@@ -1,0 +1,45 @@
+
+				README.porting
+
+			useful tips and useless warnings
+			  for people trying to compile
+			    twin on non-Linux systems
+
+Various users asked for twin portings on many platforms,
+yet the author only has access to Linux systems (and to an ancient AIX...)
+so this file is/will be mostly user contributed.
+
+
+Compiling on AIX 3.2:
+
+	The author tried this personally, and managed to "mostly" do it.
+	You still have to work manually a little though...
+	here's what you can try (good luck) :
+
+	Before starting you need to have installed GNU make, GNU bash and
+	(very probably) GNU gcc; you can try with AIX cc, but I won't bet on it
+
+	First, edit the following files:
+	  Rules : change "ECHO=echo -e" into "ECHO=echo"
+
+	  server/hw_keys.h: comment the lines
+		line 25: IS(Sys_Req, 0, "")
+		line 75: IS(KP_Delete, 3, "\x1BOn")
+
+	Then 'gmake config', disabling Modules, Custom malloc/free,
+	Socket compression, Linux console support.
+
+	Now 'gmake'. If you have bash installed but you get an error like
+	../scripts/MkDep: ../scripts/MkDep: Too many levels of symbolic links
+	then run 'ln -sf MkDep1 scripts/MkDep' and type 'gmake' again.
+
+	It will bomb out building lib/libTw.so as AIX 3.2
+	does not have shared libraries. So type:
+	'cd lib; ar cr libTw.a libTw.o md5.o; cd ..'
+	to build a static libTw.
+
+	Continue with 'gmake -C server' and 'gmake -C clients'...
+	all should go well now. If you want to install twin, you will need to
+	copy the binaries manually as 'gmake install' tries to build libTw.so
+	again, bombing out. In this case, remember to also install libTw.a.
+

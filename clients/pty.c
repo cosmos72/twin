@@ -20,7 +20,7 @@
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 
-#include "libTw.h"
+#include <libTw.h>
 #include "term.h"
 
 /* pseudo-teletype connections handling functions */
@@ -38,15 +38,16 @@ static int ptyfd, ttyfd;
 static byte get_pty(void)
 {
     int fd = -1, sfd = -1;
-#ifdef USE_DEVPTMX
-    extern char *ptsname();
-
+#ifdef CONF_TERM_DEVPTS
+    
     /* open master pty /dev/ptmx */
-    if ((fd = open("/dev/ptmx", O_RDWR)) >= 0) {
-	grantpt(fd);
-	unlockpt(fd);
-	ptydev = ttydev = ptsname(fd);
-	goto Found:
+    if ((fd = open("/dev/ptmx", O_RDWR|O_NOCTTY)) >= 0) {
+	if (grantpt(fd) == 0 && unlockpt(fd) == 0) {
+	    ptydev = ttydev = ptsname(fd);
+	    if ((sfd = open(ptydev, O_RDWR|O_NOCTTY)) >= 0)
+		goto Found;
+	}
+	close(fd);
     }
 #else
     static char     pty_name[] = "/dev/pty??";
@@ -63,8 +64,8 @@ static byte get_pty(void)
 	ptydev[len - 2] = ttydev[len - 2] = *c1;
 	for (c2 = PTYCHAR2; *c2; c2++) {
 	    ptydev[len - 1] = ttydev[len - 1] = *c2;
-	    if ((fd = open(ptydev, O_RDWR)) >= 0) {
-		if ((sfd = open(ttydev, O_RDWR)) >= 0)
+	    if ((fd = open(ptydev, O_RDWR|O_NOCTTY)) >= 0) {
+		if ((sfd = open(ttydev, O_RDWR|O_NOCTTY)) >= 0)
 		    /* access(ttydev, R_OK|W_OK) won't do as it checks against REAL uid */
 		    goto Found;
 		close(fd);
@@ -82,20 +83,32 @@ Found:
     return TRUE;
 }
 
+static gid_t tty_grgid;
+gid_t get_tty_grgid(void) {
+    struct group *gr;
+    
+    if (!tty_grgid) {
+	if ((gr = getgrnam("tty")))
+	    tty_grgid = gr->gr_gid;
+	else
+	    tty_grgid = (gid_t)-1;
+    }
+    return tty_grgid;
+}
+
 /* 2. Fixup permission for pty master/slave pairs */
 static byte fixup_pty(void) {
+    /* from util.c */
+    extern gid_t get_tty_grgid(void);
+    
     uid_t id = getuid();
-    static gid_t grgid = 0;
-
-    /*
-    if (!grgid) {
-	struct group *gr;
-	if ((gr = getgrnam("tty")))
-	    grgid = gr->gr_gid;
-    }
-     */
-    if (chown(ptydev, id, 0) == 0 && chmod(ptydev, 0600) == 0 &&
-	chown(ttydev, id, grgid) == 0 && chmod(ttydev, 0620) == 0)
+    gid_t tty_gid = get_tty_grgid();
+    
+    if (tty_gid != (gid_t)-1 &&
+#ifndef CONF_TERM_DEVPTS
+	chown(ptydev, id, 0) == 0 && chmod(ptydev, 0600) == 0 &&
+#endif
+	chown(ttydev, id, tty_gid) == 0 && chmod(ttydev, 0620) == 0)
 	return TRUE;
     return FALSE;
 }
@@ -122,7 +135,9 @@ static byte switchto_tty(void)
     if (ttyfd > 2)
 	close(ttyfd);
 
+#ifdef TIOCSCTTY
     ioctl(0, TIOCSCTTY, 0);
+#endif
 
 /* set process group */
 #if defined (_POSIX_VERSION) || defined (__svr4__)

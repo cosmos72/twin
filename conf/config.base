@@ -3,6 +3,7 @@
 #
 
 CONF___MENU="General setup"
+CONF_WM_MENU="Window Manager"
 CONF_TERM_MENU="Terminal emulator"
 CONF_SOCKET_MENU="Socket support"
 CONF_HW_MENU="Display hardware support"
@@ -10,7 +11,9 @@ CONF_OPT_MENU="Runtime options"
 
 CONF__MODULES_HELP="Enable modules"
 CONF__ALLOC_HELP="Use custom malloc/free routines (tested on Linux i386 only)"
+CONF_WM_HELP="Builtin Window Manager: absolutely needed, do not say <N>"
 CONF_TERM_HELP="Builtin Terminal emulator"
+CONF_TERM_DEVPTS_HELP=" -> Terminal: use glibc-2.1 /dev/pts/"
 CONF_SOCKET_HELP="Support remote socket connections"
 CONF_SOCKET_GZ_HELP=" -> Sockets: Support gzip compression"
 CONF_HW_TTY_HELP="HW support: text terminals (Linux console...)"
@@ -29,8 +32,12 @@ menu CONF__
   yesno CONF__MODULES
   yesno CONF__ALLOC
 endmenu
+menu CONF_WM
+  yesmodno CONF_WM
+endmenu
 menu CONF_TERM
   yesmodno CONF_TERM
+  yesno CONF_TERM_DEVPTS
 endmenu
 menu CONF_SOCKET
   yesmodno CONF_SOCKET

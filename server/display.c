@@ -129,6 +129,9 @@ byte AlwaysTrue(void) {
     return TRUE;
 }
 
+void GetPrivileges(void) {
+}
+
 static void OutOfMemory(void) {
     fputs("twdisplay: Out of memory!\n", stderr);
 }

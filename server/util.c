@@ -14,6 +14,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <grp.h>
 
 #include "twin.h"
 #include "methods.h"
@@ -435,6 +436,7 @@ byte SetSelectionFromWindow(window *Window) {
 
 
 static byte fullTWD[]="/tmp/.Twin:\0\0\0";
+static byte envTWD[]="TWDISPLAY=:\0\0\0";
 
 /* set TWDISPLAY */
 byte SetTWDisplay(void) {
@@ -448,8 +450,9 @@ byte SetTWDisplay(void) {
 	    TWDisplay = fullTWD+10;
 	    lenTWDisplay = strlen(TWDisplay);
 	    
-	    setenv("TWDISPLAY", TWDisplay, 1);
-	    setenv("TERM", "linux", 1);
+	    CopyMem(TWDisplay, envTWD+10, lenTWDisplay);
+	    putenv(envTWD);
+	    putenv("TERM=linux");
 	    if ((arg0 = AllocMem(strlen(TWDisplay) + 6))) {
 		strcpy(arg0, "twin ");
 		strcat(arg0, TWDisplay);
@@ -468,6 +471,78 @@ void UnSetTWDisplay(void) {
 }
 
 
+
+/* suid/sgid privileges related functions */
+
+static enum { none, sgidtty, suidroot } Privilege = none;
+static gid_t tty_grgid;
+
+gid_t get_tty_grgid(void) {
+    struct group *gr;
+    
+    if (!tty_grgid) {
+	if ((gr = getgrnam("tty")))
+	    tty_grgid = gr->gr_gid;
+	else
+	    tty_grgid = (gid_t)-1;
+    }
+    return tty_grgid;
+}
+
+void CheckPrivileges(void) {
+    if (GetRootPrivileges() >= 0)
+	Privilege = suidroot;
+    else {
+	(void)get_tty_grgid();
+	if (tty_grgid != (gid_t)-1 && GetGroupPrivileges(tty_grgid) >= 0)
+	    Privilege = sgidtty;
+    }
+    
+    DropPrivileges();
+    
+#ifdef CONF_TERM
+# ifdef CONF_TERM_DEVPTS
+    if (Privilege < sgidtty) {
+	byte c;
+	fprintf(stderr, "twin: not running setgid tty.\n"
+		"      might be unable to start the terminal emulator.\n"
+		"      hit RETURN to continue, or CTRL-C to quit.\n");
+	fflush(stdout);
+	read(0, &c, 1);
+    }
+# else /* !CONF_TERM_DEVPTS */
+    if (Privilege < suidroot) {
+	byte c;
+	fprintf(stderr, "twin: not running setuid root.\n"
+		"      might be unable to start the terminal emulator.\n"
+		"      hit RETURN to continue, or CTRL-C to quit.\n");
+	fflush(stdout);
+	read(0, &c, 1);
+    }
+# endif /* CONF_TERM_DEVPTS */
+    
+#else /* !CONF_TERM */
+    
+# ifdef CONF_MODULES
+    if (Privilege == none) {
+	byte c;
+	fprintf(stderr, "twin: not running setgid tty or setuid root.\n"
+		"      might be unable to start the terminal emulator module.\n"
+		"      hit RETURN to continue, or CTRL-C to quit.\n");
+	fflush(stdout);
+	read(0, &c, 1);
+    }
+# endif /* CONF_MODULES */
+    
+#endif /* CONF_TERM */
+}
+
+void GetPrivileges(void) {
+    if (Privilege == suidroot)
+	GetRootPrivileges();
+    else if (Privilege == sgidtty)
+	GetGroupPrivileges(get_tty_grgid());
+}
 
 
 

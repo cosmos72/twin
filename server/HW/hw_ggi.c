@@ -492,7 +492,8 @@ byte GGI_InitHW(void) {
 	HW->ShowMouse = NoOp;
 	HW->HideMouse = NoOp;
 	HW->UpdateMouseAndCursor = NoOp;
-
+	HW->MouseState.x = HW->MouseState.y = HW->MouseState.keys = 0;
+	
 	HW->DetectSize  = GGI_DetectSize;
 	HW->CheckResize = GGI_CheckResize;
 	HW->Resize      = GGI_Resize;

@@ -20,7 +20,6 @@
 #include "resize.h"
 #include "util.h"
 #include "remote.h"
-#include "wm.h"
 #include "hw.h"
 #include "hw_multi.h"
 
@@ -457,7 +456,7 @@ static fn_row _FnRow = {
 
 static gadget *CreateGadget(fn_gadget *Fn_Gadget, window *Window,
 			    hwcol ColText, hwcol ColSelect, hwcol ColDisabled, hwcol ColSelectDisabled,
-			    udat Code, udat Flags, udat Left, udat Up, udat XWidth, udat YWidth, byte Bitmap,
+			    udat Code, udat Flags, udat Left, udat Up, udat XWidth, udat YWidth,
 			    byte *TextNormal, byte *TextSelect, byte *TextDisabled, byte *TextSelectDisabled,
 			    hwcol *ColorNormal, hwcol *ColorSelect, hwcol *ColorDisabled, hwcol *ColorSelectDisabled) {
     gadget *Gadget = (gadget *)0;
@@ -477,40 +476,40 @@ static gadget *CreateGadget(fn_gadget *Fn_Gadget, window *Window,
 
 	Gadget->Contents[0] = CloneMem(TextNormal, Size);
 		
-	if (Bitmap & 0x2)
+	if (TextSelect)
 	    Gadget->Contents[1] = CloneMem(TextSelect, Size);
 	else
 	    Gadget->Contents[1] = NULL;
 	
-	if (Bitmap & 0x2)
+	if (TextDisabled)
 	    Gadget->Contents[2] = CloneMem(TextDisabled, Size);
 	else
 	    Gadget->Contents[2] = NULL;
 	
-	if (Bitmap & 0x4)
+	if (TextSelectDisabled)
 	    Gadget->Contents[3] = CloneMem(TextSelectDisabled, Size);
 	else
 	    Gadget->Contents[3] = NULL;
 	 
-	if (Bitmap & 0x8)
+	if (ColorNormal)
 	    Gadget->Contents[4] = CloneMem(ColorNormal, Size*sizeof(hwcol));
 	else
 	    Gadget->Contents[4] = NULL, Gadget->Flags |= GADGET_USE_DEFCOL;
 	
-	if (Bitmap & 0x10)
+	if (ColorSelect)
 	    Gadget->Contents[5] = CloneMem(ColorSelect, Size*sizeof(hwcol));
 	else
 	    Gadget->Contents[5] = NULL;
 	    
-	if (Bitmap & 0x20)
+	if (ColorDisabled)
 	    Gadget->Contents[6] = CloneMem(ColorDisabled, Size*sizeof(hwcol));
 	else
 	    Gadget->Contents[6] = NULL;
 	    
-	if (Bitmap & 0x40)
+	if (ColorSelectDisabled)
 	    Gadget->Contents[7] = CloneMem(ColorSelectDisabled, Size*sizeof(hwcol));
 	else
-	    Gadget->Contents[7] = NULL;
+	    Gadget->Contents[7] = ColorSelectDisabled;
 	
 	InsertLast(Gadget, Gadget, Window);
     }
@@ -623,7 +622,7 @@ static gadget *SearchGadget(window *Window, dat i, dat j) {
     return FirstGadget;
 }
 
-static gadget *CreateButton(fn_gadget *Fn_Gadget, window *Window, udat XWidth, udat YWidth, hwcol BgCol) {
+static gadget *CreateEmptyButton(fn_gadget *Fn_Gadget, window *Window, udat XWidth, udat YWidth, hwcol BgCol) {
     gadget *Gadget;
     uldat Size;
     byte i;
@@ -683,6 +682,18 @@ void FillButton(gadget *Gadget, udat Code, udat Left, udat Up, udat Flags, byte 
 	}
 }
 
+
+static gadget *CreateButton(fn_gadget *Fn_Gadget, window *Window,
+			    hwcol BgCol, hwcol Col, hwcol ColDisabled,
+			    udat Code, udat Flags, udat Left, udat Up, udat XWidth, udat YWidth,
+			    byte *Text) {
+    gadget *Gadget;
+    if ((Gadget = Fn_Gadget->CreateEmptyButton(Fn_Gadget, Window, XWidth, YWidth, BgCol)))
+	FillButton(Gadget, Code, Left, Up, Flags, Text, Col, ColDisabled);
+    return Gadget;
+}
+
+				    
 gadget *CloneButton(gadget *SetUpGadget, udat Code, udat Left, udat Up, hwcol BgCol) {
     gadget *Gadget;
     udat i, XWidth, YWidth;
@@ -725,8 +736,9 @@ static fn_gadget _FnGadget = {
 	InsertGadget,
 	RemoveGadget,
 	DeleteGadget,
-	CreateButton,
+	CreateEmptyButton,
 	FillButton,
+	CreateButton,
 	CloneButton
 };
 

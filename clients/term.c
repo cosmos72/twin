@@ -22,7 +22,7 @@
 #include <termios.h>
 #include <signal.h>
 
-#include "libTw.h"
+#include <libTw.h>
 
 #include "pty.h"
 
@@ -167,9 +167,8 @@ static char *title = " Twin Term ";
 
 static twindow newTermWindow(void) {
     uldat len = strlen(title);
-    hwcol *coltitle = TwAllocMem(len * sizeof(hwcol));
     twindow Window = TwCreateWindow
-	(len, title, TwWriteMem(coltitle, COL(HIGH|WHITE,HIGH|BLUE), len * sizeof(hwcol)),
+	(len, title, NULL,
 	 Term_Menu, COL(WHITE,BLACK), TW_LINECURSOR,
 	 TW_WINDOW_WANT_KEYS|TW_WINDOW_WANT_CHANGES|TW_WINDOW_DRAG|TW_WINDOW_RESIZE|TW_WINDOW_Y_BAR|TW_WINDOW_CLOSE,
 	 TW_WINFL_CURSOR_ON|TW_WINFL_USECONTENTS,
@@ -215,7 +214,7 @@ static void CloseTerm(uldat Slot) {
 }
 
 static void SignalChild(int n) {
-    while (wait4((pid_t)-1, (int *)0, WNOHANG, (struct rusage *)0) > 0)
+    while (wait3((int *)0, WNOHANG, (struct rusage *)0) > 0)
 	;
     signal(SIGCHLD, SignalChild);
 }

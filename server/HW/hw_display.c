@@ -454,7 +454,8 @@ byte display_InitHW(void) {
     HW->ShowMouse = NoOp;
     HW->HideMouse = NoOp;
     HW->UpdateMouseAndCursor = NoOp;
-
+    HW->MouseState.x = HW->MouseState.y = HW->MouseState.keys = 0;
+    
     HW->DetectSize  = display_DetectSize;
     HW->CheckResize = display_CheckResize;
     HW->Resize      = display_Resize;

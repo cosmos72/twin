@@ -6,19 +6,21 @@
 TOPDIR=..
 
 BASEOBJS=data.o methods.o util.o draw.o main.o hw_multi.o \
-	 resize.o scroller.o builtin.o wm.o remote.o
+	 resize.o scroller.o builtin.o remote.o
 HWOBJS=hw.o HW/hw.a
 ALLOCOBJS=alloc.o
 DLOBJS=dl.o
-SOCKETOBJS=socket.o md5.o
+WMOBJS=wm.o
 TERMOBJS=pty.o tty.o term.o 
+SOCKETOBJS=socket.o md5.o
 WRAPOBJS=wrapper.o
 DISPLAYOBJS=display.o
-ALLOBJS:=$(BASEOBJS) $(HWOBJS) $(ALLOCOBJS) $(DLOBJS) $(TERMOBJS) $(SOCKETOBJS) $(WRAPOBJS) $(DISPLAYOBJS)
+ALLOBJS:=$(BASEOBJS) $(HWOBJS) $(ALLOCOBJS) $(DLOBJS) $(WMOBJS) $(TERMOBJS) $(SOCKETOBJS) $(WRAPOBJS) $(DISPLAYOBJS)
 
 OBJS_twin_real:=$(BASEOBJS) $(HWOBJS)
-OBJS_socket.so:=$(SOCKETOBJS)
+OBJS_wm.so:=$(WMOBJS)
 OBJS_term.so:=$(TERMOBJS)
+OBJS_socket.so:=$(SOCKETOBJS)
 OBJS_twin_wrapper:=$(WRAPOBJS)
 OBJS_twdisplay:=$(DISPLAYOBJS) $(HWOBJS)
 
@@ -30,8 +32,9 @@ CFLAGS_dl.o=$(strip $(patsubst %,-DCONF_DESTDIR=\"%\",$(DESTDIR)))
 CFLAGS_wrapper.o=$(strip $(patsubst %,-DCONF_DESTDIR=\"%\",$(DESTDIR)))
 CFLAGS_display.o=$(strip $(patsubst %,-DCONF_DESTDIR=\"%\",$(DESTDIR)))
 
-LDFLAGS_socket.so=-lc -shared
+LDFLAGS_wm.so=-lc -shared
 LDFLAGS_term.so=-lc -shared
+LDFLAGS_socket.so=-lc -shared
 LDFLAGS_twdisplay=-L$(TOPDIR)/lib -lTw
 
 #
@@ -63,6 +66,34 @@ else
   EXCL_OBJS+=$(DLOBJS)
 endif
 
+ifeq ($(CONF__ALLOC),y)
+  OBJS_twin_real+=$(ALLOCOBJS)
+  OBJS_twdisplay+=$(ALLOCOBJS)
+  CFLAGS+=-DCONF__ALLOC
+else
+  EXCL_OBJS+=$(ALLOCOBJS)
+endif
+
+ifeq ($(CONF_WM),y)
+  OBJS_twin_real+=$(WMOBJS)
+else
+  ifeq ($(CONF_WM),m)
+    MODBINS+=wm.so
+  else
+    EXCL_OBJS+=$(WMOBJS)
+  endif
+endif
+
+ifeq ($(CONF_TERM),y)
+  OBJS_twin_real+=$(TERMOBJS)
+else
+  ifeq ($(CONF_TERM),m)
+    MODBINS+=term.so
+  else
+    EXCL_OBJS+=$(TERMOBJS)
+  endif
+endif
+
 ifeq ($(CONF_SOCKET),y)
   OBJS_twin_real+=$(SOCKETOBJS)
   ifeq ($(CONF_SOCKET_GZ),y)
@@ -79,25 +110,33 @@ else
   endif
 endif
 
-ifeq ($(CONF_TERM),y)
-  OBJS_twin_real+=$(TERMOBJS)
-else
-  ifeq ($(CONF_TERM),m)
-    MODBINS+=term.so
+#
+# suid root / sgid tty stuff
+#
+ifneq ($(CONF_TERM),n)
+  ifeq ($(CONF_TERM_DEVPTS),y)
+    PRIV=tty
   else
-    EXCL_OBJS+=$(TERMOBJS)
+    PRIV=root
+  endif
+else
+  ifeq ($(CONF_MODULES),y)
+    PRIV=root
+  else
+    PRIV=
   endif
 endif
 
-ifeq ($(CONF__ALLOC),y)
-  OBJS_twin_real+=$(ALLOCOBJS)
-  OBJS_twdisplay+=$(ALLOCOBJS)
-  CFLAGS+=-DCONF__ALLOC
+ifeq ($(PRIV),root)
+  SETPRIV=chmod u+s $(DESTDIR)/bin/twin_real
 else
-  EXCL_OBJS+=$(ALLOCOBJS)
+  ifeq ($(PRIV),tty)
+    SETPRIV=chown :tty $(DESTDIR)/bin/twin_real && chmod g+s $(DESTDIR)/bin/twin_real
+  else
+    SETPRIV=
+  endif
 endif
-
-
+  
 #
 # the final link nightmare...
 #
@@ -141,13 +180,14 @@ bins: $(BINS)
 modules: $(MODBINS)
 
 clean:
-	make clean -C HW
+	$(MAKE) clean -C HW
 	rm -f .*.flags .*.link .*.arlib gmon.out core log twin \
-	      twin_real twin_wrapper twdisplay socket.so term.so $(ALLOBJS)
+	      twin_real twin_wrapper twdisplay socket.so term.so wm.so \
+	      $(ALLOBJS)
 
 install:
 	$(CP) twin $(BINS) $(DESTDIR)/bin
-	chmod u+s $(DESTDIR)/bin/twin_real
+	$(SETPRIV)
 	if [ "$(MODBINS)" ]; then \
 	  $(MKDIR) $(DESTDIR)/lib/twin/modules; \
 	  $(CP) $(MODBINS) $(DESTDIR)/lib/twin/modules; \

@@ -7,4 +7,9 @@
 #include <string.h>
 #include <time.h>
 
+#ifdef _AIX
+# include <sys/select.h>
+# include <termio.h>
+#endif
+
 #endif /* _TWINSYS_H */

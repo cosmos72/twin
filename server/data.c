@@ -356,7 +356,7 @@ byte InitData(void) {
     ExecK(STATE_DEFAULT, 99)=STDEF_DRAGorRESIZE_SCREEN;	/*Ctrl-F6    */
 #endif
     
-    ExecK(STATE_DEFAULT,1)=HOT_KEY;		/* this sets the Menu HotKey; edit hw.h to change it */
+    ExecK(STATE_DEFAULT,1)=HOT_KEY;		/* this sets the Menu HotKey; edit hotkey.h to change it */
     ExecK(STATE_DEFAULT,2)=STDEF_ACT_MENU;
     
     /*----------- Window -----------*/

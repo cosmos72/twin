@@ -91,6 +91,10 @@ static module *So[MAX_So];
 module *DlLoad(uldat code) {
     if (code < MAX_So) {
 	if (!So[code]) switch (code) {
+#ifndef CONF_WM
+	  case WMSo:
+	    return So[code] = DlLoadAny(5, "wm.so");
+#endif
 #ifndef CONF_TERM
 	  case TermSo:
 	    return So[code] = DlLoadAny(7, "term.so");

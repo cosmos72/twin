@@ -22,6 +22,10 @@
 #include <limits.h>
 #include <stdlib.h>
 
+#ifdef _AIX
+# include <sys/select.h>
+#endif
+
 typedef   signed char	 num;
 typedef unsigned char	byte;
 typedef   signed short	 dat;
@@ -454,12 +458,16 @@ void Tw_SetFontTranslation(tdisplay TwD, byte trans[0x80]);
 
 tgadget Tw_CreateGadget(tdisplay TwD, twindow Window,
 		       hwcol ColText, hwcol ColTextSelect, hwcol ColTextDisabled, hwcol ColTextSelectDisabled,
-		       udat Code, udat Flags, udat Left, udat Up, udat XWidth, udat YWidth, byte Bitmap,
+		       udat Code, udat Flags, udat Left, udat Up, udat XWidth, udat YWidth,
 		       byte *TextNormal, byte *TextSelect, byte *TextDisabled, byte *TextSelectDisabled,
 		       hwcol *ColNormal, hwcol *ColSelect, hwcol *ColDisabled, hwcol *ColSelectDisabled);
 void    Tw_CopyGadget(tdisplay TwD, tgadget From, tgadget To);
 void	Tw_DeleteGadget(tdisplay TwD, tgadget Gadget);
 tgadget Tw_SearchGadget(tdisplay TwD, twindow Window, dat i, dat j);
+tgadget Tw_CreateButtonGadget(tdisplay TwD, twindow Window,
+			      hwcol BgCol, hwcol Col, hwcol ColDisabled,
+			      udat Code, udat Flags, udat Left, udat Up, udat XWidth, udat YWidth,
+			      byte *Text);
 
 void	Tw_Create4MenuRow(tdisplay TwD, twindow Window, udat Code, byte FlagActive, uldat TextLen, byte *Text);
 #define Tw_Row4Menu Tw_Create4MenuRow
@@ -529,7 +537,7 @@ void Tw_SetOwnerSelection(tdisplay TwD, tobj Owner, time_t Time, frac_t Frac);
 
 void Tw_RequestSelection(tdisplay TwD, tobj Owner, uldat ReqPrivate);
 void Tw_NotifySelection(tdisplay TwD, tobj Requestor, uldat ReqPrivate,
-			uldat Magic, byte MIME[TW_MAX_MIMELEN],	uldat Len, byte *Data);
+			uldat Magic, byte MIME[TW_MAX_MIMELEN], uldat Len, byte *Data);
 #define TW_SEL_CURRENTTIME ((time_t)0)
 
 

@@ -193,19 +193,42 @@ static void X11_Configure(udat resource, byte todefault, udat value) {
 }
 
     
-static udat X11_LookupKey(KeySym sym) {
+/* convert an X11 KeySym into a libTw key code */
+
+static udat X11_LookupKey(XKeyEvent *ev, udat *len, char *seq) {
     static udat lastTW = TW_Null;
-    static KeySym lastXK = NoSymbol;
+    static KeySym sym, lastXK = NoSymbol;
     
     uldat i, low, up;
-    
-    if (sym >= ' ' && sym <= '~')
-	return (udat)sym;
 
+    *len = XLookupString(ev, seq, *len, &sym, NULL);
+
+    if (sym == XK_BackSpace && ev->state & (ControlMask|Mod1Mask)) {
+	if (ev->state & ControlMask)
+	    *len = 1, *seq = '\x1F';
+	else
+	    *len = 2, seq[0] = '\x1B', seq[1] = '\x7F';
+	return TW_BackSpace;
+    }
+
+    if (!*len)
+	return TW_Null;
+
+    if (sym >= ' ' && sym <= '~') {
+	/* turn ALT+A into ESC+A etc. */
+	if (ev->state & Mod1Mask && *len == 1 && (byte)sym == *seq) {
+	    *len = 2;
+	    seq[1] = seq[0];
+	    seq[0] = '\x1B';
+	}
+	return (udat)sym;
+    }
+    
     if (sym == lastXK)
 	return lastTW;
-    
-    low = 0; up = X11_keyn;
+        
+    low = 0;		/* the first possible */
+    up = X11_keyn;	/* 1 + the last possible */
     
     while (low < up) {
 	i = (low + up) / 2;
@@ -213,7 +236,7 @@ static udat X11_LookupKey(KeySym sym) {
 	    lastXK = sym;
 	    return lastTW = X11_keys[i].tkey;
 	} else if (sym > X11_keys[i].xkey)
-	    low = i;
+	    low = i + 1;
 	else
 	    up = i;
     }
@@ -223,17 +246,15 @@ static udat X11_LookupKey(KeySym sym) {
 
 
 static void X11_HandleEvent(XEvent *event) {
-    static byte seq[SMALLBUFF], *s, len;
-    KeySym key = NoSymbol;
+    static byte seq[SMALLBUFF];
     dat x, y, dx, dy;
-    udat TW_key;
+    udat len = SMALLBUFF, TW_key;
 
     if (event->xany.window == xwindow) switch (event->type) {
       case KeyPress:
-	if ((len = XLookupString(&event->xkey, s=seq, SMALLBUFF, &key, NULL))) {
-	    TW_key = X11_LookupKey(key);
-	    KeyboardEventCommon(TW_key, len, s);
-	}
+	TW_key = X11_LookupKey(&event->xkey, &len, seq);
+	if (TW_key != TW_Null)
+	    KeyboardEventCommon(TW_key, len, seq);
 	break;
       case KeyRelease:
 	break;
@@ -859,7 +880,8 @@ byte X11_InitHW(void) {
 	    HW->ShowMouse = NoOp;
 	    HW->HideMouse = NoOp;
 	    HW->UpdateMouseAndCursor = NoOp;
-
+	    HW->MouseState.x = HW->MouseState.y = HW->MouseState.keys = 0;
+	    
 	    HW->DetectSize  = X11_DetectSize;
 	    HW->CheckResize = X11_CheckResize;
 	    HW->Resize      = X11_Resize;

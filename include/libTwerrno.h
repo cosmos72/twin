@@ -30,6 +30,7 @@
 #define TW_EINTERNAL_GZIP ((uldat)15)
 #define TW_ENO_HOST	((uldat)16)
 #define TW_EBAD_FUNCTION ((uldat)17)
+#define TW_EX_PROTOCOL	((uldat)18)
 
 uldat Tw_Errno(tdisplay TwD);
 #define TwErrno		Tw_Errno(Tw_DefaultD)

@@ -33,17 +33,22 @@
 #include "common.h"
 #include "hw_multi.h"
 #include "builtin.h"
-#include "wm.h"
 #include "scroller.h"
 #include "util.h"
 #include "remote.h"
 
+#ifdef CONF_WM
+# include "wm.h"
+#elif defined(CONF__MODULES)
+# include "dl.h"
+#endif
+
 #ifdef CONF_SOCKET
-#include "socket.h"
+# include "socket.h"
 #endif
 
 #ifdef CONF_TERM
-#include "term.h"
+# include "term.h"
 #endif
 
 /*-------------*/
@@ -53,6 +58,8 @@ int max_fds;
 byte lenTWDisplay, *TWDisplay, *origTWDisplay, *origTERM, *origHW;
 byte **main_argv, **orig_argv;
 byte ctty_InUse;
+
+msgport *WM_MsgPort;
 
 int (*OverrideSelect)(int n, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *timeout);
 
@@ -122,21 +129,6 @@ static msgport *RunMsgPort(msgport *CurrPort) {
     return NextPort;
 }
 
-static void CheckPrivileges(void) {
-    char c;
-    
-    c = GetPrivileges() < 0;
-    DropPrivileges();
-    
-    if (c) {
-	fprintf(stderr, "twin: not running setuid root.\n"
-			"      might be unable to start the terminal emulator.\n"
-			"      hit RETURN to continue, or CTRL-C to quit.\n");
-	fflush(stdout);
-	read(0, &c, 1);
-    }
-}
-
 static byte Init(void) {
     FD_ZERO(&save_rfds);
     FD_ZERO(&save_wfds);
@@ -168,7 +160,11 @@ static byte Init(void) {
 	    InitTtysave() &&
 	    InitHW() && 
 	    InitScroller() &&
+#ifdef CONF_WM
 	    InitWM() &&
+#elif defined(CONF__MODULES)
+	    DlLoad(WMSo) &&
+#endif
 #ifdef CONF_TERM
 	    InitTerm() &&
 #endif

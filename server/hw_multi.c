@@ -25,7 +25,6 @@
 #include "remote.h"
 
 #include "resize.h"
-#include "wm.h"
 #include "hw.h"
 #include "hw_private.h"
 #include "common.h"
@@ -618,8 +617,7 @@ void TwinSelectionSetOwner(obj *Owner, time_t Time, frac_t Frac) {
 	    CopyMem(&T, &All->Selection->Time, sizeof(timevalue));
 	} else if (Owner->Id >> magic_shift == display_hw_magic >> magic_shift) {
 	    /* don't NEEDSelectionExport here! */
-	    All->Selection->OwnerOnce = (display_hw *)Owner;
-	    CopyMem(&T, &All->Selection->Time, sizeof(timevalue));
+	    All->Selection->OwnerOnce = (display_hw *)0;
 	}
     }
 }
@@ -788,19 +786,17 @@ INLINE void OptimizeChangedVideo(void) {
 INLINE void SyncOldVideo(void) {
     uldat start, len;
     int i;
-
-    if (ChangedVideoFlag) {
-	for (i=0; i<ScreenHeight*2; i++) {
-	    start = ChangedVideo[i>>1][i&1][0];
+	
+    for (i=0; i<ScreenHeight*2; i++) {
+	start = ChangedVideo[i>>1][i&1][0];
+	
+	if (start != -1) {
+	    len = ChangedVideo[i>>1][i&1][1] + 1 - start;
+	    start += (i>>1)*ScreenWidth;
 	    
-	    if (start != -1) {
-		len = ChangedVideo[i>>1][i&1][1] + 1 - start;
-		start += (i>>1)*ScreenWidth;
-		
-		ChangedVideo[i>>1][i&1][0] = -1;
+	    ChangedVideo[i>>1][i&1][0] = -1;
 	    
-		CopyMem(Video + start, OldVideo + start, len * sizeof(hwattr));
-	    }
+	    CopyMem(Video + start, OldVideo + start, len * sizeof(hwattr));
 	}
     }
 }
@@ -879,7 +875,8 @@ void FlushHW(void) {
     if (NeedHW & NEEDFlushStdout)
 	fflush(stdout), NeedHW &= ~NEEDFlushStdout;
     
-    SyncOldVideo();
+    if (ChangedVideoFlag && NeedOldVideo)
+	SyncOldVideo();
 
     ChangedVideoFlag = FALSE;
     ValidOldVideo = TRUE;

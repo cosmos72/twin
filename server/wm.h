@@ -3,6 +3,4 @@
 
 byte InitWM(void);
 
-extern msgport *WM_MsgPort;
-
 #endif /* _TW_WM_H */

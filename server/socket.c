@@ -39,6 +39,7 @@
 #include "hw.h"
 #include "hw_multi.h"
 #include "common.h"
+#include "version.h"
 
 #include "libTw.h"
 
@@ -496,6 +497,7 @@ static uldat FindFunction(byte Len, byte *name);
 #define DECL_(n,arg)	arg A(n);
 #define DECLx(n,arg)	uldat AL(n); arg *A(n);
 #define DECLV(n,arg)	uldat AL(n); arg *A(n);
+#define DECLW(n,arg)	uldat AL(n); arg *A(n);
 #define D(n,arg,f)	DECL##f(n,arg)
 
 #define RETv(ret,call)	call;
@@ -517,6 +519,8 @@ static uldat FindFunction(byte Len, byte *name);
 
 #define V(len)		V
 #define iV(len)		len
+#define W(len)		W
+#define iW(len)		len
 
 #define Left(size)	(s + (size) <= end)
 
@@ -536,6 +540,15 @@ static uldat FindFunction(byte Len, byte *name);
 				    pass \
 				} else \
 				    FAIL##r(n);
+
+#define PARSEW(r,n,arg,len,pass) if (Left(sizeof(uldat)) && (Pop(s,uldat,AL(n)), Left(AL(n)))) { \
+				    PopAddr(s, arg, AL(n), A(n)); \
+				    if (AL(n) != (len) * sizeof(arg)) \
+					A(n) = NULL; \
+				    pass \
+				} else \
+				    FAIL##r(n);
+
 #define P(r,n,arg,f,len,pass)	PARSE##f(r,n,arg,len,pass)
 
 
@@ -653,26 +666,6 @@ NAME(funct, name) \
       A(11)))))))))))))) \
 }
 
-#define PROTO18(ret0,f0, funct,name,fn,   arg1 ,f1 , arg2 ,f2 , arg3 ,f3 , arg4 ,f4 , arg5 ,f5 , \
-	   arg6 ,f6 , arg7 ,f7 , arg8 ,f8 , arg9 ,f9 , arg10,f10, arg11,f11, arg12,f12, arg13,f13, \
-	   arg14,f14, arg15,f15, arg16,f16, arg17,f17, arg18,f18) \
-NAME(funct, name) \
-{ D(0 ,ret0 ,f0 ) \
-  D(1 ,arg1 ,f1 ) D(2 ,arg2 ,f2 ) D(3 ,arg3 ,f3 ) D(4 ,arg4, f4 ) \
-  D(5 ,arg5 ,f5 ) D(6 ,arg6 ,f6 ) D(7 ,arg7 ,f7 ) D(8 ,arg8 ,f8 ) \
-  D(9 ,arg9, f9 ) D(10,arg10,f10) D(11,arg11,f11) D(12,arg12,f12) \
-  D(13,arg13,f13) D(14,arg14,f14) D(15,arg15,f15) D(16,arg16,f16) \
-  D(17,arg17,f17) D(18,arg18,f18) \
-  P(f0,1 ,arg1 ,f1 ,i##f1 , P(f0,2 ,arg2 ,f2 ,i##f2 , P(f0,3 ,arg3 ,f3 ,i##f3 , P(f0,4 ,arg4 ,f4 ,i##f4 , \
-  P(f0,5 ,arg5 ,f5 ,i##f5 , P(f0,6 ,arg6 ,f6 ,i##f6 , P(f0,7 ,arg7 ,f7 ,i##f7 , P(f0,8 ,arg8 ,f8 ,i##f8 , \
-  P(f0,9 ,arg9 ,f9 ,i##f9 , P(f0,10,arg10,f10,i##f10, P(f0,11,arg11,f11,i##f11, P(f0,12,arg12,f12,i##f12, \
-  P(f0,13,arg13,f13,i##f13, P(f0,14,arg14,f14,i##f14, P(f0,15,arg15,f15,i##f15, P(f0,16,arg16,f16,i##f16, \
-  P(f0,17,arg17,f17,i##f17, P(f0,18,arg18,f18,i##f18, \
-  RET##fn(ret0,f0, Act##fn(funct,name) (FN##fn(name) \
-      A(1 ), A(2 ), A(3 ), A(4 ), A(5 ), A(6 ), A(7 ), A(8 ), A(9 ), A(10), \
-      A(11), A(12), A(13), A(14), A(15), A(16), A(17), A(18))))))))))))))))))))) \
-}
-
 #define PROTO19(ret0,f0, funct,name,fn,   arg1 ,f1 , arg2 ,f2 , arg3 ,f3 , arg4 ,f4 , arg5 ,f5 , \
 	   arg6 ,f6 , arg7 ,f7 , arg8 ,f8 , arg9 ,f9 , arg10,f10, arg11,f11, arg12,f12, arg13,f13, \
 	   arg14,f14, arg15,f15, arg16,f16, arg17,f17, arg18,f18, arg19,f19) \
@@ -694,53 +687,6 @@ NAME(funct, name) \
       ))))))))))))))))))))) \
 }
 
-#define PROTO20(ret0,f0, funct,name,fn,   arg1 ,f1 , arg2 ,f2 , arg3 ,f3 , arg4 ,f4 , arg5 ,f5 , \
-	   arg6 ,f6 , arg7 ,f7 , arg8 ,f8 , arg9 ,f9 , arg10,f10, arg11,f11, arg12,f12, arg13,f13, \
-	   arg14,f14, arg15,f15, arg16,f16, arg17,f17, arg18,f18, arg19,f19, arg20,f20) \
-NAME(funct, name) \
-{ D(0 ,ret0 ,f0 ) \
-  D(1 ,arg1 ,f1 ) D(2 ,arg2 ,f2 ) D(3 ,arg3 ,f3 ) D(4 ,arg4, f4 ) \
-  D(5 ,arg5 ,f5 ) D(6 ,arg6 ,f6 ) D(7 ,arg7 ,f7 ) D(8 ,arg8 ,f8 ) \
-  D(9 ,arg9, f9 ) D(10,arg10,f10) D(11,arg11,f11) D(12,arg12,f12) \
-  D(13,arg13,f13) D(14,arg14,f14) D(15,arg15,f15) D(16,arg16,f16) \
-  D(17,arg17,f17) D(18,arg18,f18) D(19,arg19,f19) D(20,arg20,f20) \
-  P(f0,1 ,arg1 ,f1 ,i##f1 , P(f0,2 ,arg2 ,f2 ,i##f2 , P(f0,3 ,arg3 ,f3 ,i##f3 , P(f0,4 ,arg4 ,f4 ,i##f4 , \
-  P(f0,5 ,arg5 ,f5 ,i##f5 , P(f0,6 ,arg6 ,f6 ,i##f6 , P(f0,7 ,arg7 ,f7 ,i##f7 , P(f0,8 ,arg8 ,f8 ,i##f8 , \
-  P(f0,9 ,arg9 ,f9 ,i##f9 , P(f0,10,arg10,f10,i##f10, P(f0,11,arg11,f11,i##f11, P(f0,12,arg12,f12,i##f12, \
-  P(f0,13,arg13,f13,i##f13, P(f0,14,arg14,f14,i##f14, P(f0,15,arg15,f15,i##f15, P(f0,16,arg16,f16,i##f16, \
-  P(f0,17,arg17,f17,i##f17, P(f0,18,arg18,f18,i##f18, P(f0,19,arg19,f19,i##f19, P(f0,20,arg20,f20,i##f20, \
-  RET##fn(ret0,f0, Act##fn(funct,name) (FN##fn(name) \
-      A(1 ), A(2 ), A(3 ), A(4 ), A(5 ), A(6 ), A(7 ), A(8 ), A(9 ), A(10), \
-      A(11), A(12), A(13), A(14), A(15), A(16), A(17), A(18), A(19), A(20) \
-      )))))))))))))))))))))) \
-}
-
-#define PROTO25(ret0,f0, funct,name,fn, arg1 ,f1 , arg2 ,f2 , arg3 ,f3 , arg4 ,f4 , arg5 ,f5 , \
-	   arg6 ,f6 , arg7 ,f7 , arg8 ,f8 , arg9 ,f9 , arg10,f10, arg11,f11, arg12,f12, arg13,f13, \
-	   arg14,f14, arg15,f15, arg16,f16, arg17,f17, arg18,f18, arg19,f19, arg20,f20, arg21,f21, \
-	   arg22,f22, arg23,f23, arg24,f24, arg25,f25) \
-NAME(funct, name) \
-{ D(0 ,ret0 ,f0 ) \
-  D(1 ,arg1 ,f1 ) D(2 ,arg2 ,f2 ) D(3 ,arg3 ,f3 ) D(4 ,arg4, f4 ) \
-  D(5 ,arg5 ,f5 ) D(6 ,arg6 ,f6 ) D(7 ,arg7 ,f7 ) D(8 ,arg8 ,f8 ) \
-  D(9 ,arg9, f9 ) D(10,arg10,f10) D(11,arg11,f11) D(12,arg12,f12) \
-  D(13,arg13,f13) D(14,arg14,f14) D(15,arg15,f15) D(16,arg16,f16) \
-  D(17,arg17,f17) D(18,arg18,f18) D(19,arg19,f19) D(20,arg20,f20) \
-  D(21,arg21,f21) D(22,arg22,f22) D(23,arg23,f23) D(24,arg24,f24) \
-  D(25,arg25,f25) \
-  P(f0,1 ,arg1 ,f1 ,i##f1 , P(f0,2 ,arg2 ,f2 ,i##f2 , P(f0,3 ,arg3 ,f3 ,i##f3 , P(f0,4 ,arg4 ,f4 ,i##f4 , \
-  P(f0,5 ,arg5 ,f5 ,i##f5 , P(f0,6 ,arg6 ,f6 ,i##f6 , P(f0,7 ,arg7 ,f7 ,i##f7 , P(f0,8 ,arg8 ,f8 ,i##f8 , \
-  P(f0,9 ,arg9 ,f9 ,i##f9 , P(f0,10,arg10,f10,i##f10, P(f0,11,arg11,f11,i##f11, P(f0,12,arg12,f12,i##f12, \
-  P(f0,13,arg13,f13,i##f13, P(f0,14,arg14,f14,i##f14, P(f0,15,arg15,f15,i##f15, P(f0,16,arg16,f16,i##f16, \
-  P(f0,17,arg17,f17,i##f17, P(f0,18,arg18,f18,i##f18, P(f0,19,arg19,f19,i##f19, P(f0,20,arg20,f20,i##f20, \
-  P(f0,21,arg21,f21,i##f21, P(f0,22,arg22,f22,i##f22, P(f0,23,arg23,f23,i##f23, P(f0,24,arg24,f24,i##f24, \
-  P(f0,25,arg25,f25,i##f25, \
-  RET##fn(ret0,f0, Act##fn(funct,name) (FN##fn(name) \
-      A(1 ), A(2 ), A(3 ), A(4 ), A(5 ), A(6 ), A(7 ), A(8 ), A(9 ), A(10), \
-      A(11), A(12), A(13), A(14), A(15), A(16), A(17), A(18), A(19), A(20), \
-      A(21), A(22), A(23), A(24), A(25) \
-      ))))))))))))))))))))))))))) \
-}
 
 
 #include "sockproto.h"
@@ -761,15 +707,16 @@ static sock_fn sockF [] = {
 
 /***********/
 
-
-static uldat SendTwinMagic(void) {
-    byte data[8+sizeof(uldat)] = { sizeof(byte), sizeof(udat), sizeof(uldat), sizeof(hwcol), sizeof(time_t), 0, sizeof(frac_t), 0};
-    *(uldat *)(data+8) = TWIN_MAGIC;
-    return RemoteWriteQueue(Slot, 8+sizeof(uldat), data);
+static uldat SendTwinProtocol(void) {
+    static char buf[] = " Twin-" TW_PROTOCOL_VERSION_STR "-" TWIN_VERSION_STR "\n";
+    buf[0] = strlen(buf);
+    return RemoteWriteQueue(Slot, buf[0], buf);
 }
 
-INLINE uldat Send(uldat data) {
-    return RemoteWriteQueue(Slot, sizeof(uldat), &data);
+static uldat SendTwinMagic(void) {
+    byte data[8+sizeof(uldat)] = { 8+sizeof(uldat), sizeof(byte), sizeof(udat), sizeof(uldat), sizeof(hwcol), sizeof(time_t), sizeof(frac_t), 0};
+    *(uldat *)(data+8) = TWIN_MAGIC;
+    return RemoteWriteQueue(Slot, 8+sizeof(uldat), data);
 }
     
 static uldat FindFunction(byte Len, byte *name) {
@@ -795,21 +742,56 @@ static void Reply(uldat code, uldat len, void *data) {
 
 
 #define digestLen	16  /* hardcoded in MD5 routines */
-#define lAuthLen 	64  /* min length of ~/.TwinAuth */
-#define hAuthLen	256 /* max length of ~/.TwinAuth */
-#define challengeLen	512 /* length of ~/.TwinAuth + random data */
+#define AuthLen		256 /* length of ~/.TwinAuth */
+#define ChallLen	256 /* length of random data */
+#define TotalLen	(AuthLen+ChallLen)
 
-static byte AuthData[challengeLen];
-static uldat AuthLen;
+static byte AuthData[TotalLen];
+
+static uldat GetRandomData(void) {
+     int ufd, len = 0, got = -1;
+     unsigned long res;
+
+     if ((ufd = open("/dev/urandom", O_RDONLY)) >= 0) {
+         for (; len < AuthLen; len += got) {
+	     got = read(ufd, AuthData + len, AuthLen - len);
+	     if (got < 0) {
+	         if (errno == EINTR || errno == EAGAIN)
+		     got = 0;
+		 else
+		     break;
+	     }
+	 }
+	 close(ufd);
+     }
+     if (len < AuthLen) {
+         /* /dev/urandom unavailable ? use mrand48... */
+         srand48(time(NULL) + getpid());
+	 got = 0;
+
+	 while (len < AuthLen) {
+	     if (!got) {
+	         got = 4;
+	         res = (unsigned long)mrand48();
+	     }
+	     AuthData[len++] = res & MAXBYTE;
+	     res >>= 8;
+	     got--;
+	 }
+     }
+     return len;
+}
 
 static byte CreateAuth(byte *path) {
-    int fd = NOFD, ufd = NOFD, len = 0, got = -1;
+    int fd, len = 0, got = -1;
     
     if ((fd = open(path, O_WRONLY|O_CREAT|O_TRUNC, 0600)) >= 0 &&
-	fchmod(fd, 0600) == 0 &&
-	(ufd = open("/dev/urandom", O_RDONLY)) >= 0) {
-	for (len = 0; len < hAuthLen; len += got) {
-	    got = read(ufd, AuthData + len, hAuthLen - len);
+	fchmod(fd, 0600) == 0) {
+
+        len = GetRandomData();
+
+	if (len == AuthLen) for (len = 0; len < AuthLen; len += got) {
+	    got = write(fd, AuthData + len, AuthLen - len);
 	    if (got < 0) {
 		if (errno == EINTR || errno == EAGAIN)
 		    got = 0;
@@ -817,22 +799,10 @@ static byte CreateAuth(byte *path) {
 		    break;
 	    }
 	}
-	if (got > 0) for (len = 0; len < hAuthLen; len += got) {
-	    got = write(fd, AuthData + len, hAuthLen - len);
-	    if (got < 0) {
-		if (errno == EINTR || errno == EAGAIN)
-		    got = 0;
-		else
-		    break;
-	    }
-	}
-    }
-    if (fd != NOFD)
 	close(fd);
-    if (ufd != NOFD)
-	close(ufd);
-    AuthLen = len;
-    return got > 0;
+    }
+
+    return len == AuthLen;
 }
     
 static byte InitAuth(void) {
@@ -841,16 +811,17 @@ static byte InitAuth(void) {
     
     if (!(home = getenv("HOME")))
 	return FALSE;
+    
     len = LenStr(home);
-    len = Min2(len, challengeLen-11);
+    len = Min2(len, TotalLen-11);
     CopyMem(home, AuthData, len);
     CopyMem("/.TwinAuth", AuthData+len, 11);
 
     if ((fd = open(AuthData, O_RDONLY)) < 0)
 	return CreateAuth(AuthData);
 
-    for (len = 0; len < hAuthLen; len += got) {
-	got = read(fd, AuthData + len, hAuthLen - len);
+    for (len = 0; len < AuthLen; len += got) {
+	got = read(fd, AuthData + len, AuthLen - len);
 	if (got < 0) {
 	    if (errno == EINTR || errno == EAGAIN)
 		got = 0;
@@ -861,10 +832,9 @@ static byte InitAuth(void) {
 	}
     }
     close(fd);
-    if (len < lAuthLen)
+    if (len < AuthLen)
     	return CreateAuth(AuthData);
 
-    AuthLen = len;
     return TRUE;
 }
 
@@ -876,64 +846,157 @@ static byte SendChallenge(void) {
     if ((fd = open("/dev/urandom", O_RDONLY)) < 0)
 	return FALSE;
     len = AuthLen;
-    for (got = 1; len < challengeLen && got; len += got) {
+    for (got = 1; len < TotalLen && got; len += got) {
 	do {
-	    got = read(fd, AuthData + len, challengeLen - len);
+	    got = read(fd, AuthData + len, TotalLen - len);
 	} while (got < 0 && errno == EINTR);
 	if (got <= 0)
 	    break;
     }
     close(fd);
-    if (got > 0 && len == challengeLen && (len -= AuthLen) &&
+    if (got > 0 && len == TotalLen && (len -= AuthLen) &&
 	RemoteReadGrowQueue(Slot, digestLen) &&
+	/* make space for digest, and also check there's no pending data */
 	(t = RemoteReadGetQueue(Slot, &got)) && got == digestLen &&
 	RemoteWriteQueue(Slot, sizeof(uldat), &len) &&
 	RemoteWriteQueue(Slot, len, AuthData+AuthLen)) {
 	
 	MD5Init(&ctx);
-	MD5Update(&ctx, AuthData, challengeLen);
-	MD5Final(t, &ctx);
+	MD5Update(&ctx, AuthData, TotalLen);
+	MD5Final(t, &ctx); /* write digest into t */
 	
 	return TRUE;
     }
     return FALSE;
 }
 
+INLINE uldat SendUldat(uldat data) {
+    return RemoteWriteQueue(Slot, sizeof(uldat), &data);
+}
+
+/*
+ * try to read (len) bytes from socket.
+ * return # of bytes received or -1 for errors
+ */
+static int TryRead(int fd, uldat slot, uldat len) {
+    byte *t;
+    int got;
+    
+    if ((t = RemoteReadGrowQueue(slot, len))) {
+	got = read(fd, t, len);
+
+	RemoteReadShrinkQueue(slot, len - Max2(got, 0));
+	
+	return got;
+    }
+    return -1;
+}
+
+/*
+ * try to ensure (len) bytes are in FdList[slot].RQueue.
+ * return # of bytes available or -1 for errors
+ */
+static int EnsureRead(int fd, uldat slot, uldat len) {
+    uldat max;
+    int got;
+    
+    (void)RemoteReadGetQueue(slot, &max);
+    
+    if (max < len) {
+	got = TryRead(fd, slot, len - max);
+	
+	if (got == 0 || (got < 0 && errno != EINTR && errno != EAGAIN))
+	    return -1;
+
+	if (got > 0)
+	    max += got;
+    }
+    return max;
+}
+
 static void Wait4Auth(int fd, uldat slot) {
     byte *t;
-    uldat left, got = 0;
+    int got;
     
-    (void)RemoteReadGetQueue(slot, &left);
+    got = EnsureRead(fd, Slot = slot, digestLen*2);
     
-    if (left < digestLen*2) {
-	left = digestLen*2 - left;
-	if ((t = RemoteReadGrowQueue(slot, left)))
-	    got = read(fd, t, left);
-	else
-	    return;
-    } else
-	left = 0;
-    
-    if ((got < 0 && (got = 0, errno == EINTR)) || (got > 0 && got < left)) {
+    if (got < 0)
+	;
+    if (got < digestLen*2)
 	/* not yet ready to check */
-	RemoteReadShrinkQueue(slot, left - got);
 	return;
-    }
-    
-    if (got == left && (t = RemoteReadGetQueue(slot, &left)) && left >= digestLen*2) {
+    else { /* (got >= digestLen*2) */
+	t = RemoteReadGetQueue(Slot, NULL);
 	if (!CmpMem(t, t+digestLen, digestLen)) {
 	    /* OK! */
-	    ls.HandlerIO = SocketIO;
-	    RemoteReadDeQueue(slot, digestLen*2);
-	    Send(GO_MAGIC);
+	    LS.HandlerIO = SocketIO;
+	    RemoteReadDeQueue(Slot, digestLen*2);
+	    SendUldat(GO_MAGIC);
 	    return;
 	}
     }
     
-    Send(STOP_MAGIC);
-    RemoteFlush(slot);
-    UnRegisterRemote(slot);
+    /* I/O error or Auth error */
+    SendUldat(STOP_MAGIC);
+    RemoteFlush(Slot);
+    UnRegisterRemote(Slot);
     close(fd);
+}
+
+static void Wait4Magic(int fd, uldat slot, byte isUnix) {
+    byte *t;
+    uldat max;
+    int got;
+    
+    t = RemoteReadGetQueue(Slot = slot, &max);
+    if (max == 0)
+	max = MAXBYTE;
+    else
+	max = t[0];
+
+    got = EnsureRead(fd, Slot, max);
+
+    t = RemoteReadGetQueue(Slot, NULL);
+    if (got > 0)
+	max = t[0];
+    
+    if (got < 0)
+	;
+    else if (got < max)
+	/* not yet ready to check */
+	return;
+    else { /* (got >= max) */
+	/*
+	 * at the moment, no server-side datasize or endianity translation is available...
+	 * so just send the plain Magic
+	 */
+	RemoteReadDeQueue(Slot, max);
+
+	if (SendTwinMagic()) {
+	    if (isUnix) {
+		LS.HandlerIO = SocketIO;
+		if (SendUldat(GO_MAGIC))
+		    return;
+	    } else {
+		LS.HandlerIO = Wait4Auth;
+		if (SendUldat(WAIT_MAGIC) && SendChallenge())
+		    return;
+	    }
+	}
+	/* hmm... internal error. out of memory or can't write. */
+    }
+    
+    /* I/O error or internal error */
+    UnRegisterRemote(Slot);
+    close(fd);
+}
+
+static void Wait4MagicUnix(int fd, uldat slot) {
+    Wait4Magic(fd, slot, TRUE);
+}
+
+static void Wait4MagicInet(int fd, uldat slot) {
+    Wait4Magic(fd, slot, FALSE);
 }
 
 
@@ -942,10 +1005,10 @@ static void unixSocketIO(int fd, uldat slot) {
     int len = sizeof(un_addr);
     if ((fd = accept(unixFd, (struct sockaddr *)&un_addr, &len)) >= 0) {
 	/* programs on the unix socket are always authorized */
-	if ((Slot = RegisterRemoteFd(fd, SocketIO)) != NOSLOT) {
+	if ((Slot = RegisterRemoteFd(fd, Wait4MagicUnix)) != NOSLOT) {
 	    fcntl(fd, F_SETFL, O_NONBLOCK);
 	    fcntl(fd, F_SETFD, FD_CLOEXEC);
-	    if (SendTwinMagic() && Send(GO_MAGIC))
+	    if (SendTwinProtocol())
 		return;
 	    UnRegisterRemote(Slot);
 	}
@@ -957,11 +1020,11 @@ static void inetSocketIO(int fd, uldat slot) {
     struct sockaddr_in in_addr;
     int len = sizeof(in_addr);
     if ((fd = accept(inetFd, (struct sockaddr *)&in_addr, &len)) >= 0) {
-	if ((Slot = RegisterRemoteFd(fd, Wait4Auth)) != NOSLOT) {
+	if ((Slot = RegisterRemoteFd(fd, Wait4MagicInet)) != NOSLOT) {
 	    fcntl(fd, F_SETFL, O_NONBLOCK);
 	    fcntl(fd, F_SETFD, FD_CLOEXEC);
-	    if (SendTwinMagic() && Send(WAIT_MAGIC) && SendChallenge())
-		return;
+	    if (SendTwinProtocol())
+		return;       
 	    UnRegisterRemote(Slot);	    
 	}
 	close(fd);
@@ -1056,8 +1119,15 @@ static void SocketIO(int fd, uldat slot) {
 		end = s + len;
 		Pop(s, uldat, RequestN);
 		Pop(s, uldat, Funct);
-		if (Funct < MaxFunct)
+		if (Funct < MaxFunct) {
+		    slot = Slot;
 		    sockF[Funct].F();   /* Slot is the uncompressed socket here ! */
+		    Slot = slot;	/*
+					 * restore, in case sockF[Funct].F() changed it;
+					 * without this, tw* clients can freeze
+					 * if twdisplay is in use
+					 */
+		}
 		else if (Funct == FIND_MAGIC)
 		    sockFindFunction();
 		s = end;
@@ -1331,7 +1401,7 @@ static byte DoCompress(byte on_off) {
 	    z1->zfree  = z2->zfree  = sockZFree;
 	    z1->opaque = z2->opaque = NULL;
 
-	    if (deflateInit(z1, Z_DEFAULT_COMPRESSION) == Z_OK) {
+	    if (deflateInit(z1, Z_BEST_COMPRESSION) == Z_OK) {
 		if (inflateInit(z2) == Z_OK) {
 		
 		    /* ok, start pairing the two slots */

@@ -26,7 +26,6 @@
 #include "common.h"
 #include "libTwkeys.h"
 
-msgport *WM_MsgPort;
 static msgport *MapQueue;
 
 static void SmartPlace(window *Window, screen *Screen);
@@ -346,18 +345,66 @@ static void CommonMenuAction(msg *Msg) {
     }
 }
 
+static screen *Screen;
+static menu *Menu;
+static menuitem *CurrMenuItem;
+static window *CurrWin;
+static gadget *Gadget;
+static dat i, j;
+static udat Funct;
+static byte State, Shade;
+static ldat Left, Up, Rgt, Dwn, NWinDiMenu;
+static udat YLimit;
+static dat ScreenWidth;
+static setup *SetUp;
+static ldat DragPosition;
 
-static void DeActivateMenu(screen *Screen, menu *Menu, menuitem *CurrMenuItem, dat i, dat j, window *CurrWin) {
+static void DeActivateScreen(void) {
+    Screen->Attrib &= ~(GADGET_BACK_SELECT|GADGET_PRESSED);
+    if (Screen != All->LastScreen) {
+	MoveLast(Screen, All, Screen);
+	DrawArea((screen *)0, (window *)0, (window *)0, (gadget *)0, (gadget *)0,
+		 0, (dat)Min2(Screen->YLimit, All->FirstScreen->YLimit)-(dat)1,
+		 MAXDAT, MAXDAT, FALSE);
+	UpdateCursor();
+    }
+}
+
+static void SwitchToScreen(screen *tScreen) {
+    MoveFirst(Screen, All, tScreen);
+    DrawArea((screen *)0, (window *)0, (window *)0, (gadget *)0, (gadget *)0,
+	     0, (dat)Min2(Screen->YLimit, tScreen->YLimit)-(dat)1,
+	     MAXDAT, MAXDAT, FALSE);
+    UpdateCursor();
+    Screen=tScreen;
+    ScreenWidth=Screen->ScreenWidth;
+    YLimit=Screen->YLimit;
+    if ((CurrWin=Screen->FocusWindow)) {
+	NWinDiMenu=CurrWin->Attrib & WINDOW_MENU ? 0 : (ldat)~(ldat)0;
+    }
+		    
+    if ((Menu=Act(SearchMenu,Screen)(Screen)))
+	CurrMenuItem=Menu->MenuItemSelect;
+}
+
+static void ActivateMenu(void) {
+    if (j+1==(dat)YLimit)
+	CurrMenuItem=Act(SearchMenuItem,Menu)(Menu, i);
+    else
+	CurrMenuItem=(menuitem *)0;
+    ChangeMenuFirstScreen(CurrMenuItem, TRUE, ACTIVATE_MENU_FLAG);
+}
+
+static void DeActivateMenu(void) {
     window *tempWin;
-    byte FlagsMove = All->FlagsMove;
     row *tempRow;
     msg *NewMsg;
     event_any *tempEvent;
-    byte dummyShade;
-    
-    if (FlagsMove & GLMOVE_BY_MOUSE) {
+    byte dummy;
+
+    if (All->FlagsMove & GLMOVE_BY_MOUSE) {
 	if ((tempWin = CurrMenuItem
-	     && Act(SearchWindow,Screen)(Screen, i, j, &dummyShade)==CurrWin
+	     && Act(SearchWindow,Screen)(Screen, i, j, &dummy)==CurrWin
 	     ? CurrWin : (window *)0))
 	    tempRow=Act(SearchRow,tempWin)(tempWin, CurrWin->CurY);
     } else {
@@ -382,42 +429,297 @@ static void DeActivateMenu(screen *Screen, menu *Menu, menuitem *CurrMenuItem, d
 		SendMsg(WM_MsgPort, NewMsg);
 	}
     }
+
 }
 
-static void DeActivateScreen(screen *Screen) {
-    Screen->Attrib &= ~(GADGET_BACK_SELECT|GADGET_PRESSED);
-    if (Screen != All->LastScreen) {
-	MoveLast(Screen, All, Screen);
-	DrawArea((screen *)0, (window *)0, (window *)0, (gadget *)0, (gadget *)0,
-		 0, (dat)Min2(Screen->YLimit, All->FirstScreen->YLimit)-(dat)1,
-		 MAXDAT, MAXDAT, FALSE);
-	UpdateCursor();
+static void DragMenu(void) {
+    uldat Delta;
+    byte dummy;
+    
+    if (CurrWin)
+	Delta=CurrWin->CurY;
+    else
+	Delta = MAXULDAT;
+		    
+    if (Act(SearchWindow,Screen)(Screen, i, j, &dummy)==CurrWin
+	&& (ldat)i>Left && (ldat)i<Rgt && (ldat)j>Up && (ldat)j<Dwn)
+	CurrWin->CurY=(uldat)((ldat)j-Up-(ldat)1)+CurrWin->YLogic;
+    else
+	CurrWin->CurY=MAXULDAT;
+		    
+    if (Delta!=MAXULDAT) {
+	Delta+=(dat)(Up-CurrWin->YLogic)+(dat)1;
+	DrawWindow(CurrWin, (gadget *)0, (gadget *)0, (dat)Left+(dat)1, (dat)Delta, (dat)Rgt-(dat)1, (dat)Delta, FALSE);
+    }
+    if ((Delta=CurrWin->CurY)!=MAXULDAT) {
+	Delta+=(dat)(Up-CurrWin->YLogic)+(dat)1;
+	DrawWindow(CurrWin, (gadget *)0, (gadget *)0, (dat)Left+(dat)1, (dat)Delta, (dat)Rgt-(dat)1, (dat)Delta, FALSE);
+    }
+    UpdateCursor();
+}
+
+static void ActivateTitleWindow(void) {
+    if ((ldat)i<Left+(ldat)2 && CurrWin->Attrib & WINDOW_CLOSE) {
+	CurrWin->Attrib|=GADGET_CLOSE_SELECT|GADGET_PRESSED;
+	All->FlagsMove=GLMOVE_1stWIN_FREEZE;
+    }
+    else if (Rgt-(ldat)i<(ldat)2 && !(CurrWin->Attrib & WINDOW_MENU)) {
+	CurrWin->Attrib|=GADGET_BACK_SELECT|GADGET_PRESSED;
+	All->FlagsMove=GLMOVE_1stWIN_FREEZE;
+    }
+    else if (CurrWin->Attrib & WINDOW_DRAG) {
+	All->FlagsMove=GLMOVE_1stWIN | GLMOVE_BY_MOUSE;
+	DragPosition=(ldat)i-Left;
+    }
+    DrawBorderWindow(CurrWin, BORDER_ANY);
+}
+
+static void ActivateBarsWindow(void) {
+    byte dummy, CharFound
+	= SearchFontBorderWin(CurrWin, (udat)((ldat)i-Left), (udat)((ldat)j-Up), (byte)0, (byte)0, &dummy, &dummy);
+
+    All->FlagsMove=GLMOVE_SCROLL_1stWIN | GLMOVE_BY_MOUSE;
+			    
+    if ((ldat)j==Dwn) {
+	if (CharFound==POS_ARROW_BACK)
+	    CurrWin->Attrib|=X_BAR_SELECT|ARROW_BACK_SELECT;
+	else if (CharFound==POS_ARROW_FWD)
+	    CurrWin->Attrib|=X_BAR_SELECT|ARROW_FWD_SELECT;
+	else if (CharFound==POS_BAR_BACK)
+	    CurrWin->Attrib|=X_BAR_SELECT|PAGE_BACK_SELECT;
+	else if (CharFound==POS_BAR_FWD)
+	    CurrWin->Attrib|=X_BAR_SELECT|PAGE_FWD_SELECT;
+	else {
+	    CurrWin->Attrib|=X_BAR_SELECT|TAB_SELECT;
+	    DragPosition=i-Left-1-TabStart(CurrWin, (num)1);
+	}
+    } else {
+	if (CharFound==POS_ARROW_BACK)
+	    CurrWin->Attrib|=Y_BAR_SELECT|ARROW_BACK_SELECT;
+	else if (CharFound==POS_ARROW_FWD)
+	    CurrWin->Attrib|=Y_BAR_SELECT|ARROW_FWD_SELECT;
+	else if (CharFound==POS_BAR_BACK)
+	    CurrWin->Attrib|=Y_BAR_SELECT|PAGE_BACK_SELECT;
+	else if (CharFound==POS_BAR_FWD)
+	    CurrWin->Attrib|=Y_BAR_SELECT|PAGE_FWD_SELECT;
+	else {
+	    CurrWin->Attrib|=Y_BAR_SELECT|TAB_SELECT;
+	    DragPosition=j-Up-1-TabStart(CurrWin, (num)0);
+	}
+    }
+    DrawBorderWindow(CurrWin, BORDER_ANY);
+}
+
+static void TryScrollWindow(void) {
+    uldat NumLogicMax;
+    
+    if (CurrWin->Attrib & X_BAR_SELECT) {
+	NumLogicMax=Max2((uldat)1024, CurrWin->XLogic+(uldat)CurrWin->XWidth-(uldat)2);
+	if (i-DragPosition>Rgt-(ldat)4)
+	    i=Rgt+DragPosition-(ldat)4;
+	ScrollWindow(CurrWin, (i-Left-1-DragPosition-TabStart(CurrWin, (num)1))*(dat)(NumLogicMax/(CurrWin->XWidth-(udat)5)), 0);
+    }
+    else if (CurrWin->Attrib & Y_BAR_SELECT) {
+	NumLogicMax=Max2(CurrWin->MaxNumRow, CurrWin->YLogic+(uldat)CurrWin->YWidth-(uldat)2);
+	if (j-DragPosition>Dwn-(ldat)3)
+	    i=Dwn+DragPosition-(ldat)3;
+	ScrollWindow(CurrWin, 0, (j-Up-1-DragPosition-TabStart(CurrWin, (num)0))*(dat)(NumLogicMax/(CurrWin->YWidth-(udat)4)));
     }
 }
+
+static void ActivateGadget(void) {
+    All->FlagsMove|=GLMOVE_1stWIN_FREEZE;
+    CurrWin->GadgetSelect=Gadget;
+    Gadget->Flags|=GADGET_PRESSED;
+    if (CurrWin == All->FirstScreen->FirstWindow)
+	DrawWindow(CurrWin, (gadget *)0, Gadget, MINDAT, MINDAT, MAXDAT, MAXDAT, FALSE);
+    else
+	DrawArea((screen *)0, (window *)0, CurrWin, (gadget *)0, Gadget, MINDAT, MINDAT, MAXDAT, MAXDAT, FALSE);
+}
+
+static void DeActivateGadget(void) {
+    msg *NewMsg;
+    event_any *tempEvent;
+
+    if (Gadget==Act(SearchGadget,CurrWin)(CurrWin, i, j) &&
+	!(Gadget->Flags & GADGET_DISABLED) && Gadget->Flags & GADGET_PRESSED
+	&& Gadget->Code) {
+	if (!(NewMsg=Do(Create,Msg)(FnMsg, MSG_WINDOW_GADGET, sizeof(event_gadget))))
+	    Error(NOMEMORY);
+	else {
+	    tempEvent=&NewMsg->Event;
+	    tempEvent->EventGadget.Window = CurrWin;
+	    tempEvent->EventGadget.Code = Gadget->Code;
+	    SendMsg(CurrWin->Menu->MsgPort, NewMsg);
+	}
+    }
+    /* CurrWin->GadgetSelect=(gadget *)0; */
+    Gadget->Flags &= ~GADGET_PRESSED;
+    if (Gadget) {
+	if (CurrWin == All->FirstScreen->FirstWindow)
+	    DrawWindow(CurrWin, (gadget *)0, Gadget, MINDAT, MINDAT, MAXDAT, MAXDAT, FALSE);
+	else
+	    DrawArea((screen *)0, (window *)0, CurrWin, (gadget *)0, Gadget, MINDAT, MINDAT, MAXDAT, MAXDAT, FALSE);
+    }
+}
+
+
+static void DragGadget(void) {
+    uldat temp, ltemp;
+    
+    ltemp=CurrWin->Attrib;
+    temp=Screen->Attrib;
+    if (temp & GADGET_ANY_SELECT) {
+	if (j+1==(dat)YLimit && i>ScreenWidth-(dat)3)
+	    Screen->Attrib|=GADGET_PRESSED;
+	else
+	    Screen->Attrib&=~GADGET_PRESSED;
+	if (temp!=Screen->Attrib)
+	    DrawMenuBar(Screen, ScreenWidth-(dat)2, ScreenWidth-(dat)1);
+    }
+    else if (ltemp & GADGET_BACK_SELECT && !(ltemp & WINDOW_MENU)) {
+	if ((ldat)j==Up && Rgt-(ldat)i<(ldat)2 && (ldat)i<=Rgt)
+	    CurrWin->Attrib|=GADGET_PRESSED;
+	else
+	    CurrWin->Attrib&=~GADGET_PRESSED;
+	if (ltemp!=CurrWin->Attrib)
+	    DrawBorderWindow(CurrWin, BORDER_ANY);
+    }
+    else if (ltemp & GADGET_CLOSE_SELECT && ltemp & WINDOW_CLOSE) {
+	if ((ldat)j==Up && (ldat)i>=Left && (ldat)i<Left+(ldat)2)
+	    CurrWin->Attrib|=GADGET_PRESSED;
+	else
+	    CurrWin->Attrib&=~GADGET_PRESSED;
+	if (ltemp!=CurrWin->Attrib)
+	    DrawBorderWindow(CurrWin, BORDER_ANY);
+    }
+    else if ((Gadget=CurrWin->GadgetSelect)) {
+	temp=Gadget->Flags;
+	if (Gadget==Act(SearchGadget,CurrWin)(CurrWin, i, j))
+	    Gadget->Flags|=GADGET_PRESSED;
+	else
+	    Gadget->Flags&=~GADGET_PRESSED;
+	if (temp!=Gadget->Flags) {
+	    if (CurrWin == All->FirstScreen->FirstWindow)
+		DrawWindow(CurrWin, (gadget *)0, Gadget, MINDAT, MINDAT, MAXDAT, MAXDAT, FALSE);
+	    else
+		DrawArea((screen *)0, (window *)0, CurrWin, (gadget *)0, Gadget, MINDAT, MINDAT, MAXDAT, MAXDAT, FALSE);
+	}
+    }
+}
+
+static void DeActivate(void) {
+    udat temp;
+    msg *NewMsg;
+    event_any *tempEvent;
+	
+    if (Funct==STMENU_ACT_BACKTO_DEF && State==STATE_MENU) {
+	DeActivateMenu();
+	Funct=STWIN_BACKTO_DEF;
+    }
+		
+    if (Funct!=STWIN_BACKTO_DEF && Funct!=STWIN_BACKTO_DEF_FREEZE)
+	return;
+
+    temp = All->FlagsMove & GLMOVE_RESIZE_1stWIN;
+    
+    if (Funct==STWIN_BACKTO_DEF_FREEZE)
+	All->FlagsMove=GLMOVE_1stWIN_FREEZE;
+    else
+	All->FlagsMove=(byte)0;
+    
+    if (State==STATE_SCREEN)
+	DrawMenuBar(Screen, MINDAT, MAXDAT);
+    else if (State==STATE_MENU)
+	ChangeMenuFirstScreen((menuitem *)0, GLMOVE_BY_MOUSE, DISABLE_MENU_FLAG);
+    else if (State==STATE_SCROLL)
+	DrawBorderWindow(CurrWin, BORDER_ANY);
+    else if (State==STATE_WINDOW) {
+	CurrWin->Attrib &= ~(GADGET_ANY_SELECT | SCROLL_ANY_SELECT);
+	DrawBorderWindow(CurrWin, BORDER_ANY);
+	
+	if (temp)
+	    Check4Resize(CurrWin);
+	
+    } else {
+	if (j+1==(dat)YLimit && i>ScreenWidth-(dat)3 && Screen->Attrib & GADGET_BACK_SELECT)
+	    DeActivateScreen();
+	
+	else if (CurrWin && (ldat)j==Up && (ldat)i>=Left && (ldat)i<Left+(ldat)2 && CurrWin->Attrib & WINDOW_CLOSE && CurrWin->Attrib & GADGET_CLOSE_SELECT) {
+	    if (!(NewMsg=Do(Create,Msg)(FnMsg, MSG_WINDOW_GADGET, sizeof(event_gadget))))
+		Error(NOMEMORY);
+	    else if (CurrWin) {
+		CurrWin->Attrib &= ~(GADGET_CLOSE_SELECT|GADGET_PRESSED);
+		DrawBorderWindow(CurrWin, BORDER_ANY);
+		tempEvent=&NewMsg->Event;
+		tempEvent->EventGadget.Window = CurrWin;
+		tempEvent->EventGadget.Code = (udat)0; /* COD_CLOSE */
+		SendMsg(CurrWin->Menu->MsgPort, NewMsg);
+	    }
+	}
+	else if (CurrWin && (ldat)j==Up && Rgt-(ldat)i<(ldat)2 && (ldat)i<=Rgt && CurrWin && !(CurrWin->Attrib & WINDOW_MENU) && CurrWin->Attrib & GADGET_BACK_SELECT) {
+	    CurrWin->Attrib &= ~(GADGET_BACK_SELECT|GADGET_PRESSED);
+	    
+	    if (CurrWin == Screen->FirstWindow && CurrWin->Next)
+		MakeLastWindow(CurrWin, TRUE);
+	    else if (CurrWin->Prev)
+		MakeFirstWindow(CurrWin, TRUE);
+	    else
+		DrawArea((screen *)0, (window *)0, CurrWin, (gadget *)0, (gadget *)0,
+			 Rgt-1, Up, Rgt, Up, FALSE);
+	}
+	else if (Screen->Attrib & GADGET_BACK_SELECT) {
+	    Screen->Attrib &= ~(GADGET_BACK_SELECT|GADGET_PRESSED);
+	    DrawMenuBar(Screen, MINDAT, MAXDAT);
+	}
+	else if (CurrWin && CurrWin->Attrib & (GADGET_CLOSE_SELECT | GADGET_BACK_SELECT)) {
+	    CurrWin->Attrib &= ~(GADGET_CLOSE_SELECT | GADGET_BACK_SELECT|GADGET_PRESSED);
+	    DrawBorderWindow(CurrWin, BORDER_ANY);
+	}
+	else if (CurrWin && (Gadget=CurrWin->GadgetSelect))
+	    DeActivateGadget();
+    }
+}
+
+INLINE void InitVars(void) {
+    Screen=All->FirstScreen;
+    ScreenWidth=Screen->ScreenWidth;
+    YLimit=Screen->YLimit;
+    if ((CurrWin=Screen->FocusWindow)) {
+	NWinDiMenu=CurrWin->Attrib & WINDOW_MENU ? 0 : (ldat)~(ldat)0;
+	
+	Up=(ldat)CurrWin->Up-((ldat)Screen->Up & NWinDiMenu)+(ldat)YLimit;
+	Left=(ldat)CurrWin->Left-((ldat)Screen->Left & NWinDiMenu);
+	Rgt=Left+(ldat)CurrWin->XWidth-(ldat)1;
+	Dwn=Up+(ldat)CurrWin->YWidth-(ldat)1;
+
+    } else
+	NWinDiMenu=TRUE;
+	    
+    if ((Menu=Act(SearchMenu,Screen)(Screen)))
+	CurrMenuItem=Menu->MenuItemSelect;
+    
+    SetUp=All->SetUp;
+    Shade=!!(SetUp->Flags & SETUP_DO_SHADE);
+}
+
 
 /* the Window Manager built into Twin */
 static void WManagerH(msgport *MsgPort) {
     msg *Msg, *NewMsg;
     event_any *Event, *tempEvent;
-    window *CurrWin, *tempWin;
-    udat Funct = 0, CallKey;
+    window *tWin;
+    udat CallKey;
     dat EventMouseX, EventMouseY;
-    static ldat DragPosition;
     udat temp;
     udat Repeat;
-    uldat ltemp;
-    setup *SetUp;
-    screen *Screen, *tempScreen;
-    menu *Menu;
-    menuitem *CurrMenuItem, *tempMenuItem;
-    gadget *Gadget;
-    ldat Left, Up, Rgt, Dwn, NWinDiMenu;
-    uldat NumRow, NumLogicMax, OldNumRow, Delta;
-    dat i, j, XDelta, YDelta;
-    byte FlagsMove, State, CharFound;
-    byte Shade;
-    dat ScreenWidth;
-    udat YLimit;
+    screen *tScreen;
+    menuitem *tempMenuItem;
+    uldat NumRow, OldNumRow;
+    dat XDelta, YDelta;
+    byte dummy;
+    
+    Funct = 0;
     
     while ((Msg=WM_MsgPort->FirstMsg)) {
 	
@@ -437,15 +739,14 @@ static void WManagerH(msgport *MsgPort) {
 	
 	Event=&Msg->Event;
 	CallKey=Event->EventKeyboard.Code;
-	FlagsMove=All->FlagsMove;
 	
-	if (FlagsMove & GLMOVE_1stSCREEN)
+	if (All->FlagsMove & GLMOVE_1stSCREEN)
 	    State=STATE_SCREEN;
-	else if (FlagsMove & GLMOVE_1stMENU)
+	else if (All->FlagsMove & GLMOVE_1stMENU)
 	    State=STATE_MENU;
-	else if (FlagsMove & GLMOVE_SCROLL_1stWIN && Msg->Type==MSG_KEY) 
+	else if (All->FlagsMove & GLMOVE_SCROLL_1stWIN && Msg->Type==MSG_KEY) 
 	    State=STATE_SCROLL;
-	else if (FlagsMove & GLMOVE_ANY_1stWIN)
+	else if (All->FlagsMove & GLMOVE_ANY_1stWIN)
 	    State=STATE_WINDOW;
 	else
 	    State=STATE_DEFAULT;
@@ -456,11 +757,22 @@ static void WManagerH(msgport *MsgPort) {
 	 */
 	
 	if (Msg->Type==MSG_MOUSE) {
+	    
+	    i = EventMouseX = Event->EventMouse.X;
+	    j = EventMouseY = Event->EventMouse.Y;
+
+	    if ((tScreen = Do(Search,Screen)(j)))
+		tWin = Act(SearchWindow,tScreen)(tScreen, i, j, &dummy);
+	    else
+		tWin = (window *)0;
+
 	    if (All->GlobalMouseCodes[State][0])		/* Compressed Format : not implemented */
 		Funct = (udat)0;
 	    else
 		Funct = FnM(All->GlobalMouseCodes[State],CallKey);
+
 	} else if (CallKey < ' ' || CallKey > '~') {
+
 	    if (All->GlobalKeyCodes[State][0])			/* Compressed Format */
 		switch (All->GlobalKeyCodes[State][0]) {
 		  case 1:					/* parallel list */
@@ -475,200 +787,61 @@ static void WManagerH(msgport *MsgPort) {
 		}
 	    else
 		Funct = FnK(All->GlobalKeyCodes[State],CallKey);
+	    
+	    Repeat=1;
+	    EventMouseX=EventMouseY=(dat)0;
 	}
 	
 	if (Funct) {
-	    Screen=All->FirstScreen;
-	    ScreenWidth=Screen->ScreenWidth;
-	    YLimit=Screen->YLimit;
-	    if ((CurrWin=Screen->FocusWindow)) {
-		NWinDiMenu=CurrWin->Attrib & WINDOW_MENU ? 0 : (ldat)~(ldat)0;
-
-		Up=(ldat)CurrWin->Up-((ldat)Screen->Up & NWinDiMenu)+(ldat)YLimit;
-		Left=(ldat)CurrWin->Left-((ldat)Screen->Left & NWinDiMenu);
-		Rgt=Left+(ldat)CurrWin->XWidth-(ldat)1;
-		Dwn=Up+(ldat)CurrWin->YWidth-(ldat)1;
-
-	    } else
-		NWinDiMenu=TRUE;
+	    InitVars();
 	    
-	    if ((Menu=Act(SearchMenu,Screen)(Screen)))
-		CurrMenuItem=Menu->MenuItemSelect;
-	    
-	    FlagsMove=All->FlagsMove;
-	    SetUp=All->SetUp;
-	    Shade=!!(SetUp->Flags & SETUP_DO_SHADE);
-	    if (Msg->Type==MSG_MOUSE) {
-		EventMouseX=Event->EventMouse.X;
-		EventMouseY=Event->EventMouse.Y;
-	    }
-	    else {
-		Repeat=1;
-		EventMouseX=EventMouseY=(dat)0;
-	    }
-	    
-	    if (State==STATE_WINDOW && EventMouseY<(dat)YLimit)
-		EventMouseY=(dat)YLimit;
-	    
-	    
-	    i = (dat)EventMouseX;
-	    j = (dat)EventMouseY;
-	    
+	    if (State==STATE_WINDOW && j<(dat)YLimit)
+		j=EventMouseY=(dat)YLimit;
 	    
 	    switch (Funct) {
 	      case STMENU_ACT_BACKTO_DEF:
 	      case STWIN_BACKTO_DEF:
 	      case STWIN_BACKTO_DEF_FREEZE:
 	      case STWIN_BACKTO_NULL:
-		if (FlagsMove & GLMOVE_ANY && ((FlagsMove & GLMOVE_BY_MOUSE) ? Msg->Type != MSG_MOUSE : Msg->Type != MSG_KEY))
+		
+		if (All->FlagsMove & GLMOVE_ANY && ((All->FlagsMove & GLMOVE_BY_MOUSE) ? Msg->Type != MSG_MOUSE : Msg->Type != MSG_KEY))
 		    break;
 		
-		if (Funct==STMENU_ACT_BACKTO_DEF && State==STATE_MENU) {
-		    
-		    DeActivateMenu(Screen, Menu, CurrMenuItem, i, j, CurrWin);
-		    
-		    FlagsMove=All->FlagsMove;
-		    Funct=STWIN_BACKTO_DEF;
-		}
+		DeActivate();
 		
-		if (Funct==STWIN_BACKTO_DEF || Funct==STWIN_BACKTO_DEF_FREEZE) {
-		    
-		    if (All->FlagsMove & GLMOVE_RESIZE_1stWIN)
-			temp = TRUE;
-		    else
-			temp = FALSE;
-		    
-		    if (Funct==STWIN_BACKTO_DEF_FREEZE)
-			All->FlagsMove=GLMOVE_1stWIN_FREEZE;
-		    else
-			All->FlagsMove=(byte)0;
-		    
-		    if (State==STATE_SCREEN)
-			DrawMenuBar(Screen, MINDAT, MAXDAT);
-		    else if (State==STATE_MENU)
-			ChangeMenuFirstScreen((menuitem *)0, GLMOVE_BY_MOUSE, DISABLE_MENU_FLAG);
-		    else if (State==STATE_SCROLL)
-			DrawBorderWindow(CurrWin, BORDER_ANY);
-		    else if (State==STATE_WINDOW) {
-			CurrWin->Attrib &= ~(GADGET_ANY_SELECT | SCROLL_ANY_SELECT);
-			DrawBorderWindow(CurrWin, BORDER_ANY);
-
-			if (temp)
-			    Check4Resize(CurrWin);
-		    }
-		    else {
-			if (j+1==(dat)YLimit && i>ScreenWidth-(dat)3 && Screen->Attrib & GADGET_BACK_SELECT)
-			    DeActivateScreen(Screen);
-
-			else if (CurrWin && (ldat)j==Up && (ldat)i>=Left && (ldat)i<Left+(ldat)2 && CurrWin->Attrib & WINDOW_CLOSE && CurrWin->Attrib & GADGET_CLOSE_SELECT) {
-			    if (!(NewMsg=Do(Create,Msg)(FnMsg, MSG_WINDOW_GADGET, sizeof(event_gadget))))
-				Error(NOMEMORY);
-			    else if (CurrWin) {
-				CurrWin->Attrib &= ~(GADGET_CLOSE_SELECT|GADGET_PRESSED);
-				DrawBorderWindow(CurrWin, BORDER_ANY);
-				tempEvent=&NewMsg->Event;
-				tempEvent->EventGadget.Window = CurrWin;
-				tempEvent->EventGadget.Code = (udat)0; /* COD_CLOSE */
-				SendMsg(CurrWin->Menu->MsgPort, NewMsg);
-			    }
-			}
-			else if (CurrWin && (ldat)j==Up && Rgt-(ldat)i<(ldat)2 && (ldat)i<=Rgt && CurrWin && !(CurrWin->Attrib & WINDOW_MENU) && CurrWin->Attrib & GADGET_BACK_SELECT) {
-			    CurrWin->Attrib &= ~(GADGET_BACK_SELECT|GADGET_PRESSED);
-			    
-			    if (CurrWin == Screen->FirstWindow && CurrWin->Next)
-				MakeLastWindow(CurrWin, TRUE);
-			    else if (CurrWin->Prev)
-				MakeFirstWindow(CurrWin, TRUE);
-			    else
-				DrawArea((screen *)0, (window *)0, CurrWin, (gadget *)0, (gadget *)0,
-					 Rgt-1, Up, Rgt, Up, FALSE);
-			}
-			else if (Screen->Attrib & GADGET_BACK_SELECT) {
-			    Screen->Attrib &= ~(GADGET_BACK_SELECT|GADGET_PRESSED);
-			    DrawMenuBar(Screen, MINDAT, MAXDAT);
-			}
-			else if (CurrWin && CurrWin->Attrib & (GADGET_CLOSE_SELECT | GADGET_BACK_SELECT)) {
-			    CurrWin->Attrib &= ~(GADGET_CLOSE_SELECT | GADGET_BACK_SELECT|GADGET_PRESSED);
-			    DrawBorderWindow(CurrWin, BORDER_ANY);
-			}
-			else if (CurrWin && (Gadget=CurrWin->GadgetSelect)) {
-			    if (Gadget==Act(SearchGadget,CurrWin)(CurrWin, i, j) &&
-				!(Gadget->Flags & GADGET_DISABLED) && Gadget->Flags & GADGET_PRESSED
-				&& Gadget->Code) {
-				if (!(NewMsg=Do(Create,Msg)(FnMsg, MSG_WINDOW_GADGET, sizeof(event_gadget))))
-				    Error(NOMEMORY);
-				else {
-				    tempEvent=&NewMsg->Event;
-				    tempEvent->EventGadget.Window = CurrWin;
-				    tempEvent->EventGadget.Code = Gadget->Code;
-				    SendMsg(CurrWin->Menu->MsgPort, NewMsg);
-				}
-			    }
-			    /* CurrWin->GadgetSelect=(gadget *)0; */
-			    Gadget->Flags &= ~GADGET_PRESSED;
-			    if (Gadget) {
-				if (CurrWin == All->FirstScreen->FirstWindow)
-				    DrawWindow(CurrWin, (gadget *)0, Gadget, MINDAT, MINDAT, MAXDAT, MAXDAT, FALSE);
-				else
-				    DrawArea((screen *)0, (window *)0, CurrWin, (gadget *)0, Gadget, MINDAT, MINDAT, MAXDAT, MAXDAT, FALSE);
-			    }
-			}
-		    }
-		}
 		break;
 		
 	      case STDEF_MOUSE_ACT_SOME:
 	      case STDEF_MOUSE_ACT_MENU:
 	      case STDEF_MOUSE_ACT_NULL:
-		if (!(tempScreen=Do(Search,Screen)(j)))
+		if (!tScreen)
 		    break;
-		else if (tempScreen!=Screen) {
-		    MoveFirst(Screen, All, tempScreen);
-		    DrawArea((screen *)0, (window *)0, (window *)0, (gadget *)0, (gadget *)0,
-			     0, (dat)Min2(Screen->YLimit, tempScreen->YLimit)-(dat)1,
-			     MAXDAT, MAXDAT, FALSE);
-		    UpdateCursor();
-		    Screen=tempScreen;
-		    ScreenWidth=Screen->ScreenWidth;
-		    YLimit=Screen->YLimit;
-		    if ((CurrWin=Screen->FocusWindow)) {
-			NWinDiMenu=CurrWin->Attrib & WINDOW_MENU ? 0 : (ldat)~(ldat)0;
-		    }
+		else if (tScreen!=Screen) {
+		    SwitchToScreen(tScreen);
 		    
-		    if ((Menu=Act(SearchMenu,Screen)(Screen)))
-			CurrMenuItem=Menu->MenuItemSelect;
-
 		    State=STATE_DEFAULT;
-		    All->FlagsMove=FlagsMove=GLMOVE_1stWIN_FREEZE;
+		    All->FlagsMove=GLMOVE_1stWIN_FREEZE;
 		}
 		
-		if (FlagsMove & GLMOVE_1stSCREEN) {
+		if (All->FlagsMove & GLMOVE_1stSCREEN) {
 		    All->FlagsMove &= ~GLMOVE_1stSCREEN;
 		    DrawMenuBar(Screen, MINDAT, MAXDAT);
 		}
-		if (FlagsMove & GLMOVE_ANY_1stWIN) {
+		if (All->FlagsMove & GLMOVE_ANY_1stWIN) {
 		    All->FlagsMove &= ~GLMOVE_ANY_1stWIN;
 		    DrawBorderWindow(CurrWin, BORDER_ANY);
 		}
-		if (FlagsMove & GLMOVE_1stMENU) {
+		if (All->FlagsMove & GLMOVE_1stMENU) {
 		    ChangeMenuFirstScreen((menuitem *)0, FALSE, DISABLE_MENU_FLAG);
 		    CurrWin=Screen->FocusWindow;
 		}
-		FlagsMove=All->FlagsMove;
 
-		tempWin=Act(SearchWindow,Screen)(Screen, i, j, &Shade);
-		
 		if (Funct==STDEF_MOUSE_ACT_MENU) {
 		    if (Menu) {
-			if (j+1==(dat)YLimit)
-			    CurrMenuItem=Act(SearchMenuItem,Menu)(Menu, i);
-			else
-			    CurrMenuItem=(menuitem *)0;
-			ChangeMenuFirstScreen(CurrMenuItem, TRUE, ACTIVATE_MENU_FLAG);
+			ActivateMenu();
 		    }
-		}
-		else if (Funct==STDEF_MOUSE_ACT_NULL) {
-		    if (!tempWin && j >= (dat)YLimit) {
+		} else if (Funct==STDEF_MOUSE_ACT_NULL) {
+		    if (!tWin && j >= (dat)YLimit) {
 			/* open the Window List */
 			Act(UnMap,ListWin)(ListWin);
 			ListWin->Left = Screen->Left + i - ListWin->XWidth / 2;
@@ -678,105 +851,54 @@ static void WManagerH(msgport *MsgPort) {
 		}
 		else if (j+1==(dat)YLimit) {
 		    if (i>ScreenWidth-(dat)3) {
-			tempScreen->Attrib |= GADGET_BACK_SELECT|GADGET_PRESSED;
-			All->FlagsMove=FlagsMove=GLMOVE_1stWIN_FREEZE;
+			tScreen->Attrib |= GADGET_BACK_SELECT|GADGET_PRESSED;
+			All->FlagsMove=GLMOVE_1stWIN_FREEZE;
 		    }
 		    else
-			All->FlagsMove=FlagsMove=GLMOVE_1stSCREEN | GLMOVE_BY_MOUSE;
+			All->FlagsMove=GLMOVE_1stSCREEN | GLMOVE_BY_MOUSE;
 		    DrawMenuBar(Screen, (dat)0, ScreenWidth-(dat)1);
 		}
-		else if (tempWin) {
-		    if (tempWin!=CurrWin) {
-			CurrWin=Act(Focus,tempWin)(tempWin);
-			if (Screen->FocusWindow != tempWin)
+		else if (tWin) {
+		    if (tWin!=CurrWin) {
+			CurrWin=Act(Focus,tWin)(tWin);
+			if (Screen->FocusWindow != tWin)
 			    /* failed for some reason */
 			    break;
-			DrawBorderWindow(tempWin, BORDER_ANY);
+			DrawBorderWindow(tWin, BORDER_ANY);
 			DrawBorderWindow(CurrWin, BORDER_ANY);
 			DrawMenuBar(Screen, MINDAT, MAXDAT);
 			UpdateCursor();
-			CurrWin = tempWin;
-			All->FlagsMove=FlagsMove=GLMOVE_1stWIN_FREEZE;
+			CurrWin = tWin;
+			All->FlagsMove=GLMOVE_1stWIN_FREEZE;
 			NWinDiMenu=CurrWin->Attrib & WINDOW_MENU ? 0 : (ldat)~(ldat)0;
+			
+			Up=(ldat)CurrWin->Up-((ldat)Screen->Up & NWinDiMenu)+(ldat)YLimit;
+			Left=(ldat)CurrWin->Left-((ldat)Screen->Left & NWinDiMenu);
+			Rgt=Left+(ldat)CurrWin->XWidth-(ldat)1;
+			Dwn=Up+(ldat)CurrWin->YWidth-(ldat)1;
 		    }
-		    
-		    Up=(ldat)CurrWin->Up-((ldat)Screen->Up & NWinDiMenu)+(ldat)YLimit;
-		    Left=(ldat)CurrWin->Left-((ldat)Screen->Left & NWinDiMenu);
-		    Rgt=Left+(ldat)CurrWin->XWidth-(ldat)1;
-		    Dwn=Up+(ldat)CurrWin->YWidth-(ldat)1;
 		    
 		    if ((ldat)i==Left || (ldat)i==Rgt || (ldat)j==Up || (ldat)j==Dwn) {
 			if ((ldat)i>Rgt-(ldat)2 && (ldat)j==Dwn && CurrWin->Attrib & WINDOW_RESIZE) {
-			    All->FlagsMove=FlagsMove=GLMOVE_RESIZE_1stWIN | GLMOVE_BY_MOUSE;
+			    All->FlagsMove=GLMOVE_RESIZE_1stWIN | GLMOVE_BY_MOUSE;
 			    DrawBorderWindow(CurrWin, BORDER_ANY);
-			}
-			else if ((ldat)j==Up) {
-			    if ((ldat)i<Left+(ldat)2 && CurrWin->Attrib & WINDOW_CLOSE) {
-				CurrWin->Attrib|=GADGET_CLOSE_SELECT|GADGET_PRESSED;
-				All->FlagsMove=FlagsMove=GLMOVE_1stWIN_FREEZE;
-			    }
-			    else if (Rgt-(ldat)i<(ldat)2 && !(CurrWin->Attrib & WINDOW_MENU)) {
-				CurrWin->Attrib|=GADGET_BACK_SELECT|GADGET_PRESSED;
-				All->FlagsMove=FlagsMove=GLMOVE_1stWIN_FREEZE;
-			    }
-			    else if (CurrWin->Attrib & WINDOW_DRAG) {
-				All->FlagsMove=FlagsMove=GLMOVE_1stWIN | GLMOVE_BY_MOUSE;
-				DragPosition=(ldat)i-Left;
-			    }
-			    DrawBorderWindow(CurrWin, BORDER_ANY);
-			}
-			else if ((CurrWin->Attrib & WINDOW_X_BAR && (ldat)j==Dwn && (ldat)i<=Rgt-(ldat)2 && (ldat)i>=Left+(ldat)1)
+			    
+			} else if ((ldat)j==Up) {
+			    ActivateTitleWindow();
+			    
+			} else if ((CurrWin->Attrib & WINDOW_X_BAR && (ldat)j==Dwn && (ldat)i<=Rgt-(ldat)2 && (ldat)i>=Left+(ldat)1)
 				 || (CurrWin->Attrib & WINDOW_Y_BAR && (ldat)i==Rgt && (ldat)j<=Dwn-(ldat)1 && (ldat)j>=Up+(ldat)1)) {
 			    
-			    CharFound=SearchFontBorderWin(CurrWin, (udat)((ldat)i-Left), (udat)((ldat)j-Up), (byte)0, (byte)0, &FlagsMove, &FlagsMove);
-			    All->FlagsMove=FlagsMove=GLMOVE_SCROLL_1stWIN | GLMOVE_BY_MOUSE;
-			    
-			    if ((ldat)j==Dwn) {
-				if (CharFound==POS_ARROW_BACK)
-				    CurrWin->Attrib|=X_BAR_SELECT|ARROW_BACK_SELECT;
-				else if (CharFound==POS_ARROW_FWD)
-				    CurrWin->Attrib|=X_BAR_SELECT|ARROW_FWD_SELECT;
-				else if (CharFound==POS_BAR_BACK)
-				    CurrWin->Attrib|=X_BAR_SELECT|PAGE_BACK_SELECT;
-				else if (CharFound==POS_BAR_FWD)
-				    CurrWin->Attrib|=X_BAR_SELECT|PAGE_FWD_SELECT;
-				else {
-				    CurrWin->Attrib|=X_BAR_SELECT|TAB_SELECT;
-				    DragPosition=i-Left-1-TabStart(CurrWin, (num)1);
-				}
-			    }
-			    else {
-				if (CharFound==POS_ARROW_BACK)
-				    CurrWin->Attrib|=Y_BAR_SELECT|ARROW_BACK_SELECT;
-				else if (CharFound==POS_ARROW_FWD)
-				    CurrWin->Attrib|=Y_BAR_SELECT|ARROW_FWD_SELECT;
-				else if (CharFound==POS_BAR_BACK)
-				    CurrWin->Attrib|=Y_BAR_SELECT|PAGE_BACK_SELECT;
-				else if (CharFound==POS_BAR_FWD)
-				    CurrWin->Attrib|=Y_BAR_SELECT|PAGE_FWD_SELECT;
-				else {
-				    CurrWin->Attrib|=Y_BAR_SELECT|TAB_SELECT;
-				    DragPosition=j-Up-1-TabStart(CurrWin, (num)0);
-				}
-			    }
-			    DrawBorderWindow(CurrWin, BORDER_ANY);
+			    ActivateBarsWindow();
 			}
-		    }
-		    else if (!(FlagsMove & GLMOVE_1stWIN_FREEZE)) {
+		    } else if (!(All->FlagsMove & GLMOVE_1stWIN_FREEZE)) {
 			if ((Gadget=Act(SearchGadget,CurrWin)(CurrWin, i, j))
 			    && !(Gadget->Flags & GADGET_DISABLED)) {
 			    
-			    All->FlagsMove|=GLMOVE_1stWIN_FREEZE;
-			    CurrWin->GadgetSelect=Gadget;
-			    Gadget->Flags|=GADGET_PRESSED;
-			    if (CurrWin == All->FirstScreen->FirstWindow)
-				DrawWindow(CurrWin, (gadget *)0, Gadget, MINDAT, MINDAT, MAXDAT, MAXDAT, FALSE);
-			    else
-				DrawArea((screen *)0, (window *)0, CurrWin, (gadget *)0, Gadget, MINDAT, MINDAT, MAXDAT, MAXDAT, FALSE);
+			    ActivateGadget();
 			}
 		    }
-		}
-		else {
+		} else {
 		    if (CurrWin) {
 			Act(Focus,CurrWin)((window *)0);
 			DrawBorderWindow(CurrWin, BORDER_ANY);
@@ -789,97 +911,28 @@ static void WManagerH(msgport *MsgPort) {
 	      case STMENU_MOUSE_DRAG:
 		if (EventMouseY+1==YLimit && (tempMenuItem=Act(SearchMenuItem,Menu)(Menu, EventMouseX)) && tempMenuItem!=CurrMenuItem)
 		    ChangeMenuFirstScreen(tempMenuItem, TRUE, KEEP_ACTIVE_MENU_FLAG);
-		else if (CurrMenuItem) {
-		    if (CurrWin)
-			Delta=CurrWin->CurY;
-		    else
-			Delta = MAXULDAT;
-		    
-		    if (Act(SearchWindow,Screen)(Screen, EventMouseX, EventMouseY ,&Shade)==CurrWin
-			&& (ldat)EventMouseX>Left && (ldat)EventMouseX<Rgt && (ldat)EventMouseY>Up && (ldat)EventMouseY<Dwn)
-			CurrWin->CurY=(uldat)((ldat)EventMouseY-Up-(ldat)1)+CurrWin->YLogic;
-		    else
-			CurrWin->CurY=MAXULDAT;
-		    
-		    if (Delta!=MAXULDAT) {
-			Delta+=(dat)(Up-CurrWin->YLogic)+(dat)1;
-			DrawWindow(CurrWin, (gadget *)0, (gadget *)0, (dat)Left+(dat)1, (dat)Delta, (dat)Rgt-(dat)1, (dat)Delta, FALSE);
-		    }
-		    if ((Delta=CurrWin->CurY)!=MAXULDAT) {
-			Delta+=(dat)(Up-CurrWin->YLogic)+(dat)1;
-			DrawWindow(CurrWin, (gadget *)0, (gadget *)0, (dat)Left+(dat)1, (dat)Delta, (dat)Rgt-(dat)1, (dat)Delta, FALSE);
-		    }
-		    UpdateCursor();
-		}
+		else if (CurrMenuItem)
+		    DragMenu();
 		break;
 	      case STDEF_MOUSE_DRAG_SOME:
-		if (FlagsMove & GLMOVE_1stWIN_FREEZE && CurrWin) {
-		    ltemp=CurrWin->Attrib;
-		    temp=Screen->Attrib;
-		    if (temp & GADGET_ANY_SELECT) {
-			if (j+1==(dat)YLimit && i>ScreenWidth-(dat)3)
-			    Screen->Attrib|=GADGET_PRESSED;
-			else
-			    Screen->Attrib&=~GADGET_PRESSED;
-			if (temp!=Screen->Attrib)
-			    DrawMenuBar(Screen, ScreenWidth-(dat)2, ScreenWidth-(dat)1);
-		    }
-		    else if (ltemp & GADGET_BACK_SELECT && !(ltemp & WINDOW_MENU)) {
-			if ((ldat)j==Up && Rgt-(ldat)i<(ldat)2 && (ldat)i<=Rgt)
-			    CurrWin->Attrib|=GADGET_PRESSED;
-			else
-			    CurrWin->Attrib&=~GADGET_PRESSED;
-			if (ltemp!=CurrWin->Attrib)
-			    DrawBorderWindow(CurrWin, BORDER_ANY);
-		    }
-		    else if (ltemp & GADGET_CLOSE_SELECT && ltemp & WINDOW_CLOSE) {
-			if ((ldat)j==Up && (ldat)i>=Left && (ldat)i<Left+(ldat)2)
-			    CurrWin->Attrib|=GADGET_PRESSED;
-			else
-			    CurrWin->Attrib&=~GADGET_PRESSED;
-			if (ltemp!=CurrWin->Attrib)
-			    DrawBorderWindow(CurrWin, BORDER_ANY);
-		    }
-		    else if ((Gadget=CurrWin->GadgetSelect)) {
-			temp=Gadget->Flags;
-			if (Gadget==Act(SearchGadget,CurrWin)(CurrWin, i, j))
-			    Gadget->Flags|=GADGET_PRESSED;
-			else
-			    Gadget->Flags&=~GADGET_PRESSED;
-			if (temp!=Gadget->Flags) {
-			    if (CurrWin == All->FirstScreen->FirstWindow)
-				DrawWindow(CurrWin, (gadget *)0, Gadget, MINDAT, MINDAT, MAXDAT, MAXDAT, FALSE);
-			    else
-				DrawArea((screen *)0, (window *)0, CurrWin, (gadget *)0, Gadget, MINDAT, MINDAT, MAXDAT, MAXDAT, FALSE);
-			}
-		    }
+		if (All->FlagsMove & GLMOVE_1stWIN_FREEZE && CurrWin) {
+		    DragGadget();
 		}
-		else if (FlagsMove & GLMOVE_BY_MOUSE && CurrWin && CurrWin->Attrib & TAB_SELECT) {
-		    if (CurrWin->Attrib & X_BAR_SELECT) {
-			NumLogicMax=Max2((uldat)1024, CurrWin->XLogic+(uldat)CurrWin->XWidth-(uldat)2);
-			if (i-DragPosition>Rgt-(ldat)4)
-			    i=Rgt+DragPosition-(ldat)4;
-			ScrollWindow(CurrWin, (i-Left-1-DragPosition-TabStart(CurrWin, (num)1))*(dat)(NumLogicMax/(CurrWin->XWidth-(udat)5)), 0);
-		    }
-		    else if (CurrWin->Attrib & Y_BAR_SELECT) {
-			NumLogicMax=Max2(CurrWin->MaxNumRow, CurrWin->YLogic+(uldat)CurrWin->YWidth-(uldat)2);
-			if (j-DragPosition>Dwn-(ldat)3)
-			    i=Dwn+DragPosition-(ldat)3;
-			ScrollWindow(CurrWin, 0, (j-Up-1-DragPosition-TabStart(CurrWin, (num)0))*(dat)(NumLogicMax/(CurrWin->YWidth-(udat)4)));
-		    }
+		else if (All->FlagsMove & GLMOVE_BY_MOUSE && CurrWin && CurrWin->Attrib & TAB_SELECT) {
+		    TryScrollWindow();
 		}
-		else if (FlagsMove & GLMOVE_BY_MOUSE && FlagsMove & GLMOVE_1stSCREEN) {
+		else if (All->FlagsMove & GLMOVE_BY_MOUSE && All->FlagsMove & GLMOVE_1stSCREEN) {
 		    YDelta=(dat)((ldat)EventMouseY-(ldat)YLimit+(ldat)1);
 		    if (YDelta)
 			ResizeFirstScreen(YDelta);
 		}
-		else if (FlagsMove & GLMOVE_BY_MOUSE && FlagsMove & GLMOVE_1stWIN) {
+		else if (All->FlagsMove & GLMOVE_BY_MOUSE && All->FlagsMove & GLMOVE_1stWIN) {
 		    i=(dat)((ldat)EventMouseX-Left-DragPosition);
 		    j=(dat)((ldat)EventMouseY-Up);
 		    if (i || j)
 			DragWindow(CurrWin, i, j);
 		}
-		else if (FlagsMove & GLMOVE_BY_MOUSE && FlagsMove & GLMOVE_RESIZE_1stWIN) {
+		else if (All->FlagsMove & GLMOVE_BY_MOUSE && All->FlagsMove & GLMOVE_RESIZE_1stWIN) {
 		    i=(dat)((ldat)EventMouseX-Rgt);
 		    j=(dat)((ldat)EventMouseY-Dwn);
 		    if (i || j)
@@ -957,11 +1010,6 @@ static void WManagerH(msgport *MsgPort) {
 		
 		ScrollWindow(CurrWin, XDelta, YDelta);
 		break;
-#if 0
-	      case STDEF_NEXT_WINDOW:
-		MakeLastWindow(CurrWin);
-		break;
-#endif
 	      case STDEF_CLOSE_WINDOW:
 		if (!(CurrWin->Attrib & WINDOW_CLOSE))
 		    break;
@@ -977,7 +1025,7 @@ static void WManagerH(msgport *MsgPort) {
 	      case STDEF_DRAGorRESIZE_WINDOW:
 		if (!(CurrWin->Attrib & (WINDOW_DRAG | WINDOW_RESIZE)))
 		    break;
-		All->FlagsMove=FlagsMove=GLMOVE_1stWIN;
+		All->FlagsMove=GLMOVE_1stWIN;
 		DrawBorderWindow(CurrWin, BORDER_ANY);
 		break;
 	      case STDEF_CENTER_WINDOW:
@@ -985,9 +1033,9 @@ static void WManagerH(msgport *MsgPort) {
 		    CenterWindow(CurrWin);
 		break;
 	      case STDEF_NEXT_SCREEN:
-		if ((tempScreen=All->LastScreen)==Screen)
+		if ((tScreen=All->LastScreen)==Screen)
 		    break;
-		MoveFirst(Screen, All, tempScreen);
+		MoveFirst(Screen, All, tScreen);
 		DrawArea((screen *)0, (window *)0, (window *)0, (gadget *)0, (gadget *)0, MINDAT, MINDAT, MAXDAT, MAXDAT, FALSE);
 		UpdateCursor();
 		break;
@@ -1019,7 +1067,7 @@ static void WManagerH(msgport *MsgPort) {
 		ChangeMenuFirstScreen(tempMenuItem, FALSE, KEEP_ACTIVE_MENU_FLAG);
 		break;
 	      case STMENU_PREV_ROW:
-		if (!CurrWin->MaxNumRow || FlagsMove & GLMOVE_BY_MOUSE)
+		if (!CurrWin->MaxNumRow || All->FlagsMove & GLMOVE_BY_MOUSE)
 		    break;
 		OldNumRow=CurrWin->CurY;
 		if (OldNumRow<MAXULDAT) {
@@ -1036,7 +1084,7 @@ static void WManagerH(msgport *MsgPort) {
 		UpdateCursor();
 		break;
 	      case STMENU_NEXT_ROW:
-		if (!CurrWin->MaxNumRow || FlagsMove & GLMOVE_BY_MOUSE)
+		if (!CurrWin->MaxNumRow || All->FlagsMove & GLMOVE_BY_MOUSE)
 		    break;
 		OldNumRow=CurrWin->CurY;
 		if (OldNumRow<MAXULDAT) {
@@ -1060,11 +1108,11 @@ static void WManagerH(msgport *MsgPort) {
 	if (!CheckForwardMsg(Msg, !!Funct))
 	    Delete(Msg);	
     }
-    
+
     if (!(All->FlagsMove & GLMOVE_ANY)) {
 	while ((Msg=MapQueue->FirstMsg)) {
-	    tempWin=Msg->Event.EventMap.Window;
-	    SmartPlace(tempWin, Msg->Event.EventMap.Screen);
+	    tWin=Msg->Event.EventMap.Window;
+	    SmartPlace(tWin, Msg->Event.EventMap.Screen);
 	    Delete(Msg);
 	}
     }
@@ -1139,17 +1187,17 @@ static byte doSmartPlace(window *Window, dat *X, udat *Y) {
 
 #define MAXLRAND48 0x80000000l
 
-static void SmartPlace(window *Window, screen *Screen) {
+static void SmartPlace(window *Window, screen *tScreen) {
     dat X[2];
     udat Y[2];
     
-    X[1] = (SLeft = X[0] = Screen->Left) + Screen->ScreenWidth - 1;
-    Y[1] = (SUp = Y[0] = Screen->Up) + Screen->ScreenHeight - Screen->YLimit - 1;
+    X[1] = (SLeft = X[0] = tScreen->Left) + tScreen->ScreenWidth - 1;
+    Y[1] = (SUp = Y[0] = tScreen->Up) + tScreen->ScreenHeight - tScreen->YLimit - 1;
     
     XWidth = Window->XWidth;
     YWidth = Window->YWidth;
     
-    if (!doSmartPlace(Screen->FirstWindow, X, Y)) {
+    if (!doSmartPlace(tScreen->FirstWindow, X, Y)) {
 	/* can't be smart... be random */
 	if (XWidth <= X[1] - X[0])
 	    X[0] += lrand48() / (MAXLRAND48 / (X[1] - X[0] + 2 - XWidth));
@@ -1163,6 +1211,17 @@ static void SmartPlace(window *Window, screen *Screen) {
     
     Window->Left = X[0];
     Window->Up = Y[0];
-    Act(RealMap,Window)(Window,Screen);
+    Act(RealMap,Window)(Window, tScreen);
 }
 
+#ifdef MODULE
+byte InitModule(module *Module) {
+    return !WM_MsgPort && InitWM();
+}
+
+void QuitModule(module *Module) {
+    Delete(MapQueue);
+    Delete(WM_MsgPort);
+    WM_MsgPort = (msgport *)0;
+}
+#endif /* MODULE */

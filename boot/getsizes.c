@@ -13,7 +13,10 @@
 
 #include "twin.h"
 
-#include <asm/page.h>
+/* Try to get PAGE_SIZE */
+#ifdef __linux__
+# include <asm/page.h>
+#endif
 
 int main(void) {
     if (sizeof(uldat) < sizeof(void *)) {

@@ -45,9 +45,10 @@ udat GetDisplayHeight(void);
 byte InitTransUser(void);
 
 /*
- * this comes either from display.c or from main.c
+ * these comes either from display.c or from main.c/util.c
  */
 void Quit(int status);
+void GetPrivileges(void);
 
 #endif /* _TW_HW_COMMON_H */
 

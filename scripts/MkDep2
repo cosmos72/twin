@@ -32,8 +32,8 @@ for i in $FILES; do
   CONFS=
   # search `#include "name"' and `CONF_name' in the file
   # and turn them into ` INC_name ' and ` CONF_name '
-  MATCH=`grep -E '(^# *include *"[^"]*")|(^# *if.*CONF_)' "$i" \
-  | sed -e 's:^# *include *"\([^"]*\)".*$: INC_\1 :' -e 's:CONF_[A-Za-z0-9_]*: \0 :g'`  
+  MATCH=`grep -E '(^# *include *"[^"]*")|(^#.*def.*CONF_)' "$i" \
+  | sed -e 's:^# *include *"\([^"]*\)".*$: INC_\1 :' -e 's:CONF_\([A-Za-z0-9_]*\): CONF_\1 :g'`  
   for j in $MATCH; do
     case "$j" in
       INC_* )

@@ -36,6 +36,9 @@ void doSelectionSetOwner(obj *Owner, time_t Time, frac_t Frac);
 byte   SetTWDisplay(void);
 void UnSetTWDisplay(void);
 
+void CheckPrivileges(void);
+void GetPrivileges(void);
+
 byte SearchInfo(menu *Menu, dat i);
 
 #endif /* _TW_UTIL_H */

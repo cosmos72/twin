@@ -10,13 +10,13 @@
  *
  */
 
+#include <errno.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <termios.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <termios.h>
-#include <errno.h>
 
 #include "twin.h"
 #include "main.h"
@@ -31,7 +31,8 @@
 #include "libTwkeys.h"
 
 #ifdef CONF_HW_TTY_LINUX
-#include <gpm.h>
+/*void *_fxstat = __fxstat;*/
+# include <gpm.h>
 #endif
 
 #if !defined(CONF_HW_TTY_LINUX) && !defined(CONF_HW_TTY_TWTERM)
@@ -1502,6 +1503,8 @@ byte tty_InitHW(void) {
 		}
 		HW->QuitHW = tty_QuitHW;
 
+		HW->MouseState.x = HW->MouseState.y = HW->MouseState.keys =
+		    HW->Last_x = HW->Last_y = 0;
 
 		/*
 		 * we must draw everything on our new shiny window

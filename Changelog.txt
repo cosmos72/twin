@@ -1,3 +1,24 @@
+From 0.3.2 to 0.3.3: (Massimiliano Ghilardi, 12 Jul 2000)
+	* Ported to AIX 3.2. I only had to fix minor problems
+	  like #includes and a few functions not available on it.
+	  Twin still does not compile out-of-the-box on AIX 3.2 and
+	  you need to work a little manually, see README.porting.
+	* Added twin <-> libTw protocol handshaking.
+	  Tweaked internal libTw protocol to allow passing NULL
+	  instead of arrays where it makes sense;
+	  WARNING: don't mix twin or libTw from 0.3.3 and up
+	  with older twin or libTw... it will not work.
+	* Cleaned up and modularized the window manager.
+	  Now you can write your own twin window manager!
+	* Fixed SEGFAULT on video activity while running detached.
+	* Fixed two socket-related bugs that could send libTw
+	  initialization data to the wrong client, freezing both who gets
+	  the unexpected data and who was waiting for it.
+	  This happened more often if twdisplay was in use.
+	* Optimized custom malloc/free with memory blocks > PAGE_SIZE.
+	* Added mouse support and `This' button to Display Window.
+	* X11 keyboard support cleanups.
+	
 From 0.3.1 to 0.3.2: (Massimiliano Ghilardi, 08 Jun 2000)
 	* Fixed internal FdWQueued bookkeeping.
 	* Fixed mouse redrawing problems with `-hw=tty'.

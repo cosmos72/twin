@@ -3,7 +3,6 @@
 #
 TOPDIR=..
 
-CFLAGS+=-I$(TOPDIR)/include
 LDFLAGS+=-L../lib -lTw
 
 OBJS_twcat=cat.o
@@ -36,7 +35,7 @@ else
 endif
 
 twdetach: twattach
-	ln -sfn $< $@
+	ln -sf $< $@
 
 clean:
 	rm -f .*.flags .*.link gmon.out core $(OBJS) $(BINS) twdetach

@@ -5,14 +5,16 @@ TOPDIR=..
 
 all: everything
 
-CFLAGS+=-fPIC
-
 VERSION=2.0.0
 SO_VER=2
 
 BINS=libTw.so.$(VERSION)
+ARLIBS=libTw.a
 OBJS_libTw.so.$(VERSION)=libTw.o md5.o
+OBJS_libTw.a=libTw_u.o md5_u.o
 
+CFLAGS_libTw.o+=-fPIC -D_REENTRANT
+CFLAGS_md5.o+=-fPIC -D_REENTRANT
 LDFLAGS_libTw.so.$(VERSION)=-lc -shared -Wl,-soname,libTw.so.$(SO_VER)
 
 include $(TOPDIR)/conf/config.status
@@ -41,7 +43,7 @@ include $(TOPDIR)/Rules
 #
 # handy targets
 #
-lib: $(BINS)
+lib: $(ARLIBS) $(BINS)
 
 links: libTw.so.$(SO_VER) libTw.so
 
@@ -52,5 +54,5 @@ libTw.so:
 	ln -sfn libTw.so.$(SO_VER) libTw.so
 
 clean:
-	rm -f .*.flags .*.link libTw.so* $(OBJS)
+	rm -f .*.flags .*.link .*.arlib libTw.so* libTw.a $(_ALLOBJS)
 

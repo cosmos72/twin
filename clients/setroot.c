@@ -18,7 +18,7 @@
 #include <signal.h>
 #include <errno.h>
 
-#include "libTw.h"
+#include <libTw.h>
 
 byte *name;
 

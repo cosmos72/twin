@@ -7,7 +7,7 @@
 
 #include <stdio.h>
 
-#include "libTw.h"
+#include <libTw.h>
 
 #define COD_QUIT      (udat)1
 
@@ -32,7 +32,7 @@ static byte InitEdit(void) {
 	return FALSE;
     
     if ((Edit_Win=TwCreateWindow
-	 (13, " Twin Editor ", "\x8C\x84\x84\x84\x84\x8C\x84\x84\x84\x84\x84\x84\x84",
+	 (13, " Twin Editor ", NULL,
 	  Edit_Menu, COL(HIGH|WHITE,HIGH|BLACK),
 	  TW_LINECURSOR,
 	  TW_WINDOW_WANT_KEYS|TW_WINDOW_DRAG|TW_WINDOW_RESIZE|TW_WINDOW_X_BAR|TW_WINDOW_Y_BAR|TW_WINDOW_CLOSE,
@@ -105,7 +105,7 @@ int main(int argc, char *argv[]) {
 	    
 	} else if (Msg->Type==TW_MSG_SELECTIONNOTIFY) {
 	    
-	    tevent_selectionnotify EventN = &Msg->Event.EventKeyboard;
+	    tevent_selectionnotify EventN = &Msg->Event.EventSelectionNotify;
 	    if (EventN->Magic == TW_SEL_TEXTMAGIC)
 		(void)TwWriteRowWindow(EventN->ReqPrivate, EventN->Len, EventN->Data);
 	    

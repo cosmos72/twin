@@ -21,7 +21,13 @@
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 
+#ifdef CONF_TERM_DEVPTS
+# define __USE_XOPEN
+# include <stdlib.h>
+#endif
+
 #include "twin.h"
+#include "util.h"
 
 /* pseudo-teletype connections handling functions */
 
@@ -38,15 +44,16 @@ static int ptyfd, ttyfd;
 static byte get_pty(void)
 {
     int fd = -1, sfd = -1;
-#ifdef USE_DEVPTMX
-    extern char *ptsname();
-
+#ifdef CONF_TERM_DEVPTS
+    
     /* open master pty /dev/ptmx */
     if ((fd = open("/dev/ptmx", O_RDWR|O_NOCTTY)) >= 0) {
-	grantpt(fd);
-	unlockpt(fd);
-	ptydev = ttydev = ptsname(fd);
-	goto Found:
+	if (grantpt(fd) == 0 && unlockpt(fd) == 0) {
+	    ptydev = ttydev = ptsname(fd);
+	    if ((sfd = open(ptydev, O_RDWR|O_NOCTTY)) >= 0)
+		goto Found;
+	}
+	close(fd);
     }
 #else
     static char     pty_name[] = "/dev/pty??";
@@ -84,16 +91,17 @@ Found:
 
 /* 2. Fixup permission for pty master/slave pairs */
 static byte fixup_pty(void) {
+    /* from util.c */
+    extern gid_t get_tty_grgid(void);
+    
     uid_t id = getuid();
-    static gid_t grgid = 0;
-
-    if (!grgid) {
-	struct group *gr;
-	if ((gr = getgrnam("tty")))
-	    grgid = gr->gr_gid;
-    }
-    if (grgid && chown(ptydev, id, 0) == 0 && chmod(ptydev, 0600) == 0 &&
-	chown(ttydev, id, grgid) == 0 && chmod(ttydev, 0620) == 0)
+    gid_t tty_gid = get_tty_grgid();
+    
+    if (tty_gid != (gid_t)-1 &&
+#ifndef CONF_TERM_DEVPTS
+	chown(ptydev, id, 0) == 0 && chmod(ptydev, 0600) == 0 &&
+#endif
+	chown(ttydev, id, tty_gid) == 0 && chmod(ttydev, 0620) == 0)
 	return TRUE;
     return FALSE;
 }
@@ -120,7 +128,9 @@ static byte switchto_tty(void)
     if (ttyfd > 2)
 	close(ttyfd);
 
+#ifdef TIOCSCTTY
     ioctl(0, TIOCSCTTY, 0);
+#endif
 
 /* set process group */
 #if defined (_POSIX_VERSION) || defined (__svr4__)

@@ -320,15 +320,17 @@ struct fn_gadget {
     uldat Magic, Size, Used;
     gadget *(*Create)(fn_gadget *, window *Window,
 		      hwcol ColText, hwcol ColTextSelect, hwcol ColTextDisabled, hwcol ColTextSelectDisabled,
-		      udat Code, udat Flags, udat Left, udat Up, udat XWidth, udat YWidth, byte Bitmap,
+		      udat Code, udat Flags, udat Left, udat Up, udat XWidth, udat YWidth,
 		      byte *TextNormal, byte *TextSelect, byte *TextDisabled, byte *TextSelectDisabled,
 		      hwcol *ColNormal, hwcol *ColSelect, hwcol *ColDisabled, hwcol *ColSelectDisabled);
     gadget *(*Copy)(gadget *From, gadget *To);
     void (*Insert)(gadget *, window *, gadget *Prev, gadget *Next);
     void (*Remove)(gadget *);
     void (*Delete)(gadget *);
-    gadget *(*CreateButton)(fn_gadget *Fn_Gadget, window *Window, udat XWidth, udat YWidth, hwcol BgCol);
+    gadget *(*CreateEmptyButton)(fn_gadget *Fn_Gadget, window *Window, udat XWidth, udat YWidth, hwcol BgCol);
     void (*FillButton)(gadget *Gadget, udat Code, udat Left, udat Up, udat Flags, byte *Text, hwcol Color, hwcol ColorDisabled);
+    gadget *(*CreateButton)(fn_gadget *Fn_Gadget, window *Window, hwcol BgCol, hwcol Col, hwcol ColDisabled,
+			    udat Code, udat Flags, udat Left, udat Up, udat XWidth, udat YWidth, byte *Text);
     gadget *(*CloneButton)(gadget *SetUpGadget, udat Code, udat Left, udat Up, hwcol BgCol);
 
 };
@@ -1528,7 +1530,8 @@ INLINE void *ReAllocMem(void *Mem, uldat Size) {
 
 
 # define DropPrivileges() (setegid(getgid()), seteuid(getuid()))
-# define GetPrivileges() seteuid(0)
+# define GetRootPrivileges() seteuid(0)
+# define GetGroupPrivileges(g) setegid(g)
 
 #else
 

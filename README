@@ -113,6 +113,9 @@
 
    First, you might want to edit the file `Rules' to change
    the install directory, tweak compiler flags (enable debugging), etc.
+
+   If you are trying to compile on non-Linux systems, you would do better
+   reading the file README.porting now, for useful tips and warnings.
    
    Then type `make', answer to the questions, and watch it compile.
    If everything goes fine, you get what follows:
@@ -441,8 +444,8 @@
    
    1) select `Suspend' from the `File' entry of the default menu.
       This is equivalent to the normal Unix job control associated to CTRL-Z:
-      twin shuts down its displays and returns to the shell it was started from.
-      To resume twin, just type `fg' (or send a SIGCONT to it).
+      twin shuts down all its displays and returns to the shell it was started
+      from. To resume twin, just type `fg' (or send a SIGCONT to it).
       This may not work if you used 2) below, because that detaches twin
       from the job control mechanism used by shells.
       
@@ -450,7 +453,7 @@
       WARNING: Be sure the Socket Server can be started before doing this!
                Otherwise you will not be able to reattach twin to any display
 	       at all!
-      In this case, twin shuts down its displays and detaches
+      In this case, twin shuts down all its displays and detaches
       (by forking in the background) from the shell it was started from,
       but keeps running as a daemon (with no display).
    
@@ -561,7 +564,7 @@
       WARNING:
         twin has no way to detect if the tty you specified is really
 	a supported terminal (a linux console or a twin terminal).
-        If you attach twin to an unsupportd terminal,
+        If you attach twin to an unsupported terminal,
 	things might go BADLY wrong.
 
       $ twdisplay -twin@myhost.somewhere.net:1 -hw=twin@yourhost:3,gz
@@ -609,7 +612,7 @@
 		  (default: vga)
 		: ",drag" to allow using XCopyArea as redrawing speedup.
 		  This is off by default as on many X servers XCopyArea
-		  actually eats more CPU time than a normal redraw.
+		  is actually slower than a normal redraw.
 		  Your mileage may vary.
       
       -hw=twin	: ",gz" to enable gzip compression on the connecting socket

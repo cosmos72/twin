@@ -12,7 +12,7 @@
 
 #include <stdio.h>
 
-#include "libTw.h"
+#include <libTw.h>
 
 static tmsgport Event_MsgPort;
 static tmenu Event_Menu;
@@ -34,7 +34,7 @@ static byte InitEvent(void) {
 	return FALSE;
     
     if ((Event_Win=TwCreateWindow
-	 (14, " Event Tester ", "\x9F\x9F\x9F\x9F\x9F\x9F\x9F\x9F\x9F\x9F\x9F\x9F\x9F\x9F",
+	 (14, " Event Tester ", NULL,
 	  Event_Menu, COL(WHITE,BLACK), TW_NOCURSOR,
 	  TW_WINDOW_WANT_KEYS|TW_WINDOW_WANT_MOUSE|TW_WINDOW_WANT_CHANGES|TW_WINDOW_DRAG|TW_WINDOW_RESIZE|TW_WINDOW_CLOSE,
 	  0, (udat)20, (udat)10, (udat)0))) {

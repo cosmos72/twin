@@ -31,6 +31,8 @@
 		<len> can be an expression, and may access the other arguments
 		of the function as A(n) where <n> is the progressive number
 		of the argument: A(1) is the first arg, A(2) the second, ...
+	  W(len) = vector of <len> elements, with double-checking/autodetect on len
+		so that you can safely pass NULL instead of the vector.
 
  Function calls wait until server has processed the command and returned the result
  if their return value is not void.
@@ -38,9 +40,10 @@
  <action> : the function name (Create, Map, Delete, ...)
  <object> : the object it acts upon (Gadget, Window, ...)
  
- <self> : 1 if the function implementation in the server needs the Fn##object method pointer
+ <self> : 0 if the server implementation does not need the Fn##object method pointer
+	: 1 if the function in the server needs the Fn##object method pointer
 	: 2 if the Fn##object method pointer is extracted from the first argument
-	: 0 otherwise
+	
 
 */
 
@@ -63,18 +66,21 @@ PROTO2(byte,_, Detach,HW,0, uldat,_, byte,V(A(1)))
 
 PROTO1(void,v,  Set,FontTranslation,0, byte,V(0x80))
 
-PROTO20(gadget,x, Create,Gadget,1,
+PROTO19(gadget,x, Create,Gadget,1,
 	window,x,hwcol,_,hwcol,_,hwcol,_,hwcol,_,
-	udat,_,   udat,_, udat,_, udat,_, udat,_, udat,_, byte,_,
-	byte,V(A(9)*A(10)),  byte,V(A(9)*A(10)),  byte,V(A(9)*A(10)),  byte,V(A(9)*A(10)),
-	hwcol,V(A(9)*A(10)), hwcol,V(A(9)*A(10)), hwcol,V(A(9)*A(10)), hwcol,V(A(9)*A(10)))
+	udat,_,   udat,_, udat,_, udat,_, udat,_, udat,_,
+	byte,W(A(9)*A(10)),  byte,W(A(9)*A(10)),  byte,W(A(9)*A(10)),  byte,W(A(9)*A(10)),
+	hwcol,W(A(9)*A(10)), hwcol,W(A(9)*A(10)), hwcol,W(A(9)*A(10)), hwcol,W(A(9)*A(10)))
 
 PROTO2(void,v,      Copy,Gadget,2, gadget,x, gadget,x)
 PROTO1(void,v,    Delete,Gadget,2, gadget,x)
 
+PROTO11(gadget,x, CreateButton,Gadget,1, window,x, hwcol,_, hwcol,_, hwcol,_,
+	udat,_, udat,_, udat,_, udat,_, udat,_, udat,_, byte,V(A(9)*A(10)))
+
 PROTO5(void,v,   Create4Menu,Row,1, window,x, udat,_, byte,_, uldat,_, byte,V(A(4)))
 
-PROTO11(window,x,     Create,Window,1, udat,_, byte,V(A(1)), hwcol,V(A(1)), menu,x,
+PROTO11(window,x,     Create,Window,1, udat,_, byte,V(A(1)), hwcol,W(A(1)), menu,x,
 	hwcol,_, uldat,_, uldat,_, byte,_, udat,_, udat,_, udat,_)
 PROTO1(void,v,        Delete,Window,2, window,x)
 PROTO1(window,x, Create4Menu,Window,1, menu,x)
@@ -98,7 +104,7 @@ PROTO1(void,v,	        Delete,MenuItem,2, menuitem,x)
 
 PROTO8(menu,x, Create,Menu,1, msgport,x, hwcol,_, hwcol,_, hwcol,_, hwcol,_, hwcol,_,
        hwcol,_, byte,_)
-PROTO5(void,v, SetInfo,Menu,2, menu,x, byte,_, uldat,_, byte,V(A(3)), hwcol,V(A(3)))
+PROTO5(void,v, SetInfo,Menu,2, menu,x, byte,_, uldat,_, byte,V(A(3)), hwcol,W(A(3)))
 PROTO1(void,v,  Delete,Menu,2, menu,x)
 
 PROTO5CreateMsgPort(msgport,x,Create,MsgPort,1, byte,_, byte,V(A(1)), time_t,_, frac_t,_, byte,_)

@@ -221,11 +221,32 @@ static block *Cache[MAX_CACHE];
 
 static void *GetBs(size_t len) {
     block *B;
-    if (len == BLOCK_SIZE && CSize) {
-	B = Cache[CFirst];
-	CFirst++;
-	CSize--;
-	return B;
+    if (CSize * BLOCK_SIZE >= len) {
+	if (len == BLOCK_SIZE) {
+	    B = Cache[CFirst];
+	    CFirst++;
+	    CSize--;
+	    return B;
+	} else {
+	    size_t got = BLOCK_SIZE;
+	    delta i, n;
+	    B = Cache[n = CFirst];
+	    for (i = CFirst+1; got < len && i <= CLast; i++) {
+		if ((byte *)B + got == (byte *)Cache[i])
+		    got += BLOCK_SIZE;
+		else {
+		    B = Cache[n = i];
+		    got = BLOCK_SIZE;
+		}
+	    }
+	    if (got >= len) {
+		got /= BLOCK_SIZE;
+		MoveMem(Cache + CFirst, Cache + CFirst + got, (n - CFirst) * sizeof(block *));
+		CFirst += got;
+		CSize -= got;
+		return B;
+	    }
+	}
     }
     if ((B = getcore(len)) != NOCORE)
 	return B;

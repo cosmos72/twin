@@ -479,6 +479,7 @@ byte TW_InitHW(void) {
 	    HW->ShowMouse = NoOp;
 	    HW->HideMouse = NoOp;
 	    HW->UpdateMouseAndCursor = NoOp;
+	    HW->MouseState.x = HW->MouseState.y = HW->MouseState.keys = 0;
 	    
 	    HW->DetectSize  = TW_DetectSize;
 	    HW->CheckResize = TW_CheckResize;

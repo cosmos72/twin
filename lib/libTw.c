@@ -28,6 +28,7 @@
 #include "libTw.h"
 #include "unaligned.h"
 #include "md5.h"
+#include "version.h"
 
 #ifdef CONF_SOCKET_GZ
 # include <zlib.h>
@@ -314,29 +315,27 @@ static void Fail(tw_d TwD) {
 }
 
 static byte Flush(tw_d TwD, byte timid) {
-    uldat chunk, left, len;
+    uldat chunk = 0, left, len;
     byte *t;
     byte Q;
     
     if (!timid)
 	FD_ZERO(&fset);
     
-    (void)GetQueue(TwD, QWRITE, &left);
+    t = GetQueue(TwD, Q = QWRITE, &left);
+    len = left;
 
     if (Fd != NOFD && left) {
 
 #ifdef CONF_SOCKET_GZ
 	if (GzipFlag) {
-	    if (Gzip(TwD))
-		Q = QgzWRITE;
-	    else
+	    if (Gzip(TwD)) {
+		t = GetQueue(TwD, Q = QgzWRITE, &left);
+		len = left;
+	    } else
 		return FALSE; /* TwGzip() calls Panic() if needed */
-	} else
+	}
 #endif
-	    Q = QWRITE;
-	
-	t = GetQueue(TwD, Q, &left);
-	len = left;
     
 	while (left > 0) {
 	    chunk = write(Fd, t, left);
@@ -461,18 +460,46 @@ static uldat ReadUldat(tw_d TwD) {
     return l;
 }
 
+static byte ProtocolNumbers(tw_d TwD) {
+    byte *servdata, *hostdata = " Twin-" toSTR(TW_PROTOCOL_VERSION_MAJOR) ".";
+    uldat len = 0, _len = strlen(hostdata);
+    
+    while (Fd != NOFD && (!len || ((servdata = GetQueue(TwD, QREAD, NULL)), len < *servdata)))
+	len += TryRead(TwD, TRUE);
+
+    if (Fd != NOFD) {
+	servdata = GetQueue(TwD, QREAD, &len);
+    
+	if (*servdata >= _len && !TwCmpMem(hostdata+1, servdata+1, _len-1)) {
+	    DeQueue(TwD, QREAD, *servdata);
+	    return TRUE;
+	} else
+	    Errno = TW_EX_PROTOCOL;
+    }
+    return FALSE;
+}
+
 static byte MagicNumbers(tw_d TwD) {
     uldat len = 0;
-    byte *hostdata, data[8+sizeof(uldat)] = { sizeof(byte), sizeof(udat), sizeof(uldat), sizeof(hwcol), sizeof(time_t), 0, sizeof(frac_t), 0};
+    byte *hostdata, data[8+sizeof(uldat)] = { 8+sizeof(uldat), sizeof(byte), sizeof(udat), sizeof(uldat), sizeof(hwcol), sizeof(time_t), sizeof(frac_t), 0};
     *(uldat *)(data+8) = TWIN_MAGIC;
     
-    while (Fd != NOFD && len < 8+sizeof(uldat))
+    /* send our magic to server */
+    if (!AddQueue(TwD, QWRITE, 8+sizeof(uldat), data) || !Tw_Flush(TwD))
+	return FALSE;
+
+    /*
+     * at the moment, no client-side datasize or endianity translation is available...
+     * so just check against our Magic
+     */
+    while (Fd != NOFD && (!len || ((hostdata = GetQueue(TwD, QREAD, NULL)), len < *hostdata)))
 	len += TryRead(TwD, TRUE);
 
     if (Fd != NOFD) {
 	hostdata = GetQueue(TwD, QREAD, &len);
     
-	if (!TwCmpMem(data, hostdata, 8)) {
+	if (len >= 8+sizeof(uldat) && *hostdata == 8+sizeof(uldat)
+	    && !TwCmpMem(data, hostdata, 8)) {
 	    if (!TwCmpMem(data+8, hostdata+8, sizeof(uldat))) {
 		DeQueue(TwD, QREAD, 8+sizeof(uldat));
 		return TRUE;
@@ -669,7 +696,7 @@ tw_d Tw_Open(byte *TwDisplay) {
     fcntl(Fd, F_SETFL, O_NONBLOCK);
     
     OpenCount++;
-    if (MagicNumbers(TwD) && MagicChallenge(TwD)) {
+    if (ProtocolNumbers(TwD) && MagicNumbers(TwD) && MagicChallenge(TwD)) {
 	if (gzip)
 	    (void)Tw_EnableGzip(TwD);
 	return TwD;
@@ -796,6 +823,8 @@ byte *Tw_StrError(tw_d TwD, uldat e) {
 	return "unknown host in TWDISPLAY";
       case TW_EBAD_FUNCTION:
 	return "function is not a possible server function";
+      case TW_EX_PROTOCOL:
+	return "server has incompatible protocol version, impossible to connect";
       default:
 	return "unknown error";
     }
@@ -830,9 +859,9 @@ int Tw_ConnectionFd(tw_d TwD) {
  * TwCreate4MenuMenuItem();
  * TwCreateMsgPort();
  * 
- * and in general any Tw() function of libTw.h with the <real> flag set
+ * and in general any Tw() function of libTw.h returning non-void
  * so that it sends something to the server and waits for the server
- * to send the return value.
+ * to send back the return value.
  */
 tmsg Tw_PeekMsg(tw_d TwD) {
     tmsg Msg;
@@ -904,16 +933,20 @@ static void Send(tw_d TwD, uldat idFN) {
 #define t_(arg)		arg
 #define tx(arg)		uldat
 #define tV(arg)		arg *
+#define tW(arg)		arg *
 #define t(arg,f)	t##f(arg)
 #define a(n,arg,f)	t(arg,f) A(n)
 
 #define V(check)	V
 #define iV(check)	check
+#define W(check)	W
+#define iW(check)	check
 
 #define DECLv(n,arg)
 #define DECL_(n,arg)	
 #define DECLx(n,arg)	
 #define DECLV(n,arg)	uldat AL(n);
+#define DECLW(n,arg)	uldat AL(n);
 #define D(n,arg,f)	DECL##f(n,arg)
 
 #define RETv(ret,f0)	return;
@@ -930,6 +963,11 @@ static void Send(tw_d TwD, uldat idFN) {
 				    pass \
 				}
 #define PARSEV(n,arg,len,pass)	if (AL(n) = (len) * sizeof(arg), WQLeft(AL(n))) { \
+				    PushV(s,AL(n),A(n)); \
+				    pass \
+				}
+#define PARSEW(n,arg,len,pass)	if (AL(n) = A(n) ? (len) * sizeof(arg) : 0, WQLeft(sizeof(uldat) + AL(n))) { \
+				    Push(s,uldat,AL(n)); \
 				    PushV(s,AL(n),A(n)); \
 				    pass \
 				}
@@ -1094,31 +1132,6 @@ NAME(ret,f0,funct,name) (tw_d TwD, \
   FAIL(ret,f0) \
 }
 
-#define PROTO18(ret0,f0, funct,name,fn, arg1 ,f1 , arg2 ,f2 , arg3 ,f3 , arg4 ,f4 , arg5 ,f5 , \
-       arg6 ,f6 , arg7 ,f7 , arg8 ,f8 , arg9 ,f9 , arg10,f10, arg11,f11, arg12,f12, arg13,f13, \
-       arg14,f14, arg15,f15, arg16,f16, arg17,f17, arg18,f18) \
-NAME(ret,f0,funct,name) (tw_d TwD, \
-			 a(1 ,arg1 ,f1 ), a(2 ,arg2 ,f2 ), a(3 ,arg3 ,f3 ), a(4 ,arg4 ,f4 ), \
-			 a(5 ,arg5 ,f5 ), a(6 ,arg6 ,f6 ), a(7 ,arg7 ,f7 ), a(8 ,arg8 ,f8 ), \
-			 a(9 ,arg9 ,f9 ), a(10,arg10,f10), a(11,arg11,f11), a(12,arg12,f12), \
-			 a(13,arg13,f13), a(14,arg14,f14), a(15,arg15,f15), a(16,arg16,f16), \
-			 a(17,arg17,f17), a(18,arg18,f18)) \
-{ \
-  D(1 ,arg1 ,f1 ) D(2 ,arg2 ,f2 ) D(3 ,arg3 ,f3 ) D(4 ,arg4, f4 ) \
-  D(5 ,arg5 ,f5 ) D(6 ,arg6 ,f6 ) D(7 ,arg7 ,f7 ) D(8 ,arg8 ,f8 ) \
-  D(9 ,arg9, f9 ) D(10,arg10,f10) D(11,arg11,f11) D(12,arg12,f12) \
-  D(13,arg13,f13) D(14,arg14,f14) D(15,arg15,f15) D(16,arg16,f16) \
-  D(17,arg17,f17) D(18,arg18,f18) \
-  SELF(funct##name, \
-  P(1 ,arg1 ,f1 ,i##f1 , P(2 ,arg2 ,f2 ,i##f2 , P(3 ,arg3 ,f3 ,i##f3 , P(4 ,arg4 ,f4 ,i##f4 , \
-  P(5 ,arg5 ,f5 ,i##f5 , P(6 ,arg6 ,f6 ,i##f6 , P(7 ,arg7 ,f7 ,i##f7 , P(8 ,arg8 ,f8 ,i##f8 , \
-  P(9 ,arg9 ,f9 ,i##f9 , P(10,arg10,f10,i##f10, P(11,arg11,f11,i##f11, P(12,arg12,f12,i##f10, \
-  P(13,arg13,f13,i##f13, P(14,arg14,f14,i##f14, P(15,arg15,f15,i##f15, P(16,arg16,f16,i##f16, \
-  P(17,arg17,f17,i##f17, P(18,arg18,f18,i##f18, \
-  RET(funct##name,ret,f0)))))))))))))))))))) \
-  FAIL(ret,f0) \
-}
-
 #define PROTO19(ret0,f0, funct,name,fn, arg1 ,f1 , arg2 ,f2 , arg3 ,f3 , arg4 ,f4 , arg5 ,f5 , \
        arg6 ,f6 , arg7 ,f7 , arg8 ,f8 , arg9 ,f9 , arg10,f10, arg11,f11, arg12,f12, arg13,f13, \
        arg14,f14, arg15,f15, arg16,f16, arg17,f17, arg18,f18, arg19,f19) \
@@ -1141,63 +1154,6 @@ NAME(ret,f0,funct,name) (tw_d TwD, \
   P(13,arg13,f13,i##f13, P(14,arg14,f14,i##f14, P(15,arg15,f15,i##f15, P(16,arg16,f16,i##f16, \
   P(17,arg17,f17,i##f17, P(18,arg18,f18,i##f18, P(19,arg19,f19,i##f19, \
   RET(funct##name,ret,f0))))))))))))))))))))) \
-  FAIL(ret,f0) \
-}
-
-#define PROTO20(ret0,f0, funct,name,fn, arg1 ,f1 , arg2 ,f2 , arg3 ,f3 , arg4 ,f4 , arg5 ,f5 , \
-       arg6 ,f6 , arg7 ,f7 , arg8 ,f8 , arg9 ,f9 , arg10,f10, arg11,f11, arg12,f12, arg13,f13, \
-       arg14,f14, arg15,f15, arg16,f16, arg17,f17, arg18,f18, arg19,f19, arg20,f20) \
-NAME(ret,f0,funct,name) (tw_d TwD, \
-			 a(1 ,arg1 ,f1 ), a(2 ,arg2 ,f2 ), a(3 ,arg3 ,f3 ), a(4 ,arg4 ,f4 ), \
-			 a(5 ,arg5 ,f5 ), a(6 ,arg6 ,f6 ), a(7 ,arg7 ,f7 ), a(8 ,arg8 ,f8 ), \
-			 a(9 ,arg9 ,f9 ), a(10,arg10,f10), a(11,arg11,f11), a(12,arg12,f12), \
-			 a(13,arg13,f13), a(14,arg14,f14), a(15,arg15,f15), a(16,arg16,f16), \
-			 a(17,arg17,f17), a(18,arg18,f18), a(19,arg19,f19), a(20,arg20,f20)) \
-{ \
-  D(1 ,arg1 ,f1 ) D(2 ,arg2 ,f2 ) D(3 ,arg3 ,f3 ) D(4 ,arg4, f4 ) \
-  D(5 ,arg5 ,f5 ) D(6 ,arg6 ,f6 ) D(7 ,arg7 ,f7 ) D(8 ,arg8 ,f8 ) \
-  D(9 ,arg9, f9 ) D(10,arg10,f10) D(11,arg11,f11) D(12,arg12,f12) \
-  D(13,arg13,f13) D(14,arg14,f14) D(15,arg15,f15) D(16,arg16,f16) \
-  D(17,arg17,f17) D(18,arg18,f18) D(19,arg19,f19) D(20,arg20,f20) \
-  SELF(funct##name, \
-  P(1 ,arg1 ,f1 ,i##f1 , P(2 ,arg2 ,f2 ,i##f2 , P(3 ,arg3 ,f3 ,i##f3 , P(4 ,arg4 ,f4 ,i##f4 , \
-  P(5 ,arg5 ,f5 ,i##f5 , P(6 ,arg6 ,f6 ,i##f6 , P(7 ,arg7 ,f7 ,i##f7 , P(8 ,arg8 ,f8 ,i##f8 , \
-  P(9 ,arg9 ,f9 ,i##f9 , P(10,arg10,f10,i##f10, P(11,arg11,f11,i##f11, P(12,arg12,f12,i##f12, \
-  P(13,arg13,f13,i##f13, P(14,arg14,f14,i##f14, P(15,arg15,f15,i##f15, P(16,arg16,f16,i##f16, \
-  P(17,arg17,f17,i##f17, P(18,arg18,f18,i##f18, P(19,arg19,f19,i##f19, P(20,arg20,f20,i##f20, \
-  RET(funct##name,ret,f0)))))))))))))))))))))) \
-  FAIL(ret,f0) \
-}
-
-#define PROTO25(ret0,f0, funct,name,fn, arg1 ,f1 , arg2 ,f2 , arg3 ,f3 , arg4 ,f4 , arg5 ,f5 , \
-       arg6 ,f6 , arg7 ,f7 , arg8 ,f8 , arg9 ,f9 , arg10,f10, arg11,f11, arg12,f12, arg13,f13, \
-       arg14,f14, arg15,f15, arg16,f16, arg17,f17, arg18,f18, arg19,f19, arg20,f20, arg21,f21, \
-       arg22,f22, arg23,f23, arg24,f24, arg25,f25) \
-NAME(ret,f0,funct,name) (tw_d TwD, \
-			 a(1 ,arg1 ,f1 ), a(2 ,arg2 ,f2 ), a(3 ,arg3 ,f3 ), a(4 ,arg4 ,f4 ), \
-			 a(5 ,arg5 ,f5 ), a(6 ,arg6 ,f6 ), a(7 ,arg7 ,f7 ), a(8 ,arg8 ,f8 ), \
-			 a(9 ,arg9 ,f9 ), a(10,arg10,f10), a(11,arg11,f11), a(12,arg12,f12), \
-			 a(13,arg13,f13), a(14,arg14,f14), a(15,arg15,f15), a(16,arg16,f16), \
-			 a(17,arg17,f17), a(18,arg18,f18), a(19,arg19,f19), a(20,arg20,f20), \
-			 a(21,arg21,f21), a(22,arg22,f22), a(23,arg23,f23), a(24,arg24,f24), \
-			 a(25,arg25,f25)) \
-{ \
-  D(1 ,arg1 ,f1 ) D(2 ,arg2 ,f2 ) D(3 ,arg3 ,f3 ) D(4 ,arg4, f4 ) \
-  D(5 ,arg5 ,f5 ) D(6 ,arg6 ,f6 ) D(7 ,arg7 ,f7 ) D(8 ,arg8 ,f8 ) \
-  D(9 ,arg9, f9 ) D(10,arg10,f10) D(11,arg11,f11) D(12,arg12,f12) \
-  D(13,arg13,f13) D(14,arg14,f14) D(15,arg15,f15) D(16,arg16,f16) \
-  D(17,arg17,f17) D(18,arg18,f18) D(19,arg19,f19) D(20,arg20,f20) \
-  D(21,arg21,f21) D(22,arg22,f22) D(23,arg23,f23) D(24,arg24,f24) \
-  D(25,arg25,f25) \
-  SELF(funct##name, \
-  P(1 ,arg1 ,f1 ,i##f1 , P(2 ,arg2 ,f2 ,i##f2 , P(3 ,arg3 ,f3 ,i##f3 , P(4 ,arg4 ,f4 ,i##f4 , \
-  P(5 ,arg5 ,f5 ,i##f5 , P(6 ,arg6 ,f6 ,i##f6 , P(7 ,arg7 ,f7 ,i##f7 , P(8 ,arg8 ,f8 ,i##f8 , \
-  P(9 ,arg9 ,f9 ,i##f9 , P(10,arg10,f10,i##f10, P(11,arg11,f11,i##f11, P(12,arg12,f12,i##f12, \
-  P(13,arg13,f13,i##f13, P(14,arg14,f14,i##f14, P(15,arg15,f15,i##f15, P(16,arg16,f16,i##f16, \
-  P(17,arg17,f17,i##f17, P(18,arg18,f18,i##f18, P(19,arg19,f19,i##f19, P(20,arg20,f20,i##f20, \
-  P(21,arg21,f21,i##f21, P(22,arg22,f22,i##f22, P(23,arg23,f23,i##f23, P(24,arg24,f24,i##f24, \
-  P(25,arg25,f25,i##f25, \
-  RET(funct##name,ret,f0))))))))))))))))))))))))))) \
   FAIL(ret,f0) \
 }
 
@@ -1439,7 +1395,7 @@ byte Tw_EnableGzip(tw_d TwD) {
 	    }
 	    zW->opaque = zR->opaque = NULL;
 
-	    if (deflateInit(zW, Z_DEFAULT_COMPRESSION) == Z_OK) {
+	    if (deflateInit(zW, Z_BEST_COMPRESSION) == Z_OK) {
 		if (inflateInit(zR) == Z_OK) {
 		    if (Tw_DoCompress(TwD, TRUE))
 			return GzipFlag = TRUE;

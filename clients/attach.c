@@ -19,7 +19,7 @@
 #include <signal.h>
 #include <errno.h>
 
-#include "libTw.h"
+#include <libTw.h>
 
 void usage(byte *name) {
     fprintf(stderr, "Usage: %s [-a|-d] [-v|-s] [-twin@<TWDISPLAY>] -hw=<display>[,options]\n"

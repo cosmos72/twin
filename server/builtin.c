@@ -24,6 +24,7 @@
 #include "resize.h"
 #include "draw.h"
 #include "util.h"
+#include "version.h"
 
 #ifdef CONF__MODULES
 # include "dl.h"
@@ -65,7 +66,7 @@ menu *Builtin_Term_Menu;
 #define COD_O_NOSCROLL	(udat)49
 
 #define COD_D_REMOVE	(udat)60
-#define COD_D_UPDATE	(udat)61
+#define COD_D_THIS	(udat)61
 
 static msgport *Builtin_MsgPort;
 static menu *Builtin_Menu;
@@ -77,7 +78,7 @@ static menuitem *Builtin_Modules;
 static window *AboutWin, *ClockWin, *OptionWin, *DisplayWin;
 window *ListWin;
 
-static gadget *ButtonOK_About, *ButtonRemove, *ButtonUpdate;
+static gadget *ButtonOK_About, *ButtonRemove, *ButtonThis;
 
 static void Clock_Update(void) {
     struct timevalue *Time = &All->Now;
@@ -119,7 +120,8 @@ static void UpdateMenuRows(window *dummy) {
 
 	Module = Module->Next;
     }
-    
+
+#ifndef CONF_TERM    
     if (_TermSo) {
 	TweakMenuRows(Builtin_Modules, COD_TERM_ON,    ROW_INACTIVE);
 	TweakMenuRows(Builtin_Modules, COD_TERM_OFF,   ROW_ACTIVE);
@@ -129,6 +131,8 @@ static void UpdateMenuRows(window *dummy) {
 	TweakMenuRows(Builtin_Modules, COD_TERM_OFF,   ROW_INACTIVE);
 	TweakMenuRows(Builtin_File,    COD_SPAWN,      ROW_INACTIVE);
     }
+#endif
+#ifndef CONF_SOCKET
     if (_SocketSo) {
 	TweakMenuRows(Builtin_Modules, COD_SOCKET_ON,  ROW_INACTIVE);
 	TweakMenuRows(Builtin_Modules, COD_SOCKET_OFF, ROW_ACTIVE);
@@ -136,6 +140,7 @@ static void UpdateMenuRows(window *dummy) {
 	TweakMenuRows(Builtin_Modules, COD_SOCKET_ON,  ROW_ACTIVE);
 	TweakMenuRows(Builtin_Modules, COD_SOCKET_OFF, ROW_INACTIVE);
     }
+#endif
 }
 
 #endif
@@ -291,21 +296,39 @@ void UpdateDisplayWin(window *displayWin) {
     }
 }
 
-static void DisplayH(msg *Msg) {
+static void SelectRowWindow(window *CurrWin, uldat newCurY) {
+    uldat oldCurY=CurrWin->CurY;
+
+    CurrWin->CurY=newCurY;
+
+    if (oldCurY!=newCurY) {
+	DrawTextWindow(CurrWin, 0, oldCurY, CurrWin->XWidth-2, oldCurY);
+	DrawTextWindow(CurrWin, 0, newCurY, CurrWin->XWidth-2, newCurY);
+    }
+}
+
+static void DisplayGadgetH(msg *Msg) {
     display_hw *hw;
     uldat i;
 
     switch (Msg->Event.EventGadget.Code) {
       case COD_D_REMOVE:
-	if (Act(SearchRow,DisplayWin)(DisplayWin, i = DisplayWin->CurY)) {
+	if ((i = DisplayWin->CurY) < DisplayWin->MaxNumRow) {
 	    for (hw = All->FirstDisplayHW; hw && i; hw = hw->Next, i--)
 		;
 	    if (hw && !i)
 		Delete(hw);
 	}
 	break;
-      case COD_D_UPDATE:
-	UpdateDisplayWin(DisplayWin);
+      case COD_D_THIS:
+	if (All->MouseHW) {
+	    for (i = 0, hw = All->FirstDisplayHW; hw; hw = hw->Next, i++) {
+		if (hw == All->MouseHW)
+		    break;
+	    }
+	    if (hw)
+		SelectRowWindow(DisplayWin, i);
+	}
 	break;
       default:
 	break;
@@ -343,7 +366,7 @@ static void BuiltinH(msgport *MsgPort) {
 	    } else if (tempWin == OptionWin)
 		OptionH(Msg);
 	    else if (tempWin == DisplayWin)
-		DisplayH(Msg);
+		DisplayGadgetH(Msg);
 	}
 	else if (Msg->Type==MSG_MENU_ROW) {
 	    if (Event->EventMenu.Menu==Builtin_Menu) {
@@ -426,13 +449,16 @@ static void BuiltinH(msgport *MsgPort) {
 		    break;
 		}
 	    }
-	} else if (Msg->Event.EventCommon.Window == ListWin) {
+	} else if (Msg->Event.EventCommon.Window == ListWin ||
+		   Msg->Event.EventCommon.Window == DisplayWin) {
 	    
 	    /* this code is partially duplicated from wm.c... :( */
 	    byte State = STATE_MENU;
 	    udat Funct, temp, Repeat, CallKey;
 	    
-	    if (Msg->Type==MSG_WINDOW_KEY) {
+	    if (Msg->Event.EventCommon.Window == ListWin &&
+		Msg->Type==MSG_WINDOW_KEY) {
+		
 		CallKey = Msg->Event.EventKeyboard.Code;
 		/* steal actions from All->GlobalKeyCodes[STATE_MENU] */
 		if (All->GlobalKeyCodes[State][0])			/* Compressed Format */
@@ -475,23 +501,16 @@ static void BuiltinH(msgport *MsgPort) {
 		}
 	    } else if (Msg->Type==MSG_WINDOW_MOUSE) {
 		dat EventMouseX = Msg->Event.EventMouse.X, EventMouseY = Msg->Event.EventMouse.Y;
-		window *CurrWin = ListWin;
-		uldat oldCurY;
+		window *CurrWin = Msg->Event.EventCommon.Window;
 
 		temp = EventMouseX >= 0 && EventMouseX <= CurrWin->XWidth-2
-		    && EventMouseY >= 0 && EventMouseY <= CurrWin->YWidth-2;
+		    && EventMouseY >= 0 && EventMouseY <= CurrWin->YWidth-2
+		    && (uldat)EventMouseY+CurrWin->YLogic < (uldat)CurrWin->MaxNumRow;
+
+		SelectRowWindow(CurrWin, temp ? (uldat)EventMouseY+CurrWin->YLogic : MAXULDAT);
 		
-		oldCurY=CurrWin->CurY;
-		if (temp)
-		    CurrWin->CurY=(uldat)EventMouseY+CurrWin->YLogic;
-		else
-		    CurrWin->CurY=MAXULDAT;
-		if (oldCurY!=CurrWin->CurY) {
-		    DrawTextWindow(CurrWin, 0, oldCurY, CurrWin->XWidth-2, oldCurY);
-		    DrawTextWindow(CurrWin, 0, CurrWin->CurY, CurrWin->XWidth-2, CurrWin->CurY);
-		}
-		
-		if (isRELEASE(Msg->Event.EventMouse.Code)) {
+		if (CurrWin == ListWin &&
+		    isRELEASE(Msg->Event.EventMouse.Code)) {
 		    if (temp)
 			SelectListWin();
 		}
@@ -541,14 +560,12 @@ void FullUpdateListWin(window *listWin) {
     }
 }
 
-
-    
 byte InitBuiltin(void) {
     window *Window;
     byte *s, *greeting = "\n"
 	"                TWIN             \n"
 	"        Text WINdows manager     \n\n"
-	"          Version 0.3.2 by       \n\n"
+	"          Version " TWIN_VERSION_STR " by       \n\n"
 	"        Massimiliano Ghilardi    \n\n"
 	"         <max@Linuz.sns.it>      ";
     uldat grlen = strlen(greeting);
@@ -648,65 +665,65 @@ byte InitBuiltin(void) {
 
 	Act(WriteRow,AboutWin)(AboutWin, grlen, greeting) &&
 	
-	(ButtonOK_About=Do(CreateButton,Gadget)(FnGadget, AboutWin, (udat)8, (udat)1, (byte)0x70)) &&
+	(ButtonOK_About=Do(CreateEmptyButton,Gadget)(FnGadget, AboutWin, (udat)8, (udat)1, (byte)0x70)) &&
 
-	(ButtonRemove=Do(CreateButton,Gadget)(FnGadget, DisplayWin, (udat)8, (udat)1, (byte)0x70)) &&
-	(ButtonUpdate=Do(CreateButton,Gadget)(FnGadget, DisplayWin, (udat)8, (udat)1, (byte)0x70)) &&
+	(ButtonRemove=Do(CreateEmptyButton,Gadget)(FnGadget, DisplayWin, (udat)8, (udat)1, (byte)0x70)) &&
+	(ButtonThis  =Do(CreateEmptyButton,Gadget)(FnGadget, DisplayWin, (udat)8, (udat)1, (byte)0x70)) &&
 
 	Do(Create,Gadget)(FnGadget, DisplayWin, COL(BLACK,WHITE), COL(BLACK,WHITE),
 			  COL(BLACK,WHITE), COL(BLACK,WHITE),
-			  0, GADGET_USE_DEFCOL|GADGET_DISABLED, 0, 0, 11, 8, 0x1,
+			  0, GADGET_USE_DEFCOL|GADGET_DISABLED, 0, 0, 11, 8,
 			  ((s = AllocMem(11*8)), WriteMem(s, ' ', 11*8), s),
 			  NULL, NULL, NULL, NULL, NULL, NULL, NULL) &&
 	
 	Do(Create,Gadget)(FnGadget, OptionWin, COL(BLACK,WHITE), COL(HIGH|WHITE,GREEN),
 			  COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
-			  COD_O_SHADOWS, GADGET_USE_DEFCOL, 2, 1, 11, 1, 0x1,
+			  COD_O_SHADOWS, GADGET_USE_DEFCOL, 2, 1, 11, 1,
 			  "[ ] Shadows", NULL, NULL, NULL, NULL, NULL, NULL, NULL) &&
 
 	Do(Create,Gadget)(FnGadget, OptionWin, COL(BLACK,WHITE), COL(HIGH|WHITE,GREEN),
 			  COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
-			  COD_O_Xp_SHADE, GADGET_USE_DEFCOL, 18, 1, 3, 1, 0x1,
+			  COD_O_Xp_SHADE, GADGET_USE_DEFCOL, 18, 1, 3, 1,
 			  "[+]", NULL, NULL, NULL, NULL, NULL, NULL, NULL) &&
 
 	Do(Create,Gadget)(FnGadget, OptionWin, COL(BLACK,WHITE), COL(HIGH|WHITE,GREEN),
 			  COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
-			  COD_O_Xn_SHADE, GADGET_USE_DEFCOL, 21, 1, 3, 1, 0x1,
+			  COD_O_Xn_SHADE, GADGET_USE_DEFCOL, 21, 1, 3, 1,
 			  "[-]", NULL, NULL, NULL, NULL, NULL, NULL, NULL) &&
 
 	Do(Create,Gadget)(FnGadget, OptionWin, COL(BLACK,WHITE), COL(HIGH|WHITE,GREEN),
 			  COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
-			  COD_O_Yp_SHADE, GADGET_USE_DEFCOL, 18, 2, 3, 1, 0x1,
+			  COD_O_Yp_SHADE, GADGET_USE_DEFCOL, 18, 2, 3, 1,
 			  "[+]", NULL, NULL, NULL, NULL, NULL, NULL, NULL) &&
 
 	Do(Create,Gadget)(FnGadget, OptionWin, COL(BLACK,WHITE), COL(HIGH|WHITE,GREEN),
 			  COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
-			  COD_O_Yn_SHADE, GADGET_USE_DEFCOL, 21, 2, 3, 1, 0x1,
+			  COD_O_Yn_SHADE, GADGET_USE_DEFCOL, 21, 2, 3, 1,
 			  "[-]", NULL, NULL, NULL, NULL, NULL, NULL, NULL) &&
 	
 	Do(Create,Gadget)(FnGadget, OptionWin, COL(BLACK,WHITE), COL(HIGH|WHITE,GREEN),
 			  COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
-			  COD_O_ALWAYSCURSOR, GADGET_USE_DEFCOL, 2, 4, 22, 1, 0x1,
+			  COD_O_ALWAYSCURSOR, GADGET_USE_DEFCOL, 2, 4, 22, 1,
 			  "[ ] Always Show Cursor", NULL, NULL, NULL, NULL, NULL, NULL, NULL) &&
 
 	Do(Create,Gadget)(FnGadget, OptionWin, COL(BLACK,WHITE), COL(HIGH|WHITE,GREEN),
 			  COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
-			  COD_O_NOBLINK, GADGET_USE_DEFCOL, 2, 6, 33, 1, 0x1,
+			  COD_O_NOBLINK, GADGET_USE_DEFCOL, 2, 6, 33, 1,
 			  "[ ] Disable Blink/High Background", NULL, NULL, NULL, NULL, NULL, NULL, NULL) &&
 
 	Do(Create,Gadget)(FnGadget, OptionWin, COL(BLACK,WHITE), COL(HIGH|WHITE,GREEN),
 			  COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
-			  COD_O_HIDEMENU, GADGET_USE_DEFCOL, 2, 8, 15, 1, 0x1,
+			  COD_O_HIDEMENU, GADGET_USE_DEFCOL, 2, 8, 15, 1,
 			  "[ ] Hidden Menu", NULL, NULL, NULL, NULL, NULL, NULL, NULL) &&
 
 	Do(Create,Gadget)(FnGadget, OptionWin, COL(BLACK,WHITE), COL(HIGH|WHITE,GREEN),
 			  COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
-			  COD_O_NOSCROLL, GADGET_USE_DEFCOL, 2, 10, 28, 1, 0x1,
+			  COD_O_NOSCROLL, GADGET_USE_DEFCOL, 2, 10, 28, 1,
 			  "[ ] Disable Screen Scrolling", NULL, NULL, NULL, NULL, NULL, NULL, NULL) &&
 
 	Do(Create,Gadget)(FnGadget, OptionWin, COL(BLACK,WHITE), COL(HIGH|WHITE,GREEN),
 			  COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
-			  COD_O_NEWFONT, GADGET_USE_DEFCOL, 2, 12, 15, 1, 0x1,
+			  COD_O_NEWFONT, GADGET_USE_DEFCOL, 2, 12, 15, 1,
 			  "[ ] Custom Font", NULL, NULL, NULL, NULL, NULL, NULL, NULL)
 
 	)
@@ -736,7 +753,7 @@ byte InitBuiltin(void) {
 	Act(FillButton,ButtonOK_About)(ButtonOK_About, COD_OK, (udat)15, (udat)11, (udat)0, "   OK   ", (byte)0x2F, (byte)0x28);
 
 	Act(FillButton,ButtonRemove)(ButtonRemove, COD_D_REMOVE, (udat)1, (udat)2, (udat)0, " Remove ", (byte)0x2F, (byte)0x28);
-	Act(FillButton,ButtonUpdate)(ButtonUpdate, COD_D_UPDATE, (udat)1, (udat)5, (udat)0, " Update ", (byte)0x2F, (byte)0x28);
+	Act(FillButton,ButtonThis)  (ButtonThis,   COD_D_THIS,   (udat)1, (udat)5, (udat)0, "  This  ", (byte)0x2F, (byte)0x28);
 
 	OptionWin->CurX = 25; OptionWin->CurY = 1;
 	Act(WriteRow,OptionWin)(OptionWin, 10, "  X Shadow");
@@ -771,48 +788,4 @@ byte InitBuiltin(void) {
     }
     return FALSE;
 }
-
-
-#if 0
-static msgport *Empty_MsgPort;
-static menu *Empty_Menu;
-
-static void EmptyH(msgport *MsgPort);
-
-void InitEmpty(void) {
-    if (!(Empty_MsgPort=Do(Create,MsgPort)
-	  (FnMsgPort, "Empty", (time_t)0, (frac_t)0, (byte)0, (void *)EmptyH)) ||
-	!(Empty_Menu=Do(Create,Menu)
-	  (FnMenu, Empty_MsgPort, (byte)0x70, (byte)0x20, (byte)0x78, (byte)0x08, (byte)0x74,
-	   (byte)0x24, (menuitem *)0, (menuitem *)0, (menuitem *)0, (byte)0, (row *)0, ZERO)) ||
-	!(Act(SetInfo,Menu)
-	  (Empty_Menu, (udat)0, (byte)1, (uldat)12, (uldat)13, (uldat)0, (uldat)0,
-	   " Empty Menu ", "tttttttttttt"))) {
-	Error(NOMEMORY);
-	return;
-    }
-    
-    
-    
-    Act(Map,InsertRemoveWin)(Screen, InsertRemoveWin);
-}
-
-static void EmptyH(msgport *MsgPort) {
-    byte Buffer[100];
-    msg *Msg;
-    
-    while ((Msg=Empty_MsgPort->FirstMsg)) {
-	//		Beep();
-	Remove(Msg, Empty_MsgPort, Msg);
-	Delete(Msg);
-    }
-    
-    ProvaWin.CurX=ProvaWin.CurY=(uldat)0;
-    sprintf((char *)Buffer, "Free Mem:%7lu\rSpeed   :%7u", 0ul, Cicli);
-    if (!Act(WriteRow,ProvaWin)(ProvaWin, Buffer))
-	Error(NOMEMORY);
-
-    Cicli=(uldat)0;
-}
-#endif
 

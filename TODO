@@ -1,18 +1,25 @@
-hw_display.c: various TODO still there, in particular Selection
-detect deadlocks in twattach, -f to force
 twrun : contact "twin term" Message Port and tell it to start a command
-        same from Menu
-cleanup keycode recognition : ALT + letter, CTRL + letter, [NumLock +] keypad
+Menu: CLI: run a command (eventually inside a terminal)
+cleanup keycode recognition : [NumLock +] keypad
 unhide menu when unfocusing all windows? (then hide again when focusing a window)
-split WManagerH into humanly sized functions
-.twinrc with runtime configurable WM / options / display+options
+.twinrc with runtime configurable WM+window buttons / options / display+options
 keyboard hotkeys for gadget selection and screen scroll/resize
 info on menubar: time / memory / load, size of window during resize
 WINFL_BYUSER windows -> not this way: use shared menory.
-tweak TwCreateGadget to allow for Buttons, and add TwCreateButton and similar.
-cut&paste compatibility with gpm and libTw (X11 done).
 cleanup overflows with shadows at window [xy]width = almost max, move arithmetic to [ul]dat
 screensaver
 finish libGGI keyboard support
 wtmp logging
-support using /dev/pts/* as twterm pty/tty
+docs (gmanedit?)
+
+twterm -h
+runtime swap L-M-R mouse buttons
+twcalc - calculator
+twclip - show clipboard / multiple clipboards / cut-n-paste from it
+port to other platforms (*BSD, ... Also, twdisplay on win32)
+twbiff
+-geometry option to tw* clients
+window-shading (roll-up?) : collapse to top border only (title)
+CTRL-` or CTRL-2 or CTRL-@ (all ASCII 0) as hotkey?
+
+

@@ -72,7 +72,7 @@ static void SignalWinch(int n) {
 }
 
 static void SignalChild(int n) {
-    while (wait4((pid_t)-1, (int *)0, WNOHANG, (struct rusage *)0) > 0)
+    while (wait3((int *)0, WNOHANG, (struct rusage *)0) > 0)
 	;
     signal(SIGCHLD, SignalChild);
 }

@@ -17,7 +17,7 @@
 #include <errno.h>
 #include <sys/utsname.h>
 
-#include "libTw.h"
+#include <libTw.h>
 
 tmsgport SysMon_MsgPort;
 tmenu SysMon_Menu;
@@ -28,7 +28,6 @@ char buf[BIGBUFF];
 byte InitSysMon(void) {
     struct utsname uts;
     byte *name;
-    hwcol *col;
     uldat len;
     
     if (uname(&uts) >= 0 && (name = malloc(11 + (len = strlen(uts.nodename))))) {
@@ -41,11 +40,6 @@ byte InitSysMon(void) {
     else
 	return FALSE;
     
-    if ((col=malloc(len * sizeof(hwcol))))
-	memset(col, 0x9F, len * sizeof(hwcol));
-    else
-	return FALSE;
-	
     name[len] = '\0';
 	
     if (TwOpen(NULL) &&
@@ -59,7 +53,7 @@ byte InitSysMon(void) {
 	TwItem4MenuCommon(SysMon_Menu) &&
 	
 	(SysMon_Win = TwCreateWindow
-	 (len, name, col, SysMon_Menu, COL(HIGH|YELLOW,BLUE),
+	 (len, name, NULL, SysMon_Menu, COL(HIGH|YELLOW,BLUE),
 	  TW_NOCURSOR, TW_WINDOW_DRAG|TW_WINDOW_CLOSE, 0,
 	  (udat)26, (udat)7, (udat )0))) {
 
@@ -247,7 +241,7 @@ void Update(void) {
 	uphours = (updays /= 60) % 24;
 	updays /= 24;
 	
-	snprintf(buf, BIGBUFF, "%d days %2d:%02d", (int)updays, uphours, upminutes);
+	sprintf(buf, "%d days %2d:%02d", (int)updays, uphours, upminutes);
 
 	TwGotoXYWindow(SysMon_Win, 8, 4);
 	TwWriteRowWindow(SysMon_Win, strlen(buf), buf);

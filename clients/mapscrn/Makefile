@@ -3,7 +3,7 @@
 #
 TOPDIR=../..
 
-CFLAGS+=-I$(TOPDIR)/include -DDATADIR=\"/usr/lib/kbd\"
+CFLAGS+=-DDATADIR=\"/usr/lib/kbd\"
 LDFLAGS+=-L$(TOPDIR)/lib -lTw
 
 OBJS_twmapscrn=mapscrn.o xmalloc.o findfile.o

@@ -9,9 +9,14 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
-#include <sys/kd.h>
 
-#include "libTw.h"
+#ifdef __linux__
+# include <sys/kd.h>
+#elif !defined (E_TABSZ)
+# define E_TABSZ 256
+#endif
+
+#include <libTw.h>
 
 #include "paths.h"
 #include "findfile.h"
