@@ -90,6 +90,44 @@ static void display_KeyboardEvent(int fd, display_hw *hw) {
 		/* 0 == Close Code */
 		HW->NeedHW |= NEEDPanicHW, NeedHW |= NEEDPanicHW;
 	    break;
+	  case MSG_SELECTIONCLEAR:
+	    /* selection now owned by some other client on the same display HW as twdisplay */
+	    HW->HWSelectionPrivate = NULL;
+	    /*
+	     * DO NOT use (obj *)display here instead of (obj *)HW, as it is a msgport
+	     * and would bypass the OwnerOnce mechanism, often resulting in an infinite loop.
+	     */
+	    TwinSelectionSetOwner((obj *)HW, SEL_CURRENTTIME, SEL_CURRENTTIME);
+	    break;
+	  case MSG_SELECTIONREQUEST:
+	    /*
+	     * should never happen, hw_display always transparently passes 
+	     * the real Owner / Requestor of Selection.
+	     */
+	    fputs("\ntwin: display_KeyboardEvent(): unexpected SelectionRequest Message from twdisplay!\n", stderr);
+	    fflush(stderr);
+#if 0
+	    TwinSelectionRequest(Event->EventSelectionRequest.Requestor,
+				 Event->EventSelectionRequest.ReqPrivate,
+				 TwinSelectionGetOwner());
+#endif
+	    break;
+	  case MSG_SELECTIONNOTIFY:
+	    /*
+	     * should never happen, hw_display always transparently passes 
+	     * the real Owner / Requestor of Selection.
+	     */
+	    fputs("\ntwin: display_KeyboardEvent(): unexpected SelectionNotify Message from twdisplay!\n", stderr);
+	    fflush(stderr);
+#if 0
+	    TwinSelectionNotify(dRequestor, dReqPrivate,
+				Event->EventSelectionNotify.Magic,
+				Event->EventSelectionNotify.MIME,
+				Event->EventSelectionNotify.Len,
+				Event->EventSelectionNotify.Data);
+#endif
+	    break;
+
 	  case MSG_DISPLAY:
 	    switch (Event->EventDisplay.Code) {
 #if 0
@@ -202,7 +240,7 @@ static void display_FlushVideo(void) {
 	display_SetCursorType(HW->TT = CursorType);
 	setFlush();
     }
-    HW->ChangedMouseFlag = FALSE;
+    HW->FlagsHW &= ~FlHWChangedMouseFlag;
 }
 
 static void display_FlushHW(void) {
@@ -256,6 +294,71 @@ static void display_DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, da
     SocketSendMsg(display, Msg);
     setFlush();
 }
+
+static void display_SetPalette(udat N, udat R, udat G, udat B) {
+    udat data[3] = {R, G, B};
+    
+    display_CreateMsg(DPY_SetPalette, 4*sizeof(dat));
+
+    ev->X = N;
+    ev->Data = (byte *)data;
+
+    SocketSendMsg(display, Msg);
+    setFlush();
+}
+
+static void display_ResetPalette(void) {
+    display_CreateMsg(DPY_ResetPalette, 0);
+    SocketSendMsg(display, Msg);
+    setFlush();
+}
+
+/*
+ * import Selection from twdisplay
+ */
+static byte display_SelectionImport_display(void) {
+    return !HW->HWSelectionPrivate;
+}
+
+/*
+ * export our Selection to twdisplay
+ */
+static void display_SelectionExport_display(void) {
+    if (!HW->HWSelectionPrivate) {
+	HW->HWSelectionPrivate = (void *)display;
+	display_CreateMsg(DPY_SelectionExport, 0);
+	SocketSendMsg(display, Msg);
+	setFlush();
+    }
+}
+
+/*
+ * request Selection from twdisplay
+ */
+static void display_SelectionRequest_display(obj *Requestor, uldat ReqPrivate) {
+    if (!HW->HWSelectionPrivate) {
+	/*
+	 * shortcut: since (display) is a msgport, use fail-safe TwinSelectionRequest()
+	 * to send message to twdisplay.
+	 */
+	TwinSelectionRequest(Requestor, ReqPrivate, (obj *)display);
+    }
+    /* else race! someone else became Selection owner in the meanwhile... */
+}
+
+/*
+ * notify our Selection to twdisplay
+ */
+static void display_SelectionNotify_display(uldat ReqPrivate, uldat Magic, byte MIME[MAX_MIMELEN],
+					    uldat Len, byte *Data) {
+    /*
+     * shortcut: since (display) is a msgport, use fail-safe TwinSelectionNotify()
+     * to send message to twdisplay.
+     */
+    TwinSelectionNotify((obj *)display, ReqPrivate, Magic, MIME, Len, Data);
+}
+
+
 
 static void display_QuitHW(void) {
     /* tell twdisplay to cleanly quit */
@@ -350,14 +453,17 @@ byte display_InitHW(void) {
 
     HW->ShowMouse = NoOp;
     HW->HideMouse = NoOp;
+    HW->UpdateMouseAndCursor = NoOp;
 
     HW->DetectSize  = display_DetectSize;
     HW->CheckResize = display_CheckResize;
     HW->Resize      = display_Resize;
 
-    HW->ExportClipBoard = NoOp;
-    HW->ImportClipBoard = (void *)NoOp;
-    HW->PrivateClipBoard = NULL;
+    HW->HWSelectionImport  = display_SelectionImport_display;
+    HW->HWSelectionExport  = display_SelectionExport_display;
+    HW->HWSelectionRequest = display_SelectionRequest_display;
+    HW->HWSelectionNotify  = display_SelectionNotify_display;
+    HW->HWSelectionPrivate = NULL;
     
     if (arg && strstr(arg, ",drag")) {
 	HW->CanDragArea = display_CanDragArea;
@@ -367,8 +473,8 @@ byte display_InitHW(void) {
 
     HW->Beep = display_Beep;
     HW->Configure = display_Configure;
-    HW->SetPalette = (void *)NoOp; /* TODO finish this */
-    HW->ResetPalette = NoOp;
+    HW->SetPalette = display_SetPalette;
+    HW->ResetPalette = display_ResetPalette;
 	    
     HW->QuitHW = display_QuitHW;
     HW->QuitKeyboard = NoOp;
@@ -376,10 +482,14 @@ byte display_InitHW(void) {
     HW->QuitVideo = NoOp;
 
     HW->DisplayIsCTTY = FALSE;
-    HW->SoftMouse = FALSE;
+    HW->FlagsHW &= ~FlHWSoftMouse;
 
-    HW->NeedOldVideo = TRUE;
-    HW->ExpensiveFlushVideo = arg && strstr(arg, ",slow");
+    HW->FlagsHW |= FlHWNeedOldVideo;
+    if (arg && strstr(arg, ",slow"))
+	HW->FlagsHW |= FlHWExpensiveFlushVideo;
+    else
+	HW->FlagsHW &= ~FlHWExpensiveFlushVideo;
+	
     HW->NeedHW = NEEDPersistentSlot;
     HW->CanResize = arg && strstr(arg, ",resize");
     HW->merge_Threshold = 0;
@@ -392,11 +502,11 @@ byte display_InitHW(void) {
     if (arg && (s = strstr(arg, ",x=")))
 	HW->X = atoi(s+3);
     else
-	HW->X = ScreenWidth;
+	HW->X = GetDisplayWidth();
     if (arg && (s = strstr(arg, ",y=")))
 	HW->Y = atoi(s+3);
     else
-	HW->Y = ScreenHeight;
+	HW->Y = GetDisplayHeight();
     
     /*
      * we must draw everything on our new shiny window

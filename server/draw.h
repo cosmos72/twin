@@ -24,8 +24,8 @@ void DrawAreaWindow(window *Window, byte Shaded);
 void DrawAbsoluteWindow(window *Window, udat Xstart, udat Ystart, udat Xend, udat Yend);
 void DrawTextWindow(window *Window, uldat Xstart, uldat Xend, uldat NumRowStart, uldat NumRowEnd);
 
-void ClearSelection(window *Window);
-void StartSelection(window *Window, uldat XSel, uldat YSel);
-void ExtendSelection(window *Window, uldat XSel, uldat YSel);
+void ClearHilight(window *Window);
+void StartHilight(window *Window, uldat XSel, uldat YSel);
+void ExtendHilight(window *Window, uldat XSel, uldat YSel);
 
 #endif /* _TW_DRAW_H */

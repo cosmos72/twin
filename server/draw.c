@@ -1299,7 +1299,7 @@ void DrawScreen(screen *Screen) {
     DrawArea(FirstScreen, (window *)0, (window *)0, (gadget *)0, (gadget *)0, MINDAT, (dat)Screen->YLimit, MAXDAT, MAXDAT, FALSE);
 }
 
-void ClearSelection(window *Window) {
+void ClearHilight(window *Window) {
     if (Window->Attrib & WINDOW_DO_SEL) {
 	Window->Attrib &= ~WINDOW_DO_SEL;
 	if (Window->YendSel > Window->YstSel)
@@ -1309,15 +1309,15 @@ void ClearSelection(window *Window) {
     }
 }
 
-void StartSelection(window *Window, uldat XSel, uldat YSel) {
-    ClearSelection(Window);
+void StartHilight(window *Window, uldat XSel, uldat YSel) {
+    ClearHilight(Window);
     Window->Attrib |= WINDOW_DO_SEL|WINDOW_FWDSEL;
     Window->XstSel = Window->XendSel = XSel;
     Window->YstSel = Window->YendSel = YSel;
     DrawTextWindow(Window, XSel, YSel, XSel, YSel);
 }
 
-void ExtendSelection(window *Window, uldat XSel, uldat YSel) {
+void ExtendHilight(window *Window, uldat XSel, uldat YSel) {
     uldat oX, oY;
     
     if (!(Window->Attrib & WINDOW_DO_SEL)) {

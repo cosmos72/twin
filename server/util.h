@@ -27,9 +27,11 @@ byte Minimum(byte MaxIndex, uldat *Elenco);
 
 void SetArgv_0(byte **argv, byte *src);
 
-#define AddToClipBoard(Len, Data) SetClipBoard(CLIP_APPEND, Len, Data)
-byte SetClipBoard(uldat Magic, uldat Len, byte *Data);
-byte SetClipBoardFromWindow(window *Window);
+#define SelectionAppend(Len, Data) SelectionStore(SEL_APPEND, NULL, Len, Data)
+byte SelectionStore(uldat Magic, byte MIME[MAX_MIMELEN], uldat Len, byte *Data);
+byte SetSelectionFromWindow(window *Window);
+void doSelectionSetOwner(obj *Owner, time_t Time, frac_t Frac);
+#define SEL_CURRENTTIME ((time_t)0)
 
 byte   SetTWDisplay(void);
 void UnSetTWDisplay(void);

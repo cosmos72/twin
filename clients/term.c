@@ -54,6 +54,7 @@ static fdlist *FdList;
 static uldat FdSize, FdTop, FdBottom;
 #define LS	FdList[Slot]
 
+
 /* functions */
 
 static uldat FdListGrow(void) {
@@ -77,11 +78,10 @@ static uldat FdListGrow(void) {
     return oldsize;
 }
 
-static uldat FdListGet(void) {
-    if (FdBottom == FdSize)
-	return FdListGrow();
-    
-    return FdBottom;
+INLINE uldat FdListGet(void) {
+    if (FdBottom < FdSize)
+	return FdBottom;
+    return FdListGrow();
 }
 
 static uldat Slot_Window(twindow Window) {
@@ -169,7 +169,7 @@ static twindow newTermWindow(void) {
     uldat len = strlen(title);
     hwcol *coltitle = TwAllocMem(len * sizeof(hwcol));
     twindow Window = TwCreateWindow
-	(len, title, TwWriteMem(coltitle, COL(HIGH|WHITE,HIGH|BLUE), len * sizeof(hwattr)),
+	(len, title, TwWriteMem(coltitle, COL(HIGH|WHITE,HIGH|BLUE), len * sizeof(hwcol)),
 	 Term_Menu, COL(WHITE,BLACK), TW_LINECURSOR,
 	 TW_WINDOW_WANT_KEYS|TW_WINDOW_WANT_CHANGES|TW_WINDOW_DRAG|TW_WINDOW_RESIZE|TW_WINDOW_Y_BAR|TW_WINDOW_CLOSE,
 	 TW_WINFL_CURSOR_ON|TW_WINFL_USECONTENTS,
@@ -273,9 +273,23 @@ static void TwinTermH(void) {
 	if (Msg->Type==TW_MSG_WINDOW_KEY) {
 	    /* send keypresses */
 	    write(Fd, Event->EventKeyboard.AsciiSeq, Event->EventKeyboard.SeqLen);
-	} else if (Msg->Type==TW_MSG_CLIPBOARD) {
+	} else if (Msg->Type==TW_MSG_SELECTION) {
+	    /*
+	     * send Msg->Event.EventCommon.Window as ReqPrivate field,
+	     * so that we will get it back in TW_MSG_SELECTIONNOTIFY message
+	     * without having to store it manually
+	     */
+	    TwRequestSelection(TwGetOwnerSelection(), Win);
+	    
+	} else if (Msg->Type==TW_MSG_SELECTIONNOTIFY) {
+
+	    Win = Event->EventSelectionNotify.ReqPrivate;
+	    Slot = Slot_Window(Win);
+	    Fd = Fd_Slot(Slot);
+
 	    /* react as for keypresses */
-	    write(Fd, Event->EventClipBoard.Data, Event->EventClipBoard.Len);
+	    write(Fd, Event->EventSelectionNotify.Data, Event->EventSelectionNotify.Len);
+
 	} else if (Msg->Type==TW_MSG_WINDOW_MOUSE) {
 	    /* send mouse movements keypresses */
 	    byte len, buf[10] = "\033[?M";

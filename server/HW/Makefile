@@ -49,8 +49,8 @@ include $(TOPDIR)/conf/config.status
 # and group together all *.o objects needed by each binary
 #
 
-ifeq ($(CONF_ALLOC),y)
-  CFLAGS+=-DCONF_ALLOC
+ifeq ($(CONF__ALLOC),y)
+  CFLAGS+=-DCONF__ALLOC
 endif
 
 ifeq ($(CONF_HW_TTY),y)

@@ -224,7 +224,7 @@ byte WriteRow(window *Window, uldat Len, byte *Text) {
     ModeInsert=Window->Flags & WINFL_INSERT;
     
     if (Window->Attrib & WINDOW_ANYSEL)
-	ClearSelection(Window);
+	ClearHilight(Window);
     
     while (Len) {
 	if (max<=y || (max==y+1 && (*Text==(byte)13 || *Text==(byte)10))) {
@@ -424,22 +424,22 @@ void CenterWindow(window *Window) {
 	parz1=DeltaX;
 	parz2=DeltaX+(ldat)ScreenWidth-(ldat)Window->XWidth;
 	DeltaX=Abs(parz1)<Abs(parz2) ? parz1 : parz2;
-    } else if (Window->XWidth<=(udat)ScreenWidth+2)
+    } else
 	DeltaX--;
 	
     
     parz1=(ldat)Window->Up-(ldat)Screen->Up+(ldat)YLimit;
     parz2=parz1+(ldat)Window->YWidth;
-    if (parz1>(ldat)YLimit && parz2<=(ldat)ScreenHeight)
+    if (parz1>=(ldat)YLimit && parz2<=(ldat)ScreenHeight)
 	DeltaY=(ldat)0;
     else
-	DeltaY=-parz1+(ldat)YLimit+1;
+	DeltaY=-parz1+YLimit;
     
     if ((ldat)Window->YWidth<=(ldat)ScreenHeight-(ldat)YLimit) {
 	parz1=DeltaY;
 	parz2=DeltaY+(ldat)ScreenHeight-(ldat)YLimit-(ldat)Window->YWidth;
 	DeltaY=Abs(parz1)<Abs(parz2) ? parz1 : parz2;
-    } else if ((ldat)Window->YWidth<=(ldat)ScreenHeight-(ldat)YLimit+2)
+    } else
 	DeltaY--;
 	
     DragFirstScreen(DeltaX, DeltaY);

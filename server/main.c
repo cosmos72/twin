@@ -236,7 +236,7 @@ int main(int argc, char *argv[]) {
     
     main_argv = (byte **)argv;
     
-#ifdef CONF_ALLOC
+#ifdef CONF__ALLOC
     if (!InitAlloc()) {
 	fputs("twin: InitAlloc() failed: internal error!\n", stderr);
 	return 1;
@@ -295,8 +295,8 @@ int main(int argc, char *argv[]) {
 		UpdateCursor();
 	    }
 	    
-	    if (NeedHW & NEEDExportClipBoard)
-		ExportClipBoard();
+	    if (NeedHW & NEEDSelectionExport)
+		SelectionExport();
 	    
 	    /*
 	     * A display HW could Panic in its Event handlers or in its

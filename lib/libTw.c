@@ -104,13 +104,15 @@ typedef struct s_tw_d {
 #define QgzWRITE 4
 #define QMAX	 5
 
-uldat CommonErrno;
+static uldat CommonErrno, OpenCount;
 
 /* and this is the 'default' display */
 tw_d Tw_DefaultD;
 
+#ifdef CONF_SOCKET_GZ
 static uldat Gzip(tw_d TwD);
 static uldat Gunzip(tw_d TwD);
+#endif
 
 static void Panic(tw_d TwD);
 static uldat ParseReplies(tw_d TwD);
@@ -138,17 +140,18 @@ static byte *clone_str(byte *S) {
 void Tw_ConfigMalloc(void *(*my_malloc)(size_t),
 		     void *(*my_realloc)(void *, size_t),
 		     void  (*my_free)(void *)) {
-    
-    if (my_malloc && my_realloc && my_free) {
-	Tw_AllocMem = my_malloc;
-	Tw_ReAllocMem = my_realloc;
-	Tw_FreeMem = my_free;
-	Tw_CloneStr = clone_str;
-    } else {
-	Tw_AllocMem = malloc;
-	Tw_ReAllocMem = realloc;
-	Tw_FreeMem = free;
-	Tw_CloneStr = (byte *(*)(byte *))strdup;
+    if (!OpenCount) {
+	if (my_malloc && my_realloc && my_free) {
+	    Tw_AllocMem = my_malloc;
+	    Tw_ReAllocMem = my_realloc;
+	    Tw_FreeMem = my_free;
+	    Tw_CloneStr = clone_str;
+	} else {
+	    Tw_AllocMem = malloc;
+	    Tw_ReAllocMem = realloc;
+	    Tw_FreeMem = free;
+	    Tw_CloneStr = (byte *(*)(byte *))strdup;
+	}
     }
 }
 
@@ -527,7 +530,8 @@ static byte MagicChallenge(tw_d TwD) {
 	if (got < 0)
 	    break;
     }
-
+    close(fd);
+    
     challenge = ReadUldat(TwD);
     if (Fd == NOFD || got < 0 || len + challenge != challengeLen) {
 	Tw_FreeMem(data);
@@ -568,7 +572,8 @@ tw_d Tw_Open(byte *TwDisplay) {
     tw_d TwD;
     int result, fd;
     byte *options, gzip = FALSE;
-
+    uldat _Errno;
+    
     if (!TwDisplay && (!(TwDisplay = getenv("TWDISPLAY")) || !*TwDisplay)) {
 	CommonErrno = TW_ENO_DISPLAY;
 	return (tw_d)0;
@@ -663,14 +668,16 @@ tw_d Tw_Open(byte *TwDisplay) {
     fcntl(Fd, F_SETFD, FD_CLOEXEC);
     fcntl(Fd, F_SETFL, O_NONBLOCK);
     
+    OpenCount++;
     if (MagicNumbers(TwD) && MagicChallenge(TwD)) {
 	if (gzip)
 	    (void)Tw_EnableGzip(TwD);
 	return TwD;
     }
-    CommonErrno = Errno;
-    Panic(TwD);
-    Tw_FreeMem(TwD);
+    _Errno = Errno;
+    close(Fd); Fd = NOFD; /* to skip Tw_Sync() */
+    Tw_Close(TwD);
+    CommonErrno = _Errno;
     return (tw_d)0;
 }
 
@@ -693,6 +700,7 @@ void Tw_Close(tw_d TwD) {
 	if ((q = Queue[i]))
 	    Tw_FreeMem(q);
     }
+    OpenCount--;
     CommonErrno = 0;
     /*PanicFlag = FALSE;*/
     Tw_FreeMem(TwD);
@@ -702,12 +710,19 @@ void Tw_Close(tw_d TwD) {
 /*
  * Tw_AttachGetReply() returns 0 for failure, 1 for success,
  * else message string (len) bytes long.
+ * 
+ * it bypasses any compression.
  */
 byte *Tw_AttachGetReply(tw_d TwD, uldat *len) {
     uldat chunk;
-    byte *answ, *nul;
+    byte *answ = (byte *)-1, *nul;
+#ifdef CONF_SOCKET_GZ
+    byte wasGzipFlag = GzipFlag;
+    GzipFlag = FALSE;
+#endif
     
-    if (Fd != NOFD) {
+    if (Fd != NOFD) do {
+	
 	answ = GetQueue(TwD, QREAD, &chunk);
 	if (!chunk) {
 	    (void)TryRead(TwD, TRUE);
@@ -717,16 +732,20 @@ byte *Tw_AttachGetReply(tw_d TwD, uldat *len) {
 	    if ((nul = memchr(answ, '\0', chunk))) {
 		if (nul == answ && nul + 1 < answ + chunk) {
 		    DeQueue(TwD, QREAD, 2);
-		    return (byte *)(size_t)nul[1];
+		    answ = (byte *)(size_t)nul[1];
+		    break;
 		}
 		chunk = nul - answ;
 	    }
 	    DeQueue(TwD, QREAD, chunk);
 	    *len = chunk;
-	    return answ;
+	    break;
 	}
-    }
-    return (byte *)-1;
+    } while (0);
+#ifdef CONF_SOCKET_GZ
+    GzipFlag = wasGzipFlag;
+#endif
+    return answ;
 }
 
 void Tw_AttachConfirm(tw_d TwD) {
@@ -943,9 +962,6 @@ NAME(ret,f0,funct,name) (tw_d TwD) \
   FAIL(ret,f0) \
 }
 
-#define PROTO0Abs	PROTO0
-
-
 #define PROTO1(ret,f0, funct,name,fn, arg1,f1) \
 NAME(ret,f0,funct,name) (tw_d TwD, a(1,arg1,f1)) \
 { \
@@ -955,8 +971,6 @@ NAME(ret,f0,funct,name) (tw_d TwD, a(1,arg1,f1)) \
   RET(funct##name,ret,f0))) \
   FAIL(ret,f0) \
 }
-
-#define PROTO1Abs PROTO1
 
 #define PROTO2(ret,f0, funct,name,fn, arg1,f1, arg2,f2) \
 NAME(ret,f0,funct,name) (tw_d TwD, \
@@ -968,8 +982,6 @@ NAME(ret,f0,funct,name) (tw_d TwD, \
   RET(funct##name,ret,f0)))) \
   FAIL(ret,f0) \
 }
-
-#define PROTO2Abs	PROTO2
 
 #define PROTO2FindFunction(ret,f0, funct,name,fn, arg1,f1, arg2,f2) \
 NAME(ret,f0,funct,name) (tw_d TwD, \
@@ -994,8 +1006,6 @@ NAME(ret,f0,funct,name) (tw_d TwD, \
   FAIL(ret,f0) \
 }
     
-#define PROTO3Abs	PROTO3
-
 #define PROTO4(ret,f0, funct,name,fn, arg1,f1, arg2,f2, arg3,f3, arg4,f4) \
 NAME(ret,f0,funct,name) (tw_d TwD, \
 			 a(1,arg1,f1), a(2,arg2,f2), a(3,arg3,f3), a(4,arg4,f4)) \
@@ -1083,8 +1093,6 @@ NAME(ret,f0,funct,name) (tw_d TwD, \
   RET(funct##name,ret,f0))))))))))))) \
   FAIL(ret,f0) \
 }
-
-#define PROTO11Abs PROTO11
 
 #define PROTO18(ret0,f0, funct,name,fn, arg1 ,f1 , arg2 ,f2 , arg3 ,f3 , arg4 ,f4 , arg5 ,f5 , \
        arg6 ,f6 , arg7 ,f7 , arg8 ,f8 , arg9 ,f9 , arg10,f10, arg11,f11, arg12,f12, arg13,f13, \
@@ -1258,6 +1266,13 @@ byte Tw_SendMsg(tw_d TwD, tmsgport MsgPort, tmsg Msg) {
 	Tw_FreeMem(Msg);
     }
     return ret;
+}
+
+void Tw_BlindSendMsg(tw_d TwD, tmsgport MsgPort, tmsg Msg) {
+    if (Msg && Msg->Magic == msg_magic) {
+	Tw_BlindSendToMsgPort(TwD, MsgPort, Msg->Len, (void *)Msg);
+	Tw_FreeMem(Msg);
+    }
 }
 
 

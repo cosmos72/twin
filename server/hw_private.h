@@ -17,7 +17,6 @@ extern udat ScreenWidth, ScreenHeight;
 
 extern struct termios ttysave;
 
-void VideoFlipMouse(void);
 void FillOldVideo(dat Xstart, dat Ystart, dat Xend, dat Yend, hwattr Attr);
 void saveDisplaySize(void);
 

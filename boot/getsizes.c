@@ -16,6 +16,15 @@
 #include <asm/page.h>
 
 int main(void) {
+    if (sizeof(uldat) < sizeof(void *)) {
+	fprintf(stderr, "getsizes: FATAL: type `uldat' (%dbits) is smaller than `void *' (%dbits)\n"
+		"\tYou should edit include/twin.h and include/libTw.h\n"
+		"\tand use a bigger type for `uldat' and `ldat',\n"
+		"\tfor example `[unsigned] long' or `[unsigned] long long'.\n"
+		"\n"
+		"\tABORTING.\n", sizeof(uldat)*8, sizeof(void *)*8);
+	return 1;
+    }
     printf("#ifndef _TW_SIZES_H\n"
 	   "#define _TW_SIZES_H\n"
 	   "\n"

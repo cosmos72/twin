@@ -3,10 +3,12 @@ Known bugs and problems:
 *  Attaching to /dev/pts/* does not work.
 
    I am not sure if it's a twin or kernel problem, as attaching to other ttys
-   (/dev/tty[1-63], /dev/tty[p-z][a-f], etc.) works.
+   (/dev/tty[1-63], /dev/tty[p-z][0-f], etc.) works.
 
 *  display corruption running `mutt' inside `screen' inside `twterm'
    Asked `strace' logs to a helpful user, waiting for them.
    
-*  sparse segfaults :(
-
+*  Compiling with gcc 2.95.2 (is this egcs actually ?)
+   may give problems depending on the options you use to compile.
+   Using "-g -O2" resulted in a non-working binary for me :(
+   

@@ -17,6 +17,11 @@ config $(CONF):
 	@echo
 	$(BASH) scripts/Configure
 
+menuconf menuconfig:
+	@echo Starting configure for twin $(TW_VERSION) ...
+	@echo
+	$(BASH) scripts/Configure.dialog
+
 reconfig: config all
 
 boot.dir: $(CONF)

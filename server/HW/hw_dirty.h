@@ -66,5 +66,14 @@ INLINE byte Threshold_isDirtyVideo(dat X, dat Y) {
 	return s2 + (ScreenWidth - e1) < HW->merge_Threshold;
 }
 
+/* VideoFlip is quite os-independent ;) */
+INLINE void VideoFlip(udat x, udat y) {
+    uldat pos = x + y * ScreenWidth;
+    hwattr h = Video[pos];
+    hwcol c = ~HWCOL(h) ^ COL(HIGH,HIGH);
+
+    Video[pos] = HWATTR( c, HWFONT(h) );
+}
+
 #endif /* _TW_HW_DIRTY_H */
 

@@ -309,7 +309,7 @@ static void GGI_FlushVideo(void) {
 	setFlush();
     }
     
-    HW->ChangedMouseFlag = FALSE;
+    HW->FlagsHW &= ~FlHWChangedMouseFlag;
 }
 
 static void GGI_FlushHW(void) {
@@ -407,7 +407,7 @@ static void GGI_QuitHW(void) {
 }
 
 byte GGI_InitHW(void) {
-    byte *arg = HW->Name;
+    byte *arg = HW->Name, *opt = NULL;
     uldat len = HW->NameLen;
     int i, j;
     
@@ -422,6 +422,12 @@ byte GGI_InitHW(void) {
 	if (strncmp(arg, "ggi", 3))
 	    return FALSE; /* user said "use <arg> as display, not ggi" */
 	arg += 3;
+	
+	if ((opt = strstr(arg, ",noinput"))) {
+	    *opt = '\0';
+	    HW->FlagsHW |= FlHWNoInput;
+	}
+	
 	if (*arg == '@')
 	    arg++;
 	else
@@ -429,9 +435,10 @@ byte GGI_InitHW(void) {
     } else
 	arg = NULL;
 
-    if (ggiInit() < 0) 
+    if (ggiInit() < 0) {
+	if (opt) *opt = ',';
 	return FALSE;
-
+    }
     if (!(HW->Private = (struct GGI_data *)AllocMem(sizeof(struct GGI_data)))) {
 	fprintf(stderr, "      GGI_InitHW(): Out of memory!\n");
 	return FALSE;
@@ -458,6 +465,8 @@ byte GGI_InitHW(void) {
 	gfont.y = j;
 	HW->X = gmode.virt.x / gfont.x;
 	HW->Y = gmode.virt.y / gfont.y;
+	HW->usedX = GetDisplayWidth();
+	HW->usedY = GetDisplayHeight();
 
 #if 0
 	if (inputs)
@@ -482,15 +491,17 @@ byte GGI_InitHW(void) {
 	
 	HW->ShowMouse = NoOp;
 	HW->HideMouse = NoOp;
+	HW->UpdateMouseAndCursor = NoOp;
 
-	GGI_DetectSize(&HW->usedX, &HW->usedY);
 	HW->DetectSize  = GGI_DetectSize;
 	HW->CheckResize = GGI_CheckResize;
 	HW->Resize      = GGI_Resize;
 
-	HW->ExportClipBoard = NoOp;
-	HW->ImportClipBoard = (void *)NoOp;
-	HW->PrivateClipBoard = NULL;
+	HW->HWSelectionImport  = AlwaysFalse;
+	HW->HWSelectionExport  = NoOp;
+	HW->HWSelectionRequest = (void *)NoOp;
+	HW->HWSelectionNotify  = (void *)NoOp;
+	HW->HWSelectionPrivate = NULL;
 
 #if 1
 	HW->CanDragArea = NULL;
@@ -510,10 +521,10 @@ byte GGI_InitHW(void) {
 	HW->QuitVideo = NoOp;
 
 	HW->DisplayIsCTTY = FALSE;
-	HW->SoftMouse = FALSE; /* mouse pointer handled by X11 server */
+	HW->FlagsHW &= ~FlHWSoftMouse; /* mouse pointer handled by X11 server */
 
-	HW->NeedOldVideo = TRUE;
-	HW->ExpensiveFlushVideo = TRUE;
+	HW->FlagsHW |= FlHWNeedOldVideo;
+	HW->FlagsHW |= FlHWExpensiveFlushVideo;
 	HW->NeedHW = 0;
 	HW->CanResize = FALSE; /* TODO: a real GGI_Resize() */
 	HW->merge_Threshold = 0;
@@ -530,6 +541,7 @@ byte GGI_InitHW(void) {
 	 */
 	NeedRedrawVideo(0, 0, HW->X - 1, HW->Y - 1);
 
+	if (opt) *opt = ',';
 	return TRUE;
 	
     } while (0); else {
@@ -543,6 +555,7 @@ byte GGI_InitHW(void) {
 	ggiClose(gvis);
     ggiExit();
     
+    if (opt) *opt = ',';
     return FALSE;
 }
 

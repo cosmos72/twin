@@ -33,9 +33,6 @@ void FillVideo(dat Xstart, dat Ystart, dat Xend, dat Yend, udat Attrib);
 void RefreshVideo(void);
 byte ResizeDisplay(void);
 
-udat GetWidthScreen(screen *Screen);
-udat GetHeightScreen(screen *Screen);
-
 void RunNoHW(void);
 void UpdateFlagsHW(void);
 

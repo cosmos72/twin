@@ -1,6 +1,4 @@
-ModuleHook on All->FirstModule...LastModule
-runtime option: disable virtual screen scrolling
-hw_display.c: resizing, startup drawing, various TODO still there
+hw_display.c: various TODO still there, in particular Selection
 detect deadlocks in twattach, -f to force
 twrun : contact "twin term" Message Port and tell it to start a command
         same from Menu

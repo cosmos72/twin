@@ -176,7 +176,10 @@ static byte *RemoteWriteFillQueue(uldat Slot, uldat *len) {
     delta = LS.WQmax - LS.WQlen; /* yet available */
     if (len)
 	*len = delta;
-    LS.WQlen = LS.WQmax; /* alloc them */
+    if (!LS.WQlen && LS.WQmax) {
+	LS.WQlen = LS.WQmax; /* alloc them */
+	FdWQueued++;
+    }
     return LS.WQueue + LS.WQmax - delta; /* return the address of first one */
 }
 
@@ -199,7 +202,8 @@ static byte RemoteGzip(uldat Slot) {
 	    
 	    if (z->avail_out < (delta = z->avail_in + 12)) {
 		if (RemoteWriteQueue(slot, delta - z->avail_out, NULL)) {
-		    ls.WQlen -= delta;
+		    if (!(ls.WQlen -= delta))
+			FdWQueued--;
 		    z->next_out = RemoteWriteFillQueue(slot, &z->avail_out);
 		} else /* out of memory ! */
 		    break;
@@ -208,13 +212,17 @@ static byte RemoteGzip(uldat Slot) {
 	    zret = deflate(z, Z_SYNC_FLUSH);
 
 	    /* update the compressed queue */
-	    ls.WQlen -= z->avail_out;
+	    if (!(ls.WQlen -= z->avail_out))
+		FdWQueued--;
 	}
     }
     /* update the uncompressed queue */
     if (z->avail_in)
 	CopyMem(LS.WQueue + LS.WQlen - z->avail_in, LS.WQueue, z->avail_in);
-    LS.WQlen = z->avail_in;
+
+    slot = LS.WQlen;
+    if (!(LS.WQlen = z->avail_in) && slot)
+	FdWQueued--;
     
     return zret == Z_OK;
     
@@ -340,9 +348,11 @@ static byte SendToMsgPort(msgport *MsgPort, udat Len, byte *Data) {
 	tMsg->Magic == msg_magic) {
 	
 	if (tMsg->Type == TW_MSG_WINDOW_KEY)
-	    _Len = Delta + tMsg->Event.EventKeyboard.SeqLen;
+	    _Len = (FnMsg->Size - Delta) + tMsg->Event.EventKeyboard.SeqLen;
+	else if (tMsg->Type == TW_MSG_SELECTIONNOTIFY)
+	    _Len = (FnMsg->Size - Delta) + tMsg->Event.EventSelectionNotify.Len;
 	else
-	    _Len = FnMsg->Size;
+	    _Len = FnMsg->Size - Delta;
 	
 	if ((Msg = Do(Create,Msg)(FnMsg, tMsg->Type, _Len))) {
 
@@ -351,7 +361,7 @@ static byte SendToMsgPort(msgport *MsgPort, udat Len, byte *Data) {
 			       tMsg->Event.EventCommon.Window);
 
 	    switch (tMsg->Type) {
-#if defined(CONF_MODULES) || defined (CONF_HW_DISPLAY)
+#if defined(CONF__MODULES) || defined (CONF_HW_DISPLAY)
 	      case TW_MSG_DISPLAY:
 
 		if (sizeof(struct tevent_display) == sizeof(twindow) + 4*sizeof(dat) + sizeof(byte *)) {
@@ -370,7 +380,7 @@ static byte SendToMsgPort(msgport *MsgPort, udat Len, byte *Data) {
 		    ok = FALSE;
 		      
 		break;
-#endif /* defined(CONF_MODULES) || defined (CONF_HW_DISPLAY) */
+#endif /* defined(CONF__MODULES) || defined (CONF_HW_DISPLAY) */
 	      case TW_MSG_WINDOW_KEY:
 		if (sizeof(struct tevent_keyboard) == sizeof(twindow) + 3*sizeof(dat) + 2*sizeof(byte)) {
 		    CopyMem((void *)&tMsg->Event.EventKeyboard.Code,
@@ -398,6 +408,16 @@ static byte SendToMsgPort(msgport *MsgPort, udat Len, byte *Data) {
 		    Msg->Event.EventMouse.Y             = tMsg->Event.EventMouse.Y;
 		}
 		break;
+	      case MSG_SELECTIONCLEAR:
+		if (sizeof(struct tevent_common) == sizeof(twindow) + 2*sizeof(dat)) {
+		    CopyMem((void *)&tMsg->Event.EventCommon.Code,
+			    (void *)& Msg->Event.EventCommon.Code, 2*sizeof(dat));
+		} else {
+		    Msg->Event.EventCommon.Code         = tMsg->Event.EventCommon.Code;
+		    Msg->Event.EventCommon.pad          = tMsg->Event.EventCommon.pad;
+		}
+		break;
+
 /* TODO: finish this */
 #if 0
 	      case MSG_WINDOW_CHANGE:
@@ -414,15 +434,6 @@ static byte SendToMsgPort(msgport *MsgPort, udat Len, byte *Data) {
 		Push(t, udat,    Msg->Event.EventMenu.pad);
 		Push(t, tmenu,   Obj2Id(Msg->Event.EventMenu.Menu));
 		break;
-	      case MSG_CLIPBOARD:
-		Push(t, udat,    Msg->Event.EventClipBoard.Code);
-		Push(t, udat,    Msg->Event.EventClipBoard.ShiftFlags);
-		Push(t, dat,     Msg->Event.EventClipBoard.X);
-		Push(t, dat,     Msg->Event.EventClipBoard.Y);
-		Push(t, uldat,   All->ClipMagic);
-		Push(t, uldat,   All->ClipLen);
-		PushV(t, All->ClipLen, All->ClipData);
-		break;
 #endif
 	      default:
 		ok = FALSE;
@@ -433,10 +444,22 @@ static byte SendToMsgPort(msgport *MsgPort, udat Len, byte *Data) {
 		SendMsg(MsgPort, Msg);
 		return TRUE;
 	    }
+	    
+	    Delete(Msg);
 	}
     }
     return FALSE;
 }
+
+static void BlindSendToMsgPort(msgport *MsgPort, udat Len, byte *Data) {
+    (void)SendToMsgPort(MsgPort, Len, Data);
+}
+
+static obj *GetOwnerSelection(void);
+static void SetOwnerSelection(msgport *Owner, time_t Time, frac_t Frac);
+static void NotifySelection(obj *Requestor, uldat ReqPrivate,
+			    uldat Magic, byte MIME[MAX_MIMELEN], uldat Len, byte *Data);
+static void RequestSelection(obj *Owner, uldat ReqPrivate);
 
 
 /* Second: socket handling functions */
@@ -465,6 +488,7 @@ static uldat FindFunction(byte Len, byte *name);
 #define FN1(name)	Fn##name,
 #define FN2(name)
 
+#define Act0(funct,name) (funct##name)
 #define Act1(funct,name) Do(funct,name)
 #define Act2(funct,name) Act(funct,A(1))
 
@@ -521,26 +545,12 @@ NAME(funct, name) \
   RET##fn(ret0,f0, Act##fn(funct,name) (FN##fn(name))) \
 }
 
-#define PROTO0Abs(ret0,f0, funct,name,fn) \
-NAME(funct, name) \
-{ D(0,ret0,f0) \
-  RET##fn(ret0,f0, (funct##name) ()) \
-}
-
 #define PROTO1(ret0,f0, funct,name,fn, arg1,f1) \
 NAME(funct, name) \
 { D(0,ret0,f0) \
   D(1,arg1,f1) \
   P(f0,1,arg1,f1,i##f1, \
   RET##fn(ret0,f0, Act##fn(funct,name) (FN##fn(name) A(1)))) \
-}
-
-#define PROTO1Abs(ret0,f0, funct,name,fn, arg1,f1) \
-NAME(funct, name) \
-{ D(0,ret0,f0) \
-  D(1,arg1,f1) \
-  P(f0,1,arg1,f1,i##f1, \
-  RET##fn(ret0,f0, (funct##name) (A(1)))) \
 }
 
 #define PROTO2(ret0,f0, funct,name,fn, arg1,f1, arg2,f2) \
@@ -551,15 +561,7 @@ NAME(funct, name) \
   RET##fn(ret0,f0, Act##fn(funct,name) (FN##fn(name) A(1), A(2))))) \
 }
 
-#define PROTO2Abs(ret0,f0, funct,name,fn, arg1,f1, arg2,f2) \
-NAME(funct, name) \
-{ D(0,ret0,f0) \
-  D(1,arg1,f1) D(2,arg2,f2) \
-  P(f0,1,arg1,f1,i##f1, P(f0,2,arg2,f2,i##f2, \
-  RET##fn(ret0,f0, (funct##name) (A(1), A(2))))) \
-}
-
-#define PROTO2FindFunction PROTO2Abs
+#define PROTO2FindFunction PROTO2
 
 #define PROTO3(ret0,f0, funct,name,fn, arg1,f1, arg2,f2, arg3,f3) \
 NAME(funct, name) \
@@ -567,14 +569,6 @@ NAME(funct, name) \
   D(1,arg1,f1) D(2,arg2,f2) D(3,arg3,f3) \
   P(f0,1,arg1,f1,i##f1, P(f0,2,arg2,f2,i##f2, P(f0,3,arg3,f3,i##f3, \
   RET##fn(ret0,f0, Act##fn(funct,name) (FN##fn(name) A(1), A(2), A(3)))))) \
-}
-
-#define PROTO3Abs(ret0,f0, funct,name,fn, arg1,f1, arg2,f2, arg3,f3) \
-NAME(funct, name) \
-{ D(0,ret0,f0) \
-  D(1,arg1,f1) D(2,arg2,f2) D(3,arg3,f3) \
-  P(f0,1,arg1,f1,i##f1, P(f0,2,arg2,f2,i##f2, P(f0,3,arg3,f3,i##f3, \
-  RET##fn(ret0,f0, funct##name (A(1), A(2), A(3)))))) \
 }
 
 #define PROTO4(ret0,f0, funct,name,fn, arg1,f1, arg2,f2, arg3,f3, arg4,f4) \
@@ -974,7 +968,7 @@ static void inetSocketIO(int fd, uldat slot) {
     }
 }
 
-void sockKillSlot(uldat slot) {
+static void sockKillSlot(uldat slot) {
     msgport *MsgPort;
     display_hw *D_HW;
     
@@ -1100,7 +1094,7 @@ static void sockSendMsg(msgport *MsgPort, msg *Msg) {
     Slot = MsgPort->RemoteData.FdSlot;
 	
     switch (Msg->Type) {
-#if defined(CONF_MODULES) || defined (CONF_HW_DISPLAY)
+#if defined(CONF__MODULES) || defined (CONF_HW_DISPLAY)
       case MSG_DISPLAY:
 	Easy = FALSE;
 	Reply(Msg->Type, Len = sizeof(twindow) + 4*sizeof(udat) + Msg->Event.EventDisplay.Len, NULL);
@@ -1120,7 +1114,7 @@ static void sockSendMsg(msgport *MsgPort, msg *Msg) {
 	    PushV(t, Msg->Event.EventDisplay.Len, Msg->Event.EventDisplay.Data);
 	}
 	break;
-#endif /* defined(CONF_MODULES) || defined (CONF_HW_DISPLAY) */
+#endif /* defined(CONF__MODULES) || defined (CONF_HW_DISPLAY) */
       case MSG_WINDOW_KEY:
 	if (Easy && sizeof(event_keyboard) == sizeof(window *) + 3*sizeof(dat) + 2*sizeof(byte))
 	    break;
@@ -1193,47 +1187,67 @@ static void sockSendMsg(msgport *MsgPort, msg *Msg) {
 	    Push(t, tmenu,   Obj2Id(Msg->Event.EventMenu.Menu));
 	}
 	break;
-      case MSG_CLIPBOARD:
-	if (sizeof(event_clipboard) == sizeof(window *) + 4*sizeof(dat))
+      case MSG_SELECTION:
+	if (Easy && sizeof(event_selection) == sizeof(window *) + 4*sizeof(dat))
 	    break;
 	else
 	    Easy = FALSE;
-	if (!All->ClipLen)
-	    return;
-	Reply(Msg->Type, Len = sizeof(twindow) + 4*sizeof(dat) + 2*sizeof(ldat) + All->ClipLen, NULL);
+	Reply(Msg->Type, Len = sizeof(twindow) + 4*sizeof(dat) + 2*sizeof(ldat), NULL);
 	if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
 	    t += Tot - Len;
-	    Push(t, twindow, Obj2Id(Msg->Event.EventClipBoard.Window));
-	    Push(t, udat,    Msg->Event.EventClipBoard.Code);
-	    Push(t, udat,    Msg->Event.EventClipBoard.ShiftFlags);
-	    Push(t, dat,     Msg->Event.EventClipBoard.X);
-	    Push(t, dat,     Msg->Event.EventClipBoard.Y);
-	    Push(t, uldat,   All->ClipMagic);
-	    Push(t, uldat,   All->ClipLen);
-	    PushV(t, All->ClipLen, All->ClipData);
+	    Push(t, twindow, Obj2Id(Msg->Event.EventSelection.Window));
+	    Push(t, udat,    Msg->Event.EventSelection.Code);
+	    Push(t, udat,    Msg->Event.EventSelection.pad);
+	    Push(t, dat,     Msg->Event.EventSelection.X);
+	    Push(t, dat,     Msg->Event.EventSelection.Y);
+	}
+	break;
+      case MSG_SELECTIONREQUEST:
+	if (Easy && sizeof(event_selectionrequest) == sizeof(window *) + 2*sizeof(dat) + sizeof(obj *) + sizeof(ldat))
+	    break;
+	else
+	    Easy = FALSE;
+	Reply(Msg->Type, Len = sizeof(twindow) + 2*sizeof(dat) + 2*sizeof(ldat), NULL);
+	if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
+	    t += Tot - Len;
+	    Push(t, twindow, Obj2Id(Msg->Event.EventSelectionRequest.Window));
+	    Push(t, udat,    Msg->Event.EventSelectionRequest.Code);
+	    Push(t, udat,    Msg->Event.EventSelectionRequest.pad);
+	    Push(t, tobj,    Obj2Id(Msg->Event.EventSelectionRequest.Requestor));
+	    Push(t, uldat,   Msg->Event.EventSelectionRequest.ReqPrivate);
+	}
+	break;
+      case MSG_SELECTIONNOTIFY:
+	if (Easy && sizeof(event_selectionnotify) == sizeof(window *) + 2*sizeof(dat) +
+	    3*sizeof(ldat) + MAX_MIMELEN + sizeof(byte *))
+	    break;
+	else
+	    Easy = FALSE;
+	Reply(Msg->Type, Len = sizeof(twindow) + 2*sizeof(dat) + 3*sizeof(ldat)
+	      + MAX_MIMELEN + Msg->Event.EventKeyboard.SeqLen, NULL);
+	if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
+	    t += Tot - Len;
+	    Push(t, twindow, Obj2Id(Msg->Event.EventSelectionNotify.Window));
+	    Push(t, udat,    Msg->Event.EventSelectionNotify.Code);
+	    Push(t, udat,    Msg->Event.EventSelectionNotify.pad);
+	    Push(t, uldat,   Msg->Event.EventSelectionNotify.ReqPrivate);
+	    Push(t, uldat,   Msg->Event.EventSelectionNotify.Magic);
+	    PushV(t, MAX_MIMELEN, Msg->Event.EventSelectionNotify.MIME);
+	    Push(t, uldat,   Msg->Event.EventSelectionNotify.Len);
+	    PushV(t, Msg->Event.EventSelectionNotify.Len, Msg->Event.EventSelectionNotify.Data);
 	}
 	break;
       default:
-	break;
+	return;
     }
     if (Easy) {
 	Msg->Event.EventCommon.Window = (void *)Obj2Id(Msg->Event.EventCommon.Window);
 	if (Msg->Type == MSG_MENU_ROW)
 	    Msg->Event.EventMenu.Menu = (void *)Obj2Id(Msg->Event.EventMenu.Menu);
-	if (Msg->Type != MSG_CLIPBOARD)
-	    Reply(Msg->Type, Msg->Len, &Msg->Event);
-	else if (All->ClipLen) {
-	    uldat buf[3];
-	    buf[0] = (2 + 2) * sizeof(uldat) + Msg->Len + All->ClipLen;
-	    buf[1] = RequestN;
-	    buf[2] = Msg->Type;
-	    (void)RemoteWriteQueue(Slot, 3*sizeof(uldat), buf);
-	    (void)RemoteWriteQueue(Slot, Msg->Len, &Msg->Event);
-	    buf[0] = All->ClipMagic;
-	    buf[1] = All->ClipLen;
-	    (void)RemoteWriteQueue(Slot, 2*sizeof(uldat), buf);
-	    (void)RemoteWriteQueue(Slot, All->ClipLen, All->ClipData);
-	}
+	else if (Msg->Type == MSG_SELECTIONREQUEST)
+	    Msg->Event.EventSelectionRequest.Requestor
+	    = (void *)Obj2Id(Msg->Event.EventSelectionRequest.Requestor);
+	Reply(Msg->Type, Msg->Len, &Msg->Event);
     }
 }
 
@@ -1367,23 +1381,29 @@ static void NeedResizeDisplay(void){
 
 
 
+/*
+ * this does direct write() on the connecting socket,
+ * so it bypasses any compression.
+ */
 static void AttachHW(uldat len, byte *arg, byte redirect) {
     display_hw *D_HW;
     byte buf[2] = "\0";
-    int errfd;
+    int errfd, realFd;
     
+    realFd = LS.Fd >= 0 ? LS.Fd : FdList[LS.pairSlot].Fd;
+
     if (!LS.MsgPort) {
 	if (redirect)
-	    write(LS.Fd, "twin: AttachHW(): client did not create a MsgPort\n\0", 52);
+	    write(realFd, "twin: AttachHW(): client did not create a MsgPort\n\0", 52);
 	else
-	    write(LS.Fd, buf, 2);
+	    write(realFd, buf, 2);
 	return;
     }
     
     if (redirect) {
 	if ((errfd = dup(2)) >= 0) {
 	    close(2);
-	    dup2(LS.Fd, 2);
+	    dup2(realFd, 2);
 	} else
 	    redirect = 0;
     }
@@ -1400,7 +1420,7 @@ static void AttachHW(uldat len, byte *arg, byte redirect) {
 	if (D_HW->NeedHW & NEEDPersistentSlot)
 	    buf[1]++;
     }
-    write(LS.Fd, buf, 2);
+    write(realFd, buf, 2);
 
     if (redirect) {
 	/* wait for twattach to display messages... */
@@ -1408,11 +1428,11 @@ static void AttachHW(uldat len, byte *arg, byte redirect) {
 	struct timeval tv = {2,0};
 
 	FD_ZERO(&set);
-	FD_SET(LS.Fd, &set);
+	FD_SET(realFd, &set);
 	    
-	while (select(LS.Fd+1, &set, NULL, NULL, &tv) == -1 && errno == EINTR)
+	while (select(realFd+1, &set, NULL, NULL, &tv) == -1 && errno == EINTR)
 	    ;
-	read(LS.Fd, buf, 1);
+	read(realFd, buf, 1);
 	
 	close(2);
 	dup2(errfd, 2);
@@ -1431,6 +1451,24 @@ static void SetFontTranslation(byte trans[0x80]) {
 }
 
 
+static obj *GetOwnerSelection(void) {
+    return TwinSelectionGetOwner();
+}
+
+static void SetOwnerSelection(msgport *Owner, time_t Time, frac_t Frac) {
+    if (Owner && Owner == LS.MsgPort)
+	TwinSelectionSetOwner((obj *)Owner, Time, Frac);
+}
+
+static void NotifySelection(obj *Requestor, uldat ReqPrivate, uldat Magic, byte MIME[MAX_MIMELEN],
+			    uldat Len, byte *Data) {
+    TwinSelectionNotify(Requestor, ReqPrivate, Magic, MIME, Len, Data);
+}
+
+static void RequestSelection(obj *Owner, uldat ReqPrivate) {
+    if (LS.MsgPort)
+	TwinSelectionRequest((obj *)LS.MsgPort, ReqPrivate, Owner);
+}
 
 
 #ifdef MODULE

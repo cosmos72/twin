@@ -55,7 +55,7 @@ include $(TOPDIR)/conf/config.status
 # set variables according config.status
 # and group together all *.o objects needed by each binary
 #
-ifeq ($(CONF_MODULES),y)
+ifeq ($(CONF__MODULES),y)
   LDFLAGS_twin_real+=-rdynamic -ldl
   OBJS_twin_real+=$(DLOBJS)
   LDFLAGS_twdisplay+=-rdynamic -ldl
@@ -89,10 +89,10 @@ else
   endif
 endif
 
-ifeq ($(CONF_ALLOC),y)
+ifeq ($(CONF__ALLOC),y)
   OBJS_twin_real+=$(ALLOCOBJS)
   OBJS_twdisplay+=$(ALLOCOBJS)
-  CFLAGS+=-DCONF_ALLOC
+  CFLAGS+=-DCONF__ALLOC
 else
   EXCL_OBJS+=$(ALLOCOBJS)
 endif

@@ -64,10 +64,9 @@ static uldat FdListGrow(void) {
 }
 
 INLINE uldat FdListGet(void) {
-    if (FdBottom == FdSize)
-	return FdListGrow();
-    
-    return FdBottom;
+    if (FdBottom < FdSize)
+	return FdBottom;
+    return FdListGrow();
 }
 
 byte RemoteFlush(uldat Slot) {
@@ -76,12 +75,13 @@ byte RemoteFlush(uldat Slot) {
     if (Slot == NOSLOT || Slot >= FdTop || LS.Fd == NOFD)
 	return FALSE;
 
-#if defined(CONF_SOCKET_GZ) || defined(CONF_MODULES)
+#if defined(CONF_SOCKET_GZ) || defined(CONF__MODULES)
     if (LS.PrivateFlush) {
 	/* a (gzipped) paired slot:
 	 * PrivateFlush() does everything:
 	 * first gzip the data, then flush it */
 	chunk = LS.PrivateFlush(Slot);
+
 	if (LS.PrivateAfterFlush)
 	    LS.PrivateAfterFlush(Slot);
 	return (byte)chunk;
@@ -100,10 +100,11 @@ byte RemoteFlush(uldat Slot) {
 	LS.WQlen -= chunk;
     }
     
-    if (LS.WQlen && offset) {
-	MoveMem(LS.WQueue + offset, LS.WQueue, LS.WQlen);
+    if (LS.WQlen) {
 	FD_SET(LS.Fd, &save_wfds);
-    } else if (!LS.WQlen) {
+	if (offset)
+	    MoveMem(LS.WQueue + offset, LS.WQueue, LS.WQlen);
+    } else {
 	FD_CLR(LS.Fd, &save_wfds);
 	FdWQueued--;
     }

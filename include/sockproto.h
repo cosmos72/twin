@@ -51,17 +51,17 @@
 
 PROTO2FindFunction(uldat,_, Find,Function,0, byte,_, byte,V(A(1)))
 
-PROTO0Abs(byte,_,  Sync,Socket,0)
+PROTO0(byte,_,  Sync,Socket,0)
 
-PROTO0Abs(byte,_, Can,Compress,0)
-PROTO1Abs(byte,_, Do,Compress,0, byte,_)
+PROTO0(byte,_, Can,Compress,0)
+PROTO1(byte,_, Do,Compress,0, byte,_)
 
-PROTO0Abs(void,v, NeedResize,Display,0)
+PROTO0(void,v, NeedResize,Display,0)
 
-PROTO3Abs(void,v, Attach,HW,0, uldat,_, byte,V(A(1)), byte,_)
-PROTO2Abs(byte,_, Detach,HW,0, uldat,_, byte,V(A(1)))
+PROTO3(void,v, Attach,HW,0, uldat,_, byte,V(A(1)), byte,_)
+PROTO2(byte,_, Detach,HW,0, uldat,_, byte,V(A(1)))
 
-PROTO1Abs(void,v,  Set,FontTranslation,0, byte,V(0x80))
+PROTO1(void,v,  Set,FontTranslation,0, byte,V(0x80))
 
 PROTO20(gadget,x, Create,Gadget,1,
 	window,x,hwcol,_,hwcol,_,hwcol,_,hwcol,_,
@@ -88,7 +88,7 @@ PROTO2(void,v,    SetColText,Window,2, window,x, hwcol,_)
 PROTO11(void,v, SetColors,Window,2, window,x, udat,_, hwcol,_, hwcol,_,
 	hwcol,_, hwcol,_, hwcol,_, hwcol,_, hwcol,_, hwcol,_, hwcol,_)
 PROTO8(void,v,     Configure,Window,2, window,x, byte,_, dat,_, udat,_, udat,_, udat,_, udat,_, udat,_)
-PROTO3Abs(void,v,     Resize,Window,0, window,x, udat,_, udat,_)
+PROTO3(void,v,     Resize,Window,0, window,x, udat,_, udat,_)
 
 PROTO3(gadget,x,SearchGadget,Window,2, window,x, dat,_, dat,_)
 
@@ -106,21 +106,27 @@ PROTO1(void,v,   Delete,MsgPort,2, msgport,x)
 
 PROTO4(void,v,  BgImage,Screen,2, screen,x, udat,_, udat,_, hwattr,V(A(2)*A(3)))
 
-PROTO0Abs(screen  ,x, First,Screen,  0)
-PROTO1Abs(window  ,x, First,Window,  0, screen, x)
-PROTO1Abs(gadget  ,x, First,Gadget,  0, window, x)
-PROTO0Abs(msgport ,x, First,MsgPort, 0)
-PROTO1Abs(menu    ,x, First,Menu,    0, msgport,x)
-PROTO1Abs(menuitem,x, First,MenuItem,0, menu,   x)
+PROTO0(screen  ,x, First,Screen,  0)
+PROTO1(window  ,x, First,Window,  0, screen, x)
+PROTO1(gadget  ,x, First,Gadget,  0, window, x)
+PROTO0(msgport ,x, First,MsgPort, 0)
+PROTO1(menu    ,x, First,Menu,    0, msgport,x)
+PROTO1(menuitem,x, First,MenuItem,0, menu,   x)
 
-PROTO1Abs(obj,x,   Prev,Obj,0, obj,x)
-PROTO1Abs(obj,x,   Next,Obj,0, obj,x)
-PROTO1Abs(obj,x, Parent,Obj,0, obj,x)
+PROTO1(obj,x,   Prev,Obj,0, obj,x)
+PROTO1(obj,x,   Next,Obj,0, obj,x)
+PROTO1(obj,x, Parent,Obj,0, obj,x)
 
-PROTO1Abs(udat,_,  GetWidth,Screen,0, screen,x)
-PROTO1Abs(udat,_, GetHeight,Screen,0, screen,x)
+PROTO0(udat,_, GetDisplay,Width,0)
+PROTO0(udat,_, GetDisplay,Height,0)
 
-PROTO3Abs(byte,_, SendTo,MsgPort,0, msgport,x, udat,_, byte,V(A(2)))
+PROTO3(byte,_, SendTo,MsgPort,0, msgport,x, udat,_, byte,V(A(2)))
+PROTO3(void,v, BlindSendTo,MsgPort,0, msgport,x, udat,_, byte,V(A(2)))
+
+PROTO0(obj, x, GetOwner,Selection,0)
+PROTO3(void,v, SetOwner,Selection,0, msgport,x, time_t,_, frac_t,_)
+PROTO2(void,v,  Request,Selection,0, obj,x, uldat,_)
+PROTO6(void,v,   Notify,Selection,0, obj,x, uldat,_, uldat,_, byte,V(TW_MAX_MIMELEN), uldat,_, byte,V(A(5)))
 
 #endif /* _TW_SOCKPROTO_H */
 

@@ -24,8 +24,15 @@ function yesno() {
     eval "$1"="$ANS"
 }
 
+function yesno_dep() {
+   DEP=$(eval "echo \"\${$2}\"")
+   if test "$DEP" != n; then
+      yesno "$1"
+   fi
+}
+
 function yesmodno() {
-   if [ $CONF_MODULES = n ]; then
+   if [ $CONF__MODULES = n ]; then
       yesno "$1"
    else
       ANS=
@@ -55,6 +62,18 @@ function yesmodno() {
    fi
 }
 
+function warn() {
+   echo -e "$@"
+}
+
+function menu() {
+   echo -e "#\n# "$(eval "echo \"\${${1}_MENU}\"")"\n#"
+}
+
+function endmenu() {
+   :
+}
+
 function dump() {
     VAL=$(eval "echo \"\${$1}\"")
     echo "$1=$VAL"
@@ -71,7 +90,6 @@ else
     echo "# Using default configuration from config.default"
     source conf/config.default
 fi
-echo "#"
 
 source conf/config.base
 
@@ -83,7 +101,7 @@ cat >conf/config.status <<EOF
 #
 EOF
 
-exec >>conf/config.status
 for i in `cat conf/config.list`; do
     dump $i
-done
+done >>conf/config.status
+

@@ -121,16 +121,13 @@
    - the various clients (twcat, twterm, ...) in the clients/ subdirectory.
    
    The first time you run `make' or each time you run `make config', a shell
-   scripts is executed to let you configure twin. It looks like this:
+   scripts is executed to let you configure twin.
+   If you have "dialog" installed, you can also use `make menuconfig'
+   for a somewhat (?) more friendly interface. 
    
-	/bin/sh scripts/Configure
-	#
-	# Twin configuration utility
-	#
-	# Using default configuration from config.default
-	#
+   In both cases, the questions asked are equivalent:
 
-   and then it asks some questions:
+   First question:
    
 	Enable modules [Y/n] ?
 	
@@ -154,11 +151,14 @@
    Answer `y' if you want to enable transparent gzip compression in the
    socket connections. Read paragraph `7. Transparent Compression' for details.
    
-   	Use custom malloc/free routines (tested on i386 only) [Y/n] ?
+   	Use custom malloc/free routines (tested on Linux i386 only) [Y/n] ?
    
    Answer 'y' to use home-made, mmap() based replacements of malloc/free.
    Their main (only) advantage is they are very clever in returning
    unused memory to the system.
+   Anyway, they are tested only on Linux i386, and furthermore
+   they shoot heavily on the kernel mmap subsystem,
+   so on some OSes they may give troubles.
    
 	HW support: textmode terminals (Linux console, ...) [Y/m/n] ?
 
@@ -191,11 +191,13 @@
    
    Now you are ready to compile.
    If this is the first time you run `make', everything is automatic.
-   If you just typed `make config', then you now need to run `make'.
+   If you just typed `make config' or `make menuconfig', then you now need
+   to run `make'.
    
    In case you get errors during compilation and you really can't solve
    the problem by your own, you can e-mail me at <max@linuz.sns.it>
-   sending an _EXACT_ copy of what `make' printed, and I'll try to help you.
+   sending an _EXACT_ copy of what `make' printed and also specifying
+   your operating system (uname -a), and I'll try to help you.
 
 
 4. Installing and Starting twin
@@ -217,11 +219,8 @@
    on most systems, after the installation it is necessary to run `ldconfig'
    as root before programs can find libTw.so* shared libraries.
 
-   If you compiled some display driver as module, twin will NOT autoprobe
-   for it and you will need to use `twin -hw=<display>' to load and use
-   a modularized display driver.
-
-   Warning: if you compiled some code as module, twin will search it
+   WARNING:
+   if you compiled some code as module, twin will search it
    only in $DESTDIR/lib/twin/modules so it may not find the modules
    until you install them.
    To make debugging easier, if you compile with DESTDIR not set then
@@ -233,13 +232,17 @@
    all kinds of bad things may happen.
    The most common effect is that `twin' dies with a SEGFAULT.
 
+
+   If you compiled some display driver as module, twin will NOT autoprobe
+   for it and you will need to use `twin -hw=<display>' to load and use
+   a modularized display driver.
    
    After twin is installed, to start it just type
    
    twin
    
    If you did not install twin yet, you can go to the directory where
-   you compiled twin, then:
+   you compiled twin, then run:
    
    cd server/
    ./twin_real
@@ -275,17 +278,19 @@
    well, I feel quite stupid too writing it, but I must start from somewhere ;)
    
    Each word in the menu just appeared is a `menuitem'.
+   The "ð" menuitem lets you pop up some utility windows, including a Clock,
+   the Option window, the Display window and the About window.
    The "File" menuitem lets you quit twin, suspend or detach it and,
    if the built-in terminal emulator code is loaded, open a terminal window.
    The "Edit" menuitem is just a standard entry but it's not usable here.
-   The "Options" menuitem lets you customize some aspects of twin: currently
-   you can use it to add/remove window shadows.
    The "Modules" menuitem lets you insert/remove modules from the running twin:
    you can "Run Twin Term" to insert the terminal emulator module,
    you can "Stop Twin Term" to kill all terminal windows and unload the module;
    you can "Run Socket Server" to insert the support code for running external
    programs, you can "Stop Socket Server" to remove that code and kill all
    external programs.
+   The "Window" menuitem is common to all menus and lets you do several
+   operations on windows (explained immediately below)
    
    Ok, enough boring stuff for now... let's jump to something else.
 
@@ -293,7 +298,7 @@
    a new menu while the previous gets inaccessible. When you start without
    windows, you are presented the default menu described above.
    Anyway, all menus share a common part: the "Window" menuitem, which
-   lets you do obvious operations with all windows
+   lets you do basic operations with all windows
    -- Close, Move, Resize, Center, Zoom, cycle through windows (Next) --
    and also lets you open the Window List.
    You can open the Window List also by middle-cliking on the desktop,
@@ -311,7 +316,7 @@
    Raise/Lower to move the focused window to top/bottom of windows stack
    while keeping it focused.
    
-   Starting from twin 0.2.5, you can use the menus even without a mouse.
+   You can use the menus even without a mouse.
    Hit the `Pause' key (edit server/hotkey.h and recompile to change it)
    to open the menu, then you can transverse the menu with arrow keys, hit
    `Return' to select an entry in a menuitem or `Escape' to close the menu.
@@ -348,7 +353,7 @@
    drag the `tab' (the solid white bar) to quickly scroll the window;
    click on the space before or after the `tab' to scroll the window contents
    one page at time.
-   Unlike older versions (before 0.2.7), twin now splits the concepts
+   Unlike older versions (0.2.6 and earlier), twin now splits the concepts
    of top window and focused window: left-clicking on a window will focus it,
    so that keypresses will go to that window, but you will need to click
    on the window's TOP/BACK button to have it become the top window. Clicking
@@ -361,7 +366,7 @@
    
 6. External programs
 
-   If you have `twin' correctly installed and running (and you eventually
+   If you have `twin' correctly installed and running (and eventually you
    loaded the Socket Server module) you can run an external program
    by typing its name, just as you do with X11 clients.
    If twin is not installed yet, you will need to set LD_LIBRARY_PATH to the
@@ -387,6 +392,7 @@
    The external programs (clients) distributed with twin are:
    
 	twattach  - utility to attach/detach twin from displays
+	twdisplay - advanced utility to attach/detach twin from displays
 	twcat     - twin-aware version of `cat'
 	twedit    - a wannabe twin editor. For now, it's just a test.
 	twevent   - display twin events, like xev (X11) and mev (console/gpm)
@@ -428,6 +434,9 @@
    
 8. Attach/Detach
 
+   Twin can run without a display at all, can attach or detach from a display
+   on the fly, and can run on multiple displays simultaneously.
+   
    There are various ways to temporarily close a display used by twin:
    
    1) select `Suspend' from the `File' entry of the default menu.
@@ -582,7 +591,7 @@
     if you do not specify `-twin@<TWDISPLAY>', the default $TWDISPLAY will
     be used.
       
-    know displays are:
+    known displays are:
       
       -hw=X[@<XDISPLAY>]     or    -hw=X11[@<XDISPLAY>]
       -hw=twin[@<TWDISPLAY>]
@@ -591,6 +600,10 @@
 	
     and known display options are:
       
+      all displays : ",noinput" to start the display as view-only;
+                     keyboard and mouse activity on that display
+		     will be ignored.
+		  
       -hw=X  or
       -hw=X11	: ",font=<fontname>" to choose your favourite X11 font
 		  (default: vga)

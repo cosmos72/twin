@@ -438,7 +438,7 @@ static byte GPM_InitMouse(void) {
 	return FALSE;
     }
     
-    HW->SoftMouse = TRUE; /* _we_ Hide/Show it */
+    HW->FlagsHW |= FlHWSoftMouse; /* _we_ Hide/Show it */
     
     HW->MouseEvent = GPM_MouseEvent;
     HW->QuitMouse = GPM_QuitMouse;
@@ -569,7 +569,7 @@ static byte xterm_InitMouse(void) {
     HW->MouseEvent = xterm_MouseEvent;
     HW->QuitMouse = xterm_QuitMouse;
     
-    HW->SoftMouse = FALSE; /* no need to Hide/Show it */
+    HW->FlagsHW &= ~FlHWSoftMouse; /* no need to Hide/Show it */
     HW->ShowMouse = HW->HideMouse = NoOp; /* override the ones set by InitVideo() */
     
     return TRUE;
@@ -675,7 +675,7 @@ static byte warn_NoMouse(void) {
 	HW->MouseEvent = (void *)NoOp;
 	HW->QuitMouse = NoOp;
     
-	HW->SoftMouse = FALSE; /* no need to Hide/Show it */
+	HW->FlagsHW &= ~FlHWSoftMouse; /* no need to Hide/Show it */
 	HW->ShowMouse = HW->HideMouse = NoOp; /* override the ones set by InitVideo() */
 	
 	return TRUE;
@@ -735,6 +735,10 @@ static void stdout_Configure(udat resource, byte todefault, udat value);
 static void stdout_FlushHW(void);
 static void stdout_SetPalette(udat N, udat R, udat G, udat B);
 static void stdout_ResetPalette(void);
+static void tty_UpdateMouseAndCursor(void);
+
+static byte stdout_CanDragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp);
+static void stdout_DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp);
 
 /* output through /dev/vcsaXX */
 
@@ -783,15 +787,20 @@ static byte vcsa_InitVideo(void) {
 
     HW->ShowMouse = vcsa_ShowMouse;
     HW->HideMouse = vcsa_HideMouse;
+    HW->UpdateMouseAndCursor = tty_UpdateMouseAndCursor;
 
     HW->DetectSize  = stdin_DetectSize; stdin_DetectSize(&HW->usedX, &HW->usedY);
     HW->CheckResize = stdin_CheckResize;
     HW->Resize      = stdin_Resize;
     
-    HW->ImportClipBoard = (void *)NoOp;
-    HW->ExportClipBoard = (void *)NoOp;
+    HW->HWSelectionImport  = AlwaysFalse;
+    HW->HWSelectionExport  = NoOp;
+    HW->HWSelectionRequest = (void *)NoOp;
+    HW->HWSelectionNotify  = (void *)NoOp;
+    HW->HWSelectionPrivate = NULL;
     
-    HW->CanDragArea = NULL; 
+    HW->CanDragArea = stdout_CanDragArea;
+    HW->DragArea = stdout_DragArea;
    
     HW->XY[0] = HW->XY[1] = 0;
     HW->TT = (uldat)-1; /* force updating cursor */
@@ -803,8 +812,8 @@ static byte vcsa_InitVideo(void) {
 
     HW->QuitVideo = vcsa_QuitVideo;
     
-    HW->NeedOldVideo = TRUE;
-    HW->ExpensiveFlushVideo = FALSE;
+    HW->FlagsHW |= FlHWNeedOldVideo;
+    HW->FlagsHW &= ~FlHWExpensiveFlushVideo;
     HW->NeedHW = 0;
     HW->CanResize = FALSE;
     HW->merge_Threshold = 40;
@@ -826,88 +835,96 @@ static void vcsa_QuitVideo(void) {
 static void vcsa_FlushVideo(void) {
     dat i, j;
     uldat prevS = (uldat)-1, prevE = (uldat)-1, _prevS, _prevE, _start, _end, start, end;
-    byte FlippedVideo = FALSE;
+    byte FlippedVideo = FALSE, FlippedOldVideo = FALSE;
+    hwattr savedOldVideo;
     
-    if (ChangedVideoFlag) {
-	/* this hides the mouse if needed ... */
+    if (!ChangedVideoFlag) {
+	HW->UpdateMouseAndCursor();
+	return;
+    }
     
-	/* first, check the old mouse position */
-	if (HW->SoftMouse) {
-	    if (HW->ChangedMouseFlag) {
-		/* dirty the old mouse position, so that it will be overwritten */
-		
-		/*
-		 * with multi-display this is a hack, but since OldVideo gets restored
-		 * by VideoFlipMouse() below *BEFORE* returning from vcsa_FlushVideo(),
-		 * that's ok.
-		 */
-		DirtyVideo(HW->Last_x, HW->Last_y, HW->Last_x, HW->Last_y);
-		if (ValidOldVideo)
-		    OldVideo[HW->Last_x + HW->Last_y * ScreenWidth] = ~Video[HW->Last_x + HW->Last_y * ScreenWidth];
-	    }
+    /* this hides the mouse if needed ... */
+    
+    /* first, check the old mouse position */
+    if (HW->FlagsHW & FlHWSoftMouse) {
+	if (HW->FlagsHW & FlHWChangedMouseFlag) {
+	    /* dirty the old mouse position, so that it will be overwritten */
 	    
-	    i = HW->MouseState.x;
-	    j = HW->MouseState.y;
 	    /*
-	     * instead of calling ShowMouse(),
-	     * we flip the new mouse position in Video[] and dirty it if necessary.
-	     * this avoids glitches if the mouse is between two dirty areas
-	     * that get merged.
+	     * with multi-display this is a hack, but since OldVideo gets restored
+	     * by VideoFlip() below *BEFORE* returning from vcsa_FlushVideo(),
+	     * that's ok.
 	     */
-	    if (HW->ChangedMouseFlag || (FlippedVideo = Threshold_isDirtyVideo(i, j))) {
-		VideoFlipMouse();
-		if (!FlippedVideo)
-		    DirtyVideo(i, j, i, j);
-		HW->ChangedMouseFlag = FALSE;
-		FlippedVideo = TRUE;
-	    } else
-		FlippedVideo = FALSE;
+	    DirtyVideo(HW->Last_x, HW->Last_y, HW->Last_x, HW->Last_y);
+	    if (ValidOldVideo) {
+		FlippedOldVideo = TRUE;
+		savedOldVideo = OldVideo[HW->Last_x + HW->Last_y * ScreenWidth];
+		OldVideo[HW->Last_x + HW->Last_y * ScreenWidth] = ~Video[HW->Last_x + HW->Last_y * ScreenWidth];
+	    }
 	}
 	
-	for (i=0; i<ScreenHeight*2; i++) {
-	    _start = start = (uldat)ChangedVideo[i>>1][i&1][0];
-	    _end   = end   = (uldat)ChangedVideo[i>>1][i&1][1];
+	i = HW->MouseState.x;
+	j = HW->MouseState.y;
+	/*
+	 * instead of calling ShowMouse(),
+	 * we flip the new mouse position in Video[] and dirty it if necessary.
+	 * this avoids glitches if the mouse is between two dirty areas
+	 * that get merged.
+	 */
+	if ((HW->FlagsHW & FlHWChangedMouseFlag) || (FlippedVideo = Threshold_isDirtyVideo(i, j))) {
+	    VideoFlip(i, j);
+	    if (!FlippedVideo)
+		DirtyVideo(i, j, i, j);
+	    HW->FlagsHW &= ~FlHWChangedMouseFlag;
+	    FlippedVideo = TRUE;
+	} else
+	    FlippedVideo = FALSE;
+    }
+    
+    for (i=0; i<ScreenHeight*2; i++) {
+	_start = start = (uldat)ChangedVideo[i>>1][i&1][0];
+	_end   = end   = (uldat)ChangedVideo[i>>1][i&1][1];
 	    
-	    if (start != (uldat)-1) {
+	if (start != (uldat)-1) {
 		
-		/* actual tty size could be different from ScreenWidth*ScreenHeight... */
-		start += (i>>1) * ScreenWidth;
-		end   += (i>>1) * ScreenWidth;
+	    /* actual tty size could be different from ScreenWidth*ScreenHeight... */
+	    start += (i>>1) * ScreenWidth;
+	    end   += (i>>1) * ScreenWidth;
 
-		_start += (i>>1) * HW->X;
-		_end   += (i>>1) * HW->X;
+	    _start += (i>>1) * HW->X;
+	    _end   += (i>>1) * HW->X;
 		
 		
-		if (prevS != (uldat)-1) {
-		    if (start - prevE < HW->merge_Threshold) {
-			/* the two chunks are (almost) contiguous, merge them */
-			/* if HW->X != ScreenWidth we can merge only if they do not wrap */
-			if (HW->X == ScreenWidth || prevS / ScreenWidth == end / ScreenWidth) {
-			    _prevE = prevE = end;
-			    continue;
-			}
+	    if (prevS != (uldat)-1) {
+		if (start - prevE < HW->merge_Threshold) {
+		    /* the two chunks are (almost) contiguous, merge them */
+		    /* if HW->X != ScreenWidth we can merge only if they do not wrap */
+		    if (HW->X == ScreenWidth || prevS / ScreenWidth == end / ScreenWidth) {
+			_prevE = prevE = end;
+			continue;
 		    }
-		    lseek(VcsaFd, 4+_prevS*sizeof(hwattr), SEEK_SET);
-		    write(VcsaFd, (void *)&Video[prevS], (prevE-prevS+1)*sizeof(hwattr));
 		}
-		prevS = start;
-		prevE = end;
-		_prevS = _start;
-		_prevE = _end;
+		lseek(VcsaFd, 4+_prevS*sizeof(hwattr), SEEK_SET);
+		write(VcsaFd, (void *)&Video[prevS], (prevE-prevS+1)*sizeof(hwattr));
 	    }
+	    prevS = start;
+	    prevE = end;
+	    _prevS = _start;
+	    _prevE = _end;
 	}
-	if (prevS != (uldat)-1) {
-	    lseek(VcsaFd, 4+_prevS*sizeof(hwattr), SEEK_SET);
-	    write(VcsaFd, (char *)&Video[prevS], (prevE-prevS+1)*sizeof(hwattr));
-	}
-    } else if (HW->SoftMouse && HW->ChangedMouseFlag)
-	HW->HideMouse();
+    }
+    if (prevS != (uldat)-1) {
+	lseek(VcsaFd, 4+_prevS*sizeof(hwattr), SEEK_SET);
+	write(VcsaFd, (char *)&Video[prevS], (prevE-prevS+1)*sizeof(hwattr));
+    }
     
     /* ... and this redraws the mouse */
-    if (HW->SoftMouse) {
+    if (HW->FlagsHW & FlHWSoftMouse) {
+	if (FlippedOldVideo)
+	    OldVideo[HW->Last_x + HW->Last_y * ScreenWidth] = savedOldVideo;
 	if (FlippedVideo)
-	    VideoFlipMouse();
-	else if (HW->ChangedMouseFlag)
+	    VideoFlip(HW->Last_x = HW->MouseState.x, HW->Last_y = HW->MouseState.y);
+	else if (HW->FlagsHW & FlHWChangedMouseFlag)
 	    HW->ShowMouse();
     }
     
@@ -922,7 +939,7 @@ static void vcsa_FlushVideo(void) {
 	setFlush();
     }
 
-    HW->ChangedMouseFlag = FALSE;
+    HW->FlagsHW &= ~FlHWChangedMouseFlag;
 }
 
 
@@ -948,7 +965,6 @@ static void vcsa_HideMouse(void) {
     lseek(VcsaFd, 4+_pos*sizeof(hwattr), SEEK_SET);
     write(VcsaFd, (char *)&Video[pos], sizeof(hwattr));
 }
-
 
 #endif /* CONF_HW_TTY_LINUX */
 
@@ -1003,26 +1019,29 @@ static byte stdout_InitVideo(void) {
 	return FALSE;
     } while (0);
 
-    fputs("\033[0;11m\033[2J\033[3h", stdOUT); /* clear colors, clear screen,
-						set IBMPC consolemap, set TTY_DISPCTRL */
+    fputs("\033[0;11m\033[2J\033[3h", stdOUT); /* clear colors, clear screen, */
+					       /* set IBMPC consolemap, set TTY_DISPCTRL */
     
     HW->FlushVideo = stdout_FlushVideo;
     HW->FlushHW = stdout_FlushHW;
 
     HW->ShowMouse = stdout_ShowMouse;
     HW->HideMouse = stdout_HideMouse;
-
+    HW->UpdateMouseAndCursor = tty_UpdateMouseAndCursor;
+    
     HW->DetectSize  = stdin_DetectSize;
     HW->CheckResize = stdin_CheckResize;
     HW->Resize      = stdin_Resize;
     
-    HW->ImportClipBoard = (void *)NoOp;
-    HW->ExportClipBoard = (void *)NoOp;
+    HW->HWSelectionExport = (void *)NoOp;
+    HW->HWSelectionRequest = (void *)NoOp;
+    HW->HWSelectionNotify = (void *)NoOp;
     
-    HW->CanDragArea = NULL; 
+    HW->CanDragArea = stdout_CanDragArea;
+    HW->DragArea = stdout_DragArea;
    
     HW->XY[0] = HW->XY[1] = 0;
-    HW->TT = -1; /* force updateing the cursor */
+    HW->TT = -1; /* force updating the cursor */
 	
     HW->Beep = stdout_Beep;
     HW->Configure = stdout_Configure;
@@ -1031,8 +1050,8 @@ static byte stdout_InitVideo(void) {
 
     HW->QuitVideo = stdout_QuitVideo;
     
-    HW->NeedOldVideo = TRUE;
-    HW->ExpensiveFlushVideo = FALSE;
+    HW->FlagsHW |= FlHWNeedOldVideo;
+    HW->FlagsHW &= ~FlHWExpensiveFlushVideo;
     HW->NeedHW = 0;
     HW->merge_Threshold = 0;
     
@@ -1113,60 +1132,73 @@ INLINE void stdout_Mogrify(dat x, dat y, uldat len) {
 }
 
 static void stdout_FlushVideo(void) {
-    dat i;
+    dat i, j;
     dat start, end;
-    byte FlippedVideo = FALSE;
+    byte FlippedVideo = FALSE, FlippedOldVideo = FALSE;
+    hwattr savedOldVideo;
     
-    if (ChangedVideoFlag) {
-	/* hide the mouse if needed */
-	
-	if (HW->SoftMouse) {
-	    /* first, check the old mouse position */
-	    if (HW->ChangedMouseFlag) {
-		/* dirty the old mouse position, so that it will be overwritten */
-		
-		/*
-		 * with multi-display this is a hack, but since OldVideo gets restored
-		 * by VideoFlipMouse() below *BEFORE* returning from stdout_FlushVideo(),
-		 * that's ok.
-		 */
-		DirtyVideo(HW->Last_x, HW->Last_y, HW->Last_x, HW->Last_y);
-		if (ValidOldVideo)
-		    OldVideo[HW->Last_x + HW->Last_y * ScreenWidth] = ~Video[HW->Last_x + HW->Last_y * ScreenWidth];
-	    }
+    if (!ChangedVideoFlag) {
+	HW->UpdateMouseAndCursor();
+	return;
+    }
+
+    /* hide the mouse if needed */
+    
+    /* first, check the old mouse position */
+    if (HW->FlagsHW & FlHWSoftMouse) {
+	if (HW->FlagsHW & FlHWChangedMouseFlag) {
+	    /* dirty the old mouse position, so that it will be overwritten */
 	    
-	    /* then, the new position */
-	    if (HW->ChangedMouseFlag || Plain_isDirtyVideo(HW->MouseState.x, HW->MouseState.y)) {
-		/* we'll trample on it. no problem, just tweak Video[]
-		 * so that it automagically redraws it */
-		VideoFlipMouse();
-		HW->ChangedMouseFlag = FALSE;
-		FlippedVideo = TRUE;
+	    /*
+	     * with multi-display this is a hack, but since OldVideo gets restored
+	     * below *BEFORE* returning from stdout_FlushVideo(), that's ok.
+	     */
+	    DirtyVideo(HW->Last_x, HW->Last_y, HW->Last_x, HW->Last_y);
+	    if (ValidOldVideo) {
+		FlippedOldVideo = TRUE;
+		savedOldVideo = OldVideo[HW->Last_x + HW->Last_y * ScreenWidth];
+		OldVideo[HW->Last_x + HW->Last_y * ScreenWidth] = ~Video[HW->Last_x + HW->Last_y * ScreenWidth];
 	    }
 	}
 	
-	stdout_MogrifyInit();
-	stdout_MogrifyNoCursor();
-	for (i=0; i<ScreenHeight*2; i++) {
-	    start = ChangedVideo[i>>1][i&1][0];
-	    end   = ChangedVideo[i>>1][i&1][1];
+        i = HW->MouseState.x;
+	j = HW->MouseState.y;
+	/*
+	 * instead of calling ShowMouse(),
+	 * we flip the new mouse position in Video[] and dirty it if necessary.
+	 */
+	if ((HW->FlagsHW & FlHWChangedMouseFlag) || (FlippedVideo = Plain_isDirtyVideo(i, j))) {
+	    VideoFlip(i, j);
+	    if (!FlippedVideo)
+		DirtyVideo(i, j, i, j);
+	    HW->FlagsHW &= ~FlHWChangedMouseFlag;
+	    FlippedVideo = TRUE;
+	} else
+	    FlippedVideo = FALSE;
+    }
 	
-	    if (start != -1)
-		stdout_Mogrify(start, i>>1, end-start+1);
-	}
-	/* put the cursor back in place */
-	stdout_MogrifyYesCursor();
-	HW->XY[0] = HW->XY[1] = -1;
+    stdout_MogrifyInit();
+    stdout_MogrifyNoCursor();
+    for (i=0; i<ScreenHeight*2; i++) {
+	start = ChangedVideo[i>>1][i&1][0];
+	end   = ChangedVideo[i>>1][i&1][1];
 	
-	setFlush();
-    } else if (HW->SoftMouse && HW->ChangedMouseFlag)
-	HW->HideMouse();
+	if (start != -1)
+	    stdout_Mogrify(start, i>>1, end-start+1);
+    }
+    /* put the cursor back in place */
+    stdout_MogrifyYesCursor();
+    HW->XY[0] = HW->XY[1] = -1;
+    
+    setFlush();
     
     /* ... and this redraws the mouse */
-    if (HW->SoftMouse) {
+    if (HW->FlagsHW & FlHWSoftMouse) {
+	if (FlippedOldVideo)
+	    OldVideo[HW->Last_x + HW->Last_y * ScreenWidth] = savedOldVideo;
 	if (FlippedVideo)
-	    VideoFlipMouse();
-	else if (HW->ChangedMouseFlag)
+	    VideoFlip(HW->Last_x = HW->MouseState.x, HW->Last_y = HW->MouseState.y);
+	else if (HW->FlagsHW & FlHWChangedMouseFlag)
 	    HW->ShowMouse();
     }
     
@@ -1178,7 +1210,7 @@ static void stdout_FlushVideo(void) {
 	stdout_SetCursorType(HW->TT = CursorType);
 	setFlush();
     }
-    HW->ChangedMouseFlag = FALSE;
+    HW->FlagsHW &= ~FlHWChangedMouseFlag;
 }
 
 static void stdout_FlushHW(void) {
@@ -1226,6 +1258,23 @@ static void stdout_HideMouse(void) {
     setFlush();
 }
 
+static void tty_UpdateMouseAndCursor(void) {
+    if ((HW->FlagsHW & FlHWSoftMouse) && (HW->FlagsHW & FlHWChangedMouseFlag)) {
+	HW->HideMouse();
+	HW->ShowMouse();
+	HW->FlagsHW &= ~FlHWChangedMouseFlag;
+    }
+
+    if ((CursorX != HW->XY[0] || CursorY != HW->XY[1]) && (CursorType != NOCURSOR)) {
+	stdout_MoveToXY(HW->XY[0] = CursorX, HW->XY[1] = CursorY);
+	setFlush();
+    }
+    if (CursorType != HW->TT) {
+	stdout_SetCursorType(HW->TT = CursorType);
+	setFlush();
+    }
+}
+
 static void stdout_Beep(void) {
     fputs("\033[3l\007\033[3h", stdOUT);
     setFlush();
@@ -1263,7 +1312,7 @@ static void stdout_Configure(udat resource, byte todefault, udat value) {
 
     
 static void stdout_SetPalette(udat N, udat R, udat G, udat B) {
-    fprintf(stdOUT, "\033]P%1hx%2hx%2hx%2hx", N, R, G, B);
+    fprintf(stdOUT, "\033]P%1hx%02hx%02hx%02hx", N, R, G, B);
     setFlush();
 }
 
@@ -1274,47 +1323,39 @@ static void stdout_ResetPalette(void) {
 
 
 
-#if 0
-/* it works, but it's MUCH slower than doing it the normal way */
-void stdout_DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
-    dat DstRgt = DstLeft + (Rgt - Left), DstDwn = DstUp + (Dwn - Up);
-    ldat len, count;
-    hwattr *src = Video, *dst = Video;
-    
-    count = Dwn - Up + 1;
-    len   = (Rgt-Left+1) * sizeof(hwattr);
+#if 1
+static byte stdout_CanDragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
+    return Left == 0 && Rgt == HW->X-1 && Dwn == HW->Y-1 && DstUp == 0;
+}
 
-    if (DstUp <= 1 && DstUp < Up &&
-	Left == DstLeft && Left == 0 && Rgt == ScreenWidth - 1 &&
-	Dwn == ScreenHeight - 1 && Up <= ScreenHeight/2 &&
-	DstUp <= Dwn && DstDwn >= Up) {
-	/* ok, prepare for direct tty scroll */
+
+/* it works, but it's MUCH slower than doing it the normal way */
+static void stdout_DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
+    udat delta = Up - DstUp;
 	
-	HW->HideMouse();
-	HW->ChangedMouseFlag = TRUE;
+    HW->HideMouse();
+    HW->FlagsHW |= FlHWChangedMouseFlag;
 	
-	fprintf(stdOUT,
-		"\033[?1c\033[0m"	/* hide cursor, reset color */
-		"\033[1;1H"		/* go to first line */
-		"\033[%dM",Up-DstUp);/* delete lines (i.e. scroll up) */
-	if (FlushVideo != stdout_FlushVideo)
-	    fflush(stdOUT);
-	/*
-	 * now the last trick. with scrolling, we have erased part of Up,Dwn area
-	 * and also everything above DstUp.
-	 * since this is supposed to be a drag, for the former is going to be junked
-	 * and will be redrawn by other code in any case, so no need to worry.
-	 * about the latter, we dirty it so that it will be redrawn.
-	 */
+    fprintf(stdOUT,
+	    "\033[?1c\033[0m"	/* hide cursor, reset color */
+	    "\033[%d;1H", HW->Y);/* go to last line */
+	    
+    while (delta--)
+	putc('\n', stdOUT);
+    
+    if (HW->FlushVideo == stdout_FlushVideo)
+	setFlush();
+    else
+	fflush(stdOUT);
 	
-	if (DstUp > 0)
-	    DirtyVideo(0, 0, ScreenWidth - 1, DstUp-1);
-	
-	/* this will restore the cursor */
-	HW->XY[0] = HW->XY[1] = HW->TT = -1;
-    } else
-    	/* tty scrolls can't do this :( */
-	DirtyVideo(DstLeft, DstUp, DstRgt, DstDwn);
+    /* this will restore the cursor */
+    HW->TT = -1;
+    
+    /*
+     * now the last trick: tty scroll erased the part
+     * below DstUp + (Dwn - Up) so we must redraw it.
+     */
+    NeedRedrawVideo(0, DstUp + (Dwn - Up) + 1, HW->X - 1, HW->Y - 1);
 }
 #endif /* 0 */
 
@@ -1338,6 +1379,10 @@ static void tty_QuitHW(void) {
     FreeMem(HW->Private);
 }
 
+/*
+ * note: during xxx_InitHW() initialization, DON'T use ScreenWidth/ScreenHeight
+ * as they may be not up to date. Use GetDisplayWidth() / GetDisplayHeight().
+ */
 byte tty_InitHW(void) {
     byte *arg = HW->Name;
     byte *s;
@@ -1388,6 +1433,10 @@ byte tty_InitHW(void) {
 		s = strchr(arg += 7, ',');
 		arg = s;
 		force_stdout = TRUE;
+	    } else if (!strncmp(arg, ",noinput", 8)) {
+		s = strchr(arg += 8, ',');
+		arg = s;
+		HW->FlagsHW |= FlHWNoInput;
 	    } else
 		break;
 	}
@@ -1460,8 +1509,8 @@ byte tty_InitHW(void) {
 		 * to redraw everything too.
 		 */
 		stdin_DetectSize(&HW->usedX, &HW->usedY);
-		HW->usedX = ScreenWidth;
-		HW->usedY = ScreenHeight;
+		HW->usedX = GetDisplayWidth();
+		HW->usedY = GetDisplayHeight();
 		NeedRedrawVideo(0, 0, HW->X - 1, HW->Y - 1);
 
 		return TRUE;

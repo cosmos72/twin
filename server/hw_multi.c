@@ -33,7 +33,7 @@
 #include "util.h"
 #include "socket.h"
 
-#ifdef CONF_MODULES
+#ifdef CONF__MODULES
 # include "dl.h"
 #endif
 
@@ -79,7 +79,7 @@
 
 static dat (*saveChangedVideo)[2][2];
 
-static udat savedScreenWidth, savedScreenHeight;
+static udat savedScreenWidth = 100, savedScreenHeight = 30;
 static udat TryScreenWidth, TryScreenHeight;
 
 static dat AccelVideo[4] = { MAXDAT, MAXDAT, MINDAT, MINDAT };
@@ -90,17 +90,14 @@ frac_t StrategyDelay = (frac_t)0;
 
 /* common functions */
 
-void saveDisplaySize(void) {
-    savedScreenWidth = ScreenWidth;
-    savedScreenHeight = ScreenHeight;
+udat GetDisplayWidth(void) {
+    return All->FirstDisplayHW && !All->FirstDisplayHW->Quitted
+	? ScreenWidth : savedScreenWidth;
 }
 
-udat GetWidthScreen(screen *Screen) {
-    return All->FirstDisplayHW ? Screen ? Screen->ScreenWidth : 0 : savedScreenWidth;
-}
-
-udat GetHeightScreen(screen *Screen) {
-    return All->FirstDisplayHW ? Screen ? Screen->ScreenHeight : 0 : savedScreenHeight;
+udat GetDisplayHeight(void) {
+    return All->FirstDisplayHW && !All->FirstDisplayHW->Quitted
+	? ScreenHeight : savedScreenHeight;
 }
 
 void UpdateFlagsHW(void) {
@@ -109,17 +106,18 @@ void UpdateFlagsHW(void) {
 
     forHW {
 	if (!HW->Quitted) {
-	    NeedOldVideo |= HW->NeedOldVideo;
-	    ExpensiveFlushVideo |= HW->ExpensiveFlushVideo;
+	    NeedOldVideo |= HW->FlagsHW & FlHWNeedOldVideo;
+	    ExpensiveFlushVideo |= HW->FlagsHW & FlHWExpensiveFlushVideo;
 	    CanDragArea &= !!HW->CanDragArea;
 	}
     }
 }
 
 void RunNoHW(void) {
-    savedScreenWidth  = ScreenWidth;
-    savedScreenHeight = ScreenHeight;
-
+    if (ScreenWidth && ScreenHeight) {
+	savedScreenWidth  = ScreenWidth;
+	savedScreenHeight = ScreenHeight;
+    }
     ResizeDisplay();
 
     if (!DisplayHWCTTY) {
@@ -140,14 +138,14 @@ void RunNoHW(void) {
 	}
     }
     /* try to fire up the Socket Server ... */
-#if defined (CONF_MODULES) && !defined(CONF_SOCKET)
+#if defined (CONF__MODULES) && !defined(CONF_SOCKET)
     (void)DlLoad(SocketSo);
 #endif
 }
 
 
 void warn_NoHW(uldat len, char *arg, uldat tried) {
-#ifdef CONF_MODULES
+#ifdef CONF__MODULES
     if (!tried && !arg)
 	    fputs("twin: no display driver compiled into twin.\n"
 		  "      please run as `twin -hw=<display>'\n", stderr);
@@ -163,7 +161,7 @@ void warn_NoHW(uldat len, char *arg, uldat tried) {
     }
 }
 
-#ifdef CONF_MODULES
+#ifdef CONF__MODULES
 
 static byte module_InitHW(void) {
     byte *name, *tmp;
@@ -212,7 +210,7 @@ static byte module_InitHW(void) {
     return FALSE;
 }
 
-#endif /* CONF_MODULES */
+#endif /* CONF__MODULES */
 
 #if defined(CONF_HW_X11) || defined(CONF_HW_TWIN) || defined(CONF_HW_DISPLAY) || defined(CONF_HW_TTY) || defined(CONF_HW_GGI)
 static byte check4(byte *s, byte *arg) {
@@ -253,7 +251,7 @@ byte InitDisplayHW(display_hw *D_HW) {
     SaveHW;
     SetHW(D_HW);
 
-    D_HW->Quitted = D_HW->DisplayIsCTTY = D_HW->NeedHW = FALSE;
+    D_HW->DisplayIsCTTY = D_HW->NeedHW = D_HW->FlagsHW = FALSE;
     
     if (arg && !strncmp(arg, "-hw=", 4))
 	arg += 4;
@@ -276,19 +274,19 @@ byte InitDisplayHW(display_hw *D_HW) {
 #ifdef CONF_HW_GGI
 	(check4("ggi", arg) && (tried++, GGI_InitHW()) && (fix4("ggi", D_HW), TRUE)) ||
 #endif
-#ifdef CONF_MODULES
+#ifdef CONF__MODULES
 	module_InitHW() ||
 #endif
 	(warn_NoHW(arg ? D_HW->NameLen - 4 : 0, arg, tried), FALSE);
 
     if (success) {
+	D_HW->Quitted = FALSE;
 	if (!DisplayHWCTTY && D_HW->DisplayIsCTTY)
 	    DisplayHWCTTY = D_HW;
 	if (All->FnHookDisplayHW)
 	    All->FnHookDisplayHW(All->HookDisplayHW);
 	UpdateFlagsHW(); /* this garbles HW... not a problem here */
-    } else
-	D_HW->Quitted = TRUE;
+    }
     
     fflush(stderr);
     RestoreHW;
@@ -314,7 +312,7 @@ void QuitDisplayHW(display_hw *D_HW) {
 	    KillSlot(slot);
 	}
 
-#ifdef CONF_MODULES
+#ifdef CONF__MODULES
 	if (D_HW->Module) {
 	    D_HW->Module->Used--;
 	    Delete(D_HW->Module);
@@ -336,15 +334,6 @@ display_hw *AttachDisplayHW(uldat len, byte *arg, uldat slot) {
 	return NULL;
     }
     
-    if (!All->FirstDisplayHW) {
-	/* was running with no HW, restore ScreenWidth/ScreenHeight */
-	if (savedScreenWidth && savedScreenHeight) {
-	    TryScreenWidth = savedScreenWidth;
-	    TryScreenHeight = savedScreenHeight;
-	    savedScreenWidth = savedScreenHeight = 0;
-	}
-    }
-    
     if ((D_HW = Do(Create,DisplayHW)(FnDisplayHW, len, arg))) {
 	D_HW->AttachSlot = slot;
 	if (Act(Init,D_HW)(D_HW)) {
@@ -354,7 +343,7 @@ display_hw *AttachDisplayHW(uldat len, byte *arg, uldat slot) {
 	    }
 	    return D_HW;
 	}
-	/* failed, clean up without calling RunNoHW() */
+	/* failed, clean up without calling RunNoHW() or KillSlot() */
 	D_HW->Quitted = TRUE;
 	D_HW->AttachSlot = NOSLOT;
 	D_HW->QuitHW = NoOp;
@@ -486,9 +475,11 @@ byte ResizeDisplay(void) {
 	     */
 	    TryScreenWidth = TryScreenHeight = MAXUDAT;
 	    forHW {
-		HW->DetectSize(&Width, &Height);
-		if (TryScreenWidth  > Width)  TryScreenWidth  = Width;
-		if (TryScreenHeight > Height) TryScreenHeight = Height;
+		if (!HW->Quitted) {
+		    HW->DetectSize(&Width, &Height);
+		    if (TryScreenWidth  > Width)  TryScreenWidth  = Width;
+		    if (TryScreenHeight > Height) TryScreenHeight = Height;
+		}
 	    }
 	}
 	
@@ -497,7 +488,8 @@ byte ResizeDisplay(void) {
 	    Width = TryScreenWidth;
 	    Height = TryScreenHeight;
 	    forHW {
-		HW->CheckResize(&TryScreenWidth, &TryScreenHeight);
+		if (!HW->Quitted)
+		    HW->CheckResize(&TryScreenWidth, &TryScreenHeight);
 	    }
 	} while (TryScreenWidth < Width || TryScreenHeight < Height);
 	 
@@ -508,7 +500,8 @@ byte ResizeDisplay(void) {
 	
 	/* size seems reasonable, apply it to all HW displays */
 	forHW {
-	    HW->Resize(TryScreenWidth, TryScreenHeight);
+	    if (!HW->Quitted)
+		HW->Resize(TryScreenWidth, TryScreenHeight);
 	}
     } else
 	TryScreenWidth = TryScreenHeight = 1;
@@ -579,18 +572,151 @@ void ResetPaletteHW(void) {
     }
 }
 
-void ExportClipBoard(void) {
-    forHW {
-	if (HW->ExportClipBoard)
-	    HW->ExportClipBoard();
-    }
-    NeedHW &= ~NEEDExportClipBoard;
+
+/* HW back-end function: get selection owner */
+obj *TwinSelectionGetOwner(void) {
+    /*
+     * this looks odd... but it's correct:
+     * only libTw clients can persistently own the Selection;
+     * a display HW can own the Selection only if you did a mouse click
+     * on its display, and even in this case it will own the Selection
+     * only for a single request.
+     */
+    obj *Owner = (obj *)All->Selection->OwnerOnce;
+    if (Owner)
+	All->Selection->OwnerOnce = NULL;
+    else
+	Owner = (obj *)All->Selection->Owner;
+    return Owner;
 }
 
-void ImportClipBoard(byte Wait) {
-    if ((HW = All->MouseHW)) {
-	if (HW->ImportClipBoard)
-	    HW->ImportClipBoard(Wait);
+static void SelectionClear(msgport *Owner) {
+    msg *Msg;
+    
+    if ((Msg = Do(Create,Msg)(FnMsg, MSG_SELECTIONCLEAR, sizeof(event_common))))
+	SendMsg(Owner, Msg);
+}
+
+/* HW back-end function: set selection owner */
+void TwinSelectionSetOwner(obj *Owner, time_t Time, frac_t Frac) {
+    timevalue T;
+    if (T.Seconds != SEL_CURRENTTIME) {
+	T.Seconds = Time;
+	T.Fraction = Frac;
+    } else
+	CopyMem(&All->Now, &T, sizeof(timevalue));
+
+    if (CmpTime(&T, &All->Selection->Time) > 0) {
+	if (!Owner || Owner->Id >> magic_shift == msgport_magic >> magic_shift) {
+	    if (All->Selection->Owner)
+		SelectionClear(All->Selection->Owner);
+
+	    NeedHW |= NEEDSelectionExport;
+
+	    All->Selection->Owner = (msgport *)Owner;
+	    All->Selection->OwnerOnce = NULL;
+	    CopyMem(&T, &All->Selection->Time, sizeof(timevalue));
+	} else if (Owner->Id >> magic_shift == display_hw_magic >> magic_shift) {
+	    /* don't NEEDSelectionExport here! */
+	    All->Selection->OwnerOnce = (display_hw *)Owner;
+	    CopyMem(&T, &All->Selection->Time, sizeof(timevalue));
+	}
+    }
+}
+
+void TwinSelectionNotify(obj *Requestor, uldat ReqPrivate, uldat Magic, byte MIME[MAX_MIMELEN],
+			    uldat Len, byte *Data) {
+    msg *NewMsg;
+    event_any *Event;
+#if 0    
+    fprintf(stderr, "twin: Selection Notify to 0x%08x\n", Requestor ? Requestor->Id : NOID);
+    fflush(stderr);
+#endif
+    if (!Requestor) {
+	(void)SelectionStore(Magic, MIME, Len, Data);
+    } else if (Requestor->Id >> magic_shift == msgport_magic >> magic_shift) {
+	if (!Data)
+	    Len = 0;
+
+	if ((NewMsg = Do(Create,Msg)(FnMsg, MSG_SELECTIONNOTIFY, sizeof(event_selectionnotify) + Len))) {
+	    Event = &NewMsg->Event;
+	    Event->EventSelectionNotify.Window = NULL;
+	    Event->EventSelectionNotify.Code = 0;
+	    Event->EventSelectionNotify.pad = 0;
+	    Event->EventSelectionNotify.ReqPrivate = ReqPrivate;
+	    Event->EventSelectionNotify.Magic = Magic;
+	    if (MIME)
+		CopyMem(MIME, Event->EventSelectionNotify.MIME, MAX_MIMELEN);
+	    else
+		WriteMem(Event->EventSelectionNotify.MIME, '\0', MAX_MIMELEN);
+	    Event->EventSelectionNotify.Len = Len;
+	    CopyMem(Data, Event->EventSelectionNotify.Data, Len);
+	    SendMsg((msgport *)Requestor, NewMsg);
+	}
+    } else if (Requestor->Id >> magic_shift == display_hw_magic >> magic_shift) {
+	SaveHW;
+	SetHW((display_hw *)Requestor);
+	HW->HWSelectionNotify(ReqPrivate, Magic, MIME, Len, Data);
+	RestoreHW;
+    }
+}
+
+#if 0
+void TwinInternalSelectionNotify(obj *Requestor, uldat ReqPrivate) {
+    selection *Sel;
+    if (Requestor) {
+	Sel = All->Selection;
+	TwinSelectionNotify(Requestor, ReqPrivate, Sel->Magic, Sel->MIME, Sel->Len, Sel->Data);
+    }
+}
+#endif
+
+void TwinSelectionRequest(obj *Requestor, uldat ReqPrivate, obj *Owner) {
+#if 0
+    fprintf(stderr, "twin: Selection Request from 0x%08x, owner is 0x%08x\n",
+	    Requestor ? Requestor->Id : NOID, Owner ? Owner->Id : NOID);
+    fflush(stderr);
+#endif
+    if (Owner) {
+	if (Owner->Id >> magic_shift == msgport_magic >> magic_shift) {
+	    msg *NewMsg;
+	    event_any *Event;
+	    if ((NewMsg = Do(Create,Msg)(FnMsg, MSG_SELECTIONREQUEST, sizeof(event_selectionrequest)))) {
+
+		Event = &NewMsg->Event;
+		Event->EventSelectionRequest.Window = NULL;
+		Event->EventSelectionRequest.Code = 0;
+		Event->EventSelectionRequest.pad = 0;
+		Event->EventSelectionRequest.Requestor = Requestor;
+		Event->EventSelectionRequest.ReqPrivate = ReqPrivate;
+		SendMsg((msgport *)Owner, NewMsg);
+	    }
+	} else if (Owner->Id >> magic_shift == display_hw_magic >> magic_shift) {
+	    SaveHW;
+	    SetHW((display_hw *)Owner);
+	    HW->HWSelectionRequest(Requestor, ReqPrivate);
+	    RestoreHW;
+	}
+    } else {
+	selection *Sel = All->Selection;
+	TwinSelectionNotify(Requestor, ReqPrivate, Sel->Magic, Sel->MIME, Sel->Len, Sel->Data);
+    }
+}
+
+void SelectionExport(void) {    
+    forHW {
+	HW->HWSelectionExport();
+    }
+    NeedHW &= ~NEEDSelectionExport;
+}
+
+void SelectionImport(void) {
+    if (All->MouseHW) {
+	HW = All->MouseHW;
+	if (HW->HWSelectionImport())
+	    All->Selection->OwnerOnce = HW;
+	else
+	    All->Selection->OwnerOnce = NULL;
     }
 }
 
@@ -615,6 +741,8 @@ INLINE void DiscardBlinkVideo(void) {
 INLINE void OptimizeChangedVideo(void) {
     uldat _start, start, _end, end;
     int i;
+
+    ChangedVideoFlag = FALSE;
     
     for (i=0; i<ScreenHeight*2; i++) {
 	start = (uldat)ChangedVideo[i>>1][!(i&1)][0];
@@ -646,9 +774,12 @@ INLINE void OptimizeChangedVideo(void) {
 		} else
 		    ChangedVideo[i>>1][1][0] = -1;
 		continue;
-	    } else if (start > _start || end < _end) {
-		ChangedVideo[i>>1][!(i&1)][0] += start - _start;
-		ChangedVideo[i>>1][!(i&1)][1] -= _end - end;
+	    } else {
+		ChangedVideoFlag = TRUE;
+		if (start > _start)
+		    ChangedVideo[i>>1][!(i&1)][0] += start - _start;
+		if (end < _end)
+		    ChangedVideo[i>>1][!(i&1)][1] -= _end - end;
 	    }
 	}
     }
@@ -720,16 +851,19 @@ void FlushHW(void) {
 	    CopyMem(saveChangedVideo, ChangedVideo, ScreenHeight*sizeof(dat)*4);
 	    mangled = FALSE;
 	}
-	if (HW->RedrawVideo) {
+	if (HW->RedrawVideo || ((HW->FlagsHW & FlHWSoftMouse) &&
+				(HW->FlagsHW & FlHWChangedMouseFlag))) {
 	    if (!saved) {
 		saveValidOldVideo = ValidOldVideo;
 		saveChangedVideoFlag = ChangedVideoFlag;
 		CopyMem(ChangedVideo, saveChangedVideo, ScreenHeight*sizeof(dat)*4);
 		saved = TRUE;
 	    }
-	    DirtyVideo(HW->RedrawLeft, HW->RedrawUp, HW->RedrawRight, HW->RedrawDown);
-	    ValidOldVideo = FALSE;
-	    /* the OldVideo[] caching would make all this stuff useless otherwise */
+	    if (HW->RedrawVideo) {
+		DirtyVideo(HW->RedrawLeft, HW->RedrawUp, HW->RedrawRight, HW->RedrawDown);
+		ValidOldVideo = FALSE;
+		/* the OldVideo[] caching would make all this stuff useless otherwise */
+	    }
 	    mangled = TRUE;
 	}
 	if (doBeep)
@@ -917,13 +1051,6 @@ void DragAreaHW(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
     }
 }
 
-byte *GetClipData(void) {
-    return All->ClipData;
-}
-
-uldat GetClipLen(void) {
-    return All->ClipLen;
-}
 
 
 byte MouseEventCommon(dat x, dat y, dat dx, dat dy, udat IdButtons) {
@@ -945,7 +1072,7 @@ byte MouseEventCommon(dat x, dat y, dat dx, dat dy, udat IdButtons) {
     OldState->delta_y = y == 0 ? Min2(dy, 0) : y == ScreenHeight - 1 ? Max2(dy, 0) : 0;
 	
     if (x != prev_x || y != prev_y)
-	HW->ChangedMouseFlag = TRUE;
+	HW->FlagsHW |= FlHWChangedMouseFlag;
 
     OldState->x = x;
     OldState->y = y;
@@ -961,7 +1088,10 @@ byte MouseEventCommon(dat x, dat y, dat dx, dat dy, udat IdButtons) {
 	Buttons |= HOLD << (Overload>>RIGHT & OV_ANY);
     
     OldState->keys=Buttons;
-    
+
+    /* keep it available */
+    All->MouseHW = HW;
+
     if (Buttons != OldButtons || (OldButtons && (x != prev_x || y != prev_y))) {
 	
 	if (OldButtons && (x != prev_x || y != prev_y)) {
@@ -987,8 +1117,6 @@ byte MouseEventCommon(dat x, dat y, dat dx, dat dy, udat IdButtons) {
 		ret = FALSE;
 	}
 
-	/* keep it available */
-	All->MouseHW = HW;
     }
     return ret;
 }
@@ -996,6 +1124,9 @@ byte MouseEventCommon(dat x, dat y, dat dx, dat dy, udat IdButtons) {
 byte StdAddEventMouse(udat CodeMsg, udat Code, dat MouseX, dat MouseY) {
     msg *Msg;
     event_mouse *Event;
+
+    if (HW && HW == All->MouseHW && HW->FlagsHW & FlHWNoInput)
+	return TRUE;
     
     if ((Code & ANY_ACTION_MOUSE)==DRAG_MOUSE
 	&& (Msg = WM_MsgPort->LastMsg)
@@ -1021,6 +1152,9 @@ byte StdAddEventMouse(udat CodeMsg, udat Code, dat MouseX, dat MouseY) {
 byte KeyboardEventCommon(udat Code, udat Len, byte *Seq) {
     event_keyboard *Event;
     msg *Msg;
+
+    if (HW->FlagsHW & FlHWNoInput)
+	return TRUE;
 
     if ((Msg=Do(Create,Msg)(FnMsg, MSG_KEY, Len + sizeof(event_keyboard)))) {
 	Event = &Msg->Event.EventKeyboard;

@@ -673,7 +673,10 @@ struct fn_screen {
 #define MSG_WINDOW_CHANGE	((udat)0x1002)
 #define MSG_WINDOW_GADGET	((udat)0x1003)
 #define MSG_MENU_ROW		((udat)0x1004)
-#define MSG_CLIPBOARD		((udat)0x1005)
+#define MSG_SELECTION		((udat)0x1005)
+#define MSG_SELECTIONNOTIFY	((udat)0x1006)
+#define MSG_SELECTIONREQUEST	((udat)0x1007)
+#define MSG_SELECTIONCLEAR	((udat)0x1008)
 
 /*
  * Notes about MsgType :
@@ -691,7 +694,10 @@ struct fn_screen {
  * MSG_WINDOW_CHANGE	use ...EventWindow
  * MSG_WINDOW_GADGET	use ...EventGadget
  * MSG_MENU_ROW		use ...EventMenu
- * MSG_CLIPBOARD	use ...EventClipBoard
+ * MSG_SELECTION	use ...EventSelection
+ * MSG_SELECTIONNOTIFY	use ...EventSelectionNotify
+ * MSG_SELECTIONREQUEST	use ...EventSelectionRequest
+ * MSG_SELECTIONCLEAR	use ...EventCommon
  * If you don't want to get messages from gadgets or menuitem rows,
  * just set to 0 (zero) their Code.
  * 
@@ -742,8 +748,8 @@ struct event_display {
 #define DPY_SetCursorType	((udat)4)
 #define DPY_MoveToXY		((udat)5)
 #define DPY_Resize		((udat)6)
-#define DPY_ImportClipBoard	((udat)7)
-#define DPY_ExportClipBoard	((udat)8)
+
+#define DPY_SelectionExport	((udat)8)
 #define DPY_DragArea		((udat)9)
 #define DPY_Beep		((udat)10)
 #define DPY_Configure		((udat)11)
@@ -773,11 +779,39 @@ struct event_menu {
     menu *Menu;
 };
 
-typedef struct event_clipboard event_clipboard;
-struct event_clipboard {
+typedef struct event_selection event_selection;
+struct event_selection {
     window *Window;
-    udat Code, ShiftFlags; /* Code is unused */
+    udat Code, pad; /* unused */
     dat X, Y;
+};
+
+#define MAX_MIMELEN 64
+
+typedef struct event_selectionnotify event_selectionnotify;
+struct event_selectionnotify {
+    window *Window;
+    udat Code, pad; /* unused */
+    uldat ReqPrivate;
+    uldat Magic;
+    byte MIME[MAX_MIMELEN];
+    uldat Len;
+    byte Data[1]; /* Data[] is Len bytes actually */
+};
+/*SelectionNotify Magic*/
+#define SEL_APPEND	((uldat)0x00000000)
+#define SEL_TEXTMAGIC	((uldat)0x54657874)
+#define SEL_FILEMAGIC	((uldat)0x46696c65)
+#define SEL_URLMAGIC	((uldat)0xAB1691BA)
+#define SEL_DATAMAGIC	((uldat)0xDA1AA1AD) /* check MIME if you get this */
+#define SEL_IDMAGIC	((uldat)0x49644964)
+
+typedef struct event_selectionrequest event_selectionrequest;
+struct event_selectionrequest {
+    window *Window;
+    udat Code, pad; /* unused */
+    obj *Requestor;
+    uldat ReqPrivate;
 };
 
 typedef union event_any event_any;
@@ -790,7 +824,9 @@ union event_any {
     event_window EventWindow;
     event_gadget EventGadget;
     event_menu EventMenu;
-    event_clipboard EventClipBoard;
+    event_selection EventSelection;
+    event_selectionnotify EventSelectionNotify;
+    event_selectionrequest EventSelectionRequest;
 };
 
 struct msg {
@@ -910,6 +946,7 @@ struct display_hw {
     
     void (*ShowMouse)(void);
     void (*HideMouse)(void);
+    void (*UpdateMouseAndCursor)(void);
 
     /* just detect size */
     void (*DetectSize)(udat *x, udat *y);
@@ -920,9 +957,12 @@ struct display_hw {
     /* unconditionally resize to (x,y). it is guaranteed that CheckResize returned this (x,y) */
     void (*Resize)(udat x, udat y);
     
-    void (*ImportClipBoard)(byte Wait);
-    void (*ExportClipBoard)(void);
-    void *PrivateClipBoard;
+    byte (*HWSelectionImport)(void);
+    void (*HWSelectionExport)(void);
+    void (*HWSelectionRequest)(obj *Requestor, uldat ReqPrivate);
+    void (*HWSelectionNotify)(uldat ReqPrivate, uldat Magic,
+			    byte MIME[MAX_MIMELEN], uldat Len, byte *Data);
+    void *HWSelectionPrivate;
 	
     byte (*CanDragArea)(dat Xstart, dat Ystart, dat Xend, dat Yend, dat DstXstart, dat DstYstart);
     void (*DragArea)(dat Xstart, dat Ystart, dat Xend, dat Yend, dat DstXstart, dat DstYstart);
@@ -954,33 +994,20 @@ struct display_hw {
      * used internally... is set to TRUE before InitHW() and after QuitHW()
      */
     
-    byte SoftMouse;
+    byte FlagsHW;
     /*
-     * set to TRUE if display HW has to manually hide/show the mouse pointer
-     */
-
-    byte ChangedMouseFlag;
-    /*
-     * set to TRUE after a mouse event that requires redrawing mouse pointer
-     */
-
-    byte NeedOldVideo;
-    /*
-     * set to TRUE if FlushVideo() is a bit expensive,
-     * and it's better to cache the actual display contents in OldVideo[]
-     * and send only what effectively changed, instead of all the dirty areas.
+     * various display HW flags:
      * 
-     * Note that there is no automatic updating scheme for OldVideo[]
-     * (except for HW accelerated operations - currently only DragArea())
-     * and that FlushVideo() is responsible of keeping it up to date.
-     */
-    
-    byte ExpensiveFlushVideo;
-    /*
-     * set ExpensiveFlushVideo to TRUE if FlushVideo() is SO expensive
-     * that it's better to sleep a little before flushing,
-     * hoping to receive more data in the meantime,
-     * in order to merge the flush operations.
+     * FlHWSoftMouse		: set if display HW has to manually hide/show the mouse pointer
+     * FlHWChangedMouseFlag	: set after a mouse event that requires redrawing mouse pointer
+     * FlHWNeedOldVideo		: set if FlushVideo() is a bit expensive, and it's better to cache
+     *				  the actual display contents in OldVideo[] and send only
+     *				  what effectively changed, instead of all the dirty areas.
+     * FlHWExpensiveFlushVideo	: set if FlushVideo() is SO expensive that it's better to sleep
+     *				  a little before flushing,hoping to receive more data
+     *				  in the meantime, in order to merge the flush operations.
+     * FlHWNoInput		: set if the display HW should be used as view-only,
+     * 				  ignoring all input from it.
      */
     
     byte NeedHW;
@@ -991,7 +1018,7 @@ struct display_hw {
     byte CanResize;
     /*
      * set to TRUE if the display can actually resize itself (example: X11)
-     * set to FALSE if it can only live with the externally set size (example: tty)
+     * set to FALSE if it can only live with the externally set size (example: ttys)
      */
     
     byte RedrawVideo;
@@ -1055,12 +1082,19 @@ struct fn_display_hw {
     byte (*Init)(display_hw *);
     void (*Quit)(display_hw *);
 };
-    
-/* NeedOpHW */
+
+/* FlagsHW */
+#define FlHWSoftMouse		((byte)0x01)
+#define FlHWChangedMouseFlag	((byte)0x02)
+#define FlHWNeedOldVideo	((byte)0x04)
+#define FlHWExpensiveFlushVideo	((byte)0x08)
+#define FlHWNoInput		((byte)0x10)
+
+/* NEEDOpHW */
 #define NEEDFlushStdout		((byte)0x01)
 #define NEEDFlushHW		((byte)0x02)
 #define NEEDResizeDisplay	((byte)0x04)
-#define NEEDExportClipBoard	((byte)0x08)
+#define NEEDSelectionExport	((byte)0x08)
 #define NEEDPanicHW		((byte)0x10)
 #define NEEDPersistentSlot	((byte)0x20)
 #define NEEDFromPreviousFlushHW	((byte)0x40)
@@ -1140,33 +1174,36 @@ struct setup {
 #define MAX_XSHADE	MIN_XWIN
 #define MAX_YSHADE	MIN_YWIN
 
+typedef struct selection {
+    timevalue Time;
+    msgport *Owner;
+    display_hw *OwnerOnce;
+    uldat Magic;
+    byte MIME[MAX_MIMELEN];
+    uldat Len, Max;
+    byte *Data;
+} selection;
 
 struct all {
     screen *FirstScreen, *LastScreen;
     msgport *FirstMsgPort, *LastMsgPort, *RunMsgPort;
     mutex *FirstMutex, *LastMutex;
     module *FirstModule, *LastModule;
+    fn_hook FnHookModule; window *HookModule;
     display_hw *FirstDisplayHW, *LastDisplayHW, *MouseHW;
     fn_hook FnHookDisplayHW; window *HookDisplayHW;
     menu *BuiltinMenu;
     timevalue Now;
+    selection *Selection;
     setup *SetUp;
     udat *GlobalKeyCodes[STATE_MAX];
     udat *GlobalMouseCodes[STATE_MAX];
     byte *Gtranslations[IBMPC_MAP];
     byte MouseOverload;
     byte FlagsMove;
-    uldat ClipMagic, ClipLen, ClipMax;
-    byte *ClipData;
     void (*AtQuit)(void);
 };
 
-/*ClipMagic*/
-#define CLIP_APPEND	((uldat)0x00000000)
-#define CLIP_TEXTMAGIC	((uldat)0x54657874)
-#define CLIP_FILEMAGIC	((uldat)0x46696c65)
-#define CLIP_DATAMAGIC	((uldat)0xDA1AA1AD)
-#define CLIP_IDMAGIC	((uldat)0x49644964)
 
 /*FlagsMove */
 #define GLMOVE_BY_MOUSE		(byte)0x80
@@ -1444,7 +1481,7 @@ struct all {
 
 /* INLINE/define stuff: */
 
-#ifdef CONF_ALLOC
+#ifdef CONF__ALLOC
 byte InitAlloc(void);
 void *AllocMem(size_t Size);
 void FreeMem(void *Mem);

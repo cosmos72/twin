@@ -61,7 +61,7 @@
 
 static byte *MYname;
 
-#ifdef CONF_MODULES
+#ifdef CONF__MODULES
 
 # ifdef CONF_DESTDIR
 #  define TWIN_MODULE_DIR CONF_DESTDIR "/lib/twin/modules/"
@@ -71,17 +71,18 @@ static byte *MYname;
 
 static byte *twindir = TWIN_MODULE_DIR;
 
-#endif /* CONF_MODULES */
-
 static byte *ErrStr;
 
+#endif /* CONF__MODULES */
+
+
 static udat TryScreenWidth, TryScreenHeight;
+static udat savedScreenWidth, savedScreenHeight;
 static byte ValidVideo;
 
-static uldat ClipMagic, ClipLen;
-static byte MIME[255], MIMELen, *ClipData;
-
 byte *TWDisplay, *origTWDisplay, *origTERM;
+
+byte nullMIME[TW_MAX_MIMELEN];
 
 #define L 0x55
 #define M 0xAA
@@ -109,8 +110,7 @@ static uldat FdSize = 5, FdTop, FdBottom, FdWQueued;
 static fd_set save_rfds, save_wfds;
 static int max_fds;
 
-static tmsgport THelper = NOID;
-static tscreen  TScreen;
+static tmsgport TMsgPort = NOID, THelper = NOID;
 
 int (*OverrideSelect)(int n, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *timeout) = select;
 
@@ -121,6 +121,12 @@ int (*OverrideSelect)(int n, fd_set *readfds, fd_set *writefds, fd_set *exceptfd
 void Quit(int status);
 
 void NoOp(void) {
+}
+byte AlwaysFalse(void) {
+    return FALSE;
+}
+byte AlwaysTrue(void) {
+    return TRUE;
 }
 
 static void OutOfMemory(void) {
@@ -229,7 +235,7 @@ static void RemoteEvent(int FdCount, fd_set *FdSet) {
 }
 
 
-#ifdef CONF_MODULES
+#ifdef CONF__MODULES
 
 #include <dlfcn.h>
 
@@ -323,7 +329,7 @@ static byte module_InitHW(void) {
     return FALSE;
 }
 
-#endif /* CONF_MODULES */
+#endif /* CONF__MODULES */
 
 static display_hw *CreateDisplayHW(uldat len, byte *name);
 static byte InitDisplayHW(display_hw *);
@@ -373,7 +379,7 @@ static void fix4(byte *s, display_hw *D_HW) {
 #endif /* defined(CONF_HW_X11) || defined(CONF_HW_TWIN) || defined(CONF_HW_DISPLAY) || defined(CONF_HW_TTY) || defined(CONF_HW_GGI) */
 
 static void warn_NoHW(uldat len, char *arg, uldat tried) {
-#ifdef CONF_MODULES
+#ifdef CONF__MODULES
     if (!tried && !arg)
 	    fputs("twdisplay: no display driver compiled into twdisplay.\n"
 		  "      please run as `twdisplay [-twin@<TWDISPLAY>] -hw=<display>'\n", stderr);
@@ -391,8 +397,8 @@ static void warn_NoHW(uldat len, char *arg, uldat tried) {
 
 static void UpdateFlagsHW(void) {
     if (!HW->Quitted) {
-	NeedOldVideo = HW->NeedOldVideo;
-	ExpensiveFlushVideo = HW->ExpensiveFlushVideo;
+	NeedOldVideo = HW->FlagsHW & FlHWNeedOldVideo;
+	ExpensiveFlushVideo = HW->FlagsHW & FlHWExpensiveFlushVideo;
 	CanDragArea = !!HW->CanDragArea;
     }
 }
@@ -409,7 +415,7 @@ static byte InitDisplayHW(display_hw *D_HW) {
     SaveHW;
     SetHW(D_HW);
 
-    D_HW->Quitted = D_HW->DisplayIsCTTY = D_HW->NeedHW = FALSE;
+    D_HW->DisplayIsCTTY = D_HW->NeedHW = D_HW->FlagsHW = FALSE;
     
     if (arg && !strncmp(arg, "-hw=", 4))
 	arg += 4;
@@ -436,17 +442,17 @@ static byte InitDisplayHW(display_hw *D_HW) {
 #ifdef CONF_HW_GGI
 	(check4("ggi", arg) && (tried++, GGI_InitHW()) && (fix4("ggi", D_HW), TRUE)) ||
 #endif
-#ifdef CONF_MODULES
+#ifdef CONF__MODULES
 	module_InitHW() ||
 #endif
 	(warn_NoHW(arg ? D_HW->NameLen - 4 : 0, arg, tried), FALSE);
 
     if (success) {
+	D_HW->Quitted = FALSE;
 	if (!DisplayHWCTTY && D_HW->DisplayIsCTTY)
 	    DisplayHWCTTY = D_HW;
 	UpdateFlagsHW();
-    } else
-	D_HW->Quitted = TRUE;
+    }
     
     fflush(stderr);
     RestoreHW;
@@ -628,12 +634,6 @@ static byte ReAllocVideo(udat Width, udat Height) {
     return change;
 }
 
-static void GetMainDisplaySize(udat *Width, udat *Height) {
-    *Width = TwGetWidthScreen(TScreen);
-    if (!*Width) *Width = 100;
-    *Height = TwGetHeightScreen(TScreen);
-    if (!*Height) *Height = 30;
-}
 
 /*
  * return TRUE if ScreenWidth or ScreenHeight were changed
@@ -659,7 +659,7 @@ static byte ResizeDisplay(void) {
 	Tmsg->Event.EventDisplay.Len  = 0;
 	Tmsg->Event.EventDisplay.X    = ScreenWidth;
 	Tmsg->Event.EventDisplay.Y    = ScreenHeight;
-	TwSendMsg(THelper, Tmsg);
+	TwBlindSendMsg(THelper, Tmsg);
     }
     return change;
 }
@@ -692,6 +692,32 @@ static void HandleMsg(tmsg Msg) {
     tevent_display EventD;
     
     switch (Msg->Type) {
+      case TW_MSG_SELECTION:
+	/* should never happen */
+	fputs("\ntwdisplay: HandleMsg(): unexpected Selection Message from twin!\n", stderr);
+	fflush(stderr);
+	break;
+      case TW_MSG_SELECTIONREQUEST:
+#if 0
+	fprintf(stderr, "twdisplay: Selection Request from 0x%08x, owner is underlying HW\n", Msg->Event.EventSelectionRequest.Requestor);
+	fflush(stderr);
+#endif
+	/* request selection from underlying HW */
+	HW->HWSelectionRequest((void *)Msg->Event.EventSelectionRequest.Requestor,
+			       Msg->Event.EventSelectionRequest.ReqPrivate);
+	break;
+      case TW_MSG_SELECTIONNOTIFY:
+#if 0
+	fprintf(stderr, "twdisplay: Selection Notify to underlying HW\n");
+	fflush(stderr);
+#endif
+	/* notify selection to underlying HW */
+	HW->HWSelectionNotify(Msg->Event.EventSelectionNotify.ReqPrivate,
+			      Msg->Event.EventSelectionNotify.Magic,
+			      Msg->Event.EventSelectionNotify.MIME,
+			      Msg->Event.EventSelectionNotify.Len,
+			      Msg->Event.EventSelectionNotify.Data);
+	break;
       case TW_MSG_DISPLAY:
 	EventD = &Msg->Event.EventDisplay;
 	switch (EventD->Code) {
@@ -735,11 +761,8 @@ static void HandleMsg(tmsg Msg) {
 		ReAllocVideo(EventD->X, EventD->Y);
 	    }
 	    break;
-	  case TW_DPY_ImportClipBoard:
-	    ImportClipBoard(TRUE);
-	    break;
-	  case TW_DPY_ExportClipBoard:
-	    ExportClipBoard();
+	  case TW_DPY_SelectionExport:
+	    NeedHW |= NEEDSelectionExport;
 	    break;
 	  case TW_DPY_DragArea:
 #define c ((udat *)EventD->Data)
@@ -754,10 +777,13 @@ static void HandleMsg(tmsg Msg) {
 	    HW->Configure(EventD->X, (udat)EventD->Y == MAXUDAT, EventD->Y);
 	    break;
 	  case TW_DPY_SetPalette:
-	    /* TODO finish this */
+#define c ((udat *)EventD->Data)
+	    if (EventD->Len == 3*sizeof(udat))
+		HW->SetPalette(EventD->X, c[0], c[1], c[2]);
+#undef c
 	    break;
 	  case TW_DPY_ResetPalette:
-	    /* TODO finish this */
+	    HW->ResetPalette();
 	    break;
 	  case TW_DPY_Helper:
 	    THelper = *(uldat *)EventD->Data;
@@ -778,50 +804,59 @@ static void SocketIO(void) {
 	HandleMsg(Msg);
 }
 
-void ExportClipBoard(void) {
-    if (HW->ExportClipBoard)
-	HW->ExportClipBoard();
-    NeedHW &= ~NEEDExportClipBoard;
+void SelectionExport(void) {
+    HW->HWSelectionExport();
+    NeedHW &= ~NEEDSelectionExport;
 }
 
-void ImportClipBoard(byte Wait) {
-    if (HW->ImportClipBoard)
-	HW->ImportClipBoard(Wait);
+/* HW back-end function: get selection owner */
+obj *TwinSelectionGetOwner(void) {
+    return (void *)TwGetOwnerSelection();
 }
 
-
-byte SetClipBoard(uldat Magic, uldat Len, byte *Data) {
-    /* TODO finish this */
-#if 0
-    return TwSetClipBoard(Magic, Len, Data);
-#endif
-    return TRUE;
-}
-
-byte *GetClipData(void) {
-    /* TODO finish this */
-#if 0
+/* HW back-end function: set selection owner */
+void TwinSelectionSetOwner(obj *Owner, time_t Time, frac_t Frac) {
     tmsg Msg;
-    TwRequestClipBoard(NOID);
-    do {
-	if ((Msg = TwReadMsg(TRUE))) {
-	    HandleMsg(Msg);
-	    if (Msg->Type == TW_MSG_CLIPBOARD)
-		break;
-	}
-    } while (Msg);
+
+    if ((Msg=TwCreateMsg(TW_MSG_SELECTIONCLEAR, sizeof(tevent_common)))) {
+	TwBlindSendMsg(THelper, Msg);
+    }
+}
+
+/* HW back-end function: notify selection */
+void TwinSelectionNotify(obj *Requestor, uldat ReqPrivate, uldat Magic, byte MIME[MAX_MIMELEN],
+			    uldat Len, byte *Data) {
+    if (!MIME)
+	MIME = nullMIME;
+#if 0
+    fprintf(stderr, "twdisplay: Selection Notify to 0x%08x\n", (uldat)Requestor);
+    fflush(stderr);
 #endif
-    return ClipData;
+    TwNotifySelection((uldat)Requestor, ReqPrivate, Magic, MIME, Len, Data);
 }
 
-uldat GetClipLen(void) {
-    return ClipLen;
+#if 0
+void TwinInternalSelectionNotify(obj *Requestor, uldat ReqPrivate) {
+    TwInternalSelectionNotify((uldat)Requestor, ReqPrivate);
 }
+#endif
 
+/* HW back-end function: request selection */
+void TwinSelectionRequest(obj *Requestor, uldat ReqPrivate, obj *Owner) {
+#if 0
+    fprintf(stderr, "twdisplay: Selection Request from 0x%08x, Owner is 0x%08x\n", (uldat)Requestor, (uldat)Owner);
+    fflush(stderr);
+#endif
+    TwRequestSelection((uldat)Owner, ReqPrivate);
+}
 
 static byte StdAddEventMouse(udat CodeMsg, udat Code, dat MouseX, dat MouseY) {
     tevent_mouse Event;
     tmsg Msg;
+
+    if (HW->FlagsHW & FlHWNoInput)
+	return TRUE;
+
     if ((Msg=TwCreateMsg(CodeMsg, sizeof(event_mouse)))) {
 	Event = &Msg->Event.EventMouse;
 
@@ -830,7 +865,8 @@ static byte StdAddEventMouse(udat CodeMsg, udat Code, dat MouseX, dat MouseY) {
 	Event->X = MouseX;
 	Event->Y = MouseY;
 	
-	return TwSendMsg(THelper, Msg);
+	TwBlindSendMsg(THelper, Msg);
+	return TRUE;
     }
     return FALSE;
 }
@@ -854,7 +890,7 @@ byte MouseEventCommon(dat x, dat y, dat dx, dat dy, udat Buttons) {
     OldState->delta_y = y == 0 ? Min2(dy, 0) : y == ScreenHeight - 1 ? Max2(dy, 0) : 0;
 	
     if (x != prev_x || y != prev_y)
-	HW->ChangedMouseFlag = TRUE;
+	HW->FlagsHW |= FlHWChangedMouseFlag;
 
     OldState->x = x;
     OldState->y = y;
@@ -892,6 +928,10 @@ byte MouseEventCommon(dat x, dat y, dat dx, dat dy, udat Buttons) {
 byte KeyboardEventCommon(udat Code, udat Len, byte *Seq) {
     tevent_keyboard Event;
     tmsg Msg;
+
+    if (HW->FlagsHW & FlHWNoInput)
+	return TRUE;
+
     if ((Msg=TwCreateMsg(TW_MSG_WINDOW_KEY, Len + sizeof(event_keyboard)))) {
 	Event = &Msg->Event.EventKeyboard;
 	    
@@ -901,7 +941,8 @@ byte KeyboardEventCommon(udat Code, udat Len, byte *Seq) {
 	CopyMem(Seq, Event->AsciiSeq, Len);
 	Event->AsciiSeq[Len] = '\0'; /* terminate string with \0 */
 	
-	return TwSendMsg(THelper, Msg);
+	TwBlindSendMsg(THelper, Msg);
+	return TRUE;
     }
     return FALSE;
 }
@@ -924,8 +965,8 @@ static void MainLoop(int Fd) {
 	if (NeedHW & NEEDResizeDisplay)
 	    ResizeDisplay();
 	
-	if (NeedHW & NEEDExportClipBoard)
-	    ExportClipBoard();
+	if (NeedHW & NEEDSelectionExport)
+	    SelectionExport();
 
 	/*
 	 * don't FlushHW() unconditionalluy here,
@@ -935,11 +976,8 @@ static void MainLoop(int Fd) {
 	 */
 	if (HW->RedrawVideo)
 	    FlushHW();
-	else if (HW->SoftMouse && HW->ChangedMouseFlag) {
-	    HW->HideMouse();
-	    HW->ShowMouse();
-
-	    HW->ChangedMouseFlag = FALSE;
+	else {
+	    HW->UpdateMouseAndCursor();
 
 	    if (HW->NeedHW & NEEDFlushHW)
 		HW->FlushHW();
@@ -1001,6 +1039,14 @@ static void MainLoop(int Fd) {
 	exit(1);
     }
 }
+
+udat GetDisplayWidth(void) {
+    return savedScreenWidth;
+}
+udat GetDisplayHeight(void) {
+    return savedScreenHeight;
+}
+
 
 int main(int argc, char *argv[]) {
     byte redirect = 1;
@@ -1071,7 +1117,11 @@ int main(int argc, char *argv[]) {
     InitSignals();
     InitTtysave();
     
-    if (TwOpen(dpy)) do {
+#ifdef CONF__ALLOC
+    TwConfigMalloc(AllocMem, ReAllocMem, FreeMem);
+#endif
+
+    if (TwOpen(TWDisplay)) do {
 	byte *buf;
 
 	if (RegisterRemote(Fd = TwConnectionFd(), (void *)0, (void *)NoOp) == NOSLOT) {
@@ -1080,13 +1130,13 @@ int main(int argc, char *argv[]) {
 	    return 1;
 	}
 	    
-	if (!TwCreateMsgPort(9, "twdisplay", (uldat)0, (udat)0, (byte)0))
+	if (!(TMsgPort = TwCreateMsgPort(9, "twdisplay", (uldat)0, (udat)0, (byte)0)))
 	    break;
 
-	TScreen = TwFirstScreen();
-	GetMainDisplaySize(&ScreenWidth, &ScreenHeight);
+	savedScreenWidth = TryScreenWidth = TwGetDisplayWidth();
+	savedScreenHeight = TryScreenHeight = TwGetDisplayHeight();
 
-	if (!(HW = AttachDisplayHW(strlen(arg), arg, 0))) {
+	if (!(HW = AttachDisplayHW(strlen(arg), arg, NOSLOT))) {
 	    TwClose();
 	    return 1;
 	}
@@ -1127,6 +1177,7 @@ int main(int argc, char *argv[]) {
 	    fflush(stdout);
 	}
 
+	
 	TwAttachConfirm();
 	/*
 	 * twin waits this before grabbing the display...
@@ -1141,6 +1192,7 @@ int main(int argc, char *argv[]) {
 		fprintf(stderr, "... ok, twin successfully attached.\n");
 	    else
 		fprintf(stderr, "... ach, twin failed to attach.\n");
+	    fflush(stderr);
 	}
 	if (ret == 2)
 	    /*

@@ -301,36 +301,50 @@ void SortAllMsgPortsByCallTime(void) {
     All->LastMsgPort  = End;
 }
 
-byte SetClipBoard(uldat Magic, uldat Len, byte *Data) {
+byte SelectionStore(uldat Magic, byte MIME[MAX_MIMELEN], uldat Len, byte *Data) {
+    uldat newLen;
     byte *newData;
+    selection *Sel = All->Selection;
     
-    if (Magic != CLIP_APPEND) {
-        All->ClipLen = 0;
-	All->ClipMagic = Magic;
-    }
-    if (All->ClipMax < All->ClipLen + Len) {
-	if (!(newData = ReAllocMem(All->ClipData, All->ClipLen + Len)))
+    if (Magic == SEL_APPEND) 
+	newLen = Sel->Len + Len;
+    else
+	newLen = Len;
+    
+    if (Sel->Max < newLen) {
+	if (!(newData = ReAllocMem(Sel->Data, newLen)))
 	    return FALSE;
-	All->ClipData = newData;
-	All->ClipMax = All->ClipLen + Len;
+	Sel->Data = newData;
+	Sel->Max = newLen;
+    }
+    if (Magic != SEL_APPEND) {
+	Sel->Owner = NULL;
+	Sel->Len = 0;
+	Sel->Magic = Magic;
+	if (MIME)
+	    CopyMem(MIME, Sel->MIME, MAX_MIMELEN);
+	else
+	    WriteMem(Sel->MIME, '\0', MAX_MIMELEN);
     }
     if (Data)
-	CopyMem(Data, All->ClipData + All->ClipLen, Len);
+	CopyMem(Data, Sel->Data + Sel->Len, Len);
     else
-	WriteMem(All->ClipData + All->ClipLen, ' ', Len);
-    All->ClipLen += Len;
-    NeedHW |= NEEDExportClipBoard;
-    
+	WriteMem(Sel->Data + Sel->Len, ' ', Len);
+    Sel->Len += Len;
     return TRUE;
 }
 
-byte SetClipBoardFromWindow(window *Window) {
+byte SetSelectionFromWindow(window *Window) {
     uldat y, slen, len;
     byte *sData, *Data, ok = TRUE;
     
     if (!(Window->Attrib & WINDOW_ANYSEL) || Window->YstSel > Window->YendSel ||
-	(Window->YstSel == Window->YendSel && Window->XstSel > Window->XendSel))
-	return TRUE;
+	(Window->YstSel == Window->YendSel && Window->XstSel > Window->XendSel)) {
+	
+	ok &= SelectionStore(SEL_TEXTMAGIC, NULL, 0, NULL);
+	if (ok) NeedHW |= NEEDSelectionExport;
+	return ok;
+    }
     
     if (Window->Flags & WINFL_USECONTENTS) {
 	hwattr *hw;
@@ -353,7 +367,7 @@ byte SetClipBoardFromWindow(window *Window) {
 	    hw += Window->XstSel;
 	    while (len--)
 		*Data++ = HWFONT(*hw++);
-	    ok &= SetClipBoard(CLIP_TEXTMAGIC, slen, sData);
+	    ok &= SelectionStore(SEL_TEXTMAGIC, NULL, slen, sData);
 	}
 	
 	if (hw >= Window->TtyData->Split)
@@ -367,7 +381,7 @@ byte SetClipBoardFromWindow(window *Window) {
 	    len = slen;
 	    while (len--)
 		*Data++ = HWFONT(*hw++);
-	    ok &= AddToClipBoard(slen, sData);
+	    ok &= SelectionAppend(slen, sData);
 	}
 	
 	if (ok && Window->YendSel > Window->YstSel) {
@@ -377,8 +391,9 @@ byte SetClipBoardFromWindow(window *Window) {
 	    len = slen = Window->XendSel + 1;
 	    while (len--)
 		*Data++ = HWFONT(*hw++);
-	    AddToClipBoard(slen, sData);
+	    ok &= SelectionAppend(slen, sData);
 	}
+	if (ok) NeedHW |= NEEDSelectionExport;
 	return ok;
     }
     if (!(Window->Flags & WINFL_USEANY)) {
@@ -393,22 +408,23 @@ byte SetClipBoardFromWindow(window *Window) {
 		slen = Row->Len - Window->XstSel;
 	    else
 		slen = Min2(Row->Len, Window->XendSel+1) - Min2(Row->Len, Window->XstSel);
-	    ok &= SetClipBoard(CLIP_TEXTMAGIC, slen, Row->Text + Window->XstSel);
+	    ok &= SelectionStore(SEL_TEXTMAGIC, NULL, slen, Row->Text + Window->XstSel);
 	}
 	if (y < Window->YendSel || !Row || Row->Len <= Window->XendSel)
-	    ok &= AddToClipBoard(1, "\n");
+	    ok &= SelectionAppend(1, "\n");
 
 	for (y = Window->YstSel + 1; ok && y < Window->YendSel; y++) {
 	    if ((Row = Act(SearchRow,Window)(Window, y)))
-		ok &= AddToClipBoard(Row->Len, Row->Text);
-	    ok &= AddToClipBoard(1, "\n");
+		ok &= SelectionAppend(Row->Len, Row->Text);
+	    ok &= SelectionAppend(1, "\n");
 	}
 	if (Window->YendSel > Window->YstSel) {
 	    if ((Row = Act(SearchRow,Window)(Window, Window->YendSel)))
-		ok &= AddToClipBoard(Min2(Row->Len, Window->XendSel+1), Row->Text);
+		ok &= SelectionAppend(Min2(Row->Len, Window->XendSel+1), Row->Text);
 	    if (!Row || Row->Len <= Window->XendSel)
-		ok &= AddToClipBoard(1, "\n");
+		ok &= SelectionAppend(1, "\n");
 	}
+	if (ok) NeedHW |= NEEDSelectionExport;
 	return ok;
     }
     return FALSE;

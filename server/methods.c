@@ -27,7 +27,7 @@
 #ifdef CONF_TERM
 # include "tty.h"
 #endif
-#ifdef CONF_MODULES
+#ifdef CONF__MODULES
 # include "dl.h"
 #endif
 
@@ -1292,7 +1292,7 @@ window *SimpleFocus(window *newWin) {
 }
 #endif
 
-#if !defined(CONF_TERM) && defined(CONF_MODULES)
+#if !defined(CONF_TERM) && defined(CONF__MODULES)
 void FakeWriteAscii(window *Window, uldat Len, byte *Text) {
     if (DlLoad(TermSo) && Window->Fn->WriteAscii != FakeWriteAscii)
 	Act(WriteAscii,Window)(Window, Len, Text);
@@ -1325,7 +1325,7 @@ static fn_window _FnWindow = {
 	KbdFocus,
 	WriteAscii,
 	WriteHWAttr,
-#elif defined(CONF_MODULES)
+#elif defined(CONF__MODULES)
 	SimpleFocus,
 	FakeWriteAscii,
 	FakeWriteHWAttr,
@@ -1653,13 +1653,18 @@ static screen *CreateScreen(fn_screen *Fn_Screen, udat BgWidth, udat BgHeight, h
 	DeleteObj((obj *)Screen);
 	Screen=(screen *)0;
     }
+    if (!Screen)
+	fprintf(stderr, "twin: internal error: CreateScreen(%d, %d) failed.\n",
+		(int)BgWidth, (int)BgHeight);
     return Screen;
 }
 
 static screen *CreateSimpleScreen(fn_screen *Fn_Screen, hwattr Bg) {
+    screen *Screen;
     hwattr bg[1];
     bg[0] = Bg;
-    return Fn_Screen->Create(Fn_Screen, 1, 1, bg);
+    Screen = Fn_Screen->Create(Fn_Screen, 1, 1, bg);
+    return Screen;
 }
 
 static void BgImageScreen(screen *Screen, udat BgWidth, udat BgHeight, hwattr *Bg) {
@@ -2016,7 +2021,9 @@ static module *CreateModule(fn_module *Fn_Module, uldat NameLen, byte *Name) {
 	
 	Module->NameLen = NameLen;
 	Module->Name = newName;
+	Module->Used = 0;
 	Module->Handle = Module->Private = NULL;
+	
 	InsertLast(Module, Module, All);
     } else if (newName)
 	FreeMem(newName);
@@ -2032,6 +2039,9 @@ static void InsertModule(module *Module, all *Parent, module *Prev, module *Next
     if (!Module->All && Parent) {
 	InsertGeneric((obj *)Module, (obj_parent *)&Parent->FirstModule, (obj *)Prev, (obj *)Next, (uldat *)0);
 	Module->All = Parent;
+
+	if (All->FnHookModule)
+	    All->FnHookModule(All->HookModule);
     }
 }
 
@@ -2039,6 +2049,9 @@ static void RemoveModule(module *Module) {
     if (Module->All) {
 	RemoveGeneric((obj *)Module, (obj_parent *)&Module->All->FirstModule, (uldat *)0);
 	Module->All = (all *)0;
+
+	if (All->FnHookModule)
+	    All->FnHookModule(All->HookModule);
     }
 }
 
@@ -2060,7 +2073,7 @@ static fn_module _FnModule = {
 	InsertModule,
 	RemoveModule,
 	DeleteModule,
-#ifdef CONF_MODULES
+#ifdef CONF__MODULES
 	DlOpen,
 	DlClose
 #else
@@ -2133,7 +2146,7 @@ static void DeleteDisplayHW(display_hw *DisplayHW) {
 	    Act(Quit,DisplayHW)(DisplayHW);
 	
 	Remove(DisplayHW);
-	if (DisplayHW->Name)
+	if (DisplayHW->NameLen && DisplayHW->Name)
 	    FreeMem(DisplayHW->Name);
 	DeleteObj((obj *)DisplayHW);
 	

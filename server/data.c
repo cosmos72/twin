@@ -38,6 +38,15 @@ static setup SetUp = {
 	(byte)5, (byte)3 /* DeltaXShade, DeltaYShade */
 };
 
+static selection Selection = {
+    { (time_t)0, (frac_t)0 },
+	(msgport *)0, (display_hw *)0,
+	SEL_TEXTMAGIC,
+	"",
+	(uldat)0, (uldat)0,
+	NULL
+};
+
 #define L 0x55
 #define M 0xAA
 #define H 0xFF
@@ -61,10 +70,12 @@ static all _All = {
 	(msgport *)0, (msgport *)0, (msgport *)0,
 	(mutex *)0, (mutex *)0,
 	(module *)0, (module *)0,
+	(fn_hook)0, (window *)0,
 	(display_hw *)0, (display_hw *)0, (display_hw *)0,
 	(fn_hook)0, (window *)0,
 	(menu *)0,
     { (time_t)0, (uldat)0 },
+	&Selection,
 	&SetUp,
 	
     { ExecKey[0], ExecKey[1], ExecKey[2], ExecKey[3], ExecKey[4] },
@@ -93,8 +104,6 @@ static all _All = {
     },
 	
 	OV_LEFT<<LEFT | OV_MIDDLE<<MIDDLE | OV_RIGHT<<RIGHT, FALSE,
-	(uldat)0, (uldat)0, (uldat)0,
-	(byte *)0,
 	(void (*)(void))0
 };
 all *All = &_All;

@@ -25,13 +25,13 @@
 #include "draw.h"
 #include "util.h"
 
-#ifdef CONF_MODULES
+#ifdef CONF__MODULES
 # include "dl.h"
 #endif
 
 #if defined(CONF_TERM)
 # include "term.h"
-#elif defined (CONF_MODULES)
+#elif defined (CONF__MODULES)
 menu *Builtin_Term_Menu;
 #define Term_Menu Builtin_Term_Menu
 #endif
@@ -62,6 +62,7 @@ menu *Builtin_Term_Menu;
 #define COD_O_ALWAYSCURSOR (udat)46
 #define COD_O_NOBLINK	(udat)47
 #define COD_O_HIDEMENU	(udat)48
+#define COD_O_NOSCROLL	(udat)49
 
 #define COD_D_REMOVE	(udat)60
 #define COD_D_UPDATE	(udat)61
@@ -69,7 +70,7 @@ menu *Builtin_Term_Menu;
 static msgport *Builtin_MsgPort;
 static menu *Builtin_Menu;
 static menuitem *Builtin_File;
-#ifdef CONF_MODULES
+#ifdef CONF__MODULES
 static menuitem *Builtin_Modules;
 #endif
 
@@ -96,7 +97,7 @@ static void Clock_Update(void) {
     Builtin_MsgPort->PauseDuration.Seconds = 0;
 }
 
-#if defined(CONF_MODULES) && !(defined(CONF_TERM) && defined(CONF_SOCKET))
+#if defined(CONF__MODULES) && !(defined(CONF_TERM) && defined(CONF_SOCKET))
 static void TweakMenuRows(menuitem *Item, udat code, byte flag) {
     window *Win;
     row *Row;
@@ -105,9 +106,41 @@ static void TweakMenuRows(menuitem *Item, udat code, byte flag) {
 	(Row = Act(SearchRowCode,Win)(Win, code, (uldat *)0)))
 	Row->Flags = flag;
 }
+
+static void UpdateMenuRows(window *dummy) {
+    module *Module = All->FirstModule;
+    byte _TermSo = FALSE, _SocketSo = FALSE;
+
+    while (Module) {
+	if (Module->NameLen == 7 && !CmpMem("term.so", Module->Name, 7))
+	    _TermSo = TRUE;
+	else if (Module->NameLen == 9 && !CmpMem("socket.so", Module->Name, 9))
+	    _SocketSo = TRUE;
+
+	Module = Module->Next;
+    }
+    
+    if (_TermSo) {
+	TweakMenuRows(Builtin_Modules, COD_TERM_ON,    ROW_INACTIVE);
+	TweakMenuRows(Builtin_Modules, COD_TERM_OFF,   ROW_ACTIVE);
+	TweakMenuRows(Builtin_File,    COD_SPAWN,      ROW_ACTIVE);
+    } else {
+	TweakMenuRows(Builtin_Modules, COD_TERM_ON,    ROW_ACTIVE);
+	TweakMenuRows(Builtin_Modules, COD_TERM_OFF,   ROW_INACTIVE);
+	TweakMenuRows(Builtin_File,    COD_SPAWN,      ROW_INACTIVE);
+    }
+    if (_SocketSo) {
+	TweakMenuRows(Builtin_Modules, COD_SOCKET_ON,  ROW_INACTIVE);
+	TweakMenuRows(Builtin_Modules, COD_SOCKET_OFF, ROW_ACTIVE);
+    } else {
+	TweakMenuRows(Builtin_Modules, COD_SOCKET_ON,  ROW_ACTIVE);
+	TweakMenuRows(Builtin_Modules, COD_SOCKET_OFF, ROW_INACTIVE);
+    }
+}
+
 #endif
 
-#if defined(CONF_MODULES) || defined(CONF_TERM)
+#if defined(CONF__MODULES) || defined(CONF_TERM)
 static void SpawnTerm(void) {
     msg *Msg;
     /* send a Msg to Term_MsgPort */
@@ -164,11 +197,13 @@ void UpdateOptionWin(void) {
 	G->Contents[0][1] = Flags & SETUP_NEW_FONT ? 'û' : ' ';
     if ((G = Act(SearchGadgetCode,OptionWin)(OptionWin, COD_O_HIDEMENU)))
 	G->Contents[0][1] = Flags & SETUP_HIDEMENU ? 'û' : ' ';
+    if ((G = Act(SearchGadgetCode,OptionWin)(OptionWin, COD_O_NOSCROLL)))
+	G->Contents[0][1] = Flags & SETUP_NOSCROLL ? 'û' : ' ';
     
-    OptionWin->CurX = 25; OptionWin->CurY = 2;
+    OptionWin->CurX = 25; OptionWin->CurY = 1;
     i = (Flags & SETUP_DO_SHADE ? All->SetUp->DeltaXShade : 0) + '0';
     Act(WriteRow,OptionWin)(OptionWin, 1, &i);
-    OptionWin->CurX = 25; OptionWin->CurY = 3;
+    OptionWin->CurX = 25; OptionWin->CurY = 2;
     i = (Flags & SETUP_DO_SHADE ? All->SetUp->DeltaYShade : 0) + '0';
     Act(WriteRow,OptionWin)(OptionWin, 1, &i);
 }
@@ -210,6 +245,10 @@ static void OptionH(msg *Msg) {
       case COD_O_HIDEMENU:
 	Flags ^= SETUP_HIDEMENU;
 	HideMenu(!!(Flags & SETUP_HIDEMENU));
+	redraw = FALSE;
+	break;
+      case COD_O_NOSCROLL:
+	Flags ^= SETUP_NOSCROLL;
 	redraw = FALSE;
 	break;
       default:
@@ -355,39 +394,32 @@ static void BuiltinH(msgport *MsgPort) {
 		    QuitHW();
 		    break;
 		    
-#if defined(CONF_MODULES) && !defined(CONF_TERM)
+#if defined(CONF__MODULES) && !defined(CONF_TERM)
 		  case COD_TERM_ON:
 		    if (!DlLoad(TermSo))
-		      break;
-		    TweakMenuRows(Builtin_Modules, COD_TERM_ON,    ROW_INACTIVE);
-		    TweakMenuRows(Builtin_Modules, COD_TERM_OFF,   ROW_ACTIVE);
-		    TweakMenuRows(Builtin_File,    COD_SPAWN,      ROW_ACTIVE);
+			break;
 		    /* FALLTHROUGH */
 #endif
-#if defined(CONF_MODULES) || defined(CONF_TERM)
+#if defined(CONF__MODULES) || defined(CONF_TERM)
 		 case COD_SPAWN:
 		    SpawnTerm();
 		    break;
 #endif
-#if defined(CONF_MODULES) && !defined(CONF_TERM)
+#if defined(CONF__MODULES) && !defined(CONF_TERM)
 		  case COD_TERM_OFF:
 		    DlUnLoad(TermSo);
-		    TweakMenuRows(Builtin_Modules, COD_TERM_ON,    ROW_ACTIVE);
-		    TweakMenuRows(Builtin_Modules, COD_TERM_OFF,   ROW_INACTIVE);
-		    TweakMenuRows(Builtin_File,    COD_SPAWN,      ROW_INACTIVE);
 		    break;
 #endif
-#if defined(CONF_MODULES) && !defined(CONF_SOCKET)
+#if defined(CONF__MODULES) && !defined(CONF_SOCKET)
+		  case COD_SOCKET_OFF:
+		    DlUnLoad(SocketSo);
+		    if (All->FirstDisplayHW)
+			break;
+		    /* hmm... better to fire it up again */
+		    /* FALLTHROUGH */
 		  case COD_SOCKET_ON:
 		    if (!DlLoad(SocketSo))
 			break;
-		    TweakMenuRows(Builtin_Modules, COD_SOCKET_ON,  ROW_INACTIVE);
-		    TweakMenuRows(Builtin_Modules, COD_SOCKET_OFF, ROW_ACTIVE);
-		    break;
-		  case COD_SOCKET_OFF:
-		    DlUnLoad(SocketSo);
-		    TweakMenuRows(Builtin_Modules, COD_SOCKET_ON,  ROW_ACTIVE);
-		    TweakMenuRows(Builtin_Modules, COD_SOCKET_OFF, ROW_INACTIVE);
 		    break;
 #endif
 		  default:
@@ -516,7 +548,7 @@ byte InitBuiltin(void) {
     byte *s, *greeting = "\n"
 	"                TWIN             \n"
 	"        Text WINdows manager     \n\n"
-	"          Version 0.3.1 by       \n\n"
+	"          Version 0.3.2 by       \n\n"
 	"        Massimiliano Ghilardi    \n\n"
 	"         <max@Linuz.sns.it>      ";
     uldat grlen = strlen(greeting);
@@ -542,7 +574,7 @@ byte InitBuiltin(void) {
 	(Window=Win4Menu(Builtin_Menu)) &&
 #if defined(CONF_TERM)
 	Row4Menu(Window, COD_SPAWN,  ROW_ACTIVE,10, " New Term  ") &&
-#elif defined(CONF_MODULES)
+#elif defined(CONF__MODULES)
 	Row4Menu(Window, COD_SPAWN,ROW_INACTIVE,10, " New Term  ") &&
 #endif
 	Row4Menu(Window, (udat)0,    ROW_IGNORE,10, "ÄÄÄÄÄÄÄÄÄÄ") &&
@@ -563,14 +595,16 @@ byte InitBuiltin(void) {
 	Row4Menu(Window, (udat)0, ROW_INACTIVE,16," Show Clipboard ") &&
 	Item4Menu(Builtin_Menu, Window, TRUE, 6," Edit ") &&
 	
-#if defined(CONF_MODULES) && !(defined(CONF_TERM) && defined(CONF_SOCKET))
+#if defined(CONF__MODULES) && !(defined(CONF_TERM) && defined(CONF_SOCKET))
 	(Window=Win4Menu(Builtin_Menu)) &&
+	(Act(InstallHook,Window)(Window, UpdateMenuRows, &All->FnHookModule), TRUE) &&
+	
 #if !defined(CONF_TERM)
 	Row4Menu(Window, COD_TERM_ON,	ROW_ACTIVE,  20, " Run Twin Term      ") &&
 	Row4Menu(Window, COD_TERM_OFF,	ROW_INACTIVE,20, " Stop Twin Term     ") &&
 #endif
 #if !defined(CONF_SOCKET) && !defined(CONF_TERM)
-	Row4Menu(Window, (udat)0,       ROW_INACTIVE,20, "ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ") &&
+	Row4Menu(Window, (udat)0,       ROW_IGNORE,  20, "ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ") &&
 #endif	
 #if !defined(CONF_SOCKET)
 	Row4Menu(Window, COD_SOCKET_ON,	ROW_ACTIVE,  20, " Run Socket Server  ") &&
@@ -627,47 +661,52 @@ byte InitBuiltin(void) {
 	
 	Do(Create,Gadget)(FnGadget, OptionWin, COL(BLACK,WHITE), COL(HIGH|WHITE,GREEN),
 			  COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
-			  COD_O_SHADOWS, GADGET_USE_DEFCOL, 2, 2, 11, 1, 0x1,
+			  COD_O_SHADOWS, GADGET_USE_DEFCOL, 2, 1, 11, 1, 0x1,
 			  "[ ] Shadows", NULL, NULL, NULL, NULL, NULL, NULL, NULL) &&
 
 	Do(Create,Gadget)(FnGadget, OptionWin, COL(BLACK,WHITE), COL(HIGH|WHITE,GREEN),
 			  COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
-			  COD_O_Xp_SHADE, GADGET_USE_DEFCOL, 18, 2, 3, 1, 0x1,
+			  COD_O_Xp_SHADE, GADGET_USE_DEFCOL, 18, 1, 3, 1, 0x1,
 			  "[+]", NULL, NULL, NULL, NULL, NULL, NULL, NULL) &&
 
 	Do(Create,Gadget)(FnGadget, OptionWin, COL(BLACK,WHITE), COL(HIGH|WHITE,GREEN),
 			  COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
-			  COD_O_Xn_SHADE, GADGET_USE_DEFCOL, 21, 2, 3, 1, 0x1,
+			  COD_O_Xn_SHADE, GADGET_USE_DEFCOL, 21, 1, 3, 1, 0x1,
 			  "[-]", NULL, NULL, NULL, NULL, NULL, NULL, NULL) &&
 
 	Do(Create,Gadget)(FnGadget, OptionWin, COL(BLACK,WHITE), COL(HIGH|WHITE,GREEN),
 			  COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
-			  COD_O_Yp_SHADE, GADGET_USE_DEFCOL, 18, 3, 3, 1, 0x1,
+			  COD_O_Yp_SHADE, GADGET_USE_DEFCOL, 18, 2, 3, 1, 0x1,
 			  "[+]", NULL, NULL, NULL, NULL, NULL, NULL, NULL) &&
 
 	Do(Create,Gadget)(FnGadget, OptionWin, COL(BLACK,WHITE), COL(HIGH|WHITE,GREEN),
 			  COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
-			  COD_O_Yn_SHADE, GADGET_USE_DEFCOL, 21, 3, 3, 1, 0x1,
+			  COD_O_Yn_SHADE, GADGET_USE_DEFCOL, 21, 2, 3, 1, 0x1,
 			  "[-]", NULL, NULL, NULL, NULL, NULL, NULL, NULL) &&
 	
 	Do(Create,Gadget)(FnGadget, OptionWin, COL(BLACK,WHITE), COL(HIGH|WHITE,GREEN),
 			  COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
-			  COD_O_ALWAYSCURSOR, GADGET_USE_DEFCOL, 2, 5, 22, 1, 0x1,
+			  COD_O_ALWAYSCURSOR, GADGET_USE_DEFCOL, 2, 4, 22, 1, 0x1,
 			  "[ ] Always Show Cursor", NULL, NULL, NULL, NULL, NULL, NULL, NULL) &&
 
 	Do(Create,Gadget)(FnGadget, OptionWin, COL(BLACK,WHITE), COL(HIGH|WHITE,GREEN),
 			  COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
-			  COD_O_NOBLINK, GADGET_USE_DEFCOL, 2, 7, 36, 1, 0x1,
-			  "[ ] No Blink/High Background on Ttys", NULL, NULL, NULL, NULL, NULL, NULL, NULL) &&
+			  COD_O_NOBLINK, GADGET_USE_DEFCOL, 2, 6, 33, 1, 0x1,
+			  "[ ] Disable Blink/High Background", NULL, NULL, NULL, NULL, NULL, NULL, NULL) &&
 
 	Do(Create,Gadget)(FnGadget, OptionWin, COL(BLACK,WHITE), COL(HIGH|WHITE,GREEN),
 			  COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
-			  COD_O_HIDEMENU, GADGET_USE_DEFCOL, 2, 9, 15, 1, 0x1,
+			  COD_O_HIDEMENU, GADGET_USE_DEFCOL, 2, 8, 15, 1, 0x1,
 			  "[ ] Hidden Menu", NULL, NULL, NULL, NULL, NULL, NULL, NULL) &&
 
 	Do(Create,Gadget)(FnGadget, OptionWin, COL(BLACK,WHITE), COL(HIGH|WHITE,GREEN),
 			  COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
-			  COD_O_NEWFONT, GADGET_USE_DEFCOL, 2, 11, 15, 1, 0x1,
+			  COD_O_NOSCROLL, GADGET_USE_DEFCOL, 2, 10, 28, 1, 0x1,
+			  "[ ] Disable Screen Scrolling", NULL, NULL, NULL, NULL, NULL, NULL, NULL) &&
+
+	Do(Create,Gadget)(FnGadget, OptionWin, COL(BLACK,WHITE), COL(HIGH|WHITE,GREEN),
+			  COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
+			  COD_O_NEWFONT, GADGET_USE_DEFCOL, 2, 12, 15, 1, 0x1,
 			  "[ ] Custom Font", NULL, NULL, NULL, NULL, NULL, NULL, NULL)
 
 	)
@@ -699,20 +738,23 @@ byte InitBuiltin(void) {
 	Act(FillButton,ButtonRemove)(ButtonRemove, COD_D_REMOVE, (udat)1, (udat)2, (udat)0, " Remove ", (byte)0x2F, (byte)0x28);
 	Act(FillButton,ButtonUpdate)(ButtonUpdate, COD_D_UPDATE, (udat)1, (udat)5, (udat)0, " Update ", (byte)0x2F, (byte)0x28);
 
-	OptionWin->CurX = 25; OptionWin->CurY = 2;
+	OptionWin->CurX = 25; OptionWin->CurY = 1;
 	Act(WriteRow,OptionWin)(OptionWin, 10, "  X Shadow");
-	OptionWin->CurX = 25; OptionWin->CurY = 3;
+	OptionWin->CurX = 25; OptionWin->CurY = 2;
 	Act(WriteRow,OptionWin)(OptionWin, 10, "  Y Shadow");
 	
 	All->SetUp->Flags |= SETUP_DO_SHADE
 #ifdef CONF_OPT_ALWAYSCURSOR
 	    | SETUP_ALWAYSCURSOR
 #endif
-#ifdef CONF_OPT_TTY_NOBLINK
+#ifdef CONF_OPT_NOBLINK
 	    | SETUP_NOBLINK
 #endif
 #ifdef CONF_OPT_HIDEMENU
 	    | SETUP_HIDEMENU
+#endif
+#ifdef CONF_OPT_NOSCROLL
+	    | SETUP_NOSCROLL
 #endif
 	    ;
 

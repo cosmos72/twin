@@ -54,7 +54,7 @@ dat (*ChangedVideo)[2][2];
 byte ChangedVideoFlag, ChangedVideoFlagAgain;
 
 
-udat ScreenWidth = 100, ScreenHeight = 30;
+udat ScreenWidth, ScreenHeight;
 
 udat CursorX, CursorY;
 uldat CursorType;
@@ -155,15 +155,6 @@ void NeedRedrawVideo(udat Left, udat Up, udat Right, udat Down) {
  */
 
 
-
-/* VideoFlipMouse is quite os-independent ;) */
-void VideoFlipMouse(void) {
-    uldat pos = (HW->Last_x = HW->MouseState.x) + (HW->Last_y = HW->MouseState.y) * ScreenWidth;
-    hwattr h = Video[pos];
-    hwcol c = ~HWCOL(h) ^ COL(HIGH,HIGH);
-
-    Video[pos] = HWATTR( c, HWFONT(h) );
-}
 
 /*
  * for better cleannes, DirtyVideo()

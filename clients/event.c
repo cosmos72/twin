@@ -73,28 +73,32 @@ void human_print(uldat len, byte *s) {
 
 int main(int argc, char *argv[]) {
     tmsg Msg;
-    tevent_keyboard EventK;
-    tevent_gadget EventG;
-    tevent_clipboard EventC;
-    tevent_mouse EventM;
-    tevent_window EventW;
     udat Code, origCode;
     
     if (InitEvent()) while ((Msg=TwReadMsg(TRUE))) {
 	if (Msg->Type==TW_MSG_WINDOW_KEY) {
-	    EventK=&Msg->Event.EventKeyboard;
-	    printf("Key: Code %d (0x%04x), ASCII ", (int)EventK->Code, (int)EventK->Code);
+	    tevent_keyboard EventK = &Msg->Event.EventKeyboard;
+	    
+	    printf("Key: Code %u (0x%04x), ASCII ",
+		   (unsigned)EventK->Code, (unsigned)EventK->Code);
 	    human_print(EventK->SeqLen, EventK->AsciiSeq);
 	    putchar('\n');
-	} else if (Msg->Type==TW_MSG_CLIPBOARD) {
-	    EventC=&Msg->Event.EventClipBoard;
-	    printf("Clipboard Paste: Magic %d (0x%08x), ASCII ", (unsigned)EventC->Magic, (unsigned)EventC->Magic);
-	    human_print(EventC->Len, EventC->Data);
+	} else if (Msg->Type==TW_MSG_SELECTION) {
+	    uldat Owner = TwGetOwnerSelection();
+	    printf("Selection Paste: Owner %d (0x%08x), requesting data notify...\n",
+		   Owner, Owner);
+	    TwRequestSelection(Owner, NOID);
+	} else if (Msg->Type==TW_MSG_SELECTIONNOTIFY) {
+	    tevent_selectionnotify EventN = &Msg->Event.EventSelectionNotify;
+
+	    printf("Selection Notify: Magic %u (0x%08x), Len %u, ASCII ",
+		   (unsigned)EventN->Magic, (unsigned)EventN->Magic, (unsigned)EventN->Len);
+	    human_print(EventN->Len, EventN->Data);
 	    putchar('\n');
 	} else if (Msg->Type==TW_MSG_WINDOW_MOUSE) {
 	    byte *s1, *s2, *s3, *s4, *s5, *s6, *s7;
+	    tevent_mouse EventM = &Msg->Event.EventMouse;
 	    
-	    EventM=&Msg->Event.EventMouse;
 	    origCode=Code=EventM->Code;
 	    
 	    if (isPRESS(Code)) {
@@ -134,13 +138,13 @@ int main(int argc, char *argv[]) {
 		   (int)origCode, s1, s2, s3, s4, s5, s6, s7, EventM->X, EventM->Y);
 	    
 	} else if (Msg->Type==TW_MSG_WINDOW_GADGET) {
-	    EventG=&Msg->Event.EventGadget;
+	    tevent_gadget EventG = &Msg->Event.EventGadget;
 	    printf("Window Gadget: Code %d (0x%04x)\n", (unsigned)EventG->Code, (unsigned)EventG->Code);
 	    if (EventG->Code == 0 && EventG->Window == Event_Win) {
 		break;
 	    }
 	} else if (Msg->Type==TW_MSG_WINDOW_CHANGE) {
-	    EventW=&Msg->Event.EventWindow;
+	    tevent_window EventW = &Msg->Event.EventWindow;
 	    printf("Window Change: new size x=%d y=%d\n",
 		   EventW->XWidth - 2, EventW->YWidth - 2);
 	}

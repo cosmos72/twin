@@ -1,3 +1,25 @@
+From 0.3.1 to 0.3.2: (Massimiliano Ghilardi, 08 Jun 2000)
+	* Fixed internal FdWQueued bookkeeping.
+	* Fixed mouse redrawing problems with `-hw=tty'.
+	* Fixed libTw to let twattach and twdisplay work
+	  also on compressed connections.
+	* Fixed a few SEGFAULTs on exit.
+	* Fixed a buffer overrun in twterm
+	  which sometimes made it completely non-working.
+	* Fixed 1x1 display detection after Menu -> ð -> Detach
+	* New option `,noinput' common to all display HW : starts the display
+	  as view-only, ignoring all mouse/keyboard input coming from it.
+        * Added `make menuconfig': it uses "dialog" as user interface.
+	  Of course, let me know if your version of dialog gives problems
+	  on `make menuconfig'.
+	* Fixed palette support on Linux console.
+	* Completely rewritten cut-and-paste code to make it non-blocking
+	  on the server. Updated all clients, display drivers and twdisplay
+	  for the new Selection API: now twdisplay supports Selection too.
+	  Selection support on hw_tty and hw_ggi is still missing
+	  since underlying HW does not have an usable Selection mechanism.
+	  People, the code I had to write for cut-and-paste is a nightmare!
+	
 From 0.3.0 to 0.3.1: (Massimiliano Ghilardi, 16 May 2000)
 	* Updated README for the changes in twattach and for
 	  multiple display support.

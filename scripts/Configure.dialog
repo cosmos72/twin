@@ -1,0 +1,152 @@
+
+function yesno() {
+    VAL=$(eval "echo \"\${$1}\"")
+    HELP=$(eval "echo \"\${${1}_HELP}\"")
+    
+    if test "$VAL" = "y" -o "$VAL" = "m"; then
+	VAL="on"
+    else
+	VAL="off"
+    fi
+
+    : $[ CURRITEMS=CURRITEMS+1 ]
+    CURRCMD="$CURRCMD ${1#CONF_} \\\"$HELP\\\" $VAL"
+}
+
+# cannot rely on the value of dependency variable...
+# user may change it while inside "dialog"
+function yesno_dep() {
+   yesno "$1"
+}
+
+function yesmodno() {
+   if test "$CONF__MODULES" = n; then
+      yesno "$1"
+   else
+      VAL=$(eval "echo \"\${$1}\"")
+      HELP=$(eval "echo \"\${${1}_HELP}\"")
+    
+      if test "$VAL" = "y"; then
+	  VAL="on";
+	  MOD="off";
+      elif test "$VAL" = "m"; then
+	  VAL="on";
+	  MOD="on";
+      else
+	  VAL="off";
+	  MOD="off";
+      fi
+    
+    : $[ CURRITEMS=CURRITEMS+2 ]
+    CURRCMD="$CURRCMD ${1#CONF_} \\\"$HELP\\\" $VAL MOD_${1#CONF_} \\\" -> Compile as module\\\" $MOD"
+   fi
+}
+
+function warn() {
+   :
+}
+
+function menu() {
+   MAINCMD="$MAINCMD ${1#CONF_} \"$(eval "echo \"\${${1}_MENU}\"")\""
+   : $[ MAINITEMS=MAINITEMS+1 ]
+   CURRMENU="$1"
+   CURRITEMS=0
+   CURRCMD=""
+}
+
+function endmenu() {
+   eval $(echo MENU_${CURRMENU})=\"--separate-output --checklist \\\"$(eval "echo \"\${${CURRMENU}_MENU}\"")\\\" $[CURRITEMS+6] 80 $CURRITEMS $CURRCMD\"
+}
+
+function die() {
+   rm -f .dialog_*
+   echo
+   echo "Quitting..."
+   echo
+   echo "Twin configuration was NOT saved!"
+   echo
+   exit 0
+}
+
+function quit() {
+   rm -f .dialog_*
+   echo
+   echo "Twin configuration saved."
+   echo
+   exit 0
+}
+
+function dump() {
+    VAL=$(eval "echo \"\${$1}\"")
+    if [ "$VAL" = m -a "$CONF_MODULES" = n ]; then
+       VAL=y
+    fi
+    echo "$1=$VAL"
+}
+
+function fulldump() {
+   cat >conf/config.status <<EOF
+#
+# This file is created by 'make menuconfig', do not edit!
+#
+# Configuration:
+#
+EOF
+
+   for i in `cat conf/config.list`; do
+       dump $i
+   done >>conf/config.status
+}
+
+function parse() {
+   CURR=`cat $2`;
+   LIST=`cat conf/config.list | grep CONF_${1}`
+   for i in $LIST; do
+      THIS=n
+      for j in $CURR; do
+	 if [ "${i#CONF_}" = "$j" ]; then
+	    THIS=y
+	 elif [ "$THIS" = y -a "MOD_${i#CONF_}" = "$j" ]; then
+	    THIS=m
+	    break;
+	 fi
+      done
+      if [ "$CONF__MODULES" = n -a "$THIS" = m ]; then
+         THIS=y
+      fi
+      eval $i="$THIS"
+   done
+}
+
+trap die SIGINT SIGQUIT SIGHUP SIGTERM
+
+MAINCMD=
+MAINITEMS=2
+
+if [ -f conf/config.status ]; then
+   source conf/config.status
+else
+   source conf/config.default
+fi
+
+source conf/config.base
+
+MENU_MAIN="--separate-output --menu \"Twin Configuration - Top Menu\" $[ MAINITEMS+6 ] 50 $MAINITEMS $MAINCMD SAVE \"Save config and exit\" QUIT \"Exit without saving\""
+
+while :; do
+   eval "dialog $MENU_MAIN 2>.dialog_MENU_MAIN" || die
+   RES=`cat .dialog_MENU_MAIN`;
+   case "$RES" in
+      SAVE)
+         fulldump; quit ;;
+      QUIT)
+         die ;;
+      *)
+         MENU=$(eval "echo \"\${MENU_CONF_${RES}}\"")
+         if test "$MENU"; then
+            eval "dialog $MENU 2>.dialog_MENU_${RES}" && parse $RES .dialog_MENU_${RES} && source conf/config.base
+         fi
+         ;;
+   esac
+done
+

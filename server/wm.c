@@ -177,34 +177,33 @@ static byte CheckForwardMsg(msg *Msg, byte WasUsed) {
 	    if (isSINGLE_RELEASE(Code))
 		ClickedInside = FALSE;
 
-	    /* manage selection and ClipBoard */
+	    /* manage window hilight and Selection */
 	    if (!(CurrWin->Attrib & WINDOW_WANT_MOUSE)) {
 		if (isPRESS(Code) && Code == DOWN_LEFT)
-		    StartSelection(CurrWin, (ldat)x-Left-1+CurrWin->XLogic, (ldat)y-Up-1+CurrWin->YLogic);
+		    StartHilight(CurrWin, (ldat)x-Left-1+CurrWin->XLogic, (ldat)y-Up-1+CurrWin->YLogic);
 		else if (isDRAG(Code) && Code == (DRAG_MOUSE|HOLD_LEFT)) {
-		    ExtendSelection(CurrWin, (ldat)x-Left-1+CurrWin->XLogic, (ldat)y-Up-1+CurrWin->YLogic);
+		    ExtendHilight(CurrWin, (ldat)x-Left-1+CurrWin->XLogic, (ldat)y-Up-1+CurrWin->YLogic);
 		} else if (isRELEASE(Code) && Code == RELEASE_LEFT) {
-		    SetClipBoardFromWindow(CurrWin);
+		    SetSelectionFromWindow(CurrWin);
 		} else if (isRELEASE(Code) && Code == RELEASE_MIDDLE) {
-		    /* send ClipBoard Paste msg */
+		    /* send Selection Paste msg */
 		    msg *NewMsg;
 		    
-		    ImportClipBoard(TRUE);
-		    /* HACK: ImportClipBoard(TRUE) could block! */
+		    /* store selection owner */
+		    SelectionImport();
 		    
-		    if (All->ClipLen &&
-			(NewMsg = Do(Create,Msg)(FnMsg, MSG_CLIPBOARD, sizeof(event_clipboard)))) {
+		    if ((NewMsg = Do(Create,Msg)(FnMsg, MSG_SELECTION, sizeof(event_selection)))) {
 			Event = &NewMsg->Event;
-			Event->EventClipBoard.Window = CurrWin;
-			Event->EventClipBoard.Code = 0;
-			Event->EventClipBoard.ShiftFlags = (udat)0;
-			Event->EventClipBoard.X = x;
-			Event->EventClipBoard.Y = y;
+			Event->EventSelection.Window = CurrWin;
+			Event->EventSelection.Code = 0;
+			Event->EventSelection.pad = (udat)0;
+			Event->EventSelection.X = x;
+			Event->EventSelection.Y = y;
 			SendMsg(CurrWin->Menu->MsgPort, NewMsg);
 		    }
 		}
 	    }
-	    /* finished with ClipBoard stuff */
+	    /* finished with Selection stuff */
 	    
 	    if (CurrWin->Attrib & WINDOW_WANT_MOUSE) {
 		Msg->Type=MSG_WINDOW_MOUSE;
@@ -1093,8 +1092,6 @@ byte InitWM(void) {
 static dat SLeft;
 static udat SUp, XWidth, YWidth;
 
-#define MAXLRAND48 0x80000000l
-
 static byte doSmartPlace(window *Window, dat *X, udat *Y) {
     dat WLeft, WRgt, TryX[2];
     udat WUp, WDwn, TryY[2];
@@ -1106,21 +1103,21 @@ static byte doSmartPlace(window *Window, dat *X, udat *Y) {
     if (!Window)
 	return TRUE;
 	
-    WRgt = (WLeft = Window->Left) + Window->XWidth - 1;
-    WDwn = (WUp = Window->Up) + Window->YWidth - 1;
+    WRgt = (WLeft = Window->Left) + Window->XWidth;
+    WDwn = (WUp = Window->Up) + Window->YWidth;
     Window = Window->Next;
 	
-    if (X[0] > WRgt || X[1] < WLeft || Y[0] > WDwn || Y[1] < WUp)
-	return TRUE;
+    if (X[0] >= WRgt || X[1] < WLeft || Y[0] >= WDwn || Y[1] < WUp)
+	return Window ? doSmartPlace(Window, X, Y) : TRUE;
     
     if (X[0] < WLeft) {
 	TryX[0] = X[0]; TryX[1] = WLeft - 1;
 	TryY[0] = Y[0]; TryY[1] = Y[1];
 	OK = doSmartPlace(Window, TryX, TryY);
     }
-    if (!OK && X[1] > WRgt) {
-	TryX[0] = WRgt + 1; TryX[1] = X[1];
-	TryY[0] = Y[0];     TryY[1] = Y[1];
+    if (!OK && X[1] >= WRgt) {
+	TryX[0] = WRgt; TryX[1] = X[1];
+	TryY[0] = Y[0]; TryY[1] = Y[1];
 	OK = doSmartPlace(Window, TryX, TryY);
     }
     if (!OK && Y[0] < WUp) {
@@ -1128,9 +1125,9 @@ static byte doSmartPlace(window *Window, dat *X, udat *Y) {
 	TryY[0] = Y[0]; TryY[1] = WUp - 1;
 	OK = doSmartPlace(Window, TryX, TryY);
     }
-    if (!OK && Y[1] > WDwn) {
-	TryX[0] = X[0];     TryX[1] = X[1];
-	TryY[0] = WDwn + 1; TryY[1] = Y[1];
+    if (!OK && Y[1] >= WDwn) {
+	TryX[0] = X[0]; TryX[1] = X[1];
+	TryY[0] = WDwn; TryY[1] = Y[1];
 	OK = doSmartPlace(Window, TryX, TryY);
     }
     if (OK) {
@@ -1139,6 +1136,8 @@ static byte doSmartPlace(window *Window, dat *X, udat *Y) {
     }
     return OK;
 }
+
+#define MAXLRAND48 0x80000000l
 
 static void SmartPlace(window *Window, screen *Screen) {
     dat X[2];

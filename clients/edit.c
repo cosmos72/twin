@@ -85,23 +85,33 @@ static byte InitEdit(void) {
 
 int main(int argc, char *argv[]) {
     tmsg Msg;
-    tevent_keyboard EventK;
-    tevent_gadget EventG;
-    tevent_clipboard EventC;
     udat Code;
     uldat WinN = 1;
     
     if (InitEdit()) while ((Msg=TwReadMsg(TRUE))) {
 	if (Msg->Type==TW_MSG_WINDOW_KEY) {
-	    EventK=&Msg->Event.EventKeyboard;
+	    
+	    tevent_keyboard EventK = &Msg->Event.EventKeyboard;
 	    Code=EventK->Code;
 	    (void)TwWriteRowWindow(EventK->Window, EventK->SeqLen, EventK->AsciiSeq);
-	} else if (Msg->Type==TW_MSG_CLIPBOARD) {
-	    EventC=&Msg->Event.EventClipBoard;
-	    if (EventC->Magic == TW_CLIP_TEXTMAGIC)
-		(void)TwWriteRowWindow(EventC->Window, EventC->Len, EventC->Data);
+	    
+	} else if (Msg->Type==TW_MSG_SELECTION) {
+	    /*
+	     * send Msg->Event.EventSelection.Window as ReqPrivate field,
+	     * so that we will get it back in TW_MSG_SELECTIONNOTIFY message
+	     * without having to store it manually
+	     */
+	    TwRequestSelection(TwGetOwnerSelection(), Msg->Event.EventSelection.Window);
+	    
+	} else if (Msg->Type==TW_MSG_SELECTIONNOTIFY) {
+	    
+	    tevent_selectionnotify EventN = &Msg->Event.EventKeyboard;
+	    if (EventN->Magic == TW_SEL_TEXTMAGIC)
+		(void)TwWriteRowWindow(EventN->ReqPrivate, EventN->Len, EventN->Data);
+	    
 	} else if (Msg->Type==TW_MSG_WINDOW_GADGET) {
-	    EventG=&Msg->Event.EventGadget;
+	    
+	    tevent_gadget EventG = &Msg->Event.EventGadget;
 	    if (EventG->Code == 0 && EventG->Window == Edit_Win) {
 		TwUnMapWindow(Edit_Win);
 		TwDeleteWindow(Edit_Win);

@@ -250,8 +250,8 @@ struct tevent_display {
 #define TW_DPY_SetCursorType	((udat)4)
 #define TW_DPY_MoveToXY		((udat)5)
 #define TW_DPY_Resize		((udat)6)
-#define TW_DPY_ImportClipBoard	((udat)7)
-#define TW_DPY_ExportClipBoard	((udat)8)
+
+#define TW_DPY_SelectionExport	((udat)8)
 #define TW_DPY_DragArea		((udat)9)
 #define TW_DPY_Beep		((udat)10)
 #define TW_DPY_Configure	((udat)11)
@@ -281,20 +281,39 @@ struct tevent_menu {
     tmenu Menu;
 };
 
-typedef struct tevent_clipboard *tevent_clipboard;
-struct tevent_clipboard {
+typedef struct tevent_selection *tevent_selection;
+struct tevent_selection {
     twindow Window;
-    udat Code, ShiftFlags; /* Code is unused */
+    udat Code, pad; /* unused */
     dat X, Y; /* these coords are absolute, to allow cross-window cut-n-paste */
-    uldat Magic;
-    uldat Len;
-    byte MIME[255], MIMELen; /* MIME type */
-    byte Data[1];
 };
-/*ClipBoard Magic*/
-#define TW_CLIP_TEXTMAGIC	((uldat)0x54657874)
-#define TW_CLIP_FILEMAGIC	((uldat)0x46696c65)
-#define TW_CLIP_IDMAGIC		((uldat)0x49644964)
+
+#define TW_MAX_MIMELEN 64
+
+typedef struct tevent_selectionnotify *tevent_selectionnotify;
+struct tevent_selectionnotify {
+    twindow Window;
+    udat Code, pad; /* unused */
+    uldat ReqPrivate;
+    uldat Magic;
+    byte MIME[TW_MAX_MIMELEN];
+    uldat Len;
+    byte Data[1]; /* Data[] is Len bytes actually */
+};
+/*SelectionNotify Magic*/
+#define TW_SEL_TEXTMAGIC	((uldat)0x54657874)
+#define TW_SEL_FILEMAGIC	((uldat)0x46696c65)
+#define TW_SEL_URLMAGIC		((uldat)0xAB1691BA)
+#define TW_SEL_DATAMAGIC	((uldat)0xDA1AA1AD) /* check MIME if you get this */
+#define TW_SEL_IDMAGIC		((uldat)0x49644964)
+
+typedef struct tevent_selectionrequest *tevent_selectionrequest;
+struct tevent_selectionrequest {
+    twindow Window;
+    udat Code, pad; /* unused */
+    tmsgport Requestor;
+    uldat ReqPrivate;
+};
 
 typedef union tevent_any *tevent_any;
 union tevent_any {
@@ -305,7 +324,9 @@ union tevent_any {
     struct tevent_window    EventWindow;
     struct tevent_gadget    EventGadget;
     struct tevent_menu      EventMenu;
-    struct tevent_clipboard EventClipBoard;
+    struct tevent_selection EventSelection;
+    struct tevent_selectionnotify EventSelectionNotify;
+    struct tevent_selectionrequest EventSelectionRequest;
 };
 
 typedef struct tmsg *tmsg;
@@ -322,7 +343,10 @@ struct tmsg {
 #define TW_MSG_WINDOW_CHANGE	((udat)0x1002)
 #define TW_MSG_WINDOW_GADGET	((udat)0x1003)
 #define TW_MSG_MENU_ROW		((udat)0x1004)
-#define TW_MSG_CLIPBOARD	((udat)0x1005)
+#define TW_MSG_SELECTION	((udat)0x1005)
+#define TW_MSG_SELECTIONNOTIFY	((udat)0x1006)
+#define TW_MSG_SELECTIONREQUEST	((udat)0x1007)
+#define TW_MSG_SELECTIONCLEAR	((udat)0x1008)
 
 
 typedef struct s_tw_d *tdisplay;
@@ -491,12 +515,23 @@ tobj Tw_PrevObj(tdisplay TwD, tobj Obj);
 tobj Tw_NextObj(tdisplay TwD, tobj Obj);
 tobj Tw_ParentObj(tdisplay TwD, tobj Obj);
 
-udat Tw_GetWidthScreen(tdisplay TwD, tscreen Screen);
-udat Tw_GetHeightScreen(tdisplay TwD, tscreen Screen);
+udat Tw_GetDisplayWidth(tdisplay TwD);
+udat Tw_GetDisplayHeight(tdisplay TwD);
 
 tmsg Tw_CreateMsg(tdisplay TwD, udat Type, udat Len);
 void Tw_DeleteMsg(tdisplay TwD, tmsg Msg);
 byte Tw_SendMsg(tdisplay TwD, tmsgport MsgPort, tmsg Msg);
+void Tw_BlindSendMsg(tdisplay TwD, tmsgport MsgPort, tmsg Msg);
+
+tobj Tw_GetOwnerSelection(tdisplay TwD);
+/* this actually has a 'tmsgport Owner' parameter in sockproto.h */
+void Tw_SetOwnerSelection(tdisplay TwD, tobj Owner, time_t Time, frac_t Frac);
+
+void Tw_RequestSelection(tdisplay TwD, tobj Owner, uldat ReqPrivate);
+void Tw_NotifySelection(tdisplay TwD, tobj Requestor, uldat ReqPrivate,
+			uldat Magic, byte MIME[TW_MAX_MIMELEN],	uldat Len, byte *Data);
+#define TW_SEL_CURRENTTIME ((time_t)0)
+
 
 
 tdisplay Tw_Open(byte *Tw_Display);
@@ -584,6 +619,8 @@ tmsg	Tw_PeekMsg(tdisplay TwD);
  * libTw.so.1 --- single head compatibility. these are too handy to drop them.
  */
 extern tdisplay Tw_DefaultD;
+
+#define TwConfigMalloc(my_malloc, my_realloc, my_free) Tw_ConfigMalloc(my_malloc, my_realloc, my_free)
 
 #define TwLenStr(S)			strlen(S)
 #define TwCmpStr(S1, S2)		strcmp((S1), (S2))
@@ -679,12 +716,21 @@ extern tdisplay Tw_DefaultD;
 #define TwPrevObj(Obj)			Tw_PrevObj(Tw_DefaultD, Obj)
 #define TwNextObj(Obj)			Tw_NextObj(Tw_DefaultD, Obj)
 #define TwParentObj(Obj)		Tw_ParentObj(Tw_DefaultD, Obj)
-#define TwGetWidthScreen(Screen)	Tw_GetWidthScreen(Tw_DefaultD, Screen)
-#define TwGetHeightScreen(Screen)	Tw_GetHeightScreen(Tw_DefaultD, Screen)
+#define TwGetDisplayWidth()		Tw_GetDisplayWidth(Tw_DefaultD)
+#define TwGetDisplayHeight()		Tw_GetDisplayHeight(Tw_DefaultD)
 
 #define TwCreateMsg(Type, Len)		Tw_CreateMsg(Tw_DefaultD, Type, Len)
 #define TwDeleteMsg(Msg)		Tw_DeleteMsg(Tw_DefaultD, Msg)
 #define TwSendMsg(MsgPort, Msg)		Tw_SendMsg(Tw_DefaultD, MsgPort, Msg)
+#define TwBlindSendMsg(MsgPort, Msg)	Tw_BlindSendMsg(Tw_DefaultD, MsgPort, Msg)
+
+#define TwGetOwnerSelection()		Tw_GetOwnerSelection(Tw_DefaultD)
+#define TwSetOwnerSelection(Owner, Time, Frac) \
+					Tw_SetOwnerSelection(Tw_DefaultD, Owner, Time, Frac)
+#define TwRequestSelection(Owner, ReqPrivate)	Tw_RequestSelection(Tw_DefaultD, Owner, ReqPrivate)
+#define TwNotifySelection(Requestor, ReqPrivate, Magic, MIME, Len, Data) \
+					Tw_NotifySelection(Tw_DefaultD, Requestor, ReqPrivate, \
+							   Magic, MIME, Len, Data)
 
 
 #define TwOpen(Tw_Display)		(!!(Tw_DefaultD = Tw_Open(Tw_Display)))

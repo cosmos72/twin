@@ -30,40 +30,104 @@
 #include <X11/Xatom.h>
 #include <X11/Xmd.h>                /* CARD32 */
 
+
+/*
+ * I always said X11 Selection is a nightmare... this is the worst bug I have ever seen:
+ * 
+ * Suppose twin is running on X, and you also have twdisplay running on the same X.
+ * You select something inside a twterm. Twin will export the selection on all displays,
+ * in this case hw_X11 and hw_display (which talks to twdisplay and its other hw_X11).
+ * Both the hw_X11 will do a XSetSelectionOwner, causing a race: one wins,
+ * the other receives a SelectionClear event from X.
+ * 
+ * Suppose twdisplay wins.
+ * 
+ * Ok, so you have twin holding some selected data, but twdisplay actually holding
+ * X11 Selection ownership. Now try to click on an xterm to paste that data.... nightmare!
+ * 
+ * 
+ * note the nesting... here is what happens:
+ *   |      |
+ *   v      v
+ * twdisplay   receives a "Selection Request" from X (xterm), and knows twin Selection owner is twin -> hw_X11 (twdisplay)
+ *             so it forwards the request to twin
+ * 
+ *  twin       receives a "Selection Request" from twdisplay, and knows twin Selection owner is twin -> hw_X11 (twdisplay)
+ *             so it resets the Selection owner (displays hold selection only for a single request) and forwards
+ *             the request to hw_X11 (twdisplay), so that twdisplay receives the request AS AN X11 SELECTION REQUEST!
+ * 
+ *   twdisplay receives a "Selection Request" from X (twin), and knows twin Selection owner is None
+ *             so it forwards the request to twin.
+ *             PROBLEM: twdisplay must remember the TWO NESTED X11 SELECTION REQUESTS!
+ * 
+ *    twin     receives a "Selection Request" from twdisplay, and knows twin Selection owner is None
+ *             so it picks its internal Selection data and Notifies it back to twdisplay
+ * 
+ *   twdisplay receives a "Selection Notify" from twin and forwards it to whoever asked it...
+ *             in this case to X (twin).
+ * 
+ *  twin       receives a "Selection Notify" from twdisplay, and knows Requestor is twdisplay
+ *             so it forwards the notify to twdisplay.
+ * 
+ * twdisplay   receives a "Selection Notify" from twin and forwards it to whoever asked it...
+ *             If it remembered the nesting, it will correctly remove the previous
+ *             request from its list, and orward this notify to X (xterm), else will happily
+ *             forward this notify to X (twin), causing an INFINITE LOOP!
+ * 
+ * 
+ * solution:
+ * 
+ * Twdisplay must remember the two nested x11 selection requests.
+ * Will only TWO nested requests suffice for any case?
+ * Adding more twdisplay/twattach to the same X server
+ * will not change anything, as only one will own X11 Selection, so I think so.
+ * In any case, I add a counter and make twdisplay complain loud if it overflows.
+ * 
+ */
+
 /* Display variables */
+
+#define NEST 2
 
 struct x11_data {
     unsigned int xwidth, xheight;
     int xwfont, xhfont, xupfont;
 
-    Display *xdisplay;
-    Window  xwindow;
-    GC      xgc;
-    XGCValues xsgc;
+    Display     *xdisplay;
+    Window       xwindow;
+    GC           xgc;
+    XGCValues    xsgc;
     XFontStruct *xsfont;
-    byte    xwindow_AllVisible;
+    byte         xwindow_AllVisible;
+    obj         *xRequestor[NEST];
+    uldat        xReqPrivate[NEST];
+    uldat        xReqCount;
+    uldat        XReqCount;
+    XSelectionRequestEvent XReq[NEST];
     unsigned long xcol[MAXCOL+1];
 };
 
-#define xdata ((struct x11_data *)HW->Private)
+#define xdata	((struct x11_data *)HW->Private)
 #define xwidth	(xdata->xwidth)
 #define xheight	(xdata->xheight)
 #define xwfont	(xdata->xwfont)
 #define xhfont	(xdata->xhfont)
 #define xupfont	(xdata->xupfont)
-#define xdisplay (xdata->xdisplay)
+#define xdisplay	(xdata->xdisplay)
 #define xwindow	(xdata->xwindow)
 #define xgc	(xdata->xgc)
 #define xsgc	(xdata->xsgc)
 #define xsfont	(xdata->xsfont)
-#define xwindow_AllVisible (xdata->xwindow_AllVisible)
+#define xwindow_AllVisible	(xdata->xwindow_AllVisible)
+#define xRequestor(j)	(xdata->xRequestor[j])
+#define xReqPrivate(j)	(xdata->xReqPrivate[j])
+#define xReqCount	(xdata->xReqCount)
+#define XReqCount	(xdata->XReqCount)
+#define XReq(j)	(xdata->XReq[j])
 #define xcol	(xdata->xcol)
 
-
-static void X11_doImportClipBoard(Window win, Atom prop, Bool Delete);
-static void X11_ExportClipBoard(void);
-static void X11_UnExportClipBoard(void);
-static void X11_SendClipBoard(XSelectionRequestEvent *rq);
+static void X11_SelectionNotify_up(Window win, Atom prop);
+static void X11_SelectionRequest_up(XSelectionRequestEvent *req);
 
 
 static void X11_Beep(void) {
@@ -237,18 +301,20 @@ static void X11_HandleEvent(XEvent *event) {
 	xwindow_AllVisible = event->xvisibility.state == VisibilityUnobscured;
 	break;
       case SelectionClear:
-	X11_UnExportClipBoard();
+	HW->HWSelectionPrivate = NULL; /* selection now owned by some other X11 client */
+	TwinSelectionSetOwner((obj *)HW, SEL_CURRENTTIME, SEL_CURRENTTIME);
 	break;
       case SelectionRequest:
-	X11_SendClipBoard(&event->xselectionrequest);
+	X11_SelectionRequest_up(&event->xselectionrequest);
 	break;
       case SelectionNotify:
-	X11_doImportClipBoard(event->xselection.requestor, event->xselection.property, False);
+	X11_SelectionNotify_up(event->xselection.requestor, event->xselection.property);
 	break;
       default:
 	break;
     }
 }
+
 static void X11_KeyboardEvent(int fd, display_hw *D_HW) {
     XEvent event;
     SaveHW;
@@ -386,7 +452,7 @@ static void X11_FlushVideo(void) {
 	setFlush();
     }
 
-    HW->ChangedMouseFlag = FALSE;
+    HW->FlagsHW &= ~FlHWChangedMouseFlag;
 }
 
 static void X11_FlushHW(void) {
@@ -412,108 +478,187 @@ static void X11_Resize(udat x, udat y) {
     }
 }
      
-static void X11_ExportClipBoard(void) {
-    if (!HW->PrivateClipBoard) {
-	/* we don't own the selection buffer of X server, replace it */
+/*
+ * import X11 Selection
+ */
+static byte X11_SelectionImport_X11(void) {
+    return !HW->HWSelectionPrivate;
+}
+
+/*
+ * export our Selection to X11
+ */
+static void X11_SelectionExport_X11(void) {
+    if (!HW->HWSelectionPrivate) {
 	XSetSelectionOwner(xdisplay, XA_PRIMARY, xwindow, CurrentTime);
-	HW->PrivateClipBoard = (void *)xwindow;
+	HW->HWSelectionPrivate = (void *)xwindow;
 	setFlush();
     }
 }
 
-static void X11_UnExportClipBoard(void) {
-    HW->PrivateClipBoard = (void *)0;
-}
-
-static void X11_SendClipBoard(XSelectionRequestEvent *rq) {
+/*
+ * notify our Selection to X11
+ */
+static void X11_SelectionNotify_X11(uldat ReqPrivate, uldat Magic, byte MIME[MAX_MIMELEN],
+				    uldat Len, byte *Data) {
     XEvent ev;
     static Atom xa_targets = None;
     if (xa_targets == None)
 	xa_targets = XInternAtom (xdisplay, "TARGETS", False);
 	
+    if (XReqCount == 0) {
+	fprintf(stderr, "hw_X11.c: X11_SelectionNotify_X11(): unexpected Twin Selection Notify event!\n");
+	fflush(stderr);
+	return;
+    }
+#if 0
+    else {
+	fprintf(stderr, "hw_X11.c: X11_SelectionNotify_X11(): %d nested Twin Selection Notify events\n", XReqCount);
+	fflush(stderr);
+    }
+#endif
+    
+    XReqCount--;
     ev.xselection.type      = SelectionNotify;
     ev.xselection.property  = None;
-    ev.xselection.display   = rq->display;
-    ev.xselection.requestor = rq->requestor;
-    ev.xselection.selection = rq->selection;
-    ev.xselection.target    = rq->target;
-    ev.xselection.time      = rq->time;
+    ev.xselection.display   = XReq(XReqCount).display;
+    ev.xselection.requestor = XReq(XReqCount).requestor;
+    ev.xselection.selection = XReq(XReqCount).selection;
+    ev.xselection.target    = XReq(XReqCount).target;
+    ev.xselection.time      = XReq(XReqCount).time;
 	
-    if (rq->target == xa_targets) {
+    if (XReq(XReqCount).target == xa_targets) {
 	/*
-	 *          * On some systems, the Atom typedef is 64 bits wide.
-	 *          * We need to have a typedef that is exactly 32 bits wide,
-	 *          * because a format of 64 is not allowed by the X11 protocol.
-	 *          */
+	 * On some systems, the Atom typedef is 64 bits wide.
+	 * We need to have a typedef that is exactly 32 bits wide,
+	 * because a format of 64 is not allowed by the X11 protocol.
+	 */
 	typedef CARD32 Atom32;
 	Atom32 target_list[2];
 	
 	target_list[0] = (Atom32) xa_targets;
 	target_list[1] = (Atom32) XA_STRING;
-	XChangeProperty (xdisplay, rq->requestor, rq->property,
+	XChangeProperty (xdisplay, XReq(XReqCount).requestor, XReq(XReqCount).property,
 			 xa_targets, 8*sizeof(target_list[0]), PropModeReplace,
 			 (char *)target_list,
 			 sizeof(target_list)/sizeof(target_list[0]));
-	ev.xselection.property = rq->property;
-    } else if (rq->target == XA_STRING) {
-	XChangeProperty (xdisplay, rq->requestor, rq->property,
+	ev.xselection.property = XReq(XReqCount).property;
+    } else if (XReq(XReqCount).target == XA_STRING) {
+	XChangeProperty (xdisplay, XReq(XReqCount).requestor, XReq(XReqCount).property,
 			 XA_STRING, 8, PropModeReplace,
-			 /* GetClipData() MUST ALWAYS precede GetClipLen() */
-			 GetClipData(), GetClipLen());
-	ev.xselection.property = rq->property;
+			 Data, Len);
+	ev.xselection.property = XReq(XReqCount).property;
     }
-    XSendEvent (xdisplay, rq->requestor, False, 0, &ev);
+    XSendEvent (xdisplay, XReq(XReqCount).requestor, False, 0, &ev);
+    setFlush();
 }
 
-static void X11_doImportClipBoard(Window win, Atom prop, Bool Delete) {
+/*
+ * notify the X11 Selection to twin upper layer
+ */
+static void X11_SelectionNotify_up(Window win, Atom prop) {
     long nread = 0;
     unsigned long nitems, bytes_after = BIGBUFF;
-    byte *data;
     Atom actual_type;
     int actual_fmt;
-    
+    byte *data, *buff = NULL;
+
+    if (xReqCount == 0) {
+	fprintf(stderr, "hw_X11.c: X11_SelectionNotify_up(): unexpected X Selection Notify event!\n");
+	fflush(stderr);
+	return;
+    }
+#if 0
+    else {
+	fprintf(stderr, "hw_X11.c: X11_SelectionNotify_up(): %d nested X Selection Notify event\n", xReqCount);
+	fflush(stderr);
+    }
+#endif
     if (prop == None)
 	return;
-    
-    SetClipBoard(CLIP_TEXTMAGIC, 0, NULL);
-    
-    do {	
+
+    xReqCount--;
+
+    do {
 	if ((XGetWindowProperty(xdisplay, win, prop,
-				nread/4, bytes_after/4, Delete,
+				nread/4, bytes_after/4, False,
 				AnyPropertyType, &actual_type, &actual_fmt,
 				&nitems, &bytes_after, &data)
 	     != Success) || (actual_type != XA_STRING)) {
 	    
-	    XFree (data);
+	    XFree(data);
+	    if (buff)
+		FreeMem(buff);
 	    return;
 	}
-	nread += nitems;
 	
-	AddToClipBoard(nitems, data);
-	XFree (data);
-	
+	if (buff || (buff = AllocMem(nitems + bytes_after))) {
+	    CopyMem(data, buff + nread, nitems);
+	    nread += nitems;
+	}
+	XFree(data);
+	if (!buff)
+	    return;
     } while (bytes_after > 0);
+    
+    TwinSelectionNotify(xRequestor(xReqCount), xReqPrivate(xReqCount), SEL_TEXTMAGIC, NULL, nread, buff);
+    FreeMem(buff);
 }
 
-static void X11_ImportClipBoard(byte Wait) {
-    if (!HW->PrivateClipBoard) {
-	/* we don't own the selection buffer of X server, ask for it */
+/*
+ * request X11 Selection
+ */
+static void X11_SelectionRequest_X11(obj *Requestor, uldat ReqPrivate) {
+    if (!HW->HWSelectionPrivate) {
+
+	if (xReqCount == NEST) {
+	    fprintf(stderr, "hw_X11.c: X11_SelectionRequest_X11(): too many nested Twin Selection Request events!\n");
+	    fflush(stderr);
+	    return;
+	}
+#if 0
+	else {
+	    fprintf(stderr, "hw_X11.c: X11_SelectionRequest_X11(): %d nested Twin Selection Request events\n", xReqCount+1);
+	    fflush(stderr);
+	}
+#endif
+	xRequestor(xReqCount) = Requestor;
+	xReqPrivate(xReqCount) = ReqPrivate;
+	xReqCount++;
+	
 	if (XGetSelectionOwner(xdisplay, XA_PRIMARY) == None)
-	    X11_doImportClipBoard(DefaultRootWindow(xdisplay), XA_CUT_BUFFER0, False);
+	    X11_SelectionNotify_up(DefaultRootWindow(xdisplay), XA_CUT_BUFFER0);
 	else {
 	    Atom prop = XInternAtom (xdisplay, "VT_SELECTION", False);
-	    XConvertSelection (xdisplay, XA_PRIMARY, XA_STRING, prop, xwindow, CurrentTime);
-	    if (Wait) {
-		XEvent event;
-		do {
-		    XNextEvent(xdisplay, &event);
-		    X11_HandleEvent(&event);
-		} while (event.type != SelectionNotify);
-	    }
+	    XConvertSelection(xdisplay, XA_PRIMARY, XA_STRING, prop, xwindow, CurrentTime);
+	    setFlush();
+	    /* we will get an X11 SelectionNotify event */
 	}
     }
+    /* else race! someone else became Selection owner in the meanwhile... */
 }
 
+
+/*
+ * request twin Selection
+ */
+static void X11_SelectionRequest_up(XSelectionRequestEvent *req) {
+    if (XReqCount == NEST) {
+	fprintf(stderr, "hw_X11.c: X11_SelectionRequest_up(): too many nested X Selection Request events!\n");
+	fflush(stderr);
+	return;
+    }
+#if 0
+    else {
+	fprintf(stderr, "hw_X11.c: X11_SelectionRequest_up(): %d nested X Selection Request events\n", XReqCount+1);
+	fflush(stderr);
+    }
+#endif
+    CopyMem(req, &XReq(XReqCount), sizeof(XSelectionRequestEvent));
+    XReqCount++;
+    TwinSelectionRequest((obj *)HW, NOID, TwinSelectionGetOwner());
+    /* we will get a HW->HWSelectionNotify (i.e. X11_SelectionNotify_X11) call */
+}
 
 static byte X11_CanDragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
     return xwindow_AllVisible /* if window is partially covered, XCopyArea() cannot work */
@@ -599,7 +744,8 @@ byte X11_InitHW(void) {
     XSizeHints *xhints;
     XEvent event;
     int i;
-    byte *opt = NULL, *fontname = NULL, name[] = "twin :??? on X";
+    byte *opt = NULL, *drag = NULL, *noinput = NULL,
+	*fontname = NULL, name[] = "twin :??? on X";
     
     if (arg && HW->NameLen > 4) {
 	
@@ -611,25 +757,26 @@ byte X11_InitHW(void) {
 	if (*arg == '1' && arg[1] == '1')
 	    arg += 2; /* `X11' is same as `X' */
 
-	if ((opt = strchr(arg, ','))) {
-	    if (!strncmp(opt + 1, "font=", 5))
-		fontname = opt + 6;
-	    *opt = '\0';
-	}
+	opt = strstr(arg, ",font=");
+	drag = strstr(arg, ",drag");
+	noinput = strstr(arg, ",noinput");
 	
+	if (opt)  *opt = '\0', fontname = opt + 6;
+	if (drag) *drag = '\0';
+	if (noinput) *noinput = '\0';
+	    
 	if (*arg == '@')
 	    arg++; /* use specified X DISPLAY */
-	else if (*arg) {
-	    if (opt)
-		*opt = ',';
-	    return FALSE;
-	} else
+	else
 	    arg = NULL;
     } else
 	arg = NULL;
     
     if (!(HW->Private = (struct x11_data *)AllocMem(sizeof(struct x11_data)))) {
 	fprintf(stderr, "      X11_InitHW(): Out of memory!\n");
+	if (opt) *opt = ',';
+	if (drag) *drag = ',';
+	if (noinput) *noinput = ',';
 	return FALSE;
     }
     
@@ -663,9 +810,9 @@ byte X11_InitHW(void) {
 	     (xsfont = XLoadQueryFont(xdisplay, "vga")) ||
 	     (xsfont = XLoadQueryFont(xdisplay, "fixed"))) &&
 	    (xwfont = xsfont->min_bounds.width,
-	     xwidth = xwfont * (HW->X = ScreenWidth),
+	     xwidth = xwfont * (HW->X = GetDisplayWidth()),
 	     xhfont = (xupfont = xsfont->ascent) + xsfont->descent,
-	     xheight = xhfont * (HW->Y = ScreenHeight),
+	     xheight = xhfont * (HW->Y = GetDisplayHeight()),
 	     xwindow = XCreateWindow(xdisplay, RootWindow(xdisplay, xscreen), 0, 0,
 				     xwidth, xheight, 0, xdepth, InputOutput,
 				     DefaultVisual(xdisplay, xscreen),
@@ -711,16 +858,19 @@ byte X11_InitHW(void) {
 
 	    HW->ShowMouse = NoOp;
 	    HW->HideMouse = NoOp;
+	    HW->UpdateMouseAndCursor = NoOp;
 
 	    HW->DetectSize  = X11_DetectSize;
 	    HW->CheckResize = X11_CheckResize;
 	    HW->Resize      = X11_Resize;
 	    
-	    HW->ExportClipBoard = X11_ExportClipBoard;
-	    HW->ImportClipBoard = X11_ImportClipBoard;
-	    HW->PrivateClipBoard = NULL;
+	    HW->HWSelectionImport  = X11_SelectionImport_X11;
+	    HW->HWSelectionExport  = X11_SelectionExport_X11;
+	    HW->HWSelectionRequest = X11_SelectionRequest_X11;
+	    HW->HWSelectionNotify  = X11_SelectionNotify_X11;
+	    HW->HWSelectionPrivate = NULL;
 
-	    if (arg && strstr(arg, ",drag")) {
+	    if (drag) {
 		HW->CanDragArea = X11_CanDragArea;
 		HW->DragArea    = X11_DragArea;
 	    } else
@@ -737,10 +887,13 @@ byte X11_InitHW(void) {
 	    HW->QuitVideo = NoOp;
 	    
 	    HW->DisplayIsCTTY = FALSE;
-	    HW->SoftMouse = FALSE; /* mouse pointer handled by X11 server */
+	    HW->FlagsHW &= ~FlHWSoftMouse; /* mouse pointer handled by X11 server */
 	    
-	    HW->NeedOldVideo = TRUE;
-	    HW->ExpensiveFlushVideo = TRUE;
+	    HW->FlagsHW |= FlHWNeedOldVideo;
+	    HW->FlagsHW |= FlHWExpensiveFlushVideo;
+	    if (noinput)
+		HW->FlagsHW |= FlHWNoInput;
+	    
 	    HW->NeedHW = 0;
 	    HW->CanResize = TRUE;
 	    HW->merge_Threshold = 0;
@@ -753,7 +906,11 @@ byte X11_InitHW(void) {
 	    NeedRedrawVideo(0, 0, HW->X - 1, HW->Y - 1);
 
 	    if (opt) *opt = ',';
+	    if (drag) *drag = ',';
+	    if (noinput) *noinput = ',';
 
+	    xReqCount = XReqCount = 0;
+	    
 	    return TRUE;
 	}
     } while (0); else {
@@ -764,6 +921,8 @@ byte X11_InitHW(void) {
     }
 
     if (opt) *opt = ',';
+    if (drag) *drag = ',';
+    if (noinput) *noinput = ',';
 	
     if (xdisplay)
 	X11_QuitHW();

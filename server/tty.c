@@ -1015,6 +1015,8 @@ INLINE void write_ctrl(byte c) {
 	    if (nPar==7)
 		SetPaletteHW(Par[0], Par[1] * 16 + Par[2],
 			     Par[3] * 16 + Par[4], Par[5] * 16 + Par[6]);
+	    else
+		return; /* avoid resetting State */
 	}
 	break;
 
@@ -1297,7 +1299,7 @@ void WriteAscii(window *Window, uldat Len, byte *AsciiSeq) {
     }
     /* clear any selection */
     if (Win->Attrib & WINDOW_ANYSEL)
-	ClearSelection(Win);
+	ClearHilight(Win);
     
     while (!(*Flags & TTY_STOPPED) && Len) {
 	c = *AsciiSeq;
@@ -1395,7 +1397,7 @@ void WriteHWAttr(window *Window, udat x, udat y, uldat len, hwattr *text) {
     }
     /* clear any selection */
     if (Win->Attrib & WINDOW_ANYSEL)
-	ClearSelection(Win);
+	ClearHilight(Win);
 
     do {
 	if (dst >= Split)

@@ -25,6 +25,7 @@
 #include "resize.h"
 #include "util.h"
 #include "builtin.h" /* for Builtin_Term_Menu */
+#include "common.h"
 
 #define COD_QUIT      (udat)1
 #define COD_SPAWN     (udat)3
@@ -117,7 +118,7 @@ static void TwinTermH(msgport *MsgPort) {
     event_any *Event;
     udat Code/*, Repeat*/;
     window *Win;
-   
+    
     while ((Msg=Term_MsgPort->FirstMsg)) {
 	Remove(Msg);
 	
@@ -128,10 +129,18 @@ static void TwinTermH(msgport *MsgPort) {
 	    Win = Event->EventKeyboard.Window;
 	    (void)RemoteWindowWriteQueue(Win, Event->EventKeyboard.SeqLen,
 					 Event->EventKeyboard.AsciiSeq);
-	} else if (Msg->Type==MSG_CLIPBOARD) {
-	    /* react as for keypresses */
-	    Win = Event->EventClipBoard.Window;
-	    (void)RemoteWindowWriteQueue(Win, All->ClipLen, All->ClipData);
+	} else if (Msg->Type==MSG_SELECTION) {
+	    
+	    if ((Win = Event->EventSelection.Window))
+		TwinSelectionRequest((obj *)Term_MsgPort, Win->Id, TwinSelectionGetOwner());
+
+	} else if (Msg->Type==MSG_SELECTIONNOTIFY) {
+	    
+	    if ((Win = (window *)Id2Obj(window_magic >> magic_shift,
+					Event->EventSelectionNotify.ReqPrivate)))
+		(void)RemoteWindowWriteQueue(Win, Event->EventSelectionNotify.Len,
+					     Event->EventSelectionNotify.Data);
+	    
 	} else if (Msg->Type==MSG_WINDOW_MOUSE) {
 	    Code=Event->EventMouse.Code;
 	    /* send mouse movements */

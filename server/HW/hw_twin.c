@@ -35,7 +35,14 @@ struct tw_data {
 #define Twin 		(twdata->Twin)
 #define Tmsgport	(twdata->Tmsgport)
 
+struct sel_req {
+    uldat Requestor;
+    uldat ReqPrivate;
+};
 
+static void TW_SelectionRequest_up(uldat Requestor, uldat ReqPrivate);
+static void TW_SelectionNotify_up(uldat ReqPrivate, uldat Magic, byte MIME[MAX_MIMELEN],
+				  uldat Len, byte *Data);
 
 static void TW_Beep(void) {
     Tw_WriteAsciiWindow(Td, Twin, 1, "\007");
@@ -77,18 +84,31 @@ static void TW_Configure(udat resource, byte todefault, udat value) {
     }
 }
 
-static void TW_KeyboardEvent(int fd, display_hw *hw) {
-    tmsg Msg;
+static void TW_HandleMsg(tmsg Msg) {
     tevent_any Event;
     dat x, y, dx, dy;
-    SaveHW;
-    SetHW(hw);
-    
-    while ((Msg = Tw_ReadMsg(Td, FALSE))) {
-	
-	Event = &Msg->Event;
-	
-	if (Event->EventCommon.Window == Twin) switch (Msg->Type) {
+
+    Event = &Msg->Event;
+
+    switch (Msg->Type) {
+      case TW_MSG_SELECTIONCLEAR:
+	HW->HWSelectionPrivate = NULL; /* selection now owned by some other libTw client */
+	TwinSelectionSetOwner((obj *)HW, SEL_CURRENTTIME, SEL_CURRENTTIME);
+	return;
+      case TW_MSG_SELECTIONREQUEST:
+	TW_SelectionRequest_up(Event->EventSelectionRequest.Requestor, Event->EventSelectionRequest.ReqPrivate);
+	return;
+      case TW_MSG_SELECTIONNOTIFY:
+	TW_SelectionNotify_up(Event->EventSelectionNotify.ReqPrivate, Event->EventSelectionNotify.Magic,
+			      Event->EventSelectionNotify.MIME, Event->EventSelectionNotify.Len,
+			      Event->EventSelectionNotify.Data);
+	return;
+      default:
+	break;
+    }
+
+    if (Event->EventCommon.Window == Twin) {
+	switch (Msg->Type) {
 	  case TW_MSG_WINDOW_KEY:
 	    KeyboardEventCommon(Event->EventKeyboard.Code, Event->EventKeyboard.SeqLen, Event->EventKeyboard.AsciiSeq);
 	    break;
@@ -119,19 +139,22 @@ static void TW_KeyboardEvent(int fd, display_hw *hw) {
 		/* 0 == Close Code */
 		HW->NeedHW |= NEEDPanicHW, NeedHW |= NEEDPanicHW;
 	    break;
-	  case TW_MSG_CLIPBOARD:
-	    SetClipBoard(Event->EventClipBoard.Magic,
-			 /*
-			  * Event->EventClipBoard.MIME,
-			  * Event->EventClipBoard.MIMELen,
-			  */
-			 Event->EventClipBoard.Len,
-			 Event->EventClipBoard.Data);
-	    break;
 	  default:
 	    break;
 	}
     }
+    
+}
+
+static void TW_KeyboardEvent(int fd, display_hw *hw) {
+    tmsg Msg;
+    SaveHW;
+    SetHW(hw);
+    
+    while ((Msg = Tw_ReadMsg(Td, FALSE)))
+	TW_HandleMsg(Msg);
+	
+	
     if (Tw_InPanic(Td))
 	HW->NeedHW |= NEEDPanicHW, NeedHW |= NEEDPanicHW;
     RestoreHW;
@@ -197,7 +220,8 @@ static void TW_FlushVideo(void) {
 	setFlush();
     }
     
-    HW->ChangedMouseFlag = HW->RedrawVideo = FALSE;
+    HW->FlagsHW &= ~FlHWChangedMouseFlag;
+    HW->RedrawVideo = FALSE;
 }
 
 static void TW_FlushHW(void) {
@@ -246,12 +270,93 @@ static void TW_DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat Dst
 }
 #endif
 
+/*
+ * import Selection from libTw
+ */
+static byte TW_SelectionImport_TW(void) {
+    return !HW->HWSelectionPrivate;
+}
+
+/*
+ * export our Selection to libTw
+ */
+static void TW_SelectionExport_TW(void) {
+    if (!HW->HWSelectionPrivate) {
+	HW->HWSelectionPrivate = (void *)Tmsgport;
+	Tw_SetOwnerSelection(Td, Tmsgport, SEL_CURRENTTIME, SEL_CURRENTTIME);
+	setFlush();
+    }
+}
+
+/*
+ * request Selection from libTw
+ */
+static void TW_SelectionRequest_TW(obj *Requestor, uldat ReqPrivate) {
+    if (!HW->HWSelectionPrivate) {
+	struct sel_req *SelReq = AllocMem(sizeof(struct sel_req));
+	/*
+	 * instead of storing (Requestor, ReqPrivate) in some static buffer,
+	 * we exploit the ReqPrivate field of libTw Selection Request/Notify
+	 */
+	if (SelReq) {
+	    SelReq->Requestor = (uldat)Requestor;
+	    SelReq->ReqPrivate = ReqPrivate;
+	    Tw_RequestSelection(Td, Tw_GetOwnerSelection(Td), (uldat)SelReq);
+	}
+    }
+    /* else race! someone else became Selection owner in the meanwhile... */
+}
+
+/*
+ * request twin Selection from upper layer
+ */
+static void TW_SelectionRequest_up(uldat Requestor, uldat ReqPrivate) {
+    struct sel_req *SelReq = AllocMem(sizeof(struct sel_req));
+    /*
+     * instead of storing (Requestor, ReqPrivate) in some static buffer,
+     * we exploit the ReqPrivate field of libTw Selection Request/Notify
+     */
+    if (SelReq) {
+	SelReq->Requestor = Requestor;
+	SelReq->ReqPrivate = ReqPrivate;
+	TwinSelectionRequest((obj *)HW, (uldat)SelReq, TwinSelectionGetOwner());
+    }
+    /* we will get a HW->HWSelectionNotify (i.e. TW_SelectionNotify_TW) call */
+}
+
+/*
+ * notify our Selection to libTw
+ */
+static void TW_SelectionNotify_TW(uldat ReqPrivate, uldat Magic, byte MIME[MAX_MIMELEN],
+				  uldat Len, byte *Data) {
+    struct sel_req *SelReq = (void *)ReqPrivate;
+
+    if (SelReq) {
+        Tw_NotifySelection(Td, SelReq->Requestor, SelReq->ReqPrivate, Magic, MIME, Len, Data);
+	FreeMem(SelReq);
+    }
+}
+
+/*
+ * notify the libTw Selection to twin upper layer
+ */
+static void TW_SelectionNotify_up(uldat ReqPrivate, uldat Magic, byte MIME[MAX_MIMELEN],
+				  uldat Len, byte *Data) {
+    struct sel_req *SelReq = (void *)ReqPrivate;
+
+    if (SelReq) {
+        TwinSelectionNotify((void *)SelReq->Requestor, SelReq->ReqPrivate, Magic, MIME, Len, Data);
+	FreeMem(SelReq);
+    }
+}
+
+    
 static void TW_QuitHW(void) {
     /* not necessary, and Tmsgport, Twin could be undefined */
     /*
-    Tw_UnMapWindow(Td, Twin);
-    Tw_DeleteWindow(Td, Twin);
-    Tw_DeleteMsgPort(Td, Tmsgport);
+     * Tw_UnMapWindow(Td, Twin);
+     * Tw_DeleteWindow(Td, Twin);
+     * Tw_DeleteMsgPort(Td, Tmsgport);
      */
     Tw_Close(Td);
     
@@ -264,7 +369,7 @@ static void TW_QuitHW(void) {
 }
 
 byte TW_InitHW(void) {
-    byte *arg = HW->Name;
+    byte *arg = HW->Name, *opt = NULL;
     byte name[] = " twin :??? on twin ";
     hwcol namecol[] = " twin :??? on twin ";
     uldat len;
@@ -275,8 +380,15 @@ byte TW_InitHW(void) {
 	arg += 4;
 	if (strncmp(arg, "twin", 4))
 	    return FALSE; /* user said "use <arg> as display, not libTw" */
+
+	arg += 4;
 	
-	if (*(arg+=4) == '@')
+	if ((opt = strstr(arg, ",noinput"))) {
+	    *opt = '\0';
+	    HW->FlagsHW |= FlHWNoInput;
+	}
+	
+	if (*arg == '@')
 	    ++arg; /* use specified TWDISPLAY */
 	else
 	    arg = NULL; /* use default TWDISPLAY */
@@ -290,15 +402,17 @@ byte TW_InitHW(void) {
 	 * exactly a bright idea.
 	 */
 	fputs("      TW_InitHW() failed: TWDISPLAY is not set\n", stderr);
+	if (opt) *opt = ',';
 	return FALSE;
     }
 
     if (!(HW->Private = (struct tw_data *)AllocMem(sizeof(struct tw_data)))) {
 	fputs("      TW_InitHW(): Out of memory!\n", stderr);
+	if (opt) *opt = ',';
 	return FALSE;
     }
 
-#ifdef CONF_ALLOC
+#ifdef CONF__ALLOC
     Tw_ConfigMalloc(AllocMem, ReAllocMem, FreeMem);
 #endif
 	
@@ -331,7 +445,7 @@ byte TW_InitHW(void) {
 		(Td, strlen(name), name, namecol, Tmenu, COL(WHITE,BLACK), LINECURSOR,
 		 WINDOW_WANT_KEYS|WINDOW_WANT_MOUSE|WINDOW_WANT_CHANGE|WINDOW_DRAG|WINDOW_RESIZE|WINDOW_CLOSE,
 		 WINFL_USECONTENTS|WINFL_CURSOR_ON,
-		 2 + (HW->X = ScreenWidth), 2 + (HW->Y = ScreenHeight), (uldat)0);
+		 2 + (HW->X = GetDisplayWidth()), 2 + (HW->Y = GetDisplayHeight()), (uldat)0);
 
 	    if (!Twin)
 		break;
@@ -364,14 +478,17 @@ byte TW_InitHW(void) {
 
 	    HW->ShowMouse = NoOp;
 	    HW->HideMouse = NoOp;
+	    HW->UpdateMouseAndCursor = NoOp;
 	    
 	    HW->DetectSize  = TW_DetectSize;
 	    HW->CheckResize = TW_CheckResize;
 	    HW->Resize      = TW_Resize;
 	    
-	    HW->ExportClipBoard = NoOp;
-	    HW->ImportClipBoard = (void *)NoOp;
-	    HW->PrivateClipBoard = NULL;
+	    HW->HWSelectionImport  = TW_SelectionImport_TW;
+	    HW->HWSelectionExport  = TW_SelectionExport_TW;
+	    HW->HWSelectionRequest = TW_SelectionRequest_TW;
+	    HW->HWSelectionNotify  = TW_SelectionNotify_TW;
+	    HW->HWSelectionPrivate = NULL;
 	    
 	    HW->CanDragArea = NULL;
 
@@ -386,10 +503,10 @@ byte TW_InitHW(void) {
 	    HW->QuitVideo = NoOp;
 
 	    HW->DisplayIsCTTY = FALSE;
-	    HW->SoftMouse = FALSE; /* mouse pointer handled by X11 server */
+	    HW->FlagsHW &= ~FlHWSoftMouse; /* mouse pointer handled by X11 server */
 
-	    HW->NeedOldVideo = TRUE;
-	    HW->ExpensiveFlushVideo = FALSE;
+	    HW->FlagsHW |= FlHWNeedOldVideo;
+	    HW->FlagsHW &= ~FlHWExpensiveFlushVideo;
 	    HW->NeedHW = 0;
 	    HW->CanResize = TRUE;
 	    HW->merge_Threshold = 0;
@@ -401,6 +518,7 @@ byte TW_InitHW(void) {
 	     */
 	    NeedRedrawVideo(0, 0, HW->X - 1, HW->Y - 1);
 	    
+	    if (opt) *opt = ',';
 	    return TRUE;
 	    
 	} while (0); else {
@@ -414,6 +532,7 @@ byte TW_InitHW(void) {
     if (Td && Tw_ConnectionFd(Td) >= 0)
 	TW_QuitHW();
 
+    if (opt) *opt = ',';
     return FALSE;
 }
 

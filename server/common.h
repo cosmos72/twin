@@ -21,18 +21,26 @@ void ConfigureHW(udat resource, byte todefault, udat value);
 void SetPaletteHW(udat N, udat R, udat G, udat B);
 void ResetPaletteHW(void);
 
-void ImportClipBoard(byte Wait);
-void ExportClipBoard(void);
-byte *GetClipData(void);
-uldat GetClipLen(void);
+obj *TwinSelectionGetOwner(void);
+void TwinSelectionSetOwner(obj *Owner, time_t Time, frac_t Frac);
+#define SEL_CURRENTTIME ((time_t)0)
+void TwinSelectionNotify(obj *Requestor, uldat ReqPrivate, uldat Magic, byte MIME[MAX_MIMELEN],
+			    uldat Len, byte *Data);
+void TwinInternalSelectionNotify(obj *Requestor, uldat ReqPrivate);
+void TwinSelectionRequest(obj *Requestor, uldat ReqPrivate, obj *Owner);
 
-#ifndef AddToClipBoard
-# define AddToClipBoard(Len, Data) SetClipBoard(CLIP_APPEND, Len, Data)
+void SelectionExport(void);
+void SelectionImport(void);
+#ifndef SelectionAppend
+# define SelectionAppend(Len, Data) SelectionStore(SEL_APPEND, NULL, Len, Data)
 #endif
-byte SetClipBoard(uldat Magic, uldat Len, byte *Data);
+byte SelectionStore(uldat Magic, byte MIME[MAX_MIMELEN], uldat Len, byte *Data);
 
 byte KeyboardEventCommon(udat Code, udat Len, byte *Seq);
 byte MouseEventCommon(dat x, dat y, dat dx, dat dy, udat IdButtons);
+
+udat GetDisplayWidth(void);
+udat GetDisplayHeight(void);
 
 byte InitTransUser(void);
 
