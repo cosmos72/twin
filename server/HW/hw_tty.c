@@ -13,6 +13,7 @@
 
 #include <errno.h>
 #include <fcntl.h>
+#define __USE_UNIX98 
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -38,19 +39,22 @@
 # define CONF_HW_TTY_TWTERM
 #endif
 
-
 #ifdef CONF_HW_TTY_LINUX
 /*void *_fxstat = __fxstat;*/
 # include <gpm.h>
 #endif
 
-#ifdef CONF_HW_TTY_TERMCAP
-# include <termcap.h>
+#ifdef CONF__UNICODE
+# include "Tutf/Tutf.h"
 #endif
 
 struct tty_data {
     int tty_fd, VcsaFd, tty_number;
     byte *tty_name, *tty_TERM;
+#ifdef CONF__UNICODE
+    uldat tty_charset;
+    Tutf_function tty_UTF_16_to_charset;
+#endif
     dat ttypar[2];
     FILE *stdOUT;
     uldat saveCursorType;
@@ -77,6 +81,8 @@ struct tty_data {
 #define tty_number	(ttydata->tty_number)
 #define tty_name	(ttydata->tty_name)
 #define tty_TERM	(ttydata->tty_TERM)
+#define tty_charset	(ttydata->tty_charset)
+#define tty_UTF_16_to_charset	(ttydata->tty_UTF_16_to_charset)
 #define ttypar		(ttydata->ttypar)
 #define stdOUT		(ttydata->stdOUT)
 #define saveCursorType	(ttydata->saveCursorType)
@@ -412,12 +418,18 @@ static void stdin_KeyboardEvent(int fd, display_hw hw) {
 
 static byte warn_NoMouse(void) {
     byte c;
+    byte *Msg =
+	"\n"
+	"      \033[1m  ALL  MOUSE  DRIVERS  FAILED.\033[0m\n"
+	"\n"
+	"      If you really want to run `twin' without mouse\n"
+	"      hit RETURN to continue, otherwise hit CTRL-C to quit now.\n";
     
-    printk("\n"
-	   "      \033[1m  ALL  MOUSE  DRIVERS  FAILED.\033[0m\n"
-	   "\n"
-	   "      If you really want to run `twin' without mouse\n"
-	   "      hit RETURN to continue, otherwise hit CTRL-C to quit now.\n");
+    if (tty_fd != 0) {
+	fprintf(stdOUT, Msg);
+	fflush(stdOUT);
+    }
+    printk(Msg);
     flushk();
     
     read(tty_fd, &c, 1);
@@ -544,6 +556,10 @@ static byte xterm_InitMouse(byte force) {
 		   "      has no support for xterm-style mouse reporting.\n");
 	    return FALSE;
 	}
+	if (ttypar[0]==6 && ttypar[1]<4) {
+	    printk("      xterm_InitMouse() warning: this `linux' terminal\n"
+		   "      can only report click, drag and release, not motion.\n");
+	}
 	seq = "\033[?9h";
     } else if (!strncmp(term, "xterm", 5) || !strncmp(term, "rxvt", 4)) {
 	seq = "\033[?1001s\033[?1000h";
@@ -573,6 +589,15 @@ static void xterm_QuitMouse(void) {
 	fputs("\033[?1000l\033[?1001r", stdOUT);
     HW->QuitMouse = NoOp;
 }
+
+static void xterm_EnableMouseMotionEvents(byte enable) {
+    if (ttypar[0]==6 && ttypar[1]>=4) {
+	/* either enable new style + mouse motion, or switch back to new style */
+	fputs(enable ? "\033[?999h" : "\033[?9h", stdOUT);
+	setFlush();
+    }
+}
+
 
 static void xterm_MouseEvent(int fd, display_hw hw) {
     static dat prev_x, prev_y;
@@ -642,7 +667,6 @@ static void xterm_MouseEvent(int fd, display_hw hw) {
 }
 
 
-
 #if defined(CONF_HW_TTY_LINUX) || defined(CONF_HW_TTY_TWTERM)
 # include "hw_tty_linux.c"
 #endif
@@ -661,6 +685,7 @@ static
 byte tty_InitHW(void) {
     byte *arg = HW->Name;
     byte *s;
+    byte *charset = NULL;
     byte skip_vcsa = FALSE;
     byte skip_stdout = FALSE;
     byte force_xterm = FALSE;
@@ -671,6 +696,9 @@ byte tty_InitHW(void) {
 	return FALSE;
     }
     saveCursorType = (uldat)-1;
+#ifdef CONF__UNICODE
+    tty_charset = (uldat)-1;
+#endif
     saveX = saveY = 0;
     stdOUT = NULL;
     tty_TERM = tty_name = NULL;
@@ -707,6 +735,12 @@ byte tty_InitHW(void) {
 		tty_TERM = CloneStr(arg);
 		if (s) *s = ',';
 		arg = s;
+	    } else if (!strncmp(arg, ",charset=", 9)) {
+		s = strchr(arg += 9, ',');
+		if (s) *s = '\0';
+		charset = CloneStr(arg);
+		if (s) *s = ',';
+		arg = s;
 	    } else if (!strncmp(arg, ",stdout", 7)) {
 		arg = strchr(arg + 7, ',');
 		skip_vcsa = TRUE;
@@ -732,6 +766,28 @@ byte tty_InitHW(void) {
 
 #ifdef HW_TTY_TERMCAP
     colorbug = tc_colorbug;
+#endif
+
+#ifdef CONF__UNICODE
+    if (charset) {
+	if ((tty_charset = Tutf_charset_id(charset)) == (uldat)-1)
+	    printk("      tty_InitHW(): libTutf warning: unknown charset `%." STR(SMALLBUFF) "s', assuming `IBM437'\n", charset);
+	else if (tty_charset == Tutf_charset_id(T_NAME(UTF_16))) {
+	    printk("      tty_InitHW(): cannot use Unicode charset `%." STR(SMALLBUFF) "s', assuming `IBM437'\n", charset);
+	    tty_charset = (uldat)-1;
+	}
+	FreeMem(charset);
+    }
+    if (tty_charset == (uldat)-1)
+	tty_UTF_16_to_charset = Tutf_UTF_16_to_IBM437;
+    else
+	tty_UTF_16_to_charset = Tutf_UTF_16_to_charset_function(tty_charset);
+
+#else
+    if (charset) {
+	FreeMem(charset);
+	printk("      tty_InitHW(): warning: `charset=' option requires Unicode support\n");
+    }
 #endif
     
     if (!stdOUT) {

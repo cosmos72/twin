@@ -10,7 +10,7 @@
 				TUTORIAL
 
 
-		  updated to version 0.3.8, 19 Feb 2001
+		  updated to version 0.3.9, 25 Jun 2001
 	      
 
 	     Author: Massimiliano Ghilardi <max@linuz.sns.it>
@@ -58,10 +58,10 @@
       buttons position and look, scrollbars position and look,
       as they are under control of twin builtin window manager.
    c. In `twin', windows are not just plain rectangules where programs
-      can draw. They can contain `gadgets' (small icons you can select,
-      like the buttons you can find in many GUIs) and they can contain
-      lines longer that the window width and/or more lines than
-      the window height, letting the user scroll them.
+      can draw. They can contain other windows and/or `gadgets' (small
+      icons you can select, like the buttons you can find in many GUIs)
+      and they can contain lines longer that the window width and/or more
+      lines than the window height, letting the user scroll them.
    d. Twin implements virtual screens. Each virtual screen has very big
       sizes in both directions (something like 64K character cells),
       and you can scroll them by holding LEFT or MIDDLE mouse buttons
@@ -96,8 +96,8 @@
    click/release, not drags) and keyboard (each terminal sends different codes
    for special keys: F1-F12, Pause, ...)
 
-   Currently, twin is tested on i386 platforms running either Linux or
-   FreeBSD. I had yet no chance to test it on other systems.
+   Currently, twin is tested on Linux and FreeBSD.
+   I had yet no chance to test it on other systems.
    
    Twin will not be able to take advantage of special features of non-Linux
    system consoles until someone adds to twin the necessary code for them.
@@ -717,31 +717,35 @@
     and known display options are:
       
       all displays : ",noinput" to start the display as view-only;
-                     keyboard and mouse activity on that display
-		     will be ignored.
+			keyboard and mouse activity on that display
+			will be ignored.
 		   : ",slow" to tell twin the display is slow and output
-		     to it should be buffered and chunked together as much
-		     as possible (this is on by default for -hw=X11)
+			to it should be buffered and chunked together as much
+			as possible (this is on by default for -hw=X11)
 		  
       -hw=X  or
       -hw=X11	: ",font=<fontname>" to choose your favourite X11 font
-		  (default: vga)
+		        (default: vga).
+		: ",charset=<name>" to inform the driver about the codepage
+		        corresponding to the used font (default: autodetected).
 		: ",drag" to allow using XCopyArea as redrawing speedup.
-		  This is off by default as on many X servers XCopyArea
-		  is actually slower than a normal redraw.
-		  Your mileage may vary.
+			This is off by default as on many X servers XCopyArea
+			is actually slower than a normal redraw.
+			Your mileage may vary.
       
       -hw=twin	: ",gz" to enable gzip compression on the connecting socket.
       
       -hw=tty	: ",stdout" to draw on stdout even if /dev/vcsa* is available.
 		: ",termcap" to use termcap/ncurses interface even if other
-			     methods are available.
+			methods are available.
 		: ",colorbug" use with termcap interface, if terminal does not
-			     reset colors to white on black using ESC [ m
-			     (or the appropriate sequence for the terminal).
+			reset colors to white on black using ESC [ m
+			(or the appropriate sequence for the terminal).
 		: ",xterm" to force xterm-style mouse in case it is not
-			     autodetected.
+			autodetected.
 		: ",TERM=<terminal>" to specify the terminal type.
+		: ",charset=<name>" to inform the driver of the codepage
+		        used by the terminal (default: IBM437).
 
       -hw=ggi	: no options, use the zillion of libggi environment variables
 		  to control libggi behaviour.

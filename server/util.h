@@ -7,9 +7,11 @@ extern uldat unixSlot;
 extern int unixFd;
 
 void *CloneMem(CONST void *From, uldat Size);
-byte *CloneStr(CONST byte *s);
-byte *CloneStrL(CONST byte *s, uldat len);
-byte **CloneStrList(byte **list);
+byte *CloneStr(CONST byte *From);
+byte *CloneStrL(CONST byte *From, uldat Size);
+byte **CloneStrList(byte **FromList);
+hwfont *CloneString2HWFont(CONST byte *From, uldat Size);
+hwfont *CloneString2HWFontL(CONST byte *From, uldat Size);
 
 byte Error(udat Code_Error);
 
@@ -40,6 +42,7 @@ void ResetBorderPattern(void);
 void FallBackKeyAction(window W, event_keyboard *EventK);
 
 byte **TokenizeStringVec(uldat len, byte *text);
+byte **TokenizeHWFontVec(uldat len, hwfont *text);
 void FreeStringVec(byte **argv);
 
 byte InitTWDisplay(void);

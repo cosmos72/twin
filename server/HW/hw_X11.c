@@ -24,6 +24,11 @@
 
 #include "Tw/Twkeys.h"
 
+#ifdef CONF__UNICODE
+# include "Tutf/Tutf.h"
+# include "Tutf/Tutf_defs.h"
+#endif
+
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/keysym.h>
@@ -101,16 +106,20 @@
 
 #define NEST 2
 
+
+
 struct x11_data {
     unsigned int xwidth, xheight;
     int xwfont, xhfont, xupfont;
-
+#ifdef CONF__UNICODE
+    Tutf_function xUTF_16_to_charset;
+#endif    
     Display     *xdisplay;
     Window       xwindow;
     GC           xgc;
     XGCValues    xsgc;
     XFontStruct *xsfont;
-    byte         xwindow_AllVisible;
+    byte         xwindow_AllVisible, xfont_map;
     obj          xRequestor[NEST];
     uldat        xReqPrivate[NEST];
     uldat        xReqCount;
@@ -126,12 +135,14 @@ struct x11_data {
 #define xwfont	(xdata->xwfont)
 #define xhfont	(xdata->xhfont)
 #define xupfont	(xdata->xupfont)
+#define xUTF_16_to_charset	(xdata->xUTF_16_to_charset)
 #define xdisplay	(xdata->xdisplay)
 #define xwindow	(xdata->xwindow)
 #define xgc	(xdata->xgc)
 #define xsgc	(xdata->xsgc)
 #define xsfont	(xdata->xsfont)
 #define xwindow_AllVisible	(xdata->xwindow_AllVisible)
+#define xfont_map	(xdata->xfont_map)
 #define xRequestor(j)	(xdata->xRequestor[j])
 #define xReqPrivate(j)	(xdata->xReqPrivate[j])
 #define xReqCount	(xdata->xReqCount)
@@ -200,6 +211,9 @@ static void X11_Configure(udat resource, byte todefault, udat value) {
 	xctrl.bell_duration = todefault ? -1 : value;
 	XChangeKeyboardControl(xdisplay, KBBellDuration, &xctrl);
 	setFlush();
+	break;
+      case HW_MOUSEMOTIONEVENTS:
+	/* nothing to do */
 	break;
       default:
 	break;
@@ -293,9 +307,6 @@ static void X11_HandleEvent(XEvent *event) {
       case MotionNotify:
       case ButtonPress:
       case ButtonRelease:
-	if (event->type == MotionNotify && !HW->MouseState.keys)
-	    break;
-	
 	x = event->xbutton.x / xwfont;
 	if (x < 0) x = 0;
 	else if (x >= DisplayWidth) x = DisplayWidth - 1;
@@ -394,18 +405,34 @@ static void X11_KeyboardEvent(int fd, display_hw D_HW) {
 /* this can stay static, X11_FlushHW() is not reentrant */
 static hwcol _col;
 
-#define XDRAW(col, buf, buflen) \
+
+
+#ifdef CONF__UNICODE
+# define XDRAW(col, buf, buflen) \
+    if (xsgc.foreground != xcol[COLFG(col)]) \
+	XSetForeground(xdisplay, xgc, xsgc.foreground = xcol[COLFG(col)]); \
+    if (xsgc.background != xcol[COLBG(col)]) \
+	XSetBackground(xdisplay, xgc, xsgc.background = xcol[COLBG(col)]); \
+	XDrawImageString16(xdisplay, xwindow, xgc, xbegin, ybegin + xupfont, buf, buflen)
+#else
+# define XDRAW(col, buf, buflen) \
     if (xsgc.foreground != xcol[COLFG(col)]) \
 	XSetForeground(xdisplay, xgc, xsgc.foreground = xcol[COLFG(col)]); \
     if (xsgc.background != xcol[COLBG(col)]) \
 	XSetBackground(xdisplay, xgc, xsgc.background = xcol[COLBG(col)]); \
 	XDrawImageString(xdisplay, xwindow, xgc, xbegin, ybegin + xupfont, buf, buflen)
+#endif
 
 INLINE void X11_Mogrify(dat x, dat y, uldat len) {
     hwattr *V, *oV;
     hwcol col;
     udat buflen = 0;
+#ifdef CONF__UNICODE
+    hwfont f;
+    XChar2b buf[SMALLBUFF];
+#else
     byte buf[SMALLBUFF];
+#endif
     int xbegin = x * xwfont, ybegin = y * xhfont;
     
     V = Video + x + y * DisplayWidth;
@@ -422,7 +449,15 @@ INLINE void X11_Mogrify(dat x, dat y, uldat len) {
 		xbegin = x * xwfont;
 		_col = col;
 	    }
+#ifdef CONF__UNICODE
+	    f = HWFONT(*V);
+	    if (xUTF_16_to_charset)
+		f = xUTF_16_to_charset(f);
+	    buf[buflen  ].byte1 = f >> 8;
+	    buf[buflen++].byte2 = f & 0xFF;
+#else
 	    buf[buflen++] = HWFONT(*V);
+#endif
 	}
     }
     if (buflen) {
@@ -432,10 +467,19 @@ INLINE void X11_Mogrify(dat x, dat y, uldat len) {
 }
 
 static void X11_HideCursor(dat x, dat y) {
-    hwattr V = Video[x + y * DisplayWidth];
-    byte c = HWFONT(V);
-    hwcol col = HWCOL(V);
     int xbegin = x * xwfont, ybegin = y * xhfont;
+    hwattr V = Video[x + y * DisplayWidth];
+    hwcol col = HWCOL(V);
+#ifdef CONF__UNICODE
+    XChar2b c;
+    hwfont f = HWFONT(V);
+    if (xUTF_16_to_charset)
+	f = xUTF_16_to_charset(f);
+    c.byte1 = f >> 8;
+    c.byte2 = f & 0xFF;
+#else
+    byte c = HWFONT(V);
+#endif
     
     XDRAW(col, &c, 1);
 }
@@ -443,10 +487,15 @@ static void X11_HideCursor(dat x, dat y) {
 #undef XDRAW
 
 static void X11_ShowCursor(uldat type, dat x, dat y) {
-    hwattr V = Video[x + y * DisplayWidth];
-    hwcol v;
-    byte c;
     udat i;
+    hwcol v;
+    hwattr V = Video[x + y * DisplayWidth];
+#ifdef CONF__UNICODE
+    hwfont f;
+    XChar2b c;
+#else
+    byte c;
+#endif
     
     if (type & 0x10) {
 	/* soft cursor */
@@ -459,8 +508,17 @@ static void X11_ShowCursor(uldat type, dat x, dat y) {
 	    XSetForeground(xdisplay, xgc, xsgc.foreground = xcol[COLFG(v)]);
 	if (xsgc.background != xcol[COLBG(v)])
 	    XSetBackground(xdisplay, xgc, xsgc.background = xcol[COLBG(v)]);
+#ifdef CONF__UNICODE
+	f = HWFONT(V);
+	if (xUTF_16_to_charset)
+	    f = xUTF_16_to_charset(f);
+	c.byte1 = f >> 8;
+	c.byte2 = f & 0xFF;
+	XDrawImageString16(xdisplay, xwindow, xgc, x * xwfont, y * xhfont + xupfont, &c, 1);
+#else
 	c = HWFONT(V);
 	XDrawImageString(xdisplay, xwindow, xgc, x * xwfont, y * xhfont + xupfont, &c, 1);
+#endif
     }
     if (type & 0xF) {
 	/* VGA hw-like cursor */
@@ -796,6 +854,71 @@ static int X11_Die(Display *d) {
 }
 #endif
 
+
+#ifdef CONF__UNICODE
+static Tutf_function X11_UTF_16_to_charset_function(CONST byte *charset) {
+    XFontProp *fp;
+    Atom fontatom;
+    CONST byte *s, *fontname = NULL;
+    uldat i;
+    
+    if (!charset) {
+	/* attempt to autodetect encoding. */
+	fp = xsfont->properties;
+	fontatom = XInternAtom (xdisplay, "FONT", False);
+	i = xsfont->n_properties;
+	
+	while (i--) {
+	    if (fp->name == fontatom) {
+		fontname = XGetAtomName(xdisplay, fp->card32);
+		/*fprintf(stderr, "    X11_UTF_16_to...: font name: `%s\'\n", fontname);*/
+		break;
+	    }
+	    fp++;
+	}
+	if (fontname && !strcmp(fontname, "vga")) {
+	    charset = T_NAME_IBM437;
+	} else if (fontname) {
+	    i = 2;
+	    for (s = fontname + strlen(fontname) - 1; i && s >= fontname; s--) {
+		if (*s == '-')
+		    i--;
+	    }
+	    if (!i)
+		charset = s + 2; /* skip current char and '-' */
+	}
+	    
+	if (!charset) {
+	    if (xsfont->min_byte1 < xsfont->max_byte1) {
+		/* font is more than just 8-bit. For now, assume it's unicode */
+		printk("    X11_InitHW: font `%s\' has no known charset encoding,\n"
+		       "                assuming Unicode.\n", fontname);
+		return NULL;
+	    }
+	    /* else assume codepage437. gross. */
+	    printk("    X11_InitHW: font `%s\' has no known charset encoding,\n"
+		   "                assuming IBM437 codepage (\"VGA\").\n", fontname);
+	    return Tutf_UTF_16_to_IBM437;
+	}
+    }
+    
+    i = Tutf_charset_id(charset);
+    s = Tutf_charset_name(i);
+    if (s && !strcmp(s, T_NAME_UTF_16)) {
+	/* this is an Unicode font. good. */
+	return NULL;
+    }
+    
+    if (i == (uldat)-1) {
+	printk("      X11_InitHW(): libTutf warning: unknown charset `%." STR(SMALLBUFF) "s', assuming `IBM437'\n", charset);
+	return Tutf_UTF_16_to_IBM437;
+    }
+    
+    return Tutf_UTF_16_to_charset_function(i);
+}
+#endif
+
+    
 #ifdef CONF_THIS_MODULE
 static
 #endif
@@ -808,11 +931,18 @@ byte X11_InitHW(void) {
     XSizeHints *xhints;
     XEvent event;
     int i;
-    byte *opt = NULL, *drag = NULL, *noinput = NULL,
-	*fontname = NULL, name[] = "twin :??? on X";
+    byte *s, *dpy = NULL, *dpy0 = NULL,
+    *fontname = NULL, *fontname0 = NULL,
+    *charset = NULL, *charset0 = NULL,
+    name[] = "twin :??? on X";
+    byte drag = FALSE, noinput = FALSE;
+    
+    if (!(HW->Private = (struct x11_data *)AllocMem(sizeof(struct x11_data)))) {
+	printk("      X11_InitHW(): Out of memory!\n");
+	return FALSE;
+    }
     
     if (arg && HW->NameLen > 4) {
-	
 	arg += 4; /* skip "-hw=" */
 	
 	if (*arg++ != 'X')
@@ -821,34 +951,44 @@ byte X11_InitHW(void) {
 	if (*arg == '1' && arg[1] == '1')
 	    arg += 2; /* `X11' is same as `X' */
 
-	opt = strstr(arg, ",font=");
-	drag = strstr(arg, ",drag");
-	noinput = strstr(arg, ",noinput");
-	
-	if (opt)  *opt = '\0', fontname = opt + 6;
-	if (drag) *drag = '\0';
-	if (noinput) *noinput = '\0';
-	    
-	if (*arg == '@')
-	    arg++; /* use specified X DISPLAY */
-	else
-	    arg = NULL;
-    } else
-	arg = NULL;
-    
-    if (!(HW->Private = (struct x11_data *)AllocMem(sizeof(struct x11_data)))) {
-	printk("      X11_InitHW(): Out of memory!\n");
-	if (opt) *opt = ',';
-	if (drag) *drag = ',';
-	if (noinput) *noinput = ',';
-	return FALSE;
+	if (*arg == '@') {
+	    s = strchr(dpy = ++arg, ',');
+	    if (s) *(dpy0 = s) = '\0';
+	    arg = s;
+	}
+
+	while (arg && *arg) {
+	    /* parse options */
+	    if (*arg == ',') {
+		arg++;
+		continue;
+	    }
+	    if (!strncmp(arg, "font=", 5)) {
+		fontname = arg += 5;
+		s = strchr(arg, ',');
+		if (s) *(fontname0 = s++) = '\0';
+		arg = s;
+	    } else if (!strncmp(arg, "charset=", 8)) {
+		charset = arg += 8;
+		s = strchr(arg, ',');
+		if (s) *(charset0 = s++) = '\0';
+		arg = s;
+	    } else if (!strncmp(arg, "drag", 4)) {
+		arg += 4;
+		drag = TRUE;
+	    } else if (!strncmp(arg, "noinput", 7)) {
+		arg += 7;
+		noinput = TRUE;
+	    }
+	}
     }
 
     xsfont = NULL; xhints = NULL;
     xwindow = None; xgc = None;
+    xReqCount = XReqCount = 0;
     HW->keyboard_slot = NOSLOT;
     
-    if ((xdisplay = XOpenDisplay(arg))) do {
+    if ((xdisplay = XOpenDisplay(dpy))) do {
 	
 	(void)XSetIOErrorHandler(X11_Die);
 	
@@ -899,6 +1039,9 @@ byte X11_InitHW(void) {
 	    strcat(name+5, " on X");
 	    XStoreName(xdisplay, xwindow, name);
 	    
+#ifdef CONF__UNICODE
+	    xUTF_16_to_charset = X11_UTF_16_to_charset_function(charset);
+#endif	    
 	    /*
 	     * ask ICCCM-compliant window manager to tell us when close window
 	     * has been chosen, rather than just killing us
@@ -913,13 +1056,13 @@ byte X11_InitHW(void) {
 	    xhints->width_inc  = xwfont;
 	    xhints->height_inc = xhfont;
 	    XSetWMNormalHints(xdisplay, xwindow, xhints);
-
+	    
 	    XMapWindow(xdisplay, xwindow);
-
+	    
 	    do {
 		XNextEvent(xdisplay, &event);
 	    } while (event.type != MapNotify);
-
+	    
 	    XFree(xhints); xhints = NULL;
 	    
 	    HW->mouse_slot = NOSLOT;
@@ -931,13 +1074,13 @@ byte X11_InitHW(void) {
 	    
 	    HW->FlushVideo = X11_FlushVideo;
 	    HW->FlushHW = X11_FlushHW;
-
+	    
 	    HW->KeyboardEvent = X11_KeyboardEvent;
 	    HW->MouseEvent = (void *)NoOp; /* mouse events handled by X11_KeyboardEvent */
-
+	    
 	    HW->XY[0] = HW->XY[1] = 0;
 	    HW->TT = NOCURSOR;
-
+	    
 	    HW->ShowMouse = NoOp;
 	    HW->HideMouse = NoOp;
 	    HW->UpdateMouseAndCursor = NoOp;
@@ -952,18 +1095,18 @@ byte X11_InitHW(void) {
 	    HW->HWSelectionRequest = X11_SelectionRequest_X11;
 	    HW->HWSelectionNotify  = X11_SelectionNotify_X11;
 	    HW->HWSelectionPrivate = NULL;
-
+	    
 	    if (drag) {
 		HW->CanDragArea = X11_CanDragArea;
 		HW->DragArea    = X11_DragArea;
 	    } else
 		HW->CanDragArea = NULL;
-
+	    
 	    HW->Beep = X11_Beep;
 	    HW->Configure = X11_Configure;
 	    HW->SetPalette = (void *)NoOp;
 	    HW->ResetPalette = NoOp;
-
+	    
 	    HW->QuitHW = X11_QuitHW;
 	    HW->QuitKeyboard  = NoOp;
 	    HW->QuitMouse = NoOp;
@@ -988,25 +1131,23 @@ byte X11_InitHW(void) {
 	     */
 	    HW->RedrawVideo = FALSE;
 	    NeedRedrawVideo(0, 0, HW->X - 1, HW->Y - 1);
-
-	    if (opt) *opt = ',';
-	    if (drag) *drag = ',';
-	    if (noinput) *noinput = ',';
-
-	    xReqCount = XReqCount = 0;
+	    
+	    if (dpy0) *dpy0 = ',';
+	    if (fontname0) *fontname0 = ',';
+	    if (charset0) *charset0 = ',';
 	    
 	    return TRUE;
 	}
     } while (0); else {
-	if (arg || (arg = getenv("DISPLAY")))
+	if (dpy || (dpy = getenv("DISPLAY")))
 	    printk("      X11_InitHW() failed to open display %s\n", arg);
 	else
 	    printk("      X11_InitHW() failed: DISPLAY is not set\n");
     }
-
-    if (opt) *opt = ',';
-    if (drag) *drag = ',';
-    if (noinput) *noinput = ',';
+	
+    if (dpy0) *dpy0 = ',';
+    if (fontname0) *fontname0 = ',';
+    if (charset0) *charset0 = ',';
 	
     if (xdisplay)
 	X11_QuitHW();

@@ -1,0 +1,5 @@
+ 
+ twmapscrn: .twmapscrn.link
+ .twmapscrn.link: mapscrn.o xmalloc.o findfile.o
+
+ 

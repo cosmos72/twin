@@ -1,0 +1,54 @@
+
+			     Compatibility problems
+		    
+
+This file describes known compatibility problems when mixing
+twin server, library and client of different versions.
+
+This file was created together with twin-0.3.9 so it may contain
+little information for older versions.
+
+Since libTw and libTutf have version numbering different from twin,
+but new libTw and libTutf are always released with a new twin server
+(until now), it is possible to match libTw and libTutf versions against
+the twin server version they were released with.
+Here is the correspondence:
+
+     twin server	libTw		libTutf
+	0.2.8		1.0.0
+
+	0.3.0		2.0.0
+	0.3.1		2.0.0
+	0.3.2		2.0.0
+	0.3.3		2.0.0
+	0.3.4		2.0.0
+	
+	0.3.5		2.0.1
+	0.3.6		2.0.2
+	0.3.7		2.0.4 \_(this is a release bug)
+	0.3.8		2.0.4 /
+	
+	0.3.9		3.0.0		0.0.1
+
+As a general rule of thumb, you would better use libraries
+and servers released together to avoid most problems
+(clients are more version-mismatch tolerant, expecially when
+the clients are older than the libraries).
+
+
+* Using libTw >= 3.0.0 :
+	you can enable 'Unicode support' :
+	if a client is compiled against libraries including 'Unicode support',
+	it requires libraries including 'Unicode support' to run;
+	if a client is compiled against libraries without 'Unicode support',
+	it requires libraries without 'Unicode support' to run.
+
+* Using libTw >= 3.0.0 with twin <  0.3.9
+     or libTw <  3.0.0 with twin >= 0.3.9 :
+        does not work.
+
+* Using libTw >= 2.0.4 with twin <  0.3.7 :
+	calling Tw_MapWindow() and some other functions
+	results in libTw panic with 'function not supported by server'
+	(affects almost all clients)
+

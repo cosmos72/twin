@@ -1,0 +1,24 @@
+Begin3
+Title:		twin
+Version:	0.3.9
+Entered-date:	010623
+Description:	a Text mode WINdow environment.
+		It has built-in window manager and linux console emulator.
+		Has X11-style networked server capabilities:
+		programs started remotely can connect to twin using sockets.
+		Runs on the linux console, on itself, on X11 display,
+		can attach/detach on-the-fly to a display
+		and supports multiple simultaneous displays.
+		VGA font provided for better look.
+Keywords:	twin wm twindows linux
+Author: 	max@linuz.sns.it (Massimiliano Ghilardi)
+Maintained-by:	max@linuz.sns.it (Massimiliano Ghilardi)
+Primary-site:	http://linuz.sns.it/~max/twin/
+		537k  twin-0.3.9.tar.gz
+		852   twin-0.3.9.lsm
+Alternate-site: http://freshmeat.net/projects/twin/
+		537k  twin-0.3.9.tar.gz
+		852   twin-0.3.9.lsm
+Platforms:	Linux, FreeBSD, X11
+Copying-policy:	GPL
+End

@@ -13,33 +13,11 @@
 #ifndef _TWIN_H
 #define _TWIN_H
 
-#include "twinsys.h"
-
+#include "Tw/compiler.h"
+#include "Tw/osincludes.h"
 #include "Tw/datatypes.h"
 #include "Tw/datasizes.h"
-
-
-
-#if !defined(CONST)
-# define CONST const
-#endif
-
-/* inline is NOT a standard C feature :( */
-#if !defined(INLINE)
-# define INLINE static
-#endif
-
-#if !defined(VOLATILE)
-# define VOLATILE volatile
-#endif
-
-#if !defined(FNATTR_CONST)
-# if defined(__GNUC__)
-#  define FNATTR_CONST __attribute__((const))
-# else
-#  define FNATTR_CONST
-# endif
-#endif
+#include "Tw/uni_types.h"
 
 #define Abs(x) ((x)>0 ? (x) : -(x))
 #define Swap(a, b, tmp) ((tmp)=(a), (a)=(b), (b)=(tmp))
@@ -50,6 +28,11 @@
 #define Max3(x, y, z) ((x)>(y) ? Max2(x,z) : Max2(y,z))
 #define Min3(x, y, z) ((x)<(y) ? Min2(x,z) : Min2(y,z))
 
+#define _CAT(a,b) a##b
+#define CAT(a,b) _CAT(a,b)
+
+#define _STR(s) #s
+#define STR(s) _STR(s)
 
 /***************/
 
@@ -57,7 +40,9 @@
 #define specFD   (-2)	/* use for every FD that needs a special RemoteFlush()
 			 * instead of a plain write() and set PrivateFlush as needed */
 
-#define NOPID  ((pid_t)0)
+#ifndef NOPID		/* some OSes (Solaris for one) already define NOPID */
+# define NOPID  ((pid_t)0)
+#endif
 #define NOSLOT MAXULDAT
 
 #ifndef FALSE
@@ -112,16 +97,25 @@
 #define COLFG(col) ((col) & 0x0F)
 
 
+/* if sizeof(hwattr) == 2, bytes are { 'ascii', 'col' } */
+
 /* hwattr <-> hwcol+hwfont conversion */
-#if TW_BYTE_ORDER == TW_LITTLE_ENDIAN
-# define HWATTR(col,ascii) (((hwattr)(col)<<8) | (hwattr)(hwfont)(ascii))
-# define HWCOL(attr) ((hwcol)(attr>>8))
-# define HWFONT(attr) ((byte)(hwfont)(attr))
-#else
-# define HWATTR(col,ascii) ((hwattr)(col) | ((hwattr)(hwfont)(ascii)<<8))
-# define HWCOL(attr) ((hwcol)(attr))
-# define HWFONT(attr) ((byte)(hwfont)((attr)>>8))
-#endif /* TW_BYTE_ORDER == TW_LITTLE_ENDIAN */
+# define HWATTR16(col,ascii) (((byte16)(byte)(col) << 8) | (byte16)(byte)(ascii))
+# define HWATTR_COLMASK16(attr) ((attr) & 0xFF00)
+# define HWATTR_FONTMASK16(attr) ((attr) & 0xFF)
+# define HWCOL16(attr) ((hwcol)((attr) >> 8))
+# define HWFONT16(attr) ((byte)(attr))
+
+
+/* if sizeof(hwattr) == 4, bytes are { 'ascii_low', 'col', 'ascii_high', 'unused' } */
+
+/* hwattr <-> hwcol+hwfont conversion */
+# define HWATTR32(col,ascii) (((byte32)(byte)(col) << 8) | (((byte32)(ascii) & 0xFF00) << 8) | (byte32)(byte)(ascii))
+# define HWATTR_COLMASK32(attr) ((attr) & 0xFF00)
+# define HWATTR_FONTMASK32(attr) ((attr) & 0xFF00FF)
+# define HWCOL32(attr) ((hwcol)((attr) >> 8))
+# define HWFONT32(attr) ((byte16)(((attr) & 0xFF) | (((attr) >> 8) & 0xFF00)))
+
 
 /*
  * Notes about the timevalue struct:
@@ -182,6 +176,7 @@ typedef struct s_ttydata ttydata;
 typedef struct s_remotedata remotedata;
 typedef struct s_draw_ctx draw_ctx;
 
+#define obj obj
 typedef struct s_obj *obj;
 typedef struct s_fn_obj *fn_obj;
 typedef struct s_obj_parent *obj_parent;
@@ -247,16 +242,16 @@ typedef void (*fn_hook)(window);
 /* ttydata->nPar */
 #define NPAR		16
 
-/* ttydata->*G* */
-#define GRAF_MAP	0
-#define LAT1_MAP	1
+/* ttydata->*G? */
+#define GRAF_MAP	0 /*GRAF_MAP: in the range 0x80 - 0xFF it's identical to LAT1_MAP*/
+#define LAT1_MAP	0
+#define IBMPC_MAP	1
 #define USER_MAP	2
-#define IBMPC_MAP	3
 
 typedef enum ttystate {
     ESnormal = 0, ESesc, ESsquare, ESgetpars, ESgotpars, ESfunckey,
       EShash, ESsetG0, ESsetG1, ESpercent, ESignore, ESnonstd,
-      ESpalette, ESxterm_1, ESxterm_2, ESany = 0xFF, ESques = 0x100
+      ESpalette, ESxterm_1_, ESxterm_1, ESxterm_2_, ESxterm_2, ESany = 0xFF, ESques = 0x100
 } ttystate;
 
 struct s_ttydata {
@@ -277,7 +272,7 @@ struct s_ttydata {
     
     byte currG, G, G0, G1, saveG, saveG0, saveG1;
     dat newLen, newMax;
-    byte *newTitle;	/* buffer for xterm set window title escape seq */
+    byte *newName;	/* buffer for xterm set window title escape seq */
 };
 
 
@@ -323,8 +318,16 @@ struct s_fn_obj {
     void (*Insert)(obj Obj, obj_parent, obj Prev, obj Next);
     void (*Remove)(obj);
     void (*Delete)(obj);
+    void (*ChangeField)(obj, udat field, uldat CLEARMask, uldat XORMask);
 };
 
+
+struct s_wE {		/* for WIDGET_USEEXPOSE widgets */
+    CONST byte *Text;
+    CONST hwfont *HWFont;
+    CONST hwattr *HWAttr;
+    ldat X1, Y1, X2, Y2;
+};
 
 struct s_widget {
     uldat Id;
@@ -334,20 +337,25 @@ struct s_widget {
     /* widget */
     widget FirstW, LastW; /* list of children */
     widget SelectW;	    /* selected child */
-    dat Left, Up;
-    dat XWidth, YWidth;
-    hwattr Fill;
+    dat Left, Up, XWidth, YWidth;
+    uldat Attrib;
+    uldat Flags;
     ldat XLogic, YLogic;
-    widget OPrev, ONext; /* list with the same msgport (owner) */
+    widget O_Prev, O_Next; /* list with the same msgport (owner) */
     msgport Owner;
+    hwattr USE_Fill;
+    union {
+	struct s_wE E;
+    } USE;
 };
 
 struct s_fn_widget {
     uldat Magic, Size, Used;
-    widget (*Create)(fn_widget, msgport Owner, dat XWidth, dat YWidth, hwattr Fill, dat Left, dat Up);
+    widget (*Create)(fn_widget, msgport Owner, dat XWidth, dat YWidth, uldat Attrib, uldat Flags, dat Left, dat Up, hwattr USE_Fill);
     void (*Insert)(widget, widget Parent, widget Prev, widget Next);
     void (*Remove)(widget);
     void (*Delete)(widget);
+    void (*ChangeField)(widget, udat field, uldat CLEARMask, uldat XORMask);
     /* widget */
     fn_obj Fn_Obj; /* backup of overloaded functions */
     void (*DrawSelf)(draw_ctx *D);
@@ -362,8 +370,32 @@ struct s_fn_widget {
     void (*Own)(widget, msgport);
     void (*DisOwn)(widget);    
     void (*RecursiveDelete)(widget, msgport);
+    void (*Expose)(widget, dat XWidth, dat YWidth, dat Left, dat Up, CONST byte *, CONST hwfont *, CONST hwattr *);
 };
 
+/* Widget->Attrib */
+/*
+ * ask the server to send events even for mouse motion without any pressed button.
+ * works only if WIDGET_WANT_MOUSE is set too.
+ */
+#define WIDGET_WANT_MOUSE_MOTION	0x0001
+#define WIDGET_WANT_KEYS	0x0002
+#define WIDGET_WANT_MOUSE	0x0004
+#define WIDGET_WANT_CHANGES	0x0008
+
+
+/* Widget->Flags */
+#define WIDGETFL_USEEXPOSE	0x02
+#define WIDGETFL_USEFILL	0x03
+#define WIDGETFL_USEANY		0x07 /* mask of all above ones */
+
+#define w_USE(w, USExxx)	(((w)->Flags & WIDGETFL_USEANY) == CAT(WIDGETFL_,USExxx))
+
+
+struct s_gT {		/* for GADGETFL_USETEXT gadgets */
+    hwfont *Text[4];
+    hwcol *Color[4];
+};
 
 struct s_gadget {
     uldat Id;
@@ -374,30 +406,34 @@ struct s_gadget {
     widget FirstW, LastW;/* list of children */
     widget SelectW;	 /* selected child */
     dat Left, Up, XWidth, YWidth;
-    hwattr Fill;
+    uldat Attrib;
+    uldat Flags;
     ldat XLogic, YLogic;
-    widget OPrev, ONext; /* list in the same msgport (owner) */
+    widget O_Prev, O_Next; /* list in the same msgport (owner) */
     msgport Owner;
+    hwattr USE_Fill;
+    union {
+	struct s_gT T;
+	struct s_wE E;
+    } USE;
     /* gadget */
     hwcol ColText, ColSelect, ColDisabled, ColSelectDisabled;
-    udat Code, Flags;
-    gadget GPrev, GNext; /* list in the same group */
+    udat Code;
+    gadget G_Prev, G_Next; /* list in the same group */
     group Group;
-    byte *Text[4];
-    hwcol *Color[4];
 };
 
 struct s_fn_gadget {
     uldat Magic, Size, Used;
     gadget (*Create)
 	(fn_gadget, msgport Owner, widget Parent, dat XWidth, dat YWidth,
-	 CONST byte *TextNormal, udat Code, udat Flags,
+	 CONST byte *TextNormal, uldat Attrib, uldat Flags, udat Code,
 	 hwcol ColText, hwcol ColTextSelect, hwcol ColTextDisabled, hwcol ColTextSelectDisabled,
-	 dat Left, dat Up,       CONST byte *TextSelect, CONST byte *TextDisabled, CONST byte *TextSelectDisabled,
-	 CONST hwcol *ColNormal, CONST hwcol *ColSelect, CONST hwcol *ColDisabled, CONST hwcol *ColSelectDisabled);
+	 dat Left, dat Up);
     void (*Insert)(gadget, widget Parent, widget Prev, widget Next);
     void (*Remove)(gadget);
     void (*Delete)(gadget);
+    void (*ChangeField)(gadget, udat field, uldat CLEARMask, uldat XORMask);
     /* widget */
     fn_obj Fn_Obj;
     void (*DrawSelf)(draw_ctx *D);
@@ -412,47 +448,76 @@ struct s_fn_gadget {
     void (*Own)(gadget, msgport);
     void (*DisOwn)(gadget);    
     void (*RecursiveDelete)(gadget, msgport);
+    void (*Expose)(gadget, dat XWidth, dat YWidth, dat Left, dat Up, CONST byte *, CONST hwfont *, CONST hwattr *);
     /* gadget */
     fn_widget Fn_Widget;
     gadget (*CreateEmptyButton)(fn_gadget Fn_Gadget, msgport Owner, dat XWidth, dat YWidth, hwcol BgCol);
     byte (*FillButton)(gadget Gadget, widget Parent, udat Code, dat Left, dat Up,
 		       udat Flags, CONST byte *Text, hwcol Color, hwcol ColorDisabled);
     gadget (*CreateButton)(fn_gadget Fn_Gadget, widget Parent, dat XWidth, dat YWidth, CONST byte *Text,
-			      udat Code, udat Flags, hwcol BgCol, hwcol Col, hwcol ColDisabled,
+			      uldat Flags, udat Code, hwcol BgCol, hwcol Col, hwcol ColDisabled,
 			      dat Left, dat Up);
     void (*WriteTexts)(gadget Gadget, byte bitmap, dat XWidth, dat YWidth, CONST byte *Text, dat Left, dat Up);
+    void (*WriteHWFonts)(gadget Gadget, byte bitmap, dat XWidth, dat YWidth, CONST hwfont *HWFont, dat Left, dat Up);
 };
 
-/*Flags : */
+/* Gadget->Attrib */
+#define GADGET_WANT_MOUSE_MOTION	WIDGET_WANT_MOUSE_MOTION /* 0x0001 */
+#define GADGET_WANT_KEYS	WIDGET_WANT_KEYS	/* 0x0002 */
+#define GADGET_WANT_MOUSE	WIDGET_WANT_MOUSE	/* 0x0004 */
+#define GADGET_WANT_CHANGES	WIDGET_WANT_CHANGES	/* 0x0008 */
+
+
+/* Gadget->Flags */
+#define GADGETFL_USETEXT	0x00   /* it's the default */
+#define GADGETFL_USEEXPOSE	WIDGETFL_USEEXPOSE /* 0x02 */
+#define GADGETFL_USEFILL	WIDGETFL_USEFILL   /* 0x03 */
+#define GADGETFL_USEANY		WIDGETFL_USEANY    /* 0x07 */
+
+#define G_USE(g, USExxx)	(((g)->Flags & GADGETFL_USEANY) == CAT(GADGETFL_,USExxx))
+
 /* remember this gadget is a button, so that SetText() does not ruin the shadow */
-#define GADGET_BUTTON		((udat)0x01)
-#define GADGET_DISABLED		((udat)0x02)
-#define GADGET_USE_DEFCOL	WINFL_USE_DEFCOL /* 0x04 */
+#define GADGETFL_BUTTON		0x0010
+#define GADGETFL_DISABLED	0x0020
+#define GADGETFL_TEXT_DEFCOL	0x0040
 /* this makes the gadget 'checkable' : can be in 'checked' or 'unchecked' state.
  * also necessary to put the gadget in a group */
-#define GADGET_TOGGLE		((udat)0x08)
-/*GADGET_PRESSED==0x0800      */
+#define GADGETFL_TOGGLE		0x0080
+#define GADGETFL_PRESSED	0x0100
 
 
-/*              NOTE :              */
-/*
- the "Contents" of a gadget is structured as follows:
- Contents[0]==TextNormal;      (mandatory)
- Contents[1]==TextSelect;        (if not present, use ...[0])
- Contents[2]==TextDisabled;      (if not present, use ...[0])
- Contents[3]==TextSelectDisabled; (if not present, use ...[1]; if ...[1] not present too, use ...[0])
+/*              NOTE :
  * 
- Contents[4]==ColorNormal;      (mandatory unless WINFL_USE_DEFCOL is set)
- Contents[5]==ColorSelect;        (if not present, use ...[4])
- Contents[6]==ColorDisabled;      (if not present, use ...[4])
- Contents[7]==ColorSelectDisabled;(if not present, use ...[5]; if ...[5] not present too, use ...[4])
+ * the USE.T fields (Contents) of a gadget are used as follows:
+ * Text[0]==TextNormal;      (mandatory)
+ * Text[1]==TextSelect;        (if not present, use ...[0])
+ * Text[2]==TextDisabled;      (if not present, use ...[0])
+ * Text[3]==TextSelectDisabled; (if not present, use ...[1]; if ...[1] not present too, use ...[0])
  * 
- If WINFL_USE_DEFCOL is active,
- ...[4], ...[5], ...[6] and ...[7] are ignored.
+ * Color[0]==ColorNormal;      (mandatory unless GADGET_USE_DEFCOL is set)
+ * Color[1]==ColorSelect;        (if not present, use ...[0])
+ * Color[2]==ColorDisabled;      (if not present, use ...[0])
+ * Color[3]==ColorSelectDisabled;(if not present, use ...[1]; if ...[1] not present too, use ...[0])
+ * 
+ * If GADGET_USE_DEFCOL is set,
+ * Color[0], [1], [2] and [3] are ignored.
  * 
  */
 
 
+struct s_WR {		/* for WINDOWFL_USEROWS windows */
+    row FirstRow, LastRow;
+    row RowOne, RowSplit;	/*RESERVED: used to optimize the drawing on screen */
+    ldat NumRowOne, NumRowSplit;/*RESERVED: updated automatically by WriteRow. To insert */
+    /*or remove manually rows, you must zero out NumRowOne */
+    /*and NumRowSplit forcing twin to recalculate them */
+};
+
+struct s_WC {		/* for WINDOWFL_USECONTENTS windows */
+    hwattr *Contents;
+    ttydata *TtyData;
+    ldat HSplit;
+};
 
 struct s_window {
     uldat Id;
@@ -463,45 +528,33 @@ struct s_window {
     widget FirstW, LastW; /* list of children */
     widget SelectW;	    /* selected child */
     dat Left, Up, XWidth, YWidth;
-    hwattr Fill;
+    uldat Attrib;
+    uldat Flags;
     ldat XLogic, YLogic;
-    widget OPrev, ONext; /* list with the same msgport (owner) */
+    widget O_Prev, O_Next; /* list with the same msgport (owner) */
     msgport Owner;
+    hwattr USE_Fill;
+    union {
+	struct s_WR R;
+	struct s_WC C;
+	struct s_wE E;
+    } USE;
     /* window */
     menu Menu;		/* from which the window depends */
-    dat LenTitle;
-    byte *Title; hwcol *ColTitle;
-    byte *BorderPattern[2];
+    dat NameLen;
+    byte *Name; hwcol *ColName;
+    hwfont *BorderPattern[2];
     remotedata RemoteData;
     ldat CurX, CurY;
     ldat XstSel, YstSel, XendSel, YendSel;
     hwcol ColGadgets, ColArrows, ColBars, ColTabs, ColBorder,
     	ColText, ColSelect, ColDisabled, ColSelectDisabled;
-    byte Flags;
-    uldat Attrib;
+    uldat State;
     uldat CursorType;
     dat MinXWidth, MinYWidth;
     dat MaxXWidth, MaxYWidth;
     ldat WLogic, HLogic;	/* window interior logic size */
-    union {
-	struct {		/* for WINFL_USEROWS windows */
-	    row FirstRow, LastRow;
-	    row RowOne, RowSplit;	/*RESERVED: used to optimize the drawing on screen */
-	    ldat NumRowOne, NumRowSplit;/*RESERVED: updated automatically by WriteRow. To insert */
-				/*or remove manually rows, you must zero out NumRowOne */
-				/*and NumRowSplit forcing twin to recalculate them */
-	} R;
-	struct {		/* for WINFL_USECONTENTS windows */
-	    hwattr *Contents;
-	    ttydata *TtyData;
-	    ldat HSplit;
-	} C;
-	struct {		/* for WINFL_USEEXPOSE windows */
-	    CONST hwattr *Contents;
-	    CONST byte *Text;
-	    ldat X1, Y1, X2, Y2;
-	} E;
-    } USE;
+    hwfont CONST * Charset;	/* the byte -> hwfont translation to use */
     fn_hook ShutDownHook; /* hooks for this widget */
     fn_hook Hook, *WhereHook;
     fn_hook MapUnMapHook;
@@ -510,12 +563,13 @@ struct s_window {
 
 struct s_fn_window {
     uldat Magic, Size, Used;
-    window (*Create)(fn_window, dat LenTitle, CONST byte *Title, CONST hwcol *ColTitle, menu Menu,
-		     hwcol ColText, uldat CursorType, uldat Attrib, byte Flags,
+    window (*Create)(fn_window, dat NameLen, CONST byte *Name, CONST hwcol *ColName, menu Menu,
+		     hwcol ColText, uldat CursorType, uldat Attrib, uldat Flags,
 		     dat XWidth, dat YWidth, dat ScrollBackLines);
     void (*Insert)(window, widget Parent, widget Prev, widget Next);
     void (*Remove)(window);
     void (*Delete)(window);
+    void (*ChangeField)(window, udat field, uldat CLEARMask, uldat XORMask);
     /* widget */
     fn_obj Fn_Obj;
     void (*DrawSelf)(draw_ctx *D);
@@ -530,13 +584,14 @@ struct s_fn_window {
     void (*Own)(window, msgport);
     void (*DisOwn)(window);    
     void (*RecursiveDelete)(window, msgport);
+    void (*Expose)(window, dat XWidth, dat YWidth, dat Left, dat Up, CONST byte *, CONST hwfont *, CONST hwattr *);
     /* window */
     fn_widget Fn_Widget;
-    void (*WriteAscii)(window, ldat Len, CONST byte *Text);
+    void (*WriteAscii)(window, ldat Len, CONST byte *Ascii);
+    void (*WriteString)(window, ldat Len, CONST byte *String);
+    void (*WriteHWFont)(window, ldat Len, CONST hwfont *HWFont);
     void (*WriteHWAttr)(window, dat x, dat y, ldat Len, CONST hwattr *Attr);
     byte (*WriteRow)(window, ldat Len, CONST byte *Text);
-    void (*ExposeAscii)(window, dat XWidth, dat YWidth, CONST byte *, dat Left, dat Up);
-    void (*ExposeHWAttr)(window, dat XWidth, dat YWidth, CONST hwattr *, dat Left, dat Up);
     
     void (*GotoXY)(window, ldat X, ldat Y);
     void (*SetColText)(window, hwcol ColText);
@@ -547,77 +602,77 @@ struct s_fn_window {
 		      dat MaxXWidth, dat MaxYWidth);
     window (*Create4Menu)(fn_window, menu);
     void (*MapTopReal)(window, screen);
-    byte (*FindBorder)(window, dat u, dat v, byte Border, byte *PtrChar, hwcol *PtrColor);
+    byte (*FindBorder)(window, dat u, dat v, byte Border, hwfont *PtrChar, hwcol *PtrColor);
     row (*FindRow)(window, ldat RowN);
     row (*FindRowByCode)(window, udat Code, ldat *NumRow);
     byte (*InstallHook)(window, fn_hook, fn_hook *Where);
     void (*RemoveHook)(window, fn_hook, fn_hook *Where);
 };
 
+
 /* Window->Attrib */
-#define WINDOW_MENU		((uldat)0x0001)
-#define WINDOW_WANT_KEYS	((uldat)0x0002)
-#define WINDOW_WANT_MOUSE	((uldat)0x0004)
-#define WINDOW_WANT_CHANGE	((uldat)0x0008)
-#define WINDOW_DRAG		((uldat)0x0010)
-#define WINDOW_RESIZE		((uldat)0x0020)
-#define WINDOW_CLOSE		((uldat)0x0040)
-#define WINDOW_ROLLED_UP	((uldat)0x0080)
-#define WINDOW_X_BAR		((uldat)0x0100)
-#define WINDOW_Y_BAR		((uldat)0x0200)
-
-/*
- * ask the server to automatically handle keypresses
- * (incompatible with WINDOW_WANT_KEYS)
- */
-#define WINDOW_AUTO_KEYS	((uldat)0x0400)
-
-/* this must fit in `udat' since it is shared with gadget.Flags */
-#define GADGET_PRESSED		((uldat)0x0800)
-
-#define X_BAR_SELECT		((uldat)0x1000)
-#define Y_BAR_SELECT		((uldat)0x2000)
-#define XY_BAR_SELECT		(X_BAR_SELECT | Y_BAR_SELECT)
-#define TAB_SELECT		((uldat)0x4000)
-#define PAGE_BACK_SELECT	((uldat)0x8000)
-#define PAGE_FWD_SELECT		((uldat)0x00010000lu)
-#define ARROW_BACK_SELECT	((uldat)0x00020000lu)
-#define ARROW_FWD_SELECT	((uldat)0x00040000lu)
-#define SCROLL_ANY_SELECT  	(ARROW_BACK_SELECT | ARROW_FWD_SELECT | PAGE_BACK_SELECT | PAGE_FWD_SELECT | TAB_SELECT)
-
-#define WINDOW_FWDSEL		((uldat)0x00080000lu)
-#define WINDOW_REVSEL		((uldat)0x00100000lu)
-#define WINDOW_ANYSEL		(WINDOW_FWDSEL|WINDOW_REVSEL)
-#define WINDOW_DO_SEL		((uldat)0x00200000lu)
-
-#define BUTTON_FIRST_SELECT	((uldat)0x00400000lu)
-#define BUTTON_LAST_SELECT	((uldat)0x80000000lu)
-#define BUTTON_ANY_SELECT	((uldat)0xFFC00000lu)
-
-/*#define BUTTON_FIRST		((byte)0) */
-/*#define BUTTON_CLOSE		((byte)0) */
-/*#define BUTTON_LAST		((byte)9) */
-
-#define BUTTON_MAX		((byte)10)
+#define WINDOW_WANT_MOUSE_MOTION	WIDGET_WANT_MOUSE_MOTION /* 0x0001 */
+#define WINDOW_WANT_KEYS	WIDGET_WANT_KEYS	/* 0x0002 */
+#define WINDOW_WANT_MOUSE	WIDGET_WANT_MOUSE	/* 0x0004 */
+#define WINDOW_WANT_CHANGES	WIDGET_WANT_CHANGES	/* 0x0008 */
+#define WINDOW_DRAG		0x0100
+#define WINDOW_RESIZE		0x0200
+#define WINDOW_CLOSE		0x0400
+#define WINDOW_ROLLED_UP	0x0800
+#define WINDOW_X_BAR		0x1000
+#define WINDOW_Y_BAR		0x2000
+#define WINDOW_AUTO_KEYS	0x4000
 
 
 
 /* Window->Flags */
-/* #define WINFL_USEROWS	((byte)0x00) *//* it's the default */
-#define WINFL_USECONTENTS	((byte)0x01)
-#define WINFL_USEEXPOSE		((byte)0x02)
-#define WINFL_USEANY		((byte)0x03)
+#define WINDOWFL_USEROWS	0x00 /* it's the default */
+#define WINDOWFL_USECONTENTS	0x01
+#define WINDOWFL_USEEXPOSE	WIDGETFL_USEEXPOSE /* 0x02 */
+#define WINDOWFL_USEFILL	WIDGETFL_USEFILL   /* 0x03 */
+#define WINDOWFL_USEANY		WIDGETFL_USEANY    /* 0x07 */
 
-#define WINFL_USE_DEFCOL	((byte)0x04)
-#define	WINFL_CURSOR_ON		((byte)0x08)
-#define WINFL_INSERT		((byte)0x10)
-#define WINFL_SEL_ROWCURR	((byte)0x20)
-#define WINFL_DISABLED		((byte)0x40)
+#define W_USE(W, USExxx)	(((W)->Flags & WINDOWFL_USEANY) == CAT(WINDOWFL_,USExxx))
 
-#define WINFL_BORDERLESS	((byte)0x80)
+#define	WINDOWFL_CURSOR_ON	0x10
+#define WINDOWFL_MENU		0x20
+#define WINDOWFL_DISABLED	0x40
+#define WINDOWFL_BORDERLESS	0x80
+#define WINDOWFL_ROWS_INSERT	0x0100
+#define WINDOWFL_ROWS_DEFCOL	0x0200
+#define WINDOWFL_ROWS_SELCURRENT	0x0400
 
 
-/* CursorType: */
+/* Window->State */
+#define X_BAR_SELECT		0x0001
+#define Y_BAR_SELECT		0x0002
+#define XY_BAR_SELECT		(X_BAR_SELECT | Y_BAR_SELECT)
+#define TAB_SELECT		0x0004
+#define PAGE_BACK_SELECT	0x0008
+#define PAGE_FWD_SELECT		0x0010
+#define ARROW_BACK_SELECT	0x0020
+#define ARROW_FWD_SELECT	0x0040
+#define SCROLL_ANY_SELECT  	(ARROW_BACK_SELECT | ARROW_FWD_SELECT | PAGE_BACK_SELECT | PAGE_FWD_SELECT | TAB_SELECT)
+
+#define WINDOW_FWDSEL		0x0080
+#define WINDOW_REVSEL		0x0100
+#define WINDOW_ANYSEL		(WINDOW_FWDSEL|WINDOW_REVSEL)
+#define WINDOW_DO_SEL		0x0200
+#define WINDOW_GADGET_PRESSED	0x0400
+
+#define BUTTON_FIRST_SELECT	0x00400000
+#define BUTTON_LAST_SELECT	0x80000000
+#define BUTTON_ANY_SELECT	0xFFC00000
+
+/*#define BUTTON_FIRST		0 */
+/*#define BUTTON_CLOSE		0 */
+/*#define BUTTON_LAST		9 */
+
+#define BUTTON_MAX		10
+
+
+
+/* Window->CursorType */
 /* These come from linux/drivers/char/console.c */
 #define NOCURSOR	1
 #define LINECURSOR	2
@@ -627,7 +682,10 @@ struct s_fn_window {
 #define MIN_XWIN	4
 #define MIN_YWIN	2
 
-
+struct s_sB {	/* for SCREENFL_USEBG screens */
+    dat BgWidth, BgHeight;
+    hwattr *Bg;
+};
 
 struct s_screen {
     uldat Id;
@@ -638,28 +696,32 @@ struct s_screen {
     widget FirstW, LastW; /* list of children */
     widget FocusW;	    /* same as SelectW : focused child */
     dat dummyLeft, YLimit, dummyXWidth, dummyYWidth;
-    hwattr Fill;
+    uldat Attrib;
+    uldat Flags;
     ldat XLogic, YLogic;
-    widget OPrev, ONext; /* list with the same msgport (owner) */
+    widget O_Prev, O_Next; /* list with the same msgport (owner) */
     msgport Owner;
+    hwattr USE_Fill;
+    union {
+	struct s_sB B;
+	struct s_wE E;
+    } USE;
     /* screen */
-    dat LenTitle;
-    byte *Title;
+    dat NameLen;
+    byte *Name;
     window MenuWindow, ClickWindow;
-    udat Attrib;
-    dat BgWidth, BgHeight;
-    hwattr *Bg;
     all All;
     fn_hook FnHookWindow;/* allow hooks on children Map()/UnMap() inside this widget */
     window HookWindow;
 };
 struct s_fn_screen {
     uldat Magic, Size, Used;
-    screen (*Create)(fn_screen, dat LenTitle, CONST byte *Title,
+    screen (*Create)(fn_screen, dat NameLen, CONST byte *Name,
 		     dat BgWidth, dat BgHeight, CONST hwattr *Bg);
     void (*Insert)(screen, all, screen Prev, screen Next);
     void (*Remove)(screen);
     void (*Delete)(screen);
+    void (*ChangeField)(screen, udat field, uldat CLEARMask, uldat XORMask);
     /* widget */
     fn_obj Fn_Obj;
     void (*DrawSelf)(draw_ctx *D);
@@ -674,20 +736,33 @@ struct s_fn_screen {
     void (*Own)(screen, msgport);
     void (*DisOwn)(screen);    
     void (*RecursiveDelete)(screen, msgport);
+    void (*Expose)(screen, dat XWidth, dat YWidth, dat Left, dat Up, CONST byte *, CONST hwfont *, CONST hwattr *);
     /* screen */
     fn_widget Fn_Widget;
     menu (*FindMenu)(screen);
     screen (*Find)(dat j);
-    screen (*CreateSimple)(fn_screen, dat LenTitle, CONST byte *Title, hwattr Bg);
+    screen (*CreateSimple)(fn_screen, dat NameLen, CONST byte *Name, hwattr Bg);
     void (*BgImage)(screen, dat BgWidth, dat BgHeight, CONST hwattr *Bg);
     void (*DrawMenu)(screen, dat Xstart, dat Xend);
     void (*ActivateMenu)(screen, menuitem, byte byMouse);
     void (*DeActivateMenu)(screen);
 };
 
-/* Screen->Attrib : */
-#define GADGET_BACK_SELECT 0x8000
-/*GADGET_PRESSED==0x0800      */
+
+/* Screen->Attrib */
+/* not used */
+
+
+/* Screen->Flags */
+#define SCREENFL_USEBG		0x00 /* it's the default */
+#define SCREENFL_USEEXPOSE	WIDGETFL_USEEXPOSE	/* 0x02 */
+#define SCREENFL_USEFILL	WIDGETFL_USEFILL	/* 0x03 */
+#define SCREENFL_USEANY		WIDGETFL_USEANY		/* 0x07 */
+
+#define S_USE(s, USExxx)	(((s)->Flags & SCREENFL_USEANY) == CAT(SCREENFL_,USExxx))
+
+#define SCREENFL_BACK_SELECT	0x0010
+#define SCREENFL_BACK_PRESSED	0x0020
 
 
 
@@ -710,6 +785,7 @@ struct s_fn_group {
     void (*Insert)(group, msgport MsgPort, group Prev, group Next);
     void (*Remove)(group);
     void (*Delete)(group);
+    void (*ChangeField)(group, udat field, uldat CLEARMask, uldat XORMask);
     /* group */
     fn_obj Fn_Obj; /* backup of overloaded functions */
     void (*InsertGadget)(group, gadget);
@@ -733,7 +809,8 @@ struct s_row {
     byte Flags;
     uldat Len, MaxLen;
     uldat Gap, LenGap;
-    byte *Text; hwcol *ColText;
+    hwfont *Text;
+    hwcol *ColText;
 };
 
 struct s_fn_row {
@@ -742,17 +819,19 @@ struct s_fn_row {
     void (*Insert)(row, window, row Prev, row Next);
     void (*Remove)(row);
     void (*Delete)(row);
+    void (*ChangeField)(row, udat field, uldat CLEARMask, uldat XORMask);
     /* row */
     fn_obj Fn_Obj;
     row (*Create4Menu)(fn_row Fn_Row, window Window, udat Code, byte FlagActive, ldat Len, CONST byte *Text);
     byte (*SetText)(row, ldat Len, CONST byte *Text, byte DefaultCol);
+/*    byte (*SetHWFont)(row, ldat Len, CONST hwfont *HWFont, byte DefaultCol); */
 };
 
 /*Flags : */
 #define ROW_INACTIVE	((byte)0x00)
 #define ROW_ACTIVE	((byte)0x01)
 #define ROW_IGNORE	((byte)0x02)
-#define ROW_USE_DEFCOL	WINFL_USE_DEFCOL /* 0x04 */
+#define ROW_DEFCOL	((byte)0x04)
 
 
 
@@ -765,16 +844,17 @@ struct s_menuitem {
     /* menuitem */
     window Window;
     byte FlagActive;
-    dat Left, Len, ShortCut;
+    dat Left, NameLen, ShortCut;
     byte *Name;
 };
 struct s_fn_menuitem {
     uldat Magic, Size, Used;
     menuitem (*Create)(fn_menuitem, menu Menu, window Window, byte FlagActive,
-		       dat Left, dat Len, dat ShortCut, CONST byte *Name);
+		       dat Left, dat NameLen, dat ShortCut, CONST byte *Name);
     void (*Insert)(menuitem, menu, menuitem Prev, menuitem Next);
     void (*Remove)(menuitem);
     void (*Delete)(menuitem);
+    void (*ChangeField)(menuitem, udat field, uldat CLEARMask, uldat XORMask);
     /* menuitem */	
     fn_obj Fn_Obj;
     menuitem (*Create4Menu)(fn_menuitem, menu, window, byte FlagActive,
@@ -794,7 +874,7 @@ struct s_menu {
     byte CommonItems;
     byte FlagDefColInfo;
     row Info;
-    menuitem FirstMenuItem, LastMenuItem, MenuItemSelect;
+    menuitem FirstI, LastI, SelectI;
 };
 struct s_fn_menu {
     uldat Magic, Size, Used;
@@ -803,6 +883,7 @@ struct s_fn_menu {
     void (*Insert)(menu, msgport, menu Prev, menu Next);
     void (*Remove)(menu);
     void (*Delete)(menu);
+    void (*ChangeField)(menu, udat field, uldat CLEARMask, uldat XORMask);
     /* menu */
     fn_obj Fn_Obj;
     row (*SetInfo)(menu, byte Flags, ldat Len, CONST byte *Text, CONST hwcol *ColText);
@@ -820,10 +901,10 @@ struct s_fn_menu {
 #define MSG_DISPLAY		((udat)0x0FFF)
 
 #define MSG_SYSTEM_FIRST	((udat)0x1000)
-#define MSG_WINDOW_KEY		((udat)0x1000)
-#define MSG_WINDOW_MOUSE	((udat)0x1001)
-#define MSG_WINDOW_CHANGE	((udat)0x1002)
-#define MSG_WINDOW_GADGET	((udat)0x1003)
+#define MSG_WIDGET_KEY		((udat)0x1000)
+#define MSG_WIDGET_MOUSE	((udat)0x1001)
+#define MSG_WIDGET_CHANGE	((udat)0x1002)
+#define MSG_WIDGET_GADGET	((udat)0x1003)
 #define MSG_MENU_ROW		((udat)0x1004)
 #define MSG_SELECTION		((udat)0x1005)
 #define MSG_SELECTIONNOTIFY	((udat)0x1006)
@@ -848,10 +929,10 @@ struct s_fn_menu {
  *
  * 0x1000 ... 0x1FFF : Messages from the WM to a generick task
  * currently defined are:
- * MSG_WINDOW_KEY	use ...EventKeyboard
- * MSG_WINDOW_MOUSE	use ...EventMouse
- * MSG_WINDOW_CHANGE	use ...EventWindow
- * MSG_WINDOW_GADGET	use ...EventGadget
+ * MSG_WIDGET_KEY	use ...EventKeyboard
+ * MSG_WIDGET_MOUSE	use ...EventMouse
+ * MSG_WIDGET_CHANGE	use ...EventWindow
+ * MSG_WIDGET_GADGET	use ...EventGadget
  * MSG_MENU_ROW		use ...EventMenu
  * MSG_SELECTION	use ...EventSelection
  * MSG_SELECTIONNOTIFY	use ...EventSelectionNotify
@@ -870,34 +951,34 @@ struct s_fn_menu {
 
 typedef struct s_event_common event_common;
 struct s_event_common {
-    window Window;
+    widget W;
     udat Code, pad;
 };
 
 typedef struct s_event_map event_map;
 struct s_event_map {
-    window Window;
+    window W;
     udat Code, pad;	/* unused */
     screen Screen;
 };
 
 typedef struct s_event_keyboard event_keyboard;
 struct s_event_keyboard {
-    window Window;
+    widget W;
     udat Code, ShiftFlags, SeqLen;
     byte pad, AsciiSeq[1];  /* AsciiSeq[SeqLen] == '\0' */
 };
 
 typedef struct s_event_mouse event_mouse;
 struct s_event_mouse {
-    window Window;
+    widget W;
     udat Code, ShiftFlags;
     dat X, Y;
 };
 
 typedef struct s_event_control event_control;
 struct s_event_control {
-    window Window;
+    widget W;
     udat Code, Len;
     dat X, Y;
     byte Data[1]; /* Data[Len] == '\0' */
@@ -909,23 +990,20 @@ struct s_event_control {
 #define MSG_CONTROL_OPEN	((udat)2)
 #define MSG_CONTROL_DRAGNDROP	((udat)3)
 
-/* some MSG_WINDOW_CHANGE flags */
-#define MSG_WINFL_SHADED	((udat)1)
-
 /* use for free-format messages between clients */
 typedef struct s_event_clientmsg event_clientmsg;
 struct s_event_clientmsg {
-    window Window;
+    widget W;
     udat Code, Len;
-    byte Data[1]; /* [len] bytes actually */
+    byte Data[1]; /* [Len] bytes actually */
 };
 
 typedef struct s_event_display event_display;
 struct s_event_display {
-    window Window; /* not used here */
+    widget W; /* not used here */
     udat Code, Len;
     dat X, Y;
-    byte *Data; /* [len] bytes actually */
+    byte *Data; /* [Len] bytes actually */
 };
 
 #define DPY_DrawHWAttr		((udat)0)
@@ -946,34 +1024,37 @@ struct s_event_display {
 #define DPY_RedrawVideo		((udat)15)
 #define DPY_Quit		((udat)16)
 
-typedef struct s_event_window event_window;
-struct s_event_window {
-    window Window;
+typedef struct s_event_widget event_widget;
+struct s_event_widget {
+    widget W;
     udat Code, Flags;
     dat XWidth, YWidth;
     dat X, Y;
 };
 
-/* some MSG_WINDOW_CHANGE codes */
-#define MSG_WINDOW_RESIZE ((udat)0)
-#define MSG_WINDOW_EXPOSE ((udat)1)
+/* some MSG_WIDGET_CHANGE codes */
+#define MSG_WIDGET_RESIZE 0
+#define MSG_WIDGET_EXPOSE 1
+
+/* some MSG_WIDGET_CHANGE flags */
+#define MSG_WIDGETFL_SHADED	1
 
 typedef struct s_event_gadget event_gadget;
 struct s_event_gadget {
-    window Window;	/* it's up to the client to handle Gadgets mapped in non-window parents */
+    widget W;
     udat Code, Flags; /* the Flags of the gadget */
 };
 
 typedef struct s_event_menu event_menu;
 struct s_event_menu {
-    window Window;
+    window W;
     udat Code, pad;
     menu Menu;
 };
 
 typedef struct s_event_selection event_selection;
 struct s_event_selection {
-    window Window;
+    widget W;
     udat Code, pad; /* unused */
     dat X, Y;
 };
@@ -982,7 +1063,7 @@ struct s_event_selection {
 
 typedef struct s_event_selectionnotify event_selectionnotify;
 struct s_event_selectionnotify {
-    window Window;
+    widget W;
     udat Code, pad; /* unused */
     uldat ReqPrivate;
     uldat Magic;
@@ -991,16 +1072,17 @@ struct s_event_selectionnotify {
     byte Data[1]; /* Data[] is Len bytes actually */
 };
 /*SelectionNotify Magic*/
-#define SEL_APPEND	((uldat)0x00000000)
-#define SEL_TEXTMAGIC	((uldat)0x54657874)
-#define SEL_FILEMAGIC	((uldat)0x46696c65)
-#define SEL_URLMAGIC	((uldat)0xAB1691BA)
-#define SEL_DATAMAGIC	((uldat)0xDA1AA1AD) /* check MIME if you get this */
-#define SEL_IDMAGIC	((uldat)0x49644964)
+#define SEL_APPEND	0x00000000
+#define SEL_TEXTMAGIC	0x54657874
+#define SEL_HWFONTMAGIC 0x4877666E
+#define SEL_FILEMAGIC	0x46696c65
+#define SEL_URLMAGIC	0xAB1691BA
+#define SEL_DATAMAGIC	0xDA1AA1AD /* check MIME if you get this */
+#define SEL_IDMAGIC	0x49644964
 
 typedef struct s_event_selectionrequest event_selectionrequest;
 struct s_event_selectionrequest {
-    window Window;
+    widget W;
     udat Code, pad; /* unused */
     obj Requestor;
     uldat ReqPrivate;
@@ -1015,7 +1097,7 @@ union event_any {
     event_clientmsg EventClientMsg;
     event_display EventDisplay;
     event_map EventMap;
-    event_window EventWindow;
+    event_widget EventWidget;
     event_gadget EventGadget;
     event_menu EventMenu;
     event_selection EventSelection;
@@ -1039,6 +1121,7 @@ struct s_fn_msg {
     void (*Insert)(msg, msgport, msg Prev, msg Next);
     void (*Remove)(msg);
     void (*Delete)(msg);
+    void (*ChangeField)(msg, udat field, uldat CLEARMask, uldat XORMask);
     /* msg */
     fn_obj Fn_Obj;
 };
@@ -1051,7 +1134,7 @@ struct s_msgport {
     msgport Prev, Next; /* list in the same All */
     all All;
     /* msgport */
-    byte WakeUp, NameLen, *ProgramName;
+    byte WakeUp, NameLen, *Name;
     /* Note : a MsgPort is always woken up if it has pending messages. */
     void (*Handler)(msgport);
     void (*ShutDownHook)(msgport);
@@ -1066,12 +1149,13 @@ struct s_msgport {
 };
 struct s_fn_msgport {
     uldat Magic, Size, Used;
-    msgport (*Create)(fn_msgport, byte NameLen, CONST byte *ProgramName,
+    msgport (*Create)(fn_msgport, byte NameLen, CONST byte *Name,
 		      time_t PauseSec, frac_t PauseFraction,
 		      byte WakeUp, void (*Handler)(msgport));
     void (*Insert)(msgport, all, msgport Prev, msgport Next);
     void (*Remove)(msgport);
     void (*Delete)(msgport);
+    void (*ChangeField)(msgport, udat field, uldat CLEARMask, uldat XORMask);
     /* msgport */
     fn_obj Fn_Obj;
 };
@@ -1086,7 +1170,7 @@ struct s_mutex {
     mutex Prev, Next; /* in the same All */
     all All;
     /* mutex */    
-    mutex OPrev, ONext; /* owned by the same MsgPort */
+    mutex O_Prev, O_Next; /* owned by the same MsgPort */
     msgport Owner;
     byte Perm, NameLen;
     byte *Name;
@@ -1097,6 +1181,7 @@ struct s_fn_mutex {
     void (*Insert)(mutex, all, mutex Prev, mutex Next);
     void (*Remove)(mutex);
     void (*Delete)(mutex);
+    void (*ChangeField)(mutex, udat field, uldat CLEARMask, uldat XORMask);
     /* mutex */
     fn_obj Fn_Obj;
     void (*Own)(mutex, msgport);
@@ -1125,6 +1210,7 @@ struct s_fn_module {
     void (*Insert)(module, all, module Prev, module Next);
     void (*Remove)(module);
     void (*Delete)(module);
+    void (*ChangeField)(module, udat field, uldat CLEARMask, uldat XORMask);
     /* module */    
     fn_obj Fn_Obj;
     byte (*DlOpen)(module);
@@ -1212,7 +1298,7 @@ struct s_display_hw {
      *				  the actual display contents in OldVideo[] and send only
      *				  what effectively changed, instead of all the dirty areas.
      * FlHWExpensiveFlushVideo	: set if FlushVideo() is SO expensive that it's better to sleep
-     *				  a little before flushing,hoping to receive more data
+     *				  a little before flushing, hoping to receive more data
      *				  in the meantime, in order to merge the flush operations.
      * FlHWNoInput		: set if the display HW should be used as view-only,
      * 				  ignoring all input from it.
@@ -1286,6 +1372,7 @@ struct s_fn_display_hw {
     void (*Insert)(display_hw, all, display_hw Prev, display_hw Next);
     void (*Remove)(display_hw);
     void (*Delete)(display_hw);
+    void (*ChangeField)(display_hw, udat field, uldat CLEARMask, uldat XORMask);
     /* display_hw */
     fn_obj Fn_Obj;
     byte (*Init)(display_hw);
@@ -1324,6 +1411,43 @@ struct s_fn_display_hw {
 #define MAXID		((uldat)0x0FFFFFFFul)
 #define magic_mask	((uldat)0xF0000000ul)
 #define magic_shift	28
+
+#define obj_magic_id		0
+#define widget_magic_id		1
+#define gadget_magic_id		2
+#define window_magic_id		3
+#define screen_magic_id		4
+#define group_magic_id		5
+#define row_magic_id		6
+#define menuitem_magic_id	7
+#define menu_magic_id		8
+#define msgport_magic_id	9
+#define msg_magic_id		0xA
+#define mutex_magic_id		0xB
+#define module_magic_id		0xC
+#define display_hw_magic_id	0xD
+
+/*
+ * These must have consecutive values, but obj_magic_STR can be changed
+ * as long as it has the same value as obj_magic_CHR.
+ * To avoid troubles with strlen(), you should not use '\0' or "\0"
+ * for any of the values below.
+ */
+#define base_magic_CHR		'0'
+#define obj_magic_STR		"0"
+#define widget_magic_STR	"1"
+#define gadget_magic_STR	"2"
+#define window_magic_STR	"3"
+#define screen_magic_STR	"4"
+#define group_magic_STR		"5"
+#define row_magic_STR		"6"
+#define menuitem_magic_STR	"7"
+#define menu_magic_STR		"8"
+#define msgport_magic_STR	"9"
+#define msg_magic_STR		"A"
+#define mutex_magic_STR		"B"
+#define module_magic_STR	"C"
+#define display_hw_magic_STR	"D"
 
 #define obj_magic	((uldat)0x0dead0b1ul)
 #define widget_magic	((uldat)0x161d9743ul)
@@ -1399,7 +1523,6 @@ struct s_setup {
 #define SETUP_HIDEMENU		0x08
 #define SETUP_MENUINFO		0x10
 #define SETUP_EDGESCROLL	0x20
-#define SETUP_ALTFONT		0x40
 
 
 #define MAX_XSHADE	9
@@ -1458,7 +1581,7 @@ typedef struct s_selection {
 } selection;
 
 typedef struct s_button_vec {
-    byte shape[2];
+    hwfont shape[2];
     num pos;
     byte exists;
     byte changed;
@@ -1466,6 +1589,7 @@ typedef struct s_button_vec {
 
 
 struct s_all {
+    uldat Id; /* for compatibility with s_obj */
     screen FirstScreen, LastScreen;
     msgport FirstMsgPort, LastMsgPort, RunMsgPort;
     mutex FirstMutex, LastMutex;
@@ -1485,10 +1609,12 @@ struct s_all {
 
     menu BuiltinMenu, CommonMenu;
     row BuiltinRow;
+    uldat MouseMotionN;/* number of mapped windows wanting mouse motion events */
+    
     
     button_vec ButtonVec[BUTTON_MAX + 1]; /* +1 for window corner */
     
-    byte *Gtranslations[IBMPC_MAP];
+    hwfont *Gtranslations[USER_MAP+1];
 };
 
 
@@ -1531,13 +1657,16 @@ struct s_all {
 
 #define DRAG_MOUSE	((udat)0x40)
 
-#define ANY_ACTION_MOUSE	(PRESS_ANY | RELEASE_ANY | DRAG_MOUSE)
+#define MOTION_MOUSE	((udat)0x00)
+
+#define ANY_ACTION_MOUSE	(PRESS_ANY | RELEASE_ANY | DRAG_MOUSE | MOTION_MOUSE)
 
 #define MAX_MOUSE_CODE	(udat)0x48
 
 #define isPRESS(code)	((code) & 0x08)
-#define isDRAG(code)	((code) & DRAG_MOUSE)
 #define isRELEASE(code)	((code) & ANY_ACTION_MOUSE && !((code) & (DRAG_MOUSE|(udat)0x08)))
+#define isDRAG(code)	((code) & DRAG_MOUSE)
+#define isMOTION(code)	(!(code))
 
 #define isSINGLE_PRESS(code) (isPRESS(code) && ((code) == DOWN_LEFT || (code) == DOWN_MIDDLE || (code) == DOWN_RIGHT))
 #define isSINGLE_DRAG(code) (isDRAG(code) && ((code) == (DRAG_MOUSE|HOLD_LEFT) || (code) == (DRAG_MOUSE|HOLD_MIDDLE) || (code) == (DRAG_MOUSE|HOLD_RIGHT)))

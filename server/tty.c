@@ -26,6 +26,13 @@
 #include "common.h"
 #include "tty.h"
 
+#include "Tw/Tw.h"
+#include "Tw/Twstat.h"
+
+#ifdef CONF__UNICODE
+# include "Tutf/Tutf.h"
+#endif
+
 /*
  * VT102 emulator
  */
@@ -43,7 +50,7 @@ static ldat dirtyS[2];
 static byte dirtyN;
 
 #define ColText		Win->ColText
-#define State		Data->State
+#define DState		Data->State
 #define Effects		Data->Effects
 #define ScrollBack	Data->ScrollBack
 #define SizeX		Data->SizeX
@@ -67,6 +74,7 @@ static byte dirtyN;
 #define Par		Data->Par
 #define nPar		Data->nPar
 #define currG		Data->currG
+#define Charset		Win->Charset
 #define G		Data->G
 #define G0		Data->G0
 #define G1		Data->G1
@@ -75,7 +83,7 @@ static byte dirtyN;
 #define saveG1		Data->saveG1
 #define newLen		Data->newLen
 #define newMax		Data->newMax
-#define newTitle	Data->newTitle
+#define newName	Data->newName
 
 
 /* A bitmap for codes <32. A bit of 1 indicates that the code
@@ -142,9 +150,9 @@ static void flush_tty(void) {
     /* first, draw on screen whatever changed in the window */
     if (dirtyN) {
 	if (dirtyN == MAXBYTE)
-	    DrawLogicWindow2(Win, 0, ScrollBack, SizeX-1, SizeY-1 + ScrollBack);
+	    DrawLogicWidget((widget)Win, 0, ScrollBack, SizeX-1, SizeY-1 + ScrollBack);
 	else for (i=0; i<dirtyN; i++)
-	    DrawLogicWindow2(Win, dirty[i][0], dirty[i][1] + ScrollBack, dirty[i][2], dirty[i][3] + ScrollBack);
+	    DrawLogicWidget((widget)Win, dirty[i][0], dirty[i][1] + ScrollBack, dirty[i][2], dirty[i][3] + ScrollBack);
 	dirtyN = 0;
     }
     
@@ -160,7 +168,7 @@ static void flush_tty(void) {
     } else
 	doupdate = FALSE;
 
-    if (Win == (window)All->FirstScreen->FocusW && (doupdate || (*Flags & TTY_UPDATECURSOR)))
+    if ((doupdate || (*Flags & TTY_UPDATECURSOR)) && ContainsCursor((widget)Win))
 	UpdateCursor();
 
     *Flags &= ~TTY_UPDATECURSOR;
@@ -527,12 +535,32 @@ static void update_eff(void) {
     Color = COL(fg, bg);
 }
 
-INLINE byte applyG(byte c) {
-    if (c < 0x80 || currG == IBMPC_MAP)
-	return c;
-    return All->Gtranslations[currG][c & 0x7F];
+#ifdef CONF__UNICODE
+
+# define setCharset(g) do switch ((currG = (g))) { \
+    case LAT1_MAP: Charset = Tutf_ISO_8859_1_to_UTF_16; break; \
+    case IBMPC_MAP: Charset = Tutf_IBM437_to_UTF_16; break; \
+    case USER_MAP: Charset = All->Gtranslations[USER_MAP]; break; \
+} while (0)
+
+INLINE hwfont applyG(hwfont c) {
+    if (c < 0x100)
+	c = Charset[c];
+    return c;
 }
-    
+
+#else /* !CONF__UNICODE */
+
+# define setCharset(g) (currG = (g))
+
+INLINE hwfont applyG(hwfont c) {
+    if (currG == IBMPC_MAP)
+	return c;
+    return All->Gtranslations[currG][c & 0xFF];
+}
+
+#endif /* CONF__UNICODE */
+
 INLINE void csi_m(void) {
     dat i;
     udat effects = Effects;
@@ -567,14 +595,14 @@ INLINE void csi_m(void) {
 		* control chars if defined, don't set
 		* bit 8 on output.
 		*/
-	currG = G ? G1 : G0;
+	setCharset(G ? G1 : G0);
 	*Flags &= ~(TTY_DISPCTRL | TTY_SETMETA);
 	break;
       case 11: /* ANSI X3.64-1979 (SCO-ish?)
 		* Select first alternate font, lets
 		* chars < 32 be displayed as ROM chars.
 		*/
-	currG = IBMPC_MAP;
+	setCharset(IBMPC_MAP);
 	*Flags |= TTY_DISPCTRL;
 	*Flags &= ~TTY_SETMETA;
 	break;
@@ -582,7 +610,7 @@ INLINE void csi_m(void) {
 		* Select second alternate font, toggle
 		* high bit before displaying as ROM char.
 		*/
-	currG = IBMPC_MAP;
+	setCharset(IBMPC_MAP);
 	*Flags |= TTY_DISPCTRL | TTY_SETMETA;
 	break;
       case 21:
@@ -641,10 +669,10 @@ static void respond_string(byte *p) {
 	/* or we may need to send a Msg to Win->Menu->MsgPort */
 	msg Msg;
 	event_keyboard *Event;
-	if ((Msg = Do(Create,Msg)(FnMsg, MSG_WINDOW_KEY, Len + sizeof(event_keyboard)))) {
+	if ((Msg = Do(Create,Msg)(FnMsg, MSG_WIDGET_KEY, Len + sizeof(event_keyboard)))) {
 	    /* this is the same code as in KeyboardEvent() in hw.c */
 	    Event = &Msg->Event.EventKeyboard;
-	    Event->Window = Win;
+	    Event->W = (widget)Win;
 	    if (Len == 1 && (p[0] == ENTER || p[0] == ESCAPE))
 		Event->Code = p[0];
 	    else
@@ -672,7 +700,8 @@ INLINE void status_report(void) {
  * this is what the terminal answers to a ESC-Z or csi0c query.
  */
 INLINE void respond_ID(void) {
-    respond_string("\033[?6;3c" /* VT102ID is "\033[?6c" */);
+    respond_string("\033[?6;4c" /* VT102ID (returned by linux console) is "\033[?6c" */);
+    /* "\033[?6;3c " was used by older twin and lacks "\033[?999h" (report mouse motion) */
 }
 
 static void set_mode(byte on_off) {
@@ -682,7 +711,7 @@ static void set_mode(byte on_off) {
 	
 	/* DEC private modes set/reset */
 	
-	if (State & ESques) switch (Par[i]) {
+	if (DState & ESques) switch (Par[i]) {
 	    
 	  case 1:	/* Cursor keys send ^[Ox/^[[x */
 	    CHANGE_BIT(TTY_ALTCURSKEYS, on_off);
@@ -704,28 +733,31 @@ static void set_mode(byte on_off) {
 	    break;
 	  case 8:			/* Autorepeat on/off */
 	    break;
-	  case 9:
+	  case 9: /* new style */
 	    CHANGE_BIT(TTY_REPORTMOUSE, on_off);
 	    CHANGE_BIT(TTY_REPORTMOUSE2, FALSE);
-	    if (on_off)
-		Win->Attrib |= WINDOW_WANT_MOUSE;
-	    else
-		Win->Attrib &= ~WINDOW_WANT_MOUSE;
+	    Act(ChangeField,Win)
+		(Win, TWS_window_Attrib, WINDOW_WANT_MOUSE_MOTION|WINDOW_WANT_MOUSE,
+		 on_off ? WINDOW_WANT_MOUSE : 0);
 	    break;
 	  case 25:			/* Cursor on/off */
-	    if (on_off)
-		Win->Flags |= WINFL_CURSOR_ON;
-	    else
-		Win->Flags &= ~WINFL_CURSOR_ON;
+	    Act(ChangeField,Win)
+		(Win, TWS_window_Flags, WINDOWFL_CURSOR_ON, on_off ? WINDOWFL_CURSOR_ON : 0);
 	    *Flags |= TTY_UPDATECURSOR;
 	    break;
-	  case 1000:
+	  case 999: /* new style, report also motions */
+	    CHANGE_BIT(TTY_REPORTMOUSE, on_off);
+	    CHANGE_BIT(TTY_REPORTMOUSE2, on_off);
+	    Act(ChangeField,Win)
+		(Win, TWS_window_Attrib, WINDOW_WANT_MOUSE|WINDOW_WANT_MOUSE_MOTION,
+		 on_off ? WINDOW_WANT_MOUSE|WINDOW_WANT_MOUSE_MOTION : 0);
+	    break;
+	  case 1000: /* classic xterm style */
 	    CHANGE_BIT(TTY_REPORTMOUSE, FALSE);
 	    CHANGE_BIT(TTY_REPORTMOUSE2, on_off);
-	    if (on_off)
-		Win->Attrib |= WINDOW_WANT_MOUSE;
-	    else
-		Win->Attrib &= ~WINDOW_WANT_MOUSE;
+	    Act(ChangeField,Win)
+		(Win, TWS_window_Attrib, WINDOW_WANT_MOUSE|WINDOW_WANT_MOUSE_MOTION,
+		 on_off ? WINDOW_WANT_MOUSE|WINDOW_WANT_MOUSE_MOTION : 0);
 	    break;
 
 	/* ANSI modes set/reset */
@@ -840,12 +872,12 @@ INLINE void restore_current(void) {
     G  = saveG;
     G0 = saveG0;
     G1 = saveG1;
-    currG = G ? G1 : G0;
+    setCharset(G ? G1 : G0);
 }
 
 static void reset_tty(byte do_clear) {
 
-    State = ESnormal;
+    DState = ESnormal;
     if (*Flags & TTY_INVERTSCR)
 	invert_screen();
     *Flags = TTY_AUTOWRAP;
@@ -858,7 +890,7 @@ static void reset_tty(byte do_clear) {
     Underline = COL(HIGH|WHITE,BLACK);
     HalfInten = COL(HIGH|BLACK,BLACK);
     
-    Win->Flags |= WINFL_CURSOR_ON;
+    Win->Flags |= WINDOWFL_CURSOR_ON;
     Win->CursorType = LINECURSOR;
 
     TabStop[0] = 0x01010100;
@@ -872,7 +904,7 @@ static void reset_tty(byte do_clear) {
      * but starting with the identity mapping
      * seems the only reasonable choice to me
      */
-    currG = G0 = saveG0 = IBMPC_MAP;
+    setCharset(G0 = saveG0 = IBMPC_MAP);
     G1 = saveG1 = GRAF_MAP;
     
     /*
@@ -891,13 +923,13 @@ static void reset_tty(byte do_clear) {
 
 static byte grow_newtitle(void) {
     ldat _Max;
-    byte *_Title;
+    byte *_Name;
     if (newMax < MAXDAT) {
 	_Max = ((ldat)newMax + (newMax >> 1) + 3) | All->SetUp->MinAllocSize;
 	if (_Max > MAXDAT)
 	    _Max = MAXDAT;
-	if ((_Title = ReAllocMem(newTitle, _Max))) {
-	    newTitle = _Title;
+	if ((_Name = ReAllocMem(newName, _Max))) {
+	    newName = _Name;
 	    newMax = _Max;
 	    return TRUE;
 	}
@@ -907,7 +939,7 @@ static byte grow_newtitle(void) {
 
 static byte insert_newtitle(byte c) {
     if (newLen < newMax || grow_newtitle()) {
-	newTitle[ newLen++ ] = c;
+	newName[ newLen++ ] = c;
 	return TRUE;
     }
     return FALSE;
@@ -916,15 +948,15 @@ static byte insert_newtitle(byte c) {
 static void set_newtitle(void) {
     widget P;
     
-    if (Win->Title)
-	FreeMem(Win->Title);
+    if (Win->Name)
+	FreeMem(Win->Name);
 
     /* try to shrink... */
-    if (!(Win->Title = ReAllocMem(newTitle, newLen)))
-	Win->Title = newTitle;
-    Win->LenTitle = newLen;
+    if (!(Win->Name = ReAllocMem(newName, newLen)))
+	Win->Name = newName;
+    Win->NameLen = newLen;
     newLen = newMax = 0;
-    newTitle = (byte *)0;
+    newName = (byte *)0;
 
 #if 1
     /*
@@ -946,9 +978,9 @@ static void set_newtitle(void) {
 }
 
 static void clear_newtitle(void) {
-    if (newTitle)
-	FreeMem(newTitle);
-    newTitle = (byte *)0;
+    if (newName)
+	FreeMem(newName);
+    newName = (byte *)0;
     newLen = newMax = 0;
 }
 
@@ -961,12 +993,13 @@ INLINE void write_ctrl(byte c) {
       case 0:
 	return;
       case 7:
-	if (State != ESxterm_2) {
+	if (DState != ESxterm_1 && DState != ESxterm_2) {
 	    BeepHW();
 	    return;
 	}
-	set_newtitle();
-	State = ESnormal;
+	if (DState == ESxterm_2)
+	    set_newtitle();
+	DState = ESnormal;
 	return;
       case 8:
 	bs();
@@ -989,42 +1022,42 @@ INLINE void write_ctrl(byte c) {
 	cr();
 	return;
       case 14:
-	G = 1; currG = G1;
+	G = 1; setCharset(G1);
 	*Flags |= TTY_DISPCTRL;
 	return;
       case 15:
-	G = 0; currG = G0;
+	G = 0; setCharset(G0);
         *Flags &= ~TTY_DISPCTRL;
 	return;
       case 24: case 26:
-	State = ESnormal;
+	DState = ESnormal;
 	return;
       case 27:
-	State = ESesc;
+	DState = ESesc;
 	return;
       case 127:
 	del();
 	return;
       case 128+27:
-	State = ESsquare;
+	DState = ESsquare;
 	return;
     }
     
-    /* State machine */
+    /* DState machine */
     
     /* mask out ESques for now */
-    switch (State & ESany) {
+    switch (DState & ESany) {
 	
       case ESesc:
 	switch (c) {
 	  case '[':
-	    State = ESsquare;
+	    DState = ESsquare;
 	    return;
 	  case ']':
-	    State = ESnonstd;
+	    DState = ESnonstd;
 	    return;
 	  case '%':
-	    State = ESpercent;
+	    DState = ESpercent;
 	    return;
 	  case 'E':
 	    cr();
@@ -1049,13 +1082,13 @@ INLINE void write_ctrl(byte c) {
 	    restore_current();
 	    break;
 	  case '(':
-	    State = ESsetG0;
+	    DState = ESsetG0;
 	    return;
 	  case ')':
-	    State = ESsetG1;
+	    DState = ESsetG1;
 	    return;
 	  case '#':
-	    State = EShash;
+	    DState = EShash;
 	    return;
 	  case 'c':
 	    reset_tty(TRUE);
@@ -1074,13 +1107,17 @@ INLINE void write_ctrl(byte c) {
 	if (c=='P') {		/* Palette escape sequence */
 	    nPar = 0 ;
 	    WriteMem((byte *)&Par, 0, NPAR * sizeof(ldat));
-	    State = ESpalette;
+	    DState = ESpalette;
 	    return;
 	} else if (c=='R')	/* Reset palette */
 	    ResetPaletteHW();
-	else if (c=='2') {
+	else if (c=='1') {
+	    /* may be xterm set window icon title */
+	    DState = ESxterm_1_;
+	    return;
+	} else if (c=='2') {
 	    /* may be xterm set window title */
-	    State = ESxterm_1;
+	    DState = ESxterm_2_;
 	    return;
 	}
 	break;
@@ -1092,20 +1129,20 @@ INLINE void write_ctrl(byte c) {
 		SetPaletteHW(Par[0], Par[1] * 16 + Par[2],
 			     Par[3] * 16 + Par[4], Par[5] * 16 + Par[6]);
 	    else
-		return; /* avoid resetting State */
+		return; /* avoid resetting DState */
 	}
 	break;
 
       case ESsquare:
 	Par[0] = nPar = 0;
 	/*WriteMem((byte *)&Par, 0, NPAR * sizeof(ldat));*/
-	State = ESgetpars;
+	DState = ESgetpars;
 	if (c == '[') { /* Function key */
-	    State = ESfunckey;
+	    DState = ESfunckey;
 	    return;
 	}
 	if (c == '?') {
-	    State |= ESques;
+	    DState |= ESques;
 	    return;
 	}
 	/* FALLTHROUGH */
@@ -1119,7 +1156,7 @@ INLINE void write_ctrl(byte c) {
 	    Par[nPar] += c-'0';
 	    return;
 	} else
-	    State = ESgotpars | (State & ESques);
+	    DState = ESgotpars | (DState & ESques);
 	/* FALLTHROUGH */
       
       case ESgotpars:
@@ -1131,7 +1168,7 @@ INLINE void write_ctrl(byte c) {
 	    set_mode(0);
 	    break;
 	  case 'c':
-	    if (State & ESques) {
+	    if (DState & ESques) {
 		if (!Par[0])
 		    Par[1] = Par[2] = Par[0];
 		else if (nPar == 1)
@@ -1143,7 +1180,7 @@ INLINE void write_ctrl(byte c) {
 	    /* selection complement mask */
 	    break;
 	  case 'n':
-	    if (!(State & ESques)) {
+	    if (!(DState & ESques)) {
 		if (Par[0] == 5)
 		    status_report();
 		else if (Par[0] == 6)
@@ -1151,7 +1188,7 @@ INLINE void write_ctrl(byte c) {
 	    }
 	    break;
 	}
-	if (State & ESques)
+	if (DState & ESques)
 	    break;
 
 	switch (c) {
@@ -1294,7 +1331,7 @@ INLINE void write_ctrl(byte c) {
 	  default: break;
 	}
 	if (G == 0)
-	    currG = G0;
+	    setCharset(G0);
 	break;
 	
       case ESsetG1:
@@ -1306,12 +1343,23 @@ INLINE void write_ctrl(byte c) {
 	  default: break;
 	}
 	if (G == 1)
-	    currG = G1;
+	    setCharset(G1);
+	break;
+	
+      case ESxterm_1_:
+	if (c == ';') {
+	    DState = ESxterm_1;
+	    return;
+	}
 	break;
 	
       case ESxterm_1:
+	/* ignore, cannot set window icon title */
+	return;
+	
+      case ESxterm_2_:
 	if (c == ';') {
-	    State = ESxterm_2;
+	    DState = ESxterm_2;
 	    return;
 	}
 	break;
@@ -1319,15 +1367,16 @@ INLINE void write_ctrl(byte c) {
       case ESxterm_2:
 	if (c >= ' ' && insert_newtitle(c))
 	    return;
+	break;
 	
       default:
 	break;
     }
 
-    if (newTitle)
+    if (newName)
 	clear_newtitle();
     
-    State = ESnormal;
+    DState = ESnormal;
 }
 
 widget TtyKbdFocus(widget newW) {
@@ -1344,7 +1393,7 @@ widget TtyKbdFocus(widget newW) {
 	    
     if (Screen == All->FirstScreen) {
 	if (!newW || !IS_WINDOW(newW) ||
-	    !(((window)newW)->Flags & WINFL_USECONTENTS) ||
+	    !W_USE((window)newW, USECONTENTS) ||
 	    !((window)newW)->USE.C.TtyData)
 	    
 	    newFlags = defaultFlags;
@@ -1366,16 +1415,9 @@ void ForceKbdFocus(void) {
     kbdFlags = ~defaultFlags;
     (void)TtyKbdFocus(All->FirstScreen->FocusW);
 }
-    
-/* this is the main entry point */
-void TtyWriteAscii(window Window, ldat Len, CONST byte *AsciiSeq) {
-    byte c, ok;
 
-    if (!Window || !Len || !AsciiSeq ||
-	!(Window->Flags & WINFL_USECONTENTS) ||	!Window->USE.C.TtyData)
-	return;
-    
-    /* initialize global static data */
+/* initialize global static data */
+static void common(window Window) {
     Win = Window;
     Data = Win->USE.C.TtyData;
     Flags = &Data->Flags;
@@ -1394,12 +1436,23 @@ void TtyWriteAscii(window Window, ldat Len, CONST byte *AsciiSeq) {
 	}
     }
     /* clear any selection */
-    if (Win->Attrib & WINDOW_ANYSEL)
+    if (Win->State & WINDOW_ANYSEL)
 	ClearHilight(Win);
+}
+
+/* this is the main entry point */
+void TtyWriteAscii(window Window, ldat Len, CONST byte *AsciiSeq) {
+    hwfont c;
+    byte ok;
+
+    if (!Window || !Len || !AsciiSeq || !W_USE(Window, USECONTENTS) || !Window->USE.C.TtyData)
+	return;
     
+    common(Window);
+
     while (!(*Flags & TTY_STOPPED) && Len) {
-	c = *AsciiSeq;
-	AsciiSeq++; Len--;
+	c = *AsciiSeq++;
+	Len--;
 	
 	/* If the original code was a control character we only allow a glyph
 	 * to be displayed if the code is not normally used (such as for cursor movement)
@@ -1413,9 +1466,9 @@ void TtyWriteAscii(window Window, ldat Len, CONST byte *AsciiSeq) {
 	
 	ok = (c >= 32 || !(((*Flags & TTY_DISPCTRL ? CTRL_ALWAYS : CTRL_ACTION) >> c) & 1))
 	    && (c != 127 || (*Flags & TTY_DISPCTRL)) && (c != 128+27)
-	    && (c = applyG(c));
+	    && (c = applyG((byte)c));
 
-	if (State == ESnormal && ok) {
+	if (DState == ESnormal && ok) {
 
 	    /* Now try to find out how to display it */
 	    if (*Flags & TTY_NEEDWRAP) {
@@ -1435,9 +1488,8 @@ void TtyWriteAscii(window Window, ldat Len, CONST byte *AsciiSeq) {
 		X++;
 		Pos++;
 	    }
-	    continue;
-	}	    
-	write_ctrl(c);
+	} else
+	    write_ctrl((byte)c);
 	/* don't flush here, it just decreases performance */
 	/* flush_tty(); */
     }
@@ -1445,32 +1497,113 @@ void TtyWriteAscii(window Window, ldat Len, CONST byte *AsciiSeq) {
 }
 
 
+#if TW_SIZEOFHWFONT == 1
+void TtyWriteHWFont(window Window, ldat Len, CONST hwfont *HWFont) {
+    TtyWriteAscii(Window, Len, HWFont);
+}
+#else
+/* same as TtyWriteAscii(), but writes hwfont (unicode). Useful only if CONF__UNICODE is enabled. */
+void TtyWriteHWFont(window Window, ldat Len, CONST hwfont *HWFont) {
+    hwfont c;
+    byte ok;
+
+    if (!Window || !Len || !HWFont || !W_USE(Window, USECONTENTS) || !Window->USE.C.TtyData)
+	return;
+
+    common(Window);
+    
+    while (!(*Flags & TTY_STOPPED) && Len) {
+	c = *HWFont++;
+	Len--;
+	
+	/* If the original code is 8-bit, behave as TtyWriteAscii() with LAT1_MAP*/
+	if (c < 0x100) {
+	    if (*Flags & TTY_SETMETA)
+		c |= 0x80;
+	
+	    ok = (c >= 32 || !(((*Flags & TTY_DISPCTRL ? CTRL_ALWAYS : CTRL_ACTION) >> c) & 1))
+		&& (c != 127 || (*Flags & TTY_DISPCTRL)) && (c != 128+27);
+	} else
+	    ok = TRUE;
+	
+	if (DState == ESnormal && ok) {
+
+	    /* Now try to find out how to display it */
+	    if (*Flags & TTY_NEEDWRAP) {
+		cr();
+		lf();
+	    }
+	    if (*Flags & TTY_INSERT)
+		insert_char(1);
+	    
+	    dirty_tty(X, Y, X, Y);
+	    *Pos = HWATTR(Color, c);
+	    
+	    if (X == SizeX - 1) {
+		if (*Flags & TTY_AUTOWRAP) 
+		    *Flags |= TTY_NEEDWRAP;
+	    } else {
+		X++;
+		Pos++;
+	    }
+	} else
+	    write_ctrl((byte)c);
+    }
+    flush_tty();
+}
+#endif
+
 /*
- * this currently wraps at window width
- * so it can write multiple rows at time
+ * this writes String literally, without interpreting specially any character
+ * (not even ESC or \n) and using current translation.
+ */
+void TtyWriteString(window Window, ldat Len, CONST byte *String) {
+    hwfont c;
+
+    if (!Window || !Len || !String || !W_USE(Window, USECONTENTS) || !Window->USE.C.TtyData)
+	return;
+
+    common(Window);
+
+    while (!(*Flags & TTY_STOPPED) && Len) {
+	c = applyG(*String++);
+
+	Len--;
+
+	/* Now try to find out how to display it */
+	if (*Flags & TTY_NEEDWRAP) {
+	    cr();
+	    lf();
+	}
+	    
+	dirty_tty(X, Y, X, Y);
+	*Pos = HWATTR(Color, c);
+	    
+	if (X == SizeX - 1) {
+	    if (*Flags & TTY_AUTOWRAP) 
+		*Flags |= TTY_NEEDWRAP;
+	} else {
+	    X++;
+	    Pos++;
+	}
+    }	    
+    flush_tty();
+}
+
+
+/*
+ * this currently wraps at window width so it can write multiple rows at time.
+ * does not move cursor position, nor interacts with wrapglitch.
  */
 void TtyWriteHWAttr(window Window, dat x, dat y, ldat len, CONST hwattr *text) {
     ldat left, max, chunk;
     hwattr *dst;
     
-    if (!Window || !len || !text ||
-	!(Window->Flags & WINFL_USECONTENTS) ||	!Window->USE.C.TtyData)
+    if (!Window || !len || !text || !W_USE(Window, USECONTENTS) || !Window->USE.C.TtyData)
 	return;
 
-    Win = Window;
-    Data = Win->USE.C.TtyData;
-    Flags = &Data->Flags;
+    common(Window);
 
-#if 0
-    /*
-     * dangerous to resize Contents here... clients can write in a window
-     * even while it is interactively resized! Contents should be resized only
-     * when Interactive Resize is finished.
-     */
-    if (!CheckResizeWindowContents(Window))
-	return;
-#endif
-    
     x = Max2(x, 0); x = Min2(x, SizeX - 1);
     y = Max2(y, 0); y = Min2(y, SizeY - 1);
 
@@ -1491,7 +1624,7 @@ void TtyWriteHWAttr(window Window, dat x, dat y, ldat len, CONST hwattr *text) {
 	}
     }
     /* clear any selection */
-    if (Win->Attrib & WINDOW_ANYSEL)
+    if (Win->State & WINDOW_ANYSEL)
 	ClearHilight(Win);
 
     do {

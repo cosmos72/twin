@@ -1,5 +1,5 @@
 /*
- *  libTwkeys.h  --  keycode #defines for libTw keyboard events
+ *  Twkeys.h  --  keycode #defines for libTw keyboard events
  *
  *  Copyright (C) 2000 by Massimiliano Ghilardi
  *
@@ -10,8 +10,8 @@
  *
  */
 
-#ifndef _LIB_TW_KEYS_H
-#define _LIB_TW_KEYS_H
+#ifndef _TW_KEYS_H
+#define _TW_KEYS_H
 
 
 #define TW_Tab			0x09
@@ -231,9 +231,9 @@
 #define TW_PesetaSign		0x177
 #define TW_RupeeSign		0x178
 #define TW_WonSign		0x179
-#define TW_NewSheqelSign	0x17a
-#define TW_DongSign		0x17b
-#define TW_EuroSign		0x17c
+#define TW_NewSheqelSign	0x17A
+#define TW_DongSign		0x17B
+#define TW_EuroSign		0x17C
 
 /* a dummy value for xterm-style mouse reporting ASCII sequences */
 #define TW_XTermMouse		0x1FE
@@ -243,5 +243,5 @@
 #define MAX_KEY_CODE		(TW_Null+1)
 
 
-#endif /* _LIB_TW_KEYS */
+#endif /* _TW_KEYS_H */
 

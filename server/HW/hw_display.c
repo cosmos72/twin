@@ -71,11 +71,11 @@ static void display_HandleEvent(display_hw hw) {
 	Event = &hMsg->Event;
 	
 	switch (hMsg->Type) {
-	  case MSG_WINDOW_KEY:
+	  case MSG_WIDGET_KEY:
 	    KeyboardEventCommon(Event->EventKeyboard.Code, Event->EventKeyboard.ShiftFlags,
 				Event->EventKeyboard.SeqLen, Event->EventKeyboard.AsciiSeq);
 	    break;
-	  case MSG_WINDOW_MOUSE:
+	  case MSG_WIDGET_MOUSE:
 	    x = Event->EventMouse.X;
 	    y = Event->EventMouse.Y;
 	    dx = x == 0 ? -1 : x == DisplayWidth - 1 ? 1 : 0;
@@ -88,7 +88,7 @@ static void display_HandleEvent(display_hw hw) {
 	    HW->MouseState.y = y;
 	    HW->MouseState.keys = Event->EventMouse.Code & HOLD_ANY;
 	    break;
-	  case MSG_WINDOW_GADGET:
+	  case MSG_WIDGET_GADGET:
 	    if (!Event->EventGadget.Code)
 		/* 0 == Close Code */
 		HW->NeedHW |= NEEDPanicHW, NeedHW |= NEEDPanicHW;

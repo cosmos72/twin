@@ -63,11 +63,11 @@ void panic_free(void *v) {
 
 #if TW_PAGE_SIZE <= _MAXUDAT
    typedef udat delta;
-#  define SDELTA _SIZEOFUDAT
+#  define SDELTA TW_SIZEOFUDAT
 #else
-# if TW_PAGE_SIZE <= _MAXULDAT
+# if TW_PAGE_SIZE <= TW_MAXULDAT
    typedef uldat delta;
-#  define SDELTA _SIZEOFULDAT
+#  define SDELTA TW_SIZEOFULDAT
 # else
 #   error TW_PAGE_SIZE too big or not defined!
 # endif
@@ -107,7 +107,7 @@ typedef struct parent {
 
 #define ASSERT_TW_PAGE_DATA ((size_t)&(((block *)0)->V))
 
-#if defined(__i386__) && TW_PAGE_SIZE == 4096 && _SIZEOFVOIDP == 4 && SDELTA == 2
+#if defined(__i386__) && TW_PAGE_SIZE == 4096 && TW_SIZEOFVOIDP == 4 && SDELTA == 2
 
 /*
  * a somewhat optimized version... but it aligns data at 8 bytes,

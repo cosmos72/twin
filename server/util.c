@@ -34,6 +34,10 @@
 
 #include "Tw/Twkeys.h"
 
+#ifdef CONF__UNICODE
+# include "Tutf/Tutf.h"
+#endif
+
 udat ErrNo;
 byte CONST * ErrStr;
 
@@ -68,6 +72,27 @@ void *CloneMem(CONST void *From, uldat Size) {
     return NULL;
 }
 
+#if TW_SIZEOFHWFONT == 1
+hwfont *CloneString2HWFont(CONST byte *From, uldat Size) {
+    return CloneMem(From, Size);
+}
+#else
+hwfont *CloneString2HWFont(CONST byte *From, uldat Size) {
+    hwfont *temp, *save;
+    if (From && Size && (save = temp = (hwfont *)AllocMem(Size * sizeof(hwfont)))) {
+	while (Size--) {
+#ifdef CONF__UNICODE
+	    *temp++ = Tutf_IBM437_to_UTF_16[*From++];
+#else
+	    *temp++ = *From++;
+#endif
+	}
+	return save;
+    }
+    return NULL;
+}
+#endif
+
 byte *CloneStr(CONST byte *s) {
     byte *q;
     uldat len;
@@ -94,6 +119,31 @@ byte *CloneStrL(CONST byte *s, uldat len) {
     }
     return NULL;
 }
+
+#if TW_SIZEOFHWFONT == 1
+hwfont *CloneString2HWFontL(CONST byte *s, uldat len) {
+    return CloneStrL(s, len);
+}
+#else
+hwfont *CloneString2HWFontL(CONST byte *s, uldat len) {
+    hwfont *temp, *save;
+    
+    if (s) {
+	if ((temp = save = (hwfont *)AllocMem((len+1) * sizeof(hwfont)))) {
+	    while (len--) {
+# ifdef CONF__UNICODE
+		*temp++ = Tutf_IBM437_to_UTF_16[*s++];
+# else
+		*temp++ = *s++;
+# endif
+	    }
+	    *temp = '\0';
+	}
+	return save;
+    }
+    return NULL;
+}
+#endif
 
 byte **CloneStrList(byte **s) {
     uldat n = 1;
@@ -348,13 +398,16 @@ byte SendControlMsg(msgport MsgPort, udat Code, udat Len, CONST byte *Data) {
 
 byte SelectionStore(uldat Magic, CONST byte MIME[MAX_MIMELEN], uldat Len, CONST byte *Data) {
     uldat newLen;
-    byte *newData;
+    byte *newData, pad;
     selection *Sel = All->Selection;
     
     if (Magic == SEL_APPEND) 
 	newLen = Sel->Len + Len;
     else
 	newLen = Len;
+    
+    if ((pad = (Sel->Magic == SEL_HWFONTMAGIC && (newLen & 1))))
+	newLen++;
     
     if (Sel->Max < newLen) {
 	if (!(newData = ReAllocMem(Sel->Data, newLen)))
@@ -376,18 +429,27 @@ byte SelectionStore(uldat Magic, CONST byte MIME[MAX_MIMELEN], uldat Len, CONST 
     else
 	WriteMem(Sel->Data + Sel->Len, ' ', Len);
     Sel->Len += Len;
+    if (pad) {
+#if TW_BYTE_ORDER == TW_LITTLE_ENDIAN
+	Sel->Data[Sel->Len++] = '\0';
+#else
+	Sel->Data[Sel->Len] = Sel->Data[Sel->Len-1];
+	Sel->Data[Sel->Len-1] = '\0';
+	Sel->Len++;
+#endif
+    }
     return TRUE;
 }
 
 byte SetSelectionFromWindow(window Window) {
     uldat y, slen, len;
     byte *sData, *Data;
-    byte ok = TRUE;
+    byte ok = TRUE, w_useC = W_USE(Window, USECONTENTS);
     
-    if (!(Window->Attrib & WINDOW_DO_SEL))
+    if (!(Window->State & WINDOW_DO_SEL))
 	return ok;
     
-    if (!(Window->Attrib & WINDOW_ANYSEL) || Window->YstSel > Window->YendSel ||
+    if (!(Window->State & WINDOW_ANYSEL) || Window->YstSel > Window->YendSel ||
 	(Window->YstSel == Window->YendSel && Window->XstSel > Window->XendSel)) {
 	
 	ok &= SelectionStore(SEL_TEXTMAGIC, NULL, 0, NULL);
@@ -398,8 +460,7 @@ byte SetSelectionFromWindow(window Window) {
     /* normalize negative coords */
     if (Window->XstSel < 0)
 	Window->XstSel = 0;
-    else if ((Window->Flags & WINFL_USECONTENTS) &&
-	     Window->XstSel >= Window->WLogic) {
+    else if (w_useC && Window->XstSel >= Window->WLogic) {
 	Window->XstSel = 0;
 	Window->YstSel++;
     }
@@ -408,11 +469,10 @@ byte SetSelectionFromWindow(window Window) {
 	Window->XstSel = 0;
     } else if (Window->YstSel >= Window->HLogic) {
 	Window->YstSel = Window->HLogic - 1;
-	Window->XstSel = (Window->Flags & WINFL_USECONTENTS) ?
-	    Window->WLogic - 1 : MAXLDAT;
+	Window->XstSel = w_useC ? Window->WLogic - 1 : MAXLDAT;
     }
 
-    if (Window->Flags & WINFL_USECONTENTS) {
+    if (w_useC) {
 	hwattr *hw;
 	
 	/* normalize negative coords */
@@ -448,7 +508,7 @@ byte SetSelectionFromWindow(window Window) {
 	    len = slen;
 	    hw += Window->XstSel;
 	    while (len--)
-		*Data++ = HWFONT(*hw++);
+		*Data++ = HWFONT(*hw), hw++;
 	    ok &= SelectionStore(SEL_TEXTMAGIC, NULL, slen, sData);
 	}
 	
@@ -462,7 +522,7 @@ byte SetSelectionFromWindow(window Window) {
 	    Data = sData;
 	    len = slen;
 	    while (len--)
-		*Data++ = HWFONT(*hw++);
+		*Data++ = HWFONT(*hw), hw++;
 	    ok &= SelectionAppend(slen, sData);
 	}
 	
@@ -472,13 +532,13 @@ byte SetSelectionFromWindow(window Window) {
 	    Data = sData;
 	    len = slen = Window->XendSel + 1;
 	    while (len--)
-		*Data++ = HWFONT(*hw++);
+		*Data++ = HWFONT(*hw), hw++;
 	    ok &= SelectionAppend(slen, sData);
 	}
 	if (ok) NeedHW |= NEEDSelectionExport;
 	return ok;
     }
-    if (!(Window->Flags & WINFL_USEANY)) {
+    if (W_USE(Window, USEROWS)) {
 	row Row;
 	
 	/* Gap not supported! */
@@ -490,8 +550,27 @@ byte SetSelectionFromWindow(window Window) {
 		slen = Row->Len - Window->XstSel;
 	    else
 		slen = Min2(Row->Len, Window->XendSel+1) - Min2(Row->Len, Window->XstSel);
+#if TW_SIZEOFHWFONT != 1
+	    {
+		/* FIXME: this should be like below, with SEL_HWFONTMAGIC */
+		hwfont *hf;
+		
+		if (!(sData = Data = AllocMem(slen)))
+		    return FALSE;
+		hf = Row->Text + Min2(Row->Len, Window->XstSel);
+		len = slen;
+		while (len--)
+		    *Data++ = *hf++;
+		
+		ok &= SelectionStore(SEL_TEXTMAGIC, NULL, slen, sData);
+		
+		FreeMem(sData);
+	    }
+	    
+#else
 	    ok &= SelectionStore(SEL_TEXTMAGIC, NULL, slen,
-				 Row->Text + Min2(Row->Len, Window->XstSel));
+				 (byte *)(Row->Text + Min2(Row->Len, Window->XstSel)));
+#endif
 	} else
 	    ok &= SelectionStore(SEL_TEXTMAGIC, NULL, 0, "");
 
@@ -500,12 +579,12 @@ byte SetSelectionFromWindow(window Window) {
 
 	for (y = Window->YstSel + 1; ok && y < Window->YendSel; y++) {
 	    if ((Row = Act(FindRow,Window)(Window, y)) && Row->Text)
-		ok &= SelectionAppend(Row->Len, Row->Text);
+		ok &= SelectionAppend(Row->Len * sizeof(hwfont), (byte *)Row->Text);
 	    ok &= SelectionAppend(1, "\n");
 	}
 	if (Window->YendSel > Window->YstSel) {
 	    if (Window->XendSel >= 0 && (Row = Act(FindRow,Window)(Window, Window->YendSel)) && Row->Text)
-		ok &= SelectionAppend(Min2(Row->Len, Window->XendSel+1), Row->Text);
+		ok &= SelectionAppend(Min2(Row->Len, Window->XendSel+1) * sizeof(hwfont), (byte *)Row->Text);
 	    if (!Row || !Row->Text || Row->Len <= Window->XendSel)
 		ok &= SelectionAppend(1, "\n");
 	}
@@ -523,12 +602,27 @@ byte CreateXTermMouseEvent(event_mouse *Event, byte buflen, byte *buf) {
     dat x = Event->X, y = Event->Y;
     byte len = 0;
 	
-    if (!(W = Event->Window) || !(W->Flags & WINFL_USECONTENTS) || !W->USE.C.TtyData)
+    if (!(W = (window)Event->W) || !IS_WINDOW(W) || !W_USE(W, USECONTENTS) || !W->USE.C.TtyData)
 	return len;
     
     Flags = W->USE.C.TtyData->Flags;
     
-    if (Flags & TTY_REPORTMOUSE2) {
+    if (Flags & TTY_REPORTMOUSE) {
+	/* new-style reporting */
+
+	/* when both TTY_REPORTMOUSE|TTY_REPORTMOUSE2 are set, also report motion */
+	if (buflen < 9 || (isMOTION(Code) && !(Flags & TTY_REPORTMOUSE)))
+	    /* buffer too small! */
+	    return len;
+	
+	CopyMem("\033[5M", buf, 4);
+	buf[4] = ' ' + (Code & HOLD_ANY);
+	buf[5] = '!' + (x & 0x7f);
+	buf[6] = '!' + ((x >> 7) & 0x7f);
+	buf[7] = '!' + (y & 0x7f);
+	buf[8] = '!' + ((y >> 7) & 0x7f);
+	len = 9;
+    } else if (Flags & TTY_REPORTMOUSE2) {
 	/* classic xterm-style reporting */
 	
 	if (buflen < 6)
@@ -551,20 +645,6 @@ byte CreateXTermMouseEvent(event_mouse *Event, byte buflen, byte *buf) {
 	buf[5] = '!' + y;
 	len = 6;
 	
-    } else if (Flags & TTY_REPORTMOUSE) {
-	/* new-style reporting */
-	
-	if (buflen < 9)
-	    /* buffer too small! */
-	    return len;
-	
-	CopyMem("\033[5M", buf, 4);
-	buf[4] = ' ' + (Code & HOLD_ANY);
-	buf[5] = '!' + (x & 0x7f);
-	buf[6] = '!' + ((x >> 7) & 0x7f);
-	buf[7] = '!' + (y & 0x7f);
-	buf[8] = '!' + ((y >> 7) & 0x7f);
-	len = 9;
     }
     return len;
 }
@@ -574,18 +654,72 @@ void ResetBorderPattern(void) {
     widget W;
     
     for (MsgP = All->FirstMsgPort; MsgP; MsgP=MsgP->Next) {
-	for (W = MsgP->FirstW; W; W = W->ONext) {
+	for (W = MsgP->FirstW; W; W = W->O_Next) {
 	    if (IS_WINDOW(W))
 		((window)W)->BorderPattern[0] = ((window)W)->BorderPattern[1] = NULL;
 	}
     }
 }
 
+static gadget _PrevGadget(gadget G) {
+    while (G->Prev) {
+	G = (gadget)G->Prev;
+	if (IS_GADGET(G))
+	    return (gadget)G;
+    }
+    return (gadget)G->Prev;
+}
+
+static gadget _NextGadget(gadget G) {
+    while (G->Next) {
+	G = (gadget)G->Next;
+	if (IS_GADGET(G))
+	    return (gadget)G;
+    }
+    return (gadget)G->Next;
+}
+
+
+
 /* handle common keyboard actions like cursor moving */
 void FallBackKeyAction(window W, event_keyboard *EventK) {
     ldat NumRow, OldNumRow;
+    gadget G, H;
     
-    if (W->Attrib & WINDOW_AUTO_KEYS) switch (EventK->Code) {
+    if ((G = (gadget)W->SelectW) && IS_GADGET(G)) switch (EventK->Code) {
+      case TW_Escape:
+	UnPressGadget(G, FALSE);
+	W->SelectW = (widget)0;
+	break;
+      case TW_Return:
+	UnPressGadget(G, TRUE);
+	PressGadget(G);
+	break;
+      case TW_Up:
+      case TW_Left:
+	if ((H = _PrevGadget(G))) {
+	    if (!(G->Flags & GADGETFL_TOGGLE))
+		UnPressGadget(G, FALSE);
+	    W->SelectW = (widget)H;
+	    PressGadget(H);
+	}
+	break;
+      case TW_Down:
+      case TW_Right:
+      case TW_Tab:
+	if ((H = _NextGadget(G))) {
+	    if (!(G->Flags & GADGETFL_TOGGLE))
+		UnPressGadget(G, FALSE);
+	    W->SelectW = (widget)H;
+	    PressGadget(H);
+	}
+	break;
+      default:
+	break;
+    } else if ((G = (gadget)W->FirstW) && IS_GADGET(G)) {
+	PressGadget(G);
+	W->SelectW = (widget)G;
+    } else switch (EventK->Code) {
       case TW_Up:
 	if (!W->HLogic)
 	    break;
@@ -596,13 +730,13 @@ void FallBackKeyAction(window W, event_keyboard *EventK) {
 	    else
 		NumRow=OldNumRow-(ldat)1;
 	    W->CurY=NumRow;
-	    if (W->Flags & WINFL_SEL_ROWCURR)
-		DrawLogicWindow2(W, (ldat)0, OldNumRow, (ldat)MAXDAT-(ldat)2, OldNumRow);
+	    if (W->Flags & WINDOWFL_ROWS_SELCURRENT)
+		DrawLogicWidget((widget)W, (ldat)0, OldNumRow, (ldat)MAXDAT-(ldat)2, OldNumRow);
 	}
 	else
 	    W->CurY=NumRow=W->HLogic-(ldat)1;
-	if (W->Flags & WINFL_SEL_ROWCURR)
-	    DrawLogicWindow2(W, (ldat)0, NumRow, (ldat)MAXDAT-(ldat)2, NumRow);
+	if (W->Flags & WINDOWFL_ROWS_SELCURRENT)
+	    DrawLogicWidget((widget)W, (ldat)0, NumRow, (ldat)MAXDAT-(ldat)2, NumRow);
 	UpdateCursor();
 	break;
       case TW_Down:
@@ -615,13 +749,13 @@ void FallBackKeyAction(window W, event_keyboard *EventK) {
 	    else
 		NumRow=OldNumRow+(ldat)1;
 	    W->CurY=NumRow;
-	    if (W->Flags & WINFL_SEL_ROWCURR)
-		DrawLogicWindow2(W, (ldat)0, OldNumRow, (ldat)MAXDAT-(ldat)2, OldNumRow);
+	    if (W->Flags & WINDOWFL_ROWS_SELCURRENT)
+		DrawLogicWidget((widget)W, (ldat)0, OldNumRow, (ldat)MAXDAT-(ldat)2, OldNumRow);
 	}
 	else
 	    W->CurY=NumRow=(ldat)0;
-	if (W->Flags & WINFL_SEL_ROWCURR)
-	    DrawLogicWindow2(W, (ldat)0, NumRow, (ldat)MAXDAT-(ldat)2, NumRow);
+	if (W->Flags & WINDOWFL_ROWS_SELCURRENT)
+	    DrawLogicWidget((widget)W, (ldat)0, NumRow, (ldat)MAXDAT-(ldat)2, NumRow);
 	UpdateCursor();
 	break;
       case TW_Left:
@@ -631,13 +765,13 @@ void FallBackKeyAction(window W, event_keyboard *EventK) {
 	}
 	break;
       case TW_Right:
-	if (((W->Flags & WINFL_USECONTENTS) && W->CurX < W->XWidth - 3) ||
-	    (!(W->Flags & WINFL_USEANY) && W->CurX < MAXLDAT - 1)) {
+	if ((W_USE(W, USECONTENTS) && W->CurX < W->XWidth - 3) ||
+	    (W_USE(W, USEROWS) && W->CurX < MAXLDAT - 1)) {
 	    W->CurX++;
 	    UpdateCursor();
 	}
 	break;
-      default:
+	default:
 	break;
     }
 }
@@ -704,8 +838,68 @@ void FreeStringVec(byte **cmd) {
     }
 }
 
-
-
+/*
+ * create a (malloced) array of non-space args
+ * from arbitrary text command line
+ * 
+ * FIXME: need proper handling of double quotes:
+ * "a b" is the string `a b' NOT the two strings `"a' `b"'
+ * (same for single quotes, backslashes, ...)
+ */
+#if TW_SIZEOFHWFONT == 1
+byte **TokenizeHWFontVec(uldat len, hwfont *s) {
+    return TokenizeStringVec(len, s);
+}
+#else /* TW_SIZEOFHWFONT != 1 */
+byte **TokenizeHWFontVec(uldat len, hwfont *s) {
+    byte **cmd = NULL, *buf, *v;
+    hwfont c;
+    uldat save_len, save_n, n = 0, i;
+    
+    /* skip initial spaces */
+    while (len && ((c = *s) == '\0' || c == ' ')) {
+	len--, s++;
+    }
+    save_len = len;
+    
+    if (len && (buf = AllocMem(len + 1))) {
+	for (i = 0; i < len; i++)
+	    buf[i] = (byte)s[i];
+	buf[len] = '\0';
+	
+	/* how many args? */
+	while (len) {
+	    len--, c = *s++;
+	    if (c && c != ' ') {
+		n++;
+		while (len && (c = *s) && c != ' ') {
+		    len--, s++;
+		}
+	    }
+	}
+	if ((cmd = AllocMem((n + 1) * sizeof(byte *)))) {
+	    save_n = n;
+	    n = 0;
+	    len = save_len;
+	    v = buf;
+	    
+	    /* put args in cmd[] */
+	    while (len) {
+		len--, c = *v++;
+		if (c && c != ' ') {
+		    cmd[n++] = v - 1;
+		    while (len && (c = *v) && c != ' ') {
+			len--, v++;
+		    }
+		    *v = '\0'; /* safe, we did a malloc(len+1) */
+		}
+	    }
+	    cmd[n] = NULL; /* safe, we did a malloc(n+1) */
+	}
+    }
+    return cmd;
+}
+#endif /* TW_SIZEOFHWFONT == 1 */
 
 int unixFd;
 uldat unixSlot;
@@ -839,40 +1033,6 @@ void CheckPrivileges(void) {
     }
     
     DropPrivileges();
-    
-#if 0
-# ifdef CONF_TERM
-#  ifdef CONF_TERM_DEVPTS
-    if (Privilege < sgidtty) {
-	byte c;
-	printk("twin: not running setgid tty.\n"
-		"      might be unable to start the terminal emulator.\n"
-		"      hit RETURN to continue, or CTRL-C to quit.\n");
-	read(0, &c, 1);
-    }
-#  else /* !CONF_TERM_DEVPTS */
-    if (Privilege < suidroot) {
-	byte c;
-	printk("twin: not running setuid root.\n"
-		"      might be unable to start the terminal emulator.\n"
-		"      hit RETURN to continue, or CTRL-C to quit.\n");
-	read(0, &c, 1);
-    }
-#  endif /* CONF_TERM_DEVPTS */
-    
-# else /* !CONF_TERM */
-
-#  ifdef CONF__MODULES
-    if (Privilege == none) {
-	byte c;
-	printk("twin: not running setgid tty or setuid root.\n"
-		"      might be unable to start the terminal emulator module.\n"
-		"      hit RETURN to continue, or CTRL-C to quit.\n");
-	read(0, &c, 1);
-    }
-#  endif /* CONF__MODULES */
-# endif /* CONF_TERM */
-#endif /* 0 */
 }
 
 void GetPrivileges(void) {

@@ -1,0 +1,3 @@
+findfile.o: findfile.c xmalloc.h findfile.h nls.h
+mapscrn.o: mapscrn.c ../../include/Tw/Tw.h ../../include/Tw/Twerrno.h paths.h findfile.h nls.h ../../include/version.h
+xmalloc.o: xmalloc.c nls.h xmalloc.h

@@ -70,7 +70,7 @@ INLINE byte Threshold_isDirtyVideo(dat X, dat Y) {
 INLINE void VideoFlip(udat x, udat y) {
     uldat pos = x + y * DisplayWidth;
     hwattr h = Video[pos];
-    hwcol c = ~HWCOL(h) ^ COL(HIGH,0);
+    hwcol c = ~HWCOL(h) ^ COL(HIGH,HIGH);
 
     Video[pos] = HWATTR( c, HWFONT(h));
 }

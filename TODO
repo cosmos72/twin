@@ -1,6 +1,10 @@
-BUGS:
+URGENT:
 
+Debug twlsobj on window->Contents
+Add Unicode cut-n-paste
 Fix libTw Reply-> alignment problems.
+"paste" command in menu
+Add charsets to libTutf
 
 DECIDE:
 
@@ -10,8 +14,6 @@ TODO:
 
 Flame libgpm people for /tmp/gpm* sockets, gpm_tried, syslogging, ncurses
 
-GCC/i386 optimized socket.so/socketalien.so
-
 RC AddScreen / Background
 recursive menu windows
 
@@ -20,12 +22,8 @@ port to other platforms (*BSD, ... Also, twdisplay on win32)
 ?-geometry option to tw* clients
 twdialog
 
-look at tvision widgets and methods
-unhide menu when unfocusing all windows? (then hide again when focusing a window)
-option to limit new windows INITIAL size to screen size
-keyboard hotkeys for gadget selection and screen scroll
-?info on menubar: time / memory / load, size of window during resize
-WINFL_BYUSER windows -> not this way: use shared menory.
+toolkit library
+keyboard hotkeys for screen scroll
 screensaver
 wtmp logging
 docs (gmanedit?)

@@ -27,7 +27,7 @@
 
 #include "Tw/Tw.h"
 
-#include "term.h"
+#include "tterm.h"
 
 /* pseudo-teletype connections handling functions */
 
@@ -184,7 +184,7 @@ uldat Spawn(twindow Window, pid_t *ppid, dat X, dat Y, TW_CONST byte *arg0, byte
 	/* child */
 	if (!switchto_tty())
 	    exit(1);
-	execvp((char *)arg0, (char **)argv);
+	execvp((TW_CONST char *)arg0, (char * TW_CONST *)argv);
 	exit(1);
 	break;
       default:

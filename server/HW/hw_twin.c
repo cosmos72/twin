@@ -23,7 +23,7 @@
 #include "Tw/Tw.h"
 #include "Tw/Twerrno.h"
 #include "Tw/Twkeys.h"
-
+#include "Tw/Twstat.h"
 
 struct tw_data {
     tdisplay Td;
@@ -83,6 +83,13 @@ static void TW_Configure(udat resource, byte todefault, udat value) {
 	}
 	setFlush();
 	break;
+      case HW_MOUSEMOTIONEVENTS:
+	if (todefault)
+	    value = 0;
+	Tw_ChangeField(Td, Twin, TWS_window_Attrib, TW_WINDOW_WANT_MOUSE_MOTION,
+		       value ? TW_WINDOW_WANT_MOUSE_MOTION : 0);
+	setFlush();
+	break;
       default:
 	break;
     }
@@ -111,13 +118,13 @@ static void TW_HandleMsg(tmsg Msg) {
 	break;
     }
 
-    if (Event->EventCommon.Window == Twin) {
+    if (Event->EventCommon.W == Twin) {
 	switch (Msg->Type) {
-	  case TW_MSG_WINDOW_KEY:
+	  case TW_MSG_WIDGET_KEY:
 	    KeyboardEventCommon(Event->EventKeyboard.Code, Event->EventKeyboard.ShiftFlags,
 				Event->EventKeyboard.SeqLen, Event->EventKeyboard.AsciiSeq);
 	    break;
-	  case TW_MSG_WINDOW_MOUSE:
+	  case TW_MSG_WIDGET_MOUSE:
 	    x = Event->EventMouse.X;
 	    y = Event->EventMouse.Y;
 	    dx = x == 0 ? -1 : x == DisplayWidth - 1 ? 1 : 0;
@@ -130,16 +137,16 @@ static void TW_HandleMsg(tmsg Msg) {
 	    HW->MouseState.y = y;
 	    HW->MouseState.keys = Event->EventMouse.Code & HOLD_ANY;
 	    break;
-	  case TW_MSG_WINDOW_CHANGE:
-	    if (HW->X != Event->EventWindow.XWidth - 2 ||
-		HW->Y != Event->EventWindow.YWidth - 2) {
+	  case TW_MSG_WIDGET_CHANGE:
+	    if (HW->X != Event->EventWidget.XWidth ||
+		HW->Y != Event->EventWidget.YWidth) {
 		
-		HW->X = Event->EventWindow.XWidth - 2;
-		HW->Y = Event->EventWindow.YWidth - 2;
+		HW->X = Event->EventWidget.XWidth;
+		HW->Y = Event->EventWidget.YWidth;
 		ResizeDisplayPrefer(HW);
 	    }
 	    break;
-	  case TW_MSG_WINDOW_GADGET:
+	  case TW_MSG_WIDGET_GADGET:
 	    if (!Event->EventGadget.Code)
 		/* 0 == Close Code */
 		HW->NeedHW |= NEEDPanicHW, NeedHW |= NEEDPanicHW;
@@ -152,13 +159,21 @@ static void TW_HandleMsg(tmsg Msg) {
 }
 
 static void TW_KeyboardEvent(int fd, display_hw hw) {
+    byte firstloop = TRUE;
     tmsg Msg;
     SaveHW;
     SetHW(hw);
     
-    while ((Msg = Tw_ReadMsg(Td, FALSE)))
+    /*
+     * All other parts of twin read and parse data from fds in big chunks,
+     * while Tw_ReadMsg() returns only a single event at time.
+     * To compensate this and avoid to lag behind, we do a small loop checking
+     * for all messages received while reading the first one.
+     */
+    while ((firstloop || Tw_PendingMsg(Td)) && (Msg = Tw_ReadMsg(Td, FALSE))) {
 	TW_HandleMsg(Msg);
-	
+	firstloop = FALSE;
+    }
 	
     if (Tw_InPanic(Td))
 	HW->NeedHW |= NEEDPanicHW, NeedHW |= NEEDPanicHW;
@@ -259,7 +274,7 @@ static void TW_CheckResize(dat *x, dat *y) {
 
 static void TW_Resize(dat x, dat y) {
     if (x != HW->X || y != HW->Y) {
-	Tw_ResizeWindow(Td, Twin, (HW->X = x) + 2, (HW->Y = y) + 2);
+	Tw_ResizeWindow(Td, Twin, HW->X = x, HW->Y = y);
 	setFlush();
     }
 }
@@ -377,6 +392,8 @@ static void TW_QuitHW(void) {
     HW->QuitHW = NoOp;
 }
 
+TW_DECL_MAGIC(hw_twin_magic);
+
 #ifdef CONF_THIS_MODULE
 static
 #endif
@@ -430,7 +447,9 @@ byte TW_InitHW(void) {
     Tw_ConfigMalloc(AllocMem, ReAllocMem, FreeMem);
 #endif
 	
-    if ((Td = Tw_Open(arg)) &&
+    Td = NULL;
+    
+    if (Tw_CheckMagic(hw_twin_magic) && (Td = Tw_Open(arg)) &&
 	
 	/*
 	 * check if the server supports the functions we need and store their IDs
@@ -443,8 +462,7 @@ byte TW_InitHW(void) {
 	(Tmsgport = Tw_CreateMsgPort
 	 (Td, 12, "Twin on Twin", (uldat)0, (udat)0, (byte)0)) &&
 	(Tmenu = Tw_CreateMenu
-	 (Td, Tmsgport,
-	  COL(BLACK,WHITE), COL(BLACK,GREEN), COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
+	 (Td, COL(BLACK,WHITE), COL(BLACK,GREEN), COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
 	  COL(RED,WHITE), COL(RED,GREEN), (byte)0)) &&
 	Tw_Item4MenuCommon(Td, Tmenu)) do {
 	    
@@ -454,9 +472,9 @@ byte TW_InitHW(void) {
 	    len = strlen(name);
 	    
 	    Twin = Tw_CreateWindow
-		(Td, strlen(name), name, NULL, Tmenu, COL(WHITE,BLACK), LINECURSOR,
-		 WINDOW_WANT_KEYS|WINDOW_WANT_MOUSE|WINDOW_WANT_CHANGE|WINDOW_DRAG|WINDOW_RESIZE|WINDOW_CLOSE,
-		 WINFL_USECONTENTS|WINFL_CURSOR_ON,
+		(Td, strlen(name), name, NULL, Tmenu, COL(WHITE,BLACK), TW_LINECURSOR,
+		 TW_WINDOW_WANT_KEYS|TW_WINDOW_WANT_MOUSE|TW_WINDOW_WANT_CHANGES|TW_WINDOW_DRAG|TW_WINDOW_RESIZE|TW_WINDOW_CLOSE,
+		 TW_WINDOWFL_USECONTENTS|TW_WINDOWFL_CURSOR_ON,
 		 (HW->X = GetDisplayWidth()), (HW->Y = GetDisplayHeight()), (uldat)0);
 
 	    if (!Twin)

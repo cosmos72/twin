@@ -18,42 +18,50 @@
 
 static tmsgport Event_MsgPort;
 static tmenu Event_Menu;
-static twindow Event_Win;
+static twindow Event_Win, Event_SubWin;
+
+TW_DECL_MAGIC(event_magic);
 
 static byte InitEvent(void) {
-    if (!TwOpen(NULL))
+    if (!TwCheckMagic(event_magic) || !TwOpen(NULL))
 	return FALSE;
     
     if ((Event_MsgPort=TwCreateMsgPort
 	 (12, "Event Tester", (time_t)0, (frac_t)0, (byte)0)) &&
-	(Event_Menu=TwCreateMenu
-	 (Event_MsgPort, COL(BLACK,WHITE), COL(BLACK,GREEN), COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
+	(Event_Menu=TwCreateMenu(
+	  COL(BLACK,WHITE), COL(BLACK,GREEN), COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
 	  COL(RED,WHITE), COL(RED,GREEN), (byte)0)) &&
 	TwItem4MenuCommon(Event_Menu)) {
 	
 	TwInfo4Menu(Event_Menu, TW_ROW_ACTIVE, 14, " Event Tester ", "ptppppptpppppp");
-    } else
-	return FALSE;
     
-    if ((Event_Win=TwCreateWindow
-	 (12, "Event Tester", NULL,
-	  Event_Menu, COL(WHITE,BLACK), TW_NOCURSOR,
-	  TW_WINDOW_WANT_KEYS|TW_WINDOW_WANT_MOUSE|TW_WINDOW_WANT_CHANGES|TW_WINDOW_DRAG|TW_WINDOW_RESIZE|TW_WINDOW_CLOSE,
-	  TW_WINFL_USEEXPOSE, 18, 8, 0))) {
+	if ((Event_Win=TwCreateWindow
+	     (12, "Event Tester", NULL,
+	      Event_Menu, COL(WHITE,BLACK), TW_NOCURSOR,
+	      TW_WINDOW_WANT_KEYS|TW_WINDOW_WANT_MOUSE|TW_WINDOW_WANT_CHANGES|TW_WINDOW_DRAG|TW_WINDOW_RESIZE|TW_WINDOW_CLOSE,
+	      TW_WINDOWFL_USEEXPOSE, 18, 8, 0))) {
 	
-	TwSetColorsWindow(Event_Win, 0x1FF,
-			  COL(HIGH|YELLOW,CYAN), COL(HIGH|GREEN,HIGH|BLUE), COL(WHITE,HIGH|BLUE),
-			  COL(HIGH|WHITE,HIGH|BLUE), COL(HIGH|WHITE,HIGH|BLUE),
-			  COL(WHITE,BLACK), COL(WHITE,HIGH|BLACK), COL(HIGH|BLACK,BLACK), COL(BLACK,HIGH|BLACK));
-	TwConfigureWindow(Event_Win, 0xF<<2, 0, 0, 10, 5, 30, 15);
-    } else
-	return FALSE;
-    
-    
-    TwMapWindow(Event_Win, TwFirstScreen());
-    TwFlush();
+	    TwSetColorsWindow(Event_Win, 0x1FF,
+			      COL(HIGH|YELLOW,CYAN), COL(HIGH|GREEN,HIGH|BLUE), COL(WHITE,HIGH|BLUE),
+			      COL(HIGH|WHITE,HIGH|BLUE), COL(HIGH|WHITE,HIGH|BLUE),
+			      COL(WHITE,BLACK), COL(WHITE,HIGH|BLACK), COL(HIGH|BLACK,BLACK), COL(BLACK,HIGH|BLACK));
+	    TwConfigureWindow(Event_Win, 0xF<<2, 0, 0, 10, 5, 30, 15);
+	    TwMapWindow(Event_Win, TwFirstScreen());
 
-    return TRUE;
+	    if ((Event_SubWin=TwCreateWindow
+		 (9, "SubWindow", NULL,
+		  Event_Menu, COL(WHITE,BLUE), TW_NOCURSOR,
+		  TW_WINDOW_WANT_KEYS|TW_WINDOW_WANT_MOUSE|TW_WINDOW_WANT_MOUSE_MOTION|TW_WINDOW_WANT_CHANGES,
+		  0/*TW_WINFL_BORDERLESS*/, 7, 3, 0))) {
+
+		TwSetXYWindow(Event_SubWin, 5, 2);
+		TwMapWindow(Event_SubWin, Event_Win);
+
+		return TwFlush();
+	    }
+	}
+    }
+    return FALSE;
 }
 
 void human_print(uldat len, byte *s) {
@@ -211,7 +219,10 @@ int main(int argc, char *argv[]) {
     udat Code, origCode;
     
     if (InitEvent()) while ((Msg=TwReadMsg(TRUE))) {
-	if (Msg->Type==TW_MSG_WINDOW_KEY) {
+	if (Msg->Event.EventCommon.W != Event_Win)
+	    printf("SubWindow: ");
+	    
+	if (Msg->Type==TW_MSG_WIDGET_KEY) {
 	    tevent_keyboard EventK = &Msg->Event.EventKeyboard;
 	    
 	    printf("Key: Code %.3u (0x%04x, %s),\tShiftFlags 0x%04x, ASCII ",
@@ -223,7 +234,7 @@ int main(int argc, char *argv[]) {
 	    uldat Owner = TwGetOwnerSelection();
 	    printf("Selection Paste: Owner %d (0x%08x), requesting data notify...\n",
 		   Owner, Owner);
-	    TwRequestSelection(Owner, NOID);
+	    TwRequestSelection(Owner, TW_NOID);
 	} else if (Msg->Type==TW_MSG_SELECTIONNOTIFY) {
 	    tevent_selectionnotify EventN = &Msg->Event.EventSelectionNotify;
 
@@ -231,13 +242,16 @@ int main(int argc, char *argv[]) {
 		   (unsigned)EventN->Magic, (unsigned)EventN->Magic, (unsigned)EventN->Len);
 	    human_print(EventN->Len, EventN->Data);
 	    putchar('\n');
-	} else if (Msg->Type==TW_MSG_WINDOW_MOUSE) {
+	} else if (Msg->Type==TW_MSG_WIDGET_MOUSE) {
 	    byte *s1, *s2, *s3, *s4, *s5, *s6, *s7;
 	    tevent_mouse EventM = &Msg->Event.EventMouse;
 	    
 	    origCode=Code=EventM->Code;
 	    
-	    if (isPRESS(Code)) {
+	    if (isMOTION(Code)) {
+		s1 = "Motion";
+		s2 = "";
+	    } else if (isPRESS(Code)) {
 		s1 = "Press";
 		switch (Code & PRESS_ANY) {
 		  case PRESS_LEFT:   s2 = " Left";   Code &= ~HOLD_LEFT; break;
@@ -273,23 +287,23 @@ int main(int argc, char *argv[]) {
 	    printf("Mouse: Code 0x%04x: %s%s, %s%s%s%s%sx=%d, y=%d\n",
 		   (int)origCode, s1, s2, s3, s4, s5, s6, s7, EventM->X, EventM->Y);
 	    
-	} else if (Msg->Type==TW_MSG_WINDOW_GADGET) {
+	} else if (Msg->Type==TW_MSG_WIDGET_GADGET) {
 	    tevent_gadget EventG = &Msg->Event.EventGadget;
-	    printf("Window Gadget: Code %d (0x%04x)\n", (unsigned)EventG->Code, (unsigned)EventG->Code);
-	    if (EventG->Code == 0 && EventG->Window == Event_Win) {
+	    printf("Gadget: Code %d (0x%04x)\n", (unsigned)EventG->Code, (unsigned)EventG->Code);
+	    if (EventG->Code == 0 && EventG->W == Event_Win) {
 		break;
 	    }
-	} else if (Msg->Type==TW_MSG_WINDOW_CHANGE) {
-	    tevent_window EventW = &Msg->Event.EventWindow;
-	    if (EventW->Code == TW_MSG_WINDOW_RESIZE)
-		printf("Window Change: new size x=%d y=%d\n",
+	} else if (Msg->Type==TW_MSG_WIDGET_CHANGE) {
+	    tevent_widget EventW = &Msg->Event.EventWidget;
+	    if (EventW->Code == TW_MSG_WIDGET_RESIZE)
+		printf("Widget Change: new size x=%d y=%d\n",
 		       EventW->XWidth, EventW->YWidth);
-	    else if (EventW->Code == TW_MSG_WINDOW_EXPOSE) {
-		printf("Window Change: expose x=%d, y=%d, width=%d, height=%d%s\n",
+	    else if (EventW->Code == TW_MSG_WIDGET_EXPOSE) {
+		printf("Widget Change: expose x=%d, y=%d, width=%d, height=%d%s\n",
 		       EventW->X, EventW->Y, EventW->XWidth, EventW->YWidth,
-		       EventW->Flags & TW_MSG_WINFL_SHADED ? ", shaded" : "");
-		TwExposeAsciiWindow(EventW->Window, EventW->XWidth, EventW->YWidth,
-				    NULL, EventW->X, EventW->Y);
+		       EventW->Flags & TW_MSG_WIDGETFL_SHADED ? ", shaded" : "");
+		TwExposeTextWindow(EventW->W, EventW->XWidth, EventW->YWidth,
+				   EventW->X, EventW->Y, NULL);
 	    }
 	} else if (Msg->Type==TW_MSG_USER_CONTROL) {
 	    tevent_control EventC = &Msg->Event.EventControl;

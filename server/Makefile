@@ -4,6 +4,7 @@
 #
 
 TOPDIR=..
+SUBDIRS=HW
 
 include $(TOPDIR)/MakePaths
 
@@ -13,21 +14,18 @@ HWOBJS=hw.o HW/hw.a
 DLOBJS=dl.o
 WMOBJS=wm.o rcrun.o rcopt.o
 RCPARSEOBJS=rcparse_tab.o rcparse_lex.o shm.o
-TERMOBJS=pty.o tty.o term.o 
+TERMOBJS=pty.o tty.o tterm.o 
 SOCKETOBJS=socket.o md5.o
-SOCKETALIENOBJS=socketalien.o
 WRAPOBJS=wrapper.o
 DISPLAYOBJS=display.o
 ALLOBJS:=$(BASEOBJS) $(HWOBJS) $(DLOBJS) $(WMOBJS) $(TERMOBJS) \
-	 $(SOCKETOBJS) $(SOCKETALIENOBJS) $(WRAPOBJS) \
-	 $(DISPLAYOBJS) $(RCPARSEOBJS)
+	 $(SOCKETOBJS) $(WRAPOBJS) $(DISPLAYOBJS) $(RCPARSEOBJS)
 
 OBJS_twin_real:=$(BASEOBJS) $(HWOBJS)
 OBJS_wm.so:=$(WMOBJS)
 OBJS_rcparse.so:=$(RCPARSEOBJS)
 OBJS_term.so:=$(TERMOBJS)
 OBJS_socket.so:=$(SOCKETOBJS)
-OBJS_socketalien.so:=$(SOCKETALIENOBJS)
 OBJS_twin_wrapper:=$(WRAPOBJS)
 OBJS_twdisplay:=$(DISPLAYOBJS) alloc.o $(HWOBJS)
 
@@ -39,7 +37,6 @@ LDFLAGS_rcparse.so=-lc -shared
 LDFLAGS_rcrun.so=-lc -shared
 LDFLAGS_term.so=-lc -shared
 LDFLAGS_socket.so=-lc -shared
-LDFLAGS_socketalien.so=-lc -shared
 LDFLAGS_twdisplay=$(LIBTW)
 
 #
@@ -62,26 +59,22 @@ ifeq ($(OS),Linux)
   DLOPEN_LDFLAGS=-rdynamic -ldl
 else
   DLOPEN_LDFLAGS=-rdynamic
+  ifeq ($(OS),SunOS)
+    LDFLAGS_socketlibs+=-lsocket -lnsl
+  endif
 endif
 
 #
 # target
 #
-all: bins modules twin
-
-twin_real:
-
-twin: twin_wrapper
-	$(LN) $< $@
-
-HW/hw.a: HW.dir
+all: bins modules twin handy
 
 #
 # read configuration
 #
 include $(TOPDIR)/conf/config.status
--include .depend
 -include .modules
+-include .depend
 
 #
 # set variables according config.status
@@ -132,15 +125,16 @@ endif
 
 ifeq ($(CONF_SOCKET),y)
   OBJS_twin_real+=$(SOCKETOBJS)
+  LDFLAGS_twin_real+=$(LDFLAGS_socketlibs)
+  LDFLAGS_twdisplay+=$(LDFLAGS_socketlibs)
   ifeq ($(CONF_SOCKET_GZ),y)
     LDFLAGS_twin_real+=-lz
   endif
 else
   ifeq ($(CONF_SOCKET),m)
     MODBINS+=socket.so
-    ifeq ($(CONF_SOCKET_ALIEN),y)
-      OBJS_socket.so+=$(SOCKETALIENOBJS)
-    endif
+    LDFLAGS_socket.so+=$(LDFLAGS_socketlibs)
+    LDFLAGS_twdisplay+=$(LDFLAGS_socketlibs)
     ifeq ($(CONF_SOCKET_GZ),y)
       LDFLAGS_socket.so+=-lz
     endif
@@ -149,18 +143,9 @@ else
   endif
 endif
 
-ifeq ($(CONF_SOCKET_ALIEN),y)
-  ifeq ($(CONF_SOCKET),y)
-    OBJS_twin_real+=$(SOCKETALIENOBJS)
-  endif
-else
-  ifeq ($(CONF_SOCKET_ALIEN),m)
-    MODBINS+=socketalien.so
-  else
-    EXCL_OBJS+=$(SOCKETALIENOBJS)
-  endif
+ifneq ($(CONF_SOCKET),n)
 endif
-  
+
 #
 # suid root / sgid tty stuff
 #
@@ -185,10 +170,15 @@ else
   SETPRIV=chown .tty $(DESTDIR)$(bindir)/twin_real && chmod g+s $(DESTDIR)$(bindir)/twin_real
   SETPRIV_COMM=(i.e. sgid tty privileges)
 endif
-  
+
 #
 # the final link nightmare...
 #
+ifeq ($(CONF__UNICODE),y)
+  LDFLAGS_twin_real+=$(LIBTWUTF)
+  LDFLAGS_twdisplay+=$(LIBTWUTF)
+endif
+
 ifeq ($(CONF_HW_TTY),y)
   ifeq ($(CONF_HW_TTY_LINUX),y)
     LDFLAGS_twin_real+=-lgpm #/usr/lib/libgpm.a
@@ -227,14 +217,28 @@ endif
 include $(TOPDIR)/MakeRules
 
 
+bins: $(BINS)
+
+modules: $(MODBINS)
+
+
 #
 # All done. Now just set a few special targets
 #
 
+twin: twin_wrapper
+	$(LN) $< $@
 
-bins: $(BINS)
+# the '@:' dummy command is to force relinking after HW/hw.a is rebuilt
+HW/hw.a: dir-HW
+	@:
 
-modules: $(MODBINS)
+autogen: rcparse_tab.c rcparse_tab.h rcparse_lex.c socket1macros.h socket2macros.h socket3macros.h
+
+handy: .twinrc
+
+.twinrc:
+	$(LN) ../system.twinrc .twinrc
 
 rcparse_tab.c rcparse_tab.h: rcparse.y
 	bison -d --no-lines -o $@ $<
@@ -242,17 +246,16 @@ rcparse_tab.c rcparse_tab.h: rcparse.y
 rcparse_lex.c: rcparse.l
 	flex -L -B -o$@ $<
 
+socketmacros%.h: m4/macros%.m4 $(TOPDIR)/include/sockproto.h
+	m4 -I$(TOPDIR)/include $< > $@
+
 symbolsdep: all
 	for i in *.o; do nm $$i | grep 'U ' | cut -dU -f2- > $${i%%.o}.u; done; :
 	for i in *.o; do nm $$i | grep 'B \| C \| D \| T ' > $${i%%.o}.d; done; :
-	for i in *.u; do echo; echo $$i; for j in `cat $$i`; do \
+	for i in *.u; do $(ECHO); $(ECHO) $$i; for j in `cat $$i`; do \
 	grep -e " $${j}\$$" *.d; done | sort; done > $@; :
-	
-Torture: torture
-	$(MAKE) Torture -C HW
 
 clean:
-	$(MAKE) clean -C HW
 	rm -f .*.flags .*.link .*.arlib gmon.out core log twin \
 	      twin_real twin_wrapper twdisplay *.so \
 	      *.o \
@@ -267,14 +270,13 @@ install:
 	if [ "$(MODBINS)" ]; then \
 	  $(INSTALL) $(MODBINS) $(DESTDIR)$(libdir)/twin/modules; \
 	fi
-	$(MAKE) install -C HW DESTDIR=$(DESTDIR)
 	@if [ "$(SETPRIV)" ]; then \
-	  echo [1m ; \
-	  echo Twin may need special privileges for the terminal emulator to work. ; \
-	  echo More exactly, the following command could be necessary: ; \
-	  echo "        $(SETPRIV)" ; \
-	  echo "$(SETPRIV_COMM)" ; \
-	  echo Since twin has not been extensively tested against vulnerabilities, ; \
-	  echo you will grant special privileges to twin AT YOUR OWN RISK. ; \
-	  echo [0m ; \
+	  $(ECHO) [1m ; \
+	  $(ECHO) Twin may need special privileges for the terminal emulator to work. ; \
+	  $(ECHO) More exactly, the following command could be necessary: ; \
+	  $(ECHO) "   $(SETPRIV)" ; \
+	  $(ECHO) "$(SETPRIV_COMM)" ; \
+	  $(ECHO) Since twin has not been extensively tested against vulnerabilities, ; \
+	  $(ECHO) you will grant special privileges to twin AT YOUR OWN RISK. ; \
+	  $(ECHO) [0m ; \
 	fi

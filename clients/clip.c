@@ -16,16 +16,18 @@ static tmsgport Clip_MsgPort;
 static tmenu Clip_Menu;
 static twindow Clip_Win;
 
+TW_DECL_MAGIC(clip_magic);
+
 static byte InitClip(void) {
     twindow Window;
 
-    if (!TwOpen(NULL))
+    if (!TwCheckMagic(clip_magic) || !TwOpen(NULL))
 	return FALSE;
     
     if ((Clip_MsgPort=TwCreateMsgPort
 	 (11, "twclipboard", (time_t)0, (frac_t)0, (byte)0)) &&
-	(Clip_Menu=TwCreateMenu
-	 (Clip_MsgPort, COL(BLACK,WHITE), COL(BLACK,GREEN), COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
+	(Clip_Menu=TwCreateMenu(
+	  COL(BLACK,WHITE), COL(BLACK,GREEN), COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
 	  COL(RED,WHITE), COL(RED,GREEN), (byte)0))) {
 	
 	TwInfo4Menu(Clip_Menu, TW_ROW_ACTIVE, 16, " Twin Clipboard ", "ptpppptppppppppp");
@@ -37,7 +39,7 @@ static byte InitClip(void) {
 	  Clip_Menu, COL(HIGH|WHITE,HIGH|BLACK),
 	  TW_LINECURSOR,
 	  TW_WINDOW_WANT_KEYS|TW_WINDOW_DRAG|TW_WINDOW_RESIZE|TW_WINDOW_X_BAR|TW_WINDOW_Y_BAR|TW_WINDOW_CLOSE,
-	  TW_WINFL_CURSOR_ON|TW_WINFL_USE_DEFCOL,
+	  TW_WINDOWFL_CURSOR_ON|TW_WINDOWFL_ROWS_DEFCOL,
 	  38, 18, 0)) &&
 	(Window=TwWin4Menu(Clip_Menu)) &&
 	(TwRow4Menu(Window, COD_QUIT, TW_ROW_INACTIVE, 17, " Quit      Alt-X ") ,
@@ -90,11 +92,11 @@ int main(int argc, char *argv[]) {
     uldat err, WinN = 1;
     
     if (InitClip()) while ((Msg=TwReadMsg(TRUE))) {
-	if (Msg->Type==TW_MSG_WINDOW_KEY) {
+	if (Msg->Type==TW_MSG_WIDGET_KEY) {
 	    
 	    tevent_keyboard EventK = &Msg->Event.EventKeyboard;
 	    Code=EventK->Code;
-	    (void)TwWriteRowWindow(EventK->Window, EventK->SeqLen, EventK->AsciiSeq);
+	    (void)TwWriteRowWindow(EventK->W, EventK->SeqLen, EventK->AsciiSeq);
 	    
 	} else if (Msg->Type==TW_MSG_SELECTION) {
 	    /*
@@ -102,7 +104,7 @@ int main(int argc, char *argv[]) {
 	     * so that we will get it back in TW_MSG_SELECTIONNOTIFY message
 	     * without having to store it manually
 	     */
-	    TwRequestSelection(TwGetOwnerSelection(), Msg->Event.EventSelection.Window);
+	    TwRequestSelection(TwGetOwnerSelection(), Msg->Event.EventSelection.W);
 	    
 	} else if (Msg->Type==TW_MSG_SELECTIONNOTIFY) {
 	    
@@ -112,10 +114,10 @@ int main(int argc, char *argv[]) {
 	    
 	} else if (Msg->Type==TW_MSG_SELECTIONCLEAR) {
 	    ;
-	} else if (Msg->Type==TW_MSG_WINDOW_GADGET) {
+	} else if (Msg->Type==TW_MSG_WIDGET_GADGET) {
 	    
 	    tevent_gadget EventG = &Msg->Event.EventGadget;
-	    if (EventG->Code == 0 && EventG->Window == Clip_Win) {
+	    if (EventG->Code == 0 && EventG->W == Clip_Win) {
 		TwUnMapWindow(Clip_Win);
 		TwDeleteWindow(Clip_Win);
 		if (!--WinN)

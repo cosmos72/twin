@@ -46,7 +46,7 @@
 # include "socket.h"
 #endif
 #ifdef CONF_TERM
-# include "term.h"
+# include "tterm.h"
 #endif
 #ifdef CONF__MODULES
 # include "dl.h"
@@ -195,7 +195,8 @@ static byte Init(void) {
      * You may have twin SEGFAULT at startup or (worse) introduce subtle bugs!
      */
     
-    return (   InitSignals()
+    return (   InitData()
+	    && InitSignals()
 	    && InitTWDisplay()
 	    && (All->AtQuit = QuitTWDisplay)
 	    && InitTransUser()
@@ -228,6 +229,8 @@ void Quit(int status) {
 #if 0
     module M;
 #endif
+    
+    RemoteFlushAll();
     
     if (All->AtQuit)
 	All->AtQuit();
@@ -364,11 +367,12 @@ int main(int argc, char *argv[]) {
 	    if (StrategyFlag != HW_DELAY)
 		FlushHW();
 	    
-	    if (NeedHW & NEEDPanicHW) {
+	    if (NeedHW & NEEDPanicHW || All->FirstMsgPort->FirstMsg) {
 		/*
 		 * hmm... displays are rotting quickly today!
 		 * we called PanicHW() just above, so don't call again,
 		 * just set a zero timeout and let the above call do the work
+		 * on next loop.
 		 */
 		sel_timeout.tv_sec = sel_timeout.tv_usec = 0;
 		this_timeout = &sel_timeout;

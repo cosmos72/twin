@@ -121,9 +121,6 @@ module DlLoad(uldat code) {
 #ifndef CONF_SOCKET
 	      case SocketSo:  M = DlLoadAny(9, "socket.so"); break;
 #endif
-#ifndef CONF_SOCKET_ALIEN
-	      case SocketAlienSo:  M = DlLoadAny(14, "socketalien.so"); break;
-#endif
 #ifndef CONF_WM_RC
 	      case RCParseSo: M = DlLoadAny(10, "rcparse.so"); break;
 #endif
@@ -163,8 +160,6 @@ udat DlName2Code(byte *name) {
 	return TermSo;
     if (!CmpStr(name, "socket.so"))
 	return SocketSo;
-    if (!CmpStr(name, "socketalien.so"))
-	return SocketAlienSo;
     if (!CmpStr(name, "rcparse.so"))
 	return RCParseSo;
     return MainSo;

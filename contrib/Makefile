@@ -2,6 +2,11 @@
 # Makefile for various contributed libTw clients
 #
 
+#
+# list of subdirectories to build
+#
+SUBDIRS=
+
 # add your binary to this list
 #
 BINS=twbiff
@@ -23,20 +28,29 @@ all: everything
 
 
 include $(TOPDIR)/conf/config.status
--include .depend
 -include .modules
+-include .depend
 
 include $(TOPDIR)/MakeRules
+
 
 ifneq ($(CONF_SOCKET),n)
   everything: $(BINS)
 else
   everything:
-	@echo
-	@echo "You disabled \"Support remote socket connections\","
-	@echo "so the clients will NOT be compiled!"
-	@echo
+	@$(ECHO) ; \
+	 $(ECHO) "You disabled \"Support remote socket connections\"," ; \
+	 $(ECHO) "so the clients will NOT be compiled!" ; \
+	 $(ECHO)
 endif
+
+
+#
+# include the do-everything file.
+# Must correctly set all CFLAGS* and LDFLAGS* before including this!
+#
+include $(TOPDIR)/MakeRules
+
 
 install:
 	$(INSTALL) -d $(DESTDIR)$(bindir)

@@ -33,9 +33,6 @@ byte InitRCOptions(void) {
 #ifdef CONF_OPT_EDGESCROLL
 	| SETUP_EDGESCROLL
 #endif
-#ifdef CONF_OPT_ALTFONT
-	| SETUP_ALTFONT
-#endif
 	;
 
     return TRUE;

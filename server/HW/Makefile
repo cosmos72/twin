@@ -4,6 +4,7 @@
 #
 
 TOPDIR=../..
+SUBDIRS=
 
 CFLAGS+=-I..
 
@@ -31,7 +32,7 @@ CFLAGS_hw_X11.o+=-I/usr/X11R6/include
 LDFLAGS_hw_tty.so=-lc -shared
 LDFLAGS_hw_X11.so=-lc -shared -L/usr/X11R6/lib -lX11
 LDFLAGS_hw_display.so=-lc -shared
-LDFLAGS_hw_twin.so=-lc -shared -L$(TOPDIR)/lib -lTw
+LDFLAGS_hw_twin.so=-lc -shared $(LIBTW)
 LDFLAGS_hw_ggi.so=-lc -shared -lggi
 
 #
@@ -43,8 +44,8 @@ all: $(ARLIBS) modules
 # read configuration
 #
 include $(TOPDIR)/conf/config.status
--include .depend
 -include .modules
+-include .depend
 
 #
 # set variables according config.status
@@ -54,6 +55,10 @@ include $(TOPDIR)/conf/config.status
 ifeq ($(CONF__ALLOC),y)
   CFLAGS+=-DCONF__ALLOC
 endif
+
+#ifeq ($(CONF__UNICODE),y)
+#  LDFLAGS+=$(LIBTWUTF)
+#endif
 
 ifeq ($(CONF_HW_TTY),y)
   OBJS_hw.a+=$(TTYOBJS)
@@ -84,6 +89,7 @@ else
     all: hw_X.so
     
     MODBINS+=hw_X11.so
+    
   else
     EXCL_OBJS+=$(X11OBJS)
   endif
@@ -134,8 +140,6 @@ modules: $(MODBINS)
 
 hw_X.so: hw_X11.so
 	$(LN) $< $@
-
-Torture: torture
 
 clean:
 	rm -f .*.flags .*.link .*.arlib hw.a hw_*.so $(ALLOBJS)

@@ -75,6 +75,8 @@ static byte VersionsMatch(byte force) {
     return TRUE;
 }
 
+TW_DECL_MAGIC(attach_magic);
+
 int main(int argc, char *argv[]) {
     byte detach = 0, redirect, force = 0, flags = TW_ATTACH_HW_REDIRECT;
     byte *dpy = NULL, *arg = NULL, *tty = ttyname(0);
@@ -170,8 +172,8 @@ int main(int argc, char *argv[]) {
     }
     
     redirect = flags & TW_ATTACH_HW_REDIRECT;
-    
-    if (TwOpen(dpy) && TwCreateMsgPort(8, "Twattach", 0, 0, 0)) do {
+
+    if (TwCheckMagic(attach_magic) && TwOpen(dpy) && TwCreateMsgPort(8, "Twattach", 0, 0, 0)) do {
 	
 	if (!VersionsMatch(force)) {
 	    if (!force) {

@@ -14,14 +14,12 @@ exts Exts = {
     { NULL },
     { remoteKillSlot },
     { (void *)NoOp },
-    { NULL },
     { FakeOpenTerm }
 };
 static exts OrigExts = {
     { NULL },
     { remoteKillSlot },
     { (void *)NoOp },
-    { NULL },
     { FakeOpenTerm }
 };
 

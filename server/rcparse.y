@@ -23,7 +23,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
     
-#include "libTwkeys.h"
+#include "Tw/Twkeys.h"
 
 #include "twin.h"
 #include "methods.h"

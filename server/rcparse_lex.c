@@ -743,6 +743,7 @@ int line_no[MAX_READ_DEPTH];
     
 static int yywrap(void);
 
+static char errbuf[256];
 
 /* twin.h typedefs `msg'... avoid it */
 #define msg Msg
@@ -1333,9 +1334,9 @@ return (unsigned char)yytext[0];
 case 84:
 YY_RULE_SETUP
 {
-		    fprintf(stderr, "twin: %s:%d: invalid identifier `%s'\n",
+		    sprintf(errbuf, "twin: %s:%d: invalid identifier `%s'\n",
 			    FILE_NAME, LINE_NO, yytext);
-		    yyterminate();
+		    YY_FATAL_ERROR(errbuf);
 		}
 	YY_BREAK
 case 85:
@@ -1389,9 +1390,13 @@ YY_RULE_SETUP
 case 86:
 YY_RULE_SETUP
 {
-		    fprintf(stderr, "twin: %s:%d: unterminated string:\n%s\n",
-			    FILE_NAME, LINE_NO, yytext);
-		    yyterminate();
+		    char *buf = AllocMem(256 + strlen(yytext));
+		    if (buf) {
+			sprintf(buf, "twin: %s:%d: unterminated string:\n%s\n",
+				FILE_NAME, LINE_NO, yytext);
+		    } else
+			buf = "twin: unterminated string\n";
+		    YY_FATAL_ERROR(buf);
 		}
 	YY_BREAK
 case 87:
@@ -1401,14 +1406,14 @@ YY_RULE_SETUP
 case 88:
 YY_RULE_SETUP
 {
-			unsigned char ch = yytext[0];
-			fprintf(stderr, "twin: %s:%d: illegal character 0x%02X",
-				FILE_NAME, LINE_NO, ch);
-                        if (ch >= 32 && ch < 127) {
-			    fprintf(stderr, " `%c'", ch);
-                        }
-			fprintf(stderr, "\n");
-			yyterminate();
+		    unsigned char ch = yytext[0];
+		    sprintf(errbuf, "twin: %s:%d: illegal character 0x%02X",
+			    FILE_NAME, LINE_NO, ch);
+                    if (ch >= 32 && ch < 127) {
+			sprintf(errbuf + strlen(errbuf), " `%c'\n", ch);
+                    } else
+			strcat(errbuf, "\n");
+		    YY_FATAL_ERROR(errbuf);
 		}
 	YY_BREAK
 case 89:

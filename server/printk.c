@@ -22,7 +22,7 @@
 #include "builtin.h"
 #include "draw.h"
 
-static byte buf[1024]; /* hope it's enough */
+static byte buf[SMALLBUFF*4]; /* hope it's enough */
 static int log_fd = NOFD;
 
 int printk(CONST byte *format, ...) {
@@ -34,9 +34,9 @@ int printk(CONST byte *format, ...) {
     i = vsprintf(buf, format, ap); /* hopefully i < sizeof(buf) */
     va_end(ap);
     
-    if (i >= 1024) {
+    if (i >= SMALLBUFF*4) {
 	fputs("twin: internal error: printk() overflow! \033[1mQUIT NOW !\033[0m\n", stderr);
-	return 1024;
+	return SMALLBUFF*4;
     }
 
 #ifdef CONF_PRINTK

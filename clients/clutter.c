@@ -40,9 +40,11 @@ static byte NewClutterWindow(void) {
     return FALSE;
 }
 
+TW_DECL_MAGIC(clutter_magic);
+
 static byte InitClutter(void) {
 
-    if (!TwOpen(NULL))
+    if (!TwCheckMagic(term_magic) || !TwOpen(NULL))
 	return FALSE;
     
     srand48(time(NULL));
@@ -52,8 +54,8 @@ static byte InitClutter(void) {
 
     if ((Clutter_MsgPort=TwCreateMsgPort
 	 (7, "Clutter", (time_t)0, (frac_t)0, (byte)0)) &&
-	(Clutter_Menu=TwCreateMenu
-	 (Clutter_MsgPort, COL(BLACK,WHITE), COL(BLACK,GREEN), COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
+	(Clutter_Menu=TwCreateMenu(
+	  COL(BLACK,WHITE), COL(BLACK,GREEN), COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
 	  COL(RED,WHITE), COL(RED,GREEN), (byte)0)) &&
 	TwItem4MenuCommon(Clutter_Menu)) {
 	

@@ -86,7 +86,7 @@ function menu() {
 }
 
 function endmenu() {
-   eval $(echo MENU_${CURRMENU})=\"--separate-output --checklist \\\"$(eval "echo \"\${${CURRMENU}_MENU}\"")\\\" $[CURRITEMS+6] 80 $CURRITEMS $CURRCMD\"
+   eval $(echo MENU_${CURRMENU})=\"--separate-output --checklist \\\"$(eval "echo \"\${${CURRMENU}_MENU}\"")\\\" $[CURRITEMS+7] 80 $CURRITEMS $CURRCMD\"
 }
 
 function die() {
@@ -179,7 +179,7 @@ fi
 
 source conf/config.base
 
-MENU_MAIN="--separate-output --menu \"Twin Configuration - Top Menu\" $[ MAINITEMS+6 ] 50 $MAINITEMS $MAINCMD SAVE \"Save config and exit\" QUIT \"Exit without saving\""
+MENU_MAIN="--separate-output --menu \"Twin Configuration - Top Menu\" $[ MAINITEMS+7 ] 50 $MAINITEMS $MAINCMD SAVE \"Save config and exit\" QUIT \"Exit without saving\""
 
 while :; do
    eval "dialog $MENU_MAIN 2>.dialog_MENU_MAIN" || die

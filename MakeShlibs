@@ -1,0 +1,12 @@
+
+ifeq ($(LDFLAGS_SOLIB),)
+  OS=($shell uname)
+  ifeq ($(OS),SunOS)
+    LDFLAGS_SOLIB=-lc -shared -Wl,-h,
+  else
+    # this is correct for at least Linux and FreeBSD.
+    # for the others, it is just a guess
+    LDFLAGS_SOLIB=-lc -shared -Wl,-soname,
+  endif
+endif
+

@@ -35,6 +35,8 @@ void panic(void) {
 
 hwattr *load_ascii_art(FILE *aaFILE, uldat *x, uldat *y, uldat padX, uldat padY);
 
+TW_DECL_MAGIC(setroot_magic);
+
 int main(int argc, char *argv[]) {
     hwattr *image;
     uldat X, Y, padX = 0, padY = 0, err;
@@ -76,7 +78,8 @@ int main(int argc, char *argv[]) {
 	return 0;
     }
 	
-    if (TwOpen(NULL)) {
+    if (TwCheckMagic(setroot_magic) && TwOpen(NULL)) {
+	
 	FILE *aaFILE = aafile ? fopen(aafile, "r") : stdin;
 	if (!aafile) aafile = "(stdin)";
 	

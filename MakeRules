@@ -17,9 +17,15 @@ ifdef DEBUG
  CFLAGS+=$(OPT_FLAGS) -pipe
  LDFLAGS+=-g
 else
- OPT_FLAGS+=-O2 -fomit-frame-pointer
- CFLAGS+=$(OPT_FLAGS) -DINLINE="extern inline" -pipe
- LDFLAGS+=-s
+ ifdef PROFILE
+   OPT_FLAGS+=-p -pg
+   CFLAGS+=$(OPT_FLAGS) -pipe
+   LDFLAGS+=-p -pg
+ else
+   OPT_FLAGS+=-O2 -fomit-frame-pointer
+   CFLAGS+=$(OPT_FLAGS) "-DINLINE=extern inline" -pipe
+   LDFLAGS+=-s
+ endif
 endif
 
 
@@ -31,9 +37,9 @@ endif
 # apply known-good GCC compiler flags.
 #
 ifeq ($(CC),gcc)
-  CFLAGS+=-Wall -Wshadow -Wno-uninitialized
+  OPT_FLAGS+=-Wall -Wshadow -Wno-uninitialized
   ifdef PARANOID_GCC
-    CFLAGS+=-Wstrict-prototypes -Wcast-qual -Wcast-align -Wpointer-arith -Wbad-function-cast -Waggregate-return -Winline
+    OPT_FLAGS+=-Wstrict-prototypes -Wcast-qual -Wcast-align -Wpointer-arith -Wbad-function-cast -Waggregate-return -Winline
   endif
 endif
 
@@ -43,6 +49,10 @@ endif
 #
 INSTALL=install
 
+#
+# install with 644 permission:
+#
+INSTALL-TXT=install -m 644
 
 #
 # set `ar' archiver...
@@ -55,9 +65,9 @@ AR=ar
 CP=cp -f
 
 #
-# `ln -sf' : `ln' with soft links, force overwrite
+# `ln -f -s' : `ln' with soft links, force overwrite
 #
-LN=ln -sf
+LN=ln -f -s
 
 #
 # `mkdir -p' or `mkdirhier' : make a directory and all missing directory parents
@@ -79,31 +89,64 @@ MKDIR=mkdir -p
 #
 #BASH=/bin/bash
 
+
+#
+# only if you know what you are doing:
+# options to used to link shared libraries.
+# keep commented to enable autodetection.
+#
+# this is for Linux
+#LDFLAGS_SOLIB=-lc -shared -Wl,-soname,
+#
+# and this for SunOS
+#LDFLAGS_SOLIB=-lc -shared -Wl,-h,
+
+
 #
 # --------------- no user-serviceable parts below this line ----------------
 #
 
+#
+# m4 preprocessor
+#
+M4=m4
 
 ifeq ($(prefix),)
   include $(TOPDIR)/MakePaths
+endif
+
+ifeq ($(LDFLAGS_SOLIB),)
+  include $(TOPDIR)/MakeShlibs
 endif
 
 ifeq ($(filter -r,$(MAKEFLAGS)),)
   MAKEFLAGS+=-r
 endif
 
-TWIN_VERSION_STR=0.3.8
+TWIN_VERSION_STR=0.3.9
 
 CFLAGS+=-I$(TOPDIR)/include
 
-MODFLAGS+=-DCONF_THIS_MODULE
+MODFLAGS+=-fPIC -DCONF_THIS_MODULE
+
 
 CONF:=$(TOPDIR)/conf/config.status
 
-LIBTW:=-L$(TOPDIR)/lib -lTw
+LIBTWUTF:=-L$(TOPDIR)/libs/libTutf -lTutf
+
+LIBTW:=-L$(TOPDIR)/libs/libTw -lTw
 ifeq ($(CONF__SHLIBS),n)
   ifeq ($(CONF_SOCKET_GZ),y)
     LIBTW+=-lz
+  endif
+endif
+
+
+ifeq ($(ECHO),)
+  ifeq ($(strip $(shell echo -e)),)
+    ECHO=echo -e
+  else
+    ECHO=echo
   endif
 endif
 
@@ -115,14 +158,6 @@ ifeq ($(BASH),)
 endif
 
 BASH_VERSION:=$(word 1,$(subst ., ,$(shell $(BASH) -c "echo \$$BASH_VERSION")))
-
-ifeq ($(ECHO),)
-  ifeq ($(strip $(shell echo -e)),)
-    ECHO=echo -e
-  else
-    ECHO=echo
-  endif
-endif
 
 config $(CONF):
 	@echo Starting configure for twin $(TWIN_VERSION_STR) ... ; \
@@ -142,6 +177,7 @@ reconfig: config all
 nullconfig:
 	cd $(TOPDIR) ; \
 	$(BASH) scripts/Configure < /dev/null > /dev/null
+
 
 # collect together in $(OBJS) all objs from $(BINS) looking in $(OBJS_xxx)
 OBJS:=$(foreach B,$(BINS),$(OBJS_$(B)))
@@ -167,30 +203,153 @@ _ALLOBJS:=$(strip $(OBJS) $(MODOBJS) $(ARLIBOBJS) $(EXCL_OBJS))
 _ALLSRCS:=$(strip $(subst .o,.c,$(filter %.o,$(_ALLOBJS)))) \
 	  $(strip $(subst .o,.C,$(filter %.o,$(CPPOBJS))))
 
+
 .modules: Makefile $(TOPDIR)/MakeRules $(CONF)
 	@$(ECHO) -n Building .modules... ; \
-	 $(ECHO) " $(_ALLFLAGS)" > .modules ; \
-	 $(ECHO) " $(foreach B,$(BINS) $(MODBINS) $(CPPBINS),$(B): .$(B).link\n .$(B).link: $(OBJS_$(B))\n)" >> .modules ; \
-	 $(ECHO) " $(foreach B,$(ARLIBS),$(B): .$(B).arlib\n .$(B).arlib: $(OBJS_$(B))\n)" >> .modules ; \
+	 $(ECHO) " $(_ALLFLAGS)" > $@ ; \
+	 $(ECHO) " $(foreach B,$(BINS) $(MODBINS) $(CPPBINS),$(B): .$(B).link\n .$(B).link: $(OBJS_$(B))\n)" >> $@ ; \
+	 $(ECHO) " $(foreach B,$(ARLIBS),$(B): .$(B).arlib\n .$(B).arlib: $(OBJS_$(B))\n)" >> $@ ; \
 	 $(ECHO) done
 
-.depend: Makefile $(TOPDIR)/MakeRules $(TOPDIR)/scripts/MkDep $(_ALLSRCS)
-	$(BASH) $(TOPDIR)/scripts/MkDep $(TOPDIR) $(filter -I%,$(CFLAGS)) -- $(_ALLSRCS) > .depend
+.depend: $(TOPDIR)/scripts/Mkdep Makefile $(TOPDIR)/MakeRules $(_ALLSRCS)
+	$< $(filter -I%,$(CFLAGS)) $(sort $(_ALLSRCS)) > $@
 
-$(TOPDIR)/scripts/MkDep:
-	$(LN) MkDep$(BASH_VERSION) $(TOPDIR)/scripts/MkDep
 
-$(TOPDIR)/scripts/Bitmap:
-	$(MAKE) -C $(TOPDIR)/scripts
+
+$(TOPDIR)/include/Tw/datasizes.h: $(TOPDIR)/scripts/Getsizes
+	$< > $@
+
+
+ifneq ($(wildcard $(TOPDIR)/.uni_types.flags),)
+  include $(TOPDIR)/.uni_types.flags
+else
+  PREVIOUS_CONF__UNICODE=x
+endif
+
+force-remake:
+	@:
+
+ifeq ($(CONF__UNICODE),y)
+  $(TOPDIR)/include/Tw/uni_types.h: $(TOPDIR)/MakeRules
+	@$(ECHO) "PREVIOUS_CONF__UNICODE=$(CONF__UNICODE)" > $(TOPDIR)/.uni_types.flags; \
+	 $(ECHO) "#ifndef _TW_UNI_TYPES_H" > $@ ; \
+	 $(ECHO) "#define _TW_UNI_TYPES_H" >> $@ ; \
+	 $(ECHO) >> $@ ; \
+	 $(ECHO) "typedef TW_BYTE16             byte16;" >> $@ ; \
+	 $(ECHO) "typedef TW_BYTE32             byte32;" >> $@ ; \
+	 $(ECHO) "typedef byte16                hwfont;" >> $@ ; \
+	 $(ECHO) "typedef byte32                hwattr;" >> $@ ; \
+	 $(ECHO) >> $@ ; \
+	 $(ECHO) "#define TW_SIZEOFHWFONT       2" >> $@ ; \
+	 $(ECHO) "#define TW_SIZEOFHWATTR       4" >> $@ ; \
+	 $(ECHO) >> $@ ; \
+	 $(ECHO) "#define TW_MAXHWFONT          0xFFFF" >> $@ ; \
+	 $(ECHO) "#define TW_MAXHWATTR          0xFFFFFFFF" >> $@ ; \
+	 $(ECHO) >> $@ ; \
+	 $(ECHO) "#define HWATTR(col,ascii)     HWATTR32(col,ascii)" >> $@ ; \
+	 $(ECHO) "#define HWATTR_COLMASK(attr)  HWATTR_COLMASK32(attr)" >> $@ ; \
+	 $(ECHO) "#define HWATTR_FONTMASK(attr) HWATTR_FONTMASK32(attr)" >> $@ ; \
+	 $(ECHO) "#define HWCOL(attr)           HWCOL32(attr)" >> $@ ; \
+	 $(ECHO) "#define HWFONT(attr)          HWFONT32(attr)" >> $@ ; \
+	 $(ECHO) >> $@ ; \
+	 $(ECHO) "#endif /* _TW_UNI_TYPES_H */" >> $@
+else
+  $(TOPDIR)/include/Tw/uni_types.h: $(TOPDIR)/MakeRules
+	@$(ECHO) "PREVIOUS_CONF__UNICODE=$(CONF__UNICODE)" > $(TOPDIR)/.uni_types.flags; \
+	 $(ECHO) "#ifndef _TW_UNI_TYPES_H" > $@ ; \
+	 $(ECHO) "#define _TW_UNI_TYPES_H" >> $@ ; \
+	 $(ECHO) >> $@ ; \
+	 $(ECHO) "typedef TW_BYTE16             byte16;" >> $@ ; \
+	 $(ECHO) "typedef TW_BYTE32             byte32;" >> $@ ; \
+	 $(ECHO) "typedef byte                  hwfont;" >> $@ ; \
+	 $(ECHO) "typedef byte16                hwattr;" >> $@ ; \
+	 $(ECHO) >> $@ ; \
+	 $(ECHO) "#define TW_SIZEOFHWFONT       1" >> $@ ; \
+	 $(ECHO) "#define TW_SIZEOFHWATTR       2" >> $@ ; \
+	 $(ECHO) >> $@ ; \
+	 $(ECHO) "#define TW_MAXHWFONT          0xFFFF" >> $@ ; \
+	 $(ECHO) "#define TW_MAXHWATTR          0xFFFFFFFF" >> $@ ; \
+	 $(ECHO) >> $@ ; \
+	 $(ECHO) "#define HWATTR(col,ascii)     HWATTR16(col,ascii)" >> $@ ; \
+	 $(ECHO) "#define HWATTR_COLMASK(attr)  HWATTR_COLMASK16(attr)" >> $@ ; \
+	 $(ECHO) "#define HWATTR_FONTMASK(attr) HWATTR_FONTMASK16(attr)" >> $@ ; \
+	 $(ECHO) "#define HWCOL(attr)           HWCOL16(attr)" >> $@ ; \
+	 $(ECHO) "#define HWFONT(attr)          HWFONT16(attr)" >> $@ ; \
+	 $(ECHO) >> $@ ; \
+	 $(ECHO) "#endif /* _TW_UNI_TYPES_H */" >> $@
+endif
+
+ifneq ($(CONF__UNICODE),$(PREVIOUS_CONF__UNICODE))
+  $(TOPDIR)/include/Tw/uni_types.h: force-remake
+endif
+
+$(TOPDIR)/include/twin.h: $(TOPDIR)/include/Tw/uni_types.h
+	@touch $@
+
+$(TOPDIR)/include/Tw/Tw.h: $(TOPDIR)/include/Tw/uni_types.h
+	@touch $@
+
+
+$(TOPDIR)/scripts/Getsizes: $(TOPDIR)/scripts/getsizes.c $(TOPDIR)/include/Tw/datatypes.h
+	$(CC) $(CFLAGS) $(LDFLAGS) $< -o $@
+
+$(TOPDIR)/scripts/Mkdep: $(TOPDIR)/scripts/mkdep.c $(TOPDIR)/include/Tw/datasizes.h
+	$(CC) $(CFLAGS) $(LDFLAGS) $< -o $@
+
+$(TOPDIR)/scripts/Bitmap: $(TOPDIR)/scripts/bitmap.c
+	$(CC) $(CFLAGS) $(LDFLAGS) $< -o $@
 	
-torture.%.c: %.c Makefile $(TOPDIR)/MakeRules $(TOPDIR)/scripts/Torture $(TOPDIR)/scripts/Bitmap
+
+#
+# target to recursively build all subdirectories
+#
+subdirs: $(foreach D, $(SUBDIRS), dir-$(D))
+
+dir-%:
+	$(MAKE) -C $*
+
+#
+# torture is the target to compile all source files in the current directory
+# under all possible configurations. VERY useful to spot bugs.
+#
+# Torture is just like torture, except it also recursively Tortures
+# all subdirectories.
+#
+
+torture-%.c: %.c Makefile $(TOPDIR)/MakeRules $(TOPDIR)/scripts/Torture $(TOPDIR)/scripts/Bitmap
 	@echo; echo "Torturing $< ..."; echo;
 	$(BASH) $(TOPDIR)/scripts/Torture $(TOPDIR)/scripts/Bitmap $(CC) $(CFLAGS) $(CFLAGS_$@) -c $< -o $*.o -- $<
 
-torture: $(_ALLSRCS) $(foreach S,$(_ALLSRCS),torture.$(S))
+torture: $(_ALLSRCS) $(foreach S,$(_ALLSRCS),torture-$(S))
 	
-%.dir:
-	$(MAKE) -C $*
+Torture: torture $(foreach D, $(SUBDIRS), Torture-dir-$(D))
+
+Torture-dir-%:
+	$(MAKE) Torture -C $*
+
+#
+# autogen is the target to build all autogenerated files that require
+# extra tools (m4, bison, flex ...) and thus must be already present
+# when releasing twin, to let people build with just compiler, bash, make.
+# To 'make Torture', also sed and grep are required.
+#
+autogen: $(foreach D, $(SUBDIRS), autogen-dir-$(D))
+
+autogen-dir-%:
+	$(MAKE) autogen -C $*
+
+install: $(foreach D, $(SUBDIRS), install-dir-$(D))
+
+install-dir-%:
+	$(MAKE) install -C $* DESTDIR=$(DESTDIR)
+
+clean: $(foreach D, $(SUBDIRS), clean-dir-$(D))
+
+clean-dir-%:
+	$(MAKE) clean -C $*
+
+%macros.h: m4/%macros.m4 $(TOPDIR)/include/m4/sockproto.m4
+	$(M4) -I$(TOPDIR)/include $< > $@
 
 %.o: %.c
 	$(CC) $(CFLAGS) $(CFLAGS_$@) -c $< -o $@
@@ -199,12 +358,13 @@ torture: $(_ALLSRCS) $(foreach S,$(_ALLSRCS),torture.$(S))
 	'endif' > .$@.flags
 
 %.o: %.C
-	$(CCPLUS) $(CFLAGS) $(CPLUSFLAGS) $(CFLAGS_$@) -c $< -o $@
-	@$(ECHO) ' ifeq ($$(strip $$(CCPLUS) $$(CFLAGS) $(CPLUSFLAGS) $$(CFLAGS_$@)),$(strip $(CCPLUS) $(CFLAGS) $(CPLUSFLAGS) $(CFLAGS_$@)))\n'\
+	$(CXX) $(CFLAGS) $(CXXFLAGS) $(CFLAGS_$@) $(CXXFLAGS_$@) -c $< -o $@
+	@$(ECHO) ' ifeq ($$(strip $(CXX) $(CFLAGS) $(CXXFLAGS) $(CFLAGS_$@) $(CXXFLAGS_$@)),$(strip $(CXX) $(CFLAGS) $(CXXFLAGS) $(CFLAGS_$@) $(CXXFLAGS_$@)))\n'\
 	'FILES_UP_TO_DATE += $@\n'\
 	'endif' > .$@.flags
 
-# this would be:
+#
+# this is the rule to link a binary. It should look like:
 # % : $(OBJS_%)
 #	$(CC) -o $* $(OBJS_$*) $(LDFLAGS) $(LDFLAGS_$*)
 #	...
@@ -214,8 +374,8 @@ torture: $(_ALLSRCS) $(foreach S,$(_ALLSRCS),torture.$(S))
 # % : .%.link
 # .%.link : $(OBJS_%)
 #
-# and we keep implicit the last step:
-#
+# and we use patterns for the last step:
+#       
 .%.link:
 	$(CC) -o $* $(OBJS_$*) $(LDFLAGS) $(LDFLAGS_$*)
 	@$(LN) $* $@ ; \
@@ -241,35 +401,36 @@ torture: $(_ALLSRCS) $(foreach S,$(_ALLSRCS),torture.$(S))
 #
 # Find files whose flags have changed and force recompilation.
 # For safety, this works in the converse direction:
-#   every file is forced, except those whose flags are positively up-to-date.
-#
-# to avoid useless re-making, we never force files in other directories:
-# `make' must already visit all directories anyway.
+# every file is forced, except those whose flags are positively up-to-date.
 #
 FILES := $(OBJS) $(MODOBJS) $(ARLIBOBJS) \
 	 $(patsubst %,.%.link,$(BINS) $(MODBINS)) \
 	 $(patsubst %,.%.arlib,$(ARLIBS))
 
+#
+# to avoid useless re-making, assume files in other dirs are already up-to-date:
+# `make' must already visit all directories anyway.
+#
 FILES_UP_TO_DATE := $(filter-out $(wildcard * .*), $(FILES))
 
 
 FILES_FLAGS_EXIST := $(wildcard .*.flags)
 ifneq ($(FILES_FLAGS_EXIST),)
+ #
+ # this appends files whose flags are positively up-to-date to FILES_UP_TO_DATE
+ #
  include $(FILES_FLAGS_EXIST)
 endif
 
 FILES_CHANGED := $(strip $(filter-out $(FILES_UP_TO_DATE), $(FILES)))
 
-
-ifneq ($(FILES_CHANGED),)
-
-# be _very_ brutal...
-# $(shell rm -f $(FILES_CHANGED))
-
-# ..or be more kind
-
+#
+# force remaking by using a phony target as prerequisite
+#
 dummy:
 	@:
+
+ifneq ($(FILES_CHANGED),)
 
 $(FILES_CHANGED): dummy
 

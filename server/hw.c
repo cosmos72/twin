@@ -89,7 +89,7 @@ static void HandleSignalChild(void) {
     pid_t pid;
     int status;
     GotSignalChild = FALSE;
-    while ((pid = wait3(&status, WNOHANG, (struct rusage *)0)) != NOPID && pid != (pid_t)-1) {
+    while ((pid = wait3(&status, WNOHANG, (struct rusage *)0)) != 0 && pid != (pid_t)-1) {
 	if (WIFEXITED(status) || WIFSIGNALED(status))
 	    RemotePidIsDead(pid);
     }

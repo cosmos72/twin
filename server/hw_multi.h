@@ -29,15 +29,17 @@ void SuspendHW(byte verbose);
 display_hw AttachDisplayHW(uldat len, CONST byte *arg, uldat slot, byte flags);
 byte DetachDisplayHW(uldat len, CONST byte *arg, byte flags);
 
-void FillVideo(dat Xstart, dat Ystart, dat Xend, dat Yend, udat Attrib);
+void FillVideo(dat Xstart, dat Ystart, dat Xend, dat Yend, hwattr Attrib);
 void RefreshVideo(void);
 byte ResizeDisplay(void);
 
 void RunNoHW(void);
 void UpdateFlagsHW(void);
 
+void EnableMouseMotionEvents(byte enable);
+
 byte StdAddEventMouse(udat CodeMsg, udat Code, dat MouseX, dat MouseY);
-void SyntheticKey(window Window, udat Code, udat ShiftFlags, byte Len, byte *Seq);
+void SyntheticKey(window W, udat Code, udat ShiftFlags, byte Len, byte *Seq);
 
 #endif /* _TW_HW_MULTI_H */
 

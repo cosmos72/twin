@@ -1,7 +1,7 @@
 
 # set installation directories
 
-sysconfdir = /etc
+sysconfdir = /etc/twin
 prefix = /usr/local
 bindir = $(prefix)/bin
 libdir = $(prefix)/lib

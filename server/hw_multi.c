@@ -226,8 +226,10 @@ static byte module_InitHW(void) {
 #if defined(CONF_HW_X11) || defined(CONF_HW_TWIN) || defined(CONF_HW_DISPLAY) || defined(CONF_HW_TTY) || defined(CONF_HW_GGI)
 static byte check4(byte *s, byte *arg) {
     if (arg && strncmp(s, arg, strlen(s))) {
+	/*
 	printk("twin: `-hw=%s' given, skipping `-hw=%s' display driver.\n",
 		arg, s);
+	 */
 	return FALSE;
     } else if (arg)
 	printk("twin: trying given `-hw=%s' display driver.\n", s);
@@ -417,7 +419,7 @@ byte InitHW(void) {
     byte ret = FALSE;
     byte flags = 0;
     
-    WriteMem(ConfigureHWDefault, '\1', HW_CONFIGURE_MAX);
+    WriteMem(ConfigureHWDefault, '\1', HW_CONFIGURE_MAX); /* set everything to default (-1) */
     
     if (arglist[0] && !arglist[1] && !strcmp(*arglist, "-nohw")) {
 	printk("twin: starting in background as %s\n", TWDisplay);
@@ -595,6 +597,7 @@ void BeepHW(void) {
     NeedHW |= NEEDBeepHW;
 }
 
+/* configure underlying HW */
 void ConfigureHW(udat resource, byte todefault, udat value) {
     
     if (!(ConfigureHWDefault[resource] = todefault))
@@ -690,7 +693,7 @@ void TwinSelectionNotify(obj Requestor, uldat ReqPrivate, uldat Magic, CONST byt
 
 	if ((NewMsg = Do(Create,Msg)(FnMsg, MSG_SELECTIONNOTIFY, sizeof(event_selectionnotify) + Len))) {
 	    Event = &NewMsg->Event;
-	    Event->EventSelectionNotify.Window = NULL;
+	    Event->EventSelectionNotify.W = NULL;
 	    Event->EventSelectionNotify.Code = 0;
 	    Event->EventSelectionNotify.pad = 0;
 	    Event->EventSelectionNotify.ReqPrivate = ReqPrivate;
@@ -723,7 +726,7 @@ void TwinSelectionRequest(obj Requestor, uldat ReqPrivate, obj Owner) {
 	    if ((NewMsg = Do(Create,Msg)(FnMsg, MSG_SELECTIONREQUEST, sizeof(event_selectionrequest)))) {
 
 		Event = &NewMsg->Event;
-		Event->EventSelectionRequest.Window = NULL;
+		Event->EventSelectionRequest.W = NULL;
 		Event->EventSelectionRequest.Code = 0;
 		Event->EventSelectionRequest.pad = 0;
 		Event->EventSelectionRequest.Requestor = Requestor;
@@ -771,7 +774,7 @@ INLINE void DiscardBlinkVideo(void) {
 	    start += (i>>1)*DisplayWidth;
 
 	    for (V = &Video[start]; len; V++, len--)
-		*V &= ~HWATTR(COL(0,HIGH), (hwfont)0);
+		*V &= ~HWATTR(COL(0,HIGH), (byte)0);
 	}
     }
 }
@@ -872,6 +875,10 @@ void FlushHW(void) {
 	DrawArea2(FULL_SCREEN);
 	UpdateCursor();
     }
+
+    if (NeedUpdateCursor)
+	FlushCursor();
+    
     if (!(All->SetUp->Flags & SETUP_BLINK))
 	DiscardBlinkVideo();
 
@@ -929,21 +936,21 @@ void FlushHW(void) {
 }
 
 
-void SyntheticKey(window Window, udat Code, udat ShiftFlags, byte Len, byte *Seq) {
+void SyntheticKey(window W, udat Code, udat ShiftFlags, byte Len, byte *Seq) {
     event_keyboard *Event;
     msg Msg;
 
-    if (Window && Len && Seq &&
-	(Msg=Do(Create,Msg)(FnMsg, MSG_WINDOW_KEY, Len + sizeof(event_keyboard)))) {
+    if (W && Len && Seq &&
+	(Msg=Do(Create,Msg)(FnMsg, MSG_WIDGET_KEY, Len + sizeof(event_keyboard)))) {
 	
 	Event = &Msg->Event.EventKeyboard;
-	Event->Window = Window;
+	Event->W = (widget)W;
 	Event->Code = Code;
 	Event->ShiftFlags = ShiftFlags;
 	Event->SeqLen = Len;
 	CopyMem(Seq, Event->AsciiSeq, Len);
 	Event->AsciiSeq[Len] = '\0'; /* terminate string with \0 */
-	SendMsg(Window->Menu->MsgPort, Msg);
+	SendMsg(W->Owner, Msg);
     }
 }
 
@@ -1088,6 +1095,9 @@ void DragAreaHW(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
 }
 
 
+void EnableMouseMotionEvents(byte enable) {
+    ConfigureHW(HW_MOUSEMOTIONEVENTS, FALSE, enable);
+}
 
 byte MouseEventCommon(dat x, dat y, dat dx, dat dy, udat Buttons) {
     dat prev_x, prev_y;
@@ -1095,6 +1105,7 @@ byte MouseEventCommon(dat x, dat y, dat dx, dat dy, udat Buttons) {
     mouse_state *OldState;
     udat result;
     byte ret = TRUE;
+    byte alsoMotionEvents = All->MouseMotionN > 0;
     
     OldState=&HW->MouseState;
     OldButtons=OldState->keys;
@@ -1118,9 +1129,12 @@ byte MouseEventCommon(dat x, dat y, dat dx, dat dy, udat Buttons) {
     /* keep it available */
     All->MouseHW = HW;
 
-    if (Buttons != OldButtons || (OldButtons && (x != prev_x || y != prev_y))) {
+    if (Buttons != OldButtons || ((alsoMotionEvents || OldButtons) && (x != prev_x || y != prev_y))) {
 	
-	if (OldButtons && (x != prev_x || y != prev_y)) {
+	if (alsoMotionEvents && !OldButtons && (x != prev_x || y != prev_y)) {
+	    if (!StdAddEventMouse(MSG_MOUSE, MOTION_MOUSE, x, y))
+		ret = FALSE;
+	} else if (OldButtons && (x != prev_x || y != prev_y)) {
 	    if (!StdAddEventMouse(MSG_MOUSE, DRAG_MOUSE | OldButtons, x, y))
 		ret = FALSE;
 	}
@@ -1206,11 +1220,11 @@ byte InitTransUser(void) {
     scrnmap_t map[E_TABSZ];
     
     if (ioctl(0, GIO_SCRNMAP, map) == 0) {
-	if (sizeof(scrnmap_t) == 1)
-	    CopyMem(map+0x80, All->Gtranslations[USER_MAP], 0x80);
+	if (sizeof(scrnmap_t) == sizeof(hwfont))
+	    CopyMem(map+0x80, All->Gtranslations[USER_MAP], sizeof(hwfont) * 0x80);
 	else {
 	    for (c = 0; c < 0x80; c++)
-		All->Gtranslations[USER_MAP][c] = (byte)map[c | 0x80];
+		All->Gtranslations[USER_MAP][c] = (hwfont)map[c | 0x80];
 	}
     } else
 #endif

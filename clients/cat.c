@@ -22,16 +22,18 @@ static tmsgport Cat_MsgPort;
 static tmenu Cat_Menu;
 static twindow Cat_Win;
 
+TW_DECL_MAGIC(cat_magic);
+
 static byte InitCat(void) {
     twindow Window;
 
-    if (!TwOpen(NULL))
+    if (!TwCheckMagic(cat_magic) || !TwOpen(NULL))
 	return FALSE;
     
     if ((Cat_MsgPort=TwCreateMsgPort
 	 (8, "Twin Cat", (time_t)0, (frac_t)0, (byte)0)) &&
-	(Cat_Menu=TwCreateMenu
-	 (Cat_MsgPort, COL(BLACK,WHITE), COL(BLACK,GREEN), COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
+	(Cat_Menu=TwCreateMenu(
+	  COL(BLACK,WHITE), COL(BLACK,GREEN), COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
 	  COL(RED,WHITE), COL(RED,GREEN), (byte)0))) {
 
 	TwInfo4Menu(Cat_Menu, TW_ROW_ACTIVE, 10, " Twin Cat ", "ptpppptpppppp");
@@ -42,7 +44,7 @@ static byte InitCat(void) {
 	 (8, "Twin Cat", NULL,
 	  Cat_Menu, COL(BLACK,HIGH|BLACK), TW_LINECURSOR,
 	  TW_WINDOW_DRAG|TW_WINDOW_RESIZE|TW_WINDOW_X_BAR|TW_WINDOW_Y_BAR|TW_WINDOW_CLOSE,
-	  TW_WINFL_USE_DEFCOL,
+	  TW_WINDOWFL_USEROWS|TW_WINDOWFL_ROWS_DEFCOL,
 	  80, 25, 0)) &&
 	(Window=TwWin4Menu(Cat_Menu)) &&
 	TwItem4Menu(Cat_Menu, Window, TRUE, 6, " File ")) {
@@ -107,9 +109,9 @@ int main(int argc, char *argv[]) {
 	TwFlush();
     }
     while ((Msg=TwReadMsg(TRUE))) {
-	if (Msg->Type==TW_MSG_WINDOW_GADGET) {
+	if (Msg->Type==TW_MSG_WIDGET_GADGET) {
 	    EventG=&Msg->Event.EventGadget;
-	    if (EventG->Code == 0 && EventG->Window == Cat_Win)
+	    if (EventG->Code == 0 && EventG->W == Cat_Win)
 		break;
 	}
     }

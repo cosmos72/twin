@@ -24,6 +24,13 @@
 #include "hw.h"
 #include "hw_multi.h"
 
+#include "Tw/Tw.h"
+#include "Tw/Twstat.h"
+
+#ifdef CONF__UNICODE
+# include "Tutf/Tutf.h"
+# include "Tutf/Tutf_defs.h"
+#endif
 #ifdef CONF_TERM
 # include "tty.h"
 #endif
@@ -141,13 +148,14 @@ static struct s_fn_obj _FnObj = {
     CreateObj,
     InsertObj,
     RemoveObj,
-    DeleteObj
+    DeleteObj,
+    (void *)NoOp
 };
 
 /* widget */
 
 
-static widget CreateWidget(fn_widget Fn_Widget, msgport Owner, dat XWidth, dat YWidth, hwattr Fill, dat Left, dat Up) {
+static widget CreateWidget(fn_widget Fn_Widget, msgport Owner, dat XWidth, dat YWidth, uldat Attrib, uldat Flags, dat Left, dat Up, hwattr Fill) {
     widget W = (widget)0;
 
     if (Owner && (W=(widget)Fn_Widget->Fn_Obj->Create((fn_obj)Fn_Widget))) {
@@ -158,9 +166,12 @@ static widget CreateWidget(fn_widget Fn_Widget, msgport Owner, dat XWidth, dat Y
 	W->Up   = Up;
 	W->XWidth = XWidth;
 	W->YWidth = YWidth;
+	W->Attrib = Attrib;
+	W->Flags = Flags;
 	W->XLogic = W->YLogic = 0;
-	W->OPrev = W->ONext = (widget)0;
+	W->O_Prev = W->O_Next = (widget)0;
 	W->Owner = (msgport)0;
+	W->USE_Fill = Fill;
 	
 	Act(Own,W)(W, Owner);
     }
@@ -195,10 +206,32 @@ static void DeleteWidget(widget W) {
 }
 
 static void SetFillWidget(widget W, hwattr Fill) {
-    if (W->Fill != Fill) {
-	W->Fill = Fill;
+    if (W->USE_Fill != Fill) {
+	W->USE_Fill = Fill;
 	if (W->Parent)
 	    DrawAreaWidget(W);
+    }
+}
+
+static void ChangeFieldWidget(widget W, udat field, uldat CLEARMask, uldat XORMask) {
+    uldat i;
+    
+    if (W) switch (field) {
+      case TWS_widget_Left:
+      case TWS_widget_Up:
+      case TWS_widget_Width:
+      case TWS_widget_Height:
+	break;
+      case TWS_widget_USE_Fill:
+	i = (hwattr)((W->USE_Fill & ~CLEARMask) ^ XORMask);
+	SetFillWidget(W, i);
+	break;
+      case TWS_widget_XLogic:
+      case TWS_widget_YLogic:
+	break;
+      default:
+	W->Fn->Fn_Obj->ChangeField((obj)W, field, CLEARMask, XORMask);
+	break;
     }
 }
 
@@ -214,7 +247,7 @@ widget FocusWidget(widget W) {
 	if (oldW && IS_WINDOW(oldW)) DrawBorderWindow((window)oldW, BORDER_ANY);
 	if ((W && IS_WINDOW(W)) || (oldW && IS_WINDOW(oldW))) {
 	    UpdateCursor();
-	    if (!W || !IS_WINDOW(W) || !(((window)W)->Attrib & WINDOW_MENU))
+	    if (!W || !IS_WINDOW(W) || !(((window)W)->Flags & WINDOWFL_MENU))
 		Act(DrawMenu,All->FirstScreen)(All->FirstScreen, 0, MAXDAT);
 	}
     }
@@ -294,12 +327,12 @@ static void SetXYWidget(widget W, dat X, dat Y) {
 
 static void OwnWidget(widget Widget, msgport Owner) {
     if (!Widget->Owner) {
-	if ((Widget->ONext = Owner->FirstW))
-	    Owner->FirstW->OPrev = Widget;
+	if ((Widget->O_Next = Owner->FirstW))
+	    Owner->FirstW->O_Prev = Widget;
 	else
 	    Owner->LastW=Widget;	
     
-	Widget->OPrev = (widget)0;
+	Widget->O_Prev = (widget)0;
 	Owner->FirstW = Widget;
 	Widget->Owner = Owner;
     }
@@ -308,17 +341,17 @@ static void OwnWidget(widget Widget, msgport Owner) {
 static void DisOwnWidget(widget W) {
     msgport Owner;
     if ((Owner = W->Owner)) {
-	if (W->OPrev)
-	    W->OPrev->ONext = W->ONext;
+	if (W->O_Prev)
+	    W->O_Prev->O_Next = W->O_Next;
 	else if (Owner->FirstW == W)
-	    Owner->FirstW = W->ONext;
+	    Owner->FirstW = W->O_Next;
 	
-	if (W->ONext)
-	    W->ONext->OPrev = W->OPrev;
+	if (W->O_Next)
+	    W->O_Next->O_Prev = W->O_Prev;
 	else if (Owner->LastW == W)
-	    Owner->LastW = W->OPrev;
+	    Owner->LastW = W->O_Prev;
 	
-	W->OPrev = W->ONext = (widget)0;
+	W->O_Prev = W->O_Next = (widget)0;
 	W->Owner = (msgport)0;
     }
 }
@@ -340,6 +373,7 @@ static struct s_fn_widget _FnWidget = {
     InsertWidget,
     RemoveWidget,
     DeleteWidget,
+    ChangeFieldWidget,
     &_FnObj,
     DrawSelfWidget, /* exported by draw.c */
     FindWidgetAt,   /* exported by draw.c */
@@ -352,7 +386,8 @@ static struct s_fn_widget _FnWidget = {
     UnMapWidget,
     OwnWidget,
     DisOwnWidget,
-    RecursiveDeleteWidget
+    RecursiveDeleteWidget,
+    ExposeWidget    /* exported by resize.c */
 };
 
 
@@ -360,17 +395,16 @@ static struct s_fn_widget _FnWidget = {
 
 static gadget CreateGadget
     (fn_gadget Fn_Gadget, msgport Owner, widget Parent, dat XWidth, dat YWidth,
-     CONST byte *TextNormal, udat Code, udat Flags,
+     CONST byte *TextNormal, uldat Attrib, uldat Flags, udat Code, 
      hwcol ColText, hwcol ColTextSelect, hwcol ColTextDisabled, hwcol ColTextSelectDisabled,
-     dat Left, dat Up,       CONST byte *TextSelect, CONST byte *TextDisabled, CONST byte *TextSelectDisabled,
-     CONST hwcol *ColNormal, CONST hwcol *ColSelect, CONST hwcol *ColDisabled, CONST hwcol *ColSelectDisabled)
+     dat Left, dat Up)
 {
     gadget G = (gadget)0;
     ldat Size;
 
     if (Owner && Code < COD_RESERVED && XWidth > 0 && YWidth > 0 && TextNormal &&
 	(G=(gadget)Fn_Gadget->Fn_Widget->Create
-	 ((fn_widget)Fn_Gadget, Owner, XWidth, YWidth, (hwattr)0, Left, Up))) {
+	 ((fn_widget)Fn_Gadget, Owner, XWidth, YWidth, Attrib, Flags, Left, Up, (hwattr)0))) {
 	
 	Fn_Gadget->Fn_Widget->Used++;
 
@@ -379,48 +413,19 @@ static gadget CreateGadget
 	G->ColDisabled=ColTextDisabled;
 	G->ColSelectDisabled=ColTextSelectDisabled;
 	G->Code=Code;
-	G->Flags=Flags;
 
-	G->GPrev = G->GNext = (gadget)0;
+	G->G_Prev = G->G_Next = (gadget)0;
 	G->Group = (group)0;
 	
-	Size = (ldat)XWidth*YWidth;
-	G->Text[0] = CloneMem(TextNormal, Size);
-		
-	if (TextSelect)
-	    G->Text[1] = CloneMem(TextSelect, Size);
-	else
-	    G->Text[1] = NULL;
+	if (G_USE(G, USETEXT)) {
+	    Size = (ldat)XWidth*YWidth;
+
+	    G->USE.T.Text[0] = CloneString2HWFont(TextNormal, Size);
+	    G->USE.T.Text[1] = G->USE.T.Text[2] = G->USE.T.Text[3] = NULL;
+	    G->USE.T.Color[0] = G->USE.T.Color[1] = G->USE.T.Color[2] = G->USE.T.Color[3] = NULL;
+	}
 	
-	if (TextDisabled)
-	    G->Text[2] = CloneMem(TextDisabled, Size);
-	else
-	    G->Text[2] = NULL;
-	
-	if (TextSelectDisabled)
-	    G->Text[3] = CloneMem(TextSelectDisabled, Size);
-	else
-	    G->Text[3] = NULL;
-	 
-	if (ColNormal)
-	    G->Color[0] = CloneMem(ColNormal, Size*sizeof(hwcol));
-	else
-	    G->Color[0] = NULL, G->Flags |= GADGET_USE_DEFCOL;
-	
-	if (ColSelect)
-	    G->Color[1] = CloneMem(ColSelect, Size*sizeof(hwcol));
-	else
-	    G->Color[1] = NULL;
-	    
-	if (ColDisabled)
-	    G->Color[2] = CloneMem(ColDisabled, Size*sizeof(hwcol));
-	else
-	    G->Color[2] = NULL;
-	    
-	if (ColSelectDisabled)
-	    G->Color[3] = CloneMem(ColSelectDisabled, Size*sizeof(hwcol));
-	else
-	    G->Color[3] = NULL;
+	/* G->Flags |= GADGETFL_TEXT_DEFCOL; */
 	
 	if (Parent)
 	    Act(Map,G)(G, Parent);
@@ -433,34 +438,81 @@ static void DeleteGadget(gadget G) {
     byte i;
     
     Act(UnMap,G)(G);
-    for (i=0; i<4; i++) {
-	if (G->Text[i])
-	    FreeMem(G->Text[i]);
-	if (G->Color[i])
-	    FreeMem(G->Color[i]);
+    if (G_USE(G, USETEXT)) {
+	for (i=0; i<4; i++) {
+	    if (G->USE.T.Text[i])
+		FreeMem(G->USE.T.Text[i]);
+	    if (G->USE.T.Color[i])
+		FreeMem(G->USE.T.Color[i]);
+	}
     }
     (Fn_Widget->Delete)((widget)G);
     if (!--Fn_Widget->Used)
 	FreeMem(Fn_Widget);
 }
 
+static void ChangeFieldGadget(gadget G, udat field, uldat CLEARMask, uldat XORMask) {
+    uldat i, mask;
+    
+    if (G) switch (field) {
+      case TWS_gadget_ColText:
+      case TWS_gadget_ColSelect:
+      case TWS_gadget_ColDisabled:
+      case TWS_gadget_ColSelectDisabled:
+      case TWS_gadget_Code:
+	break;
+      case TWS_gadget_Flags:
+	mask = GADGETFL_DISABLED|GADGETFL_TEXT_DEFCOL|GADGETFL_PRESSED|GADGETFL_TOGGLE;
+	CLEARMask &= mask;
+	XORMask &= mask;
+	i = (G->Flags & ~CLEARMask) ^ XORMask;
+	if ((i & mask) != (G->Flags & mask)) {
+	    if ((i & GADGETFL_PRESSED) != (G->Flags & GADGETFL_PRESSED)) {
+		if (i & GADGETFL_PRESSED)
+		    PressGadget(G);
+		else
+		    UnPressGadget(G, TRUE);
+	    }
+	    mask = GADGETFL_DISABLED|GADGETFL_TEXT_DEFCOL;
+	    if ((i & mask) != (G->Flags & mask)) {
+		G->Flags = i;
+		DrawAreaWidget((widget)G);
+	    } else
+		G->Flags = i;
+	}
+	break;
+      default:
+	G->Fn->Fn_Widget->ChangeField((widget)G, field, CLEARMask, XORMask);
+	break;
+    }
+}
+
+
 static gadget CreateEmptyButton(fn_gadget Fn_Gadget, msgport Owner, dat XWidth, dat YWidth, hwcol BgCol) {
     gadget G;
     ldat Size;
     byte i;
     dat j, k;
-    
+#ifdef CONF__UNICODE
+# define _FULL  T_UTF_16_FULL_BLOCK
+# define _LOWER T_UTF_16_LOWER_HALF_BLOCK
+# define _UPPER T_UTF_16_UPPER_HALF_BLOCK
+#else
+# define _FULL  ((byte)'Û')
+# define _LOWER ((byte)'Ü')
+# define _UPPER ((byte)'ß')
+#endif
     if ((G=(gadget)Fn_Gadget->Fn_Widget->Create
-	 ((fn_widget)Fn_Gadget, Owner, ++XWidth, ++YWidth, (hwattr)0, 0, 0))) {
+	 ((fn_widget)Fn_Gadget, Owner, ++XWidth, ++YWidth, 0, GADGETFL_USETEXT|GADGETFL_BUTTON, 0, 0, (hwattr)0))) {
 	
 	Size = (ldat)XWidth * YWidth;
 	
 	for (i=0; i<4; i++)
-	    G->Text[i] = G->Color[i] = NULL;
+	    G->USE.T.Text[i] = NULL, G->USE.T.Color[i] = NULL;
 	
 	for (i=0; i<4; i++)
-	    if (!(G->Text[i]=(byte *)AllocMem(Size)) ||
-		!(G->Color[i]=(byte *)AllocMem(Size * sizeof(hwcol)))) {
+	    if (!(G->USE.T.Text[i]=(hwfont *)AllocMem(Size * sizeof(hwfont))) ||
+		!(G->USE.T.Color[i]=(hwcol *)AllocMem(Size * sizeof(hwcol)))) {
 		
 		Act(Delete,G)(G);
 		return (gadget)0;
@@ -473,18 +525,31 @@ static gadget CreateEmptyButton(fn_gadget Fn_Gadget, msgport Owner, dat XWidth, 
 	
 	for (i=0; i<4; i++) {
 	    for (j=k=(dat)0; j<YWidth; j++, k+=XWidth+1) {
-		G->Text [i][k+(i & 1 ? 0 : XWidth)] = i & 1 ? ' ' : k ? 'Û' : 'Ü';
-		G->Color[i][k+(i & 1 ? 0 : XWidth)] = BgCol;
+		G->USE.T.Text [i][k+(i & 1 ? 0 : XWidth)] = i & 1 ? ' ' : k ? _FULL : _LOWER;
+		G->USE.T.Color[i][k+(i & 1 ? 0 : XWidth)] = BgCol;
 	    }
-	    G->Text[i][k] = ' ';
-	    WriteMem((void *)(G->Text [i]+k+1), i & 1 ? ' ' : 'ß', XWidth);
-	    WriteMem((void *)(G->Color[i]+k), BgCol, (XWidth+1) * sizeof(hwcol));
+	    G->USE.T.Text[i][k] = ' ';
+#if TW_SIZEOFHWFONT == 1
+	    WriteMem((void *)(G->USE.T.Text [i]+k+1), i & 1 ? ' ' : _UPPER, XWidth);
+#else
+	    for (j=(dat)0; j<XWidth; j++)
+		G->USE.T.Text[i][k+1+j] = i & 1 ? ' ' : _UPPER;
+#endif
+#if TW_SIZEOFHWCOL == 1
+	    WriteMem((void *)(G->USE.T.Color[i]+k), BgCol, XWidth+1);
+#else
+	    for (j=(dat)0; j<=XWidth; j++)
+		G->USE.T.Color[i][k+j] = BgCol;
+#endif
 	}
 	
-	G->GPrev = G->GNext = (gadget)0;
+	G->G_Prev = G->G_Next = (gadget)0;
 	G->Group = (group)0;
     }
     return G;
+#undef _FULL
+#undef _UPPER
+#undef _LOWER
 }
 
 byte FillButton(gadget G, widget Parent, udat Code, dat Left, dat Up,
@@ -498,17 +563,17 @@ byte FillButton(gadget G, widget Parent, udat Code, dat Left, dat Up,
     G->Code = Code;
     G->Left = Left;
     G->Up   = Up;
-    G->Flags = Flags | GADGET_BUTTON;
+    G->Flags = (Flags & ~GADGETFL_USEANY) | GADGETFL_USETEXT | GADGETFL_BUTTON;
     XWidth = G->XWidth;
     YWidth = G->YWidth;
     
     T = Text;
     for (j=(dat)0; j<(YWidth-(dat)1)*XWidth; j+=XWidth) {
 	for (i=(dat)0; i<XWidth-(dat)1; i++) {
-	    G->Text[0][i+j] = G->Text[1][i+j+1] = G->Text[2][i+j] = G->Text[3][i+j+1] = *(T++);
+	    G->USE.T.Text[0][i+j] = G->USE.T.Text[1][i+j+1] = G->USE.T.Text[2][i+j] = G->USE.T.Text[3][i+j+1] = *(T++);
 	    
-	    G->Color[0][i+j] = G->Color[1][i+j+1] = Color;
-	    G->Color[2][i+j] = G->Color[3][i+j+1] = ColorDisabled;
+	    G->USE.T.Color[0][i+j] = G->USE.T.Color[1][i+j+1] = Color;
+	    G->USE.T.Color[2][i+j] = G->USE.T.Color[3][i+j+1] = ColorDisabled;
 	}
     }
     if (Parent)
@@ -519,7 +584,7 @@ byte FillButton(gadget G, widget Parent, udat Code, dat Left, dat Up,
 
 
 static gadget CreateButton(fn_gadget Fn_Gadget, widget Parent, dat XWidth, dat YWidth, CONST byte *Text,
-			    udat Code, udat Flags, hwcol BgCol, hwcol Col, hwcol ColDisabled,
+			    uldat Flags, udat Code, hwcol BgCol, hwcol Col, hwcol ColDisabled,
 			    dat Left, dat Up) {
     gadget G;
     if (Parent && (G = Fn_Gadget->CreateEmptyButton(Fn_Gadget, Parent->Owner, XWidth, YWidth, BgCol))) {
@@ -538,6 +603,7 @@ static struct s_fn_gadget _FnGadget = {
     (void *)InsertWidget,
     (void *)RemoveWidget,
     DeleteGadget,
+    ChangeFieldGadget,
     /* widget */
     &_FnObj,
     DrawSelfGadget,       /* exported by draw.c */
@@ -552,12 +618,14 @@ static struct s_fn_gadget _FnGadget = {
     (void *)OwnWidget,
     (void *)DisOwnWidget,
     (void *)RecursiveDeleteWidget,
+    (void *)ExposeWidget,	/* exported by resize.c */
     /* gadget */
     &_FnWidget,
     CreateEmptyButton,
     FillButton,
     CreateButton,
     WriteTextsGadget,	/* exported by resize.c */
+    WriteHWFontsGadget,	/* exported by resize.c */
 };
 
 /* ttydata */
@@ -595,9 +663,9 @@ static byte InitTtyData(window Window, dat ScrollBackLines) {
     Data->Split = Window->USE.C.Contents + Window->WLogic * Window->HLogic;
     
     Window->CursorType = LINECURSOR;
-    /* respect the WINFL_CURSOR_ON set by the client and don't force it on */
+    /* respect the WINDOWFL_CURSOR_ON set by the client and don't force it on */
 #if 0
-    Window->Flags |= WINFL_CURSOR_ON;
+    Window->Flags |= WINDOWFL_CURSOR_ON;
 #endif
     Window->ColText = Data->Color = Data->DefColor = Data->saveColor = COL(WHITE,BLACK);
     Data->Underline = COL(HIGH|WHITE,BLACK);
@@ -616,21 +684,21 @@ static byte InitTtyData(window Window, dat ScrollBackLines) {
     Data->G1 = Data->saveG1 = GRAF_MAP;
 
     Data->newLen = Data->newMax = 0;
-    Data->newTitle = NULL;
+    Data->newName = NULL;
     
     return TRUE;
 }
 
 /* window */
 
-static window CreateWindow(fn_window Fn_Window, dat LenTitle, CONST byte *Title, CONST hwcol *ColTitle,
-			    menu Menu, hwcol ColText, uldat CursorType, uldat Attrib, byte Flags,
+static window CreateWindow(fn_window Fn_Window, dat NameLen, CONST byte *Name, CONST hwcol *ColName,
+			    menu Menu, hwcol ColText, uldat CursorType, uldat Attrib, uldat Flags,
 			    dat XWidth, dat YWidth, dat ScrollBackLines) {
 
     window Window = (window)0;
-    byte *_Title = NULL;
-    hwcol *_ColTitle = NULL;
-    byte HasBorder = 2 * !(Flags & WINFL_BORDERLESS);
+    byte *_Name = NULL;
+    hwcol *_ColName = NULL;
+    byte HasBorder = 2 * !(Flags & WINDOWFL_BORDERLESS);
     
     /* overflow safety */
     if (HasBorder) {
@@ -640,15 +708,15 @@ static window CreateWindow(fn_window Fn_Window, dat LenTitle, CONST byte *Title,
 	    YWidth += HasBorder;
     }
     
-    if ((!Title || (_Title=CloneStrL(Title, LenTitle))) &&
-	(!ColTitle || (_ColTitle=CloneMem(ColTitle, LenTitle*sizeof(hwcol)))) &&
+    if ((!Name || (_Name=CloneStrL(Name, NameLen))) &&
+	(!ColName || (_ColName=CloneMem(ColName, NameLen*sizeof(hwcol)))) &&
 	Menu && Menu->MsgPort &&
 	(Window=(window)Fn_Window->Fn_Widget->Create
-	 ((fn_widget)Fn_Window, Menu->MsgPort, XWidth, YWidth, (hwattr)0, 0, MAXDAT))) {
+	 ((fn_widget)Fn_Window, Menu->MsgPort, XWidth, YWidth, Attrib, Flags, 0, MAXDAT, (hwattr)0))) {
 	Window->Menu = Menu;
-	Window->LenTitle = LenTitle;
-	Window->Title = _Title;
-	Window->ColTitle = _ColTitle;
+	Window->NameLen = NameLen;
+	Window->Name = _Name;
+	Window->ColName = _ColName;
 	Window->BorderPattern[0] = Window->BorderPattern[1] = (void *)0;
 	Window->RemoteData.Fd = NOFD;
 	Window->RemoteData.ChildPid = NOPID;
@@ -665,12 +733,12 @@ static window CreateWindow(fn_window Fn_Window, dat LenTitle, CONST byte *Title,
 	Window->ColDisabled = DEFAULT_ColDisabled;
 	Window->ColSelectDisabled = DEFAULT_ColSelectDisabled;
 	/* sanity: */
-	if ((Window->Flags = Flags) & WINFL_BORDERLESS)
-	    Attrib &= ~WINDOW_ROLLED_UP;
-	if (Attrib & WINDOW_WANT_KEYS)
-	    Attrib &= ~WINDOW_AUTO_KEYS;
+	if (Window->Flags & WINDOWFL_BORDERLESS)
+	    Window->Attrib &= ~WINDOW_ROLLED_UP;
+	if (Window->Attrib & WINDOW_WANT_KEYS)
+	    Window->Attrib &= ~WINDOW_AUTO_KEYS;
 	
-	Window->Attrib = Attrib;
+	Window->State = (uldat)0;
 	Window->CursorType = CursorType;
 
 	Window->MinXWidth=MIN_XWIN;
@@ -680,6 +748,9 @@ static window CreateWindow(fn_window Fn_Window, dat LenTitle, CONST byte *Title,
 	Window->MaxXWidth = MAXDAT;
 	Window->MaxYWidth = MAXDAT;
 
+#ifdef CONF__UNICODE
+	Window->Charset = Tutf_IBM437_to_UTF_16;
+#endif
 	WriteMem(&Window->USE, '\0', sizeof(Window->USE));
 
 	Window->ShutDownHook = (fn_hook)0;
@@ -688,7 +759,7 @@ static window CreateWindow(fn_window Fn_Window, dat LenTitle, CONST byte *Title,
 	Window->MapUnMapHook = (fn_hook)0;
 	Window->MapQueueMsg = (msg)0;
 
-	if (Flags & WINFL_USECONTENTS) {
+	if (W_USE(Window, USECONTENTS)) {
 	    if (MAXDAT - ScrollBackLines < YWidth - HasBorder)
 		ScrollBackLines = MAXDAT - YWidth + HasBorder;
 	    Window->CurY = Window->YLogic = ScrollBackLines;
@@ -698,21 +769,21 @@ static window CreateWindow(fn_window Fn_Window, dat LenTitle, CONST byte *Title,
 		Act(Delete,Window)(Window);
 		Window = (window)0;
 	    }
-	} else if (Flags & WINFL_USEEXPOSE) {
-	    Window->WLogic = XWidth - HasBorder;
-	    Window->HLogic = ScrollBackLines + YWidth - HasBorder;
-	} else {
+	} else if (W_USE(Window, USEROWS)) {
 	    Window->WLogic = 1024; /* just an arbitrary value... */
 	    Window->HLogic = 0;    /* no rows */
+	} else {
+	    Window->WLogic = XWidth - HasBorder;
+	    Window->HLogic = ScrollBackLines + YWidth - HasBorder;
 	}
 	
 	Fn_Window->Fn_Widget->Used++;
 	return Window;
     }
-    if (_Title)
-	FreeMem(_Title);
-    if (_ColTitle)
-	FreeMem(_ColTitle);
+    if (_Name)
+	FreeMem(_Name);
+    if (_ColName)
+	FreeMem(_ColName);
     return Window;
 }
 
@@ -724,22 +795,103 @@ static void DeleteWindow(window W) {
 	Act(RemoveHook,W)(W, W->Hook, W->WhereHook);
     if (W->ShutDownHook)
 	W->ShutDownHook(W);
-    if (W->Title)
-	FreeMem(W->Title);
-    if (W->ColTitle)
-	FreeMem(W->ColTitle);
-    if (W->Flags & WINFL_USECONTENTS) {
+    if (W->Name)
+	FreeMem(W->Name);
+    if (W->ColName)
+	FreeMem(W->ColName);
+    if (W_USE(W, USECONTENTS)) {
 	if (W->USE.C.TtyData)
 	    FreeMem(W->USE.C.TtyData);
 	if (W->USE.C.Contents)
 	    FreeMem(W->USE.C.Contents);
-    }
-    if (!(W->Flags & WINFL_USEANY))
+    } else if (W_USE(W, USEROWS))
 	DeleteList(W->USE.R.FirstRow);
 	
     (Fn_Widget->Delete)((widget)W);
     if (!--Fn_Widget->Used)
 	FreeMem(Fn_Widget);
+}
+
+
+static void IncMouseMotionN(void) {
+    if (!All->MouseMotionN++)
+	EnableMouseMotionEvents(TRUE);
+}
+
+static void DecMouseMotionN(void) {
+    if (All->MouseMotionN && !--All->MouseMotionN)
+	EnableMouseMotionEvents(FALSE);
+}
+
+static void ChangeFieldWindow(window W, udat field, uldat CLEARMask, uldat XORMask) {
+    uldat i, mask;
+    
+    if (W) switch (field) {
+      case TWS_window_CurX:
+      case TWS_window_CurY:
+      case TWS_window_XstSel:
+      case TWS_window_YstSel:
+      case TWS_window_XendSel:
+      case TWS_window_YendSel:
+      case TWS_window_ColGadgets:
+      case TWS_window_ColArrows:
+      case TWS_window_ColBars:
+      case TWS_window_ColTabs:
+      case TWS_window_ColBorder:
+      case TWS_window_ColText:
+      case TWS_window_ColSelect:
+      case TWS_window_ColDisabled:
+      case TWS_window_ColSelectDisabled:
+	/* FIXME: finish this */
+	break;
+      case TWS_window_Flags:
+	mask = WINDOWFL_CURSOR_ON;
+	CLEARMask &= mask;
+	XORMask &= mask;
+	i = (W->Flags & ~CLEARMask) ^ XORMask;
+	if ((i & mask) != (W->Flags & mask)) {
+	    W->Flags = i;
+	    if (ContainsCursor((widget)W))
+		UpdateCursor();
+	}
+	break;
+      case TWS_window_Attrib:
+	mask = WINDOW_WANT_KEYS|WINDOW_WANT_MOUSE|WINDOW_WANT_CHANGES|WINDOW_DRAG|
+	    WINDOW_RESIZE|WINDOW_CLOSE|WINDOW_ROLLED_UP|WINDOW_X_BAR|WINDOW_Y_BAR|
+	    WINDOW_AUTO_KEYS|WINDOW_WANT_MOUSE_MOTION;
+	CLEARMask &= mask;
+	XORMask &= mask;
+	i = (W->Attrib & ~CLEARMask) ^ XORMask;
+	if ((i & mask) != (W->Attrib & mask)) {
+	    if ((i & WINDOW_ROLLED_UP) != (W->Attrib & WINDOW_ROLLED_UP))
+		RollUpWindow(W, !!(i & WINDOW_ROLLED_UP));
+	    if ((i & WINDOW_WANT_MOUSE_MOTION) != (W->Attrib & WINDOW_WANT_MOUSE_MOTION) && W->Parent) {
+		if (i & WINDOW_WANT_MOUSE_MOTION)
+		    IncMouseMotionN();
+		else
+		    DecMouseMotionN();
+	    }
+	    mask = WINDOW_RESIZE|WINDOW_CLOSE|WINDOW_X_BAR|WINDOW_Y_BAR;
+	    if ((i & mask) != (W->Attrib & mask) && W->Parent) {
+		W->Attrib = i;
+		DrawBorderWindow(W, BORDER_ANY);
+	    } else
+		W->Attrib = i;
+	}
+	break;
+      case TWS_window_State:
+      case TWS_window_CursorType:
+      case TWS_window_MinXWidth:
+      case TWS_window_MinYWidth:
+      case TWS_window_MaxXWidth:
+      case TWS_window_MaxYWidth:
+      case TWS_window_WLogic:
+      case TWS_window_HLogic:
+	break;
+      default:
+	W->Fn->Fn_Widget->ChangeField((widget)W, field, CLEARMask, XORMask);
+	break;
+    }
 }
 
 static void SetColTextWindow(window W, hwcol ColText) {
@@ -791,7 +943,7 @@ static void SetXYWindow(window W, dat X, dat Y) {
 static void ConfigureWindow(window W, byte Bitmap, dat Left, dat Up,
 			    dat MinXWidth, dat MinYWidth, dat MaxXWidth, dat MaxYWidth) {
     widget Prev, Next;
-    byte HasBorder = 2 * !(W->Flags & WINFL_BORDERLESS);
+    byte HasBorder = 2 * !(W->Flags & WINDOWFL_BORDERLESS);
 
     if (W->Parent) {
 	Prev = W->Prev;
@@ -806,22 +958,22 @@ static void ConfigureWindow(window W, byte Bitmap, dat Left, dat Up,
 	W->Up = Up;
 
     if (Bitmap & 4) {
-	MinXWidth = Max2(MinXWidth, MinXWidth + HasBorder);
+	MinXWidth = Max2(MinXWidth, (dat)(MinXWidth + HasBorder));
 	W->MinXWidth = MinXWidth;
 	W->XWidth = Max2(MinXWidth, W->XWidth);
     }
     if (Bitmap & 8) {
-	MinYWidth = Max2(MinYWidth, MinYWidth + HasBorder);
+	MinYWidth = Max2(MinYWidth, (dat)(MinYWidth + HasBorder));
 	W->MinYWidth = MinYWidth;
 	W->YWidth = Max2(MinYWidth, W->YWidth);
     }
     if (Bitmap & 0x10) {
-	MaxXWidth = Max2(MaxXWidth, MaxXWidth + HasBorder);
+	MaxXWidth = Max2(MaxXWidth, (dat)(MaxXWidth + HasBorder));
 	W->MaxXWidth = Max2(W->MinXWidth, MaxXWidth);
 	W->XWidth = Min2(MaxXWidth, W->XWidth);
     }
     if (Bitmap & 0x20) {
-	MaxYWidth = Max2(MaxYWidth, MaxYWidth + HasBorder);
+	MaxYWidth = Max2(MaxYWidth, (dat)(MaxYWidth + HasBorder));
 	W->MaxYWidth = Max2(W->MinYWidth, MaxYWidth);
 	W->YWidth = Min2(MaxYWidth, W->YWidth);
     }
@@ -832,7 +984,7 @@ static void ConfigureWindow(window W, byte Bitmap, dat Left, dat Up,
 }
 
 static void GotoXYWindow(window Window, ldat X, ldat Y) {
-    if (Window->Flags & WINFL_USECONTENTS) {
+    if (W_USE(Window, USECONTENTS)) {
 	ttydata *TT = Window->USE.C.TtyData;
 	
 	X = Max2(X, 0);
@@ -850,15 +1002,15 @@ static void GotoXYWindow(window Window, ldat X, ldat Y) {
     }
     Window->CurX = X;
     Window->CurY = Y;
-    if (Window == (window)All->FirstScreen->FocusW)
+    if (ContainsCursor((widget)Window))
 	UpdateCursor();
 }
 
 window Create4MenuWindow(fn_window Fn_Window, menu Menu) {
     window Window = (window)0;
     if (Menu && (Window=Fn_Window->Create
-		 (Fn_Window, 0, NULL, (hwcol *)0, Menu, COL(BLACK,WHITE),
-		  NOCURSOR, WINDOW_MENU|WINDOW_AUTO_KEYS, WINFL_USE_DEFCOL|WINFL_SEL_ROWCURR,
+		 (Fn_Window, 0, NULL, (hwcol *)0, Menu, COL(BLACK,WHITE), NOCURSOR, WINDOW_AUTO_KEYS,
+		  WINDOWFL_MENU|WINDOWFL_USEROWS|WINDOWFL_ROWS_DEFCOL|WINDOWFL_ROWS_SELCURRENT,
 		  MIN_XWIN, MIN_YWIN, 0))) {
 	
 	Act(SetColors,Window)(Window, 0x1FF, COL(0,0), COL(0,0), COL(0,0), COL(0,0), COL(HIGH|WHITE,WHITE),
@@ -887,6 +1039,9 @@ static void MapTopRealWindow(window Window, screen Screen) {
 	InsertFirst(W, Window, (widget)Screen);
 	Window->Parent = (widget)Screen;
 	
+	if (Window->Attrib & WINDOW_WANT_MOUSE_MOTION)
+	    IncMouseMotionN();
+	
 	if (Screen == All->FirstScreen) {
 	    OldWindow = (window)Act(KbdFocus,Window)(Window);
 	    if (OldWindow && IS_WINDOW(OldWindow))
@@ -894,7 +1049,7 @@ static void MapTopRealWindow(window Window, screen Screen) {
 	    UpdateCursor();
 	}
 	DrawAreaWindow2(Window);
-	if (!(Window->Attrib & WINDOW_MENU))
+	if (!(Window->Flags & WINDOWFL_MENU))
 	    Act(DrawMenu,Screen)(Screen, 0, MAXDAT);
 
 	if (Window->MapUnMapHook)
@@ -911,7 +1066,7 @@ static void MapWindow(window W, widget Parent) {
     if (!W->Parent && !W->MapQueueMsg && Parent) {
 	if (IS_SCREEN(Parent)) {
 	    if (Ext(WM,MsgPort) && (Msg = Do(Create,Msg)(FnMsg, MSG_MAP, sizeof(event_map)))) {
-		Msg->Event.EventMap.Window = W;
+		Msg->Event.EventMap.W = W;
 		Msg->Event.EventMap.Code   = 0;
 		Msg->Event.EventMap.Screen = (screen)Parent;
 		W->MapQueueMsg = Msg;
@@ -920,6 +1075,10 @@ static void MapWindow(window W, widget Parent) {
 		Act(MapTopReal,W)(W, (screen)Parent);
 	} else if (IS_WIDGET(Parent)) {
 	    W->Fn->Fn_Widget->Map((widget)W, (widget)Parent);
+	    
+	    if (W->Attrib & WINDOW_WANT_MOUSE_MOTION)
+		IncMouseMotionN();
+	    
 	    if (W->MapUnMapHook)
 		W->MapUnMapHook(W);
 	}
@@ -939,7 +1098,7 @@ static void UnMapWindow(window W) {
 
 		/* take care... menu is active */
 		if (W == Screen->MenuWindow || 
-		    (W == (window)Screen->FocusW && (W->Attrib & WINDOW_MENU))) {
+		    (W == (window)Screen->FocusW && (W->Flags & WINDOWFL_MENU))) {
 		
 		    /*
 		     * ! DANGER ! 
@@ -948,18 +1107,21 @@ static void UnMapWindow(window W) {
 		     */
 		    ChangeMenuFirstScreen((menuitem)0, FALSE, DISABLE_MENU_FLAG);
 		    
-		    if (W->Attrib & WINDOW_MENU)
+		    if (W->Flags & WINDOWFL_MENU)
 			/* all done */
 			return;
 		    /* else we still must UnMap() the original window */
 		}
 	    }
-	    
+
+	    if (W->Attrib & WINDOW_WANT_MOUSE_MOTION)
+		DecMouseMotionN();
+
 	    if (Screen->ClickWindow == W)
 		Screen->ClickWindow = NULL;
 	
 	    if ((wasFocus = W == (window)Screen->FocusW)) {
-		if (W->Attrib & WINDOW_MENU)
+		if (W->Flags & WINDOWFL_MENU)
 		    Next = Screen->MenuWindow;
 		else {
 		    if ((widget)W == Screen->FirstW)
@@ -992,7 +1154,7 @@ static void UnMapWindow(window W) {
 			DrawBorderWindow(Next, BORDER_ANY);
 		    } else
 			Do(KbdFocus,Window)((window)0);
-		    if (!(W->Attrib & WINDOW_MENU))
+		    if (!(W->Flags & WINDOWFL_MENU))
 			Act(DrawMenu,Screen)(Screen, 0, MAXDAT);
 		    UpdateCursor();
 		} else
@@ -1008,6 +1170,9 @@ static void UnMapWindow(window W) {
 	} else {
 	    /* UnMap() a sub-window */
 	    W->Fn->Fn_Widget->UnMap((widget)W);
+	    
+	    if (W->Attrib & WINDOW_WANT_MOUSE_MOTION)
+		DecMouseMotionN();
 	    
 	    if (W->MapUnMapHook)
 		W->MapUnMapHook(W);
@@ -1045,9 +1210,19 @@ static void RemoveHookWindow(window Window, fn_hook Hook, fn_hook *WhereHook) {
 
 #ifndef CONF_TERM
 # ifdef CONF__MODULES
-void FakeWriteAscii(window Window, ldat Len, CONST byte *Text) {
+void FakeWriteAscii(window Window, ldat Len, CONST byte *Ascii) {
     if (DlLoad(TermSo) && Window->Fn->WriteAscii != FakeWriteAscii)
-	Act(WriteAscii,Window)(Window, Len, Text);
+	Act(WriteAscii,Window)(Window, Len, Ascii);
+}
+
+void FakeWriteString(window Window, ldat Len, CONST byte *String) {
+    if (DlLoad(TermSo) && Window->Fn->WriteString != FakeWriteString)
+	Act(WriteString,Window)(Window, Len, String);
+}
+
+void FakeWriteHWFont(window Window, ldat Len, CONST hwfont *HWFont) {
+    if (DlLoad(TermSo) && Window->Fn->WriteHWFont != FakeWriteHWFont)
+	Act(WriteHWFont,Window)(Window, Len, HWFont);
 }
 
 void FakeWriteHWAttr(window Window, dat x, dat y, ldat Len, CONST hwattr *Attr) {
@@ -1062,23 +1237,25 @@ window FakeOpenTerm(CONST byte *arg0, byte * CONST *argv) {
 }
 # else  /* CONF__MODULES */
 #  define FakeWriteAscii  (void (*)(window, ldat, CONST byte *))NoOp
+#  define FakeWriteString   (void (*)(window, ldat, CONST byte *))NoOp
+#  define FakeWriteHWFont (void (*)(window, ldat, CONST hwfont *))NoOp
 #  define FakeWriteHWAttr (void (*)(window, dat, dat, ldat, CONST hwattr *))NoOp
 # endif /* CONF__MODULES */
 #endif  /* CONF_TERM */
 
 
 #ifdef CONF_WM
-byte WMFindBorderWindow(window Window, dat u, dat v, byte Border, byte *PtrChar, hwcol *PtrColor);
+byte WMFindBorderWindow(window Window, dat u, dat v, byte Border, hwfont *PtrChar, hwcol *PtrColor);
 
 #else
-byte FakeFindBorderWindow(window W, dat u, dat v, byte Border, byte *PtrChar, hwcol *PtrColor) {
+byte FakeFindBorderWindow(window W, dat u, dat v, byte Border, hwfont *PtrChar, hwcol *PtrColor) {
     byte Horiz, Vert;
     
     Horiz = u ? u+1 == W->XWidth ? (byte)2 : (byte)1 : (byte)0;
     Vert  = v ? v+1 == W->YWidth ? (byte)2 : (byte)1 : (byte)0;
 
     if (*PtrChar)
-	*PtrChar = StdBorder[!!(All->SetUp->Flags & SETUP_ALTFONT)][Border][Vert*3+Horiz];
+	*PtrChar = StdBorder[Border][Vert*3+Horiz];
     if (*PtrColor)
 	*PtrColor = W->ColBorder;
     
@@ -1142,6 +1319,7 @@ static struct s_fn_window _FnWindow = {
     (void *)InsertWidget,
     (void *)RemoveWidget,
     DeleteWindow,
+    ChangeFieldWindow,
     /* widget */
     &_FnObj,
     DrawSelfWindow,
@@ -1156,18 +1334,21 @@ static struct s_fn_window _FnWindow = {
     (void *)OwnWidget,
     (void *)DisOwnWidget,
     (void *)RecursiveDeleteWidget,
+    (void *)ExposeWidget,	/* exported by resize.c */
     /* window */
     &_FnWidget,
 #ifdef CONF_TERM
     TtyWriteAscii,
+    TtyWriteString,
+    TtyWriteHWFont,
     TtyWriteHWAttr,
 #else
     FakeWriteAscii,
+    FakeWriteString,
+    FakeWriteHWFont,
     FakeWriteHWAttr,
 #endif
     WriteRow,		/* exported by resize.c */
-    ExposeAscii,	/* exported by resize.c */
-    ExposeHWAttr,	/* exported by resize.c */
 	
     GotoXYWindow,
     SetColTextWindow,
@@ -1191,7 +1372,7 @@ static struct s_fn_window _FnWindow = {
 
 /* screen */
 
-static screen CreateScreen(fn_screen Fn_Screen, dat LenTitle, CONST byte *Title,
+static screen CreateScreen(fn_screen Fn_Screen, dat NameLen, CONST byte *Name,
 			    dat BgWidth, dat BgHeight, CONST hwattr *Bg) {
     screen S = (screen)0;
     size_t size;
@@ -1199,26 +1380,25 @@ static screen CreateScreen(fn_screen Fn_Screen, dat LenTitle, CONST byte *Title,
     if ((size=(size_t)BgWidth * BgHeight * sizeof(hwattr))) {
 	
 	if ((S=(screen)Fn_Screen->Fn_Widget->Create
-	     ((fn_widget)Fn_Screen, Builtin_MsgPort, MAXDAT, MAXDAT, (hwattr)0, 0, 0))) {
+	     ((fn_widget)Fn_Screen, Builtin_MsgPort, MAXDAT, MAXDAT, 0, SCREENFL_USEBG, 0, 0, (hwattr)0))) {
 
-	    if (!(S->Title=NULL, Title) || (S->Title=CloneStrL(Title, LenTitle))) {
-		if ((S->Bg = AllocMem(size))) {
+	    if (!(S->Name=NULL, Name) || (S->Name=CloneStrL(Name, NameLen))) {
+		if ((S->USE.B.Bg = AllocMem(size))) {
 
 		    Fn_Screen->Fn_Widget->Used++;
 		    
-		    S->LenTitle = LenTitle;
+		    S->NameLen = NameLen;
 		    S->MenuWindow = S->ClickWindow = NULL;
 		    S->HookWindow = NULL;
 		    S->FnHookWindow = NULL;
-		    S->Attrib = 0;
-		    S->BgWidth = BgWidth;
-		    S->BgHeight = BgHeight;
-		    CopyMem(Bg, S->Bg, size);
+		    S->USE.B.BgWidth = BgWidth;
+		    S->USE.B.BgHeight = BgHeight;
+		    CopyMem(Bg, S->USE.B.Bg, size);
 		    S->All = (all)0;
 		    
 		    return S;
 		}
-		if (S->Title) FreeMem(S->Title);
+		if (S->Name) FreeMem(S->Name);
 	    }
 	    (Fn_Screen->Fn_Widget->Delete)((widget)S);
 	}
@@ -1226,19 +1406,20 @@ static screen CreateScreen(fn_screen Fn_Screen, dat LenTitle, CONST byte *Title,
     return NULL;
 }
 
-static screen CreateSimpleScreen(fn_screen Fn_Screen, dat LenTitle, CONST byte *Title, hwattr Bg) {
-    return Fn_Screen->Create(Fn_Screen, LenTitle, Title, 1, 1, &Bg);
+static screen CreateSimpleScreen(fn_screen Fn_Screen, dat NameLen, CONST byte *Name, hwattr Bg) {
+    return Fn_Screen->Create(Fn_Screen, NameLen, Name, 1, 1, &Bg);
 }
 
 static void BgImageScreen(screen Screen, dat BgWidth, dat BgHeight, CONST hwattr *Bg) {
     size_t size;
     
-    if (Screen && Bg && (size = (size_t)BgWidth * BgHeight * sizeof(hwattr)) &&
-	(Screen->Bg = ReAllocMem(Screen->Bg, size))) {
+    if (Screen && S_USE(Screen, USEBG) && Bg &&
+	(size = (size_t)BgWidth * BgHeight * sizeof(hwattr)) &&
+	(Screen->USE.B.Bg = ReAllocMem(Screen->USE.B.Bg, size))) {
 
-	Screen->BgWidth = BgWidth;
-	Screen->BgHeight = BgHeight;
-	CopyMem(Bg, Screen->Bg, size);
+	Screen->USE.B.BgWidth = BgWidth;
+	Screen->USE.B.BgHeight = BgHeight;
+	CopyMem(Bg, Screen->USE.B.Bg, size);
 	DrawArea2((screen)0, (widget)0, (widget)0, 0, Screen->YLimit+1, MAXDAT, MAXDAT, FALSE);
     }
 }
@@ -1267,6 +1448,14 @@ static void DeleteScreen(screen Screen) {
     (Fn_Widget->Delete)((widget)Screen);
     if (!--Fn_Widget->Used)
 	FreeMem(Fn_Widget);
+}
+
+static void ChangeFieldScreen(screen S, udat field, uldat CLEARMask, uldat XORMask) {
+    if (S) switch (field) {
+      default:
+	S->Fn->Fn_Widget->ChangeField((widget)S, field, CLEARMask, XORMask);
+	break;
+    }
 }
 
 static void SetXYScreen(screen Screen, dat X, dat Y) {
@@ -1344,7 +1533,9 @@ static void DrawMenuScreen(screen Screen, dat Xstart, dat Xend) {
     menu Menu;
     menuitem Item;
     dat DWidth, DHeight, i, j, x;
-    byte Color, Font, Select, State, MenuInfo;
+    hwfont Font;
+    hwcol Color;
+    byte Select, State, MenuInfo;
     
     if (QueuedDrawArea2FullScreen || !Screen || !Screen->All || Xstart>Xend)
 	return;
@@ -1374,7 +1565,7 @@ static void DrawMenuScreen(screen Screen, dat Xstart, dat Xend) {
     for (i=Xstart; i<=Xend; i++) {
 	if (i+2>=DWidth) {
 	    Color = State == STATE_SCREEN ? Menu->ColSelShtCut : Menu->ColShtCut;
-	    if (XAND(Screen->Attrib, GADGET_BACK_SELECT|GADGET_PRESSED))
+	    if (XAND(Screen->Flags, SCREENFL_BACK_SELECT|SCREENFL_BACK_PRESSED))
 		Color = COL( COLBG(Color), COLFG(Color));
 	    Font = Screen_Back[2-(DWidth-i)];
 	}
@@ -1398,13 +1589,13 @@ static void DrawMenuScreen(screen Screen, dat Xstart, dat Xend) {
 		
 		if (Item) {
 		    /* check if Item is from All->CommonMenu */
-		    if (Item->Menu == All->CommonMenu && Menu->LastMenuItem)
-			x = Menu->LastMenuItem->Left + Menu->LastMenuItem->Len;
+		    if (Item->Menu == All->CommonMenu && Menu->LastI)
+			x = Menu->LastI->Left + Menu->LastI->NameLen;
 		    else
 			x = 0;
 
 		    Select = State == STATE_SCREEN ||
-			(State == STATE_MENU && Item->Menu->MenuItemSelect == Item);
+			(State == STATE_MENU && Item->Menu->SelectI == Item);
 		    /*
 		     * CHEAT: Item may be in CommonMenu, not in Menu...
 		     * steal Item color from Menu.
@@ -1435,6 +1626,7 @@ static struct s_fn_screen _FnScreen = {
     InsertScreen,
     RemoveScreen,
     DeleteScreen,
+    ChangeFieldScreen,
     /* widget */
     &_FnObj,
     DrawSelfScreen,
@@ -1449,6 +1641,7 @@ static struct s_fn_screen _FnScreen = {
     (void *)OwnWidget,
     (void *)DisOwnWidget,
     (void *)RecursiveDeleteWidget,
+    (void *)ExposeWidget,	/* exported by resize.c */
     /* screen */
     &_FnWidget,
     FindMenuScreen,
@@ -1505,15 +1698,30 @@ static void DeleteGroup(group Group) {
 }
 
 static void InsertGadgetGroup(group Group, gadget G) {
-    if (G && !G->Group) {
-	InsertGeneric((obj)G, (obj_parent)&Group->FirstG, (obj)Group->LastG, (obj)0, (ldat *)0);
+    if (G && !G->Group && !G->G_Prev && !G->G_Next) {
+	if ((G->G_Next = Group->FirstG))
+	    Group->FirstG->G_Prev = G;
+	else
+	    Group->LastG = G;
+    
+	Group->FirstG = G;
 	G->Group = Group;
     }
 }
 
 static void RemoveGadgetGroup(group Group, gadget G) {
    if (G && G->Group == Group) {
-       RemoveGeneric((obj)G, (obj_parent)&G->Group->FirstG, (ldat *)0);
+       if (G->G_Prev)
+	   G->G_Prev->G_Next = G->G_Next;
+       else if (Group->FirstG == G)
+	   Group->FirstG = G->G_Next;
+    
+       if (G->G_Next)
+	   G->G_Next->G_Prev = G->G_Prev;
+       else if (Group->LastG == G)
+	   Group->LastG = G->G_Prev;
+    
+       G->G_Prev = G->G_Next = (gadget)0;
        G->Group = (group)0;
    }
 }
@@ -1538,6 +1746,7 @@ static struct s_fn_group _FnGroup = {
     InsertGroup,
     RemoveGroup,
     DeleteGroup,
+    (void *)NoOp,
     &_FnObj,
     InsertGadgetGroup,
     RemoveGadgetGroup,
@@ -1558,13 +1767,14 @@ static row CreateRow(fn_row Fn_Row, udat Code, byte Flags) {
 	Row->Code = Code;
 	Row->Flags = Flags;
 	Row->Gap = Row->LenGap = Row->Len = Row->MaxLen = 0;
-	Row->Text = Row->ColText = NULL;
+	Row->Text = NULL;
+	Row->ColText = NULL;
     }
     return Row;
 }
 
 static void InsertRow(row Row, window Parent, row Prev, row Next) {
-    if (!Row->Window && Parent && !(Parent->Flags & WINFL_USEANY)) {
+    if (!Row->Window && Parent && W_USE(Parent, USEROWS)) {
 	InsertGeneric((obj)Row, (obj_parent)&Parent->USE.R.FirstRow, (obj)Prev, (obj)Next, &Parent->HLogic);
 	Row->Window = Parent;
 	Parent->USE.R.NumRowOne = Parent->USE.R.NumRowSplit = (ldat)0;
@@ -1572,7 +1782,7 @@ static void InsertRow(row Row, window Parent, row Prev, row Next) {
 }
 
 static void RemoveRow(row Row) {
-    if (Row->Window && !(Row->Window->Flags & WINFL_USEANY)) {
+    if (Row->Window && W_USE(Row->Window, USEROWS)) {
 	Row->Window->USE.R.NumRowOne = Row->Window->USE.R.NumRowSplit = (ldat)0;
 	RemoveGeneric((obj)Row, (obj_parent)&Row->Window->USE.R.FirstRow, &Row->Window->HLogic);
 	Row->Window = (window)0;
@@ -1599,7 +1809,7 @@ static row Create4MenuRow(fn_row Fn_Row, window Window, udat Code, byte Flags, l
     row Row = (row)0;
 
     if (Window && (Row=(Fn_Row->Create)(Fn_Row, Code, Flags)) &&
-	(!Text || (Row->Text = CloneMem(Text, Len)))) {
+	(!Text || (Row->Text = CloneString2HWFont(Text, Len)))) {
 
 	Row->Len = Row->MaxLen = Len;
 	Act(Insert, Row)(Row, Window, Window->USE.R.LastRow, NULL);
@@ -1621,8 +1831,21 @@ static row Create4MenuRow(fn_row Fn_Row, window Window, udat Code, byte Flags, l
 static byte SetTextRow(row Row, ldat Len, CONST byte *Text, byte DefaultCol) {
     if (EnsureLenRow(Row, Len, DefaultCol)) {
 	if (Len) {
+
+#if TW_SIZEOFHWFONT != 1
+	    hwfont *RowText = Row->Text;
+	    ldat i = Len;
+	    while (i-- > 0) {
+# ifdef CONF__UNICODE
+		*RowText++ = Tutf_IBM437_to_UTF_16[*Text++];
+# else /* !CONF__UNICODE */
+		*RowText++ = *Text++;
+# endif /* CONF__UNICODE */
+	    }
+#else /* TW_SIZEOFHWFONT == 1 */
 	    CopyMem(Text, Row->Text, Len);
-	    if (!(Row->Flags & ROW_USE_DEFCOL) && !DefaultCol)
+#endif /* TW_SIZEOFHWFONT != 1 */
+	    if (!(Row->Flags & ROW_DEFCOL) && !DefaultCol)
 		/* will not work correctly if sizeof(hwcol) != 1 */
 		WriteMem(Row->ColText, COL(WHITE,BLACK), Len * sizeof(hwcol));
 	}
@@ -1639,6 +1862,7 @@ static struct s_fn_row _FnRow = {
     InsertRow,
     RemoveRow,
     DeleteRow,
+    (void *)NoOp,
     /* row */
     &_FnObj,
     Create4MenuRow,
@@ -1665,22 +1889,22 @@ static void SyncScreenMenus(menu Menu) {
 }
 
 static menuitem CreateMenuItem(fn_menuitem Fn_MenuItem, menu Menu, window Window, byte FlagActive,
-				dat Left, dat Len, dat ShortCut, CONST byte *Name) {
+				dat Left, dat NameLen, dat ShortCut, CONST byte *Name) {
     menuitem MenuItem = (menuitem)0;
     byte *_Name = NULL;
     
-    if (Window && Menu && Name && (_Name=CloneStrL(Name,Len)) &&
+    if (Window && Menu && Name && (_Name=CloneStrL(Name,NameLen)) &&
 	(MenuItem=(menuitem)Fn_MenuItem->Fn_Obj->Create((fn_obj)Fn_MenuItem))) {	  
 	
 	Fn_MenuItem->Fn_Obj->Used++;
 	
 	MenuItem->FlagActive=FlagActive;
 	MenuItem->Left=Left;
-	MenuItem->Len=Len;
+	MenuItem->NameLen=NameLen;
 	MenuItem->ShortCut=ShortCut;
 	MenuItem->Name=_Name;
 	MenuItem->Window=Window;
-	InsertLast(MenuItem, MenuItem, Menu);
+	InsertLast(I, MenuItem, Menu);
 	
 	SyncScreenMenus(Menu);
 	
@@ -1693,14 +1917,14 @@ static menuitem CreateMenuItem(fn_menuitem Fn_MenuItem, menu Menu, window Window
 
 static void InsertMenuItem(menuitem MenuItem, menu Parent, menuitem Prev, menuitem Next) {
     if (!MenuItem->Menu && Parent) {
-	InsertGeneric((obj)MenuItem, (obj_parent)&Parent->FirstMenuItem, (obj)Prev, (obj)Next, (ldat *)0);
+	InsertGeneric((obj)MenuItem, (obj_parent)&Parent->FirstI, (obj)Prev, (obj)Next, (ldat *)0);
 	MenuItem->Menu = Parent;
     }
 }
 
 static void RemoveMenuItem(menuitem MenuItem) {
     if (MenuItem->Menu) {
-	RemoveGeneric((obj)MenuItem, (obj_parent)&MenuItem->Menu->FirstMenuItem, (ldat *)0);
+	RemoveGeneric((obj)MenuItem, (obj_parent)&MenuItem->Menu->FirstI, (ldat *)0);
 	MenuItem->Menu = (menu)0;
     }
 }
@@ -1731,8 +1955,8 @@ menuitem Create4MenuMenuItem(fn_menuitem Fn_MenuItem, menu Menu, window Window, 
     if (!Menu || !Window)
 	return (menuitem)0;
     
-    if (Menu->LastMenuItem)
-	Left=Menu->LastMenuItem->Left+Menu->LastMenuItem->Len;
+    if (Menu->LastI)
+	Left=Menu->LastI->Left+Menu->LastI->NameLen;
     else
 	Left=(dat)1;
 
@@ -1762,6 +1986,7 @@ static struct s_fn_menuitem _FnMenuItem = {
     InsertMenuItem,
     RemoveMenuItem,
     DeleteMenuItem,
+    (void *)NoOp,
     &_FnObj,
     Create4MenuMenuItem,
     Create4MenuCommonMenuItem
@@ -1783,7 +2008,7 @@ static menu CreateMenu(fn_menu Fn_Menu, msgport MsgPort, hwcol ColItem, hwcol Co
 	Menu->ColSelectDisabled=ColSelectDisabled;
 	Menu->ColShtCut=ColShtCut;
 	Menu->ColSelShtCut=ColSelShtCut;
-	Menu->FirstMenuItem=Menu->LastMenuItem=Menu->MenuItemSelect=(menuitem)0;
+	Menu->FirstI=Menu->LastI=Menu->SelectI=(menuitem)0;
 	Menu->CommonItems = FALSE;
 	Menu->FlagDefColInfo=FlagDefColInfo;
 	Menu->Info=(row)0;
@@ -1827,7 +2052,7 @@ static void DeleteMenu(menu Menu) {
 	 */
 	if (!QueuedDrawArea2FullScreen) {
 	    for (W = MsgPort->FirstW; W && count; W = WNext) {
-		WNext = W->ONext;
+		WNext = W->O_Next;
 		if (IS_WINDOW(W) && ((window)W)->Menu == Menu) {
 		    if (W->Parent && IS_SCREEN(W->Parent)) {
 			count--;
@@ -1838,7 +2063,7 @@ static void DeleteMenu(menu Menu) {
 		QueuedDrawArea2FullScreen = TRUE;
 	}
 	for (W = MsgPort->FirstW; W; W = WNext) {
-	    WNext = W->ONext;
+	    WNext = W->O_Next;
 	    if (IS_WINDOW(W) && ((window)W)->Menu == Menu) {
 		if (W->Parent && IS_SCREEN(W->Parent)) {
 		    Act(UnMap,W)(W);
@@ -1847,7 +2072,7 @@ static void DeleteMenu(menu Menu) {
 	    }
 	}
 	Remove(Menu);
-	DeleteList(Menu->FirstMenuItem);
+	DeleteList(Menu->FirstI);
 	if (Menu->Info)
 	    Delete(Menu->Info);
 	
@@ -1860,7 +2085,7 @@ static void DeleteMenu(menu Menu) {
 static row SetInfoMenu(menu Menu, byte Flags, ldat Len, CONST byte *Text, CONST hwcol *ColText) {
     row Row;
     if ((Row = Do(Create,Row)(FnRow, 0, Flags))) {
-	if ((!Text || (Row->Text=CloneStrL(Text,Len))) &&
+	if ((!Text || (Row->Text=CloneString2HWFontL(Text,Len))) &&
 	    (!ColText || (Row->ColText=CloneMem(ColText, Len*sizeof(hwcol))))) {
 	    Row->Len = Row->MaxLen = Len;
 	    if (Menu->Info)
@@ -1877,21 +2102,21 @@ static menuitem FindItem(menu Menu, dat i) {
     menuitem Item = (menuitem)0;
     
     if (Menu) {
-	for (Item = Menu->FirstMenuItem; Item; Item = Item->Next) {
-	    if (i >= Item->Left && i < Item->Left + Item->Len)
+	for (Item = Menu->FirstI; Item; Item = Item->Next) {
+	    if (i >= Item->Left && i < Item->Left + Item->NameLen)
 		break;
 	}
 	
 	if (!Item && Menu->CommonItems && All->CommonMenu) {
 
-	    Item = Menu->LastMenuItem;
+	    Item = Menu->LastI;
 	    
-	    if (!Item || i >= Item->Left + Item->Len) {
+	    if (!Item || i >= Item->Left + Item->NameLen) {
 		/* search in All->CommonMenu */
 		if (Item)
-		    i -= Item->Left + Item->Len;
-		for (Item = All->CommonMenu->FirstMenuItem; Item; Item = Item->Next) {
-		    if (i >= Item->Left && i < Item->Left + Item->Len)
+		    i -= Item->Left + Item->NameLen;
+		for (Item = All->CommonMenu->FirstI; Item; Item = Item->Next) {
+		    if (i >= Item->Left && i < Item->Left + Item->NameLen)
 			break;
 		}
 	    } else
@@ -1903,10 +2128,10 @@ static menuitem FindItem(menu Menu, dat i) {
 
 static menuitem GetSelectItem(menu Menu) {
     if (Menu) {
-	if (Menu->MenuItemSelect)
-	    return Menu->MenuItemSelect;
+	if (Menu->SelectI)
+	    return Menu->SelectI;
 	if (Menu->CommonItems && All->CommonMenu)
-	    return All->CommonMenu->MenuItemSelect;
+	    return All->CommonMenu->SelectI;
     }
     return (menuitem)0;
 }
@@ -1915,19 +2140,19 @@ static void SetSelectItem(menu Menu, menuitem Item) {
     if (Menu) {
 	if (Item) {
 	    if (Item->Menu == Menu) {
-		Menu->MenuItemSelect = Item;
+		Menu->SelectI = Item;
 		if (Menu->CommonItems && All->CommonMenu)
-		    All->CommonMenu->MenuItemSelect = (menuitem)0;
+		    All->CommonMenu->SelectI = (menuitem)0;
 		
 	    } else if (Menu->CommonItems && Item->Menu == All->CommonMenu) {
-		Menu->MenuItemSelect = (menuitem)0;
-		All->CommonMenu->MenuItemSelect = Item;
+		Menu->SelectI = (menuitem)0;
+		All->CommonMenu->SelectI = Item;
 	    }
 	    /* else Item is not a meaningful one! */
 	} else {
-	    Menu->MenuItemSelect = Item;
+	    Menu->SelectI = Item;
 	    if (Menu->CommonItems && All->CommonMenu)
-		All->CommonMenu->MenuItemSelect = Item;
+		All->CommonMenu->SelectI = Item;
 	}
     }
 }
@@ -1938,6 +2163,7 @@ static struct s_fn_menu _FnMenu = {
     InsertMenu,
     RemoveMenu,
     DeleteMenu,
+    (void *)NoOp,
     /* menu */
     &_FnObj,
     SetInfoMenu,
@@ -2011,26 +2237,27 @@ static struct s_fn_msg _FnMsg = {
     InsertMsg,
     RemoveMsg,
     DeleteMsg,
+    (void *)NoOp,
     /* msg */
     &_FnObj
 };
 
 /* msgport */
 
-static msgport CreateMsgPort(fn_msgport Fn_MsgPort, byte NameLen, CONST byte *ProgramName,
+static msgport CreateMsgPort(fn_msgport Fn_MsgPort, byte NameLen, CONST byte *Name,
 			      time_t PauseSec, frac_t PauseFraction,
 			      byte WakeUp, void (*Handler)(msgport)) {
     msgport MsgPort = (msgport)0;
-    byte *Name;
+    byte *_Name;
     
-    if (Handler && (!ProgramName || (Name = CloneStrL(ProgramName, NameLen))) &&
+    if (Handler && (!Name || (_Name = CloneStrL(Name, NameLen))) &&
 	(MsgPort=(msgport)Fn_MsgPort->Fn_Obj->Create((fn_obj)Fn_MsgPort))) {
 	
 	Fn_MsgPort->Fn_Obj->Used++;
 	
 	MsgPort->WakeUp=WakeUp;
 	MsgPort->NameLen=NameLen;
-	MsgPort->ProgramName=Name;
+	MsgPort->Name=_Name;
 	MsgPort->Handler=Handler;
 	MsgPort->ShutDownHook=(void (*)(msgport))0;
 	MsgPort->PauseDuration.Seconds=PauseSec;
@@ -2049,8 +2276,8 @@ static msgport CreateMsgPort(fn_msgport Fn_MsgPort, byte NameLen, CONST byte *Pr
 		     WakeUp ? (msgport)0 : All->LastMsgPort,
 		     WakeUp ? All->FirstMsgPort : (msgport)0);
 	SortMsgPortByCallTime(MsgPort);
-    } else if (NameLen && Name)
-	FreeMem(Name);
+    } else if (NameLen && _Name)
+	FreeMem(_Name);
     return MsgPort;
 }
 
@@ -2082,7 +2309,7 @@ static void DeleteMsgPort(msgport MsgPort) {
 	 * we set QueuedDrawArea2FullScreen = TRUE, so that the UnMap()
 	 * calls do not have to redraw every time.
 	 */
-	for (W = MsgPort->FirstW; W && count; W = W->ONext) {
+	for (W = MsgPort->FirstW; W && count; W = W->O_Next) {
 	    if (IS_WINDOW(W) && W->Parent && IS_SCREEN(W->Parent)) {
 		count--;
 	    }
@@ -2105,8 +2332,8 @@ static void DeleteMsgPort(msgport MsgPort) {
 	DeleteList(MsgPort->FirstMutex);
 	
 	Remove(MsgPort);
-	if (MsgPort->ProgramName)
-	    FreeMem(MsgPort->ProgramName);
+	if (MsgPort->Name)
+	    FreeMem(MsgPort->Name);
 	
 	(Fn_Obj->Delete)((obj)MsgPort);
 	if (!--Fn_Obj->Used)
@@ -2120,6 +2347,7 @@ static struct s_fn_msgport _FnMsgPort = {
     InsertMsgPort,
     RemoveMsgPort,
     DeleteMsgPort,
+    (void *)NoOp,
     /* msgport */
     &_FnObj
 };
@@ -2190,12 +2418,12 @@ static void DeleteMutex(mutex Mutex) {
 static void OwnMutex(mutex Mutex, msgport Parent) {
     if (!Mutex->Owner && Parent) {
 
-	if ((Mutex->OPrev = Parent->LastMutex))
-	    Parent->LastMutex->ONext = Mutex;
+	if ((Mutex->O_Prev = Parent->LastMutex))
+	    Parent->LastMutex->O_Next = Mutex;
 	else
 	    Parent->FirstMutex = Mutex;	
     
-	Mutex->ONext = (mutex)0;
+	Mutex->O_Next = (mutex)0;
 	Parent->LastMutex = Mutex;
 	
 	Mutex->Owner = Parent;
@@ -2205,17 +2433,17 @@ static void OwnMutex(mutex Mutex, msgport Parent) {
 static void DisOwnMutex(mutex Mutex) {
     msgport Parent;
     if ((Parent = Mutex->Owner)) {
-	if (Mutex->OPrev)
-	    Mutex->OPrev->ONext = Mutex->ONext;
+	if (Mutex->O_Prev)
+	    Mutex->O_Prev->O_Next = Mutex->O_Next;
 	else if (Parent->FirstMutex == Mutex)
-	    Parent->FirstMutex = Mutex->ONext;
+	    Parent->FirstMutex = Mutex->O_Next;
     
-	if (Mutex->ONext)
-	    Mutex->ONext->OPrev = Mutex->OPrev;
+	if (Mutex->O_Next)
+	    Mutex->O_Next->O_Prev = Mutex->O_Prev;
 	else if (Parent->LastMutex == Mutex)
-	    Parent->LastMutex = Mutex->OPrev;
+	    Parent->LastMutex = Mutex->O_Prev;
     
-	Mutex->OPrev = Mutex->ONext = (mutex)0;
+	Mutex->O_Prev = Mutex->O_Next = (mutex)0;
 	
 	Mutex->Owner = (msgport)0;
     }
@@ -2227,6 +2455,7 @@ static struct s_fn_mutex _FnMutex = {
     InsertMutex,
     RemoveMutex,
     DeleteMutex,
+    (void *)NoOp,
     /* mutex */
     &_FnObj,
     OwnMutex,
@@ -2294,6 +2523,7 @@ static struct s_fn_module _FnModule = {
     InsertModule,
     RemoveModule,
     DeleteModule,
+    (void *)NoOp,
     /* module */
     &_FnObj,
 #ifdef CONF__MODULES
@@ -2398,6 +2628,7 @@ static struct s_fn_display_hw _FnDisplayHW = {
     InsertDisplayHW,
     RemoveDisplayHW,
     DeleteDisplayHW,
+    (void *)NoOp,
     /* display_hw */
     &_FnObj,
     InitDisplayHW,

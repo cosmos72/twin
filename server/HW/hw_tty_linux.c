@@ -17,31 +17,53 @@
 #ifdef CONF_HW_TTY_LINUX
 
 
-#if defined(__linux__) && TW_BYTE_ORDER == TW_LITTLE_ENDIAN
-/* try to get prototype for pwrite() */
-# include <asm/unistd.h>
 
-# if defined(__NR_pwrite) && defined(_syscall5)
-   _syscall5(size_t,pwrite,unsigned int,fd, const char *,buf,
-			  size_t,count, off_t,poslow, off_t,poshigh)
-/* /dev/vcsa* are surely smaller than 2GB :) */
-#  define linux_pwrite(fd, buf, count, pos) pwrite((fd), (buf), (count), (pos), 0)
-# endif
-#endif
- 
-#ifndef linux_pwrite
+
+#if TW_SIZEOFHWATTR == 2 && TW_BYTE_ORDER == TW_LITTLE_ENDIAN
+
+# ifdef HAVE_PWRITE /* always 0... */
+
+#  define vcsa_write(fd, buf, count, pos) pwrite(fd, buf, (count)*2, (pos)*2+4)
+
+# else /* !HAVE_PWRITE */
 /*
  * we do not need the complete seek + write + seek back
  * but only seek + write
  */
-# define linux_pwrite(fd, buf, count, pos) do { \
-    lseek((fd), (pos), SEEK_SET); \
-    write((fd), (buf), (count)); \
+#  define vcsa_write(fd, buf, count, pos) do { \
+    lseek(fd, (pos)*2+4, SEEK_SET); \
+    write(fd, buf, (count)*2); \
 } while (0)
-#endif
+
+# endif /* HAVE_PWRITE */
+
+#else /* TW_SIZEOFHWATTR != 2 || TW_BYTE_ORDER != TW_LITTLE_ENDIAN */
+
+static byte vcsa_buff[BIGBUFF*2];
+
+INLINE void vcsa_write(int fd, hwattr *buf, uldat count, uldat pos) {
+    byte *buf8;
+    uldat chunk;
     
+    lseek(fd, pos*2+4, SEEK_SET);
+    while (count) {
+	buf8 = vcsa_buff;
+	pos = chunk = Min2(count, BIGBUFF);
+	while (pos--) {
+# ifdef CONF__UNICODE
+	    *buf8++ = tty_UTF_16_to_charset(HWFONT(*buf));
+# else
+	    *buf8++ = HWFONT(*buf);
+# endif
+	    *buf8++ = HWCOL(*buf);
+	    buf++;
+	}
+	write(fd, vcsa_buff, chunk*2);
+	count -= chunk;
+    }
+}
 
-
+#endif /* TW_SIZEOFHWATTR == 2 && TW_BYTE_ORDER == TW_LITTLE_ENDIAN */
 
 
 
@@ -147,6 +169,11 @@ static void GPM_QuitMouse(void) {
     HW->QuitMouse = NoOp;
 }
 
+static void GPM_EnableMouseMotionEvents(byte enable) {
+    /* nothing to do */
+}
+
+
 static void GPM_MouseEvent(int fd, display_hw hw) {
     int left;
     udat IdButtons, Buttons = 0;
@@ -167,7 +194,7 @@ static void GPM_MouseEvent(int fd, display_hw hw) {
 	if (Gpm_GetEvent(&GPM_EV) <= 0) {
 	    if (loopN == 30)
 		HW->NeedHW |= NEEDPanicHW, NeedHW |= NEEDPanicHW;
-	    return;
+	    break;
 	}
 	
 #if 0
@@ -395,8 +422,7 @@ static void vcsa_FlushVideo(void) {
 			continue;
 		    }
 		}
-		linux_pwrite(VcsaFd, (void *)&Video[prevS], (prevE-prevS+1)*sizeof(hwattr),
-		       4+_prevS*sizeof(hwattr));
+		vcsa_write(VcsaFd, (void *)&Video[prevS], prevE+1-prevS, _prevS);
 	    }
 	    prevS = start;
 	    prevE = end;
@@ -405,8 +431,7 @@ static void vcsa_FlushVideo(void) {
 	}
     }
     if (prevS != (uldat)-1) {
-	linux_pwrite(VcsaFd, (void *)&Video[prevS], (prevE-prevS+1)*sizeof(hwattr),
-	       4+_prevS*sizeof(hwattr));
+	vcsa_write(VcsaFd, (void *)&Video[prevS], prevE+1-prevS, _prevS);
     }
     
     /* ... and this redraws the mouse */
@@ -440,19 +465,18 @@ static void vcsa_ShowMouse(void) {
     uldat pos = (HW->Last_x = HW->MouseState.x) + (HW->Last_y = HW->MouseState.y) * DisplayWidth;
     uldat _pos = HW->Last_x + HW->Last_y * HW->X;
     
-    hwattr h  = Video[pos];
-    hwcol c = ~HWCOL(h) ^ COL(HIGH,HIGH);
+    hwattr h  = Video[pos], c = HWATTR_COLMASK(~h) ^ HWATTR(COL(HIGH,HIGH),0);
 
-    h = HWATTR( c, HWFONT(h));
+    h = c | HWATTR_FONTMASK(h);
 
-    linux_pwrite(VcsaFd, (void *)&h, sizeof(hwattr), 4+_pos*sizeof(hwattr));
+    vcsa_write(VcsaFd, (void *)&h, 1, _pos);
 }
 
 static void vcsa_HideMouse(void) {
     uldat pos = HW->Last_x + HW->Last_y * DisplayWidth;
     uldat _pos = HW->Last_x + HW->Last_y * HW->X;
 
-    linux_pwrite(VcsaFd, (void *)&Video[pos], sizeof(hwattr), 4+_pos*sizeof(hwattr));
+    vcsa_write(VcsaFd, (void *)&Video[pos], 1, _pos);
 }
 
 #endif /* CONF_HW_TTY_LINUX */
@@ -595,7 +619,8 @@ INLINE void linux_SetColor(hwcol col) {
 INLINE void linux_Mogrify(dat x, dat y, uldat len) {
     hwattr *V, *oV;
     hwcol col;
-    byte c, sending = FALSE;
+    hwfont c, _c;
+    byte sending = FALSE;
     
     V = Video + x + y * DisplayWidth;
     oV = OldVideo + x + y * DisplayWidth;
@@ -610,29 +635,47 @@ INLINE void linux_Mogrify(dat x, dat y, uldat len) {
 	    if (col != _col)
 		linux_SetColor(col);
 	
-	    c = HWFONT(*V);
-	    if ((c < 32 && ((CTRL_ALWAYS >> c) & 1)) || c == 128+27)
-		putc(' ', stdOUT); /* can't display it */
-	    else
-		putc(c, stdOUT);
+	    c = _c = HWFONT(*V);
+#ifdef CONF__UNICODE
+	    c = tty_UTF_16_to_charset(c);
+#endif
+	    
+	    if ((c < 32 && ((CTRL_ALWAYS >> c) & 1)) || c == 128+27) {
+		/* can't display it */
+#ifdef CONF__UNICODE
+		c = T_CAT(Tutf_IBM437_to_,T_MAP(US_ASCII)) [ Tutf_UTF_16_to_IBM437(_c) ];
+#else
+		c = ' ';
+#endif
+	    }
+	    putc((char)c, stdOUT);
 	} else
 	    sending = FALSE;
     }
 }
 
 INLINE void linux_SingleMogrify(dat x, dat y, hwattr V) {
-    byte c;
+    hwfont c, _c;
     
     linux_MoveToXY(x,y);
 
     if (HWCOL(V) != _col)
 	linux_SetColor(HWCOL(V));
 	
-    c = HWFONT(V);
-    if ((c < 32 && ((CTRL_ALWAYS >> c) & 1)) || c == 128+27)
-	putc(' ', stdOUT); /* can't display it */
-    else
-	putc(c, stdOUT);
+    c = _c = HWFONT(V);
+#ifdef CONF__UNICODE
+    c = tty_UTF_16_to_charset(c);
+#endif
+
+    if ((c < 32 && ((CTRL_ALWAYS >> c) & 1)) || c == 128+27) {
+	/* can't display it */
+#ifdef CONF__UNICODE
+	c = T_CAT(Tutf_IBM437_to_,T_MAP(US_ASCII)) [ Tutf_UTF_16_to_IBM437(_c) ];
+#else
+	c = ' ';
+#endif
+    }
+    putc((char)c, stdOUT);
 }
 
 /* HideMouse and ShowMouse depend on Video setup, not on Mouse.
@@ -641,7 +684,7 @@ static void linux_ShowMouse(void) {
     uldat pos = (HW->Last_x = HW->MouseState.x) + (HW->Last_y = HW->MouseState.y) * DisplayWidth;
     hwattr h  = Video[pos];
     hwcol c = ~HWCOL(h) ^ COL(HIGH,HIGH);
-
+    
     linux_SingleMogrify(HW->MouseState.x, HW->MouseState.y, HWATTR( c, HWFONT(h)));
 
     /* store current cursor state for correct updating */
@@ -793,6 +836,16 @@ static void linux_Configure(udat resource, byte todefault, udat value) {
 	else
 	    fprintf(stdOUT, "\033[11;%hd]", value);
 	setFlush();
+	break;
+      case HW_MOUSEMOTIONEVENTS:
+	if (todefault)
+	    value = 0;
+	if (HW->MouseEvent == xterm_MouseEvent)
+	    xterm_EnableMouseMotionEvents(value);
+#ifdef CONF_HW_TTY_LINUX
+	else if (HW->MouseEvent == GPM_MouseEvent)
+	    GPM_EnableMouseMotionEvents(value);
+#endif
 	break;
       default:
 	break;

@@ -2,7 +2,7 @@
 Twin - a Textmode WINdow environment, by Massimiliano Ghilardi
 --------------------------------------------------------------
 
-Version 0.3.8
+Version 0.3.9
 
 Twin is a windowing environment with mouse support, window manager,
 terminal emulator and networked clients, all inside a text display.
@@ -15,7 +15,7 @@ It supports a variety of displays:
 * twdisplay, a general network-transparent display client, used
   to attach/detach more displays on-the-fly.
 
-Currently, twin is tested on Linux (i386, PowerPC) and on FreeBSD.
+Currently, twin is tested on Linux (i386, PowerPC, Alpha) and on FreeBSD.
 I had yet no chance to seriously test it on other systems.
    
 --------------------------------------------------------------

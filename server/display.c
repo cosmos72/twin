@@ -35,6 +35,7 @@
 
 #include "Tw/Tw.h"
 #include "Tw/Twerrno.h"
+#include "Tw/Twstat.h"
 
 /* HW specific headers */
 
@@ -110,6 +111,7 @@ static fd_set save_rfds, save_wfds;
 static int max_fds;
 
 static tmsgport TMsgPort = NOID, THelper = NOID;
+static byte MouseMotionN; /* non-zero to report also mouse motion events */
 
 int (*OverrideSelect)(int n, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *timeout) = select;
 
@@ -381,6 +383,7 @@ static struct s_fn_display_hw _FnDisplayHW = {
 	(void *)NoOp, /* InsertDisplayHW */
 	(void *)NoOp, /* RemoveDisplayHW */
 	(void *)NoOp, /* DeleteDisplayHW */
+	(void *)NoOp, /* ChangeFieldDisplayHW */
 	NULL,	      /* Fn_Obj */
 	InitDisplayHW,
 	QuitDisplayHW
@@ -823,6 +826,8 @@ static void HandleMsg(tmsg Msg) {
 	    HW->Beep();
 	    break;
 	  case TW_DPY_Configure:
+	    if (EventD->X == HW_MOUSEMOTIONEVENTS)
+		MouseMotionN = EventD->Y > 0;
 	    HW->Configure(EventD->X, EventD->Y == -1, EventD->Y);
 	    break;
 	  case TW_DPY_SetPalette:
@@ -946,28 +951,31 @@ byte MouseEventCommon(dat x, dat y, dat dx, dat dy, udat Buttons) {
     
     OldState->keys=Buttons;
     
-    if (Buttons != OldButtons || (OldButtons && (x != prev_x || y != prev_y))) {
+    if (Buttons != OldButtons || ((MouseMotionN || OldButtons) && (x != prev_x || y != prev_y))) {
 	
-	if (OldButtons && (x != prev_x || y != prev_y)) {
-	    if (!StdAddEventMouse(TW_MSG_WINDOW_MOUSE, DRAG_MOUSE | OldButtons, x, y))
+	if (MouseMotionN && !OldButtons && (x != prev_x || y != prev_y)) {
+	    if (!StdAddEventMouse(TW_MSG_WIDGET_MOUSE, MOTION_MOUSE, x, y))
+		ret = FALSE;
+	} else if (OldButtons && (x != prev_x || y != prev_y)) {
+	    if (!StdAddEventMouse(TW_MSG_WIDGET_MOUSE, DRAG_MOUSE | OldButtons, x, y))
 		ret = FALSE;
 	}
 	if ((Buttons & HOLD_LEFT) != (OldButtons & HOLD_LEFT)) {
 	    result = (Buttons & HOLD_LEFT ? DOWN_LEFT : RELEASE_LEFT) | (OldButtons &= ~HOLD_LEFT);
 	    OldButtons |= Buttons & HOLD_LEFT;
-	    if (!StdAddEventMouse(TW_MSG_WINDOW_MOUSE, result, x, y))
+	    if (!StdAddEventMouse(TW_MSG_WIDGET_MOUSE, result, x, y))
 		ret = FALSE;
 	}
 	if ((Buttons & HOLD_MIDDLE) != (OldButtons & HOLD_MIDDLE)) {
 	    result = (Buttons & HOLD_MIDDLE ? DOWN_MIDDLE : RELEASE_MIDDLE) | (OldButtons &= ~HOLD_MIDDLE);
 	    OldButtons |= Buttons & HOLD_MIDDLE;
-	    if (!StdAddEventMouse(TW_MSG_WINDOW_MOUSE, result, x, y))
+	    if (!StdAddEventMouse(TW_MSG_WIDGET_MOUSE, result, x, y))
 		ret = FALSE;
 	}
 	if ((Buttons & HOLD_RIGHT) != (OldButtons & HOLD_RIGHT)) {
 	    result = (Buttons & HOLD_RIGHT ? DOWN_RIGHT : RELEASE_RIGHT) | (OldButtons &= ~HOLD_RIGHT);
 	    OldButtons |= Buttons & HOLD_RIGHT;
-	    if (!StdAddEventMouse(TW_MSG_WINDOW_MOUSE, result, x, y))
+	    if (!StdAddEventMouse(TW_MSG_WIDGET_MOUSE, result, x, y))
 		ret = FALSE;
 	}
     }
@@ -981,7 +989,7 @@ byte KeyboardEventCommon(udat Code, udat ShiftFlags, udat Len, CONST byte *Seq) 
     if (HW->FlagsHW & FlHWNoInput)
 	return TRUE;
 
-    if ((Msg=TwCreateMsg(TW_MSG_WINDOW_KEY, Len + sizeof(event_keyboard)))) {
+    if ((Msg=TwCreateMsg(TW_MSG_WIDGET_KEY, Len + sizeof(event_keyboard)))) {
 	Event = &Msg->Event.EventKeyboard;
 	    
 	Event->Code = Code;
@@ -1153,7 +1161,9 @@ static byte VersionsMatch(byte force) {
     }
     return TRUE;
 }
-    
+
+TW_DECL_MAGIC(display_magic);
+
 int main(int argc, char *argv[]) {
     byte flags = TW_ATTACH_HW_REDIRECT, force = 0;
     byte *dpy = NULL, *arg = NULL, *tty = ttyname(0);
@@ -1265,7 +1275,7 @@ int main(int argc, char *argv[]) {
     TwConfigMalloc(AllocMem, ReAllocMem, FreeMem);
 #endif
 
-    if (TwOpen(TWDisplay)) do {
+    if (TwCheckMagic(display_magic) && TwOpen(TWDisplay)) do {
 	byte *buf;
 	
 	if (!VersionsMatch(force)) {

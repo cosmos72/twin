@@ -306,7 +306,9 @@ static ldat FreeButtonPos(ldat n, ldat lr) {
 
 static byte ImmButton(ldat n, str shape, ldat lr, ldat flag, ldat pos) {
     if (n >= 0 && n < BUTTON_MAX && strlen(shape) >= 2) {
-	CopyMem(shape, All->ButtonVec[n].shape, 2);
+	/* sizeof(hwfont) != sizeof(byte) */
+	All->ButtonVec[n].shape[0] = shape[0];
+	All->ButtonVec[n].shape[1] = shape[1];
 	if (lr == FL_RIGHT)
 	    pos = -pos;
 	if (flag == '+' || flag == '-')
@@ -360,7 +362,7 @@ static byte ImmGlobalFlags(node l) {
     
     while (l) {
 	switch (l->id) {
-	  case ALTFONT:      i = SETUP_ALTFONT;      break;
+	  case ALTFONT:      /*ignored for compatibility*/ return TRUE;
 	  case ALWAYSCURSOR: i = SETUP_ALWAYSCURSOR; break;
 	  case BLINK:        i = SETUP_BLINK;        break;
 	  case EDGESCROLL:   i = SETUP_EDGESCROLL;   break;

@@ -1,5 +1,30 @@
 
+
+
 #ifdef CONF_HW_TTY_TERMCAP
+
+/* this is the usual mess of ad-hoc includes and defines... */
+
+# if defined (__sun__) || defined(__SVR4)
+
+   /*  curses interfaces (emulated) to the termcap library (Solaris7, bwitt) */
+#  undef TRUE
+#  undef FALSE
+#  include <curses.h>
+#  include <termio.h>         /* Solaris7: needed "typedef struct sgttyb SGTTY" */
+#  include <term.h>
+
+#  ifdef __sun__
+   /*  Some one forget a few prototypes!  ugh  (Solaris7, bwitt) */
+   extern char * tgoto(), * tgetstr();
+#  endif
+
+# else /* rest of the world */
+
+#  include <termcap.h>
+
+# endif         
+
 
 static void termcap_QuitVideo(void);
 static void termcap_ShowMouse(void);
@@ -231,10 +256,11 @@ INLINE void termcap_SetColor(hwcol col) {
 }
 
 INLINE void termcap_Mogrify(dat x, dat y, uldat len) {
+    uldat delta = x + (uldat)y * DisplayWidth;
     hwattr *V, *oV;
     hwcol col;
-    byte c, sending = FALSE;
-    uldat delta = x + (uldat)y * DisplayWidth;
+    hwfont c;
+    byte sending = FALSE;
     
     if (!wrapglitch && delta + len >= (uldat)DisplayWidth * DisplayHeight)
 	len = (uldat)DisplayWidth * DisplayHeight - delta - 1;
@@ -253,17 +279,25 @@ INLINE void termcap_Mogrify(dat x, dat y, uldat len) {
 		termcap_SetColor(col);
 	
 	    c = HWFONT(*V);
-	    if (c < 32 || c == 127 || c == 128+27)
-		putc(' ', stdOUT); /* can't display it */
-	    else
-		putc(c, stdOUT);
+#ifdef CONF__UNICODE
+	    c = tty_UTF_16_to_charset(c);
+#endif
+	    if (c < 32 || c == 127 || c == 128+27) {
+		/* can't display it */
+#ifdef CONF__UNICODE
+		c = T_CAT(Tutf_IBM437_to_,T_MAP(US_ASCII))[c];
+#else
+		c = ' ';
+#endif
+	    }
+	    putc((char)c, stdOUT);
 	} else
 	    sending = FALSE;
     }
 }
 
 INLINE void termcap_SingleMogrify(dat x, dat y, hwattr V) {
-    byte c;
+    hwfont c;
     
     if (!wrapglitch && x == DisplayWidth-1 && y == DisplayHeight-1)
 	return;
@@ -274,20 +308,28 @@ INLINE void termcap_SingleMogrify(dat x, dat y, hwattr V) {
 	termcap_SetColor(HWCOL(V));
 	
     c = HWFONT(V);
-    if (c < 32 || c == 128+27)
-	putc(' ', stdOUT); /* can't display it */
-    else
-	putc(c, stdOUT);
+#ifdef CONF__UNICODE
+    c = tty_UTF_16_to_charset(c);
+#endif
+    if (c < 32 || c == 127 || c == 128+27) {
+	/* can't display it */
+#ifdef CONF__UNICODE
+	c = T_CAT(Tutf_IBM437_to_,T_MAP(US_ASCII))[c];
+#else
+	c = ' ';
+#endif
+    }
+    putc((char)c, stdOUT);
 }
 
 /* HideMouse and ShowMouse depend on Video setup, not on Mouse.
  * so we have vcsa_ and termcap_ versions, not GPM_ ones... */
 static void termcap_ShowMouse(void) {
     uldat pos = (HW->Last_x = HW->MouseState.x) + (HW->Last_y = HW->MouseState.y) * DisplayWidth;
-    hwattr h  = Video[pos];
-    hwcol c = ~HWCOL(h) ^ COL(HIGH,HIGH);
+    hwattr h  = Video[pos], 
+	c = HWATTR_COLMASK(~h) ^ HWATTR(COL(HIGH,HIGH),0);
 
-    termcap_SingleMogrify(HW->MouseState.x, HW->MouseState.y, HWATTR( c, HWFONT(h)));
+    termcap_SingleMogrify(HW->MouseState.x, HW->MouseState.y, c | HWATTR_FONTMASK(h));
 
     /* force updating the cursor */
     HW->XY[0] = HW->XY[1] = -1;
@@ -344,6 +386,17 @@ static void termcap_Configure(udat resource, byte todefault, udat value) {
 	break;
       case HW_BELLPITCH:
       case HW_BELLDURATION:
+	break;
+      case HW_MOUSEMOTIONEVENTS:
+	if (todefault)
+	    value = 0;
+	if (HW->MouseEvent == xterm_MouseEvent)
+	    xterm_EnableMouseMotionEvents(value);
+#ifdef CONF_HW_TTY_LINUX
+	else if (HW->MouseEvent == GPM_MouseEvent)
+	    GPM_EnableMouseMotionEvents(value);
+#endif
+	break;
       default:
 	break;
     }

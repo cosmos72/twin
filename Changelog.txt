@@ -1,4 +1,60 @@
+From 0.3.8 to 0.3.9: (Massimiliano Ghilardi, 25 Jun 2001)
+	* Added Unicode support.
+	* New libTutf library to convert between Unicode and other charsets.
+	* Added `charset=' option to -hw=X11 and -hw=tty.
+	* Bumped libTw major version to 3 due to the following changes:
+	  * Added prototype checking to Tw_FindFunction.
+	  * Changed events from Window-centric to Widget-centric, to
+	    accommodate for corresponding changes in the server.
+	  * Changed prototype of some crucial functions: Tw_CreateMenu,
+	    Tw_CreateWidget, Tw_CreateGadget, Tw_CreateWindow, Tw_CreateGroup.
+	* Updated all clients to libTw.so.3 API.
+	* Fixed libTw segfaults upon receiving huge replies from server.
+	* Fixed a lot of libTw pointer alignment problems on non-i386
+	  architectures. Some unaligned pointer accesses still probably exist.
+	* Added libTw sanity checks to avoid compiling a client against a libTw
+	  with certain data sizes and running it with another libTw with
+	  incompatible data sizes (i.e. if you changed Unicode support).
+	* Added Tw_*Stat() functions to retrieve information on libTw objects.
+	  Also added `twlsobj' client to demonstrate Tw_*Stat() usage.
+	* Added mouse motion reporting (with no buttons pressed).
+	  To enable it from a libTw client, set the TW_WINDOW_WANT_MOUSE_MOTION
+	  flag in twidget->Attrib.
+	  To enable it from within a terminal, send "\033[?999h",
+	  to disable send "\033[?999l" (or "\033[?9h" to return to `normal'
+	  mouse reporting).
+	* Added cut-n-paste on "Execute" window.
+	* Added keyboard shortcuts to navigate through gadgets on
+	  WINDOW_AUTO_KEYS windows: use Arrows, TAB, Return and Escape.
+	* Added dummy support for xterm's change icon title escape sequence.
+	* Started writing twdialog (UNFINISHED).
+	* Fixed shadow drawing errors in mapping/unmapping rolled up windows.
+	* Fixed scrolling and resizing of top window not to corrupt menu bar.
+	* Fixed window mouse selection and cursor visibility when menubar
+	  is not on top of display.
+	* Fixed two stupid server bugs introduced in 0.3.8 that made
+	  twsysmon and twcat non working.
+	* Fixed off-by-two resize errors with -hw=twin and in twterm client,
+	  caused by 0.3.8 change to use given size as window INTERIOR size,
+	  not considering the border.
+	* Fixed error recovery on parsing errors in ~/.twinrc file.
+	* Started porting to SunOS (mostly contributed by Brian Witt),
+	  and substituted the bash/sed/grep script 'MkDep' with a pure
+	  C implementation (grabbed and adapted from Linux kernel sources).
+	* libTw optimization: AVL (Adelson-Velskii and Landis) trees used
+	  to speed up listener search (grabbed from Linux kernel sources too).
+	* Rewrote server-side implementation of libTw using `m4' preprocessor.
+	  Design is now more complex, but resulting code is less than half of
+	  the original size if CONF_SOCKET_ALIEN is enabled.
+	* Cleaned up Tw/Tw++.h wrapper: (tlistener) type is now opaque,
+	  so that C++ clients do not depend on libTw internals.
+	* Decided and implemented sub-windows focus policy (sub-windows are
+	  windows contained or `mapped' inside other windows).
+	* Added support for placing cursor in a sub-window.
+	* Documented 0.3.8 last minute fix in Changelog (read below).
+	
 From 0.3.7 to 0.3.8: (Massimiliano Ghilardi, 08 Mar 2001)
+	* Last minute fix: added InitAlloc() call to twdisplay.
 	* Added printing of window size on menu during Interactive Resize.
 	* Fixed ~/.twinrc "Resize" command to work correctly when given
 	  absolute numbers (i.e. "Resize 92 31" results in a 92x31 window).

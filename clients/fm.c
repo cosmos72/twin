@@ -20,14 +20,16 @@ static tmsgport FM_MsgPort;
 static tmenu FM_Menu;
 static tgadget FM_Main;
 
+TW_DECL_MAGIC(fm_magic);
+
 static byte InitFM(void) {
-    if (!TwOpen(NULL))
+    if (!TwCheckMagic(fm_magic) || !TwOpen(NULL))
 	return FALSE;
     
     if ((FM_MsgPort=TwCreateMsgPort
 	 (12, "FM Tester", (time_t)0, (frac_t)0, (byte)0)) &&
-	(FM_Menu=TwCreateMenu
-	 (FM_MsgPort, COL(BLACK,WHITE), COL(BLACK,GREEN), COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
+	(FM_Menu=TwCreateMenu(
+	  COL(BLACK,WHITE), COL(BLACK,GREEN), COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
 	  COL(RED,WHITE), COL(RED,GREEN), (byte)0)) &&
 	TwItem4MenuCommon(FM_Menu)) {
 	

@@ -4,13 +4,13 @@
 typedef struct wm_ctx wm_ctx;
 
 struct wm_ctx {
-    window W;
+    window W;  /* top level window user is interacting with */
     screen Screen;
     menu Menu;
     menuitem Item;
-    gadget G;
+    widget DW; /* deepest widget user is interacting with */
     udat Type; /* Msg->Type: MSG_* */
-    byte Pos; /* POS_* */
+    byte Pos;  /* POS_* relative to (W) */
     byte ByMouse;
     udat Code; /* keyboard key / mouse buttons pressed */
     udat ShiftFlags;

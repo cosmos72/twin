@@ -5,12 +5,12 @@
  *
  */
 
-#ifndef _TWCONFIG_H
-#define _TWCONFIG_H
+#ifndef _TW_CONFIG_H
+#define _TW_CONFIG_H
 
 #ifndef CONF_SOCKET
 # undef CONF_HW_TWIN
 # undef CONF_HW_DISPLAY
 #endif
 
-#endif /* _TWCONFIG_H */
+#endif /* _TW_CONFIG_H */

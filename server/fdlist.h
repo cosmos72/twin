@@ -8,14 +8,17 @@
 #ifndef _TW_FDLIST_H
 #define _TW_FDLIST_H
 
+typedef void (*handler_io_s)(int, uldat);
+typedef void (*handler_io_d)(int, obj);
+
 typedef struct fdlist fdlist;	/* for compressed sockets, two fdlist's are used: */
 struct fdlist {			/* the uncompressed one has                       */
     int Fd;                     /* Fd == GZFD and pairSlot == the compressed one; */
     uldat pairSlot;		/* the compressed has                             */
     obj HandlerData;		/* Fd == real fd and pairSlot == the uncompressed;*/
     union {
-	void (*S)(int Fd, uldat Slot);
-	void (*D)(int Fd, obj  Data);
+	handler_io_s S;
+	handler_io_d D;
     } HandlerIO;
     msgport MsgPort;		/* other sockets just have                        */
     byte *WQueue;		/* Fd == real fd and pairSlot == NOSLOT;          */
@@ -33,33 +36,21 @@ struct fdlist {			/* the uncompressed one has                       */
      * uncompressed slot: in the compressed slot they are used to compress outgoing data,
      * while in the uncompressed one they are used to uncompress incoming data.
      */
-    byte AlienMagic[8];			/* sizes and endianity used by slot
-					 * instead of native sizes and endianity */
+    byte AlienMagic[9 /*TWS_highest*/];/* sizes and endianity used by slot
+					* instead of native sizes and endianity */
     byte extern_couldntwrite;
 };
 
-enum Alien_types {
-	Alien_xendian = 0,
-	/* the following are hardcoded in socket.c, libTw.c and libTw ABI, don't change! */
-	Alien_byte = 1, Alien_num = 1,
-	Alien_dat  = 2, Alien_udat = 2,
-	Alien_ldat = 3, Alien_uldat = 3,
-	Alien_hwcol = 4,
-	Alien_time_t = 5, Alien_frac_t = 6,
-	/* this is internal to socketalien.c */
-	Alien_hwattr = 7
-};
-
 enum Alien_magics {
-	/* these are possible values of AlienMagic[Alien_xendian]  */
+	/* these are possible values of AlienXendian(slot) */
 	MagicUnknown = 0, MagicNative = 1,
 	MagicAlien = 2, MagicAlienXendian = 3
 };
 
 #define AlienMagic(slot)	(FdList[slot].AlienMagic)
 
-#define AlienXendian(slot)	AlienMagic(slot)[Alien_xendian]
-#define AlienSizeof(type, slot) AlienMagic(slot)[Alien_##type]
+#define AlienXendian(slot)	AlienMagic(slot)[TWS_void /*0*/]
+#define AlienSizeof(type, slot) AlienMagic(slot)[TWS_##type]
 
 
 

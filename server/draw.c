@@ -19,6 +19,10 @@
 #include "util.h"
 #include "draw.h"
 
+#ifdef CONF__UNICODE
+# include "Tutf/Tutf.h"
+#endif
+
 INLINE hwcol DoShadowColor(hwcol Color, byte Fg, byte Bg) {
     return
 	(
@@ -35,11 +39,11 @@ INLINE hwcol DoShadowColor(hwcol Color, byte Fg, byte Bg) {
  * warning: DrawMenu() can cheat and give us a user Menu
  * while MenuItem is from All->CommonMenu
  */
-void FindFontMenuItem(menu Menu, menuitem MenuItem, dat i, byte Select, byte *PtrFont, hwcol *PtrColor) {
+void FindFontMenuItem(menu Menu, menuitem MenuItem, dat i, byte Select, hwfont *PtrFont, hwcol *PtrColor) {
     hwcol Color;
     byte ShortCutFound;
 
-    if (Menu && MenuItem && i >= MenuItem->Left && i < MenuItem->Left + MenuItem->Len) {
+    if (Menu && MenuItem && i >= MenuItem->Left && i < MenuItem->Left + MenuItem->NameLen) {
 	ShortCutFound = i==MenuItem->Left+MenuItem->ShortCut;
 	if (MenuItem->FlagActive) {
 	    if (ShortCutFound) {
@@ -56,12 +60,16 @@ void FindFontMenuItem(menu Menu, menuitem MenuItem, dat i, byte Select, byte *Pt
 	else
 	    Color=Menu->ColDisabled;
 
+#ifdef CONF__UNICODE
+	*PtrFont=Tutf_IBM437_to_UTF_16[MenuItem->Name[i - MenuItem->Left]];
+#else
 	*PtrFont=MenuItem->Name[i - MenuItem->Left];
+#endif
 	*PtrColor=Color;
     }
 }
 
-void FindFontInfo(menu Menu, dat i, byte Select, byte *PtrFont, hwcol *PtrColor) {
+void FindFontInfo(menu Menu, dat i, byte Select, hwfont *PtrFont, hwcol *PtrColor) {
     row Info;
     hwcol Color;
     
@@ -75,6 +83,7 @@ void FindFontInfo(menu Menu, dat i, byte Select, byte *PtrFont, hwcol *PtrColor)
 	else
 	    Color = Info->ColText[i];
 	
+	/* they are both hwfont, no translation required */
 	*PtrFont=Info->Text[i];
 	*PtrColor=Color;
     }
@@ -82,22 +91,21 @@ void FindFontInfo(menu Menu, dat i, byte Select, byte *PtrFont, hwcol *PtrColor)
 
 
 void DrawDesktop(screen Screen, dat X1, dat Y1, dat X2, dat Y2, byte Shaded) {
-    hwattr *Attr, attr = HWATTR(COL(WHITE,BLACK),' ');
+    hwattr *Attr, attr;
+    hwcol col;
     dat DWidth, DHeight;
     dat YLimit = -1;
+    dat BgWidth, BgHeight;
     
     if (QueuedDrawArea2FullScreen || X1>X2 || Y1>Y2 || X2<0 || Y2<0)
 	return;
     
-    if (Screen) {
-	Attr=Screen->Bg;
-	attr=*Attr;
-	YLimit=Screen->YLimit;
-    }
-
     DWidth=All->DisplayWidth;
     DHeight=All->DisplayHeight;
     
+    if (Screen)
+	YLimit = Screen->YLimit;
+
     if (X1>=DWidth || Y1>=DHeight || Y2<YLimit)
 	return;
 
@@ -105,40 +113,57 @@ void DrawDesktop(screen Screen, dat X1, dat Y1, dat X2, dat Y2, byte Shaded) {
     Y1 = Max2(Y1, YLimit+1);
     X2 = Min2(X2, DWidth-1);
     Y2 = Min2(Y2, DHeight-1);
-
-    if (Screen && (Screen->BgWidth > 1 || Screen->BgHeight > 1)) {
+    
+    if (Screen && S_USE(Screen, USEBG)) {
+	Attr = Screen->USE.B.Bg;
+	BgWidth = Screen->USE.B.BgWidth;
+	BgHeight = Screen->USE.B.BgHeight;
+    }
+    
+    if (Screen && S_USE(Screen, USEBG) && (BgWidth > 1 || BgHeight > 1)) {
 	/* use tiling... easier than other solutions */
-	ldat X, Y, x, max = Screen->BgWidth * Screen->BgHeight;
-	ldat y = ((ldat)Y1 + Screen->YLogic - Screen->YLimit) % Screen->BgHeight;
-	if (y < 0) y += Screen->BgHeight;
-	y *= Screen->BgWidth;
+	ldat X, Y, x, max = BgWidth * BgHeight;
+	ldat y = ((ldat)Y1 + Screen->YLogic - Screen->YLimit) % BgHeight;
+	if (y < 0) y += BgHeight;
+	y *= BgWidth;
 	
 	DirtyVideo(X1, Y1, X2, Y2);
 	
-	for (; Y1 <= Y2; Y1++, y+=Screen->BgWidth) {
+	for (; Y1 <= Y2; Y1++, y+=BgWidth) {
 	    Y = Y1 * DWidth;
 
 	    if (y >= max) y -= max;
-	    x = ((ldat)X1 + Screen->XLogic) % Screen->BgWidth;
-	    if (x < 0) x += Screen->BgWidth;
+	    x = ((ldat)X1 + Screen->XLogic) % BgWidth;
+	    if (x < 0) x += BgWidth;
 		
 	    if (Shaded) {
 		for (X = X1; X <= X2; X++, x++) {
-		    if (x >= Screen->BgWidth) x -= Screen->BgWidth;
+		    if (x >= BgWidth) x -= BgWidth;
 		    
-		    attr=Attr[x + y];
-		    Video[X + Y] = HWATTR(DoShadowColor(HWCOL(attr), Shaded, Shaded), HWFONT(attr));
+		    attr = Attr[x + y];
+		    col = DoShadowColor(HWCOL(attr), Shaded, Shaded);
+		    Video[X + Y] = HWATTR(col, HWFONT(attr));
 		}
 	    } else {
 		for (X = X1; X <= X2; X++, x++) {
-		    if (x >= Screen->BgWidth) x -= Screen->BgWidth;
+		    if (x >= BgWidth) x -= BgWidth;
 		    Video[X + Y] = Attr[x + y];
 		}
 	    }
 	}
     } else {
-	if (Shaded)
-	    attr=HWATTR(DoShadowColor(HWCOL(attr), Shaded, Shaded), HWFONT(attr));
+	if (Screen) {
+	    if (S_USE(Screen, USEBG))
+		attr = *Screen->USE.B.Bg;
+	    else
+		attr = Screen->USE_Fill;
+	} else
+	    attr = HWATTR(COL(WHITE,BLACK),' ');
+
+	if (Shaded) {
+	    col = DoShadowColor(HWCOL(attr), Shaded, Shaded);
+	    attr = HWATTR(col, 0) | HWATTR_FONTMASK(attr);
+	}
 	FillVideo(X1, Y1, X2, Y2, attr);
     }
 }
@@ -146,10 +171,10 @@ void DrawDesktop(screen Screen, dat X1, dat Y1, dat X2, dat Y2, byte Shaded) {
 
 /*
  * initialize a draw_ctx given widget-relative coords
- * (0,0 is the window top-left corner)
+ * (0,0 is the widget top-left corner)
  * return FALSE if given window area is not visible
  */
-static byte InitDrawCtx(widget W, dat X1, dat Y1, dat X2, dat Y2, byte Shaded, draw_ctx *D) {
+byte InitDrawCtx(widget W, dat X1, dat Y1, dat X2, dat Y2, byte Shaded, draw_ctx *D) {
     ldat XL, YL, height;
     uldat Cycle = 0;
     widget C = NULL, CC = NULL;
@@ -169,7 +194,10 @@ static byte InitDrawCtx(widget W, dat X1, dat Y1, dat X2, dat Y2, byte Shaded, d
     D->X2  = X2;
     
     D->Up  = 0;
-    D->Dwn = W->YWidth - 1;
+    if (IS_WINDOW(W) && (((window)W)->Attrib & WINDOW_ROLLED_UP))
+	D->Dwn = 0;
+    else
+	D->Dwn = W->YWidth - 1;
     D->Y1  = Y1;
     D->Y2  = Y2;
 
@@ -187,7 +215,7 @@ static byte InitDrawCtx(widget W, dat X1, dat Y1, dat X2, dat Y2, byte Shaded, d
 
 	    if (IS_SCREEN(W))
 		HasTopBar = 1;
-	    else if (IS_WINDOW(W) && !(((window)W)->Flags & WINFL_BORDERLESS))
+	    else if (IS_WINDOW(W) && !(((window)W)->Flags & WINDOWFL_BORDERLESS))
 		/* count border thickness */
 		HasBorder = 1;
 	} else
@@ -234,7 +262,7 @@ static byte InitDrawCtx(widget W, dat X1, dat Y1, dat X2, dat Y2, byte Shaded, d
  * absolute display coords. (0,0 is the display top-left corner)
  * return FALSE if given area is not visible 
  */
-static byte InitAbsoluteDrawCtx(widget W, dat X1, dat Y1, dat X2, dat Y2, byte Shaded, draw_ctx *D) {
+byte InitAbsoluteDrawCtx(widget W, dat X1, dat Y1, dat X2, dat Y2, byte Shaded, draw_ctx *D) {
 
     if (InitDrawCtx(W, 0, 0, MAXDAT, MAXDAT, Shaded, D)) {
 	
@@ -250,6 +278,47 @@ static byte InitAbsoluteDrawCtx(widget W, dat X1, dat Y1, dat X2, dat Y2, byte S
 }
 
 /*
+ * translate X,Y coords from `relative to W1' to `relative to W2'.
+ * If W1 is NULL X,Y coords are taken as `absolute'.
+ * If W2 is NULL X,Y coords are translated to `absolute'.
+ * *Inside will be == FALSE if X,Y is outside W2,
+ * == TRUE if inside, == TRUE+TRUE if on the border.
+ */
+void TranslateCoordsWidget(widget W1, widget W2, dat *X, dat *Y, byte *Inside) {
+    draw_ctx D;
+    if (W1 || W2) {
+	if (W1) {
+	    InitDrawCtx(W1, 0, 0, MAXDAT, MAXDAT, FALSE, &D);
+	    if (IS_WINDOW(W1) && !(((window)W1)->Flags & WINDOWFL_BORDERLESS)) {
+		(*X)++; (*Y)++;
+	    }
+	    *X += D.Left;
+	    *Y += D.Up;
+	}
+	if (W2) {
+	    InitDrawCtx(W2, 0, 0, MAXDAT, MAXDAT, FALSE, &D);
+	    if (Inside) {
+		if (*X >= D.Left && *X <= D.Rgt && *Y >= D.Up && *Y <= D.Dwn) {
+		    *Inside = TRUE;
+	    
+		    if (IS_WINDOW(W2) && !(((window)W2)->Flags & WINDOWFL_BORDERLESS) &&
+			(*X == D.Left || *X == D.Rgt || *Y == D.Up || *Y == D.Dwn))
+		
+			*Inside += TRUE;
+		} else
+		    *Inside = FALSE;
+	    }
+	    if (IS_WINDOW(W2) && !(((window)W2)->Flags & WINDOWFL_BORDERLESS))
+		(*X)--; (*Y)--;
+	    *X -= D.Left;
+	    *Y -= D.Up;
+	}
+    } else
+	*Inside = FALSE;
+}
+
+
+/*
  * find the widget at given coordinates inside Parent
  * --- (0,0) is the Parent top-left corner
  */
@@ -258,7 +327,7 @@ widget FindWidgetAt(widget Parent, dat X, dat Y) {
     ldat i, j;
     dat height;
     
-    if (IS_WINDOW(Parent) && !(((window)Parent)->Flags & WINFL_BORDERLESS))
+    if (IS_WINDOW(Parent) && !(((window)Parent)->Flags & WINDOWFL_BORDERLESS))
 	X--, Y--;
     else if (IS_SCREEN(Parent) && Y <= 0) {
 	/* got nothing, or the menu... */
@@ -281,9 +350,169 @@ widget FindWidgetAt(widget Parent, dat X, dat Y) {
     return (widget)0;
 }
 
+
+widget RecursiveFindWidgetAt(widget Parent, dat X, dat Y) {
+    widget W;
+    byte HasBorder;
+    
+    while (Parent) {
+	HasBorder = IS_WINDOW(Parent) && !(((window)Parent)->Flags & WINDOWFL_BORDERLESS);
+
+	if (X >= HasBorder && Y >= HasBorder && X < Parent->XWidth - HasBorder && Y < Parent->YWidth - HasBorder &&
+	    (W = Act(FindWidgetAt,Parent)(Parent, X, Y))) {
+
+	    X += Parent->XLogic - W->Left - HasBorder;
+	    Y += Parent->YLogic - W->Up - HasBorder;
+	    Parent = W;
+	} else
+	    break;
+    }
+    return Parent;
+}
+
+
+
 void DrawSelfWidget(draw_ctx *D) {
-    if (!QueuedDrawArea2FullScreen) {
-	FillVideo(D->X1, D->Y1, D->X2, D->Y2, D->TopW->Fill);
+    widget W;
+    
+    if (QueuedDrawArea2FullScreen)
+	return;
+    
+    W = D->TopW;
+
+    if (w_USE(W, USEEXPOSE)) {
+	CONST byte *Text = W->USE.E.Text;
+	CONST hwfont *HWFont = W->USE.E.HWFont;
+	CONST hwattr *HWAttr = W->USE.E.HWAttr;
+	ldat Left, Up, Rgt, Dwn;
+	ldat v;
+	dat X1, X2, Y1, Y2;
+	ldat _X1, _X2, _Y1, _Y2;
+	dat DWidth, i, j;
+	hwcol Color;
+	byte Shaded;
+
+	Left = D->Left; Up = D->Up;
+	Rgt = D->Rgt; Dwn = D->Dwn;
+	X1 = D->X1; Y1 = D->Y1;
+	X2 = D->X2; Y2 = D->Y2;
+	Shaded = D->Shaded;
+	DWidth = D->DWidth;
+
+#if 0
+	/*
+	 * this would suppress EXPOSE messages during resize (good)
+	 * but also clears the whole widget during non-top resize (bad)
+	 */
+	if ((All->State & STATE_ANY) == STATE_RESIZE && (widget)All->FirstScreen->ClickWindow == W) {
+	    /* user is interactively resizing this window... pad with spaces */
+	    FillVideo(X1, Y1, X2, Y2, W->USE_Fill);
+	    return;
+	}
+#endif
+
+#define Pitch (W->USE.E.X2 - W->USE.E.X1)
+	
+	if (Text || HWFont || HWAttr) {
+	    _X1 = Max2(W->USE.E.X1, 0);
+	    _X2 = Min2(W->USE.E.X2, Rgt - Left);
+	    _Y1 = Max2(W->USE.E.Y1, 0);
+	    _Y2 = Min2(W->USE.E.Y2, Dwn - Up);
+	    
+	    if (_X1 > _X2 || _Y1 > _Y2) {
+		/* no valid ->USE.E, fill with spaces */
+		FillVideo(X1, Y1, X2, Y2, W->USE_Fill);
+		return;
+	    }
+
+	    /*
+	     * check if the ->USE.E is smaller than the widget size...
+	     * pad with SPACEs as needed
+	     */
+	    if (Y1 < _Y1) {
+		FillVideo(X1, Y1, X2, _Y1 - 1, W->USE_Fill);
+		Y1 = _Y1;
+	    }
+	    if (Y2 > _Y2) {
+		FillVideo(X1, _Y2 + 1, X2, Y2, W->USE_Fill);
+		Y2 = _Y2;
+	    }
+	    if (X1 < _X1) {
+		FillVideo(X1, Y1, _X1 - 1, Y2, W->USE_Fill);
+		X1 = _X1;
+	    }
+	    if (X2 > _X2) {
+		FillVideo(_X2 + 1, Y1, X2, Y2, W->USE_Fill);
+		X2 = _X2;
+	    }
+	    
+	    if (Text) {
+		Color = HWCOL(W->USE_Fill);
+		if (Shaded)
+		    Color = DoShadowColor(Color, Shaded, Shaded);
+		Text += (Y1 - _Y1) * Pitch;
+		for (j=Y1; j<=Y2; j++) {
+		    Text += X1 - _X1;
+		    for (i=X1, v=0; i<=X2; i++, v++) {
+			Video[i+j*DWidth] = HWATTR(Color, Text[v]);
+			Text += Pitch;
+		    }
+		    Text += Pitch - (X1 - _X1);
+		}
+	    } else if (HWFont) {
+		Color = HWCOL(W->USE_Fill);
+		if (Shaded)
+		    Color = DoShadowColor(Color, Shaded, Shaded);
+		HWFont += (Y1 - _Y1) * Pitch;
+		for (j=Y1; j<=Y2; j++) {
+		    HWFont += X1 - _X1;
+		    for (i=X1, v=0; i<=X2; i++, v++) {
+			Video[i+j*DWidth] = HWATTR(Color, HWFont[v]);
+			HWFont += Pitch;
+		    }
+		    HWFont += Pitch - (X1 - _X1);
+		}
+	    } else if (HWAttr && !Shaded) {
+		HWAttr += X1 - _X1 + (Y1 - _Y1) * Pitch;
+		for (j=Y1; j<=Y2; j++) {
+		    CopyMem(HWAttr, &Video[j*DWidth+X1], sizeof(hwattr)*(X2-X1+1));
+		    HWAttr += Pitch;
+		}
+	    } else if (HWAttr) {
+		/* Shaded == TRUE */
+		HWAttr += (Y1 - _Y1) * Pitch;
+		for (j=Y1; j<=Y2; j++) {
+		    HWAttr += X1 - _X1;
+		    for (i=X1, v=0; i<=X2; i++, v++) {
+			Color = DoShadowColor(HWCOL(HWAttr[v]), Shaded, Shaded);
+			Video[i+j*DWidth] = HWATTR(Color, 0) | HWATTR_FONTMASK(HWAttr[v]);
+			HWAttr += Pitch;
+		    }
+		    HWAttr += Pitch - (X1 - _X1);
+		}
+	    } else {
+		/* ask the client to draw */
+		msg Msg;
+		event_widget *EventW;
+
+		if ((Msg=Do(Create,Msg)(FnMsg, MSG_WIDGET_CHANGE, sizeof(event_widget)))) {
+		    EventW = &Msg->Event.EventWidget;
+		    EventW->W      = W;
+		    EventW->Code   = MSG_WIDGET_EXPOSE;
+		    EventW->Flags  = Shaded ? MSG_WIDGETFL_SHADED : 0;
+		    EventW->XWidth = X2 - X1 + 1;
+		    EventW->YWidth = Y2 - Y1 + 1;
+		    EventW->X      = X1 - Left;
+		    EventW->Y      = Y1 - Up;
+		    SendMsg(W->Owner, Msg);
+		}
+	    }
+	}
+#undef Pitch
+	
+    } else {
+	
+	FillVideo(D->X1, D->Y1, D->X2, D->Y2, W->USE_Fill);
 	DirtyVideo(D->X1, D->Y1, D->X2, D->Y2);
     }
 }
@@ -291,58 +520,61 @@ void DrawSelfWidget(draw_ctx *D) {
 
 void DrawSelfGadget(draw_ctx *D) {
     gadget G;
-    widget Parent;
-    byte Font, Select, Disabled, Absent;
-    dat width, DWidth, i, i_min, i_max, j, j_min, j_max;
-    ldat Offset;
-    byte *Text, **GadgetText;
-    hwcol *ColText, **GadgetColor;
-    hwcol Color;
 
     if (QueuedDrawArea2FullScreen)
 	return;
     
     G = (gadget)D->TopW;
-    Parent = G->Parent;
-    Select = !!(G->Flags & GADGET_PRESSED);
-    Disabled = !!(G->Flags & GADGET_DISABLED);
-    Absent = !!(G->Flags & GADGET_USE_DEFCOL);
-	    
-    i_min = D->X1 - D->Left;
-    i_max = D->X2 - D->Left;
-	    
-    j_min = D->Y1 - D->Up;
-    j_max = D->Y2 - D->Up;
-
-    width = G->XWidth;
-    DWidth = D->DWidth;
     
-    Offset = D->Left + D->Up * DWidth;
-	    
-    GadgetText = G->Text;
-    GadgetColor = G->Color;
+    if (!G_USE(G, USETEXT)) {
+	G->Fn->Fn_Widget->DrawSelf(D);
+	return;
+    }
+    
+    {
+	widget Parent;
+	byte Select, Disabled, Absent;
+	dat width, DWidth, i, i_min, i_max, j, j_min, j_max;
+	ldat Offset;
+	hwfont Font, *Text, **GadgetText;
+	hwcol *ColText, **GadgetColor;
+	hwcol Color;
 
-    Text = Select
-	? Disabled && GadgetText[3]
-	? GadgetText[3]
-	: GadgetText[1]
-	? GadgetText[1]
-	: GadgetText[0]
-	: Disabled && GadgetText[2]
-	? GadgetText[2]
-	: GadgetText[0];
+	Parent = G->Parent;
+	Select = !!(G->Flags & GADGETFL_PRESSED);
+	Disabled = !!(G->Flags & GADGETFL_DISABLED);
+	Absent = !!(G->Flags & GADGETFL_TEXT_DEFCOL);
 	    
-    if (Absent) {
-	Color = Select
-	    ? Disabled
-	    ? G->ColSelectDisabled
-	    : G->ColSelect
-	    : Disabled
-	    ? G->ColDisabled
-	    : G->ColText;
-	Color = DoShadowColor(Color, D->Shaded, D->Shaded);
-    } else {
-	ColText = Select
+	i_min = D->X1 - D->Left;
+	i_max = D->X2 - D->Left;
+	    
+	j_min = D->Y1 - D->Up;
+	j_max = D->Y2 - D->Up;
+
+	width = G->XWidth;
+	DWidth = D->DWidth;
+    
+	Offset = D->Left + D->Up * DWidth;
+	    
+	GadgetText = G->USE.T.Text;
+	GadgetColor = G->USE.T.Color;
+
+	Text = Select
+	    ? Disabled && GadgetText[3]
+	    ? GadgetText[3]
+	    : GadgetText[1]
+	    ? GadgetText[1]
+	    : GadgetText[0]
+	    : Disabled && GadgetText[2]
+	    ? GadgetText[2]
+	    : GadgetText[0];
+	    
+	if (!Text)
+	    Font = ' ';
+	
+	ColText = Absent
+	    ? NULL
+	    : Select
 	    ? Disabled && GadgetColor[3]
 	    ? GadgetColor[3]
 	    : GadgetColor[1]
@@ -351,18 +583,31 @@ void DrawSelfGadget(draw_ctx *D) {
 	    : Disabled && GadgetColor[2]
 	    ? GadgetColor[2]
 	    : GadgetColor[0];
-    }
-	    
-    for (j=j_min; j<=j_max; j++) {
-	for (i=i_min; i<=i_max; i++) {
-	    Font=Text[i + j * width];
-	    if (!Absent)
-		Color = DoShadowColor(ColText[i + j * width], D->Shaded, D->Shaded);
-	    Video[i + j * DWidth + Offset] =
-		HWATTR(Color, Font);
+	
+	if (!ColText) {
+	    Absent = TRUE;
+	    Color = Select
+	    ? Disabled
+	    ? G->ColSelectDisabled
+	    : G->ColSelect
+	    : Disabled
+	    ? G->ColDisabled
+	    : G->ColText;
+	    Color = DoShadowColor(Color, D->Shaded, D->Shaded);
 	}
+
+	for (j=j_min; j<=j_max; j++) {
+	    for (i=i_min; i<=i_max; i++) {
+		if (Text)
+		    Font = Text[i + j * width];
+		if (!Absent)
+		    Color = DoShadowColor(ColText[i + j * width], D->Shaded, D->Shaded);
+		Video[i + j * DWidth + Offset] =
+		    HWATTR(Color, Font);
+	    }
+	}
+	DirtyVideo(D->X1, D->Y1, D->X2, D->Y2);
     }
-    DirtyVideo(D->X1, D->Y1, D->X2, D->Y2);
 }
 
 static void DrawSelfBorder(window Window, ldat Left, ldat Up, ldat Rgt, ldat Dwn,
@@ -371,7 +616,7 @@ static void DrawSelfBorder(window Window, ldat Left, ldat Up, ldat Rgt, ldat Dwn
 
     dat i, j, u, v;
     dat DWidth = All->DisplayWidth;
-    byte Font;
+    hwfont Font;
     hwcol Color;
     
     if (QueuedDrawArea2FullScreen)
@@ -432,301 +677,208 @@ static void DrawSelfBorder(window Window, ldat Left, ldat Up, ldat Rgt, ldat Dwn
 
 void DrawSelfWindow(draw_ctx *D) {
     window W;
-    ldat Left, Up, Rgt, Dwn;
-    dat X1, Y1, X2, Y2;
-    dat DWidth, i, j;
-    ldat u, v;
-    byte Shaded, Absent;
-    byte Select, RowDisabled;
-    row CurrRow;
-    CONST hwattr *Contents, *CurrCont;
-    ldat Row, PosInRow;
-    CONST byte *Text;
-    hwcol *ColText;
-    hwcol Color;
-    byte Font;
-    
+
     if (QueuedDrawArea2FullScreen)
 	return;
-    
-    W = (window)D->TopW;
-    X1 = D->X1; Y1 = D->Y1;
-    X2 = D->X2; Y2 = D->Y2;
-    Left = D->Left; Up = D->Up;
-    Rgt = D->Rgt; Dwn = D->Dwn;
-    Shaded = D->Shaded;
-    DWidth = D->DWidth;
 
-    /* not here... already done in DrawWCtx() */
-    /*
-     * Left -= W->XLogic; Rgt -= W->XLogic;
-     * Up   -= W->YLogic; Dwn -= W->YLogic;
-     */
-    if (W->Flags & WINFL_USECONTENTS) {
+    W = (window)D->TopW;
+
+    if (!W_USE(W, USEROWS) && !W_USE(W, USECONTENTS)) {
+	W->Fn->Fn_Widget->DrawSelf(D);
+	return;
+    }
+	
+    {
+	ldat Left, Up, Rgt, Dwn;
+	dat X1, Y1, X2, Y2;
+	dat DWidth, i, j;
+	ldat u, v;
+	byte Shaded, Absent;
+	byte Select, RowDisabled;
+	row CurrRow;
+	CONST hwattr *Contents, *CurrCont;
+	ldat Row, PosInRow;
+	CONST hwfont *HWFont;
+	hwcol *ColText;
+	hwcol Color;
+	hwfont Font;
+	
+	X1 = D->X1; Y1 = D->Y1;
+	X2 = D->X2; Y2 = D->Y2;
+	Left = D->Left; Up = D->Up;
+	Rgt = D->Rgt; Dwn = D->Dwn;
+	Shaded = D->Shaded;
+	DWidth = D->DWidth;
+    
+	/* not here... already done in DrawWCtx() */
 	/*
-	 * For xterm-like windows, Contents is a buffer of (x=WLogic) * (y=HLogic)
-	 * hwattr:s, in the same format as Video: HWATTR(Color, Ascii).
-	 * Room in excess is used as scrollback.
-	 * 
-	 * To avoid frequent mem-mem copies, VGA-like splitline method is used:
-	 * USE.C.Split is the first used line of Contents, and after the end
-	 * of Contents we restart from zero.
-	 * 
-	 * HLogic also has the usual meaning:
-	 * number of total lines (visible + scrollback)
+	 * Left -= W->XLogic; Rgt -= W->XLogic;
+	 * Up   -= W->YLogic; Dwn -= W->YLogic;
 	 */
-	if (!(Contents = W->USE.C.Contents))
-	    return;
 	
-	if (Y2 - Up >= W->HLogic) {
-	    /* the ->Contents buffer is smaller than the window size... pad with SPACEs */
-	    dat Ynew = Up + W->HLogic;
-	    FillVideo(X1, Ynew, X2, Y2, HWATTR(W->ColText, ' '));
-	    Y2 = Ynew - 1;
-	}
-	
-	if (X2 - Left >= W->WLogic) {
-	    /* the ->Contents buffer is smaller than the window size... pad with SPACEs */
-	    dat Xnew = Left + W->WLogic;
-	    FillVideo(Xnew, Y1, X2, Y2, HWATTR(W->ColText, ' '));
-	    X2 = Xnew - 1;
-	}
-	
-	if (X1 <= X2 && Y1 <= Y2) {
-	    Row = Y1 - Up + W->USE.C.HSplit; /* row number in Contents */
-	    if (Row >= W->HLogic)
-		Row -= W->HLogic;
-	    CurrCont = Contents + Row * W->WLogic;
-	    
-	    Row = W->HLogic - 1 - Row;	/* rows still readable */
-	    
-	    if (!Shaded) {
-		for (j=Y1, u=Y1-Up; j<=Y2; j++, u++, Row--) {
-		    if (!(W->Attrib & WINDOW_DO_SEL) ||
-			u < W->YstSel || u > W->YendSel) {
-			
-			CopyMem(CurrCont + X1-Left, &Video[j*DWidth+X1],
-				sizeof(hwattr)*(X2-X1+1));
-			
-		    } else {
+	if (W_USE(W, USECONTENTS) && (Contents = W->USE.C.Contents)) {
+	    /*
+	     * For xterm-like windows, Contents is a buffer of (x=WLogic) * (y=HLogic)
+	     * hwattr:s, in the same format as Video: HWATTR(Color, Ascii).
+	     * Room in excess is used as scrollback.
+	     * 
+	     * To avoid frequent mem-mem copies, VGA-like splitline method is used:
+	     * USE.C.Split is the first used line of Contents, and after the end
+	     * of Contents we restart from zero.
+	     * 
+	     * HLogic also has the usual meaning:
+	     * number of total lines (visible + scrollback)
+	     */
+	    if (Y2 - Up >= W->HLogic) {
+		/* the ->Contents buffer is smaller than the window size... pad with SPACEs */
+		dat Ynew = Up + W->HLogic;
+		FillVideo(X1, Ynew, X2, Y2, HWATTR(W->ColText, ' '));
+		Y2 = Ynew - 1;
+	    }
+	    if (X2 - Left >= W->WLogic) {
+		/* the ->Contents buffer is smaller than the window size... pad with SPACEs */
+		dat Xnew = Left + W->WLogic;
+		FillVideo(Xnew, Y1, X2, Y2, HWATTR(W->ColText, ' '));
+		X2 = Xnew - 1;
+	    }
+	    if (X1 <= X2 && Y1 <= Y2) {
+		Row = Y1 - Up + W->USE.C.HSplit; /* row number in Contents */
+		if (Row >= W->HLogic)
+		    Row -= W->HLogic;
+		CurrCont = Contents + Row * W->WLogic;
+		
+		Row = W->HLogic - 1 - Row;	/* rows still readable */
+		
+		if (!Shaded) {
+		    for (j=Y1, u=Y1-Up; j<=Y2; j++, u++, Row--) {
+			if (!(W->State & WINDOW_DO_SEL) ||
+			    u < W->YstSel || u > W->YendSel) {
+			    
+			    CopyMem(CurrCont + X1-Left, &Video[j*DWidth+X1],
+				    sizeof(hwattr)*(X2-X1+1));
+			    
+			} else {
+			    for (i=X1, v=X1-Left; i<=X2; i++, v++) {
+				Select = (W->State & WINDOW_DO_SEL) &&
+				    ((u>W->YstSel ||
+				      (u==W->YstSel && v>=W->XstSel)) &&
+				     (u<W->YendSel ||
+				      (u==W->YendSel && v<=W->XendSel)));
+				if (Select)
+				    Color = W->ColSelect;
+				else
+				    Color = HWCOL(CurrCont[v]);
+				Video[i+j*DWidth] = HWATTR(Color, HWFONT(CurrCont[v]));
+			    }
+			}
+			CurrCont += W->WLogic;
+			if (!Row)
+			    CurrCont -= (Row = W->HLogic) * W->WLogic;
+		    }
+		} else {
+		    for (j=Y1, u=Y1-Up; j<=Y2; j++, u++, Row--) {
 			for (i=X1, v=X1-Left; i<=X2; i++, v++) {
-			    Select = (W->Attrib & WINDOW_DO_SEL) &&
+			    
+			    Select = (W->State & WINDOW_DO_SEL) &&
 				((u>W->YstSel ||
 				  (u==W->YstSel && v>=W->XstSel)) &&
 				 (u<W->YendSel ||
 				  (u==W->YendSel && v<=W->XendSel)));
+			    
 			    if (Select)
 				Color = W->ColSelect;
 			    else
 				Color = HWCOL(CurrCont[v]);
+			    Color=DoShadowColor(Color, Shaded, Shaded);
+			    
 			    Video[i+j*DWidth] = HWATTR(Color, HWFONT(CurrCont[v]));
 			}
+			CurrCont += W->WLogic;
+			if (!Row)
+			    CurrCont -= (Row = W->HLogic) * W->WLogic;
 		    }
-		    CurrCont += W->WLogic;
-		    if (!Row)
-			CurrCont -= (Row = W->HLogic) * W->WLogic;
 		}
-	    } else {
-		for (j=Y1, u=Y1-Up; j<=Y2; j++, u++, Row--) {
-		    for (i=X1, v=X1-Left; i<=X2; i++, v++) {
-			
-			Select = (W->Attrib & WINDOW_DO_SEL) &&
-			    ((u>W->YstSel ||
-			      (u==W->YstSel && v>=W->XstSel)) &&
-			     (u<W->YendSel ||
-			      (u==W->YendSel && v<=W->XendSel)));
-			
-			if (Select)
-			    Color = W->ColSelect;
-			else
-			    Color = HWCOL(CurrCont[v]);
-			Color=DoShadowColor(Color, Shaded, Shaded);
-			
-			Video[i+j*DWidth] = HWATTR(Color, HWFONT(CurrCont[v]));
+		DirtyVideo(X1, Y1, X2, Y2);
+	    }
+	} else if (W_USE(W, USEROWS) && W->USE.R.FirstRow) {
+	    /*
+	     * editor-like windows. no length limit in the rows and in XLogic.
+	     */
+	    Row=Y1-Up;
+	    
+	    if (Row>=W->HLogic)
+		CurrRow = (row)0;
+	    else if (W->USE.R.NumRowSplit && W->USE.R.RowSplit && Row==W->USE.R.NumRowSplit)
+		CurrRow = W->USE.R.RowSplit;
+	    else if (W->USE.R.NumRowSplit && W->USE.R.RowSplit && W->USE.R.RowSplit->Next && Row==W->USE.R.NumRowSplit+(ldat)1)
+		CurrRow = W->USE.R.RowSplit->Next;
+	    else if (W->USE.R.NumRowOne && W->USE.R.RowOne && Row==W->USE.R.NumRowOne)
+		CurrRow = W->USE.R.RowOne;
+	    else if (Row==(ldat)0)
+		CurrRow = W->USE.R.FirstRow;
+	    else if (Row+(ldat)1==W->HLogic)
+		CurrRow = W->USE.R.LastRow;
+	    else
+		CurrRow = Act(FindRow,W)(W, Row);
+	    
+	    for (j=Y1; j<=Y2; j++, Row++) {
+		
+		RowDisabled = (W->Flags & WINDOWFL_DISABLED)
+		    || (CurrRow && !(CurrRow->Flags & (ROW_ACTIVE|ROW_IGNORE)));
+		
+		if (CurrRow) {
+		    HWFont=CurrRow->Text;
+		    ColText=CurrRow->ColText;
+		}
+		
+		PosInRow=X1-Left;
+		if (CurrRow && PosInRow>=CurrRow->Gap)
+		    PosInRow+=CurrRow->LenGap;
+		
+		for (i=X1; i<=X2; i++, PosInRow++) {
+		    
+		    if ((Absent=(!CurrRow || PosInRow>=CurrRow->Len)))
+			Font = ' ';
+		    else
+			Font = HWFont[PosInRow];
+		    
+		    if (W->Flags & WINDOWFL_ROWS_SELCURRENT)
+			Select = Row==W->CurY;
+		    else {
+			Select = (W->State & WINDOW_DO_SEL) &&
+			    ((Row>W->YstSel ||
+			      (Row==W->YstSel && PosInRow>=W->XstSel)) &&
+			     (Row<W->YendSel ||
+			      (Row==W->YendSel && PosInRow<=W->XendSel)));
 		    }
-		    CurrCont += W->WLogic;
-		    if (!Row)
-			CurrCont -= (Row = W->HLogic) * W->WLogic;
+		    if (CurrRow)
+			Select &= !(CurrRow->Flags & ROW_IGNORE);
+		    
+		    if (Select)
+			Color = RowDisabled ? W->ColSelectDisabled : W->ColSelect;
+		    else if (RowDisabled)
+			Color = W->ColDisabled;
+		    else if ((W->Flags & WINDOWFL_ROWS_DEFCOL) || Absent)
+			Color = W->ColText;
+		    else
+			Color = ColText[PosInRow];
+		    
+		    Color=DoShadowColor(Color, Shaded, Shaded);
+		    Video[i+j*DWidth]=HWATTR(Color, Font);
+		}
+		if (CurrRow) {
+		    W->USE.R.RowSplit = CurrRow;
+		    W->USE.R.NumRowSplit = Row;
+		    CurrRow=CurrRow->Next;
 		}
 	    }
 	    DirtyVideo(X1, Y1, X2, Y2);
-	}
-    } else if (W->Flags & WINFL_USEEXPOSE) {
-	Contents = W->USE.E.Contents;
-	Text = W->USE.E.Text;
-
-#if 0
-	/*
-	 * this would suppress EXPOSE messages during resize (good)
-	 * but also clears the whole window during non-top resize (bad)
-	 */
-	if ((All->State & STATE_ANY) == STATE_RESIZE && All->FirstScreen->ClickWindow == W) {
-	    /* user is interactively resizing this window... pad with spaces */
-	    FillVideo(X1, Y1, X2, Y2, HWATTR(W->ColText, ' '));
-	    return;
-	}
-#endif
-	if (Contents || Text) {
-	    dat _X1, _X2, _Y1, _Y2;
-	    _X1 = Max2(W->USE.E.X1, 0);
-	    _X2 = Min2(W->USE.E.X2, Rgt - Left);
-	    _Y1 = Max2(W->USE.E.Y1, 0);
-	    _Y2 = Min2(W->USE.E.Y2, Dwn - Up);
-	    
-	    if (_X1 > _X2 || _Y1 > _Y2) {
-		/* no valid ->Contents, fill with spaces */
-		FillVideo(X1, Y1, X2, Y2, HWATTR(W->ColText, ' '));
-		return;
-	    }
-
-	    /*
-	     * check if the ->Contents buffer is smaller than the window size...
-	     * pad with SPACEs with needed
-	     */
-	    if (Y1 < _Y1) {
-		FillVideo(X1, Y1, X2, _Y1 - 1, HWATTR(W->ColText, ' '));
-		Y1 = _Y1;
-	    }
-	    if (Y2 > _Y2) {
-		FillVideo(X1, _Y2 + 1, X2, Y2, HWATTR(W->ColText, ' '));
-		Y2 = _Y2;
-	    }
-	    if (X1 < _X1) {
-		FillVideo(X1, Y1, _X1 - 1, Y2, HWATTR(W->ColText, ' '));
-		X1 = _X1;
-	    }
-	    if (X2 > _X2) {
-		FillVideo(_X2 + 1, Y1, X2, Y2, HWATTR(W->ColText, ' '));
-		X2 = _X2;
-	    }
-	    
-	    if (Contents && !Shaded) {
-		Contents += X1 - _X1 + (Y1 - _Y1) * W->HLogic;
-		for (j=Y1; j<=Y2; j++) {
-		    CopyMem(Contents, &Video[j*DWidth+X1], sizeof(hwattr)*(X2-X1+1));
-		    Contents += W->HLogic;
-		}
-	    } else if (Contents) {
-		/* Shaded == TRUE */
-		Contents += (Y1 - _Y1) * W->HLogic;
-		for (j=Y1; j<=Y2; j++) {
-		    Contents += X1 - _X1;
-		    for (i=X1, v=0; i<=X2; i++, v++) {
-			Color = DoShadowColor(HWCOL(Contents[v]), Shaded, Shaded);
-			Video[i+j*DWidth] = HWATTR(Color, HWFONT(Contents[v]));
-			Contents += W->HLogic;
-		    }
-		    Contents += W->HLogic - (X1 - _X1);
-		}
-	    } else {
-		Color = W->ColText;
-		if (Shaded)
-		    Color = DoShadowColor(Color, Shaded, Shaded);
-		Text += (Y1 - _Y1) * W->HLogic;
-		for (j=Y1; j<=Y2; j++) {
-		    Text += X1 - _X1;
-		    for (i=X1, v=0; i<=X2; i++, v++) {
-			Video[i+j*DWidth] = HWATTR(Color, HWFONT(Text[v]));
-			Text += W->HLogic;
-		    }
-		    Text += W->HLogic - (X1 - _X1);
-		}
-	    }
 	} else {
-	    /* ask the client to draw */
-	    msg Msg;
-	    event_window *EventW;
-
-	    if ((Msg=Do(Create,Msg)(FnMsg, MSG_WINDOW_CHANGE, sizeof(event_window)))) {
-		EventW = &Msg->Event.EventWindow;
-		EventW->Window = W;
-		EventW->Code   = MSG_WINDOW_EXPOSE;
-		EventW->Flags  = Shaded ? MSG_WINFL_SHADED : 0;
-		EventW->XWidth = X2 - X1 + 1;
-		EventW->YWidth = Y2 - Y1 + 1;
-		EventW->X      = X1 - Left;
-		EventW->Y      = Y1 - Up;
-		SendMsg(W->Menu->MsgPort, Msg);
-	    }
+	    /* either an unknown window type or just one of the above, but empty */
+	    Color = W->ColText;
+	    Color = DoShadowColor(Color, Shaded, Shaded);
+	    FillVideo(X1, Y1, X2, Y2, HWATTR(Color, ' '));
 	}
-    } else if (!(W->Flags & WINFL_USEANY) && W->USE.R.FirstRow) {
-	/*
-	 * editor-like windows. no length limit in the rows and in XLogic.
-	 */
-	Row=Y1-Up;
-	
-	if (Row>=W->HLogic)
-	    CurrRow = (row)0;
-	else if (W->USE.R.NumRowSplit && W->USE.R.RowSplit && Row==W->USE.R.NumRowSplit)
-	    CurrRow = W->USE.R.RowSplit;
-	else if (W->USE.R.NumRowSplit && W->USE.R.RowSplit && W->USE.R.RowSplit->Next && Row==W->USE.R.NumRowSplit+(ldat)1)
-	    CurrRow = W->USE.R.RowSplit->Next;
-	else if (W->USE.R.NumRowOne && W->USE.R.RowOne && Row==W->USE.R.NumRowOne)
-	    CurrRow = W->USE.R.RowOne;
-	else if (Row==(ldat)0)
-	    CurrRow = W->USE.R.FirstRow;
-	else if (Row+(ldat)1==W->HLogic)
-	    CurrRow = W->USE.R.LastRow;
-	else
-	    CurrRow = Act(FindRow,W)(W, Row);
-	
-	for (j=Y1; j<=Y2; j++, Row++) {
-	    
-	    RowDisabled = (W->Flags & WINFL_DISABLED)
-		|| (CurrRow && !(CurrRow->Flags & (ROW_ACTIVE|ROW_IGNORE)));
-	    
-	    if (CurrRow) {
-		Text=CurrRow->Text;
-		ColText=CurrRow->ColText;
-	    }
-	    
-	    PosInRow=X1-Left;
-	    if (CurrRow && PosInRow>=CurrRow->Gap)
-		PosInRow+=CurrRow->LenGap;
-	    
-	    for (i=X1; i<=X2; i++, PosInRow++) {
-		
-		if ((Absent=(!CurrRow || PosInRow>=CurrRow->Len)))
-		    Font = ' ';
-		else
-		    Font = Text[PosInRow];
-		
-		if (W->Flags & WINFL_SEL_ROWCURR)
-		    Select = Row==W->CurY;
-		else {
-		    Select = (W->Attrib & WINDOW_DO_SEL) &&
-			((Row>W->YstSel ||
-			  (Row==W->YstSel && PosInRow>=W->XstSel)) &&
-			 (Row<W->YendSel ||
-			  (Row==W->YendSel && PosInRow<=W->XendSel)));
-		}
-		if (CurrRow)
-		    Select &= !(CurrRow->Flags & ROW_IGNORE);
-		
-		if (Select)
-		    Color = RowDisabled ? W->ColSelectDisabled : W->ColSelect;
-		else if (RowDisabled)
-		    Color = W->ColDisabled;
-		else if ((W->Flags & WINFL_USE_DEFCOL) || Absent)
-		    Color = W->ColText;
-		else
-		    Color = ColText[PosInRow];
-		
-		Color=DoShadowColor(Color, Shaded, Shaded);
-		Video[i+j*DWidth]=HWATTR(Color, Font);
-	    }
-	    if (CurrRow) {
-		W->USE.R.RowSplit = CurrRow;
-		W->USE.R.NumRowSplit = Row;
-		CurrRow=CurrRow->Next;
-	    }
-	}
-	DirtyVideo(X1, Y1, X2, Y2);
-    } else {
-	/* either an unknown window type or just one of the above, but empty */
-	Color = W->ColText;
-	Color = DoShadowColor(Color, Shaded, Shaded);
-	FillVideo(X1, Y1, X2, Y2, HWATTR(Color, ' '));
     }
 }
 
@@ -811,13 +963,13 @@ static void DrawWCtx(draw_ctx *D) {
 	if (!D->BorderDone) {
 	    D->BorderDone = TRUE;
 	    
-	    if (IS_WINDOW(W) && !((Window = (window)W)->Flags & WINFL_BORDERLESS)) {
+	    if (IS_WINDOW(W) && !((Window = (window)W)->Flags & WINDOWFL_BORDERLESS)) {
 		
 		if (!OnlyChild) {
 		    WinActive =
 			Window==(window)All->FirstScreen->FocusW ||
 			Window==All->FirstScreen->MenuWindow;
-		    Border = Window->Attrib & WINDOW_MENU || !WinActive;
+		    Border = (Window->Flags & WINDOWFL_MENU) || !WinActive;
 		    DrawSelfBorder(Window, Left, Up, Rgt, Dwn, X1, Y1, X2, Y2, Border, WinActive, Shaded);
 		}
 		
@@ -980,19 +1132,48 @@ static void _DrawAreaCtx_(draw_ctx **FirstD, screen Screen, widget W, widget Onl
     }
 }
 
-screen ScreenParent(widget W) {
-    while (W->Parent)
-	W = W->Parent;
-    return IS_SCREEN(W) ? (screen)W : (screen)0;
+window WindowParent(widget W) {
+    if (W) do {
+	if (IS_WINDOW(W))
+	    return (window)W;
+    } while ((W = W->Parent));
+    return (window)0;
 }
 
-widget TopParent(widget W) {
-    while (W->Parent) {
+screen ScreenParent(widget W) {
+    if (W) do {
+	if (IS_SCREEN(W))
+	    return (screen)W;
+    } while ((W = W->Parent));
+    return (screen)0;
+}
+
+widget NonScreenParent(widget W) {
+    if (W) while (W->Parent) {
 	if (IS_SCREEN(W->Parent))
 	    return W;
 	W = W->Parent;
     }
-    return W->Parent;
+    return W;
+}
+
+window FindCursorWindow(void) {
+    widget P, W;
+    if (!(P = All->FirstScreen->FocusW))
+	P = (widget)All->FirstScreen->MenuWindow;
+    if (P) while ((W = P->SelectW))
+	P = W;
+    return WindowParent(P);
+}
+
+byte ContainsCursor(widget W) {
+    widget C = (widget)FindCursorWindow();
+    while (C) {
+	if (C == W)
+	    return TRUE;
+	C = C->Parent;
+    }
+    return FALSE;
 }
 
 static void DrawAreaCtx(draw_ctx *D) {
@@ -1136,7 +1317,7 @@ static void DrawAreaCtx(draw_ctx *D) {
 	    continue;
 	}
 	
-	TopOnlyW = OnlyW ? TopParent(OnlyW) : NULL;
+	TopOnlyW = OnlyW ? NonScreenParent(OnlyW) : NULL;
 	
 	if (WidgetFound==TRUE && (!OnlyW || TopOnlyW==W)) {
 	    draw_ctx *FD = NULL;
@@ -1340,7 +1521,7 @@ void DrawBorderWindow(window Window, byte Flags) {
     widget Parent;
     screen Screen, FirstScreen;
 
-    if (QueuedDrawArea2FullScreen || !Window || (Window->Flags & WINFL_BORDERLESS) ||
+    if (QueuedDrawArea2FullScreen || !Window || (Window->Flags & WINDOWFL_BORDERLESS) ||
 	!(Parent=Window->Parent) || !IS_SCREEN(Parent))
 	return;
 
@@ -1481,30 +1662,30 @@ void DrawAreaWindow2(window W) {
 }
 
 /* replaces DrawAbsoluteWindow() */
-void DrawPartialWindow2(window W, dat X1, dat Y1, dat X2, dat Y2) {
+void DrawPartialWidget(widget W, dat X1, dat Y1, dat X2, dat Y2) {
     draw_ctx D;
-    if (!QueuedDrawArea2FullScreen && W && InitDrawCtx((widget)W, X1, Y1, X2, Y2, FALSE, &D)) {
+    if (!QueuedDrawArea2FullScreen && W && InitDrawCtx(W, X1, Y1, X2, Y2, FALSE, &D)) {
 	/*
 	 * DO NOT assume W is completely visible...
 	 * might be obscured by another window! So reset D.TopW
 	 * Assume instead that who called us wants to draw the visible part of W,
 	 * not whatever covers it. So set D.W (used as OnlyW)
 	 */
-	D.TopW = NULL; D.W = (widget)W;
+	D.TopW = NULL; D.W = W;
 	DrawAreaCtx(&D);
     }
 }
 
 /* replaces DrawTextWindow() */
-void DrawLogicWindow2(window W, ldat X1, ldat Y1, ldat X2, ldat Y2) {
+void DrawLogicWidget(widget W, ldat X1, ldat Y1, ldat X2, ldat Y2) {
     ldat XL, YL;
     byte HasBorder;
     
-    if (!QueuedDrawArea2FullScreen && W && !(W->Attrib & WINDOW_ROLLED_UP) && X2>=X1 && Y2>=Y1) {
+    if (!QueuedDrawArea2FullScreen && W && (!IS_WINDOW(W) || !(((window)W)->Attrib & WINDOW_ROLLED_UP)) && X2>=X1 && Y2>=Y1) {
 	XL = W->XLogic;
 	YL = W->YLogic;
     
-	HasBorder = !(W->Flags & WINFL_BORDERLESS);
+	HasBorder = !IS_WINDOW(W) || !(((window)W)->Flags & WINDOWFL_BORDERLESS);
 	
 	if (X2>=XL && Y2>=YL && Y1<MAXLDAT &&
 	    X1<XL+(ldat)W->XWidth-2*HasBorder &&
@@ -1518,7 +1699,7 @@ void DrawLogicWindow2(window W, ldat X1, ldat Y1, ldat X2, ldat Y2) {
 	    Y2 = Min2(Y2, YL+(ldat)W->YWidth-1-2*HasBorder);
 	    Y2 = Max2(Y2-YL, 0); Y2 = Min2(Y2+HasBorder, MAXDAT);
 	    
-	    DrawPartialWindow2(W, (dat)X1, (dat)Y1, (dat)X2, (dat)Y2);
+	    DrawPartialWidget(W, (dat)X1, (dat)Y1, (dat)X2, (dat)Y2);
 	}
     }
 }
@@ -1569,20 +1750,20 @@ void DrawScreen(screen Screen) {
 }
 
 void ClearHilight(window Window) {
-    if (Window->Attrib & WINDOW_DO_SEL) {
-	Window->Attrib &= ~WINDOW_DO_SEL;
+    if (Window->State & WINDOW_DO_SEL) {
+	Window->State &= ~WINDOW_DO_SEL;
 	if (Window->YendSel > Window->YstSel)
-	    DrawLogicWindow2(Window, Window->XLogic, Window->YstSel, Window->XLogic+Window->XWidth, Window->YendSel);
+	    DrawLogicWidget((widget)Window, Window->XLogic, Window->YstSel, Window->XLogic+Window->XWidth, Window->YendSel);
 	else
-	    DrawLogicWindow2(Window, Window->XstSel, Window->YstSel, Window->XendSel, Window->YstSel);
+	    DrawLogicWidget((widget)Window, Window->XstSel, Window->YstSel, Window->XendSel, Window->YstSel);
     }
 }
 
 void StartHilight(window Window, ldat XSel, ldat YSel) {
     if (Window) {
 	ClearHilight(Window);
-	Window->Attrib &= ~WINDOW_ANYSEL;
-	Window->Attrib |= WINDOW_FWDSEL;
+	Window->State &= ~WINDOW_ANYSEL;
+	Window->State |= WINDOW_FWDSEL;
 	Window->XstSel = Window->XendSel = XSel;
 	Window->YstSel = Window->YendSel = YSel;
     }
@@ -1590,47 +1771,47 @@ void StartHilight(window Window, ldat XSel, ldat YSel) {
 
 void ExtendHilight(window Window, ldat XSel, ldat YSel) {
     ldat oX, oY;
-    uldat oAttrib;
+    uldat oState;
     
     if (!Window)
 	return;
 
-    if (!(Window->Attrib & WINDOW_DO_SEL)) {
-	if (Window->Attrib & WINDOW_ANYSEL) {
-	    if (Window->Attrib & WINDOW_FWDSEL)
+    if (!(Window->State & WINDOW_DO_SEL)) {
+	if (Window->State & WINDOW_ANYSEL) {
+	    if (Window->State & WINDOW_FWDSEL)
 		StartHilight(Window, Window->XstSel, Window->YstSel);
-	    else if (Window->Attrib & WINDOW_REVSEL)
+	    else if (Window->State & WINDOW_REVSEL)
 		StartHilight(Window, Window->XendSel, Window->YendSel);
-	    Window->Attrib |= WINDOW_DO_SEL;
-	    DrawLogicWindow2(Window, Window->XstSel, Window->YstSel, Window->XendSel, Window->YstSel);
+	    Window->State |= WINDOW_DO_SEL;
+	    DrawLogicWidget((widget)Window, Window->XstSel, Window->YstSel, Window->XendSel, Window->YstSel);
 	} else
 	    return;
     }
 	
-    if (Window->Attrib & WINDOW_FWDSEL) {
+    if (Window->State & WINDOW_FWDSEL) {
 	oX = Window->XendSel;
 	oY = Window->YendSel;
     } else {
 	oX = Window->XstSel;
 	oY = Window->YstSel;
     }
-    oAttrib = Window->Attrib;
+    oState = Window->State;
     
-    if ((Window->Attrib & WINDOW_FWDSEL) &&
+    if ((Window->State & WINDOW_FWDSEL) &&
 	 (YSel < Window->YstSel || (YSel == Window->YstSel && XSel < Window->XstSel))) {
 
-	Window->Attrib ^= WINDOW_ANYSEL;
+	Window->State ^= WINDOW_ANYSEL;
 	Window->XendSel = Window->XstSel;
 	Window->YendSel = Window->YstSel;
-    } else if ((Window->Attrib & WINDOW_REVSEL) &&
+    } else if ((Window->State & WINDOW_REVSEL) &&
 	 (YSel > Window->YendSel || (YSel == Window->YendSel && XSel > Window->XendSel))) {
 
-	Window->Attrib ^= WINDOW_ANYSEL;
+	Window->State ^= WINDOW_ANYSEL;
 	Window->XstSel = Window->XendSel;
 	Window->YstSel = Window->YendSel;
     }
 
-    if (Window->Attrib & WINDOW_FWDSEL) {
+    if (Window->State & WINDOW_FWDSEL) {
 	Window->XendSel = XSel;
 	Window->YendSel = YSel;
     } else {
@@ -1639,13 +1820,13 @@ void ExtendHilight(window Window, ldat XSel, ldat YSel) {
     }
 
     /*
-    printf("%c%c %d %d %d %d\n", (Window->Attrib & WINDOW_DO_SEL) ? '*' : ' ',
-	   (Window->Attrib & WINDOW_FWDSEL) ? '+' : '-',
+    printf("%c%c %d %d %d %d\n", (Window->State & WINDOW_DO_SEL) ? '*' : ' ',
+	   (Window->State & WINDOW_FWDSEL) ? '+' : '-',
 	   Window->XstSel, Window->YstSel, Window->XendSel, Window->YendSel);
     */
     
-    if (YSel == oY && ((oAttrib & WINDOW_ANYSEL) == (Window->Attrib & WINDOW_ANYSEL)))
-	DrawLogicWindow2(Window, Min2(XSel, oX), YSel, Max2(XSel, oX), YSel);
+    if (YSel == oY && ((oState & WINDOW_ANYSEL) == (Window->State & WINDOW_ANYSEL)))
+	DrawLogicWidget((widget)Window, Min2(XSel, oX), YSel, Max2(XSel, oX), YSel);
     else
-	DrawLogicWindow2(Window, Window->XLogic, Min2(YSel, oY), Window->XLogic+Window->XWidth, Max2(YSel, oY));
+	DrawLogicWidget((widget)Window, Window->XLogic, Min2(YSel, oY), Window->XLogic+Window->XWidth, Max2(YSel, oY));
 }

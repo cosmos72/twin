@@ -24,7 +24,9 @@ tmsgport SysMon_MsgPort;
 tmenu SysMon_Menu;
 twindow SysMon_Win;
 
-char buf[BIGBUFF];
+char buf[TW_BIGBUFF];
+
+TW_DECL_MAGIC(sysmon_magic);
 
 byte InitSysMon(void) {
     struct utsname uts;
@@ -41,13 +43,13 @@ byte InitSysMon(void) {
 	return FALSE;
     
     name[len] = '\0';
-	
-    if (TwOpen(NULL) &&
+
+    if (TwCheckMagic(sysmon_magic) &&
+	TwOpen(NULL) &&
 	
 	(SysMon_MsgPort=TwCreateMsgPort
 	 (len, name, 0, 0, 0)) &&
-	(SysMon_Menu=TwCreateMenu
-	 (SysMon_MsgPort,
+	(SysMon_Menu=TwCreateMenu(
 	  COL(BLACK,WHITE), COL(BLACK,GREEN), COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
 	  COL(RED,WHITE), COL(RED,GREEN), (byte)0)) &&
 	TwItem4MenuCommon(SysMon_Menu) &&
@@ -97,7 +99,7 @@ uldat HBar(hwcol Col, uldat len, uldat scale, uldat frac) {
 }
 
 void Update(void) {
-    static int ProcStatFd = NOFD, ProcMeminfoFd = NOFD, ProcUptimeFd = NOFD;
+    static int ProcStatFd = TW_NOFD, ProcMeminfoFd = TW_NOFD, ProcUptimeFd = TW_NOFD;
     static uldat CpuUser[2], CpuNice[2], CpuSystem[2], CpuIdle[2], CpuTotal;
     static uldat DiskR[2], DiskW[2], DiskTotal;
     static uldat MemUsed, MemShared, MemBuff, MemCache, MemFree, MemTotal;
@@ -106,22 +108,22 @@ void Update(void) {
     uldat len, tmp;
     char *s, *e;
     
-    if (ProcStatFd != NOFD)
+    if (ProcStatFd != TW_NOFD)
 	close(ProcStatFd);
     ProcStatFd = open("/proc/stat", O_RDONLY);
     
-    if (ProcMeminfoFd != NOFD)
+    if (ProcMeminfoFd != TW_NOFD)
 	close(ProcMeminfoFd);
     ProcMeminfoFd = open("/proc/meminfo", O_RDONLY);
 
-    if (ProcUptimeFd != NOFD)
+    if (ProcUptimeFd != TW_NOFD)
 	close(ProcUptimeFd);
     ProcUptimeFd = open("/proc/uptime", O_RDONLY);
 
-    if (ProcStatFd != NOFD) {
+    if (ProcStatFd != TW_NOFD) {
 	s = buf;
 	len = 0;
-	while ((tmp = read(ProcStatFd, s, BIGBUFF - len)) > 0)
+	while ((tmp = read(ProcStatFd, s, TW_BIGBUFF - len)) > 0)
 	    len += tmp, s += tmp;
 	buf[len] = '\0';
 	if ((s = strstr(buf, "cpu "))) {
@@ -155,10 +157,10 @@ void Update(void) {
 	    DiskTotal = 1;
 	}
     }
-    if (ProcMeminfoFd != NOFD) {
+    if (ProcMeminfoFd != TW_NOFD) {
 	s = buf;
 	len = 0;
-	while ((tmp = read(ProcMeminfoFd, s, BIGBUFF - len)) > 0)
+	while ((tmp = read(ProcMeminfoFd, s, TW_BIGBUFF - len)) > 0)
 	    len += tmp, s += tmp;
 	buf[len] = '\0';
 	if ((s = strstr(buf, "MemTotal:")))
@@ -230,7 +232,7 @@ void Update(void) {
 
 	s = buf;
 	len = 0;
-	while ((tmp = read(ProcUptimeFd, s, BIGBUFF - len)) > 0)
+	while ((tmp = read(ProcUptimeFd, s, TW_BIGBUFF - len)) > 0)
 	    len += tmp, s += tmp;
 	buf[len] = '\0';
 
@@ -292,8 +294,8 @@ int main(int argc, char *argv[]) {
 
 	while ((Msg = TwReadMsg(FALSE))) {
 	    Event=&Msg->Event;
-	    if (Event->EventCommon.Window == SysMon_Win) {
-		if (Msg->Type==TW_MSG_WINDOW_GADGET) {
+	    if (Event->EventCommon.W == SysMon_Win) {
+		if (Msg->Type==TW_MSG_WIDGET_GADGET) {
 		    if (Event->EventGadget.Code == 0)
 			/* 0 == Close Code */
 			Quit();

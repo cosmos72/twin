@@ -41,4 +41,4 @@ void MD5Transform(uint32 buf[4], uint32 const in[16]);
  */
 typedef struct MD5Context MD5_CTX;
 
-#endif /* !MD5_H */
+#endif /* MD5_H */

@@ -56,7 +56,9 @@
 /*
  * Control Character Defaults
  */
-#define CTRL(x)	(x&037)
+#ifndef CTRL
+# define CTRL(x)	(x&037)
+#endif
 #define	CEOF		CTRL('d')
 #ifdef _POSIX_VDISABLE
 # define CEOL		_POSIX_VDISABLE

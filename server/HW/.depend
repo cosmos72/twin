@@ -1,0 +1,23 @@
+hw_X11.o: hw_X11.c ../../include/twin.h ../main.h ../data.h ../remote.h ../hw.h ../hw_private.h hw_dirty.h ../common.h ../../include/Tw/Twkeys.h ../../include/Tutf/Tutf.h ../../include/Tutf/Tutf_defs.h ../hw_keys.h ../../include/version.h
+ifeq ($(CONF__UNICODE),y)
+  CFLAGS_hw_X11.o+=-DCONF__UNICODE
+endif
+hw_display.o: hw_display.c ../../include/twin.h ../main.h ../data.h ../remote.h ../methods.h ../extensions.h ../hw.h ../hw_private.h hw_dirty.h ../common.h ../../include/version.h
+hw_ggi.o: hw_ggi.c ../../include/twin.h ../main.h ../data.h ../remote.h ../hw.h ../hw_private.h hw_dirty.h ../common.h ../../include/version.h
+hw_tty.o: hw_tty.c ../../include/tty_ioctl.h ../../include/twin.h ../main.h ../data.h ../remote.h ../hw.h ../hw_private.h hw_dirty.h ../common.h ../../include/Tw/Twkeys.h ../../include/Tutf/Tutf.h hw_tty_linux.c hw_tty_termcap.c ../../include/version.h
+ifeq ($(CONF_HW_TTY_LINUX),y)
+  CFLAGS_hw_tty.o+=-DCONF_HW_TTY_LINUX
+endif
+ifeq ($(CONF_HW_TTY_TWTERM),y)
+  CFLAGS_hw_tty.o+=-DCONF_HW_TTY_TWTERM
+endif
+ifeq ($(CONF_HW_TTY_TERMCAP),y)
+  CFLAGS_hw_tty.o+=-DCONF_HW_TTY_TERMCAP
+endif
+ifeq ($(CONF__UNICODE),y)
+  CFLAGS_hw_tty.o+=-DCONF__UNICODE
+endif
+hw_twin.o: hw_twin.c ../../include/twin.h ../main.h ../data.h ../remote.h ../hw.h ../hw_private.h hw_dirty.h ../common.h ../../include/Tw/Tw.h ../../include/Tw/Twerrno.h ../../include/Tw/Twkeys.h ../../include/Tw/Twstat.h ../../include/version.h
+ifeq ($(CONF__ALLOC),y)
+  CFLAGS_hw_twin.o+=-DCONF__ALLOC
+endif

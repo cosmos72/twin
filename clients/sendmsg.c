@@ -1,5 +1,5 @@
 /*
- *  findtwin.c  --  find a running twin server
+ *  sendmsg.c  --  send a message to a twin client
  *
  *  This program is placed in the public domain.
  *
@@ -33,6 +33,8 @@ void ShowVersion(void) {
     fputs("twsendmsg " TWIN_VERSION_STR "\n", stdout);
 }
 
+TW_DECL_MAGIC(sendmsg_magic);
+
 int main(int argc, char *argv[]) {
     byte *MsgPortName = NULL, *CodeName = NULL, *Data = NULL;
     udat Type = TW_MSG_USER_CONTROL, Code = TW_MSG_CONTROL_OPEN, DataLen = 0;
@@ -51,11 +53,9 @@ int main(int argc, char *argv[]) {
 	    return 0;
 	}
     }
-
-    do {
-	if (!TwOpen(NULL))
-	    break;
-
+    
+    if (TwCheckMagic(sendmsg_magic) && TwOpen(NULL)) do {
+	
 	while (++argv, --argc) {
 	    if (!strncmp(*argv, "-msgport=", 9))
 		MsgPortName = *argv + 9;
@@ -93,13 +93,13 @@ int main(int argc, char *argv[]) {
 	    DataLen = strlen(Data);
 	
 	if (MsgPortName) {
-	    if ((MsgPort = TwFindMsgPort(NOID, strlen(MsgPortName), MsgPortName))) {
+	    if ((MsgPort = TwFindMsgPort(TW_NOID, strlen(MsgPortName), MsgPortName))) {
 		if (Type == TW_MSG_USER_CONTROL) {
 		    tevent_control EventC;
 		    if ((Msg = TwCreateMsg(TW_MSG_USER_CONTROL,
 					   DataLen + sizeof(*EventC)))) {
 			EventC = &Msg->Event.EventControl;
-			EventC->Window = NOID;
+			EventC->W = TW_NOID;
 			EventC->Code = Code;
 			EventC->Len = DataLen;
 			EventC->X = 0;
@@ -113,7 +113,7 @@ int main(int argc, char *argv[]) {
 		    tevent_clientmsg EventC;
 		    if ((Msg = TwCreateMsg(TW_MSG_USER_CLIENTMSG,
 					   DataLen + sizeof(*EventC)))) {
-			EventC->Window = NOID;
+			EventC->W = TW_NOID;
 			EventC->Code = Code;
 			EventC->Len = DataLen;
 			if (DataLen)

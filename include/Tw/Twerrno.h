@@ -1,5 +1,5 @@
 /*
- *  libTwerrno.h  --  error handling stuff for libTw
+ *  Twerrno.h  --  error handling stuff for libTw
  *
  *  Copyright (C) 1999-2000 by Massimiliano Ghilardi
  *
@@ -10,8 +10,8 @@
  *
  */
 
-#ifndef _LIB_TW_ERRNO_H
-#define _LIB_TW_ERRNO_H
+#ifndef _TW_ERRNO_H
+#define _TW_ERRNO_H
 
 #define TW_EX_ENDIAN	((uldat)1)
 #define TW_EX_SIZES	((uldat)2)
@@ -23,15 +23,19 @@
 #define TW_ENO_MEM	((uldat)8)
 #define TW_ECANT_WRITE	((uldat)9)
 #define TW_ENO_FUNCTION	((uldat)10)
-#define TW_EWEIRD	((uldat)11)
+#define TW_ESTRANGE	((uldat)11)
 #define TW_ENO_AUTH	((uldat)12)
 #define TW_EDENIED	((uldat)13)
 #define TW_EBAD_GZIP	((uldat)14)
 #define TW_EINTERNAL_GZIP	((uldat)15)
-#define TW_ENO_HOST	((uldat)16)
+#define TW_ENO_HOST		((uldat)16)
 #define TW_EBAD_FUNCTION	((uldat)17)
-#define TW_EX_PROTOCOL	((uldat)18)
-#define TW_ENO_SOCKET	((uldat)19)
+#define TW_EX_PROTOCOL		((uldat)18)
+#define TW_ENO_SOCKET		((uldat)19)
+#define TW_ESTRANGE_CALL	((uldat)20)
+#define TW_EFAILED_CALL		((uldat)21)
+#define TW_EFAILED_ARG_CALL	((uldat)22)
+#define TW_EXLIB_SIZES		((uldat)23)
 
 typedef struct tw_errno {
     uldat E;
@@ -69,4 +73,4 @@ TW_CONST byte *Tw_StrErrorDetail(TW_CONST tdisplay TwD, uldat e, uldat s) TW_FNA
  }
 #endif
 
-#endif /* _LIB_TW_ERRNO_H */
+#endif /* _TW_ERRNO_H */

@@ -64,7 +64,7 @@ static void ScrollerH(msgport MsgPort) {
     msg Msg, saveMsg;
     mouse_state *Mouse;
     screen Screen;
-    uldat Attrib;
+    uldat Attrib, WState;
     dat Limit;
     dat Mouse_delta_x, Mouse_delta_y;
     byte State, FlagDeskScroll, FlagWinScroll, WinScrolled = FALSE;
@@ -91,8 +91,10 @@ static void ScrollerH(msgport MsgPort) {
     
     if (FocusWindow) {
 	Attrib=FocusWindow->Attrib;
-	FlagWinScroll = (XAND(Attrib, WINDOW_X_BAR | X_BAR_SELECT)
-			 || XAND(Attrib, WINDOW_Y_BAR | Y_BAR_SELECT)) && !(Attrib & TAB_SELECT);
+	WState=FocusWindow->State;
+	FlagWinScroll = (((Attrib & WINDOW_X_BAR) && (WState | X_BAR_SELECT))
+			 || ((Attrib & WINDOW_Y_BAR) && (WState | Y_BAR_SELECT)))
+	    && !(WState & TAB_SELECT);
     } else
 	FlagWinScroll = FALSE;
     

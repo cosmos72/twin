@@ -42,24 +42,20 @@ Compiling on FreeBSD:
 Compiling on AIX 3.2:
 
 	The author tried this personally, and managed to "mostly" do it.
-	You still have to work manually a little though...
 	here's what you can try (good luck) :
 
-	Before starting you need to have installed GNU make, GNU bash and
-	(very probably) GNU gcc; you can try with AIX cc, but I won't bet on it
-
-	First, edit the following file:
-	  server/hw_keys.h: comment the lines
-		line 25: IS(Sys_Req, 0, "")
-		line 75: IS(KP_Delete, 3, "\x1BOn")
+	Before starting you need to have installed GNU make (gmake), GNU bash
+	and (very probably) GNU gcc; you can try with AIX cc, but I have not
+	tested compiling twin with it.
 
 	Then `gmake config', disabling Shared libraries, Modules,
 	Custom malloc/free, Socket compression, Linux console support.
 
-	Now `gmake'. If you have bash installed but you get an error like
-	../scripts/MkDep: ../scripts/MkDep: Too many levels of symbolic links
-	then run `ln -sf MkDep1 scripts/MkDep' and type `gmake' again.
+	Now `gmake'.
 
 	Known problems on AIX 3.2 :
 		twdisplay does not work, I suspect an endianity problem.
 
+Compiling on Solaris 8:
+
+	(work in progress)

@@ -8,7 +8,8 @@
 #define HW_ALTCURSKEYS	((udat)0x0002)
 #define HW_BELLPITCH    ((udat)0x0003)
 #define HW_BELLDURATION ((udat)0x0004)
-#define HW_CONFIGURE_MAX ((udat)0x0005)
+#define HW_MOUSEMOTIONEVENTS ((udat)0x0005)
+#define HW_CONFIGURE_MAX ((udat)0x0006)
 
 extern display_hw DisplayHWCTTY;
 #define HWCTTY_DETACHED ((display_hw)1)

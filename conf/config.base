@@ -13,10 +13,11 @@ CONF_OPT_MENU="Runtime options"
 CONF__SHLIBS_HELP="Enable shared libraries (ELF)"
 CONF__MODULES_HELP="Enable modules (ELF)"
 CONF__ALLOC_HELP="Use custom malloc/free (tested on Linux/i386 only)"
+CONF__UNICODE_HELP="Build all code with Unicode support"
 CONF_SOCKET_HELP="Support remote socket connections"
 CONF_SOCKET_GZ_HELP=" -> Sockets: support gzip compression"
 CONF_SOCKET_PTHREADS_HELP=" -> Sockets: thread-safe libTw (requires pthread.h)"
-CONF_SOCKET_ALIEN_HELP="Sockets: support non-native architectures"
+CONF_SOCKET_ALIEN_HELP=" -> Sockets: support non-native architectures"
 CONF_WM_HELP="Window Manager: absolutely needed!"
 CONF_WM_RC_HELP="WM: support ~/.twinrc configuration parser"
 CONF_WM_RC_SHMMAP_HELP=" -> WM: RC: use mmapped shared file for parser"
@@ -39,18 +40,18 @@ CONF_OPT_ALWAYSCURSOR_HELP="Runtime option: force always visible cursor"
 CONF_OPT_HIDEMENU_HELP="Runtime option: hidden menu"
 CONF_OPT_MENUINFO_HELP="Runtime option: enable menu information line"
 CONF_OPT_EDGESCROLL_HELP="Runtime option: enable screen scrolling"
-CONF_OPT_ALTFONT_HELP="Runtime option: use alternate font (see Tutorial)"
 
 menu CONF__
   yesno CONF__SHLIBS
   yesno CONF__MODULES
   yesno CONF__ALLOC
+  yesno CONF__UNICODE
 endmenu
 menu CONF_SOCKET
   yesmodno CONF_SOCKET
   yesno_dep CONF_SOCKET_GZ CONF_SOCKET
   yesno_dep CONF_SOCKET_PTHREADS CONF_SOCKET
-  yesmodno CONF_SOCKET_ALIEN
+  yesno CONF_SOCKET_ALIEN
 endmenu
 menu CONF_WM
   yesmodno CONF_WM
@@ -85,5 +86,4 @@ menu CONF_OPT
   yesno CONF_OPT_HIDEMENU
   yesno CONF_OPT_MENUINFO
   yesno CONF_OPT_EDGESCROLL
-  yesno CONF_OPT_ALTFONT
 endmenu

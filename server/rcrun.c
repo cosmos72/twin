@@ -53,7 +53,7 @@ struct run {
     uldat cycle;
     union {
 	timevalue WakeUp;
-	str Title;
+	str Name;
     } SW;	 /* what we are waiting for: sleep timeout or window map */
     
     wm_ctx C;   /* event that generated the run queue */
@@ -229,17 +229,17 @@ static node RCFindMouseBind(ldat code, ldat ctx) {
     return NULL;
 }
 
-str RCFindBorderPattern(window W, byte Border) {
+hwfont *RCFindBorderPattern(window W, byte Border) {
     node l;
     
     if (!W)
 	return NULL;
     
     for (l = BorderList; l; l=l->next) {
-	if ((l->x.f.flag == FL_INACTIVE) == Border && wildcard_match(l->name, W->Title))
+	if ((l->x.f.flag == FL_INACTIVE) == Border && wildcard_match(l->name, W->Name))
 	    break;
     }
-    return W->BorderPattern[Border] = l ? l->data : NULL;
+    return W->BorderPattern[Border] = l ? (hwfont *)l->data : NULL;
 }
 
 INLINE void RCRemove(run **p) {
@@ -328,7 +328,7 @@ static window RCFindWindowName(str name) {
 	/* search among mapped windows */
 	W = (window)S->FirstW;
 	while (W) {
-	    if (IS_WINDOW(W) && W->LenTitle == len && !CmpMem(W->Title, name, len))
+	    if (IS_WINDOW(W) && W->NameLen == len && !CmpMem(W->Name, name, len))
 		return W;
 	    W = (window)W->Next;
 	}
@@ -341,7 +341,7 @@ static screen RCFindScreenName(str name) {
     uldat len = strlen(name);
     screen S = All->FirstScreen;
     while (S) {
-	if (S->LenTitle == len && !CmpMem(S->Title, name, len))
+	if (S->NameLen == len && !CmpMem(S->Name, name, len))
 	    break;
     }
     return S;
@@ -481,9 +481,9 @@ static byte RCSteps(run *r) {
 	    if (W) {
 		dat x = applyflagx(n), y = applyflagy(n);
 		if (n->x.f.plus_minus == 0)
-		    x = n->x.f.a - W->XWidth + 2*!(W->Flags & WINFL_BORDERLESS);
+		    x = n->x.f.a - W->XWidth + 2*!(W->Flags & WINDOWFL_BORDERLESS);
 		if (n->x.f.flag == 0)
-		    y = n->x.f.b - W->YWidth + 2*!(W->Flags & WINFL_BORDERLESS);
+		    y = n->x.f.b - W->YWidth + 2*!(W->Flags & WINDOWFL_BORDERLESS);
 		ResizeRelWindow(W, x, y);
 		Check4Resize(W); /* send MSG_WINDOW_CHANGE and realloc(W->Contents) */
 	    }
@@ -524,7 +524,7 @@ static byte RCSteps(run *r) {
 	    break;
 	  case WAIT:
 	    /* remember the window name we are waiting for */
-	    r->SW.Title = n->name;
+	    r->SW.Name = n->name;
 	    state = Swait;
 	    break;
 	  case WINDOW:
@@ -848,11 +848,11 @@ static void RCWake(void) {
 
 /* wake up queues when the wanted window appears */
 static void RCWake4Window(window W) {
-    str Title = W->Title;
+    str Name = W->Name;
     run **p = &Wait, *r;
 
-    if (Title) while ((r = *p)) {
-	if (!CmpStr(r->SW.Title, Title)) {
+    if (Name) while ((r = *p)) {
+	if (!CmpStr(r->SW.Name, Name)) {
 	    r->W = W->Id;
 	    RCRemove(p); /* p does not change but *p is now the next run */
 	    RCAddFirst(r, Run);
@@ -1001,7 +1001,7 @@ void QuitRC(void) {
 
 #define COD_COMMON_LAST		COD_COMMON_CLOSE
 
-static byte USEefaultCommonMenu(void) {
+static byte USEDefaultCommonMenu(void) {
     menu Menu;
     menuitem Item;
     window W;
@@ -1111,9 +1111,9 @@ byte InitRC(void) {
 	{ INTERACTIVE, NULL, NULL, NULL, NULL, { { 0, SCREEN, }, } }
     };
     static button_vec V[] = {
-	{ "[]", 0, TRUE, FALSE },
-	{ "\x12\x12", -2, TRUE, FALSE },
-	{ "><", -4, TRUE, FALSE }
+	{ {'[',    ']'},      0, TRUE, FALSE },
+	{ {'\x12', '\x12'} , -2, TRUE, FALSE },
+	{ {'>',    '<'} ,    -4, TRUE, FALSE }
     };
 
     str Seq = "";
@@ -1145,7 +1145,7 @@ byte InitRC(void) {
     All->SetUp->DeltaXShade = 3;
     All->SetUp->DeltaXShade = 2;
 
-    if (USEefaultCommonMenu()) {
+    if (USEDefaultCommonMenu()) {
 	
 	InitRCOptions();
 	UpdateOptionWin();

@@ -8,9 +8,8 @@ void DlClose(module Module);
 #define WMSo		((uldat)1)
 #define TermSo		((uldat)2)
 #define SocketSo	((uldat)3)
-#define SocketAlienSo	((uldat)4)
-#define RCParseSo	((uldat)5)
-#define MAX_So		((uldat)6)
+#define RCParseSo	((uldat)4)
+#define MAX_So		((uldat)5)
 
 module DlLoad(uldat code);
 void   DlUnLoad(uldat code);

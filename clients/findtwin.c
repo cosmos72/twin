@@ -13,6 +13,8 @@
 #include "Tw/Tw.h"
 #include "Tw/Twerrno.h"
 
+TW_DECL_MAGIC(findtwin_magic);
+
 static void test(TW_CONST char *dpy) {
     if (dpy || (dpy = getenv("TWDISPLAY"))) {
 	if (TwOpen(dpy)) {
@@ -60,6 +62,11 @@ int main(int argc, char *argv[]) {
 	return 1;
     }
 
+    if (!TwCheckMagic(findtwin_magic)) {
+	fprintf(stderr, "twfindtwin: %s%s\n", TwStrError(TwErrno), TwStrErrorDetail(TwErrno, TwErrnoDetail));
+	return 1;
+    }
+    
     /* then, check for environment TWDISPLAY */
     test(NULL);
     

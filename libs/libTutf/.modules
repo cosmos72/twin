@@ -1,0 +1,7 @@
+ 
+ libTutf.so.0.0.1: .libTutf.so.0.0.1.link
+ .libTutf.so.0.0.1.link: libTutf.o
+
+ libTutf.a: .libTutf.a.arlib
+ .libTutf.a.arlib: libTutf_u.o
+

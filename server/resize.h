@@ -4,10 +4,11 @@
 byte EnsureLenRow(row Row, ldat Len, byte DefaultCol);
 byte WriteRow(window Window, ldat Len, byte CONST * Text);
 
-void ExposeAscii(window Window, dat XWidth, dat YWidth, CONST byte *Text, dat Left, dat Up);
-void ExposeHWAttr(window Window, dat XWidth, dat YWidth, CONST hwattr *Attr, dat Left, dat Up);
+void ExposeWidget(widget W, dat XWidth, dat YWidth, dat Left, dat Up, CONST byte *Text, CONST hwfont *Font, CONST hwattr *Attr);
 
-void UpdateCursor(void);
+extern byte NeedUpdateCursor;
+#define UpdateCursor() (NeedUpdateCursor = TRUE)
+void FlushCursor(void);
 
 byte CheckResizeWindowContents(window Window);
 byte ResizeWindowContents(window Window);
@@ -47,6 +48,7 @@ void PressGadget(gadget G);
 void UnPressGadget(gadget G, byte maySendMsgIfNotToggle);
 void SendMsgGadget(gadget G);
 void WriteTextsGadget(gadget G, byte bitmap, dat XWidth, dat YWidth, CONST byte *Text, dat Left, dat Up);
+void WriteHWFontsGadget(gadget G, byte bitmap, dat XWidth, dat YWidth, CONST hwfont *Text, dat Left, dat Up);
 
 #endif /* _TW_RESIZE_H */
 

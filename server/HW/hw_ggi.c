@@ -169,16 +169,13 @@ static void GGI_KeyboardEvent(int fd, display_hw hw) {
 	}
     }
     
-    if (keys != HW->MouseState.keys ||
-	((keys || HW->MouseState.keys) &&
-	 (dx || dy || x != HW->MouseState.x || y != HW->MouseState.y)))
-	 
-	 MouseEventCommon(x, y, dx, dy, keys);
-    else {
+    if (keys != HW->MouseState.keys || dx || dy || x != HW->MouseState.x || y != HW->MouseState.y) {
+	MouseEventCommon(x, y, dx, dy, keys);
 	HW->MouseState.keys = keys;
 	HW->MouseState.x = x;
 	HW->MouseState.y = y;
     }
+    
     RestoreHW;
 }
 

@@ -1,14 +1,18 @@
 #ifndef _TW_DRAW_H
 #define _TW_DRAW_H
 
-void FindFontMenuItem(menu Menu, menuitem MenuItem, dat i, byte Select, byte *PtrFont, hwcol *PtrColor);
-void FindFontInfo(menu Menu, dat i, byte Select, byte *PtrFont, hwcol *PtrColor);
+void FindFontMenuItem(menu Menu, menuitem MenuItem, dat i, byte Select, hwfont *PtrFont, hwcol *PtrColor);
+void FindFontInfo(menu Menu, dat i, byte Select, hwfont *PtrFont, hwcol *PtrColor);
 widget FindWidgetAt(widget Parent, dat X, dat Y);
 
 void DrawSelfWidget(draw_ctx *D);
 void DrawSelfGadget(draw_ctx *D);
 void DrawSelfWindow(draw_ctx *D);
 void DrawSelfScreen(draw_ctx *D);
+
+byte InitDrawCtx(widget W, dat X1, dat Y1, dat X2, dat Y2, byte Shaded, draw_ctx *D);
+byte InitAbsoluteDrawCtx(widget W, dat X1, dat Y1, dat X2, dat Y2, byte Shaded, draw_ctx *D);
+void TranslateCoordsWidget(widget W1, widget W2, dat *X, dat *Y, byte *Inside);
 
 void DrawDesktop(screen Screen, dat Xstart, dat Ystart, dat Xend, dat Yend, byte Shaded);
 
@@ -40,8 +44,8 @@ void DrawAreaShadeWindow(screen Screen, window Window, dat Xstart, dat Ystart, d
 /* this also draws the shadow: */
 void DrawAreaWindow2(window Window);
 
-void DrawPartialWindow2(window W, dat X1, dat Y1, dat X2, dat Y2);
-void DrawLogicWindow2(window Window, ldat X1, ldat Y1, ldat X2, ldat Y2);
+void DrawPartialWidget(widget W, dat X1, dat Y1, dat X2, dat Y2);
+void DrawLogicWidget(widget W, ldat X1, ldat Y1, ldat X2, ldat Y2);
 
 void ReDrawRolledUpAreaWindow(window Window, byte Shaded);
 
@@ -50,6 +54,10 @@ void StartHilight(window Window, ldat XSel, ldat YSel);
 void ExtendHilight(window Window, ldat XSel, ldat YSel);
 
 screen ScreenParent(widget W);
-widget TopParent(widget W);
+window WindowParent(widget W);
+widget NonScreenParent(widget W);
+window FindCursorWindow(void);
+byte ContainsCursor(widget W);
+widget RecursiveFindWidgetAt(widget Parent, dat X, dat Y);
 
 #endif /* _TW_DRAW_H */

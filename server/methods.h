@@ -4,9 +4,11 @@
 byte FindInfo(menu Menu, dat i);
 window FakeOpenTerm(CONST byte *arg0, byte * CONST * argv);
 widget FakeKbdFocus(widget W);
-void FakeWriteAscii(window Window, ldat Len, CONST byte *Text);
+void FakeWriteAscii(window Window, ldat Len, CONST byte *Ascii);
+void FakeWriteString(window Window, ldat Len, CONST byte *String);
+void FakeWriteHWFont(window Window, ldat Len, CONST hwfont *HWFont);
 void FakeWriteHWAttr(window Window, dat x, dat y, ldat Len, CONST hwattr *Attr);
-byte FakeFindBorderWindow(window W, dat u, dat v, byte Border, byte *PtrChar, hwcol *PtrColor);
+byte FakeFindBorderWindow(window W, dat u, dat v, byte Border, hwfont *PtrChar, hwcol *PtrColor);
 
 extern fn Fn;
 #define FnObj		(Fn.f_obj)
