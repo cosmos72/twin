@@ -16,15 +16,15 @@
 byte *argv0;
 
 void Usage(void) {
-    fprintf(stderr, "Usage: %s [-msgport=]<MsgPort> [OPTIONS]\n"
+    fprintf(stderr, "Usage: %s [--msgport=]<MsgPort> [OPTIONS]\n"
 	    "Currently known options:\n"
-	    " -h, -help               display this help and exit\n"
-	    " -V, -version            output version information and exit\n"
-	    " -twin@<dpy>             set the server to contact (default is $TWDISPLAY)\n"
-	    " -control                send a MSG_USER_CONTROL message (default)\n"
-	    " -clientmsg              send a MSG_USER_CLIENTMSG message\n"
-	    " [-code=]<Code>          set the message code (default is `open')\n"
-	    " [-data=]<Data>          set the message data\n"
+	    " -h, --help              display this help and exit\n"
+	    " -V, --version           output version information and exit\n"
+	    " --twin@<dpy>            set the server to contact (default is $TWDISPLAY)\n"
+	    " --control               send a MSG_USER_CONTROL message (default)\n"
+	    " --clientmsg             send a MSG_USER_CLIENTMSG message\n"
+	    " [--code=]<Code>         set the message code (default is `open')\n"
+	    " [--data=]<Data>         set the message data\n"
 	    "Currently known codes for control messages are:\n"
 	    " quit (0), restart (1), open (2)\n",
 	    argv0);
@@ -89,7 +89,7 @@ int main(int argc, char *argv[]) {
 		Code = TW_MSG_CONTROL_OPEN;
 	    else {
 		fprintf(stderr, "%s: argument `%s' not recognized\n"
-			"\ttry `%s -help' for usage summary.\n", argv0, CodeName, argv0);
+			"\ttry `%s --help' for usage summary.\n", argv0, CodeName, argv0);
 		return 1;
 	    }
 	}

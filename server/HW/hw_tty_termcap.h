@@ -23,11 +23,15 @@
 #  ifdef HAVE_TERMCAP_H
 #   include <termcap.h>
 #  else
-#   ifdef HAVE_NCURSES_H
-#    include <ncurses.h>
+#   ifdef HAVE_NCURSES_TERMCAP_H
+#    include <ncurses/termcap.h>
 #   else
-#    ifdef HAVE_NCURSES_NCURSES_H
-#     include <ncurses/ncurses.h>
+#    ifdef HAVE_NCURSES_H
+#     include <ncurses.h>
+#    else
+#     ifdef HAVE_NCURSES_NCURSES_H
+#      include <ncurses/ncurses.h>
+#     endif
 #    endif
 #   endif
 #  endif

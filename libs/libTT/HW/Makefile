@@ -14,7 +14,7 @@ SUBDIRS=
 include $(TOPDIR)/include/TT/makeversion
 -include $(TOPDIR)/makeautoconf
 
-all: everything
+all: build-all
 
 BINS=
 SHLIBS=
@@ -123,7 +123,7 @@ endif
 
 
 ifeq ($(CONF__MODULES),n)
-  everything:
+  build-all:
 	@rm -f $(filter-out $(ALLBINS), $(ALLBINS_FULL)) ; \
 	 echo ; \
 	 echo "You disabled \"Enable shared modules\", so only" ; \
@@ -138,7 +138,7 @@ endif
 #
 include $(TOPDIR)/makerules
 
-everything: $(ALLBINS) links
+build-all: $(ALLBINS) links
 
 hw_%_m4.c: m4/hw.m4h hw_%_c $(wildcard m4/*.m4h $(TOPDIR)/include/m4/*.m4h)
 	$(M4) '-Dtarget=$*' -I$(TOPDIR)/include $< > $@
@@ -156,7 +156,15 @@ install-dir:
 	$(INSTALL-DIR) $(DESTDIR)$(libdir)/$(INSTALLSUBDIR)
 
 install: install-dir $(foreach M,$(MODS),install-mod-$(M))
-	
+
+
+uninstall-dir:
+	rmdir $(DESTDIR)$(libdir)$(INSTALLSUBDIR) || true
+	rmdir $(DESTDIR)$(libdir)/TT/modules || true
+	rmdir $(DESTDIR)$(libdir)/TT || true
+
+uninstall: $(foreach M,$(MODS),uninstall-mod-$(M)) uninstall-dir
+
 clean:
 	rm -f .*.flags .*.mod .*.shlib .*.arlib .*.cllib *.lst *.la *.a *.o *.lo *.so *.so.* ; \
 	rm -fr .libs

@@ -4,7 +4,7 @@
 			  
 
 
-This file describes how to create/modify themes for `-hw=gfx' twin driver.
+This file describes how to create/modify themes for `--hw=gfx' twin driver.
 
 Themes for this driver are simple: a single .xpm file holding all bitmaps.
 Optionally, you can also use arbitrary .xpm files as screen root pixmap and
@@ -12,6 +12,7 @@ window interior pixmap. These are not bound to the font size, while themes are:
 
 each theme .xpm file contains in its name the font size it requires: for example,
 
+ShinyMetal_6x13.xpm
 ShinyMetal_8x16.xpm
 absolute-e_8x16.xpm
    default_8x16.xpm
@@ -21,13 +22,13 @@ absolute-e_8x16.xpm
 
 There is currently no good way to convert a theme from a font size to another
 (actually you can scale the whole picture, but quite probably the results will
-not be very satisfying).
+be fuzzy and not very satisfying).
 
 Each theme picture is composed by 15x7 cells (this will increase in the future),
-and each cell is the same size as the required font (i.e. 8x16, 9x19, ...).
+and each cell is the same size as the required font (i.e. 6x13, 8x16, 9x19, ...).
 
 Each cell contains the bitmap used to draw a border, a button, a scrollbar
-or part of them. You can get a quick idea of the cell layout by examining
+or part of them. You can get a quick idea of the cell layout by viewing
 the ShinyMetal_8x16.xpm theme, which is quite intuitive and complete.
 
 If you want the details about what you should put in each cell,

@@ -602,4 +602,4 @@ byte InitModule(module Module) {
 void QuitModule(module Module) {
 }
 
-#endif /* MODULE */
+#endif /* THIS_MODULE */

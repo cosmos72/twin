@@ -11,13 +11,20 @@ include $(TOPDIR)/include/Tw/makeversion
 
 LD_FLAGS+=$(LD_LIBSOCKET)
 
-all: everything
+all: build-all
 
 SHLIBS=libTw.la
 ARLIBS=libTw.a
 
 OBJS_libTw.la=libTw.lo avl.lo md5.lo missing.lo
 OBJS_libTw.a=libTw.o avl.o md5.o missing.o
+
+OBJS_gcc_i386_asm=libTw2_i386.o
+OBJS_gcc_i386_asm_L=libTw2_i386.lo
+
+
+ALL_OBJS=$(OBJS_libTw.a) $(OBJS_libTw.a) $(OBJS_gcc_i386_asm) $(OBJS_gcc_i386_asm_L)
+
 
 CC_FLAGS+=-D_REENTRANT
 
@@ -35,15 +42,14 @@ ifneq ($(CONF_SOCKET),n)
   ifeq ($(CONF_SOCKET_PTHREADS),y)
     LD_FLAGS_libTw.la+=$(LD_LIBPTHREAD_WEAK)
   endif
-  everything: lib
+  build-all: lib
   install: install-real
+  uninstall: uninstall-real
   ifeq ($(CONF_SOCKET_GZ),y)
     LD_FLAGS_libTw.la+=-lz
   endif
 else
-  everything: warn
-  install: warn
-  warn:
+  build-all install uninstall warn:
 	@rm -f $(ARLIBS) $(SHLIBS) ; \
 	 echo ; \
 	 echo "You disabled \"Support remote socket connections\"," ; \
@@ -52,8 +58,8 @@ else
 endif
 
 ifeq ($(GCC_I386_ASM),yes)
-  OBJS_libTw.la+=libTw2_i386.lo
-  OBJS_libTw.a+=libTw2_i386.o
+    OBJS_libTw.la+=$(OBJS_gcc_i386_asm_L)
+    OBJS_libTw.a+=$(OBJS_gcc_i386_asm)
 endif
 
 #
@@ -93,6 +99,18 @@ install-dir:
 	$(INSTALL-DIR) $(DESTDIR)$(libdir)
 
 install-real: install-headers install-dir $(foreach B,$(SHLIBS) $(ARLIBS),install-lib-$(B))
+
+
+
+uninstall-headers:
+	rm -f $(DESTDIR)$(includedir)/Tw/*.h
+	rmdir $(DESTDIR)$(includedir)/Tw || true
+
+uninstall-dir:
+	rmdir $(DESTDIR)$(libdir) || true
+
+uninstall-real: uninstall-headers $(foreach B,$(SHLIBS) $(ARLIBS),uninstall-lib-) uninstall-dir
+
 
 clean:
 	rm -f .*.flags .*.shlib .*.arlib *.a *.la *.o *.lo *.so *.so.* ; \

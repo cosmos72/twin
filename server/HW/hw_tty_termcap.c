@@ -163,11 +163,13 @@ static byte termcap_InitVideo(void) {
 		strerror(errno));
 	return FALSE;
     }
-    
+
+#ifdef CONF__UNICODE
     if (tty_charset_to_UTF_16 != Tutf_CP437_to_UTF_16) {
 	tc_name[tc_seq_charset_start] = NULL;
 	tc_charset_start = tc_charset_end = NULL;
     }
+#endif
 
     for (n = tc_name, d = tc_cap; *n; n++, d++) {
 	if (*n && !termcap_extract(*n, d)) {

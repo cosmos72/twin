@@ -7,7 +7,7 @@
 /** library minor version */
 #define TT_PROTOCOL_VERSION_MINOR 0
 /** library patch version */
-#define TT_PROTOCOL_VERSION_PATCH 8
+#define TT_PROTOCOL_VERSION_PATCH 9
 /** library full version number (major,minor,patch) */
 #define TT_PROTOCOL_VERSION       ((TT_PROTOCOL_VERSION_MAJOR<<16)|(TT_PROTOCOL_VERSION_MINOR<<8)|TT_PROTOCOL_VERSION_PATCH)
 /** string reperesenting library full version number ("major.minor.patch") */

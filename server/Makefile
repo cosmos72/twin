@@ -20,8 +20,8 @@ BASEOBJS=data.o builtin.o methods.o util.o draw.o extensions.o main.o \
          missing.o hw_multi.o printk.o resize.o scroller.o remote.o alloc.o
 HWOBJS=hw.o HW/hw.lst
 DLOBJS=dl.o
-WMOBJS=wm.o rcrun.o rcopt.o
-RCPARSEOBJS=rcparse_tab.o rcparse_lex.o shm.o
+WMOBJS=wm.o rcrun.o rcopt.o shm.o
+RCPARSEOBJS=rcparse_tab.o rcparse_lex.o
 TERMOBJS=pty.o tty.o tterm.o 
 SOCKETOBJS=socket.o md5.o
 WRAPOBJS=wrapper.o
@@ -59,7 +59,7 @@ ifneq ($(libdir),)
   #
   # where to install modules?
   #
-  # libdir_MODS=$(libdir)/twin/modules
+  # libdir_MODS=$(libdir)$(INSTALLSUBDIR)
 endif
 ifneq ($(bindir),)
   CC_FLAGS_wrapper.o=-DBINDIR=\"$(bindir)\"
@@ -69,7 +69,7 @@ endif
 #
 # target
 #
-all: bins modules twin links
+all: build-subdirs bins modules twin links
 
 #
 # read configuration
@@ -215,6 +215,9 @@ ifneq ($(CONF_SOCKET),n)
   endif
 endif
 
+ifeq ($(CONF_EXT_LIBTT),y)
+  LD_FLAGS_twin_real+=$(LD_LIBTT)
+endif
 
 #
 # common rules
@@ -235,7 +238,7 @@ twin: twin_wrapper
 	$(LN) $< $@
 
 # the '@:' dummy command is to force relinking after HW/hw.lst is rebuilt
-HW/hw.lst: dir-HW
+HW/hw.lst: build-dir-HW
 	@:
 
 do-autogen: rcparse_tab.c rcparse_tab.h rcparse_lex.c socket1_m4.h socket2_m4.h socket3_m4.h
@@ -263,26 +266,44 @@ symbolsdep: all
 	for i in *.u; do echo; echo $$i; for j in `cat $$i`; do \
 	grep -e " $${j}\$$" *.d; done | sort; done > $@; :
 
+
+install-dirs:
+	$(INSTALL-DIR) $(DESTDIR)$(bindir) $(DESTDIR)$(libdir)$(INSTALLSUBDIR)
+
+install-bins:
+	$(INSTALL) $(BINS) $(DESTDIR)$(bindir) && \
+	$(INSTALL-BIN) twstart $(DESTDIR)$(bindir) && \
+	$(LN) twin_wrapper $(DESTDIR)$(bindir)/twin
+
+install: install-dirs install-bins $(foreach M,$(MODS),install-mod-$(M))
+	@if [ "$(SETPRIV)" ]; then \
+	  echo [1m ; \
+	  echo "# Twin may need special privileges for the terminal emulator to work." ; \
+	  echo "# More exactly, the following command could be necessary:" ; \
+	  echo "#    $(SETPRIV)" ; \
+	  echo "# $(SETPRIV_COMM)" ; \
+	  echo "# Since twin has not been extensively tested against vulnerabilities," ; \
+	  echo "# you will grant special privileges to twin AT YOUR OWN RISK." ; \
+	  echo [0m ; \
+	fi
+
+uninstall-dirs:
+	rmdir $(DESTDIR)$(bindir) || true
+	rmdir $(DESTDIR)$(libdir)$(INSTALLSUBDIR) || true
+	rmdir $(DESTDIR)$(libdir)/twin || true
+	rmdir $(DESTDIR)$(libdir) || true
+
+uninstall-bins:
+	cd $(DESTDIR)$(bindir) && \
+	   rm -f $(BINS) twstart twin || true
+	rmdir $(DESTDIR)$(bindir) || true
+	rmdir $(DESTDIR)$(libdir)$(INSTALLSUBDIR) || true
+
+uninstall: uninstall-bins $(foreach M,$(MODS),uninstall-mod-$(M)) uninstall-dirs
+
+
 clean:
 	rm -f .*.flags .*.link .*.arlib gmon.out core log twin \
 	      twin_real twin_wrapper twdisplay *.o *.lo *.la *.so *.so.* \
 	      rcparse.output y.tab.c lex.yy.c *.u *.d ; \
 	rm -fr .libs
-
-install-bins:
-	$(INSTALL-DIR) $(DESTDIR)$(bindir) $(DESTDIR)$(libdir)/twin/modules && \
-	$(INSTALL) $(BINS) $(DESTDIR)$(bindir) && \
-	$(INSTALL-BIN) twstart $(DESTDIR)$(bindir) && \
-	$(LN) twin_wrapper $(DESTDIR)$(bindir)/twin
-
-install: install-bins $(foreach M,$(MODS),install-mod-$(M))
-	@if [ "$(SETPRIV)" ]; then \
-	  echo [1m ; \
-	  echo Twin may need special privileges for the terminal emulator to work. ; \
-	  echo More exactly, the following command could be necessary: ; \
-	  echo "   $(SETPRIV)" ; \
-	  echo "$(SETPRIV_COMM)" ; \
-	  echo Since twin has not been extensively tested against vulnerabilities, ; \
-	  echo you will grant special privileges to twin AT YOUR OWN RISK. ; \
-	  echo [0m ; \
-	fi

@@ -36,17 +36,16 @@
 # error nor dlopen() nor lt_dlopen() module loading API available!  
 #endif
 
+
 byte DlOpen(module Module) {
-    void * Handle = NULL;
+    my_handle Handle = NULL;
     uldat len0 = LenStr(conf_destdir_lib_twin_modules_) + LenStr(my_VERSION), len;
-    byte *name;
+    byte *name = NULL;
     byte (*init_dl)(module);
     
     if (Module && !Module->Handle && (!Module->NameLen || Module->Name)) {
 	/* dlopen(NULL, ...) returns a handle for the main program */
-	if (Module->NameLen == 0)
-	    name = NULL;
-	else {
+	if (Module->NameLen) {
 	    len = len0 + Module->NameLen;
 	    if ((name = AllocMem(len+1)))
 		sprintf(name, "%s%.*s%s", conf_destdir_lib_twin_modules_, (int)Module->NameLen, Module->Name, my_VERSION);
@@ -55,7 +54,7 @@ byte DlOpen(module Module) {
 		return FALSE;
 	    }
 	}
-	Handle = (void *)my(dlopen)(name my_dlopen_extra_args);
+	Handle = my(dlopen)(name my_dlopen_extra_args);
 	if (name)
 	    FreeMem(name);
     }
@@ -66,12 +65,12 @@ byte DlOpen(module Module) {
     }
 
     if (name) {
-	init_dl = (byte (*)(module)) my(dlsym)((my_handle)Handle, "InitModule");
+	init_dl = (byte (*)(module)) my(dlsym)(Handle, "InitModule");
 	if (!init_dl || init_dl(Module)) {
-	    Module->Handle = Handle;
+	    Module->Handle = (void *)Handle;
 	    return TRUE;
 	}
-	my(dlclose)((my_handle)Handle);
+	my(dlclose)(Handle);
 	return FALSE;
     }
     return TRUE;

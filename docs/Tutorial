@@ -10,7 +10,7 @@
 				TUTORIAL
 
 
-		  updated to version 0.4.5, 13 Jul 2002
+		  updated to version 0.4.6, 26 Mar 2003
 	      
 
 	     Author: Massimiliano Ghilardi <max@linuz.sns.it>
@@ -147,18 +147,16 @@
 	To compile twin you need the following programs installed
 	on your system:
 	
-	GNU make	it should always work unless it's really prehistorical
+	a recent GNU make (versions <= 3.76.1 do not to work)
 			
 	an ANSI C compiler (gcc for example)
    
    Once you have the necessary programs listed above, you can start:
    
-   First, you might want to edit the file `makerules' to change
-   the install directory, tweak compiler flags (enable debugging), etc.
    If you are trying to compile on non-Linux systems, you would do better
    reading the file README.porting now, for useful tips and warnings.
    
-   Then type `./configure' to automatically configure twin for your system.
+   Type `./configure [options]' to automatically configure twin for your system.
    
    AUTOMATIC CONFIGURATION SHOULD ALWAYS SUFFICE;
    YOU SHOULD NEVER NEED TO MANUALLY CONFIGURE TWIN.
@@ -194,7 +192,7 @@
 4. Installing and Starting twin
 
    If you want to install twin on your system,
-   make sure that the `prefix' variable set in `makerules' is correct,
+   make sure that the `prefix' variable set by './configure' is correct,
    considering that when you will type `make install'
    the various parts of twin will be placed as follows:
    `twin' and the other programs (twterm, etc.) will go in $prefix/bin,
@@ -229,10 +227,6 @@
    In any case, you cannot mix modules from a certain version
    with a `twin' executable of a different version.
 
-   If you compiled some display driver as module, twin will NOT autoprobe
-   for it and you will need to use `twin -hw=<display>' to load and use
-   a modularized display driver.
-   
    After twin is installed, to start it just type
    
      twin
@@ -246,7 +240,7 @@
    If you want, you can specify the display to use
    instead of letting twin autoprobe; the syntax is:
    
-     twin [-hw=<display>[,options]] [-hw=<display>[,options]] ...
+     twin [--hw=<display>[,options]] [--hw=<display>[,options]] ...
      
    where <display> is one of:
    
@@ -258,11 +252,11 @@
 	
    for an explanation of the available display methods and their options,
    see paragraph 8. below about `twattach' and `twdisplay': they have
-   exactly the same syntax as twin for the argument `-hw=<display>[,options]'
+   exactly the same syntax as twin for the argument `--hw=<display>[,options]'
 
    You can also start twin in the background without display with
    
-     twin -nohw
+     twin --nohw
    
 
 5. The Twin UI (User Interface): how to use it
@@ -420,10 +414,10 @@
 	twclip    - a wannabe utility to manage clipboard.
 	            For now, it's little more than test.
 	twlsobj   - show internal server objects: windows, menus, ...  Options:
-	    -h, -help           display this help and exit
-	    -V, -version        output version information and exit
-	    -r, -recursive      also show lists of parents, children, ...
-	    -v, -verbose        always show all data, even huge arrays
+	    -h, --help           display this help and exit
+	    -V, --version        output version information and exit
+	    -r, --recursive      also show lists of parents, children, ...
+	    -v, --verbose        always show all data, even huge arrays
 	    
 	twevent   - report twin events, like xev (X11) and mev (console/gpm)
 	twmapscrn - twin equivalent of Linux console tool `mapscrn'
@@ -432,20 +426,20 @@
 		    is often not necessary.
 		    
 	twsendmsg - utility to send messages to running libTw clients. Options:
-	    -h, -help           display this help and exit
-	    -V, -version        output version information and exit
-	    -control            send a MSG_USER_CONTROL message (default)
-	    -clientmsg          send a MSG_USER_CLIENTMSG message
-	    [-code=]<Code>      set the message code (default is open (2))
-	    [-data=]<Data>      set the message data
+	    -h, --help           display this help and exit
+	    -V, --version        output version information and exit
+	    --control            send a MSG_USER_CONTROL message (default)
+	    --clientmsg          send a MSG_USER_CLIENTMSG message
+	    [--code=]<Code>      set the message code (default is open (2))
+	    [--data=]<Data>      set the message data
 	   Currently known codes for control messages are:
 	    quit (0), restart (1), open (2)
 	
 	twsetroot - customize twin background (see clients/README.twsetroot)
 	twsysmon  - a system resources monitor (works on Linux only)
 	twterm    - create remote twin terminal windows. Known options:
-	    -h, -help		display this help and exit
-	    -V, -version	output version information and exit
+	    -h, --help		display this help and exit
+	    -V, --version	output version information and exit
 	    -t <title>		set window title
 				(you will need to enclose <title> in quotes
 				if it contains spaces or other special chars)
@@ -454,17 +448,17 @@
 	twthreadtest - a stupid demo to test libTw with threads.
 
 	twdm      - a login manager, modeled after xdm/kdm. Known options:
-	    -h, -help               display this help and exit
-	    -V, -version            output version information and exit
-	    -k, -kill               kill twin server upon display detach
-	    -q, -quiet              quiet; suppress diagnostic messages
-	    -attach                 use "twattach" to start display (default)
-	    -display                use "twdisplay" to start display
-	    -envrc                  tell twin to run .twenvrc.sh to get environment
-	    -suidroot               tell twin to keep suid root privileges
-	    -sgidtty                tell twin to keep sgid tty privileges
-	    -title=<title>          set window title
-	    -hw=<arg>               set display hw to use (default: -hw=tty)
+	    -h, --help               display this help and exit
+	    -V, --version            output version information and exit
+	    -k, --kill               kill twin server upon display detach
+	    -q, --quiet              quiet; suppress diagnostic messages
+	    --attach                 use "twattach" to start display (default)
+	    --display                use "twdisplay" to start display
+	    --envrc                  tell twin to run .twenvrc.sh to get environment
+	    --suidroot               tell twin to keep suid root privileges
+	    --sgidtty                tell twin to keep sgid tty privileges
+	    --title=<title>          set window title
+	    --hw=<arg>               set display hw to use (default: -hw=tty)
 
    `twdm' can be used instead of the usual mingetty/agetty/login programs
    to let a user login on a workstation console (currently tested only on Linux).
@@ -480,7 +474,7 @@
    replace the whole line with the one below -- of course you must replace
    TERM=<...> with the actual terminal type of your workstation console)
    
-   1:2345:respawn:/usr/local/bin/twdm -quiet -hw=tty@/dev/tty1,TERM=linux
+   1:2345:respawn:/usr/local/bin/twdm --quiet --hw=tty@/dev/tty1,TERM=linux
    
    In order to correctly setup $PATH and other environment variables,
    you can add `-envrc' option to twdm (tested only on Linux with bash).
@@ -519,8 +513,8 @@
    to send a message to `twterm' saying "please open a shell window".
    To send exactly this message, one can use `twsendmsg' in the following way:
 	twsendmsg "twterm" open
-   ("Remote Twin Term" is the name of the message port created by `twterm',
-   while "Builtin" is the name of the message port builtin into twin)
+   ("twterm" is the name of the message port created by `twterm',
+   while "twin" is the name of the message port builtin into twin server)
    Of course it is possible to start arbitrary commands with `twsendmsg',
    not just the user's shell:
 	twsendmsg "twin" open "pine someone@somewhere.net"
@@ -695,19 +689,19 @@
 	    
     Examples:
       
-      $ twattach -hw=X
+      $ twattach --hw=X
       tell the default twin (corresponding to $TWDISPLAY)
       to attach to the default X server (corresponding to $DISPLAY)
 
-      $ twdetach -hw=X
+      $ twdetach --hw=X
       tell the default twin
       to detach ONE display attached to the default X server
 
-      $ twdetach -twin@:5
+      $ twdetach --twin@:5
       tell the twin corresponding to :5 to detach from ALL its displays
       and keep running in the background (same as using `Detach' from menu)
 
-      $ twattach -twin@<some twin display> -hw=X@<some X display>
+      $ twattach --twin@<some twin display> --hw=X@<some X display>
       tell twin correspinding to <some twin display>
       (for example :5, or myhost.somewhere.net:2)
       to attach to the X server corresponding to <some X display>
@@ -716,27 +710,32 @@
       to talk each other (see above for an explanation about how
       the file .TwinAuth is used for authorization control)
       
-      $ twattach -twin@:5 -hw=tty
+      $ twattach --twin@:5 --hw=tty
       tell twin :5 to attach to the same tty device you are running
       `twattach' on. For this to work, both `twattach' and `twin' must
       be running on the same host.
 
-      $ twdisplay -twin@myhost.somewhere.net:1 -hw=tty
-      attach twin at myhost.somewhere.net:1 to the tty device you are running
-      `twdisplay' on. Since it is actually twdisplay that attaches to the tty,
+      $ twdisplay
+      autoprobe for a display, then attach twin at $TWDISPLAY to it.
+      The main advantage of using twdisplay is:
+      since it is actually twdisplay that attaches to the display,
       while twin just talks to twdisplay using a socket, `twdisplay' and `twin'
       may even be running on different hosts.
 
-      $ twattach -twin@myhost.somewhere.net:1 -hw=tty@-
+      $ twdisplay --twin@myhost.somewhere.net:1 --hw=tty
+      attach twin at myhost.somewhere.net:1 to the tty device you are running
+      `twdisplay' on.
+
+      $ twattach --twin@myhost.somewhere.net:1 --hw=tty@-
       tell twin at myhost.somewhere.net:1 to attach to its own controlling tty.
       This does not work if that twin has already detached from its tty,
       but you will be told that in case it happens.
 
-      $ twdetach -twin@myhost.somewhere.net:1 -hw=tty@-
+      $ twdetach --twin@myhost.somewhere.net:1 --hw=tty@-
       tell twin at myhost.somewhere.net:1 to detach from its own controlling
       tty (supposing it was being used as a display)
 
-      $ twattach -twin@:5 -hw=tty@<some tty device>,TERM=<terminal type>
+      $ twattach --twin@:5 --hw=tty@<some tty device>,TERM=<terminal type>
       tell twin to attach to <some tty device>.
       In this case you must make sure no program is reading/writing
       on <some tty device> (for example you might run `sleep 365d' on it)
@@ -747,42 +746,45 @@
 	a supported terminal. If you attach twin to an unsupported terminal,
 	things might go BADLY wrong.
 
-      $ twdisplay -twin@myhost.somewhere.net:1 -hw=twin@yourhost:3,gz
+      $ twdisplay --twin@myhost.somewhere.net:1 --hw=twin@yourhost:3,gz
       attach twin running on myhost.somewhere.net:1
       to another twin running on yourhost:3 and display on it.
       The final ",gz" means that the connection between `twdisplay'
       and the second `twin' will be compressed.
       
-      $ twattach -twin@<some twin display> -hw=ggi
+      $ twattach --twin@<some twin display> --hw=ggi
       tell twin to fire up libggi and display on it.
       
       
 
     The most general syntax of twattach is:
-      twattach [-a|-d] [-v|-q] [-s|-x] [-twin@<TWDISPLAY>] -hw=<display>[,options]
+      twattach [-a|-d] [-v|-q] [-s|-x] [--twin@<TWDISPLAY>] --hw=<display>[,options]
 
     The most general syntax of twdisplay is:
-      twdisplay [-v|-q] [-s|-x] [-twin@<TWDISPLAY>] -hw=<display>[,options]
+      twdisplay [-v|-q] [-s|-x] [--twin@<TWDISPLAY>] [--hw=<display>[,options]]
 
     switches have the following meaning:
-      -a	: send attach command (default)
-      -d	: send detach command (same as running `twdetach [args ...]')
-      -v	: be verbose and display all messages generated by twin
-	          while trying to attach (default)
-      -q	: be quiet and display no messages
-      -s, -share: allow multiple simultaneous displays (default)
-      -x, -excl : request an eclusive display - detach all others
+      -a		: send attach command (default)
+      -d		: send detach command (same as running `twdetach [args ...]')
+      -v, --verbose	: be verbose and display all messages generated by twin
+			  while trying to attach (default)
+      -q, --quiet	: be quiet and display no messages
+      -s, --share	: allow multiple simultaneous displays (default)
+      -x, --excl	: request an eclusive display - detach all others
 
-    if you do not specify `-twin@<TWDISPLAY>', the default $TWDISPLAY will
+    if you do not specify `--twin@<TWDISPLAY>', the default $TWDISPLAY will
     be used.
-      
+
+    if you do not specify `--hw=<display>[,options]', twdisplay will autoprobe
+    for it.
+
     known displays are:
       
-      -hw=X[@<XDISPLAY>]     or    -hw=X11[@<XDISPLAY>]
-      -hw=gfx[@<XDISPLAY>]
-      -hw=twin[@<TWDISPLAY>]
-      -hw=tty[@<tty device>]
-      -hw=ggi[@<libggi target>]
+      --hw=X[@<XDISPLAY>]     or    --hw=X11[@<XDISPLAY>]
+      --hw=gfx[@<XDISPLAY>]
+      --hw=twin[@<TWDISPLAY>]
+      --hw=tty[@<tty device>]
+      --hw=ggi[@<libggi target>]
 	
     and known display options are:
       
@@ -794,7 +796,7 @@
 			as possible (this is on by default for -hw=X , -hw=X11
 			and -hw=gfx)
 		  
-      -hw=X  or -hw=X11 or -hw=gfx :
+      --hw=X  or --hw=X11 or --hw=gfx :
                 : ",font=<fontname>" to choose your favourite X11 font
 		        (default: vga).
 		: ",charset=<name>" to inform the driver about the codepage
@@ -804,7 +806,7 @@
 			is actually slower than a normal redraw.
 			Your mileage may vary.
 
-      -hw=gfx   : ",mono" to load themes and images as monochrome
+      --hw=gfx  : ",mono" to load themes and images as monochrome
                   ",color" to load themes and images as colorful (default)
                   ",theme=<name>" to set the theme pixmap
                   ",root=<name>"  to set the screen root pixmap
@@ -823,9 +825,9 @@
                         use root pixmap (root), use bg pixmap (bg)
 
       
-      -hw=twin  : ",gz" to enable gzip compression on the connecting socket.
+      --hw=twin : ",gz" to enable gzip compression on the connecting socket.
       
-      -hw=tty	: ",stdout" to draw on stdout even if /dev/vcsa* is available.
+      --hw=tty	: ",stdout" to draw on stdout even if /dev/vcsa* is available.
 		: ",termcap" to use termcap/ncurses interface even if other
 			methods are available.
 		: ",colorbug" use with termcap interface, if terminal does not
@@ -841,7 +843,7 @@
 		: ",utf8" to tell twin that the tty understands utf8 encoding
 		        to display Unicode.
 
-      -hw=ggi	: no options, use the zillion of libggi environment variables
+      --hw=ggi	: no options, use the zillion of libggi environment variables
 		  to control libggi behaviour.
 
 
@@ -856,10 +858,10 @@
 
     Attaching twin to the X server of globe.alter.net is easy, just run
     this command on globe
-    $ twattach -twin@plato.alter.net:2 -hw=X@globe.alter.net:0
+    $ twattach --twin@plato.alter.net:2 --hw=X@globe.alter.net:0
     
     or alternatively,
-    $ twdisplay -twin@plato.alter.net:2 -hw=X@globe.alter.net:0
+    $ twdisplay --twin@plato.alter.net:2 --hw=X@globe.alter.net:0
 
     (this requires you have the same .TwinAuth on both hosts
     and that the X server on globe accepts the connection attempt,
@@ -871,7 +873,7 @@
     The easiest way is to use `twdisplay', running this command on globe
     console:
     
-    $ twdisplay -twin@plato.alter.net:2 -hw=tty
+    $ twdisplay --twin@plato.alter.net:2 --hw=tty
 
     There are ways to solve the problem without `twdisplay', but they
     are both more complex and less functional, as they either require
@@ -889,25 +891,29 @@
    is the Display window inside twin (killing the `twdisplay' process that
    requested the exclusive display works too).
    
-   To request an exclusive display, you must add the option `-x' to twdisplay
-   command line. Example:
+   To request an exclusive display, you must add the option `-x' or `--excl'
+   to twdisplay command line. Example:
    
-   $ twattach -x -twin@:0 -hw=tty
+   $ twattach --excl --twin@:0 --hw=tty
    
    Exclusive displays can be started directly by twin, exactly in the same way:
    
-   $ twin -x -hw=tty
+   $ twin --excl --hw=tty
    
-   Of course, when specifying `-x', twin can only start one display.
+   Of course, when specifying `--excl', twin can only start one display.
 
 
    Summary of twin options:
-     -h, -help               display this help and exit
-     -V, -version            output version information and exit
-     -secure                 forbid starting external programs
-     -x                      start display as exclusive
-     -nohw                   start in background without display
-     -hw=<display>[,options] start with the given display (multiple -hw=... allowed)
+     -h, --help               display this help and exit
+     -V, --version            output version information and exit
+     --secure                 forbid starting external programs
+     --envrc                  execute .twenvrc.sh and read its output to set
+                              environment variables (mostly useful for twdm)
+     -s, --share              start display as shared (default)
+     -x, --excl               start display as exclusive
+     --nohw                   start in background without display
+     --hw=<display>[,options] start with the given display (multiple --hw=... allowed)
+                              (default: autoprobe all displays until one succeeds)
 
 
 9. Installing fonts

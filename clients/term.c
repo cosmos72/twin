@@ -299,16 +299,10 @@ static void CloseTerm(uldat Slot) {
  */
 static volatile byte ReceivedSignalChild;
 
-#if TW_RETSIGTYPE == void
-# define TW_RETFROMSIGNAL
-#else
-# define TW_RETFROMSIGNAL return 0;
-#endif
-
 static TW_RETSIGTYPE SignalChild(int n) {
     ReceivedSignalChild = TRUE;
     signal(SIGCHLD, SignalChild);
-    TW_RETFROMSIGNAL
+    TW_RETFROMSIGNAL(0);
 }
 
 static void RemotePidIsDead(pid_t pid) {
@@ -495,8 +489,8 @@ static void TwinTermIO(int Slot) {
 static void Usage(char *name) {
     fprintf(stderr, "Usage: %s [OPTIONS]\n"
 	    "Currently known options: \n"
-	    " -h, -help               display this help and exit\n"
-	    " -V, -version            output version information and exit\n"
+	    " -h, --help              display this help and exit\n"
+	    " -V, --version           output version information and exit\n"
 	    " -t <title>              set window title\n"
 	    " -e <command>            run <command> instead of user's shell\n"
 	    "                         (must be last option)\n", name);
@@ -535,7 +529,7 @@ int main(int argc, char *argv[]) {
 	    break;
 	} else {
 	    fprintf(stderr, "%s: argument `%s' not recognized\n"
-		    "\ttry `%s -help' for usage summary.\n", name, *argv, name);
+		    "\ttry `%s --help' for usage summary.\n", name, *argv, name);
 	    return 1;
 	}
 	argv++;

@@ -1,5 +1,5 @@
 Name:		twin
-Version:	0.4.5
+Version:	0.4.6
 Release:	2
 Vendor:		Massimiliano Ghilardi <max@linuz.sns.it>
 Copyright:	GPL

@@ -30,8 +30,11 @@ char *Tw_missing_strdup(TW_CONST char *s, void *(*missing_malloc)(size_t size)) 
 
 #ifndef TW_HAVE_STRSPN
 size_t Tw_missing_strspn(TW_CONST char *s, TW_CONST char *accept) {
-    if (s) while (*s && strchr(accept, *s))
-	s++;
+    size_t accept_len = strlen(accept);
+    
+    if (s)
+	while (*s && memchr(accept, *s, accept_len))
+	    s++;
     return s;
 }
 #endif
@@ -52,3 +55,22 @@ TW_CONST char *Tw_missing_strstr(TW_CONST char *haystack, TW_CONST char *needle)
     return NULL;
 }
 #endif
+
+
+int Tw_option_strcmp(TW_CONST char *s1, TW_CONST char *s2) {
+    if (s1[0] == '-' && s1[1] == '-' && s1[2])
+	s1++;
+    if (s2[0] == '-' && s2[1] == '-' && s2[2])
+	s2++;
+    return strcmp(s1, s2);
+}
+
+int Tw_option_strncmp(TW_CONST char *s1, TW_CONST char *s2, size_t n) {
+    if (n > 2 && s1[0] == '-' && s1[1] == '-' && s1[2])
+	n--, s1++;
+    if (s2[0] == '-' && s2[1] == '-' && s2[2])
+	s2++;
+    return strncmp(s1, s2, n);
+}
+
+

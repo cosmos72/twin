@@ -74,7 +74,7 @@ LD_FLAGS_ttdemo2+=$(LD_LIBTT)
 LD_FLAGS_ttdemo3+=$(LD_LIBTT)
 
 
-all: everything
+all: build-all
 
 -include $(TOPDIR)/conf/conf.current
 -include .modules
@@ -109,7 +109,7 @@ endif
 #
 include $(TOPDIR)/makerules
 
-everything: $(BINS) links subdirs
+build-all: $(BINS) links build-subdirs
 
 ifneq ($(filter twattach,$(BINS)),)
   links: twdetach
@@ -126,6 +126,12 @@ install:
 	$(INSTALL) $(filter-out twdm,$(BINS)) $(DESTDIR)$(bindir) && \
 	$(INSTALL) $(filter twdm,$(BINS)) $(DESTDIR)$(sbindir) && \
 	$(LN) twattach $(DESTDIR)$(bindir)/twdetach
+
+uninstall:
+	cd $(DESTDIR)$(bindir)  && rm -f $(filter-out twdm,$(BINS)) twdetach || true
+	cd $(DESTDIR)$(sbindir) && rm -f $(filter twdm,$(BINS)) || true
+	rmdir $(DESTDIR)$(bindir) || true
+	rmdir $(DESTDIR)$(sbindir) || true
 
 clean:
 	rm -f .*.flags .*.bin gmon.out core tw* tt* *.la *.a *.o *.lo *.so *.so.* ; \

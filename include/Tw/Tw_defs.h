@@ -28,6 +28,20 @@
 
 #ifndef _TWIN_H
 
+
+/* return from signal macros */
+
+#define TW_RETFROMSIGNAL(value)		return TW_ARG_IFNOTVOID(value, TW_RETSIGTYPE)
+#define TW_ARG_IFNOTVOID(value, type)	TW_CAT(TW_ARG_IFNOTVOID_,type)(value)
+#define TW_ARG_IFNOTVOID_void(value)
+#define TW_ARG_IFNOTVOID_int(value)	(value)
+
+
+
+/* maximum number of arguments of a libTw function */
+#define TW_MAX_ARGS_N	20
+  
+
 /* Macros for HW VGA (not ANSI!) colors */
 #define BLACK	((hwcol)0)
 #define BLUE	((hwcol)1)

@@ -19,7 +19,7 @@ TOPDOCS:=$(patsubst %,$(TOPDIR)/%, README BUGS INSTALL README.porting \
 #
 # target
 #
-all: alldocs
+all: autogen
 
 #
 # read configuration: currently not needed
@@ -41,9 +41,11 @@ include $(TOPDIR)/makerules
 # All done. Now just set a few special targets
 #
 
+autogen: alldocs
+
 alldocs: ltrace.conf
 
-ltrace.conf: m4/ltrace.conf.m4 $(wildcard m4/ltrace.conf.*.in $(TOPDIR)/include/m4/TT*.m4h)
+ltrace.conf: m4/ltrace.conf.m4 $(wildcard m4/ltrace.conf.*.in $(TOPDIR)/include/m4/TT*.m4)
 	$(M4) -I$(TOPDIR)/include $< > $@
 
 clean:
@@ -52,5 +54,12 @@ install:
 	$(INSTALL-DIR) $(DESTDIR)$(datadir)/man/man1 && \
 	$(INSTALL-TXT) twin.1 $(DESTDIR)$(datadir)/man/man1 ; \
 	$(INSTALL-DIR) $(DESTDIR)$(datadir)/twin/docs
-	$(INSTALL-TXT) $(DOCS) $(DESTDIR)$(datadir)/twin/docs
 	$(INSTALL-TXT) $(TOPDOCS) $(DESTDIR)$(datadir)/twin
+	$(INSTALL-TXT) $(DOCS) $(DESTDIR)$(datadir)/twin/docs
+
+uninstall:
+	cd $(DESTDIR)$(datadir) && rm -f man/man1/twin.1 && \
+	   cd twin && rm -f $(notdir $(TOPDOCS)) && \
+	   cd docs && rm -f $(notdir $(DOCS)) || true
+	rmdir $(DESTDIR)$(datadir)/twin/docs || true
+	rmdir $(DESTDIR)$(datadir)/twin || true

@@ -989,6 +989,7 @@ byte RC_VM(timevalue *t) {
 void QuitRC(void) {
     ResetBorderPattern();
     RCKillAll();
+    shm_quit();
 }
 
 

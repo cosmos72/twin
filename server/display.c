@@ -34,27 +34,6 @@
 #include <Tw/Twstat.h>
 #include <Tw/Twstat_defs.h>
 
-/* HW specific headers */
-
-#ifdef CONF_HW_GFX
-# include "HW/hw_gfx.h"
-#endif
-
-#ifdef CONF_HW_X11
-# include "HW/hw_X11.h"
-#endif
-
-#ifdef CONF_HW_TWIN
-# include "HW/hw_twin.h"
-#endif
-
-#ifdef CONF_HW_TTY
-# include "HW/hw_tty.h"
-#endif
-
-#ifdef CONF_HW_GGI
-# include "HW/hw_ggi.h"
-#endif
 
 
 
@@ -63,7 +42,8 @@
 
 
 # if defined(HAVE_DLFCN_H) && defined(HAVE_DLOPEN)
-# include <dlfcn.h>
+
+#  include <dlfcn.h>
 # define my(fn) fn
 # define my_handle void *
 # define my_dlopen_extra_args , RTLD_NOW|RTLD_GLOBAL
@@ -303,8 +283,6 @@ static void RemoteEvent(int FdCount, fd_set *FdSet) {
 
 #ifdef CONF__MODULES
 
-#include <dlfcn.h>
-
 static struct s_fn_module _FnModule = {
     module_magic, (uldat)sizeof(struct s_module), (uldat)1,
 	(void *)NoOp, /* CreateModule */
@@ -327,7 +305,7 @@ static module DlLoadAny(uldat len, byte *name) {
     byte *_name;
     
     if ((Module->Name = CloneStrL(name, len)) &&
-	(_name = AllocMem(len + strlen(conf_destdir_lib_twin_modules_) + 1))) {
+	(_name = AllocMem(len + strlen(conf_destdir_lib_twin_modules_) + strlen(my_VERSION) + 1))) {
 	
 	sprintf(_name, "%s%.*s%s", conf_destdir_lib_twin_modules_, (int)len, name, my_VERSION);
 
@@ -349,11 +327,9 @@ static module DlLoadAny(uldat len, byte *name) {
     return (module)0;
 }
 
-static byte module_InitHW(void) {
+static byte module_InitHW(byte *arg, uldat len) {
     byte *name, *tmp;
     byte *(*InitD)(void);
-    byte *arg = HW->Name;
-    uldat len = HW->NameLen;
     module Module = NULL;
 
     if (!arg || len <= 4)
@@ -423,19 +399,32 @@ static struct s_display_hw _HW = {
 	&_FnDisplayHW,
 };
 
-#if defined(CONF_HW_GFX) || defined(CONF_HW_X11) || defined(CONF_HW_TWIN) || defined(CONF_HW_TTY) || defined(CONF_HW_GGI)
+#if defined(CONF__MODULES) || defined(CONF_HW_TWIN)
 static byte check4(byte *s, byte *arg) {
+    if (arg && !strncmp(s, arg, strlen(s))) {
+	printk("twin: trying given `--hw=%."STR(SMALLBUFF)"s' display driver.\n", s);
+	return TRUE;
+    }
+    return FALSE;
+}
+#endif /* defined(CONF__MODULES) || defined(CONF_HW_TWIN) */
+
+#if defined(CONF__MODULES) || defined(CONF_HW_GFX) || defined(CONF_HW_X11) || defined(CONF_HW_TTY) || defined(CONF_HW_GGI)
+static byte autocheck4(byte *s, byte *arg) {
     if (arg && strncmp(s, arg, strlen(s))) {
-	printk("twdisplay: `-hw=%."STR(SMALLBUFF)"s' given, skipping `-hw=%."STR(SMALLBUFF)"s' display driver.\n",
+	printk("twdisplay: `--hw=%."STR(SMALLBUFF)"s' given, skipping `--hw=%."STR(SMALLBUFF)"s' display driver.\n",
 		arg, s);
 	return FALSE;
     } else if (arg)
-	printk("twdisplay: trying given `-hw=%."STR(SMALLBUFF)"s' display driver.\n", s);
+	printk("twdisplay: trying given `--hw=%."STR(SMALLBUFF)"s' display driver.\n", s);
     else
-	printk("twdisplay: autoprobing `-hw=%."STR(SMALLBUFF)"s' display driver.\n", s);
+	printk("twdisplay: autoprobing `--hw=%."STR(SMALLBUFF)"s' display driver.\n", s);
     return TRUE;
 }
+#endif /* defined(CONF__MODULES) || defined(CONF_HW_GFX) || defined(CONF_HW_X11) || defined(CONF_HW_TTY) || defined(CONF_HW_GGI) */
 
+
+#if defined(CONF__MODULES) || defined(CONF_HW_GFX) || defined(CONF_HW_X11) || defined(CONF_HW_TWIN) || defined(CONF_HW_TTY) || defined(CONF_HW_GGI)
 static void fix4(byte *s, display_hw D_HW) {
     uldat len;
     if (!D_HW->NameLen) {
@@ -448,19 +437,19 @@ static void fix4(byte *s, display_hw D_HW) {
 	}
     }
 }
-#endif /* defined(CONF_HW_GFX) || defined(CONF_HW_X11) || defined(CONF_HW_TWIN) || defined(CONF_HW_TTY) || defined(CONF_HW_GGI) */
+#endif /* defined(CONF__MODULES) || defined(CONF_HW_GFX) || defined(CONF_HW_X11) || defined(CONF_HW_TWIN) || defined(CONF_HW_TTY) || defined(CONF_HW_GGI) */
 
 static void warn_NoHW(uldat len, char *arg, uldat tried) {
 #ifdef CONF__MODULES
     if (!tried && !arg)
 	printk("twdisplay: no display driver compiled into twdisplay.\n"
-	       "      please run as `twdisplay [-twin@<TWDISPLAY>] -hw=<display>'\n");
+	       "      please run as `twdisplay [--twin@<TWDISPLAY>] --hw=<display>'\n");
     else
 #endif
     {
 	printk("twdisplay: All display drivers failed");
 	if (arg)
-	    printk(" for `-hw=%.*s\'", (int)len, arg);
+	    printk(" for `--hw=%.*s\'", (int)len, arg);
 	else
 	    printk(".");
 	printk("\n");
@@ -474,6 +463,64 @@ static void UpdateFlagsHW(void) {
 	CanDragArea = !!HW->CanDragArea;
     }
 }
+
+#ifdef CONF__MODULES
+# define DEF_INITHW(hw) \
+static byte CAT(hw,_InitHW)(void) { \
+    byte *arg; \
+    uldat len; \
+    if (HW->Name && HW->NameLen) { \
+	arg = HW->Name; \
+	len = HW->NameLen; \
+    } else { \
+	arg = "-hw=" STR(hw); \
+	len = strlen(arg); \
+    } \
+    return module_InitHW(arg, len); \
+}
+#else
+# define DEF_INITHW(hw)
+#endif
+
+
+/* HW specific functions */
+
+#ifdef CONF_HW_GFX
+# include "HW/hw_gfx.h"
+#else
+  DEF_INITHW(gfx)
+#endif
+
+#ifdef CONF_HW_X11
+# include "HW/hw_X11.h"
+# define X_InitHW X11_InitHW
+#else
+  DEF_INITHW(X)
+#endif
+	
+#ifdef CONF_HW_TWIN
+# include "HW/hw_twin.h"
+# define twin_InitHW TW_InitHW
+#else
+  DEF_INITHW(twin)
+#endif
+
+#ifdef CONF_HW_TTY
+# include "HW/hw_tty.h"
+#else
+  DEF_INITHW(tty)
+#endif
+
+#ifdef CONF_HW_GGI
+# include "HW/hw_ggi.h"
+# define ggi_InitHW GGI_InitHW
+#else
+  DEF_INITHW(ggi)
+#endif
+
+#undef DEF_INITHW
+
+
 
 /*
  * InitDisplayHW runs HW specific InitXXX() functions, starting from best setup
@@ -494,29 +541,33 @@ static byte InitDisplayHW(display_hw D_HW) {
     else
 	arg = NULL;
 
+#define     TRY4(hw) (    check4(STR(hw), arg) && (tried++, CAT(hw,_InitHW)()) && (fix4(STR(hw), D_HW), TRUE))
+#define AUTOTRY4(hw) (autocheck4(STR(hw), arg) && (tried++, CAT(hw,_InitHW)()) && (fix4(STR(hw), D_HW), TRUE))
+
     success =
-#ifdef CONF_HW_GFX
-	(check4("gfx", arg) && (tried++, gfx_InitHW()) && (fix4("gfx", D_HW), TRUE)) ||
+#if defined(CONF__MODULES) || defined(CONF_HW_GFX)
+	AUTOTRY4(gfx) ||
 #endif
-#ifdef CONF_HW_X11
-	(check4("X", arg) && (tried++, X11_InitHW()) && (fix4("X", D_HW), TRUE)) ||
+#if defined(CONF__MODULES) || defined(CONF_HW_X11)
+	AUTOTRY4(X) ||
 #endif
-#ifdef CONF_HW_TWIN
-	(check4("twin", arg) && (tried++, TW_InitHW()) && (fix4("twin", D_HW), TRUE)) ||
+#if defined(CONF__MODULES) || defined(CONF_HW_TWIN)
+	AUTOTRY4(twin) ||
+#endif
+#if defined(CONF__MODULES) || defined(CONF_HW_DISPLAY)
+#if 0 /* cannot use `--hw=display' inside twdisplay! */
+	TRY4(display) ||
+# endif
+#endif
+#if defined(CONF__MODULES) || defined(CONF_HW_TTY)
+	AUTOTRY4(tty) ||
+#endif
+#if defined(CONF__MODULES) || defined(CONF_HW_GGI)
+	AUTOTRY4(ggi) ||
 #endif
 
-#if 0 /* cannot use `-hw=display' inside twdisplay! */
-	(check4("display", arg) && (tried++, display_InitHW()) && (fix4("display", D_HW), TRUE)) ||
-#endif
-	
-#ifdef CONF_HW_TTY
-	(check4("tty", arg) && (tried++, tty_InitHW()) && (fix4("tty", D_HW), TRUE)) ||
-#endif
-#ifdef CONF_HW_GGI
-	(check4("ggi", arg) && (tried++, GGI_InitHW()) && (fix4("ggi", D_HW), TRUE)) ||
-#endif
 #ifdef CONF__MODULES
-	module_InitHW() ||
+	module_InitHW(D_HW->Name, D_HW->NameLen) ||
 #endif
 	(warn_NoHW(arg ? D_HW->NameLen - 4 : 0, arg, tried), FALSE);
 
@@ -571,7 +622,7 @@ static byte IsValidHW(uldat len, CONST byte *arg) {
 
 static display_hw AttachDisplayHW(uldat len, CONST byte *arg, uldat slot, byte flags) {
     if ((len && len <= 4) || CmpMem("-hw=", arg, Min2(len,4))) {
-	printk("twdisplay: specified `%.*s\' is not `-hw=<display>\'\n",
+	printk("twdisplay: specified `%.*s\' is not `--hw=<display>\'\n",
 		(int)len, arg);
 	return (display_hw)0;
     }
@@ -1178,20 +1229,21 @@ dat GetDisplayHeight(void) {
 }
 
 static void Usage(void) {
-    fputs("Usage: twdisplay [OPTIONS] -hw=<display> [...]\n"
+    fputs("Usage: twdisplay [OPTIONS]\n"
 	  "Currently known options: \n"
-	  " -h, -help               display this help and exit\n"
-	  " -V, -version            output version information and exit\n"
-	  " -s, -share              allow multiple simultaneous displays (default)\n"
-	  " -x, -excl               request exclusive display - detach all others\n"
-	  " -v, -verbose            verbose output (default)\n"
-	  " -q, -quiet              quiet - don't report messages from twin server\n"
-	  " -f, -force              force running even with wrong protocol version\n"
-	  " -twin@<TWDISPLAY>       specify server to contact instead of $TWDISPLAY\n"
-	  " -hw=<display>[,options] start the given display\n"
-	  "Currently known display methods: \n"
-	  "\tX[@<XDISPLAY>]\n"
+	  " -h, --help               display this help and exit\n"
+	  " -V, --version            output version information and exit\n"
+	  " -s, --share              allow multiple simultaneous displays (default)\n"
+	  " -x, --excl               request exclusive display - detach all others\n"
+	  " -v, --verbose            verbose output (default)\n"
+	  " -q, --quiet              quiet - don't report messages from twin server\n"
+	  " -f, --force              force running even with wrong protocol version\n"
+	  " --twin@<TWDISPLAY>       specify server to contact instead of $TWDISPLAY\n"
+	  " --hw=<display>[,options] start the given display (only one --hw=... allowed)\n"
+	  "                          (default: autoprobe all displays until one succeeds)\n"
+	  "Currently known display drivers: \n"
 	  "\tgfx[@<XDISPLAY>]\n"
+	  "\tX[@<XDISPLAY>]\n"
 	  "\ttwin[@<TWDISPLAY>]\n"
 	  "\ttty[@<tty device>]\n"
 	  "\tggi[@<ggi display>]\n", stdout);
@@ -1200,7 +1252,7 @@ static void Usage(void) {
 static void TryUsage(CONST char *opt) {
     if (opt)
 	fprintf(stdout, "twdisplay: unknown option `%."STR(SMALLBUFF)"s'\n", opt);
-    fputs("           try `twdisplay -help' for usage summary.\n", stdout);
+    fputs("           try `twdisplay --help' for usage summary.\n", stdout);
 }
 
 static void ShowVersion(void) {
@@ -1268,7 +1320,7 @@ int main(int argc, char *argv[]) {
 	    dpy = *argv + 6;
 	else if (!strncmp(*argv, "-hw=", 4)) {
 	    if (!strncmp(*argv+4, "display", 7)) {
-		printk("%."STR(SMALLBUFF)"s: argument `-hw=display' is for internal use only.\n", MYname);
+		printk("%."STR(SMALLBUFF)"s: argument `--hw=display' is for internal use only.\n", MYname);
 		TryUsage(NULL);
 		return 1;
 	    }
@@ -1325,8 +1377,8 @@ int main(int argc, char *argv[]) {
     }
     
     if (!arg) {
-	Usage();
-	return 1;
+	/* if user did not specify any `--hw=<dpy>', autoprobe */
+	arg = "";
     }
 
 #ifdef CONF__ALLOC
@@ -1365,7 +1417,7 @@ int main(int argc, char *argv[]) {
 	    return 1;
 	}
 	    
-	if (!(TMsgPort = TwCreateMsgPort(9, "twdisplay", 0, 0, 0)))
+	if (!(TMsgPort = TwCreateMsgPort(9, "twdisplay", (uldat)0, (udat)0, (byte)0)))
 	    break;
 
 	DisplayWidth = TryDisplayWidth = TwGetDisplayWidth();
@@ -1392,7 +1444,7 @@ int main(int argc, char *argv[]) {
 	flags &= TW_ATTACH_HW_REDIRECT;
 	
 	if (flags)
-	    printk("reported messages ...\n");
+	    printk("messages reported by twin server...\n");
 	
 	for (;;) {
 	    buff = TwAttachGetReply(&chunk);

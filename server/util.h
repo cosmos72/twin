@@ -27,7 +27,9 @@ byte SendControlMsg(msgport MsgPort, udat Code, udat Len, CONST byte *Data);
 
 byte Minimum(byte MaxIndex, CONST uldat *Array);
 
-void SetArgv_0(byte * CONST * argv, CONST byte * src);
+uldat ComputeUsableLenArgv(byte *CONST *argv);
+void SetArgv0(byte *CONST *argv, uldat argv_usable_len, CONST byte *src);
+
 
 #define SelectionAppend(Len, Data) SelectionStore(SEL_APPEND, NULL, Len, Data)
 byte SelectionStore(uldat Magic, CONST byte MIME[MAX_MIMELEN], uldat Len, CONST byte *Data);

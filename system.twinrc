@@ -505,6 +505,7 @@ Mouse H1  M  Interactive Screen
 # # sends window to given screen
 # 
 # Sleep <n>
+# # sleeps <n> milliseconds
 #
 # Stderr <string> ...
 # # send message to stderr

@@ -50,6 +50,9 @@
 /* Define if you have the getpagesize function.  */
 #undef HAVE_GETPAGESIZE
 
+/* Define if you have the getpt function.  */
+#undef HAVE_GETPT
+
 /* Define if you have the getspnam function.  */
 #undef HAVE_GETSPNAM
 
@@ -160,6 +163,9 @@
 
 /* Define if you have the <ncurses/ncurses.h> header file.  */
 #undef HAVE_NCURSES_NCURSES_H
+
+/* Define if you have the <ncurses/termcap.h> header file.  */
+#undef HAVE_NCURSES_TERMCAP_H
 
 /* Define if you have the <pthread.h> header file.  */
 #undef HAVE_PTHREAD_H

@@ -6,9 +6,9 @@ THISDIR=$(TOPDIR)/libs
 
 SUBDIRS=$(wildcard lib*)
 
-all: subdirs
+all: build-subdirs
 
-dir-libTT: dir-libTutf dir-libTw
+build-dir-libTT: build-dir-libTutf build-dir-libTw
 
 
 include $(TOPDIR)/makerules

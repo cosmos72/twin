@@ -1,7 +1,7 @@
 dnl Process this file with autoconf to produce a configure script.
 PACKAGE=twin
-VERSION=0.4.5
-AC_REVISION($Revision: 0.4.5 $)
+
+AC_REVISION($Revision: 0.4.6 $)
 AC_INIT(server/main.c)
 AC_CONFIG_HEADER(include/autoconf.h)
 
@@ -117,7 +117,7 @@ enable_term=mod
 
 dnl use /dev/pts/* for terminal emulator
 AC_ARG_ENABLE(term_devpts,dnl
-[  --enable-term-devpts[=yes|no]          enable /dev/pts/* pseudo-ttys ],,
+[  --enable-term-devpts[=yes|no]          enable Unix98 /dev/pts/* pseudo-ttys ],,
 enable_term_devpts=yes
 )dnl
 
@@ -185,6 +185,48 @@ dnl
 dnl Checks for programs.
 dnl
 AC_PROG_MAKE_SET
+
+make_is_good=no
+if test "${MAKE-make}"; then
+  ${MAKE-make} -v | head -1 | cut -d' ' -f1-4 | cut -d, -f1 | \
+  while read make_GNU make_Make make_version make_numbers
+  do
+    if test "$make_GNU" = "GNU" -a "$make_Make" = "Make"; then
+  
+      cat >conftestmake <<EOF
+3.76.2
+$make_numbers
+EOF
+      echo `cat conftestmake | sort` | \
+      while read make_3_76_2 make_x_numbers
+      do
+        if test "$make_3_76_2" = "3.76.2" -a "$make_x_numbers" = "$make_numbers"; then
+          echo 'make_is_good=yes' > conftestmake.result
+        fi
+        break
+      done
+    fi
+    break
+  done
+fi
+
+if test -f conftestmake; then
+  eval "make_is_version=\"`tail -1 conftestmake`\""
+fi
+if test -f conftestmake.result; then
+  eval "`cat conftestmake.result`"
+fi
+rm -f conftest*
+
+if test "$make_is_good" != yes; then
+  AC_MSG_ERROR([
+                  GNU Make version >= 3.76.2 is required to compile twin,
+                  but your \"${MAKE-make}\" appears to be version "${make_is_version}":
+
+`${MAKE-make} -v`])
+fi
+
+
 AC_PROG_CC
 AC_PROG_CPP
 dnl AC_PROG_YACC
@@ -306,8 +348,8 @@ AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
 AC_HEADER_TIME
 AC_CHECK_HEADERS(crypt.h dirent.h dlfcn.h fcntl.h gpm.h ggi/ggi.h limits.h ltdl.h \
-		 memory.h ncurses.h ncurses/ncurses.h termcap.h pthread.h shadow.h \
-		 sys/filio.h sys/ioctl.h sys/mman.h sys/param.h sys/resource.h \
+		 memory.h ncurses.h ncurses/ncurses.h termcap.h ncurses/termcap.h pthread.h \
+		 shadow.h sys/filio.h sys/ioctl.h sys/mman.h sys/param.h sys/resource.h \
 		 sys/select.h sys/timeb.h sys/ttydefaults.h sys/utsname.h sys/wait.h \
 		 asm/page.h machine/param.h termio.h termios.h unistd.h zlib.h)
 
@@ -334,8 +376,9 @@ dnl AC_FUNC_WAIT3
 
 AC_CHECK_FUNCS(ftime gettimeofday getspnam hstrerror initgroups lstat putenv setenv \
 	       select strdup strerror strspn strstr scandir alphasort uname \
-	       vprintf vsprintf vsnprintf wait3 wait4 grantpt unlockpt ptsname)
+	       vprintf vsprintf vsnprintf wait3 wait4 getpt grantpt unlockpt ptsname)
 
+AC_CHECK_FILE(/dev/ptmx)
 AC_CHECK_FUNC(crypt,,AC_CHECK_LIB(crypt,crypt))
 AC_CHECK_FUNC(dlopen,,AC_CHECK_LIB(dl,dlopen))
 AC_CHECK_LIB(ltdl,lt_dlopen)
@@ -557,6 +600,14 @@ if test "$ac_cv_lib_z_deflate" = no -o "$ac_cv_header_zlib_h" = no; then
   enable_socket_gz=no
 fi
 
+if test "$ac_cv_func_getpt" = no -a "$ac_cv_file__dev_ptmx" = no; then
+  enable_term_devpts=no
+fi
+
+if test "$ac_cv_func_getpt" = no -a "$ac_cv_file__dev_ptmx" = no; then
+  enable_term_devpts=no
+fi
+
 if test "$ac_cv_func_grantpt" = no -o "$ac_cv_func_unlockpt" = no -o "$ac_cv_func_ptsname" = no; then
   enable_term_devpts=no
 fi
@@ -765,7 +816,7 @@ if test "$enable__shlibs" != no; then
 fi
 
 echo_feat=
-for i in socket wm wm_rc term; do
+for i in socket wm wm_rc term term_devpts; do
   eval "echo_val=\${enable_$i}"
   if test "$echo_val" != no; then
     if test "$echo_val" = mod; then

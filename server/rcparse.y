@@ -218,7 +218,7 @@ _menubody_list	:                menubody { $$ = AddtoNodeList(NULL, $1); }
 		;
 
 menubody	: string func nl { $$ = MakeNodeBody($1, $2, NULL); }
-
+		;
 
 textbody_list	: '(' opt_nl _textbody_list ')' { $$ = $3; }
 		;

@@ -54,6 +54,7 @@ fd_set save_rfds, save_wfds;
 int max_fds;
 byte lenTWDisplay, *TWDisplay, *origTWDisplay, *origTERM, *origHW, *HOME;
 byte **main_argv, **orig_argv;
+uldat main_argv_usable_len;
 byte flag_secure, flag_envrc;
 byte *flag_secure_msg = "twin: cannot exec() external programs in secure mode.\n";
 
@@ -126,19 +127,21 @@ static msgport RunMsgPort(msgport CurrPort) {
 }
 
 static void Usage(void) {
-    fputs("Usage: twin [OPTION [...]]\n"
+    fputs("Usage: twin [OPTIONS]\n"
 	  "Currently known options: \n"
-	  " -h, -help               display this help and exit\n"
-	  " -V, -version            output version information and exit\n"
-	  " -secure                 forbid starting external programs\n"
-	  " -envrc                  execute .twenvrc.sh and read its output to set\n"
-	  "                         environment variables (mostly useful for twdm)\n"
-	  " -x                      start display as exclusive\n"
-	  " -nohw                   start in background without display\n"
-	  " -hw=<display>[,options] start with the given display (multiple -hw=... allowed)\n"
-	  "Currently known display methods: \n"
-	  "\tX[@<XDISPLAY>]\n"
+	  " -h, --help               display this help and exit\n"
+	  " -V, --version            output version information and exit\n"
+	  " --secure                 forbid starting external programs\n"
+	  " --envrc                  execute .twenvrc.sh and read its output to set\n"
+	  "                          environment variables (mostly useful for twdm)\n"
+	  " -s, --share              start display as shared (default)\n"
+	  " -x, --excl               start display as exclusive\n"
+	  " --nohw                   start in background without display\n"
+	  " --hw=<display>[,options] start with the given display (multiple --hw=... allowed)\n"
+	  "                          (default: autoprobe all displays until one succeeds)\n"
+	  "Currently known display drivers: \n"
 	  "\tgfx[@<XDISPLAY>]\n"
+	  "\tX[@<XDISPLAY>]\n"
 	  "\ttwin[@<TWDISPLAY>]\n"
 	  "\ttty[@<tty device>]\n"
 	  "\tggi[@<ggi display>]\n", stdout);
@@ -288,8 +291,9 @@ int main(int argc, char *argv[]) {
     
     DropPrivileges();
 
+    main_argv_usable_len = ComputeUsableLenArgv(main_argv = (byte **)argv);
+    
     MergeHyphensArgv(argc, argv);
-    main_argv = (byte **)argv;
 
 #ifdef CONF__ALLOC
     /* do this as soon as possible */

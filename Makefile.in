@@ -3,26 +3,32 @@
 #
 TOPDIR=.
 THISDIR=.
-SUBDIRS=$(wildcard include docs libs clients server themes)
+SUBDIRS=$(wildcard include docs themes libs clients server)
 
-make_VERSION:=$(wordlist 1,2,$(shell $(MAKE) -v))
-ifneq ($(make_VERSION),GNU Make)
+make_IDENTITY:=$(wordlist 1,2,$(shell $(MAKE) -v))
+
+ifneq ($(make_IDENTITY),GNU Make)
   all: make_is_not_GNU
-endif
-
-all: subdirs
-	@echo ; \
-	 echo "twin is now fully compiled." ; \
-	 echo "(if you want, you can build user-contributed programs with '$(MAKE) -C contrib')" ; \
-	 echo "As next step, you probably want to run '$(MAKE) install' as root."
-
-make_is_not_GNU:
-	@echo "Warning: GNU Make is required to build twin, but the '$(MAKE)' you are using" ; \
-	 echo "does not seem to be GNU Make. build will probably fail... " ; \
-	 echo "running '$(MAKE) -v' to get version information resulted in: " ; \
+  make_is_not_GNU:
+	@echo [1m; \
+	 echo "# Warning: GNU Make is required to build twin, but the '$(MAKE)' you are using" ; \
+	 echo "# does not seem to be GNU Make. build will probably fail... " ; \
+	 echo "# running '$(MAKE) -v' to get version information resulted in: " ; \
 	 echo "--------------------------------------------------------" ; \
 	 $(MAKE) -v ; \
-	 echo "--------------------------------------------------------"
+	 echo "--------------------------------------------------------" ; \
+	 echo [0m
+endif
+
+
+
+all: build-subdirs
+	@echo [1m; \
+	 echo "# twin is now fully compiled." ; \
+	 echo "# (if you want, you can build user-contributed programs with '$(MAKE) -C contrib')" ; \
+	 echo "# As next step, you probably want to run '$(MAKE) install' as root." ; \
+	 echo [0m
+
 
 
 #
@@ -72,7 +78,7 @@ $(ADMIN_LIBTOOLS):
 
 ADMIN_ACLOCAL:=admin/aclocal.m4
 
-ADMIN_REMOVE_US:=$(ADMIN_ACLOCAL) $(ADMIN_LIBTOOLS)
+DISTCLEAN_EMPTY_FILES:=$(ADMIN_ACLOCAL) $(ADMIN_LIBTOOLS)
 
 $(ADMIN_ACLOCAL):
 	@if [ -f /usr/share/aclocal/libtool.m4 ]; then \
@@ -93,13 +99,25 @@ config.status libtool: configure $(ADMIN_LIBTOOLS)
 	@echo Updating config.status libtool
 	./configure --cache-file=config.cache --no-create
 
+#
+# was:
+#
+# Makefile: Makefile.in
+#
+# makeautoconf: makeautoconf.in
+#
+# conf/conf.auto: conf/conf.auto.in
+#
+# Makefile makeautoconf conf/conf.auto: config.status
+#	@echo ...
+#
 Makefile: Makefile.in
 
-makeautoconf: makeautoconf.in
+makeautoconf: makeautoconf.in Makefile
 
-conf/conf.auto: conf/conf.auto.in
+conf/conf.auto: conf/conf.auto.in Makefile
 
-Makefile makeautoconf conf/conf.auto: config.status
+Makefile: config.status
 	@echo Updating Makefile makeautoconf conf/conf.auto
 	./config.status
 
@@ -147,27 +165,34 @@ install:
 	$(LN) system.twenvrc.sh $(DESTDIR)$(libdir)/twin/.twenvrc.sh
 ifeq ($(CONF__SHLIBS),y)
 	@echo [1m ; \
-	 echo If this is the first time you installed twin $(TWIN_VERSION_STR) ; \
-	 echo you probably need to run some kind of administrative command ; \
-	 echo to let your system know about newly installed shared libraries ; \
-	 echo
+	 echo "# If this is the first time you installed twin $(TWIN_VERSION_STR)" ; \
+	 echo "# you probably need to run some kind of administrative command" ; \
+	 echo "# to let your system know about newly installed shared libraries" ; \
+	 echo "# "
   ifeq ($(SYS_SHLIBS),native)
-	@echo if you do not know what to run, you can try with:
+	@echo "# if you do not know what to run, you can try with:"
     ifeq ($(OS),Linux)
-	@echo "ldconfig"
+	@echo "# ldconfig"
     else
-	@echo "ldconfig -R"
+	@echo "# ldconfig -R"
     endif
   else
-	@echo if you do not know what to run, libtool can usually do it for you: ; \
-	 echo just execute: ; \
-	 echo $(TOPDIR)/libtool --finish $(libdir)
+	@echo "# if you do not know what to run, libtool can usually do it for you:" ; \
+	 echo "# just execute:" ; \
+	 echo "# libtool --finish $(libdir)"
   endif
-	@echo [0m
+	@echo
 endif
-	@echo "As next step, you probably want to run '$(MAKE) clean'" ; \
-	 echo ; \
-	 echo "Installation should be completed. Type 'twstart' and enjoy."
+	@echo "# As next step, you probably want to run '$(MAKE) clean'" ; \
+	 echo "# Or, if something went wrong, '$(MAKE) uninstall'" ; \
+	 echo "# " ; \
+	 echo "# Installation should be completed. Type 'twstart' and enjoy." ; \
+	 echo [0m
+
+uninstall:
+	cd $(DESTDIR)$(libdir)/twin && \
+	   rm -f system.twinrc .twinrc system.twenvrc.sh .twenvrc.sh || true
+	rmdir $(DESTDIR)$(libdir)/twin || true
 
 clean: fakeconf autogen
 	rm -f .dialog_* ; \
@@ -181,18 +206,22 @@ distclean: clean
 	      include/autoconf.h include/Tw/Twautoconf.h \
 	      scripts/Mkdep scripts/Bitmap scripts/Getsizes \
 	      include/Tw/datasizes.h include/Tw/uni_types.h \
-	      .uni_types.conf .hdepend `find . -type l` \
+	      .*.conf .hdepend `find . -type l` \
 	      `find . -name .modules -o -name .depend` && \
 	$(CP) Makefile.fake Makefile && \
-	rm -f $(ADMIN_REMOVE_US) && \
-	for i in $(ADMIN_REMOVE_US); do \
+	rm -f $(DISTCLEAN_REMOVE_FILES) $(DISTCLEAN_EMPTY_FILES) && \
+	for i in $(DISTCLEAN_EMPTY_FILES); do \
 	  echo > $$i; \
 	done && \
 	touch configure
 
 pure: distclean
-	rm -f Makefile admin/config.* $(ADMIN_REMOVE_US) configure \
-	      server/rcparse_*.? include/autoconf.h.in docs/ltrace.conf \
-	      `find include -name version.h` `find . -name \*_m4.h -o -name \*_m4.c`
-
+	rm -f Makefile admin/config.* \
+	      $(DISTCLEAN_REMOVE_FILES) $(DISTCLEAN_EMPTY_FILES) \
+	      configure makeversion server/rcparse_*.? \
+	      include/autoconf.h.in docs/ltrace.conf \
+	      themes/hw_gfx/default_*.xpm \
+	      `find include -name version.h` `find . -name '*_m4.[ch]'` \
+	      `find . -name makefragment` \
+	      $(PURE_REMOVE_FILES)
 

@@ -152,10 +152,6 @@ byte shm_init(size_t len) {
     return FALSE;
 }
 
-void shm_abort(void) {
-    munmap(M, L);
-    M = NULL;
-}
 
 /*
  * shrink (M, M+L) to (M, S)
@@ -171,6 +167,16 @@ byte shm_shrink(void) {
     return TRUE;
 }
 
+void shm_abort(void) {
+    munmap(M, L);
+    M = NULL;
+}
+
+void shm_TSR_abort(void) {
+    if (TSR_M)
+	(void)munmap(TSR_M, TSR_L);
+    TSR_M = NULL;
+}
 
 /*
  * Terminate Stay Resident :
@@ -180,11 +186,15 @@ byte shm_shrink(void) {
  *
  */
 void shm_TSR(void) {
-    if (TSR_M)
-	(void)munmap(TSR_M, TSR_L);
+    shm_TSR_abort();
     TSR_M = M;
     TSR_L = L;
     M = NULL;
+}
+
+void shm_quit(void) {
+    shm_TSR_abort();
+    shm_abort();
 }
 
 /*
@@ -226,10 +236,6 @@ byte shm_init(size_t len) {
     return !!M;
 }
 
-void shm_abort(void) {
-    FreeMem(M);
-}
-
 /*
  * shrink (M, M+L) to (M, S)
  */
@@ -260,6 +266,18 @@ byte shm_shrink(void) {
 }
 
 
+void shm_abort(void) {
+    if (M)
+	FreeMem(M);
+    M = NULL;
+}
+
+void shm_TSR_abort(void) {
+    if (TSR_M)
+	FreeMem(TSR_M);
+    TSR_M = NULL;
+}
+
 /*
  * Terminate Stay Resident :
  * 
@@ -268,11 +286,15 @@ byte shm_shrink(void) {
  * 
  */
 void shm_TSR(void) {
-    if (TSR_M)
-	FreeMem(TSR_M);
+    shm_TSR_abort();
     TSR_M = M;
     TSR_L = L;
     M = NULL;
+}
+
+void shm_TSR_quit(void) {
+    shm_TSR_abort();
+    shm_abort();
 }
 
 /*

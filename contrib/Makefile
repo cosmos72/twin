@@ -35,7 +35,7 @@ LD_FLAGS+=$(LD_LIBTW)
 
 ALLBINS=$(BINS) $(MODS) $(SHLIBS) $(ARLIBS) $(CLLIBS)
 
-all: everything
+all: build-all
 
 
 -include $(TOPDIR)/conf/conf.current
@@ -51,9 +51,9 @@ include $(TOPDIR)/makerules
 
 
 ifneq ($(CONF_SOCKET),n)
-  everything: $(ALLBINS) $(patsubst %,dir-%,$(SUBDIRS))
+  build-all: $(ALLBINS) build-subdirs
 else
-  everything:
+  build-all:
 	@echo ; \
 	 echo "You disabled \"Support remote socket connections\"," ; \
 	 echo "so the clients will NOT be compiled!" ; \
@@ -66,6 +66,11 @@ endif
 install:
 	$(INSTALL-DIR) $(DESTDIR)$(bindir)
 	$(INSTALL) $(BINS) $(DESTDIR)$(bindir)
+
+uninstall:
+	cd $(DESTDIR)$(bindir) && \
+	   rm -f $(BINS) || true
+	rmdir $(DESTDIR)$(bindir) || true
 
 clean:
 	rm -f .*.flags .*.bin .*.mod .*.shlib .*.arlib .*.cllib gmon.out core \

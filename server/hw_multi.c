@@ -52,29 +52,11 @@
 # include "HW/hw_X11.h"
 #endif
 
-#if defined(CONF__MODULES) || defined(CONF_SOCKET)
-
-# ifdef CONF_HW_DISPLAY
-#  include "HW/hw_display.h"
-# endif
-
-# ifdef CONF_HW_TWIN
-#  include "HW/hw_twin.h"
-# endif
-
-#else
+#if !defined(CONF__MODULES) && !defined(CONF_SOCKET)
 
 # undef CONF_HW_DISPLAY
 # undef CONF_HW_TWIN
 
-#endif
-
-#ifdef CONF_HW_TTY
-# include "HW/hw_tty.h"
-#endif
-
-#ifdef CONF_HW_GGI
-# include "HW/hw_ggi.h"
 #endif
 
 
@@ -175,20 +157,19 @@ void RunNoHW(byte print_info) {
 }
 
 
-void warn_NoHW(uldat len, char *arg, uldat tried) {
+static void warn_NoHW(uldat len, char *arg, uldat tried) {
 #ifdef CONF__MODULES
     if (!tried && !arg)
 	printk("twin: no display driver compiled into twin.\n"
-	       "      please run as `twin -hw=<display>'\n");
+	       "      please run as `twin --hw=<display>'\n");
     else
 #endif
     {
-	printk("twin: All display drivers failed");
+	printk("twin: all display drivers failed");
 	if (arg)
-	    printk(" for `-hw=%.*s\'", Min2((int)len,SMALLBUFF), arg);
+	    printk(" for `--hw=%.*s\'\n", Min2((int)len,SMALLBUFF), arg);
 	else
-	    printk(".");
-	printk("\n");
+	    printk(".\n");
     }
 }
 
@@ -242,9 +223,12 @@ static byte module_InitHW(byte *arg, uldat len) {
     return FALSE;
 }
 
+#endif /* CONF__MODULES */
 
-#define DEF_INITHW(hw) \
-byte CAT(hw,_InitHW)(void) { \
+
+#ifdef CONF__MODULES
+# define DEF_INITHW(hw) \
+static byte CAT(hw,_InitHW)(void) { \
     byte *arg; \
     uldat len; \
     if (HW->Name && HW->NameLen) { \
@@ -256,49 +240,78 @@ byte CAT(hw,_InitHW)(void) { \
     } \
     return module_InitHW(arg, len); \
 }
+#else
+# define DEF_INITHW(hw)
+#endif
 
-#ifndef CONF_HW_GFX
+
+/* HW specific functions */
+
+#ifdef CONF_HW_GFX
+# include "HW/hw_gfx.h"
+#else
   DEF_INITHW(gfx)
 #endif
-#ifndef CONF_HW_X11
+
+#ifdef CONF_HW_X11
+# include "HW/hw_X11.h"
+# define X_InitHW X11_InitHW
+#else
   DEF_INITHW(X)
 #endif
-#ifndef CONF_HW_TWIN
+	
+#ifdef CONF_HW_TWIN
+# include "HW/hw_twin.h"
+# define twin_InitHW TW_InitHW
+#else
   DEF_INITHW(twin)
 #endif
-#ifndef CONF_HW_TTY
+
+#ifdef CONF_HW_DISPLAY
+# include "HW/hw_display.h"
+#else
+  DEF_INITHW(display)
+#endif
+
+#ifdef CONF_HW_TTY
+# include "HW/hw_tty.h"
+#else
   DEF_INITHW(tty)
 #endif
-#ifndef CONF_HW_GGI
+
+#ifdef CONF_HW_GGI
+# include "HW/hw_ggi.h"
+# define ggi_InitHW GGI_InitHW
+#else
   DEF_INITHW(ggi)
 #endif
 
 #undef DEF_INITHW
 
-#endif /* CONF__MODULES */
 
-
-#ifdef CONF_HW_X11
-# define X_InitHW X11_InitHW
-#endif
-#ifdef CONF_HW_TWIN
-# define twin_InitHW TW_InitHW
-#endif
-#ifdef CONF_HW_GGI
-# define ggi_InitHW GGI_InitHW
-#endif
-
+#if defined(CONF__MODULES) || defined(CONF_HW_DISPLAY)
 static byte check4(byte *s, byte *arg) {
-    if (arg && strncmp(s, arg, strlen(s))) {
+    if (arg && !strncmp(s, arg, strlen(s))) {
+	printk("twin: trying given `--hw=%."STR(SMALLBUFF)"s' display driver.\n", s);
+	return TRUE;
+    }
+    return FALSE;
+}
+#endif /* defined(CONF__MODULES) || defined(CONF_HW_DISPLAY) */
+
+static byte autocheck4(byte *s, byte *arg) {
+    if (arg && !strncmp(s, arg, strlen(s))) {
+	printk("twin: trying given `--hw=%."STR(SMALLBUFF)"s' display driver.\n", s);
+	return TRUE;
+    }
+    if (arg) {
 	/*
 	printk("twin: `-hw=%."STR(SMALLBUFF)"s' given, skipping `-hw=%."STR(SMALLBUFF)"s' display driver.\n",
 		arg, s);
 	 */
 	return FALSE;
-    } else if (arg)
-	printk("twin: trying given `-hw=%."STR(SMALLBUFF)"s' display driver.\n", s);
-    else
-	printk("twin: autoprobing `-hw=%."STR(SMALLBUFF)"s' display driver.\n", s);
+    }
+    printk("twin: autoprobing `--hw=%."STR(SMALLBUFF)"s' display driver.\n", s);
     return TRUE;
 }
 
@@ -334,35 +347,35 @@ byte InitDisplayHW(display_hw D_HW) {
     else
 	arg = NULL;
 
-#define TRY4(hw) (check4(STR(hw), arg) && (tried++, CAT(hw,_InitHW)()) && (fix4(STR(hw), D_HW), TRUE))
+#define AUTOTRY4(hw) (autocheck4(STR(hw), arg) && (tried++, CAT(hw,_InitHW)()) && (fix4(STR(hw), D_HW), TRUE))
+#define     TRY4(hw) (    check4(STR(hw), arg) && (tried++, CAT(hw,_InitHW)()) && (fix4(STR(hw), D_HW), TRUE))
     
     success =
 #if defined(CONF__MODULES) || defined(CONF_HW_GFX)
-	TRY4(gfx) ||
+	AUTOTRY4(gfx) ||
 #endif
 #if defined(CONF__MODULES) || defined(CONF_HW_X11)
-	TRY4(X) ||
+	AUTOTRY4(X) ||
 #endif
 #if defined(CONF__MODULES) || defined(CONF_HW_TWIN)
-	TRY4(twin) ||
+	AUTOTRY4(twin) ||
 #endif
 #if defined(CONF__MODULES) || defined(CONF_HW_DISPLAY)
-# if 0 /* not usable here */
 	TRY4(display) ||
-# endif
 #endif
 #if defined(CONF__MODULES) || defined(CONF_HW_TTY)
-	TRY4(tty) ||
+	AUTOTRY4(tty) ||
 #endif
 #if defined(CONF__MODULES) || defined(CONF_HW_GGI)
-	TRY4(ggi) ||
+	AUTOTRY4(ggi) ||
 #endif
 #ifdef CONF__MODULES
 	module_InitHW(D_HW->Name, D_HW->NameLen) ||
 #endif
 	(warn_NoHW(arg ? D_HW->NameLen - 4 : 0, arg, tried), FALSE);
 
-#undef TRY4
+#undef     TRY4
+#undef AUTOTRY4
 
     if (success) {
 	D_HW->Quitted = FALSE;
@@ -429,7 +442,7 @@ display_hw AttachDisplayHW(uldat len, CONST byte *arg, uldat slot, byte flags) {
 
     if ((len && len <= 4) || CmpMem("-hw=", arg, Min2(len,4))) {
 	printk("twin: specified `%.*s\' is not a known option.\n"
-		"      try `twin -help' for usage summary.\n",
+		"      try `twin --help' for usage summary.\n",
 	       Min2((int)len,SMALLBUFF), arg);
 	return NULL;
     }
@@ -497,35 +510,40 @@ byte DetachDisplayHW(uldat len, CONST byte *arg, byte flags) {
 /* initialize all required HW displays. Since we are at it, also parse command line */
 byte InitHW(void) {
     byte **arglist = orig_argv;
-    byte ret = FALSE;
-    byte flags = 0;
-    int hwcount = 0;
+    byte ret = FALSE, flags = 0, nohw = FALSE;
+    udat hwcount = 0;
     
     WriteMem(ConfigureHWDefault, '\1', HW_CONFIGURE_MAX); /* set everything to default (-1) */
     
     for (arglist = orig_argv; *arglist; arglist++) {
-	if (!strcmp(*arglist, "-nohw")) {
-	    if (hwcount > 0) {
-		printk("twin: `-hw=' and `-nohw' options used together. make up your mind.\n");
-		return FALSE;
-	    }
-	    hwcount = -1;
-	} else if (!strcmp(*arglist, "-x")) {
-	    flags = TW_ATTACH_HW_EXCLUSIVE;
-	} else if (!strcmp(*arglist, "-secure")) {
+	if (!strcmp(*arglist, "-nohw"))
+	    nohw = TRUE;
+	else if (!strcmp(*arglist, "-x") || !strcmp(*arglist, "-excl"))
+	    flags |= TW_ATTACH_HW_EXCLUSIVE;
+	else if (!strcmp(*arglist, "-s") || !strcmp(*arglist, "-share"))
+	    flags &= ~TW_ATTACH_HW_EXCLUSIVE;
+	else if (!strcmp(*arglist, "-secure"))
 	    flag_secure = TRUE;
-	} else if (!strcmp(*arglist, "-envrc")) {
+	else if (!strcmp(*arglist, "-envrc"))
 	    flag_envrc = TRUE;
-	} else if (!strncmp(*arglist, "-hw=", 4)) {
-	    if (hwcount == -1) {
-		printk("twin: `-hw=' and `-nohw' options used together. make up your mind.\n");
-		return FALSE;
-	    } else if (hwcount > 0 && (flags & TW_ATTACH_HW_EXCLUSIVE)) {
-		printk("twin: `-x' (exclusive) used with multiple `-hw='. make up your mind.\n");
-		return FALSE;
-	    }
+	else if (!strncmp(*arglist, "-hw=", 4))
+	    hwcount++;
+	else
+	    printk("twin: ignoring unknown option `%."STR(SMALLBUFF)"s'\n", *arglist);
+    }
+
+    if (nohw && hwcount > 0) {
+	printk("twin: `--hw=' and `--nohw' options used together. make up your mind.\n");
+	return ret;
+    }
+    if (flags & TW_ATTACH_HW_EXCLUSIVE) {
+	if (hwcount == 0 || hwcount > 1) {
+	    printk("twin: `--excl' used with%s `--hw='. make up your mind.\n",
+		   hwcount == 0 ? "out" : " multiple");
+	    return ret;
 	}
     }
+
     /*
      * execute .twenvrc.sh if needed and read its output to set
      * environment variables (mostly useful for twdm)

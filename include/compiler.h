@@ -11,8 +11,8 @@
 # define _CAT(a,b) a##b
 # define CAT(a,b) _CAT(a,b)
 
-# define _CAT3(a,b,c,d) a##b##c
-# define CAT3(a,b,c,d) _CAT3(a,b,c)
+# define _CAT3(a,b,c) a##b##c
+# define CAT3(a,b,c) _CAT3(a,b,c)
 
 # define _CAT4(a,b,c,d) a##b##c##d
 # define CAT4(a,b,c,d) _CAT4(a,b,c,d)

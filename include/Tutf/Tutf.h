@@ -160,6 +160,12 @@
 #define T_ALIASES_ISO_8859_9	"ISO_8859-9:1989", "ISO8859-9", "l5", "latin5", "iso-ir-148", "turkish"
 
 
+#define T_MAP_ISO_8859_10	ISO_8859_10
+#define T_MAP_ISO8859_10	ISO_8859_10
+#define T_NAME_ISO_8859_10	"ISO-8859-10"
+#define T_ALIASES_ISO_8859_10	"ISO8859-10"
+
+
 #define T_MAP_ISO_8859_13	ISO_8859_13
 #define T_MAP_ISO8859_13	ISO_8859_13
 #define T_MAP_L7		ISO_8859_13
@@ -188,6 +194,12 @@
 #define T_MAP_ISO_IR_203	ISO_8859_15
 #define T_NAME_ISO_8859_15	"ISO-8859-15"
 #define T_ALIASES_ISO_8859_15	"ISO8859-15", "l9", "latin9", "euro", "iso-ir-203"
+
+
+#define T_MAP_ISO_8859_16	ISO_8859_16
+#define T_MAP_ISO8859_16	ISO_8859_16
+#define T_NAME_ISO_8859_16	"ISO-8859-16"
+#define T_ALIASES_ISO_8859_16	"ISO8859-16"
 
 
 #define T_MAP_CP437	CP437
@@ -316,12 +328,46 @@
 #define T_ALIASES_CP1251	"1251", "ms-cyrl", "windows-1251", "bulgarian"
 
 
+#define T_MAP_CP1252	CP1252
+#define T_MAP_1252	CP1252
+#define T_MAP_WINDOWS_1252	CP1252
+#define T_NAME_CP1252	"cp1252"
+#define T_ALIASES_CP1252	"1252", "windows-1252"
+
+
+#define T_MAP_CP1253	CP1253
+#define T_MAP_1253	CP1253
+#define T_MAP_WINDOWS_1253	CP1253
+#define T_NAME_CP1253	"cp1253"
+#define T_ALIASES_CP1253	"1253", "windows-1253"
+
+
+#define T_MAP_CP1254	CP1254
+#define T_MAP_1254	CP1254
+#define T_MAP_WINDOWS_1254	CP1254
+#define T_NAME_CP1254	"cp1254"
+#define T_ALIASES_CP1254	"1254", "windows-1254"
+
+
 #define T_MAP_CP1255	CP1255
 #define T_MAP_1255	CP1255
-#define T_MAP_MS_HEBR	CP1255
 #define T_MAP_WINDOWS_1255	CP1255
 #define T_NAME_CP1255	"cp1255"
-#define T_ALIASES_CP1255	"1255", "ms-hebr", "windows-1255"
+#define T_ALIASES_CP1255	"1255", "windows-1255"
+
+
+#define T_MAP_CP1256	CP1256
+#define T_MAP_1256	CP1256
+#define T_MAP_WINDOWS_1256	CP1256
+#define T_NAME_CP1256	"cp1256"
+#define T_ALIASES_CP1256	"1256", "windows-1256"
+
+
+#define T_MAP_CP1257	CP1257
+#define T_MAP_1257	CP1257
+#define T_MAP_WINDOWS_1257	CP1257
+#define T_NAME_CP1257	"cp1257"
+#define T_ALIASES_CP1257	"1257", "windows-1257"
 
 
 #define T_MAP_KOI8_R	KOI8_R
@@ -371,6 +417,11 @@ hwfont Tutf_UTF_16_to_ISO_8859_6(hwfont c);
 hwfont Tutf_UTF_16_to_ISO_8859_7(hwfont c);
 hwfont Tutf_UTF_16_to_ISO_8859_8(hwfont c);
 hwfont Tutf_UTF_16_to_ISO_8859_9(hwfont c);
+hwfont Tutf_UTF_16_to_ISO_8859_10(hwfont c);
+hwfont Tutf_UTF_16_to_ISO_8859_13(hwfont c);
+hwfont Tutf_UTF_16_to_ISO_8859_14(hwfont c);
+hwfont Tutf_UTF_16_to_ISO_8859_15(hwfont c);
+hwfont Tutf_UTF_16_to_ISO_8859_16(hwfont c);
 
 hwfont Tutf_UTF_16_to_CP437(hwfont c);
 hwfont Tutf_UTF_16_to_CP737(hwfont c);
@@ -391,7 +442,12 @@ hwfont Tutf_UTF_16_to_CP874(hwfont c);
 
 hwfont Tutf_UTF_16_to_CP1250(hwfont c);
 hwfont Tutf_UTF_16_to_CP1251(hwfont c);
+hwfont Tutf_UTF_16_to_CP1252(hwfont c);
+hwfont Tutf_UTF_16_to_CP1253(hwfont c);
+hwfont Tutf_UTF_16_to_CP1254(hwfont c);
 hwfont Tutf_UTF_16_to_CP1255(hwfont c);
+hwfont Tutf_UTF_16_to_CP1256(hwfont c);
+hwfont Tutf_UTF_16_to_CP1257(hwfont c);
 
 hwfont Tutf_UTF_16_to_KOI8_R(hwfont c);
 hwfont Tutf_UTF_16_to_KOI8_U(hwfont c);
@@ -407,6 +463,11 @@ extern hwfont Tutf_ISO_8859_6_to_UTF_16[0x100];
 extern hwfont Tutf_ISO_8859_7_to_UTF_16[0x100];
 extern hwfont Tutf_ISO_8859_8_to_UTF_16[0x100];
 extern hwfont Tutf_ISO_8859_9_to_UTF_16[0x100];
+extern hwfont Tutf_ISO_8859_10_to_UTF_16[0x100];
+extern hwfont Tutf_ISO_8859_13_to_UTF_16[0x100];
+extern hwfont Tutf_ISO_8859_14_to_UTF_16[0x100];
+extern hwfont Tutf_ISO_8859_15_to_UTF_16[0x100];
+extern hwfont Tutf_ISO_8859_16_to_UTF_16[0x100];
 
 extern hwfont Tutf_CP437_to_UTF_16[0x100];
 extern hwfont Tutf_CP737_to_UTF_16[0x100];
@@ -424,9 +485,15 @@ extern hwfont Tutf_CP865_to_UTF_16[0x100];
 extern hwfont Tutf_CP866_to_UTF_16[0x100];
 extern hwfont Tutf_CP869_to_UTF_16[0x100];
 extern hwfont Tutf_CP874_to_UTF_16[0x100];
+
 extern hwfont Tutf_CP1250_to_UTF_16[0x100];
 extern hwfont Tutf_CP1251_to_UTF_16[0x100];
+extern hwfont Tutf_CP1252_to_UTF_16[0x100];
+extern hwfont Tutf_CP1253_to_UTF_16[0x100];
+extern hwfont Tutf_CP1254_to_UTF_16[0x100];
 extern hwfont Tutf_CP1255_to_UTF_16[0x100];
+extern hwfont Tutf_CP1256_to_UTF_16[0x100];
+extern hwfont Tutf_CP1257_to_UTF_16[0x100];
 
 extern hwfont Tutf_KOI8_R_to_UTF_16[0x100];
 extern hwfont Tutf_KOI8_U_to_UTF_16[0x100];

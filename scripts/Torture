@@ -43,8 +43,8 @@ i="$1"
 name=`echo $i | sed -e 's/\./_/g'`
   
 DEFS=
-# search `#include "name"' `CONF_name' and `DEBUG_name' in the file
-# and turn them into ` INC_name ' ` CONF_name ' and ` DEBUG_name '
+# search `#ifdef CONF_name' and `#ifdef DEBUG_name' in the file
+# and turn them into ` CONF_name ' and ` DEBUG_name '
 MATCH=`grep -E '(^#.*def.*CONF_)|(^#.*def.*DEBUG_)' "$i" \
 | sed -e 's:CONF_\([A-Za-z0-9_]*\): CONF_\1 :g'    \
       -e 's:DEBUG_\([A-Za-z0-9_]*\): DEBUG_\1 :g'`

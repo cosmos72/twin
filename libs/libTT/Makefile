@@ -9,7 +9,7 @@ SUBDIRS=HW
 include $(TOPDIR)/include/TT/makeversion
 -include $(TOPDIR)/makeautoconf
 
-all: everything
+all: build-subdirs build-all
 
 BINS=
 SHLIBS=libTT.la
@@ -43,9 +43,9 @@ CC_FLAGS+=-I. -D_REENTRANT
 
 ifeq ($(CONF_TT),y)
   ifeq ($(CONF__SHLIBS),y)
-    everything: $(ALLBINS)
+    build-all: $(ALLBINS)
   else
-    everything: $(ARLIBS)
+    build-all: $(ARLIBS)
 	@rm -f $(filter-out $(ARLIBS), $(ALLBINS)) ; \
 	 echo ; \
 	 echo "You disabled \"Enable shared libraries\"," ; \
@@ -54,9 +54,11 @@ ifeq ($(CONF_TT),y)
   endif
 
   install: install-real
+  uninstall: uninstall-real
 else
-  everything: warn
+  build-all: warn
   install: warn
+  uninstall:
   warn:
 	@rm -f $(ALLBINS) ; \
 	 echo ; \
@@ -143,6 +145,16 @@ install-dir:
 
 
 install-real: install-headers install-dir $(foreach B,$(SHLIBS) $(ARLIBS),install-lib-$(B))
+
+
+uninstall-headers:
+	rm -f $(DESTDIR)$(includedir)/TT/*.h
+	rmdir $(DESTDIR)$(includedir)/TT || true
+
+uninstall-dir:
+	rmdir $(DESTDIR)$(includedir) || true
+
+uninstall-real: uninstall-headers $(foreach B,$(SHLIBS) $(ARLIBS),uninstall-lib-) uninstall-dir
 
 
 clean:

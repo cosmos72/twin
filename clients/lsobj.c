@@ -56,10 +56,10 @@ void Usage(void) {
     fprintf(stderr, "Usage: %s [option] [object_id]\n"
 	    "If no arguments are given, the first screen is used as default object_id\n"
 	    "Currently known options:\n"
-	    " -h, -help               display this help and exit\n"
-	    " -V, -version            output version information and exit\n"
-	    " -r, -recursive          also show lists of parents, children, ...\n"
-	    " -v, -verbose            always show all data, even huge arrays\n",
+	    " -h, --help              display this help and exit\n"
+	    " -V, --version           output version information and exit\n"
+	    " -r, --recursive         also show lists of parents, children, ...\n"
+	    " -v, --verbose           always show all data, even huge arrays\n",
 	    argv0);
 }
 

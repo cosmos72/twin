@@ -32,6 +32,11 @@ install:
 	$(INSTALL-DIR) $(DESTDIR)$(bindir)
 	$(INSTALL) $(BINS) $(DESTDIR)$(bindir)
 
+uninstall:
+	cd $(DESTDIR)$(bindir) && \
+	   rm -f $(BINS) || true
+	rmdir $(DESTDIR)$(bindir) || true
+
 clean:
 	rm -f .*.flags .*.bin gmon.out core tw* *.la *.a *.o *.lo *.so *.so.* ; \
 	rm -fr .libs

@@ -21,6 +21,7 @@
 #include "methods.h"
 
 #include "fdlist.h"
+#include "printk.h"
 #include "remote.h"
 #include "util.h"
 
@@ -334,8 +335,10 @@ void RemoteEvent(int FdCount, fd_set *FdSet) {
 void RemoteParanoia(void) {
     struct timeval zero;
     fd_set sel_rfds, sel_wfds;
-    int safe, unsafe, test;
+    int safe, unsafe, test, last_errno;
     uldat Slot;
+    
+    printk("twin: RemoteParanoia() called! Trying to recover from unexpected I/O error...\n");
     
     /* rebuild max_fds, save_rfds, FdWQueued, save_wfds */
     FdWQueued = max_fds = 0;
@@ -354,25 +357,35 @@ void RemoteParanoia(void) {
 	}
     }
 
+    printk("                    ... rebuilt internal file descriptor arrays...\n");
+    
     sel_rfds = save_rfds; sel_wfds = save_wfds;
     zero.tv_sec = zero.tv_usec = 0;
-    if (select(max_fds+1, &sel_rfds, &sel_wfds, NULL, &zero) >= 0)
+    if (select(max_fds+1, &sel_rfds, &sel_wfds, NULL, &zero) >= 0) {
+	printk("                    ... problem disappeared. Good.\n");
 	return;
+    }
 
-    
-    if (errno != EBADF && errno != EINVAL) {
+    last_errno = errno;
+    if (last_errno != EBADF && last_errno != EINVAL) {
 	/* transient error ? */
-	for (test = 10; test > 0; test--) {
+	for (test = 0; test < 10; test++) {
 	    sel_rfds = save_rfds; sel_wfds = save_wfds;
 	    zero.tv_sec = 0;
 	    zero.tv_usec = 100000;
 	    if (select(max_fds+1, &sel_rfds, &sel_wfds, NULL, &zero) >= 0)
 		break;
 	}
-	if (test > 0)
+	if (test < 10) {
 	    /* solved ? */
+	    printk("                    ... problem disappeared after a few tries, was:\n"
+		   "                        errno = %d (%."STR(SMALLBUFF)"s)\n",
+		   strerror(last_errno));
 	    return;
+	}
     }
+
+    printk("                    ... problem did not disappear, going to close some fds...\n");
     
     /*
      * Assume we must thrash some fd with permanent errors.
@@ -385,35 +398,40 @@ void RemoteParanoia(void) {
 	sel_rfds = save_rfds; sel_wfds = save_wfds;
 	zero.tv_sec = zero.tv_usec = 0;
 	
-	test = (unsafe + safe) / 2;
+	test = (unsafe + safe + 1) / 2;
 	if (select(test, &sel_rfds, &sel_wfds, NULL, &zero) >= 0)
 	    safe = test;
 	else
 	    unsafe = test;
     }
     /* ok, let's trow away 'unsafe-1' fd. */
-	
+    
+    test = unsafe - 1;
+    printk("                    ... closing file descriptor %d\n", test);
+	   
     for (Slot=0; Slot<FdTop; Slot++) {
-	if (safe == LS.Fd) {
+	if (test == LS.Fd) {
 	    /* let the Handler realize this fd is dead */
 	    /* don't unregister Slot, allow the handler do that. */
 	    if (LS.HandlerData)
-		LS.HandlerIO.D (safe, LS.HandlerData);
+		LS.HandlerIO.D (test, LS.HandlerData);
 	    else
-		LS.HandlerIO.S (safe, Slot);
+		LS.HandlerIO.S (test, Slot);
 
 	    /* failsafe: we're in paranoid mode, remember? */
-	    if (Slot<FdTop && safe == LS.Fd) {
-		close(safe);
+	    if (Slot<FdTop && test == LS.Fd) {
+		close(test);
 		UnRegisterRemote(Slot);
 	    }
 	    return;
 	}
     }
     
+    printk("                    ... bug! fd %d should not be registered at all!\n", test);
+    
     /* Paranoia: still here? */
-    FD_CLR(safe, &save_rfds);
-    FD_CLR(safe, &save_wfds);
+    FD_CLR(test, &save_rfds);
+    FD_CLR(test, &save_wfds);
 }
 
 /*

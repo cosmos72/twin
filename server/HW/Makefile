@@ -68,7 +68,7 @@ endif
 #
 # target
 #
-all: everything
+all: build-all
 
 #
 # read configuration
@@ -167,7 +167,7 @@ include $(TOPDIR)/makerules
 # All done. Now just set a few special targets
 #
 
-everything: $(BINS) $(MODS) $(SHLIBS) $(ARLIBS) $(CLLIBS) links
+build-all: $(BINS) $(MODS) $(SHLIBS) $(ARLIBS) $(CLLIBS) links
 
 links: $(subst hw_X11.la,hw_X.so.$(SHLIBS_VER),$(filter hw_X11.la,$(MODS)))
 
@@ -182,12 +182,25 @@ clean:
 	rm -fr .libs
 
 install-dir:
-	$(INSTALL-DIR) $(DESTDIR)$(libdir)/twin/modules/HW
+	$(INSTALL-DIR) $(DESTDIR)$(libdir)$(INSTALLSUBDIR)
 
 install-mod-link-hw_X.la:
-	$(LN) hw_X11.so.$(SHLIBS_VER) $(DESTDIR)$(libdir)/twin/modules/HW/hw_X.so.$(SHLIBS_VER)
+	$(LN) hw_X11.so.$(SHLIBS_VER) $(DESTDIR)$(libdir)$(INSTALLSUBDIR)/hw_X.so.$(SHLIBS_VER)
 
 install-mod-hw_X11.la: install-mod-link-hw_X.la
 
 install: install-dir $(foreach M,$(MODS),install-mod-$(M))
+
+
+uninstall-dir:
+	rmdir $(DESTDIR)$(libdir)$(INSTALLSUBDIR) || true
+	rmdir $(DESTDIR)$(libdir)/twin/modules || true
+	rmdir $(DESTDIR)$(libdir)/twin || true
+
+uninstall-mod-link-hw_X.la:
+	rm -f $(DESTDIR)$(libdir)$(INSTALLSUBDIR)/hw_X.so.$(SHLIBS_VER)
+
+uninstall-mod-hw_X11.la: uninstall-mod-link-hw_X.la
+
+uninstall: $(foreach M,$(MODS),uninstall-mod-$(M)) uninstall-dir
 

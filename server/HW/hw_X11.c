@@ -10,6 +10,13 @@
  *
  */
 
+#include <Tw/Twkeys.h>
+
+#ifdef CONF__UNICODE
+# include <Tutf/Tutf.h>
+# include <Tutf/Tutf_defs.h>
+#endif
+
 #include "twin.h"
 #include "main.h"
 #include "data.h"
@@ -19,13 +26,6 @@
 #include "hw_private.h"
 #include "hw_dirty.h"
 #include "common.h"
-
-#include <Tw/Twkeys.h>
-
-#ifdef CONF__UNICODE
-# include <Tutf/Tutf.h>
-# include <Tutf/Tutf_defs.h>
-#endif
 
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>

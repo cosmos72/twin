@@ -86,13 +86,14 @@
 #endif
 
 #include <Tw/Tw_defs.h>
+#include <Tw/Twtypes.h>
+#include <Tw/missing.h>
 
 #ifndef _TWIN_H
 #define _TWIN_H
 
 /* a cutdown version of twin.h */
-#include <Tw/Twtypes.h>
-#include <Tw/missing.h>
+
 
 /** a structure containing high resolution time */
 typedef struct s_timevalue  {

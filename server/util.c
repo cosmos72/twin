@@ -289,21 +289,26 @@ uldat HexStrToNum(byte *StringHex) {
 */
 
 /* adapted from similar code in bdflush */
-void SetArgv_0(byte *CONST *argv, byte CONST * src) {
+uldat ComputeUsableLenArgv(byte *CONST *argv) {
     byte *ptr;
-    uldat count, len = LenStr(src);
+    uldat count;
     
     ptr = argv[0] + LenStr(argv[0]);
     for (count = 1; argv[count]; count++) {
 	if (argv[count] == ptr + 1)
-	    ptr += LenStr(++ptr);
+	    ptr += LenStr(ptr + 1) + 1;
     }
+    return ptr - argv[0];
+}
+
+void SetArgv0(byte *CONST *argv, uldat argv_usable_len, CONST byte *src) {
+    uldat len = strlen(src);
     
-    if (len + 1 < (size_t)(ptr - argv[0])) {
+    if (len + 1 < argv_usable_len) {
 	CopyMem(src, argv[0], len);
-	WriteMem(argv[0] + len, '\0', (size_t)(ptr - argv[0]) - len);
+	WriteMem(argv[0] + len, '\0', argv_usable_len - len);
     } else
-	CopyMem(src, argv[0], (size_t)(ptr - argv[0]));
+	CopyMem(src, argv[0], argv_usable_len);
 }
                                            
 
@@ -980,7 +985,7 @@ byte InitTWDisplay(void) {
 #endif
 			if ((arg0 = AllocMem(LenStr(TWDisplay) + 6))) {
 			    sprintf(arg0, "twin %s", TWDisplay);
-			    SetArgv_0(main_argv, arg0);
+			    SetArgv0(main_argv, main_argv_usable_len, arg0);
 			    FreeMem(arg0);
 			}
 			return TRUE;

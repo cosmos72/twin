@@ -44,27 +44,65 @@
 static char *ptydev, *ttydev;
 static int ptyfd, ttyfd;
 
+#define SS "%s"
+
+#ifdef CONF_TERM_DEVPTS
+static void pty_error(TW_CONST byte *d, TW_CONST byte *f, TW_CONST byte *arg) {
+    fprintf(stderr, "twterm: "SS": "SS"(\""SS"\") failed: "SS"\n",
+	    d ? d : (TW_CONST byte *)"<NULL>",
+	    f ? f : (TW_CONST byte *)"<NULL>",
+	    arg ? arg : (TW_CONST byte *)"<NULL>",
+	    strerror(errno));
+}
+
+static void get_pty_error(TW_CONST byte *f, TW_CONST byte *arg) {
+    pty_error("opening pseudo-tty", f, arg);
+}
+#endif
+
+
 /* 1. Acquire a pseudo-teletype from the system. */
 /*
  * On failure, returns FALSE.
- * On success, fills ttydev and ptydev with the names of the
- * master and slave parts and sets ptyfd to the pty file descriptor
+ * On success, fills ttydev and ptydev with the names of the master
+ * and slave parts and sets ttyfd and ptyfd to the file descriptors
  */
 static byte get_pty(void)
 {
     int fd = -1, sfd = -1;
 #ifdef CONF_TERM_DEVPTS
     
-    /* open master pty /dev/ptmx */
-    if ((fd = open("/dev/ptmx", O_RDWR|O_NOCTTY)) >= 0) {
-	if (grantpt(fd) == 0 && unlockpt(fd) == 0) {
-	    ptydev = ttydev = ptsname(fd);
-	    if ((sfd = open(ptydev, O_RDWR|O_NOCTTY)) >= 0)
-		goto Found;
-	}
+    /* open master pty */
+    if (
+# ifdef HAVE_GETPT
+	(fd = getpt()) >= 0
+# else
+	(fd = open("/dev/ptmx", O_RDWR|O_NOCTTY)) >= 0
+# endif
+	) {
+	
+	if (grantpt(fd) == 0) {
+	    if (unlockpt(fd) == 0) {
+		ptydev = ttydev = ptsname(fd);
+		if ((sfd = open(ptydev, O_RDWR|O_NOCTTY)) >= 0)
+		    goto Found;
+		else
+		    get_pty_error("slave open", ptydev);
+	    } else
+		get_pty_error("unlockpt", "");
+	} else
+	    get_pty_error("grantpt", "");
+	    
 	close(fd);
-    }
-#else
+    } else
+	get_pty_error(
+# ifdef HAVE_GETPT
+		      "getpt", ""
+# else
+		      "open", "/dev/ptmx"
+# endif
+		      );
+#else /* ! CONF_TERM_DEVPTS */
     static char     pty_name[] = "/dev/pty??";
     static char     tty_name[] = "/dev/tty??";
     int             len = strlen(tty_name);
@@ -87,6 +125,8 @@ static byte get_pty(void)
 	    }
 	}
     }
+    fprintf(stderr, "twterm: failed to get a pty/tty pseudo-tty pair\n");
+    
 #endif
     return FALSE;
 

@@ -20,7 +20,7 @@
 byte *name;
 
 void usage(void) {
-    fprintf(stderr, "Usage: %s [-padx <X>] [-pady <Y>] [-aa <ascii art file>]\n", name);
+    fprintf(stderr, "Usage: %s [--padx <X>] [--pady <Y>] [--aa <ascii art file>]\n", name);
 }
 
 void panic(void) {

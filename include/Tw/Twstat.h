@@ -85,33 +85,6 @@
   }
 #endif
 
-typedef union s_tsval {
-    tlargest _;
-#ifdef obj
-    obj    o;
-#endif
-    struct {
-	TW_CONST void *V;
-	uldat L;
-    } vec;
-    struct {
-	void *V;
-	uldat L;
-    } vecV;
-} tsval;
-
-typedef struct s_tsfield {
-    udat hash;
-    udat type;
-    tsval val;
-} *tsfield;
-
-typedef struct s_tslist {
-    udat N;
-    udat flags;
-    struct s_tsfield TSF[1];
-} *tslist;
-
 tlargest Tw_Stat (     tdisplay TwD, tobj Id, udat h);
 tslist   Tw_StatL(     tdisplay TwD, tobj Id, udat hN, ...);
 tslist   Tw_StatA(     tdisplay TwD, tobj Id, udat hN, TW_CONST udat *h);

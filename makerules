@@ -6,11 +6,7 @@
 # do NOT touch this
 #
 -include $(TOPDIR)/makeautoconf
-
-#
-# this version of twin
-#
-TWIN_VERSION_STR=0.4.5
+-include $(TOPDIR)/makeversion
 
 
 #
@@ -46,6 +42,8 @@ else
      # detected by `./configure' :
      CFLAGS+=$(CC_AC_FLAGS)
    endif
+   # strip installed binaries
+   INSTALLFLAGS+=-s
  endif
 endif
 
@@ -56,13 +54,13 @@ endif
 #
 # apply known-good GCC compiler flags.
 #
-ifeq ($(CC),gcc)
+ifeq ($(word 1, $(CC)),gcc)
   CFLAGS+=-pipe -Wall -Wshadow -Wno-uninitialized -Winline
   ifdef DEBUG
     CFLAGS+=-Wno-unused
   endif
   ifdef PARANOID_GCC
-    CFLAGS+=-Wstrict-prototypes -Wcast-qual -Wcast-align -Wpointer-arith -Wbad-function-cast -Waggregate-return
+    CFLAGS+=-Wundef -Wstrict-prototypes -Wcast-qual -Wcast-align -Wpointer-arith -Wbad-function-cast -Waggregate-return
   endif
 endif
 
@@ -126,7 +124,7 @@ MKDIR=mkdir -p
 
 
 #
-# m4 preprocessor
+# GNU m4 preprocessor
 #
 M4=m4
 
@@ -186,7 +184,7 @@ ifeq ($(SYS_SHLIBS),native)
   #
   # how to install a binary (program or library)
   #
-  INSTALL=$(INSTALL-BIN) -s
+  INSTALL=$(INSTALL-BIN) $(INSTALL_FLAGS)
 
 else
 
@@ -234,7 +232,7 @@ else
   #
   # how to install a program or library: wrap with libtool
   #
-  INSTALL=$(TOPDIR)/libtool --silent $(INSTALL-BIN) -s
+  INSTALL=$(TOPDIR)/libtool --silent $(INSTALL-BIN) $(INSTALL_FLAGS)
 
 endif
  
@@ -246,7 +244,7 @@ CC_AS=$(CC)
 #
 CC_FLAGS+=$(CFLAGS) $(EXTRA_CFLAGS)
 LD_FLAGS+=$(LDFLAGS) $(EXTRA_LDFLAGS)
-
+INSTALL_FLAGS+=$(INSTALLFLAGS) $(EXTRA_INSTALLFLAGS)
 
 
 ifeq ($(filter r,$(MAKEFLAGS)),)
@@ -375,7 +373,9 @@ nullconfig:
 	$(BASH) scripts/Configure.tty < /dev/null > /dev/null
 
 	
-
+$(TOPDIR)/makeversion: $(TOPDIR)/include/makeversion
+	@echo Updating $(TOPDIR)/makeversion; \
+	 echo "TWIN_VERSION_STR=`cut -d= -f2 < include/makeversion | xargs echo | tr ' ' '.'`" > $@
 
 
 # collect together in $(OBJS) all objs from $(BINS) looking in $(OBJS_xxx)
@@ -479,6 +479,10 @@ $(TOPDIR)/.hdepend: $(TOPDIR)/scripts/Mkdep $(TOPDIR)/makerules $(_GL_H_FILES) $
 	$(M4) -I$(TOPDIR)/include $< > $@
 
 
+ifeq ($(EXTRA_VER),)
+  EXTRA_VER=0
+endif
+
 version.h: version.h.in makeversion $(TOPDIR)/makerules
 	$(Q)sed -e 's/@MAJOR_VER@/$(MAJOR_VER)/g' -e 's/@MINOR_VER@/$(MINOR_VER)/g' \
 	    -e 's/@PATCH_VER@/$(PATCH_VER)/g' -e 's/@EXTRA_VER@/$(EXTRA_VER)/g' < $< > $@
@@ -548,8 +552,8 @@ version.h: version.h.in makeversion $(TOPDIR)/makerules
 
 
 #
-# function to extract actual .o files from a .lst collection:
-# special care must be taken when extracting from a .lst NOT in the currect directory
+# function to extract actual .o files from .lst collection:
+# special care must be taken when extracting from .lst NOT in the currect directory
 #
 expand-lst=$(strip $(filter-out %.lst,$(1)) $(foreach L,$(filter %.lst,$(1)),$(call cat-lst,$(L))))
 cat-lst=$(foreach F,$(shell cat $(1)),$(patsubst %,$(dir $(1))%,$(F)))
@@ -641,13 +645,24 @@ endif
 install-lib-%.a:
 	$(INSTALL-TXT) $*.a $(DESTDIR)$(libdir)
 
+uninstall-lib-%.a:
+	rm -f $(DESTDIR)$(libdir)/$*.a
+
+
 ifeq ($(SYS_SHLIBS),native)
   install-mod-%.la:
 	$(INSTALL) $*.so.$(SHLIBS_VER) $(DESTDIR)$(libdir)$(INSTALLSUBDIR)
   install-lib-%.la:
 	$(INSTALL) $*.so.$(SHLIBS_VER) $(DESTDIR)$(libdir)
-	$(LN) $*.so.$(SHLIBS_VER) $(DESTDIR)$(libdir)$(INSTALLSUBDIR)/$*.so.$(MAJOR_VER) && \
-	$(LN) $*.so.$(MAJOR_VER) $(DESTDIR)$(libdir)$(INSTALLSUBDIR)/$*.so
+	$(LN)      $*.so.$(SHLIBS_VER) $(DESTDIR)$(libdir)/$*.so.$(MAJOR_VER) && \
+	$(LN)      $*.so.$(MAJOR_VER)  $(DESTDIR)$(libdir)/$*.so
+
+  uninstall-mod-%.la:
+	rm -f $(DESTDIR)$(libdir)$(INSTALLSUBDIR)/$*.so.$(SHLIBS_VER)
+  uninstall-lib-%.la:
+	rm -f $(DESTDIR)$(libdir)/$*.so.$(SHLIBS_VER) \
+	      $(DESTDIR)$(libdir)/$*.so.$(MAJOR_VER) \
+	      $(DESTDIR)$(libdir)/$*.so
 else
   install-mod-%.la:
 	$(INSTALL) $*.la $(DESTDIR)$(libdir)$(INSTALLSUBDIR)
@@ -671,6 +686,11 @@ else
 	echo ')'
   install-lib-%.la:
 	$(INSTALL) $*.la $(DESTDIR)$(libdir)
+
+  uninstall-mod-%.la:
+	rm -f $(DESTDIR)$(libdir)$(INSTALLSUBDIR)/$*.la
+  uninstall-lib-%.la:
+	rm -f $(DESTDIR)$(libdir)/$*.la
 endif
 
 # forbid GNU-make to `rm -f $(OBJS) $(SHLIBOBJS) $(ARLIBOBJS)' after build
@@ -691,21 +711,45 @@ $(TOPDIR)/include/Tw/datasizes.h: $(TOPDIR)/scripts/Getsizes
 force-remake:
 	@:
 
+ifeq ($(CONF__LONG_LONG),)
+  ifneq ($(wildcard $(CONF)),)
+    include $(CONF)
+  endif
+endif
+
+ifneq ($(wildcard $(TOPDIR)/.long_long.conf),)
+  include $(TOPDIR)/.long_long.conf
+else
+  PREVIOUS_CONF__LONG_LONG=x
+endif
+
+#
+# force re-compiling and re-running scripts/Getsizes after CONF__LONG_LONG changed
+#
+ifneq ($(CONF__LONG_LONG),$(PREVIOUS_CONF__LONG_LONG))
+  $(TOPDIR)/scripts/Getsizes: force-remake
+endif
+
+
+
+
 ifeq ($(CONF__UNICODE),)
   ifneq ($(wildcard $(CONF)),)
     include $(CONF)
   endif
 endif
 
-ifneq ($(wildcard $(TOPDIR)/.uni_types.conf),)
-  include $(TOPDIR)/.uni_types.conf
+ifneq ($(wildcard $(TOPDIR)/.unicode.conf),)
+  include $(TOPDIR)/.unicode.conf
 else
   PREVIOUS_CONF__UNICODE=x
 endif
 
+
+
 #
 # force re-making after building include/Tw/uni_types.h,
-# so that 'make' reads new .uni_types.conf
+# so that 'make' reads new .unicode.conf
 #
 ifneq ($(CONF__UNICODE),$(PREVIOUS_CONF__UNICODE))
   $(TOPDIR)/include/Tw/uni_types.h: force-remake
@@ -718,13 +762,13 @@ endif
 #
 
 ifeq ($(CONF__UNICODE),n)
-  $(TOPDIR)/include/Tw/uni_types.h $(TOPDIR)/.uni_types.conf: $(TOPDIR)/scripts/unitypes16
+  $(TOPDIR)/include/Tw/uni_types.h $(TOPDIR)/.unicode.conf: $(TOPDIR)/scripts/unitypes16
 	cat $< > $@
-	@echo "PREVIOUS_CONF__UNICODE=$(CONF__UNICODE)" > $(TOPDIR)/.uni_types.conf
+	@echo "PREVIOUS_CONF__UNICODE=$(CONF__UNICODE)" > $(TOPDIR)/.unicode.conf
 else
-  $(TOPDIR)/include/Tw/uni_types.h $(TOPDIR)/.uni_types.conf: $(TOPDIR)/scripts/unitypes32
+  $(TOPDIR)/include/Tw/uni_types.h $(TOPDIR)/.unicode.conf: $(TOPDIR)/scripts/unitypes32
 	cat $< > $@
-	@echo "PREVIOUS_CONF__UNICODE=$(CONF__UNICODE)" > $(TOPDIR)/.uni_types.conf
+	@echo "PREVIOUS_CONF__UNICODE=$(CONF__UNICODE)" > $(TOPDIR)/.unicode.conf
 endif
 
 
@@ -745,11 +789,19 @@ $(TOPDIR)/include/Tw/Twautoconf.h: $(TOPDIR)/include/autoconf.h
 	 echo "#endif /* _TW_AUTOCONF_H */" >> $@
 
 
+ifeq ($(CONF__LONG_LONG),y)
+  CC_FLAGS_script_getsizes.o+=-DCONF__LONG_LONG
+endif
 
 $(TOPDIR)/scripts/Getsizes: $(TOPDIR)/scripts/getsizes.c $(TOPDIR)/include/Tw/datatypes.h $(TOPDIR)/include/autoconf.h
-	$(CC) $(CC_FLAGS) $(LD_FLAGS) $< -o $@
+	$(CC) $(CC_FLAGS) $(CC_FLAGS_script_getsizes.o) $(LD_FLAGS) $< -o $@
+	@echo "PREVIOUS_CONF__LONG_LONG=$(CONF__LONG_LONG)" > $(TOPDIR)/.long_long.conf
 
-$(TOPDIR)/scripts/Mkdep: $(TOPDIR)/scripts/mkdep.c $(TOPDIR)/include/Tw/datasizes.h $(TOPDIR)/include/autoconf.h
+#
+# Mkdep does not actually depend on datasizes.h,
+# but this is the best place to force creating it
+#
+$(TOPDIR)/scripts/Mkdep: $(TOPDIR)/scripts/mkdep.c $(TOPDIR)/include/autoconf.h $(TOPDIR)/include/Tw/datasizes.h
 	$(CC) $(CC_FLAGS) $(LD_FLAGS) $< -o $@
 
 $(TOPDIR)/scripts/Bitmap: $(TOPDIR)/scripts/bitmap.c
@@ -759,9 +811,9 @@ $(TOPDIR)/scripts/Bitmap: $(TOPDIR)/scripts/bitmap.c
 #
 # target to recursively build all subdirectories
 #
-subdirs: $(foreach D, $(SUBDIRS), dir-$(D))
+build-subdirs: $(patsubst %, build-dir-%, $(SUBDIRS))
 
-dir-%:
+build-dir-%:
 	$(MAKE) -C $*
 
 #
@@ -776,8 +828,8 @@ dir-%:
 #
 
 torture-%.c: %.c Makefile $(TOPDIR)/makerules $(TOPDIR)/scripts/Torture $(TOPDIR)/scripts/Bitmap
-	@echo; echo "Torturing $<"; echo;
-	$(BASH) $(TOPDIR)/scripts/Torture $(TOPDIR)/scripts/Bitmap $(CC) $(CC_FLAGS) $(CC_FLAGS_$*.o) -c $< -o $*.o -- $<
+	@echo; echo "Torturing $<"; echo; \
+	$(BASH) $(TOPDIR)/scripts/Torture $(TOPDIR)/scripts/Bitmap $(CC) $(filter-out -DCONF_%, $(CC_FLAGS) $(CC_FLAGS_$*.o)) -c $< -o $*.o -- $<
 
 torture: $(filter %.c, $(_ALL_SRCS) $(foreach S,$(_ALL_SRCS),torture-$(S)))
 	
@@ -808,6 +860,13 @@ install: $(foreach D, $(SUBDIRS), install-dir-$(D))
 
 install-dir-%:
 	$(MAKE) install -C $* DESTDIR=$(DESTDIR)
+
+
+uninstall: $(patsubst %, uninstall-dir-%, $(SUBDIRS))
+
+uninstall-dir-%:
+	$(MAKE) uninstall -C $* DESTDIR=$(DESTDIR)
+
 
 clean: $(foreach D, $(SUBDIRS), clean-dir-$(D))
 

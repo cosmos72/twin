@@ -33,6 +33,20 @@
 static char *ptydev, *ttydev;
 static int ptyfd, ttyfd;
 
+#define SS "%."STR(SMALLBUFF)"s"
+
+static void pty_error(CONST byte *d, CONST byte *f, CONST byte *arg) {
+    printk("twin: "SS": "SS"(\""SS"\") failed: "SS"\n",
+	   d ? d : (CONST byte *)"<NULL>",
+	   f ? f : (CONST byte *)"<NULL>",
+	   arg ? arg : (CONST byte *)"<NULL>",
+	   strerror(errno));
+}
+
+static void get_pty_error(CONST byte *f, CONST byte *arg) {
+    pty_error("opening pseudo-tty", f, arg);
+}
+
 /* 1. Acquire a pseudo-teletype from the system. */
 /*
  * On failure, returns FALSE.
@@ -44,15 +58,37 @@ static byte get_pty(void)
     int fd = -1, sfd = -1;
 #ifdef CONF_TERM_DEVPTS
     
-    /* open master pty /dev/ptmx */
-    if ((fd = open("/dev/ptmx", O_RDWR|O_NOCTTY)) >= 0) {
-	if (grantpt(fd) == 0 && unlockpt(fd) == 0) {
-	    ptydev = ttydev = ptsname(fd);
-	    if ((sfd = open(ptydev, O_RDWR|O_NOCTTY)) >= 0)
-		goto Found;
-	}
+    /* open master pty */
+    if (
+# ifdef HAVE_GETPT
+	(fd = getpt()) >= 0
+# else
+	(fd = open("/dev/ptmx", O_RDWR|O_NOCTTY)) >= 0
+# endif
+	) {
+	
+	if (grantpt(fd) == 0) {
+	    if (unlockpt(fd) == 0) {
+		ptydev = ttydev = ptsname(fd);
+		if ((sfd = open(ptydev, O_RDWR|O_NOCTTY)) >= 0)
+		    goto Found;
+		else
+		    get_pty_error("slave open", ptydev);
+	    } else
+		get_pty_error("unlockpt", "");
+	} else
+	    get_pty_error("grantpt", "");
+	    
 	close(fd);
-    }
+    } else
+	get_pty_error(
+# ifdef HAVE_GETPT
+		      "getpt", ""
+# else
+		      "open", "/dev/ptmx"
+# endif
+		      );
+
 #else
     static char     pty_name[] = "/dev/pty??";
     static char     tty_name[] = "/dev/tty??";
@@ -76,6 +112,8 @@ static byte get_pty(void)
 	    }
 	}
     }
+    printk("twin: failed to get a pty/tty pseudo-tty pair\n");
+    
 #endif
     return FALSE;
 
@@ -104,6 +142,11 @@ static byte fixup_pty(void) {
     return FALSE;
 }
 
+
+static void setup_pty_error(CONST byte *f, CONST byte *arg) {
+    pty_error("setting up slave tty", f, arg);
+}
+
 /* 3. Setup tty size and termios settings */
 /*
  * do it before the fork() and NOT in the child to avoid
@@ -119,9 +162,16 @@ static byte setup_tty(udat x, udat y) {
     wsiz.ws_xpixel = 0;
     wsiz.ws_ypixel = 0;
     
-    return ioctl(ptyfd, TIOCSWINSZ, &wsiz) >= 0 &&
-	tty_setioctl(ttyfd, &ttysave) >= 0;
+    if (ioctl(ptyfd, TIOCSWINSZ, &wsiz) >= 0) {
+	if (tty_setioctl(ttyfd, &ttysave) >= 0)
+	    return TRUE;
+	else
+	    setup_pty_error("tty_setioctl", "");
+    } else
+	setup_pty_error("ioctl", "TIOCSWINSZ");
+    return FALSE;
 }
+
 
 /* 4. Establish ttyfd as controlling teletype for new session and switch to it */
 static byte switchto_tty(void)

@@ -12,9 +12,9 @@
  * Plus, only those symbols referenced are passed to the C compiler!
  * 
  * Creates simple dependency lines for #include "*.h" and #include <*.h> ;
- * they are treated slightly differently:
+ * the two syntaxes are treated slightly differently:
  * #include <*.h> files are printed only if the corresponding file actually
- * exists in one of the -I<dir> directories;
+ * exists in one of the -I<dir> directories; instead
  * #include "*.h" files are first searched in current directory, then searched as the former,
  * but finally assumed to exist in the current directory if not existant, and thus printed.
  * 

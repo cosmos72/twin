@@ -33,7 +33,7 @@
 #include <Tw/Twkeys.h>
 
 #if !defined(CONF_HW_TTY_LINUX) && !defined(CONF_HW_TTY_TWTERM) && !defined(CONF_HW_TTY_TERMCAP)
-# warning trying to compile textmode terminals driver without support for any specific ttys.
+# warning trying to compile hw_tty.c without support for any specific terminal.
 # warning twin terminal driver will be enabled by default.
 # define CONF_HW_TTY_TWTERM
 #endif
@@ -770,13 +770,12 @@ byte tty_InitHW(void) {
     saveCursorType = (uldat)-1;
 #ifdef CONF__UNICODE
     tty_charset = (uldat)-1;
+    tty_can_utf8 = TRUE+TRUE;
 #endif
     saveX = saveY = 0;
     stdOUT = NULL;
     tty_fd = -1;
     tty_TERM = tty_name = NULL;
-    
-    tty_can_utf8 = TRUE+TRUE;
     
     if (arg && HW->NameLen > 4) {
 	arg += 4;
@@ -831,9 +830,11 @@ byte tty_InitHW(void) {
 	    } else if (!strncmp(arg, ",slow", 5)) {
 		arg = strchr(arg + 5, ',');
 		HW->FlagsHW |= FlHWExpensiveFlushVideo;
+#ifdef CONF__UNICODE
 	    } else if (!strncmp(arg, ",utf8", 5)) {
 		arg = strchr(arg + 5, ',');
 		tty_can_utf8 = TRUE;
+#endif
 	    } else {
 		if (*arg == ',')
 		    arg++;

@@ -482,7 +482,7 @@ static void CleanupLastW(widget LastW, udat LastKeys, byte LastInside) {
 	LastKeys = 0;
 }
 			    
-static void HandleHilightAndSelection(widget W, udat Code, dat X, dat Y) {
+static void HandleHilightAndSelection(widget W, udat Code, dat X, dat Y, byte Inside) {
     udat _Code;
     byte IsHoldButtonSelection = (Code & HOLD_ANY) == All->SetUp->ButtonSelection;
     
@@ -496,7 +496,7 @@ static void HandleHilightAndSelection(widget W, udat Code, dat X, dat Y) {
 	
 	if (_Code == All->SetUp->ButtonSelection && IS_WINDOW(W))
 	    SetSelectionFromWindow((window)W);
-	else if (_Code == All->SetUp->ButtonPaste) {
+	else if (_Code == All->SetUp->ButtonPaste && Inside) {
 	    /* send Selection Paste msg */
 	    msg NewMsg;
 	    
@@ -625,10 +625,10 @@ static byte CheckForwardMsg(wm_ctx *C, msg Msg, byte WasUsed) {
     }
     
     /* manage window hilight and Selection */
-    if (IS_WINDOW(W) && Code && !LastKeys && (All->State & STATE_ANY) == STATE_DEFAULT &&
-	!(W->Attrib & WIDGET_WANT_MOUSE)) {
+    if (IS_WINDOW(W) && Inside && Code && !LastKeys &&
+	(All->State & STATE_ANY) == STATE_DEFAULT && !(W->Attrib & WIDGET_WANT_MOUSE)) {
 
-	HandleHilightAndSelection(W, Code, X, Y);
+	HandleHilightAndSelection(W, Code, X, Y, Inside);
 
 	LastWId = W->Id;
 	
@@ -636,6 +636,8 @@ static byte CheckForwardMsg(wm_ctx *C, msg Msg, byte WasUsed) {
     }
     /* finished with Selection stuff */
 
+    
+    /* forward the message */
     if (Inside || LastKeys || LastInside) {
 	if (isMOTION(Code)
 	    ? (Inside || LastInside) && (W->Attrib & WIDGET_WANT_MOUSE_MOTION)

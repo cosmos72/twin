@@ -9,7 +9,7 @@ include $(TOPDIR)/include/Tutf/makeversion
 
 SUBDIRS=
 
-all: everything
+all: build-all
 
 SHLIBS=libTutf.la
 ARLIBS=libTutf.a
@@ -26,10 +26,11 @@ CC_FLAGS+=-D_REENTRANT
 
 
 ifeq ($(CONF__UNICODE),y)
-  everything: lib
+  build-all: lib
   install: install-real
+  uninstall: uninstall-real
 else
-  everything install:
+  build-all install uninstall:
 	@rm -f $(SHLIBS) $(ARLIBS) ; \
 	 echo ; \
 	 echo "You disabled \"Build all code with Unicode support\"," ; \
@@ -71,6 +72,17 @@ install-dir:
 
 install-real: install-headers install-dir $(foreach B,$(SHLIBS) $(ARLIBS),install-lib-$(B))
 	
+
+
+uninstall-headers:
+	rm -f $(DESTDIR)$(includedir)/Tutf/*.h
+
+uninstall-dir:
+	rmdir $(DESTDIR)$(includedir)/Tutf || true
+
+uninstall-real: uninstall-headers uninstall-dir $(foreach X,$(SHLIBS) $(ARLIBS),uninstall-lib-$(X))
+
+
 clean:
 	rm -f .*.flags .*.shlib .*.arlib *.la *.a *.o *.lo *.so *.so.* ; \
 	rm -fr .libs

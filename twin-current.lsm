@@ -1,7 +1,7 @@
 Begin3
 Title:		twin
-Version:	0.4.5
-Entered-date:	020705
+Version:	0.4.6
+Entered-date:	030326
 Description:	a Text mode WINdow environment.
 		It has built-in window manager and linux console emulator.
 		Has X11-style networked server capabilities:
@@ -14,11 +14,11 @@ Keywords:	twin wm twindows linux
 Author: 	max@linuz.sns.it (Massimiliano Ghilardi)
 Maintained-by:	max@linuz.sns.it (Massimiliano Ghilardi)
 Primary-site:	http://linuz.sns.it/~max/twin/
-		890k  twin-0.4.5.tar.gz
-		866   twin-0.4.5.lsm
+		1112k twin-0.4.6.tar.gz
+		866   twin-0.4.6.lsm
 Alternate-site: http://prdownloads.sourceforge.net/projects/twin/
-		890k  twin-0.4.5.tar.gz
-		866   twin-0.4.5.lsm
+		1112k twin-0.4.6.tar.gz
+		866   twin-0.4.6.lsm
 Platforms:	Linux, FreeBSD, SunOS, X11
 Copying-policy:	GPL
 End

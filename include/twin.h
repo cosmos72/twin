@@ -17,12 +17,17 @@
 # include "autoconf.h"
 #endif
 
+/* pull in "obj" field in <Tw/stattypes.h> */
+#define obj obj
+typedef struct s_obj *obj;
+
 #include "compiler.h"
 #include "version.h"
 #include "osincludes.h"
 #include <Tw/compiler.h>
 #include <Tw/datatypes.h>
 #include <Tw/datasizes.h>
+#include <Tw/stattypes.h>
 #include <Tw/uni_types.h>
 #include <Tw/version.h>
 #include <Tw/missing.h>
@@ -67,6 +72,20 @@
 #define SMALLBUFF	256
 #define BIGBUFF		4096
 #define HUGEBUFF	131072
+
+
+
+/* return from signal macros */
+
+#define RETFROMSIGNAL(value)		return ARG_IFNOTVOID(value, RETSIGTYPE)
+#define ARG_IFNOTVOID(value, type)	CAT(ARG_IFNOTVOID_,type)(value)
+#define ARG_IFNOTVOID_void(value)
+#define ARG_IFNOTVOID_int(value)	(value)
+
+
+
+/* maximum number of arguments of a libTw function */
+#define TW_MAX_ARGS_N	20
 
 
 /* Macros for HW VGA (not ANSI!) colors */
@@ -184,8 +203,7 @@ typedef struct s_ttydata ttydata;
 typedef struct s_remotedata remotedata;
 typedef struct s_draw_ctx draw_ctx;
 
-#define obj obj
-typedef struct s_obj *obj;
+/*typedef struct s_obj *obj;*/
 typedef struct s_fn_obj *fn_obj;
 typedef struct s_obj_parent *obj_parent;
 typedef struct s_widget *widget;

@@ -34,7 +34,7 @@ EOF
   --enable-wm-rc-shmmap[=yes|no]         enable mmapped shared file for parser
   --enable-wm-rc-shrink[=yes|no]         enable shrinking memory when parser finished
   --enable-term[=yes|no|mod]             enable builtin terminal emulator
-  --enable-term-devpts[=yes|no]          enable glibc-2.1 /dev/pts/* pseudo-ttys
+  --enable-term-devpts[=yes|no]          enable Unix98 /dev/pts/* pseudo-ttys
   --enable-printk[=yes|no]               enable logging messages in Messages window
 EOF
     cat << EOF

@@ -95,6 +95,10 @@ static TUTF_CONST utf_to_ch *my_bsearch(TUTF_CONST utf_to_ch *key, TUTF_CONST ut
 #include "iso_8859_x.c"
 #undef ISO_8859_X
 
+#define ISO_8859_X ISO_8859_10
+#include "iso_8859_x.c"
+#undef ISO_8859_X
+
 #define ISO_8859_X ISO_8859_13
 #include "iso_8859_x.c"
 #undef ISO_8859_X
@@ -104,6 +108,10 @@ static TUTF_CONST utf_to_ch *my_bsearch(TUTF_CONST utf_to_ch *key, TUTF_CONST ut
 #undef ISO_8859_X
 
 #define ISO_8859_X ISO_8859_15
+#include "iso_8859_x.c"
+#undef ISO_8859_X
+
+#define ISO_8859_X ISO_8859_16
 #include "iso_8859_x.c"
 #undef ISO_8859_X
 
@@ -173,7 +181,27 @@ static TUTF_CONST utf_to_ch *my_bsearch(TUTF_CONST utf_to_ch *key, TUTF_CONST ut
 #include "template.c"
 #undef TEMPLATE
 
+#define TEMPLATE CP1252
+#include "template.c"
+#undef TEMPLATE
+
+#define TEMPLATE CP1253
+#include "template.c"
+#undef TEMPLATE
+
+#define TEMPLATE CP1254
+#include "template.c"
+#undef TEMPLATE
+
 #define TEMPLATE CP1255
+#include "template.c"
+#undef TEMPLATE
+
+#define TEMPLATE CP1256
+#include "template.c"
+#undef TEMPLATE
+
+#define TEMPLATE CP1257
 #include "template.c"
 #undef TEMPLATE
 
@@ -183,11 +211,14 @@ static TUTF_CONST utf_to_ch *my_bsearch(TUTF_CONST utf_to_ch *key, TUTF_CONST ut
 	EL(T_MAP(ISO_8859_1)) EL(T_MAP(ISO_8859_2)) EL(T_MAP(ISO_8859_3)) \
 	EL(T_MAP(ISO_8859_4)) EL(T_MAP(ISO_8859_5)) EL(T_MAP(ISO_8859_6)) \
 	EL(T_MAP(ISO_8859_7)) EL(T_MAP(ISO_8859_8)) EL(T_MAP(ISO_8859_9)) \
-	EL(T_MAP(ISO_8859_13)) EL(T_MAP(ISO_8859_14)) EL(T_MAP(ISO_8859_15)) \
+	EL(T_MAP(ISO_8859_10)) EL(T_MAP(ISO_8859_13)) EL(T_MAP(ISO_8859_14)) \
+	EL(T_MAP(ISO_8859_15)) EL(T_MAP(ISO_8859_16)) \
         EL(T_MAP(CP437)) EL(T_MAP(CP737)) EL(T_MAP(CP775)) EL(T_MAP(CP850)) EL(T_MAP(CP852)) \
 	EL(T_MAP(CP855)) EL(T_MAP(CP857)) EL(T_MAP(CP860)) EL(T_MAP(CP861)) EL(T_MAP(CP862)) \
 	EL(T_MAP(CP863)) EL(T_MAP(CP864)) EL(T_MAP(CP865)) EL(T_MAP(CP866)) EL(T_MAP(CP869)) \
-	EL(T_MAP(CP874)) EL(T_MAP(CP1250)) EL(T_MAP(CP1251)) EL(T_MAP(CP1255))
+	EL(T_MAP(CP874)) \
+        EL(T_MAP(CP1250)) EL(T_MAP(CP1251)) EL(T_MAP(CP1252)) EL(T_MAP(CP1253)) \
+	EL(T_MAP(CP1254)) EL(T_MAP(CP1255)) EL(T_MAP(CP1256)) EL(T_MAP(CP1257))
 
 #define _LIST(EL) \
 	EL(T_MAP(UTF_16)) _NLIST(EL)

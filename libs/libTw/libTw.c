@@ -117,7 +117,9 @@ static fn_list Functions[] = {
     {NULL, 0, 0, NULL, NULL }
 };
 
-typedef uldat v_id_vec [ sizeof(Functions) / sizeof(Functions[0]) ];
+#define Functions_N	 sizeof(Functions) / sizeof(Functions[0])
+
+typedef uldat v_id_vec [ Functions_N - 1 ];
 
 /*
  * automagically get the symbols order_* to be the index

@@ -1,4 +1,9 @@
 
+/* tell includes we are an assebler source, a C source! */
+#define __asm
+
+
+
 #include <Tw/Twautoconf.h>
 #include "check_asm.h"
 

@@ -76,16 +76,10 @@ static VOLATILE byte GotSignalWinch;
 static VOLATILE byte GotSignalChild;
 static VOLATILE byte GotSignalHangup;
 
-#if RETSIGTYPE == void
-# define RETFROMSIGNAL
-#else
-# define RETFROMSIGNAL return 0;
-#endif
-
 static RETSIGTYPE SignalWinch(int n) {
     GotSignals = GotSignalWinch = TRUE;
     signal(SIGWINCH, SignalWinch);
-    RETFROMSIGNAL
+    RETFROMSIGNAL(0);
 }
 
 static RETSIGTYPE HandleSignalWinch(void) {
@@ -95,13 +89,13 @@ static RETSIGTYPE HandleSignalWinch(void) {
 	
 	ResizeDisplayPrefer(DisplayHWCTTY);
     }
-    RETFROMSIGNAL
+    RETFROMSIGNAL(0);
 }
 
 static RETSIGTYPE SignalChild(int n) {
     GotSignals = GotSignalChild = TRUE;
     signal(SIGCHLD, SignalChild);
-    RETFROMSIGNAL
+    RETFROMSIGNAL(0);
 }
 
 static void HandleSignalChild(void) {
@@ -120,7 +114,7 @@ static void HandleSignalChild(void) {
 static RETSIGTYPE SignalHangup(int n) {
     GotSignals = GotSignalHangup = TRUE;
     signal(SIGHUP, SignalHangup);
-    RETFROMSIGNAL
+    RETFROMSIGNAL(0);
 }
 
 static void HandleSignalHangup(void) {
@@ -157,7 +151,7 @@ static RETSIGTYPE SignalPanic(int n) {
     
     kill(getpid(), n);
     
-    RETFROMSIGNAL
+    RETFROMSIGNAL(0);
 }
 #endif
 

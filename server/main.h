@@ -5,6 +5,7 @@ extern fd_set save_rfds, save_wfds;
 extern int max_fds;
 extern byte lenTWDisplay, *TWDisplay, *origTWDisplay, *origTERM, *origHW, *HOME;
 extern byte **main_argv, **orig_argv;
+extern uldat main_argv_usable_len;
 extern byte flag_envrc, flag_secure, *flag_secure_msg;
 
 extern int (*OverrideSelect)(int n, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *timeout);

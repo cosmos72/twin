@@ -24,49 +24,44 @@ static char *MYname;
 static void Usage(byte detach) {
     fprintf(stderr, "Usage: %s [OPTIONS] %s\n"
 	    "Currently known options: \n"
-	    " -h, -help               display this help and exit\n"
-	    " -V, -version            output version information and exit\n"
-	    " -a                      attach display%s\n"
-	    " -d                      detach display%s\n"
-	    " -s, -share              allow multiple simultaneous displays (default)\n"
-	    " -x, -excl               request exclusive display - detach all others\n"
-	    " -v, -verbose            verbose output (default)\n"
-	    " -q, -quiet              quiet - don't report messages from twin server\n"
-	    " -f, -force              force running even with wrong protocol version\n"
-	    " -twin@<TWDISPLAY>       specify server to contact instead of $TWDISPLAY\n"
-	    " -hw=<display>[,options] start the given display\n"
-	    "Currently known display methods: \n"
+	    " -h, --help               display this help and exit\n"
+	    " -V, --version            output version information and exit\n"
+	    " -a                       attach display%s\n"
+	    " -d                       detach display%s\n"
+	    " -s, --share              allow multiple simultaneous displays (default)\n"
+	    " -x, --excl               request exclusive display - detach all others\n"
+	    " -v, --verbose            verbose output (default)\n"
+	    " -q, --quiet              quiet - don't report messages from twin server\n"
+	    " -f, --force              force running even with wrong protocol version\n"
+	    " --twin@<TWDISPLAY>       specify server to contact (default is $TWDISPLAY)\n"
+	    " --hw=<display>[,options] start the given display driver\n"
+	    "Currently known display drivers: \n"
 	    "\tX[@<XDISPLAY>]\n"
 	    "\ttwin[@<TWDISPLAY>]\n"
 	    "\ttty[@<tty device>]\n"
 	    "\tggi[@<ggi display>]\n",
-	    MYname, detach ? "" : "-hw=<display> [...]",
+	    MYname, detach ? "" : "--hw=<display> [...]",
 	    detach ? "" : " (default)", detach ? " (default)" : "");
 }
 
 static TW_VOLATILE byte gotSignals, gotSignalWinch, gotSignalPanic;
 
-#if TW_RETSIGTYPE == void
-# define TW_RETFROMSIGNAL
-#else
-# define TW_RETFROMSIGNAL return 0;
-#endif
 
 static TW_RETSIGTYPE SignalWinch(int n) {
     signal(SIGWINCH, SignalWinch);
     gotSignals = gotSignalWinch = TRUE;
-    TW_RETFROMSIGNAL
+    TW_RETFROMSIGNAL(0);
 }
 
 static TW_RETSIGTYPE SignalPanic(int n) {
     signal(n, SIG_IGN);
     gotSignals = gotSignalPanic = TRUE;
-    TW_RETFROMSIGNAL
+    TW_RETFROMSIGNAL(0);
 }
 
 static void ShowVersion(void) {
     printf("%s " TWIN_VERSION_STR " with socket protocol "
-	  TW_PROTOCOL_VERSION_STR "\n", MYname);
+	   TW_PROTOCOL_VERSION_STR "\n", MYname);
 }
 
 static byte VersionsMatch(byte force) {
@@ -195,7 +190,8 @@ int main(int argc, char *argv[]) {
 		return 1;
 	    }
 	} else {
-	    Usage(detach);
+	    fprintf(stderr, "%s: argument `%s' not recognized\n"
+		    "\ttry `%s --help' for usage summary.\n", MYname, *argv, MYname);
 	    return 1;
 	}
     }
@@ -213,7 +209,7 @@ int main(int argc, char *argv[]) {
 	
 	if (!VersionsMatch(force)) {
 	    if (!force) {
-		fprintf(stderr, "%s: Aborting. Use option `-f' to ignore versions check.\n", MYname);
+		fprintf(stderr, "%s: Aborting. Use option `--force' to ignore versions check.\n", MYname);
 		TwClose();
 		return 1;
 	    }

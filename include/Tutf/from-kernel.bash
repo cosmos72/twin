@@ -9,21 +9,26 @@ fi
 echo
 echo '/*'
 echo ' * This file was automatically generated'
-echo ' * from Linux kernel sources with "from-kernel.bash"'
+echo ' * from '"$2"' sources with "from-kernel.bash"'
 echo ' * Do not edit!'
 echo ' */'
 echo
 
-while read define name value; do
-  if [ "$define" = '#define' -a "${name:0:9}" = 'T_UTF_16_' ]; then
-    value="$[ value ]"
-    if [ "$value" -gt 65535 ]; then
-      break
+if [ -f utf_16.sh ]; then
+  . utf_16.sh
+else
+  while read define name value; do
+    if [ "$define" = '#define' -a "${name:0:9}" = 'T_UTF_16_' ]; then
+      value="$[ value ]"
+      if [ "$value" -gt 65535 ]; then
+        break
+      fi
+      eval "${name:9}=$value"
+      eval "rev_$value=${name:9}"
     fi
-    eval "${name:9}=$value"
-    eval "rev_$value=${name:9}"
-  fi
-done < utf_16.h
+  done < utf_16.h
+  set | grep "^rev_" > utf_16.sh
+fi
 
 i=0
 list=
@@ -57,15 +62,15 @@ echo "#define _TUTF_${target}_H"
 echo
 
 while read line; do
-  if [ "$line" = 'static wchar_t charset2uni[256] = {' ]; then
-    while read a b c d; do
+  if [ "$line" = 'static wchar_t charset2uni[256] = {' -o \
+       "$line" = 'static const unsigned short charset2uni[256] = {' ]; then
+    while read a; do
       if [ "${a}" = '};' ]; then
         break 2;
       elif [ "${a:0:2}" != '/*' ]; then
-        def "$a"
-	def "$b"
-	def "$c"
-	def "$d"
+        for ai in $a; do
+          def "$ai"
+	done
       fi
     done
   fi

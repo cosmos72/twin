@@ -77,7 +77,7 @@ static byte DM_Kill, quiet, logged_in;
 static TW_VOLATILE pid_t ServerPid = (pid_t)-1, AttachPid = (pid_t)-1;
 
 static byte * TW_CONST * Args;
-static TW_CONST byte *hw_name = "-hw=tty", *title, *TwEnvRC = NULL;
+static TW_CONST byte *hw_name = "--hw=tty", *title, *TwEnvRC = NULL;
 static byte use_twdisplay = DM_ATTACH, Privileges = TW_PRIV_NONE;
 
 typedef struct s_data {
@@ -91,17 +91,17 @@ static struct s_data user, pass;
 static void Usage(void) {
     fprintf(stderr, "Usage: twdm [OPTIONS]\n"
 	    "Currently known options: \n"
-	    " -h, -help               display this help and exit\n"
-	    " -V, -version            output version information and exit\n"
-	    " -k, -kill               kill twin server upon display detach\n"
-	    " -q, -quiet              quiet; suppress diagnostic messages\n"
-	    " -attach                 use \"twattach\" to start display (default)\n"
-	    " -display                use \"twdisplay\" to start display\n"
-	    " -envrc                  tell twin to run .twenvrc.sh to get environment\n"
-	    " -suidroot               tell twin to keep suid root privileges\n"
-	    " -sgidtty                tell twin to keep sgid tty privileges\n"
-	    " -title=<title>          set window title\n"
-	    " -hw=<arg>               set display hw to use (default: -hw=tty)\n");
+	    " -h, --help              display this help and exit\n"
+	    " -V, --version           output version information and exit\n"
+	    " -k, --kill              kill twin server upon display detach\n"
+	    " -q, --quiet             quiet; suppress diagnostic messages\n"
+	    " --attach                use \"twattach\" to start display (default)\n"
+	    " --display               use \"twdisplay\" to start display\n"
+	    " --envrc                 tell twin to run .twenvrc.sh to get environment\n"
+	    " --suidroot              tell twin to keep suid root privileges\n"
+	    " --sgidtty               tell twin to keep sgid tty privileges\n"
+	    " --title=<title>         set window title\n"
+	    " --hw=<arg>              set display hw to use (default: --hw=tty)\n");
 }
 
 static void ShowVersion(void) {
@@ -111,36 +111,36 @@ static void ShowVersion(void) {
 static void ParseArgs(void) {
     TW_CONST byte *s;
     while ((s = *Args)) {
-	if (!strcmp(s, "-h") || !strcmp(s, "-help")) {
+	if (!strcmp(s, "-h") || !Tw_option_strcmp(s, "-help")) {
 	    Usage();
 	    exit(0);
-	} else if (!strcmp(s, "-V") || !strcmp(s, "-version")) {
+	} else if (!strcmp(s, "-V") || !Tw_option_strcmp(s, "-version")) {
 	    ShowVersion();
 	    exit(0);
-	} else if (!strcmp(s, "-k") || !strcmp(s, "-kill")) {
+	} else if (!strcmp(s, "-k") || !Tw_option_strcmp(s, "-kill")) {
 	    DM_Kill = TRUE;
-	} else if (!strcmp(s, "-q") || !strcmp(s, "-quiet")) {
+	} else if (!strcmp(s, "-q") || !Tw_option_strcmp(s, "-quiet")) {
 	    quiet = TRUE;
-	} else if (!strcmp(s, "-attach")) {
+	} else if (!Tw_option_strcmp(s, "-attach")) {
 	    use_twdisplay = DM_ATTACH;
-	} else if (!strcmp(s, "-display")) {
+	} else if (!Tw_option_strcmp(s, "-display")) {
 	    use_twdisplay = DM_DISPLAY;
-	} else if (!strcmp(s, "-envrc")) {
-	    TwEnvRC = "-envrc";
-	} else if (!strcmp(s, "-suidroot")) {
+	} else if (!Tw_option_strcmp(s, "-envrc")) {
+	    TwEnvRC = "--envrc";
+	} else if (!Tw_option_strcmp(s, "-suidroot")) {
 	    Privileges = TW_PRIV_SUIDROOT;
-	} else if (!strcmp(s, "-sgidtty")) {
+	} else if (!Tw_option_strcmp(s, "-sgidtty")) {
 	    Privileges = TW_PRIV_SGIDTTY;
-	} else if (!strncmp(s, "-title=", 7)) {
+	} else if (!Tw_option_strncmp(s, "-title=", 7)) {
 	    title = s+7;
-	} else if (!strncmp(s, "-hw=", 4)) {
+	} else if (!Tw_option_strncmp(s, "-hw=", 4)) {
 	    hw_name = s;
 	} else if (!strcmp(s, "--")) {
 	    /* '--' means end of options */
 	    break;
 	} else {
 	    fprintf(stderr, "twdm: unknown option: `%s'\n"
-		    "\ttry `twdm -help' for usage summary.\n", s);
+		    "\ttry `twdm --help' for usage summary.\n", s);
 	    exit(1);
 	}
 	Args++;
@@ -183,8 +183,8 @@ static byte InitServer(void) {
 	if (fd[0] != 1)
 	    close(fd[0]);
 
-	execl(BINDIR_PREFIX "twin", "twin", "-secure", "-nohw", TwEnvRC, NULL);
-	execlp("twin", "twin", "-secure", "-nohw", TwEnvRC, NULL);
+	execl(BINDIR_PREFIX "twin", "twin", "--secure", "--nohw", TwEnvRC, NULL);
+	execlp("twin", "twin", "--secure", "--nohw", TwEnvRC, NULL);
 	fprintf(stderr, "twdm: exec(twin) failed: %s\n", strerror(errno));
 	exit(1);
 	return FALSE;
@@ -229,18 +229,21 @@ static void shortsleep(void) {
 }
 
 static byte InitAttach(void) {
-    char *attach, *prefix_attach;
-    char buff[] = "-twin@:\0\0\0";
+    char *attach, *path_attach;
+    char buff[] = "--twin@:\0\0\0";
 
-    if (use_twdisplay == DM_ATTACH || (use_twdisplay == 0 && !strcmp(hw_name, "-hw=tty"))) {
+    if (use_twdisplay == DM_ATTACH ||
+	(use_twdisplay == 0 &&
+	 !Tw_option_strcmp(hw_name, "-hw=tty"))) {
+	
         attach = "twattach";
-	prefix_attach = BINDIR_PREFIX "twattach";
+	path_attach = BINDIR_PREFIX "twattach";
     } else {
         attach = "twdisplay";
-	prefix_attach = BINDIR_PREFIX "twdisplay";
+	path_attach = BINDIR_PREFIX "twdisplay";
     }
 
-    strncpy(buff+6, DM_Display, 4);
+    strncpy(buff+7, DM_Display, 4);
 
     /* sleep a little to let server start up */
     shortsleep();
@@ -248,8 +251,8 @@ static byte InitAttach(void) {
     switch ((AttachPid = fork())) {
       case 0:
 	/* child */
-	execl(prefix_attach, attach, "-q", buff, hw_name, NULL);
-	execlp(attach, attach, "-q", buff, hw_name, NULL);
+	execl(path_attach, attach, "--quiet", buff, hw_name, NULL);
+	execlp(attach, attach, "--quiet", buff, hw_name, NULL);
 	fprintf(stderr, "twdm: exec(%s) failed: %s\n", attach, strerror(errno));
 	exit(1);
 	return FALSE;
@@ -572,16 +575,10 @@ static void HandleGadget(tevent_gadget E) {
     }
 }
 
-#if TW_RETSIGTYPE == void
-# define TW_RETFROMSIGNAL
-#else
-# define TW_RETFROMSIGNAL return 0;
-#endif
-
 static TW_RETSIGTYPE SignalPanic(int n) {
     signal(n, SIG_DFL);
     quit();
-    TW_RETFROMSIGNAL
+    TW_RETFROMSIGNAL(0);
 }
 
 static TW_RETSIGTYPE SignalChild(int n) {
@@ -596,7 +593,7 @@ static TW_RETSIGTYPE SignalChild(int n) {
 		AttachPid = (pid_t)-1;
 	}
     }
-    TW_RETFROMSIGNAL
+    TW_RETFROMSIGNAL(0);
 }
 
 static void InitSignals(void) {
@@ -628,8 +625,6 @@ int main(int argc, char *argv[]) {
     tmsg Msg;
     uldat err;
 
-    TwMergeHyphensArgv(argc, argv);
-    
     Args = (byte * TW_CONST *)argv + 1;
     
     ParseArgs();

@@ -31,7 +31,7 @@ THISDIR=$(TOPDIR)/contrib/twcd
 
 LD_FLAGS+=$(LD_LIBTW)
 
-all: everything
+all: build-all
 
 
 -include $(TOPDIR)/conf/conf.current
@@ -47,9 +47,9 @@ include $(TOPDIR)/makerules
 
 
 ifneq ($(CONF_SOCKET),n)
-  everything: $(BINS)
+  build-all: $(BINS)
 else
-  everything:
+  build-all:
 	@echo ; \
 	 echo "You disabled \"Support remote socket connections\"," ; \
 	 echo "so the clients will NOT be compiled!" ; \
@@ -62,6 +62,11 @@ endif
 install:
 	$(INSTALL-DIR) $(DESTDIR)$(bindir)
 	$(INSTALL-BIN) $(BINS) $(DESTDIR)$(bindir)
+
+uninstall:
+	cd $(DESTDIR)$(bindir) && \
+	   rm -f $(BINS) || true
+	rmdir $(DESTDIR)$(bindir) || true
 
 clean:
 	rm -f .*.flags .*.bin gmon.out core $(BINS) *.la *.a *.o *.lo *.so *.so.* ; \

@@ -25,9 +25,11 @@
 #include <Tutf/iso_8859_7.h>
 #include <Tutf/iso_8859_8.h>
 #include <Tutf/iso_8859_9.h>
+#include <Tutf/iso_8859_10.h>
 #include <Tutf/iso_8859_13.h>
 #include <Tutf/iso_8859_14.h>
 #include <Tutf/iso_8859_15.h>
+#include <Tutf/iso_8859_16.h>
 
 #include <Tutf/cp437.h>
 #include <Tutf/cp737.h>
@@ -48,7 +50,12 @@
     
 #include <Tutf/cp1250.h>
 #include <Tutf/cp1251.h>
+#include <Tutf/cp1252.h>
+#include <Tutf/cp1253.h>
+#include <Tutf/cp1254.h>
 #include <Tutf/cp1255.h>
+#include <Tutf/cp1256.h>
+#include <Tutf/cp1257.h>
 
 #endif /* _TUTF_DEFS_H */
 

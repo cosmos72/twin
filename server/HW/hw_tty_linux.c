@@ -579,7 +579,12 @@ static void linux_QuitVideo(void) {
 #define CTRL_ALWAYS 0x0800f501	/* Cannot be overridden by TTY_DISPCTRL */
 
 #define linux_MogrifyInit() fputs("\033[m", stdOUT); _col = COL(WHITE,BLACK);
-#define linux_MogrifyFinish() do { if (utf8used) utf8used = FALSE, fputs("\033%@", stdOUT); } while (0)
+
+#ifdef CONF__UNICODE
+# define linux_MogrifyFinish() do { if (utf8used) utf8used = FALSE, fputs("\033%@", stdOUT); } while (0)
+#else
+# define linux_MogrifyFinish() do { } while (0)
+#endif
 
 INLINE void linux_SetColor(hwcol col) {
     static byte colbuf[] = "\033[2x;2x;4x;3xm";
