@@ -58,6 +58,8 @@ int main(int argc, char *argv[]) {
     tevent_gadget EventG;
     uldat err;
     
+    TwMergeHyphensArgv(argc, argv);
+    
     if (argc > 2) {
 	fprintf(stderr, "usage %s filename\n", argv[0]);
 	return 0;

@@ -94,13 +94,13 @@ getuniscrnmap(int fd, unsigned short *map) {
 int
 loaduniscrnmap(int fd, unsigned short *map) {
 	if (sizeof(hwfont) == sizeof(unsigned short)) {
-		TwSetUniFontTranslation((hwfont *)map+0x80);
+		TwSetHWFontTranslation((hwfont *)map+0x80);
 	} else {
 		hwfont buf[E_TABSZ-0x80];
 		int i;
 		for (i=0; i<0x80; i++)
 			buf[i] = map[i|0x80];
-		TwSetUniFontTranslation(buf);
+		TwSetHWFontTranslation(buf);
 	}
 	TwSync();
 	return 0;

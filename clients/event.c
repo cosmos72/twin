@@ -212,7 +212,7 @@ byte *twcontrolname(udat Code) {
 int main(int argc, char *argv[]) {
     tmsg Msg;
     uldat err;
-    udat Code, origCode;
+    udat Code;
     
     if (InitEvent()) while ((Msg=TwReadMsg(TRUE))) {
 	if (Msg->Event.EventCommon.W != Event_Win)
@@ -239,10 +239,10 @@ int main(int argc, char *argv[]) {
 	    human_print(EventN->Len, EventN->Data);
 	    putchar('\n');
 	} else if (Msg->Type==TW_MSG_WIDGET_MOUSE) {
-	    byte *s1, *s2, *s3, *s4, *s5, *s6, *s7;
+	    byte *s1, *s2, *s3, *s4, *s5, *s6, *s7, *s8, *s9;
 	    tevent_mouse EventM = &Msg->Event.EventMouse;
 	    
-	    origCode=Code=EventM->Code;
+	    Code = EventM->Code;
 	    
 	    if (isMOTION(Code)) {
 		s1 = "Motion";
@@ -250,9 +250,15 @@ int main(int argc, char *argv[]) {
 	    } else if (isPRESS(Code)) {
 		s1 = "Press";
 		switch (Code & PRESS_ANY) {
-		  case PRESS_LEFT:   s2 = " Left";   Code &= ~HOLD_LEFT; break;
-		  case PRESS_MIDDLE: s2 = " Middle"; Code &= ~HOLD_MIDDLE; break;
-		  case PRESS_RIGHT:  s2 = " Right";  Code &= ~HOLD_RIGHT; break;
+		  case PRESS_LEFT:   s2 = " Left";   break;
+		  case PRESS_MIDDLE: s2 = " Middle"; break;
+		  case PRESS_RIGHT:  s2 = " Right";  break;
+#ifdef HOLD_WHEEL_REV
+		  case PRESS_WHEEL_REV:s2=" Wheel Rev"; break;
+#endif
+#ifdef HOLD_WHEEL_FWD
+		  case PRESS_WHEEL_FWD:s2=" Wheel Fwd"; break;
+#endif
 		  default: s2 = "Unknown Button "; break;
 		}
 	    } else if (isRELEASE(Code)) {
@@ -261,6 +267,12 @@ int main(int argc, char *argv[]) {
 		  case RELEASE_LEFT:   s2 = " Left";   break;
 		  case RELEASE_MIDDLE: s2 = " Middle"; break;
 		  case RELEASE_RIGHT:  s2 = " Right";  break;
+#ifdef HOLD_WHEEL_REV
+		  case RELEASE_WHEEL_REV:s2=" Wheel Rev"; break;
+#endif
+#ifdef HOLD_WHEEL_FWD
+		  case RELEASE_WHEEL_FWD:s2=" Wheel Fwd"; break;
+#endif
 		  default: s2 = "Unknown Button "; break;
 		}
 	    } else if (isDRAG(Code)) {
@@ -271,17 +283,24 @@ int main(int argc, char *argv[]) {
 		s2 = "";
 	    }
 	    
-	    if ((Code &= HOLD_ANY)) {
-		s3 = "while ";
-		s4 = Code & HOLD_LEFT ? "Left " : "";
-		s5 = Code & HOLD_MIDDLE ? "Middle " : "";
-		s6 = Code & HOLD_RIGHT ? "Right " : "";
-		s7 = "held, ";
+	    if ((Code & HOLD_ANY)) {
+		s3 = "while";
+		s4 = Code & HOLD_LEFT   ? " Left"   : "";
+		s5 = Code & HOLD_MIDDLE ? " Middle" : "";
+		s6 = Code & HOLD_RIGHT  ? " Right"  : "";
+#ifdef HOLD_WHEEL_REV
+		s7 = Code & HOLD_WHEEL_REV ? " Wheel Rev" : "";
+#endif
+#ifdef HOLD_WHEEL_FWD
+		s8 = Code & HOLD_WHEEL_FWD ? " Wheel Fwd"  : "";
+#endif
+		s9 = " held, ";
 	    } else
-		s3 = s4 = s5 = s6 = s7 = "";
+		s3 = s4 = s5 = s6 = s7 = s8 = s9 = "";
 	    
-	    printf("Mouse: Code 0x%04x: %s%s, %s%s%s%s%sx=%d, y=%d\n",
-		   (int)origCode, s1, s2, s3, s4, s5, s6, s7, EventM->X, EventM->Y);
+	    printf("Mouse: Code 0x%04x: %s%s, %s%s%s%s%s%s%sx=%d, y=%d\n",
+		   (int)Code, s1, s2, s3, s4, s5, s6, s7, s8, s9,
+		   EventM->X, EventM->Y);
 	    
 	} else if (Msg->Type==TW_MSG_WIDGET_GADGET) {
 	    tevent_gadget EventG = &Msg->Event.EventGadget;

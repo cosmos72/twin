@@ -1,7 +1,7 @@
 dnl Process this file with autoconf to produce a configure script.
 PACKAGE=twin
-VERSION=0.4.4
-AC_REVISION($Revision: 0.4.4 $)
+VERSION=0.4.5
+AC_REVISION($Revision: 0.4.5 $)
 AC_INIT(server/main.c)
 AC_CONFIG_HEADER(include/autoconf.h)
 
@@ -45,7 +45,7 @@ enable_socket_gz=yes
 
 dnl thread safe libTw
 AC_ARG_ENABLE(socket_pthreads,dnl
-[  --enable-socket-pthreads[=yes|no]      enable thread safe libTw (requires pthread) ],,
+[  --enable-socket-pthreads[=yes|no]      enable thread safe libraries (requires pthread) ],,
 enable_socket_pthreads=yes
 )dnl
 
@@ -73,9 +73,15 @@ AC_ARG_ENABLE(tt_hw_gtk,dnl
 enable_tt_hw_gtk=mod
 )dnl
 
+dnl Toolkit library: use X11 as display driver
+AC_ARG_ENABLE(tt_hw_x11,dnl
+[  --enable-tt-hw-x11[=yes|mod|no]        enable libTT to use X11 as display target ],,
+enable_tt_hw_x11=mod
+)dnl
+
 dnl Toolkit library: use xml files as display driver
 AC_ARG_ENABLE(tt_hw_xml,dnl
-[  --enable-tt-hw-file[=yes|mod|no]        enable libTT to use xml files as display target ],,
+[  --enable-tt-hw-xml[=yes|mod|no]        enable libTT to use xml files as display target ],,
 enable_tt_hw_xml=mod
 )dnl
 
@@ -111,7 +117,7 @@ enable_term=mod
 
 dnl use /dev/pts/* for terminal emulator
 AC_ARG_ENABLE(term_devpts,dnl
-[  --enable-term-devpts[=yes|no]          enable glibc-2.1 /dev/pts/* pseudo-ttys ],,
+[  --enable-term-devpts[=yes|no]          enable /dev/pts/* pseudo-ttys ],,
 enable_term_devpts=yes
 )dnl
 
@@ -129,7 +135,7 @@ enable_hw_tty=mod
 
 dnl the Linux console driver
 AC_ARG_ENABLE(hw-tty-linux,dnl
-[  --enable-hw-tty-linux[=yes|no]         enable the Linux console driver ],,
+[  --enable-hw-tty-linux[=yes|no]         enable the Linux console driver (gpm mouse, /dev/vcsa)],,
 enable_hw_tty_linux=yes
 )dnl
 
@@ -141,7 +147,7 @@ enable_hw_tty_twterm=yes
 
 dnl the termcap terminal driver
 AC_ARG_ENABLE(hw-tty-termcap,dnl
-[  --enable-hw-tty-termcap[=yes|no]       enable the termcap terminal driver ],,
+[  --enable-hw-tty-termcap[=yes|no]       enable the termcap/ncurses terminal driver ],,
 enable_hw_tty_termcap=yes
 )dnl
 
@@ -153,7 +159,7 @@ enable_hw_x11=mod
 
 dnl the gfx driver
 AC_ARG_ENABLE(hw-gfx,dnl
-[  --enable-hw-gfx[=yes|mod|no]           enable the gfx driver ],,
+[  --enable-hw-gfx[=yes|mod|no]           enable the gfx (enhanced X11) driver ],,
 enable_hw_gfx=mod
 )dnl
 
@@ -194,42 +200,42 @@ AC_CACHE_CHECK(for OS, ac_cv_sys_uname, [
   ac_cv_sys_uname="`uname`"
 ])
 
-AC_CACHE_CHECK(for shared library support, ac_cv_support_shlibs, [
+AC_CACHE_CHECK(for shared library support, ac_cv_sys_shlibs, [
   if test "$ac_cv_sys_uname" = Linux -o "$ac_cv_sys_uname" = FreeBSD; then
     if test "$ac_cv_prog_gcc" = yes; then
-      ac_cv_support_shlibs=native
+      ac_cv_sys_shlibs=native
     fi
   fi
 ])
 
-if test "$ac_cv_support_shlibs" = native; then
-  echo "    this system is Linux/FreeBSD with GNU C"
-  echo "    assuming GNU C internally uses GNU ld"
-  echo "    using native rules to create shared libraries"
+if test "$ac_cv_sys_shlibs" = native; then
+  AC_MSG_RESULT([    this system is Linux/FreeBSD with GNU C
+    assuming GNU C internally uses GNU ld
+    using native rules to create shared libraries])
   AC_CHECK_PROG(AR, ar, ar,)
   AC_CHECK_PROG(RANLIB, ranlib, ranlib,)
   lt_cv_prog_gnu_ld=yes
-elif test "$ac_cv_support_shlibs" != no; then
-  echo "    this system is not Linux/FreeBSD with GNU C"
-  echo "    trying to use libtool to create shared libraries"
-  echo "configuring libtool..."
+elif test "$ac_cv_sys_shlibs" != no; then
+  AC_MSG_RESULT([    this system is not Linux/FreeBSD with GNU C
+    trying to use libtool to create shared libraries
+configuring libtool...])
   #
   # disable static libraries in libtool... we build them manually
   #
   AC_CHECK_PROG(AR, ar, ar,)
   AC_DISABLE_STATIC
   AM_PROG_LIBTOOL
-  echo "...libtool configured"
+  AC_MSG_RESULT([...libtool configured])
   AC_MSG_CHECKING(for shared library support (again))
   if ./libtool --features | grep 'enable shared lib' >/dev/null; then
-    ac_cv_support_shlibs=libtool
+    ac_cv_sys_shlibs=libtool
   else
-    ac_cv_support_shlibs=no
+    ac_cv_sys_shlibs=no
   fi
-  AC_MSG_RESULT([$ac_cv_support_shlibs])
+  AC_MSG_RESULT([$ac_cv_sys_shlibs])
 else
-  echo "    cache file says this system does not support shared libraries"
-  echo "    skipping libtool configuration"
+  AC_MSG_RESULT([    cache file says this system does not support shared libraries
+    skipping libtool configuration])
 fi
 
 dnl
@@ -364,7 +370,7 @@ LIBS=
 
 dnl test for X11
 AC_PATH_X
-if test "$have_x" != no; then
+if test "$have_x" = yes; then
   if test "$ac_x_includes"; then
     CF_HEADERX11="-I$ac_x_includes"
   fi
@@ -376,7 +382,7 @@ fi
 
 
 dnl test for xpm
-if test "$have_x" != no; then
+if test "$have_x" = yes; then
   ac_save_cpp="$ac_cpp"
   ac_save_link="$ac_link"
   ac_cpp="$ac_cpp $CF_HEADERX11"
@@ -384,7 +390,7 @@ if test "$have_x" != no; then
 fi
   AC_CHECK_HEADERS(X11/xpm.h)
   AC_CHECK_LIB(Xpm, XpmReadFileToPixmap)
-if test "$have_x" != no; then
+if test "$have_x" = yes; then
   ac_cpp="$ac_save_cpp"
   ac_link="$ac_save_link"
 fi
@@ -501,7 +507,7 @@ dnl
 dnl enable shared libraries/modules if possible
 dnl
 
-if test "$ac_cv_support_shlibs" = no; then
+if test "$ac_cv_sys_shlibs" = no; then
   enable__modules=no
   enable__shlibs=no
 fi
@@ -567,11 +573,12 @@ if test "$ac_cv_lib_ggi_ggiOpen" = no -o "$ac_cv_header_ggi_ggi_h" = no; then
   enable_hw_ggi=no
 fi
 
-if test "$have_x" = no; then
+if test "$have_x" != yes; then
   enable_hw_x11=no
+  enable_tt_hw_x11=no
 fi
 
-if test "$have_x" = no -o "$ac_cv_header_X11_xpm_h" = no -o "$ac_cv_lib_Xpm_XpmReadFileToPixmap" = no; then
+if test "$have_x" != yes -o "$ac_cv_header_X11_xpm_h" = no -o "$ac_cv_lib_Xpm_XpmReadFileToPixmap" = no; then
   enable_hw_gfx=no
 fi
 
@@ -635,8 +642,8 @@ fi
 AC_SUBST(RANLIB)
 AC_SUBST(AR)
 
-SUPPORT_SHLIBS="$ac_cv_support_shlibs"
-AC_SUBST(SUPPORT_SHLIBS)
+SYS_SHLIBS="$ac_cv_sys_shlibs"
+AC_SUBST(SYS_SHLIBS)
 
 if test "$ac_cv_lib_dl_dlopen" = yes; then
   LD_LIBDL=-ldl
@@ -748,30 +755,13 @@ AC_SUBST(CONF_)
 AC_OUTPUT(Makefile makeautoconf conf/conf.auto)
 
 
-
 echo_shlibs="<none>"
 echo_op=
 echo_cl=
 if test "$enable__shlibs" != no; then
   echo_op='('
   echo_cl=')'
-  echo_shlibs="$SUPPORT_SHLIBS"
-fi
-
-echo_libs=
-if test "$enable__unicode" != no; then
-  echo_libs="$echo_libs $echo_op""libTutf""$echo_cl"
-fi
-if test "$enable_socket" != no; then
-  echo_libs="$echo_libs $echo_op""libTw""$echo_cl"
-fi
-if test "$enable_tt" != no; then
-  echo_libs="$echo_libs $echo_op""libTT""$echo_cl"
-fi
-if test "$echo_libs" = ""; then
-  echo_libs="<none>"
-else
-  echo_libs="`echo $echo_libs`"
+  echo_shlibs="$SYS_SHLIBS"
 fi
 
 echo_feat=
@@ -806,8 +796,42 @@ else
   echo_hw="`echo $echo_hw`"
 fi
 
+echo_hw_tty=
+if test "$enable_hw_tty" != no; then
+  for i in linux twterm termcap; do
+    eval "echo_val=\${enable_hw_tty_$i}"
+    if test "$echo_val" != no; then
+      if test "$echo_val" = mod; then
+        i="$echo_op""$i""$echo_cl"
+      fi
+      echo_hw_tty="$echo_hw_tty $i"
+    fi
+  done
+fi
+if test "$echo_hw_tty" = ""; then
+  echo_hw_tty="<none>"
+else
+  echo_hw_tty="`echo $echo_hw_tty`"
+fi
+
+echo_libs=
+if test "$enable__unicode" != no; then
+  echo_libs="$echo_libs $echo_op""libTutf""$echo_cl"
+fi
+if test "$enable_socket" != no; then
+  echo_libs="$echo_libs $echo_op""libTw""$echo_cl"
+fi
+if test "$enable_tt" != no; then
+  echo_libs="$echo_libs $echo_op""libTT""$echo_cl"
+fi
+if test "$echo_libs" = ""; then
+  echo_libs="<none>"
+else
+  echo_libs="`echo $echo_libs`"
+fi
+
 echo_tt_hw=
-for i in twin gtk xml; do
+for i in twin gtk x11 xml; do
   eval "echo_val=\${enable_tt_hw_$i}"
   if test "$echo_val" != no; then
     if test "$echo_val" = mod; then
@@ -822,25 +846,26 @@ else
   echo_tt_hw="`echo $echo_tt_hw`"
 fi
 
-echo ""
-echo "Configuration:"
-echo ""
-echo "  Items in parenthesis (...) will be built as shared libraries"
-echo ""
-echo "  Compiler:                   ${CC}"
-echo "  Compiler flags:             ${CFLAGS}"
-echo "  Shared library support:     ${echo_shlibs}"
-echo "  Server features:            ${echo_feat}"
-echo "  Server HW drivers:          ${echo_hw}"
-echo "  Libraries:                  ${echo_libs}"
-echo "  TT library HW targets:      ${echo_tt_hw}"
-echo "  Install path:               ${prefix}/bin, ${prefix}/lib/twin, ${prefix}/share/twin"
-echo
-echo "to show/change other configuration settings, you can run one of:"
-echo "'./configure <options>', 'scripts/Configure.sh <options>',"
-echo "'make config' or 'make menuconfig'"
-echo
-echo "twin is now (hopefully) configured."
-echo
-echo "As next step, you probably want to run 'make'."
+AC_MSG_RESULT([
+Configuration:
+
+  Items in parenthesis (...) will be built as shared libraries/modules
+
+  Compiler:                   ${CC}
+  Compiler flags:             ${CFLAGS}
+  Shared libraries support:   ${echo_shlibs}
+  Server features:            ${echo_feat}
+  Server HW drivers:          ${echo_hw}
+  Server hw_tty driver flags: ${echo_hw_tty}
+  Libraries:                  ${echo_libs}
+  TT library HW targets:      ${echo_tt_hw}
+  Install path:               ${prefix}/bin, ${prefix}/lib/twin, ${prefix}/share/twin
+
+to show/change other configuration settings, you can run one of:
+'./configure <options>', 'scripts/Configure.sh <options>',
+'make config' or 'make menuconfig'
+
+twin is now (hopefully) configured.
+
+As next step, you probably want to run 'make'.])
 

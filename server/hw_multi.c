@@ -194,17 +194,17 @@ void warn_NoHW(uldat len, char *arg, uldat tried) {
 
 #ifdef CONF__MODULES
 
-static byte module_InitHW(void) {
+static byte module_InitHW(byte *arg, uldat len) {
     byte *name, *tmp;
     byte *(*InitD)(void);
-    byte *arg = HW->Name;
-    uldat len = HW->NameLen;
     module Module;
 
-    if (!arg || len <= 4)
+    if (!arg || !len)
 	return FALSE;
     
-    arg += 4; len -= 4; /* skip "-hw=" */
+    if (len >= 4 && !memcmp(arg, "-hw=", 4)) {
+	arg += 4; len -= 4; /* skip "-hw=" */
+    }
     
     name = memchr(arg, '@', len);
     tmp = memchr(arg, ',', len);
@@ -242,9 +242,52 @@ static byte module_InitHW(void) {
     return FALSE;
 }
 
+
+#define DEF_INITHW(hw) \
+byte CAT(hw,_InitHW)(void) { \
+    byte *arg; \
+    uldat len; \
+    if (HW->Name && HW->NameLen) { \
+	arg = HW->Name; \
+	len = HW->NameLen; \
+    } else { \
+	arg = "-hw=" STR(hw); \
+	len = strlen(arg); \
+    } \
+    return module_InitHW(arg, len); \
+}
+
+#ifndef CONF_HW_GFX
+  DEF_INITHW(gfx)
+#endif
+#ifndef CONF_HW_X11
+  DEF_INITHW(X)
+#endif
+#ifndef CONF_HW_TWIN
+  DEF_INITHW(twin)
+#endif
+#ifndef CONF_HW_TTY
+  DEF_INITHW(tty)
+#endif
+#ifndef CONF_HW_GGI
+  DEF_INITHW(ggi)
+#endif
+
+#undef DEF_INITHW
+
 #endif /* CONF__MODULES */
 
-#if defined(CONF_HW_GFX) || defined(CONF_HW_X11) || defined(CONF_HW_TWIN) || defined(CONF_HW_DISPLAY) || defined(CONF_HW_TTY) || defined(CONF_HW_GGI)
+
+#ifdef CONF_HW_X11
+# define X_InitHW X11_InitHW
+#endif
+#ifdef CONF_HW_TWIN
+# define twin_InitHW TW_InitHW
+#endif
+#ifdef CONF_HW_GGI
+# define ggi_InitHW GGI_InitHW
+#endif
+
 static byte check4(byte *s, byte *arg) {
     if (arg && strncmp(s, arg, strlen(s))) {
 	/*
@@ -271,7 +314,6 @@ static void fix4(byte *s, display_hw D_HW) {
 	}
     }
 }
-#endif /* defined(CONF_HW_GFX) || defined(CONF_HW_X11) || defined(CONF_HW_TWIN) || defined(CONF_HW_DISPLAY) || defined(CONF_HW_TTY) || defined(CONF_HW_GGI) */
 
 /*
  * InitDisplayHW runs HW specific InitXXX() functions, starting from best setup
@@ -292,29 +334,35 @@ byte InitDisplayHW(display_hw D_HW) {
     else
 	arg = NULL;
 
+#define TRY4(hw) (check4(STR(hw), arg) && (tried++, CAT(hw,_InitHW)()) && (fix4(STR(hw), D_HW), TRUE))
+    
     success =
-#ifdef CONF_HW_GFX
-	(check4("gfx", arg) && (tried++, gfx_InitHW()) && (fix4("gfx", D_HW), TRUE)) ||
+#if defined(CONF__MODULES) || defined(CONF_HW_GFX)
+	TRY4(gfx) ||
 #endif
-#ifdef CONF_HW_X11
-	(check4("X", arg) && (tried++, X11_InitHW()) && (fix4("X", D_HW), TRUE)) ||
+#if defined(CONF__MODULES) || defined(CONF_HW_X11)
+	TRY4(X) ||
 #endif
-#ifdef CONF_HW_TWIN
-	(check4("twin", arg) && (tried++, TW_InitHW()) && (fix4("twin", D_HW), TRUE)) ||
+#if defined(CONF__MODULES) || defined(CONF_HW_TWIN)
+	TRY4(twin) ||
 #endif
-#ifdef CONF_HW_DISPLAY
-	(check4("display", arg) && (tried++, display_InitHW()) && (fix4("display", D_HW), TRUE)) ||
+#if defined(CONF__MODULES) || defined(CONF_HW_DISPLAY)
+# if 0 /* not usable here */
+	TRY4(display) ||
+# endif
 #endif
-#ifdef CONF_HW_TTY
-	(check4("tty", arg) && (tried++, tty_InitHW()) && (fix4("tty", D_HW), TRUE)) ||
+#if defined(CONF__MODULES) || defined(CONF_HW_TTY)
+	TRY4(tty) ||
 #endif
-#ifdef CONF_HW_GGI
-	(check4("ggi", arg) && (tried++, GGI_InitHW()) && (fix4("ggi", D_HW), TRUE)) ||
+#if defined(CONF__MODULES) || defined(CONF_HW_GGI)
+	TRY4(ggi) ||
 #endif
 #ifdef CONF__MODULES
-	module_InitHW() ||
+	module_InitHW(D_HW->Name, D_HW->NameLen) ||
 #endif
 	(warn_NoHW(arg ? D_HW->NameLen - 4 : 0, arg, tried), FALSE);
+
+#undef TRY4
 
     if (success) {
 	D_HW->Quitted = FALSE;
@@ -1191,36 +1239,52 @@ byte MouseEventCommon(dat x, dat y, dat dx, dat dy, udat Buttons) {
     if (Buttons != OldButtons || ((alsoMotionEvents || OldButtons) && (x != prev_x || y != prev_y))) {
 	
 	if (alsoMotionEvents && !OldButtons && (x != prev_x || y != prev_y)) {
-	    if (!StdAddEventMouse(MSG_MOUSE, MOTION_MOUSE, x, y))
+	    if (!StdAddMouseEvent(MSG_MOUSE, MOTION_MOUSE, x, y))
 		ret = FALSE;
 	} else if (OldButtons && (x != prev_x || y != prev_y)) {
-	    if (!StdAddEventMouse(MSG_MOUSE, DRAG_MOUSE | OldButtons, x, y))
+	    if (!StdAddMouseEvent(MSG_MOUSE, DRAG_MOUSE | OldButtons, x, y))
 		ret = FALSE;
 	}
 	if ((Buttons & HOLD_LEFT) != (OldButtons & HOLD_LEFT)) {
-	    result = (Buttons & HOLD_LEFT ? DOWN_LEFT : RELEASE_LEFT) | (OldButtons &= ~HOLD_LEFT);
+	    result = (Buttons & HOLD_LEFT ? PRESS_LEFT : RELEASE_LEFT) | (OldButtons &= ~HOLD_LEFT);
 	    OldButtons |= Buttons & HOLD_LEFT;
-	    if (!StdAddEventMouse(MSG_MOUSE, result, x, y))
+	    if (!StdAddMouseEvent(MSG_MOUSE, result, x, y))
 		ret = FALSE;
 	}
 	if ((Buttons & HOLD_MIDDLE) != (OldButtons & HOLD_MIDDLE)) {
-	    result = (Buttons & HOLD_MIDDLE ? DOWN_MIDDLE : RELEASE_MIDDLE) | (OldButtons &= ~HOLD_MIDDLE);
+	    result = (Buttons & HOLD_MIDDLE ? PRESS_MIDDLE : RELEASE_MIDDLE) | (OldButtons &= ~HOLD_MIDDLE);
 	    OldButtons |= Buttons & HOLD_MIDDLE;
-	    if (!StdAddEventMouse(MSG_MOUSE, result, x, y))
+	    if (!StdAddMouseEvent(MSG_MOUSE, result, x, y))
 		ret = FALSE;
 	}
 	if ((Buttons & HOLD_RIGHT) != (OldButtons & HOLD_RIGHT)) {
-	    result = (Buttons & HOLD_RIGHT ? DOWN_RIGHT : RELEASE_RIGHT) | (OldButtons &= ~HOLD_RIGHT);
+	    result = (Buttons & HOLD_RIGHT ? PRESS_RIGHT : RELEASE_RIGHT) | (OldButtons &= ~HOLD_RIGHT);
 	    OldButtons |= Buttons & HOLD_RIGHT;
-	    if (!StdAddEventMouse(MSG_MOUSE, result, x, y))
+	    if (!StdAddMouseEvent(MSG_MOUSE, result, x, y))
 		ret = FALSE;
 	}
+#ifdef HOLD_WHEEL_REV
+	if ((Buttons & HOLD_WHEEL_REV) != (OldButtons & HOLD_WHEEL_REV)) {
+	    result = (Buttons & HOLD_WHEEL_REV ? PRESS_WHEEL_REV : RELEASE_WHEEL_REV) | (OldButtons &= ~HOLD_WHEEL_REV);
+	    OldButtons |= Buttons & HOLD_WHEEL_REV;
+	    if (!StdAddMouseEvent(MSG_MOUSE, result, x, y))
+		ret = FALSE;
+	}
+#endif
+#ifdef HOLD_WHEEL_FWD
+	if ((Buttons & HOLD_WHEEL_FWD) != (OldButtons & HOLD_WHEEL_FWD)) {
+	    result = (Buttons & HOLD_WHEEL_FWD ? PRESS_WHEEL_FWD : RELEASE_WHEEL_FWD) | (OldButtons &= ~HOLD_WHEEL_FWD);
+	    OldButtons |= Buttons & HOLD_WHEEL_FWD;
+	    if (!StdAddMouseEvent(MSG_MOUSE, result, x, y))
+		ret = FALSE;
+	}
+#endif
 
     }
     return ret;
 }
 
-byte StdAddEventMouse(udat CodeMsg, udat Code, dat MouseX, dat MouseY) {
+byte StdAddMouseEvent(udat CodeMsg, udat Code, dat MouseX, dat MouseY) {
     msg Msg;
     event_mouse *Event;
 

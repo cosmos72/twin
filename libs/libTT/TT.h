@@ -18,7 +18,7 @@
 
 /* include our internal copy of TTtypes.h instead of the public one */
 #include "TTtypes.h"
-
+#include <TT/TTmem.h>
 
 /* this is a libTT internal value. Do not use it in clients! */
 #define TT_MAX_ERROR	256
@@ -36,6 +36,9 @@
 #define NOFD		((int)-1)
 #define NOSLOT		TW_MAXTOPAQUE
 
+#define TT_FALSE	FALSE
+#define TT_TRUE		TRUE
+
 #define TT_NOID		NOID
 #define TT_BADID	BADID
 #define TT_NOFD		NOFD
@@ -45,16 +48,6 @@
 #define TT_MAX2(a,b) ((a)>(b) ? (a) : (b))
 
 #define TT_DECL_MAGIC(id) TW_DECL_MAGIC(id)
-
-extern void *(*TTAllocMem)(size_t);
-extern void *(*TTReAllocMem)(void *, size_t);
-extern void  (*TTFreeMem)(void *);
-void *TTCloneMem(TT_CONST void *S, size_t len);
-ttbyte *TTCloneStr(TT_CONST ttbyte *S);
-void TTConfigMalloc(void *(*my_malloc)(size_t),
-		     void *(*my_realloc)(void *, size_t),
-		     void  (*my_free)(void *));
-
 
 ttbyte TTCheckMagic(TT_CONST ttbyte id[]);
 
@@ -84,25 +77,17 @@ TT_CONST ttbyte *TTClassNameOf(tt_obj o);
 TT_CONST ttbyte *TTGetName_ttfn(tt_fn fn);
 tt_fn TTGetSuper_ttfn(tt_fn fn);
 
-TT_FN_ATTR_CONST ttuint TTGetValueId(TT_CONST ttbyte *);
-TT_FN_ATTR_CONST TT_CONST ttbyte *TTGetValueName(ttuint);
-
-extern void *(*TTAllocMem)(size_t);
-extern void *(*TTReAllocMem)(void *, size_t);
-extern void  (*TTFreeMem)(void *);
-extern void *TTCloneMem(TT_CONST void *, size_t);
-extern ttbyte *TTCloneStr(TT_CONST ttbyte *);
-
-#define TTCopyMem(From, To, Size)	memcpy(To, From, Size)
-#define TTMoveMem(From, To, Size)	memmove(To, From, Size)
-#define TTWriteMem(Mem, Char, Size)	memset(Mem, Char, Size)
-#define TTCmpMem(m1, m2, Size)		memcmp(m1, m2, Size)
-
-#define TTLenStr(S) strlen(S)
-#define TTCmpStr(S1, S2) strcmp(S1, S2)
-#define TTCopyStr(From,To) strcpy(To, From)
+TT_FN_ATTR_CONST ttuint TTGetFieldId(TT_ARG_READ ttbyte *);
+TT_FN_ATTR_CONST TT_CONST ttbyte *TTGetFieldName(ttuint);
 
 
+tt_fn TTGetField_ttobj(TT_ARG_READ tt_obj o, ttuint which, ttany *value);
+tt_fn TTSetField_ttobj(tt_obj o, ttuint which, ttany value);
+tt_fn TTChangeField_ttobj(tt_obj o, ttuint which, ttany nand_value, ttany xor_value);
 
+tt_obj TTGetInstalled_tteventmask(void);
+tt_obj TTGetDefault_tteventmask(void);
+void TTSetInstalled_tteventmask(tt_obj installed_event_mask);
+void TTSetDefault_tteventmask(tt_obj default_event_mask);
 
 #endif /* _TT_H */

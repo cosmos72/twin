@@ -14,13 +14,14 @@ each theme .xpm file contains in its name the font size it requires: for example
 
 ShinyMetal_8x16.xpm
 absolute-e_8x16.xpm
-default_8x16.xpm
-afterstep_9x19.xpm
-default_9x19.xpm
+   default_8x16.xpm
+ afterstep_9x19.xpm
+      kde2_9x19.xpm
+   default_9x19.xpm
 
 There is currently no good way to convert a theme from a font size to another
 (actually you can scale the whole picture, but quite probably the results will
-not be very satisying).
+not be very satisfying).
 
 Each theme picture is composed by 15x7 cells (this will increase in the future),
 and each cell is the same size as the required font (i.e. 8x16, 9x19, ...).
@@ -67,7 +68,7 @@ D,0 : scrollbar,   active, vertical, background tile
 E,0 : scrollbar,  pressed, vertical, background tile
 
 0,1 : screen root tile
-1,1 : window interior tile
+1,1 : window background tile
 2,1 : button 0,   pressed, left  half
 3,1 : button 0,   pressed, right half
 4,1 : button 1,   pressed, left  half

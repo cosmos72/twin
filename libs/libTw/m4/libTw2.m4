@@ -88,7 +88,7 @@ divert
 
 #define c(a) (tlargest)a
 
-include(`m4/sockproto.m4h')
+include(`m4/Tw_sockproto.m4h')
 
 #undef c
 

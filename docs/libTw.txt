@@ -294,10 +294,10 @@ generates events (user input) is decided by the application.
   /*
    * this is just like Tw_ReadMsg(), but returns a Tw_AllocMem() copy
    * of the message, to avoid concurrency problems with other threads.
-   * You must Tw_FreeMem() it when done!
+   * You must Tw_DeleteMsg() it when done!
    */
-   tmsg TwReadMsg_Clone(byte Wait);
-   tmsg Tw_ReadMsg_Clone(tdisplay TwD, byte Wait);
+   tmsg TwCloneReadMsg(byte Wait);
+   tmsg Tw_CloneReadMsg(tdisplay TwD, byte Wait);
    
   /*
    * This is the function you must call to check if there are pending Msgs.
@@ -317,7 +317,7 @@ generates events (user input) is decided by the application.
    * 
    * Tw_PeekMsg() and Tw_ReadMsg() return a (tmsg) pointer to data
    * in a static buffer. The pointer becomes invalid after a call
-   * to any function of libTw.h with non-void return value,
+   * to any function of Tw/Tw.h with non-void return value,
    * so that it sends something to the server and waits for the server
    * to send the return value (i.e. it is blocking),
    * in particular any of the following:
@@ -340,10 +340,10 @@ generates events (user input) is decided by the application.
    * 
    * If you are using threads, or just have a doubt that your code might
    * reference the message returned Tw_PeekMsg() or Tw_ReadMsg()
-   * after a call to one of the above functions, use Tw_ReadMsg_Clone() :
+   * after a call to one of the above functions, use Tw_CloneReadMsg() :
    * it's just like Tw_ReadMsg(), except that it returns a Tw_AllocMem() copy
    * of the message, that you can use as long as you wish. Just remember to
-   * Tw_FreeMem() it when done!
+   * Tw_DeleteMsg() it when done!
    * 
    * 
    * Other important notes:

@@ -47,6 +47,10 @@
 # include <Tutf/Tutf.h>
 #endif
 
+#ifdef CONF_HW_TTY_TERMCAP
+# include "hw_tty_termcap.h"
+#endif
+
 struct tty_data {
     int tty_fd, VcsaFd, tty_number;
     byte *tty_name, *tty_TERM;
@@ -61,6 +65,8 @@ struct tty_data {
     uldat saveCursorType;
     dat saveX, saveY;
 
+    udat (*LookupKey)(udat *ShiftFlags, byte *slen, byte *s, byte **sret);
+
     byte *mouse_start_seq, *mouse_end_seq, *mouse_motion_seq;
 #ifdef CONF_HW_TTY_LINUX
     Gpm_Connect GPM_Conn;
@@ -68,13 +74,11 @@ struct tty_data {
     int GPM_keys;
 #endif
 
-    byte *tc_scr_clear;
 #ifdef CONF_HW_TTY_TERMCAP
-    byte *tc_cursor_goto, *tc_cursor_on, *tc_cursor_off,
-	*tc_bold_on, *tc_blink_on, *tc_attr_off,
-	*tc_kpad_on, *tc_kpad_off, *tc_audio_bell,
-	*tc_charset_start, *tc_charset_end,
+    byte *tc_cap[tc_cap_N],
 	colorbug, wrapglitch;
+#else
+    byte *tc_scr_clear;
 #endif
 };
 
@@ -93,27 +97,37 @@ struct tty_data {
 #define saveCursorType	(ttydata->saveCursorType)
 #define saveX		(ttydata->saveX)
 #define saveY		(ttydata->saveY)
+#define LookupKey	(ttydata->LookupKey)
 #define mouse_start_seq	(ttydata->mouse_start_seq)
 #define mouse_end_seq	(ttydata->mouse_end_seq)
 #define mouse_motion_seq (ttydata->mouse_motion_seq)
 #define GPM_Conn	(ttydata->GPM_Conn)
 #define GPM_fd		(ttydata->GPM_fd)
 #define GPM_keys	(ttydata->GPM_keys)
-#define tc_cursor_goto	(ttydata->tc_cursor_goto)
-#define tc_cursor_on	(ttydata->tc_cursor_on)
-#define tc_cursor_off	(ttydata->tc_cursor_off)
-#define tc_bold_on	(ttydata->tc_bold_on)
-#define tc_blink_on	(ttydata->tc_blink_on)
-#define tc_attr_off	(ttydata->tc_attr_off)
-#define tc_kpad_on	(ttydata->tc_kpad_on)
-#define tc_kpad_off	(ttydata->tc_kpad_off)
-#define tc_scr_clear	(ttydata->tc_scr_clear)
-#define tc_audio_bell	(ttydata->tc_audio_bell)
-#define tc_charset_start (ttydata->tc_charset_start)
-#define tc_charset_end	(ttydata->tc_charset_end)
-#define tc_audio_bell	(ttydata->tc_audio_bell)
-#define colorbug	(ttydata->colorbug)
-#define wrapglitch	(ttydata->wrapglitch)
+
+
+#ifdef CONF_HW_TTY_TERMCAP
+# define tc_cap		(ttydata->tc_cap)
+# define tc_scr_clear	(tc_cap[tc_seq_scr_clear])
+# define tc_cursor_goto	(tc_cap[tc_seq_cursor_goto])
+# define tc_cursor_on	(tc_cap[tc_seq_cursor_on])
+# define tc_cursor_off	(tc_cap[tc_seq_cursor_off])
+# define tc_bold_on	(tc_cap[tc_seq_bold_on])
+# define tc_blink_on	(tc_cap[tc_seq_blink_on])
+# define tc_attr_off	(tc_cap[tc_seq_attr_off])
+# define tc_kpad_on	(tc_cap[tc_seq_kpad_on])
+# define tc_kpad_off	(tc_cap[tc_seq_kpad_off])
+# define tc_audio_bell	(tc_cap[tc_seq_audio_bell])
+# define tc_charset_start	(tc_cap[tc_seq_charset_start])
+# define tc_charset_end	(tc_cap[tc_seq_charset_end])
+# define tc_audio_bell	(tc_cap[tc_seq_audio_bell])
+# define tc_charset_start	(tc_cap[tc_seq_charset_start])
+# define tc_charset_end	(tc_cap[tc_seq_charset_end])	
+# define colorbug	(ttydata->colorbug)
+# define wrapglitch	(ttydata->wrapglitch)
+#else
+# define tc_scr_clear	(ttydata->tc_scr_clear)
+#endif
 
 
 /* plain Unix-style tty keyboard input */
@@ -123,7 +137,7 @@ struct tty_data {
 
 static void stdin_QuitKeyboard(void);
 static void stdin_KeyboardEvent(int fd, display_hw hw);
-
+static udat linux_LookupKey(udat *ShiftFlags, byte *slen, byte *s, byte **sret);
 
 /* return FALSE if failed */
 static byte stdin_InitKeyboard(void) {
@@ -175,6 +189,8 @@ static byte stdin_InitKeyboard(void) {
     HW->KeyboardEvent = stdin_KeyboardEvent;
     HW->QuitKeyboard = stdin_QuitKeyboard;
 
+    LookupKey = linux_LookupKey;
+    
     return TRUE;
 }
 
@@ -187,14 +203,15 @@ static void stdin_QuitKeyboard(void) {
     HW->QuitKeyboard = NoOp;
 }
 
-static udat stdin_LookupKey(udat *ShiftFlags, byte *slen, byte *s) {
+static udat linux_LookupKey(udat *ShiftFlags, byte *slen, byte *s, byte **sret) {
     byte used = 0, len = *slen;
 
     *ShiftFlags = 0;
+    *sret = s;
 
     if (len == 0)
 	return TW_Null;
-
+    
     if (len > 1 && *s == '\x1B') {
 
 	++used, --len;
@@ -375,7 +392,7 @@ static byte xterm_MouseData[10] = "\033[M#!!!!";
 static void stdin_KeyboardEvent(int fd, display_hw hw) {
     static void xterm_MouseEvent(int, display_hw);
     static byte *match;
-    byte got, chunk, buf[SMALLBUFF], *s;
+    byte got, chunk, buf[SMALLBUFF], *s, *sret;
     udat Code, ShiftFlags;
     SaveHW;
     
@@ -416,9 +433,9 @@ static void stdin_KeyboardEvent(int fd, display_hw hw) {
 	if (!(chunk = got))
 	    break;
 	
-	Code = stdin_LookupKey(&ShiftFlags, &chunk, s);
+	Code = LookupKey(&ShiftFlags, &chunk, s, &sret);
 
-	KeyboardEventCommon(Code, ShiftFlags, chunk, s);
+	KeyboardEventCommon(Code, ShiftFlags, chunk, sret);
 	s += chunk, got -= chunk;
     }
     
@@ -657,14 +674,9 @@ static void xterm_MouseEvent(int fd, display_hw hw) {
 		Buttons |= HOLD_RIGHT;
 	    x = *++s - '!'; /* (*s) must be unsigned char */
 	    y = *++s - '!';
-	} else if (*s == '5' && *++s == 'M' && (Id = *++s) >= ' ' && (Id -= ' ') <= HOLD_ANY) {
+	} else if (*s == '5' && *++s == 'M' && (Id = *++s) >= ' ' && (Id -= ' ') <= 0x1F /*HOLD_ANY*/) {
 	    /* enhanced xterm-style reporting (twin specs) */
 	    Buttons = Id;
-	    /* it would be: 
-	     * (Id & HOLD_LEFT ? HOLD_LEFT : 0) |
-	     * (Id & HOLD_MIDDLE ? HOLD_MIDDLE : 0) |
-	     * (Id & HOLD_RIGHT ? HOLD_RIGHT : 0);
-	     */
 	    s++;
 	    x = (udat)((s[0]-'!') & 0x7f) | (udat)((udat)((s[1]-'!') & 0x7f) << 7);
 	    if (x & ((udat)1 << 13))
@@ -711,7 +723,7 @@ static void xterm_MouseEvent(int fd, display_hw hw) {
 #ifdef CONF__UNICODE
 static byte utf8used;
 
-void tty_MogrifyUTF8(hwfont h) {
+static void tty_MogrifyUTF8(hwfont h) {
     byte c;
     if (!utf8used)
 	utf8used = TRUE, fputs("\033%G", stdOUT);
@@ -808,11 +820,11 @@ byte tty_InitHW(void) {
 		arg = strchr(arg + 9, ',');
 		tc_colorbug = TRUE;
 	    } else if (!strncmp(arg, ",mouse=", 6)) {
-		if (!strncmp(arg+6, "xterm", 5))
+		if (!strncmp(arg+7, "xterm", 5))
 		    force_mouse = TRUE;
-		else if (!strncmp(arg+6, "twterm", 5))
+		else if (!strncmp(arg+7, "twterm", 5))
 		    force_mouse = TRUE+TRUE;
-		arg = strchr(arg + 6, ',');
+		arg = strchr(arg + 7, ',');
 	    } else if (!strncmp(arg, ",noinput", 8)) {
 		arg = strchr(arg + 8, ',');
 		HW->FlagsHW |= FlHWNoInput;
@@ -946,22 +958,23 @@ byte tty_InitHW(void) {
 	if (
 #ifdef CONF_HW_TTY_LINUX
 	    GPM_InitMouse() ||
+#else
+	    (printk("      tty_InitHW(): gpm mouse support not compiled in, skipping.\n"), FALSE) ||
 #endif
 	    xterm_InitMouse(force_mouse) ||
 	    warn_NoMouse()) {
 	    
 	    if (
-		FALSE
 #ifdef CONF_HW_TTY_LINUX
-		|| (!skip_vcsa && vcsa_InitVideo())
+		(!skip_vcsa && vcsa_InitVideo()) ||
 #endif
 #if defined(CONF_HW_TTY_LINUX) || defined(CONF_HW_TTY_TWTERM)
-		|| (!skip_stdout && linux_InitVideo())
+		(!skip_stdout && linux_InitVideo()) ||
 #endif
 #ifdef CONF_HW_TTY_TERMCAP
-		|| termcap_InitVideo()
+		termcap_InitVideo() ||
 #endif
-		) {
+		FALSE) {
 	    
 		/*
 		 * must be deferred until now, as HW-specific functions

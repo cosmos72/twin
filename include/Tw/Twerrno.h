@@ -57,8 +57,8 @@ tw_errno *Tw_ErrnoLocation(tdisplay TwD);
 #define Tw_Errno(TwD)		(Tw_ErrnoLocation(TwD)->E)
 #define Tw_ErrnoDetail(TwD)	(Tw_ErrnoLocation(TwD)->S)
 
-TW_CONST byte *Tw_StrError(TW_CONST tdisplay TwD, uldat e) TW_FN_ATTR_CONST;
-TW_CONST byte *Tw_StrErrorDetail(TW_CONST tdisplay TwD, uldat e, uldat s) TW_FN_ATTR_CONST;
+TW_FN_ATTR_CONST TW_CONST byte *Tw_StrError(TW_CONST tdisplay TwD, uldat e);
+TW_FN_ATTR_CONST TW_CONST byte *Tw_StrErrorDetail(TW_CONST tdisplay TwD, uldat e, uldat s);
 
 #define TwErrnoLocation		Tw_ErrnoLocation(Tw_DefaultD)
 #define TwErrno			Tw_Errno(Tw_DefaultD)

@@ -160,7 +160,8 @@ static void SelectWinList(void) {
     widget W;
     
     for (W = Screen->FirstW; W; W = W->Next) {
-	if (W == (widget)WinList || !IS_WINDOW(W) || (((window)W)->Flags & WINDOWFL_MENU))
+	if (W == (widget)WinList || !IS_WINDOW(W) ||
+	    (((window)W)->Flags & (WINDOWFL_NOTVISIBLE|WINDOWFL_MENU)))
 	    continue;
 	if (!n)
 	    break;
@@ -757,7 +758,8 @@ void UpdateWinList(void) {
     WinList->YWidth = WinList->MinYWidth;
     
     for (W = Screen->FirstW; W; W = W->Next) {
-	if (W == (widget)WinList || !IS_WINDOW(W) || (((window)W)->Flags & WINDOWFL_MENU))
+	if (W == (widget)WinList || !IS_WINDOW(W) ||
+	    (((window)W)->Flags & (WINDOWFL_NOTVISIBLE|WINDOWFL_MENU)))
 	    continue;
 	Row4Menu(WinList, (udat)0, ROW_ACTIVE, ((window)W)->NameLen, ((window)W)->Name);
     }
@@ -777,7 +779,7 @@ void FullUpdateWinList(widget listWin) {
 #ifdef CONF_PRINTK
 static byte InitMessagesWin(void) {
     MessagesWin = Do(Create,Window)
-	(FnWindow, 8, "Messages", NULL,
+	(FnWindow, Builtin_MsgPort, 8, "Messages", NULL,
 	 Builtin_Menu, COL(WHITE,BLACK), LINECURSOR,
 	 WINDOW_DRAG|WINDOW_RESIZE|WINDOW_X_BAR|WINDOW_Y_BAR|WINDOW_CLOSE,
 	 WINDOWFL_CURSOR_ON, 60, 20, 200);
@@ -889,46 +891,46 @@ byte InitBuiltin(void) {
 	Item4MenuCommon(Builtin_Menu) &&
 		
 	(AboutWin = Do(Create,Window)
-	 (FnWindow, 5, "About", "\x7F\x7F\x7F\x7F\x7F", Builtin_Menu, COL(BLACK,WHITE),
+	 (FnWindow, Builtin_MsgPort, 5, "About", "\x7F\x7F\x7F\x7F\x7F", Builtin_Menu, COL(BLACK,WHITE),
 	  NOCURSOR, WINDOW_AUTO_KEYS|WINDOW_WANT_MOUSE|WINDOW_DRAG|WINDOW_CLOSE, WINDOWFL_USEROWS|WINDOWFL_ROWS_DEFCOL,
 	  36, 13, 0)) &&
 
 	(ClockWin = Do(Create,Window)
-	 (FnWindow, 5, "Clock", NULL, Builtin_Menu, COL(YELLOW,BLUE),
+	 (FnWindow, Builtin_MsgPort, 5, "Clock", NULL, Builtin_Menu, COL(YELLOW,BLUE),
 	  NOCURSOR, WINDOW_DRAG|WINDOW_CLOSE, WINDOWFL_USEROWS|WINDOWFL_ROWS_DEFCOL,
 	  10, 2, 0)) &&
 
 	(OptionWin = Do(Create,Window)
-	 (FnWindow, 7, "Options", NULL, Builtin_Menu, COL(HIGH|BLACK,BLACK),
+	 (FnWindow, Builtin_MsgPort, 7, "Options", NULL, Builtin_Menu, COL(HIGH|BLACK,BLACK),
 	  NOCURSOR, WINDOW_AUTO_KEYS|WINDOW_WANT_MOUSE|WINDOW_DRAG|WINDOW_CLOSE,WINDOWFL_USEROWS|WINDOWFL_ROWS_DEFCOL,
 	  37, 16, 0)) &&
 
 	(ButtonWin = Do(Create,Window)
-	 (FnWindow, 7, "Buttons", NULL, Builtin_Menu, COL(HIGH|WHITE,WHITE),
+	 (FnWindow, Builtin_MsgPort, 7, "Buttons", NULL, Builtin_Menu, COL(HIGH|WHITE,WHITE),
 	  NOCURSOR, WINDOW_AUTO_KEYS|WINDOW_WANT_MOUSE|WINDOW_DRAG|WINDOW_CLOSE, WINDOWFL_USECONTENTS,
 	  37, 19, 0)) &&
 
 	(DisplayWin = Do(Create,Window)
-	 (FnWindow, 7, "Display", NULL, Builtin_Menu, COL(HIGH|BLACK,WHITE),
+	 (FnWindow, Builtin_MsgPort, 7, "Display", NULL, Builtin_Menu, COL(HIGH|BLACK,WHITE),
 	  NOCURSOR,
 	  WINDOW_WANT_MOUSE|WINDOW_AUTO_KEYS|WINDOW_DRAG|WINDOW_RESIZE|WINDOW_CLOSE|WINDOW_X_BAR|WINDOW_Y_BAR,
 	  WINDOWFL_USEROWS|WINDOWFL_ROWS_SELCURRENT|WINDOWFL_ROWS_DEFCOL,
 	  31, 10, 0)) &&
 
 	(DisplaySubWin = Do(Create,Window)
-	 (FnWindow, 0, NULL, NULL, Builtin_Menu, COL(HIGH|BLACK,WHITE),
+	 (FnWindow, Builtin_MsgPort, 0, NULL, NULL, Builtin_Menu, COL(HIGH|BLACK,WHITE),
 	  NOCURSOR, WINDOW_AUTO_KEYS, WINDOWFL_USEROWS|WINDOWFL_ROWS_DEFCOL,
 	  10, MAXDAT, 0)) &&
 
 	(WinList = Do(Create,Window)
-	 (FnWindow, 11, "Window List", NULL, Builtin_Menu, COL(WHITE,BLUE),
+	 (FnWindow, Builtin_MsgPort, 11, "Window List", NULL, Builtin_Menu, COL(WHITE,BLUE),
 	  NOCURSOR,
 	  WINDOW_WANT_KEYS|WINDOW_WANT_MOUSE|WINDOW_DRAG|WINDOW_CLOSE/*|WINDOW_RESIZE*/|WINDOW_X_BAR|WINDOW_Y_BAR,
 	  WINDOWFL_USEROWS|WINDOWFL_ROWS_SELCURRENT|WINDOWFL_ROWS_DEFCOL,
 	  14, 2, 0)) &&
 
 	(ExecuteWin = Do(Create,Window)
-	 (FnWindow, 10, "Execute...", NULL, Builtin_Menu, COL(WHITE,BLUE),
+	 (FnWindow, Builtin_MsgPort, 10, "Execute...", NULL, Builtin_Menu, COL(WHITE,BLUE),
 	  LINECURSOR, WINDOW_WANT_KEYS|WINDOW_CLOSE|WINDOW_DRAG|WINDOW_X_BAR,
 	  WINDOWFL_USEROWS|WINDOWFL_ROWS_DEFCOL|WINDOWFL_CURSOR_ON,
 	  38, 2, 0)) &&

@@ -48,7 +48,7 @@ else
   lib: $(ARLIBS)
 	@rm -f $(SHLIBS) ; \
 	 echo ; \
-	 echo "You disabled \"Enable shared libraries (ELF)\"," ; \
+	 echo "You disabled \"Enable shared libraries\"," ; \
 	 echo "so only the static library libTutf.a will be compiled!" ; \
 	 echo
 endif

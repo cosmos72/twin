@@ -34,6 +34,10 @@
 # define TW_INLINE static
 #endif
 
+#if defined(TW_HAVE_STATIC_INLINE) || defined(TW_HAVE_INLINE) || defined(inline)
+# define TW_CAN_INLINE 1
+#endif
+
 #if defined(VOLATILE)
 # define TW_VOLATILE VOLATILE
 #else

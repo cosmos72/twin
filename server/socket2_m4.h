@@ -36,41 +36,55 @@
 
 
 
+
+
 { 0, 0, "FindFunction",
     "0""_"TWS_uldat_STR"_"TWS_byte_STR"V"TWS_byte_STR"_"TWS_byte_STR"V"TWS_byte_STR },
+
 
 { 0, 0, "SyncSocket",
     "0""_"TWS_byte_STR },
 
+
 { 0, 0, "ServerSizeof",
     "0""_"TWS_byte_STR"_"TWS_byte_STR },
 
+
 { 0, 0, "CanCompress",
     "0""_"TWS_byte_STR },
+
 { 0, 0, "DoCompress",
     "0""_"TWS_byte_STR"_"TWS_byte_STR },
+
 
 { 0, 0, "NeedResizeDisplay",
     "0""v"TWS_void_STR },
 
+
 { 0, 0, "AttachHW",
     "0""v"TWS_void_STR"_"TWS_uldat_STR"V"TWS_byte_STR"_"TWS_byte_STR },
+
 { 0, 0, "DetachHW",
     "0""_"TWS_byte_STR"_"TWS_uldat_STR"V"TWS_byte_STR },
 
+
 { 0, 0, "SetFontTranslation",
     "0""v"TWS_void_STR"V"TWS_byte_STR },
-{ 0, 0, "SetUniFontTranslation",
+
+{ 0, 0, "SetHWFontTranslation",
     "0""v"TWS_void_STR"V"TWS_hwfont_STR },
+
 
 { 0, 0, "DeleteObj",
     "0""v"TWS_void_STR"x"obj_magic_STR },
+
 { 0, 0, "ChangeFieldObj",
     "2""v"TWS_void_STR"x"obj_magic_STR"_"TWS_udat_STR"_"TWS_uldat_STR"_"TWS_uldat_STR },
 
 
 { 0, 0, "CreateWidget",
     "0""x"widget_magic_STR"_"TWS_dat_STR"_"TWS_dat_STR"_"TWS_uldat_STR"_"TWS_uldat_STR"_"TWS_dat_STR"_"TWS_dat_STR"_"TWS_hwattr_STR },
+
 { 0, 0, "RecursiveDeleteWidget",
     "0""v"TWS_void_STR"x"widget_magic_STR },
 { 0, 0, "MapWidget",
@@ -83,8 +97,6 @@
     "0""v"TWS_void_STR"x"widget_magic_STR"_"TWS_dat_STR"_"TWS_dat_STR },
 { 0, 0, "ScrollWidget",
     "0""v"TWS_void_STR"x"widget_magic_STR"_"TWS_ldat_STR"_"TWS_ldat_STR },
-{ 0, 0, "GetOwnerWidget",
-    "0""x"msgport_magic_STR"x"widget_magic_STR },
 { 0, 0, "DrawWidget",
     "0""v"TWS_void_STR"x"widget_magic_STR"_"TWS_dat_STR"_"TWS_dat_STR"_"TWS_dat_STR"_"TWS_dat_STR"W"TWS_byte_STR"W"TWS_hwfont_STR"W"TWS_hwattr_STR },
 
@@ -118,7 +130,7 @@
     "2""v"TWS_void_STR"x"gadget_magic_STR"_"TWS_byte_STR"_"TWS_dat_STR"_"TWS_dat_STR"W"TWS_hwfont_STR"_"TWS_dat_STR"_"TWS_dat_STR },
 
 { 0, 0, "CreateWindow",
-    "1""x"window_magic_STR"_"TWS_dat_STR"V"TWS_byte_STR"W"TWS_hwcol_STR"x"menu_magic_STR"_"TWS_hwcol_STR"_"TWS_uldat_STR"_"TWS_uldat_STR"_"TWS_uldat_STR"_"TWS_dat_STR"_"TWS_dat_STR"_"TWS_dat_STR },
+    "0""x"window_magic_STR"_"TWS_dat_STR"V"TWS_byte_STR"W"TWS_hwcol_STR"x"menu_magic_STR"_"TWS_hwcol_STR"_"TWS_uldat_STR"_"TWS_uldat_STR"_"TWS_uldat_STR"_"TWS_dat_STR"_"TWS_dat_STR"_"TWS_dat_STR },
 { 0, 0, "Create4MenuWindow",
     "1""x"window_magic_STR"x"menu_magic_STR },
 
@@ -133,6 +145,8 @@
 
 { 0, 0, "GotoXYWindow",
     "2""v"TWS_void_STR"x"window_magic_STR"_"TWS_ldat_STR"_"TWS_ldat_STR },
+{ 0, 0, "SetTitleWindow",
+    "0""v"TWS_void_STR"x"window_magic_STR"_"TWS_dat_STR"V"TWS_byte_STR },
 { 0, 0, "SetColTextWindow",
     "2""v"TWS_void_STR"x"window_magic_STR"_"TWS_hwcol_STR },
 { 0, 0, "SetColorsWindow",
@@ -154,9 +168,6 @@
 { 0, 0, "SetSelectedGadgetGroup",
     "2""v"TWS_void_STR"x"group_magic_STR"x"gadget_magic_STR },
 
-{ 0, 0, "Create4MenuRow",
-    "0""v"TWS_void_STR"x"window_magic_STR"_"TWS_udat_STR"_"TWS_byte_STR"_"TWS_ldat_STR"V"TWS_byte_STR },
-
 { 0, 0, "RaiseRow",
     "2""v"TWS_void_STR"x"row_magic_STR },
 { 0, 0, "LowerRow",
@@ -166,8 +177,6 @@
 { 0, 0, "CirculateChildrenRow",
     "0""v"TWS_void_STR"x"obj_magic_STR"_"TWS_byte_STR },
 
-{ 0, 0, "Create4MenuMenuItem",
-    "0""x"menuitem_magic_STR"x"obj_magic_STR"x"window_magic_STR"_"TWS_byte_STR"_"TWS_dat_STR"V"TWS_byte_STR },
 { 0, 0, "Create4MenuAny",
     "0""x"row_magic_STR"x"obj_magic_STR"x"window_magic_STR"_"TWS_udat_STR"_"TWS_byte_STR"_"TWS_ldat_STR"V"TWS_byte_STR },
 
@@ -193,20 +202,6 @@
     "0""x"obj_magic_STR"x"obj_magic_STR },
 { 0, 0, "ParentObj",
     "0""x"obj_magic_STR"x"obj_magic_STR },
-
-{ 0, 0, "G_PrevGadget",
-    "0""x"gadget_magic_STR"x"gadget_magic_STR },
-{ 0, 0, "G_NextGadget",
-    "0""x"gadget_magic_STR"x"gadget_magic_STR },
-{ 0, 0, "GroupGadget",
-    "0""x"group_magic_STR"x"gadget_magic_STR },
-
-{ 0, 0, "O_PrevWidget",
-    "0""x"widget_magic_STR"x"widget_magic_STR },
-{ 0, 0, "O_NextWidget",
-    "0""x"widget_magic_STR"x"widget_magic_STR },
-{ 0, 0, "OwnerWidget",
-    "0""x"msgport_magic_STR"x"widget_magic_STR },
 
 { 0, 0, "FirstScreen",
     "0""x"screen_magic_STR },

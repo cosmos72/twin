@@ -410,6 +410,7 @@ struct s_fn_widget {
 #define WIDGET_WANT_KEYS	0x0002
 #define WIDGET_WANT_MOUSE	0x0004
 #define WIDGET_WANT_CHANGES	0x0008
+#define WIDGET_AUTO_FOCUS	0x0010
 
 
 /* Widget->Flags */
@@ -505,6 +506,7 @@ struct s_fn_gadget {
 #define GADGET_WANT_KEYS	WIDGET_WANT_KEYS	/* 0x0002 */
 #define GADGET_WANT_MOUSE	WIDGET_WANT_MOUSE	/* 0x0004 */
 #define GADGET_WANT_CHANGES	WIDGET_WANT_CHANGES	/* 0x0008 */
+#define GADGET_AUTO_FOCUS	WIDGET_AUTO_FOCUS	/* 0x0010 */
 
 
 /* Gadget->Flags */
@@ -605,8 +607,8 @@ struct s_window {
 
 struct s_fn_window {
     uldat Magic, Size, Used;
-    window (*Create)(fn_window, dat NameLen, CONST byte *Name, CONST hwcol *ColName, menu Menu,
-		     hwcol ColText, uldat CursorType, uldat Attrib, uldat Flags,
+    window (*Create)(fn_window, msgport Owner, dat NameLen, CONST byte *Name, CONST hwcol *ColName,
+		     menu Menu, hwcol ColText, uldat CursorType, uldat Attrib, uldat Flags,
 		     dat XWidth, dat YWidth, dat ScrollBackLines);
     void (*Insert)(window, widget Parent, widget Prev, widget Next);
     void (*Remove)(window);
@@ -645,6 +647,7 @@ struct s_fn_window {
     byte (*RowWriteHWAttr)(window, dat x, dat y, ldat Len, CONST hwattr *Attr);
 
     void (*GotoXY)(window, ldat X, ldat Y);
+    void (*SetTitle)(window, dat titlelen, byte *title);
     void (*SetColText)(window, hwcol ColText);
     void (*SetColors)(window, udat Bitmap,
 		      hwcol ColGadgets, hwcol ColArrows, hwcol ColBars, hwcol ColTabs, hwcol ColBorder,
@@ -663,6 +666,7 @@ struct s_fn_window {
 #define WINDOW_WANT_KEYS	WIDGET_WANT_KEYS	/* 0x0002 */
 #define WINDOW_WANT_MOUSE	WIDGET_WANT_MOUSE	/* 0x0004 */
 #define WINDOW_WANT_CHANGES	WIDGET_WANT_CHANGES	/* 0x0008 */
+#define WINDOW_AUTO_FOCUS	WIDGET_AUTO_FOCUS	/* 0x0010 */
 #define WINDOW_DRAG		0x0100
 #define WINDOW_RESIZE		0x0200
 #define WINDOW_CLOSE		0x0400
@@ -1741,12 +1745,6 @@ struct s_all {
 #define PRESS_ANY	((udat)0x38)
 #define PRESS_CODE(n)	((udat)0x08 | ((udat)(n) << 4)) /* n is 0,1,2 */
 
-#define DOWN_LEFT	(HOLD_LEFT|PRESS_LEFT)
-#define DOWN_MIDDLE	(HOLD_MIDDLE|PRESS_MIDDLE)
-#define DOWN_RIGHT	(HOLD_RIGHT|PRESS_RIGHT)
-#define DOWN_ANY	(HOLD_ANY|PRESS_ANY)
-#define DOWN_CODE(n)	(HOLD_CODE(n)|PRESS_CODE(n)) /* n is 0,1,2 */
-
 #define RELEASE_LEFT	((udat)0x10)
 #define RELEASE_MIDDLE	((udat)0x20)
 #define RELEASE_RIGHT	((udat)0x30)
@@ -1766,7 +1764,7 @@ struct s_all {
 #define isDRAG(code)	((code) & DRAG_MOUSE)
 #define isMOTION(code)	(!(code))
 
-#define isSINGLE_PRESS(code) (isPRESS(code) && ((code) == DOWN_LEFT || (code) == DOWN_MIDDLE || (code) == DOWN_RIGHT))
+#define isSINGLE_PRESS(code) (isPRESS(code) && ((code) == PRESS_LEFT || (code) == PRESS_MIDDLE || (code) == PRESS_RIGHT))
 #define isSINGLE_DRAG(code) (isDRAG(code) && ((code) == (DRAG_MOUSE|HOLD_LEFT) || (code) == (DRAG_MOUSE|HOLD_MIDDLE) || (code) == (DRAG_MOUSE|HOLD_RIGHT)))
 #define isSINGLE_RELEASE(code) (isRELEASE(code) && !((code) & HOLD_ANY))
 

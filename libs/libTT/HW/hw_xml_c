@@ -29,28 +29,23 @@ TT_INLINE void dump_obj(ttobj o) {
     TT_CONST ttbyte *name;
     ttbyte buf[64];
     ttany data;
-    ttfn type;
+    tt_fn type;
     
     if ((id = OBJ2ID(o))) {
 	fprintf(dump_file, "  <TT:%s>\n", name = TTClassNameOf((tt_obj)id));
 	sprintf(buf, "%s_field_last", name);
-	last = TTGetValueId(buf);
+	last = TTGetFieldId(buf);
 	for (i = 0; i < last; i++) {
-	    if ((name = TTGetValueName(i)) && (type = o->FN->GetValue(o, i, &data))) {
+	    if ((name = TTGetFieldName(i)) && (type = TTGetField_ttobj((tt_obj)id, i, &data)) && data != (ttany)0) {
 		if (type == TTFN_ttstring)
 		    fprintf(dump_file, "    <TT:%s value=\"%s\"/>\n", name, (ttstring)(ttopaque)data);
 		else
-		    fprintf(dump_file, "    <TT:%s value=\"0x%lx\"/>\n", name, (unsigned long)(ttopaque)data);
+		    fprintf(dump_file, "    <TT:%s value=\"0x%lX\"/>\n", name, (unsigned long)(ttopaque)data);
 	    }
 	}
 	fprintf(dump_file, "  </TT:%s>\n", TTClassNameOf((tt_obj)id));
     }
 }
-
-#define IdList	 TTD.UTIL.IdList
-#define IdSize	 TTD.UTIL.IdSize
-#define IdTop	 TTD.UTIL.IdTop
-#define IdBottom TTD.UTIL.IdBottom
 
 static void dump_all(void) {
     ttbyte n;
@@ -81,15 +76,10 @@ static ttbyte HWDEF(Flush)(void) {
 static ttbyte HWDEF(TimidFlush)(void) {
     return 1;
 }
-static ttbyte HWDEF(MainLoop)(void) {
-    return 1;
-}
 static ttbyte HWDEF(MainLoopOnce)(ttbyte wait) {
     return 1;
 }
-static void HWDEF(ExitMainLoop)(void) {
-}
-static void HWDEF(DeleteListener)(ttlistener o) {
+static void HWDEF(DeleteCallback)(ttcallback o) {
 }
 static void HWDEF(Close)(void) {
     dump_all();

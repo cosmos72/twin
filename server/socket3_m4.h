@@ -37,6 +37,8 @@
 
 
 
+
+
   case order_FindFunction:
     switch (n) {
       case 2: L = a[1]._; break;
@@ -53,27 +55,38 @@
 
 
 
+
+
+
+
+
+
   case order_AttachHW:
     switch (n) {
       case 2: L = a[1]._; break;
     }
     break;
+
   case order_DetachHW:
     switch (n) {
       case 2: L = a[1]._; break;
     }
     break;
 
+
   case order_SetFontTranslation:
     switch (n) {
       case 1: L = 0x80; break;
     }
     break;
-  case order_SetUniFontTranslation:
+
+  case order_SetHWFontTranslation:
     switch (n) {
       case 1: L = 0x80; break;
     }
     break;
+
+
 
 
 
@@ -163,23 +176,22 @@
     break;
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-  case order_Create4MenuRow:
+  case order_SetTitleWindow:
     switch (n) {
-      case 5: L = a[4]._; break;
+      case 3: L = a[2]._; break;
     }
     break;
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -190,11 +202,6 @@
     break; 
 
 
-  case order_Create4MenuMenuItem:
-    switch (n) {
-      case 5: L = a[4]._; break;
-    }
-    break;
   case order_Create4MenuAny:
     switch (n) {
       case 6: L = a[5]._; break;
@@ -227,14 +234,6 @@
       case 4: L = a[2]._*a[3]._; break;
     }
     break;
-
-
-
-
-
-
-
-
 
 
 

@@ -34,5 +34,5 @@ define(`PROTO', `define(`NAME', `  case order_`'TRIM($3)`'TRIM($4):
 define(`PROTOSyncSocket', `PROTO($@)')
 define(`PROTOFindFunction', `PROTO($@)')
 
-include(`m4/sockproto.m4h')
+include(`m4/Tw_sockproto.m4h')
 

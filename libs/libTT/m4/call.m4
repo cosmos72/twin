@@ -8,7 +8,7 @@ dnl Tell the user about this.
 
 
 /*
- *  call_m4.h  --  implementation of callbacks to libTT methods
+ *  call_m4.h  --  implementation of listeners to libTT methods
  *
  */
 
@@ -43,33 +43,12 @@ define(`a0_eq_ifnotvoid', `ifelse($1, void, `', `a0 =')')
 define(`a0_ifnotvoid', `ifelse($1, void, `', `a0')')
 
 define(`extends')
-define(`public', `ifdef(`m4super_$6', `
+define(`public', `
 arg_decl_decay($5) TT$2_$3`'(ifelse($4, 0, void, `args_decl(1, $4, NSHIFT(5, $@))'));
-', `
-arg_decl_decay($5) TT$2_$3`'(ifelse($4, 0, void, `args_decl(1, $4, NSHIFT(5, $@))'));
-')')
-define(`exported',`ifdef(`m4super_$6', `
-arg_decl_decay($5) TT$2_$3`'(ifelse($4, 0, void, `args_decl(1, $4, NSHIFT(5, $@))'));
-', `
-arg_decl_decay($5) TT$2_$3`'(ifelse($4, 0, void, `args_decl(1, $4, NSHIFT(5, $@))'));
-')')
-
-
-divert
-
-/* prototypes for `public' and `exported' methods */
-
-define(`el',`
-/* $1 methods */
-TTFNdef_$1($1)
 ')
-TTlist()
-undefine(`el')
-define(`exported')
-define(`public')
-define(`extends')
+define(`public_set',`public($@)')
+define(`exported',`public($@)')
 
-/* prototypes for handy `public' and `exported' methods */
 
 define(`decl_name', `ifelse(`$1', `', `Toupper($2)`'Toupper($3)', `Toupper($1)')')
 define(`decl_args', `arg_decl_decay(this) o`'decl_fn_$3(NSHIFT(3, $@))')
@@ -78,29 +57,17 @@ define(`decl_fn_get', `')
 define(`decl_fn_set', `, $2 $1')
 define(`decl_fn_fixedchange', `')
 
-define(`def_handy', `
-arg_decl_decay($1) TT`'decl_name($2,$3,$4)_`'this`'(decl_args($@));
-')
+dnl define(`def_handy', `
+dnl arg_decl_decay($1) TT`'decl_name($2,$3,$4)_`'this`'(decl_args($@));
+dnl ')
 
 define(`wrap_export', `ifelse(index(`$3', `r'), -1, `', `exported($1,,get,$2,$1)')`'dnl
 `'ifelse(index(`$3', `w'), -1, `', `exported(void,,set,$2,$1)')')
 
-define(`el', `
-/* prototypes for handy $1 methods */
-define(`this', `$1')`'TThandy_$1($1,$1)')
-define(`extends')
-define(`exported', `def_handy($@)')
-define(`field', `wrap_export($@)')
-define(`exported_fields', `TTdef_$1($1,$1)')
-TTlist()
-define(`exported_fields')
-define(`exported')
-define(`extends')
-define(`field')
-undefine(`el')
 
+divert
 
-/* enum for method callbacks */
+/* enum for method listeners */
 
 typedef enum e_order_methods {
     /* generic functions */
@@ -110,12 +77,14 @@ typedef enum e_order_methods {
 define(`exported', `
     order_$2_$3,')
 define(`public', `exported($@)')
+define(`public_set', `exported($@)')
 define(`el',`
     /* $1 methods */TTFNdef_$1($1)')
 TTlist()
 undefine(`el')
 define(`exported')
 define(`public')
+define(`public_set')
 
     order_FN_handy,
 
@@ -145,7 +114,7 @@ struct s_ttmethod {
     void *mth;
 };
 
-/* array for method callbacks */
+/* array for method listeners */
 
 static struct s_ttmethod method_array[] = {
     /* generic functions */
@@ -155,11 +124,13 @@ static struct s_ttmethod method_array[] = {
 define(`exported', `
     { order_$2_$3, (void *)TT$2_$3, },')
 define(`public', `exported($@)')
+define(`public_set', `exported($@)')
 define(`el',`
     /* $1 methods */TTFNdef_$1($1)')
 TTlist()
 undefine(`el')
 define(`exported')
+define(`public_set')
 define(`public')
 
 define(`el', `
@@ -244,6 +215,7 @@ define(`exported', `
 	    TT$2_$3(args_call(1, $4, NSHIFT(5, $@)));
 	break;')
 define(`public', `exported($@)')
+define(`public_set', `exported($@)')
 define(`el',`
     /* $1 methods */
     TTFNdef_$1($1)
@@ -251,6 +223,7 @@ define(`el',`
 TTlist()
 undefine(`el')
 define(`exported')
+define(`public_set')
 define(`public')
 
 define(`el', `

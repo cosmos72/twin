@@ -34,7 +34,7 @@ byte InitTWCD(void) {
     if (!TwCheckMagic(twcd_magic) || !TwOpen(NULL))
 	return FALSE;
 
-    TWCD_MsgPort=TwCreateMsgPort(4,"TWCD",(time_t)0,(frac_t)0,(byte)0);    
+    TWCD_MsgPort=TwCreateMsgPort(4,"twcd",(time_t)0,(frac_t)0,(byte)0);    
 
     TWCD_Menu=TwCreateMenu(COL(BLACK,WHITE),COL(BLACK,GREEN),
         COL(HIGH|BLACK,WHITE),COL(HIGH|BLACK,BLACK),COL(RED,WHITE),
@@ -57,7 +57,7 @@ byte InitTWCD(void) {
     	return FALSE;
 
     TwGotoXYWindow(TWCD_Win, 0, 2);
-    TwWriteRowWindow(TWCD_Win, 17, "<< [] || -> >> /\\");
+    TwWriteAsciiWindow(TWCD_Win, 17, "<< [] || -> >> /\\");
     TwMapWindow(TWCD_Win, TwFirstScreen());
     TwFlush();
 
@@ -66,9 +66,9 @@ byte InitTWCD(void) {
 
 void writeTrack (char *title) {
     TwGotoXYWindow(TWCD_Win, 0, 0);
-    TwWriteRowWindow(TWCD_Win, 20, "                    ");
+    TwWriteAsciiWindow(TWCD_Win, 20, "                    ");
     TwGotoXYWindow(TWCD_Win, 0, 0);
-    TwWriteRowWindow(TWCD_Win, strlen(title), title);
+    TwWriteAsciiWindow(TWCD_Win, strlen(title), title);
 }
 
 void changeTrack(void) {
@@ -141,10 +141,10 @@ int main(int argc, char **argv) {
                 default:
                  break;
             }
-        } if (Msg->Type==TW_MSG_MENU_ROW) {
+        } else if (Msg->Type==TW_MSG_MENU_ROW) {
             if (EventA->EventMenu.Code == COD_QUIT && EventA->EventMenu.W == TWCD_Win)
                 break;
-        } if (Msg->Type==TW_MSG_WIDGET_GADGET) {
+        } else if (Msg->Type==TW_MSG_WIDGET_GADGET) {
             if (EventA->EventGadget.Code == 0 && EventA->EventGadget.W == TWCD_Win)
                 break;
         }

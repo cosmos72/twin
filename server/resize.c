@@ -84,8 +84,14 @@ void FlushCursor(void) {
 		CurY >= 0 && CurY < (Window->YWidth - HasBorder) &&
 		InitDrawCtx(W, (dat)CurX, (dat)CurY, (dat)CurX, (dat)CurY, FALSE, &D) &&
 		((Window == (window)Screen->FirstW && !Window->FirstW) ||
+#if 1
+		 /* widgets and gadgets cannot contain cursor, but they can obscure it */
+		 W == RecursiveFindWidgetAt((widget)Screen, (dat)D.X1, (dat)D.Y1 - Screen->YLimit)
+#else
 		 Window == WindowParent(RecursiveFindWidgetAt
-					((widget)Screen, (dat)D.X1, (dat)D.Y1 - Screen->YLimit)))) {
+					((widget)Screen, (dat)D.X1, (dat)D.Y1 - Screen->YLimit))
+#endif
+		 )) {
 		
 		MoveToXY((dat)D.X1, (dat)D.Y1);
 		if ((type = Window->CursorType) == NOCURSOR && All->SetUp->Flags & SETUP_CURSOR_ALWAYS)
@@ -583,8 +589,9 @@ void ResizeWidget(widget W, dat X, dat Y) {
 	mY = Max2(Y, W->YWidth);
 	W->XWidth = X;
 	W->YWidth = Y;
-	
-	DrawAreaWidget(W);
+
+	if (!(W->Flags & WIDGETFL_NOTVISIBLE))
+	    DrawAreaWidget(W);
     }
 }
 
@@ -1125,12 +1132,14 @@ void ResizeRelWindow(window Window, dat i, dat j) {
     dat YLimit, XWidth, YWidth;
     dat MinXWidth, MinYWidth, MaxXWidth, MaxYWidth;
     dat DWidth, DHeight;
-    byte Shade, DeltaXShade, DeltaYShade;
+    byte Shade, DeltaXShade, DeltaYShade, visible;
     
     if (!Window || (!i && !j)) /* || !(Window->Attrib & WINDOW_RESIZE) */
 	return;
 
-    if ((widget)Window == All->FirstScreen->FirstW) {
+    visible = !(Window->Flags & WIDGETFL_NOTVISIBLE);
+    
+    if (visible && (widget)Window == All->FirstScreen->FirstW) {
 	ResizeRelFirstWindow(i, j);
 	return;
     }
@@ -1142,7 +1151,7 @@ void ResizeRelWindow(window Window, dat i, dat j) {
     MaxXWidth=Window->MaxXWidth;
     MaxYWidth=Window->MaxYWidth;
 
-    if ((Parent=Window->Parent) && IS_SCREEN(Parent)) {
+    if (visible && (Parent=Window->Parent) && IS_SCREEN(Parent)) {
 	DWidth=All->DisplayWidth;
 	DHeight=All->DisplayHeight;
 	SetUp=All->SetUp;
@@ -1179,7 +1188,7 @@ void ResizeRelWindow(window Window, dat i, dat j) {
 	Dwn+=DeltaY;
     }
     if (DeltaX || DeltaY) {
-	if (Parent && IS_SCREEN(Parent)) {
+	if (visible && Parent && IS_SCREEN(Parent)) {
 	    Up = (dat)Max2(Up, (ldat)YLimit);
 	    DrawArea2((screen)Parent, (widget)0, (widget)0,
 		      (dat)Left, (dat)Up, (dat)Rgt, (dat)Dwn, FALSE);
@@ -1187,7 +1196,7 @@ void ResizeRelWindow(window Window, dat i, dat j) {
 		DrawShadeWindow(Window, 0, 0, MAXDAT, MAXDAT, FALSE);
 	}
     
-	if (Window == (window)All->FirstScreen->FocusW)
+	if (visible && Window == (window)All->FirstScreen->FocusW)
 	    UpdateCursor();
 	
 	/* resize contents? for Interactive Resize, let the WM resize it

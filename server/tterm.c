@@ -48,7 +48,7 @@ static window newTermWindow(byte *title) {
     window Window;
 
     Window = Do(Create,Window)
-	(FnWindow, LenStr(title), title, NULL,
+	(FnWindow, Term_MsgPort, LenStr(title), title, NULL,
 	 Term_Menu, COL(WHITE,BLACK), LINECURSOR,
 	 WINDOW_WANT_KEYS|WINDOW_DRAG|WINDOW_RESIZE|WINDOW_Y_BAR|WINDOW_CLOSE,
 	 WINDOWFL_CURSOR_ON|WINDOWFL_USECONTENTS,

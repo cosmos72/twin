@@ -517,6 +517,8 @@ int main(int argc, char *argv[]) {
 
     argv++, argc--;
     
+    TwMergeHyphensArgv(argc, argv);
+    
     while (argc) {
 	if (!strcmp(*argv, "-h") || !strcmp(*argv, "-help")) {
 	    Usage(name);

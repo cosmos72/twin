@@ -37,32 +37,11 @@ define(`TThandy_ttevent',`extends(m4super_$1,$2)`'dnl
     exported(void,consume,fixedchange,evflags,consumed,consumed)`'dnl
 ')
 
-define(`TThandy_ttcallback',`extends(m4super_$1,$2)`'dnl
-    exported($1,,get,avl_left)`'dnl
-    exported($1,,get,avl_right)`'dnl
-    exported($1,,get,avl_parent)`'dnl
+define(`TThandy_ttlistener',`extends(m4super_$1,$2)`'dnl
+dnl exported($1,,get,avl_left)`'dnl
+dnl exported($1,,get,avl_right)`'dnl
+dnl exported($1,,get,avl_parent)`'dnl
     exported_fields($2)`'dnl
-    exported(TT_CONST ttany *,,get,args)`'dnl
-')
-
-define(`TThandy_ttlabel',`extends(m4super_$1,$2)`'dnl
-    exported_fields($2)`'dnl
-    exported(TT_CONST ttfont *,,get,text)`'dnl
-')
-
-define(`TThandy_ttanybutton',`extends(m4super_$1,$2)`'dnl
-    exported_fields($2)`'dnl
-    exported(TT_CONST ttfont *,,get,text)`'dnl
-')
-
-define(`TThandy_ttanytext',`extends(m4super_$1,$2)`'dnl
-    exported_fields($2)`'dnl
-    exported(TT_CONST ttfont *,,get,text)`'dnl
-')
-
-define(`TThandy_tttheme',`extends(m4super_$1,$2)`'dnl
-    exported_fields($2)`'dnl
-    exported(TT_CONST ttbyte *,,get,name)`'dnl
 ')
 
 divert

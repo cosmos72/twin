@@ -1,5 +1,7 @@
 /*
- *  demo.c  --  sample client for libTT
+ *  demo.c  --  sample client for libTT.
+ *              It mostly demonstrates some libTT functions,
+ *              without being actually useful.
  *
  *  This program is placed in the public domain.
  *
@@ -21,35 +23,157 @@ static void stat_ttobj(ttobj f) {
     ttbyte buf[64];
     ttany data;
     
-    printf("(%s) 0x%x = {\n", name = TTClassNameOf(f), (unsigned)f);
+    printf("(%s) 0x%x = {\n", name = TTClassNameOf(f), (unsigned)(ttopaque)f);
     sprintf(buf, "%s_field_last", name);
-    last = TTGetValueId(buf);
+    last = TTGetFieldId(buf);
     for (i = 0; i < last; i++) {
-	if ((name = TTGetValueName(i)) && TTGetValue_ttobj(f, i, &data))
-	    printf("\t%s\t= 0x%x;\n", name, (unsigned)(ttopaque)data);
+	if ((name = TTGetFieldName(i)) && TTGetField_ttobj(f, i, &data))
+	    printf("\t%s\t= 0x%x;\n", name, (unsigned)data);
     }
     printf("}\n");
 }
 
 /*
- * since my_printf is used from TTCreate_ttcallback(),
- * it will always receive only one argument (nargs == 1, only args[0] available).
- * 
- * args[0] will contain the object that generated the event since TTCreate_ttcallback()
- * was called with the ttcallback_lflags_arg0_component flag set.
+ * since my_printf is used from TTCreateDel_ttlistener(),
+ * it will always receive only one argument:
+ * arg0 will contain the object that generated the event since TTCreateDel_ttlistener()
+ * was called with the ttlistener_lflags_arg0_component flag set.
  */
 static ttany my_exit(ttany arg0) {
-    printf("delete:  %x\n", (unsigned)arg0 /* this is (f) below */);
-    if (TTINSTANCEOF(ttvisible, arg0)) {
-	stat_ttobj((ttobj)arg0);
+    printf("delete:  0x%x\n", (unsigned)arg0 /* this is (f) below */);
+    if (TTIS(ttvisible, arg0)) {
+	/*
+	 * the double cast (ttobj)(ttopaque)arg0 avoid warnings in case
+	 * the integer type (ttany) of arg0 has different size than the pointer type (ttobj)
+	 */
+	stat_ttobj((ttobj)(ttopaque)arg0);
 	/* TTExitMainLoop(); */
-	my_exitmainloop = TRUE;
+	my_exitmainloop = TT_TRUE;
     }
     return 0;
 }
 
 static void my_repaint(ttvisible o, ttshort x, ttshort y, ttshort w, ttshort h) {
-    printf("repaint: %x x=%d y=%d w=%d h=%d\n", (unsigned)(ttopaque)o, (int)x, (int)y, (int)w, (int)h);
+    printf("repaint: 0x%x x=%d y=%d w=%d h=%d\n", (unsigned)(ttopaque)o, (int)x, (int)y, (int)w, (int)h);
+}
+
+static void my_resize(ttany arg0) {
+    ttcomponent f;
+    tteventbig e;
+    static ttuint widget_w_id, widget_h_id;
+    ttany value, old_value;
+    ttuint evcode;
+    
+    if (TTIS(tteventbig, arg0)) {
+	e = (tteventbig)(ttopaque)arg0;
+	f = TTGetComponent_ttevent((ttevent)e);
+
+	evcode    = TTGetEvcode_ttevent((ttevent)e);
+	value     = TTGetValue_tteventbig(e);
+	old_value = TTGetOldValue_tteventbig(e);
+	
+	if (!widget_w_id) {
+	    widget_w_id = TTGetFieldId("ttwidget_w");
+	    widget_h_id = TTGetFieldId("ttwidget_h");
+	}
+	printf("resize: 0x%x %c=%d (was %d)\n", (unsigned)(ttopaque)f,
+	       evcode == widget_w_id ? 'w' : 'h',
+	       (int)value, (int)old_value);
+    }
+}
+
+static void my_keydata_changed(ttany arg0) {
+    tteventbig e;
+    ttcomponent f;
+    ttdata d;
+    
+    if (TTIS(tteventbig, arg0)) {
+	e = (tteventbig)(ttopaque)arg0;
+	d = (ttdata)TTGetComponent_ttevent((ttevent)e);
+	if (TTIS(ttdata,d)) {
+	    f = TTGetComponent_ttdata(d);
+	    printf("key data change: 0x%x [key 0x%x, \"%s\"] data=%d (was %d)\n",
+		   (unsigned)(ttopaque)f, (unsigned)(ttopaque)d, TTGetKey_ttdata(d),
+		   TTGetValue_tteventbig(e), TTGetOldValue_tteventbig(e));
+	}
+    }
+}
+
+static ttbyte my_init(void) {
+    ttframe f;
+    ttlistener l1, l2;
+    
+    if (TTCheckMagic(ttdemo_magic) &&
+	TTOpen(NULL) &&
+	TTSet_ttapplication("ttdemo") &&
+	(f = TTNEW(ttframe)) &&
+
+	/*
+	 * connect `askclose' event to TTDel():
+	 * this is only to show how to do it, since TTClose()
+	 * or exit() are already enough to shutdown libTT
+	 * 
+	 * by default new listeners get called AFTER the other existing listeners
+	 * 
+	 * set ttlistener_lflags_arg0_component flag so that
+	 * first argument will be (f)
+	 */
+	TTCreateAskclose_ttlistener((ttcomponent)f, ttlistener_lflags_arg0_component,
+				    (void *)TTDel) &&
+	
+	/*
+	 * when f gets deleted (by callback above), call my_exit to exit libTT main loop.
+	 */
+	TTCreateDel_ttlistener((ttcomponent)f, ttlistener_lflags_arg0_component,
+			       (void *)my_exit) &&
+	
+	/*
+	 * react to f resizes.
+	 */
+	(l1 = TTCreateChange_ttlistener((ttcomponent)f, TTGetFieldId("ttwidget_w"),
+					0, (void *)my_resize)) &&
+	(l2 = TTCreateChange_ttlistener((ttcomponent)f, TTGetFieldId("ttwidget_h"),
+					0, (void *)my_resize)) &&
+
+	/*
+	 * the following two function show how to use KeyData in ttcomponents
+	 * and watch for changes in it.
+	 */
+	TTSetKeyData_ttcomponent((ttcomponent)f, "somestring", 19) &&
+	TTCreateKeyData_ttlistener((ttcomponent)f, "somestring",
+				   0, (void *)my_keydata_changed) &&
+	TTSetKeyData_ttcomponent((ttcomponent)f, "somestring", 123456789) &&
+	
+	TT_TRUE)
+    {
+	/*
+	 * play with blocked events
+	 */
+	ttuint evtypes[] = {
+	    0x2000, 0x0100, 0x1000
+	};
+	ttopaque n = sizeof(evtypes)/sizeof(evtypes[0]);
+	
+	TTSetEventMask_ttlistener(l1, TTCreate_tteventmask(TTCreateA_ttbitmask(n, evtypes), NULL, NULL));
+	/*
+	 * now we cannot use the created ttbitmasks and tteventmasks anymore:
+	 * TTSetEventMask_ttlistener() and TTCreate_tteventmask() swallow them
+	 */
+	TTSetEventMask_ttlistener(l2, TTCreate_tteventmask(TTCreateA_ttbitmask(n, evtypes), NULL, NULL));
+	/*
+	 * idem as above
+	 */
+
+	
+	    
+	TTSetRepaint_ttvisible((ttvisible)f, my_repaint);
+	TTSetWH_ttwidget((ttwidget)f, 10, 8);
+	TTSetVisible_ttvisible((ttvisible)f, TT_TRUE);
+
+	return TT_TRUE;
+    }
+    
+    return TT_FALSE;
 }
 
 static ttbyte my_mainloop(void) {
@@ -82,51 +206,9 @@ static ttbyte my_mainloop(void) {
 }
 
 int main(int argc, char *argv[]) {
-    ttframe f;
     byte ok;
     
-    ok =TTCheckMagic(ttdemo_magic) &&
-	TTOpen(NULL) &&
-	TTSet_ttapplication("ttdemo") &&
-	(f = TTNEW(ttframe)) &&
-
-	/*
-	 * connect `askclose' event to TTDel():
-	 * this is only to show how to do it, since TTClose()
-	 * or exit() are already enough to shutdown libTT
-	 * 
-	 * set ttcallback_lflags_after flag to ensure TTDel
-	 * gets called AFTER the other existing callbacks
-	 * 
-	 * also set ttcallback_lflags_arg0_component flag so that
-	 * first argument will be (f)
-	 */
-	TTCreate_ttcallback((ttcomponent)f, ttevent_evtype_askclose,
-			    ttcallback_lflags_after|ttcallback_lflags_arg0_component,
-			    (void *)TTDel, (ttany)0) &&
-	
-	/*
-	 * when f gets deleted (by callback above), call my_exit to exit libTT main loop.
-	 * 
-	 * set ttcallback_lflags_function_plain flag to tell libTT that my_printf
-	 * takes a list of (ttany) parameters as arguments (only one actually, since
-	 * we use TTCreate_ttcallback() and not one of TTCreate*_ttcallback() )
-	 * 
-	 * we could set ttcallback_lflags_arg0_component flag here too,
-	 * but we do not, to show how last argument of TTCreate_ttcallback() is passed
-	 * verbatim to callback.
-	 */
-	TTCreate_ttcallback((ttcomponent)f, ttevent_evtype_del, 
-			    ttcallback_lflags_function_plain, (void *)my_exit, (ttany)f) &&
-	(
-	 TTSetRepaint_ttvisible((ttvisible)f, my_repaint),
-	 TTSetWH_ttwidget((ttwidget)f, 10, 8),
-	 TTSetVisible_ttvisible((ttvisible)f, TRUE),
-	 TRUE
-	 );
-	
-    
-    if (ok) {
+    if ((ok = my_init())) {
 	/*
 	 * ok = TTMainLoop();
 	 */

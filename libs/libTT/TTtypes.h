@@ -8,6 +8,7 @@
 #ifndef _TT_TYPES_H
 #define _TT_TYPES_H
 
+#include <Tw/Tw_defs.h>
 #include <Tw/Twtypes.h>
 #include <Tw/Twavl.h>
 
@@ -21,7 +22,8 @@
 #include "flags.h"
 #include "tree_m4.h"
 #include "datatypes.h"
-#include "defs_m4.h"
+#include <TT/datasizes.h>
+#include "decls_m4.h"
 
 #endif /* _TT_TYPES_H */
 

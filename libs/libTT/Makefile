@@ -28,8 +28,8 @@ AVLOBJS_l=avl.lo
 HWOBJS=HW/hw.lst
 HWOBJS_l=HW/hw_l.lst
 
-OBJS_libTT.a=libTT.o field.o handy.o wrap.o missing.o $(HWOBJS)
-OBJS_libTT.la=libTT.lo field.lo handy.lo wrap.lo missing.lo $(HWOBJS_l)
+OBJS_libTT.a=libTT.o mem.o field.o handy.o wrap.o missing.o $(HWOBJS)
+OBJS_libTT.la=libTT.lo mem.lo field.lo handy.lo wrap.lo missing.lo $(HWOBJS_l)
 
 ALLOBJS=$(AVLOBJS) $(AVLOBJS_l) $(HWOBJS) $(HWOBJS_l) $(OBJS_libTT.a) $(OBJS_libTT.la)
 
@@ -48,7 +48,7 @@ ifeq ($(CONF_TT),y)
     everything: $(ARLIBS)
 	@rm -f $(filter-out $(ARLIBS), $(ALLBINS)) ; \
 	 echo ; \
-	 echo "You disabled \"Enable shared libraries (ELF)\"," ; \
+	 echo "You disabled \"Enable shared libraries\"," ; \
 	 echo "so only the static library libTT.a will be compiled!" ; \
 	 echo
   endif
@@ -109,10 +109,10 @@ endif
 #
 
 #
-# generate defs_m4.h *before* entering HW/ subdirectory, otherwise
-# wrong depends will be generated there since defs_m4.h is missing
+# generate decls_m4.h *before* entering HW/ subdirectory, otherwise
+# wrong depends will be generated there since decls_m4.h is missing
 #
-HW/%: defs_m4.h dir-HW
+HW/%: decls_m4.h dir-HW
 	@:
 
 #
@@ -126,7 +126,7 @@ include $(TOPDIR)/makerules
 # All done. Now just set a few special targets
 #
 
-do-autogen: defs_m4.h
+do-autogen: decls_m4.h
 
 missing.c:
 	$(LN) $(TOPDIR)/server/$@ $@

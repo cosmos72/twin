@@ -11,7 +11,7 @@ BINS=
 
 BINS_libTw=twattach twcat twclip twdialog twevent twfindtwin twlsmsgport twlsobj twsendmsg twsetroot twterm
 
-BINS_libTT=ttdemo ttdemo2
+BINS_libTT=ttdemo ttdemo2 ttdemo3
 
 
 ifneq ($(CONF_SOCKET),n)
@@ -47,6 +47,7 @@ OBJS_twterm=pty.o term.o
 OBJS_twthreadtest=threadtest.o
 OBJS_ttdemo=demo.o
 OBJS_ttdemo2=demo2.o
+OBJS_ttdemo3=demo3.o
 
 CC_FLAGS_threadtest.o+=-D_REENTRANT
 
@@ -70,6 +71,7 @@ LD_FLAGS_twterm+=$(LD_LIBTW)
 LD_FLAGS_twthreadtest+=$(LD_LIBTW) $(LD_LIBPTHREAD)
 LD_FLAGS_ttdemo+=$(LD_LIBTT)
 LD_FLAGS_ttdemo2+=$(LD_LIBTT)
+LD_FLAGS_ttdemo3+=$(LD_LIBTT)
 
 
 all: everything

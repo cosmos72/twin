@@ -114,7 +114,7 @@ struct x11_data {
 #ifdef CONF__UNICODE
     Tutf_function xUTF_16_to_charset;
 #endif    
-    Display     *xdisplay;
+    Display     *dpy;
     Window       xwindow;
     GC           xgc;
     XGCValues    xsgc;
@@ -136,7 +136,7 @@ struct x11_data {
 #define xhfont		(xdata->xhfont)
 #define xupfont		(xdata->xupfont)
 #define xUTF_16_to_charset	(xdata->xUTF_16_to_charset)
-#define xdisplay	(xdata->xdisplay)
+#define dpy	(xdata->dpy)
 #define xwindow		(xdata->xwindow)
 #define xgc		(xdata->xgc)
 #define xsgc		(xdata->xsgc)
@@ -158,7 +158,7 @@ static void X11_SelectionRequest_up(XSelectionRequestEvent *req);
 
 
 static void X11_Beep(void) {
-    XBell(xdisplay, 0);
+    XBell(dpy, 0);
     setFlush();
 }
 
@@ -174,12 +174,12 @@ static void X11_Configure(udat resource, byte todefault, udat value) {
 	break;
       case HW_BELLPITCH:
 	xctrl.bell_pitch = todefault ? -1 : value;
-	XChangeKeyboardControl(xdisplay, KBBellPitch, &xctrl);
+	XChangeKeyboardControl(dpy, KBBellPitch, &xctrl);
 	setFlush();
 	break;
       case HW_BELLDURATION:
 	xctrl.bell_duration = todefault ? -1 : value;
-	XChangeKeyboardControl(xdisplay, KBBellDuration, &xctrl);
+	XChangeKeyboardControl(dpy, KBBellDuration, &xctrl);
 	setFlush();
 	break;
       case HW_MOUSEMOTIONEVENTS:
@@ -332,21 +332,44 @@ static void X11_HandleEvent(XEvent *event) {
 	    break;
 	}
 	
-	dx= event->xbutton.state;
-	dy= (dx & Button1Mask ? HOLD_LEFT : 0) |
+	dx = event->xbutton.state;
+	dy =(dx & Button1Mask ? HOLD_LEFT : 0) |
 	    (dx & Button2Mask ? HOLD_MIDDLE : 0) |
-	    (dx & Button3Mask ? HOLD_RIGHT : 0);
+	    (dx & Button3Mask ? HOLD_RIGHT : 0) |
+#ifdef HOLD_WHEEL_REV
+	    (dx & Button4Mask ? HOLD_WHEEL_REV : 0) |
+#endif
+#ifdef HOLD_WHEEL_FWD
+	    (dx & Button5Mask ? HOLD_WHEEL_FWD : 0) |
+#endif
+	    0;
+	
+	
+	/*
+	 * when sending ButtonRelease event, X11 reports that button
+	 * as still held down in event->xbutton.state ButtonMask...
+	 * 
+	 * instead when sending ButtonPress event, X11 reports that
+	 * button as still NOT held down in event->xbutton.state ButtonMask...
+	 * 
+	 * fix both cases here.
+	 */
 	dx = event->xbutton.button;
-	
+	dx = (dx == Button1 ? HOLD_LEFT :
+	      dx == Button2 ? HOLD_MIDDLE :
+	      dx == Button3 ? HOLD_RIGHT :
+#ifdef HOLD_WHEEL_REV
+	      dx == Button4 ? HOLD_WHEEL_REV :
+#endif
+#ifdef HOLD_WHEEL_FWD
+	      dx == Button5 ? HOLD_WHEEL_FWD :
+#endif
+	      0);
 	if (event->type == ButtonPress)
-	    dy|= (dx == Button1 ? HOLD_LEFT :
-		  dx == Button2 ? HOLD_MIDDLE :
-		  dx == Button3 ? HOLD_RIGHT : 0);
+	    dy |= dx;
 	else
-	    dy &= ~(dx == Button1 ? HOLD_LEFT :
-		    dx == Button2 ? HOLD_MIDDLE :
-		    dx == Button3 ? HOLD_RIGHT : 0);
-	
+	    dy &= ~dx;
+	    
 	MouseEventCommon(x, y, 0, 0, dy);
 	
 	break;
@@ -403,8 +426,8 @@ static void X11_KeyboardEvent(int fd, display_hw D_HW) {
     SaveHW;
     SetHW(D_HW);
     
-    while (XPending(xdisplay) > 0) {
-	XNextEvent(xdisplay, &event);
+    while (XPending(dpy) > 0) {
+	XNextEvent(dpy, &event);
 	X11_HandleEvent(&event);
     }
     
@@ -419,17 +442,17 @@ static hwcol _col;
 #ifdef CONF__UNICODE
 # define XDRAW(col, buf, buflen) \
     if (xsgc.foreground != xcol[COLFG(col)]) \
-	XSetForeground(xdisplay, xgc, xsgc.foreground = xcol[COLFG(col)]); \
+	XSetForeground(dpy, xgc, xsgc.foreground = xcol[COLFG(col)]); \
     if (xsgc.background != xcol[COLBG(col)]) \
-	XSetBackground(xdisplay, xgc, xsgc.background = xcol[COLBG(col)]); \
-    XDrawImageString16(xdisplay, xwindow, xgc, xbegin, ybegin + xupfont, buf, buflen)
+	XSetBackground(dpy, xgc, xsgc.background = xcol[COLBG(col)]); \
+    XDrawImageString16(dpy, xwindow, xgc, xbegin, ybegin + xupfont, buf, buflen)
 #else
 # define XDRAW(col, buf, buflen) \
     if (xsgc.foreground != xcol[COLFG(col)]) \
-	XSetForeground(xdisplay, xgc, xsgc.foreground = xcol[COLFG(col)]); \
+	XSetForeground(dpy, xgc, xsgc.foreground = xcol[COLFG(col)]); \
     if (xsgc.background != xcol[COLBG(col)]) \
-	XSetBackground(xdisplay, xgc, xsgc.background = xcol[COLBG(col)]); \
-    XDrawImageString(xdisplay, xwindow, xgc, xbegin, ybegin + xupfont, buf, buflen)
+	XSetBackground(dpy, xgc, xsgc.background = xcol[COLBG(col)]); \
+    XDrawImageString(dpy, xwindow, xgc, xbegin, ybegin + xupfont, buf, buflen)
 #endif
 
 INLINE void X11_Mogrify(dat x, dat y, uldat len) {
@@ -510,17 +533,17 @@ static void X11_ShowCursor(uldat type, dat x, dat y) {
 	if ((type & 0x40) && ((COLFG(v) & WHITE) == (COLBG(v) & WHITE)))
 	    v ^= COL(WHITE,0);
 	if (xsgc.foreground != xcol[COLFG(v)])
-	    XSetForeground(xdisplay, xgc, xsgc.foreground = xcol[COLFG(v)]);
+	    XSetForeground(dpy, xgc, xsgc.foreground = xcol[COLFG(v)]);
 	if (xsgc.background != xcol[COLBG(v)])
-	    XSetBackground(xdisplay, xgc, xsgc.background = xcol[COLBG(v)]);
+	    XSetBackground(dpy, xgc, xsgc.background = xcol[COLBG(v)]);
 #ifdef CONF__UNICODE
 	f = xUTF_16_to_charset(HWFONT(V));
 	c.byte1 = f >> 8;
 	c.byte2 = f & 0xFF;
-	XDrawImageString16(xdisplay, xwindow, xgc, x * xwfont, y * xhfont + xupfont, &c, 1);
+	XDrawImageString16(dpy, xwindow, xgc, x * xwfont, y * xhfont + xupfont, &c, 1);
 #else
 	c = HWFONT(V);
-	XDrawImageString(xdisplay, xwindow, xgc, x * xwfont, y * xhfont + xupfont, &c, 1);
+	XDrawImageString(dpy, xwindow, xgc, x * xwfont, y * xhfont + xupfont, &c, 1);
 #endif
     }
     if (type & 0xF) {
@@ -529,12 +552,12 @@ static void X11_ShowCursor(uldat type, dat x, dat y) {
 	
 	/* doesn't work as expected on paletted visuals... */
 	if (xsgc.foreground != xcol[COLFG(HWCOL(V)) ^ COLBG(HWCOL(V))])
-	    XSetForeground(xdisplay, xgc, xsgc.foreground = xcol[COLFG(HWCOL(V)) ^ COLBG(HWCOL(V))]);
+	    XSetForeground(dpy, xgc, xsgc.foreground = xcol[COLFG(HWCOL(V)) ^ COLBG(HWCOL(V))]);
 	
-	XSetFunction(xdisplay, xgc, xsgc.function = GXxor);
-	XFillRectangle(xdisplay, xwindow, xgc,
+	XSetFunction(dpy, xgc, xsgc.function = GXxor);
+	XFillRectangle(dpy, xwindow, xgc,
 		       x * xwfont, y * xhfont + xhfont - i, xwfont, i);
-	XSetFunction(xdisplay, xgc, xsgc.function = GXcopy);
+	XSetFunction(dpy, xgc, xsgc.function = GXcopy);
     }
 }
 
@@ -583,7 +606,7 @@ static void X11_FlushVideo(void) {
 }
 
 static void X11_FlushHW(void) {
-    XFlush(xdisplay);
+    XFlush(dpy);
     clrFlush();
 }
 
@@ -598,7 +621,7 @@ static void X11_CheckResize(dat *x, dat *y) {
 
 static void X11_Resize(dat x, dat y) {
     if (x != HW->X || y != HW->Y) {
-	XResizeWindow(xdisplay, xwindow,
+	XResizeWindow(dpy, xwindow,
 		      xwidth = xwfont * (HW->X = x),
 		      xheight = xhfont * (HW->Y = y));
 	setFlush();
@@ -617,7 +640,7 @@ static byte X11_SelectionImport_X11(void) {
  */
 static void X11_SelectionExport_X11(void) {
     if (!HW->HWSelectionPrivate) {
-	XSetSelectionOwner(xdisplay, XA_PRIMARY, xwindow, CurrentTime);
+	XSetSelectionOwner(dpy, XA_PRIMARY, xwindow, CurrentTime);
 	HW->HWSelectionPrivate = (tany)xwindow;
 	setFlush();
     }
@@ -660,7 +683,7 @@ static void X11_SelectionNotify_X11(uldat ReqPrivate, uldat Magic, CONST byte MI
 	
 	target_list[0] = (Atom32) xTARGETS;
 	target_list[1] = (Atom32) XA_STRING;
-	XChangeProperty (xdisplay, XReq(XReqCount).requestor, XReq(XReqCount).property,
+	XChangeProperty (dpy, XReq(XReqCount).requestor, XReq(XReqCount).property,
 			 xTARGETS, 8*sizeof(target_list[0]), PropModeReplace,
 			 (char *)target_list,
 			 sizeof(target_list)/sizeof(target_list[0]));
@@ -683,7 +706,7 @@ static void X11_SelectionNotify_X11(uldat ReqPrivate, uldat Magic, CONST byte MI
 		Len = 0;
 	}
 #endif
-	XChangeProperty (xdisplay, XReq(XReqCount).requestor, XReq(XReqCount).property,
+	XChangeProperty (dpy, XReq(XReqCount).requestor, XReq(XReqCount).property,
 			 XA_STRING, 8, PropModeReplace, Data, Len);
 	ev.xselection.property = XReq(XReqCount).property;
 
@@ -692,7 +715,7 @@ static void X11_SelectionNotify_X11(uldat ReqPrivate, uldat Magic, CONST byte MI
 	    FreeMem(_Data);
 #endif
     }
-    XSendEvent (xdisplay, XReq(XReqCount).requestor, False, 0, &ev);
+    XSendEvent (dpy, XReq(XReqCount).requestor, False, 0, &ev);
     setFlush();
 }
 
@@ -721,7 +744,7 @@ static void X11_SelectionNotify_up(Window win, Atom prop) {
     xReqCount--;
 
     do {
-	if ((XGetWindowProperty(xdisplay, win, prop,
+	if ((XGetWindowProperty(dpy, win, prop,
 				nread/4, bytes_after/4, False,
 				AnyPropertyType, &actual_type, &actual_fmt,
 				&nitems, &bytes_after, &data)
@@ -765,11 +788,11 @@ static void X11_SelectionRequest_X11(obj Requestor, uldat ReqPrivate) {
 	xReqPrivate(xReqCount) = ReqPrivate;
 	xReqCount++;
 	
-	if (XGetSelectionOwner(xdisplay, XA_PRIMARY) == None)
-	    X11_SelectionNotify_up(DefaultRootWindow(xdisplay), XA_CUT_BUFFER0);
+	if (XGetSelectionOwner(dpy, XA_PRIMARY) == None)
+	    X11_SelectionNotify_up(DefaultRootWindow(dpy), XA_CUT_BUFFER0);
 	else {
-	    Atom prop = XInternAtom (xdisplay, "VT_SELECTION", False);
-	    XConvertSelection(xdisplay, XA_PRIMARY, XA_STRING, prop, xwindow, CurrentTime);
+	    Atom prop = XInternAtom (dpy, "VT_SELECTION", False);
+	    XConvertSelection(dpy, XA_PRIMARY, XA_STRING, prop, xwindow, CurrentTime);
 	    setFlush();
 	    /* we will get an X11 SelectionNotify event */
 	}
@@ -819,7 +842,7 @@ static void X11_DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat Ds
 	    HW->TT = (uldat)-1;
 	}
     }
-    XCopyArea(xdisplay, xwindow, xwindow, xgc,
+    XCopyArea(dpy, xwindow, xwindow, xgc,
 	      Left*xwfont, Up*xhfont, (Rgt-Left+1)*xwfont, (Dwn-Up+1)*xhfont,
 	      DstLeft*xwfont, DstUp*xhfont);
     setFlush();
@@ -828,14 +851,14 @@ static void X11_DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat Ds
 
 static void X11_QuitHW(void) {
 
-    if (xsfont) XFreeFont(xdisplay, xsfont);
-    if (xgc != None) XFreeGC(xdisplay, xgc);
+    if (xsfont) XFreeFont(dpy, xsfont);
+    if (xgc != None) XFreeGC(dpy, xgc);
     if (xwindow != None) {
-	XUnmapWindow(xdisplay, xwindow);
-	XDestroyWindow(xdisplay, xwindow);
+	XUnmapWindow(dpy, xwindow);
+	XDestroyWindow(dpy, xwindow);
     }
-    XCloseDisplay(xdisplay);
-    xdisplay = NULL;
+    XCloseDisplay(dpy);
+    dpy = NULL;
     
     if (HW->keyboard_slot != NOSLOT)
 	UnRegisterRemote(HW->keyboard_slot);
@@ -860,7 +883,7 @@ static int X11_Die(Display *d) {
      */
     forallHW {
 	if (HW->QuitHW == X11_QuitHW && HW->Private
-	    && d == xdisplay) { /* expands to HW->Private->xdisplay */
+	    && d == dpy) { /* expands to HW->Private->dpy */
 	    
 	    HW->NeedHW |= NEEDPanicHW, NeedHW |= NEEDPanicHW;
 	    
@@ -887,12 +910,12 @@ static Tutf_function X11_UTF_16_to_charset_function(CONST byte *charset) {
     if (!charset) {
 	/* attempt to autodetect encoding. */
 	fp = xsfont->properties;
-	fontatom = XInternAtom (xdisplay, "FONT", False);
+	fontatom = XInternAtom (dpy, "FONT", False);
 	i = xsfont->n_properties;
 	
 	while (i--) {
 	    if (fp->name == fontatom) {
-		fontname = XGetAtomName(xdisplay, fp->card32);
+		fontname = XGetAtomName(dpy, fp->card32);
 		/*fprintf(stderr, "    X11_UTF_16_to...: font name: `%s\'\n", fontname);*/
 		break;
 	    }
@@ -962,7 +985,7 @@ byte X11_InitHW(void) {
     XSizeHints *xhints;
     XEvent event;
     int i;
-    byte *s, *dpy = NULL, *dpy0 = NULL,
+    byte *s, *dpy_ = NULL, *dpy0 = NULL,
     *fontname = NULL, *fontname0 = NULL,
     *charset = NULL, *charset0 = NULL,
     name[] = "twin :??? on X";
@@ -983,7 +1006,7 @@ byte X11_InitHW(void) {
 	    arg += 2; /* `X11' is same as `X' */
 
 	if (*arg == '@') {
-	    if ((s = strchr(dpy = ++arg, ','))) {
+	    if ((s = strchr(dpy_ = ++arg, ','))) {
 		*(dpy0 = s) = '\0';
 		arg = s + 1;
 	    } else
@@ -1022,21 +1045,21 @@ byte X11_InitHW(void) {
     xReqCount = XReqCount = 0;
     HW->keyboard_slot = NOSLOT;
     
-    if ((xdisplay = XOpenDisplay(dpy))) do {
+    if ((dpy = XOpenDisplay(dpy_))) do {
 	
 	(void)XSetIOErrorHandler(X11_Die);
 
 	if (!X11_CheckRemapKeys())
 	    break;
 
-	xscreen = DefaultScreen(xdisplay);
-	xdepth  = DefaultDepth(xdisplay, xscreen);
+	xscreen = DefaultScreen(dpy);
+	xdepth  = DefaultDepth(dpy, xscreen);
 	
 	for (i = 0; i <= MAXCOL; i++) {
 	    xcolor.red   = 257 * (udat)Palette[i].Red;
 	    xcolor.green = 257 * (udat)Palette[i].Green;
 	    xcolor.blue  = 257 * (udat)Palette[i].Blue;
-	    if (!XAllocColor(xdisplay, DefaultColormap(xdisplay, xscreen), &xcolor)) {
+	    if (!XAllocColor(dpy, DefaultColormap(dpy, xscreen), &xcolor)) {
 		printk("      X11_InitHW() failed to allocate colors\n");
 		break;
 	    }
@@ -1050,27 +1073,27 @@ byte X11_InitHW(void) {
 	    StructureNotifyMask | SubstructureNotifyMask |
 	    KeyPressMask | ButtonPressMask | ButtonReleaseMask | PointerMotionMask;
 
-	if (((fontname && (xsfont = XLoadQueryFont(xdisplay, fontname))) ||
-	     (xsfont = XLoadQueryFont(xdisplay, "vga")) ||
-	     (xsfont = XLoadQueryFont(xdisplay, "fixed"))) &&
+	if (((fontname && (xsfont = XLoadQueryFont(dpy, fontname))) ||
+	     (xsfont = XLoadQueryFont(dpy, "vga")) ||
+	     (xsfont = XLoadQueryFont(dpy, "fixed"))) &&
 	    (xwfont = xsfont->min_bounds.width,
 	     xwidth = xwfont * (HW->X = GetDisplayWidth()),
 	     xhfont = (xupfont = xsfont->ascent) + xsfont->descent,
 	     xheight = xhfont * (HW->Y = GetDisplayHeight()),
-	     xwindow = XCreateWindow(xdisplay, DefaultRootWindow(xdisplay), 0, 0,
+	     xwindow = XCreateWindow(dpy, DefaultRootWindow(dpy), 0, 0,
 				     xwidth, xheight, 0, xdepth, InputOutput,
-				     DefaultVisual(xdisplay, xscreen),
+				     DefaultVisual(dpy, xscreen),
 				     CWBackPixel | CWEventMask, &xattr)) &&
 
 	    (xsgc.foreground = xsgc.background = xcol[0],
 	     xsgc.graphics_exposures = False,
 	     xsgc.font = xsfont->fid,
-	     xgc = XCreateGC(xdisplay, xwindow, GCFont|GCForeground|GCBackground|GCGraphicsExposures, &xsgc)) &&
+	     xgc = XCreateGC(dpy, xwindow, GCFont|GCForeground|GCBackground|GCGraphicsExposures, &xsgc)) &&
 
 	    (xhints = XAllocSizeHints())) {
 	    
 	    sprintf(name, "twin %s on X", TWDisplay);
-	    XStoreName(xdisplay, xwindow, name);
+	    XStoreName(dpy, xwindow, name);
 
 
 #ifdef CONF__UNICODE
@@ -1081,28 +1104,28 @@ byte X11_InitHW(void) {
 	     * ask ICCCM-compliant window manager to tell us when close window
 	     * has been chosen, rather than just killing us
 	     */
-	    xWM_PROTOCOLS = XInternAtom(xdisplay, "WM_PROTOCOLS", False);
-	    xWM_DELETE_WINDOW = XInternAtom(xdisplay, "WM_DELETE_WINDOW", False);
-	    xTARGETS = XInternAtom(xdisplay, "TARGETS", False);
+	    xWM_PROTOCOLS = XInternAtom(dpy, "WM_PROTOCOLS", False);
+	    xWM_DELETE_WINDOW = XInternAtom(dpy, "WM_DELETE_WINDOW", False);
+	    xTARGETS = XInternAtom(dpy, "TARGETS", False);
 
-	    XChangeProperty(xdisplay, xwindow, xWM_PROTOCOLS, XA_ATOM, 32, PropModeReplace,
+	    XChangeProperty(dpy, xwindow, xWM_PROTOCOLS, XA_ATOM, 32, PropModeReplace,
 			    (unsigned char *) &xWM_DELETE_WINDOW, 1);
 	    
 	    xhints->flags = PResizeInc;
 	    xhints->width_inc  = xwfont;
 	    xhints->height_inc = xhfont;
-	    XSetWMNormalHints(xdisplay, xwindow, xhints);
+	    XSetWMNormalHints(dpy, xwindow, xhints);
 	    
-	    XMapWindow(xdisplay, xwindow);
+	    XMapWindow(dpy, xwindow);
 	    
 	    do {
-		XNextEvent(xdisplay, &event);
+		XNextEvent(dpy, &event);
 	    } while (event.type != MapNotify);
 	    
 	    XFree(xhints); xhints = NULL;
 	    
 	    HW->mouse_slot = NOSLOT;
-	    HW->keyboard_slot = RegisterRemote(i = XConnectionNumber(xdisplay), (obj)HW,
+	    HW->keyboard_slot = RegisterRemote(i = XConnectionNumber(dpy), (obj)HW,
 					       X11_KeyboardEvent);
 	    if (HW->keyboard_slot == NOSLOT)
 		break;
@@ -1175,7 +1198,7 @@ byte X11_InitHW(void) {
 	    return TRUE;
 	}
     } while (0); else {
-	if (dpy || (dpy = getenv("DISPLAY")))
+	if (dpy_ || (dpy_ = getenv("DISPLAY")))
 	    printk("      X11_InitHW() failed to open display %."STR(SMALLBUFF)"s\n", HW->Name);
 	else
 	    printk("      X11_InitHW() failed: DISPLAY is not set\n");
@@ -1185,7 +1208,7 @@ byte X11_InitHW(void) {
     if (fontname0) *fontname0 = ',';
     if (charset0) *charset0 = ',';
 	
-    if (xdisplay)
+    if (dpy)
 	X11_QuitHW();
 
     FreeMem(HW->Private);

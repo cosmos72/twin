@@ -72,7 +72,7 @@ else
   lib: $(ARLIBS)
 	@rm -f $(SHLIBS) ; \
 	 echo ; \
-	 echo "You disabled \"Enable shared libraries (ELF)\"," ; \
+	 echo "You disabled \"Enable shared libraries\"," ; \
 	 echo "so only the static library libTw.a will be compiled!" ; \
 	 echo
 endif

@@ -11,7 +11,8 @@
 #include <TT/version.h>
 #include <TT/TTflags.h>
 #include <TT/datatypes.h>
-#include <TT/defs_m4.h>
+#include <TT/datasizes.h>
+#include <TT/decls_m4.h>
 #include <TT/handy_m4.h>
 
 #endif /* _TT_TYPES_H */

@@ -38,22 +38,32 @@ typedef struct s_ttutil {
 #ifdef CONF_SOCKET_PTHREADS
     s_tt_errno *(*GetErrnoLocation)(void);
 #endif
-    ttfont *(*CloneStr2TTFont)(TT_CONST ttbyte * s, size_t len);
-    ttbyte (*AssignId)(TT_CONST ttfn_ttobj FN, ttobj Obj);
-    void (*DropId)(ttobj Obj);
+    ttbyte(*AssignId)(TT_CONST ttfn_ttobj FN, ttobj Obj);
+    void  (*DropId)(ttobj Obj);
     ttobj (*Id2Obj)(ttbyte i, ttopaque Id);
     ttobj (*FindNative)(ttany id);
+    void  (*GetNow)(void);
     
-    void (*DispatchEvent)(ttcomponent o, ttevent ev, ttbyte dflags);
-    void (*DispatchSimpleEvent)(ttcomponent o, ttuint evtype);
+    void (*FireEvent)(ttevent ev, ttcomponent o);
+    void (*FireSimpleEvent)(ttcomponent o, ttuint evtype);
+    void (*FireChangeEvent)(ttcomponent o, ttuint which, ttany value, ttany old_value, ttopaque len);
     
-    void (*DelAllListeners_ttcomponent)(ttcomponent o);
-    void (*DelAllCallbacks_ttcomponent)(ttcomponent o);
+    void (*AddTo_ttlistener)(ttlistener c, ttcomponent o);
+    void (*Remove_ttlistener)(ttlistener c);
+    void (*Activate_tttimer)(tttimer o, ttbyte active);
     
-    ttcallback (*AddTo_ttcallback)(ttcallback c, ttcomponent o);
-    void (*Remove_ttcallback)(ttcallback c);
+    void   (*AddTo_ttdata)(ttdata d, ttcomponent o, ttbyte quickndirty);
+    void   (*Remove_ttdata)(ttdata d);
+    tt_fn  (*SetData_ttdata)(ttdata o, ttany data);
+    ttdata (*FindByKey_ttdata)(ttdata base, TT_CONST ttbyte *key, ttopaque len);
+    ttdata (*protected_Create_ttdata)(ttcomponent c, TT_ARG_READ ttbyte *key, ttopaque key_len, ttany data);
+    
+    void (*DelAllExtras_ttcomponent)(ttcomponent o);
     
     void (*Expose_ttvisible)(ttvisible o, ttshort x, ttshort y, ttshort w, ttshort h);
+    
+    void (*RealClose)(void);
+    
 } s_ttutil;
 
 typedef struct s_ttcreates {
@@ -64,14 +74,29 @@ typedef struct s_tt_d {
 #ifdef CONF_SOCKET_PTHREADS
     th_r_mutex mutex;
 #endif
+    ttuint refcount;
+    
     tttheme Theme, DummyTheme;
     ttmenubar Menubar;
     ttapplication Application;
+
+    tteventmask InstalledEM, DefaultEM;
+
+    /* events queued */
+    ttevent FirstE, LastE;
+    /* listeners in progress */
+    ttlistener FirstL, LastL;
+    
+    /* active timers */
+    tttimer FirstT, LastT;
+    time_t TNow;
+    frac_t FNow;
     
     ttbyte *HWTarget, *HWOptions;
     void *DlHandle;
     
-    ttbyte OpenFlag, ExitMainLoopFlag, PanicFlag;
+    ttbyte OpenFlag, PanicFlag, ExitMainLoopFlag, QuitArg;
+    
     s_tt_errno rCommonErrno_;
     s_tt_errno_vec rErrno_;
     TT_CONST byte *str_dlerror;
@@ -79,10 +104,12 @@ typedef struct s_tt_d {
     s_ttcreates CREATE;
     s_ttutil UTIL;
     
-    ttfn_ttobj FN_[order_n];
+    ttfns FN_hw_null;
     
-    ttfns null_FNs;
+    ttfn_ttobj FNs[order_n];
+    
     s_ttfns FN;
+    s_ttfns FNdefault;
 } s_tt_d;
 
 
@@ -94,8 +121,22 @@ extern s_tt_d TTD;
 #define CommonErrno		(TTD.rCommonErrno_.E)
 #define CommonErrnoDetail	(TTD.rCommonErrno_.S)
 
-#define LOCK th_r_mutex_lock(mutex)
-#define UNLK th_r_mutex_unlock(mutex)
+#define TT_MUTEX_HELPER_DEFS(attr) \
+    attr void Lock(void) { \
+	th_r_mutex_lock(mutex); \
+	TTD.refcount++; \
+    } \
+    attr void Unlock(void) { \
+	/* do not automatically call RealClose if in panic */ \
+	if (!--TTD.refcount && TTD.OpenFlag && !TTD.PanicFlag) \
+	    RealClose(); \
+	th_r_mutex_unlock(mutex); \
+    } \
+    TH_R_MUTEX_HELPER_DEFS(attr)
+
+
+#define LOCK Lock()
+#define UNLK Unlock()
 
 #define FAIL(E, S)		(CommonErrno = TT_MAX_ERROR+(E), CommonErrnoDetail = (S), FALSE)
 #define FAIL_PRINT(E, S, name)	(FAIL((E), (S)), _TTPrintInitError(name), FALSE)

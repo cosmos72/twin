@@ -3,7 +3,7 @@
 #
 TOPDIR=.
 THISDIR=.
-SUBDIRS=$(wildcard include docs libs clients server)
+SUBDIRS=$(wildcard include docs libs clients server themes)
 
 make_VERSION:=$(wordlist 1,2,$(shell $(MAKE) -v))
 ifneq ($(make_VERSION),GNU Make)
@@ -71,6 +71,8 @@ $(ADMIN_LIBTOOLS):
 	libtoolize -c
 
 ADMIN_ACLOCAL:=admin/aclocal.m4
+
+ADMIN_REMOVE_US:=$(ADMIN_ACLOCAL) $(ADMIN_LIBTOOLS)
 
 $(ADMIN_ACLOCAL):
 	@if [ -f /usr/share/aclocal/libtool.m4 ]; then \
@@ -149,7 +151,7 @@ ifeq ($(CONF__SHLIBS),y)
 	 echo you probably need to run some kind of administrative command ; \
 	 echo to let your system know about newly installed shared libraries ; \
 	 echo
-  ifeq ($(SUPPORT_SHLIBS),native)
+  ifeq ($(SYS_SHLIBS),native)
 	@echo if you do not know what to run, you can try with:
     ifeq ($(OS),Linux)
 	@echo "ldconfig"
@@ -182,12 +184,15 @@ distclean: clean
 	      .uni_types.conf .hdepend `find . -type l` \
 	      `find . -name .modules -o -name .depend` && \
 	$(CP) Makefile.fake Makefile && \
-	rm -f  $(ADMIN_ACLOCAL) && echo > $(ADMIN_ACLOCAL) && \
+	rm -f $(ADMIN_REMOVE_US) && \
+	for i in $(ADMIN_REMOVE_US); do \
+	  echo > $$i; \
+	done && \
 	touch configure
 
 pure: distclean
-	rm -f Makefile admin/lt* admin/config.* configure \
-	      $(ADMIN_ACLOCAL) server/rcparse_*.? include/autoconf.h.in \
+	rm -f Makefile admin/config.* $(ADMIN_REMOVE_US) configure \
+	      server/rcparse_*.? include/autoconf.h.in docs/ltrace.conf \
 	      `find include -name version.h` `find . -name \*_m4.h -o -name \*_m4.c`
 
 

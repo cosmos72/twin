@@ -20,5 +20,5 @@ define(`PROTOSyncSocket', `PROTO($@)')
 #define FIND_MAGIC		((uldat)0x646E6946ul) /* i.e. "Find" */
 #define MSG_MAGIC		((uldat)0x2167734dul) /* i.e. "Msg!" */
 
-include(`m4/sockproto.m4h')
+include(`m4/Tw_sockproto.m4h')
 

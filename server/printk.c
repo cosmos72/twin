@@ -43,15 +43,17 @@ int printk(CONST byte *format, ...) {
 #endif /* HAVE_VSNPRINTF */
 
 #ifdef CONF_PRINTK
-    if (MessagesWin->HLogic > SMALLBUFF) {
-	while (MessagesWin->HLogic > SMALLBUFF) {
-	    Delete(MessagesWin->USE.R.FirstRow);
-	    MessagesWin->CurY--;
+    if (MessagesWin) {
+	if (MessagesWin->HLogic > SMALLBUFF) {
+	    while (MessagesWin->HLogic > SMALLBUFF) {
+		Delete(MessagesWin->USE.R.FirstRow);
+		MessagesWin->CurY--;
+	    }
+	    if (MessagesWin->Parent)
+		DrawFullWindow2(MessagesWin);
 	}
-	if (MessagesWin->Parent)
-	    DrawFullWindow2(MessagesWin);
+	Act(RowWriteAscii,MessagesWin)(MessagesWin, i, buf);
     }
-    Act(RowWriteAscii,MessagesWin)(MessagesWin, i, buf);
 #endif /* CONF_PRINTK */
 
     if (log_fd == NOFD)

@@ -30,5 +30,5 @@ define(`PROTO', `{ 0, 0, "CHAIN($3, $4)",
 define(`PROTOSyncSocket', `PROTO($@)')
 define(`PROTOFindFunction', `PROTO($@)')
 
-include(`m4/sockproto.m4h')
+include(`m4/Tw_sockproto.m4h')
 

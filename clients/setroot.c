@@ -41,6 +41,8 @@ int main(int argc, char *argv[]) {
     
     name = *argv;
     
+    TwMergeHyphensArgv(argc, argv);
+    
     while (*++argv) {
 	switch (state) {
 	  case def:

@@ -17,7 +17,7 @@ int errmsg(tdisplay td) {
     return !!err;
 }
 
-int main(void) {
+int main(int argc, char *argv[]) {
     tslist reply, reply2;
     uldat id;
     tdisplay td;

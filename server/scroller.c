@@ -140,7 +140,7 @@ static void ScrollerH(msgport MsgPort) {
 	if (!WinScrolled)
 	    ScrollerAutoRepeat();
 
-	StdAddEventMouse(MSG_MOUSE, DRAG_MOUSE | Mouse->keys, Mouse->x, Mouse->y);
+	StdAddMouseEvent(MSG_MOUSE, DRAG_MOUSE | Mouse->keys, Mouse->x, Mouse->y);
     } else {
 	if (!WinScrolled)
 	    ScrollerDelayRepeat();

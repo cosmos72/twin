@@ -139,7 +139,7 @@ divert
  *                ________/   ____/(0,0)
  *       ________/       ____/       |
  *      /               /            |
- *ttlistener     ttevent        ttcomponent
+ *ttcallback     ttevent        ttcomponent
  *(0x1,0x3)     (0x2,0x3)     ___(0x3,0x3)___
  *                      _____/    /     \    \_____
  *                _____/         /       \         \_____

@@ -10,6 +10,8 @@
 
 #include <Tw/Tw.h>
 #include <Tw/Twavl.h>
+#include <Tw/Twstat.h>
+#include <Tw/Twstat_defs.h>
 #include <Tw/Twerrno.h>
 
 
@@ -28,96 +30,141 @@ static BREAK(ttobj) {
 	    TwDeleteObj(o->native);
 	    o->native = TW_NOID;
 	}
+	/* call null_Break_ttobj: */
+	FNDEFAULT(ttobj)->Break(o);
     }
 }
 
 
 /* ttvisible */
-
+static void twin_AtBuild_ttvisible(ttvisible o) {
+    /*
+     * add all children of this ttvisible:
+     * they have not been added yet, since we just
+     * called Build() on the parent ttvisible
+     */
+    opaque native = o->native, child_native;
+    ttvisible child = o->child_first;
+    
+    if (IS(ttwidget,o) && native != TW_NOID) while (child) {
+	if ((child_native = child->native))
+	    TwMapWidget(child_native, native);
+	child = child->next;
+    }
+}
 
 /* ttnative */
 static ttnative DEF(GetRoot_ttnative)(void) {
     return Create_ttnative(TwFirstScreen());
 }
-static DEL(ttnative) {
+static BREAK(ttnative) {
     o->native = TW_NOID;
-    DELSUPER(ttnative);
+    FNDEFAULT(ttnative)->Break(o);
+}
+static ttshort DEF(GetW_ttnative)(ttnative o) {
+    ttnative r = TFN_ttnative->GetRoot();
+    if (r && r->native == o->native)
+	return TwGetDisplayWidth();
+    return TwStat(o->native, TWS_widget_Width);
+}
+static ttshort DEF(GetH_ttnative)(ttnative o) {
+    ttnative r = TFN_ttnative->GetRoot();
+    if (r && r->native == o->native)
+	return TwGetDisplayHeight();
+    return TwStat(o->native, TWS_widget_Height);
 }
 
 
 /* ttwidget */
-static void ExposeListener_ttwidget(tevent_any e, void *id) {
+static void DEF(BuiltinRepaint_ttwidget)(ttwidget o, dat x, dat y, dat w, dat h) {
+    TwDrawHWAttrWidget(o->native, w, h, x, y, w, NULL);
+}
+static void twin_ExposeCallback_ttwidget(tevent_any e, void *id) {
     ttwidget o = ID2(ttwidget,(opaque)id);
     if (o)
 	Expose_ttvisible((ttvisible)o, e->EventWidget.X, e->EventWidget.Y, e->EventWidget.XWidth, e->EventWidget.YWidth);
 }
-static ttlistener AddExposeListener_ttwidget(ttwidget o) {
-    ttlistener l;
-    if ((l = Create_ttlistener((ttcomponent)o))) {
-	if ((l->native = (opaque)TwAddWidgetListener
-	     (o->native, TW_MSG_WIDGET_EXPOSE,
-	      (tfn_listener)ExposeListener_ttwidget, (void *)OBJ2ID(o))))
-	    /* OBJ2ID(o) is (ttopaque), so has same size as (void *) :-) */
-	    return l;
-	TDEL(l);
+static void twin_ResizeCallback_ttwidget(tevent_any e, void *id) {
+    ttwidget o = ID2(ttwidget,(opaque)id);
+    if (o) {
+	FIRE_EVENT(o->w = e->EventWidget.XWidth, o, ttwidget_w, e->EventWidget.XWidth, o->w);
+	FIRE_EVENT(o->h = e->EventWidget.YWidth, o, ttwidget_h, e->EventWidget.YWidth, o->h);
+    }
+}
+static ttcallback twin_AddCommonCallbacks_ttwidget(ttwidget o) {
+    ttcallback l[5];
+    byte i = 0;
+    void *id = (void *)OBJ2ID(o);
+    
+	
+    if ((l[i] = Create_ttcallback((ttcomponent)o)) &&
+	(l[i]->native = (opaque)TwAddWidgetListener
+	 (o->native, TW_MSG_WIDGET_EXPOSE,
+	  (tfn_listener)twin_ExposeCallback_ttwidget, id)) &&
+	(i++, (l[i] = Create_ttcallback((ttcomponent)o))) &&
+	(l[i]->native = (opaque)TwAddWidgetListener
+	 (o->native, TW_MSG_WIDGET_RESIZE,
+	  (tfn_listener)twin_ResizeCallback_ttwidget, id))) {
+
+	return l[i];
+    }
+    while (i) {
+    	TDEL(l[i]);
+	i--;
     }
     return NULL;
 }
 static BUILD(ttwidget) {
-    if (TW_NOID != (o->native = TwCreateWidget(1, 1, 0, TW_WIDGETFL_USEFILL, 0, MAXDAT, HWATTR(myTheme(o)->bg[tttheme_bg_normal], myTheme(o)->fill))))
+    tttheme t = myTheme(o);
+    hwfont f = t->fill;
+    hwcol c = o->col;
+    if (TW_NOID != (o->native = TwCreateWidget(o->w, o->h, 0, TW_WIDGETFL_USEFILL, 0, MAXDAT, HWATTR(c, f)))) {
+	twin_AtBuild_ttvisible((ttvisible)o);
 	return o;
+    }
     return NULL;
 }
 static void DEF(AddTo_ttwidget)(ttwidget o, ttvisible parent) {
     if (parent && !o->parent) {
-	/* prepend to list, cannot use FNSUPER(ttwidget)->AddTo() */
-	if ((o->next = parent->child_first))
-	    parent->child_first->prev = (ttvisible)o;
-	else
-	    parent->child_last = (ttvisible)o;
-	parent->child_first = (ttvisible)o;
-	o->prev = NULL;
-	o->parent = parent;
-
-	TwMapWidget(o->native, parent->native);
+	FNDEFAULT(ttwidget)->AddTo(o, parent);
+	
+	if (o->native != TW_NOID && parent->native != TW_NOID)
+	    TwMapWidget(o->native, parent->native);
     }
 }
-static void DEF(SetVisible_ttwidget)(ttwidget o, byte on_off) {
-    on_off = !!on_off;
-    if (on_off != !!(o->vflags & ttvisible_vflags_visible)) {
-	o->vflags ^= ttvisible_vflags_visible;
-	TwSetVisibleWidget(o->native, on_off);
-    }
+static void DEF(SetVisible_ttwidget)(ttwidget o, ttbyte visible) {
+    ttuint isvisible, wasvisibile;
+    
+    wasvisibile = o->vflags & ttvisible_vflags_visible;
+    
+    FNDEFAULT(ttwidget)->SetVisible(o, visible);
+    
+    isvisible = o->vflags & ttvisible_vflags_visible;
+    
+    if (isvisible != wasvisibile && o->native != TW_NOID)
+	TwSetVisibleWidget(o->native, visible);
 }
 static void DEF(Remove_ttwidget)(ttwidget o) {
     if (o->parent) {
-	FNSUPER(ttwidget)->Remove((super_(ttwidget))o);
+	FNDEFAULT(ttwidget)->Remove(o);
 	
-	TwUnMapWidget(o->native);
+	if (o->native != TW_NOID)
+	    TwUnMapWidget(o->native);
     }
 }
-static void DEF(SetXYWH_ttwidget)(ttwidget o, ttuint mask, ttshort x, ttshort y, ttshort w, ttshort h) {
-    if (mask & 1)
-	o->x = x;
-    if (mask & 2)
-	o->y = y;
-    if (mask & 3)
-	TwSetXYWidget(o->native, o->x, o->y);
-    if (mask & 4)
-	o->w = w;
-    if (mask & 8)
-	o->h = h;
-    if (mask & 0x0c)
-	TwResizeWidget(o->native, o->w, o->h);
+static void DEF(SetXY_ttwidget)(ttwidget o, ttshort x, ttshort y) {
+    TwSetXYWidget(o->native, o->x = x, o->y = y);
 }
-static void DEF(SetXlYl_ttwidget)(ttwidget o, ttuint mask, ttint xl, ttint yl) {
-    ttint o_xl = o->xl, o_yl = o->yl;
-    if (mask & 1)
-	o->xl = xl;
-    if (mask & 2)
-	o->yl = yl;
-    if (mask & 3)
-       TwScrollWidget(o->native, o->xl - o_xl, o->yl - o_yl);
+static void DEF(SetWH_ttwidget)(ttwidget o, ttshort w, ttshort h) {
+    TwResizeWidget(o->native, o->w = w, o->h = h);
+}
+static void DEF(SetXl_ttwidget)(ttwidget o, ttint xl) {
+    TwScrollWidget(o->native, xl - o->xl, 0);
+    o->xl = xl;
+}
+static void DEF(SetYl_ttwidget)(ttwidget o, ttint yl) {
+    TwScrollWidget(o->native, 0, yl - o->yl);
+    o->yl = yl;
 }
 static void DEF(Draw_ttwidget)(ttwidget o, ttshort x, ttshort y, ttshort w, ttshort h, ttshort pitch,
 			       TT_CONST ttbyte *asciidata, TT_CONST ttfont *fontdata, TT_CONST ttattr *attrdata) {
@@ -127,113 +174,68 @@ static void DEF(Draw_ttwidget)(ttwidget o, ttshort x, ttshort y, ttshort w, ttsh
 
 /* ttlabel */
 static BUILD(ttlabel) {
-    if (TW_NOID != (o->native = TwCreateWidget(o->text_len, 1, 0, TW_WIDGETFL_USEEXPOSE, 0, MAXDAT, HWATTR(myTheme(o)->bg[tttheme_bg_normal], myTheme(o)->fill)))) {
-	if (AddExposeListener_ttwidget((ttwidget)o))
+    if (TW_NOID != (o->native = TwCreateWidget(o->text_len, 1, 0, TW_WIDGETFL_USEEXPOSE, 0, MAXDAT, HWATTR(o->col, myTheme(o)->fill)))) {
+	if (twin_AddCommonCallbacks_ttwidget((ttwidget)o)) {
+	    twin_AtBuild_ttvisible((ttvisible)o);
 	    return o;
+	}
     }
     return NULL;
 }
-/* force inheritance from Draw_ttwidget() : DEF(Draw_ttlabel); */
+static void DEF(Invalidate_ttwidget)(ttwidget o) {
+    tttheme t;
+    
+    FNDEFAULT(ttwidget)->Invalidate(o);
+    
+    t = myTheme(o);
+    
+    TwSetFillWidget(o->native, HWATTR(o->col, t->fill));
+}
+
+/* force inheritance from Draw_ttwidget() (m4 trick: DEF(Draw_ttlabel)); */
 #define twin_Draw_ttlabel (void *)twin_Draw_ttwidget
 
 static void DEF(BuiltinRepaint_ttlabel)(ttlabel o, dat x, dat y, dat w, dat h) {
-    if (y == 0 && x < o->text_len)
-	TwDrawHWFontWidget(o->native, TT_MIN2(w,o->text_len-x), 1, x, 0, o->text_len, o->text+x);
+    if (y == 0) {
+	if (x < o->text_len)
+	    TwDrawHWFontWidget(o->native, TT_MIN2(w,o->text_len-x), 1, x, 0, o->text_len, o->text+x);
+	if (x+w > o->text_len)
+	    TwDrawHWFontWidget(o->native, o->text_len-x-w, 1, o->text_len, 0, 0, NULL);
+    }
 }
+
+
+/* ttbuttongroup */
+
+
 
 /* ttanybutton */
+static void DEF(Invalidate_ttanybutton)(ttanybutton o) {
+    /* needed because we have overridden Invalidate_ttwidget above */
+    ttbyte i;
+    
+#ifdef DEBUG_TT_HW_TWIN
+    fprintf(stderr, "twin_Invalidate_ttanybutton(o=0x%X)\n",
+	    (unsigned)o->id);
+#endif
+    for (i = 0; i < sizeof(o->theme_shape)/sizeof(o->theme_shape[0]); i++) {
+	if (o->theme_shape[i].attr) {
+	    TTFreeMem(o->theme_shape[i].attr);
+	    o->theme_shape[i].attr = NULL;
+	}
+    }
+}
 static void DEF(BuiltinRepaint_ttanybutton)(ttanybutton o, dat x, dat y, dat w, dat h) {
-    if (o->text) {
-	if (h+y > o->text_height)
-	    h = o->text_height - y;
-	if (w+x > o->text_width)
-	    w = o->text_width - x;
-
-	if (h > 0 && w > 0 && y < o->text_height && x < o->text_width)
-	    TwDrawHWFontWidget(o->native, TT_MIN2(w,o->text_width-x), TT_MIN2(h, o->text_height-y),
-				  x, y, o->text_width, o->text + x + (y * o->text_width));
-    } else
-	TwDrawHWFontWidget(o->native, w, h, x, y, w, NULL);
-}
-static void MouseEventWrapper_ttanybutton(tevent_any e, tobj id) {
-    ttanybutton o = ID2(ttanybutton,id);
-    ttevent ev;
-    if (o && (ev = (ttevent)Create_tteventbig
-	      /* FIXME: convert to libTT codes/shiftflags */
-	      (ttevent_evtype_mouse, e->EventMouse.Code, e->EventMouse.ShiftFlags,
-	       e->EventMouse.X, e->EventMouse.Y, 0, 0, 0, NULL))) {
-	
-	/* also deletes ev */
-	DispatchEvent((ttcomponent)o, ev, DispatchEvent_dflags_both);
-    }
-}
-static ttlistener AddCommonListeners_ttanybutton(ttanybutton o) {
-    ttlistener l[5];
-    byte i = 0;
-    void *id = (void *)OBJ2ID(o);
-    
-    if ((l[i] = AddExposeListener_ttwidget((ttwidget)o)) &&
-	(i++, (l[i] = Create_ttlistener((ttcomponent)o))) &&
-	((l[i]->native = (opaque)TwAddMouseListener(o->native, MOTION_MOUSE, 0, (tfn_listener)MouseEventWrapper_ttanybutton, id))) &&
-	(i++, (l[i] = Create_ttlistener((ttcomponent)o))) &&
-	((l[i]->native = (opaque)TwAddMouseListener(o->native, DOWN_LEFT, 0, (tfn_listener)MouseEventWrapper_ttanybutton, id))) &&
-	(i++, (l[i] = Create_ttlistener((ttcomponent)o))) &&
-	((l[i]->native = (opaque)TwAddMouseListener(o->native, DRAG_MOUSE|HOLD_LEFT, 0, (tfn_listener)MouseEventWrapper_ttanybutton, id))) &&
-	(i++, (l[i] = Create_ttlistener((ttcomponent)o))) &&
-	((l[i]->native = (opaque)TwAddMouseListener(o->native, RELEASE_LEFT, 0, (tfn_listener)MouseEventWrapper_ttanybutton, id)))) {
-	
-	return l[i];
-    }
-    while (i) {
-    	TDEL(l[i]);
-	i--;
-    }
-    return NULL;
-}
-
-
-/* ttbutton */
-static BUILD(ttbutton) {
-    dat w = o->text_width + myTheme(o)->shape[tttheme_shape_ttbutton_normal][0].border[tt_x_left] +
-	myTheme(o)->shape[tttheme_shape_ttbutton_normal][0].border[tt_x_right];
-    dat h = o->text_height + myTheme(o)->shape[tttheme_shape_ttbutton_normal][0].border[tt_y_up] +
-	myTheme(o)->shape[tttheme_shape_ttbutton_normal][0].border[tt_y_down];
-    
-    if (TW_NOID != (o->native = TwCreateWidget(w, h, TW_WIDGET_WANT_MOUSE|TW_WIDGET_WANT_MOUSE_MOTION,
-	TW_WIDGETFL_USEEXPOSE, 0, 0, myTheme(o)->bg[tttheme_bg_normal]))) {
-	if (AddCommonListeners_ttanybutton((ttanybutton)o))
-	    return o;
-    }
-    return NULL;
-}
-static void DEF(BuiltinRepaint_ttbutton)(ttbutton o, dat x, dat y, dat w, dat h) {
     ttattr *t;
     dat tw, th;
-    ttuint i, vflags;
-    static TT_CONST ttuint case_flags[][3] = {
-	{ ttanybutton_vflags_normal,   ttbutton_shape_normal,   tttheme_shape_ttbutton_normal, },
-	{ ttanybutton_vflags_prelight, ttbutton_shape_prelight, tttheme_shape_ttbutton_prelight, },
-	{ ttanybutton_vflags_pressed,  ttbutton_shape_pressed,  tttheme_shape_ttbutton_pressed, },
-	{ ttanybutton_vflags_disabled, ttbutton_shape_disabled, tttheme_shape_ttbutton_disabled, },
-    };
+    ttuint i;
     
-    vflags = o->vflags & ttanybutton_vflags_statemask;
-    for (i = 0; i < sizeof(case_flags)/sizeof(case_flags[0]); i++) {
-	if (case_flags[i][0] == vflags)
-	    break;
-    }
-    if (i >= sizeof(case_flags)/sizeof(case_flags[0]))
-	return;
-    
-    if (!(t = o->text_shape[case_flags[i][1]].attr))
-	t = o->text_shape[case_flags[i][1]].attr
-	= myTheme(o)->FN->ComputeShapeButton(o, i, case_flags[i][2]);
+    i = o->FN->CacheThemeShape(o);
 
-    if (t) {
-	i = case_flags[i][1];
-	
-	tw = o->text_shape[i].width;
-	th = o->text_shape[i].height;
+    if (i != (ttuint)-1) {
+	t = o->theme_shape[i].attr;
+	tw = o->theme_shape[i].width;
+	th = o->theme_shape[i].height;
 	
 	if (h+y > th)
 	    h = th - y;
@@ -243,11 +245,161 @@ static void DEF(BuiltinRepaint_ttbutton)(ttbutton o, dat x, dat y, dat w, dat h)
 	if (h > 0 && w > 0 && y < th && x < tw)
 	    TwDrawHWAttrWidget(o->native, TT_MIN2(w,tw-x), TT_MIN2(h, th-y),
 				 x, y, tw, t + x + (y * tw));
+    } else if (o->text && o->FN == TFN_ttanybutton) {
+	if (h+y > o->text_height)
+	    h = o->text_height - y;
+	if (w+x > o->text_width)
+	    w = o->text_width - x;
+
+	if (h > 0 && w > 0 && y < o->text_height && x < o->text_width)
+	    TwDrawHWAttrWidget(o->native, TT_MIN2(w,o->text_width-x), TT_MIN2(h, o->text_height-y),
+				  x, y, o->text_width, o->text + x + (y * o->text_width));
     } else
-	TwDrawHWFontWidget(o->native, w, h, x, y, w, NULL);
+	TwDrawHWAttrWidget(o->native, w, h, x, y, w, NULL);
 }
-static void DEF(SetPressed_ttbutton)(ttbutton o, byte pressed) {
+static void twin_MouseCallback_ttanybutton(tevent_any e, tobj id) {
+    ttanybutton o = ID2(ttanybutton,id);
+    ttevent ev;
+    ttuint evcode;
+    udat code;
+    /*
+     * libTw and libTT have the different encoding for mouse event codes,
+     * but shiftflags are the same
+     */
+    if (o) {
+	
+	code = e->EventMouse.Code;
+	evcode = 0;
+	if (isMOTION(code) || isDRAG(code)) {
+	    evcode = ttevent_evcode_mouse_move;
+	} else if (isPRESS(code)) {
+	    switch (code & PRESS_ANY) {
+	      case PRESS_LEFT:
+		evcode = ttevent_evcode_mouse_press_1;
+		break;
+	      case PRESS_MIDDLE:
+		evcode = ttevent_evcode_mouse_press_2;
+		break;
+	      case PRESS_RIGHT:
+		evcode = ttevent_evcode_mouse_press_3;
+		break;
+#ifdef HOLD_WHEEL_REV
+	      case PRESS_WHEEL_REV:
+		evcode = ttevent_evcode_mouse_press_4;
+		break;
+#endif
+#ifdef HOLD_WHEEL_FWD
+	      case PRESS_WHEEL_FWD:
+		evcode = ttevent_evcode_mouse_press_5;
+		break;
+#endif
+	      default:
+		/* unknown code! */
+		return;
+	    }
+	} else if (isRELEASE(code)) {
+	    switch (code & RELEASE_ANY) {
+	      case RELEASE_LEFT:
+		evcode = ttevent_evcode_mouse_release_1;
+		break;
+	      case RELEASE_MIDDLE:
+		evcode = ttevent_evcode_mouse_release_2;
+		break;
+	      case RELEASE_RIGHT:
+		evcode = ttevent_evcode_mouse_release_3;
+		break;
+#ifdef HOLD_WHEEL_REV
+	      case RELEASE_WHEEL_REV:
+		evcode = ttevent_evcode_mouse_release_4;
+		break;
+#endif
+#ifdef HOLD_WHEEL_FWD
+	      case RELEASE_WHEEL_FWD:
+		evcode = ttevent_evcode_mouse_release_5;
+		break;
+#endif
+	      default:
+		/* unknown code! */
+		return;
+	    }
+	} else {
+	    /* unknown code! */
+	    return;
+	}
+	
+	if ((code & HOLD_ANY)) {
+	    evcode |=
+		(code & HOLD_LEFT      ? ttevent_evcode_mouse_hold_1 : 0) |
+		(code & HOLD_MIDDLE    ? ttevent_evcode_mouse_hold_2 : 0) |
+		(code & HOLD_RIGHT     ? ttevent_evcode_mouse_hold_3 : 0) |
+#ifdef HOLD_WHEEL_REV
+		(code & HOLD_WHEEL_REV ? ttevent_evcode_mouse_hold_4 : 0) |
+#endif
+#ifdef HOLD_WHEEL_FWD
+		(code & HOLD_WHEEL_FWD ? ttevent_evcode_mouse_hold_5 : 0) |
+#endif
+		0;
+	}
+
+	if (evcode >= ttevent_evcode_mouse_first &&
+	    evcode <= ttevent_evcode_mouse_last &&
+	    (ev = (ttevent)Create4_tteventbig
+	     (ttevent_evtype_mouse, evcode, e->EventMouse.ShiftFlags,
+	      e->EventMouse.X, e->EventMouse.Y, 0, 0))) {
+	
+	    FireEvent(ev, (ttcomponent)o);
+	    /* FireEvent also deletes ev */
+	}
+    }
 }
+static ttcallback twin_AddCommonCallbacks_ttanybutton(ttanybutton o) {
+    ttcallback l[5];
+    byte i = 0;
+    void *id = (void *)OBJ2ID(o);
+    
+    if ((l[i] = twin_AddCommonCallbacks_ttwidget((ttwidget)o)) &&
+	(i++, (l[i] = Create_ttcallback((ttcomponent)o))) &&
+	(l[i]->native = (opaque)TwAddMouseListener
+	 (o->native, MOTION_MOUSE, 0, 
+	  (tfn_listener)twin_MouseCallback_ttanybutton, id)) &&
+	(i++, (l[i] = Create_ttcallback((ttcomponent)o))) &&
+	(l[i]->native = (opaque)TwAddMouseListener
+	 (o->native, PRESS_LEFT, 0,
+	  (tfn_listener)twin_MouseCallback_ttanybutton, id)) &&
+	(i++, (l[i] = Create_ttcallback((ttcomponent)o))) &&
+	(l[i]->native = (opaque)TwAddMouseListener
+	 (o->native, DRAG_MOUSE|HOLD_LEFT, 0,
+	  (tfn_listener)twin_MouseCallback_ttanybutton, id)) &&
+	(i++, (l[i] = Create_ttcallback((ttcomponent)o))) &&
+	(l[i]->native = (opaque)TwAddMouseListener
+	 (o->native, RELEASE_LEFT, 0,
+	  (tfn_listener)twin_MouseCallback_ttanybutton, id))) {
+	
+	return l[i];
+    }
+    while (i) {
+    	TDEL(l[i]);
+	i--;
+    }
+    return NULL;
+}
+static BUILD(ttanybutton) {
+    /* calculate o->w and o->h using theme: */
+    o->FN->CacheThemeShape(o);
+    
+    if (TW_NOID != (o->native = TwCreateWidget
+		    (o->w, o->h, TW_WIDGET_WANT_MOUSE|TW_WIDGET_WANT_MOUSE_MOTION|TW_WIDGET_AUTO_FOCUS,
+		     TW_WIDGETFL_USEEXPOSE, 0, 0, o->col))) {
+	if (twin_AddCommonCallbacks_ttanybutton((ttanybutton)o)) {
+	    twin_AtBuild_ttvisible((ttvisible)o);
+	    return o;
+	}
+    }
+    return NULL;
+}
+
+
+/* ttbutton */
 
 
 /* ttcheckbutton */
@@ -256,80 +408,113 @@ static void DEF(SetPressed_ttbutton)(ttbutton o, byte pressed) {
 /* ttradiobutton */
 
 
-/* ttbuttongroup */
+/* ttscrollbar */
 
-static BUILD(ttbuttongroup) {
-    if (TW_NOID != (o->native = TwCreateGroup()))
-	return o;
-    return NULL;
-}
+
+/* ttslider */
+
+
+/* ttscrollpane */
 
 
 /* ttwindow */
-
 static BUILD(ttwindow) {
     if (TW_NOID != (o->native = TwCreateWindow
-	 (0, NULL, NULL, myMenubar_n(o), myTheme(o)->bg[tttheme_bg_normal],
-	  TW_LINECURSOR, TW_WINDOW_DRAG|
-	  TW_WINDOW_WANT_CHANGES|TW_WINDOW_WANT_KEYS|TW_WINDOW_WANT_MOUSE,
-	  TW_WINDOWFL_USEEXPOSE|TW_WINDOWFL_CURSOR_ON|TW_WINDOWFL_BORDERLESS, 1, 1, 0))) {
-	if (AddExposeListener_ttwidget((ttwidget)o))
+	 (o->title ? TTLenStr(o->title) : 0, o->title, NULL, TW_NOID, o->col, TW_LINECURSOR,
+	  TW_WINDOW_DRAG|TW_WINDOW_WANT_CHANGES|TW_WINDOW_WANT_KEYS|
+	  TW_WINDOW_WANT_MOUSE|TW_WINDOW_WANT_MOUSE_MOTION|TW_WIDGET_AUTO_FOCUS,
+	  TW_WINDOWFL_USEEXPOSE|TW_WINDOWFL_CURSOR_ON|TW_WINDOWFL_BORDERLESS, o->w, o->h, 0))) {
+	if (twin_AddCommonCallbacks_ttwidget((ttwidget)o)) {
+	    twin_AtBuild_ttvisible((ttvisible)o);
 	    return o;
+	}
     }
     return NULL;
 }
 
-static void DEF(BuiltinRepaint_ttwindow)(ttwindow o, dat x, dat y, dat w, dat h) {
-    TwDrawHWAttrWidget(o->native, w, h, x, y, w, NULL);    
-}
 
 /* ttframe */
-
-static void AskCloseWrapper_ttframe(tevent_any ev, tobj id) {
+static void twin_AskCloseCallback_ttframe(tevent_any ev, tobj id) {
     ttframe o = ID2(ttframe,id);
     if (o)
-	DispatchSimpleEvent((ttcomponent)o, ttevent_evtype_askclose);
+	FireSimpleEvent((ttcomponent)o, ttevent_evtype_askclose);
 }
-
-static ttlistener AddAskCloseListener_ttframe(ttframe o) {
-    ttlistener l;
+static ttcallback twin_AddAskCloseCallback_ttframe(ttframe o) {
+    ttcallback l;
     opaque id = OBJ2ID(o);
     
-    if ((l = Create_ttlistener((ttcomponent)o))) {
+    if ((l = Create_ttcallback((ttcomponent)o))) {
 	if ((l->native = (opaque)TwAddGadgetListener
-	     (o->native, 0 /*CLOSE code*/, (tfn_listener)AskCloseWrapper_ttframe, (void *)id)))
+	     (o->native, 0 /*CLOSE code*/, (tfn_listener)twin_AskCloseCallback_ttframe, (void *)id)))
 	    return l;
 	TDEL(l);
     }
     return NULL;
 }
-
 static BUILD(ttframe) {
+    /* ttframe are non-visible when created */
     o->vflags &= ~ttvisible_vflags_visible;
     
     if (TW_NOID != (o->native = TwCreateWindow
-	 (0, NULL, NULL, myMenubar_n(o), myTheme(o)->bg[tttheme_bg_normal],
-	  TW_LINECURSOR, TW_WINDOW_DRAG|TW_WINDOW_RESIZE|TW_WINDOW_CLOSE|
-	  TW_WINDOW_WANT_CHANGES|TW_WINDOW_WANT_KEYS|TW_WINDOW_WANT_MOUSE,
-	  TW_WINDOWFL_USEEXPOSE|TW_WINDOWFL_CURSOR_ON, 1, 1, 0)) &&
-	AddExposeListener_ttwidget((ttwidget)o) &&
-	AddAskCloseListener_ttframe(o)) {
+	 (o->title ? TTLenStr(o->title) : 0, o->title, NULL, myMenubar_n(o), o->col, TW_LINECURSOR,
+	  TW_WINDOW_DRAG|TW_WINDOW_RESIZE|TW_WINDOW_CLOSE|TW_WINDOW_WANT_CHANGES|
+	  TW_WINDOW_WANT_KEYS|TW_WINDOW_WANT_MOUSE|TW_WINDOW_WANT_MOUSE_MOTION|TW_WIDGET_AUTO_FOCUS,
+	  TW_WINDOWFL_USEEXPOSE|TW_WINDOWFL_CURSOR_ON, o->w, o->h, 0)) &&
+	twin_AddCommonCallbacks_ttwidget((ttwidget)o) &&
+	twin_AddAskCloseCallback_ttframe(o)) {
 
+	twin_AtBuild_ttvisible((ttvisible)o);
+	
 	o->FN->AddTo(o, (ttvisible)TFN_ttnative->GetRoot());
 	return o;
     }
     return NULL;
 }
+/*
+ * HACK WARNING: libTw does not support non-visible
+ * top-level widgets, so we emulate them with TwUnmapWidget().
+ * This is why we override AddTo_ttframe() and SetVisible_ttframe()
+ */
+static void DEF(AddTo_ttframe)(ttframe o, ttvisible parent) {
+    if (parent && !o->parent) {
+	/* prepend to list */
+	if ((o->next = parent->child_first))
+	    parent->child_first->prev = (ttvisible)o;
+	else
+	    parent->child_last = (ttvisible)o;
+	parent->child_first = (ttvisible)o;
+	o->prev = NULL;
+	o->parent = parent;
+
+	if (o->vflags & ttvisible_vflags_visible)
+	    TwMapWidget(o->native, parent->native);
+    }
+}
+static void DEF(SetVisible_ttframe)(ttframe o, byte on_off) {
+    on_off = !!on_off;
+    if (on_off != !!(o->vflags & ttvisible_vflags_visible)) {
+	o->vflags ^= ttvisible_vflags_visible;
+	if (o->parent) {
+	    if (on_off)
+		TwMapWidget(o->native, o->parent->native);
+	    else
+		TwUnMapWidget(o->native);
+	}
+    }
+}
+static ttbyte DEF(SetTitle_ttframe)(ttframe o, TT_ARG_READ ttbyte *title) {
+    if (FNDEFAULT(ttframe)->SetTitle(o, title)) {
+
+	TwSetTitleWindow(o->native, o->title_len, o->title);
+
+	return TT_TRUE;
+    }
+    return TT_FALSE;
+}
 
 static void DEF(BuiltinRepaint_ttframe)(ttframe o, dat x, dat y, dat w, dat h) {
     TwDrawHWAttrWidget(o->native, w, h, x, y, w, NULL);    
 }
-
-
-/* ttscrollbar */
-
-
-/* ttslider */
 
 
 /* ttscroller */
@@ -350,17 +535,17 @@ static void DEF(AddTo_ttmenuitem)(ttmenuitem o, ttvisible parent) {
 	if (!(udat)Code)
 	    Code = 1 + (rand() & 0xFFF);
 	o->native = TwRow4Menu
-	    (parent->private, Code, 
+	    (parent->target_private, Code, 
 	     *o->name ? (o->vflags & ttanybutton_vflags_disabled) ?
 	     TW_ROW_ACTIVE : TW_ROW_INACTIVE
 	     : TW_ROW_IGNORE, strlen(o->name), o->name);
 	
-	FNSUPER(ttmenuitem)->AddTo((super_(ttmenuitem))o, parent);
+	FNDEFAULT(ttmenuitem)->AddTo(o, parent);
     }
 }
 static void DEF(Remove_ttmenuitem)(ttmenuitem o) {
     if (o->parent) {
-	FNSUPER(ttmenuitem)->Remove((super_(ttmenuitem))o);
+	FNDEFAULT(ttmenuitem)->Remove(o);
 	
 	if (TW_NOID != o->native)
 	    TwDeleteObj(o->native);
@@ -386,22 +571,22 @@ static void DEF(AddTo_ttmenu)(ttmenu o, ttvisible parent) {
 		o->menubar = ((ttmenu)parent)->menubar;
 	}
 	
-	if (TW_NOID != (o->private = TwCreate4MenuWindow(myMenubar_n(o))) &&
-	    TW_NOID != (o->native = TwItem4Menu(parent->native, o->private,
+	if (TW_NOID != (o->target_private = TwCreate4MenuWindow(myMenubar_n(o))) &&
+	    TW_NOID != (o->native = TwItem4Menu(parent->native, o->target_private,
 						  !(o->vflags & ttanybutton_vflags_disabled),
 						  strlen(o->name), o->name))) {
 
-	    FNSUPER(ttmenu)->AddTo((super_(ttmenu))o, parent);
+	    FNDEFAULT(ttmenu)->AddTo(o, parent);
 	}
     }
 }
 static void DEF(Remove_ttmenu)(ttmenu o) {
     if (o->parent) {
-	FNSUPER(ttmenu)->Remove((super_(ttmenu))o);
+	FNDEFAULT(ttmenu)->Remove(o);
 	
-	if (o->private != TW_NOID) {
-	    TwDeleteObj(o->private);
-	    o->private = TW_NOID;
+	if (o->target_private != TW_NOID) {
+	    TwDeleteObj(o->target_private);
+	    o->target_private = TW_NOID;
 	}
 	if (o->native != TW_NOID) {
 	    TwDeleteObj(o->native);
@@ -417,10 +602,13 @@ static void DEF(Remove_ttmenu)(ttmenu o) {
 static BUILD(ttmenubar) {
     tttheme t = myTheme(o);
     if (TW_NOID != (o->native = TwCreateMenu
-		    (t->bg[tttheme_bg_menu], t->bg[tttheme_bg_menu_select],
+		    (t->bg[tttheme_bg_menu_normal], t->bg[tttheme_bg_menu_select],
 		     t->bg[tttheme_bg_menu_disabled], t->bg[tttheme_bg_menu_selectdisabled],
 		     t->bg[tttheme_bg_menu_shcut], t->bg[tttheme_bg_menu_selectshcut], 0))) {
+
 	TwItem4MenuCommon(o->native);
+	twin_AtBuild_ttvisible((ttvisible)o);
+	    
 	return o;
     }
     return NULL;
@@ -457,9 +645,6 @@ static byte HWDEF(Flush)(void) {
 static byte HWDEF(TimidFlush)(void) {
     return TwTimidFlush();
 }
-static byte HWDEF(MainLoop)(void) {
-    return TwMainLoop();
-}
 static ttbyte HWDEF(MainLoopOnce)(ttbyte wait) {
     tmsg Msg;
     
@@ -473,10 +658,7 @@ static ttbyte HWDEF(MainLoopOnce)(ttbyte wait) {
     
     return !TwInPanic();
 }
-static void HWDEF(ExitMainLoop)(void) {
-    TwExitMainLoop();
-}
-static void HWDEF(DeleteListener)(ttlistener o) {
+static void HWDEF(DeleteCallback)(ttcallback o) {
     if (o->native != (opaque)TW_NOID)
 	TwDeleteListener((tlistener)(opaque)o->native);
 }
@@ -514,7 +696,7 @@ ttfns _TT_twin_InitHW(tthw *HW)
      */
     *HW = &twin_TTFNs.HW;
     
-    TwConfigMalloc(TTAllocMem, TTReAllocMem, TTFreeMem);
+    TwConfigMalloc(TTAllocMem, TTReallocMem, TTFreeMem);
     
     if (TwCheckMagic(TT_Tw_magic) && TwOpen(TTD.HWOptions))
         return &twin_TTFNs;

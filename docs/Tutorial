@@ -10,7 +10,7 @@
 				TUTORIAL
 
 
-		  updated to version 0.4.4, 14 Jan 2002
+		  updated to version 0.4.5, 13 Jul 2002
 	      
 
 	     Author: Massimiliano Ghilardi <max@linuz.sns.it>
@@ -32,7 +32,7 @@
 	   6.2. Security Statement on Sockets
 	7. Transparent Compression
 	8. Attach/Detach
-	9. Installing vga.pcf.gz
+	9. Installing X11 and VGA fonts
 	10. Greetings
 
 1. Concepts
@@ -914,19 +914,29 @@
 
     a. X11:
     
-    If you want to install the supplied vga.pcf.gz file, for use under X,
+    Two X11 fonts are currently distributed with twin:
+    
+    vga.pcf.gz          a VGA-like font (size 8x16, codepage 437)
+    9x19u.pcf.gz        a font derived from public domain '10x20.pcf.gz' font:
+                        it has 9x19 size and it is unicode. full X11 name is
+			-misc-fixed-medium-r-normal--19-200-75-75-C-100-ISO10646-1
+    
+    If you want to install these fonts to use them under X,
     you should do something like this (details are system dependant):
 
-    copy fonts/vga.pcf.gz from the distribution to a misc fonts directory,
+    copy fonts/*.pcf.gz from the distribution to a misc fonts directory,
     I used /usr/X11R6/lib/X11/fonts/misc on my system.
     Run `mkfontdir' as root on the directory used.
+    Since you are at it, you may also add the line
+    9x19	-misc-fixed-medium-r-normal--19-200-75-75-C-100-ISO10646-1
+    to `fonts.alias' in the same directory.
     Run `xset fp rehash'.
-    Use the command 'xlsfonts | grep vga' to see if the font has been
+    Use the command 'xlsfonts | grep vga' to see if the fonts have been
     registered correctly.
 
-    This should fix some problems with twin displaying strange fonts under X,
-    since if twin cannot find the `vga' font, it will fallback on `fixed',
-    which has different encoding and no pseudo-graphical characters,
+    This should fix some problems with twin displaying strange fonts
+    under X, since if twin cannot find the `9x19' nor the `vga' font,
+    it will fallback on `fixed', which has no pseudo-graphical characters
     and makes twin look really ugly.
 
     b. VGA text display:

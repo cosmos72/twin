@@ -949,7 +949,7 @@ void TwinSelectionRequest(obj Requestor, uldat ReqPrivate, obj Owner) {
     TwRequestSelection((topaque)Owner, ReqPrivate);
 }
 
-static byte StdAddEventMouse(udat CodeMsg, udat Code, dat MouseX, dat MouseY) {
+static byte StdAddMouseEvent(udat CodeMsg, udat Code, dat MouseX, dat MouseY) {
     tevent_mouse Event;
     tmsg Msg;
 
@@ -999,30 +999,46 @@ byte MouseEventCommon(dat x, dat y, dat dx, dat dy, udat Buttons) {
     if (Buttons != OldButtons || ((MouseMotionN || OldButtons) && (x != prev_x || y != prev_y))) {
 	
 	if (MouseMotionN && !OldButtons && (x != prev_x || y != prev_y)) {
-	    if (!StdAddEventMouse(TW_MSG_WIDGET_MOUSE, MOTION_MOUSE, x, y))
+	    if (!StdAddMouseEvent(TW_MSG_WIDGET_MOUSE, MOTION_MOUSE, x, y))
 		ret = FALSE;
 	} else if (OldButtons && (x != prev_x || y != prev_y)) {
-	    if (!StdAddEventMouse(TW_MSG_WIDGET_MOUSE, DRAG_MOUSE | OldButtons, x, y))
+	    if (!StdAddMouseEvent(TW_MSG_WIDGET_MOUSE, DRAG_MOUSE | OldButtons, x, y))
 		ret = FALSE;
 	}
 	if ((Buttons & HOLD_LEFT) != (OldButtons & HOLD_LEFT)) {
-	    result = (Buttons & HOLD_LEFT ? DOWN_LEFT : RELEASE_LEFT) | (OldButtons &= ~HOLD_LEFT);
+	    result = (Buttons & HOLD_LEFT ? PRESS_LEFT : RELEASE_LEFT) | (OldButtons &= ~HOLD_LEFT);
 	    OldButtons |= Buttons & HOLD_LEFT;
-	    if (!StdAddEventMouse(TW_MSG_WIDGET_MOUSE, result, x, y))
+	    if (!StdAddMouseEvent(TW_MSG_WIDGET_MOUSE, result, x, y))
 		ret = FALSE;
 	}
 	if ((Buttons & HOLD_MIDDLE) != (OldButtons & HOLD_MIDDLE)) {
-	    result = (Buttons & HOLD_MIDDLE ? DOWN_MIDDLE : RELEASE_MIDDLE) | (OldButtons &= ~HOLD_MIDDLE);
+	    result = (Buttons & HOLD_MIDDLE ? PRESS_MIDDLE : RELEASE_MIDDLE) | (OldButtons &= ~HOLD_MIDDLE);
 	    OldButtons |= Buttons & HOLD_MIDDLE;
-	    if (!StdAddEventMouse(TW_MSG_WIDGET_MOUSE, result, x, y))
+	    if (!StdAddMouseEvent(TW_MSG_WIDGET_MOUSE, result, x, y))
 		ret = FALSE;
 	}
 	if ((Buttons & HOLD_RIGHT) != (OldButtons & HOLD_RIGHT)) {
-	    result = (Buttons & HOLD_RIGHT ? DOWN_RIGHT : RELEASE_RIGHT) | (OldButtons &= ~HOLD_RIGHT);
+	    result = (Buttons & HOLD_RIGHT ? PRESS_RIGHT : RELEASE_RIGHT) | (OldButtons &= ~HOLD_RIGHT);
 	    OldButtons |= Buttons & HOLD_RIGHT;
-	    if (!StdAddEventMouse(TW_MSG_WIDGET_MOUSE, result, x, y))
+	    if (!StdAddMouseEvent(TW_MSG_WIDGET_MOUSE, result, x, y))
 		ret = FALSE;
 	}
+#ifdef HOLD_WHEEL_REV
+	if ((Buttons & HOLD_WHEEL_REV) != (OldButtons & HOLD_WHEEL_REV)) {
+	    result = (Buttons & HOLD_WHEEL_REV ? PRESS_WHEEL_REV : RELEASE_WHEEL_REV) | (OldButtons &= ~HOLD_WHEEL_REV);
+	    OldButtons |= Buttons & HOLD_WHEEL_REV;
+	    if (!StdAddMouseEvent(MSG_MOUSE, result, x, y))
+		ret = FALSE;
+	}
+#endif
+#ifdef HOLD_WHEEL_FWD
+	if ((Buttons & HOLD_WHEEL_FWD) != (OldButtons & HOLD_WHEEL_FWD)) {
+	    result = (Buttons & HOLD_WHEEL_FWD ? PRESS_WHEEL_FWD : RELEASE_WHEEL_FWD) | (OldButtons &= ~HOLD_WHEEL_FWD);
+	    OldButtons |= Buttons & HOLD_WHEEL_FWD;
+	    if (!StdAddMouseEvent(MSG_MOUSE, result, x, y))
+		ret = FALSE;
+	}
+#endif
     }
     return ret;
 }
@@ -1207,6 +1223,15 @@ static byte VersionsMatch(byte force) {
     return TRUE;
 }
 
+static void MergeHyphensArgv(int argc, char **argv) {
+    char *S;
+    while (argc) {
+	if ((S = *argv) && S[0] == '-' && S[1] == '-' && S[2] && S[3])
+	    (*argv)++;
+	argv++, argc--;
+    }
+}
+
 TW_DECL_MAGIC(display_magic);
 
 int main(int argc, char *argv[]) {
@@ -1217,6 +1242,8 @@ int main(int argc, char *argv[]) {
     TW_CONST byte *buff;
     uldat chunk;
     int Fd;
+    
+    MergeHyphensArgv(argc, argv);
     
     MYname = argv[0];
     

@@ -40,5 +40,5 @@ define(`PROTOFindFunction', `PROTO($@)')
 
 divert
 
-include(`m4/sockproto.m4h')
+include(`m4/Tw_sockproto.m4h')
 

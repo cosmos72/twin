@@ -26,65 +26,60 @@ include(`m4/TThandy.m4h')
 
 divert(-1)
 
+dnl
+dnl                                 DESIGN PROBLEM
+dnl
+dnl we have to deal with a multipath inheritance, and there is no automatic way
+dnl to determine which is the default implementation of methods that are not explicitly
+dnl overridden by display targets.
+dnl
+dnl let's try to explain with an example and a picture:
+dnl
+dnl the base driver hw_null_c defines method `SetXY' for ttwidget saying DEF(SetXY_ttwidget)
+dnl then later overrides the same method `SetXY' for ttscrollpane saying DEF(SetXY_ttscrollpane)
+dnl
+dnl the derivate driver hw_twin_c does exactly the same:
+dnl says DEF(SetXY_ttwidget) and later DEF(SetXY_ttscrollpane); see the picture below:
+dnl 
+dnl hw_null_c:  DEF(SetXY_ttwidget)       DEF(SetXY_ttscrollpane)
+dnl 
+dnl hw_twin_c:  DEF(SetXY_ttwidget)       DEF(SetXY_ttscrollpane)
+dnl
+dnl now, calling FNSUPER(ttscrollpane)->SetXY() from twin_SetXY_ttscrollpane
+dnl which function should invoke: twin_SetXY_ttwidget or null_SetXY_ttscrollpane?
+dnl
+dnl                                    SOLUTION
+dnl
+dnl solution: we implement a double inheritance:
+dnl FNDEFAULT(ttscrollpane)->SetXY() calls null_SetXY_ttscrollpane, while
+dnl FNSUPER(ttscrollpane)->SetXY() calls twin_SetXY_ttwidget.
+dnl
+dnl also, in case twin_SetXY_ttscrollpane was not defined,
+dnl calling TTSetXY_ttwidget() on a ttscrollpane results in a call to
+dnl null_SetXY_ttscrollpane, which if needed can call twin_SetXY_ttwidget
+dnl simply as FNSUPER(ttscrollpane)->SetXY().
+dnl
+
 define(`HWDEF',`define(`hw_$1')target()_$1')
 
 define(`DEF',`define(`mtd_$1')target()_$1')
 
-define(`NEW',`$1 DEF(New_$1)(ttfn_$1 FN, $1 o)')
-define(`NEWSUPER',`($1)FN->FN_`'m4super_$1->New((ttfn_`'m4super_$1)FN, (m4super_$1)o)')
-
 define(`BUILD',`$1 DEF(Build_$1)($1 o)')
 define(`BREAK',`void DEF(Break_$1)($1 o)')
-
-define(`FNSUPER',`o->FN->FN_`'m4super_$1')
-
+define(`NEW',`$1 DEF(New_$1)(ttfn_$1 FN, $1 o)')
 define(`DEL',`void DEF(Del_$1)($1 o)')
+
+define(`SUPER',`m4super_$1')
+
+define(`FNDEFAULT',`TFNdefault($1)')
+define(`FNSUPER',`TFN(m4super_$1)')
+
+define(`NEWDEFAULT',`FNDEFAULT($1)->New(FN, o)')
+define(`NEWSUPER',`($1)FNSUPER($1)->New((ttfn_`'m4super_$1)FN, (m4super_$1)o)')
+
+define(`DELDEFAULT',`FNDEFAULT($1)->Del(o)')
 define(`DELSUPER',`FNSUPER($1)->Del((m4super_$1)o)')
 
-define(`type_ttfn', `ifelse(index(`$1', `*'), -1, ifelse(regexp(`$1', `_fn$'), -1, TTFN_$1, TTFN_ttfunction), index(`$1', ttbyte), -1, TTFN_ttpointer, TTFN_ttstring)')
-
-define(`opaque_ifpointer', `ifelse(regexp(`$1', `_fn$'), -1, ifelse(index(`$1', `*'), -1, `', (opaque)), (opaque))')
-define(`obj2id_ifdecay', `ifdef(`m4super_$1', `OBJ2ID($2)', $2)')
-
-define(`wrap_export', `ifelse(index(`$3', `r'), -1, `', `exported($1,,get,$2,$1)')`'dnl
-`'ifelse(index(`$3', `w'), -1, `', `exported(void,,set,$2,$1)')')
-
-define(`def_handy', `
-arg_decl_decay($1) TT`'decl_name($2,$3,$4)_`'this`'(decl_args($@)) {
-    body($@)
-}')
-
-defined(`expand', $@)
-
-define(`DEF_DEFAULT_GetValue', `
-`'define(`this', $1)`'dnl
-`'define(`extends')`'dnl
-`'define(`this_count', 0)`'dnl
-`'define(`field', `ifelse(index($'`3, r), -1, `', `define(`this_count', inc(this_count))')')`'dnl
-`'TTdef_$1($1,$1)`'dnl
-`'ifelse(this_count, 0, `', `
-`'define(`mtd_GetValue_$1')`'dnl
-'static ttfn target()_GetValue_$1($1 o, ttuint which, ttany *value) {
-    if (which && which < this`'_field_last && o && TTAssert(IS($1,o))) {
-	if (which > this`'_field_first) switch (which) {
-`'define(`exported', `ifelse($'`3, get, `
-	  case this`'_'$'`4`:
-	    *value = (ttany)opaque_ifpointer('$'`1`)obj2id_ifdecay('$'`1`, o->'$'`4`); dnl
-`'`'`'`'`'`'return type_ttfn('$'`1`);', `')')`'dnl
-`'define(`field', `wrap_export($'`@)')`'dnl
-`'TTdef_$1($1,$1)
-	}
-	ifelse($1, ttobj, `', `else
-	    return FNSUPER($1)->GetValue((m4super_$1)o, which, value);')
-    }
-    return (ttfn)0;
-})`'dnl
-`'define(`field')`'dnl
-`'define(`exported')`'dnl
-`'define(`extends')`'dnl
-`'undefine(`this')`'dnl
-`'undefine(`this_count')`'dnl
-')
 
 define(`DECL_COMMON', `
 
@@ -120,10 +115,10 @@ include(hw_`'target()_c)
 dnl m4magicmask_*, m4magic_*, m4size_* and m4FN_super_* must always be defined!
 dnl define sizeof(object) for all objects
 define(`el',`define(`m4order_$1')`'dnl
-    define(`m4magicmask_$1')`'dnl
-    define(`m4magic_$1')`'dnl
-    define(`m4size_$1')`'dnl
-    define(`size_$1', `sizeof(s_$1)')`'dnl
+`'`'define(`m4magicmask_$1')`'dnl
+`'`'define(`m4magic_$1')`'dnl
+`'`'define(`m4size_$1')`'dnl
+`'`'define(`size_$1',`sizeof(s_$1)')`'dnl
 ')
 TTlist()
 undefine(`el')
@@ -134,44 +129,54 @@ undefine(`el')
  * null display `target' MUST IMPLEMENT ALL METHODS, even if as stubs.
  */
 
-define(`hardfall', `
-`#'error: undefined $1')
+divert(-1)
 
-define(`fall', `ifelse(target(), `null', `hardfall($1)', `NULL /* WARNING: undefined $1 */')')
+define(`hardfail', `
+`#'error: undefined target()_$1
+NULL')
+
+define(`fail', `ifelse(target(), `null', `hardfail($1)', `NULL /* UNDEFINED: $1  */')')
 
 define(`extends',`TTFNdef_$1($2)
-    TFN_$1,
+    /* `extends' ttfn_$1 */
 ')
-define(`superfield',`ifdef(`mtd_$2_$3',`target()_$2_$3', dnl
-`ifelse(`$3',`ttobj',`fall($2)', `superfield(`',`$2',m4super_$3)')')')
-define(`protected',`ifdef(`m4$2_$3',`$2_$3', `ifdef(`mtd_$2_$3',`target()_$2_$3', dnl
-`(void *)superfield(,`$2',m4super_$3)')'),
+
+define(`superfield', `ifdef(`mtd_$2_$3', `NULL /* inherits:  $2_$1 -> $2_$3 */', dnl
+`ifelse(`$3', `ttobj', `fail($2_$1)', `superfield(`$1', `$2', m4super_$3)')')')
+
+define(`protected', `ifdef(`m4$2_$3', `$2_$3', `ifdef(`mtd_$2_$3', `target()_$2_$3', dnl
+`(void *)superfield(`$3', `$2', m4super_$3)')'),
 ')
+define(`public_set',`protected($@)')
 define(`public',`protected($@)')
 
 define(`el',`
   {
-    TTFNdef_$1($1)
+TTFNdef_$1($1)
   },
 ')
+
+divert
+
 static s_ttfns target()_TTFNs = {
 
 TTlist()
 undefine(`el')`'dnl
 define(`public')`'dnl
+define(`public_set')`'dnl
 define(`protected')`'dnl
 define(`extends')`'dnl
 dnl
 dnl
 define(`TTHWlist',
-  `el(Sync) el(Flush) el(TimidFlush) el(MainLoop) el(MainLoopOnce) el(ExitMainLoop) dnl
-   el(DeleteListener) el(Close) el(ConnectionFd) el(GetErrno) el(GetErrnoDetail) dnl
+  `el(Sync) el(Flush) el(TimidFlush) el(MainLoopOnce) el(DeleteCallback) dnl
+   el(Close) el(ConnectionFd) el(GetErrno) el(GetErrnoDetail) dnl
    el(StrError) el(StrErrorDetail) dnl
   ')
 dnl
 define(`el',`ifdef(`hw_$1', `
     target()_$1,', `
-    hardfall($1)')')
+    hardfail($1)')')
   {
 TTHWlist()
   },

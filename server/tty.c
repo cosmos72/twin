@@ -974,35 +974,18 @@ static byte insert_newtitle(byte c) {
 }
 
 static void set_newtitle(void) {
-    widget P;
+    dat _Len;
+    byte *_Name;
     
-    if (Win->Name)
-	FreeMem(Win->Name);
 
     /* try to shrink... */
-    if (!(Win->Name = ReAllocMem(newName, newLen)))
-	Win->Name = newName;
-    Win->NameLen = newLen;
+    if (!(_Name = ReAllocMem(newName, _Len = newLen)))
+	_Name = newName;
+
     newLen = newMax = 0;
     newName = (byte *)0;
 
-#if 1
-    /*
-     * do not allow changing window borders just because
-     * some untrusted application set a new title
-     */
-    DrawBorderWindow(Win, BORDER_UP);
-#else
-    /* user may have title-dependent borders in ~/.twinrc, honour them: */
-    Win->BorderPattern[0] = Win->BorderPattern[1] = NULL;
-    DrawBorderWindow(Win, BORDER_ANY);
-#endif
-    
-    if ((P = Win->Parent) && IS_SCREEN(P)) {
-	/* need to update window list with new name ? */
-	if (((screen)P)->FnHookW)
-	    ((screen)P)->FnHookW(((screen)P)->HookW);
-    }
+    Act(SetTitle,Win)(Win, _Len, _Name);
 }
 
 static void clear_newtitle(void) {

@@ -267,6 +267,15 @@ void *AlwaysNull(void) {
     return NULL;
 }
 
+static void MergeHyphensArgv(int argc, char **argv) {
+    char *S;
+    while (argc) {
+	if ((S = *argv) && S[0] == '-' && S[1] == '-' && S[2] && S[3])
+	    (*argv)++;
+	argv++, argc--;
+    }
+}
+
 #define MAXDELAY 50 MilliSECs
 #define MINDELAY 10000
 
@@ -278,7 +287,8 @@ int main(int argc, char *argv[]) {
     int num_fds;
     
     DropPrivileges();
-    
+
+    MergeHyphensArgv(argc, argv);
     main_argv = (byte **)argv;
 
 #ifdef CONF__ALLOC

@@ -11,9 +11,11 @@ typedef TW_BYTE32             byte32;
 typedef byte16                hwfont;
 typedef byte32                hwattr;
 
+#define TW_SIZEOFHWCOL        1
 #define TW_SIZEOFHWFONT       2
 #define TW_SIZEOFHWATTR       4
 
+#define TW_MAXHWCOL           0xFF
 #define TW_MAXHWFONT          0xFFFF
 #define TW_MAXHWATTR          0xFFFFFFFF
 

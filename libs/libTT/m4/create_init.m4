@@ -1,14 +1,15 @@
 
 
-dnl This file is `m4/exports_decl.m4' : m4 macros to autogenerate exports_decl_m4.h
+
+dnl This file is `m4/create_init.m4' : m4 macros to autogenerate create_init_m4.h
 dnl Tell the user about this.
 
 
-/* This file was automatically generated from `m4/exports_decl.m4', do not edit! */
+/* This file was automatically generated from `m4/create_init.m4', do not edit! */
 
 
 /*
- *  exports_decl_m4.h  --  exported wrappers around libTT methods
+ *  create_init_m4.h  --  initialization of libTT internal Create* function pointers
  *
  */
 

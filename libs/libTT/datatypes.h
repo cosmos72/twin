@@ -10,8 +10,8 @@ typedef  udat    ttushort;
 typedef  ldat    ttint;
 typedef uldat    ttuint;
 
-typedef hwfont   ttfont;
 typedef hwcol    ttcol;
+typedef hwfont   ttfont;
 typedef hwattr   ttattr;
 
 typedef topaque ttopaque;
@@ -23,19 +23,23 @@ typedef void *	 ttpointer;
 typedef TT_CONST ttbyte * ttstring;
 typedef void (*ttfunction)(void);
 
-/* these are the types to interface with clients. Data of this types actually contains (ttopaque) integers. */
-typedef void *tt_obj;
-typedef void *tt_fn;
+/*
+ * these are the types to interface with clients.
+ * Data of this types actually contains (ttopaque) integers.
+ */
+typedef struct s_tt_obj *tt_obj;
+typedef struct s_tt_fn  *tt_fn;
 
 
-typedef void (*ttcallback_fn)(ttuint nargs, ttany *args);
+typedef void (*ttlistener_fn)(ttany arg0);
+typedef void (*ttlistener_fn_array)(ttuint nargs, ttany *args);
 typedef void (*ttvisible_repaint_fn)(tt_obj,ttshort,ttshort,ttshort,ttshort);
 
 
 typedef struct s_ttshape *ttshape;
 typedef struct s_ttshape {
     ttshort width, height, border[4];
-    hwattr *attr;
+    ttattr *attr;
 } s_ttshape;
 
 

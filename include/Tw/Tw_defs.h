@@ -1,3 +1,14 @@
+/*
+ *  Tw_defs.h  --  #defines for libTw macros
+ *
+ *  Copyright (C) 1999-2002 by Massimiliano Ghilardi
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Library General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2 of the License, or (at your option) any later version.
+ *
+ */
 
 #ifndef _TW_DEFS_H
 #define _TW_DEFS_H
@@ -98,10 +109,16 @@
  */
 #define THOUSAND	((frac_t)1000)
 
-#define NanoSECs	* 1 /* i.e. (frac_t)1 is a nanosecond */
-#define MicroSECs	* (THOUSAND NanoSECs)
-#define MilliSECs	* (THOUSAND MicroSECs)
-#define FullSECs	* (THOUSAND MilliSECs)
+#define NanoSEC		1 /* i.e. (frac_t)1 is a nanosecond */
+#define MicroSEC	(THOUSAND * NanoSEC)
+#define MilliSEC	(THOUSAND * MicroSEC)
+#define FullSEC		(THOUSAND * MilliSEC)
+
+
+#define NanoSECs	* NanoSEC
+#define MicroSECs	* MicroSEC
+#define MilliSECs	* MilliSEC
+#define FullSECs	* FullSEC
 
 
 /* mouse events stuff */
@@ -114,11 +131,6 @@
 #define PRESS_MIDDLE	0x18
 #define PRESS_RIGHT	0x28
 #define PRESS_ANY	0x38
-
-#define DOWN_LEFT	(HOLD_LEFT|PRESS_LEFT)
-#define DOWN_MIDDLE	(HOLD_MIDDLE|PRESS_MIDDLE)
-#define DOWN_RIGHT	(HOLD_RIGHT|PRESS_RIGHT)
-#define DOWN_ANY	(HOLD_ANY|PRESS_ANY)
 
 #define RELEASE_LEFT	0x10
 #define RELEASE_MIDDLE	0x20
@@ -135,12 +147,12 @@
 
 #define isPRESS(code)	((code) & 0x08)
 #define isDRAG(code)	((code) & DRAG_MOUSE)
-#define isRELEASE(code)	((code) & ANY_ACTION_MOUSE && !isPRESS(code) && !isDRAG(code))
+#define isRELEASE(code)	(!isPRESS(code) && ((code) & 0x30))
 #define isMOTION(code)	(!(code))
 
-#define isSINGLE_PRESS(code) (isPRESS(code) && ((code) == DOWN_LEFT || (code) == DOWN_MIDDLE || (code) == DOWN_RIGHT))
-#define isSINGLE_DRAG(code) (isDRAG(code) && ((code) == (DRAG_MOUSE|HOLD_LEFT) || (code) == (DRAG_MOUSE|HOLD_MIDDLE) || (code) == (DRAG_MOUSE|HOLD_RIGHT)))
-#define isSINGLE_RELEASE(code) (isRELEASE(code) && !((code) & HOLD_ANY))
+#define isSINGLE_PRESS(code) ((code) == PRESS_LEFT || (code) == PRESS_MIDDLE || (code) == PRESS_RIGHT)
+#define isSINGLE_DRAG(code) ((code) == (DRAG_MOUSE|HOLD_LEFT) || (code) == (DRAG_MOUSE|HOLD_MIDDLE) || (code) == (DRAG_MOUSE|HOLD_RIGHT))
+#define isSINGLE_RELEASE(code) ((code) == RELEASE_LEFT) || (code) == RELEASE_MIDDLE || (code) == RELEASE_RIGHT)
 
 
 
@@ -168,6 +180,7 @@
 #define TW_WIDGET_WANT_KEYS	0x0002
 #define TW_WIDGET_WANT_MOUSE	0x0004
 #define TW_WIDGET_WANT_CHANGES	0x0008
+#define TW_WIDGET_AUTO_FOCUS	0x0010
 
 /* Widget->Flags */
 #define TW_WIDGETFL_USEEXPOSE	0x02
@@ -185,6 +198,7 @@
 #define TW_GADGET_WANT_KEYS	TW_WIDGET_WANT_KEYS	/* 0x0002 */
 #define TW_GADGET_WANT_MOUSE	TW_WIDGET_WANT_MOUSE	/* 0x0004 */
 #define TW_GADGET_WANT_CHANGES	TW_WIDGET_WANT_CHANGES	/* 0x0008 */
+#define TW_GADGET_AUTO_FOCUS	TW_WIDGET_AUTO_FOCUS	/* 0x0010 */
 
 
 /* Gadget->Flags */
@@ -210,6 +224,7 @@
 #define TW_WINDOW_WANT_KEYS	TW_WIDGET_WANT_KEYS	/* 0x0002 */
 #define TW_WINDOW_WANT_MOUSE	TW_WIDGET_WANT_MOUSE	/* 0x0004 */
 #define TW_WINDOW_WANT_CHANGES	TW_WIDGET_WANT_CHANGES	/* 0x0008 */
+#define TW_WINDOW_AUTO_FOCUS	TW_WIDGET_AUTO_FOCUS	/* 0x0010 */
 #define TW_WINDOW_DRAG		0x0100
 #define TW_WINDOW_RESIZE	0x0200
 #define TW_WINDOW_CLOSE		0x0400

@@ -11,9 +11,9 @@ CONF_PRINTK_MENU="Messages logging"
 CONF_HW_MENU="Display hardware support"
 CONF_OPT_MENU="Runtime options"
 
-CONF__SHLIBS_HELP="Enable shared libraries (ELF)"
-CONF__MODULES_HELP="Enable modules (ELF)"
-CONF__ALLOC_HELP="Use custom malloc/free (tested on Linux/i386 only)"
+CONF__SHLIBS_HELP="Enable shared libraries"
+CONF__MODULES_HELP="Enable shared modules"
+CONF__ALLOC_HELP="Use custom mmap() based malloc/free"
 CONF__UNICODE_HELP="Build all code with Unicode support"
 CONF_SOCKET_HELP="Support remote socket connections"
 CONF_SOCKET_GZ_HELP=" -> Sockets: support gzip compression"
@@ -22,6 +22,7 @@ CONF_SOCKET_ALIEN_HELP=" -> Sockets: support non-native architectures"
 CONF_TT_HELP="Support Text Toolkit library (libTT)"
 CONF_TT_HW_TWIN_HELP=" -> HW support: Twin, native"
 CONF_TT_HW_GTK_HELP=" -> HW support: gtk"
+CONF_TT_HW_X11_HELP=" -> HW support: X11"
 CONF_TT_HW_XML_HELP=" -> HW support: write to xml files"
 CONF_WM_HELP="Window Manager: absolutely needed!"
 CONF_WM_RC_HELP="WM: support ~/.twinrc configuration parser"
@@ -31,7 +32,7 @@ CONF_TERM_HELP="Builtin Terminal emulator"
 CONF_TERM_DEVPTS_HELP=" -> Terminal: use glibc-2.1 /dev/pts/"
 CONF_PRINTK_HELP="Store server messages into Messages window"
 CONF_HW_TTY_HELP="HW support: text terminals (Linux console...)"
-CONF_HW_TTY_LINUX_HELP=" -> tty support: Linux console"
+CONF_HW_TTY_LINUX_HELP=" -> tty support: Linux console (gpm mouse, /dev/vcsa)"
 CONF_HW_TTY_TWTERM_HELP=" -> tty support: Twin terminal"
 CONF_HW_TTY_TERMCAP_HELP=" -> tty support: termcap/ncurses terminal database"
 CONF_HW_X11_HELP="HW support: X11"
@@ -63,6 +64,7 @@ menu CONF_TT
   yesno CONF_TT
   yesmodno_truedep CONF_TT_HW_TWIN CONF_SOCKET
   yesmodno CONF_TT_HW_GTK
+  yesmodno CONF_TT_HW_X11
   yesmodno CONF_TT_HW_XML
 endmenu
 menu CONF_WM

@@ -169,14 +169,8 @@ include $(TOPDIR)/makerules
 
 everything: $(BINS) $(MODS) $(SHLIBS) $(ARLIBS) $(CLLIBS) links
 
-fontsizes:=$(sort $(patsubst %.xpm,%,$(filter %.xpm,$(subst _, ,$(wildcard ../themes/hw_gfx/*_*.xpm)))))
+links: $(subst hw_X11.la,hw_X.so.$(SHLIBS_VER),$(filter hw_X11.la,$(MODS)))
 
-default_gfx_themes=$(patsubst %,../themes/hw_gfx/default_%.xpm,$(fontsizes))
-
-links: $(default_gfx_themes) $(subst hw_X11.la,hw_X.so.$(SHLIBS_VER),$(filter hw_X11.la,$(MODS)))
-
-../themes/hw_gfx/default_%.xpm:
-	$(LN) $(notdir $(word 1,$(filter-out $@,$(wildcard ../themes/hw_gfx/*_$*.xpm)))) $@
 
 modules: $(MODS) links
 
@@ -189,11 +183,6 @@ clean:
 
 install-dir:
 	$(INSTALL-DIR) $(DESTDIR)$(libdir)/twin/modules/HW
-	$(INSTALL-DIR) $(DESTDIR)$(datadir)/twin/themes/hw_gfx
-	$(INSTALL-TXT) ../themes/hw_gfx/* $(DESTDIR)$(datadir)/twin/themes/hw_gfx
-	$(foreach S,$(fontsizes),$(LN) \
-	 $(notdir $(word 1,$(filter-out ../themes/hw_gfx/default_%.xpm,$(wildcard ../themes/hw_gfx/*_$(S).xpm)))) \
-	 $(DESTDIR)$(datadir)/twin/themes/hw_gfx/default_$(S).xpm ; )
 
 install-mod-link-hw_X.la:
 	$(LN) hw_X11.so.$(SHLIBS_VER) $(DESTDIR)$(libdir)/twin/modules/HW/hw_X.so.$(SHLIBS_VER)

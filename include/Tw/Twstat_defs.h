@@ -51,6 +51,7 @@
 #define TWS_widget_Owner		0x010D
 #define TWS_widget_Msgport		TWS_widget_Owner
 #define TWS_widget_USE_Fill		0x010E
+#define TWS_widget_Fill			TWS_widget_USE_Fill
 #define TWS_widget_ChildrenW_List	0x0120
 #define TWS_widget_O_Prev_List		0x0121
 #define TWS_widget_O_Next_List		0x0122

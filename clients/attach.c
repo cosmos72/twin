@@ -116,6 +116,8 @@ int main(int argc, char *argv[]) {
     byte *s;
     TW_CONST byte *buff;
     uldat chunk;
+
+    TwMergeHyphensArgv(argc, argv);
     
     MYname = argv[0];
     

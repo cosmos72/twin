@@ -56,9 +56,6 @@
 # include <sys/ioctl.h>
 #endif
 
-/* backward compatibility. will be removed */
-#define Tw_Create4MenuMenuItem _Tw_Create4MenuMenuItem
-
 #include <Tw/Tw.h>
 
 #include <Tw/Twavl.h>
@@ -2278,42 +2275,50 @@ static uldat FindFunctionId(tw_d TwD, uldat order) {
 
 
 
+/**
+ * sends all buffered data to connection and waits for server to process it
+ */
+byte Tw_SyncSocket(tw_d TwD)				{ return Tw_Sync(TwD); }
 
 
 
 /* handy special cases (also for compatibility) */
+
+
+
 /**
- * sets a gadget to pressed or unpressed
+ * return the owner of this gadget
  */
-void Tw_SetPressedGadget(tw_d TwD, tgadget a1, byte a2) {
-    Tw_ChangeField(TwD, a1, TWS_gadget_Flags, TW_GADGETFL_PRESSED, a2 ? TW_GADGETFL_PRESSED : 0);
+tmsgport Tw_OwnerWidget(tw_d TwD, twidget a1) {
+    return Tw_Stat(TwD, a1, TWS_widget_Owner);
 }
 
 /**
- * returns wether a gadget is pressed or not
+ * return prev widget with same owner
  */
-byte Tw_IsPressedGadget(tw_d TwD, tgadget a1) {
-    return Tw_Stat(TwD, a1, TWS_gadget_Flags) & TW_GADGETFL_PRESSED ? TRUE : FALSE;
+tgadget Tw_O_PrevWidget(tw_d TwD, twidget a1) {
+    return Tw_Stat(TwD, a1, TWS_widget_O_Prev);
 }
 
 /**
- * sets a gadget to toggle-type or to normal type
+ * return next widget with same owner
  */
-void Tw_SetToggleGadget(tw_d TwD, tgadget a1, byte a2) {
-    Tw_ChangeField(TwD, a1, TWS_gadget_Flags, TW_GADGETFL_TOGGLE, a2 ? TW_GADGETFL_TOGGLE : 0);
+tgadget Tw_O_NextWidget(tw_d TwD, twidget a1) {
+    return Tw_Stat(TwD, a1, TWS_widget_O_Next);
 }
 
 /**
- * return wether a gadget is toggle-type or not
+ * change the fill patter of given widget
  */
-byte Tw_IsToggleGadget(tw_d TwD, tgadget a1) {
-    return Tw_Stat(TwD, a1, TWS_gadget_Flags) & TW_GADGETFL_TOGGLE ? TRUE : FALSE;
+void Tw_SetFillWidget(tw_d TwD, twidget a1, hwattr a2) {
+    Tw_ChangeField(TwD, a1, TWS_widget_Fill, ~(hwattr)0, a2);
 }
 
 /**
  * draws given portion of a widget; usually called after a TW_WIDGET_EXPOSE message
  */
-void Tw_Draw2Widget(tw_d TwD, twidget a1, dat a2, dat a3, dat a4, dat a5, dat pitch, TW_CONST byte *a6, TW_CONST hwfont *a7, TW_CONST hwattr *a8) {
+void Tw_Draw2Widget(tw_d TwD, twidget a1, dat a2, dat a3, dat a4, dat a5, dat pitch,
+		    TW_CONST byte *a6, TW_CONST hwfont *a7, TW_CONST hwattr *a8) {
     uldat len6;
     uldat len7;
     uldat len8;
@@ -2328,21 +2333,21 @@ void Tw_Draw2Widget(tw_d TwD, twidget a1, dat a2, dat a3, dat a4, dat a5, dat pi
                 Push(s,uldat,a1); Push(s,dat,a2); Push(s,dat,a3); Push(s,dat,a4); Push(s,dat,a5);
 		Push(s,uldat,len6);
 		while (len6) {
-		    PushV(s,a2,a6);
+		    PushV(s,a2*sizeof(byte),a6);
 		    a6 += pitch;
-		    len6 -= a2;
+		    len6 -= a2*sizeof(byte);
 		}
 		Push(s,uldat,len7);
 		while (len7) {
-		    PushV(s,a2,a7);
+		    PushV(s,a2*sizeof(hwfont),a7);
 		    a7 += pitch;
-		    len7 -= a2;
+		    len7 -= a2*sizeof(hwfont);
 		}
 		Push(s,uldat,len8);
 		while (len8) {
-		    PushV(s,a2,a8);
+		    PushV(s,a2*sizeof(hwattr),a8);
 		    a8 += pitch;
-		    len8 -= a2;
+		    len8 -= a2*sizeof(hwattr);
 		}
 		Send(TwD, (My = NextSerial(TwD)), id_Tw[order_DrawWidget]);
 		UNLK;return;
@@ -2379,13 +2384,54 @@ void Tw_DrawHWAttrWidget(tw_d TwD, twidget W, dat XWidth, dat YWidth, dat Left, 
 }
 
 
-
-/* handy aliases (also for completeness) */
 /**
- * sends all buffered data to connection and waits for server to process it
+ * sets a gadget to pressed or unpressed
  */
-byte Tw_SyncSocket(tw_d TwD)				{ return Tw_Sync(TwD); }
+void Tw_SetPressedGadget(tw_d TwD, tgadget a1, byte a2) {
+    Tw_ChangeField(TwD, a1, TWS_gadget_Flags, TW_GADGETFL_PRESSED, a2 ? TW_GADGETFL_PRESSED : 0);
+}
 
+/**
+ * returns wether a gadget is pressed or not
+ */
+byte Tw_IsPressedGadget(tw_d TwD, tgadget a1) {
+    return Tw_Stat(TwD, a1, TWS_gadget_Flags) & TW_GADGETFL_PRESSED ? TRUE : FALSE;
+}
+
+/**
+ * sets a gadget to toggle-type or to normal type
+ */
+void Tw_SetToggleGadget(tw_d TwD, tgadget a1, byte a2) {
+    Tw_ChangeField(TwD, a1, TWS_gadget_Flags, TW_GADGETFL_TOGGLE, a2 ? TW_GADGETFL_TOGGLE : 0);
+}
+
+/**
+ * return wether a gadget is toggle-type or not
+ */
+byte Tw_IsToggleGadget(tw_d TwD, tgadget a1) {
+    return Tw_Stat(TwD, a1, TWS_gadget_Flags) & TW_GADGETFL_TOGGLE ? TRUE : FALSE;
+}
+
+/**
+ * return the group of this gadget
+ */
+tgroup Tw_GroupGadget(tw_d TwD, tgadget a1) {
+    return Tw_Stat(TwD, a1, TWS_gadget_Group);
+}
+
+/**
+ * return prev gadget in same group
+ */
+tgadget Tw_G_PrevGadget(tw_d TwD, tgadget a1) {
+    return Tw_Stat(TwD, a1, TWS_gadget_G_Prev);
+}
+
+/**
+ * return next gadget in same group
+ */
+tgadget Tw_G_NextGadget(tw_d TwD, tgadget a1) {
+    return Tw_Stat(TwD, a1, TWS_gadget_G_Next);
+}
 
 /**
  * sets given portion of gadget's contents
@@ -2445,32 +2491,30 @@ void Tw_SetHWFontsGadget(tw_d TwD, tgadget G, byte bitmap, dat Width, dat Height
 /**
  * creates a row for a menu
  */
-trow Tw_Create4Menu2Row(tw_d TwD, twindow Window, udat Code, byte Flags, ldat Len, TW_CONST byte *Text) {
-    trow R;
-    if (!(R = Tw_Create4MenuAny(TwD, (tobj)Window, (twindow)0, Code, Flags, Len, Text))) {
-	/* backward compatibility: will be removed */
-	Tw_Create4MenuRow(TwD, Window, Code, Flags, Len, Text);
-	R = Tw_FindRowByCodeWindow(TwD, Window, Code);
-    }
-    return R;
+trow Tw_Create4MenuRow(tw_d TwD, twindow Window, udat Code, byte Flags, ldat Len, TW_CONST byte *Text) {
+    return Tw_Create4MenuAny(TwD, (tobj)Window, (twindow)0, Code, Flags, Len, Text);
 }
 
-/* backward compatibility. will be removed */
-#undef Tw_Create4MenuMenuItem
 /**
  * creates a menuitem for a menu
  */
 tmenuitem Tw_Create4MenuMenuItem(tdisplay TwD, tobj Parent, twindow Window, byte Flags, dat Len, TW_CONST byte *Name) {
-    tmenuitem I;
-    if (!(I = Tw_Create4MenuAny(TwD, Parent, Window, (udat)0, Flags, Len, Name)))
-	/* backward compatibility: will be removed */
-	I = _Tw_Create4MenuMenuItem(TwD, Parent, Window, Flags, Len, Name);
-    return I;
+    return Tw_Create4MenuAny(TwD, Parent, Window, (udat)0, Flags, Len, Name);
 }
-/* backward compatibility. will be removed */
-#define Tw_Create4MenuMenuItem _Tw_Create4MenuMenuItem
+
+
+
+
+
+
+
 
 /***********/
+
+
+
+
+
 
 
 /* tslist flags: */
@@ -2940,6 +2984,16 @@ byte Tw_FindFunctions(tw_d TwD, void *F, ...) {
     return TRUE;
 }
 
+
+void Tw_MergeHyphensArgv(int argc, char **argv) {
+    char *S;
+    while (argc) {
+	if ((S = *argv) && S[0] == '-' && S[1] == '-' && S[2] && S[3])
+	    (*argv)++;
+	argv++, argc--;
+    }
+}
+
 #ifdef CONF_SOCKET_GZ
 
 static voidpf Tw_ZAlloc(voidpf opaque, uInt items, uInt size) {
@@ -3112,15 +3166,4 @@ byte Tw_DisableGzip(tw_d TwD) {
 #endif /* CONF_SOCKET_GZ */
 
 
-
-/* backward compatibility. will be removed. */
-#undef Tw_WriteRowWindow
-void Tw_WriteRowWindow(tdisplay TwD, twindow Window, ldat Len, TW_CONST byte *Data) {
-    Tw_WriteAsciiWindow(TwD, Window, Len, Data);
-}
-
-#undef Tw_ResizeWindow
-void Tw_ResizeWindow(tdisplay TwD, twindow Window, dat XWidth, dat YWidth) {
-    Tw_ResizeWidget(TwD, Window, XWidth, YWidth);
-}
 

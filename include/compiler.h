@@ -44,9 +44,13 @@
 #  define INLINE static inline
 # elif defined(HAVE_INLINE) || defined(inline)
 #  define INLINE inline
+# else
+#  define INLINE static
 # endif
-#else
-# define INLINE static
+#endif
+
+#if defined(HAVE_STATIC_INLINE) || defined(HAVE_INLINE) || defined(inline)
+# define CAN_INLINE 1
 #endif
 
 #if !defined(VOLATILE)

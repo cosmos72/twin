@@ -6,8 +6,10 @@ SUBDIRS=
 
 all: autogen
 
-do-autogen: defs_m4.h handy_m4.h version.h
+do-autogen: m4_incs version.h
 
 include makeversion
 include $(TOPDIR)/makerules
+
+m4_incs: $(call M4_INCS,)
 

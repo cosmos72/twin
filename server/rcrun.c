@@ -916,7 +916,7 @@ byte RC_VMQueue(CONST wm_ctx *C) {
 	    ctx = Pos2Ctx(C->Pos);
 	    
 	    if (isSINGLE_PRESS(C->Code)) {
-		Code = (C->Code & HOLD_ANY) | HOLD_CODE(3);
+		Code = HOLD_CODE(PRESS_N(C->Code)) | HOLD_CODE(3);
 		n = RCFindMouseBind((ldat)Code, ctx);
 		if (n) {
 		    ClickWinId = C->W ? C->W->Id : NOID;

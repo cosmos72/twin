@@ -22,7 +22,7 @@
  * and methods declared in this file allow only a single connection to a single
  * twin server (single-headed). This should not be a problem for most
  * applications, but you'd better know it.
- * Even though techincally possible, extending Tw/Tw++.h to be multi-headed
+ * Even though technically possible, extending Tw/Tw++.h to be multi-headed
  * would noticeably complicate it, as EVERY object would need to remember the
  * connection that was used to create it.
  */
@@ -126,7 +126,7 @@ class TWidget : public TObj {
     {
 	TwMapWidget(Id, parentId);
     }
-    inline void map( TWidget *parent ) const
+    inline void map( const TWidget *parent ) const
     {
 	TwMapWidget(Id, parent->Id);
     }
@@ -142,13 +142,13 @@ class TWidget : public TObj {
     {
 	TwSetXYWidget(Id, X, Y);
     }
-    static inline tmsgport getOwner( twidget myId )
+    static inline tmsgport owner( twidget myId )
     {
-	return TwGetOwnerWidget(myId);
+	return TwOwnerWidget(myId);
     }
-    inline tmsgport getOwner( ) const
+    inline tmsgport owner( ) const
     {
-	return TwGetOwnerWidget(Id);
+	return TwOwnerWidget(Id);
     }
     inline twidget findWidgetAt(dat x, dat y) const
     {
@@ -181,7 +181,7 @@ class TGadget : public TWidget {
      * 
      * Take care.
      */
-    inline TGadget( TWidget *parent, dat XWidth, dat YWidth, const char *TextNormal,
+    inline TGadget( const TWidget *parent, dat XWidth, dat YWidth, const char *TextNormal,
 		   udat Code = 0, uldat Flags = TW_GADGETFL_USETEXT|TW_GADGETFL_TEXT_DEFCOL, uldat Attrib = 0,
 		   hwcol ColText = COL(BLACK,GREEN), hwcol ColTextSelect = COL(HIGH|WHITE,GREEN),
 		   hwcol ColTextDisabled = COL(HIGH|BLACK,GREEN), hwcol ColTextSelectDisabled = COL(HIGH|BLACK,GREEN),
@@ -192,12 +192,12 @@ class TGadget : public TWidget {
 		ColText, ColTextSelect, ColTextDisabled, ColTextSelectDisabled, Left, Up);
     }
     /*
-     * args are `udat Code, udat Flags' to exploit optional paremeters,
+     * args are `udat Code, uldat Flags' to exploit optional paremeters,
      * while in Tw.h they are `uldat Flags, udat Code'.
      * 
      * Take care.
      */
-    static inline TGadget *CreateButton( TWidget *parent, dat XWidth, dat YWidth, const char *name,
+    static inline TGadget *CreateButton( const TWidget *parent, dat XWidth, dat YWidth, const char *name,
 		   udat Code = 0, uldat Flags = 0, hwcol BgCol = COL(BLACK,WHITE),
 		   hwcol Col = COL(BLACK,GREEN), hwcol ColDisabled = COL(HIGH|BLACK,GREEN),
 		   dat Left = 0, dat Up = 0)
@@ -255,7 +255,7 @@ class TButton : public TGadget {
   public:
     inline ~TButton( )			{ }
     
-    inline TButton( TWidget *parent, dat XWidth, dat YWidth, const char *name,
+    inline TButton( const TWidget *parent, dat XWidth, dat YWidth, const char *name,
 		   udat Code = 0, uldat Flags = 0, hwcol BgCol = COL(BLACK,WHITE),
 		   hwcol Col = COL(BLACK,GREEN), hwcol ColDisabled = COL(HIGH|BLACK,GREEN),
 		   dat Left = 0, dat Up = 0)
@@ -272,7 +272,7 @@ class TWindow : public TWidget {
   public:
     inline ~TWindow( )			{ } 
     
-    inline TWindow( TMenu *Menu, const char *name ="",
+    inline TWindow( const TMenu *Menu, const char *name ="",
 		   hwcol ColText = COL(BLACK,WHITE), uldat CursorType = TW_NOCURSOR,
 		   uldat Attrib = TW_WINDOW_WANT_KEYS|TW_WINDOW_CLOSE|TW_WINDOW_DRAG|TW_WINDOW_RESIZE,
 		   uldat Flags = TW_WINDOWFL_USEROWS, dat XWidth = 0, dat YWidth = 0, dat ScrollBackLines = 0)
@@ -280,7 +280,7 @@ class TWindow : public TWidget {
 	Id = TwCreateWindow(strlen(name), (TW_CONST byte *)name, NULL, Menu->Id, ColText, CursorType,
 			    Attrib, Flags, XWidth, YWidth, ScrollBackLines);
     }
-    static inline TWindow *create4Menu(TMenu *Menu)
+    static inline TWindow *create4Menu(const TMenu *Menu)
     {
 	TWindow *W = new TWindow( );
 	W->Id = TwCreate4MenuWindow(Menu->Id);
@@ -373,11 +373,11 @@ class TGroup : public TObj {
     {
 	if (Id == TW_NOID) Id = TwCreateGroup( );
     }
-    inline void insertGadget( TGadget *G ) const
+    inline void insertGadget( const TGadget *G ) const
     {
 	TwInsertGadgetGroup(Id, G->Id);
     }
-    inline void removeGadget( TGadget *G ) const
+    inline void removeGadget( const TGadget *G ) const
     {
 	TwRemoveGadgetGroup(Id, G->Id);
     }
@@ -385,7 +385,7 @@ class TGroup : public TObj {
     {
 	return TwGetSelectedGadgetGroup(Id);
     }
-    inline void setSelectedGadget( TGadget *G ) const
+    inline void setSelectedGadget( const TGadget *G ) const
     {
 	TwSetSelectedGadgetGroup(Id, G->Id);
     }
@@ -405,7 +405,7 @@ class TKeyEvent : public s_tevent_keyboard {
   public:
     inline ~TKeyEvent( )		{ }
     
-    inline TKeyEvent(TWidget *widget, udat code, udat shiftflags )
+    inline TKeyEvent(const TWidget *widget, udat code, udat shiftflags )
     {
 	W = widget->Id;
 	Code = code;
@@ -428,7 +428,7 @@ class TMouseEvent : public s_tevent_mouse {
   public:
     inline ~TMouseEvent( )		{ }
     
-    inline TMouseEvent(TWidget *widget, udat code, udat shiftflags )
+    inline TMouseEvent(const TWidget *widget, udat code, udat shiftflags )
     {
 	W = widget->Id;
 	Code = code;
@@ -449,7 +449,7 @@ class TControlEvent : public s_tevent_control {
   public:
     inline ~TControlEvent( )		{ }
     
-    inline TControlEvent(TWidget *widget, udat code )
+    inline TControlEvent(const TWidget *widget, udat code )
     {
 	W = widget->Id;
 	Code = code;
@@ -469,7 +469,7 @@ class TClientMsgEvent : public s_tevent_clientmsg {
   public:
     inline ~TClientMsgEvent( )		{ }
     
-    inline TClientMsgEvent(TWidget *widget, udat code )
+    inline TClientMsgEvent(const TWidget *widget, udat code )
     {
 	W = widget->Id;
 	Code = code;
@@ -507,7 +507,7 @@ class TWidgetEvent : public s_tevent_widget {
   public:
     inline ~TWidgetEvent( )		{ }
     
-    inline TWidgetEvent(TWidget *widget, udat code )
+    inline TWidgetEvent(const TWidget *widget, udat code )
     {
 	W = widget->Id;
 	Code = code;
@@ -526,7 +526,7 @@ class TGadgetEvent : public s_tevent_gadget {
   public:
     inline ~TGadgetEvent( )		{ }
     
-    inline TGadgetEvent(TWidget *widget, udat code )
+    inline TGadgetEvent(const TWidget *widget, udat code )
     {
 	W = widget->Id;
 	Code = code;
@@ -544,7 +544,7 @@ class TMenuEvent : public s_tevent_menu {
   public:
     inline ~TMenuEvent( )		{ }
     
-    inline TMenuEvent(TWidget *widget, TMenu *M, udat code )
+    inline TMenuEvent(const TWidget *widget, const TMenu *M, udat code )
     {
 	W = widget->Id;
 	Menu = M->Id;
@@ -561,7 +561,7 @@ class TSelectionEvent : public s_tevent_selection {
   public:
     inline ~TSelectionEvent( )		{ }
     
-    inline TSelectionEvent(TWidget *widget)
+    inline TSelectionEvent(const TWidget *widget)
     {
 	W = widget->Id;
 	Code = 0;
@@ -724,7 +724,7 @@ class TListener {
     inline ~TListener( )
     {
 	if (Event)
-	    Event->~TEvent();
+	    delete Event;
 	TwSetTEListener(T, 0, NULL);
 	TwDeleteListener(T);
     }
@@ -798,7 +798,7 @@ class TListenerNonStatic : public TListener {
  * we force a cast to the exact needed types. The macro below will fail
  * if you exagerate.
  * In particular, `This' should be a pointer to a class derived from `TEmpty'
- * (all libTw++ classes, except for T*Msg, T*Event and T*Listener* are
+ * (all Tw++ classes, except for T*Msg, T*Event and T*Listener* are
  * derived from `TEmpty')
  * and `L' must be a method pointer with prototype compatible to
  * `void (TEmpty::*)(void *, TEvent *)' -- possibly with `TEmpty::*'
@@ -933,7 +933,7 @@ class TW : public TEmpty {
     {
 	return TwDetachHW(strlen(name), (TW_CONST byte *)name);
     }
-        /* ok, back to normal methods */
+    /* ok, back to normal methods */
     static inline void setFontTranslation(const char trans[0x80])
     {
 	TwSetFontTranslation((TW_CONST byte *)trans);
@@ -1153,7 +1153,7 @@ class TW : public TEmpty {
     }
     static inline void deleteListener(TListener *L)
     {
-	L->~TListener();
+	delete L;
     }
   private:
     static inline TListener *addListener(TEvent *E, uldat type, TListener *L)

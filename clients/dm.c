@@ -628,6 +628,7 @@ int main(int argc, char *argv[]) {
     tmsg Msg;
     uldat err;
 
+    TwMergeHyphensArgv(argc, argv);
     
     Args = (byte * TW_CONST *)argv + 1;
     

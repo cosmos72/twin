@@ -215,13 +215,18 @@ static void GPM_MouseEvent(int fd, display_hw hw) {
 	if (GPM_EV.type & GPM_UP)
 	    IdButtons = GPM_keys & ~IdButtons;
 	GPM_keys = IdButtons;
-	
-	if (IdButtons & GPM_B_LEFT)
-	    Buttons |= HOLD_LEFT;
-	if (IdButtons & GPM_B_MIDDLE)
-	    Buttons |= HOLD_MIDDLE;
-	if (IdButtons & GPM_B_RIGHT)
-	    Buttons |= HOLD_RIGHT;
+
+	Buttons |=
+	    (IdButtons & GPM_B_LEFT   ? HOLD_LEFT   : 0) |
+	    (IdButtons & GPM_B_MIDDLE ? HOLD_MIDDLE : 0) |
+	    (IdButtons & GPM_B_RIGHT  ? HOLD_RIGHT  : 0) |
+#if defined(GPM_B_WHEEL_REV) && defined(HOLD_WHEEL_REV)
+	    (IdButtons & GPM_B_WHEEL_REV ? HOLD_WHEEL_REV : 0) |
+#endif
+#if defined(GPM_B_WHEEL_FWD) && defined(HOLD_WHEEL_FWD)
+	    (IdButtons & GPM_B_WHEEL_FWD ? HOLD_WHEEL_FWD : 0) |
+#endif	
+	    0;
 	
 	MouseEventCommon(GPM_EV.x, GPM_EV.y, GPM_EV.dx, GPM_EV.dy, Buttons);
 	

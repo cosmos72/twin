@@ -176,7 +176,7 @@ void AVLInsert(tavl L /*key*/, tavl P /*base*/, tavl_compare cmp, tavl *root) {
 	*root = L;
 }
 
-/* FIXME: this is untested */
+/* FIXME: this is not completely tested */
 void AVLRemove(tavl P /*node*/, tavl_compare cmp, tavl *root) {
     tavl L, R, LC, RC, Y;
     byte HL, HR;
@@ -184,7 +184,7 @@ void AVLRemove(tavl P /*node*/, tavl_compare cmp, tavl *root) {
     L = LC = P->AVLLeft;
     R = RC = P->AVLRight;
     if (L && R) {
-	while (RC && RC) {
+	while (LC && RC) {
 	    L = LC; LC = L->AVLRight;
 	    R = RC; RC = R->AVLLeft;
 	}
@@ -200,23 +200,30 @@ void AVLRemove(tavl P /*node*/, tavl_compare cmp, tavl *root) {
 	    /*            LC                                          */
 	    /*                                                        */
 	    LC = L->AVLLeft;
-	    Y = L->AVLParent;
-	    if ((Y->AVLRight = LC)) LC->AVLParent = Y;
+	    if ((Y = L->AVLParent) == P)
+		Y->AVLLeft = LC;
+	    else
+		Y->AVLRight = LC;
+	    if (LC) LC->AVLParent = Y;
 	    AVL_Insert(L, P->AVLParent, P, root);
 	    if ((L->AVLRight = P->AVLRight)) L->AVLRight->AVLParent = L;
-	    L->AVLLeft = P->AVLLeft; L->AVLLeft->AVLParent = L;
-	    HL = L->AVLLeft->AVLHeight;
+	    if ((L->AVLLeft = P->AVLLeft)) L->AVLLeft->AVLParent = L;
+	    HL = AVLHeightOf(L->AVLLeft);
 	    HR = AVLHeightOf(L->AVLRight);
 	    L->AVLHeight = 1 + (HL > HR ? HL : HR);
 	} else {
 	    /* similar to the above, just swap Left <--> Right sides */
 	    RC = R->AVLRight;
 	    Y = R->AVLParent;
-	    if ((Y->AVLLeft = RC)) RC->AVLParent = Y;
+	    if ((Y = L->AVLParent) == P)
+		Y->AVLRight = RC;
+	    else
+		Y->AVLLeft = RC;
+	    if (RC) RC->AVLParent = Y;
 	    AVL_Insert(R, P->AVLParent, P, root);
 	    if ((R->AVLLeft = P->AVLLeft)) R->AVLLeft->AVLParent = R;
-	    R->AVLRight = P->AVLRight; R->AVLRight->AVLParent = R;
-	    HR = R->AVLRight->AVLHeight;
+	    if ((R->AVLRight = P->AVLRight)) R->AVLRight->AVLParent = R;
+	    HR = AVLHeightOf(R->AVLRight);
 	    HL = AVLHeightOf(R->AVLLeft);
 	    R->AVLHeight = 1 + (HR > HL ? HR : HL);
 	}

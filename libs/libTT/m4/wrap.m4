@@ -73,11 +73,12 @@ arg_decl_decay($5) TT$2_$3`'(ifelse($4, 0, void, `args_decl(1, $4, NSHIFT(5, $@)
     UNLK;
     return a0_ifnotvoid($5);
 }')')
+define(`public_set',`exported($@)')
 
 
 divert
 
-/* `public' and `exported' methods */
+/* `public', `public_set' and `exported' methods */
 
 define(`el',`
 /* $1 methods */
@@ -87,6 +88,7 @@ TTlist()
 undefine(`el')
 define(`exported')
 define(`public')
+define(`public_set')
 define(`extends')
 
 

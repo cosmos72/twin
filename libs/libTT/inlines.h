@@ -14,25 +14,10 @@ TT_INLINE opaque Obj2Id(ttobj Obj) {
 #define ID2(type,id) ((type)Id2Obj(order_(type), (topaque)(id)))
 
 
-/* ttfn_ttobj <-> tt_fn conversion */
-
-/* unused *//*
-TT_INLINE opaque Fn2Id(ttfn_ttobj FN) {
-    return FN ? FN->order : NOID;
-}
-*/
-
-TT_INLINE ttfn_ttobj Id2Fn(opaque FN) {
-    if (FN >= order_ttobj && FN < order_n)
-	return TFNs[FN];
-    return NULL;
-}
-#define ID2FN(FN) Id2Fn((opaque)(FN))
-
-
-#define TNEW2(type, o)	((type)New(TFNs[order_(type)], (ttobj)o))
-#define TNEW(type)	TNEW2(type, (ttobj)0)
-#define TDEL(o)		Del((ttobj)o)
+#define TNEW_NOBUILD(type)	(TFN(type)->New(TFN(type), (type)0))
+#define TNEW2(type, o)		((type)New((ttfn_ttobj)TFN(type), (ttobj)o))
+#define TNEW(type)		TNEW2(type, (ttobj)0)
+#define TDEL(o)			Del((ttobj)o)
 
 /* destructors */
 /* unused *//*
@@ -69,6 +54,9 @@ TT_INLINE ttobj New(ttfn_ttobj FN, ttobj o) {
     return (ttobj)0;
 }
 
+/* ttlistener */
+
+
 /* ttmenubar */
 TT_INLINE ttmenubar GetDefault_ttmenubar(void) {
     if (!TTD.Menubar && (TTD.Menubar = TFN_ttmenubar->New(TFN_ttmenubar, NULL)))
@@ -82,6 +70,10 @@ TT_INLINE tttheme GetDefault_tttheme(void) {
     if (!TTD.Theme && !TTD.DummyTheme && (TTD.Theme = TFN_tttheme->New(TFN_tttheme, NULL)))
 	return (tttheme)Build((ttobj)TTD.Theme);
     return TTD.Theme ? TTD.Theme : TTD.DummyTheme;
+}
+
+TT_INLINE ttapplication Get_ttapplication(void) {
+    return TTD.Application;
 }
 
 #endif /* _TT_INLINES_H */

@@ -41,9 +41,12 @@
 
 
 
+
+
 case order_FindFunction:
     a[0]._ = (uldat)sockFindFunction((byte)a[1]._, (CONST byte *)a[2].V, (byte)a[3]._, (CONST byte *)a[4].V);
     break;
+
 
 
 case order_SyncSocket:
@@ -51,18 +54,22 @@ case order_SyncSocket:
     break;
 
 
+
 case order_ServerSizeof:
     a[0]._ = (uldat)sockServerSizeof((byte)a[1]._);
     break;
+
 
 
 case order_CanCompress:
     a[0]._ = (uldat)sockCanCompress();
     break;
 
+
 case order_DoCompress:
     a[0]._ = (uldat)sockDoCompress((byte)a[1]._);
     break;
+
 
 
 case order_NeedResizeDisplay:
@@ -70,27 +77,33 @@ case order_NeedResizeDisplay:
     break;
 
 
+
 case order_AttachHW:
     sockAttachHW((uldat)a[1]._, (CONST byte *)a[2].V, (byte)a[3]._);
     break;
+
 
 case order_DetachHW:
     a[0]._ = (uldat)sockDetachHW((uldat)a[1]._, (CONST byte *)a[2].V);
     break;
 
 
+
 case order_SetFontTranslation:
     sockSetFontTranslation((CONST byte *)a[1].V);
     break;
 
-case order_SetUniFontTranslation:
-    sockSetUniFontTranslation((CONST hwfont *)a[1].V);
+
+case order_SetHWFontTranslation:
+    sockSetHWFontTranslation((CONST hwfont *)a[1].V);
     break;
+
 
 
 case order_DeleteObj:
     sockDeleteObj((obj)a[1].x);
     break;
+
 
 case order_ChangeFieldObj:
     Act(ChangeField,(obj)a[1].x)((obj)a[1].x, (udat)a[2]._, (uldat)a[3]._, (uldat)a[4]._);
@@ -101,6 +114,7 @@ case order_ChangeFieldObj:
 case order_CreateWidget:
     a[0].x = (obj)sockCreateWidget((dat)a[1]._, (dat)a[2]._, (uldat)a[3]._, (uldat)a[4]._, (dat)a[5]._, (dat)a[6]._, (hwattr)a[7]._);
     break;
+
 
 case order_RecursiveDeleteWidget:
     sockRecursiveDeleteWidget((widget)a[1].x);
@@ -124,10 +138,6 @@ case order_ResizeWidget:
 
 case order_ScrollWidget:
     sockScrollWidget((widget)a[1].x, (ldat)a[2]._, (ldat)a[3]._);
-    break;
-
-case order_GetOwnerWidget:
-    a[0].x = (obj)sockGetOwnerWidget((widget)a[1].x);
     break;
 
 case order_DrawWidget:
@@ -187,7 +197,7 @@ case order_WriteHWFontsGadget:
 
 
 case order_CreateWindow:
-    a[0].x = (obj)Do(Create,Window)(FnWindow, (dat)a[1]._, (CONST byte *)a[2].V, (CONST hwcol *)a[3].V, (menu)a[4].x, (hwcol)a[5]._, (uldat)a[6]._, (uldat)a[7]._, (uldat)a[8]._, (dat)a[9]._, (dat)a[10]._, (dat)a[11]._);
+    a[0].x = (obj)sockCreateWindow((dat)a[1]._, (CONST byte *)a[2].V, (CONST hwcol *)a[3].V, (menu)a[4].x, (hwcol)a[5]._, (uldat)a[6]._, (uldat)a[7]._, (uldat)a[8]._, (dat)a[9]._, (dat)a[10]._, (dat)a[11]._);
     break;
 
 case order_Create4MenuWindow:
@@ -214,6 +224,10 @@ case order_WriteHWAttrWindow:
 
 case order_GotoXYWindow:
     Act(GotoXY,(window)a[1].x)((window)a[1].x, (ldat)a[2]._, (ldat)a[3]._);
+    break;
+
+case order_SetTitleWindow:
+    sockSetTitleWindow((window)a[1].x, (dat)a[2]._, (CONST byte *)a[3].V);
     break;
 
 case order_SetColTextWindow:
@@ -255,11 +269,6 @@ case order_SetSelectedGadgetGroup:
     break;
 
 
-case order_Create4MenuRow:
-    sockCreate4MenuRow((window)a[1].x, (udat)a[2]._, (byte)a[3]._, (ldat)a[4]._, (CONST byte *)a[5].V);
-    break;
-
-
 case order_RaiseRow:
     Act(Raise,(row)a[1].x)((row)a[1].x);
     break;
@@ -276,10 +285,6 @@ case order_CirculateChildrenRow:
     sockCirculateChildrenRow((obj)a[1].x, (byte)a[2]._);
     break;
 
-
-case order_Create4MenuMenuItem:
-    a[0].x = (obj)sockCreate4MenuMenuItem((obj)a[1].x, (window)a[2].x, (byte)a[3]._, (dat)a[4]._, (CONST byte *)a[5].V);
-    break;
 
 case order_Create4MenuAny:
     a[0].x = (obj)sockCreate4MenuAny((obj)a[1].x, (window)a[2].x, (udat)a[3]._, (byte)a[4]._, (ldat)a[5]._, (CONST byte *)a[6].V);
@@ -324,32 +329,6 @@ case order_NextObj:
 
 case order_ParentObj:
     a[0].x = (obj)sockParentObj((obj)a[1].x);
-    break;
-
-
-case order_G_PrevGadget:
-    a[0].x = (obj)sockG_PrevGadget((gadget )a[1].x);
-    break;
-
-case order_G_NextGadget:
-    a[0].x = (obj)sockG_NextGadget((gadget )a[1].x);
-    break;
-
-case order_GroupGadget:
-    a[0].x = (obj)sockGroupGadget((gadget )a[1].x);
-    break;
-
-
-case order_O_PrevWidget:
-    a[0].x = (obj)sockO_PrevWidget((widget )a[1].x);
-    break;
-
-case order_O_NextWidget:
-    a[0].x = (obj)sockO_NextWidget((widget )a[1].x);
-    break;
-
-case order_OwnerWidget:
-    a[0].x = (obj)sockOwnerWidget((widget )a[1].x);
     break;
 
 

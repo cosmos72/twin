@@ -32,7 +32,7 @@ define(`PROTO', `define(order_`'NAME($3, $4), order_n)`'define(`order_n', incr(o
 define(`PROTOFindFunction', `PROTO($@)')
 define(`PROTOSyncSocket', `PROTO($@)')
 
-include(`m4/sockproto.m4h')
+include(`m4/Tw_sockproto.m4h')
 
 define(`order_n', eval(order_n/2))
 
@@ -97,7 +97,7 @@ divert
 
 i386_call(1)
 
-include(`m4/sockproto.m4h')
+include(`m4/Tw_sockproto.m4h')
 
 i386_call(3)
 

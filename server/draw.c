@@ -395,7 +395,6 @@ widget RecursiveFindWidgetAt(widget Parent, dat X, dat Y) {
 
 void DrawSelfWidget(draw_ctx *D) {
     widget W = D->TopW;
-    hwattr h;
     
     if (QueuedDrawArea2FullScreen || (W->Flags & WIDGETFL_NOTVISIBLE))
 	return;
@@ -409,6 +408,7 @@ void DrawSelfWidget(draw_ctx *D) {
 	dat Pitch, X1, X2, Y1, Y2, dX, dY;
 	ldat _X1, _X2, _Y1, _Y2;
 	dat DWidth, i, j;
+	hwattr h;
 	hwcol Color;
 	byte Shaded;
 
@@ -452,12 +452,12 @@ void DrawSelfWidget(draw_ctx *D) {
 	    _Y1 = Max2(W->USE.E.Y1 + Up, Y1);
 	    _Y2 = Min2(W->USE.E.Y2 + Up, Y2);
 
-	    dX = _X1 - W->USE.E.X1 + Left;
-	    dY = _Y1 - W->USE.E.Y1 + Up;
+	    dX = _X1 - W->USE.E.X1 - Left;
+	    dY = _Y1 - W->USE.E.Y1 - Up;
 	    
+	    h = W->USE_Fill | extra_POS_INSIDE;
 	    if (_X1 > _X2 || _Y1 > _Y2) {
 		/* no valid ->USE.E, fill with spaces */
-		h = W->USE_Fill | extra_POS_INSIDE;
 		FillVideo(X1, Y1, X2, Y2, h);
 		return;
 	    }
@@ -469,19 +469,19 @@ void DrawSelfWidget(draw_ctx *D) {
 	     * pad with SPACEs as needed
 	     */
 	    if (Y1 < _Y1) {
-		FillVideo(X1, Y1, X2, _Y1 - 1, W->USE_Fill);
+		FillVideo(X1, Y1, X2, _Y1 - 1, h);
 		Y1 = _Y1;
 	    }
 	    if (Y2 > _Y2) {
-		FillVideo(X1, _Y2 + 1, X2, Y2, W->USE_Fill);
+		FillVideo(X1, _Y2 + 1, X2, Y2, h);
 		Y2 = _Y2;
 	    }
 	    if (X1 < _X1) {
-		FillVideo(X1, Y1, _X1 - 1, Y2, W->USE_Fill);
+		FillVideo(X1, Y1, _X1 - 1, Y2, h);
 		X1 = _X1;
 	    }
 	    if (X2 > _X2) {
-		FillVideo(_X2 + 1, Y1, X2, Y2, W->USE_Fill);
+		FillVideo(_X2 + 1, Y1, X2, Y2, h);
 		X2 = _X2;
 	    }
 	    
@@ -543,7 +543,7 @@ void DrawSelfWidget(draw_ctx *D) {
 	    }
 	}
     } else
-	FillVideo(D->X1, D->Y1, D->X2, D->Y2, W->USE_Fill);
+	FillVideo(D->X1, D->Y1, D->X2, D->Y2, W->USE_Fill | extra_POS_INSIDE);
 }
 
 

@@ -22,18 +22,16 @@ static BREAK(ttobj) {
 
 
 /* ttwidget */
-static NEW(ttwidget) {
-    if ((o->native = (opaque)gtk_fixed_new()))
-	return o;
-    return NULL;
-}
 static BUILD(ttwidget) {
-    gtk_widget_realize((GtkWidget *)o->native);
-    return o;
+    if ((o->native = (opaque)gtk_fixed_new())) {
+	gtk_widget_realize((GtkWidget *)o->native);
+	return o;
+    }
+    return NULL;
 }
 static void DEF(AddTo_ttwidget)(ttwidget o, ttvisible parent) {
     if (parent && !o->parent) {
-	/* prepend to list, cannot use FNSUPER(ttwidget)->AddTo() */
+	/* prepend to list, cannot use FNDEFAULT(ttwidget)->AddTo() */
 	if ((o->next = parent->child_first))
 	    parent->child_first->prev = (ttvisible)o;
 	else
@@ -61,7 +59,7 @@ static void DEF(SetVisible_ttwidget)(ttwidget o, ttbyte on_off) {
 }
 static void DEF(Remove_ttwidget)(ttwidget o) {
     if (o->parent) {
-	FNSUPER(ttwidget)->Remove((super_(ttwidget))o);
+	FNDEFAULT(ttwidget)->Remove(o);
 	
 	gtk_widget_reparent((GtkWidget *)o->native, (GtkWidget *)0);
     }
@@ -77,20 +75,22 @@ static ttbyte HWDEF(Flush)(void) {
 static ttbyte HWDEF(TimidFlush)(void) {
     return 1;
 }
+#if 0 /* not used */
 static ttbyte HWDEF(MainLoop)(void) {
-    gtk_main();
-    return 1;
-}
-static ttbyte HWDEF(MainLoopOnce)(ttbyte wait) {
-    /* FIXME: this is almost surely wrong */
-    gtk_main_quit();
     gtk_main();
     return 1;
 }
 static void HWDEF(ExitMainLoop)(void) {
     gtk_main_quit();
 }
-static void HWDEF(DeleteListener)(ttlistener o) {
+#endif
+static ttbyte HWDEF(MainLoopOnce)(ttbyte wait) {
+    /* FIXME: this is almost surely wrong */
+    gtk_main_quit();
+    gtk_main();
+    return 1;
+}
+static void HWDEF(DeleteCallback)(ttcallback o) {
 }
 static void HWDEF(Close)(void) {
 }

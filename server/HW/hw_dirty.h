@@ -17,7 +17,7 @@ INLINE byte Plain_isDirtyVideo(dat X, dat Y) {
 
 /*
  * this is not trivial, as it must consider that areas nearer than
- * merge_Threshold will get merged together (by vcsa_FlushVideo())
+ * merge_Threshold will get merged together (by vcsa_FlushVideo() for example)
  */
 INLINE byte Threshold_isDirtyVideo(dat X, dat Y) {
     dat s1, s2, e1, e2, delta;
@@ -66,13 +66,9 @@ INLINE byte Threshold_isDirtyVideo(dat X, dat Y) {
 	return s2 + (DisplayWidth - e1) < HW->merge_Threshold;
 }
 
-/* VideoFlip is quite os-independent ;) */
+/* VideoFlip is quite OS and driver independent ;) */
 INLINE void VideoFlip(udat x, udat y) {
-    uldat pos = x + y * DisplayWidth;
-    hwattr h = Video[pos];
-    hwcol c = ~HWCOL(h) ^ COL(HIGH,HIGH);
-
-    Video[pos] = HWATTR( c, HWFONT(h));
+    Video[x + (uldat)y * DisplayWidth] ^= HWATTR(COL(WHITE,WHITE), 0);
 }
 
 #endif /* _TWIN_HW_DIRTY_H */

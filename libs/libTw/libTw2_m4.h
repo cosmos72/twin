@@ -17,6 +17,8 @@
 
 
 
+
+
 static uldat _Tw_FindFunction(tw_d TwD, byte a1, TW_CONST byte *a2, byte a3, TW_CONST byte *a4) {
     return (uldat)EncodeCall(ENCODE_FL_NOLOCK|0, order_FindFunction, TwD 
     , c(a1)
@@ -26,9 +28,11 @@ static uldat _Tw_FindFunction(tw_d TwD, byte a1, TW_CONST byte *a2, byte a3, TW_
 }
 
 
+
 static byte _Tw_SyncSocket(tw_d TwD) {
     return (byte)EncodeCall(ENCODE_FL_NOLOCK|0, order_SyncSocket, TwD );
 }
+
 
 
 byte Tw_ServerSizeof(tw_d TwD, byte a1) {
@@ -37,9 +41,11 @@ byte Tw_ServerSizeof(tw_d TwD, byte a1) {
 }
 
 
+
 byte Tw_CanCompress(tw_d TwD) {
     return (byte)EncodeCall(0, order_CanCompress, TwD );
 }
+
 
 byte Tw_DoCompress(tw_d TwD, byte a1) {
     return (byte)EncodeCall(0, order_DoCompress, TwD 
@@ -47,9 +53,11 @@ byte Tw_DoCompress(tw_d TwD, byte a1) {
 }
 
 
+
 void Tw_NeedResizeDisplay(tw_d TwD) {
     EncodeCall(ENCODE_FL_VOID, order_NeedResizeDisplay, TwD );
 }
+
 
 
 void Tw_AttachHW(tw_d TwD, uldat a1, TW_CONST byte *a2, byte a3) {
@@ -59,6 +67,7 @@ void Tw_AttachHW(tw_d TwD, uldat a1, TW_CONST byte *a2, byte a3) {
     , c(a3));
 }
 
+
 byte Tw_DetachHW(tw_d TwD, uldat a1, TW_CONST byte *a2) {
     return (byte)EncodeCall(0, order_DetachHW, TwD 
     , c(a1)
@@ -66,21 +75,25 @@ byte Tw_DetachHW(tw_d TwD, uldat a1, TW_CONST byte *a2) {
 }
 
 
+
 void Tw_SetFontTranslation(tw_d TwD, TW_CONST byte *a1) {
     EncodeCall(ENCODE_FL_VOID, order_SetFontTranslation, TwD 
     , c((0x80) * sizeof(byte)), (TW_CONST void *)a1);
 }
 
-void Tw_SetUniFontTranslation(tw_d TwD, TW_CONST hwfont *a1) {
-    EncodeCall(ENCODE_FL_VOID, order_SetUniFontTranslation, TwD 
+
+void Tw_SetHWFontTranslation(tw_d TwD, TW_CONST hwfont *a1) {
+    EncodeCall(ENCODE_FL_VOID, order_SetHWFontTranslation, TwD 
     , c((0x80) * sizeof(hwfont)), (TW_CONST void *)a1);
 }
+
 
 
 void Tw_DeleteObj(tw_d TwD, tobj a1) {
     EncodeCall(ENCODE_FL_VOID, order_DeleteObj, TwD 
     , c(a1));
 }
+
 
 void Tw_ChangeFieldObj(tw_d TwD, tobj a1, udat a2, uldat a3, uldat a4) {
     EncodeCall(ENCODE_FL_VOID, order_ChangeFieldObj, TwD 
@@ -102,6 +115,7 @@ twidget Tw_CreateWidget(tw_d TwD, dat a1, dat a2, uldat a3, uldat a4, dat a5, da
     , c(a6)
     , c(a7));
 }
+
 
 void Tw_RecursiveDeleteWidget(tw_d TwD, twidget a1) {
     EncodeCall(ENCODE_FL_VOID, order_RecursiveDeleteWidget, TwD 
@@ -138,11 +152,6 @@ void Tw_ScrollWidget(tw_d TwD, twidget a1, ldat a2, ldat a3) {
     , c(a1)
     , c(a2)
     , c(a3));
-}
-
-tmsgport Tw_GetOwnerWidget(tw_d TwD, twidget a1) {
-    return (tobj)EncodeCall(0, order_GetOwnerWidget, TwD 
-    , c(a1));
 }
 
 void Tw_DrawWidget(tw_d TwD, twidget a1, dat a2, dat a3, dat a4, dat a5, TW_CONST byte *a6, TW_CONST hwfont *a7, TW_CONST hwattr *a8) {
@@ -319,6 +328,13 @@ void Tw_GotoXYWindow(tw_d TwD, twindow a1, ldat a2, ldat a3) {
     , c(a3));
 }
 
+void Tw_SetTitleWindow(tw_d TwD, twindow a1, dat a2, TW_CONST byte *a3) {
+    EncodeCall(ENCODE_FL_VOID, order_SetTitleWindow, TwD 
+    , c(a1)
+    , c(a2)
+    , c((a2) * sizeof(byte)), (TW_CONST void *)a3);
+}
+
 void Tw_SetColTextWindow(tw_d TwD, twindow a1, hwcol a2) {
     EncodeCall(ENCODE_FL_VOID, order_SetColTextWindow, TwD 
     , c(a1)
@@ -388,16 +404,6 @@ void Tw_SetSelectedGadgetGroup(tw_d TwD, tgroup a1, tgadget a2) {
 }
 
 
-void Tw_Create4MenuRow(tw_d TwD, twindow a1, udat a2, byte a3, ldat a4, TW_CONST byte *a5) {
-    EncodeCall(ENCODE_FL_VOID, order_Create4MenuRow, TwD 
-    , c(a1)
-    , c(a2)
-    , c(a3)
-    , c(a4)
-    , c((a4) * sizeof(byte)), (TW_CONST void *)a5);
-}
-
-
 void Tw_RaiseRow(tw_d TwD, trow a1) {
     EncodeCall(ENCODE_FL_VOID, order_RaiseRow, TwD 
     , c(a1));
@@ -421,15 +427,6 @@ void Tw_CirculateChildrenRow(tw_d TwD, tobj a1, byte a2) {
     , c(a2));
 }
 
-
-tmenuitem Tw_Create4MenuMenuItem(tw_d TwD, tobj a1, twindow a2, byte a3, dat a4, TW_CONST byte *a5) {
-    return (tobj)EncodeCall(0, order_Create4MenuMenuItem, TwD 
-    , c(a1)
-    , c(a2)
-    , c(a3)
-    , c(a4)
-    , c((a4) * sizeof(byte)), (TW_CONST void *)a5);
-}
 
 trow Tw_Create4MenuAny(tw_d TwD, tobj a1, twindow a2, udat a3, byte a4, ldat a5, TW_CONST byte *a6) {
     return (tobj)EncodeCall(0, order_Create4MenuAny, TwD 
@@ -507,38 +504,6 @@ tobj Tw_NextObj(tw_d TwD, tobj a1) {
 
 tobj Tw_ParentObj(tw_d TwD, tobj a1) {
     return (tobj)EncodeCall(0, order_ParentObj, TwD 
-    , c(a1));
-}
-
-
-tgadget   Tw_G_PrevGadget(tw_d TwD, tgadget  a1) {
-    return (tobj)EncodeCall(0, order_G_PrevGadget, TwD 
-    , c(a1));
-}
-
-tgadget   Tw_G_NextGadget(tw_d TwD, tgadget  a1) {
-    return (tobj)EncodeCall(0, order_G_NextGadget, TwD 
-    , c(a1));
-}
-
-tgroup    Tw_GroupGadget(tw_d TwD, tgadget  a1) {
-    return (tobj)EncodeCall(0, order_GroupGadget, TwD 
-    , c(a1));
-}
-
-
-twidget   Tw_O_PrevWidget(tw_d TwD, twidget  a1) {
-    return (tobj)EncodeCall(0, order_O_PrevWidget, TwD 
-    , c(a1));
-}
-
-twidget   Tw_O_NextWidget(tw_d TwD, twidget  a1) {
-    return (tobj)EncodeCall(0, order_O_NextWidget, TwD 
-    , c(a1));
-}
-
-tmsgport  Tw_OwnerWidget(tw_d TwD, twidget  a1) {
-    return (tobj)EncodeCall(0, order_OwnerWidget, TwD 
     , c(a1));
 }
 

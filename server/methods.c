@@ -345,7 +345,7 @@ static void MapWidget(widget W, widget Parent) {
 	
 	    DrawAreaWidget(W);
 	    
-	    if (W->Attrib & WIDGET_WANT_MOUSE_MOTION)
+	    if (W->Attrib & (WIDGET_WANT_MOUSE_MOTION|WIDGET_AUTO_FOCUS))
 		IncMouseMotionN();
 	    
 	    if (W->MapUnMapHook)
@@ -379,7 +379,7 @@ static void MapTopRealWidget(widget W, screen Screen) {
 	/* top-level widgets must be visible */
 	W->Flags &= ~WINDOWFL_NOTVISIBLE;
 
-	if (W->Attrib & WIDGET_WANT_MOUSE_MOTION)
+	if (W->Attrib & (WIDGET_WANT_MOUSE_MOTION|WIDGET_AUTO_FOCUS))
 	    IncMouseMotionN();
 	
 	if (Screen == All->FirstScreen) {
@@ -421,7 +421,7 @@ static void UnMapWidget(widget W) {
 		CloseMenu();
 	    }
 
-	    if (W->Attrib & WIDGET_WANT_MOUSE_MOTION)
+	    if (W->Attrib & (WIDGET_WANT_MOUSE_MOTION|WIDGET_AUTO_FOCUS))
 		DecMouseMotionN();
 
 	    if (Screen->ClickWindow == (window)W)
@@ -488,7 +488,7 @@ static void UnMapWidget(widget W) {
 	    DrawAreaWidget(W);
 	    W->Parent = (widget)0;
 	    
-	    if (W->Attrib & WIDGET_WANT_MOUSE_MOTION)
+	    if (W->Attrib & (WIDGET_WANT_MOUSE_MOTION|WIDGET_AUTO_FOCUS))
 		DecMouseMotionN();
 	    
 	    if (W->MapUnMapHook)
@@ -632,7 +632,7 @@ static gadget CreateGadget
 
     if (Owner && Code < COD_RESERVED && XWidth > 0 && YWidth > 0 && 
 	(G=(gadget)Fn_Gadget->Fn_Widget->Create
-	 ((fn_widget)Fn_Gadget, Owner, XWidth, YWidth, Attrib, Flags, Left, Up, (hwattr)0))) {
+	 ((fn_widget)Fn_Gadget, Owner, XWidth, YWidth, Attrib, Flags, Left, Up, HWATTR(ColText, ' ')))) {
 	
 	Fn_Gadget->Fn_Widget->Used++;
 
@@ -940,13 +940,14 @@ static byte InitTtyData(window Window, dat ScrollBackLines) {
 
 /* window */
 
-static window CreateWindow(fn_window Fn_Window, dat NameLen, CONST byte *Name, CONST hwcol *ColName,
-			    menu Menu, hwcol ColText, uldat CursorType, uldat Attrib, uldat Flags,
-			    dat XWidth, dat YWidth, dat ScrollBackLines) {
+static window CreateWindow(fn_window Fn_Window, msgport Owner,
+			   dat TitleLen, CONST byte *Title, CONST hwcol *ColTitle, menu Menu,
+			   hwcol ColText, uldat CursorType, uldat Attrib, uldat Flags,
+			   dat XWidth, dat YWidth, dat ScrollBackLines) {
 
     window Window = (window)0;
-    byte *_Name = NULL;
-    hwcol *_ColName = NULL;
+    byte *_Title = NULL;
+    hwcol *_ColTitle = NULL;
     byte HasBorder = 2 * !(Flags & WINDOWFL_BORDERLESS);
     
     /* overflow safety */
@@ -957,16 +958,16 @@ static window CreateWindow(fn_window Fn_Window, dat NameLen, CONST byte *Name, C
 	    YWidth += HasBorder;
     }
     
-    if ((!Name || (_Name=CloneStrL(Name, NameLen))) &&
-	(!ColName || (_ColName=CloneMem(ColName, NameLen*sizeof(hwcol)))) &&
-	Menu && Menu->MsgPort &&
-	(Window=(window)Fn_Window->Fn_Widget->Create
-	 ((fn_widget)Fn_Window, Menu->MsgPort, XWidth, YWidth, Attrib, Flags, 0, MAXDAT, (hwattr)0))) {
+    if ((!Title || (_Title=CloneStrL(Title, TitleLen))) &&
+	(!ColTitle || (_ColTitle=CloneMem(ColTitle, TitleLen*sizeof(hwcol)))) &&
+	Owner && (Window=(window)Fn_Window->Fn_Widget->Create
+		  ((fn_widget)Fn_Window, Owner, XWidth, YWidth,
+		   Attrib, Flags, 0, MAXDAT, HWATTR(ColText, ' ')))) {
 	Window->Menu = Menu;
 	Window->MenuItem = (menuitem)0;
-	Window->NameLen = NameLen;
-	Window->Name = _Name;
-	Window->ColName = _ColName;
+	Window->NameLen = TitleLen;
+	Window->Name = _Title;
+	Window->ColName = _ColTitle;
 	Window->BorderPattern[0] = Window->BorderPattern[1] = (void *)0;
 	Window->RemoteData.Fd = NOFD;
 	Window->RemoteData.ChildPid = NOPID;
@@ -1024,10 +1025,10 @@ static window CreateWindow(fn_window Fn_Window, dat NameLen, CONST byte *Name, C
 	Fn_Window->Fn_Widget->Used++;
 	return Window;
     }
-    if (_Name)
-	FreeMem(_Name);
-    if (_ColName)
-	FreeMem(_ColName);
+    if (_Title)
+	FreeMem(_Title);
+    if (_ColTitle)
+	FreeMem(_ColTitle);
     return Window;
 }
 
@@ -1108,17 +1109,17 @@ static void ChangeFieldWindow(window W, udat field, uldat CLEARMask, uldat XORMa
 	}
 	break;
       case TWS_window_Attrib:
-	mask = WINDOW_WANT_KEYS|WINDOW_WANT_MOUSE|WINDOW_WANT_CHANGES|WINDOW_DRAG|
-	    WINDOW_RESIZE|WINDOW_CLOSE|WINDOW_ROLLED_UP|WINDOW_X_BAR|WINDOW_Y_BAR|
-	    WINDOW_AUTO_KEYS|WINDOW_WANT_MOUSE_MOTION;
+	mask = WINDOW_WANT_KEYS|WINDOW_WANT_MOUSE|WINDOW_WANT_CHANGES|WINDOW_AUTO_FOCUS|
+	    WINDOW_DRAG|WINDOW_RESIZE|WINDOW_CLOSE|WINDOW_ROLLED_UP|WINDOW_X_BAR|
+	    WINDOW_Y_BAR|WINDOW_AUTO_KEYS|WINDOW_WANT_MOUSE_MOTION;
 	CLEARMask &= mask;
 	XORMask &= mask;
 	i = (W->Attrib & ~CLEARMask) ^ XORMask;
 	if ((i & mask) != (W->Attrib & mask)) {
 	    if ((i & WINDOW_ROLLED_UP) != (W->Attrib & WINDOW_ROLLED_UP))
 		RollUpWindow(W, !!(i & WINDOW_ROLLED_UP));
-	    if ((i & WINDOW_WANT_MOUSE_MOTION) != (W->Attrib & WINDOW_WANT_MOUSE_MOTION) && W->Parent) {
-		if (i & WINDOW_WANT_MOUSE_MOTION)
+	    if ((i & (WINDOW_WANT_MOUSE_MOTION|WIDGET_AUTO_FOCUS)) != (W->Attrib & (WINDOW_WANT_MOUSE_MOTION|WIDGET_AUTO_FOCUS)) && W->Parent) {
+		if (i & (WINDOW_WANT_MOUSE_MOTION|WIDGET_AUTO_FOCUS))
 		    IncMouseMotionN();
 		else
 		    DecMouseMotionN();
@@ -1143,6 +1144,34 @@ static void ChangeFieldWindow(window W, udat field, uldat CLEARMask, uldat XORMa
       default:
 	W->Fn->Fn_Widget->ChangeField((widget)W, field, CLEARMask, XORMask);
 	break;
+    }
+}
+
+static void SetTitleWindow(window W, dat titlelen, byte *title) {
+    widget P;
+    
+    if (W->Name)
+	FreeMem(W->Name);
+    
+    W->NameLen = titlelen;
+    W->Name = title;
+    
+#if 1
+    /*
+     * do not allow changing window borders just because
+     * some untrusted application set a new title
+     */
+    DrawBorderWindow(W, BORDER_UP);
+#else
+    /* user may have title-dependent borders in ~/.twinrc, honour them: */
+    Win->BorderPattern[0] = Win->BorderPattern[1] = NULL;
+    DrawBorderWindow(W, BORDER_ANY);
+#endif
+    
+    if ((P = W->Parent) && IS_SCREEN(P)) {
+	/* need to update window list with new name ? */
+	if (((screen)P)->FnHookW)
+	    ((screen)P)->FnHookW(((screen)P)->HookW);
     }
 }
 
@@ -1278,7 +1307,8 @@ static void GotoXYWindow(window Window, ldat X, ldat Y) {
 window Create4MenuWindow(fn_window Fn_Window, menu Menu) {
     window Window = (window)0;
     if (Menu && (Window=Fn_Window->Create
-		 (Fn_Window, 0, NULL, (hwcol *)0, Menu, COL(BLACK,WHITE), NOCURSOR, WINDOW_AUTO_KEYS,
+		 (Fn_Window, Menu->MsgPort, 0, NULL, (hwcol *)0, Menu, COL(BLACK,WHITE),
+		  NOCURSOR, WINDOW_AUTO_KEYS,
 		  WINDOWFL_MENU|WINDOWFL_USEROWS|WINDOWFL_ROWS_DEFCOL|WINDOWFL_ROWS_SELCURRENT,
 		  MIN_XWIN, MIN_YWIN, 0))) {
 	
@@ -1440,6 +1470,7 @@ static struct s_fn_window _FnWindow = {
     (void *)AlwaysFalse,
 	
     GotoXYWindow,
+    SetTitleWindow,
     SetColTextWindow,
     SetColorsWindow,
     ConfigureWindow,
@@ -1466,7 +1497,7 @@ static screen CreateScreen(fn_screen Fn_Screen, dat NameLen, CONST byte *Name,
     if ((size=(size_t)BgWidth * BgHeight * sizeof(hwattr))) {
 	
 	if ((S=(screen)Fn_Screen->Fn_Widget->Create
-	     ((fn_widget)Fn_Screen, Builtin_MsgPort, MAXDAT, MAXDAT, 0, SCREENFL_USEBG, 0, 0, (hwattr)0))) {
+	     ((fn_widget)Fn_Screen, Builtin_MsgPort, MAXDAT, MAXDAT, 0, SCREENFL_USEBG, 0, 0, Bg[0]))) {
 
 	    if (!(S->Name=NULL, Name) || (S->Name=CloneStrL(Name, NameLen))) {
 		if ((S->USE.B.Bg = AllocMem(size))) {

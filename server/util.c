@@ -620,10 +620,19 @@ byte CreateXTermMouseEvent(event_mouse *Event, byte buflen, byte *buf) {
 	  case PRESS_LEFT: buf[3] = ' '; break;
 	  case PRESS_MIDDLE: buf[3] = '!'; break;
 	  case PRESS_RIGHT: buf[3] = '\"'; break;
+	    /* WHEEL_REV and WHEEL_FWD supported only at release */
 	}
-	else if (isRELEASE(Code))
-	    buf[3] = '#';
-	else
+	else if (isRELEASE(Code)) {
+	    switch (Code & RELEASE_ANY) {
+#ifdef HOLD_WHEEL_REV
+	      case RELEASE_WHEEL_REV: buf[3] = '`'; break;
+#endif
+#ifdef HOLD_WHEEL_FWD
+	      case RELEASE_WHEEL_FWD: buf[3] = 'a'; break;
+#endif
+	      default: buf[3] = '#'; break;
+	    }
+	} else
 	    return len;
 
 	buf[4] = '!' + x;
@@ -911,9 +920,9 @@ byte InitTWDisplay(void) {
 
     
     if ((unixFd = socket(AF_UNIX, SOCK_STREAM, 0)) >= 0) {
-
-    WriteMem(&addr, 0, sizeof(addr));
-    addr.sun_family = AF_UNIX;
+	
+	WriteMem(&addr, 0, sizeof(addr));
+	addr.sun_family = AF_UNIX;
 
 	for (i=0; i<0x1000; i++) {
 	    sprintf(fullTWD+11, "%x", i);
@@ -921,6 +930,7 @@ byte InitTWDisplay(void) {
 
 	    ok = bind(unixFd, (struct sockaddr *)&addr, sizeof(addr)) >= 0;
 	    if (!ok) {
+		Error(SYSCALLERROR);
 		/* maybe /tmp/.Twin:<x> is already in use... */
 		if (fd >= 0 || (fd = socket(AF_UNIX, SOCK_STREAM, 0)) >= 0) {
 		    if (connect(fd, (struct sockaddr *)&addr, sizeof(addr)) >= 0) {
@@ -983,8 +993,9 @@ byte InitTWDisplay(void) {
     }
     if (fd != NOFD)
 	close(fd);
-    printk("twin: all TWDISPLAY already in use!\n"
-	    "      Please cleanup stale /tmp/.Twin* sockets and try again\n");
+    printk("twin: failed to create any /tmp/.Twin* socket: %."STR(SMALLBUFF)"s\n", ErrStr);
+    printk("      possible reasons: either /tmp not writable, or all TWDISPLAY already in use,\n"
+	   "      or too many stale /tmp/.Twin* sockets. Aborting.\n");
     return FALSE;
 }
 

@@ -15,7 +15,7 @@ TT_DECL_MAGIC(ttdemo_magic);
 
 int main(int argc, char *argv[]) {
     ttframe f;
-    byte ok;
+    ttbyte ok;
     
     ok =TTCheckMagic(ttdemo_magic) &&
 	TTOpen(NULL) &&
@@ -25,15 +25,13 @@ int main(int argc, char *argv[]) {
 	/*
 	 * connect `askclose' event to TTExitMainLoop():
 	 * 
-	 * set ttcallback_lflags_after flag to ensure TTExitMainLoop
-	 * gets called AFTER the other existing callbacks
+	 * by default new listeners get called AFTER the other existing listeners
 	 */
-	TTCreate_ttcallback((ttcomponent)f, ttevent_evtype_askclose,
-			    ttcallback_lflags_after,
-			    (void *)TTExitMainLoop, (ttany)0) &&
+	TTCreateAskclose_ttlistener((ttcomponent)f, 0, (void *)TTExitMainLoop) &&
+	
 	(
 	 TTSetWH_ttwidget((ttwidget)f, 10, 8),
-	 TTSetVisible_ttvisible((ttvisible)f, TRUE),
+	 TTSetVisible_ttvisible((ttvisible)f, TT_TRUE),
 	 TTMainLoop()
 	 );
 	

@@ -107,7 +107,8 @@ static void TW_Configure(udat resource, byte todefault, udat value) {
 static void TW_HandleMsg(tmsg Msg) {
     tevent_any Event;
     dat x, y, dx, dy;
-
+    udat keys;
+    
     Event = &Msg->Event;
 
     switch (Msg->Type) {
@@ -138,13 +139,10 @@ static void TW_HandleMsg(tmsg Msg) {
 	    y = Event->EventMouse.Y;
 	    dx = x == 0 ? -1 : x == DisplayWidth - 1 ? 1 : 0;
 	    dy = y == 0 ? -1 : y == DisplayHeight - 1 ? 1 : 0;
-	    if (dx || dy || x != HW->MouseState.x || y != HW->MouseState.y ||
-		(Event->EventMouse.Code & HOLD_ANY) != HW->MouseState.keys)
-		
-		MouseEventCommon(x, y, dx, dy, Event->EventMouse.Code);
-	    HW->MouseState.x = x;
-	    HW->MouseState.y = y;
-	    HW->MouseState.keys = Event->EventMouse.Code & HOLD_ANY;
+	    keys = Event->EventMouse.Code;
+	    keys = (keys & HOLD_ANY) | (isPRESS(keys) ? HOLD_CODE(PRESS_N(keys)) : 0);
+
+	    MouseEventCommon(x, y, dx, dy, keys);
 	    break;
 	  case TW_MSG_WIDGET_CHANGE:
 	    if (HW->X != Event->EventWidget.XWidth ||

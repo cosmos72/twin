@@ -27,35 +27,48 @@
 
 
 
+
+
 EL(FindFunction)
+
 
 EL(SyncSocket)
 
+
 EL(ServerSizeof)
 
+
 EL(CanCompress)
+
 EL(DoCompress)
+
 
 EL(NeedResizeDisplay)
 
+
 EL(AttachHW)
+
 EL(DetachHW)
 
+
 EL(SetFontTranslation)
-EL(SetUniFontTranslation)
+
+EL(SetHWFontTranslation)
+
 
 EL(DeleteObj)
+
 EL(ChangeFieldObj)
 
 
 EL(CreateWidget)
+
 EL(RecursiveDeleteWidget)
 EL(MapWidget)
 EL(UnMapWidget)
 EL(SetXYWidget)
 EL(ResizeWidget)
 EL(ScrollWidget)
-EL(GetOwnerWidget)
 EL(DrawWidget)
 
 EL(SetVisibleWidget)
@@ -85,6 +98,7 @@ EL(WriteHWFontWindow)
 EL(WriteHWAttrWindow)
 
 EL(GotoXYWindow)
+EL(SetTitleWindow)
 EL(SetColTextWindow)
 EL(SetColorsWindow)
 EL(ConfigureWindow)
@@ -97,14 +111,11 @@ EL(RemoveGadgetGroup)
 EL(GetSelectedGadgetGroup)
 EL(SetSelectedGadgetGroup)
 
-EL(Create4MenuRow)
-
 EL(RaiseRow)
 EL(LowerRow)
 EL(RestackChildrenRow) 
 EL(CirculateChildrenRow)
 
-EL(Create4MenuMenuItem)
 EL(Create4MenuAny)
 
 EL(Create4MenuCommonMenuItem)
@@ -120,14 +131,6 @@ EL(BgImageScreen)
 EL(PrevObj)
 EL(NextObj)
 EL(ParentObj)
-
-EL(G_PrevGadget)
-EL(G_NextGadget)
-EL(GroupGadget)
-
-EL(O_PrevWidget)
-EL(O_NextWidget)
-EL(OwnerWidget)
 
 EL(FirstScreen)
 EL(FirstWidget)

@@ -10,7 +10,7 @@
 #
 # this version of twin
 #
-TWIN_VERSION_STR=0.4.4
+TWIN_VERSION_STR=0.4.5
 
 
 #
@@ -58,6 +58,9 @@ endif
 #
 ifeq ($(CC),gcc)
   CFLAGS+=-pipe -Wall -Wshadow -Wno-uninitialized -Winline
+  ifdef DEBUG
+    CFLAGS+=-Wno-unused
+  endif
   ifdef PARANOID_GCC
     CFLAGS+=-Wstrict-prototypes -Wcast-qual -Wcast-align -Wpointer-arith -Wbad-function-cast -Waggregate-return
   endif
@@ -139,17 +142,19 @@ ifeq ($(QUIET),y)
   echo-and-compile=@echo "compiling $(2)" ; $(1) $(2)
   echo-and-link=@echo "linking   $(2)" ; $(1) $(2)
   echo-done=:
+  Q:=@
 else
   echo-and-compile=$(strip $(1) $(2))
   echo-and-link=$(strip $(1) $(2))
   echo-done=:
+  Q:=
 endif
 
 
 SHLIBS_VER=$(MAJOR_VER).$(MINOR_VER).$(PATCH_VER)
 
 
-ifeq ($(SUPPORT_SHLIBS),native)
+ifeq ($(SYS_SHLIBS),native)
   # either native shared library support,
   # or no shared libraries at all.
   # in both cases, do not use libtool
@@ -285,6 +290,11 @@ ifeq ($(CONF__SHLIBS),n)
     
     ifeq ($(CONF__MODULES),y)
       LD_LIBTT+=$(LD_LIBDL)
+      ifeq ($(SYS_SHLIBS),native)
+        LD_LIBTT+=-rdynamic
+      else
+        LD_LIBTT+=-export-dynamic
+      endif
     endif
     ifeq ($(CONF__UNICODE),y)
       LD_LIBTT+=$(LD_LIBTUTF)
@@ -300,7 +310,7 @@ ifeq ($(CONF__SHLIBS),n)
     endif
   endif
 else
-  ifeq ($(SUPPORT_SHLIBS),native)
+  ifeq ($(SYS_SHLIBS),native)
     #
     # this is for GNU gcc with GNU ld on Linux/FreeBSD:
     # a shared library can depend on another shared library,
@@ -421,7 +431,7 @@ $(CONF): $(TOPDIR)/conf/conf.auto $(TOPDIR)/include/Tw/Twautoconf.h
 	 $(ECHO_E) " $(foreach B,$(SHLIBS),$(B): .$(B).shlib\n .$(B).shlib: $(OBJS_$(B))\n)" >> $@ ; \
 	 $(ECHO_E) " $(foreach B,$(ARLIBS),$(B): .$(B).arlib\n .$(B).arlib: $(OBJS_$(B))\n)" >> $@ ; \
 	 $(ECHO_E) " $(foreach B,$(CLLIBS),$(B): .$(B).cllib\n .$(B).cllib: $(OBJS_$(B))\n)" >> $@ ; \
-	 $(ECHO_E) " ifeq (\$$(SUPPORT_SHLIBS),native)" >> $@ ; \
+	 $(ECHO_E) " ifeq (\$$(SYS_SHLIBS),native)" >> $@ ; \
 	 $(ECHO_E) " $(foreach B,$(SHLIBS),  LD_FLAGS_$(B)+=-Wl,-soname,$(patsubst %.la,%,$(B)).so.$(MAJOR_VER)\n)" >> $@ ; \
 	 $(ECHO_E) " endif" >> $@
 
@@ -465,12 +475,12 @@ $(TOPDIR)/.hdepend: $(TOPDIR)/scripts/Mkdep $(TOPDIR)/makerules $(_GL_H_FILES) $
 
 
 
-%_m4.h: m4/%.m4 $(wildcard m4/m4_*.m4 $(TOPDIR)/include/m4/*.m4h)
+%_m4.h: m4/%.m4 $(wildcard $(TOPDIR)/include/m4/*.m4h)
 	$(M4) -I$(TOPDIR)/include $< > $@
 
 
 version.h: version.h.in makeversion $(TOPDIR)/makerules
-	sed -e 's/@MAJOR_VER@/$(MAJOR_VER)/g' -e 's/@MINOR_VER@/$(MINOR_VER)/g' \
+	$(Q)sed -e 's/@MAJOR_VER@/$(MAJOR_VER)/g' -e 's/@MINOR_VER@/$(MINOR_VER)/g' \
 	    -e 's/@PATCH_VER@/$(PATCH_VER)/g' -e 's/@EXTRA_VER@/$(EXTRA_VER)/g' < $< > $@
 
 #
@@ -566,7 +576,7 @@ cat-lst=$(foreach F,$(shell cat $(1)),$(patsubst %,$(dir $(1))%,$(F)))
 	 $(echo-done)
 
 .%.mod: $(TOPDIR)/makerules
-ifeq ($(SUPPORT_SHLIBS),native)
+ifeq ($(SYS_SHLIBS),native)
 	$(call echo-and-link,$(LD_MOD) $(call expand-lst,$(OBJS_$*)) $(LD_FLAGS) $(LD_FLAGS_SHLIBS) $(LD_FLAGS_$*) -o,$(patsubst %.la,%.so.$(SHLIBS_VER),$*))
 	@$(call make-mod-links,$*)
 else
@@ -579,7 +589,7 @@ endif
 	 $(echo-done)
 
 .%.shlib: $(TOPDIR)/makerules
-ifeq ($(SUPPORT_SHLIBS),native)
+ifeq ($(SYS_SHLIBS),native)
 	$(call echo-and-link,$(LD_SH) $(call expand-lst,$(OBJS_$*)) $(LD_FLAGS) $(LD_FLAGS_SHLIBS) $(LD_FLAGS_$*) -o,$(patsubst %.la,%.so.$(SHLIBS_VER),$*))
 	@$(call make-shlib-links,$*)
 else
@@ -611,7 +621,7 @@ endif
 #
 # useful (used for dlopen()) links, needed if using libtool
 #
-ifneq ($(SUPPORT_SHLIBS),native)
+ifneq ($(SYS_SHLIBS),native)
   %.so.$(SHLIBS_VER):
 	@if [ -f .libs/$@ ]; then \
 	  echo $(LN) .libs/$@ $@ ; \
@@ -631,7 +641,7 @@ endif
 install-lib-%.a:
 	$(INSTALL-TXT) $*.a $(DESTDIR)$(libdir)
 
-ifeq ($(SUPPORT_SHLIBS),native)
+ifeq ($(SYS_SHLIBS),native)
   install-mod-%.la:
 	$(INSTALL) $*.so.$(SHLIBS_VER) $(DESTDIR)$(libdir)$(INSTALLSUBDIR)
   install-lib-%.la:

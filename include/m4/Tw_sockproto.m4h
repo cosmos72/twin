@@ -1,5 +1,6 @@
 
 ifdef(`c_comment', `', `define(`c_comment')')
+ifdef(`c_doxygen', `', `define(`c_doxygen')')
 
 c_comment([
 /*
@@ -58,35 +59,48 @@ rem([
 
 ])
 
+c_doxygen(/** return server-side id of given libTw function name with given prototype */)
 PROTOFindFunction(uldat,_, Find,Function,0, byte,_,namelen, byte,V(A(1)),name, byte,_,protolen, byte,V(A(3)),proto)
 
+c_doxygen(/** sync libTw socket: flush output buffer and wait for server replies */)
 PROTOSyncSocket(byte,_,  Sync,Socket,0)
 
+c_doxygen(/** return server idea of sizeof(type) */)
 PROTO(byte,_, Server,Sizeof,0, byte,_,type)
 
+c_doxygen(/** return 1 if server supports compression (using zlib) */)
 PROTO(byte,_, Can,Compress,0)
+c_doxygen(/** used internally by libTw to enable/disable compression only on server side;
+ * DO NOT USE THIS`,' use Tw_EnableGzip() and Tw_DisableGzip() instead */)
 PROTO(byte,_, Do,Compress,0, byte,_,on_off)
 
+c_doxygen(/** force a server display resize; used by twdisplay */)
 PROTO(void,v, NeedResize,Display,0)
 
+c_doxygen(/** tell server to open a new display; used by twattach/twdisplay */)
 PROTO(void,v, Attach,HW,0, uldat,_,len, byte,V(A(1)),name, byte,_,flags)
+c_doxygen(/** tell server to close given display */)
 PROTO(byte,_, Detach,HW,0, uldat,_,len, byte,V(A(1)),name)
 
-PROTO(void,v,  Set,   FontTranslation,0,  byte,V(0x80),trans)
-PROTO(void,v,  Set,UniFontTranslation,0,hwfont,V(0x80),trans)
+c_doxygen(/** set server global charset translation */)
+PROTO(void,v,  Set,  FontTranslation,0,  byte,V(0x80),trans)
+c_doxygen(/** set server global charset translation */)
+PROTO(void,v,  Set,HWFontTranslation,0,hwfont,V(0x80),trans)
 
+c_doxygen(/** delete given object */)
 PROTO(void,v,     Delete,Obj,0, obj,x,O)
+c_doxygen(/** change given field of object; new_value = (old_value & ~clearmask) ^ xormask */)
 PROTO(void,v,ChangeField,Obj,2, obj,x,O, udat,_,field, uldat,_,clearmask, uldat,_,xormask)
 
 
 PROTO(widget,x,   Create,Widget,0, dat,_,w, dat,_,h, uldat,_,attrib, uldat,_,flags, dat,_,x, dat,_,y, hwattr,_,fill)
+c_doxygen(/** delete given widget and all its children */)
 PROTO(void,v,RecursiveDelete,Widget,0, widget,x,W)
 PROTO(void,v,        Map,Widget,2, widget,x,W, widget,x,parent)
 PROTO(void,v,      UnMap,Widget,2, widget,x,W)
 PROTO(void,v,      SetXY,Widget,0, widget,x,W, dat,_,x, dat,_,y)
 PROTO(void,v,     Resize,Widget,0, widget,x,W, dat,_,w, dat,_,h)
 PROTO(void,v,     Scroll,Widget,0, widget,x,W, ldat,_,dxl, ldat,_,dyl)
-PROTO(msgport,x,GetOwner,Widget,0, widget,x,W)
 PROTO(void,v,       Draw,Widget,0, widget,x,W, dat,_,w, dat,_,h, dat,_,x, dat,_,y, byte,W(A(2)*A(3)),text, hwfont,W(A(2)*A(3)),textfont, hwattr,W(A(2)*A(3)),textattr)
 
 PROTO(void,v, SetVisible,Widget,0, widget,x,W, byte,_,on_off)
@@ -112,7 +126,7 @@ PROTO(gadget,x, CreateButton,Gadget,1, widget,x,parent, dat,_,w, dat,_,h, byte,V
 PROTO(void,v, WriteTexts,Gadget,2, gadget,x,G, byte,_,mask, dat,_,w, dat,_,h, byte,W(A(2)*A(3)),text, dat,_,x, dat,_,y)
 PROTO(void,v, WriteHWFonts,Gadget,2, gadget,x,G, byte,_,mask, dat,_,w, dat,_,h, hwfont,W(A(2)*A(3)),textfont, dat,_,x, dat,_,y)
 
-PROTO(window,x,     Create,Window,1, dat,_,namelen, byte,V(A(1)),name, hwcol,W(A(1)),colname, menu,x,M,
+PROTO(window,x,     Create,Window,0, dat,_,titlelen, byte,V(A(1)),title, hwcol,W(A(1)),coltitle, menu,x,M,
 	hwcol,_,coltext, uldat,_,cursortype, uldat,_,attrib, uldat,_,flags, dat,_,w, dat,_,h, dat,_,hscroll)
 PROTO(window,x, Create4Menu,Window,1, menu,x,M)
 
@@ -122,6 +136,7 @@ PROTO(void,v,  WriteHWFont, Window,0, window,x,W, ldat,_,len, hwfont,V(A(2)),tex
 PROTO(void,v,  WriteHWAttr ,Window,0, window,x,W,  dat,_,x, dat,_,y, ldat,_,len, hwattr,V(A(4)),textattr)
 
 PROTO(void,v,        GotoXY,Window,2, window,x,W, ldat,_,x, ldat,_,y)
+PROTO(void,v,      SetTitle,Window,0, window,x,W, dat,_,titlelen, byte,V(A(2)),title)
 PROTO(void,v,    SetColText,Window,2, window,x,W, hwcol,_,coltext)
 PROTO(void,v,     SetColors,Window,2, window,x,W, udat,_,mask, hwcol,_,colgadgets, hwcol,_,colarrows,
 	hwcol,_,colbars, hwcol,_,coltabs, hwcol,_,colborder, hwcol,_,coltext, hwcol,_,colselect,
@@ -136,16 +151,11 @@ PROTO(void,v, RemoveGadget,Group,2, group,x,g, gadget,x,G)
 PROTO(gadget,x, GetSelectedGadget,Group,2, group,x,g)
 PROTO(void,v,   SetSelectedGadget,Group,2, group,x,g, gadget,x,G)
 
-dnl backward compatibility. will be removed
-PROTO(void,v,   Create4Menu,Row,0, window,x,W, udat,_,code, byte,_,flags, ldat,_,len, byte,V(A(4)),text)
-
 PROTO(void,v,            Raise,Row,2, row,x,R)
 PROTO(void,v,            Lower,Row,2, row,x,R)
 PROTO(void,v,  RestackChildren,Row,0, obj,x,O, uldat,_,n, row,X(A(2)),children) 
 PROTO(void,v,CirculateChildren,Row,0, obj,x,O, byte,_,up_down)
 
-dnl backward compatibility. will be removed
-PROTO(menuitem,x,    Create4Menu,MenuItem,0,  obj,x,parent, window,x,W,              byte,_,flags,  dat,_,len, byte,V(A(4)),text)
 PROTO(row,x,         Create4Menu,Any,0,       obj,x,parent, window,x,W, udat,_,code, byte,_,flags, ldat,_,len, byte,V(A(5)),text)
 
 PROTO(uldat,_, Create4MenuCommon,MenuItem,1, menu,x,M)
@@ -162,14 +172,6 @@ PROTO(void,v,  BgImage,Screen,2, screen,x,S, dat,_,w, dat,_,h, hwattr,V(A(2)*A(3
 PROTO(obj,x,      Prev,Obj,0, obj,x,O)
 PROTO(obj,x,      Next,Obj,0, obj,x,O)
 PROTO(obj,x,    Parent,Obj,0, obj,x,O)
-
-PROTO(gadget  ,x, G_Prev,Gadget, 0, gadget ,x,G)
-PROTO(gadget  ,x, G_Next,Gadget, 0, gadget ,x,G)
-PROTO(group   ,x, Group ,Gadget, 0, gadget ,x,G)
-
-PROTO(widget  ,x, O_Prev,Widget, 0, widget ,x,W)
-PROTO(widget  ,x, O_Next,Widget, 0, widget ,x,W)
-PROTO(msgport ,x, Owner ,Widget, 0, widget ,x,W)
 
 PROTO(screen  ,x, First,Screen,  0)
 PROTO(widget  ,x, First,Widget,  0, widget ,x,W)

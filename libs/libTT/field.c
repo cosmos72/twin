@@ -42,13 +42,13 @@ static int CompareFields(TT_CONST ttfield f1, TT_CONST ttfield f2) {
     return 0;
 }
 
-TT_FN_ATTR_CONST ttuint TTGetValueId(TT_CONST ttbyte *name) {
+TT_FN_ATTR_CONST ttuint TTGetFieldId(TT_CONST ttbyte *name) {
     s_ttfield key, *m;
     
     if (fields_needsort) {
 	fields_needsort = FALSE;
 	
-	memcpy(field_array, field_array_c, sizeof(field_array));
+	TTCopyMem(field_array_c, field_array, sizeof(field_array));
 	qsort(field_array, ttobj_field_n, sizeof(struct s_ttfield),
 	      (int (*)(TT_CONST void *, TT_CONST void *))CompareFields);
     }
@@ -63,7 +63,7 @@ TT_FN_ATTR_CONST ttuint TTGetValueId(TT_CONST ttbyte *name) {
     }
     return (ttuint)0;
 }
-TT_FN_ATTR_CONST TT_CONST ttbyte *TTGetValueName(ttuint n) {
+TT_FN_ATTR_CONST TT_CONST ttbyte *TTGetFieldName(ttuint n) {
     if (n < ttobj_field_n)
 	return field_array_c[n].name;
     return NULL;

@@ -62,6 +62,8 @@ static void display_HandleEvent(display_hw hw) {
     msg hMsg;
     event_any *Event;
     dat x, y, dx, dy;
+    udat keys;
+    
     SaveHW;
     SetHW(hw);
     
@@ -80,13 +82,10 @@ static void display_HandleEvent(display_hw hw) {
 	    y = Event->EventMouse.Y;
 	    dx = x == 0 ? -1 : x == DisplayWidth - 1 ? 1 : 0;
 	    dy = y == 0 ? -1 : y == DisplayHeight - 1 ? 1 : 0;
-	    if (dx || dy || x != HW->MouseState.x || y != HW->MouseState.y ||
-		(Event->EventMouse.Code & HOLD_ANY) != HW->MouseState.keys)
-		
-		MouseEventCommon(x, y, dx, dy, Event->EventMouse.Code);
-	    HW->MouseState.x = x;
-	    HW->MouseState.y = y;
-	    HW->MouseState.keys = Event->EventMouse.Code & HOLD_ANY;
+	    keys = Event->EventMouse.Code;
+	    keys = (keys & HOLD_ANY) | (isPRESS(keys) ? HOLD_CODE(PRESS_N(keys)) : 0);
+
+	    MouseEventCommon(x, y, dx, dy, keys);
 	    break;
 	  case MSG_WIDGET_GADGET:
 	    if (!Event->EventGadget.Code)

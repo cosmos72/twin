@@ -1,58 +1,96 @@
 
 
-
 #ifdef CONF_HW_TTY_TERMCAP
 
-/* this is the usual mess of ad-hoc includes and defines... */
-
-# if defined (__sun__) || defined(__SVR4)
-
-   /*  curses interfaces (emulated) to the termcap library (Solaris7, bwitt) */
-#  undef TRUE
-#  undef FALSE
-#  include <curses.h>
-#  include <termio.h>         /* Solaris7: needed "typedef struct sgttyb SGTTY" */
-#  include <term.h>
-
-#  ifdef __sun__
-   /*  Some one forget a few prototypes!  ugh  (Solaris7, bwitt) */
-   extern char * tgoto(), * tgetstr();
-#  endif
-
-# else /* rest of the world */
-
-#  ifdef HAVE_TERMCAP_H
-#   include <termcap.h>
-#  else
-#   ifdef HAVE_NCURSES_H
-#    include <ncurses.h>
-#   else
-#    ifdef HAVE_NCURSES_NCURSES_H
-#     include <ncurses/ncurses.h>
-#    endif
-#   endif
-#  endif
-
-# endif /* rest of the world */
-
-static void termcap_QuitVideo(void);
-static void termcap_ShowMouse(void);
-static void termcap_HideMouse(void);
-static void termcap_FlushVideo(void);
-static void termcap_UpdateMouseAndCursor(void);
-
-
-static void termcap_Beep(void);
-static void termcap_Configure(udat resource, byte todefault, udat value);
-
-static byte termcap_CanDragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp);
-static void termcap_DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp);
 
 INLINE void termcap_SetCursorType(uldat type) {
     fprintf(stdOUT, "%s", (type & 0xFFFFFFl) == NOCURSOR ? tc_cursor_off : tc_cursor_on);
 }
 INLINE void termcap_MoveToXY(udat x, udat y) {
     fputs(tgoto(tc_cursor_goto, x, y), stdOUT);
+}
+
+
+static udat termcap_LookupKey(udat *ShiftFlags, byte *slen, byte *s, byte **sret) {
+    byte len = *slen;
+    byte **key;
+    static struct {
+	udat k;
+	byte l, *s;
+    } CONST linux_key[] = {
+# define IS(k, l, s) { CAT(TW_,k), l, s },
+IS(F1,		4, "\x1B[[A")
+IS(F2,		4, "\x1B[[B")
+IS(F3,		4, "\x1B[[C")
+IS(F4,		4, "\x1B[[D")
+IS(F5,		4, "\x1B[[E")
+IS(F6,		5, "\x1B[17~")
+IS(F7,		5, "\x1B[18~")
+IS(F8,		5, "\x1B[19~")
+IS(F9,		5, "\x1B[20~")
+IS(F10,		5, "\x1B[21~")
+IS(F11,		5, "\x1B[23~")
+IS(F12,		5, "\x1B[24~")
+
+IS(Delete,	4, "\x1B[3~")
+IS(Insert,	4, "\x1B[2~")
+IS(Next,	4, "\x1B[6~")
+IS(Prior,	4, "\x1B[5~")
+IS(Left,	3, "\x1B[D")
+IS(Up,		3, "\x1B[A")
+IS(Right,	3, "\x1B[C")
+IS(Down,	3, "\x1B[B")
+#undef IS
+    }, *lk;
+    
+    *sret = s;
+    *ShiftFlags = 0;
+
+    if (len == 0)
+	return TW_Null;
+
+    if (len > 1 && *s == '\x1B') {
+	
+	if (len == 2 && s[1] >= ' ' && s[1] <= '~') {
+	    /* try to handle ALT + <some key> */
+	    *slen = len;
+	    *ShiftFlags = KBD_ALT_FL;
+	    return (udat)s[1];
+	}
+	
+	for (key = &tc_cap[tc_key_first]; key < &tc_cap[tc_key_last]; key++) {
+	    if (*key && !strncmp(*key, s, len)) {
+		lk = linux_key + (key - &tc_cap[tc_key_first]);
+		*slen = lk->l;
+		*sret = lk->s;
+		return lk->k;
+	    }
+	}
+
+	/*
+	 * return stdin_LookupKey(ShiftFlags, slen, s, sret);
+	 */
+    }
+
+    *slen = 1;
+    
+    switch (*s) {
+      case TW_Tab:
+      case TW_Linefeed:
+      case TW_Return:
+      case TW_Escape:
+	return (udat)*s;
+      default:
+	if (*s < ' ') {
+	    /* try to handle CTRL + <some key> */
+	    *ShiftFlags = KBD_CTRL_FL;
+	    return (udat)*s | 0x40;
+	}
+	return (udat)*s;
+    }
+    
+    /* NOTREACHED */
+    return TW_Null;
 }
 
 static byte *termcap_extract(byte *cap, byte **dest) {
@@ -68,8 +106,9 @@ static byte *termcap_extract(byte *cap, byte **dest) {
     s += strspn(s, "0123456789*");
     
     for (d = buf; *s; *d++ = *s++) {
-	if (*s == '$' && *(s + 1) == '<')
-	    if (!(s = strchr(s, '>')) || !*++s) break;
+	if (*s == '$' && s[1] == '<')
+	    if (!(s = strchr(s, '>')) || !*++s)
+		break;
     }
     *d = '\0';
     return *dest = CloneStr(buf);
@@ -78,24 +117,11 @@ static byte *termcap_extract(byte *cap, byte **dest) {
 
 
 static void termcap_cleanup(void) {
-    byte ** np, *tc_quit[13];
+    byte **n;
     
-    tc_quit[0] = tc_cursor_goto;
-    tc_quit[1] = tc_cursor_on;
-    tc_quit[2] = tc_cursor_off;
-    tc_quit[3] = tc_bold_on;
-    tc_quit[4] = tc_blink_on;
-    tc_quit[5] = tc_attr_off;
-    tc_quit[6] = tc_kpad_on;
-    tc_quit[7] = tc_kpad_off;
-    tc_quit[8] = tc_scr_clear;
-    tc_quit[9] = tc_audio_bell;
-    tc_quit[10] = tc_charset_start;
-    tc_quit[11] = tc_charset_end;
-    tc_quit[12] = NULL;
-    
-    for (np = tc_quit; *np; np++)
-	if (*np) FreeMem(*np);
+    for (n = tc_cap; n < tc_cap + tc_cap_N; n++)
+	if (*n)
+	    FreeMem(*n);
 }
 
 static void fixup_colorbug(void) {
@@ -110,52 +136,21 @@ static void fixup_colorbug(void) {
     }
 }
 
-struct tc_init_node {
-    byte *cap, **buf;
-};
-
 static byte termcap_InitVideo(void) {
     byte *term = tty_TERM;
-    struct tc_init_node *np, tc_init[] = {
-	{ "cm",  },
-	{ "ve",  },
-	{ "vi",  },
-	{ "md",  },
-	{ "mb",  },
-	{ "me",  },
-	{ "ks",  },
-	{ "ke",  },
-	{ "cl",  },
-	{ "bl",  },
-	{ "as",  },
-	{ "as",  },
-	{ NULL,  }
+    byte *tc_name[tc_cap_N + 1] = {
+	"cl", "cm", "ve", "vi", "md", "mb", "me", "ks", "ke", "bl", "as", "ae",
+	    "k1", "k2", "k3", "k4", "k5", "k6", "k7", "k8", "k9", "k;", "F1", "F2",
+	    "kD", "kI", "kN", "kP", "kl", "ku", "kr", "kd", NULL
     };
+    byte **n, **d;
     char tcbuf[2048];		/* by convention, this is enough */
 
     if (!term) {
 	printk("      termcap_InitVideo() failed: unknown terminal type.\n");
 	return FALSE;
     }
-    
-    tc_init[0].buf = &tc_cursor_goto;
-    tc_init[1].buf = &tc_cursor_on;
-    tc_init[2].buf = &tc_cursor_off;
-    tc_init[3].buf = &tc_bold_on;
-    tc_init[4].buf = &tc_blink_on;
-    tc_init[5].buf = &tc_attr_off;
-    tc_init[6].buf = &tc_kpad_on;
-    tc_init[7].buf = &tc_kpad_off;
-    tc_init[8].buf = &tc_scr_clear;
-    tc_init[9].buf = &tc_audio_bell;
-    if (tty_charset_to_UTF_16 != Tutf_CP437_to_UTF_16) {
-	tc_init[10].cap = NULL;
-	tc_charset_start = tc_charset_end = NULL;
-    } else {
-	tc_init[10].buf = &tc_charset_start;
-	tc_init[11].buf = &tc_charset_end;
-    }
-    
+
     switch (tgetent(tcbuf, term)) {
       case 1:
 	break;
@@ -169,23 +164,24 @@ static byte termcap_InitVideo(void) {
 	return FALSE;
     }
     
-    for (np = tc_init; np->cap; np++)
-	*np->buf = NULL;
+    if (tty_charset_to_UTF_16 != Tutf_CP437_to_UTF_16) {
+	tc_name[tc_seq_charset_start] = NULL;
+	tc_charset_start = tc_charset_end = NULL;
+    }
 
-    for (np = tc_init; np->cap; np++) {
-	if (!termcap_extract(np->cap, np->buf)) {
+    for (n = tc_name, d = tc_cap; *n; n++, d++) {
+	if (*n && !termcap_extract(*n, d)) {
 	    printk("      termcap_InitVideo() failed: Out of memory!\n");
 	    termcap_cleanup();
 	    return FALSE;
 	}
     }
-    
+
     if (!*tc_cursor_goto) {
 	printk("      termcap_InitVideo() failed: terminal misses `cursor goto' capability\n");
 	termcap_cleanup();
 	return FALSE;
     }
-
 
 # ifdef CONF__UNICODE
     if (tty_can_utf8 == TRUE+TRUE)
@@ -233,6 +229,8 @@ static byte termcap_InitVideo(void) {
     HW->FlagsHW &= ~FlHWExpensiveFlushVideo;
     HW->NeedHW = 0;
     HW->merge_Threshold = 0;
+
+    LookupKey = termcap_LookupKey;
     
     return TRUE;
 }

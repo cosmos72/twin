@@ -356,21 +356,44 @@ static void X11_HandleEvent(XEvent *event) {
 	    break;
 	}
 	
-	dx= event->xbutton.state;
-	dy= (dx & Button1Mask ? HOLD_LEFT : 0) |
+	dx = event->xbutton.state;
+	dy =(dx & Button1Mask ? HOLD_LEFT : 0) |
 	    (dx & Button2Mask ? HOLD_MIDDLE : 0) |
-	    (dx & Button3Mask ? HOLD_RIGHT : 0);
+	    (dx & Button3Mask ? HOLD_RIGHT : 0) |
+#ifdef HOLD_WHEEL_REV
+	    (dx & Button4Mask ? HOLD_WHEEL_REV : 0) |
+#endif
+#ifdef HOLD_WHEEL_FWD
+	    (dx & Button5Mask ? HOLD_WHEEL_FWD : 0) |
+#endif
+	    0;
+	
+	
+	/*
+	 * when sending ButtonRelease event, X11 reports that button
+	 * as still held down in event->xbutton.state ButtonMask...
+	 * 
+	 * instead when sending ButtonPress event, X11 reports that
+	 * button as still NOT held down in event->xbutton.state ButtonMask...
+	 * 
+	 * fix both cases here.
+	 */
 	dx = event->xbutton.button;
-	
+	dx = (dx == Button1 ? HOLD_LEFT :
+	      dx == Button2 ? HOLD_MIDDLE :
+	      dx == Button3 ? HOLD_RIGHT :
+#ifdef HOLD_WHEEL_REV
+	      dx == Button4 ? HOLD_WHEEL_REV :
+#endif
+#ifdef HOLD_WHEEL_FWD
+	      dx == Button5 ? HOLD_WHEEL_FWD :
+#endif
+	      0);
 	if (event->type == ButtonPress)
-	    dy|= (dx == Button1 ? HOLD_LEFT :
-		  dx == Button2 ? HOLD_MIDDLE :
-		  dx == Button3 ? HOLD_RIGHT : 0);
+	    dy |= dx;
 	else
-	    dy &= ~(dx == Button1 ? HOLD_LEFT :
-		    dx == Button2 ? HOLD_MIDDLE :
-		    dx == Button3 ? HOLD_RIGHT : 0);
-	
+	    dy &= ~dx;
+	    
 	MouseEventCommon(x, y, 0, 0, dy);
 	
 	break;
@@ -1119,10 +1142,12 @@ static byte *GfxFile(byte *arg, byte **ret_file, uldat *ret_len) {
 static void GfxUse(byte *arg, byte *how) {
     if (!strncmp(arg, "none", 4))
 	*how = GFX_USE_NONE;
-    else if (!strncmp(arg, "bg", 2))
-	*how = GFX_USE_BG;
     else if (!strncmp(arg, "theme", 5))
 	*how = GFX_USE_THEME;
+    else if (!strncmp(arg, "root", 4))
+	*how = GFX_USE_ROOT;
+    else if (!strncmp(arg, "bg", 2))
+	*how = GFX_USE_BG;
 }
 
 #ifdef THIS_MODULE
@@ -1154,8 +1179,11 @@ byte gfx_InitHW(void) {
 	return FALSE;
     }
     
+    /* autodetect */
     xmonochrome = TRUE + TRUE;
-    xroot_flag = xbg_flag = GFX_USE_THEME;
+    
+    /* conservative default settings to reduce CPU usage */
+    xroot_flag = xbg_flag = GFX_USE_NONE;
 
     if (arg && HW->NameLen > 4) {
 	arg += 4; /* skip "-hw=" */

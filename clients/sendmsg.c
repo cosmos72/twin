@@ -43,6 +43,8 @@ int main(int argc, char *argv[]) {
     tmsg Msg;
     uldat err;
 
+    TwMergeHyphensArgv(argc, argv);
+    
     argv0 = argv[0];
     
     if (argc == 2) {

@@ -10,17 +10,17 @@ typedef  byte    ttbyte;
 typedef sbyte    ttchar;
 /** type >= 2-bytes, signed */
 typedef   dat    ttshort;
-/** type >= 2-bytes type, unsigned */
+/** type >= 2-bytes, unsigned */
 typedef  udat    ttushort;
-/** type >= 4-bytes type, signed */
+/** type >= 4-bytes, signed */
 typedef  ldat    ttint;
-/** type >= 4-bytes type, unsigned */
+/** type >= 4-bytes, unsigned */
 typedef uldat    ttuint;
 
-/** type >= 1-byte, unsigned, used to hold characters (possibly including unicode) */
-typedef hwfont   ttfont;
 /** type >= 1-byte, unsigned, used to hold colors */
 typedef hwcol    ttcol;
+/** type >= 1-byte, unsigned, used to hold characters (possibly including unicode) */
+typedef hwfont   ttfont;
 /** type >= 2-bytes, unsigned, used to hold characters+colors */
 typedef hwattr   ttattr;
 

@@ -349,13 +349,12 @@ static void sockNeedResizeDisplay(void);
 static void sockAttachHW(uldat len, CONST byte *arg, byte flags);
 static byte sockDetachHW(uldat len, CONST byte *arg);
 static void sockSetFontTranslation(CONST byte trans[0x80]);
-static void sockSetUniFontTranslation(CONST hwfont trans[0x80]);
+static void sockSetHWFontTranslation(CONST hwfont trans[0x80]);
 
 static void sockDeleteObj(void *V);
 
 static widget sockCreateWidget(dat XWidth, dat YWidth, uldat Attrib, uldat Flags, dat Left, dat Up, hwattr Fill);
 static void sockRecursiveDeleteWidget(widget W);
-static msgport sockGetOwnerWidget(widget W);
 static void sockSetXYWidget(widget W, dat x, dat y);
 static void sockResizeWidget(widget W, dat XWidth, dat YWidth);
 #define sockScrollWidget ScrollWidget
@@ -374,17 +373,16 @@ static gadget sockCreateGadget
      hwcol ColText, hwcol ColTextSelect, hwcol ColTextDisabled, hwcol ColTextSelectDisabled,
      dat Left, dat Up);
 
+static window sockCreateWindow(dat TitleLen, CONST byte *Title, CONST hwcol *ColTitle, menu Menu,
+			       hwcol ColText, uldat CursorType, uldat Attrib, uldat Flags,
+			       dat XWidth, dat YWidth, dat ScrollBackLines);
 static void sockWriteAsciiWindow(window Window, ldat Len, CONST byte *Ascii);
 static void sockWriteStringWindow(window Window, ldat Len, CONST byte *String);
 static void sockWriteHWFontWindow(window Window, ldat Len, CONST hwfont *HWFont);
 static void sockWriteHWAttrWindow(window Window, dat x, dat y, ldat Len, CONST hwattr *Attr);
+static void sockSetTitleWindow(window Window, dat titlelen, CONST byte *title);
 
 static row  sockFindRowByCodeWindow(window Window, dat Code);
-
-/* backward compatibility. will be removed */
-static void sockCreate4MenuRow(window, udat Code, byte Flags, uldat Len, byte CONST *Name);
-/* backward compatibility. will be removed */
-static menuitem sockCreate4MenuMenuItem(obj Parent, window Window, byte Flags, dat Len, byte CONST *Name);
 
 static menuitem sockCreate4MenuAny(obj Parent, window Window, udat Code, byte Flags, ldat Len, byte CONST *Name);
 
@@ -405,14 +403,6 @@ static group sockCreateGroup(void);
 static obj sockPrevObj(obj Obj);
 static obj sockNextObj(obj Obj);
 static obj sockParentObj(obj Obj);
-
-static gadget sockG_PrevGadget(gadget Gadget);
-static gadget sockG_NextGadget(gadget Gadget);
-static group sockGroupGadget(gadget Gadget);
-
-static widget sockO_PrevWidget(widget Widget);
-static widget sockO_NextWidget(widget Widget);
-static msgport sockOwnerWidget(widget Widget);
 
 static screen sockFirstScreen(void);
 static widget sockFirstWidget(widget W);
@@ -880,7 +870,7 @@ static void sockSetFontTranslation(CONST byte trans[0x80]) {
     }
 }
 
-static void sockSetUniFontTranslation(CONST hwfont trans[0x80]) {
+static void sockSetHWFontTranslation(CONST hwfont trans[0x80]) {
 #ifdef CONF__UNICODE
     if (trans) {
 	int i;
@@ -943,11 +933,6 @@ static void sockRecursiveDeleteWidget(widget W) {
     
     Act(RecursiveDelete,W)(W, MsgPort);
 }
-static msgport sockGetOwnerWidget(widget W) {
-    if (W)
-	return W->Owner;
-    return (msgport)0;
-}
 static void sockSetXYWidget(widget W, dat x, dat y) {
     if (W) {
 	if (W->Parent && IS_SCREEN(W->Parent)) {
@@ -965,7 +950,7 @@ static void sockDrawWidget(widget W, dat XWidth, dat YWidth, dat Left, dat Up, C
 
 static void sockFocusSubWidget(widget W) {
     widget P;
-    if (W) {
+    if (W && !IS_SCREEN(W) && W->Parent && !IS_SCREEN(W->Parent)) {
 	W->SelectW = NULL;
 	while ((P = W->Parent) && !IS_SCREEN(P)) {
 	    P->SelectW = W;
@@ -973,6 +958,20 @@ static void sockFocusSubWidget(widget W) {
 	}
 	if (ContainsCursor((widget)WindowParent(W)))
 	    UpdateCursor();
+    }
+}
+
+static void sockResizeWidget(widget W, dat X, dat Y) {
+    if (W) {
+	if (IS_WINDOW(W)) {
+	    if (!(W->Flags & WINDOWFL_BORDERLESS))
+		X+=2, Y+=2;
+	    ResizeRelWindow((window)W, X - W->XWidth, Y - W->YWidth);
+	} else if (IS_GADGET(W)) {
+	    ResizeGadget((gadget)W, X, Y);
+	} else {
+	    ResizeWidget((widget)W, X, Y);
+	}
     }
 }
 
@@ -1029,6 +1028,16 @@ static gadget sockCreateGadget
     return (gadget)0;
 }
 
+static window sockCreateWindow(dat TitleLen, CONST byte *Title, CONST hwcol *ColTitle, menu Menu,
+			       hwcol ColText, uldat CursorType, uldat Attrib, uldat Flags,
+			       dat XWidth, dat YWidth, dat ScrollBackLines) {
+    msgport Owner;
+    if ((Owner = RemoteGetMsgPort(Slot)))
+	return Do(Create,Window)
+	    (FnWindow, Owner, TitleLen, Title, ColTitle, Menu, ColText,
+	     CursorType, Attrib, Flags, XWidth, YWidth, ScrollBackLines);
+    return (window)0;
+}
 
 static void sockWriteAsciiWindow(window Window, ldat Len, CONST byte *Ascii) {
     if (Window) {
@@ -1066,17 +1075,12 @@ static void sockWriteHWAttrWindow(window Window, dat x, dat y, ldat Len, CONST h
     }
 }
 
-static void sockResizeWidget(widget W, dat X, dat Y) {
-    if (W) {
-	if (IS_WINDOW(W)) {
-	    if (!(W->Flags & WINDOWFL_BORDERLESS))
-		X+=2, Y+=2;
-	    ResizeRelWindow((window)W, X - W->XWidth, Y - W->YWidth);
-	} else if (IS_GADGET(W)) {
-	    ResizeGadget((gadget)W, X, Y);
-	} else {
-	    ResizeWidget((widget)W, X, Y);
-	}
+static void sockSetTitleWindow(window Window, dat titlelen, CONST byte *title) {
+    byte *_title = NULL;
+    
+    if (Window) {
+	if (!titlelen || (_title = CloneMem(title, titlelen + 1)))
+	    Act(SetTitle,Window)(Window, titlelen, _title);
     }
 }
 
@@ -1087,16 +1091,6 @@ static row sockFindRowByCodeWindow(window Window, dat Code) {
     return (row)0;
 }
 
-
-/* backward compatibility. will be removed */
-static void sockCreate4MenuRow(window Window, udat Code, byte Flags, uldat Len, byte CONST *Name) {
-    Row4Menu(Window, Code, Flags, Len, Name);
-}
-
-/* backward compatibility. will be removed */
-static menuitem sockCreate4MenuMenuItem(obj Parent, window Window, byte Flags, dat Len, byte CONST *Name) {
-    return Item4Menu(Parent, Window, Flags, Len, Name);
-}
 
 static menuitem sockCreate4MenuAny(obj Parent, window Window, udat Code, byte Flags, ldat Len, byte CONST *Name) {
     return Do(Create4Menu,MenuItem)(FnMenuItem, Parent, Window, Code, Flags, Len, Name);
@@ -1150,26 +1144,6 @@ static obj sockNextObj(obj Obj) {
 }
 static obj sockParentObj(obj Obj) {
     return Obj ? (obj)Obj->Parent : Obj;
-}
-
-static gadget sockG_PrevGadget(gadget Gadget) {
-    return Gadget ? Gadget->G_Prev : Gadget;
-}
-static gadget sockG_NextGadget(gadget Gadget) {
-    return Gadget ? Gadget->G_Next : Gadget;
-}
-static group sockGroupGadget(gadget Gadget) {
-    return Gadget ? Gadget->Group : (group)Gadget;
-}
-
-static widget sockO_PrevWidget(widget Widget) {
-    return Widget ? Widget->O_Prev : Widget;
-}
-static widget sockO_NextWidget(widget Widget) {
-    return Widget ? Widget->O_Next : Widget;
-}
-static msgport sockOwnerWidget(widget Widget) {
-    return Widget ? Widget->Owner : (msgport)Widget;
 }
 
 static screen sockFirstScreen(void) {
