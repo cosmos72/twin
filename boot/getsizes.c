@@ -46,7 +46,7 @@ int main(void) {
 	   "#define _MINTIME_T	0x%lXul\n"
 	   "#define _MINFRAC_T	0x%lXul\n"
 	   "\n"
-	   "#define BLOCK_SIZE	%d\n"
+	   "#define TW_PAGE_SIZE	%d\n"
 	   "\n"
 	   "#define TW_BYTE_ORDER	%s\n"
 	   "#define TW_LITTLE_ENDIAN	1234\n"

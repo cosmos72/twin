@@ -2,7 +2,7 @@
  *  hw_tty.c  --  functions to let twin display on linux console
  *		  and inside a twin terminal
  *
- *  Copyright (C) 1999-2000 by Massimiliano Ghilardi
+ *  Copyright (C) 1999-2001 by Massimiliano Ghilardi
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -13,6 +13,7 @@
 
 #include <errno.h>
 #include <fcntl.h>
+#include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -53,7 +54,7 @@ struct tty_data {
     dat ttypar[2];
     FILE *stdOUT;
     uldat saveCursorType;
-    udat saveX, saveY;
+    dat saveX, saveY;
 
 #ifdef CONF_HW_TTY_LINUX
     Gpm_Connect GPM_Conn;
@@ -167,14 +168,21 @@ static void stdin_QuitKeyboard(void) {
     HW->QuitKeyboard = NoOp;
 }
 
-static udat stdin_LookupKey(byte *slen, byte *s) {
+static udat stdin_LookupKey(udat *ShiftFlags, byte *slen, byte *s) {
     byte used = 0, len = *slen;
-    
-    if (*s == '\x1B') {
+
+    *ShiftFlags = 0;
+
+    if (len == 0)
+	return TW_Null;
+
+    if (len > 1 && *s == '\x1B') {
+	
+	++used, --len;
 	
 #define IS(sym, c) case c: *slen = ++used; return TW_##sym
 	
-	++used, --len; switch (*++s) {
+	switch (*++s) {
 	    
 	  case '[':
 	    if (++used, --len) switch (*++s) {
@@ -186,6 +194,8 @@ static udat stdin_LookupKey(byte *slen, byte *s) {
 		IS(KP_5,  'G');  /* returned when NumLock is off */
 		IS(Pause, 'P');
 		
+		/* FALLTHROUGH */
+		
 	      case '[':
 		/* ESC [ [ */
 		if (++used, --len) switch (*++s) {
@@ -195,7 +205,7 @@ static udat stdin_LookupKey(byte *slen, byte *s) {
 		    IS(F4, 'D');
 		    IS(F5, 'E');
 		}
-		return TW_Null;
+		break;
 		
 	      case '1':
 		/* ESC [ 1 */
@@ -216,7 +226,7 @@ static udat stdin_LookupKey(byte *slen, byte *s) {
 			    IS(F8, '9');
 			}
 		}
-		return TW_Null;
+		break;
 		
 	      case '2':
 		/* ESC [ 2 */
@@ -238,38 +248,38 @@ static udat stdin_LookupKey(byte *slen, byte *s) {
 			    IS(F12, '4');
 			}
 		}
-		return TW_Null;
+		break;
 		
 	      case '3':
 		/* ESC [ 3 */
 		if (++used, --len) switch (*++s) {
 		    IS(Delete, '~');
 		}
-		return TW_Null;
+		break;
 		
 	      case '4':
 		/* ESC [ 4 */
 		if (++used, --len) switch (*++s) {
 		    IS(End, '~');
 		}
-		return TW_Null;
+		break;
 		
 	      case '5':
 		/* ESC [ 5 */
 		if (++used, --len) switch (*++s) {
 		    IS(Prior, '~');
 		}
-		return TW_Null;
+		break;
 
 	      case '6':
 		/* ESC [ 6 */
 		if (++used, --len) switch (*++s) {
 		    IS(Next, '~');
 		}
-		return TW_Null;
+		break;
 		
 	    }
-	    return TW_Null;
+	    break;
 	    
 	  case 'O':
 	    /* ESC O */
@@ -297,15 +307,38 @@ static udat stdin_LookupKey(byte *slen, byte *s) {
 		IS(KP_8, 'x');
 		IS(KP_9, 'y');
 	    }
-	    return TW_Null;
-	    
+	    break;
+
 	  default:
-	    return TW_Null;
+	    break;
 	}
-	    
+
 #undef IS
 	
+	/* try to handle ALT + <some key> */
+	*slen = ++used;
+	*ShiftFlags = KBD_ALT_FL;
+	return (udat)*s;
     }
+
+    *slen = ++used;
+    
+    switch (*s) {
+      case TW_Tab:
+      case TW_Linefeed:
+      case TW_Return:
+      case TW_Escape:
+	return (udat)*s;
+      default:
+	if (*s < ' ') {
+	    /* try to handle CTRL + <some key> */
+	    *ShiftFlags = KBD_CTRL_FL;
+	    return (udat)*s | 0x40;
+	}
+	return (udat)*s;
+    }
+    
+    /* NOTREACHED */
     return TW_Null;
 }
 	
@@ -315,7 +348,7 @@ static void stdin_KeyboardEvent(int fd, display_hw *hw) {
     static void xterm_MouseEvent(int, display_hw *);
     static byte *match;
     byte got, chunk, buf[SMALLBUFF], *s;
-    udat Code;
+    udat Code, ShiftFlags;
     SaveHW;
     
     SetHW(hw);
@@ -355,13 +388,9 @@ static void stdin_KeyboardEvent(int fd, display_hw *hw) {
 	if (!(chunk = got))
 	    break;
 	
-	if (chunk > 1) {
-	    if ((Code = stdin_LookupKey(&chunk, s)) == TW_Null)
-		chunk = 1;
-	} else
-	    Code = (udat)*s;
+	Code = stdin_LookupKey(&ShiftFlags, &chunk, s);
 
-	KeyboardEventCommon(Code, chunk, s);
+	KeyboardEventCommon(Code, ShiftFlags, chunk, s);
 	s += chunk, got -= chunk;
     }
     
@@ -400,7 +429,7 @@ static byte warn_NoMouse(void) {
 
 
 
-static void stdin_DetectSize(udat *x, udat *y) {
+static void stdin_DetectSize(dat *x, dat *y) {
     struct winsize wsiz;
 
     if (ioctl(tty_fd, TIOCGWINSZ, &wsiz) >= 0 && wsiz.ws_row > 0 && wsiz.ws_col > 0) {
@@ -412,12 +441,12 @@ static void stdin_DetectSize(udat *x, udat *y) {
     *y = HW->Y;
 }
 
-static void stdin_CheckResize(udat *x, udat *y) {
+static void stdin_CheckResize(dat *x, dat *y) {
     *x = Min2(*x, HW->X);
     *y = Min2(*y, HW->Y);
 }
 
-static void stdin_Resize(udat x, udat y) {
+static void stdin_Resize(dat x, dat y) {
     if (x < HW->usedX || y < HW->usedY) {
 	/*
 	 * can't resize the tty, just clear it so that
@@ -578,20 +607,20 @@ static void xterm_MouseEvent(int fd, display_hw *hw) {
 
     if (s) {
 	x = Max2(x, 0);
-	x = Min2(x, ScreenWidth - 1);
+	x = Min2(x, DisplayWidth - 1);
     
 	y = Max2(y, 0);
-	y = Min2(y, ScreenHeight - 1);
+	y = Min2(y, DisplayHeight - 1);
     
 	if (x == 0 && prev_x == 0)
 	    dx = -1;
-	else if (x == ScreenWidth - 1 && prev_x == ScreenWidth - 1)
+	else if (x == DisplayWidth - 1 && prev_x == DisplayWidth - 1)
 	    dx = 1;
 	else
 	    dx = 0;
 	if (y == 0 && prev_y == 0)
 	    dy = -1;
-	else if (y == ScreenHeight - 1 && prev_y == ScreenHeight - 1)
+	else if (y == DisplayHeight - 1 && prev_y == DisplayHeight - 1)
 	    dy = 1;
 	else
 	    dy = 0;
@@ -614,10 +643,10 @@ static void xterm_MouseEvent(int fd, display_hw *hw) {
 #endif
 
 /*
- * note: during xxx_InitHW() initialization, DON'T use ScreenWidth/ScreenHeight
+ * note: during xxx_InitHW() initialization, DON'T use DisplayWidth/DisplayHeight
  * as they may be not up to date. Use GetDisplayWidth() / GetDisplayHeight().
  */
-#ifdef MODULE
+#ifdef CONF_THIS_MODULE
 static
 #endif
 byte tty_InitHW(void) {
@@ -670,25 +699,23 @@ byte tty_InitHW(void) {
 		if (s) *s = ',';
 		arg = s;
 	    } else if (!strncmp(arg, ",stdout", 7)) {
-		s = strchr(arg += 7, ',');
-		arg = s;
+		arg = strchr(arg + 7, ',');
 		skip_vcsa = TRUE;
 	    } else if (!strncmp(arg, ",termcap", 8)) {
-		s = strchr(arg += 8, ',');
-		arg = s;
+		arg = strchr(arg + 8, ',');
 		skip_vcsa = skip_stdout = TRUE;
 	    } else if (!strncmp(arg, ",colorbug", 9)) {
-		s = strchr(arg += 9, ',');
-		arg = s;
+		arg = strchr(arg + 9, ',');
 		tc_colorbug = TRUE;
 	    } else if (!strncmp(arg, ",xterm", 6)) {
-		s = strchr(arg += 6, ',');
-		arg = s;
+		arg = strchr(arg + 6, ',');
 		force_xterm = TRUE;
 	    } else if (!strncmp(arg, ",noinput", 8)) {
-		s = strchr(arg += 8, ',');
-		arg = s;
+		arg = strchr(arg + 8, ',');
 		HW->FlagsHW |= FlHWNoInput;
+	    } else if (!strncmp(arg, ",slow", 5)) {
+		arg = strchr(arg + 5, ',');
+		HW->FlagsHW |= FlHWExpensiveFlushVideo;
 	    } else
 		break;
 	}
@@ -789,7 +816,7 @@ byte tty_InitHW(void) {
     return FALSE;
 }
 
-#ifdef MODULE
+#ifdef CONF_THIS_MODULE
 
 #include "version.h"
 MODULEVERSION;
@@ -803,4 +830,4 @@ byte InitModule(module *Module) {
 void QuitModule(module *Module) {
 }
 
-#endif /* MODULE */
+#endif /* CONF_THIS_MODULE */

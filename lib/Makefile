@@ -5,7 +5,7 @@ TOPDIR=..
 
 all: everything
 
-VERSION=2.0.1
+VERSION=2.0.2
 SO_VER=2
 
 BINS=libTw.so.$(VERSION)
@@ -64,6 +64,8 @@ libTw.so.$(SO_VER):
 
 libTw.so:
 	$(LN) libTw.so.$(SO_VER) libTw.so
+
+Torture: torture
 
 install-real:
 	if [ -f libTw.so.$(VERSION) ]; then \

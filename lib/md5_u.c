@@ -1,1 +1,1 @@
-../server/md5.c
+md5.c

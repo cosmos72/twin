@@ -1,7 +1,7 @@
 /*
  *  hw.c  --  common functions to use HW/hw_* displays
  *
- *  Copyright (C) 1993-2000 by Massimiliano Ghilardi
+ *  Copyright (C) 1993-2001 by Massimiliano Ghilardi
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -54,7 +54,7 @@ dat (*ChangedVideo)[2][2];
 byte ChangedVideoFlag, ChangedVideoFlagAgain;
 
 
-udat ScreenWidth, ScreenHeight;
+dat DisplayWidth, DisplayHeight;
 
 udat CursorX, CursorY;
 uldat CursorType;
@@ -152,7 +152,7 @@ void QuitSignals(void) {
 #endif
 }
 
-void MoveToXY(udat x, udat y) {
+void MoveToXY(dat x, dat y) {
     CursorX = x;
     CursorY = y;
 }
@@ -166,7 +166,7 @@ void SetCursorType(uldat type) {
     CursorType = type;
 }
 
-void NeedRedrawVideo(udat Left, udat Up, udat Right, udat Down) {
+void NeedRedrawVideo(dat Left, dat Up, dat Right, dat Down) {
     if (HW->RedrawVideo) {
 	HW->RedrawLeft  = Min2(HW->RedrawLeft,  Left);
 	HW->RedrawUp    = Min2(HW->RedrawUp,    Up);
@@ -199,13 +199,13 @@ void DirtyVideo(dat Xstart, dat Ystart, dat Xend, dat Yend) {
     dat s0, s1, e0, e1, len, min;
     byte i;
     
-    if (Xstart > Xend || Xstart >= ScreenWidth || Xend < 0 ||
-	Ystart > Yend || Ystart >= ScreenHeight || Yend < 0)
+    if (Xstart > Xend || Xstart >= DisplayWidth || Xend < 0 ||
+	Ystart > Yend || Ystart >= DisplayHeight || Yend < 0)
 	return;
     Xstart = Max2(Xstart, 0);
     Ystart = Max2(Ystart, 0);
-    Xend = Min2(Xend, ScreenWidth-1);
-    Yend = Min2(Yend, ScreenHeight-1);
+    Xend = Min2(Xend, DisplayWidth-1);
+    Yend = Min2(Yend, DisplayHeight-1);
 
     ChangedVideoFlag = ChangedVideoFlagAgain = TRUE;
     
@@ -311,23 +311,23 @@ static void Video2OldVideo(dat Xstart, dat Ystart, dat Xend, dat Yend) {
     hwattr *src, *dst;
     uldat xc, yc;
     
-    if (Xstart > Xend || Xstart >= ScreenWidth || Xend < 0 ||
-	Ystart > Yend || Ystart >= ScreenHeight || Yend < 0)
+    if (Xstart > Xend || Xstart >= DisplayWidth || Xend < 0 ||
+	Ystart > Yend || Ystart >= DisplayHeight || Yend < 0)
 	return;
     Xstart = Max2(Xstart, 0);
     Ystart = Max2(Ystart, 0);
-    Xend = Min2(Xend, ScreenWidth-1);
-    Yend = Min2(Yend, ScreenHeight-1);
+    Xend = Min2(Xend, DisplayWidth-1);
+    Yend = Min2(Yend, DisplayHeight-1);
 
     yc = Yend - Ystart + 1;
     xc = sizeof(hwattr) * (Xend - Xstart + 1);
-    src = Video + Xstart + Ystart * ScreenWidth;
-    dst = OldVideo + Xstart + Ystart * ScreenWidth;
+    src = Video + Xstart + Ystart * DisplayWidth;
+    dst = OldVideo + Xstart + Ystart * DisplayWidth;
     
     while (yc--) {
 	CopyMem(src, dst, xc);
-	src += ScreenWidth;
-	dst += ScreenWidth;
+	src += DisplayWidth;
+	dst += DisplayWidth;
     }
 }
 
@@ -357,32 +357,32 @@ void DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
     /* do the drag inside Video[] */
     
     if (DstUp <= Up) {
-	src +=    Left +    Up * ScreenWidth;
-	dst += DstLeft + DstUp * ScreenWidth;
+	src +=    Left +    Up * DisplayWidth;
+	dst += DstLeft + DstUp * DisplayWidth;
 	if (DstUp != Up) {
 	    /* copy forward */
 	    while (count--) {
 		CopyMem(src, dst, len);
-		dst += ScreenWidth;
-		src += ScreenWidth;
+		dst += DisplayWidth;
+		src += DisplayWidth;
 	    }
 	} else if (Left != DstLeft) {
 	    /* the tricky case: DstUp == Up */
 	    /* copy forward, but with memmove() */
 	    while (count--) {
 		MoveMem(src, dst, len);
-		dst += ScreenWidth;
-		src += ScreenWidth;
+		dst += DisplayWidth;
+		src += DisplayWidth;
 	    }
 	}
     } else if (DstUp > Up) {
 	/* copy backward */
-	src +=    Left +    Dwn * ScreenWidth;
-	dst += DstLeft + DstDwn * ScreenWidth;
+	src +=    Left +    Dwn * DisplayWidth;
+	dst += DstLeft + DstDwn * DisplayWidth;
 	while (count--) {
 	    CopyMem(src, dst, len);
-	    dst -= ScreenWidth;
-	    src -= ScreenWidth;
+	    dst -= DisplayWidth;
+	    src -= DisplayWidth;
 	}
     }
 

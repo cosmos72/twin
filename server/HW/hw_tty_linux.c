@@ -16,6 +16,38 @@
  */
 #ifdef CONF_HW_TTY_LINUX
 
+
+#include "sizes.h"
+
+
+#if defined(__linux__) && TW_BYTE_ORDER == TW_LITTLE_ENDIAN
+/* try to get prototype for pwrite() */
+# include <asm/unistd.h>
+
+# if defined(__NR_pwrite) && defined(_syscall5)
+   _syscall5(size_t,pwrite,unsigned int,fd, const char *,buf,
+			  size_t,count, off_t,poslow, off_t,poshigh)
+/* /dev/vcsa* are surely smaller than 2GB :) */
+#  define linux_pwrite(fd, buf, count, pos) pwrite((fd), (buf), (count), (pos), 0)
+# endif
+#endif
+ 
+#ifndef linux_pwrite
+/*
+ * we do not need the complete seek + write + seek back
+ * but only seek + write
+ */
+# define linux_pwrite(fd, buf, count, pos) do { \
+    lseek((fd), (pos), SEEK_SET); \
+    write((fd), (buf), (count)); \
+} while (0)
+#endif
+    
+
+
+
+
+
 /*
  * libgpm is stacked, not multi-headed (so no multiplex too)
  */
@@ -31,7 +63,7 @@ static byte GPM_InUse;
 static void GPM_QuitMouse(void);
 static void GPM_MouseEvent(int fd, display_hw *hw);
 
-static int wrap_GPM_Open(void) {
+static int wrap_Gpm_Open(void) {
     /*
      * HACK! this works around a quirk in libgpm:
      * if Gpm_Open fails, it sets gpm_tried to non-zero
@@ -81,7 +113,7 @@ static byte GPM_InitMouse(void) {
 	return FALSE;
     }
     
-    if (wrap_GPM_Open() < 0)
+    if (wrap_Gpm_Open() < 0)
 	return FALSE;
 
     fcntl(GPM_fd, F_SETFD, FD_CLOEXEC);
@@ -214,7 +246,7 @@ static void vcsa_HideMouse(void);
 /* return FALSE if failed */
 static byte vcsa_InitVideo(void) {
     static byte vcsa_name[] = "/dev/vcsaXX";
-    
+
     if (!tty_name) {
 	fputs("      vcsa_InitVideo() failed: unable to detect tty device\n", stderr);
 	return FALSE;
@@ -264,7 +296,7 @@ static byte vcsa_InitVideo(void) {
     HW->CanDragArea = linux_CanDragArea;
     HW->DragArea = linux_DragArea;
    
-    HW->XY[0] = HW->XY[1] = 0;
+    HW->XY[0] = HW->XY[1] = -1;
     HW->TT = (uldat)-1; /* force updating cursor */
     
     HW->Beep = linux_Beep;
@@ -284,7 +316,7 @@ static byte vcsa_InitVideo(void) {
 }
 
 static void vcsa_QuitVideo(void) {
-    linux_MoveToXY(0, ScreenHeight-1);
+    linux_MoveToXY(0, DisplayHeight-1);
     linux_SetCursorType(LINECURSOR);
     fputs("\033[0m\033[3l\n", stdOUT); /* clear colors, TTY_DISPCTRL */
     
@@ -320,8 +352,8 @@ static void vcsa_FlushVideo(void) {
 	    DirtyVideo(HW->Last_x, HW->Last_y, HW->Last_x, HW->Last_y);
 	    if (ValidOldVideo) {
 		FlippedOldVideo = TRUE;
-		savedOldVideo = OldVideo[HW->Last_x + HW->Last_y * ScreenWidth];
-		OldVideo[HW->Last_x + HW->Last_y * ScreenWidth] = ~Video[HW->Last_x + HW->Last_y * ScreenWidth];
+		savedOldVideo = OldVideo[HW->Last_x + HW->Last_y * DisplayWidth];
+		OldVideo[HW->Last_x + HW->Last_y * DisplayWidth] = ~Video[HW->Last_x + HW->Last_y * DisplayWidth];
 	    }
 	}
 	
@@ -343,15 +375,15 @@ static void vcsa_FlushVideo(void) {
 	    FlippedVideo = FALSE;
     }
     
-    for (i=0; i<ScreenHeight*2; i++) {
+    for (i=0; i<DisplayHeight*2; i++) {
 	_start = start = (uldat)ChangedVideo[i>>1][i&1][0];
 	_end   = end   = (uldat)ChangedVideo[i>>1][i&1][1];
 	    
 	if (start != (uldat)-1) {
 		
-	    /* actual tty size could be different from ScreenWidth*ScreenHeight... */
-	    start += (i>>1) * ScreenWidth;
-	    end   += (i>>1) * ScreenWidth;
+	    /* actual tty size could be different from DisplayWidth*DisplayHeight... */
+	    start += (i>>1) * DisplayWidth;
+	    end   += (i>>1) * DisplayWidth;
 
 	    _start += (i>>1) * HW->X;
 	    _end   += (i>>1) * HW->X;
@@ -360,14 +392,14 @@ static void vcsa_FlushVideo(void) {
 	    if (prevS != (uldat)-1) {
 		if (start - prevE < HW->merge_Threshold) {
 		    /* the two chunks are (almost) contiguous, merge them */
-		    /* if HW->X != ScreenWidth we can merge only if they do not wrap */
-		    if (HW->X == ScreenWidth || prevS / ScreenWidth == end / ScreenWidth) {
+		    /* if HW->X != DisplayWidth we can merge only if they do not wrap */
+		    if (HW->X == DisplayWidth || prevS / DisplayWidth == end / DisplayWidth) {
 			_prevE = prevE = end;
 			continue;
 		    }
 		}
-		lseek(VcsaFd, 4+_prevS*sizeof(hwattr), SEEK_SET);
-		write(VcsaFd, (void *)&Video[prevS], (prevE-prevS+1)*sizeof(hwattr));
+		linux_pwrite(VcsaFd, (void *)&Video[prevS], (prevE-prevS+1)*sizeof(hwattr),
+		       4+_prevS*sizeof(hwattr));
 	    }
 	    prevS = start;
 	    prevE = end;
@@ -376,14 +408,14 @@ static void vcsa_FlushVideo(void) {
 	}
     }
     if (prevS != (uldat)-1) {
-	lseek(VcsaFd, 4+_prevS*sizeof(hwattr), SEEK_SET);
-	write(VcsaFd, (char *)&Video[prevS], (prevE-prevS+1)*sizeof(hwattr));
+	linux_pwrite(VcsaFd, (void *)&Video[prevS], (prevE-prevS+1)*sizeof(hwattr),
+	       4+_prevS*sizeof(hwattr));
     }
     
     /* ... and this redraws the mouse */
     if (HW->FlagsHW & FlHWSoftMouse) {
 	if (FlippedOldVideo)
-	    OldVideo[HW->Last_x + HW->Last_y * ScreenWidth] = savedOldVideo;
+	    OldVideo[HW->Last_x + HW->Last_y * DisplayWidth] = savedOldVideo;
 	if (FlippedVideo)
 	    VideoFlip(HW->Last_x = HW->MouseState.x, HW->Last_y = HW->MouseState.y);
 	else if (HW->FlagsHW & FlHWChangedMouseFlag)
@@ -408,24 +440,22 @@ static void vcsa_FlushVideo(void) {
 /* HideMouse and ShowMouse depend on Video setup, not on Mouse.
  * so we have vcsa_ and stdout_ versions, not GPM_ ones... */
 static void vcsa_ShowMouse(void) {
-    uldat pos = (HW->Last_x = HW->MouseState.x) + (HW->Last_y = HW->MouseState.y) * ScreenWidth;
+    uldat pos = (HW->Last_x = HW->MouseState.x) + (HW->Last_y = HW->MouseState.y) * DisplayWidth;
     uldat _pos = HW->Last_x + HW->Last_y * HW->X;
     
     hwattr h  = Video[pos];
-    hwcol c = ~HWCOL(h) ^ COL(HIGH,HIGH);
+    hwcol c = ~HWCOL(h) ^ COL(HIGH,0);
 
     h = HWATTR( c, HWFONT(h) );
 
-    lseek(VcsaFd, 4+_pos*sizeof(hwattr), SEEK_SET);
-    write(VcsaFd, (char *)&h, sizeof(hwattr));
+    linux_pwrite(VcsaFd, (void *)&h, sizeof(hwattr), 4+_pos*sizeof(hwattr));
 }
 
 static void vcsa_HideMouse(void) {
-    uldat pos = HW->Last_x + HW->Last_y * ScreenWidth;
+    uldat pos = HW->Last_x + HW->Last_y * DisplayWidth;
     uldat _pos = HW->Last_x + HW->Last_y * HW->X;
 
-    lseek(VcsaFd, 4+_pos*sizeof(hwattr), SEEK_SET);
-    write(VcsaFd, (char *)&Video[pos], sizeof(hwattr));
+    linux_pwrite(VcsaFd, (void *)&Video[pos], sizeof(hwattr), 4+_pos*sizeof(hwattr));
 }
 
 #endif /* CONF_HW_TTY_LINUX */
@@ -505,8 +535,8 @@ static byte linux_InitVideo(void) {
     HW->CanDragArea = linux_CanDragArea;
     HW->DragArea = linux_DragArea;
    
-    HW->XY[0] = HW->XY[1] = 0;
-    HW->TT = -1; /* force updating the cursor */
+    HW->XY[0] = HW->XY[1] = -1;
+    HW->TT = (uldat)-1; /* force updating the cursor */
 	
     HW->Beep = linux_Beep;
     HW->Configure = linux_Configure;
@@ -524,7 +554,7 @@ static byte linux_InitVideo(void) {
 }
 
 static void linux_QuitVideo(void) {
-    linux_MoveToXY(0, ScreenHeight-1);
+    linux_MoveToXY(0, DisplayHeight-1);
     linux_SetCursorType(LINECURSOR);
     fputs("\033[0;10m\033[3l\n", stdOUT);
     /* restore original colors, consolemap and TTY_DISPCTRL */
@@ -535,9 +565,7 @@ static void linux_QuitVideo(void) {
 
 #define CTRL_ALWAYS 0x0800f501	/* Cannot be overridden by TTY_DISPCTRL */
 
-#define linux_MogrifyInit() fputs("\033[0m", stdOUT); _col = COL(WHITE,BLACK)
-#define linux_MogrifyNoCursor() fputs("\033[?25l", stdOUT);
-#define linux_MogrifyYesCursor() fputs("\033[?25h", stdOUT);
+#define linux_MogrifyInit() fputs("\033[m", stdOUT); _col = COL(WHITE,BLACK)
 
 INLINE void linux_SetColor(hwcol col) {
     static byte colbuf[] = "\033[2x;2x;4x;3xm";
@@ -572,8 +600,8 @@ INLINE void linux_Mogrify(dat x, dat y, uldat len) {
     hwcol col;
     byte c, sending = FALSE;
     
-    V = Video + x + y * ScreenWidth;
-    oV = OldVideo + x + y * ScreenWidth;
+    V = Video + x + y * DisplayWidth;
+    oV = OldVideo + x + y * DisplayWidth;
 	
     for (; len; V++, oV++, x++, len--) {
 	if (!ValidOldVideo || *V != *oV) {
@@ -613,24 +641,30 @@ INLINE void linux_SingleMogrify(dat x, dat y, hwattr V) {
 /* HideMouse and ShowMouse depend on Video setup, not on Mouse.
  * so we have vcsa_ and linux_ versions, not GPM_ ones... */
 static void linux_ShowMouse(void) {
-    uldat pos = (HW->Last_x = HW->MouseState.x) + (HW->Last_y = HW->MouseState.y) * ScreenWidth;
+    uldat pos = (HW->Last_x = HW->MouseState.x) + (HW->Last_y = HW->MouseState.y) * DisplayWidth;
     hwattr h  = Video[pos];
-    hwcol c = ~HWCOL(h) ^ COL(HIGH,HIGH);
+    hwcol c = ~HWCOL(h) ^ COL(HIGH,0);
 
     linux_SingleMogrify(HW->MouseState.x, HW->MouseState.y, HWATTR( c, HWFONT(h) ));
 
-    /* put the cursor back in place */
-    HW->XY[0] = HW->XY[1] = (udat)-1;
+    /* store current cursor state for correct updating */
+    HW->XY[1] = HW->MouseState.y;
+    HW->XY[0] = HW->MouseState.x + 1;
+    /* linux terminals have VT100 wrapglitch */
+    if (HW->XY[0] == HW->X) HW->XY[0]--;
     setFlush();
 }
 
 static void linux_HideMouse(void) {
-    uldat pos = HW->Last_x + HW->Last_y * ScreenWidth;
+    uldat pos = HW->Last_x + HW->Last_y * DisplayWidth;
 
     linux_SingleMogrify(HW->Last_x, HW->Last_y, Video[pos]);
 
-    /* put the cursor back in place */
-    HW->XY[0] = HW->XY[1] = (udat)-1;
+    /* store current cursor state for correct updating */
+    HW->XY[1] = HW->Last_y;
+    HW->XY[0] = HW->Last_x + 1;
+    /* linux terminals have VT100 wrapglitch */
+    if (HW->XY[0] == HW->X) HW->XY[0]--;
     setFlush();
 }
 
@@ -656,8 +690,7 @@ static void linux_UpdateMouseAndCursor(void) {
 }
 
 static void linux_FlushVideo(void) {
-    dat i, j;
-    dat start, end;
+    dat i, j, start, end, XY[2];
     byte FlippedVideo = FALSE, FlippedOldVideo = FALSE;
     hwattr savedOldVideo;
     
@@ -680,8 +713,8 @@ static void linux_FlushVideo(void) {
 	    DirtyVideo(HW->Last_x, HW->Last_y, HW->Last_x, HW->Last_y);
 	    if (ValidOldVideo) {
 		FlippedOldVideo = TRUE;
-		savedOldVideo = OldVideo[HW->Last_x + HW->Last_y * ScreenWidth];
-		OldVideo[HW->Last_x + HW->Last_y * ScreenWidth] = ~Video[HW->Last_x + HW->Last_y * ScreenWidth];
+		savedOldVideo = OldVideo[HW->Last_x + HW->Last_y * DisplayWidth];
+		OldVideo[HW->Last_x + HW->Last_y * DisplayWidth] = ~Video[HW->Last_x + HW->Last_y * DisplayWidth];
 	    }
 	}
 	
@@ -702,27 +735,28 @@ static void linux_FlushVideo(void) {
     }
 
     linux_MogrifyInit();
-    if (HW->TT != NOCURSOR)
-	linux_MogrifyNoCursor();
-    for (i=0; i<ScreenHeight*2; i++) {
+    for (i=0; i<DisplayHeight*2; i++) {
 	start = ChangedVideo[i>>1][i&1][0];
 	end   = ChangedVideo[i>>1][i&1][1];
 	
 	if (start != -1)
-	    linux_Mogrify(start, i>>1, end-start+1);
+	    /* also keep track of cursor position */
+	    linux_Mogrify(start, XY[1] = i>>1, (XY[0] = end)-start+1);
     }
-    /* put the cursor back in place */
-    if (HW->TT != NOCURSOR)
-	linux_MogrifyYesCursor();
-    
-    HW->XY[0] = HW->XY[1] = -1;
-    
+
+    /* store current cursor state for correct updating */
+    HW->XY[1] = XY[1];
+    if ((HW->XY[0] = XY[0] + 1) == HW->X)
+	/* linux terminals have VT100 wrapglitch */
+	HW->XY[0]--;
+	
+
     setFlush();
     
     /* ... and this redraws the mouse */
     if (HW->FlagsHW & FlHWSoftMouse) {
 	if (FlippedOldVideo)
-	    OldVideo[HW->Last_x + HW->Last_y * ScreenWidth] = savedOldVideo;
+	    OldVideo[HW->Last_x + HW->Last_y * DisplayWidth] = savedOldVideo;
 	if (FlippedVideo)
 	    VideoFlip(HW->Last_x = HW->MouseState.x, HW->Last_y = HW->MouseState.y);
 	else if (HW->FlagsHW & FlHWChangedMouseFlag)
@@ -779,18 +813,24 @@ static void linux_ResetPalette(void) {
 }
 
 static byte linux_CanDragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
+    /*
+     * tty scrolling capabilities are very limited...
+     * do not even consider using tty `ESC [ <n> M' (delete_line)
+     * or `ESC [ <n> L' (insert_line) as they are *SLOW*,
+     * so the only usable one is '\n' (newline).
+     */
     return Left == 0 && Rgt == HW->X-1 && Dwn == HW->Y-1 && DstUp == 0;
 }
 
 static void linux_DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
     udat delta = Up - DstUp;
-	
+
     HW->HideMouse();
     HW->FlagsHW |= FlHWChangedMouseFlag;
 	
     fprintf(stdOUT,
-	    "\033[?1c\033[0m"	/* hide cursor, reset color */
-	    "\033[%d;1H", HW->Y);/* go to last line */
+	    "%s\033[m\033[%d;1H", /* hide cursor, reset color, go to last line */
+	    HW->TT == NOCURSOR ? "" : "\033[?1c", HW->Y);
 	    
     while (delta--)
 	putc('\n', stdOUT);
@@ -800,12 +840,16 @@ static void linux_DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat 
     else
 	fflush(stdOUT);
 	
-    /* this will restore the cursor */
-    HW->TT = -1;
+    /* store actual cursor state for correct updating */
+    HW->XY[0] = 0; HW->XY[1] = HW->Y - 1;
+    HW->TT = NOCURSOR;
     
     /*
-     * now the last trick: tty scroll erased the part
+     * Now the last trick: tty scroll erased the part
      * below DstUp + (Dwn - Up) so we must redraw it.
+     * This should not be necessary, as after a DragArea()
+     * you are supposed to redraw the original position with whatever
+     * is under the object you dragged away, but better safe than sorry.
      */
     NeedRedrawVideo(0, DstUp + (Dwn - Up) + 1, HW->X - 1, HW->Y - 1);
 }

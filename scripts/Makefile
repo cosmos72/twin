@@ -6,13 +6,13 @@ TOPDIR=..
 
 all: bins
 
-OBJS_Torture:=torture.o
+OBJS_Bitmap:=bitmap.o
 OBJS_Bin2c:=bin2c.o
 
-ALLOBJS:=$(OBJS_Torture) $(OBJS_Bin2c)
+ALLOBJS:=$(OBJS_Bitmap)
 
 
-BINS=Torture Bin2c
+BINS=Bitmap
 MODBINS=
 
 -include .depend
@@ -29,7 +29,7 @@ bins: $(BINS)
 modules: $(MODBINS)
 
 clean:
-	rm -f .*.flags .*.link .*.arlib $(ALLOBJS) Torture
+	rm -f .*.flags .*.link .*.arlib $(ALLOBJS) $(BINS) $(MODBINS)
 
 install:
 

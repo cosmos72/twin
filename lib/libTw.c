@@ -1,7 +1,7 @@
 /*
  *  libTw.c  --  implementation of libTw functions
  *
- *  Copyright (C) 1999-2000 by Massimiliano Ghilardi
+ *  Copyright (C) 1999-2001 by Massimiliano Ghilardi
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Library General Public
@@ -193,7 +193,7 @@ static uldat AddQueue(tw_d TwD, byte i, uldat len, void *data) {
 
 
 static uldat Grow(tw_d TwD, byte i, uldat len) {
-    /* make enough space available in Queue[i] */
+    /* make enough space available in Queue[i] and mark it used */
     uldat nmax;
     byte *t;
     
@@ -1246,7 +1246,7 @@ byte Tw_Sync(tw_d TwD) {
     return Fd != NOFD ? (GetQueue(TwD, QWRITE, &left), left) ? Tw_SyncSocket(TwD) : TRUE : FALSE;
 }
     
-#define Delta ((size_t)&(((tmsg)0)->Event))
+#define Delta ((udat)(size_t)&(((tmsg)0)->Event))
 
 tmsg Tw_CreateMsg(tw_d TwD, udat Type, udat EventLen) {
     tmsg Msg;
@@ -1397,6 +1397,7 @@ static uldat Gunzip(tw_d TwD) {
 	while (z->avail_in && zret == Z_OK) {
 	    
 	    /* approx. guess of uncompression ratio: 1 to 5 */
+	    /* in case we guess wrong, inflate() will tell us to make more space */
 	    if (z->avail_out < (delta = 5 * z->avail_in + 12)) {
 		if (Grow(TwD, QREAD, delta - z->avail_out)) {
 		    Qlen[QREAD] -= delta;

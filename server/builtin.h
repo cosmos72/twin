@@ -2,8 +2,6 @@
 #define _TW_BUILTIN_H
 
 byte InitBuiltin(void);
-void UpdateListWin(void);
-void UpdateDisplayWin(void);
 void FillButtonWin(void);
 void UpdateOptionWin(void);
 

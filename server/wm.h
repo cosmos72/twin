@@ -12,10 +12,10 @@ struct wm_ctx {
     udat Type; /* Msg->Type: MSG_* */
     byte Pos; /* POS_* */
     byte ByMouse;
-    byte Repeat;
     udat Code; /* keyboard key / mouse buttons pressed */
-    dat i, j;
-    ldat Left, Up, Rgt, Dwn;
+    udat ShiftFlags;
+    dat i, j;  /* mouse coordinates */
+    ldat Left, Up, Rgt, Dwn; /* window (W) corners */
 };
 
 

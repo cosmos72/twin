@@ -4,13 +4,13 @@
 byte SearchInfo(menu *Menu, dat i);
 window *FakeOpenTerm(CONST byte *arg0, byte * CONST *argv);
 window *FakeKbdFocus(window *W);
-void FakeWriteAscii(window *Window, uldat Len, CONST byte *Text);
-void FakeWriteHWAttr(window *Window, udat x, udat y, uldat Len, CONST hwattr *Attr);
+void FakeWriteAscii(window *Window, ldat Len, CONST byte *Text);
+void FakeWriteHWAttr(window *Window, dat x, dat y, ldat Len, CONST hwattr *Attr);
+byte FakeFindBorderWindow(window *W, dat u, dat v, byte Border, byte *PtrChar, hwcol *PtrColor);
 
 extern fn Fn;
 #define FnObj		(Fn.f_obj)
 #define	FnArea		(Fn.f_area)
-#define	FnAreaWin	(Fn.f_area_win)
 #define	FnRow		(Fn.f_row)
 #define	FnGadget	(Fn.f_gadget)
 #define FnWindow	(Fn.f_window)

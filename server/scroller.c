@@ -18,6 +18,9 @@
 #include "resize.h"
 #include "util.h"
 
+
+/* FIXME: Fix screen scrolling during Interactive Drag/Resize */
+
 msgport *Scroller_MsgPort;
 static void ScrollerH(msgport *MsgPort);
 
@@ -35,7 +38,7 @@ byte InitScroller(void) {
 
 	return TRUE;
     }
-    fprintf(stderr, "twin: InitScroller(): Out of memory!\n");
+    fprintf(stderr, "twin: Scroller: Out of memory!\n");
     return FALSE;
 }
 

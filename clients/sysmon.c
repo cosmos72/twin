@@ -28,7 +28,7 @@ char buf[BIGBUFF];
 byte InitSysMon(void) {
     struct utsname uts;
     byte *name;
-    uldat len;
+    ldat len;
     
     if (uname(&uts) >= 0 && (name = malloc(9 + (len = strlen(uts.nodename))))) {
 	memcpy(name, uts.nodename, len);
@@ -44,7 +44,7 @@ byte InitSysMon(void) {
     if (TwOpen(NULL) &&
 	
 	(SysMon_MsgPort=TwCreateMsgPort
-	 (len, name, (uldat)0, (udat)0, (byte)0)) &&
+	 (len, name, 0, 0, 0)) &&
 	(SysMon_Menu=TwCreateMenu
 	 (SysMon_MsgPort,
 	  COL(BLACK,WHITE), COL(BLACK,GREEN), COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
@@ -54,14 +54,13 @@ byte InitSysMon(void) {
 	(SysMon_Win = TwCreateWindow
 	 (len, name, NULL, SysMon_Menu, COL(HIGH|YELLOW,BLUE),
 	  TW_NOCURSOR, TW_WINDOW_DRAG|TW_WINDOW_CLOSE, 0,
-	  (udat)26, (udat)7, (udat )0))) {
+	  26, 7, 0))) {
 
 	TwSetColorsWindow(SysMon_Win, 0x1FF,
 			  (hwcol)0x3E, (hwcol)0, (hwcol)0, (hwcol)0, (hwcol)0x9F,
 			  (hwcol)0x1E, (hwcol)0x3E, (hwcol)0x18, (hwcol)0x08);
-	TwConfigureWindow(SysMon_Win, 0xF<<2, 0, 0, (udat)26, (udat)7, (udat)26, (udat)7);
 
-	TwInfo4Menu(SysMon_Menu, TW_ROW_ACTIVE, (uldat)16, " System Monitor ", "pppppppppppppppp");
+	TwInfo4Menu(SysMon_Menu, TW_ROW_ACTIVE, 16, " System Monitor ", "pppppppppppppppp");
 	TwWriteRowWindow(SysMon_Win, 26, "CPU \nDISK\nMEM \nSWAP\nUPTIME");
 	TwMapWindow(SysMon_Win, TwFirstScreen());
 	return TRUE;

@@ -9,7 +9,7 @@ byte *CloneStr(CONST byte *s);
 byte *CloneStrL(CONST byte *s, uldat len);
 byte **CloneStrList(byte **list);
 
-void Error(udat Code_Error);
+byte Error(udat Code_Error);
 void NormalizeTime(timevalue *Time);
 timevalue *InstantNow(timevalue *Now);
 dat CmpTime(timevalue *T1, timevalue *T2);
@@ -31,8 +31,13 @@ byte SetSelectionFromWindow(window *Window);
 void doSelectionSetOwner(obj *Owner, time_t Time, frac_t Frac);
 #define SEL_CURRENTTIME ((time_t)0)
 
+byte CreateXTermMouseEvent(event_mouse *Event, byte buflen, byte *buf);
+
 void ResetBorderPattern(void);
 void FallBackKeyAction(window *W, event_keyboard *EventK);
+
+byte **ExtractArgv(byte *text, uldat len);
+void FreeArgv(byte **argv);
 
 byte   SetTWDisplay(void);
 void UnSetTWDisplay(void);

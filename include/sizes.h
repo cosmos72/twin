@@ -1,11 +1,8 @@
 #ifndef _TW_SIZES_H
 #define _TW_SIZES_H
 
-#define _SIZEOFNUM	1
 #define _SIZEOFBYTE	1
-#define _SIZEOFDAT	2
 #define _SIZEOFUDAT	2
-#define _SIZEOFLDAT	4
 #define _SIZEOFULDAT	4
 #define _SIZEOFTIME_T	4
 #define _SIZEOFFRAC_T	4
@@ -26,7 +23,7 @@
 #define _MINTIME_T	0x80000000ul
 #define _MINFRAC_T	0x80000000ul
 
-#define BLOCK_SIZE	4096
+#define TW_PAGE_SIZE	4096
 
 #define TW_BYTE_ORDER	1234
 #define TW_LITTLE_ENDIAN	1234

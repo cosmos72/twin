@@ -46,7 +46,7 @@ INLINE byte Threshold_isDirtyVideo(dat X, dat Y) {
     /* check for slots in the previous/next line */
     if (s1 > X && Y)
 	delta = -1;
-    else if (e1 < X && Y < ScreenHeight - 1)
+    else if (e1 < X && Y < DisplayHeight - 1)
 	delta = 1;
     else
 	return FALSE;
@@ -61,16 +61,16 @@ INLINE byte Threshold_isDirtyVideo(dat X, dat Y) {
 	e2 = ChangedVideo[Y+delta][delta<0][1];
 	
     if (delta < 0)
-	return s1 + (ScreenWidth - e2) < HW->merge_Threshold;
+	return s1 + (DisplayWidth - e2) < HW->merge_Threshold;
     else
-	return s2 + (ScreenWidth - e1) < HW->merge_Threshold;
+	return s2 + (DisplayWidth - e1) < HW->merge_Threshold;
 }
 
 /* VideoFlip is quite os-independent ;) */
 INLINE void VideoFlip(udat x, udat y) {
-    uldat pos = x + y * ScreenWidth;
+    uldat pos = x + y * DisplayWidth;
     hwattr h = Video[pos];
-    hwcol c = ~HWCOL(h) ^ COL(HIGH,HIGH);
+    hwcol c = ~HWCOL(h) ^ COL(HIGH,0);
 
     Video[pos] = HWATTR( c, HWFONT(h) );
 }

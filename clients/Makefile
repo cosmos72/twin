@@ -38,6 +38,8 @@ endif
 twdetach: twattach
 	$(LN) $< $@
 
+Torture:
+
 install:
 	$(CP) $(BINS) */tw* $(DESTDIR)/bin 
 	$(LN) twattach $(DESTDIR)/bin/twdetach

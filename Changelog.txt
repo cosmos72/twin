@@ -1,3 +1,56 @@
+From 0.3.5 to 0.3.6: (Massimiliano Ghilardi, 14 Jan 2001)
+	* Added limited ShiftFlags reporting on keyboard events.
+	* Added ShiftFlags support to Key bindings in ~/.twinrc and
+	  a commented out example for using Alt-Tab to cycle through windows.
+	* Added Menu -> File -> Execute to run arbitrary programs
+	  without having to open a terminal.
+	* Started adding borderless windows (still incomplete).
+	* Added option ",slow" to all display drivers.
+	* Added support for xterm's change window title escape sequence.
+	* Added support for nested windows. For example, the "Remove" and
+	  "This" buttons in Menu -> ð -> Display window now are actually
+	  inside a sub-window. This was a much bigger work than what
+	  it may seem.
+	* Updated twterm and twin server to correctly allow choosing which
+	  xterm-style protocol to send to applications.
+	* Changed signedness of all libTw function parameters used for
+	  coordinates and sizes... for consistency they are now signed
+	  integers (`dat' or `ldat'). No need to recompile the clients.
+	  This allows to place windows (and sub-windows) at negative coords
+	  with respect to their parent.
+	* Changed some libTw functions not yet used by any client to take
+	  advantage of the new general `widget' type.
+	* Fixed missing setting TERM=linux in twterm.
+	* Fixed RC Virtual Machine to use the window you clicked upon instead
+	  of the currently focused window.
+	* Fixed SEGFAULT on Menu -> Window -> Send HotKey and RC function
+	  `SyntheticKey' used by it.
+	* Fixed Menu -> Window -> Next and RC function `Window 1' used by it.
+	* Fixed SneakSetupMouse(): there were some glitches
+	  if you did Interactive [Menu,Scroll,...] with keyboard
+	  and then you pressed mouse (yeah, evil).
+	* Fixed cursor positioning during Interactive Drag or Scroll of
+	  FullScreen first window on -hw=tty display if /dev/vcsa* output
+	  was used.
+	* Some more tweaking in -hw=tty display driver.
+	* Fixed an old bug on backward window text selection.
+	* Fixed another bug concerning selection on WINFL_USEROWS windows.
+	* Fixed a compile bug in methods.c when modules are disabled.
+	* Fixed a compile problem with X11 display driver on some platforms.
+	* Fixed display corruption when running "mutt" inside "screen"
+	  inside "twterm"... I wrote absolute/relative coords the wrong way.
+	  Thanks to the helpful guy that reported this bug but never sent
+	  strace logs of it *grin*.
+	* Fixed redrawing of rolled-up out-of-screen windows.
+	* Changed selection color and tty display driver mouse pointer color.
+	* Fixed server and socket protocol versioning.
+	* New `make Torture' target: it compiles every possible source file
+	  under every possible configuration. Use to help me find bugs!
+	  You can torture a specific set of source files with
+	  `make torture.<file1>.c torture.<file2>c ...'
+	  Example: `cd server; make torture.wm.c torture.methods.c'
+	* Fixed another pair of compile bugs found with `make Torture'.
+	
 From 0.3.4 to 0.3.5: (Massimiliano Ghilardi, 20 Dec 2000)
 	* Compatibility break: fixed heavily sick mouse event protocol
 	  (it swapped middle/right buttons in Drag and Release, both

@@ -49,27 +49,27 @@ void panic_free(void *v) {
 
 #ifdef CONF__ALLOC
 
-#ifdef __linux__
-#include <asm/page.h>
-#endif
+//#ifdef __linux__
+//#include <asm/page.h>
+//#endif
 #include <sys/types.h>
 #include <sys/mman.h>
 
-#if BLOCK_SIZE <= _MAXUDAT
+#if TW_PAGE_SIZE <= _MAXUDAT
    typedef udat delta;
 #  define SDELTA _SIZEOFUDAT
 #else
-# if BLOCK_SIZE <= _MAXULDAT
+# if TW_PAGE_SIZE <= _MAXULDAT
    typedef uldat delta;
 #  define SDELTA _SIZEOFULDAT
 # else
-#   error BLOCK_SIZE too big or not defined!
+#   error TW_PAGE_SIZE too big or not defined!
 # endif
 #endif
 
-#define BLOCK_MASK		(~(size_t)(BLOCK_SIZE-1))
-#define BLOCK_BASE(addr)	((addr)&BLOCK_MASK)
-#define BLOCK_ALIGN(addr)	(((addr)+BLOCK_SIZE-1)&BLOCK_MASK)
+#define TW_PAGE_MASK		(~(size_t)(TW_PAGE_SIZE-1))
+#define TW_PAGE_BASE(addr)	((addr)&TW_PAGE_MASK)
+#define TW_PAGE_ALIGN(addr)	(((addr)+TW_PAGE_SIZE-1)&TW_PAGE_MASK)
 
 #define getcore(size) (void *)mmap(0, (size), PROT_READ|PROT_WRITE, MAP_ANON|MAP_PRIVATE, -1, 0)
 #define dropcore(addr, size) munmap((void *)(addr), (size))
@@ -99,35 +99,35 @@ typedef struct parent {
     block *First, *Last;
 } parent;
 
-#define ASSERT_BLOCK_DATA ((size_t)&(((block *)0)->V))
+#define ASSERT_TW_PAGE_DATA ((size_t)&(((block *)0)->V))
 
-#if defined(__i386__) && BLOCK_SIZE == 4096 && _SIZEOFVOIDP == 4 && SDELTA == 2
+#if defined(__i386__) && TW_PAGE_SIZE == 4096 && _SIZEOFVOIDP == 4 && SDELTA == 2
 
 /*
  * a somewhat optimized version... but it aligns data at 8 bytes,
  * not at 16 like the general version below (not a problem on Intel)
  */
-#define BLOCK_DATA 16
+#define TW_PAGE_DATA 16
 #define KINDS 17
 static delta  Sizes[KINDS+1] = {   1,   2,  4,  8, 16, 24,48,96,184,288,448,576,808,1016,1352,2032,4079,4096};
 static delta Counts[KINDS+1] = {3626,1920,989,502,253,169,84,42, 22, 14,  9,  7,  5,   4,   3,   2,   1,   1};
 static parent Heads[KINDS];
 
 byte InitAlloc(void) {
-    return BLOCK_DATA == ASSERT_BLOCK_DATA;
+    return TW_PAGE_DATA == ASSERT_TW_PAGE_DATA;
 }
 
 #else
 
 #define _ALIGN		15
 #define _ALIGN1		16
-#define SAFEKINDS	20 + BLOCK_SIZE/4096
+#define SAFEKINDS	20 + TW_PAGE_SIZE/4096
 static delta  Sizes[SAFEKINDS];
 static delta Counts[SAFEKINDS];
 static parent Heads[SAFEKINDS];
 
 static delta KINDS;
-static delta BLOCK_DATA;
+static delta TW_PAGE_DATA;
 
 static delta BuildBlock(delta s, delta size) {
     delta n, d;
@@ -137,18 +137,18 @@ static delta BuildBlock(delta s, delta size) {
 	n = (size * 8) / (s * 8 + 1); /* n * s bytes used for data, n bits for bitmap */
 	if (n > 8) {
 	    nfrac[0] = (size * 8) % ((s-_ALIGN1) * 8 + 1); /* nfrac wasted bits */
-	    nfrac[0] *= BLOCK_SIZE / (s-_ALIGN1);
+	    nfrac[0] *= TW_PAGE_SIZE / (s-_ALIGN1);
 	    d = 0;
 	    nfrac[1] = (size * 8) % (s * 8 + 1);
-	    nfrac[1] *= BLOCK_SIZE / s;
+	    nfrac[1] *= TW_PAGE_SIZE / s;
 	    if (nfrac[1] < nfrac[d]) d = 1;
 	    nfrac[2] = (size * 8) % ((s+_ALIGN1) * 8 + 1);
-	    nfrac[2] *= BLOCK_SIZE / (s+_ALIGN1);
+	    nfrac[2] *= TW_PAGE_SIZE / (s+_ALIGN1);
 	    if (nfrac[2] < nfrac[d]) d = 2;
 	    
-	    if (s > BLOCK_DATA * 8) {
+	    if (s > TW_PAGE_DATA * 8) {
 		nfrac[3] = (size * 8) % ((s+2*_ALIGN1) * 8 + 1);
-		nfrac[3] *= BLOCK_SIZE / (s+2*_ALIGN1);
+		nfrac[3] *= TW_PAGE_SIZE / (s+2*_ALIGN1);
 		if (nfrac[3] < nfrac[d]) d = 3;
 	    }
 	    s += (d-1)*_ALIGN1;
@@ -160,7 +160,7 @@ static delta BuildBlock(delta s, delta size) {
     
     Sizes[KINDS] = s;
     Counts[KINDS] = n = (size * 8) / (s * 8 + 1);
-    if (++KINDS >= BLOCK_SIZE/128)
+    if (++KINDS >= TW_PAGE_SIZE/128)
 	return FALSE;
     
     if (s * s < size * 2)
@@ -172,29 +172,29 @@ static delta BuildBlock(delta s, delta size) {
 	s = ((size * 8) / (n-1) - 1) / 8;
 	s &= ~_ALIGN;
     } else
-	s = BLOCK_SIZE;
+	s = TW_PAGE_SIZE;
     return s;
 }
 
 byte InitAlloc(void) {
     delta s, bsize;
 
-    BLOCK_DATA = (ASSERT_BLOCK_DATA + _ALIGN) & ~(size_t)_ALIGN;
-    bsize = BLOCK_SIZE - BLOCK_DATA;
+    TW_PAGE_DATA = (ASSERT_TW_PAGE_DATA + _ALIGN) & ~(size_t)_ALIGN;
+    bsize = TW_PAGE_SIZE - TW_PAGE_DATA;
     
     s = 1;
     while (s < bsize)
 	s = BuildBlock(s, bsize);
-    Sizes[KINDS] = BLOCK_SIZE;
+    Sizes[KINDS] = TW_PAGE_SIZE;
     Counts[KINDS] = 1;
     return TRUE;
 }
 
 #endif
 
-#define B_DATA(base, i)		((void *)((char *)(base) + BLOCK_DATA + Sizes[(base)->Kind] * (i)))
-#define B_INDEX(base, mem)	(((char *)(mem) - (char *)(base) - BLOCK_DATA) / Sizes[(base)->Kind])
-#define B_BITMAP(base)		((char *)(base) + BLOCK_SIZE - ((base)->Max + 7) / 8)
+#define B_DATA(base, i)		((void *)((char *)(base) + TW_PAGE_DATA + Sizes[(base)->Kind] * (i)))
+#define B_INDEX(base, mem)	(((char *)(mem) - (char *)(base) - TW_PAGE_DATA) / Sizes[(base)->Kind])
+#define B_BITMAP(base)		((char *)(base) + TW_PAGE_SIZE - ((base)->Max + 7) / 8)
 #define B_GETBIT(bitmap, i)	(((bitmap)[(i)/8] >> ((i)&7)) & 1)
 #define B_SETBIT(bitmap, i)	((bitmap)[(i)/8] |= 1 << ((i)&7))
 #define B_CLRBIT(bitmap, i)	((bitmap)[(i)/8] &= ~(1 << ((i)&7)))
@@ -202,7 +202,7 @@ byte InitAlloc(void) {
 static block *Highest;
 
 void *AllocStatHighest(void) {
-    return (void *)((byte *)Highest + BLOCK_SIZE);
+    return (void *)((byte *)Highest + TW_PAGE_SIZE);
 }
 
 INLINE delta SearchKind(delta size) {
@@ -257,26 +257,26 @@ static block *Cache[MAX_CACHE];
 
 static void *GetBs(size_t len) {
     block *B;
-    if (CSize * BLOCK_SIZE >= len) {
-	if (len == BLOCK_SIZE) {
+    if (CSize * TW_PAGE_SIZE >= len) {
+	if (len == TW_PAGE_SIZE) {
 	    B = Cache[CFirst];
 	    CFirst++;
 	    CSize--;
 	    return B;
 	} else {
-	    size_t got = BLOCK_SIZE;
+	    size_t got = TW_PAGE_SIZE;
 	    delta i, n;
 	    B = Cache[n = CFirst];
 	    for (i = CFirst+1; got < len && i <= CLast; i++) {
 		if ((byte *)B + got == (byte *)Cache[i])
-		    got += BLOCK_SIZE;
+		    got += TW_PAGE_SIZE;
 		else {
 		    B = Cache[n = i];
-		    got = BLOCK_SIZE;
+		    got = TW_PAGE_SIZE;
 		}
 	    }
 	    if (got >= len) {
-		got /= BLOCK_SIZE;
+		got /= TW_PAGE_SIZE;
 		MoveMem(Cache + CFirst, Cache + CFirst + got, (n - CFirst) * sizeof(block *));
 		CFirst += got;
 		CSize -= got;
@@ -308,7 +308,7 @@ INLINE delta SearchB(block *B, delta low, delta up) {
 
 static void DropBs(block *B, size_t len) {
     delta pos, d;
-    while (len >= BLOCK_SIZE) {
+    while (len >= TW_PAGE_SIZE) {
 	if (!CSize) {
 	    CSize++;
 	    CFirst = CLast = MAX_CACHE/2;
@@ -318,7 +318,7 @@ static void DropBs(block *B, size_t len) {
 		dropcore(B, len);
 		return;
 	    } else {
-		dropcore(Cache[CLast], BLOCK_SIZE);
+		dropcore(Cache[CLast], TW_PAGE_SIZE);
 		if (B < Cache[CFirst])
 		    pos = CFirst;
 		else
@@ -362,14 +362,14 @@ static void DropBs(block *B, size_t len) {
 	    Cache[pos] = B;
 	    CSize++;
 	}
-	B = (block *)((char *)B + BLOCK_SIZE);
-	len -= BLOCK_SIZE;
+	B = (block *)((char *)B + TW_PAGE_SIZE);
+	len -= TW_PAGE_SIZE;
     }
 }
 
 INLINE void *CreateB(delta kind) {
     block *B;
-    if ((B = GetBs(BLOCK_SIZE))) {
+    if ((B = GetBs(TW_PAGE_SIZE))) {
 	B->Kind = kind;
 	B->Max = Counts[kind];
 	B->Top = B->Bottom = 0;
@@ -380,7 +380,7 @@ INLINE void *CreateB(delta kind) {
 
 INLINE void DeleteB(block *B) {
     RemoveB(B, &Heads[B->Kind]);
-    DropBs(B, BLOCK_SIZE);
+    DropBs(B, TW_PAGE_SIZE);
 }
 
 #ifdef DEBUG_MALLOC
@@ -443,7 +443,7 @@ void *AllocMem(size_t len) {
 	}
     } else if (len > Sizes[KINDS-1]) {
 	block *B;
-	len = BLOCK_ALIGN(len + BLOCK_DATA);
+	len = TW_PAGE_ALIGN(len + TW_PAGE_DATA);
 	if ((B = GetBs(len))) {
 	    B->Prev = B->Next = (void *)0;
 	    B->Kind = KINDS;
@@ -470,7 +470,7 @@ void FreeMem(void *Mem) {
 	return;
 #endif
     
-    if ((B = (block *)BLOCK_BASE((size_t)Mem)) && B->Kind <= KINDS &&
+    if ((B = (block *)TW_PAGE_BASE((size_t)Mem)) && B->Kind <= KINDS &&
 	((i = B_INDEX(B, Mem)), Mem == B_DATA(B, i))) {
 
 
@@ -496,6 +496,7 @@ void FreeMem(void *Mem) {
 		    RemoveB(B, &Heads[B->Kind]);
 		    InsertB(B, &Heads[B->Kind]);
 		}
+		return;
 	    }
 	} else if (B->Kind == KINDS) {
 	    if (Mem == B_DATA(B, 0)) {
@@ -503,9 +504,13 @@ void FreeMem(void *Mem) {
 		POISON(Mem, B->Len - ((byte *)Mem - (byte *)B));
 #endif
 		DropBs(B, B->Len);
+		return;
 	    }
 	}
     }
+#ifdef DEBUG_MALLOC
+    fprintf(stderr, "FAIL: %.8X is not a valid pointer\n", (size_t)Mem);
+#endif    
 }
 
 void *ReAllocMem(void *Mem, uldat newSize) {
@@ -523,7 +528,7 @@ void *ReAllocMem(void *Mem, uldat newSize) {
     if (!Mem)
 	return AllocMem(newSize);
     
-    if ((B = (block *)BLOCK_BASE((size_t)Mem)) && B->Kind <= KINDS &&
+    if ((B = (block *)TW_PAGE_BASE((size_t)Mem)) && B->Kind <= KINDS &&
 	((i = B_INDEX(B, Mem)), Mem == B_DATA(B, i))) {
 	/*
 	 * return Mem if it still fits in the original location,
@@ -541,7 +546,7 @@ void *ReAllocMem(void *Mem, uldat newSize) {
 	    }
 	} else if (B->Kind == KINDS) {
 	    if (Mem == B_DATA(B, 0)) {
-		newSize = BLOCK_ALIGN(newSize + BLOCK_DATA);
+		newSize = TW_PAGE_ALIGN(newSize + TW_PAGE_DATA);
 		if (newSize == (oldSize = B->Len))
 		    return Mem;
 		if (newSize < oldSize) {

@@ -1,7 +1,7 @@
 /*
  *  twin.h  --  main include for all twin-related data types, functions and macros
  *
- *  Copyright (C) 1993-2000 by Massimiliano Ghilardi
+ *  Copyright (C) 1993-2001 by Massimiliano Ghilardi
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -190,14 +190,11 @@ typedef struct mouse_state {
 } mouse_state;
 
 typedef struct fn_obj fn_obj;
-typedef struct fn_area fn_area;
 typedef struct obj obj;
 typedef struct obj_parent obj_parent;
-typedef struct area area;
-typedef struct area_parent area_parent;
-typedef struct area_win area_win;
-typedef struct area_win_parent area_win_parent;
-typedef struct fn_area_win fn_area_win;
+typedef struct draw_ctx draw_ctx;
+typedef struct widget widget;
+typedef struct fn_widget fn_widget;
 typedef struct gadget gadget;
 typedef struct fn_gadget fn_gadget;
 typedef struct row row;
@@ -254,7 +251,6 @@ struct obj {
     fn_obj *Fn;
     obj *Prev, *Next;
     obj_parent *Parent;
-    obj *OPrev, *ONext;
 };
 
 struct obj_parent {
@@ -264,93 +260,80 @@ struct obj_parent {
 struct fn_obj {
     uldat Magic, Size, Used;
     obj *(*Create)(fn_obj *);
-    obj *(*Copy)(obj *From, obj *To);
     void (*Insert)(obj *Obj, obj_parent *, obj *Prev, obj *Next);
     void (*Remove)(obj *);
     void (*Delete)(obj *);
 };
 
-struct area {
-    uldat Id;
-    fn_area *Fn;
-    area *Prev, *Next;
-    area_parent *Parent;
-    screen *FirstScreen;
-    window *FirstWindow, *OnlyThisWindow;
-    gadget *FirstGadget, *OnlyThisGadget;
-    dat Xstart, Ystart, Xend, Yend;
+
+struct draw_ctx {
+    draw_ctx *Next;
+    screen *Screen;
+    widget *TopW;
+    widget *W;
+    widget *OnlyW;
+    ldat Left, Up, Rgt, Dwn; /* widget corners position on Screen */
+    ldat X1, Y1, X2, Y2;     /* screen area to draw */
+    dat DWidth;
+    dat DHeight;
+    byte NoChildren;
+    byte BorderDone;
     byte Shaded;
 };
 
-struct area_parent {
-    area *FirstArea, *LastArea;
-};
-
-struct fn_area {
-    uldat Magic, Size, Used;
-    area *(*Create)(fn_area *, area_parent *, screen *, window *, window *OnlyThisWindow,
-		    gadget *FirstGadget, gadget *OnlyThisGadget, dat Xstart, dat Ystart,
-		    dat Xend, dat Yend, byte Shaded);
-    area *(*Copy)(area *From, area *To);
-    void (*Insert)(area *, area_parent *, area *Prev, area *Next);
-    void (*Remove)(area *);
-    void (*Delete)(area *);
-};
-
-struct area_win {
+struct widget {
     uldat Id;
-    fn_area_win *Fn;
-    area_win *Prev, *Next;
-    area_win_parent *Parent;
-    window *Window;
-    gadget *FirstGadget, *OnlyThisGadget;
-    byte NoGadgets;
-    uldat XLogic, YLogic;
-    dat Xstart, Ystart, Xend, Yend;
+    fn_widget *Fn;
+    widget *Prev, *Next;/* list in the same parent */
+    widget *Parent;	/* where this widget sits */
+    widget *FirstW, *LastW; /* list of children */
+    widget *SelectW;	    /* selected child */
+    dat Left, Up;
+    dat XWidth, YWidth;
+    ldat XLogic, YLogic;
 };
 
-struct area_win_parent {
-    area_win *FirstAreaWin, *LastAreaWin;
-};
-
-struct fn_area_win {
+struct fn_widget {
     uldat Magic, Size, Used;
-    area_win *(*Create)(fn_area_win *, area_win_parent *, window *, gadget *FirstGadget, gadget *OnlyThisGadget,
-			byte NoGadgets, uldat XLogic, uldat YLogic, dat Xstart, dat Ystart, dat Xend, dat Yend);
-    area_win *(*Copy)(area_win *From, area_win *To);
-    void (*Insert)(area_win *, area_win_parent *, area_win *Prev, area_win *Next);
-    void (*Remove)(area_win *);
-    void (*Delete)(area_win *);
+    widget *(*CannotCreate)(fn_widget *);
+    void (*Insert)(widget *, widget *Parent, widget *Prev, widget *Next);
+    void (*Remove)(widget *);
+    void (*Delete)(widget *);
+    void (*DrawSelf)(draw_ctx *D);
+    widget *(*SearchWidget)(widget *Parent, dat X, dat Y);
 };
 
 struct gadget {
     uldat Id;
     fn_gadget *Fn;
-    gadget *Prev, *Next;
-    window *Window;
+    widget *Prev, *Next;
+    widget *Parent;
+    widget *FirstW, *LastW; /* list of children */
+    widget *SelectW;	    /* selected child */
+    dat Left, Up, XWidth, YWidth;
+    ldat XLogic, YLogic;
+    
     hwcol ColText, ColSelect, ColDisabled, ColSelectDisabled;
     udat Code, Flags;
-    udat Left, Up, XWidth, YWidth;
     byte *Contents[8];
 };
 
 struct fn_gadget {
     uldat Magic, Size, Used;
-    gadget *(*Create)(fn_gadget *, window *Window,
+    gadget *(*Create)(fn_gadget *, /*widget*/ void *Parent,
 		      hwcol ColText, hwcol ColTextSelect, hwcol ColTextDisabled, hwcol ColTextSelectDisabled,
-		      udat Code, udat Flags, udat Left, udat Up, udat XWidth, udat YWidth,
+		      udat Code, udat Flags, dat Left, dat Up, dat XWidth, dat YWidth,
 		      CONST byte *TextNormal, CONST byte *TextSelect, CONST byte *TextDisabled, CONST byte *TextSelectDisabled,
 		      CONST hwcol *ColNormal, CONST hwcol *ColSelect, CONST hwcol *ColDisabled, CONST hwcol *ColSelectDisabled);
-    gadget *(*Copy)(gadget *From, gadget *To);
-    void (*Insert)(gadget *, window *, gadget *Prev, gadget *Next);
+    void (*Insert)(gadget *, widget *Parent, widget *Prev, widget *Next);
     void (*Remove)(gadget *);
     void (*Delete)(gadget *);
-    gadget *(*CreateEmptyButton)(fn_gadget *Fn_Gadget, window *Window, udat XWidth, udat YWidth, hwcol BgCol);
-    byte (*FillButton)(gadget *Gadget, udat Code, udat Left, udat Up, udat Flags, CONST byte *Text, hwcol Color, hwcol ColorDisabled);
+    void (*DrawSelf)(draw_ctx *D);
+    widget *(*SearchWidget)(gadget *Parent, dat X, dat Y);    
+    gadget *(*CreateEmptyButton)(fn_gadget *Fn_Gadget, /*widget*/ void *Parent, dat XWidth, dat YWidth, hwcol BgCol);
+    byte (*FillButton)(gadget *Gadget, udat Code, dat Left, dat Up, udat Flags, CONST byte *Text, hwcol Color, hwcol ColorDisabled);
     gadget *(*CreateButton)(fn_gadget *Fn_Gadget, window *Window, hwcol BgCol, hwcol Col, hwcol ColDisabled,
-			    udat Code, udat Flags, udat Left, udat Up, udat XWidth, udat YWidth, CONST byte *Text);
-    gadget *(*CloneButton)(gadget *SetUpGadget, udat Code, udat Left, udat Up, hwcol BgCol);
-
+			    udat Code, udat Flags, dat Left, dat Up, dat XWidth, dat YWidth, CONST byte *Text);
 };
 
 /*Flags : */
@@ -390,11 +373,10 @@ struct row {
 struct fn_row {
     uldat Magic, Size, Used;
     row *(*Create)(fn_row *, udat Code, byte Flags);
-    row *(*Copy)(row *From, row *To);
     void (*Insert)(row *, window *, row *Prev, row *Next);
     void (*Remove)(row *);
     void (*Delete)(row *);
-    row *(*Create4Menu)(fn_row *Fn_Row, window *Window, udat Code, byte FlagActive, uldat Len, CONST byte *Text);
+    row *(*Create4Menu)(fn_row *Fn_Row, window *Window, udat Code, byte FlagActive, ldat Len, CONST byte *Text);
 };
 /*Flags : */
 #define ROW_INACTIVE	((byte)0x00)
@@ -404,7 +386,7 @@ struct fn_row {
 typedef enum ttystate {
     ESnormal = 0, ESesc, ESsquare, ESgetpars, ESgotpars, ESfunckey,
       EShash, ESsetG0, ESsetG1, ESpercent, ESignore, ESnonstd,
-      ESpalette, ESany = 0xFF, ESques = 0x100
+      ESpalette, ESxterm_1, ESxterm_2, ESany = 0xFF, ESques = 0x100
 } ttystate;
 
 #define TTY_STOPPED	((udat)0x0001)
@@ -417,7 +399,7 @@ typedef enum ttystate {
 #define TTY_REVERSECOL	((udat)0x0080)
 #define TTY_INVERTSCR	((udat)0x0100)
 #define TTY_ALTCURSKEYS	((udat)0x0200)
-#define TTY_ABSORIG	((udat)0x0400)
+#define TTY_RELORIG	((udat)0x0400)
 #define TTY_SETMETA	((udat)0x0800)
 #define TTY_UPDATECURSOR ((udat)0x1000)
 #define TTY_REPORTMOUSE	 ((udat)0x2000)
@@ -441,11 +423,11 @@ struct ttydata {
     ttystate State;
     udat Flags;
     udat Effects;
-    udat ScrollBack;	/* Number of scrollback lines */
-    udat SizeX, SizeY;	/* Terminal size */
-    udat Top, Bottom;	/* Y scrolling region. default 0...SizeY-1 */
-    udat X, Y;		/* Cursor position in visible buffer */
-    udat saveX, saveY;
+    dat ScrollBack;	/* Number of scrollback lines */
+    dat SizeX, SizeY;	/* Terminal size */
+    dat Top, Bottom;	/* Y scrolling region. default 0...SizeY-1 */
+    dat X, Y;		/* Cursor position in visible buffer */
+    dat saveX, saveY;
     hwattr *Start, *Split;/* Start and Split of visible buffer */
     			  /* AfterSplit is just Window->Contents */
     hwattr *Pos;	  /* Pointer to cursor position in buffer */
@@ -454,6 +436,8 @@ struct ttydata {
     uldat nPar, Par[NPAR];
     
     byte currG, G, G0, G1, saveG, saveG0, saveG1;
+    dat newLen, newMax;
+    byte *newTitle;	/* buffer for xterm set window title escape seq */
 };
 
 struct remotedata {
@@ -465,11 +449,18 @@ struct remotedata {
 struct window {
     uldat Id;
     fn_window *Fn;
-    window *Prev, *Next; /* list in the same screen */
-    screen *Screen;      /* in which window sits */
+    widget *Prev, *Next;/* list in the same parent */
+    widget *Parent;	/* where this window sits */
+    widget *FirstW, *LastW; /* list of children */
+    widget *SelectW;	    /* selected child */
+    dat Left, Up;
+    dat XWidth, YWidth;
+    ldat XLogic, YLogic;
+
     window *OPrev, *ONext; /* list with the same menu */
-    menu *Menu;		 /* from which the window eventually depends */
-    udat LenTitle;
+    menu *Menu;		/* from which the window depends */
+    
+    dat LenTitle;
     byte *Title, *ColTitle;
     byte *BorderPattern[2];
     ttydata *TtyData;
@@ -478,56 +469,54 @@ struct window {
     fn_hook MapUnMapHook;
     msg *MapQueueMsg;
     remotedata RemoteData;
-    uldat XLogic, YLogic, CurX, CurY;
-    uldat XstSel, YstSel, XendSel, YendSel;
+    ldat CurX, CurY;
+    ldat XstSel, YstSel, XendSel, YendSel;
     hwcol ColGadgets, ColArrows, ColBars, ColTabs, ColBorder, ColText, ColSelect, ColDisabled, ColSelectDisabled;
     byte Flags;
     uldat Attrib;
     uldat CursorType;
-    dat Left; udat Up;
-    udat XWidth, YWidth;
-    udat MinXWidth, MinYWidth;
-    udat MaxXWidth, MaxYWidth;
+    dat MinXWidth, MinYWidth;
+    dat MaxXWidth, MaxYWidth;
     hwattr *Contents;
-    uldat MaxNumRow;
+    ldat MaxNumRow;
     row *FirstRow, *LastRow;
     row *RowOne, *RowSplit;	/*RESERVED: used to optimize the drawing on screen */
-    uldat NumRowOne, NumRowSplit;/*RESERVED: updated automatically by WriteRow. To insert */
+    ldat NumRowOne, NumRowSplit;/*RESERVED: updated automatically by WriteRow. To insert */
     				/*or remove manually rows, you must zero out NumRowOne */
 				/*and NumRowSplit forcing twin to recalculate them */
-    gadget *FirstGadget, *LastGadget, *GadgetSelect;
+    
 };
 struct fn_window {
     uldat Magic, Size, Used;
-    window *(*Create)(fn_window *, udat LenTitle, CONST byte *Title, CONST hwcol *ColTitle, menu *Menu,
+    window *(*Create)(fn_window *, dat LenTitle, CONST byte *Title, CONST hwcol *ColTitle, menu *Menu,
 		      hwcol ColText, uldat CursorType, uldat Attrib, byte Flags,
-		      udat XWidth, udat YWidth, udat ScrollBackLines);
-    window *(*Copy)(window *From, window *To);
-    void (*Insert)(window *, screen *, window *Prev, window *Next);
+		      dat XWidth, dat YWidth, dat ScrollBackLines);
+    void (*Insert)(window *, widget *Parent, widget *Prev, widget *Next);
     void (*Remove)(window *);
     void (*Delete)(window *);
-    byte (*FindBorder)(window *, udat u, udat v, byte Border, byte *PtrChar, byte *PtrColor);
+    void (*DrawSelf)(draw_ctx *D);
+    widget *(*SearchWidget)(window *Parent, dat X, dat Y);
+    byte (*FindBorder)(window *, dat u, dat v, byte Border, byte *PtrChar, byte *PtrColor);
     void (*SetColText)(window *, hwcol ColText);
     void (*SetColors)(window *, udat Bitmap,
 		      hwcol ColGadgets, hwcol ColArrows, hwcol ColBars, hwcol ColTabs, hwcol ColBorder,
 		      hwcol ColText, hwcol ColSelect, hwcol ColDisabled, hwcol ColSelectDisabled);
-    void (*Configure)(window *, byte Bitmap, dat Left, udat Up, udat MinXWidth, udat MinYWidth,
-		      udat MaxXWidth, udat MaxYWidth);
-    void (*GotoXY)(window *, uldat X, uldat Y);
+    void (*Configure)(window *, byte Bitmap, dat Left, dat Up, dat MinXWidth, dat MinYWidth,
+		      dat MaxXWidth, dat MaxYWidth);
+    void (*GotoXY)(window *, ldat X, ldat Y);
     window *(*Create4Menu)(fn_window *, menu *);
-    void (*RealMap)(window *, screen *);
-    void (*Map)(window *, screen *);
+    void (*Map)(window *, void * /* (screen *) or (window *) */ );
+    void (*MapTopReal)(window *, screen *);
     void (*UnMap)(window *);
     void (*Own)(window *, menu *);
     void (*DisOwn)(window *);    
     window *(*Focus)(window *);
     window *(*KbdFocus)(window *);
-    void (*WriteAscii)(window *, uldat Len, CONST byte *Text);
-    void (*WriteHWAttr)(window *, udat x, udat y, uldat Len, CONST hwattr *Attr);
-    byte (*WriteRow)(window *, uldat Len, CONST byte *Text);
-    row *(*SearchRow)(window *, uldat RowN);
-    row *(*SearchRowCode)(window *, udat Code, uldat *NumRow);
-    gadget *(*SearchGadget)(window *, dat i, dat j);
+    void (*WriteAscii)(window *, ldat Len, CONST byte *Text);
+    void (*WriteHWAttr)(window *, dat x, dat y, ldat Len, CONST hwattr *Attr);
+    byte (*WriteRow)(window *, ldat Len, CONST byte *Text);
+    row *(*SearchRow)(window *, ldat RowN);
+    row *(*SearchRowCode)(window *, udat Code, ldat *NumRow);
     gadget *(*SearchGadgetCode)(window *, udat Code);
     byte (*InstallHook)(window *, fn_hook, fn_hook *Where);
     void (*RemoveHook)(window *, fn_hook, fn_hook *Where);
@@ -545,7 +534,7 @@ struct fn_window {
 #define WINDOW_X_BAR		((uldat)0x0100)
 #define WINDOW_Y_BAR		((uldat)0x0200)
 
-/* #define WINDOW_UNUSED	((uldat)0x0400) */
+#define WINDOW_BORDERLESS	((uldat)0x0400)
 
 /* this must fit in `udat' since it is shared with gadget.Flags */
 #define GADGET_PRESSED		((uldat)0x0800)
@@ -567,7 +556,7 @@ struct fn_window {
 
 #define BUTTON_FIRST_SELECT	((uldat)0x00400000lu)
 #define BUTTON_LAST_SELECT	((uldat)0x80000000lu)
-#define BUTTON_ANY_SELECT	((uldat)0xFFE00000lu)
+#define BUTTON_ANY_SELECT	((uldat)0xFFC00000lu)
 
 /*#define BUTTON_FIRST		((byte)0) */
 /*#define BUTTON_CLOSE		((byte)0) */
@@ -579,7 +568,7 @@ struct fn_window {
 
 
 /* Window->Flags */
-/* #define WINFL_USEROWS	((byte)0x00) it's the default */
+/* #define WINFL_USEROWS	((byte)0x00) *//* it's the default */
 #define WINFL_USECONTENTS	((byte)0x01)
 #define WINFL_BYUSER		((byte)0x02)
 #define WINFL_USEANY		((byte)0x03)
@@ -607,19 +596,18 @@ struct menuitem {
     menu *Menu;
     window *Window;
     byte FlagActive;
-    udat Left, Len, ShortCut;
+    dat Left, Len, ShortCut;
     byte *Name;
 };
 struct fn_menuitem {
     uldat Magic, Size, Used;
     menuitem *(*Create)(fn_menuitem *, menu *Menu, window *Window, byte FlagActive,
-			udat Left, udat Len, udat ShortCut, CONST byte *Name);
-    menuitem *(*Copy)(menuitem *From, menuitem *To);
+			dat Left, dat Len, dat ShortCut, CONST byte *Name);
     void (*Insert)(menuitem *, menu *, menuitem *Prev, menuitem *Next);
     void (*Remove)(menuitem *);
     void (*Delete)(menuitem *);
     menuitem *(*Create4Menu)(fn_menuitem *, menu *, window *, byte FlagActive,
-			     udat Len, CONST byte *Name);
+			     dat Len, CONST byte *Name);
     uldat (*Create4MenuCommon)(fn_menuitem *, menu *);
     /* for compatibility this must return an (uldat) != 0 for success. yuch */
 };
@@ -640,11 +628,10 @@ struct fn_menu {
     uldat Magic, Size, Used;
     menu *(*Create)(fn_menu *, msgport *MsgPort, hwcol ColItem, hwcol ColSelect, hwcol ColDisabled,
 		    hwcol ColSelectDisabled, hwcol ColShtCut, hwcol ColSelShtCut, byte FlagDefColInfo);
-    menu *(*Copy)(menu *From, menu *To);
     void (*Insert)(menu *, msgport *, menu *Prev, menu *Next);
     void (*Remove)(menu *);
     void (*Delete)(menu *);
-    row *(*SetInfo)(menu *, byte Flags, uldat Len, CONST byte *Text, CONST hwcol *ColText);
+    row *(*SetInfo)(menu *, byte Flags, ldat Len, CONST byte *Text, CONST hwcol *ColText);
     menuitem *(*SearchItem)(menu *, dat i);
     menuitem *(*GetSelectItem)(menu *);
     void (*SetSelectItem)(menu *, menuitem *);
@@ -655,31 +642,36 @@ struct fn_menu {
 struct screen {
     uldat Id;
     fn_screen *Fn;
-    screen *Prev, *Next;
-    all *All;
-    udat LenTitle;
+    screen *Prev, *Next;/* list in the same all */
+    widget *dummyParent;/* NULL */
+    widget *FirstW, *LastW; /* list of children */
+    widget *SelectW;	    /* selected child */
+    dat dummyLeft, YLimit;
+    dat dummyWidth, dummyHeight;
+    ldat XLogic, YLogic;
+    
+    dat LenTitle;
     byte *Title;
-    dat ScreenWidth, ScreenHeight;
-    window *FirstWindow, *LastWindow, *FocusWindow, *MenuWindow;
+    window *FocusWindow, *MenuWindow, *ClickWindow;
     fn_hook FnHookWindow; window *HookWindow;
     udat Attrib;
-    dat Left; udat Up; udat YLimit;
-    udat BgWidth, BgHeight;
+    dat BgWidth, BgHeight;
     hwattr *Bg;
+    all *All;
 };
 struct fn_screen {
     uldat Magic, Size, Used;
-    screen *(*Create)(fn_screen *, udat LenTitle, CONST byte *Title,
-		      udat BgWidth, udat BgHeight, CONST hwattr *Bg);
-    screen *(*Copy)(screen *From, screen *To);
+    screen *(*Create)(fn_screen *, dat LenTitle, CONST byte *Title,
+		      dat BgWidth, dat BgHeight, CONST hwattr *Bg);
     void (*Insert)(screen *, all *, screen *Prev, screen *Next);
     void (*Remove)(screen *);
     void (*Delete)(screen *);
-    window *(*SearchWindow)(screen *, dat i, dat j);
+    void (*DrawSelf)(draw_ctx *D);
+    widget *(*SearchWidget)(screen *Parent, dat X, dat Y);
     menu *(*SearchMenu)(screen *);
     screen *(*Search)(dat j);
-    screen *(*CreateSimple)(fn_screen *, udat LenTitle, CONST byte *Title, hwattr Bg);
-    void (*BgImage)(screen *, udat BgWidth, udat BgHeight, CONST hwattr *Bg);
+    screen *(*CreateSimple)(fn_screen *, dat LenTitle, CONST byte *Title, hwattr Bg);
+    void (*BgImage)(screen *, dat BgWidth, dat BgHeight, CONST hwattr *Bg);
     void (*Focus)(screen *);
     void (*DrawMenu)(screen *, dat Xstart, dat Xend);
     void (*ActivateMenu)(screen *, menuitem *, byte byMouse);
@@ -893,7 +885,6 @@ struct msg {
 struct fn_msg {
     uldat Magic, Size, Used;
     msg *(*Create)(fn_msg *, udat Type, udat EventLen);
-    msg *(*Copy)(msg *From, msg *To);
     void (*Insert)(msg *, msgport *, msg *Prev, msg *Next);
     void (*Remove)(msg *);
     void (*Delete)(msg *);
@@ -922,7 +913,6 @@ struct fn_msgport {
     msgport *(*Create)(fn_msgport *, byte NameLen, CONST byte *ProgramName,
 		       time_t PauseSec, frac_t PauseFraction,
 		       byte WakeUp, void (*Handler)(msgport *));
-    msgport *(*Copy)(msgport *From, msgport *To);
     void (*Insert)(msgport *, all *, msgport *Prev, msgport *Next);
     void (*Remove)(msgport *);
     void (*Delete)(msgport *);
@@ -936,14 +926,13 @@ struct mutex {
     fn_mutex *Fn;
     mutex *Prev, *Next; /* in the same All */
     all *All;
-    mutex *OPrev, *ONext; /* with the same MsgPort */
+    mutex *OPrev, *ONext; /* owned by the same MsgPort */
     msgport *MsgPort;
     byte Perm, NameLen, *Name;
 };
 struct fn_mutex {
     uldat Magic, Size, Used;
     mutex *(*Create)(fn_mutex *, msgport *MsgPort, byte NameLen, CONST byte *Name, byte Perm);
-    mutex *(*Copy)(mutex *From, mutex *To);
     void (*Insert)(mutex *, all *, mutex *Prev, mutex *Next);
     void (*Remove)(mutex *);
     void (*Delete)(mutex *);
@@ -969,7 +958,6 @@ struct module {
 struct fn_module {
     uldat Magic, Size, Used;
     module *(*Create)(fn_module *, uldat NameLen, CONST byte *Name);
-    module *(*Copy)(module *From, module *To);
     void (*Insert)(module *, all *, module *Prev, module *Next);
     void (*Remove)(module *);
     void (*Delete)(module *);
@@ -1002,13 +990,13 @@ struct display_hw {
     void (*UpdateMouseAndCursor)(void);
 
     /* just detect size */
-    void (*DetectSize)(udat *x, udat *y);
+    void (*DetectSize)(dat *x, dat *y);
 
     /* check if size (x,y) is possible. if not, decrease (x,y) to the nearest possible size */
-    void (*CheckResize)(udat *x, udat *y);
+    void (*CheckResize)(dat *x, dat *y);
     
     /* unconditionally resize to (x,y). it is guaranteed that CheckResize returned this (x,y) */
-    void (*Resize)(udat x, udat y);
+    void (*Resize)(dat x, dat y);
     
     byte (*HWSelectionImport)(void);
     void (*HWSelectionExport)(void);
@@ -1079,7 +1067,7 @@ struct display_hw {
      * set to TRUE if the display was corrupted by some external event
      * example: hw_X11.c sets this when its window gets Expose events
      */
-    udat RedrawLeft, RedrawUp, RedrawRight, RedrawDown;
+    dat RedrawLeft, RedrawUp, RedrawRight, RedrawDown;
     /*
      * the corrupted area that needs to be redrawn.
      * 
@@ -1092,12 +1080,12 @@ struct display_hw {
 
     mouse_state MouseState;
 
-    udat X, Y;
+    dat X, Y;
     /*
      * real display size, in character cells.
      */
     
-    udat usedX, usedY;
+    dat usedX, usedY;
     /*
      * used display size (i.e. ScreenWidth, ScreenHeight)
      */
@@ -1121,14 +1109,13 @@ struct display_hw {
     
     uldat AttachSlot; /* slot of client that told us to attach to this display */
     
-    udat XY[2]; /* hw-dependent cursor position */
+    dat XY[2];  /* hw-dependent cursor position */
     uldat TT;   /* hw-dependent cursor type */
     
 };
 struct fn_display_hw {
     uldat Magic, Size, Used;
     display_hw *(*Create)(fn_display_hw *, uldat NameLen, CONST byte *Name);
-    display_hw *(*Copy)(display_hw *From, display_hw *To);
     void (*Insert)(display_hw *, all *, display_hw *Prev, display_hw *Next);
     void (*Remove)(display_hw *);
     void (*Delete)(display_hw *);
@@ -1165,10 +1152,11 @@ struct fn_display_hw {
 #define magic_mask	((uldat)0xF0000000ul)
 #define magic_shift	28
 
-#define obj_magic	((uldat)0x1dead0b1ul)
-#define area_magic	((uldat)0x2feed976ul)
-#define area_win_magic	((uldat)0x3a5ea507ul)
-#define row_magic	((uldat)0x48074ffaul)
+#define obj_magic	((uldat)0x0dead0b1ul)
+#define widget_magic	((uldat)0x161d9743ul)
+#define row_magic	((uldat)0x28074ffaul)
+#define module_magic	((uldat)0x3b0f1278ul)
+#define display_hw_magic ((uldat)0x4dbcc609ul)
 #define gadget_magic	((uldat)0x59867551ul)
 #define window_magic	((uldat)0x61357531ul)
 #define menuitem_magic	((uldat)0x7abc8fdeul)
@@ -1177,16 +1165,26 @@ struct fn_display_hw {
 #define msg_magic	((uldat)0xA3a61ce4ul)
 #define msgport_magic	((uldat)0xB0981437ul)
 #define mutex_magic	((uldat)0xC0faded0ul)
-#define module_magic	((uldat)0xDb0f1278ul)
-#define display_hw_magic	((uldat)0xEdbcc609ul)
 
-#define magic_n		15 /* # of the above ones + 1 */
+
+#define magic_n		13 /* max top hex digit of the above ones + 1 */
+
+#define IS_OBJ(type,O)	(((O)->Id & magic_mask) == (type##_magic & magic_mask))
+#define IS_ROW(O)	IS_OBJ(row,O)
+#define IS_GADGET(O)	IS_OBJ(gadget,O)
+#define IS_WINDOW(O)	IS_OBJ(window,O)
+#define IS_MENUITEM(O)	IS_OBJ(menuitem,O)
+#define IS_MENU(O)	IS_OBJ(menu,O)
+#define IS_SCREEN(O)	IS_OBJ(screen,O)
+#define IS_MSG(O)	IS_OBJ(msg,O)
+#define IS_MSGPORT(O)	IS_OBJ(msgport,O)
+#define IS_MUTEX(O)	IS_OBJ(mutex,O)
+#define IS_MODULE(O)	IS_OBJ(module,O)
+#define IS_DISPLAY_HW(O) IS_OBJ(display_hw,O)
 
 /* in the same order as the #defines above ! */
 struct fn {
     fn_obj *f_obj;
-    fn_area *f_area;
-    fn_area_win *f_area_win;
     fn_row *f_row;
     fn_gadget *f_gadget;
     fn_window *f_window;
@@ -1243,7 +1241,6 @@ struct setup {
 
 /* furher All->State flags */
 #define STATE_FL_BYMOUSE	((byte)0x40)
-#define STATE_FL_FREEZE		((byte)0x80)
 
 
 /* values returned by FnWindow->FindBorder (modeled after STATE_*) */
@@ -1289,6 +1286,7 @@ struct all {
     fn_hook FnHookModule; window *HookModule;
     display_hw *FirstDisplayHW, *LastDisplayHW, *MouseHW, *ExclusiveHW;
     fn_hook FnHookDisplayHW; window *HookDisplayHW;
+    dat DisplayWidth, DisplayHeight;
     byte State;
     timevalue Now;
     selection *Selection;
@@ -1297,33 +1295,19 @@ struct all {
 
     menu *BuiltinMenu, *CommonMenu;
     
-    button_vec ButtonVec[BUTTON_MAX];
+    button_vec ButtonVec[BUTTON_MAX + 1]; /* +1 for window corner */
     
     byte *Gtranslations[IBMPC_MAP];
 };
 
 
-/*
- La struttura di GlobalKeyCodes[i] e GlobalMouseCodes[i]
- (un puntatore ciascuno per ogni stato di movimento)
- e' esattamente la stessa presente
- nel campo KeyCodes di menu.
- */
-
 /************** Keys **************/
 
-#define NUM_LOCK	(byte)0x1
-#define CAPS_LOCK	(byte)0x2
-#define RIGHT_SHIFT	(byte)0x4
-#define LEFT_SHIFT	(byte)0x8
-
-#define RIGHT_CTRL	(byte)0xC
-#define	LEFT_CTRL	(byte)0xD
-
-#define RIGHT_ALT	(byte)0xE
-#define LEFT_ALT	(byte)0xF
-
-#define MAX_SHIFT_FLAG	(byte)0x10
+#define KBD_SHIFT_FL	(byte)0x1
+#define KBD_CTRL_FL	(byte)0x2
+#define KBD_ALT_FL	(byte)0x4
+#define KBD_CAPS_LOCK	(byte)0x8
+#define KBD_NUM_LOCK	(byte)0x10
 
 
 #define ENTER      	((udat)'\r')
@@ -1404,7 +1388,7 @@ struct all {
 
 #ifdef DEBUG_MALLOC
   /*
-   * with the current (0.3.5) MkDep, DEBUG_MALLOC gets defined only if doing
+   * with the current MkDep, DEBUG_MALLOC gets defined only if doing
    * `make DEBUG_MALLOC=1 ...' and the C file that includes twin.h actually
    * checks for DEBUG_MALLOC. Anyway, this is acceptable :-)
    */

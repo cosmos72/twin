@@ -1,7 +1,7 @@
 /*
  *  display.c  -- connect to a running twin and register as a display
  *
- *  Copyright (C) 2000 by Massimiliano Ghilardi
+ *  Copyright (C) 2000-2001 by Massimiliano Ghilardi
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -39,10 +39,6 @@
 # include "HW/hw_X11.h"
 #endif
 
-#ifdef CONF_HW_DISPLAY
-# include "HW/hw_display.h"
-#endif
-
 #ifdef CONF_HW_TWIN
 # include "HW/hw_twin.h"
 #endif
@@ -60,8 +56,8 @@
 
 #ifdef CONF__MODULES
 
-# ifdef CONF_DESTDIR
-#  define DIR_LIB_TWIN_MODULES_ CONF_DESTDIR "/lib/twin/modules/"
+# ifdef DESTDIR
+#  define DIR_LIB_TWIN_MODULES_ DESTDIR "/lib/twin/modules/"
 # else
 #  define DIR_LIB_TWIN_MODULES_ "./"
 # endif
@@ -76,8 +72,7 @@ static CONST byte *ErrStr;
 
 static CONST byte *MYname;
 
-static udat TryScreenWidth, TryScreenHeight;
-static udat savedScreenWidth, savedScreenHeight;
+static dat TryDisplayWidth, TryDisplayHeight;
 static byte ValidVideo;
 
 CONST byte *TWDisplay, *origTWDisplay, *origTERM;
@@ -249,7 +244,6 @@ static void RemoteEvent(int FdCount, fd_set *FdSet) {
 static fn_module _FnModule = {
     module_magic, (uldat)sizeof(module), (uldat)1,
 	(void *)NoOp, /* CreateModule */
-	(void *)NoOp, /* CopyModule   */
 	(void *)NoOp, /* InsertModule */
 	(void *)NoOp, /* RemoveModule */
 	(void *)NoOp, /* DeleteModule */
@@ -345,7 +339,6 @@ static void QuitDisplayHW(display_hw *);
 static fn_display_hw _FnDisplayHW = {
     display_hw_magic, (uldat)sizeof(display_hw), (uldat)1,
 	(void *)NoOp, /* CreateDisplayHW */
-	(void *)NoOp, /* CopyDisplayHW   */
 	(void *)NoOp, /* InsertDisplayHW */
 	(void *)NoOp, /* RemoveDisplayHW */
 	(void *)NoOp, /* DeleteDisplayHW */
@@ -358,7 +351,7 @@ static display_hw _HW = {
 	&_FnDisplayHW,
 };
 
-#if defined(CONF_HW_X11) || defined(CONF_HW_TWIN) || defined(CONF_HW_DISPLAY) || defined(CONF_HW_TTY) || defined(CONF_HW_GGI)
+#if defined(CONF_HW_X11) || defined(CONF_HW_TWIN) || defined(CONF_HW_TTY) || defined(CONF_HW_GGI)
 static byte check4(byte *s, byte *arg) {
     if (arg && strncmp(s, arg, strlen(s))) {
 	fprintf(stderr, "twdisplay: `-hw=%s' given, skipping `-hw=%s' display driver.\n",
@@ -383,7 +376,7 @@ static void fix4(byte *s, display_hw *D_HW) {
 	}
     }
 }
-#endif /* defined(CONF_HW_X11) || defined(CONF_HW_TWIN) || defined(CONF_HW_DISPLAY) || defined(CONF_HW_TTY) || defined(CONF_HW_GGI) */
+#endif /* defined(CONF_HW_X11) || defined(CONF_HW_TWIN) || defined(CONF_HW_TTY) || defined(CONF_HW_GGI) */
 
 static void warn_NoHW(uldat len, char *arg, uldat tried) {
 #ifdef CONF__MODULES
@@ -438,9 +431,7 @@ static byte InitDisplayHW(display_hw *D_HW) {
 #endif
 
 #if 0 /* cannot use `-hw=display' inside twdisplay! */
-# ifdef CONF_HW_DISPLAY
 	(check4("display", arg) && (tried++, display_InitHW()) && (fix4("display", D_HW), TRUE)) ||
-# endif
 #endif
 	
 #ifdef CONF_HW_TTY
@@ -461,7 +452,6 @@ static byte InitDisplayHW(display_hw *D_HW) {
 	UpdateFlagsHW();
     }
     
-    fflush(stderr);
     RestoreHW;
 
     return success;
@@ -498,7 +488,6 @@ static display_hw *AttachDisplayHW(uldat len, CONST byte *arg, uldat slot, byte 
     if ((len && len <= 4) || CmpMem("-hw=", arg, Min2(len,4))) {
 	fprintf(stderr, "twdisplay: specified `%.*s\' is not `-hw=<display>\'\n",
 		(int)len, arg);
-	fflush(stderr);
 	return (display_hw *)0;
     }
     
@@ -511,19 +500,21 @@ static display_hw *AttachDisplayHW(uldat len, CONST byte *arg, uldat slot, byte 
 }
 
 
+#if 0
+/* not needed, server-side hw_display already does optimization for us */
 INLINE void OptimizeChangedVideo(void) {
     uldat _start, start, _end, end;
     int i;
     
-    for (i=0; i<ScreenHeight*2; i++) {
+    for (i=0; i<DisplayHeight*2; i++) {
 	start = (uldat)ChangedVideo[i>>1][!(i&1)][0];
 	    
 	if (start != (uldat)-1) {
 	    
-	    start += (i>>1) * ScreenWidth;
+	    start += (i>>1) * DisplayWidth;
 	    _start = start;
 
-	    _end = end = (uldat)ChangedVideo[i>>1][!(i&1)][1] + (i>>1) * ScreenWidth;
+	    _end = end = (uldat)ChangedVideo[i>>1][!(i&1)][1] + (i>>1) * DisplayWidth;
 		
 	    while (start <= end && Video[start] == OldVideo[start])
 		start++;
@@ -552,18 +543,21 @@ INLINE void OptimizeChangedVideo(void) {
 	}
     }
 }
+#else
+# define OptimizeChangedVideo() do { } while(0)
+#endif
 
 INLINE void SyncOldVideo(void) {
     uldat start, len;
     int i;
 
     if (ChangedVideoFlag) {
-	for (i=0; i<ScreenHeight*2; i++) {
+	for (i=0; i<DisplayHeight*2; i++) {
 	    start = ChangedVideo[i>>1][i&1][0];
 	    
 	    if (start != -1) {
 		len = ChangedVideo[i>>1][i&1][1] + 1 - start;
-		start += (i>>1)*ScreenWidth;
+		start += (i>>1)*DisplayWidth;
 		
 		ChangedVideo[i>>1][i&1][0] = -1;
 	    
@@ -583,7 +577,7 @@ void FlushHW(void) {
 	ValidOldVideo = FALSE;
     } else if (NeedOldVideo && ValidOldVideo)
 	OptimizeChangedVideo();
-
+    
     HW->FlushVideo();
     
     HW->RedrawVideo = FALSE;
@@ -604,13 +598,13 @@ void FlushHW(void) {
 void ResizeDisplayPrefer(display_hw *D_HW) {
     SaveHW;
     SetHW(D_HW);
-    D_HW->DetectSize(&TryScreenWidth, &TryScreenHeight);
+    D_HW->DetectSize(&TryDisplayWidth, &TryDisplayHeight);
     NeedHW |= NEEDResizeDisplay;
     RestoreHW;
 }
 
-static byte ReAllocVideo(udat Width, udat Height) {
-    byte change = ScreenWidth != Width || ScreenHeight != Height;
+static byte ReAllocVideo(dat Width, dat Height) {
+    byte change = DisplayWidth != Width || DisplayHeight != Height;
     
     if (!NeedOldVideo && OldVideo) {
 	FreeMem(OldVideo);
@@ -624,18 +618,18 @@ static byte ReAllocVideo(udat Width, udat Height) {
     }
     
     if (!Video || change) {
-	ScreenWidth = Width;
-	ScreenHeight = Height;
+	DisplayWidth = Width;
+	DisplayHeight = Height;
 	
-	if ((!(Video = (hwattr *)ReAllocMem(Video, ScreenWidth*ScreenHeight*sizeof(hwattr))) ||
-	     !(ChangedVideo = (dat (*)[2][2])ReAllocMem(ChangedVideo, ScreenHeight*sizeof(dat)*4))) &&
-	     ScreenWidth && ScreenHeight) {
+	if ((!(Video = (hwattr *)ReAllocMem(Video, DisplayWidth*DisplayHeight*sizeof(hwattr))) ||
+	     !(ChangedVideo = (dat (*)[2][2])ReAllocMem(ChangedVideo, DisplayHeight*sizeof(dat)*4))) &&
+	     DisplayWidth && DisplayHeight) {
 	    
 	    OutOfMemory();
 	    Quit(1);
 	}
 	ValidVideo = FALSE;
-	WriteMem(ChangedVideo, 0xff, ScreenHeight*sizeof(dat)*4);
+	WriteMem(ChangedVideo, 0xff, DisplayHeight*sizeof(dat)*4);
     
     }
     return change;
@@ -643,29 +637,29 @@ static byte ReAllocVideo(udat Width, udat Height) {
 
 
 /*
- * return TRUE if ScreenWidth or ScreenHeight were changed
+ * return TRUE if DisplayWidth or DisplayHeight were changed
  */
 static byte ResizeDisplay(void) {
     byte change = FALSE;
     tmsg Tmsg;
     
-    if (!TryScreenWidth || !TryScreenHeight)
-	HW->DetectSize(&TryScreenWidth, &TryScreenHeight);
+    if (!TryDisplayWidth || !TryDisplayHeight)
+	HW->DetectSize(&TryDisplayWidth, &TryDisplayHeight);
     
-    HW->CheckResize(&TryScreenWidth, &TryScreenHeight);
-    HW->Resize(TryScreenWidth, TryScreenHeight);
+    HW->CheckResize(&TryDisplayWidth, &TryDisplayHeight);
+    HW->Resize(TryDisplayWidth, TryDisplayHeight);
 
-    change = ReAllocVideo(TryScreenWidth, TryScreenHeight);
+    change = ReAllocVideo(TryDisplayWidth, TryDisplayHeight);
     
     NeedHW &= ~NEEDResizeDisplay;
 
-    TryScreenWidth = TryScreenHeight = 0;
+    TryDisplayWidth = TryDisplayHeight = 0;
     
     if (change && (Tmsg = TwCreateMsg(TW_MSG_DISPLAY, sizeof(struct tevent_display)))) {
 	Tmsg->Event.EventDisplay.Code = TW_DPY_Resize;
 	Tmsg->Event.EventDisplay.Len  = 0;
-	Tmsg->Event.EventDisplay.X    = ScreenWidth;
-	Tmsg->Event.EventDisplay.Y    = ScreenHeight;
+	Tmsg->Event.EventDisplay.X    = DisplayWidth;
+	Tmsg->Event.EventDisplay.Y    = DisplayHeight;
 	TwBlindSendMsg(THelper, Tmsg);
     }
     return change;
@@ -737,20 +731,20 @@ static void HandleMsg(tmsg Msg) {
 	switch (EventD->Code) {
 	  case TW_DPY_DrawHWAttr:
 	    if (EventD->Len /= sizeof(hwattr)) {
-		if (EventD->X + EventD->Len > ScreenWidth || EventD->Y >= ScreenHeight) {
+		if (EventD->X + EventD->Len > DisplayWidth || EventD->Y >= DisplayHeight) {
 		    /*
 		     * in a perfect world this should not happen, 
 		     * but with our asyncronous display size negotiation,
 		     * it actually can.
 		     */
 
-		    if (EventD->Y < ScreenHeight && EventD->X < ScreenWidth)
-			EventD->Len = ScreenWidth - EventD->X;
+		    if (EventD->Y < DisplayHeight && EventD->X < DisplayWidth)
+			EventD->Len = DisplayWidth - EventD->X;
 		    else
 			break;
 		}
 		DirtyVideo(EventD->X, EventD->Y, EventD->X + EventD->Len - 1, EventD->Y);
-		CopyMem(EventD->Data, &Video[EventD->X + EventD->Y * ScreenWidth], EventD->Len * sizeof(hwattr));
+		CopyMem(EventD->Data, &Video[EventD->X + EventD->Y * DisplayWidth], EventD->Len * sizeof(hwattr));
 	    }
 	    break;
 	  case TW_DPY_FlushHW:
@@ -770,7 +764,7 @@ static void HandleMsg(tmsg Msg) {
 	     * don't detect/check anything, just apply it
 	     * (if it is meaningful and different from current)
 	     */
-	    if (EventD->X != ScreenWidth || EventD->Y != ScreenHeight) {
+	    if (EventD->X != DisplayWidth || EventD->Y != DisplayHeight) {
 		HW->Resize(EventD->X, EventD->Y);
 		ReAllocVideo(EventD->X, EventD->Y);
 	    }
@@ -788,7 +782,7 @@ static void HandleMsg(tmsg Msg) {
 	    HW->Beep();
 	    break;
 	  case TW_DPY_Configure:
-	    HW->Configure(EventD->X, (udat)EventD->Y == MAXUDAT, EventD->Y);
+	    HW->Configure(EventD->X, EventD->Y == -1, EventD->Y);
 	    break;
 	  case TW_DPY_SetPalette:
 #define c ((udat *)EventD->Data)
@@ -899,11 +893,11 @@ byte MouseEventCommon(dat x, dat y, dat dx, dat dy, udat Buttons) {
     prev_x = OldState->x;
     prev_y = OldState->y;
 
-    x = Max2(x, 0); x = Min2(x, ScreenWidth - 1);
-    OldState->delta_x = x == 0 ? Min2(dx, 0) : x == ScreenWidth - 1 ? Max2(dx, 0) : 0;
+    x = Max2(x, 0); x = Min2(x, DisplayWidth - 1);
+    OldState->delta_x = x == 0 ? Min2(dx, 0) : x == DisplayWidth - 1 ? Max2(dx, 0) : 0;
 
-    y = Max2(y, 0); y = Min2(y, ScreenHeight - 1);
-    OldState->delta_y = y == 0 ? Min2(dy, 0) : y == ScreenHeight - 1 ? Max2(dy, 0) : 0;
+    y = Max2(y, 0); y = Min2(y, DisplayHeight - 1);
+    OldState->delta_y = y == 0 ? Min2(dy, 0) : y == DisplayHeight - 1 ? Max2(dy, 0) : 0;
 	
     if (x != prev_x || y != prev_y)
 	HW->FlagsHW |= FlHWChangedMouseFlag;
@@ -941,7 +935,7 @@ byte MouseEventCommon(dat x, dat y, dat dx, dat dy, udat Buttons) {
     return ret;
 }
 
-byte KeyboardEventCommon(udat Code, udat Len, CONST byte *Seq) {
+byte KeyboardEventCommon(udat Code, udat ShiftFlags, udat Len, CONST byte *Seq) {
     tevent_keyboard Event;
     tmsg Msg;
 
@@ -952,7 +946,7 @@ byte KeyboardEventCommon(udat Code, udat Len, CONST byte *Seq) {
 	Event = &Msg->Event.EventKeyboard;
 	    
 	Event->Code = Code;
-	Event->ShiftFlags = (udat)0;
+	Event->ShiftFlags = ShiftFlags;
 	Event->SeqLen = Len;
 	CopyMem(Seq, Event->AsciiSeq, Len);
 	Event->AsciiSeq[Len] = '\0'; /* terminate string with \0 */
@@ -1053,11 +1047,11 @@ static void MainLoop(int Fd) {
     exit(1);    
 }
 
-udat GetDisplayWidth(void) {
-    return savedScreenWidth;
+dat GetDisplayWidth(void) {
+    return DisplayWidth;
 }
-udat GetDisplayHeight(void) {
-    return savedScreenHeight;
+dat GetDisplayHeight(void) {
+    return DisplayHeight;
 }
 
 
@@ -1225,11 +1219,11 @@ int main(int argc, char *argv[]) {
 	    return 1;
 	}
 	    
-	if (!(TMsgPort = TwCreateMsgPort(9, "twdisplay", (uldat)0, (udat)0, (byte)0)))
+	if (!(TMsgPort = TwCreateMsgPort(9, "twdisplay", 0, 0, 0)))
 	    break;
 
-	savedScreenWidth = TryScreenWidth = TwGetDisplayWidth();
-	savedScreenHeight = TryScreenHeight = TwGetDisplayHeight();
+	DisplayWidth = TryDisplayWidth = TwGetDisplayWidth();
+	DisplayHeight = TryDisplayHeight = TwGetDisplayHeight();
 
 	if (!(HW = AttachDisplayHW(strlen(arg), arg, NOSLOT, 0))) {
 	    TwClose();

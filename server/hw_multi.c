@@ -2,7 +2,7 @@
  *  hw_multi.c  --  functions to use multiple
  *                  simultaneous HW/hw_* displays
  *
- *  Copyright (C) 2000 by Massimiliano Ghilardi
+ *  Copyright (C) 2000-2001 by Massimiliano Ghilardi
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -85,8 +85,8 @@
 
 static dat (*saveChangedVideo)[2][2];
 
-static udat savedScreenWidth = 100, savedScreenHeight = 30;
-static udat TryScreenWidth, TryScreenHeight;
+static dat savedDisplayWidth = 100, savedDisplayHeight = 30;
+static dat TryDisplayWidth, TryDisplayHeight;
 
 static dat AccelVideo[4] = { MAXDAT, MAXDAT, MINDAT, MINDAT };
 byte   StrategyFlag;
@@ -98,12 +98,12 @@ frac_t StrategyDelay = (frac_t)0;
 
 udat GetDisplayWidth(void) {
     return All->FirstDisplayHW && !All->FirstDisplayHW->Quitted
-	? ScreenWidth : savedScreenWidth;
+	? DisplayWidth : savedDisplayWidth;
 }
 
 udat GetDisplayHeight(void) {
     return All->FirstDisplayHW && !All->FirstDisplayHW->Quitted
-	? ScreenHeight : savedScreenHeight;
+	? DisplayHeight : savedDisplayHeight;
 }
 
 void UpdateFlagsHW(void) {
@@ -120,9 +120,9 @@ void UpdateFlagsHW(void) {
 }
 
 void RunNoHW(void) {
-    if (ScreenWidth && ScreenHeight) {
-	savedScreenWidth  = ScreenWidth;
-	savedScreenHeight = ScreenHeight;
+    if (DisplayWidth && DisplayHeight) {
+	savedDisplayWidth  = DisplayWidth;
+	savedDisplayHeight = DisplayHeight;
     }
     ResizeDisplay();
 
@@ -295,7 +295,6 @@ byte InitDisplayHW(display_hw *D_HW) {
 	UpdateFlagsHW(); /* this garbles HW... not a problem here */
     }
     
-    fflush(stderr);
     RestoreHW;
 
     return success;
@@ -338,7 +337,6 @@ display_hw *AttachDisplayHW(uldat len, CONST byte *arg, uldat slot, byte flags) 
 	fprintf(stderr, "twin: specified `%.*s\' is not a known option.\n"
 		"      try `twin -help' for usage summary.\n",
 		(int)len, arg);
-	fflush(stderr);
 	return NULL;
     }
     
@@ -364,7 +362,7 @@ display_hw *AttachDisplayHW(uldat len, CONST byte *arg, uldat slot, byte flags) 
 	    }
 
 	    if (ResizeDisplay()) {
-		DrawArea(FULL_SCREEN);
+		DrawArea2(FULL_SCREEN);
 		UpdateCursor();
 	    }
 	    return D_HW;
@@ -450,18 +448,16 @@ byte RestartHW(byte verbose) {
 	}
 	if (ret) {
 	    ResizeDisplay();
-	    DrawArea(FULL_SCREEN);
+	    DrawArea2(FULL_SCREEN);
 	    UpdateCursor();
 	} else {
 	    fputs("\ntwin:   \033[1mALL  DISPLAY  DRIVERS  FAILED.\033[0m\n"
 		  "\ntwin: continuing in background with no display.\n", stderr);
-	    fflush(stderr);
 	    RunNoHW();
 	}
     } else if (verbose) {
 	fputs("twin: RestartHW(): All display drivers removed by SuspendHW().\n"
 	      "      No display available for restarting, use twattach or twdisplay.\n", stderr);
-	fflush(stderr);
     }
     return ret;
 }
@@ -479,7 +475,6 @@ void SuspendHW(byte verbose) {
 	fputs("twin: SuspendHW(): All display drivers had to be removed\n"
 	      "      since they were attached to clients (twattach/twdisplay).\n"
 	      "twin: --- STOPPED ---\n", stderr);
-	fflush(stderr);
     }
 }
 
@@ -498,66 +493,65 @@ void PanicHW(void) {
 void ResizeDisplayPrefer(display_hw *D_HW) {
     SaveHW;
     SetHW(D_HW);
-    D_HW->DetectSize(&TryScreenWidth, &TryScreenHeight);
+    D_HW->DetectSize(&TryDisplayWidth, &TryDisplayHeight);
     NeedHW |= NEEDResizeDisplay;
     RestoreHW;
 }
 
 /*
- * return TRUE if ScreenWidth or ScreenHeight were changed
+ * return TRUE if DisplayWidth or DisplayHeight were changed
  */
 byte ResizeDisplay(void) {
-    screen *fScreen;
     udat Width, Height;
     byte change = FALSE;
     
     if (All->FirstDisplayHW) {
 	
-	if (!TryScreenWidth || !TryScreenHeight) {
+	if (!TryDisplayWidth || !TryDisplayHeight) {
 	    /*
 	     * we are trying to come up with a fair display size
 	     * and have all HW agree on it.
 	     */
-	    TryScreenWidth = TryScreenHeight = MAXUDAT;
+	    TryDisplayWidth = TryDisplayHeight = MAXDAT;
 	    forHW {
 		if (!HW->Quitted) {
 		    HW->DetectSize(&Width, &Height);
-		    if (TryScreenWidth  > Width)  TryScreenWidth  = Width;
-		    if (TryScreenHeight > Height) TryScreenHeight = Height;
+		    if (TryDisplayWidth  > Width)  TryDisplayWidth  = Width;
+		    if (TryDisplayHeight > Height) TryDisplayHeight = Height;
 		}
 	    }
 	}
 	
 	/* now let's check how much we can resize all HW displays... */
 	do {
-	    Width = TryScreenWidth;
-	    Height = TryScreenHeight;
+	    Width = TryDisplayWidth;
+	    Height = TryDisplayHeight;
 	    forHW {
 		if (!HW->Quitted)
-		    HW->CheckResize(&TryScreenWidth, &TryScreenHeight);
+		    HW->CheckResize(&TryDisplayWidth, &TryDisplayHeight);
 	    }
-	} while (TryScreenWidth < Width || TryScreenHeight < Height);
+	} while (TryDisplayWidth < Width || TryDisplayHeight < Height);
 	 
-	if (!TryScreenWidth || TryScreenWidth == MAXUDAT)
-	    TryScreenWidth = ScreenWidth;
-	if (!TryScreenHeight || TryScreenHeight == MAXUDAT)
-	    TryScreenHeight = ScreenHeight;
+	if (!TryDisplayWidth || TryDisplayWidth == MAXDAT)
+	    TryDisplayWidth = DisplayWidth;
+	if (!TryDisplayHeight || TryDisplayHeight == MAXDAT)
+	    TryDisplayHeight = DisplayHeight;
 	
 	/* size seems reasonable, apply it to all HW displays */
 	forHW {
 	    if (!HW->Quitted)
-		HW->Resize(TryScreenWidth, TryScreenHeight);
+		HW->Resize(TryDisplayWidth, TryDisplayHeight);
 	}
     } else
-	TryScreenWidth = TryScreenHeight = 1;
+	TryDisplayWidth = TryDisplayHeight = 1;
 
-    change = ScreenWidth != TryScreenWidth || ScreenHeight != TryScreenHeight;
+    change = DisplayWidth != TryDisplayWidth || DisplayHeight != TryDisplayHeight;
     
     if (!NeedOldVideo && OldVideo) {
 	FreeMem(OldVideo);
 	OldVideo = NULL;
     } else if ((NeedOldVideo && !OldVideo) || change) {
-	if (!(OldVideo = (hwattr *)ReAllocMem(OldVideo, TryScreenWidth*TryScreenHeight*sizeof(hwattr)))) {
+	if (!(OldVideo = (hwattr *)ReAllocMem(OldVideo, TryDisplayWidth*TryDisplayHeight*sizeof(hwattr)))) {
 	    fprintf(stderr, "twin: out of memory!\n");
 	    Quit(1);
 	}
@@ -565,26 +559,22 @@ byte ResizeDisplay(void) {
     }
     
     if (!Video || change) {
-	ScreenWidth = TryScreenWidth;
-	ScreenHeight = TryScreenHeight;
+	All->DisplayWidth  = DisplayWidth  = TryDisplayWidth;
+	All->DisplayHeight = DisplayHeight = TryDisplayHeight;
 	
-	if (!(Video = (hwattr *)ReAllocMem(Video, ScreenWidth*ScreenHeight*sizeof(hwattr))) ||
-	    !(ChangedVideo = (dat (*)[2][2])ReAllocMem(ChangedVideo, ScreenHeight*sizeof(dat)*4)) ||
-	    !(saveChangedVideo = (dat (*)[2][2])ReAllocMem(saveChangedVideo, ScreenHeight*sizeof(dat)*4))) {
+	if (!(Video = (hwattr *)ReAllocMem(Video, DisplayWidth*DisplayHeight*sizeof(hwattr))) ||
+	    !(ChangedVideo = (dat (*)[2][2])ReAllocMem(ChangedVideo, DisplayHeight*sizeof(dat)*4)) ||
+	    !(saveChangedVideo = (dat (*)[2][2])ReAllocMem(saveChangedVideo, DisplayHeight*sizeof(dat)*4))) {
 	    
 	    fprintf(stderr, "twin: out of memory!\n");
 	    Quit(1);
 	}
-	WriteMem(ChangedVideo, 0xff, ScreenHeight*sizeof(dat)*4);
+	WriteMem(ChangedVideo, 0xff, DisplayHeight*sizeof(dat)*4);
     
-	for (fScreen = All->FirstScreen; fScreen; fScreen = fScreen->Next) {
-	    fScreen->ScreenHeight = ScreenHeight;
-	    fScreen->ScreenWidth  = ScreenWidth;
-	}
     }
     NeedHW &= ~NEEDResizeDisplay;
 
-    TryScreenWidth = TryScreenHeight = 0;
+    TryDisplayWidth = TryDisplayHeight = 0;
     
     return change;
 }
@@ -674,7 +664,6 @@ void TwinSelectionNotify(obj *Requestor, uldat ReqPrivate, uldat Magic, CONST by
     event_any *Event;
 #if 0    
     fprintf(stderr, "twin: Selection Notify to 0x%08x\n", Requestor ? Requestor->Id : NOID);
-    fflush(stderr);
 #endif
     if (!Requestor) {
 	(void)SelectionStore(Magic, MIME, Len, Data);
@@ -709,7 +698,6 @@ void TwinSelectionRequest(obj *Requestor, uldat ReqPrivate, obj *Owner) {
 #if 0
     fprintf(stderr, "twin: Selection Request from 0x%08x, owner is 0x%08x\n",
 	    Requestor ? Requestor->Id : NOID, Owner ? Owner->Id : NOID);
-    fflush(stderr);
 #endif
     if (Owner) {
 	if (Owner->Id >> magic_shift == msgport_magic >> magic_shift) {
@@ -758,12 +746,12 @@ INLINE void DiscardBlinkVideo(void) {
     uldat start, len;
     hwattr *V;
     
-    for (i=0; i<ScreenHeight*2; i++) {
+    for (i=0; i<DisplayHeight*2; i++) {
 	start = (uldat)ChangedVideo[i>>1][i&1][0];
 
 	if (start != -1) {
 	    len = (uldat)ChangedVideo[i>>1][i&1][1] + 1 - start;
-	    start += (i>>1)*ScreenWidth;
+	    start += (i>>1)*DisplayWidth;
 
 	    for (V = &Video[start]; len; V++, len--)
 		*V &= ~HWATTR(COL(0,HIGH), (hwfont)0);
@@ -777,15 +765,15 @@ INLINE void OptimizeChangedVideo(void) {
 
     ChangedVideoFlag = FALSE;
     
-    for (i=0; i<ScreenHeight*2; i++) {
+    for (i=0; i<DisplayHeight*2; i++) {
 	start = (uldat)ChangedVideo[i>>1][!(i&1)][0];
 	    
 	if (start != (uldat)-1) {
 	    
-	    start += (i>>1) * ScreenWidth;
+	    start += (i>>1) * DisplayWidth;
 	    _start = start;
 
-	    _end = end = (uldat)ChangedVideo[i>>1][!(i&1)][1] + (i>>1) * ScreenWidth;
+	    _end = end = (uldat)ChangedVideo[i>>1][!(i&1)][1] + (i>>1) * DisplayWidth;
 		
 	    while (start <= end && Video[start] == OldVideo[start])
 		start++;
@@ -822,12 +810,12 @@ INLINE void SyncOldVideo(void) {
     uldat start, len;
     int i;
 	
-    for (i=0; i<ScreenHeight*2; i++) {
+    for (i=0; i<DisplayHeight*2; i++) {
 	start = ChangedVideo[i>>1][i&1][0];
 	
 	if (start != -1) {
 	    len = ChangedVideo[i>>1][i&1][1] + 1 - start;
-	    start += (i>>1)*ScreenWidth;
+	    start += (i>>1)*DisplayWidth;
 	    
 	    ChangedVideo[i>>1][i&1][0] = -1;
 	    
@@ -879,7 +867,7 @@ void FlushHW(void) {
 	if (mangled) {
 	    ValidOldVideo = saveValidOldVideo;
 	    ChangedVideoFlag = saveChangedVideoFlag;
-	    CopyMem(saveChangedVideo, ChangedVideo, ScreenHeight*sizeof(dat)*4);
+	    CopyMem(saveChangedVideo, ChangedVideo, DisplayHeight*sizeof(dat)*4);
 	    mangled = FALSE;
 	}
 	if (HW->RedrawVideo || ((HW->FlagsHW & FlHWSoftMouse) &&
@@ -887,7 +875,7 @@ void FlushHW(void) {
 	    if (!saved) {
 		saveValidOldVideo = ValidOldVideo;
 		saveChangedVideoFlag = ChangedVideoFlag;
-		CopyMem(ChangedVideo, saveChangedVideo, ScreenHeight*sizeof(dat)*4);
+		CopyMem(ChangedVideo, saveChangedVideo, DisplayHeight*sizeof(dat)*4);
 		saved = TRUE;
 	    }
 	    if (HW->RedrawVideo) {
@@ -918,7 +906,7 @@ void FlushHW(void) {
 }
 
 
-void SyntheticKey(window *Window, udat Code, byte Len, byte *Seq) {
+void SyntheticKey(window *Window, udat Code, udat ShiftFlags, byte Len, byte *Seq) {
     event_keyboard *Event;
     msg *Msg;
 
@@ -928,6 +916,7 @@ void SyntheticKey(window *Window, udat Code, byte Len, byte *Seq) {
 	Event = &Msg->Event.EventKeyboard;
 	Event->Window = Window;
 	Event->Code = Code;
+	Event->ShiftFlags = ShiftFlags;
 	Event->SeqLen = Len;
 	CopyMem(Seq, Event->AsciiSeq, Len);
 	Event->AsciiSeq[Len] = '\0'; /* terminate string with \0 */
@@ -939,19 +928,19 @@ void FillVideo(dat Xstart, dat Ystart, dat Xend, dat Yend, hwattr Attrib) {
     hwattr *pos;
     udat _xc, xc, yc, delta;
     
-    if (Xstart > Xend || Xstart >= ScreenWidth || Xend < 0 ||
-	Ystart > Yend || Ystart >= ScreenHeight || Yend < 0)
+    if (Xstart > Xend || Xstart >= DisplayWidth || Xend < 0 ||
+	Ystart > Yend || Ystart >= DisplayHeight || Yend < 0)
 	return;
     Xstart = Max2(Xstart, 0);
     Ystart = Max2(Ystart, 0);
-    Xend = Min2(Xend, ScreenWidth-1);
-    Yend = Min2(Yend, ScreenHeight-1);
+    Xend = Min2(Xend, DisplayWidth-1);
+    Yend = Min2(Yend, DisplayHeight-1);
     DirtyVideo(Xstart, Ystart, Xend, Yend);
 
     yc = Yend - Ystart + 1;
     _xc = Xend - Xstart + 1;
-    delta = ScreenWidth - _xc;
-    pos = Video + Xstart + Ystart * ScreenWidth;
+    delta = DisplayWidth - _xc;
+    pos = Video + Xstart + Ystart * DisplayWidth;
     
     while (yc--) {
 	xc = _xc;
@@ -965,18 +954,18 @@ void FillOldVideo(dat Xstart, dat Ystart, dat Xend, dat Yend, hwattr Attrib) {
     hwattr *pos;
     udat _xc, xc, yc, delta;
     
-    if (Xstart > Xend || Xstart >= ScreenWidth || Xend < 0 ||
-	Ystart > Yend || Ystart >= ScreenHeight || Yend < 0)
+    if (Xstart > Xend || Xstart >= DisplayWidth || Xend < 0 ||
+	Ystart > Yend || Ystart >= DisplayHeight || Yend < 0)
 	return;
     Xstart = Max2(Xstart, 0);
     Ystart = Max2(Ystart, 0);
-    Xend = Min2(Xend, ScreenWidth-1);
-    Yend = Min2(Yend, ScreenHeight-1);
+    Xend = Min2(Xend, DisplayWidth-1);
+    Yend = Min2(Yend, DisplayHeight-1);
 
     yc = Yend - Ystart + 1;
     _xc = Xend - Xstart + 1;
-    delta = ScreenWidth - _xc;
-    pos = OldVideo + Xstart + Ystart * ScreenWidth;
+    delta = DisplayWidth - _xc;
+    pos = OldVideo + Xstart + Ystart * DisplayWidth;
     
     while (yc--) {
 	xc = _xc;
@@ -988,8 +977,8 @@ void FillOldVideo(dat Xstart, dat Ystart, dat Xend, dat Yend, hwattr Attrib) {
 
 void RefreshVideo(void) {
     ValidOldVideo = FALSE;
-    DrawArea(FULL_SCREEN);
-    /* better than DirtyVideo(0, 0, ScreenWidth - 1, ScreenHeight - 1); */
+    DrawArea2(FULL_SCREEN);
+    /* safer than DirtyVideo(0, 0, DisplayWidth - 1, DisplayHeight - 1); */
 }
 
 INLINE uldat Plain_countDirtyVideo(dat X1, dat Y1, dat X2, dat Y2) {
@@ -1088,11 +1077,11 @@ byte MouseEventCommon(dat x, dat y, dat dx, dat dy, udat Buttons) {
     prev_x = OldState->x;
     prev_y = OldState->y;
 
-    x = Max2(x, 0); x = Min2(x, ScreenWidth - 1);
-    OldState->delta_x = x == 0 ? Min2(dx, 0) : x == ScreenWidth - 1 ? Max2(dx, 0) : 0;
+    x = Max2(x, 0); x = Min2(x, DisplayWidth - 1);
+    OldState->delta_x = x == 0 ? Min2(dx, 0) : x == DisplayWidth - 1 ? Max2(dx, 0) : 0;
 
-    y = Max2(y, 0); y = Min2(y, ScreenHeight - 1);
-    OldState->delta_y = y == 0 ? Min2(dy, 0) : y == ScreenHeight - 1 ? Max2(dy, 0) : 0;
+    y = Max2(y, 0); y = Min2(y, DisplayHeight - 1);
+    OldState->delta_y = y == 0 ? Min2(dy, 0) : y == DisplayHeight - 1 ? Max2(dy, 0) : 0;
 	
     if (x != prev_x || y != prev_y)
 	HW->FlagsHW |= FlHWChangedMouseFlag;
@@ -1162,7 +1151,7 @@ byte StdAddEventMouse(udat CodeMsg, udat Code, dat MouseX, dat MouseY) {
     return FALSE;
 }
 
-byte KeyboardEventCommon(udat Code, udat Len, CONST byte *Seq) {
+byte KeyboardEventCommon(udat Code, udat ShiftFlags, udat Len, CONST byte *Seq) {
     event_keyboard *Event;
     msg *Msg;
 
@@ -1173,7 +1162,7 @@ byte KeyboardEventCommon(udat Code, udat Len, CONST byte *Seq) {
 	Event = &Msg->Event.EventKeyboard;
 	    
 	Event->Code = Code;
-	Event->ShiftFlags = (udat)0;
+	Event->ShiftFlags = ShiftFlags;
 	Event->SeqLen = Len;
 	CopyMem(Seq, Event->AsciiSeq, Len);
 	Event->AsciiSeq[Len] = '\0'; /* terminate string with \0 */

@@ -1,7 +1,7 @@
 /*
  *  socket.c  --  remote libTw server implementation: supports unix and inet sockets
  *
- *  Copyright (C) 1999-2000 by Massimiliano Ghilardi
+ *  Copyright (C) 1999-2001 by Massimiliano Ghilardi
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -42,6 +42,7 @@
 #include "version.h"
 
 #include "libTw.h"
+#include "libTwkeys.h"
 
 /* First: private variables from remote.c */
 extern fdlist *FdList;
@@ -145,6 +146,22 @@ static byte *RemoteReadGetQueue(uldat Slot, uldat *len) {
     return LS.RQueue + LS.RQstart;
 }
 
+static byte *RemoteWriteGetQueue(uldat Slot, uldat *len) {
+    if (Slot >= FdTop || LS.Fd == NOFD || !LS.WQlen) {
+	if (len) *len = 0;
+	return NULL;
+    }
+    if (len)
+	*len = LS.WQlen;
+    return LS.WQueue;
+}
+
+
+
+
+#ifdef CONF_SOCKET_GZ
+
+
 static byte *RemoteReadFillQueue(uldat Slot, uldat *len) {
     uldat delta;
     if (Slot >= FdTop || LS.Fd == NOFD) {
@@ -156,16 +173,6 @@ static byte *RemoteReadFillQueue(uldat Slot, uldat *len) {
 	*len = delta;
     LS.RQlen += delta; /* alloc them */
     return LS.RQueue + LS.RQmax - delta; /* return the address of first one */
-}
-
-static byte *RemoteWriteGetQueue(uldat Slot, uldat *len) {
-    if (Slot >= FdTop || LS.Fd == NOFD || !LS.WQlen) {
-	if (len) *len = 0;
-	return NULL;
-    }
-    if (len)
-	*len = LS.WQlen;
-    return LS.WQueue;
 }
 
 static byte *RemoteWriteFillQueue(uldat Slot, uldat *len) {
@@ -183,10 +190,6 @@ static byte *RemoteWriteFillQueue(uldat Slot, uldat *len) {
     }
     return LS.WQueue + LS.WQmax - delta; /* return the address of first one */
 }
-
-
-
-#ifdef CONF_SOCKET_GZ
 
 /* compress an uncompressed slot */
 static byte RemoteGzip(uldat Slot) {
@@ -293,7 +296,7 @@ static byte SyncSocket(void) {
     return TRUE;
 }
 
-static void ResizeWindow(window *Window, udat X, udat Y) {
+static void ResizeWindow(window *Window, dat X, dat Y) {
     if (Window)
 	ResizeRelWindow(Window, X - Window->XWidth, Y - Window->YWidth);
 }
@@ -301,11 +304,8 @@ static void ResizeWindow(window *Window, udat X, udat Y) {
 static screen *FirstScreen(void) {
     return All->FirstScreen;
 }
-static window *FirstWindow(screen *Screen) {
-    return Screen ? Screen->FirstWindow : (void *)Screen;
-}
-static gadget *FirstGadget(window *Window) {
-    return Window ? Window->FirstGadget : (void *)Window;
+static widget *FirstWidget(widget *W) {
+    return W ? W->FirstW : W;
 }
 static msgport *FirstMsgPort(void) {
     return All->FirstMsgPort;
@@ -329,18 +329,18 @@ static obj *ParentObj(obj *Obj) {
 }
 
 
-#define tDelta ((size_t)&(((tmsg)0)->Event))
-#define  Delta ((size_t)&(((msg *)0)->Event))
+#define tDelta ((udat)(size_t)&(((tmsg)0)->Event))
+#define  Delta ((udat)(size_t)&(((msg *)0)->Event))
 
 static byte SendToMsgPort(msgport *MsgPort, udat Len, CONST byte *Data) {
     msg *Msg;
     tmsg tMsg = (tmsg)Data;
-    uldat _Len;
+    udat _Len;
     byte ok = TRUE;
     
     if (MsgPort && Len && tMsg && Len >= tDelta && Len == tMsg->Len &&
 	tMsg->Magic == msg_magic) {
-	
+
 	if (tMsg->Type == TW_MSG_WINDOW_KEY)
 	    _Len = (FnMsg->Size - Delta) + tMsg->Event.EventKeyboard.SeqLen;
 	else if (tMsg->Type == TW_MSG_SELECTIONNOTIFY)
@@ -464,6 +464,15 @@ static uldat MaxFunct, Slot, RequestN, noId = NOID;
 static byte *s, *end;
 static int unixFd = NOFD, inetFd = NOFD, Fd;
 static uldat unixSlot = NOSLOT, inetSlot = NOSLOT;
+
+#define DeleteGadget   SafeDeleteObj
+#define DeleteWindow   SafeDeleteObj
+#define DeleteMenuItem SafeDeleteObj
+#define DeleteMenu     SafeDeleteObj
+#define DeleteMsgPort  SafeDeleteObj
+
+static void SafeDeleteObj(void *V);
+static msgport *CreateMsgPort(byte LenTitle, CONST byte *Title, time_t WakeUp, frac_t WakeUpFrac, byte Flags);
 
 static void Reply(uldat code, uldat len, CONST void *data);
 static void SocketH(msgport *MsgPort);
@@ -601,22 +610,6 @@ NAME(funct, name) \
   FAIL##f0 \
 }
 
-#define PROTO5CreateMsgPort(ret0,f0, funct,name,fn, arg1,f1, arg2,f2, arg3,f3, arg4,f4, arg5,f5) \
-NAME(funct, name) \
-{ D_0(ret0,f0) \
-  D(1,arg1,f1) D(2,arg2,f2) D(3,arg3,f3) D(4,arg4,f4) \
-  D(5,arg5,f5) \
-  if (RemoteGetMsgPort(Slot)) { Reply(OK_MAGIC, sizeof(uldat), &noId); return; } \
-  P(1,arg1,f1,i##f1, P(2,arg2,f2,i##f2, P(3,arg3,f3,i##f3, P(4,arg4,f4,i##f4, \
-  P(5,arg5,f5,i##f5, \
-  if (s == end) { \
-   RET##f0(ret0, Act##fn(funct,name) (FN##fn(name) A(1), A(2), A(3), A(4), A(5), SocketH)) \
-   if (A(0)) { RegisterMsgPort(A(0), Slot); A(0)->ShutDownHook = sockShutDown; } \
-   return; \
-  } else fail = -1; ))))) \
-  FAIL##f0 \
-}
-
 #define PROTO6(ret0,f0, funct,name,fn,arg1,f1, arg2,f2, arg3,f3, arg4,f4, arg5,f5, \
 	arg6,f6) \
 NAME(funct, name) \
@@ -714,7 +707,7 @@ static sock_fn sockF [] = {
 /***********/
 
 static uldat SendTwinProtocol(void) {
-    static char buf[] = " Twin-" TW_PROTOCOL_VERSION_STR "-" TWIN_VERSION_STR "\n";
+    static byte buf[] = " Twin-" TW_PROTOCOL_VERSION_STR "-" TWIN_VERSION_STR "\n";
     buf[0] = strlen(buf);
     return RemoteWriteQueue(Slot, buf[0], buf);
 }
@@ -755,47 +748,49 @@ static void Reply(uldat code, uldat len, CONST void *data) {
 static byte AuthData[TotalLen];
 
 static uldat GetRandomData(void) {
-     int ufd, len = 0, got = -1;
-     unsigned long res;
+    int ufd, got = -1;
+    unsigned long res;
+    uldat len = 0;
 
-     if ((ufd = open("/dev/urandom", O_RDONLY)) >= 0) {
-         for (; len < AuthLen; len += got) {
-	     got = read(ufd, AuthData + len, AuthLen - len);
-	     if (got < 0) {
-	         if (errno == EINTR || errno == EAGAIN)
-		     got = 0;
-		 else
-		     break;
-	     }
-	 }
-	 close(ufd);
-     }
-     if (len < AuthLen) {
-         /* /dev/urandom unavailable ? use mrand48... */
-         srand48(time(NULL) + getpid());
-	 got = 0;
-
-	 while (len < AuthLen) {
-	     if (!got) {
-	         got = 4;
-	         res = (unsigned long)mrand48();
-	     }
-	     AuthData[len++] = res & MAXBYTE;
-	     res >>= 8;
-	     got--;
-	 }
-     }
-     return len;
+    if ((ufd = open("/dev/urandom", O_RDONLY)) >= 0) {
+	for (; len < AuthLen; len += got) {
+	    got = read(ufd, AuthData + len, (size_t)(AuthLen - len));
+	    if (got < 0) {
+		if (errno == EINTR || errno == EAGAIN)
+		    got = 0;
+		else
+		    break;
+	    }
+	}
+	close(ufd);
+    }
+    if (len < AuthLen) {
+	/* /dev/urandom unavailable ? use mrand48... */
+	srand48(time(NULL) + getpid());
+	got = 0;
+	
+	while (len < AuthLen) {
+	    if (!got) {
+		got = 4;
+		res = (unsigned long)mrand48();
+	    }
+	    AuthData[len++] = res & MAXBYTE;
+	    res >>= 8;
+	    got--;
+	}
+    }
+    return len;
 }
 
 static byte CreateAuth(byte *path) {
-    int fd, len = 0, got = -1;
+    int fd, got = -1;
+    uldat len = 0;
     
     if ((fd = open(path, O_WRONLY|O_CREAT|O_TRUNC, 0600)) >= 0 &&
 	fchmod(fd, 0600) == 0) {
-
+	
         len = GetRandomData();
-
+	
 	if (len == AuthLen) for (len = 0; len < AuthLen; len += got) {
 	    got = write(fd, AuthData + len, AuthLen - len);
 	    if (got < 0) {
@@ -807,12 +802,13 @@ static byte CreateAuth(byte *path) {
 	}
 	close(fd);
     }
-
-    return len == AuthLen;
-}
     
+    return len == AuthLen ? TRUE : Error(SYSCALLERROR);
+}
+
 static byte InitAuth(void) {
-    int fd, len, got;
+    int fd, got;
+    uldat len;
     
     if (!HOME)
 	return FALSE;
@@ -821,7 +817,7 @@ static byte InitAuth(void) {
     len = Min2(len, TotalLen-11);
     CopyMem(HOME, AuthData, len);
     CopyMem("/.TwinAuth", AuthData+len, 11);
-
+    
     if ((fd = open(AuthData, O_RDONLY)) < 0)
 	return CreateAuth(AuthData);
 
@@ -832,7 +828,7 @@ static byte InitAuth(void) {
 		got = 0;
 	    else {
 		close(fd);
-		return FALSE;
+		return Error(SYSCALLERROR);
 	    }
 	}
     }
@@ -845,7 +841,8 @@ static byte InitAuth(void) {
 
 static byte SendChallenge(void) {
     struct MD5Context ctx;
-    int fd, len, got;
+    int fd, got;
+    uldat len;
     byte *t;
     
     if ((fd = open("/dev/urandom", O_RDONLY)) < 0)
@@ -1078,9 +1075,12 @@ static void sockKillSlot(uldat slot) {
 
 
 static void SocketIO(int fd, uldat slot) {
-    uldat gzSlot, len, Funct;
+    uldat len, Funct;
     byte *t, *tend;
     size_t tot;
+#ifdef CONF_SOCKET_GZ
+    uldat gzSlot;
+#endif
     
     Fd = fd;
     Slot = slot;
@@ -1145,7 +1145,7 @@ static void SocketIO(int fd, uldat slot) {
 		break;
 	    }
 	}
-	RemoteReadDeQueue(Slot, s - t);
+	RemoteReadDeQueue(Slot, (uldat)(s - t));
 	
 #ifdef CONF_SOCKET_GZ
 	if (gzSlot != NOSLOT)
@@ -1339,16 +1339,54 @@ static void sockSendMsg(msgport *MsgPort, msg *Msg) {
 
 static void SocketH(msgport *MsgPort) {
     msg *Msg;
+    byte buf[10], len;
     
     while ((Msg=MsgPort->FirstMsg)) {
 	Remove(Msg);
-	
-	sockSendMsg(MsgPort, Msg);
+
+	/* handle xterm-style mouse reporting... */
+	if (Msg->Type==MSG_WINDOW_MOUSE &&
+	    (len = CreateXTermMouseEvent(&Msg->Event.EventMouse, 10, buf))) {
+	    /*
+	     * SyntheticKey() will send an appropriate keyboard message to this MsgPort
+	     * and we will sockSendMsg() it later in the while() loop.
+	     */
+	    SyntheticKey(Msg->Event.EventMouse.Window, TW_XTermMouse, 0, len, buf);
+	} else
+	    sockSendMsg(MsgPort, Msg);
 	
 	Delete(Msg);
     }
 }
 
+static void SafeDeleteObj(void *V) {
+    obj *O = V, *P = V;
+    msgport *MsgPort = FdList[Slot].MsgPort;
+	
+    if (MsgPort) while (P) {
+	if (IS_MSGPORT(P) && P == (obj *)MsgPort) {
+	    Delete(O);
+	    return;
+	}
+	if (IS_WINDOW(P))
+	    P = (obj *) ((window *)P)->Menu;
+	else if (IS_MUTEX(P))
+	    P = (obj *) ((mutex *)P)->MsgPort;
+	else
+	    P = (obj *)P->Parent;
+    }
+}
+
+/* last 3 args are actually useless for remote clients */
+static msgport *CreateMsgPort(byte LenTitle, CONST byte *Title, time_t WakeUp, frac_t WakeUpFrac, byte Flags) {
+    msgport *MsgPort;
+    
+    if ((MsgPort = Do(Create,MsgPort)(FnMsgPort, LenTitle, Title, WakeUp, WakeUpFrac, Flags, SocketH))) {
+	RegisterMsgPort(MsgPort, Slot);
+	MsgPort->ShutDownHook = sockShutDown;
+    }
+    return MsgPort;
+}
 
 
 
@@ -1559,7 +1597,7 @@ static void RequestSelection(obj *Owner, uldat ReqPrivate) {
 }
 
 
-#ifdef MODULE
+#ifdef CONF_THIS_MODULE
 
 # include "version.h"
 MODULEVERSION;
@@ -1572,7 +1610,7 @@ byte InitSocket(void)
     char opt[15];
 
     if (!InitAuth()) {
-	fprintf(stderr, "twin: failed to create ~/.TwinAuth\n");
+	fprintf(stderr, "twin: failed to create ~/.TwinAuth: %s\n", ErrStr);
 	return FALSE;
     }
     
@@ -1589,14 +1627,21 @@ byte InitSocket(void)
 	    bind(unixFd, (struct sockaddr *)&addr, sizeof(addr)) >= 0 &&
 	    chmod(addr.sun_path, 0700) >= 0 &&
 	    listen(unixFd, 3) >= 0 &&
-	    (unixSlot = RegisterRemoteFd(unixFd, unixSocketIO)) != NOSLOT) {
-	    
-	    fcntl(unixFd, F_SETFD, FD_CLOEXEC);
-	    CopyStr(addr.sun_path, opt);
-	    opt[6] = 'T';
-	    rename(addr.sun_path, opt);
-	} else
-	    close(unixFd);
+	    fcntl(unixFd, F_SETFD, FD_CLOEXEC) >= 0) {
+		    
+	    if ((unixSlot = RegisterRemoteFd(unixFd, unixSocketIO)) != NOSLOT) {
+		
+		CopyStr(addr.sun_path, opt);
+		opt[6] = 'T';
+		rename(addr.sun_path, opt);
+		    
+	    } else
+		close(unixFd);
+	} else {
+	    Error(SYSCALLERROR);
+	    if (unixFd >= 0)
+		close(unixFd);
+	}
     }
     
     {
@@ -1610,11 +1655,17 @@ byte InitSocket(void)
 	    setsockopt(inetFd, SOL_SOCKET, SO_REUSEADDR, (void *)&opt, sizeof(opt)) >= 0 &&
 	    bind(inetFd, (struct sockaddr *)&addr, sizeof(addr)) >= 0 &&
 	    listen(inetFd, 1) >= 0 &&
-	    (inetSlot = RegisterRemoteFd(inetFd, inetSocketIO)) != NOSLOT) {
+	    fcntl(inetFd, F_SETFD, FD_CLOEXEC) >= 0) {
 	    
-	    fcntl(inetFd, F_SETFD, FD_CLOEXEC);
-	} else
-	    close(inetFd);
+	    if ((inetSlot = RegisterRemoteFd(inetFd, inetSocketIO)) != NOSLOT)
+		;
+	    else
+		close(inetFd);
+	} else {
+	    Error(SYSCALLERROR);
+	    if (inetFd >= 0)
+		close(inetFd);
+	}
     }
     
     if (unixSlot != NOSLOT || inetSlot != NOSLOT) {
@@ -1626,11 +1677,11 @@ byte InitSocket(void)
 	
 	return TRUE;
     }
-    fprintf(stderr, "twin: failed to create sockets\n");
+    fprintf(stderr, "twin: failed to create sockets: %s\n", ErrStr);
     return FALSE;
 }
 
-#ifdef MODULE
+#ifdef CONF_THIS_MODULE
 void QuitModule(module *Module) {
     if (unixSlot != NOSLOT) {
 	UnRegisterRemote(unixSlot);

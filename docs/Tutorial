@@ -10,7 +10,7 @@
 				TUTORIAL
 
 
-		  updated to version 0.3.5, 19 Dec 2000
+		  updated to version 0.3.6, 13 Jan 2001
 	      
 
 	     Author: Massimiliano Ghilardi <max@linuz.sns.it>
@@ -28,6 +28,7 @@
 	4. Installing and Starting twin
 	5. The Twin UI (User Interface): how to use it
 	6. External programs
+	   6.1. Security Statement on Sockets
 	7. Transparent Compression
 	8. Attach/Detach
 	9. Installing vga.pcf.gz
@@ -161,8 +162,6 @@
    reading the file README.porting now, for useful tips and warnings.
    
    Then type `make' or `make config' to configure twin for your tastes.
-   The first time you run `make' or each time you run `make config',
-   a shell script is executed to let you configure twin.
    If you have "dialog" installed, you can use `make menuconfig'
    for a somewhat more friendly interface. 
    In both cases, you have to answer various questions about twin
@@ -187,7 +186,15 @@
    sending an _EXACT_ copy of what `make' printed and also specifying
    your operating system (uname -a), and I'll try to help you.
 
-
+   If you have a fast computer and some spare time, you could help me a little
+   and try to compile every source file under every possible configuration.
+   This is not as huge as it may seem, and it's easy to do: just type
+   `make Torture'.
+   In case you get compile errors, please report them to me,
+   specifying your OS name (type `uname -a'), and the compile command
+   that failed, including the EXACT error messages.
+   
+   
 4. Installing and Starting twin
 
    If you want to install twin on your system,
@@ -281,10 +288,11 @@
    well, I feel quite stupid too writing it, but I must start from somewhere ;)
    
    Each word in the menu just appeared is a `menuitem'. The "ð" menuitem lets
-   you pop up some utility windows, including a Clock, the Option window,
+   you pop up some utility windows, including a Clock, the Options window,
    the Buttons window, the Display window and the About window.
-   The "File" menuitem lets you quit twin, suspend or detach it and,
-   if the built-in terminal emulator code is loaded, open a terminal window.
+   The "File" menuitem lets you Quit twin, Suspend or Detach it, Execute
+   arbitrary shell commands and, if the builtin terminal emulator code
+   is loaded, open a New Terminal window.
    The "Edit" menuitem is just a standard entry but it's not usable here.
    The "Modules" menuitem lets you insert/remove modules from the running twin:
    you can "Run Twin Term" to insert the terminal emulator module,
@@ -301,9 +309,9 @@
    a new menu while the previous gets inaccessible. When you start without
    windows, you are presented the default menu described above.
    Anyway, all menus share a common part: the "Window" menuitem, which
-   lets you do basic operations with all windows
-   -- Close, Move, Resize, Center, Maximize, cycle through windows (Next) --
-   and also lets you open the Window List.
+   lets you do basic operations with all windows --
+   Move, Resize, Scroll, Center, Maximize, UnFocus, cycle through windows
+   (Next), and also lets you open the Window List.
    You can open the Window List also by middle-cliking on the desktop,
    in any area with no windows at all.
    A side effect of opening the Window List is that its menu
@@ -311,13 +319,16 @@
    the default menu also by left-clicking on the screen background, in an area
    with no windows: this un-focuses all windows and, when no window is focused,
    you _always_ get the default menu.
+   Clicking with left mouse button or hitting keyboard `Return' on
+   a window name of the Window List will focus and Center the corresponding
+   window.
    
-   Clicking or hitting `Return' on a window name of the Window List will
-   focus and Center the corresponding window.
    Other not-so-obvious things you can do from the Default menu are:
-   "Full Screen" to maximize the current window to full-screen;
+   "Full Screen" to maximize the current window to full-screen,
+   RollUp to collapse a window to its title bar only, and back to normal size,
+   Refresh to redraw the whole display in case it gets garbled,
    Raise/Lower to move the focused window to top/bottom of windows stack,
-   and also unfocuses if moving it to bottom of stack.
+   and also unfocus if moving it to bottom of stack.
    
    You can use the menus even without a mouse: The `Pause' key opens the menu
    (to change it, edit your ~/.twinrc, or, if you disabled support for
@@ -325,9 +336,12 @@
    then you can transverse the menu with arrow keys, hit `Return'
    to select an entry in a menuitem or `Escape' to close the menu.
    Choosing Menu -> Window -> Move lets you move the focused window with
-   arrows, Menu -> Window -> Resize lets you resize it (still with arrows),
-   while  Menu -> Window -> Scroll lets you scroll it: use arrows for
-   one-line scrolls and Insert,Delete,PageUp,PageDown for one-page scrolls.
+   arrows, Resize lets you resize it (still with arrows),
+   while Scroll lets you scroll it: use arrows for one-line scrolls and
+   Insert,Delete,PageUp,PageDown for one-page scrolls.
+   There is a small problem now: if twin intercepts the `Pause' key,
+   how can you have your programs receive it? This is what "Send Hotkey"
+   is for: it sends a `Pause' key event to the focused window.
 
    Now, the next argument: Focusing and Freezing.
    
@@ -359,9 +373,9 @@
    drag the `tab' (the solid white bar) to quickly scroll the window;
    click on the space before or after the `tab' to scroll the window contents
    one page at time.
-   Unlike older versions (0.2.6 and earlier), twin now splits the concepts
-   of top window and focused window: left-clicking on a window will focus it,
-   so that keypresses will go to that window, but you will need to click
+   Twin splits the concepts of top window and focused window:
+   left-clicking on a window will focus it, so that keypresses
+   will go to that window, but you will need to click
    on the window's TOP/BACK button to have it become the top window. Clicking
    on the window's TOP/BACK button again will Lower and UnFocus the window.
    
@@ -369,6 +383,10 @@
    and other terminals: you select some text by moving the mouse with
    the left button pressed and paste by clicking with the middle button.
    
+   Again, you can tailor (almost) any of the above features to your tastes
+   by editing your own ~/.twinrc configuration file. The file system.twinrc
+   distributed with twin is a well commented sample configuration you can
+   start from.
    
 6. External programs
 
@@ -376,7 +394,7 @@
    loaded the Socket Server module) you can run an external program
    by typing its name, just as you do with X11 clients.
    If twin is not installed yet, you will need to set LD_LIBRARY_PATH to the
-   directory where libTw.so.1 is: something like
+   directory where libTw.so.2 is: something like
 	export LD_LIBRARY_PATH=<twin-top-dir>/lib
    should work.
    Also, if you don't start external programs from within a twin terminal
@@ -401,13 +419,13 @@
 	twdisplay - advanced utility to attach/detach twin from displays
 	twcat     - twin-aware version of `cat'
 	twedit    - a wannabe twin editor. For now, it's just a test.
-	twevent   - display twin events, like xev (X11) and mev (console/gpm)
+	twevent   - report twin events, like xev (X11) and mev (console/gpm)
 	twmapscrn - twin equivalent of Linux console tool `mapscrn'
 		    NOTE: when started from Linux console, twin will already
 		    load the current consolemap translation, so using twmapscrn
 		    is often not necessary.
 	twsetroot - customize twin background (see clients/README.twsetroot)
-	twsysmon  - a system resources monitor
+	twsysmon  - a system resources monitor (works on Linux only)
 	twterm    - create remote twin terminal windows. Known options:
 	    -h, -help		display this help and exit
 	    -V, -version	output version information and exit
@@ -427,7 +445,8 @@
    they happened; furthermore, it is limited to a 255x255 window.
    The second is an enhanced version which can also report mouse drags and has
    14 bits data for window width and height. It is enabled with ESC [?9h and
-   disabled with ESC [?9l . 
+   disabled with ESC [?9l . Also, they support xterm-style escape sequence
+   to change window title.
    
    Since most programs running inside a linux terminal don't expect to be able
    to use the mouse with xterm-style protocol, various tricks may be needed in
@@ -436,6 +455,32 @@
    
    Midnight Commander `mc': start with `mc -x'
    Other applications: you can try to set TERM=xterm and hope to fool them.
+
+   6.1. Security Statement on Sockets:
+   
+	As said above,
+	the authorization method currently used is similar to Xauthority:
+	the file .TwinAuth in your home directory holds some magic data that
+	clients use to answer the challenge received from twin. If that data
+	is wrong or the file doesn't exist, clients can connect to twin only
+	using the unix socket (TWDISPLAY=:<something>) so they must run
+	on the same machine as twin; remote programs won't be able to connect.
+	
+	Also, the unix socket is set to permissions 600, so only the owner can
+	connect to it (at least on Linux it works this way).
+	
+	The `challenge' is actually an MD5 checksum verification: server sends
+	256 bytes of random data; client does MD5 of that data + .TwinAuth and
+	sends MD5 back. If server agrees on MD5, it grants connection.
+	This challenge method has an important feature:
+	The contents of your .TwinAuth is NEVER transmitted through any socket.
+	So, unless your home directory resides on an NFS filesystem, you can
+	be sure that noone will be able to find the data contained in your
+	.TwinAuth by spying the network between twin and the clients you start.
+	On the other hand, the connection between twin and clients is NOT
+	encrypted, so it is easy to find out what you type and what you see
+	in the client windows by spying the network as above.
+
 
 7. Transparent Compression
 
@@ -461,7 +506,7 @@
 8. Attach/Detach
 
    Twin can run without a display at all, can attach or detach from a display
-   on the fly, and can run on multiple displays simultaneously.
+   on the fly, and can also run with multiple simultaneous displays.
    
    There are various ways to temporarily close a display used by twin:
    
@@ -496,7 +541,7 @@
       to attach to.
       Twin then tries to start that display by its own,
       while twattach's only work is to report all messages generated by twin
-      during the attach (if you run twattach with the option `-s' (silent),
+      during the attach (if you run twattach with the option `-q' (quiet),
       then twattach has nothing to do at all).
    
    Instead `twdisplay' works differently:
@@ -527,10 +572,11 @@
 			    Also protects twdisplay from bugs, quirks and
 			    limitations in display drivers and libraries
 			    needed by them: libgpm can connect only ONCE
-			    to A SINGLE gpm, libX11 tends to call exit() when
-			    its X window gets deleted, etc.
+			    to A SINGLE gpm, libX11 calls exit() when
+			    receives fatal errors from X server, etc.
 			    Using `twdisplay' to attach twin to itself works!
-            disadvantages:  eats more CPU and memory.
+            disadvantages:  eats more CPU and memory. Not really a problem
+	    		    these days.
 	    
 	    
     Examples:
@@ -628,6 +674,9 @@
       all displays : ",noinput" to start the display as view-only;
                      keyboard and mouse activity on that display
 		     will be ignored.
+		   : ",slow" to tell twin the display is slow and output
+		     to it should be buffered and chunked together as much
+		     as possible (this is on by default for -hw=X11)
 		  
       -hw=X  or
       -hw=X11	: ",font=<fontname>" to choose your favourite X11 font

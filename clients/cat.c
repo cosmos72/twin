@@ -33,7 +33,7 @@ static byte InitCat(void) {
 	 (Cat_MsgPort, COL(BLACK,WHITE), COL(BLACK,GREEN), COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
 	  COL(RED,WHITE), COL(RED,GREEN), (byte)0))) {
 
-	TwInfo4Menu(Cat_Menu, TW_ROW_ACTIVE, (uldat)10, " Twin Cat ", "ptpppptpppppp");
+	TwInfo4Menu(Cat_Menu, TW_ROW_ACTIVE, 10, " Twin Cat ", "ptpppptpppppp");
     } else
 	return FALSE;
     
@@ -42,7 +42,7 @@ static byte InitCat(void) {
 	  Cat_Menu, COL(BLACK,HIGH|BLACK), TW_LINECURSOR,
 	  TW_WINDOW_DRAG|TW_WINDOW_RESIZE|TW_WINDOW_X_BAR|TW_WINDOW_Y_BAR|TW_WINDOW_CLOSE,
 	  TW_WINFL_USE_DEFCOL,
-	  (udat)82, (udat)27, (udat)0)) &&
+	  82, 27, 0)) &&
 	(Window=TwWin4Menu(Cat_Menu)) &&
 	TwItem4Menu(Cat_Menu, Window, TRUE, 6, " File ")) {
 
@@ -50,7 +50,7 @@ static byte InitCat(void) {
 			  COL(HIGH|GREEN,WHITE), COL(CYAN,BLUE), COL(HIGH|BLUE,BLACK), COL(HIGH|WHITE,HIGH|BLUE),
 			  COL(HIGH|WHITE,HIGH|BLUE), COL(HIGH|WHITE,HIGH|BLACK),
 			  COL(HIGH|BLACK,WHITE), COL(BLACK,HIGH|BLACK), COL(BLACK,WHITE));
-	TwConfigureWindow(Cat_Win, 0xF<<2, 0, 0, (udat)7, (udat)3, MAXUDAT, MAXUDAT);
+	TwConfigureWindow(Cat_Win, 0xF<<2, 0, 0, 7, 3, MAXDAT, MAXDAT);
 
 	TwRow4Menu(Window, COD_QUIT, TW_ROW_INACTIVE, 17, " Quit      Alt-X ");
 	

@@ -7,7 +7,7 @@
  *      Massimiliano Ghilardi <max@linuz.sns.it>
  *
  *
- *  Copyright (C) 1993-2000 by Massimiliano Ghilardi
+ *  Copyright (C) 1993-2001 by Massimiliano Ghilardi
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -133,6 +133,7 @@ static void Usage(void) {
 	  "Currently known options: \n"
 	  " -h, -help               display this help and exit\n"
 	  " -V, -version            output version information and exit\n"
+	  " -x                      start display as exclusive\n"
 	  " -nohw                   start in background without display\n"
 	  " -hw=<display>[,options] start with the given display (multiple -hw=... allowed)\n"
 	  "Currently known display methods: \n"
@@ -163,7 +164,7 @@ static byte Check4SpecialArgs(void) {
 #if !defined(CONF_WM)
 static byte DieWMSo(void) {
 #if defined(CONF__MODULES)
-    fprintf(stderr, "twin: fatal: failed to load the window manager (wm.so)\n");
+    fprintf(stderr, "twin: fatal: failed to load the window manager: %s\n", ErrStr);
 #else
     fprintf(stderr, "twin: fatal: no window manager and no module loader compiled in.\n"
 	    "      Where should I get the window manager from!?\n");
@@ -203,11 +204,11 @@ static byte Init(void) {
 	    && InitBuiltin()
 	    && InitHW()
 	    /*
-	     * We need care here: DrawArea(), DrawMenu(), etc. all need All->BuiltinMenu and
+	     * We need care here: DrawArea2(), DrawMenu(), etc. all need All->BuiltinMenu and
 	     * also Video[]. The former initialized by InitBuiltin(), the latter by InitHW().
-	     * Immediately after initializaztion, InitHW() does DrawArea(FULL_SCREEN)
+	     * Immediately after initializaztion, InitHW() does DrawArea2(FULL_SCREEN)
 	     * so InitHW() must come after InitBuiltin().
-	     * No DrawArea() are allowed at all before InitHW() !
+	     * No DrawArea2() are allowed at all before InitHW() !
 	     */
 #ifdef CONF_WM
 	    && InitWM()
@@ -298,7 +299,7 @@ int main(int argc, char *argv[]) {
 	Quit(0);
 
     /* not needed... done by InitHW() */
-    /* DrawArea(FULL_SCREEN); */
+    /* DrawArea2(FULL_SCREEN); */
     
     InstantNow(Now); /* read again... */
     SortAllMsgPortsByCallTime();
@@ -338,7 +339,7 @@ int main(int argc, char *argv[]) {
 	do {
 	    if (NeedHW & NEEDResizeDisplay) {
 		ResizeDisplay();
-		DrawArea(FULL_SCREEN);
+		DrawArea2(FULL_SCREEN);
 		UpdateCursor();
 	    }
 	    

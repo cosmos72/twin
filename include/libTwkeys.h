@@ -13,6 +13,7 @@
 #ifndef _LIB_TW_KEYS_H
 #define _LIB_TW_KEYS_H
 
+
 #define TW_Tab			0x09
 #define TW_Linefeed		0x0A
 #define TW_Return		0x0D
@@ -233,6 +234,9 @@
 #define TW_NewSheqelSign	0x17a
 #define TW_DongSign		0x17b
 #define TW_EuroSign		0x17c
+
+/* a dummy value for xterm-style mouse reporting ASCII sequences */
+#define TW_XTermMouse		0x1FE
 
 #define TW_Null			0x1FF
 

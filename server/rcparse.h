@@ -1,7 +1,7 @@
 /*
  *  rcparse.h  --  C back-end of ~/.twinrc parser for twin
  *
- *  Copyright (C) 2000 by Massimiliano Ghilardi
+ *  Copyright (C) 2001 by Massimiliano Ghilardi
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -449,24 +449,36 @@ static ldat FindTwKey(str name) {
     uldat i;
     for (i = 0; TW_KeyList[i].name; i++) {
 	if (!CmpStr(name, TW_KeyList[i].name))
-	    return (ldat)TW_KeyList[i].key;
+	    return (ldat)i;
     }
-    return (ldat)0;
+    return -1;
 }
 
-static byte BindKey(str label, node *func) {
-    ldat key = FindTwKey(label);
+static byte BindKey(ldat shiftflags, str label, node *func) {
+    ldat key;
     node *n;
     
-    if (key) {
-	if (!(n = LookupBind(key, 0, KeyList))) {
-	    n = MakeBuiltinFunc(key);
-	    n->name = label;
-	    KeyList = AddtoNodeList(KeyList, n);
-	}
-	n->body = ReverseList(func);
+    switch (strlen(label)) {
+      case 0:
+	return FALSE;
+      case 1:
+	key = (byte)*label;
+	break;
+      default:
+	if ((key = FindTwKey(label)) == -1)
+	    return FALSE;
+	key = TW_KeyList[key].key;
+	break;
     }
-    return !!key;
+
+    if (!(n = LookupBind(key, shiftflags, KeyList))) {
+	n = MakeBuiltinFunc(key);
+	n->name = label;
+	n->x.ctx = shiftflags;
+	KeyList = AddtoNodeList(KeyList, n);
+    }
+    n->body = ReverseList(func);
+    return TRUE;
 }
     
 static byte BindMouse(str buttons, str _ctx, node *func) {
@@ -587,16 +599,48 @@ static node *MakeSendToScreen(str name) {
     return n;
 }
 
-static node *MakeSyntheticKey(str label) {
-    ldat key = FindTwKey(label);
+static node *MakeSyntheticKey(ldat shiftflags, str label) {
+    ldat key;
+    str  seq;
+    byte buf[4];
     node *n;
-    if (key) {
-	n = NEW(node);
-	n->id = SYNTHETICKEY;
-	n->x.f.a = key;
-	return n;
+    
+    switch (strlen(label)) {
+      case 0:
+	return NULL;
+	
+      case 1:
+	key = (byte)*label;
+	seq = label;
+	break;
+	
+      default:
+	if ((key = FindTwKey(label)) == -1)
+	    return NULL;
+	seq = TW_KeyList[key].seq;
+	key = TW_KeyList[key].key;
+	break;
     }
-    return NULL;
+
+    if (strlen(seq) == 1) {
+	if (shiftflags & KBD_ALT_FL) {
+	    buf[0] = '\x1B';
+	    buf[1] = *seq;
+	    buf[2] = '\0';
+	    seq = buf;
+	} else if (shiftflags & KBD_CTRL_FL) {
+	    buf[0] = *seq & 0x1F;
+	    buf[1] = '\0';
+	    seq = buf;
+	}
+    }
+    
+    n = NEW(node);
+    n->id = SYNTHETICKEY;
+    n->x.f.flag = shiftflags;
+    n->x.f.a = key;
+    n->name = my_strdup(seq);
+    return n;
 }
 
 static node *MakeSleep(ldat t) {
@@ -1092,7 +1136,7 @@ static byte *findfile(byte *name, uldat *fsize) {
 
 static byte rcparse(byte *path);
 
-#ifdef MODULE
+#ifdef CONF_THIS_MODULE
 static
 #endif
 byte rcload(void) {
@@ -1175,9 +1219,8 @@ byte rcload(void) {
 }
 
 
-#ifdef MODULE
+#ifdef CONF_THIS_MODULE
 
-# include "version.h"
 MODULEVERSION;
 
 byte InitModule(module *Module) {

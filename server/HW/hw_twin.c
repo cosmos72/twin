@@ -1,7 +1,7 @@
 /*
  *  hw_twin.h  --  functions to let twin display on another twin
  *
- *  Copyright (C) 2000 by Massimiliano Ghilardi
+ *  Copyright (C) 2000-2001 by Massimiliano Ghilardi
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -113,13 +113,14 @@ static void TW_HandleMsg(tmsg Msg) {
     if (Event->EventCommon.Window == Twin) {
 	switch (Msg->Type) {
 	  case TW_MSG_WINDOW_KEY:
-	    KeyboardEventCommon(Event->EventKeyboard.Code, Event->EventKeyboard.SeqLen, Event->EventKeyboard.AsciiSeq);
+	    KeyboardEventCommon(Event->EventKeyboard.Code, Event->EventKeyboard.ShiftFlags,
+				Event->EventKeyboard.SeqLen, Event->EventKeyboard.AsciiSeq);
 	    break;
 	  case TW_MSG_WINDOW_MOUSE:
 	    x = Event->EventMouse.X;
 	    y = Event->EventMouse.Y;
-	    dx = x == 0 ? -1 : x == ScreenWidth - 1 ? 1 : 0;
-	    dy = y == 0 ? -1 : y == ScreenHeight - 1 ? 1 : 0;
+	    dx = x == 0 ? -1 : x == DisplayWidth - 1 ? 1 : 0;
+	    dy = y == 0 ? -1 : y == DisplayHeight - 1 ? 1 : 0;
 	    if (dx || dy || x != HW->MouseState.x || y != HW->MouseState.y ||
 		(Event->EventMouse.Code & HOLD_ANY) != HW->MouseState.keys)
 		
@@ -169,8 +170,8 @@ INLINE void TW_Mogrify(dat x, dat y, uldat len) {
     hwattr *buf;
     dat xbegin = x, ybegin = y;
     
-    V = Video + x + y * ScreenWidth;
-    oV = OldVideo + x + y * ScreenWidth;
+    V = Video + x + y * DisplayWidth;
+    oV = OldVideo + x + y * DisplayWidth;
     
     for (; len; x++, V++, oV++, len--) {
 	if (buflen && ValidOldVideo && *V == *oV) {
@@ -196,7 +197,7 @@ static void TW_FlushVideo(void) {
     
     /* first burst all changes */
     if (ChangedVideoFlag) {
-	for (i=0; i<ScreenHeight*2; i++) {
+	for (i=0; i<DisplayHeight*2; i++) {
 	    start = ChangedVideo[i>>1][i&1][0];
 	    end   = ChangedVideo[i>>1][i&1][1];
 	    
@@ -246,16 +247,16 @@ static void TW_FlushHW(void) {
     }
 }
 
-static void TW_DetectSize(udat *x, udat *y) {
+static void TW_DetectSize(dat *x, dat *y) {
     *x = HW->X;
     *y = HW->Y;
 }
 
-static void TW_CheckResize(udat *x, udat *y) {
+static void TW_CheckResize(dat *x, dat *y) {
     /* always ok */
 }
 
-static void TW_Resize(udat x, udat y) {
+static void TW_Resize(dat x, dat y) {
     if (x != HW->X || y != HW->Y) {
 	Tw_ResizeWindow(Td, Twin, (HW->X = x) + 2, (HW->Y = y) + 2);
 	setFlush();
@@ -375,7 +376,7 @@ static void TW_QuitHW(void) {
     HW->QuitHW = NoOp;
 }
 
-#ifdef MODULE
+#ifdef CONF_THIS_MODULE
 static
 #endif
 byte TW_InitHW(void) {
@@ -396,6 +397,9 @@ byte TW_InitHW(void) {
 	    *opt = '\0';
 	    HW->FlagsHW |= FlHWNoInput;
 	}
+	if (strstr(arg, ",slow"))
+	    HW->FlagsHW |= FlHWExpensiveFlushVideo;
+
 	
 	if (*arg == '@')
 	    ++arg; /* use specified TWDISPLAY */
@@ -545,7 +549,7 @@ byte TW_InitHW(void) {
     return FALSE;
 }
 
-#ifdef MODULE
+#ifdef CONF_THIS_MODULE
 
 #include "version.h"
 MODULEVERSION;

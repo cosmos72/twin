@@ -35,11 +35,11 @@ void SelectionImport(void);
 #endif
 byte SelectionStore(uldat Magic, CONST byte MIME[MAX_MIMELEN], uldat Len, CONST byte *Data);
 
-byte KeyboardEventCommon(udat Code, udat Len, CONST byte *Seq);
+byte KeyboardEventCommon(udat Code, udat ShiftFlags, udat Len, CONST byte *Seq);
 byte MouseEventCommon(dat x, dat y, dat dx, dat dy, udat IdButtons);
 
-udat GetDisplayWidth(void);
-udat GetDisplayHeight(void);
+dat GetDisplayWidth(void);
+dat GetDisplayHeight(void);
 
 byte InitTransUser(void);
 

@@ -76,8 +76,9 @@ typedef union {
 #define	SELECTIONBUTTON	325
 #define	COLOR	326
 #define	COL_HIGH	327
-#define	NUMBER	328
-#define	STRING	329
+#define	KBD_FLAG	328
+#define	NUMBER	329
+#define	STRING	330
 
 
 extern YYSTYPE yylval;

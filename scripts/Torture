@@ -1,0 +1,77 @@
+
+#
+# this partially duplicates MkDep...
+#
+
+BITMAP=
+TORTURE=
+FILES=
+
+BITMAP=$1
+shift
+
+while [ "$1" ]; do
+  case "$1" in
+    -- )
+      break
+      ;;
+    *\ * )
+      TORTURE="$TORTURE \"$1\""
+      shift
+      ;;
+    * )
+      TORTURE="$TORTURE $1"
+      shift
+      ;;
+  esac
+done
+
+if [ "$1" = "--" ]; then
+  shift
+else
+  exit 1
+fi
+
+
+i="$1"
+
+
+name=`echo $i | sed -e 's/\./_/g'`
+  
+DEFS=
+# search `#include "name"' `CONF_name' and `DEBUG_name' in the file
+# and turn them into ` INC_name ' ` CONF_name ' and ` DEBUG_name '
+MATCH=`grep -E '(^#.*def.*CONF_)|(^#.*def.*DEBUG_)' "$i" \
+| sed -e 's:CONF_\([A-Za-z0-9_]*\): CONF_\1 :g'    \
+      -e 's:DEBUG_\([A-Za-z0-9_]*\): DEBUG_\1 :g'`
+
+for j in $MATCH; do
+  case "$j" in
+    CONF_* )
+      eval "ALREADY=\"\$${name}_${j}_AWARE\""
+      if [ ! "$ALREADY" ]; then
+        DEFS="$j $DEFS"
+	eval "${name}_${j}_AWARE=y"
+      fi
+      ;;
+    DEBUG_* )
+      eval "ALREADY=\"\$${name}_${j}_AWARE\""
+      if [ ! "$ALREADY" ]; then
+        DEFS="$j $DEFS"
+	eval "${name}_${j}_AWARE=y"
+      fi
+      ;;
+  esac
+done
+
+FLAGS=`echo .${i}.flags | sed -e 's/\.c/\.o/'`
+echo "rm -f $FLAGS"
+rm -f $FLAGS
+
+eval "$BITMAP $DEFS" | while read THIS; do
+
+  echo "$TORTURE $THIS"
+  eval "$TORTURE $THIS" || exit 1
+  
+done
+

@@ -167,21 +167,21 @@ static char **args;
 static char *title = "Twin Term";
 
 static twindow newTermWindow(void) {
-    uldat len = strlen(title);
+    dat len = strlen(title);
     twindow Window = TwCreateWindow
 	(len, title, NULL,
 	 Term_Menu, COL(WHITE,BLACK), TW_LINECURSOR,
 	 TW_WINDOW_WANT_KEYS|TW_WINDOW_WANT_CHANGES|TW_WINDOW_DRAG|TW_WINDOW_RESIZE|TW_WINDOW_Y_BAR|TW_WINDOW_CLOSE,
 	 TW_WINFL_CURSOR_ON|TW_WINFL_USECONTENTS,
-	 (udat)82, (udat)27, (uldat)200);
+	 82, 27, 200);
 
     if (Window != NOID) {
 	TwSetColorsWindow
-	    (Window, 0x1FF, COL(HIGH|YELLOW,CYAN), COL(HIGH|GREEN,HIGH|BLUE), COL(WHITE,HIGH|BLUE),
-	     COL(HIGH|WHITE,HIGH|BLUE), COL(HIGH|WHITE,HIGH|BLUE),
-	     COL(WHITE,BLACK), COL(WHITE,HIGH|BLACK), COL(HIGH|BLACK,BLACK), COL(BLACK,HIGH|BLACK));
+	    (Window, 0x1FF, COL(HIGH|YELLOW,CYAN), COL(HIGH|GREEN,HIGH|BLUE),
+	     COL(WHITE,HIGH|BLUE), COL(HIGH|WHITE,HIGH|BLUE), COL(HIGH|WHITE,HIGH|BLUE),
+	     COL(WHITE,BLACK), COL(BLACK,WHITE), COL(HIGH|BLACK,BLACK), COL(BLACK,HIGH|BLACK));
 	
-	TwConfigureWindow(Window, 0xF<<2, 0, 0, (udat)7, (udat)3, MAXUDAT, MAXUDAT);
+	TwConfigureWindow(Window, 0xF<<2, 0, 0, 7, 3, MAXDAT, MAXDAT);
     }
     return Window;
 }
@@ -224,6 +224,8 @@ static byte InitTerm(void) {
     twindow Window;
     
     signal(SIGCHLD, SignalChild);
+
+    putenv("TERM=linux");
     
     if (TwOpen(NULL)) {
 	if ((Term_MsgPort=TwCreateMsgPort
@@ -232,7 +234,7 @@ static byte InitTerm(void) {
 	     (Term_MsgPort,
 	      COL(BLACK,WHITE), COL(BLACK,GREEN), COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
 	      COL(RED,WHITE), COL(RED,GREEN), (byte)0)) &&
-	    (TwInfo4Menu(Term_Menu, TW_ROW_ACTIVE, (uldat)18, " Remote Twin Term ", "ptpppppptpppptpppp"),
+	    (TwInfo4Menu(Term_Menu, TW_ROW_ACTIVE, 18, " Remote Twin Term ", "ptpppppptpppptpppp"),
 
 	     (Window=TwWin4Menu(Term_Menu))) &&
 	    (TwRow4Menu(Window, COD_SPAWN, TW_ROW_ACTIVE, 10, " New Term "),
@@ -357,7 +359,7 @@ static void TwinTermH(void) {
 
 static void TwinTermIO(int Slot) {
     static byte buf[BIGBUFF];
-    uldat got = 0, chunk = 0;
+    ldat got = 0, chunk = 0;
     
     do {
 	/*
@@ -365,11 +367,11 @@ static void TwinTermIO(int Slot) {
 	 * linux ttys buffer up to 4095 bytes.
 	 */
 	chunk = read(LS.Fd, buf + got, BIGBUFF - 1 - got);
-    } while (chunk && chunk != (uldat)-1 && (got += chunk) < BIGBUFF - 1);
+    } while (chunk > 0 && (got += chunk) < BIGBUFF - 1);
     
     if (got)
 	TwWriteAsciiWindow(LS.Window, got, buf);
-    else if (chunk == (uldat)-1 && errno != EINTR && errno != EAGAIN)
+    else if (chunk == -1 && errno != EINTR && errno != EAGAIN)
 	/* something bad happened to our child :( */
 	CloseTerm(Slot);
 }

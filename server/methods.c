@@ -2,7 +2,7 @@
  *  methods.c  --  functions for OO-style calls on twin data structures
  *                 (windows, menus, ...)
  *
- *  Copyright (C) 1993-2000 by Massimiliano Ghilardi
+ *  Copyright (C) 1993-2001 by Massimiliano Ghilardi
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -43,20 +43,7 @@ void *OverrideMth(void **where, void *OrigMth, void *NewMth) {
     return NULL;
 }
 
-obj *Clone(obj *Obj) {
-    obj *t1, *t2;
-    
-    if ((t1 = Do(Create,Obj)(Obj->Fn))) {
-	/* fill the rest with zeros to be in a known state */
-	WriteMem((byte *)t1 + FnObj->Size, '\0', Obj->Fn->Size - FnObj->Size);
-	if ((t2 = Act(Copy,Obj)(Obj, t1)))
-	    return t2;
-	Act(Delete,t1)(t1);
-	t1 = t2; /* i.e. NULL */
-    }
-    return t1;
-}
-
+#if 0 /* not used */
 INLINE void DeletePartialList(obj *Obj) {
     obj *Next;
     while (Obj) {
@@ -65,32 +52,9 @@ INLINE void DeletePartialList(obj *Obj) {
 	Obj = Next;
     }
 }
+#endif
 
-void CloneList(obj *From, obj **FirstTo, obj **LastTo) {
-    obj *TmpObj, *Obj;
-    
-    
-    if (!(*FirstTo=Obj=Clone(From))) {
-	*LastTo = (obj *)0;
-	return;
-    }
-    Obj->Prev=(obj *)0;
-    From=From->Next;
-    while (From) {
-	Obj->Next=TmpObj=Clone(From);
-	if (!TmpObj) {
-	    DeletePartialList(*FirstTo);
-	    return;
-	}
-	TmpObj->Prev=Obj;
-	Obj=TmpObj;
-	From=From->Next;
-    }
-    Obj->Next=(obj *)0;
-    *LastTo=Obj;
-}
-
-INLINE void InsertGeneric(obj *Obj, obj_parent *Parent, obj *Prev, obj *Next, uldat *ObjCount) {
+INLINE void InsertGeneric(obj *Obj, obj_parent *Parent, obj *Prev, obj *Next, ldat *ObjCount) {
     if (Obj->Prev || Obj->Next)
 	return;
 
@@ -113,7 +77,7 @@ INLINE void InsertGeneric(obj *Obj, obj_parent *Parent, obj *Prev, obj *Next, ul
 	(*ObjCount)++;
 }
 
-INLINE void RemoveGeneric(obj *Obj, obj_parent *Parent, uldat *ObjCount) {
+INLINE void RemoveGeneric(obj *Obj, obj_parent *Parent, ldat *ObjCount) {
     if (Obj->Prev)
 	Obj->Prev->Next=Obj->Next;
     else if (Parent->First == Obj)
@@ -129,30 +93,6 @@ INLINE void RemoveGeneric(obj *Obj, obj_parent *Parent, uldat *ObjCount) {
 	(*ObjCount)--;
 }
 
-INLINE void OwnGeneric(obj *Obj, obj_parent *Parent) {
-    if ((Obj->OPrev=Parent->Last))
-	Parent->Last->ONext=Obj;
-    else
-	Parent->First=Obj;	
-    
-    Obj->ONext=(obj *)0;
-    Parent->Last=Obj;
-}
-
-INLINE void DisOwnGeneric(obj *Obj, obj_parent *Parent) {
-    if (Obj->OPrev)
-	Obj->OPrev->ONext=Obj->ONext;
-    else if (Parent->First == Obj)
-	Parent->First=Obj->ONext;
-    
-    if (Obj->ONext)
-	Obj->ONext->OPrev=Obj->OPrev;
-    else if (Parent->Last == Obj)
-	Parent->Last=Obj->OPrev;
-    
-    Obj->OPrev=Obj->ONext=(obj *)0;
-}
-
 /* fn_obj and others fn_XXX functions */
 
 /* obj */
@@ -163,43 +103,25 @@ static obj *CreateObj(fn_obj *Fn_Obj) {
     if ((Obj=(obj *)AllocMem(Fn_Obj->Size))) {
 	if (AssignId(Fn_Obj, Obj)) {
 	    (Obj->Fn=Fn_Obj)->Used++;
-	    Obj->Prev=Obj->Next=(obj *)0;
-	    Obj->Parent=(obj_parent *)0;
+	    Obj->Prev=Obj->Next=NULL;
+	    Obj->Parent=NULL;
 	}
 	else
-	    FreeMem(Obj), Obj = (obj *)0;
+	    FreeMem(Obj), Obj = NULL;
     }
     return Obj;
 }
 
-static obj *CopyObj(obj *From, obj *To) {
-    obj *prev = To->Prev, *next = To->Next;
-    uldat Id = To->Id;
-    /* we allow From->Fn and To->Fn to be different,
-     * as long as they share the same magic */
-    if (From->Fn->Magic == To->Fn->Magic) {
-	From->Fn->Used++;
-	if (!--To->Fn->Used)
-	    FreeMem(To->Fn);
-	CopyMem(From, To, From->Fn->Size);
-	To->Id = Id;
-	To->Prev = prev;
-	To->Next = next;
-	return To;
-    }
-    return (obj *)0;
-}
-
 static void InsertObj(obj *Obj, obj_parent *Parent, obj *Prev, obj *Next) {
     if (!Obj->Parent && Parent) {
-	InsertGeneric(Obj, Parent, Prev, Next, (uldat *)0);
+	InsertGeneric(Obj, Parent, Prev, Next, (ldat *)0);
 	Obj->Parent = Parent;
     }
 }
 
 static void RemoveObj(obj *Obj) {
     if (Obj->Parent) {
-	RemoveGeneric(Obj, Obj->Parent, (uldat *)0);
+	RemoveGeneric(Obj, Obj->Parent, (ldat *)0);
 	Obj->Parent = (obj_parent *)0;
     }
 }
@@ -217,86 +139,9 @@ static void DeleteObj(obj *Obj) {
 static fn_obj _FnObj = {
     obj_magic, (uldat)sizeof(obj), (uldat)1,
 	CreateObj,
-	CopyObj,
 	InsertObj,
 	RemoveObj,
 	DeleteObj
-};
-
-/* area */
-
-static area *CreateArea(fn_area *Fn_Area, area_parent *Parent, screen *FirstScreen, window *FirstWindow, window *OnlyThisWindow,
-		 gadget *FirstGadget, gadget *OnlyThisGadget, dat Xstart, dat Ystart, dat Xend, dat Yend, byte Shaded) {
-    area *Area;
-    if ((Area=(area *)CreateObj((fn_obj *)Fn_Area))) {	
-	Area->FirstScreen=FirstScreen;
-	Area->FirstWindow=FirstWindow;
-	Area->OnlyThisWindow=OnlyThisWindow;
-	Area->FirstGadget=FirstGadget;
-	Area->OnlyThisGadget=OnlyThisGadget;
-	Area->Xstart=Xstart;
-	Area->Ystart=Ystart;
-	Area->Xend=Xend;
-	Area->Yend=Yend;
-	Area->Shaded=Shaded;
-	if (Parent)
-	    InsertLast(Area, Area, Parent);
-    }
-    return Area;
-}
-
-static void DeleteArea(area *Area) {
-    if (Area) {
-	Remove(Area);
-	DeleteObj((obj *)Area);
-    }
-}
-
-static fn_area _FnArea = {
-    area_magic, (uldat)sizeof(area), (uldat)1,
-	CreateArea,
-	(area *(*)(area *, area *))CopyObj,
-	(void (*)(area *, area_parent *, area *, area *))InsertObj,
-        (void (*)(area *))RemoveObj,
-	DeleteArea
-};
-
-/* area_win */
-
-static area_win *CreateAreaWin(fn_area_win *Fn_AreaWin, area_win_parent *Parent, window *Window, gadget *FirstGadget, gadget *OnlyThisGadget,
-			byte NoGadgets, uldat XLogic, uldat YLogic, dat Xstart, dat Ystart, dat Xend, dat Yend) {
-    area_win *Area;
-    if ((Area=(area_win *)CreateObj((fn_obj *)Fn_AreaWin))) {
-	Area->Window=Window;
-	Area->FirstGadget=FirstGadget;
-	Area->OnlyThisGadget=OnlyThisGadget;
-	Area->NoGadgets=NoGadgets;
-	Area->XLogic=XLogic;
-	Area->YLogic=YLogic;
-	Area->Xstart=Xstart;
-	Area->Ystart=Ystart;
-	Area->Xend=Xend;
-	Area->Yend=Yend;
-	if (Parent)
-	    InsertLast(AreaWin, Area, Parent);
-    }
-    return Area;
-}
-
-static void DeleteAreaWin(area_win *Area) {
-    if (Area) {
-	Remove(Area);
-	DeleteObj((obj *)Area);
-    }
-}
-
-static fn_area_win _FnAreaWin = {
-    area_win_magic, (uldat)sizeof(area_win), (uldat)1,
-	CreateAreaWin,
-	(area_win *(*)(area_win *From, area_win *To))CopyObj,
-	(void (*)(area_win *, area_win_parent *, area_win *, area_win *))InsertObj,
-	(void (*)(area_win *))RemoveObj,
-	DeleteAreaWin
 };
 
 /* row */
@@ -314,47 +159,19 @@ static row *CreateRow(fn_row *Fn_Row, udat Code, byte Flags) {
     return Row;
 }
 
-static row *CopyRow(row *From, row *To) {
-    window *Window;
-    
-    if (!From || !To)
-	return (row *)0;
-    
-    Window = To->Window;
-    
-    if (To->Text)
-	FreeMem(To->Text), To->Text = NULL, To->Len = To->MaxLen = 0;
-    if (To->ColText)
-	FreeMem(To->ColText), To->ColText = NULL;
-    
-    if ((To = (row *)CopyObj((obj *)From, (obj *)To))) {
-	To->Window = Window;
-	if ((!From->Text || (To->Text = CloneMem(From->Text, From->MaxLen))) &&
-	    (!From->ColText || (To->ColText = CloneMem(From->ColText, From->MaxLen))))
-	    return To;
-	    
-	if (To->Text)
-	    FreeMem(To->Text), To->Text = NULL;
-	if (To->ColText)
-	    FreeMem(To->ColText), To->ColText = NULL;
-	To = (row *)0;
-    }
-    return To;
-}
-
 static void InsertRow(row *Row, window *Parent, row *Prev, row *Next) {
     if (!Row->Window && Parent) {
 	InsertGeneric((obj *)Row, (obj_parent *)&Parent->FirstRow, (obj *)Prev, (obj *)Next, &Parent->MaxNumRow);
 	Row->Window = Parent;
 	if (!(Row->Window->Flags & WINFL_USEANY))
-	    Row->Window->NumRowOne = Row->Window->NumRowSplit = (uldat)0;
+	    Row->Window->NumRowOne = Row->Window->NumRowSplit = (ldat)0;
     }
 }
 
 static void RemoveRow(row *Row) {
     if (Row->Window) {
 	if (!(Row->Window->Flags & WINFL_USEANY))
-	    Row->Window->NumRowOne = Row->Window->NumRowSplit = (uldat)0;
+	    Row->Window->NumRowOne = Row->Window->NumRowSplit = (ldat)0;
 	RemoveGeneric((obj *)Row, (obj_parent *)&Row->Window->FirstRow, &Row->Window->MaxNumRow);
 	Row->Window = (window *)0;
     }
@@ -371,10 +188,10 @@ static void DeleteRow(row *Row) {
     }
 }
 
-static row *SearchRow(window *Window, uldat Row) {
+static row *SearchRow(window *Window, ldat Row) {
     row *CurrRow, *ElPossib[4];
     byte Index;
-    uldat k, ElNumRows[4], ElDist[4];
+    ldat k, ElNumRows[4], ElDist[4];
     
     ElPossib[0] = Window->RowOne;
     ElPossib[1] = Window->RowSplit;
@@ -382,8 +199,8 @@ static row *SearchRow(window *Window, uldat Row) {
     ElPossib[3] = Window->LastRow;
     ElNumRows[0] = Window->NumRowOne;
     ElNumRows[1] = Window->NumRowSplit;
-    ElNumRows[2] = (uldat)0;
-    ElNumRows[3] = Window->MaxNumRow-(uldat)1;
+    ElNumRows[2] = (ldat)0;
+    ElNumRows[3] = Window->MaxNumRow-(ldat)1;
     ElDist[0] = (ElNumRows[0] ? Abs(ElNumRows[0]-Row) : MAXULDAT);
     ElDist[1] = (ElNumRows[1] ? Abs(ElNumRows[1]-Row) : MAXULDAT);
     ElDist[2] = Row;
@@ -404,9 +221,9 @@ static row *SearchRow(window *Window, uldat Row) {
     return CurrRow;
 }
 
-static row *SearchRowCode(window *Window, udat Code, uldat *NumRow) {
+static row *SearchRowCode(window *Window, udat Code, ldat *NumRow) {
     row *Row;
-    uldat Num=(uldat)0;
+    ldat Num=(ldat)0;
     
     if ((Row=Window->FirstRow))
 	while (Row && Row->Code!=Code) {
@@ -419,7 +236,7 @@ static row *SearchRowCode(window *Window, udat Code, uldat *NumRow) {
     return Row;
 }
 
-static row *Create4MenuRow(fn_row *Fn_Row, window *Window, udat Code, byte Flags, uldat Len, CONST byte *Text) {
+static row *Create4MenuRow(fn_row *Fn_Row, window *Window, udat Code, byte Flags, ldat Len, CONST byte *Text) {
     row *Row = (row *)0;
 
     if (Window && (Row=(Fn_Row->Create)(Fn_Row, Code, Flags)) &&
@@ -428,11 +245,11 @@ static row *Create4MenuRow(fn_row *Fn_Row, window *Window, udat Code, byte Flags
 	Row->Len = Row->MaxLen = Len;
 	InsertLast(Row, Row, Window);
 
-	if ((uldat)Window->XWidth<(Len=Max2((uldat)10, Len+(uldat)2)))
-	    Window->XWidth=(udat)Min2((uldat)MAXUDAT, Len);
+	if ((ldat)Window->XWidth<(Len=Max2((ldat)10, Len+(ldat)2)))
+	    Window->XWidth=(udat)Min2((ldat)MAXDAT, Len);
     
-	if ((uldat)Window->YWidth<(Len=Max2((uldat)3, Window->MaxNumRow+(uldat)2)))
-	    Window->YWidth=(udat)Min2((uldat)MAXUDAT, Len);
+	if ((ldat)Window->YWidth<(Len=Max2((ldat)3, Window->MaxNumRow+(ldat)2)))
+	    Window->YWidth=(udat)Min2((ldat)MAXDAT, Len);
 	
 	
 	return Row;
@@ -453,34 +270,60 @@ byte SearchInfo(menu *Menu, dat i) {
 static fn_row _FnRow = {
     row_magic, (uldat)sizeof(row), (uldat)1,
 	CreateRow,
-	CopyRow,
 	InsertRow,
 	RemoveRow,
 	DeleteRow,
 	Create4MenuRow
 };
 
+/* widget */
+
+/*
+ * you can't create a widget, it is just the common subset
+ * of all visible objects: windows, gadgets and screens.
+ */
+static void InsertWidget(widget *W, widget *Parent, widget *Prev, widget *Next) {
+    if (!W->Parent && Parent) {
+	InsertGeneric((obj *)W, (obj_parent *)&Parent->FirstW, (obj *)Prev, (obj *)Next, (ldat *)0);
+	W->Parent = Parent;
+    }
+}
+
+static void RemoveWidget(widget *W) {
+    if (W->Parent) {
+	RemoveGeneric((obj *)W, (obj_parent *)&W->Parent->FirstW, (ldat *)0);
+	W->Parent = (widget *)0;
+    }
+}
+
+
+
 /* gadget */
 
-static gadget *CreateGadget(fn_gadget *Fn_Gadget, window *Window,
+static gadget *CreateGadget(fn_gadget *Fn_Gadget, widget *Parent,
 			    hwcol ColText, hwcol ColSelect, hwcol ColDisabled, hwcol ColSelectDisabled,
-			    udat Code, udat Flags, udat Left, udat Up, udat XWidth, udat YWidth,
+			    udat Code, udat Flags, dat Left, dat Up, dat XWidth, dat YWidth,
 			    CONST byte *TextNormal, CONST byte *TextSelect, CONST byte *TextDisabled, CONST byte *TextSelectDisabled,
 			    CONST hwcol *ColorNormal, CONST hwcol *ColorSelect, CONST hwcol *ColorDisabled, CONST hwcol *ColorSelectDisabled) {
     gadget *Gadget = (gadget *)0;
-    uldat Size = (uldat)XWidth*YWidth;
+    ldat Size = (ldat)XWidth*YWidth;
 
-    if (Window && Code < COD_RESERVED && (Gadget=(gadget *)CreateObj((fn_obj *)Fn_Gadget))) {	
+    if (Parent && Code < COD_RESERVED && XWidth && YWidth &&
+	(Gadget=(gadget *)CreateObj((fn_obj *)Fn_Gadget))) {
+	
+	Gadget->FirstW = Gadget->LastW = Gadget->SelectW = (widget *)0;
+	Gadget->Left = Left;
+	Gadget->Up   = Up;
+	Gadget->XWidth = XWidth;
+	Gadget->YWidth = YWidth;
+	Gadget->XLogic = Gadget->YLogic = 0;
+
 	Gadget->ColText=ColText;
 	Gadget->ColSelect=ColSelect;
 	Gadget->ColDisabled=ColDisabled;
 	Gadget->ColSelectDisabled=ColSelectDisabled;
 	Gadget->Code=Code;
 	Gadget->Flags=Flags;
-	Gadget->Left=Left;
-	Gadget->Up=Up;
-	Gadget->XWidth=XWidth;
-	Gadget->YWidth=YWidth;
 
 	Gadget->Contents[0] = CloneMem(TextNormal, Size);
 		
@@ -519,65 +362,21 @@ static gadget *CreateGadget(fn_gadget *Fn_Gadget, window *Window,
 	else
 	    Gadget->Contents[7] = NULL;
 	
-	InsertLast(Gadget, Gadget, Window);
+	InsertLast(W, (widget *)Gadget, Parent);
     }
     return Gadget;
 }
 
-static gadget *CopyGadget(gadget *From, gadget *To) {
-    window *Window;
-    uldat Size;
-    byte i;
+static gadget *SearchGadgetCode(window *Window, udat Code) {
+    widget *Parent = (widget *)Window, *W;
     
-    if (!From || !To)
-	return (gadget *)0;
-    
-    Window = To->Window;
-    
-    for (i=0; i<8; i++)
-	if (To->Contents[i])
-	    FreeMem(To->Contents[i]), To->Contents[i] = NULL;
-    
-    if ((To = (gadget *)CopyObj((obj *)From, (obj *)To))) {
-	To->Window = Window;
-	
-	Size=(uldat)From->XWidth*(uldat)From->YWidth;
-    
-	for (i=0; i<8; i++)
-	    if (From->Contents[i] && !(To->Contents[i]=CloneMem(From->Contents[i], Size))) {
-		for (i=0; From->Contents[i] && !To->Contents[i] && i<8; i++)
-		    FreeMem(To->Contents[i]), To->Contents[i] = NULL;
-		To = (gadget *)0;
-		break;
-	    }
+    for (W = Parent->FirstW; W; W = W->Next) {
+	if (IS_GADGET(W) && ((gadget *)W)->Code == Code)
+	    return (gadget *)W;
     }
-    return To;
+    return (gadget *)0;
 }
 
-static gadget *SearchGadgetCode(window *Parent, udat Code) {
-    gadget *Gadget;
-    
-    if ((Gadget=Parent->FirstGadget))
-	while (Gadget && Gadget->Code!=Code) {
-	    Gadget=Gadget->Next;
-	}
-    return Gadget;
-}
-
-    
-static void InsertGadget(gadget *Gadget, window *Parent, gadget *Prev, gadget *Next) {
-    if (!Gadget->Window && Parent) {
-	InsertGeneric((obj *)Gadget, (obj_parent *)&Parent->FirstGadget, (obj *)Prev, (obj *)Next, (uldat *)0);
-	Gadget->Window = Parent;
-    }
-}
-
-static void RemoveGadget(gadget *Gadget) {
-    if (Gadget->Window) {
-	RemoveGeneric((obj *)Gadget, (obj_parent *)&Gadget->Window->FirstGadget, (uldat *)0);
-	Gadget->Window = (window *)0;
-    }
-}
 
 static void DeleteGadget(gadget *Gadget) {
     byte i;
@@ -590,56 +389,16 @@ static void DeleteGadget(gadget *Gadget) {
     }
 }
 
-static gadget *SearchGadget(window *Window, dat i, dat j) {
-    ldat shUp, shLeft;
-    udat Up, Left;
-    screen *Screen;
-    gadget *FirstGadget;
-    
-    if (!Window || !(Screen=Window->Screen))
-	return (gadget *)0;
-    
-    shUp = (ldat)Window->Up - (ldat)Screen->Up*!(Window->Attrib & WINDOW_MENU)+(ldat)Screen->YLimit+(ldat)1;
-    shLeft=(ldat)Window->Left-(ldat)Screen->Left*!(Window->Attrib & WINDOW_MENU)+(ldat)1;
-    FirstGadget=Window->FirstGadget;
-    
-    if (!FirstGadget || (ldat)i<shLeft || (ldat)j<shUp ||
-	(ldat)i>shLeft+(ldat)Window->XWidth-(ldat)3 ||
-	(ldat)j>shUp+(ldat)Window->YWidth-(ldat)3)
-	return (gadget *)0;
-    
-    if (Window->XLogic>(ldat)MAXUDAT ||
-	Window->YLogic>(ldat)MAXUDAT)
-	return (gadget *)0;
-    
-    shLeft=(ldat)i+Window->XLogic-shLeft;
-    shUp=(ldat)j+Window->YLogic-shUp;
-    
-    while (FirstGadget) {
-	Left=FirstGadget->Left;
-	Up=FirstGadget->Up;
-	
-	if (Left>(udat)shLeft || Up>(udat)shUp ||
-	    Left+FirstGadget->XWidth<=(udat)shLeft ||
-	    Up+FirstGadget->YWidth<=(udat)shUp)
-	    FirstGadget=FirstGadget->Next;
-	else
-	    break;
-    }
-    
-    return FirstGadget;
-}
-
-static gadget *CreateEmptyButton(fn_gadget *Fn_Gadget, window *Window, udat XWidth, udat YWidth, hwcol BgCol) {
+static gadget *CreateEmptyButton(fn_gadget *Fn_Gadget, widget *Parent, dat XWidth, dat YWidth, hwcol BgCol) {
     gadget *Gadget;
-    uldat Size;
+    ldat Size;
     byte i;
-    udat j, k;
+    dat j, k;
     
     if ((Gadget=(gadget *)CreateObj((fn_obj *)Fn_Gadget))) {
-	Gadget->XWidth=XWidth+(udat)1;
-	Gadget->YWidth=YWidth+(udat)1;
-	Size=(uldat)(XWidth+(udat)1)*(uldat)(YWidth+(udat)1);
+	Gadget->XWidth=XWidth+(dat)1;
+	Gadget->YWidth=YWidth+(dat)1;
+	Size=(ldat)(XWidth+(dat)1)*(ldat)(YWidth+(dat)1);
 
 	for (i=(byte)0; i<(byte)8; i++)
 	    Gadget->Contents[i]=NULL;
@@ -649,25 +408,25 @@ static gadget *CreateEmptyButton(fn_gadget *Fn_Gadget, window *Window, udat XWid
 		return (gadget *)0;
 	    }
 	
-	Size=(uldat)XWidth*(uldat)YWidth;
+	Size=(ldat)XWidth*(ldat)YWidth;
 	BgCol &= COL(0,MAXCOL);
 	for (i=(byte)0; i<(byte)4; i++) {
-	    for (j=k=(udat)0; j<YWidth; j++, k+=XWidth+(udat)1) {
+	    for (j=k=(dat)0; j<YWidth; j++, k+=XWidth+(dat)1) {
 		Gadget->Contents[i  ][k+(i & 1 ? 0 : XWidth)] = i & 1 ? ' ' : k ? 'Û' : 'Ü';
 		Gadget->Contents[i+4][k+(i & 1 ? 0 : XWidth)] = BgCol;
 	    }
 	    Gadget->Contents[i][k]=(byte)' ';
-	    WriteMem((void *)(Gadget->Contents[i]+k+1), i & 1 ? ' ' : 'ß', (uldat)XWidth);
-	    WriteMem((void *)(Gadget->Contents[i+4]+k), BgCol, (ldat)(XWidth+(udat)1));
+	    WriteMem((void *)(Gadget->Contents[i]+k+1), i & 1 ? ' ' : 'ß', (ldat)XWidth);
+	    WriteMem((void *)(Gadget->Contents[i+4]+k), BgCol, (ldat)(XWidth+(dat)1));
 	}
-	InsertLast(Gadget, Gadget, Window);
+	InsertLast(W, (widget *)Gadget, Parent);
     }
     return Gadget;
 }
 
-byte FillButton(gadget *Gadget, udat Code, udat Left, udat Up, udat Flags, CONST byte *Text, hwcol Color, hwcol ColorDisabled) {
+byte FillButton(gadget *Gadget, udat Code, dat Left, dat Up, udat Flags, CONST byte *Text, hwcol Color, hwcol ColorDisabled) {
     byte **Contents;
-    udat i, j, XWidth, YWidth;
+    dat i, j, XWidth, YWidth;
     
     if (!Gadget || Code >= COD_RESERVED)
 	return FALSE;
@@ -680,28 +439,28 @@ byte FillButton(gadget *Gadget, udat Code, udat Left, udat Up, udat Flags, CONST
     YWidth=Gadget->YWidth;
     Contents=Gadget->Contents;
     
-    for (j=(udat)0; j<(YWidth-(udat)1)*XWidth; j+=XWidth) {
-	for (i=(udat)0; i<XWidth-(udat)1; i++) {
+    for (j=(dat)0; j<(YWidth-(dat)1)*XWidth; j+=XWidth) {
+	for (i=(dat)0; i<XWidth-(dat)1; i++) {
 	    Contents[0][i+j] =
-		Contents[1][i+j+(udat)1] =
+		Contents[1][i+j+(dat)1] =
 		Contents[2][i+j] =
-		Contents[3][i+j+(udat)1] =
+		Contents[3][i+j+(dat)1] =
 		*(Text++);
 	    
-	    Contents[4][i+j] = Contents[5][i+j+(udat)1] = Color;
-	    Contents[6][i+j] = Contents[7][i+j+(udat)1] = ColorDisabled;
+	    Contents[4][i+j] = Contents[5][i+j+(dat)1] = Color;
+	    Contents[6][i+j] = Contents[7][i+j+(dat)1] = ColorDisabled;
 	}
     }
     return TRUE;
 }
 
 
-static gadget *CreateButton(fn_gadget *Fn_Gadget, window *Window,
+static gadget *CreateButton(fn_gadget *Fn_Gadget, widget *Parent,
 			    hwcol BgCol, hwcol Col, hwcol ColDisabled,
-			    udat Code, udat Flags, udat Left, udat Up, udat XWidth, udat YWidth,
+			    udat Code, udat Flags, dat Left, dat Up, dat XWidth, dat YWidth,
 			    CONST byte *Text) {
     gadget *Gadget;
-    if ((Gadget = Fn_Gadget->CreateEmptyButton(Fn_Gadget, Window, XWidth, YWidth, BgCol))) {
+    if ((Gadget = Fn_Gadget->CreateEmptyButton(Fn_Gadget, Parent, XWidth, YWidth, BgCol))) {
 	if (FillButton(Gadget, Code, Left, Up, Flags, Text, Col, ColDisabled))
 	    return Gadget;
 	Delete(Gadget);
@@ -711,59 +470,24 @@ static gadget *CreateButton(fn_gadget *Fn_Gadget, window *Window,
 }
 
 				    
-gadget *CloneButton(gadget *SetUpGadget, udat Code, udat Left, udat Up, hwcol BgCol) {
-    gadget *Gadget;
-    udat i, XWidth, YWidth;
-    byte **Contents;
-    
-    if (!(Gadget=(gadget *)Clone((obj *)SetUpGadget)))
-	return (gadget *)0;
-    
-    BgCol &= COL(0,MAXCOL);
-    Gadget->Code=Code;
-    Gadget->Left=Left;
-    Gadget->Up=Up;
-    
-    if (!(Gadget->Flags & WINFL_USE_DEFCOL)) {
-	Contents=Gadget->Contents;
-	XWidth=Gadget->XWidth;
-	YWidth=Gadget->YWidth;
-	for (i=(udat)0; i<(YWidth-(udat)1)*XWidth; i+=XWidth) {
-	    Contents[4][i+XWidth-(udat)1] =
-		Contents[5][i] =
-		Contents[6][i+XWidth-(udat)1] =
-		Contents[7][i] =
-		BgCol;
-	}
-	for (i=(YWidth-(udat)1)*XWidth; i<XWidth*YWidth; i++) {
-	    Contents[4][i] =
-		Contents[5][i] =
-		Contents[6][i] =
-		Contents[7][i] =
-		BgCol;
-	}
-    }
-    return Gadget;
-}
-
 static fn_gadget _FnGadget = {
     gadget_magic, (uldat)sizeof(gadget), (uldat)1,
-	CreateGadget,
-	CopyGadget,
-	InsertGadget,
-	RemoveGadget,
+	(void *)CreateGadget,
+	(void *)InsertWidget,
+	(void *)RemoveWidget,
 	DeleteGadget,
-	CreateEmptyButton,
+	DrawSelfGadget,
+	(void *)SearchWidget,
+	(void *)CreateEmptyButton,
 	FillButton,
-	CreateButton,
-	CloneButton
+	(void *)CreateButton,
 };
 
 /* ttydata */
 
 static byte InitTtyData(window *Window) {
     ttydata *Data = Window->TtyData;
-    uldat count = Window->MaxNumRow * Window->NumRowOne;
+    ldat count = Window->MaxNumRow * Window->NumRowOne;
     hwattr *p;
     
     if (!Data) {
@@ -818,14 +542,17 @@ static byte InitTtyData(window *Window) {
     Data->currG = Data->G0 = Data->saveG0 = IBMPC_MAP;
     Data->G1 = Data->saveG1 = GRAF_MAP;
 
+    Data->newLen = Data->newMax = 0;
+    Data->newTitle = NULL;
+    
     return TRUE;
 }
 
 /* window */
 
-static window *CreateWindow(fn_window *Fn_Window, udat LenTitle, CONST byte *Title, CONST hwcol *ColTitle,
+static window *CreateWindow(fn_window *Fn_Window, dat LenTitle, CONST byte *Title, CONST hwcol *ColTitle,
 			    menu *Menu, hwcol ColText, uldat CursorType, uldat Attrib, byte Flags,
-			    udat XWidth, udat YWidth, udat ScrollBackLines) {
+			    dat XWidth, dat YWidth, dat ScrollBackLines) {
 
     window *Window = (window *)0;
     byte *_Title = NULL;
@@ -834,52 +561,55 @@ static window *CreateWindow(fn_window *Fn_Window, udat LenTitle, CONST byte *Tit
     if ((!Title || (_Title=CloneStrL(Title, LenTitle))) &&
 	(!ColTitle || (_ColTitle=CloneMem(ColTitle, LenTitle*sizeof(hwcol)))) &&
 	(Window=(window *)CreateObj((fn_obj *)Fn_Window))) {
+
+	Window->FirstW = Window->LastW = Window->SelectW = (widget *)0;
+	Window->Left = 0; Window->Up = MAXDAT;
+	Window->XLogic = Window->YLogic = 0;
 	
-	Window->Menu=(menu *)0;
-	Window->LenTitle=LenTitle;
-	Window->Title=_Title;
-	Window->ColTitle=_ColTitle;
-	Window->BorderPattern[0]=Window->BorderPattern[1]=(void *)0;
-	Window->TtyData=(ttydata *)0;
-	Window->ShutDownHook=(fn_hook)0;
-	Window->Hook=(fn_hook)0;
-	Window->WhereHook=(fn_hook *)0;
-	Window->MapUnMapHook=(fn_hook)0;
-	Window->MapQueueMsg=(msg *)0;
+	Window->Menu = (menu *)0;
+	Window->Parent = (widget *)0;
+	Window->LenTitle = LenTitle;
+	Window->Title = _Title;
+	Window->ColTitle = _ColTitle;
+	Window->BorderPattern[0] = Window->BorderPattern[1] = (void *)0;
+	Window->TtyData = (ttydata *)0;
+	Window->ShutDownHook = (fn_hook)0;
+	Window->Hook = (fn_hook)0;
+	Window->WhereHook = (fn_hook *)0;
+	Window->MapUnMapHook = (fn_hook)0;
+	Window->MapQueueMsg = (msg *)0;
 	Window->RemoteData.Fd = -1;
 	Window->RemoteData.ChildPid = (pid_t)0;
 	Window->RemoteData.FdSlot = NOSLOT;
-	Window->XstSel=Window->YstSel=Window->XendSel=Window->YendSel=0;
-        Window->ColGadgets=DEFAULT_ColGadgets;
-	Window->ColArrows=DEFAULT_ColArrows;
-	Window->ColBars=DEFAULT_ColBars;
-	Window->ColTabs=DEFAULT_ColTabs;
-	Window->ColBorder=DEFAULT_ColBorder;
-	Window->ColText=ColText;
-	Window->ColSelect=COL(COLBG(ColText),COLFG(ColText));
-	Window->ColDisabled=DEFAULT_ColDisabled;
-	Window->ColSelectDisabled=DEFAULT_ColSelectDisabled;
-	Window->Attrib=Attrib;
-	Window->CursorType=CursorType;
-	Window->Flags=Flags;
-	Window->Left=0;
-	Window->Up=MAXUDAT;
-	Window->XLogic=Window->YLogic=Window->CurX=Window->CurY=(uldat)0;
-	Window->FirstRow=Window->LastRow=Window->RowOne=Window->RowSplit=(row *)0;
-	Window->MaxNumRow=Window->NumRowOne=Window->NumRowSplit=(uldat)0;
-	Window->FirstGadget=Window->LastGadget=Window->GadgetSelect=(gadget *)0;
-	Window->Contents=(hwattr *)0;
-
+	Window->XstSel = Window->YstSel = Window->XendSel = Window->YendSel = 0;
+        Window->ColGadgets = DEFAULT_ColGadgets;
+	Window->ColArrows = DEFAULT_ColArrows;
+	Window->ColBars = DEFAULT_ColBars;
+	Window->ColTabs = DEFAULT_ColTabs;
+	Window->ColBorder = DEFAULT_ColBorder;
+	Window->ColText = ColText;
+	Window->ColSelect = COL(COLBG(ColText),COLFG(ColText));
+	Window->ColDisabled = DEFAULT_ColDisabled;
+	Window->ColSelectDisabled = DEFAULT_ColSelectDisabled;
+	Window->Attrib = Attrib;
+	Window->CursorType = CursorType;
+	Window->Flags = Flags;
+	Window->CurX = Window->CurY = 0;
+	
 	Window->MinXWidth=MIN_XWIN;
 	Window->MinYWidth=MIN_YWIN;
 	Window->XWidth = XWidth = Max2(MIN_XWIN, XWidth);
 	Window->YWidth = YWidth = Max2(MIN_YWIN, YWidth);
-	Window->MaxXWidth = MAXUDAT-1;
-	Window->MaxYWidth = MAXUDAT-1;
+	Window->MaxXWidth = MAXDAT;
+	Window->MaxYWidth = MAXDAT;
+
+	Window->Contents=(hwattr *)0;
+	Window->FirstRow=Window->LastRow=Window->RowOne=Window->RowSplit=(row *)0;
+	Window->MaxNumRow=Window->NumRowOne=Window->NumRowSplit=(ldat)0;
 
 	if (Flags & WINFL_USECONTENTS) {
-	    if (MAXUDAT - ScrollBackLines < YWidth - 2)
-		ScrollBackLines = MAXUDAT - YWidth + 2;
+	    if (MAXDAT - ScrollBackLines < YWidth - 2)
+		ScrollBackLines = MAXDAT - YWidth + 2;
 	    Window->CurY = Window->YLogic = ScrollBackLines;
 	    Window->MaxNumRow = ScrollBackLines + YWidth-2;
 	    Window->NumRowOne = XWidth-2;
@@ -899,85 +629,12 @@ static window *CreateWindow(fn_window *Fn_Window, udat LenTitle, CONST byte *Tit
     return Window;
 }
 
-static window *CopyWindow(window *From, window *To) {
-    window *Prev, *Next;
-    menu *Menu;
-    screen *Screen;
-
-    if (!From || !To)
-	return (window *)0;
-
-    Menu = To->Menu;
-    Prev = To->OPrev;
-    Next = To->ONext;
-    
-    if ((Screen = To->Screen))
-	Act(UnMap,To)(To);
-
-    if (To->Contents)
-	FreeMem(To->Contents), To->Contents = (hwattr *)0;
-    if (To->TtyData)
-	FreeMem(To->TtyData), To->TtyData = (ttydata *)0;
-    if (To->FirstRow)
-	DeleteList(To->FirstRow);
-    if (To->FirstGadget)
-	DeleteList(To->FirstGadget);
-    
-    if ((To = (window *)CopyObj((obj *)From, (obj *)To))) {
-	To->Menu = Menu;
-	To->OPrev = Prev;
-	To->ONext = Next;
-
-	if (From->Contents)
-	    To->Contents = CloneMem(From->Contents, From->MaxNumRow*From->NumRowOne*sizeof(hwattr));
-	if (From->TtyData) {
-	    To->TtyData = CloneMem(From->TtyData, sizeof(ttydata));
-	    
-	    if (To->Contents) {
-		To->TtyData->Start = To->Contents + (From->TtyData->Start - From->Contents);
-		To->TtyData->Split = To->Contents + (From->TtyData->Split - From->Contents);
-		To->TtyData->Pos   = To->Contents + (From->TtyData->Pos   - From->Contents);
-	    } else
-		To->TtyData->Start = To->TtyData->Split = To->TtyData->Pos = (hwattr *)0;
-	}
-
-	To->RemoteData.Fd = NOFD;
-	To->RemoteData.ChildPid = NOPID;
-	To->RemoteData.FdSlot = NOSLOT;
-	
-	if ((!From->Contents || To->Contents) && (!From->TtyData || To->TtyData) &&
-	    (!From->FirstRow || (CloneList((obj *)From->FirstRow, (obj **)&To->FirstRow,
-					   (obj **)&To->LastRow), To->FirstRow)) &&
-	    (!From->FirstGadget || (CloneList((obj *)From->FirstGadget, (obj **)&To->FirstGadget,
-					      (obj **)&To->LastGadget), To->FirstGadget))) {
-	    
-	    if (Screen)
-		Act(Map,To)(To, Screen);
-	    return To;
-	}
-	
-	if (To->Contents)
-	    FreeMem(To->Contents), To->Contents = (hwattr *)0;
-	if (To->TtyData)
-	    FreeMem(To->TtyData), To->TtyData = (ttydata *)0;
-	if (To->FirstRow)
-	    DeleteList(To->FirstRow);
-	if (To->FirstGadget)
-	    DeleteList(To->FirstGadget);
-
-	if (Screen)
-	    Act(Map,To)(To, Screen);
-    	To = (window *)0;
-    }
-    return To;
-}
-
-static void InsertWindow(window *Window, screen *Parent, window *Prev, window *Next) {
-    InsertGeneric((obj *)Window, (obj_parent *)&Parent->FirstWindow, (obj *)Prev, (obj *)Next, (uldat *)0);
+static void InsertWindow(window *Window, widget *Parent, widget *Prev, widget *Next) {
+    InsertGeneric((obj *)Window, (obj_parent *)&Parent->FirstW, (obj *)Prev, (obj *)Next, (ldat *)0);
 }
 
 static void RemoveWindow(window *Window) {
-    RemoveGeneric((obj *)Window, (obj_parent *)&Window->Screen->FirstWindow, (uldat *)0);
+    RemoveGeneric((obj *)Window, (obj_parent *)&Window->Parent->FirstW, (ldat *)0);
 }
 
 static void DeleteWindow(window *Window) {
@@ -996,38 +653,11 @@ static void DeleteWindow(window *Window) {
 	    FreeMem(Window->TtyData);
 	if (Window->Contents)
 	    FreeMem(Window->Contents);
+	DeleteList(Window->FirstW);
 	DeleteList(Window->FirstRow);
-	DeleteList(Window->FirstGadget);
 	DeleteObj((obj *)Window);
     }
 }
-
-static window *SearchWindow(screen *Screen, dat i, dat j) {
-    window *Window;
-    byte WinFound=FALSE;
-    ldat shUp, shLeft, NWinDiMenu;
-    ldat YWidth;
-    
-    Window = Screen->FirstWindow;
-    while (!WinFound && Window) {
-	NWinDiMenu = Window->Attrib & WINDOW_MENU ? 0 : (ldat)~(ldat)0;
-	shUp = (ldat)Window->Up - ((ldat)Screen->Up & NWinDiMenu) + (ldat)Screen->YLimit;
-	shLeft=(ldat)Window->Left-((ldat)Screen->Left & NWinDiMenu);
-	
-	YWidth = !(Window->Attrib & WINDOW_MENU) && Window->Attrib & WINDOW_ROLLED_UP
-	    ? (ldat)1 : (ldat)Window->YWidth;
-	
-	if ((ldat)i<shLeft || (ldat)j<shUp ||
-	    (ldat)i>=(ldat)Window->XWidth+shLeft || (ldat)j>=YWidth + shUp) {
-	    
-	    Window=Window->Next;
-	    continue;
-	}
-	WinFound = TRUE;
-    }
-    return WinFound ? Window : (window *)0;
-}
-
 
 static void SetColTextWindow(window *Window, hwcol ColText) {
     if (Window)
@@ -1056,20 +686,20 @@ static void SetColorsWindow(window *Window, udat Bitmap,
 	    Window->ColDisabled = ColDisabled;
 	if (Bitmap & 0x100)
 	    Window->ColSelectDisabled = ColSelectDisabled;
-	if (Window->Screen)
+	if (Window->Parent && IS_SCREEN(Window->Parent))
 	    DrawBorderWindow(Window, BORDER_ANY);
     }
 }
 
-static void ConfigureWindow(window * Window, byte Bitmap, dat Left, udat Up,
-			    udat MinXWidth, udat MinYWidth, udat MaxXWidth, udat MaxYWidth) {
-    window *Prev, *Next;
+static void ConfigureWindow(window * Window, byte Bitmap, dat Left, dat Up,
+			    dat MinXWidth, dat MinYWidth, dat MaxXWidth, dat MaxYWidth) {
+    widget *Prev, *Next;
     if (Window) {
-	if (Window->Screen) {
+	if (Window->Parent) {
 	    Prev = Window->Prev;
 	    Next = Window->Next;
 	    Remove(Window);
-	    DrawAreaWindow(Window, FALSE);
+	    DrawAreaWindow2(Window);
 	}
 	
 	if (Bitmap & 1)
@@ -1092,14 +722,14 @@ static void ConfigureWindow(window * Window, byte Bitmap, dat Left, udat Up,
 	    Window->MaxYWidth = Max2(Window->MinYWidth, MaxYWidth);
 	    Window->YWidth = Min2(MaxYWidth, Window->YWidth);
 	}
-	if (Window->Screen) {
-	    InsertMiddle(Window, Window, Window->Screen, Prev, Next);
-	    DrawAreaWindow(Window, FALSE);
+	if (Window->Parent) {
+	    InsertMiddle(Window, Window, Window->Parent, Prev, Next);
+	    DrawAreaWindow2(Window);
 	}
     }
 }
 
-static void GotoXYWindow(window *Window, uldat X, uldat Y) {
+static void GotoXYWindow(window *Window, ldat X, ldat Y) {
     if (Window) {
 	if (Window->Flags & WINFL_USECONTENTS) {
 	    if (X >= Window->NumRowOne)
@@ -1108,7 +738,7 @@ static void GotoXYWindow(window *Window, uldat X, uldat Y) {
 		Y = Window->TtyData->SizeY - 1;
 	    Window->TtyData->X = X;
 	    Window->TtyData->Y = Y;
-	    Window->TtyData->Pos = Window->TtyData->Start + X + (uldat)Y * Window->TtyData->SizeX;
+	    Window->TtyData->Pos = Window->TtyData->Start + X + (ldat)Y * Window->TtyData->SizeX;
 	    if (Window->TtyData->Pos >= Window->TtyData->Split)
 		Window->TtyData->Pos -= Window->TtyData->Split - Window->Contents;
 	    Y += Window->MaxNumRow - Window->TtyData->SizeY;
@@ -1129,27 +759,15 @@ window *Create4MenuWindow(fn_window *Fn_Window, menu *Menu) {
 	
 	Act(SetColors,Window)(Window, 0x1FF, COL(0,0), COL(0,0), COL(0,0), COL(0,0), COL(HIGH|WHITE,WHITE),
 			      COL(BLACK,WHITE), COL(BLACK,GREEN), COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK));
-	Act(Configure,Window)(Window, 0x3F, 0, 0, MIN_XWIN, MIN_YWIN, MAXUDAT, MAXUDAT);
+	Act(Configure,Window)(Window, 0x3F, 0, 1, MIN_XWIN, MIN_YWIN, MAXDAT, MAXDAT);
     }
     return Window;
 }
 
-static void MapWindow(window *Window, screen *Screen) {
-    msg *Msg;
-    if (Ext(WM,MsgPort) && (Msg = Do(Create,Msg)(FnMsg, MSG_MAP, sizeof(event_map)))) {
-	Msg->Event.EventMap.Window = Window;
-	Msg->Event.EventMap.Code   = (udat)0;
-	Msg->Event.EventMap.Screen = Screen;
-	Window->MapQueueMsg = Msg;
-	SendMsg(Ext(WM,MsgPort), Msg);
-    } else
-	Act(RealMap,Window)(Window,Screen);
-}
-
-static void RealMapWindow(window *Window, screen *Screen) {
+static void MapTopRealWindow(window *Window, screen *Screen) {
     window *OldWindow;
     
-    if (Screen && Window && !Window->Screen) {
+    if (Screen && Window && !Window->Parent) {
 	if (Window->MapQueueMsg)
 	    /*
 	     * let the upper layer do this:
@@ -1157,11 +775,13 @@ static void RealMapWindow(window *Window, screen *Screen) {
 	     */
 	    Window->MapQueueMsg = (msg *)0;
 	
-	if (Window->Up == MAXUDAT)
-	    Window->Up = !!Screen->YLimit + Screen->Up;
+	if (Window->Up == MAXDAT) {
+	    Window->Left = Screen->XLogic;
+	    Window->Up = Max2(Screen->YLimit,0) + 1 + Screen->YLogic;
+	}
 	
-	InsertFirst(Window, Window, Screen);
-	Window->Screen = Screen;
+	InsertFirst(W, Window, (widget *)Screen);
+	Window->Parent = (widget *)Screen;
 	
 	if (Screen == All->FirstScreen) {
 	    OldWindow = Act(KbdFocus,Window)(Window);
@@ -1169,9 +789,9 @@ static void RealMapWindow(window *Window, screen *Screen) {
 		DrawBorderWindow(OldWindow, BORDER_ANY);
 	    UpdateCursor();
 	}
-	DrawAreaWindow(Window, FALSE);
+	DrawAreaWindow2(Window);
 	if (!(Window->Attrib & WINDOW_MENU))
-	    Act(DrawMenu,Screen)(Screen, MINDAT, MAXDAT);
+	    Act(DrawMenu,Screen)(Screen, 0, MAXDAT);
 
 	if (Window->MapUnMapHook)
 	    Window->MapUnMapHook(Window);
@@ -1181,16 +801,66 @@ static void RealMapWindow(window *Window, screen *Screen) {
     }
 }
 
+static void MapSubWindow(window *Window, widget *Parent) {
+    /* sanity checks: */
+    if (Parent && (!IS_WINDOW(Parent) || !(((window *)Parent)->Attrib & WINDOW_MENU)) &&
+	Window && !Window->Parent && !(Window->Attrib & WINDOW_MENU)) {
+	
+
+	Window->Attrib &= ~WINDOW_ROLLED_UP; /* not supported for sub-windows */
+	
+	if (Window->Up == MAXDAT) {
+	    Window->Left = Parent->XLogic;
+	    Window->Up = Parent->YLogic;
+	}
+	
+	InsertFirst(W, Window, Parent);
+	Window->Parent = Parent;
+	
+	DrawFullWindow2(Window);
+
+	if (Window->MapUnMapHook)
+	    Window->MapUnMapHook(Window);
+    }
+}
+
+static void MapWindow(window *Window, /*widget*/ void *Parent) {
+    msg *Msg;
+    
+    if (Window && Parent) switch (((widget *)Parent)->Id >> magic_shift) {
+      case window_magic >> magic_shift:
+	MapSubWindow(Window, (widget *)Parent);
+	break;
+      case screen_magic >> magic_shift:
+	if (Ext(WM,MsgPort) && (Msg = Do(Create,Msg)(FnMsg, MSG_MAP, sizeof(event_map)))) {
+	    Msg->Event.EventMap.Window = Window;
+	    Msg->Event.EventMap.Code   = (udat)0;
+	    Msg->Event.EventMap.Screen = (screen *)Parent;
+	    Window->MapQueueMsg = Msg;
+	    SendMsg(Ext(WM,MsgPort), Msg);
+	} else
+	    Act(MapTopReal,Window)(Window, (screen *)Parent);
+	break;
+      default:
+	break;
+    }
+}
+
 static void UnMapWindow(window *Window) {
+    widget *Parent;
+    window *Next;
     screen *Screen;
-    window *NextWindow;
     byte wasFocus;
     
     if (!Window)
 	return;
+
+    Parent = Window->Parent;
     
-    if ((Screen = Window->Screen)) {
-	if (Screen == All->FirstScreen && (All->State & STATE_ANY) == STATE_MENU) {
+    if (Parent && IS_SCREEN(Parent)) {
+	if ((Screen = (screen *)Parent) == All->FirstScreen &&
+	    (All->State & STATE_ANY) == STATE_MENU) {
+
 	    /* take care... menu is active */
 	    if (Window == Screen->MenuWindow || 
 		(Window == Screen->FocusWindow && (Window->Attrib & WINDOW_MENU))) {
@@ -1209,18 +879,30 @@ static void UnMapWindow(window *Window) {
 	    }
 	}
 	
+	if (Screen->ClickWindow == Window)
+	    Screen->ClickWindow = NULL;
+	
 	if ((wasFocus = Window == Screen->FocusWindow)) {
 	    if (Window->Attrib & WINDOW_MENU)
-		NextWindow = Screen->MenuWindow;
-	    else if (Window == Screen->FirstWindow)
-		NextWindow = Window->Next;
-	    else
-		NextWindow = Screen->FirstWindow;
+		Next = Screen->MenuWindow;
+	    else {
+		if ((widget *)Window == Screen->FirstW)
+		    Next = (window *)Window->Next;
+		else
+		    Next = (window *)Screen->FirstW;
+		
+		while (Next && !IS_WINDOW(Next))
+		    Next = (window *)Next->Next;
+	    }
 	}
 	
 	Remove(Window);
-	DrawAreaWindow(Window, FALSE);
-	Window->Screen = (screen *)0;
+	DrawAreaWindow2(Window);
+	Window->Parent = (widget *)0;
+	if (!(Window->Attrib & WINDOW_MENU)) {
+	    Window->Left = 0;
+	    Window->Up = MAXDAT;
+	}
 
 	if (wasFocus) {
 	    if (Screen == All->FirstScreen) {
@@ -1231,24 +913,34 @@ static void UnMapWindow(window *Window) {
 		if ((All->State & STATE_ANY) <= STATE_MENU)
 		    All->State &= ~STATE_ANY;
 		    
-		if (NextWindow) {
-		    (void)Act(KbdFocus,NextWindow)(NextWindow);
-		    DrawBorderWindow(NextWindow, BORDER_ANY);
+		if (Next) {
+		    (void)Act(KbdFocus,Next)(Next);
+		    DrawBorderWindow(Next, BORDER_ANY);
 		} else
 		    Do(KbdFocus,Window)((window *)0);
 		if (!(Window->Attrib & WINDOW_MENU))
-		    Act(DrawMenu,Screen)(Screen, MINDAT, MAXDAT);
+		    Act(DrawMenu,Screen)(Screen, 0, MAXDAT);
 		UpdateCursor();
 	    } else
-		Screen->FocusWindow = NextWindow;
+		Screen->FocusWindow = Next;
 	}
-	
+
 	if (Window->MapUnMapHook)
 	    Window->MapUnMapHook(Window);
 
 	if (Screen->FnHookWindow)
 	    Screen->FnHookWindow(Screen->HookWindow);
 	
+    } else if (Parent) {
+	
+	/* UnMap() a sub-window */
+	Remove(Window);
+	DrawFullWindow2(Window);
+	Window->Parent = (widget *)0;
+	
+	if (Window->MapUnMapHook)
+	    Window->MapUnMapHook(Window);
+
     } else if (Window->MapQueueMsg) {
 	/* the window was still waiting to be mapped! */
 	Delete(Window->MapQueueMsg);
@@ -1258,14 +950,33 @@ static void UnMapWindow(window *Window) {
 
 static void OwnWindow(window *Window, menu *Menu) {
     if (!Window->Menu) {
-	OwnGeneric((obj *)Window, (obj_parent *)&Menu->FirstWindow);
+	if ((Window->OPrev=Menu->LastWindow))
+	    Menu->LastWindow->ONext=Window;
+	else
+	    Menu->FirstWindow=Window;	
+    
+	Window->ONext=(window *)0;
+	Menu->LastWindow=Window;
+	
 	Window->Menu = Menu;
     }
 }
 
 static void DisOwnWindow(window *Window) {
-    if (Window->Menu) {
-	DisOwnGeneric((obj *)Window, (obj_parent *)&Window->Menu->FirstWindow);
+    menu *Menu;
+    if ((Menu = Window->Menu)) {
+	if (Window->OPrev)
+	    Window->OPrev->ONext = Window->ONext;
+	else if (Menu->FirstWindow == Window)
+	    Menu->FirstWindow = Window->ONext;
+	
+	if (Window->ONext)
+	    Window->ONext->OPrev = Window->OPrev;
+	else if (Menu->LastWindow == Window)
+	    Menu->LastWindow = Window->OPrev;
+	
+	Window->OPrev = Window->ONext = (window *)0;
+	
 	Window->Menu = (menu *)0;
     }
 }
@@ -1294,29 +1005,6 @@ static void RemoveHookWindow(window *Window, fn_hook Hook, fn_hook *WhereHook) {
 }
 
 
-/*
-static window *SearchCoordScreen(dat x, dat y, uldat *ResX, uldat *ResY) {
-    screen *Screen;
-    window *Window;
-    ldat shLeft, shUp;
-    
-    if (!(Screen=SearchScreen(y)) || !(Window=SearchWindow(Screen, x, y)))
-	return (window *)0;
-    
-    if ((shLeft=(ldat)Window->Left-(ldat)Screen->Left*!(Window->Attrib & WINDOW_MENU)) < (ldat)x &&
-	(shUp = (ldat)Window->Up - (ldat)Screen->Up*!(Window->Attrib & WINDOW_MENU)+(ldat)Screen->YLimit) < (ldat)y &&
-	shLeft+(ldat)Window->XWidth-(ldat)1>(ldat)x &&
-	shUp+(ldat)Window->YWidth-(ldat)1>(ldat)y) {
-	if (ResX)
-	    *ResX=(uldat)((ldat)x-shLeft-(ldat)1)+Window->XLogic;
-	if (ResY)
-	    *ResY=(uldat)((ldat)y-shUp-(ldat)1)+Window->YLogic;
-	return Window;
-    }
-    return (window *)0;
-}
-*/
-
 window *FocusWindow(window *W) {
     window *oldW;
     if (W)
@@ -1324,13 +1012,13 @@ window *FocusWindow(window *W) {
     else
 	oldW = Do(KbdFocus,Window)(W);
     
-    if (W != oldW && (!W || W->Screen == All->FirstScreen)) {
+    if (W != oldW && (!W || W->Parent == (widget *)All->FirstScreen)) {
 	if (W) DrawBorderWindow(W, BORDER_ANY);
 	if (oldW) DrawBorderWindow(oldW, BORDER_ANY);
 	if (W || oldW) {
 	    UpdateCursor();
 	    if (!W || !(W->Attrib & WINDOW_MENU))
-		Act(DrawMenu,All->FirstScreen)(All->FirstScreen, MINDAT, MAXDAT);
+		Act(DrawMenu,All->FirstScreen)(All->FirstScreen, 0, MAXDAT);
 	}
     }
     return oldW;
@@ -1339,7 +1027,8 @@ window *FocusWindow(window *W) {
 #if !defined(CONF_TERM)
 window *FakeKbdFocus(window *W) {
     window *oldW;
-    screen *Screen = W ? W->Screen : All->FirstScreen;
+    widget *P;
+    screen *Screen = W && (P = W->Parent) && IS_SCREEN(P) ? (screen *)P : All->FirstScreen;
     
     if (Screen) {
 	oldW = Screen->FocusWindow;
@@ -1351,13 +1040,14 @@ window *FakeKbdFocus(window *W) {
 }
 #endif
 
-#if !defined(CONF_TERM) && defined(CONF__MODULES)
-void FakeWriteAscii(window *Window, uldat Len, CONST byte *Text) {
+#ifndef CONF_TERM
+# ifdef CONF__MODULES
+void FakeWriteAscii(window *Window, ldat Len, CONST byte *Text) {
     if (DlLoad(TermSo) && Window->Fn->WriteAscii != FakeWriteAscii)
 	Act(WriteAscii,Window)(Window, Len, Text);
 }
 
-void FakeWriteHWAttr(window *Window, udat x, udat y, uldat Len, CONST hwattr *Attr) {
+void FakeWriteHWAttr(window *Window, dat x, dat y, ldat Len, CONST hwattr *Attr) {
     if (DlLoad(TermSo) && Window->Fn->WriteHWAttr != FakeWriteHWAttr)
 	Act(WriteHWAttr,Window)(Window, x, y, Len, Attr);
 }
@@ -1367,18 +1057,18 @@ window *FakeOpenTerm(CONST byte *arg0, byte * CONST *argv) {
 	return Ext(Term,Open)(arg0, argv);
     return NULL;
 }
-#else /* !defined(CONF_TERM) && defined(CONF__MODULES) */
-# define FakeWriteAscii	 (void (*)(window *, uldat, CONST byte *))NoOp
-# define FakeWriteHWAttr (void (*)(window *, udat, udat, uldat, CONST hwattr *))NoOp,
-#endif /* !defined(CONF_TERM) && defined(CONF__MODULES) */
+# else  /* CONF__MODULES */
+#  define FakeWriteAscii  (void (*)(window *, ldat, CONST byte *))NoOp
+#  define FakeWriteHWAttr (void (*)(window *, dat, dat, ldat, CONST hwattr *))NoOp
+# endif /* CONF__MODULES */
+#endif  /* CONF_TERM */
 
 
 #ifdef CONF_WM
-byte WMFindBorderWindow(window *Window, udat u, udat v, byte Border, byte *PtrChar, byte *PtrColor);
+byte WMFindBorderWindow(window *Window, dat u, dat v, byte Border, byte *PtrChar, byte *PtrColor);
 
 #else
-
-static byte FakeFindBorderWindow(window *W, udat u, udat v, byte Border, byte *PtrChar, hwcol *PtrColor) {
+byte FakeFindBorderWindow(window *W, dat u, dat v, byte Border, byte *PtrChar, hwcol *PtrColor) {
     byte Horiz, Vert;
     
     Horiz = u ? u+1 == W->XWidth ? (byte)2 : (byte)1 : (byte)0;
@@ -1398,10 +1088,11 @@ static byte FakeFindBorderWindow(window *W, udat u, udat v, byte Border, byte *P
 static fn_window _FnWindow = {
     window_magic, (uldat)sizeof(window), (uldat)1,
 	CreateWindow,
-	CopyWindow,
 	InsertWindow,
 	RemoveWindow,
 	DeleteWindow,
+	DrawSelfWindow,
+	(void *)SearchWidget,
 #ifdef CONF_WM
 	WMFindBorderWindow,
 #else
@@ -1412,8 +1103,8 @@ static fn_window _FnWindow = {
 	ConfigureWindow,
 	GotoXYWindow,
 	Create4MenuWindow,
-	RealMapWindow,
 	MapWindow,
+	MapTopRealWindow,
 	UnMapWindow,
 	OwnWindow,
 	DisOwnWindow,
@@ -1430,7 +1121,6 @@ static fn_window _FnWindow = {
 	WriteRow,
 	SearchRow,
 	SearchRowCode,
-	SearchGadget,
 	SearchGadgetCode,
 	InstallHookWindow,
 	RemoveHookWindow
@@ -1439,7 +1129,7 @@ static fn_window _FnWindow = {
 /* menuitem */
 
 static menuitem *CreateMenuItem(fn_menuitem *Fn_MenuItem, menu *Menu, window *Window, byte FlagActive,
-				udat Left, udat Len, udat ShortCut, CONST byte *Name) {
+				dat Left, dat Len, dat ShortCut, CONST byte *Name) {
     menuitem *MenuItem = (menuitem *)0;
     byte *_Name = NULL;
     
@@ -1459,46 +1149,16 @@ static menuitem *CreateMenuItem(fn_menuitem *Fn_MenuItem, menu *Menu, window *Wi
     return MenuItem;
 }
 
-static menuitem *CopyMenuItem(menuitem *From, menuitem *To) {
-    menu *Menu;
-    
-    if (!From || !To)
-	return (menuitem *)0;
-    
-    Menu = To->Menu;
-    
-    if (To->Name)
-	FreeMem(To->Name), To->Name = NULL;
-    if (To->Window)
-	Delete(To->Window), To->Window = (window *)0;
-
-    if ((To = (menuitem *)CopyObj((obj *)From, (obj *)To))) {
-	To->Menu = Menu;
-    
-	if ((!From->Name || (To->Name=CloneStrL(From->Name, (uldat)From->Len))) &&
-	    (!From->Window || (To->Window=(window *)Clone((obj *)From->Window))))
-	    return To;
-	    
-	if (To->Name)
-	    FreeMem(To->Name), To->Name = NULL, To->Len = 0;
-	if (To->Window)
-	    Delete(To->Window), To->Window = (window *)0;
-	    
-	To = (menuitem *)0;
-    }    
-    return To;
-}
-
 static void InsertMenuItem(menuitem *MenuItem, menu *Parent, menuitem *Prev, menuitem *Next) {
     if (!MenuItem->Menu && Parent) {
-	InsertGeneric((obj *)MenuItem, (obj_parent *)&Parent->FirstMenuItem, (obj *)Prev, (obj *)Next, (uldat *)0);
+	InsertGeneric((obj *)MenuItem, (obj_parent *)&Parent->FirstMenuItem, (obj *)Prev, (obj *)Next, (ldat *)0);
 	MenuItem->Menu = Parent;
     }
 }
 
 static void RemoveMenuItem(menuitem *MenuItem) {
     if (MenuItem->Menu) {
-	RemoveGeneric((obj *)MenuItem, (obj_parent *)&MenuItem->Menu->FirstMenuItem, (uldat *)0);
+	RemoveGeneric((obj *)MenuItem, (obj_parent *)&MenuItem->Menu->FirstMenuItem, (ldat *)0);
 	MenuItem->Menu = (menu *)0;
     }
 }
@@ -1515,8 +1175,8 @@ static void DeleteMenuItem(menuitem *MenuItem) {
 }
 
 menuitem *Create4MenuMenuItem(fn_menuitem *Fn_MenuItem, menu *Menu, window *Window, byte FlagActive,
-			      udat Len, CONST byte *Name) {
-    udat Left, ShortCut;
+			      dat Len, CONST byte *Name) {
+    dat Left, ShortCut;
     
     if (!Menu || !Window)
 	return (menuitem *)0;
@@ -1524,9 +1184,9 @@ menuitem *Create4MenuMenuItem(fn_menuitem *Fn_MenuItem, menu *Menu, window *Wind
     if (Menu->LastMenuItem)
 	Left=Menu->LastMenuItem->Left+Menu->LastMenuItem->Len;
     else
-	Left=(udat)1;
+	Left=(dat)1;
 
-    ShortCut=(udat)0;
+    ShortCut=(dat)0;
     while (ShortCut<Len && Name[ShortCut]==' ')
 	ShortCut++;
     
@@ -1536,6 +1196,7 @@ menuitem *Create4MenuMenuItem(fn_menuitem *Fn_MenuItem, menu *Menu, window *Wind
     return (Fn_MenuItem->Create)(Fn_MenuItem, Menu, Window, FlagActive, Left, Len, ShortCut, Name);
 }
 
+/* this returns (uldat) for compatibility :-( */
 static uldat Create4MenuCommonMenuItem(fn_menuitem *Fn_MenuItem, menu *Menu) {
     return Menu && (Menu->CommonItems = TRUE);
 }
@@ -1543,7 +1204,6 @@ static uldat Create4MenuCommonMenuItem(fn_menuitem *Fn_MenuItem, menu *Menu) {
 static fn_menuitem _FnMenuItem = {
     menuitem_magic, (uldat)sizeof(menuitem), (uldat)1,
 	CreateMenuItem,
-	CopyMenuItem,
 	InsertMenuItem,
 	RemoveMenuItem,
 	DeleteMenuItem,
@@ -1575,55 +1235,16 @@ static menu *CreateMenu(fn_menu *Fn_Menu, msgport *MsgPort, hwcol ColItem, hwcol
     return Menu;
 }
 
-static menu *CopyMenu(menu *From, menu *To) {
-    msgport *MsgPort;
-    window *First, *Last;
-    
-    if (!From || !To)
-	return (menu *)0;
-    
-    MsgPort = To->MsgPort;
-    First = To->FirstWindow;
-    Last = To->LastWindow;
-    
-    if (To->FirstMenuItem)
-	DeleteList(To->FirstMenuItem);
-    if (To->Info)
-	Delete(To->Info), To->Info=(row *)0;
-    
-    if ((To = (menu *)CopyObj((obj *)From, (obj *)To))) {
-	To->MsgPort = MsgPort;
-	To->FirstWindow = First;
-	To->LastWindow = Last;
-
-	To->MenuItemSelect=(menuitem *)0;
-
-	if ((!From->FirstMenuItem || (CloneList((obj *)From->FirstMenuItem, (obj **)&To->FirstMenuItem,
-						(obj **)&To->LastMenuItem), To->FirstMenuItem)) &&
-	    (!From->Info || (To->Info=(row *)Clone((obj *)From->Info))))
-	  
-	    return To;
-	    
-	if (To->FirstMenuItem)
-	    DeleteList(To->FirstMenuItem);
-	if (To->Info)
-	    Delete(To->Info), To->Info=(row *)0;
-	    
-	To = (menu *)0;
-    }
-    return To;
-}
-
 static void InsertMenu(menu *Menu, msgport *Parent, menu *Prev, menu *Next) {
     if (!Menu->MsgPort && Parent) {
-	InsertGeneric((obj *)Menu, (obj_parent *)&Parent->FirstMenu, (obj *)Prev, (obj *)Next, (uldat *)0);
+	InsertGeneric((obj *)Menu, (obj_parent *)&Parent->FirstMenu, (obj *)Prev, (obj *)Next, (ldat *)0);
 	Menu->MsgPort = Parent;
     }
 }
 
 static void RemoveMenu(menu *Menu) {
    if (Menu->MsgPort) {
-       RemoveGeneric((obj *)Menu, (obj_parent *)&Menu->MsgPort->FirstMenu, (uldat *)0);
+       RemoveGeneric((obj *)Menu, (obj_parent *)&Menu->MsgPort->FirstMenu, (ldat *)0);
        Menu->MsgPort = (msgport *)0;
    }
 }
@@ -1649,9 +1270,9 @@ static void DeleteMenu(menu *Menu) {
     }
 }
 
-static row *SetInfoMenu(menu *Menu, byte Flags, uldat Len, CONST byte *Text, CONST hwcol *ColText) {
+static row *SetInfoMenu(menu *Menu, byte Flags, ldat Len, CONST byte *Text, CONST hwcol *ColText) {
     row *Row;
-    if ((Row = Do(Create,Row)(FnRow, (udat)0, Flags))) {
+    if ((Row = Do(Create,Row)(FnRow, (dat)0, Flags))) {
 	if ((!Text || (Row->Text=CloneStrL(Text,Len))) &&
 	    (!ColText || (Row->ColText=CloneMem(ColText, Len*sizeof(hwcol))))) {
 	    Row->Len = Row->MaxLen = Len;
@@ -1727,7 +1348,6 @@ static void SetSelectItem(menu *Menu, menuitem *Item) {
 static fn_menu _FnMenu = {
     menu_magic, (uldat)sizeof(menu), (uldat)1,
 	CreateMenu,
-	CopyMenu,
 	InsertMenu,
 	RemoveMenu,
 	DeleteMenu,
@@ -1739,94 +1359,80 @@ static fn_menu _FnMenu = {
 
 /* screen */
 
-static screen *CreateScreen(fn_screen *Fn_Screen, udat LenTitle, CONST byte *Title,
-			    udat BgWidth, udat BgHeight, CONST hwattr *Bg) {
-    screen *Screen = (screen *)0;
+static screen *CreateScreen(fn_screen *Fn_Screen, dat LenTitle, CONST byte *Title,
+			    dat BgWidth, dat BgHeight, CONST hwattr *Bg) {
+    screen *S = (screen *)0;
     size_t size;
     
     if ((size=(size_t)BgWidth * BgHeight * sizeof(hwattr))) {
-	if ((Screen=(screen *)CreateObj((fn_obj *)Fn_Screen))) {
-	    if (!(Screen->Title=NULL, Title) || (Screen->Title=CloneStrL(Title, LenTitle))) {
-		if ((Screen->Bg = AllocMem(size))) {
+	if ((S=(screen *)CreateObj((fn_obj *)Fn_Screen))) {
+	    if (!(S->Title=NULL, Title) || (S->Title=CloneStrL(Title, LenTitle))) {
+		if ((S->Bg = AllocMem(size))) {
 
-		    Screen->LenTitle=LenTitle;
-		    Screen->FirstWindow=Screen->LastWindow=
-			Screen->FocusWindow=Screen->MenuWindow=(window *)0;
-		    Screen->HookWindow=(window *)0;
-		    Screen->FnHookWindow=(fn_hook)0;
-		    Screen->ScreenWidth=Screen->ScreenHeight=Screen->YLimit=Screen->Up=1;
-		    Screen->Attrib=Screen->Left=0;
-		    Screen->BgWidth=BgWidth;
-		    Screen->BgHeight=BgHeight;
-		    CopyMem(Bg, Screen->Bg, size);
-		
-		    return Screen;
+		    S->FirstW = S->LastW = S->SelectW = (widget *)0;
+		    S->dummyLeft = S->YLimit = 0;
+		    S->dummyWidth = S->dummyHeight = MAXDAT;
+		    S->XLogic = S->YLogic = 0;
+		    
+		    S->LenTitle = LenTitle;
+		    S->FocusWindow = S->MenuWindow = S->ClickWindow = NULL;
+		    S->HookWindow = NULL;
+		    S->FnHookWindow = NULL;
+		    S->Attrib = 0;
+		    S->BgWidth = BgWidth;
+		    S->BgHeight = BgHeight;
+		    CopyMem(Bg, S->Bg, size);
+		    S->All = (all *)0;
+		    
+		    return S;
 		}
-		if (Screen->Title) FreeMem(Screen->Title);
+		if (S->Title) FreeMem(S->Title);
 	    }
-	    DeleteObj((obj *)Screen);
+	    DeleteObj((obj *)S);
 	}
     }
     return NULL;
 }
 
-static screen *CreateSimpleScreen(fn_screen *Fn_Screen, udat LenTitle, CONST byte *Title, hwattr Bg) {
+static screen *CreateSimpleScreen(fn_screen *Fn_Screen, dat LenTitle, CONST byte *Title, hwattr Bg) {
     return Fn_Screen->Create(Fn_Screen, LenTitle, Title, 1, 1, &Bg);
 }
 
-static void BgImageScreen(screen *Screen, udat BgWidth, udat BgHeight, CONST hwattr *Bg) {
+static void BgImageScreen(screen *Screen, dat BgWidth, dat BgHeight, CONST hwattr *Bg) {
     size_t size;
     
-    if (Screen && Bg && (size=(size_t)BgWidth * BgHeight * sizeof(hwattr)) &&
+    if (Screen && Bg && (size = (size_t)BgWidth * BgHeight * sizeof(hwattr)) &&
 	(Screen->Bg = ReAllocMem(Screen->Bg, size))) {
 
-	Screen->BgWidth=BgWidth;
-	Screen->BgHeight=BgHeight;
+	Screen->BgWidth = BgWidth;
+	Screen->BgHeight = BgHeight;
 	CopyMem(Bg, Screen->Bg, size);
-	DrawArea((screen *)0, (window *)0, (window *)0, (gadget *)0, (gadget *)0, 0, Screen->YLimit, Screen->ScreenWidth-1, Screen->ScreenHeight-1, FALSE);
+	DrawArea2((screen *)0, (widget *)0, (widget *)0, 0, Screen->YLimit+1, MAXDAT, MAXDAT, FALSE);
     }
-}
-
-static screen *CopyScreen(screen *From, screen *To) {
-    all *_All;
-    window *First, *Last, *FW;
-    
-    if (!From || !To)
-	return (screen *)0;
-    
-    First = To->FirstWindow;
-    Last = To->LastWindow;
-    FW = To->FocusWindow;
-    _All = To->All;
-    
-    if ((To = (screen *)CopyObj((obj *)From, (obj *)To))) {
-	To->FirstWindow = First;
-	To->LastWindow = Last;
-	To->FocusWindow = FW;
-	if ((To->All = _All))
-	    DrawScreen(To);
-    }
-    return To;
 }
 
 static void InsertScreen(screen *Screen, all *Parent, screen *Prev, screen *Next) {
     if (!Screen->All && Parent) {
-	InsertGeneric((obj *)Screen, (obj_parent *)&Parent->FirstScreen, (obj *)Prev, (obj *)Next, (uldat *)0);
+	InsertGeneric((obj *)Screen, (obj_parent *)&Parent->FirstScreen, (obj *)Prev, (obj *)Next, (ldat *)0);
 	Screen->All = Parent;
     }
 }
 
 static void RemoveScreen(screen *Screen) {
     if (Screen->All) {
-	RemoveGeneric((obj *)Screen, (obj_parent *)&Screen->All->FirstScreen, (uldat *)0);
+	RemoveGeneric((obj *)Screen, (obj_parent *)&Screen->All->FirstScreen, (ldat *)0);
 	Screen->All = (all *)0;
     }
 }
 
 static void DeleteScreen(screen *Screen) {
     if (Screen) {
-	while (Screen->FirstWindow)
-	    Act(UnMap,Screen->FirstWindow)(Screen->FirstWindow);
+	while (Screen->FirstW) {
+	    if (IS_WINDOW(Screen->FirstW))
+		Act(UnMap,(window *)Screen->FirstW)((window *)Screen->FirstW);
+	    else
+		Delete(Screen->FirstW);
+	}
 	Remove(Screen);
 	DeleteObj((obj *)Screen);
     }
@@ -1853,12 +1459,12 @@ static menu *SearchMenuScreen(screen *Screen) {
 
 static screen *SearchScreen(dat j) {
     screen *CurrScreen;
-    byte VirtScrFound=FALSE;
+    byte VirtScrFound = FALSE;
     
     CurrScreen = All->FirstScreen;
     while (CurrScreen &&
-	  !(VirtScrFound = (j+1 >= (dat)CurrScreen->YLimit)))
-	CurrScreen=CurrScreen->Next;
+	  !(VirtScrFound = (j >= (dat)CurrScreen->YLimit)))
+	CurrScreen = CurrScreen->Next;
     
     if (VirtScrFound)
 	return CurrScreen;
@@ -1866,13 +1472,14 @@ static screen *SearchScreen(dat j) {
     return (screen *)0;
 }
 
+    
+
 static void FocusScreen(screen *tScreen) {
     screen *Screen = All->FirstScreen;
     if (tScreen && Screen != tScreen) {
 	MoveFirst(Screen, All, tScreen);
-	DrawArea((screen *)0, (window *)0, (window *)0, (gadget *)0, (gadget *)0,
-		 0, (dat)Min2(Screen->YLimit, tScreen->YLimit)-(dat)1,
-		 MAXDAT, MAXDAT, FALSE);
+	DrawArea2((screen *)0, (widget *)0, (widget *)0,
+		 0, Min2(Screen->YLimit, tScreen->YLimit), MAXDAT, MAXDAT, FALSE);
 	UpdateCursor();
     }
 }
@@ -1895,21 +1502,21 @@ static void DrawMenuScreen(screen *Screen, dat Xstart, dat Xend) {
     screen *fScreen;
     menu *Menu;
     menuitem *Item;
-    dat ScreenWidth, ScreenHeight, i, j, x;
+    dat DWidth, DHeight, i, j, x;
     byte Color, Font, Select, State, MenuInfo;
     
     if (!Screen || !Screen->All || Xstart>Xend)
 	return;
     
-    j=(dat)Screen->YLimit;
-    ScreenWidth=Screen->ScreenWidth;
-    ScreenHeight=Screen->ScreenHeight;
+    j = Screen->YLimit;
+    DWidth = All->DisplayWidth;
+    DHeight = All->DisplayHeight;
     
-    if (!j-- || j>=ScreenHeight || Xstart>=ScreenWidth || Xend<(dat)0 || Xstart > Xend)
+    if (j<0 || j>=DHeight || Xstart>=DWidth || Xstart > Xend)
 	return;
     
     for (fScreen = All->FirstScreen; fScreen && fScreen != Screen; fScreen = fScreen->Next) {
-	if (fScreen->YLimit + 1 <= j)
+	if (fScreen->YLimit <= j)
 	    return;
     }
     if (fScreen != Screen)
@@ -1920,19 +1527,19 @@ static void DrawMenuScreen(screen *Screen, dat Xstart, dat Xend) {
     
     MenuInfo = State != STATE_MENU && (All->SetUp->Flags & SETUP_MENUINFO);
     
-    Xstart = Max2(Xstart, (dat)0);
-    Xend   = Min2(Xend, ScreenWidth-(dat)1);
+    Xstart = Max2(Xstart, 0);
+    Xend   = Min2(Xend, DWidth-1);
     
     for (i=Xstart; i<=Xend; i++) {
-	if (ScreenWidth-i<=(dat)2) {
+	if (i+2>=DWidth) {
 	    Color = State == STATE_SCREEN ? Menu->ColSelShtCut : Menu->ColShtCut;
 	    if (XAND(Screen->Attrib, GADGET_BACK_SELECT|GADGET_PRESSED))
 		Color = COL( COLBG(Color), COLFG(Color) );
-	    Font = Screen_Back[(udat)2-(udat)(ScreenWidth-(dat)i)];
+	    Font = Screen_Back[2-(DWidth-i)];
 	}
-	else if (ScreenWidth-i<=(dat)3+lenTWDisplay) {
+	else if (DWidth-i<=(dat)3+lenTWDisplay) {
 	    Color = State == STATE_SCREEN ? Menu->ColSelShtCut : Menu->ColShtCut;
-	    Font = TWDisplay[(udat)3 + lenTWDisplay - (udat)(ScreenWidth - i)];
+	    Font = TWDisplay[3 + lenTWDisplay - (DWidth - i)];
 	    if (!Font) Font = ' ';
 	}
 	else if (MenuInfo && SearchInfo(Menu, i)) {
@@ -1966,7 +1573,7 @@ static void DrawMenuScreen(screen *Screen, dat Xstart, dat Xend) {
 	}
 	if (Screen != All->FirstScreen)
 	    Color = Menu->ColDisabled;
-	Video[i+j*ScreenWidth]=HWATTR(Color, Font);
+	Video[i+j*DWidth]=HWATTR(Color, Font);
     }
     DirtyVideo(Xstart, j, Xend, j);    
 }
@@ -1979,11 +1586,11 @@ static void DeActivateMenuScreen(screen *Screen) {
 static fn_screen _FnScreen = {
     screen_magic, (uldat)sizeof(screen), (uldat)1,
 	CreateScreen,
-	CopyScreen,
 	InsertScreen,
 	RemoveScreen,
 	DeleteScreen,
-	SearchWindow,
+	DrawSelfScreen,
+	(void *)SearchWidget,
 	SearchMenuScreen,
 	SearchScreen,
 	CreateSimpleScreen,
@@ -2016,21 +1623,6 @@ static msg *CreateMsg(fn_msg *Fn_Msg, udat Type, udat EventLen) {
     
 }
 
-static msg *CopyMsg(msg *From, msg *To) {
-    uldat Id = To->Id;
-    /* we allow From->Fn and To->Fn to be different,
-     * as long as they share the same magic */
-    if (From->Fn->Magic == To->Fn->Magic) {
-	From->Fn->Used++;
-	if (!--To->Fn->Used)
-	    FreeMem(To->Fn);
-	CopyMem(From, To, From->Len + Delta);
-	To->Id = Id;
-	return To;
-    }
-    return (msg *)0;
-}
-
 #undef Delta
 
 static void InsertMsg(msg *Msg, msgport *Parent, msg *Prev, msg *Next) {
@@ -2040,14 +1632,14 @@ static void InsertMsg(msg *Msg, msgport *Parent, msg *Prev, msg *Next) {
 	if (!Parent->FirstMsg && Parent->All)
 	    MoveFirst(MsgPort, All, Parent);
 	
-	InsertGeneric((obj *)Msg, (obj_parent *)&Parent->FirstMsg, (obj *)Prev, (obj *)Next, (uldat *)0);
+	InsertGeneric((obj *)Msg, (obj_parent *)&Parent->FirstMsg, (obj *)Prev, (obj *)Next, (ldat *)0);
 	Msg->MsgPort = Parent;
     }
 }
 
 static void RemoveMsg(msg *Msg) {
     if (Msg->MsgPort) {
-	RemoveGeneric((obj *)Msg, (obj_parent *)&Msg->MsgPort->FirstMsg, (uldat *)0);
+	RemoveGeneric((obj *)Msg, (obj_parent *)&Msg->MsgPort->FirstMsg, (ldat *)0);
 	Msg->MsgPort = (msgport *)0;
     }
 }
@@ -2062,7 +1654,6 @@ static void DeleteMsg(msg *Msg) {
 static fn_msg _FnMsg = {
     msg_magic, (uldat)sizeof(msg), (uldat)1,
 	CreateMsg,
-	CopyMsg,
 	InsertMsg,
 	RemoveMsg,
 	DeleteMsg
@@ -2103,14 +1694,9 @@ static msgport *CreateMsgPort(fn_msgport *Fn_MsgPort, byte NameLen, CONST byte *
     return MsgPort;
 }
 
-static msgport *CopyMsgPort(msgport *From, msgport *To) {
-    /* quite meaningless */
-    return (msgport *)0;
-}
-
 static void InsertMsgPort(msgport *MsgPort, all *Parent, msgport *Prev, msgport *Next) {
     if (!MsgPort->All && Parent) {
-	InsertGeneric((obj *)MsgPort, (obj_parent *)&Parent->FirstMsgPort, (obj *)Prev, (obj *)Next, (uldat *)0);
+	InsertGeneric((obj *)MsgPort, (obj_parent *)&Parent->FirstMsgPort, (obj *)Prev, (obj *)Next, (ldat *)0);
 	MsgPort->All = Parent;
     }
 }
@@ -2119,7 +1705,7 @@ static void RemoveMsgPort(msgport *MsgPort) {
     if (MsgPort->All) {
 	if (All->RunMsgPort == MsgPort)
 	    All->RunMsgPort = MsgPort->Next;
-	RemoveGeneric((obj *)MsgPort, (obj_parent *)&MsgPort->All->FirstMsgPort, (uldat *)0);
+	RemoveGeneric((obj *)MsgPort, (obj_parent *)&MsgPort->All->FirstMsgPort, (ldat *)0);
 	MsgPort->All = (all *)0;
     }
 }
@@ -2143,7 +1729,6 @@ static void DeleteMsgPort(msgport *MsgPort) {
 static fn_msgport _FnMsgPort = {
     msgport_magic, (uldat)sizeof(msgport), (uldat)1,
 	CreateMsgPort,
-	CopyMsgPort,
 	InsertMsgPort,
 	RemoveMsgPort,
 	DeleteMsgPort,
@@ -2188,21 +1773,16 @@ mutex *CreateMutex(fn_mutex *Fn_Mutex, msgport *MsgPort,
     return NewMutex;
 }
 
-/* you can't Copy a mutex */
-static mutex *CopyMutex(mutex *From, mutex *To) {
-    return (mutex *)0;
-}
-
 static void InsertMutex(mutex *Mutex, all *Parent, mutex *Prev, mutex *Next) {
     if (!Mutex->All && Parent) {
-	InsertGeneric((obj *)Mutex, (obj_parent *)&Mutex->All->FirstMutex, (obj *)Prev, (obj *)Next, (uldat *)0);
+	InsertGeneric((obj *)Mutex, (obj_parent *)&Mutex->All->FirstMutex, (obj *)Prev, (obj *)Next, (ldat *)0);
 	Mutex->All = Parent;
     }
 }
 
 static void RemoveMutex(mutex *Mutex) {
     if (Mutex->All) {
-	RemoveGeneric((obj *)Mutex, (obj_parent *)&Mutex->All->FirstMutex, (uldat *)0);
+	RemoveGeneric((obj *)Mutex, (obj_parent *)&Mutex->All->FirstMutex, (ldat *)0);
 	Mutex->All = (all *)0;
     }
 }
@@ -2217,14 +1797,34 @@ static void DeleteMutex(mutex *Mutex) {
 
 static void OwnMutex(mutex *Mutex, msgport *Parent) {
     if (!Mutex->MsgPort && Parent) {
-	OwnGeneric((obj *)Mutex, (obj_parent *)&Parent->FirstMutex);
+
+	if ((Mutex->OPrev = Parent->LastMutex))
+	    Parent->LastMutex->ONext = Mutex;
+	else
+	    Parent->FirstMutex = Mutex;	
+    
+	Mutex->ONext = (mutex *)0;
+	Parent->LastMutex = Mutex;
+	
 	Mutex->MsgPort = Parent;
     }
 }
 
 static void DisOwnMutex(mutex *Mutex) {
-    if (Mutex->MsgPort) {
-	DisOwnGeneric((obj *)Mutex, (obj_parent *)&Mutex->MsgPort->FirstMutex);
+    msgport *Parent;
+    if ((Parent = Mutex->MsgPort)) {
+	if (Mutex->OPrev)
+	    Mutex->OPrev->ONext = Mutex->ONext;
+	else if (Parent->FirstMutex == Mutex)
+	    Parent->FirstMutex = Mutex->ONext;
+    
+	if (Mutex->ONext)
+	    Mutex->ONext->OPrev = Mutex->OPrev;
+	else if (Parent->LastMutex == Mutex)
+	    Parent->LastMutex = Mutex->OPrev;
+    
+	Mutex->OPrev = Mutex->ONext = (mutex *)0;
+	
 	Mutex->MsgPort = (msgport *)0;
     }
 }
@@ -2232,7 +1832,6 @@ static void DisOwnMutex(mutex *Mutex) {
 static fn_mutex _FnMutex = {
     mutex_magic, (uldat)sizeof(mutex), (uldat)1,
 	CreateMutex,
-	CopyMutex,
 	InsertMutex,
 	RemoveMutex,
 	DeleteMutex,
@@ -2261,14 +1860,9 @@ static module *CreateModule(fn_module *Fn_Module, uldat NameLen, CONST byte *Nam
     return Module;
 }
 
-static module *CopyModule(module *From, module *To) {
-    /* what for ? */
-    return (module *)0;
-}
-
 static void InsertModule(module *Module, all *Parent, module *Prev, module *Next) {
     if (!Module->All && Parent) {
-	InsertGeneric((obj *)Module, (obj_parent *)&Parent->FirstModule, (obj *)Prev, (obj *)Next, (uldat *)0);
+	InsertGeneric((obj *)Module, (obj_parent *)&Parent->FirstModule, (obj *)Prev, (obj *)Next, (ldat *)0);
 	Module->All = Parent;
 
 	if (All->FnHookModule)
@@ -2278,7 +1872,7 @@ static void InsertModule(module *Module, all *Parent, module *Prev, module *Next
 
 static void RemoveModule(module *Module) {
     if (Module->All) {
-	RemoveGeneric((obj *)Module, (obj_parent *)&Module->All->FirstModule, (uldat *)0);
+	RemoveGeneric((obj *)Module, (obj_parent *)&Module->All->FirstModule, (ldat *)0);
 	Module->All = (all *)0;
 
 	if (All->FnHookModule)
@@ -2300,7 +1894,6 @@ static void DeleteModule(module *Module) {
 static fn_module _FnModule = {
     module_magic, (uldat)sizeof(module), (uldat)1,
 	CreateModule,
-	CopyModule,
 	InsertModule,
 	RemoveModule,
 	DeleteModule,
@@ -2339,13 +1932,9 @@ static display_hw *CreateDisplayHW(fn_display_hw *Fn_DisplayHW, uldat NameLen, C
     return DisplayHW;
 }
 
-static display_hw *CopyDisplayHW(display_hw *From, display_hw *To) {
-    return (display_hw *)0;
-}
-
 static void InsertDisplayHW(display_hw *DisplayHW, all *Parent, display_hw *Prev, display_hw *Next) {
     if (!DisplayHW->All && Parent) {
-	InsertGeneric((obj *)DisplayHW, (obj_parent *)&Parent->FirstDisplayHW, (obj *)Prev, (obj *)Next, (uldat *)0);
+	InsertGeneric((obj *)DisplayHW, (obj_parent *)&Parent->FirstDisplayHW, (obj *)Prev, (obj *)Next, (ldat *)0);
 	DisplayHW->All = Parent;
 #if 0
 	/*
@@ -2360,7 +1949,7 @@ static void InsertDisplayHW(display_hw *DisplayHW, all *Parent, display_hw *Prev
 
 static void RemoveDisplayHW(display_hw *DisplayHW) {
     if (DisplayHW->All) {
-	RemoveGeneric((obj *)DisplayHW, (obj_parent *)&DisplayHW->All->FirstDisplayHW, (uldat *)0);
+	RemoveGeneric((obj *)DisplayHW, (obj_parent *)&DisplayHW->All->FirstDisplayHW, (ldat *)0);
 	DisplayHW->All = (all *)0;
 
     	if (All->FnHookDisplayHW)
@@ -2392,7 +1981,7 @@ static void DeleteDisplayHW(display_hw *DisplayHW) {
 		RunNoHW();
 	    else if (All->FirstDisplayHW && ResizeDisplay()) {
 		/* a bit expensive... but for correctness this must stay here */
-		DrawArea(FULL_SCREEN);
+		DrawArea2(FULL_SCREEN);
 		UpdateCursor();
 	    }
 	}
@@ -2403,7 +1992,6 @@ static void DeleteDisplayHW(display_hw *DisplayHW) {
 static fn_display_hw _FnDisplayHW = {
     display_hw_magic, (uldat)sizeof(display_hw), (uldat)1,
 	CreateDisplayHW,
-	CopyDisplayHW,
 	InsertDisplayHW,
 	RemoveDisplayHW,
 	DeleteDisplayHW,
@@ -2414,8 +2002,6 @@ static fn_display_hw _FnDisplayHW = {
 
 fn Fn = {
 	&_FnObj,
-	&_FnArea,
-	&_FnAreaWin,
 	&_FnRow,
 	&_FnGadget,
 	&_FnWindow,

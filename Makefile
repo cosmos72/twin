@@ -12,12 +12,6 @@ endif
 include MakeRules
 #
 
-torture: nullconfig scripts.dir
-	@echo Starting torture test ...
-	@echo
-	if [ ! -f conf/config.backup ]; then cp conf/config.status conf/config.backup; fi
-	scripts/Torture $(MAKE) `cat conf/config.list` > /dev/null
-	
 boot.dir: $(CONF)
 
 lib.dir: $(CONF)
@@ -37,7 +31,12 @@ else
   install-clients:
 endif
 
-
+#
+Torture: torture
+	$(MAKE) Torture -C lib
+	$(MAKE) Torture -C server
+	$(MAKE) Torture -C clients
+	
 #
 install: all install-lib install-clients
 	$(MAKE) install -C server

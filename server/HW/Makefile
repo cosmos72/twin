@@ -134,6 +134,8 @@ modules: $(MODBINS)
 hw_X.so: hw_X11.so
 	$(LN) $< $@
 
+Torture: torture
+
 clean:
 	rm -f .*.flags .*.link .*.arlib hw.a hw_*.so $(ALLOBJS)
 

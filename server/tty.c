@@ -6,7 +6,7 @@
  *    Copyright (C) 1991, 1992  Linus Torvalds
  *
  *  all the rest written by twin author:
- *    Copyright (C) 1993-2000  Massimiliano Ghilardi
+ *    Copyright (C) 1993-2001  Massimiliano Ghilardi
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -37,9 +37,9 @@ static ttydata *Data;
 static udat *Flags;
 static udat kbdFlags = TTY_AUTOWRAP, defaultFlags = TTY_AUTOWRAP;
 
-static dat   dirty[2][4];
-static uldat dirtyS[2];
-static byte  dirtyN;
+static dat  dirty[2][4];
+static ldat dirtyS[2];
+static byte dirtyN;
 
 #define ColText		Win->ColText
 #define State		Data->State
@@ -72,6 +72,9 @@ static byte  dirtyN;
 #define saveG		Data->saveG
 #define saveG0		Data->saveG0
 #define saveG1		Data->saveG1
+#define newLen		Data->newLen
+#define newMax		Data->newMax
+#define newTitle	Data->newTitle
 
 
 /* A bitmap for codes <32. A bit of 1 indicates that the code
@@ -92,10 +95,10 @@ static byte  dirtyN;
  * for better cleannes, dirty_tty()
  * should be used *before* actually touching Win->Contents[]
  */
-void dirty_tty(udat x1, udat y1, udat x2, udat y2) {
+static void dirty_tty(dat x1, dat y1, dat x2, dat y2) {
     byte i;
-    uldat S[2] = {0, 0};
-    udat xy[2][4];
+    ldat S[2] = {0, 0};
+    dat xy[2][4];
     
     if (dirtyN == MAXBYTE || x1 > x2 || x1 >= SizeX || y1 > y2 || y1 >= SizeY)
 	return;
@@ -120,7 +123,7 @@ void dirty_tty(udat x1, udat y1, udat x2, udat y2) {
 	dirtyN = MAXBYTE;
 	return;
     } else if (i < dirtyN) {
-	CopyMem(xy[i], dirty[i], 4*sizeof(udat));
+	CopyMem(xy[i], dirty[i], 4*sizeof(dat));
     } else {
 	dirtyN++;
 	dirty[i][0] = x1;
@@ -133,22 +136,22 @@ void dirty_tty(udat x1, udat y1, udat x2, udat y2) {
 
 static void flush_tty(void) {
     byte doupdate = FALSE;
-    udat i;
+    dat i;
     
     /* first, draw on screen whatever changed in the window */
     if (dirtyN) {
 	if (dirtyN == MAXBYTE)
-	    DrawTextWindow(Win, 0, ScrollBack, SizeX-1, SizeY-1 + ScrollBack);
+	    DrawLogicWindow2(Win, 0, ScrollBack, SizeX-1, SizeY-1 + ScrollBack);
 	else for (i=0; i<dirtyN; i++)
-	    DrawTextWindow(Win, dirty[i][0], dirty[i][1] + ScrollBack, dirty[i][2], dirty[i][3] + ScrollBack);
+	    DrawLogicWindow2(Win, dirty[i][0], dirty[i][1] + ScrollBack, dirty[i][2], dirty[i][3] + ScrollBack);
 	dirtyN = 0;
     }
     
     /* then update cursor */
-    if (Win->CurX != (uldat)X || Win->CurY != (uldat)Y + ScrollBack) {
+    if (Win->CurX != (ldat)X || Win->CurY != (ldat)Y + ScrollBack) {
 
-	Win->CurX = (uldat)X;
-	Win->CurY = (uldat)Y + ScrollBack;
+	Win->CurX = (ldat)X;
+	Win->CurY = (ldat)Y + ScrollBack;
 	Pos = Base + Win->CurX + (Win->CurY + Win->NumRowSplit) * SizeX;
 	if (Pos >= Split) Pos -= Split - Base;
 	
@@ -173,7 +176,7 @@ static void flush_tty(void) {
 
 static void invert_screen(void) {
     hwattr a, *p = Start;
-    uldat count;
+    ldat count;
     
     dirty_tty(0, 0, SizeX-1, SizeY-1);
     count = SizeX * SizeY;
@@ -185,7 +188,7 @@ static void invert_screen(void) {
     }
 }
 
-static void insert_char(uldat nr) {
+static void insert_char(ldat nr) {
     hwattr *p, *q = Pos;
 
     p = q + SizeX - X - nr;
@@ -201,8 +204,8 @@ static void insert_char(uldat nr) {
     *Flags &= ~TTY_NEEDWRAP;
 }
 
-INLINE void delete_char(uldat nr) {
-    udat i;
+INLINE void delete_char(ldat nr) {
+    dat i;
     hwattr *p = Pos;
     
     i = SizeX - X - nr;
@@ -226,21 +229,21 @@ INLINE void delete_char(uldat nr) {
  * bounds, the cursor is placed at the nearest margin.
  */
 static void goto_xy(ldat new_x, ldat new_y) {
-    udat min_y, max_y;
+    dat min_y, max_y;
     
     if (new_x < 0)
 	X = 0;
     else if (new_x >= (ldat)SizeX)
 	X = SizeX - 1;
     else
-	X = (udat)new_x;
+	X = (dat)new_x;
     
-    if (*Flags & TTY_ABSORIG) {
-	min_y = 0;
-	max_y = SizeY - 1;
-    } else {
+    if (*Flags & TTY_RELORIG) {
 	min_y = Top;
 	max_y = Bottom;
+    } else {
+	min_y = 0;
+	max_y = SizeY;
     }
 
     if (new_y < (ldat)min_y)
@@ -248,18 +251,18 @@ static void goto_xy(ldat new_x, ldat new_y) {
     else if (new_y >= (ldat)max_y)
 	Y = max_y - 1;
     else
-	Y = (udat)new_y;
+	Y = (dat)new_y;
     
     *Flags &= ~TTY_NEEDWRAP;
     
     /* never flush here, just update Pos */
-    Pos = Start + X + (uldat)Y * SizeX;
+    Pos = Start + X + (ldat)Y * SizeX;
     if (Pos >= Split) Pos -= Split - Base;
 }
 
-/* for absolute user moves, when TTY_ABSORIG (decom) is set */
+/* for absolute user moves, when TTY_RELORIG (decom) is set */
 INLINE void goto_axy(ldat new_x, ldat new_y) {
-    goto_xy(new_x, *Flags & TTY_ABSORIG ? (Top+new_y) : new_y);
+    goto_xy(new_x, *Flags & TTY_RELORIG ? (Top+new_y) : new_y);
 }
 
 /* WARNING: fwd_copy() doesn't call dirty_tty(), you must call it manually! */
@@ -310,7 +313,7 @@ static void fill(hwattr *s, hwattr c, ldat len) {
     }
 }
 
-static void scrollup(udat t, udat b, dat nr) {
+static void scrollup(dat t, dat b, dat nr) {
     hwattr *d, *s;
     byte accel = FALSE;
     
@@ -320,7 +323,7 @@ static void scrollup(udat t, udat b, dat nr) {
 	return;
 
     /* try to accelerate this */
-    if (Win == All->FirstScreen->FirstWindow) {
+    if ((widget *)Win == All->FirstScreen->FirstW) {
 	accel = TRUE;
 	flush_tty();
     } else
@@ -355,7 +358,7 @@ static void scrollup(udat t, udat b, dat nr) {
 	ScrollFirstWindowArea(0, t, SizeX-1, b-1, 0, -nr);
 }
 
-static void scrolldown(udat t, udat b, dat nr) {
+static void scrolldown(dat t, dat b, dat nr) {
     hwattr *s;
     ldat step;
     byte accel = FALSE;
@@ -366,7 +369,7 @@ static void scrolldown(udat t, udat b, dat nr) {
 	return;
 
     /* try to accelerate this */
-    if (Win == All->FirstScreen->FirstWindow) {
+    if ((widget *)Win == All->FirstScreen->FirstW) {
 	accel = TRUE;
 	flush_tty();
     } else
@@ -431,23 +434,23 @@ INLINE void del(void) {
 }
 
 static void csi_J(int vpar) {
-    uldat count;
+    ldat count;
     hwattr *start;
     
     switch (vpar) {
       case 0:	/* erase from cursor to end of display */
 	dirty_tty(0, Y, SizeX-1, SizeY-1);
-	count = (SizeY - Y) * (uldat)SizeX + SizeX - X;
+	count = (SizeY - Y) * (ldat)SizeX + SizeX - X;
 	start = Pos;
 	break;
       case 1:	/* erase from start to cursor */
 	dirty_tty(0, 0, SizeX-1, Y);
-	count = Y * (uldat)SizeX + X;
+	count = Y * (ldat)SizeX + X;
 	start = Start;
 	break;
       case 2: /* erase whole display */
 	dirty_tty(0, 0, SizeX-1, SizeY-1);
-	count = (uldat)SizeX * SizeY;
+	count = (ldat)SizeX * SizeY;
 	start = Start;
 	break;
       default:
@@ -459,7 +462,7 @@ static void csi_J(int vpar) {
 }
 
 static void csi_K(int vpar) {
-    udat count;
+    dat count;
     hwattr *start;
     
     switch (vpar) {
@@ -530,7 +533,7 @@ INLINE byte applyG(byte c) {
 }
     
 INLINE void csi_m(void) {
-    udat i;
+    dat i;
     udat effects = Effects;
     hwcol fg = COLFG(ColText), bg = COLBG(ColText);
     
@@ -629,7 +632,7 @@ INLINE void csi_m(void) {
 }
 
 static void respond_string(byte *p) {
-    uldat Len = strlen(p);
+    ldat Len = strlen(p);
     
     /* the remote program may be directly attached to the window */
     if (!RemoteWindowWriteQueue(Win, Len, p)) {
@@ -656,7 +659,7 @@ static void respond_string(byte *p) {
 
 static void cursor_report(void) {
     byte buf[40];
-    sprintf(buf, "\033[%d;%dR", Y + (*Flags & TTY_ABSORIG ? Top+1 : 1), X+1);
+    sprintf(buf, "\033[%d;%dR", Y + (*Flags & TTY_RELORIG ? Top+1 : 1), X+1);
     respond_string(buf);
 }
 
@@ -672,7 +675,7 @@ INLINE void respond_ID(void) {
 }
 
 static void set_mode(byte on_off) {
-    udat i;
+    dat i;
     
     for (i=0; i<=nPar; i++)
 	
@@ -692,7 +695,7 @@ static void set_mode(byte on_off) {
 	    invert_screen();
 	    break;
 	  case 6:			/* Origin relative/absolute */
-	    CHANGE_BIT(TTY_ABSORIG, on_off);
+	    CHANGE_BIT(TTY_RELORIG, on_off);
 	    goto_axy(0,0);
 	    break;
 	  case 7:			/* Autowrap on/off */
@@ -776,44 +779,44 @@ static void setterm_command(void) {
     }
 }
 
-INLINE void insert_line(uldat nr) {
+INLINE void insert_line(ldat nr) {
    scrolldown(Y, Bottom, nr);
    *Flags &= ~TTY_NEEDWRAP;
 }
 
 
-INLINE void delete_line(uldat nr) {
+INLINE void delete_line(ldat nr) {
    scrollup(Y, Bottom, nr);
    *Flags &= ~TTY_NEEDWRAP;
 }
 
-INLINE void csi_at(uldat nr) {
-    if (nr > (uldat)SizeX - X)
-	nr = (uldat)SizeX - X;
+INLINE void csi_at(ldat nr) {
+    if (nr > (ldat)SizeX - X)
+	nr = (ldat)SizeX - X;
     else if (!nr)
 	nr = 1;
     insert_char(nr);
 }
 
-INLINE void csi_L(uldat nr) {
-    if (nr > (uldat)SizeY - Y)
-	nr = (uldat)SizeY - Y;
+INLINE void csi_L(ldat nr) {
+    if (nr > (ldat)SizeY - Y)
+	nr = (ldat)SizeY - Y;
     else if (!nr)
 	nr = 1;
     insert_line(nr);
 }
 
-INLINE void csi_P(uldat nr) {
-    if (nr > (uldat)SizeX - X)
-	nr = (uldat)SizeX - X;
+INLINE void csi_P(ldat nr) {
+    if (nr > (ldat)SizeX - X)
+	nr = (ldat)SizeX - X;
     else if (!nr)
 	nr = 1;
     delete_char(nr);
 }
 
-INLINE void csi_M(uldat nr) {
-    if (nr > (uldat)SizeY - Y)
-	nr = (uldat)SizeY - Y;
+INLINE void csi_M(ldat nr) {
+    if (nr > (ldat)SizeY - Y)
+	nr = (ldat)SizeY - Y;
     else if (!nr)
 	nr = 1;
     delete_line(nr);
@@ -885,6 +888,69 @@ static void reset_tty(byte do_clear) {
 	csi_J(2);
 }
 
+static byte grow_newtitle(void) {
+    ldat _Max;
+    byte *_Title;
+    if (newMax < MAXDAT) {
+	_Max = ((ldat)newMax + (newMax >> 1) + 3) | All->SetUp->MinAllocSize;
+	if (_Max > MAXDAT)
+	    _Max = MAXDAT;
+	if ((_Title = ReAllocMem(newTitle, _Max))) {
+	    newTitle = _Title;
+	    newMax = _Max;
+	    return TRUE;
+	}
+    }
+    return FALSE;
+}
+
+static byte insert_newtitle(byte c) {
+    if (newLen < newMax || grow_newtitle()) {
+	newTitle[ newLen++ ] = c;
+	return TRUE;
+    }
+    return FALSE;
+}
+
+static void set_newtitle(void) {
+    widget *P;
+    
+    if (Win->Title)
+	FreeMem(Win->Title);
+
+    /* try to shrink... */
+    if (!(Win->Title = ReAllocMem(newTitle, newLen)))
+	Win->Title = newTitle;
+    Win->LenTitle = newLen;
+    newLen = newMax = 0;
+    newTitle = (byte *)0;
+
+#if 1
+    /*
+     * do not allow changing window borders just because
+     * some untrusted application set a new title
+     */
+    DrawBorderWindow(Win, BORDER_UP);
+#else
+    /* user may have title-dependent borders in ~/.twinrc, honour them: */
+    Win->BorderPattern[0] = Win->BorderPattern[1] = NULL;
+    DrawBorderWindow(Win, BORDER_ANY);
+#endif
+    
+    if ((P = Win->Parent) && IS_SCREEN(P)) {
+	/* need to update window list with new name ? */
+	if (((screen *)P)->FnHookWindow)
+	    ((screen *)P)->FnHookWindow(((screen *)P)->HookWindow);
+    }
+}
+
+static void clear_newtitle(void) {
+    if (newTitle)
+	FreeMem(newTitle);
+    newTitle = (byte *)0;
+    newLen = newMax = 0;
+}
+
 INLINE void write_ctrl(byte c) {
     /*
      *  Control characters can be used in the _middle_
@@ -894,8 +960,13 @@ INLINE void write_ctrl(byte c) {
       case 0:
 	return;
       case 7:
-	BeepHW();
-	return;
+	if (State != ESxterm_2) {
+	    BeepHW();
+	    return;
+	}
+	set_newtitle();
+	break;
+	
       case 8:
 	bs();
 	return;
@@ -1001,11 +1072,16 @@ INLINE void write_ctrl(byte c) {
       case ESnonstd:
 	if (c=='P') {		/* Palette escape sequence */
 	    nPar = 0 ;
-	    WriteMem((byte *)&Par, 0, NPAR * sizeof(uldat));
+	    WriteMem((byte *)&Par, 0, NPAR * sizeof(ldat));
 	    State = ESpalette;
 	    return;
 	} else if (c=='R')	/* Reset palette */
 	    ResetPaletteHW();
+	else if (c=='2') {
+	    /* may be xterm set window title */
+	    State = ESxterm_1;
+	    return;
+	}
 	break;
 
       case ESpalette:
@@ -1021,7 +1097,7 @@ INLINE void write_ctrl(byte c) {
 
       case ESsquare:
 	Par[0] = nPar = 0;
-	/*WriteMem((byte *)&Par, 0, NPAR * sizeof(uldat));*/
+	/*WriteMem((byte *)&Par, 0, NPAR * sizeof(ldat));*/
 	State = ESgetpars;
 	if (c == '[') { /* Function key */
 	    State = ESfunckey;
@@ -1204,7 +1280,7 @@ INLINE void write_ctrl(byte c) {
 	if (c == '8') {
 	    /* DEC screen alignment test */
 	    dirty_tty(0, 0, SizeX-1, SizeY-1);
-	    fill(Start, HWATTR(ColText, 'E'), (uldat)SizeX * SizeY);
+	    fill(Start, HWATTR(ColText, 'E'), (ldat)SizeX * SizeY);
 	}
 	break;
 	
@@ -1232,17 +1308,32 @@ INLINE void write_ctrl(byte c) {
 	    currG = G1;
 	break;
 	
+      case ESxterm_1:
+	if (c == ';') {
+	    State = ESxterm_2;
+	    return;
+	}
+	break;
+	
+      case ESxterm_2:
+	if (insert_newtitle(c))
+	    return;
+	
       default:
 	break;
     }
 
+    if (newTitle)
+	clear_newtitle();
+    
     State = ESnormal;
 }
 
 window *TtyKbdFocus(window *newWin) {
     udat newFlags;
     window *oldWin;
-    screen *Screen = newWin ? newWin->Screen : All->FirstScreen;
+    widget *P;
+    screen *Screen = newWin && (P=newWin->Parent) && IS_SCREEN(P) ? (screen *)P : All->FirstScreen;
     
     if (Screen) {
 	oldWin = Screen->FocusWindow;
@@ -1273,7 +1364,7 @@ void ForceKbdFocus(void) {
 }
     
 /* this is the main entry point */
-void TtyWriteAscii(window *Window, uldat Len, CONST byte *AsciiSeq) {
+void TtyWriteAscii(window *Window, ldat Len, CONST byte *AsciiSeq) {
     byte c, ok;
 
     if (!Window || !Len)
@@ -1283,13 +1374,13 @@ void TtyWriteAscii(window *Window, uldat Len, CONST byte *AsciiSeq) {
     Win = Window;
     Data = Win->TtyData;
     Flags = &Data->Flags;
-
+    
     if (!SizeX || !SizeY)
 	return;
     
     /* scroll YLogic to bottom */
     if (Win->YLogic < ScrollBack) {
-	if (Win == All->FirstScreen->FirstWindow)
+	if ((widget *)Win == All->FirstScreen->FirstW)
 	    ScrollFirstWindow(0, ScrollBack - Win->YLogic, TRUE);
 	else {
 	    dirty_tty(0, 0, SizeX-1, SizeY-1);
@@ -1340,7 +1431,7 @@ void TtyWriteAscii(window *Window, uldat Len, CONST byte *AsciiSeq) {
 		Pos++;
 	    }
 	    continue;
-	}
+	}	    
 	write_ctrl(c);
 	/* don't flush here, it just decreases performance */
 	/* flush_tty(); */
@@ -1353,8 +1444,8 @@ void TtyWriteAscii(window *Window, uldat Len, CONST byte *AsciiSeq) {
  * this currently wraps at window width
  * so it can write multiple rows at time
  */
-void TtyWriteHWAttr(window *Window, udat x, udat y, uldat len, CONST hwattr *text) {
-    uldat left, max, chunk;
+void TtyWriteHWAttr(window *Window, dat x, dat y, ldat len, CONST hwattr *text) {
+    ldat left, max, chunk;
     hwattr *dst;
     
     if (!Window || Window->Flags & WINFL_INSERT || !len || !text)
@@ -1364,7 +1455,7 @@ void TtyWriteHWAttr(window *Window, udat x, udat y, uldat len, CONST hwattr *tex
     Win = Window;
     Data = Win->TtyData;
     Flags = &Data->Flags;
-
+    
     /*
      * on-the-fly Contents resize. This is a failsafe check...
      * the real one is in WManager and gets called after a window resize
@@ -1372,10 +1463,8 @@ void TtyWriteHWAttr(window *Window, udat x, udat y, uldat len, CONST hwattr *tex
     if (!CheckResizeWindowContents(Window))
 	return;
     
-    if (x >= SizeX)
-	x = SizeX - 1;
-    if (y >= SizeY)
-	y = SizeY - 1;
+    x = Max2(x, 0); x = Min2(x, SizeX - 1);
+    y = Max2(y, 0); y = Min2(y, SizeY - 1);
 
     if (len > (SizeY - y) * SizeX - x)
 	len = (SizeY - y) * SizeX - x;
@@ -1385,7 +1474,7 @@ void TtyWriteHWAttr(window *Window, udat x, udat y, uldat len, CONST hwattr *tex
 
     /* scroll YLogic to bottom */
     if (Win->YLogic < ScrollBack) {
-	if (Win == All->FirstScreen->FirstWindow)
+	if ((widget *)Win == All->FirstScreen->FirstW)
 	    ScrollFirstWindow(0, ScrollBack - Win->YLogic, TRUE);
 	else {
 	    dirty_tty(0, 0, SizeX-1, SizeY-1);

@@ -10,17 +10,17 @@
 extern dat (*ChangedVideo)[2][2];
 extern byte ChangedVideoFlag;
 
-extern udat CursorX, CursorY;
+extern dat CursorX, CursorY;
 extern uldat CursorType;
 
-extern udat ScreenWidth, ScreenHeight;
+extern dat DisplayWidth, DisplayHeight;
 
 extern struct termios ttysave;
 
 void FillOldVideo(dat Xstart, dat Ystart, dat Xend, dat Yend, hwattr Attr);
 void saveDisplaySize(void);
 
-void NeedRedrawVideo(udat Left, udat Up, udat Right, udat Down);
+void NeedRedrawVideo(dat Left, dat Up, dat Right, dat Down);
 
 extern display_hw *HW;
 	    

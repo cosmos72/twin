@@ -1,7 +1,7 @@
 /*
  *  hw_X11.c  --  functions to let twin display on X11
  *
- *  Copyright (C) 1999-2000 by Massimiliano Ghilardi
+ *  Copyright (C) 1999-2001 by Massimiliano Ghilardi
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -30,6 +30,18 @@
 #include <X11/Xatom.h>
 #include <X11/Xmd.h>                /* CARD32 */
 
+/*
+ * a user reported his system lacks DefaultRootWindow() ...
+ */
+#ifndef DefaultRootWindow
+# define DefaultRootWindow(xdpy) XDefaultRootWindow(xdpy)
+#endif
+#ifndef DefaultScreen
+# define DefaultScreen(xdpy) XDefaultScreen(xdpy)
+#endif
+#ifndef DefaultDepth
+# define DefaultDepth(xdpy,xscreen) XDefaultDepth(xdpy,xscreen)
+#endif
 
 /*
  * I always said X11 Selection is a nightmare... this is the worst bug I have ever seen:
@@ -198,12 +210,22 @@ static void X11_Configure(udat resource, byte todefault, udat value) {
     
 /* convert an X11 KeySym into a libTw key code */
 
-static udat X11_LookupKey(XKeyEvent *ev, udat *len, char *seq) {
+static udat X11_LookupKey(XKeyEvent *ev, udat *ShiftFlags, udat *len, char *seq) {
     static udat lastTW = TW_Null;
     static KeySym sym, lastXK = NoSymbol;
     
     uldat i, low, up;
 
+    *ShiftFlags = 0;
+    if (ev->state & ShiftMask)
+	*ShiftFlags |= KBD_SHIFT_FL;
+    if (ev->state & LockMask)
+	*ShiftFlags |= KBD_NUM_LOCK;
+    if (ev->state & ControlMask)
+	*ShiftFlags |= KBD_CTRL_FL;
+    if (ev->state & Mod1Mask)
+	*ShiftFlags |= KBD_ALT_FL;
+    
     *len = XLookupString(ev, seq, *len, &sym, NULL);
 
     if (sym == XK_BackSpace && ev->state & (ControlMask|Mod1Mask)) {
@@ -251,13 +273,13 @@ static udat X11_LookupKey(XKeyEvent *ev, udat *len, char *seq) {
 static void X11_HandleEvent(XEvent *event) {
     static byte seq[SMALLBUFF];
     dat x, y, dx, dy;
-    udat len = SMALLBUFF, TW_key;
+    udat len = SMALLBUFF, TW_key, ShiftFlags;
 
     if (event->xany.window == xwindow) switch (event->type) {
       case KeyPress:
-	TW_key = X11_LookupKey(&event->xkey, &len, seq);
+	TW_key = X11_LookupKey(&event->xkey, &ShiftFlags, &len, seq);
 	if (TW_key != TW_Null)
-	    KeyboardEventCommon(TW_key, len, seq);
+	    KeyboardEventCommon(TW_key, ShiftFlags, len, seq);
 	break;
       case KeyRelease:
 	break;
@@ -269,11 +291,11 @@ static void X11_HandleEvent(XEvent *event) {
 	
 	x = event->xbutton.x / xwfont;
 	if (x < 0) x = 0;
-	else if (x >= ScreenWidth) x = ScreenWidth - 1;
+	else if (x >= DisplayWidth) x = DisplayWidth - 1;
 	
 	y = event->xbutton.y / xhfont;
 	if (y < 0) y = 0;
-	else if (y >= ScreenHeight) y = ScreenHeight - 1;
+	else if (y >= DisplayHeight) y = DisplayHeight - 1;
 	
 	if (event->type == MotionNotify) {
 	    dx = event->xbutton.x < xwfont/2 ? -1 : xwidth - event->xbutton.x <= xwfont/2 ? 1 : 0;
@@ -378,8 +400,8 @@ INLINE void X11_Mogrify(dat x, dat y, uldat len) {
     byte buf[SMALLBUFF];
     int xbegin = x * xwfont, ybegin = y * xhfont;
     
-    V = Video + x + y * ScreenWidth;
-    oV = OldVideo + x + y * ScreenWidth;
+    V = Video + x + y * DisplayWidth;
+    oV = OldVideo + x + y * DisplayWidth;
     
     for (_col = ~HWCOL(*V); len; x++, V++, oV++, len--) {
 	col = HWCOL(*V);
@@ -402,7 +424,7 @@ INLINE void X11_Mogrify(dat x, dat y, uldat len) {
 }
 
 static void X11_HideCursor(dat x, dat y) {
-    hwattr V = Video[x + y * ScreenWidth];
+    hwattr V = Video[x + y * DisplayWidth];
     byte c = HWFONT(V);
     hwcol col = HWCOL(V);
     int xbegin = x * xwfont, ybegin = y * xhfont;
@@ -413,7 +435,7 @@ static void X11_HideCursor(dat x, dat y) {
 #undef XDRAW
 
 static void X11_ShowCursor(uldat type, dat x, dat y) {
-    hwattr V = Video[x + y * ScreenWidth];
+    hwattr V = Video[x + y * DisplayWidth];
     hwcol v;
     byte c;
     udat i;
@@ -452,15 +474,15 @@ static void X11_FlushVideo(void) {
     udat i;
     byte c = ChangedVideoFlag &&
 	(ValidOldVideo
-	 ? Video[HW->XY[0] + HW->XY[1] * ScreenWidth]
-	 != OldVideo[HW->XY[0] + HW->XY[1] * ScreenWidth] 
+	 ? Video[HW->XY[0] + HW->XY[1] * DisplayWidth]
+	 != OldVideo[HW->XY[0] + HW->XY[1] * DisplayWidth] 
 	 : Plain_isDirtyVideo(HW->XY[0], HW->XY[1]));
     /* TRUE iff the cursor will be erased by burst */
     
     
     /* first burst all changes */
     if (ChangedVideoFlag) {
-	for (i=0; i<ScreenHeight*2; i++) {
+	for (i=0; i<DisplayHeight*2; i++) {
 	    start = ChangedVideo[i>>1][i&1][0];
 	    end   = ChangedVideo[i>>1][i&1][1];
 	    
@@ -494,16 +516,16 @@ static void X11_FlushHW(void) {
     clrFlush();
 }
 
-static void X11_DetectSize(udat *x, udat *y) {
+static void X11_DetectSize(dat *x, dat *y) {
     *x = HW->X = xwidth  / xwfont;
     *y = HW->Y = xheight / xhfont;
 }
 
-static void X11_CheckResize(udat *x, udat *y) {
+static void X11_CheckResize(dat *x, dat *y) {
     /* always ok */
 }
 
-static void X11_Resize(udat x, udat y) {
+static void X11_Resize(dat x, dat y) {
     if (x != HW->X || y != HW->Y) {
 	XResizeWindow(xdisplay, xwindow,
 		      xwidth = xwfont * (HW->X = x),
@@ -772,7 +794,7 @@ static int X11_Die(Display *d) {
 }
 #endif
 
-#ifdef MODULE
+#ifdef CONF_THIS_MODULE
 static
 #endif
 byte X11_InitHW(void) {
@@ -992,7 +1014,7 @@ byte X11_InitHW(void) {
     return FALSE;
 }
 
-#ifdef MODULE
+#ifdef CONF_THIS_MODULE
 
 #include "version.h"
 MODULEVERSION;
@@ -1006,4 +1028,4 @@ byte InitModule(module *Module) {
 void QuitModule(module *Module) {
 }
 
-#endif /* MODULE */
+#endif /* CONF_THIS_MODULE */

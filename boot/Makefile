@@ -34,7 +34,8 @@ include $(TOPDIR)/MakeRules
 
 sizes.h: getsizes.c $(TOPDIR)/include/twin.h
 	$(CC) $(CFLAGS) getsizes.c $(LDFLAGS) -o getsizes
-	./getsizes > sizes.h
+	./getsizes > $(TOPDIR)/include/sizes.h
+	$(LN) $(TOPDIR)/include/sizes.h sizes.h
 
 clean:
 	rm -f .*.flags .*.link gmon.out core getsizes $(ALLOBJS)

@@ -1,7 +1,7 @@
 /*
  *  hw_display.c  --  functions to let twin use `twdisplay' as display
  *
- *  Copyright (C) 2000 by Massimiliano Ghilardi
+ *  Copyright (C) 2000-2001 by Massimiliano Ghilardi
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -50,15 +50,15 @@ static void display_Configure(udat resource, byte todefault, udat value) {
 	
     ev->X = resource;
     if (todefault)
-	ev->Y = MAXUDAT;
+	ev->Y = -1;
     else
-	ev->Y = value;
+	ev->Y = (dat)value;
     Ext(Socket,SendMsg)(display, Msg);
     setFlush();
 }
 
 /* handle messages from twdisplay */
-static void display_KeyboardEvent(int fd, display_hw *hw) {
+static void display_HandleEvent(display_hw *hw) {
     msg *hMsg;
     event_any *Event;
     dat x, y, dx, dy;
@@ -72,13 +72,14 @@ static void display_KeyboardEvent(int fd, display_hw *hw) {
 	
 	switch (hMsg->Type) {
 	  case MSG_WINDOW_KEY:
-	    KeyboardEventCommon(Event->EventKeyboard.Code, Event->EventKeyboard.SeqLen, Event->EventKeyboard.AsciiSeq);
+	    KeyboardEventCommon(Event->EventKeyboard.Code, Event->EventKeyboard.ShiftFlags,
+				Event->EventKeyboard.SeqLen, Event->EventKeyboard.AsciiSeq);
 	    break;
 	  case MSG_WINDOW_MOUSE:
 	    x = Event->EventMouse.X;
 	    y = Event->EventMouse.Y;
-	    dx = x == 0 ? -1 : x == ScreenWidth - 1 ? 1 : 0;
-	    dy = y == 0 ? -1 : y == ScreenHeight - 1 ? 1 : 0;
+	    dx = x == 0 ? -1 : x == DisplayWidth - 1 ? 1 : 0;
+	    dy = y == 0 ? -1 : y == DisplayHeight - 1 ? 1 : 0;
 	    if (dx || dy || x != HW->MouseState.x || y != HW->MouseState.y ||
 		(Event->EventMouse.Code & HOLD_ANY) != HW->MouseState.keys)
 		
@@ -103,10 +104,9 @@ static void display_KeyboardEvent(int fd, display_hw *hw) {
 	    break;
 	  case MSG_SELECTIONREQUEST:
 	    /*
-	     * should never happen, hw_display always transparently passes 
-	     * the real HW Owner of the Selection.
+	     * should never happen, twdisplay uses libTw calls to manage Selection Requests
 	     */
-	    fputs("\ntwin: display_KeyboardEvent(): unexpected SelectionRequest Message from twdisplay!\n", stderr);
+	    fputs("\ntwin: display_HandleEvent(): unexpected SelectionRequest Message from twdisplay!\n", stderr);
 	    fflush(stderr);
 #if 0
 	    TwinSelectionRequest(Event->EventSelectionRequest.Requestor,
@@ -116,10 +116,9 @@ static void display_KeyboardEvent(int fd, display_hw *hw) {
 	    break;
 	  case MSG_SELECTIONNOTIFY:
 	    /*
-	     * should never happen, hw_display always transparently passes 
-	     * the real HW Requestor of the Selection.
+	     * should never happen, twdisplay uses libTw calls to manage Selection Notifies
 	     */
-	    fputs("\ntwin: display_KeyboardEvent(): unexpected SelectionNotify Message from twdisplay!\n", stderr);
+	    fputs("\ntwin: display_HandleEvent(): unexpected SelectionNotify Message from twdisplay!\n", stderr);
 	    fflush(stderr);
 #if 0
 	    TwinSelectionNotify(dRequestor, dReqPrivate,
@@ -132,12 +131,14 @@ static void display_KeyboardEvent(int fd, display_hw *hw) {
 
 	  case MSG_DISPLAY:
 	    switch (Event->EventDisplay.Code) {
-#if 0
+	      case DPY_RedrawVideo:
 		/*
 		 * Not needed, twdisplay keeps its own copy of Video[]
 		 * and never generates DPY_RedrawVideo events
 		 */
-	      case DPY_RedrawVideo:
+		fputs("\ntwin: display_HandleEvent(): unexpected Display.(DPY_RedrawVideo) Message from twdisplay!\n", stderr);
+		fflush(stderr);
+#if 0
 		if (Event->EventDisplay.Len == sizeof(dat) * 2)
 		    NeedRedrawVideo(Event->EventDisplay.X, Event->EventDisplay.Y,
 				    ((udat *)Event->EventDisplay.Data)[0], 
@@ -166,7 +167,7 @@ static void display_KeyboardEvent(int fd, display_hw *hw) {
 }
 
 static void display_HelperH(msgport *Port) {
-    display_KeyboardEvent(NOFD, Port->AttachHW);
+    display_HandleEvent(Port->AttachHW);
 }
 
 
@@ -184,8 +185,8 @@ INLINE void display_Mogrify(dat x, dat y, uldat len) {
     hwattr *buf;
     dat xbegin = x, ybegin = y;
     
-    V = Video + x + y * ScreenWidth;
-    oV = OldVideo + x + y * ScreenWidth;
+    V = Video + x + y * DisplayWidth;
+    oV = OldVideo + x + y * DisplayWidth;
     
     for (; len; x++, V++, oV++, len--) {
 	if (buflen && ValidOldVideo && *V == *oV) {
@@ -223,7 +224,7 @@ static void display_FlushVideo(void) {
     
     /* first burst all changes */
     if (ChangedVideoFlag) {
-	for (i=0; i<ScreenHeight*2; i++) {
+	for (i=0; i<DisplayHeight*2; i++) {
 	    start = ChangedVideo[i>>1][i&1][0];
 	    end   = ChangedVideo[i>>1][i&1][1];
 	    
@@ -252,19 +253,19 @@ static void display_FlushHW(void) {
 	clrFlush();
 }
 
-static void display_DetectSize(udat *x, udat *y) {
+static void display_DetectSize(dat *x, dat *y) {
     *x = HW->X;
     *y = HW->Y;
 }
 
-static void display_CheckResize(udat *x, udat *y) {
+static void display_CheckResize(dat *x, dat *y) {
     if (!HW->CanResize) {
 	*x = Min2(*x, HW->X);
 	*y = Min2(*y, HW->Y);
     }
 }
 
-static void display_Resize(udat x, udat y) {
+static void display_Resize(dat x, dat y) {
     /*
      * when !HW->CanResize we send the Resize message even if
      * x == HW->X && y == HW->Y as twdisplay might be using a smaller area
@@ -401,7 +402,7 @@ static void fix4display(void) {
     }
 }
 
-#ifdef MODULE
+#ifdef CONF_THIS_MODULE
 static
 #endif
 byte display_InitHW(void) {
@@ -461,7 +462,7 @@ byte display_InitHW(void) {
     HW->FlushHW = display_FlushHW;
 
     HW->KeyboardEvent = (void *)NoOp; /* we must go through display_HelperH */
-    HW->MouseEvent = (void *)NoOp; /* mouse events handled by display_KeyboardEvent */
+    HW->MouseEvent = (void *)NoOp; /* mouse events handled by display_HelperH */
 	    
     HW->XY[0] = HW->XY[1] = 0;
     HW->TT = (uldat)-1; /* force updating cursor */
@@ -541,7 +542,7 @@ byte display_InitHW(void) {
     return TRUE;
 }
 
-#ifdef MODULE
+#ifdef CONF_THIS_MODULE
 
 #include "version.h"
 MODULEVERSION;
@@ -555,4 +556,4 @@ byte InitModule(module *Module) {
 void QuitModule(module *Module) {
 }
 
-#endif /* MODULE */
+#endif /* CONF_THIS_MODULE */

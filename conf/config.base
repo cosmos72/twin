@@ -33,9 +33,9 @@ CONF_OPT_SHADOWS_HELP="Runtime option: enable shadows"
 CONF_OPT_BLINK_HELP="Runtime option: enable blink/high background"
 CONF_OPT_ALWAYSCURSOR_HELP="Runtime option: force always visible cursor"
 CONF_OPT_HIDEMENU_HELP="Runtime option: hidden menu"
-CONF_OPT_MENUINFO_HELP="Runtime option: enable menu information row"
+CONF_OPT_MENUINFO_HELP="Runtime option: enable menu information line"
 CONF_OPT_EDGESCROLL_HELP="Runtime option: enable screen scrolling"
-CONF_OPT_ALTFONT_HELP="Runtime option: use alternate font (see README)"
+CONF_OPT_ALTFONT_HELP="Runtime option: use alternate font (see Tutorial)"
 
 menu CONF__
   yesno CONF__SHLIBS

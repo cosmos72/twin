@@ -1,7 +1,7 @@
 /*
  *  term.c  --  create and manage multiple terminal emulator windows on twin
  *
- *  Copyright (C) 1999-2000 by Massimiliano Ghilardi
+ *  Copyright (C) 1999-2001 by Massimiliano Ghilardi
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -53,9 +53,9 @@ static window *newTermWindow(void) {
     
     if (Window)
 	Act(SetColors,Window)
-	(Window, 0x1FF, COL(HIGH|YELLOW,CYAN), COL(HIGH|GREEN,HIGH|BLUE), COL(WHITE,HIGH|BLUE),
-	 COL(HIGH|WHITE,HIGH|BLUE), COL(HIGH|WHITE,HIGH|BLUE),
-	 COL(WHITE,BLACK), COL(WHITE,HIGH|BLACK), COL(HIGH|BLACK,BLACK), COL(BLACK,HIGH|BLACK));
+	(Window, 0x1FF, COL(HIGH|YELLOW,CYAN), COL(HIGH|GREEN,HIGH|BLUE),
+	 COL(WHITE,HIGH|BLUE), COL(HIGH|WHITE,HIGH|BLUE), COL(HIGH|WHITE,HIGH|BLUE),
+	 COL(WHITE,BLACK), COL(BLACK,WHITE), COL(HIGH|BLACK,BLACK), COL(BLACK,HIGH|BLACK));
     
     return Window;
 }
@@ -63,8 +63,8 @@ static window *newTermWindow(void) {
 static window *OpenTerm(CONST byte *arg0, byte * CONST *argv) {
     window *Window;
     
-    /* if argv is {NULL} or {"" , ...} then start user's shell */
-    if (!arg0 || !argv || !*arg0) {
+    /* if argv is {NULL} or {NULL , ...} or {"", ... } then start user's shell */
+    if (!arg0 || !*arg0 || !argv) {
 	arg0 = args[0];
 	argv = args+1;
     }
@@ -112,44 +112,12 @@ static void TwinTermH(msgport *MsgPort) {
 					     Event->EventSelectionNotify.Data);
 	    
 	} else if (Msg->Type==MSG_WINDOW_MOUSE) {
-	    Code=Event->EventMouse.Code;
-	    /* send mouse movements */
 	    Win = Event->EventMouse.Window;
 	    if (Win && Win->TtyData) {
-		byte len = 0, buf[10] = "\033[?M";
-		udat x, y;
-		
-		x = Event->EventMouse.X;
-		y = Event->EventMouse.Y;
-		    
-		if (Win->TtyData->Flags & TTY_REPORTMOUSE2) {
-		    /* classic xterm-style reporting */
-		    buf[2] = 'M';
-		    if (isPRESS(Code)) switch (Code & PRESS_ANY) {
-		      case PRESS_LEFT: buf[3] = ' '; break;
-		      case PRESS_MIDDLE: buf[3] = '!'; break;
-		      case PRESS_RIGHT: buf[3] = '\"'; break;
-		    }
-		    else if (isRELEASE(Code))
-			buf[3] = '#';
-		    else {
-			Delete(Msg);
-			continue;
-		    }
-		    buf[4] = '!' + x;
-		    buf[5] = '!' + y;
-		    len = 6;
-		} else if (Win->TtyData->Flags & TTY_REPORTMOUSE) {
-		    /* new-style reporting */
-		    buf[2] = '5';
-		    buf[3] = 'M';
-		    buf[4] = ' ' + (Code & HOLD_ANY);
-		    buf[5] = '!' + (x & 0x7f);
-		    buf[6] = '!' + (x >> 7);
-		    buf[7] = '!' + (y & 0x7f);
-		    buf[8] = '!' + (y >> 7);
-		    len = 9;
-		}
+		byte buf[10];
+		byte len = CreateXTermMouseEvent(&Event->EventMouse, 10, buf);
+    
+		/* send mouse movements using xterm mouse protocol */
 		if (len)
 		    (void)RemoteWindowWriteQueue(Win, len, buf);
 	    }
@@ -192,7 +160,7 @@ static void TwinTermIO(int Fd, window *Window) {
 	Delete(Window);
 }
 
-#ifdef MODULE
+#ifdef CONF_THIS_MODULE
 
 #include "tty.h"
 
@@ -208,9 +176,7 @@ static void OverrideMethods(byte enter) {
 	OverrideMethod(Window,KbdFocus,   TtyKbdFocus,    FakeKbdFocus);
     }
 }
-#endif /* MODULE */
 
-#ifdef MODULE
 
 # include "version.h"
 MODULEVERSION;
@@ -244,7 +210,7 @@ byte InitTerm(void)
 	Item4MenuCommon(Term_Menu)) {
 
 	RegisterExtension(Term,Open,OpenTerm);
-#ifdef MODULE
+#ifdef CONF_THIS_MODULE
 	OverrideMethods(TRUE);
 #endif
 
@@ -252,18 +218,19 @@ byte InitTerm(void)
 	    args[1][0] = '-';
 	return TRUE;
     }
-    if (shellpath)
-	fprintf(stderr, "twin: Out of memory!\n");
-    else
+    if (shellpath) {
+	Error(NOMEMORY);
+	fprintf(stderr, "twin: InitTerm(): %s\n", ErrStr);
+    } else
 	fprintf(stderr, "twin: environment variable $SHELL not set!\n");
     return FALSE;
 }
 
-#ifdef MODULE
+#ifdef CONF_THIS_MODULE
 void QuitModule(module *Module) {
     UnRegisterExtension(Term,Open,OpenTerm);
     OverrideMethods(FALSE);
     if (Term_MsgPort)
 	Delete(Term_MsgPort);
 }
-#endif /* MODULE */
+#endif /* CONF_THIS_MODULE */

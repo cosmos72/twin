@@ -8,11 +8,9 @@
    If you are trying to compile on non-Linux systems, you would do better
    reading the file README.porting now, for useful tips and warnings.
    
-   Then type `make' or `make menuconfig' to configure twin for your
-   tastes. The first time you run `make' or each time you run `make config',
-   a shell scripts is executed to let you configure twin.
-   If you have "dialog" installed, you can use `make menuconfig'
-   for a somewhat more friendly interface. 
+   Then type `make' or `make config' to configure twin for your tastes.
+   If you have "dialog" installed, you can also use `make menuconfig',
+   which provides a somewhat more friendly interface.
    
    In both cases, the questions asked are the same:
 
@@ -93,23 +91,19 @@
 	(CONF_WM_RC_SHRINK)
 	 -> WM: RC: shrink memory when parser finished [Y/n] ?
    
-   This depends on your OS:
-   answering 'n' is always safe but wastes memory,
-   answering 'y' saves memory but may screw up the ~/.twinrc parser.
-   Anyway, if twin detects problems with this option, it will tell you so
-   (watch for messages on stderr) and also automatically disable it.
-   
-   For those who want an explanation: the parser tries to guess how much memory
-   it will need to parse ~/.twinrc and allocates it beforehand.
+   This is a good thing, answer 'y' unless twin explicitly reported
+   it does not work.
+   For those who want an explanation: the parser tries to guess how much
+   memory it will need to parse ~/.twinrc and allocates it beforehand.
    To be on the safe side, the allocated memory size is a worst-case guess
    and it is quite high (about 10 times the size of your ~/.twinrc).
-   If you answer 'y', the parser tries to realloc() (or mremap() if you
-   enabled mmapped shared file above) that memory once it has finished,
-   to free the part in excess.
-   Depending on your OS, realloc() (or mremap()) may move that memory
-   to a new location, making it useless since it contains a lot of pointers.
-   If something like this ever happens, twin will send the error to stderr
-   and disable the option.
+   If you answer 'y' and did not enable CONF_WM_RC_SHMMAP above (which has
+   a safe replacement for this), the parser tries to realloc() that memory
+   once it has finished, to free the part in excess. 
+   Depending on your OS, realloc() may move that memory to a new location,
+   making it useless since it contains a lot of pointers.
+   If this ever happens, twin will report the error and tell you to disable
+   the option.
 
 	#
 	# Terminal emulator
@@ -238,10 +232,10 @@
    You can also change this option from the `Options' window inside twin.
    
 	(CONF_OPT_ALTFONT)
-	Runtime option: use alternate font (see README) [y/N] ?
+	Runtime option: use alternate font (see Tutorial) [y/N] ?
 	
    Answer `y' to use alternate graphics character to draw window borders.
    This works only if you are using a font specifically tweaked for twin,
    like the `vgafont.raw' provided (which is for VGA cards). See also section
-   `9. Installing fonts' of the README.
+   `9. Installing fonts' of the file docs/Tutorial.
    

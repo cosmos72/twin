@@ -29,7 +29,7 @@ static byte InitEvent(void) {
 	  COL(RED,WHITE), COL(RED,GREEN), (byte)0)) &&
 	TwItem4MenuCommon(Event_Menu)) {
 	
-	TwInfo4Menu(Event_Menu, TW_ROW_ACTIVE, (uldat)14, " Event Tester ", "ptppppptpppppp");
+	TwInfo4Menu(Event_Menu, TW_ROW_ACTIVE, 14, " Event Tester ", "ptppppptpppppp");
     } else
 	return FALSE;
     
@@ -37,13 +37,13 @@ static byte InitEvent(void) {
 	 (12, "Event Tester", NULL,
 	  Event_Menu, COL(WHITE,BLACK), TW_NOCURSOR,
 	  TW_WINDOW_WANT_KEYS|TW_WINDOW_WANT_MOUSE|TW_WINDOW_WANT_CHANGES|TW_WINDOW_DRAG|TW_WINDOW_RESIZE|TW_WINDOW_CLOSE,
-	  0, (udat)20, (udat)10, (udat)0))) {
+	  0, 20, 10, 0))) {
 	
 	TwSetColorsWindow(Event_Win, 0x1FF,
 			  COL(HIGH|YELLOW,CYAN), COL(HIGH|GREEN,HIGH|BLUE), COL(WHITE,HIGH|BLUE),
 			  COL(HIGH|WHITE,HIGH|BLUE), COL(HIGH|WHITE,HIGH|BLUE),
 			  COL(WHITE,BLACK), COL(WHITE,HIGH|BLACK), COL(HIGH|BLACK,BLACK), COL(BLACK,HIGH|BLACK));
-	TwConfigureWindow(Event_Win, 0xF<<2, 0, 0, (udat)10, (udat)5, (udat)30, (udat)15);
+	TwConfigureWindow(Event_Win, 0xF<<2, 0, 0, 10, 5, 30, 15);
     } else
 	return FALSE;
     
@@ -79,8 +79,9 @@ int main(int argc, char *argv[]) {
 	if (Msg->Type==TW_MSG_WINDOW_KEY) {
 	    tevent_keyboard EventK = &Msg->Event.EventKeyboard;
 	    
-	    printf("Key: Code %u (0x%04x), ASCII ",
-		   (unsigned)EventK->Code, (unsigned)EventK->Code);
+	    printf("Key: Code %u (0x%04x), ShiftFlags 0x%04x, ASCII ",
+		   (unsigned)EventK->Code, (unsigned)EventK->Code,
+		   (unsigned)EventK->ShiftFlags);
 	    human_print(EventK->SeqLen, EventK->AsciiSeq);
 	    putchar('\n');
 	} else if (Msg->Type==TW_MSG_SELECTION) {

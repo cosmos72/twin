@@ -25,6 +25,7 @@
 #include "twin.h"
 #include "main.h"
 #include "methods.h"
+#include "util.h"
 
 /* variables */
 
@@ -39,15 +40,19 @@ static uldat FdListGrow(void) {
     uldat oldsize, size;
     fdlist *newFdList;
     
-    if ((oldsize = FdSize) == MAXULDAT)
+    if ((oldsize = FdSize) == MAXULDAT) {
+	Error(NOMEMORY);
 	return NOSLOT;
+    }
     
     if ((size = oldsize < 64 ? 96 : oldsize + (oldsize>>1)) < oldsize)
 	size = MAXULDAT;
     
     /* use realloc(), not ReAllocMem() here */
-    if (!(newFdList = (fdlist *)realloc(FdList, size*sizeof(fdlist))))
+    if (!(newFdList = (fdlist *)realloc(FdList, size*sizeof(fdlist)))) {
+	Error(NOMEMORY);
 	return NOSLOT;
+    }
     
     for (FdSize = oldsize+1; FdSize<size; FdSize++)
 	newFdList[FdSize].Fd = NOFD;

@@ -2,7 +2,7 @@
 Twin - a Textmode WINdow environment, by Massimiliano Ghilardi
 --------------------------------------------------------------
 
-Version 0.3.5
+Version 0.3.6
 
 Twin is a windowing environment with mouse support, window manager,
 terminal emulator and networked clients, all inside a text display.
@@ -15,8 +15,8 @@ It supports a variety of displays:
 * twdisplay, a general network-transparent display client, used
   to attach/detach more displays on-the-fly.
 
-Currently, twin is tested on i386 platforms running either Linux
-or FreeBSD. I had yet no chance to seriously test it on other systems.
+Currently, twin is tested on Linux (i386, PowerPC) and on FreeBSD.
+I had yet no chance to seriously test it on other systems.
    
 --------------------------------------------------------------
 Documentation
@@ -31,11 +31,12 @@ COPYING.LIB	License for libTw. The library to talk to twin is LGPL'ed.
 Changelog.txt	List of all changes between the various versions of twin.
 BUGS		Known bugs of twin.
 INSTALL		Reference to installation guide, located in docs/Tutorial.
+system.twinrc	A detailed example of ~/.twinrc look-n-feel configuration file.
 
 
 The docs/ subdirectory contains additional documentation:
 
-Configure	Description of twin configuration process with the meaning
+Configure	Description of twin configuration script with the meaning
 		of every single option.
 Tutorial	A quite complete tour of twin features: the user interface,
 		how to use twin clients, compression, attaching/detaching
@@ -69,8 +70,10 @@ the install directory, tweak compiler flags (enable debugging), etc.
 Also, the `make config' or `make menuconfig' asks questions for
 many options one may not know the meaning of.
 
-For a discussion about configuring and installing twin, see the file
-`Tutorial', sections 3 and 4, distributed with twin in the docs/ subdirectory.
+For a discussion about configuring twin, see the file `Configure',
+distributed with twin in the docs/ subdirectory.
+For instructions about installing twin, see the file `Tutorial',
+section 4, again in the docs/ subdirectory.
 
 --------------------------------------------------------------
 Other topics:

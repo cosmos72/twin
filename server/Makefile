@@ -9,7 +9,7 @@ BASEOBJS=data.o builtin.o methods.o util.o draw.o extensions.o \
 	main.o hw_multi.o resize.o scroller.o remote.o alloc.o
 HWOBJS=hw.o HW/hw.a
 DLOBJS=dl.o
-WMOBJS=wm.o rcrun.o
+WMOBJS=wm.o rcrun.o rcopt.o
 RCPARSEOBJS=rcparse_tab.o rcparse_lex.o shm.o
 TERMOBJS=pty.o tty.o term.o 
 SOCKETOBJS=socket.o md5.o
@@ -30,9 +30,9 @@ BINS=twin_real twin_wrapper
 MODBINS=
 
 # don't use := here, as DESTDIR is not set yet
-CFLAGS_data.o=$(strip $(patsubst %,-DCONF_DESTDIR=\"%\",$(DESTDIR)))
-CFLAGS_wrapper.o=$(strip $(patsubst %,-DCONF_DESTDIR=\"%\",$(DESTDIR)))
-CFLAGS_display.o=$(strip $(patsubst %,-DCONF_DESTDIR=\"%\",$(DESTDIR)))
+CFLAGS_data.o=$(strip $(patsubst %,-DDESTDIR=\"%\",$(DESTDIR)))
+CFLAGS_wrapper.o=$(strip $(patsubst %,-DDESTDIR=\"%\",$(DESTDIR)))
+CFLAGS_display.o=$(strip $(patsubst %,-DDESTDIR=\"%\",$(DESTDIR)))
 
 LDFLAGS_wm.so=-lc -shared
 LDFLAGS_rcparse.so=-lc -shared
@@ -57,10 +57,12 @@ endif
 #
 all: bins modules twin
 
-twin_real: HW.dir
+twin_real:
 
 twin: twin_wrapper
 	$(LN) $< $@
+
+HW/hw.a: HW.dir
 
 #
 # read configuration
@@ -154,8 +156,8 @@ ifeq ($(PRIV),root)
   SETPRIV=chmod u+s $(DESTDIR)/bin/twin_real
   SETPRIV_COMM=(i.e. suid root privileges)
 else
-  SETPRIV=
-  SETPRIV_COMM=
+  SETPRIV=chown .tty $(DESTDIR)/bin/twin_real && chmod g+s $(DESTDIR)/bin/twin_real
+  SETPRIV_COMM=(i.e. sgid tty privileges)
 endif
   
 #
@@ -219,6 +221,9 @@ mixdep: all
 	for i in *.u; do echo; echo $$i; for j in `cat $$i`; do \
 	grep -E " $${j}\$$" *.d; done | sort; done > $@; :
 	
+Torture: torture
+	$(MAKE) Torture -C HW
+
 clean:
 	$(MAKE) clean -C HW
 	rm -f .*.flags .*.link .*.arlib gmon.out core log twin \

@@ -1,7 +1,7 @@
 #ifndef _TW_RESIZE_H
 #define _TW_RESIZE_H
 
-byte WriteRow(window *Window, uldat Len, CONST byte *Text);
+byte WriteRow(window *Window, ldat Len, CONST byte *Text);
 
 void UpdateCursor(void);
 

@@ -37,7 +37,7 @@ void RunNoHW(void);
 void UpdateFlagsHW(void);
 
 byte StdAddEventMouse(udat CodeMsg, udat Code, dat MouseX, dat MouseY);
-void SyntheticKey(window *Window, udat Code, byte Len, byte *Seq);
+void SyntheticKey(window *Window, udat Code, udat ShiftFlags, byte Len, byte *Seq);
 
 #endif /* _TW_HW_MULTI_H */
 

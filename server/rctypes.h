@@ -49,6 +49,8 @@ struct node {
 #define CTX_WIN		(CTX_TITLE|CTX_SIDE|CTX_BARS)
 #define CTX_INSIDE	0x4000
 
+#define CTX_ANY_WIN	0x7FFF
+
 #define CTX_MENU	0x8000 /* the menu bar */
 #define CTX_ROOT	0x10000l
 #define CTX_ANY		0x1FFFFl
@@ -80,7 +82,7 @@ void *shm_getend(void);
 
 
 /* stuff exported by rcparse.l */
-#ifdef CONF_PUREPARSER
+#ifdef PURE_PARSER
  int yylex();
 #else
  int yylex(void);

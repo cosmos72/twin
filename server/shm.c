@@ -29,7 +29,7 @@
 #include "rcproto.h"
 #include "rcrun.h"
 
-#ifdef CONF_WM_RC_SHRINK
+#if !defined(CONF_WM_RC_SHMMAP) && defined(CONF_WM_RC_SHRINK)
 static byte may_shrink = TRUE;
 #endif
 
@@ -79,26 +79,24 @@ static uldat full_read(int fd, byte *data, uldat len) {
     return len - left;
 }
 
-#ifdef CONF_WM_RC_SHRINK
+#if !defined(CONF_WM_RC_SHMMAP) && defined(CONF_WM_RC_SHRINK)
 static void shm_shrink_error(void) {
     
     may_shrink = FALSE;
     fputs("twin: shm_shrink(): "
-#if defined(CONF_WM_RC_SHMMAP)
-	  "mremap"
-#elif defined(CONF__ALLOC)
-	  "builtin ReAllocMem"
-#else
+# ifdef CONF__ALLOC
+	  "ReAllocMem"
+# else
 	  "realloc"
-#endif
+# endif
 	  "() relocated memory while shrinking! \n"
-#if !defined(CONF_WM_RC_SHMMAP) && defined(CONF__ALLOC)
-	  "      this should not happen! Please report.\n"
-#endif
+# ifdef CONF__ALLOC
+	  "      This should not happen! Please report.\n"
+# endif
 	  "      CONF_WM_RC_SHRINK disabled. Recompile to disable it permanently.\n"
 	  , stderr);
 }
-#endif /* CONF_WM_RC_SHRINK */
+#endif /* !defined(CONF_WM_RC_SHMMAP) && defined(CONF_WM_RC_SHRINK) */
 
 
 
@@ -121,7 +119,7 @@ byte shm_init(uldat len) {
 
     len += GL_SIZE;
     
-    len = ((len + GL_SIZE) + (BLOCK_SIZE - 1)) & ~(uldat)(BLOCK_SIZE - 1);
+    len = ((len + GL_SIZE) + (TW_PAGE_SIZE - 1)) & ~(uldat)(TW_PAGE_SIZE - 1);
 
     if ((fd = open(shmfile, O_RDWR|O_CREAT|O_TRUNC|O_EXCL, 0600)) >= 0) {
 	if (((L = len), lseek(fd, L-1, SEEK_SET) == L-1) &&
@@ -150,40 +148,20 @@ byte shm_init(uldat len) {
 void shm_abort(void) {
     munmap(M, L);
     M = NULL;
-#ifdef DEBUG_SHM
-    fflush(stderr);
-#endif
 }
 
 /*
  * shrink (M, M+L) to (M, S)
  */
 byte shm_shrink(void) {
-#ifdef CONF_WM_RC_SHMMAP
-    if (may_shrink) {
-	uldat new_L = ((uldat)(S - M) + BLOCK_SIZE - 1) & ~(uldat)(BLOCK_SIZE - 1);
+    uldat new_L = ((uldat)(S - M) + TW_PAGE_SIZE - 1) & ~(uldat)(TW_PAGE_SIZE - 1);
     
-	void *new_M = mremap(M, L, new_L, 0);
-    
-	if (new_M == M) {
-	    L = new_L;
-	    return TRUE;
-	}
-	if (new_M != NOCORE) {
-	    /* mremap relocated ! inform the user and disable may_shrink ! */
-	    shm_shrink_error();
-	    M = new_M;
-	    L = new_L;
-	}
-	/*
-	 * mremap failed or relocated...
-	 * the only thing to do here is shm_abort()
-	 */
-	return FALSE;
-    }
-#endif /* CONF_WM_RC_SHMMAP */
+    munmap(M + new_L, L - new_L);
+    L = new_L;
+
     return TRUE;
 }
+
 
 /*
  * Terminate Stay Resident :
@@ -198,9 +176,6 @@ void shm_TSR(void) {
     TSR_M = M;
     TSR_L = L;
     M = NULL;
-#ifdef DEBUG_SHM
-    fflush(stderr);
-#endif
 }
 
 void shm_TSR_abort(void) {
@@ -250,16 +225,13 @@ byte shm_init(uldat len) {
 
 void shm_abort(void) {
     FreeMem(M);
-#ifdef DEBUG_SHM
-    fflush(stderr);
-#endif
 }
 
 /*
  * shrink (M, M+L) to (M, S)
  */
 byte shm_shrink(void) {
-#ifdef CONF_WM_RC_SHMMAP
+#ifdef CONF_WM_RC_SHRINK
     if (may_shrink) {
 	uldat new_L = (uldat)(S - M);
 	
@@ -278,9 +250,10 @@ byte shm_shrink(void) {
 	/* ReAllocMem failed or relocated... the only thing to do here is shm_abort() */
 	return FALSE;
     }
-#endif /* CONF_WM_RC_SHMMAP */
+#endif /* CONF_WM_RC_SHRINK */
     return TRUE;
 }
+
 
 /*
  * Terminate Stay Resident :
@@ -294,9 +267,6 @@ void shm_TSR(void) {
     TSR_M = M;
     TSR_L = L;
     M = NULL;
-#ifdef DEBUG_SHM
-    fflush(stderr);
-#endif
 }
 
 void shm_TSR_abort(void) {

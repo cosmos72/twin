@@ -27,7 +27,7 @@ static byte InitClip(void) {
 	 (Clip_MsgPort, COL(BLACK,WHITE), COL(BLACK,GREEN), COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
 	  COL(RED,WHITE), COL(RED,GREEN), (byte)0))) {
 	
-	TwInfo4Menu(Clip_Menu, TW_ROW_ACTIVE, (uldat)16, " Twin Clipboard ", "ptpppptppppppppp");
+	TwInfo4Menu(Clip_Menu, TW_ROW_ACTIVE, 16, " Twin Clipboard ", "ptpppptppppppppp");
     } else
 	return FALSE;
     
@@ -37,7 +37,7 @@ static byte InitClip(void) {
 	  TW_NOLINECURSOR,
 	  TW_WINDOW_WANT_KEYS|TW_WINDOW_DRAG|TW_WINDOW_RESIZE|TW_WINDOW_X_BAR|TW_WINDOW_Y_BAR|TW_WINDOW_CLOSE,
 	  TW_WINFL_CURSOR_ON|TW_WINFL_USE_DEFCOL,
-	  (udat)40, (udat)20, (udat)0)) &&
+	  40, 20, 0)) &&
 	(Window=TwWin4Menu(Clip_Menu)) &&
 	(TwRow4Menu(Window, COD_QUIT, TW_ROW_INACTIVE, 17, " Quit      Alt-X ") ,
 	 TwItem4Menu(Clip_Menu, Window, TRUE, 6, " File "))) {
@@ -45,7 +45,7 @@ static byte InitClip(void) {
 	TwSetColorsWindow(Clip_Win, 0x1FF,
 			  COL(HIGH|GREEN,WHITE), COL(CYAN,BLUE), COL(HIGH|BLUE,BLACK), COL(HIGH|WHITE,HIGH|BLUE), COL(HIGH|WHITE,HIGH|BLUE),
 			  COL(HIGH|WHITE,HIGH|BLACK), COL(HIGH|BLACK,WHITE), COL(BLACK,HIGH|BLACK), COL(BLACK,WHITE));
-	TwConfigureWindow(Clip_Win, 0xF<<2, 0, 0, (udat)7, (udat)3, MAXUDAT, MAXUDAT);
+	TwConfigureWindow(Clip_Win, 0xF<<2, 0, 0, 7, 3, MAXDAT, MAXDAT);
 
     } else
 	return FALSE;

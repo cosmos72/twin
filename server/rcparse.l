@@ -3,7 +3,7 @@
  *
  *  rcparse.l  --  lex back-end of ~/.twinrc parser for twin
  *
- *  Copyright (C) 2000 by Massimiliano Ghilardi
+ *  Copyright (C) 2000-2001 by Massimiliano Ghilardi
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -34,7 +34,7 @@ static int yywrap(void);
 
 
 
-#ifdef CONF_PUREPARSER
+#ifdef PURE_PARSER
 # define YY_DECL int yylex(YYSTYPE *_yylval, void *yylloc)
 # define yylval (*_yylval)
 #endif
@@ -102,24 +102,6 @@ SyntheticKey	return SYNTHETICKEY;
 Wait		return WAIT;
 Window		return WINDOW;
 
-On		return FL_ON;
-Off		return FL_OFF;
-Toggle		return FL_TOGGLE;
-Active		return FL_ACTIVE;
-Inactive	return FL_INACTIVE;
-Left		return FL_LEFT;
-Right		return FL_RIGHT;
-
-AltFont		{ yylval.val = ALTFONT;      return GLOBAL_FLAG; }
-AlwaysCursor	{ yylval.val = ALWAYSCURSOR; return GLOBAL_FLAG; }
-Blink		{ yylval.val = BLINK;        return GLOBAL_FLAG; }
-EdgeScroll	{ yylval.val = EDGESCROLL;   return GLOBAL_FLAG; }
-HideMenu	{ yylval.val = HIDEMENU;     return GLOBAL_FLAG; }
-MenuInfo	{ yylval.val = MENUINFO;     return GLOBAL_FLAG; }
-Shadows		return SHADOWS;
-PasteButton	return PASTEBUTTON;
-SelectionButton	return SELECTIONBUTTON;
-
 Focus		{ yylval.val = FOCUS;      return FLAG_FUNC; }
 Roll		{ yylval.val = ROLL;       return FLAG_FUNC; }
 
@@ -136,6 +118,28 @@ Raise		{ yylval.val = RAISE;      return EASY_FUNC; }
 RaiseLower	{ yylval.val = RAISELOWER; return EASY_FUNC; }
 Refresh		{ yylval.val = REFRESH;    return EASY_FUNC; }
 WindowList	{ yylval.val = WINDOWLIST; return EASY_FUNC; }
+
+On		return FL_ON;
+Off		return FL_OFF;
+Toggle		return FL_TOGGLE;
+Active		return FL_ACTIVE;
+Inactive	return FL_INACTIVE;
+Left		return FL_LEFT;
+Right		return FL_RIGHT;
+PasteButton	return PASTEBUTTON;
+SelectionButton	return SELECTIONBUTTON;
+Shadows		return SHADOWS;
+
+AltFont		{ yylval.val = ALTFONT;      return GLOBAL_FLAG; }
+AlwaysCursor	{ yylval.val = ALWAYSCURSOR; return GLOBAL_FLAG; }
+Blink		{ yylval.val = BLINK;        return GLOBAL_FLAG; }
+EdgeScroll	{ yylval.val = EDGESCROLL;   return GLOBAL_FLAG; }
+HideMenu	{ yylval.val = HIDEMENU;     return GLOBAL_FLAG; }
+MenuInfo	{ yylval.val = MENUINFO;     return GLOBAL_FLAG; }
+
+Alt		{ yylval.val = KBD_ALT_FL;   return KBD_FLAG; }
+Ctrl		{ yylval.val = KBD_CTRL_FL;  return KBD_FLAG; }
+Shift		{ yylval.val = KBD_SHIFT_FL; return KBD_FLAG; }
 
 Black		{ yylval.val = BLACK;	return COLOR; }
 Blue		{ yylval.val = BLUE;	return COLOR; }

@@ -1,7 +1,7 @@
 /*
  *  builtin.c  --  create default menu, Clock and About windows.
  *
- *  Copyright (C) 1993-2000 by Massimiliano Ghilardi
+ *  Copyright (C) 1993-2001 by Massimiliano Ghilardi
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -36,9 +36,10 @@
 #define COD_QUIT	(udat)1 /* as in term.c */
 #define COD_SPAWN	(udat)3 /* as COD_SPAWN in term.c */
 
+#define COD_EXECUTE	(udat)5
 #define COD_SUSPEND	(udat)10
 #define COD_DETACH	(udat)11
-#define COD_WM_RESTART	(udat)12
+#define COD_RELOAD_RC	(udat)12
 
 #define COD_ABOUT_WIN	(udat)20
 #define COD_CLOCK_WIN   (udat)21
@@ -67,14 +68,17 @@
 #define COD_D_REMOVE	(udat)60
 #define COD_D_THIS	(udat)61
 
+#define COD_E_TTY	(udat)70
+
 static msgport *Builtin_MsgPort;
 static menu *Builtin_Menu;
 static menuitem *Builtin_File;
-#ifdef CONF__MODULES 
+#if defined(CONF__MODULES) && !(defined(CONF_SOCKET) && defined(CONF_TERM))
 static menuitem *Builtin_Modules;
 #endif
 
-static window *AboutWin, *ClockWin, *OptionWin, *ButtonWin, *DisplayWin;
+static window *AboutWin, *ClockWin, *OptionWin, *ButtonWin,
+    *DisplayWin, *DisplaySubWin, *ExecuteWin;
 window *WinList;
 
 static gadget *ButtonOK_About, *ButtonRemove, *ButtonThis;
@@ -90,8 +94,7 @@ static void Clock_Update(void) {
     sprintf((char *)Buffer, "%02u/%02u/%04u\n %02u:%02u:%02u",
 	    (udat)Date->tm_mday, (udat)Date->tm_mon+1, (udat)Date->tm_year + 1900,
 	    (udat)Date->tm_hour, (udat)Date->tm_min,   (udat)Date->tm_sec);
-    if (!Act(WriteRow,ClockWin)(ClockWin, strlen(Buffer), Buffer))
-	Error(NOMEMORY);
+    Act(WriteRow,ClockWin)(ClockWin, strlen(Buffer), Buffer);
     
     Builtin_MsgPort->PauseDuration.Fraction = 1 FullSECs - Time->Fraction;
     Builtin_MsgPort->PauseDuration.Seconds = 0;
@@ -124,11 +127,9 @@ static void UpdateMenuRows(window *dummy) {
     if (_TermSo) {
 	TweakMenuRows(Builtin_Modules, COD_TERM_ON,    ROW_INACTIVE);
 	TweakMenuRows(Builtin_Modules, COD_TERM_OFF,   ROW_ACTIVE);
-	TweakMenuRows(Builtin_File,    COD_SPAWN,      ROW_ACTIVE);
     } else {
 	TweakMenuRows(Builtin_Modules, COD_TERM_ON,    ROW_ACTIVE);
 	TweakMenuRows(Builtin_Modules, COD_TERM_OFF,   ROW_INACTIVE);
-	TweakMenuRows(Builtin_File,    COD_SPAWN,      ROW_INACTIVE);
     }
 #endif
 #ifndef CONF_SOCKET
@@ -146,25 +147,69 @@ static void UpdateMenuRows(window *dummy) {
 
 static void SelectWinList(void) {
     screen *Screen = All->FirstScreen;
-    window *Window = Screen->FirstWindow, *tempWin;
     uldat n = WinList->CurY;
+    widget *W;
     
-    for (tempWin = Window; ; Window = Window->Next) {
-	if (!Window)
-	    break;
-	if (Window == WinList || (Window->Attrib & WINDOW_MENU))
+    for (W = Screen->FirstW; W; W = W->Next) {
+	if ((void *)W == WinList || !IS_WINDOW(W) || (((window *)W)->Attrib & WINDOW_MENU))
 	    continue;
 	if (!n)
 	    break;
 	n--;
     }
-    if (!n && Window) {
-	MakeFirstWindow(Window, TRUE);
-	CenterWindow(Window);
+    if (!n && W) {
+	MakeFirstWindow((window *)W, TRUE);
+	CenterWindow((window *)W);
     }
 }
 
 
+static void ExecuteGadgetH(event_gadget *EventG) {
+    gadget *G;
+    
+    if (EventG->Code == COD_E_TTY &&
+	(G = Act(SearchGadgetCode,ExecuteWin)(ExecuteWin, COD_E_TTY))) {
+	
+	if (G->Contents[0][1] == ' ')
+	    G->Contents[0][1] = 'û';
+	else
+	    G->Contents[0][1] = ' ';
+	
+	DrawArea2((screen *)0, (widget *)0, (widget *)G,
+		 0, 0, MAXDAT, MAXDAT, FALSE);
+    }
+}
+
+static void ExecuteWinRun(void) {
+    byte **argv, *arg0;
+    row *Row;
+    gadget *G;
+    
+    Act(UnMap,ExecuteWin)(ExecuteWin);
+    
+    if ((Row = Act(SearchRow,ExecuteWin)(ExecuteWin, ExecuteWin->CurY)) && !Row->LenGap) {
+	
+	argv = ExtractArgv(Row->Text, Row->Len);
+
+	if ((G = Act(SearchGadgetCode,ExecuteWin)(ExecuteWin, COD_E_TTY)) && G->Contents[0][1] != ' ') {
+	    /* run in a tty */
+	    arg0 = argv ? argv[0] : NULL;
+	    Ext(Term,Open)(arg0, argv);
+	} else if (argv) switch (fork()) {
+	    /* do not run in a tty */
+	  case -1: /* error */
+	    break;
+	  case 0:  /* child */
+	    execvp((char *)argv[0], (char **)argv);
+	    exit(1);
+	    break;
+	  default: /* parent */
+	    break;
+	}
+	if (argv)
+	    FreeArgv(argv);
+    }
+}
 
 void UpdateOptionWin(void) {
     gadget *G;
@@ -181,10 +226,10 @@ void UpdateOptionWin(void) {
     }
     if ((G = Act(SearchGadgetCode,OptionWin)(OptionWin, COD_O_SHADOWS)))
 	G->Contents[0][1] = Flags & SETUP_SHADOWS ? 'û' : ' ';
-    if ((G = Act(SearchGadgetCode,OptionWin)(OptionWin, COD_O_BLINK)))
-	G->Contents[0][1] = Flags & SETUP_BLINK ? 'û' : ' ';
     if ((G = Act(SearchGadgetCode,OptionWin)(OptionWin, COD_O_ALWAYSCURSOR)))
 	G->Contents[0][1] = Flags & SETUP_ALWAYSCURSOR ? 'û' : ' ';
+    if ((G = Act(SearchGadgetCode,OptionWin)(OptionWin, COD_O_BLINK)))
+	G->Contents[0][1] = Flags & SETUP_BLINK ? 'û' : ' ';
     if ((G = Act(SearchGadgetCode,OptionWin)(OptionWin, COD_O_HIDEMENU)))
 	G->Contents[0][1] = Flags & SETUP_HIDEMENU ? 'û' : ' ';
     if ((G = Act(SearchGadgetCode,OptionWin)(OptionWin, COD_O_MENUINFO)))
@@ -263,9 +308,9 @@ static void OptionH(msg *Msg) {
 	
 	UpdateOptionWin();
 	if (redraw == TRUE)
-	    DrawArea(FULL_SCREEN);
+	    DrawArea2(FULL_SCREEN);
 	else {
-	    DrawAreaWindow(OptionWin, FALSE);
+	    DrawFullWindow2(OptionWin);
 	    UpdateCursor();
 	}
     }
@@ -275,7 +320,7 @@ void FillButtonWin(void) {
     byte i, j;
     byte b[6] = "      ", *s;
     
-    DeleteList(ButtonWin->FirstGadget);
+    DeleteList(ButtonWin->FirstW);
     DeleteList(ButtonWin->FirstRow);
     
     for (i=j=0; j<BUTTON_MAX; j++) {
@@ -346,10 +391,10 @@ static void BordersH(msg *Msg) {
     All->ButtonVec[Code >> 2].pos += op;
     
     UpdateButtonWin();
-    DrawArea(FULL_SCREEN);
+    DrawArea2(FULL_SCREEN);
 }
 
-void UpdateDisplayWin(window *displayWin) {
+static void UpdateDisplayWin(window *displayWin) {
     display_hw *hw;
     uldat x = 12, y = 0;
     
@@ -363,8 +408,8 @@ void UpdateDisplayWin(window *displayWin) {
 	    else
 		Act(WriteRow,DisplayWin)(DisplayWin, hw->NameLen, hw->Name);
 	}
-	if (DisplayWin->Screen)
-	    DrawAreaWindow(DisplayWin, FALSE);
+	if (DisplayWin->Parent)
+	    DrawFullWindow2(DisplayWin);
     }
 }
 
@@ -374,8 +419,8 @@ static void SelectRowWindow(window *CurrWin, uldat newCurY) {
     CurrWin->CurY=newCurY;
 
     if (oldCurY!=newCurY) {
-	DrawTextWindow(CurrWin, 0, oldCurY, CurrWin->XWidth-2, oldCurY);
-	DrawTextWindow(CurrWin, 0, newCurY, CurrWin->XWidth-2, newCurY);
+	DrawLogicWindow2(CurrWin, 0, oldCurY, CurrWin->XWidth-2, oldCurY);
+	DrawLogicWindow2(CurrWin, 0, newCurY, CurrWin->XWidth-2, newCurY);
     }
 }
 
@@ -414,6 +459,7 @@ static void BuiltinH(msgport *MsgPort) {
     event_any *Event;
     screen *Screen;
     window *NewWindow, *tempWin;
+    row *Row;
     udat Code;
     byte /*FontHeight,*/ Flags;
     
@@ -441,41 +487,41 @@ static void BuiltinH(msgport *MsgPort) {
 		BordersH(Msg);
 	    else if (tempWin == DisplayWin)
 		DisplayGadgetH(Msg);
+	    else if (tempWin == ExecuteWin)
+		ExecuteGadgetH(&Event->EventGadget);
 	}
 	else if (Msg->Type==MSG_MENU_ROW) {
 	    if (Event->EventMenu.Menu==Builtin_Menu) {
 		Code=Event->EventMenu.Code;
 		Flags=All->SetUp->Flags;
 		switch (Code) {
+		  case COD_EXECUTE:
 		  case COD_OPTION_WIN:
 		  case COD_BUTTONS_WIN:
 		  case COD_ABOUT_WIN:
 		  case COD_DISPLAY_WIN:
-		    if (Code == COD_OPTION_WIN)
-			UpdateOptionWin(), NewWindow = OptionWin;
-		    else if (Code == COD_BUTTONS_WIN)
-			UpdateButtonWin(), NewWindow = ButtonWin;
-		    else if (Code == COD_ABOUT_WIN)
-			NewWindow = AboutWin;
-		    else if (Code == COD_DISPLAY_WIN)
-			UpdateDisplayWin(DisplayWin), NewWindow = DisplayWin;
-		    else
-			break;
-		    
-		    if (NewWindow->Screen)
-			Act(UnMap,NewWindow)(NewWindow);
-		    NewWindow->Left=Screen->Left+(udat)20;
-		    NewWindow->Up=Screen->Up+(udat)6;
-		    Act(Map,NewWindow)(NewWindow, Screen);
-		    break;
 		  case COD_CLOCK_WIN:
-		    NewWindow = ClockWin;
-		    if (NewWindow->Screen)
+		    switch (Code) {
+		      case COD_EXECUTE:
+					   NewWindow = ExecuteWin; break;
+		      case COD_OPTION_WIN:
+			UpdateOptionWin(); NewWindow = OptionWin;  break;
+		      case COD_BUTTONS_WIN:
+			UpdateButtonWin(); NewWindow = ButtonWin;  break;
+		      case COD_ABOUT_WIN:
+					   NewWindow = AboutWin;   break;
+		      case COD_DISPLAY_WIN:
+			UpdateDisplayWin(DisplayWin);
+					   NewWindow = DisplayWin; break;
+		      case COD_CLOCK_WIN:
+			Builtin_MsgPort->WakeUp = TIMER_ALWAYS;
+					   NewWindow = ClockWin;   break;
+		      default:
+			break;
+		    }
+		    if (NewWindow->Parent)
 			Act(UnMap,NewWindow)(NewWindow);
-		    NewWindow->Left=Screen->Left;
-		    NewWindow->Up=Screen->Up;
 		    Act(Map,NewWindow)(NewWindow, Screen);
-		    Builtin_MsgPort->WakeUp = TIMER_ALWAYS;
 		    break;
 
 		  case COD_QUIT:
@@ -494,7 +540,7 @@ static void BuiltinH(msgport *MsgPort) {
 		    QuitHW();
 		    break;
 
-		  case COD_WM_RESTART:
+		  case COD_RELOAD_RC:
 		    SendControlMsg(Ext(WM,MsgPort), MSG_CTRL_RESTART, 0, NULL);
 		    break;
 
@@ -530,12 +576,8 @@ static void BuiltinH(msgport *MsgPort) {
 		    break;
 		}
 	    }
-	} else if (Msg->Event.EventCommon.Window == WinList ||
-		   Msg->Event.EventCommon.Window == DisplayWin) {
-	    
-	    if (Msg->Event.EventCommon.Window == WinList &&
-		Msg->Type==MSG_WINDOW_KEY) {
-		
+	} else if (Msg->Type==MSG_WINDOW_KEY) {
+	    if (Msg->Event.EventCommon.Window == WinList) {
 		switch (Msg->Event.EventKeyboard.Code) {
 		  case TW_Escape:
 		    Act(UnMap,WinList)(WinList);
@@ -547,14 +589,46 @@ static void BuiltinH(msgport *MsgPort) {
 		    FallBackKeyAction(WinList, &Msg->Event.EventKeyboard);
 		    break;
 		}
-	    } else if (Msg->Type==MSG_WINDOW_MOUSE) {
-		dat EventMouseX = Msg->Event.EventMouse.X, EventMouseY = Msg->Event.EventMouse.Y;
-		window *CurrWin = Msg->Event.EventCommon.Window;
-		byte temp = EventMouseX >= 0 && EventMouseX <= CurrWin->XWidth-2
+	    } else if (Msg->Event.EventCommon.Window == ExecuteWin) {
+		switch (Msg->Event.EventKeyboard.Code) {
+		  case TW_Escape:
+		    Act(UnMap,ExecuteWin)(ExecuteWin);
+		    break;
+		  case TW_Return:
+		    ExecuteWinRun();
+		    break;
+		  case TW_BackSpace:
+		    if (ExecuteWin->CurX) {
+			ExecuteWin->CurX--;
+			UpdateCursor();
+			if ((Row = Act(SearchRow,ExecuteWin)(ExecuteWin, ExecuteWin->CurY)) && Row->Len) {
+			    Row->Len--;
+			    DrawLogicWindow2(ExecuteWin, Row->Len, ExecuteWin->CurY,
+					   Row->Len + 1, ExecuteWin->CurY);
+			}
+		    }
+		    break;
+		  default:
+		    if (Msg->Event.EventKeyboard.SeqLen)
+			Act(WriteRow,ExecuteWin)(ExecuteWin, Msg->Event.EventKeyboard.SeqLen, Msg->Event.EventKeyboard.AsciiSeq);
+		    break;
+		}
+	    }
+	} else if (Msg->Type==MSG_WINDOW_MOUSE) {
+	    if (Msg->Event.EventCommon.Window == WinList ||
+		Msg->Event.EventCommon.Window == DisplayWin) {
+	    
+		dat EventMouseX, EventMouseY;
+		window *CurrWin;
+		byte temp;
+
+		EventMouseX = Msg->Event.EventMouse.X, EventMouseY = Msg->Event.EventMouse.Y;
+		CurrWin = Msg->Event.EventCommon.Window;
+		temp = EventMouseX >= 0 && EventMouseX <= CurrWin->XWidth-2
 		    && EventMouseY >= 0 && EventMouseY <= CurrWin->YWidth-2
 		    && (uldat)EventMouseY+CurrWin->YLogic < (uldat)CurrWin->MaxNumRow;
 
-		SelectRowWindow(CurrWin, temp ? (uldat)EventMouseY+CurrWin->YLogic : MAXULDAT);
+		SelectRowWindow(CurrWin, temp ? (uldat)EventMouseY+CurrWin->YLogic : MAXLDAT);
 		
 		if (CurrWin == WinList &&
 		    isRELEASE(Msg->Event.EventMouse.Code)) {
@@ -573,8 +647,9 @@ void FullUpdateWinList(window *listWin);
 
 void InstallRemoveWinListHook(window *listWin) {    
     if (listWin == WinList) {
-	if (WinList->Screen)
-	    Act(InstallHook,WinList)(WinList, FullUpdateWinList, &WinList->Screen->FnHookWindow);
+	if (WinList->Parent && IS_SCREEN(WinList->Parent))
+	    Act(InstallHook,WinList)(WinList, FullUpdateWinList,
+				     &((screen *)WinList->Parent)->FnHookWindow);
 	else
 	    Act(RemoveHook,WinList)(WinList, FullUpdateWinList, WinList->WhereHook);
     }
@@ -582,34 +657,35 @@ void InstallRemoveWinListHook(window *listWin) {
 
 void UpdateWinList(void) {
     screen *Screen = All->FirstScreen;
-    window *Window = Screen->FirstWindow;
+    widget *W;
     
     DeleteList(WinList->FirstRow);
     WinList->CurX = WinList->CurY = 0;
     
+    WinList->XLogic = WinList->YLogic = 0;
     WinList->XWidth = WinList->MinXWidth;
     WinList->YWidth = WinList->MinYWidth;
     
-    for (; Window; Window = Window->Next) {
-	if (Window == WinList || (Window->Attrib & WINDOW_MENU))
+    for (W = Screen->FirstW; W; W = W->Next) {
+	if ((void *)W == WinList || !IS_WINDOW(W) || (((window *)W)->Attrib & WINDOW_MENU))
 	    continue;
-	Row4Menu(WinList, (udat)0, ROW_ACTIVE, Window->LenTitle, Window->Title);
+	Row4Menu(WinList, (udat)0, ROW_ACTIVE, ((window *)W)->LenTitle, ((window *)W)->Title);
     }
 }
 
 void FullUpdateWinList(window *listWin) {
-    if (listWin == WinList && WinList->Screen) {
+    if (listWin == WinList && WinList->Parent) {
 	ResizeRelWindow(WinList, WinList->MinXWidth - WinList->XWidth, WinList->MinYWidth - WinList->YWidth);
     
 	UpdateWinList();
 	
-	DrawAreaWindow(WinList, FALSE);
+	DrawFullWindow2(WinList);
     }
 }
 
 byte InitBuiltin(void) {
     window *Window;
-    byte *s, *greeting = "\n"
+    byte *greeting = "\n"
 	"                TWIN             \n"
 	"        Text WINdows manager     \n\n"
 	"          Version " TWIN_VERSION_STR " by       \n\n"
@@ -632,30 +708,32 @@ byte InitBuiltin(void) {
 	Item4Menu(Builtin_Menu, Window, TRUE, 3, " ð ") &&
 	
 	(Window=Win4Menu(Builtin_Menu)) &&
-#if defined(CONF_TERM)
-	Row4Menu(Window, COD_SPAWN,  ROW_ACTIVE,11, " New Term  ") &&
-#elif defined(CONF__MODULES)
-	Row4Menu(Window, COD_SPAWN,ROW_INACTIVE,11, " New Term  ") &&
+#if defined(CONF_TERM) || defined(CONF__MODULES)
+
+	Row4Menu(Window, COD_SPAWN,  ROW_ACTIVE,10, " New Term ") &&
 #endif
+	Row4Menu(Window, COD_EXECUTE,ROW_ACTIVE,10, " Execute  ") &&
 #if defined(CONF_WM_RC) || defined(CONF__MODULES)
-	Row4Menu(Window, COD_WM_RESTART,ROW_ACTIVE,11," Reload RC ") &&
-#endif
+	Row4Menu(Window, COD_RELOAD_RC,ROW_ACTIVE,11," Reload RC ") &&
 	Row4Menu(Window, (udat)0,    ROW_IGNORE,11, "ÄÄÄÄÄÄÄÄÄÄÄ") &&
-	Row4Menu(Window, COD_DETACH, ROW_ACTIVE,11, " Detach    ") &&
-	Row4Menu(Window, COD_SUSPEND,ROW_ACTIVE,11, " Suspend   ") &&
-	Row4Menu(Window, COD_QUIT,   ROW_ACTIVE,11, " Quit      ") &&
+#else
+	Row4Menu(Window, (udat)0,    ROW_IGNORE,10, "ÄÄÄÄÄÄÄÄÄÄ") &&
+#endif
+	Row4Menu(Window, COD_DETACH, ROW_ACTIVE,10, " Detach   ") &&
+	Row4Menu(Window, COD_SUSPEND,ROW_ACTIVE,10, " Suspend  ") &&
+	Row4Menu(Window, COD_QUIT,   ROW_ACTIVE,10, " Quit     ") &&
 	(Builtin_File=Item4Menu(Builtin_Menu, Window, TRUE, 6, " File ")) &&
 	
 	(Window=Win4Menu(Builtin_Menu)) &&
-	Row4Menu(Window, (udat)0, ROW_INACTIVE,16," Undo           ") &&
-	Row4Menu(Window, (udat)0, ROW_INACTIVE,16," Redo           ") &&
-	Row4Menu(Window, (udat)0, ROW_IGNORE,  16,"ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ") &&
-	Row4Menu(Window, (udat)0, ROW_INACTIVE,16," Cut            ") &&
-	Row4Menu(Window, (udat)0, ROW_INACTIVE,16," Copy           ") &&
-	Row4Menu(Window, (udat)0, ROW_INACTIVE,16," Paste          ") &&
-	Row4Menu(Window, (udat)0, ROW_INACTIVE,16," Clear          ") &&
-	Row4Menu(Window, (udat)0, ROW_IGNORE,  16,"ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ") &&
-	Row4Menu(Window, (udat)0, ROW_INACTIVE,16," Show Clipboard ") &&
+	Row4Menu(Window, (udat)0, ROW_INACTIVE,11," Undo      ") &&
+	Row4Menu(Window, (udat)0, ROW_INACTIVE,11," Redo      ") &&
+	Row4Menu(Window, (udat)0, ROW_IGNORE,  11,"ÄÄÄÄÄÄÄÄÄÄÄ") &&
+	Row4Menu(Window, (udat)0, ROW_INACTIVE,11," Cut       ") &&
+	Row4Menu(Window, (udat)0, ROW_INACTIVE,11," Copy      ") &&
+	Row4Menu(Window, (udat)0, ROW_INACTIVE,11," Paste     ") &&
+	Row4Menu(Window, (udat)0, ROW_INACTIVE,11," Clear     ") &&
+	Row4Menu(Window, (udat)0, ROW_IGNORE,  11,"ÄÄÄÄÄÄÄÄÄÄÄ") &&
+	Row4Menu(Window, (udat)0, ROW_INACTIVE,11," Clipboard ") &&
 	Item4Menu(Builtin_Menu, Window, TRUE, 6," Edit ") &&
 	
 #if defined(CONF__MODULES) && !(defined(CONF_TERM) && defined(CONF_SOCKET))
@@ -679,54 +757,64 @@ byte InitBuiltin(void) {
 	Item4MenuCommon(Builtin_Menu) &&
 		
 	(AboutWin = Do(Create,Window)
-	 (FnWindow, (udat)5, "About", "\x7F\x7F\x7F\x7F\x7F", Builtin_Menu, COL(BLACK,WHITE),
+	 (FnWindow, 5, "About", "\x7F\x7F\x7F\x7F\x7F", Builtin_Menu, COL(BLACK,WHITE),
 	  NOCURSOR, WINDOW_WANT_MOUSE|WINDOW_DRAG|WINDOW_CLOSE, WINFL_USE_DEFCOL,
-	  (udat)40, (udat)15, (udat)0)) &&
+	  40, 15, 0)) &&
 
 	(ClockWin = Do(Create,Window)
-	 (FnWindow, (udat)5, "Clock", NULL, Builtin_Menu, COL(YELLOW,BLUE),
+	 (FnWindow, 5, "Clock", NULL, Builtin_Menu, COL(YELLOW,BLUE),
 	  NOCURSOR, WINDOW_DRAG|WINDOW_CLOSE, WINFL_USE_DEFCOL,
-	  (udat)12, (udat)4, (udat)0)) &&
+	  12, 4, 0)) &&
 
 	(OptionWin = Do(Create,Window)
-	 (FnWindow, (udat)7, "Options", NULL, Builtin_Menu, COL(HIGH|BLACK,BLACK),
+	 (FnWindow, 7, "Options", NULL, Builtin_Menu, COL(HIGH|BLACK,BLACK),
 	  NOCURSOR, WINDOW_WANT_MOUSE|WINDOW_DRAG|WINDOW_CLOSE,WINFL_USE_DEFCOL,
-	  (udat)42, (udat)16,(udat)0)) &&
+	  42, 18,0)) &&
 
 	(ButtonWin = Do(Create,Window)
-	 (FnWindow, (udat)7, "Buttons", NULL, Builtin_Menu, COL(HIGH|BLACK,BLACK),
+	 (FnWindow, 7, "Buttons", NULL, Builtin_Menu, COL(HIGH|BLACK,BLACK),
 	  NOCURSOR, WINDOW_WANT_MOUSE|WINDOW_DRAG|WINDOW_CLOSE, WINFL_USE_DEFCOL,
-	  (udat)42, (udat)11, (udat)0)) &&
+	  42, 11, 0)) &&
 
 	(DisplayWin = Do(Create,Window)
-	 (FnWindow, (udat)7, "Display", NULL, Builtin_Menu, COL(HIGH|BLACK,WHITE),
+	 (FnWindow, 7, "Display", NULL, Builtin_Menu, COL(HIGH|BLACK,WHITE),
 	  NOCURSOR,
-	  WINDOW_DRAG|WINDOW_RESIZE|WINDOW_CLOSE
-	  |WINDOW_X_BAR|WINDOW_Y_BAR,
-	  WINFL_USE_DEFCOL|WINFL_SEL_ROWCURR,
-	  (udat)33, (udat)12,(udat)0)) &&
+	  WINDOW_WANT_MOUSE|WINDOW_DRAG|WINDOW_RESIZE|WINDOW_CLOSE|WINDOW_X_BAR|WINDOW_Y_BAR,
+	  WINFL_SEL_ROWCURR|WINFL_USE_DEFCOL,
+	  33, 12,0)) &&
+
+	(DisplaySubWin = Do(Create,Window)
+	 (FnWindow, 0, NULL, NULL, Builtin_Menu, COL(HIGH|BLACK,WHITE),
+	  NOCURSOR, (uldat)0, WINFL_USE_DEFCOL,
+	  12, MAXDAT,0)) &&
 
 	(WinList = Do(Create,Window)
-	 (FnWindow, (udat)11, "Window List", NULL, Builtin_Menu, COL(WHITE,BLUE),
+	 (FnWindow, 11, "Window List", NULL, Builtin_Menu, COL(WHITE,BLUE),
 	  NOCURSOR,
 	  WINDOW_WANT_KEYS|WINDOW_WANT_MOUSE|WINDOW_DRAG|WINDOW_RESIZE|WINDOW_CLOSE
 	  |WINDOW_X_BAR|WINDOW_Y_BAR,
 	  WINFL_SEL_ROWCURR|WINFL_USE_DEFCOL,
-	  (udat)17, (udat)9, (udat)0)) &&
+	  17, 9, 0)) &&
 
+	(ExecuteWin = Do(Create,Window)
+	 (FnWindow, 10, "Execute...", NULL, Builtin_Menu, COL(WHITE,BLUE),
+	  LINECURSOR, WINDOW_WANT_KEYS|WINDOW_CLOSE|WINDOW_DRAG|WINDOW_X_BAR,
+	  WINFL_USE_DEFCOL|WINFL_CURSOR_ON,
+	  40, 4, 0)) &&
+	
 	Act(WriteRow,AboutWin)(AboutWin, grlen, greeting) &&
 	
-	(ButtonOK_About=Do(CreateEmptyButton,Gadget)(FnGadget, AboutWin, (udat)8, (udat)1, (byte)0x70)) &&
+	(ButtonOK_About=Do(CreateEmptyButton,Gadget)(FnGadget, AboutWin, 8, 1, (byte)0x70)) &&
 
-	(ButtonRemove=Do(CreateEmptyButton,Gadget)(FnGadget, DisplayWin, (udat)8, (udat)1, (byte)0x70)) &&
-	(ButtonThis  =Do(CreateEmptyButton,Gadget)(FnGadget, DisplayWin, (udat)8, (udat)1, (byte)0x70)) &&
-
+	(ButtonRemove=Do(CreateEmptyButton,Gadget)(FnGadget, DisplaySubWin, 8, 1, (byte)0x70)) &&
+	(ButtonThis  =Do(CreateEmptyButton,Gadget)(FnGadget, DisplaySubWin, 8, 1, (byte)0x70)) &&
+	/*
 	Do(Create,Gadget)(FnGadget, DisplayWin, COL(BLACK,WHITE), COL(BLACK,WHITE),
 			  COL(BLACK,WHITE), COL(BLACK,WHITE),
 			  0, GADGET_USE_DEFCOL|GADGET_DISABLED, 0, 0, 11, 8,
 			  ((s = AllocMem(11*8)), WriteMem(s, ' ', 11*8), s),
 			  NULL, NULL, NULL, NULL, NULL, NULL, NULL) &&
-	
+	 */
 	Do(Create,Gadget)(FnGadget, OptionWin, COL(BLACK,WHITE), COL(HIGH|WHITE,GREEN),
 			  COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
 			  COD_O_SHADOWS, GADGET_USE_DEFCOL, 2, 1, 11, 1,
@@ -769,13 +857,24 @@ byte InitBuiltin(void) {
 
 	Do(Create,Gadget)(FnGadget, OptionWin, COL(BLACK,WHITE), COL(HIGH|WHITE,GREEN),
 			  COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
-			  COD_O_EDGESCROLL, GADGET_USE_DEFCOL, 2, 10, 27, 1,
+			  COD_O_MENUINFO, GADGET_USE_DEFCOL, 2, 10, 25, 1,
+			  "[ ] Menu Information Line", NULL, NULL, NULL, NULL, NULL, NULL, NULL) &&
+
+	Do(Create,Gadget)(FnGadget, OptionWin, COL(BLACK,WHITE), COL(HIGH|WHITE,GREEN),
+			  COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
+			  COD_O_EDGESCROLL, GADGET_USE_DEFCOL, 2, 12, 27, 1,
 			  "[ ] Enable Screen Scrolling", NULL, NULL, NULL, NULL, NULL, NULL, NULL) &&
 
 	Do(Create,Gadget)(FnGadget, OptionWin, COL(BLACK,WHITE), COL(HIGH|WHITE,GREEN),
 			  COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
-			  COD_O_ALTFONT, GADGET_USE_DEFCOL, 2, 12, 15, 1,
-			  "[ ] Custom Font", NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+			  COD_O_ALTFONT, GADGET_USE_DEFCOL, 2, 14, 15, 1,
+			  "[ ] Custom Font", NULL, NULL, NULL, NULL, NULL, NULL, NULL) &&
+	
+	Do(Create,Gadget)(FnGadget, ExecuteWin, COL(HIGH|YELLOW,BLUE), COL(HIGH|WHITE,GREEN),
+			  COL(HIGH|BLACK,BLUE), COL(HIGH|BLACK,BLUE),
+			  COD_E_TTY, GADGET_USE_DEFCOL, 10, 1, 19, 1,
+			  "[ ] Run in Terminal", NULL, NULL, NULL, NULL, NULL, NULL, NULL)
+
 	)
     {
 	Act(SetColors,AboutWin)(AboutWin, 0x1FF, (hwcol)0x7A, (hwcol)0, (hwcol)0, (hwcol)0, (hwcol)0x7F,
@@ -795,18 +894,24 @@ byte InitBuiltin(void) {
 			       COL(HIGH|YELLOW,CYAN), COL(HIGH|GREEN,HIGH|BLUE), COL(WHITE,HIGH|BLUE),
 			       COL(HIGH|WHITE,HIGH|BLUE), COL(HIGH|WHITE,HIGH|BLUE),
 			       COL(WHITE,BLUE), COL(HIGH|BLUE,WHITE), COL(HIGH|BLACK,BLUE), COL(HIGH|BLACK,BLACK));
-	Act(Configure,WinList)(WinList, 1<<2 | 1<<3, 0, 0, (udat)17, (udat)4, 0, 0);
+	Act(Configure,WinList)(WinList, 1<<2 | 1<<3, 0, 0, 17, 4, 0, 0);
 
 	Act(SetColors,DisplayWin)(DisplayWin, 0x1FF, (hwcol)0x7A, (hwcol)0x7F, (hwcol)0x79, (hwcol)0xF9, (hwcol)0x7F,
 				  (hwcol)0x70, (hwcol)0x20, (hwcol)0x78, (hwcol)0x08);
 
+	Act(SetColors,DisplaySubWin)(DisplaySubWin, 1<<4, 0, 0, 0, 0, COL(HIGH|BLACK,WHITE),
+				     0, 0, 0, 0);
+
+	Act(Configure,DisplaySubWin)(DisplaySubWin, 1<<0 | 1<<1, -1, -1, 0, 0, 0, 0);
+	Act(Map,DisplaySubWin)(DisplaySubWin, DisplayWin);
+	
 	Act(InstallHook,DisplayWin)(DisplayWin, UpdateDisplayWin, &All->FnHookDisplayHW);
 	WinList->MapUnMapHook = InstallRemoveWinListHook;
 	
-	Act(FillButton,ButtonOK_About)(ButtonOK_About, COD_OK, (udat)15, (udat)11, (udat)0, "   OK   ", (byte)0x2F, (byte)0x28);
+	Act(FillButton,ButtonOK_About)(ButtonOK_About, COD_OK, 15, 11, 0, "   OK   ", (byte)0x2F, (byte)0x28);
 
-	Act(FillButton,ButtonRemove)(ButtonRemove, COD_D_REMOVE, (udat)1, (udat)2, (udat)0, " Remove ", (byte)0x2F, (byte)0x28);
-	Act(FillButton,ButtonThis)  (ButtonThis,   COD_D_THIS,   (udat)1, (udat)5, (udat)0, "  This  ", (byte)0x2F, (byte)0x28);
+	Act(FillButton,ButtonRemove)(ButtonRemove, COD_D_REMOVE, 1, 2, 0, " Remove ", (byte)0x2F, (byte)0x28);
+	Act(FillButton,ButtonThis)  (ButtonThis,   COD_D_THIS,   1, 5, 0, "  This  ", (byte)0x2F, (byte)0x28);
 
 	OptionWin->CurX = 25; OptionWin->CurY = 1;
 	Act(WriteRow,OptionWin)(OptionWin, 10, "  X Shadow");

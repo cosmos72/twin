@@ -11,7 +11,7 @@
 
 # file syntax:
 # 
-# a sharp sign '#' at the beginning of a line means the line
+# a hash sign '#' at the beginning of a line means the line
 # is a comment (you are already reading such a comment!)
 #
 # Many different commands are recognized, and are listed below.
@@ -75,7 +75,13 @@ AddToMenu " Window " (
    " List... "     WindowList
    ""              Nop
    " Refresh "     Refresh
-   " Send Hotkey " SyntheticKey Pause
+   " Send Pause "  SyntheticKey Pause
+#
+# this is a user contributed idea: ALT-TAB to cycle through windows.
+# feel free to uncomment this line and the `Key Alt Tab _Next' far below
+#
+#  " Send Alt-Tab " SyntheticKey Alt Tab
+#
    ""              Nop
    " Close "       Close
    ""              Nop
@@ -85,11 +91,12 @@ AddToMenu " Window " (
 #
 # define the user function `_Next'
 # group commands in '(' ')' and put either a newline or a ';'
-# after each command. `Window 1' means first window.
+# after each command. `Window 1' means first window, while
+# `Window 0' is the currently focused window.
 #
 AddToFunc _Next ( Lower; Window 1; Focus; )
 
-# this would be exactly the same:
+# this would be exactly the same
 #
 # AddToFunc _Next (
 #   Lower
@@ -100,7 +107,9 @@ AddToFunc _Next ( Lower; Window 1; Focus; )
 # or you can even split the function definition:
 #
 # AddToFunc _Next ( Lower; Window 1; )
-# AddToFunc _Next ( Focus; )
+# AddToFunc _Next (
+#   Focus
+# )
 #
 
 
@@ -209,6 +218,7 @@ GlobalFlags -AltFont
 # choose the mouse button used for click-to-focus,
 # for text selection and to activate window gadgets.
 # 1 means Left, 2 means Middle, 3 means Right.
+# this also implies a 'Focus' action when clicking in a non-focused window.
 #
 GlobalFlags SelectionButton 1
 #
@@ -217,9 +227,43 @@ GlobalFlags SelectionButton 1
 GlobalFlags PasteButton 2
 
 #
-# keyboard and mouse binding syntax:
+# keyboard bindings syntax:
 #
-# Key <name> <function>
+# Key <flags> <name> <function>
+#
+# <flags> is optional and can be one or more of
+#   Shift
+#   Ctrl
+#   Alt
+# remember anyway that except on X11 display twin can detect these flags
+# only deducing them from the ASCII sequences it receives from the keyboard,
+# so Shift is almost useless and not all keys combined with Ctrl and Alt
+# make sense (i.e. they must produce a unique, identificable ASCII sequence)
+#
+# <name> is the name of the key as in libTwkeys.h, without the TW_ prefix.
+# some examples:
+#   Tab   Return  Escape  BackSpace
+#   Left  Up      Right   Down
+#   Prior (Page_Up)       Next  (Page_Down)
+#   Home  End     Insert  Delete
+#   Pause Num_Lock
+#   F1 F2 F3 F4 F5 F6 F7 F8 F9 F10 F11 F12
+# or any ASCII character in double quotes:
+#   "A"  "[" "\xFF" and so on
+#
+
+# Pause pops up the menu
+Key  Pause   Interactive Menu
+
+# this is a user contributed idea: ALT-TAB to cycle through windows.
+# feel free to uncomment this line and the one far above saying this
+# same comment.
+#
+# Key Alt Tab _Next
+
+
+#
+# mouse bindings syntax:
 #
 # Mouse <buttons-list> <context> <function>
 #
@@ -236,9 +280,6 @@ GlobalFlags PasteButton 2
 #  R    root (screen background)
 #  A    any of the above
 #
-
-# Pause pops up the menu
-Key  Pause   Interactive Menu
 
 #
 # mouse bindings: left click on button 0 graciously closes the window
@@ -322,7 +363,7 @@ Mouse H1  M  Interactive Screen
 
 # now you may want some initial client...
 # uncomment to pop-up a terminal and maximize it.
-# `;' is the same as a return...
+# `;' is the same as a newline...
 #
 # ExecTty "" ; Wait "Twin Term" ; Maximize
 
@@ -336,7 +377,7 @@ Mouse H1  M  Interactive Screen
 #   "entry" <function>
 #   ...
 # )
-# add entries to the common part of all menus
+# # add entries to the common part of all menus
 #
 #
 # AddToFunc <name> (
@@ -364,7 +405,7 @@ Mouse H1  M  Interactive Screen
 # # center window
 # 
 # Close
-# politely ask the client to close the window
+# # politely ask the client to close the window
 # 
 # DeleteFunc <name>
 # 
@@ -383,12 +424,12 @@ Mouse H1  M  Interactive Screen
 # GlobalFlags [+|-][AltFont] [+|-][AlwaysCursor] [+|-][Blink] [+|-][EdgeScroll] [+|-][HideMenu] [+|-]MenuItems [+|-][Shadows <x> <y>]
 # 
 # Interactive <kind>
-# # Scroll, Move, Resize, Screen, Menu
+# # choose one of: Scroll, Move, Resize, Screen, Menu
 # 
-# Key <keyname> <context> <function>
+# Key <flags> <keyname> <context> <function>
 # 
 # Kill
-# brutally kill the client's connection
+# # brutally kill the client's connection
 # 
 # Lower
 # 
@@ -417,17 +458,17 @@ Mouse H1  M  Interactive Screen
 # # same as Window -1
 # 
 # Quit
-# unconditionally quit twin!
+# # unconditionally quit twin!
 # 
 # Read <file>
-# open another file and parse it, then continue with current file
-# (like #include in C files)
+# # open another file and parse it, then continue with current file
+# # (like #include in C files)
 # 
 # Refresh
-# redraw all displays
+# # redraw all displays
 # 
 # Restart ""|<window manager name>
-# restart the WM or load another window manager
+# # restart the WM or load another window manager
 # 
 # Resize [+|-]<x> [+|-]<y>
 # # resize window
@@ -437,7 +478,7 @@ Mouse H1  M  Interactive Screen
 # Raise
 # 
 # RaiseLower
-# raise-and-focus or lower-and-unfocus
+# # raise-and-focus or lower-and-unfocus
 # 
 # Roll [On|Off|Toggle]
 # 
@@ -450,10 +491,13 @@ Mouse H1  M  Interactive Screen
 # Sleep <n>
 #
 # Stderr <string> ...
-# send message to stderr
+# # send message to stderr
 # 
+# SyntheticKey <flags> <key>
+# # send the specified key event to window
+#
 # Wait <window name>
-# wait for specified window to be mapped
+# # wait for specified window to be mapped
 # 
 # Window {[+|-]<n>|<window name>}
 # # sets default window to operate on

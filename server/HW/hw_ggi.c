@@ -156,11 +156,11 @@ static void GGI_KeyboardEvent(int fd, display_hw *hw) {
 	    x = ev.pmove.x / gfont.x;
 	    y = ev.pmove.y / gfont.y;
 	    
-	    x = Max2(x, 0); x = Min2(x, ScreenWidth - 1);
-	    y = Max2(y, 0); y = Min2(y, ScreenHeight - 1);
+	    x = Max2(x, 0); x = Min2(x, DisplayWidth - 1);
+	    y = Max2(y, 0); y = Min2(y, DisplayHeight - 1);
 	    
-	    dx = ev.pmove.x < gfont.x/2 ? -1 : ScreenWidth *gfont.x - ev.pmove.x <= gfont.x/2 ? 1 : 0;
-	    dy = ev.pmove.y < gfont.y/2 ? -1 : ScreenHeight*gfont.y - ev.pmove.y <= gfont.y/2 ? 1 : 0;
+	    dx = ev.pmove.x < gfont.x/2 ? -1 : DisplayWidth *gfont.x - ev.pmove.x <= gfont.x/2 ? 1 : 0;
+	    dy = ev.pmove.y < gfont.y/2 ? -1 : DisplayHeight*gfont.y - ev.pmove.y <= gfont.y/2 ? 1 : 0;
 	    
 	    break;
 	    
@@ -206,8 +206,8 @@ INLINE void GGI_Mogrify(dat x, dat y, uldat len) {
     byte buf[SMALLBUFF];
     int xbegin = x * gfont.x, ybegin = y * gfont.y;
     
-    V = Video + x + y * ScreenWidth;
-    oV = OldVideo + x + y * ScreenWidth;
+    V = Video + x + y * DisplayWidth;
+    oV = OldVideo + x + y * DisplayWidth;
     
     for (_col = ~HWCOL(*V); len; x++, V++, oV++, len--) {
 	col = HWCOL(*V);
@@ -235,7 +235,7 @@ INLINE void GGI_Mogrify(dat x, dat y, uldat len) {
 #undef GDRAW
 
 static void GGI_HideCursor(dat x, dat y) {
-    hwattr V = Video[x + y * ScreenWidth];
+    hwattr V = Video[x + y * DisplayWidth];
     hwcol col = HWCOL(V);
     
     GFG(col);
@@ -244,7 +244,7 @@ static void GGI_HideCursor(dat x, dat y) {
 }
 
 static void GGI_ShowCursor(uldat type, dat x, dat y) {
-    hwattr V = Video[x + y * ScreenWidth];
+    hwattr V = Video[x + y * DisplayWidth];
     hwcol v;
     udat i;
     
@@ -275,15 +275,15 @@ static void GGI_FlushVideo(void) {
     udat i;
     byte c = ChangedVideoFlag &&
 	(ValidOldVideo
-	 ? Video[HW->XY[0] + HW->XY[1] * ScreenWidth]
-	 != OldVideo[HW->XY[0] + HW->XY[1] * ScreenWidth] 
+	 ? Video[HW->XY[0] + HW->XY[1] * DisplayWidth]
+	 != OldVideo[HW->XY[0] + HW->XY[1] * DisplayWidth] 
 	 : Plain_isDirtyVideo(HW->XY[0], HW->XY[1]));
     /* TRUE iff the cursor will be erased by burst */
     
     
     /* first burst all changes */
     if (ChangedVideoFlag) {
-	for (i=0; i<ScreenHeight*2; i++) {
+	for (i=0; i<DisplayHeight*2; i++) {
 	    start = ChangedVideo[i>>1][i&1][0];
 	    end   = ChangedVideo[i>>1][i&1][1];
 	    
@@ -317,19 +317,19 @@ static void GGI_FlushHW(void) {
     clrFlush();
 }
 
-static void GGI_DetectSize(udat *x, udat *y) {
+static void GGI_DetectSize(dat *x, dat *y) {
     *x = HW->X;
     *y = HW->Y;
 }
 
-static void GGI_CheckResize(udat *x, udat *y) {
+static void GGI_CheckResize(dat *x, dat *y) {
     /* TODO */
     /* I am lazy, libggi has ggiCheckMode() for this. */
     *x = Min2(*x, HW->X);
     *y = Min2(*y, HW->Y);
 }
 
-static void GGI_Resize(udat x, udat y) {
+static void GGI_Resize(dat x, dat y) {
     if (x < HW->usedX || y < HW->usedY) {
 	/* clear screen so that extra area will be padded with blanks */
 	ggiSetGCForeground(gvis, gforeground = gcol[0]);
@@ -406,7 +406,7 @@ static void GGI_QuitHW(void) {
 	GGI_HW = NULL;
 }
 
-#ifdef MODULE
+#ifdef CONF_THIS_MODULE
 static
 #endif
 byte GGI_InitHW(void) {
@@ -566,7 +566,7 @@ byte GGI_InitHW(void) {
 
 
 
-#ifdef MODULE
+#ifdef CONF_THIS_MODULE
 
 #include "version.h"
 MODULEVERSION;
@@ -580,7 +580,7 @@ byte InitModule(module *Module) {
 void QuitModule(module *Module) {
 }
 
-#endif /* MODULE */
+#endif /* CONF_THIS_MODULE */
 
 
 #if 0

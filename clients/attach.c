@@ -169,7 +169,7 @@ int main(int argc, char *argv[]) {
     
     redirect = flags & TW_ATTACH_HW_REDIRECT;
     
-    if (TwOpen(dpy) && TwCreateMsgPort(8, "Twattach", (uldat)0, (udat)0, (byte)0)) do {
+    if (TwOpen(dpy) && TwCreateMsgPort(8, "Twattach", 0, 0, 0)) do {
 	
 	if (!VersionsMatch(force)) {
 	    if (!force) {

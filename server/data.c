@@ -2,7 +2,7 @@
  *  data.c  --  create fundamental structures:
  *              `All', screens, table for mouse/keyboard actions
  *
- *  Copyright (C) 1993-2000 by Massimiliano Ghilardi
+ *  Copyright (C) 1993-2001 by Massimiliano Ghilardi
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,9 +20,9 @@
 
 /* setup configuration paths */
 
-#ifdef CONF_DESTDIR
-CONST byte *conf_destdir_lib_twin = CONF_DESTDIR "/lib/twin";
-CONST byte *conf_destdir_lib_twin_modules_ = CONF_DESTDIR "/lib/twin/modules/";
+#ifdef DESTDIR
+CONST byte *conf_destdir_lib_twin = DESTDIR "/lib/twin";
+CONST byte *conf_destdir_lib_twin_modules_ = DESTDIR "/lib/twin/modules/";
 #else
 CONST byte *conf_destdir_lib_twin = ".";
 CONST byte *conf_destdir_lib_twin_modules_ = "./";
@@ -84,7 +84,9 @@ static all _All = {
 	(display_hw *)0, (display_hw *)0,
 	(fn_hook)0, (window *)0,
 	
+	1, 1, /* DisplayWidth, DisplayHeight */
 	STATE_DEFAULT,
+	
     { (time_t)0, (uldat)0 },
 	&Selection,
 	&SetUp,
@@ -126,47 +128,6 @@ keylist TW_KeyList[] = {
     { NULL, TW_Null, 0, NULL }
 };
 
-
-gadget GadgetFlag = {
-    NOID, (fn_gadget *)0,
-	(gadget *)0, (gadget *)0,
-	(window *)0,
-	COL(YELLOW,BLUE), COL(YELLOW,HIGH|BLUE), COL(HIGH|BLACK,BLUE), COL(HIGH|BLACK,BLUE),
-	(udat)0,
-	(udat)0, (udat)0,
-	(udat)3, (udat)1,
-	WINFL_USE_DEFCOL,
-    {
-	"[\004]",
-	    "[\004]",
-	    "[\004]",
-	    "[\004]",
-	    (byte *)0,
-	    (byte *)0,
-	    (byte *)0,
-	    (byte *)0
-    }
-},
-GadgetSwitch = {
-    NOID, (fn_gadget *)0,
-	(gadget *)0, (gadget *)0,
-	(window *)0,
-	COL(YELLOW,BLUE), COL(YELLOW,HIGH|BLUE), COL(HIGH|BLACK,BLUE), COL(HIGH|BLACK,BLUE),
-	(udat)0,
-	(udat)0, (udat)0,
-	(udat)3, (udat)1,
-	WINFL_USE_DEFCOL,
-    {
-	"(\007)",
-	    "(\007)",
-	    "(\007)",
-	    "(\007)",
-	    (byte *)0,
-	    (byte *)0,
-	    (byte *)0,
-	    (byte *)0
-    }
-};
 
 byte GadgetResize[2][2] = {
     {'Í', '¼'},
@@ -335,9 +296,6 @@ NewFont16[] = {
 
 byte InitData(void) {
     
-    GadgetFlag.Fn = GadgetSwitch.Fn = FnGadget;
-    
-    
     if ((OneScreen = Do(CreateSimple,Screen)(FnScreen, 1, "1", HWATTR(COL(HIGH|BLACK,BLUE),'±')))) {
 	
 #define a HWATTR(COL(HIGH|BLUE,BLUE),'Ü')
@@ -357,7 +315,7 @@ byte InitData(void) {
 	    return TRUE;
 	}
     }
-    fprintf(stderr, "twin: Out of memory!\n");
+    fprintf(stderr, "twin: InitData(): Out of memory!\n");
     return FALSE;
 }
 

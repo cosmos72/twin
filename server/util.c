@@ -1,7 +1,7 @@
 /*
  *  util.c  --  utility functions
  *
- *  Copyright (C) 1993-2000 by Massimiliano Ghilardi
+ *  Copyright (C) 1993-2001 by Massimiliano Ghilardi
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -39,7 +39,7 @@ uldat MemLeft(void) {
 }
 #endif
 
-void Error(udat Code_Error) {
+byte Error(udat Code_Error) {
     switch ((ErrNo = Code_Error)) {
       case NOMEMORY:
 	ErrStr = "Out of memory!";
@@ -50,6 +50,7 @@ void Error(udat Code_Error) {
       default:
 	break;
     }
+    return FALSE;
 }
 
 void *CloneMem(CONST void *From, uldat Size) {
@@ -381,12 +382,45 @@ byte SetSelectionFromWindow(window *Window) {
 	if (ok) NeedHW |= NEEDSelectionExport;
 	return ok;
     }
-    
+
+    /* normalize negative coords */
+    if (Window->XstSel < 0)
+	Window->XstSel = 0;
+    else if ((Window->Flags & WINFL_USECONTENTS) &&
+	     Window->XstSel >= Window->NumRowOne) {
+	Window->XstSel = 0;
+	Window->YstSel++;
+    }
+    if (Window->YstSel < Window->YLogic) {
+	Window->YstSel = Window->YLogic;
+	Window->XstSel = 0;
+    } else if (Window->YstSel >= Window->MaxNumRow) {
+	Window->YstSel = Window->MaxNumRow - 1;
+	Window->XstSel = (Window->Flags & WINFL_USECONTENTS) ?
+	    Window->NumRowOne - 1 : MAXLDAT;
+    }
+
     if (Window->Flags & WINFL_USECONTENTS) {
 	hwattr *hw;
 	
+	/* normalize negative coords */
+        if (Window->XendSel < 0) {
+	    Window->XendSel = Window->NumRowOne - 1;
+	    Window->YendSel--;
+	} else if (Window->XendSel >= Window->NumRowOne)
+	    Window->XendSel = Window->NumRowOne - 1;
+	    
+	if (Window->YendSel < Window->YLogic) {
+	    Window->YendSel = Window->YLogic;
+	    Window->XendSel = 0;
+	} else if (Window->YendSel >= Window->MaxNumRow) {
+	    Window->YendSel = Window->MaxNumRow - 1;
+	    Window->XendSel = Window->NumRowOne - 1;
+	}
+	
 	if (!(sData = AllocMem(slen = Window->NumRowOne)))
 	    return FALSE;
+	
 	
 	hw = Window->Contents + (Window->YstSel + Window->NumRowSplit) * slen;
 	while (hw >= Window->TtyData->Split)
@@ -439,16 +473,16 @@ byte SetSelectionFromWindow(window *Window) {
 	y = Window->YstSel;
 	Row = Act(SearchRow,Window)(Window, y);
 	
-	if (Row) {
-	    if (Row->Text) {
-		if (y < Window->YendSel)
-		    slen = Row->Len - Window->XstSel;
-		else
-		    slen = Min2(Row->Len, Window->XendSel+1) - Min2(Row->Len, Window->XstSel);
-		ok &= SelectionStore(SEL_TEXTMAGIC, NULL, slen, Row->Text + Window->XstSel);
-	    } else
-		ok &= SelectionStore(SEL_TEXTMAGIC, NULL, 0, "");
-	}
+	if (Row && Row->Text) {
+	    if (y < Window->YendSel)
+		slen = Row->Len - Window->XstSel;
+	    else
+		slen = Min2(Row->Len, Window->XendSel+1) - Min2(Row->Len, Window->XstSel);
+	    ok &= SelectionStore(SEL_TEXTMAGIC, NULL, slen,
+				 Row->Text + Min2(Row->Len, Window->XstSel));
+	} else
+	    ok &= SelectionStore(SEL_TEXTMAGIC, NULL, 0, "");
+
 	if (y < Window->YendSel || !Row || !Row->Text || Row->Len <= Window->XendSel)
 	    ok &= SelectionAppend(1, "\n");
 
@@ -458,7 +492,7 @@ byte SetSelectionFromWindow(window *Window) {
 	    ok &= SelectionAppend(1, "\n");
 	}
 	if (Window->YendSel > Window->YstSel) {
-	    if ((Row = Act(SearchRow,Window)(Window, Window->YendSel)) && Row->Text)
+	    if (Window->XendSel >= 0 && (Row = Act(SearchRow,Window)(Window, Window->YendSel)) && Row->Text)
 		ok &= SelectionAppend(Min2(Row->Len, Window->XendSel+1), Row->Text);
 	    if (!Row || !Row->Text || Row->Len <= Window->XendSel)
 		ok &= SelectionAppend(1, "\n");
@@ -469,6 +503,58 @@ byte SetSelectionFromWindow(window *Window) {
     return FALSE;
 }
 
+
+byte CreateXTermMouseEvent(event_mouse *Event, byte buflen, byte *buf) {
+    byte len = 0;
+    udat Code = Event->Code;
+    dat x = Event->X, y = Event->Y;
+    udat Flags;
+	
+    if (!Event->Window || !Event->Window->TtyData)
+	return len;
+    
+    Flags = Event->Window->TtyData->Flags;
+    
+    if (Flags & TTY_REPORTMOUSE2) {
+	/* classic xterm-style reporting */
+	
+	if (buflen < 6)
+	    /* buffer too small! */
+	    return len;
+	
+	CopyMem("\033[M", buf, 3);
+    
+	if (isSINGLE_PRESS(Code)) switch (Code & PRESS_ANY) {
+	  case PRESS_LEFT: buf[3] = ' '; break;
+	  case PRESS_MIDDLE: buf[3] = '!'; break;
+	  case PRESS_RIGHT: buf[3] = '\"'; break;
+	}
+	else if (isRELEASE(Code))
+	    buf[3] = '#';
+	else
+	    return len;
+
+	buf[4] = '!' + x;
+	buf[5] = '!' + y;
+	len = 6;
+	
+    } else if (Flags & TTY_REPORTMOUSE) {
+	/* new-style reporting */
+	
+	if (buflen < 9)
+	    /* buffer too small! */
+	    return len;
+	
+	CopyMem("\033[5M", buf, 4);
+	buf[4] = ' ' + (Code & HOLD_ANY);
+	buf[5] = '!' + (x & 0x7f);
+	buf[6] = '!' + ((x >> 7) & 0x7f);
+	buf[7] = '!' + (y & 0x7f);
+	buf[8] = '!' + ((y >> 7) & 0x7f);
+	len = 9;
+    }
+    return len;
+}
 
 void ResetBorderPattern(void) {
     msgport *MsgP;
@@ -485,56 +571,56 @@ void ResetBorderPattern(void) {
 }
 
 void FallBackKeyAction(window *W, event_keyboard *EventK) {
-    uldat NumRow, OldNumRow;
+    ldat NumRow, OldNumRow;
 	
     switch (EventK->Code) {
       case TW_Up:
 	if (!W->MaxNumRow)
 	    break;
 	OldNumRow=W->CurY;
-	if (OldNumRow<MAXULDAT) {
+	if (OldNumRow<MAXLDAT) {
 	    if (!OldNumRow)
-		NumRow=W->MaxNumRow-(uldat)1;
+		NumRow=W->MaxNumRow-(ldat)1;
 	    else
-		NumRow=OldNumRow-(uldat)1;
+		NumRow=OldNumRow-(ldat)1;
 	    W->CurY=NumRow;
 	    if (W->Flags & WINFL_SEL_ROWCURR)
-		DrawTextWindow(W, (uldat)0, OldNumRow, (uldat)MAXUDAT-(uldat)2, OldNumRow);
+		DrawLogicWindow2(W, (ldat)0, OldNumRow, (ldat)MAXDAT-(ldat)2, OldNumRow);
 	}
 	else
-	    W->CurY=NumRow=W->MaxNumRow-(uldat)1;
+	    W->CurY=NumRow=W->MaxNumRow-(ldat)1;
 	if (W->Flags & WINFL_SEL_ROWCURR)
-	    DrawTextWindow(W, (uldat)0, NumRow, (uldat)MAXUDAT-(uldat)2, NumRow);
+	    DrawLogicWindow2(W, (ldat)0, NumRow, (ldat)MAXDAT-(ldat)2, NumRow);
 	UpdateCursor();
 	break;
       case TW_Down:
 	if (!W->MaxNumRow)
 	    break;
 	OldNumRow=W->CurY;
-	if (OldNumRow<MAXULDAT) {
-	    if (OldNumRow>=W->MaxNumRow-(uldat)1)
-		NumRow=(uldat)0;
+	if (OldNumRow<MAXLDAT) {
+	    if (OldNumRow>=W->MaxNumRow-(ldat)1)
+		NumRow=(ldat)0;
 	    else
-		NumRow=OldNumRow+(uldat)1;
+		NumRow=OldNumRow+(ldat)1;
 	    W->CurY=NumRow;
 	    if (W->Flags & WINFL_SEL_ROWCURR)
-		DrawTextWindow(W, (uldat)0, OldNumRow, (uldat)MAXUDAT-(uldat)2, OldNumRow);
+		DrawLogicWindow2(W, (ldat)0, OldNumRow, (ldat)MAXDAT-(ldat)2, OldNumRow);
 	}
 	else
-	    W->CurY=NumRow=(uldat)0;
+	    W->CurY=NumRow=(ldat)0;
 	if (W->Flags & WINFL_SEL_ROWCURR)
-	    DrawTextWindow(W, (uldat)0, NumRow, (uldat)MAXUDAT-(uldat)2, NumRow);
+	    DrawLogicWindow2(W, (ldat)0, NumRow, (ldat)MAXDAT-(ldat)2, NumRow);
 	UpdateCursor();
 	break;
       case TW_Left:
-	if (W->CurX) {
+	if (W->CurX > 0) {
 	    W->CurX--;
 	    UpdateCursor();
 	}
 	break;
       case TW_Right:
 	if (((W->Flags & WINFL_USECONTENTS) && W->CurX < W->XWidth - 3) ||
-	    (!(W->Flags & WINFL_USEANY) && W->CurX < MAXULDAT - 1)) {
+	    (!(W->Flags & WINFL_USEANY) && W->CurX < MAXLDAT - 1)) {
 	    W->CurX++;
 	    UpdateCursor();
 	}
@@ -544,8 +630,68 @@ void FallBackKeyAction(window *W, event_keyboard *EventK) {
     }
 }
 
+/*
+ * create a (malloced) array of non-space args
+ * from arbitrary text command line
+ */
+byte **ExtractArgv(byte *text, uldat tlen) {
+    uldat len, l = tlen, argc = 0;
+    byte **argv, *s, c, cmd = 1;
+    
+    for (s = text, l = tlen; s && l--; s++) {
+	c = *s;
+	if (c != ' ') {
+	    argc += cmd;
+	    cmd = 0;
+	} else
+	    cmd = 1;
+    }
+    
+    if (argc)
+	argc++; /* for the final NULL */
+    else
+	return NULL;
+    
+    if ((argv = (byte **)AllocMem( argc * sizeof(byte *) ))) {
+	argc = len = 0;
+	
+	for (s = text, l = tlen; s && l--; s++) {
+	    c = *s;
+	    
+	    if (c != ' ') {
+		if (!len++)
+		    text = s;
+		
+	    } else if (len) {
+		if ((argv[argc++] = CloneStrL(text, len))) {
+		    len = 0;
+		    text = NULL;
+		} else {
+		    FreeArgv(argv);
+		    return NULL;
+		}
+	    }
+	}
+	if (len && text && !(argv[argc++] = CloneStrL(text, len))) {
+	    FreeArgv(argv);
+	    return NULL;
+	}
+	argv[argc] = NULL;
+    }
+    return argv;
+}
 
-
+/*
+ * free a malloced array of strings
+ */
+void FreeArgv(byte **argv) {
+    byte **s;
+    
+    for (s = argv; s && *s; s++)
+	FreeMem(*s);
+    if (argv)
+	FreeMem(argv);
+}
 
 static byte fullTWD[]="/tmp/.Twin:\0\0\0";
 static byte envTWD[]="TWDISPLAY=\0\0\0\0";
@@ -624,7 +770,6 @@ void CheckPrivileges(void) {
 	fprintf(stderr, "twin: not running setgid tty.\n"
 		"      might be unable to start the terminal emulator.\n"
 		"      hit RETURN to continue, or CTRL-C to quit.\n");
-	fflush(stdout);
 	read(0, &c, 1);
     }
 #  else /* !CONF_TERM_DEVPTS */
@@ -633,23 +778,21 @@ void CheckPrivileges(void) {
 	fprintf(stderr, "twin: not running setuid root.\n"
 		"      might be unable to start the terminal emulator.\n"
 		"      hit RETURN to continue, or CTRL-C to quit.\n");
-	fflush(stdout);
 	read(0, &c, 1);
     }
 #  endif /* CONF_TERM_DEVPTS */
     
 # else /* !CONF_TERM */
 
-#  ifdef CONF_MODULES
+#  ifdef CONF__MODULES
     if (Privilege == none) {
 	byte c;
 	fprintf(stderr, "twin: not running setgid tty or setuid root.\n"
 		"      might be unable to start the terminal emulator module.\n"
 		"      hit RETURN to continue, or CTRL-C to quit.\n");
-	fflush(stdout);
 	read(0, &c, 1);
     }
-#  endif /* CONF_MODULES */
+#  endif /* CONF__MODULES */
 # endif /* CONF_TERM */
 #endif /* 0 */
 }
@@ -728,10 +871,23 @@ INLINE void _DropId(byte i, obj *Obj) {
 }
     
 byte AssignId(CONST fn_obj *Fn_Obj, obj *Obj) {
-    byte i = 0;
+    byte i;
     if (Obj) switch (Fn_Obj->Magic) {
-      case area_magic:
-      case area_win_magic:
+      case obj_magic:
+      case widget_magic:
+	/* 'obj' and 'widget' are just a template type, you can't create one */
+	break;
+      case row_magic:
+      case module_magic:
+      case display_hw_magic:
+      case msg_magic:
+	/*
+	 * we don't use Ids for rows and msgs as we expect to create *lots* of them
+	 * it's unsafe to allow modules and display_hw access remotely,
+	 * so no Ids for them too
+	 */
+        Obj->Id = Fn_Obj->Magic;
+	return TRUE;
       case gadget_magic:	
       case window_magic:
       case menuitem_magic:
@@ -739,29 +895,29 @@ byte AssignId(CONST fn_obj *Fn_Obj, obj *Obj) {
       case screen_magic:
       case msgport_magic:
       case mutex_magic:
-      case display_hw_magic:
 	i = Fn_Obj->Magic >> magic_shift;
-	break;
-      case msg_magic:
-      case row_magic:
-      case module_magic:
-	/* we don't use Ids for rows and msgs as we expect to create *lots* of them */
-	/* it's unsafe to allow modules access remotely, so no Ids for them too */
-        Obj->Id = Fn_Obj->Magic;
-	return TRUE;
-      case obj_magic:
-	/* 'obj' is just a template type, you can't create one */
+	return _AssignId(i, Obj);
       default:
-	return FALSE;
+	break;
     }
-    return i ? _AssignId(i, Obj) : i;
+    return FALSE;
 }
 
 void DropId(obj *Obj) {
     byte i = 0;
     if (Obj && Obj->Fn) switch (Obj->Fn->Magic) {
-      case area_magic:
-      case area_win_magic:
+      case obj_magic:
+      case widget_magic:
+	/* 'obj' and 'widget' are just a template type, you can't create one */
+	break;
+      case row_magic:
+      case module_magic:
+      case display_hw_magic:
+      case msg_magic:
+	/* we don't use Ids for rows and msgs as we expect to create *lots* of them */
+	/* it's unsafe to allow modules access remotely, so no Ids for them too */
+	Obj->Id = NOID;
+	break;
       case gadget_magic:	
       case window_magic:
       case menuitem_magic:
@@ -770,31 +926,29 @@ void DropId(obj *Obj) {
       case msgport_magic:
       case mutex_magic:
 	i = Obj->Fn->Magic >> magic_shift;
+	if (i == (Obj->Id >> magic_shift))
+	    _DropId(i, Obj);
 	break;
-      case msg_magic:
-      case row_magic:
-      case module_magic:
-	/* we don't use Ids for rows and msgs as we expect to create *lots* of them */
-	/* it's unsafe to allow modules access remotely, so no Ids for them too */
-	Obj->Id = NOID;
-	return;
-      case obj_magic:
-	/* 'obj' is just a template type, you can't create one */
       default:
-	return;
+	break;
     }
-    if (i && i == (Obj->Id >> magic_shift))
-	_DropId(i, Obj);
 }
 
 obj *Id2Obj(byte i, uldat Id) {
-    if (i < magic_n) {
-	if (i == (obj_magic >> magic_shift))
-	    i = (Id >> magic_shift);
-	if (i == (Id >> magic_shift)) {
+    byte I = Id >> magic_shift;
+    
+    if (i < magic_n && I < magic_n) {
+	/* everything is a valid (obj *) */
+	/* gadgets, windows, screens are valid (widget *) */
+	if (i == I || i == (obj_magic >> magic_shift) ||
+	    (i == (widget_magic >> magic_shift) &&
+	     (I == (gadget_magic >> magic_shift) ||
+	      I == (window_magic >> magic_shift) ||
+	      I == (screen_magic >> magic_shift)))) {
+	    
 	    Id &= MAXID;
-	    if (Id < IdTop[i])
-		return IdList[i][Id];
+	    if (Id < IdTop[I])
+		return IdList[I][Id];
 	}
     }
     return (obj *)0;

@@ -25,7 +25,7 @@ byte InitTtysave(void);
 void DirtyVideo(dat Xstart, dat Ystart, dat Xend, dat Yend);
 void DragArea(dat Xstart, dat Ystart, dat Xend, dat Yend, dat DstXstart, dat DstYstart);
 
-void MoveToXY(udat x, udat y);
+void MoveToXY(dat x, dat y);
 void SetCursorType(uldat type);
 
 #endif /* _TW_HW_H */

@@ -147,7 +147,7 @@ static byte termcap_InitVideo(void) {
     HW->CanDragArea = termcap_CanDragArea;
     HW->DragArea = termcap_DragArea;
    
-    HW->XY[0] = HW->XY[1] = 0;
+    HW->XY[0] = HW->XY[1] = -1;
     HW->TT = -1; /* force updating the cursor */
 	
     HW->Beep = termcap_Beep;
@@ -167,7 +167,7 @@ static byte termcap_InitVideo(void) {
 
 static void termcap_QuitVideo(void) {
 
-    termcap_MoveToXY(0, ScreenHeight-1);
+    termcap_MoveToXY(0, DisplayHeight-1);
     termcap_SetCursorType(LINECURSOR);
     fputs(attr_off, stdOUT); /* reset colors */
     
@@ -234,10 +234,10 @@ INLINE void termcap_Mogrify(dat x, dat y, uldat len) {
     hwattr *V, *oV;
     hwcol col;
     byte c, sending = FALSE;
-    uldat delta = x + (uldat)y * ScreenWidth;
+    uldat delta = x + (uldat)y * DisplayWidth;
     
-    if (!wrapglitch && delta + len >= (uldat)ScreenWidth * ScreenHeight)
-	len = (uldat)ScreenWidth * ScreenHeight - delta - 1;
+    if (!wrapglitch && delta + len >= (uldat)DisplayWidth * DisplayHeight)
+	len = (uldat)DisplayWidth * DisplayHeight - delta - 1;
     
     V = Video + delta;
     oV = OldVideo + delta;
@@ -265,7 +265,7 @@ INLINE void termcap_Mogrify(dat x, dat y, uldat len) {
 INLINE void termcap_SingleMogrify(dat x, dat y, hwattr V) {
     byte c;
     
-    if (!wrapglitch && x == ScreenWidth-1 && y == ScreenHeight-1)
+    if (!wrapglitch && x == DisplayWidth-1 && y == DisplayHeight-1)
 	return;
     
     termcap_MoveToXY(x,y);
@@ -283,24 +283,24 @@ INLINE void termcap_SingleMogrify(dat x, dat y, hwattr V) {
 /* HideMouse and ShowMouse depend on Video setup, not on Mouse.
  * so we have vcsa_ and termcap_ versions, not GPM_ ones... */
 static void termcap_ShowMouse(void) {
-    uldat pos = (HW->Last_x = HW->MouseState.x) + (HW->Last_y = HW->MouseState.y) * ScreenWidth;
+    uldat pos = (HW->Last_x = HW->MouseState.x) + (HW->Last_y = HW->MouseState.y) * DisplayWidth;
     hwattr h  = Video[pos];
-    hwcol c = ~HWCOL(h) ^ COL(HIGH,HIGH);
+    hwcol c = ~HWCOL(h) ^ COL(HIGH,0);
 
     termcap_SingleMogrify(HW->MouseState.x, HW->MouseState.y, HWATTR( c, HWFONT(h) ));
 
-    /* put the cursor back in place */
-    HW->XY[0] = HW->XY[1] = (udat)-1;
+    /* force updating the cursor */
+    HW->XY[0] = HW->XY[1] = -1;
     setFlush();
 }
 
 static void termcap_HideMouse(void) {
-    uldat pos = HW->Last_x + HW->Last_y * ScreenWidth;
+    uldat pos = HW->Last_x + HW->Last_y * DisplayWidth;
 
     termcap_SingleMogrify(HW->Last_x, HW->Last_y, Video[pos]);
 
-    /* put the cursor back in place */
-    HW->XY[0] = HW->XY[1] = (udat)-1;
+    /* force updating the cursor */
+    HW->XY[0] = HW->XY[1] = -1;
     setFlush();
 }
 
@@ -367,8 +367,8 @@ static void termcap_DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, da
     
     setFlush();
 	
-    /* this will restore the cursor */
-    HW->TT = -1;
+    /* force updating the cursor */
+    HW->XY[0] = HW->XY[1] = -1;
     
     /*
      * now the last trick: tty scroll erased the part
@@ -402,8 +402,8 @@ static void termcap_FlushVideo(void) {
 	    DirtyVideo(HW->Last_x, HW->Last_y, HW->Last_x, HW->Last_y);
 	    if (ValidOldVideo) {
 		FlippedOldVideo = TRUE;
-		savedOldVideo = OldVideo[HW->Last_x + HW->Last_y * ScreenWidth];
-		OldVideo[HW->Last_x + HW->Last_y * ScreenWidth] = ~Video[HW->Last_x + HW->Last_y * ScreenWidth];
+		savedOldVideo = OldVideo[HW->Last_x + HW->Last_y * DisplayWidth];
+		OldVideo[HW->Last_x + HW->Last_y * DisplayWidth] = ~Video[HW->Last_x + HW->Last_y * DisplayWidth];
 	    }
 	}
 	
@@ -426,7 +426,7 @@ static void termcap_FlushVideo(void) {
     termcap_MogrifyInit();
     if (HW->TT != NOCURSOR)
 	termcap_SetCursorType(HW->TT = NOCURSOR);
-    for (i=0; i<ScreenHeight*2; i++) {
+    for (i=0; i<DisplayHeight*2; i++) {
 	start = ChangedVideo[i>>1][i&1][0];
 	end   = ChangedVideo[i>>1][i&1][1];
 	
@@ -434,6 +434,7 @@ static void termcap_FlushVideo(void) {
 	    termcap_Mogrify(start, i>>1, end-start+1);
     }
     
+    /* force updating the cursor */
     HW->XY[0] = HW->XY[1] = -1;
     
     setFlush();
@@ -441,7 +442,7 @@ static void termcap_FlushVideo(void) {
     /* ... and this redraws the mouse */
     if (HW->FlagsHW & FlHWSoftMouse) {
 	if (FlippedOldVideo)
-	    OldVideo[HW->Last_x + HW->Last_y * ScreenWidth] = savedOldVideo;
+	    OldVideo[HW->Last_x + HW->Last_y * DisplayWidth] = savedOldVideo;
 	if (FlippedVideo)
 	    VideoFlip(HW->Last_x = HW->MouseState.x, HW->Last_y = HW->MouseState.y);
 	else if (HW->FlagsHW & FlHWChangedMouseFlag)

@@ -1,20 +1,45 @@
-#!/bin/sh
+#!/bin/bash
 
 ARGS="$@"
-if [ -z "$ARGS" ]; then
+HW=
+DPY=
+
+while [ "$1" ]; do
+  case "$1" in
+    -nohw|-hw=* )
+      HW="$1";
+      ;;
+    -twin@* )
+      DPY="${1:5}";
+      ;;
+    -* )
+      ;;
+    *:[0-9a-fA-F]* )
+      DPY="$1";
+      ;;
+  esac
+  shift
+done
+
+if [ -z "$HW" ]; then
   if [ "$DISPLAY" ]; then
-    ARGS="-hw=X,font=9x19"
+    ARGS="$ARGS -hw=X,font=9x19"
   elif [ "$TWDISPLAY" ]; then
-    ARGS="-hw=twin@$TWDISPLAY"
+    ARGS="$ARGS -hw=twin@$TWDISPLAY"
   else
-    ARGS="-hw=tty"
+    ARGS="$ARGS -hw=tty"
   fi
 fi
 
-DPY=`twfindtwin`
+if [ "$DPY" ]; then
+  # check it is a valid TWDISPLAY!
+  DPY=`twfindtwin "$DPY"`
+else
+  DPY=`twfindtwin`
+fi
 
-if [ $? = 0 ]; then
-  echo twstart: twin running on "$DPY"
+if [ "$DPY" ]; then
+  echo twstart: detected twin running on "$DPY"
   exec twdisplay -twin@"$DPY" $ARGS
 else
   exec twin $ARGS

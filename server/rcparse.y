@@ -2,7 +2,7 @@
  *
  *  rcparse.y  --  bison ~/.twinrc parser for twin
  *
- *  Copyright (C) 2000 by Massimiliano Ghilardi
+ *  Copyright (C) 2000-2001 by Massimiliano Ghilardi
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -38,7 +38,12 @@
 #include "wm.h"
 #include "rcrun.h"
 
+#ifdef CONF_THIS_MODULE
+# include "version.h"
+#endif
+
 #include "rcparse.h"
+
 
 /* also put here the CONF_* and DEBUG_* used in rcparse.h so that MkDep catches them */
 #if defined(DEBUG_MALLOC) || defined(DEBUG_RC) || defined(DEBUG_FORK)
@@ -88,10 +93,12 @@
 /* keywords: */
 
 
+/* tokens not valid in a function: */
 %token '(' ')' ADDSCREEN ADDTOMENU ADDTOFUNC
 %token BACKGROUND BORDER BUTTON
 %token DELETEFUNC DELETEMENU DELETEBUTTON DELETESCREEN
 
+/* tokens valid as first function token */
 %token EXEC EXECTTY GLOBALFLAGS INTERACTIVE KEY
 %token MENU MOUSE MOVE MOVESCREEN NEXT NOP PREV
 %token READ RESTART RESIZE RESIZESCREEN
@@ -108,7 +115,8 @@
 %token FOCUS MAXIMIZE FULLSCREEN LOWER RAISE RAISELOWER ROLL
 
 %token USERFUNC
-
+/* end of tokens valid as first function token */
+    
 %token '+' '-' FL_ON FL_OFF FL_TOGGLE FL_ACTIVE FL_INACTIVE FL_LEFT FL_RIGHT
 
 %token <val> GLOBAL_FLAG
@@ -119,6 +127,9 @@
 %token <color> COLOR
 %token COL_HIGH
 
+%token <val> KBD_FLAG
+/* one of KBD_*_FL in twin.h */
+    
 /* atoms: */
 %token <val>    NUMBER
 %token <_string> STRING
@@ -129,6 +140,7 @@
 %type <_string>     string
 %type <val>	    interactive_mode move_or_resize
 %type <val>         flag opt_flag flag_active opt_flag_toggle flag_lr
+%type <val>	    flag_kbd opt_flag_kbd
 %type <imm>	    nl opt_nl immediate_line
 %type <_node>       func line
 %type <_node>       global_flag funcbody menubody textbody
@@ -182,8 +194,8 @@ immediate_line	: ADDSCREEN  string               { $$ = ImmAddScreen($2); }
 		| DELETEBUTTON  NUMBER { $$ = ImmDeleteButton($2); }
 		| DELETESCREEN  string { $$ = ImmDeleteScreen($2); }
 		| GLOBALFLAGS   global_list { $$ = ImmGlobalFlags($2); }
-		| KEY   string        func { $$ = BindKey  ($2,     $3); }
-		| MOUSE string string func { $$ = BindMouse($2, $3, $4); }
+		| KEY   opt_flag_kbd string func { $$ = BindKey  ($2, $3, $4); }
+		| MOUSE string       string func { $$ = BindMouse($2, $3, $4); }
 		;
 
 funcbody_list	: '(' opt_nl _funcbody_list ')' { $$ = $3; }
@@ -255,7 +267,7 @@ func		: string		{ $$ = MakeUserFunc($1); }
 		| SENDTOSCREEN string	{ $$ = MakeSendToScreen($2); }
 		| SLEEP NUMBER		{ $$ = MakeSleep($2); }
 		| STDERR string_list	{ $$ = MakeStderr($2); }
-		| SYNTHETICKEY string   { $$ = MakeSyntheticKey($2); }
+		| SYNTHETICKEY opt_flag_kbd string  { $$ = MakeSyntheticKey($2, $3); }
 		| WAIT string		{ $$ = MakeWait($2); }
 		| WINDOW opt_flag NUMBER	{ $$ = MakeWindowNumber($2, $3); }
 		| WINDOW STRING			{ $$ = MakeWindow($2); }
@@ -290,6 +302,14 @@ flag		: '+'		{ $$ = '+'; }
 		| '-'		{ $$ = '-'; }
 		;
 		
+opt_flag_kbd	: /* nothing */ { $$ = 0; }
+		| flag_kbd
+		;
+
+flag_kbd	: KBD_FLAG
+		| KBD_FLAG flag { $$ = $1 | $2; }
+		;
+
 opt_flag_toggle	: /* nothing */ { $$ = FL_ON; }
 		| FL_ON		{ $$ = FL_ON; }
 		| FL_OFF	{ $$ = FL_OFF; }
