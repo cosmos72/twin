@@ -3,6 +3,7 @@ Menu: CLI: run a command (eventually inside a terminal)
 cleanup keycode recognition : [NumLock +] keypad
 unhide menu when unfocusing all windows? (then hide again when focusing a window)
 .twinrc with runtime configurable WM+window buttons / options / display+options
+.twinrc with 'initial keystrokes'
 keyboard hotkeys for gadget selection and screen scroll/resize
 info on menubar: time / memory / load, size of window during resize
 WINFL_BYUSER windows -> not this way: use shared menory.
@@ -12,14 +13,12 @@ finish libGGI keyboard support
 wtmp logging
 docs (gmanedit?)
 
-twterm -h
 runtime swap L-M-R mouse buttons
 twcalc - calculator
 twclip - show clipboard / multiple clipboards / cut-n-paste from it
 port to other platforms (*BSD, ... Also, twdisplay on win32)
 twbiff
 -geometry option to tw* clients
-window-shading (roll-up?) : collapse to top border only (title)
 CTRL-` or CTRL-2 or CTRL-@ (all ASCII 0) as hotkey?
-
+twdialog
 

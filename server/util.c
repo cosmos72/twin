@@ -462,6 +462,8 @@ byte SetTWDisplay(void) {
 	    return TRUE;
 	}
     }
+    fprintf(stderr, "twin: all TWDISPLAY already in use!\n"
+	    "      Please cleanup stale /tmp/.Twin* sockets and try again\n");
     return FALSE;
 }
 

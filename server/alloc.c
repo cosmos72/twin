@@ -19,7 +19,9 @@
 #include "twin.h"
 #include "sizes.h"
 
+#ifdef __linux__
 #include <asm/page.h>
+#endif
 #include <sys/types.h>
 #include <sys/mman.h>
 

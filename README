@@ -68,9 +68,9 @@
    and draws in it, does _not_ run inside an xterm or similar.
 
    In theory, it would be possible to have twin run inside an xterm, rxvt
-   or similar terminal, but it would have problems
-   with mouse (xterm doesn't report dragging, only click/release)
-   and keyboard (xterm sends different codes than linux console for some keys)
+   or similar terminal, but it would have problems with mouse
+   (xterm doesn't report dragging, only click/release) and keyboard
+   (xterm sends different codes than linux console for some keys)
    so it is easier to have twin directly talk to X11.
 
    Currently, twin is tested only on Intel platforms running Linux.
@@ -78,9 +78,8 @@
    
    Twin will not run on non-Linux system consoles until someone
    adds to twin the necessary code to access the mouse under such setups.
-   If you configure twin `HW support: Linux console' to `n'
-   and `HW support: X11' to `y' there are chances twin will work
-   on non-Linux systems too (feedback welcome on this).
+   If you configure `HW support: Linux console' to `n' there are chances
+   twin will work on non-Linux systems too (feedback welcome on this).
    
    Beyond using X11 or another copy of itself for output,
    twin can write to screen in two ways:
@@ -111,7 +110,7 @@
 
 3. Compiling twin
 
-   First, you might want to edit the file `Rules' to change
+   First, you might want to edit the file `MakeRules' to change
    the install directory, tweak compiler flags (enable debugging), etc.
 
    If you are trying to compile on non-Linux systems, you would do better
@@ -126,7 +125,7 @@
    The first time you run `make' or each time you run `make config', a shell
    scripts is executed to let you configure twin.
    If you have "dialog" installed, you can also use `make menuconfig'
-   for a somewhat (?) more friendly interface. 
+   for a somewhat more friendly interface. 
    
    In both cases, the questions asked are equivalent:
 
@@ -137,6 +136,11 @@
    Answer `y' if you want to be able to use modules (= code which can be
    inserted and removed from a running twin whenever you want).
 
+	Builtin Window Manager: absolutely needed, do not say <N> [Y/m/n] ?
+	
+   This is to compile the window manager separately from twin core.
+   Twin will not work without the window manager. Just say `y'.
+   
 	Builtin Terminal emulator [Y/m/n] ?
 	
    Answer `y' or `m' if you want to compile the terminal emulator
@@ -144,12 +148,17 @@
    the external terminal emulator,
    so answer `n' only if you _really_ know what you are doing.
    
+	 -> Terminal: use glibc-2.1 /dev/pts/ [Y/n] ?
+   
+   Answer `y' if you are compiling twin with glibc-2.1 or later and you
+   want to use /dev/pts/* terminals instead of old-style /dev/tty[p-z]*.
+
 	Support remote socket connections [Y/m/n] ? 
 	
    Answer `y' or `m' if you want to be able to run external programs.
    Answer `n' only if you _really_ know what you are doing.
    
-           Sockets: Support gzip compression [Y/n] ?
+	 -> Sockets: Support gzip compression [Y/n] ?
         
    Answer `y' if you want to enable transparent gzip compression in the
    socket connections. Read paragraph `7. Transparent Compression' for details.
@@ -160,7 +169,7 @@
    Their main (only) advantage is they are very clever in returning
    unused memory to the system.
    Anyway, they are tested only on Linux i386, and furthermore
-   they shoot heavily on the kernel mmap subsystem,
+   they shoot heavily on the kernel mmap() subsystem,
    so on some OSes they may give troubles.
    
 	HW support: textmode terminals (Linux console, ...) [Y/m/n] ?
@@ -169,28 +178,64 @@
    on text terminals (ttys). You will be asked further questions
    to choose exactly which ttys you want support for.
 
-	   tty support: Linux console [Y/n] ?
+	 -> tty support: Linux console [Y/n] ?
    
    Answer 'y' if you are compiling under Linux and you are interested
    in running twin on the Linux console.
    
-	   tty support: Twin terminal
+	 -> tty support: Twin terminal [Y/n] ?
    
    Answer 'y' if you are interested in running twin inside
    a twin terminal emulator (i.e. a shell window inside another twin).
-   Answer `n' only if you _really_ know what you are doing.
 
+	 -> tty support: termcap/ncurses terminal database [Y/n] ?
+
+   Answer 'y' if you want twin to be able to display on any termcap-compatible
+   terminal. This includes almost any existing terminal, but is far from
+   optimal and may give problems with some keys (function keys, arrows, etc.).
+   
 	HW support: X11 [Y/m/n] ?
 
    Answer 'y' or 'm' if you want twin to be able to display on X.
 
-   	HW support: Twin, native [Y/n] ?
+	HW support: Twin, native [Y/m/n] ?
 
-   Answer `y' or 'm' to allow twin to connect to another twin and open a window
-   there as display. Answer `n' only if you _really_ know what you are doing.
+   Answer `y' or 'm' to allow twin to connect to another twin
+   and open a window there as display.
 
-   If you answer 'n' to both Linux console and X11 support,
+	HW support: twdisplay client as display [Y/m/n] ?
+
+   Answer `y' or `m' compiles `twdisplay', which can attach/detach displays
+   remotely. Answer `n' only if you _really_ know what you are doing.
+
+	HW support: libggi [Y/m/n] ?
+	
+   Answer `y' or `m' to compile libggi display driver.
+   This is still incomplete, say `n'.
+   
+   If you answer 'n' to both textmode terminals and X11 support,
    you won't be able to do much with your shiny just compiled twin!
+
+	Runtime option: disable blink/high background [Y/n] ?
+	
+   Answer `y' to disable blinking/high background colors by default.
+   You can also toggle this option from the `Options' window inside twin.
+   
+	Runtime option: cursor always visible [Y/n] ?
+	
+   Answer `y' to force the cursor to always be visible by default.
+   You can also toggle this option from the `Options' window inside twin.
+
+	Runtime option: hidden menu [Y/n] ?
+
+   Answer `y' to keep the menu hidden by default.
+   You can also toggle this option from the `Options' window inside twin.
+
+	Runtime option: disable screen scrolling [Y/n] ?
+
+   Answer `y' to disable virtual screen scrolling by default.
+   You can also toggle this option from the `Options' window inside twin.
+   
    
    Now you are ready to compile.
    If this is the first time you run `make', everything is automatic.
@@ -206,7 +251,7 @@
 4. Installing and Starting twin
 
    If you want to install twin on your system,
-   make sure that the DESTDIR set in `Rules' is correct,
+   make sure that the DESTDIR set in `MakeRules' is correct,
    considering that when you will type `make install'
    the various parts of twin will be placed as follows:
    `twin' and the other programs (twterm, etc.) will go in $DESTDIR/bin,
@@ -228,7 +273,7 @@
    until you install them.
    To make debugging easier, if you compile with DESTDIR not set then
    twin will look for modules in the current directory. In this way
-   it is not necessary to `make install' in order to use modules.
+   `make install' is not necessary in order to use modules.
    
    In any case, NEVER try to mix modules from a certain version
    with a `twin' executable of a different version:
@@ -242,13 +287,13 @@
    
    After twin is installed, to start it just type
    
-   twin
+     twin
    
    If you did not install twin yet, you can go to the directory where
    you compiled twin, then run:
    
-   cd server/
-   ./twin_real
+     cd server/
+     ./twin_real
 
    If you want, you can specify the display to use
    instead of letting twin autoprobe; the syntax is:
@@ -266,7 +311,11 @@
    see paragraph 8) below about `twattach' and `twdisplay': they have
    exactly the same syntax as twin for the argument `-hw=<display>[,options]'
 
-
+   You can also start twin in the background without display with
+   
+     twin -nohw
+   
+   
 5. The Twin UI (User Interface): how to use
 
    When twin comes up, you will have a blue screen (or window) with a
@@ -351,6 +400,9 @@
      click on it in the top window and it will become the last window;
      click on it in a window behind other windows, at it will become
      the top window;
+   the button next to top-right, drawn as "><", is the ROLLUP button:
+     click on it and it will collapse the window to its title bar;
+     click on it again and it will restore the window to its normal size;
    the scrollbars are quite intuitive: click on the arrows near the lower-right
    corner to scroll the window contents one line (or row) at time;
    drag the `tab' (the solid white bar) to quickly scroll the window;
@@ -405,26 +457,47 @@
 		    is often not necessary.
 	twsetroot - customize twin background (see clients/README.twsetroot)
 	twsysmon  - a system resources monitor
-	twterm    - create remote twin terminal windows
-	            known options:
-		      -e <cmd> [<args> ...]
-			: run "<cmd> [<args> ...]" instead of user $SHELL
-		      -t <title>
-		        : set window name to <title>
-			(you will need to enclose <title> in quotes
-			if it contains spaces or other special chars)
-			
+	twterm    - create remote twin terminal windows. Known options:
+	    -h, -help		display this help and exit
+	    -V, -version	output version information and exit
+	    -t <title>		set window title
+				(you will need to enclose <title> in quotes
+				if it contains spaces or other special chars)
+	    -e <command>	run <command> instead of user's shell
+				(must be last option) 
+	    -V, -version	output version information and exit
+
+
+   The `twterm' client and the builtin terminal emulator deserve a few extra
+   explanations. They implement a linux terminal, so applications running
+   inside them will see TERM=linux, but also support two different mouse
+   reporting protocols: the first is the classical xterm-style reporting
+   (enabled with ESC [?1000h and disabled with ESC [?1000l ) which is only
+   capable to report mouse buttons hit/release and the window position where
+   they happened; furthermore, it is limited to a 255x255 window.
+   The second is an enhanced version which can also report mouse drags and has
+   14 bits data for window width and height. It is enabled with ESC [?9h and
+   disabled with ESC [?9l . 
+   
+   Since most programs running inside a linux terminal don't expect to be able
+   to use the mouse with xterm-style protocol, various tricks may be needed in
+   order to have mouse functionality with applications running in a twin
+   terminal. Here are some:
+   
+   Midnight Commander `mc': start with `mc -x'
+   Other applications: you can try to set TERM=xterm and hope to fool them.
+
 7. Transparent Compression
 
-   Starting from version 0.2.2 twin (and obviously libTw) transparently
-   support gzip compressed sockets by using the library `zlib'.
-   If the connection between twin and the remote programs you want to run
-   is slow, you may benefit from compression.
+   Twin and libTw transparently support gzip compressed sockets
+   by using the library `zlib'. If the connection between twin
+   and the remote programs you want to run is slow,
+   you may benefit from compression.
    
    To allow compression, you must make sure you have zlib installed
    on your system, then answer `y' to the configure question
    
-      Sockets: Support gzip compression [Y/n] ?
+       -> Sockets: Support gzip compression [Y/n] ?
   
    finally compile twin and libTw.
 
@@ -473,7 +546,7 @@
       Basically, you run twattach specifying which display you want *twin*
       to attach to.
       Twin then tries to start that display by its own,
-      while twattach only work is to report all messages generated by twin
+      while twattach's only work is to report all messages generated by twin
       during the attach (if you run twattach with the option `-s' (silent),
       then twattach has nothing to do at all).
    
@@ -549,7 +622,7 @@
       $ twattach -twin@myhost.somewhere.net:1 -hw=tty@-
       tell twin at myhost.somewhere.net:1 to attach to its own controlling tty.
       This does not work if that twin has already detached from its tty,
-      but you will be told so in case it happens.
+      but you will be told that in case it happens.
 
       $ twdetach -twin@myhost.somewhere.net:1 -hw=tty@-
       tell twin at myhost.somewhere.net:1 to detach from its own controlling
@@ -589,7 +662,7 @@
       -d	: send detach command (same as running `twdetach [args ...]')
       -v	: be verbose and display all messages generated by twin
 	          while trying to attach (default)
-      -s	: be silent and display no message
+      -s	: be silent and display no messages
 
     if you do not specify `-twin@<TWDISPLAY>', the default $TWDISPLAY will
     be used.
@@ -615,10 +688,17 @@
 		  is actually slower than a normal redraw.
 		  Your mileage may vary.
       
-      -hw=twin	: ",gz" to enable gzip compression on the connecting socket
+      -hw=twin	: ",gz" to enable gzip compression on the connecting socket.
       
-      -hw=tty	: ",stdout" to draw on stdout even if /dev/vcsa* is available
-		: ",TERM=<terminal>" to specify the terminal type
+      -hw=tty	: ",stdout" to draw on stdout even if /dev/vcsa* is available.
+		: ",termcap" to use termcap/ncurses interface even if other
+			     methods are available.
+		: ",colorbug" use with termcap interface, if terminal does not
+			     reset colors to white on black using ESC [ m
+			     (or the appropriate sequence for the terminal).
+		: ",xterm" to force xterm-style mouse in case it is not
+			     autodetected.
+		: ",TERM=<terminal>" to specify the terminal type.
 
       -hw=ggi	: no options, use the zillion of libggi environment variables
 		  to control libggi behaviour.

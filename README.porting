@@ -9,7 +9,36 @@ Various users asked for twin portings on many platforms,
 yet the author only has access to Linux systems (and to an ancient AIX...)
 so this file is/will be mostly user contributed.
 
+A requirement of twin on ALL platforms is that you need GNU bash and GNU make
+installed. GNU make should be invoked from the command line instead of
+the default make, while the compile logic tries to determine by its own
+how to invoke GNU bash.
 
+Compiling on FreeBSD:
+
+	Andreas Schweitzer contributed the patch to have twin correctly
+	compile on FreeBSD. In case you meet problems, you can e-mail
+	the author but remember that he is not a FreeBSD expert at all.
+	
+	Tips and caveats:
+	
+	You need to have GNU bash and GNU make (gmake) installed.
+	Use `gmake' and NOT plain `make' to compile.
+	For some reason, `gmake menuconfig' aborts. Use `gmake config'.
+	Only X and twin driver are tested, tty (termcap/ncurses) driver
+	has known problems on FreeBSD console: in particular, the PAUSE key
+	does not work; use F4 instead.
+	Quite obviously, Linux Console driver does not compile
+	(it's Linux specific): disable it.
+	To be on the safe side, also disable Custom malloc/free.
+
+	Running `ldconfig' with no parameters may be not a good idea on FreeBSD:
+	try with `ldconfig -R'.
+
+	A last note: FreeBSD native console driver is not yet available.
+	Any volunteer going to code it?
+	
+	
 Compiling on AIX 3.2:
 
 	The author tried this personally, and managed to "mostly" do it.
@@ -20,7 +49,7 @@ Compiling on AIX 3.2:
 	(very probably) GNU gcc; you can try with AIX cc, but I won't bet on it
 
 	First, edit the following files:
-	  Rules : change "ECHO=echo -e" into "ECHO=echo"
+	  MakeRules : change "ECHO=echo -e" into "ECHO=echo"
 
 	  server/hw_keys.h: comment the lines
 		line 25: IS(Sys_Req, 0, "")
@@ -35,11 +64,14 @@ Compiling on AIX 3.2:
 
 	It will bomb out building lib/libTw.so as AIX 3.2
 	does not have shared libraries. So type:
-	'cd lib; ar cr libTw.a libTw.o md5.o; cd ..'
+	'cd lib; gmake libTw.a; cd ..'
 	to build a static libTw.
 
 	Continue with 'gmake -C server' and 'gmake -C clients'...
 	all should go well now. If you want to install twin, you will need to
 	copy the binaries manually as 'gmake install' tries to build libTw.so
 	again, bombing out. In this case, remember to also install libTw.a.
+
+	Known problems on AIX 3.2 :
+		twdisplay does not work, I suspect an endianity problem.
 

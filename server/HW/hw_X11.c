@@ -756,6 +756,9 @@ static int X11_Die(Display *d) {
 }
 #endif
 
+#ifdef MODULE
+static
+#endif
 byte X11_InitHW(void) {
     byte *arg = HW->Name;
     int xscreen;

@@ -922,7 +922,7 @@ static void Wait4Auth(int fd, uldat slot) {
     
     if (got < 0)
 	;
-    if (got < digestLen*2)
+    else if (got < digestLen*2)
 	/* not yet ready to check */
 	return;
     else { /* (got >= digestLen*2) */
@@ -1549,8 +1549,10 @@ byte InitSocket(void)
 {
     char opt[15];
 
-    if (!InitAuth())
+    if (!InitAuth()) {
+	fprintf(stderr, "twin: failed to create ~/.TwinAuth\n");
 	return FALSE;
+    }
     
     {
 	struct sockaddr_un addr;
@@ -1602,6 +1604,7 @@ byte InitSocket(void)
 	
 	return TRUE;
     }
+    fprintf(stderr, "twin: failed to create sockets\n");
     return FALSE;
 }
 

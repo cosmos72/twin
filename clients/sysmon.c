@@ -30,13 +30,12 @@ byte InitSysMon(void) {
     byte *name;
     uldat len;
     
-    if (uname(&uts) >= 0 && (name = malloc(11 + (len = strlen(uts.nodename))))) {
-	name[0] = ' ';
-	memcpy(name+1, uts.nodename, len);
-	memcpy(name+1+len, " Monitor ", 9);
-	len += 10;
-    } else if ((name = strdup(" System Monitor ")))
-	len = 16;
+    if (uname(&uts) >= 0 && (name = malloc(9 + (len = strlen(uts.nodename))))) {
+	memcpy(name, uts.nodename, len);
+	memcpy(name+len, " Monitor", 8);
+	len += 8;
+    } else if ((name = strdup("System Monitor")))
+	len = 14;
     else
 	return FALSE;
     

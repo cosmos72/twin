@@ -21,13 +21,20 @@
  */
 
 #include <signal.h>
-#include <termios.h>
-#include <unistd.h>
-#include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/ttydefaults.h>
+#ifdef __FreeBSD__
+# include <sys/time.h>
+#endif
 #include <sys/resource.h>
 #include <sys/wait.h>
+
+#include "tty_ioctl.h"
+
+#include "twin.h"
+#include "hw.h"
+#include "hw_private.h"
+#include "common.h"
 
 #ifndef VDISABLE
 # ifdef _POSIX_VDISABLE
@@ -36,12 +43,6 @@
 #  define VDISABLE	255
 # endif
 #endif
-
-#include "twin.h"
-
-#include "hw.h"
-#include "hw_private.h"
-#include "common.h"
 
 display_hw *HW, *DisplayHWCTTY;
 
@@ -110,7 +111,9 @@ byte InitSignals(void) {
     signal(SIGTERM, SignalPanic);
     signal(SIGXCPU, SignalPanic);
     signal(SIGXFSZ, SignalPanic);
+# ifdef SIGPWR
     signal(SIGPWR,  SignalPanic);
+# endif
 #endif
     return TRUE;
 }
@@ -355,7 +358,7 @@ void DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
 }
 
 byte InitTtysave(void) {
-    ioctl(0, TCGETS, &ttysave);
+    tty_getioctl(0, &ttysave);
     
     ttysave.c_cc [VINTR]	= CINTR;
     ttysave.c_cc [VQUIT]	= CQUIT;

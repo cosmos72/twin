@@ -56,6 +56,7 @@ static void display_Configure(udat resource, byte todefault, udat value) {
     setFlush();
 }
 
+/* handle messages from twdisplay */
 static void display_KeyboardEvent(int fd, display_hw *hw) {
     msg *hMsg;
     event_any *Event;
@@ -102,7 +103,7 @@ static void display_KeyboardEvent(int fd, display_hw *hw) {
 	  case MSG_SELECTIONREQUEST:
 	    /*
 	     * should never happen, hw_display always transparently passes 
-	     * the real Owner / Requestor of Selection.
+	     * the real HW Owner of the Selection.
 	     */
 	    fputs("\ntwin: display_KeyboardEvent(): unexpected SelectionRequest Message from twdisplay!\n", stderr);
 	    fflush(stderr);
@@ -115,7 +116,7 @@ static void display_KeyboardEvent(int fd, display_hw *hw) {
 	  case MSG_SELECTIONNOTIFY:
 	    /*
 	     * should never happen, hw_display always transparently passes 
-	     * the real Owner / Requestor of Selection.
+	     * the real HW Requestor of the Selection.
 	     */
 	    fputs("\ntwin: display_KeyboardEvent(): unexpected SelectionNotify Message from twdisplay!\n", stderr);
 	    fflush(stderr);
@@ -263,10 +264,14 @@ static void display_CheckResize(udat *x, udat *y) {
 }
 
 static void display_Resize(udat x, udat y) {
-    if (x != HW->usedX || y != HW->usedY) {
+    /*
+     * when !HW->CanResize we send the Resize message even if
+     * x == HW->X && y == HW->Y as twdisplay might be using a smaller area
+     */
+    if (!HW->CanResize || x != HW->X || y != HW->Y) {
 	display_CreateMsg(DPY_Resize, 0);
-	HW->usedX = ev->X = x;
-	HW->usedY = ev->Y = y;
+	ev->X = x;
+	ev->Y = y;
 
 	if (HW->CanResize) {
 	    HW->X = x;
@@ -395,6 +400,9 @@ static void fix4display(void) {
     }
 }
 
+#ifdef MODULE
+static
+#endif
 byte display_InitHW(void) {
     byte *s, *arg = HW->Name;
     msgport *Port;

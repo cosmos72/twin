@@ -16,10 +16,14 @@
 #include "twinsys.h"
 
 #define Abs(x) ((x)>0 ? (x) : -(x))
-#define Swap(a, b, temp) ((temp)=(a), (a)=(b), (b)=(temp))
+#define Swap(a, b, tmp) ((tmp)=(a), (a)=(b), (b)=(tmp))
 #define Min2(x, y) ((x)<(y) ? (x) : (y))
 #define Max2(x, y) ((x)>(y) ? (x) : (y))
-#define Sign(n) ((n) > 0 ? 1 : (n) < 0 ? -1 : 0)
+#define Sign(n) ((n)>0 ? 1 : (n)<0 ? -1 : 0)
+
+#define Max3(x, y, z) ((x)>(y) ? Max2(x,z) : Max2(y,z))
+#define Min3(x, y, z) ((x)<(y) ? Min2(x,z) : Min2(y,z))
+
 
 /***************/
 
@@ -338,7 +342,7 @@ struct fn_gadget {
 /*Flags : */
 #define GADGET_USE_DEFCOL	WINFL_USE_DEFCOL
 #define GADGET_DISABLED		((udat)0x02)
-/*GADGET_PRESSED==0x8000      */
+/*GADGET_PRESSED==0x4000      */
 
 /*              NOTE :              */
 /*
@@ -488,6 +492,7 @@ struct fn_window {
     void (*Insert)(window *, screen *, window *Prev, window *Next);
     void (*Remove)(window *);
     void (*Delete)(window *);
+    byte (*FindBorder)(window *, udat u, udat v, byte Border, byte MovWin, byte *PtrChar, byte *PtrColor);
     void (*SetColText)(window *, hwcol ColText);
     void (*SetColors)(window *, udat Bitmap,
 		      hwcol ColGadgets, hwcol ColArrows, hwcol ColBars, hwcol ColTabs, hwcol ColBorder,
@@ -520,40 +525,49 @@ struct fn_window {
 #define WINDOW_DRAG		((uldat)0x0010)
 #define WINDOW_RESIZE		((uldat)0x0020)
 #define WINDOW_CLOSE		((uldat)0x0040)
-#define WINDOW_HOOKED		((uldat)0x0080)
+#define WINDOW_ROLLED_UP	((uldat)0x0080)
 #define WINDOW_X_BAR		((uldat)0x0100)
 #define WINDOW_Y_BAR		((uldat)0x0200)
 
-/* the must fit in `udat' since they are shared by gadget.Flags */
-#define GADGET_CLOSE_SELECT	((uldat)0x0400)
-#define GADGET_BACK_SELECT	((uldat)0x0800)
-#define X_BAR_SELECT		((uldat)0x1000)
-#define Y_BAR_SELECT		((uldat)0x2000)
-#define GADGET_PRESSED		((uldat)0x4000)
-#define GADGET_ANY_SELECT	(GADGET_CLOSE_SELECT | GADGET_BACK_SELECT | X_BAR_SELECT | Y_BAR_SELECT)
+/* this must fit in `udat' since it is shared with gadget.Flags */
+#define GADGET_PRESSED		((uldat)0x0400)
 
-#define TAB_SELECT		((uldat)0x00020000lu)
-#define PAGE_BACK_SELECT	((uldat)0x00040000lu)
-#define PAGE_FWD_SELECT		((uldat)0x00080000lu)
-#define ARROW_BACK_SELECT	((uldat)0x00100000lu)
-#define ARROW_FWD_SELECT	((uldat)0x00200000lu)
+#define X_BAR_SELECT		((uldat)0x0800)
+#define Y_BAR_SELECT		((uldat)0x1000)
+#define XY_BAR_SELECT		(X_BAR_SELECT | Y_BAR_SELECT)
+#define TAB_SELECT		((uldat)0x2000)
+#define PAGE_BACK_SELECT	((uldat)0x4000)
+#define PAGE_FWD_SELECT		((uldat)0x8000)
+#define ARROW_BACK_SELECT	((uldat)0x00010000lu)
+#define ARROW_FWD_SELECT	((uldat)0x00020000lu)
 #define SCROLL_ANY_SELECT  	(ARROW_BACK_SELECT | ARROW_FWD_SELECT | PAGE_BACK_SELECT | PAGE_FWD_SELECT | TAB_SELECT)
 
-#define WINDOW_FWDSEL		((uldat)0x004000000lu)
-#define WINDOW_REVSEL		((uldat)0x008000000lu)
+#define WINDOW_FWDSEL		((uldat)0x00040000lu)
+#define WINDOW_REVSEL		((uldat)0x00080000lu)
 #define WINDOW_ANYSEL		(WINDOW_FWDSEL|WINDOW_REVSEL)
-#define WINDOW_DO_SEL		((uldat)0x010000000lu)
+#define WINDOW_DO_SEL		((uldat)0x00100000lu)
+
+#define BUTTON_FIRST_SELECT	((uldat)0x00200000lu)
+#define BUTTON_LAST_SELECT	((uldat)0x80000000lu)
+#define BUTTON_ANY_SELECT	((uldat)0xFFE00000lu)
 
 
-#define POS_GADGET_CLOSE	((byte)1)
-#define POS_GADGET_BACK		((byte)2)
-#define POS_GADGET_RESIZE	((byte)3)
-#define POS_BAR_BACK		((byte)4)
-#define POS_BAR_FWD		((byte)5)
-#define POS_TAB			((byte)6)
-#define POS_ARROW_BACK		((byte)7)
-#define POS_ARROW_FWD		((byte)8)
-#define POS_TITLE		((byte)9)
+#define BUTTON_FIRST		((byte)1)
+#define BUTTON_CLOSE		((byte)1)
+#define BUTTON_BACK		((byte)2)
+#define BUTTON_ROLLUP		((byte)3)
+/*...*/
+#define BUTTON_LAST		((byte)10)
+
+#define POS_BAR_BACK		((byte)11)
+#define POS_BAR_FWD		((byte)12)
+#define POS_TAB			((byte)13)
+#define POS_ARROW_BACK		((byte)14)
+#define POS_ARROW_FWD		((byte)15)
+#define POS_TITLE		((byte)16)
+#define POS_GADGET_RESIZE	((byte)17)
+
+
 
 /* Flags: */
 /* #define WINFL_USEROWS	((byte)0x00) it's the default */
@@ -574,8 +588,8 @@ struct fn_window {
 #define SOLIDCURSOR	8
 
 /* window size limits */
-#define MIN_XWIN	6
-#define MIN_YWIN	4
+#define MIN_XWIN	4
+#define MIN_YWIN	2
 
 struct menuitem {
     uldat Id;
@@ -655,15 +669,15 @@ struct fn_screen {
     void (*Insert)(screen *, all *, screen *Prev, screen *Next);
     void (*Remove)(screen *);
     void (*Delete)(screen *);
-    window *(*SearchWindow)(screen *, dat i, dat j, byte *Shaded);
+    window *(*SearchWindow)(screen *, dat i, dat j);
     menu *(*SearchMenu)(screen *);
     screen *(*Search)(dat j);
     screen *(*CreateSimple)(fn_screen *, hwattr Bg);
     void (*BgImage)(screen *, udat BgWidth, udat BgHeight, hwattr *Bg);
 };
 /*Attrib : */
-/*GADGET_BACK_SELECT==0x0800 */
-/*GADGET_PRESSED==0x0200      */
+#define GADGET_BACK_SELECT 0x8000
+/*GADGET_PRESSED==0x4000      */
 
 
 #define MSG_KEY			((udat)0)
@@ -1173,8 +1187,8 @@ struct setup {
 #define STATE_SCREEN	(byte)4
 #define STATE_MAX	(byte)5
 
-#define MAX_XSHADE	MIN_XWIN
-#define MAX_YSHADE	MIN_YWIN
+#define MAX_XSHADE	9
+#define MAX_YSHADE	9
 
 typedef struct selection {
     timevalue Time;
@@ -1474,12 +1488,13 @@ struct all {
 #define COD_COMMON_CENTER	(udat)0xFF03
 #define COD_COMMON_ZOOM		(udat)0xFF04
 #define COD_COMMON_MAXZOOM	(udat)0xFF05
-#define COD_COMMON_REFRESH	(udat)0xFF06
-#define COD_COMMON_HOTKEY	(udat)0xFF07
-#define COD_COMMON_NEXT		(udat)0xFF08
-#define COD_COMMON_WINLIST	(udat)0xFF09
-#define COD_COMMON_RAISELOWER	(udat)0xFF10
-#define COD_COMMON_UNFOCUS	(udat)0xFF11
+#define COD_COMMON_ROLLUP	(udat)0xFF06
+#define COD_COMMON_REFRESH	(udat)0xFF07
+#define COD_COMMON_HOTKEY	(udat)0xFF08
+#define COD_COMMON_NEXT		(udat)0xFF09
+#define COD_COMMON_WINLIST	(udat)0xFF0A
+#define COD_COMMON_RAISELOWER	(udat)0xFF0B
+#define COD_COMMON_UNFOCUS	(udat)0xFF0C
 
 /* INLINE/define stuff: */
 

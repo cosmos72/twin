@@ -11,48 +11,48 @@
 
 #define COD_QUIT      (udat)1
 
-static tmsgport Edit_MsgPort;
-static tmenu Edit_Menu;
-static twindow Edit_Win;
+static tmsgport Clip_MsgPort;
+static tmenu Clip_Menu;
+static twindow Clip_Win;
 
-static byte InitEdit(void) {
+static byte InitClip(void) {
     twindow Window;
 
     if (!TwOpen(NULL))
 	return FALSE;
     
-    if ((Edit_MsgPort=TwCreateMsgPort
-	 (11, "Twin Editor", (time_t)0, (frac_t)0, (byte)0)) &&
-	(Edit_Menu=TwCreateMenu
-	 (Edit_MsgPort, COL(BLACK,WHITE), COL(BLACK,GREEN), COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
+    if ((Clip_MsgPort=TwCreateMsgPort
+	 (11, "twclipboard", (time_t)0, (frac_t)0, (byte)0)) &&
+	(Clip_Menu=TwCreateMenu
+	 (Clip_MsgPort, COL(BLACK,WHITE), COL(BLACK,GREEN), COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
 	  COL(RED,WHITE), COL(RED,GREEN), (byte)0))) {
 	
-	TwInfo4Menu(Edit_Menu, TW_ROW_ACTIVE, (uldat)13, " Twin Editor ", "ptpppptpppppp");
+	TwInfo4Menu(Clip_Menu, TW_ROW_ACTIVE, (uldat)16, " Twin Clipboard ", "ptpppptppppppppp");
     } else
 	return FALSE;
     
-    if ((Edit_Win=TwCreateWindow
-	 (11, "Twin Editor", NULL,
-	  Edit_Menu, COL(HIGH|WHITE,HIGH|BLACK),
-	  TW_LINECURSOR,
+    if ((Clip_Win=TwCreateWindow
+	 (14, "Twin Clipboard", NULL,
+	  Clip_Menu, COL(HIGH|WHITE,HIGH|BLACK),
+	  TW_NOLINECURSOR,
 	  TW_WINDOW_WANT_KEYS|TW_WINDOW_DRAG|TW_WINDOW_RESIZE|TW_WINDOW_X_BAR|TW_WINDOW_Y_BAR|TW_WINDOW_CLOSE,
 	  TW_WINFL_CURSOR_ON|TW_WINFL_USE_DEFCOL,
 	  (udat)40, (udat)20, (udat)0)) &&
-	(Window=TwWin4Menu(Edit_Menu)) &&
+	(Window=TwWin4Menu(Clip_Menu)) &&
 	(TwRow4Menu(Window, COD_QUIT, TW_ROW_INACTIVE, 17, " Quit      Alt-X ") ,
-	 TwItem4Menu(Edit_Menu, Window, TRUE, 6, " File "))) {
+	 TwItem4Menu(Clip_Menu, Window, TRUE, 6, " File "))) {
 
-	TwSetColorsWindow(Edit_Win, 0x1FF,
+	TwSetColorsWindow(Clip_Win, 0x1FF,
 			  COL(HIGH|GREEN,WHITE), COL(CYAN,BLUE), COL(HIGH|BLUE,BLACK), COL(HIGH|WHITE,HIGH|BLUE), COL(HIGH|WHITE,HIGH|BLUE),
 			  COL(HIGH|WHITE,HIGH|BLACK), COL(HIGH|BLACK,WHITE), COL(BLACK,HIGH|BLACK), COL(BLACK,WHITE));
-	TwConfigureWindow(Edit_Win, 0xF<<2, 0, 0, (udat)7, (udat)3, MAXUDAT, MAXUDAT);
+	TwConfigureWindow(Clip_Win, 0xF<<2, 0, 0, (udat)7, (udat)3, MAXUDAT, MAXUDAT);
 
     } else
 	return FALSE;
     
     
-    if ((Window=TwWin4Menu(Edit_Menu)) &&
-	TwItem4Menu(Edit_Menu, Window, FALSE, 6, " Edit ")) {
+    if ((Window=TwWin4Menu(Clip_Menu)) &&
+	TwItem4Menu(Clip_Menu, Window, FALSE, 6, " Clip ")) {
 		
 	TwRow4Menu(Window, (udat)0, TW_ROW_INACTIVE,16, " Undo           ");
 	TwRow4Menu(Window, (udat)0, TW_ROW_INACTIVE,16, " Redo           ");
@@ -66,18 +66,18 @@ static byte InitEdit(void) {
     } else
 	return FALSE;
     
-    if ((Window=TwWin4Menu(Edit_Menu)) &&
-	TwItem4Menu(Edit_Menu, Window, TRUE, 8, " Search ")) {
+    if ((Window=TwWin4Menu(Clip_Menu)) &&
+	TwItem4Menu(Clip_Menu, Window, TRUE, 8, " Search ")) {
 
 	TwRow4Menu(Window, (udat)0, TW_ROW_ACTIVE,  9, " Find    ");
 	TwRow4Menu(Window, (udat)0, TW_ROW_ACTIVE,  9, " Replace ");
     } else
 	return FALSE;
     
-    if (!TwItem4MenuCommon(Edit_Menu))
+    if (!TwItem4MenuCommon(Clip_Menu))
 	return FALSE;
 
-    TwMapWindow(Edit_Win, TwFirstScreen());
+    TwMapWindow(Clip_Win, TwFirstScreen());
     TwFlush();
 
     return TRUE;
@@ -88,7 +88,7 @@ int main(int argc, char *argv[]) {
     udat Code;
     uldat WinN = 1;
     
-    if (InitEdit()) while ((Msg=TwReadMsg(TRUE))) {
+    if (InitClip()) while ((Msg=TwReadMsg(TRUE))) {
 	if (Msg->Type==TW_MSG_WINDOW_KEY) {
 	    
 	    tevent_keyboard EventK = &Msg->Event.EventKeyboard;
@@ -109,12 +109,14 @@ int main(int argc, char *argv[]) {
 	    if (EventN->Magic == TW_SEL_TEXTMAGIC)
 		(void)TwWriteRowWindow(EventN->ReqPrivate, EventN->Len, EventN->Data);
 	    
+	} else if (Msg->Type==TW_MSG_SELECTIONCLEAR) {
+	    ;
 	} else if (Msg->Type==TW_MSG_WINDOW_GADGET) {
 	    
 	    tevent_gadget EventG = &Msg->Event.EventGadget;
-	    if (EventG->Code == 0 && EventG->Window == Edit_Win) {
-		TwUnMapWindow(Edit_Win);
-		TwDeleteWindow(Edit_Win);
+	    if (EventG->Code == 0 && EventG->Window == Clip_Win) {
+		TwUnMapWindow(Clip_Win);
+		TwDeleteWindow(Clip_Win);
 		if (!--WinN)
 		    break;
 	    }
@@ -125,8 +127,8 @@ int main(int argc, char *argv[]) {
     
     if (!TwInPanic()) {
 	/* these are not strictly necessary, as the server would cleanup by itself... */
-	TwDeleteMenu(Edit_Menu);
-	TwDeleteMsgPort(Edit_MsgPort);
+	TwDeleteMenu(Clip_Menu);
+	TwDeleteMsgPort(Clip_MsgPort);
 	TwClose();
 	return 0;
     }

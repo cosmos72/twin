@@ -12,4 +12,10 @@
 # include <termio.h>
 #endif
 
+#ifdef __FreeBSD__
+# include <sys/types.h>
+# include <machine/param.h>
+# include <unistd.h>
+#endif
+
 #endif /* _TWINSYS_H */

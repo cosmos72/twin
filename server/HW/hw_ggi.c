@@ -406,6 +406,9 @@ static void GGI_QuitHW(void) {
 	GGI_HW = NULL;
 }
 
+#ifdef MODULE
+static
+#endif
 byte GGI_InitHW(void) {
     byte *arg = HW->Name, *opt = NULL;
     uldat len = HW->NameLen;

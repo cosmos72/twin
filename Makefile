@@ -9,7 +9,7 @@ all: boot.dir lib.dir twin clients.dir
 ifneq ($(wildcard $(TOPDIR)/conf/config.status),)
   -include $(TOPDIR)/conf/config.status
 endif
-include Rules
+include MakeRules
 #
 
 config $(CONF):
@@ -35,10 +35,10 @@ clients.dir: $(CONF)
 
 ifneq ($(CONF_SOCKET),n)
   install-lib:
-	$(CP) lib/libTw.so* $(DESTDIR)/lib
+	$(MAKE) install -C lib
 	$(CP) include/libTw*.h $(DESTDIR)/include
   install-clients:
-	$(CP) clients/tw* clients/*/tw* $(DESTDIR)/bin 
+	$(MAKE) install -C clients
 else
   install-lib:
   install-clients:

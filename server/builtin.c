@@ -46,8 +46,9 @@ menu *Builtin_Term_Menu;
 #define COD_ABOUT_WIN	(udat)20
 #define COD_CLOCK_WIN   (udat)21
 #define COD_OPTION_WIN	(udat)22
-#define COD_DISPLAY_WIN	(udat)23
-#define COD_REFRESH	(udat)24
+#define COD_BORDERS_WIN	(udat)23
+#define COD_DISPLAY_WIN	(udat)24
+#define COD_REFRESH	(udat)25
 
 #define COD_TERM_ON	(udat)30
 #define COD_TERM_OFF	(udat)31
@@ -75,7 +76,7 @@ static menuitem *Builtin_File;
 static menuitem *Builtin_Modules;
 #endif
 
-static window *AboutWin, *ClockWin, *OptionWin, *DisplayWin;
+static window *AboutWin, *ClockWin, *OptionWin, *BordersWin, *DisplayWin;
 window *ListWin;
 
 static gadget *ButtonOK_About, *ButtonRemove, *ButtonThis;
@@ -213,6 +214,7 @@ void UpdateOptionWin(void) {
     Act(WriteRow,OptionWin)(OptionWin, 1, &i);
 }
 
+
 static void OptionH(msg *Msg) {
     byte Flags = All->SetUp->Flags, XShade = All->SetUp->DeltaXShade, YShade = All->SetUp->DeltaYShade;
     byte redraw = TRUE;
@@ -275,6 +277,67 @@ static void OptionH(msg *Msg) {
 	    UpdateCursor();
 	}
     }
+}
+
+void FillBordersWin(void) {
+    byte i;
+    byte *s;
+    
+    DeleteList(BordersWin->FirstGadget);
+    DeleteList(BordersWin->FirstRow);
+    
+    for (i=0; i<Button_N; i++) {
+	BordersWin->CurX = 2; BordersWin->CurY = 1 + i*3;
+	switch (Button_Fn[i]) {
+	  case BUTTON_CLOSE:  s = "Close "; break;
+	  case BUTTON_ROLLUP: s = "RollUp"; break;
+	  case BUTTON_BACK:   s = "Back  "; break;
+	  default:            s = " ???  "; break;
+	}
+	Act(WriteRow,BordersWin)(BordersWin, 6, s);
+	Act(WriteRow,BordersWin)(BordersWin, 8, " Button ");
+	Act(WriteRow,BordersWin)(BordersWin, 2, Button_Shape[i][!!(All->SetUp->Flags & SETUP_NEW_FONT)]);
+
+	Do(Create,Gadget)(FnGadget, BordersWin, COL(BLACK,WHITE), COL(HIGH|WHITE,GREEN),
+			  COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
+			  3 | (i<<2), GADGET_USE_DEFCOL, 21, 1+i*3, 3, 1,
+			  "[+]", NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+	
+	Do(Create,Gadget)(FnGadget, BordersWin, COL(BLACK,WHITE), COL(HIGH|WHITE,GREEN),
+			  COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
+			  2 | (i<<2), GADGET_USE_DEFCOL, 24, 1+i*3, 3, 1,
+			  "[-]", NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+    }
+    
+    ResizeRelWindow(BordersWin, 0, (dat)2 + (dat)Button_N*3 - (dat)BordersWin->YWidth);
+}
+    
+void UpdateBordersWin(void) {
+    byte i, s[5];
+    
+    for (i=0; i<Button_N; i++) {
+	BordersWin->CurX = 28; BordersWin->CurY = 1 + i*3;
+	sprintf(s, "%+4d", Button_Pos[i]);
+	Act(WriteRow,OptionWin)(BordersWin, strlen(s), s);
+    }
+}
+
+static void BordersH(msg *Msg) {
+    udat Code = Msg->Event.EventGadget.Code;
+    num op;
+
+    if (!(Code & 2))
+	return;
+    
+    if (Code & 1)
+	op = +1;
+    else
+	op = -1;
+    
+    Button_Pos[Code >> 2] += op;
+    
+    UpdateBordersWin();
+    DrawArea(FULLSCREEN);
 }
 
 void UpdateDisplayWin(window *displayWin) {
@@ -365,6 +428,8 @@ static void BuiltinH(msgport *MsgPort) {
 		
 	    } else if (tempWin == OptionWin)
 		OptionH(Msg);
+	    else if (tempWin == BordersWin)
+		BordersH(Msg);
 	    else if (tempWin == DisplayWin)
 		DisplayGadgetH(Msg);
 	}
@@ -374,14 +439,17 @@ static void BuiltinH(msgport *MsgPort) {
 		Flags=All->SetUp->Flags;
 		switch (Code) {
 		  case COD_OPTION_WIN:
+		  case COD_BORDERS_WIN:
 		  case COD_ABOUT_WIN:
 		  case COD_DISPLAY_WIN:
 		    if (Code == COD_OPTION_WIN)
 			UpdateOptionWin(), NewWindow = OptionWin;
+		    else if (Code == COD_BORDERS_WIN)
+			UpdateBordersWin(), NewWindow = BordersWin;
 		    else if (Code == COD_ABOUT_WIN)
 			NewWindow = AboutWin;
 		    else if (Code == COD_DISPLAY_WIN)
-			NewWindow = DisplayWin, UpdateDisplayWin(DisplayWin);
+			UpdateDisplayWin(DisplayWin), NewWindow = DisplayWin;
 		    else
 			break;
 		    
@@ -569,7 +637,6 @@ byte InitBuiltin(void) {
 	"        Massimiliano Ghilardi    \n\n"
 	"         <max@Linuz.sns.it>      ";
     uldat grlen = strlen(greeting);
-
     
     All->SetUp->Flags |= SETUP_DO_SHADE; /* | GRAPH_MOUSE | NEW_FONT | NEW_PALETTE; */
 
@@ -584,6 +651,7 @@ byte InitBuiltin(void) {
 	(Window=Win4Menu(Builtin_Menu)) &&
 	Row4Menu(Window, COD_CLOCK_WIN,  ROW_ACTIVE, 9, " Clock   ") &&
 	Row4Menu(Window, COD_OPTION_WIN, ROW_ACTIVE, 9, " Options ") &&
+	Row4Menu(Window, COD_BORDERS_WIN,ROW_ACTIVE, 9, " Borders ") &&
 	Row4Menu(Window, COD_DISPLAY_WIN,ROW_ACTIVE, 9, " Display ") &&
 	Row4Menu(Window, COD_ABOUT_WIN,  ROW_ACTIVE, 9, " About   ") &&
 	Item4Menu(Builtin_Menu, Window, TRUE, 3, " ð ") &&
@@ -633,30 +701,35 @@ byte InitBuiltin(void) {
 	Item4MenuCommon(Builtin_Menu) &&
 		
 	(AboutWin = Do(Create,Window)
-	 (FnWindow, (udat)7, " About ", "\x7F\x7F\x7F\x7F\x7F\x7F\x7F", Builtin_Menu, COL(BLACK,WHITE),
+	 (FnWindow, (udat)5, "About", "\x7F\x7F\x7F\x7F\x7F", Builtin_Menu, COL(BLACK,WHITE),
 	  NOCURSOR, WINDOW_WANT_MOUSE|WINDOW_DRAG|WINDOW_CLOSE, WINFL_USE_DEFCOL,
 	  (udat)40, (udat)15, (udat)0)) &&
 
 	(ClockWin = Do(Create,Window)
-	 (FnWindow, (udat)7, " Clock ", NULL, Builtin_Menu, COL(YELLOW,BLUE),
+	 (FnWindow, (udat)5, "Clock", NULL, Builtin_Menu, COL(YELLOW,BLUE),
 	  NOCURSOR, WINDOW_DRAG|WINDOW_CLOSE, WINFL_USE_DEFCOL,
 	  (udat)12, (udat)4, (udat)0)) &&
 
 	(OptionWin = Do(Create,Window)
-	 (FnWindow, (udat)9, " Options ", NULL, Builtin_Menu, COL(HIGH|BLACK,BLACK),
+	 (FnWindow, (udat)7, "Options", NULL, Builtin_Menu, COL(HIGH|BLACK,BLACK),
 	  NOCURSOR, WINDOW_WANT_MOUSE|WINDOW_DRAG|WINDOW_CLOSE,WINFL_USE_DEFCOL,
 	  (udat)42, (udat)16,(udat)0)) &&
 
+	(BordersWin = Do(Create,Window)
+	 (FnWindow, (udat)7, "Borders", NULL, Builtin_Menu, COL(HIGH|BLACK,BLACK),
+	  NOCURSOR, WINDOW_WANT_MOUSE|WINDOW_DRAG|WINDOW_CLOSE|WINDOW_RESIZE,WINFL_USE_DEFCOL,
+	  (udat)42, (udat)11, (udat)0)) &&
+
 	(DisplayWin = Do(Create,Window)
-	 (FnWindow, (udat)9, " Display ", NULL, Builtin_Menu, COL(HIGH|BLACK,WHITE),
+	 (FnWindow, (udat)7, "Display", NULL, Builtin_Menu, COL(HIGH|BLACK,WHITE),
 	  NOCURSOR,
 	  WINDOW_WANT_MOUSE|WINDOW_DRAG|WINDOW_RESIZE|WINDOW_CLOSE
 	  |WINDOW_X_BAR|WINDOW_Y_BAR,
 	  WINFL_USE_DEFCOL|WINFL_SEL_ROWCURR,
-	  (udat)33, (udat)10,(udat)0)) &&
+	  (udat)33, (udat)12,(udat)0)) &&
 
 	(ListWin = Do(Create,Window)
-	 (FnWindow, (udat)13, " Window List ", NULL, Builtin_Menu, COL(WHITE,BLUE),
+	 (FnWindow, (udat)11, "Window List", NULL, Builtin_Menu, COL(WHITE,BLUE),
 	  NOCURSOR,
 	  WINDOW_WANT_KEYS|WINDOW_WANT_MOUSE|WINDOW_DRAG|WINDOW_RESIZE|WINDOW_CLOSE
 	  |WINDOW_X_BAR|WINDOW_Y_BAR,
@@ -695,7 +768,7 @@ byte InitBuiltin(void) {
 			  COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
 			  COD_O_Yp_SHADE, GADGET_USE_DEFCOL, 18, 2, 3, 1,
 			  "[+]", NULL, NULL, NULL, NULL, NULL, NULL, NULL) &&
-
+	
 	Do(Create,Gadget)(FnGadget, OptionWin, COL(BLACK,WHITE), COL(HIGH|WHITE,GREEN),
 			  COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
 			  COD_O_Yn_SHADE, GADGET_USE_DEFCOL, 21, 2, 3, 1,
@@ -725,7 +798,6 @@ byte InitBuiltin(void) {
 			  COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
 			  COD_O_NEWFONT, GADGET_USE_DEFCOL, 2, 12, 15, 1,
 			  "[ ] Custom Font", NULL, NULL, NULL, NULL, NULL, NULL, NULL)
-
 	)
     {
 	Act(SetColors,AboutWin)(AboutWin, 0x1FF, (hwcol)0x7A, (hwcol)0, (hwcol)0, (hwcol)0, (hwcol)0x7F,
@@ -737,6 +809,9 @@ byte InitBuiltin(void) {
 
 	Act(SetColors,OptionWin)(OptionWin, 0x1FF, (hwcol)0x7A, (hwcol)0, (hwcol)0, (hwcol)0, (hwcol)0x7F,
 				 (hwcol)0x78, (hwcol)0x20, (hwcol)0x78, (hwcol)0x08);
+
+	Act(SetColors,BordersWin)(BordersWin, 0x1FF, (hwcol)0x7A, (hwcol)0, (hwcol)0, (hwcol)0, (hwcol)0x7F,
+				 (hwcol)0x7F, (hwcol)0x20, (hwcol)0x78, (hwcol)0x08);
 
 	Act(SetColors,ListWin)(ListWin, 0x1FF,
 			       COL(HIGH|YELLOW,CYAN), COL(HIGH|GREEN,HIGH|BLUE), COL(WHITE,HIGH|BLUE),
@@ -759,6 +834,8 @@ byte InitBuiltin(void) {
 	Act(WriteRow,OptionWin)(OptionWin, 10, "  X Shadow");
 	OptionWin->CurX = 25; OptionWin->CurY = 2;
 	Act(WriteRow,OptionWin)(OptionWin, 10, "  Y Shadow");
+
+	FillBordersWin();
 	
 	All->SetUp->Flags |= SETUP_DO_SHADE
 #ifdef CONF_OPT_ALWAYSCURSOR
@@ -786,6 +863,7 @@ byte InitBuiltin(void) {
 	
 	return TRUE;
     }
+    fprintf(stderr, "twin: Out of memory!\n");
     return FALSE;
 }
 

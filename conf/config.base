@@ -19,6 +19,8 @@ CONF_SOCKET_GZ_HELP=" -> Sockets: Support gzip compression"
 CONF_HW_TTY_HELP="HW support: text terminals (Linux console...)"
 CONF_HW_TTY_LINUX_HELP=" -> tty support: Linux console"
 CONF_HW_TTY_TWTERM_HELP=" -> tty support: Twin terminal"
+CONF_HW_TTY_TERMCAP_HELP=" -> tty support: termcap/ncurses terminal database"
+CONF_HW_TTY_NCURSES_HELP=" -> -> tty: termcap: link against libncurses"
 CONF_HW_X11_HELP="HW support: X11"
 CONF_HW_TWIN_HELP="HW support: Twin, native"
 CONF_HW_DISPLAY_HELP="HW support: twdisplay client as display"
@@ -47,14 +49,11 @@ menu CONF_HW
   yesmodno CONF_HW_TTY
   yesno_dep CONF_HW_TTY_LINUX CONF_HW_TTY
   yesno_dep CONF_HW_TTY_TWTERM CONF_HW_TTY
-  if [ $CONF_HW_TTY != n -a $CONF_HW_TTY_LINUX = n -a $CONF_HW_TTY_TWTERM = n ]; then
-    warn "WARNING: you answered \`n' to all specific tty support questions.\n         Only generic tty support (without mouse) will be compiled."
-  fi
+  yesno_dep CONF_HW_TTY_TERMCAP CONF_HW_TTY
+  yesno_dep CONF_HW_TTY_NCURSES CONF_HW_TTY
   yesmodno CONF_HW_X11
-  if [ $CONF_SOCKET = y -o $CONF_SOCKET = m ]; then
-    yesmodno CONF_HW_TWIN
-    yesmodno CONF_HW_DISPLAY
-  fi
+  yesmodno_truedep CONF_HW_TWIN CONF_SOCKET
+  yesmodno_truedep CONF_HW_DISPLAY CONF_SOCKET
   yesmodno CONF_HW_GGI
 endmenu
 menu CONF_OPT

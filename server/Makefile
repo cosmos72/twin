@@ -37,6 +37,17 @@ LDFLAGS_term.so=-lc -shared
 LDFLAGS_socket.so=-lc -shared
 LDFLAGS_twdisplay=-L$(TOPDIR)/lib -lTw
 
+
+#
+# OS-specific stuff
+#
+OS=$(shell uname)
+ifeq ($(OS),Linux)
+  DLOPEN_LDFLAGS=-rdynamic -ldl
+else
+  DLOPEN_LDFLAGS=-rdynamic
+endif
+
 #
 # target
 #
@@ -45,7 +56,7 @@ all: bins modules twin
 twin_real: HW.dir
 
 twin: twin_wrapper
-	ln -sf $< $@
+	$(LN) $< $@
 
 #
 # read configuration
@@ -59,9 +70,9 @@ include $(TOPDIR)/conf/config.status
 # and group together all *.o objects needed by each binary
 #
 ifeq ($(CONF__MODULES),y)
-  LDFLAGS_twin_real+=-rdynamic -ldl
+  LDFLAGS_twin_real+=$(DLOPEN_LDFLAGS)
   OBJS_twin_real+=$(DLOBJS)
-  LDFLAGS_twdisplay+=-rdynamic -ldl
+  LDFLAGS_twdisplay+=$(DLOPEN_LDFLAGS)
 else
   EXCL_OBJS+=$(DLOBJS)
 endif
@@ -81,6 +92,7 @@ else
     MODBINS+=wm.so
   else
     EXCL_OBJS+=$(WMOBJS)
+    dummy:=$(shell echo "You disabled the window manager! Twin will not run!" > /dev/tty)
   endif
 endif
 
@@ -145,6 +157,14 @@ ifeq ($(CONF_HW_TTY),y)
     LDFLAGS_twin_real+=-lgpm #/usr/lib/libgpm.a
     LDFLAGS_twdisplay+=-lgpm #/usr/lib/libgpm.a
   endif
+  ifeq ($(CONF_HW_TTY_TERMCAP),y)
+    LIBTERMCAP=-ltermcap
+    ifeq ($(CONF_HW_TTY_NCURSES),y)
+      LIBTERMCAP=-lncurses
+    endif
+    LDFLAGS_twin_real+=$(LIBTERMCAP)
+    LDFLAGS_twdisplay+=$(LIBTERMCAP)
+  endif
 endif
 ifeq ($(CONF_HW_X11),y)
   LDFLAGS_twin_real+=-L/usr/X11R6/lib -lX11
@@ -155,11 +175,9 @@ ifeq ($(CONF_HW_GGI),y)
   LDFLAGS_twdisplay+=-lggi
 endif
 ifneq ($(CONF_SOCKET),n)
-
-  ifneq ($CONF_HW_DISPLAY, n)
-    BINS+=twdisplay # compile it!
+  ifneq ($(CONF_HW_DISPLAY),n)
+    BINS+=twdisplay
   endif
-  
   ifeq ($(CONF_HW_TWIN),y)
     LDFLAGS_twin_real+=-L$(TOPDIR)/lib -lTw
   endif
@@ -169,7 +187,8 @@ endif
 #
 # common rules
 #
-include $(TOPDIR)/Rules
+include $(TOPDIR)/MakeRules
+
 
 #
 # All done. Now just set a few special targets
@@ -186,7 +205,8 @@ clean:
 	      $(ALLOBJS)
 
 install:
-	$(CP) twin $(BINS) $(DESTDIR)/bin
+	$(CP) $(BINS) $(DESTDIR)/bin
+	$(LN) twin_real $(DESTDIR)/bin/twin
 	$(SETPRIV)
 	if [ "$(MODBINS)" ]; then \
 	  $(MKDIR) $(DESTDIR)/lib/twin/modules; \

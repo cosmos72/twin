@@ -37,6 +37,7 @@ byte InitScroller(void) {
 
 	return TRUE;
     }
+    fprintf(stderr, "twin: Out of memory!\n");
     return FALSE;
 }
 

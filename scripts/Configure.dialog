@@ -37,13 +37,20 @@ function yesmodno() {
 	  MOD="off";
       fi
     
-    : $[ CURRITEMS=CURRITEMS+2 ]
-    CURRCMD="$CURRCMD ${1#CONF_} \\\"$HELP\\\" $VAL MOD_${1#CONF_} \\\" -> Compile as module\\\" $MOD"
+      : $[ CURRITEMS=CURRITEMS+2 ]
+      CURRCMD="$CURRCMD ${1#CONF_} \\\"$HELP\\\" $VAL MOD_${1#CONF_} \\\" -> Compile as module\\\" $MOD"
    fi
 }
 
-function warn() {
-   :
+# here we CAN rely on the value of dependency variable...
+# as it it located in another menu
+function yesmodno_truedep() {
+   DEP=$(eval "echo \"\${$2}\"")
+   if test "$DEP" != n; then
+      yesmodno "$1"
+   else
+      eval "$1=n"
+   fi
 }
 
 function menu() {
@@ -114,7 +121,7 @@ function parse() {
       if [ "$CONF__MODULES" = n -a "$THIS" = m ]; then
          THIS=y
       fi
-      eval $i="$THIS"
+      eval "$i=$THIS"
    done
 }
 

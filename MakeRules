@@ -24,20 +24,27 @@ else
 endif
 
 
+#
 # set `ar' archiver...
+#
 AR=ar
 
+#
+# `cp -f' : `cp' with force overwrite
+#
+CP=cp -f
 
 #
-# `cp -df' : `cp' with force overwrite, don't dereference symlinks/hardlinks
+# `ln -sf' : `ln' with soft links, force overwrite
 #
-CP=cp -df
+LN=ln -sf
 
 #
 # `mkdir -p' or `mkdirhier' : make a directory and all missing directory parents
 #
 MKDIR=mkdir -p
 #MKDIR=mkdirhier
+
 
 #
 # a variation of `echo' that interprets \n as newline
@@ -50,7 +57,8 @@ ECHO=echo -e
 # --------------- no user-serviceable parts below this line ----------------
 #
 
-TW_VERSION=0.3.3
+
+TW_VERSION=0.3.4
 
 CFLAGS+=-I$(TOPDIR)/include
 
@@ -85,7 +93,7 @@ _ALLOBJS:=$(strip $(OBJS) $(MODOBJS) $(ARLIBOBJS) $(EXCL_OBJS))
 
 _ALLSRCS:=$(strip $(subst .o,.c,$(filter %.o,$(_ALLOBJS))))
 
-.modules: Makefile $(TOPDIR)/Rules $(CONF)
+.modules: Makefile $(TOPDIR)/MakeRules $(CONF)
 	@$(ECHO) -n Building .modules...
 	@$(ECHO) " $(_ALLFLAGS)" > .modules
 	@$(ECHO) " $(foreach B,$(BINS) $(MODBINS),$(B): .$(B).link\n .$(B).link: $(OBJS_$(B))\n)" >> .modules
@@ -93,9 +101,9 @@ _ALLSRCS:=$(strip $(subst .o,.c,$(filter %.o,$(_ALLOBJS))))
 	@$(ECHO) done
 
 $(TOPDIR)/scripts/MkDep:
-	ln -sf MkDep$(BASH_VERSION) $(TOPDIR)/scripts/MkDep
+	$(LN) MkDep$(BASH_VERSION) $(TOPDIR)/scripts/MkDep
 
-.depend: Makefile $(TOPDIR)/Rules $(TOPDIR)/scripts/MkDep $(_ALLSRCS)
+.depend: Makefile $(TOPDIR)/MakeRules $(TOPDIR)/scripts/MkDep $(_ALLSRCS)
 	$(BASH) $(TOPDIR)/scripts/MkDep $(TOPDIR) $(filter -I%,$(CFLAGS)) -- $(_ALLSRCS) > .depend
 
 %.dir:
@@ -121,7 +129,7 @@ $(TOPDIR)/scripts/MkDep:
 #
 .%.link:
 	$(CC) -o $* $(OBJS_$*) $(LDFLAGS) $(LDFLAGS_$*)
-	@ln -sf $* $@
+	@$(LN) $* $@
 	@$(ECHO) ' ifeq ($$(strip $$(CC) $$(OBJS_$*) $$(LDFLAGS) $$(LDFLAGS_$*)),$(strip $(CC) $(OBJS_$*) $(LDFLAGS) $(LDFLAGS_$*)))\n'\
 	'FILES_UP_TO_DATE += $@\n'\
 	'endif' > $@.flags
@@ -131,7 +139,7 @@ $(TOPDIR)/scripts/MkDep:
 #
 .%.arlib:
 	rm -f $* && $(AR) cr $* $(OBJS_$*)
-	@ln -sf $* $@
+	@$(LN) $* $@
 	@$(ECHO) ' ifeq ($$(strip $$(ARLIB) $$(OBJS_$*)),$(strip $(ARLIB) $(OBJS_$*)))\n'\
 	'FILES_UP_TO_DATE += $@\n'\
 	'endif' > $@.flags

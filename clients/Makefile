@@ -22,7 +22,7 @@ include $(TOPDIR)/conf/config.status
 -include .depend
 -include .modules
 
-include $(TOPDIR)/Rules
+include $(TOPDIR)/MakeRules
 
 ifneq ($(CONF_SOCKET),n)
   everything: $(BINS) twdetach mapscrn.dir
@@ -35,7 +35,11 @@ else
 endif
 
 twdetach: twattach
-	ln -sf $< $@
+	$(LN) $< $@
+
+install:
+	$(CP) $(BINS) */tw* $(DESTDIR)/bin 
+	$(LN) twattach $(DESTDIR)/bin/twdetach
 
 clean:
 	rm -f .*.flags .*.link gmon.out core $(OBJS) $(BINS) twdetach

@@ -23,7 +23,7 @@ include $(TOPDIR)/conf/config.status
 
 ifneq ($(CONF_SOCKET),n)
   everything: lib links
-
+  install: install-real
   ifeq ($(CONF_SOCKET_GZ),y)
     LDFLAGS_libTw.so.$(VERSION)+=-lz
   endif
@@ -33,12 +33,17 @@ else
 	@echo "You disabled \"Support remote socket connections\","
 	@echo "so the library libTw.so will NOT be compiled!"
 	@echo
+  install:
+	@echo
+	@echo "You disabled \"Support remote socket connections\","
+	@echo "so the library libTw.so will NOT be compiled!"
+	@echo
 endif
 
 #
 # include the do-everything file
 #
-include $(TOPDIR)/Rules
+include $(TOPDIR)/MakeRules
 
 #
 # handy targets
@@ -48,11 +53,16 @@ lib: $(ARLIBS) $(BINS)
 links: libTw.so.$(SO_VER) libTw.so
 
 libTw.so.$(SO_VER):
-	ln -sfn libTw.so.$(VERSION) libTw.so.$(SO_VER)
+	$(LN) libTw.so.$(VERSION) libTw.so.$(SO_VER)
 
 libTw.so:
-	ln -sfn libTw.so.$(SO_VER) libTw.so
+	$(LN) libTw.so.$(SO_VER) libTw.so
 
+install-real:
+	$(CP) libTw.so.$(VERSION) $(DESTDIR)/lib
+	$(LN) libTw.so.$(VERSION) $(DESTDIR)/lib/libTw.so.$(SO_VER)
+	$(LN) libTw.so.$(SO_VER)  $(DESTDIR)/lib/libTw.so
+	
 clean:
 	rm -f .*.flags .*.link .*.arlib libTw.so* libTw.a $(_ALLOBJS)
 

@@ -26,6 +26,8 @@ BINS=
 MODBINS=
 ARLIBS=hw.a
 
+CFLAGS_hw_X11.o+=-I/usr/X11R6/include
+
 LDFLAGS_hw_tty.so=-lc -shared
 LDFLAGS_hw_X11.so=-lc -shared -L/usr/X11R6/lib -lX11
 LDFLAGS_hw_display.so=-lc -shared
@@ -60,6 +62,13 @@ else
     MODBINS+=hw_tty.so
     ifeq ($(CONF_HW_TTY_LINUX),y)
       LDFLAGS_hw_tty.so+=-lgpm
+    endif
+    ifeq ($(CONF_HW_TTY_TERMCAP),y)
+      LIBTERMCAP=-ltermcap
+      ifeq ($(CONF_HW_TTY_NCURSES),y)
+        LIBTERMCAP=-lncurses
+      endif
+      LDFLAGS_hw_tty.so+=$(LIBTERMCAP)
     endif
   else
     EXCL_OBJS+=$(TTYOBJS)
@@ -114,7 +123,7 @@ endif
 #
 # common rules
 #
-include $(TOPDIR)/Rules
+include $(TOPDIR)/MakeRules
 
 #
 # All done. Now just set a few special targets
@@ -123,7 +132,7 @@ include $(TOPDIR)/Rules
 modules: $(MODBINS)
 
 hw_X.so: hw_X11.so
-	ln -sfn $< $@
+	$(LN) $< $@
 
 clean:
 	rm -f .*.flags .*.link .*.arlib hw.a hw_*.so $(ALLOBJS)
@@ -131,5 +140,6 @@ clean:
 install:
 	if [ "$(MODBINS)" ]; then \
 	  $(MKDIR) $(DESTDIR)/lib/twin/modules/HW; \
-	  $(CP) $(MODBINS) $(wildcard hw_X.so) $(DESTDIR)/lib/twin/modules/HW; \
+	  $(CP) $(MODBINS) $(DESTDIR)/lib/twin/modules/HW; \
+	  $(LN) hw_X11.so $(DESTDIR)/lib/twin/modules/HW/hw_X.so; \
 	fi

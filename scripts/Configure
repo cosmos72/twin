@@ -62,8 +62,11 @@ function yesmodno() {
    fi
 }
 
-function warn() {
-   echo -e "$@"
+function yesmodno_truedep() {
+   DEP=$(eval "echo \"\${$2}\"")
+   if test "$DEP" != n; then
+      yesmodno "$1"
+   fi
 }
 
 function menu() {

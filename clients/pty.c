@@ -84,6 +84,7 @@ Found:
 }
 
 static gid_t tty_grgid;
+
 gid_t get_tty_grgid(void) {
     struct group *gr;
     
@@ -98,9 +99,6 @@ gid_t get_tty_grgid(void) {
 
 /* 2. Fixup permission for pty master/slave pairs */
 static byte fixup_pty(void) {
-    /* from util.c */
-    extern gid_t get_tty_grgid(void);
-    
     uid_t id = getuid();
     gid_t tty_gid = get_tty_grgid();
     

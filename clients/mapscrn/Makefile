@@ -17,7 +17,7 @@ include $(TOPDIR)/conf/config.status
 -include .depend
 -include .modules
 
-include $(TOPDIR)/Rules
+include $(TOPDIR)/MakeRules
 
 
 clean:

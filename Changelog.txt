@@ -1,3 +1,20 @@
+From 0.3.3 to 0.3.4: (Massimiliano Ghilardi, 11 Sep 2000)
+        * FreeBSD support added by Andreas Schweitzer. Thanks!
+	* Fixed SEGFAULT when doing cut-n-paste on -hw=tty,stdout.
+	* twdisplay did not react correctly to resize denials. Fixed.
+	* Option `-nohw' added to twin: starts in the background without
+	  display.
+	* Options `-h', `-help', `-V' and `-version' added to twin and twterm.
+	* Termcap/ncurses driver added to -hw=tty. Now twin can run on almost
+	  any text terminal.
+	* Options ",termcap", ",colorbug" and  ",xterm" added to -hw=tty.
+	* RollUp button "><" added on all windows. Can reduce the window
+	  to its titlebar and restore it to normal size.
+	* Support for "floating" shadows added (i.e. so displaced to be
+	  separated from the window).
+	* Menu -> ð -> Borders window added to tweak window borders look.
+	  Currently allows to move buttons.
+	
 From 0.3.2 to 0.3.3: (Massimiliano Ghilardi, 12 Jul 2000)
 	* Ported to AIX 3.2. I only had to fix minor problems
 	  like #includes and a few functions not available on it.

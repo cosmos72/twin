@@ -9,14 +9,20 @@ extern all *All;
 
 extern gadget GadgetFlag, GadgetSwitch;
 
-extern byte GadgetClose[2][2],
-GadgetBack[2][2],
-GadgetResize[2][2],
-ScrollBarX[2][3],
-ScrollBarY[2][3],
-TabX[2],
-TabY[2],
-StdBorder[2][2][3][3];
+extern byte GadgetResize[2][2],
+    ScrollBarX[2][3],
+    ScrollBarY[2][3],
+    TabX[2],
+    TabY[2],
+    StdBorder[2][2][3][3];
+
+#define MAX_BUTTONS 10
+extern byte Button_N;
+extern num  Button_Close, Button_Back;
+extern byte Button_Fn[MAX_BUTTONS];
+extern byte Button_Shape[MAX_BUTTONS][2][2];
+extern num  Button_Pos[MAX_BUTTONS];
+extern byte Button_Delta_Left, Button_Delta_Right;
 
 extern hwcol DEFAULT_ColGadgets, DEFAULT_ColArrows, DEFAULT_ColBars, DEFAULT_ColTabs,
 	DEFAULT_ColBorder, DEFAULT_ColDisabled, DEFAULT_ColSelectDisabled;

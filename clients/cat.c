@@ -38,7 +38,7 @@ static byte InitCat(void) {
 	return FALSE;
     
     if ((Cat_Win=TwCreateWindow
-	 (10, " Twin Cat ", NULL,
+	 (8, "Twin Cat", NULL,
 	  Cat_Menu, COL(BLACK,HIGH|BLACK), TW_LINECURSOR,
 	  TW_WINDOW_DRAG|TW_WINDOW_RESIZE|TW_WINDOW_X_BAR|TW_WINDOW_Y_BAR|TW_WINDOW_CLOSE,
 	  TW_WINFL_USE_DEFCOL,

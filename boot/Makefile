@@ -26,7 +26,7 @@ include $(TOPDIR)/conf/config.status
 #
 # common rules
 #
-include $(TOPDIR)/Rules
+include $(TOPDIR)/MakeRules
 
 #
 # All done. Now just set a few special targets

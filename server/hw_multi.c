@@ -46,12 +46,16 @@
 # include "HW/hw_X11.h"
 #endif
 
-#ifdef CONF_HW_DISPLAY
-# include "HW/hw_display.h"
-#endif
+#ifdef CONF_SOCKET
 
-#ifdef CONF_HW_TWIN
-# include "HW/hw_twin.h"
+# ifdef CONF_HW_DISPLAY
+#  include "HW/hw_display.h"
+# endif
+
+# ifdef CONF_HW_TWIN
+#  include "HW/hw_twin.h"
+# endif
+
 #endif
 
 #ifdef CONF_HW_TTY
@@ -211,7 +215,7 @@ static byte module_InitHW(void) {
 
 #endif /* CONF__MODULES */
 
-#if defined(CONF_HW_X11) || defined(CONF_HW_TWIN) || defined(CONF_HW_DISPLAY) || defined(CONF_HW_TTY) || defined(CONF_HW_GGI)
+#if defined(CONF_HW_X11) || (defined(CONF_SOCKET) && (defined(CONF_HW_TWIN) || defined(CONF_HW_DISPLAY))) || defined(CONF_HW_TTY) || defined(CONF_HW_GGI)
 static byte check4(byte *s, byte *arg) {
     if (arg && strncmp(s, arg, strlen(s))) {
 	fprintf(stderr, "twin: `-hw=%s' given, skipping `-hw=%s' display driver.\n",
@@ -327,7 +331,8 @@ display_hw *AttachDisplayHW(uldat len, byte *arg, uldat slot) {
     display_hw *D_HW;
 
     if ((len && len <= 4) || CmpMem("-hw=", arg, Min2(len,4))) {
-	fprintf(stderr, "twin: specified `%.*s\' is not `-hw=<display>\'\n",
+	fprintf(stderr, "twin: specified `%.*s\' is not a known option.\n"
+		"      try `twin -help' for usage summary.\n",
 		(int)len, arg);
 	fflush(stderr);
 	return NULL;
@@ -379,12 +384,18 @@ byte InitHW(void) {
 	/* autoprobe */
 	arglist = dummy;
     }
-    while (*arglist) {
-	ret |= !!AttachDisplayHW(strlen(*arglist), *arglist, NOSLOT);
-	arglist++;
+    if (!arglist[1] && !strcmp(*arglist, "-nohw")) {
+	fprintf(stderr, "twin: starting in background as %s\n", TWDisplay);
+	RunNoHW();
+	ret = TRUE;
+    } else {
+	while (*arglist) {
+	    ret |= !!AttachDisplayHW(strlen(*arglist), *arglist, NOSLOT);
+	    arglist++;
+	}
+	if (!ret)
+	    fputs("\ntwin:   \033[1mALL  DISPLAY  DRIVERS  FAILED.\033[0m\n", stderr);
     }
-    if (!ret)
-	fputs("\ntwin:   \033[1mALL  DISPLAY  DRIVERS  FAILED.\033[0m\n", stderr);
     return ret;
 }
 
@@ -709,8 +720,7 @@ void SelectionExport(void) {
 }
 
 void SelectionImport(void) {
-    if (All->MouseHW) {
-	HW = All->MouseHW;
+    if ((HW = All->MouseHW)) {
 	if (HW->HWSelectionImport())
 	    All->Selection->OwnerOnce = HW;
 	else

@@ -23,6 +23,7 @@
 #include <signal.h>
 
 #include <libTw.h>
+#include "version.h"
 
 #include "pty.h"
 
@@ -163,7 +164,7 @@ void Resize(uldat Slot, udat X, udat Y) {
 
 
 static char **args;
-static char *title = " Twin Term ";
+static char *title = "Twin Term";
 
 static twindow newTermWindow(void) {
     uldat len = strlen(title);
@@ -373,8 +374,18 @@ static void TwinTermIO(int Slot) {
 	CloseTerm(Slot);
 }
 
-static void usage(void) {
-    fprintf(stderr, "Usage: twterm [-t <title>] [-e <command>]\n");
+static void Usage(char *name) {
+    fprintf(stderr, "Usage: %s [OPTIONS]\n"
+	    "Currently known options: \n"
+	    " -h, -help               display this help and exit\n"
+	    " -V, -version            output version information and exit\n"
+	    " -t <title>              set window title\n"
+	    " -e <command>            run <command> instead of user's shell\n"
+	    "                         (must be last option)\n", name);
+}
+
+static void ShowVersion(void) {
+    fputs("twterm " TWIN_VERSION_STR "\n", stdout);
 }
 
 int main(int argc, char *argv[]) {
@@ -389,7 +400,13 @@ int main(int argc, char *argv[]) {
     argv++, argc--;
     
     while (argc) {
-	if (argc > 1 && !strcmp(*argv, "-t")) {
+	if (!strcmp(*argv, "-h") || !strcmp(*argv, "-help")) {
+	    Usage(name);
+	    return 0;
+	} else if (!strcmp(*argv, "-V") || !strcmp(*argv, "-version")) {
+	    ShowVersion();
+	    return 0;
+	} else if (argc > 1 && !strcmp(*argv, "-t")) {
 	    title = *++argv;
 	    argc--;
 	} else if (argc > 1 && !strcmp(*argv, "-e")) {
@@ -397,8 +414,8 @@ int main(int argc, char *argv[]) {
 	    args[0] = args[1];
 	    break;
 	} else {
-	    fprintf(stderr, "%s: argument `%s' not recognized\n", name, *argv);
-	    usage();
+	    fprintf(stderr, "%s: argument `%s' not recognized\n"
+		    "\ttry `%s -help' for usage summary.\n", name, *argv, name);
 	    return 1;
 	}
 	argv++;

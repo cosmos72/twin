@@ -368,6 +368,9 @@ static void TW_QuitHW(void) {
     HW->QuitHW = NoOp;
 }
 
+#ifdef MODULE
+static
+#endif
 byte TW_InitHW(void) {
     byte *arg = HW->Name, *opt = NULL;
     byte name[] = " twin :??? on twin ";

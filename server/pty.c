@@ -12,19 +12,18 @@
  *
  */
 
-#include <unistd.h>
 #include <fcntl.h>
 #include <grp.h>
 #include <signal.h>
-#include <termios.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/ioctl.h>
 
 #ifdef CONF_TERM_DEVPTS
 # define __USE_XOPEN
 # include <stdlib.h>
 #endif
+
+#include "tty_ioctl.h"
 
 #include "twin.h"
 #include "util.h"
@@ -159,8 +158,9 @@ static byte setup_tty(udat x, udat y) {
      */
     signal(SIGWINCH, SIG_DFL);
 
-    if (ioctl(0, TIOCSWINSZ, &wsiz) < 0 || ioctl(0, TCSETS, &ttysave) < 0)
+    if (ioctl(0, TIOCSWINSZ, &wsiz) < 0 || tty_setioctl(0, &ttysave) < 0)
 	return FALSE;
+    
     return TRUE;
 }
 

@@ -29,6 +29,9 @@
 #ifdef CONF__MODULES
 # include "dl.h"
 #endif
+#ifdef CONF_WM
+# include "wm.h"
+#endif
 
 /* some object-oriented ones not included in fn_obj */
 
@@ -342,11 +345,15 @@ static void InsertRow(row *Row, window *Parent, row *Prev, row *Next) {
     if (!Row->Window && Parent) {
 	InsertGeneric((obj *)Row, (obj_parent *)&Parent->FirstRow, (obj *)Prev, (obj *)Next, &Parent->MaxNumRow);
 	Row->Window = Parent;
+	if (!(Row->Window->Flags & WINFL_USEANY))
+	    Row->Window->NumRowOne = Row->Window->NumRowSplit = (uldat)0;
     }
 }
 
 static void RemoveRow(row *Row) {
     if (Row->Window) {
+	if (!(Row->Window->Flags & WINFL_USEANY))
+	    Row->Window->NumRowOne = Row->Window->NumRowSplit = (uldat)0;
 	RemoveGeneric((obj *)Row, (obj_parent *)&Row->Window->FirstRow, &Row->Window->MaxNumRow);
 	Row->Window = (window *)0;
     }
@@ -984,12 +991,11 @@ static void DeleteWindow(window *Window) {
     }
 }
 
-static window *SearchWindow(screen *Screen, dat i, dat j, byte *Shaded) {
+static window *SearchWindow(screen *Screen, dat i, dat j) {
     window *Window;
-    byte Shade, WinFound=FALSE;
+    byte WinFound=FALSE;
     ldat shUp, shLeft, NWinDiMenu;
-    
-    Shade=!!(All->SetUp->Flags & SETUP_DO_SHADE);
+    ldat YWidth;
     
     Window = Screen->FirstWindow;
     while (!WinFound && Window) {
@@ -997,27 +1003,18 @@ static window *SearchWindow(screen *Screen, dat i, dat j, byte *Shaded) {
 	shUp = (ldat)Window->Up - ((ldat)Screen->Up & NWinDiMenu) + (ldat)Screen->YLimit;
 	shLeft=(ldat)Window->Left-((ldat)Screen->Left & NWinDiMenu);
 	
-	if ((ldat)j<shUp || (ldat)i<shLeft ||
-	    (ldat)j>=(ldat)Window->YWidth + shUp + (ldat)Shade ||
-	    (ldat)i>=(ldat)Window->XWidth+shLeft+2*(ldat)Shade) {
-	    
-	    Window=Window->Next;
-	    continue;
-	}
-	if ((ldat)j>=shUp+(ldat)Window->YWidth || (ldat)i>=shLeft+(ldat)Window->XWidth) {
-	    if (((ldat)j>=shUp+(ldat)Window->YWidth && (ldat)i>shLeft+(ldat)1) || ((ldat)i>=shLeft+(ldat)Window->XWidth && (ldat)j>shUp))
-		if (Shaded) *Shaded=TRUE;
+	YWidth = !(Window->Attrib & WINDOW_MENU) && Window->Attrib & WINDOW_ROLLED_UP
+	    ? (ldat)1 : (ldat)Window->YWidth;
+	
+	if ((ldat)i<shLeft || (ldat)j<shUp ||
+	    (ldat)i>=(ldat)Window->XWidth+shLeft || (ldat)j>=YWidth + shUp) {
 	    
 	    Window=Window->Next;
 	    continue;
 	}
 	WinFound = TRUE;
     }
-    
-    if (WinFound)
-	return Window;
-    
-    return (window *)0;
+    return WinFound ? Window : (window *)0;
 }
 
 
@@ -1271,8 +1268,7 @@ static window *SearchCoordScreen(dat x, dat y, uldat *ResX, uldat *ResY) {
     window *Window;
     ldat shLeft, shUp;
     
-    if (!(Screen=SearchScreen(y)) ||
-	!(Window=SearchWindow(Screen, x, y, (byte *)0)))
+    if (!(Screen=SearchScreen(y)) || !(Window=SearchWindow(Screen, x, y)))
 	return (window *)0;
     
     if ((shLeft=(ldat)Window->Left-(ldat)Screen->Left*!(Window->Attrib & WINDOW_MENU)) < (ldat)x &&
@@ -1316,6 +1312,22 @@ void FakeWriteHWAttr(window *Window, udat x, udat y, uldat Len, hwattr *Attr) {
 }
 #endif
 
+#if !defined(CONF_WM)
+static byte FakeFindBorderWindow(window *Window, udat u, udat v, byte Border, byte MovWin, byte *PtrChar, byte *PtrColor) {
+    byte Horiz, Vert;
+    
+    Horiz = u ? u+1 == Window->XWidth ? (byte)2 : (byte)1 : (byte)0;
+    Vert  = v ? v+1 == Window->YWidth ? (byte)2 : (byte)1 : (byte)0;
+
+    if (*PtrChar)
+	*PtrChar = StdBorder[!!(All->SetUp->Flags & SETUP_NEW_FONT)][Border][Vert][Horiz];
+    if (*PtrColor)
+	*PtrColor = Window->ColBorder;
+    
+    return v ? (byte)0 : POS_TITLE;
+}
+#endif
+
 static fn_window _FnWindow = {
     window_magic, (uldat)sizeof(window), (uldat)1,
 	CreateWindow,
@@ -1323,6 +1335,11 @@ static fn_window _FnWindow = {
 	InsertWindow,
 	RemoveWindow,
 	DeleteWindow,
+#if defined(CONF_WM)	
+	FindBorderWindow,
+#else
+	FakeFindBorderWindow,
+#endif
 	SetColTextWindow,
 	SetColorsWindow,
 	ConfigureWindow,
@@ -1485,6 +1502,7 @@ menuitem *Create4MenuCommonMenuItem(fn_menuitem *Fn_MenuItem, menu *Menu) {
 	Row4Menu(Window, COD_COMMON_CENTER,   ROW_ACTIVE, 15," Center        ") &&
 	Row4Menu(Window, COD_COMMON_ZOOM,     ROW_ACTIVE, 15," Zoom          ") &&
 	Row4Menu(Window, COD_COMMON_MAXZOOM,  ROW_ACTIVE, 15," \x11ZOOM\x10        ") &&
+	Row4Menu(Window, COD_COMMON_ROLLUP,   ROW_ACTIVE, 15," Roll Up       ") &&
 	Row4Menu(Window, (udat)0,             ROW_IGNORE, 15,"컴컴컴컴컴컴컴�") &&
 	Row4Menu(Window, COD_COMMON_RAISELOWER,ROW_ACTIVE,15," Raise / Lower ") &&
 	Row4Menu(Window, COD_COMMON_UNFOCUS,  ROW_ACTIVE, 15," UnFocus       ") &&

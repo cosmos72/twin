@@ -46,7 +46,7 @@ static void termShutDown(window *Window) {
 
 static window *newTermWindow(void) {
     window *Window = Do(Create,Window)
-	(FnWindow, (udat)11, " Twin Term ", (hwcol *)0, Term_Menu, COL(WHITE,BLACK),
+	(FnWindow, (udat)9, "Twin Term", (hwcol *)0, Term_Menu, COL(WHITE,BLACK),
 	 LINECURSOR, WINDOW_WANT_CHANGE|WINDOW_WANT_KEYS|WINDOW_DRAG|WINDOW_RESIZE|WINDOW_Y_BAR|WINDOW_CLOSE,
 	 WINFL_CURSOR_ON|WINFL_USECONTENTS,
 	 (udat)82, (udat)27, (uldat)200);
@@ -109,6 +109,10 @@ byte InitTerm(void) {
 	    args[1][0] = '-';
 	return TRUE;
     }
+    if (shellpath)
+	fprintf(stderr, "twin: Out of memory!\n");
+    else
+	fprintf(stderr, "twin: environment variable $SHELL not set!\n");
     return FALSE;
 }
 

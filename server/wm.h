@@ -3,4 +3,6 @@
 
 byte InitWM(void);
 
+byte FindBorderWindow(window *Window, udat u, udat v, byte Border, byte MovWin, byte *PtrChar, byte *PtrColor);
+
 #endif /* _TW_WM_H */

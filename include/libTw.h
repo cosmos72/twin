@@ -386,7 +386,7 @@ typedef struct s_tw_d *tdisplay;
 #define TW_WINDOW_DRAG		((uldat)0x0010)
 #define TW_WINDOW_RESIZE	((uldat)0x0020)
 #define TW_WINDOW_CLOSE		((uldat)0x0040)
-#define TW_WINDOW_STAYONTOP	((uldat)0x0080)
+#define TW_WINDOW_ROLLED_UP	((uldat)0x0080)
 #define TW_WINDOW_X_BAR		((uldat)0x0100)
 #define TW_WINDOW_Y_BAR		((uldat)0x0200)
 

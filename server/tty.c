@@ -1286,6 +1286,9 @@ void WriteAscii(window *Window, uldat Len, byte *AsciiSeq) {
 	Data = Win->TtyData;
 	Flags = &Data->Flags;
     }
+
+    if (!SizeX || !SizeY)
+	return;
     
     /* scroll YLogic to bottom */
     if (Win->YLogic < ScrollBack) {

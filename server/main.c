@@ -36,6 +36,7 @@
 #include "scroller.h"
 #include "util.h"
 #include "remote.h"
+#include "version.h"
 
 #ifdef CONF_WM
 # include "wm.h"
@@ -129,6 +130,50 @@ static msgport *RunMsgPort(msgport *CurrPort) {
     return NextPort;
 }
 
+static void Usage() {
+    fputs("Usage: twin [OPTION [...]]\n"
+	  "Currently known options: \n"
+	  " -h, -help               display this help and exit\n"
+	  " -V, -version            output version information and exit\n"
+	  " -nohw                   start in background without display\n"
+	  " -hw=<display>[,options] start with the given display (multiple -hw=... allowed)\n"
+	  "Currently known display methods: \n"
+	  "\tX[@<XDISPLAY>]\n"
+	  "\ttwin[@<TWDISPLAY>]\n"
+	  "\ttty[@<tty device>]\n"
+	  "\tggi[@<ggi display>]\n", stdout);
+}
+
+static void ShowVersion(void) {
+    fputs("twin " TWIN_VERSION_STR
+	  " with socket protocol " TW_PROTOCOL_VERSION_STR "\n", stdout);
+}
+
+static byte Check4SpecialArgs(void) {
+    if (main_argv[1] && !main_argv[2]) {
+	if (!strcmp(main_argv[1], "-h") || !strcmp(main_argv[1], "-help")) {
+	    Usage();
+	    return TRUE;
+	} else if (!strcmp(main_argv[1], "-V") || !strcmp(main_argv[1], "-version")) {
+	    ShowVersion();
+	    return TRUE;
+	}
+    }
+    return FALSE;
+}
+
+#if !defined(CONF_WM)
+static byte DieWMSo(void) {
+#if defined(CONF__MODULES)
+    fprintf(stderr, "twin: fatal: failed to load the window manager (wm.so)\n");
+#else
+    fprintf(stderr, "twin: fatal: no window manager and no module loader compiled in.\n"
+	    "      Where should I get the window manager from!?\n");
+#endif
+    return FALSE;
+}
+#endif
+
 static byte Init(void) {
     FD_ZERO(&save_rfds);
     FD_ZERO(&save_wfds);
@@ -163,7 +208,9 @@ static byte Init(void) {
 #ifdef CONF_WM
 	    InitWM() &&
 #elif defined(CONF__MODULES)
-	    DlLoad(WMSo) &&
+	    (DlLoad(WMSo) || DieWMSo()) &&
+#else
+	    DieWMSo() &&
 #endif
 #ifdef CONF_TERM
 	    InitTerm() &&
@@ -231,7 +278,10 @@ int main(int argc, char *argv[]) {
     DropPrivileges();
     
     main_argv = (byte **)argv;
-    
+
+    if (Check4SpecialArgs())
+	return 0;
+
 #ifdef CONF__ALLOC
     if (!InitAlloc()) {
 	fputs("twin: InitAlloc() failed: internal error!\n", stderr);

@@ -150,16 +150,7 @@ GadgetSwitch = {
     }
 };
 
-
-byte GadgetClose[2][2] = {
-    {'[', ']'},
-    {208, 224},
-},
-GadgetBack[2][2] = {
-    {'\x12', '\x12'},
-    {209, 225},
-},
-GadgetResize[2][2] = {
+byte GadgetResize[2][2] = {
     {'Í', '¼'},
     {210, 226}
 },
@@ -194,6 +185,20 @@ StdBorder[2][2][3][3] = {
 	    {212, 213, 233}}},
 };
 
+
+byte Button_N = 3;
+num  Button_Close = 0, Button_Back = 2;
+num  Button_Pos[MAX_BUTTONS] = { 0, -3, -1, };
+byte Button_Fn[MAX_BUTTONS] = { BUTTON_CLOSE, BUTTON_ROLLUP, BUTTON_BACK, };
+byte Button_Shape[MAX_BUTTONS][2][2] = {
+    {{'[', ']'},
+	{208, 224}},
+    {{'>', '<'},
+	{175, 174}},
+    {{18, 18},
+	{209, 225}},
+};
+byte Button_Delta_Left = 2, Button_Delta_Right = 4;
 
 hwcol DEFAULT_ColGadgets = COL(HIGH|YELLOW,CYAN),
 DEFAULT_ColArrows = COL(HIGH|GREEN,HIGH|BLUE),
@@ -482,6 +487,7 @@ byte InitData(void) {
 	    return TRUE;
 	}
     }
+    fprintf(stderr, "twin: Out of memory!\n");
     return FALSE;
 }
 

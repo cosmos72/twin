@@ -29,6 +29,7 @@
 #include "hw.h"
 #include "hw_private.h"
 #include "common.h"
+#include "version.h"
 
 #include "libTw.h"
 
@@ -950,15 +951,6 @@ byte KeyboardEventCommon(udat Code, udat Len, byte *Seq) {
     return FALSE;
 }
 
-static void usage() {
-    fprintf(stderr, "Usage: %s [-v|-s] [-twin@<TWDISPLAY>] -hw=<display>[,options]\n"
-	    "Currently known display methods: \n"
-	    "\tX[@<XDISPLAY>]\n"
-	    "\ttwin[@<TWDISPLAY>]\n"
-	    "\ttty[@<tty device>]\n"
-	    "\tggi[@<ggi display>]\n", MYname);
-}
-
 static void MainLoop(int Fd) {
     struct timeval sel_timeout, *this_timeout;
     fd_set read_fds, write_fds, *pwrite_fds;
@@ -1051,6 +1043,32 @@ udat GetDisplayHeight(void) {
 }
 
 
+static void Usage(void) {
+    fputs("Usage: twdisplay [OPTION [...]]\n"
+	  "Currently known options: \n"
+	  " -h, -help               display this help and exit\n"
+	  " -V, -version            output version information and exit\n"
+	  " -v                      verbose output (default)\n"
+	  " -s                      silent; don't report messages from twin server\n"
+	  " -twin@<TWDISPLAY>       specify server to contact instead of $TWDISPLAY\n"
+	  " -hw=<display>[,options] start the given display\n"
+	  "Currently known display methods: \n"
+	  "\tX[@<XDISPLAY>]\n"
+	  "\ttwin[@<TWDISPLAY>]\n"
+	  "\ttty[@<tty device>]\n"
+	  "\tggi[@<ggi display>]\n", stdout);
+}
+
+static void TryUsage(char *opt) {
+    if (opt)
+	fprintf(stdout, "twdisplay: unknown option `%s'\n", opt);
+    fputs("           try `twdisplay -help' for usage summary.\n", stdout);
+}
+
+static void ShowVersion(void) {
+    fputs("twdisplay " TWIN_VERSION_STR "\n", stdout);
+}
+
 int main(int argc, char *argv[]) {
     byte redirect = 1;
     byte *dpy = NULL, *arg = NULL, *tty = ttyname(0);
@@ -1062,7 +1080,13 @@ int main(int argc, char *argv[]) {
     MYname = argv[0];
     
     while (*++argv) {
-	if (!strcmp(*argv, "-v"))
+	if (!strcmp(*argv, "-V") || !strcmp(*argv, "-version")) {
+	    ShowVersion();
+	    return 0;
+	} else if (!strcmp(*argv, "-h") || !strcmp(*argv, "-help")) {
+	    Usage();
+	    return 0;
+	} else if (!strcmp(*argv, "-v"))
 	    redirect = 1;
 	else if (!strcmp(*argv, "-s"))
 	    redirect = 0;
@@ -1071,7 +1095,7 @@ int main(int argc, char *argv[]) {
 	else if (!strncmp(*argv, "-hw=", 4)) {
 	    if (!strncmp(*argv+4, "display", 7)) {
 		fprintf(stderr, "%s: argument `-hw=display' is for internal use only.\n", MYname);
-		usage();
+		TryUsage(NULL);
 		return 1;
 	    }
 	    if (!strncmp(*argv+4, "tty", 3)) {
@@ -1100,17 +1124,17 @@ int main(int argc, char *argv[]) {
 	    } else if ((*argv)[4])
 		arg = *argv;
 	    else {
-		usage();
+		TryUsage(*argv);
 		return 1;
 	    }
 	} else {
-	    usage();
+	    TryUsage(*argv);
 	    return 1;
 	}
     }
     
     if (!arg) {
-	usage();
+	Usage();
 	return 1;
     }
 
