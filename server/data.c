@@ -24,6 +24,8 @@
 static udat ExecKey[STATE_MAX][MAX_KEY_CODE - ('~' - ' ')]; /* no actions associated to plain ASCII keys */
 static udat ExecMouse[STATE_MAX][MAX_MOUSE_CODE];
 
+static byte GtransUser[0x80];
+
 /***************/
 
 static screen *OneScreen, *TwoScreen;
@@ -69,9 +71,32 @@ static all _All = {
 	(menu *)0, (window *)0,
     { (time_t)0, (uldat)0 },
 	&SetUp,
+	
     { ExecKey[0], ExecKey[1], ExecKey[2], ExecKey[3], ExecKey[4] },
     { ExecMouse[0], ExecMouse[1], ExecMouse[2], ExecMouse[3], ExecMouse[4] },
-    
+	
+    {	    /*GRAF_MAP: in the range 0x80 - 0xFF it's identical to LAT1_MAP*/
+	    "\xFE\xFE\xFE\xFE\xFE\xFE\xFE\xFE\xFE\xFE\xFE\xFE\xFE\xFE\xFE\xFE"
+	    "\xFE\xFE\xFE\xFE\xFE\xFE\xFE\xFE\xFE\xFE\xFE\xFE\xFE\xFE\xFE\xFE"
+	    "\xFF\xAD\x9B\x9C\xFE\x9D\xFE\x15\x22\x43\xA6\xAE\xAA\x2D\x52\xFE"
+	    "\xF8\xF1\xFD\xFE\xFE\xE6\x14\xFA\x2C\xFE\xA7\xAF\xAC\xAB\xFE\xA8"
+	    "\x41\x41\x41\x41\x8E\x8F\x92\x80\x45\x90\x45\x45\x49\x49\x49\x49"
+	    "\xFE\xA5\x4F\x4F\x4F\x4F\x99\x78\xE8\x55\x55\x55\x9A\x59\xFE\xE1"
+	    "\x85\xA0\x83\x61\x84\x86\x91\x87\x8A\x82\x88\x89\x8D\xA1\x8C\x8B"
+	    "\xFE\xA4\x95\xA2\x93\x6F\x94\xF6\xED\x97\xA3\x96\x81\x79\xFE\x98",
+	    /*LAT1_MAP*/
+	    "\xFE\xFE\xFE\xFE\xFE\xFE\xFE\xFE\xFE\xFE\xFE\xFE\xFE\xFE\xFE\xFE"
+	    "\xFE\xFE\xFE\xFE\xFE\xFE\xFE\xFE\xFE\xFE\xFE\xFE\xFE\xFE\xFE\xFE"
+	    "\xFF\xAD\x9B\x9C\xFE\x9D\xFE\x15\x22\x43\xA6\xAE\xAA\x2D\x52\xFE"
+	    "\xF8\xF1\xFD\xFE\xFE\xE6\x14\xFA\x2C\xFE\xA7\xAF\xAC\xAB\xFE\xA8"
+	    "\x41\x41\x41\x41\x8E\x8F\x92\x80\x45\x90\x45\x45\x49\x49\x49\x49"
+	    "\xFE\xA5\x4F\x4F\x4F\x4F\x99\x78\xE8\x55\x55\x55\x9A\x59\xFE\xE1"
+	    "\x85\xA0\x83\x61\x84\x86\x91\x87\x8A\x82\x88\x89\x8D\xA1\x8C\x8B"
+	    "\xFE\xA4\x95\xA2\x93\x6F\x94\xF6\xED\x97\xA3\x96\x81\x79\xFE\x98",
+	    /*USER_MAP*/
+	    GtransUser
+    },
+	
 	OV_LEFT<<LEFT | OV_MIDDLE<<MIDDLE | OV_RIGHT<<RIGHT, FALSE,
 	&MouseState,
 	-1, -1,
@@ -295,6 +320,12 @@ NewFont16[] = {
 #endif
 
 byte InitData(void) {
+    byte c;
+    
+    for (c = 0; c < 0x80; c++)
+	GtransUser[c] = c | 0x80;
+    
+    
     /*----------- Default -------------*/
     
     ExecM(STATE_DEFAULT,0)=(udat)0; 	/* Normal Format (not compressed) */
@@ -438,7 +469,7 @@ byte InitData(void) {
     ExecK(STATE_SCREEN,TW_Down  )=SCREEN_Yp_SCROLL;
     ExecK(STATE_SCREEN,TW_Prior )=SCREEN_Ln_SCROLL;
     ExecK(STATE_SCREEN,TW_Next  )=SCREEN_Lp_SCROLL;
-    
+
     GadgetFlag.Fn = GadgetSwitch.Fn = FnGadget;
     
     if ((OneScreen = Do(CreateSimple,Screen)(FnScreen, HWATTR(COL(HIGH|BLACK,BLUE),'±')))) {

@@ -255,6 +255,13 @@ static void CommonAction(msg *Msg) {
 	    MakeFirstWindow(CurrWin, FALSE);
 	break;
 
+      case COD_COMMON_UNFOCUS:
+	Act(Focus,CurrWin)((window *)0);
+	DrawBorderWindow(CurrWin, BORDER_ANY);
+	DrawMenuBar(Screen, MINDAT, MAXDAT);
+	UpdateCursor();
+	break;
+
       case COD_COMMON_WINLIST:
 	if (ListWin->Screen)
 	    Act(UnMap,ListWin)(ListWin);
@@ -271,6 +278,54 @@ static void CommonAction(msg *Msg) {
 }
 
 
+static void DeActivateMenu(screen *Screen, menu *Menu, menuitem *CurrMenuItem, dat i, dat j, window *CurrWin) {
+    window *tempWin;
+    byte FlagsMove = All->FlagsMove;
+    row *tempRow;
+    msg *NewMsg;
+    event_any *tempEvent;
+    byte dummyShade;
+    
+    if (FlagsMove & GLMOVE_BY_MOUSE) {
+	if ((tempWin = CurrMenuItem
+	     && Act(SearchWindow,Screen)(Screen, i, j, &dummyShade)==CurrWin
+	     ? CurrWin : (window *)0))
+	    tempRow=Act(SearchRow,tempWin)(tempWin, CurrWin->CurY);
+    } else {
+	if ((tempWin = CurrMenuItem ? CurrWin : (window *)0))
+	    tempRow=Act(SearchRow,CurrWin)(CurrWin, CurrWin->CurY);
+    }
+    
+    if (tempWin && tempWin->CurY<MAXULDAT && CurrMenuItem->FlagActive
+	&& tempRow && tempRow->Flags & ROW_ACTIVE && tempRow->Code) {
+	
+	if (!(NewMsg=Do(Create,Msg)(FnMsg, MSG_MENU_ROW, sizeof(event_menu))))
+	    Error(NOMEMORY);
+	else {
+	    tempEvent=&NewMsg->Event;
+	    tempEvent->EventMenu.Window = Screen->MenuWindow;
+	    tempEvent->EventMenu.Code = tempRow->Code;
+	    tempEvent->EventMenu.Menu = Menu;
+	    if (tempRow->Code < COD_COMMON)
+		SendMsg(Menu->MsgPort, NewMsg);
+	    else
+		/* handle COD_COMMON_* codes internally */
+		SendMsg(WM_MsgPort, NewMsg);
+	}
+    }
+}
+
+static void DeActivateScreen(screen *Screen) {
+    Screen->Attrib &= ~(GADGET_BACK_SELECT|GADGET_PRESSED);
+    if (Screen != All->LastScreen) {
+	MoveLast(Screen, All, Screen);
+	DrawArea((screen *)0, (window *)0, (window *)0, (gadget *)0, (gadget *)0,
+		 0, (dat)Min2(Screen->YLimit, All->FirstScreen->YLimit)-(dat)1,
+		 MAXDAT, MAXDAT, FALSE);
+	UpdateCursor();
+    }
+}
+
 /* the Window Manager built into Twin */
 static void WManagerH(msgport *MsgPort) {
     msg *Msg, *NewMsg;
@@ -286,7 +341,6 @@ static void WManagerH(msgport *MsgPort) {
     screen *Screen, *tempScreen;
     menu *Menu;
     menuitem *CurrMenuItem, *tempMenuItem;
-    row *tempRow;
     gadget *Gadget;
     ldat Left, Up, Rgt, Dwn, NWinDiMenu;
     uldat NumRow, NumLogicMax, OldNumRow, Delta;
@@ -355,7 +409,6 @@ static void WManagerH(msgport *MsgPort) {
 	}
 	
 	if (Funct) {
-	    
 	    Screen=All->FirstScreen;
 	    ScreenWidth=Screen->ScreenWidth;
 	    YLimit=Screen->YLimit;
@@ -402,34 +455,15 @@ static void WManagerH(msgport *MsgPort) {
 		    break;
 		
 		if (Funct==STMENU_ACT_BACKTO_DEF && State==STATE_MENU) {
-		    if (FlagsMove & GLMOVE_BY_MOUSE) {
-			if ((tempWin = CurrMenuItem && Act(SearchWindow,Screen)(Screen, i, j, &Shade)==CurrWin ? CurrWin : (window *)0))
-			    tempRow=Act(SearchRow,tempWin)(tempWin, CurrWin->CurY);
-		    } else {
-			if ((tempWin = CurrMenuItem ? CurrWin : (window *)0))
-			    tempRow=Act(SearchRow,CurrWin)(CurrWin, CurrWin->CurY);
-		    }
-		   
-		    if (tempWin && tempWin->CurY<MAXULDAT && CurrMenuItem->FlagActive
-			&& tempRow && tempRow->Flags & ROW_ACTIVE && tempRow->Code) {
-			
-			if (!(NewMsg=Do(Create,Msg)(FnMsg, MSG_MENU_ROW, sizeof(event_menu))))
-			    Error(NOMEMORY);
-			else {
-			    tempEvent=&NewMsg->Event;
-			    tempEvent->EventMenu.Window = Screen->MenuWindow;
-			    tempEvent->EventMenu.Code = tempRow->Code;
-			    tempEvent->EventMenu.Menu = Menu;
-			    if (tempRow->Code < COD_COMMON)
-				SendMsg(Menu->MsgPort, NewMsg);
-			    else
-				/* handle COD_COMMON_* codes internally */
-				SendMsg(WM_MsgPort, NewMsg);
-			}
-		    }
+		    
+		    DeActivateMenu(Screen, Menu, CurrMenuItem, i, j, CurrWin);
+		    
+		    FlagsMove=All->FlagsMove;
 		    Funct=STWIN_BACKTO_DEF;
 		}
+		
 		if (Funct==STWIN_BACKTO_DEF || Funct==STWIN_BACKTO_DEF_FREEZE) {
+		    
 		    if (All->FlagsMove & GLMOVE_RESIZE_1stWIN)
 			temp = TRUE;
 		    else
@@ -454,16 +488,9 @@ static void WManagerH(msgport *MsgPort) {
 			    Check4Resize(CurrWin);
 		    }
 		    else {
-			if (j+1==(dat)YLimit && i>ScreenWidth-(dat)3 && Screen->Attrib & GADGET_BACK_SELECT) {
-			    Screen->Attrib &= ~(GADGET_BACK_SELECT|GADGET_PRESSED);
-			    if (Screen != All->LastScreen) {
-				MoveLast(Screen, All, Screen);
-				DrawArea((screen *)0, (window *)0, (window *)0, (gadget *)0, (gadget *)0,
-					 0, (dat)Min2(Screen->YLimit, All->FirstScreen->YLimit)-(dat)1,
-					 MAXDAT, MAXDAT, FALSE);
-				UpdateCursor();
-			    }
-			}
+			if (j+1==(dat)YLimit && i>ScreenWidth-(dat)3 && Screen->Attrib & GADGET_BACK_SELECT)
+			    DeActivateScreen(Screen);
+
 			else if (CurrWin && (ldat)j==Up && (ldat)i>=Left && (ldat)i<Left+(ldat)2 && CurrWin->Attrib & WINDOW_CLOSE && CurrWin->Attrib & GADGET_CLOSE_SELECT) {
 			    if (!(NewMsg=Do(Create,Msg)(FnMsg, MSG_WINDOW_GADGET, sizeof(event_gadget))))
 				Error(NOMEMORY);
@@ -479,10 +506,10 @@ static void WManagerH(msgport *MsgPort) {
 			else if (CurrWin && (ldat)j==Up && Rgt-(ldat)i<(ldat)2 && (ldat)i<=Rgt && CurrWin && !(CurrWin->Attrib & WINDOW_MENU) && CurrWin->Attrib & GADGET_BACK_SELECT) {
 			    CurrWin->Attrib &= ~(GADGET_BACK_SELECT|GADGET_PRESSED);
 			    
-			    if (CurrWin == Screen->LastWindow && CurrWin->Prev)
-				MakeFirstWindow(CurrWin, TRUE);
-			    else if (CurrWin->Next)
+			    if (CurrWin == Screen->FirstWindow && CurrWin->Next)
 				MakeLastWindow(CurrWin, TRUE);
+			    else if (CurrWin->Prev)
+				MakeFirstWindow(CurrWin, TRUE);
 			    else
 				DrawArea((screen *)0, (window *)0, CurrWin, (gadget *)0, (gadget *)0,
 					 Rgt-1, Up, Rgt, Up, FALSE);
@@ -683,6 +710,7 @@ static void WManagerH(msgport *MsgPort) {
 			Act(Focus,CurrWin)((window *)0);
 			DrawBorderWindow(CurrWin, BORDER_ANY);
 			DrawMenuBar(Screen, MINDAT, MAXDAT);
+			UpdateCursor();
 		    }
 		    All->FlagsMove|=GLMOVE_1stWIN_FREEZE;
 		}

@@ -41,11 +41,6 @@ static void TW_MoveToXY(udat x, udat y) {
     XY[3] = y;
 }
 
-static void TW_SetCharset(byte *seq) {
-    TwWriteAsciiWindow(Twindow, strlen(seq), seq);
-    All->NeedHW |= NEEDFlushHW;
-}
-
 static void TW_SetCursorType(uldat CursorType) {
     if ((CursorType & 0xF) == 0)
 	CursorType |= LINECURSOR;
@@ -282,7 +277,6 @@ display_hw *TW_InitHW(byte *arg) {
 	    
 	    TW.DetectSize  = TW_DetectSize;
 	    TW.canDragArea = NULL;
-	    TW.SetCharset = TW_SetCharset;
 	    
 	    TW.FlushVideo = TW_FlushVideo;
 	    TW.QuitVideo = NoOp;

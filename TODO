@@ -1,10 +1,12 @@
-screensaver
-russian? (done?)
+finish libGGI support: GGI_HandleEvent()
+cleanup keycode recognition : ALT + letter, CTRL + letter, [NumLock +] keypad
+unhide menu when unfocusing all windows? (then hide again when focusing a window)
+runtime configurable WM / options with .twinrc
 keyboard hotkeys for gadget selection and screen scroll/resize
 info on menubar: time / memory / load, size of window during resize
-WINFL_BYUSER windows
+WINFL_BYUSER windows -> not this way: use shared menory.
 use twattach as display
-extend TwWriteHWAttrWindow to handle more than a single line
 tweak TwCreateGadget to allow for Buttons, and add TwCreateButton and similar.
 cut&paste compatibility with gpm (X11 done).
 cleanup overflows with shadows at window [xy]width = almost max, move arithmetic to [ul]dat
+screensaver

@@ -114,6 +114,9 @@ void saveDisplaySize(void) {
 # include "HW/hw_tty.h"
 #endif
 
+#ifdef CONF_HW_GGI
+# include "HW/hw_ggi.h"
+#endif
 
 
 
@@ -125,10 +128,17 @@ void saveDisplaySize(void) {
 
 #ifndef DONT_TRAP_SIGNALS
 static void SignalPanic(int n) {
-    /* in case we get AGAIN the same signal while quitting... */
-    signal(n, SIG_IGN);
+    sigset_t s, t;
+
+    signal(n, SIG_DFL);
+    
+    sigemptyset(&s);
+    sigaddset(&s, n);
+    sigprocmask(SIG_BLOCK, &s, &t);
     
     Quit(-n);
+    
+    kill(getpid(), n);
 }
 #endif
 
@@ -171,11 +181,11 @@ void DevNullStderr(void) {
 
 static byte check4(byte *s, byte *arg) {
     if (arg && strncmp(s, arg, strlen(s))) {
-	fprintf(stderr, "twin: `-hw=%s' specified, skipping supported `-hw=%s' display driver.\n",
+	fprintf(stderr, "twin: `-hw=%s' given, skipping `-hw=%s' display driver.\n",
 		arg, s);
 	return FALSE;
     } else if (arg)
-	fprintf(stderr, "twin: trying specified `-hw=%s' display driver.\n", s);
+	fprintf(stderr, "twin: trying given `-hw=%s' display driver.\n", s);
     else
 	fprintf(stderr, "twin: autoprobing `-hw=%s' display driver.\n", s);
     return TRUE;
@@ -185,7 +195,7 @@ static byte check4(byte *s, byte *arg) {
 static module *ModuleHW;
 
 display_hw *module_InitHW(byte *arg) {
-    byte *name;
+    byte *name, *tmp;
     uldat len;
     display_hw *(*InitD)(byte *);
     display_hw *hw = (display_hw *)0;
@@ -195,6 +205,9 @@ display_hw *module_InitHW(byte *arg) {
     
     len = strlen(arg);
     name = memchr(arg, '@', len);
+    tmp = memchr(arg, ',', len);
+    if (tmp && (!name || tmp < name))
+	name = tmp;
     if (name)
 	len = name - arg;
     
@@ -272,6 +285,9 @@ byte InitHW(byte *arg) {
 #ifdef CONF_HW_TTY
 	(check4("tty", arg) && (tried++, hw = tty_InitHW(arg))) ||
 #endif
+#ifdef CONF_HW_GGI
+	(check4("ggi", arg) && (tried++, hw = GGI_InitHW(arg))) ||
+#endif
 #ifdef CONF_MODULES
 	(hw = module_InitHW(arg)) ||
 #endif
@@ -281,6 +297,11 @@ byte InitHW(byte *arg) {
     fflush(stdout);
     
     if (success) {
+	if (arg) arg -= 4;
+	if (arg != origHW) {
+	    if (origHW) free(origHW);
+	    origHW = arg ? (byte *)strdup(arg) : arg;
+	}
 	HW = hw;
 	ResizeDisplay();
 	DrawArea(FULLSCREEN);

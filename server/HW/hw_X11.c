@@ -44,7 +44,7 @@ static XFontStruct *xsfont;
 static byte    xwindow_AllVisible = TRUE;
 
 #define L 0x55
-#define M 0xaa
+#define M 0xAA
 #define H 0xFF
 
 static unsigned long colpixel[MAXCOL+1];
@@ -107,10 +107,9 @@ static byte X11_RemapKeys(void) {
 	XRebindKeysym(xdisplay, X11_keys[i].xkey, (KeySym *)0, 0, X11_keys[i].seq, X11_keys[i].len);
 	if (i && X11_keys[i-1].xkey >= X11_keys[i].xkey) {
 	    fputs("\n"
-		  "      compiled from a non-sorted server/hw_keys.h file.\n"
-		  "      someone probably messed up that file,\n"
-		  "      in any case X11 support is unusable.\n"
-		  "      X11_InitHW failed: internal error, server/hw_keys.h is not sorted.\n",
+		  "      ERROR: twin compiled from a bad server/hw_keys.h file"
+		  "             (data in file is not sorted). X11 support is unusable.\n"
+		  "      X11_InitHW failed: internal error.\n",
 		  errFILE);
 	    return FALSE;
 	}
@@ -530,6 +529,11 @@ static void X11_QuitHW(void) {
     X11.QuitHW = NoOp;
 }
 
+static int X11_Die(Display *d, XErrorEvent *ev) {
+    Quit(0);
+    return 0;
+}
+
 display_hw *X11_InitHW(byte *arg) {
     unsigned int xdepth;
     XSetWindowAttributes xattr;
@@ -537,20 +541,33 @@ display_hw *X11_InitHW(byte *arg) {
     XSizeHints *xhints;
     XEvent event;
     int i;
-    byte name[] = "twin :??? on X";
+    byte *opt = NULL, *fontname = NULL, name[] = "twin :??? on X";
     
     if (arg) {
-	if (*arg != 'X')
+	if (*arg++ != 'X')
 	    return NULL; /* user said "use <arg> as display, not X" */
-	else if (*++arg == '@')
-	    ++arg; /* use specified X DISPLAY */
-	else if (*arg == '1' && *++arg == '1' && *++arg == '@')
-	    ++arg; /* use specified X11 DISPLAY */
-	else
-	    arg = NULL; /* use default X DISPLAY */
+	
+	if (*arg == '1' && arg[1] == '1')
+	    arg += 2; /* `X11' is same as `X' */
+
+	if ((opt = strchr(arg, ','))) {
+	    if (!strncmp(opt + 1, "font=", 5))
+		fontname = opt + 6;
+	    *opt = '\0';
+	}
+	
+	if (*arg == '@')
+	    arg++; /* use specified X DISPLAY */
+	else if (*arg) {
+	    if (opt) *opt = ',';
+	    return NULL;
+	} else
+	    arg = NULL;
     }
     
     if ((xdisplay = XOpenDisplay(arg))) do {
+	
+	(void)XSetErrorHandler(X11_Die);
 	
 	if (!X11_RemapKeys())
 	    break;
@@ -574,7 +591,7 @@ display_hw *X11_InitHW(byte *arg) {
 	    StructureNotifyMask | SubstructureNotifyMask |
 	    KeyPressMask | ButtonPressMask | ButtonReleaseMask | PointerMotionMask;
 	
-	if (((xsfont = XLoadQueryFont(xdisplay, "9x19")) ||
+	if (((fontname && (xsfont = XLoadQueryFont(xdisplay, fontname))) ||
 	     (xsfont = XLoadQueryFont(xdisplay, "vga")) ||
 	     (xsfont = XLoadQueryFont(xdisplay, "fixed"))) &&
 	    (xwfont = xsfont->min_bounds.width, xwidth = xwfont * ScreenWidth,
@@ -626,7 +643,6 @@ display_hw *X11_InitHW(byte *arg) {
 	    X11.DragArea    = X11_DragArea;
 
 	    X11.DetectSize  = X11_DetectSize;
-	    X11.SetCharset  = (void *)NoOp;
 	    
 	    X11.ExportClipBoard = X11_ExportClipBoard;
 	    X11.ImportClipBoard = X11_ImportClipBoard;
@@ -656,7 +672,9 @@ display_hw *X11_InitHW(byte *arg) {
 	else
 	    fprintf(errFILE, "      X11_InitHW() failed: DISPLAY is not set\n");
     }
-    
+
+    if (opt) *opt = ',';
+	
     if (xdisplay)
 	X11_QuitHW();
     

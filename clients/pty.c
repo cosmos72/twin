@@ -155,7 +155,7 @@ uldat Spawn(twindow Window, pid_t *ppid, char *args[]) {
 	/* child */
 	if (!switchto_tty())
 	    exit(1);
-	execv(args[0], args+1);
+	execvp(args[0], args+1);
 	exit(1);
 	break;
       default:

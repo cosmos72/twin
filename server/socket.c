@@ -266,6 +266,7 @@ static void ShutdownGzip(uldat Slot);
 
 static void AttachHW(byte len, byte *arg, byte redirect);
 static void DetachHW(void);
+static void SetFontTranslation(byte trans[0x80]);
 
 static byte CanCompress(void);
 static byte DoCompress(byte on_off);
@@ -1216,6 +1217,10 @@ static void DetachHW(void) {
     doDetachHW();
 }
 
+static void SetFontTranslation(byte trans[0x80]) {
+    if (trans)
+	CopyMem(trans, All->Gtranslations[USER_MAP], 0x80);
+}
 
 
 

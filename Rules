@@ -27,6 +27,20 @@ endif
 # set `ar' archiver...
 AR=ar
 
+
+#
+# `cp -df' : `cp' with force overwrite, don't dereference symlinks/hardlinks
+#
+CP=cp -df
+
+#
+# `mkdir -p' or `mkdirhier' : make a directory and all missing directory parents
+#
+MKDIR=mkdir -p
+#MKDIR=mkdirhier
+
+
+
 #
 # --------------- no user-serviceable parts below this line ----------------
 #

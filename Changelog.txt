@@ -1,3 +1,25 @@
+From 0.2.7 to 0.2.8: (Massimiliano Ghilardi, 02 May 2000)
+	* Added options `stdout' and `TERM=<terminal>' to display `-hw=tty'
+	  The first is to force twin to use stdout as display method on
+	  Linux console even if vcsa is available.	  
+	  The second option makes possible for twattach to specify
+	  the terminal type.
+	  Usage: `-hw=tty[@device],TERM=<term>' or `-hw=tty[@device],stdout'
+	* Added option `font=<fontname>' to display `-hw=X'.
+	* Added INCOMPLETE support for libGGI display, use with `-hw=ggi'
+	* Added `-padx <X>' and `-pady <Y>' options to twsetroot.
+	* Added option `-e cmd [args ...]' to twterm. Example: twterm -e pine
+	* Cleaned up mixing Menu -> File -> Suspend and Menu -> File -> Detach
+	* Cleaned up core dumping:
+	  core now correctly spots where fatal signals were received.
+	* Added consolemap translation support,
+	  in a way that is independent from the underlying display
+	  (the one in 0.2.7 worked only on Linux console with -hw=tty,stdout)
+	  Created `twmapscrn', the twin-equivalent of `mapscrn'.
+	  When started from Linux console, twin will already load the current
+	  consolemap translation, so twmapscrn is often not necessary.
+	  This will hopefully make a certain russian user happy *GRIN*.
+	  
 From 0.2.6 to 0.2.7: (Massimiliano Ghilardi, 17 Apr 2000)
 	* Added configurable screen background, and the external program
 	  `twsetroot' to customize it.

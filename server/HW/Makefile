@@ -10,12 +10,14 @@ CFLAGS+=-I..
 BASEOBJS=hw_null.o
 TTYOBJS=hw_tty.o
 X11OBJS=hw_X11.o
+GGIOBJS=hw_ggi.o
 TWINOBJS=hw_twin.o
-ALLOBJS:=$(BASEOBJS) $(TTYOBJS) $(X11OBJS) $(TWINOBJS)
+ALLOBJS:=$(BASEOBJS) $(TTYOBJS) $(X11OBJS) $(TWINOBJS) $(GGIOBJS)
 
 OBJS_hw.a:=$(BASEOBJS)
 OBJS_hw_tty.so=$(TTYOBJS)
 OBJS_hw_X11.so=$(X11OBJS)
+OBJS_hw_ggi.so=$(GGIOBJS)
 OBJS_hw_twin.so=$(TWINOBJS)
 
 BINS=
@@ -24,6 +26,7 @@ ARLIBS=hw.a
 
 LDFLAGS_hw_tty.so=-shared
 LDFLAGS_hw_X11.so=-shared -L/usr/X11/lib -lX11
+LDFLAGS_hw_ggi.so=-shared -lggi
 LDFLAGS_hw_twin.so=-shared -L$(TOPDIR)/lib -lTw
 
 #
@@ -60,10 +63,22 @@ ifeq ($(CONF_HW_X11),y)
   OBJS_hw.a+=$(X11OBJS)
 else
   ifeq ($(CONF_HW_X11),m)
+  
     all: hw_X.so
+    
     MODBINS+=hw_X11.so
   else
     EXCL_OBJS+=$(X11OBJS)
+  endif
+endif
+
+ifeq ($(CONF_HW_GGI),y)
+  OBJS_hw.a+=$(GGIOBJS)
+else
+  ifeq ($(CONF_HW_GGI),m)
+    MODBINS+=hw_ggi.so
+  else
+    EXCL_OBJS+=$(GGIOBJS)
   endif
 endif
 
@@ -94,3 +109,8 @@ hw_X.so: hw_X11.so
 clean:
 	rm -f .*.flags .*.link .*.arlib hw.a hw_*.so $(ALLOBJS)
 
+install:
+	if [ "$(MODBINS)" ]; then \
+	  $(MKDIR) $(DESTDIR)/lib/twin/modules/HW; \
+	  $(CP) $(MODBINS) $(wildcard hw_X.so) $(DESTDIR)/lib/twin/modules/HW; \
+	fi

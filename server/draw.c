@@ -460,7 +460,6 @@ void DrawWindow(window *Window, gadget *FirstGadget, gadget *OnlyThisGadget, dat
     XLogic = (uldat)((ldat)Xstart-shLeft) - (uldat)1 + XLogic;
     YLogic = (uldat)((ldat)Ystart-shUp) - (uldat)1 + YLogic;
     
-    
     do {
 	if (FirstCicle)
 	    NoGadgets=FirstCicle=FALSE;
@@ -1126,13 +1125,13 @@ void DrawBorderWindow(window *Window, byte Flags) {
     Rgt=(dat)Min2(shRgt, (ldat)ScreenWidth-(ldat)1);
     Dwn=(dat)Min2(shDwn, (ldat)ScreenHeight-(ldat)1);
     
-    if ((Flags&BORDER_LEFT)   && shLeft<(ldat)ScreenWidth)
+    if ((Flags&BORDER_LEFT)   && shLeft>=0)
 	DrawArea(FirstScreen, FirstWindow, Window, (gadget *)0, (gadget *)0, Left, Up, Left, Dwn, FALSE);
-    if ((Flags&BORDER_UP)     && shUp<(ldat)ScreenHeight)
+    if ((Flags&BORDER_UP)     && shUp>=YLimit)
 	DrawArea(FirstScreen, FirstWindow, Window, (gadget *)0, (gadget *)0, Left, Up, Rgt, Up, FALSE);
-    if ((Flags&BORDER_RIGHT)  && shRgt>=(ldat)0)
+    if ((Flags&BORDER_RIGHT)  && shRgt<(ldat)ScreenWidth)
 	DrawArea(FirstScreen, FirstWindow, Window, (gadget *)0, (gadget *)0, Rgt, Up, Rgt, Dwn, FALSE);
-    if ((Flags&BORDER_DOWN)   && shDwn>=(ldat)YLimit)
+    if ((Flags&BORDER_DOWN)   && shDwn<(ldat)ScreenHeight)
 	DrawArea(FirstScreen, FirstWindow, Window, (gadget *)0, (gadget *)0, Left, Dwn, Rgt, Dwn, FALSE);
 }
 

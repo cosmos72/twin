@@ -251,6 +251,9 @@ static void BuiltinH(msgport *MsgPort) {
 		Act(UnMap,tempWin)(tempWin);
 		/* no window needs Delete() here */
 		
+		if (tempWin == ClockWin)
+		    Builtin_MsgPort->WakeUp = FALSE;
+		
 	    } else if (tempWin == OptionWin)
 		OptionH(Msg);
 	}
@@ -273,8 +276,9 @@ static void BuiltinH(msgport *MsgPort) {
 		    if (NewWindow->Screen)
 			Act(UnMap,NewWindow)(NewWindow);
 		    NewWindow->Left=Screen->Left;
-		    NewWindow->Up=Screen->Up+(udat)1;
+		    NewWindow->Up=Screen->Up;
 		    Act(Map,NewWindow)(NewWindow, Screen);
+		    Builtin_MsgPort->WakeUp = TIMER_ALWAYS;
 		    break;
 		  case COD_QUIT:
 		    Quit(0);
@@ -284,8 +288,10 @@ static void BuiltinH(msgport *MsgPort) {
 		    
 		    kill(getpid(), SIGSTOP);
 		    
-		    InitHW(NULL);
-		    break;
+		    if (InitHW(origHW))
+			break;
+		    /* else
+		     *  FALLTHROUGH */
 		  case COD_DETACH:
 		    doDetachHW();
 		    break;
@@ -401,8 +407,8 @@ static void BuiltinH(msgport *MsgPort) {
 	}
 	Delete(Msg);
     }
-
-    Clock_Update();
+    if (Builtin_MsgPort->WakeUp)
+	Clock_Update();
 }
 
 
@@ -443,7 +449,7 @@ byte InitBuiltin(void) {
     byte *greeting = "\n"
 	"                TWIN             \n"
 	"        Text WINdows manager     \n\n"
-	"          Version 0.2.7 by       \n\n"
+	"          Version 0.2.8 by       \n\n"
 	"        Massimiliano Ghilardi    \n\n"
 	"         <max@Linuz.sns.it>      ";
     uldat grlen = strlen(greeting);
@@ -454,7 +460,7 @@ byte InitBuiltin(void) {
     
     
     if ((Builtin_MsgPort=Do(Create,MsgPort)
-	 (FnMsgPort, 5, "Builtin", (time_t)0, (frac_t)0, TIMER_ALWAYS, BuiltinH)) &&
+	 (FnMsgPort, 5, "Builtin", (time_t)0, (frac_t)0, 0, BuiltinH)) &&
 	(Builtin_Menu=Do(Create,Menu)
 	 (FnMenu, Builtin_MsgPort, (byte)0x70, (byte)0x20, (byte)0x78, (byte)0x08, (byte)0x74, (byte)0x24, (byte)0)) &&
 	Info4Menu(Builtin_Menu, ROW_ACTIVE, (uldat)42, " Hit PAUSE or Mouse Right Button for Menu ", "tttttttttttttttttttttttttttttttttttttttttt") &&

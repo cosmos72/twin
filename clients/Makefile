@@ -16,8 +16,8 @@ OBJS_twsetroot=setroot.o
 
 BINS=twcat twedit twterm twsysmon twattach twevent twsetroot
 
+all: everything
 
-all: $(BINS) twdetach
 
 include $(TOPDIR)/conf/config.status
 -include .depend
@@ -25,10 +25,20 @@ include $(TOPDIR)/conf/config.status
 
 include $(TOPDIR)/Rules
 
+ifneq ($(CONF_SOCKET),n)
+  everything: $(BINS) twdetach mapscrn.dir
+else
+  everything:
+	@echo
+	@echo "You disabled \"Support remote socket connections\","
+	@echo "so the remote clients will NOT be compiled!"
+	@echo
+endif
 
 twdetach: twattach
 	ln -sfn $< $@
 
 clean:
 	rm -f .*.flags .*.link gmon.out core $(OBJS) $(BINS) twdetach
-	
+	$(MAKE) clean -C mapscrn
+

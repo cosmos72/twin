@@ -6,11 +6,12 @@ or a running twin.
 
 For the moment, twsetroot knows only about one type of image file:
 
-* Ascii art files:
+* ASCII art files:
   they consist of plain ASCII text plus special escape sequences
+  (known as ANSI sequences, and ASCII art files may be named ANSI images)
   to manipulate colors and cursor position. On such files, the size of the
   generated image cannot be know beforehand, so twsetroot keeps track
-  of the size while reading more and more data from the ASCII art file.
+  of the size while reading more and more data from the file.
   To have twsetroot read an ASCII art file, use `twsetroot -aa <file>'
 
 Whatever the file type is (others will be added in the future), once twsetroot
@@ -35,12 +36,30 @@ This is also in the file twsetroot.sample, so you can instead do
 twsetroot -aa twsetroot.sample
 
 If twin is using the correct (VGA) font, this will look as:
-  ‹   ‹   ‹   ‹   ‹   
-   ﬂ ‹ ﬂ ‹ ﬂ ‹ ﬂ ‹ ﬂ  
-  ‹ ﬂ ‹ ﬂ ‹ ﬂ ‹ ﬂ ‹ 
-   ﬂ ‹ ﬂ ‹ ﬂ ‹ ﬂ ‹ ﬂ
-  ‹ ﬂ ‹ ﬂ ‹ ﬂ ‹ ﬂ ‹  
-   ﬂ   ﬂ   ﬂ   ﬂ   ﬂ  
+
+    ‹ﬂ  ‹ﬂ  ‹ﬂ  ‹ﬂ
+  ﬂ‹  ﬂ‹  ﬂ‹  ﬂ‹  
+    ‹ﬂ  ‹ﬂ  ‹ﬂ  ‹ﬂ
+  ﬂ‹  ﬂ‹  ﬂ‹  ﬂ‹  
+    ‹ﬂ  ‹ﬂ  ‹ﬂ  ‹ﬂ
+  ﬂ‹  ﬂ‹  ﬂ‹  ﬂ‹  
+
+To add an empty border to an image, you can use the options `-padx <X>'
+and `-pady <Y>'. The border will use the last color set in the image,
+so it may be important *not* to put '\033[0m' at the image end. For example
+
+twsetroot -padx 2 -pady 1 -aa twsetroot.sample
+
+will produce
+
+    ‹ﬂ    ‹ﬂ    ‹ﬂ    ‹ﬂ
+  ﬂ‹    ﬂ‹    ﬂ‹    ﬂ‹
+  
+    ‹ﬂ    ‹ﬂ    ‹ﬂ    ‹ﬂ
+  ﬂ‹    ﬂ‹    ﬂ‹    ﬂ‹
+
+    ‹ﬂ    ‹ﬂ    ‹ﬂ    ‹ﬂ
+  ﬂ‹    ﬂ‹    ﬂ‹    ﬂ‹
 
 
 A last (useless ?) example is to use this file, README.twsetroot,
@@ -49,11 +68,14 @@ as background:
 twsetroot -aa README.twsetroot
 
 For more background images, you should probably look on the internet
-for ASCII art files, or use aalib (ASCII art lib) to convert some *real* images
-(gif, jpeg, ...) into nice ASCII art files that twsetroot can use.
+for ASCII art files, use aalib (ASCII art lib) to convert some *real* images
+(gif, jpeg, ...) into nice ASCII art files that twsetroot can use or create
+them by your own with an ANSI editor.
 
-Last, you probably are interested in knowing all the special escape sequences
-to set colors. Here they are:
+Last, you probably are interested in knowing all the escape sequences
+to set colors. You can do `man console_codes' and learn the whole topic of
+escape sequences, but a quick summary about the ones supported by twsetroot
+is included here:
 
 the most general color-changing sequence (if I remember correctly,
 it's an ANSI stardard) is:
@@ -80,9 +102,12 @@ Recognized values are:
 	5 = magenta
 	6 = cyan
 	7 = white
-	
+
+38      restore default foreground
+
 40..47  set background to 0..7 (see colors above)
 
+48      restore default background
 
 
 That's all.

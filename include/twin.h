@@ -395,7 +395,7 @@ typedef enum ttystate {
 #define TTY_INVERTSCR	((udat)0x0100)
 #define TTY_ALTCURSKEYS	((udat)0x0200)
 #define TTY_ABSORIG	((udat)0x0400)
-/* #define TTY_MOVECURSOR ((udat)0x0800) */
+#define TTY_SETMETA	((udat)0x0800)
 #define TTY_UPDATECURSOR ((udat)0x1000)
 #define TTY_REPORTMOUSE	 ((udat)0x2000)
 #define TTY_REPORTMOUSE2 ((udat)0x4000)
@@ -407,6 +407,11 @@ typedef enum ttystate {
 #define EFF_REVERSE	((udat)0x0010)
 
 #define NPAR		16
+
+#define GRAF_MAP	0
+#define LAT1_MAP	1
+#define USER_MAP	2
+#define IBMPC_MAP	3
 
 struct ttydata {
     ttystate State;
@@ -423,6 +428,8 @@ struct ttydata {
     hwcol Color, DefColor, saveColor, Underline, HalfInten;
     uldat TabStop[5];
     uldat nPar, Par[NPAR];
+    
+    byte currG, G, G0, G1, saveG, saveG0, saveG1;
     /* TODO: other tty stuff */
 };
 
@@ -927,6 +934,7 @@ struct all {
     setup *SetUp;
     udat *GlobalKeyCodes[STATE_MAX];
     udat *GlobalMouseCodes[STATE_MAX];
+    byte *Gtranslations[IBMPC_MAP];
     byte MouseOverload, NeedHW;
     mouse_state *MouseState;
     uldat mouse_slot, keyboard_slot;
@@ -1225,6 +1233,7 @@ struct all {
 #define COD_COMMON_NEXT		(udat)0xFF08
 #define COD_COMMON_WINLIST	(udat)0xFF09
 #define COD_COMMON_RAISELOWER	(udat)0xFF10
+#define COD_COMMON_UNFOCUS	(udat)0xFF11
 
 /* INLINE/define stuff: */
 

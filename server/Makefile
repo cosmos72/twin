@@ -93,13 +93,16 @@ endif
 #
 # the final link nightmare...
 #
-ifeq ($(CONF_HW_X11),y)
-  LDFLAGS_twin_real+=-L/usr/X11/lib -lX11
-endif
 ifeq ($(CONF_HW_TTY),y)
   ifeq ($(CONF_HW_TTY_LINUX),y)
     LDFLAGS_twin_real+=-lgpm #/usr/lib/libgpm.a
   endif
+endif
+ifeq ($(CONF_HW_X11),y)
+  LDFLAGS_twin_real+=-L/usr/X11/lib -lX11
+endif
+ifeq ($(CONF_HW_GGI),y)
+  LDFLAGS_twin_real+=-lggi
 endif
 ifeq ($(CONF_HW_TWIN),y)
   LDFLAGS_twin_real+=-L$(TOPDIR)/lib -lTw
@@ -118,6 +121,15 @@ include $(TOPDIR)/Rules
 modules: $(MODBINS)
 
 clean:
-	make -C HW clean
+	make clean -C HW
 	rm -f .*.flags .*.link .*.arlib gmon.out core twin_real twin_wrapper twin getsizes socket.so term.so $(ALLOBJS)
+
+install:
+	$(CP) twin_real twin_wrapper twin $(DESTDIR)/bin
+	chmod u+s $(DESTDIR)/bin/twin_real
+	if [ "$(MODBINS)" ]; then \
+	  $(MKDIR) $(DESTDIR)/lib/twin/modules; \
+	  $(CP) $(MODBINS) $(DESTDIR)/lib/twin/modules; \
+	fi
+	$(MAKE) install -C HW
 

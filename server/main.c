@@ -48,8 +48,10 @@
 
 fd_set save_rfds, save_wfds;
 int max_fds;
-byte *TWDisplay, *origTWDisplay, lenTWDisplay;
+byte lenTWDisplay, *TWDisplay, *origTWDisplay, *origTERM, *origHW;
 byte **main_argv, **orig_argv;
+
+int (*OverrideSelect)(int n, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *timeout);
 
 static timevalue *Now;
 
@@ -140,8 +142,12 @@ static byte Init(byte *arg) {
     
     if ((origTWDisplay = getenv("TWDISPLAY")))
 	origTWDisplay = strdup(origTWDisplay);
-    
+    if ((origTERM = getenv("TERM")))
+	origTERM = strdup(origTERM);
+
     InitSignals();
+    
+    OverrideSelect = select;
     
     return (
 	    SetTWDisplay() &&
@@ -181,11 +187,8 @@ void Quit(int status) {
 	Act(DlClose,M)(M);
 	M = M->Next;
     }
-    if (status < 0) {
-	/* kill() must not be trapped to report abnormal termination... */
-	signal(-status, SIG_DFL);
-	kill(getpid(), -status);
-    }
+    if (status < 0)
+	return; /* give control back to signal handler */
     exit(status);
 }
 
@@ -288,7 +291,9 @@ int main(int argc, char *argv[]) {
 		if (All->NeedHW & NEEDFlushStdout)
 		    fflush(stdout), All->NeedHW &= ~NEEDFlushStdout;
 	    }
-	    num_fds = select(max_fds+1, &read_fds, pwrite_fds, NULL, this_timeout);
+	    
+	    num_fds = OverrideSelect(max_fds+1, &read_fds, pwrite_fds, NULL, this_timeout);
+	    
 	} while (num_fds < 0 && errno == EINTR);
 	
 	if (num_fds < 0)

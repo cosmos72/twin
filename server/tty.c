@@ -25,153 +25,6 @@
 #include "draw.h"
 #include "hw.h"
 
-#if 0
-byte WriteContents(window *Window, hwattr *text, uldat len) {
-    uldat Xstart, Ystart, max, width, start, left, end, split, redraw = 0;
-    ttydata *Data = Window->TtyData;
-    hwattr *s;
-    
-    if (!len)
-	return TRUE;
-
-    /* WINFL_INSERT not supported */
-    if (Window->Flags & WINFL_INSERT)
-	return FALSE;
-        
-    /*
-     * on-the-fly Contents resize. This is a failsafe check...
-     * the real one is in WManager and gets called after a window resize
-     */
-    if (!CheckResizeWindowContents(Window))
-	return FALSE;
-    
-    width=Window->NumRowOne;
-    max=Window->MaxNumRow * width;
-    
-    if (len > max) {
-	/* don't waste CPU on useless operations */
-	text += max - len;
-	len = max;
-    }
-    
-    start = ((Window->CurY+Window->NumRowSplit)*width + Window->CurX) % max;
-    end = (start + len) % max;
-
-    left = len;
-    
-    if (start + len > max) {
-	/* 1. copy the rest */
-	split = start + len - max;
-	CopyMem(text+len-split, Window->Contents, split*2);
-	left -= split;
-    }
-    /* 2. copy up to splitline */
-    /* now surely start+left <= max */
-    CopyMem(text, Window->Contents + start, left*2);
-            
-    /* scroll YLogic to bottom */
-    if (Window->YLogic < Data->ScrollBack) {
-	redraw = Data->ScrollBack - Window->YLogic;
-	Window->YLogic = Data->ScrollBack;
-	DrawBorderWindow(Window, BORDER_RIGHT);
-    }
-    
-    /* update splitline... must check if we crossed _current_ splitline */
-    Xstart = Window->CurX;
-    Ystart = Window->CurY;
-    split = Ystart*width + Xstart + len;
-    
-    if (split >= max) {
-	/* ok, we did */
-	split = (split - max) / width + 1;
-	redraw += split;
-	Window->NumRowSplit += split;
-	Window->NumRowSplit %= Window->MaxNumRow;
-	
-	/* clear any partial final line */
-	s = Window->Contents + end;
-	split = HWATTR(Window->ColText, ' ');
-	left = width - end % width; /* TODO: wrapglitch */
-	while (left--)
-	    *s++ = split; 
-    }
-    
-    Data->X = Window->CurX = end % width;
-    Window->CurY = (end / width + Window->MaxNumRow - Window->NumRowSplit) % Window->MaxNumRow;
-    Data->Y = Window->CurY - Data->ScrollBack;
-    Data->Start = Window->Contents + ((Data->ScrollBack + Window->NumRowSplit) % Window->MaxNumRow) * width;
-    Data->Pos = Window->Contents + end;
-	
-    /* Temporary... not exactly optimal */
-    if (!redraw) {
-	if (Window->CurX >= len)
-	    DrawTextWindow(Window, Xstart, Ystart, Xstart + (len - 1), Ystart);
-	else
-	    DrawTextWindow(Window, 0, Ystart, width - 1, Window->CurY);
-    } else {
-#if 0
-	if (Window == All->FirstScreen->FirstWindow)
-	    DragArea( /* ? */ );
-#endif
-	DrawTextWindow(Window, 0, 0, MAXUDAT, MAXUDAT);
-    }
-    if (Window==All->FirstScreen->FocusWindow)
-	UpdateCursor();
-
-    return TRUE;
-}
-#endif /* 0 */
-
-/*
- * this currently clips at window width (does not wrap)
- * so it can write only single row at time
- */
-void WriteHWAttr(window *Window, udat x, udat y, uldat len, hwattr *text) {
-    uldat max, width, start;
-    
-    if (!Window || Window->Flags & WINFL_INSERT || !len || !text)
-	/* WINFL_INSERT not supported */
-	return;
-        
-    /*
-     * on-the-fly Contents resize. This is a failsafe check...
-     * the real one is in WManager and gets called after a window resize
-     */
-    if (!CheckResizeWindowContents(Window))
-	return;
-    
-    width = Window->NumRowOne;
-    if (x >= width)
-	x = width -1;
-    if (y >= Window->TtyData->SizeY)
-	y = Window->TtyData->SizeY - 1;
-    y += Window->TtyData->ScrollBack;
-
-    max = width - x;
-    
-    if (len > max) {
-	text += len - max;
-	len = max;
-    }
-    
-    start = ((y + Window->NumRowSplit) % Window->MaxNumRow) * width + x;
-    
-    CopyMem(text, Window->Contents + start, len * sizeof(hwattr));
-
-#if 0
-    /* scroll YLogic to bottom */
-    if (Window->YLogic < Data->ScrollBack) {
-	redraw = Data->ScrollBack - Window->YLogic;
-	Window->YLogic = Data->ScrollBack;
-	DrawBorderWindow(Window, BORDER_RIGHT);
-    }
-#endif
-    
-    DrawTextWindow(Window, x, y + Window->TtyData->ScrollBack,
-		   x + len - 1, y + Window->TtyData->ScrollBack);
-}
-
-
 /*
  * VT102 emulator
  */
@@ -213,6 +66,14 @@ static char *StrAltCursKeys = "\033[?1%c";
 #define TabStop		Data->TabStop
 #define Par		Data->Par
 #define nPar		Data->nPar
+#define currG		Data->currG
+#define G		Data->G
+#define G0		Data->G0
+#define G1		Data->G1
+#define saveG		Data->saveG
+#define saveG0		Data->saveG0
+#define saveG1		Data->saveG1
+
 
 /* A bitmap for codes <32. A bit of 1 indicates that the code
  * corresponding to that bit number invokes some special action
@@ -654,6 +515,12 @@ static void update_eff(void) {
     Color = COL(fg, bg);
 }
 
+INLINE byte applyG(byte c) {
+    if (c < 0x80 || currG == IBMPC_MAP)
+	return c;
+    return All->Gtranslations[currG][c & 0x7F];
+}
+    
 INLINE void csi_m(void) {
     udat i;
     udat effects = Effects;
@@ -688,19 +555,23 @@ INLINE void csi_m(void) {
 		* control chars if defined, don't set
 		* bit 8 on output.
 		*/
-	*Flags &= ~TTY_DISPCTRL;
+	currG = G ? G1 : G0;
+	*Flags &= ~(TTY_DISPCTRL | TTY_SETMETA);
 	break;
       case 11: /* ANSI X3.64-1979 (SCO-ish?)
 		* Select first alternate font, lets
 		* chars < 32 be displayed as ROM chars.
 		*/
+	currG = IBMPC_MAP;
 	*Flags |= TTY_DISPCTRL;
+	*Flags &= ~TTY_SETMETA;
 	break;
       case 12: /* ANSI X3.64-1979 (SCO-ish?)
 		* Select second alternate font, toggle
 		* high bit before displaying as ROM char.
 		*/
-	*Flags &= ~TTY_DISPCTRL;
+	currG = IBMPC_MAP;
+	*Flags |= TTY_DISPCTRL | TTY_SETMETA;
 	break;
       case 21:
       case 22:
@@ -824,6 +695,7 @@ static void set_mode(byte on_off) {
 	    break;
 	  case 9:
 	    CHANGE_BIT(TTY_REPORTMOUSE, on_off);
+	    CHANGE_BIT(TTY_REPORTMOUSE2, FALSE);
 	    if (on_off)
 		Win->Attrib |= WINDOW_WANT_MOUSE;
 	    else
@@ -837,13 +709,12 @@ static void set_mode(byte on_off) {
 	    *Flags |= TTY_UPDATECURSOR;
 	    break;
 	  case 1000:
+	    CHANGE_BIT(TTY_REPORTMOUSE, FALSE);
 	    CHANGE_BIT(TTY_REPORTMOUSE2, on_off);
-	    if (!(*Flags & TTY_REPORTMOUSE)) {
-		if (on_off)
-		    Win->Attrib |= WINDOW_WANT_MOUSE;
-		else
-		    Win->Attrib &= ~WINDOW_WANT_MOUSE;
-	    }
+	    if (on_off)
+		Win->Attrib |= WINDOW_WANT_MOUSE;
+	    else
+		Win->Attrib &= ~WINDOW_WANT_MOUSE;
 	    break;
 
 	/* ANSI modes set/reset */
@@ -951,6 +822,9 @@ INLINE void save_current(void) {
     saveX = X;
     saveY = Y;
     saveColor = ColText;
+    saveG  = G;
+    saveG0 = G0;
+    saveG1 = G1;
 }
 
 INLINE void restore_current(void) {
@@ -958,6 +832,10 @@ INLINE void restore_current(void) {
     ColText = saveColor;
     update_eff();
     *Flags &= ~TTY_NEEDWRAP;
+    G  = saveG;
+    G0 = saveG0;
+    G1 = saveG1;
+    currG = G ? G1 : G0;
 }
 
 static void reset_tty(byte do_clear) {
@@ -982,6 +860,15 @@ static void reset_tty(byte do_clear) {
     TabStop[1] = TabStop[2] = TabStop[3] = TabStop[4] = 0x01010101;
     
     nPar = 0;
+    
+    G = saveG = 0;
+    /*
+     * this probably violates some standard, 
+     * but starting with the identity mapping
+     * seems the only reasonable choice to me
+     */
+    currG = G0 = saveG0 = IBMPC_MAP;
+    G1 = saveG1 = GRAF_MAP;
     
     /*
     bell_pitch = DEFAULT_BELL_PITCH;
@@ -1029,9 +916,11 @@ INLINE void write_ctrl(byte c) {
 	cr();
 	return;
       case 14:
+	G = 1; currG = G1;
 	*Flags |= TTY_DISPCTRL;
 	return;
       case 15:
+	G = 0; currG = G0;
         *Flags &= ~TTY_DISPCTRL;
 	return;
       case 24: case 26:
@@ -1334,19 +1223,27 @@ INLINE void write_ctrl(byte c) {
 	break;
 	
       case ESsetG0:
-	if (c == '0' || c == 'B' || c == 'U' || c == 'K') {
-	    byte buf[] = "\033(x";
-	    buf[2] = c;
-	    HW->SetCharset(buf);
+	switch (c) {
+	  case '0': G0 = GRAF_MAP; break;
+	  case 'B': G0 = LAT1_MAP; break;
+	  case 'U': G0 = IBMPC_MAP; break;
+	  case 'K': G0 = USER_MAP; break;
+	  default: break;
 	}
+	if (G == 0)
+	    currG = G0;
 	break;
 	
       case ESsetG1:
-	if (c == '0' || c == 'B' || c == 'U' || c == 'K') {
-	    byte buf[] = "\033)x";
-	    buf[2] = c;
-	    HW->SetCharset(buf);
+	switch (c) {
+	  case '0': G1 = GRAF_MAP; break;
+	  case 'B': G1 = LAT1_MAP; break;
+	  case 'U': G1 = IBMPC_MAP; break;
+	  case 'K': G1 = USER_MAP; break;
+	  default: break;
 	}
+	if (G == 1)
+	    currG = G1;
 	break;
 	
       default:
@@ -1359,26 +1256,31 @@ INLINE void write_ctrl(byte c) {
 window *KbdFocus(window *newWin) {
     udat newFlags;
     window *oldWin;
-        
-    oldWin = All->FirstScreen->FocusWindow;
-    All->FirstScreen->FocusWindow = newWin;
-
-    if (!newWin || !newWin->TtyData)
-	newFlags = defaultFlags;
-    else
-	newFlags = newWin->TtyData->Flags;
-
-    if (!(kbdFlags & TTY_KBDAPPLIC) && (newFlags & TTY_KBDAPPLIC))
-	printf("\033="), setFlush();
-    else if ((kbdFlags & TTY_KBDAPPLIC) && !(newFlags & TTY_KBDAPPLIC))
-	printf("\033>"), setFlush();
-    if (!(kbdFlags & TTY_ALTCURSKEYS) && (newFlags & TTY_ALTCURSKEYS))
-	printf(StrAltCursKeys, 'h'), setFlush();
-    else if ((kbdFlags & TTY_ALTCURSKEYS) && !(newFlags & TTY_ALTCURSKEYS))
-	printf(StrAltCursKeys, 'l'), setFlush();
+    screen *Screen = newWin ? newWin->Screen : All->FirstScreen;
     
-    kbdFlags = newFlags;
-    
+    if (Screen) {
+	oldWin = Screen->FocusWindow;
+	Screen->FocusWindow = newWin;
+    } else
+	oldWin = newWin = (window *)0;
+	    
+    if (Screen == All->FirstScreen) {
+	if (!newWin || !newWin->TtyData)
+	    newFlags = defaultFlags;
+	else
+	    newFlags = newWin->TtyData->Flags;
+	
+	if (!(kbdFlags & TTY_KBDAPPLIC) && (newFlags & TTY_KBDAPPLIC))
+	    printf("\033="), setFlush();
+	else if ((kbdFlags & TTY_KBDAPPLIC) && !(newFlags & TTY_KBDAPPLIC))
+	    printf("\033>"), setFlush();
+	if (!(kbdFlags & TTY_ALTCURSKEYS) && (newFlags & TTY_ALTCURSKEYS))
+	    printf(StrAltCursKeys, 'h'), setFlush();
+	else if ((kbdFlags & TTY_ALTCURSKEYS) && !(newFlags & TTY_ALTCURSKEYS))
+	    printf(StrAltCursKeys, 'l'), setFlush();
+	
+	kbdFlags = newFlags;
+    }
     return oldWin;
 }
 
@@ -1426,10 +1328,15 @@ void WriteAscii(window *Window, uldat Len, byte *AsciiSeq) {
 	 * as the console would be pretty useless without them; to display an arbitrary
 	 * font position use the direct-to-font zone in UTF-8 mode.
 	 */
-	ok = c && (c >= 32 || !(((*Flags & TTY_DISPCTRL ? CTRL_ALWAYS : CTRL_ACTION) >> c) & 1))
-	  && (c != 127 || (*Flags & TTY_DISPCTRL)) && (c != 128+27);
+	if (*Flags & TTY_SETMETA)
+	    c |= 0x80;
 	
+	ok = (c >= 32 || !(((*Flags & TTY_DISPCTRL ? CTRL_ALWAYS : CTRL_ACTION) >> c) & 1))
+	    && (c != 127 || (*Flags & TTY_DISPCTRL)) && (c != 128+27)
+	    && (c = applyG(c));
+
 	if (State == ESnormal && ok) {
+
 	    /* Now try to find out how to display it */
 	    if (*Flags & TTY_NEEDWRAP) {
 		cr();
@@ -1454,6 +1361,75 @@ void WriteAscii(window *Window, uldat Len, byte *AsciiSeq) {
 	/* don't flush here, it just decreases performance */
 	/* flush_tty(); */
     }
+    flush_tty();
+}
+
+
+/*
+ * this currently wraps at window width
+ * so it can write multiple rows at time
+ */
+void WriteHWAttr(window *Window, udat x, udat y, uldat len, hwattr *text) {
+    uldat left, max, chunk;
+    hwattr *dst;
+    
+    if (!Window || Window->Flags & WINFL_INSERT || !len || !text)
+	/* WINFL_INSERT not supported */
+	return;
+
+    if (Window != Win) {
+	Win = Window;
+	Data = Win->TtyData;
+	Flags = &Data->Flags;
+    }
+
+    /*
+     * on-the-fly Contents resize. This is a failsafe check...
+     * the real one is in WManager and gets called after a window resize
+     */
+    if (!CheckResizeWindowContents(Window))
+	return;
+    
+    if (x >= SizeX)
+	x = SizeX - 1;
+    if (y >= SizeY)
+	y = SizeY - 1;
+
+    if (len > (SizeY - y) * SizeX - x)
+	len = (SizeY - y) * SizeX - x;
+
+    left = len;
+    dst = Start + y * SizeX + x;
+
+    /* scroll YLogic to bottom */
+    if (Win->YLogic < ScrollBack) {
+	if (Win == All->FirstScreen->FirstWindow)
+	    ScrollFirstWindow(0, ScrollBack - Win->YLogic, TRUE);
+	else {
+	    dirty_tty(0, 0, SizeX-1, SizeY-1);
+	    Win->YLogic = ScrollBack;
+	    DrawBorderWindow(Window, BORDER_RIGHT);
+	}
+    }
+    /* clear any selection */
+    if (Win->Attrib & WINDOW_ANYSEL)
+	ClearSelection(Win);
+
+    do {
+	if (dst >= Split)
+	    dst -= Split - Base;
+	max = Split - dst;
+	chunk = Min2(left, max);
+	CopyMem(text, dst, chunk * sizeof(hwattr));
+	text += chunk;
+	dst += chunk;
+    } while ((left -= chunk) > 0);
+    
+    if (len > SizeX - x)
+	dirty_tty(0, y, SizeX - 1, y + (x + len - 1) / SizeX);
+    else
+	dirty_tty(x, y, x + len - 1, y);
+    
     flush_tty();
 }
 

@@ -32,8 +32,8 @@
 		of the function as A(n) where <n> is the progressive number
 		of the argument: A(1) is the first arg, A(2) the second, ...
 
- Function calls wait until server has processed the command if and only if
- ther return value is not void.
+ Function calls wait until server has processed the command and returned the result
+ if their return value is not void.
  
  <action> : the function name (Create, Map, Delete, ...)
  <object> : the object it acts upon (Gadget, Window, ...)
@@ -60,6 +60,8 @@ PROTO0Abs(void,v, NeedResize,Display,0)
 
 PROTO3Abs(void,v, Attach,HW,0, byte,_, byte,V(A(1)), byte,_)
 PROTO0Abs(void,v, Detach,HW,0)
+
+PROTO1Abs(void,v,  Set,FontTranslation,0, byte,V(0x80))
 
 PROTO20(gadget,x, Create,Gadget,1,
 	window,x,hwcol,_,hwcol,_,hwcol,_,hwcol,_,

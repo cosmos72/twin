@@ -81,8 +81,8 @@ display_hw *null_InitHW(byte *arg) {
     null.ShowMouse = NoOp;
     null.HideMouse = NoOp;
 
-    null.MoveToXY = (void (*)(udat,udat))NoOp;
-    null.SetCursorType = (void (*)(uldat))NoOp;
+    null.MoveToXY = (void *)NoOp;
+    null.SetCursorType = (void *)NoOp;
     null.Beep = NoOp;
 
     null.QuitHW = NoOp;

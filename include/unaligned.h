@@ -20,7 +20,7 @@
 #else /* !__i386__ */
 
 # warning not ix86 arch, using memcpy
-# define Push(s,type,val)	PushV(s,sizeof(type),&(val))
+# define Push(s,type,val)	do {type tmp = (val); PushV(s,sizeof(type),&tmp); } while(0)
 # define Pop(s,type,lval)	PopV(s,sizeof(type),&(lval))
 
 #endif /* __i386__ */

@@ -767,14 +767,26 @@ static byte InitTtyData(window *Window) {
     Data->Split = Window->Contents + Window->MaxNumRow * Window->NumRowOne;
     
     Window->CursorType = LINECURSOR;
-    /*Window->Flags |= WINFL_CURSOR_ON;*/
+    /* respect the WINFL_CURSOR_ON set by the client and don't force it on */
+#if 0
+    Window->Flags |= WINFL_CURSOR_ON;
+#endif
     Window->ColText = Data->Color = Data->DefColor = Data->saveColor = COL(WHITE,BLACK);
     Data->Underline = COL(HIGH|WHITE,BLACK);
     Data->HalfInten = COL(HIGH|BLACK,BLACK);
     Data->TabStop[0] = 0x01010100;
     Data->TabStop[1] = Data->TabStop[2] = Data->TabStop[3] = Data->TabStop[4] = 0x01010101;
     Data->nPar = 0;
-    
+
+    Data->G = Data->saveG = 0;
+    /*
+     * this probably violates some standard, 
+     * but starting with the identity mapping
+     * seems the only reasonable choice to me
+     */
+    Data->currG = Data->G0 = Data->saveG0 = IBMPC_MAP;
+    Data->G1 = Data->saveG1 = GRAF_MAP;
+
     return TRUE;
 }
 
@@ -1238,9 +1250,16 @@ static window *SearchCoordScreen(dat x, dat y, uldat *ResX, uldat *ResY) {
 */
 
 #if !defined(CONF_TERM)
-window *SimpleFocus(window *Window) {
-    window *oldWin = All->FirstScreen->FocusWindow;
-    All->FirstScreen->FocusWindow = Window;
+window *SimpleFocus(window *newWin) {
+    window *oldWin;
+    screen *Screen = newWin ? newWin->Screen : All->FirstScreen;
+    
+    if (Screen) {
+	oldWin = Screen->FocusWindow;
+	Screen->FocusWindow = newWin;
+    } else
+	oldWin = (window *)0;
+    
     return oldWin;
 }
 #endif
@@ -1427,6 +1446,7 @@ menuitem *Create4MenuCommonMenuItem(fn_menuitem *Fn_MenuItem, menu *Menu) {
 	Row4Menu(Window, (udat)0,             ROW_IGNORE, 15,"컴컴컴컴컴컴컴�") &&
 	Row4Menu(Window, COD_COMMON_HOTKEY,   ROW_ACTIVE, 15," Send HotKey   ") &&
 	Row4Menu(Window, COD_COMMON_RAISELOWER,ROW_ACTIVE,15," Raise / Lower ") &&
+	Row4Menu(Window, COD_COMMON_UNFOCUS,  ROW_ACTIVE, 15," UnFocus       ") &&
 	Row4Menu(Window, COD_COMMON_NEXT,     ROW_ACTIVE, 15," Next          ") &&
 	Row4Menu(Window, COD_COMMON_WINLIST,  ROW_ACTIVE, 15," List...       ") &&
 	Row4Menu(Window, (udat)0,             ROW_IGNORE, 15,"컴컴컴컴컴컴컴�") &&

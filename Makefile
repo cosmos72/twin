@@ -6,6 +6,9 @@ TOPDIR=.
 all: boot.dir lib.dir twin clients.dir
 
 #
+ifneq ($(wildcard $(TOPDIR)/conf/config.status),)
+  -include $(TOPDIR)/conf/config.status
+endif
 include Rules
 #
 
@@ -22,23 +25,22 @@ twin: $(CONF) server.dir
 
 clients.dir: $(CONF)
 
+
+ifneq ($(CONF_SOCKET),n)
+  install-lib:
+	$(CP) lib/libTw.so* $(DESTDIR)/lib
+	$(CP) include/libTw*.h $(DESTDIR)/include
+  install-clients:
+	$(CP) clients/tw* clients/*/tw* $(DESTDIR)/bin 
+else
+  install-lib:
+  install-clients:
+endif
+
+
 #
-# `cp -df' : `cp' with force overwrite, don't dereference symlinks/hardlinks
-#
-# `mkdir -p' or `mkdirhier' : make a directory and all missing directory parents
-#
-install: all
-	cp -df server/twin_wrapper server/twin_real server/twin clients/tw* $(DESTDIR)/bin 
-	chmod u+s $(DESTDIR)/bin/twin_real
-	cp -df lib/libTw.so* $(DESTDIR)/lib
-	cp -df include/libTw*.h $(DESTDIR)/include
-	mkdir -p $(DESTDIR)/lib/twin/modules/HW
-	if [ "$(wildcard server/*.so)" ]; then \
-	  cp -df server/*.so $(DESTDIR)/lib/twin/modules; \
-	fi
-	if [ "$(wildcard server/HW/*.so)" ]; then \
-	  cp -df server/HW/*.so $(DESTDIR)/lib/twin/modules/HW; \
-	fi
+install: all install-lib install-clients
+	$(MAKE) install -C server
 	@echo
 	@echo If this is the first time you installed twin,
 	@echo you probably need to run \"ldconfig\" now.

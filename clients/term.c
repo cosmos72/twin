@@ -162,7 +162,7 @@ void Resize(uldat Slot, udat X, udat Y) {
 
 
 
-static char *args[3];
+static char **args;
 
 static twindow newTermWindow(void) {
     twindow Window = TwCreateWindow
@@ -219,16 +219,10 @@ static void SignalChild(int n) {
 
 static byte InitTerm(void) {
     twindow Window;
-    byte *shellpath, *shell;
     
     signal(SIGCHLD, SignalChild);
     
     if (TwOpen(NULL) &&
-	
-	(shellpath = getenv("SHELL")) &&
-	(args[0] = TwCloneStr(shellpath)) &&
-	(args[1] = (shell = strrchr(shellpath, '/'))
-	 ? TwCloneStr(shell) : TwCloneStr(shellpath)) &&
 	
 	(Term_MsgPort=TwCreateMsgPort
 	 (9, "Twin Term", (uldat)0, (udat)0, (byte)0)) &&
@@ -245,8 +239,6 @@ static byte InitTerm(void) {
 	
 	TwItem4MenuCommon(Term_Menu)) {
 	
-	if (args[1][0] == '/')
-	    args[1][0] = '-';
 	Term_Screen = TwFirstScreen();
 	return OpenTerm();
     }
@@ -373,9 +365,26 @@ int main(int argc, char *argv[]) {
     int num_fds;
     uldat Slot;
     struct timeval zero = {0, 0}, *pt;
+    char *t, *shell[3];
     
     FD_ZERO(&save_rfds);
-    
+
+    if (argc > 1 && !strcmp(argv[1], "-e")) {
+	argv[1] = argv[2];
+	args = argv + 1;
+    } else if ((shell[0] = getenv("SHELL")) &&
+	(shell[0] = strdup(shell[0])) &&
+	(shell[1] = (t = strrchr(shell[0], '/'))
+	 ? strdup(t) : strdup(shell[0]))) {
+	
+	if (shell[1][0] == '/')
+	    shell[1][0] = '-';
+	shell[2] = NULL;
+	args = shell;
+    } else
+	return 1;
+	
+
     if (!InitTerm())
 	Quit();
 

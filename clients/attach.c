@@ -22,7 +22,7 @@
 #include "libTw.h"
 
 void usage(byte *name) {
-    fprintf(stderr, "Usage: %s [-a|-d] [-v] [-twin@<TWDISPLAY>] -hw=<display to attach>\n"
+    fprintf(stderr, "Usage: %s [-a|-d] [-v|-s] [-twin@<TWDISPLAY>] -hw=<display>[,options]\n"
 	    "Currently known display methods: \n"
 	    "\tX[@<XDISPLAY>]\n"
 	    "\ttwin[@<TWDISPLAY>]\n"
@@ -37,10 +37,10 @@ void SignalWinch(int n) {
 }
     
 int main(int argc, char *argv[]) {
-    byte detach = 0, redirect = 0;
+    byte detach = 0, redirect = 1;
     byte *dpy = NULL, *arg = NULL, *tty = ttyname(0), *name = argv[0];
     byte ret = 0, mustwait = 0;
-    byte *buff;
+    byte *s, *buff;
     uldat chunk;
     
     if (strstr(argv[0], "detach"))
@@ -52,23 +52,34 @@ int main(int argc, char *argv[]) {
 	else if (!strcmp(*argv, "-a"))
 	    detach = 0;
 	else if (!strcmp(*argv, "-v"))
-	    redirect = 1;
+	    redirect = 2;
+	else if (!strcmp(*argv, "-s"))
+	    redirect = 0;
 	else if (!strncmp(*argv, "-twin@", 6))
 	    dpy = *argv + 6;
 	else if (!strncmp(*argv, "-hw=", 4)) {
 	    if (!strncmp(*argv+4, "tty", 3)) {
-		if (!(*argv)[7] ||
-		    ((*argv)[7] == '@' &&
-		     (!(*argv)[8] || (*argv)[8] == '-' ||
-		     !strcmp(*argv+8, tty)))) {
-		    
+		buff = *argv + 7;
+		s = strchr(buff, ',');
+		if (s) *s = '\0';
+		
+		if (!*buff || (*buff == '@' && (!buff[1] || buff[1] == '-' || !strcmp(buff+1, tty))))
 		    /* attach twin to our tty */
-		    arg = malloc(strlen(tty) + 9);
-		    memcpy(arg, *argv, 7);
-		    arg[7] = '@';
-		    strcpy(arg+8, tty);
-		    
 		    mustwait = 1;
+		
+		if (s) *s = ',';
+		else s = "";
+		
+		if (mustwait) {
+		    if (redirect == 1)
+			redirect = 0;
+			
+		    buff = getenv("TERM");
+		    if (!buff) buff = "";
+		    
+		    arg = malloc(strlen(tty) + 9 + (s ? strlen(s) : 0) + (buff ? 6 + strlen(buff) : 0));
+		    
+		    sprintf(arg, "-hw=tty@%s%s%s%s", tty, (buff ? (byte *)",TERM=" : buff), buff, s);
 		} else
 		    arg = *argv;
 	    } else if ((*argv)[4])

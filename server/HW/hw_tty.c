@@ -32,10 +32,12 @@
 
 #ifdef CONF_HW_TTY_LINUX
 #include <gpm.h>
+#include <linux/kd.h>
 #endif
 
 #if !defined(CONF_HW_TTY_LINUX) && !defined(CONF_HW_TTY_TWTERM)
-# error trying to compile textmode terminals driver without support for any specific ttys. you must 'make config' again.
+# warning trying to compile textmode terminals driver without support for any specific ttys.
+# warning you will get only a 'generic tty' driver, without mouse support.
 #endif
 
 static display_hw TTY;
@@ -144,6 +146,7 @@ static udat stdin_LookupKey(byte *slen, byte *s) {
 		IS(Down,  'B');
 		IS(Right, 'C');
 		IS(Left,  'D');
+		IS(KP_5,  'G');  /* returned when NumLock is off */
 		IS(Pause, 'P');
 		
 	      case '[':
@@ -290,10 +293,12 @@ static void stdin_KeyboardEvent(int fd, uldat slot) {
 	    match = s;
 	    while ((match = memchr(match, '\033', got))) {
 		if (got >= (match - s) + 6 && !strncmp(match, "\033[M", 3)) {
+		    /* classic xterm mouse reporting (X11 specs) */
 		    CopyMem(match, xterm_MouseData, 6);
 		    CopyMem(match+6, match, got - (match - s) - 6);
 		    got -= 6;
 		} else if (got >= (match - s) + 9 && !strncmp(match, "\033[5M", 4)) {
+		    /* enhanced xterm-style reporting (twin specs) */
 		    CopyMem(match, xterm_MouseData, 9);
 		    CopyMem(match+9, match, got - (match - s) - 9);
 		    got -= 9;
@@ -456,29 +461,25 @@ static void xterm_MouseEvent(int fd, uldat slot);
 
 /* return FALSE if failed */
 static byte xterm_InitMouse(void) {
-    byte *term = getenv("TERM"), *seq;
+    byte *term = origTERM, *seq;
     
     if (!strcmp(term, "linux")) {
 	/*
 	 * additional check... out-of-the box linux
 	 * doesn't have xterm-style mouse reporting
 	 */
-	    
 	if (ttypar[0]<6 || (ttypar[0]==6 && ttypar[1]<3)) {
 	    fputs("      xterm_InitMouse() failed: this `linux' terminal\n"
 		  "      has no support for xterm-style mouse reporting.\n", errFILE);
 	    return FALSE;
 	}
 	seq = "\033[?9h";
-    }
-#ifdef CONF_HW_TTY_XTERM
-    /* twin doesn't fully support xterm, rxvt etc... */
-    else if (!strncmp(term, "xterm", 5) || !strncmp(term, "rxvt", 4)) {
+    } else if (!strncmp(term, "xterm", 5) || !strncmp(term, "rxvt", 4)) {
+	/* twin doesn't fully support xterm, rxvt etc...
+	 * this is just a rough attempt */
 	seq = "\033[?1001s\033[?1000h";
-    }
-#endif
-    else {
-	fprintf(errFILE, "      xterm_InitMouse() failed: terminal is `%s', not `linux'.\n", term);
+    } else {
+	fprintf(errFILE, "      xterm_InitMouse() failed: terminal `%s' is not supported.\n", term);
 	return FALSE;
     }
 
@@ -496,14 +497,10 @@ static byte xterm_InitMouse(void) {
 }
 
 static void xterm_QuitMouse(void) {
-#ifdef CONF_HW_TTY_XTERM
     if (ttypar[0]==6 && ttypar[1]>=3)
 	fputs("\033[?9l", stdout);
-    else
+    else /* xterm or similar */
 	fputs("\033[?1000l\033[?1001r", stdout);
-#else
-    fputs("\033[?9l", stdout);
-#endif
     setFlush();
 
     TTY.QuitMouse = NoOp;
@@ -512,25 +509,27 @@ static void xterm_QuitMouse(void) {
 static void xterm_MouseEvent(int fd, uldat slot) {
     static dat prev_x, prev_y;
     udat Buttons = 0, Id;
-    char *s = xterm_MouseData;
+    byte *s = xterm_MouseData;
     dat x, y, dx, dy;
 
     if (*s == '\033' && *++s == '[') {
 	if (*++s == 'M' && (Id=*++s) <= '#') {
+	    /* classic xterm mouse reporting (X11 specs) */
 	    if (Id == ' ')
 		Buttons |= HOLD_LEFT;
 	    else if (Id == '!')
 		Buttons |= HOLD_MIDDLE;
 	    else if (Id == '\"')
 		Buttons |= HOLD_RIGHT;
-	    x = *++s - '!';
+	    x = *++s - '!'; /* (*s) must be unsigned char */
 	    y = *++s - '!';
 	} else if (*s == '5' && *++s == 'M' && (Id = *++s) >= ' ' && (Id -= ' ') <= HOLD_ANY) {
+	    /* enhanced xterm-style reporting (twin specs) */
 	    Buttons = Id;
 	    /* it would be: 
-	     (Id & HOLD_LEFT ? HOLD_LEFT : 0) |
-	     (Id & HOLD_MIDDLE ? HOLD_MIDDLE : 0) |
-	     (Id & HOLD_RIGHT ? HOLD_RIGHT : 0);
+	     * (Id & HOLD_LEFT ? HOLD_LEFT : 0) |
+	     * (Id & HOLD_MIDDLE ? HOLD_MIDDLE : 0) |
+	     * (Id & HOLD_RIGHT ? HOLD_RIGHT : 0);
 	     */
 	    s++;
 	    x = (udat)((s[0]-'!') & 0x7f) | (udat)((udat)((s[1]-'!') & 0x7f) << 7);
@@ -579,7 +578,11 @@ static byte warn_NoMouse(void) {
     byte c;
     
     fputs("\n"
+#if defined(CONF_HW_TTY_LINUX) || defined(CONF_HW_TTY_TWTERM)
 	  "      \033[1m  ALL  MOUSE  DRIVERS  FAILED.\033[0m\n"
+#else
+	  "      \033[1m TTY DRIVER COMPILED WITHOUT ANY MOUSE SUPPORT.\033[0m\n"
+#endif
 	  "\n"
 	  "      If you really want to run `twin' without mouse\n"
 	  "      hit RETURN to continue, otherwise hit CTRL-C to quit now.\n", errFILE);
@@ -613,7 +616,6 @@ static void stdin_DetectSize(udat *x, udat *y) {
 }
 
 
-static void stdout_SetCharset(byte *);
 static void stdout_MoveToXY(udat x, udat y);
 static void stdout_SetCursorType(uldat CursorType);
 static void stdout_Beep(void);
@@ -629,6 +631,7 @@ static void vcsa_QuitVideo(void);
 static void vcsa_FlushVideo(void);
 static void vcsa_ShowMouse(void);
 static void vcsa_HideMouse(void);
+static byte linux_getconsolemap(void);
 
 /* return FALSE if failed */
 static byte vcsa_InitVideo(void) {
@@ -666,9 +669,10 @@ static byte vcsa_InitVideo(void) {
     }
     fcntl(VcsaFd, F_SETFD, FD_CLOEXEC);
     
+    (void)linux_getconsolemap();
+    
     TTY.DetectSize = stdin_DetectSize;
     TTY.canDragArea = NULL; 
-    TTY.SetCharset = stdout_SetCharset;    
    
     TTY.FlushVideo = vcsa_FlushVideo;
     TTY.QuitVideo = vcsa_QuitVideo;
@@ -826,6 +830,22 @@ static void vcsa_HideMouse(void) {
     write(VcsaFd, (char *)&Video[pos], sizeof(hwattr));
 }
 
+
+static byte linux_getconsolemap(void) {
+    scrnmap_t map[E_TABSZ];
+    byte c, ret;
+    
+    if ((ret = ioctl(0, GIO_SCRNMAP, map)) == 0) {
+	if (sizeof(scrnmap_t) == 1)
+	    CopyMem(map+0x80, All->Gtranslations[USER_MAP], 0x80);
+	else {
+	    for (c = 0; c < 0x80; c++)
+		All->Gtranslations[USER_MAP][c] = (byte)map[c | 0x80];
+	}
+    }
+    return ret == 0;
+}
+
 #endif /* CONF_HW_TTY_LINUX */
 
 
@@ -853,18 +873,41 @@ static void stdout_HideMouse(void);
 
 /* return FALSE if failed */
 static byte stdout_InitVideo(void) {
-    byte *term = getenv("TERM");
+    byte *term = origTERM;
     
-    if (strcmp(term, "linux") /*&& strncmp(term, "xterm", 5) && strncmp(term, "rxvt", 4)*/) {
-	fprintf(errFILE, "      stdout_InitVideo() failed: terminal is `%s', not `linux'.\n", term);
+    if (!term) {
+	fprintf(errFILE, "      stdout_InitVideo() failed: unknown terminal.\n");
 	return FALSE;
     }
+    
+    do if (strcmp(term, "linux")) {
+	if (!strncmp(term, "xterm", 5) || !strncmp(term, "rxvt", 4)) {
+	    byte c;
+	    
+	    fprintf(errFILE, "\n"
+		    "      \033[1m  WARNING: terminal `%s' is not fully supported.\033[0m\n"
+		    "\n"
+		    "      If you really want to run `twin' on this terminal\n"
+		    "      hit RETURN to continue, otherwise hit CTRL-C to quit now.\n", term);
+	    fflush(errFILE);
+    
+	    read(0, &c, 1);
+	    if (c == '\n' || c == '\r')
+		break;
+	}
+	fprintf(errFILE, "      stdout_InitVideo() failed: terminal type `%s' not supported.\n", term);
+	return FALSE;
+    } while (0);
 
-    fputs("\033[0m\033[3h\033(U", stdout); /* clear colors, set TTY_DISPCTRL, set IBMPC consolemap */
+    fputs("\033[0;11m\033[3h", stdout); /* clear colors, set IBMPC consolemap, set TTY_DISPCTRL */
+    
+#ifdef CONF_HW_TTY_LINUX
+    /* try to get consolemap...*/
+    (void)linux_getconsolemap();
+#endif
     
     TTY.DetectSize = stdin_DetectSize;
     TTY.canDragArea = NULL;
-    TTY.SetCharset = stdout_SetCharset;    
 
     TTY.FlushVideo = stdout_FlushVideo;
     TTY.QuitVideo = stdout_QuitVideo;
@@ -889,7 +932,7 @@ static void stdout_QuitVideo(void) {
     TTY.SetCursorType(LINECURSOR);
     TTY.FlushVideo();
 
-    fputs("\033[0m\033[3l\033(B\n", stdout); /* clear colors, TTY_DISPCTRL and consolemap */
+    fputs("\033[0;10m\033[3l\n", stdout); /* restore original colors, consolemap and TTY_DISPCTRL */
     fflush(stdout);
     signal(SIGWINCH, SIG_DFL);
     
@@ -1007,7 +1050,7 @@ static void stdout_FlushVideo(void) {
 	stdout_MogrifyYesCursor();
 	All->gotoxybuf[0] = '\033';
 	
-	/* clrFlush() will be called by fputs(All->gotoxybuf...)... */
+	/* setFlush() will be called by fputs(All->gotoxybuf...)... */
     } else if (TTY.SoftMouse && ChangedMouseFlag)
 	TTY.HideMouse();
     
@@ -1020,10 +1063,10 @@ static void stdout_FlushVideo(void) {
     }
     
     if (All->gotoxybuf[0])
-	fputs(All->gotoxybuf, stdout), All->gotoxybuf[0] = '\0', clrFlush();
+	fputs(All->gotoxybuf, stdout), All->gotoxybuf[0] = '\0', setFlush();
     
     if (All->cursorbuf[0])
-	fputs(All->cursorbuf, stdout), All->cursorbuf[0] = '\0', clrFlush();
+	fputs(All->cursorbuf, stdout), All->cursorbuf[0] = '\0', setFlush();
 
     ChangedVideoFlag = ChangedMouseFlag = FALSE;
     ValidOldVideo = TRUE;
@@ -1075,11 +1118,6 @@ static void stdout_MoveToXY(udat x, udat y) {
 	saveX = x;
 	saveY = y;
     }
-}
-
-static void stdout_SetCharset(byte *seq) {
-    fputs(seq, stdout);
-    All->NeedHW |= NEEDFlushStdout;
 }
 
 static void stdout_Beep(void) {
@@ -1147,36 +1185,70 @@ static void tty_QuitHW(void) {
 }
 
 display_hw *tty_InitHW(byte *arg) {
+    byte *s;
+    byte force_stdout = FALSE;
+
     if (arg) {
 	if (strncmp(arg, "tty", 3))
 	    return NULL; /* user said "use <arg> as display, not tty" */
-	else if (*(arg+=3) == '@') {
-	    int ttyfd = open(++arg, O_RDWR);  /* use specified tty */
-	    if (ttyfd < 0)
+	
+	arg += 3;
+	
+	if (*arg == '@') {
+	    int ttyfd;
+
+	    s = strchr(++arg, ',');
+	    if (s) *s = '\0';
+	    ttyfd = open(arg, O_RDWR);  /* use specified tty */
+
+	    if (ttyfd < 0) {
+		if (s) *s++ = ',';
 		return NULL;
-	    tty_name = strdup(arg);
-#if 0
-	    {
-		pid_t pgrp;
-		byte fail;
-		
-		GetPrivileges();
-		fail = ioctl(ttyfd, TIOCGPGRP, &pgrp) < 0 || setpgid(0, pgrp) < 0;
-		DropPrivileges();
-	    
-		if (fail) {
-		    close(ttyfd);
-		    return NULL;
-		}
 	    }
-#endif	    
+
+	    tty_name = strdup(arg);
+	    if (s) *s = ',';
+	    arg = s;
+
 	    close(0);
 	    close(1);
 	    dup2(ttyfd, 0);
 	    dup2(ttyfd, 1);
-	    
 	    close(ttyfd);
 	}
+	
+	while (arg && *arg) {
+	    /* parse options */
+	    if (!strncmp(arg, ",TERM=", 6)) {
+		s = strchr(arg += 6, ',');
+		if (s) *s = '\0';
+		if (origTERM) free(origTERM);
+		origTERM = strdup(arg);
+		if (s) *s = ',';
+		arg = s;
+	    } else if (!strncmp(arg, ",stdout", 7)) {
+		s = strchr(arg += 7, ',');
+		arg = s;
+		force_stdout = TRUE;
+	    } else
+		break;
+	}
+		    
+#if 0
+	{
+	    pid_t pgrp;
+	    byte fail;
+	    
+	    GetPrivileges();
+	    fail = ioctl(ttyfd, TIOCGPGRP, &pgrp) < 0 || setpgid(0, pgrp) < 0;
+	    DropPrivileges();
+	    
+	    if (fail) {
+		close(ttyfd);
+		return NULL;
+	    }
+	}
+#endif	    
     }
     
     if (!tty_name && (tty_name = ttyname(0)))
@@ -1200,7 +1272,7 @@ display_hw *tty_InitHW(byte *arg) {
 	    
 	    if (
 #ifdef CONF_HW_TTY_LINUX
-		vcsa_InitVideo() ||
+		(!force_stdout && vcsa_InitVideo()) ||
 #endif
 		stdout_InitVideo()) {
 	    

@@ -392,6 +392,8 @@ byte *TwAttachGetReply(uldat *len);
 
 void TwDetachHW(void);
 
+void TwSetFontTranslation(byte trans[0x80]);
+
 tgadget TwCreateGadget(twindow Window,
 		       hwcol ColText, hwcol ColTextSelect, hwcol ColTextDisabled, hwcol ColTextSelectDisabled,
 		       udat Code, udat Flags, udat Left, udat Up, udat XWidth, udat YWidth, byte Bitmap,

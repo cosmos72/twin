@@ -1,6 +1,5 @@
 /*
- *  attach.c  --  connect to a running twin and tell it to attach/detach
- *                from a given display
+ *  setroot.c  -- set the screen background image of a running twin
  *
  *  Copyright (C) 2000 by Massimiliano Ghilardi
  *
@@ -24,7 +23,7 @@
 byte *name;
 
 void usage(void) {
-    fprintf(stderr, "Usage: %s [-aa <ascii art file>]\n", name);
+    fprintf(stderr, "Usage: %s [-padx <X>] [-pady <Y>] [-aa <ascii art file>]\n", name);
 }
 
 void panic(void) {
@@ -33,12 +32,12 @@ void panic(void) {
 }
 
 
-hwattr *load_ascii_art(FILE *aaFILE, uldat *x, uldat *y);
+hwattr *load_ascii_art(FILE *aaFILE, uldat *x, uldat *y, uldat padX, uldat padY);
 
 int main(int argc, char *argv[]) {
     hwattr *image;
-    uldat X, Y;
-    enum {def, aa} state = def;
+    uldat X, Y, padX = 0, padY = 0;
+    enum {def, aa, padx, pady} state = def;
     byte *aafile = NULL;
     
     name = *argv;
@@ -48,9 +47,21 @@ int main(int argc, char *argv[]) {
 	  case def:
 	    if (!strcmp(*argv, "-aa"))
 		state = aa;
+	    else if (!strcmp(*argv, "-padx"))
+		state = padx;
+	    else if (!strcmp(*argv, "-pady"))
+		state = pady;
 	    break;
 	  case aa:
 	    aafile = *argv;
+	    state = def;
+	    break;
+	  case padx:
+	    padX = atoi(*argv);
+	    state = def;
+	    break;
+	  case pady:
+	    padY = atoi(*argv);
 	    state = def;
 	    break;
 	  default:
@@ -59,7 +70,7 @@ int main(int argc, char *argv[]) {
 	}
     }
     
-    if (!(argc == 1 || (argc == 3 && aafile))) {
+    if (state != def) {
 	usage();
 	return 0;
     }
@@ -69,7 +80,7 @@ int main(int argc, char *argv[]) {
 	if (!aafile) aafile = "(stdin)";
 	
 	if (aaFILE) {
-	    if ((image = load_ascii_art(aaFILE, &X, &Y))) {
+	    if ((image = load_ascii_art(aaFILE, &X, &Y, padX, padY))) {
 		TwBgImageScreen(TwFirstScreen(), X, Y, image);
 		TwFlush();
 		TwClose();
@@ -210,7 +221,6 @@ INLINE void Fill(hwattr *t, hwattr h, uldat count) {
 
 		
 INLINE void Xgrow(void) {
-    hwattr *t;
     uldat n, newXmax;
 
     newXmax = X * 2 + 2;
@@ -220,22 +230,20 @@ INLINE void Xgrow(void) {
 	return;
     }
     
-    if (!(t = TwReAllocMem(image, n * sizeof(hwattr))))
+    if (!(image = TwReAllocMem(image, n * sizeof(hwattr))))
 	panic();
 	
     max = n;
     n = Ymax;
 	
     while (n--) {
-	TwMoveMem(t + n * Xmax, t + n * newXmax, Xmax * sizeof(hwattr));
-	Fill(t + n * newXmax + Xmax, HWATTR(Color, ' '), newXmax - Xmax);
+	TwMoveMem(image + n * Xmax, image + n * newXmax, Xmax * sizeof(hwattr));
+	Fill(image + n * newXmax + Xmax, HWATTR(Color, ' '), newXmax - Xmax);
     }
     Xmax = newXmax;
-    image = t;
 }
 
 INLINE void Ygrow(void) {
-    hwattr *t;
     uldat n, newYmax;
 
     newYmax = Y * 2 + 2;
@@ -245,14 +253,13 @@ INLINE void Ygrow(void) {
 	return;
     }
 	
-    if (!(t = TwReAllocMem(image, n * sizeof(hwattr))))
+    if (!(image = TwReAllocMem(image, n * sizeof(hwattr))))
 	panic();
 	
-    Fill(t + max, HWATTR(Color, ' '), n - max);
+    Fill(image + max, HWATTR(Color, ' '), n - max);
 
     max = n;
     Ymax = newYmax;
-    image = t;
 }
 
 void addc(byte c) {
@@ -266,23 +273,17 @@ void addc(byte c) {
 }
 
 void finalize(void) {
-    hwattr *t;
     uldat i;
     
     if (!image || !Xreal || !Yreal)
 	return;
-    if (!(t = TwAllocMem(Xreal * Yreal * sizeof(hwattr))))
-	panic();
-    for (i = 0; i < Yreal; i++)
-	TwCopyMem(image + i * Xmax, t + i * Xreal, Xreal * sizeof(hwattr));
-    /* HACK: we skip this (and leak memory) since we are a one-shot program */
-    /* TwFreeMem(image); */
-    image = t;
+    for (i = 1; i < Yreal; i++)
+	TwMoveMem(image + i * Xmax, image + i * Xreal, Xreal * sizeof(hwattr));
 }
     
 #define goto_xy(x, y) (X = (x), Y = (y))
 
-hwattr *load_ascii_art(FILE *aaFILE, uldat *x, uldat *y) {
+hwattr *load_ascii_art(FILE *aaFILE, uldat *x, uldat *y, uldat padX, uldat padY) {
     int c;
     
     if (!(image = TwAllocMem(max * sizeof(hwattr))))
@@ -414,6 +415,10 @@ hwattr *load_ascii_art(FILE *aaFILE, uldat *x, uldat *y) {
 	    State = ESnormal;
 	    break;
 	}
+    }
+    if (padX || padY) {
+	goto_xy(Xreal + padX - 1, Yreal + padY - 1);
+	addc(' ');
     }
     finalize();
     *x = Xreal;

@@ -1001,8 +1001,6 @@ void ScrollFirstWindowArea(dat X1, dat Y1, dat X2, dat Y2, dat DeltaX, dat Delta
 	else
 	    DrawWindow(Window, (gadget *)0, (gadget *)0, Left, Dwn+DeltaY+1, Rgt, Dwn, FALSE);
     }
-    if (Window == Screen->FocusWindow)
-	UpdateCursor();
 }
 
 void ScrollFirstWindow(dat DeltaX, dat DeltaY, byte byXYLogic) {
@@ -1048,6 +1046,9 @@ void ScrollFirstWindow(dat DeltaX, dat DeltaY, byte byXYLogic) {
     }
 
     ScrollFirstWindowArea(0, 0, XWidth-3, YWidth-3, -DeltaX, -DeltaY);
+    
+    if (byXYLogic && Window == All->FirstScreen->FocusWindow)
+	UpdateCursor();
 }
 
 void ScrollWindow(window *Window, dat DeltaX, dat DeltaY) {
@@ -1093,6 +1094,9 @@ void ScrollWindow(window *Window, dat DeltaX, dat DeltaY) {
 	DrawBorderWindow(Window, (DeltaX ? BORDER_DOWN : 0) | (DeltaY ? BORDER_RIGHT : 0));
 
     DrawAreaWindow(Window, FALSE);
+
+    if (Window == All->FirstScreen->FocusWindow)
+	UpdateCursor();
 }
 
 byte ExecScrollFocusWindow(void) {
@@ -1242,10 +1246,10 @@ void ChangeMenuFirstScreen(menuitem *NewItem, byte ByMouse, byte Flag) {
 		    Screen->MenuWindow = (window *)0;
 		} else
 		    Do(Focus,Window)((window *)0);
-		UpdateCursor();
 	    }
 	    if (CurrItem && CurrWin && (CurrWin->Attrib & WINDOW_MENU))
 		Act(UnMap,CurrWin)(CurrWin);
+	    UpdateCursor();
 	}
 	if (All->SetUp->Flags & SETUP_HIDEMENU && Flag==DISABLE_MENU_FLAG)
 	    HideMenu(TRUE);

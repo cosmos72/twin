@@ -61,7 +61,6 @@ struct display_hw {
     void (*HideMouse)(void);
 
     void (*DetectSize)(udat *x, udat *y);
-    void (*SetCharset)(byte *);
     
     void (*ImportClipBoard)(byte Wait);
     void (*ExportClipBoard)(void);
