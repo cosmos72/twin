@@ -1,3 +1,35 @@
+From 0.3.7 to 0.3.8: (Massimiliano Ghilardi, 08 Mar 2001)
+	* Added printing of window size on menu during Interactive Resize.
+	* Fixed ~/.twinrc "Resize" command to work correctly when given
+	  absolute numbers (i.e. "Resize 92 31" results in a 92x31 window).
+	* Fixed redrawing during press/unpress of gadgets on non-top windows.
+	* Fixed TwCreateWindow() to use given size as window INTERIOR size,
+	  not considering the border. Old clients on new server will create
+	  slightly larger windows, new clients on old server will create
+	  slightly smaller windows... really not lethal.
+	* Fixed TwResizeWindow() for the same problem, and allowed
+	  TwResizeWindow() also on non-user-resizeable windows.
+	* Fixed libTw++.h using an uninitialized variable that randomly
+	  resulted in non-working listeners.
+	* Fixed terminal emulator to work also as module. Noone noticed this!?
+	* Added socket protocol translation to allow connections from clients
+	  with different data sizes and different endianity.
+	  Completely backward compatible, as socket protocol was designed
+	  for this, but I did not actually implement translation until now.
+	  Set CONF_SOCKET_ALIEN in configuration as 'y' or 'm' to enable it.
+	  Known problems still remain in libTw and socket.so on architectures
+	  not allowing unaligned pointers.
+	* Added support for TW_WINFL_USEEXPOSE windows and corresponding
+	  expose messages (they have type == TW_MSG_WINDOW_CHANGE
+	  and code == TW_MSG_WINDOW_EXPOSE).
+	* `twsendmsg Builtin quit' now forces twin to exit. Also changed
+	  the twsendmsg default message code from `quit' to `open' : more
+	  useful and less risky.
+	* Renamed `DESTDIR' as `libdir' and used `DESTDIR' only for
+	  installation.
+	* Applied twin-devfs, twin-ncurses and twin-optflags patches from
+	  PLD team (www.pld.org.pl).
+	  
 From 0.3.6 to 0.3.7: (Massimiliano Ghilardi, 19 Feb 2001)
 	* Changed the terminal emulator to close window on shell logout
 	  even if there are background processes running (they keep running
@@ -54,7 +86,7 @@ From 0.3.6 to 0.3.7: (Massimiliano Ghilardi, 19 Feb 2001)
 	* Added some more libTw functions.
 	* Added C++ libTw wrapper (libTw++.h). Also wrote the first "serious"
 	  client: `twkalc', derived from `kcalc' of the KDE suite.
-	  Anyway `twkalc' is distributed separately, in the packet `twutils'.
+	  Anyway `twkalc' is distributed separately, in the package `twutils'.
 	* Rationalized and removed some redundant libTw functions.
 	  Source, binary and socket protocol compatibility preserved, with two
 	  exceptions: using libTw from 0.3.7 with older servers may result in

@@ -22,7 +22,9 @@ IS(Clear,	1, "\x0B")
 IS(Return,	1, "\x0D")
 IS(Pause,	3, "\x1B[P")
 IS(Scroll_Lock,	0, "")
+#ifdef XK_Sys_Req
 IS(Sys_Req,	0, "")
+#endif
 IS(Escape,	1, "\x1B")
 
 
@@ -72,7 +74,9 @@ IS(KP_Begin,	3, "\x1BOw") /* as KP_Home */
 IS(KP_Insert,	3, "\x1BOp")
 #endif
 
+#ifdef XK_KP_Delete
 IS(KP_Delete,	3, "\x1BOn")
+#endif
 IS(KP_Multiply,	3, "\x1BOR")
 IS(KP_Add,	3, "\x1BOl")
 IS(KP_Separator,3, "\x1BOm")

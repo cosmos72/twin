@@ -196,8 +196,8 @@ static byte Init(void) {
      */
     
     return (   InitSignals()
-	    && SetTWDisplay()
-	    && (All->AtQuit = UnSetTWDisplay)
+	    && InitTWDisplay()
+	    && (All->AtQuit = QuitTWDisplay)
 	    && InitTransUser()
 	    && InitTtysave()
 	    && InitScroller()

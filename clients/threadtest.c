@@ -19,8 +19,8 @@
 
 #include <pthread.h>
 
-#include "libTw.h"
-#include "libTwerrno.h"
+#include "Tw/Tw.h"
+#include "Tw/Twerrno.h"
 
 tmsgport Thrd_MsgPort;
 tmenu Thrd_Menu;
@@ -75,7 +75,7 @@ void mainloop(twindow *Win) {
     if (!(*Win = TwCreateWindow
 	(11, Win == &Thrd_Win1 ? "threadtest1" : "threadtest2", NULL, Thrd_Menu, COL(HIGH|YELLOW,BLUE),
 	 TW_NOCURSOR, TW_WINDOW_DRAG|TW_WINDOW_CLOSE|TW_WINDOW_RESIZE, TW_WINFL_USECONTENTS,
-	 33 + sizeof(long)/sizeof(hwattr), 18, 0)))
+	 31 + sizeof(long)/sizeof(hwattr), 16, 0)))
 	Quit();
 
     TwMapWindow(*Win, TwFirstScreen());

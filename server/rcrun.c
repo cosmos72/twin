@@ -37,7 +37,7 @@
 # include "dl.h"
 #endif
 
-#include "libTwkeys.h"
+#include "Tw/Twkeys.h"
 #include "hotkey.h"
 
 #define MAX_RUNCYCLE      1024 /* kill a queue after this number of steps */
@@ -396,7 +396,7 @@ static byte RCSteps(run *r) {
     node n, f;
     ldat flag;
     str *argv;
-    byte state;
+    byte state, ret;
 
     W = RCCheck4WinId(r);
     S = ScreenOf(W);
@@ -431,32 +431,36 @@ static byte RCSteps(run *r) {
 	    break;
 	    
 	  case INTERACTIVE:
-	    state = Sinter;
-	    
 	    C->W = W;
 	    if (!C->Screen && !(C->Screen=S))
 		C->Screen = All->FirstScreen;
 	    
+	    ret = FALSE;
+	    
 	    switch (n->x.f.flag) {
-	      case MENU:   ActivateCtx(C, STATE_MENU);   break;
-	      case SCROLL: ActivateCtx(C, STATE_SCROLL); break;
-	      case MOVE:   ActivateCtx(C, STATE_DRAG);   break;
-	      case RESIZE: ActivateCtx(C, STATE_RESIZE); break;
-	      case SCREEN: ActivateCtx(C, STATE_SCREEN); break;
-	      default:     state = Serr;		 break;
+	      case MENU:   ret = ActivateCtx(C, STATE_MENU);   break;
+	      case SCROLL: ret = ActivateCtx(C, STATE_SCROLL); break;
+	      case MOVE:   ret = ActivateCtx(C, STATE_DRAG);   break;
+	      case RESIZE: ret = ActivateCtx(C, STATE_RESIZE); break;
+	      case SCREEN: ret = ActivateCtx(C, STATE_SCREEN); break;
+	      default:     state = Serr;		       break;
 	    }
+	    if (ret)
+		state = Sinter;
 	    break;
 	  case MENU:
 	    /* this is just like INTERACTIVE MENU ... but does not wait! */
 	    ActivateCtx(C, STATE_MENU);
 	    break;
 	  case MODULE:
+#ifdef CONF__MODULES
 	    if (n->x.f.a == -1)
 		n->x.f.a = DlName2Code(n->name);
 	    if (n->x.f.flag == FL_ON)
 		DlLoad(n->x.f.a);
 	    else
 		DlUnLoad(n->x.f.a);
+#endif
 	    break;
 	  case MOVE:
 	    if (W)
@@ -475,7 +479,12 @@ static byte RCSteps(run *r) {
 	    break;
 	  case RESIZE:
 	    if (W) {
-		ResizeRelWindow(W, applyflagx(n), applyflagy(n));
+		dat x = applyflagx(n), y = applyflagy(n);
+		if (n->x.f.plus_minus == 0)
+		    x = n->x.f.a - W->XWidth + 2*!(W->Flags & WINFL_BORDERLESS);
+		if (n->x.f.flag == 0)
+		    y = n->x.f.b - W->YWidth + 2*!(W->Flags & WINFL_BORDERLESS);
+		ResizeRelWindow(W, x, y);
 		Check4Resize(W); /* send MSG_WINDOW_CHANGE and realloc(W->Contents) */
 	    }
 	    break;
@@ -537,9 +546,11 @@ static byte RCSteps(run *r) {
 		 */
 		
 		if (flag == 0) {
-		    if (i == 0)
-			W = All->FirstScreen->FocusWindow;
-		    else {
+		    if (i == 0) {
+			W = (window)All->FirstScreen->FocusW;
+			if (W && !IS_WINDOW(W))
+			    W = (window)0;
+		    } else {
 			if (i > 0) i--;
 			W = ForwardWindow(All->FirstScreen->FirstW);
 		    }
@@ -616,7 +627,7 @@ static byte RCSteps(run *r) {
 	    if (W && S) {
 		flag = n->x.f.flag;
 		if (flag == FL_TOGGLE)
-		    flag = (S->FocusWindow == W) ? FL_OFF : FL_ON;
+		    flag = (S->FocusW == (widget)W) ? FL_OFF : FL_ON;
 		
 		if (flag == FL_ON && S != All->FirstScreen)
 		    Act(Focus,S)(S);
@@ -866,6 +877,7 @@ static byte MouseClickReleaseSameCtx(uldat W1, uldat W2, ldat clickCtx, ldat rel
 byte RC_VMQueue(CONST wm_ctx *C) {
     uldat ClickWinId = All->FirstScreen->ClickWindow
 	? All->FirstScreen->ClickWindow->Id : NOID;
+    widget W;
     ldat ctx;
     node n;
     run *r;
@@ -933,7 +945,8 @@ byte RC_VMQueue(CONST wm_ctx *C) {
 	    if (n && (r = RCNew(n))) {
 		used = TRUE;
 		CopyMem(C, &r->C, sizeof(wm_ctx));
-		r->W = All->FirstScreen->FocusWindow ? All->FirstScreen->FocusWindow->Id : NOID;
+		W = All->FirstScreen->FocusW;
+		r->W = W && IS_WINDOW(W) ? W->Id : NOID;
 		r->C.ByMouse = FALSE;
 		/* to preserve execution orded, run it right now ! */
 		RCRun();
@@ -988,7 +1001,7 @@ void QuitRC(void) {
 
 #define COD_COMMON_LAST		COD_COMMON_CLOSE
 
-static byte RCDefaultCommonMenu(void) {
+static byte USEefaultCommonMenu(void) {
     menu Menu;
     menuitem Item;
     window W;
@@ -1132,7 +1145,7 @@ byte InitRC(void) {
     All->SetUp->DeltaXShade = 3;
     All->SetUp->DeltaXShade = 2;
 
-    if (RCDefaultCommonMenu()) {
+    if (USEefaultCommonMenu()) {
 	
 	InitRCOptions();
 	UpdateOptionWin();

@@ -52,7 +52,7 @@ static window newTermWindow(byte *title) {
 	 Term_Menu, COL(WHITE,BLACK), LINECURSOR,
 	 WINDOW_WANT_KEYS|WINDOW_DRAG|WINDOW_RESIZE|WINDOW_Y_BAR|WINDOW_CLOSE,
 	 WINFL_CURSOR_ON|WINFL_USECONTENTS,
-	 82, 27, 200);
+	 80, 25, 200);
     
     if (Window) {
 	Act(SetColors,Window)
@@ -126,7 +126,7 @@ static void TwinTermH(msgport MsgPort) {
 	    
 	} else if (Msg->Type==MSG_WINDOW_MOUSE) {
 	    Win = Event->EventMouse.Window;
-	    if (Win && Win->TtyData) {
+	    if (Win && Win->USE.C.TtyData) {
 		byte buf[10];
 		byte len = CreateXTermMouseEvent(&Event->EventMouse, 10, buf);
     
@@ -188,14 +188,18 @@ static void TwinTermIO(int Fd, window Window) {
 
 static void OverrideMethods(byte enter) {
     if (enter) {
+	OverrideMethod(Widget,KbdFocus,   FakeKbdFocus,   TtyKbdFocus);
+	OverrideMethod(Gadget,KbdFocus,   FakeKbdFocus,   TtyKbdFocus);
+	OverrideMethod(Window,KbdFocus,   FakeKbdFocus,   TtyKbdFocus);
 	OverrideMethod(Window,WriteAscii, FakeWriteAscii, TtyWriteAscii);
 	OverrideMethod(Window,WriteHWAttr,FakeWriteHWAttr,TtyWriteHWAttr);
-	OverrideMethod(Window,KbdFocus,   FakeKbdFocus,   TtyKbdFocus);
 	ForceKbdFocus();
     } else {
 	OverrideMethod(Window,WriteAscii, TtyWriteAscii,  FakeWriteAscii);
 	OverrideMethod(Window,WriteHWAttr,TtyWriteHWAttr, FakeWriteHWAttr);
 	OverrideMethod(Window,KbdFocus,   TtyKbdFocus,    FakeKbdFocus);
+	OverrideMethod(Gadget,KbdFocus,   TtyKbdFocus,    FakeKbdFocus);
+	OverrideMethod(Widget,KbdFocus,   TtyKbdFocus,    FakeKbdFocus);
     }
 }
 
@@ -240,10 +244,9 @@ byte InitTerm(void)
 	    default_args[1][0] = '-';
 	return TRUE;
     }
-    if (shellpath) {
-	Error(NOMEMORY);
+    if (shellpath)
 	printk("twin: InitTerm(): %s\n", ErrStr);
-    } else
+    else
 	printk("twin: environment variable $SHELL not set!\n");
     return FALSE;
 }

@@ -20,9 +20,9 @@
 #include "hw_dirty.h"
 #include "common.h"
 
-#include "libTw.h"
-#include "libTwerrno.h"
-#include "libTwkeys.h"
+#include "Tw/Tw.h"
+#include "Tw/Twerrno.h"
+#include "Tw/Twkeys.h"
 
 
 struct tw_data {
@@ -363,9 +363,9 @@ static void TW_SelectionNotify_up(uldat ReqPrivate, uldat Magic, CONST byte MIME
 static void TW_QuitHW(void) {
     /* not necessary, and Tmsgport, Twin could be undefined */
     /*
-     * Tw_UnMapWindow(Td, Twin);
-     * Tw_DeleteWindow(Td, Twin);
-     * Tw_DeleteMsgPort(Td, Tmsgport);
+     * Tw_UnMapWidget(Td, Twin);
+     * Tw_DeleteObj(Td, Twin);
+     * Tw_DeleteObj(Td, Tmsgport);
      */
     Tw_Close(Td);
     
@@ -436,7 +436,7 @@ byte TW_InitHW(void) {
 	 * check if the server supports the functions we need and store their IDs
 	 * to avoid deadlocking later when we need them.
 	 */
-	Tw_FindFunctions(Td, Tw_MapWindow, Tw_WriteAsciiWindow, Tw_WriteHWAttrWindow,
+	Tw_FindFunctions(Td, Tw_MapWidget, Tw_WriteAsciiWindow, Tw_WriteHWAttrWindow,
 			 Tw_GotoXYWindow, Tw_ResizeWindow, /* Tw_DragAreaWindow, */ NULL) &&
 
 	(Tscreen = Tw_FirstScreen(Td)) &&
@@ -457,7 +457,7 @@ byte TW_InitHW(void) {
 		(Td, strlen(name), name, NULL, Tmenu, COL(WHITE,BLACK), LINECURSOR,
 		 WINDOW_WANT_KEYS|WINDOW_WANT_MOUSE|WINDOW_WANT_CHANGE|WINDOW_DRAG|WINDOW_RESIZE|WINDOW_CLOSE,
 		 WINFL_USECONTENTS|WINFL_CURSOR_ON,
-		 2 + (HW->X = GetDisplayWidth()), 2 + (HW->Y = GetDisplayHeight()), (uldat)0);
+		 (HW->X = GetDisplayWidth()), (HW->Y = GetDisplayHeight()), (uldat)0);
 
 	    if (!Twin)
 		break;
@@ -465,7 +465,7 @@ byte TW_InitHW(void) {
 	    Tw_SetColorsWindow(Td, Twin, 0x1FF, COL(HIGH|YELLOW,CYAN), COL(HIGH|GREEN,HIGH|BLUE),
 			      COL(WHITE,HIGH|BLUE), COL(HIGH|WHITE,HIGH|BLUE), COL(HIGH|WHITE,HIGH|BLUE),
 			      COL(WHITE,BLACK), COL(WHITE,HIGH|BLACK), COL(HIGH|BLACK,BLACK), COL(BLACK,HIGH|BLACK));
-	    Tw_MapWindow(Td, Twin, Tscreen);
+	    Tw_MapWidget(Td, Twin, Tscreen);
 	    
 	    Tw_Flush(Td);
 	    /*

@@ -17,8 +17,8 @@
 #include <errno.h>
 #include <sys/utsname.h>
 
-#include "libTw.h"
-#include "libTwerrno.h"
+#include "Tw/Tw.h"
+#include "Tw/Twerrno.h"
 
 tmsgport SysMon_MsgPort;
 tmenu SysMon_Menu;
@@ -55,7 +55,7 @@ byte InitSysMon(void) {
 	(SysMon_Win = TwCreateWindow
 	 (len, name, NULL, SysMon_Menu, COL(HIGH|YELLOW,BLUE),
 	  TW_NOCURSOR, TW_WINDOW_DRAG|TW_WINDOW_CLOSE, 0,
-	  26, 7, 0))) {
+	  24, 5, 0))) {
 
 	TwSetColorsWindow(SysMon_Win, 0x1FF,
 			  (hwcol)0x3E, (hwcol)0, (hwcol)0, (hwcol)0, (hwcol)0x9F,

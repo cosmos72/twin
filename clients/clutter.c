@@ -12,8 +12,8 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "libTw.h"
-#include "libTwerrno.h"
+#include "Tw/Tw.h"
+#include "Tw/Twerrno.h"
 
 static tmsgport Clutter_MsgPort;
 static tmenu Clutter_Menu;
@@ -30,7 +30,7 @@ static byte NewClutterWindow(void) {
 	  Clutter_Menu, COL(BLACK,HIGH|BLACK), TW_LINECURSOR,
 	  TW_WINDOW_DRAG|TW_WINDOW_RESIZE|TW_WINDOW_X_BAR|TW_WINDOW_Y_BAR|TW_WINDOW_CLOSE,
 	  TW_WINFL_USE_DEFCOL,
-	  15, 5, 0))) {
+	  11, 3, 0))) {
 	
 	TwConfigureWindow(Window, 0x3, lrand48() / (MAXLRAND48 / X),
 			  lrand48() / (MAXLRAND48 / Y), 0, 0, 0, 0);

@@ -3,6 +3,8 @@
 
 extern udat ErrNo;
 extern byte CONST * ErrStr;
+extern uldat unixSlot;
+extern int unixFd;
 
 void *CloneMem(CONST void *From, uldat Size);
 byte *CloneStr(CONST byte *s);
@@ -40,8 +42,8 @@ void FallBackKeyAction(window W, event_keyboard *EventK);
 byte **TokenizeStringVec(uldat len, byte *text);
 void FreeStringVec(byte **argv);
 
-byte   SetTWDisplay(void);
-void UnSetTWDisplay(void);
+byte InitTWDisplay(void);
+void QuitTWDisplay(void);
 
 void CheckPrivileges(void);
 void GetPrivileges(void);

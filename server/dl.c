@@ -113,19 +113,22 @@ module DlLoad(uldat code) {
 	if (!(M = So[code])) {
 	    switch (code) {
 #ifndef CONF_WM
-		case WMSo:      M = DlLoadAny(5, "wm.so"); break;
+	      case WMSo:      M = DlLoadAny(5, "wm.so"); break;
 #endif
 #ifndef CONF_TERM
-		case TermSo:    M = DlLoadAny(7, "term.so"); break;
+	      case TermSo:    M = DlLoadAny(7, "term.so"); break;
 #endif
 #ifndef CONF_SOCKET
-		case SocketSo:  M = DlLoadAny(9, "socket.so"); break;
+	      case SocketSo:  M = DlLoadAny(9, "socket.so"); break;
+#endif
+#ifndef CONF_SOCKET_ALIEN
+	      case SocketAlienSo:  M = DlLoadAny(14, "socketalien.so"); break;
 #endif
 #ifndef CONF_WM_RC
-		case RCParseSo: M = DlLoadAny(10, "rcparse.so"); break;
+	      case RCParseSo: M = DlLoadAny(10, "rcparse.so"); break;
 #endif
-		case MainSo:
-		default:        M = DlLoadAny(4, "main"); break;
+	      case MainSo:
+	      default:        M = DlLoadAny(4, "main"); break;
 	    }
 	    if ((So[code] = M)) {
 		if (All->FnHookModule)
@@ -160,6 +163,8 @@ udat DlName2Code(byte *name) {
 	return TermSo;
     if (!CmpStr(name, "socket.so"))
 	return SocketSo;
+    if (!CmpStr(name, "socketalien.so"))
+	return SocketAlienSo;
     if (!CmpStr(name, "rcparse.so"))
 	return RCParseSo;
     return MainSo;

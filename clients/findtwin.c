@@ -10,8 +10,8 @@
 #include <stdlib.h>
 #include <dirent.h>
 
-#include "libTw.h"
-#include "libTwerrno.h"
+#include "Tw/Tw.h"
+#include "Tw/Twerrno.h"
 
 static void test(TW_CONST char *dpy) {
     if (dpy || (dpy = getenv("TWDISPLAY"))) {

@@ -50,7 +50,8 @@ void UpdateCursor(void) {
     ldat CurX, CurY, XLogic, YLogic;
     ldat XCursor, YCursor;
     
-    if ((Screen = All->FirstScreen) && (Window = Screen->FocusWindow) && !(Window->Attrib & WINDOW_ROLLED_UP)
+    if ((Screen = All->FirstScreen) && (Window = (window)Screen->FocusW) &&
+	IS_WINDOW(Window) && !(Window->Attrib & WINDOW_ROLLED_UP)
 	&& ((All->SetUp->Flags & SETUP_ALWAYSCURSOR) || (Window->Flags & WINFL_CURSOR_ON))) {
 
 	DWidth=All->DisplayWidth;
@@ -90,8 +91,8 @@ void UpdateCursor(void) {
 static byte SendResizeSignal(window Window) {
     struct winsize wsiz;
     
-    wsiz.ws_col = Window->TtyData->SizeX;
-    wsiz.ws_row = Window->TtyData->SizeY;
+    wsiz.ws_col = Window->USE.C.TtyData->SizeX;
+    wsiz.ws_row = Window->USE.C.TtyData->SizeY;
     wsiz.ws_xpixel = 0;
     wsiz.ws_ypixel = 0;
     
@@ -106,8 +107,8 @@ static byte SendResizeSignal(window Window) {
 
 byte CheckResizeWindowContents(window Window) {
     if ((Window->Flags & WINFL_USECONTENTS) &&
-	(Window->TtyData->SizeY != Window->YWidth - 2 ||
-	 Window->TtyData->SizeX != Window->XWidth - 2)) {
+	(Window->USE.C.TtyData->SizeY != Window->YWidth - 2 ||
+	 Window->USE.C.TtyData->SizeX != Window->XWidth - 2)) {
 	return ResizeWindowContents(Window);
     }
     return TRUE;
@@ -116,7 +117,7 @@ byte CheckResizeWindowContents(window Window) {
 byte ResizeWindowContents(window Window) {
     hwattr *NewCont, *saveNewCont, *OldCont, *max;
     ldat count, common, left;
-    ttydata *Data = Window->TtyData;
+    ttydata *Data = Window->USE.C.TtyData;
     dat x = Window->XWidth - 2, y = Window->YWidth - 2 + Data->ScrollBack;
     
     /* safety check: */
@@ -129,29 +130,29 @@ byte ResizeWindowContents(window Window) {
 	 * 1. always preserve the cursor line
 	 * 2. copy as much scrollback as possible
 	 */
-	if ((max = OldCont = Window->Contents)) {
-	    max += Window->NumRowOne * Window->MaxNumRow;
-	    common = Min2(Window->NumRowOne, x);
-	    count = Min2(Window->MaxNumRow, y);
-	    OldCont += Window->NumRowSplit * Window->NumRowOne;
+	if ((max = OldCont = Window->USE.C.Contents)) {
+	    max += Window->WLogic * Window->HLogic;
+	    common = Min2(Window->WLogic, x);
+	    count = Min2(Window->HLogic, y);
+	    OldCont += Window->USE.C.HSplit * Window->WLogic;
 	
 	    /* ok, now check for the cursor line */
 	    if (Window->CurY >= y) {
-		OldCont += (Window->CurY + 1 - y) * Window->NumRowOne;
+		OldCont += (Window->CurY + 1 - y) * Window->WLogic;
 		if (OldCont > max)
-		    OldCont -= Window->NumRowOne * Window->MaxNumRow;
+		    OldCont -= Window->WLogic * Window->HLogic;
 	    }
 	    
 	    while (count--) {
 		CopyMem(OldCont, NewCont, common*sizeof(hwattr));
 		
-		if ((OldCont += Window->NumRowOne) >= max) 
-		    OldCont = Window->Contents;
+		if ((OldCont += Window->WLogic) >= max) 
+		    OldCont = Window->USE.C.Contents;
 		NewCont += common;
 		for (left = x - common; left; left--)
 		    *NewCont++ = HWATTR(Window->ColText, ' ');
 	    }
-	    FreeMem(Window->Contents);
+	    FreeMem(Window->USE.C.Contents);
 	}
 	
 	left = (saveNewCont + x*y) - NewCont;
@@ -159,17 +160,17 @@ byte ResizeWindowContents(window Window) {
 	    *NewCont++ = HWATTR(Window->ColText, ' ');
     } else {
 	x = y = 0;
-	if (Window->Contents)
-	    FreeMem(Window->Contents);
+	if (Window->USE.C.Contents)
+	    FreeMem(Window->USE.C.Contents);
 	saveNewCont = NULL;
     }
     
     Window->XLogic = 0;
     Window->YLogic = Data->ScrollBack;
-    Window->NumRowOne = x;	/* Contents width */
-    Window->MaxNumRow = y;	/* Y visible + scrollback */
-    Window->NumRowSplit = 0;	/* splitline == 0 */
-    Window->Contents = saveNewCont;
+    Window->WLogic = x;	/* Contents width */
+    Window->HLogic = y;	/* Y visible + scrollback */
+    Window->USE.C.HSplit = 0;	/* splitline == 0 */
+    Window->USE.C.Contents = saveNewCont;
 
     if (Window->CurY >= y)
 	Window->CurY = y - 1;
@@ -181,14 +182,14 @@ byte ResizeWindowContents(window Window) {
     Data->Top = 0;
     Data->Bottom = Data->SizeY;
     
-    Data->Start = Window->Contents + x * Data->ScrollBack;
-    Data->Split = Window->Contents + x * y;
+    Data->Start = Window->USE.C.Contents + x * Data->ScrollBack;
+    Data->Split = Window->USE.C.Contents + x * y;
     Data->saveX = Data->X = Window->CurX;
     Data->saveY = Data->Y = Window->CurY - Data->ScrollBack;    
-    Data->Pos = Window->Contents + Window->CurY * x + Window->CurX;
+    Data->Pos = Window->USE.C.Contents + Window->CurY * x + Window->CurX;
     
     if (!(Window->Attrib & WINDOW_WANT_CHANGE)
-	&& Window->TtyData && Window->RemoteData.FdSlot != NOSLOT)
+	&& Window->USE.C.TtyData && Window->RemoteData.FdSlot != NOSLOT)
 	/* the MsgPort will not be informed of the resize...
 	 * we must send SIGWINCH manually */
 	(void)SendResizeSignal(Window);
@@ -196,9 +197,9 @@ byte ResizeWindowContents(window Window) {
     if (Window->Parent) {
 	DrawBorderWindow(Window, BORDER_RIGHT);
     
-	DrawLogicWindow2(Window, 0, 0, Window->NumRowOne-1, Window->MaxNumRow-1);
+	DrawLogicWindow2(Window, 0, 0, Window->WLogic-1, Window->HLogic-1);
     
-	if (Window == All->FirstScreen->FocusWindow)
+	if (Window == (window)All->FirstScreen->FocusW)
 	    UpdateCursor();
     }
     
@@ -210,7 +211,7 @@ static row InsertRowsWindow(window Window, ldat NumRows) {
     
     while (NumRows--) {
 	if ((CurrRow=Do(Create,Row)(FnRow, 0, ROW_ACTIVE))) {
-	    InsertLast(Row, CurrRow, Window);
+	    Act(Insert,CurrRow)(CurrRow, Window, Window->USE.R.LastRow, NULL);
 	} else
 	    break;
     }
@@ -218,18 +219,38 @@ static row InsertRowsWindow(window Window, ldat NumRows) {
     return CurrRow;
 }
 
-byte WriteRow(window Window, ldat Len, byte CONST * Text) {
-    row CurrRow;
-    ldat x, y, max, RowLen, NewLen;
-    byte CONST * _Text;
+byte EnsureLenRow(row Row, ldat Len, byte DefaultCol) {
     byte *tempText;
     hwcol *tempColText;
+    ldat NewLen;
+    
+    if (Row->MaxLen<Len) {
+	NewLen=(Len + (Len >> 1)) | All->SetUp->MinAllocSize;
+	if ((tempText=ReAllocMem(Row->Text, NewLen))) {
+	    if (!(Row->Flags & ROW_USE_DEFCOL) && !DefaultCol) {
+		if (!(tempColText=(hwcol *)ReAllocMem(Row->ColText, sizeof(hwcol)*NewLen)))
+		    Row->ColText=tempColText;
+		else
+		    return FALSE;
+	    }
+	    Row->Text=tempText;
+	    Row->MaxLen=NewLen;
+	} else
+	    return FALSE;
+    }
+    return TRUE;
+}
+
+byte WriteRow(window Window, ldat Len, CONST byte *Text) {
+    row CurrRow;
+    ldat x, y, max, RowLen;
+    byte CONST * _Text;
     byte FlagNewRows, ModeInsert;
     
     x=Window->CurX;
     y=Window->CurY;
-    max=Window->MaxNumRow;
-    CurrRow=Window->LastRow;
+    max=Window->HLogic;
+    CurrRow=Window->USE.R.LastRow;
     ModeInsert=Window->Flags & WINFL_INSERT;
     
     if (Window->Attrib & WINDOW_ANYSEL)
@@ -239,12 +260,10 @@ byte WriteRow(window Window, ldat Len, byte CONST * Text) {
 	if (max<=y || (max==y+1 && (*Text==(byte)13 || *Text==(byte)10))) {
 	    if (InsertRowsWindow(Window, Max2(y+1-max,1))) {
 		FlagNewRows=TRUE;
-		max=Window->MaxNumRow;
-		CurrRow=Window->LastRow;
-	    } else {
-		Error(NOMEMORY);
+		max=Window->HLogic;
+		CurrRow=Window->USE.R.LastRow;
+	    } else
 		return FALSE;
-	    }
 	} else {
 	    FlagNewRows=FALSE;
 	    CurrRow=Act(FindRow,Window)(Window, y);
@@ -261,28 +280,14 @@ byte WriteRow(window Window, ldat Len, byte CONST * Text) {
 	if (RowLen) {
 	    if (ModeInsert || (CurrRow && CurrRow->LenGap))
 		return FALSE;
-	
-	    if (CurrRow->MaxLen<x+RowLen) {
-		NewLen=((x+RowLen) + ((x+RowLen) >> 1)) | All->SetUp->MinAllocSize;
-		if ((tempText=ReAllocMem(CurrRow->Text, NewLen))) {
-		    if (!(Window->Flags & WINFL_USE_DEFCOL)) {
-			if ((tempColText=(hwcol *)ReAllocMem(CurrRow->ColText, sizeof(hwcol)*NewLen)))
-			    CurrRow->ColText=tempColText;
-			else {
-			    Error(NOMEMORY);
-			    return FALSE;
-			}
-		    }
-		    CurrRow->Text=tempText;
-		    CurrRow->MaxLen=NewLen;
-		    
-		    if (Window->NumRowOne==y)
-			Window->RowOne=CurrRow;
-		    if (Window->NumRowSplit==y)
-			Window->RowSplit=CurrRow;
-		} else
-		    return FALSE;
-	    }
+
+	    if (!EnsureLenRow(CurrRow, x+RowLen, (Window->Flags & WINFL_USE_DEFCOL)))
+		return FALSE;
+	    
+	    if (Window->USE.R.NumRowOne==y)
+		Window->USE.R.RowOne=CurrRow;
+	    if (Window->USE.R.NumRowSplit==y)
+		Window->USE.R.RowSplit=CurrRow;
 	    CurrRow->Flags=ROW_ACTIVE;
 	
 	    CopyMem(Text, CurrRow->Text+x, RowLen);
@@ -313,11 +318,54 @@ byte WriteRow(window Window, ldat Len, byte CONST * Text) {
 	    Window->CurX=x+=RowLen;
     }
     
-    if (Window==All->FirstScreen->FocusWindow)
+    if (Window==(window)All->FirstScreen->FocusW)
 	UpdateCursor();
     
     return TRUE;
 }
+
+
+
+
+void ExposeAscii(window Window, dat XWidth, dat YWidth, CONST byte *Text, dat Left, dat Up) {
+    if (Window->Flags & WINFL_USEEXPOSE) {
+	if (Text) {
+	    Window->USE.E.Text = Text;
+	    Window->USE.E.X1 = Left;
+	    Window->USE.E.X2 = Left + XWidth - 1;
+	    Window->USE.E.Y1 = Up;
+	    Window->USE.E.Y2 = Up + YWidth - 1;
+	} else {
+	    Window->USE.E.Text = (byte *)1;
+	    Window->USE.E.X1 = Window->USE.E.Y1 =
+		Window->USE.E.X2 = Window->USE.E.Y2 = -1;
+	}
+	
+	DrawLogicWindow2(Window, Left, Up, Left + XWidth - 1, Up + YWidth - 1);
+	Window->USE.E.Text = NULL;
+    }
+}
+
+void ExposeHWAttr(window Window, dat XWidth, dat YWidth, CONST hwattr *Attr, dat Left, dat Up) {
+    if (Window->Flags & WINFL_USEEXPOSE) {
+	if (Attr) {
+	    Window->USE.E.Contents = Attr;
+	    Window->USE.E.X1 = Left;
+	    Window->USE.E.X2 = Left + XWidth - 1;
+	    Window->USE.E.Y1 = Up;
+	    Window->USE.E.Y2 = Up + YWidth - 1;
+	} else {
+	    Window->USE.E.Contents = (hwattr *)1;
+	    Window->USE.E.X1 = Window->USE.E.Y1 =
+		Window->USE.E.X2 = Window->USE.E.Y2 = -1;
+	}
+	
+	DrawLogicWindow2(Window, Left, Up, Left + XWidth - 1, Up + YWidth - 1);
+	Window->USE.E.Contents = NULL;
+    }
+}
+
+
 
 /***************/
 
@@ -518,7 +566,7 @@ void DragFirstWindow(dat i, dat j) {
     else if (j>0 && Window->Up>MAXDAT-j)
 	j=MAXDAT-Window->Up;
 
-    isFocus = Window == Screen->FocusWindow;
+    isFocus = Window == (window)Screen->FocusW;
     
     DWidth=All->DisplayWidth;
     DHeight=All->DisplayHeight;
@@ -704,7 +752,7 @@ void DragWindow(window Window, dat i, dat j) {
 	DrawArea2((screen)0, (widget)0, (widget)0,
 		  (dat)Left, (dat)Up, (dat)Rgt+DeltaXShade, (dat)Dwn, FALSE);
     }
-    if (Window == All->FirstScreen->FocusWindow)
+    if (Window == (window)All->FirstScreen->FocusW)
 	UpdateCursor();
 }
 
@@ -720,7 +768,7 @@ void ResizeRelFirstWindow(dat i, dat j) {
     byte Shade, DeltaXShade, DeltaYShade, HasBorder;
     
     Screen=All->FirstScreen;
-    if (!(Window=(window)Screen->FirstW) || !IS_WINDOW(Window) || !(Window->Attrib & WINDOW_RESIZE))
+    if (!(Window=(window)Screen->FirstW) || !IS_WINDOW(Window) || (!i && !j)) /* || !(Window->Attrib & WINDOW_RESIZE)) */
 	return;
     
     DWidth = All->DisplayWidth;
@@ -826,12 +874,12 @@ void ResizeRelFirstWindow(dat i, dat j) {
     }
     if (DeltaX || DeltaY) {
 	DrawBorderWindow(Window, BORDER_ANY);
-	if (Window == Screen->FocusWindow)
+	if (Window == (window)Screen->FocusW)
 	    UpdateCursor();
 	
 	/* resize contents? for Interactive Resize, let the WM resize it
 	 * when Interactive Resize finishes. otherwise, do it now */
-	if ((Window->Flags & WINFL_USECONTENTS) && Window->Contents &&
+	if ((Window->Flags & WINFL_USECONTENTS) && Window->USE.C.Contents &&
 	    (Window != Screen->ClickWindow || (All->State & STATE_ANY) != STATE_RESIZE))
 	    
 	    CheckResizeWindowContents(Window);
@@ -849,7 +897,7 @@ void ResizeRelWindow(window Window, dat i, dat j) {
     dat DWidth, DHeight;
     byte Shade, DeltaXShade, DeltaYShade;
     
-    if (!Window || !(Window->Attrib & WINDOW_RESIZE) || (!i && !j))
+    if (!Window || (!i && !j)) /* || !(Window->Attrib & WINDOW_RESIZE) */
 	return;
 
     if ((widget)Window == All->FirstScreen->FirstW) {
@@ -909,12 +957,12 @@ void ResizeRelWindow(window Window, dat i, dat j) {
 		DrawShadeWindow(Window, 0, 0, MAXDAT, MAXDAT, FALSE);
 	}
     
-	if (Window == All->FirstScreen->FocusWindow)
+	if (Window == (window)All->FirstScreen->FocusW)
 	    UpdateCursor();
 	
 	/* resize contents? for Interactive Resize, let the WM resize it
 	 * when Interactive Resize finishes. otherwise, do it now */
-	if ((Window->Flags & WINFL_USECONTENTS) && Window->Contents &&
+	if ((Window->Flags & WINFL_USECONTENTS) && Window->USE.C.Contents &&
 	    (Window != All->FirstScreen->ClickWindow || (All->State & STATE_ANY) != STATE_RESIZE))
 	    
 	    CheckResizeWindowContents(Window);
@@ -1023,16 +1071,16 @@ void ScrollFirstWindow(dat DeltaX, dat DeltaY, byte byXYLogic) {
 	    DeltaX=-(dat)XLogic;
 	if (Window->Flags & WINFL_USEANY) {
 	    /*
-	     * WARNING: Window->Contents and other methods
+	     * WARNING: Window->USE.C.Contents and other methods
 	     * may be unable to handle out-of-bound rows
 	     */
-	    if (DeltaY>(dat)0 && (ldat)YLogic+YWidth-2+DeltaY>=Window->MaxNumRow)
-		DeltaY=(dat)(Window->MaxNumRow-YLogic-YWidth+2);
+	    if (DeltaY>(dat)0 && (ldat)YLogic+YWidth-2+DeltaY>=Window->HLogic)
+		DeltaY=(dat)(Window->HLogic-YLogic-YWidth+2);
 	    else if (DeltaY<(dat)0 && YLogic<(ldat)-DeltaY)
 		DeltaY=-(dat)YLogic;
 	} else {
-	    if (DeltaY>(dat)0 && YLogic+DeltaY>=Window->MaxNumRow)
-		DeltaY=(dat)(Window->MaxNumRow-YLogic-(ldat)1);
+	    if (DeltaY>(dat)0 && YLogic+DeltaY>=Window->HLogic)
+		DeltaY=(dat)(Window->HLogic-YLogic-(ldat)1);
 	    else if (DeltaY<(dat)0 && YLogic<(ldat)-DeltaY)
 		DeltaY=-(dat)YLogic;
 	}
@@ -1046,7 +1094,7 @@ void ScrollFirstWindow(dat DeltaX, dat DeltaY, byte byXYLogic) {
 
     ScrollFirstWindowArea(0, 0, XWidth-3, YWidth-3, -DeltaX, -DeltaY);
     
-    if (byXYLogic && Window == All->FirstScreen->FocusWindow)
+    if (byXYLogic && Window == (window)All->FirstScreen->FocusW)
 	UpdateCursor();
 }
 
@@ -1072,16 +1120,16 @@ void ScrollWindow(window Window, dat DeltaX, dat DeltaY) {
 	DeltaX=-(dat)XLogic;
     if (Window->Flags & WINFL_USEANY) {
 	/*
-	 * WARNING: Window->Contents and other methods
+	 * WARNING: Window->USE.C.Contents and other methods
 	 * may be unable to handle out-of-bound rows
 	 */
-	if (DeltaY>(dat)0 && (ldat)YLogic+YWidth-2+DeltaY>=Window->MaxNumRow)
-	    DeltaY=(dat)(Window->MaxNumRow-YLogic-YWidth+2);
+	if (DeltaY>(dat)0 && (ldat)YLogic+YWidth-2+DeltaY>=Window->HLogic)
+	    DeltaY=(dat)(Window->HLogic-YLogic-YWidth+2);
 	else if (DeltaY<(dat)0 && YLogic<(ldat)-DeltaY)
 	    DeltaY=-(dat)YLogic;
     } else {
-	if (DeltaY>(dat)0 && YLogic+DeltaY>=Window->MaxNumRow)
-	    DeltaY=(dat)(Window->MaxNumRow-YLogic-(ldat)1);
+	if (DeltaY>(dat)0 && YLogic+DeltaY>=Window->HLogic)
+	    DeltaY=(dat)(Window->HLogic-YLogic-(ldat)1);
 	else if (DeltaY<(dat)0 && YLogic<(ldat)-DeltaY)
 	    DeltaY=-(dat)YLogic;
     }
@@ -1092,7 +1140,7 @@ void ScrollWindow(window Window, dat DeltaX, dat DeltaY) {
 
     DrawFullWindow2(Window);
 
-    if (Window == All->FirstScreen->FocusWindow)
+    if (Window == (window)All->FirstScreen->FocusW)
 	UpdateCursor();
 }
 
@@ -1107,7 +1155,8 @@ byte ExecScrollFocusWindow(void) {
     if ((All->State & STATE_ANY) != STATE_SCROLL)
 	return FALSE;
     
-    if (!(Screen=All->FirstScreen) || !(Window=Screen->FocusWindow))
+    if (!(Screen = All->FirstScreen) || !(Window = (window)Screen->FocusW) ||
+	!IS_WINDOW(Window))
 	return FALSE;
     
     Attrib=Window->Attrib;
@@ -1197,7 +1246,10 @@ void ChangeMenuFirstScreen(menuitem NewItem, byte ByMouse, byte Flag) {
 	if (All->SetUp->Flags & SETUP_HIDEMENU && Flag==ACTIVATE_MENU_FLAG)
 	    HideMenu(FALSE);
 	
-	CurrWin = Screen->FocusWindow;
+	CurrWin = (window)Screen->FocusW;
+	if (CurrWin && !IS_WINDOW(CurrWin))
+	    CurrWin = (window)0;
+	
 	
 	if (Flag == ACTIVATE_MENU_FLAG)
 	    CurrItem = (menuitem)0;
@@ -1224,7 +1276,7 @@ void ChangeMenuFirstScreen(menuitem NewItem, byte ByMouse, byte Flag) {
 	    
 	    if (Flag==ACTIVATE_MENU_FLAG) {
 		Screen->MenuWindow = CurrWin; /* so that it keeps `active' borders */
-		Screen->FocusWindow = (window)0;
+		Screen->FocusW = (widget)0;
 	    }
 	    
 	    if (NewItem) {
@@ -1273,12 +1325,15 @@ void ChangeMenuFirstScreen(menuitem NewItem, byte ByMouse, byte Flag) {
     Act(DrawMenu,Screen)(Screen, 0, MAXDAT);
 }
 
-void UnFocusWindow(window W) {
-    if (W && W->Parent == (widget)All->FirstScreen && W == All->FirstScreen->FocusWindow) {
-	Act(KbdFocus,W)((window)0);
-	DrawBorderWindow(W, BORDER_ANY);
-	Act(DrawMenu,(screen)W->Parent)((screen)W->Parent, 0, MAXDAT);
-	UpdateCursor();
+void UnFocusWidget(widget W) {
+    if (W && W->Parent == (widget)All->FirstScreen && W == All->FirstScreen->FocusW) {
+	if (IS_WINDOW(W)) {
+	    Act(KbdFocus,W)((widget)0);
+	    DrawBorderWindow((window)W, BORDER_ANY);
+	    Act(DrawMenu,(screen)W->Parent)((screen)W->Parent, 0, MAXDAT);
+	    UpdateCursor();
+	} else
+	    All->FirstScreen->FocusW = (widget)0;
     }
 }
 
@@ -1362,8 +1417,7 @@ void SendMsgGadget(gadget G) {
 	    Event->Code = G->Code;
 	    Event->Flags = G->Flags;
 	    SendMsg(G->Owner, Msg);
-	} else
-	    Error(NOMEMORY);
+	}
     }
 }
 
@@ -1410,11 +1464,13 @@ void UnPressGadget(gadget G, byte maySendMsgIfNotToggle) {
 
 /* Left < 0 means right-align leaving (-Left-1) margin */
 /* Left < 0 means down-align  leaving (-Left-1) margin */
-void WriteTextGadget(gadget G, dat TW, dat TH, CONST byte *Text, dat L, dat U) {
+void WriteTextsGadget(gadget G, byte bitmap, dat TW, dat TH, CONST byte *Text, dat L, dat U) {
     dat GW = G->XWidth, GH = G->YWidth;
     dat TL = 0, TU = 0, W, H;
-    byte *GT = G->Text[0];
-
+    byte *GT;
+    CONST byte *TT;
+    byte i;
+    
     if (G->Flags & GADGET_BUTTON) {
 	GW--; GH--;
     }
@@ -1444,20 +1500,24 @@ void WriteTextGadget(gadget G, dat TW, dat TH, CONST byte *Text, dat L, dat U) {
     }
     
     if (W > 0) {
-	GT += L + U * GW;
-	if (Text) {
-	    Text += TL + TU * TW;
-	    /* update the specified part, do not touch the rest */
-	    while (H-- > 0) {
-		CopyMem(Text, GT, W);
-		Text += TW;
-		GT += GW;
-	    }
-	} else {
-	    /* clear the specified part of gadget contents */
-	    while (H-- > 0) {
-		WriteMem(GT, ' ', W);
-		GT += GW;
+	for (i = 0; i < 4; i++, bitmap>>=1) {
+	    if ((bitmap & 1) && G->Text[i]) {
+		GT = G->Text[i] + L + U * GW;
+		if (Text) {
+		    TT = Text + TL + TU * TW;
+		    /* update the specified part, do not touch the rest */
+		    while (H-- > 0) {
+			CopyMem(TT, GT, W);
+			TT += TW;
+			GT += GW;
+		    }
+		} else {
+		    /* clear the specified part of gadget contents */
+		    while (H-- > 0) {
+			WriteMem(GT, ' ', W);
+			GT += GW;
+		    }
+		}
 	    }
 	}
 	DrawAreaWidget((widget)G);

@@ -66,6 +66,7 @@ else
     ifeq ($(CONF_HW_TTY_TERMCAP),y)
       LIBTERMCAP=-ltermcap
       ifeq ($(CONF_HW_TTY_NCURSES),y)
+        CFLAGS_hw_tty.so+=-I/usr/include/ncurses
         LIBTERMCAP=-lncurses
       endif
       LDFLAGS_hw_tty.so+=$(LIBTERMCAP)
@@ -141,7 +142,7 @@ clean:
 
 install:
 	if [ "$(MODBINS)" ]; then \
-	  $(MKDIR) $(DESTDIR)/lib/twin/modules/HW; \
-	  $(CP) $(MODBINS) $(DESTDIR)/lib/twin/modules/HW; \
-	  $(LN) hw_X11.so $(DESTDIR)/lib/twin/modules/HW/hw_X.so; \
+	  $(INSTALL) -d $(DESTDIR)$(libdir)/twin/modules/HW; \
+	  $(INSTALL) $(MODBINS) $(DESTDIR)$(libdir)/twin/modules/HW; \
+	  $(LN) hw_X11.so $(DESTDIR)$(libdir)/twin/modules/HW/hw_X.so; \
 	fi

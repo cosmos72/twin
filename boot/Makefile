@@ -14,7 +14,7 @@ MODBINS=
 #
 # target
 #
-all: sizes.h
+all: $(TOPDIR)/include/Tw/datasizes.h
 
 #
 # read configuration
@@ -32,10 +32,9 @@ include $(TOPDIR)/MakeRules
 # All done. Now just set a few special targets
 #
 
-sizes.h: getsizes.c $(TOPDIR)/include/twin.h
+$(TOPDIR)/include/Tw/datasizes.h: getsizes.c
 	$(CC) $(CFLAGS) getsizes.c $(LDFLAGS) -o getsizes
-	./getsizes > $(TOPDIR)/include/sizes.h
-	$(LN) $(TOPDIR)/include/sizes.h sizes.h
+	./getsizes > $(TOPDIR)/include/Tw/datasizes.h
 
 clean:
 	rm -f .*.flags .*.link gmon.out core getsizes $(ALLOBJS)

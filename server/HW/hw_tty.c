@@ -29,7 +29,7 @@
 #include "hw_dirty.h"
 #include "common.h"
 
-#include "libTwkeys.h"
+#include "Tw/Twkeys.h"
 
 
 #if !defined(CONF_HW_TTY_LINUX) && !defined(CONF_HW_TTY_TWTERM) && !defined(CONF_HW_TTY_TERMCAP)
@@ -753,7 +753,8 @@ byte tty_InitHW(void) {
     setvbuf(stdOUT, NULL, _IOFBF, BUFSIZ);
 
     tty_number = 0;
-    if (tty_name && !strncmp(tty_name, "/dev/tty", 8)) {
+    if (tty_name && (!strncmp(tty_name, "/dev/tty", 8) ||
+		     !strncmp(tty_name, "/dev/vc/", 8))) {
 	s = tty_name + 8;
 	while (*s && *s >= '0' && *s <= '9') {
 	    tty_number *= 10;

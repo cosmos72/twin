@@ -40,10 +40,8 @@ Torture: torture
 clean:
 
 install:
-	if [ -d $(DESTDIR)/share/doc ]; then \
-	  $(MKDIR) $(DESTDIR)/share/doc/twin/docs && \
-	  $(CP) $(DOCS) $(DESTDIR)/share/doc/twin/docs; \
-	  cd $(TOPDIR) && \
-	  $(CP) $(TOPDOCS) $(DESTDIR)/share/doc/twin; \
-	fi
-
+	$(INSTALL) -d $(DESTDIR)$(mandir)/man1
+	$(INSTALL) twin.1 $(DESTDIR)$(mandir)/man1
+	$(INSTALL) -d $(DESTDIR)$(datadir)/twin/docs
+	$(INSTALL) $(DOCS) $(DESTDIR)$(datadir)/twin/docs
+	cd $(TOPDIR) && $(INSTALL) $(TOPDOCS) $(DESTDIR)$(datadir)/twin

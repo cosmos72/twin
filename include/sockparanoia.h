@@ -19,7 +19,7 @@
 # define PREFIX_VOID	void
 # define PREFIX
 #else
-# error you must #include at least one of "twin.h" or "libTw.h"
+# error you must #include at least one of "twin.h" or "Tw/Tw.h"
 #endif
 
 #define Act(fn,funct,name)

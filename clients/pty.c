@@ -25,7 +25,7 @@
 # include <stdlib.h>
 #endif
 
-#include "libTw.h"
+#include "Tw/Tw.h"
 
 #include "term.h"
 

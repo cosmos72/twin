@@ -12,6 +12,9 @@
 
 #include <sys/time.h>
 #include <sys/types.h>
+#include <sys/socket.h>  
+#include <sys/stat.h>
+#include <sys/un.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <grp.h>
@@ -22,13 +25,14 @@
 #include "methods.h"
 #include "main.h"
 #include "draw.h"
+#include "remote.h"
 #include "resize.h"
 #include "printk.h"
 #include "util.h"
 
 #include "hw.h"
 
-#include "libTwkeys.h"
+#include "Tw/Twkeys.h"
 
 udat ErrNo;
 byte CONST * ErrStr;
@@ -44,6 +48,9 @@ byte Error(udat Code_Error) {
     switch ((ErrNo = Code_Error)) {
       case NOMEMORY:
 	ErrStr = "Out of memory!";
+	break;
+      case NOTABLES:
+	ErrStr = "Internal tables full!";
 	break;
       case SYSCALLERROR:
 	ErrStr = strerror(errno);
@@ -392,17 +399,17 @@ byte SetSelectionFromWindow(window Window) {
     if (Window->XstSel < 0)
 	Window->XstSel = 0;
     else if ((Window->Flags & WINFL_USECONTENTS) &&
-	     Window->XstSel >= Window->NumRowOne) {
+	     Window->XstSel >= Window->WLogic) {
 	Window->XstSel = 0;
 	Window->YstSel++;
     }
     if (Window->YstSel < Window->YLogic) {
 	Window->YstSel = Window->YLogic;
 	Window->XstSel = 0;
-    } else if (Window->YstSel >= Window->MaxNumRow) {
-	Window->YstSel = Window->MaxNumRow - 1;
+    } else if (Window->YstSel >= Window->HLogic) {
+	Window->YstSel = Window->HLogic - 1;
 	Window->XstSel = (Window->Flags & WINFL_USECONTENTS) ?
-	    Window->NumRowOne - 1 : MAXLDAT;
+	    Window->WLogic - 1 : MAXLDAT;
     }
 
     if (Window->Flags & WINFL_USECONTENTS) {
@@ -410,26 +417,26 @@ byte SetSelectionFromWindow(window Window) {
 	
 	/* normalize negative coords */
         if (Window->XendSel < 0) {
-	    Window->XendSel = Window->NumRowOne - 1;
+	    Window->XendSel = Window->WLogic - 1;
 	    Window->YendSel--;
-	} else if (Window->XendSel >= Window->NumRowOne)
-	    Window->XendSel = Window->NumRowOne - 1;
+	} else if (Window->XendSel >= Window->WLogic)
+	    Window->XendSel = Window->WLogic - 1;
 	    
 	if (Window->YendSel < Window->YLogic) {
 	    Window->YendSel = Window->YLogic;
 	    Window->XendSel = 0;
-	} else if (Window->YendSel >= Window->MaxNumRow) {
-	    Window->YendSel = Window->MaxNumRow - 1;
-	    Window->XendSel = Window->NumRowOne - 1;
+	} else if (Window->YendSel >= Window->HLogic) {
+	    Window->YendSel = Window->HLogic - 1;
+	    Window->XendSel = Window->WLogic - 1;
 	}
 	
-	if (!(sData = AllocMem(slen = Window->NumRowOne)))
+	if (!(sData = AllocMem(slen = Window->WLogic)))
 	    return FALSE;
 	
 	
-	hw = Window->Contents + (Window->YstSel + Window->NumRowSplit) * slen;
-	while (hw >= Window->TtyData->Split)
-	    hw -= Window->TtyData->Split - Window->Contents;
+	hw = Window->USE.C.Contents + (Window->YstSel + Window->USE.C.HSplit) * slen;
+	while (hw >= Window->USE.C.TtyData->Split)
+	    hw -= Window->USE.C.TtyData->Split - Window->USE.C.Contents;
 	
 	{
 	    y = Window->YstSel;
@@ -445,13 +452,13 @@ byte SetSelectionFromWindow(window Window) {
 	    ok &= SelectionStore(SEL_TEXTMAGIC, NULL, slen, sData);
 	}
 	
-	if (hw >= Window->TtyData->Split)
-	    hw -= Window->TtyData->Split - Window->Contents;
+	if (hw >= Window->USE.C.TtyData->Split)
+	    hw -= Window->USE.C.TtyData->Split - Window->USE.C.Contents;
 
-	slen = Window->NumRowOne;
+	slen = Window->WLogic;
 	for (y = Window->YstSel + 1; ok && y < Window->YendSel; y++) {
-	    if (hw >= Window->TtyData->Split)
-		hw -= Window->TtyData->Split - Window->Contents;
+	    if (hw >= Window->USE.C.TtyData->Split)
+		hw -= Window->USE.C.TtyData->Split - Window->USE.C.Contents;
 	    Data = sData;
 	    len = slen;
 	    while (len--)
@@ -460,8 +467,8 @@ byte SetSelectionFromWindow(window Window) {
 	}
 	
 	if (ok && Window->YendSel > Window->YstSel) {
-	    if (hw >= Window->TtyData->Split)
-		hw -= Window->TtyData->Split - Window->Contents;
+	    if (hw >= Window->USE.C.TtyData->Split)
+		hw -= Window->USE.C.TtyData->Split - Window->USE.C.Contents;
 	    Data = sData;
 	    len = slen = Window->XendSel + 1;
 	    while (len--)
@@ -510,15 +517,16 @@ byte SetSelectionFromWindow(window Window) {
 
 
 byte CreateXTermMouseEvent(event_mouse *Event, byte buflen, byte *buf) {
-    byte len = 0;
+    window W;
+    udat Flags;
     udat Code = Event->Code;
     dat x = Event->X, y = Event->Y;
-    udat Flags;
+    byte len = 0;
 	
-    if (!Event->Window || !Event->Window->TtyData)
+    if (!(W = Event->Window) || !(W->Flags & WINFL_USECONTENTS) || !W->USE.C.TtyData)
 	return len;
     
-    Flags = Event->Window->TtyData->Flags;
+    Flags = W->USE.C.TtyData->Flags;
     
     if (Flags & TTY_REPORTMOUSE2) {
 	/* classic xterm-style reporting */
@@ -579,12 +587,12 @@ void FallBackKeyAction(window W, event_keyboard *EventK) {
     
     if (W->Attrib & WINDOW_AUTO_KEYS) switch (EventK->Code) {
       case TW_Up:
-	if (!W->MaxNumRow)
+	if (!W->HLogic)
 	    break;
 	OldNumRow=W->CurY;
 	if (OldNumRow<MAXLDAT) {
 	    if (!OldNumRow)
-		NumRow=W->MaxNumRow-(ldat)1;
+		NumRow=W->HLogic-(ldat)1;
 	    else
 		NumRow=OldNumRow-(ldat)1;
 	    W->CurY=NumRow;
@@ -592,17 +600,17 @@ void FallBackKeyAction(window W, event_keyboard *EventK) {
 		DrawLogicWindow2(W, (ldat)0, OldNumRow, (ldat)MAXDAT-(ldat)2, OldNumRow);
 	}
 	else
-	    W->CurY=NumRow=W->MaxNumRow-(ldat)1;
+	    W->CurY=NumRow=W->HLogic-(ldat)1;
 	if (W->Flags & WINFL_SEL_ROWCURR)
 	    DrawLogicWindow2(W, (ldat)0, NumRow, (ldat)MAXDAT-(ldat)2, NumRow);
 	UpdateCursor();
 	break;
       case TW_Down:
-	if (!W->MaxNumRow)
+	if (!W->HLogic)
 	    break;
 	OldNumRow=W->CurY;
 	if (OldNumRow<MAXLDAT) {
-	    if (OldNumRow>=W->MaxNumRow-(ldat)1)
+	    if (OldNumRow>=W->HLogic-(ldat)1)
 		NumRow=(ldat)0;
 	    else
 		NumRow=OldNumRow+(ldat)1;
@@ -696,44 +704,111 @@ void FreeStringVec(byte **cmd) {
     }
 }
 
+
+
+
+int unixFd;
+uldat unixSlot;
+
+static void TWDisplayIO(int fd, uldat slot) {
+    struct sockaddr_un un_addr;
+    int len = sizeof(un_addr);
+    
+    if ((fd = accept(fd, (struct sockaddr *)&un_addr, &len)) >= 0) {
+	close(fd);
+    }
+}
+
 static byte fullTWD[]="/tmp/.Twin:\0\0\0";
 static byte envTWD[]="TWDISPLAY=\0\0\0\0";
 
-/* set TWDISPLAY */
-byte SetTWDisplay(void) {
-    int i, fd;
-    byte *arg0;
-
-    HOME = getenv("HOME");
+/* set TWDISPLAY and create /tmp/.Twin:<x> */
+byte InitTWDisplay(void) {
+    struct sockaddr_un addr;
+    int i, fd = NOFD;
+    byte *arg0, ok;
     
-    for (i=0; i<0x1000; i++) {
-	sprintf(fullTWD+11, "%x", i);
-	if ((fd = open(fullTWD, O_WRONLY|O_CREAT|O_TRUNC|O_EXCL, 0600)) >= 0) {
-	    close(fd);
-	    TWDisplay = fullTWD+10;
-	    lenTWDisplay = LenStr(TWDisplay);
-	    
-	    CopyMem(TWDisplay, envTWD+10, lenTWDisplay);
-	    putenv(envTWD);
-	    putenv("TERM=linux");
-	    if ((arg0 = AllocMem(LenStr(TWDisplay) + 6))) {
-		strcpy(arg0, "twin ");
-		strcat(arg0, TWDisplay);
-		SetArgv_0(main_argv, arg0);
-		FreeMem(arg0);
+    HOME = getenv("HOME");
+
+    
+    if ((unixFd = socket(AF_UNIX, SOCK_STREAM, 0)) >= 0) {
+
+    WriteMem(&addr, 0, sizeof(addr));
+    addr.sun_family = AF_UNIX;
+
+	for (i=0; i<0x1000; i++) {
+	    sprintf(fullTWD+11, "%x", i);
+	    CopyStr(fullTWD, addr.sun_path);
+
+	    ok = bind(unixFd, (struct sockaddr *)&addr, sizeof(addr)) >= 0;
+	    if (!ok) {
+		/* maybe /tmp/.Twin:<x> is already in use... */
+		if (fd >= 0 || (fd = socket(AF_UNIX, SOCK_STREAM, 0)) >= 0) {
+		    if (connect(fd, (struct sockaddr *)&addr, sizeof(addr)) >= 0) {
+			/*
+			 * server is alive, try to grab another TWDISPLAY.
+			 * also, we must junk `fd' since SOCK_STREAM sockets
+			 * can connect() only once
+			 */
+			close(fd);
+			fd = NOFD;
+			continue;
+		    }
+		    /* either server is dead or is owned by another user */
+		    if (unlink(fullTWD) >= 0) {
+			/*
+			 * if we have permission to delete it, we also had
+			 * the permission to connect to it (hope).
+			 * So it must have been be a stale socket.
+			 * 
+			 * Trying to delete a /tmp/.Twin:<x> entry we cannot
+			 * connect to wreaks havoc if you mix this twin server
+			 * with older ones, but having two different servers
+			 * installed on one system should be rare enough.
+			 */
+			ok = bind(unixFd, (struct sockaddr *)&addr, sizeof(addr)) >= 0;
+		    }
+		}
 	    }
-	    return TRUE;
+	    if (ok) {
+		if (chmod(fullTWD, 0700) >= 0 &&
+		    listen(unixFd, 3) >= 0 &&
+		    fcntl(unixFd, F_SETFD, FD_CLOEXEC) >= 0) {
+		    
+		    if ((unixSlot = RegisterRemoteFd(unixFd, TWDisplayIO)) != NOSLOT) {
+			
+			if (fd != NOFD)
+			    close(fd);
+			TWDisplay = fullTWD+10;
+			lenTWDisplay = LenStr(TWDisplay);
+			CopyMem(TWDisplay, envTWD+10, lenTWDisplay);
+			putenv(envTWD);
+			putenv("TERM=linux");
+			if ((arg0 = AllocMem(LenStr(TWDisplay) + 6))) {
+			    sprintf(arg0, "twin %s", TWDisplay);
+			    SetArgv_0(main_argv, arg0);
+			    FreeMem(arg0);
+			}
+			return TRUE;
+		    }
+		} else
+		    Error(SYSCALLERROR);
+		close(unixFd);
+	    }
 	}
     }
+    if (fd != NOFD)
+	close(fd);
     printk("twin: all TWDISPLAY already in use!\n"
 	    "      Please cleanup stale /tmp/.Twin* sockets and try again\n");
     return FALSE;
 }
 
-/* unlink /tmp/.Twin$TWDISPLAY */
-void UnSetTWDisplay(void) {
+/* unlink /tmp/.Twin<TWDISPLAY> */
+void QuitTWDisplay(void) {
     unlink(fullTWD);
 }
+
 
 
 
@@ -863,8 +938,10 @@ INLINE byte _AssignId(byte i, obj Obj) {
 	    if (!IdList[i][j])
 		break;
 	IdBottom[i] = j;
+	return TRUE;
     }
-    return Id != NOSLOT;
+    Error(NOTABLES);
+    return FALSE;
 }
 
 INLINE void _DropId(byte i, obj Obj) {

@@ -1,7 +1,11 @@
 #ifndef _TW_RESIZE_H
 #define _TW_RESIZE_H
 
+byte EnsureLenRow(row Row, ldat Len, byte DefaultCol);
 byte WriteRow(window Window, ldat Len, byte CONST * Text);
+
+void ExposeAscii(window Window, dat XWidth, dat YWidth, CONST byte *Text, dat Left, dat Up);
+void ExposeHWAttr(window Window, dat XWidth, dat YWidth, CONST hwattr *Attr, dat Left, dat Up);
 
 void UpdateCursor(void);
 
@@ -33,7 +37,7 @@ void ScrollFirstWindow(dat DeltaX, dat DeltaY, byte byXYLogic);
 void ScrollWindow(window Window, dat DeltaX, dat DeltaY);
 void ScrollFirstWindowArea(dat X1, dat Y1, dat X2, dat Y2, dat DeltaX, dat DeltaY);
 
-void UnFocusWindow(window W);
+void UnFocusWidget(widget W);
 void RollUpWindow(window W, byte on_off);
 
 void MakeFirstWindow(window Window, byte alsoFocus);
@@ -42,7 +46,7 @@ void MakeLastWindow(window Window, byte alsoDeFocus);
 void PressGadget(gadget G);
 void UnPressGadget(gadget G, byte maySendMsgIfNotToggle);
 void SendMsgGadget(gadget G);
-void WriteTextGadget(gadget G, dat XWidth, dat YWidth, CONST byte *Text, dat Left, dat Up);
+void WriteTextsGadget(gadget G, byte bitmap, dat XWidth, dat YWidth, CONST byte *Text, dat Left, dat Up);
 
 #endif /* _TW_RESIZE_H */
 

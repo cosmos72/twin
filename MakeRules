@@ -2,15 +2,8 @@
 # Top level, common rules
 #
 
-# set install directory
-DESTDIR=/usr/local
-
 # choose your favorite C compiler
 CC=gcc
-
-# choose the C++ compiler to build C++ socket library wrapper
-# (only used if you enable CONF_SOCKET_CPP)
-CCPLUS=g++
 
 #
 # Uncomment this to turn debugging on
@@ -20,12 +13,15 @@ CCPLUS=g++
 # compile/link flags. Always use += to set variables here!
 #
 ifdef DEBUG
- CFLAGS+=-g -DINLINE=static -pipe
+ OPT_FLAGS+=-g
+ CFLAGS+=$(OPT_FLAGS) -pipe
  LDFLAGS+=-g
 else
- CFLAGS+=-O2 -fomit-frame-pointer -DINLINE="extern inline" -pipe
+ OPT_FLAGS+=-O2 -fomit-frame-pointer
+ CFLAGS+=$(OPT_FLAGS) -DINLINE="extern inline" -pipe
  LDFLAGS+=-s
 endif
+
 
 #
 # how picky should your compiler be? uncomment for paranoid gcc settings.
@@ -40,6 +36,12 @@ ifeq ($(CC),gcc)
     CFLAGS+=-Wstrict-prototypes -Wcast-qual -Wcast-align -Wpointer-arith -Wbad-function-cast -Waggregate-return -Winline
   endif
 endif
+
+
+#
+# set 'install' program
+#
+INSTALL=install
 
 
 #
@@ -81,7 +83,16 @@ MKDIR=mkdir -p
 # --------------- no user-serviceable parts below this line ----------------
 #
 
-TWIN_VERSION_STR=0.3.7
+
+ifeq ($(prefix),)
+  include $(TOPDIR)/MakePaths
+endif
+
+ifeq ($(filter -r,$(MAKEFLAGS)),)
+  MAKEFLAGS+=-r
+endif
+
+TWIN_VERSION_STR=0.3.8
 
 CFLAGS+=-I$(TOPDIR)/include
 

@@ -39,7 +39,8 @@ else
 endif
 
 install:
-	$(CP) $(BINS) $(DESTDIR)/bin 
+	$(INSTALL) -d $(DESTDIR)$(bindir)
+	$(INSTALL) $(BINS) $(DESTDIR)$(bindir)
 
 clean:
 	rm -f .*.flags .*.link gmon.out core $(OBJS) $(BINS)

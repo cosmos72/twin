@@ -17,11 +17,12 @@
  */
 
 #include "twin.h"
-#include "sizes.h"
-
+#include "util.h"
 
 
 #ifdef DEBUG_MALLOC
+
+#include "printk.h"
 
 #ifdef CONF__ALLOC
   /* bounds are calculated runtime */
@@ -56,6 +57,9 @@ void panic_free(void *v) {
  */
 #include <sys/types.h>
 #include <sys/mman.h>
+
+#include "util.h"
+
 
 #if TW_PAGE_SIZE <= _MAXUDAT
    typedef udat delta;
@@ -110,9 +114,9 @@ typedef struct parent {
  * not at 16 like the general version below (not a problem on Intel)
  */
 #define TW_PAGE_DATA 16
-#define KINDS 17
-static delta  Sizes[KINDS+1] = {   1,   2,  4,  8, 16, 24,48,96,184,288,448,576,808,1016,1352,2032,4079,4096};
-static delta Counts[KINDS+1] = {3626,1920,989,502,253,169,84,42, 22, 14,  9,  7,  5,   4,   3,   2,   1,   1};
+#define KINDS 18
+static delta  Sizes[KINDS+1] = {   1,   2,  4,  8, 16, 32,64,96,144,208,312,448,576,808,1016,1352,2032,4079,4096};
+static delta Counts[KINDS+1] = {3626,1920,989,502,253,127,63,42, 28, 19, 13,  9,  7,  5,   4,   3,   2,   1,   1};
 static parent Heads[KINDS];
 
 byte InitAlloc(void) {
@@ -459,6 +463,7 @@ void *AllocMem(size_t len) {
 	    return B_DATA(B, 0);
 	}
     }
+    Error(NOMEMORY);
     return (void *)0;
 }
 
@@ -545,6 +550,7 @@ void *ReAllocMem(void *Mem, uldat newSize) {
 		    FreeMem(Mem);
 		    return newMem;
 		}
+		Error(NOMEMORY);
 	    }
 	} else if (B->Kind == KINDS) {
 	    if (Mem == B_DATA(B, 0)) {
@@ -568,26 +574,22 @@ void *ReAllocMem(void *Mem, uldat newSize) {
 		    DropBs(B, oldSize);
 		    return B_DATA(A, 0);
 		}
+		Error(NOMEMORY);
 	    }
 	}
     }
     return newMem;
 }
 
-#else /* CONF__ALLOC */
+#else /* !CONF__ALLOC */
 
-
-#ifdef DEBUG_MALLOC
-
-#undef FreeMem
-
-void FreeMem(void *Mem) {
-    if (FAIL(Mem))
-	return;
-    free(Mem);
+void *AllocMem(size_t Size) {
+    byte Error(udat Code_Error);
+    void *res;
+    if (!(res = malloc(Size)))
+	Error(NOMEMORY);
+    return res;
 }
-
-#endif /* DEBUG_MALLOC */
 
 #endif /* CONF__ALLOC */
 

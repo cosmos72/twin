@@ -7,8 +7,8 @@
 
 #include <stdio.h>
 
-#include "libTw.h"
-#include "libTwerrno.h"
+#include "Tw/Tw.h"
+#include "Tw/Twerrno.h"
 
 #define COD_QUIT      (udat)1
 
@@ -38,7 +38,7 @@ static byte InitClip(void) {
 	  TW_LINECURSOR,
 	  TW_WINDOW_WANT_KEYS|TW_WINDOW_DRAG|TW_WINDOW_RESIZE|TW_WINDOW_X_BAR|TW_WINDOW_Y_BAR|TW_WINDOW_CLOSE,
 	  TW_WINFL_CURSOR_ON|TW_WINFL_USE_DEFCOL,
-	  40, 20, 0)) &&
+	  38, 18, 0)) &&
 	(Window=TwWin4Menu(Clip_Menu)) &&
 	(TwRow4Menu(Window, COD_QUIT, TW_ROW_INACTIVE, 17, " Quit      Alt-X ") ,
 	 TwItem4Menu(Clip_Menu, Window, TRUE, 6, " File "))) {

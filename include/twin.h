@@ -15,10 +15,18 @@
 
 #include "twinsys.h"
 
+#include "Tw/datatypes.h"
+#include "Tw/datasizes.h"
+
 
 
 #if !defined(CONST)
 # define CONST const
+#endif
+
+/* inline is NOT a standard C feature :( */
+#if !defined(INLINE)
+# define INLINE static
 #endif
 
 #if !defined(VOLATILE)
@@ -45,27 +53,6 @@
 
 /***************/
 
-typedef   signed char	 num;
-typedef unsigned char	byte;
-typedef   signed short	 dat;
-typedef unsigned short	udat;
-typedef   signed int	ldat;
-typedef unsigned int   uldat;
-
-#define MAXU(t)		((t)~(t)0)
-#define MINS(t)		((t)((t)1<<(8*sizeof(t)-1)))
-#define MAXS(t)		((t)~MINS(t))
-
-#define MINNUM		MINS(num)
-#define MAXNUM		MAXS(num)
-#define MAXBYTE		MAXU(byte)
-#define MINDAT		MINS(dat)
-#define MAXDAT		MAXS(dat)
-#define MAXUDAT		MAXU(udat)
-#define MINLDAT		MINS(ldat)
-#define MAXLDAT		MAXS(ldat)
-#define MAXULDAT	MAXU(uldat)
-
 #define NOFD   (-1)
 #define specFD   (-2)	/* use for every FD that needs a special RemoteFlush()
 			 * instead of a plain write() and set PrivateFlush as needed */
@@ -73,8 +60,10 @@ typedef unsigned int   uldat;
 #define NOPID  ((pid_t)0)
 #define NOSLOT MAXULDAT
 
-#define FALSE	((byte)0)
-#define TRUE	(!FALSE)
+#ifndef FALSE
+# define FALSE	((byte)0)
+# define TRUE	(!FALSE)
+#endif
 
 /* "Twin" in native byte-order */
 #define TWIN_MAGIC ((uldat)0x6E697754ul)
@@ -91,11 +80,6 @@ typedef unsigned int   uldat;
 #define BIGBUFF		4096
 #define HUGEBUFF	131072
 
-
-/* types for (hardware) text mode data */
-typedef unsigned short hwattr;
-typedef unsigned char  hwcol;
-typedef unsigned char  hwfont;
 
 /* Macros for HW VGA (not ANSI!) colors */
 #define BLACK	((hwcol)0)
@@ -129,9 +113,15 @@ typedef unsigned char  hwfont;
 
 
 /* hwattr <-> hwcol+hwfont conversion */
-#define HWATTR(col,ascii) (((hwattr)(col)<<8) | (hwattr)(hwfont)(ascii))
-#define HWCOL(attr) ((hwcol)(attr>>8))
-#define HWFONT(attr) ((byte)(hwfont)(attr))
+#if TW_BYTE_ORDER == TW_LITTLE_ENDIAN
+# define HWATTR(col,ascii) (((hwattr)(col)<<8) | (hwattr)(hwfont)(ascii))
+# define HWCOL(attr) ((hwcol)(attr>>8))
+# define HWFONT(attr) ((byte)(hwfont)(attr))
+#else
+# define HWATTR(col,ascii) ((hwattr)(col) | ((hwattr)(hwfont)(ascii)<<8))
+# define HWCOL(attr) ((hwcol)(attr))
+# define HWFONT(attr) ((byte)(hwfont)((attr)>>8))
+#endif /* TW_BYTE_ORDER == TW_LITTLE_ENDIAN */
 
 /*
  * Notes about the timevalue struct:
@@ -156,7 +146,6 @@ typedef unsigned char  hwfont;
  *    FullSECs, MilliSECs, MicroSECs, NanoSECs.
  *    Others may be added in the future (PicoSECs, FemtoSECs, AttoSECs, ...)
  */
-typedef ldat frac_t;
 
 typedef struct s_timevalue  {
     time_t Seconds;
@@ -169,12 +158,6 @@ typedef struct s_timevalue  {
 #define MicroSECs	* (THOUSAND NanoSECs)
 #define MilliSECs	* (THOUSAND MicroSECs)
 #define FullSECs	* (THOUSAND MilliSECs)
-
-/* this is tricky... we don't know signedness nor sizeof(time_t) during preprocess */
-#define MAXTIME_T	( (time_t)-1 > (time_t)0 ? MAXU(time_t) : MAXS(time_t) )
-#define MINTIME_T	( (time_t)-1 > (time_t)0 ? (time_t)0 : MINS(time_t) )
-#define MAXFRAC_T	MAXS(frac_t)
-#define MINFRAC_T	MINS(frac_t)
 
 #define ABS(x) ((x)>0 ? (x) : -(x))
 
@@ -372,6 +355,8 @@ struct s_fn_widget {
     gadget (*FindGadgetByCode)(widget Parent, udat Code);
     void (*SetXY)(widget, dat X, dat Y);
     void (*SetFill)(widget, hwattr Fill);
+    widget (*Focus)(widget);
+    widget (*KbdFocus)(widget);
     void (*Map)(widget, widget Parent);
     void (*UnMap)(widget);
     void (*Own)(widget, msgport);
@@ -405,7 +390,7 @@ struct s_gadget {
 struct s_fn_gadget {
     uldat Magic, Size, Used;
     gadget (*Create)
-	(fn_gadget, widget Parent, dat XWidth, dat YWidth,
+	(fn_gadget, msgport Owner, widget Parent, dat XWidth, dat YWidth,
 	 CONST byte *TextNormal, udat Code, udat Flags,
 	 hwcol ColText, hwcol ColTextSelect, hwcol ColTextDisabled, hwcol ColTextSelectDisabled,
 	 dat Left, dat Up,       CONST byte *TextSelect, CONST byte *TextDisabled, CONST byte *TextSelectDisabled,
@@ -420,6 +405,8 @@ struct s_fn_gadget {
     gadget (*FindGadgetByCode)(gadget Parent, udat Code);
     void (*SetXY)(gadget, dat X, dat Y);
     void (*SetFill)(widget, hwattr Fill);
+    widget (*Focus)(gadget);
+    widget (*KbdFocus)(gadget);
     void (*Map)(gadget, widget Parent);
     void (*UnMap)(gadget);
     void (*Own)(gadget, msgport);
@@ -433,7 +420,7 @@ struct s_fn_gadget {
     gadget (*CreateButton)(fn_gadget Fn_Gadget, widget Parent, dat XWidth, dat YWidth, CONST byte *Text,
 			      udat Code, udat Flags, hwcol BgCol, hwcol Col, hwcol ColDisabled,
 			      dat Left, dat Up);
-    void (*WriteText)(gadget Gadget, dat XWidth, dat YWidth, CONST byte *Text, dat Left, dat Up);
+    void (*WriteTexts)(gadget Gadget, byte bitmap, dat XWidth, dat YWidth, CONST byte *Text, dat Left, dat Up);
 };
 
 /*Flags : */
@@ -485,7 +472,6 @@ struct s_window {
     dat LenTitle;
     byte *Title; hwcol *ColTitle;
     byte *BorderPattern[2];
-    ttydata *TtyData;
     remotedata RemoteData;
     ldat CurX, CurY;
     ldat XstSel, YstSel, XendSel, YendSel;
@@ -496,14 +482,26 @@ struct s_window {
     uldat CursorType;
     dat MinXWidth, MinYWidth;
     dat MaxXWidth, MaxYWidth;
-    hwattr *Contents;
-    ldat MaxNumRow;
-    row FirstRow, LastRow;
-    row RowOne, RowSplit;	/*RESERVED: used to optimize the drawing on screen */
-    ldat NumRowOne, NumRowSplit;/*RESERVED: updated automatically by WriteRow. To insert */
+    ldat WLogic, HLogic;	/* window interior logic size */
+    union {
+	struct {		/* for WINFL_USEROWS windows */
+	    row FirstRow, LastRow;
+	    row RowOne, RowSplit;	/*RESERVED: used to optimize the drawing on screen */
+	    ldat NumRowOne, NumRowSplit;/*RESERVED: updated automatically by WriteRow. To insert */
 				/*or remove manually rows, you must zero out NumRowOne */
 				/*and NumRowSplit forcing twin to recalculate them */
-    
+	} R;
+	struct {		/* for WINFL_USECONTENTS windows */
+	    hwattr *Contents;
+	    ttydata *TtyData;
+	    ldat HSplit;
+	} C;
+	struct {		/* for WINFL_USEEXPOSE windows */
+	    CONST hwattr *Contents;
+	    CONST byte *Text;
+	    ldat X1, Y1, X2, Y2;
+	} E;
+    } USE;
     fn_hook ShutDownHook; /* hooks for this widget */
     fn_hook Hook, *WhereHook;
     fn_hook MapUnMapHook;
@@ -525,6 +523,8 @@ struct s_fn_window {
     gadget (*FindGadgetByCode)(window Parent, udat Code);
     void (*SetXY)(window, dat X, dat Y);
     void (*SetFill)(window, hwattr Fill);
+    widget (*Focus)(window);
+    widget (*KbdFocus)(window);
     void (*Map)(window, widget Parent);
     void (*UnMap)(window);
     void (*Own)(window, msgport);
@@ -534,10 +534,11 @@ struct s_fn_window {
     fn_widget Fn_Widget;
     void (*WriteAscii)(window, ldat Len, CONST byte *Text);
     void (*WriteHWAttr)(window, dat x, dat y, ldat Len, CONST hwattr *Attr);
-    window (*KbdFocus)(window);
-    window (*Focus)(window);
-    void (*GotoXY)(window, ldat X, ldat Y);
     byte (*WriteRow)(window, ldat Len, CONST byte *Text);
+    void (*ExposeAscii)(window, dat XWidth, dat YWidth, CONST byte *, dat Left, dat Up);
+    void (*ExposeHWAttr)(window, dat XWidth, dat YWidth, CONST hwattr *, dat Left, dat Up);
+    
+    void (*GotoXY)(window, ldat X, ldat Y);
     void (*SetColText)(window, hwcol ColText);
     void (*SetColors)(window, udat Bitmap,
 		      hwcol ColGadgets, hwcol ColArrows, hwcol ColBars, hwcol ColTabs, hwcol ColBorder,
@@ -604,7 +605,7 @@ struct s_fn_window {
 /* Window->Flags */
 /* #define WINFL_USEROWS	((byte)0x00) *//* it's the default */
 #define WINFL_USECONTENTS	((byte)0x01)
-#define WINFL_BYUSER		((byte)0x02)
+#define WINFL_USEEXPOSE		((byte)0x02)
 #define WINFL_USEANY		((byte)0x03)
 
 #define WINFL_USE_DEFCOL	((byte)0x04)
@@ -635,7 +636,7 @@ struct s_screen {
     widget dummyParent;/* NULL */
     /* widget */
     widget FirstW, LastW; /* list of children */
-    widget SelectW;	    /* selected child */
+    widget FocusW;	    /* same as SelectW : focused child */
     dat dummyLeft, YLimit, dummyXWidth, dummyYWidth;
     hwattr Fill;
     ldat XLogic, YLogic;
@@ -644,7 +645,7 @@ struct s_screen {
     /* screen */
     dat LenTitle;
     byte *Title;
-    window FocusWindow /* will use SelectW */, MenuWindow, ClickWindow;
+    window MenuWindow, ClickWindow;
     udat Attrib;
     dat BgWidth, BgHeight;
     hwattr *Bg;
@@ -664,7 +665,10 @@ struct s_fn_screen {
     void (*DrawSelf)(draw_ctx *D);
     widget (*FindWidgetAt)(screen Parent, dat X, dat Y);
     gadget (*FindGadgetByCode)(screen Parent, udat Code);
+    void (*SetXY)(screen, dat X, dat Y);
     void (*SetFill)(screen, hwattr Fill);
+    widget (*Focus)(screen);
+    widget (*KbdFocus)(screen);
     void (*Map)(screen, widget Parent);
     void (*UnMap)(screen);
     void (*Own)(screen, msgport);
@@ -676,7 +680,6 @@ struct s_fn_screen {
     screen (*Find)(dat j);
     screen (*CreateSimple)(fn_screen, dat LenTitle, CONST byte *Title, hwattr Bg);
     void (*BgImage)(screen, dat BgWidth, dat BgHeight, CONST hwattr *Bg);
-    void (*Focus)(screen);
     void (*DrawMenu)(screen, dat Xstart, dat Xend);
     void (*ActivateMenu)(screen, menuitem, byte byMouse);
     void (*DeActivateMenu)(screen);
@@ -742,12 +745,14 @@ struct s_fn_row {
     /* row */
     fn_obj Fn_Obj;
     row (*Create4Menu)(fn_row Fn_Row, window Window, udat Code, byte FlagActive, ldat Len, CONST byte *Text);
+    byte (*SetText)(row, ldat Len, CONST byte *Text, byte DefaultCol);
 };
 
 /*Flags : */
 #define ROW_INACTIVE	((byte)0x00)
 #define ROW_ACTIVE	((byte)0x01)
 #define ROW_IGNORE	((byte)0x02)
+#define ROW_USE_DEFCOL	WINFL_USE_DEFCOL /* 0x04 */
 
 
 
@@ -904,6 +909,9 @@ struct s_event_control {
 #define MSG_CONTROL_OPEN	((udat)2)
 #define MSG_CONTROL_DRAGNDROP	((udat)3)
 
+/* some MSG_WINDOW_CHANGE flags */
+#define MSG_WINFL_SHADED	((udat)1)
+
 /* use for free-format messages between clients */
 typedef struct s_event_clientmsg event_clientmsg;
 struct s_event_clientmsg {
@@ -941,13 +949,18 @@ struct s_event_display {
 typedef struct s_event_window event_window;
 struct s_event_window {
     window Window;
-    udat Code, pad; /* not used */
+    udat Code, Flags;
     dat XWidth, YWidth;
+    dat X, Y;
 };
+
+/* some MSG_WINDOW_CHANGE codes */
+#define MSG_WINDOW_RESIZE ((udat)0)
+#define MSG_WINDOW_EXPOSE ((udat)1)
 
 typedef struct s_event_gadget event_gadget;
 struct s_event_gadget {
-    window Window;
+    window Window;	/* it's up to the client to handle Gadgets mapped in non-window parents */
     udat Code, Flags; /* the Flags of the gadget */
 };
 
@@ -1299,9 +1312,10 @@ struct s_fn_display_hw {
     
 /* errors */
 #define NOMEMORY	((udat)1)
-#define DLERROR		((udat)2)
-#define SYSCALLERROR	((udat)3)
-#define USERERROR	((udat)4)
+#define NOTABLES	((udat)2)
+#define DLERROR		((udat)3)
+#define SYSCALLERROR	((udat)4)
+#define USERERROR	((udat)5)
 
 /* IDs */
 #define NOID		((uldat)0)
@@ -1470,6 +1484,7 @@ struct s_all {
     void (*AtQuit)(void);
 
     menu BuiltinMenu, CommonMenu;
+    row BuiltinRow;
     
     button_vec ButtonVec[BUTTON_MAX + 1]; /* +1 for window corner */
     
@@ -1580,18 +1595,22 @@ struct s_all {
   void *AllocMem(size_t Size);
   void FreeMem(void *Mem);
   void *ReAllocMem(void *Mem, size_t Size);
-#else /* CONF__ALLOC */
+#else /* !CONF__ALLOC */
 
-# define AllocMem(Size)		malloc(Size)
+void *AllocMem(size_t Size);
+
 # ifdef DEBUG_MALLOC
-   void FreeMem(void *Mem);
-# else
-#  define FreeMem(Mem)		free(Mem)
-# endif
+INLINE void FreeMem(void *Mem) {
+    if (!FAIL(Mem))
+	free(Mem);
+}
+# else /* !DEBUG_MALLOC */
 
-# ifndef USE_MY_REALLOC
-#  define ReAllocMem(Mem, Size)	realloc((Mem), (Size))
-# else /* USE_MY_REALLOC */
+#  define FreeMem(Mem)		free(Mem)
+
+# endif /* DEBUG_MALLOC */
+
+# ifdef USE_MY_REALLOC
 INLINE void *ReAllocMem(void *Mem, uldat Size) {
     void *res = (void *)0;
     if (Size) {
@@ -1612,17 +1631,22 @@ INLINE void *ReAllocMem(void *Mem, uldat Size) {
 	return malloc(Size);
     return res;
 }
+# else /* !USE_MY_REALLOC */
+
+#  define ReAllocMem(Mem, Size)	realloc(Mem, Size)
+
 # endif /* USE_MY_REALLOC */
+
 #endif /* CONF__ALLOC */
 
 # define LenStr(S) strlen(S)
-# define CmpStr(S1, S2) strcmp((S1), (S2))
-# define CopyStr(From,To) strcpy((To),(From))
+# define CmpStr(S1, S2) strcmp(S1, S2)
+# define CopyStr(From,To) strcpy(To, From)
 
-# define CopyMem(From, To, Size)	memcpy((To), (From), (size_t)(Size))
-# define MoveMem(From, To, Size)	memmove((To), (From), (size_t)(Size))
-# define WriteMem(Mem, Char, Size)	memset((Mem), (int)(Char), (size_t)(Size))
-# define CmpMem(m1, m2, Size)		memcmp((m1), (m2), (size_t)(Size))
+# define CopyMem(From, To, Size)	memcpy(To, From, Size)
+# define MoveMem(From, To, Size)	memmove(To, From, Size)
+# define WriteMem(Mem, Char, Size)	memset(Mem, Char, Size)
+# define CmpMem(m1, m2, Size)		memcmp(m1, m2, Size)
 
 
 # define DropPrivileges() (setegid(getgid()), seteuid(getuid()))

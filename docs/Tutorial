@@ -10,7 +10,7 @@
 				TUTORIAL
 
 
-		  updated to version 0.3.7, 19 Feb 2001
+		  updated to version 0.3.8, 19 Feb 2001
 	      
 
 	     Author: Massimiliano Ghilardi <max@linuz.sns.it>
@@ -198,12 +198,12 @@
 4. Installing and Starting twin
 
    If you want to install twin on your system,
-   make sure that the DESTDIR set in `MakeRules' is correct,
+   make sure that the `prefix' variable set in `MakeRules' is correct,
    considering that when you will type `make install'
    the various parts of twin will be placed as follows:
-   `twin' and the other programs (twterm, etc.) will go in $DESTDIR/bin,
-   modules will go in $DESTDIR/lib/twin/modules,
-   libTw.so* will go in $DESTDIR/lib.
+   `twin' and the other programs (twterm, etc.) will go in $prefix/bin,
+   modules will go in $prefix/lib/twin/modules,
+   libTw.so* will go in $prefix/lib.
 
    Once twin compiled fine, to actually install it,
    type the following command as root:
@@ -222,12 +222,13 @@
    shared libraries.
 
    WARNING (3):
-   if you compiled some code as module, twin will search it
-   only in $DESTDIR/lib/twin/modules so it may not find the modules
-   until you install them.
-   To make debugging easier, if you compile with DESTDIR not set then
-   twin will look for modules in the current directory. In this way
-   `make install' is not necessary in order to use modules.
+   if you compiled some code as modules, twin will look for them only in
+   $prefix/lib/twin/modules so it may not find the modules until you install
+   them.
+   To make debugging easier, if you compile with $libdir set to empty value
+   (i.e. make libdir= ) then twin will look for modules in the current
+   directory. In this way `make install' is not necessary in order to use
+   modules.
    
    In any case, you cannot mix modules from a certain version
    with a `twin' executable of a different version.
@@ -495,6 +496,10 @@
    terminal emulator, would work too, but only if the terminal emulator code
    (term.so) is already loaded into twin. Sending messages to "Builtin"
    instead always works, as it can auto-load term.so if needed.
+   
+   You can send also other kinds of messages. a (useless?) example is
+	twsendmsg "Builtin" quit
+   which causes twin to (brutally) exit.
    
    6.1. Security Statement on Sockets:
    

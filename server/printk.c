@@ -40,9 +40,9 @@ int printk(CONST byte *format, ...) {
     }
 
 #ifdef CONF_PRINTK
-    if (MessagesWin->MaxNumRow > SMALLBUFF) {
-	while (MessagesWin->MaxNumRow > SMALLBUFF) {
-	    Delete(MessagesWin->FirstRow);
+    if (MessagesWin->HLogic > SMALLBUFF) {
+	while (MessagesWin->HLogic > SMALLBUFF) {
+	    Delete(MessagesWin->USE.R.FirstRow);
 	    MessagesWin->CurY--;
 	}
 	if (MessagesWin->Parent)

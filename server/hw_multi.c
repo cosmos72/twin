@@ -36,7 +36,7 @@
 # include "dl.h"
 #endif
 
-#include "libTw.h"
+#include "Tw/Tw.h"
 
 
 /* HW specific headers */

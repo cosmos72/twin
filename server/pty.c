@@ -177,7 +177,7 @@ byte SpawnInWindow(window Window, CONST byte *arg0, byte * CONST *argv) {
     DropPrivileges();
 
     /* 3 */
-    if (setup_tty(Window->NumRowOne, Window->YWidth - 2)) {
+    if (setup_tty(Window->USE.C.TtyData->SizeX, Window->USE.C.TtyData->SizeY)) {
 	switch ((childpid = fork())) {
 	  case -1:
 	    /* failed */

@@ -202,6 +202,42 @@ static void SetFillWidget(widget W, hwattr Fill) {
     }
 }
 
+widget FocusWidget(widget W) {
+    widget oldW;
+    if (W)
+	oldW = Act(KbdFocus,W)(W);
+    else
+	oldW = Do(KbdFocus,Widget)(W);
+    
+    if (W != oldW && (!W || W->Parent == (widget)All->FirstScreen)) {
+	if (W && IS_WINDOW(W)) DrawBorderWindow((window)W, BORDER_ANY);
+	if (oldW && IS_WINDOW(oldW)) DrawBorderWindow((window)oldW, BORDER_ANY);
+	if ((W && IS_WINDOW(W)) || (oldW && IS_WINDOW(oldW))) {
+	    UpdateCursor();
+	    if (!W || !IS_WINDOW(W) || !(((window)W)->Attrib & WINDOW_MENU))
+		Act(DrawMenu,All->FirstScreen)(All->FirstScreen, 0, MAXDAT);
+	}
+    }
+    return oldW;
+}
+
+#ifndef CONF_TERM
+# define TtyKbdFocus FakeKbdFocus
+widget FakeKbdFocus(widget W) {
+    widget oldW;
+    widget P;
+    screen Screen = W && (P=W->Parent) && IS_SCREEN(P) ? (screen)P : All->FirstScreen;
+    
+    if (Screen) {
+	oldW = Screen->FocusW;
+	Screen->FocusW = W;
+    } else
+	oldW = (widget)0;
+	    
+    return oldW;
+}
+#endif
+
 static gadget FindGadgetByCode(widget Parent, udat Code) {
     widget W;
     
@@ -310,6 +346,8 @@ static struct s_fn_widget _FnWidget = {
     FindGadgetByCode,
     SetXYWidget,
     SetFillWidget,
+    FocusWidget,
+    TtyKbdFocus,
     MapWidget,
     UnMapWidget,
     OwnWidget,
@@ -321,8 +359,8 @@ static struct s_fn_widget _FnWidget = {
 /* gadget */
 
 static gadget CreateGadget
-    (fn_gadget Fn_Gadget, widget Parent, dat XWidth, dat YWidth, CONST byte *TextNormal,
-     udat Code, udat Flags,
+    (fn_gadget Fn_Gadget, msgport Owner, widget Parent, dat XWidth, dat YWidth,
+     CONST byte *TextNormal, udat Code, udat Flags,
      hwcol ColText, hwcol ColTextSelect, hwcol ColTextDisabled, hwcol ColTextSelectDisabled,
      dat Left, dat Up,       CONST byte *TextSelect, CONST byte *TextDisabled, CONST byte *TextSelectDisabled,
      CONST hwcol *ColNormal, CONST hwcol *ColSelect, CONST hwcol *ColDisabled, CONST hwcol *ColSelectDisabled)
@@ -330,9 +368,9 @@ static gadget CreateGadget
     gadget G = (gadget)0;
     ldat Size;
 
-    if (Parent && Parent->Owner && Code < COD_RESERVED && XWidth > 0 && YWidth > 0 && TextNormal &&
+    if (Owner && Code < COD_RESERVED && XWidth > 0 && YWidth > 0 && TextNormal &&
 	(G=(gadget)Fn_Gadget->Fn_Widget->Create
-	 ((fn_widget)Fn_Gadget, Parent->Owner, XWidth, YWidth, (hwattr)0, Left, Up))) {
+	 ((fn_widget)Fn_Gadget, Owner, XWidth, YWidth, (hwattr)0, Left, Up))) {
 	
 	Fn_Gadget->Fn_Widget->Used++;
 
@@ -384,7 +422,8 @@ static gadget CreateGadget
 	else
 	    G->Color[3] = NULL;
 	
-	Act(Map,G)(G, Parent);
+	if (Parent)
+	    Act(Map,G)(G, Parent);
     }
     return G;
 }
@@ -506,6 +545,8 @@ static struct s_fn_gadget _FnGadget = {
     (void *)FindGadgetByCode,
     (void *)SetXYWidget,
     (void *)SetFillWidget,
+    (void *)FocusWidget,
+    (void *)TtyKbdFocus,
     (void *)MapWidget,
     (void *)UnMapWidget,
     (void *)OwnWidget,
@@ -516,20 +557,20 @@ static struct s_fn_gadget _FnGadget = {
     CreateEmptyButton,
     FillButton,
     CreateButton,
-    WriteTextGadget,	/* exported by resize.c */
+    WriteTextsGadget,	/* exported by resize.c */
 };
 
 /* ttydata */
 
-static byte InitTtyData(window Window) {
-    ttydata *Data = Window->TtyData;
-    ldat count = Window->MaxNumRow * Window->NumRowOne;
-    hwattr *p = Window->Contents;
+static byte InitTtyData(window Window, dat ScrollBackLines) {
+    ttydata *Data = Window->USE.C.TtyData;
+    ldat count = Window->WLogic * Window->HLogic;
+    hwattr *p = Window->USE.C.Contents;
     
-    if (!Data && !(Window->TtyData = Data = AllocMem(sizeof(ttydata))))
+    if (!Data && !(Window->USE.C.TtyData = Data = AllocMem(sizeof(ttydata))))
 	return FALSE;
 
-    if (!p && !(Window->Contents = p = AllocMem(count * sizeof(hwattr))))
+    if (!p && !(Window->USE.C.Contents = p = AllocMem(count * sizeof(hwattr))))
 	return FALSE;
     
     while (count--)
@@ -542,16 +583,16 @@ static byte InitTtyData(window Window) {
     Data->State = ESnormal;
     Data->Flags = TTY_AUTOWRAP;
     Data->Effects = 0;
-    Window->YLogic = Window->CurY = Data->ScrollBack = Window->MaxNumRow - (Window->YWidth-2);
-    Window->NumRowSplit = 0;
-    Data->SizeX = Window->NumRowOne;
-    Data->SizeY = Window->YWidth - 2;
+    Window->YLogic = Window->CurY = Data->ScrollBack = ScrollBackLines;
+    Window->USE.C.HSplit = 0;
+    Data->SizeX = Window->WLogic;
+    Data->SizeY = Window->HLogic - ScrollBackLines;
     Data->Top = 0;
     Data->Bottom = Data->SizeY;
     Data->saveX = Data->X = Window->CurX = 0;
     Data->saveY = Data->Y = 0;
-    Data->Pos = Data->Start = Window->Contents + Data->ScrollBack * Window->NumRowOne;
-    Data->Split = Window->Contents + Window->MaxNumRow * Window->NumRowOne;
+    Data->Pos = Data->Start = Window->USE.C.Contents + Data->ScrollBack * Window->WLogic;
+    Data->Split = Window->USE.C.Contents + Window->WLogic * Window->HLogic;
     
     Window->CursorType = LINECURSOR;
     /* respect the WINFL_CURSOR_ON set by the client and don't force it on */
@@ -589,6 +630,15 @@ static window CreateWindow(fn_window Fn_Window, dat LenTitle, CONST byte *Title,
     window Window = (window)0;
     byte *_Title = NULL;
     hwcol *_ColTitle = NULL;
+    byte HasBorder = 2 * !(Flags & WINFL_BORDERLESS);
+    
+    /* overflow safety */
+    if (HasBorder) {
+	if ((dat)(XWidth + HasBorder) > 0)
+	    XWidth += HasBorder;
+	if ((dat)(YWidth + HasBorder) > 0)
+	    YWidth += HasBorder;
+    }
     
     if ((!Title || (_Title=CloneStrL(Title, LenTitle))) &&
 	(!ColTitle || (_ColTitle=CloneMem(ColTitle, LenTitle*sizeof(hwcol)))) &&
@@ -600,7 +650,6 @@ static window CreateWindow(fn_window Fn_Window, dat LenTitle, CONST byte *Title,
 	Window->Title = _Title;
 	Window->ColTitle = _ColTitle;
 	Window->BorderPattern[0] = Window->BorderPattern[1] = (void *)0;
-	Window->TtyData = (ttydata *)0;
 	Window->RemoteData.Fd = NOFD;
 	Window->RemoteData.ChildPid = NOPID;
 	Window->RemoteData.FdSlot = NOSLOT;
@@ -631,9 +680,7 @@ static window CreateWindow(fn_window Fn_Window, dat LenTitle, CONST byte *Title,
 	Window->MaxXWidth = MAXDAT;
 	Window->MaxYWidth = MAXDAT;
 
-	Window->Contents=(hwattr *)0;
-	Window->FirstRow=Window->LastRow=Window->RowOne=Window->RowSplit=(row)0;
-	Window->MaxNumRow=Window->NumRowOne=Window->NumRowSplit=(ldat)0;
+	WriteMem(&Window->USE, '\0', sizeof(Window->USE));
 
 	Window->ShutDownHook = (fn_hook)0;
 	Window->Hook = (fn_hook)0;
@@ -642,15 +689,21 @@ static window CreateWindow(fn_window Fn_Window, dat LenTitle, CONST byte *Title,
 	Window->MapQueueMsg = (msg)0;
 
 	if (Flags & WINFL_USECONTENTS) {
-	    if (MAXDAT - ScrollBackLines < YWidth - 2)
-		ScrollBackLines = MAXDAT - YWidth + 2;
+	    if (MAXDAT - ScrollBackLines < YWidth - HasBorder)
+		ScrollBackLines = MAXDAT - YWidth + HasBorder;
 	    Window->CurY = Window->YLogic = ScrollBackLines;
-	    Window->MaxNumRow = ScrollBackLines + YWidth-2;
-	    Window->NumRowOne = XWidth-2;
-	    if (!InitTtyData(Window)) {
+	    Window->WLogic = XWidth - HasBorder;
+	    Window->HLogic = ScrollBackLines + YWidth - HasBorder;
+	    if (!InitTtyData(Window, ScrollBackLines)) {
 		Act(Delete,Window)(Window);
 		Window = (window)0;
 	    }
+	} else if (Flags & WINFL_USEEXPOSE) {
+	    Window->WLogic = XWidth - HasBorder;
+	    Window->HLogic = ScrollBackLines + YWidth - HasBorder;
+	} else {
+	    Window->WLogic = 1024; /* just an arbitrary value... */
+	    Window->HLogic = 0;    /* no rows */
 	}
 	
 	Fn_Window->Fn_Widget->Used++;
@@ -675,11 +728,14 @@ static void DeleteWindow(window W) {
 	FreeMem(W->Title);
     if (W->ColTitle)
 	FreeMem(W->ColTitle);
-    if (W->TtyData)
-	FreeMem(W->TtyData);
-    if (W->Contents)
-	FreeMem(W->Contents);
-    DeleteList(W->FirstRow);
+    if (W->Flags & WINFL_USECONTENTS) {
+	if (W->USE.C.TtyData)
+	    FreeMem(W->USE.C.TtyData);
+	if (W->USE.C.Contents)
+	    FreeMem(W->USE.C.Contents);
+    }
+    if (!(W->Flags & WINFL_USEANY))
+	DeleteList(W->USE.R.FirstRow);
 	
     (Fn_Widget->Delete)((widget)W);
     if (!--Fn_Widget->Used)
@@ -735,6 +791,7 @@ static void SetXYWindow(window W, dat X, dat Y) {
 static void ConfigureWindow(window W, byte Bitmap, dat Left, dat Up,
 			    dat MinXWidth, dat MinYWidth, dat MaxXWidth, dat MaxYWidth) {
     widget Prev, Next;
+    byte HasBorder = 2 * !(W->Flags & WINFL_BORDERLESS);
 
     if (W->Parent) {
 	Prev = W->Prev;
@@ -747,19 +804,24 @@ static void ConfigureWindow(window W, byte Bitmap, dat Left, dat Up,
 	W->Left = Left;
     if (Bitmap & 2)
 	W->Up = Up;
+
     if (Bitmap & 4) {
+	MinXWidth = Max2(MinXWidth, MinXWidth + HasBorder);
 	W->MinXWidth = MinXWidth;
 	W->XWidth = Max2(MinXWidth, W->XWidth);
     }
     if (Bitmap & 8) {
+	MinYWidth = Max2(MinYWidth, MinYWidth + HasBorder);
 	W->MinYWidth = MinYWidth;
 	W->YWidth = Max2(MinYWidth, W->YWidth);
     }
     if (Bitmap & 0x10) {
+	MaxXWidth = Max2(MaxXWidth, MaxXWidth + HasBorder);
 	W->MaxXWidth = Max2(W->MinXWidth, MaxXWidth);
 	W->XWidth = Min2(MaxXWidth, W->XWidth);
     }
     if (Bitmap & 0x20) {
+	MaxYWidth = Max2(MaxYWidth, MaxYWidth + HasBorder);
 	W->MaxYWidth = Max2(W->MinYWidth, MaxYWidth);
 	W->YWidth = Min2(MaxYWidth, W->YWidth);
     }
@@ -771,20 +833,24 @@ static void ConfigureWindow(window W, byte Bitmap, dat Left, dat Up,
 
 static void GotoXYWindow(window Window, ldat X, ldat Y) {
     if (Window->Flags & WINFL_USECONTENTS) {
-	if (X >= Window->NumRowOne)
-	    X = Window->NumRowOne - 1;
-	if (Y >= Window->TtyData->SizeY)
-	    Y = Window->TtyData->SizeY - 1;
-	Window->TtyData->X = X;
-	Window->TtyData->Y = Y;
-	Window->TtyData->Pos = Window->TtyData->Start + X + (ldat)Y * Window->TtyData->SizeX;
-	if (Window->TtyData->Pos >= Window->TtyData->Split)
-	    Window->TtyData->Pos -= Window->TtyData->Split - Window->Contents;
-	Y += Window->MaxNumRow - Window->TtyData->SizeY;
+	ttydata *TT = Window->USE.C.TtyData;
+	
+	X = Max2(X, 0);
+	Y = Max2(Y, 0);
+	if (X >= TT->SizeX)
+	    X = TT->SizeX - 1;
+	if (Y >= TT->SizeY)
+	    Y = TT->SizeY - 1;
+	TT->X = X;
+	TT->Y = Y;
+	TT->Pos = TT->Start + X + (ldat)Y * TT->SizeX;
+	if (TT->Pos >= TT->Split)
+	    TT->Pos -= TT->Split - Window->USE.C.Contents;
+	Y += Window->HLogic - TT->SizeY;
     }
     Window->CurX = X;
     Window->CurY = Y;
-    if (All->FirstScreen->FocusWindow == Window)
+    if (Window == (window)All->FirstScreen->FocusW)
 	UpdateCursor();
 }
 
@@ -822,8 +888,8 @@ static void MapTopRealWindow(window Window, screen Screen) {
 	Window->Parent = (widget)Screen;
 	
 	if (Screen == All->FirstScreen) {
-	    OldWindow = Act(KbdFocus,Window)(Window);
-	    if (OldWindow)
+	    OldWindow = (window)Act(KbdFocus,Window)(Window);
+	    if (OldWindow && IS_WINDOW(OldWindow))
 		DrawBorderWindow(OldWindow, BORDER_ANY);
 	    UpdateCursor();
 	}
@@ -873,7 +939,7 @@ static void UnMapWindow(window W) {
 
 		/* take care... menu is active */
 		if (W == Screen->MenuWindow || 
-		    (W == Screen->FocusWindow && (W->Attrib & WINDOW_MENU))) {
+		    (W == (window)Screen->FocusW && (W->Attrib & WINDOW_MENU))) {
 		
 		    /*
 		     * ! DANGER ! 
@@ -892,7 +958,7 @@ static void UnMapWindow(window W) {
 	    if (Screen->ClickWindow == W)
 		Screen->ClickWindow = NULL;
 	
-	    if ((wasFocus = W == Screen->FocusWindow)) {
+	    if ((wasFocus = W == (window)Screen->FocusW)) {
 		if (W->Attrib & WINDOW_MENU)
 		    Next = Screen->MenuWindow;
 		else {
@@ -930,7 +996,7 @@ static void UnMapWindow(window W) {
 			Act(DrawMenu,Screen)(Screen, 0, MAXDAT);
 		    UpdateCursor();
 		} else
-		    Screen->FocusWindow = Next;
+		    Screen->FocusW = (widget)Next;
 	    }
 
 	    if (W->MapUnMapHook)
@@ -976,42 +1042,6 @@ static void RemoveHookWindow(window Window, fn_hook Hook, fn_hook *WhereHook) {
     }
 }
 
-
-window FocusWindow(window W) {
-    window oldW;
-    if (W)
-	oldW = Act(KbdFocus,W)(W);
-    else
-	oldW = Do(KbdFocus,Window)(W);
-    
-    if (W != oldW && (!W || W->Parent == (widget)All->FirstScreen)) {
-	if (W) DrawBorderWindow(W, BORDER_ANY);
-	if (oldW) DrawBorderWindow(oldW, BORDER_ANY);
-	if (W || oldW) {
-	    UpdateCursor();
-	    if (!W || !(W->Attrib & WINDOW_MENU))
-		Act(DrawMenu,All->FirstScreen)(All->FirstScreen, 0, MAXDAT);
-	}
-    }
-    return oldW;
-}
-
-#if !defined(CONF_TERM)
-window FakeKbdFocus(window W) {
-    window oldW;
-    widget P;
-    screen Screen;
-    
-    if (W && (P = W->Parent) && IS_SCREEN(P)) {
-	Screen = (screen)P;
-	oldW = Screen->FocusWindow;
-	Screen->FocusWindow = W;
-    } else
-	oldW = (window)0;
-    
-    return oldW;
-}
-#endif
 
 #ifndef CONF_TERM
 # ifdef CONF__MODULES
@@ -1062,14 +1092,14 @@ static row FindRow(window Window, ldat Row) {
     byte Index;
     ldat k, ElNumRows[4], ElDist[4];
     
-    ElPossib[0] = Window->RowOne;
-    ElPossib[1] = Window->RowSplit;
-    ElPossib[2] = Window->FirstRow;
-    ElPossib[3] = Window->LastRow;
-    ElNumRows[0] = Window->NumRowOne;
-    ElNumRows[1] = Window->NumRowSplit;
+    ElPossib[0] = Window->USE.R.RowOne;
+    ElPossib[1] = Window->USE.R.RowSplit;
+    ElPossib[2] = Window->USE.R.FirstRow;
+    ElPossib[3] = Window->USE.R.LastRow;
+    ElNumRows[0] = Window->USE.R.NumRowOne;
+    ElNumRows[1] = Window->USE.R.NumRowSplit;
     ElNumRows[2] = (ldat)0;
-    ElNumRows[3] = Window->MaxNumRow-(ldat)1;
+    ElNumRows[3] = Window->HLogic-(ldat)1;
     ElDist[0] = (ElNumRows[0] ? Abs(ElNumRows[0]-Row) : MAXULDAT);
     ElDist[1] = (ElNumRows[1] ? Abs(ElNumRows[1]-Row) : MAXULDAT);
     ElDist[2] = Row;
@@ -1094,7 +1124,7 @@ static row FindRowByCode(window Window, udat Code, ldat *NumRow) {
     row Row;
     ldat Num=(ldat)0;
     
-    if ((Row=Window->FirstRow))
+    if ((Row=Window->USE.R.FirstRow))
 	while (Row && Row->Code!=Code) {
 	    Row=Row->Next;
 	    Num++;
@@ -1119,6 +1149,8 @@ static struct s_fn_window _FnWindow = {
     (void *)FindGadgetByCode,
     SetXYWindow,
     (void *)SetFillWidget,
+    (void *)FocusWidget,
+    (void *)TtyKbdFocus,
     MapWindow,
     UnMapWindow,
     (void *)OwnWidget,
@@ -1129,15 +1161,15 @@ static struct s_fn_window _FnWindow = {
 #ifdef CONF_TERM
     TtyWriteAscii,
     TtyWriteHWAttr,
-    TtyKbdFocus,
 #else
     FakeWriteAscii,
     FakeWriteHWAttr,
-    FakeKbdFocus,
 #endif
-    FocusWindow,
+    WriteRow,		/* exported by resize.c */
+    ExposeAscii,	/* exported by resize.c */
+    ExposeHWAttr,	/* exported by resize.c */
+	
     GotoXYWindow,
-    WriteRow,	/* exported by resize.c */
     SetColTextWindow,
     SetColorsWindow,
     ConfigureWindow,
@@ -1175,7 +1207,7 @@ static screen CreateScreen(fn_screen Fn_Screen, dat LenTitle, CONST byte *Title,
 		    Fn_Screen->Fn_Widget->Used++;
 		    
 		    S->LenTitle = LenTitle;
-		    S->FocusWindow = S->MenuWindow = S->ClickWindow = NULL;
+		    S->MenuWindow = S->ClickWindow = NULL;
 		    S->HookWindow = NULL;
 		    S->FnHookWindow = NULL;
 		    S->Attrib = 0;
@@ -1237,6 +1269,14 @@ static void DeleteScreen(screen Screen) {
 	FreeMem(Fn_Widget);
 }
 
+static void SetXYScreen(screen Screen, dat X, dat Y) {
+    if (Screen == All->FirstScreen) {
+	Y = Max2(Y, -1);
+	Y = Min2(Y, All->DisplayHeight - 1);
+	ResizeFirstScreen(Y - Screen->YLimit);
+    }
+}
+
 static menu FindMenuScreen(screen Screen) {
     if (Screen) {
 	if (Screen->MenuWindow)
@@ -1246,9 +1286,10 @@ static menu FindMenuScreen(screen Screen) {
 	/* no window activated the menu... either the menu is inactive
 	 * or it is activated from the builtin menu */
 	    
-	if (Screen->FocusWindow && Screen->FocusWindow->Menu != All->CommonMenu) 
+	if (Screen->FocusW && IS_WINDOW(Screen->FocusW) &&
+	    ((window)Screen->FocusW)->Menu != All->CommonMenu) 
 	    /* menu inactive... return the focus window's one */
-	    return Screen->FocusWindow->Menu;
+	    return ((window)Screen->FocusW)->Menu;
 	    
 	/* last case: menu activated from builtin menu */
 	return All->BuiltinMenu;
@@ -1273,7 +1314,7 @@ static screen FindScreen(dat j) {
 
     
 
-static void FocusScreen(screen tScreen) {
+static widget FocusScreen(screen tScreen) {
     screen Screen = All->FirstScreen;
     if (tScreen && Screen != tScreen) {
 	MoveFirst(Screen, All, tScreen);
@@ -1281,6 +1322,7 @@ static void FocusScreen(screen tScreen) {
 		 0, Min2(Screen->YLimit, tScreen->YLimit), MAXDAT, MAXDAT, FALSE);
 	UpdateCursor();
     }
+    return (widget)Screen;
 }
 
 static void ActivateMenuScreen(screen Screen, menuitem Item, byte byMouse) {
@@ -1341,6 +1383,11 @@ static void DrawMenuScreen(screen Screen, dat Xstart, dat Xend) {
 	    Font = TWDisplay[3 + lenTWDisplay - (DWidth - i)];
 	    if (!Font) Font = ' ';
 	}
+	else if (DWidth-i>(dat)9 && DWidth-i<=(dat)9+All->BuiltinRow->Len) {
+	    Color = State == STATE_SCREEN ? Menu->ColSelect : Menu->ColItem;
+	    Font = All->BuiltinRow->Text[9+All->BuiltinRow->Len - (DWidth-i)];
+	    if (!Font) Font = ' ';
+	}
 	else if (MenuInfo && FindInfo(Menu, i)) {
 	    Select = State == STATE_SCREEN;
 	    FindFontInfo(Menu, i, Select, &Font, &Color);
@@ -1393,7 +1440,10 @@ static struct s_fn_screen _FnScreen = {
     DrawSelfScreen,
     (void *)FindWidgetAt,
     (void *)FindGadgetByCode,
+    SetXYScreen,
     (void *)SetFillWidget,
+    FocusScreen,
+    (void *)NoOp, /* KbdFocusWidget */
     (void *)NoOp, /* MapWidget */
     (void *)NoOp, /* UnMapWidget */
     (void *)OwnWidget,
@@ -1405,7 +1455,6 @@ static struct s_fn_screen _FnScreen = {
     FindScreen,
     CreateSimpleScreen,
     BgImageScreen,
-    FocusScreen,
     DrawMenuScreen,
     ActivateMenuScreen,
     DeActivateMenuScreen
@@ -1515,19 +1564,17 @@ static row CreateRow(fn_row Fn_Row, udat Code, byte Flags) {
 }
 
 static void InsertRow(row Row, window Parent, row Prev, row Next) {
-    if (!Row->Window && Parent) {
-	InsertGeneric((obj)Row, (obj_parent)&Parent->FirstRow, (obj)Prev, (obj)Next, &Parent->MaxNumRow);
+    if (!Row->Window && Parent && !(Parent->Flags & WINFL_USEANY)) {
+	InsertGeneric((obj)Row, (obj_parent)&Parent->USE.R.FirstRow, (obj)Prev, (obj)Next, &Parent->HLogic);
 	Row->Window = Parent;
-	if (!(Row->Window->Flags & WINFL_USEANY))
-	    Row->Window->NumRowOne = Row->Window->NumRowSplit = (ldat)0;
+	Parent->USE.R.NumRowOne = Parent->USE.R.NumRowSplit = (ldat)0;
     }
 }
 
 static void RemoveRow(row Row) {
-    if (Row->Window) {
-	if (!(Row->Window->Flags & WINFL_USEANY))
-	    Row->Window->NumRowOne = Row->Window->NumRowSplit = (ldat)0;
-	RemoveGeneric((obj)Row, (obj_parent)&Row->Window->FirstRow, &Row->Window->MaxNumRow);
+    if (Row->Window && !(Row->Window->Flags & WINFL_USEANY)) {
+	Row->Window->USE.R.NumRowOne = Row->Window->USE.R.NumRowSplit = (ldat)0;
+	RemoveGeneric((obj)Row, (obj_parent)&Row->Window->USE.R.FirstRow, &Row->Window->HLogic);
 	Row->Window = (window)0;
     }
 }
@@ -1555,12 +1602,12 @@ static row Create4MenuRow(fn_row Fn_Row, window Window, udat Code, byte Flags, l
 	(!Text || (Row->Text = CloneMem(Text, Len)))) {
 
 	Row->Len = Row->MaxLen = Len;
-	InsertLast(Row, Row, Window);
+	Act(Insert, Row)(Row, Window, Window->USE.R.LastRow, NULL);
 
 	if ((ldat)Window->XWidth<(Len=Max2((ldat)10, Len+(ldat)2)))
 	    Window->XWidth=(udat)Min2((ldat)MAXDAT, Len);
     
-	if ((ldat)Window->YWidth<(Len=Max2((ldat)3, Window->MaxNumRow+(ldat)2)))
+	if ((ldat)Window->YWidth<(Len=Max2((ldat)3, Window->HLogic+(ldat)2)))
 	    Window->YWidth=(udat)Min2((ldat)MAXDAT, Len);
 	
 	
@@ -1571,11 +1618,18 @@ static row Create4MenuRow(fn_row Fn_Row, window Window, udat Code, byte Flags, l
     return (row)0;
 }
 
-byte FindInfo(menu Menu, dat i) {
-    row Info;
-    
-    if (Menu && (Info=Menu->Info) && Info->Len>(udat)i)
+static byte SetTextRow(row Row, ldat Len, CONST byte *Text, byte DefaultCol) {
+    if (EnsureLenRow(Row, Len, DefaultCol)) {
+	if (Len) {
+	    CopyMem(Text, Row->Text, Len);
+	    if (!(Row->Flags & ROW_USE_DEFCOL) && !DefaultCol)
+		/* will not work correctly if sizeof(hwcol) != 1 */
+		WriteMem(Row->ColText, COL(WHITE,BLACK), Len * sizeof(hwcol));
+	}
+	Row->Len = Len;
+	Row->Gap = Row->LenGap = 0;
 	return TRUE;
+    }
     return FALSE;
 }
 
@@ -1587,12 +1641,18 @@ static struct s_fn_row _FnRow = {
     DeleteRow,
     /* row */
     &_FnObj,
-    Create4MenuRow
+    Create4MenuRow,
+    SetTextRow
 };
 
 
-
-/* FIXME: here. */
+byte FindInfo(menu Menu, dat i) {
+    row Info;
+    
+    if (Menu && (Info=Menu->Info) && Info->Len>(udat)i)
+	return TRUE;
+    return FALSE;
+}
 
 /* menuitem */
 

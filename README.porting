@@ -6,7 +6,7 @@
 			    twin on non-Linux systems
 
 Various users asked for twin portings on many platforms,
-yet the author only has access to Linux systems (and to an ancient AIX...)
+yet the author only has access to Linux systems
 so this file is/will be mostly user contributed.
 
 A requirement of twin on ALL platforms is that you need GNU bash and GNU make
@@ -48,9 +48,7 @@ Compiling on AIX 3.2:
 	Before starting you need to have installed GNU make, GNU bash and
 	(very probably) GNU gcc; you can try with AIX cc, but I won't bet on it
 
-	First, edit the following files:
-	  MakeRules : change "ECHO=echo -e" into "ECHO=echo"
-
+	First, edit the following file:
 	  server/hw_keys.h: comment the lines
 		line 25: IS(Sys_Req, 0, "")
 		line 75: IS(KP_Delete, 3, "\x1BOn")

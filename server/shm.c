@@ -20,7 +20,6 @@
 #include <sys/mman.h>
 
 #include "twin.h"
-#include "sizes.h"
 #include "main.h"
 #include "data.h"
 #include "printk.h"
@@ -366,7 +365,7 @@ void *shm_malloc_or_die(uldat len) {
     void *m = shm_malloc(len);
     if (m || !len)
 	return m;
-    printk("Out of shared memory!\n");
+    printk("twin: RC: Out of shared memory!\n");
     exit(1);
 }
 

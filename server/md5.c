@@ -18,7 +18,7 @@
 #include <string.h>		/* for memcpy() */
 
 #include "md5.h"
-#include "sizes.h"		/* for TW_BYTE_ORDER */
+#include "twin.h"		/* for INLINE and TW_BYTE_ORDER */
 
 #if TW_BYTE_ORDER == TW_LITTLE_ENDIAN
 # define byteReverse(buf, len)	/* Nothing */
@@ -166,7 +166,7 @@ void MD5Final(unsigned char digest[16], struct MD5Context *ctx)
 
 /* This is the central step in the MD5 algorithm. */
 #define MD5STEP(f, w, x, y, z, data, s) \
-	( w += f(x, y, z) + data,  w = w<<s | w>>(32-s),  w += x)
+	( w += f(x, y, z) + data,  w = w<<s | w>>(32-s),  w += x )
 
 /*
  * The core of the MD5 algorithm, this alters an existing MD5 hash to

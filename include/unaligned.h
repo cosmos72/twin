@@ -7,8 +7,8 @@
 # define Tw(arg)	arg
 #endif
 
-#define PushV(s,len,vec)	(Tw(CopyMem)((vec), (s), (len)), (s) += (len))
-#define PopV(s,len,lvec)	(Tw(CopyMem)((s), (lvec), (len)), (s) += (len))
+#define PushV(s,len,vec)	(Tw(CopyMem)(vec, s, len), (s) += (len))
+#define PopV(s,len,lvec)	(Tw(CopyMem)(s, lvec, len), (s) += (len))
 #define PopAddr(s,type,len,ptr)	((ptr) = (len) ? (type *)s : (type *)0, s += (len))
 
 

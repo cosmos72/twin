@@ -77,12 +77,13 @@ libTw.so:
 Torture: torture
 
 install-real:
+	$(INSTALL) -d $(DESTDIR)$(libdir)
 	if [ -f libTw.so.$(VERSION) ]; then \
-	  $(CP) libTw.so.$(VERSION) $(DESTDIR)/lib ; \
-	  $(LN) libTw.so.$(VERSION) $(DESTDIR)/lib/libTw.so.$(SO_VER) ; \
-	  $(LN) libTw.so.$(SO_VER)  $(DESTDIR)/lib/libTw.so ; \
+		$(INSTALL) libTw.so.$(VERSION) $(DESTDIR)$(libdir); \
+		$(LN) libTw.so.$(VERSION) $(DESTDIR)$(libdir)/libTw.so.$(SO_VER); \
+		$(LN) libTw.so.$(SO_VER)  $(DESTDIR)$(libdir)/libTw.so; \
 	else \
-	  $(CP) libTw.a $(DESTDIR)/lib ; \
+		$(INSTALL) libTw.a $(DESTDIR)$(libdir); \
 	fi
 	
 clean:

@@ -19,8 +19,8 @@
 #include <signal.h>
 #include <errno.h>
 
-#include "libTw.h"
-#include "libTwerrno.h"
+#include "Tw/Tw.h"
+#include "Tw/Twerrno.h"
 #include "version.h"
 
 static char *MYname;

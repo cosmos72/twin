@@ -11,8 +11,8 @@
 #include <string.h>
 
 int main(int argc, char *argv[]) {
-#ifdef DESTDIR
-    argv[0] = DESTDIR "/bin/twin_real";
+#ifdef BINDIR
+    argv[0] = BINDIR "/twin_real";
 #else
     argv[0] = "./twin_real";
 #endif

@@ -54,7 +54,7 @@ static byte dirtyN;
 #define Y		Data->Y
 #define saveX		Data->saveX
 #define saveY		Data->saveY
-#define Base		Win->Contents
+#define Base		Win->USE.C.Contents
 #define Start		Data->Start
 #define Split		Data->Split
 #define Pos		Data->Pos
@@ -153,14 +153,14 @@ static void flush_tty(void) {
 
 	Win->CurX = (ldat)X;
 	Win->CurY = (ldat)Y + ScrollBack;
-	Pos = Base + Win->CurX + (Win->CurY + Win->NumRowSplit) * SizeX;
+	Pos = Base + Win->CurX + (Win->CurY + Win->USE.C.HSplit) * SizeX;
 	if (Pos >= Split) Pos -= Split - Base;
 	
 	doupdate = TRUE;
     } else
 	doupdate = FALSE;
 
-    if (Win == All->FirstScreen->FocusWindow && (doupdate || (*Flags & TTY_UPDATECURSOR)))
+    if (Win == (window)All->FirstScreen->FocusW && (doupdate || (*Flags & TTY_UPDATECURSOR)))
 	UpdateCursor();
 
     *Flags &= ~TTY_UPDATECURSOR;
@@ -168,7 +168,7 @@ static void flush_tty(void) {
     /* finally, keyboard focus configuration: */
     if (*Flags & TTY_NEEDREFOCUS) {
 	*Flags &= ~TTY_NEEDREFOCUS;
-	if (Win == All->FirstScreen->FocusWindow)
+	if (Win == (window)All->FirstScreen->FocusW)
 	    Act(KbdFocus,Win)(Win);
     }
 }
@@ -333,9 +333,9 @@ static void scrollup(dat t, dat b, dat nr) {
     if (t == 0 && b == SizeY) {
 	/* full screen scrolls. use splitline+scrollback */
 	
-	Win->NumRowSplit += nr;
-	if (Win->NumRowSplit >= Win->MaxNumRow)
-	    Win->NumRowSplit -= Win->MaxNumRow;
+	Win->USE.C.HSplit += nr;
+	if (Win->USE.C.HSplit >= Win->HLogic)
+	    Win->USE.C.HSplit -= Win->HLogic;
 	
 	Start += nr * SizeX;
 	if (Start >= Split) Start -= Split - Base;
@@ -1330,23 +1330,26 @@ INLINE void write_ctrl(byte c) {
     State = ESnormal;
 }
 
-window TtyKbdFocus(window newWin) {
+widget TtyKbdFocus(widget newW) {
     udat newFlags;
-    window oldWin;
+    widget oldW;
     widget P;
-    screen Screen = newWin && (P=newWin->Parent) && IS_SCREEN(P) ? (screen)P : All->FirstScreen;
+    screen Screen = newW && (P=newW->Parent) && IS_SCREEN(P) ? (screen)P : All->FirstScreen;
     
     if (Screen) {
-	oldWin = Screen->FocusWindow;
-	Screen->FocusWindow = newWin;
+	oldW = Screen->FocusW;
+	Screen->FocusW = newW;
     } else
-	oldWin = newWin = (window)0;
+	oldW = newW = (widget)0;
 	    
     if (Screen == All->FirstScreen) {
-	if (!newWin || !newWin->TtyData)
+	if (!newW || !IS_WINDOW(newW) ||
+	    !(((window)newW)->Flags & WINFL_USECONTENTS) ||
+	    !((window)newW)->USE.C.TtyData)
+	    
 	    newFlags = defaultFlags;
 	else
-	    newFlags = newWin->TtyData->Flags;
+	    newFlags = ((window)newW)->USE.C.TtyData->Flags;
 	
 	if ((newFlags ^ kbdFlags) & TTY_KBDAPPLIC)
 	    ConfigureHW(HW_KBDAPPLIC, FALSE, newFlags & TTY_KBDAPPLIC);
@@ -1356,24 +1359,25 @@ window TtyKbdFocus(window newWin) {
 	
 	kbdFlags = newFlags;
     }
-    return oldWin;
+    return oldW;
 }
 
 void ForceKbdFocus(void) {
     kbdFlags = ~defaultFlags;
-    (void)TtyKbdFocus(All->FirstScreen->FocusWindow);
+    (void)TtyKbdFocus(All->FirstScreen->FocusW);
 }
     
 /* this is the main entry point */
 void TtyWriteAscii(window Window, ldat Len, CONST byte *AsciiSeq) {
     byte c, ok;
 
-    if (!Window || !Len)
+    if (!Window || !Len || !AsciiSeq ||
+	!(Window->Flags & WINFL_USECONTENTS) ||	!Window->USE.C.TtyData)
 	return;
     
     /* initialize global static data */
     Win = Window;
-    Data = Win->TtyData;
+    Data = Win->USE.C.TtyData;
     Flags = &Data->Flags;
     
     if (!SizeX || !SizeY)
@@ -1449,12 +1453,12 @@ void TtyWriteHWAttr(window Window, dat x, dat y, ldat len, CONST hwattr *text) {
     ldat left, max, chunk;
     hwattr *dst;
     
-    if (!Window || Window->Flags & WINFL_INSERT || !len || !text)
-	/* WINFL_INSERT not supported */
+    if (!Window || !len || !text ||
+	!(Window->Flags & WINFL_USECONTENTS) ||	!Window->USE.C.TtyData)
 	return;
 
     Win = Window;
-    Data = Win->TtyData;
+    Data = Win->USE.C.TtyData;
     Flags = &Data->Flags;
 
 #if 0

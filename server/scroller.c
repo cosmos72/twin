@@ -40,7 +40,7 @@ byte InitScroller(void) {
 
 	return TRUE;
     }
-    printk("twin: Scroller: Out of memory!\n");
+    printk("twin: Scroller: %s\n", ErrStr);
     return FALSE;
 }
 
@@ -85,7 +85,11 @@ static void ScrollerH(msgport MsgPort) {
     
     Mouse = &All->MouseHW->MouseState;
 
-    if ((FocusWindow=All->FirstScreen->FocusWindow)) {
+    FocusWindow = (window)All->FirstScreen->FocusW;
+    if (FocusWindow && !IS_WINDOW(FocusWindow))
+	FocusWindow = (window)0;
+    
+    if (FocusWindow) {
 	Attrib=FocusWindow->Attrib;
 	FlagWinScroll = (XAND(Attrib, WINDOW_X_BAR | X_BAR_SELECT)
 			 || XAND(Attrib, WINDOW_Y_BAR | Y_BAR_SELECT)) && !(Attrib & TAB_SELECT);
@@ -134,8 +138,7 @@ static void ScrollerH(msgport MsgPort) {
 	if (!WinScrolled)
 	    ScrollerAutoRepeat();
 
-	if (!StdAddEventMouse(MSG_MOUSE, DRAG_MOUSE | Mouse->keys, Mouse->x, Mouse->y))
-	    Error(NOMEMORY);
+	StdAddEventMouse(MSG_MOUSE, DRAG_MOUSE | Mouse->keys, Mouse->x, Mouse->y);
     } else {
 	if (!WinScrolled)
 	    ScrollerDelayRepeat();

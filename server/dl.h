@@ -4,12 +4,13 @@
 byte DlOpen(module Module);
 void DlClose(module Module);
 
-#define MainSo   ((uldat)0)
-#define WMSo	 ((uldat)1)
-#define TermSo   ((uldat)2)
-#define SocketSo ((uldat)3)
-#define RCParseSo ((uldat)4)
-#define MAX_So   ((uldat)5)
+#define MainSo		((uldat)0)
+#define WMSo		((uldat)1)
+#define TermSo		((uldat)2)
+#define SocketSo	((uldat)3)
+#define SocketAlienSo	((uldat)4)
+#define RCParseSo	((uldat)5)
+#define MAX_So		((uldat)6)
 
 module DlLoad(uldat code);
 void   DlUnLoad(uldat code);

@@ -17,9 +17,6 @@
 #ifdef CONF_HW_TTY_LINUX
 
 
-#include "sizes.h"
-
-
 #if defined(__linux__) && TW_BYTE_ORDER == TW_LITTLE_ENDIAN
 /* try to get prototype for pwrite() */
 # include <asm/unistd.h>

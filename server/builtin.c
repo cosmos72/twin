@@ -31,7 +31,7 @@
 # include "dl.h"
 #endif
 
-#include "libTwkeys.h"
+#include "Tw/Twkeys.h"
 
 
 #define COD_QUIT	(udat)1 /* as in term.c */
@@ -144,7 +144,7 @@ static void SelectWinList(void) {
     widget W;
     
     for (W = Screen->FirstW; W; W = W->Next) {
-	if ((void *)W == WinList || !IS_WINDOW(W) || (((window)W)->Attrib & WINDOW_MENU))
+	if (W == (widget)WinList || !IS_WINDOW(W) || (((window)W)->Attrib & WINDOW_MENU))
 	    continue;
 	if (!n)
 	    break;
@@ -313,7 +313,7 @@ void FillButtonWin(void) {
     byte b[6] = "      ", *s;
     
     DeleteList(ButtonWin->FirstW);
-    DeleteList(ButtonWin->FirstRow);
+    DeleteList(ButtonWin->USE.R.FirstRow);
     
     for (i=j=0; j<BUTTON_MAX; j++) {
 	if (!All->ButtonVec[j].exists)
@@ -328,24 +328,22 @@ void FillButtonWin(void) {
 	Act(WriteRow,ButtonWin)(ButtonWin, 6, s);
 	Act(WriteRow,ButtonWin)(ButtonWin, 2, All->ButtonVec[j].shape);
 
-	Do(Create,Gadget)(FnGadget, (widget)ButtonWin, 3, 1, "[-]",
+	Do(Create,Gadget)(FnGadget, Builtin_MsgPort, (widget)ButtonWin, 3, 1, "[-]",
 			  2 | (j<<2), GADGET_USE_DEFCOL,
 			  COL(BLACK,WHITE), COL(HIGH|WHITE,GREEN),
 			  COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
-			  21, 1+i*2, 
+			  19, 1+i*2, 
 			  NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-	Do(Create,Gadget)(FnGadget, (widget)ButtonWin, 3, 1, "[+]",
+	Do(Create,Gadget)(FnGadget, Builtin_MsgPort, (widget)ButtonWin, 3, 1, "[+]",
 			  3 | (j<<2), GADGET_USE_DEFCOL,
 			  COL(BLACK,WHITE), COL(HIGH|WHITE,GREEN),
 			  COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
-			  24, 1+i*2,
+			  22, 1+i*2,
 			  NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 	i++;
     }
     
-    ButtonWin->Attrib |= WINDOW_RESIZE;
     ResizeRelWindow(ButtonWin, 0, (dat)(3 + i*2) - (dat)ButtonWin->YWidth);
-    ButtonWin->Attrib &= ~WINDOW_RESIZE;
 }
     
 void UpdateButtonWin(void) {
@@ -355,7 +353,7 @@ void UpdateButtonWin(void) {
     for (i=j=0; j<BUTTON_MAX; j++) {
 	if (!All->ButtonVec[j].exists)
 	    continue;
-	ButtonWin->CurX = 28; ButtonWin->CurY = 1 + i*2;
+	ButtonWin->CurX = 26; ButtonWin->CurY = 1 + i*2;
 	
 	pos = All->ButtonVec[j].pos;
 	if (pos >= 0) {
@@ -395,7 +393,7 @@ static void UpdateDisplayWin(window displayWin) {
     uldat x = 12, y = 0;
     
     if (displayWin == DisplayWin) {
-	DeleteList(DisplayWin->FirstRow);
+	DeleteList(DisplayWin->USE.R.FirstRow);
     
 	for (hw = All->FirstDisplayHW; hw; hw = hw->Next) {
 	    Act(GotoXY,DisplayWin)(DisplayWin, x, y++);
@@ -426,7 +424,7 @@ static void DisplayGadgetH(msg Msg) {
 
     switch (Msg->Event.EventGadget.Code) {
       case COD_D_REMOVE:
-	if ((i = DisplayWin->CurY) < DisplayWin->MaxNumRow) {
+	if ((i = DisplayWin->CurY) < DisplayWin->HLogic) {
 	    for (hw = All->FirstDisplayHW; hw && i; hw = hw->Next, i--)
 		;
 	    if (hw && !i)
@@ -625,7 +623,7 @@ static void BuiltinH(msgport MsgPort) {
 		CurrWin = Msg->Event.EventCommon.Window;
 		temp = EventMouseX >= 0 && EventMouseX <= CurrWin->XWidth-2
 		    && EventMouseY >= 0 && EventMouseY <= CurrWin->YWidth-2
-		    && (uldat)EventMouseY+CurrWin->YLogic < (uldat)CurrWin->MaxNumRow;
+		    && (uldat)EventMouseY+CurrWin->YLogic < (uldat)CurrWin->HLogic;
 
 		SelectRowWindow(CurrWin, temp ? (uldat)EventMouseY+CurrWin->YLogic : MAXLDAT);
 		
@@ -636,13 +634,22 @@ static void BuiltinH(msgport MsgPort) {
 		}
 	    }
 	} else if (Msg->Type==MSG_USER_CONTROL) {
-	    if (Event->EventControl.Code == MSG_CONTROL_OPEN) {
-		byte **cmd = TokenizeStringVec(Event->EventControl.Len, Event->EventControl.Data);
-		if (cmd) {
-		    Ext(Term,Open)(cmd[0], cmd);
-		    FreeStringVec(cmd);
-		} else
-		    Ext(Term,Open)(NULL, NULL);
+	    switch (Event->EventControl.Code) {
+	      case MSG_CONTROL_OPEN:
+		{
+		    byte **cmd = TokenizeStringVec(Event->EventControl.Len, Event->EventControl.Data);
+		    if (cmd) {
+			Ext(Term,Open)(cmd[0], cmd);
+			FreeStringVec(cmd);
+		    } else
+			Ext(Term,Open)(NULL, NULL);
+		    break;
+		}
+	      case MSG_CONTROL_QUIT:
+		Quit(0);
+		break;
+	      default:
+		break;
 	    }
 	}
 	Delete(Msg);
@@ -667,7 +674,7 @@ void UpdateWinList(void) {
     screen Screen = All->FirstScreen;
     widget W;
     
-    DeleteList(WinList->FirstRow);
+    DeleteList(WinList->USE.R.FirstRow);
     WinList->CurX = WinList->CurY = 0;
     
     WinList->XLogic = WinList->YLogic = 0;
@@ -675,7 +682,7 @@ void UpdateWinList(void) {
     WinList->YWidth = WinList->MinYWidth;
     
     for (W = Screen->FirstW; W; W = W->Next) {
-	if ((void *)W == WinList || !IS_WINDOW(W) || (((window)W)->Attrib & WINDOW_MENU))
+	if (W == (widget)WinList || !IS_WINDOW(W) || (((window)W)->Attrib & WINDOW_MENU))
 	    continue;
 	Row4Menu(WinList, (udat)0, ROW_ACTIVE, ((window)W)->LenTitle, ((window)W)->Title);
     }
@@ -699,7 +706,7 @@ static byte InitMessagesWin(void) {
 	 Builtin_Menu, COL(WHITE,BLACK), LINECURSOR,
 	 WINDOW_DRAG|WINDOW_RESIZE|WINDOW_X_BAR|WINDOW_Y_BAR|WINDOW_CLOSE,
 	 WINFL_CURSOR_ON,
-	 62, 22, 200);
+	 60, 20, 200);
     if (MessagesWin) {
 	Act(SetColors,MessagesWin)
 	    (MessagesWin, 0x1F1, COL(HIGH|GREEN,WHITE), 0, 0, 0, COL(HIGH|WHITE,WHITE),
@@ -717,7 +724,7 @@ static byte InitTestWin(void) {
 	(FnWindow, 4, "Test", NULL,
 	 Builtin_Menu, COL(WHITE,BLACK), NOCURSOR,
 	 WINDOW_DRAG|WINDOW_RESIZE|WINDOW_X_BAR|WINDOW_Y_BAR|WINDOW_CLOSE,
-	 0, 42, 22, 0);
+	 0, 40, 20, 0);
     if (TestWin && (Group = Do(Create,Group)(FnGroup, Builtin_MsgPort))) {
 	Act(SetColText,TestWin)(TestWin, COL(WHITE,BLUE));
 	Act(InsertGadget,Group)
@@ -757,12 +764,16 @@ static byte InitScreens(void) {
     if ((OneScreen = Do(CreateSimple,Screen)(FnScreen, 1, "1", HWATTR(COL(HIGH|BLACK,BLUE),'±'))) &&
 	(TwoScreen = Do(Create,Screen)(FnScreen, 1, "2", 4, 2, attr))) {
 	
+	Act(Own,OneScreen)(OneScreen, Builtin_MsgPort);
+	Act(Own,TwoScreen)(TwoScreen, Builtin_MsgPort);
+	
 	InsertLast(Screen, OneScreen, All);
 	InsertLast(Screen, TwoScreen, All);
 	    
 	return TRUE;
     }
-    printk("twin: InitScreens(): Out of memory!\n");
+    Error(NOMEMORY);
+    printk("twin: InitScreens(): %s\n", ErrStr);
     return FALSE;
 }
 
@@ -780,6 +791,8 @@ byte InitBuiltin(void) {
 	 (FnMsgPort, 7, "Builtin", (time_t)0, (frac_t)0, 0, BuiltinH)) &&
 	
 	InitScreens() && /* Do(Create,Screen)() requires Builtin_MsgPort ! */
+	
+	(All->BuiltinRow = Do(Create,Row)(FnRow, 0, ROW_ACTIVE|ROW_USE_DEFCOL))&&
 	
 	(Builtin_Menu=Do(Create,Menu)
 	 (FnMenu, Builtin_MsgPort, (byte)0x70, (byte)0x20, (byte)0x78, (byte)0x08, (byte)0x74, (byte)0x24, (byte)0)) &&
@@ -848,48 +861,48 @@ byte InitBuiltin(void) {
 	(AboutWin = Do(Create,Window)
 	 (FnWindow, 5, "About", "\x7F\x7F\x7F\x7F\x7F", Builtin_Menu, COL(BLACK,WHITE),
 	  NOCURSOR, WINDOW_WANT_MOUSE|WINDOW_DRAG|WINDOW_CLOSE, WINFL_USE_DEFCOL,
-	  40, 15, 0)) &&
+	  36, 13, 0)) &&
 
 	(ClockWin = Do(Create,Window)
 	 (FnWindow, 5, "Clock", NULL, Builtin_Menu, COL(YELLOW,BLUE),
 	  NOCURSOR, WINDOW_DRAG|WINDOW_CLOSE, WINFL_USE_DEFCOL,
-	  12, 4, 0)) &&
+	  10, 2, 0)) &&
 
 	(OptionWin = Do(Create,Window)
 	 (FnWindow, 7, "Options", NULL, Builtin_Menu, COL(HIGH|BLACK,BLACK),
 	  NOCURSOR, WINDOW_WANT_MOUSE|WINDOW_DRAG|WINDOW_CLOSE,WINFL_USE_DEFCOL,
-	  42, 18,0)) &&
+	  37, 16, 0)) &&
 
 	(ButtonWin = Do(Create,Window)
 	 (FnWindow, 7, "Buttons", NULL, Builtin_Menu, COL(HIGH|BLACK,BLACK),
 	  NOCURSOR, WINDOW_WANT_MOUSE|WINDOW_DRAG|WINDOW_CLOSE, WINFL_USE_DEFCOL,
-	  42, 11, 0)) &&
+	  37, 19, 0)) &&
 
 	(DisplayWin = Do(Create,Window)
 	 (FnWindow, 7, "Display", NULL, Builtin_Menu, COL(HIGH|BLACK,WHITE),
 	  NOCURSOR,
 	  WINDOW_WANT_MOUSE|WINDOW_AUTO_KEYS|WINDOW_DRAG|WINDOW_RESIZE|WINDOW_CLOSE|WINDOW_X_BAR|WINDOW_Y_BAR,
 	  WINFL_SEL_ROWCURR|WINFL_USE_DEFCOL,
-	  33, 12,0)) &&
+	  31, 10, 0)) &&
 
 	(DisplaySubWin = Do(Create,Window)
 	 (FnWindow, 0, NULL, NULL, Builtin_Menu, COL(HIGH|BLACK,WHITE),
 	  NOCURSOR, (uldat)0, WINFL_USE_DEFCOL,
-	  12, MAXDAT,0)) &&
+	  10, MAXDAT, 0)) &&
 
 	(WinList = Do(Create,Window)
 	 (FnWindow, 11, "Window List", NULL, Builtin_Menu, COL(WHITE,BLUE),
 	  NOCURSOR,
-	  WINDOW_WANT_KEYS|WINDOW_WANT_MOUSE|WINDOW_DRAG|WINDOW_RESIZE|WINDOW_CLOSE
+	  WINDOW_WANT_KEYS|WINDOW_WANT_MOUSE|WINDOW_DRAG|WINDOW_CLOSE/*|WINDOW_RESIZE*/
 	  |WINDOW_X_BAR|WINDOW_Y_BAR,
 	  WINFL_SEL_ROWCURR|WINFL_USE_DEFCOL /*|WINFL_BORDERLESS*/ ,
-	  17, 4, 0)) &&
+	  14, 2, 0)) &&
 
 	(ExecuteWin = Do(Create,Window)
 	 (FnWindow, 10, "Execute...", NULL, Builtin_Menu, COL(WHITE,BLUE),
 	  LINECURSOR, WINDOW_WANT_KEYS|WINDOW_CLOSE|WINDOW_DRAG|WINDOW_X_BAR,
 	  WINFL_USE_DEFCOL|WINFL_CURSOR_ON,
-	  40, 4, 0)) &&
+	  38, 2, 0)) &&
 
 #ifdef CONF_PRINTK
 	InitMessagesWin() &&
@@ -901,73 +914,73 @@ byte InitBuiltin(void) {
 	(ButtonRemove=Do(CreateEmptyButton,Gadget)(FnGadget, Builtin_MsgPort, 8, 1, COL(BLACK,WHITE))) &&
 	(ButtonThis  =Do(CreateEmptyButton,Gadget)(FnGadget, Builtin_MsgPort, 8, 1, COL(BLACK,WHITE))) &&
 
-	Do(Create,Gadget)(FnGadget, (widget)OptionWin, 11, 1, "[ ] Shadows",
+	Do(Create,Gadget)(FnGadget, Builtin_MsgPort, (widget)OptionWin, 11, 1, "[ ] Shadows",
 			  COD_O_SHADOWS, GADGET_USE_DEFCOL,
 			  COL(BLACK,WHITE), COL(HIGH|WHITE,GREEN),
 			  COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
 			  2, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL) &&
 
-	Do(Create,Gadget)(FnGadget, (widget)OptionWin, 3, 1, "[-]",
+	Do(Create,Gadget)(FnGadget, Builtin_MsgPort, (widget)OptionWin, 3, 1, "[-]",
 			  COD_O_Xn_SHADE, GADGET_USE_DEFCOL,
 			  COL(BLACK,WHITE), COL(HIGH|WHITE,GREEN),
 			  COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
 			  18, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL) &&
 	
-	Do(Create,Gadget)(FnGadget, (widget)OptionWin, 3, 1, "[+]",
+	Do(Create,Gadget)(FnGadget, Builtin_MsgPort, (widget)OptionWin, 3, 1, "[+]",
 			  COD_O_Xp_SHADE, GADGET_USE_DEFCOL,
 			  COL(BLACK,WHITE), COL(HIGH|WHITE,GREEN),
 			  COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
 			  21, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL) &&
 
-	Do(Create,Gadget)(FnGadget, (widget)OptionWin, 3, 1, "[-]",
+	Do(Create,Gadget)(FnGadget, Builtin_MsgPort, (widget)OptionWin, 3, 1, "[-]",
 			  COD_O_Yn_SHADE, GADGET_USE_DEFCOL,
 			  COL(BLACK,WHITE), COL(HIGH|WHITE,GREEN),
 			  COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
 			  18, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL) &&
 	
-	Do(Create,Gadget)(FnGadget, (widget)OptionWin, 3, 1, "[+]",
+	Do(Create,Gadget)(FnGadget, Builtin_MsgPort, (widget)OptionWin, 3, 1, "[+]",
 			  COD_O_Yp_SHADE, GADGET_USE_DEFCOL,
 			  COL(BLACK,WHITE), COL(HIGH|WHITE,GREEN),
 			  COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
 			  21, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL) &&
 	
-	Do(Create,Gadget)(FnGadget, (widget)OptionWin, 22, 1, "[ ] Always Show Cursor",
+	Do(Create,Gadget)(FnGadget, Builtin_MsgPort, (widget)OptionWin, 22, 1, "[ ] Always Show Cursor",
 			  COD_O_ALWAYSCURSOR, GADGET_USE_DEFCOL,
 			  COL(BLACK,WHITE), COL(HIGH|WHITE,GREEN),
 			  COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
 			  2, 4, NULL, NULL, NULL, NULL, NULL, NULL, NULL) &&
 
-	Do(Create,Gadget)(FnGadget, (widget)OptionWin, 32, 1, "[ ] Enable Blink/High Background",
+	Do(Create,Gadget)(FnGadget, Builtin_MsgPort, (widget)OptionWin, 32, 1, "[ ] Enable Blink/High Background",
 			  COD_O_BLINK, GADGET_USE_DEFCOL,
 			  COL(BLACK,WHITE), COL(HIGH|WHITE,GREEN),
 			  COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
 			  2, 6, NULL, NULL, NULL, NULL, NULL, NULL, NULL) &&
 
-	Do(Create,Gadget)(FnGadget, (widget)OptionWin, 15, 1, "[ ] Hidden Menu",
+	Do(Create,Gadget)(FnGadget, Builtin_MsgPort, (widget)OptionWin, 15, 1, "[ ] Hidden Menu",
 			  COD_O_HIDEMENU, GADGET_USE_DEFCOL,
 			  COL(BLACK,WHITE), COL(HIGH|WHITE,GREEN),
 			  COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
 			  2, 8, NULL, NULL, NULL, NULL, NULL, NULL, NULL) &&
 
-	Do(Create,Gadget)(FnGadget, (widget)OptionWin, 25, 1, "[ ] Menu Information Line",
+	Do(Create,Gadget)(FnGadget, Builtin_MsgPort, (widget)OptionWin, 25, 1, "[ ] Menu Information Line",
 			  COD_O_MENUINFO, GADGET_USE_DEFCOL,
 			  COL(BLACK,WHITE), COL(HIGH|WHITE,GREEN),
 			  COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
 			  2, 10, NULL, NULL, NULL, NULL, NULL, NULL, NULL) &&
 
-	Do(Create,Gadget)(FnGadget, (widget)OptionWin, 27, 1, "[ ] Enable Screen Scrolling",
+	Do(Create,Gadget)(FnGadget, Builtin_MsgPort, (widget)OptionWin, 27, 1, "[ ] Enable Screen Scrolling",
 			  COD_O_EDGESCROLL, GADGET_USE_DEFCOL,
 			  COL(BLACK,WHITE), COL(HIGH|WHITE,GREEN),
 			  COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
 			  2, 12, NULL, NULL, NULL, NULL, NULL, NULL, NULL) &&
 
-	Do(Create,Gadget)(FnGadget, (widget)OptionWin, 15, 1, "[ ] Custom Font", 
+	Do(Create,Gadget)(FnGadget, Builtin_MsgPort, (widget)OptionWin, 15, 1, "[ ] Custom Font", 
 			  COD_O_ALTFONT, GADGET_USE_DEFCOL,
 			  COL(BLACK,WHITE), COL(HIGH|WHITE,GREEN),
 			  COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
 			  2, 14, NULL, NULL, NULL, NULL, NULL, NULL, NULL) &&
 	
-	Do(Create,Gadget)(FnGadget, (widget)ExecuteWin, 19, 1, "[ ] Run in Terminal",
+	Do(Create,Gadget)(FnGadget, Builtin_MsgPort, (widget)ExecuteWin, 19, 1, "[ ] Run in Terminal",
 			  COD_E_TTY, GADGET_USE_DEFCOL,
 			  COL(HIGH|YELLOW,BLUE), COL(HIGH|WHITE,GREEN),
 			  COL(HIGH|BLACK,BLUE), COL(HIGH|BLACK,BLUE),
@@ -991,7 +1004,7 @@ byte InitBuiltin(void) {
 			       COL(HIGH|YELLOW,CYAN), COL(HIGH|GREEN,HIGH|BLUE), COL(WHITE,HIGH|BLUE),
 			       COL(HIGH|WHITE,HIGH|BLUE), COL(HIGH|WHITE,HIGH|BLUE),
 			       COL(WHITE,BLUE), COL(HIGH|BLUE,WHITE), COL(HIGH|BLACK,BLUE), COL(HIGH|BLACK,BLACK));
-	Act(Configure,WinList)(WinList, 1<<2 | 1<<3, 0, 0, 17, 4, 0, 0);
+	Act(Configure,WinList)(WinList, 1<<2 | 1<<3, 0, 0, 15, 2, 0, 0);
 
 	Act(SetColors,DisplayWin)(DisplayWin, 0x1FF, (hwcol)0x7A, (hwcol)0x7F, (hwcol)0x79, (hwcol)0xF9, (hwcol)0x7F,
 				  (hwcol)0x70, (hwcol)0x20, (hwcol)0x78, (hwcol)0x08);
@@ -1022,7 +1035,8 @@ byte InitBuiltin(void) {
 
 	return TRUE;
     }
-    printk("twin: InitBuiltin(): Out of memory!\n");
+    Error(NOMEMORY);
+    printk("twin: InitBuiltin(): %s\n", ErrStr);
     return FALSE;
 }
 

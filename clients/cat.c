@@ -13,8 +13,8 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-#include "libTw.h"
-#include "libTwerrno.h"
+#include "Tw/Tw.h"
+#include "Tw/Twerrno.h"
 
 #define COD_QUIT      (udat)1
 
@@ -43,7 +43,7 @@ static byte InitCat(void) {
 	  Cat_Menu, COL(BLACK,HIGH|BLACK), TW_LINECURSOR,
 	  TW_WINDOW_DRAG|TW_WINDOW_RESIZE|TW_WINDOW_X_BAR|TW_WINDOW_Y_BAR|TW_WINDOW_CLOSE,
 	  TW_WINFL_USE_DEFCOL,
-	  82, 27, 0)) &&
+	  80, 25, 0)) &&
 	(Window=TwWin4Menu(Cat_Menu)) &&
 	TwItem4Menu(Cat_Menu, Window, TRUE, 6, " File ")) {
 

@@ -18,8 +18,8 @@
 #include <signal.h>
 #include <errno.h>
 
-#include "libTw.h"
-#include "libTwerrno.h"
+#include "Tw/Tw.h"
+#include "Tw/Twerrno.h"
 
 byte *name;
 
@@ -120,7 +120,7 @@ udat Effects;
 #define EFF_BLINK	((udat)0x0008)
 #define EFF_REVERSE	((udat)0x0010)
 
-INLINE void update_eff(void) {
+TW_INLINE void update_eff(void) {
     udat effects = Effects;
     hwcol fg = COLFG(ColText), bg = COLBG(ColText);
 	
@@ -140,7 +140,7 @@ INLINE void update_eff(void) {
     Color = COL(fg, bg);
 }
 
-INLINE void csi_m(void) {
+TW_INLINE void csi_m(void) {
     udat i;
     udat effects = Effects;
     hwcol fg = COLFG(ColText), bg = COLBG(ColText);
@@ -216,13 +216,13 @@ INLINE void csi_m(void) {
     update_eff();
 }
 
-INLINE void Fill(hwattr *t, hwattr h, uldat count) {
+TW_INLINE void Fill(hwattr *t, hwattr h, uldat count) {
     while (count--)
 	*t++ = h;
 }
 
 		
-INLINE void Xgrow(void) {
+TW_INLINE void Xgrow(void) {
     uldat n, newXmax;
 
     newXmax = X * 2 + 2;
@@ -245,7 +245,7 @@ INLINE void Xgrow(void) {
     Xmax = newXmax;
 }
 
-INLINE void Ygrow(void) {
+TW_INLINE void Ygrow(void) {
     uldat n, newYmax;
 
     newYmax = Y * 2 + 2;

@@ -1150,7 +1150,9 @@ static
 byte rcload(void) {
     str path;
     uldat len;
+#ifndef DEBUG_FORK
     int fds[2];
+#endif
     byte c = FALSE;
 
     if (!(path = findfile(".twinrc", &len)))

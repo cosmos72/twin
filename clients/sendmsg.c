@@ -9,8 +9,8 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "libTw.h"
-#include "libTwerrno.h"
+#include "Tw/Tw.h"
+#include "Tw/Twerrno.h"
 #include "version.h"
 
 byte *argv0;
@@ -22,7 +22,7 @@ void Usage(void) {
 	    " -V, -version            output version information and exit\n"
 	    " -control                send a MSG_USER_CONTROL message (default)\n"
 	    " -clientmsg              send a MSG_USER_CLIENTMSG message\n"
-	    " [-code=]<Code>          set the message code (default is 0)\n"
+	    " [-code=]<Code>          set the message code (default is `open')\n"
 	    " [-data=]<Data>          set the message data\n"
 	    "Currently known codes for control messages are:\n"
 	    " quit (0), restart (1), open (2)\n",
@@ -35,7 +35,7 @@ void ShowVersion(void) {
 
 int main(int argc, char *argv[]) {
     byte *MsgPortName = NULL, *CodeName = NULL, *Data = NULL;
-    udat Type = TW_MSG_USER_CONTROL, Code = 0, DataLen = 0;
+    udat Type = TW_MSG_USER_CONTROL, Code = TW_MSG_CONTROL_OPEN, DataLen = 0;
     tmsgport MsgPort;
     tmsg Msg;
     uldat err;

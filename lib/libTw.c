@@ -43,8 +43,8 @@
 # include <pthread.h>
 #endif
 
-#include "libTw.h"
-#include "libTwerrno.h"
+#include "Tw/Tw.h"
+#include "Tw/Twerrno.h"
 #include "mutex.h"
 
 #include "unaligned.h"
@@ -251,7 +251,7 @@ void Tw_ConfigMalloc(void *(*my_malloc)(size_t),
 
 #ifdef CONF_SOCKET_PTHREADS
 
-INLINE byte GrowErrnoLocation(tw_d TwD) {
+TW_INLINE byte GrowErrnoLocation(tw_d TwD) {
     s_tw_errno *vec;
     uldat newmax = rErrno.max <= 8 ? 16 : (rErrno.max<<1);
     
@@ -372,16 +372,9 @@ static uldat Grow(tw_d TwD, byte i, uldat len) {
     return Qlen[i] += len;
 }
 
-INLINE byte *GetQueue(tw_d TwD, byte i, uldat *len) {
+TW_INLINE byte *GetQueue(tw_d TwD, byte i, uldat *len) {
     if (len) *len = Qlen[i];
     return Queue[i] + Qstart[i];
-}
-
-INLINE byte *FillQueue(tw_d TwD, byte i, uldat *len) {
-    uldat delta = Qmax[i] - Qlen[i] - Qstart[i];
-    Qlen[i] += delta;
-    if (len) *len = delta;
-    return Queue[i] + Qstart[i] + Qlen[i] - delta;
 }
 
 static uldat *InitRS(tw_d TwD) {
@@ -395,7 +388,7 @@ static uldat *InitRS(tw_d TwD) {
     return (uldat *)0;
 }
 
-INLINE uldat DeQueue(tw_d TwD, byte i, uldat len) {
+TW_INLINE uldat DeQueue(tw_d TwD, byte i, uldat len) {
     if (!len)
 	return len;
     
@@ -636,19 +629,19 @@ static uldat TryRead(tw_d TwD, byte Wait) {
     return got;
 }
 
-INLINE reply FindReply(tw_d TwD, uldat Serial) {
-    uldat left, rlen;
+TW_INLINE reply FindReply(tw_d TwD, uldat Serial) {
+    uldat left, rlen, rSerial;
     reply rt;
     byte *t = GetQueue(TwD, QREAD, &left);
     
     while (left >= sizeof(uldat)) {
 	rt = (reply)t;
 	Pop(t,uldat,rlen);
-	left -= sizeof(uldat);
-	if (rt->Serial == Serial)
+	Pop(t,uldat,rSerial);
+	if (rSerial == Serial)
 	    return rt;
-	t += rlen;
-	left -= rlen;
+	t += rlen - sizeof(uldat);
+	left -= rlen + sizeof(uldat);
     }
     return (reply)0;
 }
@@ -1311,8 +1304,8 @@ static tlistener FindListener(tw_d TwD, tmsg Msg) {
 	    /* common part matches. check details. */
 	    switch (L->Type) {
 		/*
-		 * HACK: I am assuming all fields of a union
-		 * have the same address of the union itself
+		 * WARNING: I am assuming all fields of a union
+		 * have the same address as the union itself
 		 */
 	      case TW_MSG_WINDOW_KEY:
 	      case TW_MSG_WINDOW_MOUSE:
@@ -1604,16 +1597,24 @@ uldat Tw_MainLoop(tw_d TwD) {
 
 
 
-INLINE uldat NextSerial(tw_d TwD) {
+TW_INLINE uldat NextSerial(tw_d TwD) {
     if (++RequestN == msg_magic)
 	++RequestN;
     return RequestN;
 }
 
-INLINE void Send(tw_d TwD, uldat Serial, uldat idFN) {
+TW_INLINE void Send(tw_d TwD, uldat Serial, uldat idFN) {
+    /* be careful with aligmnent!! */
+#ifdef __i386__
     r[0] = s - (byte *)(r+1);
     r[1] = Serial;
     r[2] = idFN;
+#else
+    byte *R = (byte *)r;
+    Push(R, uldat, s - (byte *)(r+1));
+    Push(R, uldat, Serial);
+    Push(R, uldat, idFN);
+#endif
 }
 
 /***********/
@@ -2038,7 +2039,7 @@ void Tw_DeleteWindow(tw_d TwD, tobj a1)			{ Tw_DeleteObj(TwD, a1); }
 void Tw_MapWindow(tw_d TwD, twidget a1,	twidget a2)	{ Tw_MapWidget(TwD, a1, a2); }
 void Tw_UnMapWindow(tw_d TwD, twidget a1)		{ Tw_UnMapWidget(TwD, a1); }
 void Tw_SetXYWindow(tw_d TwD, twidget a1, dat x, dat y) { Tw_SetXYWidget(TwD, a1, x, y); }
-void Tw_RecursiveDeleteWindow(tw_d TwD, twidget a1)	{ Tw_RecursiveDeleteWidget(a1); }
+void Tw_RecursiveDeleteWindow(tw_d TwD, twidget a1)	{ Tw_RecursiveDeleteWidget(TwD, a1); }
 tmsgport Tw_GetOwnerWindow(tw_d TwD, twidget a1) { return Tw_GetOwnerWidget(TwD, a1); }
 void Tw_DeleteMenuItem(tw_d TwD, tobj a1)		{ Tw_DeleteObj(TwD, a1); }
 void Tw_DeleteMenu(tw_d TwD, tobj a1)			{ Tw_DeleteObj(TwD, a1); }
@@ -2046,13 +2047,23 @@ void Tw_DeleteMsgPort(tw_d TwD, tobj a1)		{ Tw_DeleteObj(TwD, a1); }
 byte Tw_SyncSocket(tw_d TwD)			 { return Tw_Sync(TwD); }
 #endif
 
+void Tw_WriteTextGadget(tw_d TwD, tgadget G, dat Width, dat Height, TW_CONST byte *Text, dat Left, dat Up) {
+    Tw_WriteTextsGadget(TwD, G, 1, Width, Height, Text, Left, Up);
+}
+
 void Tw_SetTextGadget(tw_d TwD, tgadget G, dat Width, dat Height, TW_CONST byte *Text, dat Left, dat Up) {
     /* clear the whole gadget */
-    Tw_WriteTextGadget(TwD, G, MAXDAT, MAXDAT, NULL, 0, 0);
+    Tw_WriteTextsGadget(TwD, G, 1, MAXDAT, MAXDAT, NULL, 0, 0);
     /* write the specified text */
-    Tw_WriteTextGadget(TwD, G, Width, Height, Text, Left, Up);
+    Tw_WriteTextsGadget(TwD, G, 1, Width, Height, Text, Left, Up);
 }
-    
+
+void Tw_SetTextsGadget(tw_d TwD, tgadget G, byte bitmap, dat Width, dat Height, TW_CONST byte *Text, dat Left, dat Up) {
+    /* clear the whole gadget */
+    Tw_WriteTextsGadget(TwD, G, bitmap, MAXDAT, MAXDAT, NULL, 0, 0);
+    /* write the specified text */
+    Tw_WriteTextsGadget(TwD, G, bitmap, Width, Height, Text, Left, Up);
+}
 
 static byte Sync(tw_d TwD) {
     uldat left;
@@ -2200,23 +2211,30 @@ static void Tw_ZFree(voidpf opaque, voidpf address) {
 	Tw_FreeMem((void *)address);
 }
 
+TW_INLINE byte *FillQueue(tw_d TwD, byte i, uldat *len) {
+    uldat delta = Qmax[i] - Qlen[i] - Qstart[i];
+    Qlen[i] += delta;
+    if (len) *len = delta;
+    return Queue[i] + Qstart[i] + Qlen[i] - delta;
+}
+
 /* compress data before sending */
 static uldat Gzip(tw_d TwD) {
-    uldat oldQWRITE = Qlen[QWRITE], delta;
+    uldat oldQWRITE = Qlen[QWRITE], delta, tmp;
     z_streamp z = zW;
     int zret = Z_OK;
     
     /* compress the queue */
     if (Qlen[QWRITE]) {
-	z->next_in = GetQueue(TwD, QWRITE, &z->avail_in);
-	z->next_out = FillQueue(TwD, QgzWRITE, &z->avail_out);
+	z->next_in = GetQueue(TwD, QWRITE, &tmp); z->avail_in = tmp;
+	z->next_out = FillQueue(TwD, QgzWRITE, &tmp); z->avail_out = tmp;
 	    
 	while (z->avail_in && zret == Z_OK) {
 	    
 	    if (z->avail_out < (delta = z->avail_in + 12)) {
 		if (Grow(TwD, QgzWRITE, delta - z->avail_out)) {
 		    Qlen[QgzWRITE] -= delta;
-		    z->next_out = FillQueue(TwD, QgzWRITE, &z->avail_out);
+		    z->next_out = FillQueue(TwD, QgzWRITE, &tmp); z->avail_out = tmp;
 		} else {
 		    /* out of memory ! */
 		    Errno = TW_ENO_MEM;
@@ -2247,14 +2265,14 @@ static uldat Gzip(tw_d TwD) {
 }
 
 static uldat Gunzip(tw_d TwD) {
-    uldat oldQRead = Qlen[QREAD], delta;
+    uldat oldQRead = Qlen[QREAD], delta, tmp;
     int zret = Z_OK;
     z_streamp z = zR;
     
     /* uncompress the queue */
     if (Qlen[QgzREAD]) {
-	z->next_in = GetQueue(TwD, QgzREAD, &z->avail_in);
-	z->next_out = FillQueue(TwD, QREAD, &z->avail_out);
+	z->next_in = GetQueue(TwD, QgzREAD, &tmp); z->avail_in = tmp;
+	z->next_out = FillQueue(TwD, QREAD, &tmp); z->avail_out = tmp;
 	
 	while (z->avail_in && zret == Z_OK) {
 	    
@@ -2263,7 +2281,7 @@ static uldat Gunzip(tw_d TwD) {
 	    if (z->avail_out < (delta = 5 * z->avail_in + 12)) {
 		if (Grow(TwD, QREAD, delta - z->avail_out)) {
 		    Qlen[QREAD] -= delta;
-		    z->next_out = FillQueue(TwD, QREAD, &z->avail_out);
+		    z->next_out = FillQueue(TwD, QREAD, &tmp); z->avail_out = tmp;
 		} else {
 		    /* out of memory ! */
 		    Errno = TW_ENO_MEM;

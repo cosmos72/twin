@@ -22,8 +22,8 @@
 #include <termios.h>
 #include <signal.h>
 
-#include "libTw.h"
-#include "libTwerrno.h"
+#include "Tw/Tw.h"
+#include "Tw/Twerrno.h"
 #include "version.h"
 
 #include "pty.h"
@@ -79,7 +79,7 @@ static uldat FdListGrow(void) {
     return oldsize;
 }
 
-INLINE uldat FdListGet(void) {
+TW_INLINE uldat FdListGet(void) {
     if (FdBottom < FdSize)
 	return FdBottom;
     return FdListGrow();
@@ -94,7 +94,7 @@ static uldat Slot_Window(twindow Window) {
     return NOSLOT;
 }
 
-INLINE int Fd_Slot(uldat Slot) {
+TW_INLINE int Fd_Slot(uldat Slot) {
     if (Slot < FdTop)
 	return LS.Fd;
     return NOFD;
@@ -222,7 +222,7 @@ static twindow newTermWindow(byte *title) {
 	 Term_Menu, COL(WHITE,BLACK), TW_LINECURSOR,
 	 TW_WINDOW_WANT_KEYS|TW_WINDOW_WANT_CHANGES|TW_WINDOW_DRAG|TW_WINDOW_RESIZE|TW_WINDOW_Y_BAR|TW_WINDOW_CLOSE,
 	 TW_WINFL_CURSOR_ON|TW_WINFL_USECONTENTS,
-	 82, 27, 200);
+	 80, 25, 200);
 
     if (Window != NOID) {
 	TwSetColorsWindow
@@ -230,7 +230,7 @@ static twindow newTermWindow(byte *title) {
 	     COL(WHITE,HIGH|BLUE), COL(HIGH|WHITE,HIGH|BLUE), COL(HIGH|WHITE,HIGH|BLUE),
 	     COL(WHITE,BLACK), COL(HIGH|BLACK,HIGH|WHITE), COL(HIGH|BLACK,BLACK), COL(BLACK,HIGH|BLACK));
 	
-	TwConfigureWindow(Window, (1<<2)|(1<<3), 0, 0, 7, 3, 0, 0);
+	TwConfigureWindow(Window, (1<<2)|(1<<3), 0, 0, 5, 1, 0, 0);
     }
     return Window;
 }

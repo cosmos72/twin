@@ -15,14 +15,14 @@
 #include "methods.h"
 #include "data.h"
 
-#include "libTwkeys.h"
+#include "Tw/Twkeys.h"
 
 
 /* setup configuration paths */
 
-#ifdef DESTDIR
-CONST byte *conf_destdir_lib_twin = DESTDIR "/lib/twin";
-CONST byte *conf_destdir_lib_twin_modules_ = DESTDIR "/lib/twin/modules/";
+#ifdef LIBDIR
+CONST byte *conf_destdir_lib_twin = LIBDIR "/twin";
+CONST byte *conf_destdir_lib_twin_modules_ = LIBDIR "/twin/modules/";
 #else
 CONST byte *conf_destdir_lib_twin = ".";
 CONST byte *conf_destdir_lib_twin_modules_ = "./";
@@ -91,6 +91,7 @@ static struct s_all _All = {
 	(void (*)(void))0, /* AtQuit */
 
 	(menu)0, (menu)0,
+	(row)0,
 	
     { { {0, }, }, }, /* ButtonVec[] */
 

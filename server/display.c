@@ -33,8 +33,8 @@
 #include "fdlist.h"
 #include "version.h"
 
-#include "libTw.h"
-#include "libTwerrno.h"
+#include "Tw/Tw.h"
+#include "Tw/Twerrno.h"
 
 /* HW specific headers */
 
@@ -59,15 +59,13 @@
 
 #ifdef CONF__MODULES
 
-# ifdef DESTDIR
-#  define DIR_LIB_TWIN_MODULES_ DESTDIR "/lib/twin/modules/"
+# ifdef LIBDIR
+#  define DIR_LIB_TWIN_MODULES_ LIBDIR "/twin/modules/"
 # else
 #  define DIR_LIB_TWIN_MODULES_ "./"
 # endif
 
 static CONST byte *conf_destdir_lib_twin_modules_ = DIR_LIB_TWIN_MODULES_;
-
-static CONST byte *ErrStr;
 
 #endif /* CONF__MODULES */
 
@@ -81,6 +79,9 @@ static byte ValidVideo;
 CONST byte *TWDisplay, *origTWDisplay, *origTERM;
 
 byte nullMIME[TW_MAX_MIMELEN];
+
+udat ErrNo;
+byte CONST * ErrStr;
 
 #define L 0x55
 #define M 0xAA
@@ -133,6 +134,23 @@ void *AlwaysNull(void) {
 void GetPrivileges(void) {
 }
 void RemotePidIsDead(pid_t pid) {
+}
+
+byte Error(udat Code_Error) {
+    switch ((ErrNo = Code_Error)) {
+      case NOMEMORY:
+	ErrStr = "Out of memory!";
+	break;
+      case NOTABLES:
+	ErrStr = "Internal tables full!";
+	break;
+      case SYSCALLERROR:
+	ErrStr = strerror(errno);
+	break;
+      default:
+	break;
+    }
+    return FALSE;
 }
 
 int printk(CONST byte *format, ...) {
@@ -1229,6 +1247,14 @@ int main(int argc, char *argv[]) {
 	return 1;
     }
 
+#ifdef CONF__ALLOC
+    /* do this as soon as possible */
+    if (!InitAlloc()) {
+	fputs("twin: InitAlloc() failed: internal error!\n", stderr);
+	return 1;
+    }
+#endif
+    
     TWDisplay = origTWDisplay = CloneStr(dpy ? dpy : (byte *)getenv("TWDISPLAY"));
     origTERM = CloneStr(getenv("TERM"));
 

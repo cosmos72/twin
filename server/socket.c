@@ -36,15 +36,28 @@
 #include "resize.h"
 #include "extensions.h"
 
+#include "fdlist.h"
 #include "remote.h"
+#include "socket.h"
+#include "socketprivate.h"
 #include "md5.h"
 #include "hw_multi.h"
 #include "common.h"
-#include "fdlist.h"
 #include "version.h"
 
-#include "libTw.h"
-#include "libTwkeys.h"
+#include "Tw/Tw.h"
+#include "Tw/Twkeys.h"
+
+#if defined(CONF_SOCKET_ALIEN) || defined(CONF__MODULES)
+# ifdef CONF_SOCKET_ALIEN
+   void SocketAlienIO(int fd, uldat slot);
+   byte InitSocketAlien(void);
+   void QuitSocketAlien(void);
+   byte SocketAlienOK;
+# else
+#  include "dl.h"
+# endif
+#endif
 
 /* First: private variables from remote.c */
 extern fdlist *FdList;
@@ -82,7 +95,7 @@ static uldat RemoteReadAddQueue(uldat Slot, uldat len, byte *data) {
 }
 #endif /* 0 */
 
-static byte *RemoteReadGrowQueue(uldat Slot, uldat len) {
+byte *RemoteReadGrowQueue(uldat Slot, uldat len) {
     uldat nmax;
     
     if (len == 0 || Slot >= FdTop || LS.Fd == NOFD)
@@ -109,8 +122,7 @@ static byte *RemoteReadGrowQueue(uldat Slot, uldat len) {
     return LS.RQueue + nmax;
 }
 
-static uldat RemoteReadShrinkQueue(uldat Slot, uldat len) {
-
+uldat RemoteReadShrinkQueue(uldat Slot, uldat len) {
     if (len && Slot < FdTop && LS.Fd != NOFD) {
 	if (len < LS.RQlen)
 	    LS.RQlen -= len;
@@ -123,8 +135,7 @@ static uldat RemoteReadShrinkQueue(uldat Slot, uldat len) {
     return 0;
 }
 
-static uldat RemoteReadDeQueue(uldat Slot, uldat len) {
-    
+uldat RemoteReadDeQueue(uldat Slot, uldat len) {    
     if (len && Slot < FdTop && LS.Fd != NOFD) {
 	if (len < LS.RQlen) {
 	    LS.RQstart += len;
@@ -138,7 +149,7 @@ static uldat RemoteReadDeQueue(uldat Slot, uldat len) {
     return 0;
 }
 
-static byte *RemoteReadGetQueue(uldat Slot, uldat *len) {
+byte *RemoteReadGetQueue(uldat Slot, uldat *len) {
     if (Slot >= FdTop || LS.Fd == NOFD || !LS.RQlen) {
 	if (len) *len = 0;
 	return NULL;
@@ -148,7 +159,7 @@ static byte *RemoteReadGetQueue(uldat Slot, uldat *len) {
     return LS.RQueue + LS.RQstart;
 }
 
-static byte *RemoteWriteGetQueue(uldat Slot, uldat *len) {
+byte *RemoteWriteGetQueue(uldat Slot, uldat *len) {
     if (Slot >= FdTop || LS.Fd == NOFD || !LS.WQlen) {
 	if (len) *len = 0;
 	return NULL;
@@ -194,7 +205,7 @@ static byte *RemoteWriteFillQueue(uldat Slot, uldat *len) {
 }
 
 /* compress an uncompressed slot */
-static byte RemoteGzip(uldat Slot) {
+byte RemoteGzip(uldat Slot) {
     uldat slot = LS.pairSlot, delta;
     z_streamp z = (z_streamp)ls.PrivateData;
     int zret = Z_OK;
@@ -238,7 +249,7 @@ static byte RemoteGzipFlush(uldat Slot) {
     return RemoteGzip(Slot) && RemoteFlush(LS.pairSlot);
 }
 
-static byte RemoteGunzip(uldat Slot) {
+byte RemoteGunzip(uldat Slot) {
     uldat slot = LS.pairSlot, delta;
     z_streamp z = (z_streamp)ls.PrivateData;
     int zret = Z_OK;
@@ -277,46 +288,423 @@ static void ShutdownGzip(uldat Slot);
 #endif /* CONF_SOCKET_GZ */
 
 
-/* back-end of some libTw utility functions */
-
 static void SocketH(msgport MsgPort);
-
-static void AttachHW(uldat len, CONST byte *arg, byte flags);
-static byte DetachHW(uldat len, CONST byte *arg);
-static void SetFontTranslation(CONST byte trans[0x80]);
-
-static byte CanCompress(void);
-static byte DoCompress(byte on_off);
-
-static void NeedResizeDisplay(void);
 
 static void sockShutDown(msgport MsgPort) {
     if (MsgPort->RemoteData.FdSlot < FdTop)
 	UnRegisterMsgPort(MsgPort);
 }
 
+
+
+/* prototypes of libTw back-end utility functions */
+
+static uldat FindFunction(byte Len, CONST byte *name);
+static byte SyncSocket(void);
+static byte CanCompress(void);
+static byte DoCompress(byte on_off);
+
+static void NeedResizeDisplay(void);
+static void AttachHW(uldat len, CONST byte *arg, byte flags);
+static byte DetachHW(uldat len, CONST byte *arg);
+static void SetFontTranslation(CONST byte trans[0x80]);
+
+static void DeleteObj(void *V);
+
+static widget CreateWidget(dat XWidth, dat YWidth, hwattr Fill, dat Left, dat Up);
+static void RecursiveDeleteWidget(void *V);
+static msgport GetOwnerWidget(widget W);
+
+static gadget CreateGadget
+    (widget Parent, dat XWidth, dat YWidth, CONST byte *TextNormal, udat Code, udat Flags,
+     hwcol ColText, hwcol ColTextSelect, hwcol ColTextDisabled, hwcol ColTextSelectDisabled,
+     dat Left, dat Up,       CONST byte *TextSelect, CONST byte *TextDisabled, CONST byte *TextSelectDisabled,
+     CONST hwcol *ColNormal, CONST hwcol *ColSelect, CONST hwcol *ColDisabled, CONST hwcol *ColSelectDisabled);
+static void SetPressedGadget(gadget G, byte on_off);
+static byte IsPressedGadget(gadget G);
+static void SetToggleGadget(gadget G, byte on_off);
+static byte IsToggleGadget(gadget G);
+
+static void ResizeWindow(window Window, dat X, dat Y);
+
+static msgport CreateMsgPort(byte LenTitle, CONST byte *Title, time_t WakeUp, frac_t WakeUpFrac, byte Flags);
+static msgport FindMsgPort(msgport Prev, byte LenTitle, CONST byte *Title);
+
+static screen FirstScreen(void);
+static widget FirstWidget(widget W);
+static msgport FirstMsgPort(void);
+static menu FirstMenu(msgport MsgPort);
+static menuitem FirstMenuItem(menu Menu);
+
+static obj PrevObj(obj Obj);
+static obj NextObj(obj Obj);
+static obj ParentObj(obj Obj);
+
+static byte SendToMsgPort(msgport MsgPort, udat Len, CONST byte *Data);
+static void BlindSendToMsgPort(msgport MsgPort, udat Len, CONST byte *Data);
+
+static obj  GetOwnerSelection(void);
+static void SetOwnerSelection(time_t Time, frac_t Frac);
+static void NotifySelection(obj Requestor, uldat ReqPrivate,
+			       uldat Magic, CONST byte MIME[MAX_MIMELEN], uldat Len, CONST byte *Data);
+static void RequestSelection(obj Owner, uldat ReqPrivate);
+
+#if defined(CONF_SOCKET_ALIEN) || defined(CONF__MODULES)
+socket_f SocketF = {
+	FindFunction,
+	SyncSocket,
+	CanCompress,
+	DoCompress,
+
+	NeedResizeDisplay,
+	AttachHW,
+	DetachHW,
+	SetFontTranslation,
+    
+	DeleteObj,
+    
+	CreateWidget,
+	RecursiveDeleteWidget,
+	GetOwnerWidget,
+    
+	CreateGadget,
+	SetPressedGadget,
+	IsPressedGadget,
+	SetToggleGadget,
+	IsToggleGadget,
+    
+	ResizeWindow,
+    
+	CreateMsgPort,
+	FindMsgPort,
+    
+	FirstScreen,
+	FirstWidget,
+	FirstMsgPort,
+	FirstMenu,
+	FirstMenuItem,
+
+	PrevObj,
+	NextObj,
+	ParentObj,
+    
+	GetDisplayWidth,	/* from h_multi.c */
+	GetDisplayHeight,	/* from h_multi.c */
+
+	SendToMsgPort,
+	BlindSendToMsgPort,
+    
+	GetOwnerSelection,
+	SetOwnerSelection,
+	NotifySelection,
+	RequestSelection
+};
+#endif /* defined(CONF_SOCKET_ALIEN) || defined(CONF__MODULES) */
+
+
+/* Second: socket handling functions */
+
+static uldat MaxFunct, Slot, RequestN, noId = NOID;
+static byte *s, *end;
+static int inetFd = NOFD, Fd;
+static uldat inetSlot = NOSLOT;
+
+static void sockReply(uldat code, uldat len, CONST void *data);
+
+static void SocketIO(int fd, uldat slot);
+
+#include "unaligned.h"
+
+#define ACT0(funct,name)	funct##name
+#define NAME_PREFIX		sock
+#define SIZEOF(arg)		sizeof(arg)
+#define POP(s,type,lval)	Pop(s,type,lval)
+#define POPADDR(s,type,len,ptr)	PopAddr(s,type,len,ptr)
+#define REPLY(code, type, lval) sockReply(code, sizeof(type), lval)
+
+#include "socketmacros.h"
+#include "sockproto.h"
+
+static FN_DECL {
+#   define EL(funct) { 0, #funct, CAT(NAME_PREFIX,funct) },
+#   include "sockprotolist.h"
+#   undef EL
+FN_ENDDECL };
+
+#include "socketundefs.h"
+
+#undef ACT0
+#undef NAME_PREFIX
+#undef SIZEOF
+#undef POP
+#undef POPADDR
+
+
+/***********/
+
+
+/* actual libTw back-end utility functions */
+
+static uldat FindFunction(byte Len, CONST byte *name) {
+    sock_fn *F = sockF;
+    if (name) {
+	while (F->name && (F->Len != Len || CmpMem(F->name, name, Len)))
+	    F++;
+	if (F->name)
+	    return (uldat)(F - sockF);
+    }
+    return NOID;
+}
+
 static byte SyncSocket(void) {
     return TRUE;
 }
 
+
+#ifdef CONF_SOCKET_GZ
+
+static byte CanCompress(void) {
+    return TRUE;
+}
+
+static voidpf sockZAlloc(voidpf opaque, uInt items, uInt size) {
+    void *ret = AllocMem(items * (size_t)size);
+    return ret ? (voidpf)ret : Z_NULL;
+}
+
+static void sockZFree(voidpf opaque, voidpf address) {
+    if (address != Z_NULL)
+	FreeMem((void *)address);
+}
+
+/* fixup the uncompressed slot for on-the-fly compression */
+static void FixupGzip(uldat slot) {
+    ls_p.Fd = ls.Fd;
+    ls.Fd = specFD;
+    ls.PrivateFlush = RemoteGzipFlush;
+    ls.PrivateAfterFlush = NULL;
+}
+
+/* finish shutting down compression (called on the uncompressed slot) */
+static void ShutdownGzip(uldat slot) {
+    inflateEnd((z_streamp)ls.PrivateData);
+    deflateEnd((z_streamp)ls_p.PrivateData);
+
+    FreeMem(ls.PrivateData);
+    FreeMem(ls_p.PrivateData);
+    
+    ls.Fd = ls_p.Fd;
+    ls_p.Fd = specFD;
+    UnRegisterRemote(ls.pairSlot);
+
+    ls.pairSlot = NOSLOT;
+    ls.PrivateFlush = NULL;
+    ls.PrivateAfterFlush = NULL;
+}
+
+/*
+ * this is not perfectly clean, but works well:
+ * we enable (disable) compression and give an uncompressed (compressed) answer,
+ * but we also send in the same way any answer pending or collected before the RemoteFlush().
+ * 
+ * So the library must wait for the answer immediately after calling TwDoCompress();
+ * this is what it normally does anyway since it has to wait for the return value...
+ * no problem.
+ */
+static byte DoCompress(byte on_off) {
+    uldat slot = NOSLOT;
+    z_streamp z1 = NULL, z2 = NULL;
+    
+    if (on_off) {
+	if ((slot = RegisterRemoteFd(specFD, LS.HandlerIO.S)) != NOSLOT &&
+	    (z1 = AllocMem(sizeof(*z1))) &&
+	    (z2 = AllocMem(sizeof(*z2)))) {
+	    
+	    z1->zalloc = z2->zalloc = sockZAlloc;
+	    z1->zfree  = z2->zfree  = sockZFree;
+	    z1->opaque = z2->opaque = NULL;
+
+	    if (deflateInit(z1, Z_BEST_COMPRESSION) == Z_OK) {
+		if (inflateInit(z2) == Z_OK) {
+		
+		    /* ok, start pairing the two slots */
+		    ls.pairSlot = Slot;
+		    ls.PrivateData = (void *)z1;
+		    
+		    LS.pairSlot = slot;
+		    LS.PrivateData = (void *)z2;
+		    LS.PrivateAfterFlush = FixupGzip;
+		    
+		    /* we have ls.Fd == specFD. it will be fixed by LS.PrivateAfterFlush() */
+		    
+		    return TRUE;
+		}
+		deflateEnd(z1);
+	    }
+	}
+	if (z2) FreeMem(z2);
+	if (z1) FreeMem(z1);
+	if (slot != NOSLOT) UnRegisterRemote(slot);
+	return FALSE;
+    } else {
+	/* inform RemoteFlush() we are shutting down the compression... */
+	LS.PrivateAfterFlush = ShutdownGzip;
+	
+	return TRUE;
+    }
+}
+
+#else
+
+static byte CanCompress(void) {
+    return FALSE;
+}
+
+static byte DoCompress(byte on_off) {
+    return FALSE;
+}
+
+#endif /* CONF_SOCKET_GZ */
+
+
+
+static void NeedResizeDisplay(void){
+    if (LS.MsgPort && LS.MsgPort->AttachHW)
+	ResizeDisplayPrefer(LS.MsgPort->AttachHW);
+}
+
+/*
+ * this does direct write() on the connecting socket,
+ * so it bypasses any compression.
+ */
+static void AttachHW(uldat len, CONST byte *arg, byte flags) {
+    display_hw D_HW;
+    byte buf[2] = "\0",
+	verbose = flags & TW_ATTACH_HW_REDIRECT,
+	exclusive = flags & TW_ATTACH_HW_EXCLUSIVE;
+    int realFd;
+    fd_set set;
+    struct timeval tv = {2,0};
+    
+    realFd = LS.Fd >= 0 ? LS.Fd : FdList[LS.pairSlot].Fd;
+
+    if (!LS.MsgPort) {
+	if (verbose)
+	    write(realFd, "twin: AttachHW(): client did not create a MsgPort\n\0", 52);
+	else
+	    write(realFd, buf, 2);
+	return;
+    }
+    
+    if (verbose)
+	verbose = RegisterPrintk(realFd);
+	
+    if ((D_HW = AttachDisplayHW(len, arg, Slot, exclusive))) {
+	if (D_HW->NeedHW & NEEDPersistentSlot)
+	    LS.MsgPort->AttachHW = D_HW;
+	else
+	    D_HW->AttachSlot = NOSLOT; /* we don't need it => forget it */
+    }
+    
+    if (D_HW) {
+	buf[1]++;
+	if (D_HW->NeedHW & NEEDPersistentSlot)
+	    buf[1]++;
+    }
+    write(realFd, buf, 2);
+
+    /* wait for twattach to confirm attach... */
+
+    FD_ZERO(&set);
+    FD_SET(realFd, &set);
+	    
+    while (select(realFd+1, &set, NULL, NULL, &tv) == -1 && errno == EINTR)
+	;
+    read(realFd, buf, 1);
+
+    if (verbose)
+	UnRegisterPrintk();
+}
+
+static byte DetachHW(uldat len, CONST byte *arg) {
+    return DetachDisplayHW(len, arg, 0); /* cannot detach exclusive displays !! */
+}
+
+static void SetFontTranslation(CONST byte trans[0x80]) {
+    if (trans)
+	CopyMem(trans, All->Gtranslations[USER_MAP], 0x80);
+}
+
+static msgport GetMsgPortObj(obj P) {
+    while (P) {
+	if (IS_MSGPORT(P)) {
+	    return (msgport)P;
+	}
+	switch (P->Id >> magic_shift) {
+	  case row_magic:
+	  case menuitem_magic:
+	  case menu_magic:
+	    P = (obj) P->Parent;
+	    break;
+	  case mutex_magic:
+	    P = (obj) ((mutex)P)->Owner;
+	    break;
+	  default:
+	    if (IS_WIDGET(P))
+		P = (obj) ((widget)P)->Owner;
+	    else
+		P = (obj)0;
+	    break;
+	}
+    }
+    return (msgport)P;
+}
+
+static void DeleteObj(void *V) {
+    obj O = (obj)V;
+    msgport MsgPort = RemoteGetMsgPort(Slot);
+    
+    if (MsgPort && MsgPort == GetMsgPortObj(O))
+	Delete(O);
+}
+
+static widget CreateWidget(dat XWidth, dat YWidth, hwattr Fill, dat Left, dat Up) {
+    msgport Owner;
+    if ((Owner = RemoteGetMsgPort(Slot)))
+	return Do(Create,Widget)
+	    (FnWidget, Owner, XWidth, YWidth, Fill, Left, Up);
+    return (widget)0;
+}
+static void RecursiveDeleteWidget(void *V) {
+    msgport MsgPort = RemoteGetMsgPort(Slot);
+
+    /* avoid too much visual activity... UnMap top-level widget immediately */
+    Act(UnMap,(widget)V)((widget)V);
+
+    if (MsgPort)
+	Act(RecursiveDelete,(widget)V)((widget)V, MsgPort);
+}
 static msgport GetOwnerWidget(widget W) {
     if (W)
 	return W->Owner;
     return (msgport)0;
 }
 
-static void ResizeWindow(window Window, dat X, dat Y) {
-    if (Window)
-	ResizeRelWindow(Window, X - Window->XWidth, Y - Window->YWidth);
+static gadget CreateGadget
+    (widget Parent, dat XWidth, dat YWidth, CONST byte *TextNormal, udat Code, udat Flags,
+     hwcol ColText, hwcol ColTextSelect, hwcol ColTextDisabled, hwcol ColTextSelectDisabled,
+     dat Left, dat Up,       CONST byte *TextSelect, CONST byte *TextDisabled, CONST byte *TextSelectDisabled,
+     CONST hwcol *ColNormal, CONST hwcol *ColSelect, CONST hwcol *ColDisabled, CONST hwcol *ColSelectDisabled) {
+    
+    msgport Owner;
+    if ((Owner = RemoteGetMsgPort(Slot)))
+	return Do(Create,Gadget)
+	    (FnGadget, Owner, Parent, XWidth, YWidth, TextNormal, Code, Flags,
+		 ColText, ColTextSelect, ColTextDisabled, ColTextSelectDisabled,
+		 Left, Up, TextSelect, TextDisabled, TextSelectDisabled,
+		 ColNormal, ColSelect, ColDisabled, ColSelectDisabled);
+    return (gadget)0;
 }
-
-static screen FirstScreen(void) {
-    return All->FirstScreen;
-}
-static widget FirstWidget(widget W) {
-    return W ? W->FirstW : W;
-}
-
 static void SetPressedGadget(gadget G, byte on_off) {
     if (G) {
 	if (on_off)
@@ -328,7 +716,6 @@ static void SetPressedGadget(gadget G, byte on_off) {
 static byte IsPressedGadget(gadget G) {
     return G ? !!(G->Flags & GADGET_PRESSED) : FALSE;
 }
-
 static void SetToggleGadget(gadget G, byte on_off) {
     if (G) {
 	if (on_off)
@@ -341,27 +728,25 @@ static byte IsToggleGadget(gadget G) {
     return G ? !!(G->Flags & GADGET_TOGGLE) : FALSE;
 }
 
-static msgport FirstMsgPort(void) {
-    return All->FirstMsgPort;
+
+static void ResizeWindow(window Window, dat X, dat Y) {
+    if (Window) {
+	if (!(Window->Flags & WINFL_BORDERLESS))
+	    X+=2, Y+=2;
+	ResizeRelWindow(Window, X - Window->XWidth, Y - Window->YWidth);
+    }
 }
 
-static menu FirstMenu(msgport MsgPort) {
-    return MsgPort ? MsgPort->FirstMenu : (void *)MsgPort;
+/* last 3 args are currently useless for remote clients */
+static msgport CreateMsgPort(byte LenTitle, CONST byte *Title, time_t WakeUp, frac_t WakeUpFrac, byte Flags) {
+    msgport MsgPort;
+    
+    if ((MsgPort = Do(Create,MsgPort)(FnMsgPort, LenTitle, Title, 0, 0, 0, SocketH))) {
+	RegisterMsgPort(MsgPort, Slot);
+	MsgPort->ShutDownHook = sockShutDown;
+    }
+    return MsgPort;
 }
-static menuitem FirstMenuItem(menu Menu) {
-    return Menu ? Menu->FirstMenuItem : (void *)Menu;
-}
-
-static obj PrevObj(obj Obj) {
-    return Obj ? Obj->Prev : Obj;
-}
-static obj NextObj(obj Obj) {
-    return Obj ? Obj->Next : Obj;
-}
-static obj ParentObj(obj Obj) {
-    return Obj ? (obj)Obj->Parent : Obj;
-}
-
 static msgport FindMsgPort(msgport Prev, byte LenTitle, CONST byte *Title) {
     msgport M;
     if (!(M = Prev))
@@ -374,278 +759,393 @@ static msgport FindMsgPort(msgport Prev, byte LenTitle, CONST byte *Title) {
     return M;
 }
 
-static byte SendToMsgPort(msgport MsgPort, udat Len, CONST byte *Data);
+static screen FirstScreen(void) {
+    return All->FirstScreen;
+}
+static widget FirstWidget(widget W) {
+    return W ? W->FirstW : W;
+}
+static msgport FirstMsgPort(void) {
+    return All->FirstMsgPort;
+}
+static menu FirstMenu(msgport MsgPort) {
+    return MsgPort ? MsgPort->FirstMenu : (void *)MsgPort;
+}
+static menuitem FirstMenuItem(menu Menu) {
+    return Menu ? Menu->FirstMenuItem : (void *)Menu;
+}
+
+
+
+static obj PrevObj(obj Obj) {
+    return Obj ? Obj->Prev : Obj;
+}
+static obj NextObj(obj Obj) {
+    return Obj ? Obj->Next : Obj;
+}
+static obj ParentObj(obj Obj) {
+    return Obj ? (obj)Obj->Parent : Obj;
+}
+
+
+/* shortcut: add a (tmsg) in the remote MsgPort's file descriptor queue */
+static byte ShortcutSendMsg(msgport MsgPort, udat Len, CONST tmsg tMsg) {
+    switch (tMsg->Type) {
+      /* the only types of messages allowed between clients: */
+      case TW_MSG_USER_CONTROL:
+      case TW_MSG_USER_CLIENTMSG:
+	tMsg->Len -= AlienSizeof(uldat,Slot);
+	tMsg->Magic = MSG_MAGIC;
+	RemoteWriteQueue(MsgPort->RemoteData.FdSlot, Len, (CONST byte *)tMsg);
+	return TRUE;
+    }
+    return FALSE;
+}
+
+#define tDelta ((udat)(size_t)&(((tmsg)0)->Event))
+#define  Delta ((udat)(size_t)&(((msg)0)->Event))
+#define tOffset(x) ((udat)(size_t)&(((tmsg)0)->Event.x))
+
+/* extract the (tmsg) from Data, turn it into a (msg) and send it to MsgPort */
+static byte SendToMsgPort(msgport MsgPort, udat Len, CONST byte *Data) {
+    tmsg tMsg;
+    msgport Sender;
+    msg Msg;
+    udat _Len, minType;
+    byte ok = TRUE;
+    
+    /* be careful with alignment! */
+#ifdef __i386__
+    tMsg = (tmsg)Data;
+#else
+    tMsg = (tmsg)CloneMem(Data, Len);
+#endif /* __i386__ */
+    
+    do if (MsgPort && Len && tMsg && Len >= tDelta && Len == tMsg->Len &&
+	   tMsg->Magic == msg_magic) {
+
+	Sender = RemoteGetMsgPort(Slot);
+	if (Sender && Sender->AttachHW)
+	    minType = TW_MSG_DISPLAY;
+	else
+	    minType = TW_MSG_USER_FIRST;
+	if (tMsg->Type < minType)
+	    /* not allowed! */
+	    break;
+	    
+
+
+	_Len = FnMsg->Size - Delta;
+	switch (tMsg->Type) {
+	  case TW_MSG_WINDOW_KEY:
+	    if (Len >= tOffset(EventKeyboard.AsciiSeq)) {
+		if (tMsg->Event.EventKeyboard.SeqLen + tOffset(EventKeyboard.AsciiSeq) > Len)
+		    tMsg->Event.EventKeyboard.SeqLen = Len - tOffset(EventKeyboard.AsciiSeq);
+		_Len += tMsg->Event.EventKeyboard.SeqLen;
+	    } else
+		/* (tmsg) too short */
+		ok = FALSE;
+	    break;
+	  case TW_MSG_USER_CONTROL:
+	    if (Len >= tOffset(EventControl.Data)) {
+		if (tMsg->Event.EventControl.Len + tOffset(EventControl.Data) > Len)
+		    tMsg->Event.EventControl.Len = Len - tOffset(EventControl.Data);
+		_Len += tMsg->Event.EventControl.Len;
+	    } else
+		/* (tmsg) too short */
+		ok = FALSE;
+	    break;
+	  case TW_MSG_USER_CLIENTMSG:
+	    if (Len >= tOffset(EventClientMsg.Data)) {
+		if (tMsg->Event.EventClientMsg.Len + tOffset(EventClientMsg.Data) > Len)
+		    tMsg->Event.EventClientMsg.Len = Len - tOffset(EventClientMsg.Data);
+		_Len += tMsg->Event.EventClientMsg.Len;
+	    } else
+		/* (tmsg) too short */
+		ok = FALSE;
+	    break;
+	  default:
+	    break;
+	}
+
+	if (!ok)
+	    break;
+	
+	if (MsgPort->RemoteData.Fd != NOFD && MsgPort->Handler == SocketH &&
+	    !CmpMem(FdList[MsgPort->RemoteData.FdSlot].AlienMagic, LS.AlienMagic, 8) &&
+	    ShortcutSendMsg(MsgPort, Len, tMsg))
+	    /*
+	     * shortcut: we have a (tmsg); instead of turning it into a (msg)
+	     * then have SocketH() call sockSendMsg() to turn it back into a (tmsg),
+	     * we directly copy it --- only one condition must be met:
+	     * both clients must have the same AlienMagic()
+	     */
+	    break;
+
+	if ((Msg = Do(Create,Msg)(FnMsg, tMsg->Type, _Len))) {
+		
+	    Msg->Event.EventCommon.Window =
+		(void *)Id2Obj(window_magic >> magic_shift,
+			       tMsg->Event.EventCommon.Window);
+
+	    switch (tMsg->Type) {
+#if defined(CONF__MODULES) || defined (CONF_HW_DISPLAY)
+	      case TW_MSG_DISPLAY:
+		if (sizeof(struct s_tevent_display) == sizeof(twindow) + 4*sizeof(dat) + sizeof(uldat)) {
+		    CopyMem((void *)&tMsg->Event.EventDisplay.Code,
+			    (void *)& Msg->Event.EventDisplay.Code, 4*sizeof(dat));
+		} else {
+		    Msg->Event.EventDisplay.Code   = tMsg->Event.EventDisplay.Code;
+		    Msg->Event.EventDisplay.Len    = tMsg->Event.EventDisplay.Len;
+		    Msg->Event.EventDisplay.X      = tMsg->Event.EventDisplay.X;
+		    Msg->Event.EventDisplay.Y      = tMsg->Event.EventDisplay.Y;
+		}
+		if (!(Msg->Event.EventDisplay.Data =
+		      CloneMem(tMsg->Event.EventDisplay.Data, tMsg->Event.EventDisplay.Len))
+		    && tMsg->Event.EventDisplay.Len)
+		    
+		    ok = FALSE;
+		      
+		break;
+#endif /* defined(CONF__MODULES) || defined (CONF_HW_DISPLAY) */
+	      case TW_MSG_WINDOW_KEY:
+		if (sizeof(struct s_tevent_keyboard) == sizeof(twindow) + 3*sizeof(dat) + 2*sizeof(byte)) {
+		    CopyMem((void *)&tMsg->Event.EventKeyboard.Code,
+			    (void *)& Msg->Event.EventKeyboard.Code, 3*sizeof(dat) + sizeof(byte));
+		} else {
+		    Msg->Event.EventKeyboard.Code       = tMsg->Event.EventKeyboard.Code;
+		    Msg->Event.EventKeyboard.ShiftFlags = tMsg->Event.EventKeyboard.ShiftFlags;
+		    Msg->Event.EventKeyboard.SeqLen     = tMsg->Event.EventKeyboard.SeqLen;
+		    Msg->Event.EventKeyboard.pad        = tMsg->Event.EventKeyboard.pad;
+		}
+		CopyMem(tMsg->Event.EventKeyboard.AsciiSeq, Msg->Event.EventKeyboard.AsciiSeq,
+			tMsg->Event.EventKeyboard.SeqLen);
+		
+		Msg->Event.EventKeyboard.AsciiSeq[tMsg->Event.EventKeyboard.SeqLen] = '\0';
+		
+		break;
+	      case TW_MSG_WINDOW_MOUSE:
+		if (sizeof(struct s_tevent_mouse) == sizeof(twindow) + 4*sizeof(dat)) {
+		    CopyMem((void *)&tMsg->Event.EventMouse.Code,
+			    (void *)& Msg->Event.EventMouse.Code, 4*sizeof(dat));
+		} else {
+		    Msg->Event.EventMouse.Code          = tMsg->Event.EventMouse.Code;
+		    Msg->Event.EventMouse.ShiftFlags    = tMsg->Event.EventMouse.ShiftFlags;
+		    Msg->Event.EventMouse.X             = tMsg->Event.EventMouse.X;
+		    Msg->Event.EventMouse.Y             = tMsg->Event.EventMouse.Y;
+		}
+		break;
+	      case TW_MSG_SELECTIONCLEAR:
+		if (sizeof(struct s_tevent_common) == sizeof(twindow) + 2*sizeof(dat)) {
+		    CopyMem((void *)&tMsg->Event.EventCommon.Code,
+			    (void *)& Msg->Event.EventCommon.Code, 2*sizeof(dat));
+		} else {
+		    Msg->Event.EventCommon.Code         = tMsg->Event.EventCommon.Code;
+		    Msg->Event.EventCommon.pad          = tMsg->Event.EventCommon.pad;
+		}
+		break;
+
+/* TODO: is this needed? */
+#if 0
+	      case TW_MSG_WINDOW_CHANGE:
+		Push(t, udat,    Msg->Event.EventWindow.Code);
+		Push(t, udat,    Msg->Event.EventWindow.XWidth);
+		Push(t, udat,    Msg->Event.EventWindow.YWidth);
+		break;
+	      case TW_MSG_WINDOW_GADGET:
+		Push(t, udat,    Msg->Event.EventGadget.Code);
+		Push(t, udat,    Msg->Event.EventGadget.pad);
+		break;
+	      case TW_MSG_MENU_ROW:
+		Push(t, udat,    Msg->Event.EventMenu.Code);
+		Push(t, udat,    Msg->Event.EventMenu.pad);
+		Push(t, tmenu,   Obj2Id(Msg->Event.EventMenu.Menu));
+		break;
+#endif
+	      case TW_MSG_USER_CONTROL:
+		if (sizeof(struct s_tevent_control) == sizeof(twindow) + 4*sizeof(dat) + sizeof(uldat)) {
+		    CopyMem((void *)&tMsg->Event.EventControl.Code,
+			    (void *)& Msg->Event.EventControl.Code, 4*sizeof(dat));
+		} else {
+		    Msg->Event.EventControl.Code  = tMsg->Event.EventControl.Code;
+		    Msg->Event.EventControl.Len   = tMsg->Event.EventControl.Len;
+		    Msg->Event.EventControl.X     = tMsg->Event.EventControl.X;
+		    Msg->Event.EventControl.Y     = tMsg->Event.EventControl.Y;
+		}
+		CopyMem(tMsg->Event.EventControl.Data, Msg->Event.EventControl.Data,
+			tMsg->Event.EventControl.Len);
+		
+		Msg->Event.EventControl.Data[Msg->Event.EventControl.Len] = '\0';
+		break;
+	      case TW_MSG_USER_CLIENTMSG:
+		if (sizeof(struct s_tevent_clientmsg) == sizeof(twindow) + 2*sizeof(dat) + sizeof(uldat)) {
+		    CopyMem((void *)&tMsg->Event.EventControl.Code,
+			    (void *)& Msg->Event.EventControl.Code, 2*sizeof(dat));
+		} else {
+		    Msg->Event.EventControl.Code  = tMsg->Event.EventControl.Code;
+		    Msg->Event.EventControl.Len   = tMsg->Event.EventControl.Len;
+		}
+		CopyMem(tMsg->Event.EventControl.Data, Msg->Event.EventControl.Data,
+			tMsg->Event.EventControl.Len);
+		
+		break;
+	      default:
+		ok = FALSE;
+		break;
+	    }
+	    
+	    if (ok)
+		SendMsg(MsgPort, Msg);
+	    else
+		Delete(Msg);
+	}
+    } while (0);
+    
+#ifndef __i386__
+    FreeMem(tMsg);
+#endif
+    return ok;
+}
 
 static void BlindSendToMsgPort(msgport MsgPort, udat Len, CONST byte *Data) {
     (void)SendToMsgPort(MsgPort, Len, Data);
 }
 
-static obj GetOwnerSelection(void);
-static void SetOwnerSelection(time_t Time, frac_t Frac);
-static void NotifySelection(obj Requestor, uldat ReqPrivate,
-			    uldat Magic, CONST byte MIME[MAX_MIMELEN], uldat Len, CONST byte *Data);
-static void RequestSelection(obj Owner, uldat ReqPrivate);
-
-
-/* Second: socket handling functions */
-
-#include "unaligned.h"
-
-static uldat MaxFunct, Slot, RequestN, noId = NOID;
-static byte *s, *end;
-static int unixFd = NOFD, inetFd = NOFD, Fd;
-static uldat unixSlot = NOSLOT, inetSlot = NOSLOT;
-
-static void DeleteObj(void *V);
-static void RecursiveDeleteWidget(void *V);
-
-static msgport CreateMsgPort(byte LenTitle, CONST byte *Title, time_t WakeUp, frac_t WakeUpFrac, byte Flags);
-
-static void Reply(uldat code, uldat len, CONST void *data);
-static void SocketIO(int fd, uldat slot);
-
-static uldat FindFunction(byte Len, CONST byte *name);
-
-#define ORDER(arg)	(arg##_magic >> magic_shift)
-
-#define ID(s,o)		(s=o, s ? &(s->Id) : &noId)
-
-#define A(n)		a##n
-#define AL(n)		len##n
-
-#define FN0(name)
-#define FN1(name)	Fn##name,
-#define FN2(name)
-
-#define Act0(funct,name) (funct##name)
-#define Act1(funct,name) Do(funct,name)
-#define Act2(funct,name) Act(funct,A(1))
-
-#define DECLv(n,arg)
-#define DECL_(n,arg)	arg A(n);
-#define DECLx(n,arg)	uldat AL(n); arg A(n);
-#define DECLV(n,arg)	uldat AL(n); CONST arg *A(n);
-#define DECLW(n,arg)	uldat AL(n); CONST arg *A(n);
-#define D(n,arg,f)	DECL##f(n,arg)
-#define D_0(arg,f)	uldat fail = 1; DECL##f(0,arg)
-
-#define RETv(ret,call)	call;
-#define RET_(ret,call)	Reply(OK_MAGIC, sizeof(ret), (A(0) = call, &A(0)));
-#define RETx(ret,call)	Reply(OK_MAGIC, AL(0)=sizeof(uldat), ID(A(0), call));
-
-#define FAILv
-#define FAIL_	Reply(fail, sizeof(uldat), &fail);
-#define FAILx	FAIL_
-
-#define RET0(ret,f,call) if (s == end) { RET##f(ret,call) return; } else fail = -1;
-#define RET1(ret,f,call) if (s == end) { RET##f(ret,call) return; } else fail = -1;
-#define RET2(ret,f,call) if (s == end && A(1)) { RET##f(ret,call) return; } else \
-				if (A(1)) fail = 1; \
-				else fail = -1;
-
-#define NAME(funct,name)	static void sock##funct##name(void)
-
-#define V(len)		V
-#define iV(len)		len
-#define W(len)		W
-#define iW(len)		len
-
-#define Left(size)	(s + (size) <= end)
-
-#define PARSE_(n,arg,len,pass) if (Left(sizeof(arg))) { \
-				    fail++; \
-				    Pop(s,arg,A(n)); \
-				    pass \
-				}
-#define PARSEx(n,arg,len,pass) if (Left(sizeof(uldat))) { \
-				    fail++; \
-				    Pop(s,uldat,AL(n)); \
-				    A(n) = (arg)Id2Obj(ORDER(arg), AL(n)); \
-				    pass \
-				}
-#define PARSEV(n,arg,len,pass) if (Left(AL(n) = (len) * sizeof(arg))) { \
-				    fail++; \
-				    PopAddr(s, arg, AL(n), A(n)); \
-				    pass \
-				}
-
-#define PARSEW(n,arg,len,pass) if (Left(sizeof(uldat)) && (Pop(s,uldat,AL(n)), Left(AL(n)))) { \
-				    fail++; \
-				    PopAddr(s, arg, AL(n), A(n)); \
-				    if (AL(n) != (len) * sizeof(arg)) \
-					A(n) = NULL; \
-				    pass \
-				}
-
-#define P(n,arg,f,len,pass)	PARSE##f(n,arg,len,pass)
-
-
-#define PROTO0(ret0,f0, funct,name,fn) \
-NAME(funct, name) \
-{ D_0(ret0,f0) \
-  RET##fn(ret0,f0, Act##fn(funct,name) (FN##fn(name))) \
-  FAIL##f0 \
+static obj GetOwnerSelection(void) {
+    return TwinSelectionGetOwner();
 }
 
-#define PROTO0SyncSocket PROTO0
-
-#define PROTO1(ret0,f0, funct,name,fn, arg1,f1) \
-NAME(funct, name) \
-{ D_0(ret0,f0) \
-  D(1,arg1,f1) \
-  P(1,arg1,f1,i##f1, \
-  RET##fn(ret0,f0, Act##fn(funct,name) (FN##fn(name) A(1)))) \
-  FAIL##f0 \
+static void SetOwnerSelection(time_t Time, frac_t Frac) {
+    if (LS.MsgPort)
+	TwinSelectionSetOwner((obj)LS.MsgPort, Time, Frac);
 }
 
-#define PROTO2(ret0,f0, funct,name,fn, arg1,f1, arg2,f2) \
-NAME(funct, name) \
-{ D_0(ret0,f0) \
-  D(1,arg1,f1) D(2,arg2,f2) \
-  P(1,arg1,f1,i##f1, P(2,arg2,f2,i##f2, \
-  RET##fn(ret0,f0, Act##fn(funct,name) (FN##fn(name) A(1), A(2))))) \
-  FAIL##f0 \
+static void NotifySelection(obj Requestor, uldat ReqPrivate, uldat Magic, CONST byte MIME[MAX_MIMELEN],
+			    uldat Len, CONST byte *Data) {
+    TwinSelectionNotify(Requestor, ReqPrivate, Magic, MIME, Len, Data);
 }
 
-#define PROTO2FindFunction PROTO2
-
-#define PROTO3(ret0,f0, funct,name,fn, arg1,f1, arg2,f2, arg3,f3) \
-NAME(funct, name) \
-{ D_0(ret0,f0) \
-  D(1,arg1,f1) D(2,arg2,f2) D(3,arg3,f3) \
-  P(1,arg1,f1,i##f1, P(2,arg2,f2,i##f2, P(3,arg3,f3,i##f3, \
-  RET##fn(ret0,f0, Act##fn(funct,name) (FN##fn(name) A(1), A(2), A(3)))))) \
-  FAIL##f0 \
-}
-
-#define PROTO4(ret0,f0, funct,name,fn, arg1,f1, arg2,f2, arg3,f3, arg4,f4) \
-NAME(funct, name) \
-{ D_0(ret0,f0) \
-  D(1,arg1,f1) D(2,arg2,f2) D(3,arg3,f3) D(4,arg4,f4) \
-  P(1,arg1,f1,i##f1, P(2,arg2,f2,i##f2, P(3,arg3,f3,i##f3, P(4,arg4,f4,i##f4, \
-  RET##fn(ret0,f0, Act##fn(funct,name) (FN##fn(name) A(1), A(2), A(3), A(4))))))) \
-  FAIL##f0 \
-}
-
-#define PROTO5(ret0,f0, funct,name,fn, arg1,f1, arg2,f2, arg3,f3, arg4,f4, arg5,f5) \
-NAME(funct, name) \
-{ D_0(ret0,f0) \
-  D(1,arg1,f1) D(2,arg2,f2) D(3,arg3,f3) D(4,arg4,f4) \
-  D(5,arg5,f5) \
-  P(1,arg1,f1,i##f1, P(2,arg2,f2,i##f2, P(3,arg3,f3,i##f3, P(4,arg4,f4,i##f4, \
-  P(5,arg5,f5,i##f5, \
-  RET##fn(ret0,f0, Act##fn(funct,name) (FN##fn(name) A(1), A(2), A(3), A(4), A(5)))))))) \
-  FAIL##f0 \
-}
-
-#define PROTO6(ret0,f0, funct,name,fn,arg1,f1, arg2,f2, arg3,f3, arg4,f4, arg5,f5, \
-	arg6,f6) \
-NAME(funct, name) \
-{ D_0(ret0,f0) \
-  D(1,arg1,f1) D(2,arg2,f2) D(3,arg3,f3) D(4,arg4,f4) \
-  D(5,arg5,f5) D(6,arg6,f6) \
-  P(1,arg1,f1,i##f1, P(2,arg2,f2,i##f2, P(3,arg3,f3,i##f3, P(4,arg4,f4,i##f4, \
-  P(5,arg5,f5,i##f5, P(6,arg6,f6,i##f6, \
-  RET##fn(ret0,f0, Act##fn(funct,name) (FN##fn(name) A(1), A(2), A(3), A(4), A(5), A(6))))))))) \
-  FAIL##f0 \
-}
-
-#define PROTO7(ret0,f0, funct,name,fn,arg1,f1, arg2,f2, arg3,f3, arg4,f4, arg5,f5, \
-	arg6,f6, arg7,f7) \
-NAME(funct, name) \
-{ D_0(ret0,f0) \
-  D(1,arg1,f1) D(2,arg2,f2) D(3,arg3,f3) D(4,arg4,f4) \
-  D(5,arg5,f5) D(6,arg6,f6) D(7,arg7,f7) \
-  P(1,arg1,f1,i##f1, P(2,arg2,f2,i##f2, P(3,arg3,f3,i##f3, P(4,arg4,f4,i##f4, \
-  P(5,arg5,f5,i##f5, P(6,arg6,f6,i##f6, P(7,arg7,f7,i##f7, \
-  RET##fn(ret0,f0, Act##fn(funct,name) (FN##fn(name) \
-      A(1), A(2), A(3), A(4), A(5), A(6), A(7)))))))))) \
-  FAIL##f0 \
-}
-
-#define PROTO8(ret0,f0, funct,name,fn,arg1,f1, arg2,f2, arg3,f3, arg4,f4, arg5,f5, \
-	arg6,f6, arg7,f7, arg8,f8) \
-NAME(funct, name) \
-{ D_0(ret0,f0) \
-  D(1,arg1,f1) D(2,arg2,f2) D(3,arg3,f3) D(4,arg4,f4) \
-  D(5,arg5,f5) D(6,arg6,f6) D(7,arg7,f7) D(8,arg8,f8) \
-  P(1,arg1,f1,i##f1, P(2,arg2,f2,i##f2, P(3,arg3,f3,i##f3, P(4,arg4,f4,i##f4, \
-  P(5,arg5,f5,i##f5, P(6,arg6,f6,i##f6, P(7,arg7,f7,i##f7, P(8,arg8,f8,i##f8, \
-  RET##fn(ret0,f0, Act##fn(funct,name) (FN##fn(name) \
-      A(1), A(2), A(3), A(4), A(5), A(6), A(7), A(8))))))))))) \
-  FAIL##f0 \
-}
-
-#define PROTO11(ret0,f0, funct,name,fn,arg1,f1, arg2,f2, arg3,f3, arg4,f4, arg5,f5, \
-	   arg6,f6, arg7,f7, arg8,f8, arg9,f9, arg10,f10, arg11,f11) \
-NAME(funct, name) \
-{ D_0( ret0,f0) \
-  D(1,arg1,f1) D(2,arg2,f2) D(3,arg3,f3) D(4,arg4, f4) \
-  D(5,arg5,f5) D(6,arg6,f6) D(7,arg7,f7) D(8,arg8,f8) \
-  D(9,arg9, f9) D(10,arg10,f10) D(11,arg11,f11) \
-  P(1,arg1,f1,i##f1, P(2,arg2,f2,i##f2, P(3,arg3,f3,i##f3, P(4,arg4,f4,i##f4, \
-  P(5,arg5,f5,i##f5, P(6,arg6,f6,i##f6, P(7,arg7,f7,i##f7, P(8,arg8,f8,i##f8, \
-  P(9,arg9,f9,i##f9, P(10,arg10,f10,i##f10, P(11,arg11,f11,i##f11, \
-  RET##fn(ret0,f0, Act##fn(funct,name) (FN##fn(name) \
-      A(1), A(2), A(3), A(4), A(5), A(6), A(7), A(8), A(9), A(10), \
-      A(11)))))))))))))) \
-  FAIL##f0 \
-}
-
-#define PROTO19(ret0,f0, funct,name,fn,   arg1,f1, arg2,f2, arg3,f3, arg4,f4, arg5,f5, \
-	   arg6,f6, arg7,f7, arg8,f8, arg9,f9, arg10,f10, arg11,f11, arg12,f12, arg13,f13, \
-	   arg14,f14, arg15,f15, arg16,f16, arg17,f17, arg18,f18, arg19,f19) \
-NAME(funct, name) \
-{ D_0( ret0,f0) \
-  D(1,arg1,f1) D(2,arg2,f2) D(3,arg3,f3) D(4,arg4, f4) \
-  D(5,arg5,f5) D(6,arg6,f6) D(7,arg7,f7) D(8,arg8,f8) \
-  D(9,arg9, f9) D(10,arg10,f10) D(11,arg11,f11) D(12,arg12,f12) \
-  D(13,arg13,f13) D(14,arg14,f14) D(15,arg15,f15) D(16,arg16,f16) \
-  D(17,arg17,f17) D(18,arg18,f18) D(19,arg19,f19) \
-  P(1,arg1,f1,i##f1, P(2,arg2,f2,i##f2, P(3,arg3,f3,i##f3, P(4,arg4,f4,i##f4, \
-  P(5,arg5,f5,i##f5, P(6,arg6,f6,i##f6, P(7,arg7,f7,i##f7, P(8,arg8,f8,i##f8, \
-  P(9,arg9,f9,i##f9, P(10,arg10,f10,i##f10, P(11,arg11,f11,i##f11, P(12,arg12,f12,i##f12, \
-  P(13,arg13,f13,i##f13, P(14,arg14,f14,i##f14, P(15,arg15,f15,i##f15, P(16,arg16,f16,i##f16, \
-  P(17,arg17,f17,i##f17, P(18,arg18,f18,i##f18, P(19,arg19,f19,i##f19, \
-  RET##fn(ret0,f0, Act##fn(funct,name) (FN##fn(name) \
-      A(1), A(2), A(3), A(4), A(5), A(6), A(7), A(8), A(9), A(10), \
-      A(11), A(12), A(13), A(14), A(15), A(16), A(17), A(18), A(19) \
-     ))))))))))))))))))))) \
-  FAIL##f0 \
+static void RequestSelection(obj Owner, uldat ReqPrivate) {
+    if (LS.MsgPort)
+	TwinSelectionRequest((obj)LS.MsgPort, ReqPrivate, Owner);
 }
 
 
 
-#include "sockproto.h"
+/* socket initialization functions */
+
+#if defined(CONF_SOCKET_ALIEN) || defined(CONF__MODULES)
+
+#if TW_BYTE_ORDER == TW_LITTLE_ENDIAN
+/* we can use hton?() functions to speed up translation */
+#include <netinet/in.h>
+static void FlipCopyMem(CONST byte *src, byte *dst, uldat len) {
+    switch (len) {
+      case 2:
+	if (sizeof(udat) == 2) {
+	    udat x = *(udat *)src;
+	    *(udat *)dst = htons(x);
+	}
+	else if (sizeof(unsigned short) == 2) {
+	    unsigned short x = *(unsigned short *)src;
+	    *(unsigned short *)dst = htons(x);
+	} else {
+	    dst[0] = src[1];
+	    dst[1] = src[0];
+	}
+	break;
+      case 4:
+	if (sizeof(uldat) == 4) {
+	    uldat x = *(uldat *)src;
+	    *(uldat *)dst = htonl(x);
+	    break;
+	}
+	else if (sizeof(unsigned short) == 4) {
+	    unsigned short x = *(unsigned short *)src;
+	    *(unsigned short *)dst = htonl(x);
+	}
+	else if (sizeof(unsigned int) == 4) {
+	    unsigned int x = *(unsigned int *)src;
+	    *(unsigned int *)dst = htonl(x);
+	    break;
+	}
+	/* else FALLTHROUGH */
+      default:
+	src += len - 1;
+	while (len--)
+	    *dst++ = *src--;
+	break;
+    }
+}
+
+#else
+static void FlipCopyMem(CONST byte *src, byte *dst, uldat len) {
+    src += len - 1;
+    while (len--)
+	*dst++ = *src--;
+}
+#endif /* TW_BYTE_ORDER == TW_LITTLE_ENDIAN */
 
 
-typedef struct {
-    byte Len, *name;
-    void (*F)(void);
-} sock_fn;
-static sock_fn sockF [] = {
+static void SocketAlienTranslate(CONST byte *src, uldat srclen, byte *dst, uldat dstlen, byte flip) {
     
-#   define EL(funct) { 0, #funct, sock##funct },
-#   include "sockprotolist.h"
-#   undef EL
+#if TW_BYTE_ORDER == TW_LITTLE_ENDIAN
     
-    /* handy aliases (also for compatibility) */
-    { 0, "DeleteWidget", sockDeleteObj },
-    { 0, "DeleteGadget", sockDeleteObj },
-    { 0, "MapGadget",    sockMapWidget },
-    { 0, "UnMapGadget",  sockUnMapWidget },
-    { 0, "RecursiveDeleteGadget", sockRecursiveDeleteWidget },
-    { 0, "DeleteWindow", sockDeleteObj },
-    { 0, "MapWindow",    sockMapWidget },
-    { 0, "UnMapWindow",  sockUnMapWidget },
-    { 0, "RecursiveDeleteWindow", sockRecursiveDeleteWidget },
-    { 0, "DeleteMenuItem", sockDeleteObj },
-    { 0, "DeleteMenu",   sockDeleteObj },
-    { 0, "DeleteMsgPort", sockDeleteObj },
-    { 0, NULL, (void (*)(void))0 }
+    /* copy the least significant bits */
+    if (flip)
+	FlipCopyMem(src, dst, Min2(dstlen, srclen));
+    else
+	CopyMem(src, dst, Min2(dstlen, srclen));
+    /* and set the remaining to zero */
+    if (dstlen > srclen)
+	WriteMem(dst + srclen, '\0', dstlen - srclen);
+    
+#else /* TW_BYTE_ORDER == TW_BIG_ENDIAN */
+    
+    if (dstlen > srclen) {
+	/* set the high bits to zero */
+	WriteMem(dst, '\0', dstlen - srclen);
+	/* copy the least significant bits */
+	if (flip)
+	    FlipCopyMem(src, dst + dstlen - srclen, Min2(dstlen, srclen));
+	else
+	    CopyMem(src, dst + dstlen - srclen, Min2(dstlen, srclen));
+    } else {
+	/* copy the least significant bits */
+	if (flip)
+	    FlipCopyMem(src, dst, dstlen);
+	else
+	    CopyMem(src, dst, dstlen);
+    }
+#endif /* TW_BYTE_ORDER == TW_LITTLE_ENDIAN */
+}
+
+/* convert alien type at (*src) to native and put it at (dst) */
+void SocketAlienPop(CONST byte ** src, uldat alien_len, byte *dst, uldat len) {
+    SocketAlienTranslate(*src, alien_len, dst, len, AlienXendian(Slot) == MagicAlienXendian);
+    *src += alien_len;
+}
+
+/* convert native type at (src) to alien and put it at (*dst) */
+void SocketAlienPush(CONST byte *src, uldat len, byte **dst, uldat alien_len) {
+    SocketAlienTranslate(src, len, *dst, alien_len, AlienXendian(Slot) == MagicAlienXendian);
+    *dst += alien_len;
+}
+
+
+#endif /* defined(CONF_SOCKET_ALIEN) || defined(CONF__MODULES) */
+
+
+static byte TwinMagicData[8+sizeof(uldat)] = {
+    8+sizeof(uldat),
+    sizeof(byte),
+    sizeof(udat),
+    sizeof(uldat),
+    sizeof(hwcol),
+    sizeof(time_t),
+    sizeof(frac_t),
+    0
 };
-
-/***********/
 
 static uldat SendTwinProtocol(void) {
     static byte buf[] = " Twin-" TW_PROTOCOL_VERSION_STR "-" TWIN_VERSION_STR "\n";
@@ -653,31 +1153,47 @@ static uldat SendTwinProtocol(void) {
     return RemoteWriteQueue(Slot, buf[0], buf);
 }
 
-static uldat SendTwinMagic(void) {
-    byte data[8+sizeof(uldat)] = { 8+sizeof(uldat), sizeof(byte), sizeof(udat), sizeof(uldat), sizeof(hwcol), sizeof(time_t), sizeof(frac_t), 0};
-    *(uldat *)(data+8) = TWIN_MAGIC;
-    return RemoteWriteQueue(Slot, 8+sizeof(uldat), data);
+static byte SendTwinMagic(byte *t, byte len) {
+    if (AlienXendian(Slot) == MagicNative)
+	return RemoteWriteQueue(Slot, 8+sizeof(uldat), TwinMagicData) == 8+sizeof(uldat);
+    
+    return RemoteWriteQueue(Slot, len, t) == len;
 }
     
-static uldat FindFunction(byte Len, CONST byte *name) {
-    sock_fn *F = sockF;
-    if (name) {
-	while (F->name && (F->Len != Len || CmpMem(F->name, name, Len)))
-	    F++;
-	if (F->name)
-	    return (uldat)(F - sockF);
-    }
-    return NOID;
-}
-
-static void Reply(uldat code, uldat len, CONST void *data) {
+static void sockReply(uldat code, uldat len, CONST void *data) {
     uldat buf[3];
     buf[0] = 2*sizeof(uldat) + len;
     buf[1] = RequestN;
     buf[2] = code;
-    (void)RemoteWriteQueue(Slot, 3*sizeof(uldat), buf);
-    if (len)
+    if (RemoteWriteQueue(Slot, 3*sizeof(uldat), buf) == 3*sizeof(uldat) && len)
 	(void)RemoteWriteQueue(Slot, len, data);
+}
+
+static byte SendUldat(uldat data) {
+
+#if defined(CONF_SOCKET_ALIEN) || defined(CONF__MODULES)
+
+    if (AlienXendian(Slot) == MagicNative)
+	return RemoteWriteQueue(Slot, sizeof(uldat), &data) == sizeof(uldat);
+
+    {
+	uldat len;
+	byte *t, AlienSizeofUldat = AlienSizeof(uldat, Slot);
+	
+	if (RemoteWriteQueue(Slot, AlienSizeofUldat, NULL) == AlienSizeofUldat) {
+	    t = RemoteWriteGetQueue(Slot, &len);
+	    t += len - AlienSizeofUldat;
+	    AlienPush(t,uldat,data);
+	    return TRUE;
+	}
+	return FALSE;
+    }
+#else /* !defined(CONF_SOCKET_ALIEN) && !defined(CONF__MODULES) */
+    
+    return RemoteWriteQueue(Slot, sizeof(uldat), &data) == sizeof(uldat);
+    
+#endif /* defined(CONF_SOCKET_ALIEN) || defined(CONF__MODULES) */
+    
 }
 
 
@@ -728,7 +1244,7 @@ static byte CreateAuth(byte *path) {
     uldat len = 0;
     
     if ((fd = open(path, O_WRONLY|O_CREAT|O_TRUNC, 0600)) >= 0 &&
-	fchmod(fd, 0600) == 0) {
+	chmod(path, 0600) == 0) {
 	
         len = GetRandomData();
 	
@@ -800,8 +1316,7 @@ static byte SendChallenge(void) {
     if (got > 0 && len == TotalLen && (len -= AuthLen) &&
 	RemoteReadGrowQueue(Slot, digestLen) &&
 	/* make space for digest, and also check there's no pending data */
-	(t = RemoteReadGetQueue(Slot, &got)) && got == digestLen &&
-	RemoteWriteQueue(Slot, sizeof(uldat), &len) &&
+	(t = RemoteReadGetQueue(Slot, &got)) && got == digestLen && SendUldat(len) &&
 	RemoteWriteQueue(Slot, len, AuthData+AuthLen)) {
 	
 	MD5Init(&ctx);
@@ -811,10 +1326,6 @@ static byte SendChallenge(void) {
 	return TRUE;
     }
     return FALSE;
-}
-
-INLINE uldat SendUldat(uldat data) {
-    return RemoteWriteQueue(Slot, sizeof(uldat), &data);
 }
 
 /*
@@ -857,6 +1368,24 @@ static int EnsureRead(int fd, uldat slot, uldat len) {
     return max;
 }
 
+static handler_io_s GetHandlerIO(void) {
+#if defined(CONF_SOCKET_ALIEN) || defined(CONF__MODULES)
+    if (AlienXendian(Slot) != MagicNative) {
+		
+# ifdef CONF_SOCKET_ALIEN
+	return SocketAlienIO;
+# else /* !CONF_SOCKET_ALIEN */
+	module M = DlLoad(SocketAlienSo);
+	if (M)
+	    return (handler_io_s)M->Private;
+	return NULL;
+# endif /* CONF_SOCKET_ALIEN */
+    }
+#endif /* defined(CONF_SOCKET_ALIEN) || defined(CONF__MODULES) *//
+	
+    return SocketIO;
+}
+
 static void Wait4Auth(int fd, uldat slot) {
     byte *t;
     int got;
@@ -872,10 +1401,11 @@ static void Wait4Auth(int fd, uldat slot) {
 	t = RemoteReadGetQueue(Slot, NULL);
 	if (!CmpMem(t, t+digestLen, digestLen)) {
 	    /* OK! */
-	    LS.HandlerIO.S = SocketIO;
-	    RemoteReadDeQueue(Slot, digestLen*2);
-	    SendUldat(GO_MAGIC);
-	    return;
+	    if ((LS.HandlerIO.S = GetHandlerIO())) {
+		RemoteReadDeQueue(Slot, digestLen*2);
+		SendUldat(GO_MAGIC);
+		return;
+	    }
 	}
     }
     
@@ -884,6 +1414,54 @@ static void Wait4Auth(int fd, uldat slot) {
     RemoteFlush(Slot);
     UnRegisterRemote(Slot);
     close(fd);
+}
+
+static byte Check4MagicTranslation(uldat slot, byte *magic, byte len) {
+
+    
+    if (len == 8+sizeof(uldat) && !CmpMem(magic, TwinMagicData, 8+sizeof(uldat)))
+	return MagicNative;
+    
+#if defined(CONF_SOCKET_ALIEN) || defined(CONF__MODULES)
+
+    if (
+# ifdef CONF_SOCKET_ALIEN
+	SocketAlienOK &&
+# else
+	DlLoad(SocketAlienSo) &&
+# endif
+	len >= 8+sizeof(uldat) &&
+	magic[Alien_byte] == 1 &&  /* sizeof(byte) MUST be 1, or passing byte[] vectors would fail */
+	magic[Alien_udat] >= 2 &&
+	magic[Alien_uldat] >= 4 &&
+	magic[Alien_hwcol] == 1 && /* sizeof(hwcol) MUST be 1, or passing hwcol[] vectors would fail */
+	magic[Alien_time_t] >= 4 &&
+	magic[Alien_frac_t] >= 4 &&
+	len == magic[0] && len == 8+magic[Alien_uldat]) {
+	    
+	CopyMem(magic + 1, AlienMagic(slot) + 1, 6);
+	AlienSizeof(hwattr,Slot) = AlienSizeof(byte,Slot) + AlienSizeof(hwcol,Slot);
+
+	/*
+	 * now check endianity.
+	 * 
+	 * non-trivial trick: TWIN_MAGIC significant bits are 0-31,
+	 * so on little endian machines (magic+8) is always "Twin"...
+	 * no matter what value has magic[Alien_uldat].
+	 * On big endian machines, (magic+8) is ..."niwT", with
+	 * (magic[Alien_uldat] - 4) zeroed bytes at start.
+	 */
+	if (!CmpMem(magic+8, "Twin", 4))
+	    /* little endian client. and us? */
+	    return TW_BYTE_ORDER == TW_LITTLE_ENDIAN ? MagicAlien : MagicAlienXendian;
+	if (!CmpMem(magic+8+(magic[Alien_uldat]-4), "niwT", 4))
+	    /* big endian client. and us? */
+	    return TW_BYTE_ORDER == TW_BIG_ENDIAN ? MagicAlien : MagicAlienXendian;
+    }
+
+#endif /* defined(CONF_SOCKET_ALIEN) || defined(CONF__MODULES) */
+
+    return MagicUnknown;
 }
 
 static void Wait4Magic(int fd, uldat slot, byte isUnix) {
@@ -910,15 +1488,22 @@ static void Wait4Magic(int fd, uldat slot, byte isUnix) {
 	return;
     else { /* (got >= max) */
 	/*
-	 * at the moment, no server-side datasize or endianity translation is available...
-	 * so just send the plain Magic
+	 * check whether the client has our same sizes and endianity
+	 * or one of the available translations is needed.
 	 */
+	if ((AlienXendian(Slot) = Check4MagicTranslation(Slot, t, max)) == MagicUnknown)
+	    /*
+	     * no suitable translation available. use our native magic,
+	     * in case library can handle it.
+	     */
+	    AlienXendian(Slot) = MagicNative;
+	
+	got = SendTwinMagic(t, max);
 	RemoteReadDeQueue(Slot, max);
-
-	if (SendTwinMagic()) {
+	
+	if (got) {
 	    if (isUnix) {
-		LS.HandlerIO.S = SocketIO;
-		if (SendUldat(GO_MAGIC))
+		if ((LS.HandlerIO.S = GetHandlerIO()) && SendUldat(GO_MAGIC))
 		    return;
 	    } else {
 		LS.HandlerIO.S = Wait4Auth;
@@ -926,10 +1511,9 @@ static void Wait4Magic(int fd, uldat slot, byte isUnix) {
 		    return;
 	    }
 	}
-	/* hmm... internal error. out of memory or can't write. */
     }
     
-    /* I/O error or internal error */
+    /* problem... out of memory or I/O error. */
     UnRegisterRemote(Slot);
     close(fd);
 }
@@ -1102,215 +1686,6 @@ static void SocketIO(int fd, uldat slot) {
 
 
 
-/* shortcut: add a (tmsg) in the remote MsgPort's file descriptor queue */
-static byte ShortcutSendMsg(msgport MsgPort, udat Len, CONST byte *Data) {
-    tmsg tMsg = (tmsg)Data;
-    
-    switch (tMsg->Type) {
-      /* the only types of messages allowed between clients: */
-      case TW_MSG_USER_CONTROL:
-      case TW_MSG_USER_CLIENTMSG:
-	tMsg->Len -= sizeof(uldat);
-	tMsg->Magic = MSG_MAGIC;
-	RemoteWriteQueue(MsgPort->RemoteData.FdSlot, Len, Data);
-	return TRUE;
-    }
-    return FALSE;
-}
-
-
-#define tDelta ((udat)(size_t)&(((tmsg)0)->Event))
-#define  Delta ((udat)(size_t)&(((msg)0)->Event))
-#define tOffset(x) ((udat)(size_t)&(((tmsg)0)->Event.x))
-
-/* extract the (tmsg) from Data, turn it into a (msg) and send it to MsgPort */
-static byte SendToMsgPort(msgport MsgPort, udat Len, CONST byte *Data) {
-    msgport Sender;
-    msg Msg;
-    tmsg tMsg = (tmsg)Data;
-    udat _Len, minType;
-    byte ok = TRUE;
-    
-    if (MsgPort && Len && tMsg && Len >= tDelta && Len == tMsg->Len &&
-	tMsg->Magic == msg_magic) {
-
-	Sender = RemoteGetMsgPort(Slot);
-	if (Sender && Sender->AttachHW)
-	    minType = TW_MSG_DISPLAY;
-	else
-	    minType = TW_MSG_USER_FIRST;
-	if (tMsg->Type < minType)
-	    /* not allowed! */
-	    return FALSE;
-	    
-
-
-	_Len = FnMsg->Size - Delta;
-	switch (tMsg->Type) {
-	  case TW_MSG_WINDOW_KEY:
-	    if (Len >= tOffset(EventKeyboard.AsciiSeq)) {
-		if (tMsg->Event.EventKeyboard.SeqLen + tOffset(EventKeyboard.AsciiSeq) > Len)
-		    tMsg->Event.EventKeyboard.SeqLen = Len - tOffset(EventKeyboard.AsciiSeq);
-	    } else
-		/* (tmsg) too short */
-		return FALSE;
-	    _Len += tMsg->Event.EventKeyboard.SeqLen;
-	    break;
-	  case TW_MSG_USER_CONTROL:
-	    if (Len >= tOffset(EventControl.Data)) {
-		if (tMsg->Event.EventControl.Len + tOffset(EventControl.Data) > Len)
-		    tMsg->Event.EventControl.Len = Len - tOffset(EventControl.Data);
-	    } else
-		/* (tmsg) too short */
-		return FALSE;
-	    _Len += tMsg->Event.EventControl.Len;
-	    break;
-	  case TW_MSG_USER_CLIENTMSG:
-	    if (Len >= tOffset(EventClientMsg.Data)) {
-		if (tMsg->Event.EventClientMsg.Len + tOffset(EventClientMsg.Data) > Len)
-		    tMsg->Event.EventClientMsg.Len = Len - tOffset(EventClientMsg.Data);
-	    } else
-		/* (tmsg) too short */
-		return FALSE;
-	    _Len += tMsg->Event.EventClientMsg.Len;
-	    break;
-	  default:
-	    break;
-	}
-
-	if (MsgPort->RemoteData.Fd != NOFD && MsgPort->Handler == SocketH) {
-	    /*
-	     * shortcut: we have a (tmsg); instead of turning it into a (msg)
-	     * then have SocketH() call sockSendMsg() to turn it back into a (tmsg),
-	     * we directly copy it.
-	     */
-	    if (ShortcutSendMsg(MsgPort, Len, Data))
-		return ok;
-	}
-
-	if ((Msg = Do(Create,Msg)(FnMsg, tMsg->Type, _Len))) {
-		
-	    Msg->Event.EventCommon.Window =
-		(void *)Id2Obj(window_magic >> magic_shift,
-			       tMsg->Event.EventCommon.Window);
-
-	    switch (tMsg->Type) {
-#if defined(CONF__MODULES) || defined (CONF_HW_DISPLAY)
-	      case TW_MSG_DISPLAY:
-		if (sizeof(struct s_tevent_display) == sizeof(twindow) + 4*sizeof(dat) + sizeof(uldat)) {
-		    CopyMem((void *)&tMsg->Event.EventDisplay.Code,
-			    (void *)& Msg->Event.EventDisplay.Code, 4*sizeof(dat));
-		} else {
-		    Msg->Event.EventDisplay.Code   = tMsg->Event.EventDisplay.Code;
-		    Msg->Event.EventDisplay.Len    = tMsg->Event.EventDisplay.Len;
-		    Msg->Event.EventDisplay.X      = tMsg->Event.EventDisplay.X;
-		    Msg->Event.EventDisplay.Y      = tMsg->Event.EventDisplay.Y;
-		}
-		if (!(Msg->Event.EventDisplay.Data =
-		      CloneMem(tMsg->Event.EventDisplay.Data, tMsg->Event.EventDisplay.Len))
-		    && tMsg->Event.EventDisplay.Len)
-		    
-		    ok = FALSE;
-		      
-		break;
-#endif /* defined(CONF__MODULES) || defined (CONF_HW_DISPLAY) */
-	      case TW_MSG_WINDOW_KEY:
-		if (sizeof(struct s_tevent_keyboard) == sizeof(twindow) + 3*sizeof(dat) + 2*sizeof(byte)) {
-		    CopyMem((void *)&tMsg->Event.EventKeyboard.Code,
-			    (void *)& Msg->Event.EventKeyboard.Code, 3*sizeof(dat) + sizeof(byte));
-		} else {
-		    Msg->Event.EventKeyboard.Code       = tMsg->Event.EventKeyboard.Code;
-		    Msg->Event.EventKeyboard.ShiftFlags = tMsg->Event.EventKeyboard.ShiftFlags;
-		    Msg->Event.EventKeyboard.SeqLen     = tMsg->Event.EventKeyboard.SeqLen;
-		    Msg->Event.EventKeyboard.pad        = tMsg->Event.EventKeyboard.pad;
-		}
-		CopyMem(tMsg->Event.EventKeyboard.AsciiSeq, Msg->Event.EventKeyboard.AsciiSeq,
-			tMsg->Event.EventKeyboard.SeqLen);
-		
-		Msg->Event.EventKeyboard.AsciiSeq[tMsg->Event.EventKeyboard.SeqLen] = '\0';
-		
-		break;
-	      case TW_MSG_WINDOW_MOUSE:
-		if (sizeof(struct s_tevent_mouse) == sizeof(twindow) + 4*sizeof(dat)) {
-		    CopyMem((void *)&tMsg->Event.EventMouse.Code,
-			    (void *)& Msg->Event.EventMouse.Code, 4*sizeof(dat));
-		} else {
-		    Msg->Event.EventMouse.Code          = tMsg->Event.EventMouse.Code;
-		    Msg->Event.EventMouse.ShiftFlags    = tMsg->Event.EventMouse.ShiftFlags;
-		    Msg->Event.EventMouse.X             = tMsg->Event.EventMouse.X;
-		    Msg->Event.EventMouse.Y             = tMsg->Event.EventMouse.Y;
-		}
-		break;
-	      case TW_MSG_SELECTIONCLEAR:
-		if (sizeof(struct s_tevent_common) == sizeof(twindow) + 2*sizeof(dat)) {
-		    CopyMem((void *)&tMsg->Event.EventCommon.Code,
-			    (void *)& Msg->Event.EventCommon.Code, 2*sizeof(dat));
-		} else {
-		    Msg->Event.EventCommon.Code         = tMsg->Event.EventCommon.Code;
-		    Msg->Event.EventCommon.pad          = tMsg->Event.EventCommon.pad;
-		}
-		break;
-
-/* TODO: is this needed? */
-#if 0
-	      case TW_MSG_WINDOW_CHANGE:
-		Push(t, udat,    Msg->Event.EventWindow.Code);
-		Push(t, udat,    Msg->Event.EventWindow.XWidth);
-		Push(t, udat,    Msg->Event.EventWindow.YWidth);
-		break;
-	      case TW_MSG_WINDOW_GADGET:
-		Push(t, udat,    Msg->Event.EventGadget.Code);
-		Push(t, udat,    Msg->Event.EventGadget.pad);
-		break;
-	      case TW_MSG_MENU_ROW:
-		Push(t, udat,    Msg->Event.EventMenu.Code);
-		Push(t, udat,    Msg->Event.EventMenu.pad);
-		Push(t, tmenu,   Obj2Id(Msg->Event.EventMenu.Menu));
-		break;
-#endif
-	      case TW_MSG_USER_CONTROL:
-		if (sizeof(struct s_tevent_control) == sizeof(twindow) + 4*sizeof(dat) + sizeof(uldat)) {
-		    CopyMem((void *)&tMsg->Event.EventControl.Code,
-			    (void *)& Msg->Event.EventControl.Code, 4*sizeof(dat));
-		} else {
-		    Msg->Event.EventControl.Code  = tMsg->Event.EventControl.Code;
-		    Msg->Event.EventControl.Len   = tMsg->Event.EventControl.Len;
-		    Msg->Event.EventControl.X     = tMsg->Event.EventControl.X;
-		    Msg->Event.EventControl.Y     = tMsg->Event.EventControl.Y;
-		}
-		CopyMem(tMsg->Event.EventControl.Data, Msg->Event.EventControl.Data,
-			tMsg->Event.EventControl.Len);
-		
-		Msg->Event.EventControl.Data[Msg->Event.EventControl.Len] = '\0';
-		break;
-	      case TW_MSG_USER_CLIENTMSG:
-		if (sizeof(struct s_tevent_clientmsg) == sizeof(twindow) + 2*sizeof(dat) + sizeof(uldat)) {
-		    CopyMem((void *)&tMsg->Event.EventControl.Code,
-			    (void *)& Msg->Event.EventControl.Code, 2*sizeof(dat));
-		} else {
-		    Msg->Event.EventControl.Code  = tMsg->Event.EventControl.Code;
-		    Msg->Event.EventControl.Len   = tMsg->Event.EventControl.Len;
-		}
-		CopyMem(tMsg->Event.EventControl.Data, Msg->Event.EventControl.Data,
-			tMsg->Event.EventControl.Len);
-		
-		break;
-	      default:
-		ok = FALSE;
-		break;
-	    }
-	    
-	    if (ok) {
-		SendMsg(MsgPort, Msg);
-		return TRUE;
-	    }
-	    
-	    Delete(Msg);
-	}
-    }
-    return FALSE;
-}
-
 /*
  * turn the (msg) into a (tmsg) and write it on the MsgPort file descriptor.
  * 
@@ -1318,7 +1693,6 @@ static byte SendToMsgPort(msgport MsgPort, udat Len, CONST byte *Data) {
  * when an exclusive one is started. Must preserve Slot, Fd and other globals!
  */
 static void sockSendMsg(msgport MsgPort, msg Msg) {
-    tevent_any Event = (tevent_any)0;
     uldat Len = 0, Tot;
     byte *t, Easy = sizeof(twindow) == sizeof(window);
 
@@ -1329,11 +1703,19 @@ static void sockSendMsg(msgport MsgPort, msg Msg) {
     Fd = MsgPort->RemoteData.Fd;
     Slot = MsgPort->RemoteData.FdSlot;
 
+    if (AlienXendian(Slot) != MagicNative) {
+	if (Ext(SocketAlien,SendMsg))
+	    Ext(SocketAlien,SendMsg)(MsgPort,Msg);
+	Slot = save_Slot;
+	Fd = save_Fd;
+	return;
+    }
+	
     switch (Msg->Type) {
 #if defined(CONF__MODULES) || defined (CONF_HW_DISPLAY)
       case MSG_DISPLAY:
 	Easy = FALSE;
-	Reply(Msg->Type, Len = sizeof(twindow) + 4*sizeof(udat) + Msg->Event.EventDisplay.Len, NULL);
+	sockReply(Msg->Type, Len = sizeof(twindow) + 4*sizeof(udat) + Msg->Event.EventDisplay.Len, NULL);
 
 	if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
 	    t += Tot - Len;
@@ -1356,7 +1738,7 @@ static void sockSendMsg(msgport MsgPort, msg Msg) {
 	    break;
 	else
 	    Easy = FALSE;
-	Reply(Msg->Type, Len = sizeof(twindow) + 3*sizeof(udat) + 2*sizeof(byte) + Msg->Event.EventKeyboard.SeqLen, NULL);
+	sockReply(Msg->Type, Len = sizeof(twindow) + 3*sizeof(udat) + 2*sizeof(byte) + Msg->Event.EventKeyboard.SeqLen, NULL);
 	if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
 	    t += Tot - Len;
 	    Push(t, twindow, Obj2Id(Msg->Event.EventKeyboard.Window));
@@ -1364,7 +1746,7 @@ static void sockSendMsg(msgport MsgPort, msg Msg) {
 	    Push(t, udat,    Msg->Event.EventKeyboard.ShiftFlags);
 	    Push(t, udat,    Msg->Event.EventKeyboard.SeqLen);
 	    Push(t, byte,    Msg->Event.EventKeyboard.pad);
-	    PushV(t, Msg->Event.EventKeyboard.SeqLen+1, Event->EventKeyboard.AsciiSeq);
+	    PushV(t, Msg->Event.EventKeyboard.SeqLen+1, Msg->Event.EventKeyboard.AsciiSeq);
 	}
 	break;
       case MSG_WINDOW_MOUSE:
@@ -1372,7 +1754,7 @@ static void sockSendMsg(msgport MsgPort, msg Msg) {
 	    break;
 	else
 	    Easy = FALSE;
-	Reply(Msg->Type, Len = sizeof(twindow) + 4*sizeof(udat), NULL);
+	sockReply(Msg->Type, Len = sizeof(twindow) + 4*sizeof(udat), NULL);
 	if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
 	    t += Tot - Len;
 	    Push(t, twindow, Obj2Id(Msg->Event.EventMouse.Window));
@@ -1383,17 +1765,20 @@ static void sockSendMsg(msgport MsgPort, msg Msg) {
 	}
 	break;
       case MSG_WINDOW_CHANGE:
-	if (Easy && sizeof(event_window) == sizeof(window) + 4*sizeof(dat))
+	if (Easy && sizeof(event_window) == sizeof(window) + 6*sizeof(dat))
 	    break;
 	else
 	    Easy = FALSE;
-	Reply(Msg->Type, Len = sizeof(twindow) + 4*sizeof(dat), NULL);
+	sockReply(Msg->Type, Len = sizeof(twindow) + 6*sizeof(dat), NULL);
 	if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
 	    t += Tot - Len;
 	    Push(t, twindow, Obj2Id(Msg->Event.EventWindow.Window));
 	    Push(t, udat,    Msg->Event.EventWindow.Code);
+	    Push(t, udat,    Msg->Event.EventWindow.Flags);
 	    Push(t, udat,    Msg->Event.EventWindow.XWidth);
 	    Push(t, udat,    Msg->Event.EventWindow.YWidth);
+	    Push(t, udat,    Msg->Event.EventWindow.X);
+	    Push(t, udat,    Msg->Event.EventWindow.Y);
 	}
 	break;
       case MSG_WINDOW_GADGET:
@@ -1401,7 +1786,7 @@ static void sockSendMsg(msgport MsgPort, msg Msg) {
 	    break;
 	else
 	    Easy = FALSE;
-	Reply(Msg->Type, Len = sizeof(twindow) + 2*sizeof(dat), NULL);
+	sockReply(Msg->Type, Len = sizeof(twindow) + 2*sizeof(dat), NULL);
 	if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
 	    t += Tot - Len;
 	    Push(t, twindow, Obj2Id(Msg->Event.EventGadget.Window));
@@ -1414,7 +1799,7 @@ static void sockSendMsg(msgport MsgPort, msg Msg) {
 	    break;
 	else
 	    Easy = FALSE;
-	Reply(Msg->Type, Len = sizeof(twindow) + 2*sizeof(dat) + sizeof(tmenu), NULL);
+	sockReply(Msg->Type, Len = sizeof(twindow) + 2*sizeof(dat) + sizeof(tmenu), NULL);
 	if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
 	    t += Tot - Len;
 	    Push(t, twindow, Obj2Id(Msg->Event.EventMenu.Window));
@@ -1428,7 +1813,7 @@ static void sockSendMsg(msgport MsgPort, msg Msg) {
 	    break;
 	else
 	    Easy = FALSE;
-	Reply(Msg->Type, Len = sizeof(twindow) + 4*sizeof(dat) + 2*sizeof(ldat), NULL);
+	sockReply(Msg->Type, Len = sizeof(twindow) + 4*sizeof(dat), NULL);
 	if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
 	    t += Tot - Len;
 	    Push(t, twindow, Obj2Id(Msg->Event.EventSelection.Window));
@@ -1438,28 +1823,13 @@ static void sockSendMsg(msgport MsgPort, msg Msg) {
 	    Push(t, dat,     Msg->Event.EventSelection.Y);
 	}
 	break;
-      case MSG_SELECTIONREQUEST:
-	if (Easy && sizeof(event_selectionrequest) == sizeof(window) + 2*sizeof(dat) + sizeof(obj) + sizeof(ldat))
-	    break;
-	else
-	    Easy = FALSE;
-	Reply(Msg->Type, Len = sizeof(twindow) + 2*sizeof(dat) + 2*sizeof(ldat), NULL);
-	if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
-	    t += Tot - Len;
-	    Push(t, twindow, Obj2Id(Msg->Event.EventSelectionRequest.Window));
-	    Push(t, udat,    Msg->Event.EventSelectionRequest.Code);
-	    Push(t, udat,    Msg->Event.EventSelectionRequest.pad);
-	    Push(t, tobj,    Obj2Id(Msg->Event.EventSelectionRequest.Requestor));
-	    Push(t, uldat,   Msg->Event.EventSelectionRequest.ReqPrivate);
-	}
-	break;
       case MSG_SELECTIONNOTIFY:
 	if (Easy && sizeof(event_selectionnotify) == sizeof(window) + 2*sizeof(dat) +
 	    3*sizeof(ldat) + MAX_MIMELEN + sizeof(byte *))
 	    break;
 	else
 	    Easy = FALSE;
-	Reply(Msg->Type, Len = sizeof(twindow) + 2*sizeof(dat) + 3*sizeof(ldat)
+	sockReply(Msg->Type, Len = sizeof(twindow) + 2*sizeof(dat) + 3*sizeof(ldat)
 	      + MAX_MIMELEN + Msg->Event.EventKeyboard.SeqLen, NULL);
 	if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
 	    t += Tot - Len;
@@ -1473,13 +1843,28 @@ static void sockSendMsg(msgport MsgPort, msg Msg) {
 	    PushV(t, Msg->Event.EventSelectionNotify.Len, Msg->Event.EventSelectionNotify.Data);
 	}
 	break;
+      case MSG_SELECTIONREQUEST:
+	if (Easy && sizeof(event_selectionrequest) == sizeof(window) + 2*sizeof(dat) + sizeof(obj) + sizeof(ldat))
+	    break;
+	else
+	    Easy = FALSE;
+	sockReply(Msg->Type, Len = sizeof(twindow) + 2*sizeof(dat) + 2*sizeof(ldat), NULL);
+	if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
+	    t += Tot - Len;
+	    Push(t, twindow, Obj2Id(Msg->Event.EventSelectionRequest.Window));
+	    Push(t, udat,    Msg->Event.EventSelectionRequest.Code);
+	    Push(t, udat,    Msg->Event.EventSelectionRequest.pad);
+	    Push(t, tobj,    Obj2Id(Msg->Event.EventSelectionRequest.Requestor));
+	    Push(t, uldat,   Msg->Event.EventSelectionRequest.ReqPrivate);
+	}
+	break;
 	
       case MSG_USER_CONTROL:
 	if (Easy && sizeof(event_control) == sizeof(window) + 4*sizeof(dat) + sizeof(uldat))
 	    break;
 	else
 	    Easy = FALSE;
-	Reply(Msg->Type, Len = sizeof(twindow) + 4*sizeof(dat) + sizeof(byte)
+	sockReply(Msg->Type, Len = sizeof(twindow) + 4*sizeof(dat) + sizeof(byte)
 	      + Msg->Event.EventControl.Len, NULL);
 	if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
 	    t += Tot - Len;
@@ -1497,13 +1882,13 @@ static void sockSendMsg(msgport MsgPort, msg Msg) {
 	    break;
 	else
 	    Easy = FALSE;
-	Reply(Msg->Type, Len = sizeof(twindow) + 2*sizeof(dat) + Msg->Event.EventClientMsg.Len, NULL);
+	sockReply(Msg->Type, Len = sizeof(twindow) + 2*sizeof(dat) + Msg->Event.EventClientMsg.Len, NULL);
 	if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
 	    t += Tot - Len;
-	    Push(t, twindow, Obj2Id(Msg->Event.EventControl.Window));
-	    Push(t, udat,    Msg->Event.EventControl.Code);
-	    Push(t, udat,    Msg->Event.EventControl.Len);
-	    PushV(t, Msg->Event.EventControl.Len, Msg->Event.EventControl.Data);
+	    Push(t, twindow, Obj2Id(Msg->Event.EventClientMsg.Window));
+	    Push(t, udat,    Msg->Event.EventClientMsg.Code);
+	    Push(t, udat,    Msg->Event.EventClientMsg.Len);
+	    PushV(t, Msg->Event.EventClientMsg.Len, Msg->Event.EventClientMsg.Data);
 	}
 	break;
 	
@@ -1517,12 +1902,12 @@ static void sockSendMsg(msgport MsgPort, msg Msg) {
 	else if (Msg->Type == MSG_SELECTIONREQUEST)
 	    Msg->Event.EventSelectionRequest.Requestor
 	    = (void *)Obj2Id(Msg->Event.EventSelectionRequest.Requestor);
-	Reply(Msg->Type, Msg->Len, &Msg->Event);
+	sockReply(Msg->Type, Msg->Len, &Msg->Event);
     }
     Slot = save_Slot;
     Fd = save_Fd;
 }
-	
+
 	
 static void SocketH(msgport MsgPort) {
     msg Msg;
@@ -1532,8 +1917,9 @@ static void SocketH(msgport MsgPort) {
     while ((Msg=MsgPort->FirstMsg)) {
 	Remove(Msg);
 
-	if (Msg->Type==MSG_WINDOW_MOUSE && (W = Msg->Event.EventMouse.Window) && W->TtyData &&
-	    W->TtyData->Flags & (TTY_REPORTMOUSE|TTY_REPORTMOUSE2)) {
+	if (Msg->Type==MSG_WINDOW_MOUSE && (W = Msg->Event.EventMouse.Window) &&
+	    (W->Flags & WINFL_USECONTENTS) && W->USE.C.TtyData &&
+	    W->USE.C.TtyData->Flags & (TTY_REPORTMOUSE|TTY_REPORTMOUSE2)) {
 	    
 	    len = CreateXTermMouseEvent(&Msg->Event.EventMouse, 10, buf);
 	    /*
@@ -1549,271 +1935,20 @@ static void SocketH(msgport MsgPort) {
     }
 }
 
-static msgport GetMsgPortObj(obj P) {
-    while (P) {
-	if (IS_MSGPORT(P)) {
-	    return (msgport)P;
-	}
-	switch (P->Id >> magic_shift) {
-	  case row_magic:
-	  case menuitem_magic:
-	  case menu_magic:
-	    P = (obj) P->Parent;
-	    break;
-	  case mutex_magic:
-	    P = (obj) ((mutex)P)->Owner;
-	    break;
-	  default:
-	    if (IS_WIDGET(P))
-		P = (obj) ((widget)P)->Owner;
-	    else
-		P = (obj)0;
-	    break;
-	}
-    }
-    return (msgport)P;
-}
-
-static void DeleteObj(void *V) {
-    obj O = (obj)V;
-    msgport MsgPort = FdList[Slot].MsgPort;
-    
-    if (MsgPort && MsgPort == GetMsgPortObj(O))
-	Delete(O);
-}
-
-static void RecursiveDeleteWidget(void *V) {
-    msgport MsgPort = FdList[Slot].MsgPort;
-
-    /* avoid too much visual activity... UnMap top-level widget immediately */
-    Act(UnMap,(widget)V)((widget)V);
-
-    if (MsgPort)
-	Act(RecursiveDelete,(widget)V)((widget)V, MsgPort);
-}
-
-/* last 3 args are actually useless for remote clients */
-static msgport CreateMsgPort(byte LenTitle, CONST byte *Title, time_t WakeUp, frac_t WakeUpFrac, byte Flags) {
-    msgport MsgPort;
-    
-    if ((MsgPort = Do(Create,MsgPort)(FnMsgPort, LenTitle, Title, 0, 0, 0, SocketH))) {
-	RegisterMsgPort(MsgPort, Slot);
-	MsgPort->ShutDownHook = sockShutDown;
-    }
-    return MsgPort;
-}
-
-
-
-
-
-#ifdef CONF_SOCKET_GZ
-
-static byte CanCompress(void) {
-    return TRUE;
-}
-
-static voidpf sockZAlloc(voidpf opaque, uInt items, uInt size) {
-    void *ret = AllocMem(items * (size_t)size);
-    return ret ? (voidpf)ret : Z_NULL;
-}
-
-static void sockZFree(voidpf opaque, voidpf address) {
-    if (address != Z_NULL)
-	FreeMem((void *)address);
-}
-
-/* fixup the uncompressed slot for on-the-fly compression */
-static void FixupGzip(uldat slot) {
-    ls_p.Fd = ls.Fd;
-    ls.Fd = specFD;
-    ls.PrivateFlush = RemoteGzipFlush;
-    ls.PrivateAfterFlush = NULL;
-}
-
-/* finish shutting down compression (called on the uncompressed slot) */
-static void ShutdownGzip(uldat slot) {
-    inflateEnd((z_streamp)ls.PrivateData);
-    deflateEnd((z_streamp)ls_p.PrivateData);
-
-    FreeMem(ls.PrivateData);
-    FreeMem(ls_p.PrivateData);
-    
-    ls.Fd = ls_p.Fd;
-    ls_p.Fd = specFD;
-    UnRegisterRemote(ls.pairSlot);
-
-    ls.pairSlot = NOSLOT;
-    ls.PrivateFlush = NULL;
-    ls.PrivateAfterFlush = NULL;
-}
-
-/*
- * this is not perfectly clean, but works well:
- * we enable (disable) compression and give an uncompressed (compressed) answer,
- * but we also send in the same way any answer pending or collected before the RemoteFlush().
- * 
- * So the library must wait for the answer immediately after calling TwDoCompress();
- * this is what it normally does anyway since it has to wait for the return value...
- * no problem.
- */
-static byte DoCompress(byte on_off) {
-    uldat slot = NOSLOT;
-    z_streamp z1 = NULL, z2 = NULL;
-    
-    if (on_off) {
-	if ((slot = RegisterRemoteFd(specFD, SocketIO)) != NOSLOT &&
-	    (z1 = AllocMem(sizeof(*z1))) &&
-	    (z2 = AllocMem(sizeof(*z2)))) {
-	    
-	    z1->zalloc = z2->zalloc = sockZAlloc;
-	    z1->zfree  = z2->zfree  = sockZFree;
-	    z1->opaque = z2->opaque = NULL;
-
-	    if (deflateInit(z1, Z_BEST_COMPRESSION) == Z_OK) {
-		if (inflateInit(z2) == Z_OK) {
-		
-		    /* ok, start pairing the two slots */
-		    ls.pairSlot = Slot;
-		    ls.PrivateData = (void *)z1;
-		    
-		    LS.pairSlot = slot;
-		    LS.PrivateData = (void *)z2;
-		    LS.PrivateAfterFlush = FixupGzip;
-		    
-		    /* we have ls.Fd == specFD. it will be fixed by LS.PrivateAfterFlush() */
-		    
-		    return TRUE;
-		}
-		deflateEnd(z1);
-	    }
-	}
-	if (z2) FreeMem(z2);
-	if (z1) FreeMem(z1);
-	if (slot != NOSLOT) UnRegisterRemote(slot);
-	return FALSE;
-    } else {
-	/* inform RemoteFlush() we are shutting down the compression... */
-	LS.PrivateAfterFlush = ShutdownGzip;
-	
-	return TRUE;
-    }
-}
-
-#else
-
-static byte CanCompress(void) {
-    return FALSE;
-}
-
-static byte DoCompress(byte on_off) {
-    return FALSE;
-}
-
-#endif /* CONF_SOCKET_GZ */
-
-
-static void NeedResizeDisplay(void){
-    if (LS.MsgPort && LS.MsgPort->AttachHW)
-	ResizeDisplayPrefer(LS.MsgPort->AttachHW);
-}
-
-
-
-/*
- * this does direct write() on the connecting socket,
- * so it bypasses any compression.
- */
-static void AttachHW(uldat len, CONST byte *arg, byte flags) {
-    display_hw D_HW;
-    byte buf[2] = "\0",
-	verbose = flags & TW_ATTACH_HW_REDIRECT,
-	exclusive = flags & TW_ATTACH_HW_EXCLUSIVE;
-    int realFd;
-    fd_set set;
-    struct timeval tv = {2,0};
-    
-    realFd = LS.Fd >= 0 ? LS.Fd : FdList[LS.pairSlot].Fd;
-
-    if (!LS.MsgPort) {
-	if (verbose)
-	    write(realFd, "twin: AttachHW(): client did not create a MsgPort\n\0", 52);
-	else
-	    write(realFd, buf, 2);
-	return;
-    }
-    
-    if (verbose)
-	verbose = RegisterPrintk(realFd);
-	
-    if ((D_HW = AttachDisplayHW(len, arg, Slot, exclusive))) {
-	if (D_HW->NeedHW & NEEDPersistentSlot)
-	    LS.MsgPort->AttachHW = D_HW;
-	else
-	    D_HW->AttachSlot = NOSLOT; /* we don't need it => forget it */
-    }
-    
-    if (D_HW) {
-	buf[1]++;
-	if (D_HW->NeedHW & NEEDPersistentSlot)
-	    buf[1]++;
-    }
-    write(realFd, buf, 2);
-
-    /* wait for twattach to confirm attach... */
-
-    FD_ZERO(&set);
-    FD_SET(realFd, &set);
-	    
-    while (select(realFd+1, &set, NULL, NULL, &tv) == -1 && errno == EINTR)
-	;
-    read(realFd, buf, 1);
-
-    if (verbose)
-	UnRegisterPrintk();
-}
-
-	    
-static byte DetachHW(uldat len, CONST byte *arg) {
-    return DetachDisplayHW(len, arg, 0); /* cannot detach exclusive displays !! */
-}
-
-static void SetFontTranslation(CONST byte trans[0x80]) {
-    if (trans)
-	CopyMem(trans, All->Gtranslations[USER_MAP], 0x80);
-}
-
-
-static obj GetOwnerSelection(void) {
-    return TwinSelectionGetOwner();
-}
-
-static void SetOwnerSelection(time_t Time, frac_t Frac) {
-    if (LS.MsgPort)
-	TwinSelectionSetOwner((obj)LS.MsgPort, Time, Frac);
-}
-
-static void NotifySelection(obj Requestor, uldat ReqPrivate, uldat Magic, CONST byte MIME[MAX_MIMELEN],
-			    uldat Len, CONST byte *Data) {
-    TwinSelectionNotify(Requestor, ReqPrivate, Magic, MIME, Len, Data);
-}
-
-static void RequestSelection(obj Owner, uldat ReqPrivate) {
-    if (LS.MsgPort)
-	TwinSelectionRequest((obj)LS.MsgPort, ReqPrivate, Owner);
-}
-
 
 #ifdef CONF_THIS_MODULE
 
 # include "version.h"
 MODULEVERSION;
 
+static void (*orig_unixSocketIO)(int fd, uldat slot);
+
 byte InitModule(module Module)
 #else
 byte InitSocket(void)
 #endif
 {
+    struct sockaddr_in addr;
     char opt[15];
 
     if (!InitAuth()) {
@@ -1821,58 +1956,25 @@ byte InitSocket(void)
 	return FALSE;
     }
     
-    {
-	struct sockaddr_un addr;
-	WriteMem(&addr, 0, sizeof(addr));
-	CopyStr("/tmp/.twin", addr.sun_path);
-	CopyStr(TWDisplay, addr.sun_path+10);
+    WriteMem(&addr, 0, sizeof(addr));
 	
-	addr.sun_family = AF_UNIX;
-
-	if ((unixFd = socket(AF_UNIX, SOCK_STREAM, 0)) >= 0 &&
-	    /*setsockopt(unixFd, SOL_SOCKET, SO_REUSEADDR, (void *)&opt, sizeof(opt)) >= 0 &&*/
-	    bind(unixFd, (struct sockaddr *)&addr, sizeof(addr)) >= 0 &&
-	    chmod(addr.sun_path, 0700) >= 0 &&
-	    listen(unixFd, 3) >= 0 &&
-	    fcntl(unixFd, F_SETFD, FD_CLOEXEC) >= 0) {
-		    
-	    if ((unixSlot = RegisterRemoteFd(unixFd, unixSocketIO)) != NOSLOT) {
-		
-		CopyStr(addr.sun_path, opt);
-		opt[6] = 'T';
-		rename(addr.sun_path, opt);
-		    
-	    } else
-		close(unixFd);
-	} else {
-	    Error(SYSCALLERROR);
-	    if (unixFd >= 0)
-		close(unixFd);
-	}
-    }
-    
-    {
-	struct sockaddr_in addr;
-	WriteMem(&addr, 0, sizeof(addr));
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(TW_INET_PORT + strtoul(TWDisplay+1, NULL, 16));
 	
-	addr.sin_family = AF_INET;
-	addr.sin_port = htons(TW_INET_PORT + strtoul(TWDisplay+1, NULL, 16));
+    if ((inetFd = socket(AF_INET, SOCK_STREAM, 0)) >= 0 &&
+	setsockopt(inetFd, SOL_SOCKET, SO_REUSEADDR, (void *)&opt, sizeof(opt)) >= 0 &&
+	bind(inetFd, (struct sockaddr *)&addr, sizeof(addr)) >= 0 &&
+	listen(inetFd, 1) >= 0 &&
+	fcntl(inetFd, F_SETFD, FD_CLOEXEC) >= 0) {
 	
-	if ((inetFd = socket(AF_INET, SOCK_STREAM, 0)) >= 0 &&
-	    setsockopt(inetFd, SOL_SOCKET, SO_REUSEADDR, (void *)&opt, sizeof(opt)) >= 0 &&
-	    bind(inetFd, (struct sockaddr *)&addr, sizeof(addr)) >= 0 &&
-	    listen(inetFd, 1) >= 0 &&
-	    fcntl(inetFd, F_SETFD, FD_CLOEXEC) >= 0) {
-	    
-	    if ((inetSlot = RegisterRemoteFd(inetFd, inetSocketIO)) != NOSLOT)
-		;
-	    else
-		close(inetFd);
-	} else {
-	    Error(SYSCALLERROR);
-	    if (inetFd >= 0)
-		close(inetFd);
-	}
+	if ((inetSlot = RegisterRemoteFd(inetFd, inetSocketIO)) != NOSLOT)
+	    ;
+	else
+	    close(inetFd);
+    } else {
+	Error(SYSCALLERROR);
+	if (inetFd >= 0)
+	    close(inetFd);
     }
     
     if (unixSlot != NOSLOT || inetSlot != NOSLOT) {
@@ -1881,7 +1983,20 @@ byte InitSocket(void)
     
 	RegisterExtension(Remote,KillSlot,sockKillSlot);
 	RegisterExtension(Socket,SendMsg,sockSendMsg);
-	
+
+	*(uldat *)(TwinMagicData+8) = TWIN_MAGIC;
+
+	if (unixSlot != NOSLOT) {
+#ifdef CONF_THIS_MODULE
+	    orig_unixSocketIO = FdList[unixSlot].HandlerIO.S;
+#endif
+	    FdList[unixSlot].HandlerIO.S = unixSocketIO;
+	}
+
+#ifdef CONF_SOCKET_ALIEN
+	if (!(SocketAlienOK = InitSocketAlien()))
+	    printk("twin: InitSocket: InitSocketAlien() failed.\n");
+#endif
 	return TRUE;
     }
     printk("twin: failed to create sockets: %s\n", ErrStr);
@@ -1890,19 +2005,35 @@ byte InitSocket(void)
 
 #ifdef CONF_THIS_MODULE
 void QuitModule(module Module) {
-    if (unixSlot != NOSLOT) {
-	UnRegisterRemote(unixSlot);
-	close(unixFd);
-    }
+# if !defined(CONF_SOCKET_ALIEN) && defined(CONF__MODULES)
+    module M = DlIsLoaded(SocketAlienSo);
+    handler_io_s SocketAlienIO = (handler_io_s) (M ? M->Private : NULL);
+# endif
+    
+    if (unixSlot != NOSLOT)
+	FdList[unixSlot].HandlerIO.S = orig_unixSocketIO;
+    
     if (inetSlot != NOSLOT) {
 	UnRegisterRemote(inetSlot);
 	close(inetFd);
     }
     for (Slot = 0; Slot < FdTop; Slot++) {
-	if (LS.Fd != NOFD && (LS.HandlerIO.S == SocketIO || LS.HandlerIO.S == Wait4Auth)) {
+	if (LS.Fd != NOFD && (LS.HandlerIO.S == Wait4MagicUnix ||
+			      LS.HandlerIO.S == Wait4MagicInet ||
+			      LS.HandlerIO.S == Wait4Auth ||
+# if defined(CONF_SOCKET_ALIEN) || defined(CONF__MODULES)
+			      LS.HandlerIO.S == SocketAlienIO ||
+# endif
+			      LS.HandlerIO.S == SocketIO)) {
 	    Ext(Remote,KillSlot)(Slot);
 	}
     } 
+# if defined(CONF_SOCKET_ALIEN)
+    QuitSocketAlien();
+# elif defined(CONF__MODULES)
+    if (M)
+	DlUnLoad(SocketAlienSo);
+# endif    
     UnRegisterExtension(Remote,KillSlot,sockKillSlot);
     UnRegisterExtension(Socket,SendMsg,sockSendMsg);
 }

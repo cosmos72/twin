@@ -12,9 +12,9 @@
 
 #include <stdio.h>
 
-#include "libTw.h"
-#include "libTwerrno.h"
-#include "libTwkeys.h"
+#include "Tw/Tw.h"
+#include "Tw/Twerrno.h"
+#include "Tw/Twkeys.h"
 
 static tmsgport Event_MsgPort;
 static tmenu Event_Menu;
@@ -39,7 +39,7 @@ static byte InitEvent(void) {
 	 (12, "Event Tester", NULL,
 	  Event_Menu, COL(WHITE,BLACK), TW_NOCURSOR,
 	  TW_WINDOW_WANT_KEYS|TW_WINDOW_WANT_MOUSE|TW_WINDOW_WANT_CHANGES|TW_WINDOW_DRAG|TW_WINDOW_RESIZE|TW_WINDOW_CLOSE,
-	  0, 20, 10, 0))) {
+	  TW_WINFL_USEEXPOSE, 18, 8, 0))) {
 	
 	TwSetColorsWindow(Event_Win, 0x1FF,
 			  COL(HIGH|YELLOW,CYAN), COL(HIGH|GREEN,HIGH|BLUE), COL(WHITE,HIGH|BLUE),
@@ -281,8 +281,16 @@ int main(int argc, char *argv[]) {
 	    }
 	} else if (Msg->Type==TW_MSG_WINDOW_CHANGE) {
 	    tevent_window EventW = &Msg->Event.EventWindow;
-	    printf("Window Change: new size x=%d y=%d\n",
-		   EventW->XWidth - 2, EventW->YWidth - 2);
+	    if (EventW->Code == TW_MSG_WINDOW_RESIZE)
+		printf("Window Change: new size x=%d y=%d\n",
+		       EventW->XWidth, EventW->YWidth);
+	    else if (EventW->Code == TW_MSG_WINDOW_EXPOSE) {
+		printf("Window Change: expose x=%d, y=%d, width=%d, height=%d%s\n",
+		       EventW->X, EventW->Y, EventW->XWidth, EventW->YWidth,
+		       EventW->Flags & TW_MSG_WINFL_SHADED ? ", shaded" : "");
+		TwExposeAsciiWindow(EventW->Window, EventW->XWidth, EventW->YWidth,
+				    NULL, EventW->X, EventW->Y);
+	    }
 	} else if (Msg->Type==TW_MSG_USER_CONTROL) {
 	    tevent_control EventC = &Msg->Event.EventControl;
 	    printf("User Control Message: Code %d (%s), x=%d y=%d, ASCII ",

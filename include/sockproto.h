@@ -46,8 +46,8 @@
 
 #define OK_MAGIC	((uldat)0x3E4B4F3Cul)
 
-#define FIND_MAGIC	((uldat)0x646E6946ul) /* i.e. "Find" */
-#define MSG_MAGIC	((uldat)0x2167734dul) /* i.e. "Msg!" */
+#define FIND_MAGIC		((uldat)0x646E6946ul) /* i.e. "Find" */
+#define MSG_MAGIC		((uldat)0x2167734dul) /* i.e. "Msg!" */
 
 PROTO2FindFunction(uldat,_, Find,Function,0, byte,_, byte,V(A(1)))
 
@@ -65,7 +65,7 @@ PROTO1(void,v,  Set,FontTranslation,0, byte,V(0x80))
 
 PROTO1(void,v,    Delete,Obj,0, obj,x)
 
-PROTO6(widget,x,   Create,Widget,1, msgport,x, dat,_, dat,_, hwattr,_, dat,_, dat,_)
+PROTO5(widget,x,   Create,Widget,0, dat,_, dat,_, hwattr,_, dat,_, dat,_)
 PROTO1(void,v,RecursiveDelete,Widget,0, widget,x) /* it is wrapped in socket.c */
 PROTO2(void,v,        Map,Widget,2, widget,x, widget,x)
 PROTO1(void,v,      UnMap,Widget,2, widget,x)
@@ -73,7 +73,7 @@ PROTO3(void,v,      SetXY,Widget,2, widget,x, dat,_, dat,_)
 PROTO1(msgport,x,GetOwner,Widget,0, widget,x)
 				    
 
-PROTO19(gadget,x, Create,Gadget,1,
+PROTO19(gadget,x, Create,Gadget,0,
 	widget,x, dat,_, dat,_, byte,W(A(2)*A(3)),
 	udat,_, udat,_, hwcol,_,hwcol,_,hwcol,_,hwcol,_,
 	dat,_, dat,_,        byte,W(A(2)*A(3)),  byte,W(A(2)*A(3)),  byte,W(A(2)*A(3)),
@@ -86,7 +86,7 @@ PROTO2(void,v, SetPressed,Gadget,0, gadget,x, byte,_)
 PROTO1(byte,_,  IsPressed,Gadget,0, gadget,x)
 PROTO2(void,v,  SetToggle,Gadget,0, gadget,x, byte,_)
 PROTO1(byte,_,   IsToggle,Gadget,0, gadget,x)
-PROTO6(void,v,  WriteText,Gadget,2, gadget,x, dat,_, dat,_, byte,W(A(2)*A(3)), dat,_, dat,_)
+PROTO7(void,v, WriteTexts,Gadget,2, gadget,x, byte,_, dat,_, dat,_, byte,W(A(2)*A(3)), dat,_, dat,_)
 
 									
 PROTO5(void,v,   Create4Menu,Row,1, window,x, udat,_, byte,_, ldat,_, byte,V(A(4)))
@@ -94,9 +94,12 @@ PROTO5(void,v,   Create4Menu,Row,1, window,x, udat,_, byte,_, ldat,_, byte,V(A(4
 PROTO11(window,x,     Create,Window,1, dat,_, byte,V(A(1)), hwcol,W(A(1)), menu,x,
 	hwcol,_, uldat,_, uldat,_, byte,_, dat,_, dat,_, dat,_)
 PROTO1(window,x, Create4Menu,Window,1, menu,x)
-PROTO3(void,v,    WriteAscii,Window,2, window,x, ldat,_, byte,V(A(2)))
-PROTO5(void,v,   WriteHWAttr,Window,2, window,x, dat,_, dat,_, ldat,_, hwattr,V(A(4)))
-PROTO3(void,v,      WriteRow,Window,2, window,x, ldat,_, byte,V(A(2)))
+PROTO3(void,v,  WriteAscii  ,Window,2, window,x, ldat,_, byte,V(A(2)))
+PROTO5(void,v,  WriteHWAttr ,Window,2, window,x,  dat,_, dat,_, ldat,_, hwattr,V(A(4)))
+PROTO3(void,v,  WriteRow    ,Window,2, window,x, ldat,_, byte,V(A(2)))
+PROTO6(void,v,  ExposeAscii ,Window,2, window,x,  dat,_, dat,_, byte  ,W(A(2)*A(3)), dat,_, dat,_)
+PROTO6(void,v,  ExposeHWAttr,Window,2, window,x,  dat,_, dat,_, hwattr,W(A(2)*A(3)), dat,_, dat,_)
+
 PROTO3(void,v,        GotoXY,Window,2, window,x, ldat,_, ldat,_)
 PROTO2(void,v,    SetColText,Window,2, window,x, hwcol,_)
 PROTO11(void,v, SetColors,Window,2, window,x, udat,_, hwcol,_, hwcol,_,

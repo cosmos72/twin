@@ -49,10 +49,11 @@ twdetach: twattach
 Torture:
 
 install:
-	$(CP) $(BINS) */tw* $(DESTDIR)/bin 
-	$(LN) twattach $(DESTDIR)/bin/twdetach
+	$(INSTALL) -d $(DESTDIR)$(bindir)
+	$(INSTALL) $(BINS) */tw* $(DESTDIR)$(bindir)
+	$(LN) twattach $(DESTDIR)$(bindir)/twdetach
 
 clean:
-	rm -f .*.flags .*.link gmon.out core $(OBJS) $(BINS) twdetach
+	rm -f .*.flags .*.link gmon.out core *.o tw*
 	$(MAKE) clean -C mapscrn
 

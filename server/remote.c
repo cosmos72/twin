@@ -170,8 +170,10 @@ msgport RemoteGetMsgPort(uldat Slot) {
 uldat RegisterRemote(int Fd, obj HandlerData, void *HandlerIO) {
     uldat Slot, j;
     
-    if ((Slot = FdListGet()) == NOSLOT)
+    if ((Slot = FdListGet()) == NOSLOT) {
+	Error(NOTABLES);
 	return Slot;
+    }
     
     if (FdTop <= Slot)
 	FdTop = Slot + 1;

@@ -16,6 +16,7 @@ CONF__ALLOC_HELP="Use custom malloc/free (tested on Linux/i386 only)"
 CONF_SOCKET_HELP="Support remote socket connections"
 CONF_SOCKET_GZ_HELP=" -> Sockets: support gzip compression"
 CONF_SOCKET_PTHREADS_HELP=" -> Sockets: thread-safe libTw (requires pthread.h)"
+CONF_SOCKET_ALIEN_HELP="Sockets: support non-native architectures"
 CONF_WM_HELP="Window Manager: absolutely needed!"
 CONF_WM_RC_HELP="WM: support ~/.twinrc configuration parser"
 CONF_WM_RC_SHMMAP_HELP=" -> WM: RC: use mmapped shared file for parser"
@@ -49,6 +50,7 @@ menu CONF_SOCKET
   yesmodno CONF_SOCKET
   yesno_dep CONF_SOCKET_GZ CONF_SOCKET
   yesno_dep CONF_SOCKET_PTHREADS CONF_SOCKET
+  yesmodno CONF_SOCKET_ALIEN
 endmenu
 menu CONF_WM
   yesmodno CONF_WM

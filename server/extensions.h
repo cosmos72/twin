@@ -15,6 +15,9 @@ struct exts {
 	void (*SendMsg)(msgport MsgPort, msg Msg);
     } Socket;
     struct {
+	void (*SendMsg)(msgport MsgPort, msg Msg);
+    } SocketAlien;
+    struct {
 	window (*Open)(CONST byte *arg0, byte * CONST * argv);
     } Term;
 };

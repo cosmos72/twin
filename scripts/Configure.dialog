@@ -17,6 +17,7 @@ function yesno() {
 # user may change it while inside "dialog"
 function yesno_dep() {
    yesno "$1"
+   eval "yesno_dep_$1=$2"
 }
 
 function yesmodno() {
@@ -46,6 +47,7 @@ function yesmodno() {
 # user may change it while inside "dialog"
 function yesmodno_dep() {
    yesmodno "$1"
+   eval "yesmodno_dep_$1=$2"
 }
 
 # here we CAN rely on the value of dependency variable...
@@ -109,6 +111,23 @@ function dump() {
     VAL=$(eval "echo \"\${$1}\"")
     if [ "$VAL" = m -a "$CONF__MODULES" = n ]; then
        VAL=y
+    fi
+    DEP1=$(eval "echo \"\${yesno_dep_$1}\"")
+    DEP2=$(eval "echo \"\${yesmodno_dep_$1}\"")
+    if [ "$DEP1" ]; then
+       DEP1VAL=$(eval "echo \"\${$DEP1}\"")
+#      echo "$1 ($VAL) : $DEP1 ($DEP1VAL)" > /dev/tty
+       if [ "$DEP1VAL" = n ]; then
+         VAL=n
+       fi
+    elif [ "$DEP2" ]; then
+       DEP2VAL=$(eval "echo \"\${$DEP2}\"")
+#      echo "$1 ($VAL) : $DEP2 ($DEP2VAL)" > /dev/tty
+       if [ "$DEP2VAL" = n ]; then
+         VAL=n
+       elif [ "$CONF__MODULES" = y -a "$DEP1VAL" = m -a "$VAL" = y ]; then
+         VAL=m
+       fi
     fi
     echo "$1=$VAL"
 }

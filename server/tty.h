@@ -2,7 +2,7 @@
 #define _TW_TTY_H
 
 void TtyWriteAscii(window Window, ldat Len, CONST byte *AsciiSeq);
-window TtyKbdFocus(window Window);
+widget TtyKbdFocus(widget Window);
 void ForceKbdFocus(void);
 
 void TtyWriteHWAttr(window Window, dat x, dat y, ldat Len, CONST hwattr *Attr);

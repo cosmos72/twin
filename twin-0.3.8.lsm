@@ -1,7 +1,7 @@
 Begin3
 Title:		twin
-Version:	0.3.7
-Entered-date:	010219
+Version:	0.3.8
+Entered-date:	010311
 Description:	a Text mode WINdow environment.
 		It has built-in window manager and linux console emulator.
 		Has X11-style networked server capabilities:
@@ -14,8 +14,8 @@ Keywords:	twin text window linux
 Author: 	max@Linuz.sns.it (Massimiliano Ghilardi)
 Maintained-by:	max@Linuz.sns.it (Massimiliano Ghilardi)
 Primary-site:	Linuz.sns.it /pub/Linux/max/twin/experimental/
-		372k  twin-0.3.7.tar.gz
-		875   twin-0.3.7.lsm
+		381k  twin-0.3.8.tar.gz
+		875   twin-0.3.8.lsm
 Alternate-site: sunsite.unc.edu /pub/Linux/utils/terminal/
 		201k  twin-0.2.8.tar.gz
 		779   twin-0.2.8.lsm

@@ -1,3 +1,7 @@
+BUGS:
+
+Fix libTw Reply-> alignment problems.
+
 DECIDE:
 
 GPM: some limited cut-n-paste? (single line?)
@@ -6,16 +10,16 @@ TODO:
 
 Flame libgpm people for /tmp/gpm* sockets, gpm_tried, syslogging, ncurses
 
+GCC/i386 optimized socket.so/socketalien.so
+
 RC AddScreen / Background
 recursive menu windows
 
-twcalc - calculator
 twclip - show clipboard / multiple clipboards / cut-n-paste from it
 port to other platforms (*BSD, ... Also, twdisplay on win32)
 ?-geometry option to tw* clients
 twdialog
 
-contrib/ tree
 look at tvision widgets and methods
 unhide menu when unfocusing all windows? (then hide again when focusing a window)
 option to limit new windows INITIAL size to screen size
