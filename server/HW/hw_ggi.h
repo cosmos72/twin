@@ -1,3 +1,3 @@
 
-display_hw *GGI_InitHW(byte *arg);
+byte GGI_InitHW(void);
 

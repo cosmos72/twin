@@ -12,7 +12,8 @@ CONF_HW_TTY_LINUX_HELP="   tty support: Linux console"
 CONF_HW_TTY_TWTERM_HELP="   tty support: Twin terminal"
 CONF_HW_X11_HELP="HW support: X11"
 CONF_HW_TWIN_HELP="HW support: Twin, native"
-CONF_HW_GGI_HELP="HW support: libGGI"
+CONF_HW_DISPLAY_HELP="HW support: twdisplay client as display"
+CONF_HW_GGI_HELP="HW support: libggi"
 CONF_OPT_TTY_NOBLINK_HELP="Runtime option: disable blink/high background on ttys"
 CONF_OPT_ALWAYSCURSOR_HELP="Runtime option: cursor always visible"
 CONF_OPT_HIDEMENU_HELP="Runtime option: hidden menu"
@@ -34,7 +35,10 @@ if [ $CONF_HW_TTY = y -o $CONF_HW_TTY = m ]; then
   fi
 fi
 yesmodno CONF_HW_X11
-yesmodno CONF_HW_TWIN
+if [ $CONF_SOCKET = y -o $CONF_SOCKET = m ]; then
+  yesmodno CONF_HW_TWIN
+  yesmodno CONF_HW_DISPLAY
+fi
 yesmodno CONF_HW_GGI
 yesno CONF_OPT_TTY_NOBLINK
 yesno CONF_OPT_ALWAYSCURSOR

@@ -21,6 +21,7 @@
 #include "util.h"
 #include "remote.h"
 #include "wm.h"
+#include "hw.h"
 
 #ifdef CONF_TERM
 # include "tty.h"
@@ -800,7 +801,7 @@ static window *CreateWindow(fn_window *Fn_Window, udat LenTitle, byte *Title, hw
     byte *_Title = NULL;
     hwcol *_ColTitle = NULL;
     
-    if ((!Title || (_Title=CloneMem(Title, LenTitle))) &&
+    if ((!Title || (_Title=CloneStrL(Title, LenTitle))) &&
 	(!ColTitle || (_ColTitle=CloneMem(ColTitle, LenTitle*sizeof(hwcol)))) &&
 	(Window=(window *)CreateObj((fn_obj *)Fn_Window))) {
 	
@@ -809,8 +810,10 @@ static window *CreateWindow(fn_window *Fn_Window, udat LenTitle, byte *Title, hw
 	Window->Title=_Title;
 	Window->ColTitle=_ColTitle;
 	Window->TtyData=(ttydata *)0;
-	Window->ShutDownHook=(void (*)(window *))0;
-	Window->TransientHook=(void (*)(window *))NoOp;
+	Window->ShutDownHook=(fn_hook)0;
+	Window->Hook=(fn_hook)0;
+	Window->WhereHook=(fn_hook *)0;
+	Window->MapUnMapHook=(fn_hook)0;
 	Window->MapQueueMsg=(msg *)0;
 	Window->RemoteData.Fd = -1;
 	Window->RemoteData.ChildPid = (pid_t)0;
@@ -838,12 +841,14 @@ static window *CreateWindow(fn_window *Fn_Window, udat LenTitle, byte *Title, hw
 
 	Window->MinXWidth=MIN_XWIN;
 	Window->MinYWidth=MIN_YWIN;
-	Window->XWidth = Max2(MIN_XWIN, XWidth);
-	Window->YWidth = Max2(MIN_YWIN, YWidth);
+	Window->XWidth = XWidth = Max2(MIN_XWIN, XWidth);
+	Window->YWidth = YWidth = Max2(MIN_YWIN, YWidth);
 	Window->MaxXWidth = MAXUDAT-1;
 	Window->MaxYWidth = MAXUDAT-1;
 
 	if (Flags & WINFL_USECONTENTS) {
+	    if (MAXUDAT - ScrollBackLines < YWidth - 2)
+		ScrollBackLines = MAXUDAT - YWidth + 2;
 	    Window->CurY = Window->YLogic = ScrollBackLines;
 	    Window->MaxNumRow = ScrollBackLines + YWidth-2;
 	    Window->NumRowOne = XWidth-2;
@@ -946,9 +951,11 @@ static void RemoveWindow(window *Window) {
 
 static void DeleteWindow(window *Window) {
     if (Window) {
+	Act(UnMap,Window)(Window);
+	if (Window->Hook)
+	    Act(RemoveHook,Window)(Window, Window->Hook, Window->WhereHook);
 	if (Window->ShutDownHook)
 	    Window->ShutDownHook(Window);
-	Act(UnMap,Window)(Window);
 	Act(DisOwn,Window)(Window);
 	if (Window->Title)
 	    FreeMem(Window->Title);
@@ -1134,13 +1141,6 @@ static void RealMapWindow(window *Window, screen *Screen) {
 	
 	InsertFirst(Window, Window, Screen);
 	Window->Screen = Screen;
-	/*
-	 * warning: if Window is transient and All->TransientWindow
-	 * was already non-zero, we are in trouble as we can't handle
-	 * two or more TransientWindows
-	 */
-	if (Window->Attrib & WINDOW_TRANSIENT)
-	    All->TransientWindow = Window;
 	
 	if (Screen == All->FirstScreen) {
 	    OldWindow = Act(Focus,Window)(Window);
@@ -1152,8 +1152,11 @@ static void RealMapWindow(window *Window, screen *Screen) {
 	if (!(Window->Attrib & WINDOW_MENU))
 	    DrawMenuBar(Screen, MINDAT, MAXDAT);
 
-	if (All->TransientWindow)
-	    All->TransientWindow->TransientHook(All->TransientWindow);
+	if (Window->MapUnMapHook)
+	    Window->MapUnMapHook(Window);
+	
+	if (Screen->FnHookWindow)
+	    Screen->FnHookWindow(Screen->HookWindow);
     }
 }
 
@@ -1166,7 +1169,7 @@ static void UnMapWindow(window *Window) {
 	return;
     
     if ((Screen = Window->Screen)) {
-	if (Window == Screen->MenuWindow) {
+	if (Window == Screen->MenuWindow && Window != Screen->FocusWindow) {
 	    /*
 	     * ! DANGER ! 
 	     * Trying to UnMap() a window while its menu is being used.
@@ -1181,9 +1184,6 @@ static void UnMapWindow(window *Window) {
 	Remove(Window);
 	DrawAreaWindow(Window, FALSE);
 	Window->Screen = (screen *)0;
-
-	if (Window->Attrib & WINDOW_TRANSIENT && All->TransientWindow == Window)
-	    All->TransientWindow = (window *)0;
 
 	if (wasFocus) {
 	    if (Screen == All->FirstScreen) {
@@ -1201,8 +1201,11 @@ static void UnMapWindow(window *Window) {
 		Screen->FocusWindow = NextWindow;
 	}
 	
-	if (All->TransientWindow)
-	    All->TransientWindow->TransientHook(All->TransientWindow);
+	if (Window->MapUnMapHook)
+	    Window->MapUnMapHook(Window);
+
+	if (Screen->FnHookWindow)
+	    Screen->FnHookWindow(Screen->HookWindow);
 	
     } else if (Window->MapQueueMsg) {
 	/* the window was still waiting to be mapped! */
@@ -1224,6 +1227,30 @@ static void DisOwnWindow(window *Window) {
 	Window->Menu = (menu *)0;
     }
 }
+
+static byte InstallHookWindow(window *Window, fn_hook Hook, fn_hook *WhereHook) {
+    if (Window && !Window->Hook && !Window->WhereHook && Hook &&
+	WhereHook && !WhereHook[0] && !WhereHook[1]) {
+	
+	Window->Hook = WhereHook[0] = Hook;
+	Window->WhereHook = WhereHook;
+	WhereHook[1] = (void *)Window;
+	return TRUE;
+    }
+    return FALSE;
+}
+
+static void RemoveHookWindow(window *Window, fn_hook Hook, fn_hook *WhereHook) {
+    if (Window && Hook && Window->Hook == Hook &&
+	WhereHook && Window->WhereHook == WhereHook &&
+	WhereHook[0] == Hook && WhereHook[1] == (void *)Window) {
+	
+	Window->Hook = *WhereHook = (fn_hook)0;
+	Window->WhereHook = (fn_hook *)0;
+	WhereHook[1] = (void *)0;
+    }
+}
+
 
 /*
 static window *SearchCoordScreen(dat x, dat y, uldat *ResX, uldat *ResY) {
@@ -1310,7 +1337,9 @@ static fn_window _FnWindow = {
 	SearchRow,
 	SearchRowCode,
 	SearchGadget,
-	SearchGadgetCode
+	SearchGadgetCode,
+	InstallHookWindow,
+	RemoveHookWindow
 };
 
 /* menuitem */
@@ -1320,7 +1349,7 @@ static menuitem *CreateMenuItem(fn_menuitem *Fn_MenuItem, menu *Menu, window *Wi
     menuitem *MenuItem = (menuitem *)0;
     byte *_Name = NULL;
     
-    if (Window && Menu && Name && (_Name=CloneMem(Name,Len)) &&
+    if (Window && Menu && Name && (_Name=CloneStrL(Name,Len)) &&
 	(MenuItem=(menuitem *)CreateObj((fn_obj *)Fn_MenuItem))) {	  
 	MenuItem->FlagActive=FlagActive;
 	MenuItem->Left=Left;
@@ -1352,7 +1381,7 @@ static menuitem *CopyMenuItem(menuitem *From, menuitem *To) {
     if ((To = (menuitem *)CopyObj((obj *)From, (obj *)To))) {
 	To->Menu = Menu;
     
-	if ((!From->Name || (To->Name=CloneMem(From->Name, (uldat)From->Len))) &&
+	if ((!From->Name || (To->Name=CloneStrL(From->Name, (uldat)From->Len))) &&
 	    (!From->Window || (To->Window=(window *)Clone((obj *)From->Window))))
 	    return To;
 	    
@@ -1571,7 +1600,7 @@ static void DeleteMenu(menu *Menu) {
 static row *SetInfoMenu(menu *Menu, byte Flags, uldat Len, byte *Text, hwcol *ColText) {
     row *Row;
     if ((Row = Do(Create,Row)(FnRow, (udat)0, Flags))) {
-	if ((!Text || (Row->Text=CloneMem(Text,Len))) &&
+	if ((!Text || (Row->Text=CloneStrL(Text,Len))) &&
 	    (!ColText || (Row->ColText=CloneMem(ColText, Len*sizeof(hwcol))))) {
 	    Row->Len = Row->MaxLen = Len;
 	    if (Menu->Info)
@@ -1608,6 +1637,8 @@ static screen *CreateScreen(fn_screen *Fn_Screen, udat BgWidth, udat BgHeight, h
 
 	Screen->FirstWindow=Screen->LastWindow=
 	    Screen->FocusWindow=Screen->MenuWindow=(window *)0;
+	Screen->HookWindow=(window *)0;
+	Screen->FnHookWindow=(fn_hook)0;
 	Screen->ScreenWidth=Screen->ScreenHeight=Screen->YLimit=Screen->Up=1;
 	Screen->Attrib=Screen->Left=0;
 	Screen->BgWidth=BgWidth;
@@ -1806,7 +1837,7 @@ static msgport *CreateMsgPort(fn_msgport *Fn_MsgPort, byte NameLen, byte *Progra
     msgport *MsgPort = (msgport *)0;
     byte *Name;
     
-    if (Handler && (!ProgramName || (Name = CloneMem(ProgramName, NameLen))) &&
+    if (Handler && (!ProgramName || (Name = CloneStrL(ProgramName, NameLen))) &&
 	(MsgPort=(msgport *)CreateObj((fn_obj *)Fn_MsgPort))) {
 	
 	MsgPort->WakeUp=WakeUp;
@@ -1823,6 +1854,7 @@ static msgport *CreateMsgPort(fn_msgport *Fn_MsgPort, byte NameLen, byte *Progra
 	MsgPort->FirstMsg=MsgPort->LastMsg=(msg *)0;
 	MsgPort->FirstMenu=MsgPort->LastMenu=(menu *)0;
 	MsgPort->FirstMutex=MsgPort->LastMutex=(mutex *)0;
+	MsgPort->AttachHW=(display_hw *)0;
 	InsertMiddle(MsgPort, MsgPort, All,
 		     WakeUp ? (msgport *)0 : All->LastMsgPort,
 		     WakeUp ? All->FirstMsgPort : (msgport *)0);
@@ -1976,10 +2008,9 @@ static module *CreateModule(fn_module *Fn_Module, uldat NameLen, byte *Name) {
     module *Module = (module *)0;
     byte *newName = NULL;
     
-    if (Name && (newName = CloneMem(Name, NameLen+1)) &&
+    if (Name && (newName = CloneStrL(Name, NameLen)) &&
 	(Module=(module *)CreateObj((fn_obj *)Fn_Module))) {
 	
-	newName[NameLen] = '\0';
 	Module->NameLen = NameLen;
 	Module->Name = newName;
 	Module->Handle = Module->Private = NULL;
@@ -2009,7 +2040,7 @@ static void RemoveModule(module *Module) {
 }
 
 static void DeleteModule(module *Module) {
-    if (Module) {
+    if (Module && !Module->Used) {
 	Act(DlClose,Module)(Module);
 	Remove(Module);
 	if (Module->Name)
@@ -2017,6 +2048,7 @@ static void DeleteModule(module *Module) {
 	DeleteObj((obj *)Module);
     }
 }
+
 
 static fn_module _FnModule = {
     module_magic, (uldat)sizeof(module), (uldat)1,
@@ -2035,6 +2067,77 @@ static fn_module _FnModule = {
 };
 
 
+
+/* display_hw */
+
+static display_hw *CreateDisplayHW(fn_display_hw *Fn_DisplayHW, uldat NameLen, byte *Name) {
+    display_hw *DisplayHW = (display_hw *)0;
+    byte *newName = NULL;
+    
+    if (Name && (newName = CloneStrL(Name, NameLen)) &&
+	(DisplayHW=(display_hw *)CreateObj((fn_obj *)Fn_DisplayHW))) {
+	
+	DisplayHW->NameLen = NameLen;
+	DisplayHW->Name = newName;
+	DisplayHW->Module = NULL;
+	DisplayHW->Quitted = FALSE;
+	DisplayHW->attach = NOSLOT;
+	InsertLast(DisplayHW, DisplayHW, All);
+    } else if (newName)
+	FreeMem(newName);
+    return DisplayHW;
+}
+
+static display_hw *CopyDisplayHW(display_hw *From, display_hw *To) {
+    return (display_hw *)0;
+}
+
+static void InsertDisplayHW(display_hw *DisplayHW, all *Parent, display_hw *Prev, display_hw *Next) {
+    if (!DisplayHW->All && Parent) {
+	InsertGeneric((obj *)DisplayHW, (obj_parent *)&Parent->FirstDisplayHW, (obj *)Prev, (obj *)Next, (uldat *)0);
+	DisplayHW->All = Parent;
+#if 0
+	/* here we risk to call uninitialized DisplayHW routines... put after InitHW() */
+	if (All->FnHookDisplayHW)
+	    All->FnHookDisplayHW(All->HookDisplayHW);
+#endif
+    }
+}
+
+static void RemoveDisplayHW(display_hw *DisplayHW) {
+    if (DisplayHW->All) {
+	RemoveGeneric((obj *)DisplayHW, (obj_parent *)&DisplayHW->All->FirstDisplayHW, (uldat *)0);
+	DisplayHW->All = (all *)0;
+
+    	if (All->FnHookDisplayHW)
+	    All->FnHookDisplayHW(All->HookDisplayHW);
+    }
+}
+
+static void DeleteDisplayHW(display_hw *DisplayHW) {
+    if (DisplayHW) {
+	Act(Quit,DisplayHW)(DisplayHW);
+	
+	Remove(DisplayHW);
+	if (DisplayHW->Name)
+	    FreeMem(DisplayHW->Name);
+	DeleteObj((obj *)DisplayHW);
+    }
+}
+
+
+static fn_display_hw _FnDisplayHW = {
+    display_hw_magic, (uldat)sizeof(display_hw), (uldat)1,
+	CreateDisplayHW,
+	CopyDisplayHW,
+	InsertDisplayHW,
+	RemoveDisplayHW,
+	DeleteDisplayHW,
+	InitDisplayHW,
+	QuitDisplayHW
+};
+
+
 fn Fn = {
     &_FnObj,
 	&_FnArea,
@@ -2048,6 +2151,7 @@ fn Fn = {
 	&_FnMsg,
 	&_FnMsgPort,
 	&_FnMutex,
-	&_FnModule
+	&_FnModule,
+	&_FnDisplayHW
 };
 

@@ -1,3 +1,3 @@
 
-display_hw *X11_InitHW(byte *arg);
+byte X11_InitHW(void);
 

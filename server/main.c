@@ -50,6 +50,7 @@ fd_set save_rfds, save_wfds;
 int max_fds;
 byte lenTWDisplay, *TWDisplay, *origTWDisplay, *origTERM, *origHW;
 byte **main_argv, **orig_argv;
+byte ctty_InUse;
 
 int (*OverrideSelect)(int n, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *timeout);
 
@@ -134,7 +135,7 @@ static void CheckPrivileges(void) {
     }
 }
 
-static byte Init(byte *arg) {
+static byte Init(void) {
     FD_ZERO(&save_rfds);
     FD_ZERO(&save_wfds);
     
@@ -144,8 +145,9 @@ static byte Init(byte *arg) {
 	origTWDisplay = strdup(origTWDisplay);
     if ((origTERM = getenv("TERM")))
 	origTERM = strdup(origTERM);
-
+    
     InitSignals();
+    InitTtysave();
     
     OverrideSelect = select;
     
@@ -153,8 +155,7 @@ static byte Init(byte *arg) {
 	    SetTWDisplay() &&
 	    (All->AtQuit = UnSetTWDisplay) &&
 	    InitData() &&
-	    InitHW(arg) &&
-	    (DevNullStderr(), TRUE) &&
+	    InitHW() &&
 	    InitScroller() &&
 	    InitWM() &&
 #ifdef CONF_TERM
@@ -177,12 +178,15 @@ static byte Init(byte *arg) {
 }
     
 void Quit(int status) {
-    module *M = All->FirstModule;
+    module *M;
     
     if (All->AtQuit)
 	All->AtQuit();
     
-    QuitHW();
+    SuspendHW(FALSE);
+    /* not QuitHW() as it would fire up socket.so and prepare to run with no HW */
+    
+    M = All->FirstModule;
     while (M) {
 	Act(DlClose,M)(M);
 	M = M->Next;
@@ -217,15 +221,18 @@ int main(int argc, char *argv[]) {
     
     main_argv = (byte **)argv;
     
-    if (
 #ifdef CONF_ALLOC
-	!InitAlloc() ||
+    if (!InitAlloc()) {
+	fputs("twin: InitAlloc() failed: internal error!\n", stderr);
+	return 1;
+    }
 #endif
-	!(orig_argv = StrDupList(argc, main_argv))) {
-	return 0;
+    if (!(orig_argv = CloneStrList(main_argv+1))) {
+	fputs("twin: Out of memory!\n", stderr);
+	return 1;
     }
     
-    if (!Init(orig_argv[1]))
+    if (!Init())
 	Quit(0);
 
     Now = &All->Now;
@@ -238,12 +245,6 @@ int main(int argc, char *argv[]) {
 	RemoteFlushAll();
 	
 	read_fds = save_rfds;
-	if (!FdWQueued)
-	    pwrite_fds = NULL;
-	else {
-	    write_fds = save_wfds;
-	    pwrite_fds = &write_fds;
-	}
 
 	/*
 	 * we could call InstantNow(Now) here, to get a more accurate
@@ -254,8 +255,7 @@ int main(int argc, char *argv[]) {
 	 */
 	this_timeout = CalcSleepTime(&sel_timeout, All->FirstMsgPort, Now);
 
-	
-	if (HW->ExpensiveFlushVideo) {
+	if (ExpensiveFlushVideo) {
 	    /* decide what to do... sleep a little if we can (HW_DELAY),
 	     * otherwise revert to one of the other strategies */
 	    if (!ChangedVideoFlagAgain || StrategyDelay >= MAXDELAY) {
@@ -274,28 +274,28 @@ int main(int argc, char *argv[]) {
 	}
 	
 	do {
-	    if (All->NeedHW & NEEDResizeDisplay)
+	    if (NeedHW & NEEDResizeDisplay)
 		ResizeDisplay(), DrawArea(FULLSCREEN);
 	    
-	    if (All->NeedHW & NEEDExportClipBoard) {
-		if (HW->ExportClipBoard)
-		    HW->ExportClipBoard();
-		else
-		    All->NeedHW &= ~NEEDExportClipBoard;
-	    }
+	    if (NeedHW & NEEDExportClipBoard)
+		ExportClipBoard();
 	    
-	    if (StrategyFlag != HW_DELAY) {
-		HW->FlushVideo();
-		if (All->NeedHW & NEEDFlushHW)
-		    HW->FlushHW();
-		if (All->NeedHW & NEEDFlushStdout)
-		    fflush(stdout), All->NeedHW &= ~NEEDFlushStdout;
-	    }
+	    if (StrategyFlag != HW_DELAY)
+		FlushHW();
 	    
+	    if (NeedHW & NEEDPanicHW)
+		PanicHW();
+
+	    if (!FdWQueued)
+		pwrite_fds = NULL;
+	    else {
+		write_fds = save_wfds;
+		pwrite_fds = &write_fds;
+	    }
 	    num_fds = OverrideSelect(max_fds+1, &read_fds, pwrite_fds, NULL, this_timeout);
 	    
 	} while (num_fds < 0 && errno == EINTR);
-	
+
 	if (num_fds < 0)
 	    /* ach, problem. */
 	    num_fds = 0, RemoteParanoia();

@@ -1,3 +1,38 @@
+From 0.2.8 to 0.3.0: (Massimiliano Ghilardi, 10 May 2000)
+	* Added VNC-style multiple simultaneous displays support
+	  and updated twattach to manage them. Now you can have
+	  twin:0 display on X and on twin:1 which displays on twin:0 ...
+	  Also fixed a few deadlocks related to such a setup.
+	* (UNFINISHED) Added VNC-style client-implemented displays:
+	  `twdisplay' starts a display driver then connects
+	  to twin and registers it. This allows any kind of setups,
+	  including attaching twin on a console of another machine,
+	  or having twin:0 display both on X and on twin:0 itself (!),
+	  and also protects twin from deadlocks and crashes
+	  of libX11 and other libraries used for the various displays.
+	* Due to the two changes above, NEVER assume twin quitted
+	  just because you closed all its displays.
+	  Even killing a server (X, another twin, ...) where twin
+	  was displaying may not kill it;
+	  To be sure twin actually exits, either use Menu -> File -> Quit
+	  from the default menu or, if you really feel brutal,
+	  send it a fatal signal (SIGTERM, SIGSEGV, ...).
+	  Sending SIGKILL is not advised, as tty displays will be left
+	  messed up and you will get a stale /tmp/.Twin:<x> socket.
+	* Modified HW display drivers to allow multi-head.
+	* Modified libTw to allow multi-head,
+	  and bumped version number to libTw.so.2.
+	  Clients will need to be recompiled to use the new library.
+	* Added Menu -> ð -> Display to list / detach displays.
+	* Added Menu -> ð -> Refresh.
+	* Continued libggi display.
+	  Still INCOMPLETE (keyboard doesn't work), but I feel more and more
+	  unsatisfied by libggi and lost enthusiasm about it.
+	* Fixed memory and file descriptor leaks in Tw_Close()
+	* Added option `-hw=tty@-' to twattach:
+	  tells twin to attach to its own controlling tty.
+	  (`-hw=tty' instead uses the controlling tty of twattach)
+	  
 From 0.2.7 to 0.2.8: (Massimiliano Ghilardi, 02 May 2000)
 	* Added options `stdout' and `TERM=<terminal>' to display `-hw=tty'
 	  The first is to force twin to use stdout as display method on
@@ -6,7 +41,7 @@ From 0.2.7 to 0.2.8: (Massimiliano Ghilardi, 02 May 2000)
 	  the terminal type.
 	  Usage: `-hw=tty[@device],TERM=<term>' or `-hw=tty[@device],stdout'
 	* Added option `font=<fontname>' to display `-hw=X'.
-	* Added INCOMPLETE support for libGGI display, use with `-hw=ggi'
+	* Added INCOMPLETE support for libggi display, use with `-hw=ggi'
 	* Added `-padx <X>' and `-pady <Y>' options to twsetroot.
 	* Added option `-e cmd [args ...]' to twterm. Example: twterm -e pine
 	* Cleaned up mixing Menu -> File -> Suspend and Menu -> File -> Detach

@@ -9,7 +9,9 @@ void DropId(obj *Obj);
 obj *Id2Obj(byte i, uldat Id);
 #define Obj2Id(obj) ((obj) ? (obj)->Id : NOID)
 
-byte **StrDupList(uldat n, byte **list);
+byte *CloneStr(byte *s);
+byte *CloneStrL(byte *s, uldat len);
+byte **CloneStrList(byte **list);
 
 void Error(udat Code_Error);
 void NormalizeTime(timevalue *Time);

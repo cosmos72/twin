@@ -35,30 +35,64 @@ void NoOperation(void) {
 
 void Error(udat Code_Error) {
     if ((ErrNo = Code_Error) == NOMEMORY) {
+#if 0
+	BeepHW();
+#endif	
 	ErrStr = "Out of memory!";
-	HW->Beep();
     }
 }
 
-byte **StrDupList(uldat n, byte **s) {
-    byte **t = AllocMem((n + 1) * sizeof(byte *)), **v;
+byte *CloneStr(byte *s) {
+    byte *q;
     uldat len;
     
+    if (s) {
+	len = 1 + LenStr(s);
+	if ((q = AllocMem(len)))
+	    CopyMem(s, q, len);
+	return q;
+    }
+    return s;
+}
+
+byte *CloneStrL(byte *s, uldat len) {
+    byte *q;
+    
+    if (s && len) {
+	if ((q = AllocMem(len+1))) {
+	    CopyMem(s, q, len);
+	    q[len] = '\0';
+	}
+	return q;
+    }
+    return s;
+}
+
+byte **CloneStrList(byte **s) {
+    uldat n = 1;
+    byte **t = s, **v;
+    
+    if (t) {
+	while (*t) {
+	    t++;
+	    n++;
+	}
+	t = AllocMem(n * sizeof(byte *));
+    }
+    
     if ((v = t)) {
-	for (; n; v++, s++, n--) {
-	    if ((*v = AllocMem((len = 1 + LenStr(*s)))))
-		CopyMem(*s, *v, len);
-	    else
+	for (; *s && n; v++, s++, n--) {
+	    if (!(*v = CloneStr(*s)))
 		break;
 	}
-    }
-    if (!n)
-	*v = NULL;
-    else {
-	/* failed... clean up */
-	for (; t < v; t++)
-	    FreeMem(*t);
-	t = NULL;
+
+	if (*s && n) {
+	    /* failed... clean up */
+	    for (; t < v; t++)
+		FreeMem(*t);
+	    t = NULL;
+	} else
+	    *v = NULL;
     }
     return t;
 }
@@ -286,7 +320,7 @@ byte SetClipBoard(uldat Magic, uldat Len, byte *Data) {
     else
 	WriteMem(All->ClipData + All->ClipLen, ' ', Len);
     All->ClipLen += Len;
-    All->NeedHW |= NEEDExportClipBoard;
+    NeedHW |= NEEDExportClipBoard;
     
     return TRUE;
 }
@@ -500,6 +534,7 @@ byte AssignId(fn_obj *Fn_Obj, obj *Obj) {
       case screen_magic:
       case msgport_magic:
       case mutex_magic:
+      case display_hw_magic:
 	i = Fn_Obj->Magic >> magic_shift;
 	break;
       case msg_magic:

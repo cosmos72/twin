@@ -50,7 +50,6 @@ void UpdateCursor(void) {
     ldat Left, Up;
     uldat CurX, CurY, XLogic, YLogic;
     ldat XCursor, YCursor;
-    byte dummy;
     
     if ((Screen = All->FirstScreen) && (Window = Screen->FocusWindow)
 	&& ((All->SetUp->Flags & SETUP_ALWAYSCURSOR) || (Window->Flags & WINFL_CURSOR_ON))) {
@@ -77,17 +76,17 @@ void UpdateCursor(void) {
 	    XCursor>=(ldat)0 && XCursor<(ldat)ScreenWidth &&
 	    YCursor>=(ldat)YLimit && YCursor<(ldat)ScreenHeight &&
 	    (Window == Screen->FirstWindow ||
-	     Window == Act(SearchWindow,Screen)(Screen, (dat)XCursor, (dat)YCursor, &dummy))) {
+	     Window == Act(SearchWindow,Screen)(Screen, (dat)XCursor, (dat)YCursor, NULL))) {
 		
 	    CursorType = Window->CursorType;
 	    if ((All->SetUp->Flags & SETUP_ALWAYSCURSOR) && CursorType == NOCURSOR)
 		CursorType = LINECURSOR;
 	    
-	    HW->MoveToXY((udat)XCursor, (udat)YCursor);
+	    MoveToXY((udat)XCursor, (udat)YCursor);
 	}
     }
-    
-    HW->SetCursorType(CursorType);    
+	
+    SetCursorType(CursorType);    
 }
 
 static int SendResizeSignal(window *Window) {
@@ -431,10 +430,10 @@ void CenterWindow(window *Window) {
     
     parz1=(ldat)Window->Up-(ldat)Screen->Up+(ldat)YLimit;
     parz2=parz1+(ldat)Window->YWidth;
-    if (parz1>=(ldat)YLimit && parz2<=(ldat)ScreenHeight)
+    if (parz1>(ldat)YLimit && parz2<=(ldat)ScreenHeight)
 	DeltaY=(ldat)0;
     else
-	DeltaY=-parz1+(ldat)YLimit;
+	DeltaY=-parz1+(ldat)YLimit+1;
     
     if ((ldat)Window->YWidth<=(ldat)ScreenHeight-(ldat)YLimit) {
 	parz1=DeltaY;
@@ -748,7 +747,7 @@ void DragWindow(window *Window, dat i, dat j) {
 	UpdateCursor();
 }
 
-void ResizeFirstWindow(dat i, dat j) {
+void ResizeRelFirstWindow(dat i, dat j) {
     ldat Left, Up, Rgt, Dwn;
     screen *Screen;
     setup *SetUp;
@@ -851,7 +850,7 @@ void ResizeFirstWindow(dat i, dat j) {
 }
 
 
-void ResizeWindow(window *Window, dat i, dat j) {
+void ResizeRelWindow(window *Window, dat i, dat j) {
     ldat Left, Up, Rgt, Dwn;
     screen *Screen;
     setup *SetUp;
@@ -866,7 +865,7 @@ void ResizeWindow(window *Window, dat i, dat j) {
 	return;
 
     if (Window == All->FirstScreen->FirstWindow) {
-	ResizeFirstWindow(i, j);
+	ResizeRelFirstWindow(i, j);
 	return;
     }
     
@@ -1281,8 +1280,9 @@ void MakeFirstWindow(window *Window, byte alsoFocus) {
 	else if (focusWin != Window && alsoFocus)
 	    DrawBorderWindow(Window, BORDER_ANY);
 
-	if (All->TransientWindow)
-	    All->TransientWindow->TransientHook(All->TransientWindow);
+	if (Screen->FnHookWindow)
+	    Screen->FnHookWindow(Screen->HookWindow);
+
 	if (Screen == All->FirstScreen)
 	    UpdateCursor();
     }
@@ -1310,8 +1310,9 @@ void MakeLastWindow(window *Window, byte alsoDeFocus) {
 	else if (alsoDeFocus)
 	    DrawBorderWindow(Window, BORDER_ANY);
 	
-	if (All->TransientWindow)
-	    All->TransientWindow->TransientHook(All->TransientWindow);
+	if (Screen->FnHookWindow)
+	    Screen->FnHookWindow(Screen->HookWindow);
+
 	if (Screen == All->FirstScreen)
 	    UpdateCursor();
     }

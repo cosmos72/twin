@@ -7,27 +7,30 @@ TOPDIR=../..
 
 CFLAGS+=-I..
 
-BASEOBJS=hw_null.o
+BASEOBJS=
 TTYOBJS=hw_tty.o
 X11OBJS=hw_X11.o
-GGIOBJS=hw_ggi.o
+DISPLAYOBJS=hw_display.o
 TWINOBJS=hw_twin.o
-ALLOBJS:=$(BASEOBJS) $(TTYOBJS) $(X11OBJS) $(TWINOBJS) $(GGIOBJS)
+GGIOBJS=hw_ggi.o
+ALLOBJS:=$(BASEOBJS) $(TTYOBJS) $(X11OBJS) $(DISPLAYOBJS) $(TWINOBJS) $(GGIOBJS)
 
 OBJS_hw.a:=$(BASEOBJS)
 OBJS_hw_tty.so=$(TTYOBJS)
 OBJS_hw_X11.so=$(X11OBJS)
-OBJS_hw_ggi.so=$(GGIOBJS)
+OBJS_hw_display.so=$(DISPLAYOBJS)
 OBJS_hw_twin.so=$(TWINOBJS)
+OBJS_hw_ggi.so=$(GGIOBJS)
 
 BINS=
 MODBINS=
 ARLIBS=hw.a
 
-LDFLAGS_hw_tty.so=-shared
-LDFLAGS_hw_X11.so=-shared -L/usr/X11/lib -lX11
-LDFLAGS_hw_ggi.so=-shared -lggi
-LDFLAGS_hw_twin.so=-shared -L$(TOPDIR)/lib -lTw
+LDFLAGS_hw_tty.so=-lc -shared
+LDFLAGS_hw_X11.so=-lc -shared -L/usr/X11/lib -lX11
+LDFLAGS_hw_display.so=-lc -shared
+LDFLAGS_hw_twin.so=-lc -shared -L$(TOPDIR)/lib -lTw
+LDFLAGS_hw_ggi.so=-lc -shared -lggi
 
 #
 # target
@@ -45,6 +48,10 @@ include $(TOPDIR)/conf/config.status
 # set variables according config.status
 # and group together all *.o objects needed by each binary
 #
+
+ifeq ($(CONF_ALLOC),y)
+  CFLAGS+=-DCONF_ALLOC
+endif
 
 ifeq ($(CONF_HW_TTY),y)
   OBJS_hw.a+=$(TTYOBJS)
@@ -72,6 +79,28 @@ else
   endif
 endif
 
+ifneq ($(CONF_SOCKET),n)
+  ifeq ($(CONF_HW_TWIN),y)
+    OBJS_hw.a+=$(TWINOBJS)
+  else
+    ifeq ($(CONF_HW_TWIN),m)
+      MODBINS+=hw_twin.so
+    else
+      EXCL_OBJS+=$(TWINOBJS)
+    endif
+  endif
+  
+  ifeq ($(CONF_HW_DISPLAY),y)
+    OBJS_hw.a+=$(DISPLAYOBJS)
+  else
+    ifeq ($(CONF_HW_DISPLAY),m)
+      MODBINS+=hw_display.so
+    else
+      EXCL_OBJS+=$(DISPLAYOBJS)
+    endif
+  endif
+endif
+
 ifeq ($(CONF_HW_GGI),y)
   OBJS_hw.a+=$(GGIOBJS)
 else
@@ -79,16 +108,6 @@ else
     MODBINS+=hw_ggi.so
   else
     EXCL_OBJS+=$(GGIOBJS)
-  endif
-endif
-
-ifeq ($(CONF_HW_TWIN),y)
-  OBJS_hw.a+=$(TWINOBJS)
-else
-  ifeq ($(CONF_HW_TWIN),m)
-    MODBINS+=hw_twin.so
-  else
-    EXCL_OBJS+=$(TWINOBJS)
   endif
 endif
 

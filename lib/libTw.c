@@ -11,6 +11,7 @@
  */
 
 #include <stdlib.h>
+#include <stdarg.h>
 #include <string.h>
 #include <sys/time.h>
 #include <sys/types.h>
@@ -30,60 +31,93 @@
 
 #ifdef CONF_SOCKET_GZ
 # include <zlib.h>
-  static byte TwGzipFlag;
-  static z_streamp zR, zW;
-
-  static uldat TwGzip(void);
-  static uldat TwGunzip(void);
 #endif
 
-
 typedef struct id_list {
-#   define EL(funct) uldat id_Tw##funct;
+#   define EL(funct) uldat id_Tw_##funct;
 #   include "sockprotolist.h"
 #   undef EL
 } id_list;
 
-static id_list id_Tw;
+typedef struct reply reply;
+struct reply {
+    uldat Len, ReplyN, Code, Data;
+};
 
-static byte TwPanicFlag;
-uldat TwErrno;
+typedef struct s_tw_d {
+    uldat rErrno;
 
+    byte *Queue[5];
+    uldat Qstart[5], Qlen[5], Qmax[5];
+    /*
+     * since DeQueue(Q[gz]WRITE) cancels bytes from end, not from start
+     * 
+     * Qstart[QWRITE] is used only if Tw_TimidFlush()
+     * fails writing the whole queue,
+     * while Qstart[QgzWRITE] is not used at all.
+     */
+    
+    reply *LastReply;
+    /*
+     * LastReply points to last reply from server.
+     * it sits inside Queue[QREAD], so it becomes invalid
+     * after an AddQueue(QREAD) or a DeQueue(QREAD)
+     */
+
+    uldat *r;
+    byte *s;
+
+    int Fd;
+    uldat RequestN;
+
+    id_list id;
+    
+    byte PanicFlag;
+
+#ifdef CONF_SOCKET_GZ
+    byte GzipFlag;
+    z_streamp zR, zW;
+#endif
+
+} *tw_d;
+
+#define Errno	(TwD->rErrno)
+#define id_Tw	(TwD->id)
+#define Queue	(TwD->Queue)
+#define Qstart	(TwD->Qstart)
+#define Qlen	(TwD->Qlen)
+#define Qmax	(TwD->Qmax)
+#define LastReply (TwD->LastReply)
+#define r	(TwD->r)
+#define s	(TwD->s)
+#define Fd	(TwD->Fd)
+#define RequestN  (TwD->RequestN)
+#define PanicFlag (TwD->PanicFlag)
+#define GzipFlag  (TwD->GzipFlag)
+#define zR	(TwD->zR)
+#define zW	(TwD->zW)
 
 #define QREAD    0
 #define QWRITE   1
 #define QMSG     2
 #define QgzREAD  3
 #define QgzWRITE 4
+#define QMAX	 5
 
-static byte *Queue[5];
-static uldat Qstart[5], Qlen[5], Qmax[5], *r;
-/* Qstart[QWRITE] and Qstart[QgzWRITE] are not used,
- * as DeQueue(Q[gz]WRITE) cancels bytes from end, not from start
- */
-static byte *s;
+uldat CommonErrno;
 
-static int Fd = NOFD;
-static uldat RequestN;
+/* and this is the 'default' display */
+tw_d TwDefaultD;
 
-static fd_set fset;
+static uldat Gzip(tw_d TwD);
+static uldat Gunzip(tw_d TwD);
 
-typedef struct reply reply;
-struct reply {
-    uldat Len, ReplyN, Code, Data;
-};
-/*
- * LastReply points to last reply from server.
- * it sits inside Queue[QREAD], so it becomes invalid
- * after an AddQueue(QREAD) or a DeQueue(QREAD)
- */
-static reply *LastReply;
+static void Panic(tw_d TwD);
+static uldat ParseReplies(tw_d TwD);
 
-static void TwDoPanic(void);
-static uldat ParseReplies(void);
-byte TwEnableGzip(void);
+byte Tw_EnableGzip(tw_d TwD);
 
-static uldat AddQueue(byte i, uldat len, void *data) {
+static uldat AddQueue(tw_d TwD, byte i, uldat len, void *data) {
     uldat nmax;
     byte *t;
     
@@ -110,12 +144,12 @@ static uldat AddQueue(byte i, uldat len, void *data) {
     return len;
 }
 
-#define QLeft(Q,len)	(Qlen[Q] + Qstart[Q] + (len) <= Qmax[Q] ? Qlen[Q] += (len) : Grow(Q, len))
-#define RQLeft(len)	QLeft(QREAD,len)
+#define QLeft(Q,len)	(Qlen[Q] + Qstart[Q] + (len) <= Qmax[Q] ? Qlen[Q] += (len) : Grow(TwD, Q, len))
+#define RQLeft(len)     QLeft(QREAD,len)
+#define WQLeft(len)     QLeft(QWRITE,len)
 
-#define WQLeft(len)	(Qlen[QWRITE] + (len) <= Qmax[QWRITE] ? Qlen[QWRITE] += (len) : Grow(QWRITE, len))
 
-static uldat Grow(byte i, uldat len) {
+static uldat Grow(tw_d TwD, byte i, uldat len) {
     /* make enough space available in Queue[i] */
     uldat nmax;
     byte *t;
@@ -146,30 +180,30 @@ static uldat Grow(byte i, uldat len) {
     return Qlen[i] += len;
 }
 
-INLINE byte *GetQueue(byte i, uldat *len) {
+INLINE byte *GetQueue(tw_d TwD, byte i, uldat *len) {
     if (len) *len = Qlen[i];
     return Queue[i] + Qstart[i];
 }
 
-INLINE byte *FillQueue(byte i, uldat *len) {
+INLINE byte *FillQueue(tw_d TwD, byte i, uldat *len) {
     uldat delta = Qmax[i] - Qlen[i] - Qstart[i];
     Qlen[i] += delta;
     if (len) *len = delta;
     return Queue[i] + Qstart[i] + Qlen[i] - delta;
 }
 
-static uldat *InitRS(void) {
+static uldat *InitRS(tw_d TwD) {
     uldat len;
     if (WQLeft(3*sizeof(uldat))) {
-	s = GetQueue(QWRITE, &len);
+	s = GetQueue(TwD, QWRITE, &len);
 	s += len;
 	return r = (uldat *)s - 3;
     }
-    TwErrno = TW_ENO_MEM;
+    Errno = TW_ENO_MEM;
     return (uldat *)0;
 }
 
-INLINE uldat DeQueue(byte i, uldat len) {
+INLINE uldat DeQueue(tw_d TwD, byte i, uldat len) {
     if (!len)
 	return len;
     
@@ -202,73 +236,74 @@ INLINE uldat DeQueue(byte i, uldat len) {
     }
 }
 
-static void TwDoPanic(void) {
+static void Panic(tw_d TwD) {
     uldat len;
     
-    (void)GetQueue(QREAD, &len);
-    DeQueue(QREAD, len);
+    (void)GetQueue(TwD, QREAD, &len);
+    DeQueue(TwD, QREAD, len);
 
-    (void)GetQueue(QWRITE, &len);
-    DeQueue(QWRITE, len);
+    (void)GetQueue(TwD, QWRITE, &len);
+    DeQueue(TwD, QWRITE, len);
 
-    (void)GetQueue(QMSG, &len);
-    DeQueue(QMSG, len);
+    (void)GetQueue(TwD, QMSG, &len);
+    DeQueue(TwD, QMSG, len);
 
 #ifdef CONF_SOCKET_GZ
-    (void)GetQueue(QgzREAD, &len);
-    DeQueue(QgzREAD, len);
+    (void)GetQueue(TwD, QgzREAD, &len);
+    DeQueue(TwD, QgzREAD, len);
 
-    (void)GetQueue(QgzWRITE, &len);
-    DeQueue(QgzWRITE, len);
+    (void)GetQueue(TwD, QgzWRITE, &len);
+    DeQueue(TwD, QgzWRITE, len);
 #endif
     
     if (Fd >= 0) {
-	FD_CLR(Fd, &fset);
 	close(Fd);
 	Fd = NOFD;
     }
     
-    TwPanicFlag = TRUE;
+    PanicFlag = TRUE;
 }
 
-byte TwInPanic(void) {
-    return TwPanicFlag;
+byte Tw_InPanic(tw_d TwD) {
+    return TwD && PanicFlag;
 }
 
 /* cancel the last request packet */
-/* you can (must) call DoFail() ONLY after a failed WQLeft() */
-static void DoFail(void) {
-    DeQueue(QWRITE, s - (byte *)r);
+/* you can (must) call Fail() ONLY after a failed WQLeft() */
+static void Fail(tw_d TwD) {
+    DeQueue(TwD, QWRITE, s - (byte *)r);
 }
 
-byte TwFlush(void) {
+static byte Flush(tw_d TwD, byte timid) {
     uldat chunk, left, len;
     byte *t;
     byte Q;
     
-    (void)GetQueue(QWRITE, &left);
+    (void)GetQueue(TwD, QWRITE, &left);
 
     if (Fd != NOFD && left) {
 
 #ifdef CONF_SOCKET_GZ
-	if (TwGzipFlag) {
-	    if (TwGzip())
+	if (GzipFlag) {
+	    if (Gzip(TwD))
 		Q = QgzWRITE;
 	    else
-		return FALSE; /* TwGzip() calls TwDoPanic() if needed */
+		return FALSE; /* TwGzip() calls Panic() if needed */
 	} else
 #endif
 	    Q = QWRITE;
 	
-	t = GetQueue(Q, &left);
+	t = GetQueue(TwD, Q, &left);
 	len = left;
     
 	while (left > 0) {
 	    chunk = write(Fd, t, left);
-	    if (chunk > 0) {
+	    if (chunk && chunk != (uldat)-1) {
+		/*would be "if (chunk > 0)" but chunk is unsigned */
 		left -= chunk;
 		t += chunk;
-	    } else if (chunk < 0 && errno == EINTR)
+	    }
+	    else if (chunk == (uldat)-1 && errno == EINTR)
 		continue;
 	    else
 		break;
@@ -276,38 +311,60 @@ byte TwFlush(void) {
     } else
 	left = 0;
     
-    
     if (!left)
-	DeQueue(Q, len);
-    else {
-	TwErrno = TW_ECANT_WRITE;
-	TwDoPanic();
+	DeQueue(TwD, Q, len);
+    else if (timid && chunk == (uldat)-1 && (errno == EINTR || errno == EAGAIN)) {
+	/* manually DeQueue the first (len - left) bytes */
+	len -= left;
+	
+	if (len < Qlen[Q]) {
+	    Qstart[Q] += len;
+	    Qlen[Q] -= len;
+	} else {
+	    len = Qlen[Q];
+	    Qstart[Q] = Qlen[Q] = 0;
+	}
+    } else {
+	Errno = TW_ECANT_WRITE;
+	Panic(TwD);
     }
-    return Fd != NOFD;
+    return (Fd != NOFD) + (Fd != NOFD && timid && left);
 }
 
-static uldat TryRead(byte Wait) {
+byte Tw_Flush(tw_d TwD) {
+    return Flush(TwD, FALSE);
+}
+
+byte Tw_TimidFlush(tw_d TwD) {
+    return Flush(TwD, TRUE);
+}
+    
+static uldat TryRead(tw_d TwD, byte Wait) {
     uldat got = 0, len = 0;
     byte *t, mayread;
     byte Q;
+    static fd_set fset;
     
 #ifdef CONF_SOCKET_GZ
-    if (TwGzipFlag)
+    if (GzipFlag)
 	Q = QgzREAD;
     else
 #endif
 	Q = QREAD;
     
-    if (Wait) do {
-	FD_SET(Fd, &fset);
-    } while (select(Fd+1, &fset, NULL, NULL, NULL) != 1);
-
+    if (Wait) {
+	FD_ZERO(&fset);
+	do {
+	    FD_SET(Fd, &fset);
+	} while (select(Fd+1, &fset, NULL, NULL, NULL) != 1);
+    }
+    
     mayread = ioctl(Fd, FIONREAD, &len) >= 0;
     if (!mayread || !len)
 	len = SMALLBUFF;
     
     if (QLeft(Q,len)) {
-	t = GetQueue(Q, &got);
+	t = GetQueue(TwD, Q, &got);
 	t += got - len;
 	do {
 	    got = read(Fd, t, len);
@@ -316,91 +373,91 @@ static uldat TryRead(byte Wait) {
 	Qlen[Q] -= len - (got == (uldat)-1 ? 0 : got);
 	
 	if (got == 0 || (got == (uldat)-1 && errno != EINTR && errno != EAGAIN)) {
-	    TwErrno = TW_ELOST_CONN;
-	    TwDoPanic();
+	    Errno = TW_ELOST_CONN;
+	    Panic(TwD);
 	    got = 0;
 	}
     }
     
 #ifdef CONF_SOCKET_GZ
-    if (TwGzipFlag && got)
-	return TwGunzip();
+    if (GzipFlag && got)
+	return Gunzip(TwD);
     else
 #endif
 	return got;
 }
 
 
-byte TwDrain(void) {
+static byte Drain(tw_d TwD) {
     uldat left;
-    if (Fd != NOFD && ((void)GetQueue(QWRITE, &left), left)) {
-	if (TwFlush()) while (Fd != NOFD && (!LastReply || LastReply->ReplyN != RequestN))
-	    if (TryRead(TRUE))
-		ParseReplies();
+    if (Fd != NOFD && ((void)GetQueue(TwD, QWRITE, &left), left)) {
+	if (Tw_Flush(TwD)) while (Fd != NOFD && (!LastReply || LastReply->ReplyN != RequestN))
+	    if (TryRead(TwD, TRUE))
+		ParseReplies(TwD);
     }
     return Fd != NOFD;
 }
 
-static uldat TwinReadUldat(void) {
+static uldat ReadUldat(tw_d TwD) {
     uldat l;
     byte *t;
     
-    (void)GetQueue(QREAD, &l);
+    (void)GetQueue(TwD, QREAD, &l);
     while (Fd != NOFD && l < sizeof(uldat))
-	l += TryRead(TRUE);
-    t = GetQueue(QREAD, NULL);
+	l += TryRead(TwD, TRUE);
+    t = GetQueue(TwD, QREAD, NULL);
     l = *(uldat *)t;
-    DeQueue(QREAD, sizeof(uldat));
+    DeQueue(TwD, QREAD, sizeof(uldat));
     return l;
 }
 
-static byte TwinMagicNumbers(void) {
+static byte MagicNumbers(tw_d TwD) {
     uldat len = 0;
     byte *hostdata, data[8+sizeof(uldat)] = { sizeof(byte), sizeof(udat), sizeof(uldat), sizeof(hwcol), sizeof(time_t), 0, sizeof(frac_t), 0};
     *(uldat *)(data+8) = TWIN_MAGIC;
     
     while (Fd != NOFD && len < 8+sizeof(uldat))
-	len += TryRead(TRUE);
+	len += TryRead(TwD, TRUE);
 
     if (Fd != NOFD) {
-	hostdata = GetQueue(QREAD, &len);
+	hostdata = GetQueue(TwD, QREAD, &len);
     
 	if (!TwCmpMem(data, hostdata, 8)) {
 	    if (!TwCmpMem(data+8, hostdata+8, sizeof(uldat))) {
-		DeQueue(QREAD, 8+sizeof(uldat));
+		DeQueue(TwD, QREAD, 8+sizeof(uldat));
 		return TRUE;
 	    } else
-		TwErrno = TW_EX_ENDIAN;
+		Errno = TW_EX_ENDIAN;
 	} else
-	    TwErrno = TW_EX_SIZES;
+	    Errno = TW_EX_SIZES;
     }
     return FALSE;
 }
 
 #define digestLen       16  /* hardcoded in MD5 routines */
-#define hAuthLen	256 /* max length of ~/.TwinAuth */
+#define hAuthLen	256 /* length of ~/.TwinAuth */
 #define challengeLen	512 /* length of ~/.TwinAuth + random data */
 
-static byte TwinMagicChallenge(void) {
+static byte MagicChallenge(tw_d TwD) {
     struct MD5Context ctx;
     byte *t, *data, *home;
     int fd, len, got, challenge;
     
-    challenge = TwinReadUldat();
+    challenge = ReadUldat(TwD);
     if (Fd == NOFD)
 	return FALSE;
     if (challenge == TW_GO_MAGIC)
 	return TRUE;
     if (challenge != TW_WAIT_MAGIC) {
-	TwErrno = TW_EWEIRD;
+	Errno = TW_EWEIRD;
 	return FALSE;
     }
     if (!(home = getenv("HOME"))) {
-	TwErrno = TW_ENO_AUTH;
+	Errno = TW_ENO_AUTH;
 	return FALSE;
     }
     if (!WQLeft(digestLen) || !(data = TwAllocMem(hAuthLen))) {
-	TwErrno = TW_ENO_MEM;
+	Errno = TW_ENO_MEM;
 	return FALSE;
     }
 	
@@ -413,7 +470,7 @@ static byte TwinMagicChallenge(void) {
     TwCopyMem("/.TwinAuth", data+len, 11);
     if ((fd = open(data, O_RDONLY)) < 0) {
 	TwFreeMem(data);
-	TwErrno = TW_ENO_AUTH;
+	Errno = TW_ENO_AUTH;
 	return FALSE;
     }
     for (len = 0, got = 1; got && len < hAuthLen; len += got) {
@@ -424,17 +481,17 @@ static byte TwinMagicChallenge(void) {
 	    break;
     }
 
-    challenge = TwinReadUldat();
+    challenge = ReadUldat(TwD);
     if (Fd == NOFD || got < 0 || len + challenge != challengeLen) {
 	TwFreeMem(data);
 	if (Fd != NOFD)
-	    TwErrno = TW_ENO_AUTH;
+	    Errno = TW_ENO_AUTH;
 	return FALSE;
     }
     
-    (void)GetQueue(QREAD, &got);
+    (void)GetQueue(TwD, QREAD, &got);
     while (Fd != NOFD && got < challenge)
-	got += TryRead(TRUE);
+	got += TryRead(TwD, TRUE);
     
     if (Fd == NOFD)
 	return FALSE;
@@ -442,51 +499,46 @@ static byte TwinMagicChallenge(void) {
     MD5Init(&ctx);
     MD5Update(&ctx, data, len);
     
-    t = GetQueue(QREAD, NULL);
+    t = GetQueue(TwD, QREAD, NULL);
     MD5Update(&ctx, t, challenge);
 
-    t = GetQueue(QWRITE, NULL); /* we did WQLeft(digestLen) above */
+    t = GetQueue(TwD, QWRITE, NULL); /* we did WQLeft(digestLen) above */
     MD5Final(t, &ctx);
 
-    DeQueue(QREAD, challenge);
+    DeQueue(TwD, QREAD, challenge);
     
-    TwFlush();
-    challenge = TwinReadUldat();
+    Tw_Flush(TwD);
+    challenge = ReadUldat(TwD);
     
     if (challenge == TW_GO_MAGIC)
 	return TRUE;
     if (Fd != NOFD)
-	TwErrno = TW_EDENIED;
+	Errno = TW_EDENIED;
     return FALSE;
 }
 
-byte TwOpen(byte *TwDisplay) {
-    int result;
+tw_d Tw_Open(byte *TwDisplay) {
+    tw_d TwD;
+    int result, fd;
     byte *options, gzip = FALSE;
-    
-    if (Fd != NOFD) {
-	TwErrno = TW_EALREADY_CONN;
-	return FALSE;
-    }
-    if (!TwDisplay)
-	if (!(TwDisplay = getenv("TWDISPLAY")) || !*TwDisplay) {
-	    TwErrno = TW_ENO_DISPLAY;
-	    return FALSE;
-	}
 
+    if (!TwDisplay && (!(TwDisplay = getenv("TWDISPLAY")) || !*TwDisplay)) {
+	CommonErrno = TW_ENO_DISPLAY;
+	return (tw_d)0;
+    }
+    
     if ((options = strchr(TwDisplay, ','))) {
 	*options = '\0';
-	if (!TwCmpStr(options+1, "gz"))
+	if (!TwCmpMem(options+1, "gz", 2))
 	    gzip = TRUE;
     }
-    
     
     if (*TwDisplay == ':') {
 	/* unix socket */
 	struct sockaddr_un addr;
 	
-	if ((Fd = socket(AF_UNIX, SOCK_STREAM, 0)) < 0) {
-	    TwErrno = TW_ECANT_CONN;
+	if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) < 0) {
+	    CommonErrno = TW_ECANT_CONN;
 	    return FALSE;
 	}
 	TwWriteMem(&addr, 0, sizeof(addr));
@@ -495,7 +547,7 @@ byte TwOpen(byte *TwDisplay) {
 	TwCopyStr("/tmp/.Twin", addr.sun_path);
 	TwCopyStr(TwDisplay, addr.sun_path + 10);
 	
-	result = connect(Fd, (struct sockaddr *)&addr, sizeof(addr));
+	result = connect(fd, (struct sockaddr *)&addr, sizeof(addr));
 	
     } else {
 	
@@ -504,14 +556,14 @@ byte TwOpen(byte *TwDisplay) {
 	byte *server = TwDisplay, *p = TwDisplay;
 	unsigned short port;
 	
-	while (p && *p != ':')
+	while (p && *p && *p != ':')
 	    p++;
 	
 	if (*p == ':')
 	    port = TW_INET_PORT + strtoul(p+1, NULL, 16);
 	else {
-	    TwErrno = TW_ECANT_CONN;
-	    return FALSE;
+	    CommonErrno = TW_EBAD_DISPLAY;
+	    return (tw_d)0;
 	}
 	*p = '\0';
 
@@ -527,8 +579,8 @@ byte TwOpen(byte *TwDisplay) {
 	    *p = ':';
 	    if (host_info == 0) {
 		/* unknown hostname */
-		TwErrno = TW_ECANT_CONN;
-		return FALSE;
+		CommonErrno = TW_ENO_HOST;
+		return (tw_d)0;
 	    }
 	    TwCopyMem(host_info->h_addr, &addr.sin_addr, host_info->h_length);
 	    addr.sin_family = host_info->h_addrtype;
@@ -536,81 +588,87 @@ byte TwOpen(byte *TwDisplay) {
 	    *p = ':';
 
 	
-	if ((Fd = socket(addr.sin_family, SOCK_STREAM, 0)) < 0) {
-	    TwErrno = TW_ECANT_CONN;
-	    return FALSE;
+	if ((fd = socket(addr.sin_family, SOCK_STREAM, 0)) < 0) {
+	    CommonErrno = TW_ECANT_CONN;
+	    return (tw_d)0;
 	}
-	result = connect(Fd, (struct sockaddr *)&addr, sizeof(addr));
+	result = connect(fd, (struct sockaddr *)&addr, sizeof(addr));
     }
 
     if (options)
 	*options = ',';
     
     if (result == -1) { /* some error occurred */
-	if (Fd != NOFD)
-	    close(Fd), Fd = NOFD;
-	TwErrno = TW_ECANT_CONN;
-	return FALSE;
+	if (fd != NOFD)
+	    close(fd);
+	CommonErrno = TW_ECANT_CONN;
+	return (tw_d)0;
+    }
+
+    if ((TwD = (tw_d)TwAllocMem(sizeof(struct s_tw_d)))) {
+	TwWriteMem(TwD, 0, sizeof(struct s_tw_d));
+	Fd = fd;
+    } else {
+	CommonErrno = TW_ENO_MEM;
+	return (tw_d)0;
     }
     
     fcntl(Fd, F_SETFD, FD_CLOEXEC);
     fcntl(Fd, F_SETFL, O_NONBLOCK);
     
-    if (TwinMagicNumbers() && TwinMagicChallenge()) {
-	/* reset all Tw* function ids */
-	/* HACK: we exploit the fact that NOID == 0xFFFFFFFF with all bytes equal */
-	memset(&id_Tw, (int)(byte)NOID, sizeof(id_Tw));
-	
+    if (MagicNumbers(TwD) && MagicChallenge(TwD)) {
 	if (gzip)
-	    (void)TwEnableGzip();
-	return TRUE;
+	    (void)Tw_EnableGzip(TwD);
+	return TwD;
     }
-    TwDoPanic();
-    return FALSE;
+    CommonErrno = Errno;
+    Panic(TwD);
+    TwFreeMem(TwD);
+    return (tw_d)0;
 }
 
-void TwClose(void) {
-    uldat len;
+void Tw_Close(tw_d TwD) {
+    byte *q;
+    int i;
     
     if (Fd != NOFD) {
-	TwSync();
+	Tw_Sync(TwD);
 
-	(void)GetQueue(QREAD, &len);
-	DeQueue(QREAD, len);
-
-	(void)GetQueue(QWRITE, &len);
-	DeQueue(QWRITE, len);
-
-	FD_CLR(Fd, &fset);
 	close(Fd);
-	Fd = NOFD;
     }
-    TwPanicFlag = FALSE;
+    for (i = 0; i < QMAX; i++) {
+	if ((q = Queue[i]))
+	    TwFreeMem(q);
+    }
+    CommonErrno = 0;
+    /*PanicFlag = FALSE;*/
+    TwFreeMem(TwD);
 }
+
 
 /*
  * TwAttachGetReply() returns 0 for failure, 1 for success,
  * else message string (len) bytes long.
  */
-byte *TwAttachGetReply(uldat *len) {
+byte *Tw_AttachGetReply(tw_d TwD, uldat *len) {
     uldat chunk;
     byte *answ, *nul;
     
     if (Fd != NOFD) {
-	answ = GetQueue(QREAD, &chunk);
+	answ = GetQueue(TwD, QREAD, &chunk);
 	if (!chunk) {
-	    (void)TryRead(TRUE);
-	    answ = GetQueue(QREAD, &chunk);
+	    (void)TryRead(TwD, TRUE);
+	    answ = GetQueue(TwD, QREAD, &chunk);
 	}
 	if (chunk) {
 	    if ((nul = memchr(answ, '\0', chunk))) {
 		if (nul == answ && nul + 1 < answ + chunk) {
-		    DeQueue(QREAD, 2);
-		    return (byte *)!!nul[1];
+		    DeQueue(TwD, QREAD, 2);
+		    return (byte *)(size_t)nul[1];
 		}
 		chunk = nul - answ;
 	    }
-	    DeQueue(QREAD, chunk);
+	    DeQueue(TwD, QREAD, chunk);
 	    *len = chunk;
 	    return answ;
 	}
@@ -618,7 +676,17 @@ byte *TwAttachGetReply(uldat *len) {
     return (byte *)-1;
 }
 
-byte *TwStrError(uldat e) {
+void Tw_AttachConfirm(tw_d TwD) {
+    if (Fd != NOFD) {
+	write(Fd, "\1", 1);
+    }
+}
+
+uldat Tw_Errno(tw_d TwD) {
+    return TwD ? Errno : CommonErrno;
+}
+
+byte *Tw_StrError(tw_d TwD, uldat e) {
     switch (e) {
       case 0:
 	return "success";
@@ -632,6 +700,8 @@ byte *TwStrError(uldat e) {
 	return "already connected";
       case TW_ENO_DISPLAY:
 	return "TWDISPLAY is not set";
+      case TW_EBAD_DISPLAY:
+	return "badly formed TWDISPLAY";
       case TW_ECANT_CONN:
 	return "failed to connect";
       case TW_ENO_MEM:
@@ -650,12 +720,17 @@ byte *TwStrError(uldat e) {
 	return "got invalid data from server, gzip format violated";
       case TW_EINTERNAL_GZIP:
 	return "internal gzip error, panic!";
+      case TW_ENO_HOST:
+	return "unknown host in TWDISPLAY";
+      case TW_EBAD_FUNCTION:
+	return "function is not a possible server function";
       default:
 	return "unknown error";
     }
 }
 
-int TwConnectionFd(void) {
+
+int Tw_ConnectionFd(tw_d TwD) {
     return Fd;
 }
 
@@ -687,20 +762,20 @@ int TwConnectionFd(void) {
  * so that it sends something to the server and waits for the server
  * to send the return value.
  */
-tmsg TwPeekMsg(void) {
+tmsg Tw_PeekMsg(tw_d TwD) {
     tmsg Msg;
     uldat len;
     
     if (Fd == NOFD)
 	return (tmsg)0;
     
-    Msg = (tmsg)GetQueue(QMSG, &len);
+    Msg = (tmsg)GetQueue(TwD, QMSG, &len);
     
     if (!len) {
-	TwFlush();
-	if (TryRead(FALSE)) {
-	    ParseReplies();
-	    Msg = (tmsg)GetQueue(QMSG, &len);
+	Tw_Flush(TwD);
+	if (TryRead(TwD, FALSE)) {
+	    ParseReplies(TwD);
+	    Msg = (tmsg)GetQueue(TwD, QMSG, &len);
 	}
     }
     if (len)
@@ -708,33 +783,33 @@ tmsg TwPeekMsg(void) {
     return (tmsg)0;
 }
 
-tmsg TwReadMsg(byte Wait) {
+tmsg Tw_ReadMsg(tw_d TwD, byte Wait) {
     tmsg Msg;
     uldat len;
 
     if (Fd == NOFD)
 	return (tmsg)0;
     
-    Msg = (tmsg)GetQueue(QMSG, &len);
+    Msg = (tmsg)GetQueue(TwD, QMSG, &len);
     
     if (!len) {
-	TwFlush();
+	Tw_Flush(TwD);
 	do {
-	    if (TryRead(Wait)) {
-		ParseReplies();
-		Msg = (tmsg)GetQueue(QMSG, &len);
+	    if (TryRead(TwD, Wait)) {
+		ParseReplies(TwD);
+		Msg = (tmsg)GetQueue(TwD, QMSG, &len);
 	    }		
 	} while (Wait && Fd != NOFD && !len);
     }
     
     if (Fd != NOFD && len) {
-	DeQueue(QMSG, Msg->Len);
+	DeQueue(TwD, QMSG, Msg->Len);
 	return Msg;
     }
     return (tmsg)0;
 }
-    
-static void Send(uldat idFN) {
+
+static void Send(tw_d TwD, uldat idFN) {
     if (++RequestN == msg_magic)
 	++RequestN;
     r[0] = s - (byte *)(r+1);
@@ -770,9 +845,9 @@ static void Send(uldat idFN) {
 #define D(n,arg,f)	DECL##f(n,arg)
 
 #define RETv(ret,f0)	return;
-#define RET_(ret,f0)	TwDrain(); return OkLastReply() ? *(t(ret,f0) *)&LastReply->Data : (t(ret,f0))NOID;
+#define RET_(ret,f0)	Drain(TwD); return OkLastReply() ? *(t(ret,f0) *)&LastReply->Data : (t(ret,f0))NOID;
 #define RETx(ret,f0)	RET_(ret,f0)
-#define RET(functname,ret,f0)	Send(id_Tw.id_Tw##functname); RET##f0(ret,f0)
+#define RET(functname,ret,f0)	Send(TwD, id_Tw.id_Tw_##functname); RET##f0(ret,f0)
 
 #define PARSE_(n,arg,len,pass)	if (WQLeft(sizeof(arg))) { \
 				    Push(s,arg,A(n)); \
@@ -791,24 +866,24 @@ static void Send(uldat idFN) {
 #define FAILv(ret)		return;
 #define FAIL_(ret)		return (ret)0;
 #define FAILx(ret)		return NOID;
-#define FAIL(ret,f0)		DoFail(); FAIL##f0(ret)
+#define FAIL(ret,f0)		Fail(TwD); FAIL##f0(ret)
 
-#define NAME(ret,f0,funct,name)	t(ret,f0) Tw##funct##name
+#define NAME(ret,f0,funct,name) t(ret,f0) Tw_##funct##name
 
-#define SELF(functname,pass)	if (id_Tw.id_Tw##functname == NOID) \
-				    id_Tw.id_Tw##functname = TwFindFunction(TwLenStr(#functname), #functname); \
-				if (id_Tw.id_Tw##functname != NOID) { \
-				    if (InitRS()) { pass } \
+#define SELF(functname,pass)	if (id_Tw.id_Tw_##functname == NOID) \
+				    id_Tw.id_Tw_##functname = Tw_FindFunction(TwD, TwLenStr(#functname), #functname); \
+				if (id_Tw.id_Tw_##functname != NOID) { \
+				    if (InitRS(TwD)) { pass } \
 				} else { \
-				    TwErrno = TW_ENO_FUNCTION; \
-				    TwDoPanic(); \
+				    Errno = TW_ENO_FUNCTION; \
+				    Panic(TwD); \
 				}
 			    
-#define NOSELF(functname, pass)	id_Tw.id_Tw##functname = FIND_MAGIC; if (InitRS()) { pass }
+#define NOSELF(functname, pass)	id_Tw.id_Tw_##functname = FIND_MAGIC; if (InitRS(TwD)) { pass }
 
 
 #define PROTO0(ret,f0, funct,name,fn) \
-NAME(ret,f0,funct,name) (void) \
+NAME(ret,f0,funct,name) (tw_d TwD) \
 { \
   SELF(funct##name, \
   RET(funct##name,ret,f0)) \
@@ -817,8 +892,9 @@ NAME(ret,f0,funct,name) (void) \
 
 #define PROTO0Abs	PROTO0
 
+
 #define PROTO1(ret,f0, funct,name,fn, arg1,f1) \
-NAME(ret,f0,funct,name) (a(1,arg1,f1)) \
+NAME(ret,f0,funct,name) (tw_d TwD, a(1,arg1,f1)) \
 { \
   D(1,arg1,f1) \
   SELF(funct##name, \
@@ -830,7 +906,8 @@ NAME(ret,f0,funct,name) (a(1,arg1,f1)) \
 #define PROTO1Abs PROTO1
 
 #define PROTO2(ret,f0, funct,name,fn, arg1,f1, arg2,f2) \
-NAME(ret,f0,funct,name) (a(1,arg1,f1), a(2,arg2,f2)) \
+NAME(ret,f0,funct,name) (tw_d TwD, \
+			 a(1,arg1,f1), a(2,arg2,f2)) \
 { \
   D(1,arg1,f1) D(2,arg2,f2) \
   SELF(funct##name, \
@@ -842,7 +919,8 @@ NAME(ret,f0,funct,name) (a(1,arg1,f1), a(2,arg2,f2)) \
 #define PROTO2Abs	PROTO2
 
 #define PROTO2FindFunction(ret,f0, funct,name,fn, arg1,f1, arg2,f2) \
-NAME(ret,f0,funct,name) (a(1,arg1,f1), a(2,arg2,f2)) \
+NAME(ret,f0,funct,name) (tw_d TwD, \
+			 a(1,arg1,f1), a(2,arg2,f2)) \
 { \
   D(1,arg1,f1) D(2,arg2,f2) \
   NOSELF(funct##name, \
@@ -851,8 +929,10 @@ NAME(ret,f0,funct,name) (a(1,arg1,f1), a(2,arg2,f2)) \
   FAIL(ret,f0) \
 }
 
+
 #define PROTO3(ret,f0, funct,name,fn, arg1,f1, arg2,f2, arg3,f3) \
-NAME(ret,f0,funct,name) (a(1,arg1,f1), a(2,arg2,f2), a(3,arg3,f3)) \
+NAME(ret,f0,funct,name) (tw_d TwD, \
+			 a(1,arg1,f1), a(2,arg2,f2), a(3,arg3,f3)) \
 { \
   D(1,arg1,f1) D(2,arg2,f2) D(3,arg3,f3) \
   SELF(funct##name, \
@@ -860,11 +940,12 @@ NAME(ret,f0,funct,name) (a(1,arg1,f1), a(2,arg2,f2), a(3,arg3,f3)) \
   RET(funct##name,ret,f0))))) \
   FAIL(ret,f0) \
 }
-
+    
 #define PROTO3Abs	PROTO3
 
 #define PROTO4(ret,f0, funct,name,fn, arg1,f1, arg2,f2, arg3,f3, arg4,f4) \
-NAME(ret,f0,funct,name) (a(1,arg1,f1), a(2,arg2,f2), a(3,arg3,f3), a(4,arg4,f4)) \
+NAME(ret,f0,funct,name) (tw_d TwD, \
+			 a(1,arg1,f1), a(2,arg2,f2), a(3,arg3,f3), a(4,arg4,f4)) \
 { \
   D(1,arg1,f1) D(2,arg2,f2) D(3,arg3,f3) D(4,arg4,f4) \
   SELF(funct##name, \
@@ -874,7 +955,8 @@ NAME(ret,f0,funct,name) (a(1,arg1,f1), a(2,arg2,f2), a(3,arg3,f3), a(4,arg4,f4))
 }
 
 #define PROTO5(ret,f0, funct,name,fn, arg1,f1, arg2,f2, arg3,f3, arg4,f4, arg5,f5) \
-NAME(ret,f0,funct,name) (a(1,arg1,f1), a(2,arg2,f2), a(3,arg3,f3), a(4,arg4,f4), a(5,arg5,f5)) \
+NAME(ret,f0,funct,name) (tw_d TwD, \
+			 a(1,arg1,f1), a(2,arg2,f2), a(3,arg3,f3), a(4,arg4,f4), a(5,arg5,f5)) \
 { \
   D(1,arg1,f1) D(2,arg2,f2) D(3,arg3,f3) D(4,arg4,f4) D(5,arg5,f5) \
   SELF(funct##name, \
@@ -887,7 +969,8 @@ NAME(ret,f0,funct,name) (a(1,arg1,f1), a(2,arg2,f2), a(3,arg3,f3), a(4,arg4,f4),
 
 #define PROTO6(ret0,f0, funct,name,fn, arg1,f1, arg2,f2, arg3,f3, arg4,f4, arg5,f5, \
 	arg6,f6) \
-NAME(ret,f0,funct,name) (a(1,arg1,f1), a(2,arg2,f2), a(3,arg3,f3), a(4,arg4,f4), a(5,arg5,f5),\
+NAME(ret,f0,funct,name) (tw_d TwD, \
+			 a(1,arg1,f1), a(2,arg2,f2), a(3,arg3,f3), a(4,arg4,f4), a(5,arg5,f5),\
 			 a(6,arg6,f6)) \
 { \
   D(1,arg1,f1) D(2,arg2,f2) D(3,arg3,f3) D(4,arg4,f4) D(5,arg5,f5) \
@@ -901,7 +984,8 @@ NAME(ret,f0,funct,name) (a(1,arg1,f1), a(2,arg2,f2), a(3,arg3,f3), a(4,arg4,f4),
 
 #define PROTO7(ret0,f0, funct,name,fn, arg1,f1, arg2,f2, arg3,f3, arg4,f4, arg5,f5, \
 	arg6,f6, arg7,f7) \
-NAME(ret,f0,funct,name) (a(1,arg1,f1), a(2,arg2,f2), a(3,arg3,f3), a(4,arg4,f4), a(5,arg5,f5),\
+NAME(ret,f0,funct,name) (tw_d TwD, \
+			 a(1,arg1,f1), a(2,arg2,f2), a(3,arg3,f3), a(4,arg4,f4), a(5,arg5,f5),\
 			 a(6,arg6,f6), a(7,arg7,f7)) \
 { \
   D(1,arg1,f1) D(2,arg2,f2) D(3,arg3,f3) D(4,arg4,f4) D(5,arg5,f5) \
@@ -912,10 +996,12 @@ NAME(ret,f0,funct,name) (a(1,arg1,f1), a(2,arg2,f2), a(3,arg3,f3), a(4,arg4,f4),
   RET(funct##name,ret,f0))))))))) \
   FAIL(ret,f0) \
 }
+    
 
 #define PROTO8(ret0,f0, funct,name,fn, arg1,f1, arg2,f2, arg3,f3, arg4,f4, arg5,f5, \
 	arg6,f6, arg7,f7, arg8,f8) \
-NAME(ret,f0,funct,name) (a(1,arg1,f1), a(2,arg2,f2), a(3,arg3,f3), a(4,arg4,f4), a(5,arg5,f5),\
+NAME(ret,f0,funct,name) (tw_d TwD, \
+			 a(1,arg1,f1), a(2,arg2,f2), a(3,arg3,f3), a(4,arg4,f4), a(5,arg5,f5),\
 			 a(6,arg6,f6), a(7,arg7,f7), a(8,arg8,f8)) \
 { \
   D(1,arg1,f1) D(2,arg2,f2) D(3,arg3,f3) D(4,arg4,f4) D(5,arg5,f5) \
@@ -929,7 +1015,8 @@ NAME(ret,f0,funct,name) (a(1,arg1,f1), a(2,arg2,f2), a(3,arg3,f3), a(4,arg4,f4),
 
 #define PROTO11(ret0,f0, funct,name,fn, arg1 ,f1 , arg2 ,f2 , arg3 ,f3 , arg4 ,f4 , arg5 ,f5 , \
        arg6 ,f6 , arg7 ,f7 , arg8 ,f8 , arg9 ,f9 , arg10,f10, arg11,f11) \
-NAME(ret,f0,funct,name) (a(1 ,arg1 ,f1 ), a(2 ,arg2 ,f2 ), a(3 ,arg3 ,f3 ), a(4 ,arg4 ,f4 ), \
+NAME(ret,f0,funct,name) (tw_d TwD, \
+			 a(1 ,arg1 ,f1 ), a(2 ,arg2 ,f2 ), a(3 ,arg3 ,f3 ), a(4 ,arg4 ,f4 ), \
 			 a(5 ,arg5 ,f5 ), a(6 ,arg6 ,f6 ), a(7 ,arg7 ,f7 ), a(8 ,arg8 ,f8 ), \
 			 a(9 ,arg9 ,f9 ), a(10,arg10,f10), a(11,arg11,f11)) \
 { \
@@ -949,7 +1036,8 @@ NAME(ret,f0,funct,name) (a(1 ,arg1 ,f1 ), a(2 ,arg2 ,f2 ), a(3 ,arg3 ,f3 ), a(4 
 #define PROTO18(ret0,f0, funct,name,fn, arg1 ,f1 , arg2 ,f2 , arg3 ,f3 , arg4 ,f4 , arg5 ,f5 , \
        arg6 ,f6 , arg7 ,f7 , arg8 ,f8 , arg9 ,f9 , arg10,f10, arg11,f11, arg12,f12, arg13,f13, \
        arg14,f14, arg15,f15, arg16,f16, arg17,f17, arg18,f18) \
-NAME(ret,f0,funct,name) (a(1 ,arg1 ,f1 ), a(2 ,arg2 ,f2 ), a(3 ,arg3 ,f3 ), a(4 ,arg4 ,f4 ), \
+NAME(ret,f0,funct,name) (tw_d TwD, \
+			 a(1 ,arg1 ,f1 ), a(2 ,arg2 ,f2 ), a(3 ,arg3 ,f3 ), a(4 ,arg4 ,f4 ), \
 			 a(5 ,arg5 ,f5 ), a(6 ,arg6 ,f6 ), a(7 ,arg7 ,f7 ), a(8 ,arg8 ,f8 ), \
 			 a(9 ,arg9 ,f9 ), a(10,arg10,f10), a(11,arg11,f11), a(12,arg12,f12), \
 			 a(13,arg13,f13), a(14,arg14,f14), a(15,arg15,f15), a(16,arg16,f16), \
@@ -973,7 +1061,8 @@ NAME(ret,f0,funct,name) (a(1 ,arg1 ,f1 ), a(2 ,arg2 ,f2 ), a(3 ,arg3 ,f3 ), a(4 
 #define PROTO19(ret0,f0, funct,name,fn, arg1 ,f1 , arg2 ,f2 , arg3 ,f3 , arg4 ,f4 , arg5 ,f5 , \
        arg6 ,f6 , arg7 ,f7 , arg8 ,f8 , arg9 ,f9 , arg10,f10, arg11,f11, arg12,f12, arg13,f13, \
        arg14,f14, arg15,f15, arg16,f16, arg17,f17, arg18,f18, arg19,f19) \
-NAME(ret,f0,funct,name) (a(1 ,arg1 ,f1 ), a(2 ,arg2 ,f2 ), a(3 ,arg3 ,f3 ), a(4 ,arg4 ,f4 ), \
+NAME(ret,f0,funct,name) (tw_d TwD, \
+			 a(1 ,arg1 ,f1 ), a(2 ,arg2 ,f2 ), a(3 ,arg3 ,f3 ), a(4 ,arg4 ,f4 ), \
 			 a(5 ,arg5 ,f5 ), a(6 ,arg6 ,f6 ), a(7 ,arg7 ,f7 ), a(8 ,arg8 ,f8 ), \
 			 a(9 ,arg9 ,f9 ), a(10,arg10,f10), a(11,arg11,f11), a(12,arg12,f12), \
 			 a(13,arg13,f13), a(14,arg14,f14), a(15,arg15,f15), a(16,arg16,f16), \
@@ -997,7 +1086,8 @@ NAME(ret,f0,funct,name) (a(1 ,arg1 ,f1 ), a(2 ,arg2 ,f2 ), a(3 ,arg3 ,f3 ), a(4 
 #define PROTO20(ret0,f0, funct,name,fn, arg1 ,f1 , arg2 ,f2 , arg3 ,f3 , arg4 ,f4 , arg5 ,f5 , \
        arg6 ,f6 , arg7 ,f7 , arg8 ,f8 , arg9 ,f9 , arg10,f10, arg11,f11, arg12,f12, arg13,f13, \
        arg14,f14, arg15,f15, arg16,f16, arg17,f17, arg18,f18, arg19,f19, arg20,f20) \
-NAME(ret,f0,funct,name) (a(1 ,arg1 ,f1 ), a(2 ,arg2 ,f2 ), a(3 ,arg3 ,f3 ), a(4 ,arg4 ,f4 ), \
+NAME(ret,f0,funct,name) (tw_d TwD, \
+			 a(1 ,arg1 ,f1 ), a(2 ,arg2 ,f2 ), a(3 ,arg3 ,f3 ), a(4 ,arg4 ,f4 ), \
 			 a(5 ,arg5 ,f5 ), a(6 ,arg6 ,f6 ), a(7 ,arg7 ,f7 ), a(8 ,arg8 ,f8 ), \
 			 a(9 ,arg9 ,f9 ), a(10,arg10,f10), a(11,arg11,f11), a(12,arg12,f12), \
 			 a(13,arg13,f13), a(14,arg14,f14), a(15,arg15,f15), a(16,arg16,f16), \
@@ -1022,7 +1112,8 @@ NAME(ret,f0,funct,name) (a(1 ,arg1 ,f1 ), a(2 ,arg2 ,f2 ), a(3 ,arg3 ,f3 ), a(4 
        arg6 ,f6 , arg7 ,f7 , arg8 ,f8 , arg9 ,f9 , arg10,f10, arg11,f11, arg12,f12, arg13,f13, \
        arg14,f14, arg15,f15, arg16,f16, arg17,f17, arg18,f18, arg19,f19, arg20,f20, arg21,f21, \
        arg22,f22, arg23,f23, arg24,f24, arg25,f25) \
-NAME(ret,f0,funct,name) (a(1 ,arg1 ,f1 ), a(2 ,arg2 ,f2 ), a(3 ,arg3 ,f3 ), a(4 ,arg4 ,f4 ), \
+NAME(ret,f0,funct,name) (tw_d TwD, \
+			 a(1 ,arg1 ,f1 ), a(2 ,arg2 ,f2 ), a(3 ,arg3 ,f3 ), a(4 ,arg4 ,f4 ), \
 			 a(5 ,arg5 ,f5 ), a(6 ,arg6 ,f6 ), a(7 ,arg7 ,f7 ), a(8 ,arg8 ,f8 ), \
 			 a(9 ,arg9 ,f9 ), a(10,arg10,f10), a(11,arg11,f11), a(12,arg12,f12), \
 			 a(13,arg13,f13), a(14,arg14,f14), a(15,arg15,f15), a(16,arg16,f16), \
@@ -1054,12 +1145,12 @@ NAME(ret,f0,funct,name) (a(1 ,arg1 ,f1 ), a(2 ,arg2 ,f2 ), a(3 ,arg3 ,f3 ), a(4 
 
 /***********/
 
-static uldat ParseReplies(void) {
+static uldat ParseReplies(tw_d TwD) {
     uldat left, len, rlen;
     byte *t;
     reply *rt;
     
-    t = GetQueue(QREAD, &left);
+    t = GetQueue(TwD, QREAD, &left);
     len = left;
     
     while (left >= sizeof(uldat)) {
@@ -1072,7 +1163,7 @@ static uldat ParseReplies(void) {
 	    left -= rlen;
 	    if (rt->ReplyN == MSG_MAGIC)
 		/* it's a Msg */
-		AddQueue(QMSG, rt->Len += sizeof(uldat), rt);
+		AddQueue(TwD, QMSG, rt->Len += sizeof(uldat), rt);
 	    else
 		LastReply = rt;
 	} else {
@@ -1080,42 +1171,82 @@ static uldat ParseReplies(void) {
 	    break;
 	}
     }
-    DeQueue(QREAD, len - left);
+    DeQueue(TwD, QREAD, len - left);
     return len - left;
 }
 
-byte TwSync(void) {
+byte Tw_Sync(tw_d TwD) {
     uldat left;
-    return Fd != NOFD ? (GetQueue(QWRITE, &left), left) ? TwSyncSocket() : TRUE : FALSE;
+    return Fd != NOFD ? (GetQueue(TwD, QWRITE, &left), left) ? Tw_SyncSocket(TwD) : TRUE : FALSE;
 }
     
 
+typedef struct fn_list {
+    void *Fn;
+    byte *name;
+} fn_list;
 
+static fn_list Functions[] = {
+#   define EL(funct) {Tw_##funct, #funct},
+#   include "sockprotolist.h"
+#   undef EL
+    {NULL, NULL}
+};
 
+byte Tw_FindFunctions(tw_d TwD, void *F, ...) {
+    va_list L;
+    void *tryF;
+    uldat i, *id;
+    
+
+    if (F) {
+	va_start(L, F);
+	do {
+	    for (i = 0; (tryF = Functions[i].Fn) && tryF != F; i++)
+		;
+	    if (tryF == F) {
+		id = (uldat *)&TwD->id + i;
+		if (*id != NOID ||
+		    (*id = Tw_FindFunction
+		     (TwD, TwLenStr(Functions[i].name), Functions[i].name)) != NOID)
+		    
+		    continue;
+		Errno = TW_ENO_FUNCTION;
+	    } else
+		Errno = TW_EBAD_FUNCTION;
+	    va_end(L);
+	    return FALSE;
+	
+	} while ((F = va_arg(L, void *)));
+
+	va_end(L);
+    }
+    return TRUE;
+}
 
 #ifdef CONF_SOCKET_GZ
 
 /* compress data before sending */
-static uldat TwGzip(void) {
+static uldat Gzip(tw_d TwD) {
     uldat oldQWRITE = Qlen[QWRITE], delta;
     z_streamp z = zW;
     int zret = Z_OK;
     
     /* compress the queue */
     if (Qlen[QWRITE]) {
-	z->next_in = GetQueue(QWRITE, &z->avail_in);
-	z->next_out = FillQueue(QgzWRITE, &z->avail_out);
+	z->next_in = GetQueue(TwD, QWRITE, &z->avail_in);
+	z->next_out = FillQueue(TwD, QgzWRITE, &z->avail_out);
 	    
 	while (z->avail_in && zret == Z_OK) {
 	    
 	    if (z->avail_out < (delta = z->avail_in + 12)) {
-		if (Grow(QgzWRITE, delta - z->avail_out)) {
+		if (Grow(TwD, QgzWRITE, delta - z->avail_out)) {
 		    Qlen[QgzWRITE] -= delta;
-		    z->next_out = FillQueue(QgzWRITE, &z->avail_out);
+		    z->next_out = FillQueue(TwD, QgzWRITE, &z->avail_out);
 		} else {
 		    /* out of memory ! */
-		    TwErrno = TW_ENO_MEM;
-		    TwDoPanic();
+		    Errno = TW_ENO_MEM;
+		    Panic(TwD);
 		    break;
 		}
 	    }
@@ -1129,39 +1260,39 @@ static uldat TwGzip(void) {
     
     if (Fd != NOFD) {
 	/* update the uncompressed queue */
-	DeQueue(QWRITE, Qlen[QWRITE] - z->avail_in);
+	DeQueue(TwD, QWRITE, Qlen[QWRITE] - z->avail_in);
 	
 	if (zret == Z_OK)
 	    return oldQWRITE;
 	else {
-	    TwErrno = TW_EINTERNAL_GZIP;
-	    TwDoPanic();
+	    Errno = TW_EINTERNAL_GZIP;
+	    Panic(TwD);
 	}
     }
     return FALSE;
 }
 
-static uldat TwGunzip(void) {
+static uldat Gunzip(tw_d TwD) {
     uldat oldQRead = Qlen[QREAD], delta;
     int zret = Z_OK;
     z_streamp z = zR;
     
     /* uncompress the queue */
     if (Qlen[QgzREAD]) {
-	z->next_in = GetQueue(QgzREAD, &z->avail_in);
-	z->next_out = FillQueue(QREAD, &z->avail_out);
+	z->next_in = GetQueue(TwD, QgzREAD, &z->avail_in);
+	z->next_out = FillQueue(TwD, QREAD, &z->avail_out);
 	
 	while (z->avail_in && zret == Z_OK) {
 	    
 	    /* approx. guess of uncompression ratio: 1 to 5 */
 	    if (z->avail_out < (delta = 5 * z->avail_in + 12)) {
-		if (Grow(QREAD, delta - z->avail_out)) {
+		if (Grow(TwD, QREAD, delta - z->avail_out)) {
 		    Qlen[QREAD] -= delta;
-		    z->next_out = FillQueue(QREAD, &z->avail_out);
+		    z->next_out = FillQueue(TwD, QREAD, &z->avail_out);
 		} else {
 		    /* out of memory ! */
-		    TwErrno = TW_ENO_MEM;
-		    TwDoPanic();
+		    Errno = TW_ENO_MEM;
+		    Panic(TwD);
 		    break;
 		}
 	    }
@@ -1175,20 +1306,20 @@ static uldat TwGunzip(void) {
     
     if (Fd != NOFD) {
 	/* update the compressed queue */
-	DeQueue(QgzREAD, Qlen[QgzREAD] - z->avail_in);
+	DeQueue(TwD, QgzREAD, Qlen[QgzREAD] - z->avail_in);
 	
 	if (zret == Z_OK)
 	    return Qlen[QREAD] - oldQRead;
 	else {
-	    TwErrno = TW_EBAD_GZIP;
-	    TwDoPanic();
+	    Errno = TW_EBAD_GZIP;
+	    Panic(TwD);
 	}
     }
     return FALSE;
 }
 
-byte TwEnableGzip(void) {
-    if (!TwGzipFlag && TwCanCompress()) {
+byte Tw_EnableGzip(tw_d TwD) {
+    if (!GzipFlag && Tw_CanCompress(TwD)) {
 	if ((zW = TwAllocMem(sizeof(*zW))) &&
 	    (zR = TwAllocMem(sizeof(*zR)))) {
 	    
@@ -1198,8 +1329,8 @@ byte TwEnableGzip(void) {
 
 	    if (deflateInit(zW, Z_DEFAULT_COMPRESSION) == Z_OK) {
 		if (inflateInit(zR) == Z_OK) {
-		    if (TwDoCompress(TRUE))
-			return TwGzipFlag = TRUE;
+		    if (Tw_DoCompress(TwD, TRUE))
+			return GzipFlag = TRUE;
 		    inflateEnd(zR);
 		}
 		deflateEnd(zW);
@@ -1211,13 +1342,13 @@ byte TwEnableGzip(void) {
     return FALSE;
 }
 
-byte TwDisableGzip(void) {
-    if (TwGzipFlag && TwDoCompress(FALSE)) {
+byte Tw_DisableGzip(tw_d TwD) {
+    if (GzipFlag && Tw_DoCompress(TwD, FALSE)) {
 	inflateEnd(zR);
 	deflateEnd(zW);
 	TwFreeMem(zR);
 	TwFreeMem(zW);
-	TwGzipFlag = FALSE;
+	GzipFlag = FALSE;
 	return TRUE;
     }
     return FALSE;
@@ -1225,11 +1356,11 @@ byte TwDisableGzip(void) {
 
 #else /* !CONF_SOCKET_GZ */
 
-byte TwEnableGzip(void) {
+byte Tw_EnableGzip(tw_d TwD) {
     return FALSE;
 }
 
-byte TwDisableGzip(void) {
+byte Tw_DisableGzip(tw_d TwD) {
     return FALSE;
 }
 

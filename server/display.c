@@ -1,6 +1,5 @@
 /*
- *  attach.c  --  connect to a running twin and tell it to attach/detach
- *                from a given display
+ *  display.c  -- connect to a running twin and register as a display
  *
  *  Copyright (C) 2000 by Massimiliano Ghilardi
  *
@@ -19,10 +18,14 @@
 #include <signal.h>
 #include <errno.h>
 
+#include "twin.h"
+#include "hw.h"
+#include "hw_private.h"
+
 #include "libTw.h"
 
-void usage(byte *name) {
-    fprintf(stderr, "Usage: %s [-a|-d] [-v|-s] [-twin@<TWDISPLAY>] -hw=<display>[,options]\n"
+static void usage(byte *name) {
+    fprintf(stderr, "Usage: %s [-v|-s] [-twin@<TWDISPLAY>] -hw=<display>[,options]\n"
 	    "Currently known display methods: \n"
 	    "\tX[@<XDISPLAY>]\n"
 	    "\ttwin[@<TWDISPLAY>]\n"
@@ -30,35 +33,29 @@ void usage(byte *name) {
 	    "\tggi[@<ggi display>]\n", name);
 }
 
-byte gotSignalWinch;
+static display_hw *HW;
 
-void SignalWinch(int n) {
-    signal(SIGWINCH, SignalWinch);
-    gotSignalWinch = TRUE;
-}
-    
 int main(int argc, char *argv[]) {
-    byte detach = 0, redirect = 1;
+    byte redirect = 1;
     byte *dpy = NULL, *arg = NULL, *tty = ttyname(0), *name = argv[0];
-    byte ret = 0, ourtty = 0, servtty = 0;
+    byte ret = 0, ourtty = 0;
     byte *s, *buff;
     uldat chunk;
+    tmsg Msg;
     
-    if (strstr(argv[0], "detach"))
-	detach = 1;
-
     while (*++argv) {
-	if (!strcmp(*argv, "-d"))
-	    detach = 1;
-	else if (!strcmp(*argv, "-a"))
-	    detach = 0;
-	else if (!strcmp(*argv, "-v"))
+	if (!strcmp(*argv, "-v"))
 	    redirect = 1;
 	else if (!strcmp(*argv, "-s"))
 	    redirect = 0;
 	else if (!strncmp(*argv, "-twin@", 6))
 	    dpy = *argv + 6;
 	else if (!strncmp(*argv, "-hw=", 4)) {
+	    if (!strncmp(*argv+4, "display", 7)) {
+		printf("%s: argument `-hw=display' is for internal use only.\n", name);
+		usage(name);
+		return 1;
+	    }
 	    if (!strncmp(*argv+4, "tty", 3)) {
 		buff = *argv + 7;
 		s = strchr(buff, ',');
@@ -67,10 +64,9 @@ int main(int argc, char *argv[]) {
 		if (!*buff || (*buff == '@' && (!buff[1] || !strcmp(buff+1, tty))))
 		    /* attach twin to our tty */
 		    ourtty = 1;
-		else if (*buff == '@' && buff[1] == '-')
-		    /* tell twin to attach to its tty */
-		    servtty = 1;
-		
+		/*
+		 * using server tty makes no sense for twdisplay
+		 */
 		if (s) *s = ',';
 		else s = "";
 		
@@ -81,9 +77,6 @@ int main(int argc, char *argv[]) {
 		    arg = malloc(strlen(tty) + 9 + strlen(s) + (buff ? 6 + strlen(buff) : 0));
 		    
 		    sprintf(arg, "-hw=tty@%s%s%s%s", tty, (buff ? (byte *)",TERM=" : buff), buff, s);
-		} else if (servtty) {
-		    arg = malloc(8 + strlen(s));
-		    sprintf(arg, "-hw=tty%s", s);
 		} else
 		    arg = *argv;
 	    } else if ((*argv)[4])
@@ -98,24 +91,27 @@ int main(int argc, char *argv[]) {
 	}
     }
     
-    if (detach == 0 && !arg) {
+    if (!arg) {
 	usage(name);
 	return 1;
     }
-    
-    if (TwOpen(dpy) && TwCreateMsgPort(8, "Twattach", (uldat)0, (udat)0, (byte)0)) do {
-	
-	if (detach) {
-	    return !TwDetachHW(arg ? strlen(arg) : 0, arg);
-	}
 
-	TwAttachHW(arg ? strlen(arg) : 0, arg, redirect);
+    if (!(HW = AttachDisplayHW(strlen(arg), arg, 0)))
+	return 1;
+			 
+    if (TwOpen(dpy) && TwCreateMsgPort(9, "twdisplay", (uldat)0, (udat)0, (byte)0)) do {
+	byte buf[] = "-hw=display\0resize,drag,slow";
+	
+	sprintf(buf+11, "%s%s%s",
+		myHW->CanResize ? ",resize" : "",
+		myHW->CanDragArea ? ",drag" : "",
+		myHW->ExpensiveFlushVideo ? ",slow" : "");
+	
+	TwAttachHW(strlen(buf), buf, redirect);
 	TwFlush();
 	
-	signal(SIGWINCH, SignalWinch);
-	    
 	if (redirect)
-	    printf("reported messages...\n");
+	    printf("reported messages ...\n");
 	
 	for (;;) {
 	    buff = TwAttachGetReply(&chunk);
@@ -148,20 +144,37 @@ int main(int argc, char *argv[]) {
 	    int fd = TwConnectionFd();
 	    fd_set fds;
 	    FD_ZERO(&fds);
-	    
+
 	    while (!TwInPanic()) {
-		while (TwReadMsg(FALSE))
-		    ;
+		while ((Msg = TwReadMsg(FALSE)))
+		    HandleMsg(Msg);
+		
+		if (NeedHW & NEEDResizeDisplay)
+		    ResizeDisplay();
+	    
+		if (NeedHW & NEEDExportClipBoard)
+		    ExportClipBoard();
+	    
+		if (NeedHW & NEEDPanicHW)
+		    Panic();
+	    
+		HW->FlushVideo();
+		if (HW->NeedHW & NEEDFlushHW)
+		    HW->FlushHW();
+
 		FD_SET(fd, &fds);
 		select(fd+1, &fds, NULL, NULL, NULL);
 		if (gotSignalWinch)
-		    TwNeedResizeDisplay(), TwFlush(), gotSignalWinch = FALSE;
+		    
 	    }
-	} else if (redirect) {
-	    if (ret)
-		printf("... ok, twin successfully attached.\n");
-	    else
-		printf("... ach, twin failed to attach.\n");
+	} else {
+	    if (redirect) {
+		if (ret)
+		    printf("... ok, twin successfully attached.\n");
+		else
+		    printf("... ach, twin failed to attach.\n");
+	    }
+	    printf("%s: twin said we can quit... strange!\n", name);
 	}
 	return !ret;
     } while (0);

@@ -25,8 +25,8 @@ MODBINS=
 CFLAGS_dl.o=$(strip $(patsubst %,-DCONF_DESTDIR=\"%\",$(DESTDIR)))
 CFLAGS_wrapper.o=$(strip $(patsubst %,-DCONF_DESTDIR=\"%\",$(DESTDIR)))
 
-LDFLAGS_socket.so=-shared
-LDFLAGS_term.so=-shared
+LDFLAGS_socket.so=-lc -shared
+LDFLAGS_term.so=-lc -shared
 
 #
 # target
@@ -104,8 +104,10 @@ endif
 ifeq ($(CONF_HW_GGI),y)
   LDFLAGS_twin_real+=-lggi
 endif
-ifeq ($(CONF_HW_TWIN),y)
-  LDFLAGS_twin_real+=-L$(TOPDIR)/lib -lTw
+ifneq ($(CONF_SOCKET),n)
+  ifeq ($(CONF_HW_TWIN),y)
+    LDFLAGS_twin_real+=-L$(TOPDIR)/lib -lTw
+  endif
 endif
 
 

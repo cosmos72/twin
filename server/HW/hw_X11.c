@@ -1,5 +1,5 @@
 /*
- *  hw_X11.h  --  functions to let twin display on X11
+ *  hw_X11.c  --  functions to let twin display on X11
  *
  *  Copyright (C) 1999-2000 by Massimiliano Ghilardi
  *
@@ -10,19 +10,20 @@
  *
  */
 
+#include <fcntl.h>
+
 #include "twin.h"
 #include "main.h"
 #include "data.h"
 #include "remote.h"
 #include "util.h"
+#include "methods.h"
 
 #include "hw.h"
 #include "hw_private.h"
 #include "hw_dirty.h"
 
 #include "libTwkeys.h"
-
-static display_hw X11;
 
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
@@ -32,33 +33,32 @@ static display_hw X11;
 
 /* Display variables */
 
-static unsigned int xwidth, xheight;
-static int xwfont, xhfont, xupfont;
+struct x11_data {
+    unsigned int xwidth, xheight;
+    int xwfont, xhfont, xupfont;
 
-static Display *xdisplay;
-static Window  xwindow;
-static GC      xgc;
-static XGCValues xsgc;
-static int     xscreen;
-static XFontStruct *xsfont;
-static byte    xwindow_AllVisible = TRUE;
+    Display *xdisplay;
+    Window  xwindow;
+    GC      xgc;
+    XGCValues xsgc;
+    XFontStruct *xsfont;
+    byte    xwindow_AllVisible;
+    unsigned long xcol[MAXCOL+1];
+};
 
-#define L 0x55
-#define M 0xAA
-#define H 0xFF
-
-static unsigned long colpixel[MAXCOL+1];
-static byte xpalette[MAXCOL+1][3] = {
-    /* the default colour table, for VGA+ colour systems */
-    {0,0,0}, {0,0,M}, {0,M,0}, {0,M,M}, {M,0,0}, {M,0,M}, {M,M,0}, {M,M,M},
-    {L,L,L}, {L,L,H}, {L,H,L}, {L,H,H}, {H,L,L}, {H,L,H}, {H,H,L}, {H,H,H}};
-
-#undef H
-#undef M
-#undef L
-
-#define XY ((udat  *)All->gotoxybuf)
-#define TT ((uldat *)All->cursorbuf)
+#define xdata ((struct x11_data *)HW->Private)
+#define xwidth	(xdata->xwidth)
+#define xheight	(xdata->xheight)
+#define xwfont	(xdata->xwfont)
+#define xhfont	(xdata->xhfont)
+#define xupfont	(xdata->xupfont)
+#define xdisplay (xdata->xdisplay)
+#define xwindow	(xdata->xwindow)
+#define xgc	(xdata->xgc)
+#define xsgc	(xdata->xsgc)
+#define xsfont	(xdata->xsfont)
+#define xwindow_AllVisible (xdata->xwindow_AllVisible)
+#define xcol	(xdata->xcol)
 
 
 static void X11_doImportClipBoard(Window win, Atom prop, Bool Delete);
@@ -73,16 +73,12 @@ static void X11_MoveToXY(udat x, udat y) {
 }
 
 static void X11_SetCursorType(uldat CursorType) {
-    if ((CursorType & 0xF) == 0)
-	CursorType |= LINECURSOR;
-    else if ((CursorType & 0xF) > SOLIDCURSOR)
-	CursorType = (CursorType & ~(uldat)0xF) | SOLIDCURSOR;
     TT[1] = CursorType;
 }
 
 static void X11_Beep(void) {
     XBell(xdisplay, 0);
-    All->NeedHW |= NEEDFlushHW;
+    setFlush();
 }
 
 static struct {
@@ -110,13 +106,38 @@ static byte X11_RemapKeys(void) {
 		  "      ERROR: twin compiled from a bad server/hw_keys.h file"
 		  "             (data in file is not sorted). X11 support is unusable.\n"
 		  "      X11_InitHW failed: internal error.\n",
-		  errFILE);
+		  stderr);
 	    return FALSE;
 	}
     }
     return TRUE;
 }
+
+static void X11_Configure(udat resource, byte todefault, udat value) {
+    XKeyboardControl xctrl;
     
+    switch (resource) {
+      case HW_KBDAPPLIC:
+	/* TODO */
+	break;
+      case HW_ALTCURSKEYS:
+	/* TODO */
+	break;
+      case HW_BELLPITCH:
+	xctrl.bell_pitch = todefault ? -1 : value;
+	XChangeKeyboardControl(xdisplay, KBBellPitch, &xctrl);
+	setFlush();
+	break;
+      case HW_BELLDURATION:
+	xctrl.bell_duration = todefault ? -1 : value;
+	XChangeKeyboardControl(xdisplay, KBBellDuration, &xctrl);
+	setFlush();
+	break;
+      default:
+	break;
+    }
+}
+
     
 static udat X11_LookupKey(KeySym sym) {
     static udat lastTW = TW_Null;
@@ -165,7 +186,7 @@ static void X11_HandleEvent(XEvent *event) {
       case MotionNotify:
       case ButtonPress:
       case ButtonRelease:
-	if (event->type == MotionNotify && !All->MouseState->keys)
+	if (event->type == MotionNotify && !HW->MouseState.keys)
 	    break;
 	
 	x = event->xbutton.x / xwfont;
@@ -179,8 +200,8 @@ static void X11_HandleEvent(XEvent *event) {
 	if (event->type == MotionNotify) {
 	    dx = event->xbutton.x < xwfont/2 ? -1 : xwidth - event->xbutton.x <= xwfont/2 ? 1 : 0;
 	    dy = event->xbutton.y < xhfont/2 ? -1 : xheight- event->xbutton.y <= xhfont/2 ? 1 : 0;
-	    if (dx || dy || x != All->MouseState->x || y != All->MouseState->y)
-		MouseEventCommon(x, y, dx, dy, All->MouseState->keys);
+	    if (dx || dy || x != HW->MouseState.x || y != HW->MouseState.y)
+		MouseEventCommon(x, y, dx, dy, HW->MouseState.keys);
 	    break;
 	}
 	
@@ -203,10 +224,12 @@ static void X11_HandleEvent(XEvent *event) {
 	
 	break;
       case ConfigureNotify:
-	if (xwidth != event->xconfigure.width || xheight != event->xconfigure.height) {
-	    xwidth  = event->xconfigure.width;
-	    xheight = event->xconfigure.height;
-	    All->NeedHW |= NEEDResizeDisplay;
+	if (HW->X != event->xconfigure.width  / xwfont ||
+	    HW->Y != event->xconfigure.height / xhfont) {
+	    
+	    HW->X = (xwidth  = event->xconfigure.width ) / xwfont;
+	    HW->Y = (xheight = event->xconfigure.height) / xhfont;
+	    ResizeDisplayPrefer(HW);
 	}
 	break;
       case Expose:
@@ -214,6 +237,7 @@ static void X11_HandleEvent(XEvent *event) {
 	y = event->xexpose.y / xhfont;
 	dx = (event->xexpose.x + event->xexpose.width - 1) / xwfont;
 	dy = (event->xexpose.y + event->xexpose.height - 1) / xhfont;
+	/* HACK: all displays will redraw */
 	FillOldVideo(x, y, dx, dy, HWATTR(COL(WHITE,BLACK), ' '));
 	DirtyVideo(x, y, dx, dy);
 	/* must we redraw the cursor too ? */
@@ -236,22 +260,26 @@ static void X11_HandleEvent(XEvent *event) {
 	break;
     }
 }
-static void X11_KeyboardEvent(int fd, uldat slot) {
+static void X11_KeyboardEvent(int fd, display_hw *D_HW) {
     XEvent event;
+    SaveHW;
+    SetHW(D_HW);
     
     while (XPending(xdisplay) > 0) {
 	XNextEvent(xdisplay, &event);
 	X11_HandleEvent(&event);
     }
+    
+    RestoreHW;
 }
 
 static hwcol _col;
 
 #define XDRAW(col, buf, buflen) \
-    if (xsgc.foreground != colpixel[COLFG(col)]) \
-	XSetForeground(xdisplay, xgc, xsgc.foreground = colpixel[COLFG(col)]); \
-    if (xsgc.background != colpixel[COLBG(col)]) \
-	XSetBackground(xdisplay, xgc, xsgc.background = colpixel[COLBG(col)]); \
+    if (xsgc.foreground != xcol[COLFG(col)]) \
+	XSetForeground(xdisplay, xgc, xsgc.foreground = xcol[COLFG(col)]); \
+    if (xsgc.background != xcol[COLBG(col)]) \
+	XSetBackground(xdisplay, xgc, xsgc.background = xcol[COLBG(col)]); \
 	XDrawImageString(xdisplay, xwindow, xgc, xbegin, ybegin + xupfont, buf, buflen)
 
 INLINE void X11_Mogrify(dat x, dat y, uldat len) {
@@ -275,7 +303,6 @@ INLINE void X11_Mogrify(dat x, dat y, uldat len) {
 		xbegin = x * xwfont;
 		_col = col;
 	    }
-	    *oV = *V;
 	    buf[buflen++] = HWFONT(*V);
 	}
     }
@@ -309,10 +336,10 @@ static void X11_ShowCursor(dat x, dat y, uldat type) {
 	    v ^= COL(0,WHITE);
 	if ((type & 0x40) && ((COLFG(v) & WHITE) == (COLBG(v) & WHITE)))
 	    v ^= COL(WHITE,0);
-	if (xsgc.foreground != colpixel[COLFG(v)])
-	    XSetForeground(xdisplay, xgc, xsgc.foreground = colpixel[COLFG(v)]);
-	if (xsgc.background != colpixel[COLBG(v)])
-	    XSetBackground(xdisplay, xgc, xsgc.background = colpixel[COLBG(v)]);
+	if (xsgc.foreground != xcol[COLFG(v)])
+	    XSetForeground(xdisplay, xgc, xsgc.foreground = xcol[COLFG(v)]);
+	if (xsgc.background != xcol[COLBG(v)])
+	    XSetBackground(xdisplay, xgc, xsgc.background = xcol[COLBG(v)]);
 	c = HWFONT(V);
 	XDrawImageString(xdisplay, xwindow, xgc, x * xwfont, y * xhfont + xupfont, &c, 1);
     }
@@ -321,8 +348,8 @@ static void X11_ShowCursor(dat x, dat y, uldat type) {
 	i = xhfont * ((type & 0xF)-NOCURSOR) / (SOLIDCURSOR-NOCURSOR);
 	
 	/* doesn't work in paletted visuals */
-	if (xsgc.foreground != colpixel[COLFG(HWCOL(V)) ^ COLBG(HWCOL(V))])
-	    XSetForeground(xdisplay, xgc, xsgc.foreground = colpixel[COLFG(HWCOL(V)) ^ COLBG(HWCOL(V))]);
+	if (xsgc.foreground != xcol[COLFG(HWCOL(V)) ^ COLBG(HWCOL(V))])
+	    XSetForeground(xdisplay, xgc, xsgc.foreground = xcol[COLFG(HWCOL(V)) ^ COLBG(HWCOL(V))]);
 	
 	XSetFunction(xdisplay, xgc, xsgc.function = GXxor);
 	XFillRectangle(xdisplay, xwindow, xgc,
@@ -346,27 +373,25 @@ static void X11_FlushVideo(void) {
 	for (i=0; i<ScreenHeight*2; i++) {
 	    start = ChangedVideo[i>>1][i&1][0];
 	    end   = ChangedVideo[i>>1][i&1][1];
-	    ChangedVideo[i>>1][i&1][0] = -1;
 	    
 	    if (start != -1)
 		X11_Mogrify(start, i>>1, end-start+1);
 	}
-	All->NeedHW |= NEEDFlushHW;
+	setFlush();
     }
     /* then, we may have to erase the old cursor */
     if (!c && TT[0] != NOCURSOR && (TT[0] != TT[1] || XY[0] != XY[2] || XY[1] != XY[3])) {
 	X11_HideCursor(XY[0], XY[1]);
-	All->NeedHW |= NEEDFlushHW;
+	setFlush();
     }
     /* finally, redraw the cursor if */
     /* (we want a cursor and (the burst erased the cursor or the cursor changed)) */
     if (TT[1] != NOCURSOR && (c || TT[0] != TT[1] || XY[0] != XY[2] || XY[1] != XY[3])) {
 	X11_ShowCursor(XY[2], XY[3], TT[1]);
-	All->NeedHW |= NEEDFlushHW;
+	setFlush();
     }
     
-    ChangedVideoFlag = ChangedMouseFlag = FALSE;
-    ValidOldVideo = TRUE;
+    HW->ChangedMouseFlag = FALSE;
     
     TT[0] = TT[1];
     XY[0] = XY[2];
@@ -375,25 +400,38 @@ static void X11_FlushVideo(void) {
 
 static void X11_FlushHW(void) {
     XFlush(xdisplay);
-    All->NeedHW &= ~NEEDFlushHW;
+    clrFlush();
 }
 
 static void X11_DetectSize(udat *x, udat *y) {
-    *x = xwidth  / xwfont;
-    *y = xheight / xhfont;
+    *x = HW->X = xwidth  / xwfont;
+    *y = HW->Y = xheight / xhfont;
 }
 
+static void X11_CheckResize(udat *x, udat *y) {
+    /* always ok */
+}
+
+static void X11_Resize(udat x, udat y) {
+    if (x != HW->X || y != HW->Y) {
+	XResizeWindow(xdisplay, xwindow,
+		      xwidth = xwfont * (HW->X = x),
+		      xheight = xhfont * (HW->Y = y));
+	setFlush();
+    }
+}
+     
 static void X11_ExportClipBoard(void) {
-    if (!X11.PrivateClipBoard) {
+    if (!HW->PrivateClipBoard) {
 	/* we don't own the selection buffer of X server, replace it */
 	XSetSelectionOwner(xdisplay, XA_PRIMARY, xwindow, CurrentTime);
-	X11.PrivateClipBoard = (void *)xwindow;
+	HW->PrivateClipBoard = (void *)xwindow;
+	setFlush();
     }
-    All->NeedHW &= ~NEEDExportClipBoard;
 }
 
 static void X11_UnExportClipBoard(void) {
-    X11.PrivateClipBoard = (void *)0;
+    HW->PrivateClipBoard = (void *)0;
 }
 
 static void X11_SendClipBoard(XSelectionRequestEvent *rq) {
@@ -466,7 +504,7 @@ static void X11_doImportClipBoard(Window win, Atom prop, Bool Delete) {
 }
 
 static void X11_ImportClipBoard(byte Wait) {
-    if (!X11.PrivateClipBoard) {
+    if (!HW->PrivateClipBoard) {
 	/* we don't own the selection buffer of X server, ask for it */
 	if (XGetSelectionOwner(xdisplay, XA_PRIMARY) == None)
 	    X11_doImportClipBoard(DefaultRootWindow(xdisplay), XA_CUT_BUFFER0, False);
@@ -485,7 +523,7 @@ static void X11_ImportClipBoard(byte Wait) {
 }
 
 
-static byte X11_canDragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
+static byte X11_CanDragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
     return xwindow_AllVisible && (Rgt-Left+1) * (Dwn-Up+1) > 20;
 }
 
@@ -509,7 +547,7 @@ static void X11_DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat Ds
     XCopyArea(xdisplay, xwindow, xwindow, xgc,
 	      Left*xwfont, Up*xhfont, (Rgt-Left+1)*xwfont, (Dwn-Up+1)*xhfont,
 	      DstLeft*xwfont, DstUp*xhfont);
-    All->NeedHW |= NEEDFlushHW;
+    setFlush();
 }
 
 
@@ -521,20 +559,47 @@ static void X11_QuitHW(void) {
     XCloseDisplay(xdisplay);
     xdisplay = NULL;
     
-    UnRegisterRemote(All->keyboard_slot);
-    All->keyboard_slot = NOSLOT;
+    UnRegisterRemote(HW->keyboard_slot);
+    HW->keyboard_slot = NOSLOT;
+    HW->KeyboardEvent = (void *)NoOp;
     
-    X11.KeyboardEvent = (void *)NoOp;
-    
-    X11.QuitHW = NoOp;
+    HW->QuitHW = NoOp;
+
+    FreeMem(HW->Private);
 }
 
-static int X11_Die(Display *d, XErrorEvent *ev) {
+#if 0
+/* does NOT work... libX11 insists on doing exit(1) */
+static int X11_Die(Display *d) {
+    /*
+     * this is not exactly trivial:
+     * find our HW, shut it down
+     * and quit if it was the last HW.
+     * 
+     * don't rely on HW->Private only, as non-X11 displays
+     * may use it differently and have by chance the same value for it.
+     */
+    forallHW {
+	if (HW->QuitHW == X11_QuitHW && HW->Private
+	    && d == xdisplay) { /* expands to HW->Private->xdisplay */
+	    
+	    HW->NeedHW |= NEEDPanicHW, NeedHW |= NEEDPanicHW;
+	    
+	    break;
+	}
+    }
+    return 0;
+}
+#else
+static int X11_Die(Display *d) {
     Quit(0);
     return 0;
 }
+#endif
 
-display_hw *X11_InitHW(byte *arg) {
+byte X11_InitHW(void) {
+    byte *arg = HW->Name;
+    int xscreen;
     unsigned int xdepth;
     XSetWindowAttributes xattr;
     XColor xcolor;
@@ -543,9 +608,12 @@ display_hw *X11_InitHW(byte *arg) {
     int i;
     byte *opt = NULL, *fontname = NULL, name[] = "twin :??? on X";
     
-    if (arg) {
+    if (arg && HW->NameLen > 4) {
+	
+	arg += 4; /* skip "-hw=" */
+	
 	if (*arg++ != 'X')
-	    return NULL; /* user said "use <arg> as display, not X" */
+	    return FALSE; /* user said "use <arg> as display, not X" */
 	
 	if (*arg == '1' && arg[1] == '1')
 	    arg += 2; /* `X11' is same as `X' */
@@ -559,15 +627,22 @@ display_hw *X11_InitHW(byte *arg) {
 	if (*arg == '@')
 	    arg++; /* use specified X DISPLAY */
 	else if (*arg) {
-	    if (opt) *opt = ',';
-	    return NULL;
+	    if (opt)
+		*opt = ',';
+	    return FALSE;
 	} else
 	    arg = NULL;
+    } else
+	arg = NULL;
+    
+    if (!(HW->Private = (struct x11_data *)AllocMem(sizeof(struct x11_data)))) {
+	fprintf(stderr, "      X11_InitHW(): Out of memory!\n");
+	return FALSE;
     }
     
     if ((xdisplay = XOpenDisplay(arg))) do {
 	
-	(void)XSetErrorHandler(X11_Die);
+	(void)XSetIOErrorHandler(X11_Die);
 	
 	if (!X11_RemapKeys())
 	    break;
@@ -576,17 +651,17 @@ display_hw *X11_InitHW(byte *arg) {
 	xdepth  = DefaultDepth(xdisplay, xscreen);
 	
 	for (i = 0; i <= MAXCOL; i++) {
-	    xcolor.red   = 257 * xpalette[i][0];
-	    xcolor.green = 257 * xpalette[i][1];
-	    xcolor.blue  = 257 * xpalette[i][2];
+	    xcolor.red   = 257 * (udat)All->Palette[i].Red;
+	    xcolor.green = 257 * (udat)All->Palette[i].Green;
+	    xcolor.blue  = 257 * (udat)All->Palette[i].Blue;
 	    if (!XAllocColor(xdisplay, DefaultColormap(xdisplay, xscreen), &xcolor))
 		break;
-	    colpixel[i] = xcolor.pixel;
+	    xcol[i] = xcolor.pixel;
 	}
 	if (i <= MAXCOL)
 	    break;
 	
-	xattr.background_pixel = colpixel[0];
+	xattr.background_pixel = xcol[0];
 	xattr.event_mask = ExposureMask | VisibilityChangeMask |
 	    StructureNotifyMask | SubstructureNotifyMask |
 	    KeyPressMask | ButtonPressMask | ButtonReleaseMask | PointerMotionMask;
@@ -603,7 +678,7 @@ display_hw *X11_InitHW(byte *arg) {
 	    (xgc = XCreateGC(xdisplay, xwindow, 0, NULL)) &&
 	    (xhints = XAllocSizeHints())) {
 	    
-	    xsgc.foreground = xsgc.background = colpixel[0];
+	    xsgc.foreground = xsgc.background = xcol[0];
 	    xsgc.graphics_exposures = False;
 	    XChangeGC(xdisplay, xgc, GCForeground|GCBackground|GCGraphicsExposures, &xsgc);
 	    XSetFont(xdisplay, xgc, xsfont->fid);
@@ -623,62 +698,75 @@ display_hw *X11_InitHW(byte *arg) {
 		XNextEvent(xdisplay, &event);
 	    } while (event.type != MapNotify);
 
+	    HW->mouse_slot = NOSLOT;
+	    HW->keyboard_slot = RegisterRemote(i = XConnectionNumber(xdisplay), HW,
+					       (void (*)(int fd, void *))X11_KeyboardEvent);
+	    if (HW->keyboard_slot == NOSLOT)
+		break;
+	    fcntl(i, F_SETFD, FD_CLOEXEC);
+	    
+	    HW->FlushVideo = X11_FlushVideo;
+	    HW->FlushHW = X11_FlushHW;
 
-	    All->keyboard_slot = RegisterRemote(XConnectionNumber(xdisplay), X11_KeyboardEvent);
-	    if (All->keyboard_slot == NOSLOT)
-		break;	    
-	    X11.KeyboardEvent = X11_KeyboardEvent;
-	    X11.QuitKeyboard  = NoOp;
-	    
+	    HW->KeyboardEvent = X11_KeyboardEvent;
+	    HW->MouseEvent = (void *)NoOp; /* mouse events handled by X11_KeyboardEvent */
 
-	    X11.SoftMouse = FALSE; /* mouse pointer handled by X11 server */
-	    X11.MouseEvent = (void *)NoOp; /* mouse events handled by X11_KeyboardEvent */
-	    X11.ShowMouse = NoOp;
-	    X11.HideMouse = NoOp;
-	    X11.QuitMouse = NoOp;
-	    
-	    All->mouse_slot = NOSLOT;
-		
-	    X11.canDragArea = X11_canDragArea;
-	    X11.DragArea    = X11_DragArea;
+	    HW->MoveToXY = X11_MoveToXY;
+	    HW->SetCursorType = X11_SetCursorType;
+	    XY[0] = XY[1] = XY[2] = XY[3] = 0;
+	    TT[0] = TT[1] = NOCURSOR;
 
-	    X11.DetectSize  = X11_DetectSize;
-	    
-	    X11.ExportClipBoard = X11_ExportClipBoard;
-	    X11.ImportClipBoard = X11_ImportClipBoard;
-	    X11.PrivateClipBoard = (void *)0;
+	    HW->ShowMouse = NoOp;
+	    HW->HideMouse = NoOp;
 
-	    X11.FlushVideo = X11_FlushVideo;
-	    X11.QuitVideo = NoOp;
-	    X11.FlushHW = X11_FlushHW;
+	    HW->DetectSize  = X11_DetectSize;
+	    HW->CheckResize = X11_CheckResize;
+	    HW->Resize      = X11_Resize;
+	    
+	    HW->ExportClipBoard = X11_ExportClipBoard;
+	    HW->ImportClipBoard = X11_ImportClipBoard;
+	    HW->PrivateClipBoard = NULL;
 
-	    X11.NeedOldVideo = TRUE;
-	    X11.merge_Threshold = 0;
-	    X11.ExpensiveFlushVideo = TRUE;
+	    HW->CanDragArea = X11_CanDragArea;
+	    HW->DragArea    = X11_DragArea;
+
+	    HW->Beep = X11_Beep;
+	    HW->Configure = X11_Configure;
+	    HW->SetPalette = (void *)NoOp;
+	    HW->ResetPalette = NoOp;
+
+	    HW->QuitHW = X11_QuitHW;
+	    HW->QuitKeyboard  = NoOp;
+	    HW->QuitMouse = NoOp;
+	    HW->QuitVideo = NoOp;
 	    
-	    X11.MoveToXY = X11_MoveToXY;	       XY[0] = XY[1] = XY[2] = XY[3] = 0;
-	    X11.SetCursorType = X11_SetCursorType; TT[0] = TT[1] = NOCURSOR;
-	    X11.Beep = X11_Beep;
+	    HW->DisplayIsCTTY = FALSE;
+	    HW->SoftMouse = FALSE; /* mouse pointer handled by X11 server */
 	    
-	    X11.QuitHW = X11_QuitHW;
+	    HW->NeedOldVideo = TRUE;
+	    HW->ExpensiveFlushVideo = TRUE;
+	    HW->NeedHW = 0;
+	    HW->merge_Threshold = 0;
 	    
-	    InitTtysave();
-	    
-	    return &X11;
+	    if (opt) *opt = ',';
+
+	    return TRUE;
 	}
     } while (0); else {
 	if (arg || (arg = getenv("DISPLAY")))
-	    fprintf(errFILE, "      X11_InitHW() failed to open display %s\n", arg);
+	    fprintf(stderr, "      X11_InitHW() failed to open display %s\n", arg);
 	else
-	    fprintf(errFILE, "      X11_InitHW() failed: DISPLAY is not set\n");
+	    fprintf(stderr, "      X11_InitHW() failed: DISPLAY is not set\n");
     }
 
     if (opt) *opt = ',';
 	
     if (xdisplay)
 	X11_QuitHW();
+
+    FreeMem(HW->Private);
     
-    return NULL;
+    return FALSE;
 }
 
 #ifdef MODULE

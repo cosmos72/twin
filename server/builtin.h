@@ -3,6 +3,7 @@
 
 byte InitBuiltin(void);
 void UpdateListWin(void);
+void UpdateDisplayWin(void);
 
 extern menu *Builtin_Menu;
 extern window *ListWin;

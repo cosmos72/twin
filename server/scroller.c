@@ -74,10 +74,12 @@ static void ScrollerH(msgport *MsgPort) {
 	    Delete(Msg);
     }
 
-    if (saveMsg == Dont_Scroll) {
+    if (saveMsg == Dont_Scroll || !All->MouseHW) {
 	ScrollerDeactivate();
 	return;
     }
+    
+    Mouse = &All->MouseHW->MouseState;
 
     if ((FocusWindow=All->FirstScreen->FocusWindow)) {
 	Attrib=FocusWindow->Attrib;
@@ -86,7 +88,7 @@ static void ScrollerH(msgport *MsgPort) {
     } else
 	FlagWinScroll = FALSE;
     
-    FlagDeskScroll=!(All->FullShiftFlags & FULL_SCROLL_LOCK_ACTIVE) && All->MouseState->keys;
+    FlagDeskScroll=!(All->FullShiftFlags & FULL_SCROLL_LOCK_ACTIVE) && Mouse->keys;
 
     FlagsMove=All->FlagsMove;
     if (FlagsMove & GLMOVE_1stSCREEN)
@@ -109,7 +111,6 @@ static void ScrollerH(msgport *MsgPort) {
     }
     
     
-    Mouse=All->MouseState;
     Mouse_delta_x=-Mouse->delta_x;
     Mouse_delta_y=-Mouse->delta_y;
     FlagDeskScroll &= Mouse_delta_x || Mouse_delta_y;

@@ -205,16 +205,20 @@ typedef struct display display;
 typedef struct fn_display fn_display;
 typedef struct module module;
 typedef struct fn_module fn_module;
+typedef struct display_hw display_hw;
+typedef struct fn_display_hw fn_display_hw;
 typedef struct fn fn;
 typedef struct setup setup;
 typedef struct all all;
+
+typedef void (*fn_hook)(window *);
 
 
 typedef struct fdlist fdlist;	/* for compressed sockets, two fdlist's are used: */
 struct fdlist {			/* the uncompressed one has                       */
     int Fd;                     /* Fd == GZFD and pairSlot == the compressed one; */
     uldat pairSlot;		/* the compressed has                             */
-    window *Window;		/* Fd == real fd and pairSlot == the uncompressed;*/
+    void *HandlerData;		/* Fd == real fd and pairSlot == the uncompressed;*/
     void (*HandlerIO)(int Fd, size_t any);
     msgport *MsgPort;		/* other sockets just have                        */
     byte *WQueue;		/* Fd == real fd and pairSlot == NOSLOT;          */
@@ -226,7 +230,8 @@ struct fdlist {			/* the uncompressed one has                       */
 					    * remove itself if needed (e.g. call-once routines)
 					    */
     byte (*PrivateFlush)(uldat Slot); /* private flush (compression) routine */
-    void *Private;		/* used by (un)compression routines to hold private data */
+    void *PrivateData;		/* used by (un)compression routines to hold private data */
+    byte extern_couldntwrite;
 };
 
 struct obj {
@@ -399,6 +404,7 @@ typedef enum ttystate {
 #define TTY_UPDATECURSOR ((udat)0x1000)
 #define TTY_REPORTMOUSE	 ((udat)0x2000)
 #define TTY_REPORTMOUSE2 ((udat)0x4000)
+#define TTY_NEEDREFOCUS	((udat)0x8000)
 
 #define EFF_INTENSITY	((udat)0x0001)
 #define EFF_HALFINTENS	((udat)0x0002)
@@ -449,8 +455,9 @@ struct window {
     udat LenTitle;
     byte *Title, *ColTitle;
     ttydata *TtyData;
-    void (*ShutDownHook)(window *);
-    void (*TransientHook)(window *);
+    fn_hook ShutDownHook;
+    fn_hook Hook, *WhereHook;
+    fn_hook MapUnMapHook;
     msg *MapQueueMsg;
     remotedata RemoteData;
     uldat XLogic, YLogic, CurX, CurY;
@@ -501,6 +508,8 @@ struct fn_window {
     row *(*SearchRowCode)(window *, udat Code, uldat *NumRow);
     gadget *(*SearchGadget)(window *, dat i, dat j);
     gadget *(*SearchGadgetCode)(window *, udat Code);
+    byte (*InstallHook)(window *, fn_hook, fn_hook *Where);
+    void (*RemoveHook)(window *, fn_hook, fn_hook *Where);
 };
 
 /* Attrib: */
@@ -511,7 +520,7 @@ struct fn_window {
 #define WINDOW_DRAG		((uldat)0x0010)
 #define WINDOW_RESIZE		((uldat)0x0020)
 #define WINDOW_CLOSE		((uldat)0x0040)
-#define WINDOW_TRANSIENT	((uldat)0x0080)
+#define WINDOW_HOOKED		((uldat)0x0080)
 #define WINDOW_X_BAR		((uldat)0x0100)
 #define WINDOW_Y_BAR		((uldat)0x0200)
 
@@ -633,6 +642,7 @@ struct screen {
     all *All;
     dat ScreenWidth, ScreenHeight;
     window *FirstWindow, *LastWindow, *FocusWindow, *MenuWindow;
+    fn_hook FnHookWindow; window *HookWindow;
     udat Attrib;
     dat Left; udat Up; udat YLimit;
     udat BgWidth, BgHeight;
@@ -659,6 +669,7 @@ struct fn_screen {
 #define MSG_KEY			((udat)0)
 #define MSG_MOUSE		((udat)1)
 #define MSG_MAP			((udat)2)
+#define MSG_DISPLAY		((udat)0x0FFF)
 #define MSG_WINDOW_KEY		((udat)0x1000)
 #define MSG_WINDOW_MOUSE	((udat)0x1001)
 #define MSG_WINDOW_CHANGE	((udat)0x1002)
@@ -669,10 +680,11 @@ struct fn_screen {
 /*
  * Notes about MsgType :
  *
- * 0x0000 ... 0x0FFF : Messages from Twin to the WM;
+ * 0x0000 ... 0x0FFF : Messages from Twin to the WM or another special task;
  * currently defined are:
  * MSG_KEY		use Msg->Event.EventKeyboard to get the event
  * MSG_MOUSE		use ...Event.EventMouse
+ * MSG_DISPLAY		use ...Event.EventDisplay
  *
  * 0x1000 ... 0x1FFF : Messages from the WM to a generick task
  * currently defined are:
@@ -718,6 +730,30 @@ struct event_mouse {
     dat X, Y;
 };
 
+typedef struct event_display event_display;
+struct event_display {
+    window *Window; /* not used here */
+    udat Code, Len;
+    dat X, Y;
+    byte *Data; /* [len] bytes actually */
+};
+
+#define DPY_DrawHWAttr		((udat)0)
+#define DPY_FlushHW		((udat)1)
+#define DPY_KeyboardEvent	((udat)2)
+#define DPY_MouseEvent		((udat)3)
+#define DPY_SetCursorType	((udat)4)
+#define DPY_MoveToXY		((udat)5)
+#define DPY_Resize		((udat)6)
+#define DPY_ImportClipBoard	((udat)7)
+#define DPY_ExportClipBoard	((udat)8)
+#define DPY_DragArea		((udat)9)
+#define DPY_Beep		((udat)10)
+#define DPY_Configure		((udat)11)
+#define DPY_SetPalette		((udat)12)
+#define DPY_ResetPalette	((udat)13)
+#define DPY_Helper		((udat)14)
+
 typedef struct event_window event_window;
 struct event_window {
     window *Window;
@@ -750,6 +786,7 @@ union event_any {
     event_common EventCommon;
     event_keyboard EventKeyboard;
     event_mouse EventMouse;
+    event_display EventDisplay;
     event_map EventMap;
     event_window EventWindow;
     event_gadget EventGadget;
@@ -791,6 +828,7 @@ struct msgport {
     msg *FirstMsg, *LastMsg;
     menu *FirstMenu, *LastMenu; /* that have this as MsgPort */
     mutex *FirstMutex, *LastMutex; /* that have this as MsgPort */
+    display_hw *AttachHW;	/* that was attached as told by MsgPort */
 };
 struct fn_msgport {
     uldat Magic, Size, Used;
@@ -836,7 +874,7 @@ struct module {
     fn_module *Fn;
     module *Prev, *Next; /* in the same All */
     all *All;
-    uldat NameLen;
+    uldat NameLen, Used;
     byte *Name;
     void *Handle, *Private;
 };
@@ -853,6 +891,166 @@ struct fn_module {
 
 
 
+
+struct display_hw {
+    uldat Id;
+    fn_display_hw *Fn;
+    display_hw *Prev, *Next; /* in the same All */
+    all *All;
+    uldat NameLen;
+    byte *Name;
+    module *Module;
+
+    void *Private;	/* used to store HW-specific data */
+    
+    void (*FlushVideo)(void);
+    void (*FlushHW)(void);
+
+    void (*KeyboardEvent)(int fd, display_hw *hw);
+    void (*MouseEvent)(int fd, display_hw *hw);
+    
+    void (*SetCursorType)(uldat CursorType);
+    void (*MoveToXY)(udat x, udat y);
+
+    void (*ShowMouse)(void);
+    void (*HideMouse)(void);
+
+    /* just detect size */
+    void (*DetectSize)(udat *x, udat *y);
+
+    /* check if size (x,y) is possible. if not, decrease (x,y) to the nearest possible size */
+    void (*CheckResize)(udat *x, udat *y);
+    
+    /* unconditionally resize to (x,y). it is guaranteed that CheckResize returned this (x,y) */
+    void (*Resize)(udat x, udat y);
+    
+    void (*ImportClipBoard)(byte Wait);
+    void (*ExportClipBoard)(void);
+    void *PrivateClipBoard;
+	
+    byte (*CanDragArea)(dat Xstart, dat Ystart, dat Xend, dat Yend, dat DstXstart, dat DstYstart);
+    void (*DragArea)(dat Xstart, dat Ystart, dat Xend, dat Yend, dat DstXstart, dat DstYstart);
+    /*
+     * if the display HW is capable of doing BLiTs (BLock image Transfers) under
+     * certain conditions (tipically X11's XCopyArea()), set canDragArea to a
+     * function that checks if the HW can do the BLiT with the given coordinates,
+     * and set DragArea to a function that unconditionally does the BLiT
+     * (it will very probably need to FlushVideo() first)
+     */
+
+    void (*Beep)(void);
+    void (*Configure)(udat resource, byte todefault, udat value);
+    void (*SetPalette)(udat N, udat R, udat G, udat B);
+    void (*ResetPalette)(void);
+
+    void (*QuitHW)(void);
+    void (*QuitKeyboard)(void);
+    void (*QuitMouse)(void);
+    void (*QuitVideo)(void);
+
+    byte DisplayIsCTTY;
+    /*
+     * set to TRUE if display is the controlling terminal
+     */
+
+    byte Quitted;
+    /*
+     * used internally... is set to TRUE after QuitHW() or KillSlot(attach)
+     * to avoid infinite recursion between them.
+     */
+    
+    byte SoftMouse;
+    /*
+     * set to TRUE if display HW has to manually hide/show the mouse pointer
+     */
+
+    byte ChangedMouseFlag;
+    /*
+     * set to TRUE after a mouse event that requires redrawing mouse pointer
+     */
+
+    byte NeedOldVideo;
+    /*
+     * set to TRUE if FlushVideo() is a bit expensive,
+     * and it's better to cache the actual display contents in OldVideo[]
+     * and send only what effectively changed, instead of all the dirty areas.
+     * 
+     * Note that there is no automatic updating scheme for OldVideo[]
+     * (except for HW accelerated operations - currently only DragArea())
+     * and that FlushVideo() is responsible of keeping it up to date.
+     */
+    
+    byte ExpensiveFlushVideo;
+    /*
+     * set ExpensiveFlushVideo to TRUE if FlushVideo() is SO expensive
+     * that it's better to sleep a little before flushing,
+     * hoping to receive more data in the meantime,
+     * in order to merge the flush operations.
+     */
+    
+    byte NeedHW;
+    /*
+     * various runtime flags
+     */
+    
+#if 0
+    hwattr *OldVideo; /* use an ovverride for ChangedVideo here, NOT OldVideo! */
+#endif
+
+    uldat keyboard_slot, mouse_slot;
+
+    mouse_state MouseState;
+
+    udat X, Y;
+    /*
+     * real display size, in character cells.
+     */
+    
+    dat Last_x, Last_y;
+    /*
+     * position of last mouse event
+     */
+
+    uldat merge_Threshold;
+    /*
+     * if sending many small draw commands to the HW is more expensive
+     * than sending fewer, bigger ones even considering you will also send
+     * intermediate, clean areas, set merge_Threshold to a reasonable value
+     * for merge: dirty areas less far than this will be considered as merged
+     * by Threshold_isDirtyVideo().
+     * Anyway, it's up to FlushVideo() to actually merge them.
+     * 
+     * Otherwise, set this to zero.
+     */
+    
+    uldat attach; /* slot of process that told us to attach to this display */
+    
+    byte gotoxybuf[Max2(16,4*sizeof(dat))];  /* hw-dependent data set by MoveToXY */
+    byte cursorbuf[Max2(16,2*sizeof(ldat))]; /* hw-dependent data set by SetCursorType */
+    
+};
+struct fn_display_hw {
+    uldat Magic, Size, Used;
+    display_hw *(*Create)(fn_display_hw *, uldat NameLen, byte *Name);
+    display_hw *(*Copy)(display_hw *From, display_hw *To);
+    void (*Insert)(display_hw *, all *, display_hw *Prev, display_hw *Next);
+    void (*Remove)(display_hw *);
+    void (*Delete)(display_hw *);
+    byte (*Init)(display_hw *);
+    void (*Quit)(display_hw *);
+};
+    
+/* NeedOpHW */
+#define NEEDFlushStdout		((byte)0x01)
+#define NEEDFlushHW		((byte)0x02)
+#define NEEDResizeDisplay	((byte)0x04)
+#define NEEDExportClipBoard	((byte)0x08)
+#define NEEDPanicHW		((byte)0x10)
+#define NEEDPersistentSlot	((byte)0x20)
+#define NEEDFromPreviousFlushHW	((byte)0x40)
+    
+    
+    
 #define NOMEMORY ((udat)1)
 #define DLERROR  ((udat)2)
 
@@ -874,8 +1072,9 @@ struct fn_module {
 #define msgport_magic	((uldat)0xB0981437ul)
 #define mutex_magic	((uldat)0xC0faded0ul)
 #define module_magic	((uldat)0xDb0f1278ul)
+#define display_hw_magic	((uldat)0xEdbcc609ul)
 
-#define magic_n		14 /* # of the above ones + 1 */
+#define magic_n		15 /* # of the above ones + 1 */
 
 /* in the same order as the #defines above ! */
 struct fn {
@@ -892,6 +1091,7 @@ struct fn {
     fn_msgport *f_msgport;
     fn_mutex *f_mutex;
     fn_module *f_module;
+    fn_display_hw *f_display_hw;
 };
 
 struct setup {
@@ -928,32 +1128,22 @@ struct all {
     msgport *FirstMsgPort, *LastMsgPort, *RunMsgPort;
     mutex *FirstMutex, *LastMutex;
     module *FirstModule, *LastModule;
+    display_hw *FirstDisplayHW, *LastDisplayHW, *MouseHW;
+    fn_hook FnHookDisplayHW; window *HookDisplayHW;
     menu *BuiltinMenu;
-    window *TransientWindow;
     timevalue Now;
     setup *SetUp;
     udat *GlobalKeyCodes[STATE_MAX];
     udat *GlobalMouseCodes[STATE_MAX];
     byte *Gtranslations[IBMPC_MAP];
-    byte MouseOverload, NeedHW;
-    mouse_state *MouseState;
-    uldat mouse_slot, keyboard_slot;
+    byte MouseOverload;
     byte FlagsMove;
     udat FullShiftFlags;
     uldat ClipMagic, ClipLen, ClipMax;
     byte *ClipData;
     palette *Palette;
-    byte gotoxybuf[Max2(16,4*sizeof(dat))];  /* hw-dependent data set by MoveToXY */
-    byte cursorbuf[Max2(16,2*sizeof(ldat))]; /* hw-dependent data set by SetCursorType */
     void (*AtQuit)(void);
-    uldat attach; /* slot of process that told us to attach to a display */
 };
-
-/* NeedHWOp */
-#define NEEDFlushStdout		((byte)0x01)
-#define NEEDFlushHW		((byte)0x02)
-#define NEEDResizeDisplay	((byte)0x04)
-#define NEEDExportClipBoard	((byte)0x08)
 
 /*ClipMagic*/
 #define CLIP_APPEND	((uldat)0x00000000)
@@ -1048,9 +1238,9 @@ struct all {
 #define isRELEASE(code)	((code) & ANY_ACTION_MOUSE && !isPRESS(code) && !isDRAG(code))
 
 #define isSINGLE_PRESS(code) (isPRESS(code) && ((code) == DOWN_LEFT || (code) == DOWN_MIDDLE || (code) == DOWN_RIGHT))
-#define isSINGLE_DRAG(code) (isDRAG(code) && ((code) == (DRAG_MOUSE|HOLD_LEFT) || (code) == (DRAG_MOUSE|HOLD_MIDDLE) || (code) == (DRAG_MOUSE|HOLD_RIGHT))
+#define isSINGLE_DRAG(code) (isDRAG(code) && ((code) == (DRAG_MOUSE|HOLD_LEFT) || (code) == (DRAG_MOUSE|HOLD_MIDDLE) || (code) == (DRAG_MOUSE|HOLD_RIGHT)))
 #define isSINGLE_RELEASE(code) (isRELEASE(code) && !((code) & HOLD_ANY))
-
+			     
 /*     								Nota:
  * 
  Al momento della pressione di un tasto della keyboard, sono
@@ -1271,12 +1461,26 @@ INLINE void *ReAllocMem(void *Mem, uldat Size) {
 # endif
 #endif
 
+#if 1
 
-#if 0
+# define LenStr(S) strlen(S)
+# define CmpStr(S1, S2) strcmp((S1), (S2))
+# define CopyStr(From,To) strcpy((To),(From))
+
+# define CopyMem(From, To, Size)	memcpy((To), (From), (size_t)(Size))
+# define MoveMem(From, To, Size)	memmove((To), (From), (size_t)(Size))
+# define WriteMem(Mem, Char, Size)	memset((Mem), (int)(Char), (size_t)(Size))
+# define CmpMem(m1, m2, Size)		memcmp((m1), (m2), (size_t)(Size))
+
+
+# define DropPrivileges() (setegid(getgid()), seteuid(getuid()))
+# define GetPrivileges() seteuid(0)
+
+#else
+
 uldat LenStr(byte *S);
 int   CmpStr(byte *S1, byte *S2);
 byte *CopyStr(byte *From, byte *To);
-byte *CloneStr(byte *S);
 
 void *CopyMem(void *From, void *To, uldat Size);
 void *MoveMem(void *From, void *To, uldat Size);
@@ -1285,24 +1489,10 @@ void *CmpMem(void *m1, void *m2, uldat Size);
 
 void DropPrivileges(void);
 void GetPrivileges(void);
-#endif
-
-#if 1
-# define LenStr(S) strlen(S)
-# define CmpStr(S1, S2) strcmp((S1), (S2))
-# define CopyStr(From,To) strcpy((To),(From))
-# define CloneStr(S) strdup(S)
-
-# define CopyMem(From, To, Size)	memcpy((To), (From), (size_t)(Size))
-# define MoveMem(From, To, Size)	memmove((To), (From), (size_t)(Size))
-# define WriteMem(Mem, Char, Size)	memset((Mem), (int)(Char), (size_t)(Size))
-# define CmpMem(m1, m2, Size)		memcmp((m1), (m2), (size_t)(Size))
-
-#define DropPrivileges() (setegid(getgid()), seteuid(getuid()))
-#define GetPrivileges() seteuid(0)
 
 #endif /* 0 */
 
+byte *CloneStr(byte *s);
 
 #endif /* _TWIN_H */
 

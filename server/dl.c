@@ -71,6 +71,13 @@ void DlClose(module *Module) {
 
 module *DlLoadAny(uldat len, byte *name) {
     module *Module;
+    
+    for (Module = All->FirstModule; Module; Module = Module->Next) {
+	if (len == Module->NameLen && !CmpMem(name, Module->Name, len))
+	    /* already loaded! */
+	    return Module;
+    }
+    
     if ((Module = Do(Create,Module)(FnModule, len, name))) {
 	if (Act(DlOpen,Module)(Module))
 	    return Module;

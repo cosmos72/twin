@@ -347,7 +347,7 @@ void DrawWindow(window *Window, gadget *FirstGadget, gadget *OnlyThisGadget, dat
     row *CurrRow;
     udat *Contents, *CurrCont;
     uldat XLogic, YLogic, Row, PosInRow;
-    byte *Text, **GadgetConten;
+    byte *Text, **GadgetContents;
     hwcol *ColText;
     
     if (!Window || !(Screen=Window->Screen) || Xstart>Xend || Ystart>Yend)
@@ -505,17 +505,17 @@ void DrawWindow(window *Window, gadget *FirstGadget, gadget *OnlyThisGadget, dat
 	    RowDisabled=(FirstGadget->Flags & GADGET_DISABLED);
 	    Absent=FirstGadget->Flags & GADGET_USE_DEFCOL;
 	    
-	    GadgetConten=FirstGadget->Contents;
+	    GadgetContents=FirstGadget->Contents;
 	    
 	    Text = Select
-		? RowDisabled && GadgetConten[3]
-		? GadgetConten[3]
-		: GadgetConten[1]
-		? GadgetConten[1]
-		: GadgetConten[0]
-		: RowDisabled && GadgetConten[2]
-		? GadgetConten[2]
-		: GadgetConten[0];
+		? RowDisabled && GadgetContents[3]
+		? GadgetContents[3]
+		: GadgetContents[1]
+		? GadgetContents[1]
+		: GadgetContents[0]
+		: RowDisabled && GadgetContents[2]
+		? GadgetContents[2]
+		: GadgetContents[0];
 	    
 	    if (Absent)
 		Color = Select
@@ -527,14 +527,14 @@ void DrawWindow(window *Window, gadget *FirstGadget, gadget *OnlyThisGadget, dat
 		: FirstGadget->ColText;
 	    else
 		ColText = Select
-		? RowDisabled && GadgetConten[7]
-		? GadgetConten[7]
-		: GadgetConten[5]
-		? GadgetConten[5]
-		: GadgetConten[4]
-		: RowDisabled && GadgetConten[6]
-		? GadgetConten[6]
-		: GadgetConten[4];
+		? RowDisabled && GadgetContents[7]
+		? GadgetContents[7]
+		: GadgetContents[5]
+		? GadgetContents[5]
+		: GadgetContents[4]
+		: RowDisabled && GadgetContents[6]
+		? GadgetContents[6]
+		: GadgetContents[4];
 	    
 	    i_min = (uldat)u<XLogic ? (udat)(XLogic-(uldat)u) : (udat)0;
 	    i_max = u+k<=i ? k : i-u;

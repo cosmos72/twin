@@ -56,25 +56,25 @@
 
 /* common data */
 
-display_hw *HW;
+display_hw *HW, *DisplayHWCTTY;
+
+#define forHW for (HW = All->FirstDisplayHW; HW; HW = HW->Next)
+
+#define safeforHW(s_HW) for (HW = All->FirstDisplayHW; HW && (((s_HW) = HW->Next), TRUE); HW = (s_HW))
 
 hwattr *Video, *OldVideo;
 
-byte ValidOldVideo;
+static byte NeedOldVideo, CanDragArea;
+
+byte ExpensiveFlushVideo, ValidOldVideo, NeedHW;
 
 dat (*ChangedVideo)[2][2];
 byte ChangedVideoFlag;
 byte ChangedVideoFlagAgain;
-byte ChangedMouseFlag;
 
 static udat savedScreenWidth, savedScreenHeight;
 udat ScreenWidth = 100, ScreenHeight = 30;
-
-
-FILE *errFILE;
-
-dat Last_x, Last_y;
-
+udat TryScreenWidth, TryScreenHeight;
 
 static dat AccelVideo[4] = { MAXDAT, MAXDAT, MINDAT, MINDAT };
 byte   StrategyFlag;
@@ -100,10 +100,12 @@ void saveDisplaySize(void) {
 
 
 
-#include "HW/hw_null.h"
-
 #ifdef CONF_HW_X11
 # include "HW/hw_X11.h"
+#endif
+
+#ifdef CONF_HW_DISPLAY
+# include "HW/hw_display.h"
 #endif
 
 #ifdef CONF_HW_TWIN
@@ -168,17 +170,122 @@ void InitSignals(void) {
 #endif
 }
 
-void DevNullStderr(void) {
-    int fd;
-    
-    if ((fd = open("/dev/null", O_RDWR)) >= 0) {
-	close(2);
-	if (dup2(fd, 2) < 0)
-	    dup2(1, 2);
-	close(fd);
+void UpdateFlagsHW(void) {
+    NeedOldVideo = ExpensiveFlushVideo = FALSE;
+    CanDragArea = TRUE;
+
+    forHW {
+	if (!HW->Quitted) {
+	    NeedOldVideo |= HW->NeedOldVideo;
+	    ExpensiveFlushVideo |= HW->ExpensiveFlushVideo;
+	    CanDragArea &= !!HW->CanDragArea;
+	}
     }
 }
 
+void RunNoHW(void) {
+    savedScreenWidth  = ScreenWidth;
+    savedScreenHeight = ScreenHeight;
+
+    ResizeDisplay();
+
+    if (!DisplayHWCTTY) {
+	/*
+	 * we fork in the background
+	 * so that the shell we were started from
+	 * can realize we have finished with the tty
+	 */
+	switch (fork()) {
+	  case 0: /* child: continue */
+	    DisplayHWCTTY = HWCTTY_DETACHED;
+	    setsid();
+	    break;
+	  case -1:
+	    break;
+	  default: /* parent: exit */
+	    exit(0);
+	}
+    }
+    /* try to fire up the Socket Server ... */
+#if defined (CONF_MODULES) && !defined(CONF_SOCKET)
+    (void)DlLoad(SocketSo);
+#endif
+}
+
+
+#ifdef CONF_MODULES
+
+static byte module_InitHW(void) {
+    byte *name, *tmp;
+    byte *(*InitD)(void);
+    byte *arg = HW->Name;
+    uldat len = HW->NameLen;
+    module *Module;
+
+    if (!arg || len <= 4)
+	return FALSE;
+    
+    arg += 4; len -= 4; /* skip "-hw=" */
+    
+    name = memchr(arg, '@', len);
+    tmp = memchr(arg, ',', len);
+    if (tmp && (!name || tmp < name))
+	name = tmp;
+    if (name)
+	len = name - arg;
+    
+    if ((name = AllocMem(len + 10))) {
+	sprintf(name, "HW/hw_%.*s.so", (int)len, arg);
+			
+	Module = DlLoadAny(len+9, name);
+	
+	FreeMem(name);
+	    
+	if (Module) {
+	    fprintf(stderr, "twin: starting display driver module `HW/hw_%.*s.so'...\n", (int)len, arg);
+	    
+	    if ((InitD = Module->Private) && InitD()) {
+		fprintf(stderr, "twin: ...module `HW/hw_%.*s.so' successfully started.\n", (int)len, arg);
+		HW->Module = Module; Module->Used++;
+		return TRUE;
+	    }
+	    Delete(Module);
+	}
+    }
+
+    if (Module) {
+	fprintf(stderr, "twin: ...module `HW/hw_%.*s.so' failed to start.\n", (int)len, arg);
+    } else
+	fprintf(stderr, "twin: unable to load display driver module `HW/hw_%.*s.so' :\n"
+			"      %s\n", (int)len, arg, ErrStr);
+    
+    return FALSE;
+}
+
+#endif /* CONF_MODULES */
+
+
+
+
+void warn_NoHW(uldat len, char *arg, uldat tried) {
+#ifdef CONF_MODULES
+    if (!tried && !arg)
+	    fputs("twin: no display driver compiled into twin.\n"
+		  "      please run as `twin -hw=<display>'\n", stderr);
+    else
+#endif
+    {
+	fputs("twin: All display drivers failed", stderr);
+	if (arg)
+	    fprintf(stderr, " for `-hw=%.*s\'", (int)len, arg);
+	else
+	    putc('.', stderr);
+	putc('\n', stderr);
+    }
+}
+
+
+#if defined(CONF_HW_X11) || defined(CONF_HW_TWIN) || defined(CONF_HW_DISPLAY) || defined(CONF_HW_TTY) || defined(CONF_HW_GGI)
 static byte check4(byte *s, byte *arg) {
     if (arg && strncmp(s, arg, strlen(s))) {
 	fprintf(stderr, "twin: `-hw=%s' given, skipping `-hw=%s' display driver.\n",
@@ -191,195 +298,441 @@ static byte check4(byte *s, byte *arg) {
     return TRUE;
 }
 
-#ifdef CONF_MODULES
-static module *ModuleHW;
-
-display_hw *module_InitHW(byte *arg) {
-    byte *name, *tmp;
+static void fix4(byte *s, display_hw *D_HW) {
     uldat len;
-    display_hw *(*InitD)(byte *);
-    display_hw *hw = (display_hw *)0;
-    
-    if (!arg)
-	return hw;
-    
-    len = strlen(arg);
-    name = memchr(arg, '@', len);
-    tmp = memchr(arg, ',', len);
-    if (tmp && (!name || tmp < name))
-	name = tmp;
-    if (name)
-	len = name - arg;
-    
-    if ((name = AllocMem(len + 10))) {
-	sprintf(name, "HW/hw_%.*s.so", (int)len, arg);
-			
-	ModuleHW = DlLoadAny(len+9, name);
-	
-	FreeMem(name);
-	    
-	if (ModuleHW) {
-	    fprintf(errFILE, "twin: starting display driver module `HW/hw_%.*s.so'...\n", (int)len, arg);
-	    
-	    if ((InitD = ModuleHW->Private) && (hw = InitD(arg))) {
-		fprintf(errFILE, "twin: ...module `HW/hw_%.*s.so' successfully started.\n", (int)len, arg);
-		return hw;
-	    }
-	    Delete(ModuleHW);
+    if (!D_HW->NameLen) {
+	if (D_HW->Name)
+	    FreeMem(D_HW->Name), D_HW->Name = NULL;
+	len = strlen(s) + 4;
+	if ((D_HW->Name = AllocMem(len + 1))) {
+	    sprintf(D_HW->Name, "-hw=%s", s);
+	    D_HW->NameLen = len;
 	}
     }
-
-    if (ModuleHW) {
-	fprintf(errFILE, "twin: ...module `HW/hw_%.*s.so' failed to start.\n", (int)len, arg);
-	ModuleHW = (module *)0;
-    } else
-	fprintf(errFILE, "twin: unable to load display driver module `HW/hw_%.*s.so' :\n"
-		"      %s\n", (int)len, arg, ErrStr);
-    
-    return hw;
 }
-#endif /* CONF_MODULES */
-
-display_hw *warn_NoHW(char *arg, uldat tried) {
-#ifdef CONF_MODULES
-    if (!tried && !arg)
-	    fputs("twin: no display driver compiled into twin.\n"
-		  "      please run as `twin -hw=<display>'\n", errFILE);
-#endif
-    
-    fprintf(errFILE, "\ntwin: \033[1m  ALL  DISPLAY  DRIVERS  FAILED%s%s%c\033[0m\n",
-	    arg ? "  for  `-hw=" : "", arg ? arg : "", arg ? '\'' : '.');
-
-    /*
-     * we may try forking in the background with null display HW here...
-     * but we must consider that if InitHW gets called by `twattach',
-     * we *already* fallback to null display HW... so maybe it's not so useful.
-     */
-    return (display_hw *)0;
-}
+#endif /* defined(CONF_HW_X11) || defined(CONF_HW_TWIN) || defined(CONF_HW_DISPLAY) || defined(CONF_HW_TTY) || defined(CONF_HW_GGI) */
 
 /*
- * InitHW runs InitXXX() functions, starting from best setup
+ * InitDisplayHW runs HW specific InitXXX() functions, starting from best setup
  * and falling back in case some of them fails.
  */
-byte InitHW(byte *arg) {
+byte InitDisplayHW(display_hw *D_HW) {
+    byte *arg = D_HW->Name;
     uldat tried = 0;
-    display_hw *hw;
     byte success;
+
+    SaveHW;
+    SetHW(D_HW);
+
+    D_HW->Quitted = D_HW->DisplayIsCTTY = D_HW->NeedHW = FALSE;
     
     if (arg && !strncmp(arg, "-hw=", 4))
 	arg += 4;
     else
 	arg = NULL;
 
-    if (!errFILE)
-	errFILE = stderr;
-    
     success =
 #ifdef CONF_HW_X11
-	(check4("X", arg) && (tried++, hw = X11_InitHW(arg))) ||
+	(check4("X", arg) && (tried++, X11_InitHW()) && (fix4("X", D_HW), TRUE)) ||
 #endif
 #ifdef CONF_HW_TWIN
-	(check4("twin", arg) && (tried++, hw = TW_InitHW(arg))) ||
+	(check4("twin", arg) && (tried++, TW_InitHW()) && (fix4("twin", D_HW), TRUE)) ||
+#endif
+#ifdef CONF_HW_DISPLAY
+	(check4("display", arg) && (tried++, display_InitHW()) && (fix4("display", D_HW), TRUE)) ||
 #endif
 #ifdef CONF_HW_TTY
-	(check4("tty", arg) && (tried++, hw = tty_InitHW(arg))) ||
+	(check4("tty", arg) && (tried++, tty_InitHW()) && (fix4("tty", D_HW), TRUE)) ||
 #endif
 #ifdef CONF_HW_GGI
-	(check4("ggi", arg) && (tried++, hw = GGI_InitHW(arg))) ||
+	(check4("ggi", arg) && (tried++, GGI_InitHW()) && (fix4("ggi", D_HW), TRUE)) ||
 #endif
 #ifdef CONF_MODULES
-	(hw = module_InitHW(arg)) ||
+	module_InitHW() ||
 #endif
-	(hw = warn_NoHW(arg, tried));
-    
-    fflush(errFILE);
-    fflush(stdout);
-    
+	(warn_NoHW(arg ? D_HW->NameLen - 4 : 0, arg, tried), FALSE);
+
     if (success) {
-	if (arg) arg -= 4;
-	if (arg != origHW) {
-	    if (origHW) free(origHW);
-	    origHW = arg ? (byte *)strdup(arg) : arg;
-	}
-	HW = hw;
-	ResizeDisplay();
-	DrawArea(FULLSCREEN);
-	UpdateCursor();
+	if (All->FnHookDisplayHW)
+	    All->FnHookDisplayHW(All->HookDisplayHW);
+	UpdateFlagsHW(); /* this garbles HW... not a problem here */
     }
+    
+    fflush(stderr);
+    RestoreHW;
+
     return success;
 }
 
-void QuitHW(void) {
-    if (HW)
-	HW->QuitHW();
+void QuitDisplayHW(display_hw *D_HW) {
+    SaveHW;
+    
+    if (D_HW) {
+	if (D_HW->QuitHW)
+	    HW = D_HW, D_HW->QuitHW();
+	
+	/* avoid KillSlot <-> DeleteDisplayHW infinite recursion */
+	if (!D_HW->Quitted) {
+	    D_HW->Quitted = TRUE;
+	    KillSlot(D_HW->attach);
+	}
+
 #ifdef CONF_MODULES
-    if (ModuleHW)
-	Delete(ModuleHW), ModuleHW = (module *)0;
+	if (D_HW->Module) {
+	    D_HW->Module->Used--;
+	    Delete(D_HW->Module);
+	    D_HW->Module = (module *)0;
+	}
+	UpdateFlagsHW(); /* this garbles HW... not a problem here */
 #endif
+    }
+    RestoreHW;
 }
 
-byte doAttachHW(byte len, byte *arg, byte tostderr) {
-    byte buff[SMALLBUFF];
+display_hw *AttachDisplayHW(uldat len, byte *arg, uldat slot) {
+    display_hw *D_HW;
+
+    if ((len && len <= 4) || CmpMem("-hw=", arg, Min2(len,4))) {
+	fprintf(stderr, "twin: specified `%.*s\' is not `-hw=<display>\'\n",
+		(int)len, arg);
+	fflush(stderr);
+	return NULL;
+    }
+    
+    if (!All->FirstDisplayHW) {
+	/* was running with no HW, restore ScreenWidth/ScreenHeight */
+	if (savedScreenWidth && savedScreenHeight) {
+	    TryScreenWidth = savedScreenWidth;
+	    TryScreenHeight = savedScreenHeight;
+	    savedScreenWidth = savedScreenHeight = 0;
+	}
+    }
+    
+    if ((D_HW = Do(Create,DisplayHW)(FnDisplayHW, len, arg))) {
+	D_HW->attach = slot;
+	if (Act(Init,D_HW)(D_HW)) {
+	    ResizeDisplay();
+	    DrawArea(FULLSCREEN);
+	    UpdateCursor();
+	    
+	    return D_HW;
+	}
+	D_HW->attach = NOSLOT;
+	D_HW->QuitHW = NoOp;
+	Delete(D_HW);
+	D_HW = (display_hw *)0;
+    }
+    return D_HW;
+}
+
+
+byte DetachDisplayHW(uldat len, byte *arg) {
+    byte isCTTY = FALSE, done = FALSE;
+    display_hw *s_HW;
+    if (len) {
+	safeforHW(s_HW) {
+	    if (HW->NameLen == len && !CmpMem(HW->Name, arg, len)) {
+		isCTTY = HW == DisplayHWCTTY;
+		Delete(HW);
+		done = TRUE;
+		break;
+	    }
+	}
+    } else {
+	QuitHW();
+	done = TRUE;
+    }
+    if (isCTTY || !All->FirstDisplayHW)
+	RunNoHW();
+    return done;
+}
+
+byte InitHW(void) {
+    byte **arglist = orig_argv;
+    byte *dummy[2] = {"", NULL}, ret = FALSE;
+
+    if (!arglist || !*arglist) {
+	/* autoprobe */
+	arglist = dummy;
+    }
+    while (*arglist) {
+	ret |= !!AttachDisplayHW(strlen(*arglist), *arglist, NOSLOT);
+	arglist++;
+    }
+    if (!ret)
+	fputs("\ntwin:   \033[1mALL  DISPLAY  DRIVERS  FAILED.\033[0m\n", stderr);
+    return ret;
+}
+
+void QuitHW(void) {
+    DeleteList(All->FirstDisplayHW);
+    RunNoHW();
+}
+
+byte RestartHW(byte verbose) {
+    display_hw *s_HW;
     byte ret = FALSE;
     
-    if (HW->QuitHW == NoOp) {
-	if (len) {
-	    len = Min2(len, SMALLBUFF-1);
-	    CopyMem(arg, buff, len);
-	    buff[len] = '\0';
-	    arg = buff;
-	} else
-	    arg = NULL;
-	
-	if (savedScreenWidth)
-	    ScreenWidth = savedScreenWidth, savedScreenWidth = 0;
-	if (savedScreenHeight)
-	    ScreenHeight = savedScreenHeight, savedScreenHeight = 0;
-	
-	errFILE = tostderr ? stderr : stdout;
-	ret = InitHW(arg);
-	errFILE = stderr;
+    if (All->FirstDisplayHW) {
+	safeforHW(s_HW) {
+	    if (Act(Init,HW)(HW))
+		ret = TRUE;
+	    else
+		Delete(HW);
+	}
+	if (ret) {
+	    ResizeDisplay();
+	    DrawArea(FULLSCREEN);
+	    UpdateCursor();
+	} else {
+	    fputs("\ntwin:   \033[1mALL  DISPLAY  DRIVERS  FAILED.\033[0m\n", stderr);
+	    fflush(stderr);
+	    RunNoHW();
+	}
+    } else if (verbose) {
+	fputs("twin: RestartHW(): All display drivers removed by SuspendHW().\n"
+	      "      No display available for restarting, use twattach or twdisplay\n", stderr);
+	fflush(stderr);
     }
     return ret;
 }
 
+void SuspendHW(byte verbose) {
+    display_hw *s_HW;
+    safeforHW(s_HW) {
+	if (HW->attach != NOSLOT && HW->NeedHW & NEEDPersistentSlot)
+	    /* we will not be able to restart it */
+	    Delete(HW);
+	else
+	    Act(Quit,HW)(HW);
+    }
+    if (verbose && !All->FirstDisplayHW) {
+	fputs("twin: SuspendHW(): All display drivers had to be removed\n"
+	      "      since they were attached to clients (twattach/twdisplay).\n"
+	      "twin: --- STOPPED ---\n", stderr);
+	fflush(stderr);
+    }
+}
 
-/* cannot fail */
-void doDetachHW(void) {
-    static byte NeverDetached = TRUE;
-
-    /* try to fire up the Socket Server ... */
-#if defined (CONF_MODULES) && !defined(CONF_SOCKET)
-    (void)DlLoad(SocketSo);
-#endif
+void PanicHW(void) {
+    display_hw *s_HW;
     
-    QuitHW();
+    if (NeedHW & NEEDPanicHW) {
+	safeforHW(s_HW) {
+	    if (HW->NeedHW & NEEDPanicHW)
+		Delete(HW);
+	}
+	NeedHW &= ~NEEDPanicHW;
+    }
+    if (!All->FirstDisplayHW)
+	RunNoHW();
+}
 
-    if (NeverDetached) {
-	/*
-	 * we fork in the background
-	 * so that the shell we were started from
-	 * can realize we have finished with the tty
-	 */
-	switch (fork()) {
-	  case 0: /* child: continue */
-	    NeverDetached = FALSE;
-	    setsid();
-	    break;
-	  case -1:
-	    break;
-	  default: /* parent: exit */
-	    exit(0);
+void ResizeDisplayPrefer(display_hw *D_HW) {
+    SaveHW;
+    SetHW(D_HW);
+    D_HW->DetectSize(&TryScreenWidth, &TryScreenHeight);
+    NeedHW |= NEEDResizeDisplay;
+    RestoreHW;
+}
+
+void SignalWinch(int n) {
+    SaveHW;
+    
+    if (DisplayHWCTTY && DisplayHWCTTY != HWCTTY_DETACHED
+	&& DisplayHWCTTY->DisplayIsCTTY) {
+	
+	SetHW(DisplayHWCTTY);
+	ResizeDisplayPrefer(HW);
+	RestoreHW;
+    }
+    signal(SIGWINCH, SignalWinch);
+}
+
+void ResizeDisplay(void) {
+    screen *fScreen;
+    udat Width, Height;
+
+    if (All->FirstDisplayHW) {
+	
+	if (!TryScreenWidth || !TryScreenHeight) {
+	    /*
+	     * we are trying to come up with a fair display size
+	     * and have all HW agree on it.
+	     */
+	    TryScreenWidth = TryScreenHeight = MAXUDAT;
+	    forHW {
+		HW->DetectSize(&Width, &Height);
+		if (TryScreenWidth  > Width)  TryScreenWidth  = Width;
+		if (TryScreenHeight > Height) TryScreenHeight = Height;
+	    }
+	}
+	
+	/* now let's check how much we can resize all HW displays... */
+	do {
+	    Width = TryScreenWidth;
+	    Height = TryScreenHeight;
+	    forHW {
+		HW->CheckResize(&TryScreenWidth, &TryScreenHeight);
+	    }
+	} while (TryScreenWidth < Width || TryScreenHeight < Height);
+	 
+	if (!TryScreenWidth || TryScreenWidth == MAXUDAT)
+	    TryScreenWidth = ScreenWidth;
+	if (!TryScreenHeight || TryScreenHeight == MAXUDAT)
+	    TryScreenHeight = ScreenHeight;
+	
+	/* size seems reasonable, apply it to all HW displays */
+	forHW {
+	    HW->Resize(TryScreenWidth, TryScreenHeight);
+	}
+    } else
+	TryScreenWidth = TryScreenHeight = 1;
+
+    if (!NeedOldVideo && OldVideo) {
+	free(OldVideo);
+	OldVideo = NULL;
+    } else if ((NeedOldVideo && !OldVideo) || ScreenWidth != TryScreenWidth || ScreenHeight != TryScreenHeight) {
+	if (!(OldVideo = (hwattr *)realloc(OldVideo, TryScreenWidth*TryScreenHeight*sizeof(hwattr)))) {
+	    fprintf(stderr, "twin: out of memory!\n");
+	    Quit(1);
 	}
     }
+    ValidOldVideo = FALSE; /* to force updating new displays... could be smarter */
     
-    HW = null_InitHW(NULL); /* cannot fail */
-
-    if (All->attach != NOSLOT) {
-	KillSlot(All->attach);
-	All->attach = NOSLOT;
+    if (!Video || ScreenWidth != TryScreenWidth || ScreenHeight != TryScreenHeight) {
+	ScreenWidth = TryScreenWidth;
+	ScreenHeight = TryScreenHeight;
+	
+	if (!(Video = (hwattr *)realloc(Video, ScreenWidth*ScreenHeight*sizeof(hwattr))) ||
+	    !(ChangedVideo = (dat (*)[2][2])ReAllocMem(ChangedVideo, ScreenHeight*sizeof(dat)*4))) {
+	    
+	    fprintf(stderr, "twin: out of memory!\n");
+	    Quit(1);
+	}
+	WriteMem(ChangedVideo, 0xff, ScreenHeight*sizeof(dat)*4);
+    
+	for (fScreen = All->FirstScreen; fScreen; fScreen = fScreen->Next) {
+	    fScreen->ScreenHeight = ScreenHeight;
+	    fScreen->ScreenWidth  = ScreenWidth;
+	}
     }
+    NeedHW &= ~NEEDResizeDisplay;
+
+    TryScreenWidth = TryScreenHeight = 0;
+}
+
+void MoveToXY(udat x, udat y) {
+    forHW {
+	HW->MoveToXY(x, y);
+    }
+}
+
+void SetCursorType(uldat type) {
+    if ((type & 0xF) == 0)
+	type |= LINECURSOR;
+    else if ((type & 0xF) > SOLIDCURSOR)
+	type = (type & ~(uldat)0xF) | SOLIDCURSOR;
+    
+    forHW {
+	HW->SetCursorType(type);
+    }
+}
+
+void BeepHW(void) {
+    forHW {
+	HW->Beep();
+    }
+}
+
+void ConfigureHW(udat resource, byte todefault, udat value) {
+    forHW {
+	HW->Configure(resource, todefault, value);
+    }
+}
+
+void SetPaletteHW(udat N, udat R, udat G, udat B) {
+    if (N <= MAXCOL) {
+	palette c = {R, G, B};
+	if (CmpMem(&All->Palette[N], &c, sizeof(palette))) {
+	    All->Palette[N] = c;
+	    forHW {
+		HW->SetPalette(N, R, G, B);
+	    }
+	}
+    }
+}
+
+void ResetPaletteHW(void) {
+    forHW {
+	HW->ResetPalette();
+    }
+}
+
+void ExportClipBoard(void) {
+    forHW {
+	if (HW->ExportClipBoard)
+	    HW->ExportClipBoard();
+    }
+    NeedHW &= ~NEEDExportClipBoard;
+}
+
+void ImportClipBoard(byte Wait) {
+    if ((HW = All->MouseHW)) {
+	if (HW->ImportClipBoard)
+	    HW->ImportClipBoard(Wait);
+    }
+}
+
+
+INLINE void DiscardBlinkVideo(void) {
+    int i;
+    uldat start, t;
+    hwattr *V;
+    
+    for (i=0; i<ScreenHeight*2; i++) {
+	start = (uldat)ChangedVideo[i>>1][i&1][0];
+	t     = (uldat)ChangedVideo[i>>1][i&1][1] + 1 - start;
+
+	for (V = &Video[start]; t; V++, t--)
+	    *V &= ~HWATTR(COL(0,HIGH), (hwfont)0);
+    }
+}
+
+INLINE void SyncOldVideo(void) {
+    dat start, end;
+    udat i;
+
+    if (ChangedVideoFlag) {
+	for (i=0; i<ScreenHeight*2; i++) {
+	    start = ChangedVideo[i>>1][i&1][0];
+	    end   = ChangedVideo[i>>1][i&1][1];
+	    ChangedVideo[i>>1][i&1][0] = -1;
+	    
+	    if (start != -1)
+		CopyMem(Video + start + (i>>1)*ScreenWidth,
+			OldVideo + start + (i>>1)*ScreenWidth,
+			(end-start+1) * sizeof(hwattr));
+	}
+    }
+    ChangedVideoFlag = FALSE;
+    ValidOldVideo = TRUE;
+}
+
+void FlushHW(void) {
+    
+    if (All->SetUp->Flags & SETUP_NOBLINK)
+	DiscardBlinkVideo();
+
+    forHW {
+	HW->FlushVideo();
+	if (HW->NeedHW & NEEDFlushHW)
+	    HW->FlushHW();
+    }
+    if (NeedHW & NEEDFlushStdout)
+	fflush(stdout), NeedHW &= ~NEEDFlushStdout;
+    
+    SyncOldVideo();
 }
 
 
@@ -468,7 +821,7 @@ void MouseEventCommon(dat x, dat y, dat dx, dat dy, udat IdButtons) {
     mouse_state *OldState;
     udat result;
 
-    OldState=All->MouseState;
+    OldState=&HW->MouseState;
     OldButtons=OldState->keys;
     prev_x = OldState->x;
     prev_y = OldState->y;
@@ -480,7 +833,7 @@ void MouseEventCommon(dat x, dat y, dat dx, dat dy, udat IdButtons) {
     OldState->delta_y = y == 0 ? Min2(dy, 0) : y == ScreenHeight - 1 ? Max2(dy, 0) : 0;
 	
     if (x != prev_x || y != prev_y)
-	ChangedMouseFlag = TRUE;
+	HW->ChangedMouseFlag = TRUE;
 
     OldState->x = x;
     OldState->y = y;
@@ -521,6 +874,9 @@ void MouseEventCommon(dat x, dat y, dat dx, dat dy, udat IdButtons) {
 	    if (!StdAddEventMouse(MSG_MOUSE, All->FullShiftFlags, result, x, y))
 		Error(NOMEMORY);
 	}
+
+	/* keep it available */
+	All->MouseHW = HW;
     }
 }
 
@@ -554,40 +910,11 @@ byte GetShortShiftFlags(void) {
 
 /* VideoFlipMouse is quite os-independent ;) */
 void VideoFlipMouse(void) {
-    uldat pos = (Last_x = All->MouseState->x) + (Last_y = All->MouseState->y) * ScreenWidth;
+    uldat pos = (HW->Last_x = HW->MouseState.x) + (HW->Last_y = HW->MouseState.y) * ScreenWidth;
     hwattr h = Video[pos];
     hwcol c = ~HWCOL(h) ^ COL(HIGH,HIGH);
 
     Video[pos] = HWATTR( c, HWFONT(h) );
-}
-
-void SignalWinch(int n) {
-    All->NeedHW |= NEEDResizeDisplay;
-}
-
-void ResizeDisplay(void) {
-    screen *fScreen = All->FirstScreen;
-
-    HW->DetectSize(&ScreenWidth, &ScreenHeight);
-    
-    if (!(Video = (hwattr *)realloc(Video, ScreenWidth*ScreenHeight*sizeof(hwattr))) ||
-	(HW->NeedOldVideo && !(OldVideo = (hwattr *)realloc(OldVideo, ScreenWidth*ScreenHeight*sizeof(hwattr)))) ||
-	!(ChangedVideo = (dat (*)[2][2])ReAllocMem(ChangedVideo, ScreenHeight*sizeof(dat)*4))) {
-	
-	fprintf(stderr, "twin: out of memory!\n");
-	exit(1);
-    }
-    WriteMem(ChangedVideo, 0xff, ScreenHeight*sizeof(dat)*4);
-    ValidOldVideo = FALSE;
-		     
-    while (fScreen) {
-	fScreen->ScreenHeight = ScreenHeight;
-        fScreen->ScreenWidth  = ScreenWidth;
-	fScreen = fScreen->Next;
-    }
-    All->NeedHW &= ~NEEDResizeDisplay;
-    
-    signal(SIGWINCH, SignalWinch);
 }
 
 void FillVideo(dat Xstart, dat Ystart, dat Xend, dat Yend, hwattr Attrib) {
@@ -664,6 +991,7 @@ static void Video2OldVideo(dat Xstart, dat Ystart, dat Xend, dat Yend) {
 	dst += ScreenWidth;
     }
 }
+
 
 /*
  * for better cleannes, DirtyVideo()
@@ -781,6 +1109,11 @@ void DirtyVideo(dat Xstart, dat Ystart, dat Xend, dat Yend) {
     }
 }
 
+void RefreshVideo(void) {
+    ValidOldVideo = FALSE;
+    DirtyVideo(0, 0, ScreenWidth - 1, ScreenHeight - 1);
+}
+
 INLINE uldat Plain_countDirtyVideo(dat X1, dat Y1, dat X2, dat Y2) {
     uldat t = 0;
     dat a, b;
@@ -842,17 +1175,32 @@ void DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
     dat DstRgt = DstLeft + (Rgt - Left), DstDwn = DstUp + (Dwn - Up);
     ldat len, count;
     hwattr *src = Video, *dst = Video;
-    byte Accel = FALSE;
+    byte Accel;
     
     count = Dwn - Up + 1;
     len   = (Rgt-Left+1) * sizeof(hwattr);
 
     /* if HW can do the scroll, use it instead of redrawing */
-    if (HW->canDragArea && HW->canDragArea(Left, Up, Rgt, Dwn, DstLeft, DstUp) &&
-	Strategy4Video(DstLeft, DstUp, DstRgt, DstDwn) == HW_ACCEL) {
-	
+
+    /* HACK : for consistency problems, we actually drag only if all HW can drag */
+    
+    if (CanDragArea && Strategy4Video(DstLeft, DstUp, DstRgt, DstDwn) == HW_ACCEL) {
 	Accel = TRUE;
-	HW->DragArea(Left, Up, Rgt, Dwn, DstLeft, DstUp);
+	forHW {
+	    if (HW->CanDragArea && HW->CanDragArea(Left, Up, Rgt, Dwn, DstLeft, DstUp))
+		;
+	    else {
+		Accel = FALSE;
+		break;
+	    }
+	}
+    } else
+	Accel = FALSE;
+    
+    if (Accel) {
+	forHW {
+	    HW->DragArea(Left, Up, Rgt, Dwn, DstLeft, DstUp);
+	}
     } else
 	DirtyVideo(DstLeft, DstUp, DstRgt, DstDwn);
 
@@ -888,9 +1236,25 @@ void DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
 	}
     }
 
-    if (Accel && HW->NeedOldVideo)
+    if (Accel && NeedOldVideo)
 	Video2OldVideo(DstLeft, DstUp, DstRgt, DstDwn);
 }
+
+#ifdef __LINUX__
+static void linux_getconsolemap(void) {
+    scrnmap_t map[E_TABSZ];
+    byte c, ret;
+    
+    if ((ret = ioctl(tty_fd, GIO_SCRNMAP, map)) == 0) {
+	if (sizeof(scrnmap_t) == 1)
+	    CopyMem(map+0x80, All->Gtranslations[USER_MAP], 0x80);
+	else {
+	    for (c = 0; c < 0x80; c++)
+		All->Gtranslations[USER_MAP][c] = (byte)map[c | 0x80];
+	}
+    }
+}
+#endif
 
 void InitTtysave(void) {
     ioctl(0, TCGETS, &ttysave);
@@ -952,4 +1316,8 @@ void InitTtysave(void) {
 		       | ECHOKE
 #endif
 		       );
+    
+#ifdef __LINUX__
+    linux_getconsolemap();
+#endif
 }

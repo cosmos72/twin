@@ -12,7 +12,9 @@ endif
 include Rules
 #
 
-config $(CONF): 
+config $(CONF):
+	@echo Starting configure for twin $(TW_VERSION)...
+	@echo
 	$(BASH) scripts/Configure
 
 reconfig: config all
@@ -42,7 +44,7 @@ endif
 install: all install-lib install-clients
 	$(MAKE) install -C server
 	@echo
-	@echo If this is the first time you installed twin,
+	@echo If this is the first time you installed twin $(TW_VERSION)
 	@echo you probably need to run \"ldconfig\" now.
 	@echo
 

@@ -43,6 +43,8 @@ menu *Builtin_Term_Menu;
 #define COD_ABOUT_WIN	(udat)20
 #define COD_CLOCK_WIN   (udat)21
 #define COD_OPTION_WIN	(udat)22
+#define COD_DISPLAY_WIN	(udat)23
+#define COD_REFRESH	(udat)24
 
 #define COD_TERM_ON	(udat)30
 #define COD_TERM_OFF	(udat)31
@@ -59,6 +61,8 @@ menu *Builtin_Term_Menu;
 #define COD_O_NOBLINK	(udat)47
 #define COD_O_HIDEMENU	(udat)48
 
+#define COD_D_REMOVE	(udat)60
+#define COD_D_UPDATE	(udat)61
 
 static msgport *Builtin_MsgPort;
 static menu *Builtin_Menu;
@@ -67,10 +71,10 @@ static menuitem *Builtin_File;
 static menuitem *Builtin_Modules;
 #endif
 
-static window *AboutWin, *ClockWin, *OptionWin;
+static window *AboutWin, *ClockWin, *OptionWin, *DisplayWin;
 window *ListWin;
 
-static gadget *ButtonOK_About;
+static gadget *ButtonOK_About, *ButtonRemove, *ButtonUpdate;
 
 static void Clock_Update(void) {
     struct timevalue *Time = &All->Now;
@@ -227,6 +231,52 @@ static void OptionH(msg *Msg) {
     }
 }
 
+void UpdateDisplayWin(window *displayWin) {
+    display_hw *hw;
+    uldat x = 12, y = 0;
+    
+    if (displayWin == DisplayWin) {
+	DeleteList(DisplayWin->FirstRow);
+    
+	for (hw = All->FirstDisplayHW; hw; hw = hw->Next) {
+	    Act(GotoXY,DisplayWin)(DisplayWin, x, y++);
+	    if (!hw->NameLen)
+		Act(WriteRow,DisplayWin)(DisplayWin, 9, "(no name)");
+	    else
+		Act(WriteRow,DisplayWin)(DisplayWin, hw->NameLen, hw->Name);
+	}
+	if (DisplayWin->Screen)
+	    DrawAreaWindow(DisplayWin, FALSE);
+    }
+}
+
+static void DisplayH(msg *Msg) {
+    display_hw *hw;
+    uldat i;
+    byte isCTTY = FALSE;
+    
+    switch (Msg->Event.EventGadget.Code) {
+      case COD_D_REMOVE:
+	if (Act(SearchRow,DisplayWin)(DisplayWin, i = DisplayWin->CurY)) {
+	    for (hw = All->FirstDisplayHW; hw && i; hw = hw->Next, i--)
+		;
+	    if (hw && !i) {
+		isCTTY = hw == DisplayHWCTTY;
+		Delete(hw);
+	    }
+	}
+	if (isCTTY || !All->FirstDisplayHW)
+	    RunNoHW();
+	break;
+      case COD_D_UPDATE:
+	UpdateDisplayWin(DisplayWin);
+	break;
+      default:
+	break;
+    }
+}
+	    
+    
 
 static void BuiltinH(msgport *MsgPort) {
     msg *Msg;
@@ -256,6 +306,8 @@ static void BuiltinH(msgport *MsgPort) {
 		
 	    } else if (tempWin == OptionWin)
 		OptionH(Msg);
+	    else if (tempWin == DisplayWin)
+		DisplayH(Msg);
 	}
 	else if (Msg->Type==MSG_MENU_ROW) {
 	    if (Event->EventMenu.Menu==Builtin_Menu) {
@@ -264,7 +316,16 @@ static void BuiltinH(msgport *MsgPort) {
 		switch (Code) {
 		  case COD_OPTION_WIN:
 		  case COD_ABOUT_WIN:
-		    NewWindow = Code == COD_OPTION_WIN ? OptionWin : AboutWin;
+		  case COD_DISPLAY_WIN:
+		    if (Code == COD_OPTION_WIN)
+			UpdateOptionWin(), NewWindow = OptionWin;
+		    else if (Code == COD_ABOUT_WIN)
+			NewWindow = AboutWin;
+		    else if (Code == COD_DISPLAY_WIN)
+			NewWindow = DisplayWin, UpdateDisplayWin(DisplayWin);
+		    else
+			break;
+		    
 		    if (NewWindow->Screen)
 			Act(UnMap,NewWindow)(NewWindow);
 		    NewWindow->Left=Screen->Left+(udat)20;
@@ -280,21 +341,27 @@ static void BuiltinH(msgport *MsgPort) {
 		    Act(Map,NewWindow)(NewWindow, Screen);
 		    Builtin_MsgPort->WakeUp = TIMER_ALWAYS;
 		    break;
+
+		  case COD_REFRESH:
+		    RefreshVideo();
+		    break;
+		    
 		  case COD_QUIT:
 		    Quit(0);
 		    break;
+		    
 		  case COD_SUSPEND:
-		    QuitHW();
+		    SuspendHW(TRUE);
 		    
 		    kill(getpid(), SIGSTOP);
 		    
-		    if (InitHW(origHW))
-			break;
-		    /* else
-		     *  FALLTHROUGH */
-		  case COD_DETACH:
-		    doDetachHW();
+		    (void)RestartHW(TRUE);
 		    break;
+
+		  case COD_DETACH:
+		    QuitHW();
+		    break;
+		    
 #if defined(CONF_MODULES) && !defined(CONF_TERM)
 		  case COD_TERM_ON:
 		    if (!DlLoad(TermSo))
@@ -411,8 +478,16 @@ static void BuiltinH(msgport *MsgPort) {
 	Clock_Update();
 }
 
+void FullUpdateListWin(window *listWin);
 
-    
+void InstallRemoveListWinHook(window *listWin) {    
+    if (listWin == ListWin) {
+	if (ListWin->Screen)
+	    Act(InstallHook,ListWin)(ListWin, FullUpdateListWin, &ListWin->Screen->FnHookWindow);
+	else
+	    Act(RemoveHook,ListWin)(ListWin, FullUpdateListWin, ListWin->WhereHook);
+    }
+}
 
 void UpdateListWin(void) {
     screen *Screen = All->FirstScreen;
@@ -432,24 +507,23 @@ void UpdateListWin(void) {
 }
 
 void FullUpdateListWin(window *listWin) {
-    if (listWin != ListWin || !ListWin->Screen)
-	return;
-        
-    ResizeWindow(ListWin, ListWin->MinXWidth - ListWin->XWidth, ListWin->MinYWidth - ListWin->YWidth);
+    if (listWin == ListWin && ListWin->Screen) {
+	ResizeRelWindow(ListWin, ListWin->MinXWidth - ListWin->XWidth, ListWin->MinYWidth - ListWin->YWidth);
     
-    UpdateListWin();
-    
-    DrawAreaWindow(ListWin, FALSE);
+	UpdateListWin();
+	
+	DrawAreaWindow(ListWin, FALSE);
+    }
 }
 
 
     
 byte InitBuiltin(void) {
     window *Window;
-    byte *greeting = "\n"
+    byte *s, *greeting = "\n"
 	"                TWIN             \n"
 	"        Text WINdows manager     \n\n"
-	"          Version 0.2.8 by       \n\n"
+	"          Version 0.3.0 by       \n\n"
 	"        Massimiliano Ghilardi    \n\n"
 	"         <max@Linuz.sns.it>      ";
     uldat grlen = strlen(greeting);
@@ -466,9 +540,11 @@ byte InitBuiltin(void) {
 	Info4Menu(Builtin_Menu, ROW_ACTIVE, (uldat)42, " Hit PAUSE or Mouse Right Button for Menu ", "tttttttttttttttttttttttttttttttttttttttttt") &&
 	
 	(Window=Win4Menu(Builtin_Menu)) &&
-	Row4Menu(Window, COD_CLOCK_WIN, ROW_ACTIVE, 9, " Clock   ") &&
-	Row4Menu(Window, COD_OPTION_WIN,ROW_ACTIVE, 9, " Options ") &&
-	Row4Menu(Window, COD_ABOUT_WIN, ROW_ACTIVE, 9, " About   ") &&
+	Row4Menu(Window, COD_REFRESH,    ROW_ACTIVE, 9, " Refresh ") &&
+	Row4Menu(Window, COD_CLOCK_WIN,  ROW_ACTIVE, 9, " Clock   ") &&
+	Row4Menu(Window, COD_OPTION_WIN, ROW_ACTIVE, 9, " Options ") &&
+	Row4Menu(Window, COD_DISPLAY_WIN,ROW_ACTIVE, 9, " Display ") &&
+	Row4Menu(Window, COD_ABOUT_WIN,  ROW_ACTIVE, 9, " About   ") &&
 	Item4Menu(Builtin_Menu, Window, TRUE, 3, " ð ") &&
 	
 	(Window=Win4Menu(Builtin_Menu)) &&
@@ -527,15 +603,35 @@ byte InitBuiltin(void) {
 	 (FnWindow, (udat)9, " Options ", NULL, Builtin_Menu, COL(HIGH|BLACK,BLACK),
 	  NOCURSOR, WINDOW_WANT_MOUSE|WINDOW_DRAG|WINDOW_CLOSE,WINFL_USE_DEFCOL,
 	  (udat)42, (udat)16,(udat)0)) &&
-	
+
+	(DisplayWin = Do(Create,Window)
+	 (FnWindow, (udat)9, " Display ", NULL, Builtin_Menu, COL(HIGH|BLACK,WHITE),
+	  NOCURSOR,
+	  WINDOW_WANT_MOUSE|WINDOW_DRAG|WINDOW_RESIZE|WINDOW_CLOSE
+	  |WINDOW_X_BAR|WINDOW_Y_BAR,
+	  WINFL_USE_DEFCOL|WINFL_SEL_ROWCURR,
+	  (udat)33, (udat)10,(udat)0)) &&
+
 	(ListWin = Do(Create,Window)
 	 (FnWindow, (udat)13, " Window List ", NULL, Builtin_Menu, COL(WHITE,BLUE),
-	  NOCURSOR, WINDOW_WANT_KEYS|WINDOW_WANT_MOUSE|WINDOW_DRAG|WINDOW_RESIZE|WINDOW_CLOSE
-	  |WINDOW_X_BAR|WINDOW_Y_BAR|WINDOW_TRANSIENT, WINFL_SEL_ROWCURR|WINFL_USE_DEFCOL,
+	  NOCURSOR,
+	  WINDOW_WANT_KEYS|WINDOW_WANT_MOUSE|WINDOW_DRAG|WINDOW_RESIZE|WINDOW_CLOSE
+	  |WINDOW_X_BAR|WINDOW_Y_BAR,
+	  WINFL_SEL_ROWCURR|WINFL_USE_DEFCOL,
 	  (udat)17, (udat)9, (udat)0)) &&
 
-	(ButtonOK_About=Do(CreateButton,Gadget)(FnGadget, AboutWin, (udat)8, (udat)1, (byte)0x70)) &&
 	Act(WriteRow,AboutWin)(AboutWin, grlen, greeting) &&
+	
+	(ButtonOK_About=Do(CreateButton,Gadget)(FnGadget, AboutWin, (udat)8, (udat)1, (byte)0x70)) &&
+
+	(ButtonRemove=Do(CreateButton,Gadget)(FnGadget, DisplayWin, (udat)8, (udat)1, (byte)0x70)) &&
+	(ButtonUpdate=Do(CreateButton,Gadget)(FnGadget, DisplayWin, (udat)8, (udat)1, (byte)0x70)) &&
+
+	Do(Create,Gadget)(FnGadget, DisplayWin, COL(BLACK,WHITE), COL(BLACK,WHITE),
+			  COL(BLACK,WHITE), COL(BLACK,WHITE),
+			  0, GADGET_USE_DEFCOL|GADGET_DISABLED, 0, 0, 11, 8, 0x1,
+			  ((s = AllocMem(11*8)), WriteMem(s, ' ', 11*8), s),
+			  NULL, NULL, NULL, NULL, NULL, NULL, NULL) &&
 	
 	Do(Create,Gadget)(FnGadget, OptionWin, COL(BLACK,WHITE), COL(HIGH|WHITE,GREEN),
 			  COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
@@ -600,7 +696,17 @@ byte InitBuiltin(void) {
 			       COL(WHITE,BLUE), COL(HIGH|BLUE,WHITE), COL(HIGH|BLACK,BLUE), COL(HIGH|BLACK,BLACK));
 	Act(Configure,ListWin)(ListWin, 1<<2 | 1<<3, 0, 0, (udat)17, (udat)4, 0, 0);
 
+	Act(SetColors,DisplayWin)(DisplayWin, 0x1FF, (hwcol)0x7A, (hwcol)0x7F, (hwcol)0x79, (hwcol)0xF9, (hwcol)0x7F,
+				  (hwcol)0x70, (hwcol)0x20, (hwcol)0x78, (hwcol)0x08);
+
+	Act(InstallHook,DisplayWin)(DisplayWin, UpdateDisplayWin, &All->FnHookDisplayHW);
+	ListWin->MapUnMapHook = InstallRemoveListWinHook;
+	
 	Act(FillButton,ButtonOK_About)(ButtonOK_About, COD_OK, (udat)15, (udat)11, (udat)0, "   OK   ", (byte)0x2F, (byte)0x28);
+
+	Act(FillButton,ButtonRemove)(ButtonRemove, COD_D_REMOVE, (udat)1, (udat)2, (udat)0, " Remove ", (byte)0x2F, (byte)0x28);
+	Act(FillButton,ButtonUpdate)(ButtonUpdate, COD_D_UPDATE, (udat)1, (udat)5, (udat)0, " Update ", (byte)0x2F, (byte)0x28);
+
 	OptionWin->CurX = 25; OptionWin->CurY = 2;
 	Act(WriteRow,OptionWin)(OptionWin, 10, "  X Shadow");
 	OptionWin->CurX = 25; OptionWin->CurY = 3;
@@ -626,8 +732,6 @@ byte InitBuiltin(void) {
 #endif
 
 	UpdateOptionWin();
-	
-	ListWin->TransientHook = FullUpdateListWin;
 	
 	return TRUE;
     }

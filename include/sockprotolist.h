@@ -1,6 +1,3 @@
-#ifndef _TW_SOCKPROTOLIST_H
-#define _TW_SOCKPROTOLIST_H
-
 EL(FindFunction)
 EL(SyncSocket)
 EL(CanCompress)
@@ -24,6 +21,7 @@ EL(WriteRowWindow)
 EL(SetColTextWindow)
 EL(SetColorsWindow)
 EL(ConfigureWindow)
+EL(ResizeWindow)
 EL(GotoXYWindow)
 EL(SearchGadgetWindow)
 EL(Create4MenuMenuItem)
@@ -44,5 +42,3 @@ EL(FirstMenuItem)
 EL(PrevObj)
 EL(NextObj)
 EL(ParentObj)
-
-#endif /* _TW_SOCKPROTOLIST_H */

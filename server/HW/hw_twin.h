@@ -1,3 +1,3 @@
 
-display_hw *TW_InitHW(byte *arg);
+byte TW_InitHW(void);
 

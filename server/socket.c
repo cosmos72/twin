@@ -185,7 +185,7 @@ static byte *RemoteWriteFillQueue(uldat Slot, uldat *len) {
 /* compress an uncompressed slot */
 static byte RemoteGzip(uldat Slot) {
     uldat slot = LS.pairSlot, delta;
-    z_streamp z = (z_streamp)ls.Private;
+    z_streamp z = (z_streamp)ls.PrivateData;
     int zret = Z_OK;
     
     /* compress the queue */
@@ -224,7 +224,7 @@ static byte RemoteGzipFlush(uldat Slot) {
 
 static byte RemoteGunzip(uldat Slot) {
     uldat slot = LS.pairSlot, delta;
-    z_streamp z = (z_streamp)ls.Private;
+    z_streamp z = (z_streamp)ls.PrivateData;
     int zret = Z_OK;
     
     /* uncompress the queue */
@@ -264,16 +264,14 @@ static void ShutdownGzip(uldat Slot);
 /* back-end of some libTw utility functions */
 
 
-static void AttachHW(byte len, byte *arg, byte redirect);
-static void DetachHW(void);
+static void AttachHW(uldat len, byte *arg, byte redirect);
+static byte DetachHW(uldat len, byte *arg);
 static void SetFontTranslation(byte trans[0x80]);
 
 static byte CanCompress(void);
 static byte DoCompress(byte on_off);
 
-static void NeedResizeDisplay(void) {
-    All->NeedHW |= NEEDResizeDisplay;
-}
+static void NeedResizeDisplay(void);
 
 static void sockShutDown(msgport *MsgPort) {
     if (MsgPort->RemoteData.FdSlot < FdTop)
@@ -282,6 +280,11 @@ static void sockShutDown(msgport *MsgPort) {
 
 static byte SyncSocket(void) {
     return TRUE;
+}
+
+static void ResizeWindow(window *Window, udat X, udat Y) {
+    if (Window)
+	ResizeRelWindow(Window, X - Window->XWidth, Y - Window->YWidth);
 }
 
 static screen *FirstScreen(void) {
@@ -670,7 +673,7 @@ static void Reply(uldat code, uldat len, void *data) {
     buf[1] = RequestN;
     buf[2] = code;
     (void)RemoteWriteQueue(Slot, 3*sizeof(uldat), buf);
-    if (len && data)
+    if (len)
 	(void)RemoteWriteQueue(Slot, len, data);
 }
 
@@ -823,7 +826,7 @@ static void unixSocketIO(int fd, uldat slot) {
     int len = sizeof(un_addr);
     if ((fd = accept(unixFd, (struct sockaddr *)&un_addr, &len)) >= 0) {
 	/* programs on the unix socket are always authorized */
-	if ((Slot = RegisterRemote(fd, SocketIO)) != NOSLOT) {
+	if ((Slot = RegisterRemoteFd(fd, SocketIO)) != NOSLOT) {
 	    fcntl(fd, F_SETFL, O_NONBLOCK);
 	    fcntl(fd, F_SETFD, FD_CLOEXEC);
 	    if (SendTwinMagic() && Send(GO_MAGIC))
@@ -838,7 +841,7 @@ static void inetSocketIO(int fd, uldat slot) {
     struct sockaddr_in in_addr;
     int len = sizeof(in_addr);
     if ((fd = accept(inetFd, (struct sockaddr *)&in_addr, &len)) >= 0) {
-	if ((Slot = RegisterRemote(fd, Wait4Auth)) != NOSLOT) {
+	if ((Slot = RegisterRemoteFd(fd, Wait4Auth)) != NOSLOT) {
 	    fcntl(fd, F_SETFL, O_NONBLOCK);
 	    fcntl(fd, F_SETFD, FD_CLOEXEC);
 	    if (SendTwinMagic() && Send(WAIT_MAGIC) && SendChallenge())
@@ -852,24 +855,39 @@ static void inetSocketIO(int fd, uldat slot) {
 void sockKillSlot(uldat slot) {
     msgport *MsgPort;
     
-#ifdef CONF_SOCKET_GZ
-    if (ls.pairSlot != NOSLOT) {
-	if (ls.Fd != specFD)
-	    /* compressed socket, use the other one */
-	    slot = ls.pairSlot;
+    if (slot != NOSLOT) {
 	
-	/* uncompressed socket: shutdown compression then close */
-	ShutdownGzip(slot);
+#ifdef CONF_SOCKET_GZ
+	if (ls.pairSlot != NOSLOT) {
+	    if (ls.Fd != specFD)
+		/* compressed socket, use the other one */
+		slot = ls.pairSlot;
+	
+	    /* uncompressed socket: shutdown compression then close */
+	    ShutdownGzip(slot);
 
-	UnRegisterRemote(ls.pairSlot);
-    }
+	    UnRegisterRemote(ls.pairSlot);
+	}
 #endif
 	
-    if ((MsgPort = RemoteGetMsgPort(slot)))
-	Delete(MsgPort); /* and all its children ! */
-    close(ls.Fd);
-    UnRegisterRemote(slot);
+	if ((MsgPort = RemoteGetMsgPort(slot))) {
+	    if (MsgPort->AttachHW) {
+		/* avoid KillSlot <-> DeleteDisplayHW infinite recursion */
+		if (!MsgPort->AttachHW->Quitted) {
+		    MsgPort->AttachHW->Quitted = TRUE;
+		    Delete(MsgPort->AttachHW);
+		}
+	    }
+
+	    Delete(MsgPort); /* and all its children ! */
+	}
+	
+	if (ls.Fd >= 0)
+	    close(ls.Fd);
+	UnRegisterRemote(slot);
+    }
 }
+
 
 static void SocketIO(int fd, uldat slot) {
     uldat gzSlot, len, Funct;
@@ -946,136 +964,162 @@ static void SocketIO(int fd, uldat slot) {
     }
 }
 
-static void SocketH(msgport *MsgPort) {
-    msg *Msg;
+static void sockSendMsg(msgport *MsgPort, msg *Msg) {
     tevent_any Event = (tevent_any)0;
     uldat Len = 0, Tot;
     byte *t, Easy = FALSE;
+
+    RequestN = MSG_MAGIC;
+    Fd = MsgPort->RemoteData.Fd;
+    Slot = MsgPort->RemoteData.FdSlot;
+	
+    switch (Msg->Type) {
+#if defined(CONF_MODULES) || defined (CONF_HW_DISPLAY)
+      case MSG_DISPLAY:
+	Reply(Msg->Type, Len = sizeof(twindow) + 4*sizeof(udat) + Msg->Event.EventDisplay.Len, NULL);
+
+	if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
+	    t += Tot - Len;
+	    
+	    Push(t, twindow, NOID); /* not used here */
+	    if (sizeof(event_display) == sizeof(window *) + 4*sizeof(dat) + sizeof(byte *)) {
+		PushV(t, 4*sizeof(dat), &Msg->Event.EventDisplay.Code);
+	    } else {
+		Push(t, udat,    Msg->Event.EventDisplay.Code);
+		Push(t, udat,    Msg->Event.EventDisplay.Len);
+		Push(t, udat,    Msg->Event.EventDisplay.X);
+		Push(t, udat,    Msg->Event.EventDisplay.Y);
+	    }
+	    PushV(t, Msg->Event.EventDisplay.Len, Msg->Event.EventDisplay.Data);
+	}
+	break;
+#endif /* defined(CONF_MODULES) || defined (CONF_HW_DISPLAY) */
+      case MSG_WINDOW_KEY:
+	if (sizeof(event_keyboard) == sizeof(twindow) + 3*sizeof(dat) + 2*sizeof(byte)) {
+	    Easy = TRUE;
+	    break;
+	}
+	Reply(Msg->Type, Len = sizeof(twindow) + 3*sizeof(udat) + 2*sizeof(byte) + Msg->Event.EventKeyboard.SeqLen, NULL);
+	if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
+	    t += Tot - Len;
+	    Push(t, twindow, Obj2Id(Msg->Event.EventKeyboard.Window));
+	    Push(t, udat,    Msg->Event.EventKeyboard.Code);
+	    Push(t, udat,    Msg->Event.EventKeyboard.FullShiftFlags);
+	    Push(t, udat,    Msg->Event.EventKeyboard.SeqLen);
+	    Push(t, udat,    Msg->Event.EventKeyboard.pad);
+	    PushV(t, Msg->Event.EventKeyboard.SeqLen+1, Event->EventKeyboard.AsciiSeq);
+	}
+	break;
+      case MSG_WINDOW_MOUSE:
+	if (sizeof(event_mouse) == sizeof(twindow) + 4*sizeof(dat)) {
+	    Easy = TRUE;
+	    break;
+	}
+	Reply(Msg->Type, Len = sizeof(twindow) + 4*sizeof(udat), NULL);
+	if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
+	    t += Tot - Len;
+	    Push(t, twindow, Obj2Id(Msg->Event.EventMouse.Window));
+	    Push(t, udat,    Msg->Event.EventMouse.Code);
+	    Push(t, udat,    Msg->Event.EventMouse.FullShiftFlags);
+	    Push(t, dat,     Msg->Event.EventMouse.X);
+	    Push(t, dat,     Msg->Event.EventMouse.Y);
+	}
+	break;
+      case MSG_WINDOW_CHANGE:
+	if (sizeof(event_window) == sizeof(twindow) + 4*sizeof(dat)) {
+	    Easy = TRUE;
+	    break;
+	}
+	Reply(Msg->Type, Len = sizeof(twindow) + 4*sizeof(dat), NULL);
+	if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
+	    t += Tot - Len;
+	    Push(t, twindow, Obj2Id(Msg->Event.EventWindow.Window));
+	    Push(t, udat,    Msg->Event.EventWindow.Code);
+	    Push(t, udat,    Msg->Event.EventWindow.XWidth);
+	    Push(t, udat,    Msg->Event.EventWindow.YWidth);
+	}
+	break;
+      case MSG_WINDOW_GADGET:
+	if (sizeof(event_gadget) == sizeof(twindow) + 2*sizeof(dat)) {
+	    Easy = TRUE;
+	    break;
+	}
+	Reply(Msg->Type, Len = sizeof(twindow) + 2*sizeof(dat), NULL);
+	if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
+	    t += Tot - Len;
+	    Push(t, twindow, Obj2Id(Msg->Event.EventGadget.Window));
+	    Push(t, udat,    Msg->Event.EventGadget.Code);
+	    Push(t, udat,    Msg->Event.EventGadget.pad);
+	}
+	break;
+      case MSG_MENU_ROW:
+	if (sizeof(event_menu) == sizeof(twindow) + 2*sizeof(udat) + sizeof(tmenu)) {
+	    Easy = TRUE;
+	    break;
+	}
+	Reply(Msg->Type, Len = sizeof(twindow) + 2*sizeof(dat) + sizeof(tmenu), NULL);
+	if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
+	    t += Tot - Len;
+	    Push(t, twindow, Obj2Id(Msg->Event.EventMenu.Window));
+	    Push(t, udat,    Msg->Event.EventMenu.Code);
+	    Push(t, udat,    Msg->Event.EventMenu.pad);
+	    Push(t, tmenu,   Obj2Id(Msg->Event.EventMenu.Menu));
+	}
+	break;
+      case MSG_CLIPBOARD:
+	if (sizeof(event_clipboard) == sizeof(twindow) + 4*sizeof(dat)) {
+	    /* easy */
+	    Easy = TRUE;
+	    break;
+	}
+	/* not so easy */
+	if (!All->ClipLen)
+	    return;
+	Reply(Msg->Type, Len = sizeof(twindow) + 4*sizeof(dat) + 2*sizeof(ldat) + All->ClipLen, NULL);
+	if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
+	    t += Tot - Len;
+	    Push(t, twindow, Obj2Id(Msg->Event.EventClipBoard.Window));
+	    Push(t, udat,    Msg->Event.EventClipBoard.Code);
+	    Push(t, udat,    Msg->Event.EventClipBoard.FullShiftFlags);
+	    Push(t, dat,     Msg->Event.EventClipBoard.X);
+	    Push(t, dat,     Msg->Event.EventClipBoard.Y);
+	    Push(t, uldat,   All->ClipMagic);
+	    Push(t, uldat,   All->ClipLen);
+	    PushV(t, All->ClipLen, All->ClipData);
+	}
+	break;
+      default:
+	break;
+    }
+    if (Easy) {
+	Msg->Event.EventCommon.Window = (void *)Obj2Id(Msg->Event.EventCommon.Window);
+	if (Msg->Type == MSG_MENU_ROW)
+	    Msg->Event.EventMenu.Menu = (void *)Obj2Id(Msg->Event.EventMenu.Menu);
+	if (Msg->Type != MSG_CLIPBOARD)
+	    Reply(Msg->Type, Msg->Len, &Msg->Event);
+	else if (All->ClipLen) {
+	    uldat buf[3];
+	    buf[0] = (2 + 2) * sizeof(uldat) + Msg->Len + All->ClipLen;
+	    buf[1] = RequestN;
+	    buf[2] = Msg->Type;
+	    (void)RemoteWriteQueue(Slot, 3*sizeof(uldat), buf);
+	    (void)RemoteWriteQueue(Slot, Msg->Len, &Msg->Event);
+	    buf[0] = All->ClipMagic;
+	    buf[1] = All->ClipLen;
+	    (void)RemoteWriteQueue(Slot, 2*sizeof(uldat), buf);
+	    (void)RemoteWriteQueue(Slot, All->ClipLen, All->ClipData);
+	}
+    }
+}
+
+static void SocketH(msgport *MsgPort) {
+    msg *Msg;
     
     while ((Msg=MsgPort->FirstMsg)) {
 	Remove(Msg);
 	
-	RequestN = MSG_MAGIC;
-	Fd = MsgPort->RemoteData.Fd;
-	Slot = MsgPort->RemoteData.FdSlot;
+	sockSendMsg(MsgPort, Msg);
 	
-	switch (Msg->Type) {
-	  case MSG_WINDOW_KEY:
-	    if (sizeof(event_keyboard) == sizeof(twindow) + 3*sizeof(dat) + 2*sizeof(byte)) {
-		Easy = TRUE;
-		break;
-	    }
-	    Reply(Msg->Type, Len = sizeof(twindow) + 3*sizeof(udat) + 2*sizeof(byte) + Msg->Event.EventKeyboard.SeqLen, NULL);
-	    if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
-		t += Tot - Len;
-		Push(t, twindow, Obj2Id(Msg->Event.EventKeyboard.Window));
-		Push(t, udat,    Msg->Event.EventKeyboard.Code);
-		Push(t, udat,    Msg->Event.EventKeyboard.FullShiftFlags);
-		Push(t, udat,    Msg->Event.EventKeyboard.SeqLen);
-		Push(t, udat,    Msg->Event.EventKeyboard.pad);
-		PushV(t, Msg->Event.EventKeyboard.SeqLen+1, Event->EventKeyboard.AsciiSeq);
-	    }
-	    break;
-	  case MSG_WINDOW_MOUSE:
-	    if (sizeof(event_mouse) == sizeof(twindow) + 4*sizeof(dat)) {
-		Easy = TRUE;
-		break;
-	    }
-	    Reply(Msg->Type, Len = sizeof(twindow) + 4*sizeof(udat), NULL);
-	    if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
-		t += Tot - Len;
-		Push(t, twindow, Obj2Id(Msg->Event.EventMouse.Window));
-		Push(t, udat,    Msg->Event.EventMouse.Code);
-		Push(t, udat,    Msg->Event.EventMouse.FullShiftFlags);
-		Push(t, dat,     Msg->Event.EventMouse.X);
-		Push(t, dat,     Msg->Event.EventMouse.Y);
-	    }
-	    break;
-	  case MSG_WINDOW_CHANGE:
-	    if (sizeof(event_window) == sizeof(twindow) + 4*sizeof(dat)) {
-		Easy = TRUE;
-		break;
-	    }
-	    Reply(Msg->Type, Len = sizeof(twindow) + 4*sizeof(dat), NULL);
-	    if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
-		t += Tot - Len;
-		Push(t, twindow, Obj2Id(Msg->Event.EventWindow.Window));
-		Push(t, udat,    Msg->Event.EventWindow.Code);
-		Push(t, udat,    Msg->Event.EventWindow.XWidth);
-		Push(t, udat,    Msg->Event.EventWindow.YWidth);
-	    }
-	    break;
-	  case MSG_WINDOW_GADGET:
-	    if (sizeof(event_gadget) == sizeof(twindow) + 2*sizeof(dat)) {
-		Easy = TRUE;
-		break;
-	    }
-	    Reply(Msg->Type, Len = sizeof(twindow) + 2*sizeof(dat), NULL);
-	    if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
-		t += Tot - Len;
-		Push(t, twindow, Obj2Id(Msg->Event.EventGadget.Window));
-		Push(t, udat,    Msg->Event.EventGadget.Code);
-		Push(t, udat,    Msg->Event.EventGadget.pad);
-	    }
-	    break;
-	  case MSG_MENU_ROW:
-	    if (sizeof(event_menu) == sizeof(twindow) + 2*sizeof(udat) + sizeof(tmenu)) {
-		Easy = TRUE;
-		break;
-	    }
-	    Reply(Msg->Type, Len = sizeof(twindow) + 2*sizeof(dat) + sizeof(tmenu), NULL);
-	    if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
-		t += Tot - Len;
-		Push(t, twindow, Obj2Id(Msg->Event.EventMenu.Window));
-		Push(t, udat,    Msg->Event.EventMenu.Code);
-		Push(t, udat,    Msg->Event.EventMenu.pad);
-		Push(t, tmenu,   Obj2Id(Msg->Event.EventMenu.Menu));
-	    }
-	    break;
-	  case MSG_CLIPBOARD:
-	    if (sizeof(event_clipboard) == sizeof(twindow) + 4*sizeof(dat)) {
-		/* easy */
-		Easy = TRUE;
-		break;
-	    }
-	    /* not so easy */
-	    if (!All->ClipLen)
-		continue;
-	    Reply(Msg->Type, Len = sizeof(twindow) + 4*sizeof(dat) + 2*sizeof(ldat) + All->ClipLen, NULL);
-	    if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
-		t += Tot - Len;
-		Push(t, twindow, Obj2Id(Msg->Event.EventClipBoard.Window));
-		Push(t, udat,    Msg->Event.EventClipBoard.Code);
-		Push(t, udat,    Msg->Event.EventClipBoard.FullShiftFlags);
-		Push(t, dat,     Msg->Event.EventClipBoard.X);
-		Push(t, dat,     Msg->Event.EventClipBoard.Y);
-		Push(t, uldat,   All->ClipMagic);
-		Push(t, uldat,   All->ClipLen);
-		PushV(t, All->ClipLen, All->ClipData);
-	    }
-	    break;
-	  default:
-	    break;
-	}
-	if (Easy) {
-	    Msg->Event.EventCommon.Window = (void *)Obj2Id(Msg->Event.EventCommon.Window);
-	    if (Msg->Type == MSG_MENU_ROW)
-		Msg->Event.EventMenu.Menu = (void *)Obj2Id(Msg->Event.EventMenu.Menu);
-	    if (Msg->Type != MSG_CLIPBOARD)
-		Reply(Msg->Type, Msg->Len, &Msg->Event);
-	    else if (All->ClipLen) {
-		uldat buf[3];
-		buf[0] = (2 + 2) * sizeof(uldat) + Msg->Len + All->ClipLen;
-		buf[1] = RequestN;
-		buf[2] = Msg->Type;
-		(void)RemoteWriteQueue(Slot, 3*sizeof(uldat), buf);
-		(void)RemoteWriteQueue(Slot, Msg->Len, &Msg->Event);
-		buf[0] = All->ClipMagic;
-		buf[1] = All->ClipLen;
-		(void)RemoteWriteQueue(Slot, 2*sizeof(uldat), buf);
-		(void)RemoteWriteQueue(Slot, All->ClipLen, All->ClipData);
-	    }
-	}
 	Delete(Msg);
     }
 }
@@ -1111,11 +1155,11 @@ static void FixupGzip(uldat slot) {
 
 /* finish shutting down compression (called on the uncompressed slot) */
 static void ShutdownGzip(uldat slot) {
-    inflateEnd((z_streamp)ls.Private);
-    deflateEnd((z_streamp)ls_p.Private);
+    inflateEnd((z_streamp)ls.PrivateData);
+    deflateEnd((z_streamp)ls_p.PrivateData);
 
-    FreeMem(ls.Private);
-    FreeMem(ls_p.Private);
+    FreeMem(ls.PrivateData);
+    FreeMem(ls_p.PrivateData);
     
     ls.Fd = ls_p.Fd;
     ls_p.Fd = specFD;
@@ -1140,7 +1184,7 @@ static byte DoCompress(byte on_off) {
     z_streamp z1 = NULL, z2 = NULL;
     
     if (on_off) {
-	if ((slot = RegisterRemote(specFD, SocketIO)) != NOSLOT &&
+	if ((slot = RegisterRemoteFd(specFD, SocketIO)) != NOSLOT &&
 	    (z1 = AllocMem(sizeof(*z1))) &&
 	    (z2 = AllocMem(sizeof(*z2)))) {
 	    
@@ -1153,10 +1197,10 @@ static byte DoCompress(byte on_off) {
 		
 		    /* ok, start pairing the two slots */
 		    ls.pairSlot = Slot;
-		    ls.Private = (void *)z1;
+		    ls.PrivateData = (void *)z1;
 		    
 		    LS.pairSlot = slot;
-		    LS.Private = (void *)z2;
+		    LS.PrivateData = (void *)z2;
 		    LS.PrivateAfterFlush = FixupGzip;
 		    
 		    /* we have ls.Fd == specFD. it will be fixed by LS.PrivateAfterFlush() */
@@ -1191,30 +1235,69 @@ static byte DoCompress(byte on_off) {
 #endif /* CONF_SOCKET_GZ */
 
 
+static void NeedResizeDisplay(void){
+    if (LS.MsgPort && LS.MsgPort->AttachHW)
+	ResizeDisplayPrefer(LS.MsgPort->AttachHW);
+}
 
 
 
-
-static void AttachHW(byte len, byte *arg, byte redirect) {
-    byte buf[2] = "\0", ret;
+static void AttachHW(uldat len, byte *arg, byte redirect) {
+    display_hw *D_HW;
+    byte buf[2] = "\0";
+    int errfd;
+    
+    if (!LS.MsgPort) {
+	if (redirect)
+	    write(LS.Fd, "twin: AttachHW(): client did not create a MsgPort\n\0", 52);
+	else
+	    write(LS.Fd, buf, 2);
+	return;
+    }
     
     if (redirect) {
-	close(2);
-	dup2(LS.Fd, 2);
+	if ((errfd = dup(2)) >= 0) {
+	    close(2);
+	    dup2(LS.Fd, 2);
+	} else
+	    redirect = 0;
     }
 	
-    if ((ret = doAttachHW(len, arg, redirect)))
-	All->attach = Slot;
-    buf[1] = ret;
-    write(LS.Fd, buf, 2);
+    if ((D_HW = AttachDisplayHW(len, arg, Slot))) {
+	if (D_HW->NeedHW & NEEDPersistentSlot)
+	    LS.MsgPort->AttachHW = D_HW;
+	else
+	    D_HW->attach = NOSLOT; /* we don't need it => forget it */
+    }
     
-    if (redirect)
-	DevNullStderr();
+    if (D_HW) {
+	buf[1]++;
+	if (D_HW->NeedHW & NEEDPersistentSlot)
+	    buf[1]++;
+    }
+    write(LS.Fd, buf, 2);
+
+    if (redirect) {
+	/* wait for twattach to display messages... */
+	fd_set set;
+	struct timeval tv = {10,0};
+
+	FD_ZERO(&set);
+	FD_SET(LS.Fd, &set);
+	    
+	while (select(LS.Fd+1, &set, NULL, NULL, &tv) == -1 && errno == EINTR)
+	    ;
+	read(LS.Fd, buf, 1);
+	
+	close(2);
+	dup2(errfd, 2);
+	close(errfd);
+    }
 }
 
 	    
-static void DetachHW(void) {
-    doDetachHW();
+static byte DetachHW(uldat len, byte *arg) {
+    return DetachDisplayHW(len, arg);
 }
 
 static void SetFontTranslation(byte trans[0x80]) {
@@ -1248,7 +1331,7 @@ byte InitSocket(void)
 	    /*setsockopt(unixFd, SOL_SOCKET, SO_REUSEADDR, (void *)&opt, sizeof(opt)) >= 0 &&*/
 	    bind(unixFd, (struct sockaddr *)&addr, sizeof(addr)) >= 0 &&
 	    listen(unixFd, 1) >= 0 &&
-	    (unixSlot = RegisterRemote(unixFd, unixSocketIO)) != NOSLOT) {
+	    (unixSlot = RegisterRemoteFd(unixFd, unixSocketIO)) != NOSLOT) {
 	    
 	    fcntl(unixFd, F_SETFD, FD_CLOEXEC);
 	    CopyStr(addr.sun_path, opt);
@@ -1270,7 +1353,7 @@ byte InitSocket(void)
 	    setsockopt(inetFd, SOL_SOCKET, SO_REUSEADDR, (void *)&opt, sizeof(opt)) >= 0 &&
 	    bind(inetFd, (struct sockaddr *)&addr, sizeof(addr)) >= 0 &&
 	    listen(inetFd, 1) >= 0 &&
-	    (inetSlot = RegisterRemote(inetFd, inetSocketIO)) != NOSLOT) {
+	    (inetSlot = RegisterRemoteFd(inetFd, inetSocketIO)) != NOSLOT) {
 	    
 	    fcntl(inetFd, F_SETFD, FD_CLOEXEC);
 	} else
@@ -1282,6 +1365,7 @@ byte InitSocket(void)
 	    sockF[MaxFunct].Len = strlen(sockF[MaxFunct].name);
     
 	KillSlot = sockKillSlot;
+	SocketSendMsg = sockSendMsg;
 	
 	return TRUE;
     }
@@ -1306,5 +1390,6 @@ void QuitModule(module *Module) {
 	}
     } 
     KillSlot = remoteKillSlot;
+    SocketSendMsg = NULL;
 }
 #endif

@@ -58,8 +58,8 @@ PROTO1Abs(byte,_, Do,Compress,0, byte,_)
 
 PROTO0Abs(void,v, NeedResize,Display,0)
 
-PROTO3Abs(void,v, Attach,HW,0, byte,_, byte,V(A(1)), byte,_)
-PROTO0Abs(void,v, Detach,HW,0)
+PROTO3Abs(void,v, Attach,HW,0, uldat,_, byte,V(A(1)), byte,_)
+PROTO2Abs(byte,_, Detach,HW,0, uldat,_, byte,V(A(1)))
 
 PROTO1Abs(void,v,  Set,FontTranslation,0, byte,V(0x80))
 
@@ -88,6 +88,7 @@ PROTO2(void,v,    SetColText,Window,2, window,x, hwcol,_)
 PROTO11(void,v, SetColors,Window,2, window,x, udat,_, hwcol,_, hwcol,_,
 	hwcol,_, hwcol,_, hwcol,_, hwcol,_, hwcol,_, hwcol,_, hwcol,_)
 PROTO8(void,v,     Configure,Window,2, window,x, byte,_, dat,_, udat,_, udat,_, udat,_, udat,_, udat,_)
+PROTO3Abs(void,v,     Resize,Window,0, window,x, udat,_, udat,_)
 
 PROTO3(gadget,x,SearchGadget,Window,2, window,x, dat,_, dat,_)
 

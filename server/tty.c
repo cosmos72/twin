@@ -24,6 +24,7 @@
 #include "resize.h"
 #include "draw.h"
 #include "hw.h"
+#include "tty.h"
 
 /*
  * VT102 emulator
@@ -39,8 +40,6 @@ static udat kbdFlags = TTY_AUTOWRAP, defaultFlags = TTY_AUTOWRAP;
 static dat   dirty[2][4];
 static uldat dirtyS[2];
 static byte  dirtyN;
-
-static char *StrAltCursKeys = "\033[?1%c";
 
 #define ColText		Win->ColText
 #define State		Data->State
@@ -156,9 +155,18 @@ static void flush_tty(void) {
 	doupdate = TRUE;
     } else
 	doupdate = FALSE;
+
     if (Win == All->FirstScreen->FocusWindow && (doupdate || (*Flags & TTY_UPDATECURSOR)))
 	UpdateCursor();
+
     *Flags &= ~TTY_UPDATECURSOR;
+    
+    /* finally, keyboard focus configuration: */
+    if (*Flags & TTY_NEEDREFOCUS) {
+	*Flags &= ~TTY_NEEDREFOCUS;
+	if (Win == All->FirstScreen->FocusWindow)
+	    KbdFocus(Win);
+    }
 }
 
 /* Note: inverting the screen twice should revert to the original state */
@@ -674,8 +682,7 @@ static void set_mode(byte on_off) {
 	    
 	  case 1:	/* Cursor keys send ^[Ox/^[[x */
 	    CHANGE_BIT(TTY_ALTCURSKEYS, on_off);
-	    printf(StrAltCursKeys, on_off ? 'h' : 'l');
-	    setFlush();
+	    *Flags |= TTY_NEEDREFOCUS;
 	    break;
 	  case 3:	/* 80/132 mode switch unimplemented */
 	    break;
@@ -756,13 +763,7 @@ static void setterm_command(void) {
 	break;
       case 10: /* set bell frequency in Hz */
       case 11: /* set bell duration in msec */
-
-	/* let the underlying linux console do the work */
-	if (nPar >= 1)
-	    printf("\033[%d;%d]", Par[0], Par[1]);
-	else
-	    printf("\033[%d]", Par[0]);
-	setFlush();
+	ConfigureHW(Par[0] == 10 ? HW_BELLPITCH : HW_BELLDURATION, nPar == 0, Par[1]);
 	break;
       case 12: /* bring specified console to the front */
 	break;
@@ -893,7 +894,7 @@ INLINE void write_ctrl(byte c) {
       case 0:
 	return;
       case 7:
-	HW->Beep();
+	BeepHW();
 	return;
       case 8:
 	bs();
@@ -989,13 +990,10 @@ INLINE void write_ctrl(byte c) {
 	    break;
 	  case '>':  /* Numeric keypad */
 	    *Flags &= ~TTY_KBDAPPLIC;
-	    printf("\033>");
-	    setFlush();
+	    *Flags |= TTY_NEEDREFOCUS;
 	    break;
 	  case '=':  /* Appl. keypad */
-	    *Flags |= TTY_KBDAPPLIC;
-	    printf("\033=");
-	    setFlush();
+	    *Flags |= TTY_KBDAPPLIC|TTY_NEEDREFOCUS;
 	    break;
 	}
 	break;
@@ -1006,30 +1004,16 @@ INLINE void write_ctrl(byte c) {
 	    WriteMem((byte *)&Par, 0, NPAR * sizeof(uldat));
 	    State = ESpalette;
 	    return;
-	} else if (c=='R') {	/* Reset palette */
-	    printf("\033]R");
-	    setFlush();
-	}
+	} else if (c=='R')	/* Reset palette */
+	    ResetPaletteHW();
 	break;
 
       case ESpalette:
 	if ( (c>='0'&&c<='9') || (c>='A'&&c<='F') || (c>='a'&&c<='f') ) {
 	    Par[nPar++] = (c>'9' ? (c&0xDF)-'A'+10 : c-'0') ;
-	    if (nPar==7) {
-		printf("\033]P%1x%1x%1x%1x%1x%1x%1x", Par[0], Par[1], Par[2], Par[3],
-		       Par[4], Par[5], Par[6]);
-		setFlush();
-		/*
-		int i = Par[0]*3, j = 1;
-		palette[i] = 16*Par[j++];
-		palette[i++] += Par[j++];
-		palette[i] = 16*Par[j++];
-		palette[i++] += Par[j++];
-		palette[i] = 16*Par[j++];
-		palette[i] += Par[j];
-		set_palette();
-		 */
-	    }
+	    if (nPar==7)
+		SetPaletteHW(Par[0], Par[1] * 16 + Par[2],
+			     Par[3] * 16 + Par[4], Par[5] * 16 + Par[6]);
 	}
 	break;
 
@@ -1270,14 +1254,11 @@ window *KbdFocus(window *newWin) {
 	else
 	    newFlags = newWin->TtyData->Flags;
 	
-	if (!(kbdFlags & TTY_KBDAPPLIC) && (newFlags & TTY_KBDAPPLIC))
-	    printf("\033="), setFlush();
-	else if ((kbdFlags & TTY_KBDAPPLIC) && !(newFlags & TTY_KBDAPPLIC))
-	    printf("\033>"), setFlush();
-	if (!(kbdFlags & TTY_ALTCURSKEYS) && (newFlags & TTY_ALTCURSKEYS))
-	    printf(StrAltCursKeys, 'h'), setFlush();
-	else if ((kbdFlags & TTY_ALTCURSKEYS) && !(newFlags & TTY_ALTCURSKEYS))
-	    printf(StrAltCursKeys, 'l'), setFlush();
+	if ((newFlags ^ kbdFlags) & TTY_KBDAPPLIC)
+	    ConfigureHW(HW_KBDAPPLIC, FALSE, newFlags & TTY_KBDAPPLIC);
+	
+	if ((newFlags ^ kbdFlags) & TTY_ALTCURSKEYS)
+	    ConfigureHW(HW_ALTCURSKEYS, FALSE, newFlags & TTY_ALTCURSKEYS);
 	
 	kbdFlags = newFlags;
     }

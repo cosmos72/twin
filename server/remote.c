@@ -26,12 +26,13 @@
 #include "data.h"
 #include "main.h"
 #include "methods.h"
-
+#include "hw.h"
 
 /* variables */
 
 void remoteKillSlot(uldat slot);
 void (*KillSlot)(uldat slot) = remoteKillSlot;
+void (*SocketSendMsg)(msgport *MsgPort, msg *Msg);
 
 fdlist *FdList;
 uldat FdSize, FdTop, FdBottom, FdWQueued;
@@ -120,18 +121,38 @@ void RemoteFlushAll(void) {
     }
 }
 
+void RemoteCouldntWrite(uldat Slot) {
+    if (Slot == NOSLOT || Slot >= FdTop || LS.Fd == NOFD)
+	return;
+    if (LS.extern_couldntwrite == FALSE) {
+	LS.extern_couldntwrite = TRUE;
+	FdWQueued++;
+    }
+    FD_SET(LS.Fd, &save_wfds);
+}
+
+void RemoteCouldWrite(uldat Slot) {
+    if (Slot == NOSLOT || Slot >= FdTop || LS.Fd == NOFD)
+	return;
+    if (LS.extern_couldntwrite == TRUE) {
+	LS.extern_couldntwrite = FALSE;
+	FdWQueued--;
+    }
+    FD_CLR(LS.Fd, &save_wfds);
+}
+
 msgport *RemoteGetMsgPort(uldat Slot) {
     if (Slot < FdTop && LS.Fd != NOFD)
 	return LS.MsgPort;
     return (msgport *)0;
 }
 
-/* Register a Fd, its HandlerIO and eventually its Window */
+/* Register a Fd, its HandlerIO and eventually its HandlerData arg */
 /*
  * On success, return the slot number.
  * On failure, return NOSLOT (-1).
  */
-static uldat _RegisterRemote(int Fd, window *Window, void (*HandlerIO)(int Fd, size_t any)) {
+uldat RegisterRemote(int Fd, void *HandlerData, void (*HandlerIO)(int Fd, size_t any)) {
     uldat Slot, j;
     
     if ((Slot = FdListGet()) == NOSLOT)
@@ -139,12 +160,13 @@ static uldat _RegisterRemote(int Fd, window *Window, void (*HandlerIO)(int Fd, s
     
     LS.Fd = Fd;
     LS.pairSlot = NOSLOT;
-    LS.Window = Window;
+    LS.HandlerData = HandlerData;
     LS.HandlerIO = HandlerIO;
     LS.MsgPort = (msgport *)0;
     LS.WQueue = LS.RQueue = (byte *)0;
     LS.WQlen = LS.WQmax = LS.RQlen = LS.RQmax = (uldat)0;
-    LS.PrivateAfterFlush = LS.Private = LS.PrivateFlush = NULL;
+    LS.PrivateAfterFlush = LS.PrivateData = LS.PrivateFlush = NULL;
+    LS.extern_couldntwrite = FALSE;
     
     if (FdTop <= Slot)
 	FdTop = Slot + 1;
@@ -161,14 +183,14 @@ static uldat _RegisterRemote(int Fd, window *Window, void (*HandlerIO)(int Fd, s
     return Slot;
 }
 
-uldat RegisterRemote(int Fd, void (*HandlerIO)(int Fd, uldat Slot)) {
-    return _RegisterRemote(Fd, (window *)0, (void (*)(int, size_t))HandlerIO);
+uldat RegisterRemoteFd(int Fd, void (*HandlerIO)(int Fd, uldat Slot)) {
+    return RegisterRemote(Fd, (window *)0, (void (*)(int, size_t))HandlerIO);
 }
 
 byte RegisterWindowFdIO(window *Window, void (*HandlerIO)(int Fd, window *Window)) {
     return (Window->RemoteData.FdSlot =
-	      _RegisterRemote(Window->RemoteData.Fd, Window, (void (*)(int, size_t))HandlerIO))
-	    != NOSLOT;
+	    RegisterRemote(Window->RemoteData.Fd, Window, (void (*)(int, size_t))HandlerIO))
+	!= NOSLOT;
 }
 
 /* UnRegister a Fd and related stuff given a slot number */
@@ -186,6 +208,10 @@ void UnRegisterRemote(uldat Slot) {
 	    /* trow away any data still queued :( */
 	    LS.WQlen = 0;
 	    FdWQueued--;
+	}
+	if (LS.extern_couldntwrite == TRUE) {
+	    FdWQueued--;
+	    FD_CLR(LS.Fd, &save_wfds);
 	}
 	LS.RQlen = 0;
 	if (LS.WQueue)
@@ -213,8 +239,6 @@ void UnRegisterRemote(uldat Slot) {
 		break;
 	FdTop = (j == FdBottom) ? j : j + 1;
 	
-	if (All->attach == Slot)
-	    All->attach = NOSLOT;
     }
 }
 
@@ -227,11 +251,23 @@ void UnRegisterWindowFdIO(window *Window) {
 
 void remoteKillSlot(uldat slot) {
     msgport *MsgPort;
-    
-    if ((MsgPort = RemoteGetMsgPort(slot)))
-	Delete(MsgPort); /* and all its children ! */
-    UnRegisterRemote(slot);
-    close(FdList[slot].Fd);
+    if (slot != NOSLOT) {
+	if ((MsgPort = RemoteGetMsgPort(slot))) {
+	    if (MsgPort->AttachHW) {
+		/* avoid KillSlot <-> DeleteDisplayHW infinite recursion */
+		if (!MsgPort->AttachHW->Quitted) {
+		    MsgPort->AttachHW->Quitted = TRUE;
+		    Delete(MsgPort->AttachHW);
+		}
+	    }
+		
+	    Delete(MsgPort); /* and all its children ! */
+	}
+	
+	if (FdList[slot].Fd >= 0)
+	    close(FdList[slot].Fd);
+	UnRegisterRemote(slot);
+    }
 }
 
 void RemoteEvent(int FdCount, fd_set *FdSet) {
@@ -241,8 +277,8 @@ void RemoteEvent(int FdCount, fd_set *FdSet) {
 	if ((fd = LS.Fd) >= 0) {
 	    if (FD_ISSET(fd, FdSet)) {
 		FdCount--;
-		if (LS.Window)
-		    (*(void (*)(int, window *))LS.HandlerIO) (fd, LS.Window);
+		if (LS.HandlerData)
+		    (*(void (*)(int, void *))LS.HandlerIO) (fd, LS.HandlerData);
 		else
 		    (*(void (*)(int, uldat))LS.HandlerIO) (fd, Slot);
 	    }
@@ -303,18 +339,14 @@ void RemoteParanoia(void) {
 	    unsafe = test;
     }
     /* ok, let's trow away 'unsafe-1' fd. */
-    if ((All->keyboard_slot != NOSLOT && safe == FdList[All->keyboard_slot].Fd) ||
-	(All->mouse_slot != NOSLOT && safe == FdList[All->mouse_slot].Fd))
-	/* we are in BIG troubles */
-	Quit(1);
 	
     for (Slot=0; Slot<FdTop; Slot++) {
 	if (safe == LS.Fd) {
 	    UnRegisterRemote(Slot);
 	    
 	    /* let the Handler realize this fd is dead */
-	    if (LS.Window)
-		(*(void (*)(int, window *))(LS.HandlerIO)) (safe, LS.Window);
+	    if (LS.HandlerData)
+		(*(void (*)(int, window *))(LS.HandlerIO)) (safe, LS.HandlerData);
 	    else
 		(*(void (*)(int, uldat))(LS.HandlerIO)) (safe, Slot);
 	    

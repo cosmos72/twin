@@ -25,8 +25,8 @@ void ChangeMenuFirstScreen(menuitem *NewMenuItem, byte ByMouse, byte Flag);
 
 void DragFirstWindow(dat i, dat j);
 void DragWindow(window *Window, dat i, dat j);
-void ResizeFirstWindow(dat i, dat j);
-void ResizeWindow(window *Window, dat i, dat j);
+void ResizeRelFirstWindow(dat i, dat j);
+void ResizeRelWindow(window *Window, dat i, dat j);
 void CenterWindow(window *Window);
 byte ExecScrollFocusWindow(void);
 void ScrollFirstWindow(dat DeltaX, dat DeltaY, byte byXYLogic);

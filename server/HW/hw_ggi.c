@@ -32,41 +32,37 @@
 #include <ggi/ggi.h>
 
 /*
+ * I should flame to death libggi people, as
+ * their idea of having to use ggiEventSelect() instead of plain select()
+ * doesn't allow for multiple simultaneous libggi displays!
+ */
+
+/*
  * TODO
- *	-  speed up text using ggiPuts() for multible chars.
  *	-  use ggiFlushRegion() for better X performance.
  */
 
-
-/* Global Vars */
-
 static int (*gOrigSelect)(int n, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *timeout);
+static display_hw *GGI_HW;
 
-static display_hw GGI;
+struct GGI_data {
+    ggi_visual_t gvis;
+    ggi_mode  gmode;
+    ggi_coord gfont;	/* character size */
 
-static ggi_visual_t gvis;
-static ggi_mode  gmode;
-static ggi_coord gscreen;	/* window size */
-static ggi_coord gfont;		/* character size */
-
-#define L 0x5555
-#define M 0xAAAA
-#define H 0xFFFF
-
-static ggi_pixel gforeground, gbackground, colpixel[MAXCOL+1];
-
-static ggi_color gpalette[MAXCOL+1] = {
-    /* the default colour table, for VGA+ colour systems */
-    {0,0,0}, {0,0,M}, {0,M,0}, {0,M,M}, {M,0,0}, {M,0,M}, {M,M,0}, {M,M,M},
-    {L,L,L}, {L,L,H}, {L,H,L}, {L,H,H}, {H,L,L}, {H,L,H}, {H,H,L}, {H,H,H}
+    ggi_pixel gforeground, gbackground, gcol[MAXCOL+1];
 };
 
-#undef H
-#undef M
-#undef L
+#define GGIdata ((struct GGI_data *)HW->Private)
+#define gvis	(GGIdata->gvis)
+#define gmode	(GGIdata->gmode)
+#define gfont	(GGIdata->gfont)
+#define gforeground	(GGIdata->gforeground)
+#define gbackground	(GGIdata->gbackground)
+#define gcol	(GGIdata->gcol)
 
-#define XY ((udat  *)All->gotoxybuf)
-#define TT ((uldat *)All->cursorbuf)
+#define XY ((udat  *)HW->gotoxybuf)
+#define TT ((uldat *)HW->cursorbuf)
 
 #define WANTED_EVENTS  (emKey | emPointer | emExpose)
 
@@ -87,24 +83,130 @@ static void GGI_SetCursorType(uldat CursorType) {
 static void GGI_Beep(void) {
     /* not exactly clean... */
     putchar('\7');
-    All->NeedHW |= NEEDFlushStdout;
+    NeedHW |= NEEDFlushStdout;
 }
 
-static void GGI_InitPalette(void) {
-    int i;
-    for (i=0; i <= MAXCOL; i++)
-	colpixel[i] = ggiMapColor(gvis, gpalette + i);
+static void GGI_KeyboardEvent(int fd, display_hw *hw) {
+    ggi_event ev;
+    struct timeval tv;
+    dat x, y, dx = 0, dy = 0;
+    byte keys;
+
+    SaveHW;
+    SetHW(hw);
+    
+    x = HW->MouseState.x;
+    y = HW->MouseState.y;
+    keys = HW->MouseState.keys;
+    
+    for (;;) {
+	
+	tv.tv_sec = tv.tv_usec = 0;
+	
+	if (ggiEventPoll(gvis, emAll, &tv) <= 0 || ggiEventRead(gvis, &ev, emAll) <= 0)
+	    break;
+	
+	switch (ev.any.type) {
+
+	  case evKeyPress:
+	  case evKeyRepeat:
+	    /*handle_keyboard(ev.key.sym, ev.key.modifiers, master_fd);*/
+	    break;
+	    
+	  case evExpose:
+	    /*
+	     min_x = MIN(min_x, ev.expose.x / font.x);
+	     min_y = MIN(min_y, ev.expose.y / font.y);
+
+	     max_x = MAX(max_x, (ev.expose.x+ev.expose.w +
+				 font.x - 1) / font.x);
+	     max_y = MAX(max_y, (ev.expose.y+ev.expose.h +
+				 font.y - 1) / font.y);
+	     */
+	    break;
+	    
+	  case evPtrButtonPress:
+	    switch (ev.pbutton.button) {
+	      case GII_PBUTTON_FIRST:
+		keys |= HOLD_LEFT;
+		break;
+	      case GII_PBUTTON_SECOND:
+		keys |= HOLD_RIGHT;
+		break;
+	      case GII_PBUTTON_THIRD:
+		keys |= HOLD_MIDDLE;
+		break;
+	      default:
+		break;
+	    }
+	    break;
+	    
+	  case evPtrButtonRelease:
+	    switch (ev.pbutton.button) {
+	      case GII_PBUTTON_FIRST:
+		keys &= ~HOLD_LEFT;
+		break;
+	      case GII_PBUTTON_SECOND:
+		keys &= ~HOLD_RIGHT;
+		break;
+	      case GII_PBUTTON_THIRD:
+		keys &= ~HOLD_MIDDLE;
+		break;
+	      default:
+		break;
+	    }
+	    break;
+	    
+	  case evPtrRelative:
+	    /*
+	     if (ev.any.type == evPtrRelative) {
+		 x += HW->MouseState.x;
+		 y += HW->MouseState.y;
+	     }
+	     */
+	    break;
+	    
+	  case evPtrAbsolute:
+	    
+	    x = ev.pmove.x / gfont.x;
+	    y = ev.pmove.y / gfont.y;
+	    
+	    x = Max2(x, 0); x = Min2(x, ScreenWidth - 1);
+	    y = Max2(y, 0); y = Min2(y, ScreenHeight - 1);
+	    
+	    dx = ev.pmove.x < gfont.x/2 ? -1 : ScreenWidth *gfont.x - ev.pmove.x <= gfont.x/2 ? 1 : 0;
+	    dy = ev.pmove.y < gfont.y/2 ? -1 : ScreenHeight*gfont.y - ev.pmove.y <= gfont.y/2 ? 1 : 0;
+	    
+	    break;
+	    
+	  default:
+	    break;
+	}
+    }
+    
+    if (keys != HW->MouseState.keys ||
+	((keys || HW->MouseState.keys) &&
+	 (dx || dy || x != HW->MouseState.x || y != HW->MouseState.y)))
+	 
+	 MouseEventCommon(x, y, dx, dy, keys);
+    else {
+	HW->MouseState.keys = keys;
+	HW->MouseState.x = x;
+	HW->MouseState.y = y;
+    }
+    RestoreHW;
 }
 
+/* this can stay static */
 static hwcol _col;
 
 #define GFG(col) \
-    if (gforeground != colpixel[COLFG(col)]) \
-	ggiSetGCForeground(gvis, gforeground = colpixel[COLFG(col)])
+    if (gforeground != gcol[COLFG(col)]) \
+	ggiSetGCForeground(gvis, gforeground = gcol[COLFG(col)])
 
 #define GBG(col) \
-    if (gbackground != colpixel[COLBG(col)]) \
-	ggiSetGCBackground(gvis, gbackground = colpixel[COLBG(col)])
+    if (gbackground != gcol[COLBG(col)]) \
+	ggiSetGCBackground(gvis, gbackground = gcol[COLBG(col)])
 
 #define GDRAW(col, buf, buflen) \
     GFG(col); \
@@ -134,7 +236,6 @@ INLINE void GGI_Mogrify(dat x, dat y, uldat len) {
 		xbegin = x * gfont.x;
 		_col = col;
 	    }
-	    *oV = *V;
 	    buf[buflen++] = HWFONT(*V) ? HWFONT(*V) : ' ';
 	    /* ggiPuts cannot handle '\0' */
 	}
@@ -199,27 +300,25 @@ static void GGI_FlushVideo(void) {
 	for (i=0; i<ScreenHeight*2; i++) {
 	    start = ChangedVideo[i>>1][i&1][0];
 	    end   = ChangedVideo[i>>1][i&1][1];
-	    ChangedVideo[i>>1][i&1][0] = -1;
 	    
 	    if (start != -1)
 		GGI_Mogrify(start, i>>1, end-start+1);
 	}
-	All->NeedHW |= NEEDFlushHW;
+	setFlush();
     }
     /* then, we may have to erase the old cursor */
     if (!c && TT[0] != NOCURSOR && (TT[0] != TT[1] || XY[0] != XY[2] || XY[1] != XY[3])) {
 	GGI_HideCursor(XY[0], XY[1]);
-	All->NeedHW |= NEEDFlushHW;
+	setFlush();
     }
     /* finally, redraw the cursor if */
     /* (we want a cursor and (the burst erased the cursor or the cursor changed)) */
     if (TT[1] != NOCURSOR && (c || TT[0] != TT[1] || XY[0] != XY[2] || XY[1] != XY[3])) {
 	GGI_ShowCursor(XY[2], XY[3], TT[1]);
-	All->NeedHW |= NEEDFlushHW;
+	setFlush();
     }
     
-    ChangedVideoFlag = ChangedMouseFlag = FALSE;
-    ValidOldVideo = TRUE;
+    HW->ChangedMouseFlag = FALSE;
     
     TT[0] = TT[1];
     XY[0] = XY[2];
@@ -228,124 +327,50 @@ static void GGI_FlushVideo(void) {
 
 static void GGI_FlushHW(void) {
     ggiFlush(gvis);
-    All->NeedHW &= ~NEEDFlushHW;
+    clrFlush();
 }
 
 static void GGI_DetectSize(udat *x, udat *y) {
-    *x = gscreen.x;
-    *y = gscreen.y;
+    *x = HW->X;
+    *y = HW->Y;
 }
 
-
-static void GGI_KeyboardEvent(int fd, uldat slot) {
-    ggi_event ev;
-    struct timeval tv;
-    dat x = All->MouseState->x, y = All->MouseState->y, dx = 0, dy = 0;
-    byte keys = All->MouseState->keys;
-    int ret;
-    
-    for (;;) {
-	
-	tv.tv_sec = tv.tv_usec = 0;
-	
-	if (ggiEventPoll(gvis, emAll, &tv) <= 0 || ggiEventRead(gvis, &ev, emAll) <= 0)
-	    break;
-	
-	switch (ev.any.type) {
-
-	  case evKeyPress:
-	  case evKeyRepeat:
-	    /*handle_keyboard(ev.key.sym, ev.key.modifiers, master_fd);*/
-	    break;
-	    
-	  case evExpose:
-	    /*
-	     min_x = MIN(min_x, ev.expose.x / font.x);
-	     min_y = MIN(min_y, ev.expose.y / font.y);
-	     * 
-	     max_x = MAX(max_x, (ev.expose.x+ev.expose.w +
-				 font.x - 1) / font.x);
-	     max_y = MAX(max_y, (ev.expose.y+ev.expose.h +
-				 font.y - 1) / font.y);
-	     */
-	    break;
-	    
-	  case evPtrButtonPress:
-	    switch (ev.pbutton.button) {
-	      case GII_PBUTTON_FIRST:
-		keys |= HOLD_LEFT;
-		break;
-	      case GII_PBUTTON_SECOND:
-		keys |= HOLD_RIGHT;
-		break;
-	      case GII_PBUTTON_THIRD:
-		keys |= HOLD_MIDDLE;
-		break;
-	      default:
-		break;
-	    }
-	    break;
-	    
-	  case evPtrButtonRelease:
-	    switch (ev.pbutton.button) {
-	      case GII_PBUTTON_FIRST:
-		keys &= ~HOLD_LEFT;
-		break;
-	      case GII_PBUTTON_SECOND:
-		keys &= ~HOLD_RIGHT;
-		break;
-	      case GII_PBUTTON_THIRD:
-		keys &= ~HOLD_MIDDLE;
-		break;
-	      default:
-		break;
-	    }
-	    break;
-	    
-	  case evPtrRelative:
-	    /*
-	     if (ev.any.type == evPtrRelative) {
-		 x += All->MouseState->x;
-		 y += All->MouseState->y;
-	     }
-	     */
-	    break;
-	    
-	  case evPtrAbsolute:
-	    
-	    x = ev.pmove.x / gfont.x;
-	    y = ev.pmove.y / gfont.y;
-	    
-	    x = Max2(x, 0); x = Min2(x, ScreenWidth - 1);
-	    y = Max2(y, 0); y = Min2(y, ScreenHeight - 1);
-	    
-	    dx = ev.pmove.x < gfont.x/2 ? -1 : ScreenWidth *gfont.x - ev.pmove.x <= gfont.x/2 ? 1 : 0;
-	    dy = ev.pmove.y < gfont.y/2 ? -1 : ScreenHeight*gfont.y - ev.pmove.y <= gfont.y/2 ? 1 : 0;
-	    
-	    break;
-	    
-	  default:
-	    break;
-	}
-    }
-    
-    if (keys != All->MouseState->keys ||
-	((keys || All->MouseState->keys) &&
-	 (dx || dy || x != All->MouseState->x || y != All->MouseState->y)))
-	 
-	 MouseEventCommon(x, y, dx, dy, keys);
-    else {
-	All->MouseState->keys = keys;
-	All->MouseState->x = x;
-	All->MouseState->y = y;
-    }
+static void GGI_CheckResize(udat *x, udat *y) {
+    /* TODO */
+    /* I am lazy, libggi has ggiCheckMode() for this. */
+    *x = Min2(*x, HW->X);
+    *y = Min2(*y, HW->Y);
 }
 
+static void GGI_Resize(udat x, udat y) {
+    /* clear screen so that extra area will be padded with blanks */
+    ggiSetGCForeground(gvis, gforeground = gcol[0]);
+    ggiFillscreen(gvis);
+    ggiFlush(gvis);
+}
+
+#if 0
+static byte GGI_CanDragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
+    return (Rgt-Left+1) * (Dwn-Up+1) > 20;
+}
+
+static void GGI_DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
+    GGI_FlushVideo(); /* a *must* before any direct libggi operation */
     
+    ggiCopyBox(gvis, Left*gfont.x, Up*gfont.y,
+	       (Rgt-Left+1)*gfont.x, (Dwn-Up+1)*gfont.y, DstLeft*gfont.x, DstUp*gfont.y);
+    setFlush();
+}
+#endif
+
+
 static int GGI_Select(int n, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *timeout) {
     int ret;
     ggi_event_mask gmask = WANTED_EVENTS;
     struct timeval mytm;
+    SaveHW;
+    SetHW(GGI_HW);
+    
     if (!timeout) {
 	mytm.tv_sec = 86400;
 	mytm.tv_usec = 0;
@@ -353,39 +378,76 @@ static int GGI_Select(int n, fd_set *readfds, fd_set *writefds, fd_set *exceptfd
     }
     
     ret = ggiEventSelect(gvis, &gmask, n, readfds, writefds, exceptfds, timeout);
-    GGI_KeyboardEvent(NOFD, NOSLOT);
-    
+    GGI_KeyboardEvent(NOFD, HW);
+
+    RestoreHW;
     return ret;
 }
 	
-
+static void GGI_InitPalette(void) {
+    int i;
+    ggi_color pixel;
+    for (i=0; i <= MAXCOL; i++) {
+	pixel.r = 257 * (udat)All->Palette[i].Red;
+	pixel.g = 257 * (udat)All->Palette[i].Green;
+	pixel.b = 257 * (udat)All->Palette[i].Blue;
+	pixel.a = 0;
+	gcol[i] = ggiMapColor(gvis, &pixel);
+    }
+}
 
 static void GGI_QuitHW(void) {
-    All->keyboard_slot = All->mouse_slot = NOSLOT;
+    HW->keyboard_slot = HW->mouse_slot = NOSLOT;
     
-    GGI.KeyboardEvent = (void *)NoOp;
-    GGI.QuitHW = NoOp;
+    HW->KeyboardEvent = (void *)NoOp;
+    HW->QuitHW = NoOp;
 
-    OverrideSelect = gOrigSelect;
+    if (OverrideSelect == GGI_Select)
+	OverrideSelect = gOrigSelect;
 
     ggiClose(gvis);
     ggiExit();
+    
+    FreeMem(HW->Private);
+    
+    if (GGI_HW == HW)
+	GGI_HW = NULL;
 }
 
-display_hw *GGI_InitHW(byte *arg) {
+byte GGI_InitHW(void) {
+    byte *arg = HW->Name;
+    uldat len = HW->NameLen;
     int i, j;
     
-    if (arg) {
-	if (strncmp("ggi", arg, 3))
-	    return NULL; /* user said "use <arg> as display, not ggi" */
-	    
-	arg = NULL;
+    if (GGI_HW) {
+	fputs("      GGI_InitHW() failed: libggi already in use.\n", stderr);
+	return FALSE;
     }
 
-    if (ggiInit() < 0) 
-	return NULL;
+    if (arg && len > 4) {
 
-    if ((gvis = ggiOpen(/*target,*/ NULL))) do {
+	arg += 4;
+	if (strncmp(arg, "ggi", 3))
+	    return FALSE; /* user said "use <arg> as display, not ggi" */
+	arg += 3;
+	if (*arg == '@')
+	    arg++;
+	else
+	    arg = NULL;
+    } else
+	arg = NULL;
+
+    if (ggiInit() < 0) 
+	return FALSE;
+
+    if (!(HW->Private = (struct GGI_data *)AllocMem(sizeof(struct GGI_data)))) {
+	fprintf(stderr, "      GGI_InitHW(): Out of memory!\n");
+	return FALSE;
+    }
+
+    gvis = arg ? ggiOpen(arg, NULL) : ggiOpen(NULL);
+
+    if (gvis) do {
 
 	ggiParseMode("", &gmode);
 	ggiCheckMode(gvis, &gmode);
@@ -402,77 +464,87 @@ display_hw *GGI_InitHW(byte *arg) {
 	ggiGetCharSize(gvis, &i, &j);
 	gfont.x = i;
 	gfont.y = j;
-	gscreen.x = gmode.virt.x / gfont.x;
-	gscreen.y = gmode.virt.y / gfont.y;
+	HW->X = gmode.virt.x / gfont.x;
+	HW->Y = gmode.virt.y / gfont.y;
 
 #if 0
 	if (inputs)
 		ggiJoinInputs(gvis, giiOpen(inputs, NULL));
 #endif
 	
-	ggiSetGCForeground(gvis, gforeground = colpixel[0]);
-	ggiSetGCBackground(gvis, gbackground = colpixel[0]);
+	ggiSetGCForeground(gvis, gforeground = gcol[0]);
+	ggiSetGCBackground(gvis, gbackground = gcol[0]);
 	ggiFillscreen(gvis);
+	
 
-	
-	All->keyboard_slot = All->mouse_slot = NOSLOT;
-	
-	gOrigSelect = OverrideSelect;
-	OverrideSelect = GGI_Select;
-	
-	GGI.KeyboardEvent = GGI_KeyboardEvent;
-	GGI.QuitKeyboard  = NoOp;
+	HW->keyboard_slot = HW->mouse_slot = NOSLOT;
 	    
+	HW->FlushVideo = GGI_FlushVideo;
+	HW->FlushHW = GGI_FlushHW;
 
-	GGI.SoftMouse = FALSE; /* mouse pointer handled by X11 server */
-	GGI.MouseEvent = (void *)NoOp; /* mouse events handled by GGI_KeyboardEvent */
-	GGI.ShowMouse = NoOp;
-	GGI.HideMouse = NoOp;
-	GGI.QuitMouse = NoOp;
+	HW->KeyboardEvent = GGI_KeyboardEvent;
+	HW->MouseEvent = (void *)NoOp; /* mouse events handled by GGI_KeyboardEvent */
+
+	HW->MoveToXY = GGI_MoveToXY;
+	HW->SetCursorType = GGI_SetCursorType;
+	XY[0] = XY[1] = XY[2] = XY[3] = 0;
+	TT[0] = TT[1] = NOCURSOR;
+	
+	HW->ShowMouse = NoOp;
+	HW->HideMouse = NoOp;
+
+	HW->DetectSize  = GGI_DetectSize;
+	HW->CheckResize = GGI_CheckResize;
+	HW->Resize      = GGI_Resize;
+
+	HW->ExportClipBoard = NoOp;
+	HW->ImportClipBoard = (void *)NoOp;
+	HW->PrivateClipBoard = NULL;
 
 #if 1
-	GGI.canDragArea = NULL;
+	HW->CanDragArea = NULL;
 #else
-	GGI.canDragArea = GGI_canDragArea;
-	GGI.DragArea    = GGI_DragArea;
+	HW->CanDragArea = GGI_CanDragArea;
+	HW->DragArea    = GGI_DragArea;
 #endif
 	
-	GGI.DetectSize  = GGI_DetectSize;
-	
-	GGI.ExportClipBoard = NULL;
-	GGI.ImportClipBoard = NULL;
-	GGI.PrivateClipBoard = NULL;
+	HW->Beep = GGI_Beep;
+	HW->Configure = (void *)NoOp; /* TODO... */
+	HW->SetPalette = (void *)NoOp;/* TODO... */
+	HW->ResetPalette = NoOp;
 
-	GGI.FlushVideo = GGI_FlushVideo;
-	GGI.QuitVideo = NoOp;
-	GGI.FlushHW = GGI_FlushHW;
+	HW->QuitHW = GGI_QuitHW;
+	HW->QuitKeyboard = NoOp;
+	HW->QuitMouse = NoOp;
+	HW->QuitVideo = NoOp;
 
-	GGI.NeedOldVideo = TRUE;
-	GGI.merge_Threshold = 0;
-	GGI.ExpensiveFlushVideo = FALSE;
+	HW->DisplayIsCTTY = FALSE;
+	HW->SoftMouse = FALSE; /* mouse pointer handled by X11 server */
+
+	HW->NeedOldVideo = TRUE;
+	HW->ExpensiveFlushVideo = TRUE;
+	HW->NeedHW = 0;
+	HW->merge_Threshold = 0;
+
+	gOrigSelect = OverrideSelect;
+	OverrideSelect = GGI_Select;
+
+	GGI_HW = HW;
 	
-	GGI.MoveToXY = GGI_MoveToXY;	       XY[0] = XY[1] = XY[2] = XY[3] = 0;
-	GGI.SetCursorType = GGI_SetCursorType; TT[0] = TT[1] = NOCURSOR;
-	GGI.Beep = GGI_Beep;
-	    
-	GGI.QuitHW = GGI_QuitHW;
-	
-	InitTtysave();
-	
-	return &GGI;
+	return TRUE;
 	
     } while (0); else {
 	if (arg || (arg = getenv("GGI_DISPLAY")))
-	    fprintf(errFILE, "      GGI_InitHW() failed to open display %s\n", arg);
+	    fprintf(stderr, "      GGI_InitHW() failed to open display %s\n", arg);
 	else
-	    fprintf(errFILE, "      GGI_InitHW() failed: GGI_DISPLAY is not set\n");
+	    fprintf(stderr, "      GGI_InitHW() failed: GGI_DISPLAY is not set\n");
 	
     }
     if (gvis)
 	ggiClose(gvis);
     ggiExit();
     
-    return NULL;
+    return FALSE;
 }
 
 
@@ -492,16 +564,6 @@ void QuitModule(module *Module) {
 
 
 #if 0
-static void do_move(int x, int y, int nx, int ny, int w, int h)
-{
-	if (tfr_h > 0) {
-		ggiCopyBox(gvis, x*font.x,  sy*font.y, 
-				w*font.x,  tfr_h*font.y,
-				nx*font.x, dy*font.y);
-	}
-
-}
-
 static void handle_keyboard(int sym, int modifiers, int out_fd) {
 	int shift = modifiers & (1 << GII_KM_SHIFT);
 	
@@ -555,180 +617,4 @@ static void handle_keyboard(int sym, int modifiers, int out_fd) {
 		case GIIK_ScrollBack: move_window(-sb_step); return;
 	}
 }
-
-
-/* ---------------------------------------------------------------------- */
-
-
-static void usage(void)
-{
-	fprintf(stderr,
-		"\n"
-		"USAGE: nixterm [OPTIONS...]\n"
-		"\n"
-		"where option is one of:\n"
-		"\n"
-		"      -h  --help\n"
-		"      -V  --version\n"
-		"      -m  --mode        <mode-string>\n"
-		"      -t  --target      <target-string>\n"
-		"      -i  --input       <input-string>\n"
-		"      -f  --font        <width>x<height>\n"
-		"      -s  --scrollback  <num-lines>\n"
-		"      -b  --blank       <minutes>\n"
-		"      -c  --color\n"
-		"      -q  --quiet\n"
-		"      -r  --reverse\n"
-		"\n");
-}
-
-static int parse_font(char *s, ggi_coord *f)
-{
-	int w, h;
-
-	if ((sscanf(s, " %d x %d", &w, &h) != 2) ||
-	    (w <= 0) || (h <= 0)) {
-		
-		fprintf(stderr, "nixterm: Bad font size '%s'.\n", s);
-		return -1;
-	}
-
-	f->x = w; 
-	f->y = h;
-
-	return 0;
-}
-
-
-/* ---------------------------------------------------------------------- */
-
-
-#define CMP_OPT(short,long,extra)  \
-    ((argc > extra) && \
-     ((strcmp(*argv, short) == 0) || (strcmp(*argv, long) == 0)))
-
-static int woulbe_main(int argc, char **argv, char **envp)
-{
-	char *target = NULL;
-	char *inputs = NULL;
-	char *shell  = "/bin/sh";
-
-	struct winsize window_size;
-
-	int master_fd, slave_fd;
-	int w, h;
-	int err;
-
-
-	/* initialize */
-
-	ggiParseMode("", &gmode);
-	
-	if (getenv("SHELL") != NULL) {
-		shell = getenv("SHELL");
-	}
-
-
-	/* handle arguments */
-
-	argv++; argc--;
-
-	while (argc > 0) {
-
-		if (CMP_OPT("-h", "--help", 0)) {
-
-			usage();
-			return 0;
-		}
-
-		if (CMP_OPT("-V", "--version", 0)) {
-
-			printf("Nixterm %s\n", VERSION_STR);
-			return 0;
-		}
-
-		if (CMP_OPT("-m", "--mode", 1)) {
-		    
-			ggiParseMode(argv[1], &gmode);
-			argv += 2; argc -= 2;
-			continue;
-		}
-
-		if (CMP_OPT("-t", "--target", 1)) {
-
-			target = argv[1];
-			argv += 2; argc -= 2;
-			continue;
-		}
-
-		if (CMP_OPT("-i", "--input", 1)) {
-
-			inputs = argv[1];
-			argv += 2; argc -= 2;
-			continue;
-		}
-
-		if (CMP_OPT("-f", "--font", 0)) {
-
-			if (parse_font(argv[1], &font) < 0) {
-				return 1;
-			}
-			argv += 2; argc -= 2;
-			continue;
-		}
-
-		if (CMP_OPT("-s", "--scrollback", 0)) {
-
-			if ((sscanf(argv[1], "%d", &scrollback) != 1) ||
-			    (scrollback < 0)) {
-
-				fprintf(stderr, "nixterm: Bad scrollback.\n");
-				return 1;
-			}
-			argv += 2; argc -= 2;
-			continue;
-		}
-
-		if (CMP_OPT("-b", "--blank_time", 0)) {
-
-			if ((sscanf(argv[1], "%d", &blank_time) != 1) ||
-			    (blank_time < 0)) {
-
-				fprintf(stderr, "nixterm: Bad blank_time.\n");
-				return 1;
-			}
-			blank_time = blank_time * 60 * 1000;
-			argv += 2; argc -= 2;
-			continue;
-		}
-
-		if (CMP_OPT("-q", "--quiet", 0)) {
-
-			options |= NIX_OPT_QUIET; 
-			argv++; argc--;
-			continue;
-		}
-
-		if (CMP_OPT("-r", "--reverse", 0)) {
-
-			options |= NIX_OPT_REVERSE;
-			argv++; argc--;
-			continue;
-		}
-
-		if (CMP_OPT("-c", "--color", 0)) {
-
-			options |= NIX_OPT_COLOR; 
-			argv++; argc--;
-			continue;
-		}
-
-		fprintf(stderr, "nixterm: Unknown option '%s'\n", *argv);
-		return 1;
-	}
-
-
-	/* now setup screen */
-}
-
 #endif

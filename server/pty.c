@@ -15,6 +15,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <grp.h>
+#include <signal.h>
 #include <termios.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -142,6 +143,12 @@ static byte setup_tty(udat x, udat y) {
     wsiz.ws_xpixel = 0;
     wsiz.ws_ypixel = 0;
     
+    /*
+     * prevent ioctl(0, TIOCSWINSZ, &wsiz) --- which generates SIGWINCH ---
+     * from invoking twin SIGWINCH handler!
+     */
+    signal(SIGWINCH, SIG_DFL);
+
     if (ioctl(0, TIOCSWINSZ, &wsiz) < 0 || ioctl(0, TCSETS, &ttysave) < 0)
 	return FALSE;
     return TRUE;

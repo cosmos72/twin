@@ -13,23 +13,28 @@
 #ifndef _LIB_TW_ERRNO_H
 #define _LIB_TW_ERRNO_H
 
-extern uldat TwErrno;
 #define TW_EX_ENDIAN	((uldat)1)
 #define TW_EX_SIZES	((uldat)2)
 #define TW_ELOST_CONN	((uldat)3)
 #define TW_EALREADY_CONN ((uldat)4)
 #define TW_ENO_DISPLAY	((uldat)5)
-#define TW_ECANT_CONN	((uldat)6)
-#define TW_ENO_MEM	((uldat)7)
-#define TW_ECANT_WRITE	((uldat)8)
-#define TW_ENO_FUNCTION	((uldat)9)
-#define TW_EWEIRD	((uldat)10)
-#define TW_ENO_AUTH	((uldat)11)
-#define TW_EDENIED	((uldat)12)
-#define TW_EBAD_GZIP	((uldat)13)
-#define TW_EINTERNAL_GZIP ((uldat)14)
+#define TW_EBAD_DISPLAY	((uldat)6)
+#define TW_ECANT_CONN	((uldat)7)
+#define TW_ENO_MEM	((uldat)8)
+#define TW_ECANT_WRITE	((uldat)9)
+#define TW_ENO_FUNCTION	((uldat)10)
+#define TW_EWEIRD	((uldat)11)
+#define TW_ENO_AUTH	((uldat)12)
+#define TW_EDENIED	((uldat)13)
+#define TW_EBAD_GZIP	((uldat)14)
+#define TW_EINTERNAL_GZIP ((uldat)15)
+#define TW_ENO_HOST	((uldat)16)
+#define TW_EBAD_FUNCTION ((uldat)17)
 
-byte *TwStrError(uldat e);
-byte TwInPanic(void);
+uldat Tw_Errno(tdisplay TwD);
+#define TwErrno		Tw_Errno(TwDefaultD)
+
+byte *Tw_StrError(tdisplay TwD, uldat e);
+#define TwStrError(e)	Tw_StrError(TwDefaultD, e)
 
 #endif /* _LIB_TW_ERRNO_H */

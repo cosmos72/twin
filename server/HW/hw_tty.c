@@ -15,7 +15,6 @@
 #include <sys/ioctl.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <signal.h>
 #include <termios.h>
 #include <errno.h>
 
@@ -40,7 +39,11 @@
 # warning you will get only a 'generic tty' driver, without mouse support.
 #endif
 
-static display_hw TTY;
+
+/*
+ * libgpm is stacked, not multi-headed (so no multiplex too)
+ */
+static byte GPM_InUse;
 
 /*
  * Linux:
@@ -56,25 +59,51 @@ static display_hw TTY;
  */
 
 
+
 /* plain Unix-style tty keyboard input */
 
 /* it can't update FullShiftFlags :( */
 
-static int tty_number, VcsaFd;
-static byte *tty_name;
-static dat ttypar[2];
+struct tty_data {
+    int tty_fd, VcsaFd, tty_number;
+    byte *tty_name, *tty_TERM;
+    dat ttypar[2];
+    FILE *stdOUT;
+    uldat saveCursorType;
+    udat saveX, saveY;
+	
+#ifdef CONF_HW_TTY_LINUX
+    Gpm_Connect GPM_Conn;
+    int GPM_fd;
+    int GPM_keys;
+#endif
+};
+
+#define ttydata		((struct tty_data *)HW->Private)
+#define tty_fd		(ttydata->tty_fd)
+#define VcsaFd		(ttydata->VcsaFd)
+#define tty_number	(ttydata->tty_number)
+#define tty_name	(ttydata->tty_name)
+#define tty_TERM	(ttydata->tty_TERM)
+#define ttypar		(ttydata->ttypar)
+#define stdOUT		(ttydata->stdOUT)
+#define saveCursorType	(ttydata->saveCursorType)
+#define saveX		(ttydata->saveX)
+#define saveY		(ttydata->saveY)
+#define GPM_Conn	(ttydata->GPM_Conn)
+#define GPM_fd		(ttydata->GPM_fd)
+#define GPM_keys	(ttydata->GPM_keys)
 
 static void stdin_QuitKeyboard(void);
-static void stdin_KeyboardEvent(int fd, uldat slot);
+static void stdin_KeyboardEvent(int fd, display_hw *hw);
 
-static struct termios ttyb;
 
 /* return FALSE if failed */
 static byte stdin_InitKeyboard(void) {
-    int i;
+    struct termios ttyb;
     byte buf[16], *s = buf+3, c;
+    int i;
 
-    InitTtysave();
     ttyb = ttysave;
     /* NL=='\n'==^J; CR=='\r'==^M */
     ttyb.c_iflag &= ~(IXON|IXOFF|IGNCR|INLCR|ICRNL);
@@ -86,16 +115,16 @@ static byte stdin_InitKeyboard(void) {
     ttyb.c_cc[VSUSP] = 0;
     ttyb.c_cc[VQUIT] = 0;
     ttyb.c_cc[VINTR] = 0;
-    ioctl(0, TCSETS, &ttyb);
+    ioctl(tty_fd, TCSETS, &ttyb);
 
-    write(1, "\033Z", 2); /* request ID */
+    write(tty_fd, "\033Z", 2); /* request ID */
     /* ensure we CAN read from the tty */
     do {
-	i = read(0, buf, 15);
+	i = read(tty_fd, buf, 15);
     } while (i < 0 && (errno == EAGAIN || errno == EINTR));
     if (i <= 0) {
-	fputs("      stdin_InitKeyboard() failed: unable to read from the terminal!\n", errFILE);
-	ioctl(0, TCSETS, &ttysave);
+	fputs("      stdin_InitKeyboard() failed: unable to read from the terminal!\n", stderr);
+	ioctl(tty_fd, TCSETS, &ttysave);
 	return FALSE;
     }
     buf[i] = '\0';
@@ -109,25 +138,24 @@ static byte stdin_InitKeyboard(void) {
 	s++;
     }
 
-    All->keyboard_slot = RegisterRemote(0, stdin_KeyboardEvent);
-    if (All->keyboard_slot == NOSLOT) {
+    HW->keyboard_slot = RegisterRemote(tty_fd, HW, (void *)stdin_KeyboardEvent);
+    if (HW->keyboard_slot == NOSLOT) {
 	stdin_QuitKeyboard();
 	return FALSE;
     }
-    TTY.KeyboardEvent = stdin_KeyboardEvent;
-    TTY.QuitKeyboard = stdin_QuitKeyboard;
+    HW->KeyboardEvent = stdin_KeyboardEvent;
+    HW->QuitKeyboard = stdin_QuitKeyboard;
 
     return TRUE;
 }
 
 static void stdin_QuitKeyboard(void) {
-    ioctl(0, TCSETS, &ttysave);
-    FD_CLR(0, &save_rfds);
+    ioctl(tty_fd, TCSETS, &ttysave);
     
-    UnRegisterRemote(All->keyboard_slot);
-    All->keyboard_slot = NOSLOT;
+    UnRegisterRemote(HW->keyboard_slot);
+    HW->keyboard_slot = NOSLOT;
     
-    TTY.QuitKeyboard = NoOp;
+    HW->QuitKeyboard = NoOp;
 }
 
 static udat stdin_LookupKey(byte *slen, byte *s) {
@@ -274,22 +302,26 @@ static udat stdin_LookupKey(byte *slen, byte *s) {
 	
 static byte xterm_MouseData[10] = "\033[M#!!!!";
 
-static void stdin_KeyboardEvent(int fd, uldat slot) {
-    static void xterm_MouseEvent(int, uldat);
+static void stdin_KeyboardEvent(int fd, display_hw *hw) {
+    static void xterm_MouseEvent(int, display_hw *);
     static byte *match;
     byte got, chunk, buf[SMALLBUFF], *s;
     udat Code;
-
+    SaveHW;
+    
+    SetHW(hw);
+    
     got = read(fd, s=buf, SMALLBUFF-1);
     
     if (got == 0 || (got == (byte)-1 && errno != EINTR && errno != EAGAIN)) {
 	/* BIG troubles */
-	Quit(1);
+	HW->NeedHW |= NEEDPanicHW, NeedHW |= NEEDPanicHW;
+	return;
     }
     
     while (got > 0) {
 #ifdef CONF_HW_TTY_TWTERM
-	if (TTY.MouseEvent == xterm_MouseEvent) {
+	if (HW->MouseEvent == xterm_MouseEvent) {
 	    match = s;
 	    while ((match = memchr(match, '\033', got))) {
 		if (got >= (match - s) + 6 && !strncmp(match, "\033[M", 3)) {
@@ -306,7 +338,7 @@ static void stdin_KeyboardEvent(int fd, uldat slot) {
 		    match++;
 		    continue;
 		}
-		xterm_MouseEvent(fd, slot);
+		xterm_MouseEvent(fd, HW);
 	    }
 	}
 #endif /* CONF_HW_TTY_TWTERM */
@@ -325,7 +357,13 @@ static void stdin_KeyboardEvent(int fd, uldat slot) {
 	KeyboardEventCommon(Code, chunk, s);
 	s += chunk, got -= chunk;
     }
+    
+    RestoreHW;
 }
+
+
+
+
 
 /*
  * Linux gpm mouse input:
@@ -335,72 +373,99 @@ static void stdin_KeyboardEvent(int fd, uldat slot) {
 
 #ifdef CONF_HW_TTY_LINUX
 
-static Gpm_Connect Gpm_CONN;
-static int gpm_fd;
-static Gpm_Event Gpm_EV;
 
-static void gpm_QuitMouse(void);
-static void gpm_MouseEvent(int fd, uldat slot);
+static void GPM_QuitMouse(void);
+static void GPM_MouseEvent(int fd, display_hw *hw);
 
-
-/* return FALSE if failed */
-static byte gpm_InitMouse(void) {
-    
+static int wrap_GPM_Open(void) {
     /*
      * HACK! this works around a quirk in libgpm:
      * if Gpm_Open fails, it sets gpm_tried to non-zero
      * and following calls will just fail, not even trying anymore
      */
     extern int gpm_tried;
+    
+    if (!tty_name) {
+	fputs("      gpm_InitVideo() failed: unable to detect tty device\n", stderr);
+	return NOFD;
+    }
+    if (tty_number < 1 || tty_number > 63) {
+	fprintf(stderr, "      gpm_InitMouse() failed: terminal `%s'\n"
+			 "      is not a local linux console.\n", tty_name);
+	return NOFD;
+    }
+
     gpm_tried = 0;
     
     gpm_zerobased = 1;
     gpm_visiblepointer = 0;
-    Gpm_CONN.eventMask = ~0;		/* Get everything */
-    Gpm_CONN.defaultMask = ~GPM_HARD;	/* Pass everything unused */
-    Gpm_CONN.minMod = 0;		/* Run always... */
-    Gpm_CONN.maxMod = ~0;		/* ...with any modifier */
+    GPM_Conn.eventMask = ~0;		/* Get everything */
+    GPM_Conn.defaultMask = ~GPM_HARD;	/* Pass everything unused */
+    GPM_Conn.minMod = 0;		/* Run always... */
+    GPM_Conn.maxMod = ~0;		/* ...with any modifier */
 
-    if ((gpm_fd = Gpm_Open(&Gpm_CONN, 0)) < 0) {
-	fputs("      gpm_InitMouse() failed: unable to connect to `gpm'.\n"
+    GPM_fd = Gpm_Open(&GPM_Conn, tty_number);
+    
+    if (GPM_fd >= 0) {
+	/* gpm_consolefd is opened by GPM_Open() */
+	fcntl(gpm_consolefd, F_SETFD, FD_CLOEXEC);
+    }
+    return GPM_fd;
+}
+
+
+
+/* return FALSE if failed */
+static byte GPM_InitMouse(void) {
+    
+    if (GPM_InUse) {
+	fputs("      GPM_InitMouse() failed: already connected to `gpm'.\n", stderr);
+	return FALSE;
+    }
+    
+    if (wrap_GPM_Open() < 0) {
+	fputs("      GPM_InitMouse() failed: unable to connect to `gpm'.\n"
 	      "      make sure you started `twin' from the console\n"
-	      "      and/or check that `gpm' is running.\n", errFILE);
+	      "      and/or check that `gpm' is running.\n", stderr);
 	return FALSE;
     }
-    fcntl(gpm_fd, F_SETFD, FD_CLOEXEC);
-    fcntl(gpm_fd, F_SETFL, O_NONBLOCK);
-
-    /* gpm_consolefd is opened by GpmOpen() */
-    fcntl(gpm_consolefd, F_SETFD, FD_CLOEXEC);
+    fcntl(GPM_fd, F_SETFD, FD_CLOEXEC);
+    fcntl(GPM_fd, F_SETFL, O_NONBLOCK);
     
-    All->mouse_slot = RegisterRemote(gpm_fd, gpm_MouseEvent);
-    if (All->mouse_slot == NOSLOT) {
-	gpm_QuitMouse();
+    HW->mouse_slot = RegisterRemote(GPM_fd, HW, (void *)GPM_MouseEvent);
+    if (HW->mouse_slot == NOSLOT) {
+	Gpm_Close();
 	return FALSE;
     }
     
-    TTY.SoftMouse = TRUE; /* _we_ Hide/Show it */
+    HW->SoftMouse = TRUE; /* _we_ Hide/Show it */
     
-    TTY.MouseEvent = gpm_MouseEvent;
-    TTY.QuitMouse = gpm_QuitMouse;
+    HW->MouseEvent = GPM_MouseEvent;
+    HW->QuitMouse = GPM_QuitMouse;
 
+    GPM_InUse = TRUE;
+    
     return TRUE;
 }
 
-static void gpm_QuitMouse(void) {
-    FD_CLR(gpm_fd, &save_rfds);
-    TTY.HideMouse();
+static void GPM_QuitMouse(void) {
+    HW->HideMouse();
     Gpm_Close();
 
-    UnRegisterRemote(All->mouse_slot);
-    All->mouse_slot = NOSLOT;
+    UnRegisterRemote(HW->mouse_slot);
+    HW->mouse_slot = NOSLOT;
+
+    GPM_InUse = FALSE;
     
-    TTY.QuitMouse = NoOp;
+    HW->QuitMouse = NoOp;
 }
 
-static void gpm_MouseEvent(int fd, uldat slot) {
-    static Gpm_keys = 0;
+static void GPM_MouseEvent(int fd, display_hw *hw) {
     udat IdButtons, Buttons = 0;
+    Gpm_Event GPM_EV;
+    
+    SaveHW;
+    
     /*
      * All other parts of twin read and parse data from fds in big chunks,
      * while Gpm_GetEvent() reads and parses only a single event at time.
@@ -408,26 +473,33 @@ static void gpm_MouseEvent(int fd, uldat slot) {
      */
     byte loopN = 30;
     
+    SetHW(hw);
+    
     while (loopN--) {
-	if (Gpm_GetEvent(&Gpm_EV) <= 0)
+	if (Gpm_GetEvent(&GPM_EV) <= 0) {
+	    if (loopN == 29)
+		HW->NeedHW |= NEEDPanicHW, NeedHW |= NEEDPanicHW;
 	    return;
+	}
 	
+#if 0
 	All->FullShiftFlags =
-	    (Gpm_EV.modifiers & 1 ? FULL_LEFT_SHIFT_PRESSED : 0)
-	    | (Gpm_EV.modifiers & 2 ? FULL_RIGHT_ALT_PRESSED  : 0)
-	    | (Gpm_EV.modifiers & 4 ? FULL_LEFT_CTRL_PRESSED  : 0)
-	    | (Gpm_EV.modifiers & 8 ? FULL_LEFT_ALT_PRESSED   : 0);
+	    (GPM_EV.modifiers & 1 ? FULL_LEFT_SHIFT_PRESSED : 0)
+	    | (GPM_EV.modifiers & 2 ? FULL_RIGHT_ALT_PRESSED  : 0)
+	    | (GPM_EV.modifiers & 4 ? FULL_LEFT_CTRL_PRESSED  : 0)
+	    | (GPM_EV.modifiers & 8 ? FULL_LEFT_ALT_PRESSED   : 0);
+#endif
 	
 	/*
 	 * Gpm differs from us about what buttons to report on release events:
 	 * it reports which buttons get _released_, not which are still _pressed_
 	 * Fixed here. SIGH.
 	 */
-	IdButtons = Gpm_EV.buttons;
+	IdButtons = GPM_EV.buttons;
 	
-	if (Gpm_EV.type & GPM_UP)
-	    IdButtons = Gpm_keys & ~IdButtons;
-	Gpm_keys = IdButtons;
+	if (GPM_EV.type & GPM_UP)
+	    IdButtons = GPM_keys & ~IdButtons;
+	GPM_keys = IdButtons;
 	
 	if (IdButtons & GPM_B_LEFT)
 	    Buttons |= HOLD_LEFT;
@@ -436,8 +508,9 @@ static void gpm_MouseEvent(int fd, uldat slot) {
 	if (IdButtons & GPM_B_RIGHT)
 	    Buttons |= HOLD_RIGHT;
 	
-	MouseEventCommon(Gpm_EV.x, Gpm_EV.y, Gpm_EV.dx, Gpm_EV.dy, Buttons);
+	MouseEventCommon(GPM_EV.x, GPM_EV.y, GPM_EV.dx, GPM_EV.dy, Buttons);
     }
+    RestoreHW;
 }
 
 
@@ -456,13 +529,18 @@ static void gpm_MouseEvent(int fd, uldat slot) {
 #ifdef CONF_HW_TTY_TWTERM
 
 static void xterm_QuitMouse(void);
-static void xterm_MouseEvent(int fd, uldat slot);
+static void xterm_MouseEvent(int fd, display_hw *hw);
 
 
 /* return FALSE if failed */
 static byte xterm_InitMouse(void) {
-    byte *term = origTERM, *seq;
+    byte *term = tty_TERM, *seq;
     
+    if (!term) {
+	fputs("      xterm_InitMouse() failed: unknown terminal type.\n", stderr);
+	return FALSE;
+    }
+
     if (!strcmp(term, "linux")) {
 	/*
 	 * additional check... out-of-the box linux
@@ -470,7 +548,7 @@ static byte xterm_InitMouse(void) {
 	 */
 	if (ttypar[0]<6 || (ttypar[0]==6 && ttypar[1]<3)) {
 	    fputs("      xterm_InitMouse() failed: this `linux' terminal\n"
-		  "      has no support for xterm-style mouse reporting.\n", errFILE);
+		  "      has no support for xterm-style mouse reporting.\n", stderr);
 	    return FALSE;
 	}
 	seq = "\033[?9h";
@@ -479,39 +557,38 @@ static byte xterm_InitMouse(void) {
 	 * this is just a rough attempt */
 	seq = "\033[?1001s\033[?1000h";
     } else {
-	fprintf(errFILE, "      xterm_InitMouse() failed: terminal `%s' is not supported.\n", term);
+	fprintf(stderr, "      xterm_InitMouse() failed: terminal `%s' is not supported.\n", term);
 	return FALSE;
     }
 
-    fputs(seq, stdout);
+    fputs(seq, stdOUT);
+    setFlush();
     
-    All->mouse_slot = NOSLOT; /* shared with keyboard */
+    HW->mouse_slot = NOSLOT; /* shared with keyboard */
     
-    TTY.MouseEvent = xterm_MouseEvent;
-    TTY.QuitMouse = xterm_QuitMouse;
+    HW->MouseEvent = xterm_MouseEvent;
+    HW->QuitMouse = xterm_QuitMouse;
     
-    TTY.SoftMouse = FALSE; /* no need to Hide/Show it */
-    TTY.ShowMouse = TTY.HideMouse = NoOp; /* override the ones set by InitVideo() */
+    HW->SoftMouse = FALSE; /* no need to Hide/Show it */
+    HW->ShowMouse = HW->HideMouse = NoOp; /* override the ones set by InitVideo() */
     
     return TRUE;
 }
 
 static void xterm_QuitMouse(void) {
     if (ttypar[0]==6 && ttypar[1]>=3)
-	fputs("\033[?9l", stdout);
+	fputs("\033[?9l", stdOUT);
     else /* xterm or similar */
-	fputs("\033[?1000l\033[?1001r", stdout);
-    setFlush();
-
-    TTY.QuitMouse = NoOp;
+	fputs("\033[?1000l\033[?1001r", stdOUT);
+    HW->QuitMouse = NoOp;
 }
 
-static void xterm_MouseEvent(int fd, uldat slot) {
+static void xterm_MouseEvent(int fd, display_hw *hw) {
     static dat prev_x, prev_y;
     udat Buttons = 0, Id;
     byte *s = xterm_MouseData;
     dat x, y, dx, dy;
-
+    
     if (*s == '\033' && *++s == '[') {
 	if (*++s == 'M' && (Id=*++s) <= '#') {
 	    /* classic xterm mouse reporting (X11 specs) */
@@ -542,33 +619,35 @@ static void xterm_MouseEvent(int fd, uldat slot) {
 	    if (y & ((udat)1 << 13))
 		y |= (udat)~0 << 14;
 	} else
-	    return;
+	    s = NULL;
     } else
-	return;
-    
-    x = Max2(x, 0);
-    x = Min2(x, ScreenWidth - 1);
-    
-    y = Max2(y, 0);
-    y = Min2(y, ScreenHeight - 1);
-    
-    if (x == 0 && prev_x == 0)
-	dx = -1;
-    else if (x == ScreenWidth - 1 && prev_x == ScreenWidth - 1)
-	dx = 1;
-    else
-	dx = 0;
-    if (y == 0 && prev_y == 0)
-	dy = -1;
-    else if (y == ScreenHeight - 1 && prev_y == ScreenHeight - 1)
-	dy = 1;
-    else
-	dy = 0;
+	s = NULL;
 
-    prev_x = x;
-    prev_y = y;
+    if (s) {
+	x = Max2(x, 0);
+	x = Min2(x, ScreenWidth - 1);
     
-    MouseEventCommon(x, y, dx, dy, Buttons);
+	y = Max2(y, 0);
+	y = Min2(y, ScreenHeight - 1);
+    
+	if (x == 0 && prev_x == 0)
+	    dx = -1;
+	else if (x == ScreenWidth - 1 && prev_x == ScreenWidth - 1)
+	    dx = 1;
+	else
+	    dx = 0;
+	if (y == 0 && prev_y == 0)
+	    dy = -1;
+	else if (y == ScreenHeight - 1 && prev_y == ScreenHeight - 1)
+	    dy = 1;
+	else
+	    dy = 0;
+	
+	prev_x = x;
+	prev_y = y;
+	
+	MouseEventCommon(x, y, dx, dy, Buttons);
+    }
 }
 
 #endif /* CONF_HW_TTY_TWTERM */
@@ -585,19 +664,20 @@ static byte warn_NoMouse(void) {
 #endif
 	  "\n"
 	  "      If you really want to run `twin' without mouse\n"
-	  "      hit RETURN to continue, otherwise hit CTRL-C to quit now.\n", errFILE);
-    fflush(errFILE);
+	  "      hit RETURN to continue, otherwise hit CTRL-C to quit now.\n", stderr);
+    fflush(stderr);
     
-    read(0, &c, 1);
+    read(tty_fd, &c, 1);
     if (c == '\n' || c == '\r') {
     
-	All->mouse_slot = NOSLOT; /* no mouse at all :( */
+	HW->mouse_slot = NOSLOT; /* no mouse at all :( */
     
-	TTY.MouseEvent = (void *)NoOp;
-	TTY.QuitMouse = NoOp;
+	HW->MouseEvent = (void *)NoOp;
+	HW->QuitMouse = NoOp;
     
-	TTY.SoftMouse = FALSE; /* no need to Hide/Show it */
-	TTY.ShowMouse = TTY.HideMouse = NoOp; /* override the ones set by InitVideo() */
+	HW->SoftMouse = FALSE; /* no need to Hide/Show it */
+	HW->ShowMouse = HW->HideMouse = NoOp; /* override the ones set by InitVideo() */
+	
 	return TRUE;
     }
     return FALSE;
@@ -608,243 +688,263 @@ static byte warn_NoMouse(void) {
 static void stdin_DetectSize(udat *x, udat *y) {
     struct winsize wsiz;
 
-    if (ioctl(0, TIOCGWINSZ, &wsiz) < 0 || wsiz.ws_row <= 0 || wsiz.ws_col <= 0)
-	return;
-	
-    *x = wsiz.ws_col;
-    *y = wsiz.ws_row;
+    if (ioctl(tty_fd, TIOCGWINSZ, &wsiz) >= 0 && wsiz.ws_row > 0 && wsiz.ws_col > 0) {
+	HW->X = wsiz.ws_col;
+	HW->Y = wsiz.ws_row;
+    }
+    
+    *x = HW->X;
+    *y = HW->Y;
 }
 
+static void stdin_CheckResize(udat *x, udat *y) {
+    *x = Min2(*x, HW->X);
+    *y = Min2(*y, HW->Y);
+}
+
+static void stdin_Resize(udat x, udat y) {
+    /*
+     * can't resize the tty, just clear it so that
+     * extra size will get padded with blanks
+     */
+    if (x < HW->X || y < HW->Y) {
+	fputs("\033[0m\033[2J", stdOUT);
+	fflush(stdOUT);
+	/*
+	 * flush now not to risk arriving late
+	 * and clearing the screen AFTER vcsa_FlushVideo()
+	 */
+    }
+}
+	    
 
 static void stdout_MoveToXY(udat x, udat y);
 static void stdout_SetCursorType(uldat CursorType);
 static void stdout_Beep(void);
-
+static void stdout_Configure(udat resource, byte todefault, udat value);
+static void stdout_FlushHW(void);
+static void stdout_SetPalette(udat N, udat R, udat G, udat B);
+static void stdout_ResetPalette(void);
 
 /* output through /dev/vcsaXX */
 
 
 #ifdef CONF_HW_TTY_LINUX
 
-
 static void vcsa_QuitVideo(void);
 static void vcsa_FlushVideo(void);
 static void vcsa_ShowMouse(void);
 static void vcsa_HideMouse(void);
-static byte linux_getconsolemap(void);
 
 /* return FALSE if failed */
 static byte vcsa_InitVideo(void) {
     static byte vcsa_name[] = "/dev/vcsaXX";
-    byte *tty_s = tty_name;
     
-    if (!tty_s)
+    if (!tty_name) {
+	fputs("      vcsa_InitVideo() failed: unable to detect tty device\n", stderr);
 	return FALSE;
-    
-    if (!strncmp(tty_s, "/dev/tty", 8)) {
-	tty_s += 8;
-	if (*tty_s && *tty_s >= '0' && *tty_s <= '9') {
-	    tty_number = (vcsa_name[9] = *tty_s++) - '0';
-	    if ((vcsa_name[10] = *tty_s)) {
-		tty_number *= 10;
-		tty_number += *tty_s++ - '0';
-	    }
-	}
     }
     
-    if (*tty_s || tty_number < 1 || tty_number > 63) {
-	fprintf(errFILE, "      vcsa_InitVideo() failed: terminal `%s'\n"
+    if (tty_number < 1 || tty_number > 63) {
+	fprintf(stderr, "      vcsa_InitVideo() failed: terminal `%s'\n"
 			 "      is not a local linux console.\n", tty_name);
 	return FALSE;
     }
-	        
+
+    vcsa_name[9] = tty_name[8];
+    vcsa_name[10] = tty_name[9];
+    
     GetPrivileges();
     VcsaFd = open(vcsa_name, O_WRONLY|O_NOCTTY);
     DropPrivileges();
     
     if (VcsaFd < 0) {
-	fprintf(errFILE, "      vcsa_InitVideo() failed: unable to open `%s': %s\n",
+	fprintf(stderr, "      vcsa_InitVideo() failed: unable to open `%s': %s\n",
 		vcsa_name, strerror(errno));
 	return FALSE;
     }
     fcntl(VcsaFd, F_SETFD, FD_CLOEXEC);
     
-    (void)linux_getconsolemap();
-    
-    TTY.DetectSize = stdin_DetectSize;
-    TTY.canDragArea = NULL; 
-   
-    TTY.FlushVideo = vcsa_FlushVideo;
-    TTY.QuitVideo = vcsa_QuitVideo;
-    TTY.FlushHW = NULL;
-    
-    TTY.NeedOldVideo = TRUE;
-    TTY.merge_Threshold = 40;
-    TTY.ExpensiveFlushVideo = FALSE;
-    
-    TTY.ShowMouse = vcsa_ShowMouse;
-    TTY.HideMouse = vcsa_HideMouse;
+    HW->FlushVideo = vcsa_FlushVideo;
+    HW->FlushHW = stdout_FlushHW;
 
-    TTY.MoveToXY = stdout_MoveToXY;           All->gotoxybuf[0] = '\0';
-    TTY.SetCursorType = stdout_SetCursorType; All->cursorbuf[0] = '\0';
-    TTY.Beep = stdout_Beep;
+    HW->SetCursorType = stdout_SetCursorType;
+    HW->MoveToXY = stdout_MoveToXY;           
+
+    HW->ShowMouse = vcsa_ShowMouse;
+    HW->HideMouse = vcsa_HideMouse;
+
+    HW->DetectSize  = stdin_DetectSize;
+    HW->CheckResize = stdin_CheckResize;
+    HW->Resize      = stdin_Resize;
     
+    HW->ImportClipBoard = (void *)NoOp;
+    HW->ExportClipBoard = (void *)NoOp;
+    
+    HW->CanDragArea = NULL; 
+   
+    HW->gotoxybuf[0] = '\0';
+    HW->cursorbuf[0] = '\0';
+    
+    HW->Beep = stdout_Beep;
+    HW->Configure = stdout_Configure;
+    HW->SetPalette = stdout_SetPalette;
+    HW->ResetPalette = stdout_ResetPalette;
+
+    HW->QuitVideo = vcsa_QuitVideo;
+    
+    HW->NeedOldVideo = TRUE;
+    HW->ExpensiveFlushVideo = FALSE;
+    HW->NeedHW = 0;
+    HW->merge_Threshold = 40;
+
     return TRUE;
 }
 
 static void vcsa_QuitVideo(void) {
-    TTY.MoveToXY(0, ScreenHeight-1);
-    TTY.SetCursorType(LINECURSOR);
-    vcsa_FlushVideo();
-    fputs("\033[0m\033[3l\n", stdout); /* clear colors, TTY_DISPCTRL */
-    fflush(stdout);
+    HW->MoveToXY(0, ScreenHeight-1);
+    HW->SetCursorType(LINECURSOR);
+    HW->FlushVideo();
+    fputs("\033[0m\033[3l\n", stdOUT); /* clear colors, TTY_DISPCTRL */
     
     close(VcsaFd);
     
-    signal(SIGWINCH, SIG_DFL);
-    
-    TTY.QuitVideo = NoOp;
+    HW->QuitVideo = NoOp;
 }
 
 
 static void vcsa_FlushVideo(void) {
     dat i, j;
-    uldat _s = (uldat)-1, _e = (uldat)-1, start, end;
+    uldat prevS = (uldat)-1, prevE = (uldat)-1, _prevS, _prevE, _start, _end, start, end;
     byte FlippedVideo = FALSE;
-    hwattr *V;
-    uldat t;
     
     if (ChangedVideoFlag) {
 	/* this hides the mouse if needed ... */
     
 	/* first, check the old mouse position */
-	if (TTY.SoftMouse) {
-	    if (ChangedMouseFlag) {
+	if (HW->SoftMouse) {
+	    if (HW->ChangedMouseFlag) {
 		/* dirty the old mouse position, so that it will be overwritten */
-		DirtyVideo(Last_x, Last_y, Last_x, Last_y);
+		
+		/*
+		 * with multi-display this is a hack, but since OldVideo gets restored
+		 * by VideoFlipMouse() below *BEFORE* returning from vcsa_FlushVideo(),
+		 * that's ok.
+		 */
+		DirtyVideo(HW->Last_x, HW->Last_y, HW->Last_x, HW->Last_y);
 		if (ValidOldVideo)
-		    OldVideo[Last_x + Last_y * ScreenWidth] = ~Video[Last_x + Last_y * ScreenWidth];
+		    OldVideo[HW->Last_x + HW->Last_y * ScreenWidth] = ~Video[HW->Last_x + HW->Last_y * ScreenWidth];
 	    }
 	    
-	    i = All->MouseState->x;
-	    j = All->MouseState->y;
+	    i = HW->MouseState.x;
+	    j = HW->MouseState.y;
 	    /*
 	     * instead of calling ShowMouse(),
 	     * we flip the new mouse position in Video[] and dirty it if necessary.
 	     * this avoids glitches if the mouse is between two dirty areas
 	     * that get merged.
 	     */
-	    if (ChangedMouseFlag || (FlippedVideo = Threshold_isDirtyVideo(i, j))) {
+	    if (HW->ChangedMouseFlag || (FlippedVideo = Threshold_isDirtyVideo(i, j))) {
 		VideoFlipMouse();
 		if (!FlippedVideo)
 		    DirtyVideo(i, j, i, j);
-		ChangedMouseFlag = FALSE;
+		HW->ChangedMouseFlag = FALSE;
 		FlippedVideo = TRUE;
 	    } else
 		FlippedVideo = FALSE;
 	}
 	
 	for (i=0; i<ScreenHeight*2; i++) {
-	    start = (uldat)ChangedVideo[i>>1][i&1][0];
-	    end   = (uldat)ChangedVideo[i>>1][i&1][1];
-	    ChangedVideo[i>>1][i&1][0] = -1;
+	    _start = start = (uldat)ChangedVideo[i>>1][i&1][0];
+	    _end   = end   = (uldat)ChangedVideo[i>>1][i&1][1];
 	    
 	    if (start != (uldat)-1) {
+		
+		/* actual tty size could be different from ScreenWidth*ScreenHeight... */
 		start += (i>>1) * ScreenWidth;
-		end += (i>>1) * ScreenWidth;
+		end   += (i>>1) * ScreenWidth;
 
-		if (All->SetUp->Flags & SETUP_NOBLINK) {
-		    for (V = &Video[start], t = start; t <= end; V++, t++)
-			*V &= ~HWATTR(COL(0,HIGH), (hwfont)0);
-		}
+		_start += (i>>1) * HW->X;
+		_end   += (i>>1) * HW->X;
 		
 		
 		if (ValidOldVideo) {
 		    while (start <= end && Video[start] == OldVideo[start])
-			start++;
+			start++, _start++;
 		    while (start <= end && Video[end] == OldVideo[end])
-			end--;
+			end--, _end--;
 		    if (start > end)
 			continue;
 		}
-		if (_s != (uldat)-1) {
-		    if (start - _e < TTY.merge_Threshold) {
+		
+		if (prevS != (uldat)-1) {
+		    if (start - prevE < HW->merge_Threshold) {
 			/* the two chunks are (almost) contiguous, merge them */
-			_e = end;
-			continue;
+			/* if HW->X != ScreenWidth we can merge only if they do not wrap */
+			if (HW->X == ScreenWidth || prevS / ScreenWidth == end / ScreenWidth) {
+			    _prevE = prevE = end;
+			    continue;
+			}
 		    }
-		    lseek(VcsaFd, 4+_s*sizeof(hwattr), SEEK_SET);
-		    write(VcsaFd, (void *)&Video[_s], (_e-_s+1)*sizeof(hwattr));
-		    CopyMem(&Video[_s], &OldVideo[_s], (_e-_s+1)*sizeof(hwattr));
+		    lseek(VcsaFd, 4+_prevS*sizeof(hwattr), SEEK_SET);
+		    write(VcsaFd, (void *)&Video[prevS], (prevE-prevS+1)*sizeof(hwattr));
 		}
-		_s = start;
-		_e = end;
+		prevS = start;
+		prevE = end;
+		_prevS = _start;
+		_prevE = _end;
 	    }
 	}
-	if (_s != (uldat)-1) {
-	    lseek(VcsaFd, 4+_s*sizeof(hwattr), SEEK_SET);
-	    write(VcsaFd, (char *)&Video[_s], (_e-_s+1)*sizeof(hwattr));
-	    CopyMem(&Video[_s], &OldVideo[_s], (_e-_s+1)*sizeof(hwattr));
+	if (prevS != (uldat)-1) {
+	    lseek(VcsaFd, 4+_prevS*sizeof(hwattr), SEEK_SET);
+	    write(VcsaFd, (char *)&Video[prevS], (prevE-prevS+1)*sizeof(hwattr));
 	}
-    } else if (TTY.SoftMouse && ChangedMouseFlag)
-	TTY.HideMouse();
+    } else if (HW->SoftMouse && HW->ChangedMouseFlag)
+	HW->HideMouse();
     
     /* ... and this redraws the mouse */
-    if (TTY.SoftMouse) {
+    if (HW->SoftMouse) {
 	if (FlippedVideo)
 	    VideoFlipMouse();
-	else if (ChangedMouseFlag)
-	    TTY.ShowMouse();
+	else if (HW->ChangedMouseFlag)
+	    HW->ShowMouse();
     }
     
     /* now the cursor */
     
-    if (All->gotoxybuf[0])
-	printf(All->gotoxybuf), All->gotoxybuf[0] = '\0', setFlush();
+    if (HW->gotoxybuf[0])
+	fputs(HW->gotoxybuf, stdOUT), HW->gotoxybuf[0] = '\0', setFlush();
 
-    if (All->cursorbuf[0])
-	printf(All->cursorbuf), All->cursorbuf[0] = '\0', setFlush();
+    if (HW->cursorbuf[0])
+	fputs(HW->cursorbuf, stdOUT), HW->cursorbuf[0] = '\0', setFlush();
 
-    ChangedVideoFlag = ChangedMouseFlag = FALSE;
-    ValidOldVideo = TRUE;
+    HW->ChangedMouseFlag = FALSE;
 }
 
 
 /* HideMouse and ShowMouse depend on Video setup, not on Mouse.
- * so we have vcsa_ and stdout_ versions, not gpm_ ones... */
+ * so we have vcsa_ and stdout_ versions, not GPM_ ones... */
 static void vcsa_ShowMouse(void) {
-    uldat pos = (Last_x = All->MouseState->x) + (Last_y = All->MouseState->y) * ScreenWidth;
+    uldat pos = (HW->Last_x = HW->MouseState.x) + (HW->Last_y = HW->MouseState.y) * ScreenWidth;
+    uldat _pos = HW->Last_x + HW->Last_y * HW->X;
+    
     hwattr h  = Video[pos];
     hwcol c = ~HWCOL(h) ^ COL(HIGH,HIGH);
 
     h = HWATTR( c, HWFONT(h) );
 
-    lseek(VcsaFd, 4+pos*sizeof(hwattr), SEEK_SET);
+    lseek(VcsaFd, 4+_pos*sizeof(hwattr), SEEK_SET);
     write(VcsaFd, (char *)&h, sizeof(hwattr));
 }
 
 static void vcsa_HideMouse(void) {
-    uldat pos = Last_x + Last_y * ScreenWidth;
+    uldat pos = HW->Last_x + HW->Last_y * ScreenWidth;
+    uldat _pos = HW->Last_x + HW->Last_y * HW->X;
 
-    lseek(VcsaFd, 4+pos*sizeof(hwattr), SEEK_SET);
+    lseek(VcsaFd, 4+_pos*sizeof(hwattr), SEEK_SET);
     write(VcsaFd, (char *)&Video[pos], sizeof(hwattr));
 }
 
-
-static byte linux_getconsolemap(void) {
-    scrnmap_t map[E_TABSZ];
-    byte c, ret;
-    
-    if ((ret = ioctl(0, GIO_SCRNMAP, map)) == 0) {
-	if (sizeof(scrnmap_t) == 1)
-	    CopyMem(map+0x80, All->Gtranslations[USER_MAP], 0x80);
-	else {
-	    for (c = 0; c < 0x80; c++)
-		All->Gtranslations[USER_MAP][c] = (byte)map[c | 0x80];
-	}
-    }
-    return ret == 0;
-}
 
 #endif /* CONF_HW_TTY_LINUX */
 
@@ -873,10 +973,10 @@ static void stdout_HideMouse(void);
 
 /* return FALSE if failed */
 static byte stdout_InitVideo(void) {
-    byte *term = origTERM;
+    byte *term = tty_TERM;
     
     if (!term) {
-	fprintf(errFILE, "      stdout_InitVideo() failed: unknown terminal.\n");
+	fputs("      stdout_InitVideo() failed: unknown terminal type.\n", stderr);
 	return FALSE;
     }
     
@@ -884,69 +984,77 @@ static byte stdout_InitVideo(void) {
 	if (!strncmp(term, "xterm", 5) || !strncmp(term, "rxvt", 4)) {
 	    byte c;
 	    
-	    fprintf(errFILE, "\n"
+	    fprintf(stderr, "\n"
 		    "      \033[1m  WARNING: terminal `%s' is not fully supported.\033[0m\n"
 		    "\n"
 		    "      If you really want to run `twin' on this terminal\n"
 		    "      hit RETURN to continue, otherwise hit CTRL-C to quit now.\n", term);
-	    fflush(errFILE);
+	    fflush(stderr);
     
-	    read(0, &c, 1);
+	    read(tty_fd, &c, 1);
 	    if (c == '\n' || c == '\r')
 		break;
 	}
-	fprintf(errFILE, "      stdout_InitVideo() failed: terminal type `%s' not supported.\n", term);
+	fprintf(stderr, "      stdout_InitVideo() failed: terminal type `%s' not supported.\n", term);
 	return FALSE;
     } while (0);
 
-    fputs("\033[0;11m\033[3h", stdout); /* clear colors, set IBMPC consolemap, set TTY_DISPCTRL */
+    fputs("\033[0;11m\033[3h", stdOUT); /* clear colors, set IBMPC consolemap, set TTY_DISPCTRL */
     
-#ifdef CONF_HW_TTY_LINUX
-    /* try to get consolemap...*/
-    (void)linux_getconsolemap();
-#endif
+    HW->FlushVideo = stdout_FlushVideo;
+    HW->FlushHW = stdout_FlushHW;
+
+    HW->SetCursorType = stdout_SetCursorType;
+    HW->MoveToXY = stdout_MoveToXY;           
+
+    HW->ShowMouse = stdout_ShowMouse;
+    HW->HideMouse = stdout_HideMouse;
+
+    HW->DetectSize  = stdin_DetectSize;
+    HW->CheckResize = stdin_CheckResize;
+    HW->Resize      = stdin_Resize;
     
-    TTY.DetectSize = stdin_DetectSize;
-    TTY.canDragArea = NULL;
-
-    TTY.FlushVideo = stdout_FlushVideo;
-    TTY.QuitVideo = stdout_QuitVideo;
-    TTY.FlushHW = NULL;
-
-    TTY.NeedOldVideo = TRUE;
-    TTY.merge_Threshold = 0;
-    TTY.ExpensiveFlushVideo = FALSE;
+    HW->ImportClipBoard = (void *)NoOp;
+    HW->ExportClipBoard = (void *)NoOp;
     
-    TTY.ShowMouse = stdout_ShowMouse;
-    TTY.HideMouse = stdout_HideMouse;
+    HW->CanDragArea = NULL; 
+   
+    HW->gotoxybuf[0] = '\0';
+    HW->cursorbuf[0] = '\0';
+    
+    HW->Beep = stdout_Beep;
+    HW->Configure = stdout_Configure;
+    HW->SetPalette = stdout_SetPalette;
+    HW->ResetPalette = stdout_ResetPalette;
 
-    TTY.MoveToXY = stdout_MoveToXY;           All->gotoxybuf[0] = '\0';
-    TTY.SetCursorType = stdout_SetCursorType; All->cursorbuf[0] = '\0';
-    TTY.Beep = stdout_Beep;
+    HW->QuitVideo = stdout_QuitVideo;
+    
+    HW->NeedOldVideo = TRUE;
+    HW->ExpensiveFlushVideo = FALSE;
+    HW->NeedHW = 0;
+    HW->merge_Threshold = 0;
     
     return TRUE;
 }
 
 static void stdout_QuitVideo(void) {
-    TTY.MoveToXY(0, ScreenHeight-1);
-    TTY.SetCursorType(LINECURSOR);
-    TTY.FlushVideo();
+    HW->MoveToXY(0, ScreenHeight-1);
+    HW->SetCursorType(LINECURSOR);
+    HW->FlushVideo();
 
-    fputs("\033[0;10m\033[3l\n", stdout); /* restore original colors, consolemap and TTY_DISPCTRL */
-    fflush(stdout);
-    signal(SIGWINCH, SIG_DFL);
+    fputs("\033[0;10m\033[3l\n", stdOUT); /* restore original colors, consolemap and TTY_DISPCTRL */
     
-    TTY.QuitVideo = NoOp;
+    HW->QuitVideo = NoOp;
 }
 
-
+/* this can stay static, as it's used only as temporary storage */
 static hwcol _col;
 
 #define CTRL_ALWAYS 0x0800f501	/* Cannot be overridden by TTY_DISPCTRL */
 
-#define stdout_MogrifyNoCursor() fputs("\033[?25l", stdout);
-#define stdout_MogrifyYesCursor() fputs("\033[?25h", stdout);
-#define stdout_MogrifyInit() fputs("\033[0m", stdout); _col = COL(WHITE,BLACK)
+#define stdout_MogrifyNoCursor() fputs("\033[?25l", stdOUT);
+#define stdout_MogrifyYesCursor() fputs("\033[?25h", stdOUT);
+#define stdout_MogrifyInit() fputs("\033[0m", stdOUT); _col = COL(WHITE,BLACK)
 
 INLINE void stdout_SetColor(hwcol col) {
     static byte colbuf[] = "\033[2x;2x;4x;3xm";
@@ -973,7 +1081,7 @@ INLINE void stdout_SetColor(hwcol col) {
     if (colp[-1] == ';') --colp;
     *colp++ = 'm'; *colp   = '\0';
     
-    fputs(colbuf, stdout);
+    fputs(colbuf, stdOUT);
 }
 
 INLINE void stdout_Mogrify(dat x, dat y, uldat len) {
@@ -987,19 +1095,18 @@ INLINE void stdout_Mogrify(dat x, dat y, uldat len) {
     for (; len; V++, oV++, x++, len--) {
 	if (!ValidOldVideo || *V != *oV) {
 	    if (!sending)
-		sending = TRUE, printf("\033[%d;%dH", 1 + y, 1 + x);
+		sending = TRUE, fprintf(stdOUT, "\033[%d;%dH", 1 + y, 1 + x);
 
 	    col = HWCOL(*V);
 	    
 	    if (col != _col)
 		stdout_SetColor(col);
 	
-	    *oV = *V;
 	    c = HWFONT(*V);
 	    if ((c < 32 && ((CTRL_ALWAYS >> c) & 1)) || c == 128+27)
-		putchar(' '); /* can't display it */
+		putc(' ', stdOUT); /* can't display it */
 	    else
-		putchar(c);
+		putc(c, stdOUT);
 	} else
 	    sending = FALSE;
     }
@@ -1009,23 +1116,31 @@ static void stdout_FlushVideo(void) {
     dat i;
     dat start, end;
     byte FlippedVideo = FALSE;
-    hwattr *V;
-    udat t;
     
     if (ChangedVideoFlag) {
 	/* hide the mouse if needed */
 	
-	if (TTY.SoftMouse) {
+	if (HW->SoftMouse) {
 	    /* first, check the old mouse position */
-	    if (ChangedMouseFlag && !Plain_isDirtyVideo(Last_x, Last_y))
-		TTY.HideMouse();
+	    if (HW->ChangedMouseFlag) {
+		/* dirty the old mouse position, so that it will be overwritten */
+		
+		/*
+		 * with multi-display this is a hack, but since OldVideo gets restored
+		 * by VideoFlipMouse() below *BEFORE* returning from stdout_FlushVideo(),
+		 * that's ok.
+		 */
+		DirtyVideo(HW->Last_x, HW->Last_y, HW->Last_x, HW->Last_y);
+		if (ValidOldVideo)
+		    OldVideo[HW->Last_x + HW->Last_y * ScreenWidth] = ~Video[HW->Last_x + HW->Last_y * ScreenWidth];
+	    }
 	    
 	    /* then, the new position */
-	    if (Plain_isDirtyVideo(All->MouseState->x, All->MouseState->y)) {
+	    if (HW->ChangedMouseFlag || Plain_isDirtyVideo(HW->MouseState.x, HW->MouseState.y)) {
 		/* we'll trample on it. no problem, just tweak Video[]
 		 * so that it automagically redraws it */
 		VideoFlipMouse();
-		ChangedMouseFlag = FALSE;
+		HW->ChangedMouseFlag = FALSE;
 		FlippedVideo = TRUE;
 	    }
 	}
@@ -1035,74 +1150,83 @@ static void stdout_FlushVideo(void) {
 	for (i=0; i<ScreenHeight*2; i++) {
 	    start = ChangedVideo[i>>1][i&1][0];
 	    end   = ChangedVideo[i>>1][i&1][1];
-	    ChangedVideo[i>>1][i&1][0] = -1;
 	
-	    if (All->SetUp->Flags & SETUP_NOBLINK) {
-		V = &Video[start + (i>>1) * ScreenWidth];
-		for (t = end - start + 1; t; V++, t--)
-		    *V &= ~HWATTR(COL(0,HIGH), (hwfont)0);
-	    }
-	    
 	    if (start != -1)
 		stdout_Mogrify(start, i>>1, end-start+1);
 	}
 	/* put the cursor back in place */
 	stdout_MogrifyYesCursor();
-	All->gotoxybuf[0] = '\033';
+	HW->gotoxybuf[0] = '\033';
 	
 	/* setFlush() will be called by fputs(All->gotoxybuf...)... */
-    } else if (TTY.SoftMouse && ChangedMouseFlag)
-	TTY.HideMouse();
+    } else if (HW->SoftMouse && HW->ChangedMouseFlag)
+	HW->HideMouse();
     
     /* ... and this redraws the mouse */
-    if (TTY.SoftMouse) {
+    if (HW->SoftMouse) {
 	if (FlippedVideo)
 	    VideoFlipMouse();
-	else if (ChangedMouseFlag)
-	    TTY.ShowMouse();
+	else if (HW->ChangedMouseFlag)
+	    HW->ShowMouse();
     }
     
-    if (All->gotoxybuf[0])
-	fputs(All->gotoxybuf, stdout), All->gotoxybuf[0] = '\0', setFlush();
+    if (HW->gotoxybuf[0])
+	fputs(HW->gotoxybuf, stdOUT), HW->gotoxybuf[0] = '\0', setFlush();
     
-    if (All->cursorbuf[0])
-	fputs(All->cursorbuf, stdout), All->cursorbuf[0] = '\0', setFlush();
+    if (HW->cursorbuf[0])
+	fputs(HW->cursorbuf, stdOUT), HW->cursorbuf[0] = '\0', setFlush();
 
-    ChangedVideoFlag = ChangedMouseFlag = FALSE;
-    ValidOldVideo = TRUE;
+    HW->ChangedMouseFlag = FALSE;
 }
 
+static void stdout_FlushHW(void) {
+    if (fflush(stdOUT) != 0)
+	HW->NeedHW |= NEEDPanicHW, NeedHW |= NEEDPanicHW;
+    clrFlush();
+}
+
+INLINE void stdout_SingleMogrify(dat x, dat y, hwattr V) {
+    byte c;
+    
+    fprintf(stdOUT, "\033[%d;%dH", 1 + y, 1 + x);
+
+    if (HWCOL(V) != _col)
+	stdout_SetColor(HWCOL(V));
+	
+    c = HWFONT(V);
+    if ((c < 32 && ((CTRL_ALWAYS >> c) & 1)) || c == 128+27)
+	putc(' ', stdOUT); /* can't display it */
+    else
+	putc(c, stdOUT);
+}
 
 /* HideMouse and ShowMouse depend on Video setup, not on Mouse.
- * so we have vcsa_ and stdout_ versions, not gpm_ ones... */
+ * so we have vcsa_ and stdout_ versions, not GPM_ ones... */
 static void stdout_ShowMouse(void) {
-    uldat pos = (Last_x = All->MouseState->x) + (Last_y = All->MouseState->y) * ScreenWidth;
+    uldat pos = (HW->Last_x = HW->MouseState.x) + (HW->Last_y = HW->MouseState.y) * ScreenWidth;
     hwattr h  = Video[pos];
     hwcol c = ~HWCOL(h) ^ COL(HIGH,HIGH);
 
-    Video[pos] = HWATTR( c, HWFONT(h) );
-    stdout_MogrifyInit();
-    stdout_Mogrify(All->MouseState->x, All->MouseState->y, 1);
-    Video[pos] = h;
+    stdout_SingleMogrify(HW->MouseState.x, HW->MouseState.y, HWATTR( c, HWFONT(h) ));
 
     /* put the cursor back in place */
-    All->gotoxybuf[0] = '\033';
+    HW->gotoxybuf[0] = '\033';
     setFlush();
 }
 
 static void stdout_HideMouse(void) {
-    stdout_MogrifyInit();
-    stdout_Mogrify(Last_x, Last_y, 1);
+    uldat pos = HW->Last_x + HW->Last_y * ScreenWidth;
+
+    stdout_SingleMogrify(HW->Last_x, HW->Last_y, Video[pos]);
 
     /* put the cursor back in place */
-    All->gotoxybuf[0] = '\033';
+    HW->gotoxybuf[0] = '\033';
     setFlush();
 }
 
 static void stdout_SetCursorType(uldat CursorType) {
-    static uldat saveCursorType = (uldat)-1;
     if (CursorType != saveCursorType) {
-	sprintf(All->cursorbuf, "\033[?%d;%d;%dc",
+	sprintf(HW->cursorbuf, "\033[?%d;%d;%dc",
 		(int)(CursorType & 0xFF),
 		(int)((CursorType >> 8) & 0xFF),
 		(int)((CursorType >> 16) & 0xFF));
@@ -1111,19 +1235,61 @@ static void stdout_SetCursorType(uldat CursorType) {
 }
 
 static void stdout_MoveToXY(udat x, udat y) {
-    static udat saveX = 0, saveY = 0;
     x++, y++;
     if (x != saveX || y != saveY) {
-	sprintf(All->gotoxybuf, "\033[%d;%dH", y, x);
+	sprintf(HW->gotoxybuf, "\033[%d;%dH", y, x);
 	saveX = x;
 	saveY = y;
     }
 }
 
 static void stdout_Beep(void) {
-    fputs("\033[3l\007\033[3h", stdout);
-    All->NeedHW |= NEEDFlushStdout;
+    fputs("\033[3l\007\033[3h", stdOUT);
+    setFlush();
 }
+
+
+static void stdout_Configure(udat resource, byte todefault, udat value) {
+    switch (resource) {
+      case HW_KBDAPPLIC:
+	fputs(todefault || !value ? "\033>" : "\033=", stdOUT);
+	setFlush();
+	break;
+      case HW_ALTCURSKEYS:
+	fputs(todefault || !value ? "\033[?1l" : "\033[?1h", stdOUT);
+	setFlush();
+	break;
+      case HW_BELLPITCH:
+	if (todefault)
+	    fputs("\033[10]", stdOUT);
+	else
+	    fprintf(stdOUT, "\033[10;%hd]", value);
+	setFlush();
+	break;
+      case HW_BELLDURATION:
+	if (todefault)
+	    fputs("\033[11]", stdOUT);
+	else
+	    fprintf(stdOUT, "\033[11;%hd]", value);
+	setFlush();
+	break;
+      default:
+	break;
+    }
+}
+
+    
+static void stdout_SetPalette(udat N, udat R, udat G, udat B) {
+    fprintf(stdOUT, "\033]P%1hx%2hx%2hx%2hx", N, R, G, B);
+    setFlush();
+}
+
+static void stdout_ResetPalette(void) {
+    fputs("\033]R", stdOUT);
+    setFlush();
+}
+
+
 
 #if 0
 /* it works, but it's MUCH slower than doing it the normal way */
@@ -1142,15 +1308,16 @@ void stdout_DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp)
 	/* ok, prepare for direct tty scroll */
 	
 	if (ChangedVideoFlag)
-	    FlushVideo();
-	HideMouse();
-	ChangedMouseFlag = TRUE;
+	    FlushHW();
+	HW->HideMouse();
+	HW->ChangedMouseFlag = TRUE;
 	
-	printf("\033[?1c\033[0m"	/* hide cursor, reset color */
-	       "\033[1;1H"		/* go to first line */
-	       "\033[%dM",Up-DstUp);/* delete lines (i.e. scroll up) */
+	fprintf(stdOUT,
+		"\033[?1c\033[0m"	/* hide cursor, reset color */
+		"\033[1;1H"		/* go to first line */
+		"\033[%dM",Up-DstUp);/* delete lines (i.e. scroll up) */
 	if (FlushVideo != stdout_FlushVideo)
-	    fflush(stdout);
+	    fflush(stdOUT);
 	/*
 	 * now the last trick. with scrolling, we have erased part of Up,Dwn area
 	 * and also everything above DstUp.
@@ -1163,8 +1330,8 @@ void stdout_DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp)
 	    DirtyVideo(0, 0, ScreenWidth - 1, DstUp-1);
 	
 	/* this will restore the cursor */
-	All->gotoxybuf[0] = '\033';
-	All->cursorbuf[0] = '\033';
+	HW->gotoxybuf[0] = '\033';
+	HW->cursorbuf[0] = '\033';
     } else
     	/* tty scrolls can't do this :( */
 	DirtyVideo(DstLeft, DstUp, DstRgt, DstDwn);
@@ -1172,49 +1339,61 @@ void stdout_DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp)
 #endif /* 0 */
 
 static void tty_QuitHW(void) {
-    TTY.QuitMouse();
-    TTY.QuitVideo();
-    TTY.QuitKeyboard();
+    HW->QuitMouse();
+    HW->QuitVideo();
+    HW->QuitKeyboard();
+    HW->QuitHW = NoOp;
     
-    if (tty_name) {
-	free(tty_name);
-	tty_name = NULL;
-    }
+    if (tty_name)
+	FreeMem(tty_name);
+    if (tty_TERM)
+	FreeMem(tty_TERM);
+    if (HW->DisplayIsCTTY && DisplayHWCTTY == HW)
+	DisplayHWCTTY = NULL;
     
-    TTY.QuitHW = NoOp;
+    fflush(stdOUT);
+    if (tty_fd)
+	fclose(stdOUT);
+
+    FreeMem(HW->Private);
 }
 
-display_hw *tty_InitHW(byte *arg) {
+byte tty_InitHW(void) {
+    byte *arg = HW->Name;
     byte *s;
     byte force_stdout = FALSE;
 
-    if (arg) {
-	if (strncmp(arg, "tty", 3))
-	    return NULL; /* user said "use <arg> as display, not tty" */
+    if (!(HW->Private = (struct tty_data *)AllocMem(sizeof(struct tty_data)))) {
+	fprintf(stderr, "      tty_InitHW(): Out of memory!\n");
+	return FALSE;
+    }
+    saveCursorType = (uldat)-1;
+    saveX = saveY = 0;
+    stdOUT = NULL;
+    
+    if (arg && HW->NameLen > 4) {
+	arg += 4;
 	
+	if (strncmp(arg, "tty", 3))
+	    return FALSE; /* user said "use <arg> as display, not tty" */
 	arg += 3;
 	
 	if (*arg == '@') {
-	    int ttyfd;
-
 	    s = strchr(++arg, ',');
 	    if (s) *s = '\0';
-	    ttyfd = open(arg, O_RDWR);  /* use specified tty */
-
-	    if (ttyfd < 0) {
+	    
+	    stdOUT = fopen(arg, "a+"); /* use specified tty */
+	    if (!stdOUT) {
+		fprintf(stderr, "      tty_InitHW(): fdopen(tty) failed: %s\n", strerror(errno));
 		if (s) *s++ = ',';
-		return NULL;
+		return FALSE;
 	    }
-
-	    tty_name = strdup(arg);
+	    tty_fd = fileno(stdOUT);
+	    fcntl(tty_fd, F_SETFD, FD_CLOEXEC);
+	    tty_name = CloneStr(arg);
 	    if (s) *s = ',';
 	    arg = s;
 
-	    close(0);
-	    close(1);
-	    dup2(ttyfd, 0);
-	    dup2(ttyfd, 1);
-	    close(ttyfd);
 	}
 	
 	while (arg && *arg) {
@@ -1222,8 +1401,7 @@ display_hw *tty_InitHW(byte *arg) {
 	    if (!strncmp(arg, ",TERM=", 6)) {
 		s = strchr(arg += 6, ',');
 		if (s) *s = '\0';
-		if (origTERM) free(origTERM);
-		origTERM = strdup(arg);
+		tty_TERM = CloneStr(arg);
 		if (s) *s = ',';
 		arg = s;
 	    } else if (!strncmp(arg, ",stdout", 7)) {
@@ -1233,26 +1411,31 @@ display_hw *tty_InitHW(byte *arg) {
 	    } else
 		break;
 	}
-		    
-#if 0
-	{
-	    pid_t pgrp;
-	    byte fail;
-	    
-	    GetPrivileges();
-	    fail = ioctl(ttyfd, TIOCGPGRP, &pgrp) < 0 || setpgid(0, pgrp) < 0;
-	    DropPrivileges();
-	    
-	    if (fail) {
-		close(ttyfd);
-		return NULL;
-	    }
-	}
-#endif	    
     }
     
-    if (!tty_name && (tty_name = ttyname(0)))
-	tty_name = strdup(tty_name);
+    if (!stdOUT) {
+	if (DisplayHWCTTY) {
+	    fprintf(stderr, "      tty_InitHW() failed: controlling tty %s\n",
+		    DisplayHWCTTY == HWCTTY_DETACHED ? "not usable after Detach" : "is already in use as display");
+	    return FALSE;
+	} else {
+	    tty_fd = 0;
+	    stdOUT = stdout;
+	    tty_name = CloneStr(ttyname(0));
+	    tty_TERM = CloneStr(origTERM);
+	}
+    }
+    fflush(stdOUT);
+    setvbuf(stdOUT, NULL, _IOFBF, BUFSIZ);
+
+    tty_number = 0;
+    if (tty_name && !strncmp(tty_name, "/dev/tty", 8)) {
+	s = tty_name + 8;
+	while (*s && *s >= '0' && *s <= '9') {
+	    tty_number *= 10;
+	    tty_number += *s++ - '0';
+	}
+    }
 
     if (stdin_InitKeyboard()) {
 	
@@ -1264,7 +1447,7 @@ display_hw *tty_InitHW(byte *arg) {
 #endif
 	    ||
 #ifdef CONF_HW_TTY_LINUX
-	    gpm_InitMouse()
+	    GPM_InitMouse()
 #else
 	    FALSE
 #endif
@@ -1276,14 +1459,32 @@ display_hw *tty_InitHW(byte *arg) {
 #endif
 		stdout_InitVideo()) {
 	    
-		TTY.QuitHW = tty_QuitHW;
-		return &TTY;
+		if (tty_fd == 0) {
+		    HW->DisplayIsCTTY = TRUE;
+		    DisplayHWCTTY = HW;
+		} else {
+		    /*
+		     * avoid fighting for the terminal
+		     * with a shell or some other process
+		     */
+		    HW->NeedHW |= NEEDPersistentSlot;
+
+		    HW->DisplayIsCTTY = FALSE;
+		}
+		HW->QuitHW = tty_QuitHW;
+
+		
+		return TRUE;
 	    }
-	    TTY.QuitMouse();
+	    HW->QuitMouse();
 	}
-	TTY.QuitKeyboard();
+	HW->QuitKeyboard();
     }
-    return NULL;
+    if (tty_fd) {
+	close(tty_fd);
+	fclose(stdOUT);
+    }
+    return FALSE;
 }
 
 #ifdef MODULE

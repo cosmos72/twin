@@ -22,13 +22,74 @@
 #include "scroller.h"
 #include "builtin.h"
 #include "hw.h"
+#include "libTwkeys.h"
 
 msgport *WM_MsgPort;
 static msgport *MapQueue;
 
 static void SmartPlace(window *Window, screen *Screen);
 
+static void CommonKeyAction(window *CurrWin, event_keyboard *EventK) {
+    uldat NumRow, OldNumRow;
+	
+    switch (EventK->Code) {
+      case TW_Up:
+	if (!CurrWin->MaxNumRow)
+	    break;
+	OldNumRow=CurrWin->CurY;
+	if (OldNumRow<MAXULDAT) {
+	    if (!OldNumRow)
+		NumRow=CurrWin->MaxNumRow-(uldat)1;
+	    else
+		NumRow=OldNumRow-(uldat)1;
+	    CurrWin->CurY=NumRow;
+	    if (CurrWin->Flags & WINFL_SEL_ROWCURR)
+		DrawTextWindow(CurrWin, (uldat)0, OldNumRow, (uldat)MAXUDAT-(uldat)2, OldNumRow);
+	}
+	else
+	    CurrWin->CurY=NumRow=CurrWin->MaxNumRow-(uldat)1;
+	if (CurrWin->Flags & WINFL_SEL_ROWCURR)
+	    DrawTextWindow(CurrWin, (uldat)0, NumRow, (uldat)MAXUDAT-(uldat)2, NumRow);
+	UpdateCursor();
+	break;
+      case TW_Down:
+	if (!CurrWin->MaxNumRow)
+	    break;
+	OldNumRow=CurrWin->CurY;
+	if (OldNumRow<MAXULDAT) {
+	    if (OldNumRow>=CurrWin->MaxNumRow-(uldat)1)
+		NumRow=(uldat)0;
+	    else
+		NumRow=OldNumRow+(uldat)1;
+	    CurrWin->CurY=NumRow;
+	    if (CurrWin->Flags & WINFL_SEL_ROWCURR)
+		DrawTextWindow(CurrWin, (uldat)0, OldNumRow, (uldat)MAXUDAT-(uldat)2, OldNumRow);
+	}
+	else
+	    CurrWin->CurY=NumRow=(uldat)0;
+	if (CurrWin->Flags & WINFL_SEL_ROWCURR)
+	    DrawTextWindow(CurrWin, (uldat)0, NumRow, (uldat)MAXUDAT-(uldat)2, NumRow);
+	UpdateCursor();
+	break;
+      case TW_Left:
+	if (CurrWin->CurX) {
+	    CurrWin->CurX--;
+	    UpdateCursor();
+	}
+	break;
+      case TW_Right:
+	if (((CurrWin->Flags & WINFL_USECONTENTS) && CurrWin->CurX < CurrWin->XWidth - 3) ||
+	    (!(CurrWin->Flags & WINFL_USEANY) && CurrWin->CurX < MAXULDAT - 1)) {
+	    CurrWin->CurX++;
+	    UpdateCursor();
+	}
+	break;
+      default:
+	break;
+    }
+}
 
+	    
 static byte CheckForwardMsg(msg *Msg, byte WasUsed) {
     static window *CurrWin = (window *)0;
     static byte ClickedInside = FALSE, LastKeys = 0;
@@ -41,7 +102,7 @@ static byte CheckForwardMsg(msg *Msg, byte WasUsed) {
 	return FALSE;
     }
     
-    if (FocusWin && FocusWin != CurrWin) {
+    if (FocusWin != CurrWin) {
 	/* try to leave CurrWin with a clean status */
 	msg *NewMsg;
 	udat Code;
@@ -65,12 +126,12 @@ static byte CheckForwardMsg(msg *Msg, byte WasUsed) {
 		}
 	    }
 	}
-	CurrWin = !FocusWin || (FocusWin->Attrib & WINDOW_MENU) || !FocusWin->Menu ?
-	    (window *)0 : FocusWin;
-	
 	ClickedInside = FALSE;
     }
     
+    CurrWin = !FocusWin || (FocusWin->Attrib & WINDOW_MENU) || !FocusWin->Menu ?
+	    (window *)0 : FocusWin;
+	
     if (!CurrWin || !CurrWin->Screen || (CurrWin->Attrib & WINDOW_MENU)
 	|| !CurrWin->Menu)
 	return FALSE;
@@ -78,11 +139,14 @@ static byte CheckForwardMsg(msg *Msg, byte WasUsed) {
     Event = &Msg->Event;
 	
     if (Msg->Type == MSG_KEY) {
-	if (!WasUsed && !All->FlagsMove && (CurrWin->Attrib & WINDOW_WANT_KEYS)) {
-	    Msg->Type = MSG_WINDOW_KEY;
-	    Event->EventKeyboard.Window = CurrWin;
-	    SendMsg(CurrWin->Menu->MsgPort, Msg);
-	    return TRUE;
+	if (!WasUsed && !All->FlagsMove) {
+	    if (CurrWin->Attrib & WINDOW_WANT_KEYS) {
+		Msg->Type = MSG_WINDOW_KEY;
+		Event->EventKeyboard.Window = CurrWin;
+		SendMsg(CurrWin->Menu->MsgPort, Msg);
+		return TRUE;
+	    } else
+		CommonKeyAction(CurrWin, &Event->EventKeyboard);
 	}
 	return FALSE;
     }
@@ -123,9 +187,10 @@ static byte CheckForwardMsg(msg *Msg, byte WasUsed) {
 		} else if (isRELEASE(Code) && Code == RELEASE_MIDDLE) {
 		    /* send ClipBoard Paste msg */
 		    msg *NewMsg;
-		    if (HW->ImportClipBoard)
-			/* HACK: ImportClipBoard(TRUE) could block! */
-			HW->ImportClipBoard(TRUE);
+		    
+		    ImportClipBoard(TRUE);
+		    /* HACK: ImportClipBoard(TRUE) could block! */
+		    
 		    if (All->ClipLen &&
 			(NewMsg = Do(Create,Msg)(FnMsg, MSG_CLIPBOARD, sizeof(event_clipboard)))) {
 			Event = &NewMsg->Event;
@@ -177,7 +242,7 @@ static void Check4Resize(window *CurrWin) {
 	CheckResizeWindowContents(CurrWin);
 }
 
-static void CommonAction(msg *Msg) {
+static void CommonMenuAction(msg *Msg) {
     window *CurrWin=Msg->Event.EventCommon.Window;
     screen *Screen;
     udat Code=Msg->Event.EventCommon.Code;
@@ -248,6 +313,16 @@ static void CommonAction(msg *Msg) {
 	MakeLastWindow(CurrWin, TRUE);
 	break;
 
+      case COD_COMMON_WINLIST:
+	if (ListWin->Screen)
+	    Act(UnMap,ListWin)(ListWin);
+	if (CurrWin && CurrWin->Screen)
+	    Screen = CurrWin->Screen;
+	else
+	    Screen = All->FirstScreen;
+	SmartPlace(ListWin, Screen);
+	break;
+
       case COD_COMMON_RAISELOWER:
 	if (CurrWin == Screen->FirstWindow)
 	    MakeLastWindow(CurrWin, FALSE);
@@ -262,16 +337,6 @@ static void CommonAction(msg *Msg) {
 	UpdateCursor();
 	break;
 
-      case COD_COMMON_WINLIST:
-	if (ListWin->Screen)
-	    Act(UnMap,ListWin)(ListWin);
-	if (CurrWin && CurrWin->Screen)
-	    Screen = CurrWin->Screen;
-	else
-	    Screen = All->FirstScreen;
-	SmartPlace(ListWin, Screen);
-	break;
-	
       default:
 	break;
     }
@@ -358,7 +423,7 @@ static void WManagerH(msgport *MsgPort) {
 	    SendMsg(MapQueue, Msg);
 	    continue;
 	} else if (Msg->Type==MSG_MENU_ROW && (temp=Msg->Event.EventMenu.Code) >= COD_COMMON) {
-	    CommonAction(Msg);
+	    CommonMenuAction(Msg);
 	    Delete(Msg);
 	    continue;
 	} else if (Msg->Type!=MSG_MOUSE && Msg->Type!=MSG_KEY) {
@@ -694,7 +759,9 @@ static void WManagerH(msgport *MsgPort) {
 			}
 		    }
 		    else if (!(FlagsMove & GLMOVE_1stWIN_FREEZE)) {
-			if ((Gadget=Act(SearchGadget,CurrWin)(CurrWin, i, j))) {
+			if ((Gadget=Act(SearchGadget,CurrWin)(CurrWin, i, j))
+			    && !(Gadget->Flags & GADGET_DISABLED)) {
+			    
 			    All->FlagsMove|=GLMOVE_1stWIN_FREEZE;
 			    CurrWin->GadgetSelect=Gadget;
 			    Gadget->Flags|=GADGET_PRESSED;
@@ -812,7 +879,7 @@ static void WManagerH(msgport *MsgPort) {
 		    i=(dat)((ldat)EventMouseX-Rgt);
 		    j=(dat)((ldat)EventMouseY-Dwn);
 		    if (i || j)
-			ResizeWindow(CurrWin, i, j);
+			ResizeRelWindow(CurrWin, i, j);
 		}
 		break;
 
@@ -855,7 +922,7 @@ static void WManagerH(msgport *MsgPort) {
 							      (XDelta= (dat)0, YDelta=-Repeat);
 
 		if (temp == GLMOVE_RESIZE_1stWIN)
-		    ResizeWindow(CurrWin, XDelta, YDelta);
+		    ResizeRelWindow(CurrWin, XDelta, YDelta);
 		else
 		    DragWindow(CurrWin, XDelta, YDelta);
 		
@@ -998,11 +1065,11 @@ static void WManagerH(msgport *MsgPort) {
 	}
     }
     
-    if (All->MouseState->keys && Scroller_MsgPort->WakeUp != TIMER_ALWAYS) {
+    if (All->MouseHW && All->MouseHW->MouseState.keys && Scroller_MsgPort->WakeUp != TIMER_ALWAYS) {
 	extern msg *Do_Scroll;
 	Scroller_MsgPort->WakeUp = TIMER_ALWAYS;
 	SendMsg(Scroller_MsgPort, Do_Scroll);
-    } else if (!All->MouseState->keys && Scroller_MsgPort->WakeUp == TIMER_ALWAYS) {
+    } else if ((!All->MouseHW || !All->MouseHW->MouseState.keys) && Scroller_MsgPort->WakeUp == TIMER_ALWAYS) {
 	extern msg *Dont_Scroll;
 	SendMsg(Scroller_MsgPort, Dont_Scroll);
     }

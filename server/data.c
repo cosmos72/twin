@@ -38,37 +38,27 @@ static setup SetUp = {
 	(byte)5, (byte)3 /* DeltaXShade, DeltaYShade */
 };
 
-static mouse_state MouseState = {
-    (dat)0, (dat)0,
-	(dat)0, (dat)0,
-	(byte)0
-};
+#define L 0x55
+#define M 0xAA
+#define H 0xFF
 
-palette Palette[16] = {
-    { 0, 0, 0},
-    { 0, 0,45},
-    { 0,47, 0},
-    { 0,40,36},
-    {45, 0, 0},
-    {36, 0,48},
-    {48,24, 0},
-    {45,45,45},
-    {25,25,25},
-    {18,25,63},
-    {25,63,25},
-    { 7,55,63},
-    {63,10,10},
-    {60,30,63},
-    {63,63,25},
-    {63,63,63}
-};
+static palette Palette[MAXCOL+1] = {
+    /* the default colour table, for VGA+ colour systems */
+    {0,0,0}, {0,0,M}, {0,M,0}, {0,M,M}, {M,0,0}, {M,0,M}, {M,M,0}, {M,M,M},
+    {L,L,L}, {L,L,H}, {L,H,L}, {L,H,H}, {H,L,L}, {H,L,H}, {H,H,L}, {H,H,H}};
+
+#undef H
+#undef M
+#undef L
 
 static all _All = {
     (screen *)0, (screen *)0,
 	(msgport *)0, (msgport *)0, (msgport *)0,
 	(mutex *)0, (mutex *)0,
 	(module *)0, (module *)0,
-	(menu *)0, (window *)0,
+	(display_hw *)0, (display_hw *)0, (display_hw *)0,
+	(fn_hook)0, (window *)0,
+	(menu *)0,
     { (time_t)0, (uldat)0 },
 	&SetUp,
 	
@@ -98,16 +88,11 @@ static all _All = {
     },
 	
 	OV_LEFT<<LEFT | OV_MIDDLE<<MIDDLE | OV_RIGHT<<RIGHT, FALSE,
-	&MouseState,
-	-1, -1,
-	(byte)0, (udat)0,
+	(udat)0,
 	(uldat)0, (uldat)0, (uldat)0,
 	(byte *)0,
 	Palette,
-	"",  /* char gotoxybuf[16] */
-	"",  /* char cursorbuf[16] */
-	(void (*)(void))0,
-	NOSLOT
+	(void (*)(void))0
 };
 all *All = &_All;
 

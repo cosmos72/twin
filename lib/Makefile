@@ -7,10 +7,13 @@ all: everything
 
 CFLAGS+=-fPIC
 
-BINS=libTw.so.1.0.0
-OBJS_libTw.so.1.0.0=libTw.o md5.o
+VERSION=2.0.0
+SO_VER=2
 
-LDFLAGS_libTw.so.1.0.0=-shared -Wl,-soname,libTw.so.1
+BINS=libTw.so.$(VERSION)
+OBJS_libTw.so.$(VERSION)=libTw.o md5.o
+
+LDFLAGS_libTw.so.$(VERSION)=-lc -shared -Wl,-soname,libTw.so.$(SO_VER)
 
 include $(TOPDIR)/conf/config.status
 -include .depend
@@ -20,7 +23,7 @@ ifneq ($(CONF_SOCKET),n)
   everything: lib links
 
   ifeq ($(CONF_SOCKET_GZ),y)
-    LDFLAGS_libTw.so.1.0.0+=-lz
+    LDFLAGS_libTw.so.$(VERSION)+=-lz
   endif
 else
   everything:
@@ -40,13 +43,13 @@ include $(TOPDIR)/Rules
 #
 lib: $(BINS)
 
-links: libTw.so.1 libTw.so
+links: libTw.so.$(SO_VER) libTw.so
 
-libTw.so.1:
-	ln -sfn libTw.so.1.0.0 libTw.so.1
+libTw.so.$(SO_VER):
+	ln -sfn libTw.so.$(VERSION) libTw.so.$(SO_VER)
 
 libTw.so:
-	ln -sfn libTw.so.1     libTw.so
+	ln -sfn libTw.so.$(SO_VER) libTw.so
 
 clean:
 	rm -f .*.flags .*.link libTw.so* $(OBJS)

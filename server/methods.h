@@ -15,6 +15,7 @@ extern fn Fn;
 #define	FnMsgPort	(Fn.f_msgport)
 #define	FnMutex		(Fn.f_mutex)
 #define	FnModule	(Fn.f_module)
+#define	FnDisplayHW	(Fn.f_display_hw)
 
 obj  *Clone(obj *Obj);
 void  CloneList(obj *FirstFrom, obj **FirstTo, obj **LastTo);

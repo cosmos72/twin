@@ -94,7 +94,7 @@ $(TOPDIR)/scripts/MkDep:
 
 %.o: %.c
 	$(CC) $(CFLAGS) $(CFLAGS_$@) -c $< -o $@
-	@echo -e ' ifeq ($$(CFLAGS) $$(CFLAGS_$@),$(CFLAGS) $(CFLAGS_$@))\n'\
+	@echo -e ' ifeq ($$(strip $$(CFLAGS) $$(CFLAGS_$@)),$(strip $(CFLAGS) $(CFLAGS_$@)))\n'\
 	'FILES_UP_TO_DATE += $@\n'\
 	'endif' > .$@.flags
 
@@ -113,7 +113,7 @@ $(TOPDIR)/scripts/MkDep:
 .%.link:
 	$(CC) -o $* $(OBJS_$*) $(LDFLAGS) $(LDFLAGS_$*)
 	@ln -sfn $* $@
-	@echo -e ' ifeq ($$(OBJS_$*) $$(LDFLAGS) $$(LDFLAGS_$*),$(OBJS_$*) $(LDFLAGS) $(LDFLAGS_$*))\n'\
+	@echo -e ' ifeq ($$(strip $$(OBJS_$*) $$(LDFLAGS) $$(LDFLAGS_$*)),$(strip $(OBJS_$*) $(LDFLAGS) $(LDFLAGS_$*)))\n'\
 	'FILES_UP_TO_DATE += $@\n'\
 	'endif' > $@.flags
 
@@ -123,7 +123,7 @@ $(TOPDIR)/scripts/MkDep:
 .%.arlib:
 	rm -f $* && $(AR) cr $* $(OBJS_$*)
 	@ln -sfn $* $@
-	@echo -e ' ifeq ($$(OBJS_$*),$(OBJS_$*))\n'\
+	@echo -e ' ifeq ($$(strip $$(OBJS_$*)),$(strip $(OBJS_$*)))\n'\
 	'FILES_UP_TO_DATE += $@\n'\
 	'endif' > $@.flags
 
@@ -153,6 +153,7 @@ ifneq ($(FILES_FLAGS_EXIST),)
 endif
 
 FILES_CHANGED := $(strip $(filter-out $(FILES_UP_TO_DATE), $(FILES)))
+
 
 ifneq ($(FILES_CHANGED),)
 
