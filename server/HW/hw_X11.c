@@ -71,7 +71,7 @@
  * 
  * twdisplay   receives a "Selection Notify" from twin and forwards it to whoever asked it...
  *             If it remembered the nesting, it will correctly remove the previous
- *             request from its list, and orward this notify to X (xterm), else will happily
+ *             request from its list, and forward this notify to X (xterm), else will happily
  *             forward this notify to X (twin), causing an INFINITE LOOP!
  * 
  * 
@@ -105,6 +105,7 @@ struct x11_data {
     uldat        XReqCount;
     XSelectionRequestEvent XReq[NEST];
     unsigned long xcol[MAXCOL+1];
+    Atom xWM_PROTOCOLS, xWM_DELETE_WINDOW;
 };
 
 #define xdata	((struct x11_data *)HW->Private)
@@ -125,6 +126,8 @@ struct x11_data {
 #define XReqCount	(xdata->XReqCount)
 #define XReq(j)	(xdata->XReq[j])
 #define xcol	(xdata->xcol)
+#define xWM_PROTOCOLS (xdata->xWM_PROTOCOLS)
+#define xWM_DELETE_WINDOW (xdata->xWM_DELETE_WINDOW)
 
 static void X11_SelectionNotify_up(Window win, Atom prop);
 static void X11_SelectionRequest_up(XSelectionRequestEvent *req);
@@ -331,6 +334,16 @@ static void X11_HandleEvent(XEvent *event) {
       case SelectionNotify:
 	X11_SelectionNotify_up(event->xselection.requestor, event->xselection.property);
 	break;
+      case ClientMessage:
+	if (event->xclient.message_type == xWM_PROTOCOLS &&
+	    event->xclient.format == 32 &&
+	    event->xclient.data.l[0] == xWM_DELETE_WINDOW) {
+
+	    /* going to close this display */
+	    HW->NeedHW |= NEEDPanicHW, NeedHW |= NEEDPanicHW;
+	    
+	}
+	break;
       default:
 	break;
     }
@@ -520,8 +533,8 @@ static void X11_SelectionExport_X11(void) {
 /*
  * notify our Selection to X11
  */
-static void X11_SelectionNotify_X11(uldat ReqPrivate, uldat Magic, byte MIME[MAX_MIMELEN],
-				    uldat Len, byte *Data) {
+static void X11_SelectionNotify_X11(uldat ReqPrivate, uldat Magic, CONST byte MIME[MAX_MIMELEN],
+				    uldat Len, CONST byte *Data) {
     XEvent ev;
     static Atom xa_targets = None;
     if (xa_targets == None)
@@ -547,7 +560,7 @@ static void X11_SelectionNotify_X11(uldat ReqPrivate, uldat Magic, byte MIME[MAX
     ev.xselection.selection = XReq(XReqCount).selection;
     ev.xselection.target    = XReq(XReqCount).target;
     ev.xselection.time      = XReq(XReqCount).time;
-	
+
     if (XReq(XReqCount).target == xa_targets) {
 	/*
 	 * On some systems, the Atom typedef is 64 bits wide.
@@ -676,8 +689,7 @@ static void X11_SelectionRequest_up(XSelectionRequestEvent *req) {
     }
 #endif
     CopyMem(req, &XReq(XReqCount), sizeof(XSelectionRequestEvent));
-    XReqCount++;
-    TwinSelectionRequest((obj *)HW, NOID, TwinSelectionGetOwner());
+    TwinSelectionRequest((obj *)HW, XReqCount++, TwinSelectionGetOwner());
     /* we will get a HW->HWSelectionNotify (i.e. X11_SelectionNotify_X11) call */
 }
 
@@ -695,7 +707,7 @@ static void X11_DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat Ds
 	if (HW->XY[0] >= Left && HW->XY[0] <= Rgt && HW->XY[1] >= Up && HW->XY[1] <= Dwn) {
 	    /* must hide the cursor before dragging */
 	    X11_HideCursor(HW->XY[0], HW->XY[1]);
-	    /* and remember redrawing it */
+	    /* and remember to redraw it */
 	    HW->TT = (uldat)-1;
 	} else if (HW->XY[0] >= DstLeft && HW->XY[0] <= DstRgt &&
 		   HW->XY[1] >= DstUp && HW->XY[1] <= DstDwn) {
@@ -711,14 +723,18 @@ static void X11_DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat Ds
 
 
 static void X11_QuitHW(void) {
-    XFreeFont(xdisplay, xsfont);
-    XFreeGC(xdisplay, xgc);
-    XUnmapWindow(xdisplay, xwindow);
-    XDestroyWindow(xdisplay, xwindow);
+
+    if (xsfont) XFreeFont(xdisplay, xsfont);
+    if (xgc != None) XFreeGC(xdisplay, xgc);
+    if (xwindow != None) {
+	XUnmapWindow(xdisplay, xwindow);
+	XDestroyWindow(xdisplay, xwindow);
+    }
     XCloseDisplay(xdisplay);
     xdisplay = NULL;
     
-    UnRegisterRemote(HW->keyboard_slot);
+    if (HW->keyboard_slot != NOSLOT)
+	UnRegisterRemote(HW->keyboard_slot);
     HW->keyboard_slot = NOSLOT;
     HW->KeyboardEvent = (void *)NoOp;
     
@@ -803,6 +819,10 @@ byte X11_InitHW(void) {
 	if (noinput) *noinput = ',';
 	return FALSE;
     }
+
+    xsfont = NULL; xhints = NULL;
+    xwindow = None; xgc = None;
+    HW->keyboard_slot = NOSLOT;
     
     if ((xdisplay = XOpenDisplay(arg))) do {
 	
@@ -818,8 +838,10 @@ byte X11_InitHW(void) {
 	    xcolor.red   = 257 * (udat)Palette[i].Red;
 	    xcolor.green = 257 * (udat)Palette[i].Green;
 	    xcolor.blue  = 257 * (udat)Palette[i].Blue;
-	    if (!XAllocColor(xdisplay, DefaultColormap(xdisplay, xscreen), &xcolor))
+	    if (!XAllocColor(xdisplay, DefaultColormap(xdisplay, xscreen), &xcolor)) {
+		fprintf(stderr, "      X11_InitHW() failed to allocate colors\n");
 		break;
+	    }
 	    xcol[i] = xcolor.pixel;
 	}
 	if (i <= MAXCOL)
@@ -853,6 +875,16 @@ byte X11_InitHW(void) {
 	    strcat(name+5, " on X");
 	    XStoreName(xdisplay, xwindow, name);
 	    
+	    /*
+	     * ask ICCCM-compliant window manager to tell us when close window
+	     * has been chosen, rather than just killing us
+	     */
+	    xWM_PROTOCOLS = XInternAtom(xdisplay, "WM_PROTOCOLS", False);
+	    xWM_DELETE_WINDOW = XInternAtom(xdisplay, "WM_DELETE_WINDOW", False);
+	    
+	    XChangeProperty(xdisplay, xwindow, xWM_PROTOCOLS, XA_ATOM, 32, PropModeReplace,
+			    (unsigned char *) &xWM_DELETE_WINDOW, 1);
+	    
 	    xhints->flags = PResizeInc;
 	    xhints->width_inc  = xwfont;
 	    xhints->height_inc = xhfont;
@@ -864,6 +896,8 @@ byte X11_InitHW(void) {
 		XNextEvent(xdisplay, &event);
 	    } while (event.type != MapNotify);
 
+	    XFree(xhints); xhints = NULL;
+	    
 	    HW->mouse_slot = NOSLOT;
 	    HW->keyboard_slot = RegisterRemote(i = XConnectionNumber(xdisplay), HW,
 					       (void (*)(int fd, void *))X11_KeyboardEvent);
@@ -928,6 +962,7 @@ byte X11_InitHW(void) {
 	     * without forcing all other displays
 	     * to redraw everything too.
 	     */
+	    HW->RedrawVideo = FALSE;
 	    NeedRedrawVideo(0, 0, HW->X - 1, HW->Y - 1);
 
 	    if (opt) *opt = ',';
@@ -959,6 +994,9 @@ byte X11_InitHW(void) {
 
 #ifdef MODULE
 
+#include "version.h"
+MODULEVERSION;
+		       
 byte InitModule(module *Module) {
     Module->Private = X11_InitHW;
     return TRUE;

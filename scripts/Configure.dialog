@@ -42,6 +42,23 @@ function yesmodno() {
    fi
 }
 
+# cannot rely on the value of dependency variable...
+# user may change it while inside "dialog"
+function yesmodno_dep() {
+   yesmodno "$1"
+}
+
+# here we CAN rely on the value of dependency variable...
+# as it it located in another menu
+function yesno_truedep() {
+   DEP=$(eval "echo \"\${$2}\"")
+   if test "$DEP" != n; then
+      yesno "$1"
+   else
+      eval "$1=n"
+   fi
+}
+
 # here we CAN rely on the value of dependency variable...
 # as it it located in another menu
 function yesmodno_truedep() {
@@ -51,6 +68,11 @@ function yesmodno_truedep() {
    else
       eval "$1=n"
    fi
+}
+
+function msg() {
+    : $[ CURRITEMS=CURRITEMS+1 ]
+    CURRCMD="$CURRCMD :Information: \\\"${1}\\\" off"
 }
 
 function menu() {
@@ -85,7 +107,7 @@ function quit() {
 
 function dump() {
     VAL=$(eval "echo \"\${$1}\"")
-    if [ "$VAL" = m -a "$CONF_MODULES" = n ]; then
+    if [ "$VAL" = m -a "$CONF__MODULES" = n ]; then
        VAL=y
     fi
     echo "$1=$VAL"

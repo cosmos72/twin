@@ -1,0 +1,22 @@
+#!/bin/sh
+
+ARGS="$@"
+if [ -z "$ARGS" ]; then
+  if [ "$DISPLAY" ]; then
+    ARGS="-hw=X,font=9x19"
+  elif [ "$TWDISPLAY" ]; then
+    ARGS="-hw=twin@$TWDISPLAY"
+  else
+    ARGS="-hw=tty"
+  fi
+fi
+
+DPY=`twfindtwin`
+
+if [ $? = 0 ]; then
+  echo twstart: twin running on "$DPY"
+  exec twdisplay -twin@"$DPY" $ARGS
+else
+  exec twin $ARGS
+fi
+

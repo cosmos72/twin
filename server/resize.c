@@ -22,9 +22,9 @@
 #include "twin.h"
 #include "data.h"
 #include "methods.h"
-
 #include "draw.h"
 #include "resize.h"
+
 #include "hw.h"
 
 #define INIT do { \
@@ -89,23 +89,21 @@ void UpdateCursor(void) {
     SetCursorType(type);    
 }
 
-static int SendResizeSignal(window *Window) {
+static byte SendResizeSignal(window *Window) {
     struct winsize wsiz;
     
-    if (!Window->TtyData)
-	return -1;
-	
     wsiz.ws_col = Window->TtyData->SizeX;
     wsiz.ws_row = Window->TtyData->SizeY;
     wsiz.ws_xpixel = 0;
     wsiz.ws_ypixel = 0;
     
-    if (Window->RemoteData.FdSlot != NOSLOT) {
-	if (ioctl(Window->RemoteData.Fd, TIOCSWINSZ, &wsiz) == 0)
-	    return kill(-Window->RemoteData.ChildPid, SIGWINCH);
-	return -1;
-    }
-    return 0;
+#if 0
+    /* is this enough on every OS ? */
+    return ioctl(Window->RemoteData.Fd, TIOCSWINSZ, &wsiz) == 0;
+#else
+    return ioctl(Window->RemoteData.Fd, TIOCSWINSZ, &wsiz) == 0
+	&& kill(-Window->RemoteData.ChildPid, SIGWINCH) == 0;
+#endif
 }
 
 byte CheckResizeWindowContents(window *Window) {
@@ -183,7 +181,11 @@ byte ResizeWindowContents(window *Window) {
     Data->saveY = Data->Y = Window->CurY - Data->ScrollBack;    
     Data->Pos = Window->Contents + Window->CurY * x + Window->CurX;
     
-    (void)SendResizeSignal(Window);
+    if (!(Window->Attrib & WINDOW_WANT_CHANGE)
+	&& Window->TtyData && Window->RemoteData.FdSlot != NOSLOT)
+	/* the MsgPort will not be informed of the resize...
+	 * we must send SIGWINCH manually */
+	(void)SendResizeSignal(Window);
     
     if (Window->Screen) {
 	DrawBorderWindow(Window, BORDER_RIGHT);
@@ -210,9 +212,10 @@ static row *InsertRowsWindow(window *Window, uldat NumRows) {
     return CurrRow;
 }
 
-byte WriteRow(window *Window, uldat Len, byte *Text) {
+byte WriteRow(window *Window, uldat Len, CONST byte *Text) {
     row *CurrRow;
     uldat x, y, max, RowLen, NewLen;
+    CONST byte *_Text;
     byte *tempText;
     hwcol *tempColText;
     byte FlagNewRows, ModeInsert;
@@ -240,9 +243,9 @@ byte WriteRow(window *Window, uldat Len, byte *Text) {
 	}
 	
 	RowLen=(uldat)0;
-	tempText=Text;
-	while (RowLen < Len && *tempText!=(byte)13 && *tempText!=(byte)10)
-	    ++RowLen, ++tempText;
+	_Text=Text;
+	while (RowLen < Len && *_Text!=(byte)13 && *_Text!=(byte)10)
+	    ++RowLen, ++_Text;
 	
 	/*	WINFL_INSERT non implementato */
 	/*  Gap non implementato				 */
@@ -252,7 +255,7 @@ byte WriteRow(window *Window, uldat Len, byte *Text) {
 		return FALSE;
 	
 	    if (CurrRow->MaxLen<x+RowLen) {
-		NewLen=((x+RowLen) + ((x+RowLen) >> 1)) | All->SetUp->BloccoMemMin;
+		NewLen=((x+RowLen) + ((x+RowLen) >> 1)) | All->SetUp->MinAllocSize;
 		if ((tempText=ReAllocMem(CurrRow->Text, NewLen))) {
 		    if (!(Window->Flags & WINFL_USE_DEFCOL)) {
 			if ((tempColText=(hwcol *)ReAllocMem(CurrRow->ColText, sizeof(hwcol)*NewLen)))
@@ -406,8 +409,8 @@ void CenterWindow(window *Window) {
     dat ScreenWidth, ScreenHeight;
     udat YLimit;
     
-    if (!Window || !(Screen=Window->Screen) ||
-	(Screen!=All->FirstScreen) || (Window->Attrib & WINDOW_MENU))
+    if (!Window || !(Screen=Window->Screen) || (Screen!=All->FirstScreen) ||
+	(Window->Attrib & WINDOW_MENU))
 	return;
     
     ScreenWidth=Screen->ScreenWidth;
@@ -492,6 +495,7 @@ void DragFirstWindow(dat i, dat j) {
     byte Shade, DeltaXShade, DeltaYShade, isFocus;
     
     Screen=All->FirstScreen;
+    YLimit=Screen->YLimit;
     Window=Screen->FirstWindow;
     
     if (!(Window->Attrib & WINDOW_DRAG))
@@ -502,8 +506,8 @@ void DragFirstWindow(dat i, dat j) {
     else if (i>(dat)0 && Window->Left>MAXDAT-i)
 	i=MAXDAT-Window->Left;
     
-    if (j<(dat)0 && Window->Up<(udat)-j)
-	j=-(dat)Window->Up;
+    if (j<(dat)0 && Window->Up<(udat)-j + !!YLimit)
+	j=-(dat)Window->Up + !!YLimit;
     else if (j>(dat)0 && Window->Up>MAXUDAT-(udat)j)
 	j=(dat)(MAXUDAT-Window->Up);
 
@@ -513,11 +517,10 @@ void DragFirstWindow(dat i, dat j) {
     ScreenHeight=Screen->ScreenHeight;
     NWinDiMenu=(Window->Attrib & WINDOW_MENU) ? 0 : (ldat)~(ldat)0;
     SetUp=All->SetUp;
-    Shade=!!(SetUp->Flags & SETUP_DO_SHADE);
+    Shade=!!(SetUp->Flags & SETUP_SHADOWS);
     DeltaXShade=Shade ? SetUp->DeltaXShade : (byte)0;
     DeltaYShade=Shade ? SetUp->DeltaYShade : (byte)0;
-    YLimit=Screen->YLimit;
-    
+   
     Left = (ldat)Window->Left-((ldat)Screen->Left & NWinDiMenu);
     Rgt  = Left+(ldat)Window->XWidth-(ldat)1;
     Up   = (ldat)Window->Up-((ldat)Screen->Up & NWinDiMenu)+(ldat)YLimit;
@@ -644,7 +647,7 @@ void DragWindow(window *Window, dat i, dat j) {
     ScreenHeight=Screen->ScreenHeight;
     NWinDiMenu=(Window->Attrib & WINDOW_MENU) ? 0 : (ldat)~(ldat)0;
     SetUp=All->SetUp;
-    Shade=!!(SetUp->Flags & SETUP_DO_SHADE);
+    Shade=!!(SetUp->Flags & SETUP_SHADOWS);
     DeltaXShade=Shade ? SetUp->DeltaXShade : (byte)0;
     DeltaYShade=Shade ? SetUp->DeltaYShade : (byte)0;
     YLimit=Screen->YLimit;
@@ -663,8 +666,8 @@ void DragWindow(window *Window, dat i, dat j) {
 	    i=MAXDAT-Window->Left;
     }
     if (j<(dat)0) {
-	if (Window->Up<(udat)-j)
-	    j=(dat)Window->Up;
+	if (Window->Up<(udat)-j + !!YLimit)
+	    j=(dat)Window->Up + !!YLimit;
     }
     else if (j>(dat)0) {
 	if (Window->Up>MAXUDAT-(udat)j)
@@ -720,7 +723,7 @@ void ResizeRelFirstWindow(dat i, dat j) {
     ScreenHeight=Screen->ScreenHeight;
     NWinDiMenu=(Window->Attrib & WINDOW_MENU) ? 0 : (ldat)~(ldat)0;
     SetUp=All->SetUp;
-    Shade=!!(SetUp->Flags & SETUP_DO_SHADE);
+    Shade=!!(SetUp->Flags & SETUP_SHADOWS);
     DeltaXShade=Shade ? SetUp->DeltaXShade : (byte)0;
     DeltaYShade=Shade ? SetUp->DeltaYShade : (byte)0;
     YLimit=Screen->YLimit;
@@ -832,7 +835,7 @@ void ResizeRelWindow(window *Window, dat i, dat j) {
 	ScreenHeight=Screen->ScreenHeight;
 	NWinDiMenu=(Window->Attrib & WINDOW_MENU) ? 0 : (ldat)~(ldat)0;
 	SetUp=All->SetUp;
-	Shade=!!(SetUp->Flags & SETUP_DO_SHADE);
+	Shade=!!(SetUp->Flags & SETUP_SHADOWS);
 	DeltaXShade=Shade ? SetUp->DeltaXShade : (byte)0;
 	DeltaYShade=Shade ? SetUp->DeltaYShade : (byte)0;
 	YLimit=Screen->YLimit;
@@ -892,6 +895,9 @@ void ScrollFirstWindowArea(dat X1, dat Y1, dat X2, dat Y2, dat DeltaX, dat Delta
     
     Screen=All->FirstScreen;
     Window=Screen->FirstWindow;
+
+    if (!Window || Window->Attrib & WINDOW_ROLLED_UP)
+	return;
     
     XWidth=Window->XWidth;
     YWidth=Window->YWidth;
@@ -1057,7 +1063,7 @@ byte ExecScrollFocusWindow(void) {
     udat XWidth, YWidth;
     dat DeltaX, DeltaY;
     
-    if (!(All->FlagsMove & GLMOVE_SCROLL_1stWIN))
+    if ((All->State & STATE_ANY) != STATE_SCROLL)
 	return FALSE;
     
     if (!(Screen=All->FirstScreen) || !(Window=Screen->FocusWindow))
@@ -1129,7 +1135,7 @@ void HideMenu(byte on_off) {
 	    if (Screen->Up < MAXUDAT) {
 		Screen->Up++;
 		Screen->YLimit++;
-		DrawMenuBar(Screen, MINDAT, MAXDAT);
+		Act(DrawMenu,Screen)(Screen, MINDAT, MAXDAT);
 		UpdateCursor();
 	    } else
 		ResizeFirstScreen(1);
@@ -1139,7 +1145,7 @@ void HideMenu(byte on_off) {
 
 void ChangeMenuFirstScreen(menuitem *NewItem, byte ByMouse, byte Flag) {
     screen *Screen;
-    menu *Menu;
+    menu *Menu, *_Menu;
     menuitem *CurrItem;
     window *NewWin, *CurrWin;
     
@@ -1152,33 +1158,50 @@ void ChangeMenuFirstScreen(menuitem *NewItem, byte ByMouse, byte Flag) {
 	    HideMenu(FALSE);
 	
 	CurrWin = Screen->FocusWindow;
-	CurrItem = Flag==ACTIVATE_MENU_FLAG ? (menuitem *)0 : Menu->MenuItemSelect;
+	
+	if (Flag == ACTIVATE_MENU_FLAG)
+	    CurrItem = (menuitem *)0;
+	else
+	    CurrItem = Act(GetSelectItem,Menu)(Menu);
+				      
     
-	All->FlagsMove =
-	    (
-	     ByMouse && Flag != DISABLE_MENU_FLAG
-	     ? GLMOVE_BY_MOUSE
-	     : (byte)0
-	     )
-	    |
-	    (
-	     Flag == DISABLE_MENU_FLAG
-	     ? (byte)0
-	     : GLMOVE_1stMENU
-	     );
+	/*
+	 * WARNING:
+	 * UnMapWindow() calls us if unmapping a menu window or a menu owner
+	 * while the menu is active (All->State & STATE_ANY) == STATE_MENU
+	 * 
+	 * when shutting down the menu, disable (All->State & STATE_ANY) == STATE_MENU
+	 * _BEFORE_ calling UnMap() or we will enter an infinite loop
+	 */
+	All->State =
+	    (ByMouse && Flag != DISABLE_MENU_FLAG ? STATE_FL_BYMOUSE : (byte)0) |
+	    (Flag != DISABLE_MENU_FLAG ? STATE_MENU : STATE_DEFAULT);
 	
 	if (Flag!=DISABLE_MENU_FLAG) {
 	    
-	    if (Flag==ACTIVATE_MENU_FLAG)
+	    if (Flag==ACTIVATE_MENU_FLAG) {
 		Screen->MenuWindow = CurrWin; /* so that it keeps `active' borders */
-
-	    if (NewItem) {
-		NewWin=(Menu->MenuItemSelect=NewItem)->Window;
+		Screen->FocusWindow = (window *)0;
+	    }
 	    
+	    if (NewItem) {
+		_Menu = NewItem->Menu; /* may either be Menu or All->CommonMenu */
+		NewWin = NewItem->Window;
+		
+		if (Menu != _Menu) {
+		    /* adjust NewWin->Left to the Item position in this menu */
+		    if (Menu->LastMenuItem)
+			NewWin->Left = Menu->LastMenuItem->Left + Menu->LastMenuItem->Len;
+		    else
+			NewWin->Left = 0;
+		}
+	    
+		Act(SetSelectItem,Menu)(Menu, NewItem);
+		
 		if (ByMouse)
-		    NewWin->CurY=MAXULDAT;
-		else if (NewWin->CurY==MAXULDAT)
-		    NewWin->CurY=(uldat)0;
+		    NewWin->CurY = MAXULDAT;
+		else if (NewWin->CurY == MAXULDAT)
+		    NewWin->CurY = (uldat)0;
 	    
 		if (NewItem->FlagActive)
 		    NewWin->Flags &= ~WINFL_DISABLED;
@@ -1187,15 +1210,15 @@ void ChangeMenuFirstScreen(menuitem *NewItem, byte ByMouse, byte Flag) {
 		
 		Act(RealMap,NewWin)(NewWin, Screen);
 	    } else
-		Menu->MenuItemSelect=(menuitem *)0;
+		Act(SetSelectItem,Menu)(Menu, (menuitem *)0);
 	}
 	if (Flag!=ACTIVATE_MENU_FLAG) {
 	    if (Flag==DISABLE_MENU_FLAG) {
 		if ((NewWin = Screen->MenuWindow)) {
-		    Act(Focus,NewWin)(NewWin);
+		    Act(KbdFocus,NewWin)(NewWin);
 		    Screen->MenuWindow = (window *)0;
 		} else
-		    Do(Focus,Window)((window *)0);
+		    Do(KbdFocus,Window)((window *)0);
 	    }
 	    if (CurrItem && CurrWin && (CurrWin->Attrib & WINDOW_MENU))
 		Act(UnMap,CurrWin)(CurrWin);
@@ -1204,68 +1227,79 @@ void ChangeMenuFirstScreen(menuitem *NewItem, byte ByMouse, byte Flag) {
 	if (All->SetUp->Flags & SETUP_HIDEMENU && Flag==DISABLE_MENU_FLAG)
 	    HideMenu(TRUE);
     }
-    DrawMenuBar(Screen, MINDAT, MAXDAT);
+    Act(DrawMenu,Screen)(Screen, MINDAT, MAXDAT);
 }
 
+void UnFocusWindow(window *W) {
+    if (W && W->Screen && W->Screen == All->FirstScreen && W == W->Screen->FocusWindow) {
+	Act(KbdFocus,W)((window *)0);
+	DrawBorderWindow(W, BORDER_ANY);
+	Act(DrawMenu,W->Screen)(W->Screen, MINDAT, MAXDAT);
+	UpdateCursor();
+    }
+}
 
-
-
-void MakeFirstWindow(window *Window, byte alsoFocus) {
-    screen *Screen;
-    window *firstWin, *focusWin;
-    
-    if (Window && (Screen=Window->Screen)) {
-	
-	firstWin = Screen->FirstWindow;
-	MoveFirst(Window, Screen, Window);
-	
-	if (alsoFocus) {
-	    focusWin = Act(Focus,Window)(Window);
-	    if (focusWin != Window) {
-		DrawBorderWindow(focusWin, BORDER_ANY);
-		DrawMenuBar(Screen, MINDAT, MAXDAT);
-	    }
+void RollUpWindow(window *W, byte on_off) {
+    if (W) {
+	if (on_off && !(W->Attrib & WINDOW_ROLLED_UP)) {
+	    W->Attrib |= WINDOW_ROLLED_UP;
+	    ReDrawRolledUpAreaWindow(W, FALSE);
+	} else if (!on_off && (W->Attrib & WINDOW_ROLLED_UP)) {
+	    W->Attrib &= ~WINDOW_ROLLED_UP;
+	    DrawAreaWindow(W, FALSE);
 	}
-	if (firstWin != Window)
-	    DrawAreaWindow(Window, FALSE);
-	else if (focusWin != Window && alsoFocus)
-	    DrawBorderWindow(Window, BORDER_ANY);
-
-	if (Screen->FnHookWindow)
-	    Screen->FnHookWindow(Screen->HookWindow);
-
-	if (Screen == All->FirstScreen)
+	if (W->Screen == All->FirstScreen)
 	    UpdateCursor();
     }
 }
 
-void MakeLastWindow(window *Window, byte alsoDeFocus) {
+void MakeFirstWindow(window *W, byte alsoFocus) {
     screen *Screen;
-    window *focusWin, *firstWin, *lastWin;
+    window *FW;
     
-    if (Window && (Screen=Window->Screen)) {
+    if (W && (Screen = W->Screen)) {
 	
-	lastWin = Screen->LastWindow;
-	MoveLast(Window, Screen, Window);
-	
-	if (alsoDeFocus) {
-	    firstWin = Screen->FirstWindow;
-	    focusWin = Act(Focus,firstWin)(firstWin);
-	    if (firstWin != focusWin) {
-		DrawBorderWindow(firstWin, BORDER_ANY);
-		DrawMenuBar(Screen, MINDAT, MAXDAT);
-	    }
+	FW = Screen->FirstWindow;
+	if (FW != W) {
+	    MoveFirst(Window, Screen, W);
+	    DrawAreaWindow(W, FALSE);
 	}
-	if (lastWin != Window)
-	    DrawAreaWindow(Window, FALSE);
-	else if (alsoDeFocus)
-	    DrawBorderWindow(Window, BORDER_ANY);
+	if (Screen == All->FirstScreen) {
+	    if (alsoFocus)
+		Act(Focus,W)(W);
+	    else
+		UpdateCursor();
+	}
+
+	if (Screen->FnHookWindow)
+	    Screen->FnHookWindow(Screen->HookWindow);
+    }
+}
+
+void MakeLastWindow(window *W, byte alsoUnFocus) {
+    screen *Screen;
+    window *_W;
+    
+    if (W && (Screen = W->Screen)) {
+	
+	_W = Screen->LastWindow;
+	if (W != _W) {
+	    MoveLast(Window, Screen, W);
+	    DrawAreaWindow(W, FALSE);
+	}
+	if (Screen == All->FirstScreen) {
+	    if (alsoUnFocus) {
+		_W = Screen->FirstWindow;
+		if (_W && _W != W)
+		    Act(Focus,_W)(_W);
+		else
+		    Do(Focus,Window)((window *)0);
+	    } else
+		UpdateCursor();
+	}
 	
 	if (Screen->FnHookWindow)
 	    Screen->FnHookWindow(Screen->HookWindow);
-
-	if (Screen == All->FirstScreen)
-	    UpdateCursor();
     }
 }
 

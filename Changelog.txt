@@ -1,3 +1,49 @@
+From 0.3.4 to 0.3.5: (Massimiliano Ghilardi, 20 Dec 2000)
+	* Compatibility break: fixed heavily sick mouse event protocol
+	  (it swapped middle/right buttons in Drag and Release, both
+	  on server and client side). This means that mouse-aware clients
+	  compiled against pre-0.3.5 libTw will not work properly with
+	  twin 0.3.5 and vice-versa. Sorry.
+	* Removed suid-root or sgid-tty privileges to twin.
+	  You will need to manually add such privileges,
+	  as you do it AT YOUR OWN RISK.
+	* Made the builtin window manager configurable and added RC parser
+	  for ~/.twinrc configuration file. In addition to creating the
+	  bison/yacc and lex files for RC parser and the RC Virtual Machine
+	  (it runs mouse/keyboard binds and menu functions),
+	  I had to completely rewrite the window manager :-(
+	* Internal changes to accommodate for on-the-fly reload of ~/.twinrc
+	  The common part of the menu is not anymore a private copy:
+	  all menus access the same shared entry, which can change without
+	  having to adjust each menu (no user-visible effects).
+	* Renamed twattach/twdisplay `-s' (silent) option to `-q' (quiet).
+	  Also changed silent/quiet option implementation to avoid
+	  race conditions. Mixing twin, twattach or twdisplay from
+	  version 0.3.5 with older ones will not work if you specify
+	  `-q' (or `-s' for older versions).
+	* Added exclusive displays:
+	  started using option `-x' from twin, twattach or twdisplay.
+	  Option `-s' now means "shared" and is opposite of `-x' "exclusive".
+	* New mini-client `twfindtwin' to find the TWDISPLAY of a running twin
+	  and mini-script `twstart' to attach to a running twin or start it.
+	* Added sanity version checking on all modules.
+	  Twin now refuses to load a module of different version.
+	* Cleaned up X11 driver shutdown in case of errors.
+	  Now closing an X window used by twin only detaches
+	  that display, without killing twin.
+	* Removed panic shutdown when getting SIGHUP. Now SIGHUP just
+	  closes the display attached to the controlling tty, if any.
+	  In practice: closing the tty where twin is running in
+	  no longer causes twin to quit, but just to detach from the tty.
+	  To quit, ALWAYS use Menu -> File -> Quit.
+	* Fixed a compile bug in hw_tty.c when termcap/ncurses driver
+	  was not enabled.
+	* Fixed drawing errors when scrolling text in a rolled up window.
+	* Added stricter compile checks using `const' attribute.
+	* Updated the README and started writing other documentation
+	  in docs/ subdirectory (still incomplete).
+	* Renamed Menu -> ð -> Borders window as Menu -> ð -> Buttons.
+	
 From 0.3.3 to 0.3.4: (Massimiliano Ghilardi, 11 Sep 2000)
         * FreeBSD support added by Andreas Schweitzer. Thanks!
 	* Fixed SEGFAULT when doing cut-n-paste on -hw=tty,stdout.
@@ -146,7 +192,7 @@ From 0.2.7 to 0.2.8: (Massimiliano Ghilardi, 02 May 2000)
 	  When started from Linux console, twin will already load the current
 	  consolemap translation, so twmapscrn is often not necessary.
 	  This will hopefully make a certain russian user happy *GRIN*.
-	  
+
 From 0.2.6 to 0.2.7: (Massimiliano Ghilardi, 17 Apr 2000)
 	* Added configurable screen background, and the external program
 	  `twsetroot' to customize it.

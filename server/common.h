@@ -6,8 +6,8 @@
  * display.c and the whole twin sources, in particular hw_multi.c
  */
 
-byte *CloneStr(byte *s);
-byte *CloneStrL(byte *s, uldat len);
+byte *CloneStr(CONST byte *s);
+byte *CloneStrL(CONST byte *s, uldat len);
 
 byte AllHWCanDragAreaNow(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp);
 void DragAreaHW(dat Xstart, dat Ystart, dat Xend, dat Yend, dat DstXstart, dat DstYstart);
@@ -24,9 +24,8 @@ void ResetPaletteHW(void);
 obj *TwinSelectionGetOwner(void);
 void TwinSelectionSetOwner(obj *Owner, time_t Time, frac_t Frac);
 #define SEL_CURRENTTIME ((time_t)0)
-void TwinSelectionNotify(obj *Requestor, uldat ReqPrivate, uldat Magic, byte MIME[MAX_MIMELEN],
-			    uldat Len, byte *Data);
-void TwinInternalSelectionNotify(obj *Requestor, uldat ReqPrivate);
+void TwinSelectionNotify(obj *Requestor, uldat ReqPrivate, uldat Magic, CONST byte MIME[MAX_MIMELEN],
+			    uldat Len, CONST byte *Data);
 void TwinSelectionRequest(obj *Requestor, uldat ReqPrivate, obj *Owner);
 
 void SelectionExport(void);
@@ -34,9 +33,9 @@ void SelectionImport(void);
 #ifndef SelectionAppend
 # define SelectionAppend(Len, Data) SelectionStore(SEL_APPEND, NULL, Len, Data)
 #endif
-byte SelectionStore(uldat Magic, byte MIME[MAX_MIMELEN], uldat Len, byte *Data);
+byte SelectionStore(uldat Magic, CONST byte MIME[MAX_MIMELEN], uldat Len, CONST byte *Data);
 
-byte KeyboardEventCommon(udat Code, udat Len, byte *Seq);
+byte KeyboardEventCommon(udat Code, udat Len, CONST byte *Seq);
 byte MouseEventCommon(dat x, dat y, dat dx, dat dy, udat IdButtons);
 
 udat GetDisplayWidth(void);

@@ -5,37 +5,41 @@
 
 TOPDIR=..
 
-BASEOBJS=data.o methods.o util.o draw.o main.o hw_multi.o \
-	 resize.o scroller.o builtin.o remote.o
+BASEOBJS=data.o builtin.o methods.o util.o draw.o extensions.o \
+	main.o hw_multi.o resize.o scroller.o remote.o alloc.o
 HWOBJS=hw.o HW/hw.a
-ALLOCOBJS=alloc.o
 DLOBJS=dl.o
-WMOBJS=wm.o
+WMOBJS=wm.o rcrun.o
+RCPARSEOBJS=rcparse_tab.o rcparse_lex.o shm.o
 TERMOBJS=pty.o tty.o term.o 
 SOCKETOBJS=socket.o md5.o
 WRAPOBJS=wrapper.o
 DISPLAYOBJS=display.o
-ALLOBJS:=$(BASEOBJS) $(HWOBJS) $(ALLOCOBJS) $(DLOBJS) $(WMOBJS) $(TERMOBJS) $(SOCKETOBJS) $(WRAPOBJS) $(DISPLAYOBJS)
+ALLOBJS:=$(BASEOBJS) $(HWOBJS) $(DLOBJS) $(WMOBJS) $(TERMOBJS) \
+	 $(SOCKETOBJS) $(WRAPOBJS) $(DISPLAYOBJS) $(RCPARSEOBJS)
 
 OBJS_twin_real:=$(BASEOBJS) $(HWOBJS)
 OBJS_wm.so:=$(WMOBJS)
+OBJS_rcparse.so:=$(RCPARSEOBJS)
 OBJS_term.so:=$(TERMOBJS)
 OBJS_socket.so:=$(SOCKETOBJS)
 OBJS_twin_wrapper:=$(WRAPOBJS)
-OBJS_twdisplay:=$(DISPLAYOBJS) $(HWOBJS)
+OBJS_twdisplay:=$(DISPLAYOBJS) alloc.o $(HWOBJS)
 
 BINS=twin_real twin_wrapper
 MODBINS=
 
 # don't use := here, as DESTDIR is not set yet
-CFLAGS_dl.o=$(strip $(patsubst %,-DCONF_DESTDIR=\"%\",$(DESTDIR)))
+CFLAGS_data.o=$(strip $(patsubst %,-DCONF_DESTDIR=\"%\",$(DESTDIR)))
 CFLAGS_wrapper.o=$(strip $(patsubst %,-DCONF_DESTDIR=\"%\",$(DESTDIR)))
 CFLAGS_display.o=$(strip $(patsubst %,-DCONF_DESTDIR=\"%\",$(DESTDIR)))
 
 LDFLAGS_wm.so=-lc -shared
+LDFLAGS_rcparse.so=-lc -shared
+LDFLAGS_rcrun.so=-lc -shared
 LDFLAGS_term.so=-lc -shared
 LDFLAGS_socket.so=-lc -shared
-LDFLAGS_twdisplay=-L$(TOPDIR)/lib -lTw
+LDFLAGS_twdisplay=$(LIBTW)
 
 
 #
@@ -78,11 +82,7 @@ else
 endif
 
 ifeq ($(CONF__ALLOC),y)
-  OBJS_twin_real+=$(ALLOCOBJS)
-  OBJS_twdisplay+=$(ALLOCOBJS)
   CFLAGS+=-DCONF__ALLOC
-else
-  EXCL_OBJS+=$(ALLOCOBJS)
 endif
 
 ifeq ($(CONF_WM),y)
@@ -92,10 +92,20 @@ else
     MODBINS+=wm.so
   else
     EXCL_OBJS+=$(WMOBJS)
-    dummy:=$(shell echo "You disabled the window manager! Twin will not run!" > /dev/tty)
   endif
 endif
 
+ifeq ($(CONF_WM_RC),y)
+  OBJS_twin_real+=$(RCPARSEOBJS)
+else
+  ifeq ($(CONF_WM_RC),m)
+    MODBINS+=rcparse.so
+  else
+    EXCL_OBJS+=$(RCPARSEOBJS)
+  endif
+endif
+
+ 
 ifeq ($(CONF_TERM),y)
   OBJS_twin_real+=$(TERMOBJS)
 else
@@ -122,6 +132,7 @@ else
   endif
 endif
 
+
 #
 # suid root / sgid tty stuff
 #
@@ -141,12 +152,10 @@ endif
 
 ifeq ($(PRIV),root)
   SETPRIV=chmod u+s $(DESTDIR)/bin/twin_real
+  SETPRIV_COMM=(i.e. suid root privileges)
 else
-  ifeq ($(PRIV),tty)
-    SETPRIV=chown :tty $(DESTDIR)/bin/twin_real && chmod g+s $(DESTDIR)/bin/twin_real
-  else
-    SETPRIV=
-  endif
+  SETPRIV=
+  SETPRIV_COMM=
 endif
   
 #
@@ -179,7 +188,7 @@ ifneq ($(CONF_SOCKET),n)
     BINS+=twdisplay
   endif
   ifeq ($(CONF_HW_TWIN),y)
-    LDFLAGS_twin_real+=-L$(TOPDIR)/lib -lTw
+    LDFLAGS_twin_real+=$(LIBTW)
   endif
 endif
 
@@ -198,19 +207,45 @@ bins: $(BINS)
 
 modules: $(MODBINS)
 
+rcparse_tab.c rcparse_tab.h: rcparse.y
+	bison -d --no-lines -o $@ $<
+
+rcparse_lex.c: rcparse.l
+	flex -L -B -o$@ $<
+
+mixdep: all
+	for i in *.o; do nm $$i | grep 'U ' | cut -dU -f2- > $${i%%.o}.u; done; :
+	for i in *.o; do nm $$i | grep -E 'B | C | D | T ' > $${i%%.o}.d; done; :
+	for i in *.u; do echo; echo $$i; for j in `cat $$i`; do \
+	grep -E " $${j}\$$" *.d; done | sort; done > $@; :
+	
 clean:
 	$(MAKE) clean -C HW
 	rm -f .*.flags .*.link .*.arlib gmon.out core log twin \
-	      twin_real twin_wrapper twdisplay socket.so term.so wm.so \
-	      $(ALLOBJS)
+	      twin_real twin_wrapper twdisplay *.so \
+	      $(ALLOBJS) \
+	      rcparse.output y.tab.c lex.yy.c \
+	      *.u *.d
+
+pure:
+	rm -f rcparse_tab.c rcparse_tab.h rcparse_lex.c
 
 install:
-	$(CP) $(BINS) $(DESTDIR)/bin
-	$(LN) twin_real $(DESTDIR)/bin/twin
-	$(SETPRIV)
+	$(CP) $(BINS) twstart $(DESTDIR)/bin
+	$(LN) twin_wrapper $(DESTDIR)/bin/twin
 	if [ "$(MODBINS)" ]; then \
 	  $(MKDIR) $(DESTDIR)/lib/twin/modules; \
 	  $(CP) $(MODBINS) $(DESTDIR)/lib/twin/modules; \
 	fi
 	$(MAKE) install -C HW
+	@if [ "$(SETPRIV)" ]; then \
+	  echo [1m ; \
+	  echo Twin may need special privileges for the terminal emulator to work. ; \
+	  echo More exactly, the following command could be necessary: ; \
+	  echo "        $(SETPRIV)" ; \
+	  echo "$(SETPRIV_COMM)" ; \
+	  echo Since twin has not been extensively tested against vulnerabilities, ; \
+	  echo you will grant special privileges to twin AT YOUR OWN RISK. ; \
+	  echo [0m ; \
+	fi
 

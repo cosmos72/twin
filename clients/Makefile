@@ -1,10 +1,11 @@
 #
-# Makefile for Twlib, the library that talks to Twin
+# Makefile for various libTw clients
 #
 TOPDIR=..
 
-LDFLAGS+=-L../lib -lTw
+LDFLAGS+=$(LIBTW)
 
+OBJS_twfindtwin=findtwin.o
 OBJS_twcat=cat.o
 OBJS_twedit=edit.o
 OBJS_twterm=pty.o term.o
@@ -13,7 +14,7 @@ OBJS_twattach=attach.o
 OBJS_twevent=event.o
 OBJS_twsetroot=setroot.o
 
-BINS=twcat twedit twterm twsysmon twattach twevent twsetroot
+BINS=twfindtwin twcat twedit twterm twsysmon twattach twevent twsetroot
 
 all: everything
 

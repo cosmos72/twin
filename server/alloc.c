@@ -19,6 +19,36 @@
 #include "twin.h"
 #include "sizes.h"
 
+
+
+#ifdef DEBUG_MALLOC
+
+#ifdef CONF__ALLOC
+  /* bounds are calculated runtime */
+  byte *S = (byte *)(size_t)-1;
+  byte *E = (byte *)0;
+#else
+# if defined(__linux__) && defined(__i386__)
+   /* these are good guesses for Linux/i386 with standard malloc() */
+   byte *S = (byte *)0x08000000l;
+   byte *E = (byte *)0x09000000l;
+# else
+#  error malloc() bounds not known for this architecture!
+# endif
+#endif
+
+void panic_free(void *v) {
+    fprintf(stderr, "FAIL: %.8X not in %.8X - %.8X\n",
+	    (size_t)v, (size_t)S, (size_t)E);
+}
+
+#endif /* DEBUG_MALLOC */
+
+
+
+
+#ifdef CONF__ALLOC
+
 #ifdef __linux__
 #include <asm/page.h>
 #endif
@@ -169,7 +199,11 @@ byte InitAlloc(void) {
 #define B_SETBIT(bitmap, i)	((bitmap)[(i)/8] |= 1 << ((i)&7))
 #define B_CLRBIT(bitmap, i)	((bitmap)[(i)/8] &= ~(1 << ((i)&7)))
 
+static block *Highest;
 
+void *AllocStatHighest(void) {
+    return (void *)((byte *)Highest + BLOCK_SIZE);
+}
 
 INLINE delta SearchKind(delta size) {
     delta low = 0, up = KINDS-1, test;
@@ -250,8 +284,11 @@ static void *GetBs(size_t len) {
 	    }
 	}
     }
-    if ((B = getcore(len)) != NOCORE)
+    if ((B = getcore(len)) != NOCORE) {
+	if (Highest < B)
+	    Highest = B;
 	return B;
+    }
     return (void *)0;
 }
 
@@ -346,7 +383,36 @@ INLINE void DeleteB(block *B) {
     DropBs(B, BLOCK_SIZE);
 }
 
+#ifdef DEBUG_MALLOC
+/* this is ok for Linux/i386 */
+
+#define POISON_DATA ((byte *)0xc1234567l)
+#define UNPOISON_DATA ((byte *)0xd6543210l)
+
+static void do_poison(byte *v, size_t len, byte *p) {
+    /* assume sizeof(void *) is a power of 2 */
+    size_t d = len & (sizeof(void *) - 1);
+    
+    len -= d;
+    while (len > 0) {
+	CopyMem(&p, v, sizeof(void *));
+	p++;
+	v += sizeof(void *);
+	len -= sizeof(void *);
+    }
+    CopyMem(&p, v, d);
+}
+
+#define POISON(v, len) do_poison(v, len, POISON_DATA)
+#define UNPOISON(v, len) do_poison(v, len, UNPOISON_DATA)
+
+#endif
+
 void *AllocMem(size_t len) {
+#ifdef DEBUG_MALLOC
+    byte *ret;
+#endif
+    
     if (len > 0 && len <= Sizes[KINDS-1]) {
 	byte *bitmap;
 	delta i = SearchKind(len), j;
@@ -367,6 +433,12 @@ void *AllocMem(size_t len) {
 		RemoveB(B, &Heads[B->Kind]);
 		InsertLastB(B, &Heads[B->Kind]);
 	    }
+#ifdef DEBUG_MALLOC
+	    ret = B_DATA(B, i);
+	    if (S > ret) S = ret;
+	    if (E < ret) E = ret;
+	    UNPOISON(ret, Sizes[B->Kind]);
+#endif
 	    return B_DATA(B, i);
 	}
     } else if (len > Sizes[KINDS-1]) {
@@ -376,6 +448,12 @@ void *AllocMem(size_t len) {
 	    B->Prev = B->Next = (void *)0;
 	    B->Kind = KINDS;
 	    B->Len = len;
+#ifdef DEBUG_MALLOC
+	    ret = B_DATA(B, 0);
+	    if (S > ret) S = ret;
+	    if (E < ret) E = ret;
+	    UNPOISON(ret, B->Len - (ret - (byte *)B));
+#endif
 	    return B_DATA(B, 0);
 	}
     }
@@ -386,12 +464,23 @@ void FreeMem(void *Mem) {
     byte *bitmap;
     block *B;
     delta i;
+
+#ifdef DEBUG_MALLOC
+    if (FAIL(Mem))
+	return;
+#endif
     
     if ((B = (block *)BLOCK_BASE((size_t)Mem)) && B->Kind <= KINDS &&
 	((i = B_INDEX(B, Mem)), Mem == B_DATA(B, i))) {
-	
+
+
 	if (B->Kind < KINDS) {
 	    if (i < B->Top && ((bitmap = B_BITMAP(B)), B_GETBIT(bitmap, i))) {
+		
+#ifdef DEBUG_MALLOC
+		POISON(Mem, Sizes[B->Kind]);
+#endif
+		
 		B_CLRBIT(bitmap, i);
 		if (B->Bottom > i)
 		    B->Bottom = i;
@@ -410,6 +499,9 @@ void FreeMem(void *Mem) {
 	    }
 	} else if (B->Kind == KINDS) {
 	    if (Mem == B_DATA(B, 0)) {
+#ifdef DEBUG_MALLOC
+		POISON(Mem, B->Len - ((byte *)Mem - (byte *)B));
+#endif
 		DropBs(B, B->Len);
 	    }
 	}
@@ -474,3 +566,22 @@ void *ReAllocMem(void *Mem, uldat newSize) {
     }
     return newMem;
 }
+
+#else /* CONF__ALLOC */
+
+
+#ifdef DEBUG_MALLOC
+
+#undef FreeMem
+
+void FreeMem(void *Mem) {
+    if (FAIL(Mem))
+	return;
+    free(Mem);
+}
+
+#endif /* DEBUG_MALLOC */
+
+#endif /* CONF__ALLOC */
+
+

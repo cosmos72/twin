@@ -1,11 +1,13 @@
 
 EXTRA quick install guide:
 
+$ make config
+(or make menuconfig)
 $ make
 $ su
 [password]
 # make install
 # ldconfig
 
-For more details see README, Section 4.
+For more details see the file docs/Tutorial, Sections 3 and 4.
 

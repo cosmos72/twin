@@ -23,16 +23,17 @@
 #include <errno.h>
 
 #include "twin.h"
-#include "methods.h"
 #include "data.h"
+#include "builtin.h"
+#include "methods.h"
 #include "main.h"
-
-#include "resize.h"
 #include "draw.h"
+#include "resize.h"
+#include "extensions.h"
+
 #include "hw.h"
 #include "common.h"
 #include "hw_multi.h"
-#include "builtin.h"
 #include "scroller.h"
 #include "util.h"
 #include "remote.h"
@@ -40,27 +41,24 @@
 
 #ifdef CONF_WM
 # include "wm.h"
-#elif defined(CONF__MODULES)
-# include "dl.h"
 #endif
-
 #ifdef CONF_SOCKET
 # include "socket.h"
 #endif
-
 #ifdef CONF_TERM
 # include "term.h"
+#endif
+#ifdef CONF__MODULES
+# include "dl.h"
 #endif
 
 /*-------------*/
 
 fd_set save_rfds, save_wfds;
 int max_fds;
-byte lenTWDisplay, *TWDisplay, *origTWDisplay, *origTERM, *origHW;
+byte lenTWDisplay, *TWDisplay, *origTWDisplay, *origTERM, *origHW, *HOME;
 byte **main_argv, **orig_argv;
 byte ctty_InUse;
-
-msgport *WM_MsgPort;
 
 int (*OverrideSelect)(int n, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *timeout);
 
@@ -130,7 +128,7 @@ static msgport *RunMsgPort(msgport *CurrPort) {
     return NextPort;
 }
 
-static void Usage() {
+static void Usage(void) {
     fputs("Usage: twin [OPTION [...]]\n"
 	  "Currently known options: \n"
 	  " -h, -help               display this help and exit\n"
@@ -145,8 +143,8 @@ static void Usage() {
 }
 
 static void ShowVersion(void) {
-    fputs("twin " TWIN_VERSION_STR
-	  " with socket protocol " TW_PROTOCOL_VERSION_STR "\n", stdout);
+    fputs("twin " TWIN_VERSION_STR " with socket protocol "
+	  TW_PROTOCOL_VERSION_STR "\n", stdout);
 }
 
 static byte Check4SpecialArgs(void) {
@@ -192,41 +190,37 @@ static byte Init(void) {
      * 
      * do not touch the order of the following InitXXX() calls
      * unless you *REALLY* know what you're doing.
-     * You may introduce subtle bugs or plainly
-     * have twin segfault at startup.
+     * You may have twin SEGFAULT at startup or (worse) introduce subtle bugs!
      */
     
-    return (
-	    InitSignals() &&
-	    SetTWDisplay() &&
-	    (All->AtQuit = UnSetTWDisplay) &&
-	    InitData() &&
-	    InitTransUser() &&
-	    InitTtysave() &&
-	    InitHW() && 
-	    InitScroller() &&
+    return (   InitSignals()
+	    && SetTWDisplay()
+	    && (All->AtQuit = UnSetTWDisplay)
+	    && InitData()
+	    && InitTransUser()
+	    && InitTtysave()
+	    && InitScroller()
+	    && InitBuiltin()
+	    && InitHW()
+	    /*
+	     * We need care here: DrawArea(), DrawMenu(), etc. all need All->BuiltinMenu and
+	     * also Video[]. The former initialized by InitBuiltin(), the latter by InitHW().
+	     * Immediately after initializaztion, InitHW() does DrawArea(FULL_SCREEN)
+	     * so InitHW() must come after InitBuiltin().
+	     * No DrawArea() are allowed at all before InitHW() !
+	     */
 #ifdef CONF_WM
-	    InitWM() &&
+	    && InitWM()
 #elif defined(CONF__MODULES)
-	    (DlLoad(WMSo) || DieWMSo()) &&
+	    && (DlLoad(WMSo) || DieWMSo())
 #else
-	    DieWMSo() &&
+	    && DieWMSo()
 #endif
 #ifdef CONF_TERM
-	    InitTerm() &&
+	    && InitTerm()
 #endif
 #ifdef CONF_SOCKET
-	    InitSocket() &&
-#endif
-	    InitBuiltin()
-	    
-#if 0
-	    &&
-	    InitTwEdit() &&
-	    InitClock() &&
-	    InitEmpty() &&
-	    (!(All->SetUp->Flags & NEW_FONT) || SetNewFont()) &&
-	    (!(All->SetUp->Flags & NEW_PALETTE) || SetPalette())
+	    && InitSocket()
 #endif
 	    );
 }
@@ -240,7 +234,7 @@ void Quit(int status) {
 	All->AtQuit();
     
     SuspendHW(FALSE);
-    /* not QuitHW() as it would fire up socket.so and prepare to run with no HW */
+    /* not QuitHW() as it would fire up socket.so and maybe fork() in bg */
     
 #if 0
     M = All->FirstModule;
@@ -263,6 +257,10 @@ byte AlwaysTrue(void) {
 
 byte AlwaysFalse(void) {
     return FALSE;
+}
+
+void *AlwaysNull(void) {
+    return NULL;
 }
 
 #define MAXDELAY 50 MilliSECs
@@ -292,14 +290,17 @@ int main(int argc, char *argv[]) {
 	fputs("twin: Out of memory!\n", stderr);
 	return 1;
     }
-    
+
+    Now = &All->Now;
+    InstantNow(Now); /* needed by various InitXXX() */
+
     if (!Init())
 	Quit(0);
 
-    DrawArea(FULLSCREEN);
+    /* not needed... done by InitHW() */
+    /* DrawArea(FULL_SCREEN); */
     
-    Now = &All->Now;
-    InstantNow(Now);
+    InstantNow(Now); /* read again... */
     SortAllMsgPortsByCallTime();
 
     /*------------------------ Main Loop -------------------------*/
@@ -337,7 +338,7 @@ int main(int argc, char *argv[]) {
 	do {
 	    if (NeedHW & NEEDResizeDisplay) {
 		ResizeDisplay();
-		DrawArea(FULLSCREEN);
+		DrawArea(FULL_SCREEN);
 		UpdateCursor();
 	    }
 	    
@@ -361,7 +362,11 @@ int main(int argc, char *argv[]) {
 		FlushHW();
 	    
 	    if (NeedHW & NEEDPanicHW) {
-		/* hmm... displays are rotting quickly today */
+		/*
+		 * hmm... displays are rotting quickly today!
+		 * we called PanicHW() just above, so don't call again,
+		 * just set a zero timeout and let the above call do the work
+		 */
 		sel_timeout.tv_sec = sel_timeout.tv_usec = 0;
 		this_timeout = &sel_timeout;
 	    }
@@ -411,7 +416,7 @@ int main(int argc, char *argv[]) {
 	/*
 	 * run WM_MsgPort first since it has to dispatch mouse/keyboard events
 	 */
-	(void)RunMsgPort(WM_MsgPort);
+	(void)RunMsgPort(Ext(WM,MsgPort));
 	
 	/*
 	 * MsgPorts are ordered: runnable ones first, then non-runnable ones.

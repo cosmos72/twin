@@ -1,7 +1,7 @@
 #ifndef _TW_RESIZE_H
 #define _TW_RESIZE_H
 
-byte WriteRow(window *Window, uldat Len, byte *Text);
+byte WriteRow(window *Window, uldat Len, CONST byte *Text);
 
 void UpdateCursor(void);
 
@@ -32,6 +32,9 @@ byte ExecScrollFocusWindow(void);
 void ScrollFirstWindow(dat DeltaX, dat DeltaY, byte byXYLogic);
 void ScrollWindow(window *Window, dat DeltaX, dat DeltaY);
 void ScrollFirstWindowArea(dat X1, dat Y1, dat X2, dat Y2, dat DeltaX, dat DeltaY);
+
+void UnFocusWindow(window *W);
+void RollUpWindow(window *W, byte on_off);
 
 void MakeFirstWindow(window *Window, byte alsoFocus);
 void MakeLastWindow(window *Window, byte alsoDeFocus);

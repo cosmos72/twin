@@ -58,30 +58,29 @@
 
 
 
-
-
-static byte *MYname;
-
 #ifdef CONF__MODULES
 
 # ifdef CONF_DESTDIR
-#  define TWIN_MODULE_DIR CONF_DESTDIR "/lib/twin/modules/"
+#  define DIR_LIB_TWIN_MODULES_ CONF_DESTDIR "/lib/twin/modules/"
 # else
-#  define TWIN_MODULE_DIR "./"
+#  define DIR_LIB_TWIN_MODULES_ "./"
 # endif
 
-static byte *twindir = TWIN_MODULE_DIR;
+static CONST byte *conf_destdir_lib_twin_modules_ = DIR_LIB_TWIN_MODULES_;
 
-static byte *ErrStr;
+static CONST byte *ErrStr;
 
 #endif /* CONF__MODULES */
 
+
+
+static CONST byte *MYname;
 
 static udat TryScreenWidth, TryScreenHeight;
 static udat savedScreenWidth, savedScreenHeight;
 static byte ValidVideo;
 
-byte *TWDisplay, *origTWDisplay, *origTERM;
+CONST byte *TWDisplay, *origTWDisplay, *origTERM;
 
 byte nullMIME[TW_MAX_MIMELEN];
 
@@ -126,6 +125,9 @@ void NoOp(void) {
 byte AlwaysFalse(void) {
     return FALSE;
 }
+byte *AlwaysNull(void) {
+    return NULL;
+}
 byte AlwaysTrue(void) {
     return TRUE;
 }
@@ -137,7 +139,7 @@ static void OutOfMemory(void) {
     fputs("twdisplay: Out of memory!\n", stderr);
 }
 
-byte *CloneStr(byte *s) {
+byte *CloneStr(CONST byte *s) {
     byte *q;
     uldat len;
     
@@ -147,20 +149,21 @@ byte *CloneStr(byte *s) {
 	    CopyMem(s, q, len);
 	return q;
     }
-    return s;
+    return NULL;
 }
 
-byte *CloneStrL(byte *s, uldat len) {
+byte *CloneStrL(CONST byte *s, uldat len) {
     byte *q;
     
-    if (s && len) {
+    if (s) {
 	if ((q = AllocMem(len+1))) {
-	    CopyMem(s, q, len);
+	    if (len)
+		CopyMem(s, q, len);
 	    q[len] = '\0';
 	}
 	return q;
     }
-    return s;
+    return NULL;
 }
 
 INLINE uldat FdListGet(void) {
@@ -265,9 +268,9 @@ static module *DlLoadAny(uldat len, byte *name) {
     byte *_name;
     
     if ((Module->Name = CloneStrL(name, len)) &&
-	(_name = AllocMem(len + strlen(twindir) + 1))) {
+	(_name = AllocMem(len + strlen(conf_destdir_lib_twin_modules_) + 1))) {
 	
-	sprintf(_name, "%s%s", twindir, Module->Name);
+	sprintf(_name, "%s%s", conf_destdir_lib_twin_modules_, Module->Name);
 
 	if ((Module->Handle = dlopen(_name, RTLD_NOW|RTLD_GLOBAL)) &&
 	    /*
@@ -335,7 +338,7 @@ static byte module_InitHW(void) {
 
 #endif /* CONF__MODULES */
 
-static display_hw *CreateDisplayHW(uldat len, byte *name);
+static display_hw *CreateDisplayHW(uldat len, CONST byte *name);
 static byte InitDisplayHW(display_hw *);
 static void QuitDisplayHW(display_hw *);
 
@@ -470,7 +473,7 @@ static void QuitDisplayHW(display_hw *D_HW) {
 }
 
 
-static display_hw *CreateDisplayHW(uldat NameLen, byte *Name) {
+static display_hw *CreateDisplayHW(uldat NameLen, CONST byte *Name) {
     byte *newName = NULL;
     
     if (Name && (newName = CloneStrL(Name, NameLen))) {	
@@ -482,7 +485,7 @@ static display_hw *CreateDisplayHW(uldat NameLen, byte *Name) {
 	HW->AttachSlot = NOSLOT;
 	/*
 	 * ->Quitted will be set to FALSE only
-	 * immediately before trying DisplayHW->InitHW()
+	 * after DisplayHW->InitHW() has succeeded.
 	 */
 	return HW;
     }
@@ -491,7 +494,7 @@ static display_hw *CreateDisplayHW(uldat NameLen, byte *Name) {
     return (display_hw *)0;
 }
 
-static display_hw *AttachDisplayHW(uldat len, byte *arg, uldat slot) {
+static display_hw *AttachDisplayHW(uldat len, CONST byte *arg, uldat slot, byte flags) {
     if ((len && len <= 4) || CmpMem("-hw=", arg, Min2(len,4))) {
 	fprintf(stderr, "twdisplay: specified `%.*s\' is not `-hw=<display>\'\n",
 		(int)len, arg);
@@ -707,7 +710,14 @@ static void HandleMsg(tmsg Msg) {
 	fflush(stderr);
 #endif
 	/* request selection from underlying HW */
-	HW->HWSelectionRequest((void *)Msg->Event.EventSelectionRequest.Requestor,
+	
+	/*
+	 * Just like in TwinSelectionGetOwner() : normally Requestor
+	 * is a meaningful pointer; here it is just a libTw Id.
+	 * Cast it to (obj *) as expected by HW displays...
+	 * we will cast it back when needed
+	 */
+	HW->HWSelectionRequest((obj *)(Msg->Event.EventSelectionRequest.Requestor),
 			       Msg->Event.EventSelectionRequest.ReqPrivate);
 	break;
       case TW_MSG_SELECTIONNOTIFY:
@@ -793,7 +803,6 @@ static void HandleMsg(tmsg Msg) {
 	    THelper = *(uldat *)EventD->Data;
 	    break;
 	  case TW_DPY_Quit:
-	    QuitDisplayHW(HW);
 	    Quit(0);
 	    break;
 	  default:
@@ -814,6 +823,13 @@ void SelectionExport(void) {
 }
 
 /* HW back-end function: get selection owner */
+
+/*
+ * In the same function twin server, this returns a meaningful pointer.
+ * Here, it returns just an Id coming from libTw.
+ * Cheat and cast to to (obj *), since the underlying display HW code
+ * treats it as opaque. We will cast it back to (uldat) when needed.
+ */
 obj *TwinSelectionGetOwner(void) {
     return (void *)TwGetOwnerSelection();
 }
@@ -828,22 +844,17 @@ void TwinSelectionSetOwner(obj *Owner, time_t Time, frac_t Frac) {
 }
 
 /* HW back-end function: notify selection */
-void TwinSelectionNotify(obj *Requestor, uldat ReqPrivate, uldat Magic, byte MIME[MAX_MIMELEN],
-			    uldat Len, byte *Data) {
+void TwinSelectionNotify(obj *Requestor, uldat ReqPrivate, uldat Magic, CONST byte MIME[MAX_MIMELEN],
+			    uldat Len, CONST byte *Data) {
     if (!MIME)
 	MIME = nullMIME;
 #if 0
     fprintf(stderr, "twdisplay: Selection Notify to 0x%08x\n", (uldat)Requestor);
     fflush(stderr);
 #endif
+    /* cast back Requestor from fake (obj *) to its original (uldat) */
     TwNotifySelection((uldat)Requestor, ReqPrivate, Magic, MIME, Len, Data);
 }
-
-#if 0
-void TwinInternalSelectionNotify(obj *Requestor, uldat ReqPrivate) {
-    TwInternalSelectionNotify((uldat)Requestor, ReqPrivate);
-}
-#endif
 
 /* HW back-end function: request selection */
 void TwinSelectionRequest(obj *Requestor, uldat ReqPrivate, obj *Owner) {
@@ -851,6 +862,7 @@ void TwinSelectionRequest(obj *Requestor, uldat ReqPrivate, obj *Owner) {
     fprintf(stderr, "twdisplay: Selection Request from 0x%08x, Owner is 0x%08x\n", (uldat)Requestor, (uldat)Owner);
     fflush(stderr);
 #endif
+    /* cast back Owner from the fake (obj *) to (uldat) */
     TwRequestSelection((uldat)Owner, ReqPrivate);
 }
 
@@ -929,7 +941,7 @@ byte MouseEventCommon(dat x, dat y, dat dx, dat dy, udat Buttons) {
     return ret;
 }
 
-byte KeyboardEventCommon(udat Code, udat Len, byte *Seq) {
+byte KeyboardEventCommon(udat Code, udat Len, CONST byte *Seq) {
     tevent_keyboard Event;
     tmsg Msg;
 
@@ -1033,6 +1045,12 @@ static void MainLoop(int Fd) {
 	fprintf(stderr, "%s: libTw error: %s\n", MYname, TwStrError(TwErrno));
 	exit(1);
     }
+    QuitDisplayHW(HW);
+    fprintf(stderr, "%s: shouldn't happen! Please report:\n"
+	    "\tlibTw TwErrNo: %d, %s\n"
+	    "\tsystem  errno: %d, %s\n",
+	    MYname, TwErrno, TwStrError(TwErrno), errno, strerror(errno));
+    exit(1);    
 }
 
 udat GetDisplayWidth(void) {
@@ -1048,8 +1066,11 @@ static void Usage(void) {
 	  "Currently known options: \n"
 	  " -h, -help               display this help and exit\n"
 	  " -V, -version            output version information and exit\n"
+	  " -s, -share              allow multiple simultaneous displays (default)\n"
+	  " -x, -excl               request exclusive display - detach all others\n"
 	  " -v                      verbose output (default)\n"
-	  " -s                      silent; don't report messages from twin server\n"
+	  " -q                      quiet - don't report messages from twin server\n"
+	  " -f                      force running even with wrong protocol version\n"
 	  " -twin@<TWDISPLAY>       specify server to contact instead of $TWDISPLAY\n"
 	  " -hw=<display>[,options] start the given display\n"
 	  "Currently known display methods: \n"
@@ -1059,18 +1080,34 @@ static void Usage(void) {
 	  "\tggi[@<ggi display>]\n", stdout);
 }
 
-static void TryUsage(char *opt) {
+static void TryUsage(CONST char *opt) {
     if (opt)
 	fprintf(stdout, "twdisplay: unknown option `%s'\n", opt);
     fputs("           try `twdisplay -help' for usage summary.\n", stdout);
 }
 
 static void ShowVersion(void) {
-    fputs("twdisplay " TWIN_VERSION_STR "\n", stdout);
+    fputs("twdisplay " TWIN_VERSION_STR " with socket protocol "
+	  TW_PROTOCOL_VERSION_STR "\n", stdout);
 }
 
+static byte VersionsMatch(byte force) {
+    uldat cv = TW_PROTOCOL_VERSION, lv = TwLibraryVersion(), sv = TwServerVersion();
+	
+    if (lv != sv || lv != cv) {
+	fprintf(stderr, "twdisplay: %s: socket protocol version mismatch!%s\n"
+		"           client is %d.%d.%d, library is %d.%d.%d, server is %d.%d.%d\n",
+		(force ? "warning" : "fatal"), (force ? " (ignored)" : ""),
+		TWVER_MAJOR(cv), TWVER_MINOR(cv), TWVER_PATCH(cv),
+		TWVER_MAJOR(lv), TWVER_MINOR(lv), TWVER_PATCH(lv),
+		TWVER_MAJOR(sv), TWVER_MINOR(sv), TWVER_PATCH(sv));
+	return FALSE;
+    }
+    return TRUE;
+}
+    
 int main(int argc, char *argv[]) {
-    byte redirect = 1;
+    byte flags = TW_ATTACH_HW_REDIRECT, force = 0;
     byte *dpy = NULL, *arg = NULL, *tty = ttyname(0);
     byte ret = 0, ourtty = 0;
     byte *s, *buff;
@@ -1086,10 +1123,16 @@ int main(int argc, char *argv[]) {
 	} else if (!strcmp(*argv, "-h") || !strcmp(*argv, "-help")) {
 	    Usage();
 	    return 0;
-	} else if (!strcmp(*argv, "-v"))
-	    redirect = 1;
-	else if (!strcmp(*argv, "-s"))
-	    redirect = 0;
+	} else if (!strcmp(*argv, "-x") || !strcmp(*argv, "-excl"))
+	    flags |= TW_ATTACH_HW_EXCLUSIVE;
+	else if (!strcmp(*argv, "-s") || !strcmp(*argv, "-share"))
+	    flags &= ~TW_ATTACH_HW_EXCLUSIVE;
+	else if (!strcmp(*argv, "-v"))
+	    flags |= TW_ATTACH_HW_REDIRECT;
+	else if (!strcmp(*argv, "-q"))
+	    flags &= ~TW_ATTACH_HW_REDIRECT;
+	else if (!strcmp(*argv, "-f"))
+	    force = 1;
 	else if (!strncmp(*argv, "-twin@", 6))
 	    dpy = *argv + 6;
 	else if (!strncmp(*argv, "-hw=", 4)) {
@@ -1103,12 +1146,29 @@ int main(int argc, char *argv[]) {
 		s = strchr(buff, ',');
 		if (s) *s = '\0';
 		
-		if (!*buff || (*buff == '@' && (!buff[1] || !strcmp(buff+1, tty))))
+		if (!*buff)
 		    /* attach twin to our tty */
 		    ourtty = 1;
-		/*
-		 * using server tty makes no sense for twdisplay
-		 */
+		else if (*buff == '@' && buff[1]) {
+		    if (buff[1] == '-') {
+			/*
+			 * using server tty makes no sense for twdisplay
+			 */
+			fprintf(stderr, "%s: `%s' makes sense only with twattach.\n", MYname, *argv);
+			return 1;
+		    } else if (tty) {
+			if (!strcmp(buff+1, tty))
+			    /* attach twin to our tty */
+			    ourtty = 1;
+		    } else {
+			fprintf(stderr, "%s: ttyname() failed: cannot find controlling tty!\n", MYname);
+			return 1;
+		    }
+		} else {
+		    fprintf(stderr, "%s: malformed display hw `%s'\n", MYname, *argv);
+		    return 1;
+		}
+
 		if (s) *s = ',';
 		else s = "";
 		
@@ -1150,6 +1210,14 @@ int main(int argc, char *argv[]) {
 
     if (TwOpen(TWDisplay)) do {
 	byte *buf;
+	
+	if (!VersionsMatch(force)) {
+	    if (!force) {
+		fprintf(stderr, "twdisplay: Aborting. Use option `-f' to ignore versions check.\n");
+		TwClose();
+		return 1;
+	    }
+	}
 
 	if (RegisterRemote(Fd = TwConnectionFd(), (void *)0, (void *)NoOp) == NOSLOT) {
 	    TwClose();
@@ -1163,11 +1231,12 @@ int main(int argc, char *argv[]) {
 	savedScreenWidth = TryScreenWidth = TwGetDisplayWidth();
 	savedScreenHeight = TryScreenHeight = TwGetDisplayHeight();
 
-	if (!(HW = AttachDisplayHW(strlen(arg), arg, NOSLOT))) {
+	if (!(HW = AttachDisplayHW(strlen(arg), arg, NOSLOT, 0))) {
 	    TwClose();
 	    return 1;
 	}
 	if (!(buf = AllocMem(HW->NameLen + 80))) {
+	    QuitDisplayHW(HW);
 	    TwClose();
 	    OutOfMemory();
 	    return 1;
@@ -1177,10 +1246,12 @@ int main(int argc, char *argv[]) {
 		(int)HW->X, (int)HW->Y, HW->CanResize ? ",resize" : "",
 		/* CanDragArea */ TRUE ? ",drag" : "", ExpensiveFlushVideo ? ",slow" : "");
 	
-	TwAttachHW(strlen(buf), buf, redirect);
+	TwAttachHW(strlen(buf), buf, flags);
 	TwFlush();
 	
-	if (redirect)
+	flags &= TW_ATTACH_HW_REDIRECT;
+	
+	if (flags)
 	    fprintf(stderr, "reported messages ...\n");
 	
 	for (;;) {
@@ -1192,7 +1263,7 @@ int main(int argc, char *argv[]) {
 		/* libTw panic */
 		break;
 
-	    fprintf(stderr, "%.*s", (int)chunk, buff);
+	    fprintf(stderr, "  %.*s", (int)chunk, buff);
 	}
 	fflush(stderr);
 	
@@ -1205,16 +1276,16 @@ int main(int argc, char *argv[]) {
 	}
 
 	
-	TwAttachConfirm();
 	/*
 	 * twin waits this before grabbing the display...
 	 * so we can fflush(stdout) to show all messages
 	 * *BEFORE* twin draws on (eventually) the same tty
 	 */
+	TwAttachConfirm();
 
 	ResizeDisplay();
 	
-	if (redirect && !ourtty) {
+	if (flags && !ourtty) {
 	    if (ret)
 		fprintf(stderr, "... ok, twin successfully attached.\n");
 	    else
@@ -1227,9 +1298,10 @@ int main(int argc, char *argv[]) {
 	     * until it is quitted.
 	     */
 	    MainLoop(Fd);
-	else
+	else if (ret)
 	    fprintf(stderr, "%s: twin said we can quit... strange!\n", MYname);
-	return !ret;
+	
+	Quit(!ret);
     } while (0);
     
     fprintf(stderr, "%s: libTw error: %s\n", MYname, TwStrError(TwErrno));

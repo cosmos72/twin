@@ -18,6 +18,7 @@ extern byte ExpensiveFlushVideo, NeedHW;
 extern byte CanDragArea, ChangedVideoFlagAgain;
 
 byte InitSignals(void);
+void QuitSignals(void);
 byte InitTtysave(void);
 
 

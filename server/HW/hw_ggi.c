@@ -543,6 +543,7 @@ byte GGI_InitHW(void) {
 	 * without forcing all other displays
 	 * to redraw everything too.
 	 */
+	HW->RedrawVideo = FALSE;
 	NeedRedrawVideo(0, 0, HW->X - 1, HW->Y - 1);
 
 	if (opt) *opt = ',';
@@ -567,6 +568,9 @@ byte GGI_InitHW(void) {
 
 #ifdef MODULE
 
+#include "version.h"
+MODULEVERSION;
+		       
 byte InitModule(module *Module) {
     Module->Private = GGI_InitHW;
     return TRUE;

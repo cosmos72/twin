@@ -15,25 +15,24 @@
 #include <errno.h>
 
 #include "twin.h"
-#include "main.h"
 #include "data.h"
 #include "methods.h"
+#include "extensions.h"
 
 #include "remote.h"
 #include "pty.h"
-#include "tty.h"
-#include "resize.h"
 #include "util.h"
-#include "builtin.h" /* for Builtin_Term_Menu */
 #include "common.h"
 
 #define COD_QUIT      (udat)1
 #define COD_SPAWN     (udat)3
 
-static char *args[3];
+static menu *Term_Menu;
+
+static byte *args[3];
 
 static msgport *Term_MsgPort;
-menu *Term_Menu;
+
 
 static void TwinTermH(msgport *MsgPort);
 static void TwinTermIO(int Fd, window *Window);
@@ -45,9 +44,10 @@ static void termShutDown(window *Window) {
 }
 
 static window *newTermWindow(void) {
+    
     window *Window = Do(Create,Window)
 	(FnWindow, (udat)9, "Twin Term", (hwcol *)0, Term_Menu, COL(WHITE,BLACK),
-	 LINECURSOR, WINDOW_WANT_CHANGE|WINDOW_WANT_KEYS|WINDOW_DRAG|WINDOW_RESIZE|WINDOW_Y_BAR|WINDOW_CLOSE,
+	 LINECURSOR, WINDOW_WANT_KEYS|WINDOW_DRAG|WINDOW_RESIZE|WINDOW_Y_BAR|WINDOW_CLOSE,
 	 WINFL_CURSOR_ON|WINFL_USECONTENTS,
 	 (udat)82, (udat)27, (uldat)200);
     
@@ -60,62 +60,28 @@ static window *newTermWindow(void) {
     return Window;
 }
 
-static byte OpenTerm(void) {
+static window *OpenTerm(CONST byte *arg0, byte * CONST *argv) {
     window *Window;
     
+    /* if argv is {NULL} or {"" , ...} then start user's shell */
+    if (!arg0 || !argv || !*arg0) {
+	arg0 = args[0];
+	argv = args+1;
+    }
+    
     if ((Window = newTermWindow())) {
-        if (SpawnInWindow(Window, args)) {
+        if (SpawnInWindow(Window, arg0, argv)) {
 	    if (RegisterWindowFdIO(Window, TwinTermIO)) {
 		Window->ShutDownHook = termShutDown;
 		Act(Map,Window)(Window, All->FirstScreen);
-		return TRUE;
+		return Window;
 	    }
 	    close(Window->RemoteData.Fd);
 	}
 	Delete(Window);
     }
-    return FALSE;
+    return NULL;
 }
-
-#ifdef MODULE
-static
-#endif
-byte InitTerm(void) {
-    window *Window;
-    byte *shellpath, *shell;
-    
-    if ((shellpath = getenv("SHELL")) &&
-	(args[0] = CloneStr(shellpath)) &&
-	(args[1] = (shell = strrchr(shellpath, '/'))
-	 ? CloneStr(shell) : CloneStr(shellpath)) &&
-    
-	(Term_MsgPort=Do(Create,MsgPort)
-	 (FnMsgPort, 9, "Twin Term", (uldat)0, (udat)0, (byte)0, TwinTermH)) &&
-	(Term_Menu=Do(Create,Menu)
-	 (FnMenu, Term_MsgPort,
-	  COL(BLACK,WHITE), COL(BLACK,GREEN), COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
-	  COL(RED,WHITE), COL(RED,GREEN), (byte)0)) &&
-	Info4Menu(Term_Menu, ROW_ACTIVE, (uldat)20, " Built-in Twin Term ", "ptpppppppptpppptpppp") &&
-
-	(Window=Win4Menu(Term_Menu)) &&
-	Row4Menu(Window, COD_SPAWN, ROW_ACTIVE, 10, " New Term ") &&
-	Row4Menu(Window, COD_QUIT,  FALSE,       6, " Exit ") &&
-	Item4Menu(Term_Menu, Window, TRUE, 6, " File ") &&
-	
-	Item4MenuCommon(Term_Menu)) {
-	
-
-	if (args[1][0] == '/')
-	    args[1][0] = '-';
-	return TRUE;
-    }
-    if (shellpath)
-	fprintf(stderr, "twin: Out of memory!\n");
-    else
-	fprintf(stderr, "twin: environment variable $SHELL not set!\n");
-    return FALSE;
-}
-
 
 static void TwinTermH(msgport *MsgPort) {
     msg *Msg;
@@ -196,7 +162,7 @@ static void TwinTermH(msgport *MsgPort) {
 		Code=Event->EventMenu.Code;
 		switch (Code) {
 		  case COD_SPAWN:
-		    OpenTerm();
+		    OpenTerm(NULL, NULL);
 		    break;
 		  default:
 		    break;
@@ -227,65 +193,77 @@ static void TwinTermIO(int Fd, window *Window) {
 }
 
 #ifdef MODULE
-static void OverrideMethods(byte enter) {
-    static void (*oldWriteAscii)(window *, uldat, byte *);
-    static void (*oldWriteHWAttr)(window *, udat, udat, uldat, hwattr *);
-    static window *(*oldFocus)(window *);
 
+#include "tty.h"
+
+static void OverrideMethods(byte enter) {
     if (enter) {
-	if (!oldWriteAscii && FnWindow->WriteAscii != WriteAscii) {
-	    oldWriteAscii = FnWindow->WriteAscii;
-	    FnWindow->WriteAscii = WriteAscii;
-	}
-	if (!oldWriteHWAttr && FnWindow->WriteHWAttr != WriteHWAttr) {
-	    oldWriteHWAttr = FnWindow->WriteHWAttr;
-	    FnWindow->WriteHWAttr = WriteHWAttr;
-	}
-	if (!oldFocus && FnWindow->Focus != KbdFocus) {
-	    oldFocus = FnWindow->Focus;
-	    FnWindow->Focus = KbdFocus;
-	    ForceKbdFocus();
-	}
+	OverrideMethod(Window,WriteAscii, FakeWriteAscii, TtyWriteAscii);
+	OverrideMethod(Window,WriteHWAttr,FakeWriteHWAttr,TtyWriteHWAttr);
+	OverrideMethod(Window,KbdFocus,   FakeKbdFocus,   TtyKbdFocus);
+	ForceKbdFocus();
     } else {
-	if (oldWriteAscii && FnWindow->WriteAscii == WriteAscii) {
-	    FnWindow->WriteAscii = oldWriteAscii;
-	    oldWriteAscii = NULL;
-	}
-	if (oldWriteHWAttr && FnWindow->WriteHWAttr == WriteHWAttr) {
-	    FnWindow->WriteHWAttr = oldWriteHWAttr;
-	    oldWriteHWAttr = NULL;
-	}
-	if (oldFocus && FnWindow->Focus == KbdFocus) {
-	    ForceKbdFocus();
-	    FnWindow->Focus = oldFocus;
-	    oldFocus = NULL;
-	}
+	OverrideMethod(Window,WriteAscii, TtyWriteAscii,  FakeWriteAscii);
+	OverrideMethod(Window,WriteHWAttr,TtyWriteHWAttr, FakeWriteHWAttr);
+	OverrideMethod(Window,KbdFocus,   TtyKbdFocus,    FakeKbdFocus);
     }
 }
+#endif /* MODULE */
 
-/* from builtin.c */
-extern menu *Builtin_Term_Menu;
+#ifdef MODULE
 
-byte InitModule(module *Module) {
-    if (InitTerm()) {
+# include "version.h"
+MODULEVERSION;
+
+byte InitModule(module *Module)
+#else
+byte InitTerm(void)
+#endif
+{
+    window *Window;
+    byte *shellpath, *shell;
+    
+    if ((shellpath = getenv("SHELL")) &&
+	(args[0] = CloneStr(shellpath)) &&
+	(args[1] = (shell = strrchr(shellpath, '/'))
+	 ? CloneStr(shell) : CloneStr(shellpath)) &&
+    
+	(Term_MsgPort=Do(Create,MsgPort)
+	 (FnMsgPort, 9, "Twin Term", (uldat)0, (udat)0, (byte)0, TwinTermH)) &&
+	(Term_Menu=Do(Create,Menu)
+	 (FnMenu, Term_MsgPort,
+	  COL(BLACK,WHITE), COL(BLACK,GREEN), COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
+	  COL(RED,WHITE), COL(RED,GREEN), (byte)0)) &&
+	Info4Menu(Term_Menu, ROW_ACTIVE, (uldat)20, " Built-in Twin Term ", "ptpppppppptpppptpppp") &&
+
+	(Window=Win4Menu(Term_Menu)) &&
+	Row4Menu(Window, COD_SPAWN, ROW_ACTIVE, 10, " New Term ") &&
+	Row4Menu(Window, COD_QUIT,  FALSE,       6, " Exit ") &&
+	Item4Menu(Term_Menu, Window, TRUE, 6, " File ") &&
+	
+	Item4MenuCommon(Term_Menu)) {
+
+	RegisterExtension(Term,Open,OpenTerm);
+#ifdef MODULE
 	OverrideMethods(TRUE);
-	/* let setup.c know we exist */
-	Builtin_Term_Menu = Term_Menu;
+#endif
+
+	if (args[1][0] == '/')
+	    args[1][0] = '-';
 	return TRUE;
     }
+    if (shellpath)
+	fprintf(stderr, "twin: Out of memory!\n");
+    else
+	fprintf(stderr, "twin: environment variable $SHELL not set!\n");
     return FALSE;
 }
 
+#ifdef MODULE
 void QuitModule(module *Module) {
-    /* cast 'oblivion' on setup.c */
-    window *Window;
-    Builtin_Term_Menu = NULL;
+    UnRegisterExtension(Term,Open,OpenTerm);
     OverrideMethods(FALSE);
-    if (Term_MsgPort) {
-	if (Term_Menu)
-	    for (Window = Term_Menu->FirstWindow; Window; Window = Window->ONext) {
-	    }
+    if (Term_MsgPort)
 	Delete(Term_MsgPort);
-    }
 }
 #endif /* MODULE */

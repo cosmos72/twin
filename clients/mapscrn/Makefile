@@ -4,7 +4,7 @@
 TOPDIR=../..
 
 CFLAGS+=-DDATADIR=\"/usr/lib/kbd\"
-LDFLAGS+=-L$(TOPDIR)/lib -lTw
+LDFLAGS+=$(LIBTW)
 
 OBJS_twmapscrn=mapscrn.o xmalloc.o findfile.o
 

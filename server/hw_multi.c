@@ -23,21 +23,19 @@
 #include "methods.h"
 #include "draw.h"
 #include "remote.h"
+#include "extensions.h"
 
 #include "resize.h"
 #include "hw.h"
 #include "hw_private.h"
-#include "common.h"
 #include "hw_multi.h"
 #include "util.h"
-#include "socket.h"
 
 #ifdef CONF__MODULES
 # include "dl.h"
 #endif
 
-#include "libTwkeys.h"
-#include "hotkey.h"
+#include "libTw.h"
 
 
 /* HW specific headers */
@@ -46,7 +44,7 @@
 # include "HW/hw_X11.h"
 #endif
 
-#ifdef CONF_SOCKET
+#if defined(CONF__MODULES) || defined(CONF_SOCKET)
 
 # ifdef CONF_HW_DISPLAY
 #  include "HW/hw_display.h"
@@ -55,6 +53,11 @@
 # ifdef CONF_HW_TWIN
 #  include "HW/hw_twin.h"
 # endif
+
+#else
+
+# undef CONF_HW_DISPLAY
+# undef CONF_HW_TWIN
 
 #endif
 
@@ -140,6 +143,7 @@ void RunNoHW(void) {
 	    exit(0);
 	}
     }
+    
     /* try to fire up the Socket Server ... */
 #if defined (CONF__MODULES) && !defined(CONF_SOCKET)
     (void)DlLoad(SocketSo);
@@ -215,7 +219,7 @@ static byte module_InitHW(void) {
 
 #endif /* CONF__MODULES */
 
-#if defined(CONF_HW_X11) || (defined(CONF_SOCKET) && (defined(CONF_HW_TWIN) || defined(CONF_HW_DISPLAY))) || defined(CONF_HW_TTY) || defined(CONF_HW_GGI)
+#if defined(CONF_HW_X11) || defined(CONF_HW_TWIN) || defined(CONF_HW_DISPLAY) || defined(CONF_HW_TTY) || defined(CONF_HW_GGI)
 static byte check4(byte *s, byte *arg) {
     if (arg && strncmp(s, arg, strlen(s))) {
 	fprintf(stderr, "twin: `-hw=%s' given, skipping `-hw=%s' display driver.\n",
@@ -312,7 +316,7 @@ void QuitDisplayHW(display_hw *D_HW) {
 	    /* avoid KillSlot <-> DeleteDisplayHW infinite recursion */
 	    if ((MsgPort = RemoteGetMsgPort(slot)))
 		MsgPort->AttachHW = (display_hw *)0;
-	    KillSlot(slot);
+	    Ext(Remote,KillSlot)(slot);
 	}
 
 #ifdef CONF__MODULES
@@ -327,7 +331,7 @@ void QuitDisplayHW(display_hw *D_HW) {
     RestoreHW;
 }
 
-display_hw *AttachDisplayHW(uldat len, byte *arg, uldat slot) {
+display_hw *AttachDisplayHW(uldat len, CONST byte *arg, uldat slot, byte flags) {
     display_hw *D_HW;
 
     if ((len && len <= 4) || CmpMem("-hw=", arg, Min2(len,4))) {
@@ -338,11 +342,29 @@ display_hw *AttachDisplayHW(uldat len, byte *arg, uldat slot) {
 	return NULL;
     }
     
+    if (All->ExclusiveHW) {
+	fprintf(stderr, "twin: exclusive display in use, permission to display denied!\n");
+	return NULL;
+    }
+    
     if ((D_HW = Do(Create,DisplayHW)(FnDisplayHW, len, arg))) {
 	D_HW->AttachSlot = slot;
 	if (Act(Init,D_HW)(D_HW)) {
+	    
+	    if (flags & TW_ATTACH_HW_EXCLUSIVE) {
+		display_hw *s_HW, *n_HW;
+		
+		All->ExclusiveHW = D_HW;
+		
+		for (s_HW = All->FirstDisplayHW; s_HW; s_HW = n_HW) {
+		    n_HW = s_HW->Next;
+		    if (s_HW != D_HW)
+			Delete(s_HW);
+		}
+	    }
+
 	    if (ResizeDisplay()) {
-		DrawArea(FULLSCREEN);
+		DrawArea(FULL_SCREEN);
 		UpdateCursor();
 	    }
 	    return D_HW;
@@ -358,9 +380,13 @@ display_hw *AttachDisplayHW(uldat len, byte *arg, uldat slot) {
 }
 
 
-byte DetachDisplayHW(uldat len, byte *arg) {
+byte DetachDisplayHW(uldat len, CONST byte *arg, byte flags) {
     byte done = FALSE;
     display_hw *s_HW;
+    
+    if (All->ExclusiveHW && !(flags & TW_ATTACH_HW_EXCLUSIVE))
+	return FALSE;
+    
     if (len) {
 	safeforHW(s_HW) {
 	    if (HW->NameLen == len && !CmpMem(HW->Name, arg, len)) {
@@ -378,23 +404,31 @@ byte DetachDisplayHW(uldat len, byte *arg) {
 
 byte InitHW(void) {
     byte **arglist = orig_argv;
-    byte *dummy[2] = {"", NULL}, ret = FALSE;
-
-    if (!arglist || !*arglist) {
-	/* autoprobe */
-	arglist = dummy;
-    }
-    if (!arglist[1] && !strcmp(*arglist, "-nohw")) {
+    byte *dummy[2] = {"", NULL};
+    byte ret = FALSE;
+    byte flags = 0;
+    
+    if (arglist[0] && !arglist[1] && !strcmp(*arglist, "-nohw")) {
 	fprintf(stderr, "twin: starting in background as %s\n", TWDisplay);
 	RunNoHW();
 	ret = TRUE;
     } else {
 	while (*arglist) {
-	    ret |= !!AttachDisplayHW(strlen(*arglist), *arglist, NOSLOT);
+	    if (!strcmp(*arglist++, "-x"))
+		flags = TW_ATTACH_HW_EXCLUSIVE;
+	}
+	arglist = orig_argv;
+	if (!*arglist)
+	    /* autoprobe */
+	    arglist = dummy;
+
+	while (*arglist) {
+	    if (strcmp(*arglist, "-x"))
+		ret |= !!AttachDisplayHW(strlen(*arglist), *arglist, NOSLOT, flags);
 	    arglist++;
 	}
 	if (!ret)
-	    fputs("\ntwin:   \033[1mALL  DISPLAY  DRIVERS  FAILED.\033[0m\n", stderr);
+	    fputs("\ntwin:  \033[1mALL  DISPLAY  DRIVERS  FAILED.  QUITTING.\033[0m\n", stderr);
     }
     return ret;
 }
@@ -416,16 +450,17 @@ byte RestartHW(byte verbose) {
 	}
 	if (ret) {
 	    ResizeDisplay();
-	    DrawArea(FULLSCREEN);
+	    DrawArea(FULL_SCREEN);
 	    UpdateCursor();
 	} else {
-	    fputs("\ntwin:   \033[1mALL  DISPLAY  DRIVERS  FAILED.\033[0m\n", stderr);
+	    fputs("\ntwin:   \033[1mALL  DISPLAY  DRIVERS  FAILED.\033[0m\n"
+		  "\ntwin: continuing in background with no display.\n", stderr);
 	    fflush(stderr);
 	    RunNoHW();
 	}
     } else if (verbose) {
 	fputs("twin: RestartHW(): All display drivers removed by SuspendHW().\n"
-	      "      No display available for restarting, use twattach or twdisplay\n", stderr);
+	      "      No display available for restarting, use twattach or twdisplay.\n", stderr);
 	fflush(stderr);
     }
     return ret;
@@ -633,8 +668,8 @@ void TwinSelectionSetOwner(obj *Owner, time_t Time, frac_t Frac) {
     }
 }
 
-void TwinSelectionNotify(obj *Requestor, uldat ReqPrivate, uldat Magic, byte MIME[MAX_MIMELEN],
-			    uldat Len, byte *Data) {
+void TwinSelectionNotify(obj *Requestor, uldat ReqPrivate, uldat Magic, CONST byte MIME[MAX_MIMELEN],
+			    uldat Len, CONST byte *Data) {
     msg *NewMsg;
     event_any *Event;
 #if 0    
@@ -669,16 +704,6 @@ void TwinSelectionNotify(obj *Requestor, uldat ReqPrivate, uldat Magic, byte MIM
 	RestoreHW;
     }
 }
-
-#if 0
-void TwinInternalSelectionNotify(obj *Requestor, uldat ReqPrivate) {
-    selection *Sel;
-    if (Requestor) {
-	Sel = All->Selection;
-	TwinSelectionNotify(Requestor, ReqPrivate, Sel->Magic, Sel->MIME, Sel->Len, Sel->Data);
-    }
-}
-#endif
 
 void TwinSelectionRequest(obj *Requestor, uldat ReqPrivate, obj *Owner) {
 #if 0
@@ -836,7 +861,7 @@ void FlushHW(void) {
 	NeedHW &= ~NEEDBeepHW;
     }
 
-    if (All->SetUp->Flags & SETUP_NOBLINK)
+    if (!(All->SetUp->Flags & SETUP_BLINK))
 	DiscardBlinkVideo();
 
     if (NeedOldVideo && ValidOldVideo)
@@ -893,26 +918,16 @@ void FlushHW(void) {
 }
 
 
-void SendHotKey(window *Window) {
+void SyntheticKey(window *Window, udat Code, byte Len, byte *Seq) {
     event_keyboard *Event;
     msg *Msg;
-    byte Len, *Seq = NULL;
 
-    
-    /* the following is REALLY heavy on the compiler... but it should optimize drastically. */
+    if (Window && Len && Seq &&
+	(Msg=Do(Create,Msg)(FnMsg, MSG_WINDOW_KEY, Len + sizeof(event_keyboard)))) {
 	
-#define IS(key, len, seq) if (TW_##key == HOT_KEY) Len = len, Seq = seq;
-#  include "hw_keys.h"
-#undef IS
-	
-    if (!Seq || !*Seq)
-	return;
-	
-    if ((Msg=Do(Create,Msg)(FnMsg, MSG_WINDOW_KEY, Len + sizeof(event_keyboard)))) {
 	Event = &Msg->Event.EventKeyboard;
-
 	Event->Window = Window;
-	Event->Code = HOT_KEY;
+	Event->Code = Code;
 	Event->SeqLen = Len;
 	CopyMem(Seq, Event->AsciiSeq, Len);
 	Event->AsciiSeq[Len] = '\0'; /* terminate string with \0 */
@@ -973,7 +988,8 @@ void FillOldVideo(dat Xstart, dat Ystart, dat Xend, dat Yend, hwattr Attrib) {
 
 void RefreshVideo(void) {
     ValidOldVideo = FALSE;
-    DirtyVideo(0, 0, ScreenWidth - 1, ScreenHeight - 1);
+    DrawArea(FULL_SCREEN);
+    /* better than DirtyVideo(0, 0, ScreenWidth - 1, ScreenHeight - 1); */
 }
 
 INLINE uldat Plain_countDirtyVideo(dat X1, dat Y1, dat X2, dat Y2) {
@@ -1060,9 +1076,9 @@ void DragAreaHW(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
 
 
 
-byte MouseEventCommon(dat x, dat y, dat dx, dat dy, udat IdButtons) {
+byte MouseEventCommon(dat x, dat y, dat dx, dat dy, udat Buttons) {
     dat prev_x, prev_y;
-    udat Buttons, OldButtons, Overload;
+    udat OldButtons;
     mouse_state *OldState;
     udat result;
     byte ret = TRUE;
@@ -1084,17 +1100,7 @@ byte MouseEventCommon(dat x, dat y, dat dx, dat dy, udat IdButtons) {
     OldState->x = x;
     OldState->y = y;
     
-    Buttons=(byte)0;
-    Overload=All->MouseOverload;
-    
-    if (IdButtons & HOLD_LEFT)
-	Buttons |= HOLD << (Overload>>LEFT & OV_ANY);
-    if (IdButtons & HOLD_MIDDLE)
-	Buttons |= HOLD << (Overload>>MIDDLE & OV_ANY);
-    if (IdButtons & HOLD_RIGHT)
-	Buttons |= HOLD << (Overload>>RIGHT & OV_ANY);
-    
-    OldState->keys=Buttons;
+    OldState->keys = Buttons;
 
     /* keep it available */
     All->MouseHW = HW;
@@ -1136,7 +1142,7 @@ byte StdAddEventMouse(udat CodeMsg, udat Code, dat MouseX, dat MouseY) {
 	return TRUE;
     
     if ((Code & ANY_ACTION_MOUSE)==DRAG_MOUSE
-	&& (Msg = WM_MsgPort->LastMsg)
+	&& (Msg = Ext(WM,MsgPort)->LastMsg)
 	&& Msg->Type==MSG_MOUSE
 	&& (Event=&Msg->Event.EventMouse)
 	&& Event->Code==Code) {
@@ -1150,13 +1156,13 @@ byte StdAddEventMouse(udat CodeMsg, udat Code, dat MouseX, dat MouseY) {
 	Event->ShiftFlags=(udat)0;
 	Event->X=MouseX;
 	Event->Y=MouseY;
-	SendMsg(WM_MsgPort, Msg);
+	SendMsg(Ext(WM,MsgPort), Msg);
 	return TRUE;
     }
     return FALSE;
 }
 
-byte KeyboardEventCommon(udat Code, udat Len, byte *Seq) {
+byte KeyboardEventCommon(udat Code, udat Len, CONST byte *Seq) {
     event_keyboard *Event;
     msg *Msg;
 
@@ -1171,7 +1177,7 @@ byte KeyboardEventCommon(udat Code, udat Len, byte *Seq) {
 	Event->SeqLen = Len;
 	CopyMem(Seq, Event->AsciiSeq, Len);
 	Event->AsciiSeq[Len] = '\0'; /* terminate string with \0 */
-	SendMsg(WM_MsgPort, Msg);
+	SendMsg(Ext(WM,MsgPort), Msg);
 	return TRUE;
     }
     return FALSE;

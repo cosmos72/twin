@@ -15,16 +15,22 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <grp.h>
+#include <errno.h>
 
 #include "twin.h"
+#include "data.h"
 #include "methods.h"
 #include "main.h"
-#include "data.h"
+#include "draw.h"
+#include "resize.h"
 #include "util.h"
+
 #include "hw.h"
 
+#include "libTwkeys.h"
+
 udat ErrNo;
-byte *ErrStr;
+CONST byte *ErrStr;
 
 #if 0
 uldat MemLeft(void) {
@@ -34,15 +40,26 @@ uldat MemLeft(void) {
 #endif
 
 void Error(udat Code_Error) {
-    if ((ErrNo = Code_Error) == NOMEMORY) {
-#if 0
-	BeepHW();
-#endif	
+    switch ((ErrNo = Code_Error)) {
+      case NOMEMORY:
 	ErrStr = "Out of memory!";
+	break;
+      case SYSCALLERROR:
+	ErrStr = strerror(errno);
+	break;
+      default:
+	break;
     }
 }
 
-byte *CloneStr(byte *s) {
+void *CloneMem(CONST void *From, uldat Size) {
+    void *temp;
+    if (From && Size && (temp = AllocMem(Size)))
+	return CopyMem(From, temp, Size);
+    return NULL;
+}
+
+byte *CloneStr(CONST byte *s) {
     byte *q;
     uldat len;
     
@@ -52,20 +69,21 @@ byte *CloneStr(byte *s) {
 	    CopyMem(s, q, len);
 	return q;
     }
-    return s;
+    return NULL;
 }
 
-byte *CloneStrL(byte *s, uldat len) {
+byte *CloneStrL(CONST byte *s, uldat len) {
     byte *q;
     
-    if (s && len) {
+    if (s) {
 	if ((q = AllocMem(len+1))) {
-	    CopyMem(s, q, len);
+	    if (len)
+		CopyMem(s, q, len);
 	    q[len] = '\0';
 	}
 	return q;
     }
-    return s;
+    return NULL;
 }
 
 byte **CloneStrList(byte **s) {
@@ -169,7 +187,7 @@ static dat CmpCallTime(msgport *m1, msgport *m2) {
     return CmpTime(&m1->CallTime, &m2->CallTime);
 }
 
-byte Minimum(byte MaxIndex, uldat *Elenco) {
+byte Minimum(byte MaxIndex, CONST uldat *Array) {
     byte i, MinIndex;
     uldat Temp;
     
@@ -179,8 +197,8 @@ byte Minimum(byte MaxIndex, uldat *Elenco) {
 	return 0xFF;
     
     for(i=0; i<MaxIndex; i++)
-	if (Elenco[i]<Temp) {
-	    Temp = Elenco[i];
+	if (Array[i]<Temp) {
+	    Temp = Array[i];
 	    MinIndex = i;
 	}
     
@@ -220,21 +238,21 @@ uldat HexStrToNum(byte *StringHex) {
 */
 
 /* adapted from similar code in bdflush */
-void SetArgv_0(byte **argv, byte *src) {
+void SetArgv_0(byte **argv, CONST byte *src) {
     byte *ptr;
-    uldat count, len = strlen(src);
+    uldat count, len = LenStr(src);
     
-    ptr = argv[0] + strlen(argv[0]);
+    ptr = argv[0] + LenStr(argv[0]);
     for (count = 1; argv[count]; count++) {
 	if (argv[count] == ptr + 1)
-	    ptr += strlen(++ptr);
+	    ptr += LenStr(++ptr);
     }
     
     if (len + 1 < (size_t)(ptr - argv[0])) {
-	memcpy(argv[0], src, len);
-	memset(argv[0] + len, 0, (size_t)(ptr - argv[0]) - len);
+	CopyMem(src, argv[0], len);
+	WriteMem(argv[0] + len, '\0', (size_t)(ptr - argv[0]) - len);
     } else
-	memcpy(argv[0], src, (size_t)(ptr - argv[0]));
+	CopyMem(src, argv[0], (size_t)(ptr - argv[0]));
 }
                                            
 
@@ -302,7 +320,24 @@ void SortAllMsgPortsByCallTime(void) {
     All->LastMsgPort  = End;
 }
 
-byte SelectionStore(uldat Magic, byte MIME[MAX_MIMELEN], uldat Len, byte *Data) {
+
+byte SendControlMsg(msgport *MsgPort, udat Code, udat Len, CONST byte *Data) {
+    msg *Msg;
+    event_control *Event;
+    
+    if (MsgPort && (Msg = Do(Create,Msg)(FnMsg, MSG_CONTROL, sizeof(event_control) + Len))) {
+	Event = &Msg->Event.EventControl;
+	Event->Code = Code;
+	Event->Len  = Len;
+	CopyMem(Data, Event->Data, Len);
+	SendMsg(MsgPort, Msg);
+	
+	return TRUE;
+    }
+    return FALSE;
+}
+
+byte SelectionStore(uldat Magic, CONST byte MIME[MAX_MIMELEN], uldat Len, CONST byte *Data) {
     uldat newLen;
     byte *newData;
     selection *Sel = All->Selection;
@@ -405,24 +440,27 @@ byte SetSelectionFromWindow(window *Window) {
 	Row = Act(SearchRow,Window)(Window, y);
 	
 	if (Row) {
-	    if (y < Window->YendSel)
-		slen = Row->Len - Window->XstSel;
-	    else
-		slen = Min2(Row->Len, Window->XendSel+1) - Min2(Row->Len, Window->XstSel);
-	    ok &= SelectionStore(SEL_TEXTMAGIC, NULL, slen, Row->Text + Window->XstSel);
+	    if (Row->Text) {
+		if (y < Window->YendSel)
+		    slen = Row->Len - Window->XstSel;
+		else
+		    slen = Min2(Row->Len, Window->XendSel+1) - Min2(Row->Len, Window->XstSel);
+		ok &= SelectionStore(SEL_TEXTMAGIC, NULL, slen, Row->Text + Window->XstSel);
+	    } else
+		ok &= SelectionStore(SEL_TEXTMAGIC, NULL, 0, "");
 	}
-	if (y < Window->YendSel || !Row || Row->Len <= Window->XendSel)
+	if (y < Window->YendSel || !Row || !Row->Text || Row->Len <= Window->XendSel)
 	    ok &= SelectionAppend(1, "\n");
 
 	for (y = Window->YstSel + 1; ok && y < Window->YendSel; y++) {
-	    if ((Row = Act(SearchRow,Window)(Window, y)))
+	    if ((Row = Act(SearchRow,Window)(Window, y)) && Row->Text)
 		ok &= SelectionAppend(Row->Len, Row->Text);
 	    ok &= SelectionAppend(1, "\n");
 	}
 	if (Window->YendSel > Window->YstSel) {
-	    if ((Row = Act(SearchRow,Window)(Window, Window->YendSel)))
+	    if ((Row = Act(SearchRow,Window)(Window, Window->YendSel)) && Row->Text)
 		ok &= SelectionAppend(Min2(Row->Len, Window->XendSel+1), Row->Text);
-	    if (!Row || Row->Len <= Window->XendSel)
+	    if (!Row || !Row->Text || Row->Len <= Window->XendSel)
 		ok &= SelectionAppend(1, "\n");
 	}
 	if (ok) NeedHW |= NEEDSelectionExport;
@@ -432,28 +470,104 @@ byte SetSelectionFromWindow(window *Window) {
 }
 
 
+void ResetBorderPattern(void) {
+    msgport *MsgP;
+    menu *Menu;
+    window *W;
+    
+    for (MsgP = All->FirstMsgPort; MsgP; MsgP=MsgP->Next) {
+	for (Menu = MsgP->FirstMenu; Menu; Menu=Menu->Next) {
+	    for (W = Menu->FirstWindow; W; W=W->ONext) {
+		W->BorderPattern[0] = W->BorderPattern[1] = NULL;
+	    }
+	}
+    }
+}
+
+void FallBackKeyAction(window *W, event_keyboard *EventK) {
+    uldat NumRow, OldNumRow;
+	
+    switch (EventK->Code) {
+      case TW_Up:
+	if (!W->MaxNumRow)
+	    break;
+	OldNumRow=W->CurY;
+	if (OldNumRow<MAXULDAT) {
+	    if (!OldNumRow)
+		NumRow=W->MaxNumRow-(uldat)1;
+	    else
+		NumRow=OldNumRow-(uldat)1;
+	    W->CurY=NumRow;
+	    if (W->Flags & WINFL_SEL_ROWCURR)
+		DrawTextWindow(W, (uldat)0, OldNumRow, (uldat)MAXUDAT-(uldat)2, OldNumRow);
+	}
+	else
+	    W->CurY=NumRow=W->MaxNumRow-(uldat)1;
+	if (W->Flags & WINFL_SEL_ROWCURR)
+	    DrawTextWindow(W, (uldat)0, NumRow, (uldat)MAXUDAT-(uldat)2, NumRow);
+	UpdateCursor();
+	break;
+      case TW_Down:
+	if (!W->MaxNumRow)
+	    break;
+	OldNumRow=W->CurY;
+	if (OldNumRow<MAXULDAT) {
+	    if (OldNumRow>=W->MaxNumRow-(uldat)1)
+		NumRow=(uldat)0;
+	    else
+		NumRow=OldNumRow+(uldat)1;
+	    W->CurY=NumRow;
+	    if (W->Flags & WINFL_SEL_ROWCURR)
+		DrawTextWindow(W, (uldat)0, OldNumRow, (uldat)MAXUDAT-(uldat)2, OldNumRow);
+	}
+	else
+	    W->CurY=NumRow=(uldat)0;
+	if (W->Flags & WINFL_SEL_ROWCURR)
+	    DrawTextWindow(W, (uldat)0, NumRow, (uldat)MAXUDAT-(uldat)2, NumRow);
+	UpdateCursor();
+	break;
+      case TW_Left:
+	if (W->CurX) {
+	    W->CurX--;
+	    UpdateCursor();
+	}
+	break;
+      case TW_Right:
+	if (((W->Flags & WINFL_USECONTENTS) && W->CurX < W->XWidth - 3) ||
+	    (!(W->Flags & WINFL_USEANY) && W->CurX < MAXULDAT - 1)) {
+	    W->CurX++;
+	    UpdateCursor();
+	}
+	break;
+      default:
+	break;
+    }
+}
+
 
 
 
 static byte fullTWD[]="/tmp/.Twin:\0\0\0";
-static byte envTWD[]="TWDISPLAY=:\0\0\0";
+static byte envTWD[]="TWDISPLAY=\0\0\0\0";
 
 /* set TWDISPLAY */
 byte SetTWDisplay(void) {
     int i, fd;
     byte *arg0;
+
+    HOME = getenv("HOME");
     
     for (i=0; i<0x1000; i++) {
 	sprintf(fullTWD+11, "%x", i);
 	if ((fd = open(fullTWD, O_WRONLY|O_CREAT|O_TRUNC|O_EXCL, 0600)) >= 0) {
 	    close(fd);
 	    TWDisplay = fullTWD+10;
-	    lenTWDisplay = strlen(TWDisplay);
+	    lenTWDisplay = LenStr(TWDisplay);
 	    
 	    CopyMem(TWDisplay, envTWD+10, lenTWDisplay);
 	    putenv(envTWD);
 	    putenv("TERM=linux");
-	    if ((arg0 = AllocMem(strlen(TWDisplay) + 6))) {
+	    if ((arg0 = AllocMem(LenStr(TWDisplay) + 6))) {
 		strcpy(arg0, "twin ");
 		strcat(arg0, TWDisplay);
 		SetArgv_0(main_argv, arg0);
@@ -502,8 +616,9 @@ void CheckPrivileges(void) {
     
     DropPrivileges();
     
-#ifdef CONF_TERM
-# ifdef CONF_TERM_DEVPTS
+#if 0
+# ifdef CONF_TERM
+#  ifdef CONF_TERM_DEVPTS
     if (Privilege < sgidtty) {
 	byte c;
 	fprintf(stderr, "twin: not running setgid tty.\n"
@@ -512,7 +627,7 @@ void CheckPrivileges(void) {
 	fflush(stdout);
 	read(0, &c, 1);
     }
-# else /* !CONF_TERM_DEVPTS */
+#  else /* !CONF_TERM_DEVPTS */
     if (Privilege < suidroot) {
 	byte c;
 	fprintf(stderr, "twin: not running setuid root.\n"
@@ -521,11 +636,11 @@ void CheckPrivileges(void) {
 	fflush(stdout);
 	read(0, &c, 1);
     }
-# endif /* CONF_TERM_DEVPTS */
+#  endif /* CONF_TERM_DEVPTS */
     
-#else /* !CONF_TERM */
-    
-# ifdef CONF_MODULES
+# else /* !CONF_TERM */
+
+#  ifdef CONF_MODULES
     if (Privilege == none) {
 	byte c;
 	fprintf(stderr, "twin: not running setgid tty or setuid root.\n"
@@ -534,9 +649,9 @@ void CheckPrivileges(void) {
 	fflush(stdout);
 	read(0, &c, 1);
     }
-# endif /* CONF_MODULES */
-    
-#endif /* CONF_TERM */
+#  endif /* CONF_MODULES */
+# endif /* CONF_TERM */
+#endif /* 0 */
 }
 
 void GetPrivileges(void) {
@@ -545,8 +660,6 @@ void GetPrivileges(void) {
     else if (Privilege == sgidtty)
 	GetGroupPrivileges(get_tty_grgid());
 }
-
-
 
 /* finally, functions to manage Ids */
 
@@ -614,7 +727,7 @@ INLINE void _DropId(byte i, obj *Obj) {
     }
 }
     
-byte AssignId(fn_obj *Fn_Obj, obj *Obj) {
+byte AssignId(CONST fn_obj *Fn_Obj, obj *Obj) {
     byte i = 0;
     if (Obj) switch (Fn_Obj->Magic) {
       case area_magic:

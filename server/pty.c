@@ -105,7 +105,26 @@ static byte fixup_pty(void) {
     return FALSE;
 }
 
-/* 3. Establish ttyfd as controlling teletype for new session and switch to it */
+/* 3. Setup tty size and termios settings */
+/*
+ * do it before the fork() and NOT in the child to avoid
+ * races with future tty resizes performed by the parent!
+ */
+static byte setup_tty(udat x, udat y) {
+    struct winsize wsiz;
+    /* from hw.c, ttysave is the console original state */
+    extern struct termios ttysave;
+    
+    wsiz.ws_col = x;
+    wsiz.ws_row = y;
+    wsiz.ws_xpixel = 0;
+    wsiz.ws_ypixel = 0;
+    
+    return ioctl(ptyfd, TIOCSWINSZ, &wsiz) >= 0 &&
+	tty_setioctl(ttyfd, &ttysave) >= 0;
+}
+
+/* 4. Establish ttyfd as controlling teletype for new session and switch to it */
 static byte switchto_tty(void)
 {
     int i;
@@ -141,62 +160,46 @@ static byte switchto_tty(void)
     return TRUE;
 }
 
-/* 4. Setup tty size and termios settings */
-static byte setup_tty(udat x, udat y) {
-    struct winsize wsiz;
-    /* from os.c, ttysave is the console original state */
-    extern struct termios ttysave;
-    
-    wsiz.ws_col = x;
-    wsiz.ws_row = y;
-    wsiz.ws_xpixel = 0;
-    wsiz.ws_ypixel = 0;
-    
-    /*
-     * prevent ioctl(0, TIOCSWINSZ, &wsiz) --- which generates SIGWINCH ---
-     * from invoking twin SIGWINCH handler!
-     */
-    signal(SIGWINCH, SIG_DFL);
-
-    if (ioctl(0, TIOCSWINSZ, &wsiz) < 0 || tty_setioctl(0, &ttysave) < 0)
-	return FALSE;
-    
-    return TRUE;
-}
-
-/* 5. fork() a program in a pseudo-teletype */
-byte SpawnInWindow(window *Window, char *args[]) {
+/* exported API: fork() a program in a pseudo-teletype */
+byte SpawnInWindow(window *Window, CONST byte *arg0, byte * CONST *argv) {
     pid_t childpid;
     remotedata *data = &Window->RemoteData;
 
     GetPrivileges();
     
+    /* 1 */
     if (!get_pty()) {
 	DropPrivileges();
 	return FALSE;
     }
+    /* 2 */
     (void)fixup_pty();
-    
     DropPrivileges();
 
-    switch ((childpid = fork())) {
-      case -1:
-	/* failed */
+    /* 3 */
+    if (setup_tty(Window->NumRowOne, Window->YWidth - 2)) {
+	switch ((childpid = fork())) {
+	  case -1:
+	    /* failed */
+	    close(ptyfd);
+	    ptyfd = -1;
+	    break;
+	  case 0:
+	    /* child */
+	    /* 4 */
+	    if (switchto_tty())
+		execvp((CONST char *)arg0, (char * CONST *)argv);
+	    exit(1);
+	    break;
+	  default:
+	    /* father */
+	    data->Fd = ptyfd;
+	    data->ChildPid = childpid;
+	    break;
+	}
+    } else {
 	close(ptyfd);
 	ptyfd = -1;
-	break;
-      case 0:
-	/* child */
-	if (!switchto_tty() || !setup_tty(Window->NumRowOne, Window->YWidth - 2))
-	    exit(1);
-	execv(args[0], args+1);
-	exit(1);
-	break;
-      default:
-	/* father */
-	data->Fd = ptyfd;
-	data->ChildPid = childpid;
-	break;
     }
     close(ttyfd);
     return ptyfd != -1;

@@ -9,13 +9,17 @@ CONF_SOCKET_MENU="Socket support"
 CONF_HW_MENU="Display hardware support"
 CONF_OPT_MENU="Runtime options"
 
-CONF__MODULES_HELP="Enable modules"
-CONF__ALLOC_HELP="Use custom malloc/free routines (tested on Linux i386 only)"
-CONF_WM_HELP="Builtin Window Manager: absolutely needed, do not say <N>"
-CONF_TERM_HELP="Builtin Terminal emulator"
-CONF_TERM_DEVPTS_HELP=" -> Terminal: use glibc-2.1 /dev/pts/"
+CONF__SHLIBS_HELP="Enable shared libraries (ELF)"
+CONF__MODULES_HELP="Enable modules (ELF)"
+CONF__ALLOC_HELP="Use custom malloc/free (tested on Linux/i386 only)"
 CONF_SOCKET_HELP="Support remote socket connections"
 CONF_SOCKET_GZ_HELP=" -> Sockets: Support gzip compression"
+CONF_WM_HELP="Window Manager: absolutely needed!"
+CONF_WM_RC_HELP="WM: support ~/.twinrc configuration parser"
+CONF_WM_RC_SHMMAP_HELP=" -> WM: RC: use mmapped shared file for parser"
+CONF_WM_RC_SHRINK_HELP=" -> WM: RC: shrink memory when parser finished"
+CONF_TERM_HELP="Builtin Terminal emulator"
+CONF_TERM_DEVPTS_HELP=" -> Terminal: use glibc-2.1 /dev/pts/"
 CONF_HW_TTY_HELP="HW support: text terminals (Linux console...)"
 CONF_HW_TTY_LINUX_HELP=" -> tty support: Linux console"
 CONF_HW_TTY_TWTERM_HELP=" -> tty support: Twin terminal"
@@ -25,25 +29,32 @@ CONF_HW_X11_HELP="HW support: X11"
 CONF_HW_TWIN_HELP="HW support: Twin, native"
 CONF_HW_DISPLAY_HELP="HW support: twdisplay client as display"
 CONF_HW_GGI_HELP="HW support: libggi"
-CONF_OPT_NOBLINK_HELP="Runtime option: disable blink/high background"
-CONF_OPT_ALWAYSCURSOR_HELP="Runtime option: cursor always visible"
+CONF_OPT_SHADOWS_HELP="Runtime option: enable shadows"
+CONF_OPT_BLINK_HELP="Runtime option: enable blink/high background"
+CONF_OPT_ALWAYSCURSOR_HELP="Runtime option: force always visible cursor"
 CONF_OPT_HIDEMENU_HELP="Runtime option: hidden menu"
-CONF_OPT_NOSCROLL_HELP="Runtime option: disable screen scrolling"
+CONF_OPT_MENUINFO_HELP="Runtime option: enable menu information row"
+CONF_OPT_EDGESCROLL_HELP="Runtime option: enable screen scrolling"
+CONF_OPT_ALTFONT_HELP="Runtime option: use alternate font (see README)"
 
 menu CONF__
+  yesno CONF__SHLIBS
   yesno CONF__MODULES
   yesno CONF__ALLOC
-endmenu
-menu CONF_WM
-  yesmodno CONF_WM
-endmenu
-menu CONF_TERM
-  yesmodno CONF_TERM
-  yesno CONF_TERM_DEVPTS
 endmenu
 menu CONF_SOCKET
   yesmodno CONF_SOCKET
   yesno_dep CONF_SOCKET_GZ CONF_SOCKET
+endmenu
+menu CONF_WM
+  yesmodno CONF_WM
+  yesmodno_truedep CONF_WM_RC CONF_SOCKET
+  yesno_dep CONF_WM_RC_SHMMAP CONF_WM_RC
+  yesno_dep CONF_WM_RC_SHRINK CONF_WM_RC
+endmenu
+menu CONF_TERM
+  yesmodno CONF_TERM
+  yesno CONF_TERM_DEVPTS
 endmenu
 menu CONF_HW
   yesmodno CONF_HW_TTY
@@ -57,8 +68,13 @@ menu CONF_HW
   yesmodno CONF_HW_GGI
 endmenu
 menu CONF_OPT
-  yesno CONF_OPT_NOBLINK
+  msg "Warning: settings in ~/.twinrc or in system.twinrc"
+  msg "will always override the following options!"
+  yesno CONF_OPT_SHADOWS
+  yesno CONF_OPT_BLINK
   yesno CONF_OPT_ALWAYSCURSOR
   yesno CONF_OPT_HIDEMENU
-  yesno CONF_OPT_NOSCROLL
+  yesno CONF_OPT_MENUINFO
+  yesno CONF_OPT_EDGESCROLL
+  yesno CONF_OPT_ALTFONT
 endmenu

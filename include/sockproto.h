@@ -99,7 +99,7 @@ PROTO3(void,v,     Resize,Window,0, window,x, udat,_, udat,_)
 PROTO3(gadget,x,SearchGadget,Window,2, window,x, dat,_, dat,_)
 
 PROTO5(menuitem,x, Create4Menu,MenuItem,1, menu,x, window,x, byte,_, udat,_, byte,V(A(4)))
-PROTO1(menuitem,x, Create4MenuCommon,MenuItem,1, menu,x)
+PROTO1(uldat,_,    Create4MenuCommon,MenuItem,1, menu,x)
 PROTO1(void,v,	        Delete,MenuItem,2, menuitem,x)
 
 PROTO8(menu,x, Create,Menu,1, msgport,x, hwcol,_, hwcol,_, hwcol,_, hwcol,_, hwcol,_,

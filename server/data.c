@@ -13,16 +13,24 @@
 
 #include "twin.h"
 #include "methods.h"
-#include "main.h"
 #include "data.h"
 
-#include "libTwkeys.h"	/* for TW_* key defines */
-#include "hotkey.h"	/* for HOT_KEY */
+#include "libTwkeys.h"
+
+
+/* setup configuration paths */
+
+#ifdef CONF_DESTDIR
+CONST byte *conf_destdir_lib_twin = CONF_DESTDIR "/lib/twin";
+CONST byte *conf_destdir_lib_twin_modules_ = CONF_DESTDIR "/lib/twin/modules/";
+#else
+CONST byte *conf_destdir_lib_twin = ".";
+CONST byte *conf_destdir_lib_twin_modules_ = "./";
+#endif
+
+
 
 /* First, some structures */
-
-static udat ExecKey[STATE_MAX][MAX_KEY_CODE - ('~' - ' ')]; /* no actions associated to plain ASCII keys */
-static udat ExecMouse[STATE_MAX][MAX_MOUSE_CODE];
 
 static byte GtransUser[0x80];
 
@@ -31,20 +39,21 @@ static byte GtransUser[0x80];
 static screen *OneScreen, *TwoScreen;
 
 static setup SetUp = {
-    (dat)1,
-    { (time_t)0, 500 MilliSECs },
-	(udat)0x003F,
-	(byte)0,	 /* Flags */
-	(byte)5, (byte)3 /* DeltaXShade, DeltaYShade */
+    (dat)1,	 /* MaxMouseSnap */
+    (udat)0x7,	 /* MinAllocSize */
+    (udat)0,	 /* Flags */
+    HOLD_LEFT,	 /* SelectionButton */
+    HOLD_MIDDLE, /* PasteButton */
+    (byte)3, (byte)2 /* DeltaXShade, DeltaYShade */
 };
 
 static selection Selection = {
     { (time_t)0, (frac_t)0 },
-	(msgport *)0, (display_hw *)0,
-	SEL_TEXTMAGIC,
-	"",
-	(uldat)0, (uldat)0,
-	NULL
+    (msgport *)0, (display_hw *)0,
+    SEL_TEXTMAGIC,
+    "",
+    (uldat)0, (uldat)0,
+    NULL
 };
 
 #define L 0x55
@@ -71,16 +80,20 @@ static all _All = {
 	(mutex *)0, (mutex *)0,
 	(module *)0, (module *)0,
 	(fn_hook)0, (window *)0,
-	(display_hw *)0, (display_hw *)0, (display_hw *)0,
+	(display_hw *)0, (display_hw *)0,
+	(display_hw *)0, (display_hw *)0,
 	(fn_hook)0, (window *)0,
-	(menu *)0,
+	
+	STATE_DEFAULT,
     { (time_t)0, (uldat)0 },
 	&Selection,
 	&SetUp,
+	(void (*)(void))0, /* AtQuit */
+
+	(menu *)0, (menu *)0,
 	
-    { ExecKey[0], ExecKey[1], ExecKey[2], ExecKey[3], ExecKey[4] },
-    { ExecMouse[0], ExecMouse[1], ExecMouse[2], ExecMouse[3], ExecMouse[4] },
-	
+    { { {0, }, }, }, /* ButtonVec[] */
+
     {	    /*GRAF_MAP: in the range 0x80 - 0xFF it's identical to LAT1_MAP*/
 	    "\xFE\xFE\xFE\xFE\xFE\xFE\xFE\xFE\xFE\xFE\xFE\xFE\xFE\xFE\xFE\xFE"
 	    "\xFE\xFE\xFE\xFE\xFE\xFE\xFE\xFE\xFE\xFE\xFE\xFE\xFE\xFE\xFE\xFE"
@@ -101,12 +114,17 @@ static all _All = {
 	    "\xFE\xA4\x95\xA2\x93\x6F\x94\xF6\xED\x97\xA3\x96\x81\x79\xFE\x98",
 	    /*USER_MAP*/
 	    GtransUser
-    },
-	
-	OV_LEFT<<LEFT | OV_MIDDLE<<MIDDLE | OV_RIGHT<<RIGHT, FALSE,
-	(void (*)(void))0
+    }
 };
 all *All = &_All;
+
+
+keylist TW_KeyList[] = {
+#define IS(key, len, seq) { #key, TW_##key, len, seq },
+#   include "hw_keys.h"
+#undef IS
+    { NULL, TW_Null, 0, NULL }
+};
 
 
 gadget GadgetFlag = {
@@ -170,35 +188,29 @@ TabY[2] = {
     'Û',
 	234
 },
-StdBorder[2][2][3][3] = {
-    {{{'É', 'Í', '»'},
-	{'º', ' ', 'º'},
-	{'È', 'Í', '¼'}},
-	{{'Ú', 'Ä', '¿'},
-	    {'³', ' ', '³'},
-	    {'À', 'Ä', 'Ù'}}},
-    {{{212, 213, 233},
-	{229, ' ', 230},
-	{212, 213, 233}},
-	{{212, 213, 233},
-	    {231, ' ', 232},
-	    {212, 213, 233}}},
+StdBorder[2][2][9] = {
+    {
+	    "ÉÍ»"
+	    "º º"
+	    "ÈÍ¼",
+	
+	    "ÚÄ¿"
+	    "³ ³"
+	    "ÀÄÙ",
+    }, {
+	    "\xD4\xD5\xE9"
+	    "\xE5\x20\xE6"
+	    "\xD4\xD5\xE9",
+	
+	    "\xD4\xD5\xE9"
+	    "\xE7\x20\xE8"
+	    "\xD4\xD5\xE9"
+    }
+},
+Screen_Back[2] = {
+    18,	18
 };
 
-
-byte Button_N = 3;
-num  Button_Close = 0, Button_Back = 2;
-num  Button_Pos[MAX_BUTTONS] = { 0, -3, -1, };
-byte Button_Fn[MAX_BUTTONS] = { BUTTON_CLOSE, BUTTON_ROLLUP, BUTTON_BACK, };
-byte Button_Shape[MAX_BUTTONS][2][2] = {
-    {{'[', ']'},
-	{208, 224}},
-    {{'>', '<'},
-	{175, 174}},
-    {{18, 18},
-	{209, 225}},
-};
-byte Button_Delta_Left = 2, Button_Delta_Right = 4;
 
 hwcol DEFAULT_ColGadgets = COL(HIGH|YELLOW,CYAN),
 DEFAULT_ColArrows = COL(HIGH|GREEN,HIGH|BLUE),
@@ -322,153 +334,11 @@ NewFont16[] = {
 #endif
 
 byte InitData(void) {
-    /*----------- Default -------------*/
     
-    ExecM(STATE_DEFAULT,0)=(udat)0; 	/* Normal Format (not compressed) */
-    ExecK(STATE_DEFAULT,0)=(udat)1; 	/* Compressed, parallel list format */
-    
-    ExecM(STATE_DEFAULT,DOWN_LEFT           )=STDEF_MOUSE_ACT_SOME;
-    ExecM(STATE_DEFAULT,DOWN_RIGHT          )=STDEF_MOUSE_ACT_MENU;
-    ExecM(STATE_DEFAULT,DOWN_MIDDLE         )=STDEF_MOUSE_ACT_NULL;
-    ExecM(STATE_DEFAULT,DRAG_MOUSE|HOLD_LEFT)=STDEF_MOUSE_DRAG_SOME;
-    ExecM(STATE_DEFAULT,RELEASE_LEFT        )=STWIN_BACKTO_DEF;
-    ExecM(STATE_DEFAULT,RELEASE_RIGHT       )=STWIN_BACKTO_DEF;
-    ExecM(STATE_DEFAULT,RELEASE_MIDDLE      )=STWIN_BACKTO_DEF;
-    
-    ExecM(STATE_DEFAULT,DRAG_MOUSE    | HOLD_LEFT | HOLD_RIGHT                 )=STDEF_MOUSE_DRAG_NULL;
-    ExecM(STATE_DEFAULT,DRAG_MOUSE    | HOLD_LEFT | HOLD_RIGHT    | HOLD_MIDDLE)=STDEF_MOUSE_DRAG_NULL;
-    ExecM(STATE_DEFAULT,DRAG_MOUSE    | HOLD_LEFT                 | HOLD_MIDDLE)=STDEF_MOUSE_DRAG_NULL;
-    ExecM(STATE_DEFAULT,DRAG_MOUSE                | HOLD_RIGHT                 )=STDEF_MOUSE_DRAG_NULL;
-    ExecM(STATE_DEFAULT,DRAG_MOUSE                | HOLD_RIGHT    | HOLD_MIDDLE)=STDEF_MOUSE_DRAG_NULL;
-    ExecM(STATE_DEFAULT,DRAG_MOUSE                                | HOLD_MIDDLE)=STDEF_MOUSE_DRAG_NULL;
-    ExecM(STATE_DEFAULT,RELEASE_LEFT              | HOLD_RIGHT                 )=STWIN_BACKTO_NULL;
-    ExecM(STATE_DEFAULT,RELEASE_LEFT              | HOLD_RIGHT    | HOLD_MIDDLE)=STWIN_BACKTO_NULL;
-    ExecM(STATE_DEFAULT,RELEASE_LEFT                              | HOLD_MIDDLE)=STWIN_BACKTO_NULL;
-    ExecM(STATE_DEFAULT,HOLD_LEFT              | RELEASE_RIGHT                 )=STWIN_BACKTO_NULL;
-    ExecM(STATE_DEFAULT,HOLD_LEFT              | RELEASE_RIGHT    | HOLD_MIDDLE)=STWIN_BACKTO_NULL;
-    ExecM(STATE_DEFAULT,                         RELEASE_RIGHT    | HOLD_MIDDLE)=STWIN_BACKTO_NULL;
-    ExecM(STATE_DEFAULT,HOLD_LEFT                              | RELEASE_MIDDLE)=STWIN_BACKTO_NULL;
-    ExecM(STATE_DEFAULT,                HOLD_LEFT | HOLD_RIGHT | RELEASE_MIDDLE)=STWIN_BACKTO_NULL;
-    ExecM(STATE_DEFAULT,                            HOLD_RIGHT | RELEASE_MIDDLE)=STWIN_BACKTO_NULL;
-    
-#if 0
-    ExecK(STATE_DEFAULT, 45)=STDEF_QUIT;			/*Alt-X      */
-    ExecK(STATE_DEFAULT,106)=STDEF_CLOSE_WINDOW;		/*Alt-F3     */
-    ExecK(STATE_DEFAULT, 63)=STDEF_NEXT_WINDOW;		/*F5         */
-    ExecK(STATE_DEFAULT, 98)=STDEF_DRAGorRESIZE_WINDOW;	/*Ctrl-F5    */
-    ExecK(STATE_DEFAULT,108)=STDEF_CENTER_WINDOW;		/*Alt-F5     */
-    ExecK(STATE_DEFAULT, 64)=STDEF_NEXT_SCREEN;		/*F6         */
-    ExecK(STATE_DEFAULT, 99)=STDEF_DRAGorRESIZE_SCREEN;	/*Ctrl-F6    */
-#endif
-    
-    ExecK(STATE_DEFAULT,1)=HOT_KEY;		/* this sets the Menu HotKey; edit hotkey.h to change it */
-    ExecK(STATE_DEFAULT,2)=STDEF_ACT_MENU;
-    
-    /*----------- Window -----------*/
-     
-    ExecM(STATE_WINDOW,0)=(udat)0; 	/* Normal Format (not compressed) */
-    ExecK(STATE_WINDOW,0)=(udat)0; 	/* Normal Format (not compressed) */
-   
-    ExecM(STATE_WINDOW,DOWN_LEFT                              )=STWIN_MOUSE_ACT_SOME;
-    ExecM(STATE_WINDOW,DRAG_MOUSE | HOLD_LEFT                 )=STWIN_MOUSE_DRAG_SOME;
-    ExecM(STATE_WINDOW,RELEASE_LEFT                           )=STWIN_BACKTO_DEF;
-    ExecM(STATE_WINDOW,RELEASE_LEFT | HOLD_RIGHT              )=STWIN_BACKTO_DEF_FREEZE;
-    ExecM(STATE_WINDOW,RELEASE_LEFT | HOLD_RIGHT | HOLD_MIDDLE)=STWIN_BACKTO_DEF_FREEZE;
-    ExecM(STATE_WINDOW,RELEASE_LEFT              | HOLD_MIDDLE)=STWIN_BACKTO_DEF_FREEZE;
-    ExecM(STATE_WINDOW,HOLD_LEFT | RELEASE_RIGHT              )=STWIN_MOUSE_DRAG_SOME;
-    ExecM(STATE_WINDOW,HOLD_LEFT | RELEASE_RIGHT | HOLD_MIDDLE)=STWIN_MOUSE_DRAG_SOME;
-    ExecM(STATE_WINDOW,HOLD_LEFT | HOLD_RIGHT | RELEASE_MIDDLE)=STWIN_MOUSE_DRAG_SOME;
-    ExecM(STATE_WINDOW,HOLD_LEFT              | RELEASE_MIDDLE)=STWIN_MOUSE_DRAG_SOME;
-
-    ExecK(STATE_WINDOW,TW_Return)=STWIN_BACKTO_DEF;
-    ExecK(STATE_WINDOW,TW_Escape)=STWIN_BACKTO_DEF;
-    ExecK(STATE_WINDOW,TW_Left  )=STWIN_Xn_DRAG;
-    ExecK(STATE_WINDOW,TW_Right )=STWIN_Xp_DRAG;
-    ExecK(STATE_WINDOW,TW_Up    )=STWIN_Yn_DRAG;
-    ExecK(STATE_WINDOW,TW_Down  )=STWIN_Yp_DRAG;
-    ExecK(STATE_WINDOW,TW_Insert)=STWIN_X_INCR;
-    ExecK(STATE_WINDOW,TW_Delete)=STWIN_X_DECR;
-    ExecK(STATE_WINDOW,TW_Prior )=STWIN_Y_DECR;
-    ExecK(STATE_WINDOW,TW_Next  )=STWIN_Y_INCR;
-
-    /*----------- Scroll. This is keyboard only. -----------*/
-     
-    ExecM(STATE_SCROLL,0)=(udat)0; 	/* Normal Format (not compressed) */
-    ExecK(STATE_SCROLL,0)=(udat)0; 	/* Normal Format (not compressed) */
-   
-    ExecM(STATE_SCROLL,DOWN_LEFT                              )=STWIN_MOUSE_ACT_SOME;
-    ExecM(STATE_SCROLL,DOWN_MIDDLE			      )=STDEF_MOUSE_ACT_NULL;
-    ExecM(STATE_SCROLL,DOWN_RIGHT			      )=STDEF_MOUSE_ACT_MENU;
-    ExecM(STATE_SCROLL,RELEASE_LEFT                           )=STWIN_BACKTO_DEF;
-    ExecM(STATE_SCROLL,RELEASE_MIDDLE			      )=STWIN_BACKTO_DEF;
-    ExecM(STATE_SCROLL,RELEASE_RIGHT			      )=STWIN_BACKTO_DEF;
-
-    ExecK(STATE_SCROLL,TW_Return)=STWIN_BACKTO_DEF;
-    ExecK(STATE_SCROLL,TW_Escape)=STWIN_BACKTO_DEF;
-    ExecK(STATE_SCROLL,TW_Left  )=SCROLL_Xn_CHAR;
-    ExecK(STATE_SCROLL,TW_Right )=SCROLL_Xp_CHAR;
-    ExecK(STATE_SCROLL,TW_Up    )=SCROLL_Yn_CHAR;
-    ExecK(STATE_SCROLL,TW_Down  )=SCROLL_Yp_CHAR;
-    ExecK(STATE_SCROLL,TW_Insert)=SCROLL_Xp_PAGE;
-    ExecK(STATE_SCROLL,TW_Delete)=SCROLL_Xn_PAGE;
-    ExecK(STATE_SCROLL,TW_Prior )=SCROLL_Yn_PAGE;
-    ExecK(STATE_SCROLL,TW_Next  )=SCROLL_Yp_PAGE;
-
-    /*------------ Menu --------------*/
-    
-    ExecM(STATE_MENU,0)=(udat)0; 	/* Normal Format (not compressed) */
-    ExecK(STATE_MENU,0)=(udat)0; 	/* Normal Format (not compressed) */
-    
-    ExecM(STATE_MENU,               DOWN_RIGHT                 )=STMENU_MOUSE_ACT_MENU;
-    ExecM(STATE_MENU,DRAG_MOUSE   | HOLD_RIGHT                 )=STMENU_MOUSE_DRAG;
-    ExecM(STATE_MENU,            RELEASE_RIGHT                 )=STMENU_ACT_BACKTO_DEF;
-    ExecM(STATE_MENU,RELEASE_LEFT | HOLD_RIGHT                 )=STMENU_MOUSE_DRAG;
-    ExecM(STATE_MENU,RELEASE_LEFT | HOLD_RIGHT | HOLD_MIDDLE   )=STMENU_MOUSE_DRAG;
-    ExecM(STATE_MENU,HOLD_LEFT    | HOLD_RIGHT | RELEASE_MIDDLE)=STMENU_MOUSE_DRAG;
-    ExecM(STATE_MENU,               HOLD_RIGHT | RELEASE_MIDDLE)=STMENU_MOUSE_DRAG;
-    ExecM(STATE_MENU,HOLD_LEFT | RELEASE_RIGHT                 )=STMENU_BACKTO_DEF_FREEZE;
-    ExecM(STATE_MENU,HOLD_LEFT | RELEASE_RIGHT | HOLD_MIDDLE   )=STMENU_BACKTO_DEF_FREEZE;
-    ExecM(STATE_MENU,            RELEASE_RIGHT | HOLD_MIDDLE   )=STMENU_BACKTO_DEF_FREEZE;
-    
-#if 0
-    ExecK(STATE_MENU, 45)=STMENU_QUIT;			/*Alt-X      */
-    ExecK(STATE_MENU, 98)=STMENU_DRAGorRESIZE_WINDOW;	/*Ctrl-F5    */
-#endif
-    ExecK(STATE_MENU,TW_Return)=STMENU_ACT_BACKTO_DEF;
-    ExecK(STATE_MENU,TW_Escape)=STMENU_BACKTO_DEF;
-    ExecK(STATE_MENU,TW_Left  )=STMENU_PREV_ITEM;
-    ExecK(STATE_MENU,TW_Right )=STMENU_NEXT_ITEM;
-    ExecK(STATE_MENU,TW_Up    )=STMENU_PREV_ROW;
-    ExecK(STATE_MENU,TW_Down  )=STMENU_NEXT_ROW;
-    
-    /*---------- Screen ---------*/
-    
-    ExecM(STATE_SCREEN,0)=(udat)0; 	/* Normal Format (not compressed) */
-    ExecK(STATE_SCREEN,0)=(udat)0; 	/* Normal Format (not compressed) */
-    
-    ExecM(STATE_SCREEN,DOWN_LEFT                              )=STDEF_MOUSE_ACT_SOME;
-    ExecM(STATE_SCREEN,DRAG_MOUSE | HOLD_LEFT                 )=STDEF_MOUSE_DRAG_SOME;
-    ExecM(STATE_SCREEN,RELEASE_LEFT                           )=STWIN_BACKTO_DEF;
-    ExecM(STATE_SCREEN,RELEASE_LEFT | HOLD_RIGHT              )=STWIN_BACKTO_DEF_FREEZE;
-    ExecM(STATE_SCREEN,RELEASE_LEFT | HOLD_RIGHT | HOLD_MIDDLE)=STWIN_BACKTO_DEF_FREEZE;
-    ExecM(STATE_SCREEN,RELEASE_LEFT              | HOLD_MIDDLE)=STWIN_BACKTO_DEF_FREEZE;
-    ExecM(STATE_SCREEN,HOLD_LEFT | RELEASE_RIGHT              )=STDEF_MOUSE_DRAG_SOME;
-    ExecM(STATE_SCREEN,HOLD_LEFT | RELEASE_RIGHT | HOLD_MIDDLE)=STDEF_MOUSE_DRAG_SOME;
-    ExecM(STATE_SCREEN,HOLD_LEFT | HOLD_RIGHT | RELEASE_MIDDLE)=STDEF_MOUSE_DRAG_SOME;
-    ExecM(STATE_SCREEN,HOLD_LEFT              | RELEASE_MIDDLE)=STDEF_MOUSE_DRAG_SOME;
-    
-    ExecK(STATE_SCREEN,TW_Return)=STWIN_BACKTO_DEF;
-    ExecK(STATE_SCREEN,TW_Escape)=STWIN_BACKTO_DEF;
-    ExecK(STATE_SCREEN,TW_Left  )=SCREEN_Xn_SCROLL;
-    ExecK(STATE_SCREEN,TW_Right )=SCREEN_Xp_SCROLL;
-    ExecK(STATE_SCREEN,TW_Up    )=SCREEN_Yn_SCROLL;
-    ExecK(STATE_SCREEN,TW_Down  )=SCREEN_Yp_SCROLL;
-    ExecK(STATE_SCREEN,TW_Prior )=SCREEN_Ln_SCROLL;
-    ExecK(STATE_SCREEN,TW_Next  )=SCREEN_Lp_SCROLL;
-
     GadgetFlag.Fn = GadgetSwitch.Fn = FnGadget;
     
-    if ((OneScreen = Do(CreateSimple,Screen)(FnScreen, HWATTR(COL(HIGH|BLACK,BLUE),'±')))) {
+    
+    if ((OneScreen = Do(CreateSimple,Screen)(FnScreen, 1, "1", HWATTR(COL(HIGH|BLACK,BLUE),'±')))) {
 	
 #define a HWATTR(COL(HIGH|BLUE,BLUE),'Ü')
 #define b HWATTR(COL(HIGH|BLUE,BLUE),' ')
@@ -479,7 +349,7 @@ byte InitData(void) {
 	};
 #undef a
 #undef b
-	if ((TwoScreen = Do(Create,Screen)(FnScreen, 4, 2, attr))) {
+	if ((TwoScreen = Do(Create,Screen)(FnScreen, 1, "2", 4, 2, attr))) {
 	
 	    InsertLast(Screen, OneScreen, All);
 	    InsertLast(Screen, TwoScreen, All);

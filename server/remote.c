@@ -23,16 +23,10 @@
 #include <limits.h>
 
 #include "twin.h"
-#include "data.h"
 #include "main.h"
 #include "methods.h"
-#include "hw.h"
 
 /* variables */
-
-void remoteKillSlot(uldat slot);
-void (*KillSlot)(uldat slot) = remoteKillSlot;
-void (*SocketSendMsg)(msgport *MsgPort, msg *Msg);
 
 fdlist *FdList;
 uldat FdSize, FdTop, FdBottom, FdWQueued;
@@ -84,6 +78,9 @@ byte RemoteFlush(uldat Slot) {
 
 	if (LS.PrivateAfterFlush)
 	    LS.PrivateAfterFlush(Slot);
+	
+	/* don't touch FdWQueued here as LS.PrivateFlush already handles it */
+	
 	return (byte)chunk;
     }
 #endif
@@ -205,16 +202,11 @@ void UnRegisterRemote(uldat Slot) {
 	 * call RemoteFlush() manually before UnRegisterRemote() if you need
 	 */
 	/* RemoteFlush(Slot); */
-	if (LS.WQlen) {
-	    /* trow away any data still queued :( */
-	    LS.WQlen = 0;
+	if (LS.WQlen || LS.extern_couldntwrite)
 	    FdWQueued--;
-	}
-	if (LS.extern_couldntwrite == TRUE) {
-	    FdWQueued--;
-	    FD_CLR(LS.Fd, &save_wfds);
-	}
-	LS.RQlen = 0;
+
+	/* trow away any data still queued :( */
+	LS.RQlen = LS.WQlen = 0;
 	if (LS.WQueue)
 	    FreeMem(LS.WQueue);
 	if (LS.RQueue)
@@ -225,6 +217,7 @@ void UnRegisterRemote(uldat Slot) {
 	
 	if (i >= 0) {
 	    FD_CLR(i, &save_rfds);
+	    FD_CLR(i, &save_wfds);
 	
 	    for (i=max_fds; i>=0; i--) {
 		if (FD_ISSET(i, &save_rfds))
@@ -294,32 +287,40 @@ void RemoteEvent(int FdCount, fd_set *FdSet) {
 
 void RemoteParanoia(void) {
     struct timeval zero;
-    fd_set sel_fds;
+    fd_set sel_rfds, sel_wfds;
     int safe, unsafe, test;
     uldat Slot;
     
-    /* rebuild max_fds and save_rfds */
-    FD_ZERO(&save_rfds);    
+    /* rebuild max_fds, save_rfds, FdWQueued, save_wfds */
+    FdWQueued = max_fds = 0;
+    FD_ZERO(&save_rfds);
+    FD_ZERO(&save_wfds);
+    
     for (Slot=0; Slot<FdTop; Slot++) {
 	if ((test = LS.Fd) >= 0) {
 	    FD_SET(test, &save_rfds);
-	    max_fds = test;
+	    max_fds = Max2(max_fds, test);
+	    
+	    if (LS.extern_couldntwrite) {
+		FdWQueued++;
+		FD_SET(test, &save_wfds);
+	    }
 	}
     }
 
-    sel_fds = save_rfds;
+    sel_rfds = save_rfds; sel_wfds = save_wfds;
     zero.tv_sec = zero.tv_usec = 0;
-    if (select(max_fds+1, &sel_fds, NULL, NULL, &zero) >= 0)
+    if (select(max_fds+1, &sel_rfds, &sel_wfds, NULL, &zero) >= 0)
 	return;
 
     
     if (errno != EBADF && errno != EINVAL) {
 	/* transient error ? */
 	for (test = 10; test > 0; test--) {
-	    sel_fds = save_rfds;
+	    sel_rfds = save_rfds; sel_wfds = save_wfds;
 	    zero.tv_sec = 0;
 	    zero.tv_usec = 100000;
-	    if (select(max_fds+1, &sel_fds, NULL, NULL, &zero) >= 0)
+	    if (select(max_fds+1, &sel_rfds, &sel_wfds, NULL, &zero) >= 0)
 		break;
 	}
 	if (test > 0)
@@ -335,11 +336,11 @@ void RemoteParanoia(void) {
     unsafe = max_fds+1;
     
     while (safe + 1 < unsafe) {
-	sel_fds = save_rfds;
+	sel_rfds = save_rfds; sel_wfds = save_wfds;
 	zero.tv_sec = zero.tv_usec = 0;
 	
 	test = (unsafe + safe) / 2;
-	if (select(test, &sel_fds, NULL, NULL, &zero) >= 0)
+	if (select(test, &sel_rfds, &sel_wfds, NULL, &zero) >= 0)
 	    safe = test;
 	else
 	    unsafe = test;
@@ -362,6 +363,7 @@ void RemoteParanoia(void) {
     
     /* Paranoia: still here? */
     FD_CLR(safe, &save_rfds);
+    FD_CLR(safe, &save_wfds);
 }
 
 /*
@@ -370,7 +372,7 @@ void RemoteParanoia(void) {
  *
  * return len if succeeded, 0 if failed.
  */
-uldat RemoteWriteQueue(uldat Slot, uldat len, void *data) {
+uldat RemoteWriteQueue(uldat Slot, uldat len, CONST void *data) {
     uldat nmax;
     byte *tmp;
     

@@ -73,8 +73,10 @@ typedef struct s_tw_d {
 
     id_list id;
     
+    byte ServProtocol[3];
     byte PanicFlag;
 
+    
 #ifdef CONF_SOCKET_GZ
     byte GzipFlag;
     z_streamp zR, zW;
@@ -93,6 +95,7 @@ typedef struct s_tw_d {
 #define s	(TwD->s)
 #define Fd	(TwD->Fd)
 #define RequestN  (TwD->RequestN)
+#define ServProtocol (TwD->ServProtocol)
 #define PanicFlag (TwD->PanicFlag)
 #define GzipFlag  (TwD->GzipFlag)
 #define zR	(TwD->zR)
@@ -123,19 +126,19 @@ byte Tw_EnableGzip(tw_d TwD);
 void *(*Tw_AllocMem)(size_t) = malloc;
 void *(*Tw_ReAllocMem)(void *, size_t) = realloc;
 void  (*Tw_FreeMem)(void *) = free;
-byte *(*Tw_CloneStr)(byte *) = (byte *(*)(byte *))strdup;
+byte *(*Tw_CloneStr)(TW_CONST byte *) = (byte *(*)(TW_CONST byte *))strdup;
 
 static fd_set fset;
 
-static byte *clone_str(byte *S) {
+static byte *clone_str(TW_CONST byte *S) {
     size_t len;
     byte *T;
     if (S) {
 	len = 1 + Tw_LenStr(S);
 	if ((T = Tw_AllocMem(len)))
-	    return Tw_CopyMem(S, T, len);
+	    return TwCopyMem(S, T, len);
     }
-    return S;
+    return NULL;
 }
 
 void Tw_ConfigMalloc(void *(*my_malloc)(size_t),
@@ -151,7 +154,7 @@ void Tw_ConfigMalloc(void *(*my_malloc)(size_t),
 	    Tw_AllocMem = malloc;
 	    Tw_ReAllocMem = realloc;
 	    Tw_FreeMem = free;
-	    Tw_CloneStr = (byte *(*)(byte *))strdup;
+	    Tw_CloneStr = (byte *(*)(TW_CONST byte *))strdup;
 	}
     }
 }
@@ -460,6 +463,40 @@ static uldat ReadUldat(tw_d TwD) {
     return l;
 }
 
+#define IS_DIGIT(c) ((c) >= '0' && (c) <= '9')
+
+static void ExtractServProtocol(tw_d TwD, byte *servdata, uldat len) {
+    uldat i = 0;
+    byte c;
+    
+    ServProtocol[0] = ServProtocol[1] = ServProtocol[2] = 0;
+    
+    while (len) {
+	c = *servdata;
+	while (len && (c = *servdata) && IS_DIGIT(c)) {
+	    ServProtocol[i] *= 10;
+	    ServProtocol[i] += c - '0';
+	    --len;
+	    ++servdata;
+	}
+	while (len && (c = *servdata) && !IS_DIGIT(c)) {
+	    --len;
+	    ++servdata;
+	}
+	if (++i >= 3)
+	    break;
+    }
+}
+
+uldat Tw_LibraryVersion(tw_d TwD) {
+    return TW_PROTOCOL_VERSION;
+}
+
+uldat Tw_ServerVersion(tw_d TwD) {
+    return TWVER_BUILD(ServProtocol[0],ServProtocol[1],ServProtocol[2]);
+}
+
+
 static byte ProtocolNumbers(tw_d TwD) {
     byte *servdata, *hostdata = " Twin-" toSTR(TW_PROTOCOL_VERSION_MAJOR) ".";
     uldat len = 0, _len = strlen(hostdata);
@@ -471,6 +508,7 @@ static byte ProtocolNumbers(tw_d TwD) {
 	servdata = GetQueue(TwD, QREAD, &len);
     
 	if (*servdata >= _len && !TwCmpMem(hostdata+1, servdata+1, _len-1)) {
+	    ExtractServProtocol(TwD, servdata+6, *servdata-6);
 	    DeQueue(TwD, QREAD, *servdata);
 	    return TRUE;
 	} else
@@ -595,12 +633,12 @@ static byte MagicChallenge(tw_d TwD) {
     return FALSE;
 }
 
-tw_d Tw_Open(byte *TwDisplay) {
+tw_d Tw_Open(TW_CONST byte *TwDisplay) {
     tw_d TwD;
-    int result, fd;
+    int result = -1, fd = NOFD;
     byte *options, gzip = FALSE;
     uldat _Errno;
-    
+
     if (!TwDisplay && (!(TwDisplay = getenv("TWDISPLAY")) || !*TwDisplay)) {
 	CommonErrno = TW_ENO_DISPLAY;
 	return (tw_d)0;
@@ -611,7 +649,9 @@ tw_d Tw_Open(byte *TwDisplay) {
 	if (!TwCmpMem(options+1, "gz", 2))
 	    gzip = TRUE;
     }
-    
+
+    CommonErrno = 0;
+
     if (*TwDisplay == ':') {
 	/* unix socket */
 	struct sockaddr_un addr;
@@ -628,13 +668,18 @@ tw_d Tw_Open(byte *TwDisplay) {
 	
 	result = connect(fd, (struct sockaddr *)&addr, sizeof(addr));
 	
-    } else {
+    } else do {
 	
 	struct sockaddr_in addr;
 	struct hostent *host_info;
-	byte *server = TwDisplay, *p = TwDisplay;
+	byte *server = Tw_CloneStr(TwDisplay), *p = server;
 	unsigned short port;
 	
+	if (!server) {
+	    CommonErrno = TW_ENO_MEM;
+	    break;
+	}
+	    
 	while (p && *p && *p != ':')
 	    p++;
 	
@@ -642,7 +687,8 @@ tw_d Tw_Open(byte *TwDisplay) {
 	    port = TW_INET_PORT + strtoul(p+1, NULL, 16);
 	else {
 	    CommonErrno = TW_EBAD_DISPLAY;
-	    return (tw_d)0;
+	    Tw_FreeMem(server);
+	    break;
 	}
 	*p = '\0';
 
@@ -655,32 +701,34 @@ tw_d Tw_Open(byte *TwDisplay) {
 	if (addr.sin_addr.s_addr == (unsigned long)-1) {
 	    /* may be a FQDN host like "www.gnu.org" */
 	    host_info = gethostbyname(server);
-	    *p = ':';
-	    if (host_info == 0) {
+	    if (host_info) {
+		TwCopyMem(host_info->h_addr, &addr.sin_addr, host_info->h_length);
+		addr.sin_family = host_info->h_addrtype;
+	    } else {
 		/* unknown hostname */
 		CommonErrno = TW_ENO_HOST;
-		return (tw_d)0;
+		Tw_FreeMem(server);
+		break;
 	    }
-	    TwCopyMem(host_info->h_addr, &addr.sin_addr, host_info->h_length);
-	    addr.sin_family = host_info->h_addrtype;
-	} else
-	    *p = ':';
-
-	
-	if ((fd = socket(addr.sin_family, SOCK_STREAM, 0)) < 0) {
-	    CommonErrno = TW_ECANT_CONN;
-	    return (tw_d)0;
 	}
-	result = connect(fd, (struct sockaddr *)&addr, sizeof(addr));
-    }
+
+	Tw_FreeMem(server);
+	
+	if ((fd = socket(addr.sin_family, SOCK_STREAM, 0)) >= 0)
+	    result = connect(fd, (struct sockaddr *)&addr, sizeof(addr));
+	else
+	    CommonErrno = TW_ECANT_CONN;
+
+    } while (0);
 
     if (options)
 	*options = ',';
-    
+
     if (result == -1) { /* some error occurred */
 	if (fd != NOFD)
 	    close(fd);
-	CommonErrno = TW_ECANT_CONN;
+	if (!CommonErrno)
+	    CommonErrno = TW_ECANT_CONN;
 	return (tw_d)0;
     }
 
@@ -927,13 +975,14 @@ static void Send(tw_d TwD, uldat idFN) {
 
 /*
  * a function cannot return a vector V(...) as
- * there is no way to notify the vector size
+ * there is no way to notify the vector size,
+ * but it can return W(...)
  */
 #define tv(arg)		void
 #define t_(arg)		arg
 #define tx(arg)		uldat
-#define tV(arg)		arg *
-#define tW(arg)		arg *
+#define tV(arg)		TW_CONST arg *
+#define tW(arg)		TW_CONST arg *
 #define t(arg,f)	t##f(arg)
 #define a(n,arg,f)	t(arg,f) A(n)
 

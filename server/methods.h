@@ -1,6 +1,12 @@
 #ifndef _TW_METHODS_H
 #define _TW_METHODS_H
 
+byte SearchInfo(menu *Menu, dat i);
+window *FakeOpenTerm(CONST byte *arg0, byte * CONST *argv);
+window *FakeKbdFocus(window *W);
+void FakeWriteAscii(window *Window, uldat Len, CONST byte *Text);
+void FakeWriteHWAttr(window *Window, udat x, udat y, uldat Len, CONST hwattr *Attr);
+
 extern fn Fn;
 #define FnObj		(Fn.f_obj)
 #define	FnArea		(Fn.f_area)
@@ -61,11 +67,17 @@ void  CloneList(obj *FirstFrom, obj **FirstTo, obj **LastTo);
 #define Row4Menu(Window, Code, Flags, Len, Text) \
 	Do(Create4Menu,Row)(FnRow, (Window), (Code), (Flags), (Len), (Text))
 
-#define Item4Menu(Menu, Flag, Len, Name, Window) \
-	Do(Create4Menu,MenuItem)(FnMenuItem, (Menu), (Flag), (Len), (Name), (Window))
+#define Item4Menu(Menu, Window, Flag, Len, Name) \
+	Do(Create4Menu,MenuItem)(FnMenuItem, (Menu), (Window), (Flag), (Len), (Name))
 
 #define Item4MenuCommon(Menu) \
 	Do(Create4MenuCommon,MenuItem)(FnMenuItem, (Menu))
+
+void *OverrideMth(void **where, void *OldMethod, void *NewMethod);
+
+#define OverrideMethod(ObjName, Command, ExpectedMethod, NewMethod) \
+          OverrideMth((void **)&(Fn##ObjName->Command), (void *)ExpectedMethod, (void *)NewMethod)
+
 
 #endif /* _TW_METHODS_H */
 

@@ -15,6 +15,7 @@
 #include "data.h"
 #include "remote.h"
 #include "methods.h"
+#include "extensions.h"
 
 #include "hw.h"
 #include "hw_private.h"
@@ -40,7 +41,7 @@ INLINE void display_CreateMsg(udat Code, udat Len) {
 
 static void display_Beep(void) {
     display_CreateMsg(DPY_Beep, 0);
-    SocketSendMsg(display, Msg);
+    Ext(Socket,SendMsg)(display, Msg);
     setFlush();
 }
 
@@ -52,7 +53,7 @@ static void display_Configure(udat resource, byte todefault, udat value) {
 	ev->Y = MAXUDAT;
     else
 	ev->Y = value;
-    SocketSendMsg(display, Msg);
+    Ext(Socket,SendMsg)(display, Msg);
     setFlush();
 }
 
@@ -174,7 +175,7 @@ INLINE void display_DrawHWAttr(dat x, dat y, udat buflen, hwattr *buf) {
     ev->X = x;
     ev->Y = y;
     ev->Data = (byte *)buf;
-    SocketSendMsg(display, Msg);
+    Ext(Socket,SendMsg)(display, Msg);
 }
     
 INLINE void display_Mogrify(dat x, dat y, uldat len) {
@@ -207,13 +208,13 @@ INLINE void display_MoveToXY(udat x, udat y) {
     display_CreateMsg(DPY_MoveToXY, 0);
     ev->X = x;
     ev->Y = y;
-    SocketSendMsg(display, Msg);
+    Ext(Socket,SendMsg)(display, Msg);
 }
 
 INLINE void display_SetCursorType(uldat type) {
     display_CreateMsg(DPY_SetCursorType, sizeof(uldat));
     ev->Data = (byte *)&type;
-    SocketSendMsg(display, Msg);
+    Ext(Socket,SendMsg)(display, Msg);
 }
 
 static void display_FlushVideo(void) {
@@ -246,7 +247,7 @@ static void display_FlushVideo(void) {
 
 static void display_FlushHW(void) {
     display_CreateMsg(DPY_FlushHW, 0);
-    SocketSendMsg(display, Msg);
+    Ext(Socket,SendMsg)(display, Msg);
     if (RemoteFlush(HW->AttachSlot))
 	clrFlush();
 }
@@ -278,7 +279,7 @@ static void display_Resize(udat x, udat y) {
 	    HW->Y = y;
 	}
 	    
-	SocketSendMsg(display, Msg);
+	Ext(Socket,SendMsg)(display, Msg);
 	setFlush();
     }
 }
@@ -296,7 +297,7 @@ static void display_DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, da
     ev->Y = Up;
     ev->Data = (byte *)data;
 
-    SocketSendMsg(display, Msg);
+    Ext(Socket,SendMsg)(display, Msg);
     setFlush();
 }
 
@@ -308,13 +309,13 @@ static void display_SetPalette(udat N, udat R, udat G, udat B) {
     ev->X = N;
     ev->Data = (byte *)data;
 
-    SocketSendMsg(display, Msg);
+    Ext(Socket,SendMsg)(display, Msg);
     setFlush();
 }
 
 static void display_ResetPalette(void) {
     display_CreateMsg(DPY_ResetPalette, 0);
-    SocketSendMsg(display, Msg);
+    Ext(Socket,SendMsg)(display, Msg);
     setFlush();
 }
 
@@ -332,7 +333,7 @@ static void display_SelectionExport_display(void) {
     if (!HW->HWSelectionPrivate) {
 	HW->HWSelectionPrivate = (void *)display;
 	display_CreateMsg(DPY_SelectionExport, 0);
-	SocketSendMsg(display, Msg);
+	Ext(Socket,SendMsg)(display, Msg);
 	setFlush();
     }
 }
@@ -354,8 +355,8 @@ static void display_SelectionRequest_display(obj *Requestor, uldat ReqPrivate) {
 /*
  * notify our Selection to twdisplay
  */
-static void display_SelectionNotify_display(uldat ReqPrivate, uldat Magic, byte MIME[MAX_MIMELEN],
-					    uldat Len, byte *Data) {
+static void display_SelectionNotify_display(uldat ReqPrivate, uldat Magic, CONST byte MIME[MAX_MIMELEN],
+					    uldat Len, CONST byte *Data) {
     /*
      * shortcut: since (display) is a msgport, use fail-safe TwinSelectionNotify()
      * to send message to twdisplay.
@@ -368,7 +369,7 @@ static void display_SelectionNotify_display(uldat ReqPrivate, uldat Magic, byte 
 static void display_QuitHW(void) {
     /* tell twdisplay to cleanly quit */
     display_CreateMsg(DPY_Quit, 4*sizeof(dat));
-    SocketSendMsg(display, Msg);
+    Ext(Socket,SendMsg)(display, Msg);
     RemoteFlush(HW->AttachSlot);
 
     /* then cleanup */
@@ -428,7 +429,13 @@ byte display_InitHW(void) {
 	fputs("      display_InitHW() failed: twdisplay did not create a MsgPort.\n", stderr);
 	return FALSE;
     }
-
+    
+    if (!Ext(Socket,SendMsg)) {
+	fputs("      display_InitHW() failed: SocketSendMsg() not available.\n"
+	      "      (maybe you should load Socket Server module?)\n", stderr);
+	return FALSE;
+    }
+    
     if (!(HW->Private = (struct display_data *)AllocMem(sizeof(struct display_data)))
 	|| !(Helper = Do(Create,MsgPort)
 	     (FnMsgPort, 16, "twdisplay Helper", (time_t)0, (frac_t)0, 0, display_HelperH))
@@ -505,7 +512,7 @@ byte display_InitHW(void) {
 
     display_CreateMsg(DPY_Helper, sizeof(Helper->Id));
     ev->Data = (byte *)&Helper->Id;
-    SocketSendMsg(display, Msg);
+    Ext(Socket,SendMsg)(display, Msg);
     /* don't flush now, twdisplay waits for attach messages */
 
     if (arg && (s = strstr(arg, ",x=")))
@@ -522,6 +529,7 @@ byte display_InitHW(void) {
      * without forcing all other displays
      * to redraw everything too.
      */
+    HW->RedrawVideo = FALSE;
     NeedRedrawVideo(0, 0, HW->X - 1, HW->Y - 1);
 
     setFlush();
@@ -535,6 +543,9 @@ byte display_InitHW(void) {
 
 #ifdef MODULE
 
+#include "version.h"
+MODULEVERSION;
+		       
 byte InitModule(module *Module) {
     Module->Private = display_InitHW;
     return TRUE;

@@ -15,6 +15,18 @@
 
 #include "twinsys.h"
 
+
+
+#if !defined(CONST)
+# if defined(__STDC__)
+#  define CONST const
+# else
+#  define CONST
+# endif
+#endif
+
+
+
 #define Abs(x) ((x)>0 ? (x) : -(x))
 #define Swap(a, b, tmp) ((tmp)=(a), (a)=(b), (b)=(tmp))
 #define Min2(x, y) ((x)<(y) ? (x) : (y))
@@ -71,6 +83,7 @@ typedef unsigned int   uldat;
 
 #define SMALLBUFF	256
 #define BIGBUFF		4096
+#define HUGEBUFF	131072
 
 
 /* types for (hardware) text mode data */
@@ -302,7 +315,8 @@ struct area_win_parent {
 
 struct fn_area_win {
     uldat Magic, Size, Used;
-    area_win *(*Create)(fn_area_win *, area_win_parent *, window *, gadget *FirstGadget, gadget *OnlyThisGadget,	byte NoGadgets, uldat XLogic, uldat YLogic, dat Xstart, dat Ystart, dat Xend, dat Yend);
+    area_win *(*Create)(fn_area_win *, area_win_parent *, window *, gadget *FirstGadget, gadget *OnlyThisGadget,
+			byte NoGadgets, uldat XLogic, uldat YLogic, dat Xstart, dat Ystart, dat Xend, dat Yend);
     area_win *(*Copy)(area_win *From, area_win *To);
     void (*Insert)(area_win *, area_win_parent *, area_win *Prev, area_win *Next);
     void (*Remove)(area_win *);
@@ -325,16 +339,16 @@ struct fn_gadget {
     gadget *(*Create)(fn_gadget *, window *Window,
 		      hwcol ColText, hwcol ColTextSelect, hwcol ColTextDisabled, hwcol ColTextSelectDisabled,
 		      udat Code, udat Flags, udat Left, udat Up, udat XWidth, udat YWidth,
-		      byte *TextNormal, byte *TextSelect, byte *TextDisabled, byte *TextSelectDisabled,
-		      hwcol *ColNormal, hwcol *ColSelect, hwcol *ColDisabled, hwcol *ColSelectDisabled);
+		      CONST byte *TextNormal, CONST byte *TextSelect, CONST byte *TextDisabled, CONST byte *TextSelectDisabled,
+		      CONST hwcol *ColNormal, CONST hwcol *ColSelect, CONST hwcol *ColDisabled, CONST hwcol *ColSelectDisabled);
     gadget *(*Copy)(gadget *From, gadget *To);
     void (*Insert)(gadget *, window *, gadget *Prev, gadget *Next);
     void (*Remove)(gadget *);
     void (*Delete)(gadget *);
     gadget *(*CreateEmptyButton)(fn_gadget *Fn_Gadget, window *Window, udat XWidth, udat YWidth, hwcol BgCol);
-    void (*FillButton)(gadget *Gadget, udat Code, udat Left, udat Up, udat Flags, byte *Text, hwcol Color, hwcol ColorDisabled);
+    byte (*FillButton)(gadget *Gadget, udat Code, udat Left, udat Up, udat Flags, CONST byte *Text, hwcol Color, hwcol ColorDisabled);
     gadget *(*CreateButton)(fn_gadget *Fn_Gadget, window *Window, hwcol BgCol, hwcol Col, hwcol ColDisabled,
-			    udat Code, udat Flags, udat Left, udat Up, udat XWidth, udat YWidth, byte *Text);
+			    udat Code, udat Flags, udat Left, udat Up, udat XWidth, udat YWidth, CONST byte *Text);
     gadget *(*CloneButton)(gadget *SetUpGadget, udat Code, udat Left, udat Up, hwcol BgCol);
 
 };
@@ -380,7 +394,7 @@ struct fn_row {
     void (*Insert)(row *, window *, row *Prev, row *Next);
     void (*Remove)(row *);
     void (*Delete)(row *);
-    row *(*Create4Menu)(fn_row *Fn_Row, window *Window, udat Code, byte FlagActive, uldat Len, byte *Text);
+    row *(*Create4Menu)(fn_row *Fn_Row, window *Window, udat Code, byte FlagActive, uldat Len, CONST byte *Text);
 };
 /*Flags : */
 #define ROW_INACTIVE	((byte)0x00)
@@ -440,7 +454,6 @@ struct ttydata {
     uldat nPar, Par[NPAR];
     
     byte currG, G, G0, G1, saveG, saveG0, saveG1;
-    /* TODO: other tty stuff */
 };
 
 struct remotedata {
@@ -458,6 +471,7 @@ struct window {
     menu *Menu;		 /* from which the window eventually depends */
     udat LenTitle;
     byte *Title, *ColTitle;
+    byte *BorderPattern[2];
     ttydata *TtyData;
     fn_hook ShutDownHook;
     fn_hook Hook, *WhereHook;
@@ -485,19 +499,20 @@ struct window {
 };
 struct fn_window {
     uldat Magic, Size, Used;
-    window *(*Create)(fn_window *, udat LenTitle, byte *Title, hwcol *ColTitle, menu *Menu,
+    window *(*Create)(fn_window *, udat LenTitle, CONST byte *Title, CONST hwcol *ColTitle, menu *Menu,
 		      hwcol ColText, uldat CursorType, uldat Attrib, byte Flags,
 		      udat XWidth, udat YWidth, udat ScrollBackLines);
     window *(*Copy)(window *From, window *To);
     void (*Insert)(window *, screen *, window *Prev, window *Next);
     void (*Remove)(window *);
     void (*Delete)(window *);
-    byte (*FindBorder)(window *, udat u, udat v, byte Border, byte MovWin, byte *PtrChar, byte *PtrColor);
+    byte (*FindBorder)(window *, udat u, udat v, byte Border, byte *PtrChar, byte *PtrColor);
     void (*SetColText)(window *, hwcol ColText);
     void (*SetColors)(window *, udat Bitmap,
 		      hwcol ColGadgets, hwcol ColArrows, hwcol ColBars, hwcol ColTabs, hwcol ColBorder,
 		      hwcol ColText, hwcol ColSelect, hwcol ColDisabled, hwcol ColSelectDisabled);
-    void (*Configure)(window *, byte Bitmap, dat Left, udat Up, udat MinXWidth, udat MinYWidth, udat MaxXWidth, udat MaxYWidth);
+    void (*Configure)(window *, byte Bitmap, dat Left, udat Up, udat MinXWidth, udat MinYWidth,
+		      udat MaxXWidth, udat MaxYWidth);
     void (*GotoXY)(window *, uldat X, uldat Y);
     window *(*Create4Menu)(fn_window *, menu *);
     void (*RealMap)(window *, screen *);
@@ -506,9 +521,10 @@ struct fn_window {
     void (*Own)(window *, menu *);
     void (*DisOwn)(window *);    
     window *(*Focus)(window *);
-    void (*WriteAscii)(window *, uldat Len, byte *Text);
-    void (*WriteHWAttr)(window *, udat x, udat y, uldat Len, hwattr *Attr);
-    byte (*WriteRow)(window *, uldat Len, byte *Text);
+    window *(*KbdFocus)(window *);
+    void (*WriteAscii)(window *, uldat Len, CONST byte *Text);
+    void (*WriteHWAttr)(window *, udat x, udat y, uldat Len, CONST hwattr *Attr);
+    byte (*WriteRow)(window *, uldat Len, CONST byte *Text);
     row *(*SearchRow)(window *, uldat RowN);
     row *(*SearchRowCode)(window *, udat Code, uldat *NumRow);
     gadget *(*SearchGadget)(window *, dat i, dat j);
@@ -517,7 +533,7 @@ struct fn_window {
     void (*RemoveHook)(window *, fn_hook, fn_hook *Where);
 };
 
-/* Attrib: */
+/* Window->Attrib */
 #define WINDOW_MENU		((uldat)0x0001)
 #define WINDOW_WANT_KEYS	((uldat)0x0002)
 #define WINDOW_WANT_MOUSE	((uldat)0x0004)
@@ -529,47 +545,40 @@ struct fn_window {
 #define WINDOW_X_BAR		((uldat)0x0100)
 #define WINDOW_Y_BAR		((uldat)0x0200)
 
-/* this must fit in `udat' since it is shared with gadget.Flags */
-#define GADGET_PRESSED		((uldat)0x0400)
+/* #define WINDOW_UNUSED	((uldat)0x0400) */
 
-#define X_BAR_SELECT		((uldat)0x0800)
-#define Y_BAR_SELECT		((uldat)0x1000)
+/* this must fit in `udat' since it is shared with gadget.Flags */
+#define GADGET_PRESSED		((uldat)0x0800)
+
+#define X_BAR_SELECT		((uldat)0x1000)
+#define Y_BAR_SELECT		((uldat)0x2000)
 #define XY_BAR_SELECT		(X_BAR_SELECT | Y_BAR_SELECT)
-#define TAB_SELECT		((uldat)0x2000)
-#define PAGE_BACK_SELECT	((uldat)0x4000)
-#define PAGE_FWD_SELECT		((uldat)0x8000)
-#define ARROW_BACK_SELECT	((uldat)0x00010000lu)
-#define ARROW_FWD_SELECT	((uldat)0x00020000lu)
+#define TAB_SELECT		((uldat)0x4000)
+#define PAGE_BACK_SELECT	((uldat)0x8000)
+#define PAGE_FWD_SELECT		((uldat)0x00010000lu)
+#define ARROW_BACK_SELECT	((uldat)0x00020000lu)
+#define ARROW_FWD_SELECT	((uldat)0x00040000lu)
 #define SCROLL_ANY_SELECT  	(ARROW_BACK_SELECT | ARROW_FWD_SELECT | PAGE_BACK_SELECT | PAGE_FWD_SELECT | TAB_SELECT)
 
-#define WINDOW_FWDSEL		((uldat)0x00040000lu)
-#define WINDOW_REVSEL		((uldat)0x00080000lu)
+#define WINDOW_FWDSEL		((uldat)0x00080000lu)
+#define WINDOW_REVSEL		((uldat)0x00100000lu)
 #define WINDOW_ANYSEL		(WINDOW_FWDSEL|WINDOW_REVSEL)
-#define WINDOW_DO_SEL		((uldat)0x00100000lu)
+#define WINDOW_DO_SEL		((uldat)0x00200000lu)
 
-#define BUTTON_FIRST_SELECT	((uldat)0x00200000lu)
+#define BUTTON_FIRST_SELECT	((uldat)0x00400000lu)
 #define BUTTON_LAST_SELECT	((uldat)0x80000000lu)
 #define BUTTON_ANY_SELECT	((uldat)0xFFE00000lu)
 
+/*#define BUTTON_FIRST		((byte)0) */
+/*#define BUTTON_CLOSE		((byte)0) */
+/*#define BUTTON_LAST		((byte)9) */
 
-#define BUTTON_FIRST		((byte)1)
-#define BUTTON_CLOSE		((byte)1)
-#define BUTTON_BACK		((byte)2)
-#define BUTTON_ROLLUP		((byte)3)
-/*...*/
-#define BUTTON_LAST		((byte)10)
-
-#define POS_BAR_BACK		((byte)11)
-#define POS_BAR_FWD		((byte)12)
-#define POS_TAB			((byte)13)
-#define POS_ARROW_BACK		((byte)14)
-#define POS_ARROW_FWD		((byte)15)
-#define POS_TITLE		((byte)16)
-#define POS_GADGET_RESIZE	((byte)17)
+#define BUTTON_MAX		((byte)10)
 
 
 
-/* Flags: */
+
+/* Window->Flags */
 /* #define WINFL_USEROWS	((byte)0x00) it's the default */
 #define WINFL_USECONTENTS	((byte)0x01)
 #define WINFL_BYUSER		((byte)0x02)
@@ -603,13 +612,16 @@ struct menuitem {
 };
 struct fn_menuitem {
     uldat Magic, Size, Used;
-    menuitem *(*Create)(fn_menuitem *, menu *Menu, window *Window, byte FlagActive, udat Left, udat Len, udat ShortCut, byte *Name);
+    menuitem *(*Create)(fn_menuitem *, menu *Menu, window *Window, byte FlagActive,
+			udat Left, udat Len, udat ShortCut, CONST byte *Name);
     menuitem *(*Copy)(menuitem *From, menuitem *To);
     void (*Insert)(menuitem *, menu *, menuitem *Prev, menuitem *Next);
     void (*Remove)(menuitem *);
     void (*Delete)(menuitem *);
-    menuitem *(*Create4Menu)(fn_menuitem *, menu *Menu, window *Window, byte FlagActive, udat Len, byte *Name);
-    menuitem *(*Create4MenuCommon)(fn_menuitem *, menu *Menu);
+    menuitem *(*Create4Menu)(fn_menuitem *, menu *, window *, byte FlagActive,
+			     udat Len, CONST byte *Name);
+    uldat (*Create4MenuCommon)(fn_menuitem *, menu *);
+    /* for compatibility this must return an (uldat) != 0 for success. yuch */
 };
 
 struct menu {
@@ -618,6 +630,7 @@ struct menu {
     menu *Prev, *Next; /* with the same msgport */
     msgport *MsgPort;
     hwcol ColItem, ColSelect, ColDisabled, ColSelectDisabled, ColShtCut, ColSelShtCut;
+    byte CommonItems;
     byte FlagDefColInfo;
     row *Info;
     menuitem *FirstMenuItem, *LastMenuItem, *MenuItemSelect;
@@ -625,35 +638,27 @@ struct menu {
 };
 struct fn_menu {
     uldat Magic, Size, Used;
-    menu *(*Create)(fn_menu *, msgport *MsgPort, hwcol ColItem, hwcol ColSelect, hwcol ColDisabled, hwcol ColSelectDisabled, hwcol ColShtCut, hwcol ColSelShtCut, byte FlagDefColInfo);
+    menu *(*Create)(fn_menu *, msgport *MsgPort, hwcol ColItem, hwcol ColSelect, hwcol ColDisabled,
+		    hwcol ColSelectDisabled, hwcol ColShtCut, hwcol ColSelShtCut, byte FlagDefColInfo);
     menu *(*Copy)(menu *From, menu *To);
     void (*Insert)(menu *, msgport *, menu *Prev, menu *Next);
     void (*Remove)(menu *);
     void (*Delete)(menu *);
-    row *(*SetInfo)(menu *, byte Flags, uldat Len, byte *Text, hwcol *ColText);
-    menuitem *(*SearchMenuItem)(menu *, dat i);
+    row *(*SetInfo)(menu *, byte Flags, uldat Len, CONST byte *Text, CONST hwcol *ColText);
+    menuitem *(*SearchItem)(menu *, dat i);
+    menuitem *(*GetSelectItem)(menu *);
+    void (*SetSelectItem)(menu *, menuitem *);
 };
 
-/*				Codes Keys :
- *(byte *)KeyCodes da' il modo di memorizzazione dei codici :
- 0 : Normal
- 1 byte vuoto;
- 256 codici (2 bytes ciascuno),
- uno per ogni codice Ascii del tipo 0+x (x parte da 1)
- * 
- 1 : Compresso
- *((byte *)KeyCodes+1) da' il numero di codici Ascii presenti.
- I successivi byte sono organizzati cosi' :
- Ogni codice Ascii del tipo 0+x presente
- e' indicato con x (e non 0+x) (x parte da 1) (1 byte),
- seguito dal codice corrispondente (2 bytes).
- */
+
 
 struct screen {
     uldat Id;
     fn_screen *Fn;
     screen *Prev, *Next;
     all *All;
+    udat LenTitle;
+    byte *Title;
     dat ScreenWidth, ScreenHeight;
     window *FirstWindow, *LastWindow, *FocusWindow, *MenuWindow;
     fn_hook FnHookWindow; window *HookWindow;
@@ -664,7 +669,8 @@ struct screen {
 };
 struct fn_screen {
     uldat Magic, Size, Used;
-    screen *(*Create)(fn_screen *, udat BgWidth, udat BgHeight, hwattr *Bg);
+    screen *(*Create)(fn_screen *, udat LenTitle, CONST byte *Title,
+		      udat BgWidth, udat BgHeight, CONST hwattr *Bg);
     screen *(*Copy)(screen *From, screen *To);
     void (*Insert)(screen *, all *, screen *Prev, screen *Next);
     void (*Remove)(screen *);
@@ -672,8 +678,12 @@ struct fn_screen {
     window *(*SearchWindow)(screen *, dat i, dat j);
     menu *(*SearchMenu)(screen *);
     screen *(*Search)(dat j);
-    screen *(*CreateSimple)(fn_screen *, hwattr Bg);
-    void (*BgImage)(screen *, udat BgWidth, udat BgHeight, hwattr *Bg);
+    screen *(*CreateSimple)(fn_screen *, udat LenTitle, CONST byte *Title, hwattr Bg);
+    void (*BgImage)(screen *, udat BgWidth, udat BgHeight, CONST hwattr *Bg);
+    void (*Focus)(screen *);
+    void (*DrawMenu)(screen *, dat Xstart, dat Xend);
+    void (*ActivateMenu)(screen *, menuitem *, byte byMouse);
+    void (*DeActivateMenu)(screen *);
 };
 /*Attrib : */
 #define GADGET_BACK_SELECT 0x8000
@@ -683,7 +693,11 @@ struct fn_screen {
 #define MSG_KEY			((udat)0)
 #define MSG_MOUSE		((udat)1)
 #define MSG_MAP			((udat)2)
+#define MSG_CONTROL		((udat)3)
+
 #define MSG_DISPLAY		((udat)0x0FFF)
+
+#define MSG_SYSTEM_FIRST	((udat)0x1000)
 #define MSG_WINDOW_KEY		((udat)0x1000)
 #define MSG_WINDOW_MOUSE	((udat)0x1001)
 #define MSG_WINDOW_CHANGE	((udat)0x1002)
@@ -694,6 +708,10 @@ struct fn_screen {
 #define MSG_SELECTIONREQUEST	((udat)0x1007)
 #define MSG_SELECTIONCLEAR	((udat)0x1008)
 
+
+#define MSG_USER_FIRST		((udat)0x2000)
+#define MSG_USER_CONTROL	((udat)0x2000)
+
 /*
  * Notes about MsgType :
  *
@@ -701,6 +719,8 @@ struct fn_screen {
  * currently defined are:
  * MSG_KEY		use Msg->Event.EventKeyboard to get the event
  * MSG_MOUSE		use ...Event.EventMouse
+ * MSG_CONTROL		use ...Event.EventControl
+ * 
  * MSG_DISPLAY		use ...Event.EventDisplay
  *
  * 0x1000 ... 0x1FFF : Messages from the WM to a generick task
@@ -718,7 +738,10 @@ struct fn_screen {
  * just set to 0 (zero) their Code.
  * 
  * 0x2000 ... 0xFFFF : Messages from a generic task to another.
- * they are completely user-defined.
+ * they are completely user-defined. As guideline, the following
+ * are defined:
+ * 
+ * MSG_USER_CONTROL	use ...Event.EventControl
  */
 
 
@@ -748,6 +771,18 @@ struct event_mouse {
     udat Code, ShiftFlags;
     dat X, Y;
 };
+
+typedef struct event_control event_control;
+struct event_control {
+    window *Window;
+    udat Code, Len;
+    byte Data[1]; /* Data[Len] == '\0' */
+};
+
+/* some MSG_CONTROL codes */
+#define MSG_CTRL_QUIT		((udat)0)
+#define MSG_CTRL_RESTART	((udat)1)
+#define MSG_CTRL_OPEN		((udat)2)
 
 typedef struct event_display event_display;
 struct event_display {
@@ -835,6 +870,7 @@ union event_any {
     event_common EventCommon;
     event_keyboard EventKeyboard;
     event_mouse EventMouse;
+    event_control EventControl;
     event_display EventDisplay;
     event_map EventMap;
     event_window EventWindow;
@@ -883,7 +919,8 @@ struct msgport {
 };
 struct fn_msgport {
     uldat Magic, Size, Used;
-    msgport *(*Create)(fn_msgport *, byte NameLen, byte *ProgramName, time_t PauseSec, frac_t PauseFraction,
+    msgport *(*Create)(fn_msgport *, byte NameLen, CONST byte *ProgramName,
+		       time_t PauseSec, frac_t PauseFraction,
 		       byte WakeUp, void (*Handler)(msgport *));
     msgport *(*Copy)(msgport *From, msgport *To);
     void (*Insert)(msgport *, all *, msgport *Prev, msgport *Next);
@@ -905,7 +942,7 @@ struct mutex {
 };
 struct fn_mutex {
     uldat Magic, Size, Used;
-    mutex *(*Create)(fn_mutex *, msgport *MsgPort, byte NameLen, byte *Name, byte Perm);
+    mutex *(*Create)(fn_mutex *, msgport *MsgPort, byte NameLen, CONST byte *Name, byte Perm);
     mutex *(*Copy)(mutex *From, mutex *To);
     void (*Insert)(mutex *, all *, mutex *Prev, mutex *Next);
     void (*Remove)(mutex *);
@@ -931,7 +968,7 @@ struct module {
 };
 struct fn_module {
     uldat Magic, Size, Used;
-    module *(*Create)(fn_module *, uldat NameLen, byte *Name);
+    module *(*Create)(fn_module *, uldat NameLen, CONST byte *Name);
     module *(*Copy)(module *From, module *To);
     void (*Insert)(module *, all *, module *Prev, module *Next);
     void (*Remove)(module *);
@@ -977,7 +1014,7 @@ struct display_hw {
     void (*HWSelectionExport)(void);
     void (*HWSelectionRequest)(obj *Requestor, uldat ReqPrivate);
     void (*HWSelectionNotify)(uldat ReqPrivate, uldat Magic,
-			    byte MIME[MAX_MIMELEN], uldat Len, byte *Data);
+			      CONST byte MIME[MAX_MIMELEN], uldat Len, CONST byte *Data);
     void *HWSelectionPrivate;
 	
     byte (*CanDragArea)(dat Xstart, dat Ystart, dat Xend, dat Yend, dat DstXstart, dat DstYstart);
@@ -1090,7 +1127,7 @@ struct display_hw {
 };
 struct fn_display_hw {
     uldat Magic, Size, Used;
-    display_hw *(*Create)(fn_display_hw *, uldat NameLen, byte *Name);
+    display_hw *(*Create)(fn_display_hw *, uldat NameLen, CONST byte *Name);
     display_hw *(*Copy)(display_hw *From, display_hw *To);
     void (*Insert)(display_hw *, all *, display_hw *Prev, display_hw *Next);
     void (*Remove)(display_hw *);
@@ -1118,8 +1155,10 @@ struct fn_display_hw {
 
     
     
-#define NOMEMORY ((udat)1)
-#define DLERROR  ((udat)2)
+#define NOMEMORY	((udat)1)
+#define DLERROR		((udat)2)
+#define SYSCALLERROR	((udat)3)
+#define USERERROR	((udat)4)
 
 #define NOID		((uldat)0)
 #define MAXID		((uldat)0x0FFFFFFFul)
@@ -1163,32 +1202,66 @@ struct fn {
 
 struct setup {
     dat MaxMouseSnap;
-    timevalue TimeClick;
-    udat BloccoMemMin;
+    udat MinAllocSize;
     byte Flags;
+    byte SelectionButton, PasteButton;
     byte DeltaXShade, DeltaYShade;
 };
-/*Flags : */
-#define SETUP_NEW_FONT		(byte)0x01
-#define SETUP_DO_SHADE		(byte)0x02
-#define SETUP_NEW_PALETTE	(byte)0x04
-#define SETUP_GRAPH_MOUSE	(byte)0x08
-#define SETUP_ALWAYSCURSOR	(byte)0x10
-#define SETUP_NOBLINK		(byte)0x20
-#define SETUP_HIDEMENU		(byte)0x40
-#define SETUP_NOSCROLL		(byte)0x80
+/* All->Setup->Flags */
+#define SETUP_SHADOWS		0x01
+#define SETUP_BLINK		0x02
+#define SETUP_ALWAYSCURSOR	0x04
+#define SETUP_HIDEMENU		0x08
+#define SETUP_MENUINFO		0x10
+#define SETUP_EDGESCROLL	0x20
+#define SETUP_ALTFONT		0x40
 
-/********* State List ***********/
-
-#define STATE_DEFAULT	(byte)0
-#define STATE_WINDOW	(byte)1
-#define STATE_SCROLL	(byte)2
-#define STATE_MENU	(byte)3
-#define STATE_SCREEN	(byte)4
-#define STATE_MAX	(byte)5
 
 #define MAX_XSHADE	9
 #define MAX_YSHADE	9
+
+/*
+ * values of All->State.
+ * This order is hardcoded in methods.c:UnMapWindow(),
+ * in resize.c:ExecScrollFocusWindow(),
+ * in scroller.c:ScrollerH(),
+ * do not change it!
+ */
+/*#define STATE_BUTTON(n)	((byte)(n)) */
+#define STATE_RESIZE		((byte)10)
+#define STATE_DRAG		((byte)11)
+#define STATE_SCROLL		((byte)12)
+#define STATE_GADGET		((byte)13)
+#define STATE_MENU		((byte)14)
+#define STATE_SCREEN		((byte)15)
+#define STATE_SCREENBUTTON	((byte)16)
+#define STATE_ROOT		((byte)17)
+#define STATE_DEFAULT		((byte)18)
+
+/* mask for all the above */
+#define STATE_ANY		((byte)0x1f)
+
+/* furher All->State flags */
+#define STATE_FL_BYMOUSE	((byte)0x40)
+#define STATE_FL_FREEZE		((byte)0x80)
+
+
+/* values returned by FnWindow->FindBorder (modeled after STATE_*) */
+/*#define POS_BUTTON(n)		((byte)(n))*/
+#define POS_TITLE		((byte)10)
+#define POS_CORNER		((byte)11)
+#define POS_SIDE		((byte)12)
+
+#define POS_BAR_BACK		((byte)13)
+#define POS_BAR_FWD		((byte)14)
+#define POS_TAB			((byte)15)
+#define POS_ARROW_BACK		((byte)16)
+#define POS_ARROW_FWD		((byte)17)
+
+#define POS_INSIDE		((byte)18)
+#define POS_MENU		((byte)19)
+#define POS_SCREENBUTTON	((byte)21)
+#define POS_ROOT		((byte)22)
 
 typedef struct selection {
     timevalue Time;
@@ -1200,38 +1273,35 @@ typedef struct selection {
     byte *Data;
 } selection;
 
+typedef struct button_vec {
+    byte shape[2];
+    num pos;
+    byte exists;
+    byte changed;
+} button_vec;
+
+
 struct all {
     screen *FirstScreen, *LastScreen;
     msgport *FirstMsgPort, *LastMsgPort, *RunMsgPort;
     mutex *FirstMutex, *LastMutex;
     module *FirstModule, *LastModule;
     fn_hook FnHookModule; window *HookModule;
-    display_hw *FirstDisplayHW, *LastDisplayHW, *MouseHW;
+    display_hw *FirstDisplayHW, *LastDisplayHW, *MouseHW, *ExclusiveHW;
     fn_hook FnHookDisplayHW; window *HookDisplayHW;
-    menu *BuiltinMenu;
+    byte State;
     timevalue Now;
     selection *Selection;
     setup *SetUp;
-    udat *GlobalKeyCodes[STATE_MAX];
-    udat *GlobalMouseCodes[STATE_MAX];
-    byte *Gtranslations[IBMPC_MAP];
-    byte MouseOverload;
-    byte FlagsMove;
     void (*AtQuit)(void);
+
+    menu *BuiltinMenu, *CommonMenu;
+    
+    button_vec ButtonVec[BUTTON_MAX];
+    
+    byte *Gtranslations[IBMPC_MAP];
 };
 
-
-/*FlagsMove */
-#define GLMOVE_BY_MOUSE		(byte)0x80
-#define GLMOVE_1stWIN		(byte)0x01
-#define GLMOVE_RESIZE_1stWIN	(byte)0x02
-#define GLMOVE_SCROLL_1stWIN	(byte)0x04
-#define GLMOVE_ANY_1stWIN	(GLMOVE_1stWIN | GLMOVE_RESIZE_1stWIN | GLMOVE_SCROLL_1stWIN)
-#define GLMOVE_1stMENU		(byte)0x08
-#define GLMOVE_1stSCREEN	(byte)0x10
-#define GLMOVE_ANY		(GLMOVE_ANY_1stWIN | GLMOVE_1stMENU | GLMOVE_1stSCREEN)
-#define GLMOVE_1stWIN_FREEZE	(byte)0x20
-#define GLMOVE_SENDMOUSE_1stWIN (byte)0x40
 
 /*
  La struttura di GlobalKeyCodes[i] e GlobalMouseCodes[i]
@@ -1239,23 +1309,6 @@ struct all {
  e' esattamente la stessa presente
  nel campo KeyCodes di menu.
  */
-
-/*MouseOverload : */
-#define LEFT 0
-#define MIDDLE 2
-#define RIGHT 4
-/*
- Es. per fare in modo che il tasto sinistro del mouse
- venga interpretato come tasto centrale si usa:
- * 
- OV_MIDDLE<<LEFT
- */
-
-#define OV_LEFT (byte)0x00
-#define OV_MIDDLE (byte)0x01
-#define OV_RIGHT (byte)0x02
-#define OV_ANY (byte)0x03
-
 
 /************** Keys **************/
 
@@ -1277,25 +1330,29 @@ struct all {
 #define ESCAPE     	((udat)'\033')
 
 #define HOLD		((udat)1)
-#define HOLD_LEFT	(HOLD << OV_LEFT)
-#define HOLD_MIDDLE	(HOLD << OV_MIDDLE)
-#define HOLD_RIGHT	(HOLD << OV_RIGHT)
+#define HOLD_LEFT	((udat)1)
+#define HOLD_MIDDLE	((udat)2)
+#define HOLD_RIGHT	((udat)4)
 #define HOLD_ANY	(HOLD_LEFT|HOLD_MIDDLE|HOLD_RIGHT)
+#define HOLD_CODE(n)	(HOLD << (n)) /* n is 0,1,2 */
 
 #define PRESS_LEFT	((udat)0x08)
-#define PRESS_RIGHT	((udat)0x18)
-#define PRESS_MIDDLE	((udat)0x28)
+#define PRESS_MIDDLE	((udat)0x18)
+#define PRESS_RIGHT	((udat)0x28)
 #define PRESS_ANY	((udat)0x38)
+#define PRESS_CODE(n)	((udat)0x08 | ((udat)(n) << 4)) /* n is 0,1,2 */
 
 #define DOWN_LEFT	(HOLD_LEFT|PRESS_LEFT)
-#define DOWN_RIGHT	(HOLD_RIGHT|PRESS_RIGHT)
 #define DOWN_MIDDLE	(HOLD_MIDDLE|PRESS_MIDDLE)
+#define DOWN_RIGHT	(HOLD_RIGHT|PRESS_RIGHT)
 #define DOWN_ANY	(HOLD_ANY|PRESS_ANY)
+#define DOWN_CODE(n)	(HOLD_CODE(n)|PRESS_CODE(n)) /* n is 0,1,2 */
 
 #define RELEASE_LEFT	((udat)0x10)
-#define RELEASE_RIGHT	((udat)0x20)
-#define RELEASE_MIDDLE	((udat)0x30)
+#define RELEASE_MIDDLE	((udat)0x20)
+#define RELEASE_RIGHT	((udat)0x30)
 #define RELEASE_ANY	((udat)0x30)
+#define RELEASE_CODE(n)	((udat)0x10 + ((udat)(n) << 4)) /* n is 0,1,2 */
 
 #define DRAG_MOUSE	((udat)0x40)
 
@@ -1305,210 +1362,76 @@ struct all {
 
 #define isPRESS(code)	((code) & 0x08)
 #define isDRAG(code)	((code) & DRAG_MOUSE)
-#define isRELEASE(code)	((code) & ANY_ACTION_MOUSE && !isPRESS(code) && !isDRAG(code))
+#define isRELEASE(code)	((code) & ANY_ACTION_MOUSE && !((code) & (DRAG_MOUSE|(udat)0x08)))
 
 #define isSINGLE_PRESS(code) (isPRESS(code) && ((code) == DOWN_LEFT || (code) == DOWN_MIDDLE || (code) == DOWN_RIGHT))
 #define isSINGLE_DRAG(code) (isDRAG(code) && ((code) == (DRAG_MOUSE|HOLD_LEFT) || (code) == (DRAG_MOUSE|HOLD_MIDDLE) || (code) == (DRAG_MOUSE|HOLD_RIGHT)))
 #define isSINGLE_RELEASE(code) (isRELEASE(code) && !((code) & HOLD_ANY))
-			     
-/*     								Nota:
- * 
- Al momento della pressione di un tasto della keyboard, sono
- riconosciute solo le seguenti configurazioni di keys di shift:
- * 
- LEFT_ALT
- RIGHT_ALT
- LEFT_CTRL
- RIGHT_CTRL
- NUM_LOCK	CAPS_LOCK							LEFT_SHIFT
- CAPS_LOCK 						LEFT_SHIFT
- NUM_LOCK            						LEFT_SHIFT
- LEFT_SHIFT
- NUM_LOCK	CAPS_LOCK RIGHT_SHIFT
- CAPS_LOCK	RIGHT_SHIFT
- NUM_LOCK            RIGHT_SHIFT
- RIGHT_SHIFT
- NUM_LOCK	CAPS_LOCK
- CAPS_LOCK
- NUM_LOCK
- * 
- NUM_LOCK	CAPS_LOCK
- CAPS_LOCK
- NUM_LOCK
- ---
- * 
- L' ordine in cui sono elencate le configurazioni e' quello di priorita'
- decrescente :
- Se e' premuto LEFT_ALT, si ignorano gli altri
- Altrimenti, se e' premuto RIGHT_ALT, si ignorano gli altri
- Altrimenti, se e' premuto LEFT_CTRL, si ignorano gli altri
- Altrimenti, se e' premuto RIGHT_CTRL, si ignorano gli altri
- Altrimenti, se e' premuto LEFT_SHIFT si ignora RIGHT_SHIFT.
- * 
- * 
- Tuttavia TWIN riconosce qualunque combinazione di keys di shift,
- anche se non li usa al fine di generare i codici ASCII:
- * 
+
+/*
+ * These macros can be used only for proper mouse codes.
+ * The button numbers are: 0 (Left), 1 (Middle), 2 (Right)
  */
 
-#define FULL_RIGHT_SHIFT_PRESSED	(udat)0x01
-#define FULL_LEFT_SHIFT_PRESSED		(udat)0x02
+/* if (Code & HOLD_ANY) then HOLD_N(n) returns the lowest button # pressed in Code */
+#define HOLD_N(Code)	(ffs(Code) - 1)
 
-#define FULL_RIGHT_CTRL_PRESSED		(udat)0x04
-#define	FULL_LEFT_CTRL_PRESSED		(udat)0x08
+/* if (isSINGLE_PRESS(Code)) then PRESS_N(n) return the button # pressed in Code */
+#define PRESS_N(Code)	((Code) >> 4)
 
-#define FULL_RIGHT_ALT_PRESSED		(udat)0x10
-#define FULL_LEFT_ALT_PRESSED		(udat)0x20
+/* if (isSINGLE_DRAG(Code)) then DRAG_N(n) return the button # pressed in Code */
+#define DRAG_N(Code)	HOLD_N(Code)
 
-#define FULL_NUM_LOCK_PRESSED 		(udat)0x40
-#define FULL_CAPS_LOCK_PRESSED	 	(udat)0x80
-#define FULL_SCROLL_LOCK_PRESSED 	(udat)0x100
+/* if (isSINGLE_RELEASE(Code)) then RELEASE_N(n) return the button # released in Code */
+#define RELEASE_N(Code) (((Code) >> 4) - 1)
 
-#define FULL_NUM_LOCK_ACTIVE		(udat)0x200
-#define FULL_CAPS_LOCK_ACTIVE		(udat)0x400
-#define FULL_SCROLL_LOCK_ACTIVE 	(udat)0x800
-
-
-/*     								Nota:
- * 
- Al momento della pressione e/o del rilascio di uno o piu' keys del mouse
- non viene riconosciuto l'eventuale trascinamento del mouse stesso.
- * 
- Inoltre solo un tasto alla volta puo' cambiare stato: esempio:
- L'utente preme due keys contimeraneamente.
- In tal caso vengono generati due eventi:
- uno per la pressione del primo tasto,
- uno per la pressione del secondo tenendo il primo schiacciato.
- Per fare questo si assegna una priorita' ai keys:
- 1) LEFT
- 2) RIGHT
- 3) MIDDLE
- * 
- Come conseguenza si ha che MAX_ESEGUI_MOUSE non vale 0x80 ma 0x48 perche'
- DRAG_MOUSE esclude la presenza di qualunque PRESS_xxx e RELEASE_xxx.
- */
-
-/*********** Action List ************/
-
-/************ Default *************/
-
-#define STDEF_MOUSE_ACT_SOME 		(udat)1
-#define STDEF_MOUSE_ACT_MENU     	(udat)2
-#define STDEF_MOUSE_ACT_NULL     	(udat)3
-#define STDEF_MOUSE_DRAG_SOME		(udat)4
-#define STDEF_MOUSE_DRAG_NULL		(udat)5
-#define STDEF_MOUSE_CHANGE_DESKTOP	(udat)6
-#define STDEF_QUIT             		(udat)0x100
-#define STDEF_NEXT_WINDOW      		(udat)0x101
-#define STDEF_DRAGorRESIZE_WINDOW   	(udat)0x102
-#define STDEF_CLOSE_WINDOW        	(udat)0x103
-#define STDEF_CENTER_WINDOW        	(udat)0x104
-#define STDEF_NEXT_SCREEN  		(udat)0x105
-#define STDEF_DRAGorRESIZE_SCREEN 	(udat)0x106
-#define STDEF_ACT_MENU       		(udat)0x107
-
-/************ Window ************/
-
-#define STWIN_MOUSE_ACT_SOME	STDEF_MOUSE_ACT_SOME
-#define STWIN_MOUSE_DRAG_SOME	STDEF_MOUSE_DRAG_SOME
-#define STWIN_MOUSE_CHANGE_DESKTOP STDEF_MOUSE_CHANGE_DESKTOP
-#define STWIN_QUIT		STDEF_QUIT 
-#define STWIN_CENTER_WINDOW	STDEF_CENTER_WINDOW
-
-#define STWIN_BACKTO_DEF	(udat)0x20
-#define STWIN_BACKTO_DEF_FREEZE	(udat)0x21
-#define STWIN_BACKTO_NULL	(udat)0x22
-#define STWIN_MOUSE_CHANGE_WIN	(udat)0x23
-#define STWIN_Xn_DRAG		(udat)0x120
-#define STWIN_Xp_DRAG		(udat)0x121
-#define STWIN_Yn_DRAG		(udat)0x122
-#define STWIN_Yp_DRAG		(udat)0x123
-#define STWIN_X_DECR		(udat)0x124
-#define STWIN_X_INCR		(udat)0x125
-#define STWIN_Y_DECR		(udat)0x126
-#define STWIN_Y_INCR		(udat)0x127
-
-/************* Scroll *************/
-
-#define SCROLL_BACKTO_DEF	STWIN_BACKTO_DEF
-
-#define SCROLL_Xn_CHAR		(udat)0x130
-#define SCROLL_Xp_CHAR		(udat)0x131
-#define SCROLL_Yn_CHAR		(udat)0x132
-#define SCROLL_Yp_CHAR		(udat)0x133
-#define SCROLL_Xp_PAGE		(udat)0x134
-#define SCROLL_Xn_PAGE		(udat)0x135
-#define SCROLL_Yn_PAGE		(udat)0x136
-#define SCROLL_Yp_PAGE		(udat)0x137
-
-
-/************* Menu ***************/
-
-#define STMENU_QUIT		STDEF_QUIT
-#define STMENU_MOUSE_ACT_MENU	STDEF_MOUSE_ACT_MENU
-#define STMENU_BACKTO_DEF	STWIN_BACKTO_DEF
-#define STMENU_BACKTO_DEF_FREEZE STWIN_BACKTO_DEF_FREEZE
-#define STMENU_DRAGorRESIZE_WINDOW STDEF_DRAGorRESIZE_WINDOW
-
-#define STMENU_ACT_BACKTO_DEF	(udat)0x40
-#define STMENU_MOUSE_DRAG	(udat)0x41
-#define STMENU_MOUSE_CHANGE	(udat)0x42
-#define STMENU_PREV_ITEM	(udat)0x140
-#define STMENU_NEXT_ITEM	(udat)0x141
-#define STMENU_PREV_ROW		(udat)0x142
-#define STMENU_NEXT_ROW		(udat)0x143
-
-/*********** Screen **********/
-
-#define STSCR_MOUSE_ACT_SOME	STDEF_MOUSE_ACT_SOME
-#define STSCR_BACKTO_DEF	STWIN_BACKTO_DEF
-#define STSCR_BACKTO_DEF_FREEZE	STWIN_BACKTO_DEF_FREEZE
-#define STSCR_MOUSE_DRAG_SOME	STDEF_MOUSE_DRAG_SOME
-
-#define SCREEN_Xp_SCROLL  	(udat)0x160
-#define SCREEN_Xn_SCROLL  	(udat)0x161
-#define SCREEN_Yp_SCROLL  	(udat)0x162
-#define SCREEN_Yn_SCROLL  	(udat)0x163
-#define SCREEN_Ln_SCROLL  	(udat)0x164
-#define SCREEN_Lp_SCROLL  	(udat)0x165
 
 /**********************************/
 
-#define COD_CANCEL		(udat)0xFE00
-#define COD_OK			(udat)0xFE01
-#define COD_HELP		(udat)0xFE02
-#define COD_OPEN		(udat)0xFE03
-#define COD_DELETE		(udat)0xFE04
-#define COD_NEW			(udat)0xFE05
+/* Some common menu rows codes: */
 
-#define COD_COMMON		(udat)0xFF00
-#define COD_COMMON_CLOSE	(udat)0xFF00
-#define COD_COMMON_RESIZE	(udat)0xFF01
-#define COD_COMMON_SCROLL	(udat)0xFF02
-#define COD_COMMON_CENTER	(udat)0xFF03
-#define COD_COMMON_ZOOM		(udat)0xFF04
-#define COD_COMMON_MAXZOOM	(udat)0xFF05
-#define COD_COMMON_ROLLUP	(udat)0xFF06
-#define COD_COMMON_REFRESH	(udat)0xFF07
-#define COD_COMMON_HOTKEY	(udat)0xFF08
-#define COD_COMMON_NEXT		(udat)0xFF09
-#define COD_COMMON_WINLIST	(udat)0xFF0A
-#define COD_COMMON_RAISELOWER	(udat)0xFF0B
-#define COD_COMMON_UNFOCUS	(udat)0xFF0C
+#define COD_CANCEL		0xF700
+#define COD_OK			0xF701
+#define COD_HELP		0xF702
+#define COD_OPEN		0xF703
+#define COD_DELETE		0xF704
+#define COD_NEW			0xF705
+
+/* don't use codes above or equal to this one! */
+#define COD_RESERVED		0xF800
 
 /* INLINE/define stuff: */
 
+#ifdef DEBUG_MALLOC
+  /*
+   * with the current (0.3.5) MkDep, DEBUG_MALLOC gets defined only if doing
+   * `make DEBUG_MALLOC=1 ...' and the C file that includes twin.h actually
+   * checks for DEBUG_MALLOC. Anyway, this is acceptable :-)
+   */
+  extern byte *S;
+  extern byte *E;
+  void panic_free(void *v);
+# define FAIL(v) ((v) && ((byte *)(v) < S || (byte *)(v) > E) ? (panic_free(v), TRUE) : FALSE)
+#endif /* DEBUG_MALLOC */
+
 #ifdef CONF__ALLOC
-byte InitAlloc(void);
-void *AllocMem(size_t Size);
-void FreeMem(void *Mem);
-void *ReAllocMem(void *Mem, size_t Size);
-#else
+  byte InitAlloc(void);
+  void *AllocStatHighest(void);
+  void *AllocMem(size_t Size);
+  void FreeMem(void *Mem);
+  void *ReAllocMem(void *Mem, size_t Size);
+#else /* CONF__ALLOC */
+
 # define AllocMem(Size)		malloc(Size)
-# define FreeMem(Mem)		free(Mem)
+# ifdef DEBUG_MALLOC
+   void FreeMem(void *Mem);
+# else
+#  define FreeMem(Mem)		free(Mem)
+# endif
+
 # ifndef USE_MY_REALLOC
 #  define ReAllocMem(Mem, Size)	realloc((Mem), (Size))
-# else
+# else /* USE_MY_REALLOC */
 INLINE void *ReAllocMem(void *Mem, uldat Size) {
     void *res = (void *)0;
     if (Size) {
@@ -1529,10 +1452,8 @@ INLINE void *ReAllocMem(void *Mem, uldat Size) {
 	return malloc(Size);
     return res;
 }
-# endif
-#endif
-
-#if 1
+# endif /* USE_MY_REALLOC */
+#endif /* CONF__ALLOC */
 
 # define LenStr(S) strlen(S)
 # define CmpStr(S1, S2) strcmp((S1), (S2))
@@ -1548,23 +1469,7 @@ INLINE void *ReAllocMem(void *Mem, uldat Size) {
 # define GetRootPrivileges() seteuid(0)
 # define GetGroupPrivileges(g) setegid(g)
 
-#else
-
-uldat LenStr(byte *S);
-int   CmpStr(byte *S1, byte *S2);
-byte *CopyStr(byte *From, byte *To);
-
-void *CopyMem(void *From, void *To, uldat Size);
-void *MoveMem(void *From, void *To, uldat Size);
-void *WriteMem(void *From, byte Char, uldat Size);
-void *CmpMem(void *m1, void *m2, uldat Size);
-
-void DropPrivileges(void);
-void GetPrivileges(void);
-
-#endif /* 0 */
-
-byte *CloneStr(byte *s);
+byte *CloneStr(CONST byte *s);
 
 #endif /* _TWIN_H */
 

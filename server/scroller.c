@@ -14,9 +14,7 @@
 #include "data.h"
 #include "methods.h"
 
-#include "hw.h"
 #include "hw_multi.h"
-#include "common.h"
 #include "resize.h"
 #include "util.h"
 
@@ -37,7 +35,7 @@ byte InitScroller(void) {
 
 	return TRUE;
     }
-    fprintf(stderr, "twin: Out of memory!\n");
+    fprintf(stderr, "twin: InitScroller(): Out of memory!\n");
     return FALSE;
 }
 
@@ -61,11 +59,10 @@ static void ScrollerH(msgport *MsgPort) {
     msg *Msg, *saveMsg;
     mouse_state *Mouse;
     screen *Screen;
-    udat CallKey, Funct;
     uldat Attrib;
     dat Limit;
     dat Mouse_delta_x, Mouse_delta_y;
-    byte State, FlagsMove, FlagDeskScroll, FlagWinScroll, WinScrolled = FALSE;
+    byte State, FlagDeskScroll, FlagWinScroll, WinScrolled = FALSE;
     window *FocusWindow;
     
     while ((Msg=Scroller_MsgPort->FirstMsg)) {
@@ -91,52 +88,33 @@ static void ScrollerH(msgport *MsgPort) {
     } else
 	FlagWinScroll = FALSE;
     
-    FlagDeskScroll=!(All->SetUp->Flags & SETUP_NOSCROLL) && Mouse->keys;
+    FlagDeskScroll = (All->SetUp->Flags & SETUP_EDGESCROLL)
+	&& (Mouse->keys == HOLD_LEFT || Mouse->keys == HOLD_MIDDLE || Mouse->keys == HOLD_RIGHT);
 
-    FlagsMove=All->FlagsMove;
-    if (FlagsMove & GLMOVE_1stSCREEN)
-	State=STATE_SCREEN;
-    else if (FlagsMove & GLMOVE_1stMENU)
-	State=STATE_MENU;
-    else if (FlagsMove & GLMOVE_ANY_1stWIN)
-	State=STATE_WINDOW;
-    else
-	State=STATE_DEFAULT;
+    State = All->State & STATE_ANY;
     
-    if (State!=STATE_WINDOW && State!=STATE_DEFAULT) {
+    if (State != STATE_DEFAULT && State != STATE_SCROLL) {
 	ScrollerDeactivate();
 	return;
     }
     
-    if (State==STATE_WINDOW && All->FlagsMove & GLMOVE_SCROLL_1stWIN && FlagWinScroll) {
+    if (State != STATE_DEFAULT && FlagWinScroll) {
 	if ((WinScrolled = ExecScrollFocusWindow()))
 	    ScrollerAutoRepeat();
     }
     
-    
     Mouse_delta_x=-Mouse->delta_x;
     Mouse_delta_y=-Mouse->delta_y;
     FlagDeskScroll &= Mouse_delta_x || Mouse_delta_y;
-    
+
     if (!FlagDeskScroll) {
-	if (!WinScrolled)
+	if (!WinScrolled) {
 	    ScrollerDelayRepeat();
+	}
 	return;
     }
     
-    CallKey = DRAG_MOUSE | Mouse->keys;
-    
-    /*
-     Funziona solo se GlobalKeyCodes e GlobalMouseCodes
-     hanno formato normale (non compresso)
-     */
-    
-    if (All->GlobalMouseCodes[State][0])           /*Dati Compressi : non implementato */
-	Funct=(udat)0;
-    else
-	Funct=FnM(All->GlobalMouseCodes[State],CallKey);
-    
-    if (FlagDeskScroll && (Funct==STDEF_MOUSE_DRAG_SOME || Funct==STDEF_MOUSE_DRAG_NULL)) {
+    if (FlagDeskScroll) {
 	Screen=All->FirstScreen;
 
 	Limit=All->SetUp->MaxMouseSnap;
@@ -150,7 +128,7 @@ static void ScrollerH(msgport *MsgPort) {
 	if (!WinScrolled)
 	    ScrollerAutoRepeat();
 
-	if (!StdAddEventMouse(MSG_MOUSE, CallKey, Mouse->x, Mouse->y))
+	if (!StdAddEventMouse(MSG_MOUSE, DRAG_MOUSE | Mouse->keys, Mouse->x, Mouse->y))
 	    Error(NOMEMORY);
     } else {
 	if (!WinScrolled)

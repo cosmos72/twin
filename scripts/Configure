@@ -58,17 +58,41 @@ function yesmodno() {
 	      [nN] | [Nn]o  | NO  ) ANS="n";;
 	  esac
       done
-      eval "$1"="$ANS"
+      eval "$1=$ANS"
    fi
 }
 
-function yesmodno_truedep() {
+function yesmodno_dep() {
    DEP=$(eval "echo \"\${$2}\"")
    if test "$DEP" != n; then
       yesmodno "$1"
    fi
 }
 
+function yesno_truedep() {
+   DEP=$(eval "echo \"\${$2}\"")
+   if test "$DEP" != n; then
+      yesno "$1"
+   else
+      eval "$1=n"
+   fi
+   
+}
+
+function yesmodno_truedep() {
+   DEP=$(eval "echo \"\${$2}\"")
+   if test "$DEP" != n; then
+      yesmodno "$1"
+   else
+      eval "$1=n"
+   fi
+   
+}
+
+function msg() {
+   echo "# $1"
+}
+   
 function menu() {
    echo -e "#\n# "$(eval "echo \"\${${1}_MENU}\"")"\n#"
 }

@@ -21,41 +21,92 @@
 
 #include <libTw.h>
 
-void usage(byte *name) {
-    fprintf(stderr, "Usage: %s [-a|-d] [-v|-s] [-twin@<TWDISPLAY>] -hw=<display>[,options]\n"
+#include "version.h"
+
+static char *MYname;
+
+static void Usage(byte detach) {
+    fprintf(stderr, "Usage: %s [OPTION [...]]\n"
+	    "Currently known options: \n"
+	    " -h, -help               display this help and exit\n"
+	    " -V, -version            output version information and exit\n"
+	    " -a                      attach display%s\n"
+	    " -d                      detach display%s\n"
+	    " -s, -share              allow multiple simultaneous displays (default)\n"
+	    " -x, -excl               request exclusive display - detach all others\n"
+	    " -v                      verbose output (default)\n"
+	    " -q                      quiet - don't report messages from twin server\n"
+	    " -f                      force running even with wrong protocol version\n"
+	    " -twin@<TWDISPLAY>       specify server to contact instead of $TWDISPLAY\n"
+	    " -hw=<display>[,options] start the given display\n"
 	    "Currently known display methods: \n"
 	    "\tX[@<XDISPLAY>]\n"
 	    "\ttwin[@<TWDISPLAY>]\n"
 	    "\ttty[@<tty device>]\n"
-	    "\tggi[@<ggi display>]\n", name);
+	    "\tggi[@<ggi display>]\n",
+	    MYname, detach ? "" : " (default)", detach ? " (default)" : "");
 }
 
-byte gotSignalWinch;
+static byte gotSignalWinch;
 
-void SignalWinch(int n) {
+static void SignalWinch(int n) {
     signal(SIGWINCH, SignalWinch);
     gotSignalWinch = TRUE;
 }
-    
+
+static void ShowVersion(void) {
+    printf("%s " TWIN_VERSION_STR " with socket protocol "
+	  TW_PROTOCOL_VERSION_STR "\n", MYname);
+}
+
+static byte VersionsMatch(byte force) {
+    uldat cv = TW_PROTOCOL_VERSION, lv = TwLibraryVersion(), sv = TwServerVersion();
+	
+    if (lv != sv || lv != cv) {
+	fprintf(stderr, "%s: %s: socket protocol version mismatch!%s\n"
+		"          client is %d.%d.%d, library is %d.%d.%d, server is %d.%d.%d\n",
+		MYname, (force ? "warning" : "fatal"), (force ? " (ignored)" : ""),
+		TWVER_MAJOR(cv), TWVER_MINOR(cv), TWVER_PATCH(cv),
+		TWVER_MAJOR(lv), TWVER_MINOR(lv), TWVER_PATCH(lv),
+		TWVER_MAJOR(sv), TWVER_MINOR(sv), TWVER_PATCH(sv));
+	return FALSE;
+    }
+    return TRUE;
+}
+
 int main(int argc, char *argv[]) {
-    byte detach = 0, redirect = 1;
-    byte *dpy = NULL, *arg = NULL, *tty = ttyname(0), *name = argv[0];
+    byte detach = 0, redirect, force = 0, flags = TW_ATTACH_HW_REDIRECT;
+    byte *dpy = NULL, *arg = NULL, *tty = ttyname(0);
     byte ret = 0, ourtty = 0, servtty = 0;
     byte *s, *buff;
     uldat chunk;
+    
+    MYname = argv[0];
     
     if (strstr(argv[0], "detach"))
 	detach = 1;
 
     while (*++argv) {
-	if (!strcmp(*argv, "-d"))
-	    detach = 1;
+	if (!strcmp(*argv, "-V") || !strcmp(*argv, "-version")) {
+	    ShowVersion();
+	    return 0;
+	} else if (!strcmp(*argv, "-h") || !strcmp(*argv, "-help")) {
+	    Usage(detach);
+	    return 0;
+	} else if (!strcmp(*argv, "-x") || !strcmp(*argv, "-excl"))
+	    flags |= TW_ATTACH_HW_EXCLUSIVE;
+	else if (!strcmp(*argv, "-s") || !strcmp(*argv, "-share"))
+	    flags &= ~TW_ATTACH_HW_EXCLUSIVE;
 	else if (!strcmp(*argv, "-a"))
 	    detach = 0;
+	else if (!strcmp(*argv, "-d"))
+	    detach = 1;
 	else if (!strcmp(*argv, "-v"))
-	    redirect = 1;
-	else if (!strcmp(*argv, "-s"))
-	    redirect = 0;
+	    flags |= TW_ATTACH_HW_REDIRECT;
+	else if (!strcmp(*argv, "-q"))
+	    flags &= ~TW_ATTACH_HW_REDIRECT;
+	else if (!strcmp(*argv, "-f"))
+	    force = 1;
 	else if (!strncmp(*argv, "-twin@", 6))
 	    dpy = *argv + 6;
 	else if (!strncmp(*argv, "-hw=", 4)) {
@@ -64,12 +115,25 @@ int main(int argc, char *argv[]) {
 		s = strchr(buff, ',');
 		if (s) *s = '\0';
 		
-		if (!*buff || (*buff == '@' && (!buff[1] || !strcmp(buff+1, tty))))
+		if (!*buff)
 		    /* attach twin to our tty */
 		    ourtty = 1;
-		else if (*buff == '@' && buff[1] == '-')
-		    /* tell twin to attach to its tty */
-		    servtty = 1;
+		else if (*buff == '@' && buff[1]) {
+		    if (buff[1] == '-') {
+			/* tell twin to attach to its tty */
+			servtty = 1;
+		    } else if (tty) {
+			if (!strcmp(buff+1, tty))
+			    /* attach twin to our tty */
+			    ourtty = 1;
+		    } else {
+			fprintf(stderr, "%s: ttyname() failed, cannot find controlling tty!\n", MYname);
+			return 1;
+		    }
+		} else {
+		    fprintf(stderr, "%s: malformed display hw `%s'\n", MYname, *argv);
+		    return 1;
+		}
 		
 		if (s) *s = ',';
 		else s = "";
@@ -89,27 +153,37 @@ int main(int argc, char *argv[]) {
 	    } else if ((*argv)[4])
 		arg = *argv;
 	    else {
-		usage(name);
+		Usage(detach);
 		return 1;
 	    }
 	} else {
-	    usage(name);
+	    Usage(detach);
 	    return 1;
 	}
     }
     
     if (detach == 0 && !arg) {
-	usage(name);
+	Usage(detach);
 	return 1;
     }
     
+    redirect = flags & TW_ATTACH_HW_REDIRECT;
+    
     if (TwOpen(dpy) && TwCreateMsgPort(8, "Twattach", (uldat)0, (udat)0, (byte)0)) do {
 	
+	if (!VersionsMatch(force)) {
+	    if (!force) {
+		fprintf(stderr, "%s: Aborting. Use option `-f' to ignore versions check.\n", MYname);
+		TwClose();
+		return 1;
+	    }
+	}
+
 	if (detach) {
 	    return !TwDetachHW(arg ? strlen(arg) : 0, arg);
 	}
 
-	TwAttachHW(arg ? strlen(arg) : 0, arg, redirect);
+	TwAttachHW(arg ? strlen(arg) : 0, arg, flags);
 	TwFlush();
 	
 	signal(SIGWINCH, SignalWinch);
@@ -138,12 +212,12 @@ int main(int argc, char *argv[]) {
 	    fflush(stdout);
 	}
 	
-	TwAttachConfirm();
 	/*
 	 * twin waits this before grabbing the display...
 	 * so we can fflush(stdout) to show all messages
 	 * *BEFORE* twin draws on (eventually) the same tty
 	 */
+	TwAttachConfirm();
     
 	if (ret == 2) {
 	    /*
@@ -171,7 +245,7 @@ int main(int argc, char *argv[]) {
 	return !ret;
     } while (0);
     
-    fprintf(stderr, "%s: libTw error: %s\n", name, TwStrError(TwErrno));
+    fprintf(stderr, "%s: libTw error: %s\n", MYname, TwStrError(TwErrno));
     return 1;
 }
 

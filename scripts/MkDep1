@@ -37,10 +37,14 @@ for i in $FILES; do
 
   INCS=
   CONFS=
-  # search `#include "name"' and `CONF_name' in the file
-  # and turn them into ` INC_name ' and ` CONF_name '
-  MATCH=`grep -E '(^# *include *"[^"]*")|(^#.*def.*CONF_)' "$i" \
-  | sed -e 's:^# *include *"\([^"]*\)".*$: INC_\1 :' -e 's:CONF_\([A-Za-z0-9_]*\): CONF_\1 :g'`  
+  DEBUGS=
+  # search `#include "name"' `CONF_name' and `DEBUG_name' in the file
+  # and turn them into ` INC_name ' ` CONF_name ' and ` DEBUG_name '
+  MATCH=`grep -E '(^# *include *"[^"]*")|(^#.*def.*CONF_)|(^#.*def.*DEBUG_)' "$i" \
+  | sed -e 's:^# *include *"\([^"]*\)".*$: INC_\1 :' \
+        -e 's:CONF_\([A-Za-z0-9_]*\): CONF_\1 :g'    \
+	-e 's:DEBUG_\([A-Za-z0-9_]*\): DEBUG_\1 :g'`
+
   for j in $MATCH; do
     case "$j" in
       INC_* )
@@ -64,10 +68,23 @@ for i in $FILES; do
 	  eval "${ANS}_${j}_AWARE=y"
 	fi
 	;;
+      DEBUG_* )
+        eval "ALREADY=\"\$${ANS}_${j}_AWARE\""
+        if [ ! "$ALREADY" ]; then
+          eval "${j}_AWARE=\"$i \$${j}_AWARE\""
+	  eval "${ANS}_${j}_AWARE=y"
+	  
+          eval "ALREADY=\"\$ALL_DEBUGS_${j}_AWARE\""
+	  if [ ! "$ALREADY" ]; then
+            eval "ALL_DEBUGS_${j}_AWARE=y"
+	    ALL_DEBUGS="$j $ALL_DEBUGS"
+	  fi
+	fi
+	;;
     esac
   done
   
-  patsubst "$i" "\.." "\.o"
+  patsubst "$i" "\.[ch]$" "\.o"
   echo -e "${ANS}: $INCS"
 done
 
@@ -76,9 +93,22 @@ for j in `cat $TOPDIR/conf/config.list`; do
   if [ "$FILELIST" ]; then
     echo "ifeq (\$($j),y)"
     for i in $FILELIST; do
-      patsubst "$i" "\.." "\.o"
+      patsubst "$i" "\.[ch]$" "\.o"
       echo "  CFLAGS_${ANS}+=-D$j"
     done
     echo "endif"
   fi
 done
+
+if [ "$ALL_DEBUGS" ]; then
+  for j in $ALL_DEBUGS; do
+    echo "ifdef $j"
+    eval "FILELIST=\"\$${j}_AWARE\""
+    for i in $FILELIST; do
+      patsubst "$i" "\.[ch]$" "\.o"
+      echo "  CFLAGS_${ANS}+=-D$j"
+    done
+    echo "endif"
+  done
+fi
+

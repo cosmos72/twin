@@ -1,0 +1,247 @@
+
+			Help about twin configuration
+		    
+
+   First, you might want to edit the file `MakeRules' to change
+   the install directory, tweak compiler flags (enable debugging), etc.
+
+   If you are trying to compile on non-Linux systems, you would do better
+   reading the file README.porting now, for useful tips and warnings.
+   
+   Then type `make' or `make menuconfig' to configure twin for your
+   tastes. The first time you run `make' or each time you run `make config',
+   a shell scripts is executed to let you configure twin.
+   If you have "dialog" installed, you can use `make menuconfig'
+   for a somewhat more friendly interface. 
+   
+   In both cases, the questions asked are the same:
+
+   First question:
+   
+	#
+	# General setup
+	#
+	(CONF__SHLIBS)
+   	Enable shared libraries (ELF) [Y/n] ?
+	
+   Answer `y' if you want to compile the shared library libTw.so
+   (it's the library used by clients to talk to twin).
+   This works only if you have an ELF system.
+   If you say 'n' only the static version of the library, libTw.a,
+   will be compiled. If you don't know what to do, say 'y',
+   and if compiling libTw.so fails, retry with 'n'.
+   
+	(CONF__MODULES)
+	Enable modules (ELF) [y/N] ?
+	
+   Answer `y' if you want to be able to use modules (= code which can be
+   inserted and removed from a running twin whenever you want).
+   This works only if you have ELF-compatible dlopen().
+
+	(CONF__MALLOC)
+	Use custom malloc/free routines (tested on Linux/i386 only) [y/N] ?
+   
+   Answer 'y' to use home-made, mmap() based replacements of malloc/free.
+   Their main (only) advantage is they are very clever in returning
+   unused memory to the system. Anyway, they are tested only on Linux/i386,
+   and furthermore they shoot heavily on the kernel mmap() subsystem,
+   so on some OSes they may give troubles.
+   If you are confused by all this, just say 'n'.
+   
+	#
+	# Socket support
+	#
+	(CONF_SOCKET)
+	Support remote socket connections [Y/m/n] ? 
+	
+   Answer `y' or `m' if you want to be able to run external client programs.
+   Answer `n' only if you _really_ know what you are doing.
+   
+	(CONF_SOCKET_GZ)
+	 -> Sockets: Support gzip compression [Y/n] ?
+        
+   Answer `y' if you want to enable transparent gzip compression in the
+   socket connections. This requires having zlib installed.
+   Read paragraph `7. Transparent Compression' of the README for details.
+
+	(CONF_WM)
+	Builtin Window Manager: absolutely needed! [Y/m/n] ?
+	
+   This is to compile the window manager separately from twin core.
+   Twin will not work without the window manager. Just say `y' or 'm'.
+   
+	(CONF_WM_RC)
+	WM: Support ~/.twinrc configuration parser [y/m/N] ?
+   
+   Answer 'y' or 'm' to allow customization of the window manager look-n-feel
+   using the configuration file ~/.twinrc. For the syntax of the file look
+   at the sample configuration 'system.twinrc' distributed with twin.
+   Since the RC parser is quite big and is used only at startup, it would be
+   a good idea to say 'm' here (if you enabled modules) rather than 'y'.
+   
+	(CONF_WM_RC_SHMMAP)
+   	 -> WM: Use mmapped shared file to parse ~/.twinrc [y/N] ?
+   
+   This is mostly a matter of taste. In order to safely parse ~/.twinrc,
+   twin forks() a child process that does the dirty work, then collects
+   the result. If you say 'n', the child will send the result to parent
+   through a socket (easy but slower), while if you say 'y' communication
+   will use a shared memory area coming from a mmapped file in /tmp
+   (potentially faster but more tricky to setup).
+   As a rule of thumb, say 'n' unless you also enabled "custom malloc/free".
+   
+	(CONF_WM_RC_SHRINK)
+	 -> WM: RC: shrink memory when parser finished [Y/n] ?
+   
+   This depends on your OS:
+   answering 'n' is always safe but wastes memory,
+   answering 'y' saves memory but may screw up the ~/.twinrc parser.
+   Anyway, if twin detects problems with this option, it will tell you so
+   (watch for messages on stderr) and also automatically disable it.
+   
+   For those who want an explanation: the parser tries to guess how much memory
+   it will need to parse ~/.twinrc and allocates it beforehand.
+   To be on the safe side, the allocated memory size is a worst-case guess
+   and it is quite high (about 10 times the size of your ~/.twinrc).
+   If you answer 'y', the parser tries to realloc() (or mremap() if you
+   enabled mmapped shared file above) that memory once it has finished,
+   to free the part in excess.
+   Depending on your OS, realloc() (or mremap()) may move that memory
+   to a new location, making it useless since it contains a lot of pointers.
+   If something like this ever happens, twin will send the error to stderr
+   and disable the option.
+
+	#
+	# Terminal emulator
+	#
+	(CONF_TERM)
+	Builtin Terminal emulator [Y/m/n] ?
+
+   Answer `y' or `m' if you want to compile the terminal emulator
+   built-in into twin. This code is necessary also to run `twterm',
+   the external terminal emulator,
+   so answer `n' only if you _really_ know what you are doing.
+   
+	(CONF_TERM_DEVPTS)
+	 -> Terminal: use glibc-2.1 /dev/pts/ [y/N] ?
+   
+   Answer `y' if you are compiling twin with glibc-2.1 or later and you
+   want to use /dev/pts/* terminals instead of old-style /dev/tty[p-z]*.
+
+	#
+	# Display hardware support
+	#
+	(CONF_HW_TTY)
+	HW support: textmode terminals (Linux console, ...) [Y/m/n] ?
+
+   Answer `y' or 'm' if you are interested in running twin
+   on text terminals (ttys). You will be asked further questions
+   to choose exactly which ttys you want support for.
+
+	(CONF_HW_TTY_LINUX)
+	 -> tty support: Linux console [Y/n] ?
+   
+   Answer 'y' if you are compiling under Linux and you are interested
+   in running twin on the Linux console.
+   
+	(CONF_HW_TTY_TWTERM)
+	 -> tty support: Twin terminal [Y/n] ?
+   
+   Answer 'y' if you are interested in running twin inside
+   a twin terminal emulator (i.e. a shell window inside another twin).
+
+	(CONF_HW_TTY_TERMCAP)
+	 -> tty support: termcap/ncurses terminal database [Y/n] ?
+
+   Answer 'y' if you want twin to be able to display on any termcap-compatible
+   terminal. This includes almost any existing terminal, but is far from
+   optimal and may give problems with some keys (function keys, arrows, etc.).
+
+	(CONF_HW_TTY_NCURSES)
+	 -> -> tty: termcap: link against libncurses [Y/n] ?
+	 
+   If you have libtermcap installed on your system, just say 'n'. Otherwise,
+   you very probably have libncurses installed so you can say 'y' and use it
+   as a (big and bloated) replacement of libtermcap to access the terminal
+   database.
+   
+	(CONF_HW_X11)
+	HW support: X11 [Y/m/n] ?
+
+   Answer 'y' or 'm' if you want twin to be able to display on X.
+
+	(CONF_HW_TWIN)
+	HW support: Twin, native [Y/m/n] ?
+
+   Answer `y' or 'm' to allow twin to connect to another twin
+   and open a window there as display.
+
+	(CONF_HW_TWDISPLAY)
+	HW support: twdisplay client as display [Y/m/n] ?
+
+   Answering `y' or `m' compiles `twdisplay', which can attach/detach displays
+   remotely. Answer `n' only if you _really_ know what you are doing.
+
+	(CONF_HW_GGI)
+	HW support: libggi [y/m/N] ?
+	
+   Answer `y' or `m' to compile libggi display driver.
+   This is still incomplete, say `n'.
+   
+   If you answer 'n' to both textmode terminals and X11 support,
+   you won't be able to do much with your shiny just compiled twin!
+
+	#
+	# Runtime options
+	#
+	(CONF_OPT_SHADOWS)
+	Runtime option: enable shadows [Y/n] ?
+
+   Answer 'y' if you want twin to draw shadows around each window.
+   
+   This and all remaining answer allow you to adapt twin to your tastes.
+   No matter what you answer, you can always change the option while twin
+   is running from the `Options' dialog window. Please remember anyway that
+   the settings in ~/.twinrc will override these options.
+   
+	(CONF_OPT_BLINK)
+	Runtime option: enable blink/high background [y/N] ?
+	
+   Answer `y' to enable blinking/high background colors.
+   You can also change this option from the `Options' window inside twin.
+   
+	(CONF_OPT_ALWAYSCURSOR)
+	Runtime option: cursor always visible [y/N] ?
+	
+   Answer `y' to force the cursor to always be visible.
+   You can also change this option from the `Options' window.
+
+	(CONF_OPT_HIDEMENU)
+	Runtime option: hidden menu [y/N] ?
+
+   Answer `y' to keep the menu hidden when not active.
+   You can also change this option from the `Options' window inside twin.
+
+	(CONF_OPT_MENUINFO)
+	Runtime option: allow menu information row [Y/n] ?
+	
+   Answer `y' to show client-specific information on the menu bar
+   when the menu is not active. If you answer `n', the menu will always
+   show the "normal" menu items.
+   You can also change this option from the `Options' window inside twin.
+	
+	(CONF_OPT_EDGESCROLL)
+	Runtime option: enable screen scrolling [Y/n] ?
+
+   Answer `y' to enable virtual screen scrolling. If enabled, dragging
+   the mouse to one of the screen borders of twin will scroll the screen.
+   You can also change this option from the `Options' window inside twin.
+   
+	(CONF_OPT_ALTFONT)
+	Runtime option: use alternate font (see README) [y/N] ?
+	
+   Answer `y' to use alternate graphics character to draw window borders.
+   This works only if you are using a font specifically tweaked for twin,
+   like the `vgafont.raw' provided (which is for VGA cards). See also section
+   `9. Installing fonts' of the README.
+   

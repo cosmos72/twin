@@ -1,4 +1,5 @@
 
-/* change this to use a different Menu HotKey */
+/* edit this and recompile to change the HotKey (used to activate menu) */
+
 #define HOT_KEY TW_Pause
 

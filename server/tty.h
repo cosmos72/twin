@@ -1,11 +1,11 @@
 #ifndef _TW_TTY_H
 #define _TW_TTY_H
 
-void WriteAscii(window *Window, uldat Len, byte *AsciiSeq);
-window *KbdFocus(window *Window);
+void TtyWriteAscii(window *Window, uldat Len, CONST byte *AsciiSeq);
+window *TtyKbdFocus(window *Window);
 void ForceKbdFocus(void);
 
-void WriteHWAttr(window *Window, udat x, udat y, uldat Len, hwattr *Attr);
+void TtyWriteHWAttr(window *Window, udat x, udat y, uldat Len, CONST hwattr *Attr);
 
 #if 0
 byte WriteContents(window *Window, hwattr *text, uldat len);

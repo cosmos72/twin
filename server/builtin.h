@@ -1,17 +1,12 @@
-#ifndef _TW_SETUP_H
-#define _TW_SETUP_H
+#ifndef _TW_BUILTIN_H
+#define _TW_BUILTIN_H
 
 byte InitBuiltin(void);
 void UpdateListWin(void);
 void UpdateDisplayWin(void);
+void FillButtonWin(void);
+void UpdateOptionWin(void);
 
-extern menu *Builtin_Menu;
-extern window *ListWin;
+extern window *WinList;
 
-#if 0
-void InitEmpty(void);
-void InitTwEdit(void);
-void InitClock(void);
-#endif
-
-#endif /* _TW_SETUP_H */
+#endif /* _TW_BUILTIN_H */

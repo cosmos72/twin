@@ -47,10 +47,6 @@
 # include <termcap.h>
 #endif
 
-/* plain Unix-style tty keyboard input */
-
-/* it can't update FullShiftFlags :( */
-
 struct tty_data {
     int tty_fd, VcsaFd, tty_number;
     byte *tty_name, *tty_TERM;
@@ -65,10 +61,11 @@ struct tty_data {
     int GPM_keys;
 #endif
 
+    byte *scr_clear;
 #ifdef CONF_HW_TTY_TERMCAP
     byte *cursor_goto, *cursor_on, *cursor_off,
 	*bold_on, *blink_on, *attr_off,
-	*kpad_on, *kpad_off, *scr_clear, *audio_bell,
+	*kpad_on, *kpad_off, *audio_bell,
 	colorbug, wrapglitch;
 #endif
 };
@@ -99,6 +96,12 @@ struct tty_data {
 #define audio_bell	(ttydata->audio_bell)
 #define colorbug	(ttydata->colorbug)
 #define wrapglitch	(ttydata->wrapglitch)
+
+
+/* plain Unix-style tty keyboard input */
+
+/* it can't update FullShiftFlags :( */
+
 
 static void stdin_QuitKeyboard(void);
 static void stdin_KeyboardEvent(int fd, display_hw *hw);
@@ -647,7 +650,7 @@ byte tty_InitHW(void) {
 	    
 	    stdOUT = fopen(arg, "a+"); /* use specified tty */
 	    if (!stdOUT) {
-		fprintf(stderr, "      tty_InitHW(): fopen(tty) failed: %s\n", strerror(errno));
+		fprintf(stderr, "      tty_InitHW(): fopen(\"%s\") failed: %s\n", arg, strerror(errno));
 		if (s) *s++ = ',';
 		return FALSE;
 	    }
@@ -691,7 +694,9 @@ byte tty_InitHW(void) {
 	}
     }
 
+#ifdef HW_TTY_TERMCAP
     colorbug = tc_colorbug;
+#endif
     
     if (!stdOUT) {
 	if (DisplayHWCTTY) {
@@ -723,11 +728,11 @@ byte tty_InitHW(void) {
     if (stdin_InitKeyboard()) {
 	
 	if (
-	    xterm_InitMouse(force_xterm)
 #ifdef CONF_HW_TTY_LINUX
-	    || GPM_InitMouse()
+	    GPM_InitMouse() ||
 #endif
-	    || warn_NoMouse()) {
+	    xterm_InitMouse(force_xterm) ||
+	    warn_NoMouse()) {
 	    
 	    if (
 		FALSE
@@ -767,6 +772,8 @@ byte tty_InitHW(void) {
 		stdin_DetectSize(&HW->usedX, &HW->usedY);
 		HW->usedX = GetDisplayWidth();
 		HW->usedY = GetDisplayHeight();
+		
+		HW->RedrawVideo = FALSE;
 		NeedRedrawVideo(0, 0, HW->X - 1, HW->Y - 1);
 
 		return TRUE;
@@ -784,6 +791,9 @@ byte tty_InitHW(void) {
 
 #ifdef MODULE
 
+#include "version.h"
+MODULEVERSION;
+		       
 byte InitModule(module *Module) {
     Module->Private = tty_InitHW;
     return TRUE;

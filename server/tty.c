@@ -18,11 +18,10 @@
 #include "twin.h"
 #include "data.h"
 #include "methods.h"
-
-#include "main.h"
-#include "remote.h"
-#include "resize.h"
 #include "draw.h"
+#include "resize.h"
+
+#include "remote.h"
 #include "hw.h"
 #include "common.h"
 #include "tty.h"
@@ -166,7 +165,7 @@ static void flush_tty(void) {
     if (*Flags & TTY_NEEDREFOCUS) {
 	*Flags &= ~TTY_NEEDREFOCUS;
 	if (Win == All->FirstScreen->FocusWindow)
-	    KbdFocus(Win);
+	    Act(KbdFocus,Win)(Win);
     }
 }
 
@@ -1240,7 +1239,7 @@ INLINE void write_ctrl(byte c) {
     State = ESnormal;
 }
 
-window *KbdFocus(window *newWin) {
+window *TtyKbdFocus(window *newWin) {
     udat newFlags;
     window *oldWin;
     screen *Screen = newWin ? newWin->Screen : All->FirstScreen;
@@ -1270,22 +1269,20 @@ window *KbdFocus(window *newWin) {
 
 void ForceKbdFocus(void) {
     kbdFlags = ~defaultFlags;
-    (void)KbdFocus(All->FirstScreen->FocusWindow);
+    (void)TtyKbdFocus(All->FirstScreen->FocusWindow);
 }
     
 /* this is the main entry point */
-void WriteAscii(window *Window, uldat Len, byte *AsciiSeq) {
+void TtyWriteAscii(window *Window, uldat Len, CONST byte *AsciiSeq) {
     byte c, ok;
 
     if (!Window || !Len)
 	return;
     
-    /* check that the static all data is correct... */
-    if (Window != Win) {
-	Win = Window;
-	Data = Win->TtyData;
-	Flags = &Data->Flags;
-    }
+    /* initialize global static data */
+    Win = Window;
+    Data = Win->TtyData;
+    Flags = &Data->Flags;
 
     if (!SizeX || !SizeY)
 	return;
@@ -1356,7 +1353,7 @@ void WriteAscii(window *Window, uldat Len, byte *AsciiSeq) {
  * this currently wraps at window width
  * so it can write multiple rows at time
  */
-void WriteHWAttr(window *Window, udat x, udat y, uldat len, hwattr *text) {
+void TtyWriteHWAttr(window *Window, udat x, udat y, uldat len, CONST hwattr *text) {
     uldat left, max, chunk;
     hwattr *dst;
     
@@ -1364,11 +1361,9 @@ void WriteHWAttr(window *Window, udat x, udat y, uldat len, hwattr *text) {
 	/* WINFL_INSERT not supported */
 	return;
 
-    if (Window != Win) {
-	Win = Window;
-	Data = Win->TtyData;
-	Flags = &Data->Flags;
-    }
+    Win = Window;
+    Data = Win->TtyData;
+    Flags = &Data->Flags;
 
     /*
      * on-the-fly Contents resize. This is a failsafe check...

@@ -1,7 +1,7 @@
-#ifndef _TW_SOCK_H
-#define _TW_SOCK_H
+#ifndef _TW_SOCKET_H
+#define _TW_SOCKET_H
 
 byte InitSocket(void);
 void QuitSocket(void);
 
-#endif /* _TW_SOCK_H */
+#endif /* _TW_SOCKET_H */

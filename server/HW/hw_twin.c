@@ -36,13 +36,16 @@ struct tw_data {
 #define Tmsgport	(twdata->Tmsgport)
 
 struct sel_req {
-    uldat Requestor;
+    union {
+	void *R;
+	uldat r;
+    } Requestor;
     uldat ReqPrivate;
 };
 
 static void TW_SelectionRequest_up(uldat Requestor, uldat ReqPrivate);
-static void TW_SelectionNotify_up(uldat ReqPrivate, uldat Magic, byte MIME[MAX_MIMELEN],
-				  uldat Len, byte *Data);
+static void TW_SelectionNotify_up(uldat ReqPrivate, uldat Magic, CONST byte MIME[MAX_MIMELEN],
+				  uldat Len, CONST byte *Data);
 
 static void TW_Beep(void) {
     Tw_WriteAsciiWindow(Td, Twin, 1, "\007");
@@ -297,9 +300,11 @@ static void TW_SelectionRequest_TW(obj *Requestor, uldat ReqPrivate) {
 	/*
 	 * instead of storing (Requestor, ReqPrivate) in some static buffer,
 	 * we exploit the ReqPrivate field of libTw Selection Request/Notify
+	 * 
+	 * FIXME: (uldat)SelReq: libTw uldat are not guaranteed to safely store pointers!
 	 */
 	if (SelReq) {
-	    SelReq->Requestor = (uldat)Requestor;
+	    SelReq->Requestor.R = Requestor;
 	    SelReq->ReqPrivate = ReqPrivate;
 	    Tw_RequestSelection(Td, Tw_GetOwnerSelection(Td), (uldat)SelReq);
 	}
@@ -315,9 +320,11 @@ static void TW_SelectionRequest_up(uldat Requestor, uldat ReqPrivate) {
     /*
      * instead of storing (Requestor, ReqPrivate) in some static buffer,
      * we exploit the ReqPrivate field of libTw Selection Request/Notify
+     * 
+     * FIXME: (uldat)SelReq: libTw uldat are not guaranteed to safely store pointers!
      */
     if (SelReq) {
-	SelReq->Requestor = Requestor;
+	SelReq->Requestor.r = Requestor;
 	SelReq->ReqPrivate = ReqPrivate;
 	TwinSelectionRequest((obj *)HW, (uldat)SelReq, TwinSelectionGetOwner());
     }
@@ -327,12 +334,12 @@ static void TW_SelectionRequest_up(uldat Requestor, uldat ReqPrivate) {
 /*
  * notify our Selection to libTw
  */
-static void TW_SelectionNotify_TW(uldat ReqPrivate, uldat Magic, byte MIME[MAX_MIMELEN],
-				  uldat Len, byte *Data) {
+static void TW_SelectionNotify_TW(uldat ReqPrivate, uldat Magic, CONST byte MIME[MAX_MIMELEN],
+				  uldat Len, CONST byte *Data) {
     struct sel_req *SelReq = (void *)ReqPrivate;
 
     if (SelReq) {
-        Tw_NotifySelection(Td, SelReq->Requestor, SelReq->ReqPrivate, Magic, MIME, Len, Data);
+        Tw_NotifySelection(Td, SelReq->Requestor.r, SelReq->ReqPrivate, Magic, MIME, Len, Data);
 	FreeMem(SelReq);
     }
 }
@@ -340,12 +347,12 @@ static void TW_SelectionNotify_TW(uldat ReqPrivate, uldat Magic, byte MIME[MAX_M
 /*
  * notify the libTw Selection to twin upper layer
  */
-static void TW_SelectionNotify_up(uldat ReqPrivate, uldat Magic, byte MIME[MAX_MIMELEN],
-				  uldat Len, byte *Data) {
+static void TW_SelectionNotify_up(uldat ReqPrivate, uldat Magic, CONST byte MIME[MAX_MIMELEN],
+				  uldat Len, CONST byte *Data) {
     struct sel_req *SelReq = (void *)ReqPrivate;
 
     if (SelReq) {
-        TwinSelectionNotify((void *)SelReq->Requestor, SelReq->ReqPrivate, Magic, MIME, Len, Data);
+        TwinSelectionNotify(SelReq->Requestor.R, SelReq->ReqPrivate, Magic, MIME, Len, Data);
 	FreeMem(SelReq);
     }
 }
@@ -373,8 +380,7 @@ static
 #endif
 byte TW_InitHW(void) {
     byte *arg = HW->Name, *opt = NULL;
-    byte name[] = " twin :??? on twin ";
-    hwcol namecol[] = " twin :??? on twin ";
+    byte name[] = "twin :??? on twin";
     uldat len;
     tmenu Tmenu;
     tscreen Tscreen;
@@ -439,13 +445,11 @@ byte TW_InitHW(void) {
 	    
 	    Tw_Info4Menu(Td, Tmenu, TW_ROW_ACTIVE, (uldat)14, " Twin on Twin ", "ptppppppptpppp");
 	      
-	    strcpy(name+6, TWDisplay);
-	    strcat(name+6, " on twin ");
+	    sprintf(name+5, "%s on twin", TWDisplay);
 	    len = strlen(name);
-	    memset(namecol, '\x9F', len);
 	    
 	    Twin = Tw_CreateWindow
-		(Td, strlen(name), name, namecol, Tmenu, COL(WHITE,BLACK), LINECURSOR,
+		(Td, strlen(name), name, NULL, Tmenu, COL(WHITE,BLACK), LINECURSOR,
 		 WINDOW_WANT_KEYS|WINDOW_WANT_MOUSE|WINDOW_WANT_CHANGE|WINDOW_DRAG|WINDOW_RESIZE|WINDOW_CLOSE,
 		 WINFL_USECONTENTS|WINFL_CURSOR_ON,
 		 2 + (HW->X = GetDisplayWidth()), 2 + (HW->Y = GetDisplayHeight()), (uldat)0);
@@ -520,6 +524,7 @@ byte TW_InitHW(void) {
 	     * without forcing all other displays
 	     * to redraw everything too.
 	     */
+	    HW->RedrawVideo = FALSE;
 	    NeedRedrawVideo(0, 0, HW->X - 1, HW->Y - 1);
 	    
 	    if (opt) *opt = ',';
@@ -542,6 +547,9 @@ byte TW_InitHW(void) {
 
 #ifdef MODULE
 
+#include "version.h"
+MODULEVERSION;
+		       
 byte InitModule(module *Module) {
     Module->Private = TW_InitHW;
     return TRUE;

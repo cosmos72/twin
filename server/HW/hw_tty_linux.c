@@ -104,7 +104,10 @@ static byte GPM_InitMouse(void) {
 }
 
 static void GPM_QuitMouse(void) {
+    /* we cannot be sure that some InitVideo() initialized HW->HideMouse */
+#if 0
     HW->HideMouse();
+#endif
     Gpm_Close();
 
     UnRegisterRemote(HW->mouse_slot);
@@ -116,6 +119,7 @@ static void GPM_QuitMouse(void) {
 }
 
 static void GPM_MouseEvent(int fd, display_hw *hw) {
+    int left;
     udat IdButtons, Buttons = 0;
     Gpm_Event GPM_EV;
     
@@ -130,9 +134,9 @@ static void GPM_MouseEvent(int fd, display_hw *hw) {
     
     SetHW(hw);
     
-    while (loopN--) {
+    do {
 	if (Gpm_GetEvent(&GPM_EV) <= 0) {
-	    if (loopN == 29)
+	    if (loopN == 30)
 		HW->NeedHW |= NEEDPanicHW, NeedHW |= NEEDPanicHW;
 	    return;
 	}
@@ -164,7 +168,9 @@ static void GPM_MouseEvent(int fd, display_hw *hw) {
 	    Buttons |= HOLD_RIGHT;
 	
 	MouseEventCommon(GPM_EV.x, GPM_EV.y, GPM_EV.dx, GPM_EV.dy, Buttons);
-    }
+	
+    } while (loopN-- && ioctl(GPM_fd, FIONREAD, &left) >= 0 && left > 0);
+    
     RestoreHW;
 }
 
@@ -234,7 +240,8 @@ static byte vcsa_InitVideo(void) {
     }
     fcntl(VcsaFd, F_SETFD, FD_CLOEXEC);
     
-    fputs("\033[2J", stdOUT); /* clear screen */
+    scr_clear = "\033[2J";
+    fputs(scr_clear, stdOUT); /* clear screen */
     fflush(stdOUT);
     
     HW->FlushVideo = vcsa_FlushVideo;
@@ -474,8 +481,9 @@ static byte linux_InitVideo(void) {
 	return FALSE;
     }
     
-    fputs("\033[0;11m\033[2J\033[3h", stdOUT); /* clear colors, clear screen, */
-					       /* set IBMPC consolemap, set TTY_DISPCTRL */
+    scr_clear = "\033[2J";
+    fprintf(stdOUT, "\033[0;11m%s\033[3h", scr_clear);
+    /* clear colors, temporary escape to IBMPC consolemap, clear screen, set TTY_DISPCTRL */
     
     HW->FlushVideo = linux_FlushVideo;
     HW->FlushHW = stdout_FlushHW;
@@ -518,7 +526,8 @@ static byte linux_InitVideo(void) {
 static void linux_QuitVideo(void) {
     linux_MoveToXY(0, ScreenHeight-1);
     linux_SetCursorType(LINECURSOR);
-    fputs("\033[0;10m\033[3l\n", stdOUT); /* restore original colors, consolemap and TTY_DISPCTRL */
+    fputs("\033[0;10m\033[3l\n", stdOUT);
+    /* restore original colors, consolemap and TTY_DISPCTRL */
     
     HW->QuitVideo = NoOp;
 }
@@ -693,7 +702,8 @@ static void linux_FlushVideo(void) {
     }
 
     linux_MogrifyInit();
-    linux_MogrifyNoCursor();
+    if (HW->TT != NOCURSOR)
+	linux_MogrifyNoCursor();
     for (i=0; i<ScreenHeight*2; i++) {
 	start = ChangedVideo[i>>1][i&1][0];
 	end   = ChangedVideo[i>>1][i&1][1];
@@ -702,7 +712,8 @@ static void linux_FlushVideo(void) {
 	    linux_Mogrify(start, i>>1, end-start+1);
     }
     /* put the cursor back in place */
-    linux_MogrifyYesCursor();
+    if (HW->TT != NOCURSOR)
+	linux_MogrifyYesCursor();
     
     HW->XY[0] = HW->XY[1] = -1;
     

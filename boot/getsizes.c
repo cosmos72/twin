@@ -19,23 +19,13 @@
 #endif
 
 int main(void) {
-    if (sizeof(uldat) < sizeof(void *)) {
-	fprintf(stderr, "getsizes: FATAL: type `uldat' (%dbits) is smaller than `void *' (%dbits)\n"
-		"\tYou should edit include/twin.h and include/libTw.h\n"
-		"\tand use a bigger type for `uldat' and `ldat',\n"
-		"\tfor example `[unsigned] long' or `[unsigned] long long'.\n"
-		"\n"
-		"\tABORTING.\n", sizeof(uldat)*8, sizeof(void *)*8);
-	return 1;
-    }
+    byte endian_str[sizeof(int)] = "\1\2\3\4";
+    
     printf("#ifndef _TW_SIZES_H\n"
 	   "#define _TW_SIZES_H\n"
 	   "\n"
-	   "#define _SIZEOFNUM	%d\n"
 	   "#define _SIZEOFBYTE	%d\n"
-	   "#define _SIZEOFDAT	%d\n"
 	   "#define _SIZEOFUDAT	%d\n"
-	   "#define _SIZEOFLDAT	%d\n"
 	   "#define _SIZEOFULDAT	%d\n"
 	   "#define _SIZEOFTIME_T	%d\n"
 	   "#define _SIZEOFFRAC_T	%d\n"
@@ -58,14 +48,12 @@ int main(void) {
 	   "\n"
 	   "#define BLOCK_SIZE	%d\n"
 	   "\n"
-	   "#define TW_BYTE_ORDER	%d\n"
+	   "#define TW_BYTE_ORDER	%s\n"
 	   "#define TW_LITTLE_ENDIAN	1234\n"
 	   "#define TW_BIG_ENDIAN	4321\n"
 	   "\n"
 	   "#endif /* _TW_SIZES_H */\n",
-	   sizeof(num), sizeof(byte),
-	   sizeof(dat), sizeof(udat),
-	   sizeof(ldat),sizeof(uldat),
+	   sizeof(byte), sizeof(udat), sizeof(uldat),
 	   sizeof(time_t), sizeof(frac_t),
 	   sizeof(void *),
 	   (int)MAXNUM, (int)MAXBYTE,
@@ -75,7 +63,7 @@ int main(void) {
 	   (int)(byte)MINNUM, (int)(udat)MINDAT, (long)(uldat)MINLDAT,
 	   (long)(unsigned long)MINTIME_T, (long)(unsigned long)MINFRAC_T,
 	   (int)PAGE_SIZE,
-	   *(int *)"\1\2\3\4" == 0x04030201 ? 1234 : 4321
+	   *(int *)endian_str == 0x04030201 ? "1234" : "4321"
 	   );
     return 0;
 }

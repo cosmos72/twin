@@ -8,7 +8,6 @@ DESTDIR=/usr/local
 # choose your favorite compiler
 CC=gcc
 
-#
 # Uncomment this to turn debugging on
 # DEBUG:=1
 
@@ -16,11 +15,25 @@ CC=gcc
 # compile/link flags. Always use += to set variables here!
 #
 ifdef DEBUG
- CFLAGS+=-g -DINLINE=static -pipe -Wall -Wshadow -Wno-uninitialized
+ CFLAGS+=-g -DINLINE=static -pipe
  LDFLAGS+=-g
 else
- CFLAGS+=-O2 -fomit-frame-pointer -DINLINE="extern inline" -pipe -Wall -Wshadow -Wno-uninitialized
+ CFLAGS+=-O2 -fomit-frame-pointer -DINLINE="extern inline" -pipe
  LDFLAGS+=-s
+endif
+
+#
+# how picky should your compiler be? uncomment for paranoid gcc settings.
+# PARANOID_GCC:=1
+
+#
+# apply known-good GCC compiler flags.
+#
+ifeq ($(CC),gcc)
+  CFLAGS+=-Wall -Wshadow -Wno-uninitialized
+  ifdef PARANOID_GCC
+    CFLAGS+=-Wstrict-prototypes -Wcast-qual -Wcast-align -Wpointer-arith -Wbad-function-cast -Waggregate-return -Winline
+  endif
 endif
 
 
@@ -57,8 +70,7 @@ ECHO=echo -e
 # --------------- no user-serviceable parts below this line ----------------
 #
 
-
-TW_VERSION=0.3.4
+TW_VERSION=0.3.5
 
 CFLAGS+=-I$(TOPDIR)/include
 
@@ -66,12 +78,38 @@ MODFLAGS+=-DMODULE
 
 CONF:=$(TOPDIR)/conf/config.status
 
-BASH:=$(shell if [ -x "$$BASH" ]; then echo $$BASH; \
-       else if [ -x /bin/bash ]; then echo /bin/bash; \
+LIBTW:=-L$(TOPDIR)/lib -lTw
+ifeq ($(CONF__SHLIBS),n)
+  ifeq ($(CONF_SOCKET_GZ),y)
+    LIBTW+=-lz
+  endif
+endif
+
+BASH:=$(shell if [ -x /bin/bash ]; then echo /bin/bash; \
        else if bash -c : 2>/dev/null; then echo bash; \
+       else if [ -x "$$BASH" ]; then echo $$BASH; \
        else echo sh; fi; fi; fi)
 
 BASH_VERSION:=$(word 1,$(subst ., ,$(shell $(BASH) -c "echo \$$BASH_VERSION")))
+
+config $(CONF):
+	@echo Starting configure for twin $(TW_VERSION) ... ; \
+	echo
+	cd $(TOPDIR) ; \
+	$(BASH) scripts/Configure
+
+menuconf menuconfig:
+	@echo Starting menu-dialog configure for twin $(TW_VERSION) ... ; \
+	echo
+	cd $(TOPDIR) ; \
+	$(BASH) scripts/Configure.dialog
+
+reconfig: config all
+
+
+nullconfig:
+	cd $(TOPDIR) ; \
+	$(BASH) scripts/Configure < /dev/null > /dev/null
 
 # collect together in $(OBJS) all objs from $(BINS) looking in $(OBJS_xxx)
 OBJS:=$(foreach B,$(BINS),$(OBJS_$(B)))
@@ -94,17 +132,18 @@ _ALLOBJS:=$(strip $(OBJS) $(MODOBJS) $(ARLIBOBJS) $(EXCL_OBJS))
 _ALLSRCS:=$(strip $(subst .o,.c,$(filter %.o,$(_ALLOBJS))))
 
 .modules: Makefile $(TOPDIR)/MakeRules $(CONF)
-	@$(ECHO) -n Building .modules...
-	@$(ECHO) " $(_ALLFLAGS)" > .modules
-	@$(ECHO) " $(foreach B,$(BINS) $(MODBINS),$(B): .$(B).link\n .$(B).link: $(OBJS_$(B))\n)" >> .modules
-	@$(ECHO) " $(foreach B,$(ARLIBS),$(B): .$(B).arlib\n .$(B).arlib: $(OBJS_$(B))\n)" >> .modules
-	@$(ECHO) done
+	@$(ECHO) -n Building .modules... ; \
+	 $(ECHO) " $(_ALLFLAGS)" > .modules ; \
+	 $(ECHO) " $(foreach B,$(BINS) $(MODBINS),$(B): .$(B).link\n .$(B).link: $(OBJS_$(B))\n)" >> .modules ; \
+	 $(ECHO) " $(foreach B,$(ARLIBS),$(B): .$(B).arlib\n .$(B).arlib: $(OBJS_$(B))\n)" >> .modules ; \
+	 $(ECHO) done
+
+.depend: Makefile $(TOPDIR)/MakeRules $(TOPDIR)/scripts/MkDep $(_ALLSRCS)
+	$(BASH) $(TOPDIR)/scripts/MkDep $(TOPDIR) $(filter -I%,$(CFLAGS)) -- $(_ALLSRCS) > .depend
 
 $(TOPDIR)/scripts/MkDep:
 	$(LN) MkDep$(BASH_VERSION) $(TOPDIR)/scripts/MkDep
 
-.depend: Makefile $(TOPDIR)/MakeRules $(TOPDIR)/scripts/MkDep $(_ALLSRCS)
-	$(BASH) $(TOPDIR)/scripts/MkDep $(TOPDIR) $(filter -I%,$(CFLAGS)) -- $(_ALLSRCS) > .depend
 
 %.dir:
 	$(MAKE) -C $*
@@ -129,20 +168,20 @@ $(TOPDIR)/scripts/MkDep:
 #
 .%.link:
 	$(CC) -o $* $(OBJS_$*) $(LDFLAGS) $(LDFLAGS_$*)
-	@$(LN) $* $@
-	@$(ECHO) ' ifeq ($$(strip $$(CC) $$(OBJS_$*) $$(LDFLAGS) $$(LDFLAGS_$*)),$(strip $(CC) $(OBJS_$*) $(LDFLAGS) $(LDFLAGS_$*)))\n'\
-	'FILES_UP_TO_DATE += $@\n'\
-	'endif' > $@.flags
+	@$(LN) $* $@ ; \
+	 $(ECHO) ' ifeq ($$(strip $$(CC) $$(OBJS_$*) $$(LDFLAGS) $$(LDFLAGS_$*)),$(strip $(CC) $(OBJS_$*) $(LDFLAGS) $(LDFLAGS_$*)))\n'\
+	 'FILES_UP_TO_DATE += $@\n'\
+	 'endif' > $@.flags
 
 #
 # same with `ar' archives
 #
 .%.arlib:
 	rm -f $* && $(AR) cr $* $(OBJS_$*)
-	@$(LN) $* $@
-	@$(ECHO) ' ifeq ($$(strip $$(ARLIB) $$(OBJS_$*)),$(strip $(ARLIB) $(OBJS_$*)))\n'\
-	'FILES_UP_TO_DATE += $@\n'\
-	'endif' > $@.flags
+	@$(LN) $* $@ ; \
+	 $(ECHO) ' ifeq ($$(strip $$(ARLIB) $$(OBJS_$*)),$(strip $(ARLIB) $(OBJS_$*)))\n'\
+	 'FILES_UP_TO_DATE += $@\n'\
+	 'endif' > $@.flags
 
 
 # forbid GNU-make to `rm -f $(OBJS) $(MODOBJS) $(ARLIBOBJS)' after build

@@ -1,24 +1,51 @@
-twrun : contact "twin term" Message Port and tell it to start a command
+BUGS:
+
+Button 10 -> set Corner shape
+
+X11: cleanup NumLock (argh)
+
+DECIDE:
+
+GPM: some limited cut-n-paste?
+
+TODO:
+
+contrib/ tree
+look at tvision widgets and methods
+security statement on sockets:
+   The authorization method currently used is similar to Xauthority:
+   the file .TwinAuth in your home directory holds some magic data that
+   clients use to answer the challenge received from twin. If that data
+   is wrong or the file doesn't exist, clients can connect to twin only
+   using the unix socket (TWDISPLAY=:<something>) so they must run
+   on the same machine as twin; remote programs won't be able to connect.
+		  
+   Also, the unix socket is set to permissions 600, so only the owner can connect
+   to it (at least on Linux it works this way). The 'challenge' is actually an MD5
+   check: server sends 256 bytes of random data; client does MD5 of that data +
+   .TwinAuth and sends MD5 back. If server agrees on MD5, it grants connection.
+
 Menu: CLI: run a command (eventually inside a terminal)
-cleanup keycode recognition : [NumLock +] keypad
 unhide menu when unfocusing all windows? (then hide again when focusing a window)
-.twinrc with runtime configurable WM+window buttons / options / display+options
-.twinrc with 'initial keystrokes'
-keyboard hotkeys for gadget selection and screen scroll/resize
-info on menubar: time / memory / load, size of window during resize
+option to limit new windows INITIAL size to screen size
+*Hilight(): use swapped fg/bg for hilight.
+tty.c: xterm escape sequence to set window title; hook to update window list
+keyboard hotkeys for gadget selection and screen scroll
+?info on menubar: time / memory / load, size of window during resize
 WINFL_BYUSER windows -> not this way: use shared menory.
-cleanup overflows with shadows at window [xy]width = almost max, move arithmetic to [ul]dat
 screensaver
-finish libGGI keyboard support
 wtmp logging
 docs (gmanedit?)
+-cleanup overflows with shadows at window [xy]width = almost max, move arithmetic to [ul]dat
+-finish libGGI keyboard support
 
-runtime swap L-M-R mouse buttons
+twrun : contact "twin term" Message Port and tell it to start a command
 twcalc - calculator
 twclip - show clipboard / multiple clipboards / cut-n-paste from it
 port to other platforms (*BSD, ... Also, twdisplay on win32)
 twbiff
--geometry option to tw* clients
-CTRL-` or CTRL-2 or CTRL-@ (all ASCII 0) as hotkey?
+?-geometry option to tw* clients
 twdialog
+
+
 

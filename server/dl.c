@@ -16,27 +16,27 @@
 #include "methods.h"
 #include "data.h"
 #include "util.h"
-
 #include "dl.h"
+#include "version.h"
 
-#ifdef CONF_DESTDIR
-# define TWIN_MODULE_DIR CONF_DESTDIR "/lib/twin/modules/"
-#else
-# define TWIN_MODULE_DIR "./"
-#endif
-
-static byte *twindir = TWIN_MODULE_DIR;
+static void WrongVer(uldat ver) {
+    static byte buf[80];
+    sprintf(buf, "version mismatch: module is %d.%d.%d, this twin is " TWIN_VERSION_STR,
+	    TWVER_MAJOR(ver), TWVER_MINOR(ver), TWVER_PATCH(ver));
+    ErrStr = buf;
+}
 
 byte DlOpen(module *Module) {
     void *Handle = NULL;
-    uldat len0 = LenStr(twindir), len;
+    uldat len0 = LenStr(conf_destdir_lib_twin_modules_), len;
     byte *name;
     byte (*init_dl)(module *);
+    uldat *version_dl;
     
     if (Module && !Module->Handle && Module->Name &&
 	(len = len0 + Module->NameLen, name = AllocMem(len+1))) {
 	
-	CopyMem(twindir, name, len0);
+	CopyMem(conf_destdir_lib_twin_modules_, name, len0);
 	CopyMem(Module->Name, name+len0, Module->NameLen);
 	name[len] = '\0';
 	Handle = dlopen(name, RTLD_NOW|RTLD_GLOBAL);
@@ -47,11 +47,17 @@ byte DlOpen(module *Module) {
 	ErrStr = dlerror();
 	return FALSE;
     }
-    
-    init_dl = dlsym(Handle, "InitModule");
-    if (!init_dl || init_dl(Module)) {
-	Module->Handle = Handle;
-	return TRUE;
+
+    version_dl = dlsym(Handle, "VersionModule");
+    if (version_dl && *version_dl == TWIN_VERSION) {
+	init_dl = dlsym(Handle, "InitModule");
+	if (!init_dl || init_dl(Module)) {
+	    Module->Handle = Handle;
+	    return TRUE;
+	}
+    } else {
+	Error(USERERROR);
+	WrongVer(version_dl ? *version_dl : 0);
     }
     dlclose(Handle);
     return FALSE;
@@ -89,28 +95,26 @@ module *DlLoadAny(uldat len, byte *name) {
 static module *So[MAX_So];
 
 module *DlLoad(uldat code) {
+    module *M;
     if (code < MAX_So) {
-	if (!So[code]) switch (code) {
+	if (!(M = So[code])) switch (code) {
+	  case MainSo:    M = DlLoadAny(0, ""); break;
 #ifndef CONF_WM
-	  case WMSo:
-	    return So[code] = DlLoadAny(5, "wm.so");
+	  case WMSo:      M = DlLoadAny(5, "wm.so"); break;
 #endif
 #ifndef CONF_TERM
-	  case TermSo:
-	    return So[code] = DlLoadAny(7, "term.so");
+	  case TermSo:    M = DlLoadAny(7, "term.so"); break;
 #endif
 #ifndef CONF_SOCKET
-	  case SocketSo:
-	    return So[code] = DlLoadAny(9, "socket.so");
+	  case SocketSo:  M = DlLoadAny(9, "socket.so"); break;
 #endif
-	  default:
-	    if (!So[MainSo])
-		So[MainSo] = Do(Create,Module)(FnModule, 0, "");
-	    return So[MainSo];
+#ifndef CONF_WM_RC
+	  case RCParseSo: M = DlLoadAny(10, "rcparse.so"); break;
+#endif
+	  default:        break;
 	}
-	return So[code];
     }
-    return (module *)0;
+    return So[code] = M;
 }
 
 void DlUnLoad(uldat code) {

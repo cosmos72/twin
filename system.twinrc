@@ -1,0 +1,470 @@
+#
+# This file contains the configuration for twin look-n-feel.
+# By default, it is installed as ${DESTDIR}/twin/system.twinrc
+# and, provided twin is compiled with RC parser support,
+# it is used as fallback configuration in case the user does not
+# have his own ${HOME}/.twinrc
+#
+# to customize twin user interface, just copy this file in your
+# home directory as `.twinrc' and edit it to your tastes.
+#
+
+# file syntax:
+# 
+# a sharp sign '#' at the beginning of a line means the line
+# is a comment (you are already reading such a comment!)
+#
+# Many different commands are recognized, and are listed below.
+# A quick summary of all keywords can be found at the end of this file.
+
+# First command:
+#
+# set screen background (UNFINISHED)
+Background 1 High Black On Blue (
+   "\xb1"
+)
+# the screen `1' is created by twin at startup,
+# so we do not need to `AddScreen 1',
+# and `High Black On Blue' means `high intensity black' (i.e. gray) foreground
+# on `blue' background.
+#
+# the complete list of colors is:
+# Black Blue Green Cyan Red Magenta Yellow White
+#
+# and `High' can be applied both to foreground and background.
+# depending on the display you use, `High' background may actually blink.
+#
+# the strings inside ( ) are just the screen background,
+# each string representing a line.
+#
+# every time you must write a string, you can use hexadecimal codes like "\xb1"
+# or octal codes like "\261", and double quotes surrounding the string
+# are only needed to protect special characters (i.e. parentheses,
+# non-ASCII chars, etc.). Sequences like "\?" where ? is a character
+# have the same meaning as in C language:
+# "\"" is a string containing a double quote,
+# "\n" is a newline, and so on.
+
+
+#
+# create the common part of all menus
+#
+# you need quotes to protect reserved names
+# or strings containing non-alphanumerical chars.
+# again, parenthesis '(' and ')' are used to group together a list
+#
+# this creates the menuitem " Window ", shared by all applications,
+# with the contents you see below.
+#
+# the command `Nop' is a do-nothing command used to insert a linebreak.
+# `_Next' is a user function (all other ones are predefined by twin) and
+# is defined below.
+#
+AddToMenu " Window " (
+   " Move "        Interactive Move
+   " Resize "      Interactive Resize
+   " Scroll "      Interactive Scroll
+   " Center "      Center
+   " Maximize "    Maximize
+   " Full Screen " FullScreen
+   " Roll Up "     Roll Toggle
+   ""              Nop
+   " Raise/Lower " RaiseLower
+   " UnFocus "     Focus Off
+   " Next "        _Next
+   " List... "     WindowList
+   ""              Nop
+   " Refresh "     Refresh
+   " Send Hotkey " SyntheticKey Pause
+   ""              Nop
+   " Close "       Close
+   ""              Nop
+   " Kill Client " Kill
+)
+
+#
+# define the user function `_Next'
+# group commands in '(' ')' and put either a newline or a ';'
+# after each command. `Window 1' means first window.
+#
+AddToFunc _Next ( Lower; Window 1; Focus; )
+
+# this would be exactly the same:
+#
+# AddToFunc _Next (
+#   Lower
+#   Window 1
+#   Focus
+# )
+#
+# or you can even split the function definition:
+#
+# AddToFunc _Next ( Lower; Window 1; )
+# AddToFunc _Next ( Focus; )
+#
+
+
+#
+# These are not needed... and they override
+# the borders defined by Alternate Font
+#
+# Border "*" Inactive (
+#   "⁄ƒø"
+#   "≥ ≥"
+#   "¿ƒŸ"
+# )
+#
+# Border "*" Active (
+#    "…Õª"
+#    "∫ ∫"
+#    "»Õº"
+# )
+#
+# But maybe you feel funky and want different borders
+# for different windows:
+#
+# Border "*Term*" Inactive (
+#    " ﬂ "
+#    "› ﬁ"
+#    " ‹ "
+# )
+#
+# Border "Clock" Active (
+#    "   "
+#    "   "
+#    "   "
+# )
+#
+# Border "Tw*" Active (
+#    "÷Õ∑"
+#    "≥ ≥"
+#    "”ÕΩ"
+# )
+#
+# menu windows have no name... and are always considered Inactive
+#
+# Border "" Inactive (
+#   "€ﬂ€"
+#   "€ €"
+#   "€‹€"
+# )
+
+
+
+#
+# create the buttons on window top border.
+# allowed buttons range from 0 to 9.
+# 
+# syntax:
+# Button <number> "shape" {Left|Right} [[+|-]<position>]
+# 
+# creates button <number> with given "shape", either on Left or Right
+# of window title. Optionally, you can control where exactly to place it:
+#
+# `Left +<n>' or `Right +<n>' leaves <n> free spaces between this button
+# and the last one on the same side.
+#
+# `Left <n>' or `Right <n>' specifies exact distance between button and
+# window Left (Right) edge.
+#
+# `Left -<n>' or `Right -<n>' says to place the button <n> characters nearer
+# to the border than just `Left' or `Right', possibly intersecting
+# other buttons.
+
+#
+# WARNING: Button 0 must ALWAYS be the close button...
+#
+Button 0 "[]" Left
+Button 1 "\x12\x12" Right
+Button 2 "><" Right
+#
+# a maximize/fullscreen button. feel free to uncomment :-)
+# Button 3 "+-" Right +1
+
+
+#
+# override the Options specified at compile time
+#
+# set shadows to 3x2 and enable them
+GlobalFlags Shadows 3 2 +Shadows
+#
+# enable blink/high background
+GlobalFlags +Blink
+#
+# do not force cursor always visible
+GlobalFlags -AlwaysCursor
+#
+# disable edge screen scrolling
+GlobalFlags -EdgeScroll
+#
+# do not hide the menu
+GlobalFlags -HideMenu
+#
+# enable menu information row
+GlobalFlags +MenuInfo
+#
+# do not use alternate font
+GlobalFlags -AltFont 
+#
+# choose the mouse button used for click-to-focus,
+# for text selection and to activate window gadgets.
+# 1 means Left, 2 means Middle, 3 means Right.
+#
+GlobalFlags SelectionButton 1
+#
+# choose the mouse button used to paste text selection
+#
+GlobalFlags PasteButton 2
+
+#
+# keyboard and mouse binding syntax:
+#
+# Key <name> <function>
+#
+# Mouse <buttons-list> <context> <function>
+#
+#
+# context is a string consisting of one or more of the following:
+#  0..9 corresponding button in window title
+#  C    window resize corner
+#  T    window title bar
+#  S    window sides
+#  B    window scroll bars
+#  W    one of T,S,B (i.e. window border except buttons)
+#  I    window inside
+#  M    menu
+#  R    root (screen background)
+#  A    any of the above
+#
+
+# Pause pops up the menu
+Key  Pause   Interactive Menu
+
+#
+# mouse bindings: left click on button 0 graciously closes the window
+#
+Mouse   1   0  Close
+
+# this is subtle: doing
+#   Mouse  H1   0  Close
+# instead of
+#   Mouse   1   0  Close
+# would close the window when you PRESS mouse left button on window close button,
+# NOT when you CLICK (i.e. PRESS, then RELEASE) on it!
+#
+# (note: `H' means `hold'. there is also `C' which means `click',
+# but it's the default and can be omitted, unless you want you want to use
+# them together, meaning to execute on PRESS and again on CLICK,
+# by specifying `HC' )
+#
+
+# any mouse click on button 1 does RaiseLower
+Mouse 123  1  RaiseLower
+
+# any mouse click on button 2 does Roll / UnRoll
+Mouse 123  2  Roll Toggle
+
+# these are do-nothing if Button 3 above is commented out
+#
+# mouse left click on button 3 does Maximize
+Mouse  1   3  Maximize
+# mouse middle click on button 3 does FullScreen
+Mouse  2   3  FullScreen
+
+# holding mouse left button on window title or sides does interactive move
+Mouse H1  TS  Interactive Move
+
+# mouse left on window resize corner does interactive resize
+# mouse-based window resize works "as expected" only on window resize corner
+# (try yourself to bind some window button to Interactive Resize and see...)
+#
+Mouse H1   C  Interactive Resize
+
+# mouse left on window bars does interactive scroll
+# unluckily, mouse-based window scrolling works properly ONLY
+# on window bars...
+#
+Mouse H1  B  Interactive Scroll
+
+# mouse left on root unfocuses currently focused window
+# 
+# you can create functions as complex as you like and use them
+# just like built-in functions...
+AddToFunc _UnFocus ( Window 0; Focus Off; )
+Mouse H1  R _UnFocus
+
+# middle button on root opens window list
+Mouse H2  R  WindowList
+
+# Choose your favorite setup... for twin-classic menus, which appear only
+# after you press right mouse button, use this:
+#
+GlobalFlags +MenuInfo
+# right button always opens the menu
+Mouse H3  A  Interactive Menu
+# mouse left on menu-bar does screen resize
+Mouse H1  M  Interactive Screen
+
+
+# # Otherwise you can use turbovision style menus:
+# # they always stay visible and are selected with left button
+# # _on_menu_bar_
+# #
+# GlobalFlags -MenuInfo
+# # left button on menu-bar opens the menu
+# Mouse H1  M  Interactive Menu
+# # in this case, use mouse right button on menu-bar for screen resize
+# Mouse H3  M  Interactive Screen
+
+# # Or better yet, create your personal style!
+# #
+
+
+# now you may want some initial client...
+# uncomment to pop-up a terminal and maximize it.
+# `;' is the same as a return...
+#
+# ExecTty "" ; Wait "Twin Term" ; Maximize
+
+#
+# list of all RC commands available for ~/.twinrc
+# 
+# AddScreen <screen name>
+# (UNFINISHED)
+# 
+# AddToMenu <name> (
+#   "entry" <function>
+#   ...
+# )
+# add entries to the common part of all menus
+#
+#
+# AddToFunc <name> (
+#   <function>
+#   ...
+# )
+#
+# Background <screen> <color> (
+#   "string"
+#   ... 
+# )
+# # set screen background (UNFINISHED)
+# 
+# Beep
+# 
+# Border <wildcard-pattern> {Active|Inactive} (
+#   "…Õª"
+#   "∫ ∫"
+#   "»Õº"
+# )
+#
+# Button <n> "<shape>" [+|-[<numeric pos>|Left|Right]]
+# 
+# Center
+# # center window
+# 
+# Close
+# politely ask the client to close the window
+# 
+# DeleteFunc <name>
+# 
+# DeleteMenu <name>
+# 
+# DeleteButton <number>
+# 
+# DeleteScreen <screen>
+# 
+# Exec <shell command>
+# 
+# ExecTty <shell command>
+# 
+# Focus [On|Off|Toggle]
+# 
+# GlobalFlags [+|-][AltFont] [+|-][AlwaysCursor] [+|-][Blink] [+|-][EdgeScroll] [+|-][HideMenu] [+|-]MenuItems [+|-][Shadows <x> <y>]
+# 
+# Interactive <kind>
+# # Scroll, Move, Resize, Screen, Menu
+# 
+# Key <keyname> <context> <function>
+# 
+# Kill
+# brutally kill the client's connection
+# 
+# Lower
+# 
+# Maximize
+# 
+# FullScreen
+# 
+# Menu
+# # pop-up the menu of the currently focused window
+# 
+# Mouse <button> <where> <function>
+# 
+# Move [+|-]<x> [+|-]<y>
+# # move window
+# 
+# MoveScreen [+|-]<x> [+|-]<y>
+# # move screen
+# 
+# Next
+# # same as Window +1
+# 
+# Nop
+# # do-nothing; used in a menu inserts a linebreak
+# 
+# Prev
+# # same as Window -1
+# 
+# Quit
+# unconditionally quit twin!
+# 
+# Read <file>
+# open another file and parse it, then continue with current file
+# (like #include in C files)
+# 
+# Refresh
+# redraw all displays
+# 
+# Restart ""|<window manager name>
+# restart the WM or load another window manager
+# 
+# Resize [+|-]<x> [+|-]<y>
+# # resize window
+# 
+# ResizeScreen [+|-]<x> [+|-]<y>
+# 
+# Raise
+# 
+# RaiseLower
+# raise-and-focus or lower-and-unfocus
+# 
+# Roll [On|Off|Toggle]
+# 
+# Scroll [+|-]<x> [+|-]<y>
+# # scrolls window contents
+# 
+# SendToScreen <screen>
+# # sends window to given screen
+# 
+# Sleep <n>
+#
+# Stderr <string> ...
+# send message to stderr
+# 
+# Wait <window name>
+# wait for specified window to be mapped
+# 
+# Window {[+|-]<n>|<window name>}
+# # sets default window to operate on
+# # Window <n> :
+# # n = 0 : re-get current focused window
+# # n > 0 : 1 = First Window, 2 = Second, etc.
+# #
+# # Window {+|-}<n> :
+# # n = 0 : no-op
+# # n < 0 : -1 : Prev Window, -2 Prev Prev, etc.
+# # n > 0 : +1 : Next Window, +2 Next Next, etc.
+# 
+# WindowList
+#

@@ -33,7 +33,6 @@
 
 #include "twin.h"
 #include "hw.h"
-#include "hw_private.h"
 #include "common.h"
 
 #ifndef VDISABLE
@@ -78,6 +77,18 @@ static void SignalChild(int n) {
     signal(SIGCHLD, SignalChild);
 }
 
+/*
+ * got a SIGHUP. shutdown the display on controlling tty, if any
+ */
+static void SignalHangup(int n) {
+    if (DisplayHWCTTY && DisplayHWCTTY != HWCTTY_DETACHED
+	&& DisplayHWCTTY->DisplayIsCTTY) {
+	
+	DisplayHWCTTY->NeedHW |= NEEDPanicHW, NeedHW |= NEEDPanicHW;
+    }
+    signal(SIGHUP, SignalHangup);
+}
+
 #ifndef DONT_TRAP_SIGNALS
 static void SignalPanic(int n) {
     sigset_t s, t;
@@ -100,7 +111,7 @@ byte InitSignals(void) {
     signal(SIGPIPE, SIG_IGN);
     signal(SIGIO,   SIG_IGN);
 #ifndef DONT_TRAP_SIGNALS
-    signal(SIGHUP,  SignalPanic);
+    signal(SIGHUP,  SignalHangup);
     signal(SIGINT,  SignalPanic);
     signal(SIGQUIT, SignalPanic);
     signal(SIGILL,  SignalPanic);
@@ -118,7 +129,28 @@ byte InitSignals(void) {
     return TRUE;
 }
 
-
+void QuitSignals(void) {
+    signal(SIGWINCH,SIG_IGN);
+    signal(SIGCHLD, SIG_IGN);
+    signal(SIGPIPE, SIG_IGN);
+    signal(SIGIO,   SIG_IGN);
+#ifndef DONT_TRAP_SIGNALS
+    signal(SIGHUP,  SIG_DFL);
+    signal(SIGINT,  SIG_DFL);
+    signal(SIGQUIT, SIG_DFL);
+    signal(SIGILL,  SIG_DFL);
+    signal(SIGABRT, SIG_DFL);
+    signal(SIGBUS,  SIG_DFL);
+    signal(SIGFPE,  SIG_DFL);
+    signal(SIGSEGV, SIG_DFL);
+    signal(SIGTERM, SIG_DFL);
+    signal(SIGXCPU, SIG_DFL);
+    signal(SIGXFSZ, SIG_DFL);
+# ifdef SIGPWR
+    signal(SIGPWR,  SIG_DFL);
+# endif
+#endif
+}
 
 void MoveToXY(udat x, udat y) {
     CursorX = x;
@@ -327,14 +359,14 @@ void DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
     if (DstUp <= Up) {
 	src +=    Left +    Up * ScreenWidth;
 	dst += DstLeft + DstUp * ScreenWidth;
-	if (DstUp != Up)
+	if (DstUp != Up) {
 	    /* copy forward */
 	    while (count--) {
 		CopyMem(src, dst, len);
 		dst += ScreenWidth;
 		src += ScreenWidth;
 	    }
-	else if (Left != DstLeft)
+	} else if (Left != DstLeft) {
 	    /* the tricky case: DstUp == Up */
 	    /* copy forward, but with memmove() */
 	    while (count--) {
@@ -342,6 +374,7 @@ void DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
 		dst += ScreenWidth;
 		src += ScreenWidth;
 	    }
+	}
     } else if (DstUp > Up) {
 	/* copy backward */
 	src +=    Left +    Dwn * ScreenWidth;

@@ -1,0 +1,540 @@
+
+				libTw 2.0.0 tutorial
+
+
+libTw is the library that talks to `twin' server. Since the parallel between
+X11 server and twin server comes out so often, we could say libTw is the
+equivalent of libX11.
+
+One thing that has been asked many times is porting applications from ncurses
+to libTw. Unlickily, things are not so straightforward as the two libraries
+have quite different approaches: libTw is a network transparent, multi window,
+multi headed, event driven, mouse aware library, while ncurses is full-screen,
+single-headed library without mouse support and without events.
+If all you want is to have a ncurses program run inside a SINGLE twin window,
+you could just let it run unmodified inside twterm, or, if you like hacking
+programs, you could substitute printf(), write(), etc. calls to standard output
+with TwWriteAsciiWindow() and read() from standard input with TwReadMsg().
+Yet, what you will get will still be a program displaying in a single window:
+converting an application that uses ncurses windows to use multiple libTw
+windows is usually much more difficult as with libTw any open window can
+generate events at any time, while with ncurses the "focused" window that
+generates events (user input) is decided by the application.
+
+
+				   the libTw API
+				   
+
+1. Types and defines
+
+   To access libTw functions, you need to
+
+   #include <libTw.h>
+
+   This include file defines various data types used by all libTw functions.
+   The types, together with their usual definition, are:
+
+   typedef   signed char	 num;
+   typedef unsigned char	byte;
+   typedef   signed short	 dat;
+   typedef unsigned short	udat;
+   typedef   signed int		ldat;
+   typedef unsigned int        uldat;
+
+   Anyway, except for `num' and `byte' (which are always 1 byte long)
+   you must NEVER assume to know a type's size as it may change between
+   releases of libTw. You should instead use either sizeof(<type>)
+   or the defines
+
+   MINDAT
+   MAXDAT
+   MAXUDAT
+   MINLDAT
+   MAXLDAT
+   MAXULDAT
+
+   for the minimum and maximum values of the various types.
+
+   Other defines coming from the include are:
+
+   NOID : a numeric value meaning `no object'. Used to indicate
+          an invalid window, screen, msgport, etc. (see below)
+
+   NOFD : a negative number meaning `no file descriptor' (-1)
+
+   FALSE, TRUE : the obvious meaning
+
+   TW_INET_PORT: the base TCP port used by libTw/twin server (7754)
+
+   SMALLBUFF   : the size for a small data buffer
+   BIGBUFF     : the size for a bigger data buffer
+
+
+   To represent colors, there are some dedicated types and defines:
+
+   typedef unsigned short hwattr;
+   typedef unsigned char  hwcol;
+   typedef unsigned char  hwfont;
+
+   Again, don't assume to know their size: use sizeof(<type>)
+
+   hwfont can hold a single character. This means it surely can
+   contain an ASCII character, but it may even be able to contain
+   Unicode, or whatever else.
+   
+   hwcol can hold a single foreground color + background color combination
+   This is loosely based on VGA colors, with 8 different colors
+
+   BLACK, BLUE, GREEN, CYAN, RED, MAGENTA, YELLOW, WHITE
+   
+   and a special HIGH flag. The maximum possible color value is MAXCOL.
+
+   to convert between this representation and ANSI colors, there are two macros:
+   
+   ANSI2VGA(col) and VGA2ANSI(col)
+
+   To compose and decompose a hwcol from fg/bg pair, you have the macros
+   
+   FG(fg), BG(bg) and COL(fg,bg) to compose a hwcol
+      COL(fg,bg) is simply FG(fg)|BG(bg)
+   COLBG(col) and COLFG(col) to decompose it
+
+   To compose and decompose a hwattr from hwcol/hwfont pair, you have the macros
+
+   HWATTR(col,font) to compose and HWCOL(attr), HWFONT(attr) to decompose.
+   
+   Examples:
+   a blue `f' on white background is HWATTR( COL(BLUE,WHITE), 'f')
+   a cyan foreground on red background is COL(CYAN,RED)
+   and so on...
+
+   (types for time intervals: TODO)
+
+
+   Mouse events masks
+   HOLD_LEFT, HOLD_MIDDLE, HOLD_RIGHT, HOLD_ANY
+
+   PRESS_LEFT, PRESS_RIGHT, PRESS_MIDDLE, PRESS_ANY
+
+   #define DOWN_LEFT	(HOLD_LEFT|PRESS_LEFT)
+   #define DOWN_RIGHT	(HOLD_RIGHT|PRESS_RIGHT)
+   #define DOWN_MIDDLE	(HOLD_MIDDLE|PRESS_MIDDLE)
+   #define DOWN_ANY	(HOLD_ANY|PRESS_ANY)
+
+   RELEASE_LEFT, RELEASE_RIGHT, RELEASE_MIDDLE, RELEASE_ANY
+
+   DRAG_MOUSE
+
+   #define ANY_ACTION_MOUSE	(PRESS_ANY | RELEASE_ANY | DRAG_MOUSE)
+
+   isPRESS(code), isDRAG(code), isRELEASE(code)
+
+
+
+
+   Finally, the types for the various libTw objects:
+   
+   tobj (generic), tgadget, trow, twindow, tmenuitem, tmenu, tscreen, tmsgport
+
+   The following are instead pointers to structs:
+
+   tevent_common, tevent_keyboard, tevent_keyboard, tevent_mouse,
+   tevent_display, tevent_window, tevent_gadget, tevent_menu,
+   tevent_selection, tevent_selectionnotify, tevent_selectionrequest,
+   tevent_any
+
+   tmsg
+   
+   /* Msg Type : */
+   TW_MSG_DISPLAY, TW_MSG_WINDOW_KEY, TW_MSG_WINDOW_MOUSE,
+   TW_MSG_WINDOW_CHANGE, TW_MSG_WINDOW_GADGET, TW_MSG_MENU_ROW	
+   TW_MSG_SELECTION, TW_MSG_SELECTIONNOTIFY, TW_MSG_SELECTIONREQUEST
+   TW_MSG_SELECTIONCLEAR
+
+
+   tdisplay
+
+
+   /* Gadget Flags : */
+   TW_GADGET_DISABLED
+
+   /* Row Flags : */
+   TW_ROW_INACTIVE, TW_ROW_ACTIVE, TW_ROW_IGNORE
+
+   /* Window Attrib : */
+   TW_WINDOW_MENU, TW_WINDOW_WANT_KEYS, TW_WINDOW_WANT_MOUSE,
+   TW_WINDOW_WANT_CHANGES, TW_WINDOW_DRAG, TW_WINDOW_RESIZE, TW_WINDOW_CLOSE
+   TW_WINDOW_ROLLED_UP, TW_WINDOW_X_BAR, TW_WINDOW_Y_BAR
+
+   /* Window Flags: */
+   TW_WINFL_USEROWS, TW_WINFL_USECONTENTS, TW_WINFL_BYUSER, TW_WINFL_USE_DEFCOL,
+   TW_WINFL_CURSOR_ON, TW_WINFL_INSERT, TW_WINFL_SEL_ROWCURR, TW_WINFL_DISABLED
+
+   /* Window CursorType : */
+   TW_NOCURSOR, TW_LINECURSOR, TW_SOLIDCURSOR
+
+   /* Buttons on window borders: */
+   TW_MAX_BUTTONS
+
+
+
+2. Functions
+
+   When no connections are open, you can call
+
+   void Tw_ConfigMalloc(void *(*my_malloc)(size_t),
+   			void *(*my_realloc)(void *, size_t),
+			void  (*my_free)(void *));
+		     
+   to set the functions
+   
+   extern void *(*Tw_AllocMem)(size_t);
+   extern void *(*Tw_ReAllocMem)(void *, size_t);
+   extern void  (*Tw_FreeMem)(void *);
+   extern byte *(*Tw_CloneStr)(byte *);
+ 
+   to your custom malloc/free routines.
+
+   To open a connection to a twin server, call (Tw_Display is optional)
+   byte TwOpen(byte *Tw_Display);
+     or
+   tdisplay Tw_Open(byte *Tw_Display);
+   
+   To close,
+   void TwClose(void);
+     or
+   void Tw_Close(tdisplay TwD);
+   
+   The file descriptor of a connection is returned by
+   int  TwConnectionFd(void);
+     or
+   int  Tw_ConnectionFd(tdisplay TwD);
+
+
+   As you may already have noticed, the functions starting with "Tw_"
+   are multiheaded, i.e. can handle multiple tdisplay:s
+   If all you want is to talk to a _single_ display, you can use the functions
+   starting with "Tw" only (they are actually macros) and save a little typing.
+   In case you need it, the "Tw" functions use the tdisplay Tw_DefaultD, so for
+   example, TwConnectionFd is defined as
+   #define TwConnectionFd()	Tw_ConnectionFd(Tw_DefaultD)
+
+   /* the following two functions return FALSE only after libTw has paniced */
+   /* flush output buffer */
+   byte    TwFlush(void);
+   byte    Tw_Flush(tdisplay TwD);
+   
+   /* flush output buffer and wait for all replies from server */
+   byte    TwSync(void);
+   byte    Tw_Sync(tdisplay TwD);
+
+   /* did the library panic on that display? */
+   byte    TwInPanic(void);
+   byte    Tw_InPanic(tdisplay TwD);
+   
+  /*
+   * after a panic (i.e. a fatal error), the only useful thing
+   * you can do is to Tw_Close() the display and, if you need,
+   * to Tw_Open() again.
+   */
+   
+  /*
+   * try to write to the underlying socket.
+   * if not all data could be written, write as much as possible,
+   * keep the rest queued, then return.
+   * 
+   * returns FALSE only after libTw has paniced,
+   * returns TRUE if all data was written.
+   * returns TRUE+TRUE if not all data could be written.
+   */
+   byte    TwTimidFlush(void);
+   byte    Tw_TimidFlush(tdisplay TwD);
+
+  /*
+   * This is the function you must call to get a Msg from the server.
+   * If Wait is TRUE  and no Msg is available, it waits until a Msg arrives.
+   * If Wait is FALSE and no Msg is available, it tries non-blocking
+   *                  to receive more Msgs.
+   * 
+   * In both cases, if there are already received Msgs they are returned
+   * without waiting.
+   */
+  tmsg TwReadMsg(byte Wait);
+  tmsg Tw_ReadMsg(tdisplay TwD, byte Wait);
+
+  /*
+   * This is the function you must call to check if there are pending Msgs.
+   * There may be messages to process even if there's nothig to read on
+   * (Fd = Tw_ConnectionFd()) as messages can be received also during any
+   * blocking function call like Tw_Sync(), Tw_CreateWindow(), etc.
+   * Look at the twterm sources for an example.
+   * 
+   * This returns the first pending Msg, or (tmsg)0 if none is available
+   * and none can be received non-blocking.
+   */
+   tmsg TwPeekMsg(void);
+   tmsg Tw_PeekMsg(tdisplay TwD);
+
+  /*
+   *   <*>  B I G    W A R N I N G  <*>
+   * 
+   * Tw_PeekMsg() and Tw_ReadMsg() return a (tmsg) pointer to data
+   * in a static buffer. The pointer becomes invalid after a call
+   * to any function of libTw.h with non-void return value,
+   * so that it sends something to the server and waits for the server
+   * to send the return value (i.e. it is blocking),
+   * in particular any of the following:
+   * (but calling one of these with an argument pointing to data
+   * inside a tmsg is allowed)
+   * 
+   * Tw_Sync();
+   * Tw_PeekMsg();
+   * Tw_ReadMsg();
+   * Tw_CreateGadget();
+   * Tw_SearchGadget();
+   * Tw_CreateWindow();
+   * Tw_Create4MenuWindow();
+   * Tw_Create4MenuMenuItem();
+   * Tw_CreateMsgPort();
+   * Tw_CreateMenu();
+   * 
+   * Other important notes:
+   * 1. Only ONE MsgPort can exists at max on each connection.
+   * 2. Tw_DeleteMsgPort() calls Tw_DeleteMenu() on all menus created by the client.
+   * 3. Tw_DeleteMenu() calls Tw_DeleteWindow() on all windows which use that menu.
+   * 4. Tw_DeleteWindow() calls Tw_DeleteGadget() on all gadgets of that window.
+   * 
+   * also, if you exit() from your program without calling Tw_Flush(), Tw_Sync() or Tw_Close(),
+   * pending data will *NOT* be sent to the server.
+   */
+   
+tmsgport Tw_CreateMsgPort(tdisplay TwD, byte NameLen, byte *ProgramName, time_t PauseSec, frac_t PauseFraction, byte WakeUp);
+/* WakeUp: */
+#define TW_TIMER_ALWAYS	((byte)1)
+#define TW_TIMER_ONCE	((byte)2)
+void	Tw_DeleteMsgPort(tdisplay TwD, tmsgport MsgPort);
+
+
+tgadget Tw_CreateGadget(tdisplay TwD, twindow Window,
+		       hwcol ColText, hwcol ColTextSelect, hwcol ColTextDisabled, hwcol ColTextSelectDisabled,
+		       udat Code, udat Flags, udat Left, udat Up, udat XWidth, udat YWidth,
+		       byte *TextNormal, byte *TextSelect, byte *TextDisabled, byte *TextSelectDisabled,
+		       hwcol *ColNormal, hwcol *ColSelect, hwcol *ColDisabled, hwcol *ColSelectDisabled);
+void    Tw_CopyGadget(tdisplay TwD, tgadget From, tgadget To);
+void	Tw_DeleteGadget(tdisplay TwD, tgadget Gadget);
+tgadget Tw_SearchGadget(tdisplay TwD, twindow Window, dat i, dat j);
+tgadget Tw_CreateButtonGadget(tdisplay TwD, twindow Window,
+			      hwcol BgCol, hwcol Col, hwcol ColDisabled,
+			      udat Code, udat Flags, udat Left, udat Up, udat XWidth, udat YWidth,
+			      byte *Text);
+
+void	Tw_Create4MenuRow(tdisplay TwD, twindow Window, udat Code, byte FlagActive, uldat TextLen, byte *Text);
+#define Tw_Row4Menu Tw_Create4MenuRow
+
+twindow Tw_CreateWindow(tdisplay TwD, udat TitleLen, byte *Title, hwcol *ColTitle, tmenu Menu,
+		       hwcol ColText, uldat cursorType, uldat Attrib, byte Flags,
+		       udat XWidth, udat YWidth, udat ScrollBackLines);
+void	Tw_DeleteWindow(tdisplay TwD, twindow Window);
+twindow Tw_Create4MenuWindow(tdisplay TwD, tmenu Menu);
+#define Tw_Win4Menu Tw_Create4MenuWindow
+void	Tw_MapWindow(tdisplay TwD, twindow Window, tscreen Screen);
+void	Tw_UnMapWindow(tdisplay TwD, twindow Window);
+void	Tw_WriteAsciiWindow(tdisplay TwD, twindow Window, uldat AsciiLen, byte *AsciiSeq);
+void    Tw_WriteHWAttrWindow(tdisplay TwD, twindow Window, udat x, udat y, uldat Len, hwattr *Attr);
+void	Tw_WriteRowWindow(tdisplay TwD, twindow Window, uldat Len, byte *Text);
+void	Tw_SetColTextWindow(tdisplay TwD, twindow Window, hwcol ColText);
+void	Tw_SetColorsWindow(tdisplay TwD, twindow Window, udat Bitmap, hwcol ColGadgets, hwcol ColArrows, hwcol ColBars, hwcol ColTabs,
+			  hwcol ColBorder, hwcol ColText, hwcol ColSelect, hwcol ColDisabled, hwcol ColSelectDisabled);
+void	Tw_ConfigureWindow(tdisplay TwD, twindow Window, byte Bitmap, dat Left, udat Up, udat MinXWidth, udat MinYWidth, udat MaxXWidth, udat MaxYWidth);
+void	Tw_ResizeWindow(tdisplay TwD, twindow Window, udat XWidth, udat YWidth);
+void	Tw_GotoXYWindow(tdisplay TwD, twindow Window, uldat X, uldat Y);
+tgadget Tw_SearchGadgetWindow(tdisplay TwD, twindow Window, dat X, dat Y);
+
+tmenuitem Tw_Create4MenuMenuItem(tdisplay TwD, tmenu Menu, twindow Window, byte Flags, udat NameLen, byte *Name);
+#define   Tw_Item4Menu Tw_Create4MenuMenuItem
+tmenuitem Tw_Create4MenuCommonMenuItem(tdisplay TwD, tmenu Menu);
+#define   Tw_Item4MenuCommon Tw_Create4MenuCommonMenuItem
+void	Tw_DeleteMenuItem(tdisplay TwD, tmenuitem MenuItem);
+
+tmenu	Tw_CreateMenu(tdisplay TwD, tmsgport MsgPort, hwcol ColItem, hwcol ColSelect, hwcol ColDisabled,
+		     hwcol ColSelectDisabled, hwcol ColShtCut, hwcol ColSelShtCut, byte FlagDefColInfo);
+#define Tw_Grab	Tw_CreateMutex
+void	Tw_SetInfoMenu(tdisplay TwD, tmenu Menu, byte Flags, uldat Len, byte *Text, hwcol *ColText);
+#define Tw_Info4Menu Tw_SetInfoMenu
+void	Tw_DeleteMenu(tdisplay TwD, tmenu Menu);
+
+
+void	Tw_BgImageScreen(tdisplay TwD, tscreen Screen, udat BgWidth, udat BgHeight, hwattr *BgImage);
+
+tscreen	Tw_FirstScreen(tdisplay TwD);
+twindow	Tw_FirstWindow(tdisplay TwD, tscreen Screen);
+tgadget Tw_FirstGadget(tdisplay TwD, twindow Window);
+tmsgport Tw_FirstMsgPort(tdisplay TwD);
+tmenu    Tw_FirstMenu(tdisplay TwD, tmsgport MsgPort);
+tmenuitem Tw_FirstMenuItem(tdisplay TwD, tmenu Menu);
+
+tobj Tw_PrevObj(tdisplay TwD, tobj Obj);
+tobj Tw_NextObj(tdisplay TwD, tobj Obj);
+tobj Tw_ParentObj(tdisplay TwD, tobj Obj);
+
+udat Tw_GetDisplayWidth(tdisplay TwD);
+udat Tw_GetDisplayHeight(tdisplay TwD);
+
+tmsg Tw_CreateMsg(tdisplay TwD, udat Type, udat Len);
+void Tw_DeleteMsg(tdisplay TwD, tmsg Msg);
+byte Tw_SendMsg(tdisplay TwD, tmsgport MsgPort, tmsg Msg);
+void Tw_BlindSendMsg(tdisplay TwD, tmsgport MsgPort, tmsg Msg);
+
+
+/*
+ * Selection handling. This is very similar to X11:
+ * 
+ * if client <a> wants to know the contents of selection to paste it,
+ * it must find who is the Selection owner (say <b>) and ask him:
+ * 
+ * Tw_RequestSelection(TwD, Tw_GetOwnerSelection(TwD), ReqPrivate);
+ * 
+ * ReqPrivate is some opaque data that client <a> may specify,
+ * and it will be sent back later literally.
+ * 
+ * after a while, a TW_MSG_SELECTIONNOTIFY will arrive with all the
+ * precious Selection data and also with ReqPrivate.
+ * 
+ * 
+ * 
+ * Now the other half of the story: What The Selection Owner Must Do.
+ * (this is handled automagically by twin server if the client choosed
+ * not to receive mouse events)
+ * 
+ * If the user just hilighted some data in a window of client <b>,
+ * client <b> will want to become the Selection owner, so that other
+ * clients may receive that data too. For this, client <b> must call
+ * 
+ * Tw_SetOwnerSelection(TwD, myMsgPort, TW_SEL_CURRENTTIME, TW_SEL_CURRENTTIME);
+ * 
+ * where myMsgPort is actually client <b> MsgPort. From now on, and until
+ * client <b> receives a TW_MSG_SELECTIONCLEAR event, client <b> must
+ * send its precious Selection to whoever asks for it: every time client <b>
+ * receives a TW_MSG_SELECTIONREQUEST event from libTw, it must call
+ * 
+ * Tw_NotifySelection(TwD, Requestor, ReqPrivate, Magic, MIME, Len, Data);
+ * 
+ * where Requestor and ReqPrivate come from the TW_MSG_SELECTIONREQUEST event,
+ * and the rest is the Selection data: its Magic type (usually TW_SEL_TEXTMAGIC),
+ * its MIME type ("text/plain", or whatever looks appropriate),
+ * its Len in bytes and finally, Data: a pointer to the actual data.
+ * 
+ * 
+ * There is a last thing: how can client <a> know that the user
+ * wants to paste the selection in one of its windows ?
+ * If the client keeps track of mouse movement and buttons, it can figure
+ * out by its own. Otherwise, twin automagically solves the problem sending
+ * a TW_MSG_SELECTION to the client when it should paste the selection
+ * in a window. Client should then call the first function said above,
+ * 
+ * Tw_RequestSelection(TwD, Tw_GetOwnerSelection(TwD), ReqPrivate);
+ * 
+ * and start the chain of communications just explained.
+ * Once client <a> got the Selection, it must paste it in the window
+ * in whatever way is appropriate for that window.
+ * 
+ * P.S. hint: a possible use for ReqPrivate is to store the window
+ *            that client <a> must paste into.
+ * 
+ * Finally, the function prototypes:
+ */
+tobj Tw_GetOwnerSelection(tdisplay TwD);
+
+void Tw_RequestSelection(tdisplay TwD, tobj Owner, uldat ReqPrivate);
+
+void Tw_SetOwnerSelection(tdisplay TwD, tobj Owner, time_t Time, frac_t Frac);
+#define TW_SEL_CURRENTTIME ((time_t)0)
+
+void Tw_NotifySelection(tdisplay TwD, tobj Requestor, uldat ReqPrivate,
+			uldat Magic, byte MIME[TW_MAX_MIMELEN], uldat Len, byte *Data);
+
+
+
+
+
+
+
+
+
+
+
+
+
+   /*
+    * a few string/memory related function macros:
+    */
+   
+   #define TwLenStr(S) strlen(S)
+   #define TwCmpStr(S1, S2) strcmp((S1), (S2))
+   #define TwCopyStr(From,To) strcpy((To),(From))
+   
+   #define TwCopyMem(From, To, Size)	memcpy((To), (From), (size_t)(Size))
+   #define TwMoveMem(From, To, Size)	memmove((To), (From), (size_t)(Size))
+   #define TwWriteMem(Mem, Char, Size)	memset((Mem), (int)(Char), (size_t)(Size))
+   #define TwCmpMem(m1, m2, Size)	memcmp((m1), (m2), (size_t)(Size))
+   
+   /*
+    * the "Tw_" versions of the above ones exist, and have exactly the same
+    * definition (no tdisplay argument here)
+    */
+   
+   
+   
+   /*
+    * Check if the server supports a function given its name
+    * (without the Tw/Tw_ prefix)
+    */
+   uldat TwFindFunction(byte Len, byte *Name);
+   uldat Tw_FindFunction(tdisplay TwD, byte Len, byte *Name);
+   
+   /*
+    * Check if the server supports a list of functions given its pointers
+    * (you must use the ones with Tw_ prefix as the other are macros)
+    * The list must be NULL terminated.
+    */
+   byte  Tw_FindFunctions(tdisplay TwD, void *Function, ...);
+
+   /*
+    * enable gzip compression on the socket
+    */
+   byte TwEnableGzip(void);
+   byte Tw_EnableGzip(tdisplay TwD);
+
+   /*
+    * disable gzip compression on the socket
+    */
+    byte TwDisableGzip(void);
+    byte Tw_DisableGzip(tdisplay TwD);
+
+   /*
+    * these are reserved for the programs "twattach" and "twdisplay" :
+    * manage attaching/detaching of display drivers inside twin core.
+    */
+    void TwNeedResizeDisplay(void);
+    void Tw_NeedResizeDisplay(tdisplay TwD);
+    
+    void TwAttachHW(uldat len, byte *name, byte redirect);
+    void Tw_AttachHW(tdisplay TwD, uldat len, byte *name, byte redirect);
+    
+    byte *TwAttachGetReply(uldat *len);
+    byte *Tw_AttachGetReply(tdisplay TwD, uldat *len);
+    
+    void TwAttachConfirm(void);
+    void Tw_AttachConfirm(tdisplay TwD);
+    
+    byte TwDetachHW(uldat len, byte *name);
+    byte Tw_DetachHW(tdisplay TwD, uldat len, byte *name);
+
+
+   /*
+    * load a customizable translation table. "trans" points to a 128 byte
+    * translation table for the ASCII codes 0x80 - 0xff
+    */
+    void TwSetFontTranslation(byte trans[0x80]);
+    void Tw_SetFontTranslation(tdisplay TwD, byte trans[0x80]);
+

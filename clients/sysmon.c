@@ -44,7 +44,7 @@ byte InitSysMon(void) {
     if (TwOpen(NULL) &&
 	
 	(SysMon_MsgPort=TwCreateMsgPort
-	 (len-2, name+1, (uldat)0, (udat)0, (byte)0)) &&
+	 (len, name, (uldat)0, (udat)0, (byte)0)) &&
 	(SysMon_Menu=TwCreateMenu
 	 (SysMon_MsgPort,
 	  COL(BLACK,WHITE), COL(BLACK,GREEN), COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),

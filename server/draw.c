@@ -11,9 +11,6 @@
  */
 
 #include "twin.h"
-
-#include "main.h"
-
 #include "data.h"
 #include "methods.h"
 #include "hw.h"
@@ -33,6 +30,10 @@ INLINE hwcol DoShadowColor(hwcol Color, byte Fg, byte Bg) {
 	 );
 }
 
+/*
+ * warning: DrawMenu() can cheat and give us a user Menu
+ * while MenuItem is from All->CommonMenu
+ */
 void SearchFontMenuItem(menu *Menu, menuitem *MenuItem, dat i, byte Select, byte *PtrFont, byte *PtrColor) {
     byte Color, ShortCutFound;
     
@@ -164,7 +165,7 @@ void DrawWindow(window *Window, gadget *FirstGadget, gadget *OnlyThisGadget, dat
     gadget *GadgetNext;
     ldat shLeft, shUp, shRgt, shDwn;
     ldat NWinDiMenu;
-    byte Border, WinActive, MovWin, Absent, NoGadgets;
+    byte Border, WinActive, Absent, NoGadgets;
     byte Font, Select, RowDisabled;
     hwcol Color;
     byte GadgetFound=FALSE, lError=FALSE, FirstCicle=TRUE;
@@ -202,14 +203,13 @@ void DrawWindow(window *Window, gadget *FirstGadget, gadget *OnlyThisGadget, dat
     Yend=(dat)Min2((ldat)Yend, shDwn);
     
     WinActive= Window==All->FirstScreen->FocusWindow || Window==All->FirstScreen->MenuWindow;
-    MovWin = WinActive && All->FlagsMove & GLMOVE_ANY_1stWIN;
     Border = Window->Attrib & WINDOW_MENU || !WinActive;
     if ((ldat)Ystart==shUp) {
 	if (!OnlyThisGadget) {
 	    j=Ystart*ScreenWidth;
 	    for (i=Xstart; i<=Xend; i++) {
 		u=(udat)((ldat)i-shLeft);
-		Act(FindBorder,Window)(Window, u, (udat)0, Border, MovWin, &Font, &Color);
+		Act(FindBorder,Window)(Window, u, (udat)0, Border, &Font, &Color);
 		Color=DoShadowColor(Color, Shaded || !WinActive, Shaded);
 		Video[i+j]=HWATTR(Color, Font);
 	    }
@@ -226,7 +226,7 @@ void DrawWindow(window *Window, gadget *FirstGadget, gadget *OnlyThisGadget, dat
 	    j=Yend*ScreenWidth;
 	    for (i=Xstart; i<=Xend; i++) {
 		u=(udat)((ldat)i-shLeft);
-		Act(FindBorder,Window)(Window, u, v, Border, MovWin, &Font, &Color);
+		Act(FindBorder,Window)(Window, u, v, Border, &Font, &Color);
 		Color=DoShadowColor(Color, Shaded || !WinActive, Shaded);
 		Video[i+j]=HWATTR(Color, Font);
 	    }
@@ -241,7 +241,7 @@ void DrawWindow(window *Window, gadget *FirstGadget, gadget *OnlyThisGadget, dat
 	if (!OnlyThisGadget) {
 	    for (j=Ystart; j<=Yend; j++) {
 		v=(udat)((ldat)j-shUp);
-		Act(FindBorder,Window)(Window, (udat)0, v, Border, MovWin, &Font, &Color);
+		Act(FindBorder,Window)(Window, (udat)0, v, Border, &Font, &Color);
 		Color=DoShadowColor(Color, Shaded || !WinActive, Shaded);
 		Video[Xstart+j*ScreenWidth]=HWATTR(Color, Font);
 	    }
@@ -257,7 +257,7 @@ void DrawWindow(window *Window, gadget *FirstGadget, gadget *OnlyThisGadget, dat
 	    u=(udat)((ldat)Xend-shLeft);
 	    for (j=Ystart; j<=Yend; j++) {
 		v=(udat)((ldat)j-shUp);
-		Act(FindBorder,Window)(Window, u, v, Border, MovWin, &Font, &Color);
+		Act(FindBorder,Window)(Window, u, v, Border, &Font, &Color);
 		Color=DoShadowColor(Color, Shaded || !WinActive, Shaded);
 		Video[Xend+j*ScreenWidth]=HWATTR(Color, Font);
 	    }
@@ -599,87 +599,6 @@ void DrawWindow(window *Window, gadget *FirstGadget, gadget *OnlyThisGadget, dat
 	Error(lError);
 }
 
-void DrawMenuBar(screen *Screen, dat Xstart, dat Xend) {
-    screen *fScreen;
-    menu *Menu;
-    menuitem *CurrMenuItem;
-    dat ScreenWidth, ScreenHeight, i, j;
-    byte Color, Font, Select;
-    
-    if (!Screen || !Screen->All || Xstart>Xend)
-	return;
-    
-    j=(dat)Screen->YLimit;
-    ScreenWidth=Screen->ScreenWidth;
-    ScreenHeight=Screen->ScreenHeight;
-    
-    if (!j-- || j>=ScreenHeight || Xstart>=ScreenWidth || Xend<(dat)0 || Xstart > Xend)
-	return;
-    
-    for (fScreen = All->FirstScreen; fScreen && fScreen != Screen; fScreen = fScreen->Next) {
-	if (fScreen->YLimit <= j)
-	    return;
-    }
-    if (fScreen != Screen)
-	return;
-	
-    Menu=Act(SearchMenu,Screen)(Screen);
-    
-    Xstart=Max2(Xstart, (dat)0);
-    Xend=Min2(Xend, ScreenWidth-(dat)1);
-    
-    if (Menu)
-	for (i=Xstart; i<=Xend; i++) {
-	    if (ScreenWidth-i<=(dat)2) {
-		Color = All->FlagsMove & GLMOVE_1stSCREEN ? Menu->ColSelShtCut : Menu->ColShtCut;
-		if (Screen->Attrib & GADGET_BACK_SELECT && Screen->Attrib & GADGET_PRESSED)
-		    Color = COL( COLBG(Color), COLFG(Color) );
-		Font = Button_Shape[Button_Back][!!(All->SetUp->Flags & SETUP_NEW_FONT)][(udat)2-(udat)(ScreenWidth-(dat)i)];
-	    }
-	    else if (ScreenWidth-i<=(dat)3+lenTWDisplay) {
-		Color = All->FlagsMove & GLMOVE_1stSCREEN ? Menu->ColSelShtCut : Menu->ColShtCut;
-		Font = TWDisplay[(udat)3 + lenTWDisplay - (udat)(ScreenWidth - i)];
-		if (!Font) Font = ' ';
-	    }
-	    else if (All->FlagsMove & GLMOVE_1stMENU && (CurrMenuItem=Act(SearchMenuItem,Menu)(Menu, i))) {
-		Select = (All->FlagsMove & GLMOVE_1stSCREEN || Menu->MenuItemSelect==CurrMenuItem);
-		SearchFontMenuItem(Menu, CurrMenuItem, i, Select, &Font, &Color);
-	    }
-	    else if (!(All->FlagsMove & GLMOVE_1stMENU) && SearchInfo(Menu, i)) {
-		Select = All->FlagsMove & GLMOVE_1stSCREEN;
-		SearchFontInfo(Menu, i, Select, &Font, &Color);
-	    }
-	    else {
-		Color = (All->FlagsMove & GLMOVE_1stSCREEN) ? Menu->ColSelect : Menu->ColItem;
-		Font = ' ';
-	    }
-	    if (Screen != All->FirstScreen)
-		Color = Menu->ColDisabled;
-	    Video[i+j*ScreenWidth]=HWATTR(Color, Font);
-	}
-    else {
-	i = Min2(Xend,ScreenWidth-2);
-	if (Xstart < i)
-	    FillVideo(Xstart, j, i-1, j, HWATTR(COL(BLACK,WHITE),' '));
-	if (i <= Xend) {
-	    Color = COL(RED,WHITE);
-	    if (Screen->Attrib & GADGET_BACK_SELECT && Screen->Attrib & GADGET_PRESSED)
-		Color = COL( COLBG(Color), COLFG(Color) );
-	    for (; i <= Xend; i++) {
-		Font = Button_Shape[Button_Back][!!(All->SetUp->Flags & SETUP_NEW_FONT)][(udat)2-(udat)(ScreenWidth-(dat)i)];
-		Video[i+j*ScreenWidth]=HWATTR(Color, Font);
-	    }
-	}
-    }
-    
-    DirtyVideo(Xstart, j, Xend, j);    
-}
-
-
-#define ONLY_SHADE (byte)0x02
-#define ORIZ  (byte)0x01
-#define VERT (byte)0x02
-
 INLINE void _DrawArea_(area_parent *AreaParent, screen *FirstScreen, window *FirstWindow, window *OnlyThisWindow, gadget *FirstGadget, gadget *OnlyThisGadget, dat Xstart, dat Ystart, dat Xend, dat Yend, byte Shaded, byte *lError) {
     area *Area;
     if (!(Area=Do(Create,Area)(FnArea, AreaParent, FirstScreen, FirstWindow, OnlyThisWindow, FirstGadget, OnlyThisGadget, Xstart, Ystart, Xend, Yend, Shaded))) {
@@ -759,14 +678,14 @@ void DrawArea(screen *FirstScreen, window *FirstWindow, window *OnlyThisWindow, 
 	if (!FirstWindow) {
 	    FirstWindow=FirstScreen->FirstWindow;
 	    if (Ystart==u && !OnlyThisWindow) {
-		DrawMenuBar(FirstScreen, Xstart, Xend);
+		Act(DrawMenu,FirstScreen)(FirstScreen, Xstart, Xend);
 		if (++Ystart>Yend)
 		    continue;
 	    }
 	}
 	
 	SetUp=All->SetUp;
-	Shade=!!(SetUp->Flags & SETUP_DO_SHADE) && !Shaded;
+	Shade=!!(SetUp->Flags & SETUP_SHADOWS) && !Shaded;
 	DeltaXShade=Shade ? SetUp->DeltaXShade : (byte)0;
 	DeltaYShade=Shade ? SetUp->DeltaYShade : (byte)0;
 	
@@ -798,7 +717,7 @@ void DrawArea(screen *FirstScreen, window *FirstWindow, window *OnlyThisWindow, 
 		WinFound=TRUE;
 	    else if (Shade && ((HS_Xstart<=HS_Xend && HS_Ystart <= S_Yend) ||
 			       (VS_Xstart<=VS_Xend && VS_Ystart <= S_Yend)))
-		WinFound=ONLY_SHADE;
+		WinFound=TRUE+TRUE;
 	    else
 		FirstWindow=FirstWindow->Next;
 	}
@@ -1018,7 +937,7 @@ void DrawAreaShadeWindow(screen *Screen, window *Window, dat Xstart, dat Ystart,
     
     SetUp=All->SetUp;
     if (!Window || !Screen ||
-	Xstart>Xend || Ystart>Yend || !(SetUp->Flags & SETUP_DO_SHADE))
+	Xstart>Xend || Ystart>Yend || !(SetUp->Flags & SETUP_SHADOWS))
 	return;
     
     DeltaXShade=SetUp->DeltaXShade;
@@ -1098,7 +1017,7 @@ void DrawAreaWindow(window *Window, byte Shaded) {
     if (!Window || !(Screen=Window->Screen))
 	return;
 
-    Shade = All->SetUp->Flags & SETUP_DO_SHADE;
+    Shade = All->SetUp->Flags & SETUP_SHADOWS;
 
     if (Window == All->FirstScreen->FirstWindow)
 	DrawWindow(Window, (gadget *)0, (gadget *)0, 0, 0, MAXDAT, MAXDAT, Shaded);
@@ -1134,7 +1053,7 @@ void ReDrawRolledUpAreaWindow(window *Window, byte Shaded) {
     if (!Window || !(Screen=Window->Screen))
 	return;
 
-    Shade = All->SetUp->Flags & SETUP_DO_SHADE;
+    Shade = All->SetUp->Flags & SETUP_SHADOWS;
     DeltaXShade = Shade ? All->SetUp->DeltaXShade : (byte)0;
     DeltaYShade = Shade ? All->SetUp->DeltaYShade : (byte)0;
 	

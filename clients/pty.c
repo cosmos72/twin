@@ -20,7 +20,13 @@
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 
+#ifdef CONF_TERM_DEVPTS
+# define __USE_XOPEN
+# include <stdlib.h>
+#endif
+
 #include <libTw.h>
+
 #include "term.h"
 
 /* pseudo-teletype connections handling functions */

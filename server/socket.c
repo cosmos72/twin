@@ -24,19 +24,19 @@
 #include <fcntl.h>
 
 #ifdef CONF_SOCKET_GZ
-#include <zlib.h>
+# include <zlib.h>
 #endif
 
 #include "twin.h"
 #include "methods.h"
 #include "data.h"
-
 #include "main.h"
 #include "util.h"
+#include "resize.h"
+#include "extensions.h"
+
 #include "remote.h"
 #include "md5.h"
-#include "resize.h"
-#include "hw.h"
 #include "hw_multi.h"
 #include "common.h"
 #include "version.h"
@@ -275,9 +275,9 @@ static void ShutdownGzip(uldat Slot);
 /* back-end of some libTw utility functions */
 
 
-static void AttachHW(uldat len, byte *arg, byte redirect);
-static byte DetachHW(uldat len, byte *arg);
-static void SetFontTranslation(byte trans[0x80]);
+static void AttachHW(uldat len, CONST byte *arg, byte flags);
+static byte DetachHW(uldat len, CONST byte *arg);
+static void SetFontTranslation(CONST byte trans[0x80]);
 
 static byte CanCompress(void);
 static byte DoCompress(byte on_off);
@@ -329,17 +329,10 @@ static obj *ParentObj(obj *Obj) {
 }
 
 
-INLINE void *CloneMem(void *From, uldat Size) {
-    void *temp;
-    if (From && Size && (temp = AllocMem(Size)))
-	return CopyMem(From, temp, Size);
-    return NULL;
-}
-
 #define tDelta ((size_t)&(((tmsg)0)->Event))
 #define  Delta ((size_t)&(((msg *)0)->Event))
 
-static byte SendToMsgPort(msgport *MsgPort, udat Len, byte *Data) {
+static byte SendToMsgPort(msgport *MsgPort, udat Len, CONST byte *Data) {
     msg *Msg;
     tmsg tMsg = (tmsg)Data;
     uldat _Len;
@@ -452,14 +445,14 @@ static byte SendToMsgPort(msgport *MsgPort, udat Len, byte *Data) {
     return FALSE;
 }
 
-static void BlindSendToMsgPort(msgport *MsgPort, udat Len, byte *Data) {
+static void BlindSendToMsgPort(msgport *MsgPort, udat Len, CONST byte *Data) {
     (void)SendToMsgPort(MsgPort, Len, Data);
 }
 
 static obj *GetOwnerSelection(void);
 static void SetOwnerSelection(msgport *Owner, time_t Time, frac_t Frac);
 static void NotifySelection(obj *Requestor, uldat ReqPrivate,
-			    uldat Magic, byte MIME[MAX_MIMELEN], uldat Len, byte *Data);
+			    uldat Magic, CONST byte MIME[MAX_MIMELEN], uldat Len, CONST byte *Data);
 static void RequestSelection(obj *Owner, uldat ReqPrivate);
 
 
@@ -467,16 +460,16 @@ static void RequestSelection(obj *Owner, uldat ReqPrivate);
 
 #include "unaligned.h"
 
-static uldat MaxFunct, Slot, RequestN, noId = NOID, dummy;
+static uldat MaxFunct, Slot, RequestN, noId = NOID;
 static byte *s, *end;
 static int unixFd = NOFD, inetFd = NOFD, Fd;
 static uldat unixSlot = NOSLOT, inetSlot = NOSLOT;
 
-static void Reply(uldat code, uldat len, void *data);
+static void Reply(uldat code, uldat len, CONST void *data);
 static void SocketH(msgport *MsgPort);
 static void SocketIO(int fd, uldat slot);
 
-static uldat FindFunction(byte Len, byte *name);
+static uldat FindFunction(byte Len, CONST byte *name);
 
 #define ORDER(arg)	(arg##_magic >> magic_shift)
 
@@ -496,24 +489,24 @@ static uldat FindFunction(byte Len, byte *name);
 #define DECLv(n,arg)
 #define DECL_(n,arg)	arg A(n);
 #define DECLx(n,arg)	uldat AL(n); arg *A(n);
-#define DECLV(n,arg)	uldat AL(n); arg *A(n);
-#define DECLW(n,arg)	uldat AL(n); arg *A(n);
+#define DECLV(n,arg)	uldat AL(n); CONST arg *A(n);
+#define DECLW(n,arg)	uldat AL(n); CONST arg *A(n);
 #define D(n,arg,f)	DECL##f(n,arg)
+#define D_0(arg,f)	uldat fail = 1; DECL##f(0,arg)
 
 #define RETv(ret,call)	call;
 #define RET_(ret,call)	Reply(OK_MAGIC, sizeof(ret), (A(0) = call, &A(0)));
 #define RETx(ret,call)	Reply(OK_MAGIC, AL(0)=sizeof(uldat), ID(A(0), call));
 
-#define FAILv(n)
-#define FAIL_(n)	Reply(n, sizeof(uldat), (dummy = n, &dummy))
-#define FAILx(n)	FAIL_(n)
+#define FAILv
+#define FAIL_	Reply(fail, sizeof(uldat), &fail);
+#define FAILx	FAIL_
 
-#define RET0(ret,f,call) if (s == end) { RET##f(ret,call) } else FAIL##f(-1);
-#define RET1(ret,f,call) if (s == end) { RET##f(ret,call) } else FAIL##f(-1);
-#define RET2(ret,f,call) if (s == end && A(1)) { RET##f(ret,call) } else \
-				if (A(1)) FAIL##f(1); \
-				else FAIL##f(-1);
-
+#define RET0(ret,f,call) if (s == end) { RET##f(ret,call) return; } else fail = -1;
+#define RET1(ret,f,call) if (s == end) { RET##f(ret,call) return; } else fail = -1;
+#define RET2(ret,f,call) if (s == end && A(1)) { RET##f(ret,call) return; } else \
+				if (A(1)) fail = 1; \
+				else fail = -1;
 
 #define NAME(funct,name)	static void sock##funct##name(void)
 
@@ -524,167 +517,180 @@ static uldat FindFunction(byte Len, byte *name);
 
 #define Left(size)	(s + (size) <= end)
 
-#define PARSE_(r,n,arg,len,pass) if (Left(sizeof(arg))) { \
+#define PARSE_(n,arg,len,pass) if (Left(sizeof(arg))) { \
+				    fail++; \
 				    Pop(s,arg,A(n)); \
 				    pass \
-				} else \
-				    FAIL##r(n);
-#define PARSEx(r,n,arg,len,pass) if (Left(sizeof(uldat))) { \
+				}
+#define PARSEx(n,arg,len,pass) if (Left(sizeof(uldat))) { \
+				    fail++; \
 				    Pop(s,uldat,AL(n)); \
 				    A(n) = (arg *)Id2Obj(ORDER(arg), AL(n)); \
 				    pass \
-				} else \
-				    FAIL##r(n);
-#define PARSEV(r,n,arg,len,pass) if (Left(AL(n) = (len) * sizeof(arg))) { \
+				}
+#define PARSEV(n,arg,len,pass) if (Left(AL(n) = (len) * sizeof(arg))) { \
+				    fail++; \
 				    PopAddr(s, arg, AL(n), A(n)); \
 				    pass \
-				} else \
-				    FAIL##r(n);
+				}
 
-#define PARSEW(r,n,arg,len,pass) if (Left(sizeof(uldat)) && (Pop(s,uldat,AL(n)), Left(AL(n)))) { \
+#define PARSEW(n,arg,len,pass) if (Left(sizeof(uldat)) && (Pop(s,uldat,AL(n)), Left(AL(n)))) { \
+				    fail++; \
 				    PopAddr(s, arg, AL(n), A(n)); \
 				    if (AL(n) != (len) * sizeof(arg)) \
 					A(n) = NULL; \
 				    pass \
-				} else \
-				    FAIL##r(n);
+				}
 
-#define P(r,n,arg,f,len,pass)	PARSE##f(r,n,arg,len,pass)
+#define P(n,arg,f,len,pass)	PARSE##f(n,arg,len,pass)
 
 
 #define PROTO0(ret0,f0, funct,name,fn) \
 NAME(funct, name) \
-{ D(0,ret0,f0) \
+{ D_0(ret0,f0) \
   RET##fn(ret0,f0, Act##fn(funct,name) (FN##fn(name))) \
+  FAIL##f0 \
 }
 
 #define PROTO1(ret0,f0, funct,name,fn, arg1,f1) \
 NAME(funct, name) \
-{ D(0,ret0,f0) \
+{ D_0(ret0,f0) \
   D(1,arg1,f1) \
-  P(f0,1,arg1,f1,i##f1, \
+  P(1,arg1,f1,i##f1, \
   RET##fn(ret0,f0, Act##fn(funct,name) (FN##fn(name) A(1)))) \
+  FAIL##f0 \
 }
 
 #define PROTO2(ret0,f0, funct,name,fn, arg1,f1, arg2,f2) \
 NAME(funct, name) \
-{ D(0,ret0,f0) \
+{ D_0(ret0,f0) \
   D(1,arg1,f1) D(2,arg2,f2) \
-  P(f0,1,arg1,f1,i##f1, P(f0,2,arg2,f2,i##f2, \
+  P(1,arg1,f1,i##f1, P(2,arg2,f2,i##f2, \
   RET##fn(ret0,f0, Act##fn(funct,name) (FN##fn(name) A(1), A(2))))) \
+  FAIL##f0 \
 }
 
 #define PROTO2FindFunction PROTO2
 
 #define PROTO3(ret0,f0, funct,name,fn, arg1,f1, arg2,f2, arg3,f3) \
 NAME(funct, name) \
-{ D(0,ret0,f0) \
+{ D_0(ret0,f0) \
   D(1,arg1,f1) D(2,arg2,f2) D(3,arg3,f3) \
-  P(f0,1,arg1,f1,i##f1, P(f0,2,arg2,f2,i##f2, P(f0,3,arg3,f3,i##f3, \
+  P(1,arg1,f1,i##f1, P(2,arg2,f2,i##f2, P(3,arg3,f3,i##f3, \
   RET##fn(ret0,f0, Act##fn(funct,name) (FN##fn(name) A(1), A(2), A(3)))))) \
+  FAIL##f0 \
 }
 
 #define PROTO4(ret0,f0, funct,name,fn, arg1,f1, arg2,f2, arg3,f3, arg4,f4) \
 NAME(funct, name) \
-{ D(0,ret0,f0) \
+{ D_0(ret0,f0) \
   D(1,arg1,f1) D(2,arg2,f2) D(3,arg3,f3) D(4,arg4,f4) \
-  P(f0,1,arg1,f1,i##f1, P(f0,2,arg2,f2,i##f2, P(f0,3,arg3,f3,i##f3, P(f0,4,arg4,f4,i##f4, \
+  P(1,arg1,f1,i##f1, P(2,arg2,f2,i##f2, P(3,arg3,f3,i##f3, P(4,arg4,f4,i##f4, \
   RET##fn(ret0,f0, Act##fn(funct,name) (FN##fn(name) A(1), A(2), A(3), A(4))))))) \
+  FAIL##f0 \
 }
 
 #define PROTO5(ret0,f0, funct,name,fn, arg1,f1, arg2,f2, arg3,f3, arg4,f4, arg5,f5) \
 NAME(funct, name) \
-{ D(0,ret0,f0) \
+{ D_0(ret0,f0) \
   D(1,arg1,f1) D(2,arg2,f2) D(3,arg3,f3) D(4,arg4,f4) \
   D(5,arg5,f5) \
-  P(f0,1,arg1,f1,i##f1, P(f0,2,arg2,f2,i##f2, P(f0,3,arg3,f3,i##f3, P(f0,4,arg4,f4,i##f4, \
-  P(f0,5,arg5,f5,i##f5, \
+  P(1,arg1,f1,i##f1, P(2,arg2,f2,i##f2, P(3,arg3,f3,i##f3, P(4,arg4,f4,i##f4, \
+  P(5,arg5,f5,i##f5, \
   RET##fn(ret0,f0, Act##fn(funct,name) (FN##fn(name) A(1), A(2), A(3), A(4), A(5)))))))) \
+  FAIL##f0 \
 }
 
 #define PROTO5CreateMsgPort(ret0,f0, funct,name,fn, arg1,f1, arg2,f2, arg3,f3, arg4,f4, arg5,f5) \
 NAME(funct, name) \
-{ D(0,ret0,f0) \
+{ D_0(ret0,f0) \
   D(1,arg1,f1) D(2,arg2,f2) D(3,arg3,f3) D(4,arg4,f4) \
   D(5,arg5,f5) \
-  if (!RemoteGetMsgPort(Slot)) { \
-  P(f0,1,arg1,f1,i##f1, P(f0,2,arg2,f2,i##f2, P(f0,3,arg3,f3,i##f3, P(f0,4,arg4,f4,i##f4, \
-  P(f0,5,arg5,f5,i##f5, \
+  if (RemoteGetMsgPort(Slot)) { Reply(OK_MAGIC, sizeof(uldat), &noId); return; } \
+  P(1,arg1,f1,i##f1, P(2,arg2,f2,i##f2, P(3,arg3,f3,i##f3, P(4,arg4,f4,i##f4, \
+  P(5,arg5,f5,i##f5, \
   if (s == end) { \
-  RET##f0(ret0, Act##fn(funct,name) (FN##fn(name) A(1), A(2), A(3), A(4), A(5), SocketH)); \
-  if (A(0)) { RegisterMsgPort(A(0), Slot); A(0)->ShutDownHook = sockShutDown; } } ))))) \
-  } else { Reply(OK_MAGIC, sizeof(uldat), &noId); } \
+   RET##f0(ret0, Act##fn(funct,name) (FN##fn(name) A(1), A(2), A(3), A(4), A(5), SocketH)) \
+   if (A(0)) { RegisterMsgPort(A(0), Slot); A(0)->ShutDownHook = sockShutDown; } \
+   return; \
+  } else fail = -1; ))))) \
+  FAIL##f0 \
 }
 
 #define PROTO6(ret0,f0, funct,name,fn,arg1,f1, arg2,f2, arg3,f3, arg4,f4, arg5,f5, \
 	arg6,f6) \
 NAME(funct, name) \
-{ D(0,ret0,f0) \
+{ D_0(ret0,f0) \
   D(1,arg1,f1) D(2,arg2,f2) D(3,arg3,f3) D(4,arg4,f4) \
   D(5,arg5,f5) D(6,arg6,f6) \
-  P(f0,1,arg1,f1,i##f1, P(f0,2,arg2,f2,i##f2, P(f0,3,arg3,f3,i##f3, P(f0,4,arg4,f4,i##f4, \
-  P(f0,5,arg5,f5,i##f5, P(f0,6,arg6,f6,i##f6, \
+  P(1,arg1,f1,i##f1, P(2,arg2,f2,i##f2, P(3,arg3,f3,i##f3, P(4,arg4,f4,i##f4, \
+  P(5,arg5,f5,i##f5, P(6,arg6,f6,i##f6, \
   RET##fn(ret0,f0, Act##fn(funct,name) (FN##fn(name) A(1), A(2), A(3), A(4), A(5), A(6))))))))) \
+  FAIL##f0 \
 }
 
 #define PROTO7(ret0,f0, funct,name,fn,arg1,f1, arg2,f2, arg3,f3, arg4,f4, arg5,f5, \
 	arg6,f6, arg7,f7) \
 NAME(funct, name) \
-{ D(0,ret0,f0) \
+{ D_0(ret0,f0) \
   D(1,arg1,f1) D(2,arg2,f2) D(3,arg3,f3) D(4,arg4,f4) \
   D(5,arg5,f5) D(6,arg6,f6) D(7,arg7,f7) \
-  P(f0,1,arg1,f1,i##f1, P(f0,2,arg2,f2,i##f2, P(f0,3,arg3,f3,i##f3, P(f0,4,arg4,f4,i##f4, \
-  P(f0,5,arg5,f5,i##f5, P(f0,6,arg6,f6,i##f6, P(f0,7,arg7,f7,i##f7, \
+  P(1,arg1,f1,i##f1, P(2,arg2,f2,i##f2, P(3,arg3,f3,i##f3, P(4,arg4,f4,i##f4, \
+  P(5,arg5,f5,i##f5, P(6,arg6,f6,i##f6, P(7,arg7,f7,i##f7, \
   RET##fn(ret0,f0, Act##fn(funct,name) (FN##fn(name) \
       A(1), A(2), A(3), A(4), A(5), A(6), A(7)))))))))) \
+  FAIL##f0 \
 }
 
 #define PROTO8(ret0,f0, funct,name,fn,arg1,f1, arg2,f2, arg3,f3, arg4,f4, arg5,f5, \
 	arg6,f6, arg7,f7, arg8,f8) \
 NAME(funct, name) \
-{ D(0,ret0,f0) \
+{ D_0(ret0,f0) \
   D(1,arg1,f1) D(2,arg2,f2) D(3,arg3,f3) D(4,arg4,f4) \
   D(5,arg5,f5) D(6,arg6,f6) D(7,arg7,f7) D(8,arg8,f8) \
-  P(f0,1,arg1,f1,i##f1, P(f0,2,arg2,f2,i##f2, P(f0,3,arg3,f3,i##f3, P(f0,4,arg4,f4,i##f4, \
-  P(f0,5,arg5,f5,i##f5, P(f0,6,arg6,f6,i##f6, P(f0,7,arg7,f7,i##f7, P(f0,8,arg8,f8,i##f8, \
+  P(1,arg1,f1,i##f1, P(2,arg2,f2,i##f2, P(3,arg3,f3,i##f3, P(4,arg4,f4,i##f4, \
+  P(5,arg5,f5,i##f5, P(6,arg6,f6,i##f6, P(7,arg7,f7,i##f7, P(8,arg8,f8,i##f8, \
   RET##fn(ret0,f0, Act##fn(funct,name) (FN##fn(name) \
       A(1), A(2), A(3), A(4), A(5), A(6), A(7), A(8))))))))))) \
+  FAIL##f0 \
 }
 
 #define PROTO11(ret0,f0, funct,name,fn,arg1 ,f1 , arg2 ,f2 , arg3 ,f3 , arg4 ,f4 , arg5 ,f5 , \
 	   arg6 ,f6 , arg7 ,f7 , arg8 ,f8 , arg9 ,f9 , arg10,f10, arg11,f11) \
 NAME(funct, name) \
-{ D(0 ,ret0 ,f0 ) \
+{ D_0( ret0 ,f0 ) \
   D(1 ,arg1 ,f1 ) D(2 ,arg2 ,f2 ) D(3 ,arg3 ,f3 ) D(4 ,arg4, f4 ) \
   D(5 ,arg5 ,f5 ) D(6 ,arg6 ,f6 ) D(7 ,arg7 ,f7 ) D(8 ,arg8 ,f8 ) \
   D(9 ,arg9, f9 ) D(10,arg10,f10) D(11,arg11,f11) \
-  P(f0,1 ,arg1 ,f1 ,i##f1 , P(f0,2 ,arg2 ,f2 ,i##f2 , P(f0,3 ,arg3 ,f3 ,i##f3 , P(f0,4 ,arg4 ,f4 ,i##f4 , \
-  P(f0,5 ,arg5 ,f5 ,i##f5 , P(f0,6 ,arg6 ,f6 ,i##f6 , P(f0,7 ,arg7 ,f7 ,i##f7 , P(f0,8 ,arg8 ,f8 ,i##f8 , \
-  P(f0,9 ,arg9 ,f9 ,i##f9 , P(f0,10,arg10,f10,i##f10, P(f0,11,arg11,f11,i##f11, \
+  P(1 ,arg1 ,f1 ,i##f1 , P(2 ,arg2 ,f2 ,i##f2 , P(3 ,arg3 ,f3 ,i##f3 , P(4 ,arg4 ,f4 ,i##f4 , \
+  P(5 ,arg5 ,f5 ,i##f5 , P(6 ,arg6 ,f6 ,i##f6 , P(7 ,arg7 ,f7 ,i##f7 , P(8 ,arg8 ,f8 ,i##f8 , \
+  P(9 ,arg9 ,f9 ,i##f9 , P(10,arg10,f10,i##f10, P(11,arg11,f11,i##f11, \
   RET##fn(ret0,f0, Act##fn(funct,name) (FN##fn(name) \
       A(1 ), A(2 ), A(3 ), A(4 ), A(5 ), A(6 ), A(7 ), A(8 ), A(9 ), A(10), \
       A(11)))))))))))))) \
+  FAIL##f0 \
 }
 
 #define PROTO19(ret0,f0, funct,name,fn,   arg1 ,f1 , arg2 ,f2 , arg3 ,f3 , arg4 ,f4 , arg5 ,f5 , \
 	   arg6 ,f6 , arg7 ,f7 , arg8 ,f8 , arg9 ,f9 , arg10,f10, arg11,f11, arg12,f12, arg13,f13, \
 	   arg14,f14, arg15,f15, arg16,f16, arg17,f17, arg18,f18, arg19,f19) \
 NAME(funct, name) \
-{ D(0 ,ret0 ,f0 ) \
+{ D_0( ret0 ,f0 ) \
   D(1 ,arg1 ,f1 ) D(2 ,arg2 ,f2 ) D(3 ,arg3 ,f3 ) D(4 ,arg4, f4 ) \
   D(5 ,arg5 ,f5 ) D(6 ,arg6 ,f6 ) D(7 ,arg7 ,f7 ) D(8 ,arg8 ,f8 ) \
   D(9 ,arg9, f9 ) D(10,arg10,f10) D(11,arg11,f11) D(12,arg12,f12) \
   D(13,arg13,f13) D(14,arg14,f14) D(15,arg15,f15) D(16,arg16,f16) \
   D(17,arg17,f17) D(18,arg18,f18) D(19,arg19,f19) \
-  P(f0,1 ,arg1 ,f1 ,i##f1 , P(f0,2 ,arg2 ,f2 ,i##f2 , P(f0,3 ,arg3 ,f3 ,i##f3 , P(f0,4 ,arg4 ,f4 ,i##f4 , \
-  P(f0,5 ,arg5 ,f5 ,i##f5 , P(f0,6 ,arg6 ,f6 ,i##f6 , P(f0,7 ,arg7 ,f7 ,i##f7 , P(f0,8 ,arg8 ,f8 ,i##f8 , \
-  P(f0,9 ,arg9 ,f9 ,i##f9 , P(f0,10,arg10,f10,i##f10, P(f0,11,arg11,f11,i##f11, P(f0,12,arg12,f12,i##f12, \
-  P(f0,13,arg13,f13,i##f13, P(f0,14,arg14,f14,i##f14, P(f0,15,arg15,f15,i##f15, P(f0,16,arg16,f16,i##f16, \
-  P(f0,17,arg17,f17,i##f17, P(f0,18,arg18,f18,i##f18, P(f0,19,arg19,f19,i##f19, \
+  P(1 ,arg1 ,f1 ,i##f1 , P(2 ,arg2 ,f2 ,i##f2 , P(3 ,arg3 ,f3 ,i##f3 , P(4 ,arg4 ,f4 ,i##f4 , \
+  P(5 ,arg5 ,f5 ,i##f5 , P(6 ,arg6 ,f6 ,i##f6 , P(7 ,arg7 ,f7 ,i##f7 , P(8 ,arg8 ,f8 ,i##f8 , \
+  P(9 ,arg9 ,f9 ,i##f9 , P(10,arg10,f10,i##f10, P(11,arg11,f11,i##f11, P(12,arg12,f12,i##f12, \
+  P(13,arg13,f13,i##f13, P(14,arg14,f14,i##f14, P(15,arg15,f15,i##f15, P(16,arg16,f16,i##f16, \
+  P(17,arg17,f17,i##f17, P(18,arg18,f18,i##f18, P(19,arg19,f19,i##f19, \
   RET##fn(ret0,f0, Act##fn(funct,name) (FN##fn(name) \
       A(1 ), A(2 ), A(3 ), A(4 ), A(5 ), A(6 ), A(7 ), A(8 ), A(9 ), A(10), \
       A(11), A(12), A(13), A(14), A(15), A(16), A(17), A(18), A(19) \
       ))))))))))))))))))))) \
+  FAIL##f0 \
 }
 
 
@@ -719,7 +725,7 @@ static uldat SendTwinMagic(void) {
     return RemoteWriteQueue(Slot, 8+sizeof(uldat), data);
 }
     
-static uldat FindFunction(byte Len, byte *name) {
+static uldat FindFunction(byte Len, CONST byte *name) {
     sock_fn *F = sockF;
     if (name) {
 	while (F->name && (F->Len != Len || CmpMem(F->name, name, Len)))
@@ -730,7 +736,7 @@ static uldat FindFunction(byte Len, byte *name) {
     return NOID;
 }
 
-static void Reply(uldat code, uldat len, void *data) {
+static void Reply(uldat code, uldat len, CONST void *data) {
     uldat buf[3];
     buf[0] = 2*sizeof(uldat) + len;
     buf[1] = RequestN;
@@ -806,15 +812,14 @@ static byte CreateAuth(byte *path) {
 }
     
 static byte InitAuth(void) {
-    byte *home;
     int fd, len, got;
     
-    if (!(home = getenv("HOME")))
+    if (!HOME)
 	return FALSE;
     
-    len = LenStr(home);
+    len = LenStr(HOME);
     len = Min2(len, TotalLen-11);
-    CopyMem(home, AuthData, len);
+    CopyMem(HOME, AuthData, len);
     CopyMem("/.TwinAuth", AuthData+len, 11);
 
     if ((fd = open(AuthData, O_RDONLY)) < 0)
@@ -1053,7 +1058,7 @@ static void sockKillSlot(uldat slot) {
 	if ((MsgPort = RemoteGetMsgPort(slot))) {
 	    /*
 	     * no infinite recursion between KillSlot and DeleteMsgPort...
-	     * DeleteMsgPort doesn't kill the slot, only tries to unregister from it
+	     * DeleteMsgPort doesn't kill the slot, only unregisters from it
 	     */
 
 	    if ((D_HW = MsgPort->AttachHW)) {
@@ -1100,7 +1105,7 @@ static void SocketIO(int fd, uldat slot) {
 	    if (RemoteGunzip(Slot))
 		Slot = gzSlot;
 	    else {
-		KillSlot(Slot);
+		Ext(Remote,KillSlot)(Slot);
 		return;
 	    }
 	}
@@ -1150,19 +1155,26 @@ static void SocketIO(int fd, uldat slot) {
 	
     } else if (!len || (len == (uldat)-1 && errno != EINTR && errno != EAGAIN)) {
 	/* let's close this sucker */
-	KillSlot(Slot);
+	Ext(Remote,KillSlot)(Slot);
     }
 }
 
+/*
+ * this can be called in nasty places like detaching non-exclusive displays
+ * when an exclusive one is started. Must preserve Slot, Fd and other globals!
+ */
 static void sockSendMsg(msgport *MsgPort, msg *Msg) {
     tevent_any Event = (tevent_any)0;
     uldat Len = 0, Tot;
     byte *t, Easy = sizeof(twindow) == sizeof(window *);
 
+    uldat save_Slot = Slot;
+    int save_Fd = Fd;
+    
     RequestN = MSG_MAGIC;
     Fd = MsgPort->RemoteData.Fd;
     Slot = MsgPort->RemoteData.FdSlot;
-	
+
     switch (Msg->Type) {
 #if defined(CONF__MODULES) || defined (CONF_HW_DISPLAY)
       case MSG_DISPLAY:
@@ -1308,6 +1320,8 @@ static void sockSendMsg(msgport *MsgPort, msg *Msg) {
 	}
 	break;
       default:
+	Slot = save_Slot;
+	Fd = save_Fd;
 	return;
     }
     if (Easy) {
@@ -1319,6 +1333,8 @@ static void sockSendMsg(msgport *MsgPort, msg *Msg) {
 	    = (void *)Obj2Id(Msg->Event.EventSelectionRequest.Requestor);
 	Reply(Msg->Type, Msg->Len, &Msg->Event);
     }
+    Slot = save_Slot;
+    Fd = save_Fd;
 }
 
 static void SocketH(msgport *MsgPort) {
@@ -1455,10 +1471,14 @@ static void NeedResizeDisplay(void){
  * this does direct write() on the connecting socket,
  * so it bypasses any compression.
  */
-static void AttachHW(uldat len, byte *arg, byte redirect) {
+static void AttachHW(uldat len, CONST byte *arg, byte flags) {
     display_hw *D_HW;
-    byte buf[2] = "\0";
+    byte buf[2] = "\0",
+	redirect = flags & TW_ATTACH_HW_REDIRECT,
+	exclusive = flags & TW_ATTACH_HW_EXCLUSIVE;
     int errfd, realFd;
+    fd_set set;
+    struct timeval tv = {2,0};
     
     realFd = LS.Fd >= 0 ? LS.Fd : FdList[LS.pairSlot].Fd;
 
@@ -1478,7 +1498,7 @@ static void AttachHW(uldat len, byte *arg, byte redirect) {
 	    redirect = 0;
     }
 	
-    if ((D_HW = AttachDisplayHW(len, arg, Slot))) {
+    if ((D_HW = AttachDisplayHW(len, arg, Slot, exclusive))) {
 	if (D_HW->NeedHW & NEEDPersistentSlot)
 	    LS.MsgPort->AttachHW = D_HW;
 	else
@@ -1492,18 +1512,16 @@ static void AttachHW(uldat len, byte *arg, byte redirect) {
     }
     write(realFd, buf, 2);
 
-    if (redirect) {
-	/* wait for twattach to display messages... */
-	fd_set set;
-	struct timeval tv = {2,0};
+    /* wait for twattach to confirm attach... */
 
-	FD_ZERO(&set);
-	FD_SET(realFd, &set);
+    FD_ZERO(&set);
+    FD_SET(realFd, &set);
 	    
-	while (select(realFd+1, &set, NULL, NULL, &tv) == -1 && errno == EINTR)
-	    ;
-	read(realFd, buf, 1);
-	
+    while (select(realFd+1, &set, NULL, NULL, &tv) == -1 && errno == EINTR)
+	;
+    read(realFd, buf, 1);
+
+    if (redirect) {
 	close(2);
 	dup2(errfd, 2);
 	close(errfd);
@@ -1511,11 +1529,11 @@ static void AttachHW(uldat len, byte *arg, byte redirect) {
 }
 
 	    
-static byte DetachHW(uldat len, byte *arg) {
-    return DetachDisplayHW(len, arg);
+static byte DetachHW(uldat len, CONST byte *arg) {
+    return DetachDisplayHW(len, arg, 0); /* cannot detach exclusive displays !! */
 }
 
-static void SetFontTranslation(byte trans[0x80]) {
+static void SetFontTranslation(CONST byte trans[0x80]) {
     if (trans)
 	CopyMem(trans, All->Gtranslations[USER_MAP], 0x80);
 }
@@ -1530,8 +1548,8 @@ static void SetOwnerSelection(msgport *Owner, time_t Time, frac_t Frac) {
 	TwinSelectionSetOwner((obj *)Owner, Time, Frac);
 }
 
-static void NotifySelection(obj *Requestor, uldat ReqPrivate, uldat Magic, byte MIME[MAX_MIMELEN],
-			    uldat Len, byte *Data) {
+static void NotifySelection(obj *Requestor, uldat ReqPrivate, uldat Magic, CONST byte MIME[MAX_MIMELEN],
+			    uldat Len, CONST byte *Data) {
     TwinSelectionNotify(Requestor, ReqPrivate, Magic, MIME, Len, Data);
 }
 
@@ -1542,6 +1560,10 @@ static void RequestSelection(obj *Owner, uldat ReqPrivate) {
 
 
 #ifdef MODULE
+
+# include "version.h"
+MODULEVERSION;
+
 byte InitModule(module *Module)
 #else
 byte InitSocket(void)
@@ -1565,14 +1587,14 @@ byte InitSocket(void)
 	if ((unixFd = socket(AF_UNIX, SOCK_STREAM, 0)) >= 0 &&
 	    /*setsockopt(unixFd, SOL_SOCKET, SO_REUSEADDR, (void *)&opt, sizeof(opt)) >= 0 &&*/
 	    bind(unixFd, (struct sockaddr *)&addr, sizeof(addr)) >= 0 &&
-	    listen(unixFd, 1) >= 0 &&
+	    chmod(addr.sun_path, 0700) >= 0 &&
+	    listen(unixFd, 3) >= 0 &&
 	    (unixSlot = RegisterRemoteFd(unixFd, unixSocketIO)) != NOSLOT) {
 	    
 	    fcntl(unixFd, F_SETFD, FD_CLOEXEC);
 	    CopyStr(addr.sun_path, opt);
 	    opt[6] = 'T';
 	    rename(addr.sun_path, opt);
-	    chmod(opt, 0700);
 	} else
 	    close(unixFd);
     }
@@ -1599,8 +1621,8 @@ byte InitSocket(void)
 	for (MaxFunct = 0; sockF[MaxFunct].name; MaxFunct++)
 	    sockF[MaxFunct].Len = strlen(sockF[MaxFunct].name);
     
-	KillSlot = sockKillSlot;
-	SocketSendMsg = sockSendMsg;
+	RegisterExtension(Remote,KillSlot,sockKillSlot);
+	RegisterExtension(Socket,SendMsg,sockSendMsg);
 	
 	return TRUE;
     }
@@ -1610,8 +1632,6 @@ byte InitSocket(void)
 
 #ifdef MODULE
 void QuitModule(module *Module) {
-    void remoteKillSlot(uldat); /* from remote.c */
-
     if (unixSlot != NOSLOT) {
 	UnRegisterRemote(unixSlot);
 	close(unixFd);
@@ -1622,10 +1642,10 @@ void QuitModule(module *Module) {
     }
     for (Slot = 0; Slot < FdTop; Slot++) {
 	if (LS.Fd != NOFD && (LS.HandlerIO == SocketIO || LS.HandlerIO == Wait4Auth)) {
-	    KillSlot(Slot);
+	    Ext(Remote,KillSlot)(Slot);
 	}
     } 
-    KillSlot = remoteKillSlot;
-    SocketSendMsg = NULL;
+    UnRegisterExtension(Remote,KillSlot,sockKillSlot);
+    UnRegisterExtension(Socket,SendMsg,sockSendMsg);
 }
 #endif
