@@ -29,6 +29,7 @@
 #include "methods.h"
 #include "data.h"
 #include "main.h"
+#include "printk.h"
 #include "util.h"
 #include "hw.h"
 #include "extensions.h"
@@ -65,8 +66,8 @@
 
 #endif
 
-
-    
+/* twin.h typedefs `msg'... avoid it */
+#define msg Msg
 
 
 %}
@@ -81,7 +82,7 @@
     str          _string;
     byte         imm;
     hwcol	 color;
-    node	*_node;
+    node	 _node;
 }
 
 /*
@@ -97,11 +98,12 @@
 %token '(' ')' ADDSCREEN ADDTOMENU ADDTOFUNC
 %token BACKGROUND BORDER BUTTON
 %token DELETEFUNC DELETEMENU DELETEBUTTON DELETESCREEN
+%token READ 
 
 /* tokens valid as first function token */
-%token EXEC EXECTTY GLOBALFLAGS INTERACTIVE KEY
-%token MENU MOUSE MOVE MOVESCREEN NEXT NOP PREV
-%token READ RESTART RESIZE RESIZESCREEN
+%token EXEC EXECTTY GLOBALFLAGS INTERACTIVE KEY 
+%token MENU MODULE MOUSE MOVE MOVESCREEN NEXT NOP PREV
+%token RESTART RESIZE RESIZESCREEN
 %token SCREEN SCROLL SENDTOSCREEN SLEEP STDERR
 %token SYNTHETICKEY WAIT WINDOW
 %token '\n'
@@ -257,6 +259,7 @@ func		: string		{ $$ = MakeUserFunc($1); }
 		| FLAG_FUNC opt_flag_toggle { $$ = MakeFlagNode($1, $2); }
 		| INTERACTIVE interactive_mode
 					{ $$ = MakeFlagNode(INTERACTIVE, $2); }
+		| MODULE string	opt_flag_toggle { $$ = MakeModuleNode($2, $3); }
 		| MENU			{ $$ = MakeBuiltinFunc(MENU); }
 		| move_or_resize opt_flag NUMBER opt_flag NUMBER
 					{ $$ = MakeMoveResizeScroll($1, $2, $3, $4, $5); }

@@ -1,30 +1,28 @@
 #ifndef _TW_METHODS_H
 #define _TW_METHODS_H
 
-byte SearchInfo(menu *Menu, dat i);
-window *FakeOpenTerm(CONST byte *arg0, byte * CONST *argv);
-window *FakeKbdFocus(window *W);
-void FakeWriteAscii(window *Window, ldat Len, CONST byte *Text);
-void FakeWriteHWAttr(window *Window, dat x, dat y, ldat Len, CONST hwattr *Attr);
-byte FakeFindBorderWindow(window *W, dat u, dat v, byte Border, byte *PtrChar, hwcol *PtrColor);
+byte FindInfo(menu Menu, dat i);
+window FakeOpenTerm(CONST byte *arg0, byte * CONST * argv);
+window FakeKbdFocus(window W);
+void FakeWriteAscii(window Window, ldat Len, CONST byte *Text);
+void FakeWriteHWAttr(window Window, dat x, dat y, ldat Len, CONST hwattr *Attr);
+byte FakeFindBorderWindow(window W, dat u, dat v, byte Border, byte *PtrChar, hwcol *PtrColor);
 
 extern fn Fn;
 #define FnObj		(Fn.f_obj)
-#define	FnArea		(Fn.f_area)
-#define	FnRow		(Fn.f_row)
+#define FnGroup		(Fn.f_group)
+#define	FnWidget	(Fn.f_widget)
 #define	FnGadget	(Fn.f_gadget)
 #define FnWindow	(Fn.f_window)
+#define	FnScreen	(Fn.f_screen)
+#define	FnRow		(Fn.f_row)
 #define	FnMenuItem	(Fn.f_menuitem)
 #define	FnMenu		(Fn.f_menu)
-#define	FnScreen	(Fn.f_screen)
-#define	FnMsg		(Fn.f_msg)
 #define	FnMsgPort	(Fn.f_msgport)
 #define	FnMutex		(Fn.f_mutex)
+#define	FnMsg		(Fn.f_msg)
 #define	FnModule	(Fn.f_module)
 #define	FnDisplayHW	(Fn.f_display_hw)
-
-obj  *Clone(obj *Obj);
-void  CloneList(obj *FirstFrom, obj **FirstTo, obj **LastTo);
 
 #define Do(Command, ObjName)	(Fn##ObjName->Command)
 

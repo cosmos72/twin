@@ -72,7 +72,7 @@ INLINE void VideoFlip(udat x, udat y) {
     hwattr h = Video[pos];
     hwcol c = ~HWCOL(h) ^ COL(HIGH,0);
 
-    Video[pos] = HWATTR( c, HWFONT(h) );
+    Video[pos] = HWATTR( c, HWFONT(h));
 }
 
 #endif /* _TW_HW_DIRTY_H */

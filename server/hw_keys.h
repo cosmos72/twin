@@ -47,7 +47,7 @@ IS(Find,	0, "")
 IS(Cancel,	0, "")
 IS(Help,	0, "")
 IS(Break,	0, "")
-IS(Mode_switch,	0, "")
+/*IS(Mode_switch,0, "")*/     /* I don't want to receive this, it's AltGr */
 IS(Num_Lock,	3, "\x1BOP")
 
 IS(KP_Space,	1, " ")

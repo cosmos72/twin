@@ -164,15 +164,15 @@ ldat GlobalShadows[2];
 
 
 static void yyerror(char *s) {
-    fprintf (stderr, "twin: %s:%d: %s\n", FILE_NAME, LINE_NO, s);
+    printk("twin: %s:%d: %s\n", FILE_NAME, LINE_NO, s);
 }
 
 
-#define NEW(kind) (kind *)my_malloc(sizeof(kind))
+#define NEW() (node)my_malloc(sizeof(struct node))
 
 
-static node *ReverseList(node *l) {
-    node *base = NULL, *v;
+static node ReverseList(node l) {
+    node base = NULL, v;
     while (l) {
 	v = l->next;
 	l->next = base;
@@ -182,14 +182,14 @@ static node *ReverseList(node *l) {
     return base;
 }
 
-INLINE node *MakeNode(str name) {
-    node *n = NEW(node);
+INLINE node MakeNode(str name) {
+    node n = NEW();
     n->name = name; /* this is my_malloc()ed memory (done by rcparse.l) */
     return n;
 }
 
-INLINE node *MakeBuiltinFunc(ldat id) {
-    node *n = NEW(node);
+INLINE node MakeBuiltinFunc(ldat id) {
+    node n = NEW();
     n->id = id;
     return n;
 }
@@ -199,7 +199,7 @@ INLINE node *MakeBuiltinFunc(ldat id) {
  * do nothing in that case
  * (it's a way to eat empty lines, they are coded as NULL nodes)
  */
-INLINE node *AddtoNodeList(node *l, node *n) {
+INLINE node AddtoNodeList(node l, node n) {
     if (n) {
 	n->next = l;
 	return n;
@@ -207,8 +207,8 @@ INLINE node *AddtoNodeList(node *l, node *n) {
     return l;
 }
 
-static node *MakeNodeBody(str name, node *body, node **head) {
-    node *n = MakeNode(name);
+static node MakeNodeBody(str name, node body, node *head) {
+    node n = MakeNode(name);
     n->body = ReverseList(body);
     if (head)
 	*head = AddtoNodeList(*head, n);
@@ -220,8 +220,8 @@ static byte ImmAddScreen(str name) {
     return TRUE;
 }
 
-static void MergeNodeLists(node *n, node *l) {
-    node *ol = n->body;
+static void MergeNodeLists(node n, node l) {
+    node ol = n->body;
 
     if (!ol)
 	n->body = l;
@@ -232,8 +232,8 @@ static void MergeNodeLists(node *n, node *l) {
     }
 }
 
-static byte MergeMenu(str name, node *l) {
-    node *n;
+static byte MergeMenu(str name, node l) {
+    node n;
     
     if ((n = LookupNodeName(name, MenuList)))
 	MergeNodeLists(n, ReverseList(l));
@@ -242,8 +242,8 @@ static byte MergeMenu(str name, node *l) {
     return TRUE;
 }
 
-static byte MergeFunc(str name, node *l) {
-    node *n;
+static byte MergeFunc(str name, node l) {
+    node n;
     
     if ((n = LookupNodeName(name, FuncList)))
 	MergeNodeLists(n, ReverseList(l));
@@ -252,8 +252,8 @@ static byte MergeFunc(str name, node *l) {
     return TRUE;
 }
 
-static byte ImmBackground(str name, hwattr color, node *shape) {
-    node *n;
+static byte ImmBackground(str name, hwattr color, node shape) {
+    node n;
     if ((n = LookupNodeName(name, ScreenList))) {
 	n->body = ReverseList(shape);
 	n->x.color = color;
@@ -263,9 +263,9 @@ static byte ImmBackground(str name, hwattr color, node *shape) {
 }
 
 
-static void UnwindShape(node *n) {
-    byte *s = NULL, *d = n->data = my_malloc(n->x.ctx = 10);
-    node *shape = n->body;
+static void UnwindShape(node n) {
+    str s = NULL, d = n->data = my_malloc(n->x.ctx = 10);
+    node shape = n->body;
 
     while (shape) {
 	s = shape->name;
@@ -278,8 +278,8 @@ static void UnwindShape(node *n) {
 }
 
 
-static byte ImmBorder(str wildcard, ldat flag, node *shape) {
-    node *n;
+static byte ImmBorder(str wildcard, ldat flag, node shape) {
+    node n;
     if (shape) {
 	n = MakeNodeBody(wildcard, shape, &BorderList);
 	n->x.f.flag = flag;
@@ -325,7 +325,7 @@ static byte ImmButton(ldat n, str shape, ldat lr, ldat flag, ldat pos) {
     return FALSE;
 }
     
-static void DeleteNodeName(str name, node **l) {
+static void DeleteNodeName(str name, node *l) {
     for (; *l; l = &((*l)->next)) {
 	if (!CmpStr(name, (*l)->name)) {
 	    *l = (*l)->next;
@@ -355,7 +355,7 @@ static byte ImmDeleteScreen(str name) {
     return TRUE;
 }
 
-static byte ImmGlobalFlags(node *l) {
+static byte ImmGlobalFlags(node l) {
     ldat i, j;
     
     while (l) {
@@ -430,7 +430,7 @@ static ldat BitmapCtx(str _ctx) {
     return res;
 }
 
-static node *LookupBind(ldat label, ldat ctx, node *l) {
+static node LookupBind(ldat label, ldat ctx, node l) {
     for (; l; l = l->next) {
 	/* strict match here: (l->x.ctx == ctx) */
 	if (label == l->id && l->x.ctx == ctx)
@@ -439,8 +439,8 @@ static node *LookupBind(ldat label, ldat ctx, node *l) {
     return NULL;
 }
 
-static byte *toString(ldat i) {
-    byte *s = my_malloc(2 + 3 * sizeof(ldat));
+static str toString(ldat i) {
+    str s = my_malloc(2 + 3 * sizeof(ldat));
     sprintf(s, "%d", (int)i);
     return s;
 }
@@ -454,9 +454,9 @@ static ldat FindTwKey(str name) {
     return -1;
 }
 
-static byte BindKey(ldat shiftflags, str label, node *func) {
+static byte BindKey(ldat shiftflags, str label, node func) {
     ldat key;
-    node *n;
+    node n;
     
     switch (strlen(label)) {
       case 0:
@@ -481,10 +481,10 @@ static byte BindKey(ldat shiftflags, str label, node *func) {
     return TRUE;
 }
     
-static byte BindMouse(str buttons, str _ctx, node *func) {
+static byte BindMouse(str buttons, str _ctx, node func) {
     ldat ctx = BitmapCtx(_ctx);
     udat buttonmask = 0;
-    node *n;
+    node n;
     byte c;
     
     while ((c = *buttons++)) {
@@ -512,14 +512,22 @@ static byte BindMouse(str buttons, str _ctx, node *func) {
     return FALSE;
 }
 
-static node *MakeFlagNode(ldat id, ldat flag) {
-    node *n = MakeBuiltinFunc(id);
+static node MakeFlagNode(ldat id, ldat flag) {
+    node n = MakeBuiltinFunc(id);
     n->x.f.flag = flag;
     return n;
 }
 
-static node *MakeShadowsNode(ldat x, ldat y) {
-    node *n = MakeBuiltinFunc(SHADOWS);
+static node MakeModuleNode(str label, ldat flag) {
+    node n = MakeNode(label);
+    n->id = MODULE;
+    n->x.f.flag = flag;
+    n->x.f.a = -1; /* code for this module will be asked when needed */
+    return n;
+}
+
+static node MakeShadowsNode(ldat x, ldat y) {
+    node n = MakeBuiltinFunc(SHADOWS);
     n->x.f.flag = -(ldat)'+';
     n->x.f.a = x;
     n->x.f.b = y;
@@ -527,16 +535,16 @@ static node *MakeShadowsNode(ldat x, ldat y) {
 }
 
 
-static node *MakeUserFunc(str name) {
-    node *n = MakeNode(name);
+static node MakeUserFunc(str name) {
+    node n = MakeNode(name);
     n->id = USERFUNC;
     return n;
 }
 
-static void MakeArgVecReverse(node *n, node *l) {
+static void MakeArgVecReverse(node n, node l) {
     uldat len = 1;
-    node *base = NULL, *v;
-    byte **s;
+    node base = NULL, v;
+    str *s;
     
     if (!l)
 	return;
@@ -551,7 +559,7 @@ static void MakeArgVecReverse(node *n, node *l) {
     l = base;
 
     n->x.v.argc = len;
-    n->x.v.argv = s = (byte **)my_malloc(len * sizeof(byte *));
+    n->x.v.argv = s = (str *)my_malloc(len * sizeof(str ));
 
     while (l) {
 	*s++ = l->name; /* this is my_malloc()ed memory */
@@ -560,20 +568,20 @@ static void MakeArgVecReverse(node *n, node *l) {
     *s = NULL;
 }
 
-static node *MakeExec(node *l) {
-    node *n = MakeBuiltinFunc(EXEC);
+static node MakeExec(node l) {
+    node n = MakeBuiltinFunc(EXEC);
     MakeArgVecReverse(n, l);    
     return n;
 }
 
-static node *MakeExecTty(node *l) {
-    node *n = MakeBuiltinFunc(EXECTTY);
+static node MakeExecTty(node l) {
+    node n = MakeBuiltinFunc(EXECTTY);
     MakeArgVecReverse(n, l);    
     return n;
 }
 
-static node *MakeMoveResizeScroll(ldat id, ldat flag_x, ldat x, ldat flag_y, ldat y) {
-    node *n = MakeBuiltinFunc(id);
+static node MakeMoveResizeScroll(ldat id, ldat flag_x, ldat x, ldat flag_y, ldat y) {
+    node n = MakeBuiltinFunc(id);
     n->x.f.plus_minus = flag_x;
     n->x.f.flag = flag_y;
     n->x.f.a = x;
@@ -581,29 +589,29 @@ static node *MakeMoveResizeScroll(ldat id, ldat flag_x, ldat x, ldat flag_y, lda
     return n;
 }
 
-static node *MakeRestartWM(str name) {
-    node *n = MakeNode(name);
+static node MakeRestartWM(str name) {
+    node n = MakeNode(name);
     n->id = RESTART;
     return n;
 }
 
-static node *MakeStderr(node *l) {
-    node *n = MakeBuiltinFunc(STDERR);
+static node MakeStderr(node l) {
+    node n = MakeBuiltinFunc(STDERR);
     MakeArgVecReverse(n, l);    
     return n;
 }
 
-static node *MakeSendToScreen(str name) {
-    node *n = MakeNode(name);
+static node MakeSendToScreen(str name) {
+    node n = MakeNode(name);
     n->id = SENDTOSCREEN;
     return n;
 }
 
-static node *MakeSyntheticKey(ldat shiftflags, str label) {
+static node MakeSyntheticKey(ldat shiftflags, str label) {
     ldat key;
     str  seq;
     byte buf[4];
-    node *n;
+    node n;
     
     switch (strlen(label)) {
       case 0:
@@ -635,7 +643,7 @@ static node *MakeSyntheticKey(ldat shiftflags, str label) {
 	}
     }
     
-    n = NEW(node);
+    n = NEW();
     n->id = SYNTHETICKEY;
     n->x.f.flag = shiftflags;
     n->x.f.a = key;
@@ -643,40 +651,40 @@ static node *MakeSyntheticKey(ldat shiftflags, str label) {
     return n;
 }
 
-static node *MakeSleep(ldat t) {
-    node *n = NEW(node);
+static node MakeSleep(ldat t) {
+    node n = NEW();
     n->id = SLEEP;
     n->x.f.a = t;
     return n;
 }
 
-static node *MakeWait(str name) {
-    node *n = MakeNode(name);
+static node MakeWait(str name) {
+    node n = MakeNode(name);
     n->id = WAIT;
     return n;
 }
 
-static node *MakeWindowNumber(ldat flag, ldat x) {
-    node *n = MakeBuiltinFunc(WINDOW);
+static node MakeWindowNumber(ldat flag, ldat x) {
+    node n = MakeBuiltinFunc(WINDOW);
     n->x.f.plus_minus = flag;
     n->x.f.a = x;
     return n;
 }
 
-static node *MakeWindow(str name) {
-    node *n = MakeBuiltinFunc(WINDOW);
+static node MakeWindow(str name) {
+    node n = MakeBuiltinFunc(WINDOW);
     n->name = name;
     return n;
 }
 
-static node *AddtoStringList(node *l, str string) {
+static node AddtoStringList(node l, str string) {
     return AddtoNodeList(l, MakeNode(string));
 }
 
 
 #if defined(DEBUG_YACC) || defined(DEBUG_RC)
 
-static byte *TokenName(ldat id) {
+static str TokenName(ldat id) {
     switch (id) {
       case '+':		return "+";
       case '-':		return "-";
@@ -754,7 +762,7 @@ static byte *TokenName(ldat id) {
 
 #ifdef DEBUG_RC
 
-static byte *ColorName(hwcol col) {
+static str ColorName(hwcol col) {
     switch (col) {
       case BLACK:	return "Black";
       case BLUE:	return "Blue";
@@ -779,14 +787,14 @@ static void DumpColorName(hwcol col) {
     printf("%s ", ColorName(bg & ~HIGH));
 }
 
-static void DumpNameList(node *l, byte nl) {
+static void DumpNameList(node l, byte nl) {
     for (; l; l = l->next) {
 	if (l->name)
 	    printf("\"%s\"%c", l->name, nl ? '\n' : ' ');
     }
 }
 
-static void DumpGenericNode(node *n) {
+static void DumpGenericNode(node n) {
     ldat f, x;
 
     if (n) {
@@ -807,7 +815,7 @@ static void DumpGenericNode(node *n) {
     }
 }
 
-static void DumpPlusList(node *l) {
+static void DumpPlusList(node l) {
     for (; l; l = l->next) {
 	if (l->name)
 	    printf("\"%s\" ", l->name);
@@ -816,7 +824,7 @@ static void DumpPlusList(node *l) {
     }
 }
 
-static void DumpFuncNode(node *n) {
+static void DumpFuncNode(node n) {
     if (!n)
 	return;
     
@@ -826,7 +834,7 @@ static void DumpFuncNode(node *n) {
 }
 
 
-static void DumpMenuNode(node *n) {
+static void DumpMenuNode(node n) {
     if (!n)
 	return;
     
@@ -835,7 +843,7 @@ static void DumpMenuNode(node *n) {
     printf(")\n");
 }
 
-static void DumpScreenNode(node *n) {
+static void DumpScreenNode(node n) {
     if (!n)
 	return;
     
@@ -847,7 +855,7 @@ static void DumpScreenNode(node *n) {
     printf(")\n");
 }
 
-static void DumpBorderNode(node *n) {
+static void DumpBorderNode(node n) {
     if (!n)
 	return;
     
@@ -860,7 +868,7 @@ static void DumpBorderNode(node *n) {
 	   n->data, n->data+3, n->data+6);
 }
 
-static void DumpKeyNode(node *n) {
+static void DumpKeyNode(node n) {
     if (!n)
 	return;
     printf("%s %s ", TokenName(KEY), n->name);
@@ -868,7 +876,7 @@ static void DumpKeyNode(node *n) {
     printf("\n");
 }
 
-static void DumpMouseNode(node *n) {
+static void DumpMouseNode(node n) {
     byte buttons[4] = "\0\0\0", *b = buttons;
     
     if (!n)
@@ -886,7 +894,7 @@ static void DumpMouseNode(node *n) {
 }
 
 static void DumpGlobals(void) {
-    node *l;
+    node l;
 
     for (l = FuncList; l; l = l->next)
 	DumpFuncNode(l);
@@ -920,7 +928,7 @@ static void DumpGlobals(void) {
  * (this happens in the child process)
  */
 static void ClearGlobals(void) {
-    WriteMem(Globals, '\0', GLOBAL_MAX * sizeof(node *));
+    WriteMem(Globals, '\0', GLOBAL_MAX * sizeof(node ));
     WriteMem(All->ButtonVec, '\0', BUTTON_MAX * sizeof(button_vec));
     MenuBinds = NULL;
     MenuBindsMax = 0;
@@ -932,23 +940,23 @@ static void ClearGlobals(void) {
  * (this happens in the child process)
  */
 static void WriteGlobals(void) {
-    node **g = Globals;
+    node *g = Globals;
     void **M = shm_getbase();
 
     while (g < Globals + GLOBAL_MAX)
 	*M++ = ReverseList(*g++);
 
     CopyMem(All->ButtonVec, M, sizeof(All->ButtonVec));
-    M = (void **) ((byte *)M + sizeof(All->ButtonVec));
+    M = (void **) ((str )M + sizeof(All->ButtonVec));
     CopyMem(GlobalFlags, M, sizeof(GlobalFlags));
-    M = (void **) ((byte *)M + sizeof(GlobalFlags));
+    M = (void **) ((str )M + sizeof(GlobalFlags));
     CopyMem(GlobalShadows, M, sizeof(GlobalShadows));
-    M = (void **) ((byte *)M + sizeof(GlobalShadows));
+    M = (void **) ((str )M + sizeof(GlobalShadows));
 }
 
 
 static void NewCommonMenu_Overflow(void) {
-    fprintf(stderr, "twin: RC parser: user-defined menu is too big! (max is %d entries)\n",
+    printk("twin: RC parser: user-defined menu is too big! (max is %d entries)\n",
 	    (int)(MAXUDAT - COD_RESERVED + 1));
 }
 
@@ -956,19 +964,19 @@ static void NewCommonMenu_Overflow(void) {
  * create new CommonMenu and MenuBinds from MenuList
  * or fail with no side effects
  */
-static byte NewCommonMenu(void **shm_M, menu **res_CommonMenu,
-			   node ***res_MenuBinds, uldat *res_MenuBindsMax) {
-    node *new_MenuList;
-    node **new_MenuBinds = (node **)0;
+static byte NewCommonMenu(void **shm_M, menu *res_CommonMenu,
+			   node **res_MenuBinds, uldat *res_MenuBindsMax) {
+    node new_MenuList;
+    node *new_MenuBinds = (node *)0;
     uldat new_MenuBindsMax;
     
-    menu *Menu = (menu *)0;
-    menuitem *Item;
-    window *W;
-    row *Row;
-    node *N, *M;
+    menu Menu = (menu)0;
+    menuitem Item;
+    window W;
+    row Row;
+    node N, M;
     uldat maxlen, l;
-    byte *Line;
+    str Line;
     
     
     /* extract needed length for new_MenuBinds[] */
@@ -986,7 +994,7 @@ static byte NewCommonMenu(void **shm_M, menu **res_CommonMenu,
 	return FALSE;
     }
     
-    if (new_MenuBindsMax && !(new_MenuBinds = (node **)AllocMem(new_MenuBindsMax * sizeof(node *))))
+    if (new_MenuBindsMax && !(new_MenuBinds = (node *)AllocMem(new_MenuBindsMax * sizeof(node ))))
 	return FALSE;
 	
     new_MenuBindsMax = 0;
@@ -1014,7 +1022,7 @@ static byte NewCommonMenu(void **shm_M, menu **res_CommonMenu,
 		}
 	    }
 		
-	    if (!(Line = (byte *)AllocMem(maxlen + 1)))
+	    if (!(Line = (str )AllocMem(maxlen + 1)))
 		break;
 	    
 	    WriteMem(Line, 'Ä', maxlen);
@@ -1057,10 +1065,10 @@ static byte NewCommonMenu(void **shm_M, menu **res_CommonMenu,
  * new Screens, Common Menu and MenuBinds or fail with no side effect.
  */
 static byte ReadGlobals(void) {
-    node **g = Globals;
+    node *g = Globals;
     void **M = shm_getbase();
-    menu *new_CommonMenu;
-    node **new_MenuBinds = (node **)0;
+    menu new_CommonMenu;
+    node *new_MenuBinds = (node *)0;
     uldat new_MenuBindsMax;
     
     /* FIXME: apply to ScreenList */
@@ -1086,11 +1094,11 @@ static byte ReadGlobals(void) {
 	*g++ = *M++;
     
     CopyMem(M, All->ButtonVec, sizeof(All->ButtonVec));
-    M = (void **) ((byte *)M + sizeof(All->ButtonVec));
+    M = (void **) ((str )M + sizeof(All->ButtonVec));
     CopyMem(M, GlobalFlags, sizeof(GlobalFlags));
-    M = (void **) ((byte *)M + sizeof(GlobalFlags));
+    M = (void **) ((str )M + sizeof(GlobalFlags));
     CopyMem(M, GlobalShadows, sizeof(GlobalShadows));
-    M = (void **) ((byte *)M + sizeof(GlobalShadows));
+    M = (void **) ((str )M + sizeof(GlobalShadows));
 
 #ifdef DEBUG_RC
     DumpGlobals();
@@ -1112,8 +1120,8 @@ static byte ReadGlobals(void) {
  * this for example will search "foo"
  * as "{HOME}/foo", "{CONF_DESTDIR}/lib/twin/foo" or plain "foo"
  */
-static byte *findfile(byte *name, uldat *fsize) {
-    byte *path;
+static str findfile(str name, uldat *fsize) {
+    str path;
     byte CONST *dir;
     byte CONST *search[3] = { HOME, conf_destdir_lib_twin, "" };
     int i, len, nlen = strlen(name);
@@ -1134,13 +1142,13 @@ static byte *findfile(byte *name, uldat *fsize) {
     return NULL;
 }
 
-static byte rcparse(byte *path);
+static byte rcparse(str path);
 
 #ifdef CONF_THIS_MODULE
 static
 #endif
 byte rcload(void) {
-    byte *path;
+    str path;
     uldat len;
     int fds[2];
     byte c = FALSE;
@@ -1223,12 +1231,12 @@ byte rcload(void) {
 
 MODULEVERSION;
 
-byte InitModule(module *Module) {
+byte InitModule(module Module) {
     Module->Private = (void *)rcload;
     return TRUE;
 }
 
-void QuitModule(module *Module) {
+void QuitModule(module Module) {
 }
 #endif
 

@@ -1,18 +1,19 @@
 #!/bin/bash
 
-ARGS="$@"
+ARGS=
 HW=
 DPY=
 
 while [ "$1" ]; do
   case "$1" in
     -nohw|-hw=* )
-      HW="$1";
+      HW="$HW $1";
       ;;
     -twin@* )
       DPY="${1:5}";
       ;;
     -* )
+      ARGS="$ARGS $1";
       ;;
     *:[0-9a-fA-F]* )
       DPY="$1";
@@ -23,11 +24,11 @@ done
 
 if [ -z "$HW" ]; then
   if [ "$DISPLAY" ]; then
-    ARGS="$ARGS -hw=X,font=9x19"
+    HW="-hw=X,font=9x19"
   elif [ "$TWDISPLAY" ]; then
-    ARGS="$ARGS -hw=twin@$TWDISPLAY"
+    HW="-hw=twin@$TWDISPLAY"
   else
-    ARGS="$ARGS -hw=tty"
+    HW="-hw=tty"
   fi
 fi
 
@@ -40,8 +41,8 @@ fi
 
 if [ "$DPY" ]; then
   echo twstart: detected twin running on "$DPY"
-  exec twdisplay -twin@"$DPY" $ARGS
+  exec twdisplay -twin@"$DPY" $ARGS $HW
 else
-  exec twin $ARGS
+  exec twin $ARGS $HW
 fi
 

@@ -32,10 +32,11 @@
 
 /* static variables, common to most functions */
 
-static window *Win;
+static window Win;
 static ttydata *Data;
 static udat *Flags;
-static udat kbdFlags = TTY_AUTOWRAP, defaultFlags = TTY_AUTOWRAP;
+/* enable keypad by default */
+static udat kbdFlags = TTY_KBDAPPLIC|TTY_AUTOWRAP, defaultFlags = TTY_KBDAPPLIC|TTY_AUTOWRAP;
 
 static dat  dirty[2][4];
 static ldat dirtyS[2];
@@ -183,7 +184,7 @@ static void invert_screen(void) {
     
     while (count--) {
 	a = *p;
-	*p++ = HWATTR( COL( COLBG(HWCOL(a)), COLFG(HWCOL(a)) ), HWFONT(a) );
+	*p++ = HWATTR( COL( COLBG(HWCOL(a)), COLFG(HWCOL(a))), HWFONT(a));
 	if (p == Split) p = Base;
     }
 }
@@ -323,7 +324,7 @@ static void scrollup(dat t, dat b, dat nr) {
 	return;
 
     /* try to accelerate this */
-    if ((widget *)Win == All->FirstScreen->FirstW) {
+    if ((widget)Win == All->FirstScreen->FirstW) {
 	accel = TRUE;
 	flush_tty();
     } else
@@ -369,7 +370,7 @@ static void scrolldown(dat t, dat b, dat nr) {
 	return;
 
     /* try to accelerate this */
-    if ((widget *)Win == All->FirstScreen->FirstW) {
+    if ((widget)Win == All->FirstScreen->FirstW) {
 	accel = TRUE;
 	flush_tty();
     } else
@@ -638,7 +639,7 @@ static void respond_string(byte *p) {
     if (!RemoteWindowWriteQueue(Win, Len, p)) {
 	
 	/* or we may need to send a Msg to Win->Menu->MsgPort */
-	msg *Msg;
+	msg Msg;
 	event_keyboard *Event;
 	if ((Msg = Do(Create,Msg)(FnMsg, MSG_WINDOW_KEY, Len + sizeof(event_keyboard)))) {
 	    /* this is the same code as in KeyboardEvent() in hw.c */
@@ -671,7 +672,7 @@ INLINE void status_report(void) {
  * this is what the terminal answers to a ESC-Z or csi0c query.
  */
 INLINE void respond_ID(void) {
-    respond_string("\033[?6;3c" /* VT102ID is "\033[?6c" */ );
+    respond_string("\033[?6;3c" /* VT102ID is "\033[?6c" */);
 }
 
 static void set_mode(byte on_off) {
@@ -913,7 +914,7 @@ static byte insert_newtitle(byte c) {
 }
 
 static void set_newtitle(void) {
-    widget *P;
+    widget P;
     
     if (Win->Title)
 	FreeMem(Win->Title);
@@ -939,8 +940,8 @@ static void set_newtitle(void) {
     
     if ((P = Win->Parent) && IS_SCREEN(P)) {
 	/* need to update window list with new name ? */
-	if (((screen *)P)->FnHookWindow)
-	    ((screen *)P)->FnHookWindow(((screen *)P)->HookWindow);
+	if (((screen)P)->FnHookWindow)
+	    ((screen)P)->FnHookWindow(((screen)P)->HookWindow);
     }
 }
 
@@ -965,8 +966,8 @@ INLINE void write_ctrl(byte c) {
 	    return;
 	}
 	set_newtitle();
-	break;
-	
+	State = ESnormal;
+	return;
       case 8:
 	bs();
 	return;
@@ -1085,7 +1086,7 @@ INLINE void write_ctrl(byte c) {
 	break;
 
       case ESpalette:
-	if ( (c>='0'&&c<='9') || (c>='A'&&c<='F') || (c>='a'&&c<='f') ) {
+	if ( (c>='0'&&c<='9') || (c>='A'&&c<='F') || (c>='a'&&c<='f')) {
 	    Par[nPar++] = (c>'9' ? (c&0xDF)-'A'+10 : c-'0') ;
 	    if (nPar==7)
 		SetPaletteHW(Par[0], Par[1] * 16 + Par[2],
@@ -1316,7 +1317,7 @@ INLINE void write_ctrl(byte c) {
 	break;
 	
       case ESxterm_2:
-	if (insert_newtitle(c))
+	if (c >= ' ' && insert_newtitle(c))
 	    return;
 	
       default:
@@ -1329,17 +1330,17 @@ INLINE void write_ctrl(byte c) {
     State = ESnormal;
 }
 
-window *TtyKbdFocus(window *newWin) {
+window TtyKbdFocus(window newWin) {
     udat newFlags;
-    window *oldWin;
-    widget *P;
-    screen *Screen = newWin && (P=newWin->Parent) && IS_SCREEN(P) ? (screen *)P : All->FirstScreen;
+    window oldWin;
+    widget P;
+    screen Screen = newWin && (P=newWin->Parent) && IS_SCREEN(P) ? (screen)P : All->FirstScreen;
     
     if (Screen) {
 	oldWin = Screen->FocusWindow;
 	Screen->FocusWindow = newWin;
     } else
-	oldWin = newWin = (window *)0;
+	oldWin = newWin = (window)0;
 	    
     if (Screen == All->FirstScreen) {
 	if (!newWin || !newWin->TtyData)
@@ -1364,7 +1365,7 @@ void ForceKbdFocus(void) {
 }
     
 /* this is the main entry point */
-void TtyWriteAscii(window *Window, ldat Len, CONST byte *AsciiSeq) {
+void TtyWriteAscii(window Window, ldat Len, CONST byte *AsciiSeq) {
     byte c, ok;
 
     if (!Window || !Len)
@@ -1380,7 +1381,7 @@ void TtyWriteAscii(window *Window, ldat Len, CONST byte *AsciiSeq) {
     
     /* scroll YLogic to bottom */
     if (Win->YLogic < ScrollBack) {
-	if ((widget *)Win == All->FirstScreen->FirstW)
+	if ((widget)Win == All->FirstScreen->FirstW)
 	    ScrollFirstWindow(0, ScrollBack - Win->YLogic, TRUE);
 	else {
 	    dirty_tty(0, 0, SizeX-1, SizeY-1);
@@ -1444,7 +1445,7 @@ void TtyWriteAscii(window *Window, ldat Len, CONST byte *AsciiSeq) {
  * this currently wraps at window width
  * so it can write multiple rows at time
  */
-void TtyWriteHWAttr(window *Window, dat x, dat y, ldat len, CONST hwattr *text) {
+void TtyWriteHWAttr(window Window, dat x, dat y, ldat len, CONST hwattr *text) {
     ldat left, max, chunk;
     hwattr *dst;
     
@@ -1455,13 +1456,16 @@ void TtyWriteHWAttr(window *Window, dat x, dat y, ldat len, CONST hwattr *text) 
     Win = Window;
     Data = Win->TtyData;
     Flags = &Data->Flags;
-    
+
+#if 0
     /*
-     * on-the-fly Contents resize. This is a failsafe check...
-     * the real one is in WManager and gets called after a window resize
+     * dangerous to resize Contents here... clients can write in a window
+     * even while it is interactively resized! Contents should be resized only
+     * when Interactive Resize is finished.
      */
     if (!CheckResizeWindowContents(Window))
 	return;
+#endif
     
     x = Max2(x, 0); x = Min2(x, SizeX - 1);
     y = Max2(y, 0); y = Min2(y, SizeY - 1);
@@ -1474,7 +1478,7 @@ void TtyWriteHWAttr(window *Window, dat x, dat y, ldat len, CONST hwattr *text) 
 
     /* scroll YLogic to bottom */
     if (Win->YLogic < ScrollBack) {
-	if ((widget *)Win == All->FirstScreen->FirstW)
+	if ((widget)Win == All->FirstScreen->FirstW)
 	    ScrollFirstWindow(0, ScrollBack - Win->YLogic, TRUE);
 	else {
 	    dirty_tty(0, 0, SizeX-1, SizeY-1);
@@ -1533,7 +1537,7 @@ static void con_start(struct tty_struct *tty) {
     set_leds();
 }
 
-static void clear_buffer_attributes(window *Window) {
+static void clear_buffer_attributes(window Window) {
     unsigned short *p = (unsigned short *) origin;
     int count = screenbuf_size/2;
     int mask = hi_font_mask | 0xff;
@@ -1546,7 +1550,7 @@ static void clear_buffer_attributes(window *Window) {
 /*
  *	Palettes
  */
-void set_palette(window *Window) {
+void set_palette(window Window) {
     if (vcmode != KD_GRAPHICS)
 	sw->con_set_palette(vc_cons.d, color_table);
 }
@@ -1591,7 +1595,7 @@ int con_get_cmap(unsigned char *arg) {
     return set_get_cmap (arg,0);
 }
 
-void reset_palette(window *Window) {
+void reset_palette(window Window) {
     int j, k;
     for (j=k=0; j<16; j++) {
 	palette[k++] = default_red[j];

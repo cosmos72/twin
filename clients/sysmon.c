@@ -17,7 +17,8 @@
 #include <errno.h>
 #include <sys/utsname.h>
 
-#include <libTw.h>
+#include "libTw.h"
+#include "libTwerrno.h"
 
 tmsgport SysMon_MsgPort;
 tmenu SysMon_Menu;
@@ -257,8 +258,9 @@ void Update(void) {
 
 #define Quit() \
     do { \
-	if (TwErrno) { \
-	    printf("%s: libTw error: %s\n", argv[0], TwStrError(TwErrno)); \
+	if ((err = TwErrno)) { \
+	    printf("%s: libTw error: %s%s\n", argv[0], \
+		       TwStrError(err), TwStrErrorDetail(err, TwErrnoDetail)); \
 	    TwClose(); \
 	    exit(1); \
 	} \
@@ -271,10 +273,11 @@ int main(int argc, char *argv[]) {
     struct timeval p = {0, 0};
     fd_set readfds;
     int fd;
+    uldat err;
     
     if (!InitSysMon())
 	Quit();
-    
+
     fd = TwConnectionFd();
     FD_ZERO(&readfds);
 

@@ -33,7 +33,7 @@ for i in $FILES; do
   DEBUGS=
   # search `#include "name"' `CONF_name' and `DEBUG_name' in the file
   # and turn them into ` INC_name ' ` CONF_name ' and ` DEBUG_name '
-  MATCH=`grep -E '(^# *include *"[^"]*")|(^#.*def.*CONF_)|(^#.*def.*DEBUG_)' "$i" \
+  MATCH=`grep '\(^# *include *"[^"]*"\)\|\(^#.*def.*CONF_\)\|\(^#.*def.*DEBUG_\)' "$i" \
   | sed -e 's:^# *include *"\([^"]*\)".*$: INC_\1 :' \
         -e 's:CONF_\([A-Za-z0-9_]*\): CONF_\1 :g'    \
 	-e 's:DEBUG_\([A-Za-z0-9_]*\): DEBUG_\1 :g'`

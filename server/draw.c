@@ -15,6 +15,7 @@
 #include "methods.h"
 #include "hw.h"
 #include "hw_multi.h"
+#include "printk.h"
 #include "util.h"
 #include "draw.h"
 
@@ -23,18 +24,18 @@ INLINE hwcol DoShadowColor(hwcol Color, byte Fg, byte Bg) {
 	(
 	 Bg ? (Color & COL(0,MAXCOL)) > COL(0,HIGH|BLACK) ? COL(0,HIGH|BLACK) : COL(0,BLACK) :
 	 Fg ? Color & COL(0,WHITE) : Color & COL(0,MAXCOL)
-	 )
+	)
 	|
 	(
 	 Fg ? (Color & COL(MAXCOL,0)) > COL(HIGH|BLACK,0) ? COL(WHITE,0) : COL(HIGH|BLACK,0) : Color & COL(MAXCOL,0)
-	 );
+	);
 }
 
 /*
  * warning: DrawMenu() can cheat and give us a user Menu
  * while MenuItem is from All->CommonMenu
  */
-void SearchFontMenuItem(menu *Menu, menuitem *MenuItem, dat i, byte Select, byte *PtrFont, byte *PtrColor) {
+void FindFontMenuItem(menu Menu, menuitem MenuItem, dat i, byte Select, byte *PtrFont, hwcol *PtrColor) {
     hwcol Color;
     byte ShortCutFound;
 
@@ -60,8 +61,8 @@ void SearchFontMenuItem(menu *Menu, menuitem *MenuItem, dat i, byte Select, byte
     }
 }
 
-void SearchFontInfo(menu *Menu, dat i, byte Select, byte *PtrFont, byte *PtrColor) {
-    row *Info;
+void FindFontInfo(menu Menu, dat i, byte Select, byte *PtrFont, hwcol *PtrColor) {
+    row Info;
     hwcol Color;
     
     if (Menu && (Info = Menu->Info) && i >= 0 && i < Info->Len) {
@@ -69,7 +70,7 @@ void SearchFontInfo(menu *Menu, dat i, byte Select, byte *PtrFont, byte *PtrColo
 	    Color = Info->Flags & ROW_ACTIVE ? Menu->ColSelect : Menu->ColSelectDisabled;
 	else if (!(Info->Flags & ROW_ACTIVE))
 	    Color = Menu->ColDisabled;
-	else if (Menu->FlagDefColInfo)
+	else if (Menu->FlagDefColInfo || !Info->ColText)
 	    Color = Menu->ColItem;
 	else
 	    Color = Info->ColText[i];
@@ -80,20 +81,19 @@ void SearchFontInfo(menu *Menu, dat i, byte Select, byte *PtrFont, byte *PtrColo
 }
 
 
-void DrawDesktop(screen *Screen, dat X1, dat Y1, dat X2, dat Y2, byte Shaded) {
+void DrawDesktop(screen Screen, dat X1, dat Y1, dat X2, dat Y2, byte Shaded) {
     hwattr *Attr, attr = HWATTR(COL(WHITE,BLACK),' ');
     dat DWidth, DHeight;
-    dat YLimit = 0;
+    dat YLimit = -1;
     
-    if (X1>X2 || Y1>Y2 || X2<0 || Y2<0)
+    if (QueuedDrawArea2FullScreen || X1>X2 || Y1>Y2 || X2<0 || Y2<0)
 	return;
     
     if (Screen) {
 	Attr=Screen->Bg;
 	attr=*Attr;
 	YLimit=Screen->YLimit;
-    } else
-	YLimit = 0;
+    }
 
     DWidth=All->DisplayWidth;
     DHeight=All->DisplayHeight;
@@ -102,7 +102,7 @@ void DrawDesktop(screen *Screen, dat X1, dat Y1, dat X2, dat Y2, byte Shaded) {
 	return;
 
     X1 = Max2(X1, 0);
-    Y1 = Max2(Y1, YLimit + 1);
+    Y1 = Max2(Y1, YLimit+1);
     X2 = Min2(X2, DWidth-1);
     Y2 = Min2(Y2, DHeight-1);
 
@@ -149,11 +149,11 @@ void DrawDesktop(screen *Screen, dat X1, dat Y1, dat X2, dat Y2, byte Shaded) {
  * (0,0 is the window top-left corner)
  * return FALSE if given window area is not visible
  */
-static byte InitDrawCtx(widget *W, dat X1, dat Y1, dat X2, dat Y2, byte Shaded, draw_ctx *D) {
+static byte InitDrawCtx(widget W, dat X1, dat Y1, dat X2, dat Y2, byte Shaded, draw_ctx *D) {
     ldat XL, YL, height;
-    byte HasBorder;
     uldat Cycle = 0;
-    widget *C = NULL, *CC = NULL;
+    widget C = NULL, CC = NULL;
+    byte HasTopBar, HasBorder;
     
     if (!W || !D)
 	return FALSE;
@@ -173,22 +173,21 @@ static byte InitDrawCtx(widget *W, dat X1, dat Y1, dat X2, dat Y2, byte Shaded, 
     D->Y1  = Y1;
     D->Y2  = Y2;
 
-    /* FIXME: Screen->YLimit == -1 */
-    
     while (W) {
-	HasBorder = 0;
+	HasTopBar = HasBorder = 0;
 
-	if (!IS_WINDOW(W) || !(((window *)W)->Attrib & WINDOW_ROLLED_UP))
+	if (!IS_WINDOW(W) || !(((window)W)->Attrib & WINDOW_ROLLED_UP))
 	    height = W->YWidth;
 	else
 	    height = 1;
 
 	if (Cycle++) {
-	    if (!IS_WINDOW(C) || !(((window *)C)->Attrib & WINDOW_MENU)) {
-		XL = W->XLogic;
-		YL = W->YLogic;
-	    }
-	    if (IS_WINDOW(W) && !(((window *)W)->Attrib & WINDOW_BORDERLESS))
+	    XL = W->XLogic;
+	    YL = W->YLogic;
+
+	    if (IS_SCREEN(W))
+		HasTopBar = 1;
+	    else if (IS_WINDOW(W) && !(((window)W)->Flags & WINFL_BORDERLESS))
 		/* count border thickness */
 		HasBorder = 1;
 	} else
@@ -203,7 +202,7 @@ static byte InitDrawCtx(widget *W, dat X1, dat Y1, dat X2, dat Y2, byte Shaded, 
 	
 	D->Up  += (ldat)W->Up - YL + HasBorder;
 	D->Dwn += (ldat)W->Up - YL + HasBorder;
-	D->Y1   = Max2(D->Y1 - YL, 0) + HasBorder + W->Up;
+	D->Y1   = Max2(D->Y1 - YL, HasTopBar) + HasBorder + W->Up;
 	D->Y2   = Min2(D->Y2 - YL + HasBorder, height - 1 - HasBorder) + W->Up;
 
 	CC = C;
@@ -219,7 +218,7 @@ static byte InitDrawCtx(widget *W, dat X1, dat Y1, dat X2, dat Y2, byte Shaded, 
     D->Y1 = Max2(D->Y1, 0);
     D->Y2 = Min2(D->Y2, D->DHeight - 1);
 
-    D->Screen = (screen *)C;
+    D->Screen = (screen)C;
     D->TopW = CC;
     if (D->W == CC)
 	D->W = NULL;
@@ -235,7 +234,7 @@ static byte InitDrawCtx(widget *W, dat X1, dat Y1, dat X2, dat Y2, byte Shaded, 
  * absolute display coords. (0,0 is the display top-left corner)
  * return FALSE if given area is not visible 
  */
-static byte InitAbsoluteDrawCtx(widget *W, dat X1, dat Y1, dat X2, dat Y2, byte Shaded, draw_ctx *D) {
+static byte InitAbsoluteDrawCtx(widget W, dat X1, dat Y1, dat X2, dat Y2, byte Shaded, draw_ctx *D) {
 
     if (InitDrawCtx(W, 0, 0, MAXDAT, MAXDAT, Shaded, D)) {
 	
@@ -254,24 +253,23 @@ static byte InitAbsoluteDrawCtx(widget *W, dat X1, dat Y1, dat X2, dat Y2, byte 
  * find the widget at given coordinates inside Parent
  * --- (0,0) is the Parent top-left corner
  */
-widget *SearchWidget(widget *Parent, dat X, dat Y) {
-    widget *W;
+widget FindWidgetAt(widget Parent, dat X, dat Y) {
+    widget W;
     ldat i, j;
     dat height;
     
-    if (IS_WINDOW(Parent) && !(((window *)Parent)->Attrib & WINDOW_BORDERLESS))
+    if (IS_WINDOW(Parent) && !(((window)Parent)->Flags & WINFL_BORDERLESS))
 	X--, Y--;
     else if (IS_SCREEN(Parent) && Y <= 0) {
 	/* got nothing, or the menu... */
-	return (widget *)0;
+	return (widget)0;
     }
     
     for (W = Parent->FirstW; W; W = W->Next) {
-	i = X; j = Y;
-	if (!IS_WINDOW(W) || !(((window *)W)->Attrib & WINDOW_MENU))
-	    i += Parent->XLogic, j += Parent->YLogic;
+	i = X + Parent->XLogic;
+	j = Y + Parent->YLogic;
 
-	if (!IS_WINDOW(W) || !(((window *)W)->Attrib & WINDOW_ROLLED_UP))
+	if (!IS_WINDOW(W) || !(((window)W)->Attrib & WINDOW_ROLLED_UP))
 	    height = W->YWidth;
 	else
 	    height = 1;
@@ -280,27 +278,35 @@ widget *SearchWidget(widget *Parent, dat X, dat Y) {
 	    (ldat)W->Up   <= j && (ldat)W->Up   + height    > j)
 	    return W;
     }
-    return (widget *)0;
+    return (widget)0;
 }
-	
+
+void DrawSelfWidget(draw_ctx *D) {
+    if (!QueuedDrawArea2FullScreen) {
+	FillVideo(D->X1, D->Y1, D->X2, D->Y2, D->TopW->Fill);
+	DirtyVideo(D->X1, D->Y1, D->X2, D->Y2);
+    }
+}
+
+
 void DrawSelfGadget(draw_ctx *D) {
-    gadget *G;
-    widget *Parent;
-    byte Font, Select = FALSE, Disabled, Absent;
+    gadget G;
+    widget Parent;
+    byte Font, Select, Disabled, Absent;
     dat width, DWidth, i, i_min, i_max, j, j_min, j_max;
     ldat Offset;
-    byte *Text, **GadgetContents;
-    hwcol *ColText;
+    byte *Text, **GadgetText;
+    hwcol *ColText, **GadgetColor;
     hwcol Color;
 
-    G = (gadget *)D->TopW;
-
-    if ((Parent = G->Parent)) {
-	if ((widget *)G == Parent->SelectW && (G->Flags & GADGET_PRESSED))
-	    Select = TRUE;
-    }
-    Disabled = G->Flags & GADGET_DISABLED;
-    Absent = G->Flags & GADGET_USE_DEFCOL;
+    if (QueuedDrawArea2FullScreen)
+	return;
+    
+    G = (gadget)D->TopW;
+    Parent = G->Parent;
+    Select = !!(G->Flags & GADGET_PRESSED);
+    Disabled = !!(G->Flags & GADGET_DISABLED);
+    Absent = !!(G->Flags & GADGET_USE_DEFCOL);
 	    
     i_min = D->X1 - D->Left;
     i_max = D->X2 - D->Left;
@@ -313,17 +319,18 @@ void DrawSelfGadget(draw_ctx *D) {
     
     Offset = D->Left + D->Up * DWidth;
 	    
-    GadgetContents = G->Contents;
+    GadgetText = G->Text;
+    GadgetColor = G->Color;
 
     Text = Select
-	? Disabled && GadgetContents[3]
-	? GadgetContents[3]
-	: GadgetContents[1]
-	? GadgetContents[1]
-	: GadgetContents[0]
-	: Disabled && GadgetContents[2]
-	? GadgetContents[2]
-	: GadgetContents[0];
+	? Disabled && GadgetText[3]
+	? GadgetText[3]
+	: GadgetText[1]
+	? GadgetText[1]
+	: GadgetText[0]
+	: Disabled && GadgetText[2]
+	? GadgetText[2]
+	: GadgetText[0];
 	    
     if (Absent) {
 	Color = Select
@@ -336,14 +343,14 @@ void DrawSelfGadget(draw_ctx *D) {
 	Color = DoShadowColor(Color, D->Shaded, D->Shaded);
     } else {
 	ColText = Select
-	    ? Disabled && GadgetContents[7]
-	    ? GadgetContents[7]
-	    : GadgetContents[5]
-	    ? GadgetContents[5]
-	    : GadgetContents[4]
-	    : Disabled && GadgetContents[6]
-	    ? GadgetContents[6]
-	    : GadgetContents[4];
+	    ? Disabled && GadgetColor[3]
+	    ? GadgetColor[3]
+	    : GadgetColor[1]
+	    ? GadgetColor[1]
+	    : GadgetColor[0]
+	    : Disabled && GadgetColor[2]
+	    ? GadgetColor[2]
+	    : GadgetColor[0];
     }
 	    
     for (j=j_min; j<=j_max; j++) {
@@ -358,7 +365,7 @@ void DrawSelfGadget(draw_ctx *D) {
     DirtyVideo(D->X1, D->Y1, D->X2, D->Y2);
 }
 
-static void DrawSelfBorder(window *Window, ldat Left, ldat Up, ldat Rgt, ldat Dwn,
+static void DrawSelfBorder(window Window, ldat Left, ldat Up, ldat Rgt, ldat Dwn,
 			   dat X1, dat Y1, dat X2, dat Y2,
 			   byte Border, byte WinActive, byte Shaded) {
 
@@ -366,6 +373,9 @@ static void DrawSelfBorder(window *Window, ldat Left, ldat Up, ldat Rgt, ldat Dw
     dat DWidth = All->DisplayWidth;
     byte Font;
     hwcol Color;
+    
+    if (QueuedDrawArea2FullScreen)
+	return;
     
     if ((ldat)Y1==Up) {
 	j=Y1*DWidth;
@@ -421,20 +431,25 @@ static void DrawSelfBorder(window *Window, ldat Left, ldat Up, ldat Rgt, ldat Dw
 }
 
 void DrawSelfWindow(draw_ctx *D) {
-    window *W;
+    window W;
     ldat Left, Up, Rgt, Dwn;
     dat X1, Y1, X2, Y2;
     dat DWidth, i, j;
     ldat u, v;
     byte Shaded, Absent;
     byte Select, RowDisabled;
-    row *CurrRow;
+    row CurrRow;
     hwattr *Contents, *CurrCont;
     ldat Row, PosInRow;
-    byte *Text, Font;
-    hwcol *ColText, Color;
-
-    W = (window *)D->TopW;
+    byte *Text;
+    hwcol *ColText;
+    hwcol Color;
+    byte Font;
+    
+    if (QueuedDrawArea2FullScreen)
+	return;
+    
+    W = (window)D->TopW;
     X1 = D->X1; Y1 = D->Y1;
     X2 = D->X2; Y2 = D->Y2;
     Left = D->Left; Up = D->Up;
@@ -444,9 +459,9 @@ void DrawSelfWindow(draw_ctx *D) {
 
     /* not here... already done in DrawWCtx() */
     /*
-    Left -= W->XLogic; Rgt -= W->XLogic;
-    Up   -= W->YLogic; Dwn -= W->YLogic;
-    */
+     * Left -= W->XLogic; Rgt -= W->XLogic;
+     * Up   -= W->YLogic; Dwn -= W->YLogic;
+     */
     if (W->Flags & WINFL_USECONTENTS && (Contents = W->Contents)) {
 	/*
 	 * For xterm-like windows, Contents is a buffer of (x=NumRowOne) * (y=MaxNumRow)
@@ -541,7 +556,7 @@ void DrawSelfWindow(draw_ctx *D) {
 	Row=Y1-Up;
 	
 	if (Row>=W->MaxNumRow)
-	    CurrRow = (row *)0;
+	    CurrRow = (row)0;
 	else if (W->NumRowSplit && W->RowSplit && Row==W->NumRowSplit)
 	    CurrRow = W->RowSplit;
 	else if (W->NumRowSplit && W->RowSplit && W->RowSplit->Next && Row==W->NumRowSplit+(ldat)1)
@@ -553,7 +568,7 @@ void DrawSelfWindow(draw_ctx *D) {
 	else if (Row+(ldat)1==W->MaxNumRow)
 	    CurrRow = W->LastRow;
 	else
-	    CurrRow = Act(SearchRow,W)(W, Row);
+	    CurrRow = Act(FindRow,W)(W, Row);
 	
 	for (j=Y1; j<=Y2; j++, Row++) {
 	    
@@ -617,50 +632,55 @@ void DrawSelfWindow(draw_ctx *D) {
 
 void DrawSelfScreen(draw_ctx *D) {
     /* should never be called */
-    fputs("twin: DrawSelfScreen() called! This is not good...\n", stderr);
+    printk("twin: DrawSelfScreen() called! This is not good...\n");
 }
 
-static void _DrawWCtx_(draw_ctx **FirstD, widget *W, widget *ChildNext, widget *OnlyChild,
+static void _DrawWCtx_(draw_ctx **FirstD, widget W, widget ChildNext, widget OnlyChild,
 		       ldat Left, ldat Up, ldat Rgt, ldat Dwn, dat X1, dat Y1, dat X2, dat Y2,
 		       byte NoChildren, byte BorderDone,
 		       byte Shaded, byte *lError) {
     draw_ctx *D;
-    if ((D = (draw_ctx *)AllocMem(sizeof(draw_ctx)))) {
-	D->TopW = W;
-	D->W = ChildNext;
-	D->OnlyW = OnlyChild;
-	D->Screen = (screen *)0;
-	D->X1 = X1; D->Y1 = Y1;
-	D->X2 = X2; D->Y2 = Y2;
-	D->Left = Left; D->Up = Up;
-	D->Rgt = Rgt; D->Dwn = Dwn;
-	D->DWidth = All->DisplayWidth;
-	D->DHeight = All->DisplayHeight;
-	D->NoChildren = NoChildren;
-	D->BorderDone = BorderDone;
-	D->Shaded = Shaded;
-	
-	D->Next = *FirstD;
-	*FirstD = D;
-    } else {
-	DrawDesktop((screen *)0, X1, Y1, X2, Y2, Shaded);
-	*lError=TRUE;
+    if (!QueuedDrawArea2FullScreen) {
+	if ((D = (draw_ctx *)AllocMem(sizeof(draw_ctx)))) {
+	    D->TopW = W;
+	    D->W = ChildNext;
+	    D->OnlyW = OnlyChild;
+	    D->Screen = (screen)0;
+	    D->X1 = X1; D->Y1 = Y1;
+	    D->X2 = X2; D->Y2 = Y2;
+	    D->Left = Left; D->Up = Up;
+	    D->Rgt = Rgt; D->Dwn = Dwn;
+	    D->DWidth = All->DisplayWidth;
+	    D->DHeight = All->DisplayHeight;
+	    D->NoChildren = NoChildren;
+	    D->BorderDone = BorderDone;
+	    D->Shaded = Shaded;
+	    
+	    D->Next = *FirstD;
+	    *FirstD = D;
+	} else {
+	    DrawDesktop((screen)0, X1, Y1, X2, Y2, Shaded);
+	    *lError=TRUE;
+	}
     }
 }
 
 static void DrawWCtx(draw_ctx *D) {
     draw_ctx *FirstD = D;
-    widget *W;
-    widget *OnlyChild, *ChildNext;
+    widget W;
+    widget OnlyChild, ChildNext;
     ldat Left, Up, Rgt, Dwn;
     dat X1, Y1, X2, Y2;
-    window *Window;
+    window Window;
     byte Shaded, Border, WinActive, NoChildren;
     byte ChildFound=FALSE, lError=FALSE, FirstCycle=TRUE;
-    screen *Screen;
+    screen Screen;
     dat DWidth, DHeight;
     ldat cL, cU, cR, cD;
 
+    if (QueuedDrawArea2FullScreen)
+	return;
+    
     do {
 	W = D->TopW;
 	ChildNext = D->W;
@@ -691,7 +711,7 @@ static void DrawWCtx(draw_ctx *D) {
 	if (!D->BorderDone) {
 	    D->BorderDone = TRUE;
 	    
-	    if (IS_WINDOW(W) && !((Window = (window *)W)->Attrib & WINDOW_BORDERLESS)) {
+	    if (IS_WINDOW(W) && !((Window = (window)W)->Flags & WINFL_BORDERLESS)) {
 		
 		if (!OnlyChild) {
 		    WinActive =
@@ -808,47 +828,65 @@ static void DrawWCtx(draw_ctx *D) {
 
 
 /*
- * this ASSUMES the specified part of the widget is not obscured
+ * this ASSUMES the specified part of the widget is unobscured
  */
-void DrawWidget(widget *W, dat X1, dat Y1, dat X2, dat Y2, byte Shaded) {
+void DrawWidget(widget W, dat X1, dat Y1, dat X2, dat Y2, byte Shaded) {
     draw_ctx D;
     
-    if (W && InitAbsoluteDrawCtx(W, X1, Y1, X2, Y2, Shaded, &D)) {
+    if (!QueuedDrawArea2FullScreen && W && InitAbsoluteDrawCtx(W, X1, Y1, X2, Y2, Shaded, &D)) {
 	D.TopW = W; D.W = D.OnlyW = NULL;
 	DrawWCtx(&D);
     }
 }
 
+static void DrawAreaCtx(draw_ctx *D);
 
-static void _DrawAreaCtx_(draw_ctx **FirstD, screen *Screen, widget *W, widget *OnlyW,
-		      dat X1, dat Y1, dat X2, dat Y2, byte Shaded, byte *lError) {
-    draw_ctx *D;
-    if ((D = (draw_ctx *)AllocMem(sizeof(draw_ctx)))) {
-	D->TopW = W;
-	D->W = OnlyW;
-	D->Screen = Screen;
-	D->Left = D->X1 = X1; D->Up  = D->Y1 = Y1;
-	D->Rgt  = D->X2 = X2; D->Dwn = D->Y2 = Y2;
-	D->DWidth = All->DisplayWidth;
-	D->DHeight = All->DisplayHeight;
-	D->Shaded = Shaded;
-	
-	D->Next = *FirstD;
-	*FirstD = D;
-	
-    } else {
-	DrawDesktop((screen *)0, X1, Y1, X2, Y2, Shaded);
-	*lError=TRUE;
+/*
+ * this DOES NOT assume that the specified part of the widget is unobscured
+ */
+/* partially replaces DrawAreaWindow() -- does not redraw shadow */
+void DrawAreaWidget(widget W) {
+    draw_ctx D;
+    
+    if (!QueuedDrawArea2FullScreen && W && InitAbsoluteDrawCtx(W, 0, 0, MAXDAT, MAXDAT, FALSE, &D)) {
+	D.TopW = D.W = D.OnlyW = NULL;
+	DrawAreaCtx(&D);
     }
 }
 
-screen *ScreenParent(widget *W) {
-    while (W->Parent)
-	W = W->Parent;
-    return IS_SCREEN(W) ? (screen *)W : (screen *)0;
+
+
+static void _DrawAreaCtx_(draw_ctx **FirstD, screen Screen, widget W, widget OnlyW,
+		      dat X1, dat Y1, dat X2, dat Y2, byte Shaded, byte *lError) {
+    draw_ctx *D;
+    if (!QueuedDrawArea2FullScreen) {
+	if ((D = (draw_ctx *)AllocMem(sizeof(draw_ctx)))) {
+	    D->TopW = W;
+	    D->W = OnlyW;
+	    D->Screen = Screen;
+	    D->Left = D->X1 = X1; D->Up  = D->Y1 = Y1;
+	    D->Rgt  = D->X2 = X2; D->Dwn = D->Y2 = Y2;
+	    D->DWidth = All->DisplayWidth;
+	    D->DHeight = All->DisplayHeight;
+	    D->Shaded = Shaded;
+	    
+	    D->Next = *FirstD;
+	    *FirstD = D;
+	    
+	} else {
+	    DrawDesktop((screen)0, X1, Y1, X2, Y2, Shaded);
+	    *lError=TRUE;
+	}
+    }
 }
 
-widget *TopParent(widget *W) {
+screen ScreenParent(widget W) {
+    while (W->Parent)
+	W = W->Parent;
+    return IS_SCREEN(W) ? (screen)W : (screen)0;
+}
+
+widget TopParent(widget W) {
     while (W->Parent) {
 	if (IS_SCREEN(W->Parent))
 	    return W;
@@ -860,8 +898,8 @@ widget *TopParent(widget *W) {
 static void DrawAreaCtx(draw_ctx *D) {
     draw_ctx *FirstD = D;
     dat DWidth, DHeight, YLimit;
-    screen *FirstScreen, *Screen;
-    widget *W, *OnlyW, *TopOnlyW, *NextW;
+    screen FirstScreen, Screen;
+    widget W, OnlyW, TopOnlyW, NextW;
     setup *SetUp;
     byte WidgetFound, Shade, lError=FALSE, FirstCycle=TRUE;
     byte DeltaXShade, DeltaYShade;
@@ -873,6 +911,9 @@ static void DrawAreaCtx(draw_ctx *D) {
     dat Left, Up, Rgt, Dwn;
     dat X1, Y1, X2, Y2;
     byte Shaded;
+    
+    if (QueuedDrawArea2FullScreen)
+	return;
     
     SetUp=All->SetUp;
     
@@ -903,23 +944,32 @@ static void DrawAreaCtx(draw_ctx *D) {
 	
 	if (W) {
 	    if (IS_SCREEN(W->Parent))
-		FirstScreen = (screen *)W->Parent;
+		FirstScreen = (screen)W->Parent;
 	    else
 		continue;
 	}
 	if (!FirstScreen)
 	    FirstScreen = All->FirstScreen;
-
+	
+	/* calculate visible part of this screen */
+	for (Screen = All->FirstScreen; Screen && Screen != FirstScreen; Screen = Screen->Next) {
+	    YLimit = Screen->YLimit;
+	    if (Y2 >= YLimit)
+		Y2 = YLimit - 1;
+	}
+	if (Y1 > Y2)
+	    continue;
+	
+	Screen = FirstScreen->Next;
 	YLimit = FirstScreen->YLimit; /* FIXED +1 */
-
-	Screen=FirstScreen->Next;
+	
 	if (!OnlyW || (OnlyW && ScreenParent(OnlyW->Parent)!=FirstScreen)) {
 	    if (Y1<YLimit) {
 		if (Screen)
 		    _DrawAreaCtx_(&FirstD, Screen, W, OnlyW,
 				  X1, Y1, X2, Min2(Y2, YLimit-1), Shaded, &lError);
 		else if (!OnlyW)
-		    DrawDesktop((screen *)0, X1, Y1, X2, Y2, Shaded);
+		    DrawDesktop((screen)0, X1, Y1, X2, Y2, Shaded);
 	    }
 	    if (OnlyW)
 		continue;
@@ -946,14 +996,10 @@ static void DrawAreaCtx(draw_ctx *D) {
 
 	WidgetFound=FALSE;
 	while (W && !WidgetFound) {
-	    shLeft = (ldat)W->Left + (ldat)FirstScreen->dummyLeft;
-	    shUp   = (ldat)W->Up + (ldat)YLimit;
-	    if (!IS_WINDOW(W) || !(((window *)W)->Attrib & WINDOW_MENU)) {
-		shLeft -= FirstScreen->XLogic;
-		shUp   -= FirstScreen->YLogic;
-	    }
+	    shLeft = (ldat)W->Left + (ldat)FirstScreen->dummyLeft - FirstScreen->XLogic;
+	    shUp   = (ldat)W->Up + (ldat)YLimit - FirstScreen->YLogic;
 	    shRgt=shLeft + (ldat)W->XWidth-1;
-	    shDwn=shUp + (IS_WINDOW(W) && (((window *)W)->Attrib & WINDOW_ROLLED_UP)
+	    shDwn=shUp + (IS_WINDOW(W) && (((window)W)->Attrib & WINDOW_ROLLED_UP)
 		? 0 : (ldat)W->YWidth-1);
 	    
 	    if (Shade) {
@@ -1004,14 +1050,14 @@ static void DrawAreaCtx(draw_ctx *D) {
 
 	    if (HS_X1<=HS_X2 && HS_Y1 <= S_Y2) {
 		if (NextW)
-		    _DrawAreaCtx_(&FirstD, (screen *)0, NextW, OnlyW, 
+		    _DrawAreaCtx_(&FirstD, (screen)0, NextW, OnlyW, 
 			       (dat)HS_X1, (dat)HS_Y1, (dat)HS_X2, (dat)S_Y2, TRUE, &lError);
 		else
 		    DrawDesktop(FirstScreen, (dat)HS_X1, (dat)HS_Y1, (dat)HS_X2, (dat)S_Y2, TRUE);
 	    }
 	    if (VS_X1<=VS_X2 && VS_Y1 <= S_Y2) {
 		if (NextW)
-		    _DrawAreaCtx_(&FirstD, (screen *)0, NextW, OnlyW, 
+		    _DrawAreaCtx_(&FirstD, (screen)0, NextW, OnlyW, 
 			       (dat)VS_X1, (dat)VS_Y1, (dat)VS_X2, (dat)S_Y2, TRUE, &lError);
 		else
 		    DrawDesktop(FirstScreen, (dat)VS_X1, (dat)VS_Y1, (dat)VS_X2, (dat)S_Y2, TRUE);
@@ -1028,7 +1074,7 @@ static void DrawAreaCtx(draw_ctx *D) {
 	if (shDwn+(ldat)DeltaYShade<(ldat)Y2) {
 	    Dwn=(dat)shDwn+(dat)DeltaYShade;
 	    if (NextW)
-		_DrawAreaCtx_(&FirstD, (screen *)0, NextW, OnlyW, X1, Dwn+(dat)1, X2, Y2, Shaded, &lError);
+		_DrawAreaCtx_(&FirstD, (screen)0, NextW, OnlyW, X1, Dwn+(dat)1, X2, Y2, Shaded, &lError);
 	    else
 		DrawDesktop(FirstScreen, X1, Dwn+(dat)1, X2, Y2, Shaded);
 	} else
@@ -1039,7 +1085,7 @@ static void DrawAreaCtx(draw_ctx *D) {
 	if (shRgt+(ldat)DeltaXShade<(ldat)X2) {
 	    Rgt=(dat)shRgt+(dat)DeltaXShade;
 	    if (NextW)
-		_DrawAreaCtx_(&FirstD, (screen *)0, NextW, OnlyW, Rgt+(dat)1, Y1, X2, Dwn, Shaded, &lError);
+		_DrawAreaCtx_(&FirstD, (screen)0, NextW, OnlyW, Rgt+(dat)1, Y1, X2, Dwn, Shaded, &lError);
 	    else
 		DrawDesktop(FirstScreen, Rgt+(dat)1, Y1, X2, Dwn, Shaded);
 	} else
@@ -1050,7 +1096,7 @@ static void DrawAreaCtx(draw_ctx *D) {
 	if (shLeft>(ldat)X1) {
 	    Left=(dat)shLeft;
 	    if (NextW)
-		_DrawAreaCtx_(&FirstD, (screen *)0, NextW, OnlyW, X1, Y1, Left-(dat)1, Dwn, Shaded, &lError);
+		_DrawAreaCtx_(&FirstD, (screen)0, NextW, OnlyW, X1, Y1, Left-(dat)1, Dwn, Shaded, &lError);
 	    else
 		DrawDesktop(FirstScreen, X1, Y1, Left-(dat)1, Dwn, Shaded);
 	} else
@@ -1061,7 +1107,7 @@ static void DrawAreaCtx(draw_ctx *D) {
 	if (shUp>(ldat)Y1) {
 	    Up=(dat)shUp;
 	    if (NextW)
-		_DrawAreaCtx_(&FirstD, (screen *)0, NextW, OnlyW, Left, Y1, Rgt, Up-(dat)1, Shaded, &lError);
+		_DrawAreaCtx_(&FirstD, (screen)0, NextW, OnlyW, Left, Y1, Rgt, Up-(dat)1, Shaded, &lError);
 	    else
 		DrawDesktop(FirstScreen, Left, Y1, Rgt, Up-(dat)1, Shaded);
 	} else
@@ -1080,7 +1126,7 @@ static void DrawAreaCtx(draw_ctx *D) {
 
 	    if (X_1 <= X_2 && Y_1 <= Y_2) {
 		if (NextW)
-		    _DrawAreaCtx_(&FirstD, (screen *)0, NextW, OnlyW, (dat)X_1, (dat)Y_1, (dat)X_2, (dat)Y_2, Shaded, &lError);
+		    _DrawAreaCtx_(&FirstD, (screen)0, NextW, OnlyW, (dat)X_1, (dat)Y_1, (dat)X_2, (dat)Y_2, Shaded, &lError);
 		else
 		    DrawDesktop(FirstScreen, (dat)X_1, (dat)Y_1, (dat)X_2, (dat)Y_2, Shaded);
 	    }
@@ -1095,7 +1141,7 @@ static void DrawAreaCtx(draw_ctx *D) {
 
 	    if (X_1 <= X_2 && Y_1 <= Y2) {
 		if (NextW)
-		    _DrawAreaCtx_(&FirstD, (screen *)0, NextW, OnlyW, (dat)X_1, (dat)Y_1, (dat)X_2, (dat)Y_2, Shaded, &lError);
+		    _DrawAreaCtx_(&FirstD, (screen)0, NextW, OnlyW, (dat)X_1, (dat)Y_1, (dat)X_2, (dat)Y_2, Shaded, &lError);
 		else
 		    DrawDesktop(FirstScreen, (dat)X_1, (dat)Y_1, (dat)X_2, (dat)Y_2, Shaded);
 	    }
@@ -1141,7 +1187,7 @@ static void DrawAreaCtx(draw_ctx *D) {
 		
 		if (X_1 <= X_2 && Y_1 <= Y2) {
 		    if (NextW)
-			_DrawAreaCtx_(&FirstD, (screen *)0, NextW, OnlyW, (dat)X_1, (dat)Y_1, (dat)X_2, (dat)Y_2, Shaded, &lError);
+			_DrawAreaCtx_(&FirstD, (screen)0, NextW, OnlyW, (dat)X_1, (dat)Y_1, (dat)X_2, (dat)Y_2, Shaded, &lError);
 		    else
 			DrawDesktop(FirstScreen, (dat)X_1, (dat)Y_1, (dat)X_2, (dat)Y_2, Shaded);
 		}
@@ -1153,9 +1199,12 @@ static void DrawAreaCtx(draw_ctx *D) {
 	Error(lError);
 }
 
-void DrawArea2(screen *FirstScreen, widget *W, widget *OnlyW,
+void DrawArea2(screen FirstScreen, widget W, widget OnlyW,
 	      dat X1, dat Y1, dat X2, dat Y2, byte Shaded) {
     draw_ctx D;
+    
+    if (QueuedDrawArea2FullScreen)
+	return;
     
     D.DWidth = All->DisplayWidth;
     D.DHeight = All->DisplayHeight;
@@ -1175,27 +1224,26 @@ void DrawArea2(screen *FirstScreen, widget *W, widget *OnlyW,
     }
 }
 
-void DrawBorderWindow(window *Window, byte Flags) {
+void DrawBorderWindow(window Window, byte Flags) {
     ldat shLeft, shUp, shRgt, shDwn;
     dat Left, Up, Rgt, Dwn;
-    ldat NWindowMenu;
     dat DWidth, DHeight;
     dat YLimit;
-    widget *FirstW;
-    widget *Parent;
-    screen *Screen, *FirstScreen;
+    widget FirstW;
+    widget Parent;
+    screen Screen, FirstScreen;
 
-    if (!Window || (Window->Attrib & WINDOW_BORDERLESS) ||
+    if (QueuedDrawArea2FullScreen || !Window || (Window->Flags & WINFL_BORDERLESS) ||
 	!(Parent=Window->Parent) || !IS_SCREEN(Parent))
 	return;
 
-    Screen = (screen *)Parent;
+    Screen = (screen)Parent;
     DWidth = All->DisplayWidth;
     DHeight = All->DisplayHeight;
     YLimit = Screen->YLimit; /* FIXED +1 */
-    NWindowMenu = (Window->Attrib & WINDOW_MENU) ? 0 : (ldat)~(ldat)0;
-    shUp = (ldat)Window->Up-(Screen->YLogic & NWindowMenu)+(ldat)YLimit;
-    shLeft = (ldat)Window->Left-(Screen->XLogic & NWindowMenu);
+
+    shUp = (ldat)Window->Up - Screen->YLogic + (ldat)YLimit;
+    shLeft = (ldat)Window->Left - Screen->XLogic;
     shRgt = shLeft+(ldat)Window->XWidth-(ldat)1;
     shDwn = shUp+(Window->Attrib & WINDOW_ROLLED_UP ? 0 : (ldat)Window->YWidth-(ldat)1);
     
@@ -1203,25 +1251,27 @@ void DrawBorderWindow(window *Window, byte Flags) {
     if (shLeft>=(ldat)DWidth || shUp>=(ldat)DHeight || shRgt<(ldat)0 || shDwn<=(ldat)YLimit)
 	return;
 
-    FirstScreen= Screen==All->FirstScreen ? Screen : (screen *)0;
-    FirstW= FirstScreen && (widget *)Window==Screen->FirstW ? (widget *)Window : (widget *)0;
+    FirstScreen= Screen==All->FirstScreen ? Screen : (screen)0;
+    FirstW= FirstScreen && (widget)Window==Screen->FirstW ? (widget)Window : (widget)0;
     
     Left=(dat)Max2(shLeft, (ldat)0);
     Up=(dat)Max2(shUp, (ldat)YLimit+1);
     Rgt=(dat)Min2(shRgt, (ldat)DWidth-(ldat)1);
     Dwn=(dat)Min2(shDwn, (ldat)DHeight-(ldat)1);
     
-    if ((Flags&BORDER_LEFT)   && shLeft>=0)
-	DrawArea2(FirstScreen, FirstW, (widget *)Window, Left, Up, Left, Dwn, FALSE);
     if ((Flags&BORDER_UP)     && shUp>=YLimit)
-	DrawArea2(FirstScreen, FirstW, (widget *)Window, Left, Up, Rgt, Up, FALSE);
-    if ((Flags&BORDER_RIGHT)  && shRgt<(ldat)DWidth)
-	DrawArea2(FirstScreen, FirstW, (widget *)Window, Rgt, Up, Rgt, Dwn, FALSE);
-    if ((Flags&BORDER_DOWN)   && shDwn<(ldat)DHeight)
-	DrawArea2(FirstScreen, FirstW, (widget *)Window, Left, Dwn, Rgt, Dwn, FALSE);
+	DrawArea2(FirstScreen, FirstW, (widget)Window, Left, Up, Rgt, Up, FALSE);
+    if (!(Window->Flags & WINDOW_ROLLED_UP)) {
+	if ((Flags&BORDER_LEFT)   && shLeft>=0)
+	    DrawArea2(FirstScreen, FirstW, (widget)Window, Left, Up, Left, Dwn, FALSE);
+	if ((Flags&BORDER_RIGHT)  && shRgt<(ldat)DWidth)
+	    DrawArea2(FirstScreen, FirstW, (widget)Window, Rgt, Up, Rgt, Dwn, FALSE);
+	if ((Flags&BORDER_DOWN)   && shDwn<(ldat)DHeight)
+	    DrawArea2(FirstScreen, FirstW, (widget)Window, Left, Dwn, Rgt, Dwn, FALSE);
+    }
 }
 
-void DrawAreaShadeWindow(screen *Screen, window *Window, dat X1, dat Y1, dat X2, dat Y2,
+void DrawAreaShadeWindow(screen Screen, window Window, dat X1, dat Y1, dat X2, dat Y2,
 			 ldat shLeft, ldat shUp, ldat shRgt, ldat shDwn, byte Internal) {
     dat DHeight, DWidth, YLimit;
     /* position of Horizontal Shadow */
@@ -1232,7 +1282,7 @@ void DrawAreaShadeWindow(screen *Screen, window *Window, dat X1, dat Y1, dat X2,
     setup *SetUp;
     
     SetUp=All->SetUp;
-    if (!Window || !Screen ||
+    if (QueuedDrawArea2FullScreen || !Window || !Screen ||
 	X1>X2 || Y1>Y2 || !(SetUp->Flags & SETUP_SHADOWS))
 	return;
     
@@ -1251,7 +1301,7 @@ void DrawAreaShadeWindow(screen *Screen, window *Window, dat X1, dat Y1, dat X2,
     if (shLeft+(ldat)DeltaXShade>(ldat)X2 || shUp+(ldat)DeltaYShade>(ldat)Y2 || shRgt+(ldat)DeltaXShade<(ldat)X1 || shDwn+(ldat)DeltaYShade<(ldat)Y1)
 	return;
 
-    Window=(window *)Window->Next;
+    Window=(window)Window->Next;
 
     HS_X1 = Max2(shLeft + (ldat)DeltaXShade, (ldat)X1);
     HS_X2 = Min2(shRgt, (ldat)X2);
@@ -1266,35 +1316,33 @@ void DrawAreaShadeWindow(screen *Screen, window *Window, dat X1, dat Y1, dat X2,
 
     if (HS_X1<=HS_X2 && HS_Y1 <= S_Y2) {
 	if (!Internal)
-	    DrawArea2((screen *)0, (widget *)0, (widget *)0, (dat)HS_X1, (dat)HS_Y1, (dat)HS_X2, (dat)S_Y2, FALSE);
+	    DrawArea2((screen)0, (widget)0, (widget)0, (dat)HS_X1, (dat)HS_Y1, (dat)HS_X2, (dat)S_Y2, FALSE);
 	else if (Window)
-	    DrawArea2((screen *)0, (widget *)Window, (widget *)0, (dat)HS_X1, (dat)HS_Y1, (dat)HS_X2, (dat)S_Y2, TRUE);
+	    DrawArea2((screen)0, (widget)Window, (widget)0, (dat)HS_X1, (dat)HS_Y1, (dat)HS_X2, (dat)S_Y2, TRUE);
 	else
 	    DrawDesktop(Screen, (dat)HS_X1, (dat)HS_Y1, (dat)HS_X2, (dat)S_Y2, TRUE);
     }
     
     if (VS_X1<=VS_X2 && VS_Y1 <= S_Y2) {
 	if (!Internal)
-	    DrawArea2((screen *)0, (widget *)0, (widget *)0, (dat)VS_X1, (dat)VS_Y1, (dat)VS_X2, (dat)S_Y2, FALSE);
+	    DrawArea2((screen)0, (widget)0, (widget)0, (dat)VS_X1, (dat)VS_Y1, (dat)VS_X2, (dat)S_Y2, FALSE);
 	else if (Window)
-	    DrawArea2((screen *)0, (widget *)Window, (widget *)0, (dat)VS_X1, (dat)VS_Y1, (dat)VS_X2, (dat)S_Y2, TRUE);
+	    DrawArea2((screen)0, (widget)Window, (widget)0, (dat)VS_X1, (dat)VS_Y1, (dat)VS_X2, (dat)S_Y2, TRUE);
 	else
 	    DrawDesktop(Screen, (dat)VS_X1, (dat)VS_Y1, (dat)VS_X2, (dat)S_Y2, TRUE);
     }
 }
 
-void DrawShadeWindow(window *Window, dat X1, dat Y1, dat X2, dat Y2, byte Internal) {
-    screen *Screen;
+void DrawShadeWindow(window Window, dat X1, dat Y1, dat X2, dat Y2, byte Internal) {
+    screen Screen;
     dat YLimit;
-    ldat NWindowMenu;
     ldat shLeft, shUp, shRgt, shDwn;
     
-    if (Window && (Screen=(screen *)Window->Parent) && IS_SCREEN(Screen)) {
+    if (!QueuedDrawArea2FullScreen && Window && (Screen=(screen)Window->Parent) && IS_SCREEN(Screen)) {
 	
 	YLimit=Screen->YLimit;
-	NWindowMenu=(Window->Attrib & WINDOW_MENU) ? 0 : (ldat)~(ldat)0;
-	shUp=(ldat)Window->Up-(Screen->YLogic & NWindowMenu)+(ldat)YLimit; 
-	shLeft=(ldat)Window->Left-(Screen->XLogic & NWindowMenu);
+	shUp=(ldat)Window->Up - Screen->YLogic + (ldat)YLimit; 
+	shLeft=(ldat)Window->Left - Screen->XLogic;
 	shRgt=shLeft+(ldat)Window->XWidth-(ldat)1;
 	shDwn=shUp+(Window->Attrib & WINDOW_ROLLED_UP ? 0 : (ldat)Window->YWidth-(ldat)1);
 	
@@ -1303,65 +1351,53 @@ void DrawShadeWindow(window *Window, dat X1, dat Y1, dat X2, dat Y2, byte Intern
 }
 
 
-/* partially replaces DrawAreaWindow() -- does not redraw shadow */
-void DrawFullWindow2(window *W) {
-    draw_ctx D;
-    
-    if (W && InitDrawCtx((widget *)W, 0, 0, MAXDAT, MAXDAT, FALSE, &D)) {
-	/*
-	 * DO NOT assume W is completely visible...
-	 * might be obscured by another window! So reset D.W
-	 */
-	D.W = D.TopW = NULL;
-	DrawAreaCtx(&D);
-    }
-}
-
 /* replaces DrawAreaWindow() */
-void DrawAreaWindow2(window *W) {
+void DrawAreaWindow2(window W) {
     draw_ctx D;
     byte Dvalid = FALSE;
-    if (W && W->Parent && IS_SCREEN(W->Parent)) {
-	if ((widget *)W == All->FirstScreen->FirstW) {
-	    DrawWidget((widget *)W, 0, 0, MAXDAT, MAXDAT, FALSE);
+    if (!QueuedDrawArea2FullScreen && W && W->Parent && IS_SCREEN(W->Parent)) {
+	if ((widget)W == All->FirstScreen->FirstW) {
+	    DrawWidget((widget)W, 0, 0, MAXDAT, MAXDAT, FALSE);
 	    
-	} else if (InitDrawCtx((widget *)W, 0, 0, MAXDAT, MAXDAT, FALSE, &D)){
+	} else if (InitDrawCtx((widget)W, 0, 0, MAXDAT, MAXDAT, FALSE, &D)){
 	    Dvalid = TRUE;
 	    D.W = D.TopW = NULL;
 	    DrawAreaCtx(&D);
 	}
 	if (All->SetUp->Flags & SETUP_SHADOWS) {
 	    if (!Dvalid)
-		InitDrawCtx((widget *)W, 0, 0, MAXDAT, MAXDAT, FALSE, &D);
-	    DrawAreaShadeWindow((screen *)W->Parent, W, 0, 0, MAXDAT, MAXDAT,
+		InitDrawCtx((widget)W, 0, 0, MAXDAT, MAXDAT, FALSE, &D);
+	    DrawAreaShadeWindow((screen)W->Parent, W, 0, 0, MAXDAT, MAXDAT,
 				D.Left, D.Up, D.Rgt, D.Dwn, FALSE);
 	}
     }
 }
 
 /* replaces DrawAbsoluteWindow() */
-void DrawPartialWindow2(window *W, dat X1, dat Y1, dat X2, dat Y2) {
+void DrawPartialWindow2(window W, dat X1, dat Y1, dat X2, dat Y2) {
     draw_ctx D;
-    if (W && InitDrawCtx((widget *)W, X1, Y1, X2, Y2, FALSE, &D)) {
+    if (!QueuedDrawArea2FullScreen && W && InitDrawCtx((widget)W, X1, Y1, X2, Y2, FALSE, &D)) {
 	/*
 	 * DO NOT assume W is completely visible...
-	 * might be obscured by another window! So reset D.W
+	 * might be obscured by another window! So reset D.TopW
+	 * Assume instead that who called us wants to draw the visible part of W,
+	 * not whatever covers it. So set D.W (used as OnlyW)
 	 */
-	D.W = D.TopW = NULL;
+	D.TopW = NULL; D.W = (widget)W;
 	DrawAreaCtx(&D);
     }
 }
 
 /* replaces DrawTextWindow() */
-void DrawLogicWindow2(window *W, ldat X1, ldat Y1, ldat X2, ldat Y2) {
+void DrawLogicWindow2(window W, ldat X1, ldat Y1, ldat X2, ldat Y2) {
     ldat XL, YL;
     byte HasBorder;
     
-    if (W && !(W->Attrib & WINDOW_ROLLED_UP) && X2>=X1 && Y2>=Y1) {
+    if (!QueuedDrawArea2FullScreen && W && !(W->Attrib & WINDOW_ROLLED_UP) && X2>=X1 && Y2>=Y1) {
 	XL = W->XLogic;
 	YL = W->YLogic;
     
-	HasBorder = !(W->Attrib & WINDOW_BORDERLESS);
+	HasBorder = !(W->Flags & WINFL_BORDERLESS);
 	
 	if (X2>=XL && Y2>=YL && Y1<MAXLDAT &&
 	    X1<XL+(ldat)W->XWidth-2*HasBorder &&
@@ -1381,18 +1417,17 @@ void DrawLogicWindow2(window *W, ldat X1, ldat Y1, ldat X2, ldat Y2) {
 }
 
 
-void ReDrawRolledUpAreaWindow(window *Window, byte Shaded) {
+void ReDrawRolledUpAreaWindow(window Window, byte Shaded) {
     ldat shLeft, shUp, shRgt, shDwn;
-    ldat NWindowMenu;
     byte Shade, DeltaXShade, DeltaYShade;
-    screen *Screen;
+    screen Screen;
     dat DWidth, DHeight;
     dat YLimit;
     
-    if (!Window || !Window->Parent || !IS_SCREEN(Window->Parent))
+    if (QueuedDrawArea2FullScreen || !Window || !Window->Parent || !IS_SCREEN(Window->Parent))
 	return;
 
-    Screen = (screen *)Window->Parent;
+    Screen = (screen)Window->Parent;
 
     Shade = All->SetUp->Flags & SETUP_SHADOWS;
     DeltaXShade = Shade ? All->SetUp->DeltaXShade : (byte)0;
@@ -1401,9 +1436,8 @@ void ReDrawRolledUpAreaWindow(window *Window, byte Shaded) {
     DWidth = All->DisplayWidth;
     DHeight = All->DisplayHeight;
     YLimit=Screen->YLimit;
-    NWindowMenu=(Window->Attrib & WINDOW_MENU) ? 0 : (ldat)~(ldat)0;
-    shUp=(ldat)Window->Up-(Screen->YLogic & NWindowMenu)+(ldat)YLimit;
-    shLeft=(ldat)Window->Left-(Screen->XLogic & NWindowMenu);
+    shUp=(ldat)Window->Up - Screen->YLogic + (ldat)YLimit;
+    shLeft=(ldat)Window->Left - Screen->XLogic;
     shRgt=shLeft+(ldat)Window->XWidth-(ldat)1;
     shDwn=shUp+(ldat)Window->YWidth-(ldat)1;
     /*shDwn=shUp+(Window->Attrib & WINDOW_ROLLED_UP ? 0 : (ldat)Window->YWidth-(ldat)1);*/
@@ -1412,42 +1446,42 @@ void ReDrawRolledUpAreaWindow(window *Window, byte Shaded) {
 	return;
     
     shLeft=Max2((ldat)0, shLeft);
-    shUp=Max2((ldat)0, shUp);
+    shUp=Max2((ldat)0, shUp + 1);
     shRgt=Min2((ldat)DWidth-(ldat)1, shRgt+(ldat)DeltaXShade);
     shDwn=Min2((ldat)DHeight-(ldat)1, shDwn+(ldat)DeltaYShade);
     
-    DrawArea2((screen *)0, (widget *)0, (widget *)0, (dat)shLeft, (dat)shUp, (dat)shRgt, (dat)shDwn, Shaded);
+    DrawArea2((screen)0, (widget)0, (widget)0, (dat)shLeft, (dat)shUp, (dat)shRgt, (dat)shDwn, Shaded);
 }
 
-void DrawScreen(screen *Screen) {
-    screen *FirstScreen;
-    
-    FirstScreen= Screen==All->FirstScreen ? Screen : (screen *)0;
-    DrawArea2(FirstScreen, (widget *)0, (widget *)0, 0, (dat)Screen->YLimit, MAXDAT, MAXDAT, FALSE);
+void DrawScreen(screen Screen) {
+    screen FirstScreen;
+    if (!QueuedDrawArea2FullScreen) {
+	FirstScreen= Screen==All->FirstScreen ? Screen : (screen)0;
+	DrawArea2(FirstScreen, (widget)0, (widget)0, 0, (dat)Screen->YLimit, MAXDAT, MAXDAT, FALSE);
+    }
 }
 
-void ClearHilight(window *Window) {
+void ClearHilight(window Window) {
     if (Window->Attrib & WINDOW_DO_SEL) {
-	Window->Attrib &= ~(WINDOW_DO_SEL|WINDOW_ANYSEL);
+	Window->Attrib &= ~WINDOW_DO_SEL;
 	if (Window->YendSel > Window->YstSel)
 	    DrawLogicWindow2(Window, Window->XLogic, Window->YstSel, Window->XLogic+Window->XWidth, Window->YendSel);
 	else
 	    DrawLogicWindow2(Window, Window->XstSel, Window->YstSel, Window->XendSel, Window->YstSel);
-    } else
-	Window->Attrib &= ~(WINDOW_DO_SEL|WINDOW_ANYSEL);
-}
-
-void StartHilight(window *Window, ldat XSel, ldat YSel) {
-    if (Window) {
-	ClearHilight(Window);
-	Window->Attrib |= WINDOW_DO_SEL|WINDOW_FWDSEL;
-	Window->XstSel = Window->XendSel = XSel;
-	Window->YstSel = Window->YendSel = YSel;
-	DrawLogicWindow2(Window, XSel, YSel, XSel, YSel);
     }
 }
 
-void ExtendHilight(window *Window, ldat XSel, ldat YSel) {
+void StartHilight(window Window, ldat XSel, ldat YSel) {
+    if (Window) {
+	ClearHilight(Window);
+	Window->Attrib &= ~WINDOW_ANYSEL;
+	Window->Attrib |= WINDOW_FWDSEL;
+	Window->XstSel = Window->XendSel = XSel;
+	Window->YstSel = Window->YendSel = YSel;
+    }
+}
+
+void ExtendHilight(window Window, ldat XSel, ldat YSel) {
     ldat oX, oY;
     uldat oAttrib;
     
@@ -1460,6 +1494,8 @@ void ExtendHilight(window *Window, ldat XSel, ldat YSel) {
 		StartHilight(Window, Window->XstSel, Window->YstSel);
 	    else if (Window->Attrib & WINDOW_REVSEL)
 		StartHilight(Window, Window->XendSel, Window->YendSel);
+	    Window->Attrib |= WINDOW_DO_SEL;
+	    DrawLogicWindow2(Window, Window->XstSel, Window->YstSel, Window->XendSel, Window->YstSel);
 	} else
 	    return;
     }

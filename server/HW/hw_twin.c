@@ -21,6 +21,7 @@
 #include "common.h"
 
 #include "libTw.h"
+#include "libTwerrno.h"
 #include "libTwkeys.h"
 
 
@@ -45,7 +46,7 @@ struct sel_req {
 
 static void TW_SelectionRequest_up(uldat Requestor, uldat ReqPrivate);
 static void TW_SelectionNotify_up(uldat ReqPrivate, uldat Magic, CONST byte MIME[MAX_MIMELEN],
-				  uldat Len, CONST byte *Data);
+				  uldat Len, byte CONST * Data);
 
 static void TW_Beep(void) {
     Tw_WriteAsciiWindow(Td, Twin, 1, "\007");
@@ -96,7 +97,7 @@ static void TW_HandleMsg(tmsg Msg) {
     switch (Msg->Type) {
       case TW_MSG_SELECTIONCLEAR:
 	HW->HWSelectionPrivate = NULL; /* selection now owned by some other libTw client */
-	TwinSelectionSetOwner((obj *)HW, SEL_CURRENTTIME, SEL_CURRENTTIME);
+	TwinSelectionSetOwner((obj)HW, SEL_CURRENTTIME, SEL_CURRENTTIME);
 	return;
       case TW_MSG_SELECTIONREQUEST:
 	TW_SelectionRequest_up(Event->EventSelectionRequest.Requestor, Event->EventSelectionRequest.ReqPrivate);
@@ -150,7 +151,7 @@ static void TW_HandleMsg(tmsg Msg) {
     
 }
 
-static void TW_KeyboardEvent(int fd, display_hw *hw) {
+static void TW_KeyboardEvent(int fd, display_hw hw) {
     tmsg Msg;
     SaveHW;
     SetHW(hw);
@@ -208,11 +209,11 @@ static void TW_FlushVideo(void) {
     }
     
     /* update the cursor */
-    if (CursorType != NOCURSOR && (CursorX != HW->XY[0] || CursorY != HW->XY[1])) {
+    if (!ValidOldVideo || (CursorType != NOCURSOR && (CursorX != HW->XY[0] || CursorY != HW->XY[1]))) {
 	Tw_GotoXYWindow(Td, Twin, HW->XY[0] = CursorX, HW->XY[1] = CursorY);
 	setFlush();
     }
-    if (CursorType != HW->TT) {
+    if (!ValidOldVideo || CursorType != HW->TT) {
 	/* Tw_SetCursorWindow(Twin, CursorType); */
 	byte buff[16];
 	sprintf(buff, "\033[?%d;%d;%dc",
@@ -287,7 +288,7 @@ static byte TW_SelectionImport_TW(void) {
 static void TW_SelectionExport_TW(void) {
     if (!HW->HWSelectionPrivate) {
 	HW->HWSelectionPrivate = (void *)Tmsgport;
-	Tw_SetOwnerSelection(Td, Tmsgport, SEL_CURRENTTIME, SEL_CURRENTTIME);
+	Tw_SetOwnerSelection(Td, SEL_CURRENTTIME, SEL_CURRENTTIME);
 	setFlush();
     }
 }
@@ -295,7 +296,7 @@ static void TW_SelectionExport_TW(void) {
 /*
  * request Selection from libTw
  */
-static void TW_SelectionRequest_TW(obj *Requestor, uldat ReqPrivate) {
+static void TW_SelectionRequest_TW(obj Requestor, uldat ReqPrivate) {
     if (!HW->HWSelectionPrivate) {
 	struct sel_req *SelReq = AllocMem(sizeof(struct sel_req));
 	/*
@@ -327,7 +328,7 @@ static void TW_SelectionRequest_up(uldat Requestor, uldat ReqPrivate) {
     if (SelReq) {
 	SelReq->Requestor.r = Requestor;
 	SelReq->ReqPrivate = ReqPrivate;
-	TwinSelectionRequest((obj *)HW, (uldat)SelReq, TwinSelectionGetOwner());
+	TwinSelectionRequest((obj)HW, (uldat)SelReq, TwinSelectionGetOwner());
     }
     /* we will get a HW->HWSelectionNotify (i.e. TW_SelectionNotify_TW) call */
 }
@@ -336,7 +337,7 @@ static void TW_SelectionRequest_up(uldat Requestor, uldat ReqPrivate) {
  * notify our Selection to libTw
  */
 static void TW_SelectionNotify_TW(uldat ReqPrivate, uldat Magic, CONST byte MIME[MAX_MIMELEN],
-				  uldat Len, CONST byte *Data) {
+				  uldat Len, byte CONST * Data) {
     struct sel_req *SelReq = (void *)ReqPrivate;
 
     if (SelReq) {
@@ -349,7 +350,7 @@ static void TW_SelectionNotify_TW(uldat ReqPrivate, uldat Magic, CONST byte MIME
  * notify the libTw Selection to twin upper layer
  */
 static void TW_SelectionNotify_up(uldat ReqPrivate, uldat Magic, CONST byte MIME[MAX_MIMELEN],
-				  uldat Len, CONST byte *Data) {
+				  uldat Len, byte CONST * Data) {
     struct sel_req *SelReq = (void *)ReqPrivate;
 
     if (SelReq) {
@@ -414,13 +415,13 @@ byte TW_InitHW(void) {
 	 * returns OUR socket... and using ourself as display isn't
 	 * exactly a bright idea.
 	 */
-	fputs("      TW_InitHW() failed: TWDISPLAY is not set\n", stderr);
+	printk("      TW_InitHW() failed: TWDISPLAY is not set\n");
 	if (opt) *opt = ',';
 	return FALSE;
     }
 
     if (!(HW->Private = (struct tw_data *)AllocMem(sizeof(struct tw_data)))) {
-	fputs("      TW_InitHW(): Out of memory!\n", stderr);
+	printk("      TW_InitHW(): Out of memory!\n");
 	if (opt) *opt = ',';
 	return FALSE;
     }
@@ -473,8 +474,7 @@ byte TW_InitHW(void) {
 	     */
 	    
 	    HW->mouse_slot = NOSLOT;
-	    HW->keyboard_slot = RegisterRemote(Tw_ConnectionFd(Td), HW,
-					       (void (*)(int fd, void *))TW_KeyboardEvent);
+	    HW->keyboard_slot = RegisterRemote(Tw_ConnectionFd(Td), (obj)HW, TW_KeyboardEvent);
 	    if (HW->keyboard_slot == NOSLOT)
 		break;
 
@@ -537,9 +537,10 @@ byte TW_InitHW(void) {
 	} while (0); else {
 	    /* TwErrno(NULL) is valid... used when Tw_Open fails */
 	    if ((len = Tw_Errno(Td)))
-		fprintf(stderr, "      TW_InitHW() failed: %s\n", Tw_StrError(Td, len));
+		printk("      TW_InitHW() failed: %s%s\n",
+			Tw_StrError(Td, len), Tw_StrErrorDetail(Td, len, Tw_ErrnoDetail(Td)));
 	    else
-		fputs("      TW_InitHW() failed.\n", stderr);
+		printk("      TW_InitHW() failed.\n");
 	}
     
     if (Td && Tw_ConnectionFd(Td) >= 0)
@@ -554,13 +555,13 @@ byte TW_InitHW(void) {
 #include "version.h"
 MODULEVERSION;
 		       
-byte InitModule(module *Module) {
+byte InitModule(module Module) {
     Module->Private = TW_InitHW;
     return TRUE;
 }
 
 /* this MUST be included, or it seems that a bug in dlsym() gets triggered */
-void QuitModule(module *Module) {
+void QuitModule(module Module) {
 }
 
 #endif /* MODULE */

@@ -64,7 +64,7 @@ int (*OverrideSelect)(int n, fd_set *readfds, fd_set *writefds, fd_set *exceptfd
 
 static timevalue *Now;
 
-INLINE struct timeval *CalcSleepTime(struct timeval *sleeptime, msgport *Port, timevalue *now) {
+INLINE struct timeval *CalcSleepTime(struct timeval *sleeptime, msgport Port, timevalue *now) {
     byte got = 0;
     timevalue *call = &Port->CallTime;
 
@@ -98,8 +98,8 @@ INLINE struct timeval *CalcSleepTime(struct timeval *sleeptime, msgport *Port, t
     return got ? sleeptime : (struct timeval *)0;
 }
 
-static msgport *RunMsgPort(msgport *CurrPort) {
-    msgport *NextPort;
+static msgport RunMsgPort(msgport CurrPort) {
+    msgport NextPort;
 
     if ((CurrPort->WakeUp & (TIMER_ALWAYS|TIMER_ONCE)) &&
 	CmpTime(&CurrPort->CallTime, Now) <= 0)
@@ -164,11 +164,12 @@ static byte Check4SpecialArgs(void) {
 #if !defined(CONF_WM)
 static byte DieWMSo(void) {
 #if defined(CONF__MODULES)
-    fprintf(stderr, "twin: fatal: failed to load the window manager: %s\n", ErrStr);
+    printk("twin: fatal: failed to load the window manager: %s\n", ErrStr);
 #else
-    fprintf(stderr, "twin: fatal: no window manager and no module loader compiled in.\n"
-	    "      Where should I get the window manager from!?\n");
+    printk("twin: fatal: no window manager and no module loader compiled in.\n"
+	   "      Where should I get the window manager from!?\n");
 #endif
+    flushk();
     return FALSE;
 }
 #endif
@@ -197,7 +198,6 @@ static byte Init(void) {
     return (   InitSignals()
 	    && SetTWDisplay()
 	    && (All->AtQuit = UnSetTWDisplay)
-	    && InitData()
 	    && InitTransUser()
 	    && InitTtysave()
 	    && InitScroller()
@@ -206,8 +206,6 @@ static byte Init(void) {
 	    /*
 	     * We need care here: DrawArea2(), DrawMenu(), etc. all need All->BuiltinMenu and
 	     * also Video[]. The former initialized by InitBuiltin(), the latter by InitHW().
-	     * Immediately after initializaztion, InitHW() does DrawArea2(FULL_SCREEN)
-	     * so InitHW() must come after InitBuiltin().
 	     * No DrawArea2() are allowed at all before InitHW() !
 	     */
 #ifdef CONF_WM
@@ -223,12 +221,12 @@ static byte Init(void) {
 #ifdef CONF_SOCKET
 	    && InitSocket()
 #endif
-	    );
+	   );
 }
     
 void Quit(int status) {
 #if 0
-    module *M;
+    module M;
 #endif
     
     if (All->AtQuit)
@@ -268,7 +266,7 @@ void *AlwaysNull(void) {
 #define MINDELAY 10000
 
 int main(int argc, char *argv[]) {
-    msgport *CurrPort;
+    msgport CurrPort;
     timevalue Old, Cut;
     fd_set read_fds, write_fds, *pwrite_fds;
     struct timeval sel_timeout, *this_timeout;
@@ -278,15 +276,16 @@ int main(int argc, char *argv[]) {
     
     main_argv = (byte **)argv;
 
-    if (Check4SpecialArgs())
-	return 0;
-
 #ifdef CONF__ALLOC
+    /* do this as soon as possible */
     if (!InitAlloc()) {
 	fputs("twin: InitAlloc() failed: internal error!\n", stderr);
 	return 1;
     }
 #endif
+    if (Check4SpecialArgs())
+	return 0;
+
     if (!(orig_argv = CloneStrList(main_argv+1))) {
 	fputs("twin: Out of memory!\n", stderr);
 	return 1;
@@ -299,7 +298,7 @@ int main(int argc, char *argv[]) {
 	Quit(0);
 
     /* not needed... done by InitHW() */
-    /* DrawArea2(FULL_SCREEN); */
+    /* QueuedDrawArea2FullScreen = TRUE; */
     
     InstantNow(Now); /* read again... */
     SortAllMsgPortsByCallTime();
@@ -337,10 +336,13 @@ int main(int argc, char *argv[]) {
 	}
 	
 	do {
+	    /* synchronously handle signals */
+	    if (GotSignals)
+		HandleSignals();
+	    
 	    if (NeedHW & NEEDResizeDisplay) {
 		ResizeDisplay();
-		DrawArea2(FULL_SCREEN);
-		UpdateCursor();
+		QueuedDrawArea2FullScreen = TRUE;
 	    }
 	    
 	    if (NeedHW & NEEDSelectionExport)
@@ -349,8 +351,8 @@ int main(int argc, char *argv[]) {
 	    /*
 	     * A display HW could Panic in its Event handlers or in its
 	     * FlushVideo/FlushHW routines. So check for Panic BEFORE or AFTER
-	     * FlushHW? Consider that after a Panic, all displays could get resized
-	     * and thus need a FlushHW.
+	     * FlushHW? Consider that after a HW shutdown due to Panic,
+	     * all displays could get resized and thus need another FlushHW.
 	     * I my opinion, it's better to keep open a paniced display HW for a while,
 	     * than not to flush all remaining displays which just resized.
 	     * 
@@ -428,7 +430,7 @@ int main(int argc, char *argv[]) {
 	while (CurrPort)
 	    CurrPort = RunMsgPort(CurrPort);
 
-	All->RunMsgPort=(msgport *)0;
+	All->RunMsgPort=(msgport)0;
     }
     /* NOTREACHED */
     return 0;

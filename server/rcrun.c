@@ -23,6 +23,7 @@
 
 #include "extensions.h"
 #include "methods.h"
+#include "hw.h"
 #include "common.h"
 #include "hw_multi.h"
 
@@ -52,18 +53,18 @@ struct run {
     uldat cycle;
     union {
 	timevalue WakeUp;
-	byte *Title;
+	str Title;
     } SW;	 /* what we are waiting for: sleep timeout or window map */
     
     wm_ctx C;   /* event that generated the run queue */
-    node *stack[MAX_RUNSTACK];
+    node stack[MAX_RUNSTACK];
 };
 
 
 byte GlobalsAreStatic;
-node *Globals[GLOBAL_MAX];
+node Globals[GLOBAL_MAX];
 
-node **MenuBinds; /* array of pointers to nodes inside MenuList */
+node *MenuBinds; /* array of pointers to nodes inside MenuList */
 udat MenuBindsMax;
 
 static run *Run;   /* list of running queues */
@@ -73,7 +74,7 @@ static run *Interactive;  /* list of waiting-for-interactive-op queues */
 
 
 /* shell-like wildcard pattern matching */
-static byte wildcard_match(byte *p, byte *q) {
+static byte wildcard_match(str p, str q) {
     byte c;
 
     if (!q)
@@ -106,7 +107,7 @@ static byte wildcard_match(byte *p, byte *q) {
 	    } while (*q++ != '\0');
 	    return FALSE;
 	  case '[': {
-	      byte *endp;
+	      str endp;
 	      byte invert = 0, found = 0;
 	      byte chr;
 	      
@@ -156,8 +157,8 @@ static byte wildcard_match(byte *p, byte *q) {
     }
 }
 
-node *LookupNodeName(str name, node *head) {
-    node *l;
+node LookupNodeName(str name, node head) {
+    node l;
     if (name) for (l = head; l; l = l->next) {
 	if (!CmpStr(name, l->name))
 	    return l;
@@ -202,8 +203,8 @@ static ldat Pos2Ctx(udat Pos) {
     return 0;
 }
 
-static node *RCFindKeyBind(ldat label, ldat shiftflags) {
-    node *l = KeyList;
+static node RCFindKeyBind(ldat label, ldat shiftflags) {
+    node l = KeyList;
     for (; l; l = l->next) {
 	if (label == l->id && shiftflags == l->x.ctx)
 	    return l->body;
@@ -211,8 +212,8 @@ static node *RCFindKeyBind(ldat label, ldat shiftflags) {
     return NULL;
 }
 
-static node *RCFindMouseBind(ldat code, ldat ctx) {
-    node *l = MouseList;
+static node RCFindMouseBind(ldat code, ldat ctx) {
+    node l = MouseList;
     ldat hc = code & (HOLD_CODE(3) | HOLD_CODE(4));
     code &= HOLD_ANY;
     
@@ -228,8 +229,8 @@ static node *RCFindMouseBind(ldat code, ldat ctx) {
     return NULL;
 }
 
-byte *RCFindBorderPattern(window *W, byte Border) {
-    node *l;
+str RCFindBorderPattern(window W, byte Border) {
+    node l;
     
     if (!W)
 	return NULL;
@@ -271,7 +272,7 @@ INLINE void RCKill(run **p) {
     }
 }
 
-static run *RCNew(node *l) {
+static run *RCNew(node l) {
     run *r;
     
     if ((r = (run *)AllocMem(sizeof(run)))) {
@@ -282,7 +283,7 @@ static run *RCNew(node *l) {
     return r;
 }
 
-static ldat applyflagx(node *n) {
+static ldat applyflagx(node n) {
     ldat x = 0;
     switch (n->x.f.plus_minus) {
       case 0:
@@ -300,7 +301,7 @@ static ldat applyflagx(node *n) {
     return x * n->x.f.a;
 }
 
-static ldat applyflagy(node *n) {
+static ldat applyflagy(node n) {
     ldat y = 0;
     switch (n->x.f.flag) {
       case 0:
@@ -318,27 +319,27 @@ static ldat applyflagy(node *n) {
     return y * n->x.f.b;
 }
 
-static window *RCFindWindowName(byte *name) {
+static window RCFindWindowName(str name) {
     uldat len = strlen(name);
-    window *W;
-    screen *S = All->FirstScreen;
+    window W;
+    screen S = All->FirstScreen;
 	
     while (S) {
 	/* search among mapped windows */
-	W = (window *)S->FirstW;
+	W = (window)S->FirstW;
 	while (W) {
 	    if (IS_WINDOW(W) && W->LenTitle == len && !CmpMem(W->Title, name, len))
 		return W;
-	    W = (window *)W->Next;
+	    W = (window)W->Next;
 	}
 	S = S->Next;
     }
     return NULL;
 }
 	
-static screen *RCFindScreenName(byte *name) {
+static screen RCFindScreenName(str name) {
     uldat len = strlen(name);
-    screen *S = All->FirstScreen;
+    screen S = All->FirstScreen;
     while (S) {
 	if (S->LenTitle == len && !CmpMem(S->Title, name, len))
 	    break;
@@ -346,9 +347,9 @@ static screen *RCFindScreenName(byte *name) {
     return S;
 }
 
-INLINE window *RCCheck4WinId(run *r) {
-    window *W;
-    if (!(W = (window *)Id2Obj(window_magic >> magic_shift, r->W))
+INLINE window RCCheck4WinId(run *r) {
+    window W;
+    if (!(W = (window)Id2Obj(window_magic >> magic_shift, r->W))
 	|| !W->Parent || !IS_SCREEN(W->Parent))
 	
 	r->W = NOID;
@@ -364,37 +365,37 @@ INLINE window *RCCheck4WinId(run *r) {
 #define Serr  6
 
 
-INLINE window *ForwardWindow(widget *W) {
+INLINE window ForwardWindow(widget W) {
     while (W) {
 	if (IS_WINDOW(W))
-	    return (window *)W;
+	    return (window)W;
 	W = W->Next;
     }
-    return (window *)W;
+    return (window)W;
 }
 
-INLINE window *BackwardWindow(widget *W) {
+INLINE window BackwardWindow(widget W) {
     while (W) {
 	if (IS_WINDOW(W))
-	    return (window *)W;
+	    return (window)W;
 	W = W->Prev;
     }
-    return (window *)W;
+    return (window)W;
 }
 
-INLINE screen *ScreenOf(window *W) {
-    widget *P;
-    return W && (P=W->Parent) && IS_SCREEN(P) ? (screen *)P : (screen *)0;
+INLINE screen ScreenOf(window W) {
+    widget P;
+    return W && (P=W->Parent) && IS_SCREEN(P) ? (screen)P : (screen)0;
 }
 
 /* run the specified queue */
 static byte RCSteps(run *r) {
-    window *W, *SkipW;
-    screen *S;
+    window W, SkipW;
+    screen S;
     wm_ctx *C;
-    node *n, *f;
+    node n, f;
     ldat flag;
-    byte **argv;
+    str *argv;
     byte state;
 
     W = RCCheck4WinId(r);
@@ -449,6 +450,14 @@ static byte RCSteps(run *r) {
 	    /* this is just like INTERACTIVE MENU ... but does not wait! */
 	    ActivateCtx(C, STATE_MENU);
 	    break;
+	  case MODULE:
+	    if (n->x.f.a == -1)
+		n->x.f.a = DlName2Code(n->name);
+	    if (n->x.f.flag == FL_ON)
+		DlLoad(n->x.f.a);
+	    else
+		DlUnLoad(n->x.f.a);
+	    break;
 	  case MOVE:
 	    if (W)
 		DragWindow(W, applyflagx(n), applyflagy(n));
@@ -461,7 +470,7 @@ static byte RCSteps(run *r) {
 	  case NOP:
 	    break;
 	  case RESTART:
-	    SendControlMsg(Ext(WM,MsgPort), MSG_CTRL_RESTART, 1 + strlen(n->name), n->name);
+	    SendControlMsg(Ext(WM,MsgPort), MSG_CONTROL_RESTART, 1 + strlen(n->name), n->name);
 	    return Serr;
 	    break;
 	  case RESIZE:
@@ -481,10 +490,10 @@ static byte RCSteps(run *r) {
 	    break;
 	  case SENDTOSCREEN:
 	    if (W && S && n->name) {
-		screen *Screen = RCFindScreenName(n->name);
+		screen Screen = RCFindScreenName(n->name);
 		if (S != Screen) {
 		    Act(UnMap,W)(W);
-		    Act(Map,W)(W, Screen);
+		    Act(Map,W)(W, (widget)Screen);
 		}
 	    }
 	    break;
@@ -497,8 +506,8 @@ static byte RCSteps(run *r) {
 	  case STDERR:
 	    argv = n->x.v.argv;
 	    while (*argv)
-		fprintf(stderr, "%s ", *argv++);
-	    fputc('\n', stderr);
+		printk("%s ", *argv++);
+	    printk("\n");
 	    break;
 	  case SYNTHETICKEY:
 	    if (W)
@@ -580,7 +589,7 @@ static byte RCSteps(run *r) {
 	  case KILL:
 	    /* BRUTAL! */
 	    if (W) {
-		msgport *M = W->Menu->MsgPort;
+		msgport M = W->Menu->MsgPort;
 		/*
 		 * try not to exagerate with brutality:
 		 * allow deleting remote clients msgports only
@@ -612,7 +621,7 @@ static byte RCSteps(run *r) {
 		if (flag == FL_ON && S != All->FirstScreen)
 		    Act(Focus,S)(S);
 		
-		Act(Focus,W)(flag == FL_ON ? W : (window *)0);
+		Act(Focus,W)(flag == FL_ON ? W : (window)0);
 	    }
 	    break;
 	  case MAXIMIZE:
@@ -630,7 +639,7 @@ static byte RCSteps(run *r) {
 	    break;
 	  case RAISELOWER:
 	    if (W && S) {
-		if ((widget *)W == S->FirstW)
+		if ((widget)W == S->FirstW)
 		    MakeLastWindow(W, TRUE);
 		else
 		    MakeFirstWindow(W, TRUE);
@@ -758,7 +767,7 @@ static byte RCSleep(timevalue *_t) {
 static void RCReload(void) {
     byte success;
 #if !defined(CONF_WM_RC) && defined(CONF__MODULES)
-    module *M;
+    module M;
     byte (*mod_rcload)(void) = (byte (*)(void))0;
     
     if ((M = DlLoad(RCParseSo)))
@@ -766,7 +775,7 @@ static void RCReload(void) {
 # if 0
     /* this would garble -hw=tty display */
     else
-	fprintf(stderr, "twin: failed to load the RC parser:\n"
+	printk("twin: failed to load the RC parser:\n"
 		"      %s\n", ErrStr);
 # endif
 #endif
@@ -788,6 +797,7 @@ static void RCReload(void) {
 #endif
     
     if (success) {
+	QueuedDrawArea2FullScreen = TRUE;
 	
 	ResetBorderPattern();
 	RCKillAll();
@@ -797,7 +807,6 @@ static void RCReload(void) {
 	FillButtonWin();
 	UpdateOptionWin();
 	HideMenu(!!(All->SetUp->Flags & SETUP_HIDEMENU));
-	DrawArea2(FULL_SCREEN);
     }
 }
 
@@ -827,8 +836,8 @@ static void RCWake(void) {
 }
 
 /* wake up queues when the wanted window appears */
-static void RCWake4Window(window *W) {
-    byte *Title = W->Title;
+static void RCWake4Window(window W) {
+    str Title = W->Title;
     run **p = &Wait, *r;
 
     if (Title) while ((r = *p)) {
@@ -858,7 +867,7 @@ byte RC_VMQueue(CONST wm_ctx *C) {
     uldat ClickWinId = All->FirstScreen->ClickWindow
 	? All->FirstScreen->ClickWindow->Id : NOID;
     ldat ctx;
-    node *n;
+    node n;
     run *r;
     udat Code;
     byte used = FALSE;
@@ -870,7 +879,7 @@ byte RC_VMQueue(CONST wm_ctx *C) {
       case MSG_KEY:	
       case MSG_MOUSE:
 	
-	n = (node *)0;
+	n = (node)0;
 	
 	if (C->Type == MSG_MOUSE) {
 	    
@@ -906,12 +915,12 @@ byte RC_VMQueue(CONST wm_ctx *C) {
 	used = TRUE, RCWake4Window(C->W);
 	break;
       case MSG_CONTROL:
-	if (C->Code == MSG_CTRL_OPEN) {
+	if (C->Code == MSG_CONTROL_OPEN) {
 	    used = TRUE;
 	    if (All->State != STATE_DEFAULT)
 		/*
 		 * return to STATE_DEFAULT, and rely on RCReload()
-		 * to DrawArea(FULL_SCREEN)
+		 * to set QueuedDrawArea2FullScreen = TRUE
 		 */
 		ForceRelease(C);
 	    
@@ -980,10 +989,10 @@ void QuitRC(void) {
 #define COD_COMMON_LAST		COD_COMMON_CLOSE
 
 static byte RCDefaultCommonMenu(void) {
-    menu *Menu;
-    menuitem *Item;
-    window *W;
-    row *Row;
+    menu Menu;
+    menuitem Item;
+    window W;
+    row Row;
     
     if (!(Menu = Do(Create,Menu)(FnMenu, Ext(WM,MsgPort), (hwcol)0, (hwcol)0, (hwcol)0,
 				 (hwcol)0, (hwcol)0, (hwcol)0, TRUE)))
@@ -1029,7 +1038,7 @@ static byte RCDefaultCommonMenu(void) {
 byte InitRC(void) {
     byte InitRCOptions(void);
     
-    static node N[] = {
+    static struct node N[] = {
 	{ INTERACTIVE, NULL, NULL, NULL, NULL, { { 0, MOVE, }, } },	/* COD_COMMON_DRAG       */
 	{ INTERACTIVE, NULL, NULL, NULL, NULL, { { 0, RESIZE, }, } },	/* COD_COMMON_RESIZE     */
 	{ INTERACTIVE, NULL, NULL, NULL, NULL, { { 0, SCROLL, }, } },	/* COD_COMMON_SCROLL     */
@@ -1045,26 +1054,26 @@ byte InitRC(void) {
 	{ SYNTHETICKEY, },						/* COD_COMMON_HOTKEY     */
 	{ CLOSE, }							/* COD_COMMON_CLOSE      */
     };
-    static node *pN[] = {
+    static struct node *pN[] = {
 	N, N+1, N+2, N+3, N+4, N+5, N+6, N+7, N+8, N+9, N+10, N+11, N+12, N+13
     };
     
     /* now user functions list */
-    static node F[] = {
-	/* AddToFunc _UnFocus ( Window 0; Focus Off; ) */
+    static struct node F[] = {
+	/* AddToFunc _UnFocus ( Window 0; Focus Off;) */
 	{ 0,      "_UnFocus", NULL, F+1, },
 	{ WINDOW, NULL, N+8, NULL, NULL, { { 0, 0, } } }
     };
     
     /* now keyboard binds */
-    static node K[] = {
+    static struct node K[] = {
 	/* Key HOT_KEY Interactive Menu */
 	{ 0, NULL, NULL, K+1, },
 	{ INTERACTIVE, NULL, NULL, NULL, NULL, { { 0, MENU, }, } }
     };
     
     /* now mouse binds */
-    static node M[] = {
+    static struct node M[] = {
 	/* Mouse   1   0  Close */
 	{ HOLD_LEFT|HOLD_CODE(4),  "0", M+1, N+13,NULL, { { CTX_0, } } },
 	/* Mouse  123  1  RaiseLower */
@@ -1094,7 +1103,7 @@ byte InitRC(void) {
 	{ "><", -4, TRUE, FALSE }
     };
 
-    byte *Seq = "";
+    str Seq = "";
     /*
      * this is really heavy on the compiler...
      * but it should be able to optimize it

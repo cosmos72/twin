@@ -111,7 +111,7 @@ struct x11_data {
     XGCValues    xsgc;
     XFontStruct *xsfont;
     byte         xwindow_AllVisible;
-    obj         *xRequestor[NEST];
+    obj          xRequestor[NEST];
     uldat        xReqPrivate[NEST];
     uldat        xReqCount;
     uldat        XReqCount;
@@ -171,11 +171,10 @@ static byte X11_RemapKeys(void) {
     for (i = 0; i < X11_keyn; i++) {
 	XRebindKeysym(xdisplay, X11_keys[i].xkey, (KeySym *)0, 0, X11_keys[i].seq, X11_keys[i].len);
 	if (i && X11_keys[i-1].xkey >= X11_keys[i].xkey) {
-	    fputs("\n"
-		  "      ERROR: twin compiled from a bad server/hw_keys.h file"
-		  "             (data in file is not sorted). X11 support is unusable.\n"
-		  "      X11_InitHW failed: internal error.\n",
-		  stderr);
+	    printk("\n"
+		   "      ERROR: twin compiled from a bad server/hw_keys.h file"
+		   "             (data in file is not sorted). X11 support is unusable.\n"
+		   "      X11_InitHW() failed: internal error.\n");
 	    return FALSE;
 	}
     }
@@ -208,26 +207,29 @@ static void X11_Configure(udat resource, byte todefault, udat value) {
 }
 
     
-/* convert an X11 KeySym into a libTw key code */
+/* convert an X11 KeySym into a libTw key code and ASCII sequence */
 
 static udat X11_LookupKey(XKeyEvent *ev, udat *ShiftFlags, udat *len, char *seq) {
     static udat lastTW = TW_Null;
+    static uldat lastI = MAXULDAT;
     static KeySym sym, lastXK = NoSymbol;
     
-    uldat i, low, up;
+    uldat i, low, up, _len = *len;
 
     *ShiftFlags = 0;
     if (ev->state & ShiftMask)
 	*ShiftFlags |= KBD_SHIFT_FL;
     if (ev->state & LockMask)
-	*ShiftFlags |= KBD_NUM_LOCK;
+	*ShiftFlags |= KBD_CAPS_LOCK;
     if (ev->state & ControlMask)
 	*ShiftFlags |= KBD_CTRL_FL;
-    if (ev->state & Mod1Mask)
+    if (ev->state & (Mod1Mask|Mod3Mask)) /* Alt|AltGr */
 	*ShiftFlags |= KBD_ALT_FL;
+    if (ev->state & Mod2Mask) /* Num_Lock */
+	*ShiftFlags |= KBD_NUM_LOCK;
     
-    *len = XLookupString(ev, seq, *len, &sym, NULL);
-
+    *len = XLookupString(ev, seq, _len, &sym, NULL);
+    
     if (sym == XK_BackSpace && ev->state & (ControlMask|Mod1Mask)) {
 	if (ev->state & ControlMask)
 	    *len = 1, *seq = '\x1F';
@@ -235,9 +237,6 @@ static udat X11_LookupKey(XKeyEvent *ev, udat *ShiftFlags, udat *len, char *seq)
 	    *len = 2, seq[0] = '\x1B', seq[1] = '\x7F';
 	return TW_BackSpace;
     }
-
-    if (!*len)
-	return TW_Null;
 
     if (sym >= ' ' && sym <= '~') {
 	/* turn ALT+A into ESC+A etc. */
@@ -249,24 +248,32 @@ static udat X11_LookupKey(XKeyEvent *ev, udat *ShiftFlags, udat *len, char *seq)
 	return (udat)sym;
     }
     
-    if (sym == lastXK)
-	return lastTW;
-        
-    low = 0;		/* the first possible */
-    up = X11_keyn;	/* 1 + the last possible */
+    if (sym != lastXK) {
+	low = 0;		/* the first possible */
+	up = X11_keyn;	/* 1 + the last possible */
     
-    while (low < up) {
-	i = (low + up) / 2;
-	if (sym == X11_keys[i].xkey) {
-	    lastXK = sym;
-	    return lastTW = X11_keys[i].tkey;
-	} else if (sym > X11_keys[i].xkey)
-	    low = i + 1;
-	else
-	    up = i;
+	while (low < up) {
+	    i = (low + up) / 2;
+	    if (sym == X11_keys[i].xkey) {
+		lastTW = X11_keys[lastI = i].tkey;
+		break;
+	    } else if (sym > X11_keys[i].xkey)
+		low = i + 1;
+	    else
+		up = i;
+	}
+	if (low == up) {
+	    lastI = X11_keyn;
+	    lastTW = TW_Null;
+	}
+	lastXK = sym;
     }
-    lastXK = sym;
-    return lastTW = TW_Null;
+    if (*len == 0 && lastI < X11_keyn && X11_keys[lastI].len) {
+	/* XLookupString() returned empty string, steal sequence from hw_keys.h */
+	if (_len > X11_keys[lastI].len)
+	    CopyMem(X11_keys[lastI].seq, seq, *len = X11_keys[lastI].len);
+    }
+    return lastTW;
 };
 
 
@@ -327,7 +334,7 @@ static void X11_HandleEvent(XEvent *event) {
 	if (HW->X != event->xconfigure.width  / xwfont ||
 	    HW->Y != event->xconfigure.height / xhfont) {
 	    
-	    HW->X = (xwidth  = event->xconfigure.width ) / xwfont;
+	    HW->X = (xwidth  = event->xconfigure.width) / xwfont;
 	    HW->Y = (xheight = event->xconfigure.height) / xhfont;
 	    ResizeDisplayPrefer(HW);
 	}
@@ -348,7 +355,7 @@ static void X11_HandleEvent(XEvent *event) {
 	break;
       case SelectionClear:
 	HW->HWSelectionPrivate = NULL; /* selection now owned by some other X11 client */
-	TwinSelectionSetOwner((obj *)HW, SEL_CURRENTTIME, SEL_CURRENTTIME);
+	TwinSelectionSetOwner((obj)HW, SEL_CURRENTTIME, SEL_CURRENTTIME);
 	break;
       case SelectionRequest:
 	X11_SelectionRequest_up(&event->xselectionrequest);
@@ -371,7 +378,7 @@ static void X11_HandleEvent(XEvent *event) {
     }
 }
 
-static void X11_KeyboardEvent(int fd, display_hw *D_HW) {
+static void X11_KeyboardEvent(int fd, display_hw D_HW) {
     XEvent event;
     SaveHW;
     SetHW(D_HW);
@@ -384,6 +391,7 @@ static void X11_KeyboardEvent(int fd, display_hw *D_HW) {
     RestoreHW;
 }
 
+/* this can stay static, X11_FlushHW() is not reentrant */
 static hwcol _col;
 
 #define XDRAW(col, buf, buflen) \
@@ -458,7 +466,7 @@ static void X11_ShowCursor(uldat type, dat x, dat y) {
 	/* VGA hw-like cursor */
 	i = xhfont * ((type & 0xF)-NOCURSOR) / (SOLIDCURSOR-NOCURSOR);
 	
-	/* doesn't work in paletted visuals */
+	/* doesn't work as expected on paletted visuals... */
 	if (xsgc.foreground != xcol[COLFG(HWCOL(V)) ^ COLBG(HWCOL(V))])
 	    XSetForeground(xdisplay, xgc, xsgc.foreground = xcol[COLFG(HWCOL(V)) ^ COLBG(HWCOL(V))]);
 	
@@ -472,12 +480,13 @@ static void X11_ShowCursor(uldat type, dat x, dat y) {
 static void X11_FlushVideo(void) {
     dat start, end;
     udat i;
-    byte c = ChangedVideoFlag &&
-	(ValidOldVideo
-	 ? Video[HW->XY[0] + HW->XY[1] * DisplayWidth]
-	 != OldVideo[HW->XY[0] + HW->XY[1] * DisplayWidth] 
-	 : Plain_isDirtyVideo(HW->XY[0], HW->XY[1]));
-    /* TRUE iff the cursor will be erased by burst */
+    byte iff;
+    
+    
+    if (ValidOldVideo)
+	iff = ChangedVideoFlag &&
+	Video[HW->XY[0] + HW->XY[1] * DisplayWidth] != OldVideo[HW->XY[0] + HW->XY[1] * DisplayWidth];
+    /* TRUE if and only if the cursor will be erased by burst */
     
     
     /* first burst all changes */
@@ -492,17 +501,18 @@ static void X11_FlushVideo(void) {
 	setFlush();
     }
     /* then, we may have to erase the old cursor */
-    if (!c && HW->TT != NOCURSOR &&
-	(CursorType != HW->TT || CursorX != HW->XY[0] || CursorY != HW->XY[1])) {
+    if (!ValidOldVideo || (!iff && HW->TT != NOCURSOR &&
+	(CursorType != HW->TT || CursorX != HW->XY[0] || CursorY != HW->XY[1]))) {
 	
 	HW->TT = NOCURSOR;
 	X11_HideCursor(HW->XY[0], HW->XY[1]);
 	setFlush();
     }
-    /* finally, redraw the cursor if */
+    /* finally, redraw the cursor if forced to redraw or */
     /* (we want a cursor and (the burst erased the cursor or the cursor changed)) */
-    if (CursorType != NOCURSOR &&
-	(c || CursorType != HW->TT || CursorX != HW->XY[0] || CursorY != HW->XY[1])) {
+    if (!ValidOldVideo ||
+	(CursorType != NOCURSOR &&
+	 (iff || CursorType != HW->TT || CursorX != HW->XY[0] || CursorY != HW->XY[1]))) {
 	
 	X11_ShowCursor(HW->TT = CursorType, HW->XY[0] = CursorX, HW->XY[1]= CursorY);
 	setFlush();
@@ -556,21 +566,19 @@ static void X11_SelectionExport_X11(void) {
  * notify our Selection to X11
  */
 static void X11_SelectionNotify_X11(uldat ReqPrivate, uldat Magic, CONST byte MIME[MAX_MIMELEN],
-				    uldat Len, CONST byte *Data) {
+				    uldat Len, byte CONST * Data) {
     XEvent ev;
     static Atom xa_targets = None;
     if (xa_targets == None)
 	xa_targets = XInternAtom (xdisplay, "TARGETS", False);
 	
     if (XReqCount == 0) {
-	fprintf(stderr, "hw_X11.c: X11_SelectionNotify_X11(): unexpected Twin Selection Notify event!\n");
-	fflush(stderr);
+	printk("hw_X11.c: X11_SelectionNotify_X11(): unexpected Twin Selection Notify event!\n");
 	return;
     }
 #if 0
     else {
-	fprintf(stderr, "hw_X11.c: X11_SelectionNotify_X11(): %d nested Twin Selection Notify events\n", XReqCount);
-	fflush(stderr);
+	printk("hw_X11.c: X11_SelectionNotify_X11(): %d nested Twin Selection Notify events\n", XReqCount);
     }
 #endif
     
@@ -620,14 +628,12 @@ static void X11_SelectionNotify_up(Window win, Atom prop) {
     byte *data, *buff = NULL;
 
     if (xReqCount == 0) {
-	fprintf(stderr, "hw_X11.c: X11_SelectionNotify_up(): unexpected X Selection Notify event!\n");
-	fflush(stderr);
+	printk("hw_X11.c: X11_SelectionNotify_up(): unexpected X Selection Notify event!\n");
 	return;
     }
 #if 0
     else {
-	fprintf(stderr, "hw_X11.c: X11_SelectionNotify_up(): %d nested X Selection Notify event\n", xReqCount);
-	fflush(stderr);
+	printk("hw_X11.c: X11_SelectionNotify_up(): %d nested X Selection Notify event\n", xReqCount);
     }
 #endif
     if (prop == None)
@@ -664,18 +670,16 @@ static void X11_SelectionNotify_up(Window win, Atom prop) {
 /*
  * request X11 Selection
  */
-static void X11_SelectionRequest_X11(obj *Requestor, uldat ReqPrivate) {
+static void X11_SelectionRequest_X11(obj Requestor, uldat ReqPrivate) {
     if (!HW->HWSelectionPrivate) {
 
 	if (xReqCount == NEST) {
-	    fprintf(stderr, "hw_X11.c: X11_SelectionRequest_X11(): too many nested Twin Selection Request events!\n");
-	    fflush(stderr);
+	    printk("hw_X11.c: X11_SelectionRequest_X11(): too many nested Twin Selection Request events!\n");
 	    return;
 	}
 #if 0
 	else {
-	    fprintf(stderr, "hw_X11.c: X11_SelectionRequest_X11(): %d nested Twin Selection Request events\n", xReqCount+1);
-	    fflush(stderr);
+	    printk("hw_X11.c: X11_SelectionRequest_X11(): %d nested Twin Selection Request events\n", xReqCount+1);
 	}
 #endif
 	xRequestor(xReqCount) = Requestor;
@@ -700,18 +704,16 @@ static void X11_SelectionRequest_X11(obj *Requestor, uldat ReqPrivate) {
  */
 static void X11_SelectionRequest_up(XSelectionRequestEvent *req) {
     if (XReqCount == NEST) {
-	fprintf(stderr, "hw_X11.c: X11_SelectionRequest_up(): too many nested X Selection Request events!\n");
-	fflush(stderr);
+	printk("hw_X11.c: X11_SelectionRequest_up(): too many nested X Selection Request events!\n");
 	return;
     }
 #if 0
     else {
-	fprintf(stderr, "hw_X11.c: X11_SelectionRequest_up(): %d nested X Selection Request events\n", XReqCount+1);
-	fflush(stderr);
+	printk("hw_X11.c: X11_SelectionRequest_up(): %d nested X Selection Request events\n", XReqCount+1);
     }
 #endif
     CopyMem(req, &XReq(XReqCount), sizeof(XSelectionRequestEvent));
-    TwinSelectionRequest((obj *)HW, XReqCount++, TwinSelectionGetOwner());
+    TwinSelectionRequest((obj)HW, XReqCount++, TwinSelectionGetOwner());
     /* we will get a HW->HWSelectionNotify (i.e. X11_SelectionNotify_X11) call */
 }
 
@@ -835,7 +837,7 @@ byte X11_InitHW(void) {
 	arg = NULL;
     
     if (!(HW->Private = (struct x11_data *)AllocMem(sizeof(struct x11_data)))) {
-	fprintf(stderr, "      X11_InitHW(): Out of memory!\n");
+	printk("      X11_InitHW(): Out of memory!\n");
 	if (opt) *opt = ',';
 	if (drag) *drag = ',';
 	if (noinput) *noinput = ',';
@@ -861,7 +863,7 @@ byte X11_InitHW(void) {
 	    xcolor.green = 257 * (udat)Palette[i].Green;
 	    xcolor.blue  = 257 * (udat)Palette[i].Blue;
 	    if (!XAllocColor(xdisplay, DefaultColormap(xdisplay, xscreen), &xcolor)) {
-		fprintf(stderr, "      X11_InitHW() failed to allocate colors\n");
+		printk("      X11_InitHW() failed to allocate colors\n");
 		break;
 	    }
 	    xcol[i] = xcolor.pixel;
@@ -921,8 +923,8 @@ byte X11_InitHW(void) {
 	    XFree(xhints); xhints = NULL;
 	    
 	    HW->mouse_slot = NOSLOT;
-	    HW->keyboard_slot = RegisterRemote(i = XConnectionNumber(xdisplay), HW,
-					       (void (*)(int fd, void *))X11_KeyboardEvent);
+	    HW->keyboard_slot = RegisterRemote(i = XConnectionNumber(xdisplay), (obj)HW,
+					       X11_KeyboardEvent);
 	    if (HW->keyboard_slot == NOSLOT)
 		break;
 	    fcntl(i, F_SETFD, FD_CLOEXEC);
@@ -997,9 +999,9 @@ byte X11_InitHW(void) {
 	}
     } while (0); else {
 	if (arg || (arg = getenv("DISPLAY")))
-	    fprintf(stderr, "      X11_InitHW() failed to open display %s\n", arg);
+	    printk("      X11_InitHW() failed to open display %s\n", arg);
 	else
-	    fprintf(stderr, "      X11_InitHW() failed: DISPLAY is not set\n");
+	    printk("      X11_InitHW() failed: DISPLAY is not set\n");
     }
 
     if (opt) *opt = ',';
@@ -1019,13 +1021,13 @@ byte X11_InitHW(void) {
 #include "version.h"
 MODULEVERSION;
 		       
-byte InitModule(module *Module) {
+byte InitModule(module Module) {
     Module->Private = X11_InitHW;
     return TRUE;
 }
 
 /* this MUST be included, or it seems that a bug in dlsym() gets triggered */
-void QuitModule(module *Module) {
+void QuitModule(module Module) {
 }
 
 #endif /* CONF_THIS_MODULE */

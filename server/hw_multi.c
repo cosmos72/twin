@@ -29,6 +29,7 @@
 #include "hw.h"
 #include "hw_private.h"
 #include "hw_multi.h"
+#include "printk.h"
 #include "util.h"
 
 #ifdef CONF__MODULES
@@ -92,6 +93,9 @@ static dat AccelVideo[4] = { MAXDAT, MAXDAT, MINDAT, MINDAT };
 byte   StrategyFlag;
 frac_t StrategyDelay = (frac_t)0;
 
+static udat ConfigureHWValue[HW_CONFIGURE_MAX];
+static byte ConfigureHWDefault[HW_CONFIGURE_MAX];
+
 
 
 /* common functions */
@@ -154,17 +158,17 @@ void RunNoHW(void) {
 void warn_NoHW(uldat len, char *arg, uldat tried) {
 #ifdef CONF__MODULES
     if (!tried && !arg)
-	    fputs("twin: no display driver compiled into twin.\n"
-		  "      please run as `twin -hw=<display>'\n", stderr);
+	printk("twin: no display driver compiled into twin.\n"
+	       "      please run as `twin -hw=<display>'\n");
     else
 #endif
     {
-	fputs("twin: All display drivers failed", stderr);
+	printk("twin: All display drivers failed");
 	if (arg)
-	    fprintf(stderr, " for `-hw=%.*s\'", (int)len, arg);
+	    printk(" for `-hw=%.*s\'", (int)len, arg);
 	else
-	    putc('.', stderr);
-	putc('\n', stderr);
+	    printk(".");
+	printk("\n");
     }
 }
 
@@ -175,7 +179,7 @@ static byte module_InitHW(void) {
     byte *(*InitD)(void);
     byte *arg = HW->Name;
     uldat len = HW->NameLen;
-    module *Module;
+    module Module;
 
     if (!arg || len <= 4)
 	return FALSE;
@@ -195,10 +199,10 @@ static byte module_InitHW(void) {
 	Module = DlLoadAny(len+9, name);
 	
 	if (Module) {
-	    fprintf(stderr, "twin: starting display driver module `HW/hw_%.*s.so'...\n", (int)len, arg);
+	    printk("twin: starting display driver module `HW/hw_%.*s.so'...\n", (int)len, arg);
 	    
 	    if ((InitD = Module->Private) && InitD()) {
-		fprintf(stderr, "twin: ...module `%s' successfully started.\n", name);
+		printk("twin: ...module `%s' successfully started.\n", name);
 		FreeMem(name);
 		HW->Module = Module; Module->Used++;
 		return TRUE;
@@ -208,9 +212,9 @@ static byte module_InitHW(void) {
     }
 
     if (Module) {
-	fprintf(stderr, "twin: ...module `%s' failed to start.\n", name);
+	printk("twin: ...module `%s' failed to start.\n", name);
     } else
-	fprintf(stderr, "twin: unable to load display driver module `%s' :\n"
+	printk("twin: unable to load display driver module `%s' :\n"
 			"      %s\n", name, ErrStr);
     
     FreeMem(name);
@@ -222,17 +226,17 @@ static byte module_InitHW(void) {
 #if defined(CONF_HW_X11) || defined(CONF_HW_TWIN) || defined(CONF_HW_DISPLAY) || defined(CONF_HW_TTY) || defined(CONF_HW_GGI)
 static byte check4(byte *s, byte *arg) {
     if (arg && strncmp(s, arg, strlen(s))) {
-	fprintf(stderr, "twin: `-hw=%s' given, skipping `-hw=%s' display driver.\n",
+	printk("twin: `-hw=%s' given, skipping `-hw=%s' display driver.\n",
 		arg, s);
 	return FALSE;
     } else if (arg)
-	fprintf(stderr, "twin: trying given `-hw=%s' display driver.\n", s);
+	printk("twin: trying given `-hw=%s' display driver.\n", s);
     else
-	fprintf(stderr, "twin: autoprobing `-hw=%s' display driver.\n", s);
+	printk("twin: autoprobing `-hw=%s' display driver.\n", s);
     return TRUE;
 }
 
-static void fix4(byte *s, display_hw *D_HW) {
+static void fix4(byte *s, display_hw D_HW) {
     uldat len;
     if (!D_HW->NameLen) {
 	if (D_HW->Name)
@@ -250,7 +254,7 @@ static void fix4(byte *s, display_hw *D_HW) {
  * InitDisplayHW runs HW specific InitXXX() functions, starting from best setup
  * and falling back in case some of them fails.
  */
-byte InitDisplayHW(display_hw *D_HW) {
+byte InitDisplayHW(display_hw D_HW) {
     byte *arg = D_HW->Name;
     uldat tried = 0;
     byte success;
@@ -288,6 +292,13 @@ byte InitDisplayHW(display_hw *D_HW) {
 
     if (success) {
 	D_HW->Quitted = FALSE;
+	
+	/* configure correctly the new HW */
+	for (tried = 0; tried < HW_CONFIGURE_MAX; tried++) {
+	    if (!(ConfigureHWDefault[tried]))
+		D_HW->Configure(tried, FALSE, ConfigureHWValue[tried]);
+	}
+	
 	if (!DisplayHWCTTY && D_HW->DisplayIsCTTY)
 	    DisplayHWCTTY = D_HW;
 	if (All->FnHookDisplayHW)
@@ -300,8 +311,8 @@ byte InitDisplayHW(display_hw *D_HW) {
     return success;
 }
 
-void QuitDisplayHW(display_hw *D_HW) {
-    msgport *MsgPort;
+void QuitDisplayHW(display_hw D_HW) {
+    msgport MsgPort;
     uldat slot;
     SaveHW;
     
@@ -314,7 +325,7 @@ void QuitDisplayHW(display_hw *D_HW) {
 	if ((slot = D_HW->AttachSlot) != NOSLOT) {
 	    /* avoid KillSlot <-> DeleteDisplayHW infinite recursion */
 	    if ((MsgPort = RemoteGetMsgPort(slot)))
-		MsgPort->AttachHW = (display_hw *)0;
+		MsgPort->AttachHW = (display_hw)0;
 	    Ext(Remote,KillSlot)(slot);
 	}
 
@@ -322,7 +333,7 @@ void QuitDisplayHW(display_hw *D_HW) {
 	if (D_HW->Module) {
 	    D_HW->Module->Used--;
 	    Delete(D_HW->Module);
-	    D_HW->Module = (module *)0;
+	    D_HW->Module = (module)0;
 	}
 #endif
 	UpdateFlagsHW(); /* this garbles HW... not a problem here */
@@ -330,18 +341,18 @@ void QuitDisplayHW(display_hw *D_HW) {
     RestoreHW;
 }
 
-display_hw *AttachDisplayHW(uldat len, CONST byte *arg, uldat slot, byte flags) {
-    display_hw *D_HW;
+display_hw AttachDisplayHW(uldat len, CONST byte *arg, uldat slot, byte flags) {
+    display_hw D_HW;
 
     if ((len && len <= 4) || CmpMem("-hw=", arg, Min2(len,4))) {
-	fprintf(stderr, "twin: specified `%.*s\' is not a known option.\n"
+	printk("twin: specified `%.*s\' is not a known option.\n"
 		"      try `twin -help' for usage summary.\n",
 		(int)len, arg);
 	return NULL;
     }
     
     if (All->ExclusiveHW) {
-	fprintf(stderr, "twin: exclusive display in use, permission to display denied!\n");
+	printk("twin: exclusive display in use, permission to display denied!\n");
 	return NULL;
     }
     
@@ -350,7 +361,8 @@ display_hw *AttachDisplayHW(uldat len, CONST byte *arg, uldat slot, byte flags) 
 	if (Act(Init,D_HW)(D_HW)) {
 	    
 	    if (flags & TW_ATTACH_HW_EXCLUSIVE) {
-		display_hw *s_HW, *n_HW;
+		/* started exclusive display, kill all others */
+		display_hw s_HW, n_HW;
 		
 		All->ExclusiveHW = D_HW;
 		
@@ -362,8 +374,7 @@ display_hw *AttachDisplayHW(uldat len, CONST byte *arg, uldat slot, byte flags) 
 	    }
 
 	    if (ResizeDisplay()) {
-		DrawArea2(FULL_SCREEN);
-		UpdateCursor();
+		QueuedDrawArea2FullScreen = TRUE;
 	    }
 	    return D_HW;
 	}
@@ -372,7 +383,7 @@ display_hw *AttachDisplayHW(uldat len, CONST byte *arg, uldat slot, byte flags) 
 	D_HW->AttachSlot = NOSLOT;
 	D_HW->QuitHW = NoOp;
 	Delete(D_HW);
-	D_HW = (display_hw *)0;
+	D_HW = (display_hw)0;
     }
     return D_HW;
 }
@@ -380,7 +391,7 @@ display_hw *AttachDisplayHW(uldat len, CONST byte *arg, uldat slot, byte flags) 
 
 byte DetachDisplayHW(uldat len, CONST byte *arg, byte flags) {
     byte done = FALSE;
-    display_hw *s_HW;
+    display_hw s_HW;
     
     if (All->ExclusiveHW && !(flags & TW_ATTACH_HW_EXCLUSIVE))
 	return FALSE;
@@ -406,8 +417,10 @@ byte InitHW(void) {
     byte ret = FALSE;
     byte flags = 0;
     
+    WriteMem(ConfigureHWDefault, '\1', HW_CONFIGURE_MAX);
+    
     if (arglist[0] && !arglist[1] && !strcmp(*arglist, "-nohw")) {
-	fprintf(stderr, "twin: starting in background as %s\n", TWDisplay);
+	printk("twin: starting in background as %s\n", TWDisplay);
 	RunNoHW();
 	ret = TRUE;
     } else {
@@ -426,7 +439,7 @@ byte InitHW(void) {
 	    arglist++;
 	}
 	if (!ret)
-	    fputs("\ntwin:  \033[1mALL  DISPLAY  DRIVERS  FAILED.  QUITTING.\033[0m\n", stderr);
+	    printk("\ntwin:  \033[1mALL  DISPLAY  DRIVERS  FAILED.  QUITTING.\033[0m\n");
     }
     return ret;
 }
@@ -436,7 +449,7 @@ void QuitHW(void) {
 }
 
 byte RestartHW(byte verbose) {
-    display_hw *s_HW;
+    display_hw s_HW;
     byte ret = FALSE;
     
     if (All->FirstDisplayHW) {
@@ -448,22 +461,21 @@ byte RestartHW(byte verbose) {
 	}
 	if (ret) {
 	    ResizeDisplay();
-	    DrawArea2(FULL_SCREEN);
-	    UpdateCursor();
+	    QueuedDrawArea2FullScreen = TRUE;
 	} else {
-	    fputs("\ntwin:   \033[1mALL  DISPLAY  DRIVERS  FAILED.\033[0m\n"
-		  "\ntwin: continuing in background with no display.\n", stderr);
+	    printk("\ntwin:   \033[1mALL  DISPLAY  DRIVERS  FAILED.\033[0m\n"
+		   "\ntwin: continuing in background with no display.\n");
 	    RunNoHW();
 	}
     } else if (verbose) {
-	fputs("twin: RestartHW(): All display drivers removed by SuspendHW().\n"
-	      "      No display available for restarting, use twattach or twdisplay.\n", stderr);
+	printk("twin: RestartHW(): All display drivers removed by SuspendHW().\n"
+	       "      No display available for restarting, use twattach or twdisplay.\n");
     }
     return ret;
 }
 
 void SuspendHW(byte verbose) {
-    display_hw *s_HW;
+    display_hw s_HW;
     safeforHW(s_HW) {
 	if (HW->AttachSlot != NOSLOT && HW->NeedHW & NEEDPersistentSlot)
 	    /* we will not be able to restart it */
@@ -472,14 +484,14 @@ void SuspendHW(byte verbose) {
 	    Act(Quit,HW)(HW);
     }
     if (verbose && !All->FirstDisplayHW) {
-	fputs("twin: SuspendHW(): All display drivers had to be removed\n"
-	      "      since they were attached to clients (twattach/twdisplay).\n"
-	      "twin: --- STOPPED ---\n", stderr);
+	printk("twin: SuspendHW(): All display drivers had to be removed\n"
+	       "      since they were attached to clients (twattach/twdisplay).\n"
+	       "twin: --- STOPPED ---\n");
     }
 }
 
 void PanicHW(void) {
-    display_hw *s_HW;
+    display_hw s_HW;
     
     if (NeedHW & NEEDPanicHW) {
 	safeforHW(s_HW) {
@@ -490,7 +502,7 @@ void PanicHW(void) {
     }
 }
 
-void ResizeDisplayPrefer(display_hw *D_HW) {
+void ResizeDisplayPrefer(display_hw D_HW) {
     SaveHW;
     SetHW(D_HW);
     D_HW->DetectSize(&TryDisplayWidth, &TryDisplayHeight);
@@ -552,7 +564,7 @@ byte ResizeDisplay(void) {
 	OldVideo = NULL;
     } else if ((NeedOldVideo && !OldVideo) || change) {
 	if (!(OldVideo = (hwattr *)ReAllocMem(OldVideo, TryDisplayWidth*TryDisplayHeight*sizeof(hwattr)))) {
-	    fprintf(stderr, "twin: out of memory!\n");
+	    printk("twin: out of memory!\n");
 	    Quit(1);
 	}
 	ValidOldVideo = FALSE;
@@ -566,7 +578,7 @@ byte ResizeDisplay(void) {
 	    !(ChangedVideo = (dat (*)[2][2])ReAllocMem(ChangedVideo, DisplayHeight*sizeof(dat)*4)) ||
 	    !(saveChangedVideo = (dat (*)[2][2])ReAllocMem(saveChangedVideo, DisplayHeight*sizeof(dat)*4))) {
 	    
-	    fprintf(stderr, "twin: out of memory!\n");
+	    printk("twin: out of memory!\n");
 	    Quit(1);
 	}
 	WriteMem(ChangedVideo, 0xff, DisplayHeight*sizeof(dat)*4);
@@ -584,6 +596,10 @@ void BeepHW(void) {
 }
 
 void ConfigureHW(udat resource, byte todefault, udat value) {
+    
+    if (!(ConfigureHWDefault[resource] = todefault))
+	ConfigureHWValue[resource] = value;
+    
     forHW {
 	HW->Configure(resource, todefault, value);
     }
@@ -609,7 +625,7 @@ void ResetPaletteHW(void) {
 
 
 /* HW back-end function: get selection owner */
-obj *TwinSelectionGetOwner(void) {
+obj TwinSelectionGetOwner(void) {
     /*
      * this looks odd... but it's correct:
      * only libTw clients can persistently own the Selection;
@@ -617,29 +633,30 @@ obj *TwinSelectionGetOwner(void) {
      * on its display, and even in this case it will own the Selection
      * only for a single request.
      */
-    obj *Owner = (obj *)All->Selection->OwnerOnce;
+    obj Owner = (obj)All->Selection->OwnerOnce;
     if (Owner)
 	All->Selection->OwnerOnce = NULL;
     else
-	Owner = (obj *)All->Selection->Owner;
+	Owner = (obj)All->Selection->Owner;
     return Owner;
 }
 
-static void SelectionClear(msgport *Owner) {
-    msg *Msg;
+static void SelectionClear(msgport Owner) {
+    msg Msg;
     
     if ((Msg = Do(Create,Msg)(FnMsg, MSG_SELECTIONCLEAR, sizeof(event_common))))
 	SendMsg(Owner, Msg);
 }
 
 /* HW back-end function: set selection owner */
-void TwinSelectionSetOwner(obj *Owner, time_t Time, frac_t Frac) {
+void TwinSelectionSetOwner(obj Owner, time_t Time, frac_t Frac) {
     timevalue T;
-    if (T.Seconds != SEL_CURRENTTIME) {
+    if (Time == SEL_CURRENTTIME)
+	CopyMem(&All->Now, &T, sizeof(timevalue));
+    else {
 	T.Seconds = Time;
 	T.Fraction = Frac;
-    } else
-	CopyMem(&All->Now, &T, sizeof(timevalue));
+    }
 
     if (CmpTime(&T, &All->Selection->Time) > 0) {
 	if (!Owner || Owner->Id >> magic_shift == msgport_magic >> magic_shift) {
@@ -648,22 +665,22 @@ void TwinSelectionSetOwner(obj *Owner, time_t Time, frac_t Frac) {
 
 	    NeedHW |= NEEDSelectionExport;
 
-	    All->Selection->Owner = (msgport *)Owner;
+	    All->Selection->Owner = (msgport)Owner;
 	    All->Selection->OwnerOnce = NULL;
 	    CopyMem(&T, &All->Selection->Time, sizeof(timevalue));
 	} else if (Owner->Id >> magic_shift == display_hw_magic >> magic_shift) {
 	    /* don't NEEDSelectionExport here! */
-	    All->Selection->OwnerOnce = (display_hw *)0;
+	    All->Selection->OwnerOnce = (display_hw)0;
 	}
     }
 }
 
-void TwinSelectionNotify(obj *Requestor, uldat ReqPrivate, uldat Magic, CONST byte MIME[MAX_MIMELEN],
+void TwinSelectionNotify(obj Requestor, uldat ReqPrivate, uldat Magic, CONST byte MIME[MAX_MIMELEN],
 			    uldat Len, CONST byte *Data) {
-    msg *NewMsg;
+    msg NewMsg;
     event_any *Event;
 #if 0    
-    fprintf(stderr, "twin: Selection Notify to 0x%08x\n", Requestor ? Requestor->Id : NOID);
+    printk("twin: Selection Notify to 0x%08x\n", Requestor ? Requestor->Id : NOID);
 #endif
     if (!Requestor) {
 	(void)SelectionStore(Magic, MIME, Len, Data);
@@ -684,24 +701,24 @@ void TwinSelectionNotify(obj *Requestor, uldat ReqPrivate, uldat Magic, CONST by
 		WriteMem(Event->EventSelectionNotify.MIME, '\0', MAX_MIMELEN);
 	    Event->EventSelectionNotify.Len = Len;
 	    CopyMem(Data, Event->EventSelectionNotify.Data, Len);
-	    SendMsg((msgport *)Requestor, NewMsg);
+	    SendMsg((msgport)Requestor, NewMsg);
 	}
     } else if (Requestor->Id >> magic_shift == display_hw_magic >> magic_shift) {
 	SaveHW;
-	SetHW((display_hw *)Requestor);
+	SetHW((display_hw)Requestor);
 	HW->HWSelectionNotify(ReqPrivate, Magic, MIME, Len, Data);
 	RestoreHW;
     }
 }
 
-void TwinSelectionRequest(obj *Requestor, uldat ReqPrivate, obj *Owner) {
+void TwinSelectionRequest(obj Requestor, uldat ReqPrivate, obj Owner) {
 #if 0
-    fprintf(stderr, "twin: Selection Request from 0x%08x, owner is 0x%08x\n",
+    printk("twin: Selection Request from 0x%08x, owner is 0x%08x\n",
 	    Requestor ? Requestor->Id : NOID, Owner ? Owner->Id : NOID);
 #endif
     if (Owner) {
 	if (Owner->Id >> magic_shift == msgport_magic >> magic_shift) {
-	    msg *NewMsg;
+	    msg NewMsg;
 	    event_any *Event;
 	    if ((NewMsg = Do(Create,Msg)(FnMsg, MSG_SELECTIONREQUEST, sizeof(event_selectionrequest)))) {
 
@@ -711,11 +728,11 @@ void TwinSelectionRequest(obj *Requestor, uldat ReqPrivate, obj *Owner) {
 		Event->EventSelectionRequest.pad = 0;
 		Event->EventSelectionRequest.Requestor = Requestor;
 		Event->EventSelectionRequest.ReqPrivate = ReqPrivate;
-		SendMsg((msgport *)Owner, NewMsg);
+		SendMsg((msgport)Owner, NewMsg);
 	    }
 	} else if (Owner->Id >> magic_shift == display_hw_magic >> magic_shift) {
 	    SaveHW;
-	    SetHW((display_hw *)Owner);
+	    SetHW((display_hw)Owner);
 	    HW->HWSelectionRequest(Requestor, ReqPrivate);
 	    RestoreHW;
 	}
@@ -849,6 +866,12 @@ void FlushHW(void) {
 	NeedHW &= ~NEEDBeepHW;
     }
 
+    if (QueuedDrawArea2FullScreen) {
+	QueuedDrawArea2FullScreen = FALSE;
+	DirtyVideo(0, 0, DisplayWidth-1, DisplayHeight-1);
+	DrawArea2(FULL_SCREEN);
+	UpdateCursor();
+    }
     if (!(All->SetUp->Flags & SETUP_BLINK))
 	DiscardBlinkVideo();
 
@@ -906,9 +929,9 @@ void FlushHW(void) {
 }
 
 
-void SyntheticKey(window *Window, udat Code, udat ShiftFlags, byte Len, byte *Seq) {
+void SyntheticKey(window Window, udat Code, udat ShiftFlags, byte Len, byte *Seq) {
     event_keyboard *Event;
-    msg *Msg;
+    msg Msg;
 
     if (Window && Len && Seq &&
 	(Msg=Do(Create,Msg)(FnMsg, MSG_WINDOW_KEY, Len + sizeof(event_keyboard)))) {
@@ -977,8 +1000,9 @@ void FillOldVideo(dat Xstart, dat Ystart, dat Xend, dat Yend, hwattr Attrib) {
 
 void RefreshVideo(void) {
     ValidOldVideo = FALSE;
-    DrawArea2(FULL_SCREEN);
-    /* safer than DirtyVideo(0, 0, DisplayWidth - 1, DisplayHeight - 1); */
+    QueuedDrawArea2FullScreen = TRUE;
+    /* safer than DirtyVideo(0, 0, DisplayWidth - 1, DisplayHeight - 1),
+     * and also updates the cursor */
 }
 
 INLINE uldat Plain_countDirtyVideo(dat X1, dat Y1, dat X2, dat Y2) {
@@ -1010,7 +1034,7 @@ byte Strategy4Video(dat Xstart, dat Ystart, dat Xend, dat Yend) {
     uldat Varea = 0, XYarea_2 = (Xend-Xstart+1)*(Yend-Ystart+1)/2;
     dat x1, y1, x2, y2;
     
-    if (StrategyFlag != HW_UNSET && StrategyFlag != HW_ACCEL)
+    if (QueuedDrawArea2FullScreen || (StrategyFlag != HW_UNSET && StrategyFlag != HW_ACCEL))
 	return HW_BUFFER;
 
     /* find the intersection between the current area and AccelVideo[] */
@@ -1124,7 +1148,7 @@ byte MouseEventCommon(dat x, dat y, dat dx, dat dy, udat Buttons) {
 }
 
 byte StdAddEventMouse(udat CodeMsg, udat Code, dat MouseX, dat MouseY) {
-    msg *Msg;
+    msg Msg;
     event_mouse *Event;
 
     if (HW && HW == All->MouseHW && HW->FlagsHW & FlHWNoInput)
@@ -1153,7 +1177,7 @@ byte StdAddEventMouse(udat CodeMsg, udat Code, dat MouseX, dat MouseY) {
 
 byte KeyboardEventCommon(udat Code, udat ShiftFlags, udat Len, CONST byte *Seq) {
     event_keyboard *Event;
-    msg *Msg;
+    msg Msg;
 
     if (HW->FlagsHW & FlHWNoInput)
 	return TRUE;

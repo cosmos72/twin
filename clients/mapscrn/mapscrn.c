@@ -16,7 +16,8 @@
 # define E_TABSZ 256
 #endif
 
-#include <libTw.h>
+#include "libTw.h"
+#include "libTwerrno.h"
 
 #include "paths.h"
 #include "findfile.h"

@@ -5,11 +5,12 @@ TOPDIR=..
 
 all: everything
 
-VERSION=2.0.2
+VERSION=2.0.4
 SO_VER=2
 
 BINS=libTw.so.$(VERSION)
 ARLIBS=libTw.a
+
 OBJS_libTw.so.$(VERSION)=libTw.o md5.o
 OBJS_libTw.a=libTw_u.o md5_u.o
 
@@ -17,6 +18,7 @@ CFLAGS_libTw.o+=-fPIC -D_REENTRANT
 CFLAGS_md5.o+=-fPIC -D_REENTRANT
 CFLAGS_libTw_u.o+=-D_REENTRANT
 CFLAGS_md5_u.o+=-D_REENTRANT
+
 LDFLAGS_libTw.so.$(VERSION)=-lc -shared -Wl,-soname,libTw.so.$(SO_VER)
 
 include $(TOPDIR)/conf/config.status
@@ -24,6 +26,13 @@ include $(TOPDIR)/conf/config.status
 -include .modules
 
 ifneq ($(CONF_SOCKET),n)
+  ## do not link against libpthread: let client programs specify it explicitly
+  ## if they want to use threads, so that if they don't,
+  ## fallback, do-nothing functions will be picked from libc avoiding overhead
+  #
+  #ifeq ($(CONF_SOCKET_PTHREADS),y)
+  #  LDFLAGS_libTw.so.$(VERSION)+=-lpthread
+  #endif
   everything: lib
   install: install-real
   ifeq ($(CONF_SOCKET_GZ),y)

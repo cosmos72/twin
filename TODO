@@ -1,10 +1,3 @@
-BUGS:
-
-Fix screen scrolling during Interactive Drag/Resize
-Fix borderless windows (better OO approach? getX(), getY(), getYWidth(), getWidgetAt(), ...)
-
-X11: cleanup NumLock (argh)
-
 DECIDE:
 
 GPM: some limited cut-n-paste? (single line?)
@@ -15,9 +8,7 @@ Flame libgpm people for /tmp/gpm* sockets, gpm_tried, syslogging, ncurses
 
 RC AddScreen / Background
 recursive menu windows
-message logger
 
-twrun : contact "twin term" Message Port and tell it to start a command
 twcalc - calculator
 twclip - show clipboard / multiple clipboards / cut-n-paste from it
 port to other platforms (*BSD, ... Also, twdisplay on win32)

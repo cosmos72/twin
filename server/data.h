@@ -1,14 +1,12 @@
 #ifndef _TW_DATA_H
 #define _TW_DATA_H
 
-byte InitData(void);
-
 extern CONST byte *conf_destdir_lib_twin;
 extern CONST byte *conf_destdir_lib_twin_modules_;
 
 extern palette Palette[MAXCOL+1], defaultPalette[MAXCOL+1];
 
-extern all *All;
+extern all All;
 
 typedef struct keylist keylist;
 struct keylist {

@@ -105,7 +105,7 @@ struct tty_data {
 
 
 static void stdin_QuitKeyboard(void);
-static void stdin_KeyboardEvent(int fd, display_hw *hw);
+static void stdin_KeyboardEvent(int fd, display_hw hw);
 
 
 /* return FALSE if failed */
@@ -127,11 +127,11 @@ static byte stdin_InitKeyboard(void) {
     ttyb.c_cc[VINTR] = 0;
     tty_setioctl(tty_fd, &ttyb);
 
-    write(tty_fd, "\033Z", 2); /* request ID */
+    write(tty_fd, "\033Z", 4); /* request ID */
     /* ensure we CAN read from the tty */
     do {
 	i = read(tty_fd, buf, 15);
-    } while (i < 0 && (errno == EAGAIN || errno == EINTR));
+    } while (i < 0 && (errno == EWOULDBLOCK || errno == EINTR));
     if (i <= 0) {
 	fputs("      stdin_InitKeyboard() failed: unable to read from the terminal!\n", stderr);
 	tty_setioctl(tty_fd, &ttysave);
@@ -148,7 +148,7 @@ static byte stdin_InitKeyboard(void) {
 	s++;
     }
 
-    HW->keyboard_slot = RegisterRemote(tty_fd, HW, (void *)stdin_KeyboardEvent);
+    HW->keyboard_slot = RegisterRemote(tty_fd, (obj)HW, stdin_KeyboardEvent);
     if (HW->keyboard_slot == NOSLOT) {
 	stdin_QuitKeyboard();
 	return FALSE;
@@ -177,13 +177,21 @@ static udat stdin_LookupKey(udat *ShiftFlags, byte *slen, byte *s) {
 	return TW_Null;
 
     if (len > 1 && *s == '\x1B') {
-	
+
 	++used, --len;
-	
+	++s;
+
+	if (len == 1) {
+	    /* try to handle ALT + <some key> */
+	    *slen = ++used;
+	    *ShiftFlags = KBD_ALT_FL;
+	    return (udat)*s;
+	}
+
+	switch (*s) {
+	    
 #define IS(sym, c) case c: *slen = ++used; return TW_##sym
 	
-	switch (*++s) {
-	    
 	  case '[':
 	    if (++used, --len) switch (*++s) {
 		/* ESC [ */
@@ -315,11 +323,12 @@ static udat stdin_LookupKey(udat *ShiftFlags, byte *slen, byte *s) {
 
 #undef IS
 	
-	/* try to handle ALT + <some key> */
-	*slen = ++used;
-	*ShiftFlags = KBD_ALT_FL;
-	return (udat)*s;
     }
+
+    /* undo the increments above */
+    s -= used;
+    len += used;
+    used = 0;
 
     *slen = ++used;
     
@@ -344,8 +353,8 @@ static udat stdin_LookupKey(udat *ShiftFlags, byte *slen, byte *s) {
 	
 static byte xterm_MouseData[10] = "\033[M#!!!!";
 
-static void stdin_KeyboardEvent(int fd, display_hw *hw) {
-    static void xterm_MouseEvent(int, display_hw *);
+static void stdin_KeyboardEvent(int fd, display_hw hw) {
+    static void xterm_MouseEvent(int, display_hw);
     static byte *match;
     byte got, chunk, buf[SMALLBUFF], *s;
     udat Code, ShiftFlags;
@@ -355,7 +364,7 @@ static void stdin_KeyboardEvent(int fd, display_hw *hw) {
     
     got = read(fd, s=buf, SMALLBUFF-1);
     
-    if (got == 0 || (got == (byte)-1 && errno != EINTR && errno != EAGAIN)) {
+    if (got == 0 || (got == (byte)-1 && errno != EINTR && errno != EWOULDBLOCK)) {
 	/* BIG troubles */
 	HW->NeedHW |= NEEDPanicHW, NeedHW |= NEEDPanicHW;
 	return;
@@ -404,12 +413,12 @@ static void stdin_KeyboardEvent(int fd, display_hw *hw) {
 static byte warn_NoMouse(void) {
     byte c;
     
-    fputs("\n"
-	  "      \033[1m  ALL  MOUSE  DRIVERS  FAILED.\033[0m\n"
-	  "\n"
-	  "      If you really want to run `twin' without mouse\n"
-	  "      hit RETURN to continue, otherwise hit CTRL-C to quit now.\n", stderr);
-    fflush(stderr);
+    printk("\n"
+	   "      \033[1m  ALL  MOUSE  DRIVERS  FAILED.\033[0m\n"
+	   "\n"
+	   "      If you really want to run `twin' without mouse\n"
+	   "      hit RETURN to continue, otherwise hit CTRL-C to quit now.\n");
+    flushk();
     
     read(tty_fd, &c, 1);
     if (c == '\n' || c == '\r') {
@@ -507,7 +516,7 @@ static void tty_QuitHW(void) {
  */
 
 static void xterm_QuitMouse(void);
-static void xterm_MouseEvent(int fd, display_hw *hw);
+static void xterm_MouseEvent(int fd, display_hw hw);
 
 
 /* return FALSE if failed */
@@ -515,13 +524,13 @@ static byte xterm_InitMouse(byte force) {
     byte *term = tty_TERM, *seq;
     
     if (force) {
-	fputs("      xterm_InitMouse(): xterm-style mouse FORCED.\n"
-	      "      Assuming terminal has xterm compatible mouse reporting.\n", stderr);
+	printk("      xterm_InitMouse(): xterm-style mouse FORCED.\n"
+	       "      Assuming terminal has xterm compatible mouse reporting.\n");
 	term = "xterm";
     }
 
     if (!term) {
-	fputs("      xterm_InitMouse() failed: unknown terminal type.\n", stderr);
+	printk("      xterm_InitMouse() failed: unknown terminal type.\n");
 	return FALSE;
     }
 
@@ -531,15 +540,15 @@ static byte xterm_InitMouse(byte force) {
 	 * doesn't have xterm-style mouse reporting
 	 */
 	if (ttypar[0]<6 || (ttypar[0]==6 && ttypar[1]<3)) {
-	    fputs("      xterm_InitMouse() failed: this `linux' terminal\n"
-		  "      has no support for xterm-style mouse reporting.\n", stderr);
+	    printk("      xterm_InitMouse() failed: this `linux' terminal\n"
+		   "      has no support for xterm-style mouse reporting.\n");
 	    return FALSE;
 	}
 	seq = "\033[?9h";
     } else if (!strncmp(term, "xterm", 5) || !strncmp(term, "rxvt", 4)) {
 	seq = "\033[?1001s\033[?1000h";
     } else {
-	fprintf(stderr, "      xterm_InitMouse() failed: terminal `%s' is not supported.\n", term);
+	printk("      xterm_InitMouse() failed: terminal `%s' is not supported.\n", term);
 	return FALSE;
     }
 
@@ -565,7 +574,7 @@ static void xterm_QuitMouse(void) {
     HW->QuitMouse = NoOp;
 }
 
-static void xterm_MouseEvent(int fd, display_hw *hw) {
+static void xterm_MouseEvent(int fd, display_hw hw) {
     static dat prev_x, prev_y;
     udat Buttons = 0, Id;
     byte *s = xterm_MouseData;
@@ -658,7 +667,7 @@ byte tty_InitHW(void) {
     byte tc_colorbug = FALSE;
     
     if (!(HW->Private = (struct tty_data *)AllocMem(sizeof(struct tty_data)))) {
-	fprintf(stderr, "      tty_InitHW(): Out of memory!\n");
+	printk("      tty_InitHW(): Out of memory!\n");
 	return FALSE;
     }
     saveCursorType = (uldat)-1;
@@ -679,7 +688,7 @@ byte tty_InitHW(void) {
 	    
 	    stdOUT = fopen(arg, "a+"); /* use specified tty */
 	    if (!stdOUT) {
-		fprintf(stderr, "      tty_InitHW(): fopen(\"%s\") failed: %s\n", arg, strerror(errno));
+		printk("      tty_InitHW(): fopen(\"%s\") failed: %s\n", arg, strerror(errno));
 		if (s) *s++ = ',';
 		return FALSE;
 	    }
@@ -727,7 +736,7 @@ byte tty_InitHW(void) {
     
     if (!stdOUT) {
 	if (DisplayHWCTTY) {
-	    fprintf(stderr, "      tty_InitHW() failed: controlling tty %s\n",
+	    printk("      tty_InitHW() failed: controlling tty %s\n",
 		    DisplayHWCTTY == HWCTTY_DETACHED
 		    ? "not usable after Detach"
 		    : "is already in use as display");
@@ -821,13 +830,13 @@ byte tty_InitHW(void) {
 #include "version.h"
 MODULEVERSION;
 		       
-byte InitModule(module *Module) {
+byte InitModule(module Module) {
     Module->Private = tty_InitHW;
     return TRUE;
 }
 
 /* this MUST be included, or it seems that a bug in dlsym() gets triggered */
-void QuitModule(module *Module) {
+void QuitModule(module Module) {
 }
 
 #endif /* CONF_THIS_MODULE */

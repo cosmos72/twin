@@ -15,9 +15,6 @@
  *
  */
 
-#ifndef _TW_SOCKPROTO_H
-#define _TW_SOCKPROTO_H
-
 /*
 
  PROTO<arg #>(<rettype>,<retflag>, <action>,<object>,<self>, <arg1type>,<arg1flag>, ...)
@@ -49,12 +46,12 @@
 
 #define OK_MAGIC	((uldat)0x3E4B4F3Cul)
 
-#define FIND_MAGIC	((uldat)0x646E6946ul)
-#define MSG_MAGIC	((uldat)0x2167734dul)
+#define FIND_MAGIC	((uldat)0x646E6946ul) /* i.e. "Find" */
+#define MSG_MAGIC	((uldat)0x2167734dul) /* i.e. "Msg!" */
 
 PROTO2FindFunction(uldat,_, Find,Function,0, byte,_, byte,V(A(1)))
 
-PROTO0(byte,_,  Sync,Socket,0)
+PROTO0SyncSocket(byte,_,  Sync,Socket,0)
 
 PROTO0(byte,_, Can,Compress,0)
 PROTO1(byte,_, Do,Compress,0, byte,_)
@@ -66,25 +63,37 @@ PROTO2(byte,_, Detach,HW,0, uldat,_, byte,V(A(1)))
 
 PROTO1(void,v,  Set,FontTranslation,0, byte,V(0x80))
 
+PROTO1(void,v,    Delete,Obj,0, obj,x)
+
+PROTO6(widget,x,   Create,Widget,1, msgport,x, dat,_, dat,_, hwattr,_, dat,_, dat,_)
+PROTO1(void,v,RecursiveDelete,Widget,0, widget,x) /* it is wrapped in socket.c */
+PROTO2(void,v,        Map,Widget,2, widget,x, widget,x)
+PROTO1(void,v,      UnMap,Widget,2, widget,x)
+PROTO3(void,v,      SetXY,Widget,2, widget,x, dat,_, dat,_)
+PROTO1(msgport,x,GetOwner,Widget,0, widget,x)
+				    
+
 PROTO19(gadget,x, Create,Gadget,1,
-	window,x,hwcol,_,hwcol,_,hwcol,_,hwcol,_,
-	udat,_,  udat,_, dat,_, dat,_, dat,_, dat,_,
-	byte,W(A(9)*A(10)),  byte,W(A(9)*A(10)),  byte,W(A(9)*A(10)),  byte,W(A(9)*A(10)),
-	hwcol,W(A(9)*A(10)), hwcol,W(A(9)*A(10)), hwcol,W(A(9)*A(10)), hwcol,W(A(9)*A(10)))
+	widget,x, dat,_, dat,_, byte,W(A(2)*A(3)),
+	udat,_, udat,_, hwcol,_,hwcol,_,hwcol,_,hwcol,_,
+	dat,_, dat,_,        byte,W(A(2)*A(3)),  byte,W(A(2)*A(3)),  byte,W(A(2)*A(3)),
+	hwcol,W(A(2)*A(3)), hwcol,W(A(2)*A(3)), hwcol,W(A(2)*A(3)), hwcol,W(A(2)*A(3)))
 
-PROTO1(void,v,    Delete,Gadget,0, gadget,x)
+PROTO11(gadget,x, CreateButton,Gadget,1, widget,x, dat,_, dat,_, byte,V(A(2)*A(3)),
+	udat,_, udat,_, hwcol,_, hwcol,_, hwcol,_, dat,_, dat,_)
 
-PROTO11(gadget,x, CreateButton,Gadget,1, window,x, hwcol,_, hwcol,_, hwcol,_,
-	udat,_, udat,_, dat,_, dat,_, dat,_, dat,_, byte,V(A(9)*A(10)))
+PROTO2(void,v, SetPressed,Gadget,0, gadget,x, byte,_)
+PROTO1(byte,_,  IsPressed,Gadget,0, gadget,x)
+PROTO2(void,v,  SetToggle,Gadget,0, gadget,x, byte,_)
+PROTO1(byte,_,   IsToggle,Gadget,0, gadget,x)
+PROTO6(void,v,  WriteText,Gadget,2, gadget,x, dat,_, dat,_, byte,W(A(2)*A(3)), dat,_, dat,_)
 
+									
 PROTO5(void,v,   Create4Menu,Row,1, window,x, udat,_, byte,_, ldat,_, byte,V(A(4)))
 
 PROTO11(window,x,     Create,Window,1, dat,_, byte,V(A(1)), hwcol,W(A(1)), menu,x,
 	hwcol,_, uldat,_, uldat,_, byte,_, dat,_, dat,_, dat,_)
-PROTO1(void,v,        Delete,Window,0, window,x)
 PROTO1(window,x, Create4Menu,Window,1, menu,x)
-PROTO2(void,v,           Map,Window,2, window,x, widget,x)
-PROTO1(void,v,         UnMap,Window,2, window,x)
 PROTO3(void,v,    WriteAscii,Window,2, window,x, ldat,_, byte,V(A(2)))
 PROTO5(void,v,   WriteHWAttr,Window,2, window,x, dat,_, dat,_, ldat,_, hwattr,V(A(4)))
 PROTO3(void,v,      WriteRow,Window,2, window,x, ldat,_, byte,V(A(2)))
@@ -95,19 +104,24 @@ PROTO11(void,v, SetColors,Window,2, window,x, udat,_, hwcol,_, hwcol,_,
 PROTO8(void,v,     Configure,Window,2, window,x, byte,_, dat,_, dat,_, dat,_, dat,_, dat,_, dat,_)
 PROTO3(void,v,     Resize,Window,0, window,x, dat,_, dat,_)
 
-PROTO3(widget,x,SearchWidget,Widget,2, widget,x, dat,_, dat,_)
+PROTO3(widget,x,FindWidgetAt,Widget,2, widget,x, dat,_, dat,_)
 
-PROTO5(menuitem,x, Create4Menu,MenuItem,1, menu,x, window,x, byte,_, dat,_, byte,V(A(4)))
-PROTO1(uldat,_,    Create4MenuCommon,MenuItem,1, menu,x)
-PROTO1(void,v,	        Delete,MenuItem,0, menuitem,x)
+PROTO1(group,x,      Create,Group,1, msgport,x)
+PROTO2(void,v, InsertGadget,Group,2, group,x, gadget,x)
+PROTO2(void,v, RemoveGadget,Group,2, group,x, gadget,x)
+
+PROTO1(gadget,x, GetSelectedGadget,Group,2, group,x)
+PROTO2(void,v,   SetSelectedGadget,Group,2, group,x, gadget,x)
+
+PROTO5(menuitem,x,    Create4Menu,MenuItem,1, menu,x, window,x, byte,_, dat,_, byte,V(A(4)))
+PROTO1(uldat,_, Create4MenuCommon,MenuItem,1, menu,x)
 
 PROTO8(menu,x, Create,Menu,1, msgport,x, hwcol,_, hwcol,_, hwcol,_, hwcol,_, hwcol,_,
        hwcol,_, byte,_)
 PROTO5(void,v, SetInfo,Menu,2, menu,x, byte,_, ldat,_, byte,V(A(3)), hwcol,W(A(3)))
-PROTO1(void,v,  Delete,Menu,0, menu,x)
 
 PROTO5(msgport,x,Create,MsgPort,0, byte,_, byte,V(A(1)), time_t,_, frac_t,_, byte,_)
-PROTO1(void,v,   Delete,MsgPort,0, msgport,x)
+PROTO3(msgport,x,  Find,MsgPort,0, msgport,x, byte,_, byte,V(A(2)))
 
 PROTO4(void,v,  BgImage,Screen,2, screen,x, dat,_, dat,_, hwattr,V(A(2)*A(3)))
 
@@ -128,9 +142,7 @@ PROTO3(byte,_, SendTo,MsgPort,0, msgport,x, udat,_, byte,V(A(2)))
 PROTO3(void,v, BlindSendTo,MsgPort,0, msgport,x, udat,_, byte,V(A(2)))
 
 PROTO0(obj, x, GetOwner,Selection,0)
-PROTO3(void,v, SetOwner,Selection,0, msgport,x, time_t,_, frac_t,_)
+PROTO2(void,v, SetOwner,Selection,0, time_t,_, frac_t,_)
 PROTO2(void,v,  Request,Selection,0, obj,x, uldat,_)
 PROTO6(void,v,   Notify,Selection,0, obj,x, uldat,_, uldat,_, byte,V(TW_MAX_MIMELEN), uldat,_, byte,V(A(5)))
-
-#endif /* _TW_SOCKPROTO_H */
 

@@ -40,7 +40,7 @@ Background 1 High Black On Blue (
 # every time you must write a string, you can use hexadecimal codes like "\xb1"
 # or octal codes like "\261", and double quotes surrounding the string
 # are only needed to protect special characters (i.e. parentheses,
-# non-ASCII chars, etc.). Sequences like "\?" where ? is a character
+# non-alphanumerical chars, etc.). Sequences like "\?" where ? is a character
 # have the same meaning as in C language:
 # "\"" is a string containing a double quote,
 # "\n" is a newline, and so on.
@@ -89,7 +89,7 @@ AddToMenu " Window " (
 )
 
 #
-# define the user function `_Next'
+# define the user function `_Next' :
 # group commands in '(' ')' and put either a newline or a ';'
 # after each command. `Window 1' means first window, while
 # `Window 0' is the currently focused window.
@@ -274,7 +274,7 @@ Key  Pause   Interactive Menu
 #  T    window title bar
 #  S    window sides
 #  B    window scroll bars
-#  W    one of T,S,B (i.e. window border except buttons)
+#  W    one of T,S,B (i.e. window border except buttons and corner)
 #  I    window inside
 #  M    menu
 #  R    root (screen background)
@@ -366,6 +366,16 @@ Mouse H1  M  Interactive Screen
 # `;' is the same as a newline...
 #
 # ExecTty "" ; Wait "Twin Term" ; Maximize
+#
+# for all users too lazy to manually load the socket server from the menu:
+#
+# Module "socket.so" On
+#
+# you may also want:
+# Module "term.so" On
+
+
+
 
 #
 # list of all RC commands available for ~/.twinrc
@@ -427,6 +437,8 @@ Mouse H1  M  Interactive Screen
 # # choose one of: Scroll, Move, Resize, Screen, Menu
 # 
 # Key <flags> <keyname> <context> <function>
+# # <flags> is optional and can be one or more of
+# # Shift Ctrl Alt
 # 
 # Kill
 # # brutally kill the client's connection
@@ -442,6 +454,9 @@ Mouse H1  M  Interactive Screen
 # 
 # Mouse <button> <where> <function>
 # 
+# Module <name> [On|Off]
+# load/unload given module
+#
 # Move [+|-]<x> [+|-]<y>
 # # move window
 # 

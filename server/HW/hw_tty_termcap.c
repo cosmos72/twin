@@ -56,7 +56,7 @@ static void termcap_cleanup(void) {
 
 static void fixup_colorbug(void) {
     uldat len = LenStr(attr_off);
-    byte *s = AllocMem( len + 9 );
+    byte *s = AllocMem( len + 9);
     
     if (s) {
 	CopyMem(attr_off, s, len);
@@ -87,7 +87,7 @@ static byte termcap_InitVideo(void) {
     char tcbuf[2048];		/* by convention, this is enough */
 
     if (!term) {
-	fputs("      termcap_InitVideo() failed: unknown terminal type.\n", stderr);
+	printk("      termcap_InitVideo() failed: unknown terminal type.\n");
 	return FALSE;
     }
     
@@ -95,11 +95,11 @@ static byte termcap_InitVideo(void) {
       case 1:
 	break;
       case 0:
-	fprintf(stderr,	"      termcap_InitVideo() failed: no entry for `%s' in the terminal database.\n"
-		"      Please set your $TERM environment variable correctly.\n", term);
+	printk("      termcap_InitVideo() failed: no entry for `%s' in the terminal database.\n"
+	       "      Please set your $TERM environment variable correctly.\n", term);
 	return FALSE;
       default:
-	fprintf(stderr,	"      termcap_InitVideo() failed: system call error in tgetent(): %s\n",
+	printk("      termcap_InitVideo() failed: system call error in tgetent(): %s\n",
 		strerror(errno));
 	return FALSE;
     }
@@ -109,14 +109,14 @@ static byte termcap_InitVideo(void) {
 
     for (np = tc_init; np->cap; np++) {
 	if (!termcap_extract(np->cap, np->buf)) {
-	    fprintf(stderr,	"      termcap_InitVideo() failed: Out of memory!\n");
+	    printk("      termcap_InitVideo() failed: Out of memory!\n");
 	    termcap_cleanup();
 	    return FALSE;
 	}
     }
     
     if (!*cursor_goto) {
-	fprintf(stderr,	"      termcap_InitVideo() failed: terminal misses `cursor goto' capability\n");
+	printk("      termcap_InitVideo() failed: terminal misses `cursor goto' capability\n");
 	termcap_cleanup();
 	return FALSE;
     }
@@ -285,9 +285,9 @@ INLINE void termcap_SingleMogrify(dat x, dat y, hwattr V) {
 static void termcap_ShowMouse(void) {
     uldat pos = (HW->Last_x = HW->MouseState.x) + (HW->Last_y = HW->MouseState.y) * DisplayWidth;
     hwattr h  = Video[pos];
-    hwcol c = ~HWCOL(h) ^ COL(HIGH,0);
+    hwcol c = ~HWCOL(h) ^ COL(HIGH,HIGH);
 
-    termcap_SingleMogrify(HW->MouseState.x, HW->MouseState.y, HWATTR( c, HWFONT(h) ));
+    termcap_SingleMogrify(HW->MouseState.x, HW->MouseState.y, HWATTR( c, HWFONT(h)));
 
     /* force updating the cursor */
     HW->XY[0] = HW->XY[1] = -1;
@@ -310,11 +310,11 @@ static void termcap_Beep(void) {
 }
 
 static void termcap_UpdateCursor(void) {
-    if ((CursorX != HW->XY[0] || CursorY != HW->XY[1]) && (CursorType != NOCURSOR)) {
+    if (!ValidOldVideo || (CursorType != NOCURSOR && (CursorX != HW->XY[0] || CursorY != HW->XY[1]))) {
 	termcap_MoveToXY(HW->XY[0] = CursorX, HW->XY[1] = CursorY);
 	setFlush();
     }
-    if (CursorType != HW->TT) {
+    if (!ValidOldVideo || CursorType != HW->TT) {
 	termcap_SetCursorType(HW->TT = CursorType);
 	setFlush();
     }

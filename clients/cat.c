@@ -13,7 +13,8 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-#include <libTw.h>
+#include "libTw.h"
+#include "libTwerrno.h"
 
 #define COD_QUIT      (udat)1
 
@@ -73,6 +74,7 @@ int main(int argc, char *argv[]) {
     char buf[4096];
     tmsg Msg;
     tevent_gadget EventG;
+    uldat err;
     
     if (argc > 2) {
 	fprintf(stderr, "usage %s filename\n", argv[0]);
@@ -94,9 +96,9 @@ int main(int argc, char *argv[]) {
     }
 
     if (!InitCat()) {
-	fprintf(stderr, "%s: libTw error: %s%s%s\n", argv[0], TwStrError(TwErrno),
-		TwErrno==TW_ECANT_CONN ? ": " : "",
-		TwErrno==TW_ECANT_CONN ? strerror(errno) : "");
+	err = TwErrno;
+	fprintf(stderr, "%s: libTw error: %s%s\n", argv[0],
+		TwStrError(err), TwStrErrorDetail(err, TwErrnoDetail));
 	return 0;
     }
     
@@ -111,8 +113,9 @@ int main(int argc, char *argv[]) {
 		break;
 	}
     }
-    if (TwErrno)
-	printf("%s: libTw error: %s\n", argv[0], TwStrError(TwErrno));
+    if ((err = TwErrno))
+	fprintf(stderr, "%s: libTw error: %s%s\n", argv[0],
+		TwStrError(err), TwStrErrorDetail(err, TwErrnoDetail));
 
     if (!TwInPanic()) {
 	/* these are not strictly necessary, as the server would cleanup by itself... */

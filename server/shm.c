@@ -23,6 +23,7 @@
 #include "sizes.h"
 #include "main.h"
 #include "data.h"
+#include "printk.h"
 
 #include "wm.h"
 #include "rctypes.h"
@@ -83,7 +84,7 @@ static uldat full_read(int fd, byte *data, uldat len) {
 static void shm_shrink_error(void) {
     
     may_shrink = FALSE;
-    fputs("twin: shm_shrink(): "
+    printk("twin: shm_shrink(): "
 # ifdef CONF__ALLOC
 	  "ReAllocMem"
 # else
@@ -93,8 +94,7 @@ static void shm_shrink_error(void) {
 # ifdef CONF__ALLOC
 	  "      This should not happen! Please report.\n"
 # endif
-	  "      CONF_WM_RC_SHRINK disabled. Recompile to disable it permanently.\n"
-	  , stderr);
+	  "      CONF_WM_RC_SHRINK disabled. Recompile to disable it permanently.\n");
 }
 #endif /* !defined(CONF_WM_RC_SHMMAP) && defined(CONF_WM_RC_SHRINK) */
 
@@ -350,7 +350,7 @@ void *shm_malloc(uldat len) {
     if (retE <= E) {
 	S = retE;
 #ifdef DEBUG_SHM
-	fprintf(stderr, "%.8X  ", (uldat)ret);
+	printk("%.8X  ", (uldat)ret);
 #endif
 #ifndef CONF_WM_RC_SHMMAP
 	/* important: memory returned by shm_malloc() must be full of zeros! */
@@ -366,7 +366,7 @@ void *shm_malloc_or_die(uldat len) {
     void *m = shm_malloc(len);
     if (m || !len)
 	return m;
-    fprintf(stderr, "Out of shared memory!\n");
+    printk("Out of shared memory!\n");
     exit(1);
 }
 

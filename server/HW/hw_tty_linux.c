@@ -61,7 +61,7 @@ static byte GPM_InUse;
  */
 
 static void GPM_QuitMouse(void);
-static void GPM_MouseEvent(int fd, display_hw *hw);
+static void GPM_MouseEvent(int fd, display_hw hw);
 
 static int wrap_Gpm_Open(void) {
     /*
@@ -72,11 +72,11 @@ static int wrap_Gpm_Open(void) {
     extern int gpm_tried;
     
     if (!tty_name) {
-	fputs("      GPM_InitMouse() failed: unable to detect tty device\n", stderr);
+	printk("      GPM_InitMouse() failed: unable to detect tty device\n");
 	return NOFD;
     }
     if (tty_number < 1 || tty_number > 63) {
-	fprintf(stderr, "      GPM_InitMouse() failed: terminal `%s'\n"
+	printk("      GPM_InitMouse() failed: terminal `%s'\n"
 		        "      is not a local linux console.\n", tty_name);
 	return NOFD;
     }
@@ -96,9 +96,9 @@ static int wrap_Gpm_Open(void) {
 	/* gpm_consolefd is opened by GPM_Open() */
 	fcntl(gpm_consolefd, F_SETFD, FD_CLOEXEC);
     } else {
-	fputs("      GPM_InitMouse() failed: unable to connect to `gpm'.\n"
-	      "      make sure you started `twin' from the console\n"
-	      "      and/or check that `gpm' is running.\n", stderr);
+	printk("      GPM_InitMouse() failed: unable to connect to `gpm'.\n"
+	       "      make sure you started `twin' from the console\n"
+	       "      and/or check that `gpm' is running.\n");
     }
     return GPM_fd;
 }
@@ -109,7 +109,7 @@ static int wrap_Gpm_Open(void) {
 static byte GPM_InitMouse(void) {
     
     if (GPM_InUse) {
-	fputs("      GPM_InitMouse() failed: already connected to `gpm'.\n", stderr);
+	printk("      GPM_InitMouse() failed: already connected to `gpm'.\n");
 	return FALSE;
     }
     
@@ -119,7 +119,7 @@ static byte GPM_InitMouse(void) {
     fcntl(GPM_fd, F_SETFD, FD_CLOEXEC);
     fcntl(GPM_fd, F_SETFL, O_NONBLOCK);
     
-    HW->mouse_slot = RegisterRemote(GPM_fd, HW, (void *)GPM_MouseEvent);
+    HW->mouse_slot = RegisterRemote(GPM_fd, (obj)HW, GPM_MouseEvent);
     if (HW->mouse_slot == NOSLOT) {
 	Gpm_Close();
 	return FALSE;
@@ -150,7 +150,7 @@ static void GPM_QuitMouse(void) {
     HW->QuitMouse = NoOp;
 }
 
-static void GPM_MouseEvent(int fd, display_hw *hw) {
+static void GPM_MouseEvent(int fd, display_hw hw) {
     int left;
     udat IdButtons, Buttons = 0;
     Gpm_Event GPM_EV;
@@ -248,12 +248,12 @@ static byte vcsa_InitVideo(void) {
     static byte vcsa_name[] = "/dev/vcsaXX";
 
     if (!tty_name) {
-	fputs("      vcsa_InitVideo() failed: unable to detect tty device\n", stderr);
+	printk("      vcsa_InitVideo() failed: unable to detect tty device\n");
 	return FALSE;
     }
     
     if (tty_number < 1 || tty_number > 63) {
-	fprintf(stderr, "      vcsa_InitVideo() failed: terminal `%s'\n"
+	printk("      vcsa_InitVideo() failed: terminal `%s'\n"
 			 "      is not a local linux console.\n", tty_name);
 	return FALSE;
     }
@@ -266,7 +266,7 @@ static byte vcsa_InitVideo(void) {
     DropPrivileges();
     
     if (VcsaFd < 0) {
-	fprintf(stderr, "      vcsa_InitVideo() failed: unable to open `%s': %s\n",
+	printk("      vcsa_InitVideo() failed: unable to open `%s': %s\n",
 		vcsa_name, strerror(errno));
 	return FALSE;
     }
@@ -424,11 +424,11 @@ static void vcsa_FlushVideo(void) {
     
     /* now the cursor */
     
-    if (CursorType != NOCURSOR && (CursorX != HW->XY[0] || CursorY != HW->XY[1])) {
+    if (!ValidOldVideo || (CursorType != NOCURSOR && (CursorX != HW->XY[0] || CursorY != HW->XY[1]))) {
 	linux_MoveToXY(HW->XY[0] = CursorX, HW->XY[1] = CursorY);
 	setFlush();
     }
-    if (CursorType != HW->TT) {
+    if (!ValidOldVideo || CursorType != HW->TT) {
 	linux_SetCursorType(HW->TT = CursorType);
 	setFlush();
     }
@@ -444,9 +444,9 @@ static void vcsa_ShowMouse(void) {
     uldat _pos = HW->Last_x + HW->Last_y * HW->X;
     
     hwattr h  = Video[pos];
-    hwcol c = ~HWCOL(h) ^ COL(HIGH,0);
+    hwcol c = ~HWCOL(h) ^ COL(HIGH,HIGH);
 
-    h = HWATTR( c, HWFONT(h) );
+    h = HWATTR( c, HWFONT(h));
 
     linux_pwrite(VcsaFd, (void *)&h, sizeof(hwattr), 4+_pos*sizeof(hwattr));
 }
@@ -480,7 +480,7 @@ static byte linux_InitVideo(void) {
     byte *term = tty_TERM;
     
     if (!term) {
-	fputs("      linux_InitVideo() failed: unknown terminal type.\n", stderr);
+	printk("      linux_InitVideo() failed: unknown terminal type.\n");
 	return FALSE;
     }
     
@@ -490,24 +490,24 @@ static byte linux_InitVideo(void) {
 	if (!strncmp(term, "xterm", 5) || !strncmp(term, "rxvt", 4)) {
 	    byte c;
 	    
-	    fprintf(stderr, "\n"
+	    printk("\n"
 		    "      \033[1m  WARNING: terminal `%s' is not fully supported.\033[0m\n"
 		    "\n"
 		    "      If you really want to run `twin' on this terminal\n"
 		    "      hit RETURN to continue, otherwise hit CTRL-C to quit now.\n", term);
-	    fflush(stderr);
+	    flushk();
     
 	    read(tty_fd, &c, 1);
 	    if (c == '\n' || c == '\r')
 		break;
 	}
-	fprintf(stderr, "      linux_InitVideo() failed: terminal type `%s' not supported.\n", term);
+	printk("      linux_InitVideo() failed: terminal type `%s' not supported.\n", term);
 	return FALSE;
     } while (0);
 #endif
     
     if (strcmp(term, "linux")) {
-	fprintf(stderr, "      linux_InitVideo() failed: terminal `%s' is not `linux'.\n", term);
+	printk("      linux_InitVideo() failed: terminal `%s' is not `linux'.\n", term);
 	return FALSE;
     }
     
@@ -643,9 +643,9 @@ INLINE void linux_SingleMogrify(dat x, dat y, hwattr V) {
 static void linux_ShowMouse(void) {
     uldat pos = (HW->Last_x = HW->MouseState.x) + (HW->Last_y = HW->MouseState.y) * DisplayWidth;
     hwattr h  = Video[pos];
-    hwcol c = ~HWCOL(h) ^ COL(HIGH,0);
+    hwcol c = ~HWCOL(h) ^ COL(HIGH,HIGH);
 
-    linux_SingleMogrify(HW->MouseState.x, HW->MouseState.y, HWATTR( c, HWFONT(h) ));
+    linux_SingleMogrify(HW->MouseState.x, HW->MouseState.y, HWATTR( c, HWFONT(h)));
 
     /* store current cursor state for correct updating */
     HW->XY[1] = HW->MouseState.y;
@@ -669,11 +669,11 @@ static void linux_HideMouse(void) {
 }
 
 static void linux_UpdateCursor(void) {
-    if ((CursorX != HW->XY[0] || CursorY != HW->XY[1]) && (CursorType != NOCURSOR)) {
+    if (!ValidOldVideo || (CursorType != NOCURSOR && (CursorX != HW->XY[0] || CursorY != HW->XY[1]))) {
 	linux_MoveToXY(HW->XY[0] = CursorX, HW->XY[1] = CursorY);
 	setFlush();
     }
-    if (CursorType != HW->TT) {
+    if (!ValidOldVideo || CursorType != HW->TT) {
 	linux_SetCursorType(HW->TT = CursorType);
 	setFlush();
     }
@@ -849,7 +849,7 @@ static void linux_DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat 
      * below DstUp + (Dwn - Up) so we must redraw it.
      * This should not be necessary, as after a DragArea()
      * you are supposed to redraw the original position with whatever
-     * is under the object you dragged away, but better safe than sorry.
+     * is under the obj ect you dragged away, but better safe than sorry.
      */
     NeedRedrawVideo(0, DstUp + (Dwn - Up) + 1, HW->X - 1, HW->Y - 1);
 }

@@ -18,7 +18,8 @@
 #include <signal.h>
 #include <errno.h>
 
-#include <libTw.h>
+#include "libTw.h"
+#include "libTwerrno.h"
 
 byte *name;
 
@@ -36,7 +37,7 @@ hwattr *load_ascii_art(FILE *aaFILE, uldat *x, uldat *y, uldat padX, uldat padY)
 
 int main(int argc, char *argv[]) {
     hwattr *image;
-    uldat X, Y, padX = 0, padY = 0;
+    uldat X, Y, padX = 0, padY = 0, err;
     enum {def, aa, padx, pady} state = def;
     byte *aafile = NULL;
     
@@ -93,8 +94,9 @@ int main(int argc, char *argv[]) {
 	    fprintf(stderr, "%s: cannot open `%s': %s\n", name, aafile, strerror(errno));
 	TwClose();
     }
-    if (TwErrno)
-	fprintf(stderr, "%s: libTw error: %s\n", name, TwStrError(TwErrno));
+    if ((err = TwErrno))
+	fprintf(stderr, "%s: libTw error: %s%s\n", name,
+		TwStrError(err), TwStrErrorDetail(err, TwErrnoDetail));
 	    
     return 1;
 }

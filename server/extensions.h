@@ -6,16 +6,16 @@ typedef struct exts exts;
 
 struct exts {
     struct {
-	msgport *MsgPort;
+	msgport MsgPort;
     } WM;
     struct {
 	void (*KillSlot)(uldat slot);
     } Remote;
     struct {
-	void (*SendMsg)(msgport *MsgPort, msg *Msg);
+	void (*SendMsg)(msgport MsgPort, msg Msg);
     } Socket;
     struct {
-	window *(*Open)(CONST byte *arg0, byte * CONST *argv);
+	window (*Open)(CONST byte *arg0, byte * CONST * argv);
     } Term;
 };
 

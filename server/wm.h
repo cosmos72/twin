@@ -4,11 +4,11 @@
 typedef struct wm_ctx wm_ctx;
 
 struct wm_ctx {
-    window *W;
-    screen *Screen;
-    menu *Menu;
-    menuitem *Item;
-    gadget *G;
+    window W;
+    screen Screen;
+    menu Menu;
+    menuitem Item;
+    gadget G;
     udat Type; /* Msg->Type: MSG_* */
     byte Pos; /* POS_* */
     byte ByMouse;
@@ -21,9 +21,9 @@ struct wm_ctx {
 
 byte InitWM(void);
 
-void Check4Resize(window *W);
-void AskCloseWindow(window *W);
-void MaximizeWindow(window *W, byte full_screen);
+void Check4Resize(window W);
+void AskCloseWindow(window W);
+void MaximizeWindow(window W, byte full_screen);
 void ShowWinList(wm_ctx *C);
 
 void FocusCtx(wm_ctx *C);

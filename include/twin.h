@@ -18,14 +18,20 @@
 
 
 #if !defined(CONST)
-# if defined(__STDC__)
-#  define CONST const
-# else
-#  define CONST
-# endif
+# define CONST const
 #endif
 
+#if !defined(VOLATILE)
+# define VOLATILE volatile
+#endif
 
+#if !defined(FNATTR_CONST)
+# if defined(__GNUC__)
+#  define FNATTR_CONST __attribute__((const))
+# else
+#  define FNATTR_CONST
+# endif
+#endif
 
 #define Abs(x) ((x)>0 ? (x) : -(x))
 #define Swap(a, b, tmp) ((tmp)=(a), (a)=(b), (b)=(tmp))
@@ -152,7 +158,7 @@ typedef unsigned char  hwfont;
  */
 typedef ldat frac_t;
 
-typedef struct timevalue  {
+typedef struct s_timevalue  {
     time_t Seconds;
     frac_t Fraction;
 } timevalue;
@@ -174,221 +180,63 @@ typedef struct timevalue  {
 
 #define XAND(Bits, Mask)  (( (Bits) & (Mask) ) == (Mask) )
 
-typedef struct font {
+typedef struct s_font {
     byte AsciiCode;
     byte *Bitmap;
 } font;
 
-typedef struct palette {
+typedef struct s_palette {
     byte Red, Green, Blue;
 } palette;
 
-typedef struct mouse_state {
+typedef struct s_mouse_state {
     dat x, y;
     dat delta_x, delta_y;
     byte keys;
 } mouse_state;
 
-typedef struct fn_obj fn_obj;
-typedef struct obj obj;
-typedef struct obj_parent obj_parent;
-typedef struct draw_ctx draw_ctx;
-typedef struct widget widget;
-typedef struct fn_widget fn_widget;
-typedef struct gadget gadget;
-typedef struct fn_gadget fn_gadget;
-typedef struct row row;
-typedef struct fn_row fn_row;
-typedef struct ttydata ttydata;
-typedef struct remotedata remotedata;
-typedef struct window window;
-typedef struct fn_window fn_window;
-typedef struct menuitem menuitem;
-typedef struct fn_menuitem fn_menuitem;
-typedef struct menu menu;
-typedef struct fn_menu fn_menu;
-typedef struct screen screen;
-typedef struct fn_screen fn_screen;
-typedef struct msg msg;
-typedef struct fn_msg fn_msg;
-typedef struct msgport msgport;
-typedef struct fn_msgport fn_msgport;
-typedef struct mutex mutex;
-typedef struct fn_mutex fn_mutex;
-typedef struct module module;
-typedef struct fn_module fn_module;
-typedef struct display_hw display_hw;
-typedef struct fn_display_hw fn_display_hw;
-typedef struct fn fn;
-typedef struct setup setup;
-typedef struct all all;
+typedef struct s_ttydata ttydata;
+typedef struct s_remotedata remotedata;
+typedef struct s_draw_ctx draw_ctx;
 
-typedef void (*fn_hook)(window *);
+typedef struct s_obj *obj;
+typedef struct s_fn_obj *fn_obj;
+typedef struct s_obj_parent *obj_parent;
+typedef struct s_widget *widget;
+typedef struct s_fn_widget *fn_widget;
+typedef struct s_gadget *gadget;
+typedef struct s_fn_gadget *fn_gadget;
+typedef struct s_window *window;
+typedef struct s_fn_window *fn_window;
+typedef struct s_screen *screen;
+typedef struct s_fn_screen *fn_screen;
+typedef struct s_group *group;
+typedef struct s_fn_group *fn_group;
+typedef struct s_row *row;
+typedef struct s_fn_row *fn_row;
+typedef struct s_menuitem *menuitem;
+typedef struct s_fn_menuitem *fn_menuitem;
+typedef struct s_menu *menu;
+typedef struct s_fn_menu *fn_menu;
+typedef struct s_msg *msg;
+typedef struct s_fn_msg *fn_msg;
+typedef struct s_msgport *msgport;
+typedef struct s_fn_msgport *fn_msgport;
+typedef struct s_mutex *mutex;
+typedef struct s_fn_mutex *fn_mutex;
+typedef struct s_module *module;
+typedef struct s_fn_module *fn_module;
+typedef struct s_display_hw *display_hw;
+typedef struct s_fn_display_hw *fn_display_hw;
 
+typedef struct s_fn fn;
+typedef struct s_setup setup;
+typedef struct s_all *all;
 
-typedef struct fdlist fdlist;	/* for compressed sockets, two fdlist's are used: */
-struct fdlist {			/* the uncompressed one has                       */
-    int Fd;                     /* Fd == GZFD and pairSlot == the compressed one; */
-    uldat pairSlot;		/* the compressed has                             */
-    void *HandlerData;		/* Fd == real fd and pairSlot == the uncompressed;*/
-    void (*HandlerIO)(int Fd, size_t any);
-    msgport *MsgPort;		/* other sockets just have                        */
-    byte *WQueue;		/* Fd == real fd and pairSlot == NOSLOT;          */
-    byte *RQueue;
-    uldat WQlen, WQmax;
-    uldat RQstart, RQlen, RQmax;
-    void (*PrivateAfterFlush)(uldat Slot); /* private enable/disable compression routine.
-					    * it gets called after RemoteFlush() and it must
-					    * remove itself if needed (e.g. call-once routines)
-					    */
-    byte (*PrivateFlush)(uldat Slot); /* private flush (compression) routine */
-    void *PrivateData;		/* used by (un)compression routines to hold private data */
-    byte extern_couldntwrite;
-};
-
-struct obj {
-    uldat Id;
-    fn_obj *Fn;
-    obj *Prev, *Next;
-    obj_parent *Parent;
-};
-
-struct obj_parent {
-    obj *First, *Last;
-};
-
-struct fn_obj {
-    uldat Magic, Size, Used;
-    obj *(*Create)(fn_obj *);
-    void (*Insert)(obj *Obj, obj_parent *, obj *Prev, obj *Next);
-    void (*Remove)(obj *);
-    void (*Delete)(obj *);
-};
+typedef void (*fn_hook)(window);
 
 
-struct draw_ctx {
-    draw_ctx *Next;
-    screen *Screen;
-    widget *TopW;
-    widget *W;
-    widget *OnlyW;
-    ldat Left, Up, Rgt, Dwn; /* widget corners position on Screen */
-    ldat X1, Y1, X2, Y2;     /* screen area to draw */
-    dat DWidth;
-    dat DHeight;
-    byte NoChildren;
-    byte BorderDone;
-    byte Shaded;
-};
-
-struct widget {
-    uldat Id;
-    fn_widget *Fn;
-    widget *Prev, *Next;/* list in the same parent */
-    widget *Parent;	/* where this widget sits */
-    widget *FirstW, *LastW; /* list of children */
-    widget *SelectW;	    /* selected child */
-    dat Left, Up;
-    dat XWidth, YWidth;
-    ldat XLogic, YLogic;
-};
-
-struct fn_widget {
-    uldat Magic, Size, Used;
-    widget *(*CannotCreate)(fn_widget *);
-    void (*Insert)(widget *, widget *Parent, widget *Prev, widget *Next);
-    void (*Remove)(widget *);
-    void (*Delete)(widget *);
-    void (*DrawSelf)(draw_ctx *D);
-    widget *(*SearchWidget)(widget *Parent, dat X, dat Y);
-};
-
-struct gadget {
-    uldat Id;
-    fn_gadget *Fn;
-    widget *Prev, *Next;
-    widget *Parent;
-    widget *FirstW, *LastW; /* list of children */
-    widget *SelectW;	    /* selected child */
-    dat Left, Up, XWidth, YWidth;
-    ldat XLogic, YLogic;
-    
-    hwcol ColText, ColSelect, ColDisabled, ColSelectDisabled;
-    udat Code, Flags;
-    byte *Contents[8];
-};
-
-struct fn_gadget {
-    uldat Magic, Size, Used;
-    gadget *(*Create)(fn_gadget *, /*widget*/ void *Parent,
-		      hwcol ColText, hwcol ColTextSelect, hwcol ColTextDisabled, hwcol ColTextSelectDisabled,
-		      udat Code, udat Flags, dat Left, dat Up, dat XWidth, dat YWidth,
-		      CONST byte *TextNormal, CONST byte *TextSelect, CONST byte *TextDisabled, CONST byte *TextSelectDisabled,
-		      CONST hwcol *ColNormal, CONST hwcol *ColSelect, CONST hwcol *ColDisabled, CONST hwcol *ColSelectDisabled);
-    void (*Insert)(gadget *, widget *Parent, widget *Prev, widget *Next);
-    void (*Remove)(gadget *);
-    void (*Delete)(gadget *);
-    void (*DrawSelf)(draw_ctx *D);
-    widget *(*SearchWidget)(gadget *Parent, dat X, dat Y);    
-    gadget *(*CreateEmptyButton)(fn_gadget *Fn_Gadget, /*widget*/ void *Parent, dat XWidth, dat YWidth, hwcol BgCol);
-    byte (*FillButton)(gadget *Gadget, udat Code, dat Left, dat Up, udat Flags, CONST byte *Text, hwcol Color, hwcol ColorDisabled);
-    gadget *(*CreateButton)(fn_gadget *Fn_Gadget, window *Window, hwcol BgCol, hwcol Col, hwcol ColDisabled,
-			    udat Code, udat Flags, dat Left, dat Up, dat XWidth, dat YWidth, CONST byte *Text);
-};
-
-/*Flags : */
-#define GADGET_USE_DEFCOL	WINFL_USE_DEFCOL
-#define GADGET_DISABLED		((udat)0x02)
-/*GADGET_PRESSED==0x4000      */
-
-/*              NOTE :              */
-/*
- the "Contents" of a gadget is structured as follows:
- Contents[0]==TextNormal;      (mandatory)
- Contents[1]==TextSelect;        (if not present, use ...[0])
- Contents[2]==TextDisabled;      (if not present, use ...[0])
- Contents[3]==TextSelectDisabled; (if not present, use ...[1]; if ...[1] not present too, use ...[0])
- * 
- Contents[4]==ColorNormal;      (mandatory unless WINFL_USE_DEFCOL is set)
- Contents[5]==ColorSelect;        (if not present, use ...[4])
- Contents[6]==ColorDisabled;      (if not present, use ...[4])
- Contents[7]==ColorSelectDisabled;(if not present, use ...[5]; if ...[5] not present too, use ...[4])
- * 
- If WINFL_USE_DEFCOL is active,
- ...[4], ...[5], ...[6] and ...[7] are ignored.
- * 
- */
-
-struct row {
-    uldat Id;
-    fn_row *Fn;
-    row *Prev, *Next;
-    window *Window;
-    udat Code;
-    byte Flags;
-    uldat Len, MaxLen;
-    uldat Gap, LenGap;
-    byte *Text, *ColText;
-};
-struct fn_row {
-    uldat Magic, Size, Used;
-    row *(*Create)(fn_row *, udat Code, byte Flags);
-    void (*Insert)(row *, window *, row *Prev, row *Next);
-    void (*Remove)(row *);
-    void (*Delete)(row *);
-    row *(*Create4Menu)(fn_row *Fn_Row, window *Window, udat Code, byte FlagActive, ldat Len, CONST byte *Text);
-};
-/*Flags : */
-#define ROW_INACTIVE	((byte)0x00)
-#define ROW_ACTIVE	((byte)0x01)
-#define ROW_IGNORE	((byte)0x02)
-
-typedef enum ttystate {
-    ESnormal = 0, ESesc, ESsquare, ESgetpars, ESgotpars, ESfunckey,
-      EShash, ESsetG0, ESsetG1, ESpercent, ESignore, ESnonstd,
-      ESpalette, ESxterm_1, ESxterm_2, ESany = 0xFF, ESques = 0x100
-} ttystate;
-
+/* ttydata->Flags */
 #define TTY_STOPPED	((udat)0x0001)
 #define TTY_AUTOWRAP	((udat)0x0002)
 #define TTY_NEEDWRAP	((udat)0x0004)
@@ -406,20 +254,29 @@ typedef enum ttystate {
 #define TTY_REPORTMOUSE2 ((udat)0x4000)
 #define TTY_NEEDREFOCUS	((udat)0x8000)
 
+/* ttydata->Effects */
 #define EFF_INTENSITY	((udat)0x0001)
 #define EFF_HALFINTENS	((udat)0x0002)
 #define EFF_UNDERLINE	((udat)0x0004)
 #define EFF_BLINK	((udat)0x0008)
 #define EFF_REVERSE	((udat)0x0010)
 
+/* ttydata->nPar */
 #define NPAR		16
 
+/* ttydata->*G* */
 #define GRAF_MAP	0
 #define LAT1_MAP	1
 #define USER_MAP	2
 #define IBMPC_MAP	3
 
-struct ttydata {
+typedef enum ttystate {
+    ESnormal = 0, ESesc, ESsquare, ESgetpars, ESgotpars, ESfunckey,
+      EShash, ESsetG0, ESsetG1, ESpercent, ESignore, ESnonstd,
+      ESpalette, ESxterm_1, ESxterm_2, ESany = 0xFF, ESques = 0x100
+} ttystate;
+
+struct s_ttydata {
     ttystate State;
     udat Flags;
     udat Effects;
@@ -440,38 +297,200 @@ struct ttydata {
     byte *newTitle;	/* buffer for xterm set window title escape seq */
 };
 
-struct remotedata {
+
+
+struct s_remotedata {
     int Fd;
     pid_t ChildPid;
     uldat FdSlot; /* index in the FdList array (remote.c) */
 };
 
-struct window {
+struct s_draw_ctx {
+    draw_ctx *Next;
+    screen Screen;
+    widget TopW;
+    widget W;
+    widget OnlyW;
+    ldat Left, Up, Rgt, Dwn; /* widget corners position on Screen */
+    ldat X1, Y1, X2, Y2;     /* screen area to draw */
+    dat DWidth;
+    dat DHeight;
+    byte NoChildren;
+    byte BorderDone;
+    byte Shaded;
+};
+
+
+
+
+struct s_obj {
     uldat Id;
-    fn_window *Fn;
-    widget *Prev, *Next;/* list in the same parent */
-    widget *Parent;	/* where this window sits */
-    widget *FirstW, *LastW; /* list of children */
-    widget *SelectW;	    /* selected child */
+    fn_obj Fn;
+    obj Prev, Next;
+    obj_parent Parent;
+};
+
+struct s_obj_parent {
+    obj First, Last;
+};
+
+struct s_fn_obj {
+    uldat Magic, Size, Used;
+    obj (*Create)(fn_obj);
+    void (*Insert)(obj Obj, obj_parent, obj Prev, obj Next);
+    void (*Remove)(obj);
+    void (*Delete)(obj);
+};
+
+
+struct s_widget {
+    uldat Id;
+    fn_widget Fn;
+    widget Prev, Next;/* list in the same parent */
+    widget Parent;	/* where this widget sits */
+    /* widget */
+    widget FirstW, LastW; /* list of children */
+    widget SelectW;	    /* selected child */
     dat Left, Up;
     dat XWidth, YWidth;
+    hwattr Fill;
     ldat XLogic, YLogic;
+    widget OPrev, ONext; /* list with the same msgport (owner) */
+    msgport Owner;
+};
 
-    window *OPrev, *ONext; /* list with the same menu */
-    menu *Menu;		/* from which the window depends */
-    
+struct s_fn_widget {
+    uldat Magic, Size, Used;
+    widget (*Create)(fn_widget, msgport Owner, dat XWidth, dat YWidth, hwattr Fill, dat Left, dat Up);
+    void (*Insert)(widget, widget Parent, widget Prev, widget Next);
+    void (*Remove)(widget);
+    void (*Delete)(widget);
+    /* widget */
+    fn_obj Fn_Obj; /* backup of overloaded functions */
+    void (*DrawSelf)(draw_ctx *D);
+    widget (*FindWidgetAt)(widget Parent, dat X, dat Y);
+    gadget (*FindGadgetByCode)(widget Parent, udat Code);
+    void (*SetXY)(widget, dat X, dat Y);
+    void (*SetFill)(widget, hwattr Fill);
+    void (*Map)(widget, widget Parent);
+    void (*UnMap)(widget);
+    void (*Own)(widget, msgport);
+    void (*DisOwn)(widget);    
+    void (*RecursiveDelete)(widget, msgport);
+};
+
+
+struct s_gadget {
+    uldat Id;
+    fn_gadget Fn;
+    widget Prev, Next;
+    widget Parent;
+    /* widget */
+    widget FirstW, LastW;/* list of children */
+    widget SelectW;	 /* selected child */
+    dat Left, Up, XWidth, YWidth;
+    hwattr Fill;
+    ldat XLogic, YLogic;
+    widget OPrev, ONext; /* list in the same msgport (owner) */
+    msgport Owner;
+    /* gadget */
+    hwcol ColText, ColSelect, ColDisabled, ColSelectDisabled;
+    udat Code, Flags;
+    gadget GPrev, GNext; /* list in the same group */
+    group Group;
+    byte *Text[4];
+    hwcol *Color[4];
+};
+
+struct s_fn_gadget {
+    uldat Magic, Size, Used;
+    gadget (*Create)
+	(fn_gadget, widget Parent, dat XWidth, dat YWidth,
+	 CONST byte *TextNormal, udat Code, udat Flags,
+	 hwcol ColText, hwcol ColTextSelect, hwcol ColTextDisabled, hwcol ColTextSelectDisabled,
+	 dat Left, dat Up,       CONST byte *TextSelect, CONST byte *TextDisabled, CONST byte *TextSelectDisabled,
+	 CONST hwcol *ColNormal, CONST hwcol *ColSelect, CONST hwcol *ColDisabled, CONST hwcol *ColSelectDisabled);
+    void (*Insert)(gadget, widget Parent, widget Prev, widget Next);
+    void (*Remove)(gadget);
+    void (*Delete)(gadget);
+    /* widget */
+    fn_obj Fn_Obj;
+    void (*DrawSelf)(draw_ctx *D);
+    widget (*FindWidgetAt)(gadget Parent, dat X, dat Y);    
+    gadget (*FindGadgetByCode)(gadget Parent, udat Code);
+    void (*SetXY)(gadget, dat X, dat Y);
+    void (*SetFill)(widget, hwattr Fill);
+    void (*Map)(gadget, widget Parent);
+    void (*UnMap)(gadget);
+    void (*Own)(gadget, msgport);
+    void (*DisOwn)(gadget);    
+    void (*RecursiveDelete)(gadget, msgport);
+    /* gadget */
+    fn_widget Fn_Widget;
+    gadget (*CreateEmptyButton)(fn_gadget Fn_Gadget, msgport Owner, dat XWidth, dat YWidth, hwcol BgCol);
+    byte (*FillButton)(gadget Gadget, widget Parent, udat Code, dat Left, dat Up,
+		       udat Flags, CONST byte *Text, hwcol Color, hwcol ColorDisabled);
+    gadget (*CreateButton)(fn_gadget Fn_Gadget, widget Parent, dat XWidth, dat YWidth, CONST byte *Text,
+			      udat Code, udat Flags, hwcol BgCol, hwcol Col, hwcol ColDisabled,
+			      dat Left, dat Up);
+    void (*WriteText)(gadget Gadget, dat XWidth, dat YWidth, CONST byte *Text, dat Left, dat Up);
+};
+
+/*Flags : */
+/* remember this gadget is a button, so that SetText() does not ruin the shadow */
+#define GADGET_BUTTON		((udat)0x01)
+#define GADGET_DISABLED		((udat)0x02)
+#define GADGET_USE_DEFCOL	WINFL_USE_DEFCOL /* 0x04 */
+/* this makes the gadget 'checkable' : can be in 'checked' or 'unchecked' state.
+ * also necessary to put the gadget in a group */
+#define GADGET_TOGGLE		((udat)0x08)
+/*GADGET_PRESSED==0x0800      */
+
+
+/*              NOTE :              */
+/*
+ the "Contents" of a gadget is structured as follows:
+ Contents[0]==TextNormal;      (mandatory)
+ Contents[1]==TextSelect;        (if not present, use ...[0])
+ Contents[2]==TextDisabled;      (if not present, use ...[0])
+ Contents[3]==TextSelectDisabled; (if not present, use ...[1]; if ...[1] not present too, use ...[0])
+ * 
+ Contents[4]==ColorNormal;      (mandatory unless WINFL_USE_DEFCOL is set)
+ Contents[5]==ColorSelect;        (if not present, use ...[4])
+ Contents[6]==ColorDisabled;      (if not present, use ...[4])
+ Contents[7]==ColorSelectDisabled;(if not present, use ...[5]; if ...[5] not present too, use ...[4])
+ * 
+ If WINFL_USE_DEFCOL is active,
+ ...[4], ...[5], ...[6] and ...[7] are ignored.
+ * 
+ */
+
+
+
+struct s_window {
+    uldat Id;
+    fn_window Fn;
+    widget Prev, Next;/* list in the same parent */
+    widget Parent;	/* where this window sits */
+    /* widget */
+    widget FirstW, LastW; /* list of children */
+    widget SelectW;	    /* selected child */
+    dat Left, Up, XWidth, YWidth;
+    hwattr Fill;
+    ldat XLogic, YLogic;
+    widget OPrev, ONext; /* list with the same msgport (owner) */
+    msgport Owner;
+    /* window */
+    menu Menu;		/* from which the window depends */
     dat LenTitle;
-    byte *Title, *ColTitle;
+    byte *Title; hwcol *ColTitle;
     byte *BorderPattern[2];
     ttydata *TtyData;
-    fn_hook ShutDownHook;
-    fn_hook Hook, *WhereHook;
-    fn_hook MapUnMapHook;
-    msg *MapQueueMsg;
     remotedata RemoteData;
     ldat CurX, CurY;
     ldat XstSel, YstSel, XendSel, YendSel;
-    hwcol ColGadgets, ColArrows, ColBars, ColTabs, ColBorder, ColText, ColSelect, ColDisabled, ColSelectDisabled;
+    hwcol ColGadgets, ColArrows, ColBars, ColTabs, ColBorder,
+    	ColText, ColSelect, ColDisabled, ColSelectDisabled;
     byte Flags;
     uldat Attrib;
     uldat CursorType;
@@ -479,47 +498,59 @@ struct window {
     dat MaxXWidth, MaxYWidth;
     hwattr *Contents;
     ldat MaxNumRow;
-    row *FirstRow, *LastRow;
-    row *RowOne, *RowSplit;	/*RESERVED: used to optimize the drawing on screen */
+    row FirstRow, LastRow;
+    row RowOne, RowSplit;	/*RESERVED: used to optimize the drawing on screen */
     ldat NumRowOne, NumRowSplit;/*RESERVED: updated automatically by WriteRow. To insert */
-    				/*or remove manually rows, you must zero out NumRowOne */
+				/*or remove manually rows, you must zero out NumRowOne */
 				/*and NumRowSplit forcing twin to recalculate them */
     
+    fn_hook ShutDownHook; /* hooks for this widget */
+    fn_hook Hook, *WhereHook;
+    fn_hook MapUnMapHook;
+    msg MapQueueMsg;
 };
-struct fn_window {
+
+struct s_fn_window {
     uldat Magic, Size, Used;
-    window *(*Create)(fn_window *, dat LenTitle, CONST byte *Title, CONST hwcol *ColTitle, menu *Menu,
-		      hwcol ColText, uldat CursorType, uldat Attrib, byte Flags,
-		      dat XWidth, dat YWidth, dat ScrollBackLines);
-    void (*Insert)(window *, widget *Parent, widget *Prev, widget *Next);
-    void (*Remove)(window *);
-    void (*Delete)(window *);
+    window (*Create)(fn_window, dat LenTitle, CONST byte *Title, CONST hwcol *ColTitle, menu Menu,
+		     hwcol ColText, uldat CursorType, uldat Attrib, byte Flags,
+		     dat XWidth, dat YWidth, dat ScrollBackLines);
+    void (*Insert)(window, widget Parent, widget Prev, widget Next);
+    void (*Remove)(window);
+    void (*Delete)(window);
+    /* widget */
+    fn_obj Fn_Obj;
     void (*DrawSelf)(draw_ctx *D);
-    widget *(*SearchWidget)(window *Parent, dat X, dat Y);
-    byte (*FindBorder)(window *, dat u, dat v, byte Border, byte *PtrChar, byte *PtrColor);
-    void (*SetColText)(window *, hwcol ColText);
-    void (*SetColors)(window *, udat Bitmap,
+    widget (*FindWidgetAt)(window Parent, dat X, dat Y);
+    gadget (*FindGadgetByCode)(window Parent, udat Code);
+    void (*SetXY)(window, dat X, dat Y);
+    void (*SetFill)(window, hwattr Fill);
+    void (*Map)(window, widget Parent);
+    void (*UnMap)(window);
+    void (*Own)(window, msgport);
+    void (*DisOwn)(window);    
+    void (*RecursiveDelete)(window, msgport);
+    /* window */
+    fn_widget Fn_Widget;
+    void (*WriteAscii)(window, ldat Len, CONST byte *Text);
+    void (*WriteHWAttr)(window, dat x, dat y, ldat Len, CONST hwattr *Attr);
+    window (*KbdFocus)(window);
+    window (*Focus)(window);
+    void (*GotoXY)(window, ldat X, ldat Y);
+    byte (*WriteRow)(window, ldat Len, CONST byte *Text);
+    void (*SetColText)(window, hwcol ColText);
+    void (*SetColors)(window, udat Bitmap,
 		      hwcol ColGadgets, hwcol ColArrows, hwcol ColBars, hwcol ColTabs, hwcol ColBorder,
 		      hwcol ColText, hwcol ColSelect, hwcol ColDisabled, hwcol ColSelectDisabled);
-    void (*Configure)(window *, byte Bitmap, dat Left, dat Up, dat MinXWidth, dat MinYWidth,
+    void (*Configure)(window, byte Bitmap, dat Left, dat Up, dat MinXWidth, dat MinYWidth,
 		      dat MaxXWidth, dat MaxYWidth);
-    void (*GotoXY)(window *, ldat X, ldat Y);
-    window *(*Create4Menu)(fn_window *, menu *);
-    void (*Map)(window *, void * /* (screen *) or (window *) */ );
-    void (*MapTopReal)(window *, screen *);
-    void (*UnMap)(window *);
-    void (*Own)(window *, menu *);
-    void (*DisOwn)(window *);    
-    window *(*Focus)(window *);
-    window *(*KbdFocus)(window *);
-    void (*WriteAscii)(window *, ldat Len, CONST byte *Text);
-    void (*WriteHWAttr)(window *, dat x, dat y, ldat Len, CONST hwattr *Attr);
-    byte (*WriteRow)(window *, ldat Len, CONST byte *Text);
-    row *(*SearchRow)(window *, ldat RowN);
-    row *(*SearchRowCode)(window *, udat Code, ldat *NumRow);
-    gadget *(*SearchGadgetCode)(window *, udat Code);
-    byte (*InstallHook)(window *, fn_hook, fn_hook *Where);
-    void (*RemoveHook)(window *, fn_hook, fn_hook *Where);
+    window (*Create4Menu)(fn_window, menu);
+    void (*MapTopReal)(window, screen);
+    byte (*FindBorder)(window, dat u, dat v, byte Border, byte *PtrChar, hwcol *PtrColor);
+    row (*FindRow)(window, ldat RowN);
+    row (*FindRowByCode)(window, udat Code, ldat *NumRow);
+    byte (*InstallHook)(window, fn_hook, fn_hook *Where);
+    void (*RemoveHook)(window, fn_hook, fn_hook *Where);
 };
 
 /* Window->Attrib */
@@ -534,7 +565,11 @@ struct fn_window {
 #define WINDOW_X_BAR		((uldat)0x0100)
 #define WINDOW_Y_BAR		((uldat)0x0200)
 
-#define WINDOW_BORDERLESS	((uldat)0x0400)
+/*
+ * ask the server to automatically handle keypresses
+ * (incompatible with WINDOW_WANT_KEYS)
+ */
+#define WINDOW_AUTO_KEYS	((uldat)0x0400)
 
 /* this must fit in `udat' since it is shared with gadget.Flags */
 #define GADGET_PRESSED		((uldat)0x0800)
@@ -566,7 +601,6 @@ struct fn_window {
 
 
 
-
 /* Window->Flags */
 /* #define WINFL_USEROWS	((byte)0x00) *//* it's the default */
 #define WINFL_USECONTENTS	((byte)0x01)
@@ -579,6 +613,9 @@ struct fn_window {
 #define WINFL_SEL_ROWCURR	((byte)0x20)
 #define WINFL_DISABLED		((byte)0x40)
 
+#define WINFL_BORDERLESS	((byte)0x80)
+
+
 /* CursorType: */
 /* These come from linux/drivers/char/console.c */
 #define NOCURSOR	1
@@ -589,97 +626,185 @@ struct fn_window {
 #define MIN_XWIN	4
 #define MIN_YWIN	2
 
-struct menuitem {
+
+
+struct s_screen {
     uldat Id;
-    fn_menuitem *Fn;
-    menuitem *Prev, *Next;
-    menu *Menu;
-    window *Window;
+    fn_screen Fn;
+    screen Prev, Next;/* list in the same All */
+    widget dummyParent;/* NULL */
+    /* widget */
+    widget FirstW, LastW; /* list of children */
+    widget SelectW;	    /* selected child */
+    dat dummyLeft, YLimit, dummyXWidth, dummyYWidth;
+    hwattr Fill;
+    ldat XLogic, YLogic;
+    widget OPrev, ONext; /* list with the same msgport (owner) */
+    msgport Owner;
+    /* screen */
+    dat LenTitle;
+    byte *Title;
+    window FocusWindow /* will use SelectW */, MenuWindow, ClickWindow;
+    udat Attrib;
+    dat BgWidth, BgHeight;
+    hwattr *Bg;
+    all All;
+    fn_hook FnHookWindow;/* allow hooks on children Map()/UnMap() inside this widget */
+    window HookWindow;
+};
+struct s_fn_screen {
+    uldat Magic, Size, Used;
+    screen (*Create)(fn_screen, dat LenTitle, CONST byte *Title,
+		     dat BgWidth, dat BgHeight, CONST hwattr *Bg);
+    void (*Insert)(screen, all, screen Prev, screen Next);
+    void (*Remove)(screen);
+    void (*Delete)(screen);
+    /* widget */
+    fn_obj Fn_Obj;
+    void (*DrawSelf)(draw_ctx *D);
+    widget (*FindWidgetAt)(screen Parent, dat X, dat Y);
+    gadget (*FindGadgetByCode)(screen Parent, udat Code);
+    void (*SetFill)(screen, hwattr Fill);
+    void (*Map)(screen, widget Parent);
+    void (*UnMap)(screen);
+    void (*Own)(screen, msgport);
+    void (*DisOwn)(screen);    
+    void (*RecursiveDelete)(screen, msgport);
+    /* screen */
+    fn_widget Fn_Widget;
+    menu (*FindMenu)(screen);
+    screen (*Find)(dat j);
+    screen (*CreateSimple)(fn_screen, dat LenTitle, CONST byte *Title, hwattr Bg);
+    void (*BgImage)(screen, dat BgWidth, dat BgHeight, CONST hwattr *Bg);
+    void (*Focus)(screen);
+    void (*DrawMenu)(screen, dat Xstart, dat Xend);
+    void (*ActivateMenu)(screen, menuitem, byte byMouse);
+    void (*DeActivateMenu)(screen);
+};
+
+/* Screen->Attrib : */
+#define GADGET_BACK_SELECT 0x8000
+/*GADGET_PRESSED==0x0800      */
+
+
+
+/* group -- gadget group */
+
+
+struct s_group {
+    uldat Id;
+    fn_group Fn;
+    group Prev, Next;/* list in the same msgport */
+    msgport MsgPort;
+    /* group */
+    gadget FirstG, LastG; /* list in this group */
+    gadget SelectG;
+};
+
+struct s_fn_group {
+    uldat Magic, Size, Used;
+    group (*Create)(fn_group, msgport Parent);
+    void (*Insert)(group, msgport MsgPort, group Prev, group Next);
+    void (*Remove)(group);
+    void (*Delete)(group);
+    /* group */
+    fn_obj Fn_Obj; /* backup of overloaded functions */
+    void (*InsertGadget)(group, gadget);
+    void (*RemoveGadget)(group, gadget);
+    gadget (*GetSelectedGadget)(group);
+    void   (*SetSelectedGadget)(group, gadget);
+};
+
+
+
+/* row */
+
+
+struct s_row {
+    uldat Id;
+    fn_row Fn;
+    row Prev, Next;
+    window Window;
+    /* row */
+    udat Code;
+    byte Flags;
+    uldat Len, MaxLen;
+    uldat Gap, LenGap;
+    byte *Text; hwcol *ColText;
+};
+
+struct s_fn_row {
+    uldat Magic, Size, Used;
+    row (*Create)(fn_row, udat Code, byte Flags);
+    void (*Insert)(row, window, row Prev, row Next);
+    void (*Remove)(row);
+    void (*Delete)(row);
+    /* row */
+    fn_obj Fn_Obj;
+    row (*Create4Menu)(fn_row Fn_Row, window Window, udat Code, byte FlagActive, ldat Len, CONST byte *Text);
+};
+
+/*Flags : */
+#define ROW_INACTIVE	((byte)0x00)
+#define ROW_ACTIVE	((byte)0x01)
+#define ROW_IGNORE	((byte)0x02)
+
+
+
+
+struct s_menuitem {
+    uldat Id;
+    fn_menuitem Fn;
+    menuitem Prev, Next;
+    menu Menu;
+    /* menuitem */
+    window Window;
     byte FlagActive;
     dat Left, Len, ShortCut;
     byte *Name;
 };
-struct fn_menuitem {
+struct s_fn_menuitem {
     uldat Magic, Size, Used;
-    menuitem *(*Create)(fn_menuitem *, menu *Menu, window *Window, byte FlagActive,
-			dat Left, dat Len, dat ShortCut, CONST byte *Name);
-    void (*Insert)(menuitem *, menu *, menuitem *Prev, menuitem *Next);
-    void (*Remove)(menuitem *);
-    void (*Delete)(menuitem *);
-    menuitem *(*Create4Menu)(fn_menuitem *, menu *, window *, byte FlagActive,
-			     dat Len, CONST byte *Name);
-    uldat (*Create4MenuCommon)(fn_menuitem *, menu *);
-    /* for compatibility this must return an (uldat) != 0 for success. yuch */
+    menuitem (*Create)(fn_menuitem, menu Menu, window Window, byte FlagActive,
+		       dat Left, dat Len, dat ShortCut, CONST byte *Name);
+    void (*Insert)(menuitem, menu, menuitem Prev, menuitem Next);
+    void (*Remove)(menuitem);
+    void (*Delete)(menuitem);
+    /* menuitem */	
+    fn_obj Fn_Obj;
+    menuitem (*Create4Menu)(fn_menuitem, menu, window, byte FlagActive,
+			    dat Len, CONST byte *Name);
+    uldat (*Create4MenuCommon)(fn_menuitem, menu);
+    /* for compatibility this must return a non-zero value. */
 };
 
-struct menu {
+
+struct s_menu {
     uldat Id;
-    fn_menu *Fn;
-    menu *Prev, *Next; /* with the same msgport */
-    msgport *MsgPort;
+    fn_menu Fn;
+    menu Prev, Next; /* in the same msgport */
+    msgport MsgPort;
+    /* menu */
     hwcol ColItem, ColSelect, ColDisabled, ColSelectDisabled, ColShtCut, ColSelShtCut;
     byte CommonItems;
     byte FlagDefColInfo;
-    row *Info;
-    menuitem *FirstMenuItem, *LastMenuItem, *MenuItemSelect;
-    window *FirstWindow, *LastWindow; /* that have this as menu */
+    row Info;
+    menuitem FirstMenuItem, LastMenuItem, MenuItemSelect;
 };
-struct fn_menu {
+struct s_fn_menu {
     uldat Magic, Size, Used;
-    menu *(*Create)(fn_menu *, msgport *MsgPort, hwcol ColItem, hwcol ColSelect, hwcol ColDisabled,
-		    hwcol ColSelectDisabled, hwcol ColShtCut, hwcol ColSelShtCut, byte FlagDefColInfo);
-    void (*Insert)(menu *, msgport *, menu *Prev, menu *Next);
-    void (*Remove)(menu *);
-    void (*Delete)(menu *);
-    row *(*SetInfo)(menu *, byte Flags, ldat Len, CONST byte *Text, CONST hwcol *ColText);
-    menuitem *(*SearchItem)(menu *, dat i);
-    menuitem *(*GetSelectItem)(menu *);
-    void (*SetSelectItem)(menu *, menuitem *);
+    menu (*Create)(fn_menu, msgport MsgPort, hwcol ColItem, hwcol ColSelect, hwcol ColDisabled,
+		   hwcol ColSelectDisabled, hwcol ColShtCut, hwcol ColSelShtCut, byte FlagDefColInfo);
+    void (*Insert)(menu, msgport, menu Prev, menu Next);
+    void (*Remove)(menu);
+    void (*Delete)(menu);
+    /* menu */
+    fn_obj Fn_Obj;
+    row (*SetInfo)(menu, byte Flags, ldat Len, CONST byte *Text, CONST hwcol *ColText);
+    menuitem (*FindItem)(menu, dat i);
+    menuitem (*GetSelectItem)(menu);
+    void (*SetSelectItem)(menu, menuitem);
 };
-
-
-
-struct screen {
-    uldat Id;
-    fn_screen *Fn;
-    screen *Prev, *Next;/* list in the same all */
-    widget *dummyParent;/* NULL */
-    widget *FirstW, *LastW; /* list of children */
-    widget *SelectW;	    /* selected child */
-    dat dummyLeft, YLimit;
-    dat dummyWidth, dummyHeight;
-    ldat XLogic, YLogic;
-    
-    dat LenTitle;
-    byte *Title;
-    window *FocusWindow, *MenuWindow, *ClickWindow;
-    fn_hook FnHookWindow; window *HookWindow;
-    udat Attrib;
-    dat BgWidth, BgHeight;
-    hwattr *Bg;
-    all *All;
-};
-struct fn_screen {
-    uldat Magic, Size, Used;
-    screen *(*Create)(fn_screen *, dat LenTitle, CONST byte *Title,
-		      dat BgWidth, dat BgHeight, CONST hwattr *Bg);
-    void (*Insert)(screen *, all *, screen *Prev, screen *Next);
-    void (*Remove)(screen *);
-    void (*Delete)(screen *);
-    void (*DrawSelf)(draw_ctx *D);
-    widget *(*SearchWidget)(screen *Parent, dat X, dat Y);
-    menu *(*SearchMenu)(screen *);
-    screen *(*Search)(dat j);
-    screen *(*CreateSimple)(fn_screen *, dat LenTitle, CONST byte *Title, hwattr Bg);
-    void (*BgImage)(screen *, dat BgWidth, dat BgHeight, CONST hwattr *Bg);
-    void (*Focus)(screen *);
-    void (*DrawMenu)(screen *, dat Xstart, dat Xend);
-    void (*ActivateMenu)(screen *, menuitem *, byte byMouse);
-    void (*DeActivateMenu)(screen *);
-};
-/*Attrib : */
-#define GADGET_BACK_SELECT 0x8000
-/*GADGET_PRESSED==0x4000      */
 
 
 #define MSG_KEY			((udat)0)
@@ -703,6 +828,7 @@ struct fn_screen {
 
 #define MSG_USER_FIRST		((udat)0x2000)
 #define MSG_USER_CONTROL	((udat)0x2000)
+#define MSG_USER_CLIENTMSG	((udat)0x2100)
 
 /*
  * Notes about MsgType :
@@ -737,48 +863,58 @@ struct fn_screen {
  */
 
 
-typedef struct event_common event_common;
-struct event_common {
-    window *Window;
+typedef struct s_event_common event_common;
+struct s_event_common {
+    window Window;
     udat Code, pad;
 };
 
-typedef struct event_map event_map;
-struct event_map {
-    window *Window;
+typedef struct s_event_map event_map;
+struct s_event_map {
+    window Window;
     udat Code, pad;	/* unused */
-    screen *Screen;
+    screen Screen;
 };
 
-typedef struct event_keyboard event_keyboard;
-struct event_keyboard {
-    window *Window;
+typedef struct s_event_keyboard event_keyboard;
+struct s_event_keyboard {
+    window Window;
     udat Code, ShiftFlags, SeqLen;
     byte pad, AsciiSeq[1];  /* AsciiSeq[SeqLen] == '\0' */
 };
 
-typedef struct event_mouse event_mouse;
-struct event_mouse {
-    window *Window;
+typedef struct s_event_mouse event_mouse;
+struct s_event_mouse {
+    window Window;
     udat Code, ShiftFlags;
     dat X, Y;
 };
 
-typedef struct event_control event_control;
-struct event_control {
-    window *Window;
+typedef struct s_event_control event_control;
+struct s_event_control {
+    window Window;
     udat Code, Len;
+    dat X, Y;
     byte Data[1]; /* Data[Len] == '\0' */
 };
 
 /* some MSG_CONTROL codes */
-#define MSG_CTRL_QUIT		((udat)0)
-#define MSG_CTRL_RESTART	((udat)1)
-#define MSG_CTRL_OPEN		((udat)2)
+#define MSG_CONTROL_QUIT	((udat)0)
+#define MSG_CONTROL_RESTART	((udat)1)
+#define MSG_CONTROL_OPEN	((udat)2)
+#define MSG_CONTROL_DRAGNDROP	((udat)3)
 
-typedef struct event_display event_display;
-struct event_display {
-    window *Window; /* not used here */
+/* use for free-format messages between clients */
+typedef struct s_event_clientmsg event_clientmsg;
+struct s_event_clientmsg {
+    window Window;
+    udat Code, Len;
+    byte Data[1]; /* [len] bytes actually */
+};
+
+typedef struct s_event_display event_display;
+struct s_event_display {
+    window Window; /* not used here */
     udat Code, Len;
     dat X, Y;
     byte *Data; /* [len] bytes actually */
@@ -802,38 +938,38 @@ struct event_display {
 #define DPY_RedrawVideo		((udat)15)
 #define DPY_Quit		((udat)16)
 
-typedef struct event_window event_window;
-struct event_window {
-    window *Window;
+typedef struct s_event_window event_window;
+struct s_event_window {
+    window Window;
     udat Code, pad; /* not used */
     dat XWidth, YWidth;
 };
 
-typedef struct event_gadget event_gadget;
-struct event_gadget {
-    window *Window;
-    udat Code, pad;
+typedef struct s_event_gadget event_gadget;
+struct s_event_gadget {
+    window Window;
+    udat Code, Flags; /* the Flags of the gadget */
 };
 
-typedef struct event_menu event_menu;
-struct event_menu {
-    window *Window;
+typedef struct s_event_menu event_menu;
+struct s_event_menu {
+    window Window;
     udat Code, pad;
-    menu *Menu;
+    menu Menu;
 };
 
-typedef struct event_selection event_selection;
-struct event_selection {
-    window *Window;
+typedef struct s_event_selection event_selection;
+struct s_event_selection {
+    window Window;
     udat Code, pad; /* unused */
     dat X, Y;
 };
 
 #define MAX_MIMELEN 64
 
-typedef struct event_selectionnotify event_selectionnotify;
-struct event_selectionnotify {
-    window *Window;
+typedef struct s_event_selectionnotify event_selectionnotify;
+struct s_event_selectionnotify {
+    window Window;
     udat Code, pad; /* unused */
     uldat ReqPrivate;
     uldat Magic;
@@ -849,11 +985,11 @@ struct event_selectionnotify {
 #define SEL_DATAMAGIC	((uldat)0xDA1AA1AD) /* check MIME if you get this */
 #define SEL_IDMAGIC	((uldat)0x49644964)
 
-typedef struct event_selectionrequest event_selectionrequest;
-struct event_selectionrequest {
-    window *Window;
+typedef struct s_event_selectionrequest event_selectionrequest;
+struct s_event_selectionrequest {
+    window Window;
     udat Code, pad; /* unused */
-    obj *Requestor;
+    obj Requestor;
     uldat ReqPrivate;
 };
 
@@ -863,6 +999,7 @@ union event_any {
     event_keyboard EventKeyboard;
     event_mouse EventMouse;
     event_control EventControl;
+    event_clientmsg EventClientMsg;
     event_display EventDisplay;
     event_map EventMap;
     event_window EventWindow;
@@ -873,71 +1010,84 @@ union event_any {
     event_selectionrequest EventSelectionRequest;
 };
 
-struct msg {
+struct s_msg {
     uldat Id;
-    fn_msg *Fn;
-    msg *Prev, *Next;
-    msgport *MsgPort;
+    fn_msg Fn;
+    msg Prev, Next;
+    msgport MsgPort;
+    /* msg */
     udat Type;		/* See above notes */
     udat Len;		/* length of Event */
     event_any Event;
 };
-struct fn_msg {
+struct s_fn_msg {
     uldat Magic, Size, Used;
-    msg *(*Create)(fn_msg *, udat Type, udat EventLen);
-    void (*Insert)(msg *, msgport *, msg *Prev, msg *Next);
-    void (*Remove)(msg *);
-    void (*Delete)(msg *);
+    msg (*Create)(fn_msg, udat Type, udat EventLen);
+    void (*Insert)(msg, msgport, msg Prev, msg Next);
+    void (*Remove)(msg);
+    void (*Delete)(msg);
+    /* msg */
+    fn_obj Fn_Obj;
 };
 
 
 
-struct msgport {
+struct s_msgport {
     uldat Id;
-    fn_msgport *Fn;
-    msgport *Prev, *Next; /* list in the same All */
-    all *All;
+    fn_msgport Fn;
+    msgport Prev, Next; /* list in the same All */
+    all All;
+    /* msgport */
     byte WakeUp, NameLen, *ProgramName;
-    			/*Note : A Task is always woken up if it has pending messages. */
-    void (*Handler)(msgport *);
-    void (*ShutDownHook)(msgport *);
+    /* Note : a MsgPort is always woken up if it has pending messages. */
+    void (*Handler)(msgport);
+    void (*ShutDownHook)(msgport);
     timevalue CallTime, PauseDuration;
     remotedata RemoteData;
-    msg *FirstMsg, *LastMsg;
-    menu *FirstMenu, *LastMenu; /* that have this as MsgPort */
-    mutex *FirstMutex, *LastMutex; /* that have this as MsgPort */
-    display_hw *AttachHW;	/* that was attached as told by MsgPort */
+    msg FirstMsg, LastMsg;
+    menu FirstMenu, LastMenu;	/* menus created by this MsgPort */
+    widget FirstW, LastW;	/* widgets owned by this MsgPort */
+    group FirstGroup, LastGroup; /* groups done by this MsgPort */
+    mutex FirstMutex, LastMutex;/* mutexes owned by this MsgPort */
+    display_hw AttachHW;	/* that was attached as told by MsgPort */
 };
-struct fn_msgport {
+struct s_fn_msgport {
     uldat Magic, Size, Used;
-    msgport *(*Create)(fn_msgport *, byte NameLen, CONST byte *ProgramName,
-		       time_t PauseSec, frac_t PauseFraction,
-		       byte WakeUp, void (*Handler)(msgport *));
-    void (*Insert)(msgport *, all *, msgport *Prev, msgport *Next);
-    void (*Remove)(msgport *);
-    void (*Delete)(msgport *);
+    msgport (*Create)(fn_msgport, byte NameLen, CONST byte *ProgramName,
+		      time_t PauseSec, frac_t PauseFraction,
+		      byte WakeUp, void (*Handler)(msgport));
+    void (*Insert)(msgport, all, msgport Prev, msgport Next);
+    void (*Remove)(msgport);
+    void (*Delete)(msgport);
+    /* msgport */
+    fn_obj Fn_Obj;
 };
-/* WakeUp: */
+/* MsgPort->WakeUp: */
 #define TIMER_ALWAYS	((byte)1)
 #define TIMER_ONCE	((byte)2)
 
-struct mutex {
+
+struct s_mutex {
     uldat Id;
-    fn_mutex *Fn;
-    mutex *Prev, *Next; /* in the same All */
-    all *All;
-    mutex *OPrev, *ONext; /* owned by the same MsgPort */
-    msgport *MsgPort;
-    byte Perm, NameLen, *Name;
+    fn_mutex Fn;
+    mutex Prev, Next; /* in the same All */
+    all All;
+    /* mutex */    
+    mutex OPrev, ONext; /* owned by the same MsgPort */
+    msgport Owner;
+    byte Perm, NameLen;
+    byte *Name;
 };
-struct fn_mutex {
+struct s_fn_mutex {
     uldat Magic, Size, Used;
-    mutex *(*Create)(fn_mutex *, msgport *MsgPort, byte NameLen, CONST byte *Name, byte Perm);
-    void (*Insert)(mutex *, all *, mutex *Prev, mutex *Next);
-    void (*Remove)(mutex *);
-    void (*Delete)(mutex *);
-    void (*Own)(mutex *, msgport *);
-    void (*DisOwn)(mutex *);
+    mutex (*Create)(fn_mutex, msgport Owner, byte NameLen, CONST byte *Name, byte Perm);
+    void (*Insert)(mutex, all, mutex Prev, mutex Next);
+    void (*Remove)(mutex);
+    void (*Delete)(mutex);
+    /* mutex */
+    fn_obj Fn_Obj;
+    void (*Own)(mutex, msgport);
+    void (*DisOwn)(mutex);
 };
 #define PERM_NONE	((byte)0)
 #define PERM_READ	((byte)1)
@@ -946,44 +1096,48 @@ struct fn_mutex {
 
 /* module */
 
-struct module {
+struct s_module {
     uldat Id;
-    fn_module *Fn;
-    module *Prev, *Next; /* in the same All */
-    all *All;
+    fn_module Fn;
+    module Prev, Next; /* in the same All */
+    all All;
+    /* module */
     uldat NameLen, Used;
     byte *Name;
     void *Handle, *Private;
 };
-struct fn_module {
+struct s_fn_module {
     uldat Magic, Size, Used;
-    module *(*Create)(fn_module *, uldat NameLen, CONST byte *Name);
-    void (*Insert)(module *, all *, module *Prev, module *Next);
-    void (*Remove)(module *);
-    void (*Delete)(module *);
-    byte (*DlOpen)(module *);
-    void (*DlClose)(module *);
+    module (*Create)(fn_module, uldat NameLen, CONST byte *Name);
+    void (*Insert)(module, all, module Prev, module Next);
+    void (*Remove)(module);
+    void (*Delete)(module);
+    /* module */    
+    fn_obj Fn_Obj;
+    byte (*DlOpen)(module);
+    void (*DlClose)(module);
 };
 
 
 
-
-struct display_hw {
+struct s_display_hw {
     uldat Id;
-    fn_display_hw *Fn;
-    display_hw *Prev, *Next; /* in the same All */
-    all *All;
+    fn_display_hw Fn;
+    display_hw Prev, Next; /* in the same All */
+    all All;
+    
+    /* display_hw */
     uldat NameLen;
     byte *Name;
-    module *Module;
+    module Module;
 
     void *Private;	/* used to store HW-specific data */
     
     void (*FlushVideo)(void);
     void (*FlushHW)(void);
 
-    void (*KeyboardEvent)(int fd, display_hw *hw);
-    void (*MouseEvent)(int fd, display_hw *hw);
+    void (*KeyboardEvent)(int fd, display_hw hw);
+    void (*MouseEvent)(int fd, display_hw hw);
     
     void (*ShowMouse)(void);
     void (*HideMouse)(void);
@@ -1000,7 +1154,7 @@ struct display_hw {
     
     byte (*HWSelectionImport)(void);
     void (*HWSelectionExport)(void);
-    void (*HWSelectionRequest)(obj *Requestor, uldat ReqPrivate);
+    void (*HWSelectionRequest)(obj Requestor, uldat ReqPrivate);
     void (*HWSelectionNotify)(uldat ReqPrivate, uldat Magic,
 			      CONST byte MIME[MAX_MIMELEN], uldat Len, CONST byte *Data);
     void *HWSelectionPrivate;
@@ -1111,26 +1265,28 @@ struct display_hw {
     
     dat XY[2];  /* hw-dependent cursor position */
     uldat TT;   /* hw-dependent cursor type */
-    
-};
-struct fn_display_hw {
-    uldat Magic, Size, Used;
-    display_hw *(*Create)(fn_display_hw *, uldat NameLen, CONST byte *Name);
-    void (*Insert)(display_hw *, all *, display_hw *Prev, display_hw *Next);
-    void (*Remove)(display_hw *);
-    void (*Delete)(display_hw *);
-    byte (*Init)(display_hw *);
-    void (*Quit)(display_hw *);
 };
 
-/* FlagsHW */
+struct s_fn_display_hw {
+    uldat Magic, Size, Used;
+    display_hw (*Create)(fn_display_hw, uldat NameLen, CONST byte *Name);
+    void (*Insert)(display_hw, all, display_hw Prev, display_hw Next);
+    void (*Remove)(display_hw);
+    void (*Delete)(display_hw);
+    /* display_hw */
+    fn_obj Fn_Obj;
+    byte (*Init)(display_hw);
+    void (*Quit)(display_hw);
+};
+
+/* DisplayHW->FlagsHW */
 #define FlHWSoftMouse		((byte)0x01)
 #define FlHWChangedMouseFlag	((byte)0x02)
 #define FlHWNeedOldVideo	((byte)0x04)
 #define FlHWExpensiveFlushVideo	((byte)0x08)
 #define FlHWNoInput		((byte)0x10)
 
-/* NEEDOpHW */
+/* DisplayHW->NeedHW */
 #define NEEDFlushStdout		((byte)0x01)
 #define NEEDFlushHW		((byte)0x02)
 #define NEEDResizeDisplay	((byte)0x04)
@@ -1141,64 +1297,81 @@ struct fn_display_hw {
 #define NEEDBeepHW		((byte)0x80)
 
     
-    
+/* errors */
 #define NOMEMORY	((udat)1)
 #define DLERROR		((udat)2)
 #define SYSCALLERROR	((udat)3)
 #define USERERROR	((udat)4)
 
+/* IDs */
 #define NOID		((uldat)0)
+#define ERRID		((uldat)-1)
+
 #define MAXID		((uldat)0x0FFFFFFFul)
 #define magic_mask	((uldat)0xF0000000ul)
 #define magic_shift	28
 
 #define obj_magic	((uldat)0x0dead0b1ul)
 #define widget_magic	((uldat)0x161d9743ul)
-#define row_magic	((uldat)0x28074ffaul)
-#define module_magic	((uldat)0x3b0f1278ul)
-#define display_hw_magic ((uldat)0x4dbcc609ul)
-#define gadget_magic	((uldat)0x59867551ul)
-#define window_magic	((uldat)0x61357531ul)
+#define gadget_magic	((uldat)0x29867551ul)
+#define window_magic	((uldat)0x31357531ul)
+#define screen_magic	((uldat)0x42659871ul)
+#define group_magic	((uldat)0x5741f326ul)
+#define row_magic	((uldat)0x68074ffaul)
 #define menuitem_magic	((uldat)0x7abc8fdeul)
 #define menu_magic	((uldat)0x8bad0bedul)
-#define screen_magic	((uldat)0x92659871ul)
-#define msg_magic	((uldat)0xA3a61ce4ul)
-#define msgport_magic	((uldat)0xB0981437ul)
-#define mutex_magic	((uldat)0xC0faded0ul)
+#define msgport_magic	((uldat)0x90981437ul)
+#define msg_magic	((uldat)0xA3a61ce4ul) /* this gets compiled in libTw ! */
+#define mutex_magic	((uldat)0xB0faded0ul)
+#define module_magic	((uldat)0xCb0f1278ul)
+#define display_hw_magic ((uldat)0xDdbcc609ul)
 
 
-#define magic_n		13 /* max top hex digit of the above ones + 1 */
+#define magic_n		14 /* max top hex digit of the above ones + 1 */
+
+
+/*
+ *   B I G   F A T   WARNING:
+ * 
+ * msg_magic is the magic number for user-created (tmsg) structures,
+ * while MSG_MAGIC (defined in sockproto.h) is the serial number reserved by
+ * libTw to receive server messages (which are still (tmsg) structures).
+ */
+
 
 #define IS_OBJ(type,O)	(((O)->Id & magic_mask) == (type##_magic & magic_mask))
-#define IS_ROW(O)	IS_OBJ(row,O)
+#define IS_WIDGET(O)	(IS_OBJ(widget,O) || IS_OBJ(gadget,O) || IS_OBJ(window,O) || IS_OBJ(screen,O))
 #define IS_GADGET(O)	IS_OBJ(gadget,O)
 #define IS_WINDOW(O)	IS_OBJ(window,O)
+#define IS_SCREEN(O)	IS_OBJ(screen,O)
+#define IS_ROW(O)	IS_OBJ(row,O)
 #define IS_MENUITEM(O)	IS_OBJ(menuitem,O)
 #define IS_MENU(O)	IS_OBJ(menu,O)
-#define IS_SCREEN(O)	IS_OBJ(screen,O)
-#define IS_MSG(O)	IS_OBJ(msg,O)
 #define IS_MSGPORT(O)	IS_OBJ(msgport,O)
 #define IS_MUTEX(O)	IS_OBJ(mutex,O)
+#define IS_MSG(O)	IS_OBJ(msg,O)
 #define IS_MODULE(O)	IS_OBJ(module,O)
 #define IS_DISPLAY_HW(O) IS_OBJ(display_hw,O)
 
 /* in the same order as the #defines above ! */
-struct fn {
-    fn_obj *f_obj;
-    fn_row *f_row;
-    fn_gadget *f_gadget;
-    fn_window *f_window;
-    fn_menuitem *f_menuitem;
-    fn_menu *f_menu;
-    fn_screen *f_screen;
-    fn_msg *f_msg;
-    fn_msgport *f_msgport;
-    fn_mutex *f_mutex;
-    fn_module *f_module;
-    fn_display_hw *f_display_hw;
+struct s_fn {
+    fn_obj f_obj;
+    fn_widget f_widget;
+    fn_gadget f_gadget;
+    fn_window f_window;
+    fn_screen f_screen;
+    fn_group f_group;
+    fn_row f_row;
+    fn_menuitem f_menuitem;
+    fn_menu f_menu;
+    fn_msgport f_msgport;
+    fn_mutex f_mutex;
+    fn_msg f_msg;
+    fn_module f_module;
+    fn_display_hw f_display_hw;
 };
 
-struct setup {
+struct s_setup {
     dat MaxMouseSnap;
     udat MinAllocSize;
     byte Flags;
@@ -1260,17 +1433,17 @@ struct setup {
 #define POS_SCREENBUTTON	((byte)21)
 #define POS_ROOT		((byte)22)
 
-typedef struct selection {
+typedef struct s_selection {
     timevalue Time;
-    msgport *Owner;
-    display_hw *OwnerOnce;
+    msgport Owner;
+    display_hw OwnerOnce;
     uldat Magic;
     byte MIME[MAX_MIMELEN];
     uldat Len, Max;
     byte *Data;
 } selection;
 
-typedef struct button_vec {
+typedef struct s_button_vec {
     byte shape[2];
     num pos;
     byte exists;
@@ -1278,14 +1451,17 @@ typedef struct button_vec {
 } button_vec;
 
 
-struct all {
-    screen *FirstScreen, *LastScreen;
-    msgport *FirstMsgPort, *LastMsgPort, *RunMsgPort;
-    mutex *FirstMutex, *LastMutex;
-    module *FirstModule, *LastModule;
-    fn_hook FnHookModule; window *HookModule;
-    display_hw *FirstDisplayHW, *LastDisplayHW, *MouseHW, *ExclusiveHW;
-    fn_hook FnHookDisplayHW; window *HookDisplayHW;
+struct s_all {
+    screen FirstScreen, LastScreen;
+    msgport FirstMsgPort, LastMsgPort, RunMsgPort;
+    mutex FirstMutex, LastMutex;
+    
+    module FirstModule, LastModule;
+    fn_hook FnHookModule; window HookModule;
+    
+    display_hw FirstDisplayHW, LastDisplayHW, MouseHW, ExclusiveHW;
+    fn_hook FnHookDisplayHW; window HookDisplayHW;
+    
     dat DisplayWidth, DisplayHeight;
     byte State;
     timevalue Now;
@@ -1293,7 +1469,7 @@ struct all {
     setup *SetUp;
     void (*AtQuit)(void);
 
-    menu *BuiltinMenu, *CommonMenu;
+    menu BuiltinMenu, CommonMenu;
     
     button_vec ButtonVec[BUTTON_MAX + 1]; /* +1 for window corner */
     

@@ -7,7 +7,8 @@
 
 #include <stdio.h>
 
-#include <libTw.h>
+#include "libTw.h"
+#include "libTwerrno.h"
 
 #define COD_QUIT      (udat)1
 
@@ -34,7 +35,7 @@ static byte InitClip(void) {
     if ((Clip_Win=TwCreateWindow
 	 (14, "Twin Clipboard", NULL,
 	  Clip_Menu, COL(HIGH|WHITE,HIGH|BLACK),
-	  TW_NOLINECURSOR,
+	  TW_LINECURSOR,
 	  TW_WINDOW_WANT_KEYS|TW_WINDOW_DRAG|TW_WINDOW_RESIZE|TW_WINDOW_X_BAR|TW_WINDOW_Y_BAR|TW_WINDOW_CLOSE,
 	  TW_WINFL_CURSOR_ON|TW_WINFL_USE_DEFCOL,
 	  40, 20, 0)) &&
@@ -86,7 +87,7 @@ static byte InitClip(void) {
 int main(int argc, char *argv[]) {
     tmsg Msg;
     udat Code;
-    uldat WinN = 1;
+    uldat err, WinN = 1;
     
     if (InitClip()) while ((Msg=TwReadMsg(TRUE))) {
 	if (Msg->Type==TW_MSG_WINDOW_KEY) {
@@ -122,8 +123,9 @@ int main(int argc, char *argv[]) {
 	    }
 	}
     }
-    if (TwErrno)
-	printf("%s: libTw error: %s\n", argv[0], TwStrError(TwErrno));
+    if ((err = TwErrno))
+	fprintf(stderr, "%s: libTw error: %s%s\n", argv[0],
+		TwStrError(err), TwStrErrorDetail(err, TwErrnoDetail));
     
     if (!TwInPanic()) {
 	/* these are not strictly necessary, as the server would cleanup by itself... */

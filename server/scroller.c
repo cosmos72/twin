@@ -13,22 +13,24 @@
 #include "twin.h"
 #include "data.h"
 #include "methods.h"
+#include "scroller.h"
 
 #include "hw_multi.h"
 #include "resize.h"
+#include "printk.h"
 #include "util.h"
 
 
 /* FIXME: Fix screen scrolling during Interactive Drag/Resize */
 
-msgport *Scroller_MsgPort;
-static void ScrollerH(msgport *MsgPort);
+msgport Scroller_MsgPort;
+static void ScrollerH(msgport MsgPort);
 
 /*
  * just dummy msgs that we receive when we are called
  * to start/stop scrolling immediately
  */
-msg *Do_Scroll, *Dont_Scroll;
+msg Do_Scroll, Dont_Scroll;
 
 byte InitScroller(void) {
     if ((Scroller_MsgPort=Do(Create,MsgPort)
@@ -38,7 +40,7 @@ byte InitScroller(void) {
 
 	return TRUE;
     }
-    fprintf(stderr, "twin: Scroller: Out of memory!\n");
+    printk("twin: Scroller: Out of memory!\n");
     return FALSE;
 }
 
@@ -58,18 +60,17 @@ INLINE void ScrollerDelayRepeat(void) {
     Scroller_MsgPort->PauseDuration.Fraction = 333 MilliSECs + 1;
 }
 
-static void ScrollerH(msgport *MsgPort) {
-    msg *Msg, *saveMsg;
+static void ScrollerH(msgport MsgPort) {
+    msg Msg, saveMsg;
     mouse_state *Mouse;
-    screen *Screen;
+    screen Screen;
     uldat Attrib;
     dat Limit;
     dat Mouse_delta_x, Mouse_delta_y;
     byte State, FlagDeskScroll, FlagWinScroll, WinScrolled = FALSE;
-    window *FocusWindow;
+    window FocusWindow;
     
     while ((Msg=Scroller_MsgPort->FirstMsg)) {
-	//		Beep();
 	Remove(Msg);
 	if (Msg == Do_Scroll || Msg == Dont_Scroll)
 	    saveMsg = Msg;
@@ -96,7 +97,9 @@ static void ScrollerH(msgport *MsgPort) {
 
     State = All->State & STATE_ANY;
     
-    if (State != STATE_DEFAULT && State != STATE_SCROLL) {
+    if (State != STATE_DEFAULT && State != STATE_SCROLL &&
+	State != STATE_DRAG && State != STATE_RESIZE) {
+	
 	ScrollerDeactivate();
 	return;
     }

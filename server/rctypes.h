@@ -3,27 +3,27 @@
 
 
 /* types */
-typedef byte *str;
-typedef struct node node;
+typedef byte * str;
+typedef struct node * node;
 typedef struct ldat_list ldat_list;
 typedef struct str_list str_list;
 
 struct node {
     ldat id;
-    byte *name;
-    node *next, *body;
-    byte *data;
+    str name;
+    node next, body;
+    str data;
     union {
 	struct {
 	    ldat plus_minus, flag, a, b;
 	} f;
 	struct {
-	    byte **argv;
+	    str *argv;
 	    uldat argc;
 	} v;
 	hwcol color;
 	ldat ctx;
-	node *func;
+	node func;
     } x;
 };
 
@@ -66,7 +66,7 @@ struct ldat_list {
 #define my_malloc	shm_malloc_or_die
 #define my_strdup	shm_strdup_or_die
 void *shm_malloc_or_die(uldat size);
-byte *shm_strdup_or_die(byte *s);
+str shm_strdup_or_die(str s);
 
 byte shm_init(uldat len);
 byte shm_shrink(void);
@@ -89,7 +89,7 @@ void *shm_getend(void);
 #endif
 
 extern int read_stack_curr;
-extern byte *file_name[];
+extern str file_name[];
 extern int line_no[];
 
 #define LINE_NO line_no[read_stack_curr-1]

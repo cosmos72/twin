@@ -31,9 +31,9 @@ This also happens to be the default background of twin.
 Another example:
 
 echo -e '\033[1;44;34m  \334\337\n\337\334  ' | twsetroot
-This is also in the file twsetroot.sample, so you can instead do
+This is also in the file setroot.sample, so you can instead do
 
-twsetroot -aa twsetroot.sample
+twsetroot -aa setroot.sample
 
 If twin is using the correct (VGA) font, this will look as:
 
@@ -48,7 +48,7 @@ To add an empty border to an image, you can use the options `-padx <X>'
 and `-pady <Y>'. The border will use the last color set in the image,
 so it may be important *not* to put '\033[0m' at the image end. For example
 
-twsetroot -padx 2 -pady 1 -aa twsetroot.sample
+twsetroot -padx 2 -pady 1 -aa setroot.sample
 
 will produce
 
@@ -103,11 +103,11 @@ Recognized values are:
 	6 = cyan
 	7 = white
 
-38      restore default foreground
+38      restore default foreground (this is a linux and twin/twterm extension)
 
 40..47  set background to 0..7 (see colors above)
 
-48      restore default background
+48      restore default background (this is a linux and twin/twterm extension)
 
 
 That's all.

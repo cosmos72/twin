@@ -32,6 +32,8 @@ int line_no[MAX_READ_DEPTH];
 static int yywrap(void);
 
 
+/* twin.h typedefs `msg'... avoid it */
+#define msg Msg
 
 
 #ifdef PURE_PARSER
@@ -85,6 +87,7 @@ Interactive	return INTERACTIVE;
 Key		return KEY;
 Menu		return MENU;
 Mouse		return MOUSE;
+Module		return MODULE;
 Move		return MOVE;
 MoveScreen	return MOVESCREEN;
 Next		return NEXT;

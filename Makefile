@@ -3,7 +3,7 @@
 #
 TOPDIR=.
 
-all: boot.dir lib.dir twin clients.dir
+all: boot.dir docs.dir lib.dir twin clients.dir
 
 #
 ifneq ($(wildcard $(TOPDIR)/conf/config.status),)
@@ -39,6 +39,7 @@ Torture: torture
 	
 #
 install: all install-lib install-clients
+	$(MAKE) install -C docs
 	$(MAKE) install -C server
 	if [ -f $(DESTDIR)/lib/twin/system.twinrc ]; then \
 	   $(CP) $(DESTDIR)/lib/twin/system.twinrc $(DESTDIR)/lib/twin/system.twinrc.bak; \
@@ -46,13 +47,14 @@ install: all install-lib install-clients
 	$(CP) system.twinrc $(DESTDIR)/lib/twin && \
 	$(LN) system.twinrc $(DESTDIR)/lib/twin/.twinrc
 	@echo [1m ; \
-	 echo If this is the first time you installed twin $(TW_VERSION) ; \
+	 echo If this is the first time you installed twin $(TWIN_VERSION_STR) ; \
 	 echo you probably need to run \"ldconfig\" now. ; \
 	 echo [0m
 
 clean:
 	$(MAKE) clean -C boot
 	$(MAKE) clean -C scripts
+	$(MAKE) clean -C docs
 	$(MAKE) clean -C lib
 	$(MAKE) clean -C server
 	$(MAKE) clean -C clients

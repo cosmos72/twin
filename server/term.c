@@ -27,53 +27,66 @@
 #define COD_QUIT      (udat)1
 #define COD_SPAWN     (udat)3
 
-static menu *Term_Menu;
+static menu Term_Menu;
 
-static byte *args[3];
+static byte *default_args[3];
+static byte *default_title = "Twin Term";
 
-static msgport *Term_MsgPort;
+static msgport Term_MsgPort;
 
 
-static void TwinTermH(msgport *MsgPort);
-static void TwinTermIO(int Fd, window *Window);
+static void TwinTermH(msgport MsgPort);
+static void TwinTermIO(int Fd, window Window);
 
-static void termShutDown(window *Window) {
+static void termShutDown(window Window) {
     if (Window->RemoteData.Fd != NOFD)
 	close(Window->RemoteData.Fd);
     UnRegisterWindowFdIO(Window);
 }
 
-static window *newTermWindow(void) {
-    
-    window *Window = Do(Create,Window)
-	(FnWindow, (udat)9, "Twin Term", (hwcol *)0, Term_Menu, COL(WHITE,BLACK),
-	 LINECURSOR, WINDOW_WANT_KEYS|WINDOW_DRAG|WINDOW_RESIZE|WINDOW_Y_BAR|WINDOW_CLOSE,
+static window newTermWindow(byte *title) {
+    window Window;
+
+    Window = Do(Create,Window)
+	(FnWindow, LenStr(title), title, NULL,
+	 Term_Menu, COL(WHITE,BLACK), LINECURSOR,
+	 WINDOW_WANT_KEYS|WINDOW_DRAG|WINDOW_RESIZE|WINDOW_Y_BAR|WINDOW_CLOSE,
 	 WINFL_CURSOR_ON|WINFL_USECONTENTS,
-	 (udat)82, (udat)27, (uldat)200);
+	 82, 27, 200);
     
-    if (Window)
+    if (Window) {
 	Act(SetColors,Window)
-	(Window, 0x1FF, COL(HIGH|YELLOW,CYAN), COL(HIGH|GREEN,HIGH|BLUE),
-	 COL(WHITE,HIGH|BLUE), COL(HIGH|WHITE,HIGH|BLUE), COL(HIGH|WHITE,HIGH|BLUE),
-	 COL(WHITE,BLACK), COL(BLACK,WHITE), COL(HIGH|BLACK,BLACK), COL(BLACK,HIGH|BLACK));
+	    (Window, 0x1FF, COL(HIGH|YELLOW,CYAN), COL(HIGH|GREEN,HIGH|BLUE),
+	     COL(WHITE,HIGH|BLUE), COL(HIGH|WHITE,HIGH|BLUE), COL(HIGH|WHITE,HIGH|BLUE),
+	     COL(WHITE,BLACK), COL(HIGH|BLACK,HIGH|WHITE), COL(HIGH|BLACK,BLACK), COL(BLACK,HIGH|BLACK));
     
+	Act(Configure,Window)(Window, (1<<2)|(1<<3), 0, 0, 7, 3, 0, 0);
+    }
     return Window;
 }
 
-static window *OpenTerm(CONST byte *arg0, byte * CONST *argv) {
-    window *Window;
+static window OpenTerm(CONST byte *arg0, byte * CONST *argv) {
+    window Window;
+    byte *title;
     
-    /* if argv is {NULL} or {NULL , ...} or {"", ... } then start user's shell */
-    if (!arg0 || !*arg0 || !argv) {
-	arg0 = args[0];
-	argv = args+1;
+    /* if {arg0, argv} is {NULL, ...} or {"", ... } then start user's shell */
+    if (arg0 && *arg0 && argv && argv[0]) {
+	if ((title = strrchr(argv[0], '/')))
+	    title++;
+	else
+	    title = argv[0];
+    } else {
+	arg0 = default_args[0];
+	argv = default_args+1;
+	
+	title = default_title;
     }
     
-    if ((Window = newTermWindow())) {
+    if ((Window = newTermWindow(title))) {
         if (SpawnInWindow(Window, arg0, argv)) {
 	    if (RegisterWindowFdIO(Window, TwinTermIO)) {
 		Window->ShutDownHook = termShutDown;
-		Act(Map,Window)(Window, All->FirstScreen);
+		Act(Map,Window)(Window, (widget)All->FirstScreen);
 		return Window;
 	    }
 	    close(Window->RemoteData.Fd);
@@ -83,11 +96,11 @@ static window *OpenTerm(CONST byte *arg0, byte * CONST *argv) {
     return NULL;
 }
 
-static void TwinTermH(msgport *MsgPort) {
-    msg *Msg;
+static void TwinTermH(msgport MsgPort) {
+    msg Msg;
     event_any *Event;
     udat Code/*, Repeat*/;
-    window *Win;
+    window Win;
     
     while ((Msg=Term_MsgPort->FirstMsg)) {
 	Remove(Msg);
@@ -102,11 +115,11 @@ static void TwinTermH(msgport *MsgPort) {
 	} else if (Msg->Type==MSG_SELECTION) {
 	    
 	    if ((Win = Event->EventSelection.Window))
-		TwinSelectionRequest((obj *)Term_MsgPort, Win->Id, TwinSelectionGetOwner());
+		TwinSelectionRequest((obj)Term_MsgPort, Win->Id, TwinSelectionGetOwner());
 
 	} else if (Msg->Type==MSG_SELECTIONNOTIFY) {
 	    
-	    if ((Win = (window *)Id2Obj(window_magic >> magic_shift,
+	    if ((Win = (window)Id2Obj(window_magic >> magic_shift,
 					Event->EventSelectionNotify.ReqPrivate)))
 		(void)RemoteWindowWriteQueue(Win, Event->EventSelectionNotify.Len,
 					     Event->EventSelectionNotify.Data);
@@ -122,8 +135,7 @@ static void TwinTermH(msgport *MsgPort) {
 		    (void)RemoteWindowWriteQueue(Win, len, buf);
 	    }
 	} else if (Msg->Type==MSG_WINDOW_GADGET) {
-	    if (!Event->EventGadget.Code)
-		/* 0 == Close Code */
+	    if (Event->EventGadget.Code == 0 /* Close Code */ )
 		Delete(Event->EventGadget.Window);
 	} else if (Msg->Type==MSG_MENU_ROW) {
 	    if (Event->EventMenu.Menu==Term_Menu) {
@@ -136,12 +148,22 @@ static void TwinTermH(msgport *MsgPort) {
 		    break;
 		}
 	    }
+	} else if (Msg->Type==MSG_USER_CONTROL) {
+	    /* this duplicates the same functionality of builtin.c */
+	    if (Event->EventControl.Code == MSG_CONTROL_OPEN) {
+		byte **cmd = TokenizeStringVec(Event->EventControl.Len, Event->EventControl.Data);
+		if (cmd) {
+		    OpenTerm(cmd[0], cmd);
+		    FreeStringVec(cmd);
+		} else
+		    OpenTerm(NULL, NULL);
+	    }
 	}
 	Delete(Msg);
     }
 }
 
-static void TwinTermIO(int Fd, window *Window) {
+static void TwinTermIO(int Fd, window Window) {
     static byte buf[BIGBUFF];
     uldat got = 0, chunk = 0;
     
@@ -155,7 +177,7 @@ static void TwinTermIO(int Fd, window *Window) {
     
     if (got)
 	Act(WriteAscii,Window)(Window, got, buf);
-    else if (chunk == (uldat)-1 && errno != EINTR && errno != EAGAIN)
+    else if (chunk == (uldat)-1 && errno != EINTR && errno != EWOULDBLOCK)
 	/* something bad happened to our child :( */
 	Delete(Window);
 }
@@ -181,26 +203,26 @@ static void OverrideMethods(byte enter) {
 # include "version.h"
 MODULEVERSION;
 
-byte InitModule(module *Module)
+byte InitModule(module Module)
 #else
 byte InitTerm(void)
 #endif
 {
-    window *Window;
+    window Window;
     byte *shellpath, *shell;
     
     if ((shellpath = getenv("SHELL")) &&
-	(args[0] = CloneStr(shellpath)) &&
-	(args[1] = (shell = strrchr(shellpath, '/'))
+	(default_args[0] = CloneStr(shellpath)) &&
+	(default_args[1] = (shell = strrchr(shellpath, '/'))
 	 ? CloneStr(shell) : CloneStr(shellpath)) &&
     
 	(Term_MsgPort=Do(Create,MsgPort)
-	 (FnMsgPort, 9, "Twin Term", (uldat)0, (udat)0, (byte)0, TwinTermH)) &&
+	 (FnMsgPort, 17, "Builtin Twin Term", (uldat)0, (udat)0, (byte)0, TwinTermH)) &&
 	(Term_Menu=Do(Create,Menu)
 	 (FnMenu, Term_MsgPort,
 	  COL(BLACK,WHITE), COL(BLACK,GREEN), COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
 	  COL(RED,WHITE), COL(RED,GREEN), (byte)0)) &&
-	Info4Menu(Term_Menu, ROW_ACTIVE, (uldat)20, " Built-in Twin Term ", "ptpppppppptpppptpppp") &&
+	Info4Menu(Term_Menu, ROW_ACTIVE, (uldat)19, " Builtin Twin Term ", "ptppppppptpppptpppp") &&
 
 	(Window=Win4Menu(Term_Menu)) &&
 	Row4Menu(Window, COD_SPAWN, ROW_ACTIVE, 10, " New Term ") &&
@@ -214,20 +236,20 @@ byte InitTerm(void)
 	OverrideMethods(TRUE);
 #endif
 
-	if (args[1][0] == '/')
-	    args[1][0] = '-';
+	if (default_args[1][0] == '/')
+	    default_args[1][0] = '-';
 	return TRUE;
     }
     if (shellpath) {
 	Error(NOMEMORY);
-	fprintf(stderr, "twin: InitTerm(): %s\n", ErrStr);
+	printk("twin: InitTerm(): %s\n", ErrStr);
     } else
-	fprintf(stderr, "twin: environment variable $SHELL not set!\n");
+	printk("twin: environment variable $SHELL not set!\n");
     return FALSE;
 }
 
 #ifdef CONF_THIS_MODULE
-void QuitModule(module *Module) {
+void QuitModule(module Module) {
     UnRegisterExtension(Term,Open,OpenTerm);
     OverrideMethods(FALSE);
     if (Term_MsgPort)

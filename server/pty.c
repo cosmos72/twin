@@ -161,7 +161,7 @@ static byte switchto_tty(void)
 }
 
 /* exported API: fork() a program in a pseudo-teletype */
-byte SpawnInWindow(window *Window, CONST byte *arg0, byte * CONST *argv) {
+byte SpawnInWindow(window Window, CONST byte *arg0, byte * CONST *argv) {
     pid_t childpid;
     remotedata *data = &Window->RemoteData;
 

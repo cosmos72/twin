@@ -2,7 +2,7 @@
 Twin - a Textmode WINdow environment, by Massimiliano Ghilardi
 --------------------------------------------------------------
 
-Version 0.3.6
+Version 0.3.7
 
 Twin is a windowing environment with mouse support, window manager,
 terminal emulator and networked clients, all inside a text display.
@@ -44,7 +44,8 @@ Tutorial	A quite complete tour of twin features: the user interface,
 		and some caveats for system administrators.
 libTw.txt	a reference file for programmers who want to write
 		twin clients (INCOMPLETE).
-		
+libTw++.txt	a reference file for programmers who want to write
+		twin C++ clients (INCOMPLETE).
 
 --------------------------------------------------------------
 Getting twin

@@ -38,7 +38,7 @@
 #endif
 
 void panic_free(void *v) {
-    fprintf(stderr, "FAIL: %.8X not in %.8X - %.8X\n",
+    printk("FAIL: %.8X not in %.8X - %.8X\n",
 	    (size_t)v, (size_t)S, (size_t)E);
 }
 
@@ -49,9 +49,11 @@ void panic_free(void *v) {
 
 #ifdef CONF__ALLOC
 
-//#ifdef __linux__
-//#include <asm/page.h>
-//#endif
+/*
+ #ifdef __linux__
+ # include <asm/page.h>
+ #endif
+ */
 #include <sys/types.h>
 #include <sys/mman.h>
 
@@ -509,7 +511,7 @@ void FreeMem(void *Mem) {
 	}
     }
 #ifdef DEBUG_MALLOC
-    fprintf(stderr, "FAIL: %.8X is not a valid pointer\n", (size_t)Mem);
+    printk("FAIL: %.8X is not a valid pointer\n", (size_t)Mem);
 #endif    
 }
 

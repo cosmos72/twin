@@ -22,7 +22,8 @@
 #include <termios.h>
 #include <signal.h>
 
-#include <libTw.h>
+#include "libTw.h"
+#include "libTwerrno.h"
 #include "version.h"
 
 #include "pty.h"
@@ -30,9 +31,6 @@
 #define COD_QUIT      (udat)1
 #define COD_ASKCLOSE  (udat)2
 #define COD_SPAWN     (udat)3
-#define COD_CENTER    (udat)4
-#define COD_ZOOM      (udat)5
-#define COD_MAXZOOM   (udat)6
 
 static tscreen Term_Screen;
 static tmsgport Term_MsgPort;
@@ -42,6 +40,8 @@ static uldat WinN;
 fd_set save_rfds;
 uldat max_fds;
 int twin_fd;
+
+static void CloseTerm(uldat Slot);
 
 
 /* 5. remote fds handling */
@@ -147,8 +147,7 @@ static void UnRegisterRemote(uldat Slot) {
     }
 }
 
-
-void Resize(uldat Slot, udat X, udat Y) {
+void Resize(uldat Slot, dat X, dat Y) {
     struct winsize wsiz;
     if (Slot < FdTop && LS.Fd != NOFD) {
 	wsiz.ws_col = X;
@@ -162,14 +161,64 @@ void Resize(uldat Slot, udat X, udat Y) {
 }
 
 
+static byte **TokenizeStringVec(uldat len, byte *s) {
+    byte **cmd = NULL, *buf, c;
+    uldat save_len, save_n, n = 0;
+    
+    /* skip initial spaces */
+    while (len && ((c = *s) == '\0' || c == ' ')) {
+	len--, s++;
+    }
+    save_len = len;
+    
+    if (len && (buf = TwAllocMem(len + 1))) {
+	TwCopyMem(s, buf, len);
+	buf[len] = '\0';
+	
+	/* how many args? */
+	while (len) {
+	    len--, c = *s++;
+	    if (c && c != ' ') {
+		n++;
+		while (len && (c = *s) && c != ' ') {
+		    len--, s++;
+		}
+	    }
+	}
+	if ((cmd = TwAllocMem((n + 1) * sizeof(byte *)))) {
+	    save_n = n;
+	    n = 0;
+	    len = save_len;
+	    s = buf;
+	    
+	    /* put args in cmd[] */
+	    while (len) {
+		len--, c = *s++;
+		if (c && c != ' ') {
+		    cmd[n++] = s - 1;
+		    while (len && (c = *s) && c != ' ') {
+			len--, s++;
+		    }
+		    *s = '\0'; /* safe, we did a malloc(len+1) */
+		}
+	    }
+	    cmd[n] = NULL; /* safe, we did a malloc(n+1) */
+	}
+    }
+    return cmd;
+}
 
-static char **args;
-static char *title = "Twin Term";
+static void FreeStringVec(byte **cmd) {
+    TwFreeMem(cmd[0]);
+    TwFreeMem(cmd);
+}
 
-static twindow newTermWindow(void) {
-    dat len = strlen(title);
+static byte **default_args;
+static byte *default_title = "Twin Term";
+
+static twindow newTermWindow(byte *title) {
     twindow Window = TwCreateWindow
-	(len, title, NULL,
+	(TwLenStr(title), title, NULL,
 	 Term_Menu, COL(WHITE,BLACK), TW_LINECURSOR,
 	 TW_WINDOW_WANT_KEYS|TW_WINDOW_WANT_CHANGES|TW_WINDOW_DRAG|TW_WINDOW_RESIZE|TW_WINDOW_Y_BAR|TW_WINDOW_CLOSE,
 	 TW_WINFL_CURSOR_ON|TW_WINFL_USECONTENTS,
@@ -179,26 +228,39 @@ static twindow newTermWindow(void) {
 	TwSetColorsWindow
 	    (Window, 0x1FF, COL(HIGH|YELLOW,CYAN), COL(HIGH|GREEN,HIGH|BLUE),
 	     COL(WHITE,HIGH|BLUE), COL(HIGH|WHITE,HIGH|BLUE), COL(HIGH|WHITE,HIGH|BLUE),
-	     COL(WHITE,BLACK), COL(BLACK,WHITE), COL(HIGH|BLACK,BLACK), COL(BLACK,HIGH|BLACK));
+	     COL(WHITE,BLACK), COL(HIGH|BLACK,HIGH|WHITE), COL(HIGH|BLACK,BLACK), COL(BLACK,HIGH|BLACK));
 	
-	TwConfigureWindow(Window, 0xF<<2, 0, 0, 7, 3, MAXDAT, MAXDAT);
+	TwConfigureWindow(Window, (1<<2)|(1<<3), 0, 0, 7, 3, 0, 0);
     }
     return Window;
 }
 
-static byte OpenTerm(void) {
+static byte OpenTerm(TW_CONST byte *arg0, byte * TW_CONST *argv) {
     twindow Window;
     int Fd;
     pid_t Pid;
     uldat Slot;
+    byte *title;
     
-    if ((Window = newTermWindow())) {
-	if ((Fd = Spawn(Window, &Pid, args)) != NOFD) {
+    /* if {arg0, argv} is {NULL, ...} or {"", ... } then start user's shell */
+    if (arg0 && *arg0 && argv && argv[0]) {
+	if ((title = strrchr(argv[0], '/')))
+	    title++;
+	else
+	    title = argv[0];
+    } else {
+	arg0 = default_args[0];
+	argv = default_args+1;
+	
+	title = default_title;
+    }
+    
+    if ((Window = newTermWindow(title))) {
+	if ((Fd = Spawn(Window, &Pid, 80, 25, arg0, argv)) != NOFD) {
 	    if ((Slot = RegisterRemote(Fd, Window, Pid)) != NOSLOT) {
-		Resize(Slot, 80, 25);
 		TwMapWindow(Window, Term_Screen);
 		WinN++;
-		return TRUE;
+		return !TwInPanic();
 	    }
 	    close(Fd);
 	}
@@ -214,14 +276,59 @@ static void CloseTerm(uldat Slot) {
     WinN--;
 }
 
+/*
+ * it is not safe to call libTw functions from within signal handlers
+ * (expecially if you compiled libTw as thread-safe) so
+ * just set a flag in the handler and react to it syncronously
+ */
+static volatile byte ReceivedSignalChild;
+
 static void SignalChild(int n) {
-    while (wait3((int *)0, WNOHANG, (struct rusage *)0) > 0)
-	;
+    ReceivedSignalChild = TRUE;
     signal(SIGCHLD, SignalChild);
+}
+
+static void RemotePidIsDead(pid_t pid) {
+    uldat Slot;
+    
+    for (Slot=0; Slot<FdTop; Slot++) {
+	if (LS.Fd != NOFD && LS.Pid == pid) {
+	    CloseTerm(Slot);
+	    return;
+	}
+    }
+}
+
+static void HandleSignalChild(void) {
+    pid_t pid;
+    int status;
+    while ((pid = wait3(&status, WNOHANG, (struct rusage *)0)) != NOPID && pid != (pid_t)-1) {
+	if (WIFEXITED(status) || WIFSIGNALED(status))
+	    RemotePidIsDead(pid);
+    }
+    ReceivedSignalChild = FALSE;
+}
+
+static void Add_Spawn_Row4Menu(twindow Window) {
+    byte *name;
+    uldat len = strlen(default_title);
+    
+    if (strcmp(default_title, "Twin Term") &&
+	(name = TwAllocMem(len + 6))) {
+	
+	TwCopyMem(" New ", name, 5);	
+	TwCopyMem(default_title, name + 5, len);
+	name[len+5] = ' ';
+
+	TwRow4Menu(Window, COD_SPAWN, TW_ROW_ACTIVE, len+6, name);
+	TwFreeMem(name);
+    } else
+	TwRow4Menu(Window, COD_SPAWN, TW_ROW_ACTIVE, 10, " New Term ");
 }
 
 static byte InitTerm(void) {
     twindow Window;
+    uldat err;
     
     signal(SIGCHLD, SignalChild);
 
@@ -229,7 +336,7 @@ static byte InitTerm(void) {
     
     if (TwOpen(NULL)) {
 	if ((Term_MsgPort=TwCreateMsgPort
-	     (9, "Twin Term", (uldat)0, (udat)0, (byte)0)) &&
+	     (16, "Remote Twin Term", (uldat)0, (udat)0, (byte)0)) &&
 	    (Term_Menu=TwCreateMenu
 	     (Term_MsgPort,
 	      COL(BLACK,WHITE), COL(BLACK,GREEN), COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
@@ -237,7 +344,7 @@ static byte InitTerm(void) {
 	    (TwInfo4Menu(Term_Menu, TW_ROW_ACTIVE, 18, " Remote Twin Term ", "ptpppppptpppptpppp"),
 
 	     (Window=TwWin4Menu(Term_Menu))) &&
-	    (TwRow4Menu(Window, COD_SPAWN, TW_ROW_ACTIVE, 10, " New Term "),
+	    (Add_Spawn_Row4Menu(Window),
 	     TwRow4Menu(Window, COD_QUIT,  FALSE,       6, " Exit "),
 	     TwItem4Menu(Term_Menu, Window, TRUE, 6, " File ")) &&
 	    
@@ -245,14 +352,15 @@ static byte InitTerm(void) {
 	    
 	    Term_Screen = TwFirstScreen();
 	
-	    if (OpenTerm())
+	    if (OpenTerm(NULL, NULL))
 		return TRUE;
 	}
 	TwClose();
     } while(0);
 
-    if (TwErrno)
-	fprintf(stderr, "twterm: libTw error: %s\n", TwStrError(TwErrno));
+    if ((err = TwErrno))
+	fprintf(stderr, "twterm: libTw error: %s%s\n",
+		TwStrError(err), TwStrErrorDetail(err, TwErrnoDetail));
 
     return FALSE;
 }
@@ -293,66 +401,36 @@ static void TwinTermH(void) {
 	    write(Fd, Event->EventSelectionNotify.Data, Event->EventSelectionNotify.Len);
 
 	} else if (Msg->Type==TW_MSG_WINDOW_MOUSE) {
-	    /* send mouse movements keypresses */
-	    byte len, buf[10] = "\033[?M";
-	    udat x, y;
-
-	    Code=Event->EventMouse.Code;
-
-	    x = Event->EventMouse.X;
-	    y = Event->EventMouse.Y;
-#if 0		    
-	    /* classic xterm-style reporting */
-	    buf[2] = 'M';
-	    if (isPRESS(Code)) switch (Code & PRESS_ANY) {
-	      case PRESS_LEFT: buf[3] = ' '; break;
-	      case PRESS_MIDDLE: buf[3] = '!'; break;
-	      case PRESS_RIGHT: buf[3] = '\"'; break;
-	    }
-	    else if (isRELEASE(Code))
-		buf[3] = '#';
-	    else {
-		continue;
-	    }
-	    buf[4] = '!' + x;
-	    buf[5] = '!' + y;
-	    len = 6;
-#else /* !0 */
-	    /* new-style reporting */
-	    buf[2] = '5';
-	    buf[3] = 'M';
-	    buf[4] = ' ' + (Code & HOLD_ANY);
-	    buf[5] = '!' + (x & 0x7f);
-	    buf[6] = '!' + (x >> 7);
-	    buf[7] = '!' + (y & 0x7f);
-	    buf[8] = '!' + (y >> 7);
-	    len = 9;
-#endif
-	    write(Fd, buf, len);
+	    fprintf(stderr, "twterm: unexpected Mouse event message!\n");
+	    
 	} else if (Msg->Type==TW_MSG_WINDOW_GADGET) {
-	    if (!Event->EventGadget.Code)
-		/* 0 == Close Code */
+	    if (Event->EventGadget.Code == 0 /* Close Code */ )
 		CloseTerm(Slot);
 	} else if (Msg->Type==TW_MSG_MENU_ROW) {
 	    if (Event->EventMenu.Menu==Term_Menu) {
 		Code=Event->EventMenu.Code;
 		switch (Code) {
 		  case COD_SPAWN:
-		    OpenTerm();
+		    OpenTerm(NULL, NULL);
 		    break;
 		  case COD_ASKCLOSE:
 		    CloseTerm(Slot);
 		    break;
-		  case COD_CENTER:
-		  case COD_ZOOM:
-		  case COD_MAXZOOM:
-		    /* can't do that remotely */
 		  default:
 		    break;
 		}
 	    }
 	} else if (Msg->Type==TW_MSG_WINDOW_CHANGE) {
 	    Resize(Slot, Event->EventWindow.XWidth - 2, Event->EventWindow.YWidth - 2);
+	    
+	} else if (Msg->Type==TW_MSG_USER_CONTROL) {
+	    if (Event->EventControl.Code == TW_MSG_CONTROL_OPEN) {
+		byte **cmd = TokenizeStringVec(Event->EventControl.Len, Event->EventControl.Data);
+		if (cmd) {
+		    OpenTerm(cmd[0], cmd);
+		    FreeStringVec(cmd);
+		}
+	    }
 	}
     }
 }
@@ -371,7 +449,7 @@ static void TwinTermIO(int Slot) {
     
     if (got)
 	TwWriteAsciiWindow(LS.Window, got, buf);
-    else if (chunk == -1 && errno != EINTR && errno != EAGAIN)
+    else if (chunk == -1 && errno != EINTR && errno != EWOULDBLOCK)
 	/* something bad happened to our child :( */
 	CloseTerm(Slot);
 }
@@ -393,9 +471,9 @@ static void ShowVersion(void) {
 int main(int argc, char *argv[]) {
     fd_set fds;
     int num_fds;
-    uldat Slot;
+    uldat Slot, err;
     struct timeval zero = {0, 0}, *pt;
-    char *t, *name = argv[0], *shell[3];
+    byte *t, *name = argv[0], *shell[3];
     
     FD_ZERO(&save_rfds);
 
@@ -409,11 +487,11 @@ int main(int argc, char *argv[]) {
 	    ShowVersion();
 	    return 0;
 	} else if (argc > 1 && !strcmp(*argv, "-t")) {
-	    title = *++argv;
+	    default_title = *++argv;
 	    argc--;
 	} else if (argc > 1 && !strcmp(*argv, "-e")) {
-	    args = argv;
-	    args[0] = args[1];
+	    default_args = (byte **)argv;
+	    default_args[0] = default_args[1];
 	    break;
 	} else {
 	    fprintf(stderr, "%s: argument `%s' not recognized\n"
@@ -424,7 +502,7 @@ int main(int argc, char *argv[]) {
 	argc--;
     }
     
-    if (!args) {
+    if (!default_args) {
 	if ((shell[0] = getenv("SHELL")) &&
 	    (shell[0] = strdup(shell[0])) &&
 	    (shell[1] = (t = strrchr(shell[0], '/'))
@@ -433,7 +511,7 @@ int main(int argc, char *argv[]) {
 	    if (shell[1][0] == '/')
 		shell[1][0] = '-';
 	    shell[2] = NULL;
-	    args = shell;
+	    default_args = shell;
 	} else
 	    return 1;
     }
@@ -448,44 +526,51 @@ int main(int argc, char *argv[]) {
 
     while (WinN) {
 	/* bail out if something goes *really* wrong */
-	if (!TwSync())
+	if (!TwFlush())
 	    break;
 
-	if (TwPeekMsg())
+	if (TwPendingMsg())
 	    /* some Msg is available, don't sleep */
 	    pt = &zero;
 	else
 	    pt = NULL;
 	
 	fds = save_rfds;
+
 	do {
 	    num_fds = select(max_fds+1, &fds, NULL, NULL, pt);
+	    
+	    if (ReceivedSignalChild)
+		HandleSignalChild();
 	} while (num_fds < 0 && errno == EINTR);
-	if (num_fds < 0) {
+
+	if (num_fds < 0 && errno != EINTR) {
 	    /* panic! */
 	    TwClose();
 	    return 1;
 	}
-	
-	TwinTermH();
 
 	/*
-	 * We cannot rely on FD_ISSET(twin_fd, &fds) to call TwinTermH(),
+	 * We cannot rely on FD_ISSET(twin_fd, &fds) alone to call TwinTermH(),
 	 * as Msgs may have been already received through the socket
-	 * and sitting in a local queue
+	 * and sitting in the local queue
 	 */
-	if (num_fds && FD_ISSET(twin_fd, &fds))
-	    num_fds--;
+	if ((num_fds > 0 && FD_ISSET(twin_fd, &fds)) || TwPendingMsg()) {
+	    if (FD_ISSET(twin_fd, &fds))
+		num_fds--;
+	    TwinTermH();
+	}
 	
-	for (Slot = 0; num_fds && Slot < FdTop; Slot++) {
+	for (Slot = 0; num_fds > 0 && Slot < FdTop; Slot++) {
 	    if (LS.Fd != NOFD && FD_ISSET(LS.Fd, &fds))
 		TwinTermIO(Slot), num_fds--;
 	}
     }
-    if (TwErrno) {
-	fprintf(stderr, "twterm: libTw error: %s\n", TwStrError(TwErrno));
-	TwClose();
+    if ((err = TwErrno)) {
+	fprintf(stderr, "twterm: libTw error: %s%s\n",
+		TwStrError(err), TwStrErrorDetail(err, TwErrnoDetail));
 	return 1;
     }
+    TwClose();
     return 0;
 }

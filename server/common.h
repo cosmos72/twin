@@ -12,7 +12,7 @@ byte *CloneStrL(CONST byte *s, uldat len);
 byte AllHWCanDragAreaNow(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp);
 void DragAreaHW(dat Xstart, dat Ystart, dat Xend, dat Yend, dat DstXstart, dat DstYstart);
 
-void ResizeDisplayPrefer(display_hw *);
+void ResizeDisplayPrefer(display_hw);
 
 void PanicHW(void);
 void FlushHW(void);
@@ -21,12 +21,12 @@ void ConfigureHW(udat resource, byte todefault, udat value);
 void SetPaletteHW(udat N, udat R, udat G, udat B);
 void ResetPaletteHW(void);
 
-obj *TwinSelectionGetOwner(void);
-void TwinSelectionSetOwner(obj *Owner, time_t Time, frac_t Frac);
+obj TwinSelectionGetOwner(void);
+void TwinSelectionSetOwner(obj Owner, time_t Time, frac_t Frac);
 #define SEL_CURRENTTIME ((time_t)0)
-void TwinSelectionNotify(obj *Requestor, uldat ReqPrivate, uldat Magic, CONST byte MIME[MAX_MIMELEN],
-			    uldat Len, CONST byte *Data);
-void TwinSelectionRequest(obj *Requestor, uldat ReqPrivate, obj *Owner);
+void TwinSelectionNotify(obj Requestor, uldat ReqPrivate, uldat Magic, CONST byte MIME[MAX_MIMELEN],
+			    uldat Len, byte CONST * Data);
+void TwinSelectionRequest(obj Requestor, uldat ReqPrivate, obj Owner);
 
 void SelectionExport(void);
 void SelectionImport(void);
@@ -48,6 +48,15 @@ byte InitTransUser(void);
  */
 void Quit(int status);
 void GetPrivileges(void);
+
+int printk(CONST byte *format, ...);
+int flushk(void);
+
+
+/*
+ * this comes either from display.c or from remote.c
+ */
+void RemotePidIsDead(pid_t pid);
 
 #endif /* _TW_HW_COMMON_H */
 

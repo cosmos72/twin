@@ -3,6 +3,6 @@
 
 byte InitTerm(void);
 
-extern menu *Term_Menu;
+extern menu Term_Menu;
 
 #endif /* _TW_TERM_H */

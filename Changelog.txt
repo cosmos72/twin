@@ -1,3 +1,70 @@
+From 0.3.6 to 0.3.7: (Massimiliano Ghilardi, 19 Feb 2001)
+	* Changed the terminal emulator to close window on shell logout
+	  even if there are background processes running (they keep running
+	  without a tty).
+	* Also changed the terminal emulator code to set window title
+	  from the program name.
+	* Changed hilight/selection on windows not to react to simple clicks:
+	  now you need to hold mouse button, drag, then release.
+	* Fixed compile problems on non-(Linux,FreeBSD) systems: changed GNU
+	  `grep -E' into plain `grep' and fixed MakeRules to autodetect if
+	  "echo" or "echo -e" must to be used to interpret octal sequences.
+	* Fixed an obscure bug with selection paste on a partially obscured
+	  window.
+	* Fixed drawing error in Roll Toggle of Maximized windows when
+	  menu was not hidden.
+	* Fixed non-working Interactive Drag,Resize if activated with mouse
+	  from the menu (broken in 0.3.6).
+	* Fixed keyboard traversing of menus having ONLY the common part.
+	* Fixed non-working virtual screen scrolling while doing Interactive
+	  Drag,Resize activated with mouse.
+	* Fixed virtual screen problems: stale selected menubar was drawn when
+	  moving down all screens, and clicking on it resulted in a sefgault.
+	  Also, activity in a window on a non-top screen was drawn on display
+	  even if the window was obscured by another screen.
+	* Further X11 keyboard support cleanups: made arrows and other
+	  special keys work also with NumLock/CapsLock active.
+	* Simplified menu windows handling, renamed all object types to
+	  use pointers (*) implicitly (no user visible changes).
+	* Optimized display redrawing during heavy activity.
+	* Finished borderless windows support (use Flag TW_WINFL_BORDERLESS).
+	* Added GADGET_TOGGLE flag to use gadgets as checkable buttons,
+	  and new `group' object to use gadgets as radio buttons.
+	* Added new ~/.twinrc command to load/unload modules:
+	  Module <name> [On|Off]
+	* Added configuration option to log twin messages in "Messages" window.
+	* Updated twin to correctly configure display flags like
+	  bell duration/pitch, application keypad, alternate cursor keys.
+	* Updated twevent to print human-readable key names.
+	* Finished client-to-client messages, upgraded twevent and twterm to
+  	  support them. New tiny client `twsendmsg' to send client-to-client
+	  messages: useful to open a new shell window (or any other program
+	  running in a tty) from command line: try something like
+	  twsendmsg "Builtin" open
+	  or
+	  twsendmsg "Remote Twin Term" open
+	* Fixed non-reentrant libTw problems.
+	* Added configuration option to make libTw thread-safe (requires
+	  POSIX pthread.h). Warning: calling libTw functions asynchronously
+	  (i.e. from signal handler) will very often cause a deadlock!
+	  Also fixed a semantic issue about blocking in Tw_Flush()
+	  and Tw_ReadMsg().
+	* Added stupid demo client `twthreadtest' to try libTw with threads.
+	* Added more detailed libTw error reporting (Tw_StrErrorDetail()).
+	* Added some more libTw functions.
+	* Added C++ libTw wrapper (libTw++.h). Also wrote the first "serious"
+	  client: `twkalc', derived from `kcalc' of the KDE suite.
+	  Anyway `twkalc' is distributed separately, in the packet `twutils'.
+	* Rationalized and removed some redundant libTw functions.
+	  Source, binary and socket protocol compatibility preserved, with two
+	  exceptions: using libTw from 0.3.7 with older servers may result in
+	  "libTw error: function not supported by server: Tw_MapWidget"
+	  or similar errors;
+	  Also, you must now explicitly #include <libTwerrno.h> to access
+	  TwErrno, TwStrError() and related stuff like TW_E* error codes.
+	* Added libTw prototypes to use with Linux ltrace(1) in
+	  docs/ltrace.conf
+	
 From 0.3.5 to 0.3.6: (Massimiliano Ghilardi, 14 Jan 2001)
 	* Added limited ShiftFlags reporting on keyboard events.
 	* Added ShiftFlags support to Key bindings in ~/.twinrc and

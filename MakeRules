@@ -5,9 +5,14 @@
 # set install directory
 DESTDIR=/usr/local
 
-# choose your favorite compiler
+# choose your favorite C compiler
 CC=gcc
 
+# choose the C++ compiler to build C++ socket library wrapper
+# (only used if you enable CONF_SOCKET_CPP)
+CCPLUS=g++
+
+#
 # Uncomment this to turn debugging on
 # DEBUG:=1
 
@@ -60,17 +65,23 @@ MKDIR=mkdir -p
 
 
 #
-# a variation of `echo' that interprets \n as newline
+# choose a variation of `echo' that interprets \n as newline.
+# keep commented to enable autodetection.
 #
-ECHO=echo -e
 #ECHO=echo
+#ECHO=echo -e
 
+#
+# where is bash on your system?
+# keep commented to enable autodetection.
+#
+#BASH=/bin/bash
 
 #
 # --------------- no user-serviceable parts below this line ----------------
 #
 
-TW_VERSION=0.3.6
+TWIN_VERSION_STR=0.3.7
 
 CFLAGS+=-I$(TOPDIR)/include
 
@@ -85,21 +96,31 @@ ifeq ($(CONF__SHLIBS),n)
   endif
 endif
 
-BASH:=$(shell if [ -x /bin/bash ]; then echo /bin/bash; \
-       else if bash -c : 2>/dev/null; then echo bash; \
-       else if [ -x "$$BASH" ]; then echo $$BASH; \
-       else echo sh; fi; fi; fi)
+ifeq ($(BASH),)
+  BASH:=$(shell if [ -x /bin/bash ]; then echo /bin/bash; \
+          else if bash -c : 2>/dev/null; then echo bash; \
+	  else if [ -x "$$BASH" ]; then echo $$BASH; \
+	  else echo sh; fi; fi; fi)
+endif
 
 BASH_VERSION:=$(word 1,$(subst ., ,$(shell $(BASH) -c "echo \$$BASH_VERSION")))
 
+ifeq ($(ECHO),)
+  ifeq ($(strip $(shell echo -e)),)
+    ECHO=echo -e
+  else
+    ECHO=echo
+  endif
+endif
+
 config $(CONF):
-	@echo Starting configure for twin $(TW_VERSION) ... ; \
+	@echo Starting configure for twin $(TWIN_VERSION_STR) ... ; \
 	echo
 	cd $(TOPDIR) ; \
 	$(BASH) scripts/Configure
 
 menuconf menuconfig:
-	@echo Starting menu-dialog configure for twin $(TW_VERSION) ... ; \
+	@echo Starting menu-dialog configure for twin $(TWIN_VERSION_STR) ... ; \
 	echo
 	cd $(TOPDIR) ; \
 	$(BASH) scripts/Configure.dialog
@@ -120,6 +141,9 @@ MODOBJS:=$(foreach B,$(MODBINS),$(OBJS_$(B)))
 # same with $(ARLIBOBJS) from $(ARLIBS)
 ARLIBOBJS:=$(foreach B,$(ARLIBS),$(OBJS_$(B)))
 
+# same with $(CPPOBJS) from $(CPPBINS)
+CPPOBJS:=$(foreach B,$(CPPBINS),$(OBJS_$(B)))
+
 # set correct CFLAGS for objs compiled as modules
 ifneq ($(MODOBJS),)
   _ALLFLAGS:=$(strip $(patsubst %,CFLAGS_%+=$(MODFLAGS)\n,$(MODOBJS)))
@@ -129,12 +153,13 @@ _ALLBINS:=$(strip $(BINS) $(MODBINS) $(ARLIBS))
 
 _ALLOBJS:=$(strip $(OBJS) $(MODOBJS) $(ARLIBOBJS) $(EXCL_OBJS))
 
-_ALLSRCS:=$(strip $(subst .o,.c,$(filter %.o,$(_ALLOBJS))))
+_ALLSRCS:=$(strip $(subst .o,.c,$(filter %.o,$(_ALLOBJS)))) \
+	  $(strip $(subst .o,.C,$(filter %.o,$(CPPOBJS))))
 
 .modules: Makefile $(TOPDIR)/MakeRules $(CONF)
 	@$(ECHO) -n Building .modules... ; \
 	 $(ECHO) " $(_ALLFLAGS)" > .modules ; \
-	 $(ECHO) " $(foreach B,$(BINS) $(MODBINS),$(B): .$(B).link\n .$(B).link: $(OBJS_$(B))\n)" >> .modules ; \
+	 $(ECHO) " $(foreach B,$(BINS) $(MODBINS) $(CPPBINS),$(B): .$(B).link\n .$(B).link: $(OBJS_$(B))\n)" >> .modules ; \
 	 $(ECHO) " $(foreach B,$(ARLIBS),$(B): .$(B).arlib\n .$(B).arlib: $(OBJS_$(B))\n)" >> .modules ; \
 	 $(ECHO) done
 
@@ -159,6 +184,12 @@ torture: $(_ALLSRCS) $(foreach S,$(_ALLSRCS),torture.$(S))
 %.o: %.c
 	$(CC) $(CFLAGS) $(CFLAGS_$@) -c $< -o $@
 	@$(ECHO) ' ifeq ($$(strip $$(CC) $$(CFLAGS) $$(CFLAGS_$@)),$(strip $(CC) $(CFLAGS) $(CFLAGS_$@)))\n'\
+	'FILES_UP_TO_DATE += $@\n'\
+	'endif' > .$@.flags
+
+%.o: %.C
+	$(CCPLUS) $(CFLAGS) $(CPLUSFLAGS) $(CFLAGS_$@) -c $< -o $@
+	@$(ECHO) ' ifeq ($$(strip $$(CCPLUS) $$(CFLAGS) $(CPLUSFLAGS) $$(CFLAGS_$@)),$(strip $(CCPLUS) $(CFLAGS) $(CPLUSFLAGS) $(CFLAGS_$@)))\n'\
 	'FILES_UP_TO_DATE += $@\n'\
 	'endif' > .$@.flags
 

@@ -18,6 +18,7 @@
  */
 
 #include <stdio.h>
+#include <stdarg.h>
 #include <string.h>
 #include <unistd.h>
 #include <sys/time.h>
@@ -29,9 +30,11 @@
 #include "hw.h"
 #include "hw_private.h"
 #include "common.h"
+#include "fdlist.h"
 #include "version.h"
 
 #include "libTw.h"
+#include "libTwerrno.h"
 
 /* HW specific headers */
 
@@ -120,18 +123,33 @@ void NoOp(void) {
 byte AlwaysFalse(void) {
     return FALSE;
 }
-byte *AlwaysNull(void) {
-    return NULL;
-}
 byte AlwaysTrue(void) {
     return TRUE;
+}
+void *AlwaysNull(void) {
+    return NULL;
 }
 
 void GetPrivileges(void) {
 }
+void RemotePidIsDead(pid_t pid) {
+}
+
+int printk(CONST byte *format, ...) {
+    va_list ap;
+    int i;
+    va_start(ap, format);
+    i = vfprintf(stderr, (CONST char *)format, ap);
+    va_end(ap);
+    return i;
+}
+
+int flushk(void) {
+    return fflush(stderr);
+}
 
 static void OutOfMemory(void) {
-    fputs("twdisplay: Out of memory!\n", stderr);
+    printk("twdisplay: Out of memory!\n");
 }
 
 byte *CloneStr(CONST byte *s) {
@@ -167,7 +185,7 @@ INLINE uldat FdListGet(void) {
     return NOSLOT;
 }
 
-uldat RegisterRemote(int Fd, void *HandlerData, void (*HandlerIO)(int Fd, void *HandlerData)) {
+uldat RegisterRemote(int Fd, obj HandlerData, void *HandlerIO) {
     uldat Slot, j;
     
     if ((Slot = FdListGet()) == NOSLOT)
@@ -177,8 +195,10 @@ uldat RegisterRemote(int Fd, void *HandlerData, void (*HandlerIO)(int Fd, void *
     
     LS.Fd = Fd;
     LS.pairSlot = NOSLOT;
-    LS.HandlerData = HandlerData;
-    LS.HandlerIO = (void (*)(int, size_t))HandlerIO;
+    if ((LS.HandlerData = HandlerData))
+	LS.HandlerIO.D = HandlerIO;
+    else
+	LS.HandlerIO.S = HandlerIO;
     LS.extern_couldntwrite = FALSE;
     
     if (FdTop <= Slot)
@@ -228,9 +248,9 @@ static void RemoteEvent(int FdCount, fd_set *FdSet) {
 	    if (FD_ISSET(fd, FdSet)) {
 		FdCount--;
 		if (LS.HandlerData)
-		    (*(void (*)(int, void *))LS.HandlerIO) (fd, LS.HandlerData);
+		    LS.HandlerIO.D (fd, LS.HandlerData);
 		else
-		    (*(void (*)(int, uldat))LS.HandlerIO) (fd, Slot);
+		    LS.HandlerIO.S (fd, Slot);
 	    }
 	}
     }
@@ -241,24 +261,25 @@ static void RemoteEvent(int FdCount, fd_set *FdSet) {
 
 #include <dlfcn.h>
 
-static fn_module _FnModule = {
-    module_magic, (uldat)sizeof(module), (uldat)1,
+static struct s_fn_module _FnModule = {
+    module_magic, (uldat)sizeof(struct s_module), (uldat)1,
 	(void *)NoOp, /* CreateModule */
 	(void *)NoOp, /* InsertModule */
 	(void *)NoOp, /* RemoveModule */
 	(void *)NoOp, /* DeleteModule */
+	NULL,	      /* Fn_Obj */
 	(void *)NoOp, /* DlOpen	      */
 	(void *)NoOp  /* DlClose      */
 };
 
-static struct module _Module = {
+static struct s_module _Module = {
     module_magic,
 	&_FnModule,
 };
 
-static module *DlLoadAny(uldat len, byte *name) {
-    module *Module = &_Module;
-    byte (*init_dl)(module *);
+static module DlLoadAny(uldat len, byte *name) {
+    module Module = &_Module;
+    byte (*init_dl)(module);
     byte *_name;
     
     if ((Module->Name = CloneStrL(name, len)) &&
@@ -279,7 +300,7 @@ static module *DlLoadAny(uldat len, byte *name) {
 	    ErrStr = dlerror();
     } else
 	ErrStr = "Out of memory!";
-    return (module *)0;
+    return (module)0;
 }
 
 static byte module_InitHW(void) {
@@ -287,7 +308,7 @@ static byte module_InitHW(void) {
     byte *(*InitD)(void);
     byte *arg = HW->Name;
     uldat len = HW->NameLen;
-    module *Module;
+    module Module;
 
     if (!arg || len <= 4)
 	return FALSE;
@@ -309,10 +330,10 @@ static byte module_InitHW(void) {
 	FreeMem(name);
 	    
 	if (Module) {
-	    fprintf(stderr, "twdisplay: starting display driver module `HW/hw_%.*s.so'...\n", (int)len, arg);
+	    printk("twdisplay: starting display driver module `HW/hw_%.*s.so'...\n", (int)len, arg);
 	    
 	    if ((InitD = Module->Private) && InitD()) {
-		fprintf(stderr, "twdisplay: ...module `HW/hw_%.*s.so' successfully started.\n", (int)len, arg);
+		printk("twdisplay: ...module `HW/hw_%.*s.so' successfully started.\n", (int)len, arg);
 		HW->Module = Module; Module->Used++;
 		return TRUE;
 	    }
@@ -322,9 +343,9 @@ static byte module_InitHW(void) {
 	ErrStr = "Out of memory!";
 
     if (Module) {
-	fprintf(stderr, "twdisplay: ...module `HW/hw_%.*s.so' failed to start.\n", (int)len, arg);
+	printk("twdisplay: ...module `HW/hw_%.*s.so' failed to start.\n", (int)len, arg);
     } else
-	fprintf(stderr, "twdisplay: unable to load display driver module `HW/hw_%.*s.so' :\n"
+	printk("twdisplay: unable to load display driver module `HW/hw_%.*s.so' :\n"
 		"      %s\n", (int)len, arg, ErrStr);
     
     return FALSE;
@@ -332,21 +353,22 @@ static byte module_InitHW(void) {
 
 #endif /* CONF__MODULES */
 
-static display_hw *CreateDisplayHW(uldat len, CONST byte *name);
-static byte InitDisplayHW(display_hw *);
-static void QuitDisplayHW(display_hw *);
+static display_hw CreateDisplayHW(uldat len, CONST byte *name);
+static byte InitDisplayHW(display_hw);
+static void QuitDisplayHW(display_hw);
 
-static fn_display_hw _FnDisplayHW = {
-    display_hw_magic, (uldat)sizeof(display_hw), (uldat)1,
+static struct s_fn_display_hw _FnDisplayHW = {
+    display_hw_magic, (uldat)sizeof(struct s_display_hw), (uldat)1,
 	(void *)NoOp, /* CreateDisplayHW */
 	(void *)NoOp, /* InsertDisplayHW */
 	(void *)NoOp, /* RemoveDisplayHW */
 	(void *)NoOp, /* DeleteDisplayHW */
+	NULL,	      /* Fn_Obj */
 	InitDisplayHW,
 	QuitDisplayHW
 };
 
-static display_hw _HW = {
+static struct s_display_hw _HW = {
     display_hw_magic,
 	&_FnDisplayHW,
 };
@@ -354,17 +376,17 @@ static display_hw _HW = {
 #if defined(CONF_HW_X11) || defined(CONF_HW_TWIN) || defined(CONF_HW_TTY) || defined(CONF_HW_GGI)
 static byte check4(byte *s, byte *arg) {
     if (arg && strncmp(s, arg, strlen(s))) {
-	fprintf(stderr, "twdisplay: `-hw=%s' given, skipping `-hw=%s' display driver.\n",
+	printk("twdisplay: `-hw=%s' given, skipping `-hw=%s' display driver.\n",
 		arg, s);
 	return FALSE;
     } else if (arg)
-	fprintf(stderr, "twdisplay: trying given `-hw=%s' display driver.\n", s);
+	printk("twdisplay: trying given `-hw=%s' display driver.\n", s);
     else
-	fprintf(stderr, "twdisplay: autoprobing `-hw=%s' display driver.\n", s);
+	printk("twdisplay: autoprobing `-hw=%s' display driver.\n", s);
     return TRUE;
 }
 
-static void fix4(byte *s, display_hw *D_HW) {
+static void fix4(byte *s, display_hw D_HW) {
     uldat len;
     if (!D_HW->NameLen) {
 	if (D_HW->Name)
@@ -381,17 +403,17 @@ static void fix4(byte *s, display_hw *D_HW) {
 static void warn_NoHW(uldat len, char *arg, uldat tried) {
 #ifdef CONF__MODULES
     if (!tried && !arg)
-	    fputs("twdisplay: no display driver compiled into twdisplay.\n"
-		  "      please run as `twdisplay [-twin@<TWDISPLAY>] -hw=<display>'\n", stderr);
+	printk("twdisplay: no display driver compiled into twdisplay.\n"
+	       "      please run as `twdisplay [-twin@<TWDISPLAY>] -hw=<display>'\n");
     else
 #endif
     {
-	fputs("twdisplay: All display drivers failed", stderr);
+	printk("twdisplay: All display drivers failed");
 	if (arg)
-	    fprintf(stderr, " for `-hw=%.*s\'", (int)len, arg);
+	    printk(" for `-hw=%.*s\'", (int)len, arg);
 	else
-	    putc('.', stderr);
-	putc('\n', stderr);
+	    printk(".");
+	printk("\n");
     }
 }
 
@@ -407,7 +429,7 @@ static void UpdateFlagsHW(void) {
  * InitDisplayHW runs HW specific InitXXX() functions, starting from best setup
  * and falling back in case some of them fails.
  */
-static byte InitDisplayHW(display_hw *D_HW) {
+static byte InitDisplayHW(display_hw D_HW) {
     byte *arg = D_HW->Name;
     uldat tried = 0;
     byte success;
@@ -457,13 +479,13 @@ static byte InitDisplayHW(display_hw *D_HW) {
     return success;
 }
 
-static void QuitDisplayHW(display_hw *D_HW) {
+static void QuitDisplayHW(display_hw D_HW) {
     if (D_HW && D_HW->QuitHW)
 	HW = D_HW, D_HW->QuitHW();
 }
 
 
-static display_hw *CreateDisplayHW(uldat NameLen, CONST byte *Name) {
+static display_hw CreateDisplayHW(uldat NameLen, CONST byte *Name) {
     byte *newName = NULL;
     
     if (Name && (newName = CloneStrL(Name, NameLen))) {	
@@ -481,14 +503,14 @@ static display_hw *CreateDisplayHW(uldat NameLen, CONST byte *Name) {
     }
     if (newName)
 	FreeMem(newName);
-    return (display_hw *)0;
+    return (display_hw)0;
 }
 
-static display_hw *AttachDisplayHW(uldat len, CONST byte *arg, uldat slot, byte flags) {
+static display_hw AttachDisplayHW(uldat len, CONST byte *arg, uldat slot, byte flags) {
     if ((len && len <= 4) || CmpMem("-hw=", arg, Min2(len,4))) {
-	fprintf(stderr, "twdisplay: specified `%.*s\' is not `-hw=<display>\'\n",
+	printk("twdisplay: specified `%.*s\' is not `-hw=<display>\'\n",
 		(int)len, arg);
-	return (display_hw *)0;
+	return (display_hw)0;
     }
     
     if (CreateDisplayHW(len, arg)) {
@@ -496,7 +518,7 @@ static display_hw *AttachDisplayHW(uldat len, CONST byte *arg, uldat slot, byte 
 	if (InitDisplayHW(HW))
 	    return HW;
     }
-    return (display_hw *)0;
+    return (display_hw)0;
 }
 
 
@@ -572,7 +594,11 @@ void FlushHW(void) {
     if (!ValidVideo)
 	return;
     
-    if (HW->RedrawVideo) {
+    if (QueuedDrawArea2FullScreen) {
+	QueuedDrawArea2FullScreen = FALSE;
+	DirtyVideo(0, 0, DisplayWidth - 1, DisplayHeight - 1);
+	ValidOldVideo = FALSE;
+    } else if (HW->RedrawVideo) {
 	DirtyVideo(HW->RedrawLeft, HW->RedrawUp, HW->RedrawRight, HW->RedrawDown);
 	ValidOldVideo = FALSE;
     } else if (NeedOldVideo && ValidOldVideo)
@@ -595,7 +621,7 @@ void FlushHW(void) {
 }
 
 
-void ResizeDisplayPrefer(display_hw *D_HW) {
+void ResizeDisplayPrefer(display_hw D_HW) {
     SaveHW;
     SetHW(D_HW);
     D_HW->DetectSize(&TryDisplayWidth, &TryDisplayHeight);
@@ -655,7 +681,7 @@ static byte ResizeDisplay(void) {
 
     TryDisplayWidth = TryDisplayHeight = 0;
     
-    if (change && (Tmsg = TwCreateMsg(TW_MSG_DISPLAY, sizeof(struct tevent_display)))) {
+    if (change && (Tmsg = TwCreateMsg(TW_MSG_DISPLAY, sizeof(struct s_tevent_display)))) {
 	Tmsg->Event.EventDisplay.Code = TW_DPY_Resize;
 	Tmsg->Event.EventDisplay.Len  = 0;
 	Tmsg->Event.EventDisplay.X    = DisplayWidth;
@@ -695,29 +721,26 @@ static void HandleMsg(tmsg Msg) {
     switch (Msg->Type) {
       case TW_MSG_SELECTION:
 	/* should never happen */
-	fputs("\ntwdisplay: HandleMsg(): unexpected Selection Message from twin!\n", stderr);
-	fflush(stderr);
+	printk("\ntwdisplay: HandleMsg(): unexpected Selection Message from twin!\n");
 	break;
       case TW_MSG_SELECTIONREQUEST:
 #if 0
-	fprintf(stderr, "twdisplay: Selection Request from 0x%08x, owner is underlying HW\n", Msg->Event.EventSelectionRequest.Requestor);
-	fflush(stderr);
+	printk("twdisplay: Selection Request from 0x%08x, owner is underlying HW\n", Msg->Event.EventSelectionRequest.Requestor);
 #endif
 	/* request selection from underlying HW */
 	
 	/*
 	 * Just like in TwinSelectionGetOwner() : normally Requestor
 	 * is a meaningful pointer; here it is just a libTw Id.
-	 * Cast it to (obj *) as expected by HW displays...
+	 * Cast it to (obj) as expected by HW displays...
 	 * we will cast it back when needed
 	 */
-	HW->HWSelectionRequest((obj *)(Msg->Event.EventSelectionRequest.Requestor),
+	HW->HWSelectionRequest((obj)(Msg->Event.EventSelectionRequest.Requestor),
 			       Msg->Event.EventSelectionRequest.ReqPrivate);
 	break;
       case TW_MSG_SELECTIONNOTIFY:
 #if 0
-	fprintf(stderr, "twdisplay: Selection Notify to underlying HW\n");
-	fflush(stderr);
+	printk("twdisplay: Selection Notify to underlying HW\n");
 #endif
 	/* notify selection to underlying HW */
 	HW->HWSelectionNotify(Msg->Event.EventSelectionNotify.ReqPrivate,
@@ -819,17 +842,17 @@ void SelectionExport(void) {
 /* HW back-end function: get selection owner */
 
 /*
- * In the same function twin server, this returns a meaningful pointer.
+ * In the same function in twin server, this returns a meaningful pointer.
  * Here, it returns just an Id coming from libTw.
- * Cheat and cast to to (obj *), since the underlying display HW code
+ * Cheat and cast to to (obj), since the underlying display HW code
  * treats it as opaque. We will cast it back to (uldat) when needed.
  */
-obj *TwinSelectionGetOwner(void) {
+obj TwinSelectionGetOwner(void) {
     return (void *)TwGetOwnerSelection();
 }
 
 /* HW back-end function: set selection owner */
-void TwinSelectionSetOwner(obj *Owner, time_t Time, frac_t Frac) {
+void TwinSelectionSetOwner(obj Owner, time_t Time, frac_t Frac) {
     tmsg Msg;
 
     if ((Msg=TwCreateMsg(TW_MSG_SELECTIONCLEAR, sizeof(tevent_common)))) {
@@ -838,25 +861,23 @@ void TwinSelectionSetOwner(obj *Owner, time_t Time, frac_t Frac) {
 }
 
 /* HW back-end function: notify selection */
-void TwinSelectionNotify(obj *Requestor, uldat ReqPrivate, uldat Magic, CONST byte MIME[MAX_MIMELEN],
+void TwinSelectionNotify(obj Requestor, uldat ReqPrivate, uldat Magic, CONST byte MIME[MAX_MIMELEN],
 			    uldat Len, CONST byte *Data) {
     if (!MIME)
 	MIME = nullMIME;
 #if 0
-    fprintf(stderr, "twdisplay: Selection Notify to 0x%08x\n", (uldat)Requestor);
-    fflush(stderr);
+    printk("twdisplay: Selection Notify to 0x%08x\n", (uldat)Requestor);
 #endif
-    /* cast back Requestor from fake (obj *) to its original (uldat) */
+    /* cast back Requestor from fake (obj) to its original (uldat) */
     TwNotifySelection((uldat)Requestor, ReqPrivate, Magic, MIME, Len, Data);
 }
 
 /* HW back-end function: request selection */
-void TwinSelectionRequest(obj *Requestor, uldat ReqPrivate, obj *Owner) {
+void TwinSelectionRequest(obj Requestor, uldat ReqPrivate, obj Owner) {
 #if 0
-    fprintf(stderr, "twdisplay: Selection Request from 0x%08x, Owner is 0x%08x\n", (uldat)Requestor, (uldat)Owner);
-    fflush(stderr);
+    printk("twdisplay: Selection Request from 0x%08x, Owner is 0x%08x\n", (uldat)Requestor, (uldat)Owner);
 #endif
-    /* cast back Owner from the fake (obj *) to (uldat) */
+    /* cast back Owner from the fake (obj) to (uldat) */
     TwRequestSelection((uldat)Owner, ReqPrivate);
 }
 
@@ -960,9 +981,13 @@ byte KeyboardEventCommon(udat Code, udat ShiftFlags, udat Len, CONST byte *Seq) 
 static void MainLoop(int Fd) {
     struct timeval sel_timeout, *this_timeout;
     fd_set read_fds, write_fds, *pwrite_fds;
-    int num_fds;
+    uldat err, detail;
+    int sys_errno, num_fds;
     
     for (;;) {
+	if (GotSignals)
+	    HandleSignals();
+	
 	if (NeedHW & NEEDResizeDisplay)
 	    ResizeDisplay();
 	
@@ -998,7 +1023,11 @@ static void MainLoop(int Fd) {
 	if (!TwFlush())
 	    break;
 	
-	if (TwPeekMsg()) {
+	if (TwPendingMsg()) {
+	    /*
+	     * messages can arrive during Tw* function calls,
+	     * so the FD_ISSET() test alone does not suffice.
+	     */
 	    sel_timeout.tv_sec = sel_timeout.tv_usec = 0;
 	    this_timeout = &sel_timeout;
 	} else
@@ -1013,7 +1042,7 @@ static void MainLoop(int Fd) {
 	    /* ach, problem. */
 	    break;
 
-	if ((num_fds > 0 && FD_ISSET(Fd, &read_fds)) || TwPeekMsg()) {
+	if ((num_fds > 0 && FD_ISSET(Fd, &read_fds)) || TwPendingMsg()) {
 	    /*
 	     * messages can arrive during Tw* function calls,
 	     * so the FD_ISSET() test alone does not suffice.
@@ -1031,20 +1060,27 @@ static void MainLoop(int Fd) {
     
     if (num_fds < 0 && errno != EINTR) {
 	QuitDisplayHW(HW);
-	fprintf(stderr, "twdisplay: select(): %s\n", strerror(errno));
+	printk("twdisplay: select(): %s\n", strerror(errno));
 	exit(1);
     }
     if (TwInPanic()) {
+	err = TwErrno;
+	detail = TwErrnoDetail;
     	QuitDisplayHW(HW);
-	fprintf(stderr, "%s: libTw error: %s\n", MYname, TwStrError(TwErrno));
+	printk("%s: libTw error: %s%s\n", MYname,
+		TwStrError(err), TwStrErrorDetail(err, detail));
 	exit(1);
     }
+    err = TwErrno;
+    detail = TwErrnoDetail;
+    sys_errno = errno;
     QuitDisplayHW(HW);
-    fprintf(stderr, "%s: shouldn't happen! Please report:\n"
-	    "\tlibTw TwErrNo: %d, %s\n"
-	    "\tsystem  errno: %d, %s\n",
-	    MYname, TwErrno, TwStrError(TwErrno), errno, strerror(errno));
-    exit(1);    
+    printk("%s: shouldn't happen! Please report:\n"
+	    "\tlibTw TwErrno: %d(%d),\t%s%s\n"
+	    "\tsystem  errno: %d,\t%s\n", MYname,
+	    err, detail, TwStrError(err), TwStrErrorDetail(err, detail),
+	    sys_errno, strerror(sys_errno));
+    exit(1);
 }
 
 dat GetDisplayWidth(void) {
@@ -1056,7 +1092,7 @@ dat GetDisplayHeight(void) {
 
 
 static void Usage(void) {
-    fputs("Usage: twdisplay [OPTION [...]]\n"
+    fputs("Usage: twdisplay [OPTIONS] -hw=<display> [...]\n"
 	  "Currently known options: \n"
 	  " -h, -help               display this help and exit\n"
 	  " -V, -version            output version information and exit\n"
@@ -1089,7 +1125,7 @@ static byte VersionsMatch(byte force) {
     uldat cv = TW_PROTOCOL_VERSION, lv = TwLibraryVersion(), sv = TwServerVersion();
 	
     if (lv != sv || lv != cv) {
-	fprintf(stderr, "twdisplay: %s: socket protocol version mismatch!%s\n"
+	printk("twdisplay: %s: socket protocol version mismatch!%s\n"
 		"           client is %d.%d.%d, library is %d.%d.%d, server is %d.%d.%d\n",
 		(force ? "warning" : "fatal"), (force ? " (ignored)" : ""),
 		TWVER_MAJOR(cv), TWVER_MINOR(cv), TWVER_PATCH(cv),
@@ -1104,7 +1140,8 @@ int main(int argc, char *argv[]) {
     byte flags = TW_ATTACH_HW_REDIRECT, force = 0;
     byte *dpy = NULL, *arg = NULL, *tty = ttyname(0);
     byte ret = 0, ourtty = 0;
-    byte *s, *buff;
+    byte *s;
+    TW_CONST byte *buff;
     uldat chunk;
     int Fd;
     
@@ -1131,7 +1168,7 @@ int main(int argc, char *argv[]) {
 	    dpy = *argv + 6;
 	else if (!strncmp(*argv, "-hw=", 4)) {
 	    if (!strncmp(*argv+4, "display", 7)) {
-		fprintf(stderr, "%s: argument `-hw=display' is for internal use only.\n", MYname);
+		printk("%s: argument `-hw=display' is for internal use only.\n", MYname);
 		TryUsage(NULL);
 		return 1;
 	    }
@@ -1148,18 +1185,18 @@ int main(int argc, char *argv[]) {
 			/*
 			 * using server tty makes no sense for twdisplay
 			 */
-			fprintf(stderr, "%s: `%s' makes sense only with twattach.\n", MYname, *argv);
+			printk("%s: `%s' makes sense only with twattach.\n", MYname, *argv);
 			return 1;
 		    } else if (tty) {
 			if (!strcmp(buff+1, tty))
 			    /* attach twin to our tty */
 			    ourtty = 1;
 		    } else {
-			fprintf(stderr, "%s: ttyname() failed: cannot find controlling tty!\n", MYname);
+			printk("%s: ttyname() failed: cannot find controlling tty!\n", MYname);
 			return 1;
 		    }
 		} else {
-		    fprintf(stderr, "%s: malformed display hw `%s'\n", MYname, *argv);
+		    printk("%s: malformed display hw `%s'\n", MYname, *argv);
 		    return 1;
 		}
 
@@ -1207,13 +1244,13 @@ int main(int argc, char *argv[]) {
 	
 	if (!VersionsMatch(force)) {
 	    if (!force) {
-		fprintf(stderr, "twdisplay: Aborting. Use option `-f' to ignore versions check.\n");
+		printk("twdisplay: Aborting. Use option `-f' to ignore versions check.\n");
 		TwClose();
 		return 1;
 	    }
 	}
 
-	if (RegisterRemote(Fd = TwConnectionFd(), (void *)0, (void *)NoOp) == NOSLOT) {
+	if (RegisterRemote(Fd = TwConnectionFd(), NULL, NoOp) == NOSLOT) {
 	    TwClose();
 	    OutOfMemory();
 	    return 1;
@@ -1246,7 +1283,7 @@ int main(int argc, char *argv[]) {
 	flags &= TW_ATTACH_HW_REDIRECT;
 	
 	if (flags)
-	    fprintf(stderr, "reported messages ...\n");
+	    printk("reported messages ...\n");
 	
 	for (;;) {
 	    buff = TwAttachGetReply(&chunk);
@@ -1257,9 +1294,9 @@ int main(int argc, char *argv[]) {
 		/* libTw panic */
 		break;
 
-	    fprintf(stderr, "  %.*s", (int)chunk, buff);
+	    printk("  %.*s", (int)chunk, buff);
 	}
-	fflush(stderr);
+	flushk();
 	
 	if (TwInPanic())
 	    break;
@@ -1281,10 +1318,10 @@ int main(int argc, char *argv[]) {
 	
 	if (flags && !ourtty) {
 	    if (ret)
-		fprintf(stderr, "... ok, twin successfully attached.\n");
+		printk("... ok, twin successfully attached.\n");
 	    else
-		fprintf(stderr, "... ach, twin failed to attach.\n");
-	    fflush(stderr);
+		printk("... ach, twin failed to attach.\n");
+	    flushk();
 	}
 	if (ret == 2)
 	    /*
@@ -1293,12 +1330,13 @@ int main(int argc, char *argv[]) {
 	     */
 	    MainLoop(Fd);
 	else if (ret)
-	    fprintf(stderr, "%s: twin said we can quit... strange!\n", MYname);
+	    printk("%s: twin said we can quit... strange!\n", MYname);
 	
 	Quit(!ret);
     } while (0);
     
-    fprintf(stderr, "%s: libTw error: %s\n", MYname, TwStrError(TwErrno));
+    printk("%s: libTw error: %s%s\n", MYname,
+	    TwStrError(TwErrno), TwStrErrorDetail(TwErrno, TwErrnoDetail));
     return 1;
 }
 

@@ -23,14 +23,14 @@
 #include "common.h"
 
 struct display_data {
-    msgport *display, *Helper;
+    msgport display, Helper;
 };
 
 #define displaydata	((struct display_data *)HW->Private)
 #define display		(displaydata->display)
 #define Helper		(displaydata->Helper)
 
-static msg *Msg;
+static msg Msg;
 static event_display *ev;
 static uldat Used;
 
@@ -58,8 +58,8 @@ static void display_Configure(udat resource, byte todefault, udat value) {
 }
 
 /* handle messages from twdisplay */
-static void display_HandleEvent(display_hw *hw) {
-    msg *hMsg;
+static void display_HandleEvent(display_hw hw) {
+    msg hMsg;
     event_any *Event;
     dat x, y, dx, dy;
     SaveHW;
@@ -97,17 +97,16 @@ static void display_HandleEvent(display_hw *hw) {
 	    /* selection now owned by some other client on the same display HW as twdisplay */
 	    HW->HWSelectionPrivate = NULL;
 	    /*
-	     * DO NOT use (obj *)display here instead of (obj *)HW, as it is a msgport
+	     * DO NOT use (obj)display here instead of (obj)HW, as it is a msgport
 	     * and would bypass the OwnerOnce mechanism, often resulting in an infinite loop.
 	     */
-	    TwinSelectionSetOwner((obj *)HW, SEL_CURRENTTIME, SEL_CURRENTTIME);
+	    TwinSelectionSetOwner((obj)HW, SEL_CURRENTTIME, SEL_CURRENTTIME);
 	    break;
 	  case MSG_SELECTIONREQUEST:
 	    /*
 	     * should never happen, twdisplay uses libTw calls to manage Selection Requests
 	     */
-	    fputs("\ntwin: display_HandleEvent(): unexpected SelectionRequest Message from twdisplay!\n", stderr);
-	    fflush(stderr);
+	    printk("\ntwin: display_HandleEvent(): unexpected SelectionRequest Message from twdisplay!\n");
 #if 0
 	    TwinSelectionRequest(Event->EventSelectionRequest.Requestor,
 				 Event->EventSelectionRequest.ReqPrivate,
@@ -118,8 +117,7 @@ static void display_HandleEvent(display_hw *hw) {
 	    /*
 	     * should never happen, twdisplay uses libTw calls to manage Selection Notifies
 	     */
-	    fputs("\ntwin: display_HandleEvent(): unexpected SelectionNotify Message from twdisplay!\n", stderr);
-	    fflush(stderr);
+	    printk("\ntwin: display_HandleEvent(): unexpected SelectionNotify Message from twdisplay!\n");
 #if 0
 	    TwinSelectionNotify(dRequestor, dReqPrivate,
 				Event->EventSelectionNotify.Magic,
@@ -136,8 +134,7 @@ static void display_HandleEvent(display_hw *hw) {
 		 * Not needed, twdisplay keeps its own copy of Video[]
 		 * and never generates DPY_RedrawVideo events
 		 */
-		fputs("\ntwin: display_HandleEvent(): unexpected Display.(DPY_RedrawVideo) Message from twdisplay!\n", stderr);
-		fflush(stderr);
+		printk("\ntwin: display_HandleEvent(): unexpected Display.(DPY_RedrawVideo) Message from twdisplay!\n");
 #if 0
 		if (Event->EventDisplay.Len == sizeof(dat) * 2)
 		    NeedRedrawVideo(Event->EventDisplay.X, Event->EventDisplay.Y,
@@ -166,7 +163,7 @@ static void display_HandleEvent(display_hw *hw) {
     RestoreHW;
 }
 
-static void display_HelperH(msgport *Port) {
+static void display_HelperH(msgport Port) {
     display_HandleEvent(Port->AttachHW);
 }
 
@@ -235,11 +232,11 @@ static void display_FlushVideo(void) {
     }
     
     /* update the cursor */
-    if (CursorType != NOCURSOR && (CursorX != HW->XY[0] || CursorY != HW->XY[1])) {
+    if (!ValidOldVideo || (CursorType != NOCURSOR && (CursorX != HW->XY[0] || CursorY != HW->XY[1]))) {
 	display_MoveToXY(HW->XY[0] = CursorX, HW->XY[1] = CursorY);
 	setFlush();
     }
-    if (CursorType != HW->TT) {
+    if (!ValidOldVideo || CursorType != HW->TT) {
 	display_SetCursorType(HW->TT = CursorType);
 	setFlush();
     }
@@ -342,13 +339,13 @@ static void display_SelectionExport_display(void) {
 /*
  * request Selection from twdisplay
  */
-static void display_SelectionRequest_display(obj *Requestor, uldat ReqPrivate) {
+static void display_SelectionRequest_display(obj Requestor, uldat ReqPrivate) {
     if (!HW->HWSelectionPrivate) {
 	/*
 	 * shortcut: since (display) is a msgport, use fail-safe TwinSelectionRequest()
 	 * to send message to twdisplay.
 	 */
-	TwinSelectionRequest(Requestor, ReqPrivate, (obj *)display);
+	TwinSelectionRequest(Requestor, ReqPrivate, (obj)display);
     }
     /* else race! someone else became Selection owner in the meanwhile... */
 }
@@ -357,12 +354,12 @@ static void display_SelectionRequest_display(obj *Requestor, uldat ReqPrivate) {
  * notify our Selection to twdisplay
  */
 static void display_SelectionNotify_display(uldat ReqPrivate, uldat Magic, CONST byte MIME[MAX_MIMELEN],
-					    uldat Len, CONST byte *Data) {
+					    uldat Len, byte CONST * Data) {
     /*
      * shortcut: since (display) is a msgport, use fail-safe TwinSelectionNotify()
      * to send message to twdisplay.
      */
-    TwinSelectionNotify((obj *)display, ReqPrivate, Magic, MIME, Len, Data);
+    TwinSelectionNotify((obj)display, ReqPrivate, Magic, MIME, Len, Data);
 }
 
 
@@ -375,11 +372,11 @@ static void display_QuitHW(void) {
 
     /* then cleanup */
     
-    Helper->AttachHW = (display_hw *)0; /* to avoid infinite loop */
+    Helper->AttachHW = (display_hw)0; /* to avoid infinite loop */
     Delete(Helper);
 
     if (!--Used && Msg)
-	Delete(Msg), Msg = (msg *)0;
+	Delete(Msg), Msg = (msg)0;
     
     /*
      * the rest is done by Act(Quit,HW)(HW) by the upper layers,
@@ -407,7 +404,7 @@ static
 #endif
 byte display_InitHW(void) {
     byte *s, *arg = HW->Name;
-    msgport *Port;
+    msgport Port;
     
     if (arg && HW->NameLen > 4) {
 	arg += 4;
@@ -421,19 +418,19 @@ byte display_InitHW(void) {
 	/*
 	 * we can't start unless we have a connected twdisplay...
 	 */
-	fputs("      display_InitHW() failed: not connected to twdisplay.\n"
-	      "      (you cannot use -hw=display from command line or twattach)\n", stderr);
+	printk("      display_InitHW() failed: not connected to twdisplay.\n"
+	       "      (you cannot use -hw=display from command line or twattach)\n");
 	return FALSE;
     }
 
     if (!(Port = RemoteGetMsgPort(HW->AttachSlot))) {
-	fputs("      display_InitHW() failed: twdisplay did not create a MsgPort.\n", stderr);
+	printk("      display_InitHW() failed: twdisplay did not create a MsgPort.\n");
 	return FALSE;
     }
     
     if (!Ext(Socket,SendMsg)) {
-	fputs("      display_InitHW() failed: SocketSendMsg() not available.\n"
-	      "      (maybe you should load Socket Server module?)\n", stderr);
+	printk("      display_InitHW() failed: SocketSendMsg() not available.\n"
+	       "      (maybe you should load Socket Server module?)\n");
 	return FALSE;
     }
     
@@ -447,7 +444,7 @@ byte display_InitHW(void) {
 		Delete(Helper);
 	    FreeMem(HW->Private);
 	}
-	fputs("      display_InitHW(): Out of memory!\n", stderr);
+	printk("      display_InitHW(): Out of memory!\n");
 	return FALSE;
     }
 
@@ -547,13 +544,13 @@ byte display_InitHW(void) {
 #include "version.h"
 MODULEVERSION;
 		       
-byte InitModule(module *Module) {
+byte InitModule(module Module) {
     Module->Private = display_InitHW;
     return TRUE;
 }
 
 /* this MUST be included, or it seems that a bug in dlsym() gets triggered */
-void QuitModule(module *Module) {
+void QuitModule(module Module) {
 }
 
 #endif /* CONF_THIS_MODULE */

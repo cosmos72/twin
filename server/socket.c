@@ -31,6 +31,7 @@
 #include "methods.h"
 #include "data.h"
 #include "main.h"
+#include "printk.h"
 #include "util.h"
 #include "resize.h"
 #include "extensions.h"
@@ -39,6 +40,7 @@
 #include "md5.h"
 #include "hw_multi.h"
 #include "common.h"
+#include "fdlist.h"
 #include "version.h"
 
 #include "libTw.h"
@@ -277,6 +279,7 @@ static void ShutdownGzip(uldat Slot);
 
 /* back-end of some libTw utility functions */
 
+static void SocketH(msgport MsgPort);
 
 static void AttachHW(uldat len, CONST byte *arg, byte flags);
 static byte DetachHW(uldat len, CONST byte *arg);
@@ -287,7 +290,7 @@ static byte DoCompress(byte on_off);
 
 static void NeedResizeDisplay(void);
 
-static void sockShutDown(msgport *MsgPort) {
+static void sockShutDown(msgport MsgPort) {
     if (MsgPort->RemoteData.FdSlot < FdTop)
 	UnRegisterMsgPort(MsgPort);
 }
@@ -296,164 +299,92 @@ static byte SyncSocket(void) {
     return TRUE;
 }
 
-static void ResizeWindow(window *Window, dat X, dat Y) {
+static msgport GetOwnerWidget(widget W) {
+    if (W)
+	return W->Owner;
+    return (msgport)0;
+}
+
+static void ResizeWindow(window Window, dat X, dat Y) {
     if (Window)
 	ResizeRelWindow(Window, X - Window->XWidth, Y - Window->YWidth);
 }
 
-static screen *FirstScreen(void) {
+static screen FirstScreen(void) {
     return All->FirstScreen;
 }
-static widget *FirstWidget(widget *W) {
+static widget FirstWidget(widget W) {
     return W ? W->FirstW : W;
 }
-static msgport *FirstMsgPort(void) {
+
+static void SetPressedGadget(gadget G, byte on_off) {
+    if (G) {
+	if (on_off)
+	    PressGadget(G);
+	else
+	    UnPressGadget(G, TRUE);
+    }
+}
+static byte IsPressedGadget(gadget G) {
+    return G ? !!(G->Flags & GADGET_PRESSED) : FALSE;
+}
+
+static void SetToggleGadget(gadget G, byte on_off) {
+    if (G) {
+	if (on_off)
+	    G->Flags |= GADGET_TOGGLE;
+	else
+	    G->Flags &= ~GADGET_TOGGLE;
+    }
+}
+static byte IsToggleGadget(gadget G) {
+    return G ? !!(G->Flags & GADGET_TOGGLE) : FALSE;
+}
+
+static msgport FirstMsgPort(void) {
     return All->FirstMsgPort;
 }
-static menu *FirstMenu(msgport *MsgPort) {
+
+static menu FirstMenu(msgport MsgPort) {
     return MsgPort ? MsgPort->FirstMenu : (void *)MsgPort;
 }
-static menuitem *FirstMenuItem(menu *Menu) {
+static menuitem FirstMenuItem(menu Menu) {
     return Menu ? Menu->FirstMenuItem : (void *)Menu;
 }
 
-
-static obj *PrevObj(obj *Obj) {
+static obj PrevObj(obj Obj) {
     return Obj ? Obj->Prev : Obj;
 }
-static obj *NextObj(obj *Obj) {
+static obj NextObj(obj Obj) {
     return Obj ? Obj->Next : Obj;
 }
-static obj *ParentObj(obj *Obj) {
-    return Obj ? (obj *)Obj->Parent : Obj;
+static obj ParentObj(obj Obj) {
+    return Obj ? (obj)Obj->Parent : Obj;
 }
 
-
-#define tDelta ((udat)(size_t)&(((tmsg)0)->Event))
-#define  Delta ((udat)(size_t)&(((msg *)0)->Event))
-
-static byte SendToMsgPort(msgport *MsgPort, udat Len, CONST byte *Data) {
-    msg *Msg;
-    tmsg tMsg = (tmsg)Data;
-    udat _Len;
-    byte ok = TRUE;
-    
-    if (MsgPort && Len && tMsg && Len >= tDelta && Len == tMsg->Len &&
-	tMsg->Magic == msg_magic) {
-
-	if (tMsg->Type == TW_MSG_WINDOW_KEY)
-	    _Len = (FnMsg->Size - Delta) + tMsg->Event.EventKeyboard.SeqLen;
-	else if (tMsg->Type == TW_MSG_SELECTIONNOTIFY)
-	    _Len = (FnMsg->Size - Delta) + tMsg->Event.EventSelectionNotify.Len;
-	else
-	    _Len = FnMsg->Size - Delta;
-	
-	if ((Msg = Do(Create,Msg)(FnMsg, tMsg->Type, _Len))) {
-
-	    Msg->Event.EventCommon.Window =
-		(void *)Id2Obj(window_magic >> magic_shift,
-			       tMsg->Event.EventCommon.Window);
-
-	    switch (tMsg->Type) {
-#if defined(CONF__MODULES) || defined (CONF_HW_DISPLAY)
-	      case TW_MSG_DISPLAY:
-
-		if (sizeof(struct tevent_display) == sizeof(twindow) + 4*sizeof(dat) + sizeof(byte *)) {
-		    CopyMem((void *)&tMsg->Event.EventDisplay.Code,
-			    (void *)& Msg->Event.EventDisplay.Code, 4*sizeof(dat));
-		} else {
-		    Msg->Event.EventDisplay.Code   = tMsg->Event.EventDisplay.Code;
-		    Msg->Event.EventDisplay.Len    = tMsg->Event.EventDisplay.Len;
-		    Msg->Event.EventDisplay.X      = tMsg->Event.EventDisplay.X;
-		    Msg->Event.EventDisplay.Y      = tMsg->Event.EventDisplay.Y;
-		}
-		if (!(Msg->Event.EventDisplay.Data =
-		      CloneMem(tMsg->Event.EventDisplay.Data, tMsg->Event.EventDisplay.Len))
-		    && tMsg->Event.EventDisplay.Len)
-		    
-		    ok = FALSE;
-		      
-		break;
-#endif /* defined(CONF__MODULES) || defined (CONF_HW_DISPLAY) */
-	      case TW_MSG_WINDOW_KEY:
-		if (sizeof(struct tevent_keyboard) == sizeof(twindow) + 3*sizeof(dat) + 2*sizeof(byte)) {
-		    CopyMem((void *)&tMsg->Event.EventKeyboard.Code,
-			    (void *)& Msg->Event.EventKeyboard.Code, 3*sizeof(dat) + sizeof(byte));
-		} else {
-		    Msg->Event.EventKeyboard.Code       = tMsg->Event.EventKeyboard.Code;
-		    Msg->Event.EventKeyboard.ShiftFlags = tMsg->Event.EventKeyboard.ShiftFlags;
-		    Msg->Event.EventKeyboard.SeqLen     = tMsg->Event.EventKeyboard.SeqLen;
-		    Msg->Event.EventKeyboard.pad        = tMsg->Event.EventKeyboard.pad;
-		}
-		CopyMem(tMsg->Event.EventKeyboard.AsciiSeq, Msg->Event.EventKeyboard.AsciiSeq,
-			tMsg->Event.EventKeyboard.SeqLen);
-		
-		Msg->Event.EventKeyboard.AsciiSeq[tMsg->Event.EventKeyboard.SeqLen] = '\0';
-		
-		break;
-	      case TW_MSG_WINDOW_MOUSE:
-		if (sizeof(struct tevent_mouse) == sizeof(twindow) + 4*sizeof(dat)) {
-		    CopyMem((void *)&tMsg->Event.EventMouse.Code,
-			    (void *)& Msg->Event.EventMouse.Code, 4*sizeof(dat));
-		} else {
-		    Msg->Event.EventMouse.Code          = tMsg->Event.EventMouse.Code;
-		    Msg->Event.EventMouse.ShiftFlags    = tMsg->Event.EventMouse.ShiftFlags;
-		    Msg->Event.EventMouse.X             = tMsg->Event.EventMouse.X;
-		    Msg->Event.EventMouse.Y             = tMsg->Event.EventMouse.Y;
-		}
-		break;
-	      case MSG_SELECTIONCLEAR:
-		if (sizeof(struct tevent_common) == sizeof(twindow) + 2*sizeof(dat)) {
-		    CopyMem((void *)&tMsg->Event.EventCommon.Code,
-			    (void *)& Msg->Event.EventCommon.Code, 2*sizeof(dat));
-		} else {
-		    Msg->Event.EventCommon.Code         = tMsg->Event.EventCommon.Code;
-		    Msg->Event.EventCommon.pad          = tMsg->Event.EventCommon.pad;
-		}
-		break;
-
-/* TODO: finish this */
-#if 0
-	      case MSG_WINDOW_CHANGE:
-		Push(t, udat,    Msg->Event.EventWindow.Code);
-		Push(t, udat,    Msg->Event.EventWindow.XWidth);
-		Push(t, udat,    Msg->Event.EventWindow.YWidth);
-		break;
-	      case MSG_WINDOW_GADGET:
-		Push(t, udat,    Msg->Event.EventGadget.Code);
-		Push(t, udat,    Msg->Event.EventGadget.pad);
-		break;
-	      case MSG_MENU_ROW:
-		Push(t, udat,    Msg->Event.EventMenu.Code);
-		Push(t, udat,    Msg->Event.EventMenu.pad);
-		Push(t, tmenu,   Obj2Id(Msg->Event.EventMenu.Menu));
-		break;
-#endif
-	      default:
-		ok = FALSE;
-		break;
-	    }
-	    
-	    if (ok) {
-		SendMsg(MsgPort, Msg);
-		return TRUE;
-	    }
-	    
-	    Delete(Msg);
-	}
+static msgport FindMsgPort(msgport Prev, byte LenTitle, CONST byte *Title) {
+    msgport M;
+    if (!(M = Prev))
+	M = All->FirstMsgPort;
+    while (M) {
+	if (M->NameLen == LenTitle && !CmpMem(M->ProgramName, Title, LenTitle))
+	    break;
+	M = M->Next;
     }
-    return FALSE;
+    return M;
 }
 
-static void BlindSendToMsgPort(msgport *MsgPort, udat Len, CONST byte *Data) {
+static byte SendToMsgPort(msgport MsgPort, udat Len, CONST byte *Data);
+
+static void BlindSendToMsgPort(msgport MsgPort, udat Len, CONST byte *Data) {
     (void)SendToMsgPort(MsgPort, Len, Data);
 }
 
-static obj *GetOwnerSelection(void);
-static void SetOwnerSelection(msgport *Owner, time_t Time, frac_t Frac);
-static void NotifySelection(obj *Requestor, uldat ReqPrivate,
+static obj GetOwnerSelection(void);
+static void SetOwnerSelection(time_t Time, frac_t Frac);
+static void NotifySelection(obj Requestor, uldat ReqPrivate,
 			    uldat Magic, CONST byte MIME[MAX_MIMELEN], uldat Len, CONST byte *Data);
-static void RequestSelection(obj *Owner, uldat ReqPrivate);
+static void RequestSelection(obj Owner, uldat ReqPrivate);
 
 
 /* Second: socket handling functions */
@@ -465,17 +396,12 @@ static byte *s, *end;
 static int unixFd = NOFD, inetFd = NOFD, Fd;
 static uldat unixSlot = NOSLOT, inetSlot = NOSLOT;
 
-#define DeleteGadget   SafeDeleteObj
-#define DeleteWindow   SafeDeleteObj
-#define DeleteMenuItem SafeDeleteObj
-#define DeleteMenu     SafeDeleteObj
-#define DeleteMsgPort  SafeDeleteObj
+static void DeleteObj(void *V);
+static void RecursiveDeleteWidget(void *V);
 
-static void SafeDeleteObj(void *V);
-static msgport *CreateMsgPort(byte LenTitle, CONST byte *Title, time_t WakeUp, frac_t WakeUpFrac, byte Flags);
+static msgport CreateMsgPort(byte LenTitle, CONST byte *Title, time_t WakeUp, frac_t WakeUpFrac, byte Flags);
 
 static void Reply(uldat code, uldat len, CONST void *data);
-static void SocketH(msgport *MsgPort);
 static void SocketIO(int fd, uldat slot);
 
 static uldat FindFunction(byte Len, CONST byte *name);
@@ -497,7 +423,7 @@ static uldat FindFunction(byte Len, CONST byte *name);
 
 #define DECLv(n,arg)
 #define DECL_(n,arg)	arg A(n);
-#define DECLx(n,arg)	uldat AL(n); arg *A(n);
+#define DECLx(n,arg)	uldat AL(n); arg A(n);
 #define DECLV(n,arg)	uldat AL(n); CONST arg *A(n);
 #define DECLW(n,arg)	uldat AL(n); CONST arg *A(n);
 #define D(n,arg,f)	DECL##f(n,arg)
@@ -534,7 +460,7 @@ static uldat FindFunction(byte Len, CONST byte *name);
 #define PARSEx(n,arg,len,pass) if (Left(sizeof(uldat))) { \
 				    fail++; \
 				    Pop(s,uldat,AL(n)); \
-				    A(n) = (arg *)Id2Obj(ORDER(arg), AL(n)); \
+				    A(n) = (arg)Id2Obj(ORDER(arg), AL(n)); \
 				    pass \
 				}
 #define PARSEV(n,arg,len,pass) if (Left(AL(n) = (len) * sizeof(arg))) { \
@@ -560,6 +486,8 @@ NAME(funct, name) \
   RET##fn(ret0,f0, Act##fn(funct,name) (FN##fn(name))) \
   FAIL##f0 \
 }
+
+#define PROTO0SyncSocket PROTO0
 
 #define PROTO1(ret0,f0, funct,name,fn, arg1,f1) \
 NAME(funct, name) \
@@ -648,41 +576,41 @@ NAME(funct, name) \
   FAIL##f0 \
 }
 
-#define PROTO11(ret0,f0, funct,name,fn,arg1 ,f1 , arg2 ,f2 , arg3 ,f3 , arg4 ,f4 , arg5 ,f5 , \
-	   arg6 ,f6 , arg7 ,f7 , arg8 ,f8 , arg9 ,f9 , arg10,f10, arg11,f11) \
+#define PROTO11(ret0,f0, funct,name,fn,arg1,f1, arg2,f2, arg3,f3, arg4,f4, arg5,f5, \
+	   arg6,f6, arg7,f7, arg8,f8, arg9,f9, arg10,f10, arg11,f11) \
 NAME(funct, name) \
-{ D_0( ret0 ,f0 ) \
-  D(1 ,arg1 ,f1 ) D(2 ,arg2 ,f2 ) D(3 ,arg3 ,f3 ) D(4 ,arg4, f4 ) \
-  D(5 ,arg5 ,f5 ) D(6 ,arg6 ,f6 ) D(7 ,arg7 ,f7 ) D(8 ,arg8 ,f8 ) \
-  D(9 ,arg9, f9 ) D(10,arg10,f10) D(11,arg11,f11) \
-  P(1 ,arg1 ,f1 ,i##f1 , P(2 ,arg2 ,f2 ,i##f2 , P(3 ,arg3 ,f3 ,i##f3 , P(4 ,arg4 ,f4 ,i##f4 , \
-  P(5 ,arg5 ,f5 ,i##f5 , P(6 ,arg6 ,f6 ,i##f6 , P(7 ,arg7 ,f7 ,i##f7 , P(8 ,arg8 ,f8 ,i##f8 , \
-  P(9 ,arg9 ,f9 ,i##f9 , P(10,arg10,f10,i##f10, P(11,arg11,f11,i##f11, \
+{ D_0( ret0,f0) \
+  D(1,arg1,f1) D(2,arg2,f2) D(3,arg3,f3) D(4,arg4, f4) \
+  D(5,arg5,f5) D(6,arg6,f6) D(7,arg7,f7) D(8,arg8,f8) \
+  D(9,arg9, f9) D(10,arg10,f10) D(11,arg11,f11) \
+  P(1,arg1,f1,i##f1, P(2,arg2,f2,i##f2, P(3,arg3,f3,i##f3, P(4,arg4,f4,i##f4, \
+  P(5,arg5,f5,i##f5, P(6,arg6,f6,i##f6, P(7,arg7,f7,i##f7, P(8,arg8,f8,i##f8, \
+  P(9,arg9,f9,i##f9, P(10,arg10,f10,i##f10, P(11,arg11,f11,i##f11, \
   RET##fn(ret0,f0, Act##fn(funct,name) (FN##fn(name) \
-      A(1 ), A(2 ), A(3 ), A(4 ), A(5 ), A(6 ), A(7 ), A(8 ), A(9 ), A(10), \
+      A(1), A(2), A(3), A(4), A(5), A(6), A(7), A(8), A(9), A(10), \
       A(11)))))))))))))) \
   FAIL##f0 \
 }
 
-#define PROTO19(ret0,f0, funct,name,fn,   arg1 ,f1 , arg2 ,f2 , arg3 ,f3 , arg4 ,f4 , arg5 ,f5 , \
-	   arg6 ,f6 , arg7 ,f7 , arg8 ,f8 , arg9 ,f9 , arg10,f10, arg11,f11, arg12,f12, arg13,f13, \
+#define PROTO19(ret0,f0, funct,name,fn,   arg1,f1, arg2,f2, arg3,f3, arg4,f4, arg5,f5, \
+	   arg6,f6, arg7,f7, arg8,f8, arg9,f9, arg10,f10, arg11,f11, arg12,f12, arg13,f13, \
 	   arg14,f14, arg15,f15, arg16,f16, arg17,f17, arg18,f18, arg19,f19) \
 NAME(funct, name) \
-{ D_0( ret0 ,f0 ) \
-  D(1 ,arg1 ,f1 ) D(2 ,arg2 ,f2 ) D(3 ,arg3 ,f3 ) D(4 ,arg4, f4 ) \
-  D(5 ,arg5 ,f5 ) D(6 ,arg6 ,f6 ) D(7 ,arg7 ,f7 ) D(8 ,arg8 ,f8 ) \
-  D(9 ,arg9, f9 ) D(10,arg10,f10) D(11,arg11,f11) D(12,arg12,f12) \
+{ D_0( ret0,f0) \
+  D(1,arg1,f1) D(2,arg2,f2) D(3,arg3,f3) D(4,arg4, f4) \
+  D(5,arg5,f5) D(6,arg6,f6) D(7,arg7,f7) D(8,arg8,f8) \
+  D(9,arg9, f9) D(10,arg10,f10) D(11,arg11,f11) D(12,arg12,f12) \
   D(13,arg13,f13) D(14,arg14,f14) D(15,arg15,f15) D(16,arg16,f16) \
   D(17,arg17,f17) D(18,arg18,f18) D(19,arg19,f19) \
-  P(1 ,arg1 ,f1 ,i##f1 , P(2 ,arg2 ,f2 ,i##f2 , P(3 ,arg3 ,f3 ,i##f3 , P(4 ,arg4 ,f4 ,i##f4 , \
-  P(5 ,arg5 ,f5 ,i##f5 , P(6 ,arg6 ,f6 ,i##f6 , P(7 ,arg7 ,f7 ,i##f7 , P(8 ,arg8 ,f8 ,i##f8 , \
-  P(9 ,arg9 ,f9 ,i##f9 , P(10,arg10,f10,i##f10, P(11,arg11,f11,i##f11, P(12,arg12,f12,i##f12, \
+  P(1,arg1,f1,i##f1, P(2,arg2,f2,i##f2, P(3,arg3,f3,i##f3, P(4,arg4,f4,i##f4, \
+  P(5,arg5,f5,i##f5, P(6,arg6,f6,i##f6, P(7,arg7,f7,i##f7, P(8,arg8,f8,i##f8, \
+  P(9,arg9,f9,i##f9, P(10,arg10,f10,i##f10, P(11,arg11,f11,i##f11, P(12,arg12,f12,i##f12, \
   P(13,arg13,f13,i##f13, P(14,arg14,f14,i##f14, P(15,arg15,f15,i##f15, P(16,arg16,f16,i##f16, \
   P(17,arg17,f17,i##f17, P(18,arg18,f18,i##f18, P(19,arg19,f19,i##f19, \
   RET##fn(ret0,f0, Act##fn(funct,name) (FN##fn(name) \
-      A(1 ), A(2 ), A(3 ), A(4 ), A(5 ), A(6 ), A(7 ), A(8 ), A(9 ), A(10), \
+      A(1), A(2), A(3), A(4), A(5), A(6), A(7), A(8), A(9), A(10), \
       A(11), A(12), A(13), A(14), A(15), A(16), A(17), A(18), A(19) \
-      ))))))))))))))))))))) \
+     ))))))))))))))))))))) \
   FAIL##f0 \
 }
 
@@ -700,7 +628,20 @@ static sock_fn sockF [] = {
 #   define EL(funct) { 0, #funct, sock##funct },
 #   include "sockprotolist.h"
 #   undef EL
-
+    
+    /* handy aliases (also for compatibility) */
+    { 0, "DeleteWidget", sockDeleteObj },
+    { 0, "DeleteGadget", sockDeleteObj },
+    { 0, "MapGadget",    sockMapWidget },
+    { 0, "UnMapGadget",  sockUnMapWidget },
+    { 0, "RecursiveDeleteGadget", sockRecursiveDeleteWidget },
+    { 0, "DeleteWindow", sockDeleteObj },
+    { 0, "MapWindow",    sockMapWidget },
+    { 0, "UnMapWindow",  sockUnMapWidget },
+    { 0, "RecursiveDeleteWindow", sockRecursiveDeleteWidget },
+    { 0, "DeleteMenuItem", sockDeleteObj },
+    { 0, "DeleteMenu",   sockDeleteObj },
+    { 0, "DeleteMsgPort", sockDeleteObj },
     { 0, NULL, (void (*)(void))0 }
 };
 
@@ -756,7 +697,7 @@ static uldat GetRandomData(void) {
 	for (; len < AuthLen; len += got) {
 	    got = read(ufd, AuthData + len, (size_t)(AuthLen - len));
 	    if (got < 0) {
-		if (errno == EINTR || errno == EAGAIN)
+		if (errno == EINTR || errno == EWOULDBLOCK)
 		    got = 0;
 		else
 		    break;
@@ -794,7 +735,7 @@ static byte CreateAuth(byte *path) {
 	if (len == AuthLen) for (len = 0; len < AuthLen; len += got) {
 	    got = write(fd, AuthData + len, AuthLen - len);
 	    if (got < 0) {
-		if (errno == EINTR || errno == EAGAIN)
+		if (errno == EINTR || errno == EWOULDBLOCK)
 		    got = 0;
 		else
 		    break;
@@ -824,7 +765,7 @@ static byte InitAuth(void) {
     for (len = 0; len < AuthLen; len += got) {
 	got = read(fd, AuthData + len, AuthLen - len);
 	if (got < 0) {
-	    if (errno == EINTR || errno == EAGAIN)
+	    if (errno == EINTR || errno == EWOULDBLOCK)
 		got = 0;
 	    else {
 		close(fd);
@@ -907,7 +848,7 @@ static int EnsureRead(int fd, uldat slot, uldat len) {
     if (max < len) {
 	got = TryRead(fd, slot, len - max);
 	
-	if (got == 0 || (got < 0 && errno != EINTR && errno != EAGAIN))
+	if (got == 0 || (got < 0 && errno != EINTR && errno != EWOULDBLOCK))
 	    return -1;
 
 	if (got > 0)
@@ -931,7 +872,7 @@ static void Wait4Auth(int fd, uldat slot) {
 	t = RemoteReadGetQueue(Slot, NULL);
 	if (!CmpMem(t, t+digestLen, digestLen)) {
 	    /* OK! */
-	    LS.HandlerIO = SocketIO;
+	    LS.HandlerIO.S = SocketIO;
 	    RemoteReadDeQueue(Slot, digestLen*2);
 	    SendUldat(GO_MAGIC);
 	    return;
@@ -976,11 +917,11 @@ static void Wait4Magic(int fd, uldat slot, byte isUnix) {
 
 	if (SendTwinMagic()) {
 	    if (isUnix) {
-		LS.HandlerIO = SocketIO;
+		LS.HandlerIO.S = SocketIO;
 		if (SendUldat(GO_MAGIC))
 		    return;
 	    } else {
-		LS.HandlerIO = Wait4Auth;
+		LS.HandlerIO.S = Wait4Auth;
 		if (SendUldat(WAIT_MAGIC) && SendChallenge())
 		    return;
 	    }
@@ -1034,8 +975,8 @@ static void inetSocketIO(int fd, uldat slot) {
 }
 
 static void sockKillSlot(uldat slot) {
-    msgport *MsgPort;
-    display_hw *D_HW;
+    msgport MsgPort;
+    display_hw D_HW;
     
     if (slot != NOSLOT) {
 	
@@ -1153,20 +1094,233 @@ static void SocketIO(int fd, uldat slot) {
 	    Slot = gzSlot;
 #endif
 	
-    } else if (!len || (len == (uldat)-1 && errno != EINTR && errno != EAGAIN)) {
+    } else if (!len || (len == (uldat)-1 && errno != EINTR && errno != EWOULDBLOCK)) {
 	/* let's close this sucker */
 	Ext(Remote,KillSlot)(Slot);
     }
 }
 
+
+
+/* shortcut: add a (tmsg) in the remote MsgPort's file descriptor queue */
+static byte ShortcutSendMsg(msgport MsgPort, udat Len, CONST byte *Data) {
+    tmsg tMsg = (tmsg)Data;
+    
+    switch (tMsg->Type) {
+      /* the only types of messages allowed between clients: */
+      case TW_MSG_USER_CONTROL:
+      case TW_MSG_USER_CLIENTMSG:
+	tMsg->Len -= sizeof(uldat);
+	tMsg->Magic = MSG_MAGIC;
+	RemoteWriteQueue(MsgPort->RemoteData.FdSlot, Len, Data);
+	return TRUE;
+    }
+    return FALSE;
+}
+
+
+#define tDelta ((udat)(size_t)&(((tmsg)0)->Event))
+#define  Delta ((udat)(size_t)&(((msg)0)->Event))
+#define tOffset(x) ((udat)(size_t)&(((tmsg)0)->Event.x))
+
+/* extract the (tmsg) from Data, turn it into a (msg) and send it to MsgPort */
+static byte SendToMsgPort(msgport MsgPort, udat Len, CONST byte *Data) {
+    msgport Sender;
+    msg Msg;
+    tmsg tMsg = (tmsg)Data;
+    udat _Len, minType;
+    byte ok = TRUE;
+    
+    if (MsgPort && Len && tMsg && Len >= tDelta && Len == tMsg->Len &&
+	tMsg->Magic == msg_magic) {
+
+	Sender = RemoteGetMsgPort(Slot);
+	if (Sender && Sender->AttachHW)
+	    minType = TW_MSG_DISPLAY;
+	else
+	    minType = TW_MSG_USER_FIRST;
+	if (tMsg->Type < minType)
+	    /* not allowed! */
+	    return FALSE;
+	    
+
+
+	_Len = FnMsg->Size - Delta;
+	switch (tMsg->Type) {
+	  case TW_MSG_WINDOW_KEY:
+	    if (Len >= tOffset(EventKeyboard.AsciiSeq)) {
+		if (tMsg->Event.EventKeyboard.SeqLen + tOffset(EventKeyboard.AsciiSeq) > Len)
+		    tMsg->Event.EventKeyboard.SeqLen = Len - tOffset(EventKeyboard.AsciiSeq);
+	    } else
+		/* (tmsg) too short */
+		return FALSE;
+	    _Len += tMsg->Event.EventKeyboard.SeqLen;
+	    break;
+	  case TW_MSG_USER_CONTROL:
+	    if (Len >= tOffset(EventControl.Data)) {
+		if (tMsg->Event.EventControl.Len + tOffset(EventControl.Data) > Len)
+		    tMsg->Event.EventControl.Len = Len - tOffset(EventControl.Data);
+	    } else
+		/* (tmsg) too short */
+		return FALSE;
+	    _Len += tMsg->Event.EventControl.Len;
+	    break;
+	  case TW_MSG_USER_CLIENTMSG:
+	    if (Len >= tOffset(EventClientMsg.Data)) {
+		if (tMsg->Event.EventClientMsg.Len + tOffset(EventClientMsg.Data) > Len)
+		    tMsg->Event.EventClientMsg.Len = Len - tOffset(EventClientMsg.Data);
+	    } else
+		/* (tmsg) too short */
+		return FALSE;
+	    _Len += tMsg->Event.EventClientMsg.Len;
+	    break;
+	  default:
+	    break;
+	}
+
+	if (MsgPort->RemoteData.Fd != NOFD && MsgPort->Handler == SocketH) {
+	    /*
+	     * shortcut: we have a (tmsg); instead of turning it into a (msg)
+	     * then have SocketH() call sockSendMsg() to turn it back into a (tmsg),
+	     * we directly copy it.
+	     */
+	    if (ShortcutSendMsg(MsgPort, Len, Data))
+		return ok;
+	}
+
+	if ((Msg = Do(Create,Msg)(FnMsg, tMsg->Type, _Len))) {
+		
+	    Msg->Event.EventCommon.Window =
+		(void *)Id2Obj(window_magic >> magic_shift,
+			       tMsg->Event.EventCommon.Window);
+
+	    switch (tMsg->Type) {
+#if defined(CONF__MODULES) || defined (CONF_HW_DISPLAY)
+	      case TW_MSG_DISPLAY:
+		if (sizeof(struct s_tevent_display) == sizeof(twindow) + 4*sizeof(dat) + sizeof(uldat)) {
+		    CopyMem((void *)&tMsg->Event.EventDisplay.Code,
+			    (void *)& Msg->Event.EventDisplay.Code, 4*sizeof(dat));
+		} else {
+		    Msg->Event.EventDisplay.Code   = tMsg->Event.EventDisplay.Code;
+		    Msg->Event.EventDisplay.Len    = tMsg->Event.EventDisplay.Len;
+		    Msg->Event.EventDisplay.X      = tMsg->Event.EventDisplay.X;
+		    Msg->Event.EventDisplay.Y      = tMsg->Event.EventDisplay.Y;
+		}
+		if (!(Msg->Event.EventDisplay.Data =
+		      CloneMem(tMsg->Event.EventDisplay.Data, tMsg->Event.EventDisplay.Len))
+		    && tMsg->Event.EventDisplay.Len)
+		    
+		    ok = FALSE;
+		      
+		break;
+#endif /* defined(CONF__MODULES) || defined (CONF_HW_DISPLAY) */
+	      case TW_MSG_WINDOW_KEY:
+		if (sizeof(struct s_tevent_keyboard) == sizeof(twindow) + 3*sizeof(dat) + 2*sizeof(byte)) {
+		    CopyMem((void *)&tMsg->Event.EventKeyboard.Code,
+			    (void *)& Msg->Event.EventKeyboard.Code, 3*sizeof(dat) + sizeof(byte));
+		} else {
+		    Msg->Event.EventKeyboard.Code       = tMsg->Event.EventKeyboard.Code;
+		    Msg->Event.EventKeyboard.ShiftFlags = tMsg->Event.EventKeyboard.ShiftFlags;
+		    Msg->Event.EventKeyboard.SeqLen     = tMsg->Event.EventKeyboard.SeqLen;
+		    Msg->Event.EventKeyboard.pad        = tMsg->Event.EventKeyboard.pad;
+		}
+		CopyMem(tMsg->Event.EventKeyboard.AsciiSeq, Msg->Event.EventKeyboard.AsciiSeq,
+			tMsg->Event.EventKeyboard.SeqLen);
+		
+		Msg->Event.EventKeyboard.AsciiSeq[tMsg->Event.EventKeyboard.SeqLen] = '\0';
+		
+		break;
+	      case TW_MSG_WINDOW_MOUSE:
+		if (sizeof(struct s_tevent_mouse) == sizeof(twindow) + 4*sizeof(dat)) {
+		    CopyMem((void *)&tMsg->Event.EventMouse.Code,
+			    (void *)& Msg->Event.EventMouse.Code, 4*sizeof(dat));
+		} else {
+		    Msg->Event.EventMouse.Code          = tMsg->Event.EventMouse.Code;
+		    Msg->Event.EventMouse.ShiftFlags    = tMsg->Event.EventMouse.ShiftFlags;
+		    Msg->Event.EventMouse.X             = tMsg->Event.EventMouse.X;
+		    Msg->Event.EventMouse.Y             = tMsg->Event.EventMouse.Y;
+		}
+		break;
+	      case TW_MSG_SELECTIONCLEAR:
+		if (sizeof(struct s_tevent_common) == sizeof(twindow) + 2*sizeof(dat)) {
+		    CopyMem((void *)&tMsg->Event.EventCommon.Code,
+			    (void *)& Msg->Event.EventCommon.Code, 2*sizeof(dat));
+		} else {
+		    Msg->Event.EventCommon.Code         = tMsg->Event.EventCommon.Code;
+		    Msg->Event.EventCommon.pad          = tMsg->Event.EventCommon.pad;
+		}
+		break;
+
+/* TODO: is this needed? */
+#if 0
+	      case TW_MSG_WINDOW_CHANGE:
+		Push(t, udat,    Msg->Event.EventWindow.Code);
+		Push(t, udat,    Msg->Event.EventWindow.XWidth);
+		Push(t, udat,    Msg->Event.EventWindow.YWidth);
+		break;
+	      case TW_MSG_WINDOW_GADGET:
+		Push(t, udat,    Msg->Event.EventGadget.Code);
+		Push(t, udat,    Msg->Event.EventGadget.pad);
+		break;
+	      case TW_MSG_MENU_ROW:
+		Push(t, udat,    Msg->Event.EventMenu.Code);
+		Push(t, udat,    Msg->Event.EventMenu.pad);
+		Push(t, tmenu,   Obj2Id(Msg->Event.EventMenu.Menu));
+		break;
+#endif
+	      case TW_MSG_USER_CONTROL:
+		if (sizeof(struct s_tevent_control) == sizeof(twindow) + 4*sizeof(dat) + sizeof(uldat)) {
+		    CopyMem((void *)&tMsg->Event.EventControl.Code,
+			    (void *)& Msg->Event.EventControl.Code, 4*sizeof(dat));
+		} else {
+		    Msg->Event.EventControl.Code  = tMsg->Event.EventControl.Code;
+		    Msg->Event.EventControl.Len   = tMsg->Event.EventControl.Len;
+		    Msg->Event.EventControl.X     = tMsg->Event.EventControl.X;
+		    Msg->Event.EventControl.Y     = tMsg->Event.EventControl.Y;
+		}
+		CopyMem(tMsg->Event.EventControl.Data, Msg->Event.EventControl.Data,
+			tMsg->Event.EventControl.Len);
+		
+		Msg->Event.EventControl.Data[Msg->Event.EventControl.Len] = '\0';
+		break;
+	      case TW_MSG_USER_CLIENTMSG:
+		if (sizeof(struct s_tevent_clientmsg) == sizeof(twindow) + 2*sizeof(dat) + sizeof(uldat)) {
+		    CopyMem((void *)&tMsg->Event.EventControl.Code,
+			    (void *)& Msg->Event.EventControl.Code, 2*sizeof(dat));
+		} else {
+		    Msg->Event.EventControl.Code  = tMsg->Event.EventControl.Code;
+		    Msg->Event.EventControl.Len   = tMsg->Event.EventControl.Len;
+		}
+		CopyMem(tMsg->Event.EventControl.Data, Msg->Event.EventControl.Data,
+			tMsg->Event.EventControl.Len);
+		
+		break;
+	      default:
+		ok = FALSE;
+		break;
+	    }
+	    
+	    if (ok) {
+		SendMsg(MsgPort, Msg);
+		return TRUE;
+	    }
+	    
+	    Delete(Msg);
+	}
+    }
+    return FALSE;
+}
+
 /*
+ * turn the (msg) into a (tmsg) and write it on the MsgPort file descriptor.
+ * 
  * this can be called in nasty places like detaching non-exclusive displays
  * when an exclusive one is started. Must preserve Slot, Fd and other globals!
  */
-static void sockSendMsg(msgport *MsgPort, msg *Msg) {
+static void sockSendMsg(msgport MsgPort, msg Msg) {
     tevent_any Event = (tevent_any)0;
     uldat Len = 0, Tot;
-    byte *t, Easy = sizeof(twindow) == sizeof(window *);
+    byte *t, Easy = sizeof(twindow) == sizeof(window);
 
     uldat save_Slot = Slot;
     int save_Fd = Fd;
@@ -1185,7 +1339,7 @@ static void sockSendMsg(msgport *MsgPort, msg *Msg) {
 	    t += Tot - Len;
 	    
 	    Push(t, twindow, NOID); /* not used here */
-	    if (sizeof(event_display) == sizeof(window *) + 4*sizeof(dat) + sizeof(byte *)) {
+	    if (sizeof(event_display) == sizeof(window) + 4*sizeof(dat) + sizeof(byte *)) {
 		PushV(t, 4*sizeof(dat), &Msg->Event.EventDisplay.Code);
 	    } else {
 		Push(t, udat,    Msg->Event.EventDisplay.Code);
@@ -1198,7 +1352,7 @@ static void sockSendMsg(msgport *MsgPort, msg *Msg) {
 	break;
 #endif /* defined(CONF__MODULES) || defined (CONF_HW_DISPLAY) */
       case MSG_WINDOW_KEY:
-	if (Easy && sizeof(event_keyboard) == sizeof(window *) + 3*sizeof(dat) + 2*sizeof(byte))
+	if (Easy && sizeof(event_keyboard) == sizeof(window) + 3*sizeof(dat) + 2*sizeof(byte))
 	    break;
 	else
 	    Easy = FALSE;
@@ -1214,7 +1368,7 @@ static void sockSendMsg(msgport *MsgPort, msg *Msg) {
 	}
 	break;
       case MSG_WINDOW_MOUSE:
-	if (Easy && sizeof(event_mouse) == sizeof(window *) + 4*sizeof(dat))
+	if (Easy && sizeof(event_mouse) == sizeof(window) + 4*sizeof(dat))
 	    break;
 	else
 	    Easy = FALSE;
@@ -1229,7 +1383,7 @@ static void sockSendMsg(msgport *MsgPort, msg *Msg) {
 	}
 	break;
       case MSG_WINDOW_CHANGE:
-	if (Easy && sizeof(event_window) == sizeof(window *) + 4*sizeof(dat))
+	if (Easy && sizeof(event_window) == sizeof(window) + 4*sizeof(dat))
 	    break;
 	else
 	    Easy = FALSE;
@@ -1243,7 +1397,7 @@ static void sockSendMsg(msgport *MsgPort, msg *Msg) {
 	}
 	break;
       case MSG_WINDOW_GADGET:
-	if (Easy && sizeof(event_gadget) == sizeof(window *) + 2*sizeof(dat))
+	if (Easy && sizeof(event_gadget) == sizeof(window) + 2*sizeof(dat))
 	    break;
 	else
 	    Easy = FALSE;
@@ -1252,11 +1406,11 @@ static void sockSendMsg(msgport *MsgPort, msg *Msg) {
 	    t += Tot - Len;
 	    Push(t, twindow, Obj2Id(Msg->Event.EventGadget.Window));
 	    Push(t, udat,    Msg->Event.EventGadget.Code);
-	    Push(t, udat,    Msg->Event.EventGadget.pad);
+	    Push(t, udat,    Msg->Event.EventGadget.Flags);
 	}
 	break;
       case MSG_MENU_ROW:
-	if (Easy && sizeof(event_menu) == sizeof(window *) + 2*sizeof(udat) + sizeof(menu *))
+	if (Easy && sizeof(event_menu) == sizeof(window) + 2*sizeof(udat) + sizeof(menu))
 	    break;
 	else
 	    Easy = FALSE;
@@ -1270,7 +1424,7 @@ static void sockSendMsg(msgport *MsgPort, msg *Msg) {
 	}
 	break;
       case MSG_SELECTION:
-	if (Easy && sizeof(event_selection) == sizeof(window *) + 4*sizeof(dat))
+	if (Easy && sizeof(event_selection) == sizeof(window) + 4*sizeof(dat))
 	    break;
 	else
 	    Easy = FALSE;
@@ -1285,7 +1439,7 @@ static void sockSendMsg(msgport *MsgPort, msg *Msg) {
 	}
 	break;
       case MSG_SELECTIONREQUEST:
-	if (Easy && sizeof(event_selectionrequest) == sizeof(window *) + 2*sizeof(dat) + sizeof(obj *) + sizeof(ldat))
+	if (Easy && sizeof(event_selectionrequest) == sizeof(window) + 2*sizeof(dat) + sizeof(obj) + sizeof(ldat))
 	    break;
 	else
 	    Easy = FALSE;
@@ -1300,7 +1454,7 @@ static void sockSendMsg(msgport *MsgPort, msg *Msg) {
 	}
 	break;
       case MSG_SELECTIONNOTIFY:
-	if (Easy && sizeof(event_selectionnotify) == sizeof(window *) + 2*sizeof(dat) +
+	if (Easy && sizeof(event_selectionnotify) == sizeof(window) + 2*sizeof(dat) +
 	    3*sizeof(ldat) + MAX_MIMELEN + sizeof(byte *))
 	    break;
 	else
@@ -1319,10 +1473,42 @@ static void sockSendMsg(msgport *MsgPort, msg *Msg) {
 	    PushV(t, Msg->Event.EventSelectionNotify.Len, Msg->Event.EventSelectionNotify.Data);
 	}
 	break;
+	
+      case MSG_USER_CONTROL:
+	if (Easy && sizeof(event_control) == sizeof(window) + 4*sizeof(dat) + sizeof(uldat))
+	    break;
+	else
+	    Easy = FALSE;
+	Reply(Msg->Type, Len = sizeof(twindow) + 4*sizeof(dat) + sizeof(byte)
+	      + Msg->Event.EventControl.Len, NULL);
+	if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
+	    t += Tot - Len;
+	    Push(t, twindow, Obj2Id(Msg->Event.EventControl.Window));
+	    Push(t, udat,    Msg->Event.EventControl.Code);
+	    Push(t, udat,    Msg->Event.EventControl.Len);
+	    Push(t, dat,     Msg->Event.EventControl.X);
+	    Push(t, dat,     Msg->Event.EventControl.Y);
+	    PushV(t, Msg->Event.EventControl.Len + 1 /*the '\0'*/, Msg->Event.EventControl.Data);
+	}
+	break;
+	
+      case MSG_USER_CLIENTMSG:
+	if (Easy && sizeof(event_clientmsg) == sizeof(window) + 2*sizeof(dat) + sizeof(uldat))
+	    break;
+	else
+	    Easy = FALSE;
+	Reply(Msg->Type, Len = sizeof(twindow) + 2*sizeof(dat) + Msg->Event.EventClientMsg.Len, NULL);
+	if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
+	    t += Tot - Len;
+	    Push(t, twindow, Obj2Id(Msg->Event.EventControl.Window));
+	    Push(t, udat,    Msg->Event.EventControl.Code);
+	    Push(t, udat,    Msg->Event.EventControl.Len);
+	    PushV(t, Msg->Event.EventControl.Len, Msg->Event.EventControl.Data);
+	}
+	break;
+	
       default:
-	Slot = save_Slot;
-	Fd = save_Fd;
-	return;
+	Easy = FALSE;
     }
     if (Easy) {
 	Msg->Event.EventCommon.Window = (void *)Obj2Id(Msg->Event.EventCommon.Window);
@@ -1336,22 +1522,26 @@ static void sockSendMsg(msgport *MsgPort, msg *Msg) {
     Slot = save_Slot;
     Fd = save_Fd;
 }
-
-static void SocketH(msgport *MsgPort) {
-    msg *Msg;
+	
+	
+static void SocketH(msgport MsgPort) {
+    msg Msg;
     byte buf[10], len;
+    window W;
     
     while ((Msg=MsgPort->FirstMsg)) {
 	Remove(Msg);
 
-	/* handle xterm-style mouse reporting... */
-	if (Msg->Type==MSG_WINDOW_MOUSE &&
-	    (len = CreateXTermMouseEvent(&Msg->Event.EventMouse, 10, buf))) {
+	if (Msg->Type==MSG_WINDOW_MOUSE && (W = Msg->Event.EventMouse.Window) && W->TtyData &&
+	    W->TtyData->Flags & (TTY_REPORTMOUSE|TTY_REPORTMOUSE2)) {
+	    
+	    len = CreateXTermMouseEvent(&Msg->Event.EventMouse, 10, buf);
 	    /*
 	     * SyntheticKey() will send an appropriate keyboard message to this MsgPort
 	     * and we will sockSendMsg() it later in the while() loop.
 	     */
-	    SyntheticKey(Msg->Event.EventMouse.Window, TW_XTermMouse, 0, len, buf);
+	    if (len)
+		SyntheticKey(Msg->Event.EventMouse.Window, TW_XTermMouse, 0, len, buf);
 	} else
 	    sockSendMsg(MsgPort, Msg);
 	
@@ -1359,29 +1549,54 @@ static void SocketH(msgport *MsgPort) {
     }
 }
 
-static void SafeDeleteObj(void *V) {
-    obj *O = V, *P = V;
-    msgport *MsgPort = FdList[Slot].MsgPort;
-	
-    if (MsgPort) while (P) {
-	if (IS_MSGPORT(P) && P == (obj *)MsgPort) {
-	    Delete(O);
-	    return;
+static msgport GetMsgPortObj(obj P) {
+    while (P) {
+	if (IS_MSGPORT(P)) {
+	    return (msgport)P;
 	}
-	if (IS_WINDOW(P))
-	    P = (obj *) ((window *)P)->Menu;
-	else if (IS_MUTEX(P))
-	    P = (obj *) ((mutex *)P)->MsgPort;
-	else
-	    P = (obj *)P->Parent;
+	switch (P->Id >> magic_shift) {
+	  case row_magic:
+	  case menuitem_magic:
+	  case menu_magic:
+	    P = (obj) P->Parent;
+	    break;
+	  case mutex_magic:
+	    P = (obj) ((mutex)P)->Owner;
+	    break;
+	  default:
+	    if (IS_WIDGET(P))
+		P = (obj) ((widget)P)->Owner;
+	    else
+		P = (obj)0;
+	    break;
+	}
     }
+    return (msgport)P;
+}
+
+static void DeleteObj(void *V) {
+    obj O = (obj)V;
+    msgport MsgPort = FdList[Slot].MsgPort;
+    
+    if (MsgPort && MsgPort == GetMsgPortObj(O))
+	Delete(O);
+}
+
+static void RecursiveDeleteWidget(void *V) {
+    msgport MsgPort = FdList[Slot].MsgPort;
+
+    /* avoid too much visual activity... UnMap top-level widget immediately */
+    Act(UnMap,(widget)V)((widget)V);
+
+    if (MsgPort)
+	Act(RecursiveDelete,(widget)V)((widget)V, MsgPort);
 }
 
 /* last 3 args are actually useless for remote clients */
-static msgport *CreateMsgPort(byte LenTitle, CONST byte *Title, time_t WakeUp, frac_t WakeUpFrac, byte Flags) {
-    msgport *MsgPort;
+static msgport CreateMsgPort(byte LenTitle, CONST byte *Title, time_t WakeUp, frac_t WakeUpFrac, byte Flags) {
+    msgport MsgPort;
     
-    if ((MsgPort = Do(Create,MsgPort)(FnMsgPort, LenTitle, Title, WakeUp, WakeUpFrac, Flags, SocketH))) {
+    if ((MsgPort = Do(Create,MsgPort)(FnMsgPort, LenTitle, Title, 0, 0, 0, SocketH))) {
 	RegisterMsgPort(MsgPort, Slot);
 	MsgPort->ShutDownHook = sockShutDown;
     }
@@ -1510,31 +1725,26 @@ static void NeedResizeDisplay(void){
  * so it bypasses any compression.
  */
 static void AttachHW(uldat len, CONST byte *arg, byte flags) {
-    display_hw *D_HW;
+    display_hw D_HW;
     byte buf[2] = "\0",
-	redirect = flags & TW_ATTACH_HW_REDIRECT,
+	verbose = flags & TW_ATTACH_HW_REDIRECT,
 	exclusive = flags & TW_ATTACH_HW_EXCLUSIVE;
-    int errfd, realFd;
+    int realFd;
     fd_set set;
     struct timeval tv = {2,0};
     
     realFd = LS.Fd >= 0 ? LS.Fd : FdList[LS.pairSlot].Fd;
 
     if (!LS.MsgPort) {
-	if (redirect)
+	if (verbose)
 	    write(realFd, "twin: AttachHW(): client did not create a MsgPort\n\0", 52);
 	else
 	    write(realFd, buf, 2);
 	return;
     }
     
-    if (redirect) {
-	if ((errfd = dup(2)) >= 0) {
-	    close(2);
-	    dup2(realFd, 2);
-	} else
-	    redirect = 0;
-    }
+    if (verbose)
+	verbose = RegisterPrintk(realFd);
 	
     if ((D_HW = AttachDisplayHW(len, arg, Slot, exclusive))) {
 	if (D_HW->NeedHW & NEEDPersistentSlot)
@@ -1559,11 +1769,8 @@ static void AttachHW(uldat len, CONST byte *arg, byte flags) {
 	;
     read(realFd, buf, 1);
 
-    if (redirect) {
-	close(2);
-	dup2(errfd, 2);
-	close(errfd);
-    }
+    if (verbose)
+	UnRegisterPrintk();
 }
 
 	    
@@ -1577,23 +1784,23 @@ static void SetFontTranslation(CONST byte trans[0x80]) {
 }
 
 
-static obj *GetOwnerSelection(void) {
+static obj GetOwnerSelection(void) {
     return TwinSelectionGetOwner();
 }
 
-static void SetOwnerSelection(msgport *Owner, time_t Time, frac_t Frac) {
-    if (Owner && Owner == LS.MsgPort)
-	TwinSelectionSetOwner((obj *)Owner, Time, Frac);
+static void SetOwnerSelection(time_t Time, frac_t Frac) {
+    if (LS.MsgPort)
+	TwinSelectionSetOwner((obj)LS.MsgPort, Time, Frac);
 }
 
-static void NotifySelection(obj *Requestor, uldat ReqPrivate, uldat Magic, CONST byte MIME[MAX_MIMELEN],
+static void NotifySelection(obj Requestor, uldat ReqPrivate, uldat Magic, CONST byte MIME[MAX_MIMELEN],
 			    uldat Len, CONST byte *Data) {
     TwinSelectionNotify(Requestor, ReqPrivate, Magic, MIME, Len, Data);
 }
 
-static void RequestSelection(obj *Owner, uldat ReqPrivate) {
+static void RequestSelection(obj Owner, uldat ReqPrivate) {
     if (LS.MsgPort)
-	TwinSelectionRequest((obj *)LS.MsgPort, ReqPrivate, Owner);
+	TwinSelectionRequest((obj)LS.MsgPort, ReqPrivate, Owner);
 }
 
 
@@ -1602,7 +1809,7 @@ static void RequestSelection(obj *Owner, uldat ReqPrivate) {
 # include "version.h"
 MODULEVERSION;
 
-byte InitModule(module *Module)
+byte InitModule(module Module)
 #else
 byte InitSocket(void)
 #endif
@@ -1610,7 +1817,7 @@ byte InitSocket(void)
     char opt[15];
 
     if (!InitAuth()) {
-	fprintf(stderr, "twin: failed to create ~/.TwinAuth: %s\n", ErrStr);
+	printk("twin: failed to create ~/.TwinAuth: %s\n", ErrStr);
 	return FALSE;
     }
     
@@ -1677,12 +1884,12 @@ byte InitSocket(void)
 	
 	return TRUE;
     }
-    fprintf(stderr, "twin: failed to create sockets: %s\n", ErrStr);
+    printk("twin: failed to create sockets: %s\n", ErrStr);
     return FALSE;
 }
 
 #ifdef CONF_THIS_MODULE
-void QuitModule(module *Module) {
+void QuitModule(module Module) {
     if (unixSlot != NOSLOT) {
 	UnRegisterRemote(unixSlot);
 	close(unixFd);
@@ -1692,7 +1899,7 @@ void QuitModule(module *Module) {
 	close(inetFd);
     }
     for (Slot = 0; Slot < FdTop; Slot++) {
-	if (LS.Fd != NOFD && (LS.HandlerIO == SocketIO || LS.HandlerIO == Wait4Auth)) {
+	if (LS.Fd != NOFD && (LS.HandlerIO.S == SocketIO || LS.HandlerIO.S == Wait4Auth)) {
 	    Ext(Remote,KillSlot)(Slot);
 	}
     } 

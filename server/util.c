@@ -23,6 +23,7 @@
 #include "main.h"
 #include "draw.h"
 #include "resize.h"
+#include "printk.h"
 #include "util.h"
 
 #include "hw.h"
@@ -30,7 +31,7 @@
 #include "libTwkeys.h"
 
 udat ErrNo;
-CONST byte *ErrStr;
+byte CONST * ErrStr;
 
 #if 0
 uldat MemLeft(void) {
@@ -176,7 +177,7 @@ dat CmpTime(timevalue *T1, timevalue *T2) {
     return (dat)-1;
 }
 
-static dat CmpCallTime(msgport *m1, msgport *m2) {
+static dat CmpCallTime(msgport m1, msgport m2) {
     if ((!m1->FirstMsg) != (!m2->FirstMsg))
 	/* one of the two doesn't have msgs */
 	return m1->FirstMsg ? (dat)-1 : (dat)1;
@@ -239,7 +240,7 @@ uldat HexStrToNum(byte *StringHex) {
 */
 
 /* adapted from similar code in bdflush */
-void SetArgv_0(byte **argv, CONST byte *src) {
+void SetArgv_0(byte *CONST *argv, byte CONST * src) {
     byte *ptr;
     uldat count, len = LenStr(src);
     
@@ -262,8 +263,8 @@ void SetArgv_0(byte **argv, CONST byte *src) {
  * move a msgport to the right place in an already sorted list,
  * ordering by CallTime
  */
-void SortMsgPortByCallTime(msgport *Port) {
-    msgport *other;
+void SortMsgPortByCallTime(msgport Port) {
+    msgport other;
     if ((other = Port->Next) && CmpCallTime(Port, other) > 0) {
 	Remove(Port);
 	do {
@@ -291,10 +292,10 @@ void SortMsgPortByCallTime(msgport *Port) {
  * we use a bubble sort... no need to optimize to death this
  */
 void SortAllMsgPortsByCallTime(void) {
-    msgport *Max, *This, *Port = All->FirstMsgPort;
-    msgport *Start, *End;
+    msgport Max, This, Port = All->FirstMsgPort;
+    msgport Start, End;
     
-    Start = End = (msgport *)0;
+    Start = End = (msgport)0;
     
     while (Port) {
 	Max = This = Port;
@@ -322,8 +323,8 @@ void SortAllMsgPortsByCallTime(void) {
 }
 
 
-byte SendControlMsg(msgport *MsgPort, udat Code, udat Len, CONST byte *Data) {
-    msg *Msg;
+byte SendControlMsg(msgport MsgPort, udat Code, udat Len, CONST byte *Data) {
+    msg Msg;
     event_control *Event;
     
     if (MsgPort && (Msg = Do(Create,Msg)(FnMsg, MSG_CONTROL, sizeof(event_control) + Len))) {
@@ -371,9 +372,13 @@ byte SelectionStore(uldat Magic, CONST byte MIME[MAX_MIMELEN], uldat Len, CONST 
     return TRUE;
 }
 
-byte SetSelectionFromWindow(window *Window) {
+byte SetSelectionFromWindow(window Window) {
     uldat y, slen, len;
-    byte *sData, *Data, ok = TRUE;
+    byte *sData, *Data;
+    byte ok = TRUE;
+    
+    if (!(Window->Attrib & WINDOW_DO_SEL))
+	return ok;
     
     if (!(Window->Attrib & WINDOW_ANYSEL) || Window->YstSel > Window->YendSel ||
 	(Window->YstSel == Window->YendSel && Window->XstSel > Window->XendSel)) {
@@ -467,11 +472,11 @@ byte SetSelectionFromWindow(window *Window) {
 	return ok;
     }
     if (!(Window->Flags & WINFL_USEANY)) {
-	row *Row;
+	row Row;
 	
 	/* Gap not supported! */
 	y = Window->YstSel;
-	Row = Act(SearchRow,Window)(Window, y);
+	Row = Act(FindRow,Window)(Window, y);
 	
 	if (Row && Row->Text) {
 	    if (y < Window->YendSel)
@@ -487,12 +492,12 @@ byte SetSelectionFromWindow(window *Window) {
 	    ok &= SelectionAppend(1, "\n");
 
 	for (y = Window->YstSel + 1; ok && y < Window->YendSel; y++) {
-	    if ((Row = Act(SearchRow,Window)(Window, y)) && Row->Text)
+	    if ((Row = Act(FindRow,Window)(Window, y)) && Row->Text)
 		ok &= SelectionAppend(Row->Len, Row->Text);
 	    ok &= SelectionAppend(1, "\n");
 	}
 	if (Window->YendSel > Window->YstSel) {
-	    if (Window->XendSel >= 0 && (Row = Act(SearchRow,Window)(Window, Window->YendSel)) && Row->Text)
+	    if (Window->XendSel >= 0 && (Row = Act(FindRow,Window)(Window, Window->YendSel)) && Row->Text)
 		ok &= SelectionAppend(Min2(Row->Len, Window->XendSel+1), Row->Text);
 	    if (!Row || !Row->Text || Row->Len <= Window->XendSel)
 		ok &= SelectionAppend(1, "\n");
@@ -557,23 +562,22 @@ byte CreateXTermMouseEvent(event_mouse *Event, byte buflen, byte *buf) {
 }
 
 void ResetBorderPattern(void) {
-    msgport *MsgP;
-    menu *Menu;
-    window *W;
+    msgport MsgP;
+    widget W;
     
     for (MsgP = All->FirstMsgPort; MsgP; MsgP=MsgP->Next) {
-	for (Menu = MsgP->FirstMenu; Menu; Menu=Menu->Next) {
-	    for (W = Menu->FirstWindow; W; W=W->ONext) {
-		W->BorderPattern[0] = W->BorderPattern[1] = NULL;
-	    }
+	for (W = MsgP->FirstW; W; W = W->ONext) {
+	    if (IS_WINDOW(W))
+		((window)W)->BorderPattern[0] = ((window)W)->BorderPattern[1] = NULL;
 	}
     }
 }
 
-void FallBackKeyAction(window *W, event_keyboard *EventK) {
+/* handle common keyboard actions like cursor moving */
+void FallBackKeyAction(window W, event_keyboard *EventK) {
     ldat NumRow, OldNumRow;
-	
-    switch (EventK->Code) {
+    
+    if (W->Attrib & WINDOW_AUTO_KEYS) switch (EventK->Code) {
       case TW_Up:
 	if (!W->MaxNumRow)
 	    break;
@@ -633,64 +637,63 @@ void FallBackKeyAction(window *W, event_keyboard *EventK) {
 /*
  * create a (malloced) array of non-space args
  * from arbitrary text command line
+ * 
+ * FIXME: need proper handling of double quotes:
+ * "a b" is the string `a b' NOT the two strings `"a' `b"'
+ * (same for single quotes, backslashes, ...)
  */
-byte **ExtractArgv(byte *text, uldat tlen) {
-    uldat len, l = tlen, argc = 0;
-    byte **argv, *s, c, cmd = 1;
+byte **TokenizeStringVec(uldat len, byte *s) {
+    byte **cmd = NULL, *buf, c;
+    uldat save_len, save_n, n = 0;
     
-    for (s = text, l = tlen; s && l--; s++) {
-	c = *s;
-	if (c != ' ') {
-	    argc += cmd;
-	    cmd = 0;
-	} else
-	    cmd = 1;
+    /* skip initial spaces */
+    while (len && ((c = *s) == '\0' || c == ' ')) {
+	len--, s++;
     }
+    save_len = len;
     
-    if (argc)
-	argc++; /* for the final NULL */
-    else
-	return NULL;
-    
-    if ((argv = (byte **)AllocMem( argc * sizeof(byte *) ))) {
-	argc = len = 0;
+    if (len && (buf = AllocMem(len + 1))) {
+	CopyMem(s, buf, len);
+	buf[len] = '\0';
 	
-	for (s = text, l = tlen; s && l--; s++) {
-	    c = *s;
-	    
-	    if (c != ' ') {
-		if (!len++)
-		    text = s;
-		
-	    } else if (len) {
-		if ((argv[argc++] = CloneStrL(text, len))) {
-		    len = 0;
-		    text = NULL;
-		} else {
-		    FreeArgv(argv);
-		    return NULL;
+	/* how many args? */
+	while (len) {
+	    len--, c = *s++;
+	    if (c && c != ' ') {
+		n++;
+		while (len && (c = *s) && c != ' ') {
+		    len--, s++;
 		}
 	    }
 	}
-	if (len && text && !(argv[argc++] = CloneStrL(text, len))) {
-	    FreeArgv(argv);
-	    return NULL;
+	if ((cmd = AllocMem((n + 1) * sizeof(byte *)))) {
+	    save_n = n;
+	    n = 0;
+	    len = save_len;
+	    s = buf;
+	    
+	    /* put args in cmd[] */
+	    while (len) {
+		len--, c = *s++;
+		if (c && c != ' ') {
+		    cmd[n++] = s - 1;
+		    while (len && (c = *s) && c != ' ') {
+			len--, s++;
+		    }
+		    *s = '\0'; /* safe, we did a malloc(len+1) */
+		}
+	    }
+	    cmd[n] = NULL; /* safe, we did a malloc(n+1) */
 	}
-	argv[argc] = NULL;
     }
-    return argv;
+    return cmd;
 }
 
-/*
- * free a malloced array of strings
- */
-void FreeArgv(byte **argv) {
-    byte **s;
-    
-    for (s = argv; s && *s; s++)
-	FreeMem(*s);
-    if (argv)
-	FreeMem(argv);
+void FreeStringVec(byte **cmd) {
+    if (cmd) {
+	FreeMem(cmd[0]);
+	FreeMem(cmd);
+    }
 }
 
 static byte fullTWD[]="/tmp/.Twin:\0\0\0";
@@ -722,7 +725,7 @@ byte SetTWDisplay(void) {
 	    return TRUE;
 	}
     }
-    fprintf(stderr, "twin: all TWDISPLAY already in use!\n"
+    printk("twin: all TWDISPLAY already in use!\n"
 	    "      Please cleanup stale /tmp/.Twin* sockets and try again\n");
     return FALSE;
 }
@@ -767,7 +770,7 @@ void CheckPrivileges(void) {
 #  ifdef CONF_TERM_DEVPTS
     if (Privilege < sgidtty) {
 	byte c;
-	fprintf(stderr, "twin: not running setgid tty.\n"
+	printk("twin: not running setgid tty.\n"
 		"      might be unable to start the terminal emulator.\n"
 		"      hit RETURN to continue, or CTRL-C to quit.\n");
 	read(0, &c, 1);
@@ -775,7 +778,7 @@ void CheckPrivileges(void) {
 #  else /* !CONF_TERM_DEVPTS */
     if (Privilege < suidroot) {
 	byte c;
-	fprintf(stderr, "twin: not running setuid root.\n"
+	printk("twin: not running setuid root.\n"
 		"      might be unable to start the terminal emulator.\n"
 		"      hit RETURN to continue, or CTRL-C to quit.\n");
 	read(0, &c, 1);
@@ -787,7 +790,7 @@ void CheckPrivileges(void) {
 #  ifdef CONF__MODULES
     if (Privilege == none) {
 	byte c;
-	fprintf(stderr, "twin: not running setgid tty or setuid root.\n"
+	printk("twin: not running setgid tty or setuid root.\n"
 		"      might be unable to start the terminal emulator module.\n"
 		"      hit RETURN to continue, or CTRL-C to quit.\n");
 	read(0, &c, 1);
@@ -806,31 +809,40 @@ void GetPrivileges(void) {
 
 /* finally, functions to manage Ids */
 
-static obj **IdList[magic_n];
+static obj *IdList[magic_n];
 static uldat IdSize[magic_n], IdTop[magic_n], IdBottom[magic_n];
 
 INLINE uldat IdListGrow(byte i) {
     uldat oldsize, size;
-    obj **newIdList;
+    obj *newIdList;
     
     oldsize = IdSize[i];
     if (oldsize >= MAXID)
 	return NOSLOT;
     
-    size = oldsize < 64 ? 96 : oldsize + (oldsize>>1);
+    size = oldsize < SMALLBUFF/3 ? SMALLBUFF/2 : oldsize + (oldsize>>1);
     if (size > MAXID)
 	size = MAXID;
     
-    /* use realloc(), not ReAllocMem() here */
-    if (!(newIdList = (obj **)realloc(IdList[i], size*sizeof(obj *))))
+    if (!(newIdList = (obj *)ReAllocMem(IdList[i], size*sizeof(obj))))
 	return NOSLOT;
     
-    WriteMem(newIdList+oldsize, 0, (size-oldsize)*sizeof(obj *));
+    WriteMem(newIdList+oldsize, 0, (size-oldsize)*sizeof(obj));
     
     IdList[i] = newIdList;
     IdSize[i] = size;
     
     return oldsize;
+}
+
+INLINE void IdListShrink(byte i) {
+    obj *newIdList;
+    uldat size = Max2(BIGBUFF, IdTop[i] << 1);
+    
+    if (size < IdSize[i] && (newIdList = (obj *)ReAllocMem(IdList[i], size*sizeof(obj)))) {
+	IdList[i] = newIdList;
+	IdSize[i] = size;
+    }
 }
 
 INLINE uldat IdListGet(byte i) {
@@ -840,7 +852,7 @@ INLINE uldat IdListGet(byte i) {
     return IdBottom[i];
 }
 
-INLINE byte _AssignId(byte i, obj *Obj) {
+INLINE byte _AssignId(byte i, obj Obj) {
     uldat Id, j;
     if ((Id = IdListGet(i)) != NOSLOT) {
 	Obj->Id = Id | ((uldat)i << magic_shift);
@@ -855,27 +867,29 @@ INLINE byte _AssignId(byte i, obj *Obj) {
     return Id != NOSLOT;
 }
 
-INLINE void _DropId(byte i, obj *Obj) {
+INLINE void _DropId(byte i, obj Obj) {
     uldat Id = Obj->Id & MAXID, j;
 
     if (Id < IdTop[i] && IdList[i][Id] == Obj /* paranoia */) {
 	Obj->Id = NOID;
-	IdList[i][Id] = (obj *)0;
+	IdList[i][Id] = (obj)0;
 	if (IdBottom[i] > Id)
 	    IdBottom[i] = Id;
 	for (j = IdTop[i] - 1; j > IdBottom[i]; j--)
 	    if (IdList[i][j])
 		break;
 	IdTop[i] = (j == IdBottom[i]) ? j : j + 1;
+	
+	if (IdSize[i] > (IdTop[i] << 4) && IdSize[i] > BIGBUFF)
+	    IdListShrink(i);
     }
 }
     
-byte AssignId(CONST fn_obj *Fn_Obj, obj *Obj) {
+byte AssignId(CONST fn_obj Fn_Obj, obj Obj) {
     byte i;
     if (Obj) switch (Fn_Obj->Magic) {
       case obj_magic:
-      case widget_magic:
-	/* 'obj' and 'widget' are just a template type, you can't create one */
+	/* 'obj' is just a template type, you can't create one */
 	break;
       case row_magic:
       case module_magic:
@@ -888,11 +902,13 @@ byte AssignId(CONST fn_obj *Fn_Obj, obj *Obj) {
 	 */
         Obj->Id = Fn_Obj->Magic;
 	return TRUE;
+      case widget_magic:
       case gadget_magic:	
       case window_magic:
+      case screen_magic:
+      case group_magic:
       case menuitem_magic:
       case menu_magic:
-      case screen_magic:
       case msgport_magic:
       case mutex_magic:
 	i = Fn_Obj->Magic >> magic_shift;
@@ -903,12 +919,11 @@ byte AssignId(CONST fn_obj *Fn_Obj, obj *Obj) {
     return FALSE;
 }
 
-void DropId(obj *Obj) {
+void DropId(obj Obj) {
     byte i = 0;
     if (Obj && Obj->Fn) switch (Obj->Fn->Magic) {
       case obj_magic:
-      case widget_magic:
-	/* 'obj' and 'widget' are just a template type, you can't create one */
+	/* 'obj' is just a template type, you can't create one */
 	break;
       case row_magic:
       case module_magic:
@@ -918,11 +933,13 @@ void DropId(obj *Obj) {
 	/* it's unsafe to allow modules access remotely, so no Ids for them too */
 	Obj->Id = NOID;
 	break;
+      case widget_magic:
       case gadget_magic:	
       case window_magic:
+      case screen_magic:
+      case group_magic:
       case menuitem_magic:
       case menu_magic:
-      case screen_magic:
       case msgport_magic:
       case mutex_magic:
 	i = Obj->Fn->Magic >> magic_shift;
@@ -934,12 +951,12 @@ void DropId(obj *Obj) {
     }
 }
 
-obj *Id2Obj(byte i, uldat Id) {
+obj Id2Obj(byte i, uldat Id) {
     byte I = Id >> magic_shift;
     
     if (i < magic_n && I < magic_n) {
-	/* everything is a valid (obj *) */
-	/* gadgets, windows, screens are valid (widget *) */
+	/* everything is a valid (obj) */
+	/* gadgets, windows, screens are valid (widget) */
 	if (i == I || i == (obj_magic >> magic_shift) ||
 	    (i == (widget_magic >> magic_shift) &&
 	     (I == (gadget_magic >> magic_shift) ||
@@ -951,5 +968,5 @@ obj *Id2Obj(byte i, uldat Id) {
 		return IdList[I][Id];
 	}
     }
-    return (obj *)0;
+    return (obj)0;
 }

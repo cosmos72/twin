@@ -6,7 +6,7 @@
 TOPDIR=..
 
 BASEOBJS=data.o builtin.o methods.o util.o draw.o extensions.o \
-	main.o hw_multi.o resize.o scroller.o remote.o alloc.o
+	main.o hw_multi.o printk.o resize.o scroller.o remote.o alloc.o
 HWOBJS=hw.o HW/hw.a
 DLOBJS=dl.o
 WMOBJS=wm.o rcrun.o rcopt.o
@@ -215,11 +215,11 @@ rcparse_tab.c rcparse_tab.h: rcparse.y
 rcparse_lex.c: rcparse.l
 	flex -L -B -o$@ $<
 
-mixdep: all
+symbolsdep: all
 	for i in *.o; do nm $$i | grep 'U ' | cut -dU -f2- > $${i%%.o}.u; done; :
-	for i in *.o; do nm $$i | grep -E 'B | C | D | T ' > $${i%%.o}.d; done; :
+	for i in *.o; do nm $$i | grep 'B \| C \| D \| T ' > $${i%%.o}.d; done; :
 	for i in *.u; do echo; echo $$i; for j in `cat $$i`; do \
-	grep -E " $${j}\$$" *.d; done | sort; done > $@; :
+	grep -e " $${j}\$$" *.d; done | sort; done > $@; :
 	
 Torture: torture
 	$(MAKE) Torture -C HW

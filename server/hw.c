@@ -43,7 +43,7 @@
 # endif
 #endif
 
-display_hw *HW, *DisplayHWCTTY;
+display_hw HW, DisplayHWCTTY;
 
 hwattr *Video, *OldVideo;
 
@@ -52,7 +52,7 @@ byte ExpensiveFlushVideo, ValidOldVideo, NeedHW;
 
 dat (*ChangedVideo)[2][2];
 byte ChangedVideoFlag, ChangedVideoFlagAgain;
-
+byte QueuedDrawArea2FullScreen;
 
 dat DisplayWidth, DisplayHeight;
 
@@ -61,33 +61,67 @@ uldat CursorType;
 
 struct termios ttysave;
 
+VOLATILE byte GotSignals;
+static VOLATILE byte GotSignalWinch;
+static VOLATILE byte GotSignalChild;
+static VOLATILE byte GotSignalHangup;
 
 static void SignalWinch(int n) {
+    GotSignals = GotSignalWinch = TRUE;
+    signal(SIGWINCH, SignalWinch);
+}
+
+static void HandleSignalWinch(void) {
+    GotSignalWinch = FALSE;
     if (DisplayHWCTTY && DisplayHWCTTY != HWCTTY_DETACHED
 	&& DisplayHWCTTY->DisplayIsCTTY) {
 	
 	ResizeDisplayPrefer(DisplayHWCTTY);
     }
-    signal(SIGWINCH, SignalWinch);
 }
 
 static void SignalChild(int n) {
-    while (wait3((int *)0, WNOHANG, (struct rusage *)0) > 0)
-	;
+    GotSignals = GotSignalChild = TRUE;
     signal(SIGCHLD, SignalChild);
+}
+
+static void HandleSignalChild(void) {
+    pid_t pid;
+    int status;
+    GotSignalChild = FALSE;
+    while ((pid = wait3(&status, WNOHANG, (struct rusage *)0)) != NOPID && pid != (pid_t)-1) {
+	if (WIFEXITED(status) || WIFSIGNALED(status))
+	    RemotePidIsDead(pid);
+    }
 }
 
 /*
  * got a SIGHUP. shutdown the display on controlling tty, if any
  */
 static void SignalHangup(int n) {
+    GotSignals = GotSignalHangup = TRUE;
+    signal(SIGHUP, SignalHangup);
+}
+
+static void HandleSignalHangup(void) {
+    GotSignalHangup = FALSE;
     if (DisplayHWCTTY && DisplayHWCTTY != HWCTTY_DETACHED
 	&& DisplayHWCTTY->DisplayIsCTTY) {
 	
 	DisplayHWCTTY->NeedHW |= NEEDPanicHW, NeedHW |= NEEDPanicHW;
     }
-    signal(SIGHUP, SignalHangup);
 }
+
+void HandleSignals(void) {
+    GotSignals = FALSE;
+    if (GotSignalWinch)
+	HandleSignalWinch();
+    if (GotSignalChild)
+	HandleSignalChild();
+    if (GotSignalHangup)
+	HandleSignalHangup();
+}
+
 
 #ifndef DONT_TRAP_SIGNALS
 static void SignalPanic(int n) {
@@ -199,9 +233,11 @@ void DirtyVideo(dat Xstart, dat Ystart, dat Xend, dat Yend) {
     dat s0, s1, e0, e1, len, min;
     byte i;
     
-    if (Xstart > Xend || Xstart >= DisplayWidth || Xend < 0 ||
+    if (QueuedDrawArea2FullScreen ||
+	Xstart > Xend || Xstart >= DisplayWidth || Xend < 0 ||
 	Ystart > Yend || Ystart >= DisplayHeight || Yend < 0)
 	return;
+    
     Xstart = Max2(Xstart, 0);
     Ystart = Max2(Ystart, 0);
     Xend = Min2(Xend, DisplayWidth-1);
@@ -338,6 +374,9 @@ void DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
     hwattr *src = Video, *dst = Video;
     byte Accel;
     
+    if (QueuedDrawArea2FullScreen)
+	return;
+    
     count = Dwn - Up + 1;
     len   = (Rgt-Left+1) * sizeof(hwattr);
 
@@ -435,7 +474,7 @@ byte InitTtysave(void) {
 #ifdef IMAXBEL
 		       | IMAXBEL
 #endif
-		       );
+		      );
 	
     /* output modes */
     ttysave.c_oflag = (OPOST | ONLCR);
@@ -448,7 +487,7 @@ byte InitTtysave(void) {
 #ifdef ECHOKE
 		       | ECHOKE
 #endif
-		       );
+		      );
     
     return TRUE;
 }

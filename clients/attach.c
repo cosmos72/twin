@@ -19,14 +19,14 @@
 #include <signal.h>
 #include <errno.h>
 
-#include <libTw.h>
-
+#include "libTw.h"
+#include "libTwerrno.h"
 #include "version.h"
 
 static char *MYname;
 
 static void Usage(byte detach) {
-    fprintf(stderr, "Usage: %s [OPTION [...]]\n"
+    fprintf(stderr, "Usage: %s [OPTIONS] %s\n"
 	    "Currently known options: \n"
 	    " -h, -help               display this help and exit\n"
 	    " -V, -version            output version information and exit\n"
@@ -44,7 +44,8 @@ static void Usage(byte detach) {
 	    "\ttwin[@<TWDISPLAY>]\n"
 	    "\ttty[@<tty device>]\n"
 	    "\tggi[@<ggi display>]\n",
-	    MYname, detach ? "" : " (default)", detach ? " (default)" : "");
+	    MYname, detach ? "" : "-hw=<display> [...]",
+	    detach ? "" : " (default)", detach ? " (default)" : "");
 }
 
 static byte gotSignalWinch;
@@ -78,7 +79,8 @@ int main(int argc, char *argv[]) {
     byte detach = 0, redirect, force = 0, flags = TW_ATTACH_HW_REDIRECT;
     byte *dpy = NULL, *arg = NULL, *tty = ttyname(0);
     byte ret = 0, ourtty = 0, servtty = 0;
-    byte *s, *buff;
+    byte *s;
+    TW_CONST byte *buff;
     uldat chunk;
     
     MYname = argv[0];
@@ -245,7 +247,9 @@ int main(int argc, char *argv[]) {
 	return !ret;
     } while (0);
     
-    fprintf(stderr, "%s: libTw error: %s\n", MYname, TwStrError(TwErrno));
+    chunk = TwErrno;
+    fprintf(stderr, "%s: libTw error: %s%s\n", MYname,
+	    TwStrError(chunk), TwStrErrorDetail(chunk, TwErrnoDetail));
     return 1;
 }
 

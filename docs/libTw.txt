@@ -134,9 +134,10 @@ generates events (user input) is decided by the application.
 
    Finally, the types for the various libTw objects:
    
-   tobj (generic), tgadget, trow, twindow, tmenuitem, tmenu, tscreen, tmsgport
+   tobj (generic), twidget (generic), tgadget, trow, twindow,
+   tmenuitem, tmenu, tscreen, tmsgport
 
-   The following are instead pointers to structs:
+   The following are instead pointers to various structures:
 
    tevent_common, tevent_keyboard, tevent_keyboard, tevent_mouse,
    tevent_display, tevent_window, tevent_gadget, tevent_menu,
@@ -145,7 +146,7 @@ generates events (user input) is decided by the application.
 
    tmsg
    
-   /* Msg Type : */
+   /* Msg ->Type : */
    TW_MSG_DISPLAY, TW_MSG_WINDOW_KEY, TW_MSG_WINDOW_MOUSE,
    TW_MSG_WINDOW_CHANGE, TW_MSG_WINDOW_GADGET, TW_MSG_MENU_ROW	
    TW_MSG_SELECTION, TW_MSG_SELECTIONNOTIFY, TW_MSG_SELECTIONREQUEST
@@ -219,8 +220,11 @@ generates events (user input) is decided by the application.
    example, TwConnectionFd is defined as
    #define TwConnectionFd()	Tw_ConnectionFd(Tw_DefaultD)
 
-   /* the following two functions return FALSE only after libTw has paniced */
-   /* flush output buffer */
+   /* the following four functions return FALSE only after libTw has paniced */
+   /* flush output buffer.
+    * if not all data can be written immediately, block, then write data when
+    * output becomes possible again. return only after all data has been written
+    */
    byte    TwFlush(void);
    byte    Tw_Flush(tdisplay TwD);
    
@@ -240,7 +244,7 @@ generates events (user input) is decided by the application.
    
   /*
    * try to write to the underlying socket.
-   * if not all data could be written, write as much as possible,
+   * if not all data could be written immediately, write as much as possible,
    * keep the rest queued, then return.
    * 
    * returns FALSE only after libTw has paniced,
@@ -252,9 +256,11 @@ generates events (user input) is decided by the application.
 
   /*
    * This is the function you must call to get a Msg from the server.
-   * If Wait is TRUE  and no Msg is available, it waits until a Msg arrives.
-   * If Wait is FALSE and no Msg is available, it tries non-blocking
-   *                  to receive more Msgs.
+   * If Wait is TRUE  and no Msg is available, it flushes output queue
+   *    (with Tw_Flush()) then waits until a Msg arrives.
+   * If Wait is FALSE and no Msg is available, it flushes output queue
+   *    non-blocking (with Tw_TimidFlush()), then it tries non-blocking
+   *    to receive more Msgs.
    * 
    * In both cases, if there are already received Msgs they are returned
    * without waiting.
@@ -262,6 +268,14 @@ generates events (user input) is decided by the application.
   tmsg TwReadMsg(byte Wait);
   tmsg Tw_ReadMsg(tdisplay TwD, byte Wait);
 
+  /*
+   * this is just like Tw_ReadMsg(), but returns a Tw_AllocMem() copy
+   * of the message, to avoid concurrency problems with other threads.
+   * You must Tw_FreeMem() it when done!
+   */
+   tmsg TwReadMsg_Clone(byte Wait);
+   tmsg Tw_ReadMsg_Clone(tdisplay TwD, byte Wait);
+   
   /*
    * This is the function you must call to check if there are pending Msgs.
    * There may be messages to process even if there's nothig to read on
@@ -297,12 +311,27 @@ generates events (user input) is decided by the application.
    * Tw_Create4MenuMenuItem();
    * Tw_CreateMsgPort();
    * Tw_CreateMenu();
+   * Tw_FirstScreen();
+   * Tw_FirstMsgPort();
+   * [...]
+   * 
+   * If you are using threads, or just have a doubt that your code might
+   * reference the message returned Tw_PeekMsg() or Tw_ReadMsg()
+   * after a call to one of the above functions, use Tw_ReadMsg_Clone() :
+   * it's just like Tw_ReadMsg(), except that it returns a Tw_AllocMem() copy
+   * of the message, that you can use as long as you wish. Just remember to
+   * Tw_FreeMem() it when done!
+   * 
    * 
    * Other important notes:
    * 1. Only ONE MsgPort can exists at max on each connection.
-   * 2. Tw_DeleteMsgPort() calls Tw_DeleteMenu() on all menus created by the client.
-   * 3. Tw_DeleteMenu() calls Tw_DeleteWindow() on all windows which use that menu.
-   * 4. Tw_DeleteWindow() calls Tw_DeleteGadget() on all gadgets of that window.
+   * 2. Tw_DeleteMsgPort() calls Tw_DeleteMenu() on all menus created by the client
+   *    and Tw_DeleteWidget/Gadget/Window() on all gadgets/widgets/windows created by the client.
+   * 3. Tw_DeleteMenu() calls Tw_UnMapWindow() on all windows which use that menu.
+   * 4. Tw_DeleteWidget[/Gadget/Window]() calls Tw_UnMapWidget() on all sub-gadgets/widgets/windows
+   *    of that widget, does NOT call Tw_DeleteWidget[/Gadget/Window]() recursively on them!
+   *    If you wish to delete a widget and all sub-widgets inside it,
+   *    use Tw_RecursiveDeleteWidget[/Gadget/Window]()
    * 
    * also, if you exit() from your program without calling Tw_Flush(), Tw_Sync() or Tw_Close(),
    * pending data will *NOT* be sent to the server.

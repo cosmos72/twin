@@ -5,7 +5,7 @@
 #include "extensions.h"
 
 #if defined(CONF_TERM) || !defined(CONF__MODULES)
-# define FakeOpenTerm (window *(*)(CONST byte *arg0, byte * CONST *argv))AlwaysNull
+# define FakeOpenTerm (window (*)(CONST byte *arg0, byte * CONST * argv))AlwaysNull
 #else
 # include "methods.h"
 #endif
@@ -23,7 +23,7 @@ static exts OrigExts = {
     { FakeOpenTerm }
 };
 
-#define OrigExt(where) ((void **)( (byte *)&OrigExts + ( (byte *)where - (byte *)&Exts ) ))
+#define OrigExt(where) ((void **)( (byte *)&OrigExts + ( (byte *)where - (byte *)&Exts)))
 
 byte RegisterExt(void **where, void *data) {
     if (*where == *OrigExt(where)) {

@@ -17,8 +17,8 @@ extern frac_t StrategyDelay;
 void StrategyReset(void);
 byte Strategy4Video(dat Xstart, dat Ystart, dat Xend, dat Yend);
 
-byte InitDisplayHW(display_hw *);
-void QuitDisplayHW(display_hw *);
+byte InitDisplayHW(display_hw);
+void QuitDisplayHW(display_hw);
 
 byte InitHW(void);
 void QuitHW(void);
@@ -26,7 +26,7 @@ void QuitHW(void);
 byte RestartHW(byte verbose);
 void SuspendHW(byte verbose);
 
-display_hw *AttachDisplayHW(uldat len, CONST byte *arg, uldat slot, byte flags);
+display_hw AttachDisplayHW(uldat len, CONST byte *arg, uldat slot, byte flags);
 byte DetachDisplayHW(uldat len, CONST byte *arg, byte flags);
 
 void FillVideo(dat Xstart, dat Ystart, dat Xend, dat Yend, udat Attrib);
@@ -37,7 +37,7 @@ void RunNoHW(void);
 void UpdateFlagsHW(void);
 
 byte StdAddEventMouse(udat CodeMsg, udat Code, dat MouseX, dat MouseY);
-void SyntheticKey(window *Window, udat Code, udat ShiftFlags, byte Len, byte *Seq);
+void SyntheticKey(window Window, udat Code, udat ShiftFlags, byte Len, byte *Seq);
 
 #endif /* _TW_HW_MULTI_H */
 

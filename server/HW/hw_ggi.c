@@ -44,7 +44,7 @@
  */
 
 static int (*gOrigSelect)(int n, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *timeout);
-static display_hw *GGI_HW;
+static display_hw GGI_HW;
 
 struct GGI_data {
     ggi_visual_t gvis;
@@ -71,7 +71,7 @@ static void GGI_Beep(void) {
     NeedHW |= NEEDFlushStdout;
 }
 
-static void GGI_KeyboardEvent(int fd, display_hw *hw) {
+static void GGI_KeyboardEvent(int fd, display_hw hw) {
     ggi_event ev;
     struct timeval tv;
     dat x, y, dx = 0, dy = 0;
@@ -273,12 +273,13 @@ static void GGI_ShowCursor(uldat type, dat x, dat y) {
 static void GGI_FlushVideo(void) {
     dat start, end;
     udat i;
-    byte c = ChangedVideoFlag &&
-	(ValidOldVideo
-	 ? Video[HW->XY[0] + HW->XY[1] * DisplayWidth]
-	 != OldVideo[HW->XY[0] + HW->XY[1] * DisplayWidth] 
-	 : Plain_isDirtyVideo(HW->XY[0], HW->XY[1]));
-    /* TRUE iff the cursor will be erased by burst */
+    byte iff;
+    
+    if (ValidOldVideo)
+	iff = ChangedVideoFlag &&
+	Video[HW->XY[0] + HW->XY[1] * DisplayWidth]
+	!= OldVideo[HW->XY[0] + HW->XY[1] * DisplayWidth];
+    /* TRUE if and only if the cursor will be erased by burst */
     
     
     /* first burst all changes */
@@ -293,17 +294,19 @@ static void GGI_FlushVideo(void) {
 	setFlush();
     }
     /* then, we may have to erase the old cursor */
-    if (!c && HW->TT != NOCURSOR &&
-	(CursorType != HW->TT || CursorX != HW->XY[0] || CursorY != HW->XY[1])) {
+    if (!ValidOldVideo ||
+	(!iff && HW->TT != NOCURSOR &&
+	 (CursorType != HW->TT || CursorX != HW->XY[0] || CursorY != HW->XY[1]))) {
 	
 	HW->TT = NOCURSOR;
 	GGI_HideCursor(HW->XY[0], HW->XY[1]);
 	setFlush();
     }
-    /* finally, redraw the cursor if */
+    /* finally, redraw the cursor if forced to redraw (!ValidOldVideo) or */
     /* (we want a cursor and (the burst erased the cursor or the cursor changed)) */
-    if (CursorType != NOCURSOR &&
-	(c || CursorType != HW->TT || CursorX != HW->XY[0] || CursorY != HW->XY[1])) {
+    if (!ValidOldVideo ||
+	(CursorType != NOCURSOR &&
+	 (iff || CursorType != HW->TT || CursorX != HW->XY[0] || CursorY != HW->XY[1]))) {
 	
 	GGI_ShowCursor(HW->TT = CursorType, HW->XY[0] = CursorX, HW->XY[1]= CursorY);
 	setFlush();
@@ -415,7 +418,7 @@ byte GGI_InitHW(void) {
     int i, j;
     
     if (GGI_HW) {
-	fputs("      GGI_InitHW() failed: libggi already in use.\n", stderr);
+	printk("      GGI_InitHW() failed: libggi already in use.\n");
 	return FALSE;
     }
 
@@ -443,7 +446,7 @@ byte GGI_InitHW(void) {
 	return FALSE;
     }
     if (!(HW->Private = (struct GGI_data *)AllocMem(sizeof(struct GGI_data)))) {
-	fprintf(stderr, "      GGI_InitHW(): Out of memory!\n");
+	printk("      GGI_InitHW(): Out of memory!\n");
 	return FALSE;
     }
 
@@ -551,9 +554,9 @@ byte GGI_InitHW(void) {
 	
     } while (0); else {
 	if (arg || (arg = getenv("GGI_DISPLAY")))
-	    fprintf(stderr, "      GGI_InitHW() failed to open display %s\n", arg);
+	    printk("      GGI_InitHW() failed to open display %s\n", arg);
 	else
-	    fprintf(stderr, "      GGI_InitHW() failed: GGI_DISPLAY is not set\n");
+	    printk("      GGI_InitHW() failed: GGI_DISPLAY is not set\n");
 	
     }
     if (gvis)
@@ -571,13 +574,13 @@ byte GGI_InitHW(void) {
 #include "version.h"
 MODULEVERSION;
 		       
-byte InitModule(module *Module) {
+byte InitModule(module Module) {
     Module->Private = GGI_InitHW;
     return TRUE;
 }
 
 /* this MUST be included, or it seems that a bug in dlsym() gets triggered */
-void QuitModule(module *Module) {
+void QuitModule(module Module) {
 }
 
 #endif /* CONF_THIS_MODULE */

@@ -36,8 +36,6 @@ static byte GtransUser[0x80];
 
 /***************/
 
-static screen *OneScreen, *TwoScreen;
-
 static setup SetUp = {
     (dat)1,	 /* MaxMouseSnap */
     (udat)0x7,	 /* MinAllocSize */
@@ -49,7 +47,7 @@ static setup SetUp = {
 
 static selection Selection = {
     { (time_t)0, (frac_t)0 },
-    (msgport *)0, (display_hw *)0,
+    (msgport)0, (display_hw)0,
     SEL_TEXTMAGIC,
     "",
     (uldat)0, (uldat)0,
@@ -74,15 +72,15 @@ palette defaultPalette[MAXCOL+1] = {
 #undef M
 #undef L
 
-static all _All = {
-    (screen *)0, (screen *)0,
-	(msgport *)0, (msgport *)0, (msgport *)0,
-	(mutex *)0, (mutex *)0,
-	(module *)0, (module *)0,
-	(fn_hook)0, (window *)0,
-	(display_hw *)0, (display_hw *)0,
-	(display_hw *)0, (display_hw *)0,
-	(fn_hook)0, (window *)0,
+static struct s_all _All = {
+    (screen)0, (screen)0,
+	(msgport)0, (msgport)0, (msgport)0,
+	(mutex)0, (mutex)0,
+	(module)0, (module)0,
+	(fn_hook)0, (window)0,
+	(display_hw)0, (display_hw)0,
+	(display_hw)0, (display_hw)0,
+	(fn_hook)0, (window)0,
 	
 	1, 1, /* DisplayWidth, DisplayHeight */
 	STATE_DEFAULT,
@@ -92,7 +90,7 @@ static all _All = {
 	&SetUp,
 	(void (*)(void))0, /* AtQuit */
 
-	(menu *)0, (menu *)0,
+	(menu)0, (menu)0,
 	
     { { {0, }, }, }, /* ButtonVec[] */
 
@@ -118,7 +116,7 @@ static all _All = {
 	    GtransUser
     }
 };
-all *All = &_All;
+all All = &_All;
 
 
 keylist TW_KeyList[] = {
@@ -293,29 +291,4 @@ NewFont16[] = {
     {  0, ""}
 };
 #endif
-
-byte InitData(void) {
-    
-    if ((OneScreen = Do(CreateSimple,Screen)(FnScreen, 1, "1", HWATTR(COL(HIGH|BLACK,BLUE),'±')))) {
-	
-#define a HWATTR(COL(HIGH|BLUE,BLUE),'Ü')
-#define b HWATTR(COL(HIGH|BLUE,BLUE),' ')
-#define c HWATTR(COL(HIGH|BLUE,BLUE),'ß')
-	hwattr attr[8] = {
-	    b,b,a,c,
-	    c,a,b,b,
-	};
-#undef a
-#undef b
-	if ((TwoScreen = Do(Create,Screen)(FnScreen, 1, "2", 4, 2, attr))) {
-	
-	    InsertLast(Screen, OneScreen, All);
-	    InsertLast(Screen, TwoScreen, All);
-	    
-	    return TRUE;
-	}
-    }
-    fprintf(stderr, "twin: InitData(): Out of memory!\n");
-    return FALSE;
-}
 

@@ -25,6 +25,9 @@
 #include "twin.h"
 #include "main.h"
 #include "methods.h"
+
+#include "fdlist.h"
+#include "remote.h"
 #include "util.h"
 
 /* variables */
@@ -45,11 +48,10 @@ static uldat FdListGrow(void) {
 	return NOSLOT;
     }
     
-    if ((size = oldsize < 64 ? 96 : oldsize + (oldsize>>1)) < oldsize)
+    if ((size = oldsize < SMALLBUFF/3 ? SMALLBUFF/2 : oldsize + (oldsize>>1)) < oldsize)
 	size = MAXULDAT;
     
-    /* use realloc(), not ReAllocMem() here */
-    if (!(newFdList = (fdlist *)realloc(FdList, size*sizeof(fdlist)))) {
+    if (!(newFdList = (fdlist *)ReAllocMem(FdList, size*sizeof(fdlist)))) {
 	Error(NOMEMORY);
 	return NOSLOT;
     }
@@ -60,6 +62,16 @@ static uldat FdListGrow(void) {
     FdList = newFdList;
     
     return oldsize;
+}
+
+INLINE void FdListShrink(void) {
+    fdlist *newFdList;
+    uldat size = Max2(SMALLBUFF, FdTop << 1);
+    
+    if (size < FdSize && (newFdList = (fdlist *)ReAllocMem(FdList, size*sizeof(fdlist)))) {
+	FdList = newFdList;
+	FdSize = size;
+    }
 }
 
 INLINE uldat FdListGet(void) {
@@ -144,10 +156,10 @@ void RemoteCouldWrite(uldat Slot) {
     FD_CLR(LS.Fd, &save_wfds);
 }
 
-msgport *RemoteGetMsgPort(uldat Slot) {
+msgport RemoteGetMsgPort(uldat Slot) {
     if (Slot < FdTop && LS.Fd != NOFD)
 	return LS.MsgPort;
-    return (msgport *)0;
+    return (msgport)0;
 }
 
 /* Register a Fd, its HandlerIO and eventually its HandlerData arg */
@@ -155,21 +167,11 @@ msgport *RemoteGetMsgPort(uldat Slot) {
  * On success, return the slot number.
  * On failure, return NOSLOT (-1).
  */
-uldat RegisterRemote(int Fd, void *HandlerData, void (*HandlerIO)(int Fd, size_t any)) {
+uldat RegisterRemote(int Fd, obj HandlerData, void *HandlerIO) {
     uldat Slot, j;
     
     if ((Slot = FdListGet()) == NOSLOT)
 	return Slot;
-    
-    LS.Fd = Fd;
-    LS.pairSlot = NOSLOT;
-    LS.HandlerData = HandlerData;
-    LS.HandlerIO = HandlerIO;
-    LS.MsgPort = (msgport *)0;
-    LS.WQueue = LS.RQueue = (byte *)0;
-    LS.WQlen = LS.WQmax = LS.RQlen = LS.RQmax = (uldat)0;
-    LS.PrivateAfterFlush = LS.PrivateData = LS.PrivateFlush = NULL;
-    LS.extern_couldntwrite = FALSE;
     
     if (FdTop <= Slot)
 	FdTop = Slot + 1;
@@ -177,22 +179,33 @@ uldat RegisterRemote(int Fd, void *HandlerData, void (*HandlerIO)(int Fd, size_t
 	if (FdList[j].Fd == NOFD)
 	    break;
     FdBottom = j;
-
-    if (Fd >= 0) {
+    
+    if ((LS.Fd = Fd) >= 0) {
 	FD_SET(Fd, &save_rfds);
 	if (max_fds < Fd)
 	    max_fds = Fd;
     }
+    LS.pairSlot = NOSLOT;
+    if ((LS.HandlerData = HandlerData))
+	LS.HandlerIO.D = HandlerIO;
+    else
+	LS.HandlerIO.S = HandlerIO;
+    LS.MsgPort = (msgport)0;
+    LS.WQueue = LS.RQueue = (byte *)0;
+    LS.WQlen = LS.WQmax = LS.RQlen = LS.RQmax = (uldat)0;
+    LS.PrivateAfterFlush = LS.PrivateData = LS.PrivateFlush = NULL;
+    LS.extern_couldntwrite = FALSE;
+    
     return Slot;
 }
 
 uldat RegisterRemoteFd(int Fd, void (*HandlerIO)(int Fd, uldat Slot)) {
-    return RegisterRemote(Fd, (window *)0, (void (*)(int, size_t))HandlerIO);
+    return RegisterRemote(Fd, NULL, HandlerIO);
 }
 
-byte RegisterWindowFdIO(window *Window, void (*HandlerIO)(int Fd, window *Window)) {
+byte RegisterWindowFdIO(window Window, void (*HandlerIO)(int Fd, window Window)) {
     return (Window->RemoteData.FdSlot =
-	    RegisterRemote(Window->RemoteData.Fd, Window, (void (*)(int, size_t))HandlerIO))
+	    RegisterRemote(Window->RemoteData.Fd, (obj)Window, HandlerIO))
 	!= NOSLOT;
 }
 
@@ -238,10 +251,12 @@ void UnRegisterRemote(uldat Slot) {
 		break;
 	FdTop = (j == FdBottom) ? j : j + 1;
 	
+	if (FdSize > (FdTop << 4) && FdSize > SMALLBUFF)
+	    FdListShrink();
     }
 }
 
-void UnRegisterWindowFdIO(window *Window) {
+void UnRegisterWindowFdIO(window Window) {
     if (Window && Window->RemoteData.FdSlot < FdTop) {
 	UnRegisterRemote(Window->RemoteData.FdSlot);
 	Window->RemoteData.FdSlot = NOSLOT;
@@ -249,8 +264,8 @@ void UnRegisterWindowFdIO(window *Window) {
 }
 
 void remoteKillSlot(uldat slot) {
-    msgport *MsgPort;
-    display_hw *D_HW;
+    msgport MsgPort;
+    display_hw D_HW;
     
     if (slot != NOSLOT) {
 	if ((MsgPort = RemoteGetMsgPort(slot))) {
@@ -261,7 +276,7 @@ void remoteKillSlot(uldat slot) {
 
 	    if ((D_HW = MsgPort->AttachHW)) {
 		/* avoid KillSlot <-> DeleteDisplayHW infinite recursion */
-		MsgPort->AttachHW = (display_hw *)0;
+		MsgPort->AttachHW = (display_hw)0;
 		Delete(D_HW);
 	    }
 		
@@ -274,6 +289,36 @@ void remoteKillSlot(uldat slot) {
     }
 }
 
+void RemotePidIsDead(pid_t pid) {
+    uldat Slot;
+    int Fd;
+    obj HData;
+    remotedata *RData;
+    
+    for (Slot=0; Slot<FdTop; Slot++) {
+	
+	/* only windows can be directly attached to a child process! */	
+	if (LS.Fd != NOFD && (HData = LS.HandlerData) && IS_WINDOW(HData) &&
+	    (RData = &((window)HData)->RemoteData, RData->ChildPid == pid)) {
+	    
+	    if ((Fd = LS.Fd) >= 0) /* might be specFD... */
+		close(Fd);
+	    
+	    /* let the handler know this Slot is dead */
+	    /* don't unregister Slot, allow the handler do that. */
+	    if (LS.HandlerData)
+		LS.HandlerIO.D (Fd, LS.HandlerData);
+	    else
+		LS.HandlerIO.S (Fd, Slot);
+	    
+	    /* failsafe */
+	    if (Slot<FdTop && Fd == LS.Fd)
+		UnRegisterRemote(Slot);
+	    return;
+	}
+    }
+}
+
 void RemoteEvent(int FdCount, fd_set *FdSet) {
     uldat Slot;
     int fd;
@@ -282,9 +327,9 @@ void RemoteEvent(int FdCount, fd_set *FdSet) {
 	    if (FD_ISSET(fd, FdSet)) {
 		FdCount--;
 		if (LS.HandlerData)
-		    (*(void (*)(int, void *))LS.HandlerIO) (fd, LS.HandlerData);
+		    LS.HandlerIO.D (fd, LS.HandlerData);
 		else
-		    (*(void (*)(int, uldat))LS.HandlerIO) (fd, Slot);
+		    LS.HandlerIO.S (fd, Slot);
 	    }
 	}
     }
@@ -354,14 +399,18 @@ void RemoteParanoia(void) {
 	
     for (Slot=0; Slot<FdTop; Slot++) {
 	if (safe == LS.Fd) {
-	    UnRegisterRemote(Slot);
-	    
 	    /* let the Handler realize this fd is dead */
+	    /* don't unregister Slot, allow the handler do that. */
 	    if (LS.HandlerData)
-		(*(void (*)(int, window *))(LS.HandlerIO)) (safe, LS.HandlerData);
+		LS.HandlerIO.D (safe, LS.HandlerData);
 	    else
-		(*(void (*)(int, uldat))(LS.HandlerIO)) (safe, Slot);
-	    
+		LS.HandlerIO.S (safe, Slot);
+
+	    /* failsafe: we're in paranoid mode, remember? */
+	    if (Slot<FdTop && safe == LS.Fd) {
+		close(safe);
+		UnRegisterRemote(Slot);
+	    }
 	    return;
 	}
     }
@@ -401,7 +450,7 @@ uldat RemoteWriteQueue(uldat Slot, uldat len, CONST void *data) {
     return len;
 }
 
-void RegisterMsgPort(msgport *MsgPort, uldat Slot) {
+void RegisterMsgPort(msgport MsgPort, uldat Slot) {
     if (MsgPort && MsgPort->RemoteData.FdSlot == NOSLOT &&
 	Slot < FdTop && LS.Fd != NOFD && !LS.MsgPort) {
 	
@@ -411,13 +460,13 @@ void RegisterMsgPort(msgport *MsgPort, uldat Slot) {
     }
 }
 
-void UnRegisterMsgPort(msgport *MsgPort) {
+void UnRegisterMsgPort(msgport MsgPort) {
     uldat Slot;
     if (MsgPort && (Slot = MsgPort->RemoteData.FdSlot) < FdTop &&
 	LS.Fd != NOFD && LS.MsgPort == MsgPort) {
 	
 	MsgPort->RemoteData.FdSlot = NOSLOT;
-	LS.MsgPort = (msgport *)0;
+	LS.MsgPort = (msgport)0;
     }
 }
 

@@ -2,7 +2,7 @@
 #define _TW_UNALIGNED_H
 
 #ifdef _LIB_TW_H
-# define Tw(arg)	Tw##arg
+# define Tw(arg)	Tw_##arg
 #else
 # define Tw(arg)	arg
 #endif

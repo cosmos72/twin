@@ -25,7 +25,7 @@
 # include <stdlib.h>
 #endif
 
-#include <libTw.h>
+#include "libTw.h"
 
 #include "term.h"
 
@@ -103,16 +103,24 @@ gid_t get_tty_grgid(void) {
     return tty_grgid;
 }
 
-/* 2. Fixup permission for pty master/slave pairs */
-static byte fixup_pty(void) {
+/* 2. Fixup permission for pty master/slave pairs and set window size on slave */
+static byte fixup_pty(dat X, dat Y) {
+    struct winsize wsiz;
     uid_t id = getuid();
     gid_t tty_gid = get_tty_grgid();
+
+    wsiz.ws_col = X;
+    wsiz.ws_row = Y;
+    wsiz.ws_xpixel = 0;
+    wsiz.ws_ypixel = 0;
+    (void)ioctl(ttyfd, TIOCSWINSZ, &wsiz);
     
     if (tty_gid != (gid_t)-1 &&
 #ifndef CONF_TERM_DEVPTS
 	chown(ptydev, id, 0) == 0 && chmod(ptydev, 0600) == 0 &&
 #endif
 	chown(ttydev, id, tty_gid) == 0 && chmod(ttydev, 0620) == 0)
+	
 	return TRUE;
     return FALSE;
 }
@@ -154,7 +162,7 @@ static byte switchto_tty(void)
 }
 
 /* 5. fork() a program in a pseudo-teletype */
-uldat Spawn(twindow Window, pid_t *ppid, char *args[]) {
+uldat Spawn(twindow Window, pid_t *ppid, dat X, dat Y, TW_CONST byte *arg0, byte * TW_CONST *argv) {
 
     TwGetPrivileges();
     
@@ -162,7 +170,7 @@ uldat Spawn(twindow Window, pid_t *ppid, char *args[]) {
 	TwDropPrivileges();
 	return FALSE;
     }
-    (void)fixup_pty();
+    (void)fixup_pty(X, Y);
     
     TwDropPrivileges();
 
@@ -176,7 +184,7 @@ uldat Spawn(twindow Window, pid_t *ppid, char *args[]) {
 	/* child */
 	if (!switchto_tty())
 	    exit(1);
-	execvp(args[0], args+1);
+	execvp((char *)arg0, (char **)argv);
 	exit(1);
 	break;
       default:
