@@ -104,6 +104,9 @@
 /* Define if you have the unlockpt function.  */
 #undef HAVE_UNLOCKPT
 
+/* Define if you have the usleep function.  */
+#undef HAVE_USLEEP
+
 /* Define if you have the vprintf function.  */
 #undef HAVE_VPRINTF
 
@@ -274,6 +277,9 @@
 
 /* Define if you have gcc-compatible i386 assembler */
 #undef HAVE_GCC_I386_ASM
+
+/* Define if you have an assembler supported by twin */
+#undef HAVE_ASM
 
 /* Define if you have the gethostbyname function */
 #undef HAVE_GETHOSTBYNAME

@@ -13,7 +13,7 @@
 #include "twin.h"
 #include "data.h"
 #include "methods.h"
-#include "extensions.h"
+#include "extreg.h"
 
 #include "remote.h"
 #include "pty.h"
@@ -260,7 +260,7 @@ byte InitTerm(void)
 	
 	Item4MenuCommon(Term_Menu)) {
 
-	RegisterExtension(Term,Open,OpenTerm);
+	RegisterExt(Term,Open,OpenTerm);
 #ifdef THIS_MODULE
 	OverrideMethods(TRUE);
 #endif
@@ -278,7 +278,7 @@ byte InitTerm(void)
 
 #ifdef THIS_MODULE
 void QuitModule(module Module) {
-    UnRegisterExtension(Term,Open,OpenTerm);
+    UnRegisterExt(Term,Open,OpenTerm);
     OverrideMethods(FALSE);
     if (Term_MsgPort)
 	Delete(Term_MsgPort);

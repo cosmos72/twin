@@ -1,0 +1,65 @@
+/extreg.c/1.1/Thu Dec 19 11:25:36 2002//
+/missing.c/1.2/Thu Dec 19 11:16:41 2002//
+/socketstat.h/1.1/Thu Dec 19 11:25:36 2002//
+/tterm.c/1.4/Thu Dec 19 11:16:41 2002//
+/tterm.h/1.2/Mon Jul 23 15:26:43 2001//
+D/HW////
+D/extensions////
+D/m4////
+/Makefile/0.11/dummy timestamp//
+/alloc.c/0.6/dummy timestamp//
+/builtin.c/0.9/dummy timestamp//
+/builtin.h/0.4/dummy timestamp//
+/common.h/0.5/dummy timestamp//
+/data.c/0.7/dummy timestamp//
+/data.h/0.6/dummy timestamp//
+/display.c/0.8/dummy timestamp//
+/dl.c/0.4/dummy timestamp//
+/dl.h/0.5/dummy timestamp//
+/draw.c/0.10/dummy timestamp//
+/draw.h/0.9/dummy timestamp//
+/extreg.h/1.2/Wed Jan 15 22:08:18 2003//
+/fdlist.h/0.6/dummy timestamp//
+/hotkey.h/0.3.8.1/dummy timestamp//
+/hw.c/0.6/dummy timestamp//
+/hw.h/0.5/dummy timestamp//
+/hw_keys.h/0.4/dummy timestamp//
+/hw_multi.c/0.11/dummy timestamp//
+/hw_multi.h/0.8/dummy timestamp//
+/hw_private.h/0.4/dummy timestamp//
+/main.c/0.9/dummy timestamp//
+/main.h/0.6/dummy timestamp//
+/md5.c/0.4/dummy timestamp//
+/methods.c/0.9/dummy timestamp//
+/methods.h/0.7/dummy timestamp//
+/printk.c/0.6/dummy timestamp//
+/printk.h/0.4/dummy timestamp//
+/pty.c/0.5/dummy timestamp//
+/pty.h/0.4/dummy timestamp//
+/rcopt.c/0.5/dummy timestamp//
+/rcparse.h/0.5/dummy timestamp//
+/rcparse.l/0.5/dummy timestamp//
+/rcparse.y/0.6/dummy timestamp//
+/rcproto.h/0.4/dummy timestamp//
+/rcrun.c/0.8/dummy timestamp//
+/rcrun.h/0.6/dummy timestamp//
+/rctypes.h/0.5/dummy timestamp//
+/remote.c/0.5/dummy timestamp//
+/remote.h/0.4/dummy timestamp//
+/resize.c/0.10/dummy timestamp//
+/resize.h/0.9/dummy timestamp//
+/scroller.c/0.5/dummy timestamp//
+/scroller.h/0.4/dummy timestamp//
+/shm.c/0.5/dummy timestamp//
+/socket.h/0.4/dummy timestamp//
+/socket_id.h/1.1/Wed Jan 15 22:05:08 2003//
+/tty.c/0.8/dummy timestamp//
+/tty.h/0.5/dummy timestamp//
+/twstart/0.5/dummy timestamp//
+/util.c/0.11/dummy timestamp//
+/util.h/0.8/dummy timestamp//
+/wm.c/0.11/dummy timestamp//
+/wm.h/0.6/dummy timestamp//
+/wrapper.c/0.5/dummy timestamp//
+/socket.c/0.11/dummy timestamp//
+/socketalien.h/0.9/dummy timestamp//

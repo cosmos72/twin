@@ -25,8 +25,7 @@ static byte InitCat(void) {
 
     return
 	TwCheckMagic(cat_magic) && TwOpen(NULL) &&
-	(Cat_MsgPort=TwCreateMsgPort
-	 (5, "twcat", (time_t)0, (frac_t)0, (byte)0)) &&
+	(Cat_MsgPort=TwCreateMsgPort(5, "twcat")) &&
 	(Cat_Menu=TwCreateMenu(
 	  COL(BLACK,WHITE), COL(BLACK,GREEN), COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
 	  COL(RED,WHITE), COL(RED,GREEN), (byte)0)) &&

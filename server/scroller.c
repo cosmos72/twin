@@ -34,7 +34,7 @@ msg Do_Scroll, Dont_Scroll;
 
 byte InitScroller(void) {
     if ((Scroller_MsgPort=Do(Create,MsgPort)
-	 (FnMsgPort, 16, "builtin scroller", (time_t)0, 401 MilliSECs, (byte)0, ScrollerH)) &&
+	 (FnMsgPort, 16, "builtin scroller", (tany)0, 401 MilliSECs, (byte)0, ScrollerH)) &&
 	(Do_Scroll=Do(Create,Msg)(FnMsg, 0, 0)) &&
 	(Dont_Scroll=Do(Create,Msg)(FnMsg, 0, 0))) {
 
@@ -99,7 +99,8 @@ static void ScrollerH(msgport MsgPort) {
 	FlagWinScroll = FALSE;
     
     FlagDeskScroll = (All->SetUp->Flags & SETUP_SCREEN_SCROLL)
-	&& (Mouse->keys == HOLD_LEFT || Mouse->keys == HOLD_MIDDLE || Mouse->keys == HOLD_RIGHT);
+	/* only a single button must be held */
+	&& (Mouse->keys == HOLD_CODE(HOLD_N(Mouse->keys)));
 
     State = All->State & STATE_ANY;
     
@@ -140,7 +141,7 @@ static void ScrollerH(msgport MsgPort) {
 	if (!WinScrolled)
 	    ScrollerAutoRepeat();
 
-	StdAddMouseEvent(MSG_MOUSE, DRAG_MOUSE | Mouse->keys, Mouse->x, Mouse->y);
+	StdAddMouseEvent(MOVE_MOUSE | Mouse->keys, Mouse->x, Mouse->y);
     } else {
 	if (!WinScrolled)
 	    ScrollerDelayRepeat();

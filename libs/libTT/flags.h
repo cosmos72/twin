@@ -11,19 +11,24 @@
 #define ttmask(n)			((ttany)1<<(n))
 
 
+
 /*
  * from <Tw/datatypes.h> :
  * MINS(t) = ((t)((t)1<<(8*sizeof(t)-1)))
  */
-#define ttobj_refcount_alive		MINS(ttopaque)
-#define ttobj_oflags_static		1
+#define ttobject_refcount_alive		MINS(ttopaque)
+/** object is in non-dynamic memory and must not be free()d */
+#define ttobject_oflags_static		1
+/** object is in read-only memory and must not be modified */
+#define ttobject_oflags_const		2
+
 
 #define ttevent_evflags_consumed	MINS(ttuint)
 #define ttevent_evflags_firing		(MINS(ttuint)>>1)
 
 #define ttbitmask_oflags_mask_reverse	2
 
-#define ttlistener_lflags_builtin	MINS(ttuint)
+#define ttlistener_lflags_ttmethod	MINS(ttuint)
 #define ttlistener_lflags_args_swallow	(MINS(ttuint)>>1)
 
 

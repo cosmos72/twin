@@ -166,3 +166,12 @@ udat DlName2Code(byte *name) {
 	return RCParseSo;
     return MainSo;
 }
+
+
+void *DlSym(module Module, CONST byte *name) {
+    if (Module && name)
+	return (void *)my(dlsym)((my_handle)Module->Handle, name);
+    
+    return NULL;
+}
+

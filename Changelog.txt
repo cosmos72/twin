@@ -1,3 +1,39 @@
+From 0.4.6 to 0.5.0: (Massimiliano Ghilardi, 26 Mar 2003)
+	* Added libTw client `twcuckoo', modeled after xcuckoo.
+	* Added support for mouse wheel (= buttons 4 and 5)
+	  in libTw, libTT and in twin server. Be aware anyway that
+	  gpm daemon (used by twin to receive mouse events on Linux console)
+	  does not support mouse wheel, at least up to gpm 1.18.1.
+	* Updated makefiles to support building in a different directory than
+	  source tree. This allows compiling twin for multiple architectures
+	  using the same source tree, and also from read-only sources (pending
+	  issue: during build, a few symbolic links are added to the sources).
+	  To use this feature, simply type:
+	  $ <path-to-twin-sources>/configure <options>
+	  $ make
+	  Using this feature from a CVS snapshot is a little harder,
+	  look at `Makefile.fake' for an example.
+	* Added CONF__ASM and CONF__LONG_LONG to configuration:
+	  now you can manually enable/disable assembler code and
+	  `long long' support (`long long' support may automatically disable
+	  assembler code due to internal limitations) using one of:
+	  `./configure --enable--{asm|long-long}[=yes|no]',
+	  `scripts/Configure.sh --enable--{asm|long-long}[=yes|no]',
+	  `make config', `make menuconfig', `make gconfig'.
+	* Increased libTw major version to 4 due to incompatible changes.
+	* Removed `time_t' and `frac_t' types from libTw.
+	  They are now replaced by `tany'.
+	* Removed unused parameters from Tw_CreateMsgPort().
+	* Rationalized and completed TTGet* and TTSet* libTT methods.
+	* Added java-like ttfield and ttmethod classes.
+	  TT{Get,Set,Change}Field_ttobj are now wrappers for ttfield methods.
+	  Also rewrote TTCall*_ttmethod.
+	* Started writing libTT tunneling and detunneling drivers on top of libTw.
+	  Implemented both sides (libTw client and twin server) of server extensions.
+	* Started writing libTT tt*layout classes.
+	* Rewrote and cleaned up libTT m4 scripts.
+
+
 From 0.4.5 to 0.4.6: (Massimiliano Ghilardi, 26 Mar 2003)
 	* Fixed buffer overrun in twdisplay startup code. Patch contributed
 	  by Marco Bodrato.
@@ -10,9 +46,9 @@ From 0.4.5 to 0.4.6: (Massimiliano Ghilardi, 26 Mar 2003)
 	* Added getpt() support and error reporting to pseudo-tty allocation
 	  code, both in twin server and in twterm.
 	* Added ShinyMetal_6x13.xpm theme, contributed by Adam Olsen.
+	* Added `make uninstall'.
 	* Tweaked makefiles so that 'make install DEBUG=y' does not strip
 	  installed binaries and libraries.
-	* Added `make uninstall'.
 	* Changed `twdisplay' startup logic to mimic server: if started
 	  without `-hw=[...]' twdisplay now autoprobes all HW drivers:
  	  compiled-in ones and also drivers built as modules.

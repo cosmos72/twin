@@ -10,18 +10,19 @@
 #include <string.h>
 
 #include "autoconf.h"
+#include "version.h"
 #include <Tw/Tw.h>
 
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
 
-int main(int argc, char *argv[]) {
-#ifdef BINDIR
-    argv[0] = BINDIR "/twin_real";
-#else
-    argv[0] = "./twin_real";
+#ifndef BINDIR
+# define BINDIR "."
 #endif
+
+int main(int argc, char *argv[]) {
+    argv[0] = BINDIR "/twin_" TWIN_VERSION_STR TWIN_VERSION_EXTRA_STR ;
     execv(argv[0], argv);
     printf("failed to exec %s: %s\n", argv[0], strerror(errno));
     return 1;

@@ -15,19 +15,25 @@
 
 #include <TT/TTtypes.h>
 
-#define TT_EXLIB_SIZES		1
-#define TT_EALREADY_CONN	2
-#define TT_ENO_MEM		3
-#define TT_EDLERROR_TARGET	4
-#define TT_EUNKNOWN_TARGET	5
-#define TT_EFAILED_TARGET	6
-#define TT_EBAD_TARGET		7
-#define TT_EVERSION_TARGET	8
+#define TT_EBAD_SIZES		1
+#define TT_ENO_MEM		2
+#define TT_ETARGET_ALREADY_OPEN	20
+#define TT_ETARGET_DLERROR	21
+#define TT_ETARGET_FAILED	22
+#define TT_ETARGET_BAD		23
+#define TT_ETARGET_NO_EXTENSION	40
+#define TT_ETARGET_BAD_EXTENSION_VERSION 41
 
+#define TT_EBAD_ARG		60
+#define TT_EEXIST		61
 
-#define TT_EBAD_ARG		20
-#define TT_EEXIST		21
-
+#define TT_EDETAIL_TARGET_TWIN_TUNNEL	1
+#define TT_EDETAIL_TARGET_TWIN_DETUNNEL 2
+#define TT_EDETAIL_TARGET_TWIN		3
+#define TT_EDETAIL_TARGET_GTK		4
+#define TT_EDETAIL_TARGET_X11		5
+#define TT_EDETAIL_TARGET_XML		6
+#define TT_EDETAIL_TARGET_NULL		7
 
 typedef struct tt_errno {
     /** error number */

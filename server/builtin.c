@@ -16,7 +16,7 @@
 #include "data.h"
 #include "methods.h"
 #include "main.h"
-#include "extensions.h"
+#include "extreg.h"
 
 #include "hw.h"
 #include "hw_multi.h"
@@ -104,19 +104,19 @@ window WinList, MessagesWin;
 static gadget ButtonOK_About, ButtonRemove, ButtonThis;
 
 static void Clock_Update(void) {
-    timevalue *Time = &All->Now;
+    time_t Time = (time_t)All->Now.Seconds;
     struct tm *Date;
     byte Buffer[30];
     
     ClockWin->CurX=ClockWin->CurY=(uldat)0;
-    Date = localtime(&Time->Seconds);
+    Date = localtime(&Time);
     
     sprintf((char *)Buffer, "%02u/%02u/%04u\n %02u:%02u:%02u",
 	    (udat)Date->tm_mday, (udat)Date->tm_mon+1, (udat)Date->tm_year + 1900,
 	    (udat)Date->tm_hour, (udat)Date->tm_min,   (udat)Date->tm_sec);
     Act(RowWriteAscii,ClockWin)(ClockWin, strlen(Buffer), Buffer);
     
-    Builtin_MsgPort->PauseDuration.Fraction = 1 FullSECs - Time->Fraction;
+    Builtin_MsgPort->PauseDuration.Fraction = 1 FullSECs - All->Now.Fraction;
     Builtin_MsgPort->PauseDuration.Seconds = 0;
 }
 
@@ -820,7 +820,7 @@ byte InitBuiltin(void) {
     uldat grlen = strlen(greeting);
     
     if ((Builtin_MsgPort=Do(Create,MsgPort)
-	 (FnMsgPort, 4, "twin", (time_t)0, (frac_t)0, 0, BuiltinH)) &&
+	 (FnMsgPort, 4, "twin", 0, 0, 0, BuiltinH)) &&
 	
 	InitScreens() && /* Do(Create,Screen)() requires Builtin_MsgPort ! */
 	

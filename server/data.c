@@ -49,7 +49,7 @@ static setup SetUp = {
 };
 
 static selection Selection = {
-    { (time_t)0, (frac_t)0 },
+    { (tany)0, (tany)0 },
     (msgport)0, (display_hw)0,
 	SEL_TEXTMAGIC,
 	"",
@@ -90,7 +90,7 @@ static struct s_all _All = {
 	1, 1, /* DisplayWidth, DisplayHeight */
 	STATE_DEFAULT,
 	
-    { (time_t)0, (uldat)0 },
+    { (tany)0, (tany)0 },
 	&Selection,
 	&SetUp,
 	(void (*)(void))0, /* AtQuit */

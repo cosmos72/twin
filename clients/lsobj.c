@@ -149,7 +149,7 @@ int main(int argc, char *argv[]) {
 
 	if (err == 1) {
 	    id = TwGetAll();
-	    if (TwErrno == TW_ENO_FUNCTION) {
+	    if (TwErrno == TW_ESERVER_NO_FUNCTION) {
 		TwErrno = 0;
 		id = TwFirstScreen();
 	    }

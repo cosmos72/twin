@@ -1,0 +1,30 @@
+
+dnl This file is `m4/makefragment.m4m' : m4 macros to autogenerate makefragment_m4
+dnl Tell the user about this.
+# This file was automatically generated from `m4/makefragment.m4m', do not edit!
+
+
+#
+#  makefragment_m4  --  makefile containing rules to autogenerate some libTT glue code for Pliant
+#
+#  Copyright (C) 2002 by Massimiliano Ghilardi
+#
+#  This library is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU Library General Public
+#  License as published by the Free Software Foundation; either
+#  version 2 of the License, or (at your option) any later version.
+#
+
+tt_list_files_pli:=$(patsubst %,$(T)include/TT/%.pli,$(tt_list_objects))
+
+$(tt_list_files_pli) $(T)include/TT/pli/all_m4.pli: $(T)include/TT/pli/tt_timestamp
+
+$(T)include/TT/pli/tt_timestamp: $(T)include/TT/pli/m4/tt.m4 $(T)include/TT/pli/makefragment_m4 $(T)include/m4/TT*.m4
+	@for i in $(tt_list_objects); do \
+	    echo "building include/TT/pli/$$i.pli"; \
+	    $(M4) -I$(T)include -Dtarget=$$i $< > $(T)include/TT/pli/$$i.pli; \
+	done; \
+	touch $@
+
+PURE_REMOVE_FILES+=$(T)include/TT/pli/tt_timestamp $(T)include/TT/pli/tt?*.pli
+

@@ -18,7 +18,7 @@
 #include "draw.h"
 #include "resize.h"
 #include "util.h"
-#include "extensions.h"
+#include "extreg.h"
 #include "scroller.h"
 #include "wm.h"
 
@@ -440,7 +440,7 @@ static widget RecursiveFindFocusWidget(widget W) {
 static void CleanupLastW(widget LastW, udat LastKeys, byte LastInside) {
     msg NewMsg;
     event_any *Event;
-    udat Code;
+    udat i;
     
     if (LastW) {
 	if (LastInside) {
@@ -448,30 +448,21 @@ static void CleanupLastW(widget LastW, udat LastKeys, byte LastInside) {
 		Event=&NewMsg->Event;
 		Event->EventMouse.W = LastW;
 		Event->EventMouse.ShiftFlags = (udat)0;
-		Event->EventMouse.Code = 
-		    (LastKeys & HOLD_ANY) ? DRAG_MOUSE | (LastKeys & HOLD_ANY) : MOTION_MOUSE;
+		Event->EventMouse.Code = MOVE_MOUSE | (LastKeys & HOLD_ANY);
 		Event->EventMouse.X = MINDAT;
 		Event->EventMouse.Y = MINDAT;
 		SendMsg(LastW->Owner, NewMsg);
 	    }
 	}
-	while (LastKeys) {
+	while (LastKeys & HOLD_ANY) {
 	    if ((NewMsg=Do(Create,Msg)(FnMsg, MSG_WIDGET_MOUSE, 0))) {
 		Event=&NewMsg->Event;
 		Event->EventMouse.W = LastW;
 		Event->EventMouse.ShiftFlags = (udat)0;
-		Code =
-		    LastKeys & HOLD_LEFT ?   (LastKeys &= ~HOLD_LEFT,   RELEASE_LEFT) :
-		    LastKeys & HOLD_MIDDLE ? (LastKeys &= ~HOLD_MIDDLE, RELEASE_MIDDLE) :
-		    LastKeys & HOLD_RIGHT ?  (LastKeys &= ~HOLD_RIGHT,  RELEASE_RIGHT) :
-#ifdef HOLD_WHEEL_REV
-		    LastKeys & HOLD_WHEEL_REV ? (LastKeys &= ~HOLD_WHEEL_REV, RELEASE_WHEEL_REV) :
-#endif
-#ifdef HOLD_WHEEL_FWD
-		    LastKeys & HOLD_WHEEL_FWD ? (LastKeys &= ~HOLD_WHEEL_FWD, RELEASE_WHEEL_FWD) :
-#endif
-		    0;
-		Event->EventMouse.Code = Code | LastKeys;
+		
+		i = HOLD_N(LastKeys & HOLD_ANY);
+		
+		Event->EventMouse.Code = RELEASE_N(i) | (LastKeys &= ~HOLD_CODE(i));
 		Event->EventMouse.X = MINDAT;
 		Event->EventMouse.Y = MINDAT;
 		SendMsg(LastW->Owner, NewMsg);
@@ -488,7 +479,7 @@ static void HandleHilightAndSelection(widget W, udat Code, dat X, dat Y, byte In
     
     if (isSINGLE_PRESS(Code) && HOLD_CODE(PRESS_N(Code)) == All->SetUp->ButtonSelection)
 	StartHilight((window)W, (ldat)X+W->XLogic, (ldat)Y+W->YLogic);
-    else if (isDRAG(Code) && IsHoldButtonSelection)
+    else if (IsHoldButtonSelection && isMOVE(Code))
 	ExtendHilight((window)W, (ldat)X+W->XLogic, (ldat)Y+W->YLogic);
     else if (isSINGLE_RELEASE(Code)) {
 	
@@ -639,11 +630,11 @@ static byte CheckForwardMsg(wm_ctx *C, msg Msg, byte WasUsed) {
     
     /* forward the message */
     if (Inside || LastKeys || LastInside) {
-	if (isMOTION(Code)
+	if (Code == MOVE_MOUSE
 	    ? (Inside || LastInside) && (W->Attrib & WIDGET_WANT_MOUSE_MOTION)
 	    : (Inside || LastKeys) && (W->Attrib & WIDGET_WANT_MOUSE)) {
 
-	    if (isMOTION(Code) && !Inside)
+	    if (Code == MOVE_MOUSE && !Inside)
 		X = Y = MINDAT;
 	    
 	    Msg->Type=MSG_WIDGET_MOUSE;
@@ -1400,7 +1391,7 @@ static void ContinueReleaseMouseState(wm_ctx *C, byte State) {
 		All->State = STATE_DEFAULT;
 	    break;
 	}
-    } else if (isSINGLE_PRESS(C->Code) || isSINGLE_DRAG(C->Code) || isRELEASE(C->Code)) {
+    } else if (isSINGLE_PRESS(C->Code) || isSINGLE_MOVE(C->Code) || isRELEASE(C->Code)) {
 	switch (State) {
 	  case STATE_RESIZE: ContinueResize(C); break;
 	  case STATE_DRAG:   ContinueDrag(C);   break;
@@ -1914,7 +1905,7 @@ byte InitWM(void)
 	/* this will later be sent to rcrun.c, it forces loading .twinrc */
 	SendControlMsg(WM_MsgPort, MSG_CONTROL_OPEN, 0, NULL)) {
 	
-	if (RegisterExtension(WM,MsgPort,WM_MsgPort)) {
+	if (RegisterExt(WM,MsgPort,WM_MsgPort)) {
 	    
 	    if ((MapQueue=Do(Create,MsgPort)
 		 (FnMsgPort, 11, "WM MapQueue", 0, 0, 0, (void (*)(msgport))NoOp))) {
@@ -1932,10 +1923,10 @@ byte InitWM(void)
 		    printk("twin: RC: %."STR(SMALLBUFF)"s\n", ErrStr);
 		}
 	    }
-	    UnRegisterExtension(WM,MsgPort,WM_MsgPort);
+	    UnRegisterExt(WM,MsgPort,WM_MsgPort);
 	} else {
 	    sent = TRUE;
-	    printk("twin: WM: RegisterExtension(WM,MsgPort) failed! Another WM is running?\n");
+	    printk("twin: WM: RegisterExt(WM,MsgPort) failed! Another WM is running?\n");
 	}
     }
     if (WM_MsgPort)
@@ -1950,7 +1941,7 @@ byte InitWM(void)
 void QuitModule(module Module) {
     QuitRC();
     OverrideMethods(FALSE);
-    UnRegisterExtension(WM,MsgPort,WM_MsgPort);
+    UnRegisterExt(WM,MsgPort,WM_MsgPort);
     Delete(WM_MsgPort);
     Delete(MapQueue);
 }

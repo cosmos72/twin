@@ -1,0 +1,107 @@
+From max@linuz.sns.it Thu Oct 24 20:06:12 2002
+Date: Tue, 22 Oct 2002 12:54:37 +0200 (CEST)
+From: Massimiliano Ghilardi <max@linuz.sns.it>
+To: Adam Olsen <rhamph@d2dc.net>
+Cc: twin-develop@lists.sourceforge.net
+Subject: Re: thoughts and comments on twin
+
+On Thu, 17 Oct 2002, Adam Olsen wrote:
+
+>A few minutes ago I tried twin, first the debian version, then the
+>0.4.4 tarball.  It's very cool, but I came up with these
+>thougts/ideas/comments:
+>
+>* shift-pageup for scrolling
+>* mousewheel for scrolling
+
+This comes up often, so I will probably put it in a FAQ:
+When displaying on X (either -hw=X or -hw=gfx) it is actually possible
+to receive shift-pageup keys and to react to them, but all other display
+drivers (Linux console driver for first) are unable to distinguish shift-pageup
+from plain pageup, since it uses ascii-keyboard mode like almost all tty
+programs, not raw-keyboard mode like X or svgalib.
+
+I do not want to use raw-keyboard mode to avoid problems like unusable keyboard
+after a crash and having to implement support for all the national keyboard
+layouts like X does.
+(in other words: you can tell Linux kernel which keyboard you have -- with
+'loadkeys' and a bunch of files describing every possible national keyboard
+layout -- X can do the same even if in a different method -- I do not want to
+have to redo all that stuff for twin)
+
+
+>* bold fonts
+
+Yes, this could be an option for X drivers.
+
+>* hide mouse cursor when typing
+
+I did not think mouse could disturb, expecially since mouse redrawing on
+-hw=tty is extremely smart and smooth even during heavy scrolling, but yes,
+this could be an option too.
+
+>* backspace in mutt produces beep, not scroll up
+>* delete in mutt scrolls up, not down
+
+This is strange, since twin tries really hard to emulate a Linux terminal
+EXACTLY. Could you try hitting "ctrl-v" then "backspace" at bash prompt
+and see what ASCII sequence you get? It should be ^?
+Same with "ctrl-v" then "delete", should be ^[[3~
+If this happens when twin displays on X, be aware that most X servers mess up
+backspace and delete if you have numlock led turned on.
+
+
+>* move window with super-mouse1-move and resize with super-mouse2-move
+>  different way of having the menu.  using the right button is rather
+>  non-intuitive
+
+I did not get this, what are super-mouse1-move and super-mouse2-move?
+You can move a window by dragging its title, and resize it by dragging its
+lower-right corner (or from the menu, of course).
+The effect of ANY mouse action can be configured in your ~/.twinrc
+
+>* -hw=gfx appears to be attempting to load a 6x13 font, which doesn't
+>  exist.  how do I get it to use a properly sized font?
+
+There are two (IMHO) nice X11 fonts distributed with twin sources,
+in the fonts/ subdirectory. One is "vga" and is 8x16, the other
+is an unicode font and is 9x19.
+And for -hw=gfx, you should specify something like
+-hw=gfx,theme=ShinyMetal,font=vga
+of course theme and font are optional, but you'd better play with them a little
+to understand how they work: a theme works only if a font with corresponding
+size can be loaded...
+
+>* --hw is much more friendly to my poor brain than -hw
+
+That's true, I did not follow GNU guidelines for program arguments.
+I will change them so that both single hyphens (-hw) and double hyphens (--hw)
+are accepted.
+
+>* twin 0.4.4's tty mode garbles the display in xterm.  debian's 0.4.0
+>didn't (but didn't support the mouse either)
+
+That's a known problem, but, as I answered to whom pointed it out before,
+I do not consider xterm support mandatory, since if you can display on xterm
+you can also display on X (with a few exceptions due to firewalls/masqueraders/...).
+
+>I have alot of other thoughts on where to take twin (I've wanted
+>something like it for years), but I'll save those for later, after
+>I've got -hw=gfx working. :)
+
+Good luck and keep sending ideas and comments :-)
+
+>--
+>Adam Olsen, aka Rhamphoryncus
+>Have internet, will learn.
+>
+
+
+                        Massimiliano Ghilardi
+
+ ----------------------------------------------------------------
+| I have yet to meet a person who had a bad experience of Linux. |
+| Most have never had an experience.                             |
+ ----------------------------------------------------------------
+
+

@@ -138,7 +138,7 @@ uldat  Tw_Create4MenuCommonMenuItem(tdisplay TwD, tmenu M);
 tmenu  Tw_CreateMenu(tdisplay TwD, hwcol colitem, hwcol colselect, hwcol coldisabled, hwcol colselectdisabled, hwcol colshortcut, hwcol colshortcutselect, byte flags);
 void  Tw_SetInfoMenu(tdisplay TwD, tmenu M, byte flags, ldat len, TW_CONST byte *text, TW_CONST hwcol *coltext);
 
-tmsgport  Tw_CreateMsgPort(tdisplay TwD, byte len, TW_CONST byte *name, time_t secpause, frac_t fracpause, byte flags);
+tmsgport  Tw_CreateMsgPort(tdisplay TwD, byte len, TW_CONST byte *name);
 tmsgport  Tw_FindMsgPort(tdisplay TwD, tmsgport prev, byte len, TW_CONST byte *name);
 
 void  Tw_BgImageScreen(tdisplay TwD, tscreen S, dat w, dat h, TW_CONST hwattr *textattr);
@@ -165,11 +165,15 @@ byte  Tw_SendToMsgPort(tdisplay TwD, tmsgport P, udat len, TW_CONST byte *data);
 void  Tw_BlindSendToMsgPort(tdisplay TwD, tmsgport P, udat len, TW_CONST byte *data);
 
 tobj  Tw_GetOwnerSelection(tdisplay TwD);
-void  Tw_SetOwnerSelection(tdisplay TwD, time_t secnow, frac_t fracnow);
+void  Tw_SetOwnerSelection(tdisplay TwD, tany secnow, tany fracnow);
 void  Tw_RequestSelection(tdisplay TwD, tobj owner, uldat reqprivate);
 void  Tw_NotifySelection(tdisplay TwD, tobj requestor, uldat reqprivate, uldat magic, TW_CONST byte *mine, uldat len, TW_CONST byte *data);
 
 byte  Tw_SetServerUid(tdisplay TwD, uldat uid, byte privileges);
+
+textension  Tw_OpenExtension(tdisplay TwD, byte namelen, TW_CONST byte *name);
+tany  Tw_CallBExtension(tdisplay TwD, textension id, topaque len, TW_CONST byte *data, TW_CONST byte *return_type);
+void  Tw_CloseExtension(tdisplay TwD, textension id);
 
 
 

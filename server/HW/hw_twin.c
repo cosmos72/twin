@@ -474,14 +474,13 @@ byte TW_InitHW(void) {
 	
 	/*
 	 * check if the server supports the functions we need and store their IDs
-	 * to avoid deadlocking later when we need them.
+	 * to avoid deadlocking later when we call them.
 	 */
-	Tw_FindFunctions(Td, Tw_MapWidget, Tw_WriteAsciiWindow, Tw_WriteHWAttrWindow,
+	Tw_FindLFunction(Td, Tw_MapWidget, Tw_WriteAsciiWindow, Tw_WriteHWAttrWindow,
 			 Tw_GotoXYWindow, Tw_ResizeWindow, /* Tw_DragAreaWindow, */ NULL) &&
 
 	(Tscreen = Tw_FirstScreen(Td)) &&
-	(Tmsgport = Tw_CreateMsgPort
-	 (Td, 12, "Twin on Twin", (uldat)0, (udat)0, (byte)0)) &&
+	(Tmsgport = Tw_CreateMsgPort(Td, 12, "Twin on Twin")) &&
 	(Tmenu = Tw_CreateMenu
 	 (Td, COL(BLACK,WHITE), COL(BLACK,GREEN), COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
 	  COL(RED,WHITE), COL(RED,GREEN), (byte)0)) &&

@@ -21,18 +21,12 @@
  */
 
 
-#ifdef CONF_SOCKET_PTHREADS
-# include <pthread.h>
-#endif
-
 #include <Tutf/Tutf_defs.h>
 #include <Tw/Tw_defs.h>
 
 /* include our internal copy of TT.h instead of the public one */
 #include "TT.h"
 #include <TT/TTerrno.h>
-
-#include "mutex.h"
 
 #include "TTextern.h"
 #include "TTassert.h"
@@ -57,24 +51,18 @@ static void RealClose(void);
 
 TT_MUTEX_HELPER_DEFS(static);
 
-ttfns _TT_null_InitHW(tthw *HW);
-static ttfns module_InitHW(tthw *HW);
-ttfns _TT_twin_InitHW(tthw *HW);
-ttfns _TT_gtk_InitHW(tthw *HW);
-ttfns _TT_X11_InitHW(tthw *HW);
-ttfns _TT_xml_InitHW(tthw *HW);
-
 static void GetNow(void);
 
-static ttobj FindNative(ttany id);
+static ttobject FindNative(ttany id);
 
 static void DropId(ttobj Obj);
+static ttbyte FixedAssignIdArray(ttopaque ClassId, ttopaque o_n, TT_CONST ttobj *o_array);
 
 static void FireSimpleEvent(ttcomponent o, ttuint evtype);
 static void FireEvent(TT_ARG_DIE ttevent ev, ttcomponent o);
 static void FireEventLoop(void);
 
-static opaque Method2Order(void *method);
+ttuint TTGetMethodIdV(void *method);
 
 static void DelAll_ttobj(ttbyte quick);
 
@@ -184,7 +172,7 @@ TT_DECL_MAGIC(TTMagicData);
 
 ttbyte TTCheckMagic(TT_CONST ttbyte id[])  {
     if (TTCmpMem(id+1, TTMagicData+1, (id[0] < TTMagicData[0] ? id[0] : TTMagicData[0]) - 2 - sizeof(ttuint))) {
-	CommonErrno = TT_EXLIB_SIZES;
+	CommonErrno = TT_EBAD_SIZES;
 	return TT_FALSE;
     }
     return TT_TRUE;
@@ -192,10 +180,10 @@ ttbyte TTCheckMagic(TT_CONST ttbyte id[])  {
 
 static ttuint PrintInitError(tthw HW, TT_CONST ttbyte *target, ttbyte module) {
     s_tt_errno *L = GetErrnoLocation();
-    /* set TTD.FN.HW to allow error reporting */
+    /* set TTD.Class.HW to allow error reporting */
     if (HW)
-	TTD.FN.HW = *HW;
-    fprintf(stderr, "TT-ERROR: %s display target%s `%s' failed: %s%s\n",
+	TTD.Class.HW = *HW;
+    fprintf(stderr, "TT-ERROR: %s display target%s `%s' failed:\n\t%s%s\n",
 	    module ? "loading" : "compiled in",
 	    module ? " module" : "",
 	    target ? target : (TT_CONST ttbyte *)"(NULL)",
@@ -203,98 +191,9 @@ static ttuint PrintInitError(tthw HW, TT_CONST ttbyte *target, ttbyte module) {
     return 0;
 }
 
-#ifdef CONF__MODULES
-# ifdef LIBDIR
-static TT_CONST ttbyte *conf_libdir = LIBDIR "/TT/HW" ;
-# else
-#  define conf_libdir "HW"
-# endif
 
-static ttfns module_InitHW(tthw *HW) {
-    /* put all known driver names here (for autoprobing) */
-    /* do not autoprobe for `null' or `xml' */
-    TT_CONST ttbyte * name [] = {
-# ifndef CONF_TT_HW_TWIN
-	    "twin",
-# endif
-# ifndef CONF_TT_HW_GTK
-	    "gtk",
-# endif
-# ifndef CONF_TT_HW_X11
-	    "X11",
-# endif
-	    NULL, NULL,
-    };
-    
-    
-    /* len == strlen(LIBDIR "/TT/HW/hw_twin.so.x.y.z") */
-    ttuint i, len = 12 + strlen(TT_PROTOCOL_VERSION_STR) + strlen(conf_libdir);
-    ttbyte *buf;
-    ttfns FNs;
-    ttfns (*init_dl)(tthw *);
-    
-    if (TTD.HWTarget) {
-	/* forbid exiting from LIBDIR */
-	if (strchr(TTD.HWTarget, '/')) {
-	    CommonErrno = TT_EBAD_TARGET;
-	    return (ttfns)0;
-	}
-	len += strlen( name[0] = TTD.HWTarget );
-	/* if Target is specified, try *only* it */
-	name[1] = NULL;
-    }
-
-    if ((buf = TTAllocMem(len))) {
-	for (i = 0; i < sizeof(name)/sizeof(name[0]) && name[i]; i++) {
-	    sprintf(buf, "%s/hw_%s.so." TT_PROTOCOL_VERSION_STR, conf_libdir, name[i]);
-	    if ((TTD.DlHandle = dlopen(buf, RTLD_NOW|RTLD_GLOBAL))) {
-		init_dl = (ttfns (*)(tthw *))dlsym(TTD.DlHandle, "InitModule");
-		if (init_dl) {
-		    if ((FNs = init_dl(HW))) {
-			TTFreeMem(buf);
-			return FNs;
-		    } else {
-			/* CommonErrno will be set by init_dl(HW, FNs) */
-		    }
-		} else {
-		    CommonErrno = TT_EDLERROR_TARGET;
-		    TTD.str_dlerror = dlerror();
-		}
-		/* do not dlclose() now, module may hold error messages */
-		/* dlclose(TTD.DlHandle); */
-	    } else {
-		CommonErrno = TT_EDLERROR_TARGET;
-		TTD.str_dlerror = dlerror();
-	    }
-	    PrintInitError(*HW, name[i], TRUE);
-	}
-	TTFreeMem(buf);
-    } else
-	CommonErrno = TT_ENO_MEM;
-
-    return (ttfns)0;
-}
-#else /* !CONF__MODULES */
-
-static ttfns module_InitHW(tthw *HW) {
-    if (TTD.HWTarget)
-	fprintf(stderr, "TT-ERROR: modules not enabled, cannot load display target `%s'\n",
-		TTD.HWTarget);
-    else
-	fprintf(stderr, "TT-ERROR: modules not enabled, cannot load any display target\n");
-    
-    if (!CommonErrno)
-	CommonErrno = TT_EFAILED_TARGET;
-    return (ttfns)0;
-}
-
-#endif /* CONF__MODULES */
-
-
-
-static ttuint ttfn_sizes[] = {
-    0,
-#define el(fntype) sizeof(TT_CAT(s_ttfn_,fntype)),
+static ttopaque ttclass_sizes[] = {
+#define el(type) sizeof(TT_CAT(s_ttclass_,type)),
     TT_LIST(el)
 #undef el
 };
@@ -303,27 +202,28 @@ static ttuint ttfn_sizes[] = {
  * initialize method structures, using values in TTD.FNdefault as default
  * and overloading them with ones set in FNs
  */
-#define DeltaFN(i) ((ttuint)((ttbyte *)TFNs[i] - (ttbyte *)TFNs[order_ttobj]))
+#define DeltaClass(i) ((ttopaque)((ttbyte *)TClasses[i] - (ttbyte *)TClasses[order_first]))
 
-static void InitFNs(ttfns FNs) {
-    ttuint i, isuper = 0, j, d;
+static void InitClasses(ttclasses Classes) {
+    ttopaque i, isuper = 0, j, d;
     void **super1, **super2, **src1, **src2, **dst1, **dst2;
     void *c1, *c2;
     
-    for (i = order_ttobj; i < order_n; i++) {
+    for (i = order_first; i < order_last; i++) {
 
-	j = TT_OFFSETOF(ttfn_ttobj,New);
-	if (i > order_ttobj) {
-	    isuper = (opaque)TTGetSuper_ttfn((tt_fn)i);
-	    d = DeltaFN(isuper);
-	    super1 = (void **)((ttbyte *)&TTD.FNdefault + d + j);
-	    super2 = (void **)((ttbyte *)&TTD.FN        + d + j);
+	j = ttclass_sizes[0];
+	
+	if (i > order_first) {
+	    isuper = TT_MAGIC_MASK & (ttopaque)TTGetSuper_ttclass((tt_obj)ORDER2ID_CLASS(i));
+	    d = DeltaClass(isuper);
+	    super1 = (void **)((ttbyte *)&TTD.Class_default + d + j);
+	    super2 = (void **)((ttbyte *)&TTD.Class         + d + j);
 	}
-	d = DeltaFN(i);
-	src1 =   (void **)((ttbyte *)TTD.FN_hw_null + d + j);
-	src2 =   (void **)((ttbyte *)FNs            + d + j);
-	dst1 =   (void **)((ttbyte *)&TTD.FNdefault + d + j);
-	dst2 =   (void **)((ttbyte *)&TTD.FN        + d + j);
+	d = DeltaClass(i);
+	src1 =   (void **)((ttbyte *)TTD.Class_hw_null  + d + j);
+	src2 =   (void **)((ttbyte *)Classes            + d + j);
+	dst1 =   (void **)((ttbyte *)&TTD.Class_default + d + j);
+	dst2 =   (void **)((ttbyte *)&TTD.Class         + d + j);
 	
 	/*
 	 * this is TRICKY. we have two sources of methods (src1 and src2)
@@ -344,9 +244,9 @@ static void InitFNs(ttfns FNs) {
 	 *             src1     ->    dst1
 	 *             src2     ->    dst2
 	 */
-	for (j = TT_OFFSETOF(ttfn_ttobj,New); j < ttfn_sizes[i]; j += sizeof(void *)) {
+	for (j = ttclass_sizes[0]; j < ttclass_sizes[i - order_first]; j += sizeof(void *)) {
 	    if (TTAssertAlways
-		((c1 = *src1) || ((j < ttfn_sizes[isuper]) &&
+		((c1 = *src1) || ((j < ttclass_sizes[isuper]) &&
 				  ((c1 = *super2) || (c1 = *super1)))))
 		*dst1 = c1;
 	    
@@ -359,9 +259,12 @@ static void InitFNs(ttfns FNs) {
 	}
 	
     }
+    
+    FixedAssignIdArray(id_ttclass_ttclass, order_last - order_first, (ttobj *)TClasses);
+    
     /* set HW methods */
-    TTD.FN.HW = FNs->HW;
-    TTD.FNdefault.HW = TTD.FN_hw_null->HW;
+    TTD.Class.HW = Classes->HW;
+    TTD.Class_default.HW = TTD.Class_hw_null->HW;
 }
 
 static void CloseTarget(void) {
@@ -369,7 +272,7 @@ static void CloseTarget(void) {
 	THW.Close();
     
     /* reinitialize at each TTClose() */
-    InitFNs(TTD.FN_hw_null);
+    InitClasses(TTD.Class_hw_null);
 
 #ifdef CONF__MODULES
     /* unload module if needed */
@@ -421,7 +324,7 @@ static void Close(ttbyte quick) {
 	/* remember arg */
 	TTD.QuitArg = quick;
 	
-	if (!(TTD.refcount &= ~ttobj_refcount_alive))
+	if (!(TTD.refcount &= ~ttobject_refcount_alive))
 	    RealClose();
 	else {
 	    /*
@@ -442,61 +345,229 @@ void TTCloseQuickNDirty(void) {
     Close(TT_TRUE);
 }
 
-static ttfns OpenTarget(void) {
-    ttfns FNs;
-    tthw HW;
-	
-    /* reinitialize at each TTOpen(). this also sets ->order, ->magicmask, ->magic, ->size */
-    TTD.FNdefault = TTD.FN = *(TTD.FN_hw_null = _TT_null_InitHW(&HW));
-    
-#define AUTOCHECK4(t) (!TTD.HWTarget || !strcmp(t, TTD.HWTarget))
-#define AUTOTRY4(t) (AUTOCHECK4(TT_STR(t)) && ((FNs = TT_CAT(TT_CAT(_TT_,t),_InitHW)(&HW)) || PrintInitError(HW, TT_STR(t), TT_FALSE)))
 
-#define CHECK4(t) (TTD.HWTarget && !strcmp(t, TTD.HWTarget))
-#define TRY4(t) (CHECK4(TT_STR(t)) && ((FNs = TT_CAT(TT_CAT(_TT_,t),_InitHW)(&HW)) || PrintInitError(HW, TT_STR(t), TT_FALSE)))
+
+#ifdef CONF__MODULES
+# ifdef LIBDIR
+static TT_CONST ttbyte *conf_libdir = LIBDIR "/TT/modules/HW" ;
+# else
+#  define conf_libdir "HW"
+# endif
+
+static ttclasses module_InitHW(tthw *HW) {
+    /* put all known driver names here (for autoprobing) */
+    /* do not autoprobe for `twin_detunnel', `null' or `xml' */
+    TT_CONST ttbyte * name [] = {
+# ifndef CONF_TT_HW_TWIN_TUNNEL
+	    "twin_tunnel",
+# endif
+# ifndef CONF_TT_HW_TWIN
+	    "twin",
+# endif
+# ifndef CONF_TT_HW_GTK
+	    "gtk",
+# endif
+# ifndef CONF_TT_HW_X11
+	    "X11",
+# endif
+	    NULL, NULL,
+    };
+    
+    
+    /* len == strlen(LIBDIR "/TT/HW/twin_detunnel.so.x.y.z") */
+    ttuint i, len = 20 + strlen(TT_PROTOCOL_VERSION_STR) + strlen(conf_libdir);
+    ttbyte *buf;
+    ttclasses Classes;
+    ttclasses (*init_dl)(tthw *);
+    
+    if (TTD.HWTarget) {
+	/* forbid exiting from LIBDIR */
+	if (strchr(TTD.HWTarget, '/')) {
+	    CommonErrno = TT_ETARGET_BAD;
+	    return (ttclasses)0;
+	}
+	len += strlen( name[0] = TTD.HWTarget );
+	/* if Target is specified, try *only* it */
+	name[1] = NULL;
+    }
+
+    if ((buf = TTAllocMem(len))) {
+	for (i = 0; i < sizeof(name)/sizeof(name[0]) && name[i]; i++) {
+	    sprintf(buf, "%s/%s.so." TT_PROTOCOL_VERSION_STR, conf_libdir, name[i]);
+	    if ((TTD.DlHandle = dlopen(buf, RTLD_NOW|RTLD_GLOBAL))) {
+		init_dl = (ttclasses (*)(tthw *))dlsym(TTD.DlHandle, "InitModule");
+		if (init_dl) {
+		    if ((Classes = init_dl(HW))) {
+			TTFreeMem(buf);
+			return Classes;
+		    } else {
+			/* CommonErrno will be set by init_dl(HW, Classes) */
+		    }
+		} else {
+		    CommonErrno = TT_ETARGET_DLERROR;
+		    TTD.str_dlerror = dlerror();
+		}
+		/* do not dlclose() now, module may hold error messages */
+		/* dlclose(TTD.DlHandle); */
+	    } else {
+		CommonErrno = TT_ETARGET_DLERROR;
+		TTD.str_dlerror = dlerror();
+	    }
+	    PrintInitError(*HW, name[i], TRUE);
+	}
+	TTFreeMem(buf);
+    } else
+	CommonErrno = TT_ENO_MEM;
+
+    return (ttclasses)0;
+}
+#else /* !CONF__MODULES */
+
+static ttclasses module_InitHW(tthw *HW) {
+    if (TTD.HWTarget)
+	fprintf(stderr, "TT-ERROR: modules not enabled, cannot load display target `%s'\n",
+		TTD.HWTarget);
+    else
+	fprintf(stderr, "TT-ERROR: modules not enabled, cannot load any display target\n");
+    
+    if (!CommonErrno)
+	CommonErrno = TT_ETARGET_FAILED;
+    return (ttclasses)0;
+}
+
+#endif /* CONF__MODULES */
+
+
+
+
+static ttclasses module_InitHW(tthw *HW);
+ttclasses _TT_null_InitHW(tthw *HW);
+ttclasses _TT_twin_InitHW(tthw *HW);
+ttclasses _TT_twin_tunnel_InitHW(tthw *HW);
+ttclasses _TT_twin_detunnel_InitHW(tthw *HW);
+ttclasses _TT_gtk_InitHW(tthw *HW);
+ttclasses _TT_X11_InitHW(tthw *HW);
+ttclasses _TT_xml_InitHW(tthw *HW);
+
+typedef struct s_target_hw * target_hw;
+struct s_target_hw {
+    TT_CONST ttbyte *name;
+    ttclasses (*InitHW)(tthw *HW);
+    ttbyte autoprobe;
+};
+
+#define TARGET(t)	{ TT_STR(t), TT_CAT(TT_CAT(_TT_,t),_InitHW), TT_FALSE }
+#define AUTOTARGET(t)	{ TT_STR(t), TT_CAT(TT_CAT(_TT_,t),_InitHW), TT_TRUE }
+
+/* array of built-in targets */
+static struct s_target_hw target_array [] = {
+    /* placeholder for client-specified target */
+    /* WARNING: this currently allows only for ONE client-specified target */
+    { NULL, NULL, TT_TRUE },
+
+#ifdef CONF_TT_HW_TWIN_TUNNEL
+    AUTOTARGET(twin_tunnel),
+#endif
+    /*
+     * cannot link twin_detunnel, it references twin server symbols
+     * and would break *ALL* other libTT clients
+     */
+#if 0
+# ifdef CONF_TT_HW_TWIN_DETUNNEL
+    TARGET(twin_detunnel),
+# endif
+#endif
+#ifdef CONF_TT_HW_TWIN
+    AUTOTARGET(twin),
+#endif
+#ifdef CONF_TT_HW_GTK
+    AUTOTARGET(gtk),
+#endif
+#ifdef CONF_TT_HW_X11
+    AUTOTARGET(X11),
+#endif
     
     /* use `null' or `xml' targets ONLY if explicitly requested */
 
-    if (
-	(TTD.HWTarget && !strcmp("null", TTD.HWTarget) && (FNs = TTD.FN_hw_null)) ||
-#ifdef CONF_TT_HW_TWIN
-	AUTOTRY4(twin) ||
-#endif
-#ifdef CONF_TT_HW_GTK
-	AUTOTRY4(gtk) ||
-#endif
-#ifdef CONF_TT_HW_X11
-	AUTOTRY4(X11) ||
-#endif
 #ifdef CONF_TT_HW_XML
-	TRY4(xml) ||
+    TARGET(xml),
 #endif
-	(FNs = module_InitHW(&HW))
-#undef AUTOCHECK4
-#undef AUTOTRY4
-#undef CHECK4
-#undef TRY4
-	)
-	;
-    else if (!CommonErrno || CommonErrno == TT_EDLERROR_TARGET || CommonErrno >= TT_MAX_ERROR)
-	CommonErrno = TT_EFAILED_TARGET;
+    TARGET(null),
+};
     
-    return FNs;
+#define target_array_n (sizeof(target_array)/sizeof(target_array[0]))
+
+
+/* WARNING: this currently allows only for ONE client-specified target */
+ttbyte TTRegisterTarget(TT_CONST byte *name, ttclasses (*InitHW)(tthw *HW)) {
+    target_array[0].name = name;
+    target_array[0].InitHW = InitHW;
+    return TT_TRUE;
+}
+
+static ttclasses OpenTarget(void) {
+    ttclasses Classes = NULL;
+    tthw HW;
+    target_hw t;
+    ttuint i;
+    
+    /* reinitialize at each TTOpen(). this also sets ->order, ->magicmask, ->magic, ->size */
+    TTD.Class_default = TTD.Class = *(TTD.Class_hw_null = _TT_null_InitHW(&HW));
+    
+#define CHK4(name)	(TTD.HWTarget && !strcmp(name, TTD.HWTarget))
+#define AUTOCHK4(name)	(!TTD.HWTarget || !strcmp(name, TTD.HWTarget))
+#define ERROR4(name)	PrintInitError(HW, name, TT_FALSE)
+    
+    for (i = 0; i < target_array_n; i++) {
+	t = &target_array[i];
+	if (t->name && t->InitHW && (t->autoprobe ? AUTOCHK4(t->name) : CHK4(t->name)) &&
+	    ((Classes = t->InitHW(&HW)) || ERROR4(t->name))) {
+	    
+	    break;
+	}
+    }
+#undef CHK4
+#undef AUTOCHK4
+#undef ERROR4
+
+    if (!Classes)
+	Classes = module_InitHW(&HW);
+	
+    if (!Classes) {
+	if (!CommonErrno || CommonErrno == TT_ETARGET_DLERROR || CommonErrno >= TT_MAX_ERROR)
+	    CommonErrno = TT_ETARGET_FAILED;
+    }
+    
+    return Classes;
+}
+
+static ttbyte Subsystems_Init(void) {
+    ttbyte _TT_field_Init(void);
+    ttbyte _TT_method_Init(void);
+
+    return
+	_TT_field_Init() &&
+	_TT_method_Init();
 }
 
 static ttbyte BeforeOpenTarget(TT_CONST byte *arg) {
+    
     TT_CONST byte *t;
     ttbyte * d, * s;
     
-    if (!TTAssertAlways(sizeof(s_ttfn_ttobj) == TT_OFFSETOF(ttfn_ttobj,New) + 4 * sizeof(void (*)())))
+    if (!TTAssertAlways(sizeof(s_ttclass_ttobj) ==
+			TT_OFFSETOF(ttclass_ttobject,New)) ||
+	!TTAssertAlways(sizeof(s_ttclass_ttobject) ==
+			sizeof(s_ttclass_ttobj) + 4 * sizeof(void (*)())))
 	return TT_FALSE;
-    
+
     if (!TTD.OpenFlag && TTD.PanicFlag) {
 	/* cleanup after a failed TTOpen() */
 	TTD.QuitArg = TT_TRUE;
 	RealClose();
     }
     
+	
     /* if client did not ask for a specific target, pick from environment */
     t = arg ? arg : (TT_CONST ttbyte *)getenv("TTDISPLAY");
 
@@ -513,11 +584,12 @@ static ttbyte BeforeOpenTarget(TT_CONST byte *arg) {
 	    return TT_FALSE;
 	}
     }
-    return TT_TRUE;
+    
+    return Subsystems_Init();
 }
 
-static void AfterOpenTarget(ttfns FNs) {
-    if (FNs) {
+static void AfterOpenTarget(ttclasses Classes) {
+    if (Classes) {
 #ifdef CONF_SOCKET_PTHREADS
 	TTD.rErrno_.max = TTD.rErrno_.last = 0;
 #else
@@ -527,10 +599,10 @@ static void AfterOpenTarget(ttfns FNs) {
 	TTD.OpenFlag = TT_TRUE;
 	TTD.PanicFlag = TTD.QuitArg = TT_FALSE;
 	    
-	TTD.refcount = ttobj_refcount_alive;
+	TTD.refcount = ttobject_refcount_alive;
     
-	InitFNs(FNs);
-	
+	InitClasses(Classes);
+
     } else {
 	if (TTD.HWTarget)
 	    TTFreeMem(TTD.HWTarget);
@@ -541,19 +613,18 @@ static void AfterOpenTarget(ttfns FNs) {
 }
 
 static ttbyte Open(TT_CONST byte *arg) {
-    ttfns FNs;
+    ttclasses Classes;
 
     if (TTD.OpenFlag) {
-	CommonErrno = TT_EALREADY_CONN;
+	CommonErrno = TT_ETARGET_ALREADY_OPEN;
 	return TT_FALSE;
     }
     
     if (!BeforeOpenTarget(arg))
 	return TT_FALSE;
     
-    if ((FNs = OpenTarget())) {
-
-	AfterOpenTarget(FNs);
+    if ((Classes = OpenTarget())) {
+	AfterOpenTarget(Classes);
 	
 	TTD.Menubar = NULL;
 	TTD.Application = NULL;
@@ -567,22 +638,22 @@ static ttbyte Open(TT_CONST byte *arg) {
 	TTD.DummyTheme = &s_DummyTheme;
 
     } else {
-	AfterOpenTarget(FNs);
+	AfterOpenTarget(Classes);
     }
-    return !!FNs;
+    return !!Classes;
 }
 
 ttbyte Reopen(TT_CONST ttbyte *arg) {
-    ttfns FNs;
+    ttclasses Classes;
     ttbyte ret = TT_FALSE;
     
     if (TTD.OpenFlag) {
 	CloseTarget();
 	if (BeforeOpenTarget(arg)) {
-	    FNs = OpenTarget();
-	    AfterOpenTarget(FNs);
+	    Classes = OpenTarget();
+	    AfterOpenTarget(Classes);
 	    /* FIXME: should also rebuild native objects */
-	    ret = !!FNs;
+	    ret = !!Classes;
 	}
     }
     return ret;
@@ -616,54 +687,65 @@ TT_FN_ATTR_CONST TT_CONST ttbyte *TTStrError(ttuint E) {
     switch (E) {
       case 0:
 	return "success";
-      case TT_EXLIB_SIZES:
+      case TT_EBAD_SIZES:
 	return "compiled data sizes are incompatible with libTT now in use!";
-      case TT_EALREADY_CONN:
-	return "already connected";
+      case TT_ENO_MEM:
+	return "Out of memory!";
+      case TT_ETARGET_ALREADY_OPEN:
+	return "already opened";
 	
-      case TT_EDLERROR_TARGET:
+      case TT_ETARGET_DLERROR:
 	/*return "unable to load display target module: ";*/
 	return "";
 	
-      case TT_EFAILED_TARGET:
-#if defined(CONF_TT_HW_TWIN) || defined(CONF_TT_HW_GTK) || defined(CONF_TT_HW_X11)
-	return "all compiled-in display targets ("
+      case TT_ETARGET_FAILED:
+#if defined(CONF_TT_HW_TWIN_TUNNEL) || defined(CONF_TT_HW_TWIN) || defined(CONF_TT_HW_GTK) || defined(CONF_TT_HW_X11)
+	return "all compiled-in display targets failed ("
+# ifdef CONF_TT_HW_TWIN_TUNNEL
+	    "twin_tunnel"
+# endif
 # ifdef CONF_TT_HW_TWIN
+#  if defined(CONF_TT_HW_TWIN_TUNNEL)
+	    ", "
+#  endif
 	    "twin"
 # endif
 # ifdef CONF_TT_HW_GTK
-#  ifdef CONF_TT_HW_TWIN
+#  if defined(CONF_TT_HW_TWIN_TUNNEL) || defined(CONF_TT_HW_TWIN)
 	    ", "
 #  endif
 	    "gtk"
 # endif
 # ifdef CONF_TT_HW_X11
-#  if defined(CONF_TT_HW_TWIN) || defined(CONF_TT_HW_GTK)
+#  if defined(CONF_TT_HW_TWIN_TUNNEL) || defined(CONF_TT_HW_TWIN) || defined(CONF_TT_HW_GTK)
 	    ", "
 #  endif
 	    "X11"
 # endif
 # ifdef CONF__MODULES
-	    ") and all probed modules failed"
+	    ")\n\tand all probed modules failed"
 # else
-	    ") failed and modules not enabled"
+	    ")\n\tand modules not enabled"
 # endif
-	    "\n\t(all known targets: twin, gtk, X11, (xml), (null))";
-#else /* !(defined(CONF_TT_HW_TWIN) || defined(CONF_TT_HW_GTK) || defined(CONF_TT_HW_X11)) */
+	    "\n\t(all known targets: twin_tunnel, twin, gtk, X11, [twin_detunnel], [xml], [null])";
+#else /* !(defined(CONF_TT_HW_TWIN_TUNNEL) || defined(CONF_TT_HW_TWIN) || defined(CONF_TT_HW_GTK) || defined(CONF_TT_HW_X11)) */
 # ifdef CONF__MODULES
 	return "no display target compiled in, and all probed modules failed"
 	    
-	    "\n\t(all known targets: twin, gtk, X11, (xml), (null))";
+	    "\n\t(all known targets: twin_tunnel, twin, gtk, X11, [twin_detunnel], [xml], [null])";
 # else
 	return "no display target compiled in, and modules not enabled. Please recompile libTT !!";
 # endif /* CONF__MODULES */
 #endif /* defined(CONF_TT_HW_TWIN) || defined(CONF_TT_HW_GTK) || defined(CONF_TT_HW_X11) */
 	
-      case TT_EBAD_TARGET:
+      case TT_ETARGET_BAD:
 	return "malformed TTDISPLAY environment variable";
 	
-      case TT_EVERSION_TARGET:
-	return "display target found, but has wrong version";
+      case TT_ETARGET_NO_EXTENSION:
+	return "missing or failed `libTT' server extension, needed by ";
+
+      case TT_ETARGET_BAD_EXTENSION_VERSION:
+	return "need `libTT' server extension version "TT_PROTOCOL_VERSION_STR", found ";
 	
       case TT_EBAD_ARG:
 	return "invalid argument in function call: argument ";
@@ -679,9 +761,32 @@ TT_FN_ATTR_CONST TT_CONST ttbyte *TTStrError(ttuint E) {
 }
 
 TT_FN_ATTR_CONST TT_CONST ttbyte *TTStrErrorDetail(ttuint E, ttuint S) {
+    static ttbyte buf[] = "255.255.255";
+    
     switch (E) {
-      case TT_EDLERROR_TARGET:
+      case TT_ETARGET_DLERROR:
 	return TTD.str_dlerror ? TTD.str_dlerror : (ttbyte *)"";
+      case TT_ETARGET_NO_EXTENSION:
+	switch (S) {
+	  case TT_EDETAIL_TARGET_TWIN_TUNNEL:
+	    return "display target `twin_tunnel'";
+	  case TT_EDETAIL_TARGET_TWIN_DETUNNEL:
+	    return "display target `twin_detunnel'";
+	  case TT_EDETAIL_TARGET_TWIN:
+	    return "display target `twin'";
+	  case TT_EDETAIL_TARGET_GTK:
+	    return "display target `gtk'";
+	  case TT_EDETAIL_TARGET_X11:
+	    return "display target `X11'";
+	  case TT_EDETAIL_TARGET_XML:
+	    return "display target `xml'";
+	  case TT_EDETAIL_TARGET_NULL:
+	    return "display target `null' failed";
+	}
+	return "unknown display target";
+      case TT_ETARGET_BAD_EXTENSION_VERSION:
+	sprintf(buf, "%d.%d.%d", (S>>16)&0xFF, (S>>8)&0xFF, S&0xFF);
+	return buf;
       case TT_EBAD_ARG:
 	switch (S) {
 	  case 1: return "1";
@@ -740,24 +845,28 @@ ttbyte TTSync(void) {
 
 /* functions to manage Ids */
 
-static ttobj *IdList[order_n];
-static opaque IdSize[order_n], IdTop[order_n], IdBottom[order_n];
+static ttobj *IdList[order_last];
+static ttopaque IdSize[order_last], IdTop[order_last], IdBottom[order_last];
 
 
-TT_INLINE opaque IdListGrow(ttbyte i) {
-    opaque oldsize, size;
+static ttopaque IdListGrow(ttopaque i, ttopaque size) {
+    ttopaque oldsize;
     ttobj *newIdList;
     
     oldsize = IdSize[i];
-    if (oldsize >= MAXID)
-	return NOSLOT;
+    if (oldsize >= TT_MAXID)
+	return TT_BADID;
 
-    size = oldsize < SMALLBUFF/3 ? SMALLBUFF/2 : oldsize + (oldsize>>1);
-    if (size > MAXID)
-	size = MAXID;
+    /* use size as a minimum hint for the new size */
+    if (size && size < TT_MAXID)
+	oldsize = size;
+    
+    size = oldsize < TT_SMALLBUFF/3 ? TT_SMALLBUFF/2 : oldsize + (oldsize>>1);
+    if (size > TT_MAXID)
+	size = TT_MAXID;
     
     if (!(newIdList = (ttobj *)TTReallocMem(IdList[i], size*sizeof(ttobj))))
-	return NOSLOT;
+	return TT_BADID;
     
     TTWriteMem(newIdList+oldsize, 0, (size-oldsize)*sizeof(ttobj));
     
@@ -767,9 +876,32 @@ TT_INLINE opaque IdListGrow(ttbyte i) {
     return oldsize;
 }
 
-TT_INLINE void IdListShrink(ttbyte i) {
+TT_INLINE ttopaque FixedIdListGrow(ttbyte i, ttopaque size) {
+    ttopaque oldsize;
     ttobj *newIdList;
-    opaque size = TT_MAX2(BIGBUFF, IdTop[i] << 1);
+    
+    oldsize = IdSize[i];
+    if (oldsize >= TT_MAXID)
+	return TT_BADID;
+
+    /* use size as exact new size */
+    if (size > TT_MAXID)
+	size = TT_MAXID;
+    
+    if (!(newIdList = (ttobj *)TTReallocMem(IdList[i], size*sizeof(ttobj))))
+	return TT_BADID;
+    
+    TTWriteMem(newIdList+oldsize, 0, (size-oldsize)*sizeof(ttobj));
+    
+    IdList[i] = newIdList;
+    IdSize[i] = size;
+    
+    return oldsize;
+}
+
+TT_INLINE void IdListShrink(ttopaque i) {
+    ttobj *newIdList;
+    ttopaque size = TT_MAX2(TT_BIGBUFF, IdTop[i] << 1);
     
     if (size < IdSize[i] && (newIdList = (ttobj *)TTReallocMem(IdList[i], size*sizeof(ttobj)))) {
 	IdList[i] = newIdList;
@@ -777,17 +909,19 @@ TT_INLINE void IdListShrink(ttbyte i) {
     }
 }
 
-TT_INLINE opaque IdListGet(ttbyte i) {
+TT_INLINE ttopaque IdListGet(ttopaque i) {
     if (IdBottom[i] == IdSize[i])
-	return IdListGrow(i);
+	return IdListGrow(i, 0);
     
     return IdBottom[i];
 }
 
-TT_INLINE ttbyte _AssignId(ttbyte i, ttobj Obj) {
-    opaque Id, j;
-    if ((Id = IdListGet(i)) != NOSLOT) {
-	Obj->id = Id | ((opaque)i << magic_shift);
+TT_INLINE ttbyte _AssignId(ttopaque i, ttobj Obj) {
+    ttopaque Id, j;
+    
+    if (i < order_last && (Id = IdListGet(i)) != TT_BADID) {
+	Obj->id = Id | i << TT_MAGIC_SHIFT;
+
 	IdList[i][Id] = Obj;
 	if (IdTop[i] <= Id)
 	    IdTop[i] = Id + 1;
@@ -801,12 +935,71 @@ TT_INLINE ttbyte _AssignId(ttbyte i, ttobj Obj) {
     return TT_FALSE;
 }
 
-TT_INLINE void _DropId(ttbyte i, ttobj Obj) {
-    opaque Id = Obj->id & MAXID, j;
+TT_INLINE ttbyte _FixedAssignId(ttopaque i, ttobj Obj) {
+    ttopaque Id = Obj->id & TT_MAGIC_MASK, j;
+    
+    if (i < order_last && i == (Obj->id >> TT_MAGIC_SHIFT) &&
+	((Id < IdTop[i] && !IdList[i][Id]) || IdListGrow(i, Id))) {
+
+	IdList[i][Id] = Obj;
+	if (IdTop[i] <= Id)
+	    IdTop[i] = Id + 1;
+	for (j = IdBottom[i] + 1; j < IdTop[i]; j++)
+	    if (!IdList[i][j])
+		break;
+	IdBottom[i] = j;
+	return TRUE;
+    }
+    Errno = TT_ENO_MEM;
+    return TT_FALSE;
+}
+
+static ttbyte AssignId(TT_CONST ttclass Class, ttobj o) {
+    if (Class && o)
+	return _AssignId(Class->id & TT_MAGIC_MASK, o);
+    return TT_FALSE;
+}
+
+static ttbyte FixedAssignId(TT_CONST ttclass Class, ttobj o) {
+    if (Class && o)
+	return _FixedAssignId(Class->id & TT_MAGIC_MASK, o);
+    return TT_FALSE;
+}
+
+static ttbyte FixedAssignIdArray(ttopaque ClassId, ttopaque o_n, TT_CONST ttobj *o_array) {
+    ttobj o;
+    ttopaque used_n = 0, i, j, used_j;
+    
+    if (ClassId >= id_ttclass_first && ClassId < id_ttclass_last &&
+	!IdTop[ i = ClassId & TT_MAGIC_MASK ] &&
+	o_n && (o_n <= IdSize[i] || FixedIdListGrow(i, o_n)) != TT_BADID) {
+	
+	for (j = 0; j < o_n; j++) {
+	    o = (ttobj)o_array[j];
+	    if (TTAssertAlways(o && (o->id >> TT_MAGIC_SHIFT) == i &&
+			       (used_j = o->id & TT_MAGIC_MASK) <= o_n)) {
+		if (used_n < used_j)
+		    used_n = used_j;
+		
+		IdList[i][used_j] = o;
+	    } else
+		return TT_FALSE;
+	}
+	IdBottom[i] = IdTop[i] = used_n;
+	return TT_TRUE;
+    }
+    return TT_FALSE;
+}
+
+
+TT_INLINE void _DropId(ttopaque i, ttobj o) {
+    ttopaque Id = o->id & TT_MAXID, j;
 
     /* paranoia: we might end up calling DropId() twice on the same object */
-    if (Id < IdTop[i] && IdList[i][Id] == Obj) {
-	Obj->id = NOID;
+    if (Id < IdTop[i] && IdList[i][Id] == o) {
+	if (IS(ttobject,o) && !(((ttobject)o)->oflags & ttobject_oflags_const))
+	    /* cannot write into read-only objects... */
+	    o->id = TT_NOID;
 	IdList[i][Id] = (ttobj)0;
 	if (IdBottom[i] > Id)
 	    IdBottom[i] = Id;
@@ -815,83 +1008,48 @@ TT_INLINE void _DropId(ttbyte i, ttobj Obj) {
 		break;
 	IdTop[i] = (j == IdBottom[i]) ? j : j + 1;
 	
-	if (IdSize[i] > BIGBUFF && IdSize[i] > (IdTop[i] << 4))
+	if (IdSize[i] > TT_BIGBUFF && IdSize[i] > (IdTop[i] << 4))
 	    IdListShrink(i);
     }
 }
-    
-static ttbyte AssignId(TT_CONST ttfn_ttobj FN, ttobj Obj) {
-    if (FN && Obj)
-	return _AssignId(FN->order, Obj);
-    return TT_FALSE;
-}
 
-static void DropId(ttobj Obj) {
-    if (Obj)
-	_DropId(Obj->id >> magic_shift, Obj);
+static void DropId(ttobj o) {
+    if (o)
+	_DropId(o->id >> TT_MAGIC_SHIFT, o);
 }
 
 
 
-/* type query helpers */
-
-
-TT_INLINE ttbyte IsInstance_ttfn(ttfn_ttobj FN, ttfn_ttobj t) {
-    return FN && t && (t->magic & FN->magicmask) == FN->magic;
-}
-
-TT_INLINE ttbyte InstanceOf(ttfn_ttobj FN, ttobj o) {
-    return o && IsInstance_ttfn(FN, o->FN);
-}
-
-
-/* ttfn_ttobj <-> tt_fn conversion */
-
-/* unused *//*
-TT_INLINE opaque Fn2Id(ttfn_ttobj FN) {
-    return FN ? FN->order : NOID;
-}
-*/
-
-TT_INLINE ttfn_ttobj Id2Fn(opaque FN) {
-    if (FN >= order_ttobj && FN < order_n)
-	return TFNs[FN];
-    return NULL;
-}
-#define ID2FN(FN) Id2Fn((opaque)(FN))
-
-
-/* ttobj <-> tobj conversion */
-
-
-static ttobj Id2Obj(ttbyte i, opaque Id) {
-    ttbyte j = Id >> magic_shift;
-    ttobj o;
-    if (i < order_n && j < order_n) {
-	Id &= MAXID;
-	if (Id < IdTop[j] && (o = IdList[j][Id]))
-	    if (InstanceOf(Id2Fn(i), o))
-		return o;
-    }
-    return (ttobj)0;
-}
-
-static ttobj FindNative(ttany id) {
-    opaque i, j;
-    ttobj o;
+static ttobject FindNative(ttany id) {
+    ttopaque i, j;
+    ttobject o;
     /* search only ttnative:s (?) */
 #if 1
     i = order_ttnative;
 #else
-    for (i = order_ttnative; i <= order_ttnative; i++)
+    for (i = order_ttobject; i < order_last; i++)
 #endif
 	for (j = 0; j < IdTop[i]; j++) {
-	    if ((o = IdList[i][j]) && o->native == id)
+	    if ((o = (ttobject)IdList[i][j]) && IS(ttobject,o) && o->native == id)
 		return o;
 	}
 
-    return (ttobj)0;
+    return (ttobject)0;
 }
+
+
+
+
+/*
+ * ttclass-related functions
+ */
+
+#include "class.h"
+
+
+
+
+
 
 
 /*
@@ -902,156 +1060,13 @@ static ttobj FindNative(ttany id) {
 
 #include "create.h"
 
-#include "call_m4.h"
 
-
-/* type querying functions */
-
-ttbyte TTIsInstance_ttfn(tt_fn FN, tt_fn t) {
-    ttbyte ret;
-    if ((opaque)FN < order_n)
-	ret = IsInstance_ttfn(ID2FN(FN), ID2FN(t));
-    else if ((opaque)FN == order_n)
-	/* handle the case FN is TTFN_ttfn */
-	ret = (opaque)FN == (opaque)t;
-    else if ((opaque)FN > type_first && (opaque)FN <= type_last)
-	/* handle the case FN and t are one of TTFN_ttbyte...TTFN_tttype */
-	ret = (opaque)FN == (opaque)t;
-
-    return ret;
-}
-ttbyte TTInstanceOf(tt_fn FN, tt_obj o) {
-    ttbyte ret;
-    if ((opaque)FN == order_n)
-	/* handle the case FN is TTFN_ttfn and o is one of TTFN_* */
-	ret = (opaque)o > 0 && (opaque)o <= order_n;
-    else if ((opaque)FN == type_last)
-	/* handle the case FN is TTFN_tttype and o is one of TTFN_ttbyte...TTFN_ttfunction */
-	ret = (opaque)o > type_first && (opaque)o <= type_last;
-    else {
-	LOCK;
-	ret = InstanceOf(ID2FN(FN), ID2OBJ(o));
-	UNLK;
-    }
-    return ret;
-}
-
-#if 0 /* not currently used */
-TT_INLINE ttfn_ttobj ClassOf(ttobj o) {
-    ttfn_ttobj ret;
-    LOCK;
-    ret = o ? o->FN : (void *)o;
-    UNLK;
-    return ret;
-}
-#endif
-
-tt_fn TTClassOf(tt_obj o) {
-    tt_fn ret;
-
-    if ((opaque)o == 0)
-	ret = (tt_fn)0;
-    else if ((opaque)o <= order_n)
-	/* handle the case o is one of TTFN_* */
-	ret = (tt_fn)order_n;
-    else if ((opaque)o <= type_last)
-	/* handle the case o is one of TTFN_ttint,... */
-	ret = (tt_fn)type_last;
-    else {
-	LOCK;
-	/* shortcut for FN2ID(ClassOf(ID2OBJ(o))) */
-	ret = (tt_fn) ( ID2OBJ(o) ? ((opaque)o) >> magic_shift : NOID );
-	UNLK;
-    }
-    return ret;
-}
-
-ttuint TTGetSize_ttfn(tt_fn FN) {
-    ttopaque ret = 0;
-    
-    if ((opaque)FN == 0)
-	;
-    else if ((opaque)FN <= order_n)
-	/* handle the case FN is one of TTFN_* */
-	;
-    else if ((opaque)FN <= type_last)
-	/* handle the case FN is one of TTFN_ttint,... */
-	;
-    else {
-	ttfn fn;
-	/* LOCK; */
-	if ((fn = ID2FN(FN)))
-	    ret = fn->size;
-	/* UNLK; */
-    }
-    return ret;
-}
-
-ttuint TTSizeOf(tt_obj o) {
-    return TTGetSize_ttfn(TTClassOf(o));
-}
-
-/*
- * return the superclass of the class fn
- */
-static ttfn GetSuper_ttfn(ttfn FN) {
-    ttfn FN_super;
-    opaque i;
-    
-    /*
-     * this could be *MUCH* smarter than a dumb linear search,
-     * but hardcoding the class tree here would make it impossible
-     * to create more classes at runtime.
-     */
-    if (FN) {
-	for (i = (opaque)FN->order - 1; i >= order_ttobj; i--) {
-	    if ((FN_super = ID2FN(i)) && (FN->magic & FN_super->magicmask) == FN_super->magic)
-		return FN_super;
-	}
-    }
-    return (ttfn)0;
-}
-
-tt_fn TTGetSuper_ttfn(tt_fn fn) {
-    ttfn fn_super;
-    
-    if ((fn_super = GetSuper_ttfn(ID2FN(fn))))
-	return (tt_fn)fn_super->order;
-
-    return (tt_fn)0;
-}
-
-static TT_CONST ttbyte *ttfn_names[] = {
-    NULL,
-#define el(t) TT_STR(t),
-    TT_LIST(el)
-    TT_STR(ttfn),
-    TT_TYPELIST(el)
-#undef el
-    TT_STR(tttype)
-};
-
-/*
- * return the name of the class fn
- */
-TT_CONST ttbyte *TTGetName_ttfn(tt_fn fn) {
-    if ((opaque)fn > 0 && (opaque)fn <= type_last)
-	return ttfn_names[(opaque)fn];
-    return NULL;
-}
-
-/*
- * return the name of the class of o
- */
-TT_CONST ttbyte *TTClassNameOf(tt_obj o) {
-    return TTGetName_ttfn(TTClassOf(o));
-}
 
 /* constructors */
-tt_obj TTNew(tt_fn FN) {
+tt_obj TTNew(tt_obj Class) {
     tt_obj ret;
     LOCK;
-    ret = (tt_obj) OBJ2ID(New(ID2FN(FN), NULL));
+    ret = (tt_obj) OBJ2ID(New(ID2CLASS(Class), NULL));
     UNLK;
     return ret;
 }
@@ -1059,7 +1074,7 @@ tt_obj TTNew(tt_fn FN) {
 /* destructors */
 void TTDel(tt_obj o) {
     LOCK;
-    Del(ID2OBJ(o));
+    Del(ID2(ttobject, o));
     UNLK;
 }
 
@@ -1179,8 +1194,8 @@ static ttlistener FindListener4Event(ttlistener base, ttevent ev) {
     return key ? ttavl2ttlistener(key) : (ttlistener)0;
 }
 
-static void CallFunctionPlain(ttlistener_fn function, ttuint nargs, ttany *args) {
-    switch (nargs) {
+static void CallFunctionPlain(ttlistener_fn function, ttopaque args_n, ttany *args) {
+    switch (args_n) {
       case 0:
 	((void (*)(void)) function ) ();
 	break;
@@ -1222,34 +1237,42 @@ static void CallFunctionPlain(ttlistener_fn function, ttuint nargs, ttany *args)
 	((void (*)(ttany,ttany,ttany,ttany,ttany,ttany,ttany,ttany,ttany,ttany)) function )
 	    (args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8],args[9]);
 	break;
+      default:
+	/* argh. this is bad */
+	TTAssertAlways(args_n <= 10);
+	break;
     }
 }
 
 static void CallListener(ttlistener c, tobj o_id, tobj ev_id) {
+    static ttarg unused_return_value;
+    ttany *args;
+    ttopaque args_n;
+    
+    if (c->function && c->args) {
 
-    if (!c->function)
-	return;
+	args_n = c->args->array_n;
+	args = c->args->array;
+	
+	/* if c->arg_component_n is valid, set corresponding arg to ttcomponent o */
+	if (c->arg_component_n < args_n)
+	    args[c->arg_component_n] = o_id;
+	/* if c->arg_event_n is valid, set corresponding arg to ttevent ev */
+	if (c->arg_event_n < args_n)
+	    args[c->arg_event_n] = ev_id;
+    
+	if (c->lflags & ttlistener_lflags_ttmethod)
+	
+	    (void)TTCallY_ttmethod((tt_obj)(ttopaque)c->function, &unused_return_value, args_n, args);
+    
+	else if (c->lflags & ttlistener_lflags_function_array)
+	    
+	    ((ttlistener_array_fn)c->function) (args_n, args);
+    
+	else
 
-    if (c->args) {
-	/* if c->narg_component is valid, set corresponding arg to ttcomponent o */
-	if (c->narg_component < c->nargs)
-	    c->args[c->narg_component] = o_id;
-	/* if c->narg_event is valid, set corresponding arg to ttevent ev */
-	if (c->narg_event < c->nargs)
-	    c->args[c->narg_event] = ev_id;
+	    CallFunctionPlain(c->function, args_n, args);
     }
-    
-    if (c->lflags & ttlistener_lflags_builtin)
-	
-	CallMethod((opaque)c->function, c->nargs, c->args);
-    
-    else if (c->lflags & ttlistener_lflags_function_array)
-	
-	((ttlistener_fn_array)c->function) (c->nargs, c->args);
-    
-    else
-	
-	CallFunctionPlain(c->function, c->nargs, c->args);
 }
 
 static ttbyte IsBlockedEventBy(ttevent ev, tteventmask em) {
@@ -1260,17 +1283,17 @@ static ttbyte IsBlockedEventBy(ttevent ev, tteventmask em) {
     /* default value: do not block any evtype */
     e1true = TT_FALSE;
     if (em->evtype_mask)
-	e1true = TTIsMember_ttbitmask((tt_obj)em->evtype_mask->id, (ttany)evtype);
+	e1true = TTContains_ttbitmask((tt_obj)em->evtype_mask->id, (ttany)evtype);
     
     /* default value: block all evcodes */
     e2true = TT_FALSE;
     if (em->evcode_mask)
-	e2true = TTIsMember_ttbitmask((tt_obj)em->evcode_mask->id, (ttany)evcode);
+	e2true = TTContains_ttbitmask((tt_obj)em->evcode_mask->id, (ttany)evcode);
     
     /* default value: block all components */
     ctrue = TT_TRUE;
     if (em->component_mask)
-	ctrue = TTIsMember_ttbitmask((tt_obj)em->component_mask->id, (ttany)c);
+	ctrue = TTContains_ttbitmask((tt_obj)em->component_mask->id, (ttany)(ttopaque)c);
     
     if (e1true)
 	truth_table >>= 1;
@@ -1460,7 +1483,9 @@ static void FireSimpleEvent(ttcomponent o, ttuint evtype) {
 static void FireChangeEvent(ttcomponent o, ttuint which, ttany value, ttany old_value, ttopaque len) {
     tteventbig ev;
     
-    if ((ev = Create4s4_tteventbig(ttevent_evtype_change, which, 0, value, old_value, len, NULL)))
+    if ((ev = Create4s4_tteventbig(ttevent_evtype_change,
+				   which | (order_ttfield<<TT_MAGIC_SHIFT),
+				   0, value, old_value, len, NULL)))
 	FireEvent((ttevent)ev, o);
     /*
      * FireEvent() also deletes ev.
@@ -1609,7 +1634,7 @@ TT_INLINE void DelAllListeners_ttcomponent(ttcomponent o) {
 }
 
 
-TT_INLINE int CompareTF(time_t t1, frac_t f1, time_t t2, frac_t f2) {
+TT_INLINE int CompareTF(ttany t1, ttany f1, ttany t2, ttany f2) {
     return t1 < t2 ? -1 :
     (
      t1 > t2 ? 1 :
@@ -1620,21 +1645,21 @@ TT_INLINE int CompareTF(time_t t1, frac_t f1, time_t t2, frac_t f2) {
 }
 
 static int CompareTimers(TT_CONST tttimer t1, TT_CONST tttimer t2) {
-    return CompareTF(t1->t, t1->f, t2->t, t2->f);
+    return CompareTF(t1->delay_t, t1->delay_f, t2->delay_t, t2->delay_f);
 }
 
 static void GetNow(void) {
     struct timeval now;
 
     gettimeofday(&now, NULL);
-    TTD.TNow = now.tv_sec;
-    TTD.FNow = (frac_t)now.tv_usec MicroSECs;
+    TTD.TNow = (ttany)now.tv_sec;
+    TTD.FNow = (ttany)now.tv_usec MicroSECs;
 }
 
 static void Activate_tttimer(tttimer o, ttbyte active) {
     tttimer t = TTD.FirstT;
 
-    if (active && CompareTF(o->t, o->f, TTD.TNow, TTD.FNow) > 0) {
+    if (active && CompareTF(o->delay_t, o->delay_f, TTD.TNow, TTD.FNow) > 0) {
 	/* insert */
 	if (o->timer_prev || TTD.FirstT == o ||
 	    o->timer_next || TTD.LastT == o)
@@ -1794,16 +1819,18 @@ static void Remove_ttdata(ttdata d) {
     }
 }
 
-static tt_fn SetData_ttdata(ttdata o, ttany data) {
+static ttbyte SetData_ttdata(ttdata o, ttany data) {
     ttcomponent c;
-    if (TTAssert(o && IS(ttdata,o)) && o->data != data) {
-	if ((c = o->component) && o->key_len == 9 && !TTCmpMem(o->key, "user_data", 9))
-	    c->user_data = data;
+    if (TTAssert(o && IS(ttdata,o)) && !(o->oflags & ttobject_oflags_const)) {
+	if (data != o->data) {
+	    if ((c = o->component) && o->key_len == 9 && !TTCmpMem(o->key, "user_data", 9))
+		c->user_data = data;
 	    
-	FIRE_EVENT(o->data = data, o, ttdata_data, data, o->data);
-	return TTFN_ttany;
+	    FIRE_EVENT(o->data = data, o, ttdata_data, data, o->data);
+	}
+	return TT_TRUE;
     }
-    return (tt_fn)0;
+    return TT_FALSE;
 }
 
 static ttdata protected_Create_ttdata(ttcomponent c, TT_ARG_READ ttbyte *key, ttopaque key_len, ttany data) {
@@ -1820,7 +1847,7 @@ static ttdata protected_Create_ttdata(ttcomponent c, TT_ARG_READ ttbyte *key, tt
 	    AddTo_ttdata(d, c, TT_TRUE);
 	    /* not o->data = data; we want to keep component->user_data in sync: */
 	    SetData_ttdata(d, data);
-	    return (ttdata)Build((ttobj)d);
+	    return (ttdata)Build((ttobject)d);
 	}
 	TTFreeMem(dkey);
     }
@@ -1870,42 +1897,46 @@ static void DelAllExtras_ttcomponent(ttcomponent o) {
     DelAllDatas_ttcomponent(o);
 }
 
+static void HardDel(ttobj o) {
+    if (IS(ttobject,o) && !(((ttobject)o)->oflags & ttobject_oflags_const)) {
+	/* ignore refcount... */
+	((ttobject)o)->refcount = 0;
+	
+	/*
+	 * this is "the right thing" but may
+	 * generate *LOTS* of delete events :(
+	 */
+	TDEL(o);
+    } else {
+	DropId(o);
+    }
+}
+
 static void DelAll_ttobj(ttbyte quick) {
-    ttuint n, qn, quick_list[] = { order_ttcallback, order_ttlistener, order_tttimer };
-    ttopaque i;
+    ttopaque i, n, qn, quick_list[] = { order_ttcallback, order_ttlistener, order_tttimer };
     ttobj o;
 
     if (quick) {
 	/* first, delete all callbacks, listeners and timers */
-	for (qn = 2; qn != (ttuint)-1; qn--) {
+	for (qn = 2; qn != (ttopaque)-1; qn--) {
 	    n = quick_list[qn];
 	    for (;;) {
 		/* IdTop[n] decreases with us. */
-		if ((i = IdTop[n] - 1) != (ttuint)-1) {
-		    if (TTAssertAlways(o = IdList[n][i])) {
-			/* ignore refcount... */
-			o->refcount = 0;
-			TDEL(o);
-		    }
+		if ((i = IdTop[n] - 1) != (ttopaque)-1) {
+		    if (TTAssertAlways(o = IdList[n][i]))
+			HardDel(o);
 		} else
 		    break;
 	    }
 	}
     }
     
-    for (n = order_n - 1; n != (ttuint)-1; n--) {
+    for (n = order_last - 1; n != (ttopaque)-1; n--) {
 	for (;;) {
 	    /* IdTop[n] decreases with us. */
-	    if ((i = IdTop[n] - 1) != (ttuint)-1) {
-		if (TTAssertAlways(o = IdList[n][i])) {
-		    /* ignore refcount... */
-		    o->refcount = 0;
-		    /*
-		     * this is "the right thing" but may
-		     * generate *LOTS* of delete events :(
-		     */
-		    TDEL(o);
-		}
+	    if ((i = IdTop[n] - 1) != (ttopaque)-1) {
+		if (TTAssertAlways(o = IdList[n][i]))
+		    HardDel(o);
 		if (n == 0 && i == 0)
 		    return;
 	    } else
@@ -1928,7 +1959,7 @@ static void Expose_ttvisible(ttvisible o, ttshort x, ttshort y, ttshort w, ttsho
 	    if (!--o->refcount)
 		TDEL(o);
 	} else
-	    o->FN->BuiltinRepaint(o, x, y, w, h);
+	    o->Class->BuiltinRepaint(o, x, y, w, h);
 	
 	if (ev)
 	    /* also deletes ev */
@@ -1961,9 +1992,20 @@ static void NormalizeTimeval(struct timeval *t) {
 
 static void ComputeDelay(struct timeval *t) {
     if (TTAssert(TTD.FirstT)) {
-	t->tv_sec = TTD.FirstT->t - TTD.TNow;
-	t->tv_usec = (TTD.FirstT->f - TTD.FNow) / MicroSEC;
+	t->tv_sec = (long)TTD.FirstT->delay_t - (long)TTD.TNow;
+	/*
+	 * doing
+	 * ((long)TTD.FirstT->f - (long)TTD.FNow) / MicroSEC
+	 * overflows since ttany is usually same size and signedness as 'unsigned long'
+	 */
+	t->tv_usec = (long)TTD.FirstT->delay_f / MicroSEC - (long)TTD.FNow / MicroSEC;
 	NormalizeTimeval(t);
+#ifdef DEBUG_TT_TIMER
+	printf("now     {%ld, %ld}\n", (long)TTD.TNow, (long)TTD.FNow);
+	printf("timer   {%ld, %ld}\n", (long)TTD.FirstT->delay_t, (long)TTD.FirstT->delay_f);
+	printf("compute timer 0x%X\t{%ld, %ld}\n",
+	       (unsigned)TTD.FirstT->id, (long)t->tv_sec, (long)t->tv_usec);
+#endif
     }
 }
 
@@ -1971,25 +2013,26 @@ static ttbyte MainLoop(ttbyte wait) {
     fd_set fset;
     struct timeval t;
     tttimer c;
-    int fd = -1;
+    int fd = -1, sel_ret;
     s_tt_errno *E;
     ttbyte ret = TT_TRUE, eff_wait;
     
-    if (TTD.FirstT) {
+    if (TTD.FirstT)
 	eff_wait = TT_FALSE;
-	fd = THW.ConnectionFd();
-	FD_ZERO(&fset);
-    } else
+    else
 	eff_wait = wait;
+    
+    fd = THW.ConnectionFd();
+    FD_ZERO(&fset);
     
     for (;;) {
 
-#if 0
+#ifdef DEBUG_TT_TIMER
 	printf("THW.MainLoopOnce(eff_wait = %d", (int)eff_wait);
 	fflush(stdout);
 #endif
 	ret = THW.MainLoopOnce(eff_wait);
-#if 0
+#ifdef DEBUG_TT_TIMER
 	printf(")\n");
 #endif
 
@@ -2014,31 +2057,32 @@ static ttbyte MainLoop(ttbyte wait) {
 	    GetNow();
 	    ComputeDelay(&t);
 		
-#if 0
+#ifdef DEBUG_TT_TIMER
 	    printf("select(%d, [%d], NULL, NULL, {%ld, %ld}",
 		   fd+1, fd, (long)t.tv_sec, (long)t.tv_usec);
 	    fflush(stdout);
 #endif
 	    UNLK;
-	    select(fd+1, &fset, NULL, NULL, &t);
+	    sel_ret = select(fd+1, &fset, NULL, NULL, &t);
 	    LOCK;
-#if 0
-	    printf(")\n");
+#ifdef DEBUG_TT_TIMER
+	    printf(") = %d\n", sel_ret);
 #endif
 
 	    while ((c = TTD.FirstT)) {
 		GetNow();
 		ComputeDelay(&t);
-#if 0
-		printf("timer 0x%X\t{%ld, %ld}\n",
-		       (unsigned)c->id, (long)t.tv_sec, (long)t.tv_usec);
+		
+		if (t.tv_sec == 0 && t.tv_usec < 1000) {
+#ifdef DEBUG_TT_TIMER
+		    printf("run     timer 0x%X\t{%ld, %ld}\n",
+			   (unsigned)c->id, (long)t.tv_sec, (long)t.tv_usec);
 #endif
-		if (t.tv_sec == 0 && t.tv_usec == 0) {
 		    c->refcount++; /* protect c from being deleted */
 
 		    /*
 		     * timers are one-shot. to obtain periodic timers,
-		     * they should reactivate themselves with c->FN->SetDelay()
+		     * they should reactivate themselves with c->Class->SetDelay()
 		     */
 		    Activate_tttimer(c, TT_FALSE);
 		    
@@ -2046,8 +2090,13 @@ static ttbyte MainLoop(ttbyte wait) {
 		    
 		    if (!--c->refcount)
 			TDEL(c);
-		} else
+		} else {
+#ifdef DEBUG_TT_TIMER
+		    printf("wait    timer 0x%X\t{%ld, %ld}\n",
+			   (unsigned)c->id, (long)t.tv_sec, (long)t.tv_usec);
+#endif
 		    break;
+		}
 	    }
 	}
     }
@@ -2094,8 +2143,7 @@ s_tt_d TTD = {
     (ttlistener)0, (ttlistener)0,
 
     (tttimer)0, (tttimer)0,
-    (time_t)0,
-    (frac_t)0,
+    (ttany)0, (ttany)0,
 
     (byte *)0, (byte *)0,
     (void *)0,
@@ -2116,6 +2164,8 @@ s_tt_d TTD = {
 	    AssignId,
 	    DropId,
 	    Id2Obj,
+	    FixedAssignId,
+	    FixedAssignIdArray,
 	    FindNative,
 	    GetNow,
 	    
@@ -2141,35 +2191,29 @@ s_tt_d TTD = {
     },
     
 
-    /* FN_hw_null */
+    /* Class_hw_null */
     NULL,
 
-    /* FNs */
+    /* Classes */
     {
-	(ttfn_ttobj)0, /* order_() == 0 */
-#define el(t) (ttfn_ttobj)TFN(t),
+	/* order_ttobj == 0 */
+#define el(t) (ttclass)TClass(t),
 	 TT_LIST(el)
 #undef el
     },
     
 	
-    /* FN */
+    /* Class */
     /* { { 0, }, }, */
     
-    /* FNdefault */
+    /* Class_default */
     /* { { 0, }, }, */
 };
 
 
-/* TTFN_* globals */
-#define el(t) tt_fn TT_CAT(TTFN_,t) = (tt_fn)order_(t);
+/* TTClass_* globals */
+#define el(t) tt_obj TT_CAT(TTClass_,t) = (tt_obj)id_ttclass_(t);
 TT_LIST(el)
-#undef el
-tt_fn TTFN_ttfn = (tt_fn)order_n;
-
-#define el(t) tt_fn TT_CAT(TTFN_,t) = (tt_fn)type_(t);
 TT_TYPELIST(el)
 #undef el
-
-tt_fn TTFN_tttype = (tt_fn)type_last;
 

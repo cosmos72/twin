@@ -22,6 +22,8 @@
 
 
 
+
+
 { Tw_FindFunction, 12, 10, "Tw_FindFunction", "0""_"TWS_uldat_STR"_"TWS_byte_STR"V"TWS_byte_STR"_"TWS_byte_STR"V"TWS_byte_STR },
 
 
@@ -116,7 +118,7 @@
 { Tw_CreateMenu, 10, 16, "Tw_CreateMenu", "0""x"magic_id_STR(menu)"_"TWS_hwcol_STR"_"TWS_hwcol_STR"_"TWS_hwcol_STR"_"TWS_hwcol_STR"_"TWS_hwcol_STR"_"TWS_hwcol_STR"_"TWS_byte_STR },
 { Tw_SetInfoMenu, 11, 12, "Tw_SetInfoMenu", "2""v"TWS_void_STR"x"magic_id_STR(menu)"_"TWS_byte_STR"_"TWS_ldat_STR"V"TWS_byte_STR"W"TWS_hwcol_STR },
 
-{ Tw_CreateMsgPort, 13, 12, "Tw_CreateMsgPort", "0""x"magic_id_STR(msgport)"_"TWS_byte_STR"V"TWS_byte_STR"_"TWS_time_t_STR"_"TWS_frac_t_STR"_"TWS_byte_STR },
+{ Tw_CreateMsgPort, 13, 6, "Tw_CreateMsgPort", "0""x"magic_id_STR(msgport)"_"TWS_byte_STR"V"TWS_byte_STR },
 { Tw_FindMsgPort, 11, 8, "Tw_FindMsgPort", "0""x"magic_id_STR(msgport)"x"magic_id_STR(msgport)"_"TWS_byte_STR"V"TWS_byte_STR },
 
 { Tw_BgImageScreen, 13, 10, "Tw_BgImageScreen", "2""v"TWS_void_STR"x"magic_id_STR(screen)"_"TWS_dat_STR"_"TWS_dat_STR"V"TWS_hwattr_STR },
@@ -143,11 +145,15 @@
 { Tw_BlindSendToMsgPort, 18, 8, "Tw_BlindSendToMsgPort", "0""v"TWS_void_STR"x"magic_id_STR(msgport)"_"TWS_udat_STR"V"TWS_byte_STR },
 
 { Tw_GetOwnerSelection, 17, 2, "Tw_GetOwnerSelection", "0""x"magic_id_STR(obj) },
-{ Tw_SetOwnerSelection, 17, 6, "Tw_SetOwnerSelection", "0""v"TWS_void_STR"_"TWS_time_t_STR"_"TWS_frac_t_STR },
+{ Tw_SetOwnerSelection, 17, 6, "Tw_SetOwnerSelection", "0""v"TWS_void_STR"_"TWS_tany_STR"_"TWS_tany_STR },
 { Tw_RequestSelection, 16, 6, "Tw_RequestSelection", "0""v"TWS_void_STR"x"magic_id_STR(obj)"_"TWS_uldat_STR },
 { Tw_NotifySelection, 15, 14, "Tw_NotifySelection", "0""v"TWS_void_STR"x"magic_id_STR(obj)"_"TWS_uldat_STR"_"TWS_uldat_STR"V"TWS_byte_STR"_"TWS_uldat_STR"V"TWS_byte_STR },
 
 { Tw_SetServerUid, 12, 6, "Tw_SetServerUid", "0""_"TWS_byte_STR"_"TWS_uldat_STR"_"TWS_byte_STR },
+
+{ Tw_OpenExtension, 13, 6, "Tw_OpenExtension", "0""x"magic_id_STR(extension)"_"TWS_byte_STR"V"TWS_byte_STR },
+{ Tw_CallBExtension, 14, 10, "Tw_CallBExtension", "0""O"TWS_tany_STR"x"magic_id_STR(extension)"_"TWS_topaque_STR"V"TWS_byte_STR"V"TWS_byte_STR },
+{ Tw_CloseExtension, 14, 4, "Tw_CloseExtension", "0""v"TWS_void_STR"x"magic_id_STR(extension) },
 
 
 

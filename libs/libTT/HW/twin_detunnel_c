@@ -1,0 +1,147 @@
+/*
+ *                 WARNING!
+ * 
+ * this file is `twin_detunnel_c' and is preprocessed by m4 to produce `twin_detunnel_m4.c'
+ * 
+ * It must be a valid m4 file, and must produce a valid C file.
+ * 
+ */
+
+
+#include "twin.h"
+#include <Tw/Tw.h>
+#include <Tw/Twavl.h>
+#include <Tw/Twstat.h>
+#include <Tw/Twstat_defs.h>
+#include <Tw/Twerrno.h>
+
+/* get twin server internal headers */
+#include "../../../server/extreg.h"
+#include "../../../server/socket_id.h"
+
+DECL_BEFORE
+
+/* FIXME finish these ! */
+static tany twin_detunnel_TwStat(tobj Id, udat h) {
+    return (tany)0;
+}
+static void twin_detunnel_TwDraw2Widget(twidget W,dat XWidth,dat YWidth,dat Left,dat Up,dat Pitch,TW_CONST byte *Text,TW_CONST hwfont *Font,TW_CONST hwattr *Attr) {
+}
+static void twin_detunnel_TwSetFillWidget(twidget W,hwattr Fill) {
+}
+static void twin_detunnel_TwDrawHWFontWidget(twidget W,dat XWidth,dat YWidth,dat Left,dat Up,dat Pitch,TW_CONST hwfont *Font) {
+}
+static void twin_detunnel_TwDrawHWAttrWidget(twidget W,dat XWidth,dat YWidth,dat Left,dat Up,dat Pitch,TW_CONST hwattr *Attr) {
+}
+static tlistener twin_detunnel_TwAddMouseListener(twidget W,udat Code,udat ShiftFlags,tfn_listener Listener,void *Arg) {
+    return (tlistener)0;
+}
+static tlistener twin_detunnel_TwAddGadgetListener(twidget W,udat Code,tfn_listener Listener,void *Arg) {
+    return (tlistener)0;
+}
+static tlistener twin_detunnel_TwAddWidgetListener(twidget W,udat Code,tfn_listener Listener,void *Arg) {
+    return (tlistener)0;
+}
+static tmenuitem twin_detunnel_TwCreate4MenuRow(twindow Window,udat Code,byte Flags,ldat Len,TW_CONST byte *Text) {
+    return (tmenuitem)0;
+}
+static tmenuitem twin_detunnel_TwCreate4MenuMenuItem(tobj Parent,twindow Window,byte Flags,dat Len,TW_CONST byte *Name) {
+    return (tmenuitem)0;
+}
+
+
+dnl m4_begin "
+define(`Row4Menu', `Create4MenuRow')
+define(`Item4Menu', `Create4MenuMenuItem')
+define(`Item4MenuCommon', `Create4MenuCommonMenuItem')
+
+
+divert(-1)
+define(`EL', `define(`m4_order_$1')dnl
+    order_$1,')
+include(`socklist_m4.h')
+divert
+
+`#'define Multiplex Ext(Socket,MultiplexL)
+`#'define TD(name) CAT(twin_detunnel_Tw,name)
+
+define(`CALL', `ifdef(m4_order_`$1', Multiplex(order_$@), TD($1)(shift($@)))')
+define(`SYM', `$1')
+
+include(`twin_h')
+
+
+dnl " m4_end;
+
+
+static ttbyte HWDEF(Sync)(void) {
+    return TT_TRUE;
+}
+static ttbyte HWDEF(Flush)(void) {
+    return TT_TRUE;
+}
+static ttbyte HWDEF(TimidFlush)(void) {
+    return TT_TRUE;
+}
+static ttbyte HWDEF(MainLoopOnce)(ttbyte wait) {
+    tmsg Msg;
+    
+    /* loop until all already queued messages are dispatched */
+    do {
+        if ((Msg = TwCloneReadMsg(wait))) {
+	    TwDispatchMsg(Msg);
+	    TwFreeMem(Msg);
+	}
+    } while (TwPendingMsg());
+    
+    return !TwInPanic();
+}
+static void HWDEF(DeleteCallback)(ttcallback o) {
+    if (o->native != (opaque)TW_NOID)
+	TwDeleteListener((tlistener)(opaque)o->native);
+}
+static void HWDEF(Close)(void) {
+    TwClose();
+}
+static int HWDEF(ConnectionFd)(void) {
+    return TwConnectionFd();
+}
+static ttuint HWDEF(GetErrno)(void) {
+    return TwErrno;
+}
+static ttuint HWDEF(GetErrnoDetail)(void) {
+    return TwErrnoDetail;
+}
+static TT_CONST ttbyte *HWDEF(StrError)(ttuint E) {
+    return TwStrError(E);
+}
+static TT_CONST ttbyte *HWDEF(StrErrorDetail)(ttuint E, ttuint S) {
+    return TwStrErrorDetail(E, S);
+}
+
+
+TW_DECL_MAGIC(TT_Tw_magic);
+
+#ifdef THIS_MODULE
+ttclasses InitModule(tthw *HW)
+#else
+ttclasses _TT_twin_detunnel_InitHW(tthw *HW)
+#endif
+{
+    /*
+     * (*HW) must be set even if initialization fails,
+     * to report error messages.
+     */
+    *HW = &twin_detunnel_TTClasses.HW;
+    
+    TwConfigMalloc(TTAllocMem, TTReallocMem, TTFreeMem);
+    
+    if (TwCheckMagic(TT_Tw_magic) && TwOpen(TTD.HWOptions))
+        return &twin_detunnel_TTClasses;
+
+    FAIL(TwErrno, TwErrnoDetail);
+    
+    return (ttclasses)0;
+}
+
+DECL_AFTER

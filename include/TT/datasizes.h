@@ -12,8 +12,8 @@
 #define TT_SIZEOF_ttfont	TW_SIZEOFHWFONT
 #define TT_SIZEOF_ttattr	TW_SIZEOFHWATTR
 #define TT_SIZEOF_ttopaque	TW_SIZEOFTOPAQUE
-#define TT_SIZEOF_ttpointer	TW_SIZEOFVOIDP
 #define TT_SIZEOF_ttany		TW_SIZEOFTANY
+#define TT_SIZEOF_tttype	TW_SIZEOFTOPAQUE
 
 #define TT_MAX_ttchar		TW_MAXSBYTE
 #define TT_MAX_ttbyte		TW_MAXBYTE
@@ -26,6 +26,7 @@
 #define TT_MAX_ttattr		TW_MAXHWATTR
 #define TT_MAX_ttopaque		TW_MAXTOPAQUE
 #define TT_MAX_ttany		TW_MAXTANY
+#define TT_MAX_tttype		TW_MAXTOPAQUE
 
 #define TT_MIN_ttchar		TW_MINSBYTE
 #define TT_MIN_ttshort		TW_MINDAT 

@@ -72,7 +72,7 @@ define(`PROTOFindFunction', `PROTO($@)')
 
 divert
 
-include(`m4/Tw_sockproto.m4h')
+include(`m4/Tw_sockproto.m4')
 
 dnl
 dnl
@@ -86,8 +86,7 @@ include(`m4/ltrace.conf.libTT.in')
 
 undefine(`DEF')
 
-include(`m4/TTclasses.m4h')
-include(`m4/TThandy.m4h')
+include(`m4/TTclasses.m4')
 
 divert(-1)
 
@@ -104,7 +103,7 @@ define(`arg_ttany',   `addr')
 define(`arg_decay_scalar', `ifelse(index(`$1', `_fn'), -1, `ifdef(`arg_$1', arg_$1, addr)', addr)')
 define(`arg_decay_pointer', `ifelse(index(`$1', `ttbyte'), -1, addr, string)')
 
-define(`arg_decay', `ifdef(`m4super_$1', addr, `ifelse(index(`$1', `*'), -1, `arg_decay_scalar(`$1')', `arg_decay_pointer(`$1')')')')
+define(`arg_decay', `ifdef(`m4_super_$1', addr, `ifelse(index(`$1', `*'), -1, `arg_decay_scalar(`$1')', `arg_decay_pointer(`$1')')')')
 
 define(`_args_decay', `ifelse(`$1', `', `', `, arg_decay(`$1')`'_args_decay(shift($@))')')
 define(`args_decay', `ifelse(`$2', `', `arg_decay(`$1')', `arg_decay(`$1')`'_args_decay(shift($@))')')
@@ -112,16 +111,16 @@ define(`args_decay', `ifelse(`$2', `', `arg_decay(`$1')', `arg_decay(`$1')`'_arg
 define(`TTdeclare',`ifdef(`DEF_TT$2_$3', `', `
 arg_decay($5) TT$2_$3(ifelse($4, 0, `void', `args_decay(NSHIFT(5, $@))'));define(`DEF_TT$2_$3')')')
 
-define(`el',`TTFNdef_$1($1)')
+define(`el',`TTdef_ttclass_$1($1)')
 
 divert
 
 define(`extends')
 define(`public',`TTdeclare($@)')
 define(`public_set',`public($@)')
-define(`exported',`public($@)')
+define(`final',`public($@)')
 TTlist()
-define(`exported')
+define(`final')
 define(`public_set')
 define(`public')
 define(`extends')
@@ -129,42 +128,21 @@ undefine(`el')
 
 divert(-1)
 
-define(`tolower', `translit(`$1', `A-Z', `a-z')')
-define(`toupper', `translit(`$1', `a-z', `A-Z')')
-define(`Toupper', `toupper(substr(`$1', 0, 1))`'patsubst(substr(`$1', 1), `_\(\w\)',``'toupper(`\1')')')
+include(`m4/TTfield.m4')
 
-define(`arg_decl', `arg_decay($3) a$1')
-define(`args_decl', `ifelse($2, 0, `', $2, 1, `arg_decl($@)', `arg_decl($@), args_decl(incr($1), decr($2), NSHIFT(3, $@))')')
-
-define(`arg_call', `ifdef(`m4super_$3', `ID2($3,a$1)', a$1)')
-define(`_args_call', `ifelse($2, 0, `', `, arg_call($@)`'_args_call(incr($1), decr($2), NSHIFT(3, $@))')')
-define(`args_call', `ifelse($2, 0, `', $2, 1, `arg_call($@)', `arg_call($@)`'_args_call(incr($1), decr($2), NSHIFT(3, $@))')')
+define(`arg_decl_decay', `arg_decay($3) a$1')
 
 
-define(`decl_name', `ifelse(`$1', `', `Toupper($2)`'Toupper($3)', `Toupper($1)')')
-define(`decl_args', `arg_decay(this)`'decl_fn_$3(NSHIFT(3, $@))')
-
-define(`decl_fn_get', `')
-define(`decl_fn_set', `, arg_decay($2)')
-define(`decl_fn_fixedchange', `')
-
-define(`def_handy', `
-`'arg_decay($1) TT`'decl_name($2,$3,$4)_`'this`'(decl_args($@));')
-
-define(`wrap_export', `ifelse(index(`$3', `r'), -1, `', `exported($1,,get,$2,$1)')`'dnl
-`'ifelse(index(`$3', `w'), -1, `', `exported(void,,set,$2,$1)')')
+define(`def_field', `
+`'arg_decay($1) TT`'decl_name($@)_`'this`'(args_decay(this, $4));')
 
 divert
 
 define(`el', `
-`'define(`this', `$1')`'TThandy_$1($1,$1)')
+`'define(`this', `$1')`'TTdef_$1($1)')
 define(`extends')
-define(`exported', `def_handy($@)')
-define(`field', `wrap_export($@)')
-define(`exported_fields', `TTdef_$1($1,$1)')
+define(`field', `get_field($@)')
 TTlist()
-define(`exported_fields')
-define(`exported')
 define(`extends')
 define(`field')
 undefine(`el')

@@ -23,8 +23,7 @@ static byte InitClip(void) {
 
     return
 	TwCheckMagic(clip_magic) && TwOpen(NULL) &&
-	(Clip_MsgPort=TwCreateMsgPort
-	 (11, "twclipboard", (time_t)0, (frac_t)0, (byte)0)) &&
+	(Clip_MsgPort=TwCreateMsgPort(11, "twclipboard")) &&
 	(Clip_Menu=TwCreateMenu(
 	  COL(BLACK,WHITE), COL(BLACK,GREEN), COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
 	  COL(RED,WHITE), COL(RED,GREEN), (byte)0)) &&

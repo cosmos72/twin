@@ -1,0 +1,44 @@
+static ttbyte HWDEF(Sync)(void) {
+    return CALL(Sync);
+}
+static ttbyte HWDEF(Flush)(void) {
+    return CALL(Flush);
+}
+static ttbyte HWDEF(TimidFlush)(void) {
+    return CALL(TimidFlush);
+}
+static ttbyte HWDEF(MainLoopOnce)(ttbyte wait) {
+    tmsg Msg;
+    
+    /* loop until all already queued messages are dispatched */
+    do {
+        if ((Msg = CALL(CloneReadMsg, wait))) {
+	    CALL(DispatchMsg, Msg);
+	    CALL(FreeMem, Msg);
+	}
+    } while (CALL(PendingMsg));
+    
+    return !CALL(InPanic);
+}
+static void HWDEF(DeleteCallback)(ttcallback o) {
+    if (o->native != (opaque)TW_NOID)
+	CALL(DeleteListener, (tlistener)(opaque)o->native);
+}
+static void HWDEF(Close)(void) {
+    CALL(Close);
+}
+static int HWDEF(ConnectionFd)(void) {
+    return CALL(ConnectionFd);
+}
+static ttuint HWDEF(GetErrno)(void) {
+    return SYM(Errno);
+}
+static ttuint HWDEF(GetErrnoDetail)(void) {
+    return SYM(ErrnoDetail);
+}
+static TT_CONST ttbyte *HWDEF(StrError)(ttuint E) {
+    return CALL(StrError, E);
+}
+static TT_CONST ttbyte *HWDEF(StrErrorDetail)(ttuint E, ttuint S) {
+    return CALL(StrErrorDetail, E, S);
+}

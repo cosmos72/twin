@@ -1,7 +1,8 @@
+
 dnl Process this file with autoconf to produce a configure script.
 PACKAGE=twin
 
-AC_REVISION($Revision: 0.4.6 $)
+AC_REVISION($Revision: 1.4 $)
 AC_INIT(server/main.c)
 AC_CONFIG_HEADER(include/autoconf.h)
 
@@ -19,17 +20,30 @@ AC_ARG_ENABLE(-modules,dnl
 enable__modules=yes
 )dnl
 
+dnl unicode support
+AC_ARG_ENABLE(-unicode,dnl
+[  --enable--unicode[=yes|no]             enable building unicode-aware code ],,
+enable__unicode=yes
+)dnl
+
 dnl custom malloc/free
 AC_ARG_ENABLE(-alloc,dnl
 [  --enable--alloc[=yes|no]               enable custom malloc/free routines ],,
 enable__alloc=yes
 )dnl
 
-dnl unicode support
-AC_ARG_ENABLE(-unicode,dnl
-[  --enable--unicode[=yes|no]             enable building unicode-aware code ],,
-enable__unicode=yes
+dnl C type "long long" support (if available on your compiler)
+AC_ARG_ENABLE(-long-long,dnl
+[  --enable--long-long[=yes|no]           enable using long long C type if supported ],,
+enable__long_long=no
 )dnl
+
+dnl hand-optimized assembler (if available for your platform)
+AC_ARG_ENABLE(-asm,dnl
+[  --enable--asm[=yes|no]                 enable hand-optimized assembler if supported ],,
+enable__asm=yes
+)dnl
+
 
 dnl socket server
 AC_ARG_ENABLE(socket,dnl
@@ -65,6 +79,18 @@ dnl Toolkit library: use twin (libTw) as display driver
 AC_ARG_ENABLE(tt_hw_twin,dnl
 [  --enable-tt-hw-twin[=yes|mod|no]       enable libTT to use twin (libTw) as display target ],,
 enable_tt_hw_twin=mod
+)dnl
+
+dnl Toolkit library: display on twin + server side libTT
+AC_ARG_ENABLE(tt_hw_twin_tunnel,dnl
+[  --enable-tt-hw-twin-tunnel[=yes|mod|no]   enable libTT to use on twin + server side libTT ],,
+enable_tt_hw_twin_tunnel=mod
+)dnl
+
+dnl Toolkit library: libTT loaded by twin server
+AC_ARG_ENABLE(tt_hw_twin_detunnel,dnl
+[  --enable-tt-hw-twin-detunnel[=yes|mod|no] enable libTT on twin server side ],,
+enable_tt_hw_twin_detunnel=mod
 )dnl
 
 dnl Toolkit library: use gtk as display driver
@@ -181,6 +207,18 @@ AC_ARG_ENABLE(hw-ggi,dnl
 enable_hw_ggi=mod
 )dnl
 
+dnl server extensions
+AC_ARG_ENABLE(ext,dnl
+[  --enable-ext[=yes|no]                  enable server extensions ],,
+enable_ext=yes
+)dnl
+
+dnl libTT server extensions
+AC_ARG_ENABLE(ext-tt,dnl
+[  --enable-ext-tt[=yes|no]               enable the libTT server extensions ],,
+enable_ext_tt=no
+)dnl
+
 dnl
 dnl Checks for programs.
 dnl
@@ -209,20 +247,15 @@ EOF
     break
   done
 fi
-
-if test -f conftestmake; then
-  eval "make_is_version=\"`tail -1 conftestmake`\""
-fi
 if test -f conftestmake.result; then
   eval "`cat conftestmake.result`"
 fi
 rm -f conftest*
 
 if test "$make_is_good" != yes; then
-  AC_MSG_ERROR([
-                  GNU Make version >= 3.76.2 is required to compile twin,
-                  but your \"${MAKE-make}\" appears to be version "${make_is_version}":
+  AC_MSG_ERROR([GNU Make > 3.76.1 is required to compile twin
 
+your ${MAKE-make} reported:
 `${MAKE-make} -v`])
 fi
 
@@ -286,7 +319,7 @@ dnl
 AC_C_CONST
 AC_CACHE_CHECK(for long long, ac_cv_type_long_long, AC_TRY_COMPILE( , [
   long long a = 0x1234567812345678ll;
-  unsigned long long b = 0xfedcba12345678abull;
+  unsigned long long b = 0xFEDCBA0012345678ull;
   
   b -= a;
   a += b;
@@ -375,7 +408,7 @@ dnl we never use the 'struct rusage' returned by wait3()
 dnl AC_FUNC_WAIT3
 
 AC_CHECK_FUNCS(ftime gettimeofday getspnam hstrerror initgroups lstat putenv setenv \
-	       select strdup strerror strspn strstr scandir alphasort uname \
+	       select strdup strerror strspn strstr scandir alphasort uname usleep \
 	       vprintf vsprintf vsnprintf wait3 wait4 getpt grantpt unlockpt ptsname)
 
 AC_CHECK_FILE(/dev/ptmx)
@@ -497,12 +530,26 @@ if test "$ac_cv_c_attribute_packed" != no; then
   AC_DEFINE(HAVE_ATTRIBUTE_PACKED, 1, Define if you have gcc-compatible '__attribute__((packed))')
 fi
 
+can_enable__asm=no
+
+dnl do we have gcc i386 compatible assembler?
 
 if test "$ac_cv_prog_gcc_i386_asm" = yes; then
   AC_DEFINE(HAVE_GCC_I386_ASM, 1, Define if you have gcc-compatible i386 assembler)
+  can_enable__asm=yes
+  can_enable__asm_style="gcc-i386-asm"
 fi
 GCC_I386_ASM="$ac_cv_prog_gcc_i386_asm"
 AC_SUBST(GCC_I386_ASM)
+
+dnl do we have other supported assemblers?
+dnl other assemblers may be added here...
+
+
+if test "$can_enable__asm" = yes; then
+  AC_DEFINE(HAVE_ASM, 1, Define if you have an assembler supported by twin)
+fi
+
 
 GNU_LD="$lt_cv_prog_gnu_ld"
 AC_SUBST(GNU_LD)
@@ -578,6 +625,15 @@ if test "$ac_cv_func_mmap_fixed_mapped" = no; then
   enable_wm_rc_shmmap=no
 fi
 
+if test "$enable__asm" = yes; then
+  enable__asm="$can_enable__asm"
+  enable__asm_style="$can_enable__asm_style"
+fi
+
+if test "$ac_cv_type_long_long" = no; then
+  enable__long_long=no
+fi
+
 if test "$ac_cv_func_socket" = no -a "$ac_cv_lib_socket_socket" = no -a "$ac_cv_lib_wsock32_socket" = no; then
   AC_MSG_WARN(missing socket(): disabling socket connections (libTw)!)
   enable_socket=no
@@ -598,10 +654,6 @@ fi
 
 if test "$ac_cv_lib_z_deflate" = no -o "$ac_cv_header_zlib_h" = no; then
   enable_socket_gz=no
-fi
-
-if test "$ac_cv_func_getpt" = no -a "$ac_cv_file__dev_ptmx" = no; then
-  enable_term_devpts=no
 fi
 
 if test "$ac_cv_func_getpt" = no -a "$ac_cv_file__dev_ptmx" = no; then
@@ -772,18 +824,25 @@ dnl prepare conf/conf.auto using old conf/conf.current (or conf/conf.default)
 dnl for non-specified, non-autodetectable things (CONF_OPT_*)
 dnl
 
-. conf/conf.default
-if test -f conf/conf.current; then
-  . conf/conf.current
+# Remove last slash and all that follows it.  Not all systems have dirname.
+# we use [[ ]] since m4 will remove one level of them.
+TOP_SRCDIR="`echo $0|sed 's%/[[^/]][[^/]]*$%%'`"
+if test "${TOP_SRCDIR}" = "$0"; then
+  TOP_SRCDIR=.
 fi
-if test -f conf/conf.auto; then
-  . conf/conf.auto
+
+. ${TOP_SRCDIR}/conf/conf.default
+if test -f ${TOP_SRCDIR}/conf/conf.current; then
+  . ${TOP_SRCDIR}/conf/conf.current
+fi
+if test -f ${TOP_SRCDIR}/conf/conf.auto; then
+  . ${TOP_SRCDIR}/conf/conf.auto
 fi
 
 CONF_=
 
-for ac_FEATURE in `cat conf/conf.list`; do
-  ac_feature=enable_`echo $ac_FEATURE | cut -d_ -f2- | sed 'y%ABCDEFGHIJKLMNOPQRSTUVWXYZ%abcdefghijklmnopqrstuvwxyz%'`
+for ac_FEATURE in `cat ${TOP_SRCDIR}/conf/conf.list`; do
+  ac_feature=enable_`echo $ac_FEATURE | cut -d_ -f2- | tr 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' 'abcdefghijklmnopqrstuvwxyz'`
   eval "ac_feature_val=$`echo $ac_feature`"
   case "$ac_feature_val" in
     y | yes ) ac_feature_val=y ;;
@@ -800,123 +859,23 @@ for ac_FEATURE in `cat conf/conf.list`; do
 done
 AC_SUBST(CONF_)
 
-# all done
+# all done. now just output makefiles.
 
 
-AC_OUTPUT(Makefile makeautoconf conf/conf.auto)
+# this will prepare the Makefiles
+. ${TOP_SRCDIR}/scripts/Makefiles.sh "${TOP_SRCDIR}"
 
 
-echo_shlibs="<none>"
-echo_op=
-echo_cl=
-if test "$enable__shlibs" != no; then
-  echo_op='('
-  echo_cl=')'
-  echo_shlibs="$SYS_SHLIBS"
-fi
+AC_OUTPUT(makeautoconf conf/conf.auto)
 
-echo_feat=
-for i in socket wm wm_rc term term_devpts; do
-  eval "echo_val=\${enable_$i}"
-  if test "$echo_val" != no; then
-    if test "$echo_val" = mod; then
-      i="$echo_op""$i""$echo_cl"
-    fi
-    echo_feat="$echo_feat $i"
-  fi
-done
-if test "$echo_feat" = ""; then
-  echo_feat="<none>"
-else
-  echo_feat="`echo $echo_feat`"
-fi
+enable_="`echo \"$CONF_\" | sed 's/CONF_/enable_/g' | tr -d ';' | tr 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' 'abcdefghijklmnopqrstuvwxyz'`"
 
-echo_hw=
-for i in gfx x11 twin display tty ggi; do
-  eval "echo_val=\${enable_hw_$i}"
-  if test "$echo_val" != no; then
-    if test "$echo_val" = mod; then
-      i="$echo_op""$i""$echo_cl"
-    fi
-    echo_hw="$echo_hw $i"
-  fi
-done
-if test "$echo_hw" = ""; then
-  echo_hw="<none>"
-else
-  echo_hw="`echo $echo_hw`"
-fi
+${TOP_SRCDIR}/scripts/Prettyconfig.sh "prefix='$prefix'" "CC='$CC'" "CFLAGS='$CFLAGS'" "OS='$OS'" \
+	"SYS_SHLIBS='$SYS_SHLIBS'" "enable__asm_style='$enable__asm_style'" $enable_
 
-echo_hw_tty=
-if test "$enable_hw_tty" != no; then
-  for i in linux twterm termcap; do
-    eval "echo_val=\${enable_hw_tty_$i}"
-    if test "$echo_val" != no; then
-      if test "$echo_val" = mod; then
-        i="$echo_op""$i""$echo_cl"
-      fi
-      echo_hw_tty="$echo_hw_tty $i"
-    fi
-  done
-fi
-if test "$echo_hw_tty" = ""; then
-  echo_hw_tty="<none>"
-else
-  echo_hw_tty="`echo $echo_hw_tty`"
-fi
-
-echo_libs=
-if test "$enable__unicode" != no; then
-  echo_libs="$echo_libs $echo_op""libTutf""$echo_cl"
-fi
-if test "$enable_socket" != no; then
-  echo_libs="$echo_libs $echo_op""libTw""$echo_cl"
-fi
-if test "$enable_tt" != no; then
-  echo_libs="$echo_libs $echo_op""libTT""$echo_cl"
-fi
-if test "$echo_libs" = ""; then
-  echo_libs="<none>"
-else
-  echo_libs="`echo $echo_libs`"
-fi
-
-echo_tt_hw=
-for i in twin gtk x11 xml; do
-  eval "echo_val=\${enable_tt_hw_$i}"
-  if test "$echo_val" != no; then
-    if test "$echo_val" = mod; then
-      i="$echo_op""$i""$echo_cl"
-    fi
-    echo_tt_hw="$echo_tt_hw $i"
-  fi
-done
-if test "$echo_tt_hw" = ""; then
-  echo_tt_hw="<none>"
-else
-  echo_tt_hw="`echo $echo_tt_hw`"
-fi
 
 AC_MSG_RESULT([
-Configuration:
-
-  Items in parenthesis (...) will be built as shared libraries/modules
-
-  Compiler:                   ${CC}
-  Compiler flags:             ${CFLAGS}
-  Shared libraries support:   ${echo_shlibs}
-  Server features:            ${echo_feat}
-  Server HW drivers:          ${echo_hw}
-  Server hw_tty driver flags: ${echo_hw_tty}
-  Libraries:                  ${echo_libs}
-  TT library HW targets:      ${echo_tt_hw}
-  Install path:               ${prefix}/bin, ${prefix}/lib/twin, ${prefix}/share/twin
-
-to show/change other configuration settings, you can run one of:
-'./configure <options>', 'scripts/Configure.sh <options>',
-'make config' or 'make menuconfig'
-
 twin is now (hopefully) configured.
 
-As next step, you probably want to run 'make'.])
+As next step, you probably want to run '${MAKE-make}'.])
 

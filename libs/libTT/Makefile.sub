@@ -1,0 +1,161 @@
+#
+# Makefile for libTT, `The Text Toolkit' library sitting on top of libTw
+#
+
+SUBDIRS=HW
+
+include $(T)include/TT/makeversion
+-include $(B)makeautoconf
+
+all: build-subdirs build-all
+
+BINS=
+SHLIBS=libTT.la
+ARLIBS=libTT.a
+COLLECTS=
+#
+# we MUST place static library first, as libtool also links
+# *.o files to *.lo ones if they don't already exist
+#
+ALLBINS=libTT.a libTT.la
+
+
+AVLOBJS=avl.o
+AVLOBJS_L=avl.lo
+
+HWOBJS=HW/hw.lst
+HWOBJS_L=HW/hw_l.lst
+
+OBJS_libTT.a=libTT.o field.o getset.o method.o array.o wrap.o mem.o missing.o $(HWOBJS)
+OBJS_libTT.la=libTT.lo field.lo getset.lo method.lo array.lo wrap.lo mem.lo missing.lo $(HWOBJS_L)
+
+ALLOBJS=$(AVLOBJS) $(AVLOBJS_L) $(HWOBJS) $(HWOBJS_L) $(OBJS_libTT.a) $(OBJS_libTT.la)
+
+
+CC_FLAGS+=-I. -D_REENTRANT 
+
+-include $(B)conf/conf.current
+-include .modules
+-include .depend
+-include $(B).hdepend
+
+ifeq ($(CONF_TT),y)
+  ifeq ($(CONF__SHLIBS),y)
+    build-all: $(ALLBINS)
+  else
+    build-all: $(ARLIBS)
+	@rm -f $(filter-out $(ARLIBS), $(ALLBINS)) ; \
+	 echo ; \
+	 echo "You disabled \"Enable shared libraries\"," ; \
+	 echo "so only the static library libTT.a will be compiled!" ; \
+	 echo
+  endif
+
+  install: install-real
+  uninstall: uninstall-real
+else
+  build-all: warn
+  install: warn
+  uninstall:
+  warn:
+	@rm -f $(ALLBINS) ; \
+	 echo ; \
+	 echo "You disabled \"Support Text Toolkit library (libTT)\"," ; \
+	 echo "so the library libTT will NOT be compiled!" ; \
+	 echo
+endif
+
+
+#
+# This is globally needed by all libTT sources
+#
+ifeq ($(CONF_SOCKET_PTHREADS),y)
+  CC_FLAGS+=-DCONF_SOCKET_PTHREADS
+endif
+
+ifeq ($(CONF__MODULES),y)
+  LD_FLAGS+=$(LD_LIBDL)
+endif
+
+ifeq ($(CONF__UNICODE),y)
+  LD_FLAGS_libTT.la+=$(LD_LIBTUTF)
+endif
+
+ifeq ($(CONF_TT_HW_TWIN),y)
+  LD_FLAGS_libTT.la+=$(LD_LIBTW)
+else
+  # must manually provide AVL trees.
+  OBJS_libTT.la+=$(AVLOBJS_L)
+  OBJS_libTT.a+=$(AVLOBJS)
+endif
+
+ifeq ($(CONF_TT_HW_GTK),y)
+  LD_FLAGS_libTT.la+=$(LD_LIBGTK)
+endif
+
+ifeq ($(CONF_TT_HW_XML),y)
+  LD_FLAGS_libTT.la+=$(LD_LIBXML)
+endif
+
+
+ifneq ($(libdir),)
+  # also used for libTT.lo
+  CC_FLAGS_libTT.o+=-DLIBDIR=\"$(libdir)\"
+endif
+
+
+#
+# handy targets
+#
+
+#
+# generate decls_m4.h *before* entering HW/ subdirectory, otherwise
+# wrong depends will be generated there since decls_m4.h is missing
+#
+HW/%: decls_m4.h dir-HW
+	@:
+
+#
+# include the do-everything file.
+# Must correctly set all CC_FLAGS* and LD_FLAGS* before including this!
+#
+include $(T)makerules
+
+
+#
+# All done. Now just set a few special targets
+#
+
+do-autogen: $(S)decls_m4.h
+
+$(S)missing.c:
+	$(LN) $(B)server/missing.c $@
+
+$(S)avl.c:
+	$(LN) $(B)libs/libTw/avl.c $@
+
+install-headers:
+	$(INSTALL-DIR) $(DESTDIR)$(includedir)/TT && \
+	$(INSTALL-TXT) $(T)include/TT/*.h $(wildcard $(B)include/TT/*.h) $(DESTDIR)$(includedir)/TT
+
+install-dir:
+	$(INSTALL-DIR) $(DESTDIR)$(libdir)
+
+
+install-real: install-headers install-dir $(foreach B,$(SHLIBS) $(ARLIBS),install-lib-$(B))
+
+
+uninstall-headers:
+	rm -f $(DESTDIR)$(includedir)/TT/*.h
+	rmdir $(DESTDIR)$(includedir)/TT || true
+
+uninstall-dir:
+	rmdir $(DESTDIR)$(includedir) || true
+
+uninstall-real: uninstall-headers $(foreach B,$(SHLIBS) $(ARLIBS),uninstall-lib-$(B)) uninstall-dir
+
+
+clean:
+	rm -f .*.flags .*.shlib .*.arlib *.la *.a *.o *.lo *.so *.so.* ; \
+	rm -fr .libs
+

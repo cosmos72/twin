@@ -33,20 +33,34 @@
 
 
 
-                                  
-#define Create_ttevent		TTD.CREATE.Create_ttevent 
 
+
+
+
+
+
+
+                                                
+#define Create1_ttvector		TTD.CREATE.Create1_ttvector
+#define CreateA_ttvector		TTD.CREATE.CreateA_ttvector
+#define CreateL_ttvector		TTD.CREATE.CreateL_ttvector
+#define CreateR_ttvector		TTD.CREATE.CreateR_ttvector
+#define CreateV_ttvector		TTD.CREATE.CreateV_ttvector
+#define CreateY_ttvector		TTD.CREATE.CreateY_ttvector               
+#define Create_ttevent		TTD.CREATE.Create_ttevent 
 #define Create8_tteventbig		TTD.CREATE.Create8_tteventbig
 #define Create4_tteventbig		TTD.CREATE.Create4_tteventbig
 #define Create4s4_tteventbig		TTD.CREATE.Create4s4_tteventbig 
 #define Create_ttbitmask		TTD.CREATE.Create_ttbitmask
-#define CreateA_ttbitmask		TTD.CREATE.CreateA_ttbitmask 
-#define Create_tteventmask		TTD.CREATE.Create_tteventmask     
-#define Create_ttcallback		TFN_ttcallback->Create 
+#define CreateB2_ttbitmask		TTD.CREATE.CreateB2_ttbitmask
+#define CreateR_ttbitmask		TTD.CREATE.CreateR_ttbitmask
+#define CreateR2_ttbitmask		TTD.CREATE.CreateR2_ttbitmask 
+#define CreateB_tteventmask		TTD.CREATE.CreateB_tteventmask
+#define CreateB2_tteventmask		TTD.CREATE.CreateB2_tteventmask     
+#define Create_ttcallback		TClass_ttcallback->Create 
 #define Create_ttlistener		TTD.CREATE.Create_ttlistener
-#define CreateA_ttlistener		TTD.CREATE.CreateA_ttlistener
-#define CreateV_ttlistener		TTD.CREATE.CreateV_ttlistener
-
+#define CreateE_ttlistener		TTD.CREATE.CreateE_ttlistener
+#define CreateR_ttlistener		TTD.CREATE.CreateR_ttlistener
 #define CreateDel_ttlistener		TTD.CREATE.CreateDel_ttlistener
 #define CreateAskclose_ttlistener		TTD.CREATE.CreateAskclose_ttlistener
 #define CreateKey_ttlistener		TTD.CREATE.CreateKey_ttlistener
@@ -54,11 +68,12 @@
 #define CreateActivate_ttlistener		TTD.CREATE.CreateActivate_ttlistener
 #define CreateChange_ttlistener		TTD.CREATE.CreateChange_ttlistener
 #define CreateKeyData_ttlistener		TTD.CREATE.CreateKeyData_ttlistener
-#define CreateExpose_ttlistener		TTD.CREATE.CreateExpose_ttlistener
-         
-#define CreateA_tttimer		TTD.CREATE.CreateA_tttimer
-#define Create_tttimer		TTD.CREATE.Create_tttimer                                                            
-#define Create_ttnative		TTD.CREATE.Create_ttnative                                  
+#define CreateExpose_ttlistener		TTD.CREATE.CreateExpose_ttlistener         
+#define CreateR_tttimer		TTD.CREATE.CreateR_tttimer
+#define Create_tttimer		TTD.CREATE.Create_tttimer                                                   
+          
+#define Create_ttboxlayout		TTD.CREATE.Create_ttboxlayout              
+#define Create_ttnative		TTD.CREATE.Create_ttnative                                      
 #define Create_ttlabel		TTD.CREATE.Create_ttlabel                           
 #define Create_ttanybutton		TTD.CREATE.Create_ttanybutton     
 #define Create_ttbutton		TTD.CREATE.Create_ttbutton     
@@ -71,6 +86,7 @@
 #define Create_ttscrollpane		TTD.CREATE.Create_ttscrollpane                  
 #define Create_ttframe		TTD.CREATE.Create_ttframe 
 #define Create_ttscroller		TTD.CREATE.Create_ttscroller          
+#define Create_ttapplication		TTD.CREATE.Create_ttapplication
 
 
 

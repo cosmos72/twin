@@ -3,7 +3,7 @@
  * Smart CONF_* processing by Werner Almesberger, Michael Chastain.
  * Tweaked and adapted to `twin' Makefile scheme by Massimiliano Ghilardi.
  * 
- * Usage: mkdep [{+|-}C] [{+|-}T] [-P<prefix>] [-I<dir> [...]] file ...
+ * Usage: mkdep [-R<rootdir>] [{+|-}C] [{+|-}T] [-P<prefix>] [-I<dir> [...]] file ...
  * 
  * 
  * Search each source file for #include "*.h", #include <*.h>, CONF_* and DEBUG_*
@@ -23,8 +23,11 @@
  *   CC_FLAGS_hw_multi.o+=-DCONF_SOCKET
  * endif
  * 
- * If -P<prefix> is given, print it before every file name while generating dependecies
- *       for the following files.
+ * If -R1<prefix>:<replacement> is given, any initial file path matching <prefix> will be replaced
+ *       by <replacement> while generating dependencies for the following files.
+ * If -R2<prefix>:<replacement> is given, any initial file path matching <prefix> will be replaced
+ *       by <replacement> while generating dependencies for the following files.
+ *       If both -R1 and -R2 are given, -R2 is applied only in case -R1 does not apply.
  * If +C is given (default), enable dependencies for CONF_* and DEBUG_* symbol references
  *       for the following files.
  * If -C is given, suppress dependencies for CONF_* and DEBUG_* symbol references
@@ -50,6 +53,10 @@
 # include <fcntl.h>
 #endif
 
+#ifdef HAVE_LIMITS_H
+# include <limits.h>
+#endif
+
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
@@ -61,8 +68,16 @@
 # include <sys/stat.h>
 #include <sys/types.h>
 
-#include <Tw/datatypes.h> /* to allow including <Tw/datasizes.h> */
-#include <Tw/datasizes.h> /* for TW_BYTE_ORDER */
+#include <Tw/endianity.h> /* for TW_BYTE_ORDER */
+
+
+#ifndef INT_MIN
+# define INT_MIN ((int)1<<(sizeof(int)*8-1))
+#endif
+
+#ifndef INT_MAX
+# define INT_MAX ((int)~INT_MIN)
+#endif
 
 /* Current input file */
 static const char *g_filename;
@@ -78,22 +93,47 @@ static int    size_config = 0;
 static int    len_config  = 0;
 static int    hasdep      = 0;
 
-static const char *prefix = "";
+static const char *prefix[] = { "", "" }, *replacement[] = { "", "" };
+static int prefixlen[] = { 0, 0 }, replacementlen[] = { 0, 0 };
+
 static int suppress_CONFs = 0, fake_rules = 0;
 
 static char depname[512];
 static int depnamelen;
 
+static void print_replacement(const char *name, int namelen) {
+  if (namelen > prefixlen[0] && !memcmp(name, prefix[0], prefixlen[0]))
+    printf("%.*s%.*s", replacementlen[0], replacement[0], namelen-prefixlen[0], name+prefixlen[0]);
+  else if (namelen > prefixlen[1] && !memcmp(name, prefix[1], prefixlen[1]))
+    printf("%.*s%.*s", replacementlen[1], replacement[1], namelen-prefixlen[1], name+prefixlen[1]);
+  else
+    printf("%.*s", namelen, name);
+}
+
+static const char *trim_dirname(const char *name) {
+    const char *trimmed = strrchr(name, '/');
+    if (trimmed)
+	return trimmed+1;
+    return name;
+}
+
 static void do_depname(void)
 {
     if (!hasdep) {
 	hasdep = 1;
-	if (depname[depnamelen-1] == 'o')
-	    printf("%s%s %s%.*slo:", prefix, depname, prefix, depnamelen-1, depname);
-	else
-	    printf("%s%s:", prefix, depname);
-	if (g_filename)
-	    printf(" %s%s", prefix, g_filename);
+	if (depname[depnamelen-1] == 'o') {
+	    print_replacement(depname, depnamelen);
+	    putchar(' ');
+	    print_replacement(depname, depnamelen-1);
+	    printf("lo:");
+	} else {
+	    print_replacement(depname, depnamelen);
+	    putchar(':');
+	}
+	if (g_filename) {
+	    putchar(' ');
+	    print_replacement(g_filename, INT_MAX);
+	}
     }
 }
 
@@ -164,7 +204,8 @@ static void dump_config(void)
 	printf("\t@touch $@\n");
     
     while (pc && pc+1 < end_config && !*pc && *++pc) {
-	printf("ifeq ($(%s),y)\n  CC_FLAGS_%s+=-D%s\nendif\n", pc, depname, pc);
+	printf("ifeq ($(%s),y)\n  CC_FLAGS_%s+=-D%s\nendif\n",
+	       pc, trim_dirname(depname), pc);
 	pc = memchr(pc, 0, end_config - pc);
 	printed = 1;
     }
@@ -172,8 +213,8 @@ static void dump_config(void)
 	putchar('\n');
 }
 
-static char str_path[3][512];
-static int  len_path[3];
+static char str_path[5][512];
+static int  len_path[5];
 static int  max_path = 0;
 static int  limit_path = sizeof(len_path)/sizeof(len_path[0]);
 
@@ -181,7 +222,7 @@ static void use_path(const char * name, int len)
 {
     if (max_path < limit_path) {
 	memcpy(str_path[max_path], name, len);
-	if (name[len] != '/')
+	if (name[len-1] != '/')
 	    str_path[max_path][len++] = '/';
 	len_path[max_path++] = len;
     } else {
@@ -196,13 +237,14 @@ static void use_path(const char * name, int len)
 static int handle_include_global(const char * name, int len)
 {
     int i;
-    
+  
     for (i = 0; i < max_path; i++) {
 	memcpy(str_path[i] + len_path[i], name, len);
 	str_path[i][len_path[i]+len] = '\0';
 	if (access(str_path[i], R_OK) == 0) {
 	    do_depname();
-	    printf(" %s%s", prefix, str_path[i]);
+	    putchar(' ');
+	    print_replacement(str_path[i], INT_MAX);
 	    return 1;
 	}
     }
@@ -225,7 +267,8 @@ static void handle_include_local(const char * name, int len)
 	    return;
     }
     do_depname();
-    printf(" %s%.*s", prefix, len, name);
+    putchar(' ');
+    print_replacement(name, len);
 }
 
 
@@ -539,8 +582,8 @@ static void do_depend(const char * filename)
  */
 int main(int argc, char **argv)
 {
-    int len;
     const char * filename;
+    int len, i;
  
     setvbuf(stdout, NULL, _IOFBF, BUFSIZ);
     
@@ -569,8 +612,17 @@ int main(int argc, char **argv)
 	    use_path(filename+2, len-2);
 	    continue;
 	}
-	if (len > 2 && !memcmp("-P", filename, 2)) {
-	    prefix = filename+2;
+	if (len > 3 && !memcmp("-R", filename, 2)) {
+	    i = filename[2] - '1';
+	    if (i >= 0 && i < sizeof(prefix)/sizeof(prefix[0])) {
+		prefix[i] = filename+3;
+		prefixlen[i] = strlen(prefix[i]);
+		if ((filename = memchr(prefix[i], ':', prefixlen[i]))) {
+		    replacement[i] = filename + 1;
+		    replacementlen[i] = prefixlen[i] - (replacement[i] - prefix[i]);
+		    prefixlen[i] = filename - prefix[i];
+		}
+	    }
 	    continue;
 	}
 	g_filename = 0;

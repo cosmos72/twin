@@ -18,17 +18,40 @@ static TT_VOLATILE ttbyte my_exitmainloop;
 TT_DECL_MAGIC(ttdemo_magic);
 
 static void stat_ttobj(ttobj f) {
-    ttuint i, last;
+    ttfield i, last;
     TT_CONST ttbyte *name;
     ttbyte buf[64];
-    ttany data;
+    ttarg data;
+    ttclass Class;
+    ttopaque type;
+    ttany value;
     
     printf("(%s) 0x%x = {\n", name = TTClassNameOf(f), (unsigned)(ttopaque)f);
     sprintf(buf, "%s_field_last", name);
-    last = TTGetFieldId(buf);
-    for (i = 0; i < last; i++) {
-	if ((name = TTGetFieldName(i)) && TTGetField_ttobj(f, i, &data))
-	    printf("\t%s\t= 0x%x;\n", name, (unsigned)data);
+    last = TTGet_ttfield(buf);
+    
+    i = TTGet_ttfield("ttobj_field_first");
+    for (; i < last; i = (ttfield)((ttopaque)i + 1)) {
+	/*
+	 * evil trick here:
+	 * TTGet_ttfield() actually returns an integer,
+	 * and we try all values for that integer from
+	 * ttfield "ttobj_field_first" to "<objtype>_field_last"
+	 */
+	if ((name = TTGetName_ttfield(i)) && TTGetField_ttobj(f, i, &data)) {
+	    value = data.value;
+	    type = data.type;
+	    Class = TTFromType_ttclass(type);
+	    
+	    /* if it's an array of bytes (i.e. a string) then print as a string */
+	    if (Class == TTClass_ttbyte && TTIsArrayType_ttclass(type)) {
+		if (value)
+		    printf("\t%s\t= (%s)\t\"%s\";\n", name, TTGetName_ttclass(Class), (ttbyte *)(ttopaque)value);
+		else
+		    printf("\t%s\t= (%s)\tNULL;\n", name, TTGetName_ttclass(Class));
+	    } else
+		printf("\t%s\t= (%s)\t0x%lx;\n", name, TTGetName_ttclass(Class), (unsigned long)value);
+	}
     }
     printf("}\n");
 }
@@ -60,9 +83,9 @@ static void my_repaint(ttvisible o, ttshort x, ttshort y, ttshort w, ttshort h) 
 static void my_resize(ttany arg0) {
     ttcomponent f;
     tteventbig e;
-    static ttuint widget_w_id, widget_h_id;
+    static ttuint widget_w, widget_h;
     ttany value, old_value;
-    ttuint evcode;
+    ttany evcode;
     
     if (TTIS(tteventbig, arg0)) {
 	e = (tteventbig)(ttopaque)arg0;
@@ -72,12 +95,12 @@ static void my_resize(ttany arg0) {
 	value     = TTGetValue_tteventbig(e);
 	old_value = TTGetOldValue_tteventbig(e);
 	
-	if (!widget_w_id) {
-	    widget_w_id = TTGetFieldId("ttwidget_w");
-	    widget_h_id = TTGetFieldId("ttwidget_h");
+	if (!widget_w) {
+	    widget_w = TTGetEvcode_ttfield("ttwidget_w");
+	    widget_h = TTGetEvcode_ttfield("ttwidget_h");
 	}
 	printf("resize: 0x%x %c=%d (was %d)\n", (unsigned)(ttopaque)f,
-	       evcode == widget_w_id ? 'w' : 'h',
+	       evcode == widget_w ? 'w' : 'h',
 	       (int)value, (int)old_value);
     }
 }
@@ -105,7 +128,7 @@ static ttbyte my_init(void) {
     
     if (TTCheckMagic(ttdemo_magic) &&
 	TTOpen(NULL) &&
-	TTSet_ttapplication("ttdemo") &&
+	TTCreate_ttapplication("ttdemo") &&
 	(f = TTNEW(ttframe)) &&
 
 	/*
@@ -130,9 +153,9 @@ static ttbyte my_init(void) {
 	/*
 	 * react to f resizes.
 	 */
-	(l1 = TTCreateChange_ttlistener((ttcomponent)f, TTGetFieldId("ttwidget_w"),
+	(l1 = TTCreateChange_ttlistener((ttcomponent)f, TTGetEvcode_ttfield("ttwidget_w"),
 					0, (void *)my_resize)) &&
-	(l2 = TTCreateChange_ttlistener((ttcomponent)f, TTGetFieldId("ttwidget_h"),
+	(l2 = TTCreateChange_ttlistener((ttcomponent)f, TTGetEvcode_ttfield("ttwidget_h"),
 					0, (void *)my_resize)) &&
 
 	/*
@@ -154,12 +177,21 @@ static ttbyte my_init(void) {
 	};
 	ttopaque n = sizeof(evtypes)/sizeof(evtypes[0]);
 	
-	TTSetEventMask_ttlistener(l1, TTCreate_tteventmask(TTCreateA_ttbitmask(n, evtypes), NULL, NULL));
+	TTSetEventMask_ttlistener
+	    (l1, TTCreateB_tteventmask
+	     (TTCreateR_ttbitmask
+	      (TTCreateY_ttvector
+	       (n, evtypes)), NULL, NULL));
 	/*
-	 * now we cannot use the created ttbitmasks and tteventmasks anymore:
-	 * TTSetEventMask_ttlistener() and TTCreate_tteventmask() swallow them
+	 * now we cannot use the created ttvectors, ttbitmasks and tteventmasks anymore:
+	 * TTSetEventMask_ttlistener(), TTCreate_tteventmask() and TTCreateV_ttbitmask()
+	 * swallow them.
 	 */
-	TTSetEventMask_ttlistener(l2, TTCreate_tteventmask(TTCreateA_ttbitmask(n, evtypes), NULL, NULL));
+	TTSetEventMask_ttlistener
+	    (l2, TTCreateB_tteventmask
+	     (TTCreateR_ttbitmask
+	      (TTCreateY_ttvector
+	       (n, evtypes)), NULL, NULL));
 	/*
 	 * idem as above
 	 */

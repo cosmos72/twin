@@ -359,8 +359,7 @@ static byte InitTerm(void) {
 #endif
 
     if (TwCheckMagic(term_magic) && TwOpen(NULL) &&
-	(Term_MsgPort=TwCreateMsgPort
-	 (6, "twterm", (uldat)0, (udat)0, (byte)0)) &&
+	(Term_MsgPort=TwCreateMsgPort(6, "twterm")) &&
 	(Term_Menu=TwCreateMenu
 	 (COL(BLACK,WHITE), COL(BLACK,GREEN), COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
 	  COL(RED,WHITE), COL(RED,GREEN), (byte)0)) &&

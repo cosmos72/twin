@@ -9,18 +9,23 @@ CONF_WM_MENU="Window Manager"
 CONF_TERM_MENU="Terminal emulator"
 CONF_PRINTK_MENU="Messages logging"
 CONF_HW_MENU="Display hardware support"
+CONF_EXT_MENU="Server extensions"
 CONF_OPT_MENU="Runtime options"
 
 CONF__SHLIBS_HELP="Enable shared libraries"
 CONF__MODULES_HELP="Enable shared modules"
+CONF__UNICODE_HELP="Enable Unicode support (libTutf)"
 CONF__ALLOC_HELP="Use custom mmap() based malloc/free"
-CONF__UNICODE_HELP="Build all code with Unicode support"
+CONF__LONG_LONG_HELP="Use C type 'long long' if supported (not recommended)"
+CONF__ASM_HELP="Use hand-optimized assembler code if available"
 CONF_SOCKET_HELP="Support remote socket connections"
 CONF_SOCKET_GZ_HELP=" -> Sockets: support gzip compression"
 CONF_SOCKET_PTHREADS_HELP=" -> Sockets: thread-safe libs (requires libpthread)"
 CONF_SOCKET_ALIEN_HELP=" -> Sockets: support non-native architectures"
 CONF_TT_HELP="Support Text Toolkit library (libTT)"
-CONF_TT_HW_TWIN_HELP=" -> HW support: Twin, native"
+CONF_TT_HW_TWIN_HELP=" -> HW support: twin, native"
+CONF_TT_HW_TWIN_TUNNEL_HELP=" -> HW support: twin + server side libTT"
+CONF_TT_HW_TWIN_DETUNNEL_HELP=" -> HW support: libTT on twin server side"
 CONF_TT_HW_GTK_HELP=" -> HW support: gtk"
 CONF_TT_HW_X11_HELP=" -> HW support: X11"
 CONF_TT_HW_XML_HELP=" -> HW support: write to xml files"
@@ -33,13 +38,15 @@ CONF_TERM_DEVPTS_HELP=" -> Terminal: use Unix98 /dev/pts/* pseudo-ttys"
 CONF_PRINTK_HELP="Store server messages into Messages window"
 CONF_HW_TTY_HELP="HW support: text terminals (Linux console...)"
 CONF_HW_TTY_LINUX_HELP=" -> tty support: Linux console (gpm mouse, /dev/vcsa)"
-CONF_HW_TTY_TWTERM_HELP=" -> tty support: Twin terminal"
+CONF_HW_TTY_TWTERM_HELP=" -> tty support: twin terminal"
 CONF_HW_TTY_TERMCAP_HELP=" -> tty support: termcap/ncurses terminal database"
 CONF_HW_X11_HELP="HW support: X11"
 CONF_HW_GFX_HELP="HW support: X11 enhanced driver (gfx), uses libXpm"
-CONF_HW_TWIN_HELP="HW support: Twin, native"
+CONF_HW_TWIN_HELP="HW support: twin, native"
 CONF_HW_DISPLAY_HELP="HW support: twdisplay client as display"
 CONF_HW_GGI_HELP="HW support: libggi"
+CONF_EXT_HELP="Server extensions"
+CONF_EXT_TT_HELP="Server extension: Text Toolkit library (libTT)"
 CONF_OPT_SHADOWS_HELP="Runtime option: enable shadows"
 CONF_OPT_BLINK_HELP="Runtime option: enable blink/high background"
 CONF_OPT_CURSOR_ALWAYS_HELP="Runtime option: force always visible cursor"
@@ -51,8 +58,10 @@ CONF_OPT_SCREEN_SCROLL_HELP="Runtime option: enable screen scrolling"
 menu CONF__
   yesno CONF__SHLIBS
   yesno CONF__MODULES
-  yesno CONF__ALLOC
   yesno CONF__UNICODE
+  yesno CONF__ALLOC
+  yesno CONF__LONG_LONG
+  yesno CONF__ASM
 endmenu
 menu CONF_SOCKET
   yesmodno CONF_SOCKET
@@ -62,7 +71,9 @@ menu CONF_SOCKET
 endmenu
 menu CONF_TT
   yesno CONF_TT
-  yesmodno_truedep CONF_TT_HW_TWIN CONF_SOCKET
+  yesmodno_truedep CONF_TT_HW_TWIN          CONF_SOCKET
+  yesmodno_truedep CONF_TT_HW_TWIN_TUNNEL   CONF_SOCKET
+  yesmodno_truedep CONF_TT_HW_TWIN_DETUNNEL CONF_SOCKET
   yesmodno CONF_TT_HW_GTK
   yesmodno CONF_TT_HW_X11
   yesmodno CONF_TT_HW_XML
@@ -90,6 +101,10 @@ menu CONF_HW
   yesmodno_truedep CONF_HW_TWIN CONF_SOCKET
   yesmodno_truedep CONF_HW_DISPLAY CONF_SOCKET
   yesmodno CONF_HW_GGI
+endmenu
+menu CONF_EXT
+  yesno CONF_EXT
+  yesmodno_truedep CONF_EXT_TT CONF_TT
 endmenu
 menu CONF_OPT
   msg "Warning: settings in ~/.twinrc or in system.twinrc"

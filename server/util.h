@@ -34,8 +34,8 @@ void SetArgv0(byte *CONST *argv, uldat argv_usable_len, CONST byte *src);
 #define SelectionAppend(Len, Data) SelectionStore(SEL_APPEND, NULL, Len, Data)
 byte SelectionStore(uldat Magic, CONST byte MIME[MAX_MIMELEN], uldat Len, CONST byte *Data);
 byte SetSelectionFromWindow(window Window);
-void doSelectionSetOwner(obj Owner, time_t Time, frac_t Frac);
-#define SEL_CURRENTTIME ((time_t)0)
+void doSelectionSetOwner(obj Owner, tany Time, tany Frac);
+#define SEL_CURRENTTIME ((tany)0)
 
 byte CreateXTermMouseEvent(event_mouse *Event, byte buflen, byte *buf);
 

@@ -10,6 +10,7 @@
 #include <Tw/datatypes.h>
 #include <Tw/datasizes.h>
 #include <Tw/stattypes.h>
+#include <Tw/endianity.h>
 #include <Tw/uni_types.h>
 #include <Tw/version.h>
 

@@ -24,6 +24,7 @@ extern fn Fn;
 #define	FnMutex		(Fn.f_mutex)
 #define	FnMsg		(Fn.f_msg)
 #define	FnModule	(Fn.f_module)
+#define	FnExtension	(Fn.f_extension)
 #define	FnDisplayHW	(Fn.f_display_hw)
 
 #define Do(Command, ObjName)	(Fn##ObjName->Command)

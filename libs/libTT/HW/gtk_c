@@ -1,0 +1,196 @@
+
+/*
+ *                 WARNING!
+ * 
+ * this file is `gtk_c' and is preprocessed by m4 to produce `gtk_m4.c'
+ * 
+ * It must be a valid m4 file, and must produce a valid C include file.
+ * 
+ * 
+ *  Copyright (C) 2002 by Massimiliano Ghilardi and Adam Olsen
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Library General Public
+ * License as published by the Free Software Foundation; either
+ * version 2 of the License, or (at your option) any later version.
+ * 
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Library General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Library General Public
+ * License along with this library; if not, write to the Free
+ * Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
+ * MA 02111-1307, USA
+ *
+ */
+
+
+#include <gtk/gtk.h>
+
+DECL_BEFORE
+
+/*
+ * We need to write down only overloaded methods.
+ */
+#define TT_GTK_EUNFINISHED 1
+ 
+
+
+/* ttobject */
+static BREAK(ttobject) {
+    if (o) {
+	if (o->native) {
+	    gtk_object_destroy((GtkObject *)(opaque)o->native);
+	    o->native = (opaque)0;
+	}
+    }
+}
+
+
+/* ttwidget */
+static BUILD(ttwidget) {
+    if ((o->native = (opaque)gtk_fixed_new())) {
+	gtk_widget_realize((GtkWidget *)(opaque)o->native);
+	return o;
+    }
+    return NULL;
+}
+static void DEF(AddTo_ttwidget)(ttwidget o, ttvisible parent, ttany constraints) {
+    if (parent && !o->parent) {
+	FNDEFAULT(ttwidget)->AddTo(o, parent, constraints);
+
+	gtk_widget_reparent((GtkWidget *)(opaque)o->native, (GtkWidget *)(opaque)parent->native);
+	
+	if (o->vflags & ttvisible_vflags_visible)
+	    gtk_widget_show((GtkWidget *)(opaque)o->native);
+    }
+}
+static void DEF(SetVisible_ttwidget)(ttwidget o, ttbyte on_off) {
+    if (!on_off != !(o->vflags & ttvisible_vflags_visible)) {
+	o->vflags ^= ttvisible_vflags_visible;
+	if (o->parent) {
+	    if (on_off)
+		gtk_widget_show((GtkWidget *)(opaque)o->native);
+	    else
+		gtk_widget_hide((GtkWidget *)(opaque)o->native);
+	}
+    }
+}
+static void DEF(Remove_ttwidget)(ttwidget o) {
+    if (o->parent) {
+	FNDEFAULT(ttwidget)->Remove(o);
+	
+	gtk_widget_reparent((GtkWidget *)(opaque)o->native, (GtkWidget *)0);
+    }
+}
+
+
+/* ttframe */
+static gint target()_AskCloseCallback_ttframe(GtkWidget *widget, GdkEvent *event, gpointer data) {
+    ttframe o = ID2(ttframe,(opaque)data);
+    if (o)
+	FireSimpleEvent((ttcomponent)o, ttevent_evtype_askclose);
+    return TRUE; /* The event handler will delete the window itself if it wants to */
+}
+static ttcallback target()_AddAskCloseCallback_ttframe(ttframe o) {
+    ttcallback l;
+    opaque id = OBJ2ID(o);
+
+    if ((l = Create_ttcallback((ttcomponent)o))) {
+	if ((l->native = (opaque)gtk_signal_connect(GTK_OBJECT((gpointer)o->native), "delete_event", GTK_SIGNAL_FUNC(target()_AskCloseCallback_ttframe), (gpointer)id)))
+	    return l;
+	TDEL(l);
+    }
+    return NULL;
+}
+static BUILD(ttframe) {
+    if ((o->native = (opaque)gtk_window_new(GTK_WINDOW_TOPLEVEL)) &&
+	target()_AddAskCloseCallback_ttframe(o))
+	return o;
+    return NULL;
+}
+static void DEF(SetVisible_ttframe)(ttframe o, ttbyte on_off) {
+    o->vflags ^= ttvisible_vflags_visible;
+    if (on_off)
+	gtk_widget_show((GtkWidget *)o->native);
+    else
+	gtk_widget_hide((GtkWidget *)o->native);
+}
+
+
+static ttbyte HWDEF(Sync)(void) {
+    return 1;
+}
+static ttbyte HWDEF(Flush)(void) {
+    return 1;
+}
+static ttbyte HWDEF(TimidFlush)(void) {
+    return 1;
+}
+#if 0 /* not used */
+static ttbyte HWDEF(MainLoop)(void) {
+    gtk_main();
+    return 1;
+}
+static void HWDEF(ExitMainLoop)(void) {
+    gtk_main_quit();
+}
+#endif
+static ttbyte HWDEF(MainLoopOnce)(ttbyte wait) {
+    gtk_main_iteration_do((gboolean)wait);
+    return 1;
+}
+static void HWDEF(DeleteCallback)(ttcallback o) {
+}
+static void HWDEF(Close)(void) {
+}
+static int HWDEF(ConnectionFd)(void) {
+  return -1;
+}
+static ttuint HWDEF(GetErrno)(void) {
+  return TT_GTK_EUNFINISHED;
+}
+static ttuint HWDEF(GetErrnoDetail)(void) {
+  return 0;
+}
+static TT_CONST ttbyte *HWDEF(StrError)(ttuint E) {
+    switch (E) {
+      case TT_GTK_EUNFINISHED:
+	return "gtk support is not finished yet :(";
+    }
+    return "";
+}
+static TT_CONST ttbyte *HWDEF(StrErrorDetail)(ttuint E, ttuint S) {
+    return "";
+}
+
+
+#ifdef THIS_MODULE
+ttclasses InitModule(tthw *HW)
+#else
+ttclasses _TT_gtk_InitHW(tthw *HW)
+#endif
+{
+    int argc = 1;
+    char *argv_real[] = {"FIXME", NULL};
+    char **argv = argv_real;
+
+    /*
+     * (*HW) must be set even if initialization fails,
+     * to report error messages.
+     */
+    *HW = &gtk_TTClasses.HW;
+
+    if (gtk_init_check(&argc, &argv))
+	return &gtk_TTClasses;
+    
+    FAIL(TT_GTK_EUNFINISHED, 0); /* it's unfinished... */
+    
+    return (ttclasses)0;
+}
+
+
+DECL_AFTER
+

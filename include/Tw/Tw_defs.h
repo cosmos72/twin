@@ -40,7 +40,6 @@
 
 /* maximum number of arguments of a libTw function */
 #define TW_MAX_ARGS_N	20
-  
 
 /* Macros for HW VGA (not ANSI!) colors */
 #define BLACK	((hwcol)0)
@@ -102,28 +101,28 @@
  * Notes about the timevalue struct:
  * 
  * it is used to represent both time intervals and absolute times;
- * the ->Seconds is a time_t numeric field.
- * DON'T assume time_t is 32 bit (or any other arbitrary size)
- * since in 19 Jan 2038 at 04:14:08 any signed, 32 bit time_t will overflow.
- * So use sizeof(time_t) if you really need.
+ * the ->Seconds is a ttany numeric field.
+ * DON'T assume ttany is 32 bit (or any other arbitrary size)
+ * since in 19 Jan 2038 at 04:14:08 any signed, 32 bit ttany will overflow.
+ * So use sizeof(ttany) if you really need.
  * 
- * the ->Fraction is a frac_t numeric field.
- * As above, DON'T assume frac_t is 32 bit (or any other arbitrary size)
+ * the ->Fraction is a ttany numeric field.
+ * As above, DON'T assume ttany is 32 bit (or any other arbitrary size)
  * since in the future we may want a finer granularity than the nanosecond one
- * possible with a 32 bit frac_t.
+ * possible with a 32 bit ttany.
  * So :
- * 1) use sizeof(frac_t) if you really need
- * 2) don't assume (frac_t)1 is a nanosecond (or any other arbitrary time),
+ * 1) use sizeof(ttany) if you really need
+ * 2) don't assume (ttany)1 is a nanosecond (or any other arbitrary time),
  *    but always use the form '1 NanoSECs', '250 MilliSECs + 7 MicroSECs', etc.
- * 3) if you _absolutely_ need to know to what time (frac_t)1 corresponds,
- *    use this: '1 FullSECs' is the number of (frac_t)1 intervals in a second.
+ * 3) if you _absolutely_ need to know to what time (ttany)1 corresponds,
+ *    use this: '1 FullSECs' is the number of (ttany)1 intervals in a second.
  * 4) for the moment, the only defined fractions of a second are:
  *    FullSECs, MilliSECs, MicroSECs, NanoSECs.
  *    Others may be added in the future (PicoSECs, FemtoSECs, AttoSECs, ...)
  */
-#define THOUSAND	((frac_t)1000)
+#define THOUSAND	((ttany)1000)
 
-#define NanoSEC		1 /* i.e. (frac_t)1 is a nanosecond */
+#define NanoSEC		1 /* i.e. (ttany)1 is a nanosecond */
 #define MicroSEC	(THOUSAND * NanoSEC)
 #define MilliSEC	(THOUSAND * MicroSEC)
 #define FullSEC		(THOUSAND * MilliSEC)
@@ -135,38 +134,7 @@
 #define FullSECs	* FullSEC
 
 
-/* mouse events stuff */
-#define HOLD_LEFT	1
-#define HOLD_MIDDLE	2
-#define HOLD_RIGHT	4
-#define HOLD_ANY	(HOLD_LEFT|HOLD_MIDDLE|HOLD_RIGHT)
-
-#define PRESS_LEFT	0x08
-#define PRESS_MIDDLE	0x18
-#define PRESS_RIGHT	0x28
-#define PRESS_ANY	0x38
-
-#define RELEASE_LEFT	0x10
-#define RELEASE_MIDDLE	0x20
-#define RELEASE_RIGHT	0x30
-#define RELEASE_ANY	0x30
-
-#define DRAG_MOUSE	0x40
-
-#define MOTION_MOUSE	0x00
-
-#define ANY_ACTION_MOUSE	(PRESS_ANY | RELEASE_ANY | DRAG_MOUSE | MOTION_MOUSE)
-
-#define MAX_ACTION_MOUSE	0x48
-
-#define isPRESS(code)	((code) & 0x08)
-#define isDRAG(code)	((code) & DRAG_MOUSE)
-#define isRELEASE(code)	(!isPRESS(code) && ((code) & 0x30))
-#define isMOTION(code)	(!(code))
-
-#define isSINGLE_PRESS(code) ((code) == PRESS_LEFT || (code) == PRESS_MIDDLE || (code) == PRESS_RIGHT)
-#define isSINGLE_DRAG(code) ((code) == (DRAG_MOUSE|HOLD_LEFT) || (code) == (DRAG_MOUSE|HOLD_MIDDLE) || (code) == (DRAG_MOUSE|HOLD_RIGHT))
-#define isSINGLE_RELEASE(code) ((code) == RELEASE_LEFT) || (code) == RELEASE_MIDDLE || (code) == RELEASE_RIGHT)
+/**********************************/
 
 
 

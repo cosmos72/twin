@@ -1,4 +1,20 @@
 
+
+
+#define _obj .TWS_field_obj
+#define _any .TWS_field_scalar
+#define _vec .TWS_field_vecV
+#define _len .TWS_field_vecL
+#define _type .type
+
+#define void_ TWS_void
+#define obj_  TWS_obj
+#define vec_  TWS_vec
+#define vecW_ TWS_vecW
+
+
+
+
 /* defines and wrappers for commonly used stuff */
 #define SIZEOF(type)			AlienSizeof(type,Slot)
 #define REPLY(code, type, lval)		alienReply(code, SIZEOF(type), sizeof(type), lval)
@@ -273,260 +289,328 @@ static void alienTranslateHWAttrV_CP437_to_UTF_16(hwattr *H, uldat Len) {
     }
 }
 #endif
+
+TW_INLINE ldat alienDecodeArg(uldat id, CONST byte * Format, uldat n, tsfield a, uldat mask[1], byte flag[1], ldat fail) {
+    uldat a0, nlen;
+    byte c;
+    void *av;
+    CONST void *A;
     
-static void alienDecode(uldat id) {
-    static any a[20];
-    any A;
-    uldat mask = 0; /* at least 32 bits. we need 20... */
-    uldat nlen, n = 1;
-    ldat fail = 1;
-    CONST byte *Format = sockF[id].Format;
-    uldat a0;
-    byte flag, c, self, tmp, retF, retT;
-    
-    self = *Format++;
-    retF = *Format++;
-    retT = *Format++;
-    
-    while (fail > 0 && (c = *Format++)) {
-	switch (c) {
-	  case '_':
-	    switch ((c = *Format)) {
+    switch ((c = *Format++)) {
+      case '_':
+	switch ((c = *Format)) {
 #define CASE_(type) \
-	      case CAT(TWS_,type) + TWS_base_CHR: \
-    		/* ensure type size WAS negotiated */ \
-		if ((CAT(TWS_,type) <= TWS_hwcol || SIZEOF(type)) && Left(SIZEOF(type))) { \
-		    type an; \
-		    POP(s,type,an); \
-		    a[n]._ = (uldat)an; \
-		} else \
-		    fail = -fail; \
-		break
+	  case CAT(TWS_,type): \
+	    /* ensure type size WAS negotiated */ \
+	    if (SIZEOF(type) && Left(SIZEOF(type))) { \
+		type an; \
+		POP(s,type,an); \
+		a[n]_any = (tany)an; \
+		a[n]_type = c; \
+		break; \
+	    } \
+	    fail = -fail; \
+	    break
 		
-		case TWS_hwcol + TWS_base_CHR:
-		/*FALLTHROUGH*/
-		CASE_(byte);
-		CASE_(dat);
-		CASE_(ldat);
-		CASE_(time_t);
-		CASE_(frac_t);
+	  case TWS_hwcol:
+	    /*FALLTHROUGH*/
+	    CASE_(byte);
+	    CASE_(dat);
+	    CASE_(ldat);
+	    CASE_(topaque);
+	    CASE_(tany);
 #ifndef CONF__UNICODE
-		CASE_(hwfont);
+	    CASE_(hwfont);
 #else
-		case TWS_hwfont + TWS_base_CHR:
-		/* ensure hwattr size WAS negotiated */
-		if ((TWS_hwfont <= TWS_hwcol || SIZEOF(hwfont)) && Left(SIZEOF(hwfont))) {
-		    hwfont an;
-		    POP(s,hwfont,an);
-		    a[n]._ = (uldat)an & 0xFF;
-		    if (SIZEOF(hwfont) == 1)
-			a[n]._ = Tutf_CP437_to_UTF_16[a[n]._];
-		} else
-		    fail = -fail;
-		break;
-#endif
-#ifndef CONF__UNICODE
-		CASE_(hwattr);
-#else
-		case TWS_hwattr + TWS_base_CHR:
-		/* ensure hwattr size WAS negotiated */
-		if ((TWS_hwattr <= TWS_hwcol || SIZEOF(hwattr)) && Left(SIZEOF(hwattr))) {
-		    hwattr an;
-		    POP(s,hwattr,an);
-		    a[n]._ = HWATTR_COLMASK(an);
-		    an = HWFONT(an) & 0xFF;
-		    if (SIZEOF(hwattr) == 2)
-			an = Tutf_CP437_to_UTF_16[an];
-		    a[n]._ |= HWATTR(0, an);
-		} else
-		    fail = -fail;
-		break;
-#endif
-#undef CASE_
-	      default:
+	  case TWS_hwfont:
+	    /* ensure hwattr size WAS negotiated */
+	    if (SIZEOF(hwfont) && Left(SIZEOF(hwfont))) {
+		hwfont an;
+		POP(s,hwfont,an);
+		a[n]_any = (tany)an & 0xFF;
+		if (SIZEOF(hwfont) == 1)
+		    a[n]_any = Tutf_CP437_to_UTF_16[a[n]_any];
+		a[n]_type = c;
 		break;
 	    }
+	    fail = -fail;
 	    break;
-	  case 'x':
-	    /* all kind of pointers */
-	    if (Left(SIZEOF(uldat))) {
-		POP(s,uldat,a[n]._);
-		c = *Format - base_magic_CHR;
-		a[n].x = Id2Obj(c, a[n]._);
-	    } else
-		fail = -fail;
+#endif
+#ifndef CONF__UNICODE
+	    CASE_(hwattr);
+#else
+	  case TWS_hwattr:
+	    /* ensure hwattr size WAS negotiated */
+	    if (SIZEOF(hwattr) && Left(SIZEOF(hwattr))) {
+		hwattr an;
+		POP(s,hwattr,an);
+		a[n]_any = HWATTR_COLMASK(an);
+		an = HWFONT(an) & 0xFF;
+		if (SIZEOF(hwattr) == 2)
+		    an = Tutf_CP437_to_UTF_16[an];
+		a[n]_any |= HWATTR(0, an);
+		a[n]_type = c;
+		break;
+	    }
+	    fail = -fail;
 	    break;
-	  case 'V':
-	    nlen = sockLengths(id, n, a);
-	    c = *Format - TWS_base_CHR;
+#endif
+#undef CASE_
+	  default:
+	    break;
+	}
+	break;
+      case 'x':
+	/* all kind of pointers */
+	if (Left(SIZEOF(uldat))) {
+	    POP(s,uldat,a0);
+	    c = *Format - base_magic_CHR;
+	    a[n]_obj = Id2Obj(c, a0);
+	    a[n]_type = obj_;
+	    break;
+	}
+	fail = -fail;
+	break;
+      case 'V':
+	nlen = sockLengths(id, n, a);
+	c = *Format;
+	/* ensure type size WAS negotiated */
+	if (AlienMagic(Slot)[c]) {
+	    nlen *= AlienMagic(Slot)[c];
+	    if (Left(nlen)) {
+		PopAddr(s,byte,nlen,av);
+		a[n]_vec = av;
+		a[n]_len = nlen / AlienMagic(Slot)[c] * TwinMagicData[c];
+		a[n]_type = vec_|c;
+		
+		if (AlienMagic(Slot)[c] != TwinMagicData[c] ||
+		    (TwinMagicData[c] != 1 && AlienXendian(Slot) == MagicAlienXendian)) {
+			
+		    a[n]_vec = alienAllocReadVec
+			(av, nlen, AlienMagic(Slot)[c], TwinMagicData[c],
+			 AlienXendian(Slot) == MagicAlienXendian);
+		    if (a[n]_vec) {
+#ifdef CONF__UNICODE
+			if (c == TWS_hwattr && SIZEOF(hwattr) == 2)
+			    alienTranslateHWAttrV_CP437_to_UTF_16((hwattr *)a[n]_vec, nlen);
+#endif
+			*mask |= 1 << n;
+		    } else
+			fail = -fail;
+		}
+		break;
+	    }
+	}
+	fail = -fail;
+	break;
+      case 'W':
+	if (Left(SIZEOF(uldat))) {
+	    POP(s,uldat,nlen);
+		
+	    c = *Format;
 	    /* ensure type size WAS negotiated */
-	    if ((c <= TWS_hwcol || AlienMagic(Slot)[c])) {
-		nlen *= AlienMagic(Slot)[c];
-		if (Left(nlen)) {
-		    PopAddr(s,byte,nlen,a[n].V);
+	    if (AlienMagic(Slot)[c]) {
+		if (!nlen || (Left(nlen) && nlen == sockLengths(id, n, a) * AlienMagic(Slot)[c])) {
+		    PopAddr(s,byte,nlen,av);
+		    a[n]_vec = av;
+		    a[n]_len = nlen / AlienMagic(Slot)[c] * TwinMagicData[c];
+		    a[n]_type = vec_|vecW_|c;
+		    
 		    if (AlienMagic(Slot)[c] != TwinMagicData[c] ||
 			(TwinMagicData[c] != 1 && AlienXendian(Slot) == MagicAlienXendian)) {
 			
-			a[n].V = alienAllocReadVec
-			    (a[n].V, nlen, AlienMagic(Slot)[c], TwinMagicData[c],
+			a[n]_vec = alienAllocReadVec
+			    (av, nlen, AlienMagic(Slot)[c], TwinMagicData[c],
 			     AlienXendian(Slot) == MagicAlienXendian);
-			if (a[n].V) {
+			    
+			if (a[n]_vec) {
 #ifdef CONF__UNICODE
 			    if (c == TWS_hwattr && SIZEOF(hwattr) == 2)
-				alienTranslateHWAttrV_CP437_to_UTF_16((hwattr *)a[n].VV, nlen);
+				alienTranslateHWAttrV_CP437_to_UTF_16((hwattr *)a[n]_vec, nlen);
 #endif
-			    mask |= 1 << n;
+			    *mask |= 1 << n;
 			} else
 			    fail = -fail;
 		    }
 		    break;
 		}
 	    }
-	    fail = -fail;
-	    break;
-	  case 'W':
-	    if (Left(SIZEOF(uldat))) {
-		POP(s,uldat,nlen);
+	}
+	fail = -fail;
+	break;
+    case 'X':
+	nlen = sockLengths(id, n, a) * SIZEOF(uldat);
+	c = *Format - base_magic_CHR;
+	if (Left(nlen)) {
+	    PopAddr(s,byte,nlen,av);
+	    a[n]_vec = av;
+	    a[n]_len = nlen / SIZEOF(uldat) * sizeof(uldat);
+	    a[n]_type = vec_|obj_;
+	    
+	    if (SIZEOF(uldat) != sizeof(uldat) ||
+		AlienXendian(Slot) == MagicAlienXendian) {
+
+		A = a[n]_vec = alienAllocReadVec
+		    (av, nlen, SIZEOF(uldat), sizeof(uldat),
+		     AlienXendian(Slot) == MagicAlienXendian);
+	    } else
+		A = a[n]_vec;
 		
-		c = *Format - TWS_base_CHR;
-		/* ensure type size WAS negotiated */
-		if ((c <= TWS_hwcol || AlienMagic(Slot)[c])) {
-		    if (!nlen || (Left(nlen) && nlen == sockLengths(id, n, a)) * AlienMagic(Slot)[c]) {
-			PopAddr(s,byte,nlen,a[n].V);
-			
-			if (AlienMagic(Slot)[c] != TwinMagicData[c] ||
-			    (TwinMagicData[c] != 1 && AlienXendian(Slot) == MagicAlienXendian)) {
-			
-			    a[n].V = alienAllocReadVec
-				(a[n].V, nlen, AlienMagic(Slot)[c], TwinMagicData[c],
-				 AlienXendian(Slot) == MagicAlienXendian);
-			    
-			    if (a[n].V) {
-#ifdef CONF__UNICODE
-				if (c == TWS_hwattr && SIZEOF(hwattr) == 2)
-				    alienTranslateHWAttrV_CP437_to_UTF_16((hwattr *)a[n].VV, nlen);
-#endif
-				mask |= 1 << n;
-			    } else
-				fail = -fail;
-			}
-			break;
-		    }
+	    if (A) {
+		a[n]_vec = AllocId2ObjVec(flag, c, nlen/sizeof(uldat), (byte *)A);
+		FreeMem((void *)A);
+		if (a[n]_vec) {
+		    *mask |= *flag << n;
+		    break;
 		}
 	    }
-	    fail = -fail;
-	    break;
-	  case 'X':
-	    nlen = sockLengths(id, n, a) * SIZEOF(uldat);
-	    c = *Format - TWS_base_CHR;
+	}
+	fail = -fail;
+	break;
+      case 'Y':
+	c = *Format - base_magic_CHR;
+	if (Left(sizeof(uldat))) {
+	    Pop(s,uldat,nlen);
+	    nlen *= sizeof(uldat);
 	    if (Left(nlen)) {
-		PopAddr(s,byte,nlen,a[n].V);
-		if (SIZEOF(uldat) != sizeof(uldat) ||
-		    (TwinMagicData[c] != 1 && AlienXendian(Slot) == MagicAlienXendian)) {
+		PopAddr(s,byte,nlen,av);
+		a[n]_vec = av;
+		a[n]_len = nlen / SIZEOF(uldat) * sizeof(uldat);
+		a[n]_type = vec_|obj_;
 
-		    A.V = a[n].V = alienAllocReadVec
-			(a[n].V, nlen, SIZEOF(uldat), sizeof(uldat),
+		if (SIZEOF(uldat) != sizeof(uldat) ||
+		    AlienXendian(Slot) == MagicAlienXendian) {
+			
+		    A = a[n]_vec = alienAllocReadVec
+			(av, nlen, SIZEOF(uldat), sizeof(uldat),
 			 AlienXendian(Slot) == MagicAlienXendian);
 		} else
-		    A.V = a[n].V;
-		
-		if (A.V) {
-		    a[n].X = AllocId2ObjVec(&flag, c, nlen/sizeof(uldat), A.VV);
-		    FreeMem(A.VV);
-		    if (a[n].X) {
-			mask |= flag << n;
+		    A = a[n]_vec;
+		    
+		if (A) {
+		    a[n]_vec = AllocId2ObjVec(flag, c, nlen/sizeof(uldat), (byte *)A);
+		    FreeMem((void *)A);
+		    if (a[n]_vec) {
+			*mask |= *flag << n;
 			break;
 		    }
 		}
 	    }
-	    fail = -fail;
-	    break;
-	  case 'Y':
-	    c = *Format - TWS_base_CHR;
-	    if (Left(sizeof(uldat))) {
-		Pop(s,uldat,nlen);
-		nlen *= sizeof(uldat);
-		if (Left(nlen)) {
-		    PopAddr(s,byte,nlen,a[n].V);
-		    if (SIZEOF(uldat) != sizeof(uldat) ||
-			(TwinMagicData[c] != 1 && AlienXendian(Slot) == MagicAlienXendian)) {
-			
-			A.V = a[n].V = alienAllocReadVec
-			    (a[n].V, nlen, SIZEOF(uldat), sizeof(uldat),
-			     AlienXendian(Slot) == MagicAlienXendian);
-		    } else
-			A.V = a[n].V;
-		    
-		    if (A.V) {
-			a[n].X = AllocId2ObjVec(&flag, c, nlen/sizeof(uldat), A.VV);
-			FreeMem(A.VV);
-			if (a[n].X) {
-			    mask |= flag << n;
-			    break;
-			}
-		    }
-		}
+	}
+	fail = -fail;
+	break;
+      default:
+	fail = -fail;
+	break;
+    }
+    return fail;
+}
+
+static void alienMultiplexB(uldat id) {
+    static struct s_tsfield a[TW_MAX_ARGS_N];
+    static byte warned = FALSE;
+    uldat mask = 0; /* at least 32 bits. we need 20... */
+    uldat nlen, n = 1;
+    ldat fail = 1;
+    CONST byte *Format = sockF[id].Format;
+    uldat a0;
+    byte c, self, flag, tmp, retT[2];
+    
+    self = *Format++;
+    retT[0] = *Format++;
+    retT[1] = *Format++;
+    
+    while (fail > 0 && *Format) {
+	if (n < TW_MAX_ARGS_N) {
+	    fail = alienDecodeArg(id, Format, n, a, &mask, &flag, fail);
+	
+	} else /* (n >= TW_MAX_ARGS_N) */ {
+	    if (!warned) {
+		warned = TRUE;
+		printk("twin: alienMultiplexB(): got a call with %d args, only %d supported!\n",
+		       n, TW_MAX_ARGS_N);
 	    }
 	    fail = -fail;
-	    break;
-	  default:
-	    fail = -fail;
-	    break;
 	}
+	
 	if (fail > 0) {
-	    Format++;
+	    Format += 2;
 	    fail++;
 	    n++;
 	} else
 	    break;
     }
 
-    if ((flag = (fail > 0 && s == end && !c && (self != '2' || a[1].x))))
-	sockMultiplex(id, a);
-
-    while (mask && n) {
-	if (mask & (1 << n)) {
-	    mask &= ~(1 << n);
-	    /*avoid warnings about discarding CONST on a[n].V*/
-	    FreeMem(a[n].VV);
+    if ((flag = (fail > 0 && s == end && !*Format && (self != '2' || a[1]_obj)))) {
+	
+	if (retT[0] == 'O' && a[n-1]_type == (TWS_vec|TWS_byte) && a[n-1]_len == 2*sizeof(byte)) {
+	    /*
+	     * variable return type. store it in last arg,
+	     * and let function implementation overwrite it
+	     * 
+	     * evil trick: only a[n-1]_vec will be passed to the function,
+	     * but it points to a[n-1] itself!
+	     */
+	    a[n-1]_type = proto_2_TWS(a[n-1]_vec);
+	    if (mask & 1<<(n-1))
+		FreeMem(a[n-1].TWS_field_vecVV);
+	    
+	    a[n-1]_vec = &a[n-1];
+	    a[n-1]_len = 0;
 	}
-	n--;
+	
+	fullMultiplexS(id, n, a);
+    }
+    
+    for (nlen = 0; mask; mask >>= 1, nlen++) {
+	if (mask & 1)
+	    FreeMem(a[nlen].TWS_field_vecVV);
     }
 
     if (flag) {
+        if (retT[0] == 'O') {
+	    /* variable return type. get it from last arg */
+	    /* FIXME: currently, only '_' (scalar) and 'v' (void) return types are supported */
+		
+	    TWS_2_proto(a[n-1]_type, retT);
+	}
 	
-	switch (retF) {
+	switch (retT[0]) {
 	  case '_':
-	    switch (retT) {
+	    switch (retT[1]) {
 #define CASE_(type) \
-	      case CAT(TWS_,type) + TWS_base_CHR: \
+	      case CAT(TWS_,type): \
     		/* ensure type size WAS negotiated */ \
 		if (CAT(TWS_,type) <= TWS_hwcol || SIZEOF(type)) { \
-		    *(type *)&a[0] = (type)a[0]._; \
+		    /* move to first bytes on MSB machines */ \
+		    *(type *)&a[0]_any = (type)a[0]_any; \
 		    c = SIZEOF(type); \
 		    tmp = sizeof(type); \
+		    break; \
 		} \
+		fail = 0; \
 		break
 		
-		case TWS_hwcol + TWS_base_CHR:
+		case TWS_hwcol:
 		/*FALLTHROUGH*/
 		CASE_(byte);
 		CASE_(dat);
 		CASE_(ldat);
-		CASE_(time_t);
-		CASE_(frac_t);
+		CASE_(topaque);
+		CASE_(tany);
 		CASE_(hwfont);
 #ifndef CONF__UNICODE
 		CASE_(hwattr);
 #else
-		case TWS_hwattr + TWS_base_CHR:
+	      case TWS_hwattr:
 		/* ensure hwattr size WAS negotiated */
 		if (TWS_hwattr <= TWS_hwcol || SIZEOF(hwattr)) {
 		    if (SIZEOF(hwattr) == 1) {
-			hwfont f = Tutf_UTF_16_to_CP437(HWFONT(a[0]._));
-			a[0]._ = HWATTR_COLMASK(a[0]._) | HWATTR(0, f);
+			hwfont f = Tutf_UTF_16_to_CP437(HWFONT(a[0]_any));
+			a[0]_any = HWATTR_COLMASK(a[0]_any) | HWATTR(0, f);
 		    }
-		    *(hwattr *)&a[0] = (hwattr)a[0]._;
+		    /* move to first bytes on MSB machines */
+		    *(hwattr *)&a[0]_any = (hwattr)a[0]_any;
 		    c = SIZEOF(hwattr);
 		    tmp = sizeof(hwattr);
 		} else
@@ -539,13 +623,13 @@ static void alienDecode(uldat id) {
 		break;
 	    }
 	    if (c && fail > 0) {
-		alienReply(OK_MAGIC, tmp, c, &a[0]);
+		alienReply(OK_MAGIC, tmp, c, &a[0]_any);
 		return;
 	    }
 	    break;
 	    
 	  case 'x':
-	    a0 = a[0].x ? a[0].x->Id : NOID;
+	    a0 = a[0]_obj ? a[0]_obj->Id : NOID;
 	    REPLY(OK_MAGIC, uldat, &a0);
 	    return;
 	    
@@ -557,9 +641,9 @@ static void alienDecode(uldat id) {
 	    break;
 	}
     }
-    if (retF != 'v') {
+    if (retT[0] != 'v') {
 	if (fail > 0) {
-	    if (self != '2' || a[1].x)
+	    if (self != '2' || a[1]_obj)
 		fail = FAIL_MAGIC;
 	    else
 		fail = 1;
@@ -567,6 +651,19 @@ static void alienDecode(uldat id) {
 	alienReply(fail, 0, 0, NULL);
     }
 }
+
+
+#undef _obj
+#undef _any
+#undef _vec
+#undef _len
+#undef _type
+
+#undef void_
+#undef obj_
+#undef vec_
+#undef vecW_
+
 
 
 static void AlienIO(int fd, uldat slot) {
@@ -624,7 +721,7 @@ static void AlienIO(int fd, uldat slot) {
 		POP(s, uldat, Funct);
 		if (Funct < MaxFunct) {
 		    slot = Slot;
-		    alienDecode(Funct); /* Slot is the uncompressed socket here ! */
+		    alienMultiplexB(Funct); /* Slot is the uncompressed socket here ! */
 		    Slot = slot;	/*
 					 * restore, in case alienF[Funct].F() changed it;
 					 * without this, tw* clients can freeze
@@ -632,7 +729,7 @@ static void AlienIO(int fd, uldat slot) {
 					 */
 		}
 		else if (Funct == FIND_MAGIC)
-		    alienDecode(0);
+		    alienMultiplexB(0);
 		s = end;
 	    } else if (s + len < s) {
 		s = tend;
@@ -965,6 +1062,103 @@ static void alienSendMsg(msgport MsgPort, msg Msg) {
     Slot = save_Slot;
     Fd = save_Fd;
 }
+
+#ifdef CONF_EXT
+
+#define _obj .TWS_field_obj
+#define _any .TWS_field_scalar
+#define _vec .TWS_field_vecV
+#define _len .TWS_field_vecL
+#define _type .type
+
+static byte alienDecodeExtension(tany *Len, CONST byte **Data, tany *Args_n, tsfield a) {
+    static byte type_warned = 0;
+    topaque n = 0;
+    ldat fail = 1;
+    tany len, left = *Len;
+    CONST byte *data = *Data;
+    tany args_n = *Args_n;
+    udat t;
+
+    while (fail > 0 && n < args_n) {
+	switch ((t = a[n]_type)) {
+
+# define CASE_(type) \
+case CAT(TWS_,type): \
+    /* ensure type size WAS negotiated */ \
+    if ((len = AlienSizeof(type, Slot)) && left >= len) { \
+	type an; \
+	\
+	left -= len; \
+	POP(data,type,an); \
+	a[n]_any = (tany)an; \
+    } else \
+	fail = -fail; \
+    break
+
+	  case TWS_hwcol:
+	    /*FALLTHROUGH*/
+	    CASE_(byte);
+	    CASE_(dat);
+	    CASE_(ldat);
+	    CASE_(topaque);
+	    CASE_(tany);
+	    CASE_(hwfont);
+	    CASE_(hwattr);
+#undef CASE_
+
+	  case TWS_vec|TWS_vecW|TWS_byte:
+	    /* ensure (topaque) size WAS negotiated */
+	    if ((len = AlienSizeof(topaque, Slot)) && left >= len) {
+		topaque nlen;
+		
+		left -= len;
+		POP(data,topaque,nlen);
+		a[n]_len = nlen;
+		
+		if (!nlen || Left(nlen)) {
+		    void *addr;
+		    left -= nlen;
+		    POPADDR(data,byte,nlen,addr);
+		    a[n]_vec = addr;
+		    break;
+		}
+	    }
+	    fail = -fail;
+	    break;
+	  default:
+	    if (type_warned < 5) {
+		type_warned = 5;
+		printk("twin: sockDecodeExtension(): got a call with unknown type 0x%02X' !\n",
+		       (int)t);
+	    }
+	    fail = -fail;
+	    break;
+	}
+	
+	if (fail <= 0)
+	    break;
+	
+	fail++;
+	n++;
+    }
+    
+    if (fail > 0) {
+	*Len -= data - *Data;
+	*Data = data;
+	*Args_n = n;
+    }
+    
+    return fail > 0;
+}
+
+#undef _obj
+#undef _any
+#undef _vec
+#undef _len
+#undef _type
+
+#endif /* CONF_EXT */
 
 #undef SIZEOF
 #undef REPLY

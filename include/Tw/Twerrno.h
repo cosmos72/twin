@@ -15,32 +15,33 @@
 
 #include <Tw/Twtypes.h>
 
-#define TW_EX_ENDIAN	 1
-#define TW_EX_SIZES	 2
-#define TW_ELOST_CONN	 3
-#define TW_EALREADY_CONN 4
-#define TW_ENO_DISPLAY	 5
-#define TW_EBAD_DISPLAY	 6
-#define TW_ECANT_CONN	 7
-#define TW_ENO_MEM	 8
-#define TW_ECANT_WRITE	 9
-#define TW_ENO_FUNCTION	10
-#define TW_ESTRANGE	11
-#define TW_ENO_AUTH	12
-#define TW_EDENIED	13
-#define TW_EBAD_GZIP	14
-#define TW_EINTERNAL_GZIP	15
-#define TW_ENO_HOST		16
-#define TW_EBAD_FUNCTION	17
-#define TW_EX_PROTOCOL		18
-#define TW_ENO_SOCKET		19
-#define TW_ESTRANGE_CALL	20
-#define TW_EFAILED_CALL		21
-#define TW_EFAILED_ARG_CALL	22
-#define TW_EXLIB_SIZES		23
-#define TW_EXLIB_STRUCT_SIZES	24
+#define TW_EBAD_SIZES			1
+#define TW_EBAD_STRUCTS			2
+#define TW_ENO_DISPLAY	 		4
+#define TW_EBAD_DISPLAY	 		5
+#define TW_ENO_HOST			6
+#define TW_ENO_AUTH			7
+#define TW_ESYS_NO_MEM	 		8
+#define TW_ESYS_NO_SOCKET		9
+#define TW_ESYS_CANNOT_CONNECT		10
+#define TW_ESYS_CANNOT_WRITE		11
+#define TW_ESERVER_BAD_VERSION		12
+#define TW_ESERVER_BAD_PROTOCOL		13
+#define TW_ESERVER_BAD_ENDIAN		14
+#define TW_ESERVER_BAD_SIZES		15
+#define TW_ESERVER_LOST_CONNECT		16
+#define TW_ESERVER_ALREADY_CONNECT	17
+#define TW_ESERVER_DENIED_CONNECT	18
+#define TW_ESERVER_NO_FUNCTION		19
+#define TW_ESERVER_BAD_FUNCTION		20
+#define TW_ESERVER_BAD_RETURN		21
+#define TW_EGZIP_BAD_PROTOCOL		22
+#define TW_EGZIP_INTERNAL		23
+#define TW_ECALL_BAD			24
+#define TW_ECALL_BAD_ARG		25
 
-#define TW_ENO_MODULE_DETAIL	1
+
+#define TW_EDETAIL_NO_MODULE	1
 
 typedef struct tw_errno {
     uldat E;

@@ -674,9 +674,9 @@ static void xterm_MouseEvent(int fd, display_hw hw) {
 		Buttons |= HOLD_RIGHT;
 	    x = *++s - '!'; /* (*s) must be unsigned char */
 	    y = *++s - '!';
-	} else if (*s == '5' && *++s == 'M' && (Id = *++s) >= ' ' && (Id -= ' ') <= 0x1F /*HOLD_ANY*/) {
+	} else if (*s == '5' && *++s == 'M' && (Id = *++s) >= ' ' && (Id -= ' ') <= (HOLD_ANY>>HOLD_BITSHIFT)) {
 	    /* enhanced xterm-style reporting (twin specs) */
-	    Buttons = Id;
+	    Buttons = Id << HOLD_BITSHIFT;
 	    s++;
 	    x = (udat)((s[0]-'!') & 0x7f) | (udat)((udat)((s[1]-'!') & 0x7f) << 7);
 	    if (x & ((udat)1 << 13))

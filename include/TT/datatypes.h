@@ -29,12 +29,20 @@ typedef topaque  ttopaque;
 /** type == MAX2(ttuint,ttopaque), unsigned, used to hold anything */
 typedef tany     ttany;
 
-/** alias for (void *) */
-typedef void *	 ttpointer;
-/** alias for C strings (TT_CONST ttbyte *), almost equal to (const char *) */
-typedef TT_CONST ttbyte * ttstring;
+
+/** typed value, used for reflective calls */
+typedef struct s_ttarg ttarg;
+struct s_ttarg {
+    ttany value;
+    ttopaque type;
+    ttopaque size; /* in bytes, for arrays only */
+    ttopaque hash;
+};
+	    
 /** alias for function pointers (void (*)(void)) */
-typedef void (*ttfunction)(void);
+typedef void (*ttfunction_fn)(void);
+
+
 
 #endif /* _TT_DATATYPES_H */
 

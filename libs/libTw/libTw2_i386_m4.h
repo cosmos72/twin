@@ -486,6 +486,27 @@ Tw_ConfigureWindow:
 	.size	 Tw_ConfigureWindow,.L_ConfigureWindow-Tw_ConfigureWindow
 
 
+	.align 4
+.globl Tw_FindRowByCodeWindow
+	.type	 Tw_FindRowByCodeWindow,@function
+Tw_FindRowByCodeWindow:
+	pushl $42
+	jmp _Tw_i386_call_0
+.L_FindRowByCodeWindow:
+	.size	 Tw_FindRowByCodeWindow,.L_FindRowByCodeWindow-Tw_FindRowByCodeWindow
+
+
+
+	.align 4
+.globl Tw_CreateGroup
+	.type	 Tw_CreateGroup,@function
+Tw_CreateGroup:
+	pushl $43
+	jmp _Tw_i386_call_0
+.L_CreateGroup:
+	.size	 Tw_CreateGroup,.L_CreateGroup-Tw_CreateGroup
+
+
   
 	.align 4
 	.type	 _Tw_i386_call_2,@function
@@ -509,27 +530,6 @@ _Tw_i386_call_0:
 	ret
 .L_i386_call_0:
 	.size	 _Tw_i386_call_0,.L_i386_call_0-_Tw_i386_call_0
-
-
-	.align 4
-.globl Tw_FindRowByCodeWindow
-	.type	 Tw_FindRowByCodeWindow,@function
-Tw_FindRowByCodeWindow:
-	pushl $42
-	jmp _Tw_i386_call_0
-.L_FindRowByCodeWindow:
-	.size	 Tw_FindRowByCodeWindow,.L_FindRowByCodeWindow-Tw_FindRowByCodeWindow
-
-
-
-	.align 4
-.globl Tw_CreateGroup
-	.type	 Tw_CreateGroup,@function
-Tw_CreateGroup:
-	pushl $43
-	jmp _Tw_i386_call_0
-.L_CreateGroup:
-	.size	 Tw_CreateGroup,.L_CreateGroup-Tw_CreateGroup
 
 
 	.align 4
@@ -913,6 +913,37 @@ Tw_SetServerUid:
 	jmp _Tw_i386_call_0
 .L_SetServerUid:
 	.size	 Tw_SetServerUid,.L_SetServerUid-Tw_SetServerUid
+
+
+
+	.align 4
+.globl Tw_OpenExtension
+	.type	 Tw_OpenExtension,@function
+Tw_OpenExtension:
+	pushl $81
+	jmp _Tw_i386_call_0
+.L_OpenExtension:
+	.size	 Tw_OpenExtension,.L_OpenExtension-Tw_OpenExtension
+
+
+	.align 4
+.globl Tw_CallBExtension
+	.type	 Tw_CallBExtension,@function
+Tw_CallBExtension:
+	pushl $82
+	jmp _Tw_i386_call_0
+.L_CallBExtension:
+	.size	 Tw_CallBExtension,.L_CallBExtension-Tw_CallBExtension
+
+
+	.align 4
+.globl Tw_CloseExtension
+	.type	 Tw_CloseExtension,@function
+Tw_CloseExtension:
+	pushl $83
+	jmp _Tw_i386_call_2
+.L_CloseExtension:
+	.size	 Tw_CloseExtension,.L_CloseExtension-Tw_CloseExtension
 
 
 

@@ -1,4 +1,13 @@
 
+# TOP_SRCDIR
+T="$1"
+shift
+
+# TOP_BUILDDIR
+B="$1"
+shift
+
+
 if test -z "$BASH"; then
   echo 'WARNING: $BASH environment variable is not set. This script'
   echo '(scripts/Configure.tty) requires bash, so it will probably fail.'
@@ -45,7 +54,7 @@ function yesmodno() {
       fi
     
       : $[ CURRITEMS=CURRITEMS+2 ]
-      CURRCMD="$CURRCMD ${1#CONF_} \\\"$HELP\\\" $VAL MOD_${1#CONF_} \\\" -> Compile as module\\\" $MOD"
+      CURRCMD="$CURRCMD ${1#CONF_} \\\"$HELP\\\" $VAL ${1#CONF_}_MOD \\\" -> Compile as module\\\" $MOD"
    fi
 }
 
@@ -137,7 +146,7 @@ function dump() {
 }
 
 function fulldump() {
-   cat >conf/conf.current <<EOF
+   cat >"$B"conf/conf.current <<EOF
 #
 # This file holds the current configuration.
 # It was created by 'make menuconfig', do not edit!
@@ -146,21 +155,21 @@ function fulldump() {
 #
 EOF
 
-   for i in `cat conf/conf.list`; do
+   for i in `cat "$T"conf/conf.list`; do
        dump $i
-   done >>conf/conf.current
+   done >>"$B"conf/conf.current
 }
 
 function parse() {
    # skip gtk/gdk error messages
    CURR=`grep -v WARNING $2`;
-   LIST=`cat conf/conf.list | grep CONF_${1}`
+   LIST=`cat "$T"conf/conf.list | grep CONF_${1}`
    for i in $LIST; do
       THIS=n
       for j in $CURR; do
 	 if [ "${i#CONF_}" = "$j" ]; then
 	    THIS=y
-	 elif [ "$THIS" = y -a "MOD_${i#CONF_}" = "$j" ]; then
+	 elif [ "$THIS" = y -a "${i#CONF_}_MOD" = "$j" ]; then
 	    THIS=m
 	    break;
 	 fi
@@ -177,17 +186,17 @@ trap die SIGINT SIGQUIT SIGHUP SIGTERM
 MAINCMD=
 MAINITEMS=2
 
-. conf/conf.default
-if [ -f conf/conf.current ]; then
-   . conf/conf.current
-   if [ -f conf/conf.auto -a conf/conf.auto -nt conf/conf.current ]; then
-      . conf/conf.auto
+. "$T"conf/conf.default
+if [ -f "$B"conf/conf.current ]; then
+   . "$B"conf/conf.current
+   if [ -f "$B"conf/conf.auto -a "$B"conf/conf.auto -nt "$B"conf/conf.current ]; then
+      . "$B"conf/conf.auto
    fi
-elif [ -f conf/conf.auto ]; then
-   . conf/conf.auto
+elif [ -f "$B"conf/conf.auto ]; then
+   . "$B"conf/conf.auto
 fi
 
-. conf/conf.base
+. "$T"conf/conf.base
 
 MENU_MAIN="--menu \"Twin Configuration - Top Menu\" $[ MAINITEMS+7 ] 50 $MAINITEMS $MAINCMD SAVE \"Save config and exit\" QUIT \"Exit without saving\""
 
@@ -216,7 +225,7 @@ while :; do
       *)
          eval "MENU=\"\${MENU_CONF_${RES}}\""
          if test "$MENU"; then
-            eval "$dialog $MENU 2>.dialog_MENU_${RES}" && parse $RES .dialog_MENU_${RES} && . conf/conf.base
+            eval "$dialog $MENU 2>.dialog_MENU_${RES}" && parse $RES .dialog_MENU_${RES} && . "$T"conf/conf.base
          fi
          ;;
    esac

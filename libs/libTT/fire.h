@@ -3,6 +3,9 @@
 #define _TT_FIRE_H
 
 
+#define FIRE_EVENT_O(call, o, which, value, old_value) \
+	FIRE_EVENT(call, o, which, OBJ2ID(value), OBJ2ID(old_value))
+
 #define FIRE_EVENT(call, o, which, value, old_value) do { \
     ttany _old_value = (ttany)(old_value); \
     (call); \

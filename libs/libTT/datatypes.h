@@ -19,20 +19,20 @@ typedef topaque   opaque;
 typedef tany    ttany;
 typedef tany      any;
 
-typedef void *	 ttpointer;
-typedef TT_CONST ttbyte * ttstring;
-typedef void (*ttfunction)(void);
+typedef ttopaque tttype;
+
+typedef void (*ttfunction_fn)(void);
 
 /*
  * these are the types to interface with clients.
  * Data of this types actually contains (ttopaque) integers.
  */
 typedef struct s_tt_obj *tt_obj;
-typedef struct s_tt_fn  *tt_fn;
+#define tt_class tt_obj
 
 
 typedef void (*ttlistener_fn)(ttany arg0);
-typedef void (*ttlistener_fn_array)(ttuint nargs, ttany *args);
+typedef void (*ttlistener_array_fn)(ttuint nargs, ttany *args);
 typedef void (*ttvisible_repaint_fn)(tt_obj,ttshort,ttshort,ttshort,ttshort);
 
 
@@ -48,6 +48,7 @@ typedef struct s_tavl s_ttavl;
 typedef tavl ttavl;
 typedef tavl_c ttavl_c;
 typedef tavl_compare ttavl_compare;
+
 
 
 

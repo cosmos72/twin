@@ -398,7 +398,7 @@ static ttattr s_progressbar_x_disabled[] = {
 
 
 static s_tttheme s_DummyTheme, s_RealDummyTheme = {
-    (ttfn_tttheme)0,
+    (ttclass_tttheme)0,
     TT_NOID,
     (ttuint)0,
     (ttuint)0,
@@ -412,7 +412,8 @@ static s_tttheme s_DummyTheme, s_RealDummyTheme = {
     (ttlistener)0,
     (tttimer)0,
     (ttdata)0,
-	
+
+    (ttopaque)0,
     NULL,
     HWFONT(' '),
     {

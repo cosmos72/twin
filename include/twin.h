@@ -28,9 +28,11 @@ typedef struct s_obj *obj;
 #include <Tw/datatypes.h>
 #include <Tw/datasizes.h>
 #include <Tw/stattypes.h>
+#include <Tw/endianity.h>
 #include <Tw/uni_types.h>
 #include <Tw/version.h>
 #include <Tw/missing.h>
+#include <Tw/mouse.h>
 
 
 #define Abs(x) ((x)>0 ? (x) : -(x))
@@ -148,32 +150,32 @@ typedef struct s_obj *obj;
  * Notes about the timevalue struct:
  * 
  * it is used to represent both time intervals and absolute times;
- * the ->Seconds is a time_t numeric field.
+ * the ->Seconds is a tany numeric field.
  * DON'T assume time_t is 32 bit (or any other arbitrary size)
- * since in 19 Jan 2038 at 04:14:08 any signed, 32 bit time_t will overflow.
- * So use sizeof(time_t) if you really need.
+ * since in 19 Jan 2038 at 04:14:08 any signed, 32 bit tany will overflow.
+ * So use sizeof(tany) if you really need.
  * 
- * the ->Fraction is a frac_t numeric field (frac_t is signed).
- * As above, DON'T assume frac_t is 32 bit (or any other arbitrary size)
+ * the ->Fraction is a tany numeric field (tany is unsigned).
+ * As above, DON'T assume tany is 32 bit (or any other arbitrary size)
  * since in the future we may want a finer granularity than the nanosecond one
- * possible with a 32 bit frac_t.
+ * possible with a 32 bit tany.
  * So :
- * 1) use sizeof(frac_t) if you really need
- * 2) don't assume (frac_t)1 is a nanosecond (or any other arbitrary time),
+ * 1) use sizeof(tany) if you really need
+ * 2) don't assume (tany)1 is a nanosecond (or any other arbitrary time),
  *    but always use the form '1 NanoSECs', '250 MilliSECs + 7 MicroSECs', etc.
- * 3) if you _absolutely_ need to know to what time (frac_t)1 corresponds,
- *    use this: '1 FullSECs' is the number of (frac_t)1 intervals in a second.
+ * 3) if you _absolutely_ need to know to what time (tany)1 corresponds,
+ *    use this: '1 FullSECs' is the number of (tany)1 intervals in a second.
  * 4) for the moment, the only defined fractions of a second are:
  *    FullSECs, MilliSECs, MicroSECs, NanoSECs.
  *    Others may be added in the future (PicoSECs, FemtoSECs, AttoSECs, ...)
  */
 
 typedef struct s_timevalue  {
-    time_t Seconds;
-    frac_t Fraction;
+    tany Seconds;
+    tany Fraction;
 } timevalue;
 
-#define THOUSAND	((frac_t)1000)
+#define THOUSAND	((tany)1000)
 
 #define NanoSECs	* 1 /* i.e. (frac_t)1 is a nanosecond */
 #define MicroSECs	* (THOUSAND NanoSECs)
@@ -230,6 +232,8 @@ typedef struct s_mutex *mutex;
 typedef struct s_fn_mutex *fn_mutex;
 typedef struct s_module *module;
 typedef struct s_fn_module *fn_module;
+typedef struct s_extension *extension;
+typedef struct s_fn_extension *fn_extension;
 typedef struct s_display_hw *display_hw;
 typedef struct s_fn_display_hw *fn_display_hw;
 
@@ -1246,12 +1250,14 @@ struct s_msgport {
     widget FirstW, LastW;	/* widgets owned by this MsgPort */
     group FirstGroup, LastGroup; /* groups done by this MsgPort */
     mutex FirstMutex, LastMutex;/* mutexes owned by this MsgPort */
+    uldat CountE, SizeE;        /* number of extensions used by this MsgPort */
+    extension *Es;              /* extensions used by this MsgPort */
     display_hw AttachHW;	/* that was attached as told by MsgPort */
 };
 struct s_fn_msgport {
     uldat Magic, Size, Used;
     msgport (*Create)(fn_msgport, byte NameLen, CONST byte *Name,
-		      time_t PauseSec, frac_t PauseFraction,
+		      tany PauseSec, tany PauseFraction,
 		      byte WakeUp, void (*Handler)(msgport));
     void (*Insert)(msgport, all, msgport Prev, msgport Next);
     void (*Remove)(msgport);
@@ -1259,6 +1265,8 @@ struct s_fn_msgport {
     void (*ChangeField)(msgport, udat field, uldat CLEARMask, uldat XORMask);
     /* msgport */
     fn_obj Fn_Obj;
+    void (*UseExtension)(msgport, extension);
+    void (*UnuseExtension)(msgport, extension);
 };
 /* MsgPort->WakeUp: */
 #define TIMER_ALWAYS	((byte)1)
@@ -1316,6 +1324,37 @@ struct s_fn_module {
     fn_obj Fn_Obj;
     byte (*DlOpen)(module);
     void (*DlClose)(module);
+};
+
+
+
+struct s_extension {
+    uldat Id;
+    fn_extension Fn;
+    extension Prev, Next; /* in the same All */
+    all All;
+    /* module */
+    uldat NameLen, Used;
+    byte *Name;
+    void *Handle, *Private;
+    /* extension */
+    tany (*CallB)(extension, topaque len, CONST byte *data, void *return_type); /* call extension-specific functions */
+    void (*Quit)(extension); /* how to quit this extension if it is not dlopen()ed */
+};
+struct s_fn_extension {
+    uldat Magic, Size, Used;
+    extension (*Create)(fn_extension, uldat NameLen, CONST byte *Name);
+    void (*Insert)(extension, all, extension Prev, extension Next);
+    void (*Remove)(extension);
+    void (*Delete)(extension);
+    void (*ChangeField)(extension, udat field, uldat CLEARMask, uldat XORMask);
+    /* module */    
+    fn_obj Fn_Obj;
+    byte (*DlOpen)(extension);
+    void (*DlClose)(extension);
+    /* extension */
+    fn_module Fn_Module;
+    extension (*Query)(byte namelen, CONST byte *name);
 };
 
 
@@ -1526,8 +1565,9 @@ struct s_fn_display_hw {
 #define msg_magic_id		0xA
 #define mutex_magic_id		0xB
 #define module_magic_id		0xC
-#define display_hw_magic_id	0xD
-#define all_magic_id		0xE
+#define extension_magic_id	0xD
+#define display_hw_magic_id	0xE
+#define all_magic_id		0xF
 
 /*
  * These must have consecutive values, but obj_magic_STR can be changed
@@ -1535,22 +1575,23 @@ struct s_fn_display_hw {
  * To avoid troubles with strlen(), you should not use '\0' or "\0"
  * for any of the values below.
  */
-#define base_magic_CHR		'0'
-#define obj_magic_STR		"0"
-#define widget_magic_STR	"1"
-#define gadget_magic_STR	"2"
-#define window_magic_STR	"3"
-#define screen_magic_STR	"4"
-#define group_magic_STR		"5"
-#define row_magic_STR		"6"
-#define menuitem_magic_STR	"7"
-#define menu_magic_STR		"8"
-#define msgport_magic_STR	"9"
-#define msg_magic_STR		"A"
-#define mutex_magic_STR		"B"
-#define module_magic_STR	"C"
-#define display_hw_magic_STR	"D"
-#define all_magic_STR		"E"
+#define base_magic_CHR		'\x30'
+#define obj_magic_STR		"\x30"
+#define widget_magic_STR	"\x31"
+#define gadget_magic_STR	"\x32"
+#define window_magic_STR	"\x33"
+#define screen_magic_STR	"\x34"
+#define group_magic_STR		"\x35"
+#define row_magic_STR		"\x36"
+#define menuitem_magic_STR	"\x37"
+#define menu_magic_STR		"\x38"
+#define msgport_magic_STR	"\x39"
+#define msg_magic_STR		"\x3A"
+#define mutex_magic_STR		"\x3B"
+#define module_magic_STR	"\x3C"
+#define extension_magic_STR	"\x3D"
+#define display_hw_magic_STR	"\x3E"
+#define all_magic_STR		"\x3F"
 
 #define obj_magic	((uldat)0x0dead0b1ul)
 #define widget_magic	((uldat)0x161d9743ul)
@@ -1565,11 +1606,12 @@ struct s_fn_display_hw {
 #define msg_magic	((uldat)0xA3a61ce4ul) /* this gets compiled in libTw ! */
 #define mutex_magic	((uldat)0xB0faded0ul)
 #define module_magic	((uldat)0xCb0f1278ul)
-#define display_hw_magic ((uldat)0xDdbcc609ul)
-#define all_magic	((uldat)0xEa11Ea11ul)
+#define extension_magic ((uldat)0xDe81ec51ul)
+#define display_hw_magic ((uldat)0xEdbcc609ul)
+#define all_magic	((uldat)0xFa11Fa11ul)
 
 
-#define magic_n		15 /* max top hex digit of the above ones + 1 */
+#define magic_n		16 /* max top hex digit of the above ones + 1 */
 
 /*
  *   B I G   F A T   WARNING:
@@ -1591,7 +1633,8 @@ struct s_fn_display_hw {
 #define IS_MSGPORT(O)	IS_OBJ(msgport,O)
 #define IS_MUTEX(O)	IS_OBJ(mutex,O)
 #define IS_MSG(O)	IS_OBJ(msg,O)
-#define IS_MODULE(O)	IS_OBJ(module,O)
+#define IS_MODULE(O)	(IS_OBJ(module,O) || IS_OBJ(extension,O))
+#define IS_EXTENSION(O)	IS_OBJ(extension,O)
 #define IS_DISPLAY_HW(O) IS_OBJ(display_hw,O)
 #define IS_ALL(O)	IS_OBJ(all,O)
 
@@ -1610,6 +1653,7 @@ struct s_fn {
     fn_mutex f_mutex;
     fn_msg f_msg;
     fn_module f_module;
+    fn_extension f_extension;
     fn_display_hw f_display_hw;
     fn_obj f_all;
 };
@@ -1750,58 +1794,7 @@ struct s_all {
 #define ENTER      	((udat)'\r')
 #define ESCAPE     	((udat)'\033')
 
-#define HOLD		((udat)1)
-#define HOLD_LEFT	((udat)1)
-#define HOLD_MIDDLE	((udat)2)
-#define HOLD_RIGHT	((udat)4)
-#define HOLD_ANY	(HOLD_LEFT|HOLD_MIDDLE|HOLD_RIGHT)
-#define HOLD_CODE(n)	(HOLD << (n)) /* n is 0,1,2 */
 
-#define PRESS_LEFT	((udat)0x08)
-#define PRESS_MIDDLE	((udat)0x18)
-#define PRESS_RIGHT	((udat)0x28)
-#define PRESS_ANY	((udat)0x38)
-#define PRESS_CODE(n)	((udat)0x08 | ((udat)(n) << 4)) /* n is 0,1,2 */
-
-#define RELEASE_LEFT	((udat)0x10)
-#define RELEASE_MIDDLE	((udat)0x20)
-#define RELEASE_RIGHT	((udat)0x30)
-#define RELEASE_ANY	((udat)0x30)
-#define RELEASE_CODE(n)	((udat)0x10 + ((udat)(n) << 4)) /* n is 0,1,2 */
-
-#define DRAG_MOUSE	((udat)0x40)
-
-#define MOTION_MOUSE	((udat)0x00)
-
-#define ANY_ACTION_MOUSE	(PRESS_ANY | RELEASE_ANY | DRAG_MOUSE | MOTION_MOUSE)
-
-#define MAX_MOUSE_CODE	(udat)0x48
-
-#define isPRESS(code)	((code) & 0x08)
-#define isRELEASE(code)	((code) & ANY_ACTION_MOUSE && !((code) & (DRAG_MOUSE|(udat)0x08)))
-#define isDRAG(code)	((code) & DRAG_MOUSE)
-#define isMOTION(code)	(!(code))
-
-#define isSINGLE_PRESS(code) (isPRESS(code) && ((code) == PRESS_LEFT || (code) == PRESS_MIDDLE || (code) == PRESS_RIGHT))
-#define isSINGLE_DRAG(code) (isDRAG(code) && ((code) == (DRAG_MOUSE|HOLD_LEFT) || (code) == (DRAG_MOUSE|HOLD_MIDDLE) || (code) == (DRAG_MOUSE|HOLD_RIGHT)))
-#define isSINGLE_RELEASE(code) (isRELEASE(code) && !((code) & HOLD_ANY))
-
-/*
- * These macros can be used only for proper mouse codes.
- * The button numbers are: 0 (Left), 1 (Middle), 2 (Right)
- */
-
-/* if (Code & HOLD_ANY) then HOLD_N(n) returns the lowest button # pressed in Code */
-#define HOLD_N(Code)	(ffs(Code) - 1)
-
-/* if (isSINGLE_PRESS(Code)) then PRESS_N(n) return the button # pressed in Code */
-#define PRESS_N(Code)	((Code) >> 4)
-
-/* if (isSINGLE_DRAG(Code)) then DRAG_N(n) return the button # pressed in Code */
-#define DRAG_N(Code)	HOLD_N(Code)
-
-/* if (isSINGLE_RELEASE(Code)) then RELEASE_N(n) return the button # released in Code */
-#define RELEASE_N(Code) (((Code) >> 4) - 1)
 
 
 /**********************************/
@@ -1818,7 +1811,14 @@ struct s_all {
 /* don't use codes above or equal to this one! */
 #define COD_RESERVED		0xF800
 
+
+
+
 /* INLINE/define stuff: */
+
+
+
+
 
 #ifdef DEBUG_MALLOC
   /*

@@ -6,7 +6,7 @@
 
 
 
-/* This file was automatically generated with m4 from m4/Twcommon.m4h, do not edit! */
+/* This file was automatically generated with m4 from m4/Twcommon.m4, do not edit! */
 
 /*
  *  common1_m4.h  --  common libTw function prototypes
@@ -53,6 +53,12 @@
 #define TwMoveMem		Tw_MoveMem
 #define TwWriteMem		Tw_WriteMem
 #define TwCmpMem		Tw_CmpMem
+
+
+
+#define TwFindFunctionV(a1)	Tw_FindFunctionV(Tw_DefaultD, a1)
+
+
 
 #define TwDropPrivileges		Tw_DropPrivileges
 #define TwGetPrivileges		Tw_GetPrivileges
@@ -160,6 +166,10 @@
 #define TwMainLoop()	Tw_MainLoop(Tw_DefaultD)
 #define TwExitMainLoop()	Tw_ExitMainLoop(Tw_DefaultD)
 
+
+#define TwCallAExtension(a1, a2, a3, a4)	Tw_CallAExtension(Tw_DefaultD, a1, a2, a3, a4)
+
+#define TwCallVExtension(a1, a2, a3, a4)	Tw_CallVExtension(Tw_DefaultD, a1, a2, a3, a4)
 
 
 

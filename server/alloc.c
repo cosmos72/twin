@@ -105,7 +105,7 @@ typedef struct parent {
 
 #define ASSERT_TW_PAGE_DATA ((size_t)&(((block *)0)->V))
 
-#if defined(__i386__) && TW_PAGE_SIZE == 4096 && TW_SIZEOFVOIDP == 4 && SDELTA == 2
+#if defined(__i386__) && TW_PAGE_SIZE == 4096 && TW_SIZEOFTOPAQUE == 4 && SDELTA == 2
 
 /*
  * a somewhat optimized version... but it aligns data at 8 bytes,

@@ -23,7 +23,7 @@
 #endif
 
 #include "data.h"
-#include "extensions.h"
+#include "extreg.h"
 #include "methods.h"
 #include "main.h"
 #include "draw.h"
@@ -601,12 +601,16 @@ byte CreateXTermMouseEvent(event_mouse *Event, byte buflen, byte *buf) {
 	/* new-style reporting */
 
 	/* when both TTY_REPORTMOUSE|TTY_REPORTMOUSE2 are set, also report motion */
-	if (buflen < 9 || (isMOTION(Code) && !(Flags & TTY_REPORTMOUSE)))
-	    /* buffer too small! */
+	if (buflen < 9 || (Code == MOVE_MOUSE && !(Flags & TTY_REPORTMOUSE2)))
+	    /* buffer too small, or nothing to report */
 	    return len;
 	
+	/* report also button just pressed as down */
+	if (isPRESS(Code))
+	    Code |= HOLD_CODE(PRESS_N(Code));
+	
 	CopyMem("\033[5M", buf, 4);
-	buf[4] = ' ' + (Code & HOLD_ANY);
+	buf[4] = ' ' + ((Code & HOLD_ANY) >> HOLD_BITSHIFT) ;
 	buf[5] = '!' + (x & 0x7f);
 	buf[6] = '!' + ((x >> 7) & 0x7f);
 	buf[7] = '!' + (y & 0x7f);
@@ -1437,6 +1441,7 @@ byte AssignId(CONST fn_obj Fn_Obj, obj Obj) {
       case menu_magic:
       case msgport_magic:
       case mutex_magic:
+      case extension_magic:
 	i = Fn_Obj->Magic >> magic_shift;
 	return _AssignId(i, Obj);
       default:

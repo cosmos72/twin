@@ -15,7 +15,7 @@
 #include "data.h"
 #include "remote.h"
 #include "methods.h"
-#include "extensions.h"
+#include "extreg.h"
 
 #include "hw.h"
 #include "hw_private.h"
@@ -443,7 +443,7 @@ byte display_InitHW(void) {
     
     if (!(HW->Private = (struct display_data *)AllocMem(sizeof(struct display_data)))
 	|| !(Helper = Do(Create,MsgPort)
-	     (FnMsgPort, 16, "twdisplay Helper", (time_t)0, (frac_t)0, 0, display_HelperH))
+	     (FnMsgPort, 16, "twdisplay Helper", 0, 0, 0, display_HelperH))
 	|| (!Msg && !(Msg = Do(Create,Msg)(FnMsg, MSG_DISPLAY, sizeof(event_display))))) {
 
 	if (HW->Private) {

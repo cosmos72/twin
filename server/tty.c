@@ -95,7 +95,7 @@ static byte dirtyN;
 #define utf_char	Data->utf_char
 #define newLen		Data->newLen
 #define newMax		Data->newMax
-#define newName	Data->newName
+#define newName		Data->newName
 
 
 /* A bitmap for codes <32. A bit of 1 indicates that the code

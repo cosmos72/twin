@@ -971,11 +971,11 @@ class TW : public TEmpty {
     {
 	return TwGetOwnerSelection();
     }
-    static inline void exportSelection( time_t Time = TW_SEL_CURRENTTIME, frac_t Frac = TW_SEL_CURRENTTIME)
+    static inline void exportSelection( tany Time = TW_SEL_CURRENTTIME, tany Frac = TW_SEL_CURRENTTIME)
     {
 	TwSetOwnerSelection(Time, Frac);
     }
-    static inline void setOwnerSelection( time_t Time = TW_SEL_CURRENTTIME, frac_t Frac = TW_SEL_CURRENTTIME)
+    static inline void setOwnerSelection( tany Time = TW_SEL_CURRENTTIME, tany Frac = TW_SEL_CURRENTTIME)
     {
 	TwSetOwnerSelection(Time, Frac);
     }
@@ -1213,7 +1213,7 @@ class TW : public TEmpty {
 
 inline TMsgPort::TMsgPort( TW * dpy, const char *name )
 {
-    Id = TwCreateMsgPort(strlen(name), (TW_CONST byte *)name, 0, 0, 0);
+    Id = TwCreateMsgPort(strlen(name), (TW_CONST byte *)name);
     dpy->setMsgPort( this );
 }
 

@@ -46,7 +46,7 @@
 #include "printk.h"
 #include "util.h"
 #include "resize.h"
-#include "extensions.h"
+#include "extreg.h"
 
 #include "fdlist.h"
 #include "remote.h"
@@ -66,20 +66,7 @@
 # include <Tutf/Tutf.h>
 #endif
 
-typedef union {
-#if TW_SIZEOFULDAT >= TW_SIZEOFTIME_T && TW_SIZEOFULDAT >= TW_SIZEOFFRAC_T
-    uldat  _;
-#elif TW_SIZEOFTIME_T >= TW_SIZEOFFRAC_T
-    time_t _;
-#else
-    frac_t _;
-#endif
-    obj    x;
-    CONST byte * V;
-    byte * VV; /* avoid warnings about discarding CONST */
-    CONST obj * X;
-    obj * XX;
-} any;
+
 
 
 
@@ -395,7 +382,7 @@ static menu sockCreateMenu
     (hwcol ColItem, hwcol ColSelect, hwcol ColDisabled, hwcol ColSelectDisabled,
      hwcol ColShtCut, hwcol ColSelShtCut, byte FlagDefColInfo);
 
-static msgport sockCreateMsgPort(byte NameLen, CONST byte *Name, time_t WakeUp, frac_t WakeUpFrac, byte Flags);
+static msgport sockCreateMsgPort(byte NameLen, CONST byte *Name);
 static msgport sockFindMsgPort(msgport Prev, byte NameLen, CONST byte *Name);
 
 static group sockCreateGroup(void);
@@ -418,7 +405,7 @@ static byte sockSendToMsgPort(msgport MsgPort, udat Len, CONST byte *Data);
 static void sockBlindSendToMsgPort(msgport MsgPort, udat Len, CONST byte *Data);
 
 static obj  sockGetOwnerSelection(void);
-static void sockSetOwnerSelection(time_t Time, frac_t Frac);
+static void sockSetOwnerSelection(tany Time, tany Frac);
 static void sockNotifySelection(obj Requestor, uldat ReqPrivate,
 				 uldat Magic, CONST byte MIME[MAX_MIMELEN], uldat Len, CONST byte *Data);
 static void sockRequestSelection(obj Owner, uldat ReqPrivate);
@@ -429,6 +416,11 @@ static void sockRequestSelection(obj Owner, uldat ReqPrivate);
 
 static all sockGetAll(void);
 
+static byte sockDecodeExtension(topaque *Len, CONST byte **Data, topaque *Args_n, tsfield args);
+
+static extension sockOpenExtension(byte namelen, CONST byte *name);
+static tany sockCallBExtension(extension e, topaque len, CONST byte *args, CONST byte *return_type);
+static void sockCloseExtension(extension e);
 
 
 /* Second: socket handling functions */
@@ -447,40 +439,125 @@ static void SocketIO(int fd, uldat slot);
 #define Left(size)	(s + (size) <= end)
 
 
-enum sockid {
-    order_DoesNotExist = -1,
-#define EL(name) CAT(order_,name),
-#include "socklist_m4.h"
-#undef EL
-    order_StatObj
-};
 
-static void sockStat(any *a);
 
-static void sockMultiplex(uldat Id, any *a) {
-    switch (Id) {
-#include "socket1_m4.h"
-      case order_StatObj:
-	sockStat(a);
-	break;
-      default:
-	break;
-    }
-}
+#include "socket_id.h"
+
+
+static void sockStat(obj x, udat n, CONST byte *in);
+
+
+
 
 typedef struct {
     byte Len, FormatLen;
     CONST byte *Name, *Format;
 } sockfn;
 
-static sockfn sockF [] = {
+static sockfn sockF[] = {
 #include "socket2_m4.h"
     { 0, 0, "StatObj", "0S0x"obj_magic_STR"_"TWS_udat_STR"V"TWS_udat_STR },
     { 0, 0, NULL, NULL }
 };
 
+
+/* convert a 2-byte string "v"TWS_void_STR or "_"* or "V"* into a tsfield->type */
+TW_INLINE udat proto_2_TWS(CONST byte proto[2]) {
+    udat tws_type = 0;
+    switch (proto[0]) {
+      case 'V':
+	tws_type |= TWS_vec;
+	/* FALLTHROUGH */
+      case '_':
+	if (proto[1] < TWS_highest) {
+	    tws_type |= proto[1];
+	    break;
+	}
+	/* else FALLTHROUGH */
+      case 'v':
+	/* turn '\xFE' into TWS_void ('\0') */
+	if (proto[1] == (byte)TWS_void_CHR)
+	    break;
+	/* else FALLTHROUGH */
+      default:
+	/* safe assumption */
+	tws_type = TWS_tany;
+	break;
+    }
+    return tws_type;
+}
+
+TW_INLINE void TWS_2_proto(udat tws_type, byte proto [2]) {
+    if (tws_type & TWS_vec) {
+	proto[0] = 'V';
+    } else if (tws_type == TWS_void) {
+	proto[0] = 'v';
+    } else
+	proto[0] = '_';
+	
+    if ((tws_type &= TWS_last) == TWS_void) {
+	/* turn TWS_void ('\0') into '\xFE' */
+	proto[1] = TWS_void_CHR;
+    } else if (tws_type < TWS_highest) {
+	proto[1] = tws_type;
+    } else {
+	/* safe assumption */
+	proto[0] = '_';
+	proto[1] = TWS_tany;
+    }
+}
+
+
+
+
+
+#define _obj .TWS_field_obj
+#define _any .TWS_field_scalar
+#define _vec .TWS_field_vecV
+#define _len .TWS_field_vecL
+
+#define _type .type
+
+#define void_ TWS_void
+#define obj_  TWS_obj
+#define vec_  TWS_vec
+#define vecW_ TWS_vecW
+
+
+
+
+
+/* here a[0] is the first arg, N is the number of args */
+static void sockMultiplex_S(uldat id, topaque N, tsfield a) {
+    switch (id) {
+#include "socket1_m4.h"
+      default:
+	break;
+    }
+}
+
+/* here a[1] is the first arg, a[0] is the return value, N is the number of args + 1 */
+#define fullMultiplexS(Id, N, a) do { \
+    if ((Id) == order_StatObj) { \
+	if ((N) > 3) { \
+	    sockStat((obj)(a)[1]_obj, (udat)(a)[2]_any, (CONST byte *)(a)[3]_vec); \
+	} \
+    } else { \
+	sockMultiplex_S(Id, N, a); \
+    } \
+} while (0)
+
+
+/* here a[0] is the first arg, N is the number of args */
+static void sockMultiplexS(uldat id, topaque N, tsfield a) {
+    sockMultiplex_S(id, N, a);
+    if (id < MaxFunct)
+	a[0]_type = proto_2_TWS(sockF[id].Format);
+}
+
+
 /* code to return array lengths V(expr) and W(expr) */
-static uldat sockLengths(uldat id, uldat n, const any *a) {
+static uldat sockLengths(uldat id, uldat n, CONST tsfield a) {
     uldat L = 0;
 
     switch (id) {
@@ -489,7 +566,7 @@ static uldat sockLengths(uldat id, uldat n, const any *a) {
 	
       case order_StatObj:
 	switch (n) {
-	    case 3: L = a[2]._; break;
+	    case 3: L = a[2]_any; break;
 	}
       default:
 	break;
@@ -498,18 +575,74 @@ static uldat sockLengths(uldat id, uldat n, const any *a) {
 }
 
 
-static byte TwinMagicData[10+sizeof(uldat)] = {
-    10+sizeof(uldat),
-    sizeof(byte),
-    sizeof(udat),
-    sizeof(uldat),
-    sizeof(hwcol),
-    sizeof(time_t),
-    sizeof(frac_t),
-    sizeof(hwfont),
-    sizeof(hwattr),
-    0
-};
+
+
+
+#if 0 /* currently unused */
+
+TW_INLINE udat MultiplexArgsV2S(uldat id, udat N, va_list va, tsfield a) {
+    CONST byte *Format = sockF[id].Format;
+    udat n;
+    byte c, t, size;
+
+    /* skip return value */
+    Format += 2;
+    
+    for (n = 1; n < N && (c = *Format++); n++) {
+	t = *Format++;
+	if (t >= TWS_highest)
+	    /*
+	     * let (tobj) fields decade into (uldat),
+	     * since in this case they are not real pointers.
+	     */
+	    t = TWS_uldat;
+	switch (c) {
+	  case '_': case 'x':
+	    a[n]_any = va_arg(va, tany);
+	    break;
+	  case 'W': case 'Y':
+	    /* FALLTHROUGH */
+	  case 'V': case 'X':
+	    a[n]_vec = (CONST void *)(topaque)va_arg(va, tany);
+	    break;
+	  default:
+	    return 0;
+	}
+    }
+    return n;
+}
+
+
+/*
+ * same as sockMultiplexA: call the appropriate sock* function.
+ * but now the args are passed with a variadic prototype, not in a tsfield array.
+ * *ALL* arguments should be cast to (tany) before passing them!!!
+ */
+static tany sockMultiplexL(uldat id, ...) {
+    struct s_tsfield a[TW_MAX_ARGS_N];
+    va_list va;
+    udat N;
+
+    if (id == FIND_MAGIC)
+	id = 0;
+    
+    if (id < MaxFunct) {
+	va_start(va, id);
+	N = MultiplexArgsV2S(id, TW_MAXUDAT, va, a);
+	va_end(va);
+
+	sockMultiplexS(id, N, a);
+	return a[0]_any;
+    }
+    return 0;
+}
+
+#endif /* 0 */ /* currently unused */
+
+
+
+
+TW_DECL_MAGIC(TwinMagicData);
 
 
 /***********/
@@ -525,7 +658,7 @@ static byte TwinMagicData[10+sizeof(uldat)] = {
  * if success, return array of obj, else return NULL.
  */
 static CONST obj *AllocId2ObjVec(byte *alloced, byte c, uldat n, byte *VV) {
-#if TW_SIZEOFULDAT >= TW_SIZEOFVOIDP && TW_CAN_UNALIGNED != 0
+#if TW_SIZEOFULDAT >= TW_SIZEOFTOPAQUE && TW_CAN_UNALIGNED != 0
     CONST uldat *L = (CONST uldat *)VV;
     CONST obj *aX;
     obj *X;
@@ -554,158 +687,217 @@ static CONST obj *AllocId2ObjVec(byte *alloced, byte c, uldat n, byte *VV) {
 #endif
 }
 
-static void sockDecode(uldat id) {
-    static any a[20];
-    uldat mask = 0; /* at least 32 bits. we need 20... */
-    uldat nlen, n = 1;
-    ldat fail = 1;
-    CONST byte *Format = sockF[id].Format;
-    uldat a0;
-    byte c, self, retF, retT, flag;
-
-    self = *Format++;
-    retF = *Format++;
-    retT = *Format++;
+TW_INLINE ldat sockDecodeArg(uldat id, CONST byte * Format, uldat n, tsfield a, uldat mask[1], byte flag[1], ldat fail) {
+    void *av;
+    uldat nlen;
+    byte c;
     
-    while (fail > 0 && (c = *Format++)) {
-	switch (c) {
-	  case '_':
-	    switch ((c = *Format)) {
+    switch ((c = *Format++)) {
+      case '_':
+	switch ((c = *Format)) {
 #define CASE_(type) \
-	      case CAT(TWS_,type) + TWS_base_CHR: \
-    		/* ensure type size WAS negotiated */ \
-		if ((CAT(TWS_,type) <= TWS_hwcol || AlienSizeof(type, Slot)) && Left(sizeof(type))) { \
-		    type an; \
-		    Pop(s,type,an); \
-		    a[n]._ = (uldat)an; \
-		} else \
-		    fail = -fail; \
-		break
+	  case CAT(TWS_,type): \
+	    /* ensure type size WAS negotiated */ \
+	    if (AlienSizeof(type, Slot) && Left(sizeof(type))) { \
+		type an; \
+		Pop(s,type,an); \
+		a[n]_any = (tany)an; \
+		a[n]_type = c; \
+		break; \
+	    } \
+	    fail = -fail; \
+	    break
 		
-		case TWS_hwcol + TWS_base_CHR:
-		/*FALLTHROUGH*/
-		CASE_(byte);
-		CASE_(dat);
-		CASE_(ldat);
-		CASE_(time_t);
-		CASE_(frac_t);
-		CASE_(hwfont);
-		CASE_(hwattr);
+	  case TWS_hwcol:
+	    /*FALLTHROUGH*/
+	    CASE_(byte);
+	    CASE_(dat);
+	    CASE_(ldat);
+	    CASE_(topaque);
+	    CASE_(tany);
+	    CASE_(hwfont);
+	    CASE_(hwattr);
 #undef CASE_
-	      default:
-		break;
-	    }
-	    break;
-	  case 'x':
-	    /* all kind of pointers */
-	    if (Left(sizeof(uldat))) {
-		Pop(s,uldat,a[n]._);
-		c = *Format - base_magic_CHR;
-		a[n].x = Id2Obj(c, a[n]._);
-	    } else
-		fail = -fail;
-	    break;
-	  case 'V':
-	    nlen = sockLengths(id, n, a);
-	    c = *Format - TWS_base_CHR;
-	    /* ensure type size WAS negotiated */
-	    if ((c <= TWS_hwcol || AlienMagic(Slot)[c])) {
-		nlen *= AlienMagic(Slot)[c];
-		if (Left(nlen)) {
-		    PopAddr(s,byte,nlen,a[n].V);
-		    break;
-		}
-	    }
-	    fail = -fail;
-	    break;
-	  case 'W':
-	    if (Left(sizeof(uldat))) {
-		Pop(s,uldat,nlen);
-
-		c = *Format - TWS_base_CHR;
-		/* ensure type size WAS negotiated */
-		if ((c <= TWS_hwcol || AlienMagic(Slot)[c])) {
-		    if (!nlen || (Left(nlen) && nlen == sockLengths(id, n, a) * AlienMagic(Slot)[c])) {
-			PopAddr(s,byte,nlen,a[n].V);
-			break;
-		    }
-		}
-	    }
-	    fail = -fail;
-	    break;
-	  case 'X':
-	    nlen = sockLengths(id, n, a) * sizeof(uldat);
-	    if (Left(nlen)) {
-		c = *Format - base_magic_CHR;
-		PopAddr(s,byte,nlen,a[n].V);
-		a[n].X = AllocId2ObjVec(&flag, c, nlen/sizeof(uldat), a[n].VV);
-		mask |= flag << n;
-		if (a[n].X)
-		    break;
-	    }
-	    fail = -fail;
-	    break;
-	  case 'Y':
-	    if (Left(sizeof(uldat))) {
-		Pop(s,uldat,nlen);
-		nlen *= sizeof(uldat);
-		if (Left(nlen)) {
-		    c = *Format - base_magic_CHR;
-		    PopAddr(s,byte,nlen,a[n].V);
-		    a[n].X = AllocId2ObjVec(&flag, c, nlen/sizeof(uldat), a[n].VV);
-		    mask |= flag << n;
-		    if (a[n].X)
-			break;
-		}
-	    }
-	    fail = -fail;
-	    break;
 	  default:
 	    fail = -fail;
 	    break;
 	}
+	break;
+      case 'x':
+	/* all kind of pointers */
+	if (Left(sizeof(uldat))) {
+	    uldat a0;
+	    Pop(s,uldat,a0);
+	    c = *Format - base_magic_CHR;
+	    a[n]_obj = Id2Obj(c, a0);
+	    a[n]_type = obj_;
+	    break;
+	}
+	fail = -fail;
+	break;
+      case 'V':
+	nlen = sockLengths(id, n, a);
+	c = *Format;
+	/* ensure type size WAS negotiated */
+	if ((c <= TWS_hwcol || AlienMagic(Slot)[c])) {
+	    nlen *= AlienMagic(Slot)[c];
+	    if (Left(nlen)) {
+		PopAddr(s,byte,nlen,av);
+		a[n]_len = nlen;
+		a[n]_vec = av;
+		a[n]_type = vec_|c;
+		break;
+	    }
+	}
+	fail = -fail;
+	break;
+      case 'W':
+	if (Left(sizeof(uldat))) {
+	    Pop(s,uldat,nlen);
+	    
+	    c = *Format;
+	    /* ensure type size WAS negotiated */
+	    if ((c <= TWS_hwcol || AlienMagic(Slot)[c])) {
+		if (!nlen || (Left(nlen) && nlen == sockLengths(id, n, a) * AlienMagic(Slot)[c])) {
+		    PopAddr(s,byte,nlen,av);
+		    a[n]_len = nlen;
+		    a[n]_vec = av;
+		    a[n]_type = vec_|vecW_|c;
+		    break;
+		}
+	    }
+	}
+	fail = -fail;
+	break;
+      case 'X':
+	nlen = sockLengths(id, n, a) * sizeof(uldat);
+	if (Left(nlen)) {
+	    c = *Format - base_magic_CHR;
+	    PopAddr(s,byte,nlen,av);
+	    if ((a[n]_vec = AllocId2ObjVec(flag, c, nlen/sizeof(uldat), av))) {
+		a[n]_len = nlen;
+		a[n]_type = vec_|obj_;
+		*mask |= *flag << n;
+		break;
+	    }
+	}
+	fail = -fail;
+	break;
+      case 'Y':
+	if (Left(sizeof(uldat))) {
+	    Pop(s,uldat,nlen);
+	    nlen *= sizeof(uldat);
+	    if (Left(nlen)) {
+		c = *Format - base_magic_CHR;
+		PopAddr(s,byte,nlen,av);
+		if ((a[n]_vec = AllocId2ObjVec(flag, c, nlen/sizeof(uldat), av))) {
+		    a[n]_len = nlen;
+		    a[n]_type = vec_|obj_;
+		    *mask |= *flag << n;
+		    break;
+		}
+	    }
+	}
+	fail = -fail;
+	break;
+      default:
+	fail = -fail;
+	break;
+    }
+    return fail;
+}
+
+static void sockMultiplexB(uldat id) {
+    static struct s_tsfield a[TW_MAX_ARGS_N];
+    static byte warned = FALSE;
+    uldat mask = 0; /* at least 32 bits. we need TW_MAX_ARGS_N... */
+    uldat nlen, n = 1;
+    ldat fail = 1;
+    CONST byte *Format = sockF[id].Format;
+    uldat a0;
+    byte c, self, flag, retT[2];
+
+    self = *Format++;
+    retT[0] = *Format++;
+    retT[1] = *Format++;
+    
+    while (fail > 0 && *Format) {
+	if (n < TW_MAX_ARGS_N) {
+	    fail = sockDecodeArg(id, Format, n, a, &mask, &flag, fail);
+	
+	} else /* (n >= TW_MAX_ARGS_N) */ {
+	    if (!warned) {
+		warned = TRUE;
+		printk("twin: sockMultiplexB(): got a call with %d args, only %d supported!\n",
+		       n, TW_MAX_ARGS_N);
+	    }
+	    fail = -fail;
+	}
+	
 	if (fail > 0) {
-	    Format++;
+	    Format += 2;
 	    fail++;
 	    n++;
 	} else
 	    break;
     }
     
-    if ((flag = (fail > 0 && s == end && !c && (self != '2' || a[1].x))))
-	sockMultiplex(id,a);
+    if ((flag = (fail > 0 && s == end && !*Format && (self != '2' || a[1]_obj)))) {
 
-    while (mask && n) {
-	if (mask & (1 << n)) {
-	    mask &= ~(1 << n);
-	    /*avoid warnings about discarding CONST on a[n].X*/
-	    FreeMem(a[n].XX);
+	if (retT[0] == 'O' && a[n-1]_type == (TWS_vec|TWS_byte) && a[n-1]_len == 2*sizeof(byte)) {
+	    /*
+	     * variable return type. store it in last arg,
+	     * and let function implementation overwrite it
+	     * 
+	     * evil trick: only a[n-1]_vec will be passed to the function,
+	     * but it points to a[n-1] itself!
+	     */
+	    a[n-1]_type = proto_2_TWS(a[n-1]_vec);
+	    if (mask & 1<<(n-1))
+		FreeMem(a[n-1].TWS_field_vecVV);
+	    
+	    a[n-1]_vec = &a[n-1];
+	    a[n-1]_len = 0;
 	}
-	n--;
+	
+	fullMultiplexS(id, n, a);
+    }
+    
+    for (nlen = 0; mask; mask >>= 1, nlen++) {
+	if (mask & 1)
+	    FreeMem(a[nlen].TWS_field_vecVV);
     }
     
     if (flag) {
-	switch (retF) {
+        if (retT[0] == 'O') {
+	    /* variable return type. get it from last arg */
+	    /* FIXME: currently, only '_' (scalar) and 'v' (void) return types are supported */
+		
+	    TWS_2_proto(a[n-1]_type, retT);
+	}
+	
+	switch (retT[0]) {
 	  case '_':
-	    switch (retT) {
+	    switch (retT[1]) {
 #define CASE_(type) \
-	      case CAT(TWS_,type) + TWS_base_CHR: \
+	      case CAT(TWS_,type): \
     		/* ensure type size WAS negotiated */ \
 		if (CAT(TWS_,type) <= TWS_hwcol || AlienSizeof(type, Slot)) { \
-		    type tmp = (type)a[0]._; \
-		    *(type *)&a[0] = tmp; \
+		    /* move to first bytes on MSB machines */ \
+		    *(type *)&a[0]_any = (type)a[0]_any; \
 		    c = sizeof(type); \
-		} else \
-		    fail = 0; \
+		    break; \
+		} \
+		fail = 0; \
 		break
 		
-		case TWS_hwcol + TWS_base_CHR:
+		case TWS_hwcol:
 		/*FALLTHROUGH*/
 		CASE_(byte);
 		CASE_(dat);
 		CASE_(ldat);
-		CASE_(time_t);
-		CASE_(frac_t);
+		CASE_(topaque);
+		CASE_(tany);
 		CASE_(hwfont);
 		CASE_(hwattr);
 #undef CASE_
@@ -714,13 +906,13 @@ static void sockDecode(uldat id) {
 		break;
 	    }
 	    if (c && fail > 0) {
-		sockReply(OK_MAGIC, c, &a[0]);
+		sockReply(OK_MAGIC, c, &a[0]_any);
 		return;
 	    }
 	    break;
 	    
 	  case 'x':
-	    a0 = a[0].x ? a[0].x->Id : NOID;
+	    a0 = a[0]_obj ? a[0]_obj->Id : NOID;
 	    sockReply(OK_MAGIC, sizeof(tobj), &a0);
 	    return;
 	    
@@ -732,9 +924,9 @@ static void sockDecode(uldat id) {
 	    break;
 	}
     }
-    if (retF != 'v') {
+    if (retT[0] != 'v') {
 	if (fail > 0) {
-	    if (self != '2' || a[1].x)
+	    if (self != '2' || a[1]_obj)
 		fail = FAIL_MAGIC;
 	    else
 		fail = 1;
@@ -742,7 +934,19 @@ static void sockDecode(uldat id) {
 	sockReply(fail, 0, NULL);
     }
 }
-    
+
+
+#undef _obj
+#undef _any
+#undef _vec
+#undef _len
+
+#undef _type
+
+#undef void_
+#undef obj_
+#undef vec_
+#undef vecW_
 
 
 /***********/
@@ -1108,7 +1312,7 @@ static menu sockCreateMenu
 			       
 
 /* last 3 args are currently useless for remote clients */
-static msgport sockCreateMsgPort(byte NameLen, CONST byte *Name, time_t WakeUp, frac_t WakeUpFrac, byte Flags) {
+static msgport sockCreateMsgPort(byte NameLen, CONST byte *Name) {
     msgport MsgPort;
     
     if ((MsgPort = Do(Create,MsgPort)(FnMsgPort, NameLen, Name, 0, 0, 0, SocketH))) {
@@ -1177,6 +1381,161 @@ static gadget sockFirstGadget(group Group) {
 static all sockGetAll(void) {
     return All;
 }
+
+
+
+
+
+#ifdef CONF_EXT
+
+#define _obj .TWS_field_obj
+#define _any .TWS_field_scalar
+#define _vec .TWS_field_vecV
+#define _len .TWS_field_vecL
+
+#define _type .type
+
+#define void_ TWS_void
+#define obj_  TWS_obj
+#define vec_  TWS_vec
+#define vecW_ TWS_vecW
+
+
+static byte sockDecodeExtension(topaque *Len, CONST byte **Data, topaque *Args_n, tsfield a) {
+    static byte type_warned = 0;
+    topaque n = 0;
+    ldat fail = 1;
+    tany len, left = *Len;
+    CONST byte *data = *Data;
+    tany args_n = *Args_n;
+    udat t;
+
+# ifdef CONF_SOCKET_ALIEN
+    if (AlienXendian(Slot) != MagicNative)
+	return alienDecodeExtension(Len, Data, Args_n, a);
+# endif
+
+    while (fail > 0 && n < args_n) {
+	switch ((t = a[n]_type)) {
+
+# define CASE_(type) \
+case CAT(TWS_,type): \
+    /* ensure type size WAS negotiated */ \
+    if ((len = AlienSizeof(type, Slot)) && left >= len) { \
+	type an; \
+	\
+	left -= len; \
+	Pop(data,type,an); \
+	a[n]_any = (tany)an; \
+    } else \
+	fail = -fail; \
+    break
+
+	  case TWS_hwcol:
+	    /*FALLTHROUGH*/
+	    CASE_(byte);
+	    CASE_(dat);
+	    CASE_(ldat);
+	    CASE_(topaque);
+	    CASE_(tany);
+	    CASE_(hwfont);
+	    CASE_(hwattr);
+#undef CASE_
+	    
+	  case TWS_vec|TWS_vecW|TWS_byte:
+	    /* ensure (topaque) size WAS negotiated */
+	    if ((len = AlienSizeof(topaque, Slot)) && left >= len) {
+		topaque nlen;
+		
+		left -= len;
+		Pop(data,topaque,nlen);
+		a[n]_len = nlen;
+		
+		if (nlen <= left) {
+		    void *addr;
+		    left -= nlen;
+		    PopAddr(data,byte,nlen,addr);
+		    a[n]_vec = addr;
+		    break;
+		}
+	    }
+	    fail = -fail;
+	    break;
+	  default:
+	    if (type_warned < 5) {
+		type_warned = 5;
+		printk("twin: sockDecodeExtension(): got a call with unknown type 0x%02X' !\n",
+		       (int)t);
+	    }
+	    fail = -fail;
+	    break;
+	}
+	
+	if (fail <= 0)
+	    break;
+	
+	fail++;
+	n++;
+    }
+    
+    if (fail > 0) {
+	*Len -= data - *Data;
+	*Data = data;
+	*Args_n = n;
+    }
+    
+    return fail > 0;
+}
+
+static extension sockOpenExtension(byte namelen, CONST byte *name) {
+    /*
+     * FIXME: loading an extension from a Slot without msgport
+     * results in the extension stay loaded at least until someone uses it
+     */
+    return Do(Query,Extension)(namelen, name);
+}
+static void sockCloseExtension(extension e) {
+    msgport Owner;
+    
+    if ((Owner = RemoteGetMsgPort(Slot)) && e && IS_EXTENSION(e))
+	Act(UnuseExtension,Owner)(Owner, e);
+}
+
+
+static tany sockCallBExtension(extension e, topaque len, CONST byte *data, CONST byte *return_type) {
+    msgport M;
+    
+    if (e && IS_EXTENSION(e)) {
+	/* ensure we are registered as using the extension */
+	if ((M = RemoteGetMsgPort(Slot)))
+	    Act(UseExtension,M)(M, e);
+
+	/* actually, we receive a (tsfield) instead of return_type and we pass it through */
+	return e->CallB(e, len, data, (void *)return_type);
+    }
+    return (tany)0;
+}
+
+
+#else /* !CONF_EXT */
+
+static byte sockDecodeExtension(topaque *len, CONST byte **data, topaque *args_n, tsfield args) {
+    return FALSE;
+}
+static extension sockOpenExtension(byte namelen, CONST byte *name) {
+    return (extension)0;
+}
+static void sockCloseExtension(extension e) {
+}
+static tany sockCallBExtension(extension e, topaque len, CONST byte *data, CONST byte *return_type) {
+    return (tany)0;
+}
+
+#endif /* CONF_EXT */
+
+
+
+
 
 /*
  * turn the (msg) into a (tmsg) and write it on the MsgPort file descriptor.
@@ -1394,7 +1753,7 @@ static void sockSendMsg(msgport MsgPort, msg Msg) {
       default:
 	Easy = FALSE;
     }
-#if TW_SIZEOFVOIDP == TW_SIZEOFULDAT
+#if TW_SIZEOFTOPAQUE == TW_SIZEOFULDAT
     if (Easy) {
 	Msg->Event.EventCommon.W = (void *)Obj2Id(Msg->Event.EventCommon.W);
 	if (Msg->Type == MSG_MENU_ROW) {
@@ -1656,7 +2015,7 @@ static obj sockGetOwnerSelection(void) {
     return TwinSelectionGetOwner();
 }
 
-static void sockSetOwnerSelection(time_t Time, frac_t Frac) {
+static void sockSetOwnerSelection(tany Time, tany Frac) {
     if (LS.MsgPort)
 	TwinSelectionSetOwner((obj)LS.MsgPort, Time, Frac);
 }
@@ -1897,7 +2256,7 @@ static byte CreateAuth(byte *path) {
     return len == AuthLen ? TRUE : Error(SYSCALLERROR);
 }
 
-static byte InitAuth(void) {
+static byte sockInitAuth(void) {
     int fd, got;
     uldat len;
     
@@ -2062,48 +2421,36 @@ static byte Check4MagicTranslation(uldat slot, byte *magic, byte len) {
 	/* store client magic numbers */
 	CopyMem(magic, AlienMagic(slot), Min2(len1, TWS_highest));
 	if (len1 < TWS_highest)
-	    /* zero out unnegotiated sizes */
+	    /* version mismatch compatibility: zero out unnegotiated sizes */
 	    WriteMem(AlienMagic(slot) + len1, '\0', TWS_highest-len1);
-	
-	if (len1 <= TWS_hwattr)
-	    AlienMagic(slot)[TWS_hwattr] = 2;
 	
 	return MagicNative;
     }
     
 #ifdef CONF_SOCKET_ALIEN
 
-    if (len1 > TWS_hwcol && len == magic[0] && 
+    if (len1 > TWS_hwattr && len == magic[0] && 
 	magic[TWS_byte] == 1 &&  /* sizeof(byte) MUST be 1, or passing byte[] vectors would fail */
 	magic[TWS_udat] >= 2 &&
 	magic[TWS_uldat] >= 4 &&
 	len - len1 == magic[TWS_uldat] + 1 &&
 	magic[TWS_hwcol] == 1 && /* sizeof(hwcol) MUST be 1, or passing hwcol[] vectors would fail */
-	(len1 == TWS_time_t ||
-	 (magic[TWS_time_t] >= 4 &&
-	  (len1 == TWS_frac_t ||
-	   (magic[TWS_frac_t] >= 4 &&
-	    (len1 == TWS_hwfont ||
-	     (magic[TWS_hwfont] >= 1 &&
-	      (len1 == TWS_hwattr ||
-	       (magic[TWS_hwattr] >= 2
-		))))))))) {
+	magic[TWS_topaque] >= 4 &&
+	magic[TWS_tany] >= 4 &&
+	magic[TWS_hwfont] >= 1 &&
+	magic[TWS_hwattr] >= 2) {
 	    
 	/* store client magic numbers */
 	CopyMem(magic, AlienMagic(slot), Min2(len1, TWS_highest));
 	if (len1 < TWS_highest)
-	    /* zero out unnegotiated sizes */
+	    /* version mismatch compatibility: zero out unnegotiated sizes */
 	    WriteMem(AlienMagic(slot) + len1, '\0', TWS_highest-len1);
 
-	/*pre-0.3.9 compatibility: if hwattr is not negotiated, assume 2 bytes*/
-	if (len1 <= TWS_hwattr)
-	    AlienMagic(slot)[TWS_hwattr] = 2;
-	
 	if (warn_count < 6) {
 	    zero = NULL;
 	    if (AlienMagic(slot)[TWS_hwattr] != sizeof(hwattr))
 		zero = "hwattr";
-	    else if (len1 > TWS_hwfont && AlienMagic(slot)[TWS_hwfont] != sizeof(hwfont))
+	    else if (AlienMagic(slot)[TWS_hwfont] != sizeof(hwfont))
 		zero = "hwfont";
 	    
 	    if (zero) {
@@ -2335,7 +2682,7 @@ static void SocketIO(int fd, uldat slot) {
 		Pop(s, uldat, Funct);
 		if (Funct < MaxFunct) {
 		    slot = Slot;
-		    sockDecode(Funct); /* Slot is the uncompressed socket here ! */
+		    sockMultiplexB(Funct); /* Slot is the uncompressed socket here ! */
 		    Slot = slot;	/*
 					 * restore, in case sockF[Funct].F() changed it;
 					 * without this, tw* clients can freeze
@@ -2343,7 +2690,7 @@ static void SocketIO(int fd, uldat slot) {
 					 */
 		}
 		else if (Funct == FIND_MAGIC)
-		    sockDecode(0);
+		    sockMultiplexB(0);
 		s = end;
 	    } else if (s + len < s) {
 		s = tend;
@@ -2411,7 +2758,7 @@ byte InitSocket(void)
     struct sockaddr_in addr;
     char opt[15];
 
-    if (!InitAuth()) {
+    if (!sockInitAuth()) {
 	printk("twin: failed to create ~/.TwinAuth: %."STR(SMALLBUFF)"s\n", ErrStr);
 	return FALSE;
     }
@@ -2443,9 +2790,11 @@ byte InitSocket(void)
 	    sockF[MaxFunct].FormatLen = strlen(sockF[MaxFunct].Format);
 	}
 	
-	RegisterExtension(Remote,KillSlot,sockKillSlot);
-	RegisterExtension(Socket,SendMsg,sockSendMsg);
-	RegisterExtension(Socket,InitAuth,InitAuth);
+	RegisterExt(Remote,KillSlot,sockKillSlot);
+	RegisterExt(Socket,SendMsg,sockSendMsg);
+	RegisterExt(Socket,InitAuth,sockInitAuth);
+	RegisterExt(Socket,DecodeExtension,sockDecodeExtension);
+	RegisterExt(Socket,MultiplexS,sockMultiplexS);
 
 	m = TWIN_MAGIC;
 	CopyMem(&m, TwinMagicData+TwinMagicData[0]-sizeof(uldat), sizeof(uldat));
@@ -2483,8 +2832,10 @@ void QuitModule(module Module) {
 	    Ext(Remote,KillSlot)(Slot);
 	}
     } 
-    UnRegisterExtension(Remote,KillSlot,sockKillSlot);
-    UnRegisterExtension(Socket,SendMsg,sockSendMsg);
-    UnRegisterExtension(Socket,InitAuth,InitAuth);
+    UnRegisterExt(Remote,KillSlot,sockKillSlot);
+    UnRegisterExt(Socket,SendMsg,sockSendMsg);
+    UnRegisterExt(Socket,InitAuth,sockInitAuth);
+    UnRegisterExt(Socket,DecodeExtension,sockDecodeExtension);
+    UnRegisterExt(Socket,MultiplexS,sockMultiplexS);
 }
 #endif

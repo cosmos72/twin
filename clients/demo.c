@@ -17,9 +17,10 @@ int main(int argc, char *argv[]) {
     ttframe f;
     ttbyte ok;
     
-    ok =TTCheckMagic(ttdemo_magic) &&
+    ok =
+	TTCheckMagic(ttdemo_magic) &&
 	TTOpen(NULL) &&
-	TTSet_ttapplication("ttdemo") &&
+	TTCreate_ttapplication("ttdemo") &&
 	(f = TTNEW(ttframe)) &&
 
 	/*
@@ -27,7 +28,7 @@ int main(int argc, char *argv[]) {
 	 * 
 	 * by default new listeners get called AFTER the other existing listeners
 	 */
-	TTCreateAskclose_ttlistener((ttcomponent)f, 0, (void *)TTExitMainLoop) &&
+	TTCreateAskclose_ttlistener((ttcomponent)f, 0, (ttlistener_fn)TTExitMainLoop) &&
 	
 	(
 	 TTSetWH_ttwidget((ttwidget)f, 10, 8),

@@ -26,7 +26,7 @@ static byte InitEvent(void) {
     return
 	TwCheckMagic(event_magic) && TwOpen(NULL) &&
 	(Event_MsgPort=TwCreateMsgPort
-	 (7, "twevent", (time_t)0, (frac_t)0, (byte)0)) &&
+	 (7, "twevent")) &&
 	(Event_Menu=TwCreateMenu(
 	  COL(BLACK,WHITE), COL(BLACK,GREEN), COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
 	  COL(RED,WHITE), COL(RED,GREEN), (byte)0)) &&
@@ -36,7 +36,8 @@ static byte InitEvent(void) {
 	(Event_Win=TwCreateWindow
 	 (12, "Event Tester", NULL,
 	  Event_Menu, COL(WHITE,BLACK), TW_NOCURSOR,
-	  TW_WINDOW_WANT_KEYS|TW_WINDOW_WANT_MOUSE|TW_WINDOW_WANT_CHANGES|TW_WINDOW_DRAG|TW_WINDOW_RESIZE|TW_WINDOW_CLOSE,
+	  TW_WINDOW_WANT_KEYS|TW_WINDOW_WANT_MOUSE|TW_WINDOW_WANT_CHANGES|
+	     TW_WINDOW_DRAG|TW_WINDOW_RESIZE|TW_WINDOW_CLOSE,
 	  TW_WINDOWFL_USEEXPOSE, 18, 8, 0)) &&
 	(TwSetColorsWindow
 	 (Event_Win, 0x1FF,
@@ -50,7 +51,8 @@ static byte InitEvent(void) {
 	(Event_SubWin=TwCreateWindow
 	 (9, "SubWindow", NULL,
 	  Event_Menu, COL(WHITE,BLUE), TW_NOCURSOR,
-	  TW_WINDOW_WANT_KEYS|TW_WINDOW_WANT_MOUSE|TW_WINDOW_WANT_MOUSE_MOTION|TW_WINDOW_WANT_CHANGES,
+	  TW_WINDOW_WANT_KEYS|TW_WINDOW_WANT_MOUSE|TW_WINDOW_WANT_MOUSE_MOTION|
+	     TW_WINDOW_AUTO_FOCUS|TW_WINDOW_WANT_CHANGES,
 	  TW_WINDOWFL_BORDERLESS, 7, 3, 0)) &&
 	
 	(TwSetXYWindow(Event_SubWin, 5, 2),
@@ -244,8 +246,11 @@ int main(int argc, char *argv[]) {
 	    
 	    Code = EventM->Code;
 	    
-	    if (isMOTION(Code)) {
-		s1 = "Motion";
+	    if (isMOVE(Code)) {
+		if (Code & HOLD_ANY)
+		    s1 = "Drag";
+		else
+		    s1 = "Motion";
 		s2 = "";
 	    } else if (isPRESS(Code)) {
 		s1 = "Press";
@@ -275,15 +280,12 @@ int main(int argc, char *argv[]) {
 #endif
 		  default: s2 = "Unknown Button "; break;
 		}
-	    } else if (isDRAG(Code)) {
-		s1 = "Drag";
-		s2 = "";
 	    } else {
 		s1 = "Unknown Event ";
 		s2 = "";
 	    }
 	    
-	    if ((Code & HOLD_ANY)) {
+	    if (Code & HOLD_ANY) {
 		s3 = "while";
 		s4 = Code & HOLD_LEFT   ? " Left"   : "";
 		s5 = Code & HOLD_MIDDLE ? " Middle" : "";

@@ -1,0 +1,63 @@
+
+
+
+
+
+dnl This file is `m4/decls.m4' : m4 macros to autogenerate decls_m4.h
+dnl Tell the user about this.
+/* This file was automatically generated from `m4/decls.m4', do not edit! */
+
+
+/*
+ *  list_m4.h  --  defines for listing all libTT object types
+ *
+ *  Copyright (C) 2002 by Massimiliano Ghilardi
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Library General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2 of the License, or (at your option) any later version.
+ *
+ */
+
+#ifndef _TT_LIST_M4_H
+#define _TT_LIST_M4_H
+
+define(`c_doxygen', `
+
+$@')`'dnl
+
+define(`c_comment', `
+$@')`'dnl
+
+include(`m4/TTclasses.m4')
+include(`m4/TTclient.m4')
+
+#define TT_LIST(el) \
+TTlist()
+
+#define TT_NLIST(el) \
+TTnlist()
+
+#define TT_TYPELIST(el) \
+TTtypelist()
+
+#define TT_TYPEALIASLIST(el) \
+TTtypealiaslist()
+
+
+define(`el', `
+/** type of `$1' */
+extern ttclass	TTClass_$1;')
+TTtypelist()
+undefine(`el')
+
+/** aliases */
+define(`el', `
+`#'define TTClass_$1	TTClass_$2')
+TTtypealiaslist()
+undefine(`el')
+
+
+#endif /* _TT_LIST_M4_H */
+

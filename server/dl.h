@@ -18,4 +18,6 @@ udat   DlName2Code(byte *name);
 
 module DlLoadAny(uldat len, byte *name);
 
+void *DlSym(module Module, CONST byte *name);
+
 #endif /* _TWIN_DL_H */

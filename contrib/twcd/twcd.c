@@ -34,7 +34,7 @@ byte InitTWCD(void) {
     if (!TwCheckMagic(twcd_magic) || !TwOpen(NULL))
 	return FALSE;
 
-    TWCD_MsgPort=TwCreateMsgPort(4,"twcd",(time_t)0,(frac_t)0,(byte)0);    
+    TWCD_MsgPort=TwCreateMsgPort(4,"twcd");
 
     TWCD_Menu=TwCreateMenu(COL(BLACK,WHITE),COL(BLACK,GREEN),
         COL(HIGH|BLACK,WHITE),COL(HIGH|BLACK,BLACK),COL(RED,WHITE),

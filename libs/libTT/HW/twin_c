@@ -1,0 +1,55 @@
+/*
+ *                 WARNING!
+ * 
+ * this file is `twin_c' and is preprocessed by m4 to produce `twin_m4.c'
+ * 
+ * It must be a valid m4 file, and must produce a valid C file.
+ * 
+ */
+
+
+#include <Tw/Tw.h>
+#include <Tw/Twavl.h>
+#include <Tw/Twstat.h>
+#include <Tw/Twstat_defs.h>
+#include <Tw/Twerrno.h>
+
+
+DECL_BEFORE
+
+dnl m4_begin "
+
+define(`CALL', `Tw$1(shift($@))')
+define(`SYM', `Tw$1')
+
+include(`twin_h')
+
+include(`twin_hw_h')
+
+dnl " m4_end
+
+TW_DECL_MAGIC(TT_Tw_magic);
+
+#ifdef THIS_MODULE
+ttclasses InitModule(tthw *HW)
+#else
+ttclasses _TT_twin_InitHW(tthw *HW)
+#endif
+{
+    /*
+     * (*HW) must be set even if initialization fails,
+     * to report error messages.
+     */
+    *HW = &twin_TTClasses.HW;
+    
+    CALL(ConfigMalloc, TTAllocMem, TTReallocMem, TTFreeMem);
+    
+    if (CALL(CheckMagic, TT_Tw_magic) && CALL(Open, TTD.HWOptions))
+        return &twin_TTClasses;
+
+    FAIL(SYM(Errno), SYM(ErrnoDetail));
+    
+    return (ttclasses)0;
+}
+
+DECL_AFTER

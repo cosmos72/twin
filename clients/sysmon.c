@@ -51,8 +51,7 @@ byte InitSysMon(void) {
     return
 	TwCheckMagic(sysmon_magic) && TwOpen(NULL) &&
 	
-	(SysMon_MsgPort=TwCreateMsgPort
-	 (8, "twsysmon", 0, 0, 0)) &&
+	(SysMon_MsgPort=TwCreateMsgPort(8, "twsysmon")) &&
 	(SysMon_Menu=TwCreateMenu
 	 (COL(BLACK,WHITE), COL(BLACK,GREEN), COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
 	  COL(RED,WHITE), COL(RED,GREEN), (byte)0)) &&

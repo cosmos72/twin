@@ -26,16 +26,21 @@ ttbyte TTInPanic(void);
 /** get full library version number */
 ttuint TTLibraryVersion(void);
 
+typedef struct s_ttclasses *ttclasses;
+typedef struct s_tthw * tthw;
+/** register a new libTT display target */
+ttbyte TTRegisterTarget(TT_CONST byte *name, ttclasses (*InitHW)(tthw *HW));
+
 /** initialize libTT opening given display target (got from $TTDISPLAY if not specified) */
 ttbyte TTOpen(TT_CONST ttbyte *target);
 
 /** reinitialize libTT to use newly given display target, WITHOUT deleting libTT objects */
 ttbyte TTReopen(TT_CONST ttbyte *target);
 
-/** shutdown libTT; not necessary if you are going to exit(): use TTReopen("null") instead */
+/** shutdown libTT; not necessary if you are going to exit() */
 void TTClose(void);
 
-/** quickly shutdown libTT, does not generate `delete' events for objects deleted; not necessary if you are going to exit(): use TTReopen("null") instead */
+/** quickly shutdown libTT, does not generate `delete' events for objects being deleted; not necessary if you are going to exit() */
 void TTCloseQuickNDirty(void);
 
 
@@ -61,55 +66,36 @@ ttbyte TTMainLoopOnce(ttbyte wait);
 /** tell libTT main loop to return */
 void TTExitMainLoop(void);
 
-/** create a new object; `FN' should be one of the `TTFN_*' types */
-ttobj TTNew(ttfn FN);
+/** create a new object of class `Class'; `Class' should be one of the `TTClass_*' classes */
+ttobj TTNew(ttclass Class);
 
 /** delete given object */
 void  TTDel(ttobj o);
 
 
+/** get the first existing object of class `Class'; `Class' should be one of the `TTClass_*' classes */
+ttobj TTGetFirst(ttclass Class);
 
-/** get internal library size needed to store object `o' */
-TT_FN_ATTR_CONST ttuint TTSizeOf(ttobj o);
+/** get the last existing object of class `Class'; `Class' should be one of the `TTClass_*' classes */
+ttobj TTGetLast(ttclass Class);
 
-/** return 1 if `o' can be cast to type represented by `FN' */
-TT_FN_ATTR_CONST ttbyte TTInstanceOf(ttfn FN, ttobj o);
 
-/** return the type of `o' (will be one of the `TTFN_*' types) */
-TT_FN_ATTR_CONST ttfn   TTClassOf(ttobj o);
+/** get size needed to store object `o' (i.e. sizeof(ttobj), NOT sizeof(*ttobj)) */
+TT_FN_ATTR_CONST ttuint  TTSizeOf(ttobj o);
 
-/** return the name of the type of `o' (i.e "ttbutton", ...) */
-TT_FN_ATTR_CONST TT_CONST ttbyte *TTClassNameOf(ttobj o);
+/** return the class (runtime type) of `o' (will be one of the `TTClass_*' types) */
+TT_FN_ATTR_CONST ttclass TTClassOf(ttobj o);
 
-/** get internal library size needed to store objects of type `FN' */
-TT_FN_ATTR_CONST ttuint TTGetSize_ttfn(ttfn FN);
+/** return TT_TRUE if `o' can be cast to class represented by `Class' */
+TT_FN_ATTR_CONST ttbyte  TTInstanceOf(ttclass Class, ttobj o);
 
-/** get the parent type of the type `FN' */
-TT_FN_ATTR_CONST ttfn   TTGetSuper_ttfn(ttfn fn);
-
-/** return 1 if type `t' can be cast to type `FN' */
-TT_FN_ATTR_CONST ttbyte TTIsInstance_ttfn(ttfn FN, ttfn t);
-
-/** get the name of the type `FN' (i.e "ttbutton", ...) */
-TT_FN_ATTR_CONST TT_CONST ttbyte *TTGetName_ttfn(ttfn FN);
+/** return the name of the class of `o' (i.e "ttbutton", "ttwindow", ...) */
+TT_FN_ATTR_CONST TT_CONST TT_ARG_ARRAY_Z ttbyte *TTClassNameOf(ttobj o);
 
 
 
-/** return the id to access the field `name' in an object (i.e TTGetFieldId("ttwidget_x")) */
-TT_FN_ATTR_CONST ttuint TTGetFieldId(TT_ARG_READ ttbyte *name);
-
-/** return the name of a field from its `id' - this is the opposite of TTGetFieldId() */
-TT_FN_ATTR_CONST TT_CONST ttbyte *TTGetFieldName(ttuint id);
-
-
-/** get the value of `which' field from object `o' */
-ttfn TTGetField_ttobj(TT_ARG_READ ttobj o, ttuint which, ttany *value);
-
-/** set the value of `which' field into object `o' to `value' */
-ttfn TTSetField_ttobj(ttobj o, ttuint which, ttany value);
-
-/** change the value of `which' field into object `o' to `(old_value & ~nand_value) ^ xor_value' */
-ttfn TTChangeField_ttobj(ttobj o, ttuint which, ttany nand_value, ttany xor_value);
+/** create a vector with given values */
+ttvector TTCreateL_ttvector(ttopaque value_n, ...);
 
 
 /** get the current mask of blocked events */
@@ -121,7 +107,6 @@ void TTSetInstalled_tteventmask(tteventmask installed_event_mask);
 /** set the default mask of blocked events to be used while listeners are being called */
 void TTSetDefault_tteventmask(tteventmask default_event_mask);
 
-/** create a ttlistener with given fields */
-ttlistener TTCreateL_ttlistener(ttcomponent o, ttevent ev, ttuint flags, ttuint narg_component, ttuint narg_event, ttuint nargs, ttlistener_fn function, ...);
+
 
 #endif /* _TT_H */

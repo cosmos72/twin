@@ -1,5 +1,5 @@
 Name:		twin
-Version:	0.4.6
+Version:	0.5.0
 Release:	2
 Vendor:		Massimiliano Ghilardi <max@linuz.sns.it>
 Copyright:	GPL
@@ -83,7 +83,8 @@ ldconfig
 %doc twin-current.lsm
 %{_libdir}/libTutf.so.*
 %{_libdir}/libTw.so.*
-%{_libdir}/twin/modules
+%{_libdir}/twin
+%{_datadir}/twin
 %config %{_libdir}/twin/.twinrc
 %config %{_libdir}/twin/.twenvrc.sh
 %config %{_libdir}/twin/system.twinrc

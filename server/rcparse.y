@@ -33,7 +33,7 @@
 #include "printk.h"
 #include "util.h"
 #include "hw.h"
-#include "extensions.h"
+#include "extreg.h"
 
 #include "rctypes.h"
 

@@ -1,0 +1,19 @@
+#
+# Makefile for twin themes
+#
+#
+
+SUBDIRS=hw_gfx
+
+all: build-subdirs
+
+
+#
+# common rules
+#
+include $(T)include/makeversion
+-include $(B)makeautoconf
+include $(T)makerules
+
+
+

@@ -1,0 +1,386 @@
+                     TWIN FREQUENTLY ASKED QUESTIONS
+		            WITH ANSWERS
+			    
+                            28 Oct 2002
+                Massimiliano Ghilardi <max@linuz.sns.it>
+
+This is the list of Frequently Asked Questions about twin,
+a Textmode WINdow environment
+[see Q1.1 `What is twin ?' for more details].
+It should be read in conjunction with the other documents
+describing twin, in particular the Tutorial.
+This file, and also a lot of other documents about twin,
+is distributed together with twin sources at:
+
+* http://sourceforge.net/project/twin/
+* http://linuz.sns.it/~max/twin/
+
+and mirror sites thereof. See Q2.1 `Where can I get the documentation about
+twin ?' for a list of the available documents and more information.
+
+Please check out these documents and this FAQ, especially Q12.1 `You still
+haven't answered my question !', before sending your question.
+
+A new version of this document is released at each new version of twin,
+which means approximately monthly.  If this copy is more than a month old
+it may be out of date.
+
+===============================================================================
+
+Index
+
+ Section 1.  Introduction and General Information
+ Q1.1        What is twin ?
+ Q1.2        Does it run on my computer ?
+ Q1.3        Can twin display on X ? On Linux console ? On ... ?
+ Q1.4        What software does it provide ? Which programs require twin ?
+ Q1.5        What ports to other operating systems are there ?
+ Q1.6        Is twin PD ?  Copyrighted ?
+
+ Section 2.  Network sources and resources
+ Q2.1        Where can I get the HOWTOs and other documentation ?
+ Q2.2        Where should I look on the World Wide Web for Linux stuff ?
+ Q2.3        What newsgroups are there for Linux ?
+ Q2.4        How do I install Linux ?
+ Q2.5        Where can I get Linux material by FTP ?
+ Q2.6        I don't have FTP access.  Where do I get Linux ?
+ Q2.7        I don't have Usenet access.  Where do I get information ?
+ Q2.8        What mailing lists are there ?
+ Q2.9        Are the newsgroups archived anywhere ?
+
+ Section 3.  Compatibility with other operating systems
+ Q3.1        Can Linux share my disk with DOS ?  OS/2 ?  386BSD ?  Win95 ?
+ Q3.2        How do I access files on my DOS partition or floppy ?
+ Q3.3        Can I use my Stacked/DBLSPC/etc. DOS drive ?
+ Q3.4        Can I access OS/2 HPFS partitions from Linux ?
+ Q3.5        Can I access BSD FFS, SysV UFS, Mac, Amiga, etc filesystems ?
+ Q3.6        Can I run Microsoft Windows programs under Linux ?
+ Q3.7        How can I boot Linux from OS/2's Boot Manager ?
+ Q3.8        How can I share a swap partition between Linux and MS Windows ?
+
+ Section 4.  Linux's handling of filesystems, disks and drives
+ Q4.1        How can I get Linux to work with my large disk ?
+ Q4.2        How can I undelete files ?
+ Q4.3        Is there a defragmenter for ext2fs etc. ?
+ Q4.4        How do I format and create a filesystem on a floppy ?
+ Q4.5        I get nasty messages about inodes, blocks, and the suchlike
+ Q4.6        My swap area isn't working.
+ Q4.7        How do I remove LILO so my system boots DOS again ?
+ Q4.8        Why can't I use fdformat except as root ?
+ Q4.9        Is there something like Stacker or Doublespace for Linux ?
+ Q4.10       My ext2fs partitions are checked each time I reboot.
+ Q4.11       My root filesystem is read-only !
+ Q4.12       I have a huge /proc/kcore !  Can I delete it ?
+ Q4.13       My AHA1542C doesn't work with Linux.
+
+ Section 5.  Porting, compiling and obtaining programs
+ Q5.1        How do I port XXX to Linux ?
+ Q5.2        What is ld.so and where do I get it ?
+ Q5.3        Has anyone ported / compiled / written XXX for Linux ?
+ Q5.4        Can I use code or a compiler compiled for a 486 on my 386 ?
+ Q5.5        What does gcc -O6 do ?
+ Q5.6        Where are <linux/*.h> and <asm/*.h> ?
+ Q5.7        I get errors when I try to compile the kernel.
+ Q5.8        How do I make a shared library ?
+ Q5.9        My executables are (very) large.
+ Q5.10       Does Linux support threads or lightweight processes ?
+ Q5.11       Where can I get `lint' for Linux ?
+ Q5.12       Where can I find `kermit' for Linux ?
+
+ Section 6.  Solutions to common miscellaneous problems
+ Q6.1        free dumps core.
+ Q6.2        My clock is very wrong.
+ Q6.3        Setuid scripts don't seem to work.
+ Q6.4        Free memory as reported by free keeps shrinking.
+ Q6.5        When I add more memory it slows to a crawl.
+ Q6.6        Some programs (e.g. xdm) won't let me log in.
+ Q6.7        Some programs let me log in with no password.
+ Q6.8        My machine runs very slowly when I run GCC / X / ...
+ Q6.9        I can only log in as root.
+ Q6.10       My screen is all full of weird characters instead of letters.
+ Q6.11       I have screwed up my system and can't log in to fix it.
+ Q6.12       I've discovered a huge security hole in rm !
+ Q6.13       lpr and/or lpd aren't working.
+ Q6.14       Timestamps on files on msdos partitions are set incorrectly.
+ Q6.15       How do I get LILO to boot the vmlinux file ?
+
+ Section 7.  How do I do this or find out that ... ?
+ Q7.1        How can I get scrollback in text mode ?
+ Q7.2        How do I switch virtual consoles ?  How do I enable them ?
+ Q7.3        How do I set the timezone ?
+ Q7.4        What version of Linux and what machine name am I using ?
+ Q7.5        How can I enable or disable core dumps ?
+ Q7.6        How do I upgrade/recompile my kernel ?
+ Q7.7        Can I have more than 3 serial ports by sharing interrupts ?
+ Q7.8        How do I make a bootable floppy ?
+ Q7.9        How do I remap my keyboard to UK, French, etc. ?
+ Q7.10       How do I get NUM LOCK to default to on ?
+ Q7.11       How can I have more than 128Mb of swap ?
+
+ Section 8.  Miscellaneous information and questions answered
+ Q8.1        How do I program XYZ under Linux ?
+ Q8.2        What's all this about ELF ?
+ Q8.3        What is a .gz file ? And a .tgz ? And ... ?
+ Q8.4        What does VFS stand for ?
+ Q8.5        What is a BogoMip ?
+ Q8.6        What is the Linux Journal and where can I get it ?
+ Q8.7        How many people use Linux ?
+ Q8.8        How should I pronounce Linux ?
+
+ Section 9.  Frequently encountered error messages
+ Q9.1        Unknown terminal type linux and similar
+ Q9.2        During linking I get Undefined symbol _mcount
+ Q9.3        lp1 on fire
+ Q9.4        INET: Warning: old style ioctl(IP_SET_DEV) called!
+ Q9.5        ld: unrecognized option '-m486'
+ Q9.6        GCC says Internal compiler error
+ Q9.7        make says Error 139
+ Q9.8        shell-init: permission denied when I log in.
+ Q9.9        No utmp entry.  You must exec ... when I log in.
+ Q9.10       Warning - bdflush not running
+ Q9.11       Warning: obsolete routing request made.
+ Q9.12       EXT2-fs: warning: mounting unchecked filesystem
+ Q9.13       EXT2-fs warning: maximal count reached
+ Q9.14       EXT2-fs warning: checktime reached
+ Q9.15       df says Cannot read table of mounted filesystems
+ Q9.16       fdisk says Partition X has different physical/logical ...
+ Q9.17       fdisk: Partition 1 does not start on cylinder boundary
+ Q9.18       fdisk says partition n has an odd number of sectors
+ Q9.19       mtools says cannot initialise drive XYZ
+ Q9.20       At the start of booting: Memory tight
+ Q9.21       You don't exist. Go away.
+
+ Section 10. The X Window System
+ Q10.1       Does Linux support X Windows ?
+ Q10.2       Where can I get an XF86Config for my system ?
+ Q10.3       xterm logins show up strangely in who, finger
+ Q10.4       I can't get X Windows to work right.
+
+ Section 11. Questions applicable to very out-of-date software
+ Q11.1       Emacs just dumps core.
+ Q11.2       fdisk says cannot use nnn sectors of this partition
+ Q11.3       GCC sometimes uses huge amounts of virtual memory and thrashes
+ Q11.4       My keyboard goes all funny after I switch VC's.
+
+ Section 12. How to get further assistance
+ Q12.1       You still haven't answered my question !
+ Q12.2       What to put in a request for help
+ Q12.3       I want to mail someone about my problem.
+
+ Section 13. Administrative information and acknowledgements
+ Q13.1       Feedback is invited
+ Q13.2       Formats in which this FAQ is available
+ Q13.3       Authorship and acknowledgements
+ Q13.4       Disclaimer and Copyright
+
+===============================================================================
+
+Section 1.  Introduction and General Information
+
+ Q1.1        What is twin ?
+ Q1.2        Does it run on my computer ?
+ Q1.3        Can twin display on X ? On Linux console ? On ... ?
+ Q1.4        What software does it provide ? Which programs require twin ?
+ Q1.5        What ports to other operating systems are there ?
+ Q1.6        Is twin PD ?  Copyrighted ?
+
+-------------------------------------------------------------------------------
+
+Question 1.1.  What is twin ?
+
+Twin is a windowing environment with mouse support, window manager,
+terminal emulator and networked clients, all inside a text display.
+
+You can think to twin as the text-mode equivalent of X11 servers,
+with some extra features:
+
+a) It manages multiple windows on a single screen,
+   just like X11 servers except that twin uses text-mode.
+   
+b) It has X11-style networked server capabilities:
+   programs started remotely can connect to twin using sockets,
+   just like X11 clients (xterm, fvwm2, gimp, kde, netscape, ...) connect
+   to X11 servers.
+
+c) It has built-in window manager and terminal emulator (Linux console
+   emulator, actually).
+
+d) It supports a variety of displays by using specific drivers -
+   see Q1.3 `Can twin use X11 to display ? And Linux console ? And ... ?'
+   for more details.
+
+e) It and can attach/detach displays on-the-fly and supports
+   multiple simultaneous displays. You can find a very similar
+   feature in VNC (Virtual Network Computer, a virtual X11 server).
+
+   
+Twin is distributed under the GNU General Public License - see
+Q1.6 `Is twin PD ?  Copyrighted ?' for more details.
+   
+-------------------------------------------------------------------------------
+
+Question 1.2.  Does it run on my computer ?
+
+Twin has been tested to compile on various operating systems, including:
+Linux (i386, PowerPC, Alpha, Sparc),
+FreeBSD (i386),
+SunOS.
+
+The author had yet no chance to seriously test twin on other systems.
+But having a compatible operating system is not enough, a supported display is
+required too - see Q1.3 Can twin display on X ? On Linux console ? On ... ?
+
+-------------------------------------------------------------------------------
+
+Question 1.3.  Can twin display on X ? On Linux console ? On ... ?
+
+In order to let the user see all the text-mode windows created by twin,
+twin server must draw on a display using one of its display drivers.
+At the time this document is being written, twin supports at least the
+following drivers:
+
+X [X11] : lets twin display on X11 servers (plain driver).
+gfx     : lets twin display on X11 servers (enhanced driver).
+twin    : lets twin display on another twin server or on itself.
+tty     : lets twin display on text terminals, including at least:
+	Linux console (mouse support requires gpm and libgpm)
+	twterm, twin's own terminal emulator (with mouse)
+	any termcap/ncurses compatible terminal (with mouse if they support
+		either xterm or twterm mouse reporting protocols)
+ggi     : lets twin use libggi as display (UNFINISHED)
+
+-------------------------------------------------------------------------------
+
+Question 1.4.  What software does it provide ? Which programs require twin ?
+
+Twin is distributed with:
+
+a) twin server (obvious)
+b) twattach and twdisplay - utilities to attach/detach displays
+c) various more-or-less useful utilities, including at least:
+   twcat, twclip, twlsobj, twevent, twfindtwin,
+   twmapscrn, twsendmsg, twsetroot, twthreadtest.
+d) some more complex clients, including at least:
+   twsysmon - a system resources monitor (works on Linux only) 
+   twterm   - a terminal emulator (Linux console emulator, actually)
+   twdm     - a login manager, modeled after xdm/kdm.
+
+To obtain more information about these clients, see the Tutorial.
+   
+Various libraries come with twin too:
+
+e) libTutf  - a tiny unicode translation library
+f) libTw    - a library to talk to twin servers
+g) libTT    - a text toolkit library
+
+
+
+
+===============================================================================
+
+Section 13.  Administrative information and acknowledgements
+
+ Q13.1       Feedback is invited
+ Q13.2       Formats in which this FAQ is available
+ Q13.3       Authorship and acknowledgements
+ Q13.4       Disclaimer and Copyright
+
+-------------------------------------------------------------------------------
+
+Question 13.1.  Feedback is invited
+
+Please send me your comments on this FAQ.
+
+I accept submissions for the FAQ in any format;  All contributions
+comments and corrections are gratefully received.
+
+Please send them to <ijackson@gnu.ai.mit.edu>.
+
+If you wish to refer to a question(s) in the FAQ it's most useful for me
+if you do so by the question heading, rather than the number, as the
+question numbers are generated automatically and I don't see them in the
+source file I edit.
+
+I prefer comments in English to patchfiles - I write the FAQ in a
+different internal format anyway, so I can't use a patchfile.
+
+-------------------------------------------------------------------------------
+
+Question 13.2.  Formats in which this FAQ is available
+
+This document is available as an ASCII text file, an Emacs Info document,
+an HTML World Wide Web page, PostScript and as a USENET news posting.
+
+The ASCII, Emacs Info, HTML and posted versions and a Lout typesetter file
+(from which the PostScript is produced) are generated automatically by a
+Perl script which takes as input a file in the Bizarre Format with No
+Name.
+
+The output files linux-faq.ascii, .info and .ps and a tarfile
+linux-faq.source.tar.gz, containing the BFNN source and Perl script
+converter, are available in the docs directories of the major Linux FTP
+sites.
+
+The HTML version of this FAQ is available as
+http://www.cl.cam.ac.uk/users/iwj10/linux-faq/index.html and is mirrored
+at www.li.org and other sites.
+
+The USENET version is posted regularly to comp.os.linux.announce,
+comp.os.linux.answers, comp.answers and news.answers.
+
+-------------------------------------------------------------------------------
+
+Question 13.3.  Authorship and acknowledgements
+
+This FAQ was compiled by Ian Jackson <ijackson@gnu.ai.mit.edu>, with
+assistance and comments from others too numerous to mention.
+
+Special thanks are due to Matt Welsh, who moderated comp.os.linux.announce
+and comp.os.linux.answers, used to coordinate the HOWTOs and has written
+substantial portions of many of them, to Greg Hankins, who currently
+coordinates the HOWTOS, to Lars Wirzenius, who currently moderates
+comp.os.linux.announce, and to Marc-Michel Corsini, who wrote the original
+Linux FAQ.
+
+Thanks also to the many people who have sent comments and suggestions;
+they are too numerous to list here, but their input has been invaluable.
+
+Last but not least, thanks to Linus Torvalds and the other contributors to
+Linux for giving us something to write about !
+
+-------------------------------------------------------------------------------
+
+Question 13.4.  Disclaimer and Copyright
+
+Note that this document is provided as is.  The information in it is *not*
+warranted to be correct; you use it at your own risk.
+
+Linux Frequently Asked Questions with Answers is Copyright 1994, 1995,
+1996 by Ian Jackson <ijackson@gnu.ai.mit.edu>.
+
+It may be reproduced and distributed in its entirety (including this
+authorship, copyright and permission notice) provided that either:
+
+* the distribution is not commercial (commercial means any situation in
+  which you benefit financially - directly or indirectly such as by
+  inclusion in a publication which carries commercial advertising), or
+* the distribution is in machine-readable form (ie, a form intended to be
+  easily processed by a computer).
+
+Note that this restriction is not intended to prohibit charging for the
+service of printing or copying a document supplied by your customer.
+
+Any distribution of a partial copy or extract, a translation or a
+derivative work must be approved by me before distribution.  Email me -
+I'll probably be happy to oblige !
+
+Exceptions to these rules may be granted, and I shall be happy to answer
+any questions about this copyright --- write to Ian Jackson, Churchill
+College, Cambridge, CB3 0DS, United Kingdom or email
+<ijackson@gnu.ai.mit.edu>.  These restrictions are here to protect the
+contributors, not to restrict you as educators and learners.
+
+Ian Jackson asserts the right to be identified as the author of this work,
+and claims the moral rights of paternity and integrity, in accordance with
+the Copyright, Designs and Patents Act, 1988.
+

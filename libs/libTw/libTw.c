@@ -510,7 +510,7 @@ static uldat *InitRS(tw_d TwD) {
 	s += len;
 	return r = (uldat *)s - 3;
     }
-    Errno = TW_ENO_MEM;
+    Errno = TW_ESYS_NO_MEM;
     return (uldat *)0;
 }
 
@@ -681,7 +681,7 @@ static byte Flush(tw_d TwD, byte Wait) {
     
     if (left && Wait) {
 	E = GetErrnoLocation(TwD);
-	E->E = TW_ECANT_WRITE;
+	E->E = TW_ESYS_CANNOT_WRITE;
 	E->S = errno;
 	Panic(TwD);
     }
@@ -762,7 +762,7 @@ static uldat TryRead(tw_d TwD, byte Wait) {
 	Qlen[Q] -= len - (got == (uldat)-1 ? 0 : got);
 	
 	if (got == 0 || (got == (uldat)-1 && errno != EINTR && errno != EAGAIN && errno != EWOULDBLOCK)) {
-	    Errno = TW_ELOST_CONN;
+	    Errno = TW_ESERVER_LOST_CONNECT;
 	    Panic(TwD);
 	    return (uldat)-1;
 	}
@@ -894,10 +894,10 @@ static byte ProtocolNumbers(tw_d TwD) {
 	    DeQueue(TwD, QREAD, *servdata);
 	    return TRUE;
 	} else
-	    Errno = TW_EX_PROTOCOL;
+	    Errno = TW_ESERVER_BAD_VERSION;
     } else if (len == 0) {
 	/* server immediately closed the socket. socket module not running? */
-	GetErrnoLocation(TwD)->S = TW_ENO_MODULE_DETAIL;
+	GetErrnoLocation(TwD)->S = TW_EDETAIL_NO_MODULE;
     }
     return FALSE;
 }
@@ -911,7 +911,7 @@ TW_DECL_MAGIC(Tw_MagicData);
  */
 byte Tw_CheckMagic(TW_CONST byte id[])  {
     if (Tw_CmpMem(id+1, Tw_MagicData+1, (id[0] < Tw_MagicData[0] ? id[0] : Tw_MagicData[0]) - 2 - sizeof(uldat))) {
-	CommonErrno = TW_EXLIB_SIZES;
+	CommonErrno = TW_EBAD_SIZES;
 	return FALSE;
     }
     if (sizeof(struct s_tevent_display)  !=  sizeof(tobj) + 4*sizeof(udat) + sizeof(uldat) ||
@@ -928,7 +928,7 @@ byte Tw_CheckMagic(TW_CONST byte id[])  {
 	sizeof(struct s_tevent_control)  != sizeof(tobj) + 4*sizeof(udat) + sizeof(uldat) ||
 	sizeof(struct s_tevent_clientmsg) != sizeof(tobj) + 2*sizeof(udat) + 2*sizeof(uldat)) {
 	
-	CommonErrno = TW_EXLIB_STRUCT_SIZES;
+	CommonErrno = TW_EBAD_STRUCTS;
 	return FALSE;
     }
     return TRUE;
@@ -969,9 +969,9 @@ static byte MagicNumbers(tw_d TwD) {
 		DeQueue(TwD, QREAD, *hostdata);
 		return TRUE;
 	    } else
-		Errno = TW_EX_ENDIAN;
+		Errno = TW_ESERVER_BAD_ENDIAN;
 	} else
-	    Errno = TW_EX_SIZES;
+	    Errno = TW_ESERVER_BAD_SIZES;
     }
     return FALSE;
 }
@@ -992,7 +992,7 @@ static byte MagicChallenge(tw_d TwD) {
     if (challenge == TW_GO_MAGIC)
 	return TRUE;
     if (challenge != TW_WAIT_MAGIC) {
-	Errno = TW_ESTRANGE;
+	Errno = TW_ESERVER_BAD_PROTOCOL;
 	return FALSE;
     }
     if (!(home = getenv("HOME"))) {
@@ -1000,7 +1000,7 @@ static byte MagicChallenge(tw_d TwD) {
 	return FALSE;
     }
     if (!WQLeft(digestLen) || !(data = Tw_AllocMem(hAuthLen))) {
-	Errno = TW_ENO_MEM;
+	Errno = TW_ESYS_NO_MEM;
 	return FALSE;
     }
 	
@@ -1059,7 +1059,7 @@ static byte MagicChallenge(tw_d TwD) {
     if (challenge == TW_GO_MAGIC)
 	return TRUE;
     if (Fd != TW_NOFD)
-	Errno = TW_EDENIED;
+	Errno = TW_ESERVER_DENIED_CONNECT;
     return FALSE;
 }
 
@@ -1090,7 +1090,7 @@ tw_d Tw_Open(TW_CONST byte *TwDisplay) {
 	struct sockaddr_un addr;
 	
 	if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) < 0) {
-	    CommonErrno = TW_ENO_SOCKET;
+	    CommonErrno = TW_ESYS_NO_SOCKET;
 	    break;
 	}
 	Tw_WriteMem(&addr, 0, sizeof(addr));
@@ -1109,7 +1109,7 @@ tw_d Tw_Open(TW_CONST byte *TwDisplay) {
 	unsigned short port;
 	
 	if (!server) {
-	    CommonErrno = TW_ENO_MEM;
+	    CommonErrno = TW_ESYS_NO_MEM;
 	    break;
 	}
 	    
@@ -1153,7 +1153,7 @@ tw_d Tw_Open(TW_CONST byte *TwDisplay) {
 	if ((fd = socket(addr.sin_family, SOCK_STREAM, 0)) >= 0)
 	    result = connect(fd, (struct sockaddr *)&addr, sizeof(addr));
 	else
-	    CommonErrno = TW_ENO_SOCKET;
+	    CommonErrno = TW_ESYS_NO_SOCKET;
 	    
     } while (0);
 
@@ -1163,17 +1163,17 @@ tw_d Tw_Open(TW_CONST byte *TwDisplay) {
     if (result == -1) { /* some error occurred */
 	if (fd != TW_NOFD) {
 	    close(fd);
-	    CommonErrno = TW_ECANT_CONN;
+	    CommonErrno = TW_ESYS_CANNOT_CONNECT;
 	}
 	/* try to get a meaningful message for the error */
-	if (CommonErrno == TW_ENO_SOCKET || CommonErrno == TW_ECANT_CONN)
+	if (CommonErrno == TW_ESYS_NO_SOCKET || CommonErrno == TW_ESYS_CANNOT_CONNECT)
 	    rCommonErrno.S = errno;
 	return (tw_d)0;
     }
 
     if (!(TwD = (tw_d)Tw_AllocMem(sizeof(struct s_tw_d)))) {
 	close(fd);
-	CommonErrno = TW_ENO_MEM;
+	CommonErrno = TW_ESYS_NO_MEM;
 	return (tw_d)0;
     }
 
@@ -1351,54 +1351,54 @@ TW_FN_ATTR_CONST TW_CONST byte *Tw_StrError(TW_CONST tw_d TwD, uldat e) {
     switch (e) {
       case 0:
 	return "success";
-      case TW_EX_ENDIAN:
+      case TW_ESERVER_BAD_ENDIAN:
 	return "server has reversed endianity, impossible to connect";
-      case TW_EX_SIZES:
+      case TW_ESERVER_BAD_SIZES:
 	return "server has different data sizes, impossible to connect";
-      case TW_ELOST_CONN:
-	return "connection lost ";
-      case TW_EALREADY_CONN:
-	return "already connected";
+      case TW_EBAD_SIZES:
+	return "compiled data sizes are incompatible with libTw now in use!";
+      case TW_EBAD_STRUCTS:
+	return "internal error: structs are not packed! Please contact the author.";
       case TW_ENO_DISPLAY:
 	return "TWDISPLAY is not set";
       case TW_EBAD_DISPLAY:
 	return "badly formed TWDISPLAY";
-      case TW_ECANT_CONN:
-	return "failed to connect: ";
-      case TW_ENO_MEM:
-	return "out of memory";
-      case TW_ECANT_WRITE:
-	return "failed to send data to server: ";
-      case TW_ENO_FUNCTION:
-	return "function not supported by server: ";
-      case TW_ESTRANGE:
-	return "got strange data from server, protocol violated";
       case TW_ENO_AUTH:
 	return "bad or missing authorization file ~/.TwinAuth, cannot connect";
-      case TW_EDENIED:
+      case TW_ESYS_CANNOT_CONNECT:
+	return "failed to connect: ";
+      case TW_ESYS_NO_MEM:
+	return "out of memory!";
+      case TW_ESYS_CANNOT_WRITE:
+	return "failed to send data to server: ";
+      case TW_ESYS_NO_SOCKET:
+	return "failed to create socket: ";
+      case TW_ESERVER_LOST_CONNECT:
+	return "connection lost ";
+      case TW_ESERVER_ALREADY_CONNECT:
+	return "already connected";
+      case TW_ESERVER_BAD_PROTOCOL:
+	return "got invalid data from server, protocol violated";
+      case TW_ESERVER_NO_FUNCTION:
+	return "function not supported by server: ";
+      case TW_ESERVER_BAD_FUNCTION:
+	return "function is not a possible server function";
+      case TW_ESERVER_DENIED_CONNECT:
 	return "server denied permission to connect, file ~/.TwinAuth may be wrong";
-      case TW_EBAD_GZIP:
+      case TW_EGZIP_BAD_PROTOCOL:
 	return "got invalid data from server, gzip format violated";
-      case TW_EINTERNAL_GZIP:
+      case TW_EGZIP_INTERNAL:
 	return "internal gzip error, panic!";
       case TW_ENO_HOST:
 	return "unknown host in TWDISPLAY: ";
-      case TW_EBAD_FUNCTION:
-	return "function is not a possible server function";
-      case TW_EX_PROTOCOL:
+      case TW_ESERVER_BAD_VERSION:
 	return "server has incompatible protocol version, impossible to connect";
-      case TW_ENO_SOCKET:
-	return "failed to create socket: ";
-      case TW_ESTRANGE_CALL:
+      case TW_ESERVER_BAD_RETURN:
 	return "server function call returned strange data, wrong data sizes? : ";
-      case TW_EFAILED_CALL:
+      case TW_ECALL_BAD:
 	return "function call rejected by server, wrong data sizes? : ";
-      case TW_EFAILED_ARG_CALL:
+      case TW_ECALL_BAD_ARG:
 	return "function call rejected by server, invalid arguments? : ";
-      case TW_EXLIB_SIZES:
-	return "compiled data sizes are incompatible with libTw now in use!";
-      case TW_EXLIB_STRUCT_SIZES:
-	return "internal error: structs are not packed! Please contact the author.";
       default:
 	return "unknown error";
     }
@@ -1409,25 +1409,27 @@ TW_FN_ATTR_CONST TW_CONST byte *Tw_StrError(TW_CONST tw_d TwD, uldat e) {
  */
 TW_FN_ATTR_CONST TW_CONST byte *Tw_StrErrorDetail(TW_CONST tw_d TwD, uldat E, uldat S) {
     switch (E) {
-      case TW_ELOST_CONN:
+      case TW_ESERVER_LOST_CONNECT:
 	switch (S) {
-	  case TW_ENO_MODULE_DETAIL:
+	  case TW_EDETAIL_NO_MODULE:
 	    return "(socket module may be not running on server)";
 	  default:
 	    break;
 	}
 	return "(explicit kill or server shutdown)";
-      case TW_ECANT_CONN:
-      case TW_ECANT_WRITE:
-      case TW_ENO_SOCKET:
+      case TW_ESYS_CANNOT_CONNECT:
+      case TW_ESYS_CANNOT_WRITE:
+      case TW_ESYS_NO_SOCKET:
 	return strerror(S);
       case TW_ENO_HOST:
 	return hstrerror(S);
-      case TW_ENO_FUNCTION:
-      case TW_ESTRANGE_CALL:
-      case TW_EFAILED_CALL:
-      case TW_EFAILED_ARG_CALL:
-	return Functions[S].name;
+      case TW_ESERVER_NO_FUNCTION:
+      case TW_ESERVER_BAD_RETURN:
+      case TW_ECALL_BAD:
+      case TW_ECALL_BAD_ARG:
+	if (Functions[S].name)
+	    return Functions[S].name;
+	break;
     }
     return "";
 }
@@ -1991,151 +1993,10 @@ TW_INLINE void Send(tw_d TwD, uldat Serial, uldat idFN) {
 /***********/
 
 
-#ifdef TW_HAVE_GCC_I386_ASM
-#define _ TWS_field_scalar	
-/*
- * arguments of EncodeCall and EncodeArgs are different if using
- * asm functions Tw_* : array sizes are not placed as arguments
- * before the array, so must be calculated separately.
- */
-static uldat EncodeArraySize(fn_order o, uldat n, tsfield a) {
-    uldat L = 0;
-    switch (o) {
 
-#include "libTw3_m4.h"
-
-      case order_StatObj:
-	switch (n) {
-	    case 3: L = a[2]._; break;
-	}
-      default:
-	break;
-    }
-    return L;
-}
-# undef _
-#endif /* TW_HAVE_GCC_I386_ASM */
+#include "encode.h"
 
 
-/*
- * read (va_list va) and fill (tsfield a)
- * 
- * let (tobj) fields decade into (uldat),
- * since from client side they are the same.
- */
-TW_INLINE udat EncodeArgs(fn_order o, uldat *Space, va_list va, tsfield a) {
-    byte *Format = Functions[o].format + 1;
-    uldat arglen, space;
-    udat N;
-    byte c, t;
-    
-    for (N = space = 0; (c = *Format++); N++, a++) {
-	t = *Format++ - TWS_base_CHR;
-	if (t >= TWS_highest)
-	    /*
-	     * let (tobj) fields decade into (uldat),
-	     * since from client side they are the same .
-	     */
-	    t = TWS_uldat;
-	
-	if (N) switch (c) {
-	  case '_':
-	  case 'x':
-	    space += Tw_MagicData[t];
-	    a->type = t;
-	    a->TWS_field_scalar = va_arg(va, tlargest);
-	    break;
-	  case 'W':
-	  case 'Y':
-	    a->type = TWS_vec | TWS_vecW | t;
-#ifdef TW_HAVE_GCC_I386_ASM
-	    arglen = EncodeArraySize(o, N, a-N);
-#else
-	    arglen = va_arg(va, tlargest);
-#endif
-	    if (!(a->TWS_field_vecV = va_arg(va, TW_CONST void *)))
-		arglen = 0;
-	    a->TWS_field_vecL = arglen;
-	    space += sizeof(uldat) + arglen;
-	    break;
-	  case 'V':
-	  case 'X':
-	    a->type = TWS_vec | t;
-	    space += 
-#ifdef TW_HAVE_GCC_I386_ASM
-	    a->TWS_field_vecL = EncodeArraySize(o, N, a-N);
-#else
-	    a->TWS_field_vecL = va_arg(va, tlargest);
-#endif
-	    a->TWS_field_vecV = va_arg(va, TW_CONST void *);
-	    break;
-	  default:
-	    break;
-	} else switch (c) {
-	    /* parse arg 0 (return value) */
-	  case '_':
-	  case 'x':
-	  case 'v':
-	    a->type = t;
-	    a->hash = Tw_MagicData[t]; /* sizeof(return type) */
-	    break;
-	  default:
-	    break;
-	}
-    }
-    *Space = space;
-    return N - 1; /* arg 0 is not a call argument */
-}
-
-
-TW_INLINE void PushArg(tw_d TwD, tsfield a) {
-    switch (a->type) {
-#define ENC_CASE(type) case TW_CAT(TWS_,type): { type tmp = (type)a->TWS_field_scalar; Push(s,type,tmp); }; break
-	ENC_CASE(byte);
-	ENC_CASE(udat);
-#if 0
-	/* we never meet this here, as EncodeArgs() above turns (tobj) into (uldat) */
-      case TWS_tobj:
-	/* FALLTHROUGH */
-#endif
-	ENC_CASE(uldat);
-	ENC_CASE(hwcol);
-	ENC_CASE(time_t);
-	ENC_CASE(frac_t);
-	ENC_CASE(hwfont);
-	ENC_CASE(hwattr);
-#undef ENC_CASE
-      default:
-	if (a->type & TWS_vec) {
-	    if (a->type & TWS_vecW)
-		Push(s, uldat, a->TWS_field_vecL);
-	    if (a->TWS_field_vecL)
-		PushV(s, a->TWS_field_vecL, a->TWS_field_vecV);
-	}
-	break;
-    }
-}
-
-TW_INLINE void DecodeReply(byte *data, tsfield a) {
-    switch (a->type) {
-#define DEC_CASE(type) case TW_CAT(TWS_,type): { type tmp; Pop(data,type,tmp); a->TWS_field_scalar = tmp; }; break
-	DEC_CASE(byte);
-	DEC_CASE(udat);
-#if 0
-	/* we never meet this here, as EncodeArgs() above turns (tobj) into (uldat) */
-      case TWS_tobj:
-	/* FALLTHROUGH */
-#endif
-	DEC_CASE(uldat);
-	DEC_CASE(hwcol);
-	DEC_CASE(time_t);
-	DEC_CASE(frac_t);
-	DEC_CASE(hwfont);
-	DEC_CASE(hwattr);
-      default:
-	break;
-    }
-}
 
 static uldat FindFunctionId(tw_d TwD, uldat order);
 
@@ -2160,7 +2021,9 @@ struct s_reply {
 #define ENCODE_FL_RETURN 2
 
 
-#ifdef TW_HAVE_GCC_I386_ASM
+#if defined(CONF__ASM) && defined(TW_HAVE_ASM)
+
+# ifdef TW_HAVE_GCC_I386_ASM
 /*
  * and let _Tw_EncodeCall be visible from libTw2_i386.S:
  * it implements hand-optimized assembler version of Tw_* functions
@@ -2169,12 +2032,16 @@ struct s_reply {
  * are not placed as arguments before the array,
  * so must be calculated separately (done in EncodeArraySize())
  */
-tlargest _Tw_EncodeCall(uldat flags, uldat o, void *saved_eip, tw_d TwD, ...)
-#else
-static tlargest EncodeCall(byte flags, uldat o, tw_d TwD, ...)
-#endif
+tany _Tw_EncodeCall(uldat flags, uldat o, void *saved_eip, tw_d TwD, ...)
+# else /* !TW_HAVE_GCC_I386_ASM */
+#  error CONF__ASM is enabled but no known assemler is supported (only gcc-i386 currently)
+# endif /* TW_HAVE_GCC_I386_ASM */
+
+#else /* !(defined(CONF__ASM) && defined(TW_HAVE_ASM)) */
+static tany _Tw_EncodeCall(byte flags, uldat o, tw_d TwD, ...)
+#endif /* defined(CONF__ASM) && defined(TW_HAVE_ASM) */
 {
-    struct s_tsfield a[20];
+    struct s_tsfield a[TW_MAX_ARGS_N];
     tsfield b;
     va_list va;
     DECL_MyReply
@@ -2193,40 +2060,45 @@ static tlargest EncodeCall(byte flags, uldat o, tw_d TwD, ...)
 	va_start(va, (void *)TwD);
 	N = EncodeArgs(o, &space, va, a);
 	va_end(va);
-	
-	if (InitRS(TwD) && WQLeft(space)) {
-	    /* skip over a[0], that will hold return value */
-	    for (b = a+1; N; b++, N--)
-		PushArg(TwD, b);
-	    
-	    Send(TwD, (My = NextSerial(TwD)), id_Tw[o]);
-	    if (flags & ENCODE_FL_RETURN) {
-		if ((MyReply = (void *)Wait4Reply(TwD, My)) && (INIT_MyReply MyCode == OK_MAGIC)) {
-		    if (MyLen == 2*sizeof(uldat) + a[0].hash)
-			DecodeReply((byte *)MyData, a);
-		    else
-			FailedCall(TwD, TW_ESTRANGE_CALL, o);
-		} else {
-		    FailedCall(TwD, MyReply && MyCode != (uldat)-1 ?
-			       TW_EFAILED_ARG_CALL : TW_EFAILED_CALL, o);
+
+	if (N != (udat)-1) {
+	    if (InitRS(TwD) && WQLeft(space)) {
+		/* skip over a[0], that will hold return value */
+		for (b = a+1; N; b++, N--)
+		    s = PushArg(s, b);
+		
+		Send(TwD, (My = NextSerial(TwD)), id_Tw[o]);
+		if (flags & ENCODE_FL_RETURN) {
+		    if ((MyReply = (void *)Wait4Reply(TwD, My)) && (INIT_MyReply MyCode == OK_MAGIC)) {
+			if (MyLen == 2*sizeof(uldat) + a[0].hash)
+			    DecodeReply((byte *)MyData, a);
+			else
+			    FailedCall(TwD, TW_ESERVER_BAD_PROTOCOL, o);
+		    } else {
+			FailedCall(TwD, MyReply && MyCode != (uldat)-1 ?
+				   TW_ECALL_BAD_ARG : TW_ECALL_BAD, o);
+		    }
+		    if (MyReply)
+			KillReply(TwD, (byte *)MyReply, MyLen);
 		}
-		if (MyReply)
-		    KillReply(TwD, (byte *)MyReply, MyLen);
+	    } else {
+		/* still here? must be out of memory! */
+		Errno = TW_ESYS_NO_MEM;
+		Fail(TwD);
 	    }
 	} else {
-	    /* still here? must be out of memory! */
-	    Errno = TW_ENO_MEM;
-	    Fail(TwD);
+	    /* N == (udat)-1, EncodeArgs() failed ! */
+	    FailedCall(TwD, TW_ECALL_BAD, o);
 	}
     } else if (Fd != TW_NOFD)
-	FailedCall(TwD, TW_ENO_FUNCTION, o);
+	FailedCall(TwD, TW_ESERVER_NO_FUNCTION, o);
     if (flags & ENCODE_FL_LOCK)
 	UNLK;
     return a->TWS_field_scalar;
 }
 
 
-#ifdef TW_HAVE_GCC_I386_ASM
+#if defined(CONF__ASM) && defined(TW_HAVE_ASM)
 
 uldat _Tw_FindFunction(tw_d TwD, byte Len, TW_CONST byte *Name, byte ProtoLen, TW_CONST byte *Proto);
 byte  _Tw_SyncSocket(tw_d TwD);
@@ -2235,7 +2107,7 @@ byte  _Tw_SyncSocket(tw_d TwD);
 
 #include "libTw2_m4.h"
 
-#endif /* TW_HAVE_GCC_I386_ASM */
+#endif /* defined(CONF__ASM) && defined(TW_HAVE_ASM) */
 
 
 
@@ -2356,10 +2228,10 @@ void Tw_Draw2Widget(tw_d TwD, twidget a1, dat a2, dat a3, dat a4, dat a5, dat pi
             }
 	}
 	/* still here? must be out of memory! */
-	Errno = TW_ENO_MEM;
+	Errno = TW_ESYS_NO_MEM;
 	Fail(TwD);
     } else if (Fd != TW_NOFD)
-	FailedCall(TwD, TW_ENO_FUNCTION, order_DrawWidget);
+	FailedCall(TwD, TW_ESERVER_NO_FUNCTION, order_DrawWidget);
     
     UNLK;
 }
@@ -2530,7 +2402,7 @@ static tslist StatA(tw_d TwD, tobj Id, udat flags, udat hN, TW_CONST udat *h, ts
 /**
  * returns information about given object
  */
-tlargest Tw_Stat(tw_d TwD, tobj Id, udat h) {
+tany Tw_Stat(tw_d TwD, tobj Id, udat h) {
     struct s_tslist f;
     if (StatA(TwD, Id, TWS_SCALAR, 1, &h, &f))
 	return f.TSF[0].TWS_field_scalar;
@@ -2628,7 +2500,7 @@ tslist TwCloneStatL(tobj Id, udat hN, ...) {
     va_list ap;
     
     va_start(ap, hN);
-    TS = Tw_CloneVStat(Tw_DefaultD, Id, hN, ap);
+    TS = Tw_CloneStatV(Tw_DefaultD, Id, hN, ap);
     va_end(ap);
     
     return TS;
@@ -2711,8 +2583,8 @@ static tslist StatScalar(tslist f, byte *data, byte *end) {
 	    Popcase(dat);
 	    Popcase(ldat);
 	    Popcase(hwcol);
-	    Popcase(time_t);
-	    Popcase(frac_t);
+	    Popcase(topaque);
+	    Popcase(tany);
 	    Popcase(hwfont);
 	    Popcase(hwattr);
 	    Popcase(tobj);
@@ -2756,8 +2628,8 @@ static tslist StatTSL(tw_d TwD, udat flags, byte *data, byte *end) {
 		Popcase(dat);
 		Popcase(ldat);
 		Popcase(hwcol);
-		Popcase(time_t);
-		Popcase(frac_t);
+		Popcase(topaque);
+		Popcase(tany);
 		Popcase(hwfont);
 		Popcase(hwattr);
 		Popcase(tobj);
@@ -2789,7 +2661,7 @@ static tslist StatTSL(tw_d TwD, udat flags, byte *data, byte *end) {
 	    SortTSL(TSL);
 	    return TSL;
 	}
-	FailedCall(TwD, TW_ESTRANGE_CALL, order_StatObj);
+	FailedCall(TwD, TW_ESERVER_BAD_RETURN, order_StatObj);
 	Tw_DeleteStat(TwD, TSL);
     }
     return (tslist)0;
@@ -2818,7 +2690,7 @@ static tslist StatA(tw_d TwD, tobj Id, udat flags, udat hN, TW_CONST udat *h, ts
 			a0 = StatTSL(TwD, flags, (byte *)MyData, (byte *)MyReply + MyLen + sizeof(uldat));
 		} else {
 		    FailedCall(TwD, MyReply && MyCode != (uldat)-1 ?
-			       TW_EFAILED_ARG_CALL : TW_EFAILED_CALL, order_StatObj);
+			       TW_ECALL_BAD_ARG : TW_ECALL_BAD, order_StatObj);
 		    a0 = (tslist)TW_NOID;
 		}
 		if (MyReply)
@@ -2828,10 +2700,10 @@ static tslist StatA(tw_d TwD, tobj Id, udat flags, udat hN, TW_CONST udat *h, ts
 	    }
 	}
 	/* still here? must be out of memory! */
-	Errno = TW_ENO_MEM;
+	Errno = TW_ESYS_NO_MEM;
 	Fail(TwD);
     } else if (Fd != TW_NOFD)
-	FailedCall(TwD, TW_ENO_FUNCTION, order_StatObj);
+	FailedCall(TwD, TW_ESERVER_NO_FUNCTION, order_StatObj);
     UNLK;
     return (tslist)TW_NOID;
 }
@@ -2953,39 +2825,62 @@ void Tw_BlindSendMsg(tw_d TwD, tmsgport MsgPort, tmsg Msg) {
 /**
  * returns TRUE if server implements all given functions, FALSE otherwise
  */
-byte Tw_FindFunctions(tw_d TwD, void *F, ...) {
-    va_list L;
-    void *tryF;
+byte Tw_FindVFunction(tw_d TwD, va_list V) {
+    void *F, *tryF;
     uldat i, *id;
     s_tw_errno *E;
-
-    if (F) {
-	va_start(L, F);
-	do {
-	    for (i = 0; (tryF = Functions[i].Fn) && tryF != F; i++)
-		;
-	    if (tryF == F) {
-		id = &id_Tw[i];
-		if (*id != TW_NOID &&
-		    (*id != TW_BADID || (*id = FindFunctionId(TwD, i)) != TW_NOID))
-		    
-		    continue;
-		E = GetErrnoLocation(TwD);
-		E->E = TW_ENO_FUNCTION;
-		E->S = i;
-	    } else {
-		Errno = TW_EBAD_FUNCTION;
-	    }
-	    va_end(L);
-	    return FALSE;
+    
+    while ((F = va_arg(V, void *))) {
 	
-	} while ((F = va_arg(L, void *)));
-
-	va_end(L);
+	for (i = 0; (tryF = Functions[i].Fn) && tryF != F; i++)
+	    ;
+	if (tryF == F) {
+	    id = &id_Tw[i];
+	    if (*id != TW_NOID &&
+		(*id != TW_BADID || (*id = FindFunctionId(TwD, i)) != TW_NOID))
+		
+		continue;
+	    E = GetErrnoLocation(TwD);
+	    E->E = TW_ESERVER_NO_FUNCTION;
+	    E->S = i;
+	} else {
+	    Errno = TW_ESERVER_BAD_FUNCTION;
+	}
+	return FALSE;
+	
     }
+
     return TRUE;
 }
 
+byte Tw_FindLFunction(tw_d TwD, ...) {
+    byte ret;
+    va_list V;
+
+    va_start(V, TwD);
+    ret = Tw_FindVFunction(TwD, V);
+    va_end(V);
+	
+    return ret;
+}
+
+
+#ifndef __GNUC__
+byte TwFindLFunction(void *F, ...) {
+    byte ret;
+    va_list V;
+
+    if (F) {
+	va_start(V, F);
+	ret = Tw_FindVFunction(Tw_DefaultD, F, V);
+	va_end(V);
+	
+	return ret;
+    }
+    return TRUE;
+}
+#endif
+    
 
 void Tw_MergeHyphensArgv(int argc, char **argv) {
     char *S;
@@ -3034,7 +2929,7 @@ static uldat Gzip(tw_d TwD) {
 		    z->next_out = FillQueue(TwD, QgzWRITE, &tmp); z->avail_out = tmp;
 		} else {
 		    /* out of memory ! */
-		    Errno = TW_ENO_MEM;
+		    Errno = TW_ESYS_NO_MEM;
 		    Panic(TwD);
 		    break;
 		}
@@ -3054,7 +2949,7 @@ static uldat Gzip(tw_d TwD) {
 	if (zret == Z_OK)
 	    return oldQWRITE;
 	else {
-	    Errno = TW_EINTERNAL_GZIP;
+	    Errno = TW_EGZIP_INTERNAL;
 	    Panic(TwD);
 	}
     }
@@ -3081,7 +2976,7 @@ static uldat Gunzip(tw_d TwD) {
 		    z->next_out = FillQueue(TwD, QREAD, &tmp); z->avail_out = tmp;
 		} else {
 		    /* out of memory ! */
-		    Errno = TW_ENO_MEM;
+		    Errno = TW_ESYS_NO_MEM;
 		    Panic(TwD);
 		    break;
 		}
@@ -3101,7 +2996,7 @@ static uldat Gunzip(tw_d TwD) {
 	if (zret == Z_OK)
 	    return Qlen[QREAD] - oldQRead;
 	else {
-	    Errno = TW_EBAD_GZIP;
+	    Errno = TW_EGZIP_BAD_PROTOCOL;
 	    Panic(TwD);
 	}
     }
@@ -3168,4 +3063,124 @@ byte Tw_DisableGzip(tw_d TwD) {
 #endif /* CONF_SOCKET_GZ */
 
 
+TW_INLINE void TWS_2_proto(udat tws_type, byte proto [2]) {
+    if (tws_type & TWS_vec) {
+	proto[0] = 'V';
+    } else if (tws_type == TWS_void) {
+	proto[0] = 'v';
+    } else
+	proto[0] = '_';
+	
+    if ((tws_type &= TWS_last) == TWS_void) {
+	/* turn TWS_void ('\0') into '\xFE' */
+	proto[1] = TWS_void_CHR;
+    } else if (tws_type < TWS_highest) {
+	proto[1] = tws_type;
+    } else {
+	/* safe assumption */
+	proto[0] = '_';
+	proto[1] = TWS_tany;
+    }
+}
+
+/* encode args in server socket and call server extension */
+/* WARNING: here a[0] is the return value! */
+static tany CallBExtension(tdisplay TwD, textension eid, uldat space, tany args_n, tsfield a) {
+    struct s_tsfield a_real[2];
+    tsfield b;
+    DECL_MyReply
+    uldat My, flags, o;
+    udat N;
+    byte return_proto[2] = "v"TWS_void_STR;
+    
+    flags = a[0].type != TWS_void ? ENCODE_FL_RETURN : 0;
+    o = order_CallBExtension;
+    N = args_n;
+    
+    LOCK;
+    if (Fd != TW_NOFD && (My = id_Tw[o]) != TW_NOID &&
+       	(My != TW_BADID || (My = FindFunctionId(TwD, o)) != TW_NOID)) {
+
+	a_real[0].TWS_field_scalar = eid;
+	a_real[0].type = TWS_uldat;
+	a_real[1].TWS_field_scalar = space;
+	a_real[1].type = TWS_topaque;
+	
+	space += sizeof(uldat) + sizeof(topaque) + 2*sizeof(byte); /* a[0] (eid) + a[1] (space) + return type */
+	
+	if (InitRS(TwD) && WQLeft(space)) {
+	    s = PushArg(s, &a_real[0]);
+	    s = PushArg(s, &a_real[1]);
+	    
+	    /* skip over a[0], that will hold return value */
+	    for (b = a+1; N; b++, N--)
+		s = PushArg(s, b);
+
+	    /* push return type */
+	    TWS_2_proto(a[0].type, return_proto);
+	    PushV(s,2*sizeof(byte),return_proto);
+	    
+	    Send(TwD, (My = NextSerial(TwD)), id_Tw[o]);
+	    if (flags & ENCODE_FL_RETURN) {
+		if ((MyReply = (void *)Wait4Reply(TwD, My)) && (INIT_MyReply MyCode == OK_MAGIC)) {
+		    if (MyLen == 2*sizeof(uldat) + a[0].hash)
+			DecodeReply((byte *)MyData, a);
+		    else
+			FailedCall(TwD, TW_ESERVER_BAD_PROTOCOL, o);
+		} else {
+		    FailedCall(TwD, MyReply && MyCode != (uldat)-1 ?
+			       TW_ECALL_BAD_ARG : TW_ECALL_BAD, o);
+		}
+		if (MyReply)
+		    KillReply(TwD, (byte *)MyReply, MyLen);
+	    }
+	} else {
+	    /* still here? must be out of memory! */
+	    Errno = TW_ESYS_NO_MEM;
+	    Fail(TwD);
+	}
+    } else if (Fd != TW_NOFD)
+	FailedCall(TwD, TW_ESERVER_NO_FUNCTION, o);
+    UNLK;
+    return a->TWS_field_scalar;
+}
+
+/* WARNING: here a[0] is the return value ! */
+tany Tw_CallTExtension(tdisplay TwD, textension eid, topaque args_n, tsfield a) {
+    uldat space;
+    
+    space = ExtensionComputeSpace(args_n, a);
+
+    return CallBExtension(TwD, eid, space, args_n, a);
+}
+
+tany Tw_CallVExtension(tdisplay TwD, textension eid, TW_CONST byte *proto, topaque args_n, va_list vargs) {
+    struct s_tsfield a[TW_MAX_ARGS_N];
+    uldat space;
+    udat N;
+    s_tw_errno *E;
+
+    a->TWS_field_scalar = TW_NOID;
+    N = ExtensionEncodeArgs(proto, &space, vargs, a);
+    
+    if (N == args_n)
+	/* WARNING: here a[0] is the return value ! */
+	return CallBExtension(TwD, eid, space, args_n, a);
+	
+    E = GetErrnoLocation(TwD);
+    E->E = TW_ECALL_BAD_ARG;
+    E->S = order_CallBExtension;
+    return (tany)0;
+}
+
+tany Tw_CallLExtension(tdisplay TwD, textension eid, TW_CONST byte *proto, topaque args_n, ...) {
+    tany ret;
+    va_list vargs;
+
+    va_start(vargs, args_n);
+    ret = Tw_CallVExtension(TwD, eid, proto, args_n, vargs);
+    va_end(vargs);
+	
+    return ret;
+}
 

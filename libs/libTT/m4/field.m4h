@@ -1,0 +1,92 @@
+
+
+dnl This file is `m4/field.m4' : m4 macros to autogenerate field_m4.h
+dnl Tell the user about this.
+
+
+/* This file was automatically generated from `m4/field.m4', do not edit! */
+
+
+/*
+ *  field_m4.h  --  implementation of TT*_ttfield functions,
+ *                  reflective ttfield for all existing objects and
+ *                  TT*Field_ttobj handy functions
+ */
+
+include(`m4/TTclasses.m4')
+
+`#'define A	TClass_ttfield
+`#'define B(f)	((order_ttfield<<TT_MAGIC_SHIFT)|(f))
+
+divert(-1)
+
+include(`m4/TTfield.m4')
+include(`m4/TTdecay.m4')
+include(`m4/TTattribute.m4')
+
+
+define(`ttobj_field_Class', `A`,'')
+define(`ttobj_field_id', `B($1)`,'')
+
+define(`ttobj_fields', `pushdef(`field', `ifdef(`ttobj_field_'$'`3, ttobj_field_$'`3($1), `('$'`2`)0')')`'dnl
+`'TTdef_ttobj(ttobj)`'popdef(`field')')
+
+divert
+`#'define E(f)	ttobj_fields(f)
+
+`#'define F(f) TT_STR(f),
+`#'define G(t,a) id_ttclass_(t)|(a),
+
+divert(-1)
+define(`field')
+
+define(`type_regularize', `ifelse(`$1', `', `void', `$1', `tt_class', `ttclass', `$1', `tt_obj', `ttobj', `type_function_decay(trim_star_n_space($1))')')`'dnl
+
+define(`getset_method', `def_field($5,$6,$2)')
+
+define(`def_field', `
+    { E(this`'_$3)	len(this`'_$3), F(this`'_$3) G(type_regularize($2), encode_attribute($1)) },dnl
+`'ifelse(`$1', `', `', `
+        /*$1*/
+`#'if e_FFP <= this`'_$3 - this`'_field_first
+`#' error internal error: this`'_$3 - this`'_field_first overflows e_FFP !
+`#'endif')')
+
+define(`el', `
+    /* $1 fields */define(`this', `$1')`'dnl
+    def_field(,void,field_first)`'dnl
+    TTdef_$1($1)`'dnl
+    def_field(,void,field_last)`'dnl
+')
+define(`extends')
+define(`field', `get_field($@)')
+
+
+
+divert
+
+`#'if !defined(e_FFP)
+`#' error internal error: undefined e_FFP !
+`#'endif
+
+/* array of existing fields */
+
+static TT_CONST struct s_ttfield field_array[] = {
+define(`TT_ARG_READ')
+TTlist()
+undefine(`TT_ARG_READ')
+};
+
+#undef A
+#undef B
+#undef C
+#undef D
+#undef E
+#undef F
+
+#define field_array_n (sizeof(field_array)/sizeof(field_array[0]))
+
+define(`extends')
+define(`field')
+undefine(`el')
+

@@ -121,7 +121,20 @@
 #define ttvisible_vflags_visible	1
 
 
+#define ttlayout_constraint_root		0
 
+/** ttboxlayout horizontal layout */
+#define ttboxlayout_orientation_x		0
+/** ttboxlayout vertical layout */
+#define ttboxlayout_orientation_y		1
+
+#define ttborderlayout_constraint_north		1
+#define ttborderlayout_constraint_west		3
+#define ttborderlayout_constraint_east		4
+#define ttborderlayout_constraint_center	5
+#define ttborderlayout_constraint_south		7
+
+    
 /** ttwidget flag indicating the style used to hold its contents (fill repeating with a single ttattr) */
 #define ttwidget_vflags_style_fill	2
 /** ttwidget flag indicating the style used to hold its contents (use expose events) */

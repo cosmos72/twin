@@ -20,32 +20,6 @@
 #include "TTtypes.h"
 #include <TT/TTmem.h>
 
-/* this is a libTT internal value. Do not use it in clients! */
-#define TT_MAX_ERROR	256
-
-
-#define MAXID		(TW_MAXTOPAQUE >> 8)
-#define magic_shift	(TW_SIZEOFTOPAQUE * 8 - 8) /* keep 8 bits available for magic */
-#define magic_mask	MAXID
-
-#define SMALLBUFF	TW_SMALLBUFF
-#define BIGBUFF		TW_BIGBUFF
-
-#define NOID		((opaque)0)
-#define BADID		TW_MAXTOPAQUE
-#define NOFD		((int)-1)
-#define NOSLOT		TW_MAXTOPAQUE
-
-#define TT_FALSE	FALSE
-#define TT_TRUE		TRUE
-
-#define TT_NOID		NOID
-#define TT_BADID	BADID
-#define TT_NOFD		NOFD
-#define TT_NOSLOT	NOSLOT
-
-#define TT_MIN2(a,b) ((a)<(b) ? (a) : (b))
-#define TT_MAX2(a,b) ((a)>(b) ? (a) : (b))
 
 #define TT_DECL_MAGIC(id) TW_DECL_MAGIC(id)
 
@@ -66,24 +40,17 @@ ttbyte TTMainLoop(void);
 ttbyte TTMainLoopOnce(ttbyte wait);
 void TTExitMainLoop(void);
 
-tt_obj TTNew(tt_fn FN);
+tt_obj TTNew(tt_obj Class);
 void  TTDel(tt_obj o);
 
-ttbyte TTInstanceOf(tt_fn FN, tt_obj o);
-tt_fn TTClassOf(tt_obj o);
+tt_obj TTGetFirst(tt_obj Class);
+tt_obj TTGetLast(tt_obj Class);
 
+ttopaque TTSizeOf(tt_obj o);
+tt_obj TTClassOf(tt_obj o);
+tt_obj TTSuperClassOf(tt_obj o);
 TT_CONST ttbyte *TTClassNameOf(tt_obj o);
-
-TT_CONST ttbyte *TTGetName_ttfn(tt_fn fn);
-tt_fn TTGetSuper_ttfn(tt_fn fn);
-
-TT_FN_ATTR_CONST ttuint TTGetFieldId(TT_ARG_READ ttbyte *);
-TT_FN_ATTR_CONST TT_CONST ttbyte *TTGetFieldName(ttuint);
-
-
-tt_fn TTGetField_ttobj(TT_ARG_READ tt_obj o, ttuint which, ttany *value);
-tt_fn TTSetField_ttobj(tt_obj o, ttuint which, ttany value);
-tt_fn TTChangeField_ttobj(tt_obj o, ttuint which, ttany nand_value, ttany xor_value);
+ttbyte TTInstanceOf(tt_obj Class, tt_obj o);
 
 tt_obj TTGetInstalled_tteventmask(void);
 tt_obj TTGetDefault_tteventmask(void);

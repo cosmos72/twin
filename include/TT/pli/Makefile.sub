@@ -1,0 +1,11 @@
+
+SUBDIRS=
+
+all: autogen
+
+do-autogen: $(S)tt_timestamp
+
+include $(S)../makeversion
+include $(T)makerules
+
+

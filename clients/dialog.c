@@ -242,7 +242,7 @@ static byte InitDialog(void) {
 
     return TwCheckMagic(dialog_magic) && TwOpen(NULL) &&
 	(Dialog_MsgPort=TwCreateMsgPort
-	 (8, "twdialog", (time_t)0, (frac_t)0, (byte)0)) &&
+	 (8, "twdialog")) &&
 	(Dialog_Menu=TwCreateMenu(
 	  COL(BLACK,WHITE), COL(BLACK,GREEN), COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
 	  COL(RED,WHITE), COL(RED,GREEN), (byte)0)) &&

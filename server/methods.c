@@ -16,7 +16,7 @@
 #include "builtin.h"
 #include "methods.h"
 #include "data.h"
-#include "extensions.h"
+#include "extreg.h"
 
 #include "draw.h"
 #include "printk.h"
@@ -41,6 +41,9 @@
 #endif
 #ifdef CONF_WM
 # include "wm.h"
+#endif
+#ifdef CONF_EXT
+# include "extensions/ext_query.h"
 #endif
 
 
@@ -2401,7 +2404,7 @@ static struct s_fn_msg _FnMsg = {
 /* msgport */
 
 static msgport CreateMsgPort(fn_msgport Fn_MsgPort, byte NameLen, CONST byte *Name,
-			      time_t PauseSec, frac_t PauseFraction,
+			      tany PauseSec, tany PauseFraction,
 			      byte WakeUp, void (*Handler)(msgport)) {
     msgport MsgPort = (msgport)0;
     byte *_Name;
@@ -2411,23 +2414,25 @@ static msgport CreateMsgPort(fn_msgport Fn_MsgPort, byte NameLen, CONST byte *Na
 	
 	Fn_MsgPort->Fn_Obj->Used++;
 	
-	MsgPort->WakeUp=WakeUp;
-	MsgPort->NameLen=NameLen;
-	MsgPort->Name=_Name;
-	MsgPort->Handler=Handler;
+	MsgPort->WakeUp = WakeUp;
+	MsgPort->NameLen = NameLen;
+	MsgPort->Name = _Name;
+	MsgPort->Handler = Handler;
 	MsgPort->ShutDownHook=(void (*)(msgport))0;
-	MsgPort->PauseDuration.Seconds=PauseSec;
-	MsgPort->PauseDuration.Fraction=PauseFraction;
+	MsgPort->PauseDuration.Seconds = PauseSec;
+	MsgPort->PauseDuration.Fraction = PauseFraction;
 	(void)SumTime(&MsgPort->CallTime, &All->Now, &MsgPort->PauseDuration);
-	MsgPort->RemoteData.Fd=NOFD;
-	MsgPort->RemoteData.ChildPid=NOPID;
-	MsgPort->RemoteData.FdSlot=NOSLOT;
-	MsgPort->FirstMsg=MsgPort->LastMsg=(msg)0;
-	MsgPort->FirstMenu=MsgPort->LastMenu=(menu)0;
-	MsgPort->FirstW=MsgPort->LastW=(widget)0;
-	MsgPort->FirstGroup=MsgPort->LastGroup=(group)0;
-	MsgPort->FirstMutex=MsgPort->LastMutex=(mutex)0;
-	MsgPort->AttachHW=(display_hw)0;
+	MsgPort->RemoteData.Fd = NOFD;
+	MsgPort->RemoteData.ChildPid = NOPID;
+	MsgPort->RemoteData.FdSlot = NOSLOT;
+	MsgPort->FirstMsg=MsgPort->LastMsg = (msg)0;
+	MsgPort->FirstMenu=MsgPort->LastMenu = (menu)0;
+	MsgPort->FirstW=MsgPort->LastW = (widget)0;
+	MsgPort->FirstGroup=MsgPort->LastGroup = (group)0;
+	MsgPort->FirstMutex=MsgPort->LastMutex = (mutex)0;
+	MsgPort->CountE=MsgPort->SizeE = (uldat)0;
+	MsgPort->Es=(extension *)0;
+	MsgPort->AttachHW = (display_hw)0;
 	InsertMiddle(MsgPort, MsgPort, All,
 		     WakeUp ? (msgport)0 : All->LastMsgPort,
 		     WakeUp ? All->FirstMsgPort : (msgport)0);
@@ -2456,6 +2461,7 @@ static void RemoveMsgPort(msgport MsgPort) {
 static void DeleteMsgPort(msgport MsgPort) {
     uldat count = 30;
     widget W;
+    extension *Es;
     
     if (MsgPort) {
 	fn_obj Fn_Obj = MsgPort->Fn->Fn_Obj;
@@ -2487,6 +2493,9 @@ static void DeleteMsgPort(msgport MsgPort) {
 	DeleteList(MsgPort->FirstGroup);
 	DeleteList(MsgPort->FirstMutex);
 	
+	for (count = MsgPort->CountE, Es = MsgPort->Es; count; count--, Es++)
+	    Act(UnuseExtension,MsgPort)(MsgPort, *Es);
+	    
 	Remove(MsgPort);
 	if (MsgPort->Name)
 	    FreeMem(MsgPort->Name);
@@ -2494,6 +2503,59 @@ static void DeleteMsgPort(msgport MsgPort) {
 	(Fn_Obj->Delete)((obj)MsgPort);
 	if (!--Fn_Obj->Used)
 	    FreeMem(Fn_Obj);
+    }
+}
+
+static byte GrowExtensionMsgPort(msgport M) {
+    uldat oldsize, size;
+    extension *newEs;
+    
+    oldsize = M->SizeE;
+
+    size = oldsize < 2 ? 4 : oldsize + (oldsize>>1);
+    if (size > MAXID)
+	size = MAXID;
+    
+    if (!(newEs = (extension *)ReAllocMem(M->Es, size*sizeof(extension))))
+	return FALSE;
+    
+    M->Es = newEs;
+    return TRUE;
+}
+
+static void UseExtensionMsgPort(msgport M, extension E) {
+    uldat count;
+    extension *Es;
+    
+    if (M && E) {
+	
+	for (count = M->CountE, Es = M->Es; count; count--, Es++) {
+	    if (*Es == E)
+		/* already in use */
+		return;
+	}
+	
+	if (M->CountE >= M->SizeE && !GrowExtensionMsgPort(M))
+	    return;
+
+	M->Es[M->CountE++] = E;
+	E->Used++;
+    }
+}
+
+static void UnuseExtensionMsgPort(msgport M, extension E) {
+    uldat count;
+    extension *Es;
+    
+    if (M && E) for (count = M->CountE, Es = M->Es; count; count--, Es++) {
+	if (*Es == E) {
+	    if (count > 1)
+		*Es = Es[count - 1];
+	    M->CountE--;
+	    
+	    if (!--E->Used)
+		Delete(E);
+	}
     }
 }
 
@@ -2505,7 +2567,9 @@ static struct s_fn_msgport _FnMsgPort = {
     DeleteMsgPort,
     (void *)NoOp,
     /* msgport */
-    &_FnObj
+    &_FnObj,
+    UseExtensionMsgPort,
+    UnuseExtensionMsgPort
 };
     
 /* mutex */
@@ -2692,6 +2756,59 @@ static struct s_fn_module _FnModule = {
 };
 
 
+/* extension */
+
+static void DeleteExtension(extension E) {
+    fn_module Fn_Module;
+    msgport M;
+    extension *Es;
+    uldat i;
+    
+    /* search for MsgPorts using this extension */
+    for (M = All->FirstMsgPort; M; M = M->Next) {
+	for (i = M->CountE, Es = M->Es; i; i--, Es++) {
+	    if (E == *Es) {
+		Act(UnuseExtension,M)(M, E);
+		break;
+	    }
+	}
+    }
+    
+    /* used if the extension is NOT DlOpen()ed */
+    if (E->Quit)
+	E->Quit(E);
+    
+    Fn_Module = E->Fn->Fn_Module;
+    (Fn_Module->Delete)((module)E);
+    if (!--Fn_Module->Used)
+	FreeMem(Fn_Module);
+}
+
+static struct s_fn_extension _FnExtension = {
+    extension_magic, sizeof(struct s_extension), (uldat)1,
+    (void *)CreateModule,
+    (void *)InsertModule,
+    (void *)RemoveModule,
+    DeleteExtension,
+    (void *)NoOp,
+    /* module */
+    &_FnObj,
+#ifdef CONF__MODULES
+    (void *)DlOpen,
+    (void *)DlClose,
+#else
+    (byte (*)(extension))AlwaysFalse,
+    (void (*)(extension))NoOp,
+#endif
+    &_FnModule,
+#ifdef CONF_EXT
+    QueryExtension, /* exported by extensions/ext_query.c */
+#else
+    (void *)AlwaysNull,
+#endif
+};
+
+
 
 /* display_hw */
 
@@ -2806,6 +2923,7 @@ fn Fn = {
     &_FnMutex,
     &_FnMsg,
     &_FnModule,
+    &_FnExtension,
     &_FnDisplayHW
 };
 

@@ -1,0 +1,141 @@
+
+
+dnl This file is `m4/method1.m4' : m4 macros to autogenerate method1_m4.h
+dnl Tell the user about this.
+
+
+/* This file was automatically generated from `m4/method1.m4', do not edit! */
+
+
+/*
+ *  method1_m4.h  --  implementation of TT*_ttmethod functions,
+ *                    reflective ttmethods for all existing objects
+ *
+ */
+
+include(`m4/TTclasses.m4')
+
+divert(-1)
+
+include(`m4/TTfield.m4')
+include(`m4/TTdecay.m4')
+include(`m4/TTclient.m4')
+include(`m4/TTattribute.m4')
+
+
+define(`handy_method', `def_method($@)')
+define(`final', `def_method($1_$2,shift($@))')
+define(`public', `final($@)')
+define(`public_set', `final($@)')
+
+define(`extends')
+define(`getset_method', `def_method(Toupper2($1,$2)_`'this,shift(shift($@)))')
+define(`field', `get_field($@)')
+
+
+define(`all_methods', `
+`'    /* generic methods */
+`'    TTdef_ttclass_handymethods()`'dnl
+`'
+`'define(`el',`
+`'    /* $'`1 methods */
+`'    TTdef_ttclass_$'`1($'`1)`'dnl
+`'')
+`'TTlist()
+`'undefine(`el')
+`'
+`'    /* TTSet*_* methods omitted, they are listed above! */
+`'#if 0
+`'    def_method(SetField_ttobj,...)`'dnl
+`'    def_method(ChangeField_ttobj,...)
+`'#endif
+`'    /* TTGet*_* methods */
+`'
+`'define(`TT_ARG_READ')
+`'define(`el', `define(`this', $'`1)
+`'    /* TTGet*_$'`1 methods */TTdef_$'`1($'`1)')
+`'
+`'TTlist()
+`'undefine(`this')
+`'undefine(`el')
+`'undefine(`TT_ARG_READ')
+')
+
+
+define(`c_arg_decl_type', `trim_star_n_space($2)')
+define(`_c_args_decl_type', `ifelse($2, `', `', `, c_arg_decl_type($@)`'_c_args_decl_type(NSHIFT(3,$@))')')
+define(`c_args_decl_type', `ifelse($2, `', `', $5, `', `c_arg_decl_type($@)', `c_arg_decl_type($@)`'_c_args_decl_type(NSHIFT(3,$@))')')
+
+divert
+
+
+/* prototypes (return type and parameter type arrays) of existing methods */
+
+`#'define S(t) TT_CAT(str_order_,t)
+define(`def_method', `ifdef(`done_string_$1', `', `define(`done_string_$1')
+   apply_nocomma(`S', apply(`type_function_decay', c_args_decl_type(NSHIFT(3, $@)))),')')dnl
+
+static TT_CONST ttbyte * TT_CONST method_proto[] = {
+    /* WARNING: we never return a ttclass... if prototype says so, we return a tt_class */
+all_methods()
+};
+
+#undef S
+
+
+#define M(m) TT_CAT(ttmethod_,m)
+
+
+/* attributes of array parameters of existing methods */
+
+define(`def_method', `ifdef(`done_attributes_$1', `', `define(`done_attributes_$1')`'dnl
+`'encode_attributes($1, 0, NSHIFT(3, $@))')')dnl
+
+define(`encode_attributes', `ifelse(`$3', `', `', `dnl
+ifelse(index(`$4', `*'), -1, `', `
+    { M($1), $2, /*$3*/' encode_attribute($3)`, },')dnl
+`'encode_attributes($1, incr($2), NSHIFT(5, $@))')')dnl
+
+
+static TT_CONST ttany method_type[][3] = {
+all_methods()
+};
+
+#define method_type_n (sizeof(method_type)/sizeof(method_type[0]))
+
+
+
+
+#define method_return_type_n (sizeof(method_return_type)/sizeof(method_return_type[0]))
+
+
+
+#undef M
+
+
+
+
+/* names of existing methods */
+define(`def_method', `ifdef(`done_name_$1', `', `define(`done_name_$1')
+    "TT$1",')')
+
+static TT_CONST ttbyte * TT_CONST method_name[] = {
+all_methods()
+};
+
+
+/* addresses of existing methods */
+
+#define A(m) (ttfunction_fn)TT_CAT(TT,m)
+define(`def_method', `ifdef(`done_addr_$1', `', `define(`done_addr_$1')
+    A($1),')')
+
+static TT_CONST ttfunction_fn method_addr[] = {
+all_methods()
+};
+
+#undef A
+
+#define method_array_n (sizeof(method_name)/sizeof(method_name[0]))
+
+

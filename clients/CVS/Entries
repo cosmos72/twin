@@ -1,0 +1,27 @@
+/demo.c/1.2/Tue Jan  7 09:30:41 2003//
+/demo2.c/1.2/Tue Jan  7 09:30:41 2003//
+/demo3.c/1.1/Thu Dec 19 11:25:33 2002//
+/dialog.c/1.5/Thu Dec 19 11:16:40 2002//
+/dm.c/1.1/Thu Dec 19 11:25:33 2002//
+/lsmsgport.c/1.1/Thu Dec 19 11:25:33 2002//
+/lsobj.c/1.4/Thu Dec 19 11:16:40 2002//
+/restackM.c/1.1/Thu Dec 19 11:25:33 2002//
+/restackW.c/1.1/Thu Dec 19 11:25:33 2002//
+/term.c/1.1/Thu Dec 19 11:25:33 2002//
+/term.h/1.1/Thu Dec 19 11:25:33 2002//
+D/mapscrn////
+/Makefile/0.10/dummy timestamp//
+/README.twsetroot/0.3.8.1/dummy timestamp//
+/attach.c/0.7/dummy timestamp//
+/cat.c/0.7/dummy timestamp//
+/clip.c/0.6/dummy timestamp//
+/clutter.c/0.7/dummy timestamp//
+/event.c/0.8/dummy timestamp//
+/findtwin.c/0.7/dummy timestamp//
+/pty.c/0.6/dummy timestamp//
+/pty.h/0.4/dummy timestamp//
+/sendmsg.c/0.6/dummy timestamp//
+/setroot.c/0.7/dummy timestamp//
+/setroot.sample/0.3.8.1/dummy timestamp//
+/sysmon.c/0.7/dummy timestamp//
+/threadtest.c/0.7/dummy timestamp//

@@ -26,7 +26,7 @@
 #include "methods.h"
 #include "draw.h"
 #include "remote.h"
-#include "extensions.h"
+#include "extreg.h"
 
 #include "resize.h"
 #include "hw.h"
@@ -80,7 +80,7 @@ static dat TryDisplayWidth, TryDisplayHeight;
 
 static dat AccelVideo[4] = { MAXDAT, MAXDAT, MINDAT, MINDAT };
 byte   StrategyFlag;
-frac_t StrategyDelay = (frac_t)0;
+tany   StrategyDelay = (tany)0;
 
 static udat ConfigureHWValue[HW_CONFIGURE_MAX];
 static byte ConfigureHWDefault[HW_CONFIGURE_MAX];
@@ -777,7 +777,7 @@ static void SelectionClear(msgport Owner) {
 }
 
 /* HW back-end function: set selection owner */
-void TwinSelectionSetOwner(obj Owner, time_t Time, frac_t Frac) {
+void TwinSelectionSetOwner(obj Owner, tany Time, tany Frac) {
     timevalue T;
     if (Time == SEL_CURRENTTIME)
 	CopyMem(&All->Now, &T, sizeof(timevalue));
@@ -972,8 +972,8 @@ INLINE void SyncOldVideo(void) {
 #define MaxRecentBeepHW ((byte)30)
 
 void FlushHW(void) {
-    static timevalue LastBeep = {(time_t)0, (frac_t)0};
-    timevalue tmp = {(time_t)0, 100 MilliSECs};
+    static timevalue LastBeep = {(tany)0, (tany)0};
+    timevalue tmp = {(tany)0, 100 MilliSECs};
     byte doBeep = FALSE, saved = FALSE, mangled = FALSE;
     byte saveChangedVideoFlag, saveValidOldVideo;
     /*
@@ -1226,7 +1226,7 @@ void EnableMouseMotionEvents(byte enable) {
 
 byte MouseEventCommon(dat x, dat y, dat dx, dat dy, udat Buttons) {
     dat prev_x, prev_y;
-    udat OldButtons;
+    udat OldButtons, i;
     mouse_state *OldState;
     udat result;
     byte ret = TRUE;
@@ -1249,76 +1249,45 @@ byte MouseEventCommon(dat x, dat y, dat dx, dat dy, udat Buttons) {
     OldState->x = x;
     OldState->y = y;
     
-    OldState->keys = Buttons;
+    OldState->keys = Buttons &= HOLD_ANY;
 
     /* keep it available */
     All->MouseHW = HW;
 
     if (Buttons != OldButtons || ((alsoMotionEvents || OldButtons) && (x != prev_x || y != prev_y))) {
 	
-	if (alsoMotionEvents && !OldButtons && (x != prev_x || y != prev_y)) {
-	    if (!StdAddMouseEvent(MSG_MOUSE, MOTION_MOUSE, x, y))
-		ret = FALSE;
-	} else if (OldButtons && (x != prev_x || y != prev_y)) {
-	    if (!StdAddMouseEvent(MSG_MOUSE, DRAG_MOUSE | OldButtons, x, y))
-		ret = FALSE;
+	if ((alsoMotionEvents || OldButtons) && (x != prev_x || y != prev_y)) {
+	    ret = StdAddMouseEvent(MOVE_MOUSE | OldButtons, x, y);
 	}
-	if ((Buttons & HOLD_LEFT) != (OldButtons & HOLD_LEFT)) {
-	    result = (Buttons & HOLD_LEFT ? PRESS_LEFT : RELEASE_LEFT) | (OldButtons &= ~HOLD_LEFT);
-	    OldButtons |= Buttons & HOLD_LEFT;
-	    if (!StdAddMouseEvent(MSG_MOUSE, result, x, y))
-		ret = FALSE;
+	for (i = 0; i < BUTTON_N_MAX && ret; i++) {
+	    if ((Buttons & HOLD_CODE(i)) != (OldButtons & HOLD_CODE(i))) {
+		result = (Buttons & HOLD_CODE(i) ? PRESS_CODE(i) : RELEASE_CODE(i)) | (OldButtons &= ~HOLD_CODE(i));
+		OldButtons |= Buttons & HOLD_CODE(i);
+		ret = StdAddMouseEvent(result, x, y);
+	    }
 	}
-	if ((Buttons & HOLD_MIDDLE) != (OldButtons & HOLD_MIDDLE)) {
-	    result = (Buttons & HOLD_MIDDLE ? PRESS_MIDDLE : RELEASE_MIDDLE) | (OldButtons &= ~HOLD_MIDDLE);
-	    OldButtons |= Buttons & HOLD_MIDDLE;
-	    if (!StdAddMouseEvent(MSG_MOUSE, result, x, y))
-		ret = FALSE;
-	}
-	if ((Buttons & HOLD_RIGHT) != (OldButtons & HOLD_RIGHT)) {
-	    result = (Buttons & HOLD_RIGHT ? PRESS_RIGHT : RELEASE_RIGHT) | (OldButtons &= ~HOLD_RIGHT);
-	    OldButtons |= Buttons & HOLD_RIGHT;
-	    if (!StdAddMouseEvent(MSG_MOUSE, result, x, y))
-		ret = FALSE;
-	}
-#ifdef HOLD_WHEEL_REV
-	if ((Buttons & HOLD_WHEEL_REV) != (OldButtons & HOLD_WHEEL_REV)) {
-	    result = (Buttons & HOLD_WHEEL_REV ? PRESS_WHEEL_REV : RELEASE_WHEEL_REV) | (OldButtons &= ~HOLD_WHEEL_REV);
-	    OldButtons |= Buttons & HOLD_WHEEL_REV;
-	    if (!StdAddMouseEvent(MSG_MOUSE, result, x, y))
-		ret = FALSE;
-	}
-#endif
-#ifdef HOLD_WHEEL_FWD
-	if ((Buttons & HOLD_WHEEL_FWD) != (OldButtons & HOLD_WHEEL_FWD)) {
-	    result = (Buttons & HOLD_WHEEL_FWD ? PRESS_WHEEL_FWD : RELEASE_WHEEL_FWD) | (OldButtons &= ~HOLD_WHEEL_FWD);
-	    OldButtons |= Buttons & HOLD_WHEEL_FWD;
-	    if (!StdAddMouseEvent(MSG_MOUSE, result, x, y))
-		ret = FALSE;
-	}
-#endif
-
     }
     return ret;
 }
 
-byte StdAddMouseEvent(udat CodeMsg, udat Code, dat MouseX, dat MouseY) {
+byte StdAddMouseEvent(udat Code, dat MouseX, dat MouseY) {
     msg Msg;
     event_mouse *Event;
 
     if (HW && HW == All->MouseHW && HW->FlagsHW & FlHWNoInput)
 	return TRUE;
     
-    if ((Code & ANY_ACTION_MOUSE)==DRAG_MOUSE
+    if ((Code & MOUSE_ACTION_ANY) == MOVE_MOUSE
 	&& (Msg = Ext(WM,MsgPort)->LastMsg)
 	&& Msg->Type==MSG_MOUSE
 	&& (Event=&Msg->Event.EventMouse)
 	&& Event->Code==Code) {
+	/* merge the two events */
 	Event->X=MouseX;
 	Event->Y=MouseY;
 	return TRUE;
     }
-    if ((Msg=Do(Create,Msg)(FnMsg, CodeMsg, 0))) {
+    if ((Msg=Do(Create,Msg)(FnMsg, MSG_MOUSE, 0))) {
 	Event=&Msg->Event.EventMouse;
 	Event->Code=Code;
 	Event->ShiftFlags=(udat)0;

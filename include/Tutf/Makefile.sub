@@ -1,0 +1,10 @@
+
+SUBDIRS=
+
+all: autogen
+
+do-autogen: $(S)version.h
+
+include $(S)makeversion
+include $(T)makerules
+

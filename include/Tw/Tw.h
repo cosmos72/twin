@@ -88,6 +88,7 @@
 #include <Tw/Tw_defs.h>
 #include <Tw/Twtypes.h>
 #include <Tw/missing.h>
+#include <Tw/mouse.h>
 
 #ifndef _TWIN_H
 #define _TWIN_H
@@ -97,8 +98,8 @@
 
 /** a structure containing high resolution time */
 typedef struct s_timevalue  {
-    time_t Seconds;
-    frac_t Fraction;
+    tany Seconds;
+    tany Fraction;
 } timevalue;
 
 #endif /* _TWIN_H */
@@ -123,6 +124,8 @@ typedef tobj tmenu;
 typedef tobj tmsgport;
 /** type for server-side mutexes (used for inter-client synchronization) */
 typedef tobj tmutex;
+/** type for server extensions */
+typedef tobj textension;
 /** type for server topmost object */
 typedef tobj tall;
 
@@ -348,8 +351,6 @@ typedef struct s_tlistener *tlistener;
 
 
 
-/** return 1 if server supports all given libTw functions */
-byte  Tw_FindFunctions(tdisplay TwD, void *Function, ...);
 
 tdisplay Tw_Open(TW_CONST byte *Tw_Display);
 void Tw_Close(tdisplay TwD);
@@ -375,7 +376,7 @@ void Tw_Close(tdisplay TwD);
 /* Tw_CreateMsgPort() flags */
 #define TW_TIMER_ALWAYS	((byte)1)
 #define TW_TIMER_ONCE	((byte)2)
-#define Tw_DeleteMsgPort Tw_DeleteObj
+
      
 /* Tw_SetOwnerSelection() Time useful value: */
 #define TW_SEL_CURRENTTIME ((time_t)0)
@@ -385,6 +386,22 @@ void Tw_Close(tdisplay TwD);
 #define TW_PRIV_NONE 0
 #define TW_PRIV_SGIDTTY 1
 #define TW_PRIV_SUIDROOT 2
+
+
+
+/** return 1 if server supports all given libTw functions */
+byte  Tw_FindLFunction(tdisplay TwD, ...);
+/**
+ * call given server extension (opened with Tw_OpenExtension()).
+ * Caller must cast all optional args to (ttany),
+ * including strings and arrays.
+ * 
+ * The same cast rules apply to arguments implicitly passed to
+ * Tw_CallVExtension().
+ */
+tany  Tw_CallLExtension(tdisplay TwD, textension id, TW_CONST byte *proto, topaque args_n, ...);
+
+
 
 
 #include <Tw/common_m4.h>

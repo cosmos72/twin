@@ -1,0 +1,631 @@
+/*
+ *                 WARNING!
+ * 
+ * this file is `twin_h' and is included by m4 files `twin_c' and `twin_detunnel_c'
+ * 
+ * It must be a valid m4 file, and must produce a valid C file.
+ * 
+ */
+
+
+/*
+ * We need to write down only overloaded methods.
+ */
+ 
+
+/* ttobj */
+
+
+/* ttobject */
+static BREAK(ttobject) {
+    if (o) {
+	if (o->native != TW_NOID) {
+	    CALL(DeleteObj, o->native);
+	    o->native = TW_NOID;
+	}
+	/* call null_Break_ttobj: */
+	FNDEFAULT(ttobject)->Break(o);
+    }
+}
+
+
+/* ttvisible */
+static void target()_AtBuild_ttvisible(ttvisible o) {
+    /*
+     * add all children of this ttvisible:
+     * they have not been added yet, since we just
+     * called Build() on the parent ttvisible
+     */
+    opaque native = o->native, child_native;
+    ttvisible child = o->child_first;
+    
+    if (IS(ttwidget,o) && native != TW_NOID) while (child) {
+	if ((child_native = child->native))
+	    CALL(MapWidget, child_native, native);
+	child = child->next;
+    }
+}
+
+/* ttnative */
+static ttnative DEF(GetRoot_ttnative)(void) {
+    return Create_ttnative(CALL(FirstScreen));
+}
+static BREAK(ttnative) {
+    o->native = TW_NOID;
+    FNDEFAULT(ttnative)->Break(o);
+}
+static ttshort DEF(GetW_ttnative)(ttnative o) {
+    ttnative r = TClass_ttnative->GetRoot();
+    if (r && r->native == o->native)
+	return CALL(GetDisplayWidth);
+    return CALL(Stat, o->native, TWS_widget_Width);
+}
+static ttshort DEF(GetH_ttnative)(ttnative o) {
+    ttnative r = TClass_ttnative->GetRoot();
+    if (r && r->native == o->native)
+	return CALL(GetDisplayHeight);
+    return CALL(Stat, o->native, TWS_widget_Height);
+}
+
+
+/* ttwidget */
+static void DEF(BuiltinRepaint_ttwidget)(ttwidget o, dat x, dat y, dat w, dat h) {
+    CALL(DrawHWAttrWidget, o->native, w, h, x, y, w, NULL);
+}
+static void target()_ExposeCallback_ttwidget(tevent_any e, void *id) {
+    ttwidget o = ID2(ttwidget,(opaque)id);
+    if (o)
+	Expose_ttvisible((ttvisible)o, e->EventWidget.X, e->EventWidget.Y, e->EventWidget.XWidth, e->EventWidget.YWidth);
+}
+static void target()_ResizeCallback_ttwidget(tevent_any e, void *id) {
+    ttwidget o = ID2(ttwidget,(opaque)id);
+    if (o) {
+	FIRE_EVENT(o->w = e->EventWidget.XWidth, o, ttwidget_w, e->EventWidget.XWidth, o->w);
+	FIRE_EVENT(o->h = e->EventWidget.YWidth, o, ttwidget_h, e->EventWidget.YWidth, o->h);
+    }
+}
+static ttcallback target()_AddCommonCallbacks_ttwidget(ttwidget o) {
+    ttcallback l[5];
+    byte i = 0;
+    void *id = (void *)OBJ2ID(o);
+    
+	
+    if ((l[i] = Create_ttcallback((ttcomponent)o)) &&
+	(l[i]->native = (opaque)CALL(AddWidgetListener,
+	  o->native, TW_MSG_WIDGET_EXPOSE,
+	  (tfn_listener)target()_ExposeCallback_ttwidget, id)) &&
+	(i++, (l[i] = Create_ttcallback((ttcomponent)o))) &&
+	(l[i]->native = (opaque)CALL(AddWidgetListener,
+	  o->native, TW_MSG_WIDGET_RESIZE,
+	  (tfn_listener)target()_ResizeCallback_ttwidget, id))) {
+
+	return l[i];
+    }
+    while (i) {
+    	TDEL(l[i]);
+	i--;
+    }
+    return NULL;
+}
+static BUILD(ttwidget) {
+    tttheme t = myTheme(o);
+    hwfont f = t->fill;
+    hwcol c = o->col;
+    if (TW_NOID != (o->native = CALL(CreateWidget, o->w, o->h, 0, TW_WIDGETFL_USEFILL, 0, MAXDAT, HWATTR(c, f)))) {
+	target()_AtBuild_ttvisible((ttvisible)o);
+	return o;
+    }
+    return NULL;
+}
+static void DEF(AddTo_ttwidget)(ttwidget o, ttvisible parent, ttany constraint) {
+    if (parent && !o->parent) {
+	FNDEFAULT(ttwidget)->AddTo(o, parent, constraint);
+	
+	if (o->native != TW_NOID && parent->native != TW_NOID)
+	    CALL(MapWidget, o->native, parent->native);
+    }
+}
+static void DEF(SetVisible_ttwidget)(ttwidget o, ttbyte visible) {
+    ttuint isvisible, wasvisibile;
+    
+    wasvisibile = o->vflags & ttvisible_vflags_visible;
+    
+    FNDEFAULT(ttwidget)->SetVisible(o, visible);
+    
+    isvisible = o->vflags & ttvisible_vflags_visible;
+    
+    if (isvisible != wasvisibile && o->native != TW_NOID)
+	CALL(SetVisibleWidget, o->native, visible);
+}
+static void DEF(Remove_ttwidget)(ttwidget o) {
+    if (o->parent) {
+	FNDEFAULT(ttwidget)->Remove(o);
+	
+	if (o->native != TW_NOID)
+	    CALL(UnMapWidget, o->native);
+    }
+}
+static ttbyte DEF(SetXY_ttwidget)(ttwidget o, ttshort x, ttshort y) {
+    CALL(SetXYWidget, o->native, o->x = x, o->y = y);
+    return TT_TRUE;
+}
+static ttbyte DEF(SetWH_ttwidget)(ttwidget o, ttshort w, ttshort h) {
+    CALL(ResizeWidget, o->native, o->w = w, o->h = h);
+    return TT_TRUE;
+}
+static ttbyte DEF(SetXl_ttwidget)(ttwidget o, ttint xl) {
+    CALL(ScrollWidget, o->native, xl - o->xl, 0);
+    o->xl = xl;
+    return TT_TRUE;
+}
+static ttbyte DEF(SetYl_ttwidget)(ttwidget o, ttint yl) {
+    CALL(ScrollWidget, o->native, 0, yl - o->yl);
+    o->yl = yl;
+    return TT_TRUE;
+}
+static void DEF(Draw_ttwidget)(ttwidget o, ttshort x, ttshort y, ttshort w, ttshort h, ttshort pitch,
+			       TT_CONST ttbyte *asciidata, TT_CONST ttfont *fontdata, TT_CONST ttattr *attrdata) {
+    CALL(Draw2Widget, o->native, w, h, x, y, pitch, asciidata, fontdata, attrdata);
+}
+
+
+/* ttlabel */
+static BUILD(ttlabel) {
+    if (TW_NOID != (o->native = CALL(CreateWidget, o->text_len, 1, 0, TW_WIDGETFL_USEEXPOSE, 0, MAXDAT, HWATTR(o->col, myTheme(o)->fill)))) {
+	if (target()_AddCommonCallbacks_ttwidget((ttwidget)o)) {
+	    target()_AtBuild_ttvisible((ttvisible)o);
+	    return o;
+	}
+    }
+    return NULL;
+}
+static void DEF(Invalidate_ttwidget)(ttwidget o) {
+    tttheme t;
+    
+    FNDEFAULT(ttwidget)->Invalidate(o);
+    
+    t = myTheme(o);
+    
+    CALL(SetFillWidget, o->native, HWATTR(o->col, t->fill));
+}
+
+static void DEF(BuiltinRepaint_ttlabel)(ttlabel o, dat x, dat y, dat w, dat h) {
+    if (y == 0) {
+	if (x < o->text_len)
+	    CALL(DrawHWFontWidget, o->native, TT_MIN2(w,o->text_len-x), 1, x, 0, o->text_len, o->text+x);
+	if (x+w > o->text_len)
+	    CALL(DrawHWFontWidget, o->native, o->text_len-x-w, 1, o->text_len, 0, 0, NULL);
+    }
+}
+
+
+/* ttbuttongroup */
+
+
+
+/* ttanybutton */
+static void DEF(Invalidate_ttanybutton)(ttanybutton o) {
+    /* needed because we have overridden Invalidate_ttwidget above */
+    ttbyte i;
+    
+#ifdef DEBUG_TT_HW_TWIN
+    fprintf(stderr, "target()_Invalidate_ttanybutton(o=0x%X)\n",
+	    (unsigned)o->id);
+#endif
+    for (i = 0; i < sizeof(o->theme_shape)/sizeof(o->theme_shape[0]); i++) {
+	if (o->theme_shape[i].attr) {
+	    TTFreeMem(o->theme_shape[i].attr);
+	    o->theme_shape[i].attr = NULL;
+	}
+    }
+}
+static void DEF(BuiltinRepaint_ttanybutton)(ttanybutton o, dat x, dat y, dat w, dat h) {
+    ttattr *t;
+    dat tw, th;
+    ttuint i;
+    
+    i = o->Class->CacheThemeShape(o);
+
+    if (i != (ttuint)-1) {
+	t = o->theme_shape[i].attr;
+	tw = o->theme_shape[i].width;
+	th = o->theme_shape[i].height;
+	
+	if (h+y > th)
+	    h = th - y;
+	if (w+x > tw)
+	    w = tw - x;
+
+	if (h > 0 && w > 0 && y < th && x < tw)
+	    CALL(DrawHWAttrWidget, o->native, TT_MIN2(w,tw-x), TT_MIN2(h, th-y),
+				 x, y, tw, t + x + (y * tw));
+    } else if (o->text && o->Class == TClass_ttanybutton) {
+	if (h+y > o->text_height)
+	    h = o->text_height - y;
+	if (w+x > o->text_width)
+	    w = o->text_width - x;
+
+	if (h > 0 && w > 0 && y < o->text_height && x < o->text_width)
+	    CALL(DrawHWAttrWidget, o->native, TT_MIN2(w,o->text_width-x), TT_MIN2(h, o->text_height-y),
+				 x, y, o->text_width, o->text + x + (y * o->text_width));
+    } else
+	CALL(DrawHWAttrWidget, o->native, w, h, x, y, w, NULL);
+}
+static void target()_MouseCallback_ttanybutton(tevent_any e, tobj id) {
+    ttanybutton o = ID2(ttanybutton,id);
+    ttevent ev;
+    ttuint evcode;
+    udat code;
+    /*
+     * libTw and libTT have the different encoding for mouse event codes,
+     * but shiftflags are the same
+     */
+    if (o) {
+	
+	code = e->EventMouse.Code;
+	evcode = 0;
+	if (isMOVE(code)) {
+	    evcode = ttevent_evcode_mouse_move;
+	} else if (isPRESS(code)) {
+	    switch (code & PRESS_ANY) {
+	      case PRESS_LEFT:
+		evcode = ttevent_evcode_mouse_press_1;
+		break;
+	      case PRESS_MIDDLE:
+		evcode = ttevent_evcode_mouse_press_2;
+		break;
+	      case PRESS_RIGHT:
+		evcode = ttevent_evcode_mouse_press_3;
+		break;
+#ifdef HOLD_WHEEL_REV
+	      case PRESS_WHEEL_REV:
+		evcode = ttevent_evcode_mouse_press_4;
+		break;
+#endif
+#ifdef HOLD_WHEEL_FWD
+	      case PRESS_WHEEL_FWD:
+		evcode = ttevent_evcode_mouse_press_5;
+		break;
+#endif
+	      default:
+		/* unknown code! */
+		return;
+	    }
+	} else if (isRELEASE(code)) {
+	    switch (code & RELEASE_ANY) {
+	      case RELEASE_LEFT:
+		evcode = ttevent_evcode_mouse_release_1;
+		break;
+	      case RELEASE_MIDDLE:
+		evcode = ttevent_evcode_mouse_release_2;
+		break;
+	      case RELEASE_RIGHT:
+		evcode = ttevent_evcode_mouse_release_3;
+		break;
+#ifdef HOLD_WHEEL_REV
+	      case RELEASE_WHEEL_REV:
+		evcode = ttevent_evcode_mouse_release_4;
+		break;
+#endif
+#ifdef HOLD_WHEEL_FWD
+	      case RELEASE_WHEEL_FWD:
+		evcode = ttevent_evcode_mouse_release_5;
+		break;
+#endif
+	      default:
+		/* unknown code! */
+		return;
+	    }
+	} else {
+	    /* unknown code! */
+	    return;
+	}
+	
+	if ((code & HOLD_ANY)) {
+	    evcode |=
+		(code & HOLD_LEFT      ? ttevent_evcode_mouse_hold_1 : 0) |
+		(code & HOLD_MIDDLE    ? ttevent_evcode_mouse_hold_2 : 0) |
+		(code & HOLD_RIGHT     ? ttevent_evcode_mouse_hold_3 : 0) |
+#ifdef HOLD_WHEEL_REV
+		(code & HOLD_WHEEL_REV ? ttevent_evcode_mouse_hold_4 : 0) |
+#endif
+#ifdef HOLD_WHEEL_FWD
+		(code & HOLD_WHEEL_FWD ? ttevent_evcode_mouse_hold_5 : 0) |
+#endif
+		0;
+	}
+
+	if (evcode >= ttevent_evcode_mouse_first &&
+	    evcode <= ttevent_evcode_mouse_last &&
+	    (ev = (ttevent)Create4_tteventbig
+	     (ttevent_evtype_mouse, evcode, e->EventMouse.ShiftFlags,
+	      e->EventMouse.X, e->EventMouse.Y, 0, 0))) {
+	
+	    FireEvent(ev, (ttcomponent)o);
+	    /* FireEvent also deletes ev */
+	}
+    }
+}
+static ttcallback target()_AddCommonCallbacks_ttanybutton(ttanybutton o) {
+    ttcallback l[5];
+    byte i = 0;
+    void *id = (void *)OBJ2ID(o);
+    
+    if ((l[i] = target()_AddCommonCallbacks_ttwidget((ttwidget)o)) &&
+	(i++, (l[i] = Create_ttcallback((ttcomponent)o))) &&
+	(l[i]->native = (opaque)CALL(AddMouseListener, 
+	  o->native, MOVE_MOUSE, 0, 
+	  (tfn_listener)target()_MouseCallback_ttanybutton, id)) &&
+	(i++, (l[i] = Create_ttcallback((ttcomponent)o))) &&
+	(l[i]->native = (opaque)CALL(AddMouseListener, 
+	  o->native, PRESS_LEFT, 0,
+	  (tfn_listener)target()_MouseCallback_ttanybutton, id)) &&
+	(i++, (l[i] = Create_ttcallback((ttcomponent)o))) &&
+	(l[i]->native = (opaque)CALL(AddMouseListener, 
+	  o->native, MOVE_MOUSE|HOLD_LEFT, 0,
+	  (tfn_listener)target()_MouseCallback_ttanybutton, id)) &&
+	(i++, (l[i] = Create_ttcallback((ttcomponent)o))) &&
+	(l[i]->native = (opaque)CALL(AddMouseListener, 
+	  o->native, RELEASE_LEFT, 0,
+	  (tfn_listener)target()_MouseCallback_ttanybutton, id))) {
+	
+	return l[i];
+    }
+    while (i) {
+    	TDEL(l[i]);
+	i--;
+    }
+    return NULL;
+}
+static BUILD(ttanybutton) {
+    /* calculate o->w and o->h using theme: */
+    o->Class->CacheThemeShape(o);
+    
+    if (TW_NOID != (o->native = CALL(CreateWidget, 
+		     o->w, o->h, TW_WIDGET_WANT_MOUSE|TW_WIDGET_WANT_MOUSE_MOTION|TW_WIDGET_AUTO_FOCUS,
+		     TW_WIDGETFL_USEEXPOSE, 0, 0, o->col))) {
+	if (target()_AddCommonCallbacks_ttanybutton((ttanybutton)o)) {
+	    target()_AtBuild_ttvisible((ttvisible)o);
+	    return o;
+	}
+    }
+    return NULL;
+}
+
+
+/* ttbutton */
+
+
+/* ttcheckbutton */
+
+
+/* ttradiobutton */
+
+
+/* ttscrollbar */
+
+
+/* ttslider */
+
+
+/* ttscrollpane */
+
+
+/* ttwindow */
+static BUILD(ttwindow) {
+    if (TW_NOID != (o->native = CALL(CreateWindow, 
+	  o->title ? TTLenStr(o->title) : 0, o->title, NULL, TW_NOID, o->col, TW_LINECURSOR,
+	  TW_WINDOW_DRAG|TW_WINDOW_WANT_CHANGES|TW_WINDOW_WANT_KEYS|
+	  TW_WINDOW_WANT_MOUSE|TW_WINDOW_WANT_MOUSE_MOTION|TW_WIDGET_AUTO_FOCUS,
+	  TW_WINDOWFL_USEEXPOSE|TW_WINDOWFL_CURSOR_ON|TW_WINDOWFL_BORDERLESS, o->w, o->h, 0))) {
+	if (target()_AddCommonCallbacks_ttwidget((ttwidget)o)) {
+	    target()_AtBuild_ttvisible((ttvisible)o);
+	    return o;
+	}
+    }
+    return NULL;
+}
+
+
+/* ttframe */
+static void target()_AskCloseCallback_ttframe(tevent_any ev, tobj id) {
+    ttframe o = ID2(ttframe,id);
+    if (o)
+	FireSimpleEvent((ttcomponent)o, ttevent_evtype_askclose);
+}
+static ttcallback target()_AddAskCloseCallback_ttframe(ttframe o) {
+    ttcallback l;
+    opaque id = OBJ2ID(o);
+    
+    if ((l = Create_ttcallback((ttcomponent)o))) {
+	if ((l->native = (opaque)CALL(AddGadgetListener, 
+	     o->native, 0 /*CLOSE code*/, (tfn_listener)target()_AskCloseCallback_ttframe, (void *)id)))
+	    return l;
+	TDEL(l);
+    }
+    return NULL;
+}
+static BUILD(ttframe) {
+    /* ttframe are non-visible when created */
+    o->vflags &= ~ttvisible_vflags_visible;
+    
+    if (TW_NOID != (o->native = CALL(CreateWindow, 
+	  o->title ? TTLenStr(o->title) : 0, o->title, NULL, myMenubar_n(o), o->col, TW_LINECURSOR,
+	  TW_WINDOW_DRAG|TW_WINDOW_RESIZE|TW_WINDOW_CLOSE|TW_WINDOW_WANT_CHANGES|
+	  TW_WINDOW_WANT_KEYS|TW_WINDOW_WANT_MOUSE|TW_WINDOW_WANT_MOUSE_MOTION|TW_WIDGET_AUTO_FOCUS,
+	  TW_WINDOWFL_USEEXPOSE|TW_WINDOWFL_CURSOR_ON, o->w, o->h, 0)) &&
+	target()_AddCommonCallbacks_ttwidget((ttwidget)o) &&
+	target()_AddAskCloseCallback_ttframe(o)) {
+
+	target()_AtBuild_ttvisible((ttvisible)o);
+	
+	o->Class->AddTo(o, (ttvisible)TClass_ttnative->GetRoot(), 0);
+	return o;
+    }
+    return NULL;
+}
+/*
+ * HACK WARNING: libTw does not support non-visible
+ * top-level widgets, so we emulate them with TwUnmapWidget().
+ * This is why we override AddTo_ttframe() and SetVisible_ttframe()
+ */
+static void DEF(AddTo_ttframe)(ttframe o, ttvisible parent, ttany constraint) {
+    if (parent && !o->parent) {
+	/* prepend to list */
+	if ((o->next = parent->child_first))
+	    parent->child_first->prev = (ttvisible)o;
+	else
+	    parent->child_last = (ttvisible)o;
+	parent->child_first = (ttvisible)o;
+	o->prev = NULL;
+	o->parent = parent;
+
+	if (o->vflags & ttvisible_vflags_visible)
+	    CALL(MapWidget, o->native, parent->native);
+    }
+}
+static void DEF(SetVisible_ttframe)(ttframe o, byte on_off) {
+    on_off = !!on_off;
+    if (on_off != !!(o->vflags & ttvisible_vflags_visible)) {
+	o->vflags ^= ttvisible_vflags_visible;
+	if (o->parent) {
+	    if (on_off)
+		CALL(MapWidget, o->native, o->parent->native);
+	    else
+		CALL(UnMapWidget, o->native);
+	}
+    }
+}
+static ttbyte DEF(SetTitle_ttframe)(ttframe o, TT_ARG_READ ttbyte *title) {
+    if (FNDEFAULT(ttframe)->SetTitle(o, title)) {
+
+	CALL(SetTitleWindow, o->native, o->title_len, o->title);
+
+	return TT_TRUE;
+    }
+    return TT_FALSE;
+}
+
+static void DEF(BuiltinRepaint_ttframe)(ttframe o, dat x, dat y, dat w, dat h) {
+    CALL(DrawHWAttrWidget, o->native, w, h, x, y, w, NULL);    
+}
+
+
+/* ttscroller */
+
+
+/* ttmenuitem */
+static void DEF(AddTo_ttmenuitem)(ttmenuitem o, ttvisible parent, ttany constraint) {
+    /* append */
+    tobj Code;
+    
+    if (parent && !o->parent && TTAssert(IS(ttmenu,parent)) &&
+	(o->name || (o->name = TTCloneStr("")))) {
+
+	/* hack warning: this is dirty */
+	Code = OBJ2ID(o) + 1;
+	while (Code && ((udat)Code == 0 || (udat)Code >= TW_COD_RESERVED))
+	    Code >>= (8*sizeof(udat));
+	if (!(udat)Code)
+	    Code = 1 + (rand() & 0xFFF);
+	o->native = CALL(Row4Menu, 
+	     parent->target_private, Code, 
+	     *o->name ? (o->vflags & ttanybutton_vflags_disabled) ?
+	     TW_ROW_ACTIVE : TW_ROW_INACTIVE
+	     : TW_ROW_IGNORE, strlen(o->name), o->name);
+	
+	FNDEFAULT(ttmenuitem)->AddTo(o, parent, constraint);
+    }
+}
+static void DEF(Remove_ttmenuitem)(ttmenuitem o) {
+    if (o->parent) {
+	FNDEFAULT(ttmenuitem)->Remove(o);
+	
+	if (TW_NOID != o->native)
+	    CALL(DeleteObj, o->native);
+    }
+}
+
+/* ttcheckmenuitem */
+
+
+/* ttradiomenuitem */
+
+
+/* ttmenu */
+
+static void DEF(AddTo_ttmenu)(ttmenu o, ttvisible parent, ttany constraint) {
+    if (!o->parent && parent && TTAssert(IS(ttmenu,parent) || IS(ttmenubar,parent)) &&
+	(o->name || (o->name = TTCloneStr("")))) {
+	
+	if (!o->menubar) {
+	    if (IS(ttmenubar,parent))
+		o->menubar = (ttmenubar)parent;
+	    else if (IS(ttmenu,parent))
+		o->menubar = ((ttmenu)parent)->menubar;
+	}
+	
+	if (TW_NOID != (o->target_private = CALL(Create4MenuWindow, myMenubar_n(o))) &&
+	    TW_NOID != (o->native = CALL(Item4Menu, parent->native, o->target_private,
+						  !(o->vflags & ttanybutton_vflags_disabled),
+						  strlen(o->name), o->name))) {
+
+	    FNDEFAULT(ttmenu)->AddTo(o, parent, constraint);
+	}
+    }
+}
+static void DEF(Remove_ttmenu)(ttmenu o) {
+    if (o->parent) {
+	FNDEFAULT(ttmenu)->Remove(o);
+	
+	if (o->target_private != TW_NOID) {
+	    CALL(DeleteObj, o->target_private);
+	    o->target_private = TW_NOID;
+	}
+	if (o->native != TW_NOID) {
+	    CALL(DeleteObj, o->native);
+	    o->native = TW_NOID;
+	}
+    }
+}
+
+
+
+/* ttmenubar */
+
+static BUILD(ttmenubar) {
+    tttheme t = myTheme(o);
+    if (TW_NOID != (o->native = CALL(CreateMenu, 
+		     t->bg[tttheme_bg_menu_normal], t->bg[tttheme_bg_menu_select],
+		     t->bg[tttheme_bg_menu_disabled], t->bg[tttheme_bg_menu_selectdisabled],
+		     t->bg[tttheme_bg_menu_shcut], t->bg[tttheme_bg_menu_selectshcut], 0))) {
+
+	CALL(Item4MenuCommon, o->native);
+	target()_AtBuild_ttvisible((ttvisible)o);
+	    
+	return o;
+    }
+    return NULL;
+}
+
+
+/* ttanytext */
+
+
+/* tttextfield */
+
+
+/* tttextarea */
+
+
+/* tttheme */
+
+
+/* ttapplication */
+
+static BUILD(ttapplication) {
+    if (o->name && TW_NOID != (o->native = CALL(CreateMsgPort, strlen(o->name), o->name)))
+	return o;
+    return NULL;
+}
+

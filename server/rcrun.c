@@ -19,7 +19,7 @@
 #include "util.h"
 #include "wm.h"
 
-#include "extensions.h"
+#include "extreg.h"
 #include "methods.h"
 #include "hw.h"
 #include "common.h"
@@ -43,6 +43,8 @@
 # include <Tutf/Tutf.h>
 # include <Tutf/Tutf_defs.h>
 #endif
+
+
 
 
 #define MAX_RUNCYCLE      1024 /* kill a queue after this number of steps */
@@ -225,7 +227,7 @@ static node RCFindKeyBind(ldat label, ldat shiftflags) {
 
 static node RCFindMouseBind(ldat code, ldat ctx) {
     node l = MouseList;
-    ldat hc = code & (HOLD_CODE(3) | HOLD_CODE(4));
+    ldat hc = code & (PRESS_|RELEASE_);
     code &= HOLD_ANY;
     
     for (; l; l = l->next) {
@@ -525,8 +527,8 @@ static byte RCSteps(run *r) {
 	    }
 	    break;
 	  case SLEEP:
-	    r->SW.WakeUp.Seconds = n->x.f.a;
-	    r->SW.WakeUp.Fraction = (frac_t)0;
+	    r->SW.WakeUp.Seconds = n->x.f.a / 1000;
+	    r->SW.WakeUp.Fraction = n->x.f.a % 1000;
 	    IncrTime(&r->SW.WakeUp, &All->Now);
 	    state = Ssleep;
 	    break;
@@ -763,8 +765,8 @@ static byte RCSleep(timevalue *_t) {
     timevalue *t = _t;
     run *r = Sleep;
 
-    t->Seconds = MAXTIME_T;
-    t->Fraction = (frac_t)0; /* not MAXFRAC_T as Normalize() would overflow */
+    t->Seconds = MAXTANY;
+    t->Fraction = (tany)0; /* not MAXTANY as Normalize() would overflow */
 
     while (r) {
 	if (CmpTime(&r->SW.WakeUp, t) < 0)
@@ -916,14 +918,14 @@ byte RC_VMQueue(CONST wm_ctx *C) {
 	    ctx = Pos2Ctx(C->Pos);
 	    
 	    if (isSINGLE_PRESS(C->Code)) {
-		Code = HOLD_CODE(PRESS_N(C->Code)) | HOLD_CODE(3);
+		Code = HOLD_CODE(PRESS_N(C->Code)) | PRESS_;
 		n = RCFindMouseBind((ldat)Code, ctx);
 		if (n) {
 		    ClickWinId = C->W ? C->W->Id : NOID;
 		    n = n->body;
 		}
 	    } else if (isSINGLE_RELEASE(C->Code)) {
-		Code = HOLD_CODE(RELEASE_N(C->Code)) | HOLD_CODE(4);
+		Code = HOLD_CODE(RELEASE_N(C->Code)) | RELEASE_;
 		n = RCFindMouseBind((ldat)Code, ctx);
 		if (n && MouseClickReleaseSameCtx(ClickWinId, C->W ? C->W->Id : NOID,
 						  Pos2Ctx(ClickWindowPos), ctx, n->x.ctx))
@@ -1107,26 +1109,26 @@ byte InitRC(void) {
     /* now mouse binds */
     static struct node M[] = {
 	/* Mouse   1   0  Close */
-	{ HOLD_LEFT|HOLD_CODE(4),  "0", M+1, N+13,NULL, { { CTX_0, } } },
+	{ HOLD_LEFT|RELEASE_,  "0", M+1, N+13,NULL, { { CTX_0, } } },
 	/* Mouse  123  1  RaiseLower */
-	{ HOLD_ANY |HOLD_CODE(4),  "1", M+2, N+7, NULL, { { CTX_1, } } },
+	{ HOLD_ANY |RELEASE_,  "1", M+2, N+7, NULL, { { CTX_1, } } },
 	/* Mouse  123  3  Roll Toggle */
-	{ HOLD_ANY |HOLD_CODE(4),  "2", M+3, N+6, NULL, { { CTX_2, } } },
+	{ HOLD_ANY |RELEASE_,  "2", M+3, N+6, NULL, { { CTX_2, } } },
 	/* Mouse  H1   TS Interactive Move */
-	{ HOLD_LEFT|HOLD_CODE(3), "TS", M+4, N+0, NULL, { { CTX_TITLE|CTX_SIDE, } } },
+	{ HOLD_LEFT|PRESS_,   "TS", M+4, N+0, NULL, { { CTX_TITLE|CTX_SIDE, } } },
 	/* Mouse  H1   C  Interactive Resize */
-	{ HOLD_LEFT|HOLD_CODE(3),  "C", M+5, N+1, NULL, { { CTX_CORNER, } } },
+	{ HOLD_LEFT|PRESS_,    "C", M+5, N+1, NULL, { { CTX_CORNER, } } },
 	/* Mouse  H1   C  Interactive Scroll */
-	{ HOLD_LEFT|HOLD_CODE(3),  "B", M+6, N+2, NULL, { { CTX_BARS, } } },
+	{ HOLD_LEFT|PRESS_,    "B", M+6, N+2, NULL, { { CTX_BARS, } } },
 	/* Mouse  H1   R _UnFocus */
-	{ HOLD_LEFT|HOLD_CODE(3),  "R", M+8, M+7, NULL, { { CTX_ROOT, } } },
+	{ HOLD_LEFT|PRESS_,    "R", M+8, M+7, NULL, { { CTX_ROOT, } } },
 	{ USERFUNC, "_UnFocus", },
 	/* Mouse  H2  R  WindowList */
-	{ HOLD_MIDDLE|HOLD_CODE(3),"R", M+9, N+10,NULL, { { CTX_ROOT, } } },
+	{ HOLD_MIDDLE|PRESS_,  "R", M+9, N+10,NULL, { { CTX_ROOT, } } },
 	/* Mouse  H3  A  Interactive Menu */
-	{ HOLD_RIGHT|HOLD_CODE(3), "A", M+10,K+1, NULL, { { CTX_ANY, } } },
+	{ HOLD_RIGHT|PRESS_,   "A", M+10,K+1, NULL, { { CTX_ANY, } } },
 	/* Mouse  H1  M  Interactive Screen */
-	{ HOLD_LEFT|HOLD_CODE(3),  "M", NULL,M+11,NULL, { { CTX_MENU, } } },
+	{ HOLD_LEFT|PRESS_,    "M", NULL,M+11,NULL, { { CTX_MENU, } } },
 	{ INTERACTIVE, NULL, NULL, NULL, NULL, { { 0, SCREEN, }, } }
     };
 #ifdef CONF__UNICODE

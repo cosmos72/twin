@@ -25,6 +25,8 @@
 #define AssignId			TTD.UTIL.AssignId
 #define DropId				TTD.UTIL.DropId
 #define Id2Obj				TTD.UTIL.Id2Obj
+#define FixedAssignId			TTD.UTIL.FixedAssignId
+#define FixedAssignIdArray		TTD.UTIL.FixedAssignIdArray
 #define FindNative			TTD.UTIL.FindNative
 #define GetNow				TTD.UTIL.GetNow
 

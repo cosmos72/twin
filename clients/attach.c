@@ -205,7 +205,7 @@ int main(int argc, char *argv[]) {
 
     InitSignals();
 
-    if (TwCheckMagic(attach_magic) && TwOpen(dpy) && TwCreateMsgPort(8, "twattach", 0, 0, 0)) do {
+    if (TwCheckMagic(attach_magic) && TwOpen(dpy) && TwCreateMsgPort(8, "twattach")) do {
 	
 	if (!VersionsMatch(force)) {
 	    if (!force) {

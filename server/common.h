@@ -22,8 +22,8 @@ void SetPaletteHW(udat N, udat R, udat G, udat B);
 void ResetPaletteHW(void);
 
 obj TwinSelectionGetOwner(void);
-void TwinSelectionSetOwner(obj Owner, time_t Time, frac_t Frac);
-#define SEL_CURRENTTIME ((time_t)0)
+void TwinSelectionSetOwner(obj Owner, tany Time, tany Frac);
+#define SEL_CURRENTTIME ((tany)0)
 void TwinSelectionNotify(obj Requestor, uldat ReqPrivate, uldat Magic, CONST byte MIME[MAX_MIMELEN],
 			    uldat Len, byte CONST * Data);
 void TwinSelectionRequest(obj Requestor, uldat ReqPrivate, obj Owner);

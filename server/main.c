@@ -25,7 +25,7 @@
 #include "main.h"
 #include "draw.h"
 #include "resize.h"
-#include "extensions.h"
+#include "extreg.h"
 
 #include "hw.h"
 #include "common.h"
@@ -340,13 +340,13 @@ int main(int argc, char *argv[]) {
 	    /* decide what to do... sleep a little if we can (HW_DELAY),
 	     * otherwise revert to one of the other strategies */
 	    if (!ChangedVideoFlagAgain || StrategyDelay >= MAXDELAY) {
-		StrategyDelay = (frac_t)0;
+		StrategyDelay = (tany)0;
 		if (StrategyFlag == HW_DELAY)
 		    StrategyFlag = HW_BUFFER;
 	    } else {
 		if ((!this_timeout && (this_timeout = &sel_timeout))
 		    || this_timeout->tv_sec || this_timeout->tv_usec > MINDELAY) {
-		    this_timeout->tv_sec = (time_t)0;
+		    this_timeout->tv_sec = (tany)0;
 		    this_timeout->tv_usec = MINDELAY;
 		}
 		StrategyFlag = HW_DELAY;

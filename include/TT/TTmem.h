@@ -112,7 +112,7 @@ ttattr *TTCloneStr2Attr(TT_CONST ttbyte *s, ttcol c);
 # define TTCopyFont2Attr		TTCopyStr2Attr
 # define TTCopyFontL2Attr		TTCopyStrL2Attr
 # define TTCloneFont			TTCloneStr
-# define TTCloneFontL(f, len)		TTCloneStrL
+# define TTCloneFontL			TTCloneStrL
 # define TTCloneFont2Attr		TTCloneStr2Attr
 # define TTCloneFontL2Attr		TTCloneStrL2Attr
 #else

@@ -276,5 +276,18 @@
 
 
 
+  case order_OpenExtension:
+    switch (n) {
+      case 2: L = (a[1]._) * sizeof(byte); break;
+    }
+    break;
+  case order_CallBExtension:
+    switch (n) {
+      case 3: L = (a[2]._) * sizeof(byte); break;
+      case 4: L = (2) * sizeof(byte); break;
+    }
+    break;
+
+
 
 

@@ -1,0 +1,16 @@
+
+SUBDIRS=
+
+#
+# not yet...
+#
+#SUBDIRS=pli
+
+all: autogen
+
+do-autogen: $(T)include/TT/tt_timestamp $(S)version.h
+
+include $(S)makeversion
+include $(T)makerules
+
+

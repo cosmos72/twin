@@ -1,0 +1,10 @@
+
+SUBDIRS=Tutf Tw TT
+
+all: autogen
+
+do-autogen: $(S)version.h
+
+include $(S)makeversion
+include $(T)makerules
+

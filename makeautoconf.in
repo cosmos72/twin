@@ -6,7 +6,7 @@ ifeq ($(makeautoconf),)
 
 # include current configuration if available and not already included
 ifeq ($(CONF),)
-  CONF=$(TOPDIR)/conf/conf.current
+  CONF=$(B)conf/conf.current
 endif
 ifeq ($(CONF__UNICODE),)
   ifneq ($(wildcard $(CONF)),)
@@ -53,9 +53,6 @@ BUILD_PROG_TWIN:=@BUILD_PROG_TWIN@
 CC_AC_FLAGS:=@CFLAGS@ @CPPFLAGS@
 #CFLAGS+=@DEFS@
 LD_FLAGS+=@LDFLAGS@
-
-LD_FLAGS_SOLIB:=@LD_FLAGS_SOLIB@
-LD_FLAGS_SOLIB_NAME:=@LD_FLAGS_SOLIB_NAME@
 
 LD_LIBSOCKET:=@LD_LIBSOCKET@ @LD_LIBNSL@
 

@@ -110,7 +110,7 @@
 #define TwCreateMenu(a1, a2, a3, a4, a5, a6, a7)		Tw_CreateMenu(Tw_DefaultD, a1, a2, a3, a4, a5, a6, a7)
 #define TwSetInfoMenu(a1, a2, a3, a4, a5)		Tw_SetInfoMenu(Tw_DefaultD, a1, a2, a3, a4, a5)
 
-#define TwCreateMsgPort(a1, a2, a3, a4, a5)		Tw_CreateMsgPort(Tw_DefaultD, a1, a2, a3, a4, a5)
+#define TwCreateMsgPort(a1, a2)		Tw_CreateMsgPort(Tw_DefaultD, a1, a2)
 #define TwFindMsgPort(a1, a2, a3)		Tw_FindMsgPort(Tw_DefaultD, a1, a2, a3)
 
 #define TwBgImageScreen(a1, a2, a3, a4)		Tw_BgImageScreen(Tw_DefaultD, a1, a2, a3, a4)
@@ -142,6 +142,10 @@
 #define TwNotifySelection(a1, a2, a3, a4, a5, a6)		Tw_NotifySelection(Tw_DefaultD, a1, a2, a3, a4, a5, a6)
 
 #define TwSetServerUid(a1, a2)		Tw_SetServerUid(Tw_DefaultD, a1, a2)
+
+#define TwOpenExtension(a1, a2)		Tw_OpenExtension(Tw_DefaultD, a1, a2)
+#define TwCallBExtension(a1, a2, a3, a4)		Tw_CallBExtension(Tw_DefaultD, a1, a2, a3, a4)
+#define TwCloseExtension(a1)		Tw_CloseExtension(Tw_DefaultD, a1)
 
 
 

@@ -44,11 +44,14 @@ static ttbyte init(void) {
     ttradiobutton r1, r2;
     ttbuttongroup g;
     ttscroller s;
-    ttbyte ok;
+    ttscrollpane p;
+    ttlabel l3[6];
+    ttint i;
+    ttbyte ok = TT_FALSE;
     
     if (TTCheckMagic(ttdemo_magic) &&
 	TTOpen(NULL) &&
-	TTSet_ttapplication("ttdemo3") &&
+	TTCreate_ttapplication("ttdemo3") &&
 
 	(f = TTCreate_ttframe("ttdemo3")) &&
 	
@@ -60,24 +63,30 @@ static ttbyte init(void) {
 	 */
 	TTCreateAskclose_ttlistener((ttcomponent)f, 0, (ttlistener_fn)TTExitMainLoop) &&
 	
-	(b  = TTCreate_ttbutton("button", 6, 1, 6)) &&
-	(c  = TTCreate_ttcheckbutton("checkbutton", 11, 1, 11)) &&
-	(r1 = TTCreate_ttradiobutton("radiobutton1", 12, 1, 12)) &&
-	(r2 = TTCreate_ttradiobutton("radiobutton2", 12, 1, 12)) &&
+	(b  = TTCreate_ttbutton(6, 1, 6, "button")) &&
+	(c  = TTCreate_ttcheckbutton(11, 1, 11, "checkbutton")) &&
+	(r1 = TTCreate_ttradiobutton(12, 1, 12, "radiobutton1")) &&
+	(r2 = TTCreate_ttradiobutton(12, 1, 12, "radiobutton2")) &&
 	(g  = TTNEW(ttbuttongroup)) &&
 	
 	(s1 = TTCreate_ttslider(ttanyscroll_orientation_x, 12)) &&
 	(s2 = TTCreate_ttslider(ttanyscroll_orientation_y, 9)) &&
 
-	(s  = TTCreate_ttscroller(10, 6)) &&
+	(s  = TTCreate_ttscroller(22, 6)) &&
 	
 	(l1 = TTCreate_ttlabel("x= 0")) &&
 	(l2 = TTCreate_ttlabel("y= 0")) &&
+	(l3[0] = TTCreate_ttlabel("this is a scroll test.")) &&
+	(l3[1] = TTCreate_ttlabel("you should be able to scroll")) &&
+	(l3[2] = TTCreate_ttlabel("this text with the scrollbars")) &&
+	(l3[3] = TTCreate_ttlabel("at the right and at the bottom")) &&
+	(l3[4] = TTCreate_ttlabel("of the text itself. Please report")) &&
+	(l3[5] = TTCreate_ttlabel("any incorrect behaviour you find.")) &&
 
-	TTCreateChange_ttlistener((ttcomponent)s1, TTGetFieldId("ttslider_slide_value"),
+	TTCreateChange_ttlistener((ttcomponent)s1, TTGetEvcode_ttfield("ttslider_slide_value"),
 				  0, (ttlistener_fn)show_slider) &&
 	
-	TTCreateChange_ttlistener((ttcomponent)s2, TTGetFieldId("ttslider_slide_value"),
+	TTCreateChange_ttlistener((ttcomponent)s2, TTGetEvcode_ttfield("ttslider_slide_value"),
 				  0, (ttlistener_fn)show_slider) &&
 	
 	(ok = TT_TRUE)  ) {
@@ -91,27 +100,34 @@ static ttbyte init(void) {
 	TTSetXY_ttwidget((ttwidget)s2,17, 0);
 	TTSetXY_ttwidget((ttwidget)l1,19, 2);
 	TTSetXY_ttwidget((ttwidget)l2,19, 4);
-	TTSetXY_ttwidget((ttwidget)s,  2,10);
+	TTSetXY_ttwidget((ttwidget)s,  1,10);
 	
-	TTAdd_ttvisible((ttvisible)f, (ttvisible)b );
-	TTAdd_ttvisible((ttvisible)f, (ttvisible)c );
-	TTAdd_ttvisible((ttvisible)f, (ttvisible)r1);
-	TTAdd_ttvisible((ttvisible)f, (ttvisible)r2);
-	TTAdd_ttvisible((ttvisible)f, (ttvisible)s1);
-	TTAdd_ttvisible((ttvisible)f, (ttvisible)s2);
-	TTAdd_ttvisible((ttvisible)f, (ttvisible)l1);
-	TTAdd_ttvisible((ttvisible)f, (ttvisible)l2);
-	TTAdd_ttvisible((ttvisible)f, (ttvisible)s );
+	TTAdd_ttvisible((ttvisible)f, (ttvisible)b , ttlayout_constraint_root);
+	TTAdd_ttvisible((ttvisible)f, (ttvisible)c , ttlayout_constraint_root);
+	TTAdd_ttvisible((ttvisible)f, (ttvisible)r1, ttlayout_constraint_root);
+	TTAdd_ttvisible((ttvisible)f, (ttvisible)r2, ttlayout_constraint_root);
+	TTAdd_ttvisible((ttvisible)f, (ttvisible)s1, ttlayout_constraint_root);
+	TTAdd_ttvisible((ttvisible)f, (ttvisible)s2, ttlayout_constraint_root);
+	TTAdd_ttvisible((ttvisible)f, (ttvisible)l1, ttlayout_constraint_root);
+	TTAdd_ttvisible((ttvisible)f, (ttvisible)l2, ttlayout_constraint_root);
+	TTAdd_ttvisible((ttvisible)f, (ttvisible)s , ttlayout_constraint_root);
 
+	p = TTGetScrollpane_ttscroller(s);
+	TTSetWlHl_ttwidget((ttwidget)p, 0x3, 35, 7);
+	
+	for (i = 0; i < sizeof(l3)/sizeof(l3[0]); i++) {
+	    TTSetXY_ttwidget((ttwidget)l3[i], 0, i);
+	    TTAdd_ttvisible((ttvisible)p, (ttvisible)l3[i], ttlayout_constraint_root);
+	}
+	
 	TTAdd_ttbuttongroup(g, r1);
 	TTAdd_ttbuttongroup(g, r2);
 	
 	TTSetWH_ttwidget((ttwidget)f, 24,16);
 	
 	TTSetVisible_ttvisible((ttvisible)f, TT_TRUE);
-    } else
-	ok = TT_FALSE;
-	
+    }
+
     return ok;
 }
 

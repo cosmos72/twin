@@ -1,0 +1,56 @@
+
+
+
+
+dnl This file is `m4/proto.m4' : m4 macros to autogenerate proto_m4.h
+dnl Tell the user about this.
+/* This file was automatically generated with `m4' from `m4/proto.m4', do not edit! */
+
+/*
+ *  proto1_m4.h  -- single-head compatibility defines for libTw functions prototypes
+ *
+ *  Copyright (C) 2002 by Massimiliano Ghilardi
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Library General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2 of the License, or (at your option) any later version.
+ *
+ */
+
+divert(-1)
+
+define(`TRIM', `translit(`$1', ` ')')
+
+define(`CHAIN', `TRIM($1)`'TRIM($2)')
+
+define(`SELF', `$1`'')
+
+define(`NAME', `SELF(Tw_`'CHAIN($1,$2))')
+define(`NAME1', `SELF(Tw`'CHAIN($1,$2))')
+
+define(`NSHIFT', `ifelse($1, 0, `shift($@)', `NSHIFT(decr($1), shift(shift($@)))')')
+
+define(`PREFIX', `Tw_DefaultD`'ifelse($1, 5, `', `, ')')
+
+
+define(`ARG', `a$1')
+define(`_ARGS', `ifelse($1, $2, `', `, ARG($1)`'_ARGS(incr($1), $2)')')
+define(`ARGS', `ifelse($1, 0, `', $1, 1, `ARG(1)', `ARG(1)`'_ARGS(2, incr($1))')')
+
+
+define(`PROTO', ``#'define NAME1($3,$4)(ARGS(eval(($#-5)/3)))		NAME($3,$4)(PREFIX($#)`'ARGS(eval(($#-5)/3)))')
+define(`PROTOFindFunction', defn(`PROTO'))
+define(`PROTOSyncSocket', defn(`PROTO'))
+
+define(`Tw_ChangeFieldObj', `Tw_ChangeField')
+define(`TwChangeFieldObj', `TwChangeField')
+define(`Tw_SyncSocket', `Tw_Sync')
+define(`TwSyncSocket', `TwSync')
+
+define(`c_doxygen', `dnl')
+
+divert
+
+include(`m4/Tw_sockproto.m4')
+

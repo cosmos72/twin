@@ -38,6 +38,7 @@
 
 
 
+
 { 0, 0, "FindFunction",
     "0""_"TWS_uldat_STR"_"TWS_byte_STR"V"TWS_byte_STR"_"TWS_byte_STR"V"TWS_byte_STR },
 
@@ -189,7 +190,7 @@
     "2""v"TWS_void_STR"x"menu_magic_STR"_"TWS_byte_STR"_"TWS_ldat_STR"V"TWS_byte_STR"W"TWS_hwcol_STR },
 
 { 0, 0, "CreateMsgPort",
-    "0""x"msgport_magic_STR"_"TWS_byte_STR"V"TWS_byte_STR"_"TWS_time_t_STR"_"TWS_frac_t_STR"_"TWS_byte_STR },
+    "0""x"msgport_magic_STR"_"TWS_byte_STR"V"TWS_byte_STR },
 { 0, 0, "FindMsgPort",
     "0""x"msgport_magic_STR"x"msgport_magic_STR"_"TWS_byte_STR"V"TWS_byte_STR },
 
@@ -237,7 +238,7 @@
 { 0, 0, "GetOwnerSelection",
     "0""x"obj_magic_STR },
 { 0, 0, "SetOwnerSelection",
-    "0""v"TWS_void_STR"_"TWS_time_t_STR"_"TWS_frac_t_STR },
+    "0""v"TWS_void_STR"_"TWS_tany_STR"_"TWS_tany_STR },
 { 0, 0, "RequestSelection",
     "0""v"TWS_void_STR"x"obj_magic_STR"_"TWS_uldat_STR },
 { 0, 0, "NotifySelection",
@@ -245,6 +246,13 @@
 
 { 0, 0, "SetServerUid",
     "0""_"TWS_byte_STR"_"TWS_uldat_STR"_"TWS_byte_STR },
+
+{ 0, 0, "OpenExtension",
+    "0""x"extension_magic_STR"_"TWS_byte_STR"V"TWS_byte_STR },
+{ 0, 0, "CallBExtension",
+    "0""O"TWS_tany_STR"x"extension_magic_STR"_"TWS_topaque_STR"V"TWS_byte_STR"V"TWS_byte_STR },
+{ 0, 0, "CloseExtension",
+    "0""v"TWS_void_STR"x"extension_magic_STR },
 
 
 

@@ -409,7 +409,7 @@ static byte ImmGlobalFlags(node l) {
 	    /* ButtonSelection or ButtonPaste */
 
 	    j = l->x.f.flag;
-	    if (j >= 1 && j <= 3)
+	    if (j >= 1 && j <= BUTTON_N_MAX)
 		GlobalFlags[i+3] = HOLD_CODE(j-1);
 	    else
 		GlobalFlags[i+3] = HOLD_LEFT;
@@ -499,18 +499,18 @@ static byte BindMouse(str buttons, str _ctx, node func) {
     byte c;
     
     while ((c = *buttons++)) {
-	if (c >= '1' && c <= '3')
+	if (c >= '1' && c <= '1' + BUTTON_N_MAX)
 	    buttonmask |= HOLD_CODE(c-'1');
 	else if (c == 'H' || c == 'h')
-	    buttonmask |= HOLD_CODE(3);
+	    buttonmask |= PRESS_;
 	else if (c == 'C' || c == 'c')
-	    buttonmask |= HOLD_CODE(4);
+	    buttonmask |= RELEASE_;
     }
     if (buttonmask) {
-	if (!(buttonmask & (HOLD_CODE(3)|HOLD_CODE(4))))
+	if (!(buttonmask & (PRESS_|RELEASE_)))
 	    /* default is 'C' */
-	    buttonmask |= HOLD_CODE(4);
-	
+	    buttonmask |= RELEASE_;
+
 	if (!(n = LookupBind(buttonmask, ctx, MouseList))) {
 	    n = MakeBuiltinFunc(buttonmask);
 	    n->x.ctx = ctx;
@@ -898,16 +898,17 @@ static void DumpKeyNode(node n) {
 }
 
 static void DumpMouseNode(node n) {
-    byte buttons[4] = "\0\0\0", *b = buttons;
+    byte buttons[BUTTON_N_MAX + 1], *b = buttons;
+    udat i;
     
     if (!n)
 	return;
-    if (n->id & HOLD_LEFT)
-	*b++ = '1';
-    if (n->id & HOLD_MIDDLE)
-	*b++ = '2';
-    if (n->id & HOLD_RIGHT)
-	*b++ = '3';
+    
+    for (i = 0; i < BUTTON_N_MAX; i++) {
+	if (n->id & HOLD_N(i))
+	    *b++ = '1' + i;
+    }
+    WriteMem(b, '\0', BUTTON_N_MAX + 1 - (b - buttons));
     
     fprintf(stderr, "%s %s %s ", TokenName(MOUSE), buttons, n->name);
     DumpGenericNode(n->body);

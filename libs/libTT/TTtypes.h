@@ -19,10 +19,13 @@
 #include <TT/version.h>
 
 /* include our internal copy of headers instead of the public ones */
+#include <TT/datatypes.h>
+#include <TT/datasizes.h>
+#include "internaltypes.h"
+#include "limits_m4.h"
+
 #include "flags.h"
 #include "tree_m4.h"
-#include "datatypes.h"
-#include <TT/datasizes.h>
 #include "decls_m4.h"
 
 #endif /* _TT_TYPES_H */

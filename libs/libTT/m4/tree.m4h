@@ -1,0 +1,503 @@
+
+dnl This file is `m4/tree.m4' : m4 macros to autogenerate tree_m4.h
+dnl Tell the user about this.
+/* This file was automatically generated from `m4/tree.m4', do not edit! */
+
+
+/*
+ *  tree_m4.h  --  internal header for libTT objects hierarchy tree
+ */
+
+#ifndef _TT_TREEM4_H
+#define _TT_TREEM4_H
+
+
+
+include(`m4/TTclasses.m4')
+
+#define TT_TYPELIST(el) \
+TTtypelist()
+
+#define TT_LIST(el) \
+TTlist()
+
+#define TT_NLIST(el) \
+TTnlist()
+
+#define super_(t)	TT_CAT(super_,t)
+#define order_(t)	TT_CAT(order_,t)
+#define id_ttclass_(t)	TT_CAT(id_ttclass_,t)
+#define magicmask_(t)	TT_CAT(magicmask_,t)
+#define magic_(t)	TT_CAT(magic_,t)
+
+
+
+
+/* set str_order_xxx defines for objects */
+define(`order_type_last', 1)
+define(`def_order', `
+`#'define str_order_$1	"\x`'eval(order_type_last, 16, 2)"`'define(`order_type_last', incr(order_type_last))`'dnl
+')`'dnl
+
+define(`el', `def_order($1)')`'dnl
+TTlist()`'dnl
+undefine(`el')
+
+`#'define str_order_first	str_order_ttobj
+def_order(last)
+
+
+/* set str_order_xxx defines for native types */
+
+define(`el', `def_order($1)')`'dnl
+TTtypelist()`'dnl
+undefine(`el')
+    
+`#'define str_order_type_first	str_order_`'TTtypefirst()
+def_order(type_last)
+
+define(`el', `
+`#'define str_order_$1	str_order_$2')`'dnl
+TTtypealiaslist()`'dnl
+undefine(`el')
+undefine(`order_type_last')
+
+
+
+
+
+
+
+
+
+/* set order_xxx enums for objects */
+typedef enum e_order_ttobj {
+
+define(`m4_order_type_last', 0)dnl
+
+define(`el', `define(`m4_order_type_last', incr(m4_order_type_last))
+    order_$1 = m4_order_type_last,')dnl
+    
+    order_first = m4_order_type_last,
+    order_ttobj = order_first,
+TTnlist()
+    el(last)
+
+    
+/* set order_xxx enums for native types */
+TTtypelist()
+    
+undefine(`el')dnl
+define(`el', `
+    order_$1	= order_$2,')dnl
+
+TTtypealiaslist()`'dnl
+
+undefine(`el')dnl
+
+    order_type_first = order_`'TTtypefirst(),
+    order_type_last = order_`'TTtypelast() + 1
+    
+} e_order_types;
+
+divert(-1)
+define(`log2', `_log2($1, 0)')
+define(`_log2', `ifelse(`$1', 0, `$2', `_log2(eval(`$1'/2), incr(`$2'))')')
+
+define(`m4_order_usedbits', `log2(m4_order_type_last)')
+divert
+`#'define order_ttclass_usedbits	m4_order_usedbits
+`#'define order_ttclass_bitmask	eval((1<<m4_order_usedbits)-1)
+
+`#'ifndef TT_SIZEOF_ttopaque
+`#' error internal error: undefined TT_SIZEOF_ttopaque !
+`#'endif
+
+`#'if 8 * TT_SIZEOF_ttopaque < order_ttclass_usedbits + TT_MAGIC_SHIFT
+`#' error internal error: order_ttclass_usedbits + TT_MAGIC_SHIFT overflows 8 * sizeof(ttopaque) !
+`#'endif
+
+
+
+/* set id_ttclass_xxx enums for objects */
+typedef enum e_id_ttclass_ttobj {
+define(`el', `
+    id_ttclass_$1,')dnl
+    
+    id_ttclass_first = (order_ttclass<<TT_MAGIC_SHIFT) | order_ttobj,
+    id_ttclass_ttobj = id_ttclass_first,
+TTnlist()
+    id_ttclass_last,
+    
+/* set order_xxx enums for native types */
+TTtypelist()
+
+undefine(`el')dnl
+define(`el', `
+    id_ttclass_$1	= id_ttclass_$2,')dnl
+
+TTtypealiaslist()`'dnl
+
+undefine(`el')dnl
+
+    id_ttclass_type_first = id_ttclass_`'TTtypefirst(),
+    id_ttclass_type_last = id_ttclass_`'TTtypelast() + 1,
+    
+} e_id_ttclass_types;
+
+
+
+
+divert(-1)
+
+dnl now, the nightmare of objects hierarchy
+
+define(`radix16', `0x`'eval(`$1', 16)')
+
+dnl how many objects are descendant of another given object?
+
+define(`shiftword', `patsubst(`$1', `^ *\w+ *', `')')
+define(`numwords', `ifelse(`$1', `', 0, `incr(numwords(shiftword(`$1')))')')
+
+dnl initialize child_$1
+
+define(`el', `define(`child_$1')')
+TTlist()
+undefine(`el')
+
+dnl define super_$1 to parent of $1 and append children of $1 to child_$1
+
+define(`m4_super_ttobj', `none')
+
+define(`extends', `define(`child_$1', child_$1 $2)')
+define(`field')
+define(`el', `TTdef_$1($1)')
+TTnlist()
+undefine(`el')
+define(`field')
+define(`extends')
+
+
+define(`log2', `_log2($1, 0)')
+define(`_log2', `ifelse(`$1', 0, `$2', `_log2(eval(`$1'/2), incr(`$2'))')')
+
+define(`exp2m1', `ifelse(`$1', 0, 0, `decr(eval(1<<`$1'))')')
+
+
+dnl set childN_$1 to # of children of $1
+
+define(`el', `define(`childN_$1', numwords(child_$1))')
+TTlist()
+undefine(`el')
+
+dnl set childlogN_$1 to log2(childN), rounded up
+
+define(`el', `define(`childlogN_$1', log2(childN_$1))')
+TTlist()
+undefine(`el')
+
+dnl set magicmaskN_$1 to (childlogN_$1) bits all set to 1
+
+define(`el', `define(`magicmaskN_$1', exp2m1(childlogN_$1)) define(`bitsN_$1', magicmaskN_$1)')
+TTlist()
+undefine(`el')
+
+dnl add parents' childlogN_$1 to each childlogN_$2
+dnl and shift each magicmaskN_$2 by childlogN_$2 and add parents' magicmaskN_$1 to them 
+
+define(`extends', `define(`childlogN_$2', eval(childlogN_$2 + childlogN_$1))
+		  define(`magicmaskN_$2', eval((magicmaskN_$2<<childlogN_$1) | magicmaskN_$1))')
+define(`field')
+define(`el', `TTdef_$1($1)')
+TTnlist()
+undefine(`el')
+define(`field')
+define(`extends')
+
+
+
+dnl initialize childI_$1
+
+define(`el', `define(`childI_$1', 1)')
+TTlist()
+undefine(`el')
+
+dnl initialize childPOS_$1 to the position with respect to others in parent's list of children
+
+define(`extends', `define(`childPOS_$2', childI_$1) define(`childI_$1', incr(childI_$1))')
+define(`field')
+define(`el', `TTdef_$1($1)')
+TTnlist()
+undefine(`el')
+define(`field')
+define(`extends')
+
+
+dnl calculate magicN_$1 as follows:
+dnl highest bits are childPOS_$1 (conveniently shifted by parent's parent's childlogN_$1);
+dnl lower bits are parents' magicN_$1
+
+define(`childlogN_none', 0)
+define(`magicN_ttobj', 0)
+
+define(`el', `define(`magicN_$1', eval((childPOS_$1<<merge(childlogN_,merge(m4_super_,m4_super_$1))) | merge(magicN_,m4_super_$1)))')
+TTnlist()
+undefine(`el')
+
+divert
+
+/*
+ * NOTE:
+ *
+ * magicmask_* and magic_* are autogenerated using a quite intricated m4 algorythm.
+ *
+ * the final effect is shown below, on a cutdown hierarchy tree.
+ * in the picture, first number is magic_*, second is magicmask_*
+ *
+ *                         ________ttobj
+ *                ________/   ____/(0,0)
+ *       ________/       ____/       |
+ *      /               /            |
+ *ttcallback     ttevent        ttcomponent
+ *(0x1,0x3)     (0x2,0x3)     ___(0x3,0x3)___
+ *                      _____/    /     \    \_____
+ *                _____/         /       \         \_____
+ *               /              /         \              \
+ *           _ttvisible_   ttbuttongroup   tttheme   ttapplication
+ *          /(0x7,0x1F)\\__  (0xB,0x1F)   (0xF,0x1F)  (0x13,0x1F)
+ *         /    |       \  \_________
+ *        /     |        \           \
+ * ttnative   ttwidget   ttmenuitem   ttmenubar
+ *(0x27,0xFF)(0x47,0xFF) (0x67,0xFF) (0x87,0xFF)
+ *
+ * magic_* of a children is the parent's one, plus the progressive number
+ * (conveniently shifted) of the children in the parent's children list.
+ *
+ * as you can see, all children of the same parent share the same magicmask;
+ * this magicmask is the smallest bit mask that can hold all children magic_* numbers.
+ * in other words, the tree is coded with a Huffman-like strategy
+ * (node frequencies do not `apply' in this case)
+ *
+ * with this setup, runtime type checking and casting is extremely simple:
+ * to check if an object of type A can be cast to type B, just do:
+ *
+ *  if ((magic_A & magicmask_B) == magic_B) {
+ *      success;
+ *  } else {
+ *      fail;
+ *  }
+ * 
+ */
+
+
+
+
+
+
+
+
+
+
+
+/* set magicmask_xxx enums */
+typedef enum e_magicmask_ttobj {
+    magicmask_ttobj = 0,`'dnl
+define(`el', `
+    magicmask_$1 = radix16(merge(magicmaskN_,m4_super_$1)),')`'dnl
+TTnlist()`'dnl
+undefine(`el')
+    magicmask_last
+} e_magicmask_ttobj;
+
+
+typedef enum e_magic_ttobj {
+    magic_ttobj = 0,
+define(`el', `
+    magic_$1 = radix16(magicN_$1),')
+TTnlist()`'dnl
+undefine(`el')
+    magic_last
+} e_magic_ttobj;
+
+
+
+
+define(`m4_order_field_last', 0)dnl
+define(`extends')
+define(`fake_field', `field($@)')
+define(`field', `ifelse(`$4', `', `', `
+    this`'_$3	=     m4_order_field_last,dnl
+define(`m4_order_field_last', incr(m4_order_field_last))')')
+define(`el', `define(`this', $1)
+    this`'_field_first	= m4_order_field_last,dnl
+TTdef_$1($1)
+    this`'_field_last	= m4_order_field_last,
+')
+/* enum for existing object fields */
+typedef enum e_order_fields {
+TTlist()
+    ttobj_field_max	= m4_order_field_last
+} e_order_fields;
+define(`fake_field')
+define(`field')
+undefine(`this')
+undefine(`el')
+
+
+define(`fake_field', `field($@)')
+define(`field', `ifelse(`$4', `', `', `
+`#'define this`'_$3	this`'_$3')')
+define(`el', `define(`this', $1)
+`'field(,,field_first,r)`'dnl
+`'TTdef_$1($1)dnl
+`'field(,,field_last,r)')
+
+    
+/* defines for existing object fields */
+TTlist()
+define(`this', `ttobj')
+field(,,field_max,r)
+
+define(`fake_field')
+define(`field')
+undefine(`this')
+undefine(`el')
+
+
+
+divert(-1)
+
+
+
+include(`m4/TTfield.m4')
+include(`m4/TTdecay.m4')
+
+define(`extends')
+define(`public', `
+arg_decl_decay($5) TT$2_$3`'(ifelse($4, 0, void, `args_decl(1, $4, NSHIFT(5, $@))'));
+')
+define(`public_set',`public($@)')
+define(`final',`public($@)')
+
+
+define(`m4_order_method_last', 0)
+
+
+divert
+
+/* enum of existing object methods */
+
+typedef enum e_order_methods {
+
+    /* generic functions */
+define(`decl_ttmethod', `ifdef(`done_ttmethod_$1', `', `define(`done_ttmethod_$1')
+    ttmethod_$1	= m4_order_method_last,dnl
+`'define(`m4_order_method_last', incr(m4_order_method_last))')')
+
+
+define(`handy_method', `decl_ttmethod($1)')
+TTdef_ttclass_handymethods()
+undefine(`handy_method')
+
+define(`final', `decl_ttmethod(`$1_$2')')
+define(`public', `final($@)')
+define(`public_set', `final($@)')
+define(`el',`
+    /* $1 methods */TTdef_ttclass_$1($1)')
+TTlist()
+undefine(`el')
+define(`final')
+define(`public')
+define(`public_set')
+
+undefine(`decl_ttmethod')
+
+
+    /* TTSet*_* methods omitted, they are listed above! */
+    
+#if 0
+    ttmethod_FN_set_first	= m4_order_method_last,
+
+    ttmethod_SetField_ttobj,
+    ttmethod_ChangeField_ttobj,
+
+    ttmethod_FN_set_last	= m4_order_method_last,
+#endif
+
+    /* TTGet*_* methods */
+
+    ttmethod_FN_get_first	= m4_order_method_last,
+
+define(`el', `define(`this', `$1')
+    /* TTGet*_$1 methods */TTdef_$1($1)')
+define(`extends')
+define(`getset_method', `
+    ttmethod_`'Toupper2($1,$2)_`'this`'	= m4_order_method_last,dnl
+`'define(`m4_order_method_last', incr(m4_order_method_last))')
+define(`field', `get_field($@)')
+TTlist()
+define(`extends')
+define(`field')
+undefine(`this')
+undefine(`el')
+
+    ttmethod_FN_get_last	= m4_order_method_last,
+    ttmethod_FN_last = m4_order_method_last
+} e_order_methods;
+
+
+/* defines for existing object methods */
+
+define(`decl_ttmethod', `ifdef(`done_def_ttmethod_$1', `', `define(`done_def_ttmethod_$1')
+`#'define ttmethod_$1	ttmethod_$1')')
+
+define(`handy_method', `decl_ttmethod($1)')
+TTdef_ttclass_handymethods()
+undefine(`handy_method')
+
+define(`final', `decl_ttmethod(`$1_$2')')
+define(`public', `final($@)')
+define(`public_set', `final($@)')
+define(`el',`
+    /* $1 methods */TTdef_ttclass_$1($1)')
+TTlist()
+undefine(`el')
+define(`final')
+define(`public')
+define(`public_set')
+
+undefine(`decl_ttmethod')
+
+    /* TTSet*_* methods omitted, they are listed above! */
+    
+#if 0
+# define ttmethod_FN_set_first	ttmethod_FN_set_first
+
+# define ttmethod_SetField_ttobj	ttmethod_SetField_ttobj
+# define ttmethod_ChangeField_ttobj	ttmethod_ChangeField_ttobj
+
+# define ttmethod_FN_set_last	ttmethod_FN_set_last
+#endif
+
+    /* TTGet*_* methods */
+
+#define ttmethod_FN_get_first	ttmethod_FN_get_first
+
+define(`el', `define(`this', `$1')
+    /* TTGet*_$1 methods */TTdef_$1($1)')
+define(`extends')
+define(`getset_method', `
+`#'define ttmethod_`'Toupper2($1,$2)_`'this	ttmethod_`'Toupper2($1,$2)_`'this')
+define(`field', `get_field($@)')
+TTlist()
+define(`extends')
+define(`field')
+undefine(`this')
+undefine(`el')
+
+#define ttmethod_FN_get_last	ttmethod_FN_get_last
+#define ttmethod_FN_last	ttmethod_FN_last
+
+
+#endif /* _TT_TREEM4_H */
+

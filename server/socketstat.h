@@ -467,10 +467,8 @@ static byte sockStatAll(all x, tsfield TSF) {
     return TRUE;
 }
 
-static void sockStat(any *a) {
-    obj x = a[1].x;
-    udat i, j, n = a[2]._;
-    CONST byte *in = a[3].V;
+static void sockStat(obj x, udat n, CONST byte *in) {
+    udat i, j;
     tsfield TSF;
     uldat len, q;
     byte *data, ok;
@@ -566,8 +564,8 @@ static void sockStat(any *a) {
 		    Pushcase(udat);
 		    Pushcase(uldat);
 		    Pushcase(hwcol);
-		    Pushcase(time_t);
-		    Pushcase(frac_t);
+		    Pushcase(topaque);
+		    Pushcase(tany);
 		    Pushcase(hwfont);
 		    Pushcase(hwattr);
 		    Pushcase(tobj);

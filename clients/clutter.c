@@ -49,8 +49,7 @@ static byte InitClutter(void) {
     X = TwGetDisplayWidth();
     Y = TwGetDisplayHeight();
 
-    if ((Clutter_MsgPort=TwCreateMsgPort
-	 (9, "twclutter", (time_t)0, (frac_t)0, (byte)0)) &&
+    if ((Clutter_MsgPort=TwCreateMsgPort(9, "twclutter")) &&
 	(Clutter_Menu=TwCreateMenu(
 	  COL(BLACK,WHITE), COL(BLACK,GREEN), COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
 	  COL(RED,WHITE), COL(RED,GREEN), (byte)0)) &&

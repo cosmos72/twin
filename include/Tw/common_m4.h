@@ -6,7 +6,7 @@
 
 
 
-/* This file was automatically generated with m4 from m4/Twcommon.m4h, do not edit! */
+/* This file was automatically generated with m4 from m4/Twcommon.m4, do not edit! */
 
 /*
  *  common_m4.h  --  common libTw function prototypes
@@ -55,6 +55,12 @@ extern hwfont *Tw_CloneStr2HWFont(TW_CONST byte *, size_t);
 #define Tw_MoveMem(From, To, Size)	memmove(To, From, Size)
 #define Tw_WriteMem		memset
 #define Tw_CmpMem		memcmp
+
+
+
+byte Tw_FindFunctionV(tdisplay TwD, va_list vargs);
+
+
 
 #define Tw_DropPrivileges() (setegid(getgid()), seteuid(getuid()))
 #define Tw_GetPrivileges() seteuid(0)
@@ -189,6 +195,10 @@ byte Tw_DispatchMsg(tdisplay TwD, tmsg Msg);
 byte Tw_MainLoop(tdisplay TwD);
 void Tw_ExitMainLoop(tdisplay TwD);
 
+
+tany Tw_CallAExtension(tdisplay TwD, textension eid,TW_CONST byte *proto,topaque args_n,TW_CONST tany *args);
+/** see Tw_CallLExtension() for the rules about how to pass arguments to this function */
+tany Tw_CallVExtension(tdisplay TwD, textension eid,TW_CONST byte *proto,topaque args_n,va_list vargs);
 
 
 

@@ -3,6 +3,13 @@
 #define _TT_EXTERN_H
 
 
+#ifdef CONF_SOCKET_PTHREADS
+# include <pthread.h>
+#endif
+
+#include "mutex.h"
+
+
 /* typedef s_tt_errno */
 
 #ifdef CONF_SOCKET_PTHREADS
@@ -38,31 +45,33 @@ typedef struct s_ttutil {
 #ifdef CONF_SOCKET_PTHREADS
     s_tt_errno *(*GetErrnoLocation)(void);
 #endif
-    ttbyte(*AssignId)(TT_CONST ttfn_ttobj FN, ttobj Obj);
-    void  (*DropId)(ttobj Obj);
-    ttobj (*Id2Obj)(ttbyte i, ttopaque Id);
-    ttobj (*FindNative)(ttany id);
-    void  (*GetNow)(void);
+    ttbyte	(*AssignId)(TT_CONST ttclass Class, ttobj Obj);
+    void	(*DropId)(ttobj Obj);
+    ttobj	(*Id2Obj)(ttopaque ClassId, ttopaque Id);
+    ttbyte	(*FixedAssignId)(TT_CONST ttclass Class, ttobj Obj);
+    ttbyte	(*FixedAssignIdArray)(ttopaque ClassId, ttopaque o_n, TT_CONST ttobj *o_array);
+    ttobject	(*FindNative)(ttany id);
+    void	(*GetNow)(void);
     
-    void (*FireEvent)(ttevent ev, ttcomponent o);
-    void (*FireSimpleEvent)(ttcomponent o, ttuint evtype);
-    void (*FireChangeEvent)(ttcomponent o, ttuint which, ttany value, ttany old_value, ttopaque len);
+    void	(*FireEvent)(ttevent ev, ttcomponent o);
+    void	(*FireSimpleEvent)(ttcomponent o, ttuint evtype);
+    void	(*FireChangeEvent)(ttcomponent o, ttuint which, ttany value, ttany old_value, ttopaque len);
     
-    void (*AddTo_ttlistener)(ttlistener c, ttcomponent o);
-    void (*Remove_ttlistener)(ttlistener c);
-    void (*Activate_tttimer)(tttimer o, ttbyte active);
+    void	(*AddTo_ttlistener)(ttlistener c, ttcomponent o);
+    void	(*Remove_ttlistener)(ttlistener c);
+    void	(*Activate_tttimer)(tttimer o, ttbyte active);
     
-    void   (*AddTo_ttdata)(ttdata d, ttcomponent o, ttbyte quickndirty);
-    void   (*Remove_ttdata)(ttdata d);
-    tt_fn  (*SetData_ttdata)(ttdata o, ttany data);
-    ttdata (*FindByKey_ttdata)(ttdata base, TT_CONST ttbyte *key, ttopaque len);
-    ttdata (*protected_Create_ttdata)(ttcomponent c, TT_ARG_READ ttbyte *key, ttopaque key_len, ttany data);
+    void	(*AddTo_ttdata)(ttdata d, ttcomponent o, ttbyte quickndirty);
+    void	(*Remove_ttdata)(ttdata d);
+    ttbyte	(*SetData_ttdata)(ttdata o, ttany data);
+    ttdata	(*FindByKey_ttdata)(ttdata base, TT_CONST ttbyte *key, ttopaque len);
+    ttdata	(*protected_Create_ttdata)(ttcomponent c, TT_ARG_READ ttbyte *key, ttopaque key_len, ttany data);
     
-    void (*DelAllExtras_ttcomponent)(ttcomponent o);
+    void	(*DelAllExtras_ttcomponent)(ttcomponent o);
     
-    void (*Expose_ttvisible)(ttvisible o, ttshort x, ttshort y, ttshort w, ttshort h);
+    void	(*Expose_ttvisible)(ttvisible o, ttshort x, ttshort y, ttshort w, ttshort h);
     
-    void (*RealClose)(void);
+    void	(*RealClose)(void);
     
 } s_ttutil;
 
@@ -89,8 +98,8 @@ typedef struct s_tt_d {
     
     /* active timers */
     tttimer FirstT, LastT;
-    time_t TNow;
-    frac_t FNow;
+    ttany TNow;
+    ttany FNow;
     
     ttbyte *HWTarget, *HWOptions;
     void *DlHandle;
@@ -104,12 +113,12 @@ typedef struct s_tt_d {
     s_ttcreates CREATE;
     s_ttutil UTIL;
     
-    ttfns FN_hw_null;
+    ttclasses Class_hw_null;
     
-    ttfn_ttobj FNs[order_n];
+    ttclass Classes[order_last];
     
-    s_ttfns FN;
-    s_ttfns FNdefault;
+    s_ttclasses Class;
+    s_ttclasses Class_default;
 } s_tt_d;
 
 
@@ -138,7 +147,8 @@ extern s_tt_d TTD;
 #define LOCK Lock()
 #define UNLK Unlock()
 
-#define FAIL(E, S)		(CommonErrno = TT_MAX_ERROR+(E), CommonErrnoDetail = (S), FALSE)
+#define FAIL_TT(E, S)		(CommonErrno = (E), CommonErrnoDetail = (S), FALSE)
+#define FAIL(E, S)		FAIL_TT(TT_MAX_ERROR+(E), (S))
 #define FAIL_PRINT(E, S, name)	(FAIL((E), (S)), _TTPrintInitError(name), FALSE)
 
 #endif /* _TT_EXTERN_H */

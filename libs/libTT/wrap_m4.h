@@ -6,7 +6,7 @@
 
 
 /*
- *  wrap_m4.h  --  wrappers around exported libTT methods
+ *  wrap_m4.h  --  wrappers around final libTT methods
  *
  */
 
@@ -28,244 +28,451 @@
 
 
 
-/* public, public_set and exported methods */
 
 
 
+
+
+
+/* public, public_set and final methods */
+
+
+ 
 /* ttobj methods */
-                                
-void TTRef_ttobj(tt_obj a1) {
-    ttobj o;
-    LOCK;
-    if ((o = ID2(ttobj,a1)))
-	 Ref_ttobj(o);
-    UNLK;
-    return ;
-}
-void TTUnref_ttobj(tt_obj a1) {
-    ttobj o;
-    LOCK;
-    if ((o = ID2(ttobj,a1)))
-	 Unref_ttobj(o);
-    UNLK;
-    return ;
-}
-  
-/* ttevent methods */
+                    
+ 
+/* ttclass methods */
 
-tt_obj TTCreate_ttevent(ttuint a1, ttuint a2, ttuint a3) {
-    tt_obj a0 = (tt_obj)(opaque)0;
+ 
+/* ttobject methods */
+                
+void TTRef_ttobject(tt_obj o) {
+    ttobject a1;
     LOCK;
-    a0 = (tt_obj)OBJ2ID(Create_ttevent(a1, a2, a3));
+    if ((a1 = ID2(ttobject,o)))
+	Ref_ttobject(a1);
+    UNLK;
+    return ;
+}
+void TTUnref_ttobject(tt_obj o) {
+    ttobject a1;
+    LOCK;
+    if ((a1 = ID2(ttobject,o)))
+	Unref_ttobject(a1);
+    UNLK;
+    return ;
+}
+ttbyte TTSetUserData_ttobject(tt_obj o, ttany user_data) {
+    ttobject a1;
+    ttbyte a0 = (ttbyte)0;
+    LOCK;
+    if ((a1 = ID2(ttobject,o)))
+	a0 = SetUserData_ttobject(a1, user_data);
     UNLK;
     return a0;
 }
-void TTFire_ttevent(tt_obj a1, tt_obj a2) {
-    ttevent o;
+ 
+/* ttvector methods */
+    
+ttany TTGetAt_ttvector(TT_ARG_READ tt_obj o, ttopaque pos) {
+    ttvector a1;
+    ttany a0 = (ttany)0;
     LOCK;
-    if ((o = ID2(ttevent,a1)))
-	 Fire_ttevent(o, ID2(ttcomponent,a2));
+    if ((a1 = ID2(ttvector,o)))
+	a0 = a1->Class->GetAt(a1, pos);
+    UNLK;
+    return a0;
+}    
+ttbyte TTSetAt_ttvector(tt_obj o, ttopaque pos, ttany value) {
+    ttvector a1;
+    ttbyte a0 = (ttbyte)0;
+    LOCK;
+    if ((a1 = ID2(ttvector,o)))
+	a0 = a1->Class->SetAt(a1, pos, value);
+    UNLK;
+    return a0;
+}
+tt_obj TTCreate1_ttvector(ttany value) {
+    tt_obj a0 = (tt_obj)(opaque)0;
+    LOCK;
+    a0 = (tt_obj)OBJ2ID(Create1_ttvector(value));
+    UNLK;
+    return a0;
+}
+tt_obj TTCreateA_ttvector(ttopaque value_n, TT_ARG_READ TT_ARG_ARRAY((_P(1))) ttarg * values) {
+    tt_obj a0 = (tt_obj)(opaque)0;
+    LOCK;
+    a0 = (tt_obj)OBJ2ID(CreateA_ttvector(value_n, values));
+    UNLK;
+    return a0;
+}
+tt_obj TTCreateR_ttvector(TT_ARG_READ tt_obj v) {
+    ttvector a1;
+    tt_obj a0 = (tt_obj)(opaque)0;
+    LOCK;
+    if ((a1 = ID2(ttvector,v)))
+	a0 = (tt_obj)OBJ2ID(CreateR_ttvector(a1));
+    UNLK;
+    return a0;
+}
+tt_obj TTCreateV_ttvector(ttopaque value_n, TT_ARG_ARRAY((1)) va_list * values) {
+    tt_obj a0 = (tt_obj)(opaque)0;
+    LOCK;
+    a0 = (tt_obj)OBJ2ID(CreateV_ttvector(value_n, values));
+    UNLK;
+    return a0;
+}
+tt_obj TTCreateY_ttvector(ttopaque value_n, TT_ARG_READ TT_ARG_ARRAY((_P(1))) ttany * values) {
+    tt_obj a0 = (tt_obj)(opaque)0;
+    LOCK;
+    a0 = (tt_obj)OBJ2ID(CreateY_ttvector(value_n, values));
+    UNLK;
+    return a0;
+}
+ttbyte TTAppend_ttvector(tt_obj o, ttany value) {
+    ttvector a1;
+    ttbyte a0 = (ttbyte)0;
+    LOCK;
+    if ((a1 = ID2(ttvector,o)))
+	a0 = Append_ttvector(a1, value);
+    UNLK;
+    return a0;
+}
+ttbyte TTAdd_ttvector(tt_obj o, ttopaque pos, ttany value) {
+    ttvector a1;
+    ttbyte a0 = (ttbyte)0;
+    LOCK;
+    if ((a1 = ID2(ttvector,o)))
+	a0 = Add_ttvector(a1, pos, value);
+    UNLK;
+    return a0;
+}
+ttbyte TTAddA_ttvector(tt_obj o, ttopaque pos, ttopaque value_n, TT_ARG_READ TT_ARG_ARRAY((_P(2))) ttarg * values) {
+    ttvector a1;
+    ttbyte a0 = (ttbyte)0;
+    LOCK;
+    if ((a1 = ID2(ttvector,o)))
+	a0 = AddA_ttvector(a1, pos, value_n, values);
+    UNLK;
+    return a0;
+}
+ttbyte TTAddR_ttvector(tt_obj o, ttopaque pos, TT_ARG_READ tt_obj v) {
+    ttvector a1;
+    ttbyte a0 = (ttbyte)0;
+    LOCK;
+    if ((a1 = ID2(ttvector,o)))
+	a0 = AddR_ttvector(a1, pos, ID2(ttvector,v));
+    UNLK;
+    return a0;
+}
+ttbyte TTAddV_ttvector(tt_obj o, ttopaque pos, ttopaque value_n, TT_ARG_ARRAY((1)) va_list * values) {
+    ttvector a1;
+    ttbyte a0 = (ttbyte)0;
+    LOCK;
+    if ((a1 = ID2(ttvector,o)))
+	a0 = AddV_ttvector(a1, pos, value_n, values);
+    UNLK;
+    return a0;
+}    
+ttbyte TTAddY_ttvector(tt_obj o, ttopaque pos, ttopaque value_n, TT_ARG_READ TT_ARG_ARRAY((_P(2))) ttany * values) {
+    ttvector a1;
+    ttbyte a0 = (ttbyte)0;
+    LOCK;
+    if ((a1 = ID2(ttvector,o)))
+	a0 = a1->Class->AddY(a1, pos, value_n, values);
+    UNLK;
+    return a0;
+}    
+ttopaque TTContainsValue_ttvector(TT_ARG_READ tt_obj o, ttopaque pos_start, ttany value) {
+    ttvector a1;
+    ttopaque a0 = (ttopaque)0;
+    LOCK;
+    if ((a1 = ID2(ttvector,o)))
+	a0 = a1->Class->ContainsValue(a1, pos_start, value);
+    UNLK;
+    return a0;
+}
+ttbyte TTRemoveAt_ttvector(tt_obj o, ttopaque pos) {
+    ttvector a1;
+    ttbyte a0 = (ttbyte)0;
+    LOCK;
+    if ((a1 = ID2(ttvector,o)))
+	a0 = RemoveAt_ttvector(a1, pos);
+    UNLK;
+    return a0;
+}    
+ttbyte TTRemoveRange_ttvector(tt_obj o, ttopaque pos_start, ttopaque pos_n) {
+    ttvector a1;
+    ttbyte a0 = (ttbyte)0;
+    LOCK;
+    if ((a1 = ID2(ttvector,o)))
+	a0 = a1->Class->RemoveRange(a1, pos_start, pos_n);
+    UNLK;
+    return a0;
+}
+ 
+/* ttfield methods */
+
+ 
+/* ttmethod methods */
+
+ 
+/* ttevent methods */
+
+tt_obj TTCreate_ttevent(ttuint evtype, ttuint evcode, ttuint evflags) {
+    tt_obj a0 = (tt_obj)(opaque)0;
+    LOCK;
+    a0 = (tt_obj)OBJ2ID(Create_ttevent(evtype, evcode, evflags));
+    UNLK;
+    return a0;
+}
+void TTFire_ttevent(TT_ARG_DIE tt_obj ev, TT_ARG_READ tt_obj o) {
+    ttevent a1;
+    LOCK;
+    if ((a1 = ID2(ttevent,ev)))
+	Fire_ttevent(a1, ID2(ttcomponent,o));
     UNLK;
     return ;
 }
  
 /* tteventbig methods */
 
-
-tt_obj TTCreate8_tteventbig(ttuint a1, ttuint a2, ttuint a3, ttshort a4, ttshort a5, ttshort a6, ttshort a7, ttany a8, ttany a9, ttuint a10, TT_CONST ttbyte * a11) {
+tt_obj TTCreate8_tteventbig(ttuint evtype, ttuint evcode, ttuint evflags, ttshort x, ttshort y, ttshort w, ttshort h, ttany value, ttany old_value, ttopaque data_len, TT_ARG_READ TT_ARG_ARRAY((_P(10))) ttbyte * data) {
     tt_obj a0 = (tt_obj)(opaque)0;
     LOCK;
-    a0 = (tt_obj)OBJ2ID(Create8_tteventbig(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11));
+    a0 = (tt_obj)OBJ2ID(Create8_tteventbig(evtype, evcode, evflags, x, y, w, h, value, old_value, data_len, data));
     UNLK;
     return a0;
 }
-tt_obj TTCreate4_tteventbig(ttuint a1, ttuint a2, ttuint a3, ttshort a4, ttshort a5, ttshort a6, ttshort a7) {
+tt_obj TTCreate4_tteventbig(ttuint evtype, ttuint evcode, ttuint evflags, ttshort x, ttshort y, ttshort w, ttshort h) {
     tt_obj a0 = (tt_obj)(opaque)0;
     LOCK;
-    a0 = (tt_obj)OBJ2ID(Create4_tteventbig(a1, a2, a3, a4, a5, a6, a7));
+    a0 = (tt_obj)OBJ2ID(Create4_tteventbig(evtype, evcode, evflags, x, y, w, h));
     UNLK;
     return a0;
 }
-tt_obj TTCreate4s4_tteventbig(ttuint a1, ttuint a2, ttuint a3, ttany a4, ttany a5, ttuint a6, TT_CONST ttbyte * a7) {
+tt_obj TTCreate4s4_tteventbig(ttuint evtype, ttuint evcode, ttuint evflags, ttany value, ttany old_value, ttopaque data_len, TT_ARG_READ TT_ARG_ARRAY((_P(6))) ttbyte * data) {
     tt_obj a0 = (tt_obj)(opaque)0;
     LOCK;
-    a0 = (tt_obj)OBJ2ID(Create4s4_tteventbig(a1, a2, a3, a4, a5, a6, a7));
+    a0 = (tt_obj)OBJ2ID(Create4s4_tteventbig(evtype, evcode, evflags, value, old_value, data_len, data));
     UNLK;
     return a0;
 }
  
 /* ttbitmask methods */
 
-tt_obj TTClone_ttbitmask(tt_obj a1) {
-    ttbitmask o;
+tt_obj TTCreate_ttbitmask(ttany value) {
     tt_obj a0 = (tt_obj)(opaque)0;
     LOCK;
-    if ((o = ID2(ttbitmask,a1)))
-	a0 = (tt_obj)OBJ2ID(Clone_ttbitmask(o));
+    a0 = (tt_obj)OBJ2ID(Create_ttbitmask(value));
     UNLK;
     return a0;
 }
-tt_obj TTCreate_ttbitmask(ttany a1) {
+tt_obj TTCreateB2_ttbitmask(TT_ARG_READ tt_obj o) {
+    ttbitmask a1;
     tt_obj a0 = (tt_obj)(opaque)0;
     LOCK;
-    a0 = (tt_obj)OBJ2ID(Create_ttbitmask(a1));
+    if ((a1 = ID2(ttbitmask,o)))
+	a0 = (tt_obj)OBJ2ID(CreateB2_ttbitmask(a1));
     UNLK;
     return a0;
 }
-tt_obj TTCreateA_ttbitmask(ttopaque a1, TT_ARG_READ ttany * a2) {
+tt_obj TTCreateR_ttbitmask(TT_ARG_DIE tt_obj value) {
+    ttvector a1;
     tt_obj a0 = (tt_obj)(opaque)0;
     LOCK;
-    a0 = (tt_obj)OBJ2ID(CreateA_ttbitmask(a1, a2));
+    if ((a1 = ID2(ttvector,value)))
+	a0 = (tt_obj)OBJ2ID(CreateR_ttbitmask(a1));
     UNLK;
     return a0;
 }
-void TTClear_ttbitmask(tt_obj a1) {
-    ttbitmask o;
+tt_obj TTCreateR2_ttbitmask(TT_ARG_READ tt_obj value) {
+    ttvector a1;
+    tt_obj a0 = (tt_obj)(opaque)0;
     LOCK;
-    if ((o = ID2(ttbitmask,a1)))
-	 Clear_ttbitmask(o);
+    if ((a1 = ID2(ttvector,value)))
+	a0 = (tt_obj)OBJ2ID(CreateR2_ttbitmask(a1));
+    UNLK;
+    return a0;
+}
+void TTClear_ttbitmask(tt_obj o) {
+    ttbitmask a1;
+    LOCK;
+    if ((a1 = ID2(ttbitmask,o)))
+	Clear_ttbitmask(a1);
     UNLK;
     return ;
 }
-void TTFill_ttbitmask(tt_obj a1) {
-    ttbitmask o;
+void TTFill_ttbitmask(tt_obj o) {
+    ttbitmask a1;
     LOCK;
-    if ((o = ID2(ttbitmask,a1)))
-	 Fill_ttbitmask(o);
+    if ((a1 = ID2(ttbitmask,o)))
+	Fill_ttbitmask(a1);
     UNLK;
     return ;
 }
-void TTNegate_ttbitmask(tt_obj a1) {
-    ttbitmask o;
+void TTNegate_ttbitmask(tt_obj o) {
+    ttbitmask a1;
     LOCK;
-    if ((o = ID2(ttbitmask,a1)))
-	 Negate_ttbitmask(o);
+    if ((a1 = ID2(ttbitmask,o)))
+	Negate_ttbitmask(a1);
     UNLK;
     return ;
 }
-void TTChange_ttbitmask(tt_obj a1, ttuint a2) {
-    ttbitmask o;
+void TTChange_ttbitmask(tt_obj o, ttuint truth_table) {
+    ttbitmask a1;
     LOCK;
-    if ((o = ID2(ttbitmask,a1)))
-	 Change_ttbitmask(o, a2);
+    if ((a1 = ID2(ttbitmask,o)))
+	Change_ttbitmask(a1, truth_table);
     UNLK;
     return ;
 }
-ttbyte TTIsMember_ttbitmask(tt_obj a1, ttany a2) {
-    ttbitmask o;
+ttbyte TTContains_ttbitmask(TT_ARG_READ tt_obj o, ttany value) {
+    ttbitmask a1;
     ttbyte a0 = (ttbyte)0;
     LOCK;
-    if ((o = ID2(ttbitmask,a1)))
-	a0 = IsMember_ttbitmask(o, a2);
+    if ((a1 = ID2(ttbitmask,o)))
+	a0 = Contains_ttbitmask(a1, value);
     UNLK;
     return a0;
 }
-ttbyte TTAdd_ttbitmask(tt_obj a1, ttany a2) {
-    ttbitmask o;
+ttbyte TTAdd_ttbitmask(tt_obj o, ttany value) {
+    ttbitmask a1;
     ttbyte a0 = (ttbyte)0;
     LOCK;
-    if ((o = ID2(ttbitmask,a1)))
-	a0 = Add_ttbitmask(o, a2);
+    if ((a1 = ID2(ttbitmask,o)))
+	a0 = Add_ttbitmask(a1, value);
     UNLK;
     return a0;
 }
-ttbyte TTAddA_ttbitmask(tt_obj a1, ttopaque a2, TT_ARG_READ ttany * a3) {
-    ttbitmask o;
+ttbyte TTAddB_ttbitmask(tt_obj o, TT_ARG_READ tt_obj value) {
+    ttbitmask a1;
     ttbyte a0 = (ttbyte)0;
     LOCK;
-    if ((o = ID2(ttbitmask,a1)))
-	a0 = AddA_ttbitmask(o, a2, a3);
+    if ((a1 = ID2(ttbitmask,o)))
+	a0 = AddB_ttbitmask(a1, ID2(ttbitmask,value));
     UNLK;
     return a0;
 }
-ttbyte TTRemove_ttbitmask(tt_obj a1, ttany a2) {
-    ttbitmask o;
+ttbyte TTAddR_ttbitmask(tt_obj o, TT_ARG_READ tt_obj value) {
+    ttbitmask a1;
     ttbyte a0 = (ttbyte)0;
     LOCK;
-    if ((o = ID2(ttbitmask,a1)))
-	a0 = Remove_ttbitmask(o, a2);
+    if ((a1 = ID2(ttbitmask,o)))
+	a0 = AddR_ttbitmask(a1, ID2(ttvector,value));
     UNLK;
     return a0;
 }
-ttbyte TTRemoveA_ttbitmask(tt_obj a1, ttopaque a2, TT_ARG_READ ttany * a3) {
-    ttbitmask o;
+ttbyte TTRemove_ttbitmask(tt_obj o, ttany value) {
+    ttbitmask a1;
     ttbyte a0 = (ttbyte)0;
     LOCK;
-    if ((o = ID2(ttbitmask,a1)))
-	a0 = RemoveA_ttbitmask(o, a2, a3);
+    if ((a1 = ID2(ttbitmask,o)))
+	a0 = Remove_ttbitmask(a1, value);
     UNLK;
     return a0;
 }
-ttbyte TTCombine_ttbitmask(tt_obj a1, ttany a2, ttuint a3) {
-    ttbitmask o;
+ttbyte TTRemoveB_ttbitmask(tt_obj o, TT_ARG_READ tt_obj value) {
+    ttbitmask a1;
     ttbyte a0 = (ttbyte)0;
     LOCK;
-    if ((o = ID2(ttbitmask,a1)))
-	a0 = Combine_ttbitmask(o, a2, a3);
+    if ((a1 = ID2(ttbitmask,o)))
+	a0 = RemoveB_ttbitmask(a1, ID2(ttbitmask,value));
     UNLK;
     return a0;
 }
-ttbyte TTCombineA_ttbitmask(tt_obj a1, ttopaque a2, TT_ARG_READ ttany * a3, ttuint a4) {
-    ttbitmask o;
+ttbyte TTRemoveR_ttbitmask(tt_obj o, TT_ARG_READ tt_obj value) {
+    ttbitmask a1;
     ttbyte a0 = (ttbyte)0;
     LOCK;
-    if ((o = ID2(ttbitmask,a1)))
-	a0 = CombineA_ttbitmask(o, a2, a3, a4);
+    if ((a1 = ID2(ttbitmask,o)))
+	a0 = RemoveR_ttbitmask(a1, ID2(ttvector,value));
     UNLK;
     return a0;
 }
-ttbyte TTCombineB_ttbitmask(tt_obj a1, tt_obj a2, ttuint a3) {
-    ttbitmask o;
+ttbyte TTCombine_ttbitmask(tt_obj o, ttany value, ttuint truth_table) {
+    ttbitmask a1;
     ttbyte a0 = (ttbyte)0;
     LOCK;
-    if ((o = ID2(ttbitmask,a1)))
-	a0 = CombineB_ttbitmask(o, ID2(ttbitmask,a2), a3);
+    if ((a1 = ID2(ttbitmask,o)))
+	a0 = Combine_ttbitmask(a1, value, truth_table);
+    UNLK;
+    return a0;
+}
+ttbyte TTCombineR_ttbitmask(tt_obj o, TT_ARG_READ tt_obj value, ttuint truth_table) {
+    ttbitmask a1;
+    ttbyte a0 = (ttbyte)0;
+    LOCK;
+    if ((a1 = ID2(ttbitmask,o)))
+	a0 = CombineR_ttbitmask(a1, ID2(ttvector,value), truth_table);
+    UNLK;
+    return a0;
+}
+ttbyte TTCombineB_ttbitmask(tt_obj o, TT_ARG_READ tt_obj value, ttuint truth_table) {
+    ttbitmask a1;
+    ttbyte a0 = (ttbyte)0;
+    LOCK;
+    if ((a1 = ID2(ttbitmask,o)))
+	a0 = CombineB_ttbitmask(a1, ID2(ttbitmask,value), truth_table);
     UNLK;
     return a0;
 }
  
 /* tteventmask methods */
 
-tt_obj TTCreate_tteventmask(tt_obj a1, tt_obj a2, tt_obj a3) {
-    ttbitmask o;
+tt_obj TTCreateB_tteventmask(TT_ARG_DIE tt_obj evtype_mask, TT_ARG_DIE tt_obj evcode_mask, TT_ARG_DIE tt_obj component_mask) {
+    ttbitmask a1;
     tt_obj a0 = (tt_obj)(opaque)0;
     LOCK;
-    if ((o = ID2(ttbitmask,a1)))
-	a0 = (tt_obj)OBJ2ID(Create_tteventmask(o, ID2(ttbitmask,a2), ID2(ttbitmask,a3)));
+    if ((a1 = ID2(ttbitmask,evtype_mask)))
+	a0 = (tt_obj)OBJ2ID(CreateB_tteventmask(a1, ID2(ttbitmask,evcode_mask), ID2(ttbitmask,component_mask)));
     UNLK;
     return a0;
 }
-void TTSetEvtypeMask_tteventmask(tt_obj a1, tt_obj a2) {
-    tteventmask o;
+tt_obj TTCreateB2_tteventmask(TT_ARG_READ tt_obj evtype_mask, TT_ARG_READ tt_obj evcode_mask, TT_ARG_READ tt_obj component_mask) {
+    ttbitmask a1;
+    tt_obj a0 = (tt_obj)(opaque)0;
     LOCK;
-    if ((o = ID2(tteventmask,a1)))
-	 SetEvtypeMask_tteventmask(o, ID2(ttbitmask,a2));
+    if ((a1 = ID2(ttbitmask,evtype_mask)))
+	a0 = (tt_obj)OBJ2ID(CreateB2_tteventmask(a1, ID2(ttbitmask,evcode_mask), ID2(ttbitmask,component_mask)));
     UNLK;
-    return ;
+    return a0;
 }
-void TTSetEvcodeMask_tteventmask(tt_obj a1, tt_obj a2) {
-    tteventmask o;
+ttbyte TTSetEvtypeMask_tteventmask(tt_obj o, TT_ARG_DIE tt_obj evtype_mask) {
+    tteventmask a1;
+    ttbyte a0 = (ttbyte)0;
     LOCK;
-    if ((o = ID2(tteventmask,a1)))
-	 SetEvcodeMask_tteventmask(o, ID2(ttbitmask,a2));
+    if ((a1 = ID2(tteventmask,o)))
+	a0 = SetEvtypeMask_tteventmask(a1, ID2(ttbitmask,evtype_mask));
     UNLK;
-    return ;
+    return a0;
 }
-void TTSetComponentMask_tteventmask(tt_obj a1, tt_obj a2) {
-    tteventmask o;
+ttbyte TTSetEvcodeMask_tteventmask(tt_obj o, TT_ARG_DIE tt_obj evcode_mask) {
+    tteventmask a1;
+    ttbyte a0 = (ttbyte)0;
     LOCK;
-    if ((o = ID2(tteventmask,a1)))
-	 SetComponentMask_tteventmask(o, ID2(ttbitmask,a2));
+    if ((a1 = ID2(tteventmask,o)))
+	a0 = SetEvcodeMask_tteventmask(a1, ID2(ttbitmask,evcode_mask));
     UNLK;
-    return ;
+    return a0;
 }
-void TTSetTruthTable_tteventmask(tt_obj a1, ttuint a2) {
-    tteventmask o;
+ttbyte TTSetComponentMask_tteventmask(tt_obj o, TT_ARG_DIE tt_obj component_mask) {
+    tteventmask a1;
+    ttbyte a0 = (ttbyte)0;
     LOCK;
-    if ((o = ID2(tteventmask,a1)))
-	 SetTruthTable_tteventmask(o, a2);
+    if ((a1 = ID2(tteventmask,o)))
+	a0 = SetComponentMask_tteventmask(a1, ID2(ttbitmask,component_mask));
     UNLK;
-    return ;
+    return a0;
+}
+ttbyte TTSetTruthTable_tteventmask(tt_obj o, ttuint truth_table) {
+    tteventmask a1;
+    ttbyte a0 = (ttbyte)0;
+    LOCK;
+    if ((a1 = ID2(tteventmask,o)))
+	a0 = SetTruthTable_tteventmask(a1, truth_table);
+    UNLK;
+    return a0;
 }
  
 /* ttcallback methods */
@@ -273,844 +480,911 @@ void TTSetTruthTable_tteventmask(tt_obj a1, ttuint a2) {
  
 /* ttlistener methods */
 
-tt_obj TTCreate_ttlistener(tt_obj a1, ttuint a2, ttuint a3, ttlistener_fn a4, ttany a5) {
-    ttcomponent o;
+tt_obj TTCreate_ttlistener(tt_obj o, ttuint evtype, ttuint lflags, TT_ARG_READ ttlistener_fn function, ttany arg) {
+    ttcomponent a1;
     tt_obj a0 = (tt_obj)(opaque)0;
     LOCK;
-    if ((o = ID2(ttcomponent,a1)))
-	a0 = (tt_obj)OBJ2ID(Create_ttlistener(o, a2, a3, a4, a5));
+    if ((a1 = ID2(ttcomponent,o)))
+	a0 = (tt_obj)OBJ2ID(Create_ttlistener(a1, evtype, lflags, function, arg));
     UNLK;
     return a0;
 }
-tt_obj TTCreateA_ttlistener(tt_obj a1, tt_obj a2, ttuint a3, ttuint a4, ttuint a5, ttuint a6, ttlistener_fn a7, TT_ARG_READ ttany * a8) {
-    ttcomponent o;
+tt_obj TTCreateE_ttlistener(tt_obj o, TT_ARG_DIE tt_obj ev, ttuint lflags, TT_ARG_READ ttlistener_fn function, ttany arg) {
+    ttcomponent a1;
     tt_obj a0 = (tt_obj)(opaque)0;
     LOCK;
-    if ((o = ID2(ttcomponent,a1)))
-	a0 = (tt_obj)OBJ2ID(CreateA_ttlistener(o, ID2(ttevent,a2), a3, a4, a5, a6, a7, a8));
+    if ((a1 = ID2(ttcomponent,o)))
+	a0 = (tt_obj)OBJ2ID(CreateE_ttlistener(a1, ID2(ttevent,ev), lflags, function, arg));
     UNLK;
     return a0;
 }
-tt_obj TTCreateV_ttlistener(tt_obj a1, tt_obj a2, ttuint a3, ttuint a4, ttuint a5, ttuint a6, ttlistener_fn a7, va_list * a8) {
-    ttcomponent o;
+tt_obj TTCreateR_ttlistener(tt_obj o, TT_ARG_DIE tt_obj ev, ttuint lflags, TT_ARG_READ ttlistener_fn function, ttopaque arg_component_n, ttopaque arg_event_n, TT_ARG_DIE tt_obj args) {
+    ttcomponent a1;
     tt_obj a0 = (tt_obj)(opaque)0;
     LOCK;
-    if ((o = ID2(ttcomponent,a1)))
-	a0 = (tt_obj)OBJ2ID(CreateV_ttlistener(o, ID2(ttevent,a2), a3, a4, a5, a6, a7, a8));
+    if ((a1 = ID2(ttcomponent,o)))
+	a0 = (tt_obj)OBJ2ID(CreateR_ttlistener(a1, ID2(ttevent,ev), lflags, function, arg_component_n, arg_event_n, ID2(ttvector,args)));
     UNLK;
     return a0;
 }
-
-tt_obj TTCreateDel_ttlistener(tt_obj a1, ttuint a2, ttlistener_fn a3) {
-    ttcomponent o;
+tt_obj TTCreateDel_ttlistener(tt_obj o, ttuint lflags, TT_ARG_READ ttlistener_fn function) {
+    ttcomponent a1;
     tt_obj a0 = (tt_obj)(opaque)0;
     LOCK;
-    if ((o = ID2(ttcomponent,a1)))
-	a0 = (tt_obj)OBJ2ID(CreateDel_ttlistener(o, a2, a3));
+    if ((a1 = ID2(ttcomponent,o)))
+	a0 = (tt_obj)OBJ2ID(CreateDel_ttlistener(a1, lflags, function));
     UNLK;
     return a0;
 }
-tt_obj TTCreateAskclose_ttlistener(tt_obj a1, ttuint a2, ttlistener_fn a3) {
-    ttcomponent o;
+tt_obj TTCreateAskclose_ttlistener(tt_obj o, ttuint lflags, TT_ARG_READ ttlistener_fn function) {
+    ttcomponent a1;
     tt_obj a0 = (tt_obj)(opaque)0;
     LOCK;
-    if ((o = ID2(ttcomponent,a1)))
-	a0 = (tt_obj)OBJ2ID(CreateAskclose_ttlistener(o, a2, a3));
+    if ((a1 = ID2(ttcomponent,o)))
+	a0 = (tt_obj)OBJ2ID(CreateAskclose_ttlistener(a1, lflags, function));
     UNLK;
     return a0;
 }
-tt_obj TTCreateKey_ttlistener(tt_obj a1, ttuint a2, ttuint a3, ttuint a4, ttlistener_fn a5) {
-    ttcomponent o;
+tt_obj TTCreateKey_ttlistener(tt_obj o, ttuint evcode, ttuint evflags, ttuint lflags, TT_ARG_READ ttlistener_fn function) {
+    ttcomponent a1;
     tt_obj a0 = (tt_obj)(opaque)0;
     LOCK;
-    if ((o = ID2(ttcomponent,a1)))
-	a0 = (tt_obj)OBJ2ID(CreateKey_ttlistener(o, a2, a3, a4, a5));
+    if ((a1 = ID2(ttcomponent,o)))
+	a0 = (tt_obj)OBJ2ID(CreateKey_ttlistener(a1, evcode, evflags, lflags, function));
     UNLK;
     return a0;
 }
-tt_obj TTCreateMouse_ttlistener(tt_obj a1, ttuint a2, ttuint a3, ttuint a4, ttlistener_fn a5) {
-    ttcomponent o;
+tt_obj TTCreateMouse_ttlistener(tt_obj o, ttuint evcode, ttuint evflags, ttuint lflags, TT_ARG_READ ttlistener_fn function) {
+    ttcomponent a1;
     tt_obj a0 = (tt_obj)(opaque)0;
     LOCK;
-    if ((o = ID2(ttcomponent,a1)))
-	a0 = (tt_obj)OBJ2ID(CreateMouse_ttlistener(o, a2, a3, a4, a5));
+    if ((a1 = ID2(ttcomponent,o)))
+	a0 = (tt_obj)OBJ2ID(CreateMouse_ttlistener(a1, evcode, evflags, lflags, function));
     UNLK;
     return a0;
 }
-tt_obj TTCreateActivate_ttlistener(tt_obj a1, ttuint a2, ttlistener_fn a3) {
-    ttcomponent o;
+tt_obj TTCreateActivate_ttlistener(tt_obj o, ttuint lflags, TT_ARG_READ ttlistener_fn function) {
+    ttcomponent a1;
     tt_obj a0 = (tt_obj)(opaque)0;
     LOCK;
-    if ((o = ID2(ttcomponent,a1)))
-	a0 = (tt_obj)OBJ2ID(CreateActivate_ttlistener(o, a2, a3));
+    if ((a1 = ID2(ttcomponent,o)))
+	a0 = (tt_obj)OBJ2ID(CreateActivate_ttlistener(a1, lflags, function));
     UNLK;
     return a0;
 }
-tt_obj TTCreateChange_ttlistener(tt_obj a1, ttuint a2, ttuint a3, ttlistener_fn a4) {
-    ttcomponent o;
+tt_obj TTCreateChange_ttlistener(tt_obj o, ttuint evcode, ttuint lflags, TT_ARG_READ ttlistener_fn function) {
+    ttcomponent a1;
     tt_obj a0 = (tt_obj)(opaque)0;
     LOCK;
-    if ((o = ID2(ttcomponent,a1)))
-	a0 = (tt_obj)OBJ2ID(CreateChange_ttlistener(o, a2, a3, a4));
+    if ((a1 = ID2(ttcomponent,o)))
+	a0 = (tt_obj)OBJ2ID(CreateChange_ttlistener(a1, evcode, lflags, function));
     UNLK;
     return a0;
 }
-tt_obj TTCreateKeyData_ttlistener(tt_obj a1, TT_ARG_READ ttbyte * a2, ttuint a3, ttlistener_fn a4) {
-    ttcomponent o;
+tt_obj TTCreateKeyData_ttlistener(tt_obj o, TT_ARG_READ TT_ARG_ARRAY_Z ttbyte * key, ttuint lflags, TT_ARG_READ ttlistener_fn function) {
+    ttcomponent a1;
     tt_obj a0 = (tt_obj)(opaque)0;
     LOCK;
-    if ((o = ID2(ttcomponent,a1)))
-	a0 = (tt_obj)OBJ2ID(CreateKeyData_ttlistener(o, a2, a3, a4));
+    if ((a1 = ID2(ttcomponent,o)))
+	a0 = (tt_obj)OBJ2ID(CreateKeyData_ttlistener(a1, key, lflags, function));
     UNLK;
     return a0;
 }
-tt_obj TTCreateExpose_ttlistener(tt_obj a1, ttuint a2, ttlistener_fn a3) {
-    ttcomponent o;
+tt_obj TTCreateExpose_ttlistener(tt_obj o, ttuint lflags, TT_ARG_READ ttlistener_fn function) {
+    ttcomponent a1;
     tt_obj a0 = (tt_obj)(opaque)0;
     LOCK;
-    if ((o = ID2(ttcomponent,a1)))
-	a0 = (tt_obj)OBJ2ID(CreateExpose_ttlistener(o, a2, a3));
+    if ((a1 = ID2(ttcomponent,o)))
+	a0 = (tt_obj)OBJ2ID(CreateExpose_ttlistener(a1, lflags, function));
     UNLK;
     return a0;
-}
-    
-void TTAddTo_ttlistener(tt_obj a1, tt_obj a2) {
-    ttlistener o;
+}    
+void TTAddTo_ttlistener(tt_obj o, tt_obj c) {
+    ttlistener a1;
     LOCK;
-    if ((o = ID2(ttlistener,a1)))
-	 o->FN->AddTo(o, ID2(ttcomponent,a2));
+    if ((a1 = ID2(ttlistener,o)))
+	a1->Class->AddTo(a1, ID2(ttcomponent,c));
     UNLK;
     return ;
 }    
-void TTRemove_ttlistener(tt_obj a1) {
-    ttlistener o;
+void TTRemove_ttlistener(tt_obj o) {
+    ttlistener a1;
     LOCK;
-    if ((o = ID2(ttlistener,a1)))
-	 o->FN->Remove(o);
+    if ((a1 = ID2(ttlistener,o)))
+	a1->Class->Remove(a1);
     UNLK;
     return ;
 }
-ttbyte TTSetArgs_ttlistener(tt_obj a1, ttuint a2, ttuint a3, TT_ARG_READ ttany * a4) {
-    ttlistener o;
+ttbyte TTSetArgsR_ttlistener(tt_obj o, TT_ARG_DIE tt_obj args) {
+    ttlistener a1;
     ttbyte a0 = (ttbyte)0;
     LOCK;
-    if ((o = ID2(ttlistener,a1)))
-	a0 = SetArgs_ttlistener(o, a2, a3, a4);
+    if ((a1 = ID2(ttlistener,o)))
+	a0 = SetArgsR_ttlistener(a1, ID2(ttvector,args));
     UNLK;
     return a0;
 }
-void TTSetEventMask_ttlistener(tt_obj a1, tt_obj a2) {
-    ttlistener o;
+ttbyte TTSetEventMask_ttlistener(tt_obj o, TT_ARG_DIE tt_obj event_mask) {
+    ttlistener a1;
+    ttbyte a0 = (ttbyte)0;
     LOCK;
-    if ((o = ID2(ttlistener,a1)))
-	 SetEventMask_ttlistener(o, ID2(tteventmask,a2));
+    if ((a1 = ID2(ttlistener,o)))
+	a0 = SetEventMask_ttlistener(a1, ID2(tteventmask,event_mask));
     UNLK;
-    return ;
+    return a0;
 }
  
 /* tttimer methods */
 
-tt_obj TTCreateA_tttimer(tt_obj a1, ttuint a2, ttuint a3, ttuint a4, ttuint a5, ttlistener_fn a6, TT_ARG_READ ttany * a7, ttuint a8, ttuint a9) {
-    ttcomponent o;
+tt_obj TTCreateR_tttimer(tt_obj r, ttuint lflags, TT_ARG_READ ttlistener_fn function, ttopaque arg_component_n, ttopaque arg_timer_n, TT_ARG_DIE tt_obj args, ttany delay_t, ttany delay_f) {
+    ttcomponent a1;
     tt_obj a0 = (tt_obj)(opaque)0;
     LOCK;
-    if ((o = ID2(ttcomponent,a1)))
-	a0 = (tt_obj)OBJ2ID(CreateA_tttimer(o, a2, a3, a4, a5, a6, a7, a8, a9));
+    if ((a1 = ID2(ttcomponent,r)))
+	a0 = (tt_obj)OBJ2ID(CreateR_tttimer(a1, lflags, function, arg_component_n, arg_timer_n, ID2(ttvector,args), delay_t, delay_f));
     UNLK;
     return a0;
 }
-tt_obj TTCreate_tttimer(tt_obj a1, ttuint a2, ttlistener_fn a3, ttany a4, ttuint a5, ttuint a6) {
-    ttcomponent o;
+tt_obj TTCreate_tttimer(tt_obj r, ttuint lflags, TT_ARG_READ ttlistener_fn function, ttany arg, ttany delay_t, ttany delay_f) {
+    ttcomponent a1;
     tt_obj a0 = (tt_obj)(opaque)0;
     LOCK;
-    if ((o = ID2(ttcomponent,a1)))
-	a0 = (tt_obj)OBJ2ID(Create_tttimer(o, a2, a3, a4, a5, a6));
+    if ((a1 = ID2(ttcomponent,r)))
+	a0 = (tt_obj)OBJ2ID(Create_tttimer(a1, lflags, function, arg, delay_t, delay_f));
     UNLK;
     return a0;
 }
-void TTSetDelay_tttimer(tt_obj a1, ttuint a2, ttuint a3) {
-    tttimer o;
+void TTSetDelay_tttimer(tt_obj o, ttany delay_t, ttany delay_s) {
+    tttimer a1;
     LOCK;
-    if ((o = ID2(tttimer,a1)))
-	 SetDelay_tttimer(o, a2, a3);
+    if ((a1 = ID2(tttimer,o)))
+	SetDelay_tttimer(a1, delay_t, delay_s);
     UNLK;
     return ;
 }    
-void TTSetEnabled_tttimer(tt_obj a1, ttbyte a2) {
-    tttimer o;
+void TTSetEnabled_tttimer(tt_obj o, ttbyte enabled) {
+    tttimer a1;
     LOCK;
-    if ((o = ID2(tttimer,a1)))
-	 o->FN->SetEnabled(o, a2);
+    if ((a1 = ID2(tttimer,o)))
+	a1->Class->SetEnabled(a1, enabled);
     UNLK;
     return ;
 }    
-ttbyte TTIsEnabled_tttimer(tt_obj a1) {
-    tttimer o;
+ttbyte TTIsEnabled_tttimer(TT_ARG_READ tt_obj o) {
+    tttimer a1;
     ttbyte a0 = (ttbyte)0;
     LOCK;
-    if ((o = ID2(tttimer,a1)))
-	a0 = o->FN->IsEnabled(o);
+    if ((a1 = ID2(tttimer,o)))
+	a0 = a1->Class->IsEnabled(a1);
     UNLK;
     return a0;
 }
  
 /* ttcomponent methods */
 
-void TTAddListener_ttcomponent(tt_obj a1, tt_obj a2) {
-    ttcomponent o;
+void TTAddListener_ttcomponent(tt_obj o, tt_obj l) {
+    ttcomponent a1;
     LOCK;
-    if ((o = ID2(ttcomponent,a1)))
-	 AddListener_ttcomponent(o, ID2(ttlistener,a2));
+    if ((a1 = ID2(ttcomponent,o)))
+	AddListener_ttcomponent(a1, ID2(ttlistener,l));
     UNLK;
     return ;
 }
-void TTRemoveListener_ttcomponent(tt_obj a1, tt_obj a2) {
-    ttcomponent o;
+void TTRemoveListener_ttcomponent(tt_obj o, tt_obj l) {
+    ttcomponent a1;
     LOCK;
-    if ((o = ID2(ttcomponent,a1)))
-	 RemoveListener_ttcomponent(o, ID2(ttlistener,a2));
+    if ((a1 = ID2(ttcomponent,o)))
+	RemoveListener_ttcomponent(a1, ID2(ttlistener,l));
     UNLK;
     return ;
 }
-tt_obj TTSetKeyData_ttcomponent(tt_obj a1, TT_ARG_READ ttbyte * a2, ttany a3) {
-    ttcomponent o;
+tt_obj TTSetKeyData_ttcomponent(tt_obj o, TT_ARG_READ TT_ARG_ARRAY_Z ttbyte * key, ttany data) {
+    ttcomponent a1;
     tt_obj a0 = (tt_obj)(opaque)0;
     LOCK;
-    if ((o = ID2(ttcomponent,a1)))
-	a0 = (tt_obj)OBJ2ID(SetKeyData_ttcomponent(o, a2, a3));
+    if ((a1 = ID2(ttcomponent,o)))
+	a0 = (tt_obj)OBJ2ID(SetKeyData_ttcomponent(a1, key, data));
     UNLK;
     return a0;
 }
-ttany TTGetKeyData_ttcomponent(tt_obj a1, TT_ARG_READ ttbyte * a2) {
-    ttcomponent o;
+ttany TTGetKeyData_ttcomponent(TT_ARG_READ tt_obj o, TT_ARG_READ TT_ARG_ARRAY_Z ttbyte * key) {
+    ttcomponent a1;
     ttany a0 = (ttany)0;
     LOCK;
-    if ((o = ID2(ttcomponent,a1)))
-	a0 = GetKeyData_ttcomponent(o, a2);
+    if ((a1 = ID2(ttcomponent,o)))
+	a0 = GetKeyData_ttcomponent(a1, key);
     UNLK;
     return a0;
 }
-void TTUnsetKeyData_ttcomponent(tt_obj a1, TT_ARG_READ ttbyte * a2) {
-    ttcomponent o;
+void TTUnsetKeyData_ttcomponent(tt_obj o, TT_ARG_READ TT_ARG_ARRAY_Z ttbyte * key) {
+    ttcomponent a1;
     LOCK;
-    if ((o = ID2(ttcomponent,a1)))
-	 UnsetKeyData_ttcomponent(o, a2);
+    if ((a1 = ID2(ttcomponent,o)))
+	UnsetKeyData_ttcomponent(a1, key);
     UNLK;
     return ;
 }
-tt_obj TTGetData_ttcomponent(tt_obj a1, TT_ARG_READ ttbyte * a2) {
-    ttcomponent o;
+tt_obj TTGetData_ttcomponent(TT_ARG_READ tt_obj o, TT_ARG_READ TT_ARG_ARRAY_Z ttbyte * key) {
+    ttcomponent a1;
     tt_obj a0 = (tt_obj)(opaque)0;
     LOCK;
-    if ((o = ID2(ttcomponent,a1)))
-	a0 = (tt_obj)OBJ2ID(GetData_ttcomponent(o, a2));
+    if ((a1 = ID2(ttcomponent,o)))
+	a0 = (tt_obj)OBJ2ID(GetData_ttcomponent(a1, key));
     UNLK;
     return a0;
 }
  
 /* ttdata methods */
         
+ttbyte TTSetData_ttdata(tt_obj o, ttany data) {
+    ttdata a1;
+    ttbyte a0 = (ttbyte)0;
+    LOCK;
+    if ((a1 = ID2(ttdata,o)))
+	a0 = SetData_ttdata(a1, data);
+    UNLK;
+    return a0;
+}
  
 /* ttvisible methods */
     
-void TTAddTo_ttvisible(tt_obj a1, tt_obj a2) {
-    ttvisible o;
+void TTAddTo_ttvisible(tt_obj o, tt_obj parent, ttany constraint) {
+    ttvisible a1;
     LOCK;
-    if ((o = ID2(ttvisible,a1)))
-	 AddTo_ttvisible(o, ID2(ttvisible,a2));
+    if ((a1 = ID2(ttvisible,o)))
+	AddTo_ttvisible(a1, ID2(ttvisible,parent), constraint);
     UNLK;
     return ;
 }    
-void TTRemove_ttvisible(tt_obj a1) {
-    ttvisible o;
+void TTValidate_ttvisible(tt_obj o) {
+    ttvisible a1;
     LOCK;
-    if ((o = ID2(ttvisible,a1)))
-	 Remove_ttvisible(o);
+    if ((a1 = ID2(ttvisible,o)))
+	a1->Class->Validate(a1);
     UNLK;
     return ;
 }    
-void TTInvalidate_ttvisible(tt_obj a1) {
-    ttvisible o;
+void TTRemove_ttvisible(tt_obj o) {
+    ttvisible a1;
     LOCK;
-    if ((o = ID2(ttvisible,a1)))
-	 o->FN->Invalidate(o);
+    if ((a1 = ID2(ttvisible,o)))
+	Remove_ttvisible(a1);
     UNLK;
     return ;
 }    
-void TTSetVisible_ttvisible(tt_obj a1, ttbyte a2) {
-    ttvisible o;
+void TTInvalidate_ttvisible(tt_obj o) {
+    ttvisible a1;
     LOCK;
-    if ((o = ID2(ttvisible,a1)))
-	 SetVisible_ttvisible(o, a2);
+    if ((a1 = ID2(ttvisible,o)))
+	a1->Class->Invalidate(a1);
     UNLK;
     return ;
 }    
-void TTSetTheme_ttvisible(tt_obj a1, tt_obj a2) {
-    ttvisible o;
+void TTSetVisible_ttvisible(tt_obj o, ttbyte visible) {
+    ttvisible a1;
     LOCK;
-    if ((o = ID2(ttvisible,a1)))
-	 SetTheme_ttvisible(o, ID2(tttheme,a2));
+    if ((a1 = ID2(ttvisible,o)))
+	SetVisible_ttvisible(a1, visible);
     UNLK;
     return ;
 }    
-void TTDraw_ttvisible(tt_obj a1, ttshort a2, ttshort a3, ttshort a4, ttshort a5, ttshort a6, TT_ARG_READ ttbyte * a7, TT_ARG_READ ttfont * a8, TT_ARG_READ ttattr * a9) {
-    ttvisible o;
+ttbyte TTSetTheme_ttvisible(tt_obj o, TT_ARG_READ tt_obj theme) {
+    ttvisible a1;
+    ttbyte a0 = (ttbyte)0;
     LOCK;
-    if ((o = ID2(ttvisible,a1)))
-	 o->FN->Draw(o, a2, a3, a4, a5, a6, a7, a8, a9);
+    if ((a1 = ID2(ttvisible,o)))
+	a0 = SetTheme_ttvisible(a1, ID2(tttheme,theme));
+    UNLK;
+    return a0;
+}    
+void TTDraw_ttvisible(tt_obj o, ttshort x, ttshort y, ttshort w, ttshort h, ttshort pitch, TT_ARG_READ TT_ARG_ARRAY((_P(5),*,_P(6))) ttbyte * asciidata, TT_ARG_READ TT_ARG_ARRAY((_P(5),*,_P(6))) ttfont * fontdata, TT_ARG_READ TT_ARG_ARRAY((_P(5),*,_P(6))) ttattr * attrdata) {
+    ttvisible a1;
+    LOCK;
+    if ((a1 = ID2(ttvisible,o)))
+	a1->Class->Draw(a1, x, y, w, h, pitch, asciidata, fontdata, attrdata);
     UNLK;
     return ;
 }    
-void TTBuiltinRepaint_ttvisible(tt_obj a1, ttshort a2, ttshort a3, ttshort a4, ttshort a5) {
-    ttvisible o;
+void TTBuiltinRepaint_ttvisible(tt_obj o, ttshort x, ttshort y, ttshort w, ttshort h) {
+    ttvisible a1;
     LOCK;
-    if ((o = ID2(ttvisible,a1)))
-	 o->FN->BuiltinRepaint(o, a2, a3, a4, a5);
+    if ((a1 = ID2(ttvisible,o)))
+	a1->Class->BuiltinRepaint(a1, x, y, w, h);
     UNLK;
     return ;
 }
-void TTSetRepaint_ttvisible(tt_obj a1, ttvisible_repaint_fn a2) {
-    ttvisible o;
+
+ttbyte TTSetRepaint_ttvisible(tt_obj o, TT_ARG_READ ttvisible_repaint_fn repaint) {
+    ttvisible a1;
+    ttbyte a0 = (ttbyte)0;
     LOCK;
-    if ((o = ID2(ttvisible,a1)))
-	 SetRepaint_ttvisible(o, a2);
+    if ((a1 = ID2(ttvisible,o)))
+	a0 = SetRepaint_ttvisible(a1, repaint);
+    UNLK;
+    return a0;
+}
+void TTExpose_ttvisible(tt_obj o, ttshort x, ttshort y, ttshort w, ttshort h) {
+    ttvisible a1;
+    LOCK;
+    if ((a1 = ID2(ttvisible,o)))
+	Expose_ttvisible(a1, x, y, w, h);
     UNLK;
     return ;
 }
-void TTAdd_ttvisible(tt_obj a1, tt_obj a2) {
-    ttvisible o;
+void TTAdd_ttvisible(tt_obj o, tt_obj child, ttany constraint) {
+    ttvisible a1;
     LOCK;
-    if ((o = ID2(ttvisible,a1)))
-	 Add_ttvisible(o, ID2(ttvisible,a2));
+    if ((a1 = ID2(ttvisible,o)))
+	Add_ttvisible(a1, ID2(ttvisible,child), constraint);
     UNLK;
     return ;
 }
-void TTExpose_ttvisible(tt_obj a1, ttshort a2, ttshort a3, ttshort a4, ttshort a5) {
-    ttvisible o;
+ 
+/* ttlayout methods */
+        
+ 
+/* ttboxlayout methods */
+
+tt_obj TTCreate_ttboxlayout(ttany orientation) {
+    tt_obj a0 = (tt_obj)(opaque)0;
     LOCK;
-    if ((o = ID2(ttvisible,a1)))
-	 Expose_ttvisible(o, a2, a3, a4, a5);
+    a0 = (tt_obj)OBJ2ID(Create_ttboxlayout(orientation));
     UNLK;
-    return ;
+    return a0;
 }
+ 
+/* ttborderlayout methods */
+
  
 /* ttnative methods */
     
 tt_obj TTGetRoot_ttnative(void) {
     tt_obj a0 = (tt_obj)(opaque)0;
     LOCK;
-    a0 = (tt_obj)OBJ2ID(TFN_ttnative->GetRoot());
+    a0 = (tt_obj)OBJ2ID(TClass_ttnative->GetRoot());
     UNLK;
     return a0;
 }    
-ttshort TTGetW_ttnative(tt_obj a1) {
-    ttnative o;
+ttshort TTGetW_ttnative(TT_ARG_READ tt_obj o) {
+    ttnative a1;
     ttshort a0 = (ttshort)0;
     LOCK;
-    if ((o = ID2(ttnative,a1)))
-	a0 = o->FN->GetW(o);
+    if ((a1 = ID2(ttnative,o)))
+	a0 = a1->Class->GetW(a1);
     UNLK;
     return a0;
 }    
-ttshort TTGetH_ttnative(tt_obj a1) {
-    ttnative o;
+ttshort TTGetH_ttnative(TT_ARG_READ tt_obj o) {
+    ttnative a1;
     ttshort a0 = (ttshort)0;
     LOCK;
-    if ((o = ID2(ttnative,a1)))
-	a0 = o->FN->GetH(o);
+    if ((a1 = ID2(ttnative,o)))
+	a0 = a1->Class->GetH(a1);
     UNLK;
     return a0;
 }
-tt_obj TTCreate_ttnative(ttany a1) {
+tt_obj TTCreate_ttnative(ttany native_value) {
     tt_obj a0 = (tt_obj)(opaque)0;
     LOCK;
-    a0 = (tt_obj)OBJ2ID(Create_ttnative(a1));
+    a0 = (tt_obj)OBJ2ID(Create_ttnative(native_value));
     UNLK;
     return a0;
 }
  
 /* ttwidget methods */
     
-void TTSetXY_ttwidget(tt_obj a1, ttshort a2, ttshort a3) {
-    ttwidget o;
+void TTSetLayout_ttwidget(tt_obj o, tt_obj l) {
+    ttwidget a1;
     LOCK;
-    if ((o = ID2(ttwidget,a1)))
-	 SetXY_ttwidget(o, a2, a3);
+    if ((a1 = ID2(ttwidget,o)))
+	SetLayout_ttwidget(a1, ID2(ttlayout,l));
     UNLK;
     return ;
 }    
-void TTSetWH_ttwidget(tt_obj a1, ttshort a2, ttshort a3) {
-    ttwidget o;
+ttbyte TTSetXY_ttwidget(tt_obj o, ttshort x, ttshort y) {
+    ttwidget a1;
+    ttbyte a0 = (ttbyte)0;
     LOCK;
-    if ((o = ID2(ttwidget,a1)))
-	 SetWH_ttwidget(o, a2, a3);
+    if ((a1 = ID2(ttwidget,o)))
+	a0 = SetXY_ttwidget(a1, x, y);
     UNLK;
-    return ;
+    return a0;
 }    
-void TTSetXl_ttwidget(tt_obj a1, ttint a2) {
-    ttwidget o;
+ttbyte TTSetWH_ttwidget(tt_obj o, ttshort w, ttshort h) {
+    ttwidget a1;
+    ttbyte a0 = (ttbyte)0;
     LOCK;
-    if ((o = ID2(ttwidget,a1)))
-	 SetXl_ttwidget(o, a2);
+    if ((a1 = ID2(ttwidget,o)))
+	a0 = SetWH_ttwidget(a1, w, h);
     UNLK;
-    return ;
+    return a0;
 }    
-void TTSetYl_ttwidget(tt_obj a1, ttint a2) {
-    ttwidget o;
+ttbyte TTSetXl_ttwidget(tt_obj o, ttint xl) {
+    ttwidget a1;
+    ttbyte a0 = (ttbyte)0;
     LOCK;
-    if ((o = ID2(ttwidget,a1)))
-	 SetYl_ttwidget(o, a2);
+    if ((a1 = ID2(ttwidget,o)))
+	a0 = SetXl_ttwidget(a1, xl);
     UNLK;
-    return ;
+    return a0;
 }    
-void TTSetWl_ttwidget(tt_obj a1, ttint a2) {
-    ttwidget o;
+ttbyte TTSetYl_ttwidget(tt_obj o, ttint yl) {
+    ttwidget a1;
+    ttbyte a0 = (ttbyte)0;
     LOCK;
-    if ((o = ID2(ttwidget,a1)))
-	 SetWl_ttwidget(o, a2);
+    if ((a1 = ID2(ttwidget,o)))
+	a0 = SetYl_ttwidget(a1, yl);
     UNLK;
-    return ;
+    return a0;
 }    
-void TTSetHl_ttwidget(tt_obj a1, ttint a2) {
-    ttwidget o;
+ttbyte TTSetWl_ttwidget(tt_obj o, ttint wl) {
+    ttwidget a1;
+    ttbyte a0 = (ttbyte)0;
     LOCK;
-    if ((o = ID2(ttwidget,a1)))
-	 SetHl_ttwidget(o, a2);
+    if ((a1 = ID2(ttwidget,o)))
+	a0 = SetWl_ttwidget(a1, wl);
     UNLK;
-    return ;
+    return a0;
 }    
-void TTSetTooltip_ttwidget(tt_obj a1, tt_obj a2) {
-    ttwidget o;
+ttbyte TTSetHl_ttwidget(tt_obj o, ttint hl) {
+    ttwidget a1;
+    ttbyte a0 = (ttbyte)0;
     LOCK;
-    if ((o = ID2(ttwidget,a1)))
-	 SetTooltip_ttwidget(o, ID2(tttooltip,a2));
+    if ((a1 = ID2(ttwidget,o)))
+	a0 = SetHl_ttwidget(a1, hl);
     UNLK;
-    return ;
+    return a0;
+}    
+ttbyte TTSetTooltip_ttwidget(tt_obj o, TT_ARG_DIE tt_obj t) {
+    ttwidget a1;
+    ttbyte a0 = (ttbyte)0;
+    LOCK;
+    if ((a1 = ID2(ttwidget,o)))
+	a0 = SetTooltip_ttwidget(a1, ID2(tttooltip,t));
+    UNLK;
+    return a0;
 }
-void TTSetXlYl_ttwidget(tt_obj a1, ttbyte a2, ttint a3, ttint a4) {
-    ttwidget o;
+ttbyte TTSetXlYl_ttwidget(tt_obj o, ttuint mask, ttint xl, ttint yl) {
+    ttwidget a1;
+    ttbyte a0 = (ttbyte)0;
     LOCK;
-    if ((o = ID2(ttwidget,a1)))
-	 SetXlYl_ttwidget(o, a2, a3, a4);
+    if ((a1 = ID2(ttwidget,o)))
+	a0 = SetXlYl_ttwidget(a1, mask, xl, yl);
     UNLK;
-    return ;
+    return a0;
 }
-void TTSetWlHl_ttwidget(tt_obj a1, ttbyte a2, ttint a3, ttint a4) {
-    ttwidget o;
+ttbyte TTSetWlHl_ttwidget(tt_obj o, ttuint mask, ttint wl, ttint hl) {
+    ttwidget a1;
+    ttbyte a0 = (ttbyte)0;
     LOCK;
-    if ((o = ID2(ttwidget,a1)))
-	 SetWlHl_ttwidget(o, a2, a3, a4);
+    if ((a1 = ID2(ttwidget,o)))
+	a0 = SetWlHl_ttwidget(a1, mask, wl, hl);
     UNLK;
-    return ;
+    return a0;
 }
-void TTSetXYWH_ttwidget(tt_obj a1, ttbyte a2, ttshort a3, ttshort a4, ttshort a5, ttshort a6) {
-    ttwidget o;
+ttbyte TTSetXYWH_ttwidget(tt_obj o, ttuint mask, ttshort x, ttshort y, ttshort w, ttshort h) {
+    ttwidget a1;
+    ttbyte a0 = (ttbyte)0;
     LOCK;
-    if ((o = ID2(ttwidget,a1)))
-	 SetXYWH_ttwidget(o, a2, a3, a4, a5, a6);
+    if ((a1 = ID2(ttwidget,o)))
+	a0 = SetXYWH_ttwidget(a1, mask, x, y, w, h);
     UNLK;
-    return ;
+    return a0;
 }
-void TTSetX_ttwidget(tt_obj a1, ttshort a2) {
-    ttwidget o;
+ttbyte TTSetX_ttwidget(tt_obj o, ttshort x) {
+    ttwidget a1;
+    ttbyte a0 = (ttbyte)0;
     LOCK;
-    if ((o = ID2(ttwidget,a1)))
-	 SetX_ttwidget(o, a2);
+    if ((a1 = ID2(ttwidget,o)))
+	a0 = SetX_ttwidget(a1, x);
     UNLK;
-    return ;
+    return a0;
 }
-void TTSetY_ttwidget(tt_obj a1, ttshort a2) {
-    ttwidget o;
+ttbyte TTSetY_ttwidget(tt_obj o, ttshort y) {
+    ttwidget a1;
+    ttbyte a0 = (ttbyte)0;
     LOCK;
-    if ((o = ID2(ttwidget,a1)))
-	 SetY_ttwidget(o, a2);
+    if ((a1 = ID2(ttwidget,o)))
+	a0 = SetY_ttwidget(a1, y);
     UNLK;
-    return ;
+    return a0;
 }
-void TTSetW_ttwidget(tt_obj a1, ttshort a2) {
-    ttwidget o;
+ttbyte TTSetW_ttwidget(tt_obj o, ttshort w) {
+    ttwidget a1;
+    ttbyte a0 = (ttbyte)0;
     LOCK;
-    if ((o = ID2(ttwidget,a1)))
-	 SetW_ttwidget(o, a2);
+    if ((a1 = ID2(ttwidget,o)))
+	a0 = SetW_ttwidget(a1, w);
     UNLK;
-    return ;
+    return a0;
 }
-void TTSetH_ttwidget(tt_obj a1, ttshort a2) {
-    ttwidget o;
+ttbyte TTSetH_ttwidget(tt_obj o, ttshort h) {
+    ttwidget a1;
+    ttbyte a0 = (ttbyte)0;
     LOCK;
-    if ((o = ID2(ttwidget,a1)))
-	 SetH_ttwidget(o, a2);
+    if ((a1 = ID2(ttwidget,o)))
+	a0 = SetH_ttwidget(a1, h);
     UNLK;
-    return ;
+    return a0;
 }
  
 /* ttlabel methods */
     
-ttbyte TTDoSetFont_ttlabel(tt_obj a1, TT_ARG_DIE ttfont * a2, ttopaque a3) {
-    ttlabel o;
+void TTSetFontD_ttlabel(tt_obj o, ttopaque text_len, TT_ARG_DIE TT_ARG_ARRAY((_P(2))) ttfont * text) {
+    ttlabel a1;
+    LOCK;
+    if ((a1 = ID2(ttlabel,o)))
+	SetFontD_ttlabel(a1, text_len, text);
+    UNLK;
+    return ;
+}
+ttbyte TTSetFont_ttlabel(tt_obj o, TT_ARG_READ TT_ARG_ARRAY_Z ttfont * text) {
+    ttlabel a1;
     ttbyte a0 = (ttbyte)0;
     LOCK;
-    if ((o = ID2(ttlabel,a1)))
-	a0 = DoSetFont_ttlabel(o, a2, a3);
+    if ((a1 = ID2(ttlabel,o)))
+	a0 = SetFont_ttlabel(a1, text);
     UNLK;
     return a0;
 }
-ttbyte TTSetFont_ttlabel(tt_obj a1, TT_ARG_READ ttfont * a2) {
-    ttlabel o;
+ttbyte TTSetText_ttlabel(tt_obj o, TT_ARG_READ TT_ARG_ARRAY_Z ttbyte * text) {
+    ttlabel a1;
     ttbyte a0 = (ttbyte)0;
     LOCK;
-    if ((o = ID2(ttlabel,a1)))
-	a0 = SetFont_ttlabel(o, a2);
+    if ((a1 = ID2(ttlabel,o)))
+	a0 = SetText_ttlabel(a1, text);
     UNLK;
     return a0;
 }
-ttbyte TTSetText_ttlabel(tt_obj a1, TT_ARG_READ ttbyte * a2) {
-    ttlabel o;
-    ttbyte a0 = (ttbyte)0;
-    LOCK;
-    if ((o = ID2(ttlabel,a1)))
-	a0 = SetText_ttlabel(o, a2);
-    UNLK;
-    return a0;
-}
-tt_obj TTCreate_ttlabel(TT_ARG_READ ttbyte * a1) {
+tt_obj TTCreate_ttlabel(TT_ARG_READ TT_ARG_ARRAY_Z ttbyte * text) {
     tt_obj a0 = (tt_obj)(opaque)0;
     LOCK;
-    a0 = (tt_obj)OBJ2ID(Create_ttlabel(a1));
+    a0 = (tt_obj)OBJ2ID(Create_ttlabel(text));
     UNLK;
     return a0;
 }
  
 /* tttooltip methods */
     
-void TTSetWidget_tttooltip(tt_obj a1, tt_obj a2) {
-    tttooltip o;
+ttbyte TTSetWidget_tttooltip(TT_ARG_DIE tt_obj o, tt_obj w) {
+    tttooltip a1;
+    ttbyte a0 = (ttbyte)0;
     LOCK;
-    if ((o = ID2(tttooltip,a1)))
-	 SetWidget_tttooltip(o, ID2(ttwidget,a2));
+    if ((a1 = ID2(tttooltip,o)))
+	a0 = SetWidget_tttooltip(a1, ID2(ttwidget,w));
     UNLK;
-    return ;
+    return a0;
 }
  
 /* ttbuttongroup methods */
     
-void TTAdd_ttbuttongroup(tt_obj a1, tt_obj a2) {
-    ttbuttongroup o;
+void TTAdd_ttbuttongroup(tt_obj o, tt_obj r) {
+    ttbuttongroup a1;
     LOCK;
-    if ((o = ID2(ttbuttongroup,a1)))
-	 Add_ttbuttongroup(o, ID2(ttradiobutton,a2));
+    if ((a1 = ID2(ttbuttongroup,o)))
+	Add_ttbuttongroup(a1, ID2(ttradiobutton,r));
     UNLK;
     return ;
 }    
-void TTRemove_ttbuttongroup(tt_obj a1, tt_obj a2) {
-    ttbuttongroup o;
+void TTRemove_ttbuttongroup(tt_obj o, tt_obj r) {
+    ttbuttongroup a1;
     LOCK;
-    if ((o = ID2(ttbuttongroup,a1)))
-	 Remove_ttbuttongroup(o, ID2(ttradiobutton,a2));
+    if ((a1 = ID2(ttbuttongroup,o)))
+	Remove_ttbuttongroup(a1, ID2(ttradiobutton,r));
     UNLK;
     return ;
 }    
-void TTSetChecked_ttbuttongroup(tt_obj a1, tt_obj a2) {
-    ttbuttongroup o;
+void TTSetChecked_ttbuttongroup(tt_obj o, tt_obj r) {
+    ttbuttongroup a1;
     LOCK;
-    if ((o = ID2(ttbuttongroup,a1)))
-	 SetChecked_ttbuttongroup(o, ID2(ttradiobutton,a2));
+    if ((a1 = ID2(ttbuttongroup,o)))
+	SetChecked_ttbuttongroup(a1, ID2(ttradiobutton,r));
     UNLK;
     return ;
 }
  
 /* ttanybutton methods */
         
-ttbyte TTDoSetAttr_ttanybutton(tt_obj a1, TT_ARG_DIE ttattr * a2, ttshort a3, ttshort a4, ttshort a5) {
-    ttanybutton o;
+void TTSetAttrD_ttanybutton(tt_obj o, ttshort w, ttshort h, ttshort pitch, TT_ARG_DIE TT_ARG_ARRAY((_P(3),*,_P(4))) ttattr * text) {
+    ttanybutton a1;
+    LOCK;
+    if ((a1 = ID2(ttanybutton,o)))
+	SetAttrD_ttanybutton(a1, w, h, pitch, text);
+    UNLK;
+    return ;
+}
+ttbyte TTSetAttr_ttanybutton(tt_obj o, ttshort w, ttshort h, ttshort pitch, TT_ARG_READ TT_ARG_ARRAY((_P(3),*,_P(4))) ttattr * text) {
+    ttanybutton a1;
     ttbyte a0 = (ttbyte)0;
     LOCK;
-    if ((o = ID2(ttanybutton,a1)))
-	a0 = DoSetAttr_ttanybutton(o, a2, a3, a4, a5);
+    if ((a1 = ID2(ttanybutton,o)))
+	a0 = SetAttr_ttanybutton(a1, w, h, pitch, text);
     UNLK;
     return a0;
 }
-ttbyte TTSetAttr_ttanybutton(tt_obj a1, TT_ARG_READ ttattr * a2, ttshort a3, ttshort a4, ttshort a5) {
-    ttanybutton o;
+ttbyte TTSetFont_ttanybutton(tt_obj o, ttshort w, ttshort h, ttshort pitch, TT_ARG_READ TT_ARG_ARRAY((_P(3),*,_P(4))) ttfont * text) {
+    ttanybutton a1;
     ttbyte a0 = (ttbyte)0;
     LOCK;
-    if ((o = ID2(ttanybutton,a1)))
-	a0 = SetAttr_ttanybutton(o, a2, a3, a4, a5);
+    if ((a1 = ID2(ttanybutton,o)))
+	a0 = SetFont_ttanybutton(a1, w, h, pitch, text);
     UNLK;
     return a0;
 }
-ttbyte TTSetFont_ttanybutton(tt_obj a1, TT_ARG_READ ttfont * a2, ttshort a3, ttshort a4, ttshort a5) {
-    ttanybutton o;
+ttbyte TTSetText_ttanybutton(tt_obj o, ttshort w, ttshort h, ttshort pitch, TT_ARG_READ TT_ARG_ARRAY((_P(3),*,_P(4))) ttbyte * text) {
+    ttanybutton a1;
     ttbyte a0 = (ttbyte)0;
     LOCK;
-    if ((o = ID2(ttanybutton,a1)))
-	a0 = SetFont_ttanybutton(o, a2, a3, a4, a5);
+    if ((a1 = ID2(ttanybutton,o)))
+	a0 = SetText_ttanybutton(a1, w, h, pitch, text);
     UNLK;
     return a0;
 }
-ttbyte TTSetText_ttanybutton(tt_obj a1, TT_ARG_READ ttbyte * a2, ttshort a3, ttshort a4, ttshort a5) {
-    ttanybutton o;
-    ttbyte a0 = (ttbyte)0;
-    LOCK;
-    if ((o = ID2(ttanybutton,a1)))
-	a0 = SetText_ttanybutton(o, a2, a3, a4, a5);
-    UNLK;
-    return a0;
-}
-tt_obj TTCreate_ttanybutton(TT_ARG_READ ttbyte * a1, ttshort a2, ttshort a3, ttshort a4) {
+tt_obj TTCreate_ttanybutton(ttshort w, ttshort h, ttshort pitch, TT_ARG_READ TT_ARG_ARRAY((_P(2),*,_P(3))) ttbyte * text) {
     tt_obj a0 = (tt_obj)(opaque)0;
     LOCK;
-    a0 = (tt_obj)OBJ2ID(Create_ttanybutton(a1, a2, a3, a4));
+    a0 = (tt_obj)OBJ2ID(Create_ttanybutton(w, h, pitch, text));
     UNLK;
     return a0;
 }
  
 /* ttbutton methods */
     
-void TTSetPressed_ttbutton(tt_obj a1, ttbyte a2) {
-    ttbutton o;
+void TTSetPressed_ttbutton(tt_obj o, ttbyte pressed) {
+    ttbutton a1;
     LOCK;
-    if ((o = ID2(ttbutton,a1)))
-	 SetPressed_ttbutton(o, a2);
+    if ((a1 = ID2(ttbutton,o)))
+	SetPressed_ttbutton(a1, pressed);
     UNLK;
     return ;
 }
-ttbyte TTIsPressed_ttbutton(tt_obj a1) {
-    ttbutton o;
+ttbyte TTIsPressed_ttbutton(TT_ARG_READ tt_obj o) {
+    ttbutton a1;
     ttbyte a0 = (ttbyte)0;
     LOCK;
-    if ((o = ID2(ttbutton,a1)))
-	a0 = IsPressed_ttbutton(o);
+    if ((a1 = ID2(ttbutton,o)))
+	a0 = IsPressed_ttbutton(a1);
     UNLK;
     return a0;
 }
-tt_obj TTCreate_ttbutton(TT_ARG_READ ttbyte * a1, ttshort a2, ttshort a3, ttshort a4) {
+tt_obj TTCreate_ttbutton(ttshort w, ttshort h, ttshort pitch, TT_ARG_READ TT_ARG_ARRAY((_P(2),*,_P(3))) ttbyte * text) {
     tt_obj a0 = (tt_obj)(opaque)0;
     LOCK;
-    a0 = (tt_obj)OBJ2ID(Create_ttbutton(a1, a2, a3, a4));
+    a0 = (tt_obj)OBJ2ID(Create_ttbutton(w, h, pitch, text));
     UNLK;
     return a0;
 }
  
 /* ttcheckbutton methods */
     
-void TTSetChecked_ttcheckbutton(tt_obj a1, ttbyte a2) {
-    ttcheckbutton o;
+void TTSetChecked_ttcheckbutton(tt_obj o, ttbyte checked) {
+    ttcheckbutton a1;
     LOCK;
-    if ((o = ID2(ttcheckbutton,a1)))
-	 SetChecked_ttcheckbutton(o, a2);
+    if ((a1 = ID2(ttcheckbutton,o)))
+	SetChecked_ttcheckbutton(a1, checked);
     UNLK;
     return ;
 }
-ttbyte TTIsChecked_ttcheckbutton(tt_obj a1) {
-    ttcheckbutton o;
+ttbyte TTIsChecked_ttcheckbutton(TT_ARG_READ tt_obj o) {
+    ttcheckbutton a1;
     ttbyte a0 = (ttbyte)0;
     LOCK;
-    if ((o = ID2(ttcheckbutton,a1)))
-	a0 = IsChecked_ttcheckbutton(o);
+    if ((a1 = ID2(ttcheckbutton,o)))
+	a0 = IsChecked_ttcheckbutton(a1);
     UNLK;
     return a0;
 }
-tt_obj TTCreate_ttcheckbutton(TT_ARG_READ ttbyte * a1, ttshort a2, ttshort a3, ttshort a4) {
+tt_obj TTCreate_ttcheckbutton(ttshort w, ttshort h, ttshort pitch, TT_ARG_READ TT_ARG_ARRAY((_P(2),*,_P(3))) ttbyte * text) {
     tt_obj a0 = (tt_obj)(opaque)0;
     LOCK;
-    a0 = (tt_obj)OBJ2ID(Create_ttcheckbutton(a1, a2, a3, a4));
+    a0 = (tt_obj)OBJ2ID(Create_ttcheckbutton(w, h, pitch, text));
     UNLK;
     return a0;
 }
  
 /* ttradiobutton methods */
 
-void TTAddToGroup_ttradiobutton(tt_obj a1, tt_obj a2) {
-    ttradiobutton o;
+void TTAddToGroup_ttradiobutton(tt_obj o, tt_obj g) {
+    ttradiobutton a1;
     LOCK;
-    if ((o = ID2(ttradiobutton,a1)))
-	 AddToGroup_ttradiobutton(o, ID2(ttbuttongroup,a2));
+    if ((a1 = ID2(ttradiobutton,o)))
+	AddToGroup_ttradiobutton(a1, ID2(ttbuttongroup,g));
     UNLK;
     return ;
 }
-void TTRemoveFromGroup_ttradiobutton(tt_obj a1) {
-    ttradiobutton o;
+void TTRemoveFromGroup_ttradiobutton(tt_obj o) {
+    ttradiobutton a1;
     LOCK;
-    if ((o = ID2(ttradiobutton,a1)))
-	 RemoveFromGroup_ttradiobutton(o);
+    if ((a1 = ID2(ttradiobutton,o)))
+	RemoveFromGroup_ttradiobutton(a1);
     UNLK;
     return ;
 }
-tt_obj TTCreate_ttradiobutton(TT_ARG_READ ttbyte * a1, ttshort a2, ttshort a3, ttshort a4) {
+tt_obj TTCreate_ttradiobutton(ttshort w, ttshort h, ttshort pitch, TT_ARG_READ TT_ARG_ARRAY((_P(2),*,_P(3))) ttbyte * text) {
     tt_obj a0 = (tt_obj)(opaque)0;
     LOCK;
-    a0 = (tt_obj)OBJ2ID(Create_ttradiobutton(a1, a2, a3, a4));
+    a0 = (tt_obj)OBJ2ID(Create_ttradiobutton(w, h, pitch, text));
     UNLK;
     return a0;
 }
  
 /* ttanyscroll methods */
             
-void TTSetOrientation_ttanyscroll(tt_obj a1, ttbyte a2) {
-    ttanyscroll o;
+ttbyte TTSetOrientation_ttanyscroll(tt_obj o, ttbyte orientation) {
+    ttanyscroll a1;
+    ttbyte a0 = (ttbyte)0;
     LOCK;
-    if ((o = ID2(ttanyscroll,a1)))
-	 SetOrientation_ttanyscroll(o, a2);
+    if ((a1 = ID2(ttanyscroll,o)))
+	a0 = SetOrientation_ttanyscroll(a1, orientation);
     UNLK;
-    return ;
+    return a0;
 }    
-void TTSetSize_ttanyscroll(tt_obj a1, ttint a2) {
-    ttanyscroll o;
+ttbyte TTSetSize_ttanyscroll(tt_obj o, ttint size) {
+    ttanyscroll a1;
+    ttbyte a0 = (ttbyte)0;
     LOCK;
-    if ((o = ID2(ttanyscroll,a1)))
-	 SetSize_ttanyscroll(o, a2);
+    if ((a1 = ID2(ttanyscroll,o)))
+	a0 = SetSize_ttanyscroll(a1, size);
     UNLK;
-    return ;
+    return a0;
 }    
-void TTSetRealSize_ttanyscroll(tt_obj a1, ttint a2) {
-    ttanyscroll o;
+ttbyte TTSetRealSize_ttanyscroll(tt_obj o, ttint real_size) {
+    ttanyscroll a1;
+    ttbyte a0 = (ttbyte)0;
     LOCK;
-    if ((o = ID2(ttanyscroll,a1)))
-	 SetRealSize_ttanyscroll(o, a2);
+    if ((a1 = ID2(ttanyscroll,o)))
+	a0 = SetRealSize_ttanyscroll(a1, real_size);
     UNLK;
-    return ;
+    return a0;
 }    
-void TTSetViewSize_ttanyscroll(tt_obj a1, ttint a2) {
-    ttanyscroll o;
+ttbyte TTSetViewSize_ttanyscroll(tt_obj o, ttint view_size) {
+    ttanyscroll a1;
+    ttbyte a0 = (ttbyte)0;
     LOCK;
-    if ((o = ID2(ttanyscroll,a1)))
-	 SetViewSize_ttanyscroll(o, a2);
+    if ((a1 = ID2(ttanyscroll,o)))
+	a0 = SetViewSize_ttanyscroll(a1, view_size);
     UNLK;
-    return ;
+    return a0;
 }    
-void TTSetPosition_ttanyscroll(tt_obj a1, ttint a2) {
-    ttanyscroll o;
+ttbyte TTSetPosition_ttanyscroll(tt_obj o, ttint position) {
+    ttanyscroll a1;
+    ttbyte a0 = (ttbyte)0;
     LOCK;
-    if ((o = ID2(ttanyscroll,a1)))
-	 SetPosition_ttanyscroll(o, a2);
+    if ((a1 = ID2(ttanyscroll,o)))
+	a0 = SetPosition_ttanyscroll(a1, position);
     UNLK;
-    return ;
+    return a0;
 }
  
 /* ttscrollbar methods */
 
-tt_obj TTCreate1_ttscrollbar(ttbyte a1) {
+tt_obj TTCreate1_ttscrollbar(ttbyte orientation) {
     tt_obj a0 = (tt_obj)(opaque)0;
     LOCK;
-    a0 = (tt_obj)OBJ2ID(Create1_ttscrollbar(a1));
+    a0 = (tt_obj)OBJ2ID(Create1_ttscrollbar(orientation));
     UNLK;
     return a0;
 }
-tt_obj TTCreate4_ttscrollbar(ttbyte a1, ttint a2, ttint a3, ttint a4) {
+tt_obj TTCreate4_ttscrollbar(ttbyte orientation, ttint size, ttint real_size, ttint view_size) {
     tt_obj a0 = (tt_obj)(opaque)0;
     LOCK;
-    a0 = (tt_obj)OBJ2ID(Create4_ttscrollbar(a1, a2, a3, a4));
+    a0 = (tt_obj)OBJ2ID(Create4_ttscrollbar(orientation, size, real_size, view_size));
     UNLK;
     return a0;
 }
  
 /* ttslider methods */
     
-void TTSetSlideMin_ttslider(tt_obj a1, ttint a2) {
-    ttslider o;
+ttbyte TTSetSlideMin_ttslider(tt_obj o, ttint slide_min) {
+    ttslider a1;
+    ttbyte a0 = (ttbyte)0;
     LOCK;
-    if ((o = ID2(ttslider,a1)))
-	 SetSlideMin_ttslider(o, a2);
+    if ((a1 = ID2(ttslider,o)))
+	a0 = SetSlideMin_ttslider(a1, slide_min);
     UNLK;
-    return ;
+    return a0;
 }    
-void TTSetSlideMax_ttslider(tt_obj a1, ttint a2) {
-    ttslider o;
+ttbyte TTSetSlideMax_ttslider(tt_obj o, ttint slide_max) {
+    ttslider a1;
+    ttbyte a0 = (ttbyte)0;
     LOCK;
-    if ((o = ID2(ttslider,a1)))
-	 SetSlideMax_ttslider(o, a2);
+    if ((a1 = ID2(ttslider,o)))
+	a0 = SetSlideMax_ttslider(a1, slide_max);
     UNLK;
-    return ;
+    return a0;
 }    
-void TTSetSlideValue_ttslider(tt_obj a1, ttint a2) {
-    ttslider o;
+ttbyte TTSetSlideValue_ttslider(tt_obj o, ttint slide_value) {
+    ttslider a1;
+    ttbyte a0 = (ttbyte)0;
     LOCK;
-    if ((o = ID2(ttslider,a1)))
-	 SetSlideValue_ttslider(o, a2);
+    if ((a1 = ID2(ttslider,o)))
+	a0 = SetSlideValue_ttslider(a1, slide_value);
     UNLK;
-    return ;
+    return a0;
 }
-tt_obj TTCreate_ttslider(ttbyte a1, ttint a2) {
+tt_obj TTCreate_ttslider(ttbyte orientation, ttint real_size) {
     tt_obj a0 = (tt_obj)(opaque)0;
     LOCK;
-    a0 = (tt_obj)OBJ2ID(Create_ttslider(a1, a2));
+    a0 = (tt_obj)OBJ2ID(Create_ttslider(orientation, real_size));
     UNLK;
     return a0;
 }
  
 /* ttprogressbar methods */
 
-tt_obj TTCreate_ttprogressbar(ttbyte a1) {
+tt_obj TTCreate_ttprogressbar(ttbyte orientation) {
     tt_obj a0 = (tt_obj)(opaque)0;
     LOCK;
-    a0 = (tt_obj)OBJ2ID(Create_ttprogressbar(a1));
+    a0 = (tt_obj)OBJ2ID(Create_ttprogressbar(orientation));
     UNLK;
     return a0;
 }
  
 /* ttscrollpane methods */
 
-tt_obj TTCreate_ttscrollpane(ttshort a1, ttshort a2) {
+tt_obj TTCreate_ttscrollpane(ttshort w, ttshort h) {
     tt_obj a0 = (tt_obj)(opaque)0;
     LOCK;
-    a0 = (tt_obj)OBJ2ID(Create_ttscrollpane(a1, a2));
+    a0 = (tt_obj)OBJ2ID(Create_ttscrollpane(w, h));
     UNLK;
     return a0;
 }    
-void TTSetBarX_ttscrollpane(tt_obj a1, tt_obj a2) {
-    ttscrollpane o;
+ttbyte TTSetBarX_ttscrollpane(tt_obj o, tt_obj bar_x) {
+    ttscrollpane a1;
+    ttbyte a0 = (ttbyte)0;
     LOCK;
-    if ((o = ID2(ttscrollpane,a1)))
-	 SetBarX_ttscrollpane(o, ID2(ttscrollbar,a2));
+    if ((a1 = ID2(ttscrollpane,o)))
+	a0 = SetBarX_ttscrollpane(a1, ID2(ttscrollbar,bar_x));
     UNLK;
-    return ;
+    return a0;
 }    
-void TTSetBarY_ttscrollpane(tt_obj a1, tt_obj a2) {
-    ttscrollpane o;
+ttbyte TTSetBarY_ttscrollpane(tt_obj o, tt_obj bar_y) {
+    ttscrollpane a1;
+    ttbyte a0 = (ttbyte)0;
     LOCK;
-    if ((o = ID2(ttscrollpane,a1)))
-	 SetBarY_ttscrollpane(o, ID2(ttscrollbar,a2));
+    if ((a1 = ID2(ttscrollpane,o)))
+	a0 = SetBarY_ttscrollpane(a1, ID2(ttscrollbar,bar_y));
     UNLK;
-    return ;
+    return a0;
 }
  
 /* ttwindow methods */
     
-ttbyte TTSetTitle_ttwindow(tt_obj a1, TT_ARG_READ ttbyte * a2) {
-    ttwindow o;
+ttbyte TTSetTitle_ttwindow(tt_obj o, TT_ARG_READ TT_ARG_ARRAY_Z ttbyte * title) {
+    ttwindow a1;
     ttbyte a0 = (ttbyte)0;
     LOCK;
-    if ((o = ID2(ttwindow,a1)))
-	a0 = SetTitle_ttwindow(o, a2);
+    if ((a1 = ID2(ttwindow,o)))
+	a0 = SetTitle_ttwindow(a1, title);
     UNLK;
     return a0;
 }
  
 /* ttframe methods */
     
-void TTSetMenubar_ttframe(tt_obj a1, tt_obj a2) {
-    ttframe o;
+ttbyte TTSetMenubar_ttframe(tt_obj o, TT_ARG_READ tt_obj m) {
+    ttframe a1;
+    ttbyte a0 = (ttbyte)0;
     LOCK;
-    if ((o = ID2(ttframe,a1)))
-	 SetMenubar_ttframe(o, ID2(ttmenubar,a2));
+    if ((a1 = ID2(ttframe,o)))
+	a0 = SetMenubar_ttframe(a1, ID2(ttmenubar,m));
     UNLK;
-    return ;
+    return a0;
 }
-tt_obj TTCreate_ttframe(TT_ARG_READ ttbyte * a1) {
+tt_obj TTCreate_ttframe(TT_ARG_READ TT_ARG_ARRAY_Z ttbyte * title) {
     tt_obj a0 = (tt_obj)(opaque)0;
     LOCK;
-    a0 = (tt_obj)OBJ2ID(Create_ttframe(a1));
+    a0 = (tt_obj)OBJ2ID(Create_ttframe(title));
     UNLK;
     return a0;
 }
  
 /* ttscroller methods */
 
-tt_obj TTCreate_ttscroller(ttshort a1, ttshort a2) {
+tt_obj TTCreate_ttscroller(ttshort w, ttshort h) {
     tt_obj a0 = (tt_obj)(opaque)0;
     LOCK;
-    a0 = (tt_obj)OBJ2ID(Create_ttscroller(a1, a2));
+    a0 = (tt_obj)OBJ2ID(Create_ttscroller(w, h));
     UNLK;
     return a0;
 }
@@ -1158,10 +1432,10 @@ tt_obj TTGetDefault_tttheme(void) {
  
 /* ttapplication methods */
 
-tt_obj TTSet_ttapplication(TT_ARG_READ ttbyte * a1) {
+tt_obj TTCreate_ttapplication(TT_ARG_READ TT_ARG_ARRAY_Z ttbyte * name) {
     tt_obj a0 = (tt_obj)(opaque)0;
     LOCK;
-    a0 = (tt_obj)OBJ2ID(Set_ttapplication(a1));
+    a0 = (tt_obj)OBJ2ID(Create_ttapplication(name));
     UNLK;
     return a0;
 }

@@ -27,11 +27,13 @@
 #include "hw_dirty.h"
 #include "common.h"
 
+
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/keysym.h>
 #include <X11/Xatom.h>
 #include <X11/Xmd.h>                /* CARD32 */
+
 
 #define THIS "hw_X11"
 

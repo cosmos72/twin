@@ -1,0 +1,34 @@
+dnl This file is m4/common.m4 : m4 macros to autogenerate common_m4.h
+dnl Tell the user about this.
+/* This file was automatically generated from `m4/common.m4', do not edit! */
+
+
+/*
+ *  common_m4.h  --  common #defines for all target drivers
+ *
+ *  Copyright (C) 2002 by Massimiliano Ghilardi
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Library General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2 of the License, or (at your option) any later version.
+ *
+ */
+
+
+#ifndef _TT_HW_COMMON_H
+#define _TT_HW_COMMON_H
+
+include(`m4/TTclasses.m4')
+
+
+define(`el',`
+/* defines for ttclass_$1 fields: Class, id, size */
+`#'define Class_$1   TClass_ttclass
+`#'define id_$1      id_ttclass_$1
+`#'define size_$1    sizeof(struct s_$1)
+')
+TTlist()
+undefine(`el')
+
+#endif /* _TT_HW_COMMON_H */

@@ -1,4 +1,4 @@
-.TH "twin" "1" "0.4.6" "" ""
+.TH "twin" "1" "0.5.0" "" ""
 .SH "NAME"
 twin \- a Textmode WINdow environment
 .SH "SYNTAX"
@@ -20,23 +20,24 @@ c. talk to external programs (even on other machines) so that the programs recei
 Twin runs on the linux console, inside itself, in a twin terminal and on X11: it creates a window and draws in it, does not run inside an xterm or similar. It can also run on generic text terminals (ttys) using the termcap/ncurses driver, but it will work far from optimal.
 .SH "OPTIONS"
 .TP 
-\fB\-h\fR, \fB\-help\fR
+\fB\-h\fR, \fB\--help\fR
 display this help and exit
 .TP 
-\fB\-V\fR, \fB\-version\fR
+\fB\-V\fR, \fB\--version\fR
 output version information and exit
 .TP 
-\fB\-x\fR
+\fB\-x\fR, \fB\--excl\fR
 start display as exclusive
 .TP 
-\fB\-nohw\fR
+\fB\--nohw\fR
 start in background without display
 .TP 
-\fB\-hw=<display>[,options]\fR
+\fB\--hw=<display>[,options]\fR
 start with the given display (multiple \-hw=... allowed)
 .TP 
 Currently known display methods:
  X[@<XDISPLAY>]
+ gfx[@<XDISPLAY>]
  twin[@<TWDISPLAY>]
  tty[@<tty device>]
  ggi[@<ggi display>]
@@ -73,7 +74,7 @@ run a twin server, and let it try to autodetect the type of display (X11, tty or
 run a twin server, specifying to create an X11 window to use as display:
 .LP
 .B twin
-\-hw=X
+\--hw=X
 .SH "AUTHORS"
 Massimiliano Ghilardi <max@linuz.sns.it>
 .SH "SEE ALSO"

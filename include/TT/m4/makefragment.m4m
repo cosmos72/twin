@@ -1,0 +1,41 @@
+
+dnl This file is `m4/makefragment.m4m' : m4 macros to autogenerate makefragment_m4
+dnl Tell the user about this.
+# This file was automatically generated from `m4/makefragment.m4m', do not edit!
+
+
+#
+#  makefragment_m4  --  makefile containing rules to autogenerate some libTT headers
+#
+#  Copyright (C) 2002 by Massimiliano Ghilardi
+#
+#  This library is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU Library General Public
+#  License as published by the Free Software Foundation; either
+#  version 2 of the License, or (at your option) any later version.
+#
+
+divert(-1)
+include(`m4/TTclasses.m4')
+divert
+
+define(`el', `$1')
+tt_list_objects:=TTlist()
+undefine(`el')
+
+tt_list_files_h:=$(patsubst %,$(T)include/TT/%.h,$(tt_list_objects))
+
+
+$(T)include/TT/makefragment_m4: $(wildcard $(T)include/m4/TT*)
+ 
+$(tt_list_files_h) $(T)include/TT/all_m4.h: $(T)include/TT/tt_timestamp
+
+$(T)include/TT/tt_timestamp: $(T)include/TT/m4/tt.m4 $(T)include/TT/makefragment_m4 $(T)include/m4/TT*.m4
+	@for i in $(tt_list_objects); do \
+	    echo "building include/TT/$$i.h"; \
+	    $(M4) -I$(T)include -Dtarget=$$i $< > $(T)include/TT/$$i.h; \
+	done; \
+	touch $@
+
+PURE_REMOVE_FILES+=$(T)include/TT/tt_timestamp $(T)include/TT/tt?*.h
+

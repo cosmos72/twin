@@ -27,8 +27,7 @@ TW_DECL_MAGIC(threadtest_magic);
 byte InitThrd(void) {
     return 
 	TwCheckMagic(threadtest_magic) && TwOpen(NULL) &&
-	(Thrd_MsgPort=TwCreateMsgPort
-	 (10, "threadtest", 0, 0, 0)) &&
+	(Thrd_MsgPort=TwCreateMsgPort(10, "threadtest")) &&
 	(Thrd_Menu=TwCreateMenu(
 	  COL(BLACK,WHITE), COL(BLACK,GREEN), COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
 	  COL(RED,WHITE), COL(RED,GREEN), (byte)0)) &&

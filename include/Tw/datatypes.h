@@ -11,9 +11,9 @@ typedef unsigned int   uldat;
 
 typedef unsigned char  hwcol;
 
-typedef   signed long  frac_t;
+typedef uldat	tobj;
 
-typedef uldat  tobj;
+
 
 #define MAXU(t)		((t)~(t)0)
 #define MINS(t)		((t)((t)1<<(8*sizeof(t)-1)))
@@ -28,17 +28,14 @@ typedef uldat  tobj;
 #define MAXUDAT		MAXU(udat)
 #define MAXLDAT		MAXS(ldat)
 #define MAXULDAT	MAXU(uldat)
+#define MAXTOPAQUE	MAXU(topaque)
+#define MAXTANY		MAXU(tany)
 
 #define MINSBYTE	MINS(sbyte)
 #define MINDAT		MINS(dat)
 #define MINLDAT		MINS(ldat)
 
-/* this is tricky... we don't know signedness nor sizeof(time_t) during preprocess */
-#define MINTIME_T	MINSU(time_t)
-#define MAXTIME_T	MAXSU(time_t)
 
-#define MAXFRAC_T	MAXS(frac_t)
-#define MINFRAC_T	MINS(frac_t)
 
 
 #define TW_DECL_MAGIC(id) \
@@ -48,8 +45,8 @@ typedef uldat  tobj;
 	    sizeof(udat), \
 	    sizeof(uldat), \
 	    sizeof(hwcol), \
-	    sizeof(time_t), \
-	    sizeof(frac_t), \
+	    sizeof(topaque), \
+	    sizeof(tany), \
 	    sizeof(hwfont), \
 	    sizeof(hwattr), \
 	    0 \
