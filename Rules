@@ -1,0 +1,156 @@
+#
+# Top level, common rules
+#
+
+# set install directory
+DESTDIR=/usr/local
+
+# choose your favorite compiler
+CC=gcc
+
+#
+# Uncomment this to turn debugging on
+# DEBUG:=1
+
+#
+# compile/link flags. Always use += to set variables here!
+#
+ifdef DEBUG
+ CFLAGS+=-g -DINLINE=static -pipe -Wall -Wshadow -Wno-uninitialized
+ LDFLAGS+=-g
+else
+ CFLAGS+=-O2 -fomit-frame-pointer -DINLINE="extern inline" -pipe -Wall -Wshadow -Wno-uninitialized
+ LDFLAGS+=-s
+endif
+
+
+# set `ar' archiver...
+AR=ar
+
+#
+# --------------- no user-serviceable parts below this line ----------------
+#
+
+CFLAGS+=-I$(TOPDIR)/include
+
+MODFLAGS+=-DMODULE
+
+CONF:=$(TOPDIR)/conf/config.status
+
+BASH:=$(shell if [ -x "$$BASH" ]; then echo $$BASH; \
+       else if [ -x /bin/bash ]; then echo /bin/bash; \
+       else if bash -c : 2>/dev/null; then echo bash; \
+       else echo sh; fi; fi; fi)
+
+BASH_VERSION:=$(word 1,$(subst ., ,$(shell $(BASH) -c "echo \"$$BASH_VERSION\"")))
+
+# collect together in $(OBJS) all objs from $(BINS) looking in $(OBJS_xxx)
+OBJS:=$(foreach B,$(BINS),$(OBJS_$(B)))
+
+# same with $(MODOBJS) from $(MODBINS)
+MODOBJS:=$(foreach B,$(MODBINS),$(OBJS_$(B)))
+
+# same with $(ARLIBOBJS) from $(ARLIBS)
+ARLIBOBJS:=$(foreach B,$(ARLIBS),$(OBJS_$(B)))
+
+# set correct CFLAGS for objs compiled as modules
+ifneq ($(MODOBJS),)
+  _ALLFLAGS:=$(strip $(patsubst %,CFLAGS_%+=$(MODFLAGS)\n,$(MODOBJS)))
+endif
+
+_ALLBINS:=$(strip $(BINS) $(MODBINS) $(ARLIBS))
+
+_ALLSRCS:=$(strip $(subst .o,.c,$(filter %.o,$(OBJS) $(MODOBJS) $(ARLIBOBJS) $(EXCL_OBJS))))
+
+.modules: Makefile $(TOPDIR)/Rules $(CONF)
+	@echo -n Building .modules...
+	@echo -e " $(_ALLFLAGS)" > .modules
+	@echo -e " $(foreach B,$(BINS) $(MODBINS),$(B): .$(B).link\n .$(B).link: $(OBJS_$(B))\n)" >> .modules
+	@echo -e " $(foreach B,$(ARLIBS),$(B): .$(B).arlib\n .$(B).arlib: $(OBJS_$(B))\n)" >> .modules
+	@echo done
+
+$(TOPDIR)/scripts/MkDep:
+	ln -sfn MkDep$(BASH_VERSION) $(TOPDIR)/scripts/MkDep
+
+.depend: Makefile $(TOPDIR)/Rules $(TOPDIR)/scripts/MkDep $(_ALLSRCS)
+	$(BASH) $(TOPDIR)/scripts/MkDep $(TOPDIR) $(filter -I%,$(CFLAGS)) -- $(_ALLSRCS) > .depend
+
+%.dir:
+	$(MAKE) -C $*
+
+%.o: %.c
+	$(CC) $(CFLAGS) $(CFLAGS_$@) -c $< -o $@
+	@echo -e ' ifeq ($$(CFLAGS) $$(CFLAGS_$@),$(CFLAGS) $(CFLAGS_$@))\n'\
+	'FILES_UP_TO_DATE += $@\n'\
+	'endif' > .$@.flags
+
+# this would be:
+# % : $(OBJS_%)
+#	$(CC) $(OBJS_$*) $(LDFLAGS) $(LDFLAGS_$*) -o $*
+#	...
+# but 1) nasty match-all rules like this are a real pain
+# and 2) $(OBJS_%) doesn't expand
+# so we put into .modules an explicited version of what follows:
+# % : .%.link
+# .%.link : $(OBJS_%)
+#
+# and we keep implicit the last step:
+#
+.%.link:
+	$(CC) $(OBJS_$*) $(LDFLAGS) $(LDFLAGS_$*) -o $*
+	@ln -sfn $* $@
+	@echo -e ' ifeq ($$(LDFLAGS) $$(LDFLAGS_$*) $$(OBJS_$*),$(LDFLAGS) $(LDFLAGS_$*) $(OBJS_$*))\n'\
+	'FILES_UP_TO_DATE += $@\n'\
+	'endif' > $@.flags
+
+#
+# same with `ar' archives
+#
+.%.arlib:
+	rm -f $* && $(AR) cr $* $(OBJS_$*)
+	@ln -sfn $* $@
+	@echo -e ' ifeq ($$(OBJS_$*),$(OBJS_$*))\n'\
+	'FILES_UP_TO_DATE += $@\n'\
+	'endif' > $@.flags
+
+
+# forbid GNU-make to `rm -f $(OBJS) $(MODOBJS) $(ARLIBOBJS)' after build
+.SECONDARY: $(OBJS) $(MODOBJS) $(ARLIBOBJS)
+
+
+#
+# Find files whose flags have changed and force recompilation.
+# For safety, this works in the converse direction:
+#   every file is forced, except those whose flags are positively up-to-date.
+#
+# to avoid useless re-making, we never force files in other directories:
+# `make' must already visit all directories anyway.
+#
+FILES := $(OBJS) $(MODOBJS) $(ARLIBOBJS) \
+	 $(patsubst %,.%.link,$(BINS) $(MODBINS)) \
+	 $(patsubst %,.%.arlib,$(ARLIBS))
+
+FILES_UP_TO_DATE := $(filter-out $(wildcard * .*), $(FILES))
+
+
+FILES_FLAGS_EXIST := $(wildcard .*.flags)
+ifneq ($(FILES_FLAGS_EXIST),)
+ include $(FILES_FLAGS_EXIST)
+endif
+
+FILES_CHANGED := $(strip $(filter-out $(FILES_UP_TO_DATE), $(FILES)))
+
+ifneq ($(FILES_CHANGED),)
+
+# be _very_ brutal...
+# $(shell rm -f $(FILES_CHANGED))
+
+# ..or be more kind
+
+dummy:
+	@:
+
+$(FILES_CHANGED): dummy
+
+endif
+

@@ -1,0 +1,17 @@
+#
+# This is the default configuration.
+# Don't touch it, use 'make config' instead.
+#
+CONF_MODULES=n
+CONF_TERM=y
+CONF_SOCKET=y
+CONF_SOCKET_GZ=y
+CONF_ALLOC=y
+CONF_HW_TTY=y
+CONF_HW_TTY_LINUX=y
+CONF_HW_TTY_TWTERM=y
+CONF_HW_X11=y
+CONF_HW_TWIN=y
+CONF_OPT_TTY_NOBLINK=n
+CONF_OPT_ALWAYSCURSOR=n
+CONF_OPT_HIDEMENU=n

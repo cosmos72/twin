@@ -1,0 +1,12 @@
+russian?
+decouple first window / focused window
+keyboard hotkeys for gadget selection and screen scroll/resize
+CenterWin must act as <ZOOM> on fullscreen window size
+screensaver and background images (even from remote)
+info on menubar: time / memory / load, size of window during resize
+window smart placement
+WINFL_BYUSER windows
+use twattach as display
+extend TwWriteHWAttrWindow to handle more than a single line
+tweak TwCreateGadget to allow for Buttons, and add TwCreateButton and similar.
+cut&paste compatibility with gpm and X11.

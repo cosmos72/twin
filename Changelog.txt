@@ -1,0 +1,73 @@
+From 0.2.5 to 0.2.6: (Massimiliano Ghilardi, 04 Apr 2000)
+	* Fixed random SEGFAULT on Menu -> Window -> Send HotKey
+	* Fixed an insidious bug:
+	  after twin was detached-and-reattached, the tty of the next
+	  opened shell window was becoming the controlling tty of twin;
+	  instead a reattached twin should run with no controlling tty at all.
+	  This had the nasty side effect of killing twin
+	  when closing the <next opened shell window> !
+	* Added configure option to disable blink / high intensity background
+	  on textmode terminals. This should fix headaches of people
+	  too lazy to use SVGATextMode that keep looking at blinking
+	  focused window ;)
+	* Finished Window List. It pops up by middle-click on the desktop,
+	  and it also gets automatically updated when you
+	  open/close/reorder windows :)
+	* Added Menu -> Window -> Scroll for keyboard-based window scrolling.
+	* `twattach -v <args>' now reports any error message generated
+	  during the attach attempt (`-v' stands for `verbose').
+	  Unluckily, this change makes version 0.2.6 of twin and twattach
+	  incompatible with older versions. Always use twin and twattach
+	  of the same version and you will be fine.
+	* Added Menu -> ð -> Option window to change runtime options:
+	  shadows displacement, cursor visibility, tty blink/high background,
+	  auto-hide menu, custom font (the latter requires running on
+	  a Linux console and loading the VGA font file fonts/vgafont.raw)
+	  
+	  Side effect: When the Menu is auto-hidden, Menu -> Window -> <ZOOM>
+	  gives a real fullscreen window.
+	
+From 0.2.4 to 0.2.5: (Massimiliano Ghilardi, 27 Mar 2000)
+	* Made display size persistant (if HW allows twin to choose size).
+	* Fixed `twattach -hw=tty' to correctly react to window size change,
+	  and fixed `Twin, native' display method for the same problem.
+	* Cleaned up copyright: libTw is now LGPLed.
+	* Added KeyCode support on X11 and Linux console drivers:
+	  keyboard event also report a meaningful TW_* code for direct
+	  keyboard recognition. This allows keyboard shortcuts for
+	  menu/window/screen actions like resizing a window
+	  or transversing a menu. Infact next change is...
+	* Rebuilt hotkey support for menu/window/screen actions.
+	* Started adding Window List and Menu `Common Items'.
+	* Modularized HW display drivers. If you compiled some HW support
+	  as module, twin will NOT autoprobe for it and you will need to use
+	  `twin -hw=<display>' to load and use a modularized HW driver.
+
+From 0.2.3 to 0.2.4: (Massimiliano Ghilardi, 20 Mar 2000)
+	* Fixed a SEGFAULT at startup when compiled without
+	  "Use custom malloc/free routines (EXPERIMENTAL)".
+	* Fixed build problems when compiling without X11 support.
+
+From 0.2.2 to 0.2.3: (Massimiliano Ghilardi, 14 Mar 2000)
+	* Fixed a bunch of SEGFAULTs when displaying a screen without windows.
+	* Added a second screen, just to show twin handles it.
+	* Added a default menu when no windows are on screen...
+	  so I can omit showing the clock at startup without
+	  making twin useless :)
+	* Added libTw support: twin can now directly connect to another twin,
+	  open a window there and display on it.
+	* Twin can now runtime attach/detach to any supported display;
+	  look README, section "8) Attach/Detach" for details.
+	* Added twin_wrapper to have twin append its TWDISPLAY on command line.
+	
+From 0.2.1 to 0.2.2: (Massimiliano Ghilardi, 06 Mar 2000)
+	* Fixed a SEGFAULT when switching to X11 display method
+	  after a Suspend.
+	* Added gzip (compressed) socket support.
+	
+From 0.2 to 0.2.1: (Massimiliano Ghilardi, 22 Feb 2000)
+	* Optimized main loop by reordering MsgPort checks;
+	  Result: removed two extra loops across the whole main loop
+	  for each external event (keyboard,mouse,clients) received.
+	* Tweaked socket protocol to decrease bandwidth usage.
+	

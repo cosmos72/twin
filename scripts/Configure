@@ -1,0 +1,89 @@
+
+function yesno() {
+    ANS=
+    VAL=$(eval "echo \"\${$1}\"")
+    HELP=$(eval "echo \"\${${1}_HELP}\"")
+    
+    if test "$VAL" = "y" -o "$VAL" = "m"; then
+	PROMPT="[Y/n]"
+	VAL="y"
+    else
+	PROMPT="[y/N]"
+    fi
+    
+    while test "$ANS" != "y" -a "$ANS" != "n"
+    do
+	echo -n "$HELP $PROMPT ? "
+	read ANS
+	case "$ANS" in
+	    "" ) ANS="$VAL";;
+	    [yY] | [Yy]es | YES ) ANS="y";;
+	    [nN] | [Nn]o  | NO  ) ANS="n";;
+	esac
+    done
+    eval "$1"="$ANS"
+}
+
+function yesmodno() {
+   if [ $CONF_MODULES = n ]; then
+      yesno "$1"
+   else
+      ANS=
+      VAL=$(eval "echo \"\${$1}\"")
+      HELP=$(eval "echo \"\${${1}_HELP}\"")
+    
+      if test "$VAL" = "y"; then
+	  PROMPT="[Y/m/n]"
+      elif test "$VAL" = "m"; then
+	  PROMPT="[y/M/n]"
+      else
+	  PROMPT="[y/m/N]"
+      fi
+    
+      while test "$ANS" != "y" -a "$ANS" != "m" -a "$ANS" != "n"
+      do
+	  echo -n "$HELP $PROMPT ? "
+	  read ANS
+	  case "$ANS" in
+	      "" ) ANS="$VAL";;
+	      [yY] | [Yy]es | YES ) ANS="y";;
+	      [mM] | [Mm]od | MOD ) ANS="m";;
+	      [nN] | [Nn]o  | NO  ) ANS="n";;
+	  esac
+      done
+      eval "$1"="$ANS"
+   fi
+}
+
+function dump() {
+    VAL=$(eval "echo \"\${$1}\"")
+    echo "$1=$VAL"
+}
+
+echo "#"
+echo "# Twin configuration utility"
+echo "#"
+
+if [ -f conf/config.status ]; then
+    echo "# Using configuration saved in config.status"
+    source conf/config.status
+else
+    echo "# Using default configuration from config.default"
+    source conf/config.default
+fi
+echo "#"
+
+source conf/config.base
+
+cat >conf/config.status <<EOF
+#
+# This file is created by 'make config', do not edit!
+#
+# Configuration:
+#
+EOF
+
+exec >>conf/config.status
+for i in `cat conf/config.list`; do
+    dump $i
+done

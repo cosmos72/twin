@@ -1,0 +1,517 @@
+
+			TTTTT   W   W   III   NN  N
+			  T     W W W    I    N N N
+			  T      W W    III   N  NN
+
+
+		   Twin - a Textmode WINdow environment
+
+	     Author: Massimiliano Ghilardi <max@linuz.sns.it>
+
+
+1. Concepts
+
+   Twin creates, draws and manages windows inside a text terminal.
+   It implements in text mode the same concepts that X11 does in graphics:
+
+   a. draw on some kind of screen (tipically a computer monitor).
+   b. allow multiple windows to coexist on the same screen,
+      and draw independently on each of them.
+   c. talk to external programs (even on other machines) so that
+      the programs receive keystrokes, mouse movements, etc.
+      and can send back drawing commands.
+
+   There are anyway important differences, beyond the trivial one
+   that `twin' works in text mode and X11 servers work in graphics:
+   
+   a. Each window has an associated menu. Many windows can share
+      the same menu, and twin always show the menu associated
+      to the currently focused window.
+   b. In `twin', window borders are part of each window, and can be
+      (partially) customized by the external program that draws it.
+      Things that you can't tailor in this way are:
+      buttons position and look, scrollbars position and look;
+      to customize them you must work a little more: you'll have to
+      write your own module.
+   c. In `twin', windows are not just plain rectangules where programs
+      can draw. They can contain `gadgets' (small icons you can select,
+      like the buttons you can find in many GUIs) and they can contain
+      lines longer that the window width and/or more lines than
+      the window height, letting the user scroll them.
+   d. Twin implements virtual screens. Each virtual screen has very big
+      sizes in both directions (something like 32K character cells),
+      and you can scroll them by holding LEFT or MIDDLE mouse buttons
+      and moving the mouse to one of the screen borders. Also, you can
+      switch to the next virtual screen by clicking on the arrows
+      at the top-right of its menu bar.
+   e. Twin has a built-in window manager,
+      which needs to do a slightly different work than a typical
+      X11 window manager: it does window focus changes, window drags
+      and resizes, virtual screen changes, menu activity and dispatches
+      keystrokes and mouse events to the focused window.
+      With the help of a built-in `scroller' it also implements
+      virtual screen scrolling and window contents scrolling
+      (when you drag the scrollbar or hit the scrollbar buttons).
+   f. Twin has a built-in terminal emulator, so you don't have to start
+      any program equivalent to xterm in order to run `normal' tty programs.
+      Anyway, an external terminal emulator `twterm' is included among
+      the clients distributed with twin, in case if you really need it.
+      Note anyway that `twterm' _needs_ the built-in terminal emulator code
+      to be loaded into twin, and twin is capable to auto-load such code
+      if needed.
+
+2. Supported hardware
+
+   Twin runs perfectly on the linux console, inside a twin terminal
+   (try it, it's really funny) and on X11: it opens a window
+   and draws in it, does _not_ run inside an xterm or similar.
+
+   In theory, it would be possible to have twin run inside an xterm,
+   but it would have problems
+   with mouse (xterm doesn't report dragging, only click/release)
+   and keyboard (xterm sends different codes than linux console for some keys)
+   so it is easier to have twin directly talk to X11.
+
+   Currently, twin is tested only on Intel platforms running Linux.
+   I had yet no chance to test it on other systems.
+   
+   Twin will not run on non-Linux system consoles until someone
+   adds to twin the necessary code to access the mouse under such setups.
+   If you configure twin `HW support: Linux console' to `n'
+   and `HW support: X11' to `y' there are chances twin will work
+   on non-Linux systems too (feedback welcome on this).
+   
+   Beyond using X11 (or itself) for output, twin can write to screen in two ways:
+   a: writing to Linux special devices /dev/vcsa* which have the same layout
+      as VGA textmode framebuffer. This allows for _any_ ASCII char
+      to be displayed, from 0 to 255 but works only on linux console.
+   b: writing on standard output, just like any `normal' textmode program.
+      This doesn't allow printing of certain special characters, but shouldn't
+      be a big problem. It is also a little slower than (a) but again,
+      no big problem.
+   Twin will use (a) if available, else fallback on (b).
+   
+   2.1. Emulated hardware
+   
+        The built-in terminal emulator behaves as a linux console.
+	
+	Implementing it on something different than a linux console
+	is a little hard, as it would have to translate keyboard sequences:
+	
+	For example, when you hit <F5>, a linux console sends ESC [ [ 5
+	while xterm and derivatives send ESC [ 1 5 ~.
+	Having twin correctly running in an xterm also means that each time
+	it receives ESC [ 1 5 ~	it must translate it into ESC [ [ 5.
+	But what should it do when it receives ESC [ 1 alone?
+	Translate to ESC [ [, sent the data without translations,
+	or wait for more data? There's no easy answer.
+
+3. Compiling twin
+
+   First, you might want to edit the file `Rules' to change
+   the install directory, tweak compiler flags (enable debugging), etc.
+   
+   Then type `make', answer to the questions, and watch it compile.
+   If everything goes fine, you get what follows:
+   - `twin_real', the main program, in the server/ subdirectory;
+   - `libTw.so*', the library to connect to twin, in the lib/ subdirectory;
+   - the various clients (twcat, twterm, ...) in the clients/ subdirectory.
+   
+   The first time you run `make' or each time you run `make config', a shell
+   scripts is executed to let you configure twin. It looks like this:
+   
+	/bin/sh scripts/Configure
+	#
+	# Twin configuration utility
+	#
+	# Using default configuration from config.default
+	#
+
+   and then it asks some questions:
+   
+	Enable modules [Y/n] ?
+	
+   Answer `y' if you want to be able to use modules (= code which can be
+   inserted and removed from a running twin whenever you want).
+
+	Builtin Terminal emulator [Y/m/n] ?
+	
+   Answer `y' or `m' if you want to compile the terminal emulator
+   built-in into twin. This code is necessary also to run `twterm',
+   the external terminal emulator,
+   so answer `n' only if you _really_ know what you are doing.
+   
+	Support remote socket connections [Y/m/n] ? 
+	
+   Answer `y' or `m' if you want to be able to run external programs.
+   Answer `n' only if you _really_ know what you are doing.
+   
+           Sockets: Support gzip compression [Y/n] ?
+        
+   Answer `y' if you want to enable transparent gzip compression in the
+   socket connections. Read paragraph `7. Transparent Compression' for details.
+   
+   	Use custom malloc/free routines (tested on i386 only) [Y/n] ?
+   
+   Answer 'y' to use home-made, mmap() based replacements of malloc/free.
+   Their main (only) advantage is they are very clever in returning
+   unused memory to the system.
+   
+	HW support: textmode terminals (Linux console, ...) [Y/m/n] ?
+
+   Answer `y' or 'm' if you are interested in running twin
+   on text terminals (ttys). You will be asked further questions
+   to choose exactly which ttys you want support for.
+
+	   tty support: Linux console [Y/n] ?
+   
+   Answer 'y' if you are compiling under Linux and you are interested
+   in running twin on the Linux console.
+   
+	   tty support: Twin terminal
+   
+   Answer 'y' if you are interested in running twin inside
+   a twin terminal emulator (i.e. a shell window inside another twin).
+   Answer `n' only if you _really_ know what you are doing.
+
+	HW support: X11 [Y/m/n] ?
+
+   Answer 'y' or 'm' if you want twin to be able to display on X.
+
+   	HW support: Twin, native [Y/n] ?
+
+   Answer `y' or 'm' to allow twin to connect to another twin and open a window
+   there as display. Answer `n' only if you _really_ know what you are doing.
+
+   If you answer 'n' to both Linux console and X11 support,
+   you won't be able to do much with your shiny just compiled twin!
+   
+   Now you are ready to compile.
+   If this is the first time you run `make', everything is automatic.
+   If you just typed `make config', then you now need to run `make'.
+   
+   In case you get errors during compilation and you really can't solve
+   the problem by your own, you can e-mail me at <max@linuz.sns.it>
+   sending an _exact_ copy of what `make' printed, and I'll try to help you.
+
+4. Starting twin
+
+   It is just a matter of doing
+   
+   cd server/
+   ./twin_real
+   
+   Warning: if you compiled some code as module, twin will search it
+   only in $DESTDIR/lib/twin/modules (DESTDIR is defined in the file Rules),
+   i.e. if DESTDIR is `/usr/local', twin will look in /usr/local/lib/twin/modules;
+   so it may not find the modules until you install them.
+   To make debugging easier, if you compile with DESTDIR not set then
+   twin will look for modules in the current directory. In this way
+   it is not necessary to `make install' in order to use modules.
+   
+   In any case, NEVER try to mix modules from a certain version
+   compiled with some configuration with a `twin' executable compiled
+   with another configuration or (worse) of a different version:
+   all kinds of strange things may happen.
+
+   If you want to install twin on your system,
+   make sure that the DESTDIR set in `Rules' is correct,
+   then type `make install' to install as follows:
+   `twin' and the other programs (twterm, etc.) will go in $DESTDIR/bin,
+   modules will go in $DESTDIR/lib/twin/modules,
+   libTw.so* will go in $DESTDIR/lib.
+   
+   WARNING:
+   on some systems, after the installation it is necessary to run `ldconfig'
+   as root before programs can find libTw.so* shared libraries.
+   
+5. The Twin UI (User Interface): using it
+
+   Once twin is installed, you can start playing with it by typing `twin'.
+   
+   If you want, you can specify the display to use
+   instead of letting twin autoprobe; the syntax is:
+     twin [-hw=<display>]
+   where <display> is one of:
+        X[@<XDISPLAY>]     or    X11[@<XDISPLAY>]
+	twin[@<TWDISPLAY>]
+	tty[@<tty device>]
+	
+   If you compiled some display driver as module, twin will NOT autoprobe
+   for it and you will need to use `twin -hw=<display>' to load and use
+   a modularized display driver.
+
+   When twin comes up, you will have a blue screen (or window) with a
+   white menu bar on the top saying "Hit PAUSE or Mouse Right Button for Menu"
+   
+   To activate the menu (the default menu, actually) do what the writing says:
+   either hit the `PAUSE' key or hold down the right mouse button and move
+   the mouse on one of the words of the menu bar. A menu window will appear.
+   Choose the line you want, then release the right button if you were holding
+   it, or hit the `RETURN' key otherwise.
+   If you feel slightly offended by reading something so trivial and obvious,
+   well, I feel quite stupid too writing it, but I must start from somewhere ;)
+   
+   Each word in the menu just appeared is a `menuitem'.
+   The "File" menuitem lets you quit twin, suspend or detach it and,
+   if the built-in terminal emulator code is loaded, open a terminal window.
+   The "Edit" menuitem is just a standard entry but it's not usable here.
+   The "Options" menuitem lets you customize some aspects of twin: currently
+   you can use it to add/remove window shadows.
+   The "Modules" menuitem lets you insert/remove modules from the running twin:
+   you can "Run Twin Term" to insert the terminal emulator module,
+   you can "Stop Twin Term" to kill all terminal windows and unload the module;
+   you can "Run Socket Server" to insert the support code for running external
+   programs, you can "Stop Socket Server" to remove that code and kill all
+   external programs.
+   
+   Ok, enough boring stuff for now... let's jump to something else.
+
+   Each window has its own menu, so opening a new window will give you
+   a new menu while the previous gets inaccessible. When you start without
+   windows, you are presented the default menu described above.
+   Anyway, all menus share a common part: the "Window" menuitem, which
+   lets you do obvious operations with all windows
+   -- Close, Move, Resize, Center, Zoom, cycle through windows (Next) --
+   and also lets you open the Window List.
+   You can open the Window List also by middle-cliking on the desktop,
+   in any area with no windows at all.
+   A nice side effect of opening the Window List is that its menu
+   is the default one, so you can get it back :)
+   Clicking or hitting `Return' on a window name of the Window List will
+   focus and Center the corresponding window.
+   Other not-so-obvious things you can do from the Default menu are:
+   <ZOOM> to hide the Menu and maximize the current window to full-screen
+   (Un)Hide Menu to hide/show the Menu.
+   
+   Starting from twin 0.2.5, you can use the menus even without a mouse.
+   Hit the `Pause' key (edit server/hotkey.h and recompile to change it)
+   to open the menu, then you can transverse the menu with arrow keys, hit
+   `Return' to select an entry in a menuitem or `Escape' to close the menu.
+   Choosing Menu -> Window -> Move/Resize allows you to move the focused
+   window with arrows and resize it with Insert,Delete,PageUp,PageDown.
+   Instead, choosing Menu -> Window -> Scroll allows to scroll the focused
+   window with the same keys: arrows for 1-line scrolls and
+   Insert,Delete,PageUp,PageDown for 1-page scrolls.
+
+   Now, the next argument: Freezing.
+   
+   Even if it comes quite natural to most people to press the left mouse button
+   on the lower-right corner of windows to resize them, a thing you probably
+   don't know is that if _while holding the left button_ you also press
+   the middle or right button, the window will `freeze', i.e. it doesn't resize
+   anymore when you move the mouse, but will istantly resize when you release
+   the middle or right button. Also, while the window is `frozen', the virtual
+   screen doesn't scroll. The same `freeze' technique can be used while
+   dragging a window (to drag a window, press left button on window title).
+   Other more-or-less obvious things are:
+   the button on top-left of each window, drawn as "[]", is the CLOSE button;
+   the button on top-right, drawn as two up-down arrows, is the BACK button;
+   the scrollbars are quite intuitive: click on the arrows near the lower-right
+   corner to scroll the window contents one line (or row) at time;
+   drag the `tab' (the solid white bar) to quickly scroll the window;
+   click on the space before or after the `tab' to scroll the window contents
+   one page at time.
+   Downside:
+   `Freezing' does not work if twin displays on X, you have a two-button mouse
+   and you configured the X server with Option "Emulate3Buttons".
+   That's a limit of your mouse / X server combination.
+      
+   Twin also implements cut-n-paste, in the same way as linux console, xterm,
+   and other terminals: you select some text by moving the mouse with
+   the left button pressed and paste by clicking with the middle button.
+   
+   
+6. External programs
+
+   If you have `twin' correctly installed and running (and you eventually
+   loaded the Socket Server module) you can run an external program
+   by typing its name, just as you do with X11 clients.
+   If twin is not installed yet, you will need to set LD_LIBRARY_PATH to the
+   directory where libTw.so.1 is: something like
+	export LD_LIBRARY_PATH=<twin-top-dir>/lib
+   should work.
+   Also, if you don't start external programs from within a twin terminal
+   window, you will need to set the display. Type
+	echo $TWDISPLAY
+   inside a twin terminal, then
+	export TWDISPLAY=:<the-value-you-got>
+   before running your external programs. To run external programs from
+   another machine, using TCP sockets, do something like
+	export TWDISPLAY=<host-name>:<the-value-you-got>
+   You will also need to authorize your clients to talk to twin:
+   the authorization method currently used is similar to Xauthority:
+   the file .TwinAuth in your home directory holds some magic data that
+   clients use to answer the challenge received from twin. If that data
+   is wrong or the file doesn't exist clients can connect to twin only
+   using the unix socket (TWDISPLAY=:<something>) so they must run
+   on the same machine as twin: remote programs won't be able to connect.
+
+
+7. Transparent Compression
+
+   Starting from version 0.2.2 twin (and obviously libTw) transparently
+   support gzip compressed sockets. If the connection between twin and
+   the remote programs you want to run is slow, you may benefit from them.
+   
+   To allow compression, you must answer `y' to the configure question
+   
+      Sockets: Support gzip compression [Y/n] ?
+  
+   then compile twin and libTw.
+
+   To actually use compression, you can either append ",gz"
+   to your $TWDISPLAY like in these examples:
+
+      export TWDISPLAY=:0,gz
+      export TWDISPLAY=linuz.sns.it:5,gz
+      
+   or you can manually add a call to TwEnableGzip() in your client programs,
+   after you called TwOpen(NULL).
+   
+   
+8. Attach/Detach
+
+   There are two ways to temporarily stop (and then resume) twin:
+   
+   1) select `Suspend' from the `File' entry of the default menu.
+      This is equivalent to the normal Unix job control associated to CTRL-Z:
+      twin shuts down its display and returns to the shell it was started from.
+      To resume twin, just type `fg' (or send a SIGCONT to it).
+      This doesn't work if you used 2) below, because that detaches twin
+      from the job control mechanism used by shells.
+      
+   2) select `Detach' from the `File' entry of the default menu.
+      WARNING: Be sure the Socket Server can be started before doing this!
+               Otherwise you will not be able to reattach twin to any display
+	       at all!
+      In this case, twin shuts down its display and detaches
+      (by forking in the background) from the shell it was started from,
+      but keeps running as a daemon (with no display).
+      To have twin attach to a display (possibly different than the last used)
+      you must run `twattach' specifying which display you want twin
+      to attach to. If you add the option `-v' (verbose) to `twattach', it will
+      report all messages generated by twin during the attach.
+      
+      Examples:
+      if your twin exports $TWDISPLAY set to :5 and you detached it, you can:
+      
+      $ twattach -twin@:5 -hw=X
+      to tell twin to attach to the default X server (corresponding to $DISPLAY)
+      
+      $ twattach -twin@:5 -hw=X@<some X display>
+      to tell twin to attach to the X server corresponding to <some X display>
+      (<some X display> may be :0, or linuz.sns.it:0, or whatever you like)
+      
+      $ twattach -twin@:5 -hw=tty
+      to tell twin to attach to the same tty device
+      you are running `twattach' on.
+      
+      $ twattach -twin@:5 -hw=tty@<some tty device>
+      to tell twin to attach to <some tty device>.
+      In this case you must make sure no program is reading/writing
+      on <some tty device> (for example you might run `sleep 365d' on it)
+      or things will go BADLY wrong.
+
+      WARNING:
+        twin has no way to detect if the tty you specified (or the one
+        you are running twattach on) is a linux console or a twin terminal.
+        If you attach twin to an unsupportd terminal,
+	things might go BADLY wrong.
+
+      Of course you don't need to run twattach on the same host where
+      twin is running... just use
+      $ twattach -twin@<host name>:<TWDISPLAY> -hw=<some display>
+
+      Anyway, if twattach and twin are running on different hosts,
+      using `-hw=tty' or `-hw=tty@<device>' tells twin to attach
+      to a tty device on the host twin is running on,
+      and NOT on the host twattach is running on... so be careful.
+
+      The most general syntax of twattach is:
+        twattach [-a|-d] [-twin@<TWDISPLAY>] -hw=<display to attach>
+      where the display to attach to can be one of:
+        X[@<XDISPLAY>]
+	twin[@<TWDISPLAY>]
+	tty[@<tty device>]
+
+      
+      A common situation is the following:
+      
+      you have a detached twin, whose TWDISPLAY is :2,
+      running on a host (say plato.alter.net),
+      you are sitting at the console of another host (say globe.alter.net)
+      and you want to attach twin on the console of globe.alter.net.
+      How?
+      Attaching twin to the X server of globe.alter.net is easy, just run
+      this command on globe
+      $ twattach -twin@plato.alter.net:2 -hw=X@globe.alter.net:0
+      
+      (this requires you have a correct .TwinAuth on globe
+      and that the X server on globe accepts the connection attempt,
+      either due to `xhost +plato.alter.net' or by having a suitable
+      .Xauthority on both hosts)
+      
+      But attaching twin (running on plato) to the console of globe is another
+      matter, since that twin has no way to reach the devices on globe.
+      Currently, there are three ways to do this:
+      The first two need to start another twin, this time on globe console.
+      Assume the TWDISPLAY of this newly started twin is :1.
+
+      Then, the first method consists in opening a twin terminal
+      in twin on globe (and maybe ZOOM it), then start a telnet
+      (or ssh, or whatever) to plato, login and finally attach the twin
+      running on plato to the twin terminal:
+      $ twattach -twin@:2 -hw=tty
+      
+      This does it, but unluckily requires
+      a) to run one more twin (which also wastes the screen's top row)
+      b) to telnet (or ssh, ...) to the host twin is running on.
+      
+      The second method exploits the fact that twin can directly connect
+      to another twin and open a window as display:
+      so you start the Socket Server on the twin running on globe,
+      then type (eventually from a twin terminal)
+      $ twattach -twin@plato.alter.net:2 -hw=twin@globe.alter.net:1
+      
+      In order for this command to work, your .TwinAuth must be
+      correct on both hosts.
+      
+      The third way is easier (and more brutal), but doesn't allow
+      using the mouse: from the `globe' console start a telnet
+      (ssh, or whatever) to `plato', login then type:
+      $ twattach -twin@:2 -hw=tty
+      You will be warned that no mouse driver can be started,
+      but you will have back your fullscreen twin.
+      
+      A last note: running `twdetach' or `twattach -d' is the same as
+      selecting `Detach' from the `File' entry of the default menu.
+      
+
+9.  Installing vga.pcf.gz
+
+    If you want to install the supplied vga.pcf.gz file, for use under X, you
+    should do something like this (details will be system dependant):
+
+    copy fonts/vga.pcf.gz from the distribution to a misc fonts directory,
+    I used /usr/X11R6/lib/X11/fonts/misc on my system.
+    Run `mkfontdir' as soot on the directory used.
+    Run `xset fp rehash'.
+    Use the commands 'xlsfonts | grep vga' to see if the font has been
+    registered correctly.
+
+    This should fix some problems with twin displaying strange fonts under X,
+    since if twin cannot find the `vga' font, it will fallback on `fixed',
+    which has different encoding and thus completely different pseudo-graphical
+    characters.
+
+
+10. Greetings
+
+   I hope you will like running twin as I liked to program it.
+   Have fun...
+   
+   
+   Massimiliano Ghilardi
+   <max@linuz.sns.it>
+

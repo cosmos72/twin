@@ -1,0 +1,11 @@
+
+EXTRA quick install guide:
+
+$ make
+$ su
+[password]
+# make install
+# ldconfig
+
+For more details see README, Section 4.
+

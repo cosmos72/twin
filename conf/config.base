@@ -1,0 +1,39 @@
+#
+# This is the skeleton for the configuration scripts.
+#
+
+CONF_MODULES_HELP="Enable modules"
+CONF_TERM_HELP="Builtin Terminal emulator"
+CONF_SOCKET_HELP="Support remote socket connections"
+CONF_SOCKET_GZ_HELP="   Sockets: Support gzip compression"
+CONF_ALLOC_HELP="Use custom malloc/free routines (tested on i386 only)"
+CONF_HW_TTY_HELP="HW support: textmode terminals (Linux console, ...)"
+CONF_HW_TTY_LINUX_HELP="   tty support: Linux console"
+CONF_HW_TTY_TWTERM_HELP="   tty support: Twin terminal"
+CONF_HW_X11_HELP="HW support: X11"
+CONF_HW_TWIN_HELP="HW support: Twin, native"
+CONF_OPT_TTY_NOBLINK_HELP="Runtime option: disable blink/high background on ttys"
+CONF_OPT_ALWAYSCURSOR_HELP="Runtime option: cursor always visible"
+CONF_OPT_HIDEMENU_HELP="Runtime option: hidden menu"
+
+yesno CONF_MODULES
+yesmodno CONF_TERM
+yesmodno CONF_SOCKET
+if [ $CONF_SOCKET = y -o $CONF_SOCKET = m ]; then
+  yesno CONF_SOCKET_GZ
+fi
+yesno CONF_ALLOC
+yesmodno CONF_HW_TTY
+if [ $CONF_HW_TTY = y -o $CONF_HW_TTY = m ]; then
+  yesno CONF_HW_TTY_LINUX
+  yesno CONF_HW_TTY_TWTERM
+  if [ $CONF_HW_TTY_LINUX = n -a $CONF_HW_TTY_TWTERM = n ]; then
+    echo "WARNING: you answered \`n' to all tty support questions."
+    echo "         Only generic tty support (without mouse) will be compiled."
+  fi
+fi
+yesmodno CONF_HW_X11
+yesmodno CONF_HW_TWIN
+yesno CONF_OPT_TTY_NOBLINK
+yesno CONF_OPT_ALWAYSCURSOR
+yesno CONF_OPT_HIDEMENU

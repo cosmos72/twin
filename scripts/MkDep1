@@ -1,0 +1,84 @@
+
+function patsubst()
+{
+  ANS=`echo $1 | sed "s/$2/$3/g"`
+}
+
+TOPDIR=$1
+shift
+
+D=$TOPDIR/config
+
+DIRS=.
+FILES=
+
+while [ "$1" ]; do
+  case "$1" in
+    -I* )
+      DIRS="$DIRS ${1#-I}"
+      shift
+      ;;
+    * )
+      break
+      ;;
+  esac
+done
+
+if [ "$1" = "--" ]; then
+  shift
+else
+  exit 1
+fi
+
+FILES="$@"
+
+for i in $FILES; do
+  patsubst "$i" "\." _
+
+  INCS=
+  CONFS=
+  # search `#include "name"' and `CONF_name' in the file
+  # and turn them into ` INC_name ' and ` CONF_name '
+  MATCH=`grep -E '(^# *include *"[^"]*")|(^# *if.*CONF_)' "$i" \
+  | sed -e 's:^# *include *"\([^"]*\)".*$: INC_\1 :' -e 's:CONF_[A-Za-z0-9_]*: \0 :g'`  
+  for j in $MATCH; do
+    case "$j" in
+      INC_* )
+        j="${j#INC_}"
+	did=0
+	for k in $DIRS; do
+	  if [ -e "$k/$j" ]; then
+	    INCS="$k/$j $INCS"
+	    did=1
+	    break
+	  fi
+	done
+	if [ $did = 0 ]; then
+	  INCS="$TOPDIR/include/$j $INCS"
+	fi
+	;;
+      CONF_* )
+        eval "ALREADY=\"\$${ANS}_${j}_AWARE\""
+        if [ ! "$ALREADY" ]; then
+          eval "${j}_AWARE=\"$i \$${j}_AWARE\""
+	  eval "${ANS}_${j}_AWARE=y"
+	fi
+	;;
+    esac
+  done
+  
+  patsubst "$i" "\.." "\.o"
+  echo -e "${ANS}: $INCS"
+done
+
+for j in `cat $TOPDIR/conf/config.list`; do
+  eval "FILELIST=\"\$${j}_AWARE\""
+  if [ "$FILELIST" ]; then
+    echo "ifeq (\$($j),y)"
+    for i in $FILELIST; do
+      patsubst "$i" "\.." "\.o"
+      echo "  CFLAGS_${ANS}+=-D$j"
+    done
+    echo "endif"
+  fi
+done

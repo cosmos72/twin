@@ -1,0 +1,31 @@
+#ifndef _TW_DRAW_H
+#define _TW_DRAW_H
+
+void SearchFontMenuItem(menu *Menu, menuitem *MenuItem, dat i, byte Select, byte *PtrFont, byte *PtrColor);
+void SearchFontInfo(menu *Menu, dat i, byte Select, byte *PtrFont, byte *PtrColor);
+udat TabStart(window *Window, num isX);
+udat TabEnd(window *Window, num isX);
+byte SearchFontBorderWin(window *Window, udat u, udat v, byte Border, byte MovWin, byte *PtrFont, byte *PtrColor);
+void DrawWindow(window *Window, gadget *FirstGadget, gadget *OnlyThisGadget, dat Xstart, dat Ystart, dat Xend, dat Yend, byte Shaded);
+void DrawDesktop(screen *Screen, dat Xstart, dat Ystart, dat Xend, dat Yend, byte Shaded);
+void DrawMenuBar(screen *Screen, dat Xstart, dat Xend);
+
+void DrawArea(screen *FirstScreen, window *FirstWindow, window *OnlyThisWindow, gadget *FirstGadget, gadget *OnlyThisGadget, dat Xstart, dat Ystart, dat Xend, dat Yend, byte Shaded);
+#define FULLSCREEN (screen *)0, (window *)0, (window *)0, (gadget *)0, (gadget *)0, MINDAT, MINDAT, MAXDAT, MAXDAT, FALSE
+void DrawScreen(screen *Screen);
+void DrawBorderWindow(window *Window, byte Flags);
+#define BORDER_LEFT	(0x1)
+#define BORDER_UP	(0x2)
+#define BORDER_RIGHT	(0x4)
+#define BORDER_DOWN	(0x8)
+#define BORDER_ANY	(0xF)
+void DrawShadeWindow(window *Window, dat Xstart, dat Ystart, dat Xend, dat Yend, byte Internal);
+void DrawAreaWindow(window *Window, byte Shaded);
+void DrawAbsoluteWindow(window *Window, udat Xstart, udat Ystart, udat Xend, udat Yend);
+void DrawTextWindow(window *Window, uldat Xstart, uldat Xend, uldat NumRowStart, uldat NumRowEnd);
+
+void ClearSelection(window *Window);
+void StartSelection(window *Window, uldat XSel, uldat YSel);
+void ExtendSelection(window *Window, uldat XSel, uldat YSel);
+
+#endif /* _TW_DRAW_H */
