@@ -1,3 +1,73 @@
+From 0.4.3 to 0.4.4: (Massimiliano Ghilardi, 06 Jul 2002)
+	* Fixed out-of-date Tw/Tw++.h header causing errors in twutils build.
+	* Fixed makefiles and Mkdep for build errors in some configurations.
+	* Fixed a few missing `include $(TOPDIR)/makeautoconf' in makefiles.
+	* Fixed random SEGFAULT on client menu rows activation.
+	* Hardened twdisplay and the various HW display drivers against
+	  buffer overruns on maliciously long command line arguments.
+	  (if your system has vsnprintf(), everything is already safe
+	  and this is not necessary).
+	* Added lt_dlopen() support for runtime module loading (unfinished).
+	* Added more charsets to libTutf.
+	* Added `-twin@<dpy>' option to twsendmsg.
+	* Added more options to `-hw=tty': `,mouse={xterm|twterm}' and `,utf8'.
+	  Also renamed option `,xterm' to `,mouse=xterm'
+	  and added Eterm to the list of xterm-style mouse reporting terminals.
+	  Still on `-hw=tty', added `charset=UTF-16' as an alias for
+	  `charset=ISO-8859-1,utf8'.
+	* Changed `-hw=tty,termcap[,charset=ibm437]' driver to use alternate
+	  font ("\033[11m" or equivalent)
+	* Added option to silence down messages echoed during `make';
+	  to actually silence them, run `make QUIET=y [..]'
+	* Added human-readable configuration summary at the end of
+	  './configure' execution
+	* Added user contributed sample twin.spec file (to build RPMs)
+	  in contrib/twin.spec
+	* Added new HW driver `-hw=gfx' : it is based on `-hw=X' and adds
+	  graphical themes for window borders, buttons, scrollbars, etc.,
+	  all stored in a single .xpm file for each theme. The driver first
+	  looks for themes in user's directory ~/.twin/themes/hw_gfx/*.xpm,
+	  then in ${prefix}/share/twin/themes/hw_gfx/*.xpm, where system-wide
+	  themes get installed, finally tries to open given file without
+	  any extra prefix, so that you can specify an arbitrary file.
+	  HW driver options are the same as `-hw=X', plus:
+	  `,mono'   `,color'
+	  `,theme=<name>' (theme pixmap)
+	  `,root=<name>'   (screen root pixmap)
+	  `,bg=<name>'     (widget background pixmap)
+	  `,{root|bg}-as-{none|theme|root|bg}' (specify how to draw root or bg)
+	  Background and root pixmaps are not available if `,mono'
+	  (monochrome) is used.
+	  Option `drag' is not available if background or root pixmaps are used.
+	  If you use option `root=<name>', you should consider running
+	  echo " " | twsetroot
+	  or, more permanently, putting
+	  Background 1 White On Black (
+	    " "
+	  )
+	  in your ~/.twinrc, so that screen contents does not
+	  interfere with the root pixmap.
+	* Restored native gcc shared library support as an alternative
+	  to libtool.
+	  If `./configure' detects Linux or FreeBSD with GNU gcc then it uses
+	  builtin rules to create shared libraries, else falls back on libtool.
+	  This was necessary because installing twin with DESTDIR != "/"
+	  (as used by `rpm') breaks libtool 1.4.1 inter-library dependencies
+	  (I do not like at all that implementation of inter-library
+	  dependencies, anyway).
+	  You can manually decide how to create shared libraries with:
+	  `make SUPPORT_SHLIBS={native|libtool} [...]'
+	* To manually disable i386 assembler code you now need to run
+	  `make GCC_I386_ASM=no [...]' (actually, this changed in 0.4.3),
+	* Renamed Tw_Expose* functions to Tw_Draw* and changed Tw_Row4Menu
+	  to return created row. Marked compatibility code with
+	  /* backward compatibility. will be removed */
+	* Made `.so' extension optional in user-visible module names;
+	  you are encouraged to update your .twinrc changing any
+	  Module "<name>.so" On
+	  into
+	  Module "<name>" On
+
 From 0.4.2 to 0.4.3: (Massimiliano Ghilardi, 09 Jun 2002)
 	* Fixed various compile errors on non Linux/i386 architectures
 	  (Linux/<any>, FreeBSD/i386, SunOS/sparc).

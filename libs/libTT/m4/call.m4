@@ -104,8 +104,7 @@ undefine(`el')
 
 typedef enum e_order_methods {
     /* generic functions */
-    order_BAD = -1,
-    order_ExitMainLoop,
+    order_ExitMainLoop = 1,
     order_New,
     order_Del,dnl
 define(`exported', `
@@ -135,7 +134,7 @@ define(`extends')
 define(`field')
 undefine(`el')
 
-    order_FN_n
+    order_FN_last
 } e_order_methods;
 
 
@@ -180,6 +179,8 @@ undefine(`el')
 
 };
 
+#define order_FN_n (sizeof(method_array)/sizeof(method_array[0]))
+
 static ttbyte method_needsort = TRUE;
 
 static int CompareMethods(TT_CONST ttmethod m1, TT_CONST ttmethod m2) {
@@ -204,7 +205,7 @@ static opaque Method2Order(void *method) {
 	             (int (*)(TT_CONST void *, TT_CONST void *))CompareMethods))) {
 	return m->mtho;
     }
-    return (opaque)order_BAD;
+    return (opaque)0;
 }
 
 
@@ -224,6 +225,10 @@ static void CallMethod(ttuint order, ttuint nargs, TT_CONST ttany *a) {
     
     /* generic functions */
     
+      case order_ExitMainLoop:
+	if (nargs >= 0)
+	    TTExitMainLoop();
+	break;
       case order_New:
 	if (nargs >= 1)
 	    TTNew((tt_fn)(opaque)a[0]);
@@ -231,10 +236,6 @@ static void CallMethod(ttuint order, ttuint nargs, TT_CONST ttany *a) {
       case order_Del:
 	if (nargs >= 1)
 	    TTDel((tt_obj)(opaque)a[0]);
-	break;
-      case order_ExitMainLoop:
-	if (nargs >= 0)
-	    TTExitMainLoop();
 	break;
 
 define(`exported', `

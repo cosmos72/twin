@@ -264,10 +264,10 @@ static void alienReply(uldat code, uldat alien_len, uldat len, CONST void *data)
 }
 
 #ifdef CONF__UNICODE
-static void alienTranslateHWAttrV_IBM437_to_UTF_16(hwattr *H, uldat Len) {
+static void alienTranslateHWAttrV_CP437_to_UTF_16(hwattr *H, uldat Len) {
     hwfont f;
     while (Len--) {
-	f = Tutf_IBM437_to_UTF_16[HWFONT(*H) & 0xFF];
+	f = Tutf_CP437_to_UTF_16[HWFONT(*H) & 0xFF];
 	*H = HWATTR_COLMASK(*H) | HWATTR(0, f);
 	H++;
     }
@@ -320,7 +320,7 @@ static void alienDecode(uldat id) {
 		    POP(s,hwfont,an);
 		    a[n]._ = (uldat)an & 0xFF;
 		    if (SIZEOF(hwfont) == 1)
-			a[n]._ = Tutf_IBM437_to_UTF_16[a[n]._];
+			a[n]._ = Tutf_CP437_to_UTF_16[a[n]._];
 		} else
 		    fail = -fail;
 		break;
@@ -336,7 +336,7 @@ static void alienDecode(uldat id) {
 		    a[n]._ = HWATTR_COLMASK(an);
 		    an = HWFONT(an) & 0xFF;
 		    if (SIZEOF(hwattr) == 2)
-			an = Tutf_IBM437_to_UTF_16[an];
+			an = Tutf_CP437_to_UTF_16[an];
 		    a[n]._ |= HWATTR(0, an);
 		} else
 		    fail = -fail;
@@ -373,7 +373,7 @@ static void alienDecode(uldat id) {
 			if (a[n].V) {
 #ifdef CONF__UNICODE
 			    if (c == TWS_hwattr && SIZEOF(hwattr) == 2)
-				alienTranslateHWAttrV_IBM437_to_UTF_16((hwattr *)a[n].VV, nlen);
+				alienTranslateHWAttrV_CP437_to_UTF_16((hwattr *)a[n].VV, nlen);
 #endif
 			    mask |= 1 << n;
 			} else
@@ -404,7 +404,7 @@ static void alienDecode(uldat id) {
 			    if (a[n].V) {
 #ifdef CONF__UNICODE
 				if (c == TWS_hwattr && SIZEOF(hwattr) == 2)
-				    alienTranslateHWAttrV_IBM437_to_UTF_16((hwattr *)a[n].VV, nlen);
+				    alienTranslateHWAttrV_CP437_to_UTF_16((hwattr *)a[n].VV, nlen);
 #endif
 				mask |= 1 << n;
 			    } else
@@ -523,7 +523,7 @@ static void alienDecode(uldat id) {
 		/* ensure hwattr size WAS negotiated */
 		if (TWS_hwattr <= TWS_hwcol || SIZEOF(hwattr)) {
 		    if (SIZEOF(hwattr) == 1) {
-			hwfont f = Tutf_UTF_16_to_IBM437(HWFONT(a[0]._));
+			hwfont f = Tutf_UTF_16_to_CP437(HWFONT(a[0]._));
 			a[0]._ = HWATTR_COLMASK(a[0]._) | HWATTR(0, f);
 		    }
 		    *(hwattr *)&a[0] = (hwattr)a[0]._;
@@ -778,11 +778,11 @@ static void alienSendMsg(msgport MsgPort, msg Msg) {
 		PushV(t, N, Src);
 # ifdef CONF__UNICODE
 	    } else if (Type == TWS_hwattr && AlienMagic(Slot)[Type] == 2) {
-		/* on the fly conversion from Unicode to IBM437 */
+		/* on the fly conversion from Unicode to CP437 */
 		while (N--) {
 		    Pop(Src,hwattr,H);
 		    
-		    h = HWATTR16(HWCOL(H),Tutf_UTF_16_to_IBM437(HWFONT(H)));
+		    h = HWATTR16(HWCOL(H),Tutf_UTF_16_to_CP437(HWFONT(H)));
 		    alienPush((CONST byte *)&h, sizeof(hwattr), &t, 2);
 		}
 # endif
@@ -888,7 +888,7 @@ static void alienSendMsg(msgport MsgPort, msg Msg) {
 		N = Msg->Event.EventSelectionNotify.Len;
 		
 		if (SIZEOF(hwfont) == 1) {
-		    /* on the fly conversion from Unicode to IBM437 */
+		    /* on the fly conversion from Unicode to CP437 */
 		    Src = Msg->Event.EventSelectionNotify.Data;
 		
 		    N /= sizeof(hwfont);
@@ -897,7 +897,7 @@ static void alienSendMsg(msgport MsgPort, msg Msg) {
 		    while (N--) {
 			Pop(Src,hwattr,H);
 			
-			h = HWATTR16(HWCOL(H),Tutf_UTF_16_to_IBM437(HWFONT(H)));
+			h = HWATTR16(HWCOL(H),Tutf_UTF_16_to_CP437(HWFONT(H)));
 			alienPush((CONST byte *)&h, sizeof(hwattr), &t, 2);
 		    }
 		} else {

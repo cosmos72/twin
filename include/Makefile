@@ -2,11 +2,12 @@
 TOPDIR=..
 THISDIR=$(TOPDIR)/include
 
-SUBDIRS=
+SUBDIRS=Tutf Tw TT
 
 all: autogen
 
-do-autogen: socklist_m4.h TT/defs_m4.h TT/handy_m4.h
+do-autogen: socklist_m4.h version.h
 
+include makeversion
 include $(TOPDIR)/makerules
 

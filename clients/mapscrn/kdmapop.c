@@ -19,7 +19,7 @@
 #endif
 #include "kdmapop.h"
 #include "nls.h"
-#include "version.h"
+#include "m_version.h"
 
 /*
  * Linux pre-0.96 defined GIO_SCRNMAP, PIO_SCRNMAP:

@@ -117,6 +117,7 @@ tslist   Tw_StatL(     tdisplay TwD, tobj Id, udat hN, ...);
 tslist   Tw_StatA(     tdisplay TwD, tobj Id, udat hN, TW_CONST udat *h);
 tslist   Tw_StatV(     tdisplay TwD, tobj Id, udat hN, va_list h);
 tslist   Tw_CloneStat( tdisplay TwD, tobj Id, udat hN, ...);
+tslist   Tw_CloneStatL(tdisplay TwD, tobj Id, udat hN, ...);
 tslist   Tw_CloneStatA(tdisplay TwD, tobj Id, udat hN, TW_CONST udat *h);
 tslist   Tw_CloneStatV(tdisplay TwD, tobj Id, udat hN, va_list h);
 void     Tw_DeleteStat(tdisplay TwD, tslist TSL);
@@ -139,7 +140,7 @@ void     Tw_ChangeField(tdisplay TwD, tobj Obj, udat field, uldat CLEARMask, uld
 #ifdef __GNUC__
 # define TwCloneStatL(    Id,       hN...)	Tw_CloneStatL(Tw_DefaultD, Id ,##hN)
 #else
- tslist TwCloneStatL(tobj Id, uldat hN, ...);
+ tslist TwCloneStatL(tobj Id, udat hN, ...);
 #endif
 #define TwCloneStatA(     Id,       hN, h)	Tw_CloneStatA(Tw_DefaultD, Id, hN, h)
 #define TwCloneStatV(     Id,       hN, h)	Tw_CloneStatV(Tw_DefaultD, Id, hN, h)

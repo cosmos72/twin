@@ -46,6 +46,13 @@
 
 /***************/
 
+#ifdef CONF__UNICODE
+extern hwattr extra_POS_INSIDE;
+#else
+# define extra_POS_INSIDE 0
+#endif
+
+
 byte NeedUpdateCursor;
 
 void FlushCursor(void) {
@@ -116,14 +123,16 @@ byte CheckResizeWindowContents(window Window) {
 }
 
 byte ResizeWindowContents(window Window) {
-    hwattr *NewCont, *saveNewCont, *OldCont, *max;
+    hwattr *NewCont, *saveNewCont, *OldCont, *max, h;
     ldat count, common, left;
     ttydata *Data = Window->USE.C.TtyData;
     dat x = Window->XWidth, y = Window->YWidth + Data->ScrollBack;
     
     if (!(Window->Flags & WINDOWFL_BORDERLESS))
 	x -= 2, y -= 2;
-    
+
+    h = HWATTR(Window->ColText, ' ') | extra_POS_INSIDE;
+
     /* safety check: */
     if (x > 0 && y > 0) {
 	if (!(saveNewCont = NewCont = (hwattr *)AllocMem(x*y*sizeof(hwattr))))
@@ -154,14 +163,14 @@ byte ResizeWindowContents(window Window) {
 		    OldCont = Window->USE.C.Contents;
 		NewCont += common;
 		for (left = x - common; left; left--)
-		    *NewCont++ = HWATTR(Window->ColText, ' ');
+		    *NewCont++ = h;
 	    }
 	    FreeMem(Window->USE.C.Contents);
 	}
 	
 	left = (saveNewCont + x*y) - NewCont;
 	while (left--)
-	    *NewCont++ = HWATTR(Window->ColText, ' ');
+	    *NewCont++ = h;
     } else {
 	x = y = 0;
 	if (Window->USE.C.Contents)
@@ -442,6 +451,8 @@ byte RowWriteHWFont(window Window, ldat Len, CONST hwfont *Text) {
 
 
 
+	    
+
 void ExposeWidget2(widget W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch, CONST byte *Text, CONST hwfont *Font, CONST hwattr *Attr) {
     if (w_USE(W, USEEXPOSE)) {
 	if (Text || Font || Attr) {
@@ -475,6 +486,89 @@ void ExposeWidget2(widget W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch
     }
 }
 
+
+void ExposeWindow2(window W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch, CONST byte *Text, CONST hwfont *Font, CONST hwattr *Attr) {
+    ldat CurX, CurY;
+    
+    if (W_USE(W, USEEXPOSE)) {
+	ExposeWidget2((widget)W, XWidth, YWidth, Left, Up, Pitch, Text, Font, Attr);
+	return;
+    }
+
+    if (!W_USE(W, USECONTENTS) && !W_USE(W, USEROWS))
+	return;
+
+    /* handle negative (Left,Up) by clipping */
+    if (Left < 0) {
+	XWidth += Left;
+	if (Text) Text -= Left;
+	if (Font) Font -= Left;
+	if (Attr) Attr -= Left;
+	Left = 0;
+    }
+    if (Up < 0) {
+	YWidth += Up;
+	if (Text) Text -= (ldat)Up * Pitch;
+	if (Font) Font -= (ldat)Up * Pitch;
+	if (Attr) Attr -= (ldat)Up * Pitch;
+	Up = 0;
+    }
+    
+    if (W_USE(W, USECONTENTS)) {
+	/* clip to window size */
+	CurX = W->USE.C.TtyData->SizeX;
+	CurY = W->USE.C.TtyData->SizeY;
+	if (Left >= CurY || Up >= CurY)
+	    return;
+	if ((ldat)XWidth + Left > CurX)
+	    XWidth = CurX - Left;
+	if ((ldat)YWidth + Up > CurY)
+	    YWidth = CurY - Up;
+    }
+    if (XWidth <= 0 || YWidth <= 0)
+	return;
+    
+    if (Text) {
+	void (*WriteString)(window, ldat, CONST byte *);
+	if (W_USE(W, USECONTENTS)) {
+	    WriteString = W->Fn->TtyWriteString;
+	} else
+	    WriteString = (void (*)(window, ldat, CONST byte *))W->Fn->RowWriteString;
+	
+	CurX = W->CurX;
+	CurY = W->CurY;
+	for (; YWidth; YWidth--, Up++, Text += Pitch) {
+	    Act(GotoXY,W)(W, Left, Up);
+	    WriteString(W, XWidth, Text);
+	}
+	Act(GotoXY,W)(W, CurX, CurY);
+	
+    } else if (Font) {
+	void (*WriteHWFont)(window, ldat, CONST hwfont *);
+	if (W_USE(W, USECONTENTS))
+	    WriteHWFont = W->Fn->TtyWriteHWFont;
+	else
+	    WriteHWFont = (void (*)(window, ldat, CONST hwfont *))W->Fn->RowWriteHWFont;
+	
+	CurX = W->CurX;
+	CurY = W->CurY;
+	for (; YWidth; YWidth--, Up++, Font += Pitch) {
+	    Act(GotoXY,W)(W, Left, Up);
+	    WriteHWFont(W, XWidth, Font);
+	}
+	Act(GotoXY,W)(W, CurX, CurY);
+	
+    } else if (Attr) {
+	void (*WriteHWAttr)(window, dat, dat, ldat, CONST hwattr *);
+	if (W_USE(W, USECONTENTS))
+	    WriteHWAttr = W->Fn->TtyWriteHWAttr;
+	else
+	    WriteHWAttr = (void (*)(window, dat, dat, ldat, CONST hwattr *))W->Fn->RowWriteHWAttr;
+			   
+	for (; YWidth; YWidth--, Up++, Attr += Pitch)
+	    WriteHWAttr(W, Left, Up, XWidth, Attr);
+    }
+}
 
 /***************/
 
@@ -1666,6 +1760,22 @@ void RollUpWindow(window W, byte on_off) {
 /* ---------------- */
 
 
+void SetVisibleWidget(widget W, byte on_off) {
+    byte visible;
+    if (W) {
+	on_off = !!on_off;
+	visible = !(W->Flags & WIDGETFL_NOTVISIBLE);
+	
+	if (on_off != visible) {
+	    W->Flags ^= WIDGETFL_NOTVISIBLE;
+	    if (IS_WINDOW(W))
+		DrawAreaWindow2((window)W);
+	    else
+		DrawAreaWidget(W);
+	}
+    }
+}
+
 void RaiseWidget(widget W, byte alsoFocus) {
     screen Screen;
     
@@ -1895,7 +2005,7 @@ void WriteTextsGadget(gadget G, byte bitmap, dat TW, dat TH, CONST byte *Text, d
 			_W = W;
 			while (_W-- > 0) {
 # ifdef CONF__UNICODE
-			    *GT++ = Tutf_IBM437_to_UTF_16[*TT++];
+			    *GT++ = Tutf_CP437_to_UTF_16[*TT++];
 # else
 			    *GT++ = *TT++;
 # endif
@@ -1977,7 +2087,7 @@ void WriteHWFontsGadget(gadget G, byte bitmap, dat TW, dat TH, CONST hwfont *HWF
 			_W = W;
 			while (_W-- > 0) {
 # ifdef CONF__UNICODE   
-			    *GT++ = Tutf_IBM437_to_UTF_16[*TT++];
+			    *GT++ = Tutf_CP437_to_UTF_16[*TT++];
 # else
 			    *GT++ = *TT++;
 # endif

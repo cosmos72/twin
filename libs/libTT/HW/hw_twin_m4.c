@@ -39,6 +39,7 @@
 
 
 
+
 /*
  *                 WARNING!
  * 
@@ -144,27 +145,21 @@ static void twin_AddTo_ttwidget(ttwidget o, ttvisible parent) {
 	o->prev = NULL;
 	o->parent = parent;
 
-	if (o->vflags & ttvisible_vflags_visible)
-	    TwMapWidget(o->native, parent->native);
+	TwMapWidget(o->native, parent->native);
     }
 }
 static void twin_SetVisible_ttwidget(ttwidget o, byte on_off) {
-    if (!on_off != !(o->vflags & ttvisible_vflags_visible)) {
+    on_off = !!on_off;
+    if (on_off != !!(o->vflags & ttvisible_vflags_visible)) {
 	o->vflags ^= ttvisible_vflags_visible;
-	if (o->parent) {
-	    if (on_off)
-		TwMapWidget(o->native, o->parent->native);
-	    else
-		TwUnMapWidget(o->native);
-	}
+	TwSetVisibleWidget(o->native, on_off);
     }
 }
 static void twin_Remove_ttwidget(ttwidget o) {
     if (o->parent) {
 	o->FN->FN_ttvisible->Remove((super_(ttwidget))o);
 	
-	if (o->vflags & ttvisible_vflags_visible)
-	    TwUnMapWidget(o->native);
+	TwUnMapWidget(o->native);
     }
 }
 static void twin_SetXYWH_ttwidget(ttwidget o, ttuint mask, ttshort x, ttshort y, ttshort w, ttshort h) {
@@ -190,6 +185,10 @@ static void twin_SetXlYl_ttwidget(ttwidget o, ttuint mask, ttint xl, ttint yl) {
     if (mask & 3)
        TwScrollWidget(o->native, o->xl - o_xl, o->yl - o_yl);
 }
+static void twin_Draw_ttwidget(ttwidget o, ttshort x, ttshort y, ttshort w, ttshort h, ttshort pitch,
+			       TT_CONST ttbyte *asciidata, TT_CONST ttfont *fontdata, TT_CONST ttattr *attrdata) {
+    TwDraw2Widget(o->native, w, h, x, y, pitch, asciidata, fontdata, attrdata);
+}
 
 
 /* ttlabel */
@@ -200,9 +199,12 @@ static ttlabel twin_Build_ttlabel(ttlabel o) {
     }
     return NULL;
 }
+/* force inheritance from Draw_ttwidget() : twin_Draw_ttlabel; */
+#define twin_Draw_ttlabel (void *)twin_Draw_ttwidget
+
 static void twin_BuiltinRepaint_ttlabel(ttlabel o, dat x, dat y, dat w, dat h) {
     if (y == 0 && x < o->text_len)
-	TwExposeHWFontWidget(o->native, TT_MIN2(w,o->text_len-x), 1, x, 0, o->text_len, o->text+x);
+	TwDrawHWFontWidget(o->native, TT_MIN2(w,o->text_len-x), 1, x, 0, o->text_len, o->text+x);
 }
 
 /* ttanybutton */
@@ -214,10 +216,10 @@ static void twin_BuiltinRepaint_ttanybutton(ttanybutton o, dat x, dat y, dat w, 
 	    w = o->text_width - x;
 
 	if (h > 0 && w > 0 && y < o->text_height && x < o->text_width)
-	    TwExposeHWFontWidget(o->native, TT_MIN2(w,o->text_width-x), TT_MIN2(h, o->text_height-y),
+	    TwDrawHWFontWidget(o->native, TT_MIN2(w,o->text_width-x), TT_MIN2(h, o->text_height-y),
 				  x, y, o->text_width, o->text + x + (y * o->text_width));
     } else
-	TwExposeHWFontWidget(o->native, w, h, x, y, w, NULL);
+	TwDrawHWFontWidget(o->native, w, h, x, y, w, NULL);
 }
 static void MouseEventWrapper_ttanybutton(tevent_any e, tobj id) {
     ttanybutton o = ID2(ttanybutton,id);
@@ -305,10 +307,10 @@ static void twin_BuiltinRepaint_ttbutton(ttbutton o, dat x, dat y, dat w, dat h)
 	    w = tw - x;
 
 	if (h > 0 && w > 0 && y < th && x < tw)
-	    TwExposeHWAttrWidget(o->native, TT_MIN2(w,tw-x), TT_MIN2(h, th-y),
+	    TwDrawHWAttrWidget(o->native, TT_MIN2(w,tw-x), TT_MIN2(h, th-y),
 				 x, y, tw, t + x + (y * tw));
     } else
-	TwExposeHWFontWidget(o->native, w, h, x, y, w, NULL);
+	TwDrawHWFontWidget(o->native, w, h, x, y, w, NULL);
 }
 static void twin_SetPressed_ttbutton(ttbutton o, byte pressed) {
 }
@@ -343,6 +345,10 @@ static ttwindow twin_Build_ttwindow(ttwindow o) {
     return NULL;
 }
 
+static void twin_BuiltinRepaint_ttwindow(ttwindow o, dat x, dat y, dat w, dat h) {
+    TwDrawHWAttrWidget(o->native, w, h, x, y, w, NULL);    
+}
+
 /* ttframe */
 
 static void AskCloseWrapper_ttframe(tevent_any ev, tobj id) {
@@ -366,20 +372,23 @@ static ttlistener AddAskCloseListener_ttframe(ttframe o) {
 
 static ttframe twin_Build_ttframe(ttframe o) {
     o->vflags &= ~ttvisible_vflags_visible;
-    o->FN->AddTo(o, (ttvisible)TFN_ttnative->GetRoot());
     
     if (TW_NOID != (o->native = TwCreateWindow
 	 (0, NULL, NULL, myMenubar_n(o), myTheme(o)->bg[tttheme_bg_normal],
 	  TW_LINECURSOR, TW_WINDOW_DRAG|TW_WINDOW_RESIZE|TW_WINDOW_CLOSE|
 	  TW_WINDOW_WANT_CHANGES|TW_WINDOW_WANT_KEYS|TW_WINDOW_WANT_MOUSE,
-	  TW_WINDOWFL_USEEXPOSE|TW_WINDOWFL_CURSOR_ON, 1, 1, 0))) {
-	
-	if (AddExposeListener_ttwidget((ttwidget)o) &&
-	    AddAskCloseListener_ttframe(o))
+	  TW_WINDOWFL_USEEXPOSE|TW_WINDOWFL_CURSOR_ON, 1, 1, 0)) &&
+	AddExposeListener_ttwidget((ttwidget)o) &&
+	AddAskCloseListener_ttframe(o)) {
 
-	    return o;
+	o->FN->AddTo(o, (ttvisible)TFN_ttnative->GetRoot());
+	return o;
     }
     return NULL;
+}
+
+static void twin_BuiltinRepaint_ttframe(ttframe o, dat x, dat y, dat w, dat h) {
+    TwDrawHWAttrWidget(o->native, w, h, x, y, w, NULL);    
 }
 
 
@@ -402,15 +411,15 @@ static void twin_AddTo_ttmenuitem(ttmenuitem o, ttvisible parent) {
 
 	/* hack warning: this is dirty */
 	Code = OBJ2ID(o) + 1;
-	while (Code && !(udat)Code)
-	    Code >>= 1;
+	while (Code && ((udat)Code == 0 || (udat)Code >= TW_COD_RESERVED))
+	    Code >>= (8*sizeof(udat));
 	if (!(udat)Code)
-	    Code = rand();
-	TwRow4Menu(parent->private, Code, 
-		   *o->name ? (o->vflags & ttanybutton_vflags_disabled) ?
-		     TW_ROW_ACTIVE : TW_ROW_INACTIVE
-		   : TW_ROW_IGNORE, strlen(o->name), o->name);
-	o->native = TwFindRowByCodeWindow(parent->private, Code);
+	    Code = 1 + (rand() & 0xFFF);
+	o->native = TwRow4Menu
+	    (parent->private, Code, 
+	     *o->name ? (o->vflags & ttanybutton_vflags_disabled) ?
+	     TW_ROW_ACTIVE : TW_ROW_INACTIVE
+	     : TW_ROW_IGNORE, strlen(o->name), o->name);
 	
 	o->FN->FN_ttvisible->AddTo((super_(ttmenuitem))o, parent);
     }
@@ -517,6 +526,19 @@ static byte twin_TimidFlush(void) {
 static byte twin_MainLoop(void) {
     return TwMainLoop();
 }
+static ttbyte twin_MainLoopOnce(ttbyte wait) {
+    tmsg Msg;
+    
+    /* loop until all already queued messages are dispatched */
+    do {
+        if ((Msg = TwCloneReadMsg(wait))) {
+	    TwDispatchMsg(Msg);
+	    TwFreeMem(Msg);
+	}
+    } while (TwPendingMsg());
+    
+    return !TwInPanic();
+}
 static void twin_ExitMainLoop(void) {
     TwExitMainLoop();
 }
@@ -560,7 +582,7 @@ ttfns _TT_twin_InitHW(tthw *HW)
     
     TwConfigMalloc(TTAllocMem, TTReAllocMem, TTFreeMem);
     
-    if (TwCheckMagic(TT_Tw_magic) && TwOpen(TTD.HWArgs[1]))
+    if (TwCheckMagic(TT_Tw_magic) && TwOpen(TTD.HWOptions))
         return &twin_TTFNs;
 
     FAIL(TwErrno, TwErrnoDetail);
@@ -722,6 +744,7 @@ static s_ttfns twin_TTFNs = {
     (void *)NULL /* WARNING: undefined Remove */,
     (void *)NULL /* WARNING: undefined SetVisible */,
     (void *)NULL /* WARNING: undefined SetTheme */,
+    (void *)NULL /* WARNING: undefined Draw */,
     (void *)NULL /* WARNING: undefined BuiltinRepaint */,
             
   },
@@ -746,6 +769,7 @@ static s_ttfns twin_TTFNs = {
     (void *)NULL /* WARNING: undefined Remove */,
     (void *)NULL /* WARNING: undefined SetVisible */,
     (void *)NULL /* WARNING: undefined SetTheme */,
+    (void *)NULL /* WARNING: undefined Draw */,
     (void *)NULL /* WARNING: undefined BuiltinRepaint */,
             
     TFN_ttvisible,
@@ -773,6 +797,7 @@ static s_ttfns twin_TTFNs = {
     twin_Remove_ttwidget,
     twin_SetVisible_ttwidget,
     (void *)NULL /* WARNING: undefined SetTheme */,
+    twin_Draw_ttwidget,
     (void *)NULL /* WARNING: undefined BuiltinRepaint */,
             
     TFN_ttvisible,
@@ -801,6 +826,7 @@ static s_ttfns twin_TTFNs = {
     (void *)twin_Remove_ttwidget,
     (void *)twin_SetVisible_ttwidget,
     (void *)NULL /* WARNING: undefined SetTheme */,
+    twin_Draw_ttlabel,
     twin_BuiltinRepaint_ttlabel,
             
     TFN_ttvisible,
@@ -832,6 +858,7 @@ static s_ttfns twin_TTFNs = {
     (void *)twin_Remove_ttwidget,
     (void *)twin_SetVisible_ttwidget,
     (void *)NULL /* WARNING: undefined SetTheme */,
+    (void *)twin_Draw_ttwidget,
     twin_BuiltinRepaint_ttanybutton,
             
     TFN_ttvisible,
@@ -863,6 +890,7 @@ static s_ttfns twin_TTFNs = {
     (void *)twin_Remove_ttwidget,
     (void *)twin_SetVisible_ttwidget,
     (void *)NULL /* WARNING: undefined SetTheme */,
+    (void *)twin_Draw_ttwidget,
     twin_BuiltinRepaint_ttbutton,
             
     TFN_ttvisible,
@@ -897,6 +925,7 @@ static s_ttfns twin_TTFNs = {
     (void *)twin_Remove_ttwidget,
     (void *)twin_SetVisible_ttwidget,
     (void *)NULL /* WARNING: undefined SetTheme */,
+    (void *)twin_Draw_ttwidget,
     (void *)twin_BuiltinRepaint_ttbutton,
             
     TFN_ttvisible,
@@ -933,6 +962,7 @@ static s_ttfns twin_TTFNs = {
     (void *)twin_Remove_ttwidget,
     (void *)twin_SetVisible_ttwidget,
     (void *)NULL /* WARNING: undefined SetTheme */,
+    (void *)twin_Draw_ttwidget,
     (void *)twin_BuiltinRepaint_ttbutton,
             
     TFN_ttvisible,
@@ -971,6 +1001,7 @@ static s_ttfns twin_TTFNs = {
     (void *)twin_Remove_ttwidget,
     (void *)twin_SetVisible_ttwidget,
     (void *)NULL /* WARNING: undefined SetTheme */,
+    (void *)twin_Draw_ttwidget,
     (void *)twin_BuiltinRepaint_ttanybutton,
             
     TFN_ttvisible,
@@ -1023,7 +1054,8 @@ static s_ttfns twin_TTFNs = {
     (void *)twin_Remove_ttwidget,
     (void *)twin_SetVisible_ttwidget,
     (void *)NULL /* WARNING: undefined SetTheme */,
-    (void *)NULL /* WARNING: undefined BuiltinRepaint */,
+    (void *)twin_Draw_ttwidget,
+    twin_BuiltinRepaint_ttwindow,
             
     TFN_ttvisible,
     (void *)twin_SetXYWH_ttwidget,
@@ -1053,7 +1085,8 @@ static s_ttfns twin_TTFNs = {
     (void *)twin_Remove_ttwidget,
     (void *)twin_SetVisible_ttwidget,
     (void *)NULL /* WARNING: undefined SetTheme */,
-    (void *)NULL /* WARNING: undefined BuiltinRepaint */,
+    (void *)twin_Draw_ttwidget,
+    twin_BuiltinRepaint_ttframe,
             
     TFN_ttvisible,
     (void *)twin_SetXYWH_ttwidget,
@@ -1085,7 +1118,8 @@ static s_ttfns twin_TTFNs = {
     (void *)twin_Remove_ttwidget,
     (void *)twin_SetVisible_ttwidget,
     (void *)NULL /* WARNING: undefined SetTheme */,
-    (void *)NULL /* WARNING: undefined BuiltinRepaint */,
+    (void *)twin_Draw_ttwidget,
+    (void *)twin_BuiltinRepaint_ttwindow,
             
     TFN_ttvisible,
     (void *)twin_SetXYWH_ttwidget,
@@ -1117,6 +1151,7 @@ static s_ttfns twin_TTFNs = {
     twin_Remove_ttmenuitem,
     (void *)NULL /* WARNING: undefined SetVisible */,
     (void *)NULL /* WARNING: undefined SetTheme */,
+    (void *)NULL /* WARNING: undefined Draw */,
     (void *)NULL /* WARNING: undefined BuiltinRepaint */,
             
     TFN_ttvisible,
@@ -1143,6 +1178,7 @@ static s_ttfns twin_TTFNs = {
     (void *)twin_Remove_ttmenuitem,
     (void *)NULL /* WARNING: undefined SetVisible */,
     (void *)NULL /* WARNING: undefined SetTheme */,
+    (void *)NULL /* WARNING: undefined Draw */,
     (void *)NULL /* WARNING: undefined BuiltinRepaint */,
             
     TFN_ttvisible,
@@ -1171,6 +1207,7 @@ static s_ttfns twin_TTFNs = {
     (void *)twin_Remove_ttmenuitem,
     (void *)NULL /* WARNING: undefined SetVisible */,
     (void *)NULL /* WARNING: undefined SetTheme */,
+    (void *)NULL /* WARNING: undefined Draw */,
     (void *)NULL /* WARNING: undefined BuiltinRepaint */,
             
     TFN_ttvisible,
@@ -1201,6 +1238,7 @@ static s_ttfns twin_TTFNs = {
     twin_Remove_ttmenu,
     (void *)NULL /* WARNING: undefined SetVisible */,
     (void *)NULL /* WARNING: undefined SetTheme */,
+    (void *)NULL /* WARNING: undefined Draw */,
     (void *)NULL /* WARNING: undefined BuiltinRepaint */,
             
     TFN_ttvisible,
@@ -1229,6 +1267,7 @@ static s_ttfns twin_TTFNs = {
     (void *)NULL /* WARNING: undefined Remove */,
     (void *)NULL /* WARNING: undefined SetVisible */,
     (void *)NULL /* WARNING: undefined SetTheme */,
+    (void *)NULL /* WARNING: undefined Draw */,
     (void *)NULL /* WARNING: undefined BuiltinRepaint */,
             
     TFN_ttvisible,
@@ -1255,7 +1294,8 @@ static s_ttfns twin_TTFNs = {
     (void *)twin_Remove_ttwidget,
     (void *)twin_SetVisible_ttwidget,
     (void *)NULL /* WARNING: undefined SetTheme */,
-    (void *)NULL /* WARNING: undefined BuiltinRepaint */,
+    (void *)twin_Draw_ttwidget,
+    (void *)twin_BuiltinRepaint_ttwindow,
             
     TFN_ttvisible,
     (void *)twin_SetXYWH_ttwidget,
@@ -1287,7 +1327,8 @@ static s_ttfns twin_TTFNs = {
     (void *)twin_Remove_ttwidget,
     (void *)twin_SetVisible_ttwidget,
     (void *)NULL /* WARNING: undefined SetTheme */,
-    (void *)NULL /* WARNING: undefined BuiltinRepaint */,
+    (void *)twin_Draw_ttwidget,
+    (void *)twin_BuiltinRepaint_ttwindow,
             
     TFN_ttvisible,
     (void *)twin_SetXYWH_ttwidget,
@@ -1321,7 +1362,8 @@ static s_ttfns twin_TTFNs = {
     (void *)twin_Remove_ttwidget,
     (void *)twin_SetVisible_ttwidget,
     (void *)NULL /* WARNING: undefined SetTheme */,
-    (void *)NULL /* WARNING: undefined BuiltinRepaint */,
+    (void *)twin_Draw_ttwidget,
+    (void *)twin_BuiltinRepaint_ttwindow,
             
     TFN_ttvisible,
     (void *)twin_SetXYWH_ttwidget,
@@ -1384,12 +1426,13 @@ static s_ttfns twin_TTFNs = {
     twin_Flush, 
     twin_TimidFlush, 
     twin_MainLoop, 
-    twin_ExitMainLoop, 
-    twin_DeleteListener,    
+    twin_MainLoopOnce, 
+    twin_ExitMainLoop,    
+    twin_DeleteListener, 
     twin_Close, 
     twin_ConnectionFd, 
     twin_GetErrno, 
-    twin_GetErrnoDetail, 
+    twin_GetErrnoDetail,    
     twin_StrError, 
     twin_StrErrorDetail,   
   },

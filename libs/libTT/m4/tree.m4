@@ -13,11 +13,16 @@ dnl Tell the user about this.
 
 include(`m4/TThandy.m4h')
 
+#define TT_TYPELIST(el) \
+TTtypelist()
+
 #define TT_LIST(el) \
 TTlist()
 
 #define TT_NLIST(el) \
 TTnlist()
+
+#define type_(t)	TT_CAT(type_,t)
 
 #define super_(obj)	TT_CAT(super_,obj)
 #define order_(obj)	TT_CAT(order_,obj)
@@ -172,6 +177,16 @@ TT_NLIST(el)
 #undef el
     order_n
 } e_order_ttobj;
+
+
+/* set type_xxx enums */
+typedef enum e_type {
+    type_first = order_n,
+#define el(t) type_(t),
+TT_TYPELIST(el)
+#undef el
+    type_last
+} e_type;
 
 
 /* set magicmask_xxx enums */

@@ -329,33 +329,45 @@ static void OptionH(msg Msg) {
 }
 
 void FillButtonWin(void) {
-    dat save_i, i, j;
+    dat i, j;
     byte b[6] = "      ";
     CONST byte *s;
     
     DeleteList(ButtonWin->FirstW);
-    DeleteList(ButtonWin->USE.R.FirstRow);
     
     for (i=j=0; j<BUTTON_MAX; j++) {
 	if (All->ButtonVec[j].exists)
 	    i++;
     }
-    save_i = i;
+    ResizeRelWindow(ButtonWin, 0, (dat)(3 + i*2) - (dat)ButtonWin->YWidth);
     
+    /* clear the window: */
+    Act(TtyWriteAscii,ButtonWin)(ButtonWin, 4, "\033[2J");
+
     for (j=BUTTON_MAX-1; j>=0; j--) {
 	if (!All->ButtonVec[j].exists)
 	    continue;
 	i--;
 	
-	ButtonWin->CurX = 2; ButtonWin->CurY = 1 + i*2;
+	Act(GotoXY,ButtonWin)(ButtonWin, 2, 1 + i*2);
 	if (j)
 	    b[2] = j + '0', s = b;
 	else
 	    s = "Close ";
-	Act(RowWriteAscii,ButtonWin)(ButtonWin, 7, "Button ");
-	Act(RowWriteAscii,ButtonWin)(ButtonWin, 6, s);
-	Act(RowWriteHWFont,ButtonWin)(ButtonWin, 2, All->ButtonVec[j].shape);
-
+	Act(TtyWriteAscii,ButtonWin)(ButtonWin, 7, "Button ");
+	Act(TtyWriteAscii,ButtonWin)(ButtonWin, 6, s);
+#ifdef CONF__UNICODE
+	{
+	    hwattr h[2];
+	    hwfont *f = All->ButtonVec[j].shape;
+	    h[0] = HWATTR_EXTRA32(HWATTR(ButtonWin->ColGadgets, f[0]), EncodeToHWAttrExtra(j, 0, 0, 0));
+	    h[1] = HWATTR_EXTRA32(HWATTR(ButtonWin->ColGadgets, f[1]), EncodeToHWAttrExtra(j, 1, 0, 0));
+	    
+	    Act(TtyWriteHWAttr,ButtonWin)(ButtonWin, 15, 1+i*2, 2, h);
+	}
+#else
+	Act(TtyWriteHWFont,ButtonWin)(ButtonWin, 2, All->ButtonVec[j].shape);
+#endif
 	Do(Create,Gadget)(FnGadget, Builtin_MsgPort, (widget)ButtonWin, 3, 1, "[+]",
 			  0, GADGETFL_TEXT_DEFCOL, 3 | (j<<2),
 			  COL(BLACK,WHITE), COL(HIGH|WHITE,GREEN),
@@ -367,8 +379,6 @@ void FillButtonWin(void) {
 			  COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
 			  19, 1+i*2);
     }
-    
-    ResizeRelWindow(ButtonWin, 0, (dat)(3 + save_i*2) - (dat)ButtonWin->YWidth);
 }
     
 void UpdateButtonWin(void) {
@@ -385,20 +395,20 @@ void UpdateButtonWin(void) {
 	    continue;
 	i--;
 	
-	ButtonWin->CurX = 26; ButtonWin->CurY = 1 + i*2;
+	Act(GotoXY,ButtonWin)(ButtonWin, 26, 1 + i*2);
 	
 	pos = All->ButtonVec[j].pos;
 	if (pos >= 0) {
-	    Act(RowWriteAscii,OptionWin)(ButtonWin, 5, "Left ");
+	    Act(TtyWriteAscii,OptionWin)(ButtonWin, 5, "Left ");
 	} else if (pos == -1)
-	    Act(RowWriteAscii,OptionWin)(ButtonWin, 9, "Disabled ");
+	    Act(TtyWriteAscii,OptionWin)(ButtonWin, 9, "Disabled ");
 	else {
-	    Act(RowWriteAscii,OptionWin)(ButtonWin, 5, "Right");
+	    Act(TtyWriteAscii,OptionWin)(ButtonWin, 5, "Right");
 	    pos = -pos - 2;
 	}
 	if (pos >= 0) {
 	    sprintf(s, " %3d", pos);
-	    Act(RowWriteAscii,OptionWin)(ButtonWin, strlen(s), s);
+	    Act(TtyWriteAscii,OptionWin)(ButtonWin, strlen(s), s);
 	}
     }
 }
@@ -789,7 +799,7 @@ static byte InitScreens(void) {
 	return TRUE;
     }
     Error(NOMEMORY);
-    printk("twin: InitScreens(): %s\n", ErrStr);
+    printk("twin: InitScreens(): %."STR(SMALLBUFF)"s\n", ErrStr);
     return FALSE;
 }
 
@@ -894,8 +904,8 @@ byte InitBuiltin(void) {
 	  37, 16, 0)) &&
 
 	(ButtonWin = Do(Create,Window)
-	 (FnWindow, 7, "Buttons", NULL, Builtin_Menu, COL(HIGH|BLACK,BLACK),
-	  NOCURSOR, WINDOW_AUTO_KEYS|WINDOW_WANT_MOUSE|WINDOW_DRAG|WINDOW_CLOSE, WINDOWFL_USEROWS|WINDOWFL_ROWS_DEFCOL,
+	 (FnWindow, 7, "Buttons", NULL, Builtin_Menu, COL(HIGH|WHITE,WHITE),
+	  NOCURSOR, WINDOW_AUTO_KEYS|WINDOW_WANT_MOUSE|WINDOW_DRAG|WINDOW_CLOSE, WINDOWFL_USECONTENTS,
 	  37, 19, 0)) &&
 
 	(DisplayWin = Do(Create,Window)
@@ -1033,7 +1043,7 @@ byte InitBuiltin(void) {
 	return TRUE;
     }
     Error(NOMEMORY);
-    printk("twin: InitBuiltin(): %s\n", ErrStr);
+    printk("twin: InitBuiltin(): %."STR(SMALLBUFF)"s\n", ErrStr);
     return FALSE;
 }
 

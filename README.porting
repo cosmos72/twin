@@ -29,9 +29,9 @@ Compiling on FreeBSD:
 	Only X and twin driver are tested, tty (termcap/ncurses) driver
 	has known problems on FreeBSD console: in particular, the PAUSE key
 	does not work; use F4 instead.
-	Quite obviously, Linux console driver does not compile
-	(it's Linux specific): disable it.
-	To be on the safe side, also disable Custom malloc/free.
+	Quite obviously, Linux console driver does not compile:
+	it's Linux specific and will get disabled.
+	To be on the safe side, you may want to disable Custom malloc/free.
 
 	Running `ldconfig' with no parameters may be not a good idea on FreeBSD:
 	try with `ldconfig -R'.
@@ -49,7 +49,7 @@ Compiling on AIX 3.2:
 	and (very probably) GNU gcc; you can try with AIX cc, but I have not
 	tested compiling twin with it.
 
-	Then `./configure' and `gmake'. The logic in `./configure' should
+	Then `MAKE=gmake ./configure' and `gmake'. The logic in `./configure' should
 	disable Shared libraries, Modules, Custom malloc/free,
 	Linux console support and probably Socket compression.
 	If `gmake' fails, run `gmake config', disable all above	options
@@ -61,7 +61,7 @@ Compiling on AIX 3.2:
 Compiling on SunOS:
 
 	As usual, you need GNU make (gmake).
-	Run `./configure' and `gmake'. If you have problems compiling
+	Run `MAKE=gmake ./configure' and `gmake'. If you have problems compiling
 	clients/findtwin.c, add a line
 	
 	int alphasort();

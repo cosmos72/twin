@@ -19,6 +19,10 @@ typedef topaque   opaque;
 typedef tany    ttany;
 typedef tany      any;
 
+typedef void *	 ttpointer;
+typedef TT_CONST ttbyte * ttstring;
+typedef void (*ttfunction)(void);
+
 /* these are the types to interface with clients. Data of this types actually contains (ttopaque) integers. */
 typedef void *tt_obj;
 typedef void *tt_fn;

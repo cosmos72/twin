@@ -33,6 +33,6 @@ install:
 	$(INSTALL) $(BINS) $(DESTDIR)$(bindir)
 
 clean:
-	rm -f .*.flags .*.bin gmon.out core *.o tw* ; \
+	rm -f .*.flags .*.bin gmon.out core tw* *.la *.a *.o *.lo *.so *.so.* ; \
 	rm -fr .libs
 	

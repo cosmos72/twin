@@ -6,6 +6,7 @@ byte RowWriteAscii(window Window, ldat Len, CONST byte * Text);
 byte RowWriteHWFont(window Window, ldat Len, CONST hwfont * Text);
 
 void ExposeWidget2(widget W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch, CONST byte *Text, CONST hwfont *Font, CONST hwattr *Attr);
+void ExposeWindow2(window W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch, CONST byte *Text, CONST hwfont *Font, CONST hwattr *Attr);
 
 extern byte NeedUpdateCursor;
 #define UpdateCursor() (NeedUpdateCursor = TRUE)
@@ -43,9 +44,10 @@ void ScrollWindow(window Window, ldat DeltaX, ldat DeltaY);
 
 void ScrollWidget(widget W, ldat DeltaX, ldat DeltaY);
 
-
 void UnFocusWidget(widget W);
 void RollUpWindow(window W, byte on_off);
+
+void SetVisibleWidget(widget W, byte on_off);
 
 void RaiseWidget(widget W, byte alsoFocus);
 void LowerWidget(widget W, byte alsoDeFocus);

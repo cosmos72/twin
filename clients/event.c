@@ -298,8 +298,8 @@ int main(int argc, char *argv[]) {
 		printf("Widget Change: expose x=%d, y=%d, width=%d, height=%d%s\n",
 		       EventW->X, EventW->Y, EventW->XWidth, EventW->YWidth,
 		       EventW->Flags & TW_MSG_WIDGETFL_SHADED ? ", shaded" : "");
-		TwExposeTextWindow(EventW->W, EventW->XWidth, EventW->YWidth,
-				   EventW->X, EventW->Y, 0, NULL);
+		TwDrawTextWindow(EventW->W, EventW->XWidth, EventW->YWidth,
+				 EventW->X, EventW->Y, 0, NULL);
 	    }
 	} else if (Msg->Type==TW_MSG_USER_CONTROL) {
 	    tevent_control EventC = &Msg->Event.EventControl;

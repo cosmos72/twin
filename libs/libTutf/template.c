@@ -43,7 +43,7 @@ hwfont T_CAT(Tutf_UTF_16_to_,T_TEMPLATE)(hwfont c) {
 	c = res->ch;
     else if (c > '~')
 	/* try to approximate */
-	c = T_CAT(Tutf_IBM437_to_,T_MAP(ASCII)) [ Tutf_UTF_16_to_IBM437(c) ];
+	c = T_CAT(Tutf_CP437_to_,T_MAP(ASCII)) [ Tutf_UTF_16_to_CP437(c) ];
     /* else c = c; */
 
     return key.ch = c;

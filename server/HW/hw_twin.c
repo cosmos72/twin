@@ -580,7 +580,7 @@ byte TW_InitHW(void) {
 	} while (0); else {
 	    /* TwErrno(NULL) is valid... used when Tw_Open fails */
 	    if ((len = Tw_Errno(Td)))
-		printk("      TW_InitHW() failed: %s%s\n",
+		printk("      TW_InitHW() failed: %."STR(SMALLBUFF)"s%."STR(SMALLBUFF)"s\n",
 			Tw_StrError(Td, len), Tw_StrErrorDetail(Td, len, Tw_ErrnoDetail(Td)));
 	    else
 		printk("      TW_InitHW() failed.\n");

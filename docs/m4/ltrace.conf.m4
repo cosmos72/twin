@@ -63,7 +63,7 @@ define(`NARGS1', `eval(1+($1-5)/2)')
 
 define(`ARG', `ifelse($3, v, `', `TYPE($2,$3)`'A($1)')')
 
-define(`_ARGS', `ifelse($#, 2, `', `, ARG($1,$2,t$3)`'_ARGS(incr($1), NSHIFT(3, $@))')')
+define(`_ARGS', `ifelse($#, 2, `', `, ARG($1,$2,t$3)`'_ARGS(incr($1), NSHIFT(4, $@))')')
 define(`ARGS', `addr`'ifelse($#, 2, `', `_ARGS($@)')')
 
 define(`PROTO', `ifdef(DEF_`'NAME($3, $4), `', `TYPE($1,t$2) NAME($3, $4)(ARGS(1, NSHIFT(5, $@)));define(DEF_`'NAME($3, $4))')')

@@ -61,7 +61,7 @@ ttbyte TTCheckMagic(TT_CONST ttbyte id[]);
 ttbyte TTInPanic(void);
 ttuint TTLibraryVersion(void);
 
-ttbyte TTOpen(TT_CONST ttbyte *target, ...);
+ttbyte TTOpen(TT_CONST ttbyte *target);
 void TTClose(void);
 void TTCloseQuickNDirty(void);
 int TTConnectionFd(void);
@@ -70,6 +70,7 @@ ttbyte TTTimidFlush(void);
 ttbyte TTSync(void);
 
 ttbyte TTMainLoop(void);
+ttbyte TTMainLoopOnce(ttbyte wait);
 void TTExitMainLoop(void);
 
 tt_obj TTNew(tt_fn FN);

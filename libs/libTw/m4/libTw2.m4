@@ -46,8 +46,8 @@ define(`NARGS1', `eval(1+($1-5)/2)')
 
 define(`ARG', `ifelse($3, v, `', `TYPE($2,$3)`'A($1)')')
 
-define(`_ARGS', `ifelse($#, 2, `', `, ARG($1,$2,t$3)`'_ARGS(incr($1), NSHIFT(3, $@))')')
-define(`ARGS', `tw_d TwD`'ifelse($#, 2, `', `_ARGS($@)')')
+define(`_ARGS', `ifelse($#, 2, `', `, ARG($1,$2,t$3)`'_ARGS(incr($1), NSHIFT(4, $@))')')
+define(`ARGS', `tw_d TwD`'ifelse(eval($# < 3), 1, `', `_ARGS($@)')')
 
 define(`PARSE_', `, c(A($1))')
 define(`PARSEx', `PARSE_($@)')
@@ -60,7 +60,7 @@ define(`PARSE', `PARSE$3($1,$2,$4)')
 define(`SPACE', `SPACE$3($1,$2,$4)')
 
 define(`PARSES', `ifelse($#, 2, `', `
-    PARSE($1,$2,t$3,i$3)`'PARSES(incr($1), NSHIFT(3, $@))')')
+    PARSE($1,$2,t$3,i$3)`'PARSES(incr($1), NSHIFT(4, $@))')')
 
 define(`CALL', `EncodeCall($1, order_`'$2, TwD $3);')
 

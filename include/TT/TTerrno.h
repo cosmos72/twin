@@ -30,7 +30,9 @@
 
 
 typedef struct tt_errno {
+    /** error number */
     ttuint E;
+    /** error detail number */
     ttuint S;
     /* there may actually be more fields */
 } tt_errno;
@@ -39,12 +41,17 @@ typedef struct tt_errno {
  extern "C" {
 #endif
 
+/* get address of struct `tt_errno' describing last error */
 tt_errno *TTErrnoLocation(void);
 
+/* get error number describing last error */
 #define TTErrno			(TTErrnoLocation()->E)
+/* get error detail number describing last error */
 #define TTErrnoDetail		(TTErrnoLocation()->S)
 
+/* get human-readable string describing error number `e' */
 TT_CONST byte *TTStrError(ttuint e) TT_FN_ATTR_CONST;
+/* get human-readable string describing error number `e' and error detail number `s' */
 TT_CONST byte *TTStrErrorDetail(ttuint e, ttuint s) TT_FN_ATTR_CONST;
 
 #ifdef __cplusplus

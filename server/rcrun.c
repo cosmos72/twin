@@ -184,23 +184,29 @@ static run *ReverseRunList(run *l) {
 
 static ldat Pos2Ctx(udat Pos) {
     switch (Pos) {
-      case POS_TITLE: return CTX_TITLE;
-      case POS_CORNER:return CTX_CORNER;
-      case POS_SIDE:  return CTX_SIDE;
+      case POS_TITLE:
+      case POS_SIDE_UP:	return CTX_TITLE;
+      case POS_SIDE_LEFT:
+      case POS_SIDE_RIGHT:
+      case POS_SIDE_DOWN:return CTX_SIDE;
+      case POS_BUTTON_RESIZE:return CTX_CORNER;
 
-      case POS_BAR_BACK:
-      case POS_BAR_FWD:
-      case POS_TAB:
-      case POS_ARROW_BACK:
-      case POS_ARROW_FWD:
-	return CTX_BARS;
+      case POS_X_BAR_BACK:
+      case POS_X_BAR_FWD:
+      case POS_X_TAB:
+      case POS_X_ARROW_BACK:
+      case POS_X_ARROW_FWD:
+      case POS_Y_BAR_BACK:
+      case POS_Y_BAR_FWD:
+      case POS_Y_TAB:
+      case POS_Y_ARROW_BACK:
+      case POS_Y_ARROW_FWD:return CTX_BARS;
 	
       case POS_INSIDE:return CTX_INSIDE;
       case POS_MENU:  return CTX_MENU;
 
-      case POS_SCREENBUTTON:
-      case POS_ROOT:
-	return CTX_ROOT;
+      case POS_BUTTON_SCREEN:
+      case POS_ROOT:  return CTX_ROOT;
       default:
 	if (Pos < BUTTON_MAX)
 	    return CTX_BUTTON(Pos);
@@ -527,7 +533,7 @@ static byte RCSteps(run *r) {
 	  case STDERR:
 	    argv = n->x.v.argv;
 	    while (*argv)
-		printk("%s ", *argv++);
+		printk("%."STR(SMALLBUFF)"s ", *argv++);
 	    printk("\n");
 	    break;
 	  case SYNTHETICKEY:
@@ -799,7 +805,7 @@ static void RCReload(void) {
     /* this would garble -hw=tty display */
     else
 	printk("twin: failed to load the RC parser:\n"
-		"      %s\n", ErrStr);
+		"      %."STR(SMALLBUFF)"s\n", ErrStr);
 # endif
 #endif
     

@@ -40,6 +40,7 @@
 
 
 
+
 /*
  *                 WARNING!
  * 
@@ -283,6 +284,10 @@ static void null_SetTheme_ttvisible(ttvisible o, tttheme theme) {
     o->theme = theme;
     if (oldtheme != theme && o->parent && (o->vflags & ttvisible_vflags_visible))
 	Expose_ttvisible(o, ttvisible_repaint_args_WHOLE);
+}
+static void null_Draw_ttvisible(ttvisible o, ttshort x, ttshort y, ttshort w, ttshort h, ttshort pitch,
+				TT_CONST ttbyte *asciidata, TT_CONST ttfont *fontdata, TT_CONST ttattr *attrdata) {
+    /* do-nothing */
 }
 static void null_BuiltinRepaint_ttvisible(ttvisible o, ttshort x, ttshort y, ttshort w, ttshort h) {
     /* do-nothing */
@@ -704,256 +709,212 @@ static void null_Del_ttapplication(ttapplication o) {
 
 
                             
-static ttbyte null_GetValue_ttobj(ttobj o, ttuint which, ttany *value) {
+static ttfn null_GetValue_ttobj(ttobj o, ttuint which, ttany *value) {
     if (which && which < ttobj_field_last && o && TTAssert(IS(ttobj,o))) {
 	if (which > ttobj_field_first) switch (which) {
     
 	  case ttobj_id:
-	    *value = (ttany)o->id;
-	    return TRUE;    
+	    *value = (ttany)o->id; return TTFN_ttopaque;    
 	  case ttobj_refcount:
-	    *value = (ttany)o->refcount;
-	    return TRUE;    
+	    *value = (ttany)o->refcount; return TTFN_ttuint;    
 	  case ttobj_oflags:
-	    *value = (ttany)o->oflags;
-	    return TRUE;            
+	    *value = (ttany)o->oflags; return TTFN_ttuint;            
 	  case ttobj_user_data:
-	    *value = (ttany)o->user_data;
-	    return TRUE;    
+	    *value = (ttany)o->user_data; return TTFN_ttany;    
 	  case ttobj_events_inprogress:
-	    *value = (ttany)o->events_inprogress;
-	    return TRUE;
+	    *value = (ttany)o->events_inprogress; return TTFN_ttuint;
 	}
 	
     }
-    return FALSE;
+    return (ttfn)0;
 }  
 
                     
-static ttbyte null_GetValue_ttevent(ttevent o, ttuint which, ttany *value) {
+static ttfn null_GetValue_ttevent(ttevent o, ttuint which, ttany *value) {
     if (which && which < ttevent_field_last && o && TTAssert(IS(ttevent,o))) {
 	if (which > ttevent_field_first) switch (which) {
     
 	  case ttevent_callback:
-	    *value = (ttany)OBJ2ID(o->callback);
-	    return TRUE;    
+	    *value = (ttany)OBJ2ID(o->callback); return TTFN_ttcallback;    
 	  case ttevent_component:
-	    *value = (ttany)OBJ2ID(o->component);
-	    return TRUE;    
+	    *value = (ttany)OBJ2ID(o->component); return TTFN_ttcomponent;    
 	  case ttevent_evtype:
-	    *value = (ttany)o->evtype;
-	    return TRUE;    
+	    *value = (ttany)o->evtype; return TTFN_ttuint;    
 	  case ttevent_evcode:
-	    *value = (ttany)o->evcode;
-	    return TRUE;    
+	    *value = (ttany)o->evcode; return TTFN_ttuint;    
 	  case ttevent_evflags:
-	    *value = (ttany)o->evflags;
-	    return TRUE;
+	    *value = (ttany)o->evflags; return TTFN_ttuint;
 	}
 	else
 	    return o->FN->FN_ttobj->GetValue((ttobj)o, which, value);
     }
-    return FALSE;
+    return (ttfn)0;
 } 
 
                         
-static ttbyte null_GetValue_tteventbig(tteventbig o, ttuint which, ttany *value) {
+static ttfn null_GetValue_tteventbig(tteventbig o, ttuint which, ttany *value) {
     if (which && which < tteventbig_field_last && o && TTAssert(IS(tteventbig,o))) {
 	if (which > tteventbig_field_first) switch (which) {
     
 	  case tteventbig_x:
-	    *value = (ttany)o->x;
-	    return TRUE;    
+	    *value = (ttany)o->x; return TTFN_ttshort;    
 	  case tteventbig_y:
-	    *value = (ttany)o->y;
-	    return TRUE;    
+	    *value = (ttany)o->y; return TTFN_ttshort;    
 	  case tteventbig_w:
-	    *value = (ttany)o->w;
-	    return TRUE;    
+	    *value = (ttany)o->w; return TTFN_ttshort;    
 	  case tteventbig_h:
-	    *value = (ttany)o->h;
-	    return TRUE;    
+	    *value = (ttany)o->h; return TTFN_ttshort;    
 	  case tteventbig_len:
-	    *value = (ttany)o->len;
-	    return TRUE;    
+	    *value = (ttany)o->len; return TTFN_ttuint;    
 	  case tteventbig_data:
-	    *value = (ttany)(opaque)o->data;
-	    return TRUE;
+	    *value = (ttany)(opaque)o->data; return TTFN_ttstring;
 	}
 	else
 	    return o->FN->FN_ttevent->GetValue((ttevent)o, which, value);
     }
-    return FALSE;
+    return (ttfn)0;
 } 
 
                 
-static ttbyte null_GetValue_ttlistener(ttlistener o, ttuint which, ttany *value) {
+static ttfn null_GetValue_ttlistener(ttlistener o, ttuint which, ttany *value) {
     if (which && which < ttlistener_field_last && o && TTAssert(IS(ttlistener,o))) {
 	if (which > ttlistener_field_first) switch (which) {
     
 	  case ttlistener_lflags:
-	    *value = (ttany)o->lflags;
-	    return TRUE;    
+	    *value = (ttany)o->lflags; return TTFN_ttuint;    
 	  case ttlistener_component:
-	    *value = (ttany)OBJ2ID(o->component);
-	    return TRUE;    
+	    *value = (ttany)OBJ2ID(o->component); return TTFN_ttcomponent;    
 	  case ttlistener_prev:
-	    *value = (ttany)OBJ2ID(o->prev);
-	    return TRUE;    
+	    *value = (ttany)OBJ2ID(o->prev); return TTFN_ttlistener;    
 	  case ttlistener_next:
-	    *value = (ttany)OBJ2ID(o->next);
-	    return TRUE;
+	    *value = (ttany)OBJ2ID(o->next); return TTFN_ttlistener;
 	}
 	else
 	    return o->FN->FN_ttobj->GetValue((ttobj)o, which, value);
     }
-    return FALSE;
+    return (ttfn)0;
 } 
 
                             
-static ttbyte null_GetValue_ttcallback(ttcallback o, ttuint which, ttany *value) {
+static ttfn null_GetValue_ttcallback(ttcallback o, ttuint which, ttany *value) {
     if (which && which < ttcallback_field_last && o && TTAssert(IS(ttcallback,o))) {
 	if (which > ttcallback_field_first) switch (which) {
         
 	  case ttcallback_event:
-	    *value = (ttany)OBJ2ID(o->event);
-	    return TRUE;    
+	    *value = (ttany)OBJ2ID(o->event); return TTFN_ttevent;    
 	  case ttcallback_narg_component:
-	    *value = (ttany)o->narg_component;
-	    return TRUE;    
+	    *value = (ttany)o->narg_component; return TTFN_ttuint;    
 	  case ttcallback_narg_event:
-	    *value = (ttany)o->narg_event;
-	    return TRUE;    
+	    *value = (ttany)o->narg_event; return TTFN_ttuint;    
 	  case ttcallback_nargs:
-	    *value = (ttany)o->nargs;
-	    return TRUE;    
+	    *value = (ttany)o->nargs; return TTFN_ttuint;    
 	  case ttcallback_function:
-	    *value = (ttany)(opaque)o->function;
-	    return TRUE;    
+	    *value = (ttany)(opaque)o->function; return TTFN_ttfunction;    
 	}
 	else
 	    return o->FN->FN_ttlistener->GetValue((ttlistener)o, which, value);
     }
-    return FALSE;
+    return (ttfn)0;
 } 
 
         
-static ttbyte null_GetValue_ttcomponent(ttcomponent o, ttuint which, ttany *value) {
+static ttfn null_GetValue_ttcomponent(ttcomponent o, ttuint which, ttany *value) {
     if (which && which < ttcomponent_field_last && o && TTAssert(IS(ttcomponent,o))) {
 	if (which > ttcomponent_field_first) switch (which) {
     
 	  case ttcomponent_listeners:
-	    *value = (ttany)OBJ2ID(o->listeners);
-	    return TRUE;    
+	    *value = (ttany)OBJ2ID(o->listeners); return TTFN_ttlistener;    
 	  case ttcomponent_callbacks:
-	    *value = (ttany)OBJ2ID(o->callbacks);
-	    return TRUE;
+	    *value = (ttany)OBJ2ID(o->callbacks); return TTFN_ttcallback;
 	}
 	else
 	    return o->FN->FN_ttobj->GetValue((ttobj)o, which, value);
     }
-    return FALSE;
+    return (ttfn)0;
 } 
 
                                 
-static ttbyte null_GetValue_ttvisible(ttvisible o, ttuint which, ttany *value) {
+static ttfn null_GetValue_ttvisible(ttvisible o, ttuint which, ttany *value) {
     if (which && which < ttvisible_field_last && o && TTAssert(IS(ttvisible,o))) {
 	if (which > ttvisible_field_first) switch (which) {
     
 	  case ttvisible_vflags:
-	    *value = (ttany)o->vflags;
-	    return TRUE;    
+	    *value = (ttany)o->vflags; return TTFN_ttuint;    
 	  case ttvisible_prev:
-	    *value = (ttany)OBJ2ID(o->prev);
-	    return TRUE;    
+	    *value = (ttany)OBJ2ID(o->prev); return TTFN_ttvisible;    
 	  case ttvisible_next:
-	    *value = (ttany)OBJ2ID(o->next);
-	    return TRUE;    
+	    *value = (ttany)OBJ2ID(o->next); return TTFN_ttvisible;    
 	  case ttvisible_parent:
-	    *value = (ttany)OBJ2ID(o->parent);
-	    return TRUE;    
+	    *value = (ttany)OBJ2ID(o->parent); return TTFN_ttvisible;    
 	  case ttvisible_child_first:
-	    *value = (ttany)OBJ2ID(o->child_first);
-	    return TRUE;    
+	    *value = (ttany)OBJ2ID(o->child_first); return TTFN_ttvisible;    
 	  case ttvisible_child_last:
-	    *value = (ttany)OBJ2ID(o->child_last);
-	    return TRUE;    
+	    *value = (ttany)OBJ2ID(o->child_last); return TTFN_ttvisible;    
 	  case ttvisible_theme:
-	    *value = (ttany)OBJ2ID(o->theme);
-	    return TRUE;    
+	    *value = (ttany)OBJ2ID(o->theme); return TTFN_tttheme;    
 	  case ttvisible_repaint:
-	    *value = (ttany)(opaque)o->repaint;
-	    return TRUE;
+	    *value = (ttany)(opaque)o->repaint; return TTFN_ttfunction;
 	}
 	else
 	    return o->FN->FN_ttcomponent->GetValue((ttcomponent)o, which, value);
     }
-    return FALSE;
+    return (ttfn)0;
 } 
 
  
 
                         
-static ttbyte null_GetValue_ttwidget(ttwidget o, ttuint which, ttany *value) {
+static ttfn null_GetValue_ttwidget(ttwidget o, ttuint which, ttany *value) {
     if (which && which < ttwidget_field_last && o && TTAssert(IS(ttwidget,o))) {
 	if (which > ttwidget_field_first) switch (which) {
     
 	  case ttwidget_x:
-	    *value = (ttany)o->x;
-	    return TRUE;    
+	    *value = (ttany)o->x; return TTFN_ttshort;    
 	  case ttwidget_y:
-	    *value = (ttany)o->y;
-	    return TRUE;    
+	    *value = (ttany)o->y; return TTFN_ttshort;    
 	  case ttwidget_w:
-	    *value = (ttany)o->w;
-	    return TRUE;    
+	    *value = (ttany)o->w; return TTFN_ttshort;    
 	  case ttwidget_h:
-	    *value = (ttany)o->h;
-	    return TRUE;    
+	    *value = (ttany)o->h; return TTFN_ttshort;    
 	  case ttwidget_xl:
-	    *value = (ttany)o->xl;
-	    return TRUE;    
+	    *value = (ttany)o->xl; return TTFN_ttint;    
 	  case ttwidget_yl:
-	    *value = (ttany)o->yl;
-	    return TRUE;
+	    *value = (ttany)o->yl; return TTFN_ttint;
 	}
 	else
 	    return o->FN->FN_ttvisible->GetValue((ttvisible)o, which, value);
     }
-    return FALSE;
+    return (ttfn)0;
 } 
 
         
-static ttbyte null_GetValue_ttlabel(ttlabel o, ttuint which, ttany *value) {
+static ttfn null_GetValue_ttlabel(ttlabel o, ttuint which, ttany *value) {
     if (which && which < ttlabel_field_last && o && TTAssert(IS(ttlabel,o))) {
 	if (which > ttlabel_field_first) switch (which) {
     
 	  case ttlabel_text_len:
-	    *value = (ttany)o->text_len;
-	    return TRUE;    
+	    *value = (ttany)o->text_len; return TTFN_ttshort;    
 	}
 	else
 	    return o->FN->FN_ttwidget->GetValue((ttwidget)o, which, value);
     }
-    return FALSE;
+    return (ttfn)0;
 } 
 
                 
-static ttbyte null_GetValue_ttanybutton(ttanybutton o, ttuint which, ttany *value) {
+static ttfn null_GetValue_ttanybutton(ttanybutton o, ttuint which, ttany *value) {
     if (which && which < ttanybutton_field_last && o && TTAssert(IS(ttanybutton,o))) {
 	if (which > ttanybutton_field_first) switch (which) {
         
 	  case ttanybutton_text_width:
-	    *value = (ttany)o->text_width;
-	    return TRUE;    
+	    *value = (ttany)o->text_width; return TTFN_ttshort;    
 	  case ttanybutton_text_height:
-	    *value = (ttany)o->text_height;
-	    return TRUE;    
+	    *value = (ttany)o->text_height; return TTFN_ttshort;    
 	}
 	else
 	    return o->FN->FN_ttwidget->GetValue((ttwidget)o, which, value);
     }
-    return FALSE;
+    return (ttfn)0;
 } 
 
  
@@ -963,29 +924,41 @@ static ttbyte null_GetValue_ttanybutton(ttanybutton o, ttuint which, ttany *valu
  
 
  
-
- 
-
-     
 
  
 
         
-static ttbyte null_GetValue_ttscroller(ttscroller o, ttuint which, ttany *value) {
+static ttfn null_GetValue_ttwindow(ttwindow o, ttuint which, ttany *value) {
+    if (which && which < ttwindow_field_last && o && TTAssert(IS(ttwindow,o))) {
+	if (which > ttwindow_field_first) switch (which) {
+    
+	  case ttwindow_title:
+	    *value = (ttany)(opaque)o->title; return TTFN_ttstring;    
+	  case ttwindow_menubar:
+	    *value = (ttany)OBJ2ID(o->menubar); return TTFN_ttmenubar;
+	}
+	else
+	    return o->FN->FN_ttwidget->GetValue((ttwidget)o, which, value);
+    }
+    return (ttfn)0;
+} 
+
+ 
+
+        
+static ttfn null_GetValue_ttscroller(ttscroller o, ttuint which, ttany *value) {
     if (which && which < ttscroller_field_last && o && TTAssert(IS(ttscroller,o))) {
 	if (which > ttscroller_field_first) switch (which) {
     
 	  case ttscroller_scrollx:
-	    *value = (ttany)OBJ2ID(o->scrollx);
-	    return TRUE;    
+	    *value = (ttany)OBJ2ID(o->scrollx); return TTFN_ttscrollbar;    
 	  case ttscroller_scrolly:
-	    *value = (ttany)OBJ2ID(o->scrolly);
-	    return TRUE;
+	    *value = (ttany)OBJ2ID(o->scrolly); return TTFN_ttscrollbar;
 	}
 	else
 	    return o->FN->FN_ttwindow->GetValue((ttwindow)o, which, value);
     }
-    return FALSE;
+    return (ttfn)0;
 } 
 
      
@@ -996,36 +969,34 @@ static ttbyte null_GetValue_ttscroller(ttscroller o, ttuint which, ttany *value)
 
 
     
-static ttbyte null_GetValue_ttmenu(ttmenu o, ttuint which, ttany *value) {
+static ttfn null_GetValue_ttmenu(ttmenu o, ttuint which, ttany *value) {
     if (which && which < ttmenu_field_last && o && TTAssert(IS(ttmenu,o))) {
 	if (which > ttmenu_field_first) switch (which) {
 
     
 	  case ttmenu_menubar:
-	    *value = (ttany)OBJ2ID(o->menubar);
-	    return TRUE;
+	    *value = (ttany)OBJ2ID(o->menubar); return TTFN_ttmenubar;
 	}
 	else
 	    return o->FN->FN_ttmenuitem->GetValue((ttmenuitem)o, which, value);
     }
-    return FALSE;
+    return (ttfn)0;
 } 
 
  
 
         
-static ttbyte null_GetValue_ttanytext(ttanytext o, ttuint which, ttany *value) {
+static ttfn null_GetValue_ttanytext(ttanytext o, ttuint which, ttany *value) {
     if (which && which < ttanytext_field_last && o && TTAssert(IS(ttanytext,o))) {
 	if (which > ttanytext_field_first) switch (which) {
     
 	  case ttanytext_text_len:
-	    *value = (ttany)o->text_len;
-	    return TRUE;    
+	    *value = (ttany)o->text_len; return TTFN_ttshort;    
 	}
 	else
 	    return o->FN->FN_ttwindow->GetValue((ttwindow)o, which, value);
     }
-    return FALSE;
+    return (ttfn)0;
 } 
 
  
@@ -1037,18 +1008,17 @@ static ttbyte null_GetValue_ttanytext(ttanytext o, ttuint which, ttany *value) {
      
 
     
-static ttbyte null_GetValue_ttapplication(ttapplication o, ttuint which, ttany *value) {
+static ttfn null_GetValue_ttapplication(ttapplication o, ttuint which, ttany *value) {
     if (which && which < ttapplication_field_last && o && TTAssert(IS(ttapplication,o))) {
 	if (which > ttapplication_field_first) switch (which) {
     
 	  case ttapplication_name:
-	    *value = (ttany)(opaque)o->name;
-	    return TRUE;
+	    *value = (ttany)(opaque)o->name; return TTFN_ttstring;
 	}
 	else
 	    return o->FN->FN_ttcomponent->GetValue((ttcomponent)o, which, value);
     }
-    return FALSE;
+    return (ttfn)0;
 }
 
 
@@ -1062,6 +1032,9 @@ static byte null_TimidFlush(void) {
     return TRUE;
 }
 static byte null_MainLoop(void) {
+    return TRUE;
+}
+static byte null_MainLoopOnce(ttbyte wait) {
     return TRUE;
 }
 static void null_ExitMainLoop(void) {
@@ -1247,6 +1220,7 @@ static s_ttfns null_TTFNs = {
     null_Remove_ttvisible,
     null_SetVisible_ttvisible,
     null_SetTheme_ttvisible,
+    null_Draw_ttvisible,
     null_BuiltinRepaint_ttvisible,
             
   },
@@ -1271,6 +1245,7 @@ static s_ttfns null_TTFNs = {
     (void *)null_Remove_ttvisible,
     (void *)null_SetVisible_ttvisible,
     (void *)null_SetTheme_ttvisible,
+    (void *)null_Draw_ttvisible,
     (void *)null_BuiltinRepaint_ttvisible,
             
     TFN_ttvisible,
@@ -1298,6 +1273,7 @@ static s_ttfns null_TTFNs = {
     (void *)null_Remove_ttvisible,
     (void *)null_SetVisible_ttvisible,
     (void *)null_SetTheme_ttvisible,
+    (void *)null_Draw_ttvisible,
     (void *)null_BuiltinRepaint_ttvisible,
             
     TFN_ttvisible,
@@ -1326,6 +1302,7 @@ static s_ttfns null_TTFNs = {
     (void *)null_Remove_ttvisible,
     (void *)null_SetVisible_ttvisible,
     (void *)null_SetTheme_ttvisible,
+    (void *)null_Draw_ttvisible,
     (void *)null_BuiltinRepaint_ttvisible,
             
     TFN_ttvisible,
@@ -1357,6 +1334,7 @@ static s_ttfns null_TTFNs = {
     (void *)null_Remove_ttvisible,
     (void *)null_SetVisible_ttvisible,
     (void *)null_SetTheme_ttvisible,
+    (void *)null_Draw_ttvisible,
     (void *)null_BuiltinRepaint_ttvisible,
             
     TFN_ttvisible,
@@ -1388,6 +1366,7 @@ static s_ttfns null_TTFNs = {
     (void *)null_Remove_ttvisible,
     (void *)null_SetVisible_ttvisible,
     (void *)null_SetTheme_ttvisible,
+    (void *)null_Draw_ttvisible,
     (void *)null_BuiltinRepaint_ttvisible,
             
     TFN_ttvisible,
@@ -1422,6 +1401,7 @@ static s_ttfns null_TTFNs = {
     (void *)null_Remove_ttvisible,
     (void *)null_SetVisible_ttvisible,
     (void *)null_SetTheme_ttvisible,
+    (void *)null_Draw_ttvisible,
     (void *)null_BuiltinRepaint_ttvisible,
             
     TFN_ttvisible,
@@ -1458,6 +1438,7 @@ static s_ttfns null_TTFNs = {
     (void *)null_Remove_ttvisible,
     (void *)null_SetVisible_ttvisible,
     (void *)null_SetTheme_ttvisible,
+    (void *)null_Draw_ttvisible,
     (void *)null_BuiltinRepaint_ttvisible,
             
     TFN_ttvisible,
@@ -1496,6 +1477,7 @@ static s_ttfns null_TTFNs = {
     (void *)null_Remove_ttvisible,
     (void *)null_SetVisible_ttvisible,
     (void *)null_SetTheme_ttvisible,
+    (void *)null_Draw_ttvisible,
     (void *)null_BuiltinRepaint_ttvisible,
             
     TFN_ttvisible,
@@ -1537,7 +1519,7 @@ static s_ttfns null_TTFNs = {
     (void *)null_Build_ttobj,
     (void *)null_Break_ttobj,
     (void *)null_Del_ttcomponent,
-    (void *)null_GetValue_ttwidget,
+    null_GetValue_ttwindow,
     (void *)null_SetValue_ttobj,
     (void *)null_ChangeValue_ttobj,
         
@@ -1548,6 +1530,7 @@ static s_ttfns null_TTFNs = {
     (void *)null_Remove_ttvisible,
     (void *)null_SetVisible_ttvisible,
     (void *)null_SetTheme_ttvisible,
+    (void *)null_Draw_ttvisible,
     (void *)null_BuiltinRepaint_ttvisible,
             
     TFN_ttvisible,
@@ -1567,7 +1550,7 @@ static s_ttfns null_TTFNs = {
     null_Build_ttframe,
     (void *)null_Break_ttobj,
     (void *)null_Del_ttcomponent,
-    (void *)null_GetValue_ttwidget,
+    (void *)null_GetValue_ttwindow,
     (void *)null_SetValue_ttobj,
     (void *)null_ChangeValue_ttobj,
         
@@ -1578,6 +1561,7 @@ static s_ttfns null_TTFNs = {
     (void *)null_Remove_ttvisible,
     (void *)null_SetVisible_ttvisible,
     (void *)null_SetTheme_ttvisible,
+    (void *)null_Draw_ttvisible,
     (void *)null_BuiltinRepaint_ttvisible,
             
     TFN_ttvisible,
@@ -1610,6 +1594,7 @@ static s_ttfns null_TTFNs = {
     (void *)null_Remove_ttvisible,
     (void *)null_SetVisible_ttvisible,
     (void *)null_SetTheme_ttvisible,
+    (void *)null_Draw_ttvisible,
     (void *)null_BuiltinRepaint_ttvisible,
             
     TFN_ttvisible,
@@ -1642,6 +1627,7 @@ static s_ttfns null_TTFNs = {
     (void *)null_Remove_ttvisible,
     (void *)null_SetVisible_ttvisible,
     (void *)null_SetTheme_ttvisible,
+    (void *)null_Draw_ttvisible,
     (void *)null_BuiltinRepaint_ttvisible,
             
     TFN_ttvisible,
@@ -1668,6 +1654,7 @@ static s_ttfns null_TTFNs = {
     (void *)null_Remove_ttvisible,
     (void *)null_SetVisible_ttvisible,
     (void *)null_SetTheme_ttvisible,
+    (void *)null_Draw_ttvisible,
     (void *)null_BuiltinRepaint_ttvisible,
             
     TFN_ttvisible,
@@ -1696,6 +1683,7 @@ static s_ttfns null_TTFNs = {
     (void *)null_Remove_ttvisible,
     (void *)null_SetVisible_ttvisible,
     (void *)null_SetTheme_ttvisible,
+    (void *)null_Draw_ttvisible,
     (void *)null_BuiltinRepaint_ttvisible,
             
     TFN_ttvisible,
@@ -1726,6 +1714,7 @@ static s_ttfns null_TTFNs = {
     (void *)null_Remove_ttvisible,
     (void *)null_SetVisible_ttvisible,
     (void *)null_SetTheme_ttvisible,
+    (void *)null_Draw_ttvisible,
     (void *)null_BuiltinRepaint_ttvisible,
             
     TFN_ttvisible,
@@ -1754,6 +1743,7 @@ static s_ttfns null_TTFNs = {
     (void *)null_Remove_ttvisible,
     (void *)null_SetVisible_ttvisible,
     (void *)null_SetTheme_ttvisible,
+    (void *)null_Draw_ttvisible,
     (void *)null_BuiltinRepaint_ttvisible,
             
     TFN_ttvisible,
@@ -1780,6 +1770,7 @@ static s_ttfns null_TTFNs = {
     (void *)null_Remove_ttvisible,
     (void *)null_SetVisible_ttvisible,
     (void *)null_SetTheme_ttvisible,
+    (void *)null_Draw_ttvisible,
     (void *)null_BuiltinRepaint_ttvisible,
             
     TFN_ttvisible,
@@ -1812,6 +1803,7 @@ static s_ttfns null_TTFNs = {
     (void *)null_Remove_ttvisible,
     (void *)null_SetVisible_ttvisible,
     (void *)null_SetTheme_ttvisible,
+    (void *)null_Draw_ttvisible,
     (void *)null_BuiltinRepaint_ttvisible,
             
     TFN_ttvisible,
@@ -1846,6 +1838,7 @@ static s_ttfns null_TTFNs = {
     (void *)null_Remove_ttvisible,
     (void *)null_SetVisible_ttvisible,
     (void *)null_SetTheme_ttvisible,
+    (void *)null_Draw_ttvisible,
     (void *)null_BuiltinRepaint_ttvisible,
             
     TFN_ttvisible,
@@ -1909,12 +1902,13 @@ static s_ttfns null_TTFNs = {
     null_Flush, 
     null_TimidFlush, 
     null_MainLoop, 
-    null_ExitMainLoop, 
-    null_DeleteListener,    
+    null_MainLoopOnce, 
+    null_ExitMainLoop,    
+    null_DeleteListener, 
     null_Close, 
     null_ConnectionFd, 
     null_GetErrno, 
-    null_GetErrnoDetail, 
+    null_GetErrnoDetail,    
     null_StrError, 
     null_StrErrorDetail,   
   },

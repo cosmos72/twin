@@ -41,7 +41,7 @@ int main(int argc, char *argv[]) {
 	id = TwGetFirstScreen();
 	printf("FirstScreen = 0x%lx\n", (long)id);
 	
-	if ((l = TwLStat(id, TWS_screen_ChildrenW_List, TWS__None))) {
+	if ((l = TwStatL(id, TWS_screen_ChildrenW_List, TWS__None))) {
 	    if ((f = TwFindStat(l, TWS_menu_ChildrenI_List)) &&
 		f->type == (TWS_vec|TWS_tobj)) {
 		

@@ -332,9 +332,9 @@ static void HandleSignalChild(void) {
     ReceivedSignalChild = FALSE;
 }
 
-static void Add_Spawn_Row4Menu(twindow Window) {
-    byte *name;
+static byte Add_Spawn_Row4Menu(twindow Window) {
     uldat len = strlen(default_title);
+    byte *name, ret;
     
     if (strcmp(default_title, "Twin Term") &&
 	(name = TwAllocMem(len + 6))) {
@@ -343,10 +343,11 @@ static void Add_Spawn_Row4Menu(twindow Window) {
 	TwCopyMem(default_title, name + 5, len);
 	name[len+5] = ' ';
 
-	TwRow4Menu(Window, COD_SPAWN, TW_ROW_ACTIVE, len+6, name);
+	ret = TwRow4Menu(Window, COD_SPAWN, TW_ROW_ACTIVE, len+6, name);
 	TwFreeMem(name);
     } else
-	TwRow4Menu(Window, COD_SPAWN, TW_ROW_ACTIVE, 10, " New Term ");
+	ret = TwRow4Menu(Window, COD_SPAWN, TW_ROW_ACTIVE, 10, " New Term ");
+    return ret;
 }
 
 TW_DECL_MAGIC(term_magic);
@@ -371,9 +372,9 @@ static byte InitTerm(void) {
 	  COL(RED,WHITE), COL(RED,GREEN), (byte)0)) &&
 	(TwInfo4Menu(Term_Menu, TW_ROW_ACTIVE, 18, " Remote Twin Term ", "ptpppppptpppptpppp"), TRUE) &&
 	(Window=TwWin4Menu(Term_Menu)) &&
-	(Add_Spawn_Row4Menu(Window),
-	 TwRow4Menu(Window, COD_QUIT,  FALSE,       6, " Exit "),
-	 TwItem4Menu(Term_Menu, Window, TRUE, 6, " File ")) &&
+	Add_Spawn_Row4Menu(Window) &&
+	TwRow4Menu(Window, COD_QUIT,  FALSE, 6, " Exit ") &&
+	TwItem4Menu(Term_Menu, Window, TRUE, 6, " File ") &&
 	TwItem4MenuCommon(Term_Menu) &&
 	(Term_Screen = TwFirstScreen()) &&
 	(OpenTerm(NULL, NULL)))
@@ -430,7 +431,7 @@ static void TwinTermH(void) {
 
 		/* FIXME: this is rough */
 		while (n--)
-		    *Dst++ = Tutf_UTF_16_to_IBM437(*Src++);
+		    *Dst++ = Tutf_UTF_16_to_CP437(*Src++);
 		
 		write(Fd, Event->EventSelectionNotify.Data, Event->EventSelectionNotify.Len / sizeof(hwfont));
 	    } else

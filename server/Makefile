@@ -11,9 +11,9 @@ SUBDIRS=HW
 #
 # where to install modules (relative to $(libdir))
 #
-INSTALLSUBDIR=twin/modules
+INSTALLSUBDIR=/twin/modules
 
-include makeversion
+include $(TOPDIR)/include/makeversion
 -include $(TOPDIR)/makeautoconf
 
 BASEOBJS=data.o builtin.o methods.o util.o draw.o extensions.o main.o \
@@ -38,8 +38,12 @@ OBJS_socket.la:=$(patsubst %.o,%.lo,$(SOCKETOBJS))
 OBJS_twin_wrapper:=$(WRAPOBJS)
 OBJS_twdisplay:=$(DISPLAYOBJS) alloc.o missing.o $(HWOBJS)
 
-BINS=twin_real twin_wrapper
+BINS=
 MODS=
+
+ifeq ($(BUILD_PROG_TWIN),yes)
+  BINS+=twin_real twin_wrapper
+endif
 
 LD_FLAGS_twdisplay=$(LD_LIBTW)
 
@@ -55,7 +59,7 @@ ifneq ($(libdir),)
   #
   # where to install modules?
   #
-  libdir_MODS=$(libdir)/twin/modules
+  # libdir_MODS=$(libdir)/twin/modules
 endif
 ifneq ($(bindir),)
   CC_FLAGS_wrapper.o=-DBINDIR=\"$(bindir)\"
@@ -85,7 +89,7 @@ ifeq ($(CONF__MODULES),y)
   #
   LD_FLAGS_twin_real+=$(LD_LIBDL) -export-dynamic
   LD_FLAGS_twdisplay+=$(LD_LIBDL) -export-dynamic
-
+  
   OBJS_twin_real+=$(DLOBJS)
 endif
 
@@ -186,9 +190,14 @@ ifeq ($(CONF_HW_TTY),y)
     endif
   endif
 endif
-ifeq ($(CONF_HW_X11),y)
-  LD_FLAGS_twin_real+=-L/usr/X11R6/lib -lX11
-  LD_FLAGS_twdisplay+=-L/usr/X11R6/lib -lX11
+ifeq ($(CONF_HW_GFX),y)
+  LD_FLAGS_twin_real+=$(LD_LIBGFX)
+  LD_FLAGS_twdisplay+=$(LD_LIBGFX)
+else
+  ifeq ($(CONF_HW_X11),y)
+    LD_FLAGS_twin_real+=$(LD_LIBX11)
+    LD_FLAGS_twdisplay+=$(LD_LIBX11)
+  endif
 endif
 ifeq ($(CONF_HW_GGI),y)
   LD_FLAGS_twin_real+=-lggi
@@ -256,14 +265,14 @@ symbolsdep: all
 
 clean:
 	rm -f .*.flags .*.link .*.arlib gmon.out core log twin \
-	      twin_real twin_wrapper twdisplay *.la *.o *.lo \
+	      twin_real twin_wrapper twdisplay *.o *.lo *.la *.so *.so.* \
 	      rcparse.output y.tab.c lex.yy.c *.u *.d ; \
 	rm -fr .libs
 
 install-bins:
-	$(INSTALL-DIR) $(DESTDIR)$(bindir) $(DESTDIR)$(libdir)/twin/modules ; \
-	$(INSTALL) $(BINS) $(DESTDIR)$(bindir) ; \
-	$(INSTALL-BIN) twstart $(DESTDIR)$(bindir)/twin ; \
+	$(INSTALL-DIR) $(DESTDIR)$(bindir) $(DESTDIR)$(libdir)/twin/modules && \
+	$(INSTALL) $(BINS) $(DESTDIR)$(bindir) && \
+	$(INSTALL-BIN) twstart $(DESTDIR)$(bindir) && \
 	$(LN) twin_wrapper $(DESTDIR)$(bindir)/twin
 
 install: install-bins $(foreach M,$(MODS),install-mod-$(M))

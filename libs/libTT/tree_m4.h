@@ -41,11 +41,16 @@
 
 
 
+#define TT_TYPELIST(el) \
+el(ttbyte) el(ttshort) el(ttint) el(ttfont) el(ttcol) el(ttattr) el(ttopaque) el(ttany) el(ttpointer) el(ttstring) el(ttfunction)
+
 #define TT_LIST(el) \
 el(ttobj)  el(ttevent) el(tteventbig) el(ttlistener) el(ttcallback) el(ttcomponent) el(ttvisible) el(ttnative) el(ttwidget) el(ttlabel) el(ttanybutton) el(ttbutton) el(ttcheckbutton) el(ttradiobutton) el(ttscrollbar) el(ttbuttongroup) el(ttwindow) el(ttframe) el(ttscroller) el(ttmenuitem) el(ttcheckmenuitem) el(ttradiomenuitem) el(ttmenu) el(ttmenubar) el(ttanytext) el(tttextfield) el(tttextarea) el(tttheme) el(ttapplication)
 
 #define TT_NLIST(el) \
  el(ttevent) el(tteventbig) el(ttlistener) el(ttcallback) el(ttcomponent) el(ttvisible) el(ttnative) el(ttwidget) el(ttlabel) el(ttanybutton) el(ttbutton) el(ttcheckbutton) el(ttradiobutton) el(ttscrollbar) el(ttbuttongroup) el(ttwindow) el(ttframe) el(ttscroller) el(ttmenuitem) el(ttcheckmenuitem) el(ttradiomenuitem) el(ttmenu) el(ttmenubar) el(ttanytext) el(tttextfield) el(tttextarea) el(tttheme) el(ttapplication)
+
+#define type_(t)	TT_CAT(type_,t)
 
 #define super_(obj)	TT_CAT(super_,obj)
 #define order_(obj)	TT_CAT(order_,obj)
@@ -104,6 +109,16 @@ TT_NLIST(el)
 #undef el
     order_n
 } e_order_ttobj;
+
+
+/* set type_xxx enums */
+typedef enum e_type {
+    type_first = order_n,
+#define el(t) type_(t),
+TT_TYPELIST(el)
+#undef el
+    type_last
+} e_type;
 
 
 /* set magicmask_xxx enums */
@@ -288,6 +303,8 @@ typedef enum e_order_fields {
     ttbuttongroup_field_last,
  
     ttwindow_field_first,        
+    ttwindow_title,    
+    ttwindow_menubar,
     ttwindow_field_last,
  
     ttframe_field_first,    

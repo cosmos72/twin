@@ -45,11 +45,10 @@ static byte InitCat(void) {
 	  COL(HIGH|WHITE,HIGH|BLUE), COL(HIGH|WHITE,HIGH|BLACK),
 	  COL(HIGH|BLACK,WHITE), COL(BLACK,HIGH|BLACK), COL(BLACK,WHITE)),
 	 TwConfigureWindow(Cat_Win, 0xF<<2, 0, 0, 7, 3, MAXDAT, MAXDAT),
-	 TwRow4Menu(Window, COD_QUIT, TW_ROW_INACTIVE, 17, " Quit      Alt-X "),
-	 TwItem4MenuCommon(Cat_Menu)) &&
+	 TwRow4Menu(Window, COD_QUIT, TW_ROW_INACTIVE, 17, " Quit      Alt-X ")) &&
+	TwItem4MenuCommon(Cat_Menu) &&
 	(TwMapWindow(Cat_Win, TwFirstScreen()),
-	 TwFlush(),
-	 TRUE);
+	 TwFlush());
 }
 
 int main(int argc, char *argv[]) {

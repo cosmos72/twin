@@ -138,6 +138,7 @@ static void Usage(void) {
 	  " -hw=<display>[,options] start with the given display (multiple -hw=... allowed)\n"
 	  "Currently known display methods: \n"
 	  "\tX[@<XDISPLAY>]\n"
+	  "\tgfx[@<XDISPLAY>]\n"
 	  "\ttwin[@<TWDISPLAY>]\n"
 	  "\ttty[@<tty device>]\n"
 	  "\tggi[@<ggi display>]\n", stdout);
@@ -164,7 +165,7 @@ static byte Check4SpecialArgs(void) {
 #if !defined(CONF_WM)
 static byte DieWMSo(void) {
 #if defined(CONF__MODULES)
-    printk("twin: fatal: failed to load the window manager: %s\n", ErrStr);
+    printk("twin: fatal: failed to load the window manager: %."STR(SMALLBUFF)"s\n", ErrStr);
 #else
     printk("twin: fatal: no window manager and no module loader compiled in.\n"
 	   "      Where should I get the window manager from!?\n");
@@ -206,9 +207,10 @@ static byte Init(void) {
 	    && InitHW()
 	    /*
 	     * We need care here: DrawArea2(), DrawMenu(), etc. all need All->BuiltinMenu and
-	     * also Video[]. The former initialized by InitBuiltin(), the latter by InitHW().
+	     * also Video[]. The former is initialized by InitBuiltin(), the latter by InitHW().
 	     * No DrawArea2() are allowed at all before InitHW() !
 	     */
+	    && InitDraw()   
 #ifdef CONF_WM
 	    && InitWM()
 #elif defined(CONF__MODULES)

@@ -23,6 +23,10 @@ dnl Tell the user about this.
 #ifndef _TT_DEFSM4_H
 #define _TT_DEFSM4_H
 
+define(`c_doxygen', `
+
+$@')`'dnl
+
 include(`m4/TTclasses.m4h')
 
 #define TT_LIST(el) \
@@ -30,6 +34,9 @@ TTlist()
 
 #define TT_NLIST(el) \
 TTnlist()
+
+#define TT_TYPELIST(el) \
+TTtypelist()
 
 /* typedefs for objects structures */
 define(`el',`
@@ -44,15 +51,18 @@ typedef struct s_ttfn *	ttfn;
 typedef void (*ttcallback_fn)(ttuint nargs, ttany *args);
 typedef void (*ttvisible_repaint_fn)(ttvisible,ttshort,ttshort,ttshort,ttshort);
 
-/* global methods structures */
+/* globally available runtime class types; returned by TTCLASSOF(<some object>) */
 define(`el',`
+/** class of `$1' */
 extern ttfn	TTFN_$1;')
 TTlist()
 undefine(`el')
+/** class of `ttfn' */
 extern ttfn	TTFN_ttfn;
 
 /* #defines for objects hierarchy */
 define(`extends',`
+/** the superclass of $2 */
 `#'define TTsuper_$2	$1')
 define(`field')
 define(`el',`TTdef_$1($1)')

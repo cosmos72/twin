@@ -74,7 +74,7 @@ TT_INLINE void SetYl_ttwidget(ttwidget o, ttint yl) {
 /* ttbutton */
 TT_INLINE byte IsPressed_ttbutton(ttbutton o) {
     if (o && TTAssert(IS(ttbutton,o)))
-	return !!(o->vflags & ttbutton_vflags_pressed);
+	return !!(o->vflags & ttanybutton_vflags_pressed);
     return FALSE;
 }
 

@@ -5,16 +5,22 @@
 #
 # list of subdirectories to build
 #
-SUBDIRS=
+SUBDIRS=twcd
 
-# add your binary to this list
 #
-BINS=twbiff
+# add your binary here
+#
+BINS=
+MODS=
+SHLIBS=
+ARLIBS=
+CLLIBS=
 
 # place the object files for your binary here: you must add a line
 # OBJS_<your binary>=<list of object files>
 #
-OBJS_twbiff=biff.o
+# example:
+# OBJS_twbiff=biff.o
 
 
 #
@@ -23,7 +29,11 @@ OBJS_twbiff=biff.o
 TOPDIR=..
 THISDIR=$(TOPDIR)/contrib
 
-LD_FLAGS+=-L$(TOPDIR)/lib -lTw
+-include $(TOPDIR)/makeautoconf
+
+LD_FLAGS+=$(LD_LIBTW)
+
+ALLBINS=$(BINS) $(MODS) $(SHLIBS) $(ARLIBS) $(CLLIBS)
 
 all: everything
 
@@ -33,11 +43,15 @@ all: everything
 -include .depend
 -include $(TOPDIR)/.hdepend
 
+#
+# include the do-everything file.
+# Must correctly set all CC_FLAGS* and LD_FLAGS* before including this!
+#
 include $(TOPDIR)/makerules
 
 
 ifneq ($(CONF_SOCKET),n)
-  everything: $(BINS)
+  everything: $(ALLBINS) $(patsubst %,dir-%,$(SUBDIRS))
 else
   everything:
 	@echo ; \
@@ -47,11 +61,6 @@ else
 endif
 
 
-#
-# include the do-everything file.
-# Must correctly set all CC_FLAGS* and LD_FLAGS* before including this!
-#
-include $(TOPDIR)/makerules
 
 
 install:
@@ -59,5 +68,10 @@ install:
 	$(INSTALL) $(BINS) $(DESTDIR)$(bindir)
 
 clean:
-	rm -f .*.flags .*.link gmon.out core $(OBJS) $(BINS)
+	rm -f .*.flags .*.bin .*.mod .*.shlib .*.arlib .*.cllib gmon.out core \
+		$(ALLBINS) *.la *.a *.o *.lo *.so *.so.* ; \
+	rm -fr .libs
+
+distclean: clean
+	rm -f `find . -type l` `find . -name .modules -o -name .depend`
 

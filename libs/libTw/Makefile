@@ -6,8 +6,8 @@ THISDIR=$(TOPDIR)/libs/libTw
 
 SUBDIRS=
 
+include $(TOPDIR)/include/Tw/makeversion
 -include $(TOPDIR)/makeautoconf
-include makeversion
 
 LD_FLAGS+=$(LD_LIBSOCKET)
 
@@ -44,10 +44,10 @@ else
   everything: warn
   install: warn
   warn:
-	@rm -f (ARLIBS) $(SHLIBS) ; \
+	@rm -f $(ARLIBS) $(SHLIBS) ; \
 	 echo ; \
 	 echo "You disabled \"Support remote socket connections\"," ; \
-	 echo "so the library libTw.so will NOT be compiled!" ; \
+	 echo "so the library libTw will NOT be compiled!" ; \
 	 echo
 endif
 
@@ -83,24 +83,18 @@ md5.c:
 missing.c:
 	$(LN) $(TOPDIR)/server/missing.c $@
 
-do-autogen: paranoia_m4.h libTw1_m4.h libTw2_m4.h libTw2_i386_m4.h libTw3_m4.h
+do-autogen: libTw1_m4.h libTw2_m4.h libTw2_i386_m4.h libTw3_m4.h
 
 install-headers:
 	$(INSTALL-DIR) $(DESTDIR)$(includedir)/Tw && \
 	$(INSTALL-TXT) $(TOPDIR)/include/Tw/*.h $(DESTDIR)$(includedir)/Tw
+	
+install-dir:
+	$(INSTALL-DIR) $(DESTDIR)$(libdir)
 
-install-libTw.a:
-	$(INSTALL-DIR) $(DESTDIR)$(libdir) && \
-	$(INSTALL-TXT) $(ARLIBS) $(DESTDIR)$(libdir)
-
-install-libTw.la:
-	if [ -f libTw.la ]; then \
-	  $(INSTALL) libTw.la $(DESTDIR)$(libdir) ; \
-	fi
-
-install-real: install-headers install-libTw.a install-libTw.la
+install-real: install-headers install-dir $(foreach B,$(SHLIBS) $(ARLIBS),install-lib-$(B))
 
 clean:
-	rm -f .*.flags .*.shlib .*.arlib libTw.la libTw.a *.o *.lo ; \
+	rm -f .*.flags .*.shlib .*.arlib *.a *.la *.o *.lo *.so *.so.* ; \
 	rm -fr .libs
 

@@ -56,14 +56,21 @@ extern tdisplay Tw_DefaultD;
 #define TwScrollWidget(W, x, y)		Tw_ScrollWidget(Tw_DefaultD, W, x, y)
 #define TwGetOwnerWidget(W)		Tw_GetOwnerWidget(Tw_DefaultD, W)
 #define TwFindWidgetAtWidget(W, i, j)	Tw_FindWidgetAtWidget(Tw_DefaultD, W, i, j)
-#define TwExposeTextWidget(Window, XWidth, YWidth, Left, Up, Pitch, Text) \
-		Tw_ExposeTextWidget(Tw_DefaultD, Window, XWidth, YWidth, Left, Up, Pitch, Text)
-#define TwExposeHWFontWidget(Window, XWidth, YWidth, Left, Up, Pitch, Font) \
-		Tw_ExposeHWFontWidget(Tw_DefaultD, Window, XWidth, YWidth, Left, Up, Pitch, Font)
-#define TwExposeHWAttrWidget(Window, XWidth, YWidth, Left, Up, Pitch, Attr) \
-		Tw_ExposeHWAttrWidget(Tw_DefaultD, Window, XWidth, YWidth, Left, Up, Pitch, Attr)
 
+#define TwDrawWidget(W, XWidth, YWidth, Left, Up, Text, Font, Attr) \
+		Tw_DrawWidget(Tw_DefaultD, W, XWidth, YWidth, Left, Up, Text, Font, Attr)
 
+#define TwDraw2Widget(W, XWidth, YWidth, Left, Up, Pitch, Text, Font, Attr) \
+		Tw_Draw2Widget(Tw_DefaultD, W, XWidth, YWidth, Left, Up, Pitch, Text, Font, Attr)
+
+#define TwDrawTextWidget(W, XWidth, YWidth, Left, Up, Pitch, Text) \
+		Tw_DrawTextWidget(Tw_DefaultD, W, XWidth, YWidth, Left, Up, Pitch, Text)
+#define TwDrawHWFontWidget(W, XWidth, YWidth, Left, Up, Pitch, Font) \
+		Tw_DrawHWFontWidget(Tw_DefaultD, W, XWidth, YWidth, Left, Up, Pitch, Font)
+#define TwDrawHWAttrWidget(W, XWidth, YWidth, Left, Up, Pitch, Attr) \
+		Tw_DrawHWAttrWidget(Tw_DefaultD, W, XWidth, YWidth, Left, Up, Pitch, Attr)
+
+#define TwSetVisibleWidget(W, on_off)	Tw_SetVisibleWidget(Tw_DefaultD, W, on_off)
 #define TwFocusSubWidget(W)		Tw_FocusSubWidget(Tw_DefaultD, W)
 
 #define TwLowerWidget(W)		Tw_LowerWidget(Tw_DefaultD, W)
@@ -97,9 +104,11 @@ Tw_CreateGadget(Tw_DefaultD, Parent, XWidth, YWidth, TextNormal, Attrib, Flags, 
 #define TwResizeGadget			TwResizeWidget
 #define TwScrollGadget			TwScrollWidget
 #define TwGetOwnerGadget		TwGetOwnerWidget
-#define TwExposeTextGadget		TwExposeTextWidget
-#define TwExposeHWFontGadget		TwExposeHWFontWidget
-#define TwExposeHWAttrGadget		TwExposeHWAttrWidget
+#define TwDrawGadget			TwDrawWidget
+#define TwDraw2Gadget			TwDraw2Widget
+#define TwDrawTextGadget		TwDrawTextWidget
+#define TwDrawHWFontGadget		TwDrawHWFontWidget
+#define TwDrawHWAttrGadget		TwDrawHWAttrWidget
 
 #define TwLowerGadget			TwLowerWidget
 #define TwRaiseGadget			TwRaiseWidget
@@ -136,10 +145,12 @@ Tw_CreateGadget(Tw_DefaultD, Parent, XWidth, YWidth, TextNormal, Attrib, Flags, 
 #define TwSetHWFontsGadget(Gadget, bitmap, X, Y, HWFont, Left, Up) \
 					Tw_SetHWFontsGadget(Tw_DefaultD, Gadget, bitmap, X, Y, HWFont, Left, Up)
 
-
+/* backward compatibility. will be removed */
 #define TwCreate4MenuRow(Window, Code, FlagActive, TextLen, Text) \
 		Tw_Create4MenuRow(Tw_DefaultD, Window, Code, FlagActive, TextLen, Text)
-#define TwRow4Menu			TwCreate4MenuRow
+#define TwCreate4Menu2Row(Window, Code, FlagActive, TextLen, Text) \
+		Tw_Create4Menu2Row(Tw_DefaultD, Window, Code, FlagActive, TextLen, Text)
+#define TwRow4Menu			TwCreate4Menu2Row
 #define TwCreateWindow(NameLen, Name, ColName, Menu, ColText, cursorType, \
 		       Attrib, Flags, XWidth, YWidth, ScrollBackLines) \
 		Tw_CreateWindow(Tw_DefaultD, NameLen, Name, ColName, Menu, ColText, cursorType, \
@@ -153,9 +164,11 @@ Tw_CreateGadget(Tw_DefaultD, Parent, XWidth, YWidth, TextNormal, Attrib, Flags, 
 #define TwResizeWindow			TwResizeWidget
 #define TwScrollWindow			TwScrollWidget
 #define TwGetOwnerWindow		TwGetOwnerWidget
-#define TwExposeTextWindow		TwExposeTextWidget
-#define TwExposeHWFontWindow		TwExposeHWFontWidget
-#define TwExposeHWAttrWindow		TwExposeHWAttrWidget
+#define TwDrawWindow			TwDrawWidget
+#define TwDraw2Window			TwDraw2Widget
+#define TwDrawTextWindow		TwDrawTextWidget
+#define TwDrawHWFontWindow		TwDrawHWFontWidget
+#define TwDrawHWAttrWindow		TwDrawHWAttrWidget
 
 #define TwLowerWindow			TwLowerWidget
 #define TwRaiseWindow			TwRaiseWidget
@@ -200,6 +213,11 @@ Tw_CreateGadget(Tw_DefaultD, Parent, XWidth, YWidth, TextNormal, Attrib, Flags, 
 #define TwCreate4MenuMenuItem(Parent, Window, Flags, NameLen, Name) \
 		Tw_Create4MenuMenuItem(Tw_DefaultD, Parent, Window, Flags, NameLen, Name)
 #define TwItem4Menu			TwCreate4MenuMenuItem
+#define TwCreate4MenuAny(Parent, Window, Code, Flags, Len, Name) \
+		Tw_Create4MenuAny(Tw_DefaultD, Parent, Window, Code, Flags, Len, Name);
+
+
+
 #define TwCreate4MenuCommonMenuItem(Menu) Tw_Create4MenuCommonMenuItem(Tw_DefaultD, Menu)
 #define TwItem4MenuCommon		TwCreate4MenuCommonMenuItem
 #define TwDeleteMenuItem(MenuItem)	Tw_DeleteMenuItem(Tw_DefaultD, MenuItem)

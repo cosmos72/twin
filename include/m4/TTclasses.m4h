@@ -1,6 +1,7 @@
 
 
 ifdef(`c_comment', `', `define(`c_comment')')
+ifdef(`c_doxygen', `', `define(`c_doxygen')')
 
 c_comment([
 /*
@@ -18,6 +19,8 @@ c_comment([
 ])
 
 divert(-1)
+
+define(`TTtypelist', `el(ttbyte) el(ttshort) el(ttint) el(ttfont) el(ttcol) el(ttattr) el(ttopaque) el(ttany) el(ttpointer) el(ttstring) el(ttfunction)')
 
 define(`NSHIFT', `ifelse($1, 0, `shift($@)', `NSHIFT(decr($1), shift(shift($@)))')')
 
@@ -60,10 +63,15 @@ define(`TTFNdef_ttobj',`protected(ttuint order,order,$1)`'dnl
     protected($1 (*Build)($1 o),Build,$1)`'dnl
     protected(void (*Break)($1 o),Break,$1)`'dnl
     protected(void (*Del)($1),Del,$1)`'dnl
-    public(ttbyte (*GetValue)($1 o, ttuint which, ttany *value),GetValue,$1,3,ttbyte,$1,ttuint,ttany *)`'dnl
+`'`'c_doxygen(`/** get the value of `which' field from object `o' */')`'dnl
+    public(ttfn (*GetValue)($1 o, ttuint which, ttany *value),GetValue,$1,3,ttfn,$1,ttuint,ttany *)`'dnl
+`'`'c_doxygen(`/** set the value of `which' field into object `o' to `value' */')`'dnl
     public(ttbyte (*SetValue)($1 o, ttuint which, ttany value),SetValue,$1,3,ttbyte,$1,ttuint,ttany)`'dnl
+`'`'c_doxygen(`/** change the value of `which' field into object `o' to `(old_value & ~nand_value) ^ xor_value' */')`'dnl
     public(ttbyte (*ChangeValue)($1 o, ttuint which, ttany nand_value, ttany xor_value),ChangeValue,$1,4,ttbyte,$1,ttuint,ttany,ttany)`'dnl
+`'`'c_doxygen(`/** increase by 1 the reference count of object `o' */')`'dnl
     exported(void (*Ref)($1 o),Ref,$1,1,void,$1)`'dnl
+`'`'c_doxygen(`/** decrease by 1 the reference count of object `o' */')`'dnl
     exported(void (*Unref)($1 o),Unref,$1,1,void,$1)`'dnl
 ')
 
@@ -77,6 +85,7 @@ define(`TTdef_ttevent',`extends(ttobj,$1)`'dnl
     field(ttuint,evflags,r)`'dnl
 ')
 define(`TTFNdef_ttevent',`extends(ttobj,$1)`'dnl
+`'`'c_doxygen(`/** create a ttevent with given `evtype', `evcode' and `evflags' */')`'dnl
     exported($1 (*Create)(ttuint evtype, ttuint evcode, ttuint evflags)`'dnl
              ,Create,$1,3,ttevent,ttuint,ttuint,ttuint)`'dnl
 ')
@@ -92,6 +101,7 @@ define(`TTdef_tteventbig',`extends(ttevent,$1)`'dnl
     field(TT_CONST ttbyte *,data,r)`'dnl
 ')
 define(`TTFNdef_tteventbig',`extends(ttevent,$1)
+`'`'c_doxygen(`/** create a tteventbig with given fields */')`'dnl
     exported(tteventbig (*Create)(ttuint evtype, ttuint evcode, ttuint evflags`'dnl
              ,ttshort x, ttshort y, ttshort w, ttshort h, ttuint len, TT_CONST ttbyte *data)`'dnl
 	     ,Create,$1,9,tteventbig,ttuint,ttuint,ttuint,ttshort,ttshort,ttshort,ttshort,ttuint,TT_CONST ttbyte *)`'dnl
@@ -121,9 +131,12 @@ define(`TTdef_ttcallback',`extends(ttlistener,$1)`'dnl
     field(ttany *,args)`'dnl
 ')
 define(`TTFNdef_ttcallback',`extends(ttlistener,$1)`'dnl
+`'`'c_doxygen(`/** create a ttcallback for a ttcomponent with given fields */')`'dnl
     exported($1 (*Create)(ttcomponent o, ttuint evtype, ttuint flags, ttcallback_fn function, ttany arg),Create,$1,5,$1,ttcomponent,ttuint,ttuint,ttcallback_fn,ttany)`'dnl
+`'`'c_doxygen(`/** create a ttcallback for a ttcomponent with given fields */')`'dnl
     exported($1 (*CreateA)(ttcomponent o, ttevent ev, ttuint flags, ttuint narg_component, ttuint narg_event, ttuint nargs, ttcallback_fn function, ttany TT_CONST *args)`'dnl
 ,CreateA,$1,8,$1,ttcomponent,ttevent,ttuint,ttuint,ttuint,ttuint,ttcallback_fn,ttany TT_CONST *)`'dnl
+`'`'c_doxygen(`/** create a ttcallback for a ttcomponent with given fields */')`'dnl
     exported($1 (*CreateV)(ttcomponent o, ttevent ev, ttuint flags, ttuint narg_component, ttuint narg_event, ttuint nargs, ttcallback_fn function, va_list *vargs)`'dnl
 ,CreateV,$1,8,$1,ttcomponent,ttevent,ttuint,ttuint,ttuint,ttuint,ttcallback_fn,va_list *)`'dnl
 ')
@@ -150,13 +163,23 @@ define(`TTdef_ttvisible',`extends(ttcomponent,$1)`'dnl
     field(ttvisible_repaint_fn,repaint,r)`'dnl
 ')
 define(`TTFNdef_ttvisible',`extends(ttcomponent,$1)`'dnl
+`'`'c_doxygen(`/** add the ttvisible `o' into `parent' */')`'dnl
     public(void (*AddTo)($1 o, ttvisible parent),AddTo,$1,2,void,$1,ttvisible)`'dnl
+`'`'c_doxygen(`/** remove the ttvisible `o' from its parent */')`'dnl
     public(void (*Remove)($1 o),Remove,$1,1,void,$1)`'dnl
+`'`'c_doxygen(`/** set the ttvisible `o' to be visible or not */')`'dnl
     public(void (*SetVisible)($1 o, ttbyte on_off),SetVisible,$1,2,void,$1,ttbyte)`'dnl
+`'`'c_doxygen(`/** set the tttheme `theme' of the ttvisible `o' */')`'dnl
     public(void (*SetTheme)($1 o, tttheme theme),SetTheme,$1,2,void,$1,tttheme)`'dnl
+`'`'c_doxygen(`/** actually draw (part of) the contents of the ttvisible `o' - internally called by TTBuiltinRepaint_ttvisible */')`'dnl
+    public(void (*Draw)($1 o, ttshort x, ttshort y, ttshort w, ttshort h, ttshort pitch, TT_CONST ttbyte *asciidata, TT_CONST ttfont *fontdata, TT_CONST ttattr *attrdata),Draw,$1,9,void,$1,ttshort,ttshort,ttshort,ttshort,ttshort,TT_CONST ttbyte *,TT_CONST ttfont *,TT_CONST ttattr *)`'dnl
+`'`'c_doxygen(`/** internal libTT method that repaints (part of) the ttvisible `o' using its theme */')`'dnl
     public(void (*BuiltinRepaint)($1 o, ttshort x, ttshort y, ttshort w, ttshort h),BuiltinRepaint,$1,5,void,$1,ttshort,ttshort,ttshort,ttshort)`'dnl
+`'`'c_doxygen(`/** change the internal libTT method used to repaint (part of) the ttvisible `o' */')`'dnl
     exported(void (*SetRepaint)($1 o, ttvisible_repaint_fn repaint),SetRepaint,$1,2,void,$1,ttvisible_repaint_fn)`'dnl
+`'`'c_doxygen(`/** add the ttvisible `child' into `o' */')`'dnl
     exported(void (*Add)($1 o, ttvisible child),Add,$1,2,void,$1,ttvisible)`'dnl
+`'`'c_doxygen(`/** request a repaint for the given part of the ttvisible `o' */')`'dnl
     exported(void (*Expose)($1 o, ttshort x, ttshort y, ttshort w, ttshort h),Expose,$1,5,void,$1,ttshort,ttshort,ttshort,ttshort)`'dnl
 ')
 
@@ -165,7 +188,9 @@ TTappend(ttnative)
 define(`TTdef_ttnative',`extends(ttvisible,$1)`'dnl
 ')
 define(`TTFNdef_ttnative',`extends(ttvisible,$1)`'dnl
+`'`'c_doxygen(`/** get the ttnative `root' object into which each top level ttvisible is added */')`'dnl
     public(ttnative (*GetRoot)(void),GetRoot,$1,0,ttnative)`'dnl
+`'`'c_doxygen(`/** create a ttnative with given fields */')`'dnl
     exported(ttnative (*Create)(ttany),Create,$1,1,ttnative,ttany)`'dnl
 ')
 
@@ -180,11 +205,17 @@ define(`TTdef_ttwidget',`extends(ttvisible,$1)`'dnl
     field(ttint,yl,r)`'dnl
 ')
 define(`TTFNdef_ttwidget',`extends(ttvisible,$1)`'dnl
+`'`'c_doxygen(`/** set some (depeding on `mask') of the position `x' and `y' and the size `w' and `h' of the ttwidget `o' */')`'dnl
     public(void (*SetXYWH)($1 o, ttuint mask, ttshort x, ttshort y, ttshort w, ttshort h),SetXYWH,$1,6,void,$1,ttbyte,ttshort,ttshort,ttshort,ttshort)`'dnl
+`'`'c_doxygen(`/** set some (depeding on `mask') of the inside scroll position `xl' and `yl' of the ttwidget `o' */')`'dnl
     public(void (*SetXlYl)($1 o, ttuint mask, ttint xl, ttint yl),SetXlYl,$1,4,void,$1,ttbyte,ttint,ttint)`'dnl
+`'`'c_doxygen(`/** set the position `x' and `y' of the ttwidget `o' */')`'dnl
     exported(void (*SetXY)($1 o, ttshort x, ttshort y),SetXY,$1,3,void,$1,ttshort,ttshort)`'dnl
+`'`'c_doxygen(`/** set the size `w' and `h' of the ttwidget `o' */')`'dnl
     exported(void (*SetWH)($1 o, ttshort w, ttshort h),SetWH,$1,3,void,$1,ttshort,ttshort)`'dnl
+`'`'c_doxygen(`/** set the inside scroll position `xl' of the ttwidget `o' */')`'dnl
     exported(void (*SetXl)($1 o, ttint xl),SetXl,$1,2,void,$1,ttint)`'dnl
+`'`'c_doxygen(`/** set the inside scroll position `yl' of the ttwidget `o' */')`'dnl
     exported(void (*SetYl)($1 o, ttint yl),SetYl,$1,2,void,$1,ttint)`'dnl
 ')
 
@@ -195,7 +226,9 @@ define(`TTdef_ttlabel',`extends(ttwidget,$1)`'dnl
     field(ttfont *,text)`'dnl
 ')
 define(`TTFNdef_ttlabel',`extends(ttwidget,$1)`'dnl
+`'`'c_doxygen(`/** set the text of the ttlabel `o' */')`'dnl
     public(ttbyte (*SetText)($1 o, TT_CONST ttbyte * text),SetText,$1,2,ttbyte,$1,TT_CONST ttbyte *)`'dnl
+`'`'c_doxygen(`/** create a ttlabel with given text */')`'dnl
     exported(ttlabel (*Create)(TT_CONST ttbyte * text),Create,$1,1,ttlabel,TT_CONST ttbyte *)`'dnl
 ')
 
@@ -207,7 +240,9 @@ define(`TTdef_ttanybutton',`extends(ttwidget,$1)`'dnl
     field(struct s_ttshape,text_shape[ttbutton_shape_max])`'dnl
 ')
 define(`TTFNdef_ttanybutton',`extends(ttwidget,$1)`'dnl
+`'`'c_doxygen(`/** set the text of the ttanybutton `o' */')`'dnl
     public(ttbyte (*SetText)($1 o, TT_CONST ttfont * text, ttshort width, ttshort height, ttshort pitch),SetText,$1,5,ttbyte,$1,TT_CONST ttfont *,ttshort,ttshort,ttshort)`'dnl
+`'`'c_doxygen(`/** create a ttanybutton with given text */')`'dnl
     exported(ttanybutton (*Create)(TT_CONST ttfont * text, ttshort width, ttshort height, ttshort pitch),Create,$1,4,ttanybutton,TT_CONST ttfont *,ttshort,ttshort,ttshort)`'dnl
 ')
 
@@ -215,8 +250,11 @@ TTappend(ttbutton)
 define(`TTdef_ttbutton',`extends(ttanybutton,$1)`'dnl
 ')
 define(`TTFNdef_ttbutton',`extends(ttanybutton,$1)`'dnl
+`'`'c_doxygen(`/** set whether the ttbutton `o' is pressed or not */')`'dnl
     public(void (*SetPressed)($1 o, ttbyte pressed),SetPressed,$1,2,void,$1,ttbyte)`'dnl
+`'`'c_doxygen(`/** create a ttbutton with given text */')`'dnl
     exported(ttbutton (*Create)(TT_CONST ttfont * text, ttshort width, ttshort height, ttshort pitch),Create,$1,4,ttbutton,TT_CONST ttfont *,ttshort,ttshort,ttshort)`'dnl
+`'`'c_doxygen(`/** get whether the ttbutton `o' is pressed or not */')`'dnl
     exported(ttbyte (*IsPressed)($1 o),IsPressed,$1,1,ttbyte,$1)`'dnl
 ')
 
@@ -251,7 +289,8 @@ define(`TTFNdef_ttbuttongroup',`extends(ttcomponent,$1)`'dnl
 
 TTappend(ttwindow)
 define(`TTdef_ttwindow',`extends(ttwidget,$1)`'dnl
-    field(ttmenubar,menubar)`'dnl
+    field(ttbyte *,title,r)`'dnl
+    field(ttmenubar,menubar,r)`'dnl
 ')
 define(`TTFNdef_ttwindow',`extends(ttwidget,$1)`'dnl
 ')
@@ -307,6 +346,7 @@ TTappend(ttmenubar)
 define(`TTdef_ttmenubar',`extends(ttvisible,$1)`'dnl
 ')
 define(`TTFNdef_ttmenubar',`extends(ttvisible,$1)`'dnl
+`'`'c_doxygen(`/** get the default ttmenubar used by ttwidget:s */')`'dnl
     exported(ttmenubar (*GetDefault)(void),GetDefault,$1,0,ttmenubar)`'dnl
 ')
 
@@ -343,6 +383,7 @@ define(`TTdef_tttheme',`extends(ttcomponent,$1)
 ')
 define(`TTFNdef_tttheme',`extends(ttcomponent,$1)`'dnl
     protected(ttattr *(*ComputeShapeButton)(ttbutton o, ttbyte button_i, ttbyte theme_i),ComputeShapeButton,$1,2,ttattr *,ttbutton,ttbyte,ttbyte)`'dnl
+`'`'c_doxygen(`/** get the default tttheme used by ttvisible:s */')`'dnl
     exported(tttheme (*GetDefault)(void),GetDefault,$1,0,tttheme)`'dnl
 ')
 
@@ -352,6 +393,7 @@ define(`TTdef_ttapplication',`extends(ttcomponent,$1)`'dnl
     field(ttbyte *,name,r)`'dnl
 ')
 define(`TTFNdef_ttapplication',`extends(ttcomponent,$1)`'dnl
+`'`'c_doxygen(`/** create (only one allowed) a ttapplication with given name */')`'dnl
     exported(ttapplication (*Set)(TT_CONST ttbyte * name),Set,$1,1,ttapplication,TT_CONST ttbyte *)`'dnl
 ')
 

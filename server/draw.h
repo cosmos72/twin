@@ -1,8 +1,8 @@
 #ifndef _TWIN_DRAW_H
 #define _TWIN_DRAW_H
 
-void FindFontMenuItem(menu Menu, menuitem MenuItem, dat i, byte Select, hwfont *PtrFont, hwcol *PtrColor);
-void FindFontInfo(menu Menu, dat i, byte Select, hwfont *PtrFont, hwcol *PtrColor);
+byte InitDraw(void);
+
 widget FindWidgetAt(widget Parent, dat X, dat Y);
 
 void DrawSelfWidget(draw_ctx *D);

@@ -25,7 +25,7 @@ define(`DECL0', `ifelse($2, v, `', `a[0].$2 = (T$2)')')
 
 define(`ARG', `ifelse($1, 1, `', ``, '')`'ifelse($3, V, `(CONST $2 *)a[$1].V', `($2)a[$1].$3')')
 
-define(`PARSE', `ifelse($#, 2, `', `ARG($1,$2,t$3)`'PARSE(incr($1), NSHIFT(3, $@))')')
+define(`PARSE', `ifelse($#, 2, `', `ARG($1,$2,t$3)`'PARSE(incr($1), NSHIFT(4, $@))')')
 
 define(`CALL', `ifelse($4, 0, sock`'$2`'$3($6), $4, 1, Do($2,$3)(Fn$3, $6), Act($2,($5)a[1].x)($6));')
 

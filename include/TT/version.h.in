@@ -1,0 +1,25 @@
+
+#ifndef _TT_VERSION_H
+#define _TT_VERSION_H
+
+/** library major version */
+#define TT_PROTOCOL_VERSION_MAJOR @MAJOR_VER@
+/** library minor version */
+#define TT_PROTOCOL_VERSION_MINOR @MINOR_VER@
+/** library patch version */
+#define TT_PROTOCOL_VERSION_PATCH @PATCH_VER@
+/** library full version number (major,minor,patch) */
+#define TT_PROTOCOL_VERSION       ((TT_PROTOCOL_VERSION_MAJOR<<16)|(TT_PROTOCOL_VERSION_MINOR<<8)|TT_PROTOCOL_VERSION_PATCH)
+/** string reperesenting library full version number ("major.minor.patch") */
+#define TT_PROTOCOL_VERSION_STR   TT_STR(TT_PROTOCOL_VERSION_MAJOR) "." TT_STR(TT_PROTOCOL_VERSION_MINOR) "." TT_STR(TT_PROTOCOL_VERSION_PATCH)
+
+/** extract major from a full version number */
+#define TT_VER_MAJOR(n) ((n)>>16)
+/** extract minor from a full version number */
+#define TT_VER_MINOR(n) (((n)>>8) & 0xFF)
+/** extract patch from a full version number */
+#define TT_VER_PATCH(n) ((n) & 0xFF)
+/** build full version number from major,minor,patch */
+#define TT_VER_BUILD(M, m, p) (((M)<<16)|((m)<<8)|(p))
+
+#endif /* _TT_VERSION_H */

@@ -107,14 +107,14 @@ static struct s_all _All = {
     {	    /* LAT1_MAP mapped to Unicode -- it's the identity */
 	    NULL,
 	    /* IBMPC_MAP mapped to Unicode -- get from libTutf */
-	    Tutf_IBM437_to_UTF_16,
+	    Tutf_CP437_to_UTF_16,
 	    /* USER_MAP */
 	    GtransUser
     },
     
 #else /* !CONF__UNICODE */
     
-    {	    /* LAT1_MAP mapped to ibm437 -- just a best fit */
+    {	    /* LAT1_MAP mapped to CP437 -- just a best fit */
 	    "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
 	    "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
 	    "\x20\x21\x22\x23\x24\x25\x26\x27\x28\x29\x2a\x2b\x2c\x2d\x2e\x2f"
@@ -131,7 +131,7 @@ static struct s_all _All = {
 	    "\xFE\xA5\x4F\x4F\x4F\x4F\x99\x78\xE8\x55\x55\x55\x9A\x59\xFE\xE1"
 	    "\x85\xA0\x83\x61\x84\x86\x91\x87\x8A\x82\x88\x89\x8D\xA1\x8C\x8B"
 	    "\xFE\xA4\x95\xA2\x93\x6F\x94\xF6\xED\x97\xA3\x96\x81\x79\xFE\x98",
-	    /* IBMPC_MAP to ibm437 -- it's the identity */
+	    /* IBMPC_MAP to CP437 -- it's the identity */
 	    NULL,
 	    /* USER_MAP */
 	    GtransUser
@@ -184,7 +184,7 @@ byte InitData(void) {
     
     for (i = 0; i < sizeof(vec)/sizeof(vec[0]); i++) {
 	for (j = 0; j < sizes[i]; j++)
-	    vec[i][j] = Tutf_IBM437_to_UTF_16[vec[i][j]];
+	    vec[i][j] = Tutf_CP437_to_UTF_16[vec[i][j]];
     }
 #endif /* CONF__UNICODE */
     return AssignId_all(All);

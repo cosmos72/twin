@@ -15,6 +15,7 @@
 
 #include <Tutf/utf_16.h>
 #include <Tutf/ascii.h>
+
 #include <Tutf/iso_8859_1.h>
 #include <Tutf/iso_8859_2.h>
 #include <Tutf/iso_8859_3.h>
@@ -24,11 +25,30 @@
 #include <Tutf/iso_8859_7.h>
 #include <Tutf/iso_8859_8.h>
 #include <Tutf/iso_8859_9.h>
-#include <Tutf/ibm437.h>
-#include <Tutf/ibm850.h>
-#include <Tutf/ibm865.h>
+#include <Tutf/iso_8859_13.h>
+#include <Tutf/iso_8859_14.h>
+#include <Tutf/iso_8859_15.h>
 
+#include <Tutf/cp437.h>
+#include <Tutf/cp737.h>
+#include <Tutf/cp775.h>
+#include <Tutf/cp850.h>
+#include <Tutf/cp852.h>
+#include <Tutf/cp855.h>
+#include <Tutf/cp857.h>
+#include <Tutf/cp860.h>
+#include <Tutf/cp861.h>
+#include <Tutf/cp862.h>
+#include <Tutf/cp863.h>
+#include <Tutf/cp864.h>
+#include <Tutf/cp865.h>
 #include <Tutf/cp866.h>
+#include <Tutf/cp869.h>
+#include <Tutf/cp874.h>
+    
+#include <Tutf/cp1250.h>
+#include <Tutf/cp1251.h>
+#include <Tutf/cp1255.h>
 
 #endif /* _TUTF_DEFS_H */
 

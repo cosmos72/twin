@@ -54,8 +54,11 @@
 # include <unistd.h>
 #endif
 
-#include <sys/mman.h>
-#include <sys/stat.h>
+#ifdef HAVE_SYS_MMAN_H
+# include <sys/mman.h>
+#endif
+
+# include <sys/stat.h>
 #include <sys/types.h>
 
 #include <Tw/datatypes.h> /* to allow including <Tw/datasizes.h> */
@@ -79,12 +82,16 @@ static const char *prefix = "";
 static int suppress_CONFs = 0, fake_rules = 0;
 
 static char depname[512];
+static int depnamelen;
 
 static void do_depname(void)
 {
     if (!hasdep) {
 	hasdep = 1;
-	printf("%s%s:", prefix, depname);
+	if (depname[depnamelen-1] == 'o')
+	    printf("%s%s %s%.*slo:", prefix, depname, prefix, depnamelen-1, depname);
+	else
+	    printf("%s%s:", prefix, depname);
 	if (g_filename)
 	    printf(" %s%s", prefix, g_filename);
     }
@@ -486,13 +493,28 @@ static void do_depend(const char * filename)
     }
     
     mapsize = st.st_size;
-    mapsize = (mapsize+pagesizem1) & ~pagesizem1;
+#ifdef HAVE_MMAP
+    mapsize = (mapsize + pagesizem1) & ~pagesizem1;
     map = mmap(NULL, mapsize, PROT_READ, MAP_PRIVATE, fd, 0);
     if ((long) map == -1) {
 	perror("mkdep: mmap");
 	close(fd);
 	return;
     }
+#else
+    map = malloc(mapsize);
+    if (map == NULL) {
+	perror("mkdep: malloc");
+	close(fd);
+	return;
+    }
+    if (read(fd, map, mapsize) < mapsize) {
+	perror("mkdep: read");
+	free(map);
+	close(fd);
+	return;
+    }
+#endif	
     if ((unsigned long) map % sizeof(unsigned long) != 0)
     {
 	fprintf(stderr, "do_depend: map not aligned\n");
@@ -502,7 +524,11 @@ static void do_depend(const char * filename)
     clear_config();
     state_machine(map, map+st.st_size);
     
+#ifdef HAVE_MMAP
     munmap(map, mapsize);
+#else
+    free(map);
+#endif
     close(fd);
 }
 
@@ -522,8 +548,7 @@ int main(int argc, char **argv)
 	filename = *++argv;
 	if ((len = strlen(filename)) > sizeof(depname) - 1)
 	    len = sizeof(depname) - 1;
-	memcpy(depname, filename, len+1);
-	g_filename = 0;
+	
 	if (len >= 2 && !memcmp("+C", filename, 2)) {
 	    suppress_CONFs = 0;
 	    continue;
@@ -548,6 +573,9 @@ int main(int argc, char **argv)
 	    prefix = filename+2;
 	    continue;
 	}
+	g_filename = 0;
+	memcpy(depname, filename, depnamelen = len);
+	depname[len] = '\0';
 	if (len > 2 && filename[len-2] == '.') {
 	    if (filename[len-1] == 'c' || filename[len-1] == 'C' || filename[len-1] == 'S') {
 		depname[len-1] = 'o';

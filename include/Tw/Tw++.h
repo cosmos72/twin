@@ -478,7 +478,7 @@ class TClientMsgEvent : public s_tevent_clientmsg {
     inline udat code( )		const	{ return Code; }
     inline udat clientmsg( )	const	{ return Code; }
     inline udat len( )		const	{ return Len; }
-    inline const char *data( )	const	{ return (const char *)Data; }
+    inline const char *data( )	const	{ return (const char *)Data.b; }
 };
 
 class TDisplayEvent : public s_tevent_display {

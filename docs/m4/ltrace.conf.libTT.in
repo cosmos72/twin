@@ -33,8 +33,6 @@ uint    DEF(TTInPanic)(void);
 uint    DEF(TTLibraryVersion)(void);
 
 uint    DEF(TTOpen)(string);
-uint    DEF(TTOpenV)(uint, string, addr);
-uint    DEF(TTOpenA)(uint, addr);
 void    DEF(TTClose)(void);
 void    DEF(TTCloseQuickNDirty)(void);
 
@@ -43,7 +41,8 @@ uint    DEF(TTFlush)(void);
 uint    DEF(TTTimidFlush)(void);
 uint    DEF(TTSync)(void);
 
-int     DEF(TTMainLoop)(void);
+uint    DEF(TTMainLoop)(void);
+uint    DEF(TTMainLoopOnce)(uint);
 void    DEF(TTExitMainLoop)(void);
 addr    DEF(TTErrnoLocation)(void);
 string  DEF(TTStrError)(uint);
@@ -53,6 +52,7 @@ addr    DEF(TTNew)(addr);
 void    DEF(TTDel)(addr);
 uint    DEF(TTInstanceOf)(addr, addr);
 addr    DEF(TTClassOf)(addr);
+string  DEF(TTClassNameOf)(addr);
 uint    DEF(TTGetValueId)(string);
 string  DEF(TTGetValueName)(uint);
 

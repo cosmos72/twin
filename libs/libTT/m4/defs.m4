@@ -51,6 +51,7 @@ typedef struct s_ttfn_$1 *	ttfn_$1;')
 TTlist()
 undefine(`el')
 
+typedef ttfn_ttobj ttfn;
 
 
 /* declarations for objects structures */
@@ -93,6 +94,7 @@ typedef struct s_tthw {
     byte (*Flush)(void);
     byte (*TimidFlush)(void);
     byte (*MainLoop)(void);
+    byte (*MainLoopOnce)(byte);
     void (*ExitMainLoop)(void);
     void (*DeleteListener)(ttlistener);
 
@@ -115,6 +117,19 @@ TTlist()
 } s_ttfns;
 undefine(`el')
 
+define(`el',`
+extern tt_fn TTFN_$1;')
+
+/* client-visible global types */
+TTtypelist()
+#define TTFN_ttsbyte	TTFN_ttbyte
+#define TTFN_ttushort	TTFN_ttshort
+#define TTFN_ttuint	TTFN_ttint
+
+/* client-visible global methods structures */
+TTlist()
+
+undefine(`el')
 
 /* #defines for global methods structures */
 #define TFNs	(TTD.FN_)

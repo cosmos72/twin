@@ -56,6 +56,9 @@
 # include <sys/ioctl.h>
 #endif
 
+/* backward compatibility. will be removed */
+#define Tw_Create4MenuMenuItem _Tw_Create4MenuMenuItem
+
 #include <Tw/Tw.h>
 
 #include <Tw/Twavl.h>
@@ -76,8 +79,6 @@ TH_R_MUTEX_HELPER_DEFS(static);
 /* remove the `Obj' suffix from Tw_ChangeFieldObj() */
 #define Tw_ChangeFieldObj Tw_ChangeField
 
-/* early check libTw.h against sockproto.h */
-#include "paranoia_m4.h"
 
 #include "check_asm.h"
 
@@ -414,7 +415,8 @@ TW_INLINE uldat ParanoidAddQueueQMSG(tw_d TwD, uldat len, void *data) {
 	minlen = sizeof(struct s_tevent_gadget);
 	break;
       case TW_MSG_MENU_ROW:
-	minlen = sizeof(struct s_tevent_menu);
+	/* servers < 0.4.4 do not have a ->Row field */
+	minlen = sizeof(struct s_tevent_menu) - sizeof(tobj);
 	break;
       case TW_MSG_SELECTION:
       case TW_MSG_SELECTIONCLEAR:
@@ -913,17 +915,17 @@ byte Tw_CheckMagic(TW_CONST byte id[])  {
 	CommonErrno = TW_EXLIB_SIZES;
 	return FALSE;
     }
-    if (sizeof(struct s_tevent_display)  != sizeof(tobj) + 4*sizeof(udat) + sizeof(uldat) ||
-	sizeof(struct s_tevent_keyboard) != sizeof(tobj) + 3*sizeof(udat) + 2 ||
-	sizeof(struct s_tevent_mouse)    != sizeof(tobj) + 4*sizeof(udat) ||
-	sizeof(struct s_tevent_widget)   != sizeof(tobj) + 6*sizeof(udat) ||
-	sizeof(struct s_tevent_gadget)   != sizeof(tobj) + 2*sizeof(udat) ||
-	sizeof(struct s_tevent_menu)   != 2*sizeof(tobj) + 2*sizeof(udat) ||
-	sizeof(struct s_tevent_selection)!= sizeof(tobj) + 4*sizeof(udat) ||
+    if (sizeof(struct s_tevent_display)  !=  sizeof(tobj) + 4*sizeof(udat) + sizeof(uldat) ||
+	sizeof(struct s_tevent_keyboard) !=  sizeof(tobj) + 3*sizeof(udat) + 2 ||
+	sizeof(struct s_tevent_mouse)    !=  sizeof(tobj) + 4*sizeof(udat) ||
+	sizeof(struct s_tevent_widget)   !=  sizeof(tobj) + 6*sizeof(udat) ||
+	sizeof(struct s_tevent_gadget)   !=  sizeof(tobj) + 2*sizeof(udat) ||
+	sizeof(struct s_tevent_menu)     !=3*sizeof(tobj) + 2*sizeof(udat) ||
+	sizeof(struct s_tevent_selection)!=  sizeof(tobj) + 4*sizeof(udat) ||
 	sizeof(struct s_tevent_selectionnotify) !=
 		sizeof(tobj) + 2*sizeof(udat) + 3*sizeof(uldat) + TW_MAX_MIMELEN + 4 ||
 	sizeof(struct s_tevent_selectionrequest) !=
-		2*sizeof(tobj) + 2*sizeof(udat) + sizeof(uldat) ||
+	      2*sizeof(tobj) + 2*sizeof(udat) + sizeof(uldat) ||
 	sizeof(struct s_tevent_control)  != sizeof(tobj) + 4*sizeof(udat) + sizeof(uldat) ||
 	sizeof(struct s_tevent_clientmsg) != sizeof(tobj) + 2*sizeof(udat) + 2*sizeof(uldat)) {
 	
@@ -1760,6 +1762,7 @@ static tevent_any CreateMenuEvent(twidget W, tmenu Menu, udat Code) {
 	E->W = W;
 	E->Code = Code;
 	E->Menu = Menu;
+	E->Row = (trow)0;
     }
     return (tevent_any)E;
 }
@@ -2310,14 +2313,14 @@ byte Tw_IsToggleGadget(tw_d TwD, tgadget a1) {
 /**
  * draws given portion of a widget; usually called after a TW_WIDGET_EXPOSE message
  */
-void Tw_ExposeWidget2(tw_d TwD, twidget a1, dat a2, dat a3, dat a4, dat a5, dat pitch, TW_CONST byte *a6, TW_CONST hwfont *a7, TW_CONST hwattr *a8) {
+void Tw_Draw2Widget(tw_d TwD, twidget a1, dat a2, dat a3, dat a4, dat a5, dat pitch, TW_CONST byte *a6, TW_CONST hwfont *a7, TW_CONST hwattr *a8) {
     uldat len6;
     uldat len7;
     uldat len8;
     uldat My;
     LOCK;
-    if (Fd != TW_NOFD && (My = id_Tw[order_ExposeWidget]) != TW_NOID &&
-	(My != TW_BADID || (My = FindFunctionId(TwD, order_ExposeWidget)) != TW_NOID)) {
+    if (Fd != TW_NOFD && (My = id_Tw[order_DrawWidget]) != TW_NOID &&
+	(My != TW_BADID || (My = FindFunctionId(TwD, order_DrawWidget)) != TW_NOID)) {
 	
 	if (InitRS(TwD)) {
             My = (0 + sizeof(uldat) + sizeof(dat) + sizeof(dat) + sizeof(dat) + sizeof(dat) + (len6 = a6 ? (a2*a3) * sizeof(byte) : 0, sizeof(uldat) + len6) + (len7 = a7 ? (a2*a3) * sizeof(hwfont) : 0, sizeof(uldat) + len7) + (len8 = a8 ? (a2*a3) * sizeof(hwattr) : 0, sizeof(uldat) + len8) );
@@ -2341,7 +2344,7 @@ void Tw_ExposeWidget2(tw_d TwD, twidget a1, dat a2, dat a3, dat a4, dat a5, dat 
 		    a8 += pitch;
 		    len8 -= a2;
 		}
-		Send(TwD, (My = NextSerial(TwD)), id_Tw[order_ExposeWidget]);
+		Send(TwD, (My = NextSerial(TwD)), id_Tw[order_DrawWidget]);
 		UNLK;return;
             }
 	}
@@ -2349,7 +2352,7 @@ void Tw_ExposeWidget2(tw_d TwD, twidget a1, dat a2, dat a3, dat a4, dat a5, dat 
 	Errno = TW_ENO_MEM;
 	Fail(TwD);
     } else if (Fd != TW_NOFD)
-	FailedCall(TwD, TW_ENO_FUNCTION, order_ExposeWidget);
+	FailedCall(TwD, TW_ENO_FUNCTION, order_DrawWidget);
     
     UNLK;
 }
@@ -2357,22 +2360,22 @@ void Tw_ExposeWidget2(tw_d TwD, twidget a1, dat a2, dat a3, dat a4, dat a5, dat 
 /**
  * draws given portion of a widget; usually called after a TW_WIDGET_EXPOSE message
  */
-void Tw_ExposeTextWidget(tw_d TwD, twidget W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch, TW_CONST byte *Text) {
-    Tw_ExposeWidget2(TwD, W, XWidth, YWidth, Left, Up, Pitch, Text, NULL, NULL);
+void Tw_DrawTextWidget(tw_d TwD, twidget W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch, TW_CONST byte *Text) {
+    Tw_Draw2Widget(TwD, W, XWidth, YWidth, Left, Up, Pitch, Text, NULL, NULL);
 }
 
 /**
  * draws given portion of a widget; usually called after a TW_WIDGET_EXPOSE message
  */
-void Tw_ExposeHWFontWidget(tw_d TwD, twidget W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch, TW_CONST hwfont *Font) {
-    Tw_ExposeWidget2(TwD, W, XWidth, YWidth, Left, Up, Pitch, NULL, Font, NULL);
+void Tw_DrawHWFontWidget(tw_d TwD, twidget W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch, TW_CONST hwfont *Font) {
+    Tw_Draw2Widget(TwD, W, XWidth, YWidth, Left, Up, Pitch, NULL, Font, NULL);
 }
 
 /**
  * draws given portion of a widget; usually called after a TW_WIDGET_EXPOSE message
  */
-void Tw_ExposeHWAttrWidget(tw_d TwD, twidget W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch, TW_CONST hwattr *Attr) {
-    Tw_ExposeWidget2(TwD, W, XWidth, YWidth, Left, Up, Pitch, NULL, NULL, Attr);
+void Tw_DrawHWAttrWidget(tw_d TwD, twidget W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch, TW_CONST hwattr *Attr) {
+    Tw_Draw2Widget(TwD, W, XWidth, YWidth, Left, Up, Pitch, NULL, NULL, Attr);
 }
 
 
@@ -2439,7 +2442,33 @@ void Tw_SetHWFontsGadget(tw_d TwD, tgadget G, byte bitmap, dat Width, dat Height
     Tw_WriteHWFontsGadget(TwD, G, bitmap, Width, Height, HWFont, Left, Up);
 }
 
+/**
+ * creates a row for a menu
+ */
+trow Tw_Create4Menu2Row(tw_d TwD, twindow Window, udat Code, byte Flags, ldat Len, TW_CONST byte *Text) {
+    trow R;
+    if (!(R = Tw_Create4MenuAny(TwD, (tobj)Window, (twindow)0, Code, Flags, Len, Text))) {
+	/* backward compatibility: will be removed */
+	Tw_Create4MenuRow(TwD, Window, Code, Flags, Len, Text);
+	R = Tw_FindRowByCodeWindow(TwD, Window, Code);
+    }
+    return R;
+}
 
+/* backward compatibility. will be removed */
+#undef Tw_Create4MenuMenuItem
+/**
+ * creates a menuitem for a menu
+ */
+tmenuitem Tw_Create4MenuMenuItem(tdisplay TwD, tobj Parent, twindow Window, byte Flags, dat Len, TW_CONST byte *Name) {
+    tmenuitem I;
+    if (!(I = Tw_Create4MenuAny(TwD, Parent, Window, (udat)0, Flags, Len, Name)))
+	/* backward compatibility: will be removed */
+	I = _Tw_Create4MenuMenuItem(TwD, Parent, Window, Flags, Len, Name);
+    return I;
+}
+/* backward compatibility. will be removed */
+#define Tw_Create4MenuMenuItem _Tw_Create4MenuMenuItem
 
 /***********/
 

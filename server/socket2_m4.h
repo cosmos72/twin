@@ -85,8 +85,11 @@
     "0""v"TWS_void_STR"x"widget_magic_STR"_"TWS_ldat_STR"_"TWS_ldat_STR },
 { 0, 0, "GetOwnerWidget",
     "0""x"msgport_magic_STR"x"widget_magic_STR },
-{ 0, 0, "ExposeWidget",
+{ 0, 0, "DrawWidget",
     "0""v"TWS_void_STR"x"widget_magic_STR"_"TWS_dat_STR"_"TWS_dat_STR"_"TWS_dat_STR"_"TWS_dat_STR"W"TWS_byte_STR"W"TWS_hwfont_STR"W"TWS_hwattr_STR },
+
+{ 0, 0, "SetVisibleWidget",
+    "0""v"TWS_void_STR"x"widget_magic_STR"_"TWS_byte_STR },
 
 { 0, 0, "FocusSubWidget",
     "0""v"TWS_void_STR"x"widget_magic_STR },
@@ -152,7 +155,7 @@
     "2""v"TWS_void_STR"x"group_magic_STR"x"gadget_magic_STR },
 
 { 0, 0, "Create4MenuRow",
-    "0""v"TWS_void_STR"x"window_magic_STR"_"TWS_udat_STR"_"TWS_byte_STR"_"TWS_uldat_STR"V"TWS_byte_STR },
+    "0""v"TWS_void_STR"x"window_magic_STR"_"TWS_udat_STR"_"TWS_byte_STR"_"TWS_ldat_STR"V"TWS_byte_STR },
 
 { 0, 0, "RaiseRow",
     "2""v"TWS_void_STR"x"row_magic_STR },
@@ -165,6 +168,9 @@
 
 { 0, 0, "Create4MenuMenuItem",
     "0""x"menuitem_magic_STR"x"obj_magic_STR"x"window_magic_STR"_"TWS_byte_STR"_"TWS_dat_STR"V"TWS_byte_STR },
+{ 0, 0, "Create4MenuAny",
+    "0""x"row_magic_STR"x"obj_magic_STR"x"window_magic_STR"_"TWS_udat_STR"_"TWS_byte_STR"_"TWS_ldat_STR"V"TWS_byte_STR },
+
 { 0, 0, "Create4MenuCommonMenuItem",
     "1""_"TWS_uldat_STR"x"menu_magic_STR },
 

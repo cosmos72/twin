@@ -30,13 +30,14 @@
 
 
 
+
 /* prototypes for public and exported methods */
 
 
 
 /* ttobj methods */
                                 
-ttbyte TTGetValue_ttobj(tt_obj a1, ttuint a2, ttany * a3);
+ttfn TTGetValue_ttobj(tt_obj a1, ttuint a2, ttany * a3);
     
 ttbyte TTSetValue_ttobj(tt_obj a1, ttuint a2, ttany a3);
     
@@ -83,6 +84,8 @@ void TTRemove_ttvisible(tt_obj a1);
 void TTSetVisible_ttvisible(tt_obj a1, ttbyte a2);
     
 void TTSetTheme_ttvisible(tt_obj a1, tt_obj a2);
+    
+void TTDraw_ttvisible(tt_obj a1, ttshort a2, ttshort a3, ttshort a4, ttshort a5, ttshort a6, TT_CONST ttbyte * a7, TT_CONST ttfont * a8, TT_CONST ttattr * a9);
     
 void TTBuiltinRepaint_ttvisible(tt_obj a1, ttshort a2, ttshort a3, ttshort a4, ttshort a5);
     
@@ -356,7 +359,11 @@ TT_CONST ttfont * TTGetText_ttanybutton(tt_obj o);
 /* prototypes for handy ttbuttongroup methods */
      
 /* prototypes for handy ttwindow methods */
-         
+        
+ttbyte * TTGetTitle_ttwindow(tt_obj o);
+    
+tt_obj TTGetMenubar_ttwindow(tt_obj o);
+ 
 /* prototypes for handy ttframe methods */
      
 /* prototypes for handy ttscroller methods */
@@ -409,8 +416,7 @@ ttbyte * TTGetName_ttapplication(tt_obj o);
 
 typedef enum e_order_methods {
     /* generic functions */
-    order_BAD = -1,
-    order_ExitMainLoop,
+    order_ExitMainLoop = 1,
     order_New,
     order_Del,
 
@@ -439,6 +445,7 @@ typedef enum e_order_methods {
     order_Remove_ttvisible,    
     order_SetVisible_ttvisible,    
     order_SetTheme_ttvisible,    
+    order_Draw_ttvisible,    
     order_BuiltinRepaint_ttvisible,    
     order_SetRepaint_ttvisible,    
     order_Add_ttvisible,    
@@ -563,7 +570,9 @@ typedef enum e_order_methods {
     /* handy ttradiobutton methods */     
     /* handy ttscrollbar methods */     
     /* handy ttbuttongroup methods */     
-    /* handy ttwindow methods */         
+    /* handy ttwindow methods */        
+    order_GetTitle_ttwindow,    
+    order_GetMenubar_ttwindow, 
     /* handy ttframe methods */     
     /* handy ttscroller methods */        
     order_GetScrollx_ttscroller,    
@@ -592,7 +601,7 @@ typedef enum e_order_methods {
 
 
 
-    order_FN_n
+    order_FN_last
 } e_order_methods;
 
 
@@ -636,6 +645,7 @@ static struct s_ttmethod method_array[] = {
     { order_Remove_ttvisible, (void *)TTRemove_ttvisible, },    
     { order_SetVisible_ttvisible, (void *)TTSetVisible_ttvisible, },    
     { order_SetTheme_ttvisible, (void *)TTSetTheme_ttvisible, },    
+    { order_Draw_ttvisible, (void *)TTDraw_ttvisible, },    
     { order_BuiltinRepaint_ttvisible, (void *)TTBuiltinRepaint_ttvisible, },    
     { order_SetRepaint_ttvisible, (void *)TTSetRepaint_ttvisible, },    
     { order_Add_ttvisible, (void *)TTAdd_ttvisible, },    
@@ -758,7 +768,9 @@ static struct s_ttmethod method_array[] = {
     /* handy ttradiobutton methods */     
     /* handy ttscrollbar methods */     
     /* handy ttbuttongroup methods */     
-    /* handy ttwindow methods */         
+    /* handy ttwindow methods */        
+    { order_GetTitle_ttwindow, (void *)TTGetTitle_ttwindow, },    
+    { order_GetMenubar_ttwindow, (void *)TTGetMenubar_ttwindow, }, 
     /* handy ttframe methods */     
     /* handy ttscroller methods */        
     { order_GetScrollx_ttscroller, (void *)TTGetScrollx_ttscroller, },    
@@ -789,6 +801,8 @@ static struct s_ttmethod method_array[] = {
 
 };
 
+#define order_FN_n (sizeof(method_array)/sizeof(method_array[0]))
+
 static ttbyte method_needsort = TRUE;
 
 static int CompareMethods(TT_CONST ttmethod m1, TT_CONST ttmethod m2) {
@@ -813,7 +827,7 @@ static opaque Method2Order(void *method) {
 	             (int (*)(TT_CONST void *, TT_CONST void *))CompareMethods))) {
 	return m->mtho;
     }
-    return (opaque)order_BAD;
+    return (opaque)0;
 }
 
 
@@ -833,6 +847,10 @@ static void CallMethod(ttuint order, ttuint nargs, TT_CONST ttany *a) {
     
     /* generic functions */
     
+      case order_ExitMainLoop:
+	if (nargs >= 0)
+	    TTExitMainLoop();
+	break;
       case order_New:
 	if (nargs >= 1)
 	    TTNew((tt_fn)(opaque)a[0]);
@@ -840,10 +858,6 @@ static void CallMethod(ttuint order, ttuint nargs, TT_CONST ttany *a) {
       case order_Del:
 	if (nargs >= 1)
 	    TTDel((tt_obj)(opaque)a[0]);
-	break;
-      case order_ExitMainLoop:
-	if (nargs >= 0)
-	    TTExitMainLoop();
 	break;
 
 
@@ -927,6 +941,10 @@ static void CallMethod(ttuint order, ttuint nargs, TT_CONST ttany *a) {
       case order_SetTheme_ttvisible:
 	if (nargs >= 2)
 	    TTSetTheme_ttvisible((tt_obj)(opaque)a[0], (tt_obj)(opaque)a[1]);
+	break;    
+      case order_Draw_ttvisible:
+	if (nargs >= 9)
+	    TTDraw_ttvisible((tt_obj)(opaque)a[0], (ttshort)a[1], (ttshort)a[2], (ttshort)a[3], (ttshort)a[4], (ttshort)a[5], (TT_CONST ttbyte *)(opaque)a[6], (TT_CONST ttfont *)(opaque)a[7], (TT_CONST ttattr *)(opaque)a[8]);
 	break;    
       case order_BuiltinRepaint_ttvisible:
 	if (nargs >= 5)
@@ -1117,7 +1135,7 @@ static void CallMethod(ttuint order, ttuint nargs, TT_CONST ttany *a) {
     /* handy ttradiobutton methods */     
     /* handy ttscrollbar methods */     
     /* handy ttbuttongroup methods */     
-    /* handy ttwindow methods */         
+    /* handy ttwindow methods */             
     /* handy ttframe methods */     
     /* handy ttscroller methods */             
     /* handy ttmenuitem methods */         

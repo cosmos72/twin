@@ -130,8 +130,13 @@ case order_GetOwnerWidget:
     a[0].x = (obj)sockGetOwnerWidget((widget)a[1].x);
     break;
 
-case order_ExposeWidget:
-    sockExposeWidget((widget)a[1].x, (dat)a[2]._, (dat)a[3]._, (dat)a[4]._, (dat)a[5]._, (CONST byte *)a[6].V, (CONST hwfont *)a[7].V, (CONST hwattr *)a[8].V);
+case order_DrawWidget:
+    sockDrawWidget((widget)a[1].x, (dat)a[2]._, (dat)a[3]._, (dat)a[4]._, (dat)a[5]._, (CONST byte *)a[6].V, (CONST hwfont *)a[7].V, (CONST hwattr *)a[8].V);
+    break;
+
+
+case order_SetVisibleWidget:
+    sockSetVisibleWidget((widget)a[1].x, (byte)a[2]._);
     break;
 
 
@@ -251,7 +256,7 @@ case order_SetSelectedGadgetGroup:
 
 
 case order_Create4MenuRow:
-    sockCreate4MenuRow((window)a[1].x, (udat)a[2]._, (byte)a[3]._, (uldat)a[4]._, (CONST byte *)a[5].V);
+    sockCreate4MenuRow((window)a[1].x, (udat)a[2]._, (byte)a[3]._, (ldat)a[4]._, (CONST byte *)a[5].V);
     break;
 
 
@@ -275,6 +280,11 @@ case order_CirculateChildrenRow:
 case order_Create4MenuMenuItem:
     a[0].x = (obj)sockCreate4MenuMenuItem((obj)a[1].x, (window)a[2].x, (byte)a[3]._, (dat)a[4]._, (CONST byte *)a[5].V);
     break;
+
+case order_Create4MenuAny:
+    a[0].x = (obj)sockCreate4MenuAny((obj)a[1].x, (window)a[2].x, (udat)a[3]._, (byte)a[4]._, (ldat)a[5]._, (CONST byte *)a[6].V);
+    break;
+
 
 case order_Create4MenuCommonMenuItem:
     a[0]._ = (uldat)Do(Create4MenuCommon,MenuItem)(FnMenuItem, (menu)a[1].x);

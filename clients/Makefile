@@ -7,14 +7,28 @@ SUBDIRS=
 
 -include $(TOPDIR)/makeautoconf
 
-#
-# twsysmon and twmapscrn are Linux-specific
-#
-ifeq ($(OS),Linux)
-  SUBDIRS+=mapscrn
-  OS_CLIENTS=twsysmon
-else
-  OS_CLIENTS=
+BINS=
+
+BINS_libTw=twattach twcat twclip twdialog twevent twfindtwin twlsmsgport twlsobj twsendmsg twsetroot twterm
+
+BINS_libTT=ttdemo ttdemo2
+
+
+ifneq ($(CONF_SOCKET),n)
+  #
+  # twsysmon and twmapscrn are Linux-specific
+  #
+  ifeq ($(OS),Linux)
+    SUBDIRS+=mapscrn
+    BINS_libTw+=twsysmon
+  endif
+  
+  BINS+=$(BINS_libTw)
+
+endif
+
+ifeq ($(CONF_TT),y)
+  BINS+=$(BINS_libTT)
 endif
 
 OBJS_twattach=attach.o
@@ -24,6 +38,7 @@ OBJS_twevent=event.o
 OBJS_twdialog=dialog.o
 OBJS_twdm=dm.o
 OBJS_twfindtwin=findtwin.o
+OBJS_twlsmsgport=lsmsgport.o
 OBJS_twlsobj=lsobj.o
 OBJS_twsendmsg=sendmsg.o
 OBJS_twsetroot=setroot.o
@@ -31,6 +46,7 @@ OBJS_twsysmon=sysmon.o
 OBJS_twterm=pty.o term.o
 OBJS_twthreadtest=threadtest.o
 OBJS_ttdemo=demo.o
+OBJS_ttdemo2=demo2.o
 
 CC_FLAGS_threadtest.o+=-D_REENTRANT
 
@@ -45,6 +61,7 @@ LD_FLAGS_twevent+=$(LD_LIBTW)
 LD_FLAGS_twdialog+=$(LD_LIBTW)
 LD_FLAGS_twdm+=$(LD_LIBTW)
 LD_FLAGS_twfindtwin+=$(LD_LIBTW)
+LD_FLAGS_twlsmsgport+=$(LD_LIBTW)
 LD_FLAGS_twlsobj+=$(LD_LIBTW)
 LD_FLAGS_twsendmsg+=$(LD_LIBTW)
 LD_FLAGS_twsetroot+=$(LD_LIBTW)
@@ -52,10 +69,8 @@ LD_FLAGS_twsysmon+=$(LD_LIBTW)
 LD_FLAGS_twterm+=$(LD_LIBTW)
 LD_FLAGS_twthreadtest+=$(LD_LIBTW) $(LD_LIBPTHREAD)
 LD_FLAGS_ttdemo+=$(LD_LIBTT)
+LD_FLAGS_ttdemo2+=$(LD_LIBTT)
 
-BINS=twattach twcat twclip twdialog twevent twfindtwin twlsobj twsendmsg twsetroot twterm
-
-BINS+=$(OS_CLIENTS) ttdemo
 
 all: everything
 
@@ -65,7 +80,7 @@ all: everything
 -include $(TOPDIR)/.hdepend
 
 ifneq ($(LD_LIBCRYPT),no)
- BINS+=twdm
+ BINS_libTw+=twdm
  ifneq ($(LD_LIBCRYPT),)
    LD_FLAGS_twdm+=$(LD_LIBCRYPT)
  endif
@@ -77,15 +92,8 @@ endif
  
 ifneq ($(CONF_SOCKET),n)
   ifeq ($(CONF_SOCKET_PTHREADS),y)
-    BINS+=twthreadtest
+    BINS_libTw+=twthreadtest
   endif
-  everything: $(BINS) twdetach subdirs
-else
-  everything:
-	@echo ; \
-	 echo "You disabled \"Support remote socket connections\"," ; \
-	 echo "so the remote clients will NOT be compiled!" ; \
-	 echo
 endif
 
 ifeq ($(CONF__UNICODE),y)
@@ -99,6 +107,14 @@ endif
 #
 include $(TOPDIR)/makerules
 
+everything: $(BINS) links subdirs
+
+ifneq ($(filter twattach,$(BINS)),)
+  links: twdetach
+else
+  links:
+endif
+
 twdetach: twattach
 	$(LN) $< $@
 
@@ -106,10 +122,10 @@ install:
 	$(INSTALL-DIR) $(DESTDIR)$(bindir) && \
 	$(INSTALL-DIR) $(DESTDIR)$(sbindir) && \
 	$(INSTALL) $(filter-out twdm,$(BINS)) $(DESTDIR)$(bindir) && \
-	$(INSTALL) twdm $(DESTDIR)$(sbindir) && \
+	$(INSTALL) $(filter twdm,$(BINS)) $(DESTDIR)$(sbindir) && \
 	$(LN) twattach $(DESTDIR)$(bindir)/twdetach
 
 clean:
-	rm -f .*.flags .*.bin gmon.out core *.o tw* tt* ; \
+	rm -f .*.flags .*.bin gmon.out core tw* tt* *.la *.a *.o *.lo *.so *.so.* ; \
 	rm -fr .libs
 

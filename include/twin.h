@@ -81,6 +81,8 @@
 #define HIGH	((hwcol)8)
 #define MAXCOL	((hwcol)0xF)
 
+#define MAXHWCOL	COL(MAXCOL,MAXCOL)
+
 #define ANSI2VGA(col) (((col) & 0x1 ? RED   : 0) | \
 		       ((col) & 0x2 ? GREEN : 0) | \
 		       ((col) & 0x4 ? BLUE  : 0))
@@ -110,7 +112,7 @@
 # define HWFONT16(attr) ((byte)(attr))
 
 
-/* if sizeof(hwattr) == 4, bytes are { 'ascii_low', 'col', 'ascii_high', 'unused' } */
+/* if sizeof(hwattr) == 4, bytes are { 'ascii_low', 'col', 'ascii_high', 'extra' } */
 
 /* hwattr <-> hwcol+hwfont conversion */
 # define HWATTR32(col,ascii) (((byte32)(byte)(col) << 8) | (((byte32)(ascii) & 0xFF00) << 8) | (byte32)(byte)(ascii))
@@ -119,6 +121,9 @@
 # define HWCOL32(attr) ((hwcol)((attr) >> 8))
 # define HWFONT32(attr) ((byte16)(((attr) & 0xFF) | (((attr) >> 8) & 0xFF00)))
 
+# define HWATTR_EXTRA32(attr,extra) (((byte32)(byte)(extra) << 24) | ((byte32)(attr) & 0xFFFFFF))
+# define HWATTR_EXTRAMASK32(attr) ((attr) & 0xFF000000)
+# define HWEXTRA32(attr) ((byte)((attr) >> 24))
 
 /*
  * Notes about the timevalue struct:
@@ -647,7 +652,7 @@ struct s_fn_window {
     void (*Configure)(window, byte Bitmap, dat Left, dat Up, dat MinXWidth, dat MinYWidth,
 		      dat MaxXWidth, dat MaxYWidth);
     window (*Create4Menu)(fn_window, menu);
-    byte (*FindBorder)(window, dat u, dat v, byte Border, hwfont *PtrChar, hwcol *PtrColor);
+    byte (*FindBorder)(window, dat u, dat v, byte Border, hwattr *PtrAttr);
     row (*FindRow)(window, ldat RowN);
     row (*FindRowByCode)(window, udat Code, ldat *NumRow);
 };
@@ -981,6 +986,7 @@ struct s_fn_menu {
 
 #define MSG_USER_FIRST		((udat)0x2000)
 #define MSG_USER_CONTROL	((udat)0x2000)
+#define MSG_USER_CONTROL_REPLY	((udat)0x2001)
 #define MSG_USER_CLIENTMSG	((udat)0x2100)
 
 /*
@@ -1122,6 +1128,7 @@ struct s_event_menu {
     window W;
     udat Code, pad;
     menu Menu;
+    row Row;
 };
 
 typedef struct s_event_selection event_selection;
@@ -1613,18 +1620,18 @@ struct s_setup {
  * do not change it!
  */
 /*#define STATE_BUTTON(n)	((byte)(n)) */
-#define STATE_RESIZE		((byte)10)
-#define STATE_DRAG		((byte)11)
-#define STATE_SCROLL		((byte)12)
-#define STATE_GADGET		((byte)13)
-#define STATE_MENU		((byte)14)
-#define STATE_SCREEN		((byte)15)
-#define STATE_SCREENBUTTON	((byte)16)
-#define STATE_ROOT		((byte)17)
-#define STATE_DEFAULT		((byte)18)
+#define STATE_DRAG		((byte)10)
+#define STATE_RESIZE		((byte)15)
+#define STATE_SCROLL		((byte)16)
+#define STATE_GADGET		((byte)26)
+#define STATE_MENU		((byte)27)
+#define STATE_SCREEN		((byte)28)
+#define STATE_BUTTON_SCREEN	((byte)29)
+#define STATE_ROOT		((byte)30)
+#define STATE_DEFAULT		((byte)31)
 
 /* mask for all the above */
-#define STATE_ANY		((byte)0x1f)
+#define STATE_ANY		((byte)0x1F)
 
 /* furher All->State flags */
 #define STATE_FL_BYMOUSE	((byte)0x40)
@@ -1633,19 +1640,28 @@ struct s_setup {
 /* values returned by FnWindow->FindBorder (modeled after STATE_*) */
 /*#define POS_BUTTON(n)		((byte)(n))*/
 #define POS_TITLE		((byte)10)
-#define POS_CORNER		((byte)11)
-#define POS_SIDE		((byte)12)
+#define POS_SIDE_LEFT		((byte)11)
+#define POS_SIDE_UP		((byte)12)
+#define POS_SIDE_RIGHT		((byte)13)
+#define POS_SIDE_DOWN		((byte)14)
+#define POS_BUTTON_RESIZE	((byte)15)
 
-#define POS_BAR_BACK		((byte)13)
-#define POS_BAR_FWD		((byte)14)
-#define POS_TAB			((byte)15)
-#define POS_ARROW_BACK		((byte)16)
-#define POS_ARROW_FWD		((byte)17)
+#define POS_X_BAR_BACK		((byte)16)
+#define POS_X_BAR_FWD		((byte)17)
+#define POS_X_TAB		((byte)18)
+#define POS_X_ARROW_BACK	((byte)19)
+#define POS_X_ARROW_FWD		((byte)20)
 
-#define POS_INSIDE		((byte)18)
-#define POS_MENU		((byte)19)
-#define POS_SCREENBUTTON	((byte)21)
-#define POS_ROOT		((byte)22)
+#define POS_Y_BAR_BACK		((byte)21)
+#define POS_Y_BAR_FWD		((byte)22)
+#define POS_Y_TAB		((byte)23)
+#define POS_Y_ARROW_BACK	((byte)24)
+#define POS_Y_ARROW_FWD		((byte)25)
+
+#define POS_INSIDE		((byte)26)
+#define POS_MENU		((byte)27)
+#define POS_BUTTON_SCREEN	((byte)29)
+#define POS_ROOT		((byte)30)
 
 typedef struct s_selection {
     timevalue Time;
@@ -1791,7 +1807,7 @@ struct s_all {
 #ifdef DEBUG_MALLOC
   /*
    * with the current MkDep, DEBUG_MALLOC gets defined only if doing
-   * `make DEBUG_MALLOC=1 ...' and the C file that includes twin.h actually
+   * `make DEBUG_MALLOC=y ...' and the C file that includes twin.h actually
    * checks for DEBUG_MALLOC. Anyway, this is acceptable :-)
    */
   extern byte *S;

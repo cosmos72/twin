@@ -311,8 +311,8 @@ static ldat FreeButtonPos(ldat n, ldat lr) {
 static byte ImmButton(ldat n, str shape, ldat lr, ldat flag, ldat pos) {
     if (n >= 0 && n < BUTTON_MAX && strlen(shape) >= 2) {
 #ifdef CONF__UNICODE
-	All->ButtonVec[n].shape[0] = Tutf_IBM437_to_UTF_16[shape[0]];
-	All->ButtonVec[n].shape[1] = Tutf_IBM437_to_UTF_16[shape[1]];
+	All->ButtonVec[n].shape[0] = Tutf_CP437_to_UTF_16[shape[0]];
+	All->ButtonVec[n].shape[1] = Tutf_CP437_to_UTF_16[shape[1]];
 #else
 	All->ButtonVec[n].shape[0] = shape[0];
 	All->ButtonVec[n].shape[1] = shape[1];
@@ -530,7 +530,12 @@ static node MakeFlagNode(ldat id, ldat flag) {
 }
 
 static node MakeModuleNode(str label, ldat flag) {
-    node n = MakeNode(label);
+    node n;
+    ldat len = strlen(label);
+    /* remove .so suffix */
+    if (len > 3 && !memcmp(label+len-3, ".so", 3))
+	label[len-3] = '\0';
+    n = MakeNode(label);
     n->id = MODULE;
     n->x.f.flag = flag;
     n->x.f.a = -1; /* code for this module will be asked when needed */
@@ -1032,7 +1037,7 @@ static byte CreateNeededScreens(node list, screen *res_Screens) {
 		    r = attr + w * h;
 		    while (len--) {
 #ifdef CONF__UNICODE
-			f = Tutf_IBM437_to_UTF_16[*n++];
+			f = Tutf_CP437_to_UTF_16[*n++];
 			*r++ = HWATTR(c, f);
 #else
 			*r++ = HWATTR(c, *n);

@@ -32,13 +32,16 @@ typedef s_tt_errno s_tt_errno_vec;
 
 typedef struct s_ttutil *ttutil;
 typedef struct s_ttutil {
+    ttobj **IdList;
+    ttopaque *IdSize, *IdTop, *IdBottom;
+    
 #ifdef CONF_SOCKET_PTHREADS
     s_tt_errno *(*GetErrnoLocation)(void);
 #endif
-    ttfont *(*CloneStr2TTFont)(TT_CONST byte * s, size_t len);
-    byte (*AssignId)(TT_CONST ttfn_ttobj FN, ttobj Obj);
+    ttfont *(*CloneStr2TTFont)(TT_CONST ttbyte * s, size_t len);
+    ttbyte (*AssignId)(TT_CONST ttfn_ttobj FN, ttobj Obj);
     void (*DropId)(ttobj Obj);
-    ttobj (*Id2Obj)(byte i, opaque Id);
+    ttobj (*Id2Obj)(ttbyte i, ttopaque Id);
     ttobj (*FindNative)(ttany id);
     
     void (*DispatchEvent)(ttcomponent o, ttevent ev, ttbyte dflags);
@@ -65,11 +68,10 @@ typedef struct s_tt_d {
     ttmenubar Menubar;
     ttapplication Application;
     
-    ttuint HWArgsN;
-    byte **HWArgs;
+    ttbyte *HWTarget, *HWOptions;
     void *DlHandle;
     
-    byte OpenFlag, ExitMainLoopFlag, PanicFlag;
+    ttbyte OpenFlag, ExitMainLoopFlag, PanicFlag;
     s_tt_errno rCommonErrno_;
     s_tt_errno_vec rErrno_;
     TT_CONST byte *str_dlerror;

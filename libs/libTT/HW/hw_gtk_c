@@ -81,6 +81,12 @@ static ttbyte HWDEF(MainLoop)(void) {
     gtk_main();
     return 1;
 }
+static ttbyte HWDEF(MainLoopOnce)(ttbyte wait) {
+    /* FIXME: this is almost surely wrong */
+    gtk_main_quit();
+    gtk_main();
+    return 1;
+}
 static void HWDEF(ExitMainLoop)(void) {
     gtk_main_quit();
 }

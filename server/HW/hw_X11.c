@@ -33,6 +33,8 @@
 #include <X11/Xatom.h>
 #include <X11/Xmd.h>                /* CARD32 */
 
+#define THIS "hw_X11"
+
 /*
  * a user reported his system lacks DefaultRootWindow() ...
  */
@@ -216,7 +218,7 @@ static byte X11_CheckRemapKeys(void) {
 	if (i && X11_keys[i-1].xkey >= X11_keys[i].xkey) {
 	    printk("\n"
 		   "      ERROR: twin compiled from a bad server/hw_keys.h file"
-		   "             (data in file is not sorted). X11 support is unusable.\n"
+		   "             (data in file is not sorted). -hw=X11 driver is unusable.\n"
 		   "      X11_InitHW() failed: internal error.\n");
 	    return FALSE;
 	}
@@ -248,7 +250,7 @@ static udat X11_LookupKey(XKeyEvent *ev, udat *ShiftFlags, udat *len, char *seq)
     
     *len = XLookupString(ev, seq, _len, &sym, NULL);
 #ifdef DEBUG_HW_X11
-    printf("hw_X11: keysim=%d (%s) string='%.*s'\n", (int)sym, XKeysymToString(sym), (int)len, seq);
+    printf(THIS ": keysym=%d (%s) string='%.*s'\n", (int)sym, XKeysymToString(sym), (int)len, seq);
 #endif
     if (sym == XK_BackSpace && ev->state & (ControlMask|Mod1Mask)) {
 	if (ev->state & ControlMask)
@@ -420,14 +422,14 @@ static hwcol _col;
 	XSetForeground(xdisplay, xgc, xsgc.foreground = xcol[COLFG(col)]); \
     if (xsgc.background != xcol[COLBG(col)]) \
 	XSetBackground(xdisplay, xgc, xsgc.background = xcol[COLBG(col)]); \
-	XDrawImageString16(xdisplay, xwindow, xgc, xbegin, ybegin + xupfont, buf, buflen)
+    XDrawImageString16(xdisplay, xwindow, xgc, xbegin, ybegin + xupfont, buf, buflen)
 #else
 # define XDRAW(col, buf, buflen) \
     if (xsgc.foreground != xcol[COLFG(col)]) \
 	XSetForeground(xdisplay, xgc, xsgc.foreground = xcol[COLFG(col)]); \
     if (xsgc.background != xcol[COLBG(col)]) \
 	XSetBackground(xdisplay, xgc, xsgc.background = xcol[COLBG(col)]); \
-	XDrawImageString(xdisplay, xwindow, xgc, xbegin, ybegin + xupfont, buf, buflen)
+    XDrawImageString(xdisplay, xwindow, xgc, xbegin, ybegin + xupfont, buf, buflen)
 #endif
 
 INLINE void X11_Mogrify(dat x, dat y, uldat len) {
@@ -629,12 +631,12 @@ static void X11_SelectionNotify_X11(uldat ReqPrivate, uldat Magic, CONST byte MI
     XEvent ev;
 	
     if (XReqCount == 0) {
-	printk("hw_X11.c: X11_SelectionNotify_X11(): unexpected Twin Selection Notify event!\n");
+	printk(THIS ".c: X11_SelectionNotify_X11(): unexpected Twin Selection Notify event!\n");
 	return;
     }
 #if 0
     else {
-	printk("hw_X11.c: X11_SelectionNotify_X11(): %d nested Twin Selection Notify events\n", XReqCount);
+	printk(THIS ".c: X11_SelectionNotify_X11(): %d nested Twin Selection Notify events\n", XReqCount);
     }
 #endif
     
@@ -674,7 +676,7 @@ static void X11_SelectionNotify_X11(uldat ReqPrivate, uldat Magic, CONST byte MI
 	    if ((_Data = d = (byte *)AllocMem(Len))) {
 		s = (TW_CONST hwfont *)Data;
 		for (l = Len; l; l--)
-		    *d++ = Tutf_UTF_16_to_IBM437(*s++);
+		    *d++ = Tutf_UTF_16_to_CP437(*s++);
 		Data = _Data;
 		Len /= sizeof(hwfont);
 	    } else
@@ -705,12 +707,12 @@ static void X11_SelectionNotify_up(Window win, Atom prop) {
     byte *data, *buff = NULL;
 
     if (xReqCount == 0) {
-	printk("hw_X11.c: X11_SelectionNotify_up(): unexpected X Selection Notify event!\n");
+	printk(THIS ".c: X11_SelectionNotify_up(): unexpected X Selection Notify event!\n");
 	return;
     }
 #if 0
     else {
-	printk("hw_X11.c: X11_SelectionNotify_up(): %d nested X Selection Notify event\n", xReqCount);
+	printk(THIS ".c: X11_SelectionNotify_up(): %d nested X Selection Notify event\n", xReqCount);
     }
 #endif
     if (prop == None)
@@ -751,12 +753,12 @@ static void X11_SelectionRequest_X11(obj Requestor, uldat ReqPrivate) {
     if (!HW->HWSelectionPrivate) {
 
 	if (xReqCount == NEST) {
-	    printk("hw_X11.c: X11_SelectionRequest_X11(): too many nested Twin Selection Request events!\n");
+	    printk(THIS ".c: X11_SelectionRequest_X11(): too many nested Twin Selection Request events!\n");
 	    return;
 	}
 #if 0
 	else {
-	    printk("hw_X11.c: X11_SelectionRequest_X11(): %d nested Twin Selection Request events\n", xReqCount+1);
+	    printk(THIS ".c: X11_SelectionRequest_X11(): %d nested Twin Selection Request events\n", xReqCount+1);
 	}
 #endif
 	xRequestor(xReqCount) = Requestor;
@@ -781,12 +783,12 @@ static void X11_SelectionRequest_X11(obj Requestor, uldat ReqPrivate) {
  */
 static void X11_SelectionRequest_up(XSelectionRequestEvent *req) {
     if (XReqCount == NEST) {
-	printk("hw_X11.c: X11_SelectionRequest_up(): too many nested X Selection Request events!\n");
+	printk(THIS ".c: X11_SelectionRequest_up(): too many nested X Selection Request events!\n");
 	return;
     }
 #if 0
     else {
-	printk("hw_X11.c: X11_SelectionRequest_up(): %d nested X Selection Request events\n", XReqCount+1);
+	printk(THIS ".c: X11_SelectionRequest_up(): %d nested X Selection Request events\n", XReqCount+1);
     }
 #endif
     CopyMem(req, &XReq(XReqCount), sizeof(XSelectionRequestEvent));
@@ -897,7 +899,7 @@ static Tutf_function X11_UTF_16_to_charset_function(CONST byte *charset) {
 	    fp++;
 	}
 	if (fontname && !strcmp(fontname, "vga")) {
-	    charset = T_NAME_IBM437;
+	    charset = T_NAME_CP437;
 	} else if (fontname) {
 	    i = 2;
 	    for (s = fontname + strlen(fontname) - 1; i && s >= fontname; s--) {
@@ -911,14 +913,14 @@ static Tutf_function X11_UTF_16_to_charset_function(CONST byte *charset) {
 	if (!charset) {
 	    if (xsfont->min_byte1 < xsfont->max_byte1) {
 		/* font is more than just 8-bit. For now, assume it's unicode */
-		printk("    X11_InitHW: font `%s\' has no known charset encoding,\n"
+		printk("    X11_InitHW: font `%."STR(SMALLBUFF)"s\' has no known charset encoding,\n"
 		       "                assuming Unicode.\n", fontname);
 		return NULL;
 	    }
 	    /* else assume codepage437. gross. */
-	    printk("    X11_InitHW: font `%s\' has no known charset encoding,\n"
-		   "                assuming IBM437 codepage (\"VGA\").\n", fontname);
-	    return Tutf_UTF_16_to_IBM437;
+	    printk("    X11_InitHW: font `%."STR(SMALLBUFF)"s\' has no known charset encoding,\n"
+		   "                assuming CP437 codepage (\"VGA\").\n", fontname);
+	    return Tutf_UTF_16_to_CP437;
 	}
     }
     
@@ -930,8 +932,8 @@ static Tutf_function X11_UTF_16_to_charset_function(CONST byte *charset) {
     }
     
     if (i == (uldat)-1) {
-	printk("      X11_InitHW(): libTutf warning: unknown charset `%." STR(SMALLBUFF) "s', assuming `IBM437'\n", charset);
-	return Tutf_UTF_16_to_IBM437;
+	printk("      X11_InitHW(): libTutf warning: unknown charset `%." STR(SMALLBUFF) "s', assuming `CP437'\n", charset);
+	return Tutf_UTF_16_to_CP437;
     }
     
     return Tutf_UTF_16_to_charset_function(i);
@@ -1010,7 +1012,8 @@ byte X11_InitHW(void) {
 	    } else if (!strncmp(arg, "noinput", 7)) {
 		arg += 7;
 		noinput = TRUE;
-	    }
+	    } else
+		arg = strchr(arg, ',');
 	}
     }
 
@@ -1022,7 +1025,7 @@ byte X11_InitHW(void) {
     if ((xdisplay = XOpenDisplay(dpy))) do {
 	
 	(void)XSetIOErrorHandler(X11_Die);
-	
+
 	if (!X11_CheckRemapKeys())
 	    break;
 
@@ -1046,7 +1049,7 @@ byte X11_InitHW(void) {
 	xattr.event_mask = ExposureMask | VisibilityChangeMask |
 	    StructureNotifyMask | SubstructureNotifyMask |
 	    KeyPressMask | ButtonPressMask | ButtonReleaseMask | PointerMotionMask;
-	
+
 	if (((fontname && (xsfont = XLoadQueryFont(xdisplay, fontname))) ||
 	     (xsfont = XLoadQueryFont(xdisplay, "vga")) ||
 	     (xsfont = XLoadQueryFont(xdisplay, "fixed"))) &&
@@ -1054,22 +1057,22 @@ byte X11_InitHW(void) {
 	     xwidth = xwfont * (HW->X = GetDisplayWidth()),
 	     xhfont = (xupfont = xsfont->ascent) + xsfont->descent,
 	     xheight = xhfont * (HW->Y = GetDisplayHeight()),
-	     xwindow = XCreateWindow(xdisplay, RootWindow(xdisplay, xscreen), 0, 0,
+	     xwindow = XCreateWindow(xdisplay, DefaultRootWindow(xdisplay), 0, 0,
 				     xwidth, xheight, 0, xdepth, InputOutput,
 				     DefaultVisual(xdisplay, xscreen),
 				     CWBackPixel | CWEventMask, &xattr)) &&
-	    (xgc = XCreateGC(xdisplay, xwindow, 0, NULL)) &&
+
+	    (xsgc.foreground = xsgc.background = xcol[0],
+	     xsgc.graphics_exposures = False,
+	     xsgc.font = xsfont->fid,
+	     xgc = XCreateGC(xdisplay, xwindow, GCFont|GCForeground|GCBackground|GCGraphicsExposures, &xsgc)) &&
+
 	    (xhints = XAllocSizeHints())) {
 	    
-	    xsgc.foreground = xsgc.background = xcol[0];
-	    xsgc.graphics_exposures = False;
-	    XChangeGC(xdisplay, xgc, GCForeground|GCBackground|GCGraphicsExposures, &xsgc);
-	    XSetFont(xdisplay, xgc, xsfont->fid);
-	    
-	    strcpy(name+5, TWDisplay);
-	    strcat(name+5, " on X");
+	    sprintf(name, "twin %s on X", TWDisplay);
 	    XStoreName(xdisplay, xwindow, name);
-	    
+
+
 #ifdef CONF__UNICODE
 	    if (!(xUTF_16_to_charset = X11_UTF_16_to_charset_function(charset)))
 		xUTF_16_to_charset = X11_UTF_16_to_UTF_16;
@@ -1173,7 +1176,7 @@ byte X11_InitHW(void) {
 	}
     } while (0); else {
 	if (dpy || (dpy = getenv("DISPLAY")))
-	    printk("      X11_InitHW() failed to open display %s\n", HW->Name);
+	    printk("      X11_InitHW() failed to open display %."STR(SMALLBUFF)"s\n", HW->Name);
 	else
 	    printk("      X11_InitHW() failed: DISPLAY is not set\n");
     }

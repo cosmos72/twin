@@ -127,6 +127,7 @@ struct s_tevent_menu {
     twindow W;
     udat Code, pad;
     tmenu Menu;
+    trow Row;
 } TW_TYPE_ATTR_PACKED;
 
 typedef struct s_tevent_selection *tevent_selection;
@@ -235,6 +236,7 @@ struct s_tmsg {
 
 #define TW_MSG_USER_FIRST	((udat)0x2000)
 #define TW_MSG_USER_CONTROL	((udat)0x2000)
+#define TW_MSG_USER_CONTROL_REPLY ((udat)0x2101)
 #define TW_MSG_USER_CLIENTMSG	((udat)0x2100)
 
 
@@ -322,13 +324,14 @@ void	Tw_ResizeWidget(tdisplay TwD, twidget Widget, dat XWidth, dat YWidth);
 tmsgport Tw_GetOwnerWidget(tdisplay TwD, twidget Widget);
 twidget Tw_FindWidgetAtWidget(tdisplay TwD, twidget Parent, dat i, dat j);
 
+void    Tw_SetVisibleWidget(tdisplay TwD, twidget Widget, byte on_off);
 void    Tw_FocusSubWidget(tdisplay TwD, twidget W);
-void    Tw_ExposeWidget(tdisplay TwD, twidget W, dat XWidth, dat YWidth, dat Left, dat Up, TW_CONST byte *Text, TW_CONST hwfont *Font, TW_CONST hwattr *Attr);
-void    Tw_ExposeWidget2(tdisplay TwD, twidget W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch, TW_CONST byte *Text, TW_CONST hwfont *Font, TW_CONST hwattr *Attr);
+void    Tw_DrawWidget(tdisplay TwD, twidget W, dat XWidth, dat YWidth, dat Left, dat Up, TW_CONST byte *Text, TW_CONST hwfont *Font, TW_CONST hwattr *Attr);
+void    Tw_Draw2Widget(tdisplay TwD, twidget W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch, TW_CONST byte *Text, TW_CONST hwfont *Font, TW_CONST hwattr *Attr);
 
-void	Tw_ExposeTextWidget(tdisplay TwD, twidget W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch, TW_CONST byte *Text);
-void	Tw_ExposeHWFontWidget(tdisplay TwD, twidget W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch, TW_CONST hwfont *Font);
-void	Tw_ExposeHWAttrWidget(tdisplay TwD, twidget W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch, TW_CONST hwattr *Attr);
+void	Tw_DrawTextWidget(tdisplay TwD, twidget W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch, TW_CONST byte *Text);
+void	Tw_DrawHWFontWidget(tdisplay TwD, twidget W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch, TW_CONST hwfont *Font);
+void	Tw_DrawHWAttrWidget(tdisplay TwD, twidget W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch, TW_CONST hwattr *Attr);
 
 void	Tw_LowerWidget(tdisplay TwD, twidget W);
 void	Tw_RaiseWidget(tdisplay TwD, twidget W);
@@ -371,9 +374,11 @@ tgadget Tw_CreateGadget
 #define Tw_ResizeGadget			Tw_ResizeWidget
 #define Tw_ScrollGadget			Tw_ScrollWidget
 #define Tw_GetOwnerGadget		Tw_GetOwnerWidget
-#define Tw_ExposeTextGadget		Tw_ExposeTextWidget
-#define Tw_ExposeHWFontGadget		Tw_ExposeHWFontWidget
-#define Tw_ExposeHWAttrGadget		Tw_ExposeHWAttrWidget
+#define Tw_DrawGadget			Tw_DrawWidget
+#define Tw_Draw2Gadget			Tw_Draw2Widget
+#define Tw_DrawTextGadget		Tw_DrawTextWidget
+#define Tw_DrawHWFontGadget		Tw_DrawHWFontWidget
+#define Tw_DrawHWAttrGadget		Tw_DrawHWAttrWidget
 
 #define Tw_LowerGadget			Tw_LowerWidget
 #define Tw_RaiseGadget			Tw_RaiseWidget
@@ -400,8 +405,11 @@ void    Tw_WriteHWFontsGadget(tdisplay TwD, tgadget Gadget, byte bitmap, dat XWi
 void    Tw_SetHWFontGadget(   tdisplay TwD, tgadget Gadget,              dat XWidth, dat YWidth, TW_CONST hwfont * HWFont, dat Left, dat Up);
 void    Tw_SetHWFontsGadget(  tdisplay TwD, tgadget Gadget, byte bitmap, dat XWidth, dat YWidth, TW_CONST hwfont * HWFont, dat Left, dat Up);
 
-void	Tw_Create4MenuRow(tdisplay TwD, twindow Window, udat Code, byte Flags, uldat Len, TW_CONST byte *Text);
-#define Tw_Row4Menu Tw_Create4MenuRow
+/* backward compatibility. will be removed */
+void	Tw_Create4MenuRow(tdisplay TwD, twindow Window, udat Code, byte Flags, ldat Len, TW_CONST byte *Text);
+
+tmenuitem Tw_Create4Menu2Row(tdisplay TwD, twindow Window, udat Code, byte Flags, ldat Len, TW_CONST byte *Text);
+#define Tw_Row4Menu Tw_Create4Menu2Row
 
 twindow Tw_CreateWindow(tdisplay TwD, dat NameLen, TW_CONST byte *Name, TW_CONST hwcol *ColName, tmenu Menu,
 		       hwcol ColText, uldat cursorType, uldat Attrib, uldat Flags,
@@ -414,9 +422,11 @@ twindow Tw_CreateWindow(tdisplay TwD, dat NameLen, TW_CONST byte *Name, TW_CONST
 #define Tw_ResizeWindow			Tw_ResizeWidget
 #define Tw_ScrollWindow			Tw_ScrollWidget
 #define Tw_GetOwnerWindow		Tw_GetOwnerWidget
-#define Tw_ExposeTextWindow		Tw_ExposeTextWidget
-#define Tw_ExposeHWFontWindow		Tw_ExposeHWFontWidget
-#define Tw_ExposeHWAttrWindow		Tw_ExposeHWAttrWidget
+#define Tw_DrawWindow			Tw_DrawWidget
+#define Tw_Draw2Window			Tw_Draw2Widget
+#define Tw_DrawTextWindow		Tw_DrawTextWidget
+#define Tw_DrawHWFontWindow		Tw_DrawHWFontWidget
+#define Tw_DrawHWAttrWindow		Tw_DrawHWAttrWidget
 
 #define Tw_LowerWindow			Tw_LowerWidget
 #define Tw_RaiseWindow			Tw_RaiseWidget
@@ -454,9 +464,10 @@ trow	Tw_FindRowByCodeWindow(tdisplay TwD, twindow Window, dat Code);
 
 void	Tw_BgImageScreen(tdisplay TwD, tscreen Screen, dat BgWidth, dat BgHeight, TW_CONST hwattr *BgImage);
 
-
 tmenuitem Tw_Create4MenuMenuItem(tdisplay TwD, tobj Parent, twindow Window, byte Flags, dat Len, TW_CONST byte *Name);
 #define   Tw_Item4Menu Tw_Create4MenuMenuItem
+trow      Tw_Create4MenuAny(tdisplay TwD, tobj Parent, twindow Window, udat Code, byte Flags, ldat Len, TW_CONST byte *Name);
+
 uldat     Tw_Create4MenuCommonMenuItem(tdisplay TwD, tmenu Menu);
 #define   Tw_Item4MenuCommon Tw_Create4MenuCommonMenuItem
 #define   Tw_DeleteMenuItem Tw_DeleteObj
@@ -640,6 +651,7 @@ void  Tw_ExitMainLoop(tdisplay TwD);
  * Tw_CreateGadget();
  * Tw_FindWidgetAtWidget();
  * Tw_CreateWindow();
+ * Tw_Create4Menu2Row();
  * Tw_Create4MenuWindow();
  * Tw_Create4MenuMenuItem();
  * Tw_CreateMsgPort();
@@ -675,6 +687,8 @@ void  Tw_ExitMainLoop(tdisplay TwD);
 
 
 #include <Tw/Tw_1.h>
+
+#include <Tw/proto_m4.h>
 
 
 

@@ -26,7 +26,7 @@ if [ -z "$HW" ]; then
   if [ "$DISPLAY" ]; then
     HW="-hw=X,font=9x19"
   elif [ "$TWDISPLAY" ]; then
-    HW="-hw=twin@$TWDISPLAY"
+    HW="-hw=twin"
   else
     HW="-hw=tty"
   fi

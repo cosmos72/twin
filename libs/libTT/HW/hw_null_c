@@ -219,6 +219,10 @@ static void DEF(SetTheme_ttvisible)(ttvisible o, tttheme theme) {
     if (oldtheme != theme && o->parent && (o->vflags & ttvisible_vflags_visible))
 	Expose_ttvisible(o, ttvisible_repaint_args_WHOLE);
 }
+static void DEF(Draw_ttvisible)(ttvisible o, ttshort x, ttshort y, ttshort w, ttshort h, ttshort pitch,
+				TT_CONST ttbyte *asciidata, TT_CONST ttfont *fontdata, TT_CONST ttattr *attrdata) {
+    /* do-nothing */
+}
 static void DEF(BuiltinRepaint_ttvisible)(ttvisible o, ttshort x, ttshort y, ttshort w, ttshort h) {
     /* do-nothing */
 }
@@ -650,6 +654,9 @@ static byte HWDEF(TimidFlush)(void) {
     return TRUE;
 }
 static byte HWDEF(MainLoop)(void) {
+    return TRUE;
+}
+static byte HWDEF(MainLoopOnce)(ttbyte wait) {
     return TRUE;
 }
 static void HWDEF(ExitMainLoop)(void) {

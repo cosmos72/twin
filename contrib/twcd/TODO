@@ -1,0 +1,10 @@
+TWCD:
+- CDDB support (shouldn't be too hard)
+- Playlists
+- Almost certainly a better implementation for track handling must exist
+- Playtime indicator
+
+WRT TWIN:
+- Document relevant parts of TWIN API (unless the author has plans to)
+- Work on a widget set, or some preliminary form of widget set, for playlist
+  use

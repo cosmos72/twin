@@ -1,0 +1,136 @@
+
+#include <stdio.h>
+
+DECL_COMMON
+
+static TT_CONST ttbyte * dump_file_name;
+
+static FILE * dump_file;
+
+static ttbyte open_dump_file(void) {
+    if ((dump_file = fopen(dump_file_name, "w"))) {
+	fprintf(dump_file, "%s",
+		"<?xml version=\"1.0\"?>\n"
+		"<TT:dump xmlns:TT=\"http://twin.sourceforge.net/libTT/xml/\">\n"
+		);
+	return TRUE;
+    }
+    return FALSE;
+}
+
+static void close_dump_file(void) {
+    fprintf(dump_file, "%s", "</TT:dump>\n");
+    fclose(dump_file);
+}
+
+TT_INLINE void dump_obj(ttobj o) {
+    ttuint i, last;
+    ttopaque id;
+    TT_CONST ttbyte *name;
+    ttbyte buf[64];
+    ttany data;
+    ttfn type;
+    
+    if ((id = OBJ2ID(o))) {
+	fprintf(dump_file, "  <TT:%s>\n", name = TTClassNameOf((tt_obj)id));
+	sprintf(buf, "%s_field_last", name);
+	last = TTGetValueId(buf);
+	for (i = 0; i < last; i++) {
+	    if ((name = TTGetValueName(i)) && (type = o->FN->GetValue(o, i, &data))) {
+		if (type == TTFN_ttstring)
+		    fprintf(dump_file, "    <TT:%s value=\"%s\"/>\n", name, (ttstring)(ttopaque)data);
+		else
+		    fprintf(dump_file, "    <TT:%s value=\"0x%lx\"/>\n", name, (unsigned long)(ttopaque)data);
+	    }
+	}
+	fprintf(dump_file, "  </TT:%s>\n", TTClassNameOf((tt_obj)id));
+    }
+}
+
+#define IdList	 TTD.UTIL.IdList
+#define IdSize	 TTD.UTIL.IdSize
+#define IdTop	 TTD.UTIL.IdTop
+#define IdBottom TTD.UTIL.IdBottom
+
+static void dump_all(void) {
+    ttbyte n;
+    ttopaque i;
+    ttobj o;
+
+    if (open_dump_file()) {
+	for (n = order_ttobj; n < order_n; n++) {
+	    for (i = 0; i < IdTop[n]; i++) {
+		if ((o = IdList[n][i]))
+		    dump_obj(o);
+	    }
+	}
+	close_dump_file();
+    }
+}
+
+/*
+ * We need to write down only overloaded methods (actually none).
+ */
+
+static ttbyte HWDEF(Sync)(void) {
+    return 1;
+}
+static ttbyte HWDEF(Flush)(void) {
+    return 1;
+}
+static ttbyte HWDEF(TimidFlush)(void) {
+    return 1;
+}
+static ttbyte HWDEF(MainLoop)(void) {
+    return 1;
+}
+static ttbyte HWDEF(MainLoopOnce)(ttbyte wait) {
+    return 1;
+}
+static void HWDEF(ExitMainLoop)(void) {
+}
+static void HWDEF(DeleteListener)(ttlistener o) {
+}
+static void HWDEF(Close)(void) {
+    dump_all();
+}
+static int HWDEF(ConnectionFd)(void) {
+  return -1;
+}
+static ttuint HWDEF(GetErrno)(void) {
+  return 0;
+}
+static ttuint HWDEF(GetErrnoDetail)(void) {
+  return 0;
+}
+static TT_CONST ttbyte *HWDEF(StrError)(ttuint E) {
+    return "";
+}
+static TT_CONST ttbyte *HWDEF(StrErrorDetail)(ttuint E, ttuint S) {
+    return "";
+}
+
+
+#ifdef THIS_MODULE
+ttfns InitModule(tthw *HW)
+#else
+ttfns _TT_xml_InitHW(tthw *HW)
+#endif
+{
+    ttbyte *arg = TTD.HWOptions;
+    
+    /*
+     * (*HW) must be set even if initialization fails,
+     * to report error messages.
+     */
+    *HW = &xml_TTFNs.HW;
+
+    dump_file_name = "libTT.xml";
+    if (arg && (arg = strstr("file=", arg))) {
+	dump_file_name = arg + 5;
+	if ((arg = strchr(dump_file_name, ',')))
+	    *arg = '\0';
+    }
+
+    return &xml_TTFNs;
+}

@@ -34,6 +34,13 @@
 # include <Tutf/Tutf.h>
 #endif
 
+#ifdef CONF__UNICODE
+extern hwattr extra_POS_INSIDE;
+#else
+# define extra_POS_INSIDE 0
+#endif
+
+
 /*
  * VT102 emulator
  */
@@ -197,7 +204,7 @@ static void invert_screen(void) {
     
     while (count--) {
 	a = *p;
-	*p++ = HWATTR( COL( COLBG(HWCOL(a)), COLFG(HWCOL(a))), HWFONT(a));
+	*p++ = (a & ~HWATTR(MAXHWCOL, 0)) | HWATTR(COL(COLBG(HWCOL(a)), COLFG(HWCOL(a))), 0);
 	if (p == Split) p = Base;
     }
 }
@@ -213,7 +220,7 @@ static void insert_char(ldat nr) {
 	p[nr] = *p;
     
     while (nr--)
-	*q++ = HWATTR(ColText, ' ');
+	*q++ = HWATTR(ColText, ' ') | extra_POS_INSIDE;
 
     *Flags &= ~TTY_NEEDWRAP;
 }
@@ -231,7 +238,7 @@ INLINE void delete_char(ldat nr) {
 	p++;
     }
     while (nr--)
-	*p++ = HWATTR(ColText, ' ');
+	*p++ = HWATTR(ColText, ' ') | extra_POS_INSIDE;
     
     *Flags &= ~TTY_NEEDWRAP;
 }
@@ -366,7 +373,7 @@ static void scrollup(dat t, dat b, dat nr) {
     }
     
     /* clear the last nr lines */
-    fill(d + (b-t-nr) * SizeX, HWATTR(ColText, ' '), nr * SizeX);
+    fill(d + (b-t-nr) * SizeX, HWATTR(ColText, ' ') | extra_POS_INSIDE, nr * SizeX);
     
     if (accel)
 	ScrollFirstWindowArea(0, t, SizeX-1, b-1, 0, -nr);
@@ -393,7 +400,7 @@ static void scrolldown(dat t, dat b, dat nr) {
     step = SizeX * nr;
 
     rev_copy(s, s + step, (b-t-nr)*SizeX);
-    fill(s, HWATTR(ColText, ' '), step);
+    fill(s, HWATTR(ColText, ' ') | extra_POS_INSIDE, step);
 
     if (accel)
 	ScrollFirstWindowArea(0, t, SizeX-1, b-1, 0, nr);
@@ -470,7 +477,7 @@ static void csi_J(int vpar) {
       default:
 	return;
     }
-    fill(start, HWATTR(ColText, ' '), count);
+    fill(start, HWATTR(ColText, ' ') | extra_POS_INSIDE, count);
     
     *Flags &= ~TTY_NEEDWRAP;
 }
@@ -499,7 +506,7 @@ static void csi_K(int vpar) {
 	return;
     }
     while (count--)
-	*start++ = HWATTR(ColText, ' ');
+	*start++ = HWATTR(ColText, ' ') | extra_POS_INSIDE;
 
     *Flags &= ~TTY_NEEDWRAP;
 }
@@ -515,7 +522,7 @@ static void csi_X(int vpar) /* erase the following vpar positions */
     dirty_tty(X, Y, X+vpar-1, Y);
     
     while (vpar--)
-	*start++ = HWATTR(ColText, ' ');
+	*start++ = HWATTR(ColText, ' ') | extra_POS_INSIDE;
     
     *Flags &= ~TTY_NEEDWRAP;
 }
@@ -548,8 +555,8 @@ static void update_eff(void) {
     InvCharset = Tutf_UTF_16_to_ISO_8859_1; \
     break; \
   case IBMPC_MAP: \
-    Charset = Tutf_IBM437_to_UTF_16; \
-    InvCharset = Tutf_UTF_16_to_IBM437; \
+    Charset = Tutf_CP437_to_UTF_16; \
+    InvCharset = Tutf_UTF_16_to_CP437; \
     break; \
   case USER_MAP: \
     Charset = All->Gtranslations[USER_MAP]; \
@@ -1337,7 +1344,7 @@ INLINE void write_ctrl(byte c) {
 	if (c == '8') {
 	    /* DEC screen alignment test */
 	    dirty_tty(0, 0, SizeX-1, SizeY-1);
-	    fill(Start, HWATTR(ColText, 'E'), (ldat)SizeX * SizeY);
+	    fill(Start, HWATTR(ColText, 'E') | extra_POS_INSIDE, (ldat)SizeX * SizeY);
 	}
 	break;
 	
@@ -1542,7 +1549,7 @@ void TtyWriteAscii(window Window, ldat Len, CONST byte *AsciiSeq) {
 		insert_char(1);
 	    
 	    dirty_tty(X, Y, X, Y);
-	    *Pos = HWATTR(Color, c);
+	    *Pos = HWATTR(Color, c) | extra_POS_INSIDE;
 	    
 	    if (X == SizeX - 1) {
 		if (*Flags & TTY_AUTOWRAP) 
@@ -1600,7 +1607,7 @@ void TtyWriteHWFont(window Window, ldat Len, CONST hwfont *HWFont) {
 		insert_char(1);
 	    
 	    dirty_tty(X, Y, X, Y);
-	    *Pos = HWATTR(Color, c);
+	    *Pos = HWATTR(Color, c) | extra_POS_INSIDE;
 	    
 	    if (X == SizeX - 1) {
 		if (*Flags & TTY_AUTOWRAP) 
@@ -1640,7 +1647,7 @@ void TtyWriteString(window Window, ldat Len, CONST byte *String) {
 	}
 	    
 	dirty_tty(X, Y, X, Y);
-	*Pos = HWATTR(Color, c);
+	*Pos = HWATTR(Color, c) | extra_POS_INSIDE;
 	    
 	if (X == SizeX - 1) {
 	    if (*Flags & TTY_AUTOWRAP) 
@@ -1660,6 +1667,10 @@ void TtyWriteString(window Window, ldat Len, CONST byte *String) {
  */
 void TtyWriteHWAttr(window Window, dat x, dat y, ldat len, CONST hwattr *text) {
     ldat left, max, chunk;
+#ifdef CONF__UNICODE
+    ldat i;
+    hwattr extra;
+#endif
     hwattr *dst;
     
     if (!Window || !len || !text || !W_USE(Window, USECONTENTS) || !Window->USE.C.TtyData)
@@ -1695,11 +1706,20 @@ void TtyWriteHWAttr(window Window, dat x, dat y, ldat len, CONST hwattr *text) {
 	    dst -= Split - Base;
 	max = Split - dst;
 	chunk = Min2(left, max);
+#ifdef CONF__UNICODE
+	for (i = chunk; i; i--, text++, dst++) {
+	    if ((extra = HWEXTRA32(*text)))
+		*dst = *text;
+	    else
+		*dst = *text | extra_POS_INSIDE;
+	}
+#else
 	CopyMem(text, dst, chunk * sizeof(hwattr));
 	text += chunk;
 	dst += chunk;
+#endif
     } while ((left -= chunk) > 0);
-    
+
     if (len > SizeX - x)
 	dirty_tty(0, y, SizeX - 1, y + (x + len - 1) / SizeX);
     else

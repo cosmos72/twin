@@ -95,7 +95,7 @@ static int wrap_Gpm_Open(void) {
 	return NOFD;
     }
     if (tty_number < 1 || tty_number > 63) {
-	printk("      GPM_InitMouse() failed: terminal `%s'\n"
+	printk("      GPM_InitMouse() failed: terminal `%."STR(SMALLBUFF)"s'\n"
 		        "      is not a local linux console.\n", tty_name);
 	return NOFD;
     }
@@ -277,7 +277,7 @@ static byte vcsa_InitVideo(void) {
     }
     
     if (tty_number < 1 || tty_number > 63) {
-	printk("      vcsa_InitVideo() failed: terminal `%s'\n"
+	printk("      vcsa_InitVideo() failed: terminal `%."STR(SMALLBUFF)"s'\n"
 			 "      is not a local linux console.\n", tty_name);
 	return FALSE;
     }
@@ -290,7 +290,7 @@ static byte vcsa_InitVideo(void) {
     DropPrivileges();
     
     if (VcsaFd < 0) {
-	printk("      vcsa_InitVideo() failed: unable to open `%s': %s\n",
+	printk("      vcsa_InitVideo() failed: unable to open `%."STR(SMALLBUFF)"s': %."STR(SMALLBUFF)"s\n",
 		vcsa_name, strerror(errno));
 	return FALSE;
     }
@@ -506,35 +506,13 @@ static byte linux_InitVideo(void) {
 	return FALSE;
     }
     
-#if 0
-    /* we now have -hw=tty,termcap */
-    do if (strcmp(term, "linux")) {
-	if (!strncmp(term, "xterm", 5) || !strncmp(term, "rxvt", 4)) {
-	    byte c;
-	    
-	    printk("\n"
-		    "      \033[1m  WARNING: terminal `%s' is not fully supported.\033[0m\n"
-		    "\n"
-		    "      If you really want to run `twin' on this terminal\n"
-		    "      hit RETURN to continue, otherwise hit CTRL-C to quit now.\n", term);
-	    flushk();
-    
-	    read(tty_fd, &c, 1);
-	    if (c == '\n' || c == '\r')
-		break;
-	}
-	printk("      linux_InitVideo() failed: terminal type `%s' not supported.\n", term);
-	return FALSE;
-    } while (0);
-#endif
-    
     if (strcmp(term, "linux")) {
-	printk("      linux_InitVideo() failed: terminal `%s' is not `linux'.\n", term);
+	printk("      linux_InitVideo() failed: terminal `%."STR(SMALLBUFF)"s' is not `linux'.\n", term);
 	return FALSE;
     }
 
 #ifdef CONF__UNICODE
-    if (ttypar[0]==6 && ttypar[1]!=3 && ttypar[1]!=4)
+    if (tty_can_utf8 == TRUE+TRUE && ttypar[0]==6 && ttypar[1]!=3 && ttypar[1]!=4)
 	/* plain linux console supports utf-8, and also twin >= 0.3.11 does. */
 	tty_can_utf8 = TRUE;
     else
@@ -626,21 +604,6 @@ INLINE void linux_SetColor(hwcol col) {
     fputs(colbuf, stdOUT);
 }
 
-static byte utf8used;
-
-#ifdef CONF__UNICODE
-static void linux_MogrifyUTF8(hwfont h) {
-    byte c;
-    if (!utf8used)
-	utf8used = TRUE, fputs("\033%G", stdOUT);
-    if (h >= 0x800) {
-	c = (h >> 12) | 0xE0, putc(c, stdOUT);
-	c = ((h >> 6) & 0x3F) | 0x80, putc(c, stdOUT);
-    } else
-	c = (h >> 6) | 0xC0, putc(c, stdOUT);
-    c = (h & 0x3F) | 0x80, putc(c, stdOUT);
-}
-#endif
 
 INLINE void linux_Mogrify(dat x, dat y, uldat len) {
     hwattr *V, *oV;
@@ -671,7 +634,7 @@ INLINE void linux_Mogrify(dat x, dat y, uldat len) {
 		 * also use utf-8 if we already output ESC % G and we must putc(c > 0x80),
 		 * which would be interpreted as part of an utf-8 sequence.
 		 */
-		linux_MogrifyUTF8(_c);
+		tty_MogrifyUTF8(_c);
 		continue;
 	    }
 #endif
@@ -679,7 +642,7 @@ INLINE void linux_Mogrify(dat x, dat y, uldat len) {
 	    if ((c < 32 && ((CTRL_ALWAYS >> c) & 1)) || c == 128+27) {
 		/* can't display it */
 #ifdef CONF__UNICODE
-		c = T_CAT(Tutf_IBM437_to_,T_MAP(US_ASCII)) [ Tutf_UTF_16_to_IBM437(_c) ];
+		c = T_CAT(Tutf_CP437_to_,T_MAP(US_ASCII)) [ Tutf_UTF_16_to_CP437(_c) ];
 #else
 		c = ' ';
 #endif
@@ -708,7 +671,7 @@ INLINE void linux_SingleMogrify(dat x, dat y, hwattr V) {
 	 * also use utf-8 if we already output ESC % G and we must putc(c > 0x80),
 	 * which would be interpreted as part of an utf-8 sequence.
 	 */
-	linux_MogrifyUTF8(_c);
+	tty_MogrifyUTF8(_c);
 	return;
     }
 #endif
@@ -716,7 +679,7 @@ INLINE void linux_SingleMogrify(dat x, dat y, hwattr V) {
     if ((c < 32 && ((CTRL_ALWAYS >> c) & 1)) || c == 128+27) {
 	/* can't display it */
 #ifdef CONF__UNICODE
-	c = T_CAT(Tutf_IBM437_to_,T_MAP(US_ASCII)) [ Tutf_UTF_16_to_IBM437(_c) ];
+	c = T_CAT(Tutf_CP437_to_,T_MAP(US_ASCII)) [ Tutf_UTF_16_to_CP437(_c) ];
 #else
 	c = ' ';
 #endif

@@ -10,8 +10,6 @@
  *
  */
 
-#include <dlfcn.h>
-
 #include "twin.h"
 #include "methods.h"
 #include "data.h"
@@ -19,42 +17,61 @@
 #include "dl.h"
 #include "version.h"
 
+#if defined(HAVE_DLFCN_H) && defined(HAVE_DLOPEN)
+# include <dlfcn.h>
+# define my(fn) fn
+# define my_handle void *
+# define my_dlopen_extra_args , RTLD_NOW|RTLD_GLOBAL
+# define my_VERSION ".so." TWIN_VERSION_STR
+
+#elif defined(HAVE_LTDL_H) && defined(HAVE_LT_DLOPEN)
+
+# include <ltdl.h>
+# define my(fn) lt_##fn
+# define my_handle lt_dlhandle
+# define my_dlopen_extra_args
+# define my_VERSION ".la"
+
+#else
+# error nor dlopen() nor lt_dlopen() module loading API available!  
+#endif
+
 byte DlOpen(module Module) {
-    void *Handle = NULL;
-    uldat len0 = LenStr(conf_destdir_lib_twin_modules_), len;
+    void * Handle = NULL;
+    uldat len0 = LenStr(conf_destdir_lib_twin_modules_) + LenStr(my_VERSION), len;
     byte *name;
     byte (*init_dl)(module);
     
-    if (Module && !Module->Handle && Module->Name && Module->NameLen) {
+    if (Module && !Module->Handle && (!Module->NameLen || Module->Name)) {
 	/* dlopen(NULL, ...) returns a handle for the main program */
-	if (Module->NameLen == 4 && !CmpMem(Module->Name, "main", 4))
+	if (Module->NameLen == 0)
 	    name = NULL;
 	else {
 	    len = len0 + Module->NameLen;
-	    if ((name = AllocMem(len+1))) {
-		CopyMem(conf_destdir_lib_twin_modules_, name, len0);
-		CopyMem(Module->Name, name+len0, Module->NameLen);
-		name[len] = '\0';
-	    } else
+	    if ((name = AllocMem(len+1)))
+		sprintf(name, "%s%.*s%s", conf_destdir_lib_twin_modules_, (int)Module->NameLen, Module->Name, my_VERSION);
+	    else {
+		Error(NOMEMORY);
 		return FALSE;
+	    }
 	}
-	Handle = dlopen(name, RTLD_NOW|RTLD_GLOBAL);
+	Handle = (void *)my(dlopen)(name my_dlopen_extra_args);
 	if (name)
 	    FreeMem(name);
     }
     if (!Handle) {
 	Error(DLERROR);
-	ErrStr = dlerror();
+	ErrStr = my(dlerror)();
 	return FALSE;
     }
 
     if (name) {
-	init_dl = dlsym(Handle, "InitModule");
+	init_dl = (byte (*)(module)) my(dlsym)((my_handle)Handle, "InitModule");
 	if (!init_dl || init_dl(Module)) {
 	    Module->Handle = Handle;
 	    return TRUE;
 	}
-	dlclose(Handle);
+	my(dlclose)((my_handle)Handle);
 	return FALSE;
     }
     return TRUE;
@@ -64,12 +81,12 @@ void DlClose(module Module) {
     void (*quit_dl)(module);
     
     if (Module && Module->Handle) {
-	if (Module->NameLen != 4 || CmpMem(Module->Name, "main", 4)) {
-	    quit_dl = dlsym(Module->Handle, "QuitModule");
+	if (Module->NameLen != 0) {
+	    quit_dl = (void (*)(module)) my(dlsym)((my_handle)Module->Handle, "QuitModule");
 	    if (quit_dl)
 		quit_dl(Module);
 	}
-	dlclose(Module->Handle);
+	my(dlclose)((my_handle)Module->Handle);
 	Module->Handle = NULL;
     }
 }
@@ -94,26 +111,24 @@ module DlLoadAny(uldat len, byte *name) {
 static module So[MAX_So];
 
 module DlLoad(uldat code) {
-    uldat len = strlen(TWIN_VERSION_STR);
-    
     module M;
     if (code < MAX_So) {
 	if (!(M = So[code])) {
 	    switch (code) {
 #ifndef CONF_WM
-	      case WMSo:      M = DlLoadAny(len + 6, "wm.so." TWIN_VERSION_STR); break;
+	      case WMSo:      M = DlLoadAny(6, "wm"); break;
 #endif
 #ifndef CONF_TERM
-	      case TermSo:    M = DlLoadAny(len + 8, "term.so." TWIN_VERSION_STR); break;
+	      case TermSo:    M = DlLoadAny(8, "term"); break;
 #endif
 #ifndef CONF_SOCKET
-	      case SocketSo:  M = DlLoadAny(len + 10, "socket.so." TWIN_VERSION_STR); break;
+	      case SocketSo:  M = DlLoadAny(10, "socket"); break;
 #endif
 #ifndef CONF_WM_RC
-	      case RCParseSo: M = DlLoadAny(len + 11, "rcparse.so." TWIN_VERSION_STR); break;
+	      case RCParseSo: M = DlLoadAny(11, "rcparse"); break;
 #endif
 	      case MainSo:
-	      default:        M = DlLoadAny(4, "main"); break;
+	      default:        M = DlLoadAny(0, NULL); break;
 	    }
 	    if ((So[code] = M)) {
 		if (All->FnHookModule)
@@ -142,13 +157,13 @@ module DlIsLoaded(uldat code) {
 }
 
 udat DlName2Code(byte *name) {
-    if (!CmpStr(name, "wm.so"))
+    if (!CmpStr(name, "wm"))
 	return WMSo;
-    if (!CmpStr(name, "term.so"))
+    if (!CmpStr(name, "term"))
 	return TermSo;
-    if (!CmpStr(name, "socket.so"))
+    if (!CmpStr(name, "socket"))
 	return SocketSo;
-    if (!CmpStr(name, "rcparse.so"))
+    if (!CmpStr(name, "rcparse"))
 	return RCParseSo;
     return MainSo;
 }

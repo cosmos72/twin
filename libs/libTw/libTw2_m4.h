@@ -145,8 +145,8 @@ tmsgport Tw_GetOwnerWidget(tw_d TwD, twidget a1) {
     , c(a1));
 }
 
-void Tw_ExposeWidget(tw_d TwD, twidget a1, dat a2, dat a3, dat a4, dat a5, TW_CONST byte *a6, TW_CONST hwfont *a7, TW_CONST hwattr *a8) {
-    EncodeCall(ENCODE_FL_VOID, order_ExposeWidget, TwD 
+void Tw_DrawWidget(tw_d TwD, twidget a1, dat a2, dat a3, dat a4, dat a5, TW_CONST byte *a6, TW_CONST hwfont *a7, TW_CONST hwattr *a8) {
+    EncodeCall(ENCODE_FL_VOID, order_DrawWidget, TwD 
     , c(a1)
     , c(a2)
     , c(a3)
@@ -155,6 +155,13 @@ void Tw_ExposeWidget(tw_d TwD, twidget a1, dat a2, dat a3, dat a4, dat a5, TW_CO
     , c((a2*a3) * sizeof(byte)), (TW_CONST void *)a6
     , c((a2*a3) * sizeof(hwfont)), (TW_CONST void *)a7
     , c((a2*a3) * sizeof(hwattr)), (TW_CONST void *)a8);
+}
+
+
+void Tw_SetVisibleWidget(tw_d TwD, twidget a1, byte a2) {
+    EncodeCall(ENCODE_FL_VOID, order_SetVisibleWidget, TwD 
+    , c(a1)
+    , c(a2));
 }
 
 
@@ -381,7 +388,7 @@ void Tw_SetSelectedGadgetGroup(tw_d TwD, tgroup a1, tgadget a2) {
 }
 
 
-void Tw_Create4MenuRow(tw_d TwD, twindow a1, udat a2, byte a3, uldat a4, TW_CONST byte *a5) {
+void Tw_Create4MenuRow(tw_d TwD, twindow a1, udat a2, byte a3, ldat a4, TW_CONST byte *a5) {
     EncodeCall(ENCODE_FL_VOID, order_Create4MenuRow, TwD 
     , c(a1)
     , c(a2)
@@ -423,6 +430,17 @@ tmenuitem Tw_Create4MenuMenuItem(tw_d TwD, tobj a1, twindow a2, byte a3, dat a4,
     , c(a4)
     , c((a4) * sizeof(byte)), (TW_CONST void *)a5);
 }
+
+trow Tw_Create4MenuAny(tw_d TwD, tobj a1, twindow a2, udat a3, byte a4, ldat a5, TW_CONST byte *a6) {
+    return (tobj)EncodeCall(0, order_Create4MenuAny, TwD 
+    , c(a1)
+    , c(a2)
+    , c(a3)
+    , c(a4)
+    , c(a5)
+    , c((a5) * sizeof(byte)), (TW_CONST void *)a6);
+}
+
 
 uldat Tw_Create4MenuCommonMenuItem(tw_d TwD, tmenu a1) {
     return (uldat)EncodeCall(0, order_Create4MenuCommonMenuItem, TwD 

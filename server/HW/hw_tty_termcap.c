@@ -78,7 +78,7 @@ static byte *termcap_extract(byte *cap, byte **dest) {
 
 
 static void termcap_cleanup(void) {
-    byte ** np, *tc_quit[11];
+    byte ** np, *tc_quit[13];
     
     tc_quit[0] = tc_cursor_goto;
     tc_quit[1] = tc_cursor_on;
@@ -90,7 +90,9 @@ static void termcap_cleanup(void) {
     tc_quit[7] = tc_kpad_off;
     tc_quit[8] = tc_scr_clear;
     tc_quit[9] = tc_audio_bell;
-    tc_quit[10] = NULL;
+    tc_quit[10] = tc_charset_start;
+    tc_quit[11] = tc_charset_end;
+    tc_quit[12] = NULL;
     
     for (np = tc_quit; *np; np++)
 	if (*np) FreeMem(*np);
@@ -125,7 +127,9 @@ static byte termcap_InitVideo(void) {
 	{ "ke",  },
 	{ "cl",  },
 	{ "bl",  },
-	{ NULL, NULL }
+	{ "as",  },
+	{ "as",  },
+	{ NULL,  }
     };
     char tcbuf[2048];		/* by convention, this is enough */
 
@@ -144,17 +148,23 @@ static byte termcap_InitVideo(void) {
     tc_init[7].buf = &tc_kpad_off;
     tc_init[8].buf = &tc_scr_clear;
     tc_init[9].buf = &tc_audio_bell;
-    tc_init[10].buf = NULL;
+    if (tty_charset_to_UTF_16 != Tutf_CP437_to_UTF_16) {
+	tc_init[10].cap = NULL;
+	tc_charset_start = tc_charset_end = NULL;
+    } else {
+	tc_init[10].buf = &tc_charset_start;
+	tc_init[11].buf = &tc_charset_end;
+    }
     
     switch (tgetent(tcbuf, term)) {
       case 1:
 	break;
       case 0:
-	printk("      termcap_InitVideo() failed: no entry for `%s' in the terminal database.\n"
+	printk("      termcap_InitVideo() failed: no entry for `%."STR(SMALLBUFF)"s' in the terminal database.\n"
 	       "      Please set your $TERM environment variable correctly.\n", term);
 	return FALSE;
       default:
-	printk("      termcap_InitVideo() failed: system call error in tgetent(): %s\n",
+	printk("      termcap_InitVideo() failed: system call error in tgetent(): %."STR(SMALLBUFF)"s\n",
 		strerror(errno));
 	return FALSE;
     }
@@ -176,11 +186,18 @@ static byte termcap_InitVideo(void) {
 	return FALSE;
     }
 
+
+# ifdef CONF__UNICODE
+    if (tty_can_utf8 == TRUE+TRUE)
+	/* cannot autodetect an utf8-capable terminal, assume it cannot do utf8 */
+	tty_can_utf8 = FALSE;
+# endif
+
     wrapglitch = tgetflag("xn");
     if (colorbug)
 	fixup_colorbug();
 
-    fprintf(stdOUT, "%s%s", tc_attr_off, tc_scr_clear);
+    fprintf(stdOUT, "%s%s%s", tc_attr_off, tc_scr_clear, tc_charset_start ? tc_charset_start : (byte *)"");
     
     HW->FlushVideo = termcap_FlushVideo;
     HW->FlushHW = stdout_FlushHW;
@@ -224,7 +241,8 @@ static void termcap_QuitVideo(void) {
 
     termcap_MoveToXY(0, DisplayHeight-1);
     termcap_SetCursorType(LINECURSOR);
-    fputs(tc_attr_off, stdOUT); /* reset colors */
+    /* reset colors and charset */
+    fprintf(stdOUT, "%s%s", tc_attr_off, tc_charset_end ? tc_charset_end : (byte *)"");
     
     /* restore original alt cursor keys, keypad settings */
     HW->Configure(HW_KBDAPPLIC, TRUE, 0);
@@ -237,6 +255,7 @@ static void termcap_QuitVideo(void) {
 
 
 #define termcap_MogrifyInit() fputs(tc_attr_off, stdOUT); _col = COL(WHITE,BLACK)
+#define termcap_MogrifyFinish() do { if (utf8used) utf8used = FALSE, fputs("\033%@", stdOUT); } while (0)
 
 INLINE byte *termcap_CopyAttr(byte *attr, byte *dest) {
     while ((*dest++ = *attr++))
@@ -289,11 +308,12 @@ INLINE void termcap_SetColor(hwcol col) {
     fputs(colbuf, stdOUT);
 }
 
+
 INLINE void termcap_Mogrify(dat x, dat y, uldat len) {
     uldat delta = x + (uldat)y * DisplayWidth;
     hwattr *V, *oV;
     hwcol col;
-    hwfont c;
+    hwfont c, _c;
     byte sending = FALSE;
     
     if (!wrapglitch && delta + len >= (uldat)DisplayWidth * DisplayHeight)
@@ -312,14 +332,24 @@ INLINE void termcap_Mogrify(dat x, dat y, uldat len) {
 	    if (col != _col)
 		termcap_SetColor(col);
 	
-	    c = HWFONT(*V);
+	    c = _c = HWFONT(*V);
 #ifdef CONF__UNICODE
-	    c = tty_UTF_16_to_charset(c);
+	    c = tty_UTF_16_to_charset(_c);
+	    if (tty_can_utf8 && (tty_charset_to_UTF_16[c] != _c || (utf8used && c > 0x80))) {
+		/*
+		 * translation to charset did not find an exact match,
+		 * use utf-8 to output this char.
+		 * also use utf-8 if we already output ESC % G and we must putc(c > 0x80),
+		 * which would be interpreted as part of an utf-8 sequence.
+		 */
+		tty_MogrifyUTF8(_c);
+		continue;
+	    }
 #endif
 	    if (c < 32 || c == 127 || c == 128+27) {
 		/* can't display it */
 #ifdef CONF__UNICODE
-		c = T_CAT(Tutf_IBM437_to_,T_MAP(US_ASCII))[c];
+		c = T_CAT(Tutf_CP437_to_,T_MAP(US_ASCII))[c];
 #else
 		c = ' ';
 #endif
@@ -331,7 +361,7 @@ INLINE void termcap_Mogrify(dat x, dat y, uldat len) {
 }
 
 INLINE void termcap_SingleMogrify(dat x, dat y, hwattr V) {
-    hwfont c;
+    hwfont c, _c;
     
     if (!wrapglitch && x == DisplayWidth-1 && y == DisplayHeight-1)
 	return;
@@ -341,14 +371,24 @@ INLINE void termcap_SingleMogrify(dat x, dat y, hwattr V) {
     if (HWCOL(V) != _col)
 	termcap_SetColor(HWCOL(V));
 	
-    c = HWFONT(V);
+    c = _c = HWFONT(V);
 #ifdef CONF__UNICODE
     c = tty_UTF_16_to_charset(c);
+    if (tty_can_utf8 && (tty_charset_to_UTF_16[c] != _c || (utf8used && c > 0x80))) {
+	/*
+	 * translation to charset did not find an exact match,
+	 * use utf-8 to output this char
+	 * also use utf-8 if we already output ESC % G and we must putc(c > 0x80),
+	 * which would be interpreted as part of an utf-8 sequence.
+	 */
+	tty_MogrifyUTF8(_c);
+	return;
+    }
 #endif
     if (c < 32 || c == 127 || c == 128+27) {
 	/* can't display it */
 #ifdef CONF__UNICODE
-	c = T_CAT(Tutf_IBM437_to_,T_MAP(US_ASCII))[c];
+	c = T_CAT(Tutf_CP437_to_,T_MAP(US_ASCII))[c];
 #else
 	c = ' ';
 #endif

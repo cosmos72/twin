@@ -87,13 +87,15 @@
 
 
 
-  case order_ExposeWidget:
+  case order_DrawWidget:
     switch (n) {
       case 6: L = (a[2]._*a[3]._) * sizeof(byte); break;
       case 7: L = (a[2]._*a[3]._) * sizeof(hwfont); break;
       case 8: L = (a[2]._*a[3]._) * sizeof(hwattr); break;
     }
     break;
+
+
 
 
 
@@ -193,6 +195,12 @@
       case 5: L = (a[4]._) * sizeof(byte); break;
     }
     break;
+  case order_Create4MenuAny:
+    switch (n) {
+      case 6: L = (a[5]._) * sizeof(byte); break;
+    }
+    break;
+
 
 
 

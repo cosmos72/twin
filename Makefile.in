@@ -7,12 +7,13 @@ SUBDIRS=$(wildcard include docs libs clients server)
 
 make_VERSION:=$(wordlist 1,2,$(shell $(MAKE) -v))
 ifneq ($(make_VERSION),GNU Make)
- all: make_is_not_GNU
+  all: make_is_not_GNU
 endif
 
 all: subdirs
 	@echo ; \
-	 echo "twin is now (hopefully) compiled." ; \
+	 echo "twin is now fully compiled." ; \
+	 echo "(if you want, you can build user-contributed programs with '$(MAKE) -C contrib')" ; \
 	 echo "As next step, you probably want to run '$(MAKE) install' as root."
 
 make_is_not_GNU:
@@ -53,54 +54,9 @@ fakeconf:
 #
 Torture: fakeconf autogen
 
-#
-install:
-	$(INSTALL-DIR) $(DESTDIR)$(libdir)/twin
-	$(INSTALL-TXT) system.twinrc $(DESTDIR)$(libdir)/twin
-	$(LN) system.twinrc $(DESTDIR)$(libdir)/twin/.twinrc
-	$(INSTALL) system.twenvrc.sh $(DESTDIR)$(libdir)/twin
-	$(LN) system.twenvrc.sh $(DESTDIR)$(libdir)/twin/.twenvrc.sh
-	@echo [1m ; \
-	 echo If this is the first time you installed twin $(TWIN_VERSION_STR) ; \
-	 echo you probably need to run some kind of administrative command ; \
-	 echo to let your system know about newly installed libraries ; \
-	 echo ; \
-	 echo if you do not know what to run, libtool can usually do it for you: ; \
-	 echo just execute: ; \
-	 echo $(TOPDIR)/libtool --finish $(libdir) ; \
-	 echo [0m ; \
-	 echo "As next step, you probably want to run '$(MAKE) clean'" ; \
-	 echo ; \
-	 echo "Installation should be completed. Type 'twstart' and enjoy."
-
-clean: fakeconf autogen
-	rm -f .uni_types.conf .dialog_* ; \
-	if [ ! -s $(CONF) ]; then rm -f $(CONF); fi
-
-
-distclean: clean
-	rm -f $(CONF) \
-	      config.status config.cache config.log libtool \
-	      Makefile makeautoconf conf/conf.auto \
-	      include/autoconf.h include/Tw/Twautoconf.h \
-	      scripts/Mkdep scripts/Bitmap scripts/Getsizes \
-	      include/Tw/datasizes.h include/Tw/uni_types.h \
-	      .uni_types.flags .hdepend `find . -type l` \
-	      `find . -name .modules -o -name .depend` ; \
-	$(CP) Makefile.fake Makefile
-
-pure: distclean
-	rm -f Makefile admin/lt* admin/config.* configure include/autoconf.h.in \
-	      server/rcparse_*.? `find . -name \*_m4.h -o -name \*_m4.c`
 
 
 # libtool and autoconf stuff
-
-
-ADMIN_LIBTOOLS:=admin/ltmain.sh admin/config.guess admin/config.sub
-
-$(ADMIN_LIBTOOLS):
-	libtoolize -c
 
 #
 # libtool scripts must already exist in order for './configure'
@@ -108,7 +64,24 @@ $(ADMIN_LIBTOOLS):
 # and include/autoconf.h.in must already exist in order for './configure'
 # to correctly generate include/autoconf.h
 #
-configure: configure.in $(ADMIN_LIBTOOLS) include/autoconf.h.in
+
+ADMIN_LIBTOOLS:=admin/ltmain.sh admin/config.guess admin/config.sub
+
+$(ADMIN_LIBTOOLS):
+	libtoolize -c
+
+ADMIN_ACLOCAL:=admin/aclocal.m4
+
+$(ADMIN_ACLOCAL):
+	@if [ -f /usr/share/aclocal/libtool.m4 ]; then \
+	  echo $(LN) /usr/share/aclocal/libtool.m4 $@ ; \
+	  $(LN) /usr/share/aclocal/libtool.m4 $@ ; \
+	else \
+	  echo touch $@; \
+	  touch $@; \
+	fi
+
+configure: configure.in $(ADMIN_LIBTOOLS) $(ADMIN_ACLOCAL) include/autoconf.h.in
 	rm -f $@ && autoconf --localdir=admin
 
 include/autoconf.h.in: configure.in
@@ -160,4 +133,61 @@ include/autoconf.h: include/autoconf.h.in
 	fi
 
 bootstrap: $(CONF)
+
+
+
+#
+install:
+	$(INSTALL-DIR) $(DESTDIR)$(libdir)/twin
+	$(INSTALL-TXT) system.twinrc $(DESTDIR)$(libdir)/twin
+	$(LN) system.twinrc $(DESTDIR)$(libdir)/twin/.twinrc
+	$(INSTALL-BIN) system.twenvrc.sh $(DESTDIR)$(libdir)/twin
+	$(LN) system.twenvrc.sh $(DESTDIR)$(libdir)/twin/.twenvrc.sh
+ifeq ($(CONF__SHLIBS),y)
+	@echo [1m ; \
+	 echo If this is the first time you installed twin $(TWIN_VERSION_STR) ; \
+	 echo you probably need to run some kind of administrative command ; \
+	 echo to let your system know about newly installed shared libraries ; \
+	 echo
+  ifeq ($(SUPPORT_SHLIBS),native)
+	@echo if you do not know what to run, you can try with:
+    ifeq ($(OS),Linux)
+	@echo "ldconfig"
+    else
+	@echo "ldconfig -R"
+    endif
+  else
+	@echo if you do not know what to run, libtool can usually do it for you: ; \
+	 echo just execute: ; \
+	 echo $(TOPDIR)/libtool --finish $(libdir)
+  endif
+	@echo [0m
+endif
+	@echo "As next step, you probably want to run '$(MAKE) clean'" ; \
+	 echo ; \
+	 echo "Installation should be completed. Type 'twstart' and enjoy."
+
+clean: fakeconf autogen
+	rm -f .dialog_* ; \
+	if [ ! -s $(CONF) ]; then rm -f $(CONF); fi
+
+
+distclean: clean
+	rm -f $(CONF) \
+	      config.status config.cache config.log libtool \
+	      Makefile makeautoconf conf/conf.auto \
+	      include/autoconf.h include/Tw/Twautoconf.h \
+	      scripts/Mkdep scripts/Bitmap scripts/Getsizes \
+	      include/Tw/datasizes.h include/Tw/uni_types.h \
+	      .uni_types.conf .hdepend `find . -type l` \
+	      `find . -name .modules -o -name .depend` && \
+	$(CP) Makefile.fake Makefile && \
+	rm -f  $(ADMIN_ACLOCAL) && echo > $(ADMIN_ACLOCAL) && \
+	touch configure
+
+pure: distclean
+	rm -f Makefile admin/lt* admin/config.* configure \
+	      $(ADMIN_ACLOCAL) server/rcparse_*.? include/autoconf.h.in \
+	      `find include -name version.h` `find . -name \*_m4.h -o -name \*_m4.c`
+
 

@@ -359,8 +359,9 @@ static msgport sockGetOwnerWidget(widget W);
 static void sockSetXYWidget(widget W, dat x, dat y);
 static void sockResizeWidget(widget W, dat XWidth, dat YWidth);
 #define sockScrollWidget ScrollWidget
-static void sockExposeWidget(widget W, dat XWidth, dat YWidth, dat Left, dat Up, CONST byte *Text, CONST hwfont *Font, CONST hwattr *Attr);
+static void sockDrawWidget(widget W, dat XWidth, dat YWidth, dat Left, dat Up, CONST byte *Text, CONST hwfont *Font, CONST hwattr *Attr);
 
+#define sockSetVisibleWidget SetVisibleWidget
 static void sockFocusSubWidget(widget W);
 
 #define sockRestackChildrenWidget RestackWidgets
@@ -380,9 +381,12 @@ static void sockWriteHWAttrWindow(window Window, dat x, dat y, ldat Len, CONST h
 
 static row  sockFindRowByCodeWindow(window Window, dat Code);
 
+/* backward compatibility. will be removed */
 static void sockCreate4MenuRow(window, udat Code, byte Flags, uldat Len, byte CONST *Name);
-
+/* backward compatibility. will be removed */
 static menuitem sockCreate4MenuMenuItem(obj Parent, window Window, byte Flags, dat Len, byte CONST *Name);
+
+static menuitem sockCreate4MenuAny(obj Parent, window Window, udat Code, byte Flags, ldat Len, byte CONST *Name);
 
 #define sockRestackChildrenRow RestackRows
 static void sockCirculateChildrenRow(obj O, byte up_or_down);
@@ -887,7 +891,7 @@ static void sockSetUniFontTranslation(CONST hwfont trans[0x80]) {
 	CopyMem(trans, G + 0x80, sizeof(hwfont) * 0x80);
     }
 #else
-    sockSetFontTranslation(trans);
+    sockSetFontTranslation((CONST byte *)trans);
 #endif
 }
 
@@ -953,7 +957,7 @@ static void sockSetXYWidget(widget W, dat x, dat y) {
 	Act(SetXY,W)(W, x, y);
     }
 }
-static void sockExposeWidget(widget W, dat XWidth, dat YWidth, dat Left, dat Up, CONST byte *Text, CONST hwfont *Font, CONST hwattr *Attr) {
+static void sockDrawWidget(widget W, dat XWidth, dat YWidth, dat Left, dat Up, CONST byte *Text, CONST hwfont *Font, CONST hwattr *Attr) {
     if (W) {
 	Act(Expose,W)(W, XWidth, YWidth, Left, Up, XWidth, Text, Font, Attr);
     }
@@ -1084,12 +1088,18 @@ static row sockFindRowByCodeWindow(window Window, dat Code) {
 }
 
 
+/* backward compatibility. will be removed */
 static void sockCreate4MenuRow(window Window, udat Code, byte Flags, uldat Len, byte CONST *Name) {
     Row4Menu(Window, Code, Flags, Len, Name);
 }
 
+/* backward compatibility. will be removed */
 static menuitem sockCreate4MenuMenuItem(obj Parent, window Window, byte Flags, dat Len, byte CONST *Name) {
     return Item4Menu(Parent, Window, Flags, Len, Name);
+}
+
+static menuitem sockCreate4MenuAny(obj Parent, window Window, udat Code, byte Flags, ldat Len, byte CONST *Name) {
+    return Do(Create4Menu,MenuItem)(FnMenuItem, Parent, Window, Code, Flags, Len, Name);
 }
 
 static menu sockCreateMenu
@@ -1307,17 +1317,18 @@ static void sockSendMsg(msgport MsgPort, msg Msg) {
 	}
 	break;
       case MSG_MENU_ROW:
-	if (Easy && sizeof(event_menu) == sizeof(window) + 2*sizeof(udat) + sizeof(menu))
+	if (Easy && sizeof(event_menu) == sizeof(window) + 2*sizeof(udat) + sizeof(menu) + sizeof(row))
 	    break;
 	else
 	    Easy = FALSE;
-	sockReply(Msg->Type, Len = sizeof(twindow) + 2*sizeof(dat) + sizeof(tmenu), NULL);
+	sockReply(Msg->Type, Len = sizeof(twindow) + 2*sizeof(dat) + sizeof(tmenu) + sizeof(row), NULL);
 	if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
 	    t += Tot - Len;
 	    Push(t, twindow, Obj2Id(Msg->Event.EventMenu.W));
 	    Push(t, udat,    Msg->Event.EventMenu.Code);
 	    Push(t, udat,    Msg->Event.EventMenu.pad);
 	    Push(t, tmenu,   Obj2Id(Msg->Event.EventMenu.Menu));
+	    Push(t, trow,    Obj2Id(Msg->Event.EventMenu.Row));
 	}
 	break;
       case MSG_SELECTION:
@@ -1412,9 +1423,10 @@ static void sockSendMsg(msgport MsgPort, msg Msg) {
 #if TW_SIZEOFVOIDP == TW_SIZEOFULDAT
     if (Easy) {
 	Msg->Event.EventCommon.W = (void *)Obj2Id(Msg->Event.EventCommon.W);
-	if (Msg->Type == MSG_MENU_ROW)
+	if (Msg->Type == MSG_MENU_ROW) {
 	    Msg->Event.EventMenu.Menu = (void *)Obj2Id(Msg->Event.EventMenu.Menu);
-	else if (Msg->Type == MSG_SELECTIONREQUEST)
+	    Msg->Event.EventMenu.Row  = (void *)Obj2Id(Msg->Event.EventMenu.Row);
+	} else if (Msg->Type == MSG_SELECTIONREQUEST)
 	    Msg->Event.EventSelectionRequest.Requestor
 	    = (void *)Obj2Id(Msg->Event.EventSelectionRequest.Requestor);
 	sockReply(Msg->Type, Msg->Len, &Msg->Event);
@@ -1598,6 +1610,7 @@ static byte sockSendToMsgPort(msgport MsgPort, udat Len, CONST byte *Data) {
 		Push(t, udat,    Msg->Event.EventMenu.Code);
 		Push(t, udat,    Msg->Event.EventMenu.pad);
 		Push(t, tmenu,   Obj2Id(Msg->Event.EventMenu.Menu));
+		Push(t, trow,    Obj2Id(Msg->Event.EventMenu.Row));
 		break;
 #endif
 	      case TW_MSG_USER_CONTROL:
@@ -2123,7 +2136,7 @@ static byte Check4MagicTranslation(uldat slot, byte *magic, byte len) {
 		if (warn_count == 5)
 		    printk("twin: warning: many client with different sizes, suppressing further messages.\n");
 		else
-		    printk("twin: warning: client has different `%s' size, it may "
+		    printk("twin: warning: client has different `%."STR(SMALLBUFF)"s' size, it may "
 # ifdef CONF__UNICODE
 			   "not "
 # endif
@@ -2425,7 +2438,7 @@ byte InitSocket(void)
     char opt[15];
 
     if (!InitAuth()) {
-	printk("twin: failed to create ~/.TwinAuth: %s\n", ErrStr);
+	printk("twin: failed to create ~/.TwinAuth: %."STR(SMALLBUFF)"s\n", ErrStr);
 	return FALSE;
     }
     
@@ -2472,7 +2485,7 @@ byte InitSocket(void)
 
 	return TRUE;
     }
-    printk("twin: failed to create sockets: %s\n", ErrStr);
+    printk("twin: failed to create sockets: %."STR(SMALLBUFF)"s\n", ErrStr);
     return FALSE;
 }
 

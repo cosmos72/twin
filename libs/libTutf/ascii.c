@@ -5,7 +5,7 @@ hwfont T_CAT3(Tutf_,T_MAP(ASCII),_to_UTF_16)[0x100] = {
 #undef EL
 };
 
-hwfont T_CAT(Tutf_IBM437_to_,T_MAP(ASCII))[0x100] = {
+hwfont T_CAT(Tutf_CP437_to_,T_MAP(ASCII))[0x100] = {
         ' ','O','O','v','@','g','!','.','.','o','o','t','g','f','f','*',
 	'>','<','|','!','q','S','_','|','^','v','>','<','L','-','^','v',
 	
@@ -29,7 +29,7 @@ hwfont T_CAT(Tutf_IBM437_to_,T_MAP(ASCII))[0x100] = {
 hwfont T_CAT(Tutf_UTF_16_to_,T_MAP(ASCII))(hwfont c) {
     if (c < 0x20 /*' '*/ || c > 0x7E /*'~'*/) {
 	/* not plain 7-bit ASCII, try to approximate */
-	c = T_CAT(Tutf_IBM437_to_,T_MAP(ASCII)) [ Tutf_UTF_16_to_IBM437(c) ];
+	c = T_CAT(Tutf_CP437_to_,T_MAP(ASCII)) [ Tutf_UTF_16_to_CP437(c) ];
     }
     /* else c = c; */
     return c;

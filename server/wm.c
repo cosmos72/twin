@@ -83,17 +83,18 @@ INLINE sbyte IsTabPosition(window Window, udat pos, sbyte isX) {
 #ifdef THIS_MODULE
 static
 #endif
-byte WMFindBorderWindow(window W, dat u, dat v, byte Border, hwfont *PtrChar, hwcol *PtrColor) {
-    hwfont *BorderFont, Char;
+byte WMFindBorderWindow(window W, dat u, dat v, byte Border, hwattr *PtrAttr) {
+    hwfont *BorderFont, Font;
     ldat k;
     uldat Attrib;
     hwcol Color;
     dat rev_u, rev_v;
     dat XWidth, YWidth;
-    byte Found = POS_SIDE, MovWin;
+    byte Found = POS_SIDE_UP, FlDrag, FlResize, FlScroll, FlPressed;
     byte Horiz, Vert;
     byte Close, Resize, NMenuWin, BarX, BarY;
     sbyte Back_Fwd, i;
+    byte extra_u;
     
     if (!W)
 	return Found;
@@ -109,10 +110,24 @@ byte WMFindBorderWindow(window W, dat u, dat v, byte Border, hwfont *PtrChar, hw
     if ((W->Flags & WINDOWFL_BORDERLESS) || (u && v && rev_u && rev_v))
 	return POS_INSIDE;
     
-    MovWin = W == (window)All->FirstScreen->FocusW &&
-	((All->State & STATE_ANY) == STATE_DRAG ||
-	 (All->State & STATE_ANY) == STATE_RESIZE ||
-	 (All->State & STATE_ANY) == STATE_SCROLL);
+    FlDrag = FlResize = FlScroll = FlPressed = FALSE;
+    
+    if (W == (window)All->FirstScreen->FocusW) {
+	switch (All->State & STATE_ANY) {
+	  case STATE_DRAG:
+	    FlDrag = TRUE;
+	    break;
+	  case STATE_RESIZE:
+	    FlResize = TRUE;
+	    break;
+	  case STATE_SCROLL:
+	    FlScroll = TRUE;
+	    break;
+	  default:
+	    break;
+	}
+    }
+    
     Attrib=W->Attrib;
     Close=!!(Attrib & WINDOW_CLOSE);
     Resize=!!(Attrib & WINDOW_RESIZE);
@@ -120,8 +135,8 @@ byte WMFindBorderWindow(window W, dat u, dat v, byte Border, hwfont *PtrChar, hw
     BarY=!!(Attrib & WINDOW_Y_BAR);
     NMenuWin=!(W->Flags & WINDOWFL_MENU);
 
-    Vert  = v ? rev_v ? (byte)1 : (byte)2 : (byte)0;
-    Horiz = u ? rev_u ? (byte)1 : (byte)2 : (byte)0;
+    Horiz = extra_u = u ? rev_u ? (byte)1 : (byte)2 : (byte)0;
+    Vert  =           v ? rev_v ? (byte)1 : (byte)2 : (byte)0;
 
     
     if (!(BorderFont = W->BorderPattern[Border]) &&
@@ -142,77 +157,81 @@ byte WMFindBorderWindow(window W, dat u, dat v, byte Border, hwfont *PtrChar, hw
 	i = BUTTON_MAX;
 	if (Close && All->ButtonVec[0].exists && is_u(All->ButtonVec[0].pos))
 	    i = 0;
-	else if (NMenuWin) {
-	    for (i=1; i<BUTTON_MAX; i++) {
+	else if (NMenuWin)
+	    for (i=1; i<BUTTON_MAX; i++)
 		if (All->ButtonVec[i].exists && is_u(All->ButtonVec[i].pos))
 		    break;
-	    }
-	}
 
-	Found = POS_TITLE;
-	
 	if (i < BUTTON_MAX) {
-	    Char = All->ButtonVec[i].shape[delta_u(All->ButtonVec[i].pos)];
+	    Font = All->ButtonVec[i].shape[extra_u = delta_u(All->ButtonVec[i].pos)];
 	    Found = i;
 	} else if (W->NameLen) {
 
 	    k = 2*(ldat)u - ( (ldat)XWidth-(ldat)W->NameLen-(ldat)3 );
 	    if (k > 0) k /= 2;
-	    if (k > 0 && k <= W->NameLen)
+	    if (k > 0 && k <= W->NameLen) {
 #ifdef CONF__UNICODE
-		Char=Tutf_IBM437_to_UTF_16[W->Name[--k]];
+		Font = Tutf_CP437_to_UTF_16[W->Name[--k]];
 #else
-		Char=W->Name[--k];
+		Font = W->Name[--k];
 #endif
-	    else if (k == 0 || k == W->NameLen + 1)
-		Char=' ';
-	    else
-		Char=BorderFont[Horiz];
+		Found = POS_TITLE;
+	    } else if (k == 0 || k == W->NameLen + 1) {
+		Font = ' ';
+		Found = POS_TITLE;
+	    } else
+		Font = BorderFont[Horiz];
 	} else
-	    Char=BorderFont[Horiz];
+	    Font = BorderFont[Horiz];
 	break;
 	
 #undef is_u
 #undef delta_u
 
       case 1:
-	if (Horiz == 0)
-	    Char=BorderFont[Vert*3];
-	else if (Horiz == 2) {
+	if (Horiz == 0) {
+	    Font = BorderFont[(extra_u = Vert) * 3];
+	    Found = POS_SIDE_LEFT;
+	} else if (Horiz == 2) {
 	    if (BarY) {
 		if (rev_v<(udat)3) {
-		    Char=ScrollBarY[(udat)3-rev_v];
-		    Found= rev_v==(udat)2 ? POS_ARROW_BACK : POS_ARROW_FWD;
-		} else if (!(Back_Fwd=IsTabPosition(W, v-(udat)1, FALSE))) {
-		    Char=TabY;
-		    Found=POS_TAB;
+		    Font = ScrollBarY[extra_u = (udat)3-rev_v];
+		    Found =  rev_v == (udat)2 ? POS_Y_ARROW_BACK : POS_Y_ARROW_FWD;
+		} else if (!(Back_Fwd = IsTabPosition(W, v-(udat)1, FALSE))) {
+		    Font = TabY;
+		    Found = POS_Y_TAB;
 		} else {
-		    Char=ScrollBarY[0];
-		    Found=Back_Fwd>(sbyte)0 ? POS_BAR_FWD : POS_BAR_BACK;
+		    Font = ScrollBarY[0];
+		    Found = Back_Fwd>(sbyte)0 ? POS_Y_BAR_FWD : POS_Y_BAR_BACK;
 		}
 	    } else {
-		Char=BorderFont[Vert*3+2];
+		Font = BorderFont[(extra_u = Vert) * 3 + 2];
+		Found = POS_SIDE_RIGHT;
 	    }
 	}
 	break;
       case 2:
+	Found = POS_SIDE_DOWN;
+	
 	if (rev_u<(udat)2) {
 	    if (Resize) {
-		Char=GadgetResize[(udat)1-rev_u];
-		Found=POS_CORNER;
+		Font = GadgetResize[extra_u = (udat)1-rev_u];
+		Found = POS_BUTTON_RESIZE;
 	    } else
-		Char=BorderFont[6+(udat)2-rev_u];
+		Font = BorderFont[6 + (extra_u = (udat)2-rev_u)];
 	} else if (!BarX || !Horiz) {
-	    Char=BorderFont[6+Horiz];
+	    Font = BorderFont[6 + Horiz];
 	} else if (rev_u<(udat)4) {
-	    Char=ScrollBarX[(udat)4-rev_u];
-	    Found= rev_u==(udat)3 ? POS_ARROW_BACK : POS_ARROW_FWD;
+	    Font = ScrollBarX[extra_u = (udat)4-rev_u];
+	    Found =  rev_u==(udat)3 ? POS_X_ARROW_BACK : POS_X_ARROW_FWD;
 	} else if (!(Back_Fwd=IsTabPosition(W, u-(udat)1, TRUE))) {
-	    Char=TabX;
-	    Found=POS_TAB;
+	    Font = TabX;
+	    Found = POS_X_TAB;
+	    extra_u = 0;
 	} else {
-	    Char=ScrollBarX[0];
-	    Found=Back_Fwd>(sbyte)0 ? POS_BAR_FWD : POS_BAR_BACK;
+	    Font = ScrollBarX[0];
+	    Found = Back_Fwd>(sbyte)0 ? POS_X_BAR_FWD : POS_X_BAR_BACK;
+	    extra_u = 0;
 	}
 	break;
       default:
@@ -220,70 +239,99 @@ byte WMFindBorderWindow(window W, dat u, dat v, byte Border, hwfont *PtrChar, hw
 	
     } else switch (Vert) {
       case 0:
-	Found = POS_TITLE;
-	
 	if (W->NameLen) {
 	    k = 2*(ldat)u - ( (ldat)XWidth-(ldat)W->NameLen-(ldat)3);
 	    if (k > 0) k /= 2;
-	    if (k > 0 && k <= W->NameLen)
+	    if (k > 0 && k <= W->NameLen) {
 #ifdef CONF__UNICODE
-		Char=Tutf_IBM437_to_UTF_16[W->Name[--k]];
+		Font = Tutf_CP437_to_UTF_16[W->Name[--k]];
 #else
-		Char=W->Name[--k];
+		Font = W->Name[--k];
 #endif
-	    else if (k == 0 || k == W->NameLen + 1)
-		Char=' ';
-	    else
-		Char=BorderFont[Horiz];
+		Found = POS_TITLE;
+	    } else if (k == 0 || k == W->NameLen + 1) {
+		Font = ' ';
+		Found = POS_TITLE;
+	    } else
+		Font = BorderFont[Horiz];
 	} else
-	    Char=BorderFont[Horiz];
+	    Font = BorderFont[Horiz];
 	break;
 	
       default:
-	Char=BorderFont[Vert*3 + Horiz];
+	Font = BorderFont[Vert*3 + Horiz];
+	Found = Vert == 1 ? (Horiz ? POS_SIDE_RIGHT : POS_SIDE_LEFT) : POS_SIDE_DOWN;
 	break;
     }
+
+    if (!PtrAttr)
+	return Found;
     
-    if (PtrColor) {
-	if (MovWin && (Found < BUTTON_MAX || Found == POS_CORNER ||
-		       Found == POS_TITLE || Found == POS_SIDE)) {
-	    if (Found < BUTTON_MAX || Found==POS_CORNER)
-		Color=COL( COLBG(W->ColGadgets), COLFG(W->ColGadgets));
-	    else if (Found==POS_TITLE && W->ColName && k >= 0 && k < W->NameLen)
-		Color=W->ColName[k];
-	    else
-		Color=W->ColGadgets;
-	} else switch (Found) {
-	  case POS_CORNER:	Color=W->ColGadgets; break;
-	  case POS_SIDE:	Color=W->ColBorder;  break;
-	  case POS_ARROW_BACK:
-	  case POS_ARROW_FWD:	Color=W->ColArrows;  break;
-	  case POS_TAB:		Color=W->ColTabs;    break;
-	  case POS_BAR_BACK:
-	  case POS_BAR_FWD:	Color=W->ColBars;    break;
-	  case POS_TITLE:
-	    if (W->ColName && k >= 0 && k < W->NameLen)
-		Color=W->ColName[k];
-	    else
-		Color=W->ColBorder;
-	    break;
-	  default:
-	    if (Found < BUTTON_MAX) {
-		if (W->State & WINDOW_GADGET_PRESSED && 
-		    W->State & (BUTTON_FIRST_SELECT << Found))
-		    
-		    Color=COL( COLBG(W->ColGadgets), COLFG(W->ColGadgets));
-		else
-		    Color=W->ColGadgets;
-	    } else
-		Color=W->ColBorder;
-	    break;
+    if (FlDrag && Found >= POS_TITLE && Found <= POS_SIDE_DOWN) {
+	FlPressed = TRUE;
+	if (Found == POS_TITLE && W->ColName && k >= 0 && k < W->NameLen)
+	    Color = W->ColName[k];
+	else
+	    Color = W->ColGadgets;
+    } else switch (Found) {
+      case POS_TITLE:
+	if (W->ColName && k >= 0 && k < W->NameLen)
+	    Color = W->ColName[k];
+	else
+	    Color = W->ColBorder;
+	break;
+      case POS_SIDE_LEFT:
+      case POS_SIDE_UP:
+      case POS_SIDE_RIGHT:
+      case POS_SIDE_DOWN:
+	Color = W->ColBorder;
+	break;
+      case POS_BUTTON_RESIZE:
+	Color = W->ColGadgets;
+	if (FlResize) {
+	    Color = COL( COLBG(Color), COLFG(Color) );
+	    FlPressed = TRUE;
 	}
-	*PtrColor=Color;
+	break;
+      case POS_X_ARROW_BACK:
+      case POS_X_ARROW_FWD:
+      case POS_Y_ARROW_FWD:
+      case POS_Y_ARROW_BACK:
+	Color = W->ColArrows;
+	break;
+      case POS_X_TAB:
+      case POS_Y_TAB:
+	Color = W->ColTabs;
+	break;
+      case POS_X_BAR_BACK:
+      case POS_X_BAR_FWD:
+      case POS_Y_BAR_BACK:
+      case POS_Y_BAR_FWD:
+	Color = W->ColBars;
+	break;
+      default:
+	Color = Found < BUTTON_MAX
+	    ? (FlDrag ? COL(COLBG(W->ColGadgets),COLFG(W->ColGadgets)) : W->ColGadgets)
+	    : W->ColBorder;
+	break;
+    }
+    if (FlScroll && Found >= POS_X_BAR_BACK && Found <= POS_Y_ARROW_FWD) {
+	Color ^= COL(HIGH,HIGH);
+	FlPressed = TRUE;
+    } else if (Found < BUTTON_MAX && (W->State & WINDOW_GADGET_PRESSED) &&
+	 (W->State & (BUTTON_FIRST_SELECT << Found))) {
+	
+	Color = COL( COLBG(Color), COLFG(Color) );
+	FlPressed = TRUE;
     }
     
-    if (PtrChar)
-	*PtrChar=Char;
+#ifdef CONF__UNICODE
+    extra_u = EncodeToHWAttrExtra(Found, extra_u, !Border, FlPressed);
+    *PtrAttr = HWATTR_EXTRA32(HWATTR(Color,Font), extra_u);
+#else
+    *PtrAttr = HWATTR(Color,Font);
+#endif
+
     return Found;
 }
     
@@ -620,7 +668,7 @@ static void DetailCtx(wm_ctx *C) {
 	/* ensure IS_SCREEN(C->W->Parent) is true. */
 	C->Screen = (screen)C->W->Parent;
 	if (!C->Screen || !IS_SCREEN(C->Screen)) {
-	    printk("twin: wm.c: DetailCtx(): error: C->W is a subwidget!\n");
+	    printk("twin: wm.c: DetailCtx(): internal error: C->W is a subwidget!\n");
 	    return;
 	}
     }
@@ -652,8 +700,7 @@ static void DetailCtx(wm_ctx *C) {
 		 * and CheckForwardMsg()
 		 */
 		if (IS_WINDOW(C->W) && (C->i == C->Left || C->i == C->Rgt || C->j == C->Up || C->j == C->Dwn))
-		    C->Pos = Act(FindBorder,(window)C->W)((window)C->W, C->i - C->Left, C->j - C->Up,
-						  0, NULL, NULL);
+		    C->Pos = Act(FindBorder,(window)C->W)((window)C->W, C->i - C->Left, C->j - C->Up, 0, NULL);
 	    }
 	}
 	/*
@@ -665,7 +712,7 @@ static void DetailCtx(wm_ctx *C) {
 	    C->Pos = POS_ROOT;
 	    if (C->j == C->Screen->YLimit) {
 		if (C->i > All->DisplayWidth - (dat)3)
-		    C->Pos = POS_SCREENBUTTON;
+		    C->Pos = POS_BUTTON_SCREEN;
 		else {
 		    C->Pos = POS_MENU;
 		    C->W = C->Screen->FocusW;
@@ -720,7 +767,7 @@ static void ReleaseScreen(wm_ctx *C) {
 /* this is mouse-only */
 static byte ActivateScreenButton(wm_ctx *C) {
     if (C->Screen == All->FirstScreen && (All->State & STATE_ANY) == STATE_DEFAULT) {
-	All->State = STATE_SCREENBUTTON | STATE_FL_BYMOUSE;
+	All->State = STATE_BUTTON_SCREEN | STATE_FL_BYMOUSE;
 	C->Screen->Flags |= SCREENFL_BACK_SELECT | SCREENFL_BACK_PRESSED;
 	Act(DrawMenu,C->Screen)(C->Screen, All->DisplayWidth-(dat)2, All->DisplayWidth-(dat)1);
 	return TRUE;
@@ -735,7 +782,7 @@ static void ContinueScreenButton(wm_ctx *C) {
     
     DetailCtx(C);
     
-    if (C->Pos == POS_SCREENBUTTON)
+    if (C->Pos == POS_BUTTON_SCREEN)
 	C->Screen->State |= GADGET_PRESSED;
     else
 	C->Screen->State &= ~GADGET_PRESSED;
@@ -750,7 +797,7 @@ static void ReleaseScreenButton(wm_ctx *C) {
     All->State = STATE_DEFAULT;
     C->Screen->Flags &= ~(SCREENFL_BACK_SELECT|SCREENFL_BACK_PRESSED);
     
-    if (C->Screen != All->LastScreen && (DetailCtx(C), C->Pos == POS_SCREENBUTTON)) {
+    if (C->Screen != All->LastScreen && (DetailCtx(C), C->Pos == POS_BUTTON_SCREEN)) {
 	MoveLast(Screen, All, C->Screen);
 	DrawArea2(NULL, NULL, NULL,
 		 0, Min2(C->Screen->YLimit, All->FirstScreen->YLimit),
@@ -844,6 +891,7 @@ static void ReleaseMenu(wm_ctx *C) {
 	    Event->W = MW;
 	    Event->Code = Code;
 	    Event->Menu = Menu;
+	    Event->Row = Row;
 	    if (MW)
 		SendMsg(MW->Owner, Msg);
 	    else
@@ -922,13 +970,13 @@ static byte ActivateScroll(wm_ctx *C) {
 	if (C->ByMouse) {
 	    DetailCtx(C);
 	    if ((ldat)C->j == C->Dwn) {
-		if (C->Pos == POS_ARROW_BACK)
+		if (C->Pos == POS_X_ARROW_BACK)
 		    W->State |= X_BAR_SELECT|ARROW_BACK_SELECT;
-		else if (C->Pos == POS_ARROW_FWD)
+		else if (C->Pos == POS_X_ARROW_FWD)
 		    W->State |= X_BAR_SELECT|ARROW_FWD_SELECT;
-		else if (C->Pos == POS_BAR_BACK)
+		else if (C->Pos == POS_X_BAR_BACK)
 		    W->State |= X_BAR_SELECT|PAGE_BACK_SELECT;
-		else if (C->Pos == POS_BAR_FWD)
+		else if (C->Pos == POS_X_BAR_FWD)
 		    W->State |= X_BAR_SELECT|PAGE_FWD_SELECT;
 		else {
 		    W->State |= X_BAR_SELECT|TAB_SELECT;
@@ -936,13 +984,13 @@ static byte ActivateScroll(wm_ctx *C) {
 		    DragPosition[1] = 0;
 		}
 	    } else if ((ldat)C->i == C->Rgt) {
-		if (C->Pos == POS_ARROW_BACK)
+		if (C->Pos == POS_Y_ARROW_BACK)
 		    W->State |= Y_BAR_SELECT|ARROW_BACK_SELECT;
-		else if (C->Pos == POS_ARROW_FWD)
+		else if (C->Pos == POS_Y_ARROW_FWD)
 		    W->State |= Y_BAR_SELECT|ARROW_FWD_SELECT;
-		else if (C->Pos == POS_BAR_BACK)
+		else if (C->Pos == POS_Y_BAR_BACK)
 		    W->State |= Y_BAR_SELECT|PAGE_BACK_SELECT;
-		else if (C->Pos == POS_BAR_FWD)
+		else if (C->Pos == POS_Y_BAR_FWD)
 		    W->State |= Y_BAR_SELECT|PAGE_FWD_SELECT;
 		else {
 		    W->State |= Y_BAR_SELECT|TAB_SELECT;
@@ -1203,7 +1251,7 @@ void ForceRelease(CONST wm_ctx *C) {
 	break;
       case STATE_SCREEN:
 	break;
-      case STATE_SCREENBUTTON:
+      case STATE_BUTTON_SCREEN:
 	All->FirstScreen->Flags &= ~(SCREENFL_BACK_SELECT|SCREENFL_BACK_PRESSED);
 	break;
       default:
@@ -1227,7 +1275,7 @@ static byte ActivateMouseState(wm_ctx *C) {
     byte used = FALSE;
     
     switch (C->Pos) {
-      case POS_SCREENBUTTON:
+      case POS_BUTTON_SCREEN:
 	if ((C->Code & HOLD_ANY) == All->SetUp->ButtonSelection)
 	    used = TRUE, ActivateScreenButton(C);
 	break;
@@ -1286,7 +1334,7 @@ static byte SneakSetupMouse(wm_ctx *C) {
       case STATE_GADGET:
       case STATE_MENU:
       case STATE_SCREEN:
-      case STATE_SCREENBUTTON:
+      case STATE_BUTTON_SCREEN:
       case STATE_ROOT:
       case STATE_DEFAULT:
       default:
@@ -1307,7 +1355,7 @@ static void ContinueReleaseMouseState(wm_ctx *C, byte State) {
 	  case STATE_GADGET: ReleaseGadget(C);           break;
 	  case STATE_MENU:   ReleaseMenu(C);             break;
 	  case STATE_SCREEN: ReleaseScreen(C);           break;
-	  case STATE_SCREENBUTTON: ReleaseScreenButton(C); break;
+	  case STATE_BUTTON_SCREEN: ReleaseScreenButton(C); break;
 	  case STATE_ROOT:
 	  case STATE_DEFAULT:
 	  default:
@@ -1326,7 +1374,7 @@ static void ContinueReleaseMouseState(wm_ctx *C, byte State) {
 	  case STATE_GADGET: ContinueGadget(C); break;
 	  case STATE_MENU:   ContinueMenu(C);   break;
 	  case STATE_SCREEN: ContinueScreen(C); break;
-	  /*case STATE_SCREENBUTTON: ContinueScreenButton(C); break; */
+	  /*case STATE_BUTTON_SCREEN: ContinueScreenButton(C); break; */
 	  case STATE_ROOT: case STATE_DEFAULT:  break;
 	  default:
 	    /* if (State < BUTTON_MAX)
@@ -1797,7 +1845,7 @@ byte InitWM(void)
 		    return TRUE;
 		} else {
 		    sent = TRUE;
-		    printk("twin: RC: %s\n", ErrStr);
+		    printk("twin: RC: %."STR(SMALLBUFF)"s\n", ErrStr);
 		}
 	    }
 	    UnRegisterExtension(WM,MsgPort,WM_MsgPort);
@@ -1809,7 +1857,7 @@ byte InitWM(void)
     if (WM_MsgPort)
 	Delete(WM_MsgPort);
     if (!sent) {
-	printk("twin: WM: %s\n", ErrStr);
+	printk("twin: WM: %."STR(SMALLBUFF)"s\n", ErrStr);
     }
     return FALSE;
 }

@@ -21,7 +21,7 @@
  *
  */
 
-#include <Tw/Tw.h>
+#include <Tw/Twtypes.h>
 
 #include <Tutf/Tutf.h>
 #include <Tutf/Tutf_defs.h>
@@ -95,21 +95,99 @@ static TUTF_CONST utf_to_ch *my_bsearch(TUTF_CONST utf_to_ch *key, TUTF_CONST ut
 #include "iso_8859_x.c"
 #undef ISO_8859_X
 
-#include "ibm437.c"
-#include "ibm850.c"
-#include "ibm865.c"
+#define ISO_8859_X ISO_8859_13
+#include "iso_8859_x.c"
+#undef ISO_8859_X
+
+#define ISO_8859_X ISO_8859_14
+#include "iso_8859_x.c"
+#undef ISO_8859_X
+
+#define ISO_8859_X ISO_8859_15
+#include "iso_8859_x.c"
+#undef ISO_8859_X
+
+#include "cp437.c"
+
+#define TEMPLATE CP737
+#include "template.c"
+#undef TEMPLATE
+
+#define TEMPLATE CP775
+#include "template.c"
+#undef TEMPLATE
+
+#include "cp850.c"
+
+#define TEMPLATE CP852
+#include "template.c"
+#undef TEMPLATE
+
+#define TEMPLATE CP855
+#include "template.c"
+#undef TEMPLATE
+
+#define TEMPLATE CP857
+#include "template.c"
+#undef TEMPLATE
+
+#define TEMPLATE CP860
+#include "template.c"
+#undef TEMPLATE
+
+#define TEMPLATE CP861
+#include "template.c"
+#undef TEMPLATE
+
+#define TEMPLATE CP862
+#include "template.c"
+#undef TEMPLATE
+
+#define TEMPLATE CP863
+#include "template.c"
+#undef TEMPLATE
+
+#define TEMPLATE CP864
+#include "template.c"
+#undef TEMPLATE
+
+#include "cp865.c"
 
 #define TEMPLATE CP866
 #include "template.c"
 #undef TEMPLATE
+
+#define TEMPLATE CP869
+#include "template.c"
+#undef TEMPLATE
+
+#define TEMPLATE CP874
+#include "template.c"
+#undef TEMPLATE
+
+#define TEMPLATE CP1250
+#include "template.c"
+#undef TEMPLATE
+
+#define TEMPLATE CP1251
+#include "template.c"
+#undef TEMPLATE
+
+#define TEMPLATE CP1255
+#include "template.c"
+#undef TEMPLATE
+
 
 #define _NLIST(EL) \
 	EL(T_MAP(ASCII)) \
 	EL(T_MAP(ISO_8859_1)) EL(T_MAP(ISO_8859_2)) EL(T_MAP(ISO_8859_3)) \
 	EL(T_MAP(ISO_8859_4)) EL(T_MAP(ISO_8859_5)) EL(T_MAP(ISO_8859_6)) \
 	EL(T_MAP(ISO_8859_7)) EL(T_MAP(ISO_8859_8)) EL(T_MAP(ISO_8859_9)) \
-	EL(T_MAP(IBM437))     EL(T_MAP(IBM850))     EL(T_MAP(IBM865))     \
-	EL(T_MAP(CP866))
+	EL(T_MAP(ISO_8859_13)) EL(T_MAP(ISO_8859_14)) EL(T_MAP(ISO_8859_15)) \
+        EL(T_MAP(CP437)) EL(T_MAP(CP737)) EL(T_MAP(CP775)) EL(T_MAP(CP850)) EL(T_MAP(CP852)) \
+	EL(T_MAP(CP855)) EL(T_MAP(CP857)) EL(T_MAP(CP860)) EL(T_MAP(CP861)) EL(T_MAP(CP862)) \
+	EL(T_MAP(CP863)) EL(T_MAP(CP864)) EL(T_MAP(CP865)) EL(T_MAP(CP866)) EL(T_MAP(CP869)) \
+	EL(T_MAP(CP874)) EL(T_MAP(CP1250)) EL(T_MAP(CP1251)) EL(T_MAP(CP1255))
 
 #define _LIST(EL) \
 	EL(T_MAP(UTF_16)) _NLIST(EL)
@@ -145,13 +223,15 @@ static int strloosecmp(TUTF_CONST byte *s1, TUTF_CONST byte *s2) {
 
     for (;;) {
 	c1 = *s1++;
+	if (c1 == '-' || c1 == '_' || c1 == '.' || c1 == ':')
+	    c1 = *s1++;
+	
 	c2 = *s2++;
+	if (c2 == '-' || c2 == '_' || c2 == '.' || c2 == ':')
+	    c2 = *s2++;
+	
 	if (!c1 || !c2 ||
 	    !(c1 == c2 ||
-	      (
-	       (c1 == '-' || c1 == '_' || c1 == '.' || c1 == ':') &&
-	       (c2 == '-' || c2 == '_' || c2 == '.' || c2 == ':')
-	      ) ||
 	      (c1 >= 'A' && c1 <= 'Z' && c1 + ('a'-'A') == c2) ||
 	      (c2 >= 'A' && c2 <= 'Z' && c2 + ('a'-'A') == c1)
 	     )

@@ -43,7 +43,7 @@ static char *mapsuffixes[] = { "", ".trans", "_to_uni.trans", ".acm", 0 };
 
 #ifdef MAIN
 #include "getfd.h"
-#include "version.h"
+#include "m_version.h"
 
 int verbose = 0;
 

@@ -3,7 +3,7 @@
 #   Copyright (C) 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001
 #   Free Software Foundation, Inc.
 
-timestamp='2002-06-09'
+timestamp='2001-09-04'
 
 # This file is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -123,16 +123,6 @@ UNAME_RELEASE=`(uname -r) 2>/dev/null` || UNAME_RELEASE=unknown
 UNAME_SYSTEM=`(uname -s) 2>/dev/null`  || UNAME_SYSTEM=unknown
 UNAME_VERSION=`(uname -v) 2>/dev/null` || UNAME_VERSION=unknown
 
-case "${UNAME_MACHINE}" in
-    i?86)
-	test -z "$VENDOR" && VENDOR=pc
-	;;
-    *)
-	test -z "$VENDOR" && VENDOR=unknown
-	;;
-esac
-test -f /etc/SuSE-release && VENDOR=suse
-
 # Note: order is significant - the case branches are not exclusive.
 
 case "${UNAME_MACHINE}:${UNAME_SYSTEM}:${UNAME_RELEASE}:${UNAME_VERSION}" in
@@ -237,6 +227,9 @@ EOF
 			2-307)
 				UNAME_MACHINE="alphaev67"
 				;;
+			2-1307)
+				UNAME_MACHINE="alphaev68"
+				;;
 		esac
 	fi
 	rm -f $dummy.s $dummy
@@ -340,6 +333,9 @@ EOF
     aushp:SunOS:*:*)
 	echo sparc-auspex-sunos${UNAME_RELEASE}
 	exit 0 ;;
+    sparc*:NetBSD:*)
+	echo `uname -p`-unknown-netbsd${UNAME_RELEASE}
+	exit 0 ;;
     atari*:OpenBSD:*:*)
 	echo m68k-unknown-openbsd${UNAME_RELEASE}
 	exit 0 ;;
@@ -397,6 +393,7 @@ EOF
 	echo clipper-intergraph-clix${UNAME_RELEASE}
 	exit 0 ;;
     mips:*:*:UMIPS | mips:*:*:RISCos)
+	eval $set_cc_for_build
 	sed 's/^	//' << EOF >$dummy.c
 #ifdef __cplusplus
 #include <stdio.h>  /* for printf() prototype */
@@ -418,7 +415,6 @@ EOF
 	  exit (-1);
 	}
 EOF
-	eval $set_cc_for_build
 	$CC_FOR_BUILD $dummy.c -o $dummy \
 	  && ./$dummy `echo "${UNAME_RELEASE}" | sed -n 's/\([0-9]*\).*/\1/p'` \
 	  && rm -f $dummy.c $dummy && exit 0
@@ -488,6 +484,7 @@ EOF
 	exit 0 ;;
     *:AIX:2:3)
 	if grep bos325 /usr/include/stdio.h >/dev/null 2>&1; then
+		eval $set_cc_for_build
 		sed 's/^		//' << EOF >$dummy.c
 		#include <sys/systemcfg.h>
 
@@ -499,7 +496,6 @@ EOF
 			exit(0);
 			}
 EOF
-		eval $set_cc_for_build
 		$CC_FOR_BUILD $dummy.c -o $dummy && ./$dummy && rm -f $dummy.c $dummy && exit 0
 		rm -f $dummy.c $dummy
 		echo rs6000-ibm-aix3.2.5
@@ -567,6 +563,7 @@ EOF
                   fi ;;
               esac
               if [ "${HP_ARCH}" = "" ]; then
+	      eval $set_cc_for_build
               sed 's/^              //' << EOF >$dummy.c
 
               #define _HPUX_SOURCE
@@ -600,10 +597,9 @@ EOF
                   exit (0);
               }
 EOF
-	eval $set_cc_for_build
-	(CCOPTS= $CC_FOR_BUILD $dummy.c -o $dummy 2>/dev/null ) && HP_ARCH=`./$dummy`
-	if test -z "$HP_ARCH"; then HP_ARCH=hppa; fi
-	rm -f $dummy.c $dummy
+	    (CCOPTS= $CC_FOR_BUILD $dummy.c -o $dummy 2>/dev/null ) && HP_ARCH=`./$dummy`
+	    if test -z "$HP_ARCH"; then HP_ARCH=hppa; fi
+	    rm -f $dummy.c $dummy
 	fi ;;
 	esac
 	echo ${HP_ARCH}-hp-hpux${HPUX_REV}
@@ -613,6 +609,7 @@ EOF
 	echo ia64-hp-hpux${HPUX_REV}
 	exit 0 ;;
     3050*:HI-UX:*:*)
+	eval $set_cc_for_build
 	sed 's/^	//' << EOF >$dummy.c
 	#include <unistd.h>
 	int
@@ -638,7 +635,6 @@ EOF
 	  exit (0);
 	}
 EOF
-	eval $set_cc_for_build
 	$CC_FOR_BUILD $dummy.c -o $dummy && ./$dummy && rm -f $dummy.c $dummy && exit 0
 	rm -f $dummy.c $dummy
 	echo unknown-hitachi-hiuxwe2
@@ -771,22 +767,25 @@ EOF
 	echo ${UNAME_MACHINE}-pc-minix
 	exit 0 ;;
     arm*:Linux:*:*)
-	echo ${UNAME_MACHINE}-${VENDOR}-linux
+	echo ${UNAME_MACHINE}-unknown-linux-gnu
 	exit 0 ;;
     ia64:Linux:*:*)
-	echo ${UNAME_MACHINE}-${VENDOR}-linux
+	echo ${UNAME_MACHINE}-unknown-linux
 	exit 0 ;;
     m68*:Linux:*:*)
-	echo ${UNAME_MACHINE}-${VENDOR}-linux
+	echo ${UNAME_MACHINE}-unknown-linux-gnu
 	exit 0 ;;
     mips:Linux:*:*)
 	case `sed -n '/^byte/s/^.*: \(.*\) endian/\1/p' < /proc/cpuinfo` in
-	  big)    echo mips-${VENDOR}-linux && exit 0 ;;
-	  little) echo mipsel-${VENDOR}-linux && exit 0 ;;
+	  big)    echo mips-unknown-linux-gnu && exit 0 ;;
+	  little) echo mipsel-unknown-linux-gnu && exit 0 ;;
 	esac
 	;;
-    ppc:Linux:*:*|ppc64:Linux:*:*)
-	echo powerpc-${VENDOR}-linux
+    ppc:Linux:*:*)
+	echo powerpc-unknown-linux-gnu
+	exit 0 ;;
+    ppc64:Linux:*:*)
+	echo powerpc64-unknown-linux-gnu
 	exit 0 ;;
     alpha:Linux:*:*)
 	case `sed -n '/^cpu model/s/^.*: \(.*\)/\1/p' < /proc/cpuinfo` in
@@ -796,34 +795,34 @@ EOF
 	  PCA57) UNAME_MACHINE=alphapca56 ;;
 	  EV6)   UNAME_MACHINE=alphaev6 ;;
 	  EV67)  UNAME_MACHINE=alphaev67 ;;
-	  EV68*) UNAME_MACHINE=alphaev67 ;;
+	  EV68*) UNAME_MACHINE=alphaev68 ;;
         esac
 	objdump --private-headers /bin/sh | grep ld.so.1 >/dev/null
 	if test "$?" = 0 ; then LIBC="libc1" ; else LIBC="" ; fi
-	echo ${UNAME_MACHINE}-${VENDOR}-linux${LIBC}
+	echo ${UNAME_MACHINE}-unknown-linux-gnu${LIBC}
 	exit 0 ;;
     parisc:Linux:*:* | hppa:Linux:*:*)
 	# Look for CPU level
 	case `grep '^cpu[^a-z]*:' /proc/cpuinfo 2>/dev/null | cut -d' ' -f2` in
-	  PA7*) echo hppa1.1-${VENDOR}-linux ;;
-	  PA8*) echo hppa2.0-${VENDOR}-linux ;;
-	  *)    echo hppa-${VENDOR}-linux ;;
+	  PA7*) echo hppa1.1-unknown-linux-gnu ;;
+	  PA8*) echo hppa2.0-unknown-linux-gnu ;;
+	  *)    echo hppa-unknown-linux-gnu ;;
 	esac
 	exit 0 ;;
     parisc64:Linux:*:* | hppa64:Linux:*:*)
-	echo hppa64-${VENDOR}-linux
+	echo hppa64-unknown-linux-gnu
 	exit 0 ;;
     s390:Linux:*:* | s390x:Linux:*:*)
 	echo ${UNAME_MACHINE}-ibm-linux
 	exit 0 ;;
     sh*:Linux:*:*)
-	echo ${UNAME_MACHINE}-${VENDOR}-linux
+	echo ${UNAME_MACHINE}-unknown-linux-gnu
 	exit 0 ;;
     sparc:Linux:*:* | sparc64:Linux:*:*)
-	echo ${UNAME_MACHINE}-${VENDOR}-linux
+	echo ${UNAME_MACHINE}-unknown-linux-gnu
 	exit 0 ;;
     x86_64:Linux:*:*)
-	echo x86_64-${VENDOR}-linux
+	echo x86_64-unknown-linux-gnu
 	exit 0 ;;
     i*86:Linux:*:*)
 	# The BFD linker knows what the default object file format is, so
@@ -837,21 +836,22 @@ EOF
 				    p'`
         case "$ld_supported_targets" in
 	  elf32-i386)
-		TENTATIVE="${UNAME_MACHINE}-${VENDOR}-linux"
+		TENTATIVE="${UNAME_MACHINE}-pc-linux-gnu"
 		;;
 	  a.out-i386-linux)
-		echo "${UNAME_MACHINE}-${VENDOR}-linuxaout"
+		echo "${UNAME_MACHINE}-pc-linux-gnuaout"
 		exit 0 ;;		
 	  coff-i386)
-		echo "${UNAME_MACHINE}-${VENDOR}-linuxcoff"
+		echo "${UNAME_MACHINE}-pc-linux-gnucoff"
 		exit 0 ;;
 	  "")
-		# Either a pre-BFD a.out linker (linuxoldld) or
+		# Either a pre-BFD a.out linker (linux-gnuoldld) or
 		# one that does not give us useful --help.
-		echo "${UNAME_MACHINE}-${VENDOR}-linuxoldld"
+		echo "${UNAME_MACHINE}-pc-linux-gnuoldld"
 		exit 0 ;;
 	esac
 	# Determine whether the default compiler is a.out or elf
+	eval $set_cc_for_build
 	cat >$dummy.c <<EOF
 #include <features.h>
 #ifdef __cplusplus
@@ -863,20 +863,19 @@ EOF
 #ifdef __ELF__
 # ifdef __GLIBC__
 #  if __GLIBC__ >= 2
-    printf ("%s-${VENDOR}-linux\n", argv[1]);
+    printf ("%s-pc-linux-gnu\n", argv[1]);
 #  else
-    printf ("%s-${VENDOR}-linuxlibc1\n", argv[1]);
+    printf ("%s-pc-linux-gnulibc1\n", argv[1]);
 #  endif
 # else
-   printf ("%s-${VENDOR}-linuxlibc1\n", argv[1]);
+   printf ("%s-pc-linux-gnulibc1\n", argv[1]);
 # endif
 #else
-  printf ("%s-${VENDOR}-linuxaout\n", argv[1]);
+  printf ("%s-pc-linux-gnuaout\n", argv[1]);
 #endif
   return 0;
 }
 EOF
-	eval $set_cc_for_build
 	$CC_FOR_BUILD $dummy.c -o $dummy 2>/dev/null && ./$dummy "${UNAME_MACHINE}" && rm -f $dummy.c $dummy && exit 0
 	rm -f $dummy.c $dummy
 	test x"${TENTATIVE}" != x && echo "${TENTATIVE}" && exit 0
@@ -1003,8 +1002,8 @@ EOF
 		echo ns32k-sni-sysv
 	fi
 	exit 0 ;;
-    PENTIUM:CPunix:4.0*:*) # Unisys `ClearPath HMP IX 4000' SVR4/MP effort
-                           # says <Richard.M.Bartel@ccMail.Census.GOV>
+    PENTIUM:*:4.0*:*) # Unisys `ClearPath HMP IX 4000' SVR4/MP effort
+                      # says <Richard.M.Bartel@ccMail.Census.GOV>
         echo i586-unisys-sysv4
         exit 0 ;;
     *:UNIX_System_V:4*:FTX*)
@@ -1015,6 +1014,10 @@ EOF
     *:*:*:FTX*)
 	# From seanf@swdc.stratus.com.
 	echo i860-stratus-sysv4
+	exit 0 ;;
+    *:VOS:*:*)
+	# From Paul.Green@stratus.com.
+	echo hppa1.1-stratus-vos
 	exit 0 ;;
     mc68*:A/UX:*:*)
 	echo m68k-apple-aux${UNAME_RELEASE}
@@ -1108,11 +1111,18 @@ EOF
     *:ITS:*:*)
 	echo pdp10-unknown-its
 	exit 0 ;;
+    i*86:XTS-300:*:STOP)
+	echo ${UNAME_MACHINE}-unknown-stop
+	exit 0 ;;
+    i*86:atheos:*:*)
+	echo ${UNAME_MACHINE}-unknown-atheos
+	exit 0 ;;
 esac
 
 #echo '(No uname command or uname output not recognized.)' 1>&2
 #echo "${UNAME_MACHINE}:${UNAME_SYSTEM}:${UNAME_RELEASE}:${UNAME_VERSION}" 1>&2
 
+eval $set_cc_for_build
 cat >$dummy.c <<EOF
 #ifdef _SEQUENT_
 # include <sys/types.h>
@@ -1227,7 +1237,6 @@ main ()
 }
 EOF
 
-eval $set_cc_for_build
 $CC_FOR_BUILD $dummy.c -o $dummy 2>/dev/null && ./$dummy && rm -f $dummy.c $dummy && exit 0
 rm -f $dummy.c $dummy
 

@@ -14,12 +14,15 @@
 #include <stdlib.h>
 #include <time.h>
 #include <sys/types.h>
-#include <sys/mman.h>
 
 #include "autoconf.h"
 
 #ifdef HAVE_FCNTL_H
 # include <fcntl.h>
+#endif
+
+#ifdef HAVE_SYS_MMAN_H
+# include <sys/mman.h>
 #endif
 
 /* This mess was adapted from the GNU getpagesize.h.  */

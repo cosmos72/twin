@@ -37,8 +37,8 @@ static byte InitClip(void) {
 	   TW_WINDOWFL_CURSOR_ON|TW_WINDOWFL_ROWS_DEFCOL,
 	   38, 18, 0))) &&
 	(Window=TwWin4Menu(Clip_Menu)) &&
-	(TwRow4Menu(Window, COD_QUIT, TW_ROW_INACTIVE, 17, " Quit      Alt-X "),
-	 TwItem4Menu(Clip_Menu, Window, TRUE, 6, " File ")) &&
+	TwRow4Menu(Window, COD_QUIT, TW_ROW_INACTIVE, 17, " Quit      Alt-X ") &&
+	TwItem4Menu(Clip_Menu, Window, TRUE, 6, " File ") &&
 	(TwSetColorsWindow
 	 (Clip_Win, 0x1FF,
 	  COL(HIGH|GREEN,WHITE), COL(CYAN,BLUE), COL(HIGH|BLUE,BLACK), COL(HIGH|WHITE,HIGH|BLUE), COL(HIGH|WHITE,HIGH|BLUE),
@@ -46,23 +46,22 @@ static byte InitClip(void) {
 	 TwConfigureWindow(Clip_Win, 0xF<<2, 0, 0, 7, 3, MAXDAT, MAXDAT),
 	 (Window=TwWin4Menu(Clip_Menu))) &&
 	TwItem4Menu(Clip_Menu, Window, FALSE, 6, " Clip ") &&
-	(TwRow4Menu(Window, (udat)0, TW_ROW_INACTIVE,16, " Undo           "),
-	 TwRow4Menu(Window, (udat)0, TW_ROW_INACTIVE,16, " Redo           "),
-	 TwRow4Menu(Window, (udat)0, TW_ROW_IGNORE,  16, "컴컴컴컴컴컴컴컴"),
-	 TwRow4Menu(Window, (udat)0, TW_ROW_ACTIVE,  16, " Cut            "),
-	 TwRow4Menu(Window, (udat)0, TW_ROW_ACTIVE,  16, " Copy           "),
-	 TwRow4Menu(Window, (udat)0, TW_ROW_ACTIVE,  16, " Paste          "),
-	 TwRow4Menu(Window, (udat)0, TW_ROW_ACTIVE,  16, " Clear          "),
-	 TwRow4Menu(Window, (udat)0, TW_ROW_IGNORE,  16, "컴컴컴컴컴컴컴컴"),
-	 TwRow4Menu(Window, (udat)0, TW_ROW_INACTIVE,16, " Show Clipboard "),
-	 (Window=TwWin4Menu(Clip_Menu))) &&
+	TwRow4Menu(Window, (udat)0, TW_ROW_INACTIVE,16, " Undo           ") &&
+	TwRow4Menu(Window, (udat)0, TW_ROW_INACTIVE,16, " Redo           ") &&
+	TwRow4Menu(Window, (udat)0, TW_ROW_IGNORE,  16, "컴컴컴컴컴컴컴컴") &&
+	TwRow4Menu(Window, (udat)0, TW_ROW_ACTIVE,  16, " Cut            ") &&
+	TwRow4Menu(Window, (udat)0, TW_ROW_ACTIVE,  16, " Copy           ") &&
+	TwRow4Menu(Window, (udat)0, TW_ROW_ACTIVE,  16, " Paste          ") &&
+	TwRow4Menu(Window, (udat)0, TW_ROW_ACTIVE,  16, " Clear          ") &&
+	TwRow4Menu(Window, (udat)0, TW_ROW_IGNORE,  16, "컴컴컴컴컴컴컴컴") &&
+	TwRow4Menu(Window, (udat)0, TW_ROW_INACTIVE,16, " Show Clipboard ") &&
+	(Window=TwWin4Menu(Clip_Menu)) &&
 	TwItem4Menu(Clip_Menu, Window, TRUE, 8, " Search ") &&
-	(TwRow4Menu(Window, (udat)0, TW_ROW_ACTIVE,  9, " Find    "),
-	 TwRow4Menu(Window, (udat)0, TW_ROW_ACTIVE,  9, " Replace "),
-	 TwItem4MenuCommon(Clip_Menu)) &&
+	TwRow4Menu(Window, (udat)0, TW_ROW_ACTIVE,  9, " Find    ") &&
+	TwRow4Menu(Window, (udat)0, TW_ROW_ACTIVE,  9, " Replace ") &&
+	TwItem4MenuCommon(Clip_Menu) &&
 	(TwMapWindow(Clip_Win, TwFirstScreen()),
-	 TwFlush(),
-	 TRUE);
+	 TwFlush());
 }
 
 int main(int argc, char *argv[]) {

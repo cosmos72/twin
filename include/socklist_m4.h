@@ -56,7 +56,9 @@ EL(SetXYWidget)
 EL(ResizeWidget)
 EL(ScrollWidget)
 EL(GetOwnerWidget)
-EL(ExposeWidget)
+EL(DrawWidget)
+
+EL(SetVisibleWidget)
 
 EL(FocusSubWidget)
 EL(FindWidgetAtWidget)
@@ -103,6 +105,8 @@ EL(RestackChildrenRow)
 EL(CirculateChildrenRow)
 
 EL(Create4MenuMenuItem)
+EL(Create4MenuAny)
+
 EL(Create4MenuCommonMenuItem)
 
 EL(CreateMenu)

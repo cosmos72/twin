@@ -25,7 +25,7 @@ define(`VEC', `ifelse(ifelse($3, X, V, $3), V, `NAME`'      case $1: L = ($4) * 
 `'define(`NAME')`'define(`ENDNAME', `    }
     break;')')')
 
-define(`CASE', `ifelse($#, 2, `', `VEC(`$1', `$2', t`'$3, l`'$3)'`CASE(incr($1), NSHIFT(3, $@))')')
+define(`CASE', `ifelse(eval($# < 3), 1, `', `VEC(`$1', `$2', t`'$3, l`'$3)'`CASE(incr($1), NSHIFT(4, $@))')')
 
 define(`PROTO', `define(`NAME', `  case order_`'TRIM($3)`'TRIM($4):
     switch (n) {

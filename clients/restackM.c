@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
 	id = TwStat(a, TWS_all_BuiltinMenu);
 	printf("All = 0x%lx\n -> BuiltinMenu = 0x%lx\n", (long)a, (long)id);
 	
-	if ((l = TwLStat(id, 1, TWS_menu_ChildrenI_List))) {
+	if ((l = TwStatL(id, 1, TWS_menu_ChildrenI_List))) {
 	    if ((f = TwFindStat(l, TWS_menu_ChildrenI_List)) &&
 		f->type == (TWS_vec|TWS_tobj)) {
 		

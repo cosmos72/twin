@@ -20,6 +20,7 @@ void Usage(void) {
 	    "Currently known options:\n"
 	    " -h, -help               display this help and exit\n"
 	    " -V, -version            output version information and exit\n"
+	    " -twin@<dpy>             set the server to contact (default is $TWDISPLAY)\n"
 	    " -control                send a MSG_USER_CONTROL message (default)\n"
 	    " -clientmsg              send a MSG_USER_CLIENTMSG message\n"
 	    " [-code=]<Code>          set the message code (default is `open')\n"
@@ -36,7 +37,7 @@ void ShowVersion(void) {
 TW_DECL_MAGIC(sendmsg_magic);
 
 int main(int argc, char *argv[]) {
-    byte *MsgPortName = NULL, *CodeName = NULL, *Data = NULL;
+    byte *DisplayName = NULL, *MsgPortName = NULL, *CodeName = NULL, *Data = NULL;
     udat Type = TW_MSG_USER_CONTROL, Code = TW_MSG_CONTROL_OPEN, DataLen = 0;
     tmsgport MsgPort;
     tmsg Msg;
@@ -54,11 +55,13 @@ int main(int argc, char *argv[]) {
 	}
     }
     
-    if (TwCheckMagic(sendmsg_magic) && TwOpen(NULL)) do {
+    if (TwCheckMagic(sendmsg_magic)) do {
 	
 	while (++argv, --argc) {
 	    if (!strncmp(*argv, "-msgport=", 9))
 		MsgPortName = *argv + 9;
+	    else if (!strncmp(*argv, "-twin@", 6))
+		DisplayName = *argv + 6;
 	    else if (!strcmp(*argv, "-control"))
 		Type = TW_MSG_USER_CONTROL;
 	    else if (!strcmp(*argv, "-clientmsg"))
@@ -91,6 +94,9 @@ int main(int argc, char *argv[]) {
 	
 	if (Data)
 	    DataLen = strlen(Data);
+
+	if (!TwOpen(DisplayName))
+	    break;
 	
 	if (MsgPortName) {
 	    if ((MsgPort = TwFindMsgPort(TW_NOID, strlen(MsgPortName), MsgPortName))) {

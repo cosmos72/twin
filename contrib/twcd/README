@@ -1,0 +1,28 @@
+Twin CD
+-------
+This is my attempt at a program for TWIN, a text-mode windowing environment
+available at http://linuz.sns.it/~max/twin/. It's in infancy (my program
+and the environment), but it's quite usable (both of them, again).
+
+TWCD has a long way to go before it's as good as something like kscd or tcd,
+but it plays CDs, and it's the only TWIN CD player. As far as I know, it's
+also the first (and only) 3rd party application for TWIN.
+
+Compiling
+---------
+The latest version can be downloaded from
+http://sacredchao.net/piman/software.html
+
+TWCD requires libTw, from TWIN, and the cdaudio library (available with
+most distributions, or from freshmeat.net.)
+
+Buttons
+-------
+<< - Previous track
+[] - Stop
+|| - Pause
+-> - Play
+>> - Next track
+/\ - Eject
+
+ - Joe Wreschnig <piman@pfnet.org>

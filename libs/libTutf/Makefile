@@ -4,7 +4,8 @@
 TOPDIR=../..
 THISDIR=$(TOPDIR)/libs/libTutf
 
-include makeversion
+include $(TOPDIR)/include/Tutf/makeversion
+-include $(TOPDIR)/makeautoconf
 
 SUBDIRS=
 
@@ -65,14 +66,12 @@ install-headers:
 	$(INSTALL-DIR) $(DESTDIR)$(includedir)/Tutf && \
 	$(INSTALL-TXT) $(TOPDIR)/include/Tutf/*.h $(DESTDIR)$(includedir)/Tutf
 
-install-real: install-headers
-	$(INSTALL-DIR) $(DESTDIR)$(libdir) && \
-	$(INSTALL-TXT) $(ARLIBS) $(DESTDIR)$(libdir) && \
-	if [ -f libTutf.la ]; then \
-	  $(INSTALL) libTutf.la $(DESTDIR)$(libdir) ; \
-	fi
+install-dir:
+	$(INSTALL-DIR) $(DESTDIR)$(libdir)
+
+install-real: install-headers install-dir $(foreach B,$(SHLIBS) $(ARLIBS),install-lib-$(B))
 	
 clean:
-	rm -f .*.flags .*.shlib .*.arlib libTutf.la libTutf.a $(_ALL_OBJS) ; \
+	rm -f .*.flags .*.shlib .*.arlib *.la *.a *.o *.lo *.so *.so.* ; \
 	rm -fr .libs
 

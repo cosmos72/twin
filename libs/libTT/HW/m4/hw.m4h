@@ -41,6 +41,7 @@ define(`FNSUPER',`o->FN->FN_`'m4super_$1')
 define(`DEL',`void DEF(Del_$1)($1 o)')
 define(`DELSUPER',`FNSUPER($1)->Del((m4super_$1)o)')
 
+define(`type_ttfn', `ifelse(index(`$1', `*'), -1, ifelse(regexp(`$1', `_fn$'), -1, TTFN_$1, TTFN_ttfunction), index(`$1', ttbyte), -1, TTFN_ttpointer, TTFN_ttstring)')
 
 define(`opaque_ifpointer', `ifelse(regexp(`$1', `_fn$'), -1, ifelse(index(`$1', `*'), -1, `', (opaque)), (opaque))')
 define(`obj2id_ifdecay', `ifdef(`m4super_$1', `OBJ2ID($2)', $2)')
@@ -63,20 +64,20 @@ define(`DEF_DEFAULT_GetValue', `
 `'TTdef_$1($1,$1)`'dnl
 `'ifelse(this_count, 0, `', `
 `'define(`mtd_GetValue_$1')`'dnl
-'static ttbyte target()_GetValue_$1($1 o, ttuint which, ttany *value) {
+'static ttfn target()_GetValue_$1($1 o, ttuint which, ttany *value) {
     if (which && which < this`'_field_last && o && TTAssert(IS($1,o))) {
 	if (which > this`'_field_first) switch (which) {
 `'define(`exported', `ifelse($'`3, get, `
 	  case this`'_'$'`4`:
-	    *value = (ttany)opaque_ifpointer('$'`1`)obj2id_ifdecay('$'`1`, o->'$'`4`);
-	    return TRUE;', `')')`'dnl
+	    *value = (ttany)opaque_ifpointer('$'`1`)obj2id_ifdecay('$'`1`, o->'$'`4`); dnl
+`'`'`'`'`'`'return type_ttfn('$'`1`);', `')')`'dnl
 `'define(`field', `wrap_export($'`@)')`'dnl
 `'TTdef_$1($1,$1)
 	}
 	ifelse($1, ttobj, `', `else
 	    return FNSUPER($1)->GetValue((m4super_$1)o, which, value);')
     }
-    return FALSE;
+    return (ttfn)0;
 })`'dnl
 `'define(`field')`'dnl
 `'define(`exported')`'dnl
@@ -163,8 +164,9 @@ define(`extends')`'dnl
 dnl
 dnl
 define(`TTHWlist',
-  `el(Sync) el(Flush) el(TimidFlush) el(MainLoop) el(ExitMainLoop) el(DeleteListener) dnl
-   el(Close) el(ConnectionFd) el(GetErrno) el(GetErrnoDetail) el(StrError) el(StrErrorDetail) dnl
+  `el(Sync) el(Flush) el(TimidFlush) el(MainLoop) el(MainLoopOnce) el(ExitMainLoop) dnl
+   el(DeleteListener) el(Close) el(ConnectionFd) el(GetErrno) el(GetErrnoDetail) dnl
+   el(StrError) el(StrErrorDetail) dnl
   ')
 dnl
 define(`el',`ifdef(`hw_$1', `

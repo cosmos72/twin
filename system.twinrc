@@ -370,10 +370,10 @@ Mouse H1  M  Interactive Screen
 #
 # for all users too lazy to manually load the socket server from the menu:
 #
-# Module "socket.so" On
+# Module "socket" On
 #
 # you may also want:
-# Module "term.so" On
+# Module "term" On
 
 
 

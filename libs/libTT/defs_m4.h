@@ -25,6 +25,7 @@
 
 
 
+
 /* many useful macros */
 
 #define Min2(a,b) ((a) < (b) ? (a) : (b))
@@ -51,7 +52,7 @@
 #define super_ttradiobutton	ttcheckbutton 
 #define super_ttscrollbar	ttanybutton 
 #define super_ttbuttongroup	ttcomponent 
-#define super_ttwindow	ttwidget     
+#define super_ttwindow	ttwidget         
 #define super_ttframe	ttwindow 
 #define super_ttscroller	ttwindow         
 #define super_ttmenuitem	ttvisible     
@@ -143,6 +144,7 @@ typedef struct s_ttfn_tttheme *	ttfn_tttheme;
 typedef struct s_ttfn_ttapplication *	ttfn_ttapplication;
 
 
+typedef ttfn_ttobj ttfn;
 
 
 /* declarations for objects structures */
@@ -592,6 +594,7 @@ typedef struct s_ttwindow {
     ttint xl;
     ttint yl;
     /* extends ttwidget */
+    ttbyte * title;
     ttmenubar menubar;
 } s_ttwindow;
  
@@ -624,6 +627,7 @@ typedef struct s_ttframe {
     ttint xl;
     ttint yl;
     /* extends ttwidget */
+    ttbyte * title;
     ttmenubar menubar;
     /* extends ttwindow */
 } s_ttframe;
@@ -657,6 +661,7 @@ typedef struct s_ttscroller {
     ttint xl;
     ttint yl;
     /* extends ttwidget */
+    ttbyte * title;
     ttmenubar menubar;
     /* extends ttwindow */
     ttscrollbar scrollx;
@@ -822,6 +827,7 @@ typedef struct s_ttanytext {
     ttint xl;
     ttint yl;
     /* extends ttwidget */
+    ttbyte * title;
     ttmenubar menubar;
     /* extends ttwindow */
     ttshort text_len;
@@ -857,6 +863,7 @@ typedef struct s_tttextfield {
     ttint xl;
     ttint yl;
     /* extends ttwidget */
+    ttbyte * title;
     ttmenubar menubar;
     /* extends ttwindow */
     ttshort text_len;
@@ -893,6 +900,7 @@ typedef struct s_tttextarea {
     ttint xl;
     ttint yl;
     /* extends ttwidget */
+    ttbyte * title;
     ttmenubar menubar;
     /* extends ttwindow */
     ttshort text_len;
@@ -958,7 +966,7 @@ typedef struct s_ttfn_ttobj {
     ttobj (*Build)(ttobj o);
     void (*Break)(ttobj o);
     void (*Del)(ttobj);
-    ttbyte (*GetValue)(ttobj o, ttuint which, ttany *value);
+    ttfn (*GetValue)(ttobj o, ttuint which, ttany *value);
     ttbyte (*SetValue)(ttobj o, ttuint which, ttany value);
     ttbyte (*ChangeValue)(ttobj o, ttuint which, ttany nand_value, ttany xor_value);
         
@@ -973,7 +981,7 @@ typedef struct s_ttfn_ttevent {
     ttevent (*Build)(ttevent o);
     void (*Break)(ttevent o);
     void (*Del)(ttevent);
-    ttbyte (*GetValue)(ttevent o, ttuint which, ttany *value);
+    ttfn (*GetValue)(ttevent o, ttuint which, ttany *value);
     ttbyte (*SetValue)(ttevent o, ttuint which, ttany value);
     ttbyte (*ChangeValue)(ttevent o, ttuint which, ttany nand_value, ttany xor_value);
         
@@ -990,7 +998,7 @@ typedef struct s_ttfn_tteventbig {
     tteventbig (*Build)(tteventbig o);
     void (*Break)(tteventbig o);
     void (*Del)(tteventbig);
-    ttbyte (*GetValue)(tteventbig o, ttuint which, ttany *value);
+    ttfn (*GetValue)(tteventbig o, ttuint which, ttany *value);
     ttbyte (*SetValue)(tteventbig o, ttuint which, ttany value);
     ttbyte (*ChangeValue)(tteventbig o, ttuint which, ttany nand_value, ttany xor_value);
         
@@ -1010,7 +1018,7 @@ typedef struct s_ttfn_ttlistener {
     ttlistener (*Build)(ttlistener o);
     void (*Break)(ttlistener o);
     void (*Del)(ttlistener);
-    ttbyte (*GetValue)(ttlistener o, ttuint which, ttany *value);
+    ttfn (*GetValue)(ttlistener o, ttuint which, ttany *value);
     ttbyte (*SetValue)(ttlistener o, ttuint which, ttany value);
     ttbyte (*ChangeValue)(ttlistener o, ttuint which, ttany nand_value, ttany xor_value);
         
@@ -1029,7 +1037,7 @@ typedef struct s_ttfn_ttcallback {
     ttcallback (*Build)(ttcallback o);
     void (*Break)(ttcallback o);
     void (*Del)(ttcallback);
-    ttbyte (*GetValue)(ttcallback o, ttuint which, ttany *value);
+    ttfn (*GetValue)(ttcallback o, ttuint which, ttany *value);
     ttbyte (*SetValue)(ttcallback o, ttuint which, ttany value);
     ttbyte (*ChangeValue)(ttcallback o, ttuint which, ttany nand_value, ttany xor_value);
         
@@ -1050,7 +1058,7 @@ typedef struct s_ttfn_ttcomponent {
     ttcomponent (*Build)(ttcomponent o);
     void (*Break)(ttcomponent o);
     void (*Del)(ttcomponent);
-    ttbyte (*GetValue)(ttcomponent o, ttuint which, ttany *value);
+    ttfn (*GetValue)(ttcomponent o, ttuint which, ttany *value);
     ttbyte (*SetValue)(ttcomponent o, ttuint which, ttany value);
     ttbyte (*ChangeValue)(ttcomponent o, ttuint which, ttany nand_value, ttany xor_value);
         
@@ -1067,7 +1075,7 @@ typedef struct s_ttfn_ttvisible {
     ttvisible (*Build)(ttvisible o);
     void (*Break)(ttvisible o);
     void (*Del)(ttvisible);
-    ttbyte (*GetValue)(ttvisible o, ttuint which, ttany *value);
+    ttfn (*GetValue)(ttvisible o, ttuint which, ttany *value);
     ttbyte (*SetValue)(ttvisible o, ttuint which, ttany value);
     ttbyte (*ChangeValue)(ttvisible o, ttuint which, ttany nand_value, ttany xor_value);
         
@@ -1078,6 +1086,7 @@ typedef struct s_ttfn_ttvisible {
     void (*Remove)(ttvisible o);
     void (*SetVisible)(ttvisible o, ttbyte on_off);
     void (*SetTheme)(ttvisible o, tttheme theme);
+    void (*Draw)(ttvisible o, ttshort x, ttshort y, ttshort w, ttshort h, ttshort pitch, TT_CONST ttbyte *asciidata, TT_CONST ttfont *fontdata, TT_CONST ttattr *attrdata);
     void (*BuiltinRepaint)(ttvisible o, ttshort x, ttshort y, ttshort w, ttshort h);
             
 } s_ttfn_ttvisible;
@@ -1091,7 +1100,7 @@ typedef struct s_ttfn_ttnative {
     ttnative (*Build)(ttnative o);
     void (*Break)(ttnative o);
     void (*Del)(ttnative);
-    ttbyte (*GetValue)(ttnative o, ttuint which, ttany *value);
+    ttfn (*GetValue)(ttnative o, ttuint which, ttany *value);
     ttbyte (*SetValue)(ttnative o, ttuint which, ttany value);
     ttbyte (*ChangeValue)(ttnative o, ttuint which, ttany nand_value, ttany xor_value);
         
@@ -1102,6 +1111,7 @@ typedef struct s_ttfn_ttnative {
     void (*Remove)(ttnative o);
     void (*SetVisible)(ttnative o, ttbyte on_off);
     void (*SetTheme)(ttnative o, tttheme theme);
+    void (*Draw)(ttnative o, ttshort x, ttshort y, ttshort w, ttshort h, ttshort pitch, TT_CONST ttbyte *asciidata, TT_CONST ttfont *fontdata, TT_CONST ttattr *attrdata);
     void (*BuiltinRepaint)(ttnative o, ttshort x, ttshort y, ttshort w, ttshort h);
             
     ttfn_ttvisible FN_ttvisible;
@@ -1118,7 +1128,7 @@ typedef struct s_ttfn_ttwidget {
     ttwidget (*Build)(ttwidget o);
     void (*Break)(ttwidget o);
     void (*Del)(ttwidget);
-    ttbyte (*GetValue)(ttwidget o, ttuint which, ttany *value);
+    ttfn (*GetValue)(ttwidget o, ttuint which, ttany *value);
     ttbyte (*SetValue)(ttwidget o, ttuint which, ttany value);
     ttbyte (*ChangeValue)(ttwidget o, ttuint which, ttany nand_value, ttany xor_value);
         
@@ -1129,6 +1139,7 @@ typedef struct s_ttfn_ttwidget {
     void (*Remove)(ttwidget o);
     void (*SetVisible)(ttwidget o, ttbyte on_off);
     void (*SetTheme)(ttwidget o, tttheme theme);
+    void (*Draw)(ttwidget o, ttshort x, ttshort y, ttshort w, ttshort h, ttshort pitch, TT_CONST ttbyte *asciidata, TT_CONST ttfont *fontdata, TT_CONST ttattr *attrdata);
     void (*BuiltinRepaint)(ttwidget o, ttshort x, ttshort y, ttshort w, ttshort h);
             
     ttfn_ttvisible FN_ttvisible;
@@ -1146,7 +1157,7 @@ typedef struct s_ttfn_ttlabel {
     ttlabel (*Build)(ttlabel o);
     void (*Break)(ttlabel o);
     void (*Del)(ttlabel);
-    ttbyte (*GetValue)(ttlabel o, ttuint which, ttany *value);
+    ttfn (*GetValue)(ttlabel o, ttuint which, ttany *value);
     ttbyte (*SetValue)(ttlabel o, ttuint which, ttany value);
     ttbyte (*ChangeValue)(ttlabel o, ttuint which, ttany nand_value, ttany xor_value);
         
@@ -1157,6 +1168,7 @@ typedef struct s_ttfn_ttlabel {
     void (*Remove)(ttlabel o);
     void (*SetVisible)(ttlabel o, ttbyte on_off);
     void (*SetTheme)(ttlabel o, tttheme theme);
+    void (*Draw)(ttlabel o, ttshort x, ttshort y, ttshort w, ttshort h, ttshort pitch, TT_CONST ttbyte *asciidata, TT_CONST ttfont *fontdata, TT_CONST ttattr *attrdata);
     void (*BuiltinRepaint)(ttlabel o, ttshort x, ttshort y, ttshort w, ttshort h);
             
     ttfn_ttvisible FN_ttvisible;
@@ -1177,7 +1189,7 @@ typedef struct s_ttfn_ttanybutton {
     ttanybutton (*Build)(ttanybutton o);
     void (*Break)(ttanybutton o);
     void (*Del)(ttanybutton);
-    ttbyte (*GetValue)(ttanybutton o, ttuint which, ttany *value);
+    ttfn (*GetValue)(ttanybutton o, ttuint which, ttany *value);
     ttbyte (*SetValue)(ttanybutton o, ttuint which, ttany value);
     ttbyte (*ChangeValue)(ttanybutton o, ttuint which, ttany nand_value, ttany xor_value);
         
@@ -1188,6 +1200,7 @@ typedef struct s_ttfn_ttanybutton {
     void (*Remove)(ttanybutton o);
     void (*SetVisible)(ttanybutton o, ttbyte on_off);
     void (*SetTheme)(ttanybutton o, tttheme theme);
+    void (*Draw)(ttanybutton o, ttshort x, ttshort y, ttshort w, ttshort h, ttshort pitch, TT_CONST ttbyte *asciidata, TT_CONST ttfont *fontdata, TT_CONST ttattr *attrdata);
     void (*BuiltinRepaint)(ttanybutton o, ttshort x, ttshort y, ttshort w, ttshort h);
             
     ttfn_ttvisible FN_ttvisible;
@@ -1208,7 +1221,7 @@ typedef struct s_ttfn_ttbutton {
     ttbutton (*Build)(ttbutton o);
     void (*Break)(ttbutton o);
     void (*Del)(ttbutton);
-    ttbyte (*GetValue)(ttbutton o, ttuint which, ttany *value);
+    ttfn (*GetValue)(ttbutton o, ttuint which, ttany *value);
     ttbyte (*SetValue)(ttbutton o, ttuint which, ttany value);
     ttbyte (*ChangeValue)(ttbutton o, ttuint which, ttany nand_value, ttany xor_value);
         
@@ -1219,6 +1232,7 @@ typedef struct s_ttfn_ttbutton {
     void (*Remove)(ttbutton o);
     void (*SetVisible)(ttbutton o, ttbyte on_off);
     void (*SetTheme)(ttbutton o, tttheme theme);
+    void (*Draw)(ttbutton o, ttshort x, ttshort y, ttshort w, ttshort h, ttshort pitch, TT_CONST ttbyte *asciidata, TT_CONST ttfont *fontdata, TT_CONST ttattr *attrdata);
     void (*BuiltinRepaint)(ttbutton o, ttshort x, ttshort y, ttshort w, ttshort h);
             
     ttfn_ttvisible FN_ttvisible;
@@ -1242,7 +1256,7 @@ typedef struct s_ttfn_ttcheckbutton {
     ttcheckbutton (*Build)(ttcheckbutton o);
     void (*Break)(ttcheckbutton o);
     void (*Del)(ttcheckbutton);
-    ttbyte (*GetValue)(ttcheckbutton o, ttuint which, ttany *value);
+    ttfn (*GetValue)(ttcheckbutton o, ttuint which, ttany *value);
     ttbyte (*SetValue)(ttcheckbutton o, ttuint which, ttany value);
     ttbyte (*ChangeValue)(ttcheckbutton o, ttuint which, ttany nand_value, ttany xor_value);
         
@@ -1253,6 +1267,7 @@ typedef struct s_ttfn_ttcheckbutton {
     void (*Remove)(ttcheckbutton o);
     void (*SetVisible)(ttcheckbutton o, ttbyte on_off);
     void (*SetTheme)(ttcheckbutton o, tttheme theme);
+    void (*Draw)(ttcheckbutton o, ttshort x, ttshort y, ttshort w, ttshort h, ttshort pitch, TT_CONST ttbyte *asciidata, TT_CONST ttfont *fontdata, TT_CONST ttattr *attrdata);
     void (*BuiltinRepaint)(ttcheckbutton o, ttshort x, ttshort y, ttshort w, ttshort h);
             
     ttfn_ttvisible FN_ttvisible;
@@ -1278,7 +1293,7 @@ typedef struct s_ttfn_ttradiobutton {
     ttradiobutton (*Build)(ttradiobutton o);
     void (*Break)(ttradiobutton o);
     void (*Del)(ttradiobutton);
-    ttbyte (*GetValue)(ttradiobutton o, ttuint which, ttany *value);
+    ttfn (*GetValue)(ttradiobutton o, ttuint which, ttany *value);
     ttbyte (*SetValue)(ttradiobutton o, ttuint which, ttany value);
     ttbyte (*ChangeValue)(ttradiobutton o, ttuint which, ttany nand_value, ttany xor_value);
         
@@ -1289,6 +1304,7 @@ typedef struct s_ttfn_ttradiobutton {
     void (*Remove)(ttradiobutton o);
     void (*SetVisible)(ttradiobutton o, ttbyte on_off);
     void (*SetTheme)(ttradiobutton o, tttheme theme);
+    void (*Draw)(ttradiobutton o, ttshort x, ttshort y, ttshort w, ttshort h, ttshort pitch, TT_CONST ttbyte *asciidata, TT_CONST ttfont *fontdata, TT_CONST ttattr *attrdata);
     void (*BuiltinRepaint)(ttradiobutton o, ttshort x, ttshort y, ttshort w, ttshort h);
             
     ttfn_ttvisible FN_ttvisible;
@@ -1316,7 +1332,7 @@ typedef struct s_ttfn_ttscrollbar {
     ttscrollbar (*Build)(ttscrollbar o);
     void (*Break)(ttscrollbar o);
     void (*Del)(ttscrollbar);
-    ttbyte (*GetValue)(ttscrollbar o, ttuint which, ttany *value);
+    ttfn (*GetValue)(ttscrollbar o, ttuint which, ttany *value);
     ttbyte (*SetValue)(ttscrollbar o, ttuint which, ttany value);
     ttbyte (*ChangeValue)(ttscrollbar o, ttuint which, ttany nand_value, ttany xor_value);
         
@@ -1327,6 +1343,7 @@ typedef struct s_ttfn_ttscrollbar {
     void (*Remove)(ttscrollbar o);
     void (*SetVisible)(ttscrollbar o, ttbyte on_off);
     void (*SetTheme)(ttscrollbar o, tttheme theme);
+    void (*Draw)(ttscrollbar o, ttshort x, ttshort y, ttshort w, ttshort h, ttshort pitch, TT_CONST ttbyte *asciidata, TT_CONST ttfont *fontdata, TT_CONST ttattr *attrdata);
     void (*BuiltinRepaint)(ttscrollbar o, ttshort x, ttshort y, ttshort w, ttshort h);
             
     ttfn_ttvisible FN_ttvisible;
@@ -1349,7 +1366,7 @@ typedef struct s_ttfn_ttbuttongroup {
     ttbuttongroup (*Build)(ttbuttongroup o);
     void (*Break)(ttbuttongroup o);
     void (*Del)(ttbuttongroup);
-    ttbyte (*GetValue)(ttbuttongroup o, ttuint which, ttany *value);
+    ttfn (*GetValue)(ttbuttongroup o, ttuint which, ttany *value);
     ttbyte (*SetValue)(ttbuttongroup o, ttuint which, ttany value);
     ttbyte (*ChangeValue)(ttbuttongroup o, ttuint which, ttany nand_value, ttany xor_value);
         
@@ -1368,7 +1385,7 @@ typedef struct s_ttfn_ttwindow {
     ttwindow (*Build)(ttwindow o);
     void (*Break)(ttwindow o);
     void (*Del)(ttwindow);
-    ttbyte (*GetValue)(ttwindow o, ttuint which, ttany *value);
+    ttfn (*GetValue)(ttwindow o, ttuint which, ttany *value);
     ttbyte (*SetValue)(ttwindow o, ttuint which, ttany value);
     ttbyte (*ChangeValue)(ttwindow o, ttuint which, ttany nand_value, ttany xor_value);
         
@@ -1379,6 +1396,7 @@ typedef struct s_ttfn_ttwindow {
     void (*Remove)(ttwindow o);
     void (*SetVisible)(ttwindow o, ttbyte on_off);
     void (*SetTheme)(ttwindow o, tttheme theme);
+    void (*Draw)(ttwindow o, ttshort x, ttshort y, ttshort w, ttshort h, ttshort pitch, TT_CONST ttbyte *asciidata, TT_CONST ttfont *fontdata, TT_CONST ttattr *attrdata);
     void (*BuiltinRepaint)(ttwindow o, ttshort x, ttshort y, ttshort w, ttshort h);
             
     ttfn_ttvisible FN_ttvisible;
@@ -1398,7 +1416,7 @@ typedef struct s_ttfn_ttframe {
     ttframe (*Build)(ttframe o);
     void (*Break)(ttframe o);
     void (*Del)(ttframe);
-    ttbyte (*GetValue)(ttframe o, ttuint which, ttany *value);
+    ttfn (*GetValue)(ttframe o, ttuint which, ttany *value);
     ttbyte (*SetValue)(ttframe o, ttuint which, ttany value);
     ttbyte (*ChangeValue)(ttframe o, ttuint which, ttany nand_value, ttany xor_value);
         
@@ -1409,6 +1427,7 @@ typedef struct s_ttfn_ttframe {
     void (*Remove)(ttframe o);
     void (*SetVisible)(ttframe o, ttbyte on_off);
     void (*SetTheme)(ttframe o, tttheme theme);
+    void (*Draw)(ttframe o, ttshort x, ttshort y, ttshort w, ttshort h, ttshort pitch, TT_CONST ttbyte *asciidata, TT_CONST ttfont *fontdata, TT_CONST ttattr *attrdata);
     void (*BuiltinRepaint)(ttframe o, ttshort x, ttshort y, ttshort w, ttshort h);
             
     ttfn_ttvisible FN_ttvisible;
@@ -1430,7 +1449,7 @@ typedef struct s_ttfn_ttscroller {
     ttscroller (*Build)(ttscroller o);
     void (*Break)(ttscroller o);
     void (*Del)(ttscroller);
-    ttbyte (*GetValue)(ttscroller o, ttuint which, ttany *value);
+    ttfn (*GetValue)(ttscroller o, ttuint which, ttany *value);
     ttbyte (*SetValue)(ttscroller o, ttuint which, ttany value);
     ttbyte (*ChangeValue)(ttscroller o, ttuint which, ttany nand_value, ttany xor_value);
         
@@ -1441,6 +1460,7 @@ typedef struct s_ttfn_ttscroller {
     void (*Remove)(ttscroller o);
     void (*SetVisible)(ttscroller o, ttbyte on_off);
     void (*SetTheme)(ttscroller o, tttheme theme);
+    void (*Draw)(ttscroller o, ttshort x, ttshort y, ttshort w, ttshort h, ttshort pitch, TT_CONST ttbyte *asciidata, TT_CONST ttfont *fontdata, TT_CONST ttattr *attrdata);
     void (*BuiltinRepaint)(ttscroller o, ttshort x, ttshort y, ttshort w, ttshort h);
             
     ttfn_ttvisible FN_ttvisible;
@@ -1462,7 +1482,7 @@ typedef struct s_ttfn_ttmenuitem {
     ttmenuitem (*Build)(ttmenuitem o);
     void (*Break)(ttmenuitem o);
     void (*Del)(ttmenuitem);
-    ttbyte (*GetValue)(ttmenuitem o, ttuint which, ttany *value);
+    ttfn (*GetValue)(ttmenuitem o, ttuint which, ttany *value);
     ttbyte (*SetValue)(ttmenuitem o, ttuint which, ttany value);
     ttbyte (*ChangeValue)(ttmenuitem o, ttuint which, ttany nand_value, ttany xor_value);
         
@@ -1473,6 +1493,7 @@ typedef struct s_ttfn_ttmenuitem {
     void (*Remove)(ttmenuitem o);
     void (*SetVisible)(ttmenuitem o, ttbyte on_off);
     void (*SetTheme)(ttmenuitem o, tttheme theme);
+    void (*Draw)(ttmenuitem o, ttshort x, ttshort y, ttshort w, ttshort h, ttshort pitch, TT_CONST ttbyte *asciidata, TT_CONST ttfont *fontdata, TT_CONST ttattr *attrdata);
     void (*BuiltinRepaint)(ttmenuitem o, ttshort x, ttshort y, ttshort w, ttshort h);
             
     ttfn_ttvisible FN_ttvisible;
@@ -1488,7 +1509,7 @@ typedef struct s_ttfn_ttcheckmenuitem {
     ttcheckmenuitem (*Build)(ttcheckmenuitem o);
     void (*Break)(ttcheckmenuitem o);
     void (*Del)(ttcheckmenuitem);
-    ttbyte (*GetValue)(ttcheckmenuitem o, ttuint which, ttany *value);
+    ttfn (*GetValue)(ttcheckmenuitem o, ttuint which, ttany *value);
     ttbyte (*SetValue)(ttcheckmenuitem o, ttuint which, ttany value);
     ttbyte (*ChangeValue)(ttcheckmenuitem o, ttuint which, ttany nand_value, ttany xor_value);
         
@@ -1499,6 +1520,7 @@ typedef struct s_ttfn_ttcheckmenuitem {
     void (*Remove)(ttcheckmenuitem o);
     void (*SetVisible)(ttcheckmenuitem o, ttbyte on_off);
     void (*SetTheme)(ttcheckmenuitem o, tttheme theme);
+    void (*Draw)(ttcheckmenuitem o, ttshort x, ttshort y, ttshort w, ttshort h, ttshort pitch, TT_CONST ttbyte *asciidata, TT_CONST ttfont *fontdata, TT_CONST ttattr *attrdata);
     void (*BuiltinRepaint)(ttcheckmenuitem o, ttshort x, ttshort y, ttshort w, ttshort h);
             
     ttfn_ttvisible FN_ttvisible;
@@ -1516,7 +1538,7 @@ typedef struct s_ttfn_ttradiomenuitem {
     ttradiomenuitem (*Build)(ttradiomenuitem o);
     void (*Break)(ttradiomenuitem o);
     void (*Del)(ttradiomenuitem);
-    ttbyte (*GetValue)(ttradiomenuitem o, ttuint which, ttany *value);
+    ttfn (*GetValue)(ttradiomenuitem o, ttuint which, ttany *value);
     ttbyte (*SetValue)(ttradiomenuitem o, ttuint which, ttany value);
     ttbyte (*ChangeValue)(ttradiomenuitem o, ttuint which, ttany nand_value, ttany xor_value);
         
@@ -1527,6 +1549,7 @@ typedef struct s_ttfn_ttradiomenuitem {
     void (*Remove)(ttradiomenuitem o);
     void (*SetVisible)(ttradiomenuitem o, ttbyte on_off);
     void (*SetTheme)(ttradiomenuitem o, tttheme theme);
+    void (*Draw)(ttradiomenuitem o, ttshort x, ttshort y, ttshort w, ttshort h, ttshort pitch, TT_CONST ttbyte *asciidata, TT_CONST ttfont *fontdata, TT_CONST ttattr *attrdata);
     void (*BuiltinRepaint)(ttradiomenuitem o, ttshort x, ttshort y, ttshort w, ttshort h);
             
     ttfn_ttvisible FN_ttvisible;
@@ -1546,7 +1569,7 @@ typedef struct s_ttfn_ttmenu {
     ttmenu (*Build)(ttmenu o);
     void (*Break)(ttmenu o);
     void (*Del)(ttmenu);
-    ttbyte (*GetValue)(ttmenu o, ttuint which, ttany *value);
+    ttfn (*GetValue)(ttmenu o, ttuint which, ttany *value);
     ttbyte (*SetValue)(ttmenu o, ttuint which, ttany value);
     ttbyte (*ChangeValue)(ttmenu o, ttuint which, ttany nand_value, ttany xor_value);
         
@@ -1557,6 +1580,7 @@ typedef struct s_ttfn_ttmenu {
     void (*Remove)(ttmenu o);
     void (*SetVisible)(ttmenu o, ttbyte on_off);
     void (*SetTheme)(ttmenu o, tttheme theme);
+    void (*Draw)(ttmenu o, ttshort x, ttshort y, ttshort w, ttshort h, ttshort pitch, TT_CONST ttbyte *asciidata, TT_CONST ttfont *fontdata, TT_CONST ttattr *attrdata);
     void (*BuiltinRepaint)(ttmenu o, ttshort x, ttshort y, ttshort w, ttshort h);
             
     ttfn_ttvisible FN_ttvisible;
@@ -1574,7 +1598,7 @@ typedef struct s_ttfn_ttmenubar {
     ttmenubar (*Build)(ttmenubar o);
     void (*Break)(ttmenubar o);
     void (*Del)(ttmenubar);
-    ttbyte (*GetValue)(ttmenubar o, ttuint which, ttany *value);
+    ttfn (*GetValue)(ttmenubar o, ttuint which, ttany *value);
     ttbyte (*SetValue)(ttmenubar o, ttuint which, ttany value);
     ttbyte (*ChangeValue)(ttmenubar o, ttuint which, ttany nand_value, ttany xor_value);
         
@@ -1585,6 +1609,7 @@ typedef struct s_ttfn_ttmenubar {
     void (*Remove)(ttmenubar o);
     void (*SetVisible)(ttmenubar o, ttbyte on_off);
     void (*SetTheme)(ttmenubar o, tttheme theme);
+    void (*Draw)(ttmenubar o, ttshort x, ttshort y, ttshort w, ttshort h, ttshort pitch, TT_CONST ttbyte *asciidata, TT_CONST ttfont *fontdata, TT_CONST ttattr *attrdata);
     void (*BuiltinRepaint)(ttmenubar o, ttshort x, ttshort y, ttshort w, ttshort h);
             
     ttfn_ttvisible FN_ttvisible;
@@ -1600,7 +1625,7 @@ typedef struct s_ttfn_ttanytext {
     ttanytext (*Build)(ttanytext o);
     void (*Break)(ttanytext o);
     void (*Del)(ttanytext);
-    ttbyte (*GetValue)(ttanytext o, ttuint which, ttany *value);
+    ttfn (*GetValue)(ttanytext o, ttuint which, ttany *value);
     ttbyte (*SetValue)(ttanytext o, ttuint which, ttany value);
     ttbyte (*ChangeValue)(ttanytext o, ttuint which, ttany nand_value, ttany xor_value);
         
@@ -1611,6 +1636,7 @@ typedef struct s_ttfn_ttanytext {
     void (*Remove)(ttanytext o);
     void (*SetVisible)(ttanytext o, ttbyte on_off);
     void (*SetTheme)(ttanytext o, tttheme theme);
+    void (*Draw)(ttanytext o, ttshort x, ttshort y, ttshort w, ttshort h, ttshort pitch, TT_CONST ttbyte *asciidata, TT_CONST ttfont *fontdata, TT_CONST ttattr *attrdata);
     void (*BuiltinRepaint)(ttanytext o, ttshort x, ttshort y, ttshort w, ttshort h);
             
     ttfn_ttvisible FN_ttvisible;
@@ -1632,7 +1658,7 @@ typedef struct s_ttfn_tttextfield {
     tttextfield (*Build)(tttextfield o);
     void (*Break)(tttextfield o);
     void (*Del)(tttextfield);
-    ttbyte (*GetValue)(tttextfield o, ttuint which, ttany *value);
+    ttfn (*GetValue)(tttextfield o, ttuint which, ttany *value);
     ttbyte (*SetValue)(tttextfield o, ttuint which, ttany value);
     ttbyte (*ChangeValue)(tttextfield o, ttuint which, ttany nand_value, ttany xor_value);
         
@@ -1643,6 +1669,7 @@ typedef struct s_ttfn_tttextfield {
     void (*Remove)(tttextfield o);
     void (*SetVisible)(tttextfield o, ttbyte on_off);
     void (*SetTheme)(tttextfield o, tttheme theme);
+    void (*Draw)(tttextfield o, ttshort x, ttshort y, ttshort w, ttshort h, ttshort pitch, TT_CONST ttbyte *asciidata, TT_CONST ttfont *fontdata, TT_CONST ttattr *attrdata);
     void (*BuiltinRepaint)(tttextfield o, ttshort x, ttshort y, ttshort w, ttshort h);
             
     ttfn_ttvisible FN_ttvisible;
@@ -1666,7 +1693,7 @@ typedef struct s_ttfn_tttextarea {
     tttextarea (*Build)(tttextarea o);
     void (*Break)(tttextarea o);
     void (*Del)(tttextarea);
-    ttbyte (*GetValue)(tttextarea o, ttuint which, ttany *value);
+    ttfn (*GetValue)(tttextarea o, ttuint which, ttany *value);
     ttbyte (*SetValue)(tttextarea o, ttuint which, ttany value);
     ttbyte (*ChangeValue)(tttextarea o, ttuint which, ttany nand_value, ttany xor_value);
         
@@ -1677,6 +1704,7 @@ typedef struct s_ttfn_tttextarea {
     void (*Remove)(tttextarea o);
     void (*SetVisible)(tttextarea o, ttbyte on_off);
     void (*SetTheme)(tttextarea o, tttheme theme);
+    void (*Draw)(tttextarea o, ttshort x, ttshort y, ttshort w, ttshort h, ttshort pitch, TT_CONST ttbyte *asciidata, TT_CONST ttfont *fontdata, TT_CONST ttattr *attrdata);
     void (*BuiltinRepaint)(tttextarea o, ttshort x, ttshort y, ttshort w, ttshort h);
             
     ttfn_ttvisible FN_ttvisible;
@@ -1702,7 +1730,7 @@ typedef struct s_ttfn_tttheme {
     tttheme (*Build)(tttheme o);
     void (*Break)(tttheme o);
     void (*Del)(tttheme);
-    ttbyte (*GetValue)(tttheme o, ttuint which, ttany *value);
+    ttfn (*GetValue)(tttheme o, ttuint which, ttany *value);
     ttbyte (*SetValue)(tttheme o, ttuint which, ttany value);
     ttbyte (*ChangeValue)(tttheme o, ttuint which, ttany nand_value, ttany xor_value);
         
@@ -1722,7 +1750,7 @@ typedef struct s_ttfn_ttapplication {
     ttapplication (*Build)(ttapplication o);
     void (*Break)(ttapplication o);
     void (*Del)(ttapplication);
-    ttbyte (*GetValue)(ttapplication o, ttuint which, ttany *value);
+    ttfn (*GetValue)(ttapplication o, ttuint which, ttany *value);
     ttbyte (*SetValue)(ttapplication o, ttuint which, ttany value);
     ttbyte (*ChangeValue)(ttapplication o, ttuint which, ttany nand_value, ttany xor_value);
         
@@ -1743,6 +1771,7 @@ typedef struct s_tthw {
     byte (*Flush)(void);
     byte (*TimidFlush)(void);
     byte (*MainLoop)(void);
+    byte (*MainLoopOnce)(byte);
     void (*ExitMainLoop)(void);
     void (*DeleteListener)(ttlistener);
 
@@ -1791,6 +1820,58 @@ typedef struct s_ttfns {
     s_ttfn_ttapplication fn_ttapplication;
     s_tthw HW;
 } s_ttfns;
+
+
+
+
+/* client-visible global types */
+
+extern tt_fn TTFN_ttbyte; 
+extern tt_fn TTFN_ttshort; 
+extern tt_fn TTFN_ttint; 
+extern tt_fn TTFN_ttfont; 
+extern tt_fn TTFN_ttcol; 
+extern tt_fn TTFN_ttattr; 
+extern tt_fn TTFN_ttopaque; 
+extern tt_fn TTFN_ttany; 
+extern tt_fn TTFN_ttpointer; 
+extern tt_fn TTFN_ttstring; 
+extern tt_fn TTFN_ttfunction;
+#define TTFN_ttsbyte	TTFN_ttbyte
+#define TTFN_ttushort	TTFN_ttshort
+#define TTFN_ttuint	TTFN_ttint
+
+/* client-visible global methods structures */
+
+extern tt_fn TTFN_ttobj;  
+extern tt_fn TTFN_ttevent; 
+extern tt_fn TTFN_tteventbig; 
+extern tt_fn TTFN_ttlistener; 
+extern tt_fn TTFN_ttcallback; 
+extern tt_fn TTFN_ttcomponent; 
+extern tt_fn TTFN_ttvisible; 
+extern tt_fn TTFN_ttnative; 
+extern tt_fn TTFN_ttwidget; 
+extern tt_fn TTFN_ttlabel; 
+extern tt_fn TTFN_ttanybutton; 
+extern tt_fn TTFN_ttbutton; 
+extern tt_fn TTFN_ttcheckbutton; 
+extern tt_fn TTFN_ttradiobutton; 
+extern tt_fn TTFN_ttscrollbar; 
+extern tt_fn TTFN_ttbuttongroup; 
+extern tt_fn TTFN_ttwindow; 
+extern tt_fn TTFN_ttframe; 
+extern tt_fn TTFN_ttscroller; 
+extern tt_fn TTFN_ttmenuitem; 
+extern tt_fn TTFN_ttcheckmenuitem; 
+extern tt_fn TTFN_ttradiomenuitem; 
+extern tt_fn TTFN_ttmenu; 
+extern tt_fn TTFN_ttmenubar; 
+extern tt_fn TTFN_ttanytext; 
+extern tt_fn TTFN_tttextfield; 
+extern tt_fn TTFN_tttextarea; 
+extern tt_fn TTFN_tttheme; 
+extern tt_fn TTFN_ttapplication;
 
 
 

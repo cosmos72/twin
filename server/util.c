@@ -18,6 +18,10 @@
 #include <grp.h>
 #include <pwd.h>
 
+#ifdef HAVE_SYS_TIMEB_H
+# include <sys/timeb.h>
+#endif
+
 #include "data.h"
 #include "extensions.h"
 #include "methods.h"
@@ -109,7 +113,7 @@ hwfont *CloneStr2HWFont(CONST byte *s, uldat len) {
 	if ((temp = save = (hwfont *)AllocMem((len+1) * sizeof(hwfont)))) {
 	    while (len--) {
 # ifdef CONF__UNICODE
-		*temp++ = Tutf_IBM437_to_UTF_16[*s++];
+		*temp++ = Tutf_CP437_to_UTF_16[*s++];
 # else
 		*temp++ = *s++;
 # endif
@@ -163,11 +167,22 @@ void NormalizeTime(timevalue *Time) {
 }
 
 timevalue *InstantNow(timevalue *Now) {
+#if defined(HAVE_GETTIMEOFDAY)
     struct timeval sysNow;
-    
+
     gettimeofday(&sysNow, NULL);
+    
     Now->Seconds = sysNow.tv_sec;
     Now->Fraction = sysNow.tv_usec MicroSECs;
+#elif defined(HAVE_FTIME)
+    timeb sysNow;
+
+    ftime(&sysNow);
+    
+    Now->Seconds = sysNow.time ;
+    Now->Fraction = sysNow.millitm  MilliSECs;
+#endif
+    
     return Now;
 }
 
@@ -1091,14 +1106,14 @@ byte SetServerUid(uldat uid, byte privileges) {
 		    if (setuid(0) < 0 || setgid(0) < 0 ||
 			chown(fullTWD, 0, 0) < 0) {
 			/* tried to recover, but screwed up uids too badly. */
-			printk("twin: failed switching to uid %u: %s\n", uid, strerror(errno));
+			printk("twin: failed switching to uid %u: %."STR(SMALLBUFF)"s\n", uid, strerror(errno));
 			printk("twin: also failed to recover. Quitting NOW!\n");
 			Quit(0);
 		    }
 		    SetEnvs(getpwuid(0));
 		}
 	    }
-	    printk("twin: failed switching to uid %u: %s\n", uid, strerror(errno));
+	    printk("twin: failed switching to uid %u: %."STR(SMALLBUFF)"s\n", uid, strerror(errno));
 	}
     } else
 	printk("twin: SetServerUid() can be called only if started by root with \"-secure\".\n");
@@ -1204,7 +1219,7 @@ void RunTwEnvRC(void) {
 		  case -1: /* error */
 		    close(fds[0]);
 		    close(fds[1]);
-		    printk("twin: RunTwEnvRC(): fork() failed: %s\n", strerror(errno));
+		    printk("twin: RunTwEnvRC(): fork() failed: %."STR(SMALLBUFF)"s\n", strerror(errno));
 		    break;
 		  case 0:  /* child */
 		    close(fds[0]);
@@ -1225,13 +1240,79 @@ void RunTwEnvRC(void) {
 		    break;
 		}
 	    } else
-		printk("twin: RunTwEnvRC(): pipe() failed: %s\n", strerror(errno));
+		printk("twin: RunTwEnvRC(): pipe() failed: %."STR(SMALLBUFF)"s\n", strerror(errno));
 	} else
 	    printk("twin: RunTwEnvRC(): .twenvrc.sh: File not found\n", strerror(errno));
     } else
 	printk("twin: RunTwEnvRC(): delaying .twenvrc.sh execution until secure mode ends.\n");
 }
 
+
+/*
+ * encode POS_* position, position detail, active flag, pressed flag,
+ * into 'extra' byte field inside hwattr
+ * 
+ * not all bits are preserved... this is just
+ * a fair effort that covers most cases
+ * 
+ * this is used for example to decide where each icon
+ * is placed inside hw_gfx_themes/<*>.xpm theme files.
+ */
+hwattr EncodeToHWAttrExtra(byte pos, byte detail, byte active, byte pressed) {
+#define pitch 15
+    byte o12 = active ? pressed ? 2 : 1 : 0;
+    byte sides = (4 + o12) * pitch;
+    byte scrollx = 9 + (4 + o12) * pitch;
+    byte scrolly = 12 + o12;
+    
+    switch (pos) {
+      case POS_TITLE:
+	return 4 + sides;
+      case POS_SIDE_LEFT:
+	return 3 + sides;
+      case POS_SIDE_UP:
+	return detail + sides;
+      case POS_SIDE_RIGHT:
+	return 5 + sides;
+      case POS_SIDE_DOWN:
+	return 6 + detail + sides;
+	
+      case POS_BUTTON_RESIZE:
+	return (detail ? 1 : 0) + (pressed ? 3 : 2) * pitch;
+	
+      case POS_X_BAR_BACK:
+      case POS_X_BAR_FWD:
+	return scrollx;
+      case POS_X_TAB:
+	return 1 + scrollx;
+      case POS_X_ARROW_BACK:
+	return 2 + scrollx;
+      case POS_X_ARROW_FWD:
+	return 3 + scrollx;
+	
+      case POS_Y_BAR_BACK:
+      case POS_Y_BAR_FWD:
+	return scrolly;
+      case POS_Y_TAB:
+	return scrolly + pitch;
+      case POS_Y_ARROW_BACK:
+	return scrolly + 2 * pitch;
+      case POS_Y_ARROW_FWD:
+	return scrolly + 3 * pitch;
+      case POS_INSIDE:
+	return 1 + pitch;
+      case POS_MENU:
+	return 1;
+      case POS_ROOT:
+	return pitch;
+      default:
+	if (pos < POS_TITLE)
+	    return 2 + pos * 2 + (detail ? 1 : 0) + ((pressed ? 1 : 0) + (pos >= 5)) * pitch;
+	break;
+    }
+    return 0;
+#undef pitch
+}
 
 
 /* finally, functions to manage Ids */

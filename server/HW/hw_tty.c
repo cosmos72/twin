@@ -13,8 +13,6 @@
 
 #include "autoconf.h"
 
-#define __USE_UNIX98 
-
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
@@ -63,6 +61,7 @@ struct tty_data {
     uldat saveCursorType;
     dat saveX, saveY;
 
+    byte *mouse_start_seq, *mouse_end_seq, *mouse_motion_seq;
 #ifdef CONF_HW_TTY_LINUX
     Gpm_Connect GPM_Conn;
     int GPM_fd;
@@ -74,6 +73,7 @@ struct tty_data {
     byte *tc_cursor_goto, *tc_cursor_on, *tc_cursor_off,
 	*tc_bold_on, *tc_blink_on, *tc_attr_off,
 	*tc_kpad_on, *tc_kpad_off, *tc_audio_bell,
+	*tc_charset_start, *tc_charset_end,
 	colorbug, wrapglitch;
 #endif
 };
@@ -93,6 +93,9 @@ struct tty_data {
 #define saveCursorType	(ttydata->saveCursorType)
 #define saveX		(ttydata->saveX)
 #define saveY		(ttydata->saveY)
+#define mouse_start_seq	(ttydata->mouse_start_seq)
+#define mouse_end_seq	(ttydata->mouse_end_seq)
+#define mouse_motion_seq (ttydata->mouse_motion_seq)
 #define GPM_Conn	(ttydata->GPM_Conn)
 #define GPM_fd		(ttydata->GPM_fd)
 #define GPM_keys	(ttydata->GPM_keys)
@@ -105,6 +108,9 @@ struct tty_data {
 #define tc_kpad_on	(ttydata->tc_kpad_on)
 #define tc_kpad_off	(ttydata->tc_kpad_off)
 #define tc_scr_clear	(ttydata->tc_scr_clear)
+#define tc_audio_bell	(ttydata->tc_audio_bell)
+#define tc_charset_start (ttydata->tc_charset_start)
+#define tc_charset_end	(ttydata->tc_charset_end)
 #define tc_audio_bell	(ttydata->tc_audio_bell)
 #define colorbug	(ttydata->colorbug)
 #define wrapglitch	(ttydata->wrapglitch)
@@ -556,12 +562,16 @@ static void xterm_MouseEvent(int fd, display_hw hw);
 
 /* return FALSE if failed */
 static byte xterm_InitMouse(byte force) {
-    CONST byte *term = tty_TERM, *seq;
+    CONST byte *term = tty_TERM;
     
-    if (force) {
+    if (force == TRUE) {
 	printk("      xterm_InitMouse(): xterm-style mouse FORCED.\n"
 	       "      Assuming terminal has xterm compatible mouse reporting.\n");
 	term = "xterm";
+    } else if (force == TRUE+TRUE) {
+	printk("      xterm_InitMouse(): twterm-style mouse FORCED.\n"
+	       "      Assuming terminal has twterm compatible mouse reporting.\n");
+	term = "twterm";
     }
 
     if (!term) {
@@ -569,7 +579,13 @@ static byte xterm_InitMouse(byte force) {
 	return FALSE;
     }
 
-    if (!strcmp(term, "linux")) {
+    mouse_start_seq = "\033[?9h";
+    mouse_end_seq = "\033[?9l";
+    mouse_motion_seq = "\033[?999h";
+    
+    if (!strcmp(term, "twterm")) {
+	;
+    } else if (!strcmp(term, "linux")) {
 	/*
 	 * additional check... out-of-the box linux
 	 * doesn't have xterm-style mouse reporting
@@ -582,16 +598,21 @@ static byte xterm_InitMouse(byte force) {
 	if (ttypar[0]==6 && ttypar[1]<4) {
 	    printk("      xterm_InitMouse() warning: this `linux' terminal\n"
 		   "      can only report click, drag and release, not motion.\n");
+	    
+	    mouse_motion_seq = NULL;
 	}
-	seq = "\033[?9h";
-    } else if (!strncmp(term, "xterm", 5) || !strncmp(term, "rxvt", 4)) {
-	seq = "\033[?1001s\033[?1000h";
+    } else if (!strncmp(term, "xterm", 5) ||
+	       !strncmp(term, "rxvt", 4) ||
+	       !strncmp(term, "Eterm", 5)) {
+	mouse_start_seq = "\033[?1001s\033[?1000h";
+	mouse_end_seq = "\033[?1000l\033[?1001r";
+	mouse_motion_seq = NULL;
     } else {
-	printk("      xterm_InitMouse() failed: terminal `%s' is not supported.\n", term);
+	printk("      xterm_InitMouse() failed: terminal `%."STR(SMALLBUFF)"s' is not supported.\n", term);
 	return FALSE;
     }
 
-    fputs(seq, stdOUT);
+    fputs(mouse_start_seq, stdOUT);
     setFlush();
     
     HW->mouse_slot = NOSLOT; /* shared with keyboard */
@@ -606,17 +627,14 @@ static byte xterm_InitMouse(byte force) {
 }
 
 static void xterm_QuitMouse(void) {
-    if (ttypar[0]==6 && ttypar[1]>=3)
-	fputs("\033[?9l", stdOUT);
-    else /* xterm or similar */
-	fputs("\033[?1000l\033[?1001r", stdOUT);
+    fputs(mouse_end_seq, stdOUT);
     HW->QuitMouse = NoOp;
 }
 
 static void xterm_EnableMouseMotionEvents(byte enable) {
-    if (ttypar[0]==6 && ttypar[1]>=4) {
+    if (mouse_motion_seq) {
 	/* either enable new style + mouse motion, or switch back to new style */
-	fputs(enable ? "\033[?999h" : "\033[?9h", stdOUT);
+	fputs(enable ? mouse_motion_seq : mouse_start_seq, stdOUT);
 	setFlush();
     }
 }
@@ -690,6 +708,22 @@ static void xterm_MouseEvent(int fd, display_hw hw) {
 }
 
 
+#ifdef CONF__UNICODE
+static byte utf8used;
+
+void tty_MogrifyUTF8(hwfont h) {
+    byte c;
+    if (!utf8used)
+	utf8used = TRUE, fputs("\033%G", stdOUT);
+    if (h >= 0x800) {
+	c = (h >> 12) | 0xE0, putc(c, stdOUT);
+	c = ((h >> 6) & 0x3F) | 0x80, putc(c, stdOUT);
+    } else
+	c = (h >> 6) | 0xC0, putc(c, stdOUT);
+    c = (h & 0x3F) | 0x80, putc(c, stdOUT);
+}
+#endif
+
 #if defined(CONF_HW_TTY_LINUX) || defined(CONF_HW_TTY_TWTERM)
 # include "hw_tty_linux.c"
 #endif
@@ -711,7 +745,7 @@ byte tty_InitHW(void) {
     byte *charset = NULL;
     byte skip_vcsa = FALSE;
     byte skip_stdout = FALSE;
-    byte force_xterm = FALSE;
+    byte force_mouse = FALSE;
     byte tc_colorbug = FALSE;
     byte try_ctty = FALSE;
     byte need_persistent_slot = FALSE;
@@ -729,6 +763,8 @@ byte tty_InitHW(void) {
     stdOUT = NULL;
     tty_fd = -1;
     tty_TERM = tty_name = NULL;
+    
+    tty_can_utf8 = TRUE+TRUE;
     
     if (arg && HW->NameLen > 4) {
 	arg += 4;
@@ -771,17 +807,26 @@ byte tty_InitHW(void) {
 	    } else if (!strncmp(arg, ",colorbug", 9)) {
 		arg = strchr(arg + 9, ',');
 		tc_colorbug = TRUE;
-	    } else if (!strncmp(arg, ",xterm", 6)) {
+	    } else if (!strncmp(arg, ",mouse=", 6)) {
+		if (!strncmp(arg+6, "xterm", 5))
+		    force_mouse = TRUE;
+		else if (!strncmp(arg+6, "twterm", 5))
+		    force_mouse = TRUE+TRUE;
 		arg = strchr(arg + 6, ',');
-		force_xterm = TRUE;
 	    } else if (!strncmp(arg, ",noinput", 8)) {
 		arg = strchr(arg + 8, ',');
 		HW->FlagsHW |= FlHWNoInput;
 	    } else if (!strncmp(arg, ",slow", 5)) {
 		arg = strchr(arg + 5, ',');
 		HW->FlagsHW |= FlHWExpensiveFlushVideo;
-	    } else
-		break;
+	    } else if (!strncmp(arg, ",utf8", 5)) {
+		arg = strchr(arg + 5, ',');
+		tty_can_utf8 = TRUE;
+	    } else {
+		if (*arg == ',')
+		    arg++;
+		arg = strchr(arg, ',');
+	    }
 	}
     }
 
@@ -826,7 +871,7 @@ byte tty_InitHW(void) {
 	    stdOUT = fdopen(tty_fd, "r+");
 	}
 	if (tty_fd == -1 || !stdOUT) {
-	    printk("      tty_InitHW(): open(\"%s\") failed: %s\n", tty_name, strerror(errno));
+	    printk("      tty_InitHW(): open(\"%."STR(SMALLBUFF)"s\") failed: %."STR(SMALLBUFF)"s\n", tty_name, strerror(errno));
 	    FreeMem(tty_name);
 	    if (tty_TERM)
 		FreeMem(tty_TERM);
@@ -837,7 +882,7 @@ byte tty_InitHW(void) {
 	 * open our controlling tty as display
 	 */
 	if (DisplayHWCTTY) {
-	    printk("      tty_InitHW() failed: controlling tty %s\n",
+	    printk("      tty_InitHW() failed: controlling tty %."STR(SMALLBUFF)"s\n",
 		    DisplayHWCTTY == HWCTTY_DETACHED
 		    ? "not usable after Detach"
 		    : "is already in use as display");
@@ -872,16 +917,18 @@ byte tty_InitHW(void) {
 #ifdef CONF__UNICODE
     if (charset) {
 	if ((tty_charset = Tutf_charset_id(charset)) == (uldat)-1)
-	    printk("      tty_InitHW(): libTutf warning: unknown charset `%." STR(SMALLBUFF) "s', assuming `IBM437'\n", charset);
+	    printk("      tty_InitHW(): libTutf warning: unknown charset `%." STR(SMALLBUFF) "s', assuming `CP437'\n", charset);
 	else if (tty_charset == Tutf_charset_id(T_NAME(UTF_16))) {
-	    printk("      tty_InitHW(): cannot use Unicode charset `%." STR(SMALLBUFF) "s', assuming `IBM437'\n", charset);
-	    tty_charset = (uldat)-1;
+	    printk("      tty_InitHW(): warning: charset `%." STR(SMALLBUFF) "s' is Unicode,\n"
+		   "      handling as %." STR(SMALLBUFF) "s (latin1) with utf8\n", charset, T_NAME(ISO8859_1));
+	    tty_charset = Tutf_charset_id(T_NAME(ISO8859_1));
+	    tty_can_utf8 = TRUE;
 	}
 	FreeMem(charset);
     }
     if (tty_charset == (uldat)-1) {
-	tty_UTF_16_to_charset = Tutf_UTF_16_to_IBM437;
-	tty_charset_to_UTF_16 = Tutf_IBM437_to_UTF_16;
+	tty_UTF_16_to_charset = Tutf_UTF_16_to_CP437;
+	tty_charset_to_UTF_16 = Tutf_CP437_to_UTF_16;
     } else {
 	tty_UTF_16_to_charset = Tutf_UTF_16_to_charset_function(tty_charset);
 	tty_charset_to_UTF_16 = Tutf_charset_to_UTF_16_array(tty_charset);
@@ -900,7 +947,7 @@ byte tty_InitHW(void) {
 #ifdef CONF_HW_TTY_LINUX
 	    GPM_InitMouse() ||
 #endif
-	    xterm_InitMouse(force_xterm) ||
+	    xterm_InitMouse(force_mouse) ||
 	    warn_NoMouse()) {
 	    
 	    if (

@@ -32,8 +32,13 @@
 #include <Tw/Tw.h>
 #include <Tw/Twerrno.h>
 #include <Tw/Twstat.h>
+#include <Tw/Twstat_defs.h>
 
 /* HW specific headers */
+
+#ifdef CONF_HW_GFX
+# include "HW/hw_gfx.h"
+#endif
 
 #ifdef CONF_HW_X11
 # include "HW/hw_X11.h"
@@ -56,7 +61,28 @@
 
 #ifdef CONF__MODULES
 
-# ifdef LIBDIR
+
+# if defined(HAVE_DLFCN_H) && defined(HAVE_DLOPEN)
+# include <dlfcn.h>
+# define my(fn) fn
+# define my_handle void *
+# define my_dlopen_extra_args , RTLD_NOW|RTLD_GLOBAL
+# define my_VERSION ".so." TWIN_VERSION_STR
+
+#elif defined(HAVE_LTDL_H) && defined(HAVE_LT_DLOPEN)
+
+# include <ltdl.h>
+# define my(fn) lt_##fn
+# define my_handle lt_dlhandle
+# define my_dlopen_extra_args
+# define my_VERSION ".la"
+
+#else
+# error nor dlopen() nor lt_dlopen() module loading API available!  
+#endif
+
+
+#ifdef LIBDIR
 #  define DIR_LIB_TWIN_MODULES_ LIBDIR "/twin/modules/"
 # else
 #  define DIR_LIB_TWIN_MODULES_ "./"
@@ -65,8 +91,6 @@
 static CONST byte *conf_destdir_lib_twin_modules_ = DIR_LIB_TWIN_MODULES_;
 
 #endif /* CONF__MODULES */
-
-static CONST byte *suffix = "." TWIN_VERSION_STR;
 
 static CONST byte *MYname;
 
@@ -79,6 +103,8 @@ byte nullMIME[TW_MAX_MIMELEN];
 
 udat ErrNo;
 byte CONST * ErrStr;
+
+byte CONST * HOME;
 
 #define L 0x55
 #define M 0xAA
@@ -303,19 +329,21 @@ static module DlLoadAny(uldat len, byte *name) {
     if ((Module->Name = CloneStrL(name, len)) &&
 	(_name = AllocMem(len + strlen(conf_destdir_lib_twin_modules_) + 1))) {
 	
-	sprintf(_name, "%s%s", conf_destdir_lib_twin_modules_, Module->Name);
+	sprintf(_name, "%s%.*s%s", conf_destdir_lib_twin_modules_, (int)len, name, my_VERSION);
 
-	if ((Module->Handle = dlopen(_name, RTLD_NOW|RTLD_GLOBAL)) &&
+	if ((Module->Handle = my(dlopen)(_name my_dlopen_extra_args)) &&
 	    /*
 	     * Module MUST have a InitModule function, as it needs to set
 	     * Module->Private to its xxx_InitHW() startup code.
 	     */
-	    (init_dl = dlsym(Module->Handle, "InitModule")) &&
-	    init_dl(Module))
+	    (init_dl = (byte (*)(module)) my(dlsym)((my_handle)Module->Handle, "InitModule")) &&
+	    init_dl(Module)) {
 
+	    FreeMem(_name);
 	    return Module;
-	else
-	    ErrStr = dlerror();
+	} else
+	    ErrStr = my(dlerror)();
+	FreeMem(_name);
     } else
 	ErrStr = "Out of memory!";
     return (module)0;
@@ -326,8 +354,7 @@ static byte module_InitHW(void) {
     byte *(*InitD)(void);
     byte *arg = HW->Name;
     uldat len = HW->NameLen;
-    uldat xtralen = 10 + strlen(suffix);
-    module Module;
+    module Module = NULL;
 
     if (!arg || len <= 4)
 	return FALSE;
@@ -341,16 +368,16 @@ static byte module_InitHW(void) {
     if (name)
 	len = name - arg;
     
-    if ((name = AllocMem(len + xtralen + 1))) {
-	sprintf(name, "HW/hw_%.*s.so." TWIN_VERSION_STR, (int)len, arg);
+    if ((name = AllocMem(len + 7))) {
+	sprintf(name, "HW/hw_%.*s", (int)len, arg);
 			
-	Module = DlLoadAny(len + xtralen, name);
+	Module = DlLoadAny(len + 6, name);
 	
 	if (Module) {
-	    printk("twdisplay: starting display driver module `%s'...\n", name);
+	    printk("twdisplay: starting display driver module `%."STR(SMALLBUFF)"s'...\n", name);
 	    
 	    if ((InitD = Module->Private) && InitD()) {
-		printk("twdisplay: ...module `%s' successfully started.\n", name);
+		printk("twdisplay: ...module `%."STR(SMALLBUFF)"s' successfully started.\n", name);
 		HW->Module = Module; Module->Used++;
 		
 		FreeMem(name);
@@ -358,16 +385,18 @@ static byte module_InitHW(void) {
 	    }
 	    /*Delete(Module);*/
 	}
-	FreeMem(name);
     } else
 	ErrStr = "Out of memory!";
-
-    if (Module) {
-	printk("twdisplay: ...module `HW/hw_%.*s.so." TWIN_VERSION_STR "' failed to start.\n", (int)len, arg);
-    } else
-	printk("twdisplay: unable to load display driver module `HW/hw_%.*s.so." TWIN_VERSION_STR "' :\n"
-		"      %s\n", (int)len, arg, ErrStr);
     
+    if (Module) {
+	printk("twdisplay: ...module `%."STR(SMALLBUFF)"s' failed to start.\n", name ? name : (byte *)"(NULL)");
+    } else
+	printk("twdisplay: unable to load display driver module `%."STR(SMALLBUFF)"s' :\n"
+	       "      %."STR(SMALLBUFF)"s\n", name ? name : (byte *)"(NULL)", ErrStr);
+
+    if (name)
+    	FreeMem(name);
+
     return FALSE;
 }
 
@@ -394,16 +423,16 @@ static struct s_display_hw _HW = {
 	&_FnDisplayHW,
 };
 
-#if defined(CONF_HW_X11) || defined(CONF_HW_TWIN) || defined(CONF_HW_TTY) || defined(CONF_HW_GGI)
+#if defined(CONF_HW_GFX) || defined(CONF_HW_X11) || defined(CONF_HW_TWIN) || defined(CONF_HW_TTY) || defined(CONF_HW_GGI)
 static byte check4(byte *s, byte *arg) {
     if (arg && strncmp(s, arg, strlen(s))) {
-	printk("twdisplay: `-hw=%s' given, skipping `-hw=%s' display driver.\n",
+	printk("twdisplay: `-hw=%."STR(SMALLBUFF)"s' given, skipping `-hw=%."STR(SMALLBUFF)"s' display driver.\n",
 		arg, s);
 	return FALSE;
     } else if (arg)
-	printk("twdisplay: trying given `-hw=%s' display driver.\n", s);
+	printk("twdisplay: trying given `-hw=%."STR(SMALLBUFF)"s' display driver.\n", s);
     else
-	printk("twdisplay: autoprobing `-hw=%s' display driver.\n", s);
+	printk("twdisplay: autoprobing `-hw=%."STR(SMALLBUFF)"s' display driver.\n", s);
     return TRUE;
 }
 
@@ -419,7 +448,7 @@ static void fix4(byte *s, display_hw D_HW) {
 	}
     }
 }
-#endif /* defined(CONF_HW_X11) || defined(CONF_HW_TWIN) || defined(CONF_HW_TTY) || defined(CONF_HW_GGI) */
+#endif /* defined(CONF_HW_GFX) || defined(CONF_HW_X11) || defined(CONF_HW_TWIN) || defined(CONF_HW_TTY) || defined(CONF_HW_GGI) */
 
 static void warn_NoHW(uldat len, char *arg, uldat tried) {
 #ifdef CONF__MODULES
@@ -466,6 +495,9 @@ static byte InitDisplayHW(display_hw D_HW) {
 	arg = NULL;
 
     success =
+#ifdef CONF_HW_GFX
+	(check4("gfx", arg) && (tried++, gfx_InitHW()) && (fix4("gfx", D_HW), TRUE)) ||
+#endif
 #ifdef CONF_HW_X11
 	(check4("X", arg) && (tried++, X11_InitHW()) && (fix4("X", D_HW), TRUE)) ||
 #endif
@@ -1099,14 +1131,14 @@ static void MainLoop(int Fd) {
     
     if (num_fds < 0 && errno != EINTR) {
 	QuitDisplayHW(HW);
-	printk("twdisplay: select(): %s\n", strerror(errno));
+	printk("twdisplay: select(): %."STR(SMALLBUFF)"s\n", strerror(errno));
 	exit(1);
     }
     if (TwInPanic()) {
 	err = TwErrno;
 	detail = TwErrnoDetail;
     	QuitDisplayHW(HW);
-	printk("%s: libTw error: %s%s\n", MYname,
+	printk("%."STR(SMALLBUFF)"s: libTw error: %."STR(SMALLBUFF)"s%."STR(SMALLBUFF)"s\n", MYname,
 		TwStrError(err), TwStrErrorDetail(err, detail));
 	exit(1);
     }
@@ -1114,9 +1146,9 @@ static void MainLoop(int Fd) {
     detail = TwErrnoDetail;
     sys_errno = errno;
     QuitDisplayHW(HW);
-    printk("%s: shouldn't happen! Please report:\n"
-	    "\tlibTw TwErrno: %d(%d),\t%s%s\n"
-	    "\tsystem  errno: %d,\t%s\n", MYname,
+    printk("%."STR(SMALLBUFF)"s: shouldn't happen! Please report:\n"
+	    "\tlibTw TwErrno: %d(%d),\t%."STR(SMALLBUFF)"s%."STR(SMALLBUFF)"s\n"
+	    "\tsystem  errno: %d,\t%."STR(SMALLBUFF)"s\n", MYname,
 	    err, detail, TwStrError(err), TwStrErrorDetail(err, detail),
 	    sys_errno, strerror(sys_errno));
     exit(1);
@@ -1128,7 +1160,6 @@ dat GetDisplayWidth(void) {
 dat GetDisplayHeight(void) {
     return DisplayHeight;
 }
-
 
 static void Usage(void) {
     fputs("Usage: twdisplay [OPTIONS] -hw=<display> [...]\n"
@@ -1144,6 +1175,7 @@ static void Usage(void) {
 	  " -hw=<display>[,options] start the given display\n"
 	  "Currently known display methods: \n"
 	  "\tX[@<XDISPLAY>]\n"
+	  "\tgfx[@<XDISPLAY>]\n"
 	  "\ttwin[@<TWDISPLAY>]\n"
 	  "\ttty[@<tty device>]\n"
 	  "\tggi[@<ggi display>]\n", stdout);
@@ -1151,7 +1183,7 @@ static void Usage(void) {
 
 static void TryUsage(CONST char *opt) {
     if (opt)
-	fprintf(stdout, "twdisplay: unknown option `%s'\n", opt);
+	fprintf(stdout, "twdisplay: unknown option `%."STR(SMALLBUFF)"s'\n", opt);
     fputs("           try `twdisplay -help' for usage summary.\n", stdout);
 }
 
@@ -1164,7 +1196,7 @@ static byte VersionsMatch(byte force) {
     uldat cv = TW_PROTOCOL_VERSION, lv = TwLibraryVersion(), sv = TwServerVersion();
 	
     if (lv != sv || lv != cv) {
-	printk("twdisplay: %s: socket protocol version mismatch!%s\n"
+	printk("twdisplay: %."STR(SMALLBUFF)"s: socket protocol version mismatch!%."STR(SMALLBUFF)"s\n"
 		"           client is %d.%d.%d, library is %d.%d.%d, server is %d.%d.%d\n",
 		(force ? "warning" : "fatal"), (force ? " (ignored)" : ""),
 		TW_VER_MAJOR(cv), TW_VER_MINOR(cv), TW_VER_PATCH(cv),
@@ -1209,7 +1241,7 @@ int main(int argc, char *argv[]) {
 	    dpy = *argv + 6;
 	else if (!strncmp(*argv, "-hw=", 4)) {
 	    if (!strncmp(*argv+4, "display", 7)) {
-		printk("%s: argument `-hw=display' is for internal use only.\n", MYname);
+		printk("%."STR(SMALLBUFF)"s: argument `-hw=display' is for internal use only.\n", MYname);
 		TryUsage(NULL);
 		return 1;
 	    }
@@ -1224,20 +1256,20 @@ int main(int argc, char *argv[]) {
 		else if (*buff == '@' && buff[1]) {
 		    if (buff[1] == '-') {
 			/*
-			 * using server tty makes no sense for twdisplay
+			 * using server controlling tty makes no sense for twdisplay
 			 */
-			printk("%s: `%s' makes sense only with twattach.\n", MYname, *argv);
+			printk("%."STR(SMALLBUFF)"s: `%."STR(SMALLBUFF)"s' makes sense only with twattach.\n", MYname, *argv);
 			return 1;
 		    } else if (tty) {
 			if (!strcmp(buff+1, tty))
 			    /* attach twin to our tty */
 			    ourtty = 1;
 		    } else {
-			printk("%s: ttyname() failed: cannot find controlling tty!\n", MYname);
+			printk("%."STR(SMALLBUFF)"s: ttyname() failed: cannot find controlling tty!\n", MYname);
 			return 1;
 		    }
 		} else {
-		    printk("%s: malformed display hw `%s'\n", MYname, *argv);
+		    printk("%."STR(SMALLBUFF)"s: malformed display hw `%."STR(SMALLBUFF)"s'\n", MYname, *argv);
 		    return 1;
 		}
 
@@ -1280,7 +1312,8 @@ int main(int argc, char *argv[]) {
     
     TWDisplay = origTWDisplay = CloneStr(dpy ? dpy : (byte *)getenv("TWDISPLAY"));
     origTERM = CloneStr(getenv("TERM"));
-
+    HOME = CloneStr(getenv("HOME"));
+    
     InitSignals();
     InitTtysave();
     
@@ -1379,12 +1412,12 @@ int main(int argc, char *argv[]) {
 	     */
 	    MainLoop(Fd);
 	else if (ret)
-	    printk("%s: twin said we can quit... strange!\n", MYname);
+	    printk("%."STR(SMALLBUFF)"s: twin said we can quit... strange!\n", MYname);
 	
 	Quit(!ret);
     } while (0);
     
-    printk("%s: libTw error: %s%s\n", MYname,
+    printk("%."STR(SMALLBUFF)"s: libTw error: %."STR(SMALLBUFF)"s%."STR(SMALLBUFF)"s\n", MYname,
 	    TwStrError(TwErrno), TwStrErrorDetail(TwErrno, TwErrnoDetail));
     return 1;
 }

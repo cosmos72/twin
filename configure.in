@@ -1,7 +1,7 @@
 dnl Process this file with autoconf to produce a configure script.
 PACKAGE=twin
-VERSION=0.4.3
-AC_REVISION($Revision: 1.0 $)dnl
+VERSION=0.4.4
+AC_REVISION($Revision: 0.4.4 $)
 AC_INIT(server/main.c)
 AC_CONFIG_HEADER(include/autoconf.h)
 
@@ -55,7 +55,7 @@ AC_ARG_ENABLE(socket_alien,dnl
 enable_socket_alien=yes
 )dnl
 
-dnl support Toolkit library
+dnl support Text Toolkit library
 AC_ARG_ENABLE(tt,dnl
 [  --enable-tt[=yes|no]                   enable Text Toolkit library (libTT) ],,
 enable_tt=yes
@@ -71,6 +71,12 @@ dnl Toolkit library: use gtk as display driver
 AC_ARG_ENABLE(tt_hw_gtk,dnl
 [  --enable-tt-hw-gtk[=yes|mod|no]        enable libTT to use gtk as display target ],,
 enable_tt_hw_gtk=mod
+)dnl
+
+dnl Toolkit library: use xml files as display driver
+AC_ARG_ENABLE(tt_hw_xml,dnl
+[  --enable-tt-hw-file[=yes|mod|no]        enable libTT to use xml files as display target ],,
+enable_tt_hw_xml=mod
 )dnl
 
 dnl builtin window manager
@@ -145,6 +151,12 @@ AC_ARG_ENABLE(hw-x11,dnl
 enable_hw_x11=mod
 )dnl
 
+dnl the gfx driver
+AC_ARG_ENABLE(hw-gfx,dnl
+[  --enable-hw-gfx[=yes|mod|no]           enable the gfx driver ],,
+enable_hw_gfx=mod
+)dnl
+
 dnl the twin driver
 AC_ARG_ENABLE(hw-twin,dnl
 [  --enable-hw-twin[=yes|mod|no]          enable the twin native driver ],,
@@ -173,45 +185,51 @@ dnl AC_PROG_YACC
 dnl AC_PROG_LEX
 AC_PROG_INSTALL
 AC_PROG_LN_S
-AC_CHECK_PROG(AR, ar, ar,)
-AC_PROG_RANLIB
-
-#
-# disable static libraries in libtool... we build them manually
-#
-AC_DISABLE_STATIC
-AM_PROG_LIBTOOL
 
 dnl
 dnl Check for os-specific settings
 dnl
 
-OS="`uname`"
-ECHO_E=echo
-if test "`echo -e '\n'`" = ""; then
-  ECHO_E='echo -e'
-elif test "`echo '\n'`" = ""; then
-  ECHO_E=echo
-elif test "`/bin/echo -e '\n'`" = ""; then
-  ECHO_E='/bin/echo -e'
-elif test "`/bin/echo '\n'`" = ""; then
-  ECHO_E=/bin/echo
-fi
-ECHO_C=
-ECHO_N=
-if test "`( echo '1\c'; echo 2 ) | grep 12`" = "12"; then
-  ECHO_C='\c'
-elif test "`( echo -n "1"; echo 2 ) | grep 12`" = 12; then
-  ECHO_N='-n'
-fi
-if test -x /bin/bash; then
-  BASH=/bin/bash
-elif bash -c : 2>/dev/null; then
-  BASH=bash
-elif test -x "$BASH"; then
-  :
+AC_CACHE_CHECK(for OS, ac_cv_sys_uname, [
+  ac_cv_sys_uname="`uname`"
+])
+
+AC_CACHE_CHECK(for shared library support, ac_cv_support_shlibs, [
+  if test "$ac_cv_sys_uname" = Linux -o "$ac_cv_sys_uname" = FreeBSD; then
+    if test "$ac_cv_prog_gcc" = yes; then
+      ac_cv_support_shlibs=native
+    fi
+  fi
+])
+
+if test "$ac_cv_support_shlibs" = native; then
+  echo "    this system is Linux/FreeBSD with GNU C"
+  echo "    assuming GNU C internally uses GNU ld"
+  echo "    using native rules to create shared libraries"
+  AC_CHECK_PROG(AR, ar, ar,)
+  AC_CHECK_PROG(RANLIB, ranlib, ranlib,)
+  lt_cv_prog_gnu_ld=yes
+elif test "$ac_cv_support_shlibs" != no; then
+  echo "    this system is not Linux/FreeBSD with GNU C"
+  echo "    trying to use libtool to create shared libraries"
+  echo "configuring libtool..."
+  #
+  # disable static libraries in libtool... we build them manually
+  #
+  AC_CHECK_PROG(AR, ar, ar,)
+  AC_DISABLE_STATIC
+  AM_PROG_LIBTOOL
+  echo "...libtool configured"
+  AC_MSG_CHECKING(for shared library support (again))
+  if ./libtool --features | grep 'enable shared lib' >/dev/null; then
+    ac_cv_support_shlibs=libtool
+  else
+    ac_cv_support_shlibs=no
+  fi
+  AC_MSG_RESULT([$ac_cv_support_shlibs])
 else
- BASH=sh
+  echo "    cache file says this system does not support shared libraries"
+  echo "    skipping libtool configuration"
 fi
 
 dnl
@@ -220,7 +238,7 @@ dnl
 AC_C_CONST
 AC_CACHE_CHECK(for long long, ac_cv_type_long_long, AC_TRY_COMPILE( , [
   long long a = 0x1234567812345678ll;
-  unsigned long long b = 0x1234567812345678ull;
+  unsigned long long b = 0xfedcba12345678abull;
   
   b -= a;
   a += b;
@@ -278,15 +296,15 @@ AC_CACHE_CHECK(for gcc-compatible i386 assembler, ac_cv_prog_gcc_i386_asm, AC_TR
 dnl
 dnl Checks for header files.
 dnl
-AC_PATH_X
 AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
 AC_HEADER_TIME
-AC_CHECK_HEADERS(crypt.h dirent.h dlfcn.h fcntl.h gpm.h ggi/ggi.h limits.h memory.h \
-		 ncurses.h ncurses/ncurses.h termcap.h pthread.h shadow.h \
-		 sys/filio.h sys/ioctl.h sys/param.h sys/resource.h sys/select.h \
-		 sys/ttydefaults.h sys/utsname.h sys/wait.h asm/page.h \
-		 machine/param.h termio.h termios.h unistd.h zlib.h)
+AC_CHECK_HEADERS(crypt.h dirent.h dlfcn.h fcntl.h gpm.h ggi/ggi.h limits.h ltdl.h \
+		 memory.h ncurses.h ncurses/ncurses.h termcap.h pthread.h shadow.h \
+		 sys/filio.h sys/ioctl.h sys/mman.h sys/param.h sys/resource.h \
+		 sys/select.h sys/timeb.h sys/ttydefaults.h sys/utsname.h sys/wait.h \
+		 asm/page.h machine/param.h termio.h termios.h unistd.h zlib.h)
+
 
 dnl
 dnl Checks for typedefs, and structures
@@ -307,16 +325,26 @@ AC_FUNC_MMAP
 AC_FUNC_SETVBUF_REVERSED
 dnl we never use the 'struct rusage' returned by wait3()
 dnl AC_FUNC_WAIT3
-AC_CHECK_FUNCS(gettimeofday getspnam hstrerror initgroups lstat putenv setenv \
+
+AC_CHECK_FUNCS(ftime gettimeofday getspnam hstrerror initgroups lstat putenv setenv \
 	       select strdup strerror strspn strstr scandir alphasort uname \
 	       vprintf vsprintf vsnprintf wait3 wait4 grantpt unlockpt ptsname)
 
 AC_CHECK_FUNC(crypt,,AC_CHECK_LIB(crypt,crypt))
 AC_CHECK_FUNC(dlopen,,AC_CHECK_LIB(dl,dlopen))
+AC_CHECK_LIB(ltdl,lt_dlopen)
 AC_CHECK_FUNC(socket,,AC_CHECK_LIB(socket,socket))
 AC_CHECK_FUNC(connect,,AC_CHECK_LIB(socket,connect))
 AC_CHECK_FUNC(gethostbyname,,AC_CHECK_LIB(nsl,gethostbyname))
 dnl AC_CHECK_FUNC(gethostbyname,,AC_CHECK_LIB(resolv,gethostbyname))
+
+dnl try -lwsock32 (for mingw32 on Windows) if no socket-related functions found
+if test "$ac_cv_func_select" = no; then
+  AC_CHECK_LIB(wsock32,select)
+  AC_CHECK_LIB(wsock32,socket)
+  AC_CHECK_LIB(wsock32,connect)
+  AC_CHECK_LIB(wsock32,gethostbyname)
+fi
 
 AC_CHECK_FUNC(pthread_self)
 AC_CHECK_LIB(pthread,pthread_self) dnl FreeBSD would require AC_CHECK_LIB(c_r,pthread_self)
@@ -329,12 +357,43 @@ dnl no need for additional libraries in that case
 AC_CHECK_LIB(gpm, tgetent)
 
 LIBS=
+
 AC_CHECK_LIB(termcap,tgetent,,AC_CHECK_LIB(ncurses,tgetent))
 
+LIBS=
+
+dnl test for X11
+AC_PATH_X
+if test "$have_x" != no; then
+  if test "$ac_x_includes"; then
+    CF_HEADERX11="-I$ac_x_includes"
+  fi
+  if test "$ac_x_libraries"; then
+    LD_LIBX11="-L$ac_x_libraries"
+  fi
+  LD_LIBX11="$LD_LIBX11 -lX11"
+fi
+
+
+dnl test for xpm
+if test "$have_x" != no; then
+  ac_save_cpp="$ac_cpp"
+  ac_save_link="$ac_link"
+  ac_cpp="$ac_cpp $CF_HEADERX11"
+  ac_link="$ac_link $LD_LIBX11"
+fi
+  AC_CHECK_HEADERS(X11/xpm.h)
+  AC_CHECK_LIB(Xpm, XpmReadFileToPixmap)
+if test "$have_x" != no; then
+  ac_cpp="$ac_save_cpp"
+  ac_link="$ac_save_link"
+fi
+
+LIBS=
 
 dnl test for gtk
 AC_CHECK_PROG(gtk_config, gtk-config, yes)
-if test "$ac_cv_prog_gtk_config" = "yes"; then
+if test "$ac_cv_prog_gtk_config" = yes; then
   ac_save_cpp="$ac_cpp"
   ac_save_link="$ac_link"
   ac_cpp="$ac_cpp `gtk-config --cflags`"
@@ -342,10 +401,28 @@ if test "$ac_cv_prog_gtk_config" = "yes"; then
 fi
   AC_CHECK_HEADERS(gtk/gtk.h)
   AC_CHECK_LIB(gtk, gtk_init)
-if test "$ac_cv_prog_gtk_config" = "yes"; then
+if test "$ac_cv_prog_gtk_config" = yes; then
   ac_cpp="$ac_save_cpp"
   ac_link="$ac_save_link"
 fi
+
+LIBS=
+
+dnl test for xml2
+dnl 
+dnl AC_CHECK_PROG(xml2_config, xml2-config, yes)
+dnl if test "$ac_cv_prog_xml2_config" = yes; then
+dnl   ac_save_cpp="$ac_cpp"
+dnl   ac_save_link="$ac_link"
+dnl   ac_cpp="$ac_cpp `xml2-config --cflags`"
+dnl   ac_link="$ac_link `xml2-config --libs`"
+dnl fi
+dnl   AC_CHECK_HEADERS(libxml/parser.h)
+dnl   AC_CHECK_LIB(xml2, xmlInitParser)
+dnl if test "$ac_cv_prog_xml2_config" = yes; then
+dnl   ac_cpp="$ac_save_cpp"
+dnl   ac_link="$ac_save_link"
+dnl fi
 
 dnl
 dnl sanity checkings
@@ -374,23 +451,20 @@ fi
 
 if test "$ac_cv_prog_gcc_i386_asm" = yes; then
   AC_DEFINE(HAVE_GCC_I386_ASM, 1, Define if you have gcc-compatible i386 assembler)
-  GCC_I386_ASM=yes
-else
-  GCC_I386_ASM=
 fi
+GCC_I386_ASM="$ac_cv_prog_gcc_i386_asm"
 AC_SUBST(GCC_I386_ASM)
 
-if test "$ac_cv_prog_gnu_ld" = yes; then
-  GNU_LD=yes
-else
-  GNU_LD=
-fi
+GNU_LD="$lt_cv_prog_gnu_ld"
 AC_SUBST(GNU_LD)
 
 
-if test "$ac_cv_func_gettimeofday" = no; then
-  AC_MSG_ERROR(missing gettimeofday(): cannot compile twin! Aborting.)
+BUILD_PROG_TWIN=yes
+if test "$ac_cv_func_gettimeofday" = no -a "$ac_cv_func_ftime" = no; then
+  AC_MSG_WARN(missing gettimeofday() and ftime(): cannot compile twin server!)
+  BUILD_PROG_TWIN=no
 fi
+AC_SUBST(BUILD_PROG_TWIN)
 
 if test "$ac_cv_func_select" = no; then
   AC_MSG_ERROR(missing select(): cannot compile twin! Aborting.)
@@ -414,7 +488,7 @@ fi
 
 if test "$ac_cv_func_crypt" = no -a "$ac_cv_lib_crypt_crypt" = no; then
   AC_MSG_WARN(missing crypt(): disabling twdm client!)
-  LD_LIBCRYPT=no
+  LD_LIBCRYPT=
 elif test "$ac_cv_lib_crypt_crypt" = yes; then
   LD_LIBCRYPT=-lcrypt
 fi
@@ -424,31 +498,30 @@ dnl fixup configuration basing on autoconfigured stuff
 dnl
 
 dnl
-dnl shared and static library stuff
+dnl enable shared libraries/modules if possible
 dnl
 
-if ./libtool --features | grep 'enable shared lib' >/dev/null; then
-  :
-else
+if test "$ac_cv_support_shlibs" = no; then
   enable__modules=no
   enable__shlibs=no
 fi
 
-if test "$ac_cv_prog_RANLIB"; then
-  RANLIB="$ac_cv_prog_RANLIB"
-elif test "ac_cv_prog_ac_ct_RANLIB"; then
-  RANLIB="$ac_cv_prog_ac_ct_RANLIB"
-else
-  RANLIB=:
-fi
-if test "$ac_cv_prog_AR"; then
-  AR="$ac_cv_prog_AR"
-fi
-
-if test "$ac_cv_func_dlopen" = no -a "$ac_cv_lib_dl_dlopen" = no; then
-  enable__modules=no
-elif test "$ac_cv_header_dlfcn_h" = no; then
-  enable__modules=no
+if test "$enable__modules" = yes; then
+  can_enable__modules=no
+  if test "$ac_cv_func_dlopen" = yes -o "$ac_cv_lib_dl_dlopen" = yes; then
+    if test "$ac_cv_header_dlfcn_h" = yes; then
+      AC_DEFINE(HAVE_DLOPEN, 1, Define if you have the dlopen() API)
+      can_enable__modules=yes
+    fi
+  fi
+  if test "$can_enable__modules" = no -a "$ac_cv_lib_ltdl_lt_dlopen" = yes -a "$ac_cv_header_ltdl_h" = yes; then
+    AC_MSG_WARN([
+	support for GNU libltdl is not functional yet, will not be used
+])
+    #AC_DEFINE(HAVE_LT_DLOPEN, 1, Define if you have the lt_dlopen() API)
+    #can_enable__modules=yes
+  fi
+  enable__modules="$can_enable__modules"
 fi
 
 if test "$ac_cv_func_mmap_fixed_mapped" = no; then
@@ -456,17 +529,17 @@ if test "$ac_cv_func_mmap_fixed_mapped" = no; then
   enable_wm_rc_shmmap=no
 fi
 
-if test "$ac_cv_func_socket" = no -a "$ac_cv_lib_socket_socket" = no; then
+if test "$ac_cv_func_socket" = no -a "$ac_cv_lib_socket_socket" = no -a "$ac_cv_lib_wsock32_socket" = no; then
   AC_MSG_WARN(missing socket(): disabling socket connections (libTw)!)
   enable_socket=no
 fi
 
-if test "$ac_cv_func_connect" = no -a "$ac_cv_lib_socket_connect" = no; then
+if test "$ac_cv_func_connect" = no -a "$ac_cv_lib_socket_connect" = no -a "$ac_cv_lib_wsock32_connect" = no; then
   AC_MSG_WARN(missing connect(): disabling socket connections (libTw)!)
   enable_socket=no
 fi
 
-if test "$ac_cv_func_gethostbyname" = no -a "$ac_cv_lib_nsl_gethostbyname" = no; then
+if test "$ac_cv_func_gethostbyname" = no -a "$ac_cv_lib_nsl_gethostbyname" = no -a "$ac_cv_lib_wsock32_gethostbyname" = no; then
   AC_MSG_WARN(missing gethostbyname(): libTw will only accept numerical IP addresses!)
 fi
 
@@ -490,40 +563,92 @@ if test "$ac_cv_lib_gpm_tgetent" = no -a "$ac_cv_lib_termcap_tgetent" = no -a "$
   enable_hw_tty_termcap=no
 fi
 
+if test "$ac_cv_lib_ggi_ggiOpen" = no -o "$ac_cv_header_ggi_ggi_h" = no; then
+  enable_hw_ggi=no
+fi
+
 if test "$have_x" = no; then
   enable_hw_x11=no
 fi
 
-if test "$ac_cv_lib_ggi_ggiOpen" = no -o "$ac_cv_header_ggi_ggi_h" = no; then
-  enable_hw_ggi=no
+if test "$have_x" = no -o "$ac_cv_header_X11_xpm_h" = no -o "$ac_cv_lib_Xpm_XpmReadFileToPixmap" = no; then
+  enable_hw_gfx=no
 fi
 
 if test "$ac_cv_header_gtk_gtk_h" = no -o "$ac_cv_lib_gtk_gtk_init" = no; then
   enable_tt_hw_gtk=no
 fi
 
+dnl if test "$ac_cv_header_libxml_parser_h" = no -o "$ac_cv_lib_xml2_xmlInitParser" = no; then
+dnl   enable_tt_hw_xml=no
+dnl fi
 
 dnl
 dnl rememeber any autodetected setting
 dnl
 
+OS="$ac_cv_sys_uname"
 AC_SUBST(OS)
 
+ECHO_E=echo
+if test "`echo -e '\n'`" = ""; then
+  ECHO_E='echo -e'
+elif test "`echo '\n'`" = ""; then
+  ECHO_E=echo
+elif test "`/bin/echo -e '\n'`" = ""; then
+  ECHO_E='/bin/echo -e'
+elif test "`/bin/echo '\n'`" = ""; then
+  ECHO_E=/bin/echo
+fi
+ECHO_C=
+ECHO_N=
+if test "`( echo '1\c'; echo 2 ) | grep 12`" = "12"; then
+  ECHO_C='\c'
+elif test "`( echo -n "1"; echo 2 ) | grep 12`" = 12; then
+  ECHO_N='-n'
+fi
+if test -x /bin/bash; then
+  BASH=/bin/bash
+elif bash -c : 2>/dev/null; then
+  BASH=bash
+elif test -x "$BASH"; then
+  :
+else
+ BASH=sh
+fi
 AC_SUBST(ECHO_E)
 AC_SUBST(ECHO_N)
 AC_SUBST(ECHO_C)
 AC_SUBST(BASH)
 
+if test "$ac_cv_prog_RANLIB"; then
+  RANLIB="$ac_cv_prog_RANLIB"
+elif test "ac_cv_prog_ac_ct_RANLIB"; then
+  RANLIB="$ac_cv_prog_ac_ct_RANLIB"
+else
+  RANLIB=:
+fi
+if test "$ac_cv_prog_AR"; then
+  AR="$ac_cv_prog_AR"
+fi
+
 AC_SUBST(RANLIB)
 AC_SUBST(AR)
 
+SUPPORT_SHLIBS="$ac_cv_support_shlibs"
+AC_SUBST(SUPPORT_SHLIBS)
+
 if test "$ac_cv_lib_dl_dlopen" = yes; then
   LD_LIBDL=-ldl
+elif test "$ac_cv_lib_ltdl_lt_dlopen" = yes; then
+  LD_LIBDL=-lltdl
 fi
 AC_SUBST(LD_LIBDL)
 
 if test "$ac_cv_lib_socket_socket" = yes -o "$ac_cv_lib_socket_connect" = yes; then
   LD_LIBSOCKET=-lsocket
+elif test "$ac_cv_lib_wsock32_socket" = yes -o "$ac_cv_lib_wsock32_connect" = yes; then
+  LD_LIBSOCKET=-lwsock32
 fi
 AC_SUBST(LD_LIBSOCKET)
 
@@ -536,7 +661,7 @@ if test "$ac_cv_lib_pthread_pthread_self" = yes; then
   LD_LIBPTHREAD=-lpthread
 fi
 if test "$ac_cv_func_pthread_self" = no; then
-  LD_LIBPTHREAD_WEAK=$LD_LIBPTHREAD
+  LD_LIBPTHREAD_WEAK="$LD_LIBPTHREAD"
 fi
 AC_SUBST(LD_LIBPTHREAD)
 AC_SUBST(LD_LIBPTHREAD_WEAK)
@@ -554,15 +679,15 @@ fi
 AC_SUBST(LD_LIBTERMCAP_IN_LIBGPM)
 AC_SUBST(LD_LIBTERMCAP)
 
-if test "$have_x" != no; then
-  if test "$ac_x_includes"; then
-    CF_HEADERX11="-I$ac_x_includes"
-  fi
-  if test "$ac_x_libraries"; then
-    LD_LIBX11="-L$ac_x_libraries"
-  fi
-  LD_LIBX11="$LD_LIBX11 -lX11"
+if test "$ac_cv_header_X11_xpm_h" = yes; then
+  CF_HEADERGFX="$CF_HEADERX11"
 fi
+if test "$ac_cv_lib_Xpm_XpmReadFileToPixmap" = yes; then
+  LD_LIBGFX="$LD_LIBX11 -lXpm"
+fi
+AC_SUBST(CF_HEADERGFX)
+AC_SUBST(LD_LIBGFX)
+
 AC_SUBST(CF_HEADERX11)
 AC_SUBST(LD_LIBX11)
 
@@ -574,6 +699,14 @@ if test "$enable_tt_hw_gtk" != no; then
 fi
 AC_SUBST(CF_HEADERGTK)
 AC_SUBST(LD_LIBGTK)
+
+
+dnl if test "$enable_tt_hw_xml" != no; then
+dnl   CF_HEADERXML="`xml2-config --cflags`"
+dnl   LD_LIBXML="`xml2-config --libs`"
+dnl fi
+AC_SUBST(CF_HEADERXML)
+AC_SUBST(LD_LIBXML)
 
 
 dnl
@@ -614,15 +747,98 @@ AC_SUBST(CONF_)
 
 AC_OUTPUT(Makefile makeautoconf conf/conf.auto)
 
-echo
-echo "configuration paths are (you can edit them in 'makeautoconf' file"
-echo "or from './configure' command line):"
-echo
-echo "prefix = $prefix"
-echo "exec_prefix = $exec_prefix"
+
+
+echo_shlibs="<none>"
+echo_op=
+echo_cl=
+if test "$enable__shlibs" != no; then
+  echo_op='('
+  echo_cl=')'
+  echo_shlibs="$SUPPORT_SHLIBS"
+fi
+
+echo_libs=
+if test "$enable__unicode" != no; then
+  echo_libs="$echo_libs $echo_op""libTutf""$echo_cl"
+fi
+if test "$enable_socket" != no; then
+  echo_libs="$echo_libs $echo_op""libTw""$echo_cl"
+fi
+if test "$enable_tt" != no; then
+  echo_libs="$echo_libs $echo_op""libTT""$echo_cl"
+fi
+if test "$echo_libs" = ""; then
+  echo_libs="<none>"
+else
+  echo_libs="`echo $echo_libs`"
+fi
+
+echo_feat=
+for i in socket wm wm_rc term; do
+  eval "echo_val=\${enable_$i}"
+  if test "$echo_val" != no; then
+    if test "$echo_val" = mod; then
+      i="$echo_op""$i""$echo_cl"
+    fi
+    echo_feat="$echo_feat $i"
+  fi
+done
+if test "$echo_feat" = ""; then
+  echo_feat="<none>"
+else
+  echo_feat="`echo $echo_feat`"
+fi
+
+echo_hw=
+for i in gfx x11 twin display tty ggi; do
+  eval "echo_val=\${enable_hw_$i}"
+  if test "$echo_val" != no; then
+    if test "$echo_val" = mod; then
+      i="$echo_op""$i""$echo_cl"
+    fi
+    echo_hw="$echo_hw $i"
+  fi
+done
+if test "$echo_hw" = ""; then
+  echo_hw="<none>"
+else
+  echo_hw="`echo $echo_hw`"
+fi
+
+echo_tt_hw=
+for i in twin gtk xml; do
+  eval "echo_val=\${enable_tt_hw_$i}"
+  if test "$echo_val" != no; then
+    if test "$echo_val" = mod; then
+      i="$echo_op""$i""$echo_cl"
+    fi
+    echo_tt_hw="$echo_tt_hw $i"
+  fi
+done
+if test "$echo_tt_hw" = ""; then
+  echo_tt_hw="<none>"
+else
+  echo_tt_hw="`echo $echo_tt_hw`"
+fi
+
+echo ""
+echo "Configuration:"
+echo ""
+echo "  Items in parenthesis (...) will be built as shared libraries"
+echo ""
+echo "  Compiler:                   ${CC}"
+echo "  Compiler flags:             ${CFLAGS}"
+echo "  Shared library support:     ${echo_shlibs}"
+echo "  Server features:            ${echo_feat}"
+echo "  Server HW drivers:          ${echo_hw}"
+echo "  Libraries:                  ${echo_libs}"
+echo "  TT library HW targets:      ${echo_tt_hw}"
+echo "  Install path:               ${prefix}/bin, ${prefix}/lib/twin, ${prefix}/share/twin"
 echo
 echo "to show/change other configuration settings, you can run one of:"
-echo "'make config', 'make menuconfig', 'scripts/Configure.sh <options>'"
+echo "'./configure <options>', 'scripts/Configure.sh <options>',"
+echo "'make config' or 'make menuconfig'"
 echo
 echo "twin is now (hopefully) configured."
 echo

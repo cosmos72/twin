@@ -49,7 +49,9 @@
 { Tw_ResizeWidget, 12, 8, "Tw_ResizeWidget", "0""v"TWS_void_STR"x"magic_id_STR(widget)"_"TWS_dat_STR"_"TWS_dat_STR },
 { Tw_ScrollWidget, 12, 8, "Tw_ScrollWidget", "0""v"TWS_void_STR"x"magic_id_STR(widget)"_"TWS_ldat_STR"_"TWS_ldat_STR },
 { Tw_GetOwnerWidget, 14, 4, "Tw_GetOwnerWidget", "0""x"magic_id_STR(msgport)"x"magic_id_STR(widget) },
-{ Tw_ExposeWidget, 12, 18, "Tw_ExposeWidget", "0""v"TWS_void_STR"x"magic_id_STR(widget)"_"TWS_dat_STR"_"TWS_dat_STR"_"TWS_dat_STR"_"TWS_dat_STR"W"TWS_byte_STR"W"TWS_hwfont_STR"W"TWS_hwattr_STR },
+{ Tw_DrawWidget, 10, 18, "Tw_DrawWidget", "0""v"TWS_void_STR"x"magic_id_STR(widget)"_"TWS_dat_STR"_"TWS_dat_STR"_"TWS_dat_STR"_"TWS_dat_STR"W"TWS_byte_STR"W"TWS_hwfont_STR"W"TWS_hwattr_STR },
+
+{ Tw_SetVisibleWidget, 16, 6, "Tw_SetVisibleWidget", "0""v"TWS_void_STR"x"magic_id_STR(widget)"_"TWS_byte_STR },
 
 { Tw_FocusSubWidget, 14, 4, "Tw_FocusSubWidget", "0""v"TWS_void_STR"x"magic_id_STR(widget) },
 { Tw_FindWidgetAtWidget, 18, 8, "Tw_FindWidgetAtWidget", "2""x"magic_id_STR(widget)"x"magic_id_STR(widget)"_"TWS_dat_STR"_"TWS_dat_STR },
@@ -88,7 +90,7 @@
 { Tw_GetSelectedGadgetGroup, 22, 4, "Tw_GetSelectedGadgetGroup", "2""x"magic_id_STR(gadget)"x"magic_id_STR(group) },
 { Tw_SetSelectedGadgetGroup, 22, 6, "Tw_SetSelectedGadgetGroup", "2""v"TWS_void_STR"x"magic_id_STR(group)"x"magic_id_STR(gadget) },
 
-{ Tw_Create4MenuRow, 14, 12, "Tw_Create4MenuRow", "0""v"TWS_void_STR"x"magic_id_STR(window)"_"TWS_udat_STR"_"TWS_byte_STR"_"TWS_uldat_STR"V"TWS_byte_STR },
+{ Tw_Create4MenuRow, 14, 12, "Tw_Create4MenuRow", "0""v"TWS_void_STR"x"magic_id_STR(window)"_"TWS_udat_STR"_"TWS_byte_STR"_"TWS_ldat_STR"V"TWS_byte_STR },
 
 { Tw_RaiseRow, 8, 4, "Tw_RaiseRow", "2""v"TWS_void_STR"x"magic_id_STR(row) },
 { Tw_LowerRow, 8, 4, "Tw_LowerRow", "2""v"TWS_void_STR"x"magic_id_STR(row) },
@@ -96,6 +98,8 @@
 { Tw_CirculateChildrenRow, 20, 6, "Tw_CirculateChildrenRow", "0""v"TWS_void_STR"x"magic_id_STR(obj)"_"TWS_byte_STR },
 
 { Tw_Create4MenuMenuItem, 19, 12, "Tw_Create4MenuMenuItem", "0""x"magic_id_STR(menuitem)"x"magic_id_STR(obj)"x"magic_id_STR(window)"_"TWS_byte_STR"_"TWS_dat_STR"V"TWS_byte_STR },
+{ Tw_Create4MenuAny, 14, 14, "Tw_Create4MenuAny", "0""x"magic_id_STR(row)"x"magic_id_STR(obj)"x"magic_id_STR(window)"_"TWS_udat_STR"_"TWS_byte_STR"_"TWS_ldat_STR"V"TWS_byte_STR },
+
 { Tw_Create4MenuCommonMenuItem, 25, 4, "Tw_Create4MenuCommonMenuItem", "1""_"TWS_uldat_STR"x"magic_id_STR(menu) },
 
 { Tw_CreateMenu, 10, 16, "Tw_CreateMenu", "0""x"magic_id_STR(menu)"_"TWS_hwcol_STR"_"TWS_hwcol_STR"_"TWS_hwcol_STR"_"TWS_hwcol_STR"_"TWS_hwcol_STR"_"TWS_hwcol_STR"_"TWS_byte_STR },

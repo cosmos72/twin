@@ -30,6 +30,7 @@
 
 
 
+
 /* array for  names */
 
 static TT_CONST struct s_ttfield field_array_c[] = {
@@ -133,7 +134,9 @@ static TT_CONST struct s_ttfield field_array_c[] = {
     { ttbuttongroup_field_first, 25, "ttbuttongroup_field_first", },            
     { ttbuttongroup_field_last, 24, "ttbuttongroup_field_last", }, 
     /* ttwindow fields */    
-    { ttwindow_field_first, 20, "ttwindow_field_first", },                
+    { ttwindow_field_first, 20, "ttwindow_field_first", },            
+    { ttwindow_title, 14, "ttwindow_title", },    
+    { ttwindow_menubar, 16, "ttwindow_menubar", },    
     { ttwindow_field_last, 19, "ttwindow_field_last", }, 
     /* ttframe fields */    
     { ttframe_field_first, 19, "ttframe_field_first", },            

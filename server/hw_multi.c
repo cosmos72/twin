@@ -44,6 +44,10 @@
 
 /* HW specific headers */
 
+#ifdef CONF_HW_GFX
+# include "HW/hw_gfx.h"
+#endif
+
 #ifdef CONF_HW_X11
 # include "HW/hw_X11.h"
 #endif
@@ -181,7 +185,7 @@ void warn_NoHW(uldat len, char *arg, uldat tried) {
     {
 	printk("twin: All display drivers failed");
 	if (arg)
-	    printk(" for `-hw=%.*s\'", (int)len, arg);
+	    printk(" for `-hw=%.*s\'", Min2((int)len,SMALLBUFF), arg);
 	else
 	    printk(".");
 	printk("\n");
@@ -194,7 +198,7 @@ static byte module_InitHW(void) {
     byte *name, *tmp;
     byte *(*InitD)(void);
     byte *arg = HW->Name;
-    uldat len = HW->NameLen, verlen = strlen(TWIN_VERSION_STR);
+    uldat len = HW->NameLen;
     module Module;
 
     if (!arg || len <= 4)
@@ -209,48 +213,49 @@ static byte module_InitHW(void) {
     if (name)
 	len = name - arg;
     
-    if ((name = AllocMem(len + verlen + 11))) {
-	sprintf(name, "HW/hw_%.*s.so." TWIN_VERSION_STR, (int)len, arg);
+    if ((name = AllocMem(len + 7))) {
+	sprintf(name, "HW/hw_%.*s", (int)len, arg);
 
-	Module = DlLoadAny(len + verlen + 10, name);
+	Module = DlLoadAny(len + 6, name);
 	
 	if (Module) {
-	    printk("twin: starting display driver module `HW/hw_%.*s.so." TWIN_VERSION_STR "'...\n", (int)len, arg);
-	    
+	    printk("twin: starting display driver module `%."STR(SMALLBUFF)"s'...\n", name);
 	    if ((InitD = Module->Private) && InitD()) {
-		printk("twin: ...module `%s' successfully started.\n", name);
+		printk("twin: ...module `%."STR(SMALLBUFF)"s' successfully started.\n", name);
 		FreeMem(name);
 		HW->Module = Module; Module->Used++;
 		return TRUE;
 	    }
 	    Delete(Module);
 	}
-    }
-
-    if (Module) {
-	printk("twin: ...module `%s' failed to start.\n", name);
     } else
-	printk("twin: unable to load display driver module `%s' :\n"
-			"      %s\n", name, ErrStr);
+	Error(NOMEMORY);
     
-    FreeMem(name);
+    if (Module) {
+	printk("twin: ...module `%."STR(SMALLBUFF)"s' failed to start.\n", name ? name : (byte *)"(NULL)");
+    } else
+	printk("twin: unable to load display driver module `%."STR(SMALLBUFF)"s' :\n"
+	       "      %."STR(SMALLBUFF)"s\n", name ? name : (byte *)"(NULL)", ErrStr);
+    if (name)
+	FreeMem(name);
+    
     return FALSE;
 }
 
 #endif /* CONF__MODULES */
 
-#if defined(CONF_HW_X11) || defined(CONF_HW_TWIN) || defined(CONF_HW_DISPLAY) || defined(CONF_HW_TTY) || defined(CONF_HW_GGI)
+#if defined(CONF_HW_GFX) || defined(CONF_HW_X11) || defined(CONF_HW_TWIN) || defined(CONF_HW_DISPLAY) || defined(CONF_HW_TTY) || defined(CONF_HW_GGI)
 static byte check4(byte *s, byte *arg) {
     if (arg && strncmp(s, arg, strlen(s))) {
 	/*
-	printk("twin: `-hw=%s' given, skipping `-hw=%s' display driver.\n",
+	printk("twin: `-hw=%."STR(SMALLBUFF)"s' given, skipping `-hw=%."STR(SMALLBUFF)"s' display driver.\n",
 		arg, s);
 	 */
 	return FALSE;
     } else if (arg)
-	printk("twin: trying given `-hw=%s' display driver.\n", s);
+	printk("twin: trying given `-hw=%."STR(SMALLBUFF)"s' display driver.\n", s);
     else
-	printk("twin: autoprobing `-hw=%s' display driver.\n", s);
+	printk("twin: autoprobing `-hw=%."STR(SMALLBUFF)"s' display driver.\n", s);
     return TRUE;
 }
 
@@ -266,7 +271,7 @@ static void fix4(byte *s, display_hw D_HW) {
 	}
     }
 }
-#endif /* defined(CONF_HW_X11) || defined(CONF_HW_TWIN) || defined(CONF_HW_DISPLAY) || defined(CONF_HW_TTY) || defined(CONF_HW_GGI) */
+#endif /* defined(CONF_HW_GFX) || defined(CONF_HW_X11) || defined(CONF_HW_TWIN) || defined(CONF_HW_DISPLAY) || defined(CONF_HW_TTY) || defined(CONF_HW_GGI) */
 
 /*
  * InitDisplayHW runs HW specific InitXXX() functions, starting from best setup
@@ -288,6 +293,9 @@ byte InitDisplayHW(display_hw D_HW) {
 	arg = NULL;
 
     success =
+#ifdef CONF_HW_GFX
+	(check4("gfx", arg) && (tried++, gfx_InitHW()) && (fix4("gfx", D_HW), TRUE)) ||
+#endif
 #ifdef CONF_HW_X11
 	(check4("X", arg) && (tried++, X11_InitHW()) && (fix4("X", D_HW), TRUE)) ||
 #endif
@@ -362,7 +370,7 @@ void QuitDisplayHW(display_hw D_HW) {
 static byte IsValidHW(uldat len, CONST byte *arg) {
     CONST byte *slash = memchr(arg, '/', len), *at = memchr(arg, '@', len), *comma = memchr(arg, ',', len);
     if (slash && (!at || slash < at) && (!comma || slash < comma)) {
-	printk("twin: slash ('/') not allowed in display HW name: %.*s\n", (int)len, arg);
+	printk("twin: slash ('/') not allowed in display HW name: %.*s\n", Min2((int)len,SMALLBUFF), arg);
 	return FALSE;
     }
     return TRUE;
@@ -374,7 +382,7 @@ display_hw AttachDisplayHW(uldat len, CONST byte *arg, uldat slot, byte flags) {
     if ((len && len <= 4) || CmpMem("-hw=", arg, Min2(len,4))) {
 	printk("twin: specified `%.*s\' is not a known option.\n"
 		"      try `twin -help' for usage summary.\n",
-		(int)len, arg);
+	       Min2((int)len,SMALLBUFF), arg);
 	return NULL;
     }
     

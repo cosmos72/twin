@@ -40,6 +40,7 @@
 
 
 
+
 #include <gtk/gtk.h>
 
 
@@ -143,6 +144,12 @@ static ttbyte gtk_TimidFlush(void) {
     return 1;
 }
 static ttbyte gtk_MainLoop(void) {
+    gtk_main();
+    return 1;
+}
+static ttbyte gtk_MainLoopOnce(ttbyte wait) {
+    /* FIXME: this is almost surely wrong */
+    gtk_main_quit();
     gtk_main();
     return 1;
 }
@@ -345,6 +352,7 @@ static s_ttfns gtk_TTFNs = {
     (void *)NULL /* WARNING: undefined Remove */,
     (void *)NULL /* WARNING: undefined SetVisible */,
     (void *)NULL /* WARNING: undefined SetTheme */,
+    (void *)NULL /* WARNING: undefined Draw */,
     (void *)NULL /* WARNING: undefined BuiltinRepaint */,
             
   },
@@ -369,6 +377,7 @@ static s_ttfns gtk_TTFNs = {
     (void *)NULL /* WARNING: undefined Remove */,
     (void *)NULL /* WARNING: undefined SetVisible */,
     (void *)NULL /* WARNING: undefined SetTheme */,
+    (void *)NULL /* WARNING: undefined Draw */,
     (void *)NULL /* WARNING: undefined BuiltinRepaint */,
             
     TFN_ttvisible,
@@ -396,6 +405,7 @@ static s_ttfns gtk_TTFNs = {
     gtk_Remove_ttwidget,
     gtk_SetVisible_ttwidget,
     (void *)NULL /* WARNING: undefined SetTheme */,
+    (void *)NULL /* WARNING: undefined Draw */,
     (void *)NULL /* WARNING: undefined BuiltinRepaint */,
             
     TFN_ttvisible,
@@ -424,6 +434,7 @@ static s_ttfns gtk_TTFNs = {
     (void *)gtk_Remove_ttwidget,
     (void *)gtk_SetVisible_ttwidget,
     (void *)NULL /* WARNING: undefined SetTheme */,
+    (void *)NULL /* WARNING: undefined Draw */,
     (void *)NULL /* WARNING: undefined BuiltinRepaint */,
             
     TFN_ttvisible,
@@ -455,6 +466,7 @@ static s_ttfns gtk_TTFNs = {
     (void *)gtk_Remove_ttwidget,
     (void *)gtk_SetVisible_ttwidget,
     (void *)NULL /* WARNING: undefined SetTheme */,
+    (void *)NULL /* WARNING: undefined Draw */,
     (void *)NULL /* WARNING: undefined BuiltinRepaint */,
             
     TFN_ttvisible,
@@ -486,6 +498,7 @@ static s_ttfns gtk_TTFNs = {
     (void *)gtk_Remove_ttwidget,
     (void *)gtk_SetVisible_ttwidget,
     (void *)NULL /* WARNING: undefined SetTheme */,
+    (void *)NULL /* WARNING: undefined Draw */,
     (void *)NULL /* WARNING: undefined BuiltinRepaint */,
             
     TFN_ttvisible,
@@ -520,6 +533,7 @@ static s_ttfns gtk_TTFNs = {
     (void *)gtk_Remove_ttwidget,
     (void *)gtk_SetVisible_ttwidget,
     (void *)NULL /* WARNING: undefined SetTheme */,
+    (void *)NULL /* WARNING: undefined Draw */,
     (void *)NULL /* WARNING: undefined BuiltinRepaint */,
             
     TFN_ttvisible,
@@ -556,6 +570,7 @@ static s_ttfns gtk_TTFNs = {
     (void *)gtk_Remove_ttwidget,
     (void *)gtk_SetVisible_ttwidget,
     (void *)NULL /* WARNING: undefined SetTheme */,
+    (void *)NULL /* WARNING: undefined Draw */,
     (void *)NULL /* WARNING: undefined BuiltinRepaint */,
             
     TFN_ttvisible,
@@ -594,6 +609,7 @@ static s_ttfns gtk_TTFNs = {
     (void *)gtk_Remove_ttwidget,
     (void *)gtk_SetVisible_ttwidget,
     (void *)NULL /* WARNING: undefined SetTheme */,
+    (void *)NULL /* WARNING: undefined Draw */,
     (void *)NULL /* WARNING: undefined BuiltinRepaint */,
             
     TFN_ttvisible,
@@ -646,6 +662,7 @@ static s_ttfns gtk_TTFNs = {
     (void *)gtk_Remove_ttwidget,
     (void *)gtk_SetVisible_ttwidget,
     (void *)NULL /* WARNING: undefined SetTheme */,
+    (void *)NULL /* WARNING: undefined Draw */,
     (void *)NULL /* WARNING: undefined BuiltinRepaint */,
             
     TFN_ttvisible,
@@ -676,6 +693,7 @@ static s_ttfns gtk_TTFNs = {
     (void *)gtk_Remove_ttwidget,
     (void *)gtk_SetVisible_ttwidget,
     (void *)NULL /* WARNING: undefined SetTheme */,
+    (void *)NULL /* WARNING: undefined Draw */,
     (void *)NULL /* WARNING: undefined BuiltinRepaint */,
             
     TFN_ttvisible,
@@ -708,6 +726,7 @@ static s_ttfns gtk_TTFNs = {
     (void *)gtk_Remove_ttwidget,
     (void *)gtk_SetVisible_ttwidget,
     (void *)NULL /* WARNING: undefined SetTheme */,
+    (void *)NULL /* WARNING: undefined Draw */,
     (void *)NULL /* WARNING: undefined BuiltinRepaint */,
             
     TFN_ttvisible,
@@ -740,6 +759,7 @@ static s_ttfns gtk_TTFNs = {
     (void *)NULL /* WARNING: undefined Remove */,
     (void *)NULL /* WARNING: undefined SetVisible */,
     (void *)NULL /* WARNING: undefined SetTheme */,
+    (void *)NULL /* WARNING: undefined Draw */,
     (void *)NULL /* WARNING: undefined BuiltinRepaint */,
             
     TFN_ttvisible,
@@ -766,6 +786,7 @@ static s_ttfns gtk_TTFNs = {
     (void *)NULL /* WARNING: undefined Remove */,
     (void *)NULL /* WARNING: undefined SetVisible */,
     (void *)NULL /* WARNING: undefined SetTheme */,
+    (void *)NULL /* WARNING: undefined Draw */,
     (void *)NULL /* WARNING: undefined BuiltinRepaint */,
             
     TFN_ttvisible,
@@ -794,6 +815,7 @@ static s_ttfns gtk_TTFNs = {
     (void *)NULL /* WARNING: undefined Remove */,
     (void *)NULL /* WARNING: undefined SetVisible */,
     (void *)NULL /* WARNING: undefined SetTheme */,
+    (void *)NULL /* WARNING: undefined Draw */,
     (void *)NULL /* WARNING: undefined BuiltinRepaint */,
             
     TFN_ttvisible,
@@ -824,6 +846,7 @@ static s_ttfns gtk_TTFNs = {
     (void *)NULL /* WARNING: undefined Remove */,
     (void *)NULL /* WARNING: undefined SetVisible */,
     (void *)NULL /* WARNING: undefined SetTheme */,
+    (void *)NULL /* WARNING: undefined Draw */,
     (void *)NULL /* WARNING: undefined BuiltinRepaint */,
             
     TFN_ttvisible,
@@ -852,6 +875,7 @@ static s_ttfns gtk_TTFNs = {
     (void *)NULL /* WARNING: undefined Remove */,
     (void *)NULL /* WARNING: undefined SetVisible */,
     (void *)NULL /* WARNING: undefined SetTheme */,
+    (void *)NULL /* WARNING: undefined Draw */,
     (void *)NULL /* WARNING: undefined BuiltinRepaint */,
             
     TFN_ttvisible,
@@ -878,6 +902,7 @@ static s_ttfns gtk_TTFNs = {
     (void *)gtk_Remove_ttwidget,
     (void *)gtk_SetVisible_ttwidget,
     (void *)NULL /* WARNING: undefined SetTheme */,
+    (void *)NULL /* WARNING: undefined Draw */,
     (void *)NULL /* WARNING: undefined BuiltinRepaint */,
             
     TFN_ttvisible,
@@ -910,6 +935,7 @@ static s_ttfns gtk_TTFNs = {
     (void *)gtk_Remove_ttwidget,
     (void *)gtk_SetVisible_ttwidget,
     (void *)NULL /* WARNING: undefined SetTheme */,
+    (void *)NULL /* WARNING: undefined Draw */,
     (void *)NULL /* WARNING: undefined BuiltinRepaint */,
             
     TFN_ttvisible,
@@ -944,6 +970,7 @@ static s_ttfns gtk_TTFNs = {
     (void *)gtk_Remove_ttwidget,
     (void *)gtk_SetVisible_ttwidget,
     (void *)NULL /* WARNING: undefined SetTheme */,
+    (void *)NULL /* WARNING: undefined Draw */,
     (void *)NULL /* WARNING: undefined BuiltinRepaint */,
             
     TFN_ttvisible,
@@ -1007,12 +1034,13 @@ static s_ttfns gtk_TTFNs = {
     gtk_Flush, 
     gtk_TimidFlush, 
     gtk_MainLoop, 
-    gtk_ExitMainLoop, 
-    gtk_DeleteListener,    
+    gtk_MainLoopOnce, 
+    gtk_ExitMainLoop,    
+    gtk_DeleteListener, 
     gtk_Close, 
     gtk_ConnectionFd, 
     gtk_GetErrno, 
-    gtk_GetErrnoDetail, 
+    gtk_GetErrnoDetail,    
     gtk_StrError, 
     gtk_StrErrorDetail,   
   },

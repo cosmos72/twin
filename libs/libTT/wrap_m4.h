@@ -22,15 +22,16 @@
 
 
 
+
 /* public and exported methods */
 
 
 
 /* ttobj methods */
                                 
-ttbyte TTGetValue_ttobj(tt_obj a1, ttuint a2, ttany * a3) {
+ttfn TTGetValue_ttobj(tt_obj a1, ttuint a2, ttany * a3) {
     ttobj o;
-    ttbyte a0 = (ttbyte)0;
+    ttfn a0 = (ttfn)0;
     LOCK;
     if ((o = ID2(ttobj,a1)))
 	a0 = o->FN->GetValue(o, a2, a3);
@@ -161,6 +162,14 @@ void TTSetTheme_ttvisible(tt_obj a1, tt_obj a2) {
     LOCK;
     if ((o = ID2(ttvisible,a1)))
 	 o->FN->SetTheme(o, ID2(tttheme,a2));
+    UNLK;
+    return ;
+}    
+void TTDraw_ttvisible(tt_obj a1, ttshort a2, ttshort a3, ttshort a4, ttshort a5, ttshort a6, TT_CONST ttbyte * a7, TT_CONST ttfont * a8, TT_CONST ttattr * a9) {
+    ttvisible o;
+    LOCK;
+    if ((o = ID2(ttvisible,a1)))
+	 o->FN->Draw(o, a2, a3, a4, a5, a6, a7, a8, a9);
     UNLK;
     return ;
 }    

@@ -30,13 +30,14 @@
 
 
 
+
 /* mixed-internal {Get,Set,Change}Value(ttopaque id, ttuint which, ...) */
 
-static ttbyte GetValue_ttobj(opaque id, ttuint which, ttany *value) {
+static ttfn GetValue_ttobj(opaque id, ttuint which, ttany *value) {
     ttobj o;
     if ((o = ID2OBJ(id)))
 	return o->FN->GetValue(o, which, value);
-    return FALSE;
+    return (ttfn)0;
 }    
 
 static ttbyte SetValue_ttobj(opaque id, ttuint which, ttany value) {
@@ -334,7 +335,15 @@ TT_CONST ttfont * TTGetText_ttanybutton(tt_obj o) {
      
 
 /* handy ttwindow methods */
-         
+        
+ttbyte * TTGetTitle_ttwindow(tt_obj o) {
+    ttany a0;
+    return GetValue_ttobj((opaque)o, ttwindow_title, &a0) ? (ttbyte *)(opaque)a0 : (ttany)0;
+}    
+tt_obj TTGetMenubar_ttwindow(tt_obj o) {
+    ttany a0;
+    return GetValue_ttobj((opaque)o, ttwindow_menubar, &a0) ? (tt_obj)(opaque)a0 : (ttany)0;
+} 
 
 /* handy ttframe methods */
      

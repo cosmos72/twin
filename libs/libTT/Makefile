@@ -6,15 +6,20 @@ THISDIR=$(TOPDIR)/libs/libTT
 
 SUBDIRS=HW
 
+include $(TOPDIR)/include/TT/makeversion
+-include $(TOPDIR)/makeautoconf
+
 all: everything
 
-include makeversion
-
 BINS=
-SHLIBS=
+SHLIBS=libTT.la
 ARLIBS=libTT.a
 COLLECTS=
-ALLBINS=libTT.la libTT.a
+#
+# we MUST place static library first, as libtool also links
+# *.o files to *.lo ones if they don't already exist
+#
+ALLBINS=libTT.a libTT.la
 
 
 AVLOBJS=avl.o
@@ -31,11 +36,35 @@ ALLOBJS=$(AVLOBJS) $(AVLOBJS_l) $(HWOBJS) $(HWOBJS_l) $(OBJS_libTT.a) $(OBJS_lib
 
 CC_FLAGS+=-I. -D_REENTRANT 
 
--include $(TOPDIR)/makeautoconf
 -include $(TOPDIR)/conf/conf.current
 -include .modules
 -include .depend
 -include $(TOPDIR)/.hdepend
+
+ifeq ($(CONF_TT),y)
+  ifeq ($(CONF__SHLIBS),y)
+    everything: $(ALLBINS)
+  else
+    everything: $(ARLIBS)
+	@rm -f $(filter-out $(ARLIBS), $(ALLBINS)) ; \
+	 echo ; \
+	 echo "You disabled \"Enable shared libraries (ELF)\"," ; \
+	 echo "so only the static library libTT.a will be compiled!" ; \
+	 echo
+  endif
+
+  install: install-real
+else
+  everything: warn
+  install: warn
+  warn:
+	@rm -f $(ALLBINS) ; \
+	 echo ; \
+	 echo "You disabled \"Support Text Toolkit library (libTT)\"," ; \
+	 echo "so the library libTT will NOT be compiled!" ; \
+	 echo
+endif
+
 
 #
 # This is globally needed by all libTT sources
@@ -48,24 +77,8 @@ ifeq ($(CONF__MODULES),y)
   LD_FLAGS+=$(LD_LIBDL)
 endif
 
-ifneq ($(CONF_SOCKET),n)
-  everything: lib
-  install: install-real
-
-  SHLIBS+=libTT.la
-  
-  ifeq ($(CONF__UNICODE),y)
-    LD_FLAGS_libTT.la+=$(LD_LIBTUTF)
-  endif
-else
-  everything: warn
-  install: warn
-  warn:
-	@rm -f $(ALLBINS) ; \
-	 echo ; \
-	 echo "You disabled \"Support remote socket connections\"," ; \
-	 echo "so the library libTT.so will NOT be compiled!" ; \
-	 echo
+ifeq ($(CONF__UNICODE),y)
+  LD_FLAGS_libTT.la+=$(LD_LIBTUTF)
 endif
 
 ifeq ($(CONF_TT_HW_TWIN),y)
@@ -80,9 +93,13 @@ ifeq ($(CONF_TT_HW_GTK),y)
   LD_FLAGS_libTT.la+=$(LD_LIBGTK)
 endif
 
+ifeq ($(CONF_TT_HW_XML),y)
+  LD_FLAGS_libTT.la+=$(LD_LIBXML)
+endif
+
 
 ifneq ($(libdir),)
-  CC_FLAGS_libTT.lo+=-DLIBDIR=\"$(libdir)\"
+  # also used for libTT.lo
   CC_FLAGS_libTT.o+=-DLIBDIR=\"$(libdir)\"
 endif
 
@@ -90,18 +107,6 @@ endif
 #
 # handy targets
 #
-
-ifeq ($(CONF__SHLIBS),y)
-  lib: $(ALLBINS)
-else
-  lib: $(ARLIBS)
-	@rm -f $(filter-out $(ARLIBS), $(ALLBINS)) ; \
-	 echo ; \
-	 echo "You disabled \"Enable shared libraries (ELF)\"," ; \
-	 echo "so only the static library libTT.a will be compiled!" ; \
-	 echo
-endif
-
 
 #
 # generate defs_m4.h *before* entering HW/ subdirectory, otherwise
@@ -136,16 +141,11 @@ install-headers:
 install-dir:
 	$(INSTALL-DIR) $(DESTDIR)$(libdir)
 
-install-libTT.la:
-	$(INSTALL) $(SHLIBS) $(DESTDIR)$(libdir)
 
-install-libTT.a:
-	$(INSTALL-TXT) $(ARLIBS) $(DESTDIR)$(libdir)
-
-install-real: install-headers install-dir $(foreach B, $(SHLIBS) $(ARLIBS), install-$(B))
+install-real: install-headers install-dir $(foreach B,$(SHLIBS) $(ARLIBS),install-lib-$(B))
 
 
 clean:
-	rm -f .*.flags .*.shlib .*.arlib libTT.la libTT.a *.o *.lo ; \
+	rm -f .*.flags .*.shlib .*.arlib *.la *.a *.o *.lo *.so *.so.* ; \
 	rm -fr .libs
 

@@ -10,7 +10,7 @@
 				TUTORIAL
 
 
-		  updated to version 0.4.3, 14 Jan 2002
+		  updated to version 0.4.4, 14 Jan 2002
 	      
 
 	     Author: Massimiliano Ghilardi <max@linuz.sns.it>
@@ -251,6 +251,7 @@
    where <display> is one of:
    
         X[@<XDISPLAY>]     or    X11[@<XDISPLAY>]
+	gfx[@<XDISPLAY>]
 	twin[@<TWDISPLAY>]
 	tty[@<tty device>]
 	ggi[@<libggi target>]
@@ -778,6 +779,7 @@
     known displays are:
       
       -hw=X[@<XDISPLAY>]     or    -hw=X11[@<XDISPLAY>]
+      -hw=gfx[@<XDISPLAY>]
       -hw=twin[@<TWDISPLAY>]
       -hw=tty[@<tty device>]
       -hw=ggi[@<libggi target>]
@@ -789,10 +791,11 @@
 			will be ignored.
 		   : ",slow" to tell twin the display is slow and output
 			to it should be buffered and chunked together as much
-			as possible (this is on by default for -hw=X11)
+			as possible (this is on by default for -hw=X , -hw=X11
+			and -hw=gfx)
 		  
-      -hw=X  or
-      -hw=X11	: ",font=<fontname>" to choose your favourite X11 font
+      -hw=X  or -hw=X11 or -hw=gfx :
+                : ",font=<fontname>" to choose your favourite X11 font
 		        (default: vga).
 		: ",charset=<name>" to inform the driver about the codepage
 		        corresponding to the used font (default: autodetected).
@@ -800,8 +803,27 @@
 			This is off by default as on many X servers XCopyArea
 			is actually slower than a normal redraw.
 			Your mileage may vary.
+
+      -hw=gfx   : ",mono" to load themes and images as monochrome
+                  ",color" to load themes and images as colorful (default)
+                  ",theme=<name>" to set the theme pixmap
+                  ",root=<name>"  to set the screen root pixmap
+                  ",bg=<name>"    to set the windows background pixmap
+                  ",root-as-{none|theme|root|bg}"
+                        to specify how to draw screen root:
+                        no pixmap (none), get from theme (theme),
+                        use root pixmap (root), use bg pixmap (bg)
+                  ",root-as-{none|theme|root|bg}"
+                        to specify how to draw screen root:
+                        no pixmap (none), get from theme (theme),
+                        use root pixmap (root), use bg pixmap (bg)
+                  ",bg-as-{none|theme|root|bg}"
+                        to specify how to draw windows background:
+                        no pixmap (none), get from theme (theme),
+                        use root pixmap (root), use bg pixmap (bg)
+
       
-      -hw=twin	: ",gz" to enable gzip compression on the connecting socket.
+      -hw=twin  : ",gz" to enable gzip compression on the connecting socket.
       
       -hw=tty	: ",stdout" to draw on stdout even if /dev/vcsa* is available.
 		: ",termcap" to use termcap/ncurses interface even if other
@@ -809,13 +831,15 @@
 		: ",colorbug" use with termcap interface, if terminal does not
 			reset colors to white on black using ESC [ m
 			(or the appropriate sequence for the terminal).
-		: ",xterm" to force xterm-style mouse in case it is not
-			autodetected.
+		: ",mouse={xterm|twterm}" to force mouse to xterm-style or
+		        to twin-term-style in case it is not autodetected.
 		: ",TERM=<terminal>" to specify the terminal type.
-		: ",charset=<name>" to inform the driver of the codepage
-		        used by the terminal (default: IBM437).
+		: ",charset=<name>" to inform the driver about the codepage
+		        used by the terminal (default: CP437).
 		: ",ctty" to tell twin to grab given tty as its new
 		        controlling tty (mostly useful from twdm)
+		: ",utf8" to tell twin that the tty understands utf8 encoding
+		        to display Unicode.
 
       -hw=ggi	: no options, use the zillion of libggi environment variables
 		  to control libggi behaviour.

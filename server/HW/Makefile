@@ -11,32 +11,36 @@ SUBDIRS=
 #
 # where to install modules (relative to $(libdir))
 #
-INSTALLSUBDIR=twin/modules/HW
+INSTALLSUBDIR=/twin/modules/HW
 
-include ../makeversion
+include $(TOPDIR)/include/makeversion
 -include $(TOPDIR)/makeautoconf
 
 BASEOBJS=
-TTYOBJS=hw_tty.o
-TTYOBJS_l=hw_tty.lo
+GFXOBJS=hw_gfx.o
+GFXOBJS-L=hw_gfx.lo
 X11OBJS=hw_X11.o
-X11OBJS_l=hw_X11.lo
+X11OBJS-L=hw_X11.lo
 DISPLAYOBJS=hw_display.o
-DISPLAYOBJS_l=hw_display.lo
+DISPLAYOBJS-L=hw_display.lo
 TWINOBJS=hw_twin.o
-TWINOBJS_l=hw_twin.lo
+TWINOBJS-L=hw_twin.lo
+TTYOBJS=hw_tty.o
+TTYOBJS-L=hw_tty.lo
 GGIOBJS=hw_ggi.o
-GGIOBJS_l=hw_ggi.lo
-ALLOBJS:=$(BASEOBJS) $(TTYOBJS) $(TTYOBJS_l) $(X11OBJS) $(X11OBJS_l) \
-	$(DISPLAYOBJS) $(DISPLAYOBJS_l) $(TWINOBJS) $(TWINOBJS_l) $(GGIOBJS) $(GGIOBJS_l)
+GGIOBJS-L=hw_ggi.lo
+ALLOBJS:=$(BASEOBJS) $(GFXOBJS) $(GFXOBJS-L) $(X11OBJS) $(X11OBJS-L) \
+  $(DISPLAYOBJS) $(DISPLAYOBJS-L) $(TWINOBJS) $(TWINOBJS-L) $(TTYOBJS) $(TTYOBJS-L) \
+  $(GGIOBJS) $(GGIOBJS-L)
 
 OBJS_hw.lst=$(BASEOBJS)
 OBJS_hw_display.lst=
-OBJS_hw_tty.la=$(TTYOBJS_l)
-OBJS_hw_X11.la=$(X11OBJS_l)
-OBJS_hw_display.la=$(DISPLAYOBJS_l)
-OBJS_hw_twin.la=$(TWINOBJS_l)
-OBJS_hw_ggi.la=$(GGIOBJS_l)
+OBJS_hw_gfx.la=$(GFXOBJS-L)
+OBJS_hw_X11.la=$(X11OBJS-L)
+OBJS_hw_display.la=$(DISPLAYOBJS-L)
+OBJS_hw_twin.la=$(TWINOBJS-L)
+OBJS_hw_tty.la=$(TTYOBJS-L)
+OBJS_hw_ggi.la=$(GGIOBJS-L)
 
 BINS=
 MODS=
@@ -45,16 +49,21 @@ ARLIBS=
 CLLIBS=hw.lst hw_display.lst
 
 
-
 CC_FLAGS+=-I..
 
 CC_FLAGS.lo+=-DTHIS_MODULE
 
+CC_FLAGS_hw_gfx.o+=$(CF_HEADERGFX)
 CC_FLAGS_hw_X11.o+=$(CF_HEADERX11)
 
+LD_FLAGS_hw_gfx.la=$(LD_LIBGFX) 
 LD_FLAGS_hw_X11.la=$(LD_LIBX11)
 LD_FLAGS_hw_twin.la=$(LD_LIBTW)
 LD_FLAGS_hw_ggi.la=-lggi
+
+ifneq ($(datadir),)
+  CC_FLAGS_hw_gfx.o+=-DDATADIR=\"$(datadir)\"
+endif
 
 #
 # target
@@ -104,6 +113,14 @@ else
   endif
 endif
 
+ifeq ($(CONF_HW_GFX),y)
+  OBJS_hw.lst+=$(GFXOBJS)
+else
+  ifeq ($(CONF_HW_GFX),m)
+    MODS+=hw_gfx.la
+  endif
+endif
+
 ifeq ($(CONF_HW_X11),y)
   OBJS_hw.lst+=$(X11OBJS)
 else
@@ -150,23 +167,38 @@ include $(TOPDIR)/makerules
 # All done. Now just set a few special targets
 #
 
-links: $(patsubst %.la,%.so.$(SHLIBS_VER),$(MODS))
-
 everything: $(BINS) $(MODS) $(SHLIBS) $(ARLIBS) $(CLLIBS) links
+
+fontsizes:=$(sort $(patsubst %.xpm,%,$(filter %.xpm,$(subst _, ,$(wildcard ../themes/hw_gfx/*_*.xpm)))))
+
+default_gfx_themes=$(patsubst %,../themes/hw_gfx/default_%.xpm,$(fontsizes))
+
+links: $(default_gfx_themes) $(subst hw_X11.la,hw_X.so.$(SHLIBS_VER),$(filter hw_X11.la,$(MODS)))
+
+../themes/hw_gfx/default_%.xpm:
+	$(LN) $(notdir $(word 1,$(filter-out $@,$(wildcard ../themes/hw_gfx/*_$*.xpm)))) $@
 
 modules: $(MODS) links
 
+hw_X.so.$(SHLIBS_VER):
+	$(LN) hw_X11.so.$(SHLIBS_VER) $@
+
 clean:
-	rm -f .*.flags .*.bin .*.mod .*.arlib hw*.lst *.la $(ALLOBJS) ; \
+	rm -f .*.flags .*.bin .*.mod .*.arlib .*.cllib *.lst *.o *.lo *.la *.so *.so.* \
 	rm -fr .libs
 
 install-dir:
 	$(INSTALL-DIR) $(DESTDIR)$(libdir)/twin/modules/HW
+	$(INSTALL-DIR) $(DESTDIR)$(datadir)/twin/themes/hw_gfx
+	$(INSTALL-TXT) ../themes/hw_gfx/* $(DESTDIR)$(datadir)/twin/themes/hw_gfx
+	$(foreach S,$(fontsizes),$(LN) \
+	 $(notdir $(word 1,$(filter-out ../themes/hw_gfx/default_%.xpm,$(wildcard ../themes/hw_gfx/*_$(S).xpm)))) \
+	 $(DESTDIR)$(datadir)/twin/themes/hw_gfx/default_$(S).xpm ; )
 
-install-mod-link-hw_X11.la:
+install-mod-link-hw_X.la:
 	$(LN) hw_X11.so.$(SHLIBS_VER) $(DESTDIR)$(libdir)/twin/modules/HW/hw_X.so.$(SHLIBS_VER)
 
-install-mod-hw_X11.la: install-mod-link-hw_X11.la
+install-mod-hw_X11.la: install-mod-link-hw_X.la
 
 install: install-dir $(foreach M,$(MODS),install-mod-$(M))
 

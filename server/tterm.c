@@ -240,7 +240,7 @@ byte InitTerm(void)
     window Window;
     byte *shellpath, *shell;
     
-    if ((shellpath = getenv("SHELL")) &&
+    if (((shellpath = getenv("SHELL")) || (shellpath = "/bin/sh")) && 
 	(default_args[0] = CloneStr(shellpath)) &&
 	(default_args[1] = (shell = strrchr(shellpath, '/'))
 	 ? CloneStr(shell) : CloneStr(shellpath)) &&
@@ -270,7 +270,7 @@ byte InitTerm(void)
 	return TRUE;
     }
     if (shellpath)
-	printk("twin: InitTerm(): %s\n", ErrStr);
+	printk("twin: InitTerm(): %."STR(SMALLBUFF)"s\n", ErrStr);
     else
 	printk("twin: environment variable $SHELL not set!\n");
     return FALSE;

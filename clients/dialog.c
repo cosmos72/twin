@@ -248,7 +248,7 @@ static byte InitDialog(void) {
 	  COL(RED,WHITE), COL(RED,GREEN), (byte)0)) &&
 	(TwInfo4Menu(Dialog_Menu, TW_ROW_ACTIVE, 10, " Twin Dialog ", "ptpppptpppppp"), TRUE) &&
 	(Window=TwWin4Menu(Dialog_Menu)) &&
-	(TwRow4Menu(Window, COD_QUIT, TW_ROW_INACTIVE, 6, " Quit "), TRUE) &&
+	TwRow4Menu(Window, COD_QUIT, TW_ROW_INACTIVE, 6, " Quit ") &&
 	TwItem4Menu(Dialog_Menu, Window, TRUE, 6, " File ") &&
 	TwItem4MenuCommon(Dialog_Menu) &&
 	(Dialog_Win=TwCreateWindow

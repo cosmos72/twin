@@ -155,7 +155,9 @@ TT_CONST ttfont *	TTGetText_ttanybutton(ttanybutton o);
      
 
 /* handy ttwindow methods */
-         
+        
+ttbyte *	TTGetTitle_ttwindow(ttwindow o);    
+ttmenubar	TTGetMenubar_ttwindow(ttwindow o); 
 
 /* handy ttframe methods */
      

@@ -49,8 +49,8 @@ ltrace.conf: m4/ltrace.conf.m4 $(wildcard m4/ltrace.conf.*.in $(TOPDIR)/include/
 clean:
 
 install:
-	$(INSTALL-DIR) $(DESTDIR)$(mandir)/man1
-	$(INSTALL-TXT) twin.1 $(DESTDIR)$(mandir)/man1
+	$(INSTALL-DIR) $(DESTDIR)$(datadir)/man/man1 && \
+	$(INSTALL-TXT) twin.1 $(DESTDIR)$(datadir)/man/man1 ; \
 	$(INSTALL-DIR) $(DESTDIR)$(datadir)/twin/docs
 	$(INSTALL-TXT) $(DOCS) $(DESTDIR)$(datadir)/twin/docs
 	$(INSTALL-TXT) $(TOPDOCS) $(DESTDIR)$(datadir)/twin

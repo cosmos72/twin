@@ -55,6 +55,8 @@ byte SetServerUid(uldat uid, byte privileges);
 byte *FindFile(byte *name, uldat *fsize);
 void RunTwEnvRC(void);
 
+hwattr EncodeToHWAttrExtra(byte pos, byte detail, byte active, byte pressed);
+
 byte AssignId(CONST fn_obj Fn_Obj, obj Obj);
 byte AssignId_all(all Obj);
 void DropId(obj Obj);

@@ -57,7 +57,7 @@
 #define T_MAP_CP367		ANSI_X3_4
 #define T_MAP_IBM367		ANSI_X3_4
 #define T_NAME_ANSI_X3_4	"ANSI_X3.4"
-#define T_ALIASES_ANSI_X3_4	"ANSI_X3.4-1968", "ANSI_X3.4-1986", "ISO_646.irv:1991", "ISO646-US", "iso-ir-6", "ASCII", "US-ASCII", "us", "367", "cp367", "IBM367"
+#define T_ALIASES_ANSI_X3_4	"ANSI_X3.4-1968", "ANSI_X3.4-1986", "ISO_646.irv:1991", "ISO646-US", "iso-ir-6", "ASCII", "US-ASCII", "us", "367", "cp367", "ibm367"
 
 
 #define T_MAP_ISO_8859_1	ISO_8859_1
@@ -72,7 +72,7 @@
 #define T_MAP_LATIN1		ISO_8859_1
 #define T_MAP_LATIN_1		ISO_8859_1
 #define T_NAME_ISO_8859_1	"ISO-8859-1"
-#define T_ALIASES_ISO_8859_1	"ISO_8859-1:1987", "ISO8859-1", "819", "CP819", "IBM819", "iso-ir-100", "l1", "lat1", "latin1", "Latin-1"
+#define T_ALIASES_ISO_8859_1	"ISO_8859-1:1987", "ISO8859-1", "819", "cp819", "ibm819", "iso-ir-100", "l1", "lat1", "latin1", "Latin-1"
 
 
 #define T_MAP_ISO_8859_2	ISO_8859_2
@@ -85,7 +85,7 @@
 #define T_MAP_L2		ISO_8859_2
 #define T_MAP_LATIN2		ISO_8859_2
 #define T_NAME_ISO_8859_2	"ISO-8859-2"
-#define T_ALIASES_ISO_8859_2	"ISO_8859-2:1987", "ISO8859-2", "912", "CP912", "IBM912", "iso-ir-101", "l2", "latin2"
+#define T_ALIASES_ISO_8859_2	"ISO_8859-2:1987", "ISO8859-2", "912", "cp912", "ibm912", "iso-ir-101", "l2", "latin2"
 
 
 #define T_MAP_ISO_8859_3	ISO_8859_3
@@ -127,6 +127,7 @@
 #define T_NAME_ISO_8859_6	"ISO-8859-6"
 #define T_ALIASES_ISO_8859_6	"ISO_8859-6:1987", "ISO8859-6", "arabic", "ASMO-708", "ECMA-114", "iso-ir-127"
 
+
 #define T_MAP_ISO_8859_7	ISO_8859_7
 #define T_MAP_ISO_8859_7_1987	ISO_8859_7
 #define T_MAP_ISO8859_7		ISO_8859_7
@@ -154,35 +155,183 @@
 #define T_MAP_L5		ISO_8859_9
 #define T_MAP_LATIN5		ISO_8859_9
 #define T_MAP_ISO_IR_148	ISO_8859_9
+#define T_MAP_TURKISH		ISO_8859_9
 #define T_NAME_ISO_8859_9	"ISO-8859-9"
-#define T_ALIASES_ISO_8859_9	"ISO_8859-9:1989", "ISO8859-9", "l5", "latin5", "iso-ir-148"
+#define T_ALIASES_ISO_8859_9	"ISO_8859-9:1989", "ISO8859-9", "l5", "latin5", "iso-ir-148", "turkish"
 
 
-#define T_MAP_IBM437	IBM437
-#define T_MAP_437	IBM437
-#define T_MAP_CP437	IBM437
-#define T_NAME_IBM437	"IBM437"
-#define T_ALIASES_IBM437	"437", "CP437"
+#define T_MAP_ISO_8859_13	ISO_8859_13
+#define T_MAP_ISO8859_13	ISO_8859_13
+#define T_MAP_L7		ISO_8859_13
+#define T_MAP_LATIN7		ISO_8859_13
+#define T_MAP_BALTIC		ISO_8859_13
+#define T_MAP_ISO_IR_179A	ISO_8859_13
+#define T_NAME_ISO_8859_13	"ISO-8859-13"
+#define T_ALIASES_ISO_8859_13	"ISO8859-13", "l7", "latin7", "iso-baltic", "iso-ir-179a"
 
 
-#define T_MAP_IBM850	IBM850
-#define T_MAP_850	IBM850
-#define T_MAP_CP850	IBM850
-#define T_NAME_IBM850	"IBM850"
-#define T_ALIASES_IBM850	"850", "CP850"
+#define T_MAP_ISO_8859_14	ISO_8859_14
+#define T_MAP_ISO8859_14	ISO_8859_14
+#define T_MAP_L8		ISO_8859_14
+#define T_MAP_LATIN8		ISO_8859_14
+#define T_MAP_CELTIC		ISO_8859_14
+#define T_MAP_ISO_IR_199	ISO_8859_14
+#define T_NAME_ISO_8859_14	"ISO-8859-14"
+#define T_ALIASES_ISO_8859_14	"ISO8859-14", "l8", "latin8", "iso-celtic", "iso-ir-199"
 
 
-#define T_MAP_IBM865	IBM865
-#define T_MAP_865	IBM865
-#define T_MAP_CP865	IBM865
-#define T_NAME_IBM865	"IBM865"
-#define T_ALIASES_IBM865	"865", "CP865"
+#define T_MAP_ISO_8859_15	ISO_8859_15
+#define T_MAP_ISO8859_15	ISO_8859_15
+#define T_MAP_L9		ISO_8859_15
+#define T_MAP_LATIN9		ISO_8859_15
+#define T_MAP_EURO		ISO_8859_15
+#define T_MAP_ISO_IR_203	ISO_8859_15
+#define T_NAME_ISO_8859_15	"ISO-8859-15"
+#define T_ALIASES_ISO_8859_15	"ISO8859-15", "l9", "latin9", "euro", "iso-ir-203"
+
+
+#define T_MAP_CP437	CP437
+#define T_MAP_437	CP437
+#define T_MAP_IBM437	CP437
+#define T_NAME_CP437	"cp437"
+#define T_ALIASES_CP437	"437", "ibm437"
+
+
+#define T_MAP_CP737	CP737
+#define T_MAP_737	CP737
+#define T_NAME_CP737	"cp737"
+#define T_ALIASES_CP737	"737"
+
+
+#define T_MAP_CP775	CP775
+#define T_MAP_775	CP775
+#define T_NAME_CP775	"cp775"
+#define T_ALIASES_CP775	"775"
+
+
+#define T_MAP_CP850	CP850
+#define T_MAP_850	CP850
+#define T_MAP_IBM850	CP850
+#define T_NAME_CP850	"cp850"
+#define T_ALIASES_CP850	"850", "ibm850"
+
+
+#define T_MAP_CP852	CP852
+#define T_MAP_852	CP852
+#define T_MAP_IBM852	CP852
+#define T_MAP_PCL2	CP852
+#define T_MAP_PCLATIN2	CP852
+#define T_NAME_CP852	"cp852"
+#define T_ALIASES_CP852	"852", "ibm852", "pcl2", "pclatin2"
+
+
+#define T_MAP_CP855	CP855
+#define T_MAP_855	CP855
+#define T_MAP_IBM855	CP855
+#define T_NAME_CP855	"cp855"
+#define T_ALIASES_CP855	"855", "ibm855"
+
+
+#define T_MAP_CP857	CP857
+#define T_MAP_857	CP857
+#define T_MAP_IBM857	CP857
+#define T_NAME_CP857	"cp857"
+#define T_ALIASES_CP857	"857", "ibm857"
+
+
+#define T_MAP_CP860	CP860
+#define T_MAP_860	CP860
+#define T_MAP_PORTUGUESE CP860
+#define T_NAME_CP860	"cp860"
+#define T_ALIASES_CP860	"860", "portuguese"
+
+
+#define T_MAP_CP861	CP861
+#define T_MAP_861	CP861
+#define T_MAP_ICELANDIC CP861
+#define T_NAME_CP861	"cp861"
+#define T_ALIASES_CP861	"861", "icelandic"
+
+
+#define T_MAP_CP862	CP862
+#define T_MAP_862	CP862
+#define T_NAME_CP862	"cp862"
+#define T_ALIASES_CP862	"862"
+
+
+#define T_MAP_CP863	CP863
+#define T_MAP_863	CP863
+#define T_NAME_CP863	"cp863"
+#define T_ALIASES_CP863	"863"
+
+
+#define T_MAP_CP864	CP864
+#define T_MAP_864	CP864
+#define T_NAME_CP864	"cp864"
+#define T_ALIASES_CP864	"864"
+
+
+#define T_MAP_CP865	CP865
+#define T_MAP_865	CP865
+#define T_MAP_IBM865	CP865
+#define T_MAP_NORWEGIAN	CP865
+#define T_MAP_DANISH	CP865
+#define T_NAME_CP865	"cp865"
+#define T_ALIASES_CP865	"865", "ibm865", "norwegian", "danish"
 
 
 #define T_MAP_CP866	CP866
 #define T_MAP_866	CP866
-#define T_NAME_CP866	"CP866"
+#define T_NAME_CP866	"cp866"
 #define T_ALIASES_CP866	"866"
+
+
+#define T_MAP_CP869	CP869
+#define T_MAP_869	CP869
+#define T_NAME_CP869	"cp869"
+#define T_ALIASES_CP869	"869"
+
+
+#define T_MAP_CP874	CP874
+#define T_MAP_874	CP874
+#define T_MAP_THAI	CP874
+#define T_NAME_CP874	"cp874"
+#define T_ALIASES_CP874	"874", "thai"
+
+#define T_MAP_CP1250	CP1250
+#define T_MAP_1250	CP1250
+#define T_MAP_MS_EE	CP1250
+#define T_MAP_WINDOWS_1250	CP1250
+#define T_MAP_SLAVIC	CP1250
+#define T_NAME_CP1250	"cp1250"
+#define T_ALIASES_CP1250	"1250", "ms-ee", "windows-1250", "slavic"
+
+
+#define T_MAP_CP1251	CP1251
+#define T_MAP_1251	CP1251
+#define T_MAP_MS_CYRL	CP1251
+#define T_MAP_WINDOWS_1251	CP1251
+#define T_MAP_BULGARIAN	CP1251
+#define T_NAME_CP1251	"cp1251"
+#define T_ALIASES_CP1251	"1251", "ms-cyrl", "windows-1251", "bulgarian"
+
+
+#define T_MAP_CP1255	CP1255
+#define T_MAP_1255	CP1255
+#define T_MAP_MS_HEBR	CP1255
+#define T_MAP_WINDOWS_1255	CP1255
+#define T_NAME_CP1255	"cp1255"
+#define T_ALIASES_CP1255	"1255", "ms-hebr", "windows-1255"
+
+
+#define T_MAP_KOI8_R	KOI8_R
+#define T_NAME_KOI8_R	"koi8-r"
+#define T_ALIASES_KOI8_R
+
+
+#define T_MAP_KOI8_U	KOI8_U
+#define T_NAME_KOI8_U	"koi8-u"
+#define T_ALIASES_KOI8_U
 
 
 
@@ -222,10 +371,30 @@ hwfont Tutf_UTF_16_to_ISO_8859_6(hwfont c);
 hwfont Tutf_UTF_16_to_ISO_8859_7(hwfont c);
 hwfont Tutf_UTF_16_to_ISO_8859_8(hwfont c);
 hwfont Tutf_UTF_16_to_ISO_8859_9(hwfont c);
-hwfont Tutf_UTF_16_to_IBM437(hwfont c);
-hwfont Tutf_UTF_16_to_IBM850(hwfont c);
-hwfont Tutf_UTF_16_to_IBM865(hwfont c);
+
+hwfont Tutf_UTF_16_to_CP437(hwfont c);
+hwfont Tutf_UTF_16_to_CP737(hwfont c);
+hwfont Tutf_UTF_16_to_CP775(hwfont c);
+hwfont Tutf_UTF_16_to_CP850(hwfont c);
+hwfont Tutf_UTF_16_to_CP852(hwfont c);
+hwfont Tutf_UTF_16_to_CP855(hwfont c);
+hwfont Tutf_UTF_16_to_CP857(hwfont c);
+hwfont Tutf_UTF_16_to_CP860(hwfont c);
+hwfont Tutf_UTF_16_to_CP861(hwfont c);
+hwfont Tutf_UTF_16_to_CP862(hwfont c);
+hwfont Tutf_UTF_16_to_CP863(hwfont c);
+hwfont Tutf_UTF_16_to_CP864(hwfont c);
+hwfont Tutf_UTF_16_to_CP865(hwfont c);
 hwfont Tutf_UTF_16_to_CP866(hwfont c);
+hwfont Tutf_UTF_16_to_CP869(hwfont c);
+hwfont Tutf_UTF_16_to_CP874(hwfont c);
+
+hwfont Tutf_UTF_16_to_CP1250(hwfont c);
+hwfont Tutf_UTF_16_to_CP1251(hwfont c);
+hwfont Tutf_UTF_16_to_CP1255(hwfont c);
+
+hwfont Tutf_UTF_16_to_KOI8_R(hwfont c);
+hwfont Tutf_UTF_16_to_KOI8_U(hwfont c);
 
 /* specific translation arrays */
 extern hwfont Tutf_ANSI_X3_4_to_UTF_16[0x100];
@@ -238,12 +407,31 @@ extern hwfont Tutf_ISO_8859_6_to_UTF_16[0x100];
 extern hwfont Tutf_ISO_8859_7_to_UTF_16[0x100];
 extern hwfont Tutf_ISO_8859_8_to_UTF_16[0x100];
 extern hwfont Tutf_ISO_8859_9_to_UTF_16[0x100];
-extern hwfont Tutf_IBM437_to_UTF_16[0x100];
-extern hwfont Tutf_IBM850_to_UTF_16[0x100];
-extern hwfont Tutf_IBM865_to_UTF_16[0x100];
-extern hwfont Tutf_CP866_to_UTF_16[0x100];
 
-extern hwfont Tutf_IBM437_to_ANSI_X3_4[0x100];
+extern hwfont Tutf_CP437_to_UTF_16[0x100];
+extern hwfont Tutf_CP737_to_UTF_16[0x100];
+extern hwfont Tutf_CP775_to_UTF_16[0x100];
+extern hwfont Tutf_CP850_to_UTF_16[0x100];
+extern hwfont Tutf_CP852_to_UTF_16[0x100];
+extern hwfont Tutf_CP855_to_UTF_16[0x100];
+extern hwfont Tutf_CP857_to_UTF_16[0x100];
+extern hwfont Tutf_CP860_to_UTF_16[0x100];
+extern hwfont Tutf_CP861_to_UTF_16[0x100];
+extern hwfont Tutf_CP862_to_UTF_16[0x100];
+extern hwfont Tutf_CP863_to_UTF_16[0x100];
+extern hwfont Tutf_CP864_to_UTF_16[0x100];
+extern hwfont Tutf_CP865_to_UTF_16[0x100];
+extern hwfont Tutf_CP866_to_UTF_16[0x100];
+extern hwfont Tutf_CP869_to_UTF_16[0x100];
+extern hwfont Tutf_CP874_to_UTF_16[0x100];
+extern hwfont Tutf_CP1250_to_UTF_16[0x100];
+extern hwfont Tutf_CP1251_to_UTF_16[0x100];
+extern hwfont Tutf_CP1255_to_UTF_16[0x100];
+
+extern hwfont Tutf_KOI8_R_to_UTF_16[0x100];
+extern hwfont Tutf_KOI8_U_to_UTF_16[0x100];
+
+extern hwfont Tutf_CP437_to_ANSI_X3_4[0x100];
 
 
 #ifdef __cplusplus

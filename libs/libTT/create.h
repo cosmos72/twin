@@ -55,7 +55,7 @@ static ttcallback CreateA_ttcallback(ttcomponent c, ttevent ev, ttuint flags,
 	/* mask ONLY allowed flags! */
 	o->lflags = flags & ttcallback_lflags_any;
 	
-	if ((order = Method2Order((void *)function)) != (opaque)-1 /* order_BAD */) {
+	if ((order = Method2Order((void *)function))) {
 	    o->lflags |= ttcallback_lflags_builtin;
 	    o->function = (ttcallback_fn)order;
 	} else

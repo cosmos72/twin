@@ -43,6 +43,14 @@
 # include "wm.h"
 #endif
 
+
+#ifdef CONF__UNICODE
+extern hwattr extra_POS_INSIDE;
+#else
+# define extra_POS_INSIDE 0
+#endif
+
+
 /* some object-oriented ones not included in fn_obj */
 
 void *OverrideMth(void **where, void *OrigMth, void *NewMth) {
@@ -796,7 +804,7 @@ byte FillButton(gadget G, widget Parent, udat Code, dat Left, dat Up,
 	    G->USE.T.Text[0][i+j] = G->USE.T.Text[1][i+j+1] =
 		G->USE.T.Text[2][i+j] = G->USE.T.Text[3][i+j+1] =
 #ifdef CONF__UNICODE
-		Tutf_IBM437_to_UTF_16[*(T++)];
+		Tutf_CP437_to_UTF_16[*(T++)];
 #else
 		*(T++);
 #endif
@@ -867,7 +875,7 @@ static struct s_fn_gadget _FnGadget = {
 static byte InitTtyData(window Window, dat ScrollBackLines) {
     ttydata *Data = Window->USE.C.TtyData;
     ldat count = Window->WLogic * Window->HLogic;
-    hwattr *p = Window->USE.C.Contents;
+    hwattr *p = Window->USE.C.Contents, h;
     
     if (!Data && !(Window->USE.C.TtyData = Data = AllocMem(sizeof(ttydata))))
 	return FALSE;
@@ -875,8 +883,9 @@ static byte InitTtyData(window Window, dat ScrollBackLines) {
     if (!p && !(Window->USE.C.Contents = p = AllocMem(count * sizeof(hwattr))))
 	return FALSE;
     
+    h = HWATTR( COL(WHITE,BLACK), ' ') | extra_POS_INSIDE;
     while (count--)
-	*p++ = HWATTR( COL(WHITE,BLACK), ' ');
+	*p++ = h;
     
     /*
      * this is a superset of reset_tty(),
@@ -990,7 +999,7 @@ static window CreateWindow(fn_window Fn_Window, dat NameLen, CONST byte *Name, C
 	Window->MaxYWidth = MAXDAT;
 
 #ifdef CONF__UNICODE
-	Window->Charset = Tutf_IBM437_to_UTF_16;
+	Window->Charset = Tutf_CP437_to_UTF_16;
 #endif
 	WriteMem(&Window->USE, '\0', sizeof(Window->USE));
 
@@ -1154,8 +1163,11 @@ static void SetColorsWindow(window W, udat Bitmap,
 	W->ColTabs = ColTabs;
     if (Bitmap & 0x10)
 	W->ColBorder = ColBorder;
-    if (Bitmap & 0x20)
+    if (Bitmap & 0x20) {
 	W->ColText = ColText;
+	if (W_USE(W, USECONTENTS))
+	    W->USE.C.TtyData->Color = ColText;
+    }
     if (Bitmap & 0x40)
 	W->ColSelect = ColSelect;
     if (Bitmap & 0x80)
@@ -1314,19 +1326,17 @@ window FakeOpenTerm(CONST byte *arg0, byte * CONST *argv) {
 
 
 #ifdef CONF_WM
-byte WMFindBorderWindow(window Window, dat u, dat v, byte Border, hwfont *PtrChar, hwcol *PtrColor);
+byte WMFindBorderWindow(window Window, dat u, dat v, byte Border, hwattr *PtrAttr);
 
 #else
-byte FakeFindBorderWindow(window W, dat u, dat v, byte Border, hwfont *PtrChar, hwcol *PtrColor) {
+byte FakeFindBorderWindow(window W, dat u, dat v, byte Border, hwattr *PtrAttr) {
     byte Horiz, Vert;
     
     Horiz = u ? u+1 == W->XWidth ? (byte)2 : (byte)1 : (byte)0;
     Vert  = v ? v+1 == W->YWidth ? (byte)2 : (byte)1 : (byte)0;
 
-    if (*PtrChar)
-	*PtrChar = StdBorder[Border][Vert*3+Horiz];
-    if (*PtrColor)
-	*PtrColor = W->ColBorder;
+    if (*PtrAttr)
+	*PtrAttr = HWATTR(W->ColBorder, StdBorder[Border][Vert*3+Horiz]);
     
     return v ? POS_ROOT : POS_TITLE;
 }
@@ -1408,7 +1418,7 @@ static struct s_fn_window _FnWindow = {
     (void *)OwnWidget,
     (void *)DisOwnWidget,
     (void *)RecursiveDeleteWidget,
-    (void *)ExposeWidget2,	/* exported by resize.c */
+    (void *)ExposeWindow2,	/* exported by resize.c */
     (void *)InstallHookWidget,
     (void *)RemoveHookWidget,
     /* window */
@@ -1815,7 +1825,7 @@ static byte SetTextRow(row Row, ldat Len, CONST byte *Text, byte DefaultCol) {
 	    ldat i = Len;
 	    while (i-- > 0) {
 # ifdef CONF__UNICODE
-		*RowText++ = Tutf_IBM437_to_UTF_16[*Text++];
+		*RowText++ = Tutf_CP437_to_UTF_16[*Text++];
 # else /* !CONF__UNICODE */
 		*RowText++ = *Text++;
 # endif /* CONF__UNICODE */

@@ -19,9 +19,10 @@ CONF_SOCKET_HELP="Support remote socket connections"
 CONF_SOCKET_GZ_HELP=" -> Sockets: support gzip compression"
 CONF_SOCKET_PTHREADS_HELP=" -> Sockets: thread-safe libs (requires libpthread)"
 CONF_SOCKET_ALIEN_HELP=" -> Sockets: support non-native architectures"
-CONF_TT_HELP="Support libTT Toolkit library"
+CONF_TT_HELP="Support Text Toolkit library (libTT)"
 CONF_TT_HW_TWIN_HELP=" -> HW support: Twin, native"
 CONF_TT_HW_GTK_HELP=" -> HW support: gtk"
+CONF_TT_HW_XML_HELP=" -> HW support: write to xml files"
 CONF_WM_HELP="Window Manager: absolutely needed!"
 CONF_WM_RC_HELP="WM: support ~/.twinrc configuration parser"
 CONF_WM_RC_SHMMAP_HELP=" -> WM: RC: use mmapped shared file for parser"
@@ -34,6 +35,7 @@ CONF_HW_TTY_LINUX_HELP=" -> tty support: Linux console"
 CONF_HW_TTY_TWTERM_HELP=" -> tty support: Twin terminal"
 CONF_HW_TTY_TERMCAP_HELP=" -> tty support: termcap/ncurses terminal database"
 CONF_HW_X11_HELP="HW support: X11"
+CONF_HW_GFX_HELP="HW support: X11 enhanced driver (gfx), uses libXpm"
 CONF_HW_TWIN_HELP="HW support: Twin, native"
 CONF_HW_DISPLAY_HELP="HW support: twdisplay client as display"
 CONF_HW_GGI_HELP="HW support: libggi"
@@ -61,10 +63,11 @@ menu CONF_TT
   yesno CONF_TT
   yesmodno_truedep CONF_TT_HW_TWIN CONF_SOCKET
   yesmodno CONF_TT_HW_GTK
+  yesmodno CONF_TT_HW_XML
 endmenu
 menu CONF_WM
   yesmodno CONF_WM
-  yesmodno_truedep CONF_WM_RC CONF_SOCKET
+  yesmodno_dep CONF_WM_RC CONF_WM
   yesno_dep CONF_WM_RC_SHMMAP CONF_WM_RC
   yesno_dep CONF_WM_RC_SHRINK CONF_WM_RC
 endmenu
@@ -81,6 +84,7 @@ menu CONF_HW
   yesno_dep CONF_HW_TTY_TWTERM CONF_HW_TTY
   yesno_dep CONF_HW_TTY_TERMCAP CONF_HW_TTY
   yesmodno CONF_HW_X11
+  yesmodno_truedep CONF_HW_GFX CONF__UNICODE
   yesmodno_truedep CONF_HW_TWIN CONF_SOCKET
   yesmodno_truedep CONF_HW_DISPLAY CONF_SOCKET
   yesmodno CONF_HW_GGI
