@@ -4,11 +4,12 @@
 TOPDIR=../..
 SUBDIRS=
 
-CFLAGS+=-DDATADIR=\"/usr/lib/kbd\"
-LDFLAGS+=$(LIBTW)
+CC_FLAGS+=-DDATADIR=\"/usr/lib/kbd\"
+CC_FLAGS_mapscrn.o+=-DMAIN
 
-OBJS_twmapscrn=mapscrn.o xmalloc.o findfile.o
+LD_FLAGS+=$(LIBTW)
 
+OBJS_twmapscrn=mapscrn.o findfile.o utf8.o xmalloc.o getfd.o kdmapop.o
 BINS=twmapscrn
 
 

@@ -11,8 +11,8 @@
 #ifdef __i386__
 
 # define TW_CAN_UNALIGNED 1
-# define Push(s,type,val)	(*(type *)(s) = (val), ++(type *)(s))
-# define Pop(s,type,lval)	((lval) = *(type TW(CONST) *)s, ++(type TW(CONST) *)s)
+# define Push(s,type,val)	(*((type *)(s))++ = (val))
+# define Pop(s,type,lval)	((lval) = *((type TW(CONST) *)(s))++)
 
 #else /* !__i386__ */
 

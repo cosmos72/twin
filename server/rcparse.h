@@ -254,7 +254,11 @@ static byte MergeFunc(str name, node l) {
 
 static byte ImmBackground(str name, hwattr color, node shape) {
     node n;
-    if ((n = LookupNodeName(name, ScreenList))) {
+    
+    /* automagically create screen "1" if needed */
+    if ((n = LookupNodeName(name, ScreenList)) ||
+	(!strcmp(name, "1") && (n = MakeNodeBody(name, NULL, &ScreenList)))) {
+	
 	n->body = ReverseList(shape);
 	n->x.color = color;
 	return TRUE;
@@ -306,9 +310,13 @@ static ldat FreeButtonPos(ldat n, ldat lr) {
 
 static byte ImmButton(ldat n, str shape, ldat lr, ldat flag, ldat pos) {
     if (n >= 0 && n < BUTTON_MAX && strlen(shape) >= 2) {
-	/* sizeof(hwfont) != sizeof(byte) */
+#ifdef CONF__UNICODE
+	All->ButtonVec[n].shape[0] = Tutf_IBM437_to_UTF_16[shape[0]];
+	All->ButtonVec[n].shape[1] = Tutf_IBM437_to_UTF_16[shape[1]];
+#else
 	All->ButtonVec[n].shape[0] = shape[0];
 	All->ButtonVec[n].shape[1] = shape[1];
+#endif
 	if (lr == FL_RIGHT)
 	    pos = -pos;
 	if (flag == '+' || flag == '-')
@@ -930,7 +938,7 @@ static void DumpGlobals(void) {
  * (this happens in the child process)
  */
 static void ClearGlobals(void) {
-    WriteMem(Globals, '\0', GLOBAL_MAX * sizeof(node ));
+    WriteMem(Globals, '\0', GLOBAL_MAX * sizeof(node));
     WriteMem(All->ButtonVec, '\0', BUTTON_MAX * sizeof(button_vec));
     MenuBinds = NULL;
     MenuBindsMax = 0;
@@ -956,6 +964,138 @@ static void WriteGlobals(void) {
     M = (void **) ((str )M + sizeof(GlobalShadows));
 }
 
+static screen FindNameInScreens(uldat len, byte *name, screen S) {
+    while (S) {
+	if (len == S->NameLen && !CmpMem(name, S->Name, len))
+	    return S;
+	S = S->Next;
+    }
+    return NULL;
+}
+
+static node FindNameInList(uldat len, byte *name, node list) {
+    while (list) {
+	if (list->name && LenStr(list->name) == len && !CmpMem(name, list->name, len))
+	    return list;
+	list = list->next;
+    }
+    return NULL;
+}
+
+static void DeleteScreens(screen Screens) {
+    screen Next;
+    while (Screens) {
+	Next = Screens->Next;
+	Delete(Screens);
+	Screens = Next;
+    }
+}
+
+/*
+ * create new screens as needed or fail with no side effects
+ */
+static byte CreateNeededScreens(node list, screen *res_Screens) {
+    node body;
+    screen s, prev = (screen)0, top = (screen)0;
+    hwattr *attr, *r;
+    hwcol c;
+    uldat w, h, len, _len;
+    byte *n;
+#ifdef CONF__UNICODE
+    hwfont f;
+#endif
+    
+    while (list) {
+	w = h = 0;
+	for (body = list->body; body; body = body->next) {
+	    len = body->name ? LenStr(body->name) : 0;
+	    if (w < len)
+		w = len;
+	    h++;
+	}
+	if (!w && !h)
+	    continue;
+	
+	if ((attr = AllocMem(w * h * sizeof(hwattr)))) {
+	    h = 0;
+	    for (body = list->body; body; body = body->next) {
+		if (body->name) {
+		    n = body->name;
+		    _len = len = LenStr(n);
+		    c = list->x.color;
+		    r = attr + w * h;
+		    while (len--) {
+#ifdef CONF__UNICODE
+			f = Tutf_IBM437_to_UTF_16[*n++];
+			*r++ = HWATTR(c, f);
+#else
+			*r++ = HWATTR(c, *n);
+			n++;
+#endif			
+		    }
+		    while (_len++ < w)
+			*r++ = HWATTR(c, ' ');
+		}
+		h++;
+	    }
+	    s = Do(Create,Screen)(FnScreen, LenStr(list->name), list->name, w, h, attr);
+
+	    FreeMem(attr);
+	}
+	if (!attr || !s) {
+	    DeleteScreens(top);
+	    return FALSE;
+	}
+	if (prev)
+	    prev->Next = s;
+	prev = s;
+	if (!top)
+	    top = s;
+	
+	list = list->next;
+    }
+    *res_Screens = top;
+    return TRUE;
+}
+
+/*
+ * make screens in new_Screens visible if they don't exist,
+ * otherwise copy their background then delete them.
+ */
+static void UpdateVisibleScreens(screen new_Screens) {
+    screen S, Next, Orig;
+    for (S = new_Screens; S; S = Next) {
+	Next = S->Next;
+	S->Next = (screen)0;
+	
+	if ((Orig = FindNameInScreens(S->NameLen, S->Name, All->FirstScreen))) {
+	    Orig->USE.B.BgWidth = S->USE.B.BgWidth;
+	    Orig->USE.B.BgHeight = S->USE.B.BgHeight;
+	    if (Orig->USE.B.Bg)
+		FreeMem(Orig->USE.B.Bg);
+	    Orig->USE.B.Bg = S->USE.B.Bg;
+	    S->USE.B.Bg = NULL;
+	    Delete(S);
+	} else
+	    InsertLast(Screen, S, All);
+	    
+	S = Next;
+    }
+}
+
+/*
+ * Delete no-longer needed screens (all except "1" and ones in list)
+ */
+static void DeleteUnneededScreens(node list) {
+    screen S, Next;
+    for (S = All->FirstScreen; S; S = Next) {
+	Next = S->Next;
+	if ((S->NameLen != 1 || S->Name[0] != '1') &&
+	    !FindNameInList(S->NameLen, S->Name, list))
+	    
+	    Delete(S);
+    }
+}
 
 static void NewCommonMenu_Overflow(void) {
     printk("twin: RC parser: user-defined menu is too big! (max is %d entries)\n",
@@ -1067,18 +1207,26 @@ static byte NewCommonMenu(void **shm_M, menu *res_CommonMenu,
  * new Screens, Common Menu and MenuBinds or fail with no side effect.
  */
 static byte ReadGlobals(void) {
-    node *g = Globals;
+    node *g;
     void **M = shm_getbase();
     menu new_CommonMenu;
     node *new_MenuBinds = (node *)0;
     uldat new_MenuBindsMax;
+    screen new_Screens = (screen)0;
     
-    /* FIXME: apply to ScreenList */
-    
-    if (!NewCommonMenu(M, &new_CommonMenu, &new_MenuBinds, &new_MenuBindsMax))
+    if (!CreateNeededScreens(M[ScreenIndex], &new_Screens))
 	return FALSE;
-
+    
+    if (!NewCommonMenu(M, &new_CommonMenu, &new_MenuBinds, &new_MenuBindsMax)) {
+	DeleteScreens(new_Screens);
+	return FALSE;
+    }
+    
     /* ok, this is the no-return point. we must succeed now */
+    
+    UpdateVisibleScreens(new_Screens);
+    DeleteUnneededScreens(M[ScreenIndex]);
+    
     
     if (!GlobalsAreStatic) {
 	shm_TSR();
@@ -1092,6 +1240,7 @@ static byte ReadGlobals(void) {
     MenuBinds = new_MenuBinds;
     MenuBindsMax = new_MenuBindsMax;
     
+    g = Globals;
     while (g < Globals + GLOBAL_MAX)
 	*g++ = *M++;
     
@@ -1113,6 +1262,8 @@ static byte ReadGlobals(void) {
     All->SetUp->DeltaXShade = GlobalShadows[0];
     All->SetUp->DeltaYShade = GlobalShadows[1];
 
+    QueuedDrawArea2FullScreen = TRUE;
+    
     return TRUE;
 }
 

@@ -6,11 +6,11 @@ SUBDIRS=
 
 -include $(TOPDIR)/makeautoconf
 
-LDFLAGS+=$(LD_LIBSOCKET)
+LD_FLAGS+=$(LD_LIBSOCKET)
 
 all: everything
 
-VERSION=3.0.1
+VERSION=3.0.3
 SO_VER=3
 
 BINS=libTw.so.$(VERSION)
@@ -21,16 +21,16 @@ ARLIBS=libTw.a
 OBJS_libTw.so.$(VERSION)=libTw.o avl.o md5.o missing.o
 OBJS_libTw.a=libTw_u.o avl_u.o md5_u.o missing_u.o
 
-CFLAGS_libTw.o+=-fPIC -D_REENTRANT
-CFLAGS_avl.o+=-fPIC -D_REENTRANT
-CFLAGS_md5.o+=-fPIC -D_REENTRANT
-CFLAGS_missing.o+=-fPIC -D_REENTRANT
-CFLAGS_libTw_u.o+=-D_REENTRANT
-CFLAGS_avl_u.o+=-D_REENTRANT
-CFLAGS_md5_u.o+=-D_REENTRANT
-CFLAGS_missing_u.o+=-D_REENTRANT
+CC_FLAGS_libTw.o+=-fPIC -D_REENTRANT
+CC_FLAGS_avl.o+=-fPIC -D_REENTRANT
+CC_FLAGS_md5.o+=-fPIC -D_REENTRANT
+CC_FLAGS_missing.o+=-fPIC -D_REENTRANT
+CC_FLAGS_libTw_u.o+=-D_REENTRANT
+CC_FLAGS_avl_u.o+=-D_REENTRANT
+CC_FLAGS_md5_u.o+=-D_REENTRANT
+CC_FLAGS_missing_u.o+=-D_REENTRANT
 
-LDFLAGS_libTw.so.$(VERSION)=$(LDFLAGS_SOLIB)libTw.so.$(SO_VER)
+LD_FLAGS_libTw.so.$(VERSION)=$(LD_FLAGS_SOLIB)libTw.so.$(SO_VER)
 
 -include $(TOPDIR)/conf/conf.current
 -include .modules
@@ -43,12 +43,12 @@ ifneq ($(CONF_SOCKET),n)
   # avoiding overhead.
   #
   ifeq ($(CONF_SOCKET_PTHREADS),y)
-    LDFLAGS_libTw.so.$(VERSION)+=$(LD_LIBPTHREAD_WEAK)
+    LD_FLAGS_libTw.so.$(VERSION)+=$(LD_LIBPTHREAD_WEAK)
   endif
   everything: lib
   install: install-real
   ifeq ($(CONF_SOCKET_GZ),y)
-    LDFLAGS_libTw.so.$(VERSION)+=-lz
+    LD_FLAGS_libTw.so.$(VERSION)+=-lz
   endif
 else
   everything: warn
@@ -63,7 +63,7 @@ endif
 
 #
 # include the do-everything file.
-# Must correctly set all CFLAGS* and LDFLAGS* before including this!
+# Must correctly set all CC_FLAGS* and LD_FLAGS* before including this!
 #
 include $(TOPDIR)/makerules
 
@@ -106,7 +106,7 @@ install-headers:
 
 install-real: install-headers
 	$(INSTALL) -d $(DESTDIR)$(libdir) && \
-	$(INSTALL) libTw.a $(DESTDIR)$(libdir) && \
+	$(INSTALL-TXT) $(ARLIBS) $(DESTDIR)$(libdir) && \
 	if [ -f libTw.so.$(VERSION) ]; then \
 		$(INSTALL) libTw.so.$(VERSION) $(DESTDIR)$(libdir) && \
 		$(LN) libTw.so.$(VERSION) $(DESTDIR)$(libdir)/libTw.so.$(SO_VER) && \

@@ -1,0 +1,217 @@
+Changes from the prerelease to version 0.8:
+
+o Enhanced the shorthand notation `keycode xx = a', where `a' is an
+  ASCII letter and changed `dumpkeys' and `loadkeys' accordingly.
+  Now this entry defines useful values in shift+control, meta+shift,
+  meta+control and meta+control+shift keytables, too. AltGr entries
+  also default now to the value of non-AltGr entries.
+o Added the possibility to split long lines into multiple shorter ones
+  by appending a backslash at the end of each partial line.
+o Added a version number and a short usage message to `dumpkeys'
+o Added the options --short-info, --long-info (replaces the symbol
+  dump, -s), --numeric, --full-table, --funcs-only, --keys-only to
+  `dumpkeys'. See manpage for more info.
+o Added a version number, a short usage message and the ability to load
+  multiple map files at a time to `loadkeys'.
+o Added the utility `mktable' to generate the kernel default binding
+  table automatically from the currently loaded keytable.
+o Added the utility `showkey' for interactively inspecting the
+  scancodes and keycode values sent by key presses and releases.
+o Fixed the value of Uncaps_Shift, eliminated obsolete Map_xx symbols
+o Added Meta_Control_xxx symbols.
+o Added symbols for locking modifiers (kernel 0.99pl12 doesn't support this)
+
+Changes from version 0.8 to version 0.81:
+
+o Updated and fixed the keytable files
+o Minor additions to the loadkeys man page
+o Added support for ISO 8859-{2,3,4} character symbols, updated
+  dumpkeys man page accordingly
+
+Changes from version 0.81 to version 0.82 (aeb@cwi.nl):
+
+o Made mktable an option of loadkeys, so that the file defkeymap.c
+  produced is independent of the current kernel, and independent of
+  the current keyboard settings. (The old mktable program is now
+  obsolete.)
+o After  dumpkeys > x; loadkeys x; dumpkeys > y  the files x and y
+  should be identical. They were not. I hope they are now.
+o Showkey now restores the original keyboard mode.
+o Loadkeys now accepts quotes and backslashes in strings.
+o Added compose key support.
+
+Changes for 0.83 (aeb):
+
+o Added KT_LETTER, so that CapsLock can work correctly.
+  For the time being, this is denoted by a leading + in the keymap.
+o Added setfont, showfont, mapscrn.
+o Added setleds, setmetamode.
+o Put data by default in three subdirectories of /usr/lib/kbd.
+
+Changes for 0.84 (aeb):
+
+o Added more compose key support to loadkeys.
+o Setfont, loadkeys and mapscrn look by default in /usr/lib/kbd/*.
+o Setfont can read codepage font files (and select a font from them).
+o Many minor changes.
+
+Changes for 0.85-0.86 (aeb):
+
+o Minor things only. Added contributed keymaps and fonts.
+
+Changes for 0.87 (aeb):
+
+o Added iso-8859-8 support. Added "charset" directive.
+o Corrected a typo in "trivial".
+o Added kbd_mode.
+o Extended kbd.FAQ. Added contributed keymaps and fonts.
+
+Changes for 0.88 (aeb):
+
+o Added dynamic keymap support. Added "keymaps" directive.
+o Added dynamic console allocation. Added disalloc.
+o Added resize.
+o Changed LED handling.
+o Added the contributed codepage.c (to extract codepages from a
+  DOS .cpi file).
+o Many minor changes.
+
+Changes for 0.89 (aeb):
+
+o Some minor things.
+
+Changes for 0.90 (aeb):
+
+o Changed setfont to subsume mapscrn and escape sequence.
+o Added hpa's psftable stuff.
+o Added Unicode stuff (requires kernel 1.1.92 or later).
+
+Changes for 0.91 (aeb):
+
+o Added hpa's setfont patch.
+
+Changes for 0.94 (aeb):
+
+o Added keyword alt_is_meta.
+
+Changes for 0.96 (aeb):
+
+o Added keywords like strings_as_usual. Added keymap include files.
+o Reorganized keymap directory.
+o Added loading of compressed fonts.
+o Added iso-8859-9 handling.
+o Added -a option to showkey.
+
+Changes for 0.98 (aeb):
+
+o Added internationalization and Dutch texts (nl.po)
+
+Changes for 1.00 (aeb):
+
+o Introduced psf2 fonts, allowing one to describe a font position
+  with a Unicode sequence (base character with combining accents).
+o Reorganized fonts; added Unicode table to most of them.
+  The consolefonts directory got a subdirectory partialfonts.
+  The Unicode maps got a directory of their own.
+o Moved kbdrate from util-linux to here.
+o Added -s (sort) option to getunimap.c.
+o Setfont now accepts several psf2 fonts, each of arbitrary length.
+  Setfont now accepts certain codepage fonts.
+  Setfont now accepts a text file containing a list of fonts to load.
+o Made distinction between koi8-r and koi8-u.
+o spawn_console and spawn_login invoke openvt, not open.
+
+Changes for 1.03 (aeb):
+
+o Added doc/scancodes/* with information on the scancodes produced
+  by PC keyboards.
+o Added by.map.
+o Added Unicode maps to Greek fonts.
+
+Changes for 1.04 (aeb, Olaf Hering, Kurt Garloff):
+
+o Programs:
+  - setfont etc: support for font widths other than 8
+  - loadkeys.y: also look at mac/include
+  - cp1250.syms.h: new
+  - setlogcons: new
+  - contrib/showfont: new
+  - contrib/psfsplit: new
+  - cad: don't create a temp file
+o Documentation:
+  - Minor changes to kbd FAQ. Extended scancode FAQ. New A20 docs.
+  - Minor changes to man pages.
+o Keymaps:
+  - New keymap include dir mac/include.
+  - Added euro1.map and euro2.map.
+  - Added some compose definitions to compose.latin and compose.latin1.
+  - Deleted be-latin1.map and renamed be2-latin1.map to be-latin1.map.
+    There seems to be consensus that it is better than the original
+    be-latin1.map.
+  - Renamed hebrew.map to il-phonetic.map and added il.map.
+  - Applied fix from Jochen Hein to de.map.
+  - Applied SuSE fixes to mac-de-latin1-nodeadkeys.map, us.map, de*.map.
+  - Added mac-be.map, mac-de-latin1.map, mac-de_CH.map, mac-dk-latin1.map,
+    mac-es.map, mac-fi-latin1.map, mac-fr.map, mac-fr_CH-latin1.map,
+    mac-it.map, mac-pt-latin1.map, mac-se.map, mac-uk.map, mac-us.map,
+    br-latin1-abnt2.map, br-latin1-us.map, cz.map, de_CH-latin1.map,
+    mk.map (renamed the old one to mk0.map), mk-cp1251.map, mk-utf.map,
+    ro_win.map and cz-cp1250.map.
+o Unimaps:
+  - Added cp1250.uni.
+o Console translations:
+  - Added iso02_to_cp1250.trans.
+o Fonts:
+  - Added cybercafe.fnt, sun12x22.psfu, cp1250.psfu,
+    cp857.08, cp857.14, cp857.16.
+
+Changes for 1.05 (aeb)
+
+o Programs:
+  - kdmapop.c, kdmapop.h, utf8.c, utf8.h: new
+  - loadunimap.c: also allow a range mapped to a single Unicode symbol
+  - mapscrn.c: also allow a character given as utf8 string
+  - mapscrn.c: handle PIO_SCRNMAP and PIO_UNISCRNMAP with same -m/-om options
+  - showfont.c: also show fonts larger than 256 glyphs
+  - unicode_start: updated; added text from Bruno Haible
+o Documentation:
+  - font-formats, unicode_start.1, unicode_stop.1: new
+  - loadunimap.8, mapscrn.8, setfont.8: updated
+o Fonts:
+  - Added drdos8xN.psfu
+o Unimaps:
+  - Added cybercafe.uni
+o Console translations:
+  - Added 8859-N_to_uni.trans, cpNNNN_to_uni.trans
+o Data:
+  - Corrected corrupted 737.cp, lat5-N.psfu, baltic.trans
+
+Changes for 1.06 (aeb)
+
+o Programs:
+  - Some Makefile changes (Peter Breitenlohner)
+  - Added fgconsole to the installed programs
+  - resizecons.c: removed .psf extension from default fonts (bero)
+  - psffontop.c: correction to handling of unicode sequences (Kurt Garloff)
+  - loadkeys: work better in the presence of symlinks
+o Documentation:
+  - Removed scancode docs (these will be distributed separately, had grown to
+    over 1 MB; see also http://www.win.tue.nl/~aeb/linux/kbd/scancodes.html)
+o Fonts:
+  - Added iso02-12x22.psfu (Jacek Lipkowski)
+  - Renamed sun-12x22.psfu to iso01-12x22.psfu since Kurt Garloff
+    explained that it was not the kernel font but a modified version.
+    Added the original sun-12x22.psfu.
+  - Renamed lat7-16.psfu to iso07u-16.psfu. (lat7 is iso13, not iso07)
+  - Added lat7a-14.psfu (earlier: lt-brim*) and lat7a-16.psf (bad fonts)
+  - Added lat7-14.psfu (ugly, but with the right characters)
+o Unimaps:
+  - Renamed lat7u.uni to iso07u.uni since it is not a Latin-7 map.
+  - Added lat7.uni
+o Keymaps (mostly Kurt Garloff, SuSE):
+  - Corrected br-latin1-abnt2.map (Frédéric Meunier), mac-de_CH.map,
+    sunt5-uk.map
+  - Added missing Latin-1 symbols to fi-latin1.map (Marko Myllynen)
+  - Added sundvorak.map, sunt4-no-latin1.map, sunt5-cz-us.map,
+    sunt5-us-cz.map, mac-dvorak.map, mac-qwertz-layout.inc
+

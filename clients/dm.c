@@ -16,6 +16,7 @@
 #include <signal.h>
 #include <grp.h>
 #include <pwd.h>
+#include <sys/stat.h>
 
 #include "Tw/Tw.h"
 #include "Tw/Twkeys.h"
@@ -59,6 +60,9 @@
 #define DM_GADGET_CLEAR 2
 #define DM_GADGET_CONSOLE 3
 
+#define DM_ATTACH 1
+#define DM_DISPLAY 2
+
 static tmsgport DM_MsgPort;
 static tmenu DM_Menu;
 static tscreen DM_Screen;
@@ -70,7 +74,7 @@ static TW_VOLATILE pid_t ServerPid = (pid_t)-1, AttachPid = (pid_t)-1;
 
 static byte * TW_CONST * Args;
 static TW_CONST byte *hw_name = "-hw=tty", *title;
-static byte Privileges = TW_PRIV_NONE;
+static byte use_twdisplay = DM_ATTACH, Privileges = TW_PRIV_NONE;
 
 typedef struct s_data {
     byte txt[30];
@@ -87,10 +91,12 @@ static void Usage(void) {
 	    " -V, -version            output version information and exit\n"
 	    " -k, -kill               kill twin server upon display detach\n"
 	    " -q, -quiet              quiet; suppress diagnostic messages\n"
+	    " -attach                 use \"twattach\" to start display (default)\n"
+	    " -display                use \"twdisplay\" to start display\n"
 	    " -suidroot               tell twin to keep suid root privileges\n"
 	    " -sgidtty                tell twin to keep sgid tty privileges\n"
 	    " -title=<title>          set window title\n"
-	    " -hw=<arg>               set display hw to use\n");
+	    " -hw=<arg>               set display hw to use (default: -hw=tty)\n");
 }
 
 static void ShowVersion(void) {
@@ -110,6 +116,10 @@ static void ParseArgs(void) {
 	    DM_Kill = TRUE;
 	} else if (!strcmp(s, "-q") || !strcmp(s, "-quiet")) {
 	    quiet = TRUE;
+	} else if (!strcmp(s, "-attach")) {
+	    use_twdisplay = DM_ATTACH;
+	} else if (!strcmp(s, "-display")) {
+	    use_twdisplay = DM_DISPLAY;
 	} else if (!strcmp(s, "-suidroot")) {
 	    Privileges = TW_PRIV_SUIDROOT;
 	} else if (!strcmp(s, "-sgidtty")) {
@@ -118,6 +128,9 @@ static void ParseArgs(void) {
 	    title = s+7;
 	} else if (!strncmp(s, "-hw=", 4)) {
 	    hw_name = s;
+	} else if (!strcmp(s, "--")) {
+	    /* '--' means end of options */
+	    break;
 	} else {
 	    fprintf(stderr, "twdm: unknown option: `%s'\n"
 		    "\ttry `twdm -help' for usage summary.\n", s);
@@ -125,6 +138,27 @@ static void ParseArgs(void) {
 	}
 	Args++;
     }
+}
+
+static void SetHOME(void) {
+#if defined(TW_HAVE_SETENV) || defined(TW_HAVE_PUTENV)
+    char *HOME = getenv("HOME");
+    struct stat buf;
+    if ((!HOME || !strcmp(HOME, "/")) &&
+# ifdef TW_HAVE_LSTAT
+	lstat("/root", &buf) >= 0 &&
+# else
+	stat("/root", &buf) >= 0 &&
+# endif
+	S_ISDIR(buf.st_mode)) {
+	
+# ifdef TW_HAVE_SETENV
+	setenv("HOME","/root",1);
+# else
+	putenv("HOME=/root");
+# endif
+    }
+#endif /* defined(TW_HAVE_SETENV) || defined(TW_HAVE_PUTENV) */
 }
 
 static byte InitServer(void) {
@@ -187,7 +221,16 @@ static void shortsleep(void) {
 }
 
 static byte InitAttach(void) {
+    char *attach, *prefix_attach;
     char buff[] = "-twin@:\0\0\0";
+
+    if (use_twdisplay == DM_ATTACH || (use_twdisplay == 0 && !strcmp(hw_name, "-hw=tty"))) {
+        attach = "twattach";
+	prefix_attach = BINDIR_PREFIX "twattach";
+    } else {
+        attach = "twdisplay";
+	prefix_attach = BINDIR_PREFIX "twdisplay";
+    }
 
     strncpy(buff+6, DM_Display, 4);
 
@@ -197,9 +240,9 @@ static byte InitAttach(void) {
     switch ((AttachPid = fork())) {
       case 0:
 	/* child */
-	execl(BINDIR_PREFIX "twattach", "twattach", "-q", buff, hw_name, NULL);
-	execlp("twattach", "twattach", "-q", buff, hw_name, NULL);
-	fprintf(stderr, "twdm: exec(twattach) failed: %s\n", strerror(errno));
+	execl(prefix_attach, attach, "-q", buff, hw_name, NULL);
+	execlp(attach, attach, "-q", buff, hw_name, NULL);
+	fprintf(stderr, "twdm: exec(%s) failed: %s\n", attach, strerror(errno));
 	exit(1);
 	return FALSE;
       case (pid_t)-1:
@@ -211,7 +254,7 @@ static byte InitAttach(void) {
 	break;
     }
 
-    /* sleep a little to let twattach start up */
+    /* sleep a little to let twdisplay start up */
     shortsleep();
     
     return TRUE;
@@ -358,6 +401,9 @@ static void Login(void) {
     TwFlush();
     sleep(3);
     TwMapWindow(DM_pass, DM_Window);
+    /* we slept. swallow all events ready to be received */
+    while (TwPeekMsg())
+	TwReadMsg(FALSE);
 }
 
 static void Logout(void) {
@@ -566,6 +612,7 @@ int main(int argc, char *argv[]) {
     Args = (byte * TW_CONST *)argv + 1;
     
     ParseArgs();
+    SetHOME();
     
     if (getuid() != 0) {
 	fprintf(stderr, "Only root wants to run twdm\n");
@@ -583,7 +630,8 @@ int main(int argc, char *argv[]) {
 	
 	fd = TwConnectionFd();
 	FD_ZERO(&fset);
-	
+
+	/* wait for user to login */
 	while (AttachPid != (pid_t)-1 && ServerPid != (pid_t)-1 &&
 	       logged_in == FALSE && !TwInPanic()) {
 
@@ -624,6 +672,9 @@ int main(int argc, char *argv[]) {
 	    FD_SET(fd, &fset);
 	    select(fd+1, &fset, NULL, NULL, NULL);
 	}
+	
+	
+	/* wait for user to logout */
 	while (AttachPid != (pid_t)-1 && ServerPid != (pid_t)-1 &&
 	       logged_in == TRUE && !TwInPanic()) {
 

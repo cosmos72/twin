@@ -22,7 +22,7 @@ OBJS_twbiff=biff.o
 #
 TOPDIR=..
 
-LDFLAGS+=-L$(TOPDIR)/lib -lTw
+LD_FLAGS+=-L$(TOPDIR)/lib -lTw
 
 all: everything
 
@@ -47,7 +47,7 @@ endif
 
 #
 # include the do-everything file.
-# Must correctly set all CFLAGS* and LDFLAGS* before including this!
+# Must correctly set all CC_FLAGS* and LD_FLAGS* before including this!
 #
 include $(TOPDIR)/makerules
 

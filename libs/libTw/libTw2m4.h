@@ -477,6 +477,29 @@ void Tw_SetFontTranslation(tw_d TwD, TW_CONST byte *a1) {
     
     UNLK;
 }
+void Tw_SetUniFontTranslation(tw_d TwD, TW_CONST hwfont *a1) {
+    
+    uldat len1;
+    uldat My;
+    LOCK;
+    if (Fd != TW_NOFD && ((My = id_Tw[order_SetUniFontTranslation]) != TW_NOID ||
+		       (My = FindFunctionId(TwD, order_SetUniFontTranslation)) != TW_NOID)) {
+	if (InitRS(TwD)) {
+            My = (0 + (len1 = (0x80) * sizeof(hwfont)) );
+            if (WQLeft(My)) {
+                PushV(s,len1,a1); 
+	            Send(TwD, (My = NextSerial(TwD)), id_Tw[order_SetUniFontTranslation]);
+                    UNLK;return;
+            }
+	}
+	/* still here? must be out of memory! */
+	Errno = TW_ENO_MEM;
+	Fail(TwD);
+    } else if (Fd != TW_NOFD)
+	FailedCall(TwD, TW_ENO_FUNCTION, order_SetUniFontTranslation);
+    
+    UNLK;
+}
 
 void Tw_DeleteObj(tw_d TwD, tobj a1) {
     

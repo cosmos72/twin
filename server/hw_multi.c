@@ -1251,23 +1251,35 @@ byte KeyboardEventCommon(udat Code, udat ShiftFlags, udat Len, CONST byte *Seq) 
 #endif
 
 byte InitTransUser(void) {
-    byte c;
+    udat c;
 #ifdef __linux__
-    scrnmap_t map[E_TABSZ];
-    
-    if (ioctl(0, GIO_SCRNMAP, map) == 0) {
-	if (sizeof(scrnmap_t) == sizeof(hwfont))
-	    CopyMem(map+0x80, All->Gtranslations[USER_MAP], sizeof(hwfont) * 0x80);
-	else {
-	    for (c = 0; c < 0x80; c++)
-		All->Gtranslations[USER_MAP][c] = (hwfont)map[c | 0x80];
-	}
+
+# ifdef CONF__UNICODE
+#  define SCRNMAP_T unsigned short
+#  define SCRNMAP_IOCTL GIO_UNISCRNMAP
+# else
+#  define SCRNMAP_T unsigned char
+#  define SCRNMAP_IOCTL GIO_SCRNMAP
+# endif
+
+    SCRNMAP_T map[E_TABSZ];
+
+    if (ioctl(0, SCRNMAP_IOCTL, map) == 0) {
+	
+	if (sizeof(SCRNMAP_T) == sizeof(hwfont))
+	    CopyMem(map + 0x80, All->Gtranslations[USER_MAP] + 0x80, sizeof(hwfont) * 0x80);
+	else
+	    for (c = 0x80; c < 0x100; c++)
+		All->Gtranslations[USER_MAP][c] = (hwfont)map[c];
     } else
 #endif
     {
-	for (c = 0; c < 0x80; c++)
-	    All->Gtranslations[USER_MAP][c] = c | 0x80;
+	/* if nothing better is available, initialize to direct-to-font translation */
+	for (c = 0x80; c < 0x100; c++)
+	    All->Gtranslations[USER_MAP][c] = (hwfont)c | 0xf000;
     }
+    for (c = 0; c < 0x80; c++)
+	All->Gtranslations[USER_MAP][c] = (hwfont)c;
     return TRUE;
 }
 

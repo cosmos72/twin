@@ -71,7 +71,8 @@ PROTO(void,v, NeedResize,Display,0)
 PROTO(void,v, Attach,HW,0, uldat,_, byte,V(A(1)), byte,_)
 PROTO(byte,_, Detach,HW,0, uldat,_, byte,V(A(1)))
 
-PROTO(void,v,  Set,FontTranslation,0, byte,V(0x80))
+PROTO(void,v,  Set,   FontTranslation,0,  byte,V(0x80))
+PROTO(void,v,  Set,UniFontTranslation,0,hwfont,V(0x80))
 
 PROTO(void,v,     Delete,Obj,0, obj,x)
 PROTO(void,v,ChangeField,Obj,2, obj,x, udat,_, uldat,_, uldat,_)

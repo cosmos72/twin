@@ -448,9 +448,7 @@ INLINE void X11_Mogrify(dat x, dat y, uldat len) {
 		_col = col;
 	    }
 #ifdef CONF__UNICODE
-	    f = HWFONT(*V);
-	    if (xUTF_16_to_charset)
-		f = xUTF_16_to_charset(f);
+	    f = xUTF_16_to_charset(HWFONT(*V));
 	    buf[buflen  ].byte1 = f >> 8;
 	    buf[buflen++].byte2 = f & 0xFF;
 #else
@@ -470,9 +468,7 @@ static void X11_HideCursor(dat x, dat y) {
     hwcol col = HWCOL(V);
 #ifdef CONF__UNICODE
     XChar2b c;
-    hwfont f = HWFONT(V);
-    if (xUTF_16_to_charset)
-	f = xUTF_16_to_charset(f);
+    hwfont f = xUTF_16_to_charset(HWFONT(V));
     c.byte1 = f >> 8;
     c.byte2 = f & 0xFF;
 #else
@@ -507,9 +503,7 @@ static void X11_ShowCursor(uldat type, dat x, dat y) {
 	if (xsgc.background != xcol[COLBG(v)])
 	    XSetBackground(xdisplay, xgc, xsgc.background = xcol[COLBG(v)]);
 #ifdef CONF__UNICODE
-	f = HWFONT(V);
-	if (xUTF_16_to_charset)
-	    f = xUTF_16_to_charset(f);
+	f = xUTF_16_to_charset(HWFONT(V));
 	c.byte1 = f >> 8;
 	c.byte2 = f & 0xFF;
 	XDrawImageString16(xdisplay, xwindow, xgc, x * xwfont, y * xhfont + xupfont, &c, 1);
@@ -914,6 +908,15 @@ static Tutf_function X11_UTF_16_to_charset_function(CONST byte *charset) {
     
     return Tutf_UTF_16_to_charset_function(i);
 }
+
+
+static hwfont X11_UTF_16_to_UTF_16(hwfont c) {
+    if ((c & 0xFE00) == 0xF000)
+	/* direct-to-font zone */
+	c &= 0x01FF;
+    return c;
+}
+
 #endif
 
     
@@ -1038,7 +1041,8 @@ byte X11_InitHW(void) {
 	    XStoreName(xdisplay, xwindow, name);
 	    
 #ifdef CONF__UNICODE
-	    xUTF_16_to_charset = X11_UTF_16_to_charset_function(charset);
+	    if (!(xUTF_16_to_charset = X11_UTF_16_to_charset_function(charset)))
+		xUTF_16_to_charset = X11_UTF_16_to_UTF_16;
 #endif	    
 	    /*
 	     * ask ICCCM-compliant window manager to tell us when close window

@@ -1,6 +1,6 @@
 
-#ifndef _TT_DEFS_H
-#define _TT_DEFS_H
+#ifndef _TT_TYPES_H
+#define _TT_TYPES_H
 
 
 #define Min2(a,b) ((a) < (b) ? (a) : (b))
@@ -47,5 +47,5 @@ struct s_ttshape {
 };
 
 
-#endif /* _TT_DEFS_H */
+#endif /* _TT_TYPES_H */
 

@@ -342,7 +342,8 @@ static byte vcsa_InitVideo(void) {
 static void vcsa_QuitVideo(void) {
     linux_MoveToXY(0, DisplayHeight-1);
     linux_SetCursorType(LINECURSOR);
-    fputs("\033[0m\033[3l\n", stdOUT); /* clear colors, TTY_DISPCTRL */
+    /* restore original colors, alt cursor keys, keypad settings */
+    fputs("\033[0m\033[?1l\033>\n", stdOUT);
     
     close(VcsaFd);
     
@@ -532,9 +533,15 @@ static byte linux_InitVideo(void) {
 	return FALSE;
     }
     
+    if (ttypar[0]==6 && ttypar[1]!=3 && ttypar[1]!=4)
+	/* plain linux console supports utf-8, and also twin >= 0.3.11 does. */
+	tty_can_utf8 = TRUE;
+    else
+	tty_can_utf8 = FALSE;
+
     tc_scr_clear = "\033[2J";
-    fprintf(stdOUT, "\033[0;11m%s\033[3h", tc_scr_clear);
-    /* clear colors, temporary escape to IBMPC consolemap, clear screen, set TTY_DISPCTRL */
+    fprintf(stdOUT, "\033[0;11m\033%%@%s\033[3h", tc_scr_clear);
+    /* clear colors, temporary escape to IBMPC consolemap, disable UTF-8 mode, clear screen, set TTY_DISPCTRL */
     
     HW->FlushVideo = linux_FlushVideo;
     HW->FlushHW = stdout_FlushHW;
@@ -577,16 +584,17 @@ static byte linux_InitVideo(void) {
 static void linux_QuitVideo(void) {
     linux_MoveToXY(0, DisplayHeight-1);
     linux_SetCursorType(LINECURSOR);
-    fputs("\033[0;10m\033[3l\n", stdOUT);
-    /* restore original colors, consolemap and TTY_DISPCTRL */
-    
+    /* restore original colors, consolemap, TTY_DISPCTRL, alt cursor keys, keypad settings */
+    fputs("\033[0;10m\033[?1l\033>\n", stdOUT);
+   
     HW->QuitVideo = NoOp;
 }
 
 
 #define CTRL_ALWAYS 0x0800f501	/* Cannot be overridden by TTY_DISPCTRL */
 
-#define linux_MogrifyInit() fputs("\033[m", stdOUT); _col = COL(WHITE,BLACK)
+#define linux_MogrifyInit() fputs("\033[m", stdOUT); _col = COL(WHITE,BLACK);
+#define linux_MogrifyFinish() do { if (utf8used) utf8used = FALSE, fputs("\033%@", stdOUT); } while (0)
 
 INLINE void linux_SetColor(hwcol col) {
     static byte colbuf[] = "\033[2x;2x;4x;3xm";
@@ -616,6 +624,22 @@ INLINE void linux_SetColor(hwcol col) {
     fputs(colbuf, stdOUT);
 }
 
+static byte utf8used;
+
+#ifdef CONF__UNICODE
+static void linux_MogrifyUTF8(hwfont h) {
+    byte c;
+    if (!utf8used)
+	utf8used = TRUE, fputs("\033%G", stdOUT);
+    if (h >= 0x800) {
+	c = (h >> 12) | 0xE0, putc(c, stdOUT);
+	c = ((h >> 6) & 0x3F) | 0x80, putc(c, stdOUT);
+    } else
+	c = (h >> 6) | 0xC0, putc(c, stdOUT);
+    c = (h & 0x3F) | 0x80, putc(c, stdOUT);
+}
+#endif
+
 INLINE void linux_Mogrify(dat x, dat y, uldat len) {
     hwattr *V, *oV;
     hwcol col;
@@ -637,7 +661,17 @@ INLINE void linux_Mogrify(dat x, dat y, uldat len) {
 	
 	    c = _c = HWFONT(*V);
 #ifdef CONF__UNICODE
-	    c = tty_UTF_16_to_charset(c);
+	    c = tty_UTF_16_to_charset(_c);
+	    if (tty_can_utf8 && (tty_charset_to_UTF_16[c] != _c || (utf8used && c > 0x80))) {
+		/*
+		 * translation to charset did not find an exact match,
+		 * use utf-8 to output this char.
+		 * also use utf-8 if we already output ESC % G and we must putc(c > 0x80),
+		 * which would be interpreted as part of an utf-8 sequence.
+		 */
+		linux_MogrifyUTF8(_c);
+		continue;
+	    }
 #endif
 	    
 	    if ((c < 32 && ((CTRL_ALWAYS >> c) & 1)) || c == 128+27) {
@@ -664,7 +698,17 @@ INLINE void linux_SingleMogrify(dat x, dat y, hwattr V) {
 	
     c = _c = HWFONT(V);
 #ifdef CONF__UNICODE
-    c = tty_UTF_16_to_charset(c);
+    c = tty_UTF_16_to_charset(_c);
+    if (tty_can_utf8 && (tty_charset_to_UTF_16[c] != _c || (utf8used && c > 0x80))) {
+	/*
+	 * translation to charset did not find an exact match,
+	 * use utf-8 to output this char
+	 * also use utf-8 if we already output ESC % G and we must putc(c > 0x80),
+	 * which would be interpreted as part of an utf-8 sequence.
+	 */
+	linux_MogrifyUTF8(_c);
+	return;
+    }
 #endif
 
     if ((c < 32 && ((CTRL_ALWAYS >> c) & 1)) || c == 128+27) {
@@ -736,6 +780,7 @@ static void linux_FlushVideo(void) {
     
     if (!ChangedVideoFlag) {
 	HW->UpdateMouseAndCursor();
+	linux_MogrifyFinish();
 	return;
     }
 
@@ -802,8 +847,9 @@ static void linux_FlushVideo(void) {
 	else if (HW->FlagsHW & FlHWChangedMouseFlag)
 	    HW->ShowMouse();
     }
-    
     linux_UpdateCursor();
+    
+    linux_MogrifyFinish();
     
     HW->FlagsHW &= ~FlHWChangedMouseFlag;
 }

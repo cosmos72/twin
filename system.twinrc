@@ -19,7 +19,7 @@
 
 # First command:
 #
-# set screen background (UNFINISHED)
+# set screen background
 Background 1 High Black On Blue (
    "\xb1"
 )
@@ -381,7 +381,7 @@ Mouse H1  M  Interactive Screen
 # list of all RC commands available for ~/.twinrc
 # 
 # AddScreen <screen name>
-# (UNFINISHED)
+# # create a new virtual screen
 # 
 # AddToMenu <name> (
 #   "entry" <function>
@@ -399,7 +399,7 @@ Mouse H1  M  Interactive Screen
 #   "string"
 #   ... 
 # )
-# # set screen background (UNFINISHED)
+# # set screen background
 # 
 # Beep
 # 

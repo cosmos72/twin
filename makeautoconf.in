@@ -3,6 +3,7 @@
 ifeq ($(makeautoconf),)
   makeautoconf=included
 
+@SET_MAKE@
 
 # set installation directories
 
@@ -21,9 +22,9 @@ includedir = @includedir@
 CC=@CC@
 INSTALL=@INSTALL@
 
-AC_CFLAGS=@CFLAGS@ @CPPFLAGS@
+CC_AC_FLAGS=@CFLAGS@ @CPPFLAGS@
 #CFLAGS+=@DEFS@
-LDFLAGS+=@LDFLAGS@
+LD_FLAGS+=@LDFLAGS@
 
 LD_LIBSOCKET=@LD_LIBSOCKET@ @LD_LIBNSL@
 

@@ -182,6 +182,12 @@
 #define T_ALIASES_IBM865	"865", "CP865"
 
 
+#define T_MAP_CP866	CP866
+#define T_MAP_866	CP866
+#define T_NAME_CP866	"CP866"
+#define T_ALIASES_CP866	"866"
+
+
 
 typedef hwfont *Tutf_array;
 typedef hwfont (*Tutf_function)(hwfont);
@@ -222,6 +228,7 @@ hwfont Tutf_UTF_16_to_ISO_8859_9(hwfont c);
 hwfont Tutf_UTF_16_to_IBM437(hwfont c);
 hwfont Tutf_UTF_16_to_IBM850(hwfont c);
 hwfont Tutf_UTF_16_to_IBM865(hwfont c);
+hwfont Tutf_UTF_16_to_CP866(hwfont c);
 
 /* specific translation arrays */
 extern hwfont Tutf_ANSI_X3_4_to_UTF_16[0x100];
@@ -237,6 +244,7 @@ extern hwfont Tutf_ISO_8859_9_to_UTF_16[0x100];
 extern hwfont Tutf_IBM437_to_UTF_16[0x100];
 extern hwfont Tutf_IBM850_to_UTF_16[0x100];
 extern hwfont Tutf_IBM865_to_UTF_16[0x100];
+extern hwfont Tutf_CP866_to_UTF_16[0x100];
 
 extern hwfont Tutf_IBM437_to_ANSI_X3_4[0x100];
 

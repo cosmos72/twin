@@ -1,0 +1,25 @@
+This is kbd-1.06.tar.gz
+
+This package contains keytable files and keyboard utilities compatible
+with kernel version 1.1.54 and later. Setfont requires 1.1.92 or later.
+Major changes in keyboard and console handling occurred in 1.3.1.
+The current version of kbd might not work anymore on kernels older than that.
+
+This distribution contains no binaries - the sources depend on the
+kernel version - compile them yourself.
+
+To install this package, unpack it somewhere and issue the commands
+"./configure", "make" and "make install".  This copies the utilities
+to /usr/bin, man pages to /usr/man/man{1,4,5,8} and data files to the
+subdirectories keymaps, unimaps, consolefonts, consoletrans and videomodes
+of the datadirectory chosen during configure, probably /usr/lib/kbd.
+
+Older versions of kbd used /usr/lib/kbd/keytables (instead of .../keymaps).
+This directory can now be removed. (Just to be sure, preserve a copy
+of your favourite keymap, for example in /usr/lib/kbd/keymaps/mykeymap.
+Note that it may be used from a script in /etc/rc.d/rc.local or so.)
+
+Report problems with this package to Andries Brouwer <aeb@cwi.nl>.
+
+May 2001
+

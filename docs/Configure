@@ -124,7 +124,15 @@
 	 
    Answer `y' if you want libraries (libTw, libTutf, libTT) to be thread-safe.
    You need pthread.h and libpthread for this to work.
-   
+
+	(CONF_SOCKET_ALIEN)
+	 -> Sockets: support non-native architectures [Y/n] ?
+	 
+   Answer `y' if you want clients with different data sizes / endianity
+   to be able to connect to the server. In short, this adds server-side
+   32<->64 bit and little<->big endian translations, letting server talk
+   with clients running on different architectures than the server.
+
 	(CONF_WM)
 	Builtin Window Manager: absolutely needed! [Y/m/n] ?
 	

@@ -61,7 +61,7 @@ uldat max_list = sizeof(field_list)/sizeof(field_list[0]);
 
 /* these are hardcoded in libTw ABI, so we can hardcode them here too. */
 byte *type_list[TWS_highest+2] = {
-    "void", "byte", "dat", "ldat", "hwcol", "time_t", "frac_t", "hwfont", "hwattr", "obj_id", "unknown"
+    "void", "byte", "dat", "ldat", "hwcol", "time_t", "frac_t", "hwfont", "hwattr", "tobj", "unknown"
 };
 
 

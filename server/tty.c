@@ -81,6 +81,9 @@ static byte dirtyN;
 #define saveG		Data->saveG
 #define saveG0		Data->saveG0
 #define saveG1		Data->saveG1
+#define utf		Data->utf
+#define utf_count	Data->utf_count
+#define utf_char	Data->utf_char
 #define newLen		Data->newLen
 #define newMax		Data->newMax
 #define newName	Data->newName
@@ -700,8 +703,11 @@ INLINE void status_report(void) {
  * this is what the terminal answers to a ESC-Z or csi0c query.
  */
 INLINE void respond_ID(void) {
-    respond_string("\033[?6;4c" /* VT102ID (returned by linux console) is "\033[?6c" */);
-    /* "\033[?6;3c " was used by older twin and lacks "\033[?999h" (report mouse motion) */
+    /* VT102ID (returned by linux console) is "\033[?6c" */
+    /* twin <= 0.3.8  reports "\033[?6;3c" to indicate xterm-style mouse features */
+    /* twin <= 0.3.10 reports "\033[?6;4c", can also report mouse motion with no buttons pressed */
+    /* twin >= 0.3.11 reports "\033[?6;5c", also supports utf-8 mode */
+    respond_string("\033[?6;5c");
 }
 
 static void set_mode(byte on_off) {
@@ -906,6 +912,8 @@ static void reset_tty(byte do_clear) {
      */
     setCharset(G0 = saveG0 = IBMPC_MAP);
     G1 = saveG1 = GRAF_MAP;
+
+    utf = utf_count = utf_char = 0;
     
     /*
     bell_pitch = DEFAULT_BELL_PITCH;
@@ -1299,7 +1307,6 @@ INLINE void write_ctrl(byte c) {
 	break;
 	
       case ESpercent:
-#if 0
 	switch (c) {
 	  case '@':  /* defined in ISO 2022 */
 	    utf = 0;
@@ -1309,7 +1316,6 @@ INLINE void write_ctrl(byte c) {
 	    utf = 1;
 	    break;
 	}
-#endif
 	break;
       case ESfunckey:
 	break;
@@ -1440,16 +1446,51 @@ static void common(window Window) {
 	ClearHilight(Win);
 }
 
+/*
+ * combine (*pc) with partial utf-8 char stored in utf_char.
+ * return TRUE if the utf-8 char is complete, and can be displayed.
+ */
+static byte combine_utf(hwfont *pc) {
+    hwfont c = *pc;
+    
+    if (utf_count > 0 && (c & 0xc0) == 0x80) {
+	utf_char = (utf_char << 6) | (c & 0x3f);
+	utf_count--;
+	if (utf_count == 0)
+	    *pc = utf_char;
+	return utf_count == 0;
+    }
+
+    if ((c & 0xe0) == 0xc0) {
+	utf_count = 1;
+	utf_char = (c & 0x1f);
+    } else if ((c & 0xf0) == 0xe0) {
+	utf_count = 2;
+	utf_char = (c & 0x0f);
+    } else if ((c & 0xf8) == 0xf0) {
+	utf_count = 3;
+	utf_char = (c & 0x07);
+    } else if ((c & 0xfc) == 0xf8) {
+	utf_count = 4;
+	utf_char = (c & 0x03);
+    } else if ((c & 0xfe) == 0xfc) {
+	utf_count = 5;
+	utf_char = (c & 0x01);
+    } else
+	utf_count = 0;
+    return FALSE;
+}
+
 /* this is the main entry point */
 void TtyWriteAscii(window Window, ldat Len, CONST byte *AsciiSeq) {
     hwfont c;
     byte ok;
-
+    
     if (!Window || !Len || !AsciiSeq || !W_USE(Window, USECONTENTS) || !Window->USE.C.TtyData)
 	return;
     
     common(Window);
-
+    
     while (!(*Flags & TTY_STOPPED) && Len) {
 	c = *AsciiSeq++;
 	Len--;
@@ -1461,15 +1502,24 @@ void TtyWriteAscii(window Window, ldat Len, CONST byte *AsciiSeq) {
 	 * as the console would be pretty useless without them; to display an arbitrary
 	 * font position use the direct-to-font zone in UTF-8 mode.
 	 */
-	if (*Flags & TTY_SETMETA)
-	    c |= 0x80;
+	if (utf) {
+	    if (c & 0x80) {
+		if (!combine_utf(&c))
+		    continue;
+	    } else
+		utf_count = 0;
+	} else {
+	    /* !utf */
+	    if (*Flags & TTY_SETMETA)
+		c |= 0x80;
+	}
+
+	ok = (c >= 32 || (!utf && !(((*Flags & TTY_DISPCTRL ? CTRL_ALWAYS : CTRL_ACTION) >> c) & 1)))
+	    && (c != 127 || (*Flags & TTY_DISPCTRL)) && (c != 128+27) &&
+	    (utf || (c = applyG((byte)c)));
+
 	
-	ok = (c >= 32 || !(((*Flags & TTY_DISPCTRL ? CTRL_ALWAYS : CTRL_ACTION) >> c) & 1))
-	    && (c != 127 || (*Flags & TTY_DISPCTRL)) && (c != 128+27)
-	    && (c = applyG((byte)c));
-
 	if (DState == ESnormal && ok) {
-
 	    /* Now try to find out how to display it */
 	    if (*Flags & TTY_NEEDWRAP) {
 		cr();

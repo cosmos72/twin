@@ -99,14 +99,17 @@ static TW_CONST utf_to_ch *my_bsearch(TW_CONST utf_to_ch *key, TW_CONST utf_to_c
 #include "ibm850.c"
 #include "ibm865.c"
 
-
+#define TEMPLATE CP866
+#include "template.c"
+#undef TEMPLATE
 
 #define _NLIST(EL) \
 	EL(T_MAP(ASCII)) \
 	EL(T_MAP(ISO_8859_1)) EL(T_MAP(ISO_8859_2)) EL(T_MAP(ISO_8859_3)) \
 	EL(T_MAP(ISO_8859_4)) EL(T_MAP(ISO_8859_5)) EL(T_MAP(ISO_8859_6)) \
 	EL(T_MAP(ISO_8859_7)) EL(T_MAP(ISO_8859_8)) EL(T_MAP(ISO_8859_9)) \
-	EL(T_MAP(IBM437))     EL(T_MAP(IBM850))     EL(T_MAP(IBM865))
+	EL(T_MAP(IBM437))     EL(T_MAP(IBM850))     EL(T_MAP(IBM865))     \
+	EL(T_MAP(CP866))
 
 #define _LIST(EL) \
 	EL(T_MAP(UTF_16)) _NLIST(EL)
@@ -114,10 +117,12 @@ static TW_CONST utf_to_ch *my_bsearch(TW_CONST utf_to_ch *key, TW_CONST utf_to_c
 typedef enum {
 #define DECL_TYPE(x) T_CAT(T_ID_,x) ,
     _LIST(DECL_TYPE)
+#undef DECL_TYPE
 } id_e;
 
 #define DECL_NAME(ch) static byte *T_CAT(names_,ch) [] = { T_CAT(T_NAME_,ch), T_CAT(T_ALIASES_,ch), NULL };
 _LIST(DECL_NAME)
+#undef DECL_NAME
 
 typedef struct {
     byte * TW_CONST * names;
@@ -132,6 +137,8 @@ static Tutf_struct Tutf_structs[] = {
     _NLIST(DECL_CH)
     { NULL }
 };
+
+#undef DECL_CH
 
 static int strloosecmp(TW_CONST byte *s1, TW_CONST byte *s2) {
     byte c1, c2;

@@ -8,7 +8,7 @@ SUBDIRS=
 
 -include $(TOPDIR)/makeautoconf
 
-CFLAGS+=-I..
+CC_FLAGS+=-I..
 
 BASEOBJS=
 TTYOBJS=hw_tty.o
@@ -29,13 +29,13 @@ BINS=
 MODBINS=
 ARLIBS=hw.a
 
-CFLAGS_hw_X11.o+=$(CF_HEADERX11)
+CC_FLAGS_hw_X11.o+=$(CF_HEADERX11)
 
-LDFLAGS_hw_tty.so=-lc -shared
-LDFLAGS_hw_X11.so=-lc -shared $(LD_LIBX11)
-LDFLAGS_hw_display.so=-lc -shared
-LDFLAGS_hw_twin.so=-lc -shared $(LIBTW)
-LDFLAGS_hw_ggi.so=-lc -shared -lggi
+LD_FLAGS_hw_tty.so=-lc -shared
+LD_FLAGS_hw_X11.so=-lc -shared $(LD_LIBX11)
+LD_FLAGS_hw_display.so=-lc -shared
+LD_FLAGS_hw_twin.so=-lc -shared $(LIBTW)
+LD_FLAGS_hw_ggi.so=-lc -shared -lggi
 
 #
 # target
@@ -55,11 +55,11 @@ all: $(ARLIBS) modules
 #
 
 ifeq ($(CONF__ALLOC),y)
-  CFLAGS+=-DCONF__ALLOC
+  CC_FLAGS+=-DCONF__ALLOC
 endif
 
 #ifeq ($(CONF__UNICODE),y)
-#  LDFLAGS+=$(LIBTUTF)
+#  LD_FLAGS+=$(LIBTUTF)
 #endif
 
 ifeq ($(CONF_HW_TTY),y)
@@ -68,17 +68,17 @@ else
   ifeq ($(CONF_HW_TTY),m)
     MODBINS+=hw_tty.so
     ifeq ($(CONF_HW_TTY_LINUX),y)
-      LDFLAGS_hw_tty.so+=-lgpm
+      LD_FLAGS_hw_tty.so+=-lgpm
     endif
     ifeq ($(CONF_HW_TTY_TERMCAP),y)
-      CFLAGS_hw_tty.o+=-I/usr/include/ncurses
+      CC_FLAGS_hw_tty.o+=-I/usr/include/ncurses
       ifeq ($(CONF_HW_TTY_LINUX),y)
         ifeq ($(LD_LIBTERMCAP_IN_LIBGPM),)
-          LDFLAGS_hw_tty.so+=$(LD_LIBTERMCAP)
+          LD_FLAGS_hw_tty.so+=$(LD_LIBTERMCAP)
 	# else necessary libs are already pulled in with -lgpm above
 	endif
       else
-        LDFLAGS_hw_tty.so+=$(LD_LIBTERMCAP)
+        LD_FLAGS_hw_tty.so+=$(LD_LIBTERMCAP)
       endif
     endif
   else

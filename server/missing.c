@@ -2,7 +2,7 @@
 #include "Tw/Tw.h"
 
 #ifndef TW_HAVE_MEMCMP
-int Tw_fix_memcmp(TW_CONST void *s1, TW_CONST void *s2, size_t n) {
+int Tw_missing_memcmp(TW_CONST void *s1, TW_CONST void *s2, size_t n) {
     TW_CONST byte *b1, *b2;
     
     for (b1 = s1, b2 = s2; n; n--, b1++, b2++) {
@@ -14,7 +14,7 @@ int Tw_fix_memcmp(TW_CONST void *s1, TW_CONST void *s2, size_t n) {
 #endif
 
 #ifndef TW_HAVE_STRDUP
-char *Tw_fix_strdup(TW_CONST char *s, void *(*missing_malloc)(size_t size)) {
+char *Tw_missing_strdup(TW_CONST char *s, void *(*missing_malloc)(size_t size)) {
     char *q;
     size_t len;
     

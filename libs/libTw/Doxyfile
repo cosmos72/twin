@@ -2,8 +2,8 @@
 #---------------------------------------------------------------------------
 # General configuration options
 #---------------------------------------------------------------------------
-PROJECT_NAME           = "libTw"
-PROJECT_NUMBER         = 0.3.10
+PROJECT_NAME           = libTw
+PROJECT_NUMBER         = 0.4.0
 OUTPUT_DIRECTORY       = ../../docs/libTw/
 OUTPUT_LANGUAGE        = English
 EXTRACT_ALL            = YES
@@ -23,8 +23,8 @@ INLINE_SOURCES         = NO
 STRIP_CODE_COMMENTS    = YES
 CASE_SENSE_NAMES       = YES
 HIDE_SCOPE_NAMES       = NO
-VERBATIM_HEADERS       = YES
-SHOW_INCLUDE_FILES     = YES
+VERBATIM_HEADERS       = NO
+SHOW_INCLUDE_FILES     = NO
 JAVADOC_AUTOBRIEF      = YES
 INHERIT_DOCS           = YES
 INLINE_INFO            = YES
@@ -51,8 +51,9 @@ WARN_LOGFILE           =
 # configuration options related to the input files
 #---------------------------------------------------------------------------
 INPUT                  = .
-FILE_PATTERNS          = *.c \
-                         *.h
+FILE_PATTERNS          = libTw.c \
+                         libTw1m4.h \
+                         libTw2m4.h
 RECURSIVE              = YES
 EXCLUDE                = 
 EXCLUDE_PATTERNS       = 

@@ -233,41 +233,6 @@ struct s_tevent_common {
     udat Code, pad;
 };
 
-typedef struct s_tevent_keyboard *tevent_keyboard;
-struct s_tevent_keyboard {
-    twidget W;
-    udat Code, ShiftFlags, SeqLen;
-    byte pad, AsciiSeq[1];  /* including final \0 */
-};
-
-typedef struct s_tevent_mouse *tevent_mouse;
-struct s_tevent_mouse {
-    twidget W;
-    udat Code, ShiftFlags;
-    dat X, Y; /* these coords are relative to the widget top-left corner */
-};
-
-typedef struct s_tevent_control *tevent_control;
-struct s_tevent_control {
-    twidget W;
-    udat Code, Len;
-    dat X, Y;
-    byte Data[sizeof(uldat)]; /* Data[Len] == '\0' */
-};
-
-/* some TW_MSG_CONTROL codes */
-#define TW_MSG_CONTROL_QUIT		((udat)0)
-#define TW_MSG_CONTROL_RESTART		((udat)1)
-#define TW_MSG_CONTROL_OPEN		((udat)2)
-#define TW_MSG_CONTROL_DRAGNDROP	((udat)3)
-
-typedef struct s_tevent_clientmsg *tevent_clientmsg;
-struct s_tevent_clientmsg {
-    twidget W;
-    udat Code, Len;
-    byte Data[sizeof(uldat)]; /* [len] bytes actually */
-};
-
 typedef struct s_tevent_display *tevent_display;
 struct s_tevent_display {
     twidget W; /* not used here */
@@ -293,6 +258,20 @@ struct s_tevent_display {
 #define TW_DPY_Helper		((udat)14)
 #define TW_DPY_RedrawVideo	((udat)15)
 #define TW_DPY_Quit		((udat)16)
+
+typedef struct s_tevent_keyboard *tevent_keyboard;
+struct s_tevent_keyboard {
+    twidget W;
+    udat Code, ShiftFlags, SeqLen;
+    byte pad, AsciiSeq[1];  /* actually (SeqLen+1) bytes, including final \0 */
+};
+
+typedef struct s_tevent_mouse *tevent_mouse;
+struct s_tevent_mouse {
+    twidget W;
+    udat Code, ShiftFlags;
+    dat X, Y; /* these coords are relative to the widget top-left corner */
+};
 
 typedef struct s_tevent_widget *tevent_widget;
 struct s_tevent_widget {
@@ -356,20 +335,41 @@ struct s_tevent_selectionrequest {
     uldat ReqPrivate;
 };
 
+typedef struct s_tevent_control *tevent_control;
+struct s_tevent_control {
+    twidget W;
+    udat Code, Len;
+    dat X, Y;
+    byte Data[sizeof(uldat)]; /* [Len+1] bytes actually, Data[Len] == '\0' */
+};
+
+/* some TW_MSG_CONTROL codes */
+#define TW_MSG_CONTROL_QUIT		((udat)0)
+#define TW_MSG_CONTROL_RESTART		((udat)1)
+#define TW_MSG_CONTROL_OPEN		((udat)2)
+#define TW_MSG_CONTROL_DRAGNDROP	((udat)3)
+
+typedef struct s_tevent_clientmsg *tevent_clientmsg;
+struct s_tevent_clientmsg {
+    twidget W;
+    udat Code, Len;
+    byte Data[sizeof(uldat)]; /* [Len+1] bytes actually, Data[Len] == '\0' */
+};
+
 typedef union s_tevent_any *tevent_any;
 union s_tevent_any {
     struct s_tevent_common    EventCommon;
+    struct s_tevent_display   EventDisplay;
     struct s_tevent_keyboard  EventKeyboard;
     struct s_tevent_mouse     EventMouse;
-    struct s_tevent_control   EventControl;
-    struct s_tevent_clientmsg EventClientMsg;
-    struct s_tevent_display   EventDisplay;
     struct s_tevent_widget    EventWidget;
     struct s_tevent_gadget    EventGadget;
     struct s_tevent_menu      EventMenu;
     struct s_tevent_selection EventSelection;
     struct s_tevent_selectionnotify EventSelectionNotify;
     struct s_tevent_selectionrequest EventSelectionRequest;
+    struct s_tevent_control   EventControl;
+    struct s_tevent_clientmsg EventClientMsg;
 };
 
 typedef struct s_tmsg *tmsg;
@@ -588,6 +588,7 @@ void Tw_AttachConfirm(tdisplay TwD);
 byte Tw_DetachHW(tdisplay TwD, uldat len, TW_CONST byte *name);
 
 void Tw_SetFontTranslation(tdisplay TwD, TW_CONST byte trans[0x80]);
+void Tw_SetUniFontTranslation(tdisplay TwD, TW_CONST hwfont trans[0x80]);
 
 void	Tw_DeleteObj(tdisplay TwD, tobj Obj);
 
@@ -937,6 +938,7 @@ extern tdisplay Tw_DefaultD;
 #define TwAttachConfirm()		Tw_AttachConfirm(Tw_DefaultD)
 #define TwDetachHW(len, name)		Tw_DetachHW(Tw_DefaultD, len, name)
 #define TwSetFontTranslation(trans)	Tw_SetFontTranslation(Tw_DefaultD, trans)
+#define TwSetUniFontTranslation(trans)	Tw_SetUniFontTranslation(Tw_DefaultD, trans)
 
 #define TwDeleteObj(O)			Tw_DeleteObj(Tw_DefaultD, O)
 
@@ -1046,8 +1048,6 @@ extern tdisplay Tw_DefaultD;
 	Tw_ConfigureWindow(Tw_DefaultD, Window, Bitmap, Left, Up, MinXWidth, MinYWidth, MaxXWidth, MaxYWidth)
 #define TwResizeWindow(Window, X, Y)	Tw_ResizeWindow(Tw_DefaultD, Window, X, Y)
 #define TwGotoXYWindow(Window, X, Y)	Tw_GotoXYWindow(Tw_DefaultD, Window, X, Y)
-
-#define TwFindWidgetAtWidget(Widget, X, Y) Tw_FindWidgetAtWidget(Tw_DefaultD, Widget, X, Y)
 
 #define TwCreate4MenuMenuItem(Parent, Window, Flags, NameLen, Name) \
 		Tw_Create4MenuMenuItem(Tw_DefaultD, Parent, Window, Flags, NameLen, Name)

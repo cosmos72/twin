@@ -274,6 +274,9 @@ struct s_ttydata {
     uldat nPar, Par[NPAR];
     
     byte currG, G, G0, G1, saveG, saveG0, saveG1;
+    byte utf, utf_count;
+    hwfont utf_char;
+    
     dat newLen, newMax;
     byte *newName;	/* buffer for xterm set window title escape seq */
 };
@@ -726,6 +729,10 @@ struct s_screen {
     ldat XLogic, YLogic;
     widget O_Prev, O_Next; /* list with the same msgport (owner) */
     msgport Owner;
+    fn_hook ShutDownHook; /* hooks for this widget */
+    fn_hook Hook, *WhereHook;
+    fn_hook MapUnMapHook;
+    msg MapQueueMsg;
     hwattr USE_Fill;
     union {
 	struct s_sB B;

@@ -451,6 +451,7 @@ static void DelListener_ttobj(ttobj o, ttlistener l) {
 	o->listeners = l->next;
     TTFreeMem(l);
 }
+
 TT_INLINE void DelAllListeners_ttobj(ttobj o) {
     ttlistener l, next = o->listeners;
     while ((l = next)) {

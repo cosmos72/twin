@@ -32,22 +32,22 @@ OBJS_twdisplay:=$(DISPLAYOBJS) alloc.o missing.o $(HWOBJS)
 BINS=twin_real twin_wrapper
 MODBINS=
 
-LDFLAGS_wm.so=-lc -shared
-LDFLAGS_rcparse.so=-lc -shared
-LDFLAGS_rcrun.so=-lc -shared
-LDFLAGS_term.so=-lc -shared
-LDFLAGS_socket.so=-lc -shared
-LDFLAGS_twdisplay=$(LIBTW)
+LD_FLAGS_wm.so=-lc -shared
+LD_FLAGS_rcparse.so=-lc -shared
+LD_FLAGS_rcrun.so=-lc -shared
+LD_FLAGS_term.so=-lc -shared
+LD_FLAGS_socket.so=-lc -shared
+LD_FLAGS_twdisplay=$(LIBTW)
 
 #
 # tweak flags based on current paths configuration
 #
 ifneq ($(libdir),)
-  CFLAGS_data.o=-DLIBDIR=\"$(libdir)\"
-  CFLAGS_display.o=-DLIBDIR=\"$(libdir)\"
+  CC_FLAGS_data.o=-DLIBDIR=\"$(libdir)\"
+  CC_FLAGS_display.o=-DLIBDIR=\"$(libdir)\"
 endif
 ifneq ($(bindir),)
-  CFLAGS_wrapper.o=-DBINDIR=\"$(bindir)\"
+  CC_FLAGS_wrapper.o=-DBINDIR=\"$(bindir)\"
 endif
 
 
@@ -55,7 +55,7 @@ endif
 # OS-specific stuff
 #
 ifneq ($(GNULD),)
-  LDFLAGS_rdynamic:=-rdynamic
+  LD_FLAGS_rdynamic:=-rdynamic
 endif
 
 #
@@ -75,15 +75,15 @@ all: bins modules twin handy
 # and group together all *.o objects needed by each binary
 #
 ifeq ($(CONF__MODULES),y)
-  LDFLAGS_twin_real+=$(LD_LIBDL) $(LDFLAGS_rdynamic)
+  LD_FLAGS_twin_real+=$(LD_LIBDL) $(LD_FLAGS_rdynamic)
   OBJS_twin_real+=$(DLOBJS)
-  LDFLAGS_twdisplay+=$(LD_LIBDL) $(LDFLAGS_rdynamic)
+  LD_FLAGS_twdisplay+=$(LD_LIBDL) $(LD_FLAGS_rdynamic)
 else
   EXCL_OBJS+=$(DLOBJS)
 endif
 
 ifeq ($(CONF__ALLOC),y)
-  CFLAGS+=-DCONF__ALLOC
+  CC_FLAGS+=-DCONF__ALLOC
 endif
 
 ifeq ($(CONF_WM),y)
@@ -120,8 +120,8 @@ endif
 ifeq ($(CONF_SOCKET),n)
   EXCL_OBJS+=$(SOCKETOBJS)
 else
-  LDFLAGS_twin_real+=$(LD_LIBSOCKET)
-  LDFLAGS_twdisplay+=$(LD_LIBSOCKET)
+  LD_FLAGS_twin_real+=$(LD_LIBSOCKET)
+  LD_FLAGS_twdisplay+=$(LD_LIBSOCKET)
   ifeq ($(CONF_SOCKET),y)
     OBJS_twin_real+=$(SOCKETOBJS)
   else
@@ -129,9 +129,9 @@ else
   endif
   ifeq ($(CONF_SOCKET_GZ),y)
     ifeq ($(CONF_SOCKET),y)
-      LDFLAGS_twin_real+=-lz
+      LD_FLAGS_twin_real+=-lz
      else
-      LDFLAGS_socket.so+=-lz
+      LD_FLAGS_socket.so+=-lz
     endif
   endif
 endif
@@ -165,42 +165,42 @@ endif
 # the final link nightmare...
 #
 ifeq ($(CONF__UNICODE),y)
-  LDFLAGS_twin_real+=$(LIBTUTF)
-  LDFLAGS_twdisplay+=$(LIBTUTF)
+  LD_FLAGS_twin_real+=$(LIBTUTF)
+  LD_FLAGS_twdisplay+=$(LIBTUTF)
 endif
 
 ifeq ($(CONF_HW_TTY),y)
   ifeq ($(CONF_HW_TTY_LINUX),y)
-    LDFLAGS_twin_real+=-lgpm
-    LDFLAGS_twdisplay+=-lgpm
+    LD_FLAGS_twin_real+=-lgpm
+    LD_FLAGS_twdisplay+=-lgpm
   endif
   ifeq ($(CONF_HW_TTY_TERMCAP),y)
     ifeq ($(CONF_HW_TTY_LINUX),y)
       ifeq ($(LD_LIBTERMCAP_IN_LIBGPM),)
-        LDFLAGS_twin_real+=$(LD_LIBTERMCAP)
-        LDFLAGS_twdisplay+=$(LD_LIBTERMCAP)
+        LD_FLAGS_twin_real+=$(LD_LIBTERMCAP)
+        LD_FLAGS_twdisplay+=$(LD_LIBTERMCAP)
       # else necessary libs are already pulled in with -lgpm above
       endif
     else
-      LDFLAGS_twin_real+=$(LD_LIBTERMCAP)
-      LDFLAGS_twdisplay+=$(LD_LIBTERMCAP)
+      LD_FLAGS_twin_real+=$(LD_LIBTERMCAP)
+      LD_FLAGS_twdisplay+=$(LD_LIBTERMCAP)
     endif
   endif
 endif
 ifeq ($(CONF_HW_X11),y)
-  LDFLAGS_twin_real+=-L/usr/X11R6/lib -lX11
-  LDFLAGS_twdisplay+=-L/usr/X11R6/lib -lX11
+  LD_FLAGS_twin_real+=-L/usr/X11R6/lib -lX11
+  LD_FLAGS_twdisplay+=-L/usr/X11R6/lib -lX11
 endif
 ifeq ($(CONF_HW_GGI),y)
-  LDFLAGS_twin_real+=-lggi
-  LDFLAGS_twdisplay+=-lggi
+  LD_FLAGS_twin_real+=-lggi
+  LD_FLAGS_twdisplay+=-lggi
 endif
 ifneq ($(CONF_SOCKET),n)
   ifneq ($(CONF_HW_DISPLAY),n)
     BINS+=twdisplay
   endif
   ifeq ($(CONF_HW_TWIN),y)
-    LDFLAGS_twin_real+=$(LIBTW)
+    LD_FLAGS_twin_real+=$(LIBTW)
   endif
 endif
 

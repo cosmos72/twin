@@ -407,6 +407,8 @@ static void DEF(MouseEvent_ttbutton)(ttbutton o, udat Code, udat ShiftFlags, dat
     if (old_vflags != o->vflags)
 	o->FN->Repaint(o, ttvisible_Repaint_args_WHOLE);
 }
+static void DEF(SetPressed_ttbutton)(ttbutton o, byte pressed) {
+}
 
 
 /* ttcheckbutton */

@@ -56,8 +56,10 @@ struct tty_data {
 #ifdef CONF__UNICODE
     uldat tty_charset;
     Tutf_function tty_UTF_16_to_charset;
+    Tutf_array tty_charset_to_UTF_16;
+    byte tty_can_utf8;
 #endif
-    dat ttypar[2];
+    dat ttypar[3];
     FILE *stdOUT;
     uldat saveCursorType;
     dat saveX, saveY;
@@ -85,6 +87,8 @@ struct tty_data {
 #define tty_TERM	(ttydata->tty_TERM)
 #define tty_charset	(ttydata->tty_charset)
 #define tty_UTF_16_to_charset	(ttydata->tty_UTF_16_to_charset)
+#define tty_charset_to_UTF_16	(ttydata->tty_charset_to_UTF_16)
+#define tty_can_utf8		(ttydata->tty_can_utf8)
 #define ttypar		(ttydata->ttypar)
 #define stdOUT		(ttydata->stdOUT)
 #define saveCursorType	(ttydata->saveCursorType)
@@ -146,13 +150,15 @@ static byte stdin_InitKeyboard(void) {
 	return FALSE;
     }
     buf[i] = '\0';
-    ttypar[0] = ttypar[1] = i = 0;
+    ttypar[0] = ttypar[1] = ttypar[2] = i = 0;
 
-    while (i<2 && (c=*s)) {
+    while (i<3 && (c=*s)) {
 	if (c>='0' && c<='9') {
 	    ttypar[i] *= 10; ttypar[i] += c-'0';
 	} else if (*s==';')
 	    i++;
+	else
+	    break;
 	s++;
     }
 
@@ -780,11 +786,13 @@ byte tty_InitHW(void) {
 	}
 	FreeMem(charset);
     }
-    if (tty_charset == (uldat)-1)
+    if (tty_charset == (uldat)-1) {
 	tty_UTF_16_to_charset = Tutf_UTF_16_to_IBM437;
-    else
+	tty_charset_to_UTF_16 = Tutf_IBM437_to_UTF_16;
+    } else {
 	tty_UTF_16_to_charset = Tutf_UTF_16_to_charset_function(tty_charset);
-
+	tty_charset_to_UTF_16 = Tutf_charset_to_UTF_16_array(tty_charset);
+    }
 #else
     if (charset) {
 	FreeMem(charset);

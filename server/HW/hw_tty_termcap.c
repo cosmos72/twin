@@ -205,6 +205,10 @@ static void termcap_QuitVideo(void) {
     termcap_SetCursorType(LINECURSOR);
     fputs(tc_attr_off, stdOUT); /* reset colors */
     
+    /* restore original alt cursor keys, keypad settings */
+    HW->Configure(HW_KBDAPPLIC, TRUE, 0);
+    HW->Configure(HW_ALTCURSKEYS, TRUE, 0);
+
     termcap_cleanup();
     
     HW->QuitVideo = NoOp;

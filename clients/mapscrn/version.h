@@ -1,6 +1,6 @@
 #include <string.h>
 
-#define VERSION "1.02"
+#define VERSION "1.06"
 
 char *progname;
 

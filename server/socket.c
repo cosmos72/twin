@@ -342,6 +342,7 @@ static void NeedResizeDisplay(void);
 static void AttachHW(uldat len, CONST byte *arg, byte flags);
 static byte DetachHW(uldat len, CONST byte *arg);
 static void SetFontTranslation(CONST byte trans[0x80]);
+static void SetUniFontTranslation(CONST hwfont trans[0x80]);
 
 static void DeleteObj(void *V);
 
@@ -816,12 +817,12 @@ static byte sockStatMutex(obj x, tsfield TSF) {
 static void sockStat(any *a) {
     obj x = a[1].x;
     udat i, j, n = a[2]._;
-    CONST udat *in = (CONST udat *)a[3].V;
+    CONST byte *in = a[3].V;
     tsfield TSF;
     uldat len, q;
     byte *data, ok;
     
-    ok = x && n && (TSF = AllocMem(n * sizeof(tsfield)));
+    ok = x && n && (TSF = (tsfield)AllocMem(n * sizeof(*TSF)));
     
     if (ok) {
 	for (i = j = 0; j < n; j++) {
@@ -1314,11 +1315,26 @@ static void SetFontTranslation(CONST byte trans[0x80]) {
 	for (i = 0; i < 0x80; i++)
 	    G[i] = i;
 	if (sizeof(hwfont) == sizeof(byte))
-	    CopyMem(trans, All->Gtranslations[USER_MAP] + 0x80, 0x80);
+	    CopyMem(trans, G + 0x80, 0x80);
 	else
 	    for (i = 0x0; i < 0x80; i++)
 		G[0x80|i] = trans[i];
     }
+}
+
+static void SetUniFontTranslation(CONST hwfont trans[0x80]) {
+#ifdef CONF__UNICODE
+    if (trans) {
+	int i;
+	hwfont *G = All->Gtranslations[USER_MAP];
+
+	for (i = 0; i < 0x80; i++)
+	    G[i] = i;
+	CopyMem(trans, G + 0x80, sizeof(hwfont) * 0x80);
+    }
+#else
+    SetFontTranslation(trans);
+#endif
 }
 
 static msgport GetMsgPortObj(obj P) {

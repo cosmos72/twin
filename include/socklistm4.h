@@ -85,6 +85,7 @@ EL(AttachHW)
 EL(DetachHW)
 
 EL(SetFontTranslation)
+EL(SetUniFontTranslation)
 
 EL(DeleteObj)
 EL(ChangeFieldObj)

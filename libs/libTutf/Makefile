@@ -6,7 +6,7 @@ SUBDIRS=
 
 all: everything
 
-VERSION=0.0.2
+VERSION=0.0.3
 SO_VER=0
 
 BINS=libTutf.so.$(VERSION)
@@ -15,10 +15,10 @@ ARLIBS=libTutf.a
 OBJS_libTutf.so.$(VERSION)=libTutf.o
 OBJS_libTutf.a=libTutf_u.o
 
-CFLAGS_libTutf.o+=-fPIC -D_REENTRANT
-CFLAGS_libTutf_u.o+=-D_REENTRANT
+CC_FLAGS_libTutf.o+=-fPIC -D_REENTRANT
+CC_FLAGS_libTutf_u.o+=-D_REENTRANT
 
-LDFLAGS_libTutf.so.$(VERSION)=$(LDFLAGS_SOLIB)libTutf.so.$(SO_VER)
+LD_FLAGS_libTutf.so.$(VERSION)=$(LD_FLAGS_SOLIB)libTutf.so.$(SO_VER)
 
 -include $(TOPDIR)/conf/conf.current
 -include .modules
@@ -62,7 +62,7 @@ endif
 
 #
 # include the do-everything file.
-# Must correctly set all CFLAGS* and LDFLAGS* before including this!
+# Must correctly set all CC_FLAGS* and LD_FLAGS* before including this!
 #
 #
 include $(TOPDIR)/makerules
@@ -86,7 +86,7 @@ install-headers:
 
 install-real: install-headers
 	$(INSTALL) -d $(DESTDIR)$(libdir) && \
-	$(INSTALL) libTutf.a $(DESTDIR)$(libdir) && \
+	$(INSTALL-TXT) $(ARLIBS) $(DESTDIR)$(libdir) && \
 	if [ -f libTutf.so.$(VERSION) ]; then \
 		$(INSTALL) libTutf.so.$(VERSION) $(DESTDIR)$(libdir) && \
 		$(LN) libTutf.so.$(VERSION) $(DESTDIR)$(libdir)/libTutf.so.$(SO_VER) && \

@@ -14,7 +14,7 @@
  * Create simple dependency lines for #include "*.h".
  * For instances of CONF_* and DEBUG_* generate dependencies like
  * ifeq ($(CONF_SOCKET),y)
- *   CFLAGS_hw_multi.o+=-DCONF_SOCKET
+ *   CC_FLAGS_hw_multi.o+=-DCONF_SOCKET
  * endif
  * 
  * 2.3.99-pre1, Andrew Morton <andrewm@uow.edu.au>
@@ -131,7 +131,7 @@ void dump_config(void)
 {
     char *pc = str_config, *end_config = str_config + len_config;
     while (pc && pc+1 < end_config && !*pc && *++pc) {
-	printf("ifeq ($(%s),y)\n  CFLAGS_%s+=-D%s\nendif\n", pc, depname, pc);
+	printf("ifeq ($(%s),y)\n  CC_FLAGS_%s+=-D%s\nendif\n", pc, depname, pc);
 	pc = memchr(pc, 0, end_config - pc);
     }
 }
@@ -408,7 +408,7 @@ pound_ifdef_DEBUG_word:
 	    } while (is_alphanum(current));
 	    use_config(map_dot, next - map_dot - 1);
 	}
-	goto __start;
+	goto pound_ifdef;
     }
     if (hasdep)
 	putchar('\n');

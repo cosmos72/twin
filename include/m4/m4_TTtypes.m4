@@ -85,7 +85,9 @@ define(`TTFNdef_ttanybutton',`extends(ttwidget,$1)
     exported(hwfont TT_CONST *(*GetText)($1 o),GetText,$1,1,hwfont TT_CONST *,$1)')
 
 define(`TTdef_ttbutton',`extends(ttanybutton,$1)')
-define(`TTFNdef_ttbutton',`extends(ttanybutton,$1)')
+define(`TTFNdef_ttbutton',`extends(ttanybutton,$1)
+    public(void (*SetPressed)($1 o, byte pressed),SetPressed,$1,2,void,$1)
+    exported(byte (*IsPressed)($1 o),IsPressed,$1,1,byte,$1)')
 
 define(`TTdef_ttcheckbutton',`extends(ttbutton,$1)')
 define(`TTFNdef_ttcheckbutton',`extends(ttbutton,$1)')
@@ -118,7 +120,7 @@ define(`TTFNdef_ttscroller',`extends(ttwindow,$1)')
 
 /* ttmenuitem: Represents a single line in a menu */
 define(`TTdef_ttmenuitem',`extends(ttvisible,$1)
-	field(byte *,name)')
+    field(byte *,name)')
 define(`TTFNdef_ttmenuitem',`extends(ttvisible,$1)')
 
 /* ttcheckmenuitem: A checkable line in a menu. */

@@ -115,6 +115,11 @@
       case 1: L = 0x80; break;
     }
     break;
+  case order_SetUniFontTranslation:
+    switch (n) {
+      case 1: L = 0x80; break;
+    }
+    break;
 
 
 

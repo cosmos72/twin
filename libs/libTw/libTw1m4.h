@@ -106,6 +106,7 @@
 { Tw_DetachHW, 0, 0, "Tw_DetachHW", "0""_"TWS_byte_STR"_"TWS_uldat_STR"V"TWS_byte_STR },
 
 { Tw_SetFontTranslation, 0, 0, "Tw_SetFontTranslation", "0""v"TWS_void_STR"V"TWS_byte_STR },
+{ Tw_SetUniFontTranslation, 0, 0, "Tw_SetUniFontTranslation", "0""v"TWS_void_STR"V"TWS_hwfont_STR },
 
 { Tw_DeleteObj, 0, 0, "Tw_DeleteObj", "0""v"TWS_void_STR"x"magic_id_STR(obj) },
 { Tw_ChangeFieldObj, 0, 0, "Tw_ChangeFieldObj", "2""v"TWS_void_STR"x"magic_id_STR(obj)"_"TWS_udat_STR"_"TWS_uldat_STR"_"TWS_uldat_STR },

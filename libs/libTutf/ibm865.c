@@ -15,23 +15,35 @@ static utf_to_ch array_IBM865 [] = {
 };
 
 hwfont Tutf_UTF_16_to_IBM865(hwfont c) {
-    utf_to_ch key, *res;
+    static utf_to_ch key;
+    utf_to_ch *res;
     
-    /* Codepage 865 (VGA) obviously cannot contain all unicode chars. this is just a best effort. */
+    /* Codepage 865 obviously cannot contain all unicode chars. this is just a best effort. */
     if (!flag_IBM865) {
 	flag_IBM865 = TRUE;
 	QSORT(array_IBM865);
     }
+    if (c == key.utf)
+	return key.ch;
+    if ((c & ~0x00ff) == 0xf000 ||
+	/* direct-to-font area */
+	(c >= ' ' && c <= '~') ||
+	/* ASCII area */
+	(c > '~' && c < 0x100 && Tutf_IBM865_to_UTF_16[c] == c))
+	/* c has the same meaning in Unicode and this charset... sheer luck! */
+
+	return c & 0x00ff;
+    
     key.utf = c;
     res = BSEARCH(&key, array_IBM865);
     
     if (res)
 	c = res->ch;
-    else if (c > 0x7E /*'~'*/)
+    else if (c > '~')
 	/* try to approximate */
 	c = T_CAT(Tutf_IBM437_to_,T_MAP(ASCII)) [ Tutf_UTF_16_to_IBM437(c) ];
     /* else c = c; */
 
-    return c;
+    return key.ch = c;
 }
 

@@ -28,7 +28,7 @@ all:
 
 #
 # include the do-everything file.
-# Must correctly set all CFLAGS* and LDFLAGS* before including this!
+# Must correctly set all CC_FLAGS* and LD_FLAGS* before including this!
 #
 #
 include $(TOPDIR)/makerules

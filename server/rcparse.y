@@ -22,7 +22,10 @@
 #include <sys/socket.h>
 
 #include "Tw/Twkeys.h"
-
+#ifdef CONF__UNICODE
+# include "Tutf/Tutf.h"
+#endif
+    
 #include "twin.h"
 #include "methods.h"
 #include "data.h"
@@ -45,7 +48,7 @@
 
 
 /* also put here the CONF_* and DEBUG_* used in rcparse.h so that MkDep catches them */
-#if defined(DEBUG_MALLOC) || defined(DEBUG_RC) || defined(DEBUG_FORK)
+#if defined(DEBUG_RC) || defined(DEBUG_FORK)
 #endif
 
 /*

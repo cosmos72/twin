@@ -131,6 +131,10 @@ case order_SetFontTranslation:
     SetFontTranslation((byte CONST *)a[1].V);
     break;
 
+case order_SetUniFontTranslation:
+    SetUniFontTranslation((hwfont CONST *)a[1].V);
+    break;
+
 
 case order_DeleteObj:
     DeleteObj((obj)a[1].x);

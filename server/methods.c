@@ -898,6 +898,8 @@ static byte InitTtyData(window Window, dat ScrollBackLines) {
     Data->currG = Data->G0 = Data->saveG0 = IBMPC_MAP;
     Data->G1 = Data->saveG1 = GRAF_MAP;
 
+    Data->utf = Data->utf_count = Data->utf_char = 0;
+    
     Data->newLen = Data->newMax = 0;
     Data->newName = NULL;
     
@@ -1462,6 +1464,12 @@ static void DeleteScreen(screen Screen) {
 	Act(UnMap,Screen->FirstW)(Screen->FirstW);
 
     Remove(Screen);
+    
+    if (S_USE(Screen, USEBG) && Screen->USE.B.Bg) {
+	FreeMem(Screen->USE.B.Bg);
+	Screen->USE.B.Bg = NULL;
+    }
+    
     (Fn_Widget->Delete)((widget)Screen);
     if (!--Fn_Widget->Used)
 	FreeMem(Fn_Widget);

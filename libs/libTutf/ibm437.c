@@ -15,23 +15,36 @@ static utf_to_ch array_IBM437 [] = {
 };
 
 hwfont Tutf_UTF_16_to_IBM437(hwfont c) {
-    utf_to_ch key, *res;
+    static utf_to_ch key;
+    utf_to_ch *res;
     
     /* Codepage 437 (VGA) obviously cannot contain all unicode chars. this is just a best effort. */
     if (!flag_IBM437) {
 	flag_IBM437 = TRUE;
 	QSORT(array_IBM437);
     }
+    if (c == key.utf)
+	return key.ch;
+    if ((c & ~0x00ff) == 0xf000 ||
+	/* direct-to-font area */
+	(c >= ' ' && c <= '~') ||
+	/* ASCII area */
+	(c > '~' && c < 0x100 && Tutf_IBM437_to_UTF_16[c] == c))
+	/* c has the same meaning in Unicode and this charset... sheer luck! */
+	
+	return c & 0x00ff;
+    
     key.utf = c;
     res = BSEARCH(&key, array_IBM437);
     
     if (res)
 	c = res->ch;
-    else if (c > 0x7E /*'~'*/)
-	/* not plain 7-bit ASCII */
+    /* else c might have the same meaning in Unicode and this charset... */
+    else if (c > '~')
+	/* try to approximate (todo) */
 	c = T_UTF(IBM437,_NULL);
     /* else c = c; */
 
-    return c;
+    return key.ch = c;
 }
 

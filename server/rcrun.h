@@ -8,7 +8,10 @@ extern byte GlobalsAreStatic;
 #define CallList	Globals[0]
 #define FuncList	Globals[1]
 #define MenuList	Globals[2]
+
 #define ScreenList	Globals[3]
+#define ScreenIndex	3
+
 #define BorderList	Globals[4]
 #define KeyList		Globals[5]
 #define MouseList	Globals[6]

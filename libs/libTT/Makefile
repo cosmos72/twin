@@ -6,7 +6,7 @@ SUBDIRS=
 
 all: everything
 
-VERSION=0.0.0
+VERSION=0.0.3
 SO_VER=0
 
 BINS=libTT.so.$(VERSION)
@@ -16,12 +16,12 @@ ARLIBS=libTT.a
 OBJS_libTT.so.$(VERSION)=libTT.o missing.o
 OBJS_libTT.a=libTT_u.o missing_u.o
 
-CFLAGS_libTT.o+=-fPIC -D_REENTRANT
-CFLAGS_missing.o+=-fPIC -D_REENTRANT
-CFLAGS_libTT_u.o+=-D_REENTRANT
-CFLAGS_missing_u.o+=-D_REENTRANT
+CC_FLAGS_libTT.o+=-fPIC -D_REENTRANT
+CC_FLAGS_missing.o+=-fPIC -D_REENTRANT
+CC_FLAGS_libTT_u.o+=-D_REENTRANT
+CC_FLAGS_missing_u.o+=-D_REENTRANT
 
-LDFLAGS_libTT.so.$(VERSION)=$(LIBTW) $(LDFLAGS_SOLIB)libTT.so.$(SO_VER)
+LD_FLAGS_libTT.so.$(VERSION)=$(LIBTW) $(LD_FLAGS_SOLIB)libTT.so.$(SO_VER)
 
 -include $(TOPDIR)/conf/conf.current
 -include .modules
@@ -31,7 +31,7 @@ ifneq ($(CONF_SOCKET),n)
   everything: lib
   install: install-real
   ifeq ($(CONF__UNICODE),y)
-    LDFLAGS_libTT.so.$(VERSION)+=$(LIBTUTF)
+    LD_FLAGS_libTT.so.$(VERSION)+=$(LIBTUTF)
   endif
 else
   everything: warn
@@ -45,7 +45,7 @@ endif
 
 #
 # include the do-everything file.
-# Must correctly set all CFLAGS* and LDFLAGS* before including this!
+# Must correctly set all CC_FLAGS* and LD_FLAGS* before including this!
 #
 include $(TOPDIR)/makerules
 
@@ -90,7 +90,7 @@ install-headers:
 
 install-real: install-headers
 	$(INSTALL) -d $(DESTDIR)$(libdir) && \
-	$(INSTALL) libTT.a $(DESTDIR)$(libdir) && \
+	$(INSTALL-TXT) $(ARLIBS) $(DESTDIR)$(libdir) && \
 	if [ -f libTT.so.$(VERSION) ]; then \
 		$(INSTALL) libTT.so.$(VERSION) $(DESTDIR)$(libdir) && \
 		$(LN) libTT.so.$(VERSION) $(DESTDIR)$(libdir)/libTT.so.$(SO_VER) && \

@@ -1,3 +1,24 @@
+From 0.3.10 to 0.4.0: (Massimiliano Ghilardi, 01 Dec 2001)
+	* Added some more options to twdm, also twdm now sets $HOME to `/root'
+	  if it exists and $HOME is either `/' or unset.
+	* Added caching to Tutf_UTF_16_to_*() conversions.
+	* Added keypad state restoring on detaching a -hw=tty[...] display.
+	* Updated `twmapscrn' using kbd-1.06 sources.
+	* Fixed libTw build on SunOS bombing out at #include <netdb.h>.
+	* Fixed server-side bug causing missing fields on twlsobj for non-i386
+	  architectures.
+	* Fixed broken user charset translation (ESC(K ) in terminals
+	  and a few related bugs in libTutf translation routines.
+	  This should fix problems with cyrillic and other charsets.
+	* Added utf-8 support to tty emulator and to tty display driver
+	  to properly handle unicode.
+	* Changed makefiles to do the right thing on
+	  `make CFLAGS=[...] LDFLAGS=[...]'
+	* Hardened libTw against malicious server data.
+	* Finally enabled `AddScreen' and `Background' commands in .twinrc .
+	  Also removed second virtual screen, since you can now create it
+	  with the above commands.
+	  
 From 0.3.9 to 0.3.10: (Massimiliano Ghilardi, 31 Jul 2001)
 	* Added `twdm' client. You can now use `twdm' as login manager instead
 	  of the obsolete `getty', `login' or the bloated `xdm', `kdm', ... !

@@ -1,6 +1,4 @@
 
-#include "defines.h"		/* for HAVE_locale_h */
-
 #ifndef PACKAGE
 #define PACKAGE	"kbd"
 #endif
@@ -26,6 +24,8 @@
 # define bindtextdomain(Domain, Directory) /* empty */
 # undef textdomain
 # define textdomain(Domain) /* empty */
+# undef setlocale
+# define setlocale(Category, Locale) /* empty */
 # define _(Text) (Text)
 # define N_(Text) (Text)
 #endif

@@ -467,7 +467,7 @@ byte InitTtysave(void) {
     ttysave.c_cc [VSTOP]	= CSTOP;
     ttysave.c_cc [VSUSP]	= CSUSP;
 #ifdef VDSUSP
-    ttysave.c_cc [VDSUSP]	= CDSUSP;
+    ttysave.c_cc [VDSUSP]	= VDISABLE;
 #endif
 #ifdef VREPRINT
     ttysave.c_cc [VREPRINT]	= CRPRNT;

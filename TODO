@@ -1,12 +1,3 @@
-TODO list:
-
-1.task posted on SourceForge as 'C developer with intermediate skills':
-  harden libTw against bad or malicious server data;
-  fix libTw pointer alignment problems like {char s[100]; int x = *(int *)(s+1); }
-
-  DIFFICULTY: intermediate.
-  STATUS: assigned (baz)
-
 2.task posted on SourceForge as 'C developer with Unicode knowledge':
   add more charsets to libTutf, a small unicode translation library that can
   convert between unicode and various other charsets.
@@ -39,8 +30,8 @@ TODO list:
 6.writing down libTw API documentation. Would be *VERY* useful too, but it's
   not a trivial task as in many cases one would need to figure out by himself
   (of course can ask me if he doesn't understand something) what the various
-  functions do. Suggested format for documentation: javadoc-style comments
-  (i.e. /** comment */ ) inserted in twin/libs/libTw/libTw.c and in
+  functions do. Suggested format for documentation: doxygen javadoc-style
+  comments (i.e. /** comment */ ) inserted in twin/libs/libTw/libTw.c and in
   include/m4/m4_sockproto.m4;
 
   DIFFICULTY: intermediate (many things are obscure)
@@ -59,21 +50,15 @@ TODO list:
 
 9.random thoughts:
 
-   RC AddScreen / Background
    recursive menu windows
 
    Add Unicode cut-n-paste.
-   Ensure all libTw Reply-> alignment problems are fixed.
    "paste" command in menu
-   Add more charsets to libTutf
    twclip - show clipboard
    Check SunOS and *BSD porting. Also, twdisplay on win32
    ?-geometry option to tw* clients
 
    keyboard hotkeys for screen scroll
-   screensaver
-   wtmp logging
-   docs (doxygen)
 
    Flame libgpm people for /tmp/gpm* sockets, gpm_tried, syslogging, ncurses
    cleanup overflows with shadows at window [xy]width = almost max, move arithmetic to [ul]dat

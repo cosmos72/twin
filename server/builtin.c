@@ -763,27 +763,11 @@ static byte InitMessagesWin(void) {
 #endif
 
 static byte InitScreens(void) {
-    screen OneScreen, TwoScreen;
-#define a HWATTR(COL(HIGH|BLUE,BLUE),_LOWER)
-#define b HWATTR(COL(HIGH|BLUE,BLUE),' ')
-#define c HWATTR(COL(HIGH|BLUE,BLUE),_UPPER)
-    hwattr attr[8] = {
-	b,b,a,c,
-	    c,a,b,b,
-    };
-#undef a
-#undef b
-#undef c
+    screen OneScreen;
 
-    if ((OneScreen = Do(CreateSimple,Screen)(FnScreen, 1, "1", HWATTR(COL(HIGH|BLACK,BLUE),_MEDIUM_SHADE))) &&
-	(TwoScreen = Do(Create,Screen)(FnScreen, 1, "2", 4, 2, attr))) {
-	
-	Act(Own,OneScreen)(OneScreen, Builtin_MsgPort);
-	Act(Own,TwoScreen)(TwoScreen, Builtin_MsgPort);
+    if ((OneScreen = Do(CreateSimple,Screen)(FnScreen, 1, "1", HWATTR(COL(HIGH|BLACK,BLUE),_MEDIUM_SHADE)))) {
 	
 	InsertLast(Screen, OneScreen, All);
-	InsertLast(Screen, TwoScreen, All);
-	
 	return TRUE;
     }
     Error(NOMEMORY);

@@ -28,6 +28,8 @@
 #include <Tutf/ibm850.h>
 #include <Tutf/ibm865.h>
 
+#include <Tutf/cp866.h>
+
 #endif /* _TUTF_DEFS_H */
 
 

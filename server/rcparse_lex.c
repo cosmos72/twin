@@ -730,7 +730,7 @@ char *yytext;
 
 #define IS_OCTDIGIT(c) ((c) >= '0' && (c) <= '7')
 #define IS_HEXDIGIT(c) (((c) >= '0' && (c) <= '9') || ((c) >= 'A' && (c) <= 'F') || ((c) >= 'a' && (c) <= 'f'))
-#define HEX2INT(c)     ((c) >= 'A' ? (c) - 'A' : (c) >= 'a' ? (c) - 'a' : (c) - '0')
+#define HEX2INT(c)     ((c) >= 'a' ? (c) - 'a' + 10 : (c) >= 'A' ? (c) - 'A' + 10 : (c) - '0')
 
 #define MAX_READ_DEPTH 64
 static YY_BUFFER_STATE read_stack[MAX_READ_DEPTH];
@@ -1359,11 +1359,21 @@ YY_RULE_SETUP
 			      case 't': *s++ = '\t'; break;
 			      case 'v': *s++ = '\v'; break;
 			      case '0': *s++ = '\0'; break;
+			      case 'u':
+				/* FIXME: unicode is ok, but s is a (char *), not (hwfont *) ! */
+				if (IS_HEXDIGIT(p[1]) &&
+				    IS_HEXDIGIT(p[2]) &&
+				    IS_HEXDIGIT(p[3]) &&
+				    IS_HEXDIGIT(p[4])) {
+				    *s++ = (((HEX2INT(p[1]) << 4) | HEX2INT(p[2])) << 8)
+				        | ((HEX2INT(p[3]) << 4) | HEX2INT(p[2]));
+				    p += 5;
+				}
+				break;
 			      case 'x':
 				if (IS_HEXDIGIT(p[1]) &&
 				    IS_HEXDIGIT(p[2])) {
-				    *s++ = (HEX2INT(p[1]) << 4)
-					| HEX2INT(p[2]);
+				    *s++ = (HEX2INT(p[1]) << 4)	| HEX2INT(p[2]);
 				    p += 3;
 				}
 				break;

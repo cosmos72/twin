@@ -167,7 +167,7 @@
         
     
      
-	    
+        
       
     
        
@@ -327,7 +327,7 @@ extern ttfn_ttapplication	TTFN_ttapplication;
     
      
 #define TTsuper_ttmenuitem	ttvisible
-	 
+     
 #define TTsuper_ttcheckmenuitem	ttmenuitem 
 #define TTsuper_ttradiomenuitem	ttcheckmenuitem 
 #define TTsuper_ttmenuwindow	ttwindow 
@@ -489,7 +489,11 @@ dat TTGetTextHeight_ttanybutton(ttanybutton);
     
 hwfont TT_CONST * TTGetText_ttanybutton(ttanybutton); 
 
-/* ttbutton public and exported methods */ 
+/* ttbutton public and exported methods */
+    
+void TTSetPressed_ttbutton(ttbutton);
+    
+byte TTIsPressed_ttbutton(ttbutton); 
 
 /* ttcheckbutton public and exported methods */ 
 
@@ -786,7 +790,11 @@ ttmenuwindow TTGetMenuWindow_ttmenu(ttmenu);
     
 #define TTGetTextHeight_ttcheckbutton(a1) ((dat) TTGetTextHeight_ttanybutton(((ttanybutton)a1)))
     
-#define TTGetText_ttcheckbutton(a1) ((hwfont TT_CONST *) TTGetText_ttanybutton(((ttanybutton)a1))) 
+#define TTGetText_ttcheckbutton(a1) ((hwfont TT_CONST *) TTGetText_ttanybutton(((ttanybutton)a1)))
+    
+#define TTSetPressed_ttcheckbutton(a2, a1) ((void) TTSetPressed_ttbutton(((ttbutton)a2), (()a1)))
+    
+#define TTIsPressed_ttcheckbutton(a1) ((byte) TTIsPressed_ttbutton(((ttbutton)a1))) 
 
 /* methods inherited by ttradiobutton */
     
@@ -831,7 +839,11 @@ ttmenuwindow TTGetMenuWindow_ttmenu(ttmenu);
     
 #define TTGetTextHeight_ttradiobutton(a1) ((dat) TTGetTextHeight_ttanybutton(((ttanybutton)a1)))
     
-#define TTGetText_ttradiobutton(a1) ((hwfont TT_CONST *) TTGetText_ttanybutton(((ttanybutton)a1))) 
+#define TTGetText_ttradiobutton(a1) ((hwfont TT_CONST *) TTGetText_ttanybutton(((ttanybutton)a1)))
+    
+#define TTSetPressed_ttradiobutton(a2, a1) ((void) TTSetPressed_ttbutton(((ttbutton)a2), (()a1)))
+    
+#define TTIsPressed_ttradiobutton(a1) ((byte) TTIsPressed_ttbutton(((ttbutton)a1))) 
 
 /* methods inherited by ttbuttongroup */
     

@@ -18,32 +18,28 @@ endif
 
 #
 # Uncomment this to turn debugging on
-# DEBUG=1
+# DEBUG=y
 
 #
-# compile/link flags. Always use += to set variables here!
+# compile/link flags. Used if no CFLAGS/LDFLAGS given in `make' command line
 #
 ifdef DEBUG
- OPT_FLAGS+=-g
- CFLAGS+=$(OPT_FLAGS) -DINLINE=static
+ CFLAGS+=-g -DINLINE=static
  LDFLAGS+=-g
 else
  ifdef PROFILE
-   OPT_FLAGS+=-p -pg
-   CFLAGS+=$(OPT_FLAGS)
+   CFLAGS+=-p -pg
    LDFLAGS+=-p -pg
  else
    ifeq ($(CC),gcc)
-     OPT_FLAGS+=-O2 -fomit-frame-pointer
+     CFLAGS+=-O2 -fomit-frame-pointer
    else
      # detected by `./configure' :
-     OPT_FLAGS+=$(AC_CFLAGS)
+     CFLAGS+=$(CC_AC_FLAGS)
    endif
-   CFLAGS+=$(OPT_FLAGS)
    LDFLAGS+=-s
  endif
 endif
-
 
 #
 # how picky should your compiler be? uncomment for paranoid gcc settings.
@@ -53,12 +49,17 @@ endif
 # apply known-good GCC compiler flags.
 #
 ifeq ($(CC),gcc)
-  OPT_FLAGS+=-pipe -Wall -Wshadow -Wno-uninitialized
+  CFLAGS+=-pipe -Wall -Wshadow -Wno-uninitialized
   ifdef PARANOID_GCC
-    OPT_FLAGS+=-Wstrict-prototypes -Wcast-qual -Wcast-align -Wpointer-arith -Wbad-function-cast -Waggregate-return -Winline
+    CFLAGS+=-Wstrict-prototypes -Wcast-qual -Wcast-align -Wpointer-arith -Wbad-function-cast -Waggregate-return -Winline
   endif
 endif
 
+#
+# save user-specified or above default values in the right place
+#
+CC_FLAGS+=$(CFLAGS)
+LD_FLAGS+=$(LDFLAGS)
 
 #
 # set 'install' program
@@ -119,10 +120,10 @@ MKDIR=mkdir -p
 # keep commented to enable autodetection.
 #
 # this is for Linux and *BSD
-#LDFLAGS_SOLIB=-lc -shared -Wl,-soname,
+#LD_FLAGS_SOLIB=-lc -shared -Wl,-soname,
 #
 # and this for SunOS
-#LDFLAGS_SOLIB=-lc -shared -Wl,-h,
+#LD_FLAGS_SOLIB=-lc -shared -Wl,-h,
 
 
 #
@@ -150,14 +151,14 @@ ifeq ($(wildcard $(TOPDIR)/makeosvalues),)
 	    else if [ -x "$$BASH" ]; then echo $$BASH; \
 	    else echo sh; fi; fi; fi)
   endif
-  ifeq ($(LDFLAGS_SOLIB),)
+  ifeq ($(LD_FLAGS_SOLIB),)
     ifneq ($(GNULD),)
       # this is correct for at least Linux and FreeBSD.
       # for the others, it is just a guess
-      LDFLAGS_SOLIB=-lc -shared -Wl,-soname,
+      LD_FLAGS_SOLIB=-lc -shared -Wl,-soname,
     else
       # this is ok at least on SunOS with native linker
-      LDFLAGS_SOLIB=-lc -shared -Wl,-h,
+      LD_FLAGS_SOLIB=-lc -shared -Wl,-h,
     endif
   endif
 endif
@@ -167,15 +168,15 @@ $(TOPDIR)/makeosvalues: $(TOPDIR)/makerules $(TOPDIR)/config.status
 	 $(ECHO) "GNULD:=$(GNULD)" >> $@ ; \
 	 $(ECHO) "ECHO:=$(ECHO)" >> $@ ; \
 	 $(ECHO) "BASH:=$(BASH)" >> $@ ; \
-	 $(ECHO) "LDFLAGS_SOLIB:=$(LDFLAGS_SOLIB)" >> $@
+	 $(ECHO) "LD_FLAGS_SOLIB:=$(LD_FLAGS_SOLIB)" >> $@
 
 ifeq ($(filter -r,$(MAKEFLAGS)),)
   MAKEFLAGS+=-r
 endif
 
-TWIN_VERSION_STR=0.3.10
+TWIN_VERSION_STR=0.4.0
 
-CFLAGS+=-I$(TOPDIR)/include
+CC_FLAGS+=-I$(TOPDIR)/include
 
 MODFLAGS+=-fPIC -DCONF_THIS_MODULE
 
@@ -268,9 +269,9 @@ ARLIBOBJS:=$(foreach B,$(ARLIBS),$(OBJS_$(B)))
 # same with $(CPPOBJS) from $(CPPBINS)
 CPPOBJS:=$(foreach B,$(CPPBINS),$(OBJS_$(B)))
 
-# set correct CFLAGS for objs compiled as modules
+# set correct CC_FLAGS for objs compiled as modules
 ifneq ($(MODOBJS),)
-  _ALLFLAGS:=$(strip $(patsubst %,CFLAGS_%+=$(MODFLAGS)\n,$(MODOBJS)))
+  _ALLFLAGS:=$(strip $(patsubst %,CC_FLAGS_%+=$(MODFLAGS)\n,$(MODOBJS)))
 endif
 
 _ALLBINS:=$(strip $(BINS) $(MODBINS) $(ARLIBS))
@@ -293,7 +294,7 @@ $(CONF): $(TOPDIR)/conf/conf.auto $(TOPDIR)/include/Tw/Twautoconf.h
 	 $(ECHO) done
 
 .depend: $(TOPDIR)/scripts/Mkdep Makefile $(TOPDIR)/makerules $(_ALLSRCS)
-	$< $(filter -I%,$(CFLAGS)) $(sort $(_ALLSRCS)) > $@
+	$< $(filter -I%,$(CC_FLAGS)) $(sort $(_ALLSRCS)) > $@
 
 
 
@@ -345,13 +346,13 @@ $(TOPDIR)/include/TT/TT.h: $(TOPDIR)/include/Tw/Tw.h $(TOPDIR)/include/TT/TTdefs
 
 
 $(TOPDIR)/scripts/Getsizes: $(TOPDIR)/scripts/getsizes.c $(TOPDIR)/include/Tw/datatypes.h $(TOPDIR)/include/autoconf.h
-	$(CC) $(CFLAGS) $(LDFLAGS) $< -o $@
+	$(CC) $(CC_FLAGS) $(LD_FLAGS) $< -o $@
 
 $(TOPDIR)/scripts/Mkdep: $(TOPDIR)/scripts/mkdep.c $(TOPDIR)/include/Tw/datasizes.h $(TOPDIR)/include/autoconf.h
-	$(CC) $(CFLAGS) $(LDFLAGS) $< -o $@
+	$(CC) $(CC_FLAGS) $(LD_FLAGS) $< -o $@
 
 $(TOPDIR)/scripts/Bitmap: $(TOPDIR)/scripts/bitmap.c
-	$(CC) $(CFLAGS) $(LDFLAGS) $< -o $@
+	$(CC) $(CC_FLAGS) $(LD_FLAGS) $< -o $@
 	
 
 #
@@ -375,7 +376,7 @@ dir-%:
 
 torture-%.c: %.c Makefile $(TOPDIR)/makerules $(TOPDIR)/scripts/Torture $(TOPDIR)/scripts/Bitmap
 	@echo; echo "Torturing $< ..."; echo;
-	$(BASH) $(TOPDIR)/scripts/Torture $(TOPDIR)/scripts/Bitmap $(CC) $(CFLAGS) $(CFLAGS_$@) -c $< -o $*.o -- $<
+	$(BASH) $(TOPDIR)/scripts/Torture $(TOPDIR)/scripts/Bitmap $(CC) $(CC_FLAGS) $(CC_FLAGS_$@) -c $< -o $*.o -- $<
 
 torture: $(_ALLSRCS) $(foreach S,$(_ALLSRCS),torture-$(S))
 	
@@ -409,21 +410,21 @@ clean-dir-%:
 	$(M4) -I$(TOPDIR)/include $< > $@
 
 %.o: %.c
-	$(CC) $(CFLAGS) $(CFLAGS_$@) -c $< -o $@
-	@$(ECHO) ' ifeq ($$(strip $$(CC) $$(CFLAGS) $$(CFLAGS_$@)),$(strip $(CC) $(CFLAGS) $(CFLAGS_$@)))\n'\
+	$(CC) $(CC_FLAGS) $(CC_FLAGS_$@) -c $< -o $@
+	@$(ECHO) ' ifeq ($$(strip $$(CC) $$(CC_FLAGS) $$(CC_FLAGS_$@)),$(strip $(CC) $(CC_FLAGS) $(CC_FLAGS_$@)))\n'\
 	'FILES_UP_TO_DATE += $@\n'\
 	'endif' > .$@.flags
 
 %.o: %.C
-	$(CXX) $(CFLAGS) $(CXXFLAGS) $(CFLAGS_$@) $(CXXFLAGS_$@) -c $< -o $@
-	@$(ECHO) ' ifeq ($$(strip $(CXX) $(CFLAGS) $(CXXFLAGS) $(CFLAGS_$@) $(CXXFLAGS_$@)),$(strip $(CXX) $(CFLAGS) $(CXXFLAGS) $(CFLAGS_$@) $(CXXFLAGS_$@)))\n'\
+	$(CXX) $(CC_FLAGS) $(CXXFLAGS) $(CC_FLAGS_$@) $(CXXFLAGS_$@) -c $< -o $@
+	@$(ECHO) ' ifeq ($$(strip $(CXX) $(CC_FLAGS) $(CXXFLAGS) $(CC_FLAGS_$@) $(CXXFLAGS_$@)),$(strip $(CXX) $(CC_FLAGS) $(CXXFLAGS) $(CC_FLAGS_$@) $(CXXFLAGS_$@)))\n'\
 	'FILES_UP_TO_DATE += $@\n'\
 	'endif' > .$@.flags
 
 #
 # this is the rule to link a binary. It should look like:
 # % : $(OBJS_%)
-#	$(CC) -o $* $(OBJS_$*) $(LDFLAGS) $(LDFLAGS_$*)
+#	$(CC) -o $* $(OBJS_$*) $(LD_FLAGS) $(LD_FLAGS_$*)
 #	...
 # but 1) nasty match-all rules like this are a real pain
 # and 2) $(OBJS_%) doesn't expand
@@ -434,9 +435,9 @@ clean-dir-%:
 # and we use patterns for the last step:
 #       
 .%.link:
-	$(CC) -o $* $(OBJS_$*) $(LDFLAGS) $(LDFLAGS_$*)
+	$(CC) -o $* $(OBJS_$*) $(LD_FLAGS) $(LD_FLAGS_$*)
 	@$(LN) $* $@ ; \
-	 $(ECHO) ' ifeq ($$(strip $$(CC) $$(OBJS_$*) $$(LDFLAGS) $$(LDFLAGS_$*)),$(strip $(CC) $(OBJS_$*) $(LDFLAGS) $(LDFLAGS_$*)))\n'\
+	 $(ECHO) ' ifeq ($$(strip $$(CC) $$(OBJS_$*) $$(LD_FLAGS) $$(LD_FLAGS_$*)),$(strip $(CC) $(OBJS_$*) $(LD_FLAGS) $(LD_FLAGS_$*)))\n'\
 	 'FILES_UP_TO_DATE += $@\n'\
 	 'endif' > $@.flags
 

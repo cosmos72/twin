@@ -108,6 +108,8 @@
 
 { 0, 0, "SetFontTranslation",
     "0""v"TWS_void_STR"V"TWS_byte_STR },
+{ 0, 0, "SetUniFontTranslation",
+    "0""v"TWS_void_STR"V"TWS_hwfont_STR },
 
 { 0, 0, "DeleteObj",
     "0""v"TWS_void_STR"x"obj_magic_STR },

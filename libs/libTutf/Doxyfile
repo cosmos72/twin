@@ -3,7 +3,7 @@
 # General configuration options
 #---------------------------------------------------------------------------
 PROJECT_NAME           = "libTutf"
-PROJECT_NUMBER         = 0.3.10
+PROJECT_NUMBER         = 0.4.0
 OUTPUT_DIRECTORY       = ../../docs/libTutf/
 OUTPUT_LANGUAGE        = English
 EXTRACT_ALL            = YES

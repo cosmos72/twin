@@ -140,6 +140,7 @@ void  Tw_AttachHW(PREFIX uldat a1, CONST byte *a2, byte a3) ;
 byte  Tw_DetachHW(PREFIX uldat a1, CONST byte *a2) ;
 
 void  Tw_SetFontTranslation(PREFIX CONST byte *a1) ;
+void  Tw_SetUniFontTranslation(PREFIX CONST hwfont *a1) ;
 
 void  Tw_DeleteObj(PREFIX tobj a1) ;
 void  Tw_ChangeFieldObj(PREFIX tobj a1, udat a2, uldat a3, uldat a4) ;
