@@ -73,7 +73,7 @@ static byte DM_Kill, quiet, logged_in;
 static TW_VOLATILE pid_t ServerPid = (pid_t)-1, AttachPid = (pid_t)-1;
 
 static byte * TW_CONST * Args;
-static TW_CONST byte *hw_name = "-hw=tty", *title;
+static TW_CONST byte *hw_name = "-hw=tty", *title, *TwEnvRC = NULL;
 static byte use_twdisplay = DM_ATTACH, Privileges = TW_PRIV_NONE;
 
 typedef struct s_data {
@@ -93,6 +93,7 @@ static void Usage(void) {
 	    " -q, -quiet              quiet; suppress diagnostic messages\n"
 	    " -attach                 use \"twattach\" to start display (default)\n"
 	    " -display                use \"twdisplay\" to start display\n"
+	    " -envrc                  tell twin to run .twenvrc.sh to get environment\n"
 	    " -suidroot               tell twin to keep suid root privileges\n"
 	    " -sgidtty                tell twin to keep sgid tty privileges\n"
 	    " -title=<title>          set window title\n"
@@ -120,6 +121,8 @@ static void ParseArgs(void) {
 	    use_twdisplay = DM_ATTACH;
 	} else if (!strcmp(s, "-display")) {
 	    use_twdisplay = DM_DISPLAY;
+	} else if (!strcmp(s, "-envrc")) {
+	    TwEnvRC = "-envrc";
 	} else if (!strcmp(s, "-suidroot")) {
 	    Privileges = TW_PRIV_SUIDROOT;
 	} else if (!strcmp(s, "-sgidtty")) {
@@ -176,8 +179,8 @@ static byte InitServer(void) {
 	if (fd[0] != 1)
 	    close(fd[0]);
 
-	execl(BINDIR_PREFIX "twin", "twin", "-secure", "-nohw", NULL);
-	execlp("twin", "twin", "-secure", "-nohw", NULL);
+	execl(BINDIR_PREFIX "twin", "twin", "-secure", "-nohw", TwEnvRC, NULL);
+	execlp("twin", "twin", "-secure", "-nohw", TwEnvRC, NULL);
 	fprintf(stderr, "twdm: exec(twin) failed: %s\n", strerror(errno));
 	exit(1);
 	return FALSE;
@@ -193,6 +196,7 @@ static byte InitServer(void) {
 	do {
 	    i = read(fd[0], buff, 79);
 	} while (i < 0 && errno == EINTR);
+	close(fd[0]);
 	if (i > 33 && !memcmp(buff, "twin: starting in background as :", 33)) {
 	    while (buff[--i] == '\n')
 		;

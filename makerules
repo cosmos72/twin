@@ -311,6 +311,10 @@ else
   PREVIOUS_CONF__UNICODE=x
 endif
 
+#
+# force re-making after building include/Tw/uni_types.h,
+# so that 'make' reads new .uni_types.flags
+#
 ifneq ($(CONF__UNICODE),$(PREVIOUS_CONF__UNICODE))
   $(TOPDIR)/include/Tw/uni_types.h: force-remake
 endif
@@ -391,7 +395,9 @@ Torture-dir-%:
 # when releasing twin, to let people build with just compiler, bash, make.
 # In order to run './configure' and 'make Torture', also sed and grep are required.
 #
-autogen: $(foreach D, $(SUBDIRS), autogen-dir-$(D))
+autogen: pre-autogen $(foreach D, $(SUBDIRS), autogen-dir-$(D))
+
+pre-autogen:
 
 autogen-dir-%:
 	$(MAKE) autogen -C $*

@@ -54,7 +54,7 @@ fd_set save_rfds, save_wfds;
 int max_fds;
 byte lenTWDisplay, *TWDisplay, *origTWDisplay, *origTERM, *origHW, *HOME;
 byte **main_argv, **orig_argv;
-byte ctty_InUse, flag_secure;
+byte flag_secure, flag_envrc;
 byte *flag_secure_msg = "twin: cannot exec() external programs in secure mode.\n";
 
 int (*OverrideSelect)(int n, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *timeout);
@@ -131,6 +131,8 @@ static void Usage(void) {
 	  " -h, -help               display this help and exit\n"
 	  " -V, -version            output version information and exit\n"
 	  " -secure                 forbid starting external programs\n"
+	  " -envrc                  execute .twenvrc.sh and read its output to set\n"
+	  "                         environment variables (mostly useful for twdm)\n"
 	  " -x                      start display as exclusive\n"
 	  " -nohw                   start in background without display\n"
 	  " -hw=<display>[,options] start with the given display (multiple -hw=... allowed)\n"

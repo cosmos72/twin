@@ -395,7 +395,7 @@ TW_INLINE byte *GetQueue(tw_d TwD, byte i, uldat *len) {
 
 /* add data to a queue keeping it aligned at 8 bytes (for tmsgs) */
 TW_INLINE uldat ParanoidAddQueueQMSG(tw_d TwD, uldat len, void *data) {
-    byte *t = data + 2 * sizeof(uldat);
+    byte *t = (byte *)data + 2 * sizeof(uldat);
     uldat mtype, minlen, xlen;
     tmsg M;
     tevent_any E;
@@ -892,6 +892,9 @@ static byte ProtocolNumbers(tw_d TwD) {
 	    return TRUE;
 	} else
 	    Errno = TW_EX_PROTOCOL;
+    } else if (len == 0) {
+	/* server immediately closed the socket. socket module not running? */
+	GetErrnoLocation(TwD)->S = TW_ENO_MODULE_DETAIL;
     }
     return FALSE;
 }
@@ -1177,7 +1180,9 @@ tw_d Tw_Open(TW_CONST byte *TwDisplay) {
     }
     UNLK;
     
-    close(Fd); Fd = TW_NOFD; /* to skip Sync() */
+    if (Fd != TW_NOFD) {
+	close(Fd); Fd = TW_NOFD; /* to skip Sync() */
+    }
     Tw_Close(TwD);
     return (tw_d)0;
 }
@@ -1206,6 +1211,7 @@ void Tw_Close(tw_d TwD) {
     if (Fd != TW_NOFD) {
 	Sync(TwD);
 	close(Fd);
+	Fd = TW_NOFD;
     }
 #ifdef CONF_SOCKET_GZ
     if (GzipFlag)
@@ -1327,7 +1333,7 @@ TW_FNATTR_CONST TW_CONST byte *Tw_StrError(TW_CONST tw_d TwD, uldat e) {
       case TW_EX_SIZES:
 	return "server has different data sizes, impossible to connect";
       case TW_ELOST_CONN:
-	return "connection lost (explicit kill or server shutdown)";
+	return "connection lost ";
       case TW_EALREADY_CONN:
 	return "already connected";
       case TW_ENO_DISPLAY:
@@ -1378,6 +1384,14 @@ TW_FNATTR_CONST TW_CONST byte *Tw_StrError(TW_CONST tw_d TwD, uldat e) {
  */
 TW_FNATTR_CONST TW_CONST byte *Tw_StrErrorDetail(TW_CONST tw_d TwD, uldat E, uldat S) {
     switch (E) {
+      case TW_ELOST_CONN:
+	switch (S) {
+	  case TW_ENO_MODULE_DETAIL:
+	    return "(socket module may be not running on server)";
+	  default:
+	    break;
+	}
+	return "(explicit kill or server shutdown)";
       case TW_ECANT_CONN:
       case TW_ECANT_WRITE:
       case TW_ENO_SOCKET:

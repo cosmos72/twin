@@ -4,14 +4,14 @@
 
 #define TW_PROTOCOL_VERSION_MAJOR 3
 #define TW_PROTOCOL_VERSION_MINOR 0
-#define TW_PROTOCOL_VERSION_PATCH 3
+#define TW_PROTOCOL_VERSION_PATCH 4
 #define TW_PROTOCOL_VERSION       ((TW_PROTOCOL_VERSION_MAJOR<<16)|(TW_PROTOCOL_VERSION_MINOR<<8)|TW_PROTOCOL_VERSION_PATCH)
 #define TW_PROTOCOL_VERSION_STR   TW_STR(TW_PROTOCOL_VERSION_MAJOR) "." TW_STR(TW_PROTOCOL_VERSION_MINOR) "." TW_STR(TW_PROTOCOL_VERSION_PATCH)
 
-#define TWVER_MAJOR(n) ((n)>>16)
-#define TWVER_MINOR(n) (((n)>>8) & 0xFF)
-#define TWVER_PATCH(n) ((n) & 0xFF)
-#define TWVER_BUILD(M, m, p) (((M)<<16)|((m)<<8)|(p))
+#define TW_VER_MAJOR(n) ((n)>>16)
+#define TW_VER_MINOR(n) (((n)>>8) & 0xFF)
+#define TW_VER_PATCH(n) ((n) & 0xFF)
+#define TW_VER_BUILD(M, m, p) (((M)<<16)|((m)<<8)|(p))
 
 
 #endif /* _TW_VERSION_H */

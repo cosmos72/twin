@@ -1003,7 +1003,7 @@ case 5:
 { yyval._node = yyvsp[-1]._node; ;
     break;}
 case 6:
-{ set_yy_file(findfile(yyvsp[-1]._string, NULL)); yyval._node = NULL; ;
+{ set_yy_file(FindFile(yyvsp[-1]._string, NULL)); yyval._node = NULL; ;
     break;}
 case 7:
 { yyval._node = NULL; ;

@@ -114,6 +114,8 @@ udat GetDisplayHeight(void) {
 }
 
 void UpdateFlagsHW(void) {
+    StrategyReset(); /* reset StrategyFlag */
+    
     NeedOldVideo = ExpensiveFlushVideo = FALSE;
     CanDragArea = TRUE;
 
@@ -436,6 +438,7 @@ byte DetachDisplayHW(uldat len, CONST byte *arg, byte flags) {
     return done;
 }
 
+/* initialize all required HW displays. Since we are at it, also parse command line */
 byte InitHW(void) {
     byte **arglist = orig_argv;
     byte ret = FALSE;
@@ -455,6 +458,8 @@ byte InitHW(void) {
 	    flags = TW_ATTACH_HW_EXCLUSIVE;
 	} else if (!strcmp(*arglist, "-secure")) {
 	    flag_secure = TRUE;
+	} else if (!strcmp(*arglist, "-envrc")) {
+	    flag_envrc = TRUE;
 	} else if (!strncmp(*arglist, "-hw=", 4)) {
 	    if (hwcount == -1) {
 		printk("twin: `-hw=' and `-nohw' options used together. make up your mind.\n");
@@ -465,6 +470,12 @@ byte InitHW(void) {
 	    }
 	}
     }
+    /*
+     * execute .twenvrc.sh if needed and read its output to set
+     * environment variables (mostly useful for twdm)
+     */
+    RunTwEnvRC();
+
     for (arglist = orig_argv; *arglist; arglist++) {
 	if (!strcmp(*arglist, "-nohw")) {
 	    RunNoHW(ret = TRUE);

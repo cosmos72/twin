@@ -169,7 +169,7 @@ line_list	:           line { $$ = AddtoNodeList(NULL, $1); }
 
 line		: immediate_line '\n' { $$ = NULL; }
 		| func           '\n' { $$ = $1; }
-		| READ string    '\n' { set_yy_file(findfile($2, NULL)); $$ = NULL; }
+		| READ string    '\n' { set_yy_file(FindFile($2, NULL)); $$ = NULL; }
 		| '\n'                { $$ = NULL; }
                 ;
 

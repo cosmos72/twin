@@ -1080,6 +1080,13 @@ byte SetServerUid(uldat uid, byte privileges) {
 		    flag_secure = 0;
 		    SetEnvs(p);
 		    if ((ok = Ext(Socket,InitAuth)())) {
+			/*
+			 * it's time to execute .twenvrc.sh and read its output to set
+			 * environment variables (mostly useful for twdm)
+			 */
+			RunTwEnvRC();
+			
+			/* tell the WM to restart itself (so that it reads user's .twinrc) */
 			SendControlMsg(WM_MsgPort, MSG_CONTROL_OPEN, 0, NULL);
 			return TRUE;
 		    }
@@ -1104,6 +1111,131 @@ byte SetServerUid(uldat uid, byte privileges) {
 	printk("twin: SetServerUid() can be called only if started by root with \"-secure\".\n");
     return FALSE;
 }
+
+
+/*
+ * search for a file relative to HOME, to CONF_DESTDIR or as path
+ * 
+ * this for example will search "foo"
+ * as "{HOME}/foo", "{CONF_DESTDIR}/lib/twin/foo" or plain "foo"
+ */
+byte *FindFile(byte *name, uldat *fsize) {
+    byte *path;
+    byte CONST *dir;
+    byte CONST *search[3] = { HOME, conf_destdir_lib_twin, "" };
+    int i, min_i, max_i, len, nlen = strlen(name);
+    struct stat buf;
+    
+    if (flag_secure)
+	min_i = max_i = 1; /* only conf_destdir_lib_twin */
+    else
+	min_i = 0, max_i = 2;
+
+    for (i = min_i; i <= max_i && (dir = search[i]); i++) {
+	len = strlen(dir);
+	if ((path = AllocMem(len + nlen + 2))) {
+	    sprintf(path, "%s%s%s", dir, *dir ? "/" : "", name);
+	    if (stat(path, &buf) == 0) {
+		if (fsize)
+		    *fsize = buf.st_size;
+		return path;
+	    }
+	    FreeMem(path);
+	}
+    }
+    return NULL;
+}
+
+/*
+ * read data from infd and set environment variables accordingly
+ */
+static void ReadTwEnvRC(int infd) {
+    byte buff[BIGBUFF], *p = buff, *end, *q, *eq;
+    int got, left = BIGBUFF;
+    for (;;) {
+	do {
+	    got = read(infd, p, left);
+	} while (got == -1 && errno == EINTR);
+	
+	if (got <= 0)
+	    break;
+	
+	end = p + got;
+	p = buff;
+	    
+	while ((eq = memchr(p, '=', end - p)) &&
+	       (q = memchr(eq, '\n', end - eq))) {
+		
+	    *q++ = '\0';
+#if defined(HAVE_SETENV)
+	    *eq++ = '\0';
+	    setenv(p, eq, 1);
+#elif defined(HAVE_PUTENV)
+	    putenv(p);
+#endif
+	    p = q;
+	}
+	left = end - p;
+	if (left == BIGBUFF)
+	    /* line too long! */
+	    left = 0;
+	    
+	memmove(buff, p, left);
+	p = buff + left;
+	left = BIGBUFF - left;
+    }
+}
+
+/*
+ * execute .twenvrc.sh <dummy> and read its output to set
+ * environment variables (mostly useful for twdm)
+ */
+void RunTwEnvRC(void) {
+    byte *path;
+    uldat len;
+    int fds[2];
+    
+    if (flag_envrc != 1)
+	return;
+    
+    if (flag_secure == 0) {
+	flag_envrc = 0;
+	
+	if ((path = FindFile(".twenvrc.sh", &len))) {
+	    if ((pipe(fds) >= 0)) {
+		switch (fork()) {
+		  case -1: /* error */
+		    close(fds[0]);
+		    close(fds[1]);
+		    printk("twin: RunTwEnvRC(): fork() failed: %s\n", strerror(errno));
+		    break;
+		  case 0:  /* child */
+		    close(fds[0]);
+		    if (fds[1] != 2) {
+			close(2);
+			dup2(fds[1], 2);
+			close(fds[1]);
+		    }
+		    close(1);
+		    dup2(0, 1);
+		    execl(path, path, "dummy", NULL);
+		    exit(0);
+		    break;
+		  default: /* parent */
+		    close(fds[1]);
+		    ReadTwEnvRC(fds[0]);
+		    close(fds[0]);
+		    break;
+		}
+	    } else
+		printk("twin: RunTwEnvRC(): pipe() failed: %s\n", strerror(errno));
+	} else
+	    printk("twin: RunTwEnvRC(): .twenvrc.sh: File not found\n", strerror(errno));
+    } else
+	printk("twin: RunTwEnvRC(): delaying .twenvrc.sh execution until secure mode ends.\n");
+}
+
+
 
 /* finally, functions to manage Ids */
 

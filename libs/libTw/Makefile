@@ -10,7 +10,7 @@ LD_FLAGS+=$(LD_LIBSOCKET)
 
 all: everything
 
-VERSION=3.0.3
+VERSION=3.0.4
 SO_VER=3
 
 BINS=libTw.so.$(VERSION)

@@ -6,6 +6,15 @@ SUBDIRS=mapscrn
 
 -include $(TOPDIR)/makeautoconf
 
+#
+# twsysmon is Linux-specific
+#
+ifeq ($(OS),Linux)
+  TWSYSMON=twsysmon
+else
+  TWSYSMON=
+endif
+
 OBJS_twattach=attach.o
 OBJS_twcat=cat.o
 OBJS_twclip=clip.o
@@ -42,7 +51,7 @@ LD_FLAGS_twterm+=$(LIBTW)
 LD_FLAGS_twthreadtest+=$(LIBTW) $(LD_LIBPTHREAD)
 LD_FLAGS_ttest+=$(LIBTT)
 
-BINS=twattach twcat twclip twdialog twevent twfindtwin twlsobj twsendmsg twsetroot twsysmon twterm
+BINS=twattach twcat twclip twdialog twevent twfindtwin twlsobj twsendmsg twsetroot $(TWSYSMON) twterm
 
 #BINS+=ttest
 
@@ -82,8 +91,6 @@ endif
 # Must correctly set all BINS, MODBINS, ARLIBS, CC_FLAGS* and LD_FLAGS* before including this!
 #
 include $(TOPDIR)/makerules
-
-
 
 twdetach: twattach
 	$(LN) $< $@

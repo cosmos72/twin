@@ -307,7 +307,7 @@ static void alienDecode(uldat id) {
 			if (a[n].V) {
 #ifdef CONF__UNICODE
 			    if (c == TWS_hwattr && AlienMagic(Slot)[c] == 1)
-				alienTranslateHWAttrV_IBM437_to_UTF_16((hwattr *)a[n].V, nlen);
+				alienTranslateHWAttrV_IBM437_to_UTF_16((hwattr *)a[n].VV, nlen);
 #endif
 			    mask |= 1 << n;
 			} else
@@ -337,7 +337,7 @@ static void alienDecode(uldat id) {
 			    if (a[n].V) {
 #ifdef CONF__UNICODE
 				if (c == TWS_hwattr && AlienMagic(Slot)[c] == 1)
-				    alienTranslateHWAttrV_IBM437_to_UTF_16((hwattr *)a[n].V, nlen);
+				    alienTranslateHWAttrV_IBM437_to_UTF_16((hwattr *)a[n].VV, nlen);
 #endif
 				mask |= 1 << n;
 			    } else

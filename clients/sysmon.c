@@ -136,6 +136,7 @@ void Update(void) {
 	    CpuSystem[i] = strtol(s, &e, 0) - CpuSystem[!i];
 	    CpuIdle[i] = strtol(e, &s, 0) - CpuIdle[!i];
 	}
+	/* linux kernel 2.2 style: */
 	if ((s = strstr(buf, "disk_rio "))) {
 	    DiskR[i] = strtol(s+9, &e, 0);
 	    DiskR[i] += strtol(e, &s, 0);
@@ -147,6 +148,20 @@ void Update(void) {
 	    DiskW[i] += strtol(e, &s, 0);
 	    DiskW[i] += strtol(s, &e, 0);
 	    DiskW[i] += strtol(e, &s, 0) - DiskW[!i];
+	}
+	if ((s = strstr(buf, "disk_io: "))) {
+	    /* linux kernel 2.4 style: */
+	    s += 10;
+	    DiskR[i] = DiskW[i] = 0;
+	    while (s && (s = strstr(s, "):("))) {
+		if ((s = strchr(s+3, ',')) && (s = strchr(s+1, ','))) {
+		    DiskR[i] += strtol(s+1, &e, 0);
+		    if (*e == ',' && (e = strchr(e+1, ',')))
+			DiskW[i] += strtol(e+1, &s, 0);
+		}
+	    }
+	    DiskR[i] -= DiskR[!i];
+	    DiskW[i] -= DiskW[!i];
 	}
 	CpuTotal = CpuUser[i] + CpuNice[i] + CpuSystem[i] + CpuIdle[i];
 

@@ -91,17 +91,17 @@
    Their main (only) advantage is they are very clever in returning
    unused memory to the system. Anyway, they are tested only on Linux/i386,
    and furthermore they shoot heavily on the kernel mmap() subsystem,
-   so on some OSes they may give troubles.
+   so on some OSes / hardware they may give troubles.
    
 	(CONF__UNICODE)
 	Build all code with Unicode support [Y/n] ?
    
    Answer 'y' unless you know what you are doing. Saying 'n' skips compiling
    all necessary code to support Unicode, and produced clients and libraries
-   will be *incompatible* with ones built with Unicode support. Also, mixing
+   will be _incompatible_ with ones built with Unicode support. Also, mixing
    Unicode aware clients with a non-Unicode server or vice-versa may result
    in non-ASCII characters being rendered wrongly. It makes sense to say 'n'
-   only if you have extremely tight memory requirements.
+   only if you have _extremely_ tight memory requirements.
    
 	#
 	# Socket support
@@ -145,7 +145,7 @@
    Answer 'y' or 'm' to allow customization of the window manager look-n-feel
    using the configuration file ~/.twinrc. For the syntax of the file look
    at the sample configuration 'system.twinrc' distributed with twin.
-   Since the RC parser is quite big and is used only at startup, it would be
+   Since the RC parser is quite big and gets used only at startup, it would be
    a good idea to say 'm' here (if you enabled modules) rather than 'y'.
    
 	(CONF_WM_RC_SHMMAP)
@@ -173,7 +173,7 @@
    Depending on your OS, realloc() may move that memory to a new location,
    making it unusable since it contains a lot of pointers.
    If this ever happens, twin will report the error and tell you to disable
-   the option.
+   the option and recompile.
 
 	#
 	# Terminal emulator
@@ -189,8 +189,9 @@
 	(CONF_TERM_DEVPTS)
 	 -> Terminal: use glibc-2.1 /dev/pts/ [y/N] ?
    
-   Answer `y' if you are compiling twin with glibc-2.1 or later and you
-   want to use /dev/pts/* terminals instead of old-style /dev/tty[p-z]*.
+   Answer `y' if you are compiling twin on an OS that supports
+   /dev/pts/* terminals instead of old-style /dev/tty[p-z]*.
+   On Linux, this requires a 2.2.x or later kernel with glibc-2.1 or later.
 
 	#
 	# Messages logging
@@ -245,8 +246,9 @@
 	(CONF_HW_DISPLAY)
 	HW support: twdisplay client as display [Y/m/n] ?
 
-   Answering `y' or `m' compiles `twdisplay', which can attach/detach displays
-   remotely. Answer `n' only if you know what you are doing.
+   Answering `y' or `m' compiles the `twdisplay' client, which can
+   attach/detach displays remotely.
+   Answer `n' only if you know what you are doing.
 
 	(CONF_HW_GGI)
 	HW support: libggi [y/m/N] ?
@@ -266,9 +268,10 @@
    Answer 'y' if you want twin to draw shadows around each window.
    
    This and all remaining answer allow you to adapt twin to your tastes.
+   Please remember that the settings in ~/.twinrc will override the
+   configuration options set from here.
    No matter what you answer, you can always change the option while twin
-   is running from the `Options' dialog window. Please remember anyway that
-   the settings in ~/.twinrc will override these options.
+   is running from the `Options' dialog window. 
    
 	(CONF_OPT_BLINK)
 	Runtime option: enable blink/high background [y/N] ?

@@ -18,7 +18,7 @@ static utf_to_ch T_CAT(array_,T_TEMPLATE) [] = {
 
 hwfont T_CAT(Tutf_UTF_16_to_,T_TEMPLATE)(hwfont c) {
     static utf_to_ch key;
-    utf_to_ch *res;
+    TW_CONST utf_to_ch *res;
     
     /* T_TEMPLATE obviously cannot contain all unicode chars. this is just a best effort. */
     if (!T_CAT(flag_,T_TEMPLATE)) {

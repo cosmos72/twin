@@ -102,7 +102,7 @@
 
 /* Display variables */
 
-#define NEST 2
+#define NEST 4
 
 
 
@@ -953,9 +953,11 @@ byte X11_InitHW(void) {
 	    arg += 2; /* `X11' is same as `X' */
 
 	if (*arg == '@') {
-	    s = strchr(dpy = ++arg, ',');
-	    if (s) *(dpy0 = s) = '\0';
-	    arg = s;
+	    if ((s = strchr(dpy = ++arg, ','))) {
+		*(dpy0 = s) = '\0';
+		arg = s + 1;
+	    } else
+		arg = NULL;
 	}
 
 	while (arg && *arg) {
@@ -1142,7 +1144,7 @@ byte X11_InitHW(void) {
 	}
     } while (0); else {
 	if (dpy || (dpy = getenv("DISPLAY")))
-	    printk("      X11_InitHW() failed to open display %s\n", arg);
+	    printk("      X11_InitHW() failed to open display %s\n", HW->Name);
 	else
 	    printk("      X11_InitHW() failed: DISPLAY is not set\n");
     }

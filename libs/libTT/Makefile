@@ -6,7 +6,7 @@ SUBDIRS=
 
 all: everything
 
-VERSION=0.0.3
+VERSION=0.0.4
 SO_VER=0
 
 BINS=libTT.so.$(VERSION)

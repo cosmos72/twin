@@ -10,7 +10,7 @@
 				TUTORIAL
 
 
-		  updated to version 0.4.0, 31 Jul 2001
+		  updated to version 0.4.1, 14 Jan 2002
 	      
 
 	     Author: Massimiliano Ghilardi <max@linuz.sns.it>
@@ -28,7 +28,8 @@
 	4. Installing and Starting twin
 	5. The Twin UI (User Interface): how to use it
 	6. External programs
-	   6.1. Security Statement on Sockets
+	   6.1. Saving diagnostic messages (logs)
+	   6.2. Security Statement on Sockets
 	7. Transparent Compression
 	8. Attach/Detach
 	9. Installing vga.pcf.gz
@@ -410,6 +411,7 @@
    using the unix socket (TWDISPLAY=:<something>) so they must run
    on the same machine as twin; remote programs won't be able to connect.
 
+
    The external programs (clients) distributed with twin are:
    
 	twattach  - utility to attach/detach twin from displays
@@ -431,7 +433,7 @@
 	    [-code=]<Code>      set the message code (default is open (2))
 	    [-data=]<Data>      set the message data
 	   Currently known codes for control messages are:
-	    quit (0), restart (1), open (2)\n",
+	    quit (0), restart (1), open (2)
 	
 	twsetroot - customize twin background (see clients/README.twsetroot)
 	twsysmon  - a system resources monitor (works on Linux only)
@@ -445,7 +447,40 @@
 				(must be last option) 
 	twthreadtest - a stupid demo to test libTw with threads.
 
+	twdm      - a login manager, modeled after xdm/kdm. Known options:
+	    -h, -help               display this help and exit
+	    -V, -version            output version information and exit
+	    -k, -kill               kill twin server upon display detach
+	    -q, -quiet              quiet; suppress diagnostic messages
+	    -attach                 use "twattach" to start display (default)
+	    -display                use "twdisplay" to start display
+	    -envrc                  tell twin to run .twenvrc.sh to get environment
+	    -suidroot               tell twin to keep suid root privileges
+	    -sgidtty                tell twin to keep sgid tty privileges
+	    -title=<title>          set window title
+	    -hw=<arg>               set display hw to use (default: -hw=tty)
 
+   `twdm' can be used instead of the usual mingetty/agetty/login programs
+   to let a user login on a workstation console (currently tested only on Linux).
+   To do that, you can just type in a root shell on the console
+   
+   # twdm
+   
+   but this will work only until twdm is killed. For a more permanent setup,
+   you need to convince init that it should exec twdm instead of the usual getty.
+   Assuming you have a SysV flavour of init and that twdm is installed in
+   /usr/local/bin, a line like this in /etc/inittab should do the trick :
+   (you must find the line that starts getty on the corresponding tty and
+   replace the whole line with the one below -- of course you must replace
+   TERM=<...> with the actual terminal type of your workstation console)
+   
+   1:2345:respawn:/usr/local/bin/twdm -quiet -hw=tty@/dev/tty1,TERM=linux
+   
+   In order to correctly setup $PATH and other environment variables,
+   you can add `-envrc' option to twdm (tested only on Linux with bash).
+   
+   
+   
    The `twterm' client and the builtin terminal emulator deserve a few extra
    explanations. They implement a linux terminal, so applications running
    inside them will see TERM=linux, but also support two different mouse
@@ -497,7 +532,34 @@
 	twsendmsg "Builtin" quit
    which causes twin to exit, as if Menu -> File -> Quit was selected.
    
-   6.1. Security Statement on Sockets:
+   6.1. Saving diagnostic messages (logs):
+	
+	twin and other programs send diagnostic messages, informations,
+	and most notably errors, to standard error. This is good in most
+	cases, but if you tell twin to use its own tty as display,
+	diagnostic messages may be lost or may even garble the display.
+	
+	In this case, it can be useful to save diagnostic messages to some
+	file or device, for example another tty, or /var/log/twdm.log.
+	The way to obtain this depends on your shell, but with bash and many
+	other common shells, you can redirect standard error in this way:
+	
+	$ program arguments 2>filename
+	
+	The various programs distributed with twin do not change their
+	standard error, so for example, running
+	
+	$ twdm 2>/var/log/twdm.log
+	
+	will redirect all diagnostic messages produced by twdm and by programs
+	executed by it (twin and twattach/twdisplay) to /var/log/twdm.log.
+   
+	Furthermore, diagnostic messages produced by twin are also collected
+	within twin itself, and can be viewed selecting Menu -> ð -> Messages
+	from the default menu.
+	
+	
+   6.2. Security Statement on Sockets:
    
 	As said above,
 	the authorization method currently used is similar to Xauthority:
@@ -643,7 +705,7 @@
       to attach to the X server corresponding to <some X display>
       The programs `twattach', `twin', and the X server do not need
       to run on the same host as long as they have the permissions
-      to talk each other (see below for an explanation about how
+      to talk each other (see above for an explanation about how
       the file .TwinAuth is used for authorization control)
       
       $ twattach -twin@:5 -hw=tty
@@ -745,6 +807,8 @@
 		: ",TERM=<terminal>" to specify the terminal type.
 		: ",charset=<name>" to inform the driver of the codepage
 		        used by the terminal (default: IBM437).
+		: ",ctty" to tell twin to grab given tty as its new
+		        controlling tty (mostly useful from twdm)
 
       -hw=ggi	: no options, use the zillion of libggi environment variables
 		  to control libggi behaviour.
@@ -831,19 +895,15 @@
 
     This should fix some problems with twin displaying strange fonts under X,
     since if twin cannot find the `vga' font, it will fallback on `fixed',
-    which has different encoding and thus completely different pseudo-graphical
-    characters, and makes twin look really ugly.
+    which has different encoding and no pseudo-graphical characters,
+    and makes twin look really ugly.
 
     b. VGA text display:
     
     To use twin on a VGA or better text display, you can use the supplied
-    VGA font `fonts/9x16' by typing a command like `setfont fonts/9x19' or
-    `loadfont fonts/9x19' (again, details are system dependant).
-    
-    The VGA font `font/vgafont.raw' is included too, but was specifically
-    tweaked for the old configuration option `Use alternate font' which
-    has been removed in favour of Unicode support, and now it is only useful
-    if you write an ad-hoc ~/.twinrc.
+    VGA font `fonts/vgafont.raw' by typing a command like
+    `setfont fonts/vgafont.raw' or `loadfont fonts/vgafont.raw'
+    (again, details are system dependant).
     
     As side note, if you are going to use twin on a VGA text display,
     I strongly suggest to set your VGA card to something better than

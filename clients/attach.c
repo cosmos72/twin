@@ -30,9 +30,9 @@ static void Usage(byte detach) {
 	    " -d                      detach display%s\n"
 	    " -s, -share              allow multiple simultaneous displays (default)\n"
 	    " -x, -excl               request exclusive display - detach all others\n"
-	    " -v                      verbose output (default)\n"
-	    " -q                      quiet - don't report messages from twin server\n"
-	    " -f                      force running even with wrong protocol version\n"
+	    " -v, -verbose            verbose output (default)\n"
+	    " -q, -quiet              quiet - don't report messages from twin server\n"
+	    " -f, -force              force running even with wrong protocol version\n"
 	    " -twin@<TWDISPLAY>       specify server to contact instead of $TWDISPLAY\n"
 	    " -hw=<display>[,options] start the given display\n"
 	    "Currently known display methods: \n"
@@ -76,9 +76,9 @@ static byte VersionsMatch(byte force) {
 	fprintf(stderr, "%s: %s: socket protocol version mismatch!%s\n"
 		"          client is %d.%d.%d, library is %d.%d.%d, server is %d.%d.%d\n",
 		MYname, (force ? "warning" : "fatal"), (force ? " (ignored)" : ""),
-		TWVER_MAJOR(cv), TWVER_MINOR(cv), TWVER_PATCH(cv),
-		TWVER_MAJOR(lv), TWVER_MINOR(lv), TWVER_PATCH(lv),
-		TWVER_MAJOR(sv), TWVER_MINOR(sv), TWVER_PATCH(sv));
+		TW_VER_MAJOR(cv), TW_VER_MINOR(cv), TW_VER_PATCH(cv),
+		TW_VER_MAJOR(lv), TW_VER_MINOR(lv), TW_VER_PATCH(lv),
+		TW_VER_MAJOR(sv), TW_VER_MINOR(sv), TW_VER_PATCH(sv));
 	return FALSE;
     }
     return TRUE;
@@ -137,11 +137,11 @@ int main(int argc, char *argv[]) {
 	    detach = 0;
 	else if (!strcmp(*argv, "-d"))
 	    detach = 1;
-	else if (!strcmp(*argv, "-v"))
+	else if (!strcmp(*argv, "-v") || !strcmp(*argv, "-verbose"))
 	    flags |= TW_ATTACH_HW_REDIRECT;
-	else if (!strcmp(*argv, "-q"))
+	else if (!strcmp(*argv, "-q") || !strcmp(*argv, "-quiet"))
 	    flags &= ~TW_ATTACH_HW_REDIRECT;
-	else if (!strcmp(*argv, "-f"))
+	else if (!strcmp(*argv, "-f") || !strcmp(*argv, "-force"))
 	    force = 1;
 	else if (!strncmp(*argv, "-twin@", 6))
 	    dpy = *argv + 6;

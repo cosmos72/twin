@@ -8,9 +8,9 @@
 #define TT_PROTOCOL_VERSION       ((TT_PROTOCOL_VERSION_MAJOR<<16)|(TT_PROTOCOL_VERSION_MINOR<<8)|TT_PROTOCOL_VERSION_PATCH)
 #define TT_PROTOCOL_VERSION_STR   TT_STR(TT_PROTOCOL_VERSION_MAJOR) "." TT_STR(TT_PROTOCOL_VERSION_MINOR) "." TT_STR(TT_PROTOCOL_VERSION_PATCH)
 
-#define TTVER_MAJOR(n) ((n)>>16)
-#define TTVER_MINOR(n) (((n)>>8) & 0xFF)
-#define TTVER_PATCH(n) ((n) & 0xFF)
-#define TTVER_BUILD(M, m, p) (((M)<<16)|((m)<<8)|(p))
+#define TT_VER_MAJOR(n) ((n)>>16)
+#define TT_VER_MINOR(n) (((n)>>8) & 0xFF)
+#define TT_VER_PATCH(n) ((n) & 0xFF)
+#define TT_VER_BUILD(M, m, p) (((M)<<16)|((m)<<8)|(p))
 
 #endif _TT_VERSION_H

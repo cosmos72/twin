@@ -16,7 +16,7 @@ static utf_to_ch array_IBM865 [] = {
 
 hwfont Tutf_UTF_16_to_IBM865(hwfont c) {
     static utf_to_ch key;
-    utf_to_ch *res;
+    TW_CONST utf_to_ch *res;
     
     /* Codepage 865 obviously cannot contain all unicode chars. this is just a best effort. */
     if (!flag_IBM865) {

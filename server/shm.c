@@ -93,7 +93,8 @@ static void shm_shrink_error(void) {
 # ifdef CONF__ALLOC
 	  "      This should not happen! Please report.\n"
 # endif
-	  "      CONF_WM_RC_SHRINK disabled. Recompile to disable it permanently.\n");
+	  "      CONF_WM_RC_SHRINK disabled.\n"
+	  "      Reconfigure and recompile to disable it permanently.\n");
 }
 #endif /* !defined(CONF_WM_RC_SHMMAP) && defined(CONF_WM_RC_SHRINK) */
 
@@ -110,6 +111,9 @@ static void shm_shrink_error(void) {
 
 static byte shmfile[]="/tmp/.Twin_shm\0\0\0\0";
 
+#define TW_PAGE_ALIGN_DOWN(l) ((l) & ~(size_t)(TW_PAGE_SIZE - 1))
+#define TW_PAGE_ALIGN_UP(l) (((l) + (TW_PAGE_SIZE - 1)) & ~(size_t)(TW_PAGE_SIZE - 1))
+
 byte shm_init(size_t len) {
     int fd = NOFD;
     
@@ -118,7 +122,7 @@ byte shm_init(size_t len) {
 
     len += GL_SIZE;
     
-    len = ((len + GL_SIZE) + (TW_PAGE_SIZE - 1)) & ~(size_t)(TW_PAGE_SIZE - 1);
+    len = TW_PAGE_ALIGN_UP(len + GL_SIZE);
 
     if ((fd = open(shmfile, O_RDWR|O_CREAT|O_TRUNC|O_EXCL, 0600)) >= 0) {
 	if (((L = len), lseek(fd, L-1, SEEK_SET) == L-1) &&
@@ -129,7 +133,7 @@ byte shm_init(size_t len) {
 #endif
 	    
 #ifdef CONF__ALLOC
-	    if ((M = S = (void *)mmap((byte *)AllocStatHighest() + (1l<<20), L, PROT_READ|PROT_WRITE, MAP_FILE|MAP_SHARED, fd, 0)) == NOCORE)
+	    if ((M = S = (void *)mmap((byte *)AllocStatHighest() + (1l<<24), L, PROT_READ|PROT_WRITE, MAP_FILE|MAP_SHARED, fd, 0)) == NOCORE)
 #endif		
 		M = S = (void *)mmap(0, L, PROT_READ|PROT_WRITE, MAP_FILE|MAP_SHARED, fd, 0);
 
@@ -157,11 +161,13 @@ void shm_abort(void) {
  * shrink (M, M+L) to (M, S)
  */
 byte shm_shrink(void) {
-    size_t new_L = ((size_t)(S - M) + TW_PAGE_SIZE - 1) & ~(size_t)(TW_PAGE_SIZE - 1);
+    size_t new_L = TW_PAGE_ALIGN_UP((size_t)(S - M));
+   
+    if (new_L < L) {
+	munmap(M + new_L, L - new_L);
+	L = new_L;
+    }
     
-    munmap(M + new_L, L - new_L);
-    L = new_L;
-
     return TRUE;
 }
 
@@ -180,12 +186,6 @@ void shm_TSR(void) {
     TSR_L = L;
     M = NULL;
 }
-
-void shm_TSR_abort(void) {
-    munmap(TSR_M, TSR_L);
-    TSR_M = NULL;
-}
-
 
 /*
  * send all data structures through the fd
@@ -238,22 +238,24 @@ byte shm_shrink(void) {
     if (may_shrink) {
 	size_t new_L = (size_t)(S - M);
 	
-	void *new_M = ReAllocMem(M, new_L);
+	if (new_L < L) {
+	    void *new_M = ReAllocMem(M, new_L);
 	
-	if (new_M == M) {
-	    L = new_L;
-	    return TRUE;
+	    if (new_M == M) {
+		L = new_L;
+		return TRUE;
+	    }
+	    if (new_M) {
+		/* ReAllocMem relocated ! inform the user and disable may_shrink ! */
+		shm_shrink_error();
+		M = new_M;
+		L = new_L;
+	    }
+	    /* ReAllocMem failed or relocated... the only thing to do here is shm_abort() */
+	    return FALSE;
 	}
-	if (new_M) {
-	    /* ReAllocMem relocated ! inform the user and disable may_shrink ! */
-	    shm_shrink_error();
-	    M = new_M;
-	    L = new_L;
-	}
-	/* ReAllocMem failed or relocated... the only thing to do here is shm_abort() */
-	return FALSE;
-    }
 #endif /* CONF_WM_RC_SHRINK */
+    }
     return TRUE;
 }
 
@@ -266,16 +268,12 @@ byte shm_shrink(void) {
  * 
  */
 void shm_TSR(void) {
-    FreeMem(TSR_M);
+    if (TSR_M)
+	FreeMem(TSR_M);
     TSR_M = M;
     TSR_L = L;
     M = NULL;
 }
-
-void shm_TSR_abort(void) {
-    FreeMem(TSR_M);
-}
-
 
 /*
  * send all data structures through the fd

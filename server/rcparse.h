@@ -1227,11 +1227,8 @@ static byte ReadGlobals(void) {
     UpdateVisibleScreens(new_Screens);
     DeleteUnneededScreens(M[ScreenIndex]);
     
-    
-    if (!GlobalsAreStatic) {
-	shm_TSR();
+    if (!GlobalsAreStatic)
 	FreeMem(MenuBinds);
-    }
     GlobalsAreStatic = FALSE;
     
     if (All->CommonMenu)
@@ -1262,42 +1259,11 @@ static byte ReadGlobals(void) {
     All->SetUp->DeltaXShade = GlobalShadows[0];
     All->SetUp->DeltaYShade = GlobalShadows[1];
 
+    shm_TSR();
+
     QueuedDrawArea2FullScreen = TRUE;
     
     return TRUE;
-}
-
-/*
- * search for a file relative to HOME, to CONF_DESTDIR or as path
- * 
- * this for example will search "foo"
- * as "{HOME}/foo", "{CONF_DESTDIR}/lib/twin/foo" or plain "foo"
- */
-static str findfile(str name, uldat *fsize) {
-    str path;
-    byte CONST *dir;
-    byte CONST *search[3] = { HOME, conf_destdir_lib_twin, "" };
-    int i, min_i, max_i, len, nlen = strlen(name);
-    struct stat buf;
-    
-    if (flag_secure)
-	min_i = max_i = 1; /* only conf_destdir_lib_twin */
-    else
-	min_i = 0, max_i = 2;
-
-    for (i = min_i; i <= max_i && (dir = search[i]); i++) {
-	len = strlen(dir);
-	if ((path = AllocMem(len + nlen + 2))) {
-	    sprintf(path, "%s%s%s", dir, *dir ? "/" : "", name);
-	    if (stat(path, &buf) == 0) {
-		if (fsize)
-		    *fsize = buf.st_size;
-		return path;
-	    }
-	    FreeMem(path);
-	}
-    }
-    return NULL;
 }
 
 static byte rcparse(str path);
@@ -1313,7 +1279,7 @@ byte rcload(void) {
 #endif
     byte c = FALSE;
 
-    if (!(path = findfile(".twinrc", &len)))
+    if (!(path = FindFile(".twinrc", &len)))
 	return c;
 
     /*

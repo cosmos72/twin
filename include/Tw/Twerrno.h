@@ -37,6 +37,8 @@
 #define TW_EFAILED_ARG_CALL	22
 #define TW_EXLIB_SIZES		23
 
+#define TW_ENO_MODULE_DETAIL	1
+
 typedef struct tw_errno {
     uldat E;
     uldat S;

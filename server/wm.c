@@ -1744,8 +1744,8 @@ static void SmartPlace(widget W, screen Screen) {
 	if (YWidth > Y[1] - Y[0] + 1 && Y[0] > MINDAT)
 	    Y[0]--;
     
-	W->Left = X[0];
-	W->Up = Y[0];
+	W->Left = X[0] - Screen->XLogic;
+	W->Up = Y[0] - Screen->YLogic;
     }
     Act(MapTopReal,W)(W, Screen);
 }

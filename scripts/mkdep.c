@@ -76,7 +76,7 @@ void grow_config(int len)
 {
     while (len_config + len > size_config) {
 	if (size_config == 0)
-	    size_config = 2048;
+	    size_config = 2000;
 	str_config = realloc(str_config, size_config *= 2);
 	if (str_config == NULL)
 	{ perror("malloc config"); exit(1); }
@@ -471,6 +471,8 @@ int main(int argc, char **argv)
 {
     int len;
     const char * filename;
+ 
+    setvbuf(stdout, NULL, _IOFBF, BUFSIZ);
     
     while (--argc > 0) {
 	filename = *++argv;

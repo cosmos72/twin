@@ -229,10 +229,13 @@ HW/hw.a: dir-HW
 
 autogen: rcparse_tab.c rcparse_tab.h rcparse_lex.c socket1m4.h socket2m4.h socket3m4.h
 
-handy: .twinrc
+handy: .twinrc .twenvrc.sh
 
 .twinrc:
 	$(LN) ../system.twinrc .twinrc
+
+.twenvrc.sh:
+	$(LN) ../system.twenvrc.sh .twenvrc.sh
 
 rcparse_tab.c rcparse_tab.h: rcparse.y
 	bison -d --no-lines -o $@ $<

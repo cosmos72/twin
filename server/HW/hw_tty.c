@@ -145,7 +145,7 @@ static byte stdin_InitKeyboard(void) {
 	i = read(tty_fd, buf, 15);
     } while (i < 0 && (errno == EWOULDBLOCK || errno == EINTR));
     if (i <= 0) {
-	fputs("      stdin_InitKeyboard() failed: unable to read from the terminal!\n", stderr);
+	printk("      stdin_InitKeyboard() failed: unable to read from the terminal!\n");
 	tty_setioctl(tty_fd, &ttysave);
 	return FALSE;
     }
@@ -520,9 +520,25 @@ static void tty_QuitHW(void) {
 	DisplayHWCTTY = NULL;
     
     fflush(stdOUT);
-    if (tty_fd)
-	fclose(stdOUT);
-
+    if (stdOUT != stdout) {
+	
+	/* if we forced tty_fd to be fd 0, release it while keeping fd 0 busy */
+	if (tty_fd == 0) {
+	    if ((tty_fd = open("/dev/null", O_RDWR)) != 0) {
+		fclose(stdOUT);
+	    
+		dup2(tty_fd, 0);
+		close(tty_fd);
+	    }
+	    /*
+	     * else we don't fclose(stdOUT) to avoid having fd 0 unused...
+	     * it causes leaks, but much better than screwing up badly when
+	     * fd 0 will get used by something else (say a socket) and then
+	     * abruptly closed by tty_InitHW()
+	     */
+	} else
+	    fclose(stdOUT);
+    }
     FreeMem(HW->Private);
 }
 
@@ -698,6 +714,9 @@ byte tty_InitHW(void) {
     byte skip_stdout = FALSE;
     byte force_xterm = FALSE;
     byte tc_colorbug = FALSE;
+    byte try_ctty = FALSE;
+    byte need_persistent_slot = FALSE;
+    byte display_is_ctty = FALSE;
     
     if (!(HW->Private = (struct tty_data *)AllocMem(sizeof(struct tty_data)))) {
 	printk("      tty_InitHW(): Out of memory!\n");
@@ -709,6 +728,7 @@ byte tty_InitHW(void) {
 #endif
     saveX = saveY = 0;
     stdOUT = NULL;
+    tty_fd = -1;
     tty_TERM = tty_name = NULL;
     
     if (arg && HW->NameLen > 4) {
@@ -721,15 +741,6 @@ byte tty_InitHW(void) {
 	if (*arg == '@') {
 	    s = strchr(++arg, ',');
 	    if (s) *s = '\0';
-	    
-	    stdOUT = fopen(arg, "a+"); /* use specified tty */
-	    if (!stdOUT) {
-		printk("      tty_InitHW(): fopen(\"%s\") failed: %s\n", arg, strerror(errno));
-		if (s) *s++ = ',';
-		return FALSE;
-	    }
-	    tty_fd = fileno(stdOUT);
-	    fcntl(tty_fd, F_SETFD, FD_CLOEXEC);
 	    tty_name = CloneStr(arg);
 	    if (s) *s = ',';
 	    arg = s;
@@ -755,6 +766,9 @@ byte tty_InitHW(void) {
 	    } else if (!strncmp(arg, ",termcap", 8)) {
 		arg = strchr(arg + 8, ',');
 		skip_vcsa = skip_stdout = TRUE;
+	    } else if (!strncmp(arg, ",ctty", 5)) {
+		arg = strchr(arg + 5, ',');
+		try_ctty = TRUE;
 	    } else if (!strncmp(arg, ",colorbug", 9)) {
 		arg = strchr(arg + 9, ',');
 		tc_colorbug = TRUE;
@@ -771,6 +785,80 @@ byte tty_InitHW(void) {
 		break;
 	}
     }
+
+    if (tty_name) {
+	/*
+	 * open user-specified tty as display
+	 */
+	
+	/*
+	 * avoid fighting for the terminal with a shell
+	 * or some other process when we display on something
+	 * that was not our controlling tty
+	 * (even if we grab it as our new controlling tty)
+	 */
+	need_persistent_slot = TRUE;
+    
+	if ((tty_fd = open(tty_name, O_RDWR)) >= 0) {
+	    /*
+	     * we try to set this tty as our controlling tty
+	     * if user asks us to do so. this will greatly help
+	     * detecting tty resizes, but may hangup other processes
+	     * running on that tty.
+	     */
+	    if ((display_is_ctty = try_ctty &&
+		 (!DisplayHWCTTY || DisplayHWCTTY == HWCTTY_DETACHED) &&
+		 ioctl(tty_fd, TIOCSCTTY, 1) >= 0)) {
+
+		if (tty_fd != 0) {
+		    close(0);
+		    dup2(tty_fd, 0);
+		    close(tty_fd);
+		    tty_fd = 0;
+		}
+	    }
+
+	    fcntl(tty_fd, F_SETFD, FD_CLOEXEC);
+	    stdOUT = fdopen(tty_fd, "r+");
+	}
+	if (tty_fd == -1 || !stdOUT) {
+	    printk("      tty_InitHW(): open(\"%s\") failed: %s\n", tty_name, strerror(errno));
+	    FreeMem(tty_name);
+	    if (tty_TERM)
+		FreeMem(tty_TERM);
+	    return FALSE;
+	}
+    } else {
+	/*
+	 * open our controlling tty as display
+	 */
+	if (DisplayHWCTTY) {
+	    printk("      tty_InitHW() failed: controlling tty %s\n",
+		    DisplayHWCTTY == HWCTTY_DETACHED
+		    ? "not usable after Detach"
+		    : "is already in use as display");
+	    return FALSE;
+	} else {
+	    tty_fd = 0;
+	    stdOUT = stdout;
+	    tty_name = CloneStr(ttyname(0));
+	    if (!tty_TERM)
+		tty_TERM = CloneStr(origTERM);
+	}
+    }
+    fflush(stdOUT);
+    setvbuf(stdOUT, NULL, _IOFBF, BUFSIZ);
+    
+    tty_number = 0;
+    if (tty_name && (!strncmp(tty_name, "/dev/tty", 8) ||
+		     !strncmp(tty_name, "/dev/vc/", 8))) {
+	s = tty_name + 8;
+	while (*s && *s >= '0' && *s <= '9') {
+	    tty_number *= 10;
+	    tty_number += *s++ - '0';
+	}
+    }
+
 
 #ifdef HW_TTY_TERMCAP
     colorbug = tc_colorbug;
@@ -799,34 +887,7 @@ byte tty_InitHW(void) {
 	printk("      tty_InitHW(): warning: `charset=' option requires Unicode support\n");
     }
 #endif
-    
-    if (!stdOUT) {
-	if (DisplayHWCTTY) {
-	    printk("      tty_InitHW() failed: controlling tty %s\n",
-		    DisplayHWCTTY == HWCTTY_DETACHED
-		    ? "not usable after Detach"
-		    : "is already in use as display");
-	    return FALSE;
-	} else {
-	    tty_fd = 0;
-	    stdOUT = stdout;
-	    tty_name = CloneStr(ttyname(0));
-	    if (!tty_TERM)
-		tty_TERM = CloneStr(origTERM);
-	}
-    }
-    fflush(stdOUT);
-    setvbuf(stdOUT, NULL, _IOFBF, BUFSIZ);
 
-    tty_number = 0;
-    if (tty_name && (!strncmp(tty_name, "/dev/tty", 8) ||
-		     !strncmp(tty_name, "/dev/vc/", 8))) {
-	s = tty_name + 8;
-	while (*s && *s >= '0' && *s <= '9') {
-	    tty_number *= 10;
-	    tty_number += *s++ - '0';
-	}
-    }
 
     if (stdin_InitKeyboard()) {
 	
@@ -850,17 +911,15 @@ byte tty_InitHW(void) {
 #endif
 		) {
 	    
-		if (tty_fd == 0) {
+		/*
+		 * must be deferred until now, as HW-specific functions
+		 * can clobber HW->NeedHW
+		 */
+		if (need_persistent_slot)
+		    HW->NeedHW |= NEEDPersistentSlot;
+		if (display_is_ctty) {
 		    HW->DisplayIsCTTY = TRUE;
 		    DisplayHWCTTY = HW;
-		} else {
-		    /*
-		     * avoid fighting for the terminal
-		     * with a shell or some other process
-		     */
-		    HW->NeedHW |= NEEDPersistentSlot;
-
-		    HW->DisplayIsCTTY = FALSE;
 		}
 		HW->QuitHW = tty_QuitHW;
 

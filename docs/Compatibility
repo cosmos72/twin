@@ -30,11 +30,12 @@ Here is the correspondence:
 	0.3.10		3.0.1		0.0.2       (unreleased)
 	
 	0.4.0		3.0.3		0.0.3       (unreleased)
+	0.4.1		3.0.4		0.0.4       (unreleased)
 
 As a general rule of thumb, you would better use libraries
 and servers released together to avoid most problems
-(clients are more version-mismatch tolerant, expecially when
-the clients are older than the libraries).
+(clients are more version-mismatch tolerant with respect to libraries
+than the server, expecially when clients are older than libraries).
 
 
 * Using libTw >= 3.0.0 :

@@ -1,4 +1,58 @@
-From 0.3.10 to 0.4.0: (Massimiliano Ghilardi, 01 Dec 2001)
+From 0.4.0 to 0.4.1: (Massimiliano Ghilardi, 30 Dec 2001)
+	* Fixed window smart placement if screen is scrolled and not at (0,0).
+	* Fixed math overflow causing `twcat' window not to show up.
+	* Fixed button labels on "Buttons" window.
+	* Fixed memory leak in re-reading .twinrc.
+	* Fixed charset for non-ascii gadget contents.
+	* Fixed an error message report in `-hw=tty' being sent to wrong
+	  file descriptor.
+	* Fixed twin/twdisplay segfault when starting `-hw=X@<dpy>'
+	  and broken option parsing when starting `-hw=X@<dpy>,<options>'.
+	* Fixed display hang after the last ",slow" display was closed during
+	  video activity.
+	* Fixed a few compile errors with gcc 3.0 (thanks to Debian people
+	  for this).
+	* Fixed build errors when compiling without Unicode support.
+	* Removed some gcc extensions lurking in the code, as arithmetic on
+	  (void *) and on casted pointers like this:
+	  int c; char *s; c = *((int *)s)++;
+	* Worked around KDE `knotes' spamming requests for selection contents,
+	  which resulted in `-hw=X' internal error
+	  "hw_X11.c: X11_SelectionRequest_up(): too many nested X Selection Request events!"
+	* Updated twsysmon to linux kernel 2.4 style disk activity report.
+	* Added a few more long options to twdisplay and twattach.
+	* Cleaned up namespace for libraries version-related #defines.
+	* Cleaned up Makefiles to avoid unnecessary recompiling after
+	  configuration changed.
+	* Cleaned up libTw error reporting when socket server module is not
+	  running: libTw now reports
+		"connection lost (socket module may be not running on server)"
+	  instead of the generic
+		"connection lost (explicit kill or server shutdown)"
+        * Added option `,ctty' to -hw=tty display driver. It tries to grab
+	  given tty as the controlling terminal. Helps greatly in detecting
+	  tty resizes, but may cause other processes running on that tty to
+	  quit upon display detach (on Linux, it happens only if you are root
+	  and use this option for `twattach', or also for `twdisplay' but only
+	  if the given tty is not twdisplay's controlling tty).
+	* Added `-envrc' option to twin and to twdm:
+	  if given, twin runs the script .twenvrc.sh and reads its output,
+	  setting environment variables accordingly.
+	  Useful if twin or twdm are started by init(8) and don't have
+	  a decent $PATH.
+	  If twin is started with both `-envrc' and `-secure'
+	  (twdm *always* starts twin with `-secure'),
+	  execution of .twenvrc.sh is delayed until SetServerUid() is called,
+	  i.e. when user logs in, so that *his* ~/.twenvrc.sh is executed.
+	  A possible use of twdm with this option is placing a line like this
+	  in /etc/inittab (supposing twdm is installed in /usr/local/bin) :
+	  
+	  1:2345:respawn:/usr/local/bin/twdm -envrc -quiet -hw=tty@/dev/tty1,ctty,TERM=linux
+	  
+	  with it, users will log in with twdm instead of the usual getty
+	  (which must be removed from /etc/inittab)
+	  
+From 0.3.10 to 0.4.0: (Massimiliano Ghilardi, 31 Aug 2001)
 	* Added some more options to twdm, also twdm now sets $HOME to `/root'
 	  if it exists and $HOME is either `/' or unset.
 	* Added caching to Tutf_UTF_16_to_*() conversions.

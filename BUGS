@@ -1,7 +1,5 @@
 Known bugs and problems:
 
-*  still some libTw pointer alignment problems and some security issues
-*  twlsobj misses some fields on big-endiam machines
 *  after `./configure [OPTIONS]' you should `make' in the top-level directory,
    as `make' in a subdirectory may fail to properly update dependencies
 *  Compiling with gcc 2.95.2 (is this egcs actually ?)

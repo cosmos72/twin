@@ -31,7 +31,7 @@
 # if defined(INLINE)
 #  define TW_INLINE INLINE
 # elif defined(__GNUC__)
-#  define TW_INLINE extern __inline__
+#  define TW_INLINE static __inline__
 # elif defined(inline)
 #  define TW_INLINE inline
 # else

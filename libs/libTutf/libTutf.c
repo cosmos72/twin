@@ -55,7 +55,7 @@ static TW_CONST utf_to_ch *my_bsearch(TW_CONST utf_to_ch *key, TW_CONST utf_to_c
 			       sizeof((array)[0]), (void *)Cmp)
 
 #define BSEARCH(key, array) \
-	(utf_to_ch *)my_bsearch((key), (array), sizeof(array)/sizeof((array)[0]))
+	my_bsearch((key), (array), sizeof(array)/sizeof((array)[0]))
 
 #include "ascii.c"
 

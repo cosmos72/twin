@@ -71,7 +71,6 @@ str shm_strdup_or_die(str s);
 byte shm_init(size_t len);
 byte shm_shrink(void);
 void shm_TSR(void);
-void shm_TSR_abort(void);
 void shm_abort(void);
 byte shm_send(int fd);
 byte shm_receive(int fd);

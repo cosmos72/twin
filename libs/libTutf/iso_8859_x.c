@@ -49,7 +49,7 @@ static utf_to_ch T_CAT(array_,T_ISO_8859_X) [] = {
 
 hwfont T_CAT(Tutf_UTF_16_to_,T_ISO_8859_X)(hwfont c) {
     static utf_to_ch key;
-    utf_to_ch *res;
+    TW_CONST utf_to_ch *res;
     
     /* ISO_8859_X obviously cannot contain all unicode chars. this is just a best effort. */
     if (!T_CAT(flag_,T_ISO_8859_X)) {

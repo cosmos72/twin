@@ -52,6 +52,9 @@ byte CheckPrivileges(void);
 void GainPrivileges(void);
 byte SetServerUid(uldat uid, byte privileges);
 
+byte *FindFile(byte *name, uldat *fsize);
+void RunTwEnvRC(void);
+
 byte AssignId(CONST fn_obj Fn_Obj, obj Obj);
 void DropId(obj Obj);
 obj  Id2Obj(byte i, uldat Id);

@@ -324,7 +324,7 @@ static void MapWidget(widget W, widget Parent) {
 		W->Left = Parent->XLogic;
 		W->Up = Parent->YLogic;
 	    }
-	    InsertLast(W, W, Parent);
+	    InsertFirst(W, W, Parent);
 	    W->Parent = Parent;
 	
 	    DrawAreaWidget(W);
@@ -782,7 +782,13 @@ byte FillButton(gadget G, widget Parent, udat Code, dat Left, dat Up,
     T = Text;
     for (j=(dat)0; j<(YWidth-(dat)1)*XWidth; j+=XWidth) {
 	for (i=(dat)0; i<XWidth-(dat)1; i++) {
-	    G->USE.T.Text[0][i+j] = G->USE.T.Text[1][i+j+1] = G->USE.T.Text[2][i+j] = G->USE.T.Text[3][i+j+1] = *(T++);
+	    G->USE.T.Text[0][i+j] = G->USE.T.Text[1][i+j+1] =
+		G->USE.T.Text[2][i+j] = G->USE.T.Text[3][i+j+1] =
+#ifdef CONF__UNICODE
+		Tutf_IBM437_to_UTF_16[*(T++)];
+#else
+		*(T++);
+#endif
 	    
 	    G->USE.T.Color[0][i+j] = G->USE.T.Color[1][i+j+1] = Color;
 	    G->USE.T.Color[2][i+j] = G->USE.T.Color[3][i+j+1] = ColorDisabled;
@@ -1144,7 +1150,7 @@ static void SetXYWindow(window W, dat X, dat Y) {
 static void ConfigureWindow(window W, byte Bitmap, dat Left, dat Up,
 			    dat MinXWidth, dat MinYWidth, dat MaxXWidth, dat MaxYWidth) {
     widget Prev, Next;
-    byte HasBorder = 2 * !(W->Flags & WINDOWFL_BORDERLESS);
+    dat HasBorder = 2 * !(W->Flags & WINDOWFL_BORDERLESS);
 
     if (W->Parent) {
 	Prev = W->Prev;
@@ -1165,22 +1171,26 @@ static void ConfigureWindow(window W, byte Bitmap, dat Left, dat Up,
     }
 
     if (Bitmap & 4) {
-	MinXWidth = Max2(MinXWidth, (dat)(MinXWidth + HasBorder));
+	if (MinXWidth <= MAXDAT - HasBorder)
+	    MinXWidth = Max2(MinXWidth, MinXWidth + HasBorder);
 	W->MinXWidth = MinXWidth;
 	W->XWidth = Max2(MinXWidth, W->XWidth);
     }
     if (Bitmap & 8) {
-	MinYWidth = Max2(MinYWidth, (dat)(MinYWidth + HasBorder));
+	if (MinYWidth <= MAXDAT - HasBorder)
+	    MinYWidth = Max2(MinYWidth, MinYWidth + HasBorder);
 	W->MinYWidth = MinYWidth;
 	W->YWidth = Max2(MinYWidth, W->YWidth);
     }
     if (Bitmap & 0x10) {
-	MaxXWidth = Max2(MaxXWidth, (dat)(MaxXWidth + HasBorder));
+	if (MaxXWidth <= MAXDAT - HasBorder)
+	    MaxXWidth = Max2(MaxXWidth, MaxXWidth + HasBorder);
 	W->MaxXWidth = Max2(W->MinXWidth, MaxXWidth);
 	W->XWidth = Min2(MaxXWidth, W->XWidth);
     }
     if (Bitmap & 0x20) {
-	MaxYWidth = Max2(MaxYWidth, (dat)(MaxYWidth + HasBorder));
+	if (MaxYWidth <= MAXDAT - HasBorder)
+	    MaxYWidth = Max2(MaxYWidth, MaxYWidth + HasBorder);
 	W->MaxYWidth = Max2(W->MinYWidth, MaxYWidth);
 	W->YWidth = Min2(MaxYWidth, W->YWidth);
     }

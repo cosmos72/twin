@@ -25,7 +25,7 @@
 /* inline is NOT a standard C feature :( */
 #if !defined(INLINE)
 # if defined(__GNUC__)
-#  define INLINE extern __inline__
+#  define INLINE static __inline__
 # elif defined(inline)
 #  define INLINE inline
 # else

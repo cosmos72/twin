@@ -3,7 +3,7 @@
 # General configuration options
 #---------------------------------------------------------------------------
 PROJECT_NAME           = libTw
-PROJECT_NUMBER         = 0.4.0
+PROJECT_NUMBER         = 0.4.1
 OUTPUT_DIRECTORY       = ../../docs/libTw/
 OUTPUT_LANGUAGE        = English
 EXTRACT_ALL            = YES

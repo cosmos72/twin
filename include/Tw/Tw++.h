@@ -701,7 +701,7 @@ typedef void (TEmpty::*TMtdDefaultListener)(TMsg *, void *);
 
 
 class TListener {
-  friend TW;
+  friend class TW;
   protected:
     inline TListener( )			{ }
     tlistener T;
@@ -736,7 +736,7 @@ class TListener {
 };
 
 class TListenerNonStatic : public TListener {
-  friend TW;
+  friend class TW;
   protected:
     TEmpty *MtdThis;
     TMtdListener MtdListener;
@@ -822,7 +822,7 @@ class TDefaultListener {
 };
 
 class TDefaultListenerNonStatic : public TDefaultListener {
-  friend TW;
+  friend class TW;
   protected:
     TMtdDefaultListener MtdListener;
     TEmpty *MtdThis;

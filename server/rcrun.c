@@ -39,6 +39,12 @@
 #include "Tw/Twkeys.h"
 #include "hotkey.h"
 
+#ifdef CONF__UNICODE
+# include "Tutf/Tutf.h"
+# include "Tutf/Tutf_defs.h"
+#endif
+
+
 #define MAX_RUNCYCLE      1024 /* kill a queue after this number of steps */
 
 #define MAX_RUNSTACK 28
@@ -1110,10 +1116,15 @@ byte InitRC(void) {
 	{ HOLD_LEFT|HOLD_CODE(3),  "M", NULL,M+11,NULL, { { CTX_MENU, } } },
 	{ INTERACTIVE, NULL, NULL, NULL, NULL, { { 0, SCREEN, }, } }
     };
+#ifdef CONF__UNICODE
+# define UD_ARROW T_UTF_16_UP_DOWN_ARROW
+#else
+# define UD_ARROW '\x12'
+#endif
     static button_vec V[] = {
-	{ {'[',    ']'},      0, TRUE, FALSE },
-	{ {'\x12', '\x12'} , -2, TRUE, FALSE },
-	{ {'>',    '<'} ,    -4, TRUE, FALSE }
+	{ {'[',      ']'     },  0, TRUE, FALSE },
+	{ {UD_ARROW, UD_ARROW}, -2, TRUE, FALSE },
+	{ {'>',      '<'     }, -4, TRUE, FALSE }
     };
 
     str Seq = "";

@@ -532,12 +532,14 @@ static byte linux_InitVideo(void) {
 	printk("      linux_InitVideo() failed: terminal `%s' is not `linux'.\n", term);
 	return FALSE;
     }
-    
+
+#ifdef CONF__UNICODE
     if (ttypar[0]==6 && ttypar[1]!=3 && ttypar[1]!=4)
 	/* plain linux console supports utf-8, and also twin >= 0.3.11 does. */
 	tty_can_utf8 = TRUE;
     else
 	tty_can_utf8 = FALSE;
+#endif
 
     tc_scr_clear = "\033[2J";
     fprintf(stdOUT, "\033[0;11m\033%%@%s\033[3h", tc_scr_clear);

@@ -22,7 +22,7 @@
 static void WrongVer(uldat ver) {
     static byte buf[80];
     sprintf(buf, "version mismatch: module is %d.%d.%d, this twin is " TWIN_VERSION_STR,
-	    TWVER_MAJOR(ver), TWVER_MINOR(ver), TWVER_PATCH(ver));
+	    TW_VER_MAJOR(ver), TW_VER_MINOR(ver), TW_VER_PATCH(ver));
     ErrStr = buf;
 }
 

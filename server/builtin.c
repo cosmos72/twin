@@ -325,7 +325,6 @@ static void OptionH(msg Msg) {
 void FillButtonWin(void) {
     byte i, j;
     byte b[6] = "      ", *s;
-    byte c[3] = "  ";
     
     DeleteList(ButtonWin->FirstW);
     DeleteList(ButtonWin->USE.R.FirstRow);
@@ -341,9 +340,17 @@ void FillButtonWin(void) {
 	    s = "Close ";
 	Act(WriteRow,ButtonWin)(ButtonWin, 7, "Button ");
 	Act(WriteRow,ButtonWin)(ButtonWin, 6, s);
-	c[0] = All->ButtonVec[j].shape[0];
-	c[1] = All->ButtonVec[j].shape[1];
-	Act(WriteRow,ButtonWin)(ButtonWin, 2, c);
+	/* FIXME: we should directly write unicode to the window */
+#ifdef CONF__UNICODE
+	{
+	    byte c[3] = "  ";
+	    c[0] = Tutf_UTF_16_to_IBM437(All->ButtonVec[j].shape[0]);
+	    c[1] = Tutf_UTF_16_to_IBM437(All->ButtonVec[j].shape[1]);
+	    Act(WriteRow,ButtonWin)(ButtonWin, 2, c);
+	}
+#else
+	Act(WriteRow,ButtonWin)(ButtonWin, 2, All->ButtonVec[j].shape);
+#endif
 
 	Do(Create,Gadget)(FnGadget, Builtin_MsgPort, (widget)ButtonWin, 3, 1, "[-]",
 			  0, GADGETFL_TEXT_DEFCOL, 2 | (j<<2),
