@@ -6,10 +6,10 @@
 TOPDIR=..
 SUBDIRS=HW
 
-include $(TOPDIR)/MakePaths
+-include $(TOPDIR)/makeautoconf
 
-BASEOBJS=data.o builtin.o methods.o util.o draw.o extensions.o \
-	main.o hw_multi.o printk.o resize.o scroller.o remote.o alloc.o
+BASEOBJS=data.o builtin.o methods.o util.o draw.o extensions.o main.o \
+         missing.o hw_multi.o printk.o resize.o scroller.o remote.o alloc.o
 HWOBJS=hw.o HW/hw.a
 DLOBJS=dl.o
 WMOBJS=wm.o rcrun.o rcopt.o
@@ -27,7 +27,7 @@ OBJS_rcparse.so:=$(RCPARSEOBJS)
 OBJS_term.so:=$(TERMOBJS)
 OBJS_socket.so:=$(SOCKETOBJS)
 OBJS_twin_wrapper:=$(WRAPOBJS)
-OBJS_twdisplay:=$(DISPLAYOBJS) alloc.o $(HWOBJS)
+OBJS_twdisplay:=$(DISPLAYOBJS) alloc.o missing.o $(HWOBJS)
 
 BINS=twin_real twin_wrapper
 MODBINS=
@@ -54,14 +54,8 @@ endif
 #
 # OS-specific stuff
 #
-OS=$(shell uname)
-ifeq ($(OS),Linux)
-  DLOPEN_LDFLAGS=-rdynamic -ldl
-else
-  DLOPEN_LDFLAGS=-rdynamic
-  ifeq ($(OS),SunOS)
-    LDFLAGS_socketlibs+=-lsocket -lnsl
-  endif
+ifneq ($(GNULD),)
+  LDFLAGS_rdynamic:=-rdynamic
 endif
 
 #
@@ -72,18 +66,18 @@ all: bins modules twin handy
 #
 # read configuration
 #
-include $(TOPDIR)/conf/config.status
+-include $(TOPDIR)/conf/conf.current
 -include .modules
 -include .depend
 
 #
-# set variables according config.status
+# set variables according conf.current
 # and group together all *.o objects needed by each binary
 #
 ifeq ($(CONF__MODULES),y)
-  LDFLAGS_twin_real+=$(DLOPEN_LDFLAGS)
+  LDFLAGS_twin_real+=$(LD_LIBDL) $(LDFLAGS_rdynamic)
   OBJS_twin_real+=$(DLOBJS)
-  LDFLAGS_twdisplay+=$(DLOPEN_LDFLAGS)
+  LDFLAGS_twdisplay+=$(LD_LIBDL) $(LDFLAGS_rdynamic)
 else
   EXCL_OBJS+=$(DLOBJS)
 endif
@@ -123,27 +117,23 @@ else
   endif
 endif
 
-ifeq ($(CONF_SOCKET),y)
-  OBJS_twin_real+=$(SOCKETOBJS)
-  LDFLAGS_twin_real+=$(LDFLAGS_socketlibs)
-  LDFLAGS_twdisplay+=$(LDFLAGS_socketlibs)
-  ifeq ($(CONF_SOCKET_GZ),y)
-    LDFLAGS_twin_real+=-lz
-  endif
+ifeq ($(CONF_SOCKET),n)
+  EXCL_OBJS+=$(SOCKETOBJS)
 else
-  ifeq ($(CONF_SOCKET),m)
+  LDFLAGS_twin_real+=$(LD_LIBSOCKET)
+  LDFLAGS_twdisplay+=$(LD_LIBSOCKET)
+  ifeq ($(CONF_SOCKET),y)
+    OBJS_twin_real+=$(SOCKETOBJS)
+  else
     MODBINS+=socket.so
-    LDFLAGS_socket.so+=$(LDFLAGS_socketlibs)
-    LDFLAGS_twdisplay+=$(LDFLAGS_socketlibs)
-    ifeq ($(CONF_SOCKET_GZ),y)
+  endif
+  ifeq ($(CONF_SOCKET_GZ),y)
+    ifeq ($(CONF_SOCKET),y)
+      LDFLAGS_twin_real+=-lz
+     else
       LDFLAGS_socket.so+=-lz
     endif
-  else
-    EXCL_OBJS+=$(SOCKETOBJS)
   endif
-endif
-
-ifneq ($(CONF_SOCKET),n)
 endif
 
 #
@@ -175,22 +165,26 @@ endif
 # the final link nightmare...
 #
 ifeq ($(CONF__UNICODE),y)
-  LDFLAGS_twin_real+=$(LIBTWUTF)
-  LDFLAGS_twdisplay+=$(LIBTWUTF)
+  LDFLAGS_twin_real+=$(LIBTUTF)
+  LDFLAGS_twdisplay+=$(LIBTUTF)
 endif
 
 ifeq ($(CONF_HW_TTY),y)
   ifeq ($(CONF_HW_TTY_LINUX),y)
-    LDFLAGS_twin_real+=-lgpm #/usr/lib/libgpm.a
-    LDFLAGS_twdisplay+=-lgpm #/usr/lib/libgpm.a
+    LDFLAGS_twin_real+=-lgpm
+    LDFLAGS_twdisplay+=-lgpm
   endif
   ifeq ($(CONF_HW_TTY_TERMCAP),y)
-    LIBTERMCAP=-ltermcap
-    ifeq ($(CONF_HW_TTY_NCURSES),y)
-      LIBTERMCAP=-lncurses
+    ifeq ($(CONF_HW_TTY_LINUX),y)
+      ifeq ($(LD_LIBTERMCAP_IN_LIBGPM),)
+        LDFLAGS_twin_real+=$(LD_LIBTERMCAP)
+        LDFLAGS_twdisplay+=$(LD_LIBTERMCAP)
+      # else necessary libs are already pulled in with -lgpm above
+      endif
+    else
+      LDFLAGS_twin_real+=$(LD_LIBTERMCAP)
+      LDFLAGS_twdisplay+=$(LD_LIBTERMCAP)
     endif
-    LDFLAGS_twin_real+=$(LIBTERMCAP)
-    LDFLAGS_twdisplay+=$(LIBTERMCAP)
   endif
 endif
 ifeq ($(CONF_HW_X11),y)
@@ -214,7 +208,7 @@ endif
 #
 # common rules
 #
-include $(TOPDIR)/MakeRules
+include $(TOPDIR)/makerules
 
 
 bins: $(BINS)
@@ -233,7 +227,7 @@ twin: twin_wrapper
 HW/hw.a: dir-HW
 	@:
 
-autogen: rcparse_tab.c rcparse_tab.h rcparse_lex.c socket1macros.h socket2macros.h socket3macros.h
+autogen: rcparse_tab.c rcparse_tab.h rcparse_lex.c socket1m4.h socket2m4.h socket3m4.h
 
 handy: .twinrc
 

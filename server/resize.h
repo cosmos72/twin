@@ -1,10 +1,10 @@
-#ifndef _TW_RESIZE_H
-#define _TW_RESIZE_H
+#ifndef _TWIN_RESIZE_H
+#define _TWIN_RESIZE_H
 
 byte EnsureLenRow(row Row, ldat Len, byte DefaultCol);
 byte WriteRow(window Window, ldat Len, byte CONST * Text);
 
-void ExposeWidget(widget W, dat XWidth, dat YWidth, dat Left, dat Up, CONST byte *Text, CONST hwfont *Font, CONST hwattr *Attr);
+void ExposeWidget2(widget W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch, CONST byte *Text, CONST hwfont *Font, CONST hwattr *Attr);
 
 extern byte NeedUpdateCursor;
 #define UpdateCursor() (NeedUpdateCursor = TRUE)
@@ -41,8 +41,8 @@ void ScrollFirstWindowArea(dat X1, dat Y1, dat X2, dat Y2, dat DeltaX, dat Delta
 void UnFocusWidget(widget W);
 void RollUpWindow(window W, byte on_off);
 
-void MakeFirstWindow(window Window, byte alsoFocus);
-void MakeLastWindow(window Window, byte alsoDeFocus);
+void MakeFirstWidget(widget W, byte alsoFocus);
+void MakeLastWidget(widget W, byte alsoDeFocus);
 
 void PressGadget(gadget G);
 void UnPressGadget(gadget G, byte maySendMsgIfNotToggle);
@@ -50,5 +50,5 @@ void SendMsgGadget(gadget G);
 void WriteTextsGadget(gadget G, byte bitmap, dat XWidth, dat YWidth, CONST byte *Text, dat Left, dat Up);
 void WriteHWFontsGadget(gadget G, byte bitmap, dat XWidth, dat YWidth, CONST hwfont *Text, dat Left, dat Up);
 
-#endif /* _TW_RESIZE_H */
+#endif /* _TWIN_RESIZE_H */
 

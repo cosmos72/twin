@@ -10,8 +10,6 @@
  *
  */
 
-#include <unistd.h>
-
 #include "twin.h"
 #include "main.h"
 #include "data.h"
@@ -30,6 +28,7 @@
 #include "rctypes.h"
 #include "rcparse_tab.h"
 #include "rcrun.h"
+
 #ifdef CONF_WM_RC
 # include "rcproto.h"
 #endif
@@ -47,14 +46,14 @@ typedef struct run run;
 
 struct run {
     run *next;
-    uldat W;     /* the current window (id) */
+    uldat W;     /* the current widget (id) */
     uldat depth; /* index of last used stack element;
 		  * stack[depth] is the current instruction */
     uldat cycle;
     union {
 	timevalue WakeUp;
 	str Name;
-    } SW;	 /* what we are waiting for: sleep timeout or window map */
+    } SW;	 /* what we are waiting for: sleep timeout or widget map */
     
     wm_ctx C;   /* event that generated the run queue */
     node stack[MAX_RUNSTACK];
@@ -347,9 +346,9 @@ static screen RCFindScreenName(str name) {
     return S;
 }
 
-INLINE window RCCheck4WinId(run *r) {
-    window W;
-    if (!(W = (window)Id2Obj(window_magic >> magic_shift, r->W))
+INLINE widget RCCheck4WidgetId(run *r) {
+    widget W;
+    if (!(W = (widget)Id2Obj(widget_magic_id, r->W))
 	|| !W->Parent || !IS_SCREEN(W->Parent))
 	
 	r->W = NOID;
@@ -365,32 +364,32 @@ INLINE window RCCheck4WinId(run *r) {
 #define Serr  6
 
 
-INLINE window ForwardWindow(widget W) {
+INLINE widget ForwardWindow(widget W) {
     while (W) {
 	if (IS_WINDOW(W))
-	    return (window)W;
+	    return W;
 	W = W->Next;
     }
-    return (window)W;
+    return W;
 }
 
-INLINE window BackwardWindow(widget W) {
+INLINE widget BackwardWindow(widget W) {
     while (W) {
 	if (IS_WINDOW(W))
-	    return (window)W;
+	    return W;
 	W = W->Prev;
     }
-    return (window)W;
+    return W;
 }
 
-INLINE screen ScreenOf(window W) {
+INLINE screen ScreenOf(widget W) {
     widget P;
     return W && (P=W->Parent) && IS_SCREEN(P) ? (screen)P : (screen)0;
 }
 
 /* run the specified queue */
 static byte RCSteps(run *r) {
-    window W, SkipW;
+    widget W, SkipW;
     screen S;
     wm_ctx *C;
     node n, f;
@@ -398,7 +397,7 @@ static byte RCSteps(run *r) {
     str *argv;
     byte state, ret;
 
-    W = RCCheck4WinId(r);
+    W = RCCheck4WidgetId(r);
     S = ScreenOf(W);
     C = &r->C;
     n = r->stack[r->depth];
@@ -409,7 +408,9 @@ static byte RCSteps(run *r) {
 	if (n) switch (n->id) {
 	    
 	  case EXEC:
-	    switch (fork()) {
+	    if (flag_secure)
+		printk(flag_secure_msg);
+	    else switch (fork()) {
 	      case -1: /* error */
 		break;
 	      case 0:  /* child */
@@ -436,7 +437,6 @@ static byte RCSteps(run *r) {
 		C->Screen = All->FirstScreen;
 	    
 	    ret = FALSE;
-	    
 	    switch (n->x.f.flag) {
 	      case MENU:   ret = ActivateCtx(C, STATE_MENU);   break;
 	      case SCROLL: ret = ActivateCtx(C, STATE_SCROLL); break;
@@ -463,8 +463,8 @@ static byte RCSteps(run *r) {
 #endif
 	    break;
 	  case MOVE:
-	    if (W)
-		DragWindow(W, applyflagx(n), applyflagy(n));
+	    if (W && IS_WINDOW(W))
+		DragWindow((window)W, applyflagx(n), applyflagy(n));
 	    break;
 	  case MOVESCREEN:
 	    if (S && S != All->FirstScreen)
@@ -478,14 +478,14 @@ static byte RCSteps(run *r) {
 	    return Serr;
 	    break;
 	  case RESIZE:
-	    if (W) {
+	    if (W && IS_WINDOW(W)) {
 		dat x = applyflagx(n), y = applyflagy(n);
 		if (n->x.f.plus_minus == 0)
 		    x = n->x.f.a - W->XWidth + 2*!(W->Flags & WINDOWFL_BORDERLESS);
 		if (n->x.f.flag == 0)
 		    y = n->x.f.b - W->YWidth + 2*!(W->Flags & WINDOWFL_BORDERLESS);
-		ResizeRelWindow(W, x, y);
-		Check4Resize(W); /* send MSG_WINDOW_CHANGE and realloc(W->Contents) */
+		ResizeRelWindow((window)W, x, y);
+		Check4Resize((window)W); /* send MSG_WINDOW_CHANGE and realloc(W->Contents) */
 	    }
 	    break;
 	  case RESIZESCREEN:
@@ -494,11 +494,11 @@ static byte RCSteps(run *r) {
 	    ResizeFirstScreen(applyflagx(n));
 	    break;
 	  case SCROLL:
-	    if (W)
-		ScrollWindow(W, applyflagx(n), applyflagy(n));
+	    if (W && IS_WINDOW(W))
+		ScrollWindow((window)W, applyflagx(n), applyflagy(n));
 	    break;
 	  case SENDTOSCREEN:
-	    if (W && S && n->name) {
+	    if (W && IS_WINDOW(W) && S && n->name) {
 		screen Screen = RCFindScreenName(n->name);
 		if (S != Screen) {
 		    Act(UnMap,W)(W);
@@ -529,7 +529,7 @@ static byte RCSteps(run *r) {
 	    break;
 	  case WINDOW:
 	    if (n->name)
-		W = RCFindWindowName(n->name);
+		W = (widget)RCFindWindowName(n->name);
 	    else {
 		ldat i = applyflagx(n);
 		flag = n->x.f.plus_minus;
@@ -547,9 +547,9 @@ static byte RCSteps(run *r) {
 		
 		if (flag == 0) {
 		    if (i == 0) {
-			W = (window)All->FirstScreen->FocusW;
+			W = All->FirstScreen->FocusW;
 			if (W && !IS_WINDOW(W))
-			    W = (window)0;
+			    W = (widget)0;
 		    } else {
 			if (i > 0) i--;
 			W = ForwardWindow(All->FirstScreen->FirstW);
@@ -590,17 +590,17 @@ static byte RCSteps(run *r) {
 	    BeepHW();
 	    break;
 	  case CENTER:
-	    if (W)
-		CenterWindow(W);
+	    if (W && IS_WINDOW(W))
+		CenterWindow((window)W);
 	    break;
 	  case CLOSE:
 	    if (W)
-		AskCloseWindow(W);
+		AskCloseWidget(W);
 	    break;
 	  case KILL:
 	    /* BRUTAL! */
 	    if (W) {
-		msgport M = W->Menu->MsgPort;
+		msgport M = W->Owner;
 		/*
 		 * try not to exagerate with brutality:
 		 * allow deleting remote clients msgports only
@@ -611,7 +611,7 @@ static byte RCSteps(run *r) {
 		    S = NULL;
 		    r->W = NOID;
 		} else
-		    AskCloseWindow(W);
+		    AskCloseWidget(W);
 	    }
 	    break;
 	  case QUIT:
@@ -632,36 +632,36 @@ static byte RCSteps(run *r) {
 		if (flag == FL_ON && S != All->FirstScreen)
 		    Act(Focus,S)(S);
 		
-		Act(Focus,W)(flag == FL_ON ? W : (window)0);
+		Act(Focus,W)(flag == FL_ON ? W : (widget)0);
 	    }
 	    break;
 	  case MAXIMIZE:
 	  case FULLSCREEN:
-	    if (W && S)
-		MaximizeWindow(W, n->id == FULLSCREEN);
+	    if (W && IS_WINDOW(W) && S)
+		MaximizeWindow((window)W, n->id == FULLSCREEN);
 	    break;
 	  case LOWER:
 	    if (W && S)
-		MakeLastWindow(W, FALSE);
+		MakeLastWidget(W, FALSE);
 	    break;
 	  case RAISE:
 	    if (W && S)
-		MakeFirstWindow(W, FALSE);
+		MakeFirstWidget(W, FALSE);
 	    break;
 	  case RAISELOWER:
 	    if (W && S) {
 		if ((widget)W == S->FirstW)
-		    MakeLastWindow(W, TRUE);
+		    MakeLastWidget(W, TRUE);
 		else
-		    MakeFirstWindow(W, TRUE);
+		    MakeFirstWidget(W, TRUE);
 	    }
 	    break;
 	  case ROLL:
-	    if (W) {
+	    if (W && IS_WINDOW(W)) {
 		flag = n->x.f.flag;
 		if (flag == FL_TOGGLE)
 		    flag = W->Attrib & WINDOW_ROLLED_UP ? FL_OFF : FL_ON;
-		RollUpWindow(W, flag == FL_ON);
+		RollUpWindow((window)W, flag == FL_ON);
 	    }
 	    break;
 	  case USERFUNC:
@@ -780,7 +780,7 @@ static void RCReload(void) {
 #if !defined(CONF_WM_RC) && defined(CONF__MODULES)
     module M;
     byte (*mod_rcload)(void) = (byte (*)(void))0;
-    
+
     if ((M = DlLoad(RCParseSo)))
 	mod_rcload = M->Private;
 # if 0
@@ -924,7 +924,7 @@ byte RC_VMQueue(CONST wm_ctx *C) {
 	}
 	break;
       case MSG_MAP:
-	used = TRUE, RCWake4Window(C->W);
+	used = TRUE, RCWake4Window((window)C->W);
 	break;
       case MSG_CONTROL:
 	if (C->Code == MSG_CONTROL_OPEN) {
@@ -946,7 +946,7 @@ byte RC_VMQueue(CONST wm_ctx *C) {
 		used = TRUE;
 		CopyMem(C, &r->C, sizeof(wm_ctx));
 		W = All->FirstScreen->FocusW;
-		r->W = W && IS_WINDOW(W) ? W->Id : NOID;
+		r->W = W ? W->Id : NOID;
 		r->C.ByMouse = FALSE;
 		/* to preserve execution orded, run it right now ! */
 		RCRun();

@@ -13,8 +13,8 @@ typedef unsigned char  hwcol;
 
 typedef   signed int   frac_t;
 
-/* the biggest data type used byt libTw. usually will be same as uldat */
-typedef unsigned int   tlargest;
+/* the biggest data type used byt libTw. usually will be same as uldat or time_t */
+typedef unsigned long   tlargest;
 
 #define MAXU(t)		((t)~(t)0)
 #define MINS(t)		((t)((t)1<<(8*sizeof(t)-1)))
@@ -43,7 +43,7 @@ typedef unsigned int   tlargest;
 
 
 #define TW_DECL_MAGIC(id) \
-	static TW_CONST byte id[10+sizeof(uldat)] = { \
+	static byte id[10+sizeof(uldat)] = { \
 	    10+sizeof(uldat), \
 	    sizeof(byte), \
 	    sizeof(udat), \

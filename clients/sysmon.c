@@ -9,13 +9,13 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <sys/types.h>
-#include <sys/time.h>
 #include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <errno.h>
-#include <sys/utsname.h>
+
+#include "Tw/Twautoconf.h"
+
+#ifdef TW_HAVE_SYS_UTSNAME_H
+# include <sys/utsname.h>
+#endif
 
 #include "Tw/Tw.h"
 #include "Tw/Twerrno.h"
@@ -29,15 +29,19 @@ char buf[TW_BIGBUFF];
 TW_DECL_MAGIC(sysmon_magic);
 
 byte InitSysMon(void) {
-    struct utsname uts;
     byte *name;
     ldat len;
+    
+#if defined(TW_HAVE_SYS_UTSNAME_H) && defined(TW_HAVE_UNAME)
+    struct utsname uts;
     
     if (uname(&uts) >= 0 && (name = malloc(9 + (len = strlen(uts.nodename))))) {
 	memcpy(name, uts.nodename, len);
 	memcpy(name+len, " Monitor", 8);
 	len += 8;
-    } else if ((name = strdup("System Monitor")))
+    } else
+#endif
+    if ((name = strdup("System Monitor")))
 	len = 14;
     else
 	return FALSE;

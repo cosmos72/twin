@@ -1,10 +1,30 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <dirent.h>
+
+#include "Tw/Twautoconf.h"
+
+#ifdef TW_HAVE_UNISTD_H
+# include <unistd.h>
+#endif
+
+#if TW_HAVE_DIRENT_H
+# include <dirent.h>
+#else
+# if TW_HAVE_SYS_NDIR_H
+#  include <sys/ndir.h>
+# endif
+# if TW_HAVE_SYS_DIR_H
+#  include <sys/dir.h>
+# endif
+# if TW_HAVE_NDIR_H
+#  include <ndir.h>
+# endif
+#endif
+
+
 #include "xmalloc.h"
 #include "findfile.h"
 #include "nls.h"

@@ -217,12 +217,14 @@
 #define TWS_menuitem_Prev		TWS_obj_Prev
 #define TWS_menuitem_Next		TWS_obj_Next
 #define TWS_menuitem_Parent		TWS_obj_Parent
+#define TWS_menuitem_Code		TWS_row_Code
+#define TWS_menuitem_Flags		TWS_row_Flags
+#define TWS_menuitem_Len		TWS_row_Len
+#define TWS_menuitem_Text		TWS_row_Text
+#define TWS_menuitem_ColText		TWS_row_ColText
 #define TWS_menuitem_Window		0x0600
-#define TWS_menuitem_FlagActive		0x0601
 #define TWS_menuitem_Left		0x0602
-#define TWS_menuitem_NameLen		0x0603
 #define TWS_menuitem_ShortCut		0x0604
-#define TWS_menuitem_Name		0x0605
 
 #define TWS_menu_Id			TWS_obj_Id
 #define TWS_menu_Prev			TWS_obj_Prev
@@ -267,6 +269,16 @@
 #define TWS_mutex_Perm			0x0903
 #define TWS_mutex_NameLen		0x0904
 #define TWS_mutex_Name			0x0905
+
+#define TWS_row_Id			TWS_obj_Id
+#define TWS_row_Prev			TWS_obj_Prev
+#define TWS_row_Next			TWS_obj_Next
+#define TWS_row_Parent			TWS_obj_Parent
+#define TWS_row_Code			0x0A00
+#define TWS_row_Flags			0x0A01
+#define TWS_row_Len			0x0A02
+#define TWS_row_Text			0x0A03
+#define TWS_row_ColText			0x0A04
 
 /* the following are hardcoded in socket.c, libTw.c and libTw ABI, don't change! */
 #define TWS_void   0
@@ -343,7 +355,7 @@ typedef struct s_tlist {
     struct s_tsfield TSF[1];
 } *tslist;
 
-uldat   Tw_Stat(      tdisplay TwD, tobj Id, udat h);
+tlargest Tw_Stat(      tdisplay TwD, tobj Id, udat h);
 tslist  Tw_LStat(     tdisplay TwD, tobj Id, udat hN, ...);
 tslist  Tw_AStat(     tdisplay TwD, tobj Id, udat hN, TW_CONST udat *h);
 tslist  Tw_VStat(     tdisplay TwD, tobj Id, udat hN, va_list h);

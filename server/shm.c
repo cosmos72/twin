@@ -12,12 +12,12 @@
  *
  */
 
-#include <errno.h>
-#include <fcntl.h>
-#include <unistd.h>
+
 #include <sys/stat.h>
-#include <sys/types.h>
-#include <sys/mman.h>
+
+#ifdef CONF_WM_RC_SHMMAP
+# include <sys/mman.h>
+#endif
 
 #include "twin.h"
 #include "main.h"
@@ -35,12 +35,12 @@ static byte may_shrink = TRUE;
 
 
 static byte *M;  /* the memory pool */
-static uldat L; /* its length */
+static size_t L; /* its length */
 static byte *S;  /* the first available address */ 
 static byte *E;  /* 1 + the last available address */
 
 static byte *TSR_M; /* the _previous_ memory pool */
-static uldat TSR_L; /* its length */
+static size_t TSR_L; /* its length */
 
 #define ALIGN 15
 
@@ -49,8 +49,8 @@ static uldat TSR_L; /* its length */
 #define GL_SIZE ((_GL_SIZE & ~ALIGN) + ALIGN + 1)
 
 
-static uldat full_write(int fd, byte *data, uldat len) {
-    uldat left = len;
+static size_t full_write(int fd, byte *data, size_t len) {
+    size_t left = len;
     int r;
     
     do {
@@ -64,8 +64,8 @@ static uldat full_write(int fd, byte *data, uldat len) {
     return len - left;
 }
 
-static uldat full_read(int fd, byte *data, uldat len) {
-    uldat left = len;
+static size_t full_read(int fd, byte *data, size_t len) {
+    size_t left = len;
     int r;
     
     do {
@@ -110,7 +110,7 @@ static void shm_shrink_error(void) {
 
 static byte shmfile[]="/tmp/.Twin_shm\0\0\0\0";
 
-byte shm_init(uldat len) {
+byte shm_init(size_t len) {
     int fd = NOFD;
     
     CopyMem(TWDisplay, shmfile+14, lenTWDisplay);
@@ -118,12 +118,16 @@ byte shm_init(uldat len) {
 
     len += GL_SIZE;
     
-    len = ((len + GL_SIZE) + (TW_PAGE_SIZE - 1)) & ~(uldat)(TW_PAGE_SIZE - 1);
+    len = ((len + GL_SIZE) + (TW_PAGE_SIZE - 1)) & ~(size_t)(TW_PAGE_SIZE - 1);
 
     if ((fd = open(shmfile, O_RDWR|O_CREAT|O_TRUNC|O_EXCL, 0600)) >= 0) {
 	if (((L = len), lseek(fd, L-1, SEEK_SET) == L-1) &&
 	    write(fd, "", 1) == 1) {
 
+#ifndef MAP_FILE
+# define MAP_FILE 0
+#endif
+	    
 #ifdef CONF__ALLOC
 	    if ((M = S = (void *)mmap((byte *)AllocStatHighest() + (1l<<20), L, PROT_READ|PROT_WRITE, MAP_FILE|MAP_SHARED, fd, 0)) == NOCORE)
 #endif		
@@ -153,7 +157,7 @@ void shm_abort(void) {
  * shrink (M, M+L) to (M, S)
  */
 byte shm_shrink(void) {
-    uldat new_L = ((uldat)(S - M) + TW_PAGE_SIZE - 1) & ~(uldat)(TW_PAGE_SIZE - 1);
+    size_t new_L = ((size_t)(S - M) + TW_PAGE_SIZE - 1) & ~(size_t)(TW_PAGE_SIZE - 1);
     
     munmap(M + new_L, L - new_L);
     L = new_L;
@@ -189,15 +193,15 @@ void shm_TSR_abort(void) {
  * so we just send the value of S to mark end of meaningful data)
  */
 byte shm_send(int fd) {
-    uldat len = S - M;
+    size_t len = S - M;
 
-    return full_write(fd, (byte *)&len, sizeof(uldat)) == sizeof(uldat);
+    return full_write(fd, (byte *)&len, sizeof(size_t)) == sizeof(size_t);
 }
 
 byte shm_receive(int fd) {
-    uldat len;
+    size_t len;
     
-    if (full_read(fd, (byte *)&len, sizeof(uldat)) == sizeof(uldat)) {
+    if (full_read(fd, (byte *)&len, sizeof(size_t)) == sizeof(size_t)) {
 	S = M + len;
 	return TRUE;
     }
@@ -212,7 +216,7 @@ byte shm_receive(int fd) {
 
 
 
-byte shm_init(uldat len) {
+byte shm_init(size_t len) {
     
     M = S = AllocMem(L = len + 4096);
     if (M) {
@@ -232,7 +236,7 @@ void shm_abort(void) {
 byte shm_shrink(void) {
 #ifdef CONF_WM_RC_SHRINK
     if (may_shrink) {
-	uldat new_L = (uldat)(S - M);
+	size_t new_L = (size_t)(S - M);
 	
 	void *new_M = ReAllocMem(M, new_L);
 	
@@ -279,18 +283,18 @@ void shm_TSR_abort(void) {
  * so we must really send all data)
  */
 byte shm_send(int fd) {
-    uldat len = S - M;
+    size_t len = S - M;
 
-    *(uldat *)M = len;
+    *(size_t *)M = len;
     
     return full_write(fd, M, len) == len;
 }
 
-static byte full_read0(int fd, byte *data, uldat *dlen) {
-    uldat len, first = full_read(fd, data, sizeof(uldat));
+static byte full_read0(int fd, byte *data, size_t *dlen) {
+    size_t len, first = full_read(fd, data, sizeof(size_t));
 
-    if (first == sizeof(uldat)) {
-	len = *(uldat *)data - first;
+    if (first == sizeof(size_t)) {
+	len = *(size_t *)data - first;
 	data += first;
 	*dlen = first + full_read(fd, data, len);
 	return *dlen == first + len;
@@ -300,7 +304,7 @@ static byte full_read0(int fd, byte *data, uldat *dlen) {
 }
 
 byte shm_receive(int fd) {
-    uldat len;
+    size_t len;
     
     if (full_read0(fd, M, &len)) {
 	/*
@@ -323,7 +327,7 @@ byte shm_receive(int fd) {
 
 /* important: memory returned by shm_malloc() must be full of zeros! */
 
-void *shm_malloc(uldat len) {
+void *shm_malloc(size_t len) {
     byte *ret, *retE;
     int delta;
 
@@ -341,15 +345,15 @@ void *shm_malloc(uldat len) {
 	delta = 0;
     
     ret = S;
-    if ((uldat)ret & delta)
-	ret += delta + 1 - ((uldat)ret & delta);
+    if ((size_t)ret & delta)
+	ret += delta + 1 - ((size_t)ret & delta);
     
     retE = ret + len;
 
     if (retE <= E) {
 	S = retE;
 #ifdef DEBUG_SHM
-	printk("%.8X  ", (uldat)ret);
+	printk("%.8X  ", (size_t)ret);
 #endif
 #ifndef CONF_WM_RC_SHMMAP
 	/* important: memory returned by shm_malloc() must be full of zeros! */
@@ -361,7 +365,7 @@ void *shm_malloc(uldat len) {
 }
 
 
-void *shm_malloc_or_die(uldat len) {
+void *shm_malloc_or_die(size_t len) {
     void *m = shm_malloc(len);
     if (m || !len)
 	return m;
@@ -370,14 +374,14 @@ void *shm_malloc_or_die(uldat len) {
 }
 
 byte *shm_strdup_or_die(byte *s) {
-    uldat len = LenStr(s) + 1;
+    size_t len = LenStr(s) + 1;
     byte *d = shm_malloc_or_die(len);
     CopyMem(s, d, len);
     return d;
 }
 
 void *shm_getbase(void) {
-    return M + sizeof(uldat); /* skip space for placing shm length */
+    return M + sizeof(size_t); /* skip space for placing shm length */
 }
 
 void *shm_getend(void) {

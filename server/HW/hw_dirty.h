@@ -1,6 +1,6 @@
 
-#ifndef _TW_HW_DIRTY_H
-#define _TW_HW_DIRTY_H
+#ifndef _TWIN_HW_DIRTY_H
+#define _TWIN_HW_DIRTY_H
 
 
 INLINE byte Plain_isDirtyVideo(dat X, dat Y) {
@@ -75,5 +75,5 @@ INLINE void VideoFlip(udat x, udat y) {
     Video[pos] = HWATTR( c, HWFONT(h));
 }
 
-#endif /* _TW_HW_DIRTY_H */
+#endif /* _TWIN_HW_DIRTY_H */
 

@@ -1,37 +1,31 @@
 
-#ifndef _TW_VERSION_H
-#define _TW_VERSION_H
+#ifndef _TWIN_VERSION_H
+#define _TWIN_VERSION_H
 
-#ifndef STR
-# define __STR(v) #v
-# define STR(v) __STR(v)
+#if !defined(CAT)
+# define _CAT(a,b) a##b
+# define CAT(a,b) _CAT(a,b)
+#endif
+
+#if !defined(STR)
+# define _STR(s) #s
+# define STR(s) _STR(s)
 #endif
 
 #define TWIN_VERSION_MAJOR 0
 #define TWIN_VERSION_MINOR 3
-#define TWIN_VERSION_PATCH 9
+#define TWIN_VERSION_PATCH 10
 #define TWIN_VERSION       ((TWIN_VERSION_MAJOR<<16)|(TWIN_VERSION_MINOR<<8)|TWIN_VERSION_PATCH)
 #define TWIN_VERSION_STR   STR(TWIN_VERSION_MAJOR) "." STR(TWIN_VERSION_MINOR) "." STR(TWIN_VERSION_PATCH)
 
 #define TWIN_VERSION_EXTRA 0
 #if TWIN_VERSION_EXTRA != 0
-# define TWIN_VERSION_EXTRA_STR "_" STR(TWIN_VERSION_EXTRA)
+# define TWIN_VERSION_EXTRA_STR "_" TW_STR(TWIN_VERSION_EXTRA)
 #else
 # define TWIN_VERSION_EXTRA_STR ""
 #endif
 
-#define TW_PROTOCOL_VERSION_MAJOR 3
-#define TW_PROTOCOL_VERSION_MINOR 0
-#define TW_PROTOCOL_VERSION_PATCH 0
-#define TW_PROTOCOL_VERSION       ((TW_PROTOCOL_VERSION_MAJOR<<16)|(TW_PROTOCOL_VERSION_MINOR<<8)|TW_PROTOCOL_VERSION_PATCH)
-#define TW_PROTOCOL_VERSION_STR   STR(TW_PROTOCOL_VERSION_MAJOR) "." STR(TW_PROTOCOL_VERSION_MINOR) "." STR(TW_PROTOCOL_VERSION_PATCH)
-
-#define TWVER_MAJOR(n) ((n)>>16)
-#define TWVER_MINOR(n) (((n)>>8) & 0xFF)
-#define TWVER_PATCH(n) ((n) & 0xFF)
-#define TWVER_BUILD(M, m, p) (((M)<<16)|((m)<<8)|(p))
-
 #define MODULEVERSION uldat VersionModule = TWIN_VERSION
 
-#endif /* _TW_VERSION_H */
+#endif /* _TWIN_VERSION_H */
 

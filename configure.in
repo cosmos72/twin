@@ -1,0 +1,396 @@
+dnl Process this file with autoconf to produce a configure script.
+PACKAGE=twin
+VERSION=0.3.10
+AC_REVISION($Revision: 1.0 $)dnl
+AC_INIT(server/main.c)
+AC_CONFIG_HEADER(include/autoconf.h)
+
+AC_CONFIG_AUX_DIR(admin)
+
+dnl shared libraries
+AC_ARG_ENABLE(-shlibs,dnl
+[  --enable--shlibs[=yes|no]              enable building shared libraries ],,
+enable__shlibs=yes
+)dnl
+
+dnl shared modules
+AC_ARG_ENABLE(-modules,dnl
+[  --enable--modules[=yes|no]             enable building shared modules ],,
+enable__modules=yes
+)dnl
+
+dnl custom malloc/free
+AC_ARG_ENABLE(-alloc,dnl
+[  --enable--alloc[=yes|no]               enable custom malloc/free routines ],,
+enable__alloc=yes
+)dnl
+
+dnl unicode support
+AC_ARG_ENABLE(-unicode,dnl
+[  --enable--unicode[=yes|no]             enable building unicode-aware code ],,
+enable__unicode=yes
+)dnl
+
+dnl socket server
+AC_ARG_ENABLE(socket,dnl
+[  --enable-socket[=yes|no]               enable remote socket connections (libTw) ],,
+enable_socket=mod
+)dnl
+
+dnl socket compression
+AC_ARG_ENABLE(socket_gz,dnl
+[  --enable-socket-gz[=yes|no]            enable gzip compression on sockets ],,
+enable_socket_gz=yes
+)dnl
+
+dnl thread safe libTw
+AC_ARG_ENABLE(socket_pthreads,dnl
+[  --enable-socket-pthreads[=yes|no]      enable thread safe libTw (requires pthread) ],,
+enable_socket_pthreads=yes
+)dnl
+
+dnl support alien architectures
+AC_ARG_ENABLE(socket_alien,dnl
+[  --enable-socket-alien[=yes|no]         enable support for non-native architectures ],,
+enable_socket_alien=yes
+)dnl
+
+dnl builtin window manager
+AC_ARG_ENABLE(wm,dnl
+[  --enable-wm[=yes|no|mod]               enable the builtin WM (absolutely needed!) ],,
+enable_wm=mod
+)dnl
+
+dnl ~/.twinrc parser
+AC_ARG_ENABLE(wm_rc,dnl
+[  --enable-wm-rc[=yes|no|mod]            enable ~/.twinrc configuration parser ],,
+enable_wm_rc=mod
+)dnl
+
+dnl use mmapped shared file for parser
+AC_ARG_ENABLE(wm_rc_shmmap,dnl
+[  --enable-wm-rc-shmmap[=yes|no]         enable mmapped shared file for parser ],,
+enable_wm_rc_shmmap=yes
+)dnl
+
+dnl shrink memory when parser finished
+AC_ARG_ENABLE(wm_rc_shrink,dnl
+[  --enable-wm-rc-shrink[=yes|no]         enable shrinking memory when parser finished ],,
+enable_wm_rc_shrink=yes
+)dnl
+
+dnl terminal emulator
+AC_ARG_ENABLE(term,dnl
+[  --enable-term[=yes|no|mod]             enable builtin terminal emulator ],,
+enable_term=mod
+)dnl
+
+dnl use /dev/pts/* for terminal emulator
+AC_ARG_ENABLE(term_devpts,dnl
+[  --enable-term-devpts[=yes|no]          enable glibc-2.1 /dev/pts/* pseudo-ttys ],,
+enable_term_devpts=yes
+)dnl
+
+dnl store server messages in "Messages" window
+AC_ARG_ENABLE(printk,dnl
+[  --enable-printk[=yes|no]               enable logging messages in Messages window ],,
+enable_printk=yes
+)dnl
+
+dnl tty drivers
+AC_ARG_ENABLE(hw-tty,dnl
+[  --enable-hw-tty[=yes|no|mod]           enable tty drivers ],,
+enable_hw_tty=mod
+)dnl
+
+dnl the Linux console driver
+AC_ARG_ENABLE(hw-tty-linux,dnl
+[  --enable-hw-tty-linux[=yes|no]         enable the Linux console driver ],,
+enable_hw_tty_linux=yes
+)dnl
+
+dnl the twterm terminal driver
+AC_ARG_ENABLE(hw-tty-twterm,dnl
+[  --enable-hw-tty-twterm[=yes|no]        enable the twterm terminal driver],,
+enable_hw_tty_twterm=yes
+)dnl
+
+dnl the termcap terminal driver
+AC_ARG_ENABLE(hw-tty-termcap,dnl
+[  --enable-hw-tty-termcap[=yes|no]       enable the termcap terminal driver],,
+enable_hw_tty_termcap=yes
+)dnl
+
+dnl the X11 driver
+AC_ARG_ENABLE(hw-x11,dnl
+[  --enable-hw-x11[=yes|no|mod]           enable the X11 driver],,
+enable_hw_x11=mod
+)dnl
+
+dnl the twin driver
+AC_ARG_ENABLE(hw-twin,dnl
+[  --enable-hw-twin[=yes|no|mod]          enable the twin native driver],,
+enable_hw_twin=mod
+)dnl
+
+dnl the twdisplay driver
+AC_ARG_ENABLE(hw-display,dnl
+[  --enable-hw-display[=yes|no|mod]       enable the twdisplay client driver],,
+enable_hw_display=mod
+)dnl
+
+dnl the ggi driver
+AC_ARG_ENABLE(hw-ggi,dnl
+[  --enable-hw-ggi[=yes|no|mod]           enable the ggi driver],,
+enable_hw_ggi=mod
+)dnl
+
+dnl
+dnl Checks for programs.
+dnl
+AC_PROG_MAKE_SET
+AC_PROG_CC
+AC_PROG_CPP
+dnl AC_PROG_YACC
+dnl AC_PROG_LEX
+AC_PROG_INSTALL
+AC_PROG_LN_S
+
+dnl
+dnl Checks for header files.
+dnl
+AC_PATH_X
+AC_HEADER_DIRENT
+AC_HEADER_STDC
+AC_HEADER_SYS_WAIT
+AC_HEADER_TIME
+AC_CHECK_HEADERS(crypt.h shadow.h dlfcn.h fcntl.h gpm.h ggi/ggi.h limits.h memory.h \
+		 ncurses.h ncurses/ncurses.h termcap.h pthread.h \
+		 sys/filio.h sys/ioctl.h sys/param.h sys/resource.h sys/select.h \
+		 sys/ttydefaults.h sys/utsname.h sys/wait.h asm/page.h \
+		 machine/param.h termio.h termios.h unistd.h)
+
+dnl
+dnl Checks for typedefs, structures, and compiler characteristics.
+dnl
+AC_C_CONST
+AC_C_INLINE
+AC_TYPE_UID_T
+AC_CHECK_TYPE(gid_t,int)
+AC_TYPE_PID_T
+AC_TYPE_SIZE_T
+AC_TYPE_SIGNAL
+AC_STRUCT_TM
+
+dnl
+dnl Checks for library functions.
+dnl
+AC_FUNC_MEMCMP
+AC_FUNC_MMAP
+AC_FUNC_SETVBUF_REVERSED
+AC_FUNC_VPRINTF
+dnl we never use the 'struct rusage' returned by wait3()
+dnl AC_FUNC_WAIT3
+AC_CHECK_FUNCS(gettimeofday getspnam hstrerror initgroups putenv setenv select \
+               strdup strerror strspn strstr scandir alphasort uname \
+	       wait3 wait4 grantpt unlockpt ptsname)
+
+AC_CHECK_FUNC(crypt,,AC_CHECK_LIB(crypt,crypt))
+AC_CHECK_FUNC(dlopen,,AC_CHECK_LIB(dl,dlopen))
+AC_CHECK_FUNC(socket,,AC_CHECK_LIB(socket,socket))
+AC_CHECK_FUNC(connect,,AC_CHECK_LIB(socket,connect))
+AC_CHECK_FUNC(gethostbyname,,AC_CHECK_LIB(nsl,gethostbyname))
+dnl AC_CHECK_FUNC(gethostbyname,,AC_CHECK_LIB(resolv,gethostbyname))
+
+AC_CHECK_FUNC(pthread_self)
+AC_CHECK_LIB(pthread,pthread_self) dnl FreeBSD would require AC_CHECK_LIB(c_r,pthread_self)
+AC_CHECK_LIB(z, deflate)
+AC_CHECK_LIB(gpm, Gpm_Open)
+AC_CHECK_LIB(ggi, ggiOpen)
+
+dnl libgpm if often linked against ncurses...
+dnl no need for additional libraries in that case
+AC_CHECK_LIB(gpm, tgetent)
+
+LIBS=
+AC_CHECK_LIB(termcap,tgetent,,AC_CHECK_LIB(ncurses,tgetent))
+
+
+dnl
+dnl sanity checkings
+dnl
+
+if test "$ac_cv_func_gettimeofday" = no; then
+  AC_MSG_ERROR(missing gettimeofday(): cannot compile twin! Aborting.)
+fi
+
+if test "$ac_cv_func_select" = no; then
+  AC_MSG_ERROR(missing select(): cannot compile twin! Aborting.)
+fi
+
+if test "$ac_cv_func_gethostbyname" = yes -o "$ac_cv_lib_nsl_gethostbyname" = yes; then
+  AC_DEFINE(HAVE_GETHOSTBYNAME, 1, Define if you have the gethostbyname function)
+fi
+
+if test "$ac_cv_func_memcmp_clean" = yes; then
+  AC_DEFINE(HAVE_MEMCMP, 1, Define if memcmp() is available and works)
+fi
+
+if test "$ac_cv_func_putenv" = no -a "$ac_cv_func_setenv" = no; then
+  AC_MSG_WARN(both putenv() and setenv() missing. twin will not set TERM and TWDISPLAY correctly!)
+fi
+
+if test "$ac_cv_func_wait3" = no -a "$ac_cv_func_wait4" = no; then
+  AC_MSG_WARN(both wait3() and wait4() missing. twin will generate a lot of zombie processes!)
+fi
+
+if test "$ac_cv_func_crypt" = no -a "$ac_cv_lib_crypt_crypt" = no; then
+  AC_MSG_WARN(missing crypt(): disabling twdm client!)
+  LD_LIBCRYPT=no
+elif test "$ac_cv_lib_crypt_crypt" = yes; then
+  LD_LIBCRYPT=-lcrypt
+fi
+
+dnl
+dnl fixup configuration basing on autoconfigured stuff
+dnl
+
+if test "$ac_cv_func_dlopen" = no -a "$ac_cv_lib_dl_dlopen" = no; then
+  enable__modules=no
+elif test "$ac_cv_header_dlfcn_h" = no; then
+  enable__modules=no
+fi
+
+if test "$ac_cv_func_mmap_fixed_mapped" = no; then
+  enable__alloc=no
+  enable_wm_rc_shmmap=no
+fi
+
+if test "$ac_cv_func_socket" = no -a "$ac_cv_lib_socket_socket" = no; then
+  AC_MSG_WARN(missing socket(): disabling socket connections (libTw)!)
+  enable_socket=no
+fi
+
+if test "$ac_cv_func_connect" = no -a "$ac_cv_lib_socket_connect" = no; then
+  AC_MSG_WARN(missing connect(): disabling socket connections (libTw)!)
+  enable_socket=no
+fi
+
+if test "$ac_cv_func_gethostbyname" = no -a "$ac_cv_lib_nsl_gethostbyname" = no; then
+  AC_MSG_WARN(missing gethostbyname(): libTw will only accept numerical IP addresses!)
+fi
+
+if test "$ac_cv_lib_pthread_pthread_self" = no -o "$ac_cv_header_pthread_h" = no; then
+  enable_socket_pthreads=no
+fi
+
+if test "$ac_cv_func_grantpt" = no -o "$ac_cv_func_unlockpt" = no -o "$ac_cv_func_ptsname" = no; then
+  enable_term_devpts=no
+fi
+
+if test "$ac_cv_lib_gpm_Gpm_Open" = no -o "$ac_cv_header_gpm_h" = no; then
+  enable_hw_tty_linux=no
+fi
+
+if test "$ac_cv_lib_gpm_tgetent" = no -a "$ac_cv_lib_termcap_tgetent" = no -a "$ac_cv_lib_ncurses_tgetent" = no; then
+  enable_hw_tty_termcap=no
+fi
+
+if test "$have_x" = no; then
+  enable_hw_x11=no
+fi
+
+if test "$ac_cv_lib_ggi_ggiOpen" = no -o "$ac_cv_header_ggi_ggi_h" = no; then
+  enable_hw_ggi=no
+fi
+
+dnl
+dnl rememeber any library needed to link
+dnl
+
+if test "$ac_cv_lib_dl_dlopen" = yes; then
+  LD_LIBDL=-ldl
+fi
+AC_SUBST(LD_LIBDL)
+
+if test "$ac_cv_lib_socket_socket" = yes -o "$ac_cv_lib_socket_connect" = yes; then
+  LD_LIBSOCKET=-lsocket
+fi
+AC_SUBST(LD_LIBSOCKET)
+
+if test "$ac_cv_lib_nsl_gethostbyname" = yes; then
+  LD_LIBNSL=-lnsl
+fi
+AC_SUBST(LD_LIBNSL)
+
+if test "$ac_cv_lib_pthread_pthread_self" = yes; then
+  LD_LIBPTHREAD=-lpthread
+fi
+if test "$ac_cv_func_pthread_self" = no; then
+  LD_LIBPTHREAD_WEAK=$LD_LIBPTHREAD
+fi
+AC_SUBST(LD_LIBPTHREAD)
+AC_SUBST(LD_LIBPTHREAD_WEAK)
+
+if test "$ac_cv_lib_gpm_tgetent" = yes; then
+  LD_LIBTERMCAP_IN_LIBGPM=-lgpm
+fi
+if test "$ac_cv_lib_termcap_tgetent" = yes; then
+  LD_LIBTERMCAP=-ltermcap
+elif test "$ac_cv_lib_ncurses_tgetent" = yes; then
+  LD_LIBTERMCAP=-lncurses
+elif test "$ac_cv_lib_gpm_tgetent" = yes; then
+  LD_LIBTERMCAP=-lgpm
+fi
+AC_SUBST(LD_LIBTERMCAP_IN_LIBGPM)
+AC_SUBST(LD_LIBTERMCAP)
+
+if test "$have_x" != no; then
+  if test "$ac_x_includes"; then
+    CF_HEADERX11="-I$ac_x_includes"
+  fi
+  if test "$ac_x_libraries"; then
+    LD_LIBX11="-L$ac_x_libraries"
+  fi
+  LD_LIBX11="$LD_LIBX11 -lX11"
+fi
+AC_SUBST(CF_HEADERX11)
+AC_SUBST(LD_LIBX11)
+
+AC_SUBST(LD_LIBCRYPT)
+
+dnl
+dnl prepare conf/conf.auto using old conf/conf.current (or conf/conf.default)
+dnl for non-specified, non-autodetectable things (CONF_OPT_*)
+dnl
+
+. conf/conf.default
+if test -f conf/conf.current; then
+  . conf/conf.current
+fi
+
+CONF_=
+
+for ac_FEATURE in `cat conf/conf.list`; do
+  ac_feature=enable_`echo $ac_FEATURE | cut -d_ -f2- | sed 'y%ABCDEFGHIJKLMNOPQRSTUVWXYZ%abcdefghijklmnopqrstuvwxyz%'`
+  eval "ac_feature_val=$`echo $ac_feature`"
+  case "$ac_feature_val" in
+    y | yes ) ac_feature_val=y ;;
+    n | no  ) ac_feature_val=n ;;
+    m | mod ) ac_feature_val=m ;;
+    * )
+      # unset / undetectable. use old value.
+      eval "ac_feature_val=$`echo $ac_FEATURE`"
+      ;;
+  esac
+  if test "$ac_feature_val"; then
+    CONF_="$CONF_ $ac_FEATURE=$ac_feature_val;"
+  fi
+done
+AC_SUBST(CONF_)
+
+# all done
+
+
+AC_OUTPUT(Makefile makeautoconf conf/conf.auto)
+

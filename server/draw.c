@@ -43,9 +43,9 @@ void FindFontMenuItem(menu Menu, menuitem MenuItem, dat i, byte Select, hwfont *
     hwcol Color;
     byte ShortCutFound;
 
-    if (Menu && MenuItem && i >= MenuItem->Left && i < MenuItem->Left + MenuItem->NameLen) {
+    if (Menu && MenuItem && i >= MenuItem->Left && i < MenuItem->Left + MenuItem->Len) {
 	ShortCutFound = i==MenuItem->Left+MenuItem->ShortCut;
-	if (MenuItem->FlagActive) {
+	if (MenuItem->Flags & ROW_ACTIVE) {
 	    if (ShortCutFound) {
 		if (Select) 
 		    Color=Menu->ColSelShtCut;
@@ -60,11 +60,7 @@ void FindFontMenuItem(menu Menu, menuitem MenuItem, dat i, byte Select, hwfont *
 	else
 	    Color=Menu->ColDisabled;
 
-#ifdef CONF__UNICODE
-	*PtrFont=Tutf_IBM437_to_UTF_16[MenuItem->Name[i - MenuItem->Left]];
-#else
-	*PtrFont=MenuItem->Name[i - MenuItem->Left];
-#endif
+	*PtrFont=MenuItem->Text[i - MenuItem->Left];
 	*PtrColor=Color;
     }
 }
@@ -221,8 +217,6 @@ byte InitDrawCtx(widget W, dat X1, dat Y1, dat X2, dat Y2, byte Shaded, draw_ctx
 	} else
 	    XL = YL = 0;
 
-
-	
 	D->Left+= (ldat)W->Left - XL + HasBorder;
 	D->Rgt += (ldat)W->Left - XL + HasBorder;
 	D->X1   = Max2(D->X1 - XL, 0) + HasBorder + W->Left;
@@ -290,7 +284,7 @@ void TranslateCoordsWidget(widget W1, widget W2, dat *X, dat *Y, byte *Inside) {
 	if (W1) {
 	    InitDrawCtx(W1, 0, 0, MAXDAT, MAXDAT, FALSE, &D);
 	    if (IS_WINDOW(W1) && !(((window)W1)->Flags & WINDOWFL_BORDERLESS)) {
-		(*X)++; (*Y)++;
+		(*X)++, (*Y)++;
 	    }
 	    *X += D.Left;
 	    *Y += D.Up;
@@ -308,8 +302,9 @@ void TranslateCoordsWidget(widget W1, widget W2, dat *X, dat *Y, byte *Inside) {
 		} else
 		    *Inside = FALSE;
 	    }
-	    if (IS_WINDOW(W2) && !(((window)W2)->Flags & WINDOWFL_BORDERLESS))
-		(*X)--; (*Y)--;
+	    if (IS_WINDOW(W2) && !(((window)W2)->Flags & WINDOWFL_BORDERLESS)) {
+		(*X)--, (*Y)--;
+	    }
 	    *X -= D.Left;
 	    *Y -= D.Up;
 	}
@@ -381,17 +376,30 @@ void DrawSelfWidget(draw_ctx *D) {
     W = D->TopW;
 
     if (w_USE(W, USEEXPOSE)) {
-	CONST byte *Text = W->USE.E.Text;
-	CONST hwfont *HWFont = W->USE.E.HWFont;
-	CONST hwattr *HWAttr = W->USE.E.HWAttr;
+	CONST byte *Text = NULL;
+	CONST hwfont *HWFont = NULL;
+	CONST hwattr *HWAttr = NULL;
 	ldat Left, Up, Rgt, Dwn;
 	ldat v;
-	dat X1, X2, Y1, Y2;
+	dat Pitch, X1, X2, Y1, Y2, dX, dY;
 	ldat _X1, _X2, _Y1, _Y2;
 	dat DWidth, i, j;
 	hwcol Color;
 	byte Shaded;
 
+	switch (W->USE.E.Flags) {
+	  case WIDGET_USEEXPOSE_TEXT:
+	    Text = W->USE.E.E.Text;
+	    break;
+	  case WIDGET_USEEXPOSE_HWFONT:
+	    HWFont = W->USE.E.E.HWFont;
+	    break;
+	  case WIDGET_USEEXPOSE_HWATTR:
+	    HWAttr = W->USE.E.E.HWAttr;
+	    break;
+	  default:
+	    break;
+	}
 	Left = D->Left; Up = D->Up;
 	Rgt = D->Rgt; Dwn = D->Dwn;
 	X1 = D->X1; Y1 = D->Y1;
@@ -411,13 +419,16 @@ void DrawSelfWidget(draw_ctx *D) {
 	}
 #endif
 
-#define Pitch (W->USE.E.X2 - W->USE.E.X1)
-	
 	if (Text || HWFont || HWAttr) {
-	    _X1 = Max2(W->USE.E.X1, 0);
-	    _X2 = Min2(W->USE.E.X2, Rgt - Left);
-	    _Y1 = Max2(W->USE.E.Y1, 0);
-	    _Y2 = Min2(W->USE.E.Y2, Dwn - Up);
+	    Pitch = W->USE.E.Pitch;
+	    
+	    _X1 = Max2(W->USE.E.X1 + Left, X1);
+	    _X2 = Min2(W->USE.E.X2 + Left, X2);
+	    _Y1 = Max2(W->USE.E.Y1 + Up, Y1);
+	    _Y2 = Min2(W->USE.E.Y2 + Up, Y2);
+
+	    dX = _X1 - W->USE.E.X1 + Left;
+	    dY = _Y1 - W->USE.E.Y1 + Up;
 	    
 	    if (_X1 > _X2 || _Y1 > _Y2) {
 		/* no valid ->USE.E, fill with spaces */
@@ -425,6 +436,8 @@ void DrawSelfWidget(draw_ctx *D) {
 		return;
 	    }
 
+	    DirtyVideo(X1, Y1, X2, Y2);
+	    
 	    /*
 	     * check if the ->USE.E is smaller than the widget size...
 	     * pad with SPACEs as needed
@@ -450,71 +463,61 @@ void DrawSelfWidget(draw_ctx *D) {
 		Color = HWCOL(W->USE_Fill);
 		if (Shaded)
 		    Color = DoShadowColor(Color, Shaded, Shaded);
-		Text += (Y1 - _Y1) * Pitch;
+		Text += dY * Pitch;
 		for (j=Y1; j<=Y2; j++) {
-		    Text += X1 - _X1;
-		    for (i=X1, v=0; i<=X2; i++, v++) {
+		    Text += dX;
+		    for (i=X1, v=0; i<=X2; i++, v++)
 			Video[i+j*DWidth] = HWATTR(Color, Text[v]);
-			Text += Pitch;
-		    }
-		    Text += Pitch - (X1 - _X1);
+		    Text += Pitch - dX;
 		}
 	    } else if (HWFont) {
 		Color = HWCOL(W->USE_Fill);
 		if (Shaded)
 		    Color = DoShadowColor(Color, Shaded, Shaded);
-		HWFont += (Y1 - _Y1) * Pitch;
+		HWFont += dY * Pitch;
 		for (j=Y1; j<=Y2; j++) {
-		    HWFont += X1 - _X1;
-		    for (i=X1, v=0; i<=X2; i++, v++) {
+		    HWFont += dX;
+		    for (i=X1, v=0; i<=X2; i++, v++)
 			Video[i+j*DWidth] = HWATTR(Color, HWFont[v]);
-			HWFont += Pitch;
-		    }
-		    HWFont += Pitch - (X1 - _X1);
+		    HWFont += Pitch - dX;
 		}
 	    } else if (HWAttr && !Shaded) {
-		HWAttr += X1 - _X1 + (Y1 - _Y1) * Pitch;
+		HWAttr += dX + dY * Pitch;
 		for (j=Y1; j<=Y2; j++) {
 		    CopyMem(HWAttr, &Video[j*DWidth+X1], sizeof(hwattr)*(X2-X1+1));
 		    HWAttr += Pitch;
 		}
 	    } else if (HWAttr) {
 		/* Shaded == TRUE */
-		HWAttr += (Y1 - _Y1) * Pitch;
+		HWAttr += dY * Pitch;
 		for (j=Y1; j<=Y2; j++) {
-		    HWAttr += X1 - _X1;
+		    HWAttr += dX;
 		    for (i=X1, v=0; i<=X2; i++, v++) {
 			Color = DoShadowColor(HWCOL(HWAttr[v]), Shaded, Shaded);
 			Video[i+j*DWidth] = HWATTR(Color, 0) | HWATTR_FONTMASK(HWAttr[v]);
-			HWAttr += Pitch;
 		    }
-		    HWAttr += Pitch - (X1 - _X1);
-		}
-	    } else {
-		/* ask the client to draw */
-		msg Msg;
-		event_widget *EventW;
-
-		if ((Msg=Do(Create,Msg)(FnMsg, MSG_WIDGET_CHANGE, sizeof(event_widget)))) {
-		    EventW = &Msg->Event.EventWidget;
-		    EventW->W      = W;
-		    EventW->Code   = MSG_WIDGET_EXPOSE;
-		    EventW->Flags  = Shaded ? MSG_WIDGETFL_SHADED : 0;
-		    EventW->XWidth = X2 - X1 + 1;
-		    EventW->YWidth = Y2 - Y1 + 1;
-		    EventW->X      = X1 - Left;
-		    EventW->Y      = Y1 - Up;
-		    SendMsg(W->Owner, Msg);
+		    HWAttr += Pitch - dX;
 		}
 	    }
+	} else {
+	    /* ask the client to draw */
+	    msg Msg;
+	    event_widget *EventW;
+
+	    if ((Msg=Do(Create,Msg)(FnMsg, MSG_WIDGET_CHANGE, sizeof(event_widget)))) {
+		EventW = &Msg->Event.EventWidget;
+		EventW->W      = W;
+		EventW->Code   = MSG_WIDGET_EXPOSE;
+		EventW->Flags  = Shaded ? MSG_WIDGETFL_SHADED : 0;
+		EventW->XWidth = X2 - X1 + 1;
+		EventW->YWidth = Y2 - Y1 + 1;
+		EventW->X      = X1 - Left;
+		EventW->Y      = Y1 - Up;
+		SendMsg(W->Owner, Msg);
+	    }
 	}
-#undef Pitch
-	
-    } else {
-	
+    } else
 	FillVideo(D->X1, D->Y1, D->X2, D->Y2, W->USE_Fill);
-	DirtyVideo(D->X1, D->Y1, D->X2, D->Y2);
-    }
 }
 
 
@@ -1685,7 +1688,7 @@ void DrawLogicWidget(widget W, ldat X1, ldat Y1, ldat X2, ldat Y2) {
 	XL = W->XLogic;
 	YL = W->YLogic;
     
-	HasBorder = !IS_WINDOW(W) || !(((window)W)->Flags & WINDOWFL_BORDERLESS);
+	HasBorder = IS_WINDOW(W) && !(((window)W)->Flags & WINDOWFL_BORDERLESS);
 	
 	if (X2>=XL && Y2>=YL && Y1<MAXLDAT &&
 	    X1<XL+(ldat)W->XWidth-2*HasBorder &&

@@ -21,11 +21,11 @@
 
 #if TW_SIZEOFHWATTR == 2 && TW_BYTE_ORDER == TW_LITTLE_ENDIAN
 
-# ifdef HAVE_PWRITE /* always 0... */
+# ifdef TW_HAVE_PWRITE /* always 0... */
 
 #  define vcsa_write(fd, buf, count, pos) pwrite(fd, buf, (count)*2, (pos)*2+4)
 
-# else /* !HAVE_PWRITE */
+# else /* !TW_HAVE_PWRITE */
 /*
  * we do not need the complete seek + write + seek back
  * but only seek + write
@@ -35,7 +35,7 @@
     write(fd, buf, (count)*2); \
 } while (0)
 
-# endif /* HAVE_PWRITE */
+# endif /* TW_HAVE_PWRITE */
 
 #else /* TW_SIZEOFHWATTR != 2 || TW_BYTE_ORDER != TW_LITTLE_ENDIAN */
 
@@ -285,7 +285,7 @@ static byte vcsa_InitVideo(void) {
     vcsa_name[9] = tty_name[8];
     vcsa_name[10] = tty_name[9];
     
-    GetPrivileges();
+    GainPrivileges();
     VcsaFd = open(vcsa_name, O_WRONLY|O_NOCTTY);
     DropPrivileges();
     
@@ -296,8 +296,8 @@ static byte vcsa_InitVideo(void) {
     }
     fcntl(VcsaFd, F_SETFD, FD_CLOEXEC);
     
-    scr_clear = "\033[2J";
-    fputs(scr_clear, stdOUT); /* clear screen */
+    tc_scr_clear = "\033[2J";
+    fputs(tc_scr_clear, stdOUT); /* clear screen */
     fflush(stdOUT);
     
     HW->FlushVideo = vcsa_FlushVideo;
@@ -532,8 +532,8 @@ static byte linux_InitVideo(void) {
 	return FALSE;
     }
     
-    scr_clear = "\033[2J";
-    fprintf(stdOUT, "\033[0;11m%s\033[3h", scr_clear);
+    tc_scr_clear = "\033[2J";
+    fprintf(stdOUT, "\033[0;11m%s\033[3h", tc_scr_clear);
     /* clear colors, temporary escape to IBMPC consolemap, clear screen, set TTY_DISPCTRL */
     
     HW->FlushVideo = linux_FlushVideo;

@@ -1,5 +1,5 @@
-#ifndef _TW_RCTYPES_H
-#define _TW_RCTYPES_H
+#ifndef _TWIN_RCTYPES_H
+#define _TWIN_RCTYPES_H
 
 
 /* types */
@@ -65,10 +65,10 @@ struct ldat_list {
 /* stuff exported by shm.c */
 #define my_malloc	shm_malloc_or_die
 #define my_strdup	shm_strdup_or_die
-void *shm_malloc_or_die(uldat size);
+void *shm_malloc_or_die(size_t size);
 str shm_strdup_or_die(str s);
 
-byte shm_init(uldat len);
+byte shm_init(size_t len);
 byte shm_shrink(void);
 void shm_TSR(void);
 void shm_TSR_abort(void);
@@ -97,5 +97,5 @@ extern int line_no[];
 
 int set_yy_file(char *path);
 
-#endif /* _TW_RCTYPES_H */
+#endif /* _TWIN_RCTYPES_H */
 

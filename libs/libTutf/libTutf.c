@@ -21,8 +21,6 @@
  *
  */
 
-#include <stdlib.h>
-
 #include "Tw/Tw.h"
 
 #include "Tutf/Tutf.h"
@@ -36,13 +34,28 @@ static int Cmp(TW_CONST utf_to_ch *u1, TW_CONST utf_to_ch *u2) {
     return u1->utf - u2->utf;
 }
 
+static TW_CONST utf_to_ch *my_bsearch(TW_CONST utf_to_ch *key, TW_CONST utf_to_ch *base, size_t nmemb) {
+    TW_CONST utf_to_ch *low = base, *high = base + nmemb;
+
+    while (low + 1 < high) {
+	base = low + (high - low) / 2;
+	
+	if (base->utf > key->utf)
+	    high = base;
+	else if (base->utf < key->utf)
+	    low = base;
+	else
+	    return base;
+    }
+    return NULL;
+}
+
+
 #define QSORT(array) qsort((void *)(array), sizeof(array)/sizeof((array)[0]), \
 			       sizeof((array)[0]), (void *)Cmp)
 
 #define BSEARCH(key, array) \
-	(utf_to_ch *)bsearch((TW_CONST void *)(key), (TW_CONST void *)(array), \
-				 sizeof(array)/sizeof((array)[0]), \
-				 sizeof((array)[0]), (void *)Cmp)
+	(utf_to_ch *)my_bsearch((key), (array), sizeof(array)/sizeof((array)[0]))
 
 #include "ascii.c"
 

@@ -1165,11 +1165,11 @@ class TW : public TEmpty {
     {
 	TwSetDefaultListener((tfn_default_listener)listener, arg);
     }
-    static inline uldat mainLoop()
+    static inline byte mainLoop()
     {
 	return TwMainLoop();
     }
-    static inline uldat exec()
+    static inline byte exec()
     {
 	return TwMainLoop();
     }

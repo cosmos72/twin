@@ -5,8 +5,8 @@
  *
  */
 
-#ifndef _TW_FDLIST_H
-#define _TW_FDLIST_H
+#ifndef _TWIN_FDLIST_H
+#define _TWIN_FDLIST_H
 
 typedef void (*handler_io_s)(int, uldat);
 typedef void (*handler_io_d)(int, obj);
@@ -54,5 +54,5 @@ enum Alien_magics {
 
 
 
-#endif /* _TW_FDLIST_H */
+#endif /* _TWIN_FDLIST_H */
 

@@ -3,17 +3,23 @@
  */
 
 #include <stdio.h>
-#include <memory.h>
 #include <string.h>
-#include <fcntl.h>
-#include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/ioctl.h>
 
 #ifdef __linux__
 # include <sys/kd.h>
 #elif !defined (E_TABSZ)
 # define E_TABSZ 256
+#endif
+
+#include "Tw/Twautoconf.h"
+
+#ifdef TW_HAVE_MEMORY_H
+# include <memory.h>
+#endif
+
+#ifdef TW_HAVE_SYS_IOCTL_H
+# include <sys/ioctl.h>
 #endif
 
 #include "Tw/Tw.h"

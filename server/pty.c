@@ -12,10 +12,8 @@
  *
  */
 
-#include <fcntl.h>
 #include <grp.h>
 #include <signal.h>
-#include <sys/types.h>
 #include <sys/stat.h>
 
 #ifdef CONF_TERM_DEVPTS
@@ -26,6 +24,8 @@
 #include "tty_ioctl.h"
 
 #include "twin.h"
+#include "main.h"
+#include "printk.h"
 #include "util.h"
 
 /* pseudo-teletype connections handling functions */
@@ -163,9 +163,14 @@ static byte switchto_tty(void)
 /* exported API: fork() a program in a pseudo-teletype */
 byte SpawnInWindow(window Window, CONST byte *arg0, byte * CONST *argv) {
     pid_t childpid;
-    remotedata *data = &Window->RemoteData;
+    remotedata *data;
 
-    GetPrivileges();
+    /* 0 */
+    if (flag_secure) {
+	printk(flag_secure_msg);
+	return FALSE;
+    }
+    GainPrivileges();
     
     /* 1 */
     if (!get_pty()) {
@@ -193,6 +198,7 @@ byte SpawnInWindow(window Window, CONST byte *arg0, byte * CONST *argv) {
 	    break;
 	  default:
 	    /* father */
+	    data = &Window->RemoteData;
 	    data->Fd = ptyfd;
 	    data->ChildPid = childpid;
 	    break;

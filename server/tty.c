@@ -666,7 +666,7 @@ static void respond_string(byte *p) {
     /* the remote program may be directly attached to the window */
     if (!RemoteWindowWriteQueue(Win, Len, p)) {
 	
-	/* or we may need to send a Msg to Win->Menu->MsgPort */
+	/* or we may need to send a Msg to Win->Owner */
 	msg Msg;
 	event_keyboard *Event;
 	if ((Msg = Do(Create,Msg)(FnMsg, MSG_WIDGET_KEY, Len + sizeof(event_keyboard)))) {
@@ -681,7 +681,7 @@ static void respond_string(byte *p) {
 	    Event->SeqLen = Len;
 	    CopyMem(p, Event->AsciiSeq, Len);
 	    Event->AsciiSeq[Len] = '\0'; /* terminate string with \0 */
-	    SendMsg(Win->Menu->MsgPort, Msg);
+	    SendMsg(Win->Owner, Msg);
 	}
     }
 }
@@ -972,8 +972,8 @@ static void set_newtitle(void) {
     
     if ((P = Win->Parent) && IS_SCREEN(P)) {
 	/* need to update window list with new name ? */
-	if (((screen)P)->FnHookWindow)
-	    ((screen)P)->FnHookWindow(((screen)P)->HookWindow);
+	if (((screen)P)->FnHookW)
+	    ((screen)P)->FnHookW(((screen)P)->HookW);
     }
 }
 

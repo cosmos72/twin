@@ -1,5 +1,5 @@
-#ifndef _TW_HW_MULTI_H
-#define _TW_HW_MULTI_H
+#ifndef _TWIN_HW_MULTI_H
+#define _TWIN_HW_MULTI_H
 
 /*
  * this file exports functions and variables defined in hw_multi.c
@@ -33,13 +33,13 @@ void FillVideo(dat Xstart, dat Ystart, dat Xend, dat Yend, hwattr Attrib);
 void RefreshVideo(void);
 byte ResizeDisplay(void);
 
-void RunNoHW(void);
+void RunNoHW(byte print_info);
 void UpdateFlagsHW(void);
 
 void EnableMouseMotionEvents(byte enable);
 
 byte StdAddEventMouse(udat CodeMsg, udat Code, dat MouseX, dat MouseY);
-void SyntheticKey(window W, udat Code, udat ShiftFlags, byte Len, byte *Seq);
+void SyntheticKey(widget W, udat Code, udat ShiftFlags, byte Len, byte *Seq);
 
-#endif /* _TW_HW_MULTI_H */
+#endif /* _TWIN_HW_MULTI_H */
 

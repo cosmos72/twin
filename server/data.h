@@ -1,5 +1,5 @@
-#ifndef _TW_DATA_H
-#define _TW_DATA_H
+#ifndef _TWIN_DATA_H
+#define _TWIN_DATA_H
 
 extern CONST byte *conf_destdir_lib_twin;
 extern CONST byte *conf_destdir_lib_twin_modules_;
@@ -34,4 +34,4 @@ extern hwcol DEFAULT_ColGadgets, DEFAULT_ColArrows, DEFAULT_ColBars, DEFAULT_Col
 byte InitData(void);
 
 
-#endif /* _TW_DATA_H */
+#endif /* _TWIN_DATA_H */

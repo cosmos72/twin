@@ -80,10 +80,10 @@ static struct s_all _All = {
 	(msgport)0, (msgport)0, (msgport)0,
 	(mutex)0, (mutex)0,
 	(module)0, (module)0,
-	(fn_hook)0, (window)0,
+	(fn_hook)0, (widget)0,
 	(display_hw)0, (display_hw)0,
 	(display_hw)0, (display_hw)0,
-	(fn_hook)0, (window)0,
+	(fn_hook)0, (widget)0,
 	
 	1, 1, /* DisplayWidth, DisplayHeight */
 	STATE_DEFAULT,

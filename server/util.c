@@ -10,18 +10,16 @@
  *
  */
 
-#include <sys/time.h>
-#include <sys/types.h>
+#include "twin.h"
+
 #include <sys/socket.h>  
 #include <sys/stat.h>
 #include <sys/un.h>
-#include <unistd.h>
-#include <fcntl.h>
 #include <grp.h>
-#include <errno.h>
+#include <pwd.h>
 
-#include "twin.h"
 #include "data.h"
+#include "extensions.h"
 #include "methods.h"
 #include "main.h"
 #include "draw.h"
@@ -72,27 +70,6 @@ void *CloneMem(CONST void *From, uldat Size) {
     return NULL;
 }
 
-#if TW_SIZEOFHWFONT == 1
-hwfont *CloneString2HWFont(CONST byte *From, uldat Size) {
-    return CloneMem(From, Size);
-}
-#else
-hwfont *CloneString2HWFont(CONST byte *From, uldat Size) {
-    hwfont *temp, *save;
-    if (From && Size && (save = temp = (hwfont *)AllocMem(Size * sizeof(hwfont)))) {
-	while (Size--) {
-#ifdef CONF__UNICODE
-	    *temp++ = Tutf_IBM437_to_UTF_16[*From++];
-#else
-	    *temp++ = *From++;
-#endif
-	}
-	return save;
-    }
-    return NULL;
-}
-#endif
-
 byte *CloneStr(CONST byte *s) {
     byte *q;
     uldat len;
@@ -121,11 +98,11 @@ byte *CloneStrL(CONST byte *s, uldat len) {
 }
 
 #if TW_SIZEOFHWFONT == 1
-hwfont *CloneString2HWFontL(CONST byte *s, uldat len) {
+hwfont *CloneStr2HWFont(CONST byte *s, uldat len) {
     return CloneStrL(s, len);
 }
 #else
-hwfont *CloneString2HWFontL(CONST byte *s, uldat len) {
+hwfont *CloneStr2HWFont(CONST byte *s, uldat len) {
     hwfont *temp, *save;
     
     if (s) {
@@ -976,8 +953,13 @@ byte InitTWDisplay(void) {
 			TWDisplay = fullTWD+10;
 			lenTWDisplay = LenStr(TWDisplay);
 			CopyMem(TWDisplay, envTWD+10, lenTWDisplay);
+#if defined(HAVE_SETENV)
+			setenv("TWDISPLAY",TWDisplay,1);
+			setenv("TERM","linux",1);
+#elif defined(HAVE_PUTENV)
 			putenv(envTWD);
 			putenv("TERM=linux");
+#endif
 			if ((arg0 = AllocMem(LenStr(TWDisplay) + 6))) {
 			    sprintf(arg0, "twin %s", TWDisplay);
 			    SetArgv_0(main_argv, arg0);
@@ -1008,8 +990,9 @@ void QuitTWDisplay(void) {
 
 /* suid/sgid privileges related functions */
 
-static enum { none, sgidtty, suidroot } Privilege = none;
+static e_privilege Privilege;
 static gid_t tty_grgid;
+uid_t Uid, EUid;
 
 gid_t get_tty_grgid(void) {
     struct group *gr;
@@ -1023,23 +1006,103 @@ gid_t get_tty_grgid(void) {
     return tty_grgid;
 }
 
-void CheckPrivileges(void) {
-    if (GetRootPrivileges() >= 0)
+byte CheckPrivileges(void) {
+    Uid = getuid();
+    EUid = geteuid();
+    
+    (void)get_tty_grgid();
+    
+    if (GainRootPrivileges() >= 0)
 	Privilege = suidroot;
-    else {
-	(void)get_tty_grgid();
-	if (tty_grgid != (gid_t)-1 && GetGroupPrivileges(tty_grgid) >= 0)
-	    Privilege = sgidtty;
-    }
+    else if (tty_grgid != (gid_t)-1 && GainGroupPrivileges(tty_grgid) >= 0)
+	Privilege = sgidtty;
+    else
+	Privilege = none;
     
     DropPrivileges();
+    
+    return Privilege;
 }
 
-void GetPrivileges(void) {
+void GainPrivileges(void) {
     if (Privilege == suidroot)
-	GetRootPrivileges();
+	GainRootPrivileges();
     else if (Privilege == sgidtty)
-	GetGroupPrivileges(get_tty_grgid());
+	GainGroupPrivileges(get_tty_grgid());
+}
+
+static void SetEnvs(struct passwd *p) {
+    byte buf[BIGBUFF];
+    
+    chdir(HOME = p->pw_dir);
+#if defined(HAVE_SETENV)
+    setenv("HOME", HOME, 1);
+    setenv("SHELL", p->pw_shell, 1);
+    setenv("LOGNAME", p->pw_name, 1);
+    sprintf(buf, "/var/mail/%s", p->pw_name); setenv("MAIL", buf, 1);
+#elif defined(HAVE_PUTENV)
+    sprintf(buf, "HOME=%s", HOME); putenv(buf);
+    sprintf(buf, "SHELL=%s", p->pw_shell); putenv(buf);
+    sprintf(buf, "LOGNAME=%s", p->pw_name); putenv(buf);
+    sprintf(buf, "MAIL=/var/mail/%s", p->pw_name); putenv(buf);
+#endif
+}
+
+byte SetServerUid(uldat uid, byte privileges) {
+    msgport WM_MsgPort;
+    struct passwd *p;
+    byte ok = FALSE;
+    
+    if (flag_secure && uid == (uldat)(uid_t)uid && Uid == 0 && EUid == 0) {
+	if ((WM_MsgPort = Ext(WM,MsgPort))) {
+	    if ((p = getpwuid(uid)) && p->pw_uid == uid &&
+		chown(fullTWD, p->pw_uid, p->pw_gid) >= 0
+#ifdef HAVE_INITGROUPS
+		&& initgroups(p->pw_name, p->pw_gid) >= 0
+#endif
+		) {
+
+		
+		switch (privileges) {
+		  case none:
+		    ok = setgid(p->pw_gid) >= 0 && setuid(uid) >= 0;
+		    break;
+		  case sgidtty:
+		    ok = setregid(p->pw_gid, tty_grgid) >= 0 && setuid(uid) >= 0;
+		    break;
+		  case suidroot:
+		    ok = setgid(p->pw_gid) >= 0 && setreuid(uid, 0) >= 0;
+		    break;
+		  default:
+		    break;
+		}
+		if (ok && (uid == 0 || CheckPrivileges() == privileges)) {
+		    flag_secure = 0;
+		    SetEnvs(p);
+		    if ((ok = Ext(Socket,InitAuth)())) {
+			SendControlMsg(WM_MsgPort, MSG_CONTROL_OPEN, 0, NULL);
+			return TRUE;
+		    }
+		} else
+		    ok = FALSE;
+		
+		if (!ok) {
+		    flag_secure = 1;
+		    if (setuid(0) < 0 || setgid(0) < 0 ||
+			chown(fullTWD, 0, 0) < 0) {
+			/* tried to recover, but screwed up uids too badly. */
+			printk("twin: failed switching to uid %u: %s\n", uid, strerror(errno));
+			printk("twin: also failed to recover. Quitting NOW!\n");
+			Quit(0);
+		    }
+		    SetEnvs(getpwuid(0));
+		}
+	    }
+	    printk("twin: failed switching to uid %u: %s\n", uid, strerror(errno));
+	}
+    } else
+	printk("twin: SetServerUid() can be called only if started by root with \"-secure\".\n");
+    return FALSE;
 }
 
 /* finally, functions to manage Ids */

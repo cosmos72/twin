@@ -1,5 +1,5 @@
-#ifndef _TW_HW_H
-#define _TW_HW_H
+#ifndef _TWIN_HW_H
+#define _TWIN_HW_H
 
 #define setFlush() (HW->NeedHW |= NEEDFlushHW)
 #define clrFlush() (HW->NeedHW &= ~NEEDFlushHW)
@@ -33,4 +33,4 @@ void DragArea(dat Xstart, dat Ystart, dat Xend, dat Yend, dat DstXstart, dat Dst
 void MoveToXY(dat x, dat y);
 void SetCursorType(uldat type);
 
-#endif /* _TW_HW_H */
+#endif /* _TWIN_HW_H */

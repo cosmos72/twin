@@ -11,7 +11,6 @@
  */
 
 #include <signal.h>
-#include <unistd.h>
 
 #include "twin.h"
 #include "data.h"
@@ -130,7 +129,7 @@ static void TweakMenuRows(menuitem Item, udat code, byte flag) {
 	Row->Flags = flag;
 }
 
-static void UpdateMenuRows(window dummy) {
+static void UpdateMenuRows(widget dummy) {
 #ifndef CONF_TERM
     if (DlIsLoaded(TermSo)) {
 	TweakMenuRows(Builtin_Modules, COD_TERM_ON,    ROW_INACTIVE);
@@ -167,7 +166,7 @@ static void SelectWinList(void) {
 	n--;
     }
     if (!n && W) {
-	MakeFirstWindow((window)W, TRUE);
+	MakeFirstWidget(W, TRUE);
 	CenterWindow((window)W);
     }
 }
@@ -194,6 +193,11 @@ static void ExecuteWinRun(void) {
     gadget G;
     
     Act(UnMap,ExecuteWin)(ExecuteWin);
+    
+    if (flag_secure) {
+	printk(flag_secure_msg);
+	return;
+    }
     
     if ((Row = Act(FindRow,ExecuteWin)(ExecuteWin, ExecuteWin->CurY)) && !Row->LenGap) {
 	
@@ -399,11 +403,11 @@ static void BordersH(msg Msg) {
     UpdateButtonWin();
 }
 
-static void UpdateDisplayWin(window displayWin) {
+static void UpdateDisplayWin(widget displayWin) {
     display_hw hw;
     uldat x = 12, y = 0;
     
-    if (displayWin == DisplayWin) {
+    if (displayWin == (widget)DisplayWin) {
 	DeleteList(DisplayWin->USE.R.FirstRow);
     
 	for (hw = All->FirstDisplayHW; hw; hw = hw->Next) {
@@ -521,7 +525,7 @@ static void BuiltinH(msgport MsgPort) {
 			UpdateButtonWin();
 			NewWindow = ButtonWin;  break;
 		      case COD_DISPLAY_WIN:
-			UpdateDisplayWin(DisplayWin);
+			UpdateDisplayWin((widget)DisplayWin);
 			NewWindow = DisplayWin; break;
 		      case COD_MESSAGES_WIN:
 			NewWindow = MessagesWin;break;
@@ -701,13 +705,13 @@ static void BuiltinH(msgport MsgPort) {
 	Clock_Update();
 }
 
-void FullUpdateWinList(window listWin);
+void FullUpdateWinList(widget listWin);
 
-void InstallRemoveWinListHook(window listWin) {    
-    if (listWin == WinList) {
+void InstallRemoveWinListHook(widget listWin) {    
+    if (listWin == (widget)WinList) {
 	if (WinList->Parent && IS_SCREEN(WinList->Parent))
 	    Act(InstallHook,WinList)(WinList, FullUpdateWinList,
-				     &((screen)WinList->Parent)->FnHookWindow);
+				     &((screen)WinList->Parent)->FnHookW);
 	else
 	    Act(RemoveHook,WinList)(WinList, FullUpdateWinList, WinList->WhereHook);
     }
@@ -731,8 +735,8 @@ void UpdateWinList(void) {
     }
 }
 
-void FullUpdateWinList(window listWin) {
-    if (listWin == WinList && WinList->Parent) {
+void FullUpdateWinList(widget listWin) {
+    if (listWin == (widget)WinList && WinList->Parent) {
 	ResizeRelWindow(WinList, WinList->MinXWidth - WinList->XWidth, WinList->MinYWidth - WinList->YWidth);
     
 	UpdateWinList();

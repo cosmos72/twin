@@ -1,5 +1,5 @@
-#ifndef _TW_DL_H
-#define _TW_DL_H
+#ifndef _TWIN_DL_H
+#define _TWIN_DL_H
 
 byte DlOpen(module Module);
 void DlClose(module Module);
@@ -18,4 +18,4 @@ udat   DlName2Code(byte *name);
 
 module DlLoadAny(uldat len, byte *name);
 
-#endif /* _TW_DL_H */
+#endif /* _TWIN_DL_H */

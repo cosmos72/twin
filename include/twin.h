@@ -13,11 +13,20 @@
 #ifndef _TWIN_H
 #define _TWIN_H
 
+#ifndef RETSIGTYPE
+# include "autoconf.h"
+#endif
+
+#include "compiler.h"
+#include "version.h"
+#include "osincludes.h"
 #include "Tw/compiler.h"
-#include "Tw/osincludes.h"
 #include "Tw/datatypes.h"
 #include "Tw/datasizes.h"
 #include "Tw/uni_types.h"
+#include "Tw/version.h"
+#include "Tw/missing.h"
+
 
 #define Abs(x) ((x)>0 ? (x) : -(x))
 #define Swap(a, b, tmp) ((tmp)=(a), (a)=(b), (b)=(tmp))
@@ -27,12 +36,6 @@
 
 #define Max3(x, y, z) ((x)>(y) ? Max2(x,z) : Max2(y,z))
 #define Min3(x, y, z) ((x)<(y) ? Min2(x,z) : Min2(y,z))
-
-#define _CAT(a,b) a##b
-#define CAT(a,b) _CAT(a,b)
-
-#define _STR(s) #s
-#define STR(s) _STR(s)
 
 /***************/
 
@@ -211,7 +214,7 @@ typedef struct s_fn fn;
 typedef struct s_setup setup;
 typedef struct s_all *all;
 
-typedef void (*fn_hook)(window);
+typedef void (*fn_hook)(widget);
 
 
 /* ttydata->Flags */
@@ -323,11 +326,19 @@ struct s_fn_obj {
 
 
 struct s_wE {		/* for WIDGET_USEEXPOSE widgets */
-    CONST byte *Text;
-    CONST hwfont *HWFont;
-    CONST hwattr *HWAttr;
+    union {
+	CONST byte *Text;
+	CONST hwfont *HWFont;
+	CONST hwattr *HWAttr;
+    } E;
+    dat Flags, Pitch;
     ldat X1, Y1, X2, Y2;
 };
+
+/* WIDGET_USEEXPOSE  USE.E.Flags: */
+#define WIDGET_USEEXPOSE_TEXT 1
+#define WIDGET_USEEXPOSE_HWFONT 2
+#define WIDGET_USEEXPOSE_HWATTR 4
 
 struct s_widget {
     uldat Id;
@@ -343,6 +354,10 @@ struct s_widget {
     ldat XLogic, YLogic;
     widget O_Prev, O_Next; /* list with the same msgport (owner) */
     msgport Owner;
+    fn_hook ShutDownHook; /* hooks for this widget */
+    fn_hook Hook, *WhereHook;
+    fn_hook MapUnMapHook;
+    msg MapQueueMsg;
     hwattr USE_Fill;
     union {
 	struct s_wE E;
@@ -367,10 +382,13 @@ struct s_fn_widget {
     widget (*KbdFocus)(widget);
     void (*Map)(widget, widget Parent);
     void (*UnMap)(widget);
+    void (*MapTopReal)(widget, screen);
     void (*Own)(widget, msgport);
     void (*DisOwn)(widget);    
     void (*RecursiveDelete)(widget, msgport);
-    void (*Expose)(widget, dat XWidth, dat YWidth, dat Left, dat Up, CONST byte *, CONST hwfont *, CONST hwattr *);
+    void (*Expose)(widget, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch, CONST byte *, CONST hwfont *, CONST hwattr *);
+    byte (*InstallHook)(widget, fn_hook, fn_hook *Where);
+    void (*RemoveHook)(widget, fn_hook, fn_hook *Where);
 };
 
 /* Widget->Attrib */
@@ -411,6 +429,10 @@ struct s_gadget {
     ldat XLogic, YLogic;
     widget O_Prev, O_Next; /* list in the same msgport (owner) */
     msgport Owner;
+    fn_hook ShutDownHook; /* hooks for this widget */
+    fn_hook Hook, *WhereHook;
+    fn_hook MapUnMapHook;
+    msg MapQueueMsg;
     hwattr USE_Fill;
     union {
 	struct s_gT T;
@@ -445,10 +467,13 @@ struct s_fn_gadget {
     widget (*KbdFocus)(gadget);
     void (*Map)(gadget, widget Parent);
     void (*UnMap)(gadget);
+    void (*MapTopReal)(gadget, screen);
     void (*Own)(gadget, msgport);
     void (*DisOwn)(gadget);    
     void (*RecursiveDelete)(gadget, msgport);
     void (*Expose)(gadget, dat XWidth, dat YWidth, dat Left, dat Up, CONST byte *, CONST hwfont *, CONST hwattr *);
+    byte (*InstallHook)(gadget, fn_hook, fn_hook *Where);
+    void (*RemoveHook)(gadget, fn_hook, fn_hook *Where);
     /* gadget */
     fn_widget Fn_Widget;
     gadget (*CreateEmptyButton)(fn_gadget Fn_Gadget, msgport Owner, dat XWidth, dat YWidth, hwcol BgCol);
@@ -533,6 +558,10 @@ struct s_window {
     ldat XLogic, YLogic;
     widget O_Prev, O_Next; /* list with the same msgport (owner) */
     msgport Owner;
+    fn_hook ShutDownHook; /* hooks for this widget */
+    fn_hook Hook, *WhereHook;
+    fn_hook MapUnMapHook;
+    msg MapQueueMsg;
     hwattr USE_Fill;
     union {
 	struct s_WR R;
@@ -555,10 +584,6 @@ struct s_window {
     dat MaxXWidth, MaxYWidth;
     ldat WLogic, HLogic;	/* window interior logic size */
     hwfont CONST * Charset;	/* the byte -> hwfont translation to use */
-    fn_hook ShutDownHook; /* hooks for this widget */
-    fn_hook Hook, *WhereHook;
-    fn_hook MapUnMapHook;
-    msg MapQueueMsg;
 };
 
 struct s_fn_window {
@@ -581,10 +606,13 @@ struct s_fn_window {
     widget (*KbdFocus)(window);
     void (*Map)(window, widget Parent);
     void (*UnMap)(window);
+    void (*MapTopReal)(window, screen);
     void (*Own)(window, msgport);
     void (*DisOwn)(window);    
     void (*RecursiveDelete)(window, msgport);
     void (*Expose)(window, dat XWidth, dat YWidth, dat Left, dat Up, CONST byte *, CONST hwfont *, CONST hwattr *);
+    byte (*InstallHook)(window, fn_hook, fn_hook *Where);
+    void (*RemoveHook)(window, fn_hook, fn_hook *Where);
     /* window */
     fn_widget Fn_Widget;
     void (*WriteAscii)(window, ldat Len, CONST byte *Ascii);
@@ -601,12 +629,9 @@ struct s_fn_window {
     void (*Configure)(window, byte Bitmap, dat Left, dat Up, dat MinXWidth, dat MinYWidth,
 		      dat MaxXWidth, dat MaxYWidth);
     window (*Create4Menu)(fn_window, menu);
-    void (*MapTopReal)(window, screen);
     byte (*FindBorder)(window, dat u, dat v, byte Border, hwfont *PtrChar, hwcol *PtrColor);
     row (*FindRow)(window, ldat RowN);
     row (*FindRowByCode)(window, udat Code, ldat *NumRow);
-    byte (*InstallHook)(window, fn_hook, fn_hook *Where);
-    void (*RemoveHook)(window, fn_hook, fn_hook *Where);
 };
 
 
@@ -711,8 +736,8 @@ struct s_screen {
     byte *Name;
     window MenuWindow, ClickWindow;
     all All;
-    fn_hook FnHookWindow;/* allow hooks on children Map()/UnMap() inside this widget */
-    window HookWindow;
+    fn_hook FnHookW;/* allow hooks on children Map()/UnMap() inside this widget */
+    widget HookW;
 };
 struct s_fn_screen {
     uldat Magic, Size, Used;
@@ -737,6 +762,8 @@ struct s_fn_screen {
     void (*DisOwn)(screen);    
     void (*RecursiveDelete)(screen, msgport);
     void (*Expose)(screen, dat XWidth, dat YWidth, dat Left, dat Up, CONST byte *, CONST hwfont *, CONST hwattr *);
+    byte (*InstallHook)(screen, fn_hook, fn_hook *Where);
+    void (*RemoveHook)(screen, fn_hook, fn_hook *Where);
     /* screen */
     fn_widget Fn_Widget;
     menu (*FindMenu)(screen);
@@ -822,7 +849,6 @@ struct s_fn_row {
     void (*ChangeField)(row, udat field, uldat CLEARMask, uldat XORMask);
     /* row */
     fn_obj Fn_Obj;
-    row (*Create4Menu)(fn_row Fn_Row, window Window, udat Code, byte FlagActive, ldat Len, CONST byte *Text);
     byte (*SetText)(row, ldat Len, CONST byte *Text, byte DefaultCol);
 /*    byte (*SetHWFont)(row, ldat Len, CONST hwfont *HWFont, byte DefaultCol); */
 };
@@ -840,25 +866,34 @@ struct s_menuitem {
     uldat Id;
     fn_menuitem Fn;
     menuitem Prev, Next;
-    menu Menu;
+    obj Parent;
+    /* row */
+    udat Code;
+    byte Flags;
+    uldat Len, MaxLen;
+    uldat Gap, LenGap;
+    hwfont *Text;
+    hwcol *ColText;
     /* menuitem */
     window Window;
-    byte FlagActive;
-    dat Left, NameLen, ShortCut;
-    byte *Name;
+    dat Left, ShortCut;
 };
 struct s_fn_menuitem {
     uldat Magic, Size, Used;
-    menuitem (*Create)(fn_menuitem, menu Menu, window Window, byte FlagActive,
-		       dat Left, dat NameLen, dat ShortCut, CONST byte *Name);
-    void (*Insert)(menuitem, menu, menuitem Prev, menuitem Next);
+    menuitem (*Create)(fn_menuitem, obj Parent, window Window, udat Code, byte Flags,
+		       dat Left, ldat Len, dat ShortCut, CONST byte *Name);
+    void (*Insert)(menuitem, obj, menuitem Prev, menuitem Next);
     void (*Remove)(menuitem);
     void (*Delete)(menuitem);
     void (*ChangeField)(menuitem, udat field, uldat CLEARMask, uldat XORMask);
-    /* menuitem */	
+    /* row */
     fn_obj Fn_Obj;
-    menuitem (*Create4Menu)(fn_menuitem, menu, window, byte FlagActive,
-			    dat Len, CONST byte *Name);
+    byte (*SetText)(row, ldat Len, CONST byte *Text, byte DefaultCol);
+/*    byte (*SetHWFont)(row, ldat Len, CONST hwfont *HWFont, byte DefaultCol); */
+    /* menuitem */	
+    fn_row Fn_Row;
+    menuitem (*Create4Menu)(fn_menuitem, obj Parent, window Window, udat Code,
+			    byte Flags, ldat Len, CONST byte *Name);
     uldat (*Create4MenuCommon)(fn_menuitem, menu);
     /* for compatibility this must return a non-zero value. */
 };
@@ -957,7 +992,7 @@ struct s_event_common {
 
 typedef struct s_event_map event_map;
 struct s_event_map {
-    window W;
+    widget W;
     udat Code, pad;	/* unused */
     screen Screen;
 };
@@ -1482,7 +1517,7 @@ struct s_fn_display_hw {
 #define IS_GADGET(O)	IS_OBJ(gadget,O)
 #define IS_WINDOW(O)	IS_OBJ(window,O)
 #define IS_SCREEN(O)	IS_OBJ(screen,O)
-#define IS_ROW(O)	IS_OBJ(row,O)
+#define IS_ROW(O)	(IS_OBJ(row,O) || IS_OBJ(menuitem,O))
 #define IS_MENUITEM(O)	IS_OBJ(menuitem,O)
 #define IS_MENU(O)	IS_OBJ(menu,O)
 #define IS_MSGPORT(O)	IS_OBJ(msgport,O)
@@ -1595,10 +1630,10 @@ struct s_all {
     mutex FirstMutex, LastMutex;
     
     module FirstModule, LastModule;
-    fn_hook FnHookModule; window HookModule;
+    fn_hook FnHookModule; widget HookModule;
     
     display_hw FirstDisplayHW, LastDisplayHW, MouseHW, ExclusiveHW;
-    fn_hook FnHookDisplayHW; window HookDisplayHW;
+    fn_hook FnHookDisplayHW; widget HookDisplayHW;
     
     dat DisplayWidth, DisplayHeight;
     byte State;
@@ -1778,9 +1813,11 @@ INLINE void *ReAllocMem(void *Mem, uldat Size) {
 # define CmpMem(m1, m2, Size)		memcmp(m1, m2, Size)
 
 
+typedef enum { none, sgidtty, suidroot } e_privilege;
+
 # define DropPrivileges() (setegid(getgid()), seteuid(getuid()))
-# define GetRootPrivileges() seteuid(0)
-# define GetGroupPrivileges(g) setegid(g)
+# define GainRootPrivileges() seteuid(0)
+# define GainGroupPrivileges(g) setegid(g)
 
 byte *CloneStr(CONST byte *s);
 

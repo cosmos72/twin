@@ -21,13 +21,23 @@
  */
 
 #include <signal.h>
-#include <sys/types.h>
-#include <sys/ttydefaults.h>
-#ifdef __FreeBSD__
-# include <sys/time.h>
+#include <sys/stat.h>
+
+#include "autoconf.h"
+
+#ifdef HAVE_SYS_RESOURCE_H
+# include <sys/resource.h>
 #endif
-#include <sys/resource.h>
-#include <sys/wait.h>
+
+#ifdef HAVE_SYS_TTYDEFAULTS_H
+# include <sys/ttydefaults.h>
+#else
+# include "my_ttydefaults.h"
+#endif
+
+#ifdef HAVE_SYS_WAIT_H
+# include <sys/wait.h>
+#endif
 
 #include "tty_ioctl.h"
 
@@ -66,23 +76,32 @@ static VOLATILE byte GotSignalWinch;
 static VOLATILE byte GotSignalChild;
 static VOLATILE byte GotSignalHangup;
 
-static void SignalWinch(int n) {
+#if RETSIGTYPE == void
+# define RETFROMSIGNAL
+#else
+# define RETFROMSIGNAL return 0;
+#endif
+
+static RETSIGTYPE SignalWinch(int n) {
     GotSignals = GotSignalWinch = TRUE;
     signal(SIGWINCH, SignalWinch);
+    RETFROMSIGNAL
 }
 
-static void HandleSignalWinch(void) {
+static RETSIGTYPE HandleSignalWinch(void) {
     GotSignalWinch = FALSE;
     if (DisplayHWCTTY && DisplayHWCTTY != HWCTTY_DETACHED
 	&& DisplayHWCTTY->DisplayIsCTTY) {
 	
 	ResizeDisplayPrefer(DisplayHWCTTY);
     }
+    RETFROMSIGNAL
 }
 
-static void SignalChild(int n) {
+static RETSIGTYPE SignalChild(int n) {
     GotSignals = GotSignalChild = TRUE;
     signal(SIGCHLD, SignalChild);
+    RETFROMSIGNAL
 }
 
 static void HandleSignalChild(void) {
@@ -98,9 +117,10 @@ static void HandleSignalChild(void) {
 /*
  * got a SIGHUP. shutdown the display on controlling tty, if any
  */
-static void SignalHangup(int n) {
+static RETSIGTYPE SignalHangup(int n) {
     GotSignals = GotSignalHangup = TRUE;
     signal(SIGHUP, SignalHangup);
+    RETFROMSIGNAL
 }
 
 static void HandleSignalHangup(void) {
@@ -124,7 +144,7 @@ void HandleSignals(void) {
 
 
 #ifndef DONT_TRAP_SIGNALS
-static void SignalPanic(int n) {
+static RETSIGTYPE SignalPanic(int n) {
     sigset_t s, t;
 
     signal(n, SIG_DFL);
@@ -136,6 +156,8 @@ static void SignalPanic(int n) {
     Quit(-n);
     
     kill(getpid(), n);
+    
+    RETFROMSIGNAL
 }
 #endif
 
@@ -430,7 +452,12 @@ void DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
 }
 
 byte InitTtysave(void) {
-    tty_getioctl(0, &ttysave);
+    int _fd = open("/dev/tty", O_RDWR|O_NOCTTY);
+    int fd = _fd >= 0 ? _fd : 0;
+    byte ok = tty_getioctl(fd, &ttysave) == 0;
+    
+    if (_fd >= 0)
+	close(_fd);
     
     ttysave.c_cc [VINTR]	= CINTR;
     ttysave.c_cc [VQUIT]	= CQUIT;
@@ -468,26 +495,141 @@ byte InitTtysave(void) {
 #endif
     ttysave.c_cc [VMIN]	= 1;
     ttysave.c_cc [VTIME]	= 0;
+
+    if (ok) {
+	/* tweak as needed */
 	
-    /* input modes */
-    ttysave.c_iflag = (BRKINT | IGNPAR | ICRNL | IXON
+	/* input modes */
+	ttysave.c_iflag |= (BRKINT | IGNPAR | ICRNL | IXON
 #ifdef IMAXBEL
-		       | IMAXBEL
+			   | IMAXBEL
 #endif
-		      );
+			   );
 	
-    /* output modes */
-    ttysave.c_oflag = (OPOST | ONLCR);
+	ttysave.c_iflag &= ~(IGNBRK
+#ifdef PARMRK
+			     | PARMRK
+#endif
+#ifdef INPCK
+			     | INPCK
+#endif
+#ifdef IUCLC
+			     | IUCLC
+#endif
+			     | ISTRIP | INLCR | IXANY | IXOFF);
+	
+	/* output modes */
+	ttysave.c_oflag |= (OPOST | ONLCR);
+	ttysave.c_oflag &= ~(0
+#ifdef OLCUC
+			     | OLCUC
+#endif
+#ifdef ONOCR
+			     | ONOCR
+#endif
+#ifdef ONLRET
+			     | ONLRET
+#endif
+#ifdef OFILL
+			     | OFILL
+#endif
+#ifdef OFDEL
+			     | OFDEL
+#endif
+#ifdef NLDLY
+			     | NLDLY
+#endif
+#ifdef CRDLY
+			     | CRDLY
+#endif
+#ifdef TABDLY
+			     | TABDLY
+#endif TABDLY
+#ifdef BSDLY
+			     | BSDLY
+#endif
+#ifdef VTDLY
+			     | VTDLY
+#endif
+#ifdef FFDLY
+			     | FFDLY
+#endif
+			     );
     
-    /* control modes */
-    ttysave.c_cflag = (CS8 | CREAD);
+	/* control modes */
+	ttysave.c_cflag |= (CS8 | CREAD);
+	ttysave.c_cflag &= ~(CSTOPB | PARENB | PARODD
+#ifdef HUPCL
+			     | HUPCL
+#endif
+#ifdef CLOCAL
+			     | CLOCAL
+#endif
+#ifdef CMSPAR
+			     | CMSPAR
+#endif
+#ifdef CRTSCTS
+			     | CRTSCTS
+#endif
+			     );
 	
-    /* line discipline modes */
-    ttysave.c_lflag = (ISIG | ICANON | IEXTEN | ECHO | ECHOE | ECHOK
+	/* line discipline modes */
+	ttysave.c_lflag |= (ISIG | ICANON | IEXTEN | ECHO | ECHOE | ECHOK
 #ifdef ECHOKE
-		       | ECHOKE
+			   | ECHOKE
 #endif
-		      );
+			   );
     
+	ttysave.c_lflag &= ~(ECHONL
+#ifdef XCASE
+			     | XCASE
+#endif
+#ifdef NOFLSH
+			     | NOFLSH
+#endif
+#ifdef TOSTOP
+			     | TOSTOP
+#endif
+#ifdef ECHOCTL
+			     | ECHOCTL
+#endif
+#ifdef ECHOPRT
+			     | ECHOPRT
+#endif
+#ifdef FLUSHO
+			     | FLUSHO
+#endif
+#ifdef PENDIN
+			     | PENDIN
+#endif
+			     );
+	
+    } else {
+	/* full initialization */
+	
+	/* input modes */
+	ttysave.c_iflag = (BRKINT | IGNPAR | ICRNL | IXON
+#ifdef IMAXBEL
+			   | IMAXBEL
+#endif
+			   );
+	
+	/* output modes */
+	ttysave.c_oflag = (OPOST | ONLCR);
+    
+	/* control modes */
+	ttysave.c_cflag = (CS8 | CREAD
+#if defined(CBAUD) && defined(B38400)
+			   | B38400
+#endif
+			   );
+	
+	/* line discipline modes */
+	ttysave.c_lflag = (ISIG | ICANON | IEXTEN | ECHO | ECHOE | ECHOK
+#ifdef ECHOKE
+			   | ECHOKE
+#endif
+			   );
+    }
     return TRUE;
 }

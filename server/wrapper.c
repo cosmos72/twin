@@ -5,10 +5,16 @@
  *
  */
 
-#include <unistd.h>
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
+
+#include "autoconf.h"
+#include "Tw/missing.h"
+
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
 
 int main(int argc, char *argv[]) {
 #ifdef BINDIR

@@ -15,10 +15,8 @@
  * will fill a supplied 16-byte array with the digest.
  */
 
-#include <string.h>		/* for memcpy() */
-
 #include "md5.h"
-#include "twin.h"		/* for INLINE and TW_BYTE_ORDER */
+#include "twin.h"		/* for INLINE, TW_BYTE_ORDER, memcpy() */
 
 #if TW_BYTE_ORDER == TW_LITTLE_ENDIAN
 # define byteReverse(buf, len)	/* Nothing */

@@ -12,10 +12,13 @@
  */
 
 #include <stdio.h>
-#include <unistd.h>
-#include <sys/ioctl.h>
-#include <sys/time.h>
 #include <sys/stat.h>
+
+#include "autoconf.h"
+
+#ifdef HAVE_SYS_IOCTL_H
+# include <sys/ioctl.h>
+#endif
 
 #include "twin.h"
 #include "data.h"
@@ -123,7 +126,9 @@ void UpdateFlagsHW(void) {
     }
 }
 
-void RunNoHW(void) {
+void RunNoHW(byte print_info) {
+    pid_t child;
+    
     if (DisplayWidth && DisplayHeight) {
 	savedDisplayWidth  = DisplayWidth;
 	savedDisplayHeight = DisplayHeight;
@@ -136,7 +141,7 @@ void RunNoHW(void) {
 	 * so that the shell we were started from
 	 * can realize we have finished with the tty
 	 */
-	switch (fork()) {
+	switch ((child = fork())) {
 	  case 0: /* child: continue */
 	    DisplayHWCTTY = HWCTTY_DETACHED;
 	    setsid();
@@ -144,6 +149,15 @@ void RunNoHW(void) {
 	  case -1:
 	    break;
 	  default: /* parent: exit */
+	    if (print_info) {
+		struct stat s1, s2;
+	
+		/* if stderr != stdout, also print on stdout (exploited by twdm) */
+		if (fstat(1, &s1) != fstat(2, &s2) || s1.st_ino != s2.st_ino)
+		    printf("twin: starting in background as %s (pid %d)\n", TWDisplay, (unsigned)child);
+		
+		fprintf(stderr, "twin: starting in background as %s (pid %d)\n", TWDisplay, (unsigned)child);
+	    }
 	    exit(0);
 	}
     }
@@ -343,6 +357,15 @@ void QuitDisplayHW(display_hw D_HW) {
     RestoreHW;
 }
 
+static byte IsValidHW(uldat len, CONST byte *arg) {
+    CONST byte *slash = memchr(arg, '/', len), *at = memchr(arg, '@', len), *comma = memchr(arg, ',', len);
+    if (slash && (!at || slash < at) && (!comma || slash < comma)) {
+	printk("twin: slash ('/') not allowed in display HW name: %.*s\n", (int)len, arg);
+	return FALSE;
+    }
+    return TRUE;
+}
+
 display_hw AttachDisplayHW(uldat len, CONST byte *arg, uldat slot, byte flags) {
     display_hw D_HW;
 
@@ -358,7 +381,7 @@ display_hw AttachDisplayHW(uldat len, CONST byte *arg, uldat slot, byte flags) {
 	return NULL;
     }
     
-    if ((D_HW = Do(Create,DisplayHW)(FnDisplayHW, len, arg))) {
+    if (IsValidHW(len, arg) && (D_HW = Do(Create,DisplayHW)(FnDisplayHW, len, arg))) {
 	D_HW->AttachSlot = slot;
 	if (Act(Init,D_HW)(D_HW)) {
 	    
@@ -415,34 +438,47 @@ byte DetachDisplayHW(uldat len, CONST byte *arg, byte flags) {
 
 byte InitHW(void) {
     byte **arglist = orig_argv;
-    byte *dummy[2] = {"", NULL};
     byte ret = FALSE;
     byte flags = 0;
+    int hwcount = 0;
     
     WriteMem(ConfigureHWDefault, '\1', HW_CONFIGURE_MAX); /* set everything to default (-1) */
     
-    if (arglist[0] && !arglist[1] && !strcmp(*arglist, "-nohw")) {
-	printk("twin: starting in background as %s\n", TWDisplay);
-	RunNoHW();
-	ret = TRUE;
-    } else {
-	while (*arglist) {
-	    if (!strcmp(*arglist++, "-x"))
-		flags = TW_ATTACH_HW_EXCLUSIVE;
+    for (arglist = orig_argv; *arglist; arglist++) {
+	if (!strcmp(*arglist, "-nohw")) {
+	    if (hwcount > 0) {
+		printk("twin: `-hw=' and `-nohw' options used together. make up your mind.\n");
+		return FALSE;
+	    }
+	    hwcount = -1;
+	} else if (!strcmp(*arglist, "-x")) {
+	    flags = TW_ATTACH_HW_EXCLUSIVE;
+	} else if (!strcmp(*arglist, "-secure")) {
+	    flag_secure = TRUE;
+	} else if (!strncmp(*arglist, "-hw=", 4)) {
+	    if (hwcount == -1) {
+		printk("twin: `-hw=' and `-nohw' options used together. make up your mind.\n");
+		return FALSE;
+	    } else if (hwcount > 0 && (flags & TW_ATTACH_HW_EXCLUSIVE)) {
+		printk("twin: `-x' (exclusive) used with multiple `-hw='. make up your mind.\n");
+		return FALSE;
+	    }
 	}
-	arglist = orig_argv;
-	if (!*arglist)
-	    /* autoprobe */
-	    arglist = dummy;
-
-	while (*arglist) {
-	    if (strcmp(*arglist, "-x"))
-		ret |= !!AttachDisplayHW(strlen(*arglist), *arglist, NOSLOT, flags);
-	    arglist++;
-	}
-	if (!ret)
-	    printk("\ntwin:  \033[1mALL  DISPLAY  DRIVERS  FAILED.  QUITTING.\033[0m\n");
     }
+    for (arglist = orig_argv; *arglist; arglist++) {
+	if (!strcmp(*arglist, "-nohw")) {
+	    RunNoHW(ret = TRUE);
+	} else if (!strncmp(*arglist, "-hw=", 4)) {
+	    ret |= !!AttachDisplayHW(strlen(*arglist), *arglist, NOSLOT, flags);
+	}
+    }
+    if (hwcount == 0 && !ret)
+	/* autoprobe */
+	ret |= !!AttachDisplayHW(0, "", NOSLOT, flags);
+    
+    if (!ret)
+	printk("\ntwin:  \033[1mALL  DISPLAY  DRIVERS  FAILED.  QUITTING.\033[0m\n");
+
     return ret;
 }
 
@@ -467,7 +503,7 @@ byte RestartHW(byte verbose) {
 	} else {
 	    printk("\ntwin:   \033[1mALL  DISPLAY  DRIVERS  FAILED.\033[0m\n"
 		   "\ntwin: continuing in background with no display.\n");
-	    RunNoHW();
+	    RunNoHW(FALSE);
 	}
     } else if (verbose) {
 	printk("twin: RestartHW(): All display drivers removed by SuspendHW().\n"
@@ -936,7 +972,7 @@ void FlushHW(void) {
 }
 
 
-void SyntheticKey(window W, udat Code, udat ShiftFlags, byte Len, byte *Seq) {
+void SyntheticKey(widget W, udat Code, udat ShiftFlags, byte Len, byte *Seq) {
     event_keyboard *Event;
     msg Msg;
 
@@ -944,7 +980,7 @@ void SyntheticKey(window W, udat Code, udat ShiftFlags, byte Len, byte *Seq) {
 	(Msg=Do(Create,Msg)(FnMsg, MSG_WIDGET_KEY, Len + sizeof(event_keyboard)))) {
 	
 	Event = &Msg->Event.EventKeyboard;
-	Event->W = (widget)W;
+	Event->W = W;
 	Event->Code = Code;
 	Event->ShiftFlags = ShiftFlags;
 	Event->SeqLen = Len;

@@ -1,0 +1,7 @@
+#
+# This is the configuration automagically created by './configure [OPTIONS]'.
+# Don't touch it, use './configure [OPTIONS]' or 'scripts/Configure [OPTIONS]'
+# or 'make config' or 'make menuconfig' instead.
+#
+@CONF_@
+

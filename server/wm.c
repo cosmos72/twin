@@ -289,7 +289,7 @@ byte WMFindBorderWindow(window W, dat u, dat v, byte Border, hwfont *PtrChar, hw
 }
     
 
-static void SmartPlace(window W, screen Screen);
+static void SmartPlace(widget W, screen Screen);
     
 void Check4Resize(window W) {
     msg Msg;
@@ -312,22 +312,22 @@ void Check4Resize(window W) {
 	    Event->EventWidget.Code   = MSG_WIDGET_RESIZE;
 	    Event->EventWidget.XWidth = W->XWidth - HasBorder;
 	    Event->EventWidget.YWidth = W->YWidth - HasBorder;
-	    SendMsg(W->Menu->MsgPort, Msg);
+	    SendMsg(W->Owner, Msg);
 	}
     }
     if (W_USE(W, USECONTENTS))
 	CheckResizeWindowContents(W);
 }
 
-void AskCloseWindow(window W) {
+void AskCloseWidget(widget W) {
     msg Msg;
 
-    if (W && (W->Attrib & WINDOW_CLOSE)) {
+    if (W && (!IS_WINDOW(W) || (W->Attrib & WINDOW_CLOSE))) {
 
 	if ((Msg=Do(Create,Msg)(FnMsg, MSG_WIDGET_GADGET, sizeof(event_gadget)))) {
-	    Msg->Event.EventGadget.W = (widget)W;
+	    Msg->Event.EventGadget.W = W;
 	    Msg->Event.EventGadget.Code = (udat)0; /* COD_CLOSE */
-	    SendMsg(W->Menu->MsgPort, Msg);
+	    SendMsg(W->Owner, Msg);
 	}
     }
 }
@@ -362,8 +362,8 @@ void ShowWinList(wm_ctx *C) {
     if (WinList->Parent)
 	Act(UnMap,WinList)(WinList);
     if (C->ByMouse) {
-	WinList->Left = C->Screen->XLogic + C->i - 5;
-	WinList->Up = C->Screen->YLogic + C->j - C->Screen->YLimit;
+	WinList->Left = C->i - 5;
+	WinList->Up = C->j - C->Screen->YLimit;
     } else {
 	WinList->Left=0;
 	WinList->Up=MAXDAT;
@@ -425,8 +425,7 @@ static byte CheckForwardMsg(wm_ctx *C, msg Msg, byte WasUsed) {
     if (Msg->Type != MSG_KEY && Msg->Type != MSG_MOUSE)
 	return FALSE;
 
-    if ((W = All->FirstScreen->FocusW) && !IS_WINDOW(W))
-	W = NULL;
+    W = All->FirstScreen->FocusW;
     
     if ((All->State & STATE_ANY) == STATE_MENU) {
 	if (!W)
@@ -446,17 +445,24 @@ static byte CheckForwardMsg(wm_ctx *C, msg Msg, byte WasUsed) {
     if (!(W = RecursiveFindFocusWidget((widget)W)))
 	return FALSE;
     
+    
     Event = &Msg->Event;
 
     if (Msg->Type == MSG_KEY) {
 	if (!WasUsed && All->State == STATE_DEFAULT) {
-	    if (W->Attrib & WINDOW_WANT_KEYS) {
-		Msg->Type = MSG_WIDGET_KEY;
-		Event->EventKeyboard.W = (widget)W;
-		SendMsg(W->Owner, Msg);
-		return TRUE;
-	    } else if (IS_WINDOW(W) && ((window)W)->Attrib & WINDOW_AUTO_KEYS)
-		FallBackKeyAction((window)W, &Event->EventKeyboard);
+	    
+	    /* back up to first parent that WANT_KEYS or has AUTO_KEYS */
+	    while (W && !(W->Attrib & WIDGET_WANT_KEYS || (IS_WINDOW(W) && ((window)W)->Attrib & WINDOW_AUTO_KEYS)))
+		W = W->Parent;
+	    if (W) {
+		if (W->Attrib & WIDGET_WANT_KEYS) {
+		    Msg->Type = MSG_WIDGET_KEY;
+		    Event->EventKeyboard.W = (widget)W;
+		    SendMsg(W->Owner, Msg);
+		    return TRUE;
+		} else if (IS_WINDOW(W) && ((window)W)->Attrib & WINDOW_AUTO_KEYS)
+		    FallBackKeyAction((window)W, &Event->EventKeyboard);
+	    }
 	}
 	return FALSE;
     }
@@ -467,20 +473,20 @@ static byte CheckForwardMsg(wm_ctx *C, msg Msg, byte WasUsed) {
     Inside = FALSE;
     
     if (W && isSINGLE_PRESS(Code) &&
-	(C->W = (window)NonScreenParent((widget)W)) && IS_WINDOW(C->W) &&
+	(C->W = NonScreenParent(W)) && IS_WINDOW(C->W) &&
 	(C->Screen = (screen)C->W->Parent) && IS_SCREEN(C->Screen)) {
 	
 	/* user may have clicked on a different place than last time... */
 	    
 	DetailCtx(C);
 	
-	if (W == (widget)C->W) {
+	if (W == C->W) {
 	    X -= C->Left + !(IS_WINDOW(W) && W->Flags & WINDOWFL_BORDERLESS);
 	    Y -= C->Up + !(IS_WINDOW(W) && W->Flags & WINDOWFL_BORDERLESS);
 	    Inside = C->Pos == POS_INSIDE;
 	} else {
 	    TranslateCoordsWidget(NULL, W, &X, &Y, &Inside);
-	    if (C->DW != (widget)W)
+	    if (C->DW != W || C->Pos == POS_ROOT || C->Pos == POS_MENU)
 		/* W may be obscured by something else */
 		Inside = FALSE;
 	    while (Inside == TRUE+TRUE && (P = W->Parent)) {
@@ -493,9 +499,11 @@ static byte CheckForwardMsg(wm_ctx *C, msg Msg, byte WasUsed) {
     } else {
 	if (!isSINGLE_PRESS(Code))
 	    W = ClickW;
-	if (W)
+	if (W) {
 	    TranslateCoordsWidget(NULL, W, &X, &Y, &Inside);
-	else
+	    if (C->Pos == POS_ROOT || C->Pos == POS_MENU)
+		Inside = FALSE;
+	} else
 	    return FALSE;
     }
     
@@ -531,7 +539,7 @@ static byte CheckForwardMsg(wm_ctx *C, msg Msg, byte WasUsed) {
 	    
 	    _Code = HOLD_CODE(RELEASE_N(Code));
 	    
-	    if (_Code == All->SetUp->SelectionButton)
+	    if (_Code == All->SetUp->SelectionButton && IS_WINDOW(ClickW))
 		SetSelectionFromWindow((window)ClickW);
 	    else if (_Code == All->SetUp->PasteButton) {
 		/* send Selection Paste msg */
@@ -598,20 +606,12 @@ static void InitCtx(CONST msg Msg, wm_ctx *C) {
     
 	if ((C->Screen = Do(Find,Screen)(C->j)) && C->Screen == All->FirstScreen
 	    && C->Screen->YLimit < C->j) {
-	    C->W = (window)Act(FindWidgetAt,C->Screen)(C->Screen, C->i, C->j - C->Screen->YLimit);
-	    /*
-	     * FIXME: this allows only for windows to be inside a screen...
-	     * and rcrun.c assumes IS_WINDOW(C->W) is true.
-	     */
-	    if (C->W && !IS_WINDOW(C->W))
-		C->W = NULL;
+	    C->W = Act(FindWidgetAt,C->Screen)(C->Screen, C->i, C->j - C->Screen->YLimit);
 	} else
 	    C->W = NULL;
     } else {
 	C->Screen = All->FirstScreen;
-	C->W = (window)C->Screen->FocusW;
-	if (C->W && !IS_WINDOW(C->W))
-	    C->W = NULL;
+	C->W = C->Screen->FocusW;
     }
 }
 
@@ -621,7 +621,7 @@ static void DetailCtx(wm_ctx *C) {
 	/* ensure IS_SCREEN(C->W->Parent) is true. */
 	C->Screen = (screen)C->W->Parent;
 	if (!C->Screen || !IS_SCREEN(C->Screen)) {
-	    printk("twin: wm.c: DetailCtx(): error: C->W is a subwindow!\n");
+	    printk("twin: wm.c: DetailCtx(): error: C->W is a subwidget!\n");
 	    return;
 	}
     }
@@ -635,7 +635,7 @@ static void DetailCtx(wm_ctx *C) {
 	C->Pos = POS_ROOT;
 	
 	if (C->W) {
-	    ldat HasBorder = !(C->W->Flags & WINDOWFL_BORDERLESS);
+	    ldat HasBorder = IS_WINDOW(C->W) && !(C->W->Flags & WINDOWFL_BORDERLESS);
 	    
 	    C->Up=(ldat)C->W->Up - C->Screen->YLogic + (ldat)C->Screen->YLimit;
 	    C->Left=(ldat)C->W->Left - C->Screen->XLogic;
@@ -652,8 +652,8 @@ static void DetailCtx(wm_ctx *C) {
 		 * (i,j) _may_ be outside the window... see ContinueMenu()
 		 * and CheckForwardMsg()
 		 */
-		if (C->i == C->Left || C->i == C->Rgt || C->j == C->Up || C->j == C->Dwn)
-		    C->Pos = Act(FindBorder,C->W)(C->W, C->i - C->Left, C->j - C->Up,
+		if (IS_WINDOW(C->W) && (C->i == C->Left || C->i == C->Rgt || C->j == C->Up || C->j == C->Dwn))
+		    C->Pos = Act(FindBorder,(window)C->W)((window)C->W, C->i - C->Left, C->j - C->Up,
 						  0, NULL, NULL);
 	    }
 	}
@@ -669,6 +669,7 @@ static void DetailCtx(wm_ctx *C) {
 		    C->Pos = POS_SCREENBUTTON;
 		else {
 		    C->Pos = POS_MENU;
+		    C->W = C->Screen->FocusW;
 		    C->Item = Act(FindItem,C->Menu)(C->Menu, C->i);
 		}
 	    }
@@ -676,7 +677,7 @@ static void DetailCtx(wm_ctx *C) {
     }
 }
 
-INLINE void Fill4RC_VM(wm_ctx *C, window W, udat Type, byte Pos, udat Code) {
+INLINE void Fill4RC_VM(wm_ctx *C, widget W, udat Type, byte Pos, udat Code) {
     C->W = W;
     C->Type = Type;
     C->Pos = Pos;
@@ -685,20 +686,17 @@ INLINE void Fill4RC_VM(wm_ctx *C, window W, udat Type, byte Pos, udat Code) {
 
 void FocusCtx(wm_ctx *C) {
     if (C->W)
-	C->Screen = ScreenParent((widget)C->W);
+	C->Screen = ScreenParent(C->W);
     
     if (C->Screen && C->Screen != All->FirstScreen)
 	Act(Focus,C->Screen)(C->Screen);
     else
 	C->Screen = All->FirstScreen;
 	
-    if (C->W && C->W != (window)C->Screen->FocusW)
+    if (C->W && C->W != C->Screen->FocusW)
 	Act(Focus,C->W)(C->W);
-    else {
-	C->W = (window)C->Screen->FocusW;
-	if (C->W && !IS_WINDOW(C->W))
-	    C->W = NULL;
-    }
+    else
+	C->W = C->Screen->FocusW;
 }
 
 static byte ActivateScreen(wm_ctx *C) {
@@ -767,9 +765,7 @@ static byte ActivateMenu(wm_ctx *C) {
     if (C->Screen && C->Screen != All->FirstScreen)
 	Act(Focus,C->Screen)(C->Screen);
     C->Screen = All->FirstScreen;
-    C->W = (window)C->Screen->FocusW;
-    if (C->W && !IS_WINDOW(C->W))
-	C->W = NULL;
+    C->W = C->Screen->FocusW;
     C->Menu = Act(FindMenu,C->Screen)(C->Screen); 
 	
     if (C->ByMouse) {
@@ -801,12 +797,12 @@ static void ContinueMenu(wm_ctx *C) {
     else if (FW && (FW->Flags & WINDOWFL_MENU)) {
 	uldat Delta = FW->CurY;
 	
-	if (FW == C->W && C->Pos == POS_INSIDE)
+	if ((widget)FW == C->W && C->Pos == POS_INSIDE)
 	    FW->CurY = (ldat)C->j - C->Up - (ldat)1 + FW->YLogic;
 	else {
 	    FW->CurY = MAXLDAT;
-	    if (FW != C->W) {
-		C->W = FW;
+	    if ((widget)FW != C->W) {
+		C->W = (widget)FW;
 		DetailCtx(C); /* re-calculate Left,Up,Rgt,Dwn */
 	    }
 	}
@@ -837,7 +833,7 @@ static void ReleaseMenu(wm_ctx *C) {
     
     
     if (FW && IS_WINDOW(FW) && FW->CurY < MAXLDAT && (Menu = FW->Menu) &&
-	(Item = Act(GetSelectItem,Menu)(Menu)) && Item->FlagActive &&
+	(Item = Act(GetSelectItem,Menu)(Menu)) && (Item->Flags & ROW_ACTIVE) &&
 	(Row = Act(FindRow,FW)(FW, FW->CurY)) &&
 	(Row->Flags & ROW_ACTIVE) && Row->Code)
 	
@@ -850,7 +846,7 @@ static void ReleaseMenu(wm_ctx *C) {
 
     if (Code >= COD_RESERVED) {
 	/* handle COD_RESERVED codes internally */
-	Fill4RC_VM(C, MW, MSG_MENU_ROW, POS_MENU, Row->Code);
+	Fill4RC_VM(C, (widget)MW, MSG_MENU_ROW, POS_MENU, Row->Code);
 	(void)RC_VMQueue(C);
     } else if (Code) {
 	if ((Msg=Do(Create,Msg)(FnMsg, MSG_MENU_ROW, sizeof(event_menu)))) {
@@ -858,7 +854,10 @@ static void ReleaseMenu(wm_ctx *C) {
 	    Event->W = MW;
 	    Event->Code = Code;
 	    Event->Menu = Menu;
-	    SendMsg(Menu->MsgPort, Msg);
+	    if (MW)
+		SendMsg(MW->Owner, Msg);
+	    else
+		SendMsg(Menu->MsgPort, Msg);
 	}
     }
 }
@@ -882,10 +881,10 @@ static void HideResize(void) {
 }
 
 static byte ActivateDrag(wm_ctx *C) {
-    if (C->Screen == All->FirstScreen && C->W &&
+    if (C->Screen == All->FirstScreen && C->W && IS_WINDOW(C->W) &&
 	C->W->Attrib & WINDOW_DRAG) {
 	
-	All->FirstScreen->ClickWindow = C->W;
+	All->FirstScreen->ClickWindow = (window)C->W;
 	All->State = STATE_DRAG;
 	if (C->ByMouse) {
 	    All->State |= STATE_FL_BYMOUSE;
@@ -894,17 +893,17 @@ static byte ActivateDrag(wm_ctx *C) {
 	    DragPosition[0] = (ldat)C->i - C->Left;
 	    DragPosition[1] = (ldat)C->j - C->Up;
 	}
-	DrawBorderWindow(C->W, BORDER_ANY);
+	DrawBorderWindow((window)C->W, BORDER_ANY);
 	return TRUE;
     }
     return FALSE;
 }
 
 static byte ActivateResize(wm_ctx *C) {
-    if (C->Screen == All->FirstScreen && C->W &&
+    if (C->Screen == All->FirstScreen && C->W && IS_WINDOW(C->W) &&
 	C->W->Attrib & WINDOW_RESIZE) {
 
-	All->FirstScreen->ClickWindow = C->W;
+	All->FirstScreen->ClickWindow = (window)C->W;
 	All->State = STATE_RESIZE;
 	if (C->ByMouse) {
 	    All->State |= STATE_FL_BYMOUSE;
@@ -913,15 +912,17 @@ static byte ActivateResize(wm_ctx *C) {
 	    DragPosition[0] = (ldat)C->i - C->Rgt;
 	    DragPosition[1] = (ldat)C->j - C->Dwn;
 	}
-	DrawBorderWindow(C->W, BORDER_ANY);
-	ShowResize(C->W);
+	DrawBorderWindow((window)C->W, BORDER_ANY);
+	ShowResize((window)C->W);
 	return TRUE;
     }
     return FALSE;
 }
 
 static byte ActivateScroll(wm_ctx *C) {
-    if (C->Screen == All->FirstScreen && C->W &&
+    window W = (window)C->W;
+    
+    if (C->Screen == All->FirstScreen && W && IS_WINDOW(W) &&
 	C->W->Attrib & (WINDOW_X_BAR | WINDOW_Y_BAR)) {
 
 	/*
@@ -932,41 +933,41 @@ static byte ActivateScroll(wm_ctx *C) {
 	    DetailCtx(C);
 	    if ((ldat)C->j == C->Dwn) {
 		if (C->Pos == POS_ARROW_BACK)
-		    C->W->State |= X_BAR_SELECT|ARROW_BACK_SELECT;
+		    W->State |= X_BAR_SELECT|ARROW_BACK_SELECT;
 		else if (C->Pos == POS_ARROW_FWD)
-		    C->W->State |= X_BAR_SELECT|ARROW_FWD_SELECT;
+		    W->State |= X_BAR_SELECT|ARROW_FWD_SELECT;
 		else if (C->Pos == POS_BAR_BACK)
-		    C->W->State |= X_BAR_SELECT|PAGE_BACK_SELECT;
+		    W->State |= X_BAR_SELECT|PAGE_BACK_SELECT;
 		else if (C->Pos == POS_BAR_FWD)
-		    C->W->State |= X_BAR_SELECT|PAGE_FWD_SELECT;
+		    W->State |= X_BAR_SELECT|PAGE_FWD_SELECT;
 		else {
-		    C->W->State |= X_BAR_SELECT|TAB_SELECT;
-		    DragPosition[0] = (ldat)C->i - C->Left - 1 - TabStart(C->W, (num)1);
+		    W->State |= X_BAR_SELECT|TAB_SELECT;
+		    DragPosition[0] = (ldat)C->i - C->Left - 1 - TabStart(W, (num)1);
 		    DragPosition[1] = 0;
 		}
 	    } else if ((ldat)C->i == C->Rgt) {
 		if (C->Pos == POS_ARROW_BACK)
-		    C->W->State |= Y_BAR_SELECT|ARROW_BACK_SELECT;
+		    W->State |= Y_BAR_SELECT|ARROW_BACK_SELECT;
 		else if (C->Pos == POS_ARROW_FWD)
-		    C->W->State |= Y_BAR_SELECT|ARROW_FWD_SELECT;
+		    W->State |= Y_BAR_SELECT|ARROW_FWD_SELECT;
 		else if (C->Pos == POS_BAR_BACK)
-		    C->W->State |= Y_BAR_SELECT|PAGE_BACK_SELECT;
+		    W->State |= Y_BAR_SELECT|PAGE_BACK_SELECT;
 		else if (C->Pos == POS_BAR_FWD)
-		    C->W->State |= Y_BAR_SELECT|PAGE_FWD_SELECT;
+		    W->State |= Y_BAR_SELECT|PAGE_FWD_SELECT;
 		else {
-		    C->W->State |= Y_BAR_SELECT|TAB_SELECT;
+		    W->State |= Y_BAR_SELECT|TAB_SELECT;
 		    DragPosition[0] = 0;
-		    DragPosition[1] = (ldat)C->j - C->Up - 1 - TabStart(C->W, (num)0);
+		    DragPosition[1] = (ldat)C->j - C->Up - 1 - TabStart(W, (num)0);
 		}
 	    }
-	    if (C->W->State & SCROLL_ANY_SELECT)
+	    if (W->State & SCROLL_ANY_SELECT)
 		All->State = STATE_SCROLL | STATE_FL_BYMOUSE;
 	} else
 	    All->State = STATE_SCROLL;
 	    
-	if ((All->State & STATE_ANY) == STATE_SCROLL) {
-	    All->FirstScreen->ClickWindow = C->W;
-	    DrawBorderWindow(C->W, BORDER_ANY);
+	if ((All->State & STATE_ANY) == STATE_SCROLL && IS_WINDOW(W)) {
+	    All->FirstScreen->ClickWindow = W;
+	    DrawBorderWindow(W, BORDER_ANY);
 	    return TRUE;
 	}
     }
@@ -975,13 +976,13 @@ static byte ActivateScroll(wm_ctx *C) {
 
 /* this is mouse only */
 static void ContinueDrag(wm_ctx *C) {
-    if ((C->W = All->FirstScreen->ClickWindow)) {
+    if ((C->W = (widget)All->FirstScreen->ClickWindow)) {
 	DetailCtx(C);
-	if ((widget)C->W == All->FirstScreen->FirstW)
+	if (C->W == All->FirstScreen->FirstW)
 	    DragFirstWindow(C->i - C->Left - DragPosition[0],
 			    Max2(C->j, All->FirstScreen->YLimit+1) - C->Up - DragPosition[1]);
 	else
-	    DragWindow(C->W, C->i - C->Left - DragPosition[0],
+	    DragWindow((window)C->W, C->i - C->Left - DragPosition[0],
 		       Max2(C->j, All->FirstScreen->YLimit+1) - C->Up - DragPosition[1]);
     }
 }
@@ -989,41 +990,42 @@ static void ContinueDrag(wm_ctx *C) {
 /* this is mouse only */
 static void ContinueResize(wm_ctx *C) {
     
-    if ((C->W = All->FirstScreen->ClickWindow)) {
+    if ((C->W = (widget)All->FirstScreen->ClickWindow)) {
 	DetailCtx(C);
-	if ((widget)C->W == All->FirstScreen->FirstW)
+	if (C->W == All->FirstScreen->FirstW)
 	    ResizeRelFirstWindow(C->i - C->Rgt - DragPosition[0],
 				 Max2(C->j, All->FirstScreen->YLimit+1) - C->Dwn - DragPosition[1]);
 	else
-	    ResizeRelWindow(C->W, C->i - C->Rgt - DragPosition[0],
+	    ResizeRelWindow((window)C->W, C->i - C->Rgt - DragPosition[0],
 			    Max2(C->j, All->FirstScreen->YLimit+1) - C->Dwn - DragPosition[1]);
-	ShowResize(C->W);
+	ShowResize((window)C->W);
     }
 }
 
 /* this is mouse only */
 static void ContinueScroll(wm_ctx *C) {
+    window W;
     uldat NumLogicMax;
     ldat i;
     
-    if ((C->W = All->FirstScreen->ClickWindow)) {
+    if ((C->W = (widget)(W = All->FirstScreen->ClickWindow))) {
 	DetailCtx(C);
     
-	if (C->W->State & X_BAR_SELECT) {
-	    NumLogicMax=Max2(C->W->WLogic, C->W->XLogic + (ldat)C->W->XWidth - 2);
+	if (W->State & X_BAR_SELECT) {
+	    NumLogicMax=Max2(W->WLogic, W->XLogic + (ldat)W->XWidth - 2);
 	    i = C->i;
 	    if (i + 4 > C->Rgt + DragPosition[0])
 		i = C->Rgt + DragPosition[0] - 4;
-	    ScrollWindow(C->W, (i - C->Left - 1 - DragPosition[0] - TabStart(C->W, (num)1)) * 
-			 (NumLogicMax / (C->W->XWidth - 5)), 0);
+	    ScrollWindow(W, (i - C->Left - 1 - DragPosition[0] - TabStart(W, (num)1)) * 
+			 (NumLogicMax / (W->XWidth - 5)), 0);
 
-	} else if (C->W->State & Y_BAR_SELECT) {
-	    NumLogicMax=Max2(C->W->HLogic, C->W->YLogic + (ldat)C->W->YWidth - 2);
+	} else if (W->State & Y_BAR_SELECT) {
+	    NumLogicMax=Max2(W->HLogic, W->YLogic + (ldat)W->YWidth - 2);
 	    i = Max2(C->j, All->FirstScreen->YLimit+1);
 	    if (i + 3 > C->Dwn + DragPosition[1])
 		i = C->Dwn + DragPosition[1] - 3;
-	    ScrollWindow(C->W, 0, (i - C->Up - 1 - DragPosition[1] - TabStart(C->W, (num)0)) * 
-			 (NumLogicMax / (C->W->YWidth - (udat)4)));
+	    ScrollWindow(W, 0, (i - C->Up - 1 - DragPosition[1] - TabStart(W, (num)0)) * 
+			 (NumLogicMax / (W->YWidth - (udat)4)));
 	}
     }
 }
@@ -1048,14 +1050,17 @@ static void ReleaseDragResizeScroll(CONST wm_ctx *C) {
 
 /* this is mouse only */
 static byte ActivateButton(wm_ctx *C) {
-    All->State = C->Pos | STATE_FL_BYMOUSE;
-    C->W->State |= (BUTTON_FIRST_SELECT << C->Pos) | WINDOW_GADGET_PRESSED;
+    if (C->W && IS_WINDOW(C->W)) {
+	All->State = C->Pos | STATE_FL_BYMOUSE;
+	((window)C->W)->State |= (BUTTON_FIRST_SELECT << C->Pos) | WINDOW_GADGET_PRESSED;
 
-    C->Type = MSG_MOUSE;
-    (void)RC_VMQueue(C);
+	C->Type = MSG_MOUSE;
+	(void)RC_VMQueue(C);
     
-    DrawBorderWindow(C->W, BORDER_UP);
-    return TRUE;
+	DrawBorderWindow((window)C->W, BORDER_UP);
+	return TRUE;
+    }
+    return FALSE;
 }
 
 #if 0
@@ -1095,13 +1100,13 @@ static void ReleaseButton(wm_ctx *C) {
     
     All->State = STATE_DEFAULT;
     if (FW) {
-	if (FW == C->W && FW->State & BUTTON_ANY_SELECT) {
+	if (FW == (window)C->W && FW->State & BUTTON_ANY_SELECT) {
 	    DetailCtx(C);
     
 	    if (C->Pos < BUTTON_MAX &&
 		(FW->State & BUTTON_ANY_SELECT) == (BUTTON_FIRST_SELECT << C->Pos)) {
 	    
-		C->W = FW;
+		C->W = (widget)FW;
 		C->Type = MSG_MOUSE;
 		(void)RC_VMQueue(C);
 	    }
@@ -1131,11 +1136,11 @@ static void ContinueGadget(wm_ctx *C) {
     gadget FG;
     udat temp;
     
-    if (FW && (FG = (gadget)RecursiveFindFocusWidget((widget)FW)) && IS_GADGET(FG)) {
+    if (FW && (FG = (gadget)RecursiveFindFocusWidget((widget)FW))) {
 	temp = FG->Flags;
 
 	if (!(temp & GADGETFL_TOGGLE)) {
-	    if (FW == C->W && FG && (DetailCtx(C), (widget)FG == C->DW))
+	    if (FW == (window)C->W && FG && (DetailCtx(C), (widget)FG == C->DW))
 		FG->Flags |= GADGETFL_PRESSED;
 	    else
 		FG->Flags &= ~GADGETFL_PRESSED;
@@ -1166,7 +1171,7 @@ static void ReleaseGadget(wm_ctx *C) {
     if (!FG || !IS_GADGET(FG) || FG->Flags & GADGETFL_TOGGLE)
 	return;
     
-    UnPressGadget(FG, FW == C->W && FG && (widget)FG == C->DW);
+    UnPressGadget(FG, (widget)FW == C->W && FG && (widget)FG == C->DW);
     /* FW->SelectW=NULL; */
 }
 
@@ -1262,7 +1267,7 @@ static byte SneakSetupMouse(wm_ctx *C) {
     switch (All->State & STATE_ANY) {
       case STATE_RESIZE:
 	DetailCtx(C);
-	if (W == C->W) {
+	if (IS_WINDOW(W) && W == (window)C->W) {
 	    DragPosition[0] = (ldat)C->i - C->Rgt;
 	    DragPosition[1] = (ldat)C->j - C->Dwn;
 	} else
@@ -1270,7 +1275,7 @@ static byte SneakSetupMouse(wm_ctx *C) {
 	break;
       case STATE_DRAG:
 	DetailCtx(C);
-	if (W == C->W) {
+	if (IS_WINDOW(W) && W == (window)C->W) {
 	    DragPosition[0] = (ldat)C->i - C->Left;
 	    DragPosition[1] = (ldat)C->j - C->Up;
 	} else
@@ -1282,8 +1287,11 @@ static byte SneakSetupMouse(wm_ctx *C) {
 	 * do the dirty way and reuse the function ActivateScroll().
 	 * since it returns (void), check for (W->State & SCROLL_ANY_SELECT).
 	 */
-	ActivateScroll(C);
-	ok = !!(W->State & SCROLL_ANY_SELECT);
+	if (IS_WINDOW(W) && W == (window)C->W) {
+	    ActivateScroll(C);
+	    ok = !!(W->State & SCROLL_ANY_SELECT);
+	} else
+	    ok = FALSE;
 	break;
       case STATE_GADGET:
       case STATE_MENU:
@@ -1342,7 +1350,7 @@ static menuitem PrevItem(menuitem Item, menu Menu) {
     menuitem Prev;
     
     if (!(Prev = Item->Prev)) {
-	if (Item->Menu == Menu) {
+	if (Item->Parent == (obj)Menu) {
 	    if (Menu->CommonItems && All->CommonMenu)
 		Prev = All->CommonMenu->LastI;
 	} else
@@ -1358,7 +1366,7 @@ static menuitem NextItem(menuitem Item, menu Menu) {
     menuitem Next;
     
     if (!(Next = Item->Next)) {
-	if (Item->Menu == Menu) {
+	if (Item->Parent == (obj)Menu) {
 	    if (Menu->CommonItems && All->CommonMenu)
 		Next = All->CommonMenu->FirstI;
 	} else
@@ -1543,7 +1551,7 @@ static void WManagerH(msgport MsgPort) {
 		}
 		if ((C->Code & HOLD_ANY) == All->SetUp->SelectionButton) {
 		    
-		    if (C->W && C->W != (window)C->Screen->FocusW)
+		    if (C->W && C->W != C->Screen->FocusW)
 			Act(Focus,C->W)(C->W);
 		    
 		    DetailCtx(C);
@@ -1557,7 +1565,7 @@ static void WManagerH(msgport MsgPort) {
 		
 		/* mouse action, setup ClickWindow */
 		ClickWindowPos = C->Pos;
-		All->FirstScreen->ClickWindow = C->W;
+		All->FirstScreen->ClickWindow = (window)C->W;
 
 		used = ActivateMouseState(C);
 	    } else {
@@ -1565,7 +1573,7 @@ static void WManagerH(msgport MsgPort) {
 
 		if (!C->ByMouse)
 		    /* for keyboard actions, ClickWindow == FocusW */
-		    All->FirstScreen->ClickWindow = C->W;
+		    All->FirstScreen->ClickWindow = (window)C->W;
 	    }
 
 	    if (!used) {
@@ -1635,7 +1643,7 @@ static void WManagerH(msgport MsgPort) {
 	    QueuedDrawArea2FullScreen = TRUE;
 	while ((Msg = MapQueue->FirstMsg)) {
 	    C->W = Msg->Event.EventMap.W;
-	    SmartPlace(C->W, Msg->Event.EventMap.Screen);
+	    SmartPlace((widget)C->W, Msg->Event.EventMap.Screen);
 
 	    Fill4RC_VM(C, C->W, MSG_MAP, POS_ROOT, 0);
 	    (void)RC_VMQueue(C);
@@ -1710,7 +1718,7 @@ static byte doSmartPlace(widget W, dat *X, udat *Y) {
 
 #define MAXLRAND48 0x80000000l
 
-static void SmartPlace(window W, screen Screen) {
+static void SmartPlace(widget W, screen Screen) {
     dat X[2];
     dat Y[2];
     
@@ -1764,6 +1772,7 @@ byte InitWM(void)
     
     srand48(time(NULL));
     if ((WM_MsgPort=Do(Create,MsgPort)(FnMsgPort, 2, "WM", 0, 0, 0, WManagerH)) &&
+	/* this will later be sent to rcrun.c, it forces loading .twinrc */
 	SendControlMsg(WM_MsgPort, MSG_CONTROL_OPEN, 0, NULL)) {
 	
 	if (RegisterExtension(WM,MsgPort,WM_MsgPort)) {

@@ -1,13 +1,7 @@
-#ifndef _TW_UNALIGNED_H
-#define _TW_UNALIGNED_H
+#ifndef _TWIN_UNALIGNED_H
+#define _TWIN_UNALIGNED_H
 
-#ifdef _TW_H
-# define Tw(arg)	Tw_##arg
-# define TW(arg)	TW_##arg
-#else
-# define Tw(arg)	arg
-# define TW(arg)	arg
-#endif
+#include "Tw/prefix.h"
 
 #define PushV(s,len,vec)	(Tw(CopyMem)(vec, s, len), (s) += (len))
 #define PopV(s,len,lvec)	(Tw(CopyMem)(s, lvec, len), (s) += (len))
@@ -24,9 +18,9 @@
 
 # warning not ix86 arch, using memcpy
 # define TW_CAN_UNALIGNED 0
-# define Push(s,type,val)	do {type tmp = (val); PushV(s,sizeof(type),&tmp); } while(0)
+# define Push(s,type,val)	do {type __tmp = (val); PushV(s,sizeof(type),&__tmp); } while(0)
 # define Pop(s,type,lval)	PopV(s,sizeof(type),&(lval))
 
 #endif /* __i386__ */
 
-#endif /* _TW_UNALIGNED_H */
+#endif /* _TWIN_UNALIGNED_H */

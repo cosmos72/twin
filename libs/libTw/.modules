@@ -1,7 +1,0 @@
- 
- libTw.so.3.0.0: .libTw.so.3.0.0.link
- .libTw.so.3.0.0.link: libTw.o md5.o
-
- libTw.a: .libTw.a.arlib
- .libTw.a.arlib: libTw_u.o md5_u.o
-

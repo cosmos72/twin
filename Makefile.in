@@ -1,0 +1,113 @@
+#
+# top Makefile
+#
+TOPDIR=.
+SUBDIRS=$(wildcard include docs libs clients server)
+
+make_VERSION:=$(wordlist 1,2,$(shell $(MAKE) -v))
+ifneq ($(make_VERSION),GNU Make)
+ all: make_is_not_GNU
+endif
+
+all: subdirs
+
+make_is_not_GNU:
+	@echo "Warning: GNU Make is required to build twin, but the '$(MAKE)' you are using" ; \
+	 echo "does not seem to be GNU Make. build will probably fail... " ; \
+	 echo "running '$(MAKE) -v' to get version information resulted in: " ; \
+	 echo "--------------------------------------------------------" ; \
+	 $(MAKE) -v ; \
+	 echo "--------------------------------------------------------"
+
+
+#
+ifneq ($(wildcard $(TOPDIR)/conf/conf.current),)
+  include $(TOPDIR)/conf/conf.current
+endif
+
+
+include $(TOPDIR)/makerules
+
+
+
+#
+# ensure libraries are built first
+#
+dir-clients dir-server: dir-libs
+
+dir-libs dir-docs: dir-include
+
+dir-include: $(CONF) include/Tw/Twautoconf.h
+
+autogen: include/socklistm4.h include/TT/TTdefsm4.h
+
+fakeconf:
+	if [ -f $(CONF) ]; then true; else touch $(CONF); fi
+
+#
+Torture: fakeconf autogen
+
+#
+install:
+	$(INSTALL) -d $(DESTDIR)$(libdir)/twin
+	$(INSTALL) system.twinrc $(DESTDIR)$(libdir)/twin
+	$(LN) system.twinrc $(DESTDIR)$(libdir)/twin/.twinrc
+	@echo [1m ; \
+	 echo If this is the first time you installed twin $(TWIN_VERSION_STR) ; \
+	 echo you probably need to run \"ldconfig\" now. ; \
+	 echo [0m
+
+clean: fakeconf autogen
+	rm -f .*.flags .*.link .*.arlib gmon.out core log
+	if [ ! -s $(CONF) ]; then rm -f $(CONF); fi
+
+
+distclean: clean
+	rm -f $(CONF) $(LINKS) \
+	      config.status config.cache config.log \
+	      Makefile makeautoconf makeosvalues conf/conf.auto \
+	      include/autoconf.h include/Tw/Twautoconf.h \
+	      scripts/Mkdep scripts/Bitmap scripts/Getsizes \
+	      include/Tw/datasizes.h include/Tw/uni_types.h \
+	      `find . -name .modules -o -name .depend` \
+	      `find . -type l`
+
+pure: distclean
+	rm -f configure include/autoconf.h.in server/rcparse_*.? `find . -name \*m4.h`
+
+
+
+
+# autoconf stuff
+
+#
+# include/autoconf.h.in must already be present in order for
+# './configure' to correctly generate include/autoconf.h
+#
+configure: configure.in include/autoconf.h.in
+	rm -f $@ && autoconf
+
+include/autoconf.h.in: configure.in
+	rm -f $@ && autoheader
+
+config.status: configure
+	if [ -f ./config.status ]; then \
+	  ./config.status --recheck ; \
+	else \
+	  ./configure ; \
+	fi
+
+Makefile: config.status Makefile.in
+	rm -f $@ && ./config.status
+
+makeautoconf: config.status makeautoconf.in
+	rm -f $@ && ./config.status
+
+conf/conf.auto: config.status conf/conf.auto.in
+	rm -f $@ && ./config.status
+
+include/autoconf.h: config.status include/autoconf.h.in 
+	rm -f $@ && ./config.status
+
+bootstrap: $(CONF)
+

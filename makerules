@@ -1,0 +1,499 @@
+#
+# Top level, common rules
+#
+
+#
+# do NOT touch this
+#
+ifneq ($(wildcard $(TOPDIR)/makeautoconf),)
+  include $(TOPDIR)/makeautoconf
+endif
+
+
+#
+# choose your favorite C compiler.
+# keep commented to let `./configure' autodetect it
+# CC=gcc
+
+
+#
+# Uncomment this to turn debugging on
+# DEBUG=1
+
+#
+# compile/link flags. Always use += to set variables here!
+#
+ifdef DEBUG
+ OPT_FLAGS+=-g
+ CFLAGS+=$(OPT_FLAGS) -DINLINE=static
+ LDFLAGS+=-g
+else
+ ifdef PROFILE
+   OPT_FLAGS+=-p -pg
+   CFLAGS+=$(OPT_FLAGS)
+   LDFLAGS+=-p -pg
+ else
+   ifeq ($(CC),gcc)
+     OPT_FLAGS+=-O2 -fomit-frame-pointer
+   else
+     # detected by `./configure' :
+     OPT_FLAGS+=$(AC_CFLAGS)
+   endif
+   CFLAGS+=$(OPT_FLAGS)
+   LDFLAGS+=-s
+ endif
+endif
+
+
+#
+# how picky should your compiler be? uncomment for paranoid gcc settings.
+# PARANOID_GCC=1
+
+#
+# apply known-good GCC compiler flags.
+#
+ifeq ($(CC),gcc)
+  OPT_FLAGS+=-pipe -Wall -Wshadow -Wno-uninitialized
+  ifdef PARANOID_GCC
+    OPT_FLAGS+=-Wstrict-prototypes -Wcast-qual -Wcast-align -Wpointer-arith -Wbad-function-cast -Waggregate-return -Winline
+  endif
+endif
+
+
+#
+# set 'install' program
+# keep commented to let `./configure' autodetect it
+#
+# INSTALL=install
+
+#
+# install with 644 permission:
+#
+INSTALL-TXT=$(INSTALL) -m 644
+
+#
+# set `ar' archiver...
+#
+AR=ar
+
+
+#
+# set `ranlib' archiver (not needed on Linux and other 'modern' OS)
+#
+#RANLIB=ranlib
+
+#
+# `cp -f' : `cp' with force overwrite
+#
+CP=cp -f
+
+#
+# `ln -f -s' : `ln' with soft links, force overwrite
+#
+LN=ln -f -s
+
+#
+# `mkdir -p' or `mkdirhier' : make a directory and all missing directory parents
+#
+MKDIR=mkdir -p
+#MKDIR=mkdirhier
+
+
+#
+# choose a variation of `echo' that interprets \n as newline.
+# keep commented to enable autodetection.
+#
+#ECHO=echo
+#ECHO=echo -e
+
+#
+# where is bash on your system?
+# keep commented to enable autodetection.
+#
+#BASH=/bin/bash
+
+
+#
+# only if you know what you are doing:
+# options to used to link shared libraries.
+# keep commented to enable autodetection.
+#
+# this is for Linux and *BSD
+#LDFLAGS_SOLIB=-lc -shared -Wl,-soname,
+#
+# and this for SunOS
+#LDFLAGS_SOLIB=-lc -shared -Wl,-h,
+
+
+#
+# --------------- no user-serviceable parts below this line ----------------
+#
+
+#
+# m4 preprocessor
+#
+M4=m4
+
+ifeq ($(wildcard $(TOPDIR)/makeosvalues),)
+  OS:=$(shell uname)
+  GNULD:=$(filter GNU,$(shell ld -V))
+  ifeq ($(ECHO),)
+    ifeq ($(strip $(shell echo -e "\n")),)
+      ECHO=echo -e
+    else
+      ECHO=echo
+    endif
+  endif
+  ifeq ($(BASH),)
+    BASH:=$(shell if [ -x /bin/bash ]; then echo /bin/bash; \
+            else if bash -c : 2>/dev/null; then echo bash; \
+	    else if [ -x "$$BASH" ]; then echo $$BASH; \
+	    else echo sh; fi; fi; fi)
+  endif
+  ifeq ($(LDFLAGS_SOLIB),)
+    ifneq ($(GNULD),)
+      # this is correct for at least Linux and FreeBSD.
+      # for the others, it is just a guess
+      LDFLAGS_SOLIB=-lc -shared -Wl,-soname,
+    else
+      # this is ok at least on SunOS with native linker
+      LDFLAGS_SOLIB=-lc -shared -Wl,-h,
+    endif
+  endif
+endif
+
+$(TOPDIR)/makeosvalues: $(TOPDIR)/makerules $(TOPDIR)/config.status
+	@$(ECHO) "OS:=$(OS)" > $@ ; \
+	 $(ECHO) "GNULD:=$(GNULD)" >> $@ ; \
+	 $(ECHO) "ECHO:=$(ECHO)" >> $@ ; \
+	 $(ECHO) "BASH:=$(BASH)" >> $@ ; \
+	 $(ECHO) "LDFLAGS_SOLIB:=$(LDFLAGS_SOLIB)" >> $@
+
+ifeq ($(filter -r,$(MAKEFLAGS)),)
+  MAKEFLAGS+=-r
+endif
+
+TWIN_VERSION_STR=0.3.10
+
+CFLAGS+=-I$(TOPDIR)/include
+
+MODFLAGS+=-fPIC -DCONF_THIS_MODULE
+
+
+CONF=$(TOPDIR)/conf/conf.current
+
+#
+# once shared libraries are installed, it's ok to link just with
+# one of -lTutf, -lTw or -lTT
+#
+# but linking against $(TOPDIR)/libs/libTT/libTT.so fails
+# if there is no libTw.so in the linker path (as it happens
+# while building twin for the first time), so we need to use
+# -Wl,-rpath-link <directory> for each dependency library.
+#
+# when using static libraries, we must always explicitly
+# link all of them... (linker knows no dependencies with them)
+#
+
+ifeq ($(CONF__SHLIBS),n)
+  LIBTUTF:=-L$(TOPDIR)/libs/libTutf -lTutf
+  LIBTW:=-L$(TOPDIR)/libs/libTw -lTw
+  LIBTT:=-L$(TOPDIR)/libs/libTT -lTT
+
+  ifeq ($(CONF_SOCKET_GZ),y)
+    LIBTW+=-lz
+  endif
+  ifeq ($(CONF_SOCKET_PTHREADS),y)
+    LIBTW+=$(LD_LIBPTHREAD_WEAK)
+  endif
+  ifeq ($(CONF__UNICODE),y)
+    LIBTW+=$(LIBTUTF)
+  endif
+  LIBTT+=$(LIBTW)
+else
+  LIBTUTF:=-L$(TOPDIR)/libs/libTutf -lTutf
+  LIBTW:=-L$(TOPDIR)/libs/libTw -lTw
+  LIBTT:=-L$(TOPDIR)/libs/libTT -lTT
+
+  ifneq ($(GNULD),)
+    # ok, ld is GNU ld
+    ifeq ($(CONF__UNICODE),y)
+      LIBTT+=-Wl,-rpath-link,$(TOPDIR)/libs/libTutf
+    endif
+    LIBTT+=-Wl,-rpath-link,$(TOPDIR)/libs/libTw
+  else
+    ifeq ($(CONF__UNICODE),y)
+      LIBTT+=$(LIBTUTF)
+    endif
+    LIBTT+=$(LIBTW)    
+  endif
+endif
+
+
+config:
+	@echo Starting configure for twin $(TWIN_VERSION_STR) ... ; \
+	echo
+	cd $(TOPDIR) && \
+	$(BASH) scripts/Configure.tty
+
+menuconf menuconfig:
+	@echo Starting menu-dialog configure for twin $(TWIN_VERSION_STR) ... ; \
+	echo
+	cd $(TOPDIR) && \
+	$(BASH) scripts/Configure.dialog
+
+gconf gconfig:
+	@echo Starting menu-gdialog configure for twin $(TWIN_VERSION_STR) ... ; \
+	echo
+	cd $(TOPDIR) && \
+	$(BASH) scripts/Configure.dialog 254 gdialog
+
+nullconfig:
+	cd $(TOPDIR) && \
+	$(BASH) scripts/Configure.tty < /dev/null > /dev/null
+
+	
+
+
+
+# collect together in $(OBJS) all objs from $(BINS) looking in $(OBJS_xxx)
+OBJS:=$(foreach B,$(BINS),$(OBJS_$(B)))
+
+# same with $(MODOBJS) from $(MODBINS)
+MODOBJS:=$(foreach B,$(MODBINS),$(OBJS_$(B)))
+
+# same with $(ARLIBOBJS) from $(ARLIBS)
+ARLIBOBJS:=$(foreach B,$(ARLIBS),$(OBJS_$(B)))
+
+# same with $(CPPOBJS) from $(CPPBINS)
+CPPOBJS:=$(foreach B,$(CPPBINS),$(OBJS_$(B)))
+
+# set correct CFLAGS for objs compiled as modules
+ifneq ($(MODOBJS),)
+  _ALLFLAGS:=$(strip $(patsubst %,CFLAGS_%+=$(MODFLAGS)\n,$(MODOBJS)))
+endif
+
+_ALLBINS:=$(strip $(BINS) $(MODBINS) $(ARLIBS))
+
+_ALLOBJS:=$(strip $(OBJS) $(MODOBJS) $(ARLIBOBJS) $(EXCL_OBJS))
+
+_ALLSRCS:=$(strip $(subst .o,.c,$(filter %.o,$(_ALLOBJS)))) \
+	  $(strip $(subst .o,.C,$(filter %.o,$(CPPOBJS))))
+
+$(CONF): $(TOPDIR)/conf/conf.auto $(TOPDIR)/include/Tw/Twautoconf.h
+	cd $(TOPDIR) && \
+	$(BASH) scripts/Configure.tty < /dev/null > /dev/null
+
+
+.modules: Makefile $(TOPDIR)/makerules $(TOPDIR)/makeosvalues $(CONF)
+	@$(ECHO) -n Building .modules... ; \
+	 $(ECHO) " $(_ALLFLAGS)" > $@ ; \
+	 $(ECHO) " $(foreach B,$(BINS) $(MODBINS) $(CPPBINS),$(B): .$(B).link\n .$(B).link: $(OBJS_$(B))\n)" >> $@ ; \
+	 $(ECHO) " $(foreach B,$(ARLIBS),$(B): .$(B).arlib\n .$(B).arlib: $(OBJS_$(B))\n)" >> $@ ; \
+	 $(ECHO) done
+
+.depend: $(TOPDIR)/scripts/Mkdep Makefile $(TOPDIR)/makerules $(_ALLSRCS)
+	$< $(filter -I%,$(CFLAGS)) $(sort $(_ALLSRCS)) > $@
+
+
+
+$(TOPDIR)/include/Tw/datasizes.h: $(TOPDIR)/scripts/Getsizes
+	$< > $@
+
+
+force-remake:
+	@:
+
+ifneq ($(wildcard $(TOPDIR)/.uni_types.flags),)
+  include $(TOPDIR)/.uni_types.flags
+else
+  PREVIOUS_CONF__UNICODE=x
+endif
+
+ifneq ($(CONF__UNICODE),$(PREVIOUS_CONF__UNICODE))
+  $(TOPDIR)/include/Tw/uni_types.h: force-remake
+endif
+
+ifeq ($(CONF__UNICODE),y)
+  $(TOPDIR)/include/Tw/uni_types.h: $(TOPDIR)/scripts/Mkunitypes32
+	$< $(MAKE) > $@
+	@$(ECHO) "PREVIOUS_CONF__UNICODE=$(CONF__UNICODE)" > $(TOPDIR)/.uni_types.flags
+	
+else
+  $(TOPDIR)/include/Tw/uni_types.h: $(TOPDIR)/scripts/Mkunitypes16
+	$< $(MAKE) > $@
+	@$(ECHO) "PREVIOUS_CONF__UNICODE=$(CONF__UNICODE)" > $(TOPDIR)/.uni_types.flags
+endif
+
+
+$(TOPDIR)/include/Tw/Twautoconf.h: $(TOPDIR)/include/autoconf.h
+	sed -e 's/HAVE_/TW_HAVE_/g' -e 's/RETSIGTYPE/TW_RETSIGTYPE/g' \
+	 -e 's/STDC_HEADERS/TW_STDC_HEADERS/g' -e 's/SETVBUF/TW_SETVBUF/g' \
+	 -e 's/TIME_WITH_SYS_TIME/TW_TIME_WITH_SYS_TIME/g' \
+	 -e 's/TM_IN_SYS_TIME/TW_TM_IN_SYS_TIME/g' < $< > $@
+
+
+$(TOPDIR)/include/twin.h:  $(TOPDIR)/include/Tw/uni_types.h
+	@touch $@
+
+$(TOPDIR)/include/Tw/Tw.h: $(TOPDIR)/include/Tw/uni_types.h
+	@touch $@
+
+$(TOPDIR)/include/TT/TT.h: $(TOPDIR)/include/Tw/Tw.h $(TOPDIR)/include/TT/TTdefsm4.h
+	@touch $@
+
+
+
+$(TOPDIR)/scripts/Getsizes: $(TOPDIR)/scripts/getsizes.c $(TOPDIR)/include/Tw/datatypes.h $(TOPDIR)/include/autoconf.h
+	$(CC) $(CFLAGS) $(LDFLAGS) $< -o $@
+
+$(TOPDIR)/scripts/Mkdep: $(TOPDIR)/scripts/mkdep.c $(TOPDIR)/include/Tw/datasizes.h $(TOPDIR)/include/autoconf.h
+	$(CC) $(CFLAGS) $(LDFLAGS) $< -o $@
+
+$(TOPDIR)/scripts/Bitmap: $(TOPDIR)/scripts/bitmap.c
+	$(CC) $(CFLAGS) $(LDFLAGS) $< -o $@
+	
+
+#
+# target to recursively build all subdirectories
+#
+subdirs: $(foreach D, $(SUBDIRS), dir-$(D))
+
+dir-%:
+	$(MAKE) -C $*
+
+#
+# torture is the target to compile all source files in the current directory
+# under all possible configurations. VERY useful to spot bugs.
+#
+# Torture is just like torture, except it also recursively Tortures
+# all subdirectories.
+#
+# They need a lot of autogenerated files, but currently have do explicit
+# dependencies for them, so you should run 'make' before invoking one of these.
+#
+
+torture-%.c: %.c Makefile $(TOPDIR)/makerules $(TOPDIR)/scripts/Torture $(TOPDIR)/scripts/Bitmap
+	@echo; echo "Torturing $< ..."; echo;
+	$(BASH) $(TOPDIR)/scripts/Torture $(TOPDIR)/scripts/Bitmap $(CC) $(CFLAGS) $(CFLAGS_$@) -c $< -o $*.o -- $<
+
+torture: $(_ALLSRCS) $(foreach S,$(_ALLSRCS),torture-$(S))
+	
+Torture: torture $(foreach D, $(SUBDIRS), Torture-dir-$(D))
+
+Torture-dir-%:
+	$(MAKE) Torture -C $*
+
+#
+# autogen is the target to build all autogenerated files that require
+# extra tools (m4, bison, flex ...) and thus must be already present
+# when releasing twin, to let people build with just compiler, bash, make.
+# In order to run './configure' and 'make Torture', also sed and grep are required.
+#
+autogen: $(foreach D, $(SUBDIRS), autogen-dir-$(D))
+
+autogen-dir-%:
+	$(MAKE) autogen -C $*
+
+install: $(foreach D, $(SUBDIRS), install-dir-$(D))
+
+install-dir-%:
+	$(MAKE) install -C $* DESTDIR=$(DESTDIR)
+
+clean: $(foreach D, $(SUBDIRS), clean-dir-$(D))
+
+clean-dir-%:
+	$(MAKE) clean -C $*
+
+%m4.h: m4/%.m4 $(wildcard m4/m4_*.m4 $(TOPDIR)/include/m4/m4_*.m4)
+	$(M4) -I$(TOPDIR)/include $< > $@
+
+%.o: %.c
+	$(CC) $(CFLAGS) $(CFLAGS_$@) -c $< -o $@
+	@$(ECHO) ' ifeq ($$(strip $$(CC) $$(CFLAGS) $$(CFLAGS_$@)),$(strip $(CC) $(CFLAGS) $(CFLAGS_$@)))\n'\
+	'FILES_UP_TO_DATE += $@\n'\
+	'endif' > .$@.flags
+
+%.o: %.C
+	$(CXX) $(CFLAGS) $(CXXFLAGS) $(CFLAGS_$@) $(CXXFLAGS_$@) -c $< -o $@
+	@$(ECHO) ' ifeq ($$(strip $(CXX) $(CFLAGS) $(CXXFLAGS) $(CFLAGS_$@) $(CXXFLAGS_$@)),$(strip $(CXX) $(CFLAGS) $(CXXFLAGS) $(CFLAGS_$@) $(CXXFLAGS_$@)))\n'\
+	'FILES_UP_TO_DATE += $@\n'\
+	'endif' > .$@.flags
+
+#
+# this is the rule to link a binary. It should look like:
+# % : $(OBJS_%)
+#	$(CC) -o $* $(OBJS_$*) $(LDFLAGS) $(LDFLAGS_$*)
+#	...
+# but 1) nasty match-all rules like this are a real pain
+# and 2) $(OBJS_%) doesn't expand
+# so we put into .modules an explicited version of what follows:
+# % : .%.link
+# .%.link : $(OBJS_%)
+#
+# and we use patterns for the last step:
+#       
+.%.link:
+	$(CC) -o $* $(OBJS_$*) $(LDFLAGS) $(LDFLAGS_$*)
+	@$(LN) $* $@ ; \
+	 $(ECHO) ' ifeq ($$(strip $$(CC) $$(OBJS_$*) $$(LDFLAGS) $$(LDFLAGS_$*)),$(strip $(CC) $(OBJS_$*) $(LDFLAGS) $(LDFLAGS_$*)))\n'\
+	 'FILES_UP_TO_DATE += $@\n'\
+	 'endif' > $@.flags
+
+#
+# same with `ar' archives
+#
+ifeq ($(RANLIB),)
+  RANLIB=:
+endif
+
+.%.arlib:
+	rm -f $* && $(AR) cr $* $(OBJS_$*) && $(RANLIB) $*
+	@$(LN) $* $@ ; \
+	 $(ECHO) ' ifeq ($$(strip $$(ARLIB) $$(OBJS_$*)),$(strip $(ARLIB) $(OBJS_$*)))\n'\
+	 'FILES_UP_TO_DATE += $@\n'\
+	 'endif' > $@.flags
+
+
+# forbid GNU-make to `rm -f $(OBJS) $(MODOBJS) $(ARLIBOBJS)' after build
+.SECONDARY: $(OBJS) $(MODOBJS) $(ARLIBOBJS)
+
+
+#
+# Find files whose flags have changed and force recompilation.
+# For safety, this works in the converse direction:
+# every file is forced, except those whose flags are positively up-to-date.
+#
+FILES := $(OBJS) $(MODOBJS) $(ARLIBOBJS) \
+	 $(patsubst %,.%.link,$(BINS) $(MODBINS)) \
+	 $(patsubst %,.%.arlib,$(ARLIBS))
+
+#
+# to avoid useless re-making, assume files in other dirs are already up-to-date:
+# `make' must already visit all directories anyway.
+#
+FILES_UP_TO_DATE := $(filter-out $(wildcard * .*), $(FILES))
+
+
+FILES_FLAGS_EXIST := $(wildcard .*.flags)
+ifneq ($(FILES_FLAGS_EXIST),)
+ #
+ # this appends files whose flags are positively up-to-date to FILES_UP_TO_DATE
+ #
+ include $(FILES_FLAGS_EXIST)
+endif
+
+FILES_CHANGED := $(strip $(filter-out $(FILES_UP_TO_DATE), $(FILES)))
+
+#
+# force remaking by using a phony target as prerequisite
+#
+dummy:
+	@:
+
+ifneq ($(FILES_CHANGED),)
+
+$(FILES_CHANGED): dummy
+
+endif
+

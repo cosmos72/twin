@@ -8,13 +8,13 @@ twin server, library and client of different versions.
 This file was created together with twin-0.3.9 so it may contain
 little information for older versions.
 
-Since libTw and libTutf have version numbering different from twin,
-but new libTw and libTutf are always released with a new twin server
-(until now), it is possible to match libTw and libTutf versions against
+Since libTw, libTT and libTutf have version numbering different from twin,
+but new libTw, libTT and libTutf are always released with a new twin server
+(until now), it is possible to match libTw, libTT and libTutf versions against
 the twin server version they were released with.
 Here is the correspondence:
 
-     twin server	libTw		libTutf
+     twin server	libTw		libTutf		libTT
 	0.2.8		1.0.0
 
 	0.3.0		2.0.0
@@ -29,6 +29,7 @@ Here is the correspondence:
 	0.3.8		2.0.4 /
 	
 	0.3.9		3.0.0		0.0.1
+	0.3.10		3.0.1		0.0.2		(unreleased)
 
 As a general rule of thumb, you would better use libraries
 and servers released together to avoid most problems

@@ -520,7 +520,7 @@ void FreeMem(void *Mem) {
 #endif    
 }
 
-void *ReAllocMem(void *Mem, uldat newSize) {
+void *ReAllocMem(void *Mem, size_t newSize) {
     void *newMem = (void *)0;
     byte *bitmap;
     block *A, *B;

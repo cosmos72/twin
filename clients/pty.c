@@ -12,17 +12,27 @@
  *
  */
 
-#include <unistd.h>
-#include <fcntl.h>
 #include <grp.h>
-#include <termios.h>
-#include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/ioctl.h>
+
 
 #ifdef CONF_TERM_DEVPTS
 # define __USE_XOPEN
 # include <stdlib.h>
+#endif
+
+#include "Tw/Twautoconf.h"
+
+#ifdef TW_HAVE_TERMIOS_H
+# include <termios.h>
+#else
+# ifdef TW_HAVE_TERMIO_H
+#  include <termio.h>
+# endif
+#endif
+
+#ifdef TW_HAVE_SYS_IOCTL_H
+# include <sys/ioctl.h>
 #endif
 
 #include "Tw/Tw.h"

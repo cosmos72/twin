@@ -25,8 +25,14 @@
 
 /* a cutdown version of twin.h */
 
+#ifndef TW_RETSIGTYPE
+# include <Tw/Twautoconf.h>
+#endif
+
 #include <Tw/compiler.h>
+#include <Tw/version.h>
 #include <Tw/osincludes.h>
+#include <Tw/missing.h>
 #include <Tw/datatypes.h>
 #include <Tw/datasizes.h>
 #include <Tw/uni_types.h>
@@ -182,8 +188,8 @@ typedef struct s_timevalue  {
 #define MAX_ACTION_MOUSE	0x48
 
 #define isPRESS(code)	((code) & 0x08)
-#define isRELEASE(code)	((code) & ANY_ACTION_MOUSE && !isPRESS(code) && !isDRAG(code))
 #define isDRAG(code)	((code) & DRAG_MOUSE)
+#define isRELEASE(code)	((code) & ANY_ACTION_MOUSE && !isPRESS(code) && !isDRAG(code))
 #define isMOTION(code)	(!(code))
 
 #define isSINGLE_PRESS(code) (isPRESS(code) && ((code) == DOWN_LEFT || (code) == DOWN_MIDDLE || (code) == DOWN_RIGHT))
@@ -537,7 +543,10 @@ void Tw_ConfigMalloc(void *(*my_malloc)(size_t),
 extern void *(*Tw_AllocMem)(size_t);
 extern void *(*Tw_ReAllocMem)(void *, size_t);
 extern void  (*Tw_FreeMem)(void *);
-extern byte *(*Tw_CloneStr)(TW_CONST byte *);
+extern void *Tw_CloneMem(TW_CONST void *, size_t);
+extern byte *Tw_CloneStr(TW_CONST byte *);
+extern hwfont *Tw_CloneStr2HWFont(TW_CONST byte *, size_t);
+
 
 
 #define Tw_LenStr(S) strlen(S)
@@ -591,9 +600,14 @@ void	Tw_UnMapWidget(tdisplay TwD, twidget Widget);
 void	Tw_SetXYWidget(tdisplay TwD, twidget Widget, dat X, dat Y);
 tmsgport Tw_GetOwnerWidget(tdisplay TwD, twidget Widget);
 twidget Tw_FindWidgetAtWidget(tdisplay TwD, twidget Parent, dat i, dat j);
-void	Tw_ExposeTextWidget(tdisplay TwD, twidget W, dat XWidth, dat YWidth, dat Left, dat Up, TW_CONST byte *Text);
-void	Tw_ExposeHWFontWidget(tdisplay TwD, twidget W, dat XWidth, dat YWidth, dat Left, dat Up, TW_CONST hwfont *Font);
-void	Tw_ExposeHWAttrWidget(tdisplay TwD, twidget W, dat XWidth, dat YWidth, dat Left, dat Up, TW_CONST hwattr *Attr);
+
+void    Tw_FocusSubWidget(tdisplay TwD, twidget W);
+void    Tw_ExposeWidget(tdisplay TwD, twidget W, dat XWidth, dat YWidth, dat Left, dat Up, TW_CONST byte *Text, TW_CONST hwfont *Font, TW_CONST hwattr *Attr);
+void    Tw_ExposeWidget2(tdisplay TwD, twidget W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch, TW_CONST byte *Text, TW_CONST hwfont *Font, TW_CONST hwattr *Attr);
+
+void	Tw_ExposeTextWidget(tdisplay TwD, twidget W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch, TW_CONST byte *Text);
+void	Tw_ExposeHWFontWidget(tdisplay TwD, twidget W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch, TW_CONST hwfont *Font);
+void	Tw_ExposeHWAttrWidget(tdisplay TwD, twidget W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch, TW_CONST hwattr *Attr);
 
 
 
@@ -640,7 +654,7 @@ void    Tw_WriteHWFontsGadget(tdisplay TwD, tgadget Gadget, byte bitmap, dat XWi
 void    Tw_SetHWFontGadget(   tdisplay TwD, tgadget Gadget,              dat XWidth, dat YWidth, TW_CONST hwfont * HWFont, dat Left, dat Up);
 void    Tw_SetHWFontsGadget(  tdisplay TwD, tgadget Gadget, byte bitmap, dat XWidth, dat YWidth, TW_CONST hwfont * HWFont, dat Left, dat Up);
 
-void	Tw_Create4MenuRow(tdisplay TwD, twindow Window, udat Code, byte FlagActive, ldat TextLen, TW_CONST byte *Text);
+void	Tw_Create4MenuRow(tdisplay TwD, twindow Window, udat Code, byte Flags, uldat Len, TW_CONST byte *Text);
 #define Tw_Row4Menu Tw_Create4MenuRow
 
 twindow Tw_CreateWindow(tdisplay TwD, dat NameLen, TW_CONST byte *Name, TW_CONST hwcol *ColName, tmenu Menu,
@@ -671,7 +685,7 @@ void	Tw_ConfigureWindow(tdisplay TwD, twindow Window, byte Bitmap, dat Left, dat
 void	Tw_ResizeWindow(tdisplay TwD, twindow Window, dat XWidth, dat YWidth);
 void	Tw_GotoXYWindow(tdisplay TwD, twindow Window, ldat X, ldat Y);
 
-tmenuitem Tw_Create4MenuMenuItem(tdisplay TwD, tmenu Menu, twindow Window, byte Flags, dat NameLen, TW_CONST byte *Name);
+tmenuitem Tw_Create4MenuMenuItem(tdisplay TwD, tobj Parent, twindow Window, byte Flags, dat Len, TW_CONST byte *Name);
 #define   Tw_Item4Menu Tw_Create4MenuMenuItem
 uldat     Tw_Create4MenuCommonMenuItem(tdisplay TwD, tmenu Menu);
 #define   Tw_Item4MenuCommon Tw_Create4MenuCommonMenuItem
@@ -732,6 +746,10 @@ void Tw_NotifySelection(tdisplay TwD, tobj Requestor, uldat ReqPrivate,
 #define TW_SEL_CURRENTTIME ((time_t)0)
 
 
+byte Tw_SetServerUid(tdisplay TwD, uldat uid, byte privileges);
+#define TW_PRIV_NONE 0
+#define TW_PRIV_SGIDTTY 1
+#define TW_PRIV_SUIDROOT 2
 
 tdisplay Tw_Open(TW_CONST byte *Tw_Display);
 void	Tw_Close(tdisplay TwD);
@@ -796,18 +814,18 @@ tmsg	Tw_CloneReadMsg(tdisplay TwD, byte Wait);
 
 
 
-tlistener Tw_AddKeyboardListener(tdisplay TwD, twindow Window, udat Key,  udat ShiftFlags, tfn_listener Listener, void *Arg);
-tlistener Tw_AddMouseListener(   tdisplay TwD, twindow Window, udat Code, udat ShiftFlags, tfn_listener Listener, void *Arg);
+tlistener Tw_AddKeyboardListener(tdisplay TwD, twidget Widget, udat Key,  udat ShiftFlags, tfn_listener Listener, void *Arg);
+tlistener Tw_AddMouseListener(   tdisplay TwD, twidget Widget, udat Code, udat ShiftFlags, tfn_listener Listener, void *Arg);
 
-tlistener Tw_AddControlListener(  tdisplay TwD, twindow Window, udat Code, tfn_listener Listener, void *Arg);
-tlistener Tw_AddClientMsgListener(tdisplay TwD, twindow Window, udat Code, tfn_listener Listener, void *Arg);
+tlistener Tw_AddControlListener(  tdisplay TwD, twidget Widget, udat Code, tfn_listener Listener, void *Arg);
+tlistener Tw_AddClientMsgListener(tdisplay TwD, twidget Widget, udat Code, tfn_listener Listener, void *Arg);
 tlistener Tw_AddDisplayListener(  tdisplay TwD,                 udat Code, tfn_listener Listener, void *Arg);
-tlistener Tw_AddWindowListener(   tdisplay TwD, twindow Window, udat Code, tfn_listener Listener, void *Arg);
-tlistener Tw_AddGadgetListener(   tdisplay TwD, twindow Window, udat Code, tfn_listener Listener, void *Arg);
+tlistener Tw_AddWidgetListener(   tdisplay TwD, twidget Widget, udat Code, tfn_listener Listener, void *Arg);
+tlistener Tw_AddGadgetListener(   tdisplay TwD, twidget Widget, udat Code, tfn_listener Listener, void *Arg);
 
-tlistener Tw_AddMenuListener(tdisplay TwD, twindow Window, tmenu Menu, udat Code, tfn_listener Listener, void *Arg);
+tlistener Tw_AddMenuListener(tdisplay TwD, twidget Widget, tmenu Menu, udat Code, tfn_listener Listener, void *Arg);
 
-tlistener Tw_AddSelectionListener(tdisplay TwD, twindow Window, tfn_listener Listener, void *Arg);
+tlistener Tw_AddSelectionListener(tdisplay TwD, twidget Widget, tfn_listener Listener, void *Arg);
 tlistener Tw_AddSelectionNotifyListener( tdisplay TwD,          tfn_listener Listener, void *Arg);
 tlistener Tw_AddSelectionRequestListener(tdisplay TwD,          tfn_listener Listener, void *Arg);
 
@@ -821,7 +839,7 @@ void Tw_DeleteListener(tdisplay TwD, tlistener L);
 void Tw_SetDefaultListener(tdisplay TwD, tfn_default_listener listener, void *arg);
 
 byte  Tw_DispatchMsg(tdisplay TwD, tmsg Msg);
-uldat Tw_MainLoop(tdisplay TwD);
+byte  Tw_MainLoop(tdisplay TwD);
 
 
 
@@ -897,7 +915,9 @@ extern tdisplay Tw_DefaultD;
 #define TwAllocMem(Size)		Tw_AllocMem(Size)
 #define TwReAllocMem(Mem, Size)		Tw_ReAllocMem(Mem, Size)
 #define TwFreeMem(Mem)			Tw_FreeMem(Mem)
+#define TwCloneMem(Mem,Size)		Tw_CloneMem(Mem,Size)
 #define TwCloneStr(S)			Tw_CloneStr(S)
+#define TwCloneStr2HWFont(Mem, Size)	Tw_CloneMem2HWFont(Mem, Size)
 
 #define TwCopyMem(From, To, Size)	Tw_CopyMem(From, To, Size)
 #define TwMoveMem(From, To, Size)	Tw_MoveMem(From, To, Size)
@@ -929,14 +949,15 @@ extern tdisplay Tw_DefaultD;
 #define TwSetXYWidget(W, x, y)		Tw_SetXYWidget(Tw_DefaultD, W, x, y)
 #define TwGetOwnerWidget(W)		Tw_GetOwnerWidget(Tw_DefaultD, W)
 #define TwFindWidgetAtWidget(W, i, j)	Tw_FindWidgetAtWidget(Tw_DefaultD, W, i, j)
-#define TwExposeTextWidget(Window, XWidth, YWidth, Left, Up, Text) \
-		Tw_ExposeTextWidget(Tw_DefaultD, Window, XWidth, YWidth, Left, Up, Text)
-#define TwExposeHWFontWidget(Window, XWidth, YWidth, Left, Up, Font) \
-		Tw_ExposeHWFontWidget(Tw_DefaultD, Window, XWidth, YWidth, Left, Up, Font)
-#define TwExposeHWAttrWidget(Window, XWidth, YWidth, Left, Up, Attr) \
-		Tw_ExposeHWAttrWidget(Tw_DefaultD, Window, XWidth, YWidth, Left, Up, Attr)
+#define TwExposeTextWidget(Window, XWidth, YWidth, Left, Up, Pitch, Text) \
+		Tw_ExposeTextWidget(Tw_DefaultD, Window, XWidth, YWidth, Left, Up, Pitch, Text)
+#define TwExposeHWFontWidget(Window, XWidth, YWidth, Left, Up, Pitch, Font) \
+		Tw_ExposeHWFontWidget(Tw_DefaultD, Window, XWidth, YWidth, Left, Up, Pitch, Font)
+#define TwExposeHWAttrWidget(Window, XWidth, YWidth, Left, Up, Pitch, Attr) \
+		Tw_ExposeHWAttrWidget(Tw_DefaultD, Window, XWidth, YWidth, Left, Up, Pitch, Attr)
 
 
+#define TwFocusSubWidget(W)		Tw_FocusSubWidget(Tw_DefaultD, W)
 
 #define TwCreateGroup()			Tw_CreateGroup(Tw_DefaultD)
 #define TwInsertGadgetGroup(Group, G)	Tw_InsertGadgetGroup(Tw_DefaultD, Group, G)
@@ -1028,8 +1049,8 @@ extern tdisplay Tw_DefaultD;
 
 #define TwFindWidgetAtWidget(Widget, X, Y) Tw_FindWidgetAtWidget(Tw_DefaultD, Widget, X, Y)
 
-#define TwCreate4MenuMenuItem(Menu, Window, Flags, NameLen, Name) \
-		Tw_Create4MenuMenuItem(Tw_DefaultD, Menu, Window, Flags, NameLen, Name)
+#define TwCreate4MenuMenuItem(Parent, Window, Flags, NameLen, Name) \
+		Tw_Create4MenuMenuItem(Tw_DefaultD, Parent, Window, Flags, NameLen, Name)
 #define TwItem4Menu			TwCreate4MenuMenuItem
 #define TwCreate4MenuCommonMenuItem(Menu) Tw_Create4MenuCommonMenuItem(Tw_DefaultD, Menu)
 #define TwItem4MenuCommon		TwCreate4MenuCommonMenuItem
@@ -1088,6 +1109,7 @@ extern tdisplay Tw_DefaultD;
 					Tw_NotifySelection(Tw_DefaultD, Requestor, ReqPrivate, \
 							   Magic, MIME, Len, Data)
 
+#define TwSetServerUid(uid, privileges)	Tw_SetServerUid(Tw_DefaultD, uid, privileges)
 
 #define TwOpen(Display)			(!!(Tw_DefaultD = Tw_Open(Display)))
 #define TwClose()			(Tw_Close(Tw_DefaultD), Tw_DefaultD = (tdisplay)0)
@@ -1103,32 +1125,32 @@ extern tdisplay Tw_DefaultD;
 #define TwReadMsg(Wait)			Tw_ReadMsg(Tw_DefaultD, Wait)
 #define TwCloneReadMsg(Wait)		Tw_CloneReadMsg(Tw_DefaultD, Wait)
 
-#define TwAddKeyboardListener(               Window, Key,  ShiftFlags, Listener, Arg) \
-       Tw_AddKeyboardListener(Tw_DefaultD,   Window, Key,  ShiftFlags, Listener, Arg)
+#define TwAddKeyboardListener(               Widget, Key,  ShiftFlags, Listener, Arg) \
+       Tw_AddKeyboardListener(Tw_DefaultD,   Widget, Key,  ShiftFlags, Listener, Arg)
 
-#define TwAddMouseListener(             Window, Code, ShiftFlags, Listener, Arg) \
-       Tw_AddMouseListener(Tw_DefaultD, Window, Code, ShiftFlags, Listener, Arg)
+#define TwAddMouseListener(             Widget, Code, ShiftFlags, Listener, Arg) \
+       Tw_AddMouseListener(Tw_DefaultD, Widget, Code, ShiftFlags, Listener, Arg)
 
-#define TwAddControlListener(             Window, Code, Listener, Arg) \
-       Tw_AddControlListener(Tw_DefaultD, Window, Code, Listener, Arg)
+#define TwAddControlListener(             Widget, Code, Listener, Arg) \
+       Tw_AddControlListener(Tw_DefaultD, Widget, Code, Listener, Arg)
 
-#define TwAddClientMsgListener(             Window, Code, Listener, Arg) \
-       Tw_AddClientMsgListener(Tw_DefaultD, Window, Code, Listener, Arg)
+#define TwAddClientMsgListener(             Widget, Code, Listener, Arg) \
+       Tw_AddClientMsgListener(Tw_DefaultD, Widget, Code, Listener, Arg)
 
 #define TwAddDisplayListener(             Code, Listener, Arg) \
        Tw_AddDisplayListener(Tw_DefaultD, Code, Listener, Arg)
 
-#define TwAddWindowListener(             Window, Code, Listener, Arg) \
-       Tw_AddWindowListener(Tw_DefaultD, Window, Code, Listener, Arg)
+#define TwAddWidgetListener(             Widget, Code, Listener, Arg) \
+       Tw_AddWidgetListener(Tw_DefaultD, Widget, Code, Listener, Arg)
 
-#define TwAddGadgetListener(             Window, Code, Listener, Arg) \
-       Tw_AddGadgetListener(Tw_DefaultD, Window, Code, Listener, Arg)
+#define TwAddGadgetListener(             Widget, Code, Listener, Arg) \
+       Tw_AddGadgetListener(Tw_DefaultD, Widget, Code, Listener, Arg)
 
-#define TwAddMenuListener(             Window, Menu, Code, Listener, Arg) \
-       Tw_AddMenuListener(Tw_DefaultD, Window, Menu, Code, Listener, Arg)
+#define TwAddMenuListener(             Widget, Menu, Code, Listener, Arg) \
+       Tw_AddMenuListener(Tw_DefaultD, Widget, Menu, Code, Listener, Arg)
 
-#define TwAddSelectionListener(             Window, Listener, Arg) \
-       Tw_AddSelectionListener(Tw_DefaultD, Window, Listener, Arg)
+#define TwAddSelectionListener(             Widget, Listener, Arg) \
+       Tw_AddSelectionListener(Tw_DefaultD, Widget, Listener, Arg)
        
 #define TwAddSelectionNotifyListener(             Listener, Arg) \
        Tw_AddSelectionNotifyListener(Tw_DefaultD, Listener, Arg)

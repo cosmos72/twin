@@ -1,9 +1,0 @@
- 
- twin_real: .twin_real.link
- .twin_real.link: data.o builtin.o methods.o util.o draw.o extensions.o main.o hw_multi.o printk.o resize.o scroller.o remote.o alloc.o hw.o HW/hw.a
- twin_wrapper: .twin_wrapper.link
- .twin_wrapper.link: wrapper.o
- twdisplay: .twdisplay.link
- .twdisplay.link: display.o alloc.o hw.o HW/hw.a
-
- 

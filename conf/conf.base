@@ -1,0 +1,87 @@
+#
+# This is the skeleton for the configuration scripts.
+#
+
+CONF___MENU="General setup"
+CONF_SOCKET_MENU="Socket support"
+CONF_WM_MENU="Window Manager"
+CONF_TERM_MENU="Terminal emulator"
+CONF_PRINTK_MENU="Messages logging"
+CONF_HW_MENU="Display hardware support"
+CONF_OPT_MENU="Runtime options"
+
+CONF__SHLIBS_HELP="Enable shared libraries (ELF)"
+CONF__MODULES_HELP="Enable modules (ELF)"
+CONF__ALLOC_HELP="Use custom malloc/free (tested on Linux/i386 only)"
+CONF__UNICODE_HELP="Build all code with Unicode support"
+CONF_SOCKET_HELP="Support remote socket connections"
+CONF_SOCKET_GZ_HELP=" -> Sockets: support gzip compression"
+CONF_SOCKET_PTHREADS_HELP=" -> Sockets: thread-safe libs (requires libpthread)"
+CONF_SOCKET_ALIEN_HELP=" -> Sockets: support non-native architectures"
+CONF_WM_HELP="Window Manager: absolutely needed!"
+CONF_WM_RC_HELP="WM: support ~/.twinrc configuration parser"
+CONF_WM_RC_SHMMAP_HELP=" -> WM: RC: use mmapped shared file for parser"
+CONF_WM_RC_SHRINK_HELP=" -> WM: RC: shrink memory when parser finished"
+CONF_TERM_HELP="Builtin Terminal emulator"
+CONF_TERM_DEVPTS_HELP=" -> Terminal: use glibc-2.1 /dev/pts/"
+CONF_PRINTK_HELP="Store server messages into Messages window"
+CONF_HW_TTY_HELP="HW support: text terminals (Linux console...)"
+CONF_HW_TTY_LINUX_HELP=" -> tty support: Linux console"
+CONF_HW_TTY_TWTERM_HELP=" -> tty support: Twin terminal"
+CONF_HW_TTY_TERMCAP_HELP=" -> tty support: termcap/ncurses terminal database"
+CONF_HW_X11_HELP="HW support: X11"
+CONF_HW_TWIN_HELP="HW support: Twin, native"
+CONF_HW_DISPLAY_HELP="HW support: twdisplay client as display"
+CONF_HW_GGI_HELP="HW support: libggi"
+CONF_OPT_SHADOWS_HELP="Runtime option: enable shadows"
+CONF_OPT_BLINK_HELP="Runtime option: enable blink/high background"
+CONF_OPT_ALWAYSCURSOR_HELP="Runtime option: force always visible cursor"
+CONF_OPT_HIDEMENU_HELP="Runtime option: hidden menu"
+CONF_OPT_MENUINFO_HELP="Runtime option: enable menu information line"
+CONF_OPT_EDGESCROLL_HELP="Runtime option: enable screen scrolling"
+
+menu CONF__
+  yesno CONF__SHLIBS
+  yesno CONF__MODULES
+  yesno CONF__ALLOC
+  yesno CONF__UNICODE
+endmenu
+menu CONF_SOCKET
+  yesmodno CONF_SOCKET
+  yesno_dep CONF_SOCKET_GZ CONF_SOCKET
+  yesno_dep CONF_SOCKET_PTHREADS CONF_SOCKET
+  yesno CONF_SOCKET_ALIEN
+endmenu
+menu CONF_WM
+  yesmodno CONF_WM
+  yesmodno_truedep CONF_WM_RC CONF_SOCKET
+  yesno_dep CONF_WM_RC_SHMMAP CONF_WM_RC
+  yesno_dep CONF_WM_RC_SHRINK CONF_WM_RC
+endmenu
+menu CONF_TERM
+  yesmodno CONF_TERM
+  yesno CONF_TERM_DEVPTS
+endmenu
+menu CONF_PRINTK
+  yesno CONF_PRINTK
+endmenu
+menu CONF_HW
+  yesmodno CONF_HW_TTY
+  yesno_dep CONF_HW_TTY_LINUX CONF_HW_TTY
+  yesno_dep CONF_HW_TTY_TWTERM CONF_HW_TTY
+  yesno_dep CONF_HW_TTY_TERMCAP CONF_HW_TTY
+  yesmodno CONF_HW_X11
+  yesmodno_truedep CONF_HW_TWIN CONF_SOCKET
+  yesmodno_truedep CONF_HW_DISPLAY CONF_SOCKET
+  yesmodno CONF_HW_GGI
+endmenu
+menu CONF_OPT
+  msg "Warning: settings in ~/.twinrc or in system.twinrc"
+  msg "will always override the following options!"
+  yesno CONF_OPT_SHADOWS
+  yesno CONF_OPT_BLINK
+  yesno CONF_OPT_ALWAYSCURSOR
+  yesno CONF_OPT_HIDEMENU
+  yesno CONF_OPT_MENUINFO
+  yesno CONF_OPT_EDGESCROLL
+endmenu

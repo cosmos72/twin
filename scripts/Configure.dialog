@@ -133,22 +133,23 @@ function dump() {
 }
 
 function fulldump() {
-   cat >conf/config.status <<EOF
+   cat >conf/conf.current <<EOF
 #
-# This file is created by 'make menuconfig', do not edit!
+# This file holds the current configuration.
+# It was created by 'make menuconfig', do not edit!
 #
 # Configuration:
 #
 EOF
 
-   for i in `cat conf/config.list`; do
+   for i in `cat conf/conf.list`; do
        dump $i
-   done >>conf/config.status
+   done >>conf/conf.current
 }
 
 function parse() {
    CURR=`cat $2`;
-   LIST=`cat conf/config.list | grep CONF_${1}`
+   LIST=`cat conf/conf.list | grep CONF_${1}`
    for i in $LIST; do
       THIS=n
       for j in $CURR; do
@@ -171,18 +172,35 @@ trap die SIGINT SIGQUIT SIGHUP SIGTERM
 MAINCMD=
 MAINITEMS=2
 
-if [ -f conf/config.status ]; then
-   source conf/config.status
+if [ -f conf/conf.current -a -f conf/conf.auto -a conf/conf.current -ot conf/conf.auto ]; then
+    source conf/conf.auto
+elif [ -f conf/conf.current ]; then
+   source conf/conf.current
+elif [ -f conf/conf.auto ]; then
+   source conf/conf.auto
 else
-   source conf/config.default
+   source conf/conf.default
 fi
 
-source conf/config.base
+source conf/conf.base
 
 MENU_MAIN="--separate-output --menu \"Twin Configuration - Top Menu\" $[ MAINITEMS+7 ] 50 $MAINITEMS $MAINCMD SAVE \"Save config and exit\" QUIT \"Exit without saving\""
 
+if test "$1"; then
+  failure="$1"
+  shift
+else
+  failure=1
+fi
+if test "$1"; then
+  dialog="$@"
+else
+  dialog="dialog"
+fi
+
 while :; do
-   eval "dialog $MENU_MAIN 2>.dialog_MENU_MAIN" || die
+   eval "$dialog $MENU_MAIN 2>.dialog_MENU_MAIN"
+   test $? != $failure || die
    RES=`cat .dialog_MENU_MAIN`;
    case "$RES" in
       SAVE)
@@ -192,7 +210,7 @@ while :; do
       *)
          MENU=$(eval "echo \"\${MENU_CONF_${RES}}\"")
          if test "$MENU"; then
-            eval "dialog $MENU 2>.dialog_MENU_${RES}" && parse $RES .dialog_MENU_${RES} && source conf/config.base
+            eval "$dialog $MENU 2>.dialog_MENU_${RES}" && parse $RES .dialog_MENU_${RES} && source conf/conf.base
          fi
          ;;
    esac

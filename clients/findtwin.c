@@ -8,7 +8,22 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <dirent.h>
+
+#include "Tw/Twautoconf.h"
+
+#if TW_HAVE_DIRENT_H
+# include <dirent.h>
+#else
+# if TW_HAVE_SYS_NDIR_H
+#  include <sys/ndir.h>
+# endif
+# if TW_HAVE_SYS_DIR_H
+#  include <sys/dir.h>
+# endif
+# if TW_HAVE_NDIR_H
+#  include <ndir.h>
+# endif
+#endif
 
 #include "Tw/Tw.h"
 #include "Tw/Twerrno.h"
@@ -35,7 +50,9 @@ static int match_twsocket(TW_CONST struct dirent *d) {
 				   (HX(s[8]) && !s[9]))));
 }
 
+#if defined(TW_HAVE_SCANDIR) && defined(TW_HAVE_ALPHASORT)
 static void unix_socket_test(void) {
+    int alphasort();
     struct dirent **namelist;
     char *s;
     int n = scandir("/tmp", &namelist, match_twsocket, alphasort);
@@ -49,6 +66,7 @@ static void unix_socket_test(void) {
 	n--;
     }
 }
+#endif
 
 int main(int argc, char *argv[]) {
     
@@ -70,8 +88,10 @@ int main(int argc, char *argv[]) {
     /* then, check for environment TWDISPLAY */
     test(NULL);
     
+#if defined(TW_HAVE_SCANDIR) && defined(TW_HAVE_ALPHASORT)
     /* last resort: exhaustive search in /tmp */
     unix_socket_test();
+#endif
     
     return 1;
 }

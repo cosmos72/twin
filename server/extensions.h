@@ -1,6 +1,6 @@
 
-#ifndef _TW_EXTENSIONS_H
-#define _TW_EXTENSIONS_H
+#ifndef _TWIN_EXTENSIONS_H
+#define _TWIN_EXTENSIONS_H
 
 typedef struct exts exts;
 
@@ -13,6 +13,7 @@ struct exts {
     } Remote;
     struct {
 	void (*SendMsg)(msgport MsgPort, msg Msg);
+	byte (*InitAuth)(void);
     } Socket;
     struct {
 	window (*Open)(CONST byte *arg0, byte * CONST * argv);
@@ -31,5 +32,5 @@ byte UnRegisterExt(void **where, void *data);
 
 #define   Ext(kind,member) (Exts.kind.member)
 
-#endif /* _TW_EXTENSIONS_H */
+#endif /* _TWIN_EXTENSIONS_H */
 

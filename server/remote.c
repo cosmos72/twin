@@ -16,12 +16,6 @@
  *
  */
 
-#include <sys/time.h>
-#include <sys/types.h>
-#include <unistd.h>
-#include <errno.h>
-#include <limits.h>
-
 #include "twin.h"
 #include "main.h"
 #include "methods.h"

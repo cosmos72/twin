@@ -1,5 +1,5 @@
-#ifndef _TW_UTIL_H
-#define _TW_UTIL_H
+#ifndef _TWIN_UTIL_H
+#define _TWIN_UTIL_H
 
 extern udat ErrNo;
 extern byte CONST * ErrStr;
@@ -10,8 +10,7 @@ void *CloneMem(CONST void *From, uldat Size);
 byte *CloneStr(CONST byte *From);
 byte *CloneStrL(CONST byte *From, uldat Size);
 byte **CloneStrList(byte **FromList);
-hwfont *CloneString2HWFont(CONST byte *From, uldat Size);
-hwfont *CloneString2HWFontL(CONST byte *From, uldat Size);
+hwfont *CloneStr2HWFont(CONST byte *From, uldat Size);
 
 byte Error(udat Code_Error);
 
@@ -48,13 +47,15 @@ void FreeStringVec(byte **argv);
 byte InitTWDisplay(void);
 void QuitTWDisplay(void);
 
-void CheckPrivileges(void);
-void GetPrivileges(void);
+extern uid_t Uid, EUid;
+byte CheckPrivileges(void);
+void GainPrivileges(void);
+byte SetServerUid(uldat uid, byte privileges);
 
 byte AssignId(CONST fn_obj Fn_Obj, obj Obj);
 void DropId(obj Obj);
 obj  Id2Obj(byte i, uldat Id);
 #define Obj2Id(o) ((o) ? (o)->Id : NOID)
 
-#endif /* _TW_UTIL_H */
+#endif /* _TWIN_UTIL_H */
 

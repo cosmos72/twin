@@ -10,18 +10,29 @@
  *
  */
 
-#include <sys/time.h>
-#include <sys/types.h>
+/*
+ * Life is tricky... under SunOS hstrerror() is in an obscure library, so it gets disabled,
+ * yet <netdb.h> has its prototype, so the #define hstrerror() in "missing.h" breaks it.
+ * Solution: include "twin.h" (pulls in "missing.h") late, but still include
+ * "autoconf.h" and "osincludes.h" early to pull in HAVE_* and system headers
+ * necessary to include <sys/socket.h> under FreeBSD.
+ */
+#include "autoconf.h"
+#include "osincludes.h"
+
 #include <sys/socket.h>
 #include <sys/un.h>
-#include <sys/utsname.h>
-#include <sys/ioctl.h>
 #include <sys/stat.h>
-#include <errno.h>
 #include <netdb.h>
 #include <netinet/in.h>
-#include <unistd.h>
-#include <fcntl.h>
+
+#ifdef HAVE_SYS_IOCTL_H
+# include <sys/ioctl.h>
+#endif
+
+#ifdef HAVE_SYS_UTSNAME_H
+# include <sys/utsname.h>
+#endif
 
 #ifdef CONF_SOCKET_GZ
 # include <zlib.h>
@@ -30,6 +41,7 @@
 #include "twin.h"
 #include "methods.h"
 #include "data.h"
+#include "draw.h"
 #include "main.h"
 #include "printk.h"
 #include "util.h"
@@ -336,6 +348,10 @@ static void DeleteObj(void *V);
 static widget CreateWidget(dat XWidth, dat YWidth, uldat Attrib, uldat Flags, dat Left, dat Up, hwattr Fill);
 static void RecursiveDeleteWidget(void *V);
 static msgport GetOwnerWidget(widget W);
+static void SetXYWidget(widget W, dat x, dat y);
+static void ExposeWidget(widget W, dat XWidth, dat YWidth, dat Left, dat Up, CONST byte *Text, CONST hwfont *Font, CONST hwattr *Attr);
+
+static void FocusSubWidget(widget W);
 
 static gadget CreateGadget
     (widget Parent, dat XWidth, dat YWidth, CONST byte *TextNormal, uldat Attrib, uldat Flags, udat Code,
@@ -343,6 +359,10 @@ static gadget CreateGadget
      dat Left, dat Up);
 
 static void ResizeWindow(window Window, dat X, dat Y);
+
+static void Create4MenuRow(window, udat Code, byte Flags, uldat Len, byte CONST *Name);
+
+static menuitem Create4MenuMenuItem(obj Parent, window Window, byte Flags, dat Len, byte CONST *Name);
 
 static menu CreateMenu(hwcol ColItem, hwcol ColSelect,
 		       hwcol ColDisabled, hwcol ColSelectDisabled, hwcol ColShtCut, hwcol ColSelShtCut,
@@ -384,7 +404,6 @@ static void NotifySelection(obj Requestor, uldat ReqPrivate,
 			       uldat Magic, CONST byte MIME[MAX_MIMELEN], uldat Len, CONST byte *Data);
 static void RequestSelection(obj Owner, uldat ReqPrivate);
 
-
 /* Second: socket handling functions */
 
 static uldat MaxFunct, Slot, RequestN;
@@ -404,7 +423,7 @@ static void SocketIO(int fd, uldat slot);
 enum sock_id {
     order_DoesNotExist = -1,
 #define EL(name) CAT(order_,name),
-#include "sockprotolist.h"
+#include "socklistm4.h"
 #undef EL
     order_StatObj,
 };
@@ -413,7 +432,7 @@ static void sockStat(any *a);
 
 static void sockMultiplex(uldat Id, any *a) {
     switch (Id) {
-#include "socket1macros.h"
+#include "socket1m4.h"
       case order_StatObj:
 	sockStat(a);
 	break;
@@ -427,7 +446,7 @@ typedef struct {
 } sock_fn;
 
 static sock_fn sockF [] = {
-#include "socket2macros.h"
+#include "socket2m4.h"
     { 0, 0, "StatObj", "0S0x"obj_magic_STR"_"TWS_udat_STR"V"TWS_udat_STR },
     { 0, 0, NULL, NULL }
 };
@@ -437,7 +456,7 @@ static uldat sockLengths(uldat id, uldat n, const any *a) {
     uldat L = 0;
 
     switch (id) {
-#include "socket3macros.h"
+#include "socket3m4.h"
       case order_StatObj:
 	switch (n) {
 	    case 3: L = a[2]._; break;
@@ -579,6 +598,13 @@ static byte sockStatWidget(obj x, tsfield TSF) {
       default:
 	return FALSE;
     }
+    /* correct for screen scrolling */
+    if (((widget)x)->Parent && IS_SCREEN(((widget)x)->Parent)) {
+	if (TSF[0].hash == TWS_widget_Left)
+	    TSF[0].TWS_field_scalar -= ((widget)x)->Parent->XLogic;
+	else if (TSF[0].hash == TWS_widget_Up)
+	    TSF[0].TWS_field_scalar -= ((widget)x)->Parent->YLogic;
+    }
     return TRUE;
 }
 
@@ -616,11 +642,13 @@ static byte sockStatGadget(obj x, tsfield TSF) {
 
 static byte sockStatWindow(obj x, tsfield TSF) {
     switch (TSF[0].hash) {
-	TWScase(widget,Left,dat);
-	TWScase(widget,Up,dat);
-	TWScase(widget,XWidth,dat);
-	TWScase(widget,YWidth,dat);
-	
+      case TWS_widget_Left:
+      case TWS_widget_Up:
+      case TWS_widget_XWidth:
+      case TWS_widget_YWidth:
+	sockStatWidget(x, TSF);
+	break;
+
         TWScase(window,Menu,obj);
         TWScase(window,NameLen,dat);
         TWScasevec(window,Name,byte,((window)x)->NameLen);
@@ -703,14 +731,30 @@ static byte sockStatGroup(obj x, tsfield TSF) {
     return TRUE;
 }
 
+static byte sockStatRow(obj x, tsfield TSF) {
+    switch (TSF[0].hash) {
+	TWScase(row,Code,udat);
+	TWScase(row,Flags,byte);
+	TWScase(row,Len,uldat);
+	TWScasevec(row,Text,hwfont,((row)x)->Len);
+	TWScasevec(row,ColText,hwcol,((row)x)->Len);
+      default:
+	return FALSE;
+    }
+    return TRUE;
+}
+
 static byte sockStatMenuItem(obj x, tsfield TSF) {
     switch (TSF[0].hash) {
+	/* missing: */
+#if 0
+	TWS_menuitem_FlagActive;/*TWS_row_Flags*/
+	TWS_menuitem_NameLen;	/*TWS_row_Len*/
+	TWS_menuitem_Name;	/*TWS_row_Text*/
+#endif
 	TWScase(menuitem,Window,obj);
-	TWScase(menuitem,FlagActive,byte);
 	TWScase(menuitem,Left,dat);
-	TWScase(menuitem,NameLen,dat);
 	TWScase(menuitem,ShortCut,dat);
-	TWScasevec(menuitem,Name,byte,((menuitem)x)->NameLen);
       default:
 	return FALSE;
     }
@@ -799,7 +843,7 @@ static void sockStat(any *a) {
 		ok = sockStatGroup(x, &TSF[i]) || sockStatObj(x, &TSF[i]);
 		break;
 	      case menuitem_magic_id:
-		ok = sockStatMenuItem(x, &TSF[i]) || sockStatObj(x, &TSF[i]);
+		ok = sockStatMenuItem(x, &TSF[i]) || sockStatRow(x, &TSF[i]) || sockStatObj(x, &TSF[i]);
 		break;
 	      case menu_magic_id:
 		ok = sockStatMenu(x, &TSF[i]) || sockStatObj(x, &TSF[i]);
@@ -856,8 +900,8 @@ static void sockStat(any *a) {
 #define Pushcase(type) case CAT(TWS_,type): \
 		    { \
 			/* avoid padding problems on big-endian machines */ \
-			type tmp = (type)TSF[i].CAT(TWS_field_,type); \
-			Push(data,type,tmp); \
+			type f = (type)TSF[i].CAT(TWS_field_,type); \
+			Push(data,type,f); \
 		    } \
 		    break
 #endif
@@ -1331,8 +1375,33 @@ static msgport GetOwnerWidget(widget W) {
 	return W->Owner;
     return (msgport)0;
 }
+static void SetXYWidget(widget W, dat x, dat y) {
+    if (W) {
+	if (W->Parent && IS_SCREEN(W->Parent)) {
+	    x += W->Parent->XLogic;
+	    y += W->Parent->YLogic;
+	}
+	Act(SetXY,W)(W, x, y);
+    }
+}
+static void ExposeWidget(widget W, dat XWidth, dat YWidth, dat Left, dat Up, CONST byte *Text, CONST hwfont *Font, CONST hwattr *Attr) {
+    if (W) {
+	Act(Expose,W)(W, XWidth, YWidth, Left, Up, XWidth, Text, Font, Attr);
+    }
+}
 
-
+static void FocusSubWidget(widget W) {
+    widget P;
+    if (W) {
+	W->SelectW = NULL;
+	while ((P = W->Parent) && !IS_SCREEN(P)) {
+	    P->SelectW = W;
+	    W = P;
+	}
+	if (ContainsCursor((widget)WindowParent(W)))
+	    UpdateCursor();
+    }
+}
 
 static gadget CreateGadget
     (widget Parent, dat XWidth, dat YWidth, CONST byte *TextNormal, uldat Attrib, uldat Flags, udat Code,
@@ -1353,6 +1422,14 @@ static void ResizeWindow(window Window, dat X, dat Y) {
 	    X+=2, Y+=2;
 	ResizeRelWindow(Window, X - Window->XWidth, Y - Window->YWidth);
     }
+}
+
+static void Create4MenuRow(window Window, udat Code, byte Flags, uldat Len, byte CONST *Name) {
+    Row4Menu(Window, Code, Flags, Len, Name);
+}
+
+static menuitem Create4MenuMenuItem(obj Parent, window Window, byte Flags, dat Len, byte CONST *Name) {
+    return Item4Menu(Parent, Window, Flags, Len, Name);
 }
 
 static menu CreateMenu(hwcol ColItem, hwcol ColSelect,
@@ -1697,8 +1774,6 @@ static void RequestSelection(obj Owner, uldat ReqPrivate) {
 	TwinSelectionRequest((obj)LS.MsgPort, ReqPrivate, Owner);
 }
 
-
-
 /* socket initialization functions */
 
 
@@ -1963,7 +2038,9 @@ static void Wait4Auth(int fd, uldat slot) {
 }
 
 static byte Check4MagicTranslation(uldat slot, byte *magic, byte len) {
+#ifdef CONF_SOCKET_ALIEN
     static byte warn_count = 0;
+#endif
     
     byte *zero = memchr(magic, '\0', len);
     byte len1 = zero ? (byte)(zero - magic): 0;
@@ -2532,7 +2609,7 @@ static void SocketH(msgport MsgPort) {
 	     * and we will sockSendMsg() it later in the while() loop.
 	     */
 	    if (len)
-		SyntheticKey((window)Msg->Event.EventMouse.W, TW_XTermMouse, 0, len, buf);
+		SyntheticKey(Msg->Event.EventMouse.W, TW_XTermMouse, 0, len, buf);
 	} else
 	    sockSendMsg(MsgPort, Msg);
 	
@@ -2591,6 +2668,7 @@ byte InitSocket(void)
 	
 	RegisterExtension(Remote,KillSlot,sockKillSlot);
 	RegisterExtension(Socket,SendMsg,sockSendMsg);
+	RegisterExtension(Socket,InitAuth,InitAuth);
 
 	m = TWIN_MAGIC;
 	CopyMem(&m, TwinMagicData+TwinMagicData[0]-sizeof(uldat), sizeof(uldat));
@@ -2630,5 +2708,6 @@ void QuitModule(module Module) {
     } 
     UnRegisterExtension(Remote,KillSlot,sockKillSlot);
     UnRegisterExtension(Socket,SendMsg,sockSendMsg);
+    UnRegisterExtension(Socket,InitAuth,InitAuth);
 }
 #endif

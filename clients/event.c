@@ -52,7 +52,7 @@ static byte InitEvent(void) {
 		 (9, "SubWindow", NULL,
 		  Event_Menu, COL(WHITE,BLUE), TW_NOCURSOR,
 		  TW_WINDOW_WANT_KEYS|TW_WINDOW_WANT_MOUSE|TW_WINDOW_WANT_MOUSE_MOTION|TW_WINDOW_WANT_CHANGES,
-		  0/*TW_WINFL_BORDERLESS*/, 7, 3, 0))) {
+		  TW_WINDOWFL_BORDERLESS, 7, 3, 0))) {
 
 		TwSetXYWindow(Event_SubWin, 5, 2);
 		TwMapWindow(Event_SubWin, Event_Win);
@@ -303,7 +303,7 @@ int main(int argc, char *argv[]) {
 		       EventW->X, EventW->Y, EventW->XWidth, EventW->YWidth,
 		       EventW->Flags & TW_MSG_WIDGETFL_SHADED ? ", shaded" : "");
 		TwExposeTextWindow(EventW->W, EventW->XWidth, EventW->YWidth,
-				   EventW->X, EventW->Y, NULL);
+				   EventW->X, EventW->Y, 0, NULL);
 	    }
 	} else if (Msg->Type==TW_MSG_USER_CONTROL) {
 	    tevent_control EventC = &Msg->Event.EventControl;

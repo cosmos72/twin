@@ -1,5 +1,5 @@
-#ifndef _TW_COMMON_H
-#define _TW_COMMON_H
+#ifndef _TWIN_COMMON_H
+#define _TWIN_COMMON_H
 
 /*
  * this file exports functions and variables common to both
@@ -47,7 +47,7 @@ byte InitTransUser(void);
  * these comes either from display.c or from main.c/util.c
  */
 void Quit(int status);
-void GetPrivileges(void);
+void GainPrivileges(void);
 
 int printk(CONST byte *format, ...);
 int flushk(void);
@@ -58,5 +58,5 @@ int flushk(void);
  */
 void RemotePidIsDead(pid_t pid);
 
-#endif /* _TW_HW_COMMON_H */
+#endif /* _TWIN_HW_COMMON_H */
 

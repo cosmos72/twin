@@ -1,0 +1,28 @@
+
+		Philosophy and goals of the 'twin' project:
+
+Twin is intended to be a text mode window environment. It brings mouse
+support, multiple indipendent windows, window manager, terminal emulator, and
+server for remote applications, all in a text mode display.
+
+All base features are already implemented, but there is much room for
+expansion. Planned features are:
+
+* A whole desktop environment, all running in text mode. This includes:
+* A toolkit library with user configurable look-n-feel and rich widget
+  set (already in progress).
+* Programs for all tasks a user could perform while using a text display.
+  Image viewers are probably ruled out (but see aalib), yet most other
+  programs are possible: editor, taskbar, file manager, web browser, mail
+  client, frontend to existing tty-based programs (gdb comes to mind).
+  In most cases, existing programs can be used just adding small changes
+  to better exploit 'twin' features, or even without modifications:
+
+  editor: emacs & clones, vi & clones
+  file manager: midnight commander
+  web browser: links
+  mail clients: pine, mutt, ...
+
+  so the work is infinitely smaller than say, writing KDE or GNOME from
+  scratch.
+

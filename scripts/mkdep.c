@@ -22,13 +22,20 @@
  *   missing source files are noticed, rather than silently ignored.
  */
 
-#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 
-#include <sys/fcntl.h>
+#include "autoconf.h"
+
+#ifdef HAVE_FCNTL_H
+# include <fcntl.h>
+#endif
+
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
+
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/types.h>

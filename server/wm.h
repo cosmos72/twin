@@ -1,10 +1,10 @@
-#ifndef _TW_WM_H
-#define _TW_WM_H
+#ifndef _TWIN_WM_H
+#define _TWIN_WM_H
 
 typedef struct wm_ctx wm_ctx;
 
 struct wm_ctx {
-    window W;  /* top level window user is interacting with */
+    widget W;  /* top level widget user is interacting with */
     screen Screen;
     menu Menu;
     menuitem Item;
@@ -21,8 +21,8 @@ struct wm_ctx {
 
 byte InitWM(void);
 
+void AskCloseWidget(widget W);
 void Check4Resize(window W);
-void AskCloseWindow(window W);
 void MaximizeWindow(window W, byte full_screen);
 void ShowWinList(wm_ctx *C);
 
@@ -31,4 +31,4 @@ byte ActivateCtx(wm_ctx *C, byte State);
 
 void ForceRelease(CONST wm_ctx *C);
 
-#endif /* _TW_WM_H */
+#endif /* _TWIN_WM_H */

@@ -1,5 +1,5 @@
-#ifndef _TW_REMOTE_H
-#define _TW_REMOTE_H
+#ifndef _TWIN_REMOTE_H
+#define _TWIN_REMOTE_H
 
 uldat	RegisterRemoteFd(int Fd, void (*HandlerIO)(int Fd, uldat Slot));
 uldat	RegisterRemote(int Fd, obj HandlerData, void *HandlerIO); /* (void (*HandlerIO))(int Fd, obj HandlerData) */
@@ -37,4 +37,4 @@ void UnRegisterMsgPort(msgport MsgPort);
 
 void remoteKillSlot(uldat slot);
 
-#endif /* _TW_REMOTE_H */
+#endif /* _TWIN_REMOTE_H */

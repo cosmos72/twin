@@ -6,7 +6,7 @@ SUBDIRS=
 
 all: everything
 
-VERSION=0.0.1
+VERSION=0.0.2
 SO_VER=0
 
 BINS=libTutf.so.$(VERSION)
@@ -20,7 +20,7 @@ CFLAGS_libTutf_u.o+=-D_REENTRANT
 
 LDFLAGS_libTutf.so.$(VERSION)=$(LDFLAGS_SOLIB)libTutf.so.$(SO_VER)
 
-include $(TOPDIR)/conf/config.status
+-include $(TOPDIR)/conf/conf.current
 -include .modules
 -include .depend
 
@@ -65,7 +65,7 @@ endif
 # Must correctly set all CFLAGS* and LDFLAGS* before including this!
 #
 #
-include $(TOPDIR)/MakeRules
+include $(TOPDIR)/makerules
 
 
 

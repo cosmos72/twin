@@ -1,134 +1,164 @@
+#!/bin/sh
 
-function yesno() {
-    ANS=
-    VAL=$(eval "echo \"\${$1}\"")
-    HELP=$(eval "echo \"\${${1}_HELP}\"")
-    
-    if test "$VAL" = "y" -o "$VAL" = "m"; then
-	PROMPT="[Y/n]"
-	VAL="y"
-    else
-	PROMPT="[y/N]"
-    fi
-    
-    while test "$ANS" != "y" -a "$ANS" != "n"
-    do
-	echo -n "$HELP $PROMPT ? "
-	read ANS
-	case "$ANS" in
-	    "" ) ANS="$VAL";;
-	    [yY] | [Yy]es | YES ) ANS="y";;
-	    [nN] | [Nn]o  | NO  ) ANS="n";;
-	esac
-    done
-    eval "$1"="$ANS"
-}
+for ac_option
+do
+  case "$ac_option" in
 
-function yesno_dep() {
-   DEP=$(eval "echo \"\${$2}\"")
-   if test "$DEP" != n; then
-      yesno "$1"
-   fi
-}
+  -help | --help | --hel | --he)
+    cat << EOF
+Usage: scripts/Configure [OPTIONS]
+Options: [defaults in brackets after descriptions]
+  --help                  print this message
+  --show                  show current configuration
+  --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
+  --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
+--enable options recognized:
+  --enable--shlibs[=yes|no]              enable building shared libraries
+  --enable--modules[=yes|no]             enable building shared modules
+  --enable--alloc[=yes|no]               enable custom malloc/free routines
+  --enable--unicode[=yes|no]             enable building unicode-aware code
+  --enable-socket[=yes|no]               enable remote socket connections (libTw)
+  --enable-socket-gz[=yes|no]            enable gzip compression on sockets
+  --enable-socket-pthreads[=yes|no]      enable thread safe libTw (requires pthread)
+  --enable-socket-alien[=yes|no]         enable support for non-native architectures
+EOF
+    cat << EOF
+  --enable-wm[=yes|no|mod]               enable the builtin WM (absolutely needed!)
+  --enable-wm-rc[=yes|no|mod]            enable ~/.twinrc configuration parser
+  --enable-wm-rc-shmmap[=yes|no]         enable mmapped shared file for parser
+  --enable-wm-rc-shrink[=yes|no]         enable shrinking memory when parser finished
+  --enable-term[=yes|no|mod]             enable builtin terminal emulator
+  --enable-term-devpts[=yes|no]          enable glibc-2.1 /dev/pts/* pseudo-ttys
+  --enable-printk[=yes|no]               enable logging messages in Messages window
+  --enable-hw-tty[=yes|no|mod]           enable tty drivers
+  --enable-hw-tty-linux[=yes|no]         enable the Linux console driver
+  --enable-hw-tty-twterm[=yes|no]        enable the twterm terminal driver
+  --enable-hw-tty-termcap[=yes|no]       enable the termcap terminal driver
+  --enable-hw-x11[=yes|no|mod]           enable the X11 driver
+  --enable-hw-twin[=yes|no|mod]          enable the twin native driver
+  --enable-hw-display[=yes|no|mod]       enable the twdisplay client driver
+  --enable-hw-ggi[=yes|no|mod]           enable the ggi driver
+EOF
+    exit 0 ;;
+  esac
+done
 
-function yesmodno() {
-   if [ $CONF__MODULES = n ]; then
-      yesno "$1"
-   else
-      ANS=
-      VAL=$(eval "echo \"\${$1}\"")
-      HELP=$(eval "echo \"\${${1}_HELP}\"")
-    
-      if test "$VAL" = "y"; then
-	  PROMPT="[Y/m/n]"
-      elif test "$VAL" = "m"; then
-	  PROMPT="[y/M/n]"
-      else
-	  PROMPT="[y/m/N]"
-      fi
-    
-      while test "$ANS" != "y" -a "$ANS" != "m" -a "$ANS" != "n"
-      do
-	  echo -n "$HELP $PROMPT ? "
-	  read ANS
-	  case "$ANS" in
-	      "" ) ANS="$VAL";;
-	      [yY] | [Yy]es | YES ) ANS="y";;
-	      [mM] | [Mm]od | MOD ) ANS="m";;
-	      [nN] | [Nn]o  | NO  ) ANS="n";;
-	  esac
-      done
-      eval "$1=$ANS"
-   fi
-}
-
-function yesmodno_dep() {
-   DEP=$(eval "echo \"\${$2}\"")
-   if test "$DEP" != n; then
-      yesmodno "$1"
-   fi
-}
-
-function yesno_truedep() {
-   DEP=$(eval "echo \"\${$2}\"")
-   if test "$DEP" != n; then
-      yesno "$1"
-   else
-      eval "$1=n"
-   fi
-   
-}
-
-function yesmodno_truedep() {
-   DEP=$(eval "echo \"\${$2}\"")
-   if test "$DEP" != n; then
-      yesmodno "$1"
-   else
-      eval "$1=n"
-   fi
-   
-}
-
-function msg() {
-   echo "# $1"
-}
-   
-function menu() {
-   echo -e "#\n# "$(eval "echo \"\${${1}_MENU}\"")"\n#"
-}
-
-function endmenu() {
-   :
-}
-
-function dump() {
-    VAL=$(eval "echo \"\${$1}\"")
-    echo "$1=$VAL"
-}
-
-echo "#"
-echo "# Twin configuration utility"
-echo "#"
-
-if [ -f conf/config.status ]; then
-    echo "# Using configuration saved in config.status"
-    source conf/config.status
+#
+# read current configuration
+#
+if test -f conf/conf.current -a -f conf/conf.auto -a conf/conf.current -ot conf/conf.auto; then
+  . conf/conf.auto
+elif test -f conf/conf.current; then
+  . conf/conf.current
+elif test -f conf/conf.auto; then
+  . conf/conf.auto
 else
-    echo "# Using default configuration from config.default"
-    source conf/config.default
+  . conf/conf.default
+  echo "scripts/Configure: warning: missing conf/conf.auto: './configure' will overwrite your changes!" 1>&2
 fi
 
-source conf/config.base
+ac_cf_list=
+#
+# set enable_* variables from current configuration
+#
+for ac_CONF in `cat conf/conf.list`; do
+  ac_feature=enable_`echo $ac_CONF | cut -d_ -f2- | sed 'y%ABCDEFGHIJKLMNOPQRSTUVWXYZ%abcdefghijklmnopqrstuvwxyz%' | sed 's/-/_/g'`
+  ac_cf_list="$ac_cf_list $ac_feature"
+  eval "$ac_feature=$`echo $ac_CONF`"
+done
 
-cat >conf/config.status <<EOF
 #
-# This file is created by 'make config', do not edit!
+# process command line options
 #
-# Configuration:
-#
-EOF
+for ac_option
+do
+  case "$ac_option" in
+  -*=*) ac_optarg=`echo "$ac_option" | sed 's/[-_a-zA-Z0-9]*=//'` ;;
+  *) ac_optarg= ;;
+  esac
+  
+  case "$ac_option" in
+  
+  -disable-* | --disable-*)
+    ac_feature=`echo $ac_option|sed -e 's/-*disable-//'`
+    # Reject names that are not valid shell variable names.
+    if test -n "`echo $ac_feature| sed 's/[-a-zA-Z0-9_]//g'`"; then
+      echo "scripts/Configure: error: $ac_feature: invalid feature name" 1>&2
+      exit 1
+    fi
+    ac_feature=`echo $ac_feature| sed 's/-/_/g'`
+    eval "enable_${ac_feature}=no" ;;
 
-for i in `cat conf/config.list`; do
-    dump $i
-done >>conf/config.status
+  --show | --sho | --sh )
+    ac_opt_show=yes ;;
+    
+  -enable-* | --enable-*)
+    ac_feature=`echo $ac_option|sed -e 's/-*enable-//' -e 's/=.*//'`
+    # Reject names that are not valid shell variable names.
+    if test -n "`echo $ac_feature| sed 's/[-_a-zA-Z0-9]//g'`"; then
+      echo "scripts/Configure: error: $ac_feature: invalid feature name" 1>&2
+      exit 1
+    fi
+    ac_feature=`echo $ac_feature| sed 's/-/_/g'`
+    case "$ac_option" in
+      *=*) ;;
+      *) ac_optarg=yes ;;
+    esac
+    eval "enable_${ac_feature}='$ac_optarg'" ;;
+
+  -help | --help | --hel | --he)
+    ;;
+
+  *)
+    echo "scripts/Configure: error: $ac_option: invalid option; use --help to show usage" 1>&2;
+    exit 1 ;;
+
+  esac
+done
+
+
+#
+# prepare conf/conf.auto
+#
+
+exec 3>conf/conf.auto
+
+echo "#" 1>&3
+echo "# This configuration was created by 'scripts/Configure [OPTIONS]'." 1>&3
+echo "# Don't edit it, use one of 'make config', 'make menuconfig', " 1>&3
+echo "# 'scripts/Configure [OPTIONS]' or './configure [OPTIONS]' instead." 1>&3
+echo "#" 1>&3
+
+if test "$ac_opt_show"; then
+  echo "#" 1>&2
+  echo "# scripts/Configure: current configuration is:" 1>&2
+  echo "#" 1>&2
+fi
+
+for ac_feature in $ac_cf_list; do
+  eval "ac_cf_val=$`echo $ac_feature`"
+  case "$ac_cf_val" in
+    y | yes ) ac_cf_val=y ; ac_cf_val_long=yes ;;
+    n | no  ) ac_cf_val=n ; ac_cf_val_long=no  ;;
+    m | mod ) ac_cf_val=m ; ac_cf_val_long=mod ;;
+    * )
+      # unset / undetectable. set to empty.
+      ac_cf_val= ; ac_cf_val_long= ;;
+  esac
+  if test "$ac_cf_val"; then
+    ac_CONF=CONF_`echo $ac_feature | cut -d_ -f2- | sed 'y%abcdefghijklmnopqrstuvwxyz%ABCDEFGHIJKLMNOPQRSTUVWXYZ%'`
+    #echo $ac_feature, $ac_cf_val_long
+    #echo $ac_CONF, $ac_cf_val
+    echo "$ac_CONF=$ac_cf_val" 1>&3
+    if test "$ac_opt_show"; then
+      echo "  --`echo $ac_feature | sed 's/_/-/g'`=$ac_cf_val_long"
+    fi
+  fi
+done
+
+if test -z "$ac_opt_show"; then
+  echo "#" 1>&2
+  echo "# scripts/Configure: conf/conf.auto successfully updated." 1>&2
+  echo "#" 1>&2
+fi
 

@@ -10,14 +10,22 @@
  *
  */
 
-#include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/ioctl.h>
-#include <fcntl.h>
-#include <termios.h>
-#include <unistd.h>
-#include <sys/ioctl.h>
 #include <signal.h>
+
+#include "autoconf.h"
+
+#ifdef HAVE_SYS_IOCTL_H
+# include <sys/ioctl.h>
+#endif
+
+#ifdef HAVE_TERMIOS_H
+# include <termios.h>
+#else
+# ifdef HAVE_TERMIO_H
+#  include <termio.h>
+# endif
+#endif
 
 #include "twin.h"
 #include "data.h"
@@ -339,26 +347,36 @@ byte WriteRow(window Window, ldat Len, CONST byte *Text) {
 
 
 
-void ExposeWidget(widget W, dat XWidth, dat YWidth, dat Left, dat Up, CONST byte *Text, CONST hwfont *Font, CONST hwattr *Attr) {
+void ExposeWidget2(widget W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch, CONST byte *Text, CONST hwfont *Font, CONST hwattr *Attr) {
     if (w_USE(W, USEEXPOSE)) {
 	if (Text || Font || Attr) {
-	    W->USE.E.Text = Text;
-	    W->USE.E.HWFont = Font;
-	    W->USE.E.HWAttr = Attr;
+	    if (Text) {
+		W->USE.E.E.Text = Text;
+		W->USE.E.Flags = WIDGET_USEEXPOSE_TEXT;
+	    } else if (Font) {
+		W->USE.E.E.HWFont = Font;
+		W->USE.E.Flags = WIDGET_USEEXPOSE_HWFONT;
+	    } else {
+		W->USE.E.E.HWAttr = Attr;
+		W->USE.E.Flags = WIDGET_USEEXPOSE_HWATTR;
+	    }
 	    W->USE.E.X1 = Left;
 	    W->USE.E.X2 = Left + XWidth - 1;
 	    W->USE.E.Y1 = Up;
 	    W->USE.E.Y2 = Up + YWidth - 1;
+	    W->USE.E.Pitch = Pitch;
 	} else {
-	    W->USE.E.Text = (byte *)1;
+	    W->USE.E.E.Text = (byte *)1;
+	    W->USE.E.Flags = WIDGET_USEEXPOSE_TEXT;
 	    W->USE.E.X1 = W->USE.E.Y1 =
 		W->USE.E.X2 = W->USE.E.Y2 = -1;
+	    W->USE.E.Pitch = 0;
 	}
 	
 	DrawLogicWidget(W, Left, Up, Left + XWidth - 1, Up + YWidth - 1);
-	W->USE.E.Text = NULL;
-	W->USE.E.HWFont = NULL;
-	W->USE.E.HWAttr = NULL;
+
+	WriteMem(&W->USE.E.E, '\0', sizeof(W->USE.E.E));
+	W->USE.E.Flags = 0;
     }
 }
 
@@ -1237,7 +1255,8 @@ void ChangeMenuFirstScreen(menuitem NewItem, byte ByMouse, byte Flag) {
     screen Screen;
     menu Menu, _Menu;
     menuitem CurrItem;
-    window NewWin, CurrWin;
+    window NewWin;
+    widget CurrW;
     
     Screen=All->FirstScreen;
     Menu=Act(FindMenu,Screen)(Screen);
@@ -1247,10 +1266,7 @@ void ChangeMenuFirstScreen(menuitem NewItem, byte ByMouse, byte Flag) {
 	if (All->SetUp->Flags & SETUP_HIDEMENU && Flag==ACTIVATE_MENU_FLAG)
 	    HideMenu(FALSE);
 	
-	CurrWin = (window)Screen->FocusW;
-	if (CurrWin && !IS_WINDOW(CurrWin))
-	    CurrWin = (window)0;
-	
+	CurrW = Screen->FocusW;
 	
 	if (Flag == ACTIVATE_MENU_FLAG)
 	    CurrItem = (menuitem)0;
@@ -1276,21 +1292,20 @@ void ChangeMenuFirstScreen(menuitem NewItem, byte ByMouse, byte Flag) {
 	if (Flag!=DISABLE_MENU_FLAG) {
 	    
 	    if (Flag==ACTIVATE_MENU_FLAG) {
-		Screen->MenuWindow = CurrWin; /* so that it keeps `active' borders */
+		Screen->MenuWindow = (window)CurrW; /* so that it keeps `active' borders */
 		Screen->FocusW = (widget)0;
 	    }
 	    
 	    if (NewItem) {
-		_Menu = NewItem->Menu; /* may either be Menu or All->CommonMenu */
+		_Menu = (menu)NewItem->Parent; /* may either be Menu or All->CommonMenu */
 		NewWin = NewItem->Window;
 		
-		/* take into account Screen->XLogic,YLogic scrolling */
-		NewWin->Up = Screen->YLogic + 1;
-		NewWin->Left = Screen->XLogic + NewItem->Left;
+		NewWin->Up = 1;
+		NewWin->Left = NewItem->Left;
 		
 		if (Menu != _Menu && Menu->LastI)
 		    /* adjust common menu NewWin->Left to the Item position in this menu */
-		    NewWin->Left += Menu->LastI->Left + Menu->LastI->NameLen;
+		    NewWin->Left += Menu->LastI->Left + Menu->LastI->Len;
 	    
 		Act(SetSelectItem,Menu)(Menu, NewItem);
 		
@@ -1299,7 +1314,7 @@ void ChangeMenuFirstScreen(menuitem NewItem, byte ByMouse, byte Flag) {
 		else if (NewWin->CurY == MAXLDAT)
 		    NewWin->CurY = (ldat)0;
 	    
-		if (NewItem->FlagActive)
+		if (NewItem->Flags & ROW_ACTIVE)
 		    NewWin->Flags &= ~WINDOWFL_DISABLED;
 		else
 		    NewWin->Flags |= WINDOWFL_DISABLED;
@@ -1316,8 +1331,8 @@ void ChangeMenuFirstScreen(menuitem NewItem, byte ByMouse, byte Flag) {
 		} else
 		    Do(KbdFocus,Window)((window)0);
 	    }
-	    if (CurrItem && CurrWin && (CurrWin->Flags & WINDOWFL_MENU))
-		Act(UnMap,CurrWin)(CurrWin);
+	    if (CurrItem && CurrW && IS_WINDOW(CurrW) && (CurrW->Flags & WINDOWFL_MENU))
+		Act(UnMap,CurrW)(CurrW);
 	    UpdateCursor();
 	}
 	if (All->SetUp->Flags & SETUP_HIDEMENU && Flag==DISABLE_MENU_FLAG)
@@ -1357,14 +1372,17 @@ void RollUpWindow(window W, byte on_off) {
     }
 }
 
-void MakeFirstWindow(window W, byte alsoFocus) {
+void MakeFirstWidget(widget W, byte alsoFocus) {
     screen Screen;
     
     if (W && (Screen = (screen)W->Parent) && IS_SCREEN(Screen)) {
 	
-	if (Screen->FirstW != (widget)W) {
-	    MoveFirst(W, (widget)Screen, (widget)W);
-	    DrawAreaWindow2(W);
+	if (Screen->FirstW != W) {
+	    MoveFirst(W, (widget)Screen, W);
+	    if (IS_WINDOW(W))
+		DrawAreaWindow2((window)W);
+	    else
+		DrawAreaWidget(W);
 	}
 	if (Screen == All->FirstScreen) {
 	    if (alsoFocus)
@@ -1372,24 +1390,27 @@ void MakeFirstWindow(window W, byte alsoFocus) {
 	    UpdateCursor();
 	}
 
-	if (Screen->FnHookWindow)
-	    Screen->FnHookWindow(Screen->HookWindow);
+	if (Screen->FnHookW)
+	    Screen->FnHookW(Screen->HookW);
     }
 }
 
-void MakeLastWindow(window W, byte alsoUnFocus) {
+void MakeLastWidget(widget W, byte alsoUnFocus) {
     screen Screen;
-    window _W;
+    widget _W;
     
     if (W && (Screen = (screen)W->Parent) && IS_SCREEN(Screen)) {
 	
-	if (Screen->LastW != (widget)W) {
-	    MoveLast(W, (widget)Screen, (widget)W);
-	    DrawAreaWindow2(W);
+	if (Screen->LastW != W) {
+	    MoveLast(W, (widget)Screen, W);
+	    if (IS_WINDOW(W))
+		DrawAreaWindow2((window)W);
+	    else
+		DrawAreaWidget(W);
 	}
 	if (Screen == All->FirstScreen) {
 	    if (alsoUnFocus) {
-		_W = (window)Screen->FirstW;
+		_W = Screen->FirstW;
 		if (_W && IS_WINDOW(_W) && _W != W)
 		    Act(Focus,_W)(_W);
 		else
@@ -1398,8 +1419,8 @@ void MakeLastWindow(window W, byte alsoUnFocus) {
 		UpdateCursor();
 	}
 	
-	if (Screen->FnHookWindow)
-	    Screen->FnHookWindow(Screen->HookWindow);
+	if (Screen->FnHookW)
+	    Screen->FnHookW(Screen->HookW);
     }
 }
 

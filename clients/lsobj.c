@@ -42,8 +42,7 @@ udat field_list[] = {
 
 	TWS_group_FirstG, TWS_group_LastG, TWS_group_SelectG,
 	
-	TWS_menuitem_Window, TWS_menuitem_FlagActive, TWS_menuitem_Left,
-	TWS_menuitem_NameLen, TWS_menuitem_ShortCut, TWS_menuitem_Name,
+	TWS_menuitem_Window, TWS_menuitem_Left, TWS_menuitem_ShortCut,
 	
 	TWS_menu_ColItem, TWS_menu_ColSelect, TWS_menu_ColDisabled, TWS_menu_ColSelectDisabled,
 	TWS_menu_ColShtCut, TWS_menu_ColSelShtCut, TWS_menu_CommonItems, TWS_menu_FlagDefColInfo,
@@ -53,7 +52,9 @@ udat field_list[] = {
 	TWS_msgport_FirstMenu, TWS_msgport_LastMenu, TWS_msgport_FirstW, TWS_msgport_LastW,
 	TWS_msgport_FirstGroup, TWS_msgport_LastGroup, TWS_msgport_FirstMutex, TWS_msgport_LastMutex,
 
-	TWS_mutex_O_Prev, TWS_mutex_O_Next, TWS_mutex_Owner, TWS_mutex_Perm, TWS_mutex_NameLen, TWS_mutex_Name
+	TWS_mutex_O_Prev, TWS_mutex_O_Next, TWS_mutex_Owner, TWS_mutex_Perm, TWS_mutex_NameLen, TWS_mutex_Name,
+	
+	TWS_row_Code, TWS_row_Flags, TWS_row_Len, TWS_row_Text, TWS_row_ColText,
 };
 
 uldat max_list = sizeof(field_list)/sizeof(field_list[0]);
@@ -90,8 +91,7 @@ byte *name_list[] = {
 	
 	"group_FirstG", "group_LastG", "group_SelectG",
 	
-	"menuitem_Window", "menuitem_FlagActive", "menuitem_Left",
-	"menuitem_NameLen", "menuitem_ShortCut", "menuitem_Name",
+	"menuitem_Window", "menuitem_Left", "menuitem_ShortCut",
 	
 	"menu_ColItem", "menu_ColSelect", "menu_ColDisabled", "menu_ColSelectDisabled",
 	"menu_ColShtCut", "menu_ColSelShtCut", "menu_CommonItems", "menu_FlagDefColInfo",
@@ -101,7 +101,9 @@ byte *name_list[] = {
 	"msgport_FirstMenu", "msgport_LastMenu", "msgport_FirstW", "msgport_LastW",
 	"msgport_FirstGroup", "msgport_LastGroup", "msgport_FirstMutex", "msgport_LastMutex",
 
-	"mutex_O_Prev", "mutex_O_Next", "mutex_Owner", "mutex_Perm", "mutex_NameLen", "mutex_Name"
+	"mutex_O_Prev", "mutex_O_Next", "mutex_Owner", "mutex_Perm", "mutex_NameLen", "mutex_Name",
+
+	"row_Code", "row_Flags", "row_Len", "row_Text", "row_ColText",
 };
 
     

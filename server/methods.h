@@ -1,5 +1,5 @@
-#ifndef _TW_METHODS_H
-#define _TW_METHODS_H
+#ifndef _TWIN_METHODS_H
+#define _TWIN_METHODS_H
 
 byte FindInfo(menu Menu, dat i);
 window FakeOpenTerm(CONST byte *arg0, byte * CONST * argv);
@@ -64,11 +64,11 @@ extern fn Fn;
 #define Win4Menu(Menu) \
 	Do(Create4Menu,Window)(FnWindow, (Menu))
 
-#define Row4Menu(Window, Code, Flags, Len, Text) \
-	Do(Create4Menu,Row)(FnRow, (Window), (Code), (Flags), (Len), (Text))
+#define Row4Menu(Window, Code, Flags, Len, Name) \
+	(row)Do(Create4Menu,MenuItem)(FnMenuItem, (obj)(Window), (window)0, (Code), (Flags), (Len), (Name))
 
-#define Item4Menu(Menu, Window, Flag, Len, Name) \
-	Do(Create4Menu,MenuItem)(FnMenuItem, (Menu), (Window), (Flag), (Len), (Name))
+#define Item4Menu(Menu, Window, Flags, Len, Name) \
+	Do(Create4Menu,MenuItem)(FnMenuItem, (obj)(Menu), (Window), (udat)0, (Flags), (Len), (Name))
 
 #define Item4MenuCommon(Menu) \
 	Do(Create4MenuCommon,MenuItem)(FnMenuItem, (Menu))
@@ -79,5 +79,5 @@ void *OverrideMth(void **where, void *OldMethod, void *NewMethod);
           OverrideMth((void **)&(Fn##ObjName->Command), (void *)ExpectedMethod, (void *)NewMethod)
 
 
-#endif /* _TW_METHODS_H */
+#endif /* _TWIN_METHODS_H */
 

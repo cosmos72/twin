@@ -11,11 +11,13 @@
  *
  */
 
-#include <errno.h>
-#include <fcntl.h>
+#include "autoconf.h"
+
 #define __USE_UNIX98 
-#include <unistd.h>
-#include <sys/types.h>
+
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
 #include <sys/stat.h>
 
 #include "tty_ioctl.h"
@@ -66,11 +68,11 @@ struct tty_data {
     int GPM_keys;
 #endif
 
-    byte *scr_clear;
+    byte *tc_scr_clear;
 #ifdef CONF_HW_TTY_TERMCAP
-    byte *cursor_goto, *cursor_on, *cursor_off,
-	*bold_on, *blink_on, *attr_off,
-	*kpad_on, *kpad_off, *audio_bell,
+    byte *tc_cursor_goto, *tc_cursor_on, *tc_cursor_off,
+	*tc_bold_on, *tc_blink_on, *tc_attr_off,
+	*tc_kpad_on, *tc_kpad_off, *tc_audio_bell,
 	colorbug, wrapglitch;
 #endif
 };
@@ -91,16 +93,16 @@ struct tty_data {
 #define GPM_Conn	(ttydata->GPM_Conn)
 #define GPM_fd		(ttydata->GPM_fd)
 #define GPM_keys	(ttydata->GPM_keys)
-#define cursor_goto	(ttydata->cursor_goto)
-#define cursor_on	(ttydata->cursor_on)
-#define cursor_off	(ttydata->cursor_off)
-#define bold_on		(ttydata->bold_on)
-#define blink_on	(ttydata->blink_on)
-#define attr_off	(ttydata->attr_off)
-#define kpad_on		(ttydata->kpad_on)
-#define kpad_off	(ttydata->kpad_off)
-#define scr_clear	(ttydata->scr_clear)
-#define audio_bell	(ttydata->audio_bell)
+#define tc_cursor_goto	(ttydata->tc_cursor_goto)
+#define tc_cursor_on	(ttydata->tc_cursor_on)
+#define tc_cursor_off	(ttydata->tc_cursor_off)
+#define tc_bold_on	(ttydata->tc_bold_on)
+#define tc_blink_on	(ttydata->tc_blink_on)
+#define tc_attr_off	(ttydata->tc_attr_off)
+#define tc_kpad_on	(ttydata->tc_kpad_on)
+#define tc_kpad_off	(ttydata->tc_kpad_off)
+#define tc_scr_clear	(ttydata->tc_scr_clear)
+#define tc_audio_bell	(ttydata->tc_audio_bell)
 #define colorbug	(ttydata->colorbug)
 #define wrapglitch	(ttydata->wrapglitch)
 
@@ -133,7 +135,7 @@ static byte stdin_InitKeyboard(void) {
     ttyb.c_cc[VINTR] = 0;
     tty_setioctl(tty_fd, &ttyb);
 
-    write(tty_fd, "\033Z", 4); /* request ID */
+    write(tty_fd, "\033Z", 2); /* request ID */
     /* ensure we CAN read from the tty */
     do {
 	i = read(tty_fd, buf, 15);
@@ -473,7 +475,7 @@ static void stdin_Resize(dat x, dat y) {
 	 * can't resize the tty, just clear it so that
 	 * extra size will get padded with blanks
 	 */
-	fprintf(stdOUT, "\033[0m%s", scr_clear);
+	fprintf(stdOUT, "\033[0m%s", tc_scr_clear);
 	fflush(stdOUT);
 	/*
 	 * flush now not to risk arriving late

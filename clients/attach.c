@@ -13,11 +13,7 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <unistd.h>
-#include <sys/time.h>
-#include <sys/types.h>
 #include <signal.h>
-#include <errno.h>
 
 #include "Tw/Tw.h"
 #include "Tw/Twerrno.h"
@@ -48,11 +44,24 @@ static void Usage(byte detach) {
 	    detach ? "" : " (default)", detach ? " (default)" : "");
 }
 
-static byte gotSignalWinch;
+static TW_VOLATILE byte gotSignals, gotSignalWinch, gotSignalPanic;
 
-static void SignalWinch(int n) {
+#if TW_RETSIGTYPE == void
+# define TW_RETFROMSIGNAL
+#else
+# define TW_RETFROMSIGNAL return 0;
+#endif
+
+static TW_RETSIGTYPE SignalWinch(int n) {
     signal(SIGWINCH, SignalWinch);
-    gotSignalWinch = TRUE;
+    gotSignals = gotSignalWinch = TRUE;
+    TW_RETFROMSIGNAL
+}
+
+static TW_RETSIGTYPE SignalPanic(int n) {
+    signal(n, SIG_IGN);
+    gotSignals = gotSignalPanic = TRUE;
+    TW_RETFROMSIGNAL
 }
 
 static void ShowVersion(void) {
@@ -73,6 +82,29 @@ static byte VersionsMatch(byte force) {
 	return FALSE;
     }
     return TRUE;
+}
+
+static void InitSignals(void) {
+    signal(SIGWINCH,SignalWinch);
+    signal(SIGCHLD, SIG_IGN);
+    signal(SIGPIPE, SIG_IGN);
+    signal(SIGIO,   SIG_IGN);
+#ifndef DONT_TRAP_SIGNALS
+    signal(SIGHUP,  SignalPanic);
+    signal(SIGINT,  SignalPanic);
+    signal(SIGQUIT, SignalPanic);
+    signal(SIGILL,  SignalPanic);
+    signal(SIGABRT, SignalPanic);
+    signal(SIGBUS,  SignalPanic);
+    signal(SIGFPE,  SignalPanic);
+    signal(SIGSEGV, SignalPanic);
+    signal(SIGTERM, SignalPanic);
+    signal(SIGXCPU, SignalPanic);
+    signal(SIGXFSZ, SignalPanic);
+# ifdef SIGPWR
+    signal(SIGPWR,  SignalPanic);
+# endif
+#endif
 }
 
 TW_DECL_MAGIC(attach_magic);
@@ -173,6 +205,8 @@ int main(int argc, char *argv[]) {
     
     redirect = flags & TW_ATTACH_HW_REDIRECT;
 
+    InitSignals();
+
     if (TwCheckMagic(attach_magic) && TwOpen(dpy) && TwCreateMsgPort(8, "Twattach", 0, 0, 0)) do {
 	
 	if (!VersionsMatch(force)) {
@@ -190,8 +224,6 @@ int main(int argc, char *argv[]) {
 	TwAttachHW(arg ? strlen(arg) : 0, arg, flags);
 	TwFlush();
 	
-	signal(SIGWINCH, SignalWinch);
-	    
 	if (redirect)
 	    fprintf(stderr, "reported messages...\n");
 	
@@ -232,7 +264,7 @@ int main(int argc, char *argv[]) {
 	    fd_set fds;
 	    FD_ZERO(&fds);
 	    
-	    while (!TwInPanic()) {
+	    while (!gotSignalPanic && !TwInPanic()) {
 		while (TwReadMsg(FALSE))
 		    ;
 		FD_SET(fd, &fds);

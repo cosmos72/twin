@@ -21,10 +21,19 @@
 
 # else /* rest of the world */
 
-#  include <termcap.h>
+#  ifdef HAVE_TERMCAP_H
+#   include <termcap.h>
+#  else
+#   ifdef HAVE_NCURSES_H
+#    include <ncurses.h>
+#   else
+#    ifdef HAVE_NCURSES_NCURSES_H
+#     include <ncurses/ncurses.h>
+#    endif
+#   endif
+#  endif
 
-# endif         
-
+# endif /* rest of the world */
 
 static void termcap_QuitVideo(void);
 static void termcap_ShowMouse(void);
@@ -40,10 +49,10 @@ static byte termcap_CanDragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft,
 static void termcap_DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp);
 
 INLINE void termcap_SetCursorType(uldat type) {
-    fprintf(stdOUT, "%s", (type & 0xFFFFFFl) == NOCURSOR ? cursor_off : cursor_on);
+    fprintf(stdOUT, "%s", (type & 0xFFFFFFl) == NOCURSOR ? tc_cursor_off : tc_cursor_on);
 }
 INLINE void termcap_MoveToXY(udat x, udat y) {
-    fputs(tgoto(cursor_goto, x, y), stdOUT);
+    fputs(tgoto(tc_cursor_goto, x, y), stdOUT);
 }
 
 static byte *termcap_extract(byte *cap, byte **dest) {
@@ -70,9 +79,9 @@ static byte *termcap_extract(byte *cap, byte **dest) {
 
 static void termcap_cleanup(void) {
     byte ***np, **tc_quit[] = {
-	&cursor_goto, &cursor_on, &cursor_off,
-	    &bold_on, &blink_on, &attr_off,
-	    &kpad_on, &kpad_off, &scr_clear, &audio_bell,
+	&tc_cursor_goto, &tc_cursor_on, &tc_cursor_off,
+	    &tc_bold_on, &tc_blink_on, &tc_attr_off,
+	    &tc_kpad_on, &tc_kpad_off, &tc_scr_clear, &tc_audio_bell,
 	    NULL};
     
     for (np = tc_quit; *np; np++)
@@ -80,14 +89,14 @@ static void termcap_cleanup(void) {
 }
 
 static void fixup_colorbug(void) {
-    uldat len = LenStr(attr_off);
+    uldat len = LenStr(tc_attr_off);
     byte *s = AllocMem( len + 9);
     
     if (s) {
-	CopyMem(attr_off, s, len);
+	CopyMem(tc_attr_off, s, len);
 	CopyMem("\033[37;40m", s + len, 9);
-	FreeMem(attr_off);
-	attr_off = s;
+	FreeMem(tc_attr_off);
+	tc_attr_off = s;
     }
 }
 
@@ -97,16 +106,16 @@ static byte termcap_InitVideo(void) {
 	byte *cap, **buf;
     };
     struct tc_init_node *np, tc_init[] = {
-	{ "cm", &cursor_goto },
-	{ "ve", &cursor_on },
-	{ "vi", &cursor_off },
-	{ "md", &bold_on },
-	{ "mb", &blink_on },
-	{ "me", &attr_off },
-	{ "ks", &kpad_on },
-	{ "ke", &kpad_off },
-	{ "cl", &scr_clear },
-	{ "bl", &audio_bell },
+	{ "cm", &tc_cursor_goto },
+	{ "ve", &tc_cursor_on },
+	{ "vi", &tc_cursor_off },
+	{ "md", &tc_bold_on },
+	{ "mb", &tc_blink_on },
+	{ "me", &tc_attr_off },
+	{ "ks", &tc_kpad_on },
+	{ "ke", &tc_kpad_off },
+	{ "cl", &tc_scr_clear },
+	{ "bl", &tc_audio_bell },
 	{ NULL, NULL }
     };
     char tcbuf[2048];		/* by convention, this is enough */
@@ -140,7 +149,7 @@ static byte termcap_InitVideo(void) {
 	}
     }
     
-    if (!*cursor_goto) {
+    if (!*tc_cursor_goto) {
 	printk("      termcap_InitVideo() failed: terminal misses `cursor goto' capability\n");
 	termcap_cleanup();
 	return FALSE;
@@ -150,7 +159,7 @@ static byte termcap_InitVideo(void) {
     if (colorbug)
 	fixup_colorbug();
 
-    fprintf(stdOUT, "%s%s", attr_off, scr_clear);
+    fprintf(stdOUT, "%s%s", tc_attr_off, tc_scr_clear);
     
     HW->FlushVideo = termcap_FlushVideo;
     HW->FlushHW = stdout_FlushHW;
@@ -194,7 +203,7 @@ static void termcap_QuitVideo(void) {
 
     termcap_MoveToXY(0, DisplayHeight-1);
     termcap_SetCursorType(LINECURSOR);
-    fputs(attr_off, stdOUT); /* reset colors */
+    fputs(tc_attr_off, stdOUT); /* reset colors */
     
     termcap_cleanup();
     
@@ -202,7 +211,7 @@ static void termcap_QuitVideo(void) {
 }
 
 
-#define termcap_MogrifyInit() fputs(attr_off, stdOUT); _col = COL(WHITE,BLACK)
+#define termcap_MogrifyInit() fputs(tc_attr_off, stdOUT); _col = COL(WHITE,BLACK)
 
 INLINE byte *termcap_CopyAttr(byte *attr, byte *dest) {
     while ((*dest++ = *attr++))
@@ -220,13 +229,13 @@ INLINE void termcap_SetColor(hwcol col) {
 	    ((_col & COL(HIGH,0)) && !(col & COL(HIGH,0)))) {
 	    
 	    /* cannot turn off blinking or standout, reset everything */
-	    colp = termcap_CopyAttr(attr_off, colp);
+	    colp = termcap_CopyAttr(tc_attr_off, colp);
 	    _col = COL(WHITE,BLACK);
 	}
 	if ((col & COL(HIGH,0)) && !(_col & COL(HIGH,0)))
-	    colp = termcap_CopyAttr(bold_on, colp);
+	    colp = termcap_CopyAttr(tc_bold_on, colp);
 	if ((col & COL(0,HIGH)) && !(_col & COL(0,HIGH)))
-	    colp = termcap_CopyAttr(blink_on, colp);
+	    colp = termcap_CopyAttr(tc_blink_on, colp);
     }
         
 
@@ -347,7 +356,7 @@ static void termcap_HideMouse(void) {
 }
 
 static void termcap_Beep(void) {
-    fputs(audio_bell, stdOUT);
+    fputs(tc_audio_bell, stdOUT);
     setFlush();
 }
 
@@ -375,7 +384,7 @@ static void termcap_UpdateMouseAndCursor(void) {
 static void termcap_Configure(udat resource, byte todefault, udat value) {
     switch (resource) {
       case HW_KBDAPPLIC:
-	fputs(todefault || !value ? kpad_on : kpad_off, stdOUT);
+	fputs(todefault || !value ? tc_kpad_on : tc_kpad_off, stdOUT);
 	setFlush();
 	break;
       case HW_ALTCURSKEYS:
@@ -413,7 +422,7 @@ static void termcap_DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, da
     HW->FlagsHW |= FlHWChangedMouseFlag;
 	
     fprintf(stdOUT, "%s\033[0m%s",			/* hide cursor, reset color */
-	    cursor_off, tgoto(cursor_goto, 0, HW->Y-1));/* go to last line */
+	    tc_cursor_off, tgoto(tc_cursor_goto, 0, HW->Y-1));/* go to last line */
 	    
     while (delta--)
 	putc('\n', stdOUT);

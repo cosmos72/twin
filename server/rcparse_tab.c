@@ -1,84 +1,83 @@
 
 /*  A Bison parser, made from rcparse.y
- by  GNU Bison version 1.25
-  */
+    by GNU Bison version 1.28  */
 
 #define YYBISON 1  /* Identify Bison output.  */
 
-#define	ADDSCREEN	258
-#define	ADDTOMENU	259
-#define	ADDTOFUNC	260
-#define	BACKGROUND	261
-#define	BORDER	262
-#define	BUTTON	263
-#define	DELETEFUNC	264
-#define	DELETEMENU	265
-#define	DELETEBUTTON	266
-#define	DELETESCREEN	267
-#define	READ	268
-#define	EXEC	269
-#define	EXECTTY	270
-#define	GLOBALFLAGS	271
-#define	INTERACTIVE	272
-#define	KEY	273
-#define	MENU	274
-#define	MODULE	275
-#define	MOUSE	276
-#define	MOVE	277
-#define	MOVESCREEN	278
-#define	NEXT	279
-#define	NOP	280
-#define	PREV	281
-#define	RESTART	282
-#define	RESIZE	283
-#define	RESIZESCREEN	284
-#define	SCREEN	285
-#define	SCROLL	286
-#define	SENDTOSCREEN	287
-#define	SLEEP	288
-#define	STDERR	289
-#define	SYNTHETICKEY	290
-#define	WAIT	291
-#define	WINDOW	292
-#define	EASY_FUNC	293
-#define	BEEP	294
-#define	CENTER	295
-#define	CLOSE	296
-#define	KILL	297
-#define	QUIT	298
-#define	REFRESH	299
-#define	WINDOWLIST	300
-#define	FLAG_FUNC	301
-#define	FOCUS	302
-#define	MAXIMIZE	303
-#define	FULLSCREEN	304
-#define	LOWER	305
-#define	RAISE	306
-#define	RAISELOWER	307
-#define	ROLL	308
-#define	USERFUNC	309
-#define	FL_ON	310
-#define	FL_OFF	311
-#define	FL_TOGGLE	312
-#define	FL_ACTIVE	313
-#define	FL_INACTIVE	314
-#define	FL_LEFT	315
-#define	FL_RIGHT	316
-#define	GLOBAL_FLAG	317
-#define	ALTFONT	318
-#define	ALWAYSCURSOR	319
-#define	BLINK	320
-#define	EDGESCROLL	321
-#define	HIDEMENU	322
-#define	MENUINFO	323
-#define	SHADOWS	324
-#define	PASTEBUTTON	325
-#define	SELECTIONBUTTON	326
-#define	COLOR	327
-#define	COL_HIGH	328
-#define	KBD_FLAG	329
-#define	NUMBER	330
-#define	STRING	331
+#define	ADDSCREEN	257
+#define	ADDTOMENU	258
+#define	ADDTOFUNC	259
+#define	BACKGROUND	260
+#define	BORDER	261
+#define	BUTTON	262
+#define	DELETEFUNC	263
+#define	DELETEMENU	264
+#define	DELETEBUTTON	265
+#define	DELETESCREEN	266
+#define	READ	267
+#define	EXEC	268
+#define	EXECTTY	269
+#define	GLOBALFLAGS	270
+#define	INTERACTIVE	271
+#define	KEY	272
+#define	MENU	273
+#define	MODULE	274
+#define	MOUSE	275
+#define	MOVE	276
+#define	MOVESCREEN	277
+#define	NEXT	278
+#define	NOP	279
+#define	PREV	280
+#define	RESTART	281
+#define	RESIZE	282
+#define	RESIZESCREEN	283
+#define	SCREEN	284
+#define	SCROLL	285
+#define	SENDTOSCREEN	286
+#define	SLEEP	287
+#define	STDERR	288
+#define	SYNTHETICKEY	289
+#define	WAIT	290
+#define	WINDOW	291
+#define	EASY_FUNC	292
+#define	BEEP	293
+#define	CENTER	294
+#define	CLOSE	295
+#define	KILL	296
+#define	QUIT	297
+#define	REFRESH	298
+#define	WINDOWLIST	299
+#define	FLAG_FUNC	300
+#define	FOCUS	301
+#define	MAXIMIZE	302
+#define	FULLSCREEN	303
+#define	LOWER	304
+#define	RAISE	305
+#define	RAISELOWER	306
+#define	ROLL	307
+#define	USERFUNC	308
+#define	FL_ON	309
+#define	FL_OFF	310
+#define	FL_TOGGLE	311
+#define	FL_ACTIVE	312
+#define	FL_INACTIVE	313
+#define	FL_LEFT	314
+#define	FL_RIGHT	315
+#define	GLOBAL_FLAG	316
+#define	ALTFONT	317
+#define	ALWAYSCURSOR	318
+#define	BLINK	319
+#define	EDGESCROLL	320
+#define	HIDEMENU	321
+#define	MENUINFO	322
+#define	SHADOWS	323
+#define	PASTEBUTTON	324
+#define	SELECTIONBUTTON	325
+#define	COLOR	326
+#define	COL_HIGH	327
+#define	KBD_FLAG	328
+#define	NUMBER	329
+#define	STRING	330
 
 
 
@@ -87,11 +86,9 @@
  */
 
 #include <stdlib.h>
-#include <unistd.h>
 #include <sys/stat.h>
-#include <sys/types.h>
 #include <sys/socket.h>
-    
+
 #include "Tw/Twkeys.h"
 
 #include "twin.h"
@@ -162,7 +159,7 @@ typedef union {
 #define	YYFLAG		-32768
 #define	YYNTBASE	82
 
-#define YYTRANSLATE(x) ((unsigned)(x) <= 331 ? yytranslate[x] : 113)
+#define YYTRANSLATE(x) ((unsigned)(x) <= 330 ? yytranslate[x] : 113)
 
 static const char yytranslate[] = {     0,
      2,     2,     2,     2,     2,     2,     2,     2,     2,    40,
@@ -190,15 +187,14 @@ static const char yytranslate[] = {     0,
      2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
      2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
      2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-     2,     2,     2,     2,     2,     1,     2,     5,     6,     7,
-     8,     9,    10,    11,    12,    13,    14,    15,    16,    17,
-    18,    19,    20,    21,    22,    23,    24,    25,    26,    27,
-    28,    29,    30,    31,    32,    33,    34,    35,    36,    37,
-    38,    39,    41,    42,    43,    44,    45,    46,    47,    48,
-    49,    50,    51,    52,    53,    54,    55,    56,    57,    60,
-    61,    62,    63,    64,    65,    66,    67,    68,    69,    70,
-    71,    72,    73,    74,    75,    76,    77,    78,    79,    80,
-    81
+     2,     2,     2,     2,     2,     1,     5,     6,     7,     8,
+     9,    10,    11,    12,    13,    14,    15,    16,    17,    18,
+    19,    20,    21,    22,    23,    24,    25,    26,    27,    28,
+    29,    30,    31,    32,    33,    34,    35,    36,    37,    38,
+    39,    41,    42,    43,    44,    45,    46,    47,    48,    49,
+    50,    51,    52,    53,    54,    55,    56,    57,    60,    61,
+    62,    63,    64,    65,    66,    67,    68,    69,    70,    71,
+    72,    73,    74,    75,    76,    77,    78,    79,    80,    81
 };
 
 #if YYDEBUG != 0
@@ -253,17 +249,17 @@ static const short yyrhs[] = {    83,
 
 #if YYDEBUG != 0
 static const short yyrline[] = { 0,
-   162,   165,   166,   169,   170,   171,   172,   175,   176,   179,
-   180,   183,   184,   185,   186,   187,   188,   189,   190,   191,
-   192,   193,   194,   195,   196,   197,   198,   199,   200,   203,
-   206,   207,   210,   213,   216,   217,   220,   223,   226,   227,
-   230,   233,   234,   235,   236,   239,   240,   243,   244,   247,
-   248,   249,   250,   251,   252,   255,   256,   257,   258,   259,
-   260,   262,   263,   264,   266,   267,   268,   269,   270,   271,
-   272,   273,   274,   275,   276,   279,   280,   283,   284,   287,
-   288,   289,   290,   291,   294,   295,   296,   297,   300,   301,
-   304,   305,   308,   309,   312,   313,   316,   317,   318,   319,
-   322,   323,   326,   327
+   160,   163,   164,   167,   168,   169,   170,   173,   174,   177,
+   178,   181,   182,   183,   184,   185,   186,   187,   188,   189,
+   190,   191,   192,   193,   194,   195,   196,   197,   198,   201,
+   204,   205,   208,   211,   214,   215,   218,   221,   224,   225,
+   228,   231,   232,   233,   234,   237,   238,   241,   242,   245,
+   246,   247,   248,   249,   250,   253,   254,   255,   256,   257,
+   258,   260,   261,   262,   264,   265,   266,   267,   268,   269,
+   270,   271,   272,   273,   274,   277,   278,   281,   282,   285,
+   286,   287,   288,   289,   292,   293,   294,   295,   298,   299,
+   302,   303,   306,   307,   310,   311,   314,   315,   316,   317,
+   320,   321,   324,   325
 };
 #endif
 
@@ -436,6 +432,7 @@ static const short yycheck[] = {     1,
 };
 /* -*-C-*-  Note some compilers choke on comments on `#line' lines.  */
 
+/* This file comes from bison-1.28.  */
 
 /* Skeleton output parser for bison,
    Copyright (C) 1984, 1989, 1990 Free Software Foundation, Inc.
@@ -452,46 +449,71 @@ static const short yycheck[] = {     1,
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
+   Foundation, Inc., 59 Temple Place - Suite 330,
+   Boston, MA 02111-1307, USA.  */
 
 /* As a special exception, when this file is copied by Bison into a
    Bison output file, you may use that output file without restriction.
    This special exception was added by the Free Software Foundation
    in version 1.24 of Bison.  */
 
-#ifndef alloca
-#ifdef __GNUC__
-#define alloca __builtin_alloca
-#else /* not GNU C.  */
-#if (!defined (__STDC__) && defined (sparc)) || defined (__sparc__) || defined (__sparc) || defined (__sgi)
-#include <alloca.h>
-#else /* not sparc */
-#if defined (MSDOS) && !defined (__TURBOC__)
-#include <malloc.h>
-#else /* not MSDOS, or __TURBOC__ */
-#if defined(_AIX)
-#include <malloc.h>
- #pragma alloca
-#else /* not MSDOS, __TURBOC__, or _AIX */
-#ifdef __hpux
-#ifdef __cplusplus
-extern "C" {
-void *alloca (unsigned int);
-};
-#else /* not __cplusplus */
-void *alloca ();
-#endif /* not __cplusplus */
-#endif /* __hpux */
-#endif /* not _AIX */
-#endif /* not MSDOS, or __TURBOC__ */
-#endif /* not sparc.  */
-#endif /* not GNU C.  */
-#endif /* alloca not defined.  */
-
 /* This is the parser code that is written into each bison parser
   when the %semantic_parser declaration is not specified in the grammar.
   It was written by Richard Stallman by simplifying the hairy parser
   used when %semantic_parser is specified.  */
+
+#ifndef YYPARSE_RETURN_TYPE
+#define YYPARSE_RETURN_TYPE int
+#endif
+
+
+#ifndef YYSTACK_USE_ALLOCA
+#ifdef alloca
+#define YYSTACK_USE_ALLOCA
+#else /* alloca not defined */
+#ifdef __GNUC__
+#define YYSTACK_USE_ALLOCA
+#define alloca __builtin_alloca
+#else /* not GNU C.  */
+#if (!defined (__STDC__) && defined (sparc)) || defined (__sparc__) || defined (__sparc) || defined (__sgi) || (defined (__sun) && defined (__i386))
+#define YYSTACK_USE_ALLOCA
+#include <alloca.h>
+#else /* not sparc */
+/* We think this test detects Watcom and Microsoft C.  */
+/* This used to test MSDOS, but that is a bad idea
+   since that symbol is in the user namespace.  */
+#if (defined (_MSDOS) || defined (_MSDOS_)) && !defined (__TURBOC__)
+#if 0 /* No need for malloc.h, which pollutes the namespace;
+	 instead, just don't use alloca.  */
+#include <malloc.h>
+#endif
+#else /* not MSDOS, or __TURBOC__ */
+#if defined(_AIX)
+/* I don't know what this was needed for, but it pollutes the namespace.
+   So I turned it off.   rms, 2 May 1997.  */
+/* #include <malloc.h>  */
+ #pragma alloca
+#define YYSTACK_USE_ALLOCA
+#else /* not MSDOS, or __TURBOC__, or _AIX */
+#if 0
+#ifdef __hpux /* haible@ilog.fr says this works for HPUX 9.05 and up,
+		 and on HPUX 10.  Eventually we can turn this on.  */
+#define YYSTACK_USE_ALLOCA
+#define alloca __builtin_alloca
+#endif /* __hpux */
+#endif
+#endif /* not _AIX */
+#endif /* not MSDOS, or __TURBOC__ */
+#endif /* not sparc */
+#endif /* not GNU C */
+#endif /* alloca not defined */
+#endif /* YYSTACK_USE_ALLOCA not defined */
+
+#ifdef YYSTACK_USE_ALLOCA
+#define YYSTACK_ALLOC alloca
+#else
+#define YYSTACK_ALLOC malloc
+#endif
 
 /* Note: there must be only one dollar sign in this file.
    It is replaced by the list of actions, each action
@@ -501,8 +523,8 @@ void *alloca ();
 #define yyclearin	(yychar = YYEMPTY)
 #define YYEMPTY		-2
 #define YYEOF		0
-#define YYACCEPT	return(0)
-#define YYABORT 	return(1)
+#define YYACCEPT	goto yyacceptlab
+#define YYABORT 	goto yyabortlab
 #define YYERROR		goto yyerrlab1
 /* Like YYERROR except do call yyerror.
    This remains here temporarily to ease the
@@ -583,16 +605,12 @@ int yydebug;			/*  nonzero means print parse trace	*/
 #ifndef YYMAXDEPTH
 #define YYMAXDEPTH 10000
 #endif
-
-#ifndef YYPARSE_RETURN_TYPE
-#define YYPARSE_RETURN_TYPE int
-#endif
-
-/* Prevent warning if -Wstrict-prototypes.  */
-#ifdef __GNUC__
-YYPARSE_RETURN_TYPE yyparse (void);
-#endif
 
+/* Define __yy_memcpy.  Note that the size argument
+   should be passed with type unsigned int, because that is what the non-GCC
+   definitions require.  With GCC, __builtin_memcpy takes an arg
+   of type size_t, but it can handle unsigned int.  */
+
 #if __GNUC__ > 1		/* GNU C and GNU C++ define this.  */
 #define __yy_memcpy(TO,FROM,COUNT)	__builtin_memcpy(TO,FROM,COUNT)
 #else				/* not GNU C or C++ */
@@ -604,7 +622,7 @@ static void
 __yy_memcpy (to, from, count)
      char *to;
      char *from;
-     int count;
+     unsigned int count;
 {
   register char *f = from;
   register char *t = to;
@@ -619,10 +637,10 @@ __yy_memcpy (to, from, count)
 /* This is the most reliable way to avoid incompatibilities
    in available built-in functions on various systems.  */
 static void
-__yy_memcpy (char *to, char *from, int count)
+__yy_memcpy (char *to, char *from, unsigned int count)
 {
-  register char *f = from;
   register char *t = to;
+  register char *f = from;
   register int i = count;
 
   while (i-- > 0)
@@ -653,6 +671,17 @@ __yy_memcpy (char *to, char *from, int count)
 #define YYPARSE_PARAM_DECL
 #endif /* not YYPARSE_PARAM */
 
+/* Prevent warning if -Wstrict-prototypes.  */
+#ifdef __GNUC__
+#ifdef YYPARSE_PARAM
+YYPARSE_RETURN_TYPE
+yyparse (void *);
+#else
+YYPARSE_RETURN_TYPE
+yyparse (void);
+#endif
+#endif
+
 YYPARSE_RETURN_TYPE
 yyparse(YYPARSE_PARAM_ARG)
      YYPARSE_PARAM_DECL
@@ -681,6 +710,9 @@ yyparse(YYPARSE_PARAM_ARG)
 #endif
 
   int yystacksize = YYINITDEPTH;
+#ifndef YYSTACK_USE_ALLOCA
+  int yyfree_stacks = 0;
+#endif
 
 #ifdef YYPURE
   int yychar;
@@ -765,18 +797,34 @@ yynewstate:
       if (yystacksize >= YYMAXDEPTH)
 	{
 	  yyerror("parser stack overflow");
+#ifndef YYSTACK_USE_ALLOCA
+	  if (yyfree_stacks)
+	    {
+	      free (yyss);
+	      free (yyvs);
+#ifdef YYLSP_NEEDED
+	      free (yyls);
+#endif
+	    }
+#endif	    
 	  return 2;
 	}
       yystacksize *= 2;
       if (yystacksize > YYMAXDEPTH)
 	yystacksize = YYMAXDEPTH;
-      yyss = (short *) alloca (yystacksize * sizeof (*yyssp));
-      __yy_memcpy ((char *)yyss, (char *)yyss1, size * sizeof (*yyssp));
-      yyvs = (YYSTYPE *) alloca (yystacksize * sizeof (*yyvsp));
-      __yy_memcpy ((char *)yyvs, (char *)yyvs1, size * sizeof (*yyvsp));
+#ifndef YYSTACK_USE_ALLOCA
+      yyfree_stacks = 1;
+#endif
+      yyss = (short *) YYSTACK_ALLOC (yystacksize * sizeof (*yyssp));
+      __yy_memcpy ((char *)yyss, (char *)yyss1,
+		   size * (unsigned int) sizeof (*yyssp));
+      yyvs = (YYSTYPE *) YYSTACK_ALLOC (yystacksize * sizeof (*yyvsp));
+      __yy_memcpy ((char *)yyvs, (char *)yyvs1,
+		   size * (unsigned int) sizeof (*yyvsp));
 #ifdef YYLSP_NEEDED
-      yyls = (YYLTYPE *) alloca (yystacksize * sizeof (*yylsp));
-      __yy_memcpy ((char *)yyls, (char *)yyls1, size * sizeof (*yylsp));
+      yyls = (YYLTYPE *) YYSTACK_ALLOC (yystacksize * sizeof (*yylsp));
+      __yy_memcpy ((char *)yyls, (char *)yyls1,
+		   size * (unsigned int) sizeof (*yylsp));
 #endif
 #endif /* no yyoverflow */
 
@@ -1433,6 +1481,34 @@ yyerrhandle:
 
   yystate = yyn;
   goto yynewstate;
+
+ yyacceptlab:
+  /* YYACCEPT comes here.  */
+#ifndef YYSTACK_USE_ALLOCA
+  if (yyfree_stacks)
+    {
+      free (yyss);
+      free (yyvs);
+#ifdef YYLSP_NEEDED
+      free (yyls);
+#endif
+    }
+#endif
+  return 0;
+
+ yyabortlab:
+  /* YYABORT comes here.  */
+#ifndef YYSTACK_USE_ALLOCA
+  if (yyfree_stacks)
+    {
+      free (yyss);
+      free (yyvs);
+#ifdef YYLSP_NEEDED
+      free (yyls);
+#endif
+    }
+#endif    
+  return 1;
 }
 
 

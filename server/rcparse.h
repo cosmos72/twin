@@ -1126,10 +1126,15 @@ static str findfile(str name, uldat *fsize) {
     str path;
     byte CONST *dir;
     byte CONST *search[3] = { HOME, conf_destdir_lib_twin, "" };
-    int i, len, nlen = strlen(name);
+    int i, min_i, max_i, len, nlen = strlen(name);
     struct stat buf;
     
-    for (i=0; i<3 && (dir = search[i]); i++) {
+    if (flag_secure)
+	min_i = max_i = 1; /* only conf_destdir_lib_twin */
+    else
+	min_i = 0, max_i = 2;
+
+    for (i = min_i; i <= max_i && (dir = search[i]); i++) {
 	len = strlen(dir);
 	if ((path = AllocMem(len + nlen + 2))) {
 	    sprintf(path, "%s%s%s", dir, *dir ? "/" : "", name);

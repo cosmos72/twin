@@ -15,7 +15,10 @@
 #ifndef _TUTF_H
 #define _TUTF_H
 
-#include <Tw/compiler.h>
+#include <Tw/Twtypes.h>
+
+#include <Tutf/compiler.h>
+#include <Tutf/version.h>
 
 #ifdef __cplusplus
  extern "C" {
@@ -24,13 +27,6 @@
  }
 #endif
 
-
-
-#define T_CAT1(a,b)	a##b
-#define T_CAT(a,b)	T_CAT1(a,b)
-
-#define T_STR1(a)	#a
-#define T_STR(a)	T_STR1(a)
 
 /* get the canonical name of a charset */
 #define T_MAP(alias)	T_CAT(T_MAP_,alias)
@@ -187,19 +183,20 @@
 
 
 
-
-
 typedef hwfont *Tutf_array;
 typedef hwfont (*Tutf_function)(hwfont);
 
+
+
+
 /* get the charset `id' (opaque) from a charset alias */
-uldat Tutf_charset_id(TW_CONST byte * alias);
+uldat Tutf_charset_id(TUTF_CONST byte * alias);
 
 /* get the canonical name from the charset `id' */
-TW_CONST byte *Tutf_charset_name(uldat id);
+TUTF_CONST byte *Tutf_charset_name(uldat id);
 
 /* get the canonical name from a charset alias */
-TW_CONST byte *Tutf_charset_alias(TW_CONST byte * alias);
+TUTF_CONST byte *Tutf_charset_alias(TUTF_CONST byte * alias);
 
 
 

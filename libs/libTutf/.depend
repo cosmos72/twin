@@ -1,2 +1,0 @@
-libTutf.o: libTutf.c ../../include/Tw/Tw.h ../../include/Tutf/Tutf.h ../../include/Tutf/Tutf_defs.h ascii.c iso_8859_x.c iso_8859_x.c iso_8859_x.c iso_8859_x.c iso_8859_x.c iso_8859_x.c iso_8859_x.c iso_8859_x.c iso_8859_x.c ibm437.c ibm850.c ibm865.c
-libTutf_u.o: libTutf_u.c ../../include/Tw/Tw.h ../../include/Tutf/Tutf.h ../../include/Tutf/Tutf_defs.h ascii.c iso_8859_x.c iso_8859_x.c iso_8859_x.c iso_8859_x.c iso_8859_x.c iso_8859_x.c iso_8859_x.c iso_8859_x.c iso_8859_x.c ibm437.c ibm850.c ibm865.c

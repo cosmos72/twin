@@ -1,3 +1,26 @@
+From 0.3.9 to 0.3.10: (Massimiliano Ghilardi, 31 Jul 2001)
+	* Added `twdm' client. You can now use `twdm' as login manager instead
+	  of the obsolete `getty', `login' or the bloated `xdm', `kdm', ... !
+	* Added `autoconf' support. Twin now uses GNU `./configure' script
+	  to detect OS features.
+	* Added command-line driven configuration. Beyond running
+	  `make config' or `make menuconfig' interactively, twin can now be
+	  configured with `./configure --enable-<feature>=[yes|no|mod] ...'
+	  or with `scripts/Configure --enable-<feature>=[yes|no|mod] ...'
+	* Added `-secure' option to twin, forbids starting external programs
+	  (used by `twdm' to stop users from opening root shells).
+	* Merged include/sockprotolist.h and libs/libTw/listmacros.h
+	  into include/socklistm4.h
+	* Started writing libTT, `The Text Toolkit' library.
+	* Fixed some more build problems on FreeBSD and SunOS.
+	  Disabled threads on FreeBSD since cause clients to segfault.
+	  Any *BSD expert willing to help?
+	* Fixed server event reporting bug after clicking on a gadget.
+	* Fixed AVL trees using uninitialized fields.
+	* Added support for nested menus (can be created, but are not
+	  correctly rendered yet).
+	* Fixed setting tty speed, was forced to 0 baud.
+	
 From 0.3.8 to 0.3.9: (Massimiliano Ghilardi, 25 Jun 2001)
 	* Added Unicode support.
 	* New libTutf library to convert between Unicode and other charsets.
@@ -39,7 +62,7 @@ From 0.3.8 to 0.3.9: (Massimiliano Ghilardi, 25 Jun 2001)
 	  not considering the border.
 	* Fixed error recovery on parsing errors in ~/.twinrc file.
 	* Started porting to SunOS (mostly contributed by Brian Witt),
-	  and substituted the bash/sed/grep script 'MkDep' with a pure
+	  and substituted the bash/sed/grep script `MkDep' with a pure
 	  C implementation (grabbed and adapted from Linux kernel sources).
 	* libTw optimization: AVL (Adelson-Velskii and Landis) trees used
 	  to speed up listener search (grabbed from Linux kernel sources too).
@@ -72,7 +95,7 @@ From 0.3.7 to 0.3.8: (Massimiliano Ghilardi, 08 Mar 2001)
 	  with different data sizes and different endianity.
 	  Completely backward compatible, as socket protocol was designed
 	  for this, but I did not actually implement translation until now.
-	  Set CONF_SOCKET_ALIEN in configuration as 'y' or 'm' to enable it.
+	  Set CONF_SOCKET_ALIEN in configuration as `y' or `m' to enable it.
 	  Known problems still remain in libTw and socket.so on architectures
 	  not allowing unaligned pointers.
 	* Added support for TW_WINFL_USEEXPOSE windows and corresponding
@@ -317,7 +340,7 @@ From 0.3.0 to 0.3.1: (Massimiliano Ghilardi, 16 May 2000)
 	  multiple display support.
 	* Fixed autoloading consolemap translation from
 	  kernel, which got broken in 0.3.0
-	* Fixed 'disable blink/high background' option,
+	* Fixed `disable blink/high background' option,
 	  which got broken in 0.3.0
 	* Fixed small redraw glitches on X11 display
 	  when window gets unobscured.

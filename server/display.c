@@ -20,11 +20,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
-#include <unistd.h>
-#include <sys/time.h>
-#include <sys/types.h>
 #include <signal.h>
-#include <errno.h>
 
 #include "twin.h"
 #include "hw.h"
@@ -133,7 +129,7 @@ void *AlwaysNull(void) {
     return NULL;
 }
 
-void GetPrivileges(void) {
+void GainPrivileges(void) {
 }
 void RemotePidIsDead(pid_t pid) {
 }
@@ -156,11 +152,13 @@ byte Error(udat Code_Error) {
 }
 
 int printk(CONST byte *format, ...) {
+    int i = 0;
+#ifdef HAVE_VPRINTF
     va_list ap;
-    int i;
     va_start(ap, format);
     i = vfprintf(stderr, (CONST char *)format, ap);
     va_end(ap);
+#endif
     return i;
 }
 
@@ -527,6 +525,16 @@ static display_hw CreateDisplayHW(uldat NameLen, CONST byte *Name) {
     return (display_hw)0;
 }
 
+static byte IsValidHW(uldat len, CONST byte *arg) {
+    CONST byte *slash = memchr(arg, '/', len), *at = memchr(arg, '@', len), *comma = memchr(arg, ',', len);
+    if (slash && (!at || slash < at) && (!comma || slash < comma)) {
+	printk("twdisplay: slash ('/') not allowed in display HW name: %.*s\n", (int)len, arg);
+	return FALSE;
+    }
+    return TRUE;
+}
+
+
 static display_hw AttachDisplayHW(uldat len, CONST byte *arg, uldat slot, byte flags) {
     if ((len && len <= 4) || CmpMem("-hw=", arg, Min2(len,4))) {
 	printk("twdisplay: specified `%.*s\' is not `-hw=<display>\'\n",
@@ -534,7 +542,7 @@ static display_hw AttachDisplayHW(uldat len, CONST byte *arg, uldat slot, byte f
 	return (display_hw)0;
     }
     
-    if (CreateDisplayHW(len, arg)) {
+    if (IsValidHW(len, arg) && CreateDisplayHW(len, arg)) {
 	HW->AttachSlot = slot;
 	if (InitDisplayHW(HW))
 	    return HW;

@@ -1,5 +1,5 @@
-#ifndef _TW_DRAW_H
-#define _TW_DRAW_H
+#ifndef _TWIN_DRAW_H
+#define _TWIN_DRAW_H
 
 void FindFontMenuItem(menu Menu, menuitem MenuItem, dat i, byte Select, hwfont *PtrFont, hwcol *PtrColor);
 void FindFontInfo(menu Menu, dat i, byte Select, hwfont *PtrFont, hwcol *PtrColor);
@@ -60,4 +60,4 @@ window FindCursorWindow(void);
 byte ContainsCursor(widget W);
 widget RecursiveFindWidgetAt(widget Parent, dat X, dat Y);
 
-#endif /* _TW_DRAW_H */
+#endif /* _TWIN_DRAW_H */

@@ -10,11 +10,7 @@
  *
  */
 
-#include <stdio.h>
 #include <stdarg.h>
-#include <errno.h>
-#include <unistd.h>
-#include <sys/types.h>
 
 #include "twin.h"
 #include "remote.h"
@@ -26,9 +22,11 @@ static byte buf[SMALLBUFF*4]; /* hope it's enough */
 static int log_fd = NOFD;
 
 int printk(CONST byte *format, ...) {
-    va_list ap;
+    int i = 0;
+#ifdef HAVE_VPRINTF
+    int left, chunk;
     byte *s = buf;
-    int i, left, chunk;
+    va_list ap;
     
     va_start(ap, format);
     i = vsprintf(buf, format, ap); /* hopefully i < sizeof(buf) */
@@ -49,7 +47,7 @@ int printk(CONST byte *format, ...) {
 	    DrawFullWindow2(MessagesWin);
     }
     Act(WriteRow,MessagesWin)(MessagesWin, i, buf);
-#endif
+#endif /* CONF_PRINTK */
 
     if (log_fd == NOFD)
 	fputs(buf, stderr);
@@ -67,6 +65,7 @@ int printk(CONST byte *format, ...) {
 	} while (left > 0 && chunk > 0);
     }
     return i;
+#endif /* HAVE_VPRINTF */
 }
 
 int flushk(void) {

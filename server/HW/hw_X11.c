@@ -10,8 +10,6 @@
  *
  */
 
-#include <fcntl.h>
-
 #include "twin.h"
 #include "main.h"
 #include "data.h"

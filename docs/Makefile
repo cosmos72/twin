@@ -10,7 +10,7 @@ ALLOBJS=
 BINS=
 MODBINS=
 
-DOCS=Configure Tutorial libTw.txt libTwerrno.h twin.1
+DOCS=Configure Tutorial libTw.txt twin.1
 TOPDOCS=README BUGS INSTALL README.porting COPYING twin-current.lsm \
 	COPYING.LIB Changelog.txt 
 
@@ -22,7 +22,7 @@ all:
 #
 # read configuration
 #
--include $(TOPDIR)/conf/config.status
+-include $(TOPDIR)/conf/conf.current
 -include .modules
 -include .depend
 
@@ -31,7 +31,7 @@ all:
 # Must correctly set all CFLAGS* and LDFLAGS* before including this!
 #
 #
-include $(TOPDIR)/MakeRules
+include $(TOPDIR)/makerules
 
 
 #

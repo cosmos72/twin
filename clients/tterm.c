@@ -12,15 +12,26 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <sys/time.h>
-#include <sys/types.h>
 #include <sys/ioctl.h>
-#include <sys/resource.h>
-#include <sys/wait.h>
-#include <unistd.h>
-#include <errno.h>
-#include <termios.h>
 #include <signal.h>
+
+#include "Tw/Twautoconf.h"
+
+#ifdef TW_HAVE_SYS_RESOURCE_H
+# include <sys/resource.h>
+#endif
+
+#ifdef TW_HAVE_SYS_WAIT_H
+# include <sys/wait.h>
+#endif
+
+#ifdef TW_HAVE_TERMIOS_H
+# include <termios.h>
+#else
+# ifdef TW_HAVE_TERMIO_H
+#  include <termio.h>
+# endif
+#endif
 
 #include "Tw/Tw.h"
 #include "Tw/Twerrno.h"
@@ -283,9 +294,16 @@ static void CloseTerm(uldat Slot) {
  */
 static volatile byte ReceivedSignalChild;
 
-static void SignalChild(int n) {
+#if TW_RETSIGTYPE == void
+# define TW_RETFROMSIGNAL
+#else
+# define TW_RETFROMSIGNAL return 0;
+#endif
+
+static TW_RETSIGTYPE SignalChild(int n) {
     ReceivedSignalChild = TRUE;
     signal(SIGCHLD, SignalChild);
+    TW_RETFROMSIGNAL
 }
 
 static void RemotePidIsDead(pid_t pid) {
@@ -334,11 +352,15 @@ static byte InitTerm(void) {
     
     signal(SIGCHLD, SignalChild);
 
+#if defined(TW_HAVE_PUTENV)
     putenv("TERM=linux");
-    
+#elif defined(TW_HAVE_SETENV)
+    setenv("TERM","linux",1);
+#endif
+
     if (TwCheckMagic(term_magic) && TwOpen(NULL)) {
 	if ((Term_MsgPort=TwCreateMsgPort
-	     (16, "Remote Twin Term", (uldat)0, (udat)0, (byte)0)) &&
+	     (6, "twterm", (uldat)0, (udat)0, (byte)0)) &&
 	    (Term_Menu=TwCreateMenu(
 	      COL(BLACK,WHITE), COL(BLACK,GREEN), COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
 	      COL(RED,WHITE), COL(RED,GREEN), (byte)0)) &&

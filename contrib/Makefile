@@ -27,11 +27,11 @@ LDFLAGS+=-L$(TOPDIR)/lib -lTw
 all: everything
 
 
-include $(TOPDIR)/conf/config.status
+-include $(TOPDIR)/conf/conf.current
 -include .modules
 -include .depend
 
-include $(TOPDIR)/MakeRules
+include $(TOPDIR)/makerules
 
 
 ifneq ($(CONF_SOCKET),n)
@@ -49,7 +49,7 @@ endif
 # include the do-everything file.
 # Must correctly set all CFLAGS* and LDFLAGS* before including this!
 #
-include $(TOPDIR)/MakeRules
+include $(TOPDIR)/makerules
 
 
 install:

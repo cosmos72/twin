@@ -24,16 +24,13 @@
  *
  */
 
+#include "Tw/Tw.h"
+
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
-#include <sys/time.h>
-#include <sys/types.h>
+/* on FreeBSD, <sys/socket.h> requires "Tw/Tw.h" because of <sys/types.h> */
 #include <sys/socket.h>
-#include <sys/ioctl.h>
-#include <errno.h>
-#include <unistd.h>
-#include <fcntl.h>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <sys/un.h>
@@ -47,9 +44,15 @@
 # include <pthread.h>
 #endif
 
-#include "Tw/Tw.h"
+#ifdef TW_HAVE_SYS_IOCTL_H
+# include <sys/ioctl.h>
+#endif
+
+
 #include "Tw/Twstat.h"
 #include "Tw/Twerrno.h"
+#include "Tw/Twavl.h"
+
 #include "mutex.h"
 
 #include "unaligned.h"
@@ -60,7 +63,7 @@
 #define Tw_ChangeFieldObj Tw_ChangeField
 
 /* early check libTw.h against sockproto.h */
-#include "paranoiamacros.h"
+#include "paranoiam4.h"
 
 
 #define Min2(a,b) ((a) < (b) ? (a) : (b))
@@ -94,7 +97,7 @@ typedef struct s_fn_list {
 
 static fn_list Functions[] = {
 
-#include "libTw1macros.h"
+#include "libTw1m4.h"
     
     {Tw_Stat, 0, 0, "Tw_StatObj", "0S0x"magic_id_STR(obj)"_"TWS_udat_STR"V"TWS_udat_STR },
     
@@ -111,7 +114,7 @@ typedef uldat v_id_vec [ sizeof(Functions) / sizeof(Functions[0]) ];
 typedef enum e_fn_order {
     order_DoesNotExist = -1,
 #   define EL(funct) order_##funct,
-#   include "listmacros.h"
+#   include "socklistm4.h"
 #   undef EL
 	
     order_StatObj,
@@ -129,15 +132,14 @@ static void InitFunctions(void) {
 
 
 struct s_tlistener {
-    uldat Type;
-    tlistener Left, Right;
-    void *Arg;
-    tfn_listener Listener;
-    tevent_any Event;
-    tdisplay TwD;
-    tlistener AVLParent;
+    tlistener Left, Right, AVLParent;
     uldat AVLkey;
     byte AVLHeight;
+    uldat Type;
+    tevent_any Event;
+    tfn_listener Listener;
+    void *Arg;
+    tdisplay TwD;
 };
 
 #define QREAD    0
@@ -234,9 +236,14 @@ byte Tw_EnableGzip(tw_d TwD);
 void *(*Tw_AllocMem)(size_t) = malloc;
 void *(*Tw_ReAllocMem)(void *, size_t) = realloc;
 void  (*Tw_FreeMem)(void *) = free;
-byte *(*Tw_CloneStr)(TW_CONST byte *) = (byte *(*)(TW_CONST byte *))strdup;
 
-static byte *clone_str(TW_CONST byte *S) {
+void *Tw_CloneMem(TW_CONST void *S, size_t len) {
+    void *T;
+    if (S && (T = Tw_AllocMem(len)))
+	return Tw_CopyMem(S, T, len);
+  return NULL;
+}
+byte *Tw_CloneStr(TW_CONST byte *S) {
     size_t len;
     byte *T;
     if (S) {
@@ -257,12 +264,10 @@ void Tw_ConfigMalloc(void *(*my_malloc)(size_t),
 	    Tw_AllocMem = my_malloc;
 	    Tw_ReAllocMem = my_realloc;
 	    Tw_FreeMem = my_free;
-	    Tw_CloneStr = clone_str;
 	} else {
 	    Tw_AllocMem = malloc;
 	    Tw_ReAllocMem = realloc;
 	    Tw_FreeMem = free;
-	    Tw_CloneStr = (byte *(*)(TW_CONST byte *))strdup;
 	}
     }
     tw_mutex_unlock(OpenCountMutex);
@@ -631,7 +636,7 @@ static uldat TryRead(tw_d TwD, byte Wait) {
 	
 	Qlen[Q] -= len - (got == (uldat)-1 ? 0 : got);
 	
-	if (got == 0 || (got == (uldat)-1 && errno != EINTR && errno != EWOULDBLOCK)) {
+	if (got == 0 || (got == (uldat)-1 && errno != EINTR && errno != EAGAIN && errno != EWOULDBLOCK)) {
 	    Errno = TW_ELOST_CONN;
 	    Panic(TwD);
 	    return (uldat)-1;
@@ -742,7 +747,7 @@ uldat Tw_ServerVersion(tw_d TwD) {
 
 
 static byte ProtocolNumbers(tw_d TwD) {
-    byte *servdata, *hostdata = " Twin-" STR(TW_PROTOCOL_VERSION_MAJOR) ".";
+    byte *servdata, *hostdata = " Twin-" TW_STR(TW_PROTOCOL_VERSION_MAJOR) ".";
     uldat len = 0, chunk, _len = strlen(hostdata);
     
     while (Fd != TW_NOFD && (!len || ((servdata = GetQueue(TwD, QREAD, NULL)), len < *servdata))) {
@@ -763,18 +768,7 @@ static byte ProtocolNumbers(tw_d TwD) {
     return FALSE;
 }
 
-static byte Tw_MagicData[10+sizeof(uldat)] = {
-    10+sizeof(uldat),
-    sizeof(byte),
-    sizeof(udat),
-    sizeof(uldat),
-    sizeof(hwcol),
-    sizeof(time_t),
-    sizeof(frac_t),
-    sizeof(hwfont),
-    sizeof(hwattr),
-    0
-};
+TW_DECL_MAGIC(Tw_MagicData);
 
 byte Tw_CheckMagic(TW_CONST byte id[])  {
     if (Tw_CmpMem(id+1, Tw_MagicData+1, (id[0] < Tw_MagicData[0] ? id[0] : Tw_MagicData[0]) - 2 - sizeof(uldat))) {
@@ -978,14 +972,17 @@ tw_d Tw_Open(TW_CONST byte *TwDisplay) {
 	/* check if the server is a numbers-and-dots host like "127.0.0.1" */
 	addr.sin_port = htons(port);
 	addr.sin_addr.s_addr = inet_addr(server);
-	
+
 	if (addr.sin_addr.s_addr == (unsigned long)-1) {
+#ifdef TW_HAVE_GETHOSTBYNAME
 	    /* may be a FQDN host like "www.gnu.org" */
 	    host_info = gethostbyname(server);
 	    if (host_info) {
 		Tw_CopyMem(host_info->h_addr, &addr.sin_addr, host_info->h_length);
 		addr.sin_family = host_info->h_addrtype;
-	    } else {
+	    } else
+#endif
+	    {
 		/* unknown hostname */
 		rCommonErrno.E = TW_ENO_HOST;
 		rCommonErrno.S = h_errno;
@@ -993,7 +990,7 @@ tw_d Tw_Open(TW_CONST byte *TwDisplay) {
 		break;
 	    }
 	}
-
+	
 	Tw_FreeMem(server);
 
 	if ((fd = socket(addr.sin_family, SOCK_STREAM, 0)) >= 0)
@@ -1158,18 +1155,6 @@ void Tw_AttachConfirm(tw_d TwD) {
     UNLK;
 }
 
-
-/* warning: Tw_Errno() is a macro in libTw.h ! */
-#undef Tw_Errno
-/* this requires LOCK not to be held */
-uldat Tw_Errno(tw_d TwD) {
-    uldat e;
-    if (TwD) {
-	LOCK; e = Errno; UNLK;
-    } else
-	e = CommonErrno;
-    return e;
-}
 
 /* this requires LOCK not to be held */
 tw_errno *Tw_ErrnoLocation(tw_d TwD) {
@@ -1366,179 +1351,18 @@ tmsg Tw_CloneReadMsg(tw_d TwD, byte Wait) {
 }
 
 /* AVL listeners tree handling functions */
-/*
- * Searching a tlistener in a linear list is horribly slow.
- * Use an AVL (Adelson-Velskii and Landis) tree to speed up this search
- * from O(n) to O(log n), where n is the number of listeners. n is typically zero,
- * but may reach a few thousands if clients use them heavily.
- * Written by Bruno Haible <haible@ma2s2.mathematik.uni-karlsruhe.de> for the
- * linux kernel mm subsystem, then adapted to libTw by Massimiliano Ghilardi.
- */
 
-TW_INLINE uldat AVLgetkey(uldat Type, tevent_common Event) {
+TW_INLINE uldat TwAVLgetkey(uldat Type, tevent_common Event) {
     /* only (udat)Type is significative, not whole Type. */
     return (Type << 5) ^ Event->W ^ ((uldat)Event->Code << ((sizeof(uldat) - sizeof(udat)) * 8));
 }
 
-#define AVLgetkeyMsg(Msg) AVLgetkey((Msg)->Type, &(Msg)->Event.EventCommon)
+#define TwAVLgetkeyMsg(Msg) TwAVLgetkey((Msg)->Type, &(Msg)->Event.EventCommon)
 
-#define AVLgetkeyListener(L) AVLgetkey((L)->Type, &(L)->Event->EventCommon)
+#define TwAVLgetkeyListener(L) TwAVLgetkey((L)->Type, &(L)->Event->EventCommon)
   
-static tlistener FindListener(tw_d TwD, tmsg Msg) {
-    tlistener L = TwD->AVLRoot;
-    tevent_common EC, LC;
-    uldat key = AVLgetkeyMsg(Msg);
-	
-    EC = &Msg->Event.EventCommon;
-    
-    while (L) {
-	if (key < L->AVLkey)
-	    L = L->Left;
-	else if (key > L->AVLkey)
-	    L = L->Right;
-	else {
-	    /* same key, use detailed matching */
-	    
-	    LC = &L->Event->EventCommon;
-	    if (L->Type == Msg->Type && LC->W == EC->W && LC->Code == EC->Code) {
-	    
-		/* common part matches. check details. */
-		switch (L->Type) {
-		    /*
-		     * WARNING: I am assuming all fields of a union
-		     * have the same address as the union itself
-		     */
-		  case TW_MSG_WIDGET_KEY:
-		  case TW_MSG_WIDGET_MOUSE:
-		    if (L->Event->EventKeyboard.ShiftFlags == Msg->Event.EventKeyboard.ShiftFlags)
-			return L;
-		    break;
-		  case TW_MSG_MENU_ROW:
-		    if (L->Event->EventMenu.Menu == Msg->Event.EventMenu.Menu)
-			return L;
-		    break;
-		  case TW_MSG_WIDGET_CHANGE:
-		  case TW_MSG_WIDGET_GADGET:
-		  case TW_MSG_SELECTION:
-		  case TW_MSG_SELECTIONNOTIFY:
-		  case TW_MSG_SELECTIONREQUEST:
-		  case TW_MSG_SELECTIONCLEAR:
-		  case TW_MSG_USER_CONTROL:
-		    /* no extra checks needed */
-		    return L;
-		  default:
-		    if (L->Type >= TW_MSG_USER_FIRST)
-			return L;
-		    break;
-		}
-	    }
-	    /* detailed matching failed. */
-	    L = L->Right;
-	}
-    }
-    return L;
-}
-
-TW_INLINE void AVL_Insert(tlistener L, tlistener Parent, tlistener Old) {
-    if (Parent) {
-	if (Parent->Left == Old)
-	    Parent->Left = L;
-	else
-	    Parent->Right = L;
-    } else
-	Old->TwD->AVLRoot = L;
-    if (L) L->AVLParent = Parent;
-}
-
-#define AVLHeightOf(L) (L ? L->AVLHeight : 0)
-
-static void AVLRebalance(tw_d TwD, tlistener P) {
-    tlistener L, R, PP;
-    byte HL, HR;
-    
-    while (P) {
-	L = P->Left;
-	HL = AVLHeightOf(L);
-	R = P->Right;
-	HR = AVLHeightOf(R);
-	
-	if (HL > HR + 1) {
-	    /*                                                      */
-	    /*                           (P)                        */
-	    /*                          /   \                       */
-	    /*                    (L)n+2     n(R)                   */
-	    /*                                                      */
-	    tlistener LL = L->Left, LR = L->Right;
-	    byte HLR = AVLHeightOf(LR);
-	    if (AVLHeightOf(LL) >= HLR) {
-		/*                                                        */
-		/*               (P)                (L)n+2|n+3            */
-		/*              /   \                  /    \             */
-		/*        (L)n+2     n(R)   -->  (LL)n+1  n+1|n+2(P)      */
-		/*           / \                           /    \         */
-		/*     (LL)n+1 n|n+1(LR)             (LR)n|n+1   n(R)     */
-		/*                                                        */
-		if ((P->Left = LR)) LR->AVLParent = P;
-		L->Right = P;
-		AVL_Insert(L, (PP = P->AVLParent), P);
-		P->AVLParent = L;
-		L->AVLHeight = 1 + (P->AVLHeight = 1 + HLR);
-		P = PP;
-	    } else {
-		/*                                                        */
-		/*               (P)                 (LR)n+2              */
-		/*              /   \                 /     \             */
-		/*        (L)n+2     n(R)   -->  (L)n+1     n+1(P)        */
-		/*           / \                    / \     / \           */
-		/*      (LL)n  n+1(LR)         (LL)n   X   Y   n(R)       */
-		/*             / \                                        */
-		/*            X   Y                                       */
-		/*                                                        */
-		if ((P->Left = LR->Right)) LR->Right->AVLParent = P;
-		LR->Right = P;
-		AVL_Insert(LR, (PP = P->AVLParent), P);
-		P->AVLParent = LR;
-		if ((L->Right = LR->Left)) LR->Left->AVLParent = L;
-		LR->Left = L; L->AVLParent = LR;
-		L->AVLHeight = P->AVLHeight = HLR;
-		LR->AVLHeight = HL;
-		P = PP;
-	    }
-	} else if (HL + 1 < HR) {
-	    /* similar to the above, just swap Left <--> Right sides */
-	    tlistener RR = R->Right, RL = R->Left;
-	    byte HRL = AVLHeightOf(RL);
-	    if (AVLHeightOf(RR) >= HRL) {
-		if ((P->Right = RL)) RL->AVLParent = P;
-		R->Left = P;
-		AVL_Insert(R, (PP = P->AVLParent), P);
-		P->AVLParent = R;
-		R->AVLHeight = 1 + (P->AVLHeight = 1 + HRL);
-		P = PP;
-	    } else {
-		if ((P->Right = RL->Left)) RL->Left->AVLParent = P;
-		RL->Left = P;
-		AVL_Insert(RL, (PP = P->AVLParent), P);
-		P->AVLParent = RL;
-		if ((R->Left = RL->Right)) RL->Right->AVLParent = R;
-		RL->Right = R; R->AVLParent = RL;
-		R->AVLHeight = P->AVLHeight = HRL;
-		RL->AVLHeight = HR;
-		P = PP;
-	    }
-	} else {
-	    HL = 1 + (HL > HR ? HL : HR);
-	    if (P->AVLHeight != HL) {
-		P->AVLHeight = HL;
-		P = P->AVLParent;
-	    } else
-		break;
-	}
-    }
-}
-
-/* this assumes L1->key == L2->key */
-static ldat CompareListeners(tlistener L1, tlistener L2) {
+/* this assumes L1->AVLkey == L2->AVLkey */
+static int CompareListeners(tlistener L1, tlistener L2) {
     tevent_any L1A = L1->Event, L2A = L2->Event;
     
     if (L1->Type == L2->Type) {
@@ -1575,88 +1399,28 @@ static ldat CompareListeners(tlistener L1, tlistener L2) {
     return L2->Type - L1->Type;
 }
 
-static void InsertListener(tw_d TwD, tlistener L) {
-    uldat Lkey;
-    uldat Ckey;
-    tlistener P, C;
+static tlistener FindListener(tw_d TwD, tmsg Msg) {
+    struct s_tlistener key;
     
+    key.Type = Msg->Type;
+    key.Event = &Msg->Event;
+    key.AVLkey = TwAVLgetkeyMsg(Msg);
+    
+    return (tlistener)AVLFind((tavl)&key, (tavl)TwD->AVLRoot, (tavl_compare)CompareListeners);
+}
+
+static void InsertListener(tw_d TwD, tlistener L) {
     if (L && !L->TwD) {
-	Lkey = L->AVLkey = AVLgetkeyListener(L);
-	P = C = TwD->AVLRoot;
-	
-	while (C) {
-	    P = C;
-	    Ckey = C->AVLkey;
-	    if (Lkey < Ckey || (Lkey == Ckey && CompareListeners(L, P) < 0))
-		C = P->Left;
-	    else /* key >= Ckey */
-		C = P->Right;
-	}
+	L->AVLkey = TwAVLgetkeyListener(L);
 	L->TwD = TwD;
-	L->AVLHeight = 1;
-	L->AVLParent = P;
-	if (P) {
-	    if (Lkey < Ckey || (Lkey == Ckey && CompareListeners(L, P) < 0))
-		P->Left = L;
-	    else
-		P->Right = L;
-	    AVLRebalance(TwD, P);
-	} else
-	    TwD->AVLRoot = L;
+	AVLInsert((tavl)L, (tavl)TwD->AVLRoot, (tavl_compare)CompareListeners, (tavl *)&TwD->AVLRoot);
     }
 }
 
-/* FIXME: this is untested */
-static void RemoveListener(tw_d TwD, tlistener P) {
-    tlistener L, R, LC, RC, Y;
-    byte HL, HR;
-    
-    if (P && P->TwD == TwD) {
-	L = LC = P->Left;
-	R = RC = P->Right;
-	if (L && R) {
-	    while (RC && RC) {
-		L = LC; LC = L->Right;
-		R = RC; RC = R->Left;
-	    }
-	    if (!LC) {
-		/*                                                        */
-		/*               P                      L                 */
-		/*             /   \                  /   \               */
-		/*            X     R                X     R              */
-		/*             .                      .                   */
-		/*              .         -->          .                  */
-		/*               L                      LC                */
-		/*              /                                         */
-		/*            LC                                          */
-		/*                                                        */
-		LC = L->Left;
-		Y = L->AVLParent;
-		if ((Y->Right = LC)) LC->AVLParent = Y;
-		AVL_Insert(L, P->AVLParent, P);
-		if ((L->Right = P->Right)) L->Right->AVLParent = L;
-		L->Left = P->Left; L->Left->AVLParent = L;
-		HL = L->Left->AVLHeight;
-		HR = AVLHeightOf(L->Right);
-		L->AVLHeight = 1 + (HL > HR ? HL : HR);
-	    } else {
-		/* similar to the above, just swap Left <--> Right sides */
-		RC = R->Right;
-		Y = R->AVLParent;
-		if ((Y->Left = RC)) RC->AVLParent = Y;
-		AVL_Insert(R, P->AVLParent, P);
-		if ((R->Left = P->Left)) R->Left->AVLParent = R;
-		R->Right = P->Right; R->Right->AVLParent = R;
-		HR = R->Right->AVLHeight;
-		HL = AVLHeightOf(R->Left);
-		R->AVLHeight = 1 + (HR > HL ? HR : HL);
-	    }
-	} else
-	    AVL_Insert(R ? R : L, Y = P->AVLParent, P);
-	
-	AVLRebalance(TwD, Y);
-	P->AVLParent = P->Left = P->Right = NULL;
-	P->TwD = NULL;
+static void RemoveListener(tw_d TwD, tlistener L) {
+    if (L && L->TwD == TwD) {
+	AVLRemove((tavl)L, (tavl_compare)CompareListeners, (tavl *)&TwD->AVLRoot);
+	L->TwD = NULL;
     }
 }
 
@@ -1682,8 +1446,6 @@ void Tw_RemoveListener(tw_d TwD, tlistener L) {
     UNLK;
 }
 
-
-
 void Tw_DeleteListener(tw_d TwD, tlistener L) {
     LOCK;
     if (L->TwD == TwD) {
@@ -1707,12 +1469,12 @@ static tlistener CreateListener(tw_d TwD, udat Type, tevent_any E,
 				tfn_listener Listener, void *Arg) {
     tlistener L;
     if ((L = (tlistener)Tw_AllocMem(sizeof(struct s_tlistener)))) {
+	L->AVLParent = NULL;
 	L->Type = Type;
 	L->Event = E;
 	L->Listener = Listener;
 	L->Arg = Arg;
 	L->TwD = NULL;
-	L->AVLParent = NULL;
 	LOCK;
 	InsertListener(TwD, L);
 	UNLK;
@@ -1725,13 +1487,13 @@ tlistener Tw_CreateListener(tw_d TwD, udat Type, tevent_any E,
 			    tfn_listener Listener, void *Arg) {
     tlistener L;
     if ((L = (tlistener)Tw_AllocMem(sizeof(struct s_tlistener)))) {
+	L->AVLParent = NULL;
 	L->Type = Type;
 	L->Left = L->Right = NULL;
 	L->Event = E;
 	L->Listener = Listener;
 	L->Arg = Arg;
 	L->TwD = NULL;
-	L->AVLParent = NULL;
     }
     return L;
 }
@@ -1912,14 +1674,17 @@ byte Tw_DispatchMsg(tdisplay TwD, tmsg Msg) {
     return ret;
 }
 
-uldat Tw_MainLoop(tw_d TwD) {
+byte Tw_MainLoop(tw_d TwD) {
+    byte ret;
     tmsg Msg;
     
     LOCK;
+    Errno = 0;
     while ((Msg = ReadMsg(TwD, TRUE, TRUE)))
 	(void)DispatchMsg(TwD, Msg, TRUE);	
+    ret = Errno == 0;
     UNLK;
-    return Errno;
+    return ret;
 }
 
 
@@ -1957,7 +1722,7 @@ TW_INLINE void Send(tw_d TwD, uldat Serial, uldat idFN) {
 /***********/
 
 
-#include "libTw2macros.h"
+#include "libTw2m4.h"
 
 /* handy special cases (also for compatibility) */
 void Tw_SetPressedGadget(tw_d TwD, tgadget a1, byte a2) {
@@ -1976,16 +1741,60 @@ byte Tw_IsToggleGadget(tw_d TwD, tgadget a1) {
     return Tw_Stat(TwD, a1, TWS_gadget_Flags) & TW_GADGETFL_TOGGLE ? TRUE : FALSE;
 }
 
-void Tw_ExposeTextWidget(tw_d TwD, twidget W, dat XWidth, dat YWidth, dat Left, dat Up, TW_CONST byte *Text) {
-    Tw_ExposeWidget(TwD, W, XWidth, YWidth, Left, Up, Text, NULL, NULL);
+
+void Tw_ExposeWidget2(tw_d TwD, twidget a1, dat a2, dat a3, dat a4, dat a5, dat pitch, TW_CONST byte *a6, TW_CONST hwfont *a7, TW_CONST hwattr *a8) {
+    uldat len6;
+    uldat len7;
+    uldat len8;
+    uldat My;
+    LOCK;
+    if (Fd != TW_NOFD && ((My = id_Tw[order_ExposeWidget]) != TW_NOID ||
+		       (My = FindFunctionId(TwD, order_ExposeWidget)) != TW_NOID)) {
+	if (InitRS(TwD)) {
+            My = (0 + sizeof(uldat) + sizeof(dat) + sizeof(dat) + sizeof(dat) + sizeof(dat) + (len6 = a6 ? (a2*a3) * sizeof(byte) : 0, sizeof(uldat) + len6) + (len7 = a7 ? (a2*a3) * sizeof(hwfont) : 0, sizeof(uldat) + len7) + (len8 = a8 ? (a2*a3) * sizeof(hwattr) : 0, sizeof(uldat) + len8) );
+            if (WQLeft(My)) {
+                Push(s,uldat,a1); Push(s,dat,a2); Push(s,dat,a3); Push(s,dat,a4); Push(s,dat,a5);
+		Push(s,uldat,len6);
+		while (len6) {
+		    PushV(s,a2,a6);
+		    a6 += pitch;
+		    len6 -= a2;
+		}
+		Push(s,uldat,len7);
+		while (len7) {
+		    PushV(s,a2,a7);
+		    a7 += pitch;
+		    len7 -= a2;
+		}
+		Push(s,uldat,len8);
+		while (len8) {
+		    PushV(s,a2,a8);
+		    a8 += pitch;
+		    len8 -= a2;
+		}
+	            Send(TwD, (My = NextSerial(TwD)), id_Tw[order_ExposeWidget]);
+                    UNLK;return;
+            }
+	}
+	/* still here? must be out of memory! */
+	Errno = TW_ENO_MEM;
+	Fail(TwD);
+    } else if (Fd != TW_NOFD)
+	FailedCall(TwD, TW_ENO_FUNCTION, order_ExposeWidget);
+    
+    UNLK;
 }
 
-void Tw_ExposeHWFontWidget(tw_d TwD, twidget W, dat XWidth, dat YWidth, dat Left, dat Up, TW_CONST hwfont *Font) {
-    Tw_ExposeWidget(TwD, W, XWidth, YWidth, Left, Up, NULL, Font, NULL);
+void Tw_ExposeTextWidget(tw_d TwD, twidget W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch, TW_CONST byte *Text) {
+    Tw_ExposeWidget2(TwD, W, XWidth, YWidth, Left, Up, Pitch, Text, NULL, NULL);
 }
 
-void Tw_ExposeHWAttrWidget(tw_d TwD, twidget W, dat XWidth, dat YWidth, dat Left, dat Up, TW_CONST hwattr *Attr) {
-    Tw_ExposeWidget(TwD, W, XWidth, YWidth, Left, Up, NULL, NULL, Attr);
+void Tw_ExposeHWFontWidget(tw_d TwD, twidget W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch, TW_CONST hwfont *Font) {
+    Tw_ExposeWidget2(TwD, W, XWidth, YWidth, Left, Up, Pitch, NULL, Font, NULL);
+}
+
+void Tw_ExposeHWAttrWidget(tw_d TwD, twidget W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch, TW_CONST hwattr *Attr) {
+    Tw_ExposeWidget2(TwD, W, XWidth, YWidth, Left, Up, Pitch, NULL, NULL, Attr);
 }
 
 

@@ -2,17 +2,67 @@
 			Help about twin configuration
 		    
 
-   First, you might want to edit the file `MakeRules' to change
-   the install directory, tweak compiler flags (enable debugging), etc.
+   First, you might want to edit the files `makerules' and `makeautoconf.in' to
+   change the install directory, tweak compiler flags (enable debugging), etc.
 
    If you are trying to compile on non-Linux systems, you would do better
    reading the file README.porting now, for useful tips and warnings.
    
-   Then type `make' or `make config' to configure twin for your tastes.
-   If you have "dialog" installed, you can also use `make menuconfig',
-   which provides a somewhat more friendly interface.
+   Then type `./configure' to configure twin for your system.
+   Finally, type `make'.
    
-   In both cases, the questions asked are the same:
+   Automatic configuration of twin basically reduces to the above.
+   If you are one of the geeks that want to configure twin manually,
+   keep reading.
+   
+   WARNING:
+   WARNING: MANUALLY CONFIGURING TWIN IS ALMOST ALWAYS UNNECESSARY
+   WARNING: AND WILL VERY EASILY RESULT IN `make' BOMBING OUT WITH ERRORS!
+   WARNING:
+   WARNING: DON'T ASK FOR HELP AFTER YOU CONFIGURED TWIN MANUALLY:
+   WARNING: YOUR FEEBLE CRIES WILL BE IGNORED!
+   WARNING:
+   WARNING: STOP READING NOW!
+   WARNING:
+   
+   Since you are still reading, from now on I'll assume you know
+   what you are doing.
+   
+   To manually configure twin, you can:
+   
+   * edit conf/conf.auto, possibly using conf/conf.default as template;
+   * run `make config': a shell script asking a lot of questions will start;
+   * run `make menuconfig': a somewhat more friendly interface will be started
+     (requires a fairly recent `dialog' utility);
+   * run `./configure [OPTIONS]': this will automatically disable features that
+     are unavailable on your system, and will enable by default all other
+     (available) features.
+   * run `scripts/Configure [OPTIONS]': lets you manually change each and every
+     configuration option, defaulting to current ones.
+     
+     Note that this lets you set inconsistent options: for example
+     `scripts/Configure --disable--modules --enable-wm=socket' tries to disable
+     modules and at the same time to enable the window manager as module.
+     Provided Makefiles are smart enough to realize this risk and automatically
+     regularize the configuration before starting to compile, so it may happen
+     than `scripts/Configure --show' report different configurations before and
+     after compiling: the latter comes from regularizing the former.
+     If you want, you can regularize manually with 'make nullconfig'.
+     Also, to ensure the configuration you choosed does not use features
+     unavailable on your system, you can process it with `./configure';
+     this is very easy: just type (including the backquotes)
+     
+     ./configure `scripts/Configure --show`
+     
+   
+   In the first case, you will have to figure out by your own what the various
+   variables mean (tip: look at the CONF_* lines below).
+   In the last two cases, you also need to know that each
+   --enable-feature corresponds to the CONF_FEATURE with the same name
+   (except for prefix and upper/lower case); for example,
+   --enable-wm-rc corresponds to CONF_WM_RC.
+   In the remaining cases (`make config' and `make menuconfig'), the questions
+   asked are the same:
 
    First question:
    
@@ -22,13 +72,11 @@
 	(CONF__SHLIBS)
    	Enable shared libraries (ELF) [Y/n] ?
 	
-   Answer `y' if you want to compile the shared library libTw.so
-   (it's the library used by clients to talk to twin).
+   Answer `y' if you want to compile shared libraries
+   (libTw.so, the library used by clients to talk to twin, and some others)
    This works only if you have an ELF system.
-   If you say 'n' only the static version of the library, libTw.a,
-   will be compiled. If you don't know what to do, say 'y',
-   and if compiling libTw.so fails, retry with 'n'.
-   
+   If you say 'n' only the static version of the libraries will be compiled.
+
 	(CONF__MODULES)
 	Enable modules (ELF) [y/N] ?
 	
@@ -44,7 +92,6 @@
    unused memory to the system. Anyway, they are tested only on Linux/i386,
    and furthermore they shoot heavily on the kernel mmap() subsystem,
    so on some OSes they may give troubles.
-   If you are confused by all this, just say 'n'.
    
 	(CONF__UNICODE)
 	Build all code with Unicode support [Y/n] ?
@@ -70,8 +117,14 @@
         
    Answer `y' if you want to enable transparent gzip compression in the
    socket connections. This requires having zlib installed.
-   Read paragraph `7. Transparent Compression' of the README for details.
+   Read paragraph `7. Transparent Compression' of the Tutorial for details.
 
+	(CONF_SOCKET_PTHREADS)
+	 -> Sockets: thread-safe libraries (requires pthread.h) [Y/n] ?
+	 
+   Answer `y' if you want libraries (libTw, libTutf, libTT) to be thread-safe.
+   You need pthread.h and libpthread for this to work.
+   
 	(CONF_WM)
 	Builtin Window Manager: absolutely needed! [Y/m/n] ?
 	
@@ -93,9 +146,8 @@
    This is mostly a matter of taste. In order to safely parse ~/.twinrc,
    twin forks() a child process that does the dirty work, then collects
    the result. If you say 'n', the child will send the result to parent
-   through a socket (easy but slower), while if you say 'y' communication
-   will use a shared memory area coming from a mmapped file in /tmp
-   (potentially faster but more tricky to setup).
+   through a socket, while if you say 'y' communication will use a
+   shared memory area coming from a mmapped file in /tmp.
    As a rule of thumb, say 'n' unless you also enabled "custom malloc/free".
    
 	(CONF_WM_RC_SHRINK)
@@ -107,11 +159,11 @@
    memory it will need to parse ~/.twinrc and allocates it beforehand.
    To be on the safe side, the allocated memory size is a worst-case guess
    and it is quite high (about 10 times the size of your ~/.twinrc).
-   If you answer 'y' and did not enable CONF_WM_RC_SHMMAP above (which has
-   a safe replacement for this), the parser tries to realloc() that memory
+   If you did not enable CONF_WM_RC_SHMMAP above (which has a safe replacement
+   for this), and answer 'y' here, the parser tries to realloc() that memory
    once it has finished, to free the part in excess. 
    Depending on your OS, realloc() may move that memory to a new location,
-   making it useless since it contains a lot of pointers.
+   making it unusable since it contains a lot of pointers.
    If this ever happens, twin will report the error and tell you to disable
    the option.
 
@@ -122,7 +174,7 @@
 	Builtin Terminal emulator [Y/m/n] ?
 
    Answer `y' or `m' if you want to compile the terminal emulator
-   built-in into twin. This code is necessary also to run `twterm',
+   built-in into twin. This code is also necessary to run `twterm',
    the external terminal emulator,
    so answer `n' only if you _really_ know what you are doing.
    
@@ -132,6 +184,16 @@
    Answer `y' if you are compiling twin with glibc-2.1 or later and you
    want to use /dev/pts/* terminals instead of old-style /dev/tty[p-z]*.
 
+	#
+	# Messages logging
+	#
+   	(CONF_PRINTK)
+	Store server messages into Messages window [Y/n] ?
+   
+   Answer `y' to get a copy of twin diagnostic messages in the
+   Messages window (you can open it from the default menu).
+   Just say `y'.
+   
 	#
 	# Display hardware support
 	#
@@ -161,14 +223,6 @@
    terminal. This includes almost any existing terminal, but is far from
    optimal and may give problems with some keys (function keys, arrows, etc.).
 
-	(CONF_HW_TTY_NCURSES)
-	 -> -> tty: termcap: link against libncurses [Y/n] ?
-	 
-   If you have libtermcap installed on your system, just say 'n'. Otherwise,
-   you very probably have libncurses installed so you can say 'y' and use it
-   as a (big and bloated) replacement of libtermcap to access the terminal
-   database.
-   
 	(CONF_HW_X11)
 	HW support: X11 [Y/m/n] ?
 
@@ -180,11 +234,11 @@
    Answer `y' or 'm' to allow twin to connect to another twin
    and open a window there as display.
 
-	(CONF_HW_TWDISPLAY)
+	(CONF_HW_DISPLAY)
 	HW support: twdisplay client as display [Y/m/n] ?
 
    Answering `y' or `m' compiles `twdisplay', which can attach/detach displays
-   remotely. Answer `n' only if you _really_ know what you are doing.
+   remotely. Answer `n' only if you know what you are doing.
 
 	(CONF_HW_GGI)
 	HW support: libggi [y/m/N] ?
@@ -240,12 +294,4 @@
    Answer `y' to enable virtual screen scrolling. If enabled, dragging
    the mouse to one of the screen borders of twin will scroll the screen.
    You can also change this option from the `Options' window inside twin.
-   
-	(CONF_OPT_ALTFONT)
-	Runtime option: use alternate font (see Tutorial) [y/N] ?
-	
-   Answer `y' to use alternate graphics character to draw window borders.
-   This works only if you are using a font specifically tweaked for twin,
-   like the `vgafont.raw' provided (which is for VGA cards). See also section
-   `9. Installing fonts' of the file docs/Tutorial.
    

@@ -6,7 +6,7 @@
 			    twin on non-Linux systems
 
 Various users asked for twin portings on many platforms,
-yet the author only has access to Linux systems
+yet the author only has access to Linux and SunOS systems
 so this file is/will be mostly user contributed.
 
 A requirement of twin on ALL platforms is that you need GNU bash and GNU make
@@ -23,12 +23,14 @@ Compiling on FreeBSD:
 	Tips and caveats:
 	
 	You need to have GNU bash and GNU make (gmake) installed.
-	Use `gmake' and NOT plain `make' to compile.
-	For some reason, `gmake menuconfig' aborts. Use `gmake config'.
+	After running `./configure', use `gmake' and NOT plain `make'
+	to compile.
+	Due to incompatible `dialog' utility, `gmake menuconfig' aborts;
+	if you need it, use `gmake config' instead.
 	Only X and twin driver are tested, tty (termcap/ncurses) driver
 	has known problems on FreeBSD console: in particular, the PAUSE key
 	does not work; use F4 instead.
-	Quite obviously, Linux Console driver does not compile
+	Quite obviously, Linux console driver does not compile
 	(it's Linux specific): disable it.
 	To be on the safe side, also disable Custom malloc/free.
 
@@ -48,14 +50,28 @@ Compiling on AIX 3.2:
 	and (very probably) GNU gcc; you can try with AIX cc, but I have not
 	tested compiling twin with it.
 
-	Then `gmake config', disabling Shared libraries, Modules,
-	Custom malloc/free, Socket compression, Linux console support.
-
-	Now `gmake'.
+	Then `./configure' and `gmake'. The logic in `./configure' should
+	disable Shared libraries, Modules, Custom malloc/free,
+	Linux console support and probably Socket compression.
+	If `gmake' fails, run `gmake config', disable all above	options
+	and try again.
 
 	Known problems on AIX 3.2 :
 		twdisplay does not work, I suspect an endianity problem.
 
-Compiling on Solaris 8:
+Compiling on SunOS:
 
-	(work in progress)
+	As usual, you need GNU make (gmake) and GNU bash.
+	Run `./configure' and `gmake'. If you have problems compiling
+	clients/findtwin.c, add a line
+	
+	int alphasort();
+	
+	to clients/findtwin.c, and/or change the line saying
+	
+	LDFLAGS_twfindtwin+=$(LIBTW)
+
+	in clients/Makefile into
+	
+	LDFLAGS_twfindtwin+=$(LIBTW) -L/usr/ucblib -lucb
+	

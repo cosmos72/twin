@@ -1,5 +1,5 @@
-#ifndef _TW_RCRUN_H
-#define _TW_RCRUN_H
+#ifndef _TWIN_RCRUN_H
+#define _TWIN_RCRUN_H
 
 #define GLOBAL_MAX 7
 extern node Globals[GLOBAL_MAX];
@@ -27,5 +27,5 @@ byte RC_VM(timevalue *t);
 byte RC_VMQueue(CONST wm_ctx *C);
 
 
-#endif /* _TW_RCRUN_H */
+#endif /* _TWIN_RCRUN_H */
 

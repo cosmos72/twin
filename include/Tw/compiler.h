@@ -8,8 +8,15 @@
 
 
 
+#if !defined(TW_CAT)
+# define TW__CAT(a,b) a##b
+# define TW_CAT(a,b) TW__CAT(a,b)
+#endif
 
-
+#if !defined(TW_STR)
+# define TW__STR(s) #s
+# define TW_STR(s) TW__STR(s)
+#endif
 
 #if !defined(TW_CONST)
 # if defined(CONST)
@@ -23,6 +30,10 @@
 #if !defined(TW_INLINE)
 # if defined(INLINE)
 #  define TW_INLINE INLINE
+# elif defined(__GNUC__)
+#  define TW_INLINE extern __inline__
+# elif defined(inline)
+#  define TW_INLINE inline
 # else
 #  define TW_INLINE static
 # endif
@@ -52,50 +63,4 @@
 #endif /* _TW_COMPILER_H */
 
 
-
-
-
-
-
-
-
-#if defined(_TWIN_H) && !defined(_TW_H)
-
-/* server internal stuff. define macros without any prefix */
-
-#ifndef _TWIN_COMPILER_H
-#define _TWIN_COMPILER_H
-
-
-
-
-
-
-#if !defined(CONST)
-# define CONST const
-#endif
-
-/* inline is NOT a standard C feature :( */
-#if !defined(INLINE)
-# define INLINE static
-#endif
-
-#if !defined(VOLATILE)
-# define VOLATILE volatile
-#endif
-
-#if !defined(FNATTR_CONST)
-# if defined(__GNUC__)
-#  define FNATTR_CONST __attribute__((const))
-# else
-#  define FNATTR_CONST
-# endif
-#endif
-
-
-
-
-#endif /* _TWIN_COMPILER_H */
-
-#endif /* defined(_TWIN_H) && !defined(_TW_H) */
 

@@ -10,10 +10,6 @@
  *
  */
 
-#include <sys/types.h>
-#include <unistd.h>
-#include <errno.h>
-
 #include "twin.h"
 #include "data.h"
 #include "methods.h"
@@ -38,10 +34,14 @@ static msgport Term_MsgPort;
 static void TwinTermH(msgport MsgPort);
 static void TwinTermIO(int Fd, window Window);
 
-static void termShutDown(window Window) {
-    if (Window->RemoteData.Fd != NOFD)
-	close(Window->RemoteData.Fd);
-    UnRegisterWindowFdIO(Window);
+static void termShutDown(widget W) {
+    window Window;
+    if (IS_WINDOW(W)) {
+	Window = (window)W;
+	if (Window->RemoteData.Fd != NOFD)
+	    close(Window->RemoteData.Fd);
+	UnRegisterWindowFdIO(Window);
+    }
 }
 
 static window newTermWindow(byte *title) {

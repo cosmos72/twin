@@ -546,9 +546,14 @@ static void AlienIO(int fd, uldat slot) {
  * when an exclusive one is started. Must preserve Slot, Fd and other globals!
  */
 static void alienSendMsg(msgport MsgPort, msg Msg) {
-    uldat Len = 0, Tot, N;
-    byte *t, *Src, Type;
-
+    uldat Len = 0, Tot;
+    byte *t;
+    
+#if defined(CONF__MODULES) || defined (CONF_HW_DISPLAY)
+    uldat N;
+    byte *Src, Type;
+#endif
+    
     uldat save_Slot = Slot;
     int save_Fd = Fd;
     

@@ -6,6 +6,8 @@
 TOPDIR=../..
 SUBDIRS=
 
+-include $(TOPDIR)/makeautoconf
+
 CFLAGS+=-I..
 
 BASEOBJS=
@@ -27,10 +29,10 @@ BINS=
 MODBINS=
 ARLIBS=hw.a
 
-CFLAGS_hw_X11.o+=-I/usr/X11R6/include
+CFLAGS_hw_X11.o+=$(CF_HEADERX11)
 
 LDFLAGS_hw_tty.so=-lc -shared
-LDFLAGS_hw_X11.so=-lc -shared -L/usr/X11R6/lib -lX11
+LDFLAGS_hw_X11.so=-lc -shared $(LD_LIBX11)
 LDFLAGS_hw_display.so=-lc -shared
 LDFLAGS_hw_twin.so=-lc -shared $(LIBTW)
 LDFLAGS_hw_ggi.so=-lc -shared -lggi
@@ -43,12 +45,12 @@ all: $(ARLIBS) modules
 #
 # read configuration
 #
-include $(TOPDIR)/conf/config.status
+-include $(TOPDIR)/conf/conf.current
 -include .modules
 -include .depend
 
 #
-# set variables according config.status
+# set variables according conf.current
 # and group together all *.o objects needed by each binary
 #
 
@@ -57,7 +59,7 @@ ifeq ($(CONF__ALLOC),y)
 endif
 
 #ifeq ($(CONF__UNICODE),y)
-#  LDFLAGS+=$(LIBTWUTF)
+#  LDFLAGS+=$(LIBTUTF)
 #endif
 
 ifeq ($(CONF_HW_TTY),y)
@@ -69,12 +71,15 @@ else
       LDFLAGS_hw_tty.so+=-lgpm
     endif
     ifeq ($(CONF_HW_TTY_TERMCAP),y)
-      LIBTERMCAP=-ltermcap
-      ifeq ($(CONF_HW_TTY_NCURSES),y)
-        CFLAGS_hw_tty.so+=-I/usr/include/ncurses
-        LIBTERMCAP=-lncurses
+      CFLAGS_hw_tty.o+=-I/usr/include/ncurses
+      ifeq ($(CONF_HW_TTY_LINUX),y)
+        ifeq ($(LD_LIBTERMCAP_IN_LIBGPM),)
+          LDFLAGS_hw_tty.so+=$(LD_LIBTERMCAP)
+	# else necessary libs are already pulled in with -lgpm above
+	endif
+      else
+        LDFLAGS_hw_tty.so+=$(LD_LIBTERMCAP)
       endif
-      LDFLAGS_hw_tty.so+=$(LIBTERMCAP)
     endif
   else
     EXCL_OBJS+=$(TTYOBJS)
@@ -130,7 +135,7 @@ endif
 #
 # common rules
 #
-include $(TOPDIR)/MakeRules
+include $(TOPDIR)/makerules
 
 #
 # All done. Now just set a few special targets

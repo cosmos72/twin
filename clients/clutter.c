@@ -8,9 +8,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
-#include <time.h>
-#include <unistd.h>
 
 #include "Tw/Tw.h"
 #include "Tw/Twerrno.h"
@@ -29,7 +26,7 @@ static byte NewClutterWindow(void) {
 	 (7, "Clutter", NULL,
 	  Clutter_Menu, COL(BLACK,HIGH|BLACK), TW_LINECURSOR,
 	  TW_WINDOW_DRAG|TW_WINDOW_RESIZE|TW_WINDOW_X_BAR|TW_WINDOW_Y_BAR|TW_WINDOW_CLOSE,
-	  TW_WINFL_USE_DEFCOL,
+	  TW_WINDOWFL_ROWS_DEFCOL,
 	  11, 3, 0))) {
 	
 	TwConfigureWindow(Window, 0x3, lrand48() / (MAXLRAND48 / X),
@@ -44,7 +41,7 @@ TW_DECL_MAGIC(clutter_magic);
 
 static byte InitClutter(void) {
 
-    if (!TwCheckMagic(term_magic) || !TwOpen(NULL))
+    if (!TwCheckMagic(clutter_magic) || !TwOpen(NULL))
 	return FALSE;
     
     srand48(time(NULL));
@@ -74,22 +71,23 @@ int main(int argc, char *argv[]) {
 	err = TwErrno;
 	fprintf(stderr, "%s: libTw error: %s%s\n", argv[0],
 		TwStrError(err), TwStrErrorDetail(err, TwErrnoDetail));
-	return 0;
+	return 1;
     }
     
     while (NewClutterWindow()) {
 	while ((Msg=TwReadMsg(FALSE))) {
-	    if (Msg->Type==TW_MSG_WINDOW_GADGET) {
+	    if (Msg->Type==TW_MSG_WIDGET_GADGET) {
 		if (Msg->Event.EventGadget.Code == 0) {
 		    return 0;
 		}
 	    }
 	}
     }
-    if ((err = TwErrno))
+    if ((err = TwErrno)) {
 	fprintf(stderr, "%s: libTw error: %s%s\n", argv[0],
 		TwStrError(err), TwStrErrorDetail(err, TwErrnoDetail));
-
+	return 1;
+    }
     return 0;
 }
 
