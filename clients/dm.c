@@ -215,8 +215,12 @@ static byte InitServer(void) {
 	    }
 	    return TRUE;
 	}
-
-	fprintf(stderr, "twdm: read() from twin failed: %s\n", strerror(errno));
+	
+	if (i <= 0)
+	    fprintf(stderr, "twdm: read() from twin failed: %s\n", strerror(errno));
+	else
+	    fprintf(stderr, "twdm: error starting twin:\n\t%.*s\n", i, buff);
+	    
 	return FALSE;
     }
     fprintf(stderr, "twdm: pipe() failed: %s\n", strerror(errno));

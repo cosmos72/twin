@@ -75,7 +75,7 @@ fi
 
 echo_hw_tty=
 if test "$enable_hw_tty" != n; then
-  for i in linux twterm termcap; do
+  for i in linux lrawkbd twterm termcap; do
     eval "echo_val=\${enable_hw_tty_$i}"
     if test "$echo_val" = y; then
       echo_hw_tty="$echo_hw_tty $i"

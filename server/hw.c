@@ -138,7 +138,7 @@ void HandleSignals(void) {
 
 
 #ifndef DONT_TRAP_SIGNALS
-static RETSIGTYPE SignalPanic(int n) {
+static RETSIGTYPE SignalFatal(int n) {
     sigset_t s, t;
 
     signal(n, SIG_DFL);
@@ -155,52 +155,90 @@ static RETSIGTYPE SignalPanic(int n) {
 }
 #endif
 
+
+static int signals_ignore [] = {
+	SIGUSR1,
+	SIGUSR2,
+	SIGPIPE,
+	SIGALRM,
+#ifdef SIGIO
+	SIGIO,
+#endif
+#if defined(SIGPOLL) && (!defined(SIGIO)  || SIGPOLL != SIGIO)
+	SIGPOLL,
+#endif
+#if defined(SIGLOST) && (!defined(SIGIO)  || SIGLOST != SIGIO)  && \
+                        (!defined(SIGPWR) || SIGLOST != SIGPWR)
+	SIGLOST,
+#endif
+#ifdef SIGPROF
+	SIGPROF,
+#endif
+#ifdef SIGSYS
+	SIGSYS,
+#endif
+#if defined(SIGUNUSED) && (!defined(SIGSYS) || SIGUNUSED != SIGSYS)
+	SIGUNUSED,
+#endif
+#ifdef SIGTRAP
+	SIGTRAP,
+#endif
+#ifdef SIGURG
+	SIGURG,
+#endif
+#ifdef SIGVTALRM
+	SIGVTALRM,
+#endif
+};
+
+static int signals_fatal [] = {
+	SIGINT,
+	SIGQUIT,
+	SIGILL,
+	SIGABRT,
+	SIGBUS,
+	SIGFPE,
+	SIGSEGV,
+	SIGTERM,
+#ifdef SIGXPCU
+	SIGXCPU,
+#endif
+#ifdef SIGXFSZ
+	SIGXFSZ,
+#endif
+#ifdef SIGPWR
+	SIGPWR,
+#endif
+#ifdef SIGEMT
+	SIGEMT,
+#endif
+#if defined(SIGSTKFLT) && (!defined(SIGEMT) || SIGSTKFLT != SIGEMT)
+	SIGSTKFLT,
+#endif
+};
+
 byte InitSignals(void) {
+    uldat i;
     signal(SIGWINCH,SignalWinch);
     signal(SIGCHLD, SignalChild);
-    signal(SIGPIPE, SIG_IGN);
-    signal(SIGIO,   SIG_IGN);
-#ifndef DONT_TRAP_SIGNALS
     signal(SIGHUP,  SignalHangup);
-    signal(SIGINT,  SignalPanic);
-    signal(SIGQUIT, SignalPanic);
-    signal(SIGILL,  SignalPanic);
-    signal(SIGABRT, SignalPanic);
-    signal(SIGBUS,  SignalPanic);
-    signal(SIGFPE,  SignalPanic);
-    signal(SIGSEGV, SignalPanic);
-    signal(SIGTERM, SignalPanic);
-    signal(SIGXCPU, SignalPanic);
-    signal(SIGXFSZ, SignalPanic);
-# ifdef SIGPWR
-    signal(SIGPWR,  SignalPanic);
-# endif
-#endif
+    for (i = 0; i < sizeof(signals_ignore)/sizeof(signals_ignore[0]); i++)
+	signal(signals_ignore[i], SIG_IGN);
+    for (i = 0; i < sizeof(signals_fatal)/sizeof(signals_fatal[0]); i++)
+	signal(signals_fatal[i], SignalFatal);
     return TRUE;
 }
 
 void QuitSignals(void) {
+    uldat i;
     signal(SIGWINCH,SIG_IGN);
     signal(SIGCHLD, SIG_IGN);
-    signal(SIGPIPE, SIG_IGN);
-    signal(SIGIO,   SIG_IGN);
-#ifndef DONT_TRAP_SIGNALS
-    signal(SIGHUP,  SIG_DFL);
-    signal(SIGINT,  SIG_DFL);
-    signal(SIGQUIT, SIG_DFL);
-    signal(SIGILL,  SIG_DFL);
-    signal(SIGABRT, SIG_DFL);
-    signal(SIGBUS,  SIG_DFL);
-    signal(SIGFPE,  SIG_DFL);
-    signal(SIGSEGV, SIG_DFL);
-    signal(SIGTERM, SIG_DFL);
-    signal(SIGXCPU, SIG_DFL);
-    signal(SIGXFSZ, SIG_DFL);
-# ifdef SIGPWR
-    signal(SIGPWR,  SIG_DFL);
-# endif
-#endif
+    for (i = 0; i < sizeof(signals_ignore)/sizeof(signals_ignore[0]); i++)
+	signal(signals_ignore[i], SIG_IGN);
+    for (i = 0; i < sizeof(signals_fatal)/sizeof(signals_fatal[0]); i++)
+	signal(signals_fatal[i], SIG_DFL);
 }
+
 
 void MoveToXY(dat x, dat y) {
     CursorX = x;

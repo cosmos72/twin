@@ -1,0 +1,25 @@
+#
+# Makefile for twin hw drivers
+#
+
+
+SUBDIRS=
+
+include $(T)include/version.in
+-include $(B)makeautoconf
+
+all: autogen
+
+#
+# read configuration
+#
+-include $(B)conf/conf.current
+-include .modules
+-include .depend
+-include $(B).hdepend
+
+include $(T)makerules.in
+
+
+clean:
+

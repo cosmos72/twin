@@ -13,12 +13,14 @@ make_IDENTITY:=$(wordlist 1,2,$(shell $(MAKE) -v))
 ifneq ($(make_IDENTITY),GNU Make)
   all: make_is_not_GNU
   make_is_not_GNU:
-	@echo "# Warning: GNU Make is required to build twin, but the '$(MAKE)' you are using" ; \
+	@echo [1m; \
+	 echo "# Warning: GNU Make is required to build twin, but the '$(MAKE)' you are using" ; \
 	 echo "# does not seem to be GNU Make. build will probably fail... " ; \
 	 echo "# running '$(MAKE) -v' to get version information resulted in: " ; \
 	 echo "--------------------------------------------------------" ; \
 	 $(MAKE) -v ; \
-	 echo "--------------------------------------------------------"
+	 echo "--------------------------------------------------------" ; \
+	 echo [0m
 endif
 
 
@@ -38,7 +40,7 @@ ifneq ($(wildcard $(B)conf/conf.current),)
 endif
 
 
-include $(T)makerules
+include $(T)makerules.in
 
 
 
@@ -60,95 +62,6 @@ fakeconf:
 
 #
 Torture: fakeconf autogen
-
-
-
-# libtool and autoconf stuff
-
-#
-# libtool scripts must already exist in order for './configure'
-# to be generated correctly
-# and include/autoconf.h.in must already exist in order for './configure'
-# to correctly generate include/autoconf.h
-#
-
-ADMIN_LIBTOOLS:=$(T)admin/ltmain.sh $(T)admin/config.guess $(T)admin/config.sub
-
-$(ADMIN_LIBTOOLS):
-	cd $(TT) && libtoolize -c
-
-ADMIN_ACLOCAL:=$(T)admin/aclocal.m4
-
-DISTCLEAN_EMPTY_FILES:=$(ADMIN_ACLOCAL) $(ADMIN_LIBTOOLS)
-
-$(ADMIN_ACLOCAL):
-	@if [ -f /usr/share/aclocal/libtool.m4 ]; then \
-	  echo $(LN) /usr/share/aclocal/libtool.m4 $@ ; \
-	  $(LN) /usr/share/aclocal/libtool.m4 $@ ; \
-	else \
-	  echo touch $@; \
-	  touch $@; \
-	fi
-
-$(T)configure: $(T)configure.in $(ADMIN_LIBTOOLS) $(ADMIN_ACLOCAL) $(T)scripts/Makefiles.sh $(T)include/autoconf.h.in
-	rm -f $@ && cd $(TT) && autoconf --localdir=admin
-
-$(T)include/autoconf.h.in: $(T)configure.in
-	rm -f $@ && cd $(TT) && autoheader
-
-config.status libtool: $(T)configure $(ADMIN_LIBTOOLS)
-	@echo Updating config.status libtool; \
-	$(T)configure --cache-file=config.cache --no-create
-
-#
-# was:
-#
-# makeautoconf: $(T)makeautoconf.in
-#
-# conf/conf.auto: $(T)conf/conf.auto.in
-#
-# makeautoconf conf/conf.auto: config.status
-#	@echo ...
-#
-
-makeautoconf: $(T)makeautoconf.in config.status
-	@echo Updating makeautoconf conf/conf.auto; \
-	./config.status
-
-conf/conf.auto: $(T)conf/conf.auto.in makeautoconf
-
-#
-# this is an overkill, as it forces recompiling all sources that
-# include "autoconf.h" or "Tw/Twautoconf.h" (almost every one)
-# after each time someone runs ./configure
-#
-# include/autoconf.h: config.status $(T)include/autoconf.h.in 
-#	rm -f $@ && ./config.status
-#
-# unluckily it is needed to correctly bootstrap commands like
-# 'make -f Makefile.in autogen' or 'make -f Makefile.in distclean',
-# so the solution is:
-# check whether include/autoconf.h is actually up-to-date
-# (config.status does not touch it if its contents do not change),
-# else remove it and run either ./config.status or ./configure.
-# 
-# Instead of having include/autoconf.h depend on config.status,
-# we manually check whether config.status exists and make it if needed.
-#
-include/autoconf.h: $(T)include/autoconf.h.in
-	@echo Updating $@; \
-	if [ ! -f config.status ]; then \
-	  $(MAKE) -f Makefile.in config.status ; \
-	fi ; \
-	if [ conf/conf.auto -nt config.status -a \
-	     conf/conf.auto -nt $< ]; then \
-	  touch $@; \
-	else \
-	  rm -f $@ ; \
-	  ./config.status ; \
-	fi
-
-bootstrap: $(CONF)
 
 
 
@@ -209,7 +122,7 @@ distclean: clean
 	for i in $(DISTCLEAN_EMPTY_FILES); do \
 	  echo > $$i; \
 	done && \
-	touch configure
+	find . -type f | xargs touch
 
 pure: distclean
 	rm -f Makefile $(T)admin/config.* \

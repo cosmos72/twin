@@ -47,6 +47,7 @@ static void termcap_UpdateMouseAndCursor(void);
 
 static void termcap_Beep(void);
 static void termcap_Configure(udat resource, byte todefault, udat value);
+static void termcap_ConfigureKeyboard(udat resource, byte todefault, udat value);
 
 static byte termcap_CanDragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp);
 static void termcap_DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp);

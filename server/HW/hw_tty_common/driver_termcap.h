@@ -11,7 +11,7 @@ INLINE void termcap_MoveToXY(udat x, udat y) {
 }
 
 
-static udat termcap_LookupKey(udat *ShiftFlags, byte *slen, byte *s, byte **sret) {
+static udat termcap_LookupKey(udat *ShiftFlags, byte *slen, byte *s, byte *retlen, byte **ret) {
     byte len = *slen;
     byte **key;
     static struct {
@@ -43,17 +43,19 @@ IS(Down,	3, "\x1B[B")
 #undef IS
     }, *lk;
     
-    *sret = s;
+    *ret = s;
     *ShiftFlags = 0;
 
-    if (len == 0)
+    if (len == 0) {
+	*retlen = len;
 	return TW_Null;
-
+    }
+    
     if (len > 1 && *s == '\x1B') {
 	
 	if (len == 2 && s[1] >= ' ' && s[1] <= '~') {
 	    /* try to handle ALT + <some key> */
-	    *slen = len;
+	    *slen = *retlen = len;
 	    *ShiftFlags = KBD_ALT_FL;
 	    return (udat)s[1];
 	}
@@ -61,18 +63,18 @@ IS(Down,	3, "\x1B[B")
 	for (key = &tc_cap[tc_key_first]; key < &tc_cap[tc_key_last]; key++) {
 	    if (*key && !strncmp(*key, s, len)) {
 		lk = linux_key + (key - &tc_cap[tc_key_first]);
-		*slen = lk->l;
-		*sret = lk->s;
+		*slen = *retlen = lk->l;
+		*ret = lk->s;
 		return lk->k;
 	    }
 	}
 
 	/*
-	 * return stdin_LookupKey(ShiftFlags, slen, s, sret);
+	 * return stdin_LookupKey(ShiftFlags, slen, s, retlen, ret);
 	 */
     }
 
-    *slen = 1;
+    *slen = *retlen = 1;
     
     switch (*s) {
       case TW_Tab:
@@ -222,6 +224,7 @@ static byte termcap_InitVideo(void) {
 	
     HW->Beep = termcap_Beep;
     HW->Configure = termcap_Configure;
+    HW->ConfigureKeyboard = termcap_ConfigureKeyboard;
     HW->SetPalette = (void *)NoOp;
     HW->ResetPalette = (void *)NoOp;
 
@@ -446,7 +449,7 @@ static void termcap_UpdateMouseAndCursor(void) {
     termcap_UpdateCursor();
 }
 
-static void termcap_Configure(udat resource, byte todefault, udat value) {
+static void termcap_ConfigureKeyboard(udat resource, byte todefault, udat value) {
     switch (resource) {
       case HW_KBDAPPLIC:
 	fputs(todefault || !value ? tc_kpad_on : tc_kpad_off, stdOUT);
@@ -458,18 +461,21 @@ static void termcap_Configure(udat resource, byte todefault, udat value) {
 	 setFlush();
 	 */
 	break;
+    }
+}
+
+static void termcap_Configure(udat resource, byte todefault, udat value) {
+    switch (resource) {
+      case HW_KBDAPPLIC:
+      case HW_ALTCURSKEYS:
+	HW->ConfigureKeyboard(resource, todefault, value);
+	break;
       case HW_BELLPITCH:
       case HW_BELLDURATION:
+	/* unsupported */
 	break;
       case HW_MOUSEMOTIONEVENTS:
-	if (todefault)
-	    value = 0;
-	if (HW->MouseEvent == xterm_MouseEvent)
-	    xterm_EnableMouseMotionEvents(value);
-#ifdef CONF_HW_TTY_LINUX
-	else if (HW->MouseEvent == GPM_MouseEvent)
-	    GPM_EnableMouseMotionEvents(value);
-#endif
+	HW->ConfigureMouse(resource, todefault, value);
 	break;
       default:
 	break;

@@ -10,7 +10,7 @@ INSTALLSUBDIR=/TT/modules/HW
 
 SUBDIRS=
 
-include $(T)include/TT/makeversion
+include $(T)include/TT/version.in
 -include $(B)makeautoconf
 
 all: build-all
@@ -174,9 +174,9 @@ endif
 # include the do-everything file.
 # Must correctly set all CC_FLAGS* and LD_FLAGS* before including this!
 #
-include $(T)makerules
+include $(T)makerules.in
 
-build-all: $(ALLBINS) links
+build-all: $(ALLBINS)
 
 
 $(S)%_m4.c: $(S)m4/hw.m4 $(S)%_c $(wildcard $(S)m4/*.m4 $(T)include/m4/TT*.m4)
@@ -193,8 +193,6 @@ $(S)twin_detunnel_c: $(T)include/socklist_m4.h
 #
 
 do-autogen: $(patsubst %_c,%_m4.c,$(wildcard *_c))
-
-links: $(patsubst %.la,%.so.$(SHLIBS_VER),$(MODS))
 
 install-dir:
 	$(INSTALL-DIR) $(DESTDIR)$(libdir)$(INSTALLSUBDIR)

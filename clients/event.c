@@ -115,6 +115,8 @@ byte *twkeyname(udat Code) {
 	IS(Cancel);
 	IS(Help);
 	IS(Break);
+	IS(Caps_Lock);
+	IS(Shift_Lock);
 	IS(Num_Lock);
 	IS(KP_Home);
 	IS(KP_Left);
@@ -170,6 +172,18 @@ byte *twkeyname(udat Code) {
 	IS(F18);
 	IS(F19);
 	IS(F20);
+	IS(Shift_L);
+	IS(Shift_R);
+	IS(Control_L);
+	IS(Control_R);
+	IS(Meta_L);
+	IS(Meta_R);
+	IS(Alt_L);
+	IS(Alt_R);
+	IS(Super_L);
+	IS(Super_R);
+	IS(Hyper_L);
+	IS(Hyper_R);
 	IS(EcuSign);
 	IS(ColonSign);
 	IS(CruzeiroSign);

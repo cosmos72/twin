@@ -4,7 +4,7 @@
 
 SUBDIRS=HW
 
-include $(T)include/TT/makeversion
+include $(T)include/TT/version.in
 -include $(B)makeautoconf
 
 all: build-subdirs build-all
@@ -119,7 +119,7 @@ HW/%: decls_m4.h dir-HW
 # include the do-everything file.
 # Must correctly set all CC_FLAGS* and LD_FLAGS* before including this!
 #
-include $(T)makerules
+include $(T)makerules.in
 
 
 #
@@ -136,7 +136,7 @@ $(S)avl.c:
 
 install-headers:
 	$(INSTALL-DIR) $(DESTDIR)$(includedir)/TT && \
-	$(INSTALL-TXT) $(T)include/TT/*.h $(wildcard $(B)include/TT/*.h) $(DESTDIR)$(includedir)/TT
+	$(INSTALL-TXT) $(T)include/TT/*.h $(filter-out $(T)include/TT/%, $(wildcard $(B)include/TT/*.h)) $(DESTDIR)$(includedir)/TT
 
 install-dir:
 	$(INSTALL-DIR) $(DESTDIR)$(libdir)

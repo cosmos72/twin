@@ -21,13 +21,7 @@
 	DONE  tweak libTw to send CallBExtension return value through socket
 		     ONLY when needed
 
-2. twin server
-
-	FIXME -hw=tty on xterm gives messed up output
-	
-	write "make uninstall" target
-
-3. libTT, part 2
+2. libTT, part 2
 
 	write garbage collector
 	
@@ -46,7 +40,7 @@
 	      libTw twindow scrollbars are not powerful enough, they
 	      miss "change event" support.
 
-4. clients
+3. clients
 
 	add menu options to builtin terminal emulator and to twterm (requires
 	      sending some kind of events) to set some of the following options:
@@ -137,7 +131,4 @@
    finish libGGI keyboard support
 
    Flame libgpm people for /tmp/gpm* sockets, gpm_tried, syslogging, ncurses
-
-   ### tell GTK people to write a gtk_quit() function that shuts down gtk
-   ### but does NOT call system exit()
 

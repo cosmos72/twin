@@ -11,9 +11,9 @@ all: build-subdirs
 #
 # common rules
 #
-include $(T)include/makeversion
+include $(T)include/version.in
 -include $(B)makeautoconf
-include $(T)makerules
+include $(T)makerules.in
 
 
 

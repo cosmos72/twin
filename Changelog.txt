@@ -1,4 +1,19 @@
-From 0.4.6 to 0.5.0: (Massimiliano Ghilardi, 26 Mar 2003)
+From 0.5.0 to 0.5.1: (Massimiliano Ghilardi, 29 May 2003)
+	* Added raw keyboard support for --hw=tty on Linux console.
+	  This is hopefully very complete, since it queries the kernel tables
+	  to implement keyboard layouts, diacriticals, compose key,
+	  console-switch, Alt+<digits>, AltGr+<hexdigits> and other bells and
+	  whitles found in Linux console.
+	  This finally allows twin on Linux console to react to almost *any*
+	  keys combination like Alt+Up, Shift+PageUp and Shift+PageDown.
+	* Added new actions to system.twinrc, usable on the drivers:
+	  --hw=tty (only on Linux console), --hw=X11 and --hw=gfx.
+	    Alt+Up          spawn new terminal window
+	    Shift+PageUp    scroll up   current window
+	    Shift+PageDown  scroll down current window
+
+
+From 0.4.6 to 0.5.0: (Massimiliano Ghilardi, 02 Apr 2003)
 	* Added libTw client `twcuckoo', modeled after xcuckoo.
 	* Added support for mouse wheel (= buttons 4 and 5)
 	  in libTw, libTT and in twin server. Be aware anyway that
@@ -14,13 +29,19 @@ From 0.4.6 to 0.5.0: (Massimiliano Ghilardi, 26 Mar 2003)
 	  Using this feature from a CVS snapshot is a little harder,
 	  look at `Makefile.fake' for an example.
 	* Added CONF__ASM and CONF__LONG_LONG to configuration:
-	  now you can manually enable/disable assembler code and
+	  now you can manually enable/disable assembler source code and
 	  `long long' support (`long long' support may automatically disable
-	  assembler code due to internal limitations) using one of:
+	  assembler source code due to internal limitations) using one of:
 	  `./configure --enable--{asm|long-long}[=yes|no]',
 	  `scripts/Configure.sh --enable--{asm|long-long}[=yes|no]',
 	  `make config', `make menuconfig', `make gconfig'.
-	* Increased libTw major version to 4 due to incompatible changes.
+	* Added proper error messages reporting to ~/.twinrc parser
+	  and to twdm code that starts twin server.
+	* Modified tty mouse driver not to close the display upon libgpm fatal error.
+	* Enhanced tty keyboard driver code to better detect cursors, function keys
+	  and other special keys.
+	* Enhanced caching in CONF__ALLOC custom malloc()/free() routines.
+	* Bumped libTw major version to 4 due to incompatible changes.
 	* Removed `time_t' and `frac_t' types from libTw.
 	  They are now replaced by `tany'.
 	* Removed unused parameters from Tw_CreateMsgPort().
@@ -82,9 +103,6 @@ From 0.4.4 to 0.4.5: (Massimiliano Ghilardi, 25 Oct 2002)
 	  Also rewrote mutex locking logic to let clients safely call
 	  TTClose*() functions even from inside listeners.
 	* Added two more demo clients for libTT: ttdemo2 and ttdemo3.
-	* Added support for mouse wheel (buttons 4 and 5) in libTw.
-	  Be aware anyway that at least up to 1.18.1, linux `gpm' daemon
-	  (used by twin driver -hw=tty) does not support buttons 4 and 5.
 	* Added libTw WIDGET_AUTO_FOCUS attribute for focus-under-mouse
 	  subwidgets policy (the subwidget and all its parents must have this
 	  attribute set for autofocus to work).
@@ -197,7 +215,7 @@ From 0.4.2 to 0.4.3: (Massimiliano Ghilardi, 09 Jun 2002)
 	* Changed twterm to default to latin1 charset after reset
 	  if unicode is enabled.
 	* Changed ./configure to check for various gcc-compatible extensions
-	  and moved OS-specific settings from makerules -> makeosvalues
+	  and moved OS-specific settings from makerules.in -> makeosvalues
 	  to configure -> makeautoconf.
 	* Changed twdm install path from ${exec_prefix}/bin to ${exec_prefix}/sbin
 	  

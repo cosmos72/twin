@@ -2,7 +2,7 @@
 			Help about twin configuration
 		    
 
-   First, you might want to edit the files `makerules' and `makeautoconf.in' to
+   First, you might want to edit the files `makerules.in' and `makeautoconf.in' to
    change the install directory, tweak compiler flags (enable debugging), etc.
 
    If you are trying to compile on non-Linux systems, you would do better

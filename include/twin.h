@@ -1410,6 +1410,8 @@ struct s_display_hw {
 
     void (*Beep)(void);
     void (*Configure)(udat resource, byte todefault, udat value);
+    void (*ConfigureKeyboard)(udat resource, byte todefault, udat value);
+    void (*ConfigureMouse)(udat resource, byte todefault, udat value);
     void (*SetPalette)(udat N, udat R, udat G, udat B);
     void (*ResetPalette)(void);
 

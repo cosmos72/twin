@@ -1287,7 +1287,8 @@ byte rcload(void) {
     str path;
     uldat len;
 #ifndef DEBUG_FORK
-    int fds[2];
+    int fdm[2];
+    int fdl[2];
 #endif
     byte c = FALSE;
 
@@ -1333,29 +1334,40 @@ byte rcload(void) {
     }
     return c;
 #else
-    if (socketpair(AF_UNIX, SOCK_STREAM, 0, fds) == 0) {
-	switch (fork()) {
-	  case -1: /* error */
-	    close(fds[0]);
-	    close(fds[1]);
-	    break;
-	  case 0:  /* child */
-	    QuitSignals();
-	    close(fds[0]);
-	    ClearGlobals();
-	    if (rcparse(path)) {
-		WriteGlobals();
-		shm_send(fds[1]);
+    if (socketpair(AF_UNIX, SOCK_STREAM, 0, fdm) == 0) {
+	if (socketpair(AF_UNIX, SOCK_STREAM, 0, fdl) == 0) {
+	    switch (fork()) {
+	      case -1: /* error */
+		close(fdm[0]); close(fdm[1]);
+		close(fdl[0]); close(fdl[1]);
+		break;
+	      case 0:  /* child */
+		QuitSignals();
+		close(fdm[0]); close(fdl[0]);
+		if (fdl[1] != 2) {
+		    close(2);
+		    dup2(fdl[1], 2);
+		    close(fdl[1]);
+		}
+		ClearGlobals();
+		if (rcparse(path)) {
+		    WriteGlobals();
+		    shm_send(fdm[1]);
+		}
+		exit(0);
+		break;
+	      default: /* parent */
+		FreeMem(path);
+		close(fdm[1]); close(fdl[1]);
+		printk_receive_fd(fdl[0]);
+		
+		if (shm_receive(fdm[0]) && shm_shrink())
+		    c = ReadGlobals();
+		close(fdm[0]); close(fdl[0]);
+		break;
 	    }
-	    exit(0);
-	    break;
-	  default: /* parent */
-	    FreeMem(path);
-	    close(fds[1]);
-	    if (shm_receive(fds[0]) && shm_shrink())
-		c = ReadGlobals();
-	    close(fds[0]);
-	    break;
+	} else {
+	    close(fdm[0]); close(fdm[1]);
 	}
     }
     if (!c)

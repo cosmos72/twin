@@ -1366,7 +1366,7 @@ return (unsigned char)yytext[0];
 case 85:
 YY_RULE_SETUP
 {
-		    sprintf(errbuf, "twin: %s:%d: invalid identifier `%s'\n",
+		    sprintf(errbuf, "twin: %.200s:%d: invalid identifier `%s'\n",
 			    FILE_NAME, LINE_NO, yytext);
 		    YY_FATAL_ERROR(errbuf);
 		}
@@ -1434,7 +1434,7 @@ YY_RULE_SETUP
 {
 		    char *buf = AllocMem(256 + strlen(yytext));
 		    if (buf) {
-			sprintf(buf, "twin: %s:%d: unterminated string:\n%s\n",
+			sprintf(buf, "twin: %.200s:%d: unterminated string:\n%s\n",
 				FILE_NAME, LINE_NO, yytext);
 		    } else
 			buf = "twin: unterminated string\n";
@@ -1449,7 +1449,7 @@ case 89:
 YY_RULE_SETUP
 {
 		    unsigned char ch = yytext[0];
-		    sprintf(errbuf, "twin: %s:%d: illegal character 0x%02X",
+		    sprintf(errbuf, "twin: %.200s:%d: illegal character 0x%02X",
 			    FILE_NAME, LINE_NO, ch);
                     if (ch >= 32 && ch < 127) {
 			sprintf(errbuf + strlen(errbuf), " `%c'\n", ch);

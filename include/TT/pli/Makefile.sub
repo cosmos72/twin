@@ -5,7 +5,7 @@ all: autogen
 
 do-autogen: $(S)tt_timestamp
 
-include $(S)../makeversion
-include $(T)makerules
+include $(S)../version.in
+include $(T)makerules.in
 
 

@@ -76,7 +76,7 @@ on your system:
 
 
 But of course you may want to know more details:
-First, you might want to edit the files `makerules' and `makeautoconf.in'
+First, you might want to edit the files `makerules.in' and `makeautoconf.in'
 to change the install directory, tweak compiler flags (enable debugging), etc.
 
 First you may want to tweak the configuration options, install directory,

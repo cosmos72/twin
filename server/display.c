@@ -1358,7 +1358,8 @@ int main(int argc, char *argv[]) {
     }
 #endif
     
-    TWDisplay = origTWDisplay = CloneStr(dpy ? dpy : (byte *)getenv("TWDISPLAY"));
+    origTWDisplay = CloneStr(getenv("TWDISPLAY"));
+    TWDisplay = dpy ? CloneStr(dpy) : origTWDisplay;
     origTERM = CloneStr(getenv("TERM"));
     HOME = CloneStr(getenv("HOME"));
     

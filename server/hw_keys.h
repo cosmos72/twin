@@ -111,5 +111,18 @@ IS(F10,		5, "\x1B[21~")
 IS(F11,		5, "\x1B[23~")
 IS(F12,		5, "\x1B[24~")
 
+IS(Shift_L,	0, "")
+IS(Shift_R,	0, "")
+IS(Control_L,	0, "")
+IS(Control_R,	0, "")
+IS(Meta_L,	0, "")
+IS(Meta_R,	0, "")
+IS(Alt_L,	0, "")
+IS(Alt_R,	0, "")
+IS(Super_L,	0, "")
+IS(Super_R,	0, "")
+IS(Hyper_L,	0, "")
+IS(Hyper_R,	0, "")
+
 IS(Delete,	4, "\x1B[3~")
 

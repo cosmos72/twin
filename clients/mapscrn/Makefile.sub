@@ -23,7 +23,7 @@ all: $(BINS)
 # include the do-everything file.
 # Must correctly set all CFLAGS* and LDFLAGS* before including this!
 #
-include $(T)makerules
+include $(T)makerules.in
 
 
 install:

@@ -18,7 +18,7 @@ CONF__UNICODE_HELP="Enable Unicode support (libTutf)"
 CONF__ALLOC_HELP="Use custom mmap() based malloc/free"
 CONF__LONG_LONG_HELP="Use C type 'long long' if supported (not recommended)"
 CONF__ASM_HELP="Use hand-optimized assembler code if available"
-CONF_SOCKET_HELP="Support remote socket connections"
+CONF_SOCKET_HELP="Support remote socket connections (libTw)"
 CONF_SOCKET_GZ_HELP=" -> Sockets: support gzip compression"
 CONF_SOCKET_PTHREADS_HELP=" -> Sockets: thread-safe libs (requires libpthread)"
 CONF_SOCKET_ALIEN_HELP=" -> Sockets: support non-native architectures"
@@ -38,10 +38,11 @@ CONF_TERM_DEVPTS_HELP=" -> Terminal: use Unix98 /dev/pts/* pseudo-ttys"
 CONF_PRINTK_HELP="Store server messages into Messages window"
 CONF_HW_TTY_HELP="HW support: text terminals (Linux console...)"
 CONF_HW_TTY_LINUX_HELP=" -> tty support: Linux console (gpm mouse, /dev/vcsa)"
-CONF_HW_TTY_TWTERM_HELP=" -> tty support: twin terminal"
+CONF_HW_TTY_LRAWKBD_HELP=" -> tty support: use raw keyboard on Linux console"
+CONF_HW_TTY_TWTERM_HELP=" -> tty support: twin own terminal"
 CONF_HW_TTY_TERMCAP_HELP=" -> tty support: termcap/ncurses terminal database"
-CONF_HW_X11_HELP="HW support: X11"
 CONF_HW_GFX_HELP="HW support: X11 enhanced driver (gfx), uses libXpm"
+CONF_HW_X11_HELP="HW support: X11"
 CONF_HW_TWIN_HELP="HW support: twin, native"
 CONF_HW_DISPLAY_HELP="HW support: twdisplay client as display"
 CONF_HW_GGI_HELP="HW support: libggi"
@@ -94,10 +95,11 @@ endmenu
 menu CONF_HW
   yesmodno CONF_HW_TTY
   yesno_dep CONF_HW_TTY_LINUX CONF_HW_TTY
+  yesno_dep CONF_HW_TTY_LRAWKBD CONF_HW_TTY
   yesno_dep CONF_HW_TTY_TWTERM CONF_HW_TTY
   yesno_dep CONF_HW_TTY_TERMCAP CONF_HW_TTY
-  yesmodno CONF_HW_X11
   yesmodno_truedep CONF_HW_GFX CONF__UNICODE
+  yesmodno CONF_HW_X11
   yesmodno_truedep CONF_HW_TWIN CONF_SOCKET
   yesmodno_truedep CONF_HW_DISPLAY CONF_SOCKET
   yesmodno CONF_HW_GGI

@@ -11,10 +11,11 @@ SUBDIRS=HW extensions
 INSTALLSUBDIR=/twin/modules
 
 include $(T)makeversion
-include $(T)include/makeversion
+include $(T)include/version.in
 -include $(B)makeautoconf
 
-TWIN_SERVER=twin_$(TWIN_VERSION_STR)
+#TWIN_SERVER=twin_$(TWIN_VERSION_STR)
+TWIN_SERVER=twin_real
 
 BASEOBJS=data.o builtin.o methods.o util.o draw.o extreg.o main.o \
          missing.o hw_multi.o printk.o resize.o scroller.o remote.o alloc.o
@@ -229,7 +230,7 @@ endif
 #
 # common rules
 #
-include $(T)makerules
+include $(T)makerules.in
 
 
 bins: $(BINS)
@@ -255,7 +256,7 @@ $(EXTOBJS): build-dir-extensions
 
 do-autogen: $(S)rcparse_tab.c $(S)rcparse_tab.h $(S)rcparse_lex.c $(S)socket1_m4.h $(S)socket2_m4.h $(S)socket3_m4.h
 
-links: .twinrc .twenvrc.sh $(patsubst %.la,%.so.$(SHLIBS_VER),$(MODS))
+links: .twinrc .twenvrc.sh
 
 .twinrc:
 	$(LN) $(T)system.twinrc $@

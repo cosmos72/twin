@@ -5,6 +5,6 @@ all: autogen
 
 do-autogen: $(S)version.h
 
-include $(S)makeversion
-include $(T)makerules
+include $(S)version.in
+include $(T)makerules.in
 

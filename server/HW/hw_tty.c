@@ -48,7 +48,7 @@
 #endif
 
 #ifdef CONF_HW_TTY_TERMCAP
-# include "hw_tty_termcap.h"
+# include "hw_tty_common/driver_termcap1.h"
 #endif
 
 struct tty_data {
@@ -64,9 +64,9 @@ struct tty_data {
     FILE *stdOUT;
     uldat saveCursorType;
     dat saveX, saveY;
-
-    udat (*LookupKey)(udat *ShiftFlags, byte *slen, byte *s, byte **sret);
-
+    
+    udat (*LookupKey)(udat *ShiftFlags, byte *slen, byte *s, byte *retlen, byte **ret);
+    
     byte *mouse_start_seq, *mouse_end_seq, *mouse_motion_seq;
 #ifdef CONF_HW_TTY_LINUX
     Gpm_Connect GPM_Conn;
@@ -105,7 +105,6 @@ struct tty_data {
 #define GPM_fd		(ttydata->GPM_fd)
 #define GPM_keys	(ttydata->GPM_keys)
 
-
 #ifdef CONF_HW_TTY_TERMCAP
 # define tc_cap		(ttydata->tc_cap)
 # define tc_scr_clear	(tc_cap[tc_seq_scr_clear])
@@ -129,324 +128,52 @@ struct tty_data {
 # define tc_scr_clear	(ttydata->tc_scr_clear)
 #endif
 
+static void null_InitMouse(void);
+static byte null_InitMouseConfirm(void);
+static void stdin_DetectSize(dat *x, dat *y);
+static void stdin_CheckResize(dat *x, dat *y);
+static void stdin_Resize(dat x, dat y);
+static void stdout_FlushHW(void);
 
-/* plain Unix-style tty keyboard input */
+#ifdef CONF__UNICODE
+static void tty_MogrifyUTF8(hwfont h);
+static byte utf8used;
+#endif
 
-/* it can't update FullShiftFlags :( */
+/* this can stay static, as it's used only as temporary storage */
+static hwcol _col;
+
+static void tty_QuitHW(void);
 
 
-static void stdin_QuitKeyboard(void);
-static void stdin_KeyboardEvent(int fd, display_hw hw);
-static udat linux_LookupKey(udat *ShiftFlags, byte *slen, byte *s, byte **sret);
 
-/* return FALSE if failed */
-static byte stdin_InitKeyboard(void) {
-    struct termios ttyb;
-    byte buf[16], *s = buf+3, c;
-    int i;
 
-    ttyb = ttysave;
-    /* NL=='\n'==^J; CR=='\r'==^M */
-    ttyb.c_iflag &= ~(IXON|IXOFF|IGNCR|INLCR|ICRNL);
-    /*ttyb.c_oflag &= ~OPOST;*/
-    ttyb.c_lflag &= ~(ECHO|ICANON);
-    ttyb.c_cc[VTIME] = 0;
-    ttyb.c_cc[VMIN] = 1;
-    /* disable special handling of suspend key (^Z), quit key (^\), break key (^C) */
-    ttyb.c_cc[VSUSP] = 0;
-    ttyb.c_cc[VQUIT] = 0;
-    ttyb.c_cc[VINTR] = 0;
-    tty_setioctl(tty_fd, &ttyb);
+#include "hw_tty_common/kbd_stdin.h"
 
-    write(tty_fd, "\033Z", 2); /* request ID */
-    /* ensure we CAN read from the tty */
-    do {
-	i = read(tty_fd, buf, 15);
-    } while (i < 0 && (errno == EWOULDBLOCK || errno == EINTR));
-    if (i <= 0) {
-	printk("      stdin_InitKeyboard() failed: unable to read from the terminal!\n");
-	tty_setioctl(tty_fd, &ttysave);
-	return FALSE;
-    }
-    buf[i] = '\0';
-    ttypar[0] = ttypar[1] = ttypar[2] = i = 0;
+#include "hw_tty_common/mouse_xterm.h"
 
-    while (i<3 && (c=*s)) {
-	if (c>='0' && c<='9') {
-	    ttypar[i] *= 10; ttypar[i] += c-'0';
-	} else if (*s==';')
-	    i++;
-	else
-	    break;
-	s++;
-    }
+#if defined(CONF_HW_TTY_LINUX) || defined(CONF_HW_TTY_TWTERM)
+# include "hw_tty_linux/driver_linux.h"
+#endif
 
-    HW->keyboard_slot = RegisterRemote(tty_fd, (obj)HW, stdin_KeyboardEvent);
-    if (HW->keyboard_slot == NOSLOT) {
-	stdin_QuitKeyboard();
-	return FALSE;
-    }
-    HW->KeyboardEvent = stdin_KeyboardEvent;
-    HW->QuitKeyboard = stdin_QuitKeyboard;
+#if defined(CONF_HW_TTY_TERMCAP)
+# include "hw_tty_common/driver_termcap.h"
+#endif
 
-    LookupKey = linux_LookupKey;
+
+
+static void null_InitMouse(void) {
+    HW->mouse_slot = NOSLOT; /* no mouse at all :( */
     
-    return TRUE;
-}
-
-static void stdin_QuitKeyboard(void) {
-    tty_setioctl(tty_fd, &ttysave);
+    HW->MouseEvent = (void *)NoOp;
+    HW->QuitMouse = NoOp;
     
-    UnRegisterRemote(HW->keyboard_slot);
-    HW->keyboard_slot = NOSLOT;
-    
-    HW->QuitKeyboard = NoOp;
-}
-
-static udat linux_LookupKey(udat *ShiftFlags, byte *slen, byte *s, byte **sret) {
-    byte used = 0, len = *slen;
-
-    *ShiftFlags = 0;
-    *sret = s;
-
-    if (len == 0)
-	return TW_Null;
-    
-    if (len > 1 && *s == '\x1B') {
-
-	++used, --len;
-	++s;
-
-	if (len == 1) {
-	    /* try to handle ALT + <some key> */
-	    *slen = ++used;
-	    *ShiftFlags = KBD_ALT_FL;
-	    return (udat)*s;
-	}
-
-	switch (*s) {
-	    
-#define IS(sym, c) case c: *slen = ++used; return TW_##sym
-	
-	  case '[':
-	    if (++used, --len) switch (*++s) {
-		/* ESC [ */
-		IS(Up,    'A');
-		IS(Down,  'B');
-		IS(Right, 'C');
-		IS(Left,  'D');
-		IS(KP_5,  'G');  /* returned when NumLock is off */
-		IS(Pause, 'P');
-		
-		/* FALLTHROUGH */
-		
-	      case '[':
-		/* ESC [ [ */
-		if (++used, --len) switch (*++s) {
-		    IS(F1, 'A');
-		    IS(F2, 'B');
-		    IS(F3, 'C');
-		    IS(F4, 'D');
-		    IS(F5, 'E');
-		}
-		break;
-		
-	      case '1':
-		/* ESC [ 1 */
-		if (++used, --len) {
-		    ++s;
-		    
-		    if (len == 1 && *s == '~') {
-			/* ESC [ 1 ~ */
-			*slen = ++used;
-			return TW_Home;
-		    }
-		    ++used, --len;
-		    if (len && s[1] == '~')
-			/* ESC [ 1 ? ~ */
-			switch (*s) {
-			    IS(F6, '7');
-			    IS(F7, '8');
-			    IS(F8, '9');
-			}
-		}
-		break;
-		
-	      case '2':
-		/* ESC [ 2 */
-		if (++used, --len) {
-		    ++s;
-		    
-		    if (len == 1 && *s == '~') {
-			/* ESC 2 ~ */
-			*slen = ++used;
-			return TW_Insert;
-		    }
-		    ++used, --len;
-		    if (len && s[1] == '~')
-			/* ESC [ 2 ? ~ */
-			switch (*s) {
-			    IS(F9,  '0');
-			    IS(F10, '1');
-			    IS(F11, '3');
-			    IS(F12, '4');
-			}
-		}
-		break;
-		
-	      case '3':
-		/* ESC [ 3 */
-		if (++used, --len) switch (*++s) {
-		    IS(Delete, '~');
-		}
-		break;
-		
-	      case '4':
-		/* ESC [ 4 */
-		if (++used, --len) switch (*++s) {
-		    IS(End, '~');
-		}
-		break;
-		
-	      case '5':
-		/* ESC [ 5 */
-		if (++used, --len) switch (*++s) {
-		    IS(Prior, '~');
-		}
-		break;
-
-	      case '6':
-		/* ESC [ 6 */
-		if (++used, --len) switch (*++s) {
-		    IS(Next, '~');
-		}
-		break;
-		
-	    }
-	    break;
-	    
-	  case 'O':
-	    /* ESC O */
-	    if (++used, --len) switch (*++s) {
-		    
-		IS(KP_Enter, 'M');
-		IS(Num_Lock, 'P');
-		IS(KP_Divide,'Q');
-		IS(KP_Multiply,'R');
-		IS(KP_Subtract,'S');
-		
-		IS(KP_Add, 'l');
-		IS(KP_Separator, 'm');
-		IS(KP_Delete, 'n');
-		IS(KP_Equal, 'o');
-		
-		IS(KP_0, 'p');
-		IS(KP_1, 'q');
-		IS(KP_2, 'r');
-		IS(KP_3, 's');
-		IS(KP_4, 't');
-		IS(KP_5, 'u');
-		IS(KP_6, 'v');
-		IS(KP_7, 'w');
-		IS(KP_8, 'x');
-		IS(KP_9, 'y');
-	    }
-	    break;
-
-	  default:
-	    break;
-	}
-
-#undef IS
-	
-    }
-
-    /* undo the increments above */
-    s -= used;
-    len += used;
-    used = 0;
-
-    *slen = ++used;
-    
-    switch (*s) {
-      case TW_Tab:
-      case TW_Linefeed:
-      case TW_Return:
-      case TW_Escape:
-	return (udat)*s;
-      default:
-	if (*s < ' ') {
-	    /* try to handle CTRL + <some key> */
-	    *ShiftFlags = KBD_CTRL_FL;
-	    return (udat)*s | 0x40;
-	}
-	return (udat)*s;
-    }
-    
-    /* NOTREACHED */
-    return TW_Null;
-}
-	
-static byte xterm_MouseData[10] = "\033[M#!!!!";
-
-static void stdin_KeyboardEvent(int fd, display_hw hw) {
-    static void xterm_MouseEvent(int, display_hw);
-    static byte *match;
-    byte got, chunk, buf[SMALLBUFF], *s, *sret;
-    udat Code, ShiftFlags;
-    SaveHW;
-    
-    SetHW(hw);
-    
-    got = read(fd, s=buf, SMALLBUFF-1);
-    
-    if (got == 0 || (got == (byte)-1 && errno != EINTR && errno != EWOULDBLOCK)) {
-	/* BIG troubles */
-	HW->NeedHW |= NEEDPanicHW, NeedHW |= NEEDPanicHW;
-	return;
-    }
-    
-    while (got > 0) {
-	if (HW->MouseEvent == xterm_MouseEvent) {
-	    match = s;
-	    while ((match = memchr(match, '\033', got))) {
-		if (got >= (match - s) + 6 && !strncmp(match, "\033[M", 3)) {
-		    /* classic xterm mouse reporting (X11 specs) */
-		    CopyMem(match, xterm_MouseData, 6);
-		    CopyMem(match+6, match, got - (match - s) - 6);
-		    got -= 6;
-		} else if (got >= (match - s) + 9 && !strncmp(match, "\033[5M", 4)) {
-		    /* enhanced xterm-style reporting (twin specs) */
-		    CopyMem(match, xterm_MouseData, 9);
-		    CopyMem(match+9, match, got - (match - s) - 9);
-		    got -= 9;
-		} else {
-		    match++;
-		    continue;
-		}
-		xterm_MouseEvent(fd, HW);
-	    }
-	}
-
-	/* ok, now try to find out the correct KeyCode for the ASCII sequence we got */
-	
-	if (!(chunk = got))
-	    break;
-	
-	Code = LookupKey(&ShiftFlags, &chunk, s, &sret);
-
-	KeyboardEventCommon(Code, ShiftFlags, chunk, sret);
-	s += chunk, got -= chunk;
-    }
-    
-    RestoreHW;
+    HW->FlagsHW &= ~FlHWSoftMouse; /* no need to Hide/Show it */
+    HW->ShowMouse = HW->HideMouse = NoOp; /* override the ones set by *_InitVideo() */
 }
 
 
-
-
-
-static byte warn_NoMouse(void) {
+static byte null_InitMouseConfirm(void) {
     byte c;
     CONST byte *Msg =
 	"\n"
@@ -455,28 +182,22 @@ static byte warn_NoMouse(void) {
 	"      If you really want to run `twin' without mouse\n"
 	"      hit RETURN to continue, otherwise hit CTRL-C to quit now.\n";
     
-    if (tty_fd != 0) {
-	fprintf(stdOUT, Msg);
-	fflush(stdOUT);
-    }
-    printk(Msg);
+    fprintf(stdOUT, "%s", Msg);
+    fflush(stdOUT);
+
+    printk("%s", Msg);
     flushk();
     
     read(tty_fd, &c, 1);
     if (c == '\n' || c == '\r') {
     
-	HW->mouse_slot = NOSLOT; /* no mouse at all :( */
-    
-	HW->MouseEvent = (void *)NoOp;
-	HW->QuitMouse = NoOp;
-    
-	HW->FlagsHW &= ~FlHWSoftMouse; /* no need to Hide/Show it */
-	HW->ShowMouse = HW->HideMouse = NoOp; /* override the ones set by InitVideo() */
+	null_InitMouse();
 	
 	return TRUE;
     }
     return FALSE;
 }
+
 
 
 
@@ -514,12 +235,10 @@ static void stdin_Resize(dat x, dat y) {
     HW->usedX = x;
     HW->usedY = y;
 }
-	    
 
-static void stdout_FlushHW(void);
 
-/* this can stay static, as it's used only as temporary storage */
-static hwcol _col;
+
+
 
 
 static void stdout_FlushHW(void) {
@@ -528,201 +247,9 @@ static void stdout_FlushHW(void) {
     clrFlush();
 }
 
-static void tty_QuitHW(void) {
-    HW->QuitMouse();
-    HW->QuitVideo();
-    HW->QuitKeyboard();
-    HW->QuitHW = NoOp;
-    
-    if (tty_name)
-	FreeMem(tty_name);
-    if (tty_TERM)
-	FreeMem(tty_TERM);
-    if (HW->DisplayIsCTTY && DisplayHWCTTY == HW)
-	DisplayHWCTTY = NULL;
-    
-    fflush(stdOUT);
-    if (stdOUT != stdout) {
-	
-	/* if we forced tty_fd to be fd 0, release it while keeping fd 0 busy */
-	if (tty_fd == 0) {
-	    if ((tty_fd = open("/dev/null", O_RDWR)) != 0) {
-		fclose(stdOUT);
-	    
-		dup2(tty_fd, 0);
-		close(tty_fd);
-	    }
-	    /*
-	     * else we don't fclose(stdOUT) to avoid having fd 0 unused...
-	     * it causes leaks, but much better than screwing up badly when
-	     * fd 0 will get used by something else (say a socket) and then
-	     * abruptly closed by tty_InitHW()
-	     */
-	} else
-	    fclose(stdOUT);
-    }
-    FreeMem(HW->Private);
-}
-
-
-/*
- * xterm-style mouse input
- * 
- * used to let twin run inside twin terminal, xterm, etc.
- * 
- * it is always compiled in.
- */
-
-static void xterm_QuitMouse(void);
-static void xterm_MouseEvent(int fd, display_hw hw);
-
-
-/* return FALSE if failed */
-static byte xterm_InitMouse(byte force) {
-    CONST byte *term = tty_TERM;
-    
-    if (force == TRUE) {
-	printk("      xterm_InitMouse(): xterm-style mouse FORCED.\n"
-	       "      Assuming terminal has xterm compatible mouse reporting.\n");
-	term = "xterm";
-    } else if (force == TRUE+TRUE) {
-	printk("      xterm_InitMouse(): twterm-style mouse FORCED.\n"
-	       "      Assuming terminal has twterm compatible mouse reporting.\n");
-	term = "twterm";
-    }
-
-    if (!term) {
-	printk("      xterm_InitMouse() failed: unknown terminal type.\n");
-	return FALSE;
-    }
-
-    mouse_start_seq = "\033[?9h";
-    mouse_end_seq = "\033[?9l";
-    mouse_motion_seq = "\033[?999h";
-    
-    if (!strcmp(term, "twterm")) {
-	;
-    } else if (!strcmp(term, "linux")) {
-	/*
-	 * additional check... out-of-the box linux
-	 * doesn't have xterm-style mouse reporting
-	 */
-	if (ttypar[0]<6 || (ttypar[0]==6 && ttypar[1]<3)) {
-	    printk("      xterm_InitMouse() failed: this `linux' terminal\n"
-		   "      has no support for xterm-style mouse reporting.\n");
-	    return FALSE;
-	}
-	if (ttypar[0]==6 && ttypar[1]<4) {
-	    printk("      xterm_InitMouse() warning: this `linux' terminal\n"
-		   "      can only report click, drag and release, not motion.\n");
-	    
-	    mouse_motion_seq = NULL;
-	}
-    } else if (!strncmp(term, "xterm", 5) ||
-	       !strncmp(term, "rxvt", 4) ||
-	       !strncmp(term, "Eterm", 5)) {
-	mouse_start_seq = "\033[?1001s\033[?1000h";
-	mouse_end_seq = "\033[?1000l\033[?1001r";
-	mouse_motion_seq = NULL;
-    } else {
-	printk("      xterm_InitMouse() failed: terminal `%."STR(SMALLBUFF)"s' is not supported.\n", term);
-	return FALSE;
-    }
-
-    fputs(mouse_start_seq, stdOUT);
-    setFlush();
-    
-    HW->mouse_slot = NOSLOT; /* shared with keyboard */
-    
-    HW->MouseEvent = xterm_MouseEvent;
-    HW->QuitMouse = xterm_QuitMouse;
-    
-    HW->FlagsHW &= ~FlHWSoftMouse; /* no need to Hide/Show it */
-    HW->ShowMouse = HW->HideMouse = NoOp; /* override the ones set by InitVideo() */
-    
-    return TRUE;
-}
-
-static void xterm_QuitMouse(void) {
-    fputs(mouse_end_seq, stdOUT);
-    HW->QuitMouse = NoOp;
-}
-
-static void xterm_EnableMouseMotionEvents(byte enable) {
-    if (mouse_motion_seq) {
-	/* either enable new style + mouse motion, or switch back to new style */
-	fputs(enable ? mouse_motion_seq : mouse_start_seq, stdOUT);
-	setFlush();
-    }
-}
-
-
-static void xterm_MouseEvent(int fd, display_hw hw) {
-    static dat prev_x, prev_y;
-    udat Buttons = 0, Id;
-    byte *s = xterm_MouseData;
-    dat x, y, dx, dy;
-    
-    if (*s == '\033' && *++s == '[') {
-	if (*++s == 'M' && (Id=*++s) <= '#') {
-	    /* classic xterm mouse reporting (X11 specs) */
-	    if (Id == ' ')
-		Buttons |= HOLD_LEFT;
-	    else if (Id == '!')
-		Buttons |= HOLD_MIDDLE;
-	    else if (Id == '\"')
-		Buttons |= HOLD_RIGHT;
-	    x = *++s - '!'; /* (*s) must be unsigned char */
-	    y = *++s - '!';
-	} else if (*s == '5' && *++s == 'M' && (Id = *++s) >= ' ' && (Id -= ' ') <= (HOLD_ANY>>HOLD_BITSHIFT)) {
-	    /* enhanced xterm-style reporting (twin specs) */
-	    Buttons = Id << HOLD_BITSHIFT;
-	    s++;
-	    x = (udat)((s[0]-'!') & 0x7f) | (udat)((udat)((s[1]-'!') & 0x7f) << 7);
-	    if (x & ((udat)1 << 13))
-		/* top bit is set, set also higher ones */
-		x |= (udat)~0 << 14;
-	    
-	    s+=2;
-	    y = (udat)((s[0]-'!') & 0x7f) | (udat)((udat)((s[1]-'!') & 0x7f) << 7);
-	    if (y & ((udat)1 << 13))
-		y |= (udat)~0 << 14;
-	} else
-	    s = NULL;
-    } else
-	s = NULL;
-
-    if (s) {
-	x = Max2(x, 0);
-	x = Min2(x, DisplayWidth - 1);
-    
-	y = Max2(y, 0);
-	y = Min2(y, DisplayHeight - 1);
-    
-	if (x == 0 && prev_x == 0)
-	    dx = -1;
-	else if (x == DisplayWidth - 1 && prev_x == DisplayWidth - 1)
-	    dx = 1;
-	else
-	    dx = 0;
-	if (y == 0 && prev_y == 0)
-	    dy = -1;
-	else if (y == DisplayHeight - 1 && prev_y == DisplayHeight - 1)
-	    dy = 1;
-	else
-	    dy = 0;
-	
-	prev_x = x;
-	prev_y = y;
-	
-	MouseEventCommon(x, y, dx, dy, Buttons);
-    }
-}
 
 
 #ifdef CONF__UNICODE
-static byte utf8used;
-
 static void tty_MogrifyUTF8(hwfont h) {
     byte c;
     if (!utf8used)
@@ -736,13 +263,7 @@ static void tty_MogrifyUTF8(hwfont h) {
 }
 #endif
 
-#if defined(CONF_HW_TTY_LINUX) || defined(CONF_HW_TTY_TWTERM)
-# include "hw_tty_linux.c"
-#endif
 
-#if defined(CONF_HW_TTY_TERMCAP)
-# include "hw_tty_termcap.c"
-#endif
 
 /*
  * note: during xxx_InitHW() initialization, DON'T use DisplayWidth/DisplayHeight
@@ -755,14 +276,17 @@ byte tty_InitHW(void) {
     byte *arg = HW->Name;
     byte *s;
     byte *charset = NULL;
-    byte skip_vcsa = FALSE;
-    byte skip_stdout = FALSE;
-    byte force_mouse = FALSE;
-    byte tc_colorbug = FALSE;
-    byte try_ctty = FALSE;
-    byte need_persistent_slot = FALSE;
-    byte display_is_ctty = FALSE;
-    
+#define NEVER  0
+#define MAYBE  1
+#define ALWAYS 2
+    byte autotry_video = MAYBE, try_vcsa = MAYBE,
+	try_stdout = MAYBE, try_termcap = MAYBE,
+	autotry_kbd = MAYBE, try_lrawkbd = MAYBE,
+	
+	force_mouse = FALSE, tc_colorbug = FALSE,
+	need_persistent_slot = FALSE,
+	try_ctty = FALSE, display_is_ctty = FALSE;
+
     if (!(HW->Private = (struct tty_data *)AllocMem(sizeof(struct tty_data)))) {
 	printk("      tty_InitHW(): Out of memory!\n");
 	return FALSE;
@@ -806,26 +330,32 @@ byte tty_InitHW(void) {
 		charset = CloneStr(arg);
 		if (s) *s = ',';
 		arg = s;
+	    } else if (!strncmp(arg, ",vcsa", 5)) {
+		try_vcsa = !(autotry_video = !strncmp(arg+5, "=no", 3)) << 1;
+		arg = strchr(arg+5, ',');
 	    } else if (!strncmp(arg, ",stdout", 7)) {
-		arg = strchr(arg + 7, ',');
-		skip_vcsa = TRUE;
+		try_stdout = !(autotry_video = !strncmp(arg+7, "=no", 3)) << 1;
+		arg = strchr(arg+7, ',');
 	    } else if (!strncmp(arg, ",termcap", 8)) {
-		arg = strchr(arg + 8, ',');
-		skip_vcsa = skip_stdout = TRUE;
+		try_termcap = !(autotry_video = !strncmp(arg+8, "=no", 3)) << 1;
+		arg = strchr(arg+8, ',');
+	    } else if (!strncmp(arg, ",raw", 7)) {
+		try_lrawkbd = !(autotry_kbd = !strncmp(arg+7, "=no", 3)) << 1;
+		arg = strchr(arg+7, ',');
 	    } else if (!strncmp(arg, ",ctty", 5)) {
-		arg = strchr(arg + 5, ',');
+		arg = strchr(arg+5, ',');
 		try_ctty = TRUE;
 	    } else if (!strncmp(arg, ",colorbug", 9)) {
-		arg = strchr(arg + 9, ',');
+		arg = strchr(arg+9, ',');
 		tc_colorbug = TRUE;
 	    } else if (!strncmp(arg, ",mouse=", 6)) {
 		if (!strncmp(arg+7, "xterm", 5))
 		    force_mouse = TRUE;
 		else if (!strncmp(arg+7, "twterm", 5))
 		    force_mouse = TRUE+TRUE;
-		arg = strchr(arg + 7, ',');
+		arg = strchr(arg+7, ',');
 	    } else if (!strncmp(arg, ",noinput", 8)) {
-		arg = strchr(arg + 8, ',');
+		arg = strchr(arg+8, ',');
 		HW->FlagsHW |= FlHWNoInput;
 	    } else if (!strncmp(arg, ",slow", 5)) {
 		arg = strchr(arg + 5, ',');
@@ -953,8 +483,35 @@ byte tty_InitHW(void) {
     }
 #endif
 
+#define TRY_V(name) (autotry_video + try_##name >= ALWAYS)
+#define TRY_K(name) (autotry_kbd + try_##name >= ALWAYS)
 
-    if (stdin_InitKeyboard()) {
+    /*
+     * ORDERING IS CRITICAL HERE!
+     * 
+     * xterm_InitMouse() does not need to manually hide/show the mouse pointer,
+     * so it overrides HW->ShowMouse and HW->HideMouse installed by *_InitVideo()
+     * 
+     * Thus mouse initialization must come *AFTER* video initialization
+     * 
+     * null_InitMouseConfirm() tries a blocking read() from tty_fd,
+     * while lrawkbd_InitKeyboard() puts tty_fd in non-blocking mode.
+     * 
+     * Thus mouse initialization must come *BEFORE* keyboard initialization
+     */
+    
+    if (
+#ifdef CONF_HW_TTY_LINUX
+	(TRY_V(vcsa) && vcsa_InitVideo()) ||
+#endif
+#if defined(CONF_HW_TTY_LINUX) || defined(CONF_HW_TTY_TWTERM)
+	(TRY_V(stdout) && linux_InitVideo()) ||
+#endif
+#ifdef CONF_HW_TTY_TERMCAP
+	(TRY_V(termcap) && termcap_InitVideo()) ||
+#endif
+	FALSE) {
+	
 	
 	if (
 #ifdef CONF_HW_TTY_LINUX
@@ -963,20 +520,15 @@ byte tty_InitHW(void) {
 	    (printk("      tty_InitHW(): gpm mouse support not compiled in, skipping.\n"), FALSE) ||
 #endif
 	    xterm_InitMouse(force_mouse) ||
-	    warn_NoMouse()) {
-	    
+	    null_InitMouseConfirm()) {
+
 	    if (
-#ifdef CONF_HW_TTY_LINUX
-		(!skip_vcsa && vcsa_InitVideo()) ||
+#if defined(CONF_HW_TTY_LINUX) && defined(CONF_HW_TTY_LRAWKBD)
+		(TRY_K(lrawkbd) && lrawkbd_InitKeyboard()) ||
 #endif
-#if defined(CONF_HW_TTY_LINUX) || defined(CONF_HW_TTY_TWTERM)
-		(!skip_stdout && linux_InitVideo()) ||
-#endif
-#ifdef CONF_HW_TTY_TERMCAP
-		termcap_InitVideo() ||
-#endif
-		FALSE) {
-	    
+		(autotry_kbd && stdin_InitKeyboard())) {
+		
+		
 		/*
 		 * must be deferred until now, as HW-specific functions
 		 * can clobber HW->NeedHW
@@ -1008,7 +560,7 @@ byte tty_InitHW(void) {
 	    }
 	    HW->QuitMouse();
 	}
-	HW->QuitKeyboard();
+	HW->QuitVideo();
     }
     if (tty_fd) {
 	close(tty_fd);
@@ -1016,6 +568,47 @@ byte tty_InitHW(void) {
     }
     return FALSE;
 }
+
+
+
+static void tty_QuitHW(void) {
+    HW->QuitMouse();
+    HW->QuitKeyboard();
+    HW->QuitVideo();
+    HW->QuitHW = NoOp;
+    
+    if (tty_name)
+	FreeMem(tty_name);
+    if (tty_TERM)
+	FreeMem(tty_TERM);
+    if (HW->DisplayIsCTTY && DisplayHWCTTY == HW)
+	DisplayHWCTTY = NULL;
+    
+    fflush(stdOUT);
+    if (stdOUT != stdout) {
+	
+	/* if we forced tty_fd to be fd 0, release it while keeping fd 0 busy */
+	if (tty_fd == 0) {
+	    if ((tty_fd = open("/dev/null", O_RDWR)) != 0) {
+		fclose(stdOUT);
+	    
+		dup2(tty_fd, 0);
+		close(tty_fd);
+	    }
+	    /*
+	     * else we don't fclose(stdOUT) to avoid having fd 0 unused...
+	     * it causes leaks, but much better than screwing up badly when
+	     * fd 0 will get used by something else (say a socket) and then
+	     * abruptly closed by tty_InitHW()
+	     */
+	} else
+	    fclose(stdOUT);
+    }
+    FreeMem(HW->Private);
+}
+
+
+
 
 #ifdef THIS_MODULE
 

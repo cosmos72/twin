@@ -76,12 +76,6 @@ AddToMenu " Window " (
    ""              Nop
    " Refresh "     Refresh
    " Send Pause "  SyntheticKey Pause
-#
-# this is a user contributed idea: ALT-TAB to cycle through windows.
-# feel free to uncomment this line and the `Key Alt Tab _Next' far below
-#
-#  " Send Alt-Tab " SyntheticKey Alt Tab
-#
    ""              Nop
    " Close "       Close
    ""              Nop
@@ -242,25 +236,50 @@ GlobalFlags ButtonPaste 2
 # make sense (i.e. they must produce a unique, identificable ASCII sequence)
 #
 # <name> is the name of the key as in libTwkeys.h, without the TW_ prefix.
-# some examples:
-#   Tab   Return  Escape  BackSpace
-#   Left  Up      Right   Down
-#   Prior (Page_Up)       Next  (Page_Down)
-#   Home  End     Insert  Delete
-#   Pause Num_Lock
-#   F1 F2 F3 F4 F5 F6 F7 F8 F9 F10 F11 F12
-# or any ASCII character in double quotes:
+# To be safe, <name> should be quoted. some examples:
+#   "Tab"   "Return"  "Escape"  "BackSpace"
+#   "Left"  "Up"      "Right"   "Down"
+#   "Prior" ("Page_Up")         "Next"  ("Page_Down")
+#   "Home"  "End"     "Insert"  "Delete"
+#   "Pause" "Num_Lock"
+#   "F1" "F2" "F3" "F4" "F5" "F6" "F7" "F8" "F9" "F10" "F11" "F12"
+# or any ASCII character, also in double quotes:
 #   "A"  "[" "\xFF" and so on
 #
 
-# Pause pops up the menu
-Key  Pause   Interactive Menu
-
-# this is a user contributed idea: ALT-TAB to cycle through windows.
-# feel free to uncomment this line and the one far above saying this
-# same comment.
 #
-# Key Alt Tab _Next
+# PAUSE pops up the menu. Feel free to use any other key.
+#
+Key  "Pause"   Interactive Menu
+
+
+#
+# this is a user contributed idea: ALT-TAB to cycle through windows.
+#
+Key Alt "Tab" _Next
+
+
+#
+# Other nifty ideas.
+# These will work only on display drivers that support abstract keys.
+# Currently requires one of: `tty' with Linux raw keyboard, `gfx' or `X11'.
+#
+
+#
+# ALT-UP spawns a new terminal.
+#
+Key Alt   "Up"    ExecTty ""
+
+#
+# SHIFT-PAGEUP scrolls up focused window
+#
+Key Shift "Prior" Scroll +0 -10
+
+
+#
+# SHIFT-PAGEDOWN scrolls down focused window
+#
+Key Shift "Next"  Scroll +0 +10
 
 
 #

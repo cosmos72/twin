@@ -5,7 +5,7 @@
 
 SUBDIRS=
 
-include $(T)include/Tw/makeversion
+include $(T)include/Tw/version.in
 -include $(B)makeautoconf
 
 LD_FLAGS+=$(LD_LIBSOCKET)
@@ -67,7 +67,7 @@ endif
 # include the do-everything file.
 # Must correctly set all CC_FLAGS* and LD_FLAGS* before including this!
 #
-include $(T)makerules
+include $(T)makerules.in
 
 
 #
@@ -94,7 +94,7 @@ do-autogen: $(S)libTw1_m4.h $(S)libTw2_m4.h $(S)libTw3_m4.h $(patsubst $(S)m4/%.
 
 install-headers:
 	$(INSTALL-DIR) $(DESTDIR)$(includedir)/Tw && \
-	$(INSTALL-TXT) $(T)include/Tw/*.h $(wildcard $(B)include/Tw/*.h) $(DESTDIR)$(includedir)/Tw
+	$(INSTALL-TXT) $(T)include/Tw/*.h $(filter-out $(T)include/Tw/%, $(wildcard $(B)include/Tw/*.h)) $(DESTDIR)$(includedir)/Tw
 	
 install-dir:
 	$(INSTALL-DIR) $(DESTDIR)$(libdir)

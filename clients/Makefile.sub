@@ -32,6 +32,7 @@ endif
 OBJS_twattach=attach.o
 OBJS_twcat=cat.o
 OBJS_twclip=clip.o
+OBJS_twclutter=clutter.o
 OBJS_twcuckoo=cuckoo.o
 OBJS_twevent=event.o
 OBJS_twdialog=dialog.o
@@ -57,6 +58,7 @@ CC_FLAGS_threadtest.o+=-D_REENTRANT
 LD_FLAGS_twattach+=$(LD_LIBTW)
 LD_FLAGS_twcat+=$(LD_LIBTW)
 LD_FLAGS_twclip+=$(LD_LIBTW)
+LD_FLAGS_twclutter+=$(LD_LIBTW)
 LD_FLAGS_twcuckoo+=$(LD_LIBTW)
 LD_FLAGS_twevent+=$(LD_LIBTW)
 LD_FLAGS_twdialog+=$(LD_LIBTW)
@@ -107,7 +109,7 @@ endif
 # include the do-everything file.
 # Must correctly set all BINS, SHLIBS, ARLIBS, CC_FLAGS* and LD_FLAGS* before including this!
 #
-include $(T)makerules
+include $(T)makerules.in
 
 build-all: $(BINS) links build-subdirs
 

@@ -1355,6 +1355,15 @@ void ScrollWindow(window Window, ldat DeltaX, ldat DeltaY) {
     if (!Window || !IS_WINDOW(Window) || (!DeltaX && !DeltaY))
 	return;
     
+    if (!(Window->Attrib & WINDOW_X_BAR))
+	DeltaX = 0;
+
+    if (!(Window->Attrib & WINDOW_Y_BAR))
+	DeltaY = 0;
+
+    if (!DeltaX && !DeltaY)
+	return;
+
     if ((widget)Window == All->FirstScreen->FirstW) {
 	ScrollFirstWindow(DeltaX, DeltaY, TRUE);
 	return;

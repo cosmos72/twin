@@ -31,7 +31,7 @@ all: autogen
 # Must correctly set all CC_FLAGS* and LD_FLAGS* before including this!
 #
 #
-include $(T)makerules
+include $(T)makerules.in
 
 
 #

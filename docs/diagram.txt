@@ -1,43 +1,108 @@
+Date: Mon, 4 Nov 2002 20:12:03 +0100 (CET)
+From: Massimiliano Ghilardi <max@linuz.sns.it>
+To: Adam Olsen <e-mail omitted>
+Cc: twin-develop@lists.sourceforge.net
+Subject: architecture of twin
 
 
-This diagram represents the architecture and the layers of
-twin server, libraries and clients.
+I thought on what you said about putting widgets in the server,
+and also about the discussion with PLD people on tha same topic,
+and I came up with a nice (IMHO) idea: adding extensions to twin server,
+to let it run arbitrary code in a controlled way, and in particular adding a
+"libTT" extension, that will execute libTT functions on clients' request.
+
+In this way clients have a twin server featuring a toolkit library,
+but I do not want clients to have hardcoded, ad-hoc code to
+exploit these features of twin, so I thought about writing two specialized
+HW drivers for libTT: hw_twin_tunnel_c and hw_twin_detunnel_c, as you can see
+in the diagram below (which enhances the diagram I previously wrote):
 
 
++---------------+   +-------------------------------------------------------------------+
+| libTw clients |   |                            libTT clients                          |
++---------------+   +-------------------------------------------------------------------+
+   |                                            |
+   |                                            V
+   |                +-------------------------------------------------------------------+
+   |                |                         libTT (libs/libTT/)                       |
+   |                +-------------------------------------------------------------------+
+   |                                            |
+   |                                            V
+   |                +-------------------------------------------------------------------+
+   |                |                libTT HW drivers (libs/libTT/HW/hw_*_c)            |
+   |                +-------------------------------------------------------------------+
+   |                  |        |             |             |                  |
+   |                  V        V             V             V                  V
+   |   +----------------+  +---------+  +----------+  +----------+   +------------------+
+   |   |hw_twin_tunnel_c|  |hw_twin_c|  | hw_gtk_c |  | hw_X11_c |   |hw_twin_detunnel_c|
+   |   +----------------+  +---------+  +----------+  +----------+   +------------------+
+   |                  |        |             |             |                  |
+   V                  V        V             V             V                  |
++--------------------------------+      +----------+  +----------+            V
+|     libTw (network library)    |      |  libgtk  |  |  libX11  |    cannot be used here
++--------------------------------+      +----------+  +----------+
+ ^                         |
+ |                         |
+ |                         |
+ |   ......... network...........................................................................................
+ |                         |
+ |                         |
+ |                         V
+ |   +----------------------------------------------------------------------------------------------------------+
+ |   |                                      twin server (server/)                                               |
+ |   +----------------------------------------------------------------------------------------------------------+
+ |                                    |                                     ^                |
+ |                                    V                                     |                V
+ |   +-------------------------------------------------------------------+  |  +--------------------------------+
+ |   |             server HW drivers (server/HW/hw_*.c)                  |  |  | server extensions (server/ext/)|
+ |   +-------------------------------------------------------------------+  |  +--------------------------------+
+ |        |       ^        |              |            |            |       |           |
+ |        V       |        V              V            V            V       |           V
+ |   +---------+  |  +------------+   +--------+   +--------+   +--------+  |  +------------------+
+ |   |hw_twin.c|  |  |hw_display.c|   |hw_X11.c|   |hw_tty.c|   |hw_ggi.c|  |  |   ext_libTT.c    |
+ |   +---------+  |  +------------+   +--------+   +--------+   +--------+  |  +------------------+
+ |        |       |        |              |            |            |       |           |
+ +--------+       |        V              V            V            V       |           V
+                  |   +---------+     +--------+   +--------+   +--------+  |  +------------------+
+                  |   |twdisplay|     | libX11 |   |  tty   |   | libggi |  |  |      libTT       |
+                  |   +---------+     +--------+   +--------+   +--------+  |  +------------------+
+                  |        |                                                |           |
+                  +--------+                                                |           V
+                                                                            |  +------------------+
+                                                                            |  | libTT HW drivers |
+                                                                            |  +------------------+
+                                                                            |           |
+                                                                            |           V
+                                                                            |  +------------------+
+                                                                            |  |hw_twin_detunnel_c|
+                                                                            |  +------------------+
+                                                                            |           |
+                                                                            +-----------+
 
-  +---------------+   +-------------------------------------------------------+
-  | libTw clients |   |                   libTT clients                       |
-  +---------------+   +-------------------------------------------------------+
-          |                                     |
-          |                                     V
-          |           +-------------------------------------------------------+
-          |           |              libTT (toolkit library)                  |
-          |           +-------------------------------------------------------+
-          |                                     |
-          |                                     V
-          |           +-------------------------------------------------------+
-          |           |                  libTT HW drivers                     |
-          |           +-------------------------------------------------------+
-          |              |           |            |            |         |
-          V              V           V            V            V         V
-  +-------------------------+   +--------+   +--------+   +--------+   
-  | libTw (network library) |   | libX11 |   | libgtk |   | libkde |   .....
-  +-------------------------+   +--------+   +--------+   +--------+   
-          ^              |
-          |              V
-          |           +-------------------------------------------------------+
-          |           |                    twin server                        |
-          |           +-------------------------------------------------------+
-          |                                     |
-          |                                     V
-          |           +-------------------------------------------------------+
-          |           |                  twin HW drivers                      |
-          |           +-------------------------------------------------------+
-          |              |   ^       |             |          |           |
-          +--------------+   |       V             V          V           V
-                             |  +---------+   +--------+   +-----+   +--------+
-                             |  |twdisplay|   | libX11 |   | tty |   | libggi |
-                             |  +---------+   +--------+   +-----+   +--------+
-                             |       |
-                             +-------+
+
+In this way, it is possible for libTT clients to create the widgets on either client or server
+side, depending on runtime (!) parameters.
+
+If $TTDISPLAY=twin then libTT clients use the libTT HW driver 'hw_twin_c', which (as it is normal)
+internally create widgets, then uses libTw to draw them (using low level protocol) on a twin server.
+
+If $TTDISPLAY=twin-tunnel then libTT clients use the libTT HW driver 'hw_twin_tunnel_c',
+which only creates fake widgets internally, and uses libTw to tell the twin server to load
+the libTT extension (which, for now, MUST use libTT HW driver hw_twin_detunnel_c) and use it
+to create real widgets (high level protocol between client libTT and twin server libTT extension,
+encapsulated by libTw extension mechanism),
+
+then hw_twin_detunnel_c draws widgets on twin server itself using server native functions
+(low level protocol):
+this means there will be NO expensive network data transfers for widget related events
+(expose, repaint, ALL mouse and keyboard activity, theme change, ...):
+the only data passing across the network are client function calls (widget create/modify/delete)
+and events for listeners on client side explicitly created by the client.
+
+
+I hope you will like the idea,
+
+
+Massimiliano Ghilardi
+
 

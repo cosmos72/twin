@@ -4,12 +4,12 @@
 #define setFlush() (HW->NeedHW |= NEEDFlushHW)
 #define clrFlush() (HW->NeedHW &= ~NEEDFlushHW)
 
-#define HW_KBDAPPLIC	((udat)0x0001)
-#define HW_ALTCURSKEYS	((udat)0x0002)
-#define HW_BELLPITCH    ((udat)0x0003)
-#define HW_BELLDURATION ((udat)0x0004)
-#define HW_MOUSEMOTIONEVENTS ((udat)0x0005)
-#define HW_CONFIGURE_MAX ((udat)0x0006)
+#define HW_KBDAPPLIC		0x0001
+#define HW_ALTCURSKEYS		0x0002
+#define HW_BELLPITCH		0x0003
+#define HW_BELLDURATION		0x0004
+#define HW_MOUSEMOTIONEVENTS	0x0005
+#define HW_CONFIGURE_MAX	0x0006
 
 extern display_hw DisplayHWCTTY;
 #define HWCTTY_DETACHED ((display_hw)1)

@@ -26,6 +26,8 @@
 #
 # compile/link flags. Used if no CFLAGS/LDFLAGS given in `make' command line
 #
+CC_NAME:=$(word 1, $(subst -, ,$(CC)))
+
 ifdef DEBUG
  CFLAGS+=-g -DINLINE=static
  LDFLAGS+=-g
@@ -34,7 +36,7 @@ else
    CFLAGS+=-p -pg
    LDFLAGS+=-p -pg
  else
-   ifeq ($(CC),gcc)
+   ifeq ($(CC_NAME),gcc)
      CFLAGS+=-O2 -fomit-frame-pointer
      LDFLAGS+=-s
    else
@@ -53,7 +55,7 @@ endif
 #
 # apply known-good GCC compiler flags.
 #
-ifeq ($(word 1, $(CC)),gcc)
+ifeq ($(CC_NAME),gcc)
   CFLAGS+=-pipe -Wall -Wshadow -Wno-uninitialized -Winline
   ifdef DEBUG
     CFLAGS+=-Wno-unused
@@ -167,8 +169,140 @@ else
 endif
 
 
-SHLIBS_VER=$(MAJOR_VER).$(MINOR_VER).$(PATCH_VER)
 
+
+CONF=$(B)conf/conf.current
+
+
+
+
+#
+# rules for the various kind of objects:
+#
+
+#
+# 'make' should NOT try to build these:
+#
+
+%.sub     : ;
+
+%.in      : ;
+
+.%.flags  : ;
+
+%.m4 %.m4m %.m4h  : ;
+
+
+# libtool and autoconf stuff
+
+#
+# libtool scripts must already exist in order for './configure'
+# to be generated correctly
+# and include/autoconf.h.in must already exist in order for './configure'
+# to correctly generate include/autoconf.h
+#
+
+ADMIN_LIBTOOLS:=$(T)admin/ltmain.sh $(T)admin/config.guess $(T)admin/config.sub
+
+$(ADMIN_LIBTOOLS):
+	cd $(TT) && libtoolize
+
+ADMIN_ACLOCAL:=$(T)admin/aclocal.m4
+
+DISTCLEAN_EMPTY_FILES:=$(ADMIN_ACLOCAL) $(ADMIN_LIBTOOLS)
+
+$(ADMIN_ACLOCAL):
+	@if [ -f /usr/share/aclocal/libtool.m4 ]; then \
+	  echo $(LN) /usr/share/aclocal/libtool.m4 $@ ; \
+	  $(LN) /usr/share/aclocal/libtool.m4 $@ ; \
+	else \
+	  echo touch $@; \
+	  touch $@; \
+	fi
+
+$(T)configure: $(T)configure.in $(ADMIN_LIBTOOLS) $(ADMIN_ACLOCAL) $(T)scripts/Makefiles.sh $(T)include/autoconf.h.in
+	rm -f $@ && cd $(TT) && autoconf --localdir=admin
+
+$(T)include/autoconf.h.in: $(T)configure.in
+	rm -f $@ && cd $(TT) && autoheader
+
+$(B)config.status: $(T)configure $(ADMIN_LIBTOOLS)
+	@echo Updating config.status libtool; \
+	$(TT)configure --cache-file=config.cache --no-create
+
+$(B)libtool: $(B)config.status
+
+$(T)makeversion: $(T)include/version.in $(T)makerules.in
+	@echo Updating $@; \
+	 echo "TWIN_VERSION_STR=`cut -d= -f2 < $< | xargs echo | tr ' ' '_' | \
+	 sed 's%^\([0-9]\+\)_\([0-9]\+\)_\([0-9]\+\)%\1.\2.\3%'`" > $@
+
+#
+# avoid running $(B)config.status twice, once for $(B)makeautoconf
+# and once for $(B)conf/conf.auto
+#
+$(B)makeautoconf: $(T)makeautoconf.in $(T)conf/conf.auto.in $(B)config.status
+	@echo Updating $(B)makeautoconf $(B)conf/conf.auto; \
+	 $(BB)config.status
+
+$(B)conf/conf.auto: $(B)makeautoconf
+
+
+#
+# this is an overkill, as it would force recompiling all sources that
+# include "autoconf.h" or "Tw/Twautoconf.h" (almost every one)
+# after each time someone runs $(TT)configure
+#
+# $(B)include/autoconf.h: $(B)config.status $(T)include/autoconf.h.in 
+#	rm -f $@ && $(BB)config.status
+#
+# unluckily it is needed to correctly bootstrap commands like
+# 'make -f Makefile.sub autogen' or 'make -f Makefile.sub distclean',
+# so the solution is:
+# check whether $(B)include/autoconf.h is actually up-to-date
+# (config.status does not touch it if its contents do not change),
+# else remove it and run either $(BB)config.status or $(TT)configure.
+# 
+# Instead of having $(B)include/autoconf.h depend on $(B)config.status,
+# we manually check whether config.status exists and make it if needed.
+#
+$(B)include/autoconf.h: $(T)include/autoconf.h.in
+	@echo Updating $@; \
+	if [ ! -f $(B)config.status ]; then \
+	  $(MAKE) -f Makefile.sub $(B)config.status ; \
+	fi ; \
+	if [ $(B)conf/conf.auto -nt $(B)config.status -a \
+	     $(B)conf/conf.auto -nt $< ]; then \
+	  touch $@; \
+	else \
+	  rm -f $@ ; \
+	  $(BB)config.status ; \
+	fi
+
+bootstrap: $(CONF)
+
+
+
+
+#
+# version-related stuff
+#
+
+ifeq ($(EXTRA_VER),)
+  EXTRA_VER=0
+endif
+
+$(S)version.h: $(S)version.h.in $(S)version.in
+	$(Q)sed -e 's/@MAJOR_VER@/$(MAJOR_VER)/g' -e 's/@MINOR_VER@/$(MINOR_VER)/g' \
+	    -e 's/@PATCH_VER@/$(PATCH_VER)/g' -e 's/@EXTRA_VER@/$(EXTRA_VER)/g' < $< > $@
+
+
+
+
+
+
+
+SHLIBS_VER=$(MAJOR_VER).$(MINOR_VER).$(PATCH_VER)
 
 ifeq ($(SYS_SHLIBS),native)
   # either native shared library support,
@@ -267,6 +401,9 @@ INSTALL_FLAGS+=$(INSTALLFLAGS) $(EXTRA_INSTALLFLAGS)
 
 ifeq ($(filter r,$(MAKEFLAGS)),)
   MAKEFLAGS+=r
+  $(T)makerules.in: phony-force-remake
+else
+  makerules.in: ;
 endif
 
 ifeq ($(T),$(B))
@@ -278,8 +415,6 @@ ifneq ($(S),)
   CC_FLAGS+=-I$(SS)
 endif
 
-
-CONF=$(B)conf/conf.current
 
 #
 # once shared libraries are installed, it's ok to link just with
@@ -374,7 +509,7 @@ else
     endif
   endif
 endif  
-  
+
 config:
 	@echo Starting configure for twin $(TWIN_VERSION_STR)	... ; \
 	echo
@@ -393,10 +528,8 @@ gconf gconfig:
 nullconfig:
 	$(BASH) $(T)scripts/Configure.tty "$(T)" "$(B)" < /dev/null > /dev/null
 
-	
-$(T)makeversion: $(T)include/makeversion
-	@echo Updating $@; \
-	 echo "TWIN_VERSION_STR=`cut -d= -f2 < $< | xargs echo | tr ' ' '.'`" > $@
+
+
 
 
 # collect together in $(OBJS) all objs from $(BINS) looking in $(OBJS_xxx)
@@ -444,8 +577,7 @@ $(CONF): $(B)conf/conf.auto $(B)include/Tw/Twautoconf.h
 	/bin/sh $(T)scripts/Configure.fallback "$T" "$B" < /dev/null > /dev/null
 
 
-
-.modules: Makefile $(S)Makefile.sub $(T)makerules $(B)makeautoconf $(CONF)
+.modules: Makefile $(S)Makefile.sub $(T)makerules.in $(T)makeversion $(B)makeautoconf $(CONF)
 	@echo "building  .modules" ; \
 	 $(ECHO_E) " $(foreach X,$(BINS),$(X): .$(X).bin\n .$(X).bin: $(OBJS_$(X))\n)" > $@ ; \
 	 $(ECHO_E) " $(foreach X,$(MODS),$(X): .$(X).mod\n .$(X).mod: $(OBJS_$(X))\n)" >> $@ ; \
@@ -495,7 +627,7 @@ _FILES_H:=$(call FILES_H,$(S))
 #
 # cheat a little with what gets printed...
 #
-.depend: $(B)scripts/Mkdep Makefile $(S)Makefile.sub $(T)makerules $(_ALL_SRCS) $(_FILES_H) $(_FILES_M4_H)
+.depend: $(B)scripts/Mkdep Makefile $(S)Makefile.sub $(T)makerules.in $(CONF) $(_ALL_SRCS) $(_FILES_H) $(_FILES_M4_H)
 	@echo "building  $@" ; \
 	 $< \
 	   -R1"$(S)":'$$(S)' \
@@ -519,7 +651,7 @@ ifneq ($(T_CANONICAL),$(B_CANONICAL))
  _B_FILES_M4_H:=$(call map,FILES_M4_H,$(_B_DIRS_H))
 endif
 
-$(B).hdepend: $(B)scripts/Mkdep $(T)makerules $(_T_FILES_H) $(_T_FILES_M4_H) $(_B_FILES_H) $(_B_FILES_M4_H)
+$(B).hdepend: $(B)scripts/Mkdep $(T)makerules.in $(_T_FILES_H) $(_T_FILES_M4_H) $(_B_FILES_H) $(_B_FILES_M4_H)
 	@echo "building  $(B).hdepend" ; \
 	 $< \
 	   -R1"$(T)":'$$(T)' -R2"$(B)":'$$(B)' \
@@ -538,22 +670,6 @@ $(S)%_m4.pli: $(S)m4/%.m4pli $(wildcard $(T)include/m4/*.m4)
 
 
 
-
-#
-# version-related stuff
-#
-
-ifeq ($(EXTRA_VER),)
-  EXTRA_VER=0
-endif
-
-$(S)version.h: $(S)version.h.in $(S)makeversion $(T)makerules
-	$(Q)sed -e 's/@MAJOR_VER@/$(MAJOR_VER)/g' -e 's/@MINOR_VER@/$(MINOR_VER)/g' \
-	    -e 's/@PATCH_VER@/$(PATCH_VER)/g' -e 's/@EXTRA_VER@/$(EXTRA_VER)/g' < $< > $@
-
-#
-# rules for the various kind of objects:
-#
 
 #
 # normal (unshared) objects (from $(BINS) $(ARLIBS) $(CLLIBS))
@@ -635,7 +751,7 @@ cat-lst=$(foreach F,$(shell cat $(1)),$(patsubst %,$(dir $(1))%,$(F)))
 #
 # and we use patterns for the last step:
 #       
-.%.bin: $(T)makerules
+.%.bin: $(T)makerules.in
 	$(call echo-and-link,$(LD_BIN) $(call expand-lst,$(OBJS_$*)) $(LD_FLAGS) $(LD_FLAGS_$*) -o,$*)
 	@$(LN) $* $@ && \
 	 $(ECHO_E) ' ifeq ($$(strip $$(LD_BIN) $$(OBJS_$*) $$(LD_FLAGS) $$(LD_FLAGS_$*)),$(strip $(LD_BIN) $(OBJS_$*) $(LD_FLAGS) $(LD_FLAGS_$*)))\n'\
@@ -643,7 +759,7 @@ cat-lst=$(foreach F,$(shell cat $(1)),$(patsubst %,$(dir $(1))%,$(F)))
 	 'endif' > .$*.flags && \
 	 $(echo-done)
 
-.%.mod: $(T)makerules
+.%.mod: $(T)makerules.in
 ifeq ($(SYS_SHLIBS),native)
 	$(call echo-and-link,$(LD_MOD) $(call expand-lst,$(OBJS_$*)) $(LD_FLAGS) $(LD_FLAGS_SHLIBS) $(LD_FLAGS_$*) -o,$(patsubst %.la,%.so.$(SHLIBS_VER),$*))
 	@$(call make-mod-links,$*)
@@ -656,7 +772,7 @@ endif
 	 'endif' > .$*.flags && \
 	 $(echo-done)
 
-.%.shlib: $(T)makerules
+.%.shlib: $(T)makerules.in
 ifeq ($(SYS_SHLIBS),native)
 	$(call echo-and-link,$(LD_SH) $(call expand-lst,$(OBJS_$*)) $(LD_FLAGS) $(LD_FLAGS_SHLIBS) $(LD_FLAGS_$*) -o,$(patsubst %.la,%.so.$(SHLIBS_VER),$*))
 	@$(call make-shlib-links,$*)
@@ -669,7 +785,7 @@ endif
 	 'endif' > .$*.flags && \
 	 $(echo-done)
 
-.%.arlib: $(T)makerules
+.%.arlib: $(T)makerules.in
 	$(call echo-and-link,rm -f $* && $(AR) cr $* $(call expand-lst,$(OBJS_$*)) && $(RANLIB),$*)
 	@$(LN) $* $@ && \
 	 $(ECHO_E) ' ifeq ($$(strip $$(OBJS_$*)),$(strip $(OBJS_$*)))\n'\
@@ -677,7 +793,7 @@ endif
 	 'endif' > .$*.flags && \
 	 $(echo-done)
 
-.%.cllib: $(T)makerules
+.%.cllib: $(T)makerules.in
 	$(call echo-and-link,echo $(call expand-lst,$(OBJS_$*)) >,$*)
 	@$(LN) $* $@ && \
 	 $(ECHO_E) ' ifeq ($$(strip $$(OBJS_$*)),$(strip $(OBJS_$*)))\n'\
@@ -686,11 +802,13 @@ endif
 	 $(echo-done)
 
 
-#
-# useful (used for dlopen()) links, needed if using libtool
-#
-ifneq ($(SYS_SHLIBS),native)
-  %.so.$(SHLIBS_VER):
+ifeq ($(SYS_SHLIBS),native)
+  %.so.$(SHLIBS_VER): %.la  ;
+else
+  #
+  # useful (used for dlopen()) links, needed if using libtool
+  #
+  %.so.$(SHLIBS_VER): %.la
 	@if [ -f .libs/$@ ]; then \
 	  echo $(LN) .libs/$@ $@ ; \
 	  $(LN) .libs/$@ $@ ; \
@@ -829,18 +947,18 @@ endif
 #
 
 ifeq ($(CONF__UNICODE),n)
-  $(B)include/Tw/uni_types.h $(B).unicode.conf: $(T)scripts/unitypes16
+  $(B)include/Tw/uni_types.h $(B).unicode.conf: $(T)scripts/unitypes16.in
 	cat $< > $@
 	@echo "PREVIOUS_CONF__UNICODE=$(CONF__UNICODE)" > $(B).unicode.conf
 else
-  $(B)include/Tw/uni_types.h $(B).unicode.conf: $(T)scripts/unitypes32
+  $(B)include/Tw/uni_types.h $(B).unicode.conf: $(T)scripts/unitypes32.in
 	cat $< > $@
 	@echo "PREVIOUS_CONF__UNICODE=$(CONF__UNICODE)" > $(B).unicode.conf
 endif
 
 
 #
-# do not have Tw/Twautoconf.h depend on makerules ...
+# do not have Tw/Twautoconf.h depend on makerules.in ...
 # (it actually should, but it's an overkill)
 # 
 $(B)include/Tw/Twautoconf.h: $(B)include/autoconf.h
@@ -860,8 +978,8 @@ ifeq ($(CONF__LONG_LONG),y)
   CC_FLAGS_script_getsizes.o+=-DCONF__LONG_LONG
 endif
 
-$(B)scripts/Getsizes: $(T)scripts/getsizes.c $(T)include/Tw/datatypes.h $(B)include/autoconf.h
-	$(CC) $(CC_FLAGS) $(CC_FLAGS_script_getsizes.o) $(LD_FLAGS) $< -o $@
+$(B)scripts/Getsizes $(B).long_long.conf: $(T)scripts/getsizes.c $(T)include/Tw/datatypes.h $(B)include/autoconf.h
+	$(CC) $(CC_FLAGS) $(CC_FLAGS_script_getsizes.o) $(LD_FLAGS) $< -o $(B)scripts/Getsizes
 	@echo "PREVIOUS_CONF__LONG_LONG=$(CONF__LONG_LONG)" > $(B).long_long.conf
 
 $(B)scripts/Endianity: $(T)scripts/endianity.c $(B)include/autoconf.h
@@ -897,7 +1015,7 @@ build-dir-%:
 # dependencies for them, so you should run 'make' before invoking one of these.
 #
 
-torture-%.c: $(S)%.c Makefile $(T)makerules $(T)scripts/Torture $(B)scripts/Bitmap
+torture-%.c: $(S)%.c Makefile.sub $(T)scripts/Torture $(B)scripts/Bitmap
 	@echo; echo "Torturing $<"; echo; \
 	$(BASH) $(T)scripts/Torture $(B)scripts/Bitmap $(CC) $(filter-out -DCONF_%, $(CC_FLAGS) $(CC_FLAGS_$*.o)) -c $< -o $*.o -- $<
 
@@ -907,6 +1025,9 @@ Torture: torture $(patsubst %, Torture-dir-%, $(SUBDIRS))
 
 Torture-dir-%:
 	$(MAKE) Torture -C $*
+
+$(T)scripts/Torture: ;
+
 
 #
 # full-autogen is the target to build all autogenerated files that require

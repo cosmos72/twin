@@ -6,7 +6,7 @@ SUBDIRS=
 
 all: build-all
 
-include $(T)include/Tutf/makeversion
+include $(T)include/Tutf/version.in
 -include $(B)makeautoconf
 
 SHLIBS=libTutf.la
@@ -58,12 +58,12 @@ endif
 # Must correctly set all CC_FLAGS* and LD_FLAGS* before including this!
 #
 #
-include $(T)makerules
+include $(T)makerules.in
 
 
 install-headers:
 	$(INSTALL-DIR) $(DESTDIR)$(includedir)/Tutf && \
-	$(INSTALL-TXT) $(T)include/Tutf/*.h $(wildcard $(B)include/Tutf/*.h) $(DESTDIR)$(includedir)/Tutf
+	$(INSTALL-TXT) $(T)include/Tutf/*.h $(filter-out $(T)include/Tutf/%, $(wildcard $(B)include/Tutf/*.h)) $(DESTDIR)$(includedir)/Tutf
 
 install-dir:
 	$(INSTALL-DIR) $(DESTDIR)$(libdir)

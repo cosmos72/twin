@@ -3,9 +3,9 @@
 #
 
 
-SUBDIRS=
+SUBDIRS=hw_tty_common hw_tty_linux
 
-include $(T)include/makeversion
+include $(T)include/version.in
 -include $(B)makeautoconf
 
 #
@@ -158,21 +158,27 @@ endif
 #
 # common rules
 #
-include $(T)makerules
+include $(T)makerules.in
 
 #
 # All done. Now just set a few special targets
 #
 
-build-all: $(BINS) $(MODS) $(SHLIBS) $(ARLIBS) $(CLLIBS) links
+build-all: $(BINS) $(MODS) $(SHLIBS) $(ARLIBS) $(CLLIBS)
 
-links: $(subst hw_X11.la,hw_X.so.$(SHLIBS_VER),$(filter hw_X11.la,$(MODS)))
+modules: $(MODS)
 
-
-modules: $(MODS) links
+hw_X11.la: hw_X.so.$(SHLIBS_VER)
 
 hw_X.so.$(SHLIBS_VER):
 	$(LN) hw_X11.so.$(SHLIBS_VER) $@
+
+
+hw_tty_linux/%: build-dir-hw_tty_linux
+	@:
+
+hw_tty_common/%: build-dir-hw_tty_common
+	@:
 
 clean:
 	rm -f .*.flags .*.bin .*.mod .*.arlib .*.cllib *.lst *.o *.lo *.la *.so *.so.* \

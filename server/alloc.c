@@ -75,9 +75,6 @@ void panic_free(void *v) {
 #define TW_PAGE_BASE(addr)	((addr)&TW_PAGE_MASK)
 #define TW_PAGE_ALIGN(addr)	(((addr)+TW_PAGE_SIZE-1)&TW_PAGE_MASK)
 
-#define getcore(size) (void *)mmap(0, (size), PROT_READ|PROT_WRITE, MAP_ANON|MAP_PRIVATE, -1, 0)
-#define dropcore(addr, size) munmap((void *)(addr), (size))
-#define NOCORE ((void *)-1) /* returned when getcore() fails */
 
 typedef struct block {
     struct block *Prev, *Next;
@@ -196,18 +193,38 @@ byte InitAlloc(void) {
 
 #endif
 
-#define B_DATA(base, i)		((void *)((char *)(base) + TW_PAGE_DATA + Sizes[(base)->Kind] * (i)))
-#define B_INDEX(base, mem)	(((char *)(mem) - (char *)(base) - TW_PAGE_DATA) / Sizes[(base)->Kind])
-#define B_BITMAP(base)		((char *)(base) + TW_PAGE_SIZE - ((base)->Max + 7) / 8)
+#define B_DATA(base, i)		((void *)((byte *)(base) + TW_PAGE_DATA + Sizes[(base)->Kind] * (i)))
+#define B_INDEX(base, mem)	(((byte *)(mem) - (byte *)(base) - TW_PAGE_DATA) / Sizes[(base)->Kind])
+#define B_BITMAP(base)		((byte *)(base) + TW_PAGE_SIZE - ((base)->Max + 7) / 8)
 #define B_GETBIT(bitmap, i)	(((bitmap)[(i)/8] >> ((i)&7)) & 1)
 #define B_SETBIT(bitmap, i)	((bitmap)[(i)/8] |= 1 << ((i)&7))
 #define B_CLRBIT(bitmap, i)	((bitmap)[(i)/8] &= ~(1 << ((i)&7)))
 
-static block *Highest;
+static byte *Highest;
 
 void *AllocStatHighest(void) {
-    return (void *)((byte *)Highest + TW_PAGE_SIZE);
+    return Highest;
 }
+
+INLINE void *getcore(size_t size) {
+    byte *ret = (byte *)mmap(0, size, PROT_READ|PROT_WRITE, MAP_ANON|MAP_PRIVATE, -1, 0);
+
+    if (ret != (byte *)-1) { /* returned when mmap() fails */
+	if (Highest < ret + size)
+	    Highest = ret + size;
+	return ret;
+    }
+    return (void *)0;
+}
+
+INLINE void dropcore(void *addr, size_t size) {
+    if (Highest <= (byte *)addr + size && Highest > (byte *)addr)
+	Highest = addr;
+    
+    munmap(addr, size);
+}
+    
+
 
 INLINE delta SearchKind(delta size) {
     delta low = 0, up = KINDS-1, test;
@@ -256,45 +273,11 @@ INLINE void RemoveB(block *B, parent *P) {
 }
 
 static delta CFirst, CLast, CSize;
-#define MAX_CACHE 32
+#define  LOW_CACHE  8
+#define  AVG_CACHE 16
+#define HIGH_CACHE 24
+#define  MAX_CACHE 32
 static block *Cache[MAX_CACHE];
-
-static void *GetBs(size_t len) {
-    block *B;
-    if (CSize * TW_PAGE_SIZE >= len) {
-	if (len == TW_PAGE_SIZE) {
-	    B = Cache[CFirst];
-	    CFirst++;
-	    CSize--;
-	    return B;
-	} else {
-	    size_t got = TW_PAGE_SIZE;
-	    delta i, n;
-	    B = Cache[n = CFirst];
-	    for (i = CFirst+1; got < len && i <= CLast; i++) {
-		if ((byte *)B + got == (byte *)Cache[i])
-		    got += TW_PAGE_SIZE;
-		else {
-		    B = Cache[n = i];
-		    got = TW_PAGE_SIZE;
-		}
-	    }
-	    if (got >= len) {
-		got /= TW_PAGE_SIZE;
-		MoveMem(Cache + CFirst, Cache + CFirst + got, (n - CFirst) * sizeof(block *));
-		CFirst += got;
-		CSize -= got;
-		return B;
-	    }
-	}
-    }
-    if ((B = getcore(len)) != NOCORE) {
-	if (Highest < B)
-	    Highest = B;
-	return B;
-    }
-    return (void *)0;
-}
 
 INLINE delta SearchB(block *B, delta low, delta up) {
     delta test;
@@ -310,6 +293,8 @@ INLINE delta SearchB(block *B, delta low, delta up) {
     return up;
 }
 
+/* add given blocks to the cache, and if cache overflows
+ * return highest-addresses blocks to the OS */
 static void DropBs(block *B, size_t len) {
     delta pos, d;
     while (len >= TW_PAGE_SIZE) {
@@ -366,9 +351,57 @@ static void DropBs(block *B, size_t len) {
 	    Cache[pos] = B;
 	    CSize++;
 	}
-	B = (block *)((char *)B + TW_PAGE_SIZE);
+	B = (block *)((byte *)B + TW_PAGE_SIZE);
 	len -= TW_PAGE_SIZE;
     }
+}
+
+
+/* try to get blocks from the cache, else ask more blocks from the OS */
+static void *GetBs(size_t len) {
+    block *B;
+    size_t xlen = 0;
+    
+    /* try to get blocks from the cache */
+    if (CSize * TW_PAGE_SIZE >= len) {
+	if (len == TW_PAGE_SIZE) {
+	    B = Cache[CFirst];
+	    CFirst++;
+	    CSize--;
+	    return B;
+	} else {
+	    size_t got = TW_PAGE_SIZE;
+	    delta i, n;
+	    B = Cache[n = CFirst];
+	    for (i = CFirst+1; got < len && i <= CLast; i++) {
+		if ((byte *)B + got == (byte *)Cache[i])
+		    got += TW_PAGE_SIZE;
+		else {
+		    B = Cache[n = i];
+		    got = TW_PAGE_SIZE;
+		}
+	    }
+	    if (got >= len) {
+		got /= TW_PAGE_SIZE;
+		MoveMem(Cache + CFirst, Cache + CFirst + got, (n - CFirst) * sizeof(block *));
+		CFirst += got;
+		CSize -= got;
+		return B;
+	    }
+	}
+    }
+
+    /* try to ask blocks from the OS in medium-sized chunks */
+    if (CSize < LOW_CACHE)
+	xlen = TW_PAGE_SIZE * (AVG_CACHE - CSize);
+    
+    if (!(B = getcore(len + xlen)))
+	return B;
+
+    if (xlen)
+	DropBs((block *)((byte *)B + len), xlen);
+    
+    return B;
 }
 
 INLINE void *CreateB(delta kind) {
@@ -557,13 +590,13 @@ void *ReAllocMem(void *Mem, size_t newSize) {
 		    return Mem;
 		if (newSize < oldSize) {
 		    B->Len = newSize;
-		    DropBs((block *)((char *)B + newSize), oldSize - newSize);
+		    DropBs((block *)((byte *)B + newSize), oldSize - newSize);
 		    return Mem;
 		}
 		if ((A = GetBs(newSize))) {
-		    if ((char *)B + oldSize == (char *)A) {
+		    if ((byte *)B + oldSize == (byte *)A) {
 			/* this is sheer luck ! */
-			DropBs((block *)((char *)A + newSize - oldSize), oldSize);
+			DropBs((block *)((byte *)A + newSize - oldSize), oldSize);
 			B->Len = newSize;
 			return Mem;
 		    }

@@ -9,5 +9,5 @@ all: build-subdirs
 build-dir-libTT: build-dir-libTutf build-dir-libTw
 
 
-include $(T)makerules
+include $(T)makerules.in
 
