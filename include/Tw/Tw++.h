@@ -294,17 +294,31 @@ class TWindow : public TWidget {
     {
 	TwWriteAsciiWindow(Id, len, (TW_CONST byte *)text);
     }
+    inline void writeString(const char *text) const
+    {
+	TwWriteStringWindow(Id, strlen(text), (TW_CONST byte *)text);
+    }
+    inline void writeString(ldat len, const char *text) const
+    {
+	TwWriteStringWindow(Id, len, (TW_CONST byte *)text);
+    }
+    inline void writeHWFont(ldat len, const hwfont *text) const
+    {
+	TwWriteHWFontWindow(Id, len, text);
+    }
     inline void writeHWAttr(ldat len, dat x, dat y, ldat Len, const hwattr *Attr) const
     {
 	TwWriteHWAttrWindow(Id, x, y, Len, Attr);
     }
+    /* backward compatibility. will be removed */
     inline void writeRow(const char *text) const
     {
-	TwWriteRowWindow(Id, strlen(text), (TW_CONST byte *)text);
+	writeAscii(text);
     }
+    /* backward compatibility. will be removed */
     inline void writeRow(ldat len, const char *text) const
     {
-	TwWriteRowWindow(Id, len, (TW_CONST byte *)text);
+	writeAscii(len, text);
     }
     inline void gotoXY(ldat x, ldat y) const
     {

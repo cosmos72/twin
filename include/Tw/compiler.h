@@ -7,54 +7,55 @@
 /* library stuff. define macros with TW_ prefix */
 
 
+#define TW__CAT(a,b)		a##b
+#define TW__CAT3(a,b,c)		a##b##c
+#define TW__CAT4(a,b,c,d)	a##b##c##d
+#define TW_CAT(a,b)		TW__CAT(a,b)
+#define TW_CAT3(a,b,c)		TW__CAT3(a,b,c)
+#define TW_CAT4(a,b,c,d)	TW__CAT4(a,b,c,d)
 
-#if !defined(TW_CAT)
-# define TW__CAT(a,b) a##b
-# define TW_CAT(a,b) TW__CAT(a,b)
-#endif
+#define TW__STR(s) #s
+#define TW_STR(s) TW__STR(s)
 
-#if !defined(TW_STR)
-# define TW__STR(s) #s
-# define TW_STR(s) TW__STR(s)
-#endif
-
-#if !defined(TW_CONST)
-# if defined(CONST)
-#  define TW_CONST CONST
-# else
-#  define TW_CONST const
-# endif
+#if defined(CONST)
+# define TW_CONST CONST
+#else
+# define TW_CONST const
 #endif
 
 /* inline is NOT a standard C feature :( */
-#if !defined(TW_INLINE)
-# if defined(INLINE)
-#  define TW_INLINE INLINE
-# elif defined(__GNUC__)
-#  define TW_INLINE static __inline__
-# elif defined(inline)
+#if defined(INLINE)
+# define TW_INLINE INLINE
+#elif defined(TW_HAVE_INLINE) || defined(inline)
+# if defined(__GNUC__)
+#  define TW_INLINE static inline
+# else
 #  define TW_INLINE inline
-# else
-#  define TW_INLINE static
 # endif
+#else
+# define TW_INLINE static
 #endif
 
-#if !defined(TW_VOLATILE)
-# if defined(VOLATILE)
-#  define TW_VOLATILE VOLATILE
-# else
-#  define TW_VOLATILE volatile
-# endif
+#if defined(VOLATILE)
+# define TW_VOLATILE VOLATILE
+#else
+# define TW_VOLATILE volatile
 #endif
 
-#if !defined(TW_FNATTR_CONST)
-# if defined(FNATTR_CONST)
-#  define TW_FNATTR_CONST FNATTR_CONST
-# elif defined(__GNUC__)
-#  define TW_FNATTR_CONST __attribute__((const))
-# else
-#  define TW_FNATTR_CONST
-# endif
+#if defined(FN_ATTR_CONST)
+# define TW_FN_ATTR_CONST FN_ATTR_CONST
+#elif defined(__GNUC__)
+# define TW_FN_ATTR_CONST __attribute__((const))
+#else
+# define TW_FN_ATTR_CONST
+#endif
+
+#if defined(TYPE_ATTR_PACKED)
+# define TW_TYPE_ATTR_PACKED TYPE_ATTR_PACKED
+#elif defined(__GNUC__)
+# define TW_TYPE_ATTR_PACKED __attribute__((packed))
+#else
+# define TW_TYPE_ATTR_PACKED
 #endif
 
 

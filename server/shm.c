@@ -49,7 +49,7 @@ static size_t TSR_L; /* its length */
 #define GL_SIZE ((_GL_SIZE & ~ALIGN) + ALIGN + 1)
 
 
-static size_t full_write(int fd, byte *data, size_t len) {
+static size_t full_write(int fd, CONST byte *data, size_t len) {
     size_t left = len;
     int r;
     
@@ -195,7 +195,7 @@ void shm_TSR(void) {
 byte shm_send(int fd) {
     size_t len = S - M;
 
-    return full_write(fd, (byte *)&len, sizeof(size_t)) == sizeof(size_t);
+    return full_write(fd, (CONST byte *)&len, sizeof(size_t)) == sizeof(size_t);
 }
 
 byte shm_receive(int fd) {
@@ -254,8 +254,8 @@ byte shm_shrink(void) {
 	    /* ReAllocMem failed or relocated... the only thing to do here is shm_abort() */
 	    return FALSE;
 	}
-#endif /* CONF_WM_RC_SHRINK */
     }
+#endif /* CONF_WM_RC_SHRINK */
     return TRUE;
 }
 
@@ -371,7 +371,7 @@ void *shm_malloc_or_die(size_t len) {
     exit(1);
 }
 
-byte *shm_strdup_or_die(byte *s) {
+byte *shm_strdup_or_die(CONST byte *s) {
     size_t len = LenStr(s) + 1;
     byte *d = shm_malloc_or_die(len);
     CopyMem(s, d, len);

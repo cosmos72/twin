@@ -13,6 +13,8 @@
 #ifndef _TW_ERRNO_H
 #define _TW_ERRNO_H
 
+#include <Tw/Twtypes.h>
+
 #define TW_EX_ENDIAN	 1
 #define TW_EX_SIZES	 2
 #define TW_ELOST_CONN	 3
@@ -36,6 +38,7 @@
 #define TW_EFAILED_CALL		21
 #define TW_EFAILED_ARG_CALL	22
 #define TW_EXLIB_SIZES		23
+#define TW_EXLIB_STRUCT_SIZES	24
 
 #define TW_ENO_MODULE_DETAIL	1
 
@@ -54,8 +57,8 @@ tw_errno *Tw_ErrnoLocation(tdisplay TwD);
 #define Tw_Errno(TwD)		(Tw_ErrnoLocation(TwD)->E)
 #define Tw_ErrnoDetail(TwD)	(Tw_ErrnoLocation(TwD)->S)
 
-TW_CONST byte *Tw_StrError(TW_CONST tdisplay TwD, uldat e) TW_FNATTR_CONST;
-TW_CONST byte *Tw_StrErrorDetail(TW_CONST tdisplay TwD, uldat e, uldat s) TW_FNATTR_CONST;
+TW_FN_ATTR_CONST TW_CONST byte *Tw_StrError(TW_CONST tdisplay TwD, uldat e);
+TW_FN_ATTR_CONST TW_CONST byte *Tw_StrErrorDetail(TW_CONST tdisplay TwD, uldat e, uldat s);
 
 #define TwErrnoLocation		Tw_ErrnoLocation(Tw_DefaultD)
 #define TwErrno			Tw_Errno(Tw_DefaultD)

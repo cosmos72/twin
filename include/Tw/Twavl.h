@@ -13,6 +13,8 @@
 #ifndef _TW_AVL_H
 #define _TW_AVL_H
 
+#include <Tw/Twtypes.h>
+
 typedef struct s_tavl * tavl;
 typedef struct s_tavl TW_CONST * tavl_c;
 

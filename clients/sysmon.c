@@ -11,14 +11,14 @@
 #include <string.h>
 #include <sys/stat.h>
 
-#include "Tw/Twautoconf.h"
+#include <Tw/Twautoconf.h>
 
 #ifdef TW_HAVE_SYS_UTSNAME_H
 # include <sys/utsname.h>
 #endif
 
-#include "Tw/Tw.h"
-#include "Tw/Twerrno.h"
+#include <Tw/Tw.h>
+#include <Tw/Twerrno.h>
 
 tmsgport SysMon_MsgPort;
 tmenu SysMon_Menu;
@@ -48,31 +48,28 @@ byte InitSysMon(void) {
     
     name[len] = '\0';
 
-    if (TwCheckMagic(sysmon_magic) &&
-	TwOpen(NULL) &&
+    return
+	TwCheckMagic(sysmon_magic) && TwOpen(NULL) &&
 	
 	(SysMon_MsgPort=TwCreateMsgPort
 	 (len, name, 0, 0, 0)) &&
-	(SysMon_Menu=TwCreateMenu(
-	  COL(BLACK,WHITE), COL(BLACK,GREEN), COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
+	(SysMon_Menu=TwCreateMenu
+	 (COL(BLACK,WHITE), COL(BLACK,GREEN), COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
 	  COL(RED,WHITE), COL(RED,GREEN), (byte)0)) &&
 	TwItem4MenuCommon(SysMon_Menu) &&
 	
 	(SysMon_Win = TwCreateWindow
 	 (len, name, NULL, SysMon_Menu, COL(HIGH|YELLOW,BLUE),
 	  TW_NOCURSOR, TW_WINDOW_DRAG|TW_WINDOW_CLOSE, 0,
-	  24, 5, 0))) {
+	  24, 5, 0)) &&
 
-	TwSetColorsWindow(SysMon_Win, 0x1FF,
-			  (hwcol)0x3E, (hwcol)0, (hwcol)0, (hwcol)0, (hwcol)0x9F,
-			  (hwcol)0x1E, (hwcol)0x3E, (hwcol)0x18, (hwcol)0x08);
-
-	TwInfo4Menu(SysMon_Menu, TW_ROW_ACTIVE, 16, " System Monitor ", "pppppppppppppppp");
-	TwWriteRowWindow(SysMon_Win, 26, "CPU \nDISK\nMEM \nSWAP\nUPTIME");
-	TwMapWindow(SysMon_Win, TwFirstScreen());
-	return TRUE;
-    }
-    return FALSE;
+	(TwSetColorsWindow(SysMon_Win, 0x1FF,
+			   (hwcol)0x3E, (hwcol)0, (hwcol)0, (hwcol)0, (hwcol)0x9F,
+			   (hwcol)0x1E, (hwcol)0x3E, (hwcol)0x18, (hwcol)0x08),
+	 TwInfo4Menu(SysMon_Menu, TW_ROW_ACTIVE, 16, " System Monitor ", "pppppppppppppppp"),
+	 TwWriteAsciiWindow(SysMon_Win, 26, "CPU \nDISK\nMEM \nSWAP\nUPTIME"),
+	 TwMapWindow(SysMon_Win, TwFirstScreen()),
+	 TRUE);
 }
 
 
@@ -94,7 +91,7 @@ uldat HBar(hwcol Col, uldat len, uldat scale, uldat frac) {
 	    frac = 0;
 	TwWriteMem(s, 'Û', len/scale/2);
 	
-	TwWriteRowWindow(SysMon_Win, len/scale/2 + !!frac, buf);
+	TwWriteAsciiWindow(SysMon_Win, len/scale/2 + !!frac, buf);
 	
 	half = COL(0, COLFG(Col));
 	frac = len % (scale*2);
@@ -264,7 +261,7 @@ void Update(void) {
 	sprintf(buf, "%d days %2d:%02d", (int)updays, uphours, upminutes);
 
 	TwGotoXYWindow(SysMon_Win, 8, 4);
-	TwWriteRowWindow(SysMon_Win, strlen(buf), buf);
+	TwWriteAsciiWindow(SysMon_Win, strlen(buf), buf);
     }
 
     CpuUser[i] += CpuUser[!i];

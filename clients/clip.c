@@ -7,8 +7,8 @@
 
 #include <stdio.h>
 
-#include "Tw/Tw.h"
-#include "Tw/Twerrno.h"
+#include <Tw/Tw.h>
+#include <Tw/Twerrno.h>
 
 #define COD_QUIT      (udat)1
 
@@ -21,69 +21,48 @@ TW_DECL_MAGIC(clip_magic);
 static byte InitClip(void) {
     twindow Window;
 
-    if (!TwCheckMagic(clip_magic) || !TwOpen(NULL))
-	return FALSE;
-    
-    if ((Clip_MsgPort=TwCreateMsgPort
+    return
+	TwCheckMagic(clip_magic) && TwOpen(NULL) &&
+	(Clip_MsgPort=TwCreateMsgPort
 	 (11, "twclipboard", (time_t)0, (frac_t)0, (byte)0)) &&
 	(Clip_Menu=TwCreateMenu(
 	  COL(BLACK,WHITE), COL(BLACK,GREEN), COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
-	  COL(RED,WHITE), COL(RED,GREEN), (byte)0))) {
-	
-	TwInfo4Menu(Clip_Menu, TW_ROW_ACTIVE, 16, " Twin Clipboard ", "ptpppptppppppppp");
-    } else
-	return FALSE;
-    
-    if ((Clip_Win=TwCreateWindow
-	 (14, "Twin Clipboard", NULL,
-	  Clip_Menu, COL(HIGH|WHITE,HIGH|BLACK),
-	  TW_LINECURSOR,
-	  TW_WINDOW_WANT_KEYS|TW_WINDOW_DRAG|TW_WINDOW_RESIZE|TW_WINDOW_X_BAR|TW_WINDOW_Y_BAR|TW_WINDOW_CLOSE,
-	  TW_WINDOWFL_CURSOR_ON|TW_WINDOWFL_ROWS_DEFCOL,
-	  38, 18, 0)) &&
+	  COL(RED,WHITE), COL(RED,GREEN), (byte)0)) &&
+	(TwInfo4Menu(Clip_Menu, TW_ROW_ACTIVE, 16, " Twin Clipboard ", "ptpppptppppppppp"),
+	 (Clip_Win=TwCreateWindow
+	  (14, "Twin Clipboard", NULL,
+	   Clip_Menu, COL(HIGH|WHITE,HIGH|BLACK),
+	   TW_LINECURSOR,
+	   TW_WINDOW_WANT_KEYS|TW_WINDOW_DRAG|TW_WINDOW_RESIZE|TW_WINDOW_X_BAR|TW_WINDOW_Y_BAR|TW_WINDOW_CLOSE,
+	   TW_WINDOWFL_CURSOR_ON|TW_WINDOWFL_ROWS_DEFCOL,
+	   38, 18, 0))) &&
 	(Window=TwWin4Menu(Clip_Menu)) &&
-	(TwRow4Menu(Window, COD_QUIT, TW_ROW_INACTIVE, 17, " Quit      Alt-X ") ,
-	 TwItem4Menu(Clip_Menu, Window, TRUE, 6, " File "))) {
-
-	TwSetColorsWindow(Clip_Win, 0x1FF,
-			  COL(HIGH|GREEN,WHITE), COL(CYAN,BLUE), COL(HIGH|BLUE,BLACK), COL(HIGH|WHITE,HIGH|BLUE), COL(HIGH|WHITE,HIGH|BLUE),
-			  COL(HIGH|WHITE,HIGH|BLACK), COL(HIGH|BLACK,WHITE), COL(BLACK,HIGH|BLACK), COL(BLACK,WHITE));
-	TwConfigureWindow(Clip_Win, 0xF<<2, 0, 0, 7, 3, MAXDAT, MAXDAT);
-
-    } else
-	return FALSE;
-    
-    
-    if ((Window=TwWin4Menu(Clip_Menu)) &&
-	TwItem4Menu(Clip_Menu, Window, FALSE, 6, " Clip ")) {
-		
-	TwRow4Menu(Window, (udat)0, TW_ROW_INACTIVE,16, " Undo           ");
-	TwRow4Menu(Window, (udat)0, TW_ROW_INACTIVE,16, " Redo           ");
-	TwRow4Menu(Window, (udat)0, TW_ROW_IGNORE,  16, "컴컴컴컴컴컴컴컴");
-	TwRow4Menu(Window, (udat)0, TW_ROW_ACTIVE,  16, " Cut            ");
-	TwRow4Menu(Window, (udat)0, TW_ROW_ACTIVE,  16, " Copy           ");
-	TwRow4Menu(Window, (udat)0, TW_ROW_ACTIVE,  16, " Paste          ");
-	TwRow4Menu(Window, (udat)0, TW_ROW_ACTIVE,  16, " Clear          ");
-	TwRow4Menu(Window, (udat)0, TW_ROW_IGNORE,  16, "컴컴컴컴컴컴컴컴");
-	TwRow4Menu(Window, (udat)0, TW_ROW_INACTIVE,16, " Show Clipboard ");
-    } else
-	return FALSE;
-    
-    if ((Window=TwWin4Menu(Clip_Menu)) &&
-	TwItem4Menu(Clip_Menu, Window, TRUE, 8, " Search ")) {
-
-	TwRow4Menu(Window, (udat)0, TW_ROW_ACTIVE,  9, " Find    ");
-	TwRow4Menu(Window, (udat)0, TW_ROW_ACTIVE,  9, " Replace ");
-    } else
-	return FALSE;
-    
-    if (!TwItem4MenuCommon(Clip_Menu))
-	return FALSE;
-
-    TwMapWindow(Clip_Win, TwFirstScreen());
-    TwFlush();
-
-    return TRUE;
+	(TwRow4Menu(Window, COD_QUIT, TW_ROW_INACTIVE, 17, " Quit      Alt-X "),
+	 TwItem4Menu(Clip_Menu, Window, TRUE, 6, " File ")) &&
+	(TwSetColorsWindow
+	 (Clip_Win, 0x1FF,
+	  COL(HIGH|GREEN,WHITE), COL(CYAN,BLUE), COL(HIGH|BLUE,BLACK), COL(HIGH|WHITE,HIGH|BLUE), COL(HIGH|WHITE,HIGH|BLUE),
+	  COL(HIGH|WHITE,HIGH|BLACK), COL(HIGH|BLACK,WHITE), COL(BLACK,HIGH|BLACK), COL(BLACK,WHITE)),
+	 TwConfigureWindow(Clip_Win, 0xF<<2, 0, 0, 7, 3, MAXDAT, MAXDAT),
+	 (Window=TwWin4Menu(Clip_Menu))) &&
+	TwItem4Menu(Clip_Menu, Window, FALSE, 6, " Clip ") &&
+	(TwRow4Menu(Window, (udat)0, TW_ROW_INACTIVE,16, " Undo           "),
+	 TwRow4Menu(Window, (udat)0, TW_ROW_INACTIVE,16, " Redo           "),
+	 TwRow4Menu(Window, (udat)0, TW_ROW_IGNORE,  16, "컴컴컴컴컴컴컴컴"),
+	 TwRow4Menu(Window, (udat)0, TW_ROW_ACTIVE,  16, " Cut            "),
+	 TwRow4Menu(Window, (udat)0, TW_ROW_ACTIVE,  16, " Copy           "),
+	 TwRow4Menu(Window, (udat)0, TW_ROW_ACTIVE,  16, " Paste          "),
+	 TwRow4Menu(Window, (udat)0, TW_ROW_ACTIVE,  16, " Clear          "),
+	 TwRow4Menu(Window, (udat)0, TW_ROW_IGNORE,  16, "컴컴컴컴컴컴컴컴"),
+	 TwRow4Menu(Window, (udat)0, TW_ROW_INACTIVE,16, " Show Clipboard "),
+	 (Window=TwWin4Menu(Clip_Menu))) &&
+	TwItem4Menu(Clip_Menu, Window, TRUE, 8, " Search ") &&
+	(TwRow4Menu(Window, (udat)0, TW_ROW_ACTIVE,  9, " Find    "),
+	 TwRow4Menu(Window, (udat)0, TW_ROW_ACTIVE,  9, " Replace "),
+	 TwItem4MenuCommon(Clip_Menu)) &&
+	(TwMapWindow(Clip_Win, TwFirstScreen()),
+	 TwFlush(),
+	 TRUE);
 }
 
 int main(int argc, char *argv[]) {
@@ -96,7 +75,7 @@ int main(int argc, char *argv[]) {
 	    
 	    tevent_keyboard EventK = &Msg->Event.EventKeyboard;
 	    Code=EventK->Code;
-	    (void)TwWriteRowWindow(EventK->W, EventK->SeqLen, EventK->AsciiSeq);
+	    (void)TwWriteAsciiWindow(EventK->W, EventK->SeqLen, EventK->AsciiSeq);
 	    
 	} else if (Msg->Type==TW_MSG_SELECTION) {
 	    /*
@@ -110,7 +89,7 @@ int main(int argc, char *argv[]) {
 	    
 	    tevent_selectionnotify EventN = &Msg->Event.EventSelectionNotify;
 	    if (EventN->Magic == TW_SEL_TEXTMAGIC)
-		(void)TwWriteRowWindow(EventN->ReqPrivate, EventN->Len, EventN->Data);
+		(void)TwWriteAsciiWindow(EventN->ReqPrivate, EventN->Len, EventN->Data);
 	    
 	} else if (Msg->Type==TW_MSG_SELECTIONCLEAR) {
 	    ;

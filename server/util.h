@@ -56,6 +56,7 @@ byte *FindFile(byte *name, uldat *fsize);
 void RunTwEnvRC(void);
 
 byte AssignId(CONST fn_obj Fn_Obj, obj Obj);
+byte AssignId_all(all Obj);
 void DropId(obj Obj);
 obj  Id2Obj(byte i, uldat Id);
 #define Obj2Id(o) ((o) ? (o)->Id : NOID)

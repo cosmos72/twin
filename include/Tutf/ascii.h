@@ -5,6 +5,7 @@
 #ifndef _TUTF_ANSI_X3_4_H
 #define _TUTF_ANSI_X3_4_H
 
+
 #define T_ANSI_X3_4_NULL	0x0000
 #define T_ANSI_X3_4_START_OF_HEADING	0x0001
 #define T_ANSI_X3_4_START_OF_TEXT	0x0002

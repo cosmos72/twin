@@ -32,7 +32,7 @@
   (of course can ask me if he doesn't understand something) what the various
   functions do. Suggested format for documentation: doxygen javadoc-style
   comments (i.e. /** comment */ ) inserted in twin/libs/libTw/libTw.c and in
-  include/m4/m4_sockproto.m4;
+  include/m4/sockproto.m4h;
 
   DIFFICULTY: intermediate (many things are obscure)
   STATUS: available
@@ -50,17 +50,18 @@
 
 9.random thoughts:
 
-   recursive menu windows
-
-   Add Unicode cut-n-paste.
    "paste" command in menu
    twclip - show clipboard
-   Check SunOS and *BSD porting. Also, twdisplay on win32
+   twdisplay on win32
    ?-geometry option to tw* clients
 
    keyboard hotkeys for screen scroll
 
-   Flame libgpm people for /tmp/gpm* sockets, gpm_tried, syslogging, ncurses
    cleanup overflows with shadows at window [xy]width = almost max, move arithmetic to [ul]dat
    finish libGGI keyboard support
+
+   Flame libgpm people for /tmp/gpm* sockets, gpm_tried, syslogging, ncurses
+
+   ### tell GTK people to write a gtk_quit() function that shuts down gtk
+   ### but does NOT call system exit()
 

@@ -12,9 +12,9 @@
 
 #include <stdio.h>
 
-#include "Tw/Tw.h"
-#include "Tw/Twerrno.h"
-#include "Tw/Twkeys.h"
+#include <Tw/Tw.h>
+#include <Tw/Twerrno.h>
+#include <Tw/Twkeys.h>
 
 static tmsgport Event_MsgPort;
 static tmenu Event_Menu;
@@ -23,45 +23,41 @@ static twindow Event_Win, Event_SubWin;
 TW_DECL_MAGIC(event_magic);
 
 static byte InitEvent(void) {
-    if (!TwCheckMagic(event_magic) || !TwOpen(NULL))
-	return FALSE;
-    
-    if ((Event_MsgPort=TwCreateMsgPort
-	 (12, "Event Tester", (time_t)0, (frac_t)0, (byte)0)) &&
+    return
+	TwCheckMagic(event_magic) && TwOpen(NULL) &&
+	(Event_MsgPort=TwCreateMsgPort
+	 (7, "twevent", (time_t)0, (frac_t)0, (byte)0)) &&
 	(Event_Menu=TwCreateMenu(
 	  COL(BLACK,WHITE), COL(BLACK,GREEN), COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
 	  COL(RED,WHITE), COL(RED,GREEN), (byte)0)) &&
-	TwItem4MenuCommon(Event_Menu)) {
+	TwItem4MenuCommon(Event_Menu) &&
+	(TwInfo4Menu(Event_Menu, TW_ROW_ACTIVE, 14, " Event Tester ", "ptppppptpppppp"),
+	 TRUE) &&
+	(Event_Win=TwCreateWindow
+	 (12, "Event Tester", NULL,
+	  Event_Menu, COL(WHITE,BLACK), TW_NOCURSOR,
+	  TW_WINDOW_WANT_KEYS|TW_WINDOW_WANT_MOUSE|TW_WINDOW_WANT_CHANGES|TW_WINDOW_DRAG|TW_WINDOW_RESIZE|TW_WINDOW_CLOSE,
+	  TW_WINDOWFL_USEEXPOSE, 18, 8, 0)) &&
+	(TwSetColorsWindow
+	 (Event_Win, 0x1FF,
+	  COL(HIGH|YELLOW,CYAN), COL(HIGH|GREEN,HIGH|BLUE), COL(WHITE,HIGH|BLUE),
+	  COL(HIGH|WHITE,HIGH|BLUE), COL(HIGH|WHITE,HIGH|BLUE),
+	  COL(WHITE,BLACK), COL(WHITE,HIGH|BLACK), COL(HIGH|BLACK,BLACK), COL(BLACK,HIGH|BLACK)),
+	 TwConfigureWindow(Event_Win, 0xF<<2, 0, 0, 10, 5, 30, 15),
+	 TwMapWindow(Event_Win, TwFirstScreen()),
+	 TRUE) &&
+
+	(Event_SubWin=TwCreateWindow
+	 (9, "SubWindow", NULL,
+	  Event_Menu, COL(WHITE,BLUE), TW_NOCURSOR,
+	  TW_WINDOW_WANT_KEYS|TW_WINDOW_WANT_MOUSE|TW_WINDOW_WANT_MOUSE_MOTION|TW_WINDOW_WANT_CHANGES,
+	  TW_WINDOWFL_BORDERLESS, 7, 3, 0)) &&
 	
-	TwInfo4Menu(Event_Menu, TW_ROW_ACTIVE, 14, " Event Tester ", "ptppppptpppppp");
-    
-	if ((Event_Win=TwCreateWindow
-	     (12, "Event Tester", NULL,
-	      Event_Menu, COL(WHITE,BLACK), TW_NOCURSOR,
-	      TW_WINDOW_WANT_KEYS|TW_WINDOW_WANT_MOUSE|TW_WINDOW_WANT_CHANGES|TW_WINDOW_DRAG|TW_WINDOW_RESIZE|TW_WINDOW_CLOSE,
-	      TW_WINDOWFL_USEEXPOSE, 18, 8, 0))) {
-	
-	    TwSetColorsWindow(Event_Win, 0x1FF,
-			      COL(HIGH|YELLOW,CYAN), COL(HIGH|GREEN,HIGH|BLUE), COL(WHITE,HIGH|BLUE),
-			      COL(HIGH|WHITE,HIGH|BLUE), COL(HIGH|WHITE,HIGH|BLUE),
-			      COL(WHITE,BLACK), COL(WHITE,HIGH|BLACK), COL(HIGH|BLACK,BLACK), COL(BLACK,HIGH|BLACK));
-	    TwConfigureWindow(Event_Win, 0xF<<2, 0, 0, 10, 5, 30, 15);
-	    TwMapWindow(Event_Win, TwFirstScreen());
+	(TwSetXYWindow(Event_SubWin, 5, 2),
+	 TwMapWindow(Event_SubWin, Event_Win),
+	 TRUE) &&
 
-	    if ((Event_SubWin=TwCreateWindow
-		 (9, "SubWindow", NULL,
-		  Event_Menu, COL(WHITE,BLUE), TW_NOCURSOR,
-		  TW_WINDOW_WANT_KEYS|TW_WINDOW_WANT_MOUSE|TW_WINDOW_WANT_MOUSE_MOTION|TW_WINDOW_WANT_CHANGES,
-		  TW_WINDOWFL_BORDERLESS, 7, 3, 0))) {
-
-		TwSetXYWindow(Event_SubWin, 5, 2);
-		TwMapWindow(Event_SubWin, Event_Win);
-
-		return TwFlush();
-	    }
-	}
-    }
-    return FALSE;
+	TwFlush();
 }
 
 void human_print(uldat len, byte *s) {
@@ -233,7 +229,7 @@ int main(int argc, char *argv[]) {
 	} else if (Msg->Type==TW_MSG_SELECTION) {
 	    uldat Owner = TwGetOwnerSelection();
 	    printf("Selection Paste: Owner %d (0x%08x), requesting data notify...\n",
-		   Owner, Owner);
+		   (int)Owner, (int)Owner);
 	    TwRequestSelection(Owner, TW_NOID);
 	} else if (Msg->Type==TW_MSG_SELECTIONNOTIFY) {
 	    tevent_selectionnotify EventN = &Msg->Event.EventSelectionNotify;
@@ -314,7 +310,7 @@ int main(int argc, char *argv[]) {
 	} else if (Msg->Type==TW_MSG_USER_CLIENTMSG) {
 	    tevent_clientmsg EventC = &Msg->Event.EventClientMsg;
 	    printf("User Client Message: Code %d, ASCII ", EventC->Code);
-	    human_print(EventC->Len, EventC->Data);
+	    human_print(EventC->Len, EventC->Data.b);
 	    putchar('\n');
 	}
     }

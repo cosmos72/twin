@@ -2,6 +2,7 @@
 # top Makefile
 #
 TOPDIR=.
+THISDIR=.
 SUBDIRS=$(wildcard include docs libs clients server)
 
 make_VERSION:=$(wordlist 1,2,$(shell $(MAKE) -v))
@@ -10,6 +11,9 @@ ifneq ($(make_VERSION),GNU Make)
 endif
 
 all: subdirs
+	@echo ; \
+	 echo "twin is now (hopefully) compiled." ; \
+	 echo "As next step, you probably want to run '$(MAKE) install' as root."
 
 make_is_not_GNU:
 	@echo "Warning: GNU Make is required to build twin, but the '$(MAKE)' you are using" ; \
@@ -39,7 +43,7 @@ dir-libs dir-docs: dir-include
 
 dir-include: $(CONF) include/Tw/Twautoconf.h
 
-autogen: include/socklistm4.h include/TT/TTdefsm4.h
+do-autogen: dir-include
 
 pre-autogen: include/autoconf.h
 
@@ -59,10 +63,13 @@ install:
 	@echo [1m ; \
 	 echo If this is the first time you installed twin $(TWIN_VERSION_STR) ; \
 	 echo you probably need to run \"ldconfig\" now. ; \
-	 echo [0m
+	 echo [0m ; \
+	 echo "As next step, you probably want to run '$(MAKE) clean'" ; \
+	 echo ; \
+	 echo "Installation should be completed. Type 'twstart' and enjoy."
 
 clean: fakeconf autogen
-	rm -f .*.flags .*.link .*.arlib gmon.out core log
+	rm -f .*.flags .*.link .*.arlib gmon.out core log .dialog_*
 	if [ ! -s $(CONF) ]; then rm -f $(CONF); fi
 
 
@@ -73,11 +80,13 @@ distclean: clean
 	      include/autoconf.h include/Tw/Twautoconf.h \
 	      scripts/Mkdep scripts/Bitmap scripts/Getsizes \
 	      include/Tw/datasizes.h include/Tw/uni_types.h \
-	      `find . -name .modules -o -name .depend` \
-	      `find . -type l`
+	      .hdepend `find . -type l` \
+	      `find . -name .modules -o -name .depend` ; \
+	$(CP) Makefile.fake Makefile
 
 pure: distclean
-	rm -f configure include/autoconf.h.in server/rcparse_*.? `find . -name \*m4.h`
+	rm -f Makefile configure include/autoconf.h.in server/rcparse_*.? \
+	`find . -name \*m4.h -o -name \*m4.c`
 
 
 
@@ -95,12 +104,9 @@ include/autoconf.h.in: configure.in
 	rm -f $@ && autoheader
 
 config.status: configure
-	if [ -f ./config.status ]; then \
-	  ./config.status --recheck ; \
-	else \
-	  ./configure ; \
-	fi
-
+	@echo Updating config.status
+	./configure --cache-file=config.cache --no-create
+	
 Makefile: Makefile.in
 
 makeautoconf: makeautoconf.in
@@ -108,31 +114,39 @@ makeautoconf: makeautoconf.in
 conf/conf.auto: conf/conf.auto.in
 
 Makefile makeautoconf conf/conf.auto: config.status
+	@echo Updating Makefile makeautoconf conf/conf.auto
 	./config.status
 
 #
 # this is an overkill, as it forces recompiling all sources that
-# include "autoconf.h" or "Tw/Twautoconf.h" after each time
-# someone runs ./configure
+# include "autoconf.h" or "Tw/Twautoconf.h" (almost every one)
+# after each time someone runs ./configure
 #
-#include/autoconf.h: config.status include/autoconf.h.in 
+# include/autoconf.h: config.status include/autoconf.h.in 
 #	rm -f $@ && ./config.status
 #
 # unluckily it is needed to correctly bootstrap commands like
 # 'make -f Makefile.in autogen' or 'make -f Makefile.in distclean',
-# so the solution is to fall back on ./configure if ./config.status
-# is missing
+# so the solution is:
+# check whether include/autoconf.h is actually up-to-date
+# (config.status does not touch it if its contents do not change),
+# else remove it and run either ./config.status or ./configure.
+# 
+# Instead of having include/autoconf.h depend on config.status,
+# we manually check whether config.status exists and make it if needed.
 #
-include/autoconf.h: include/autoconf.h.in 
-	if [ -f ./config.status ]; then \
-	  ./config.status ; \
+include/autoconf.h: include/autoconf.h.in
+	@echo Updating include/autoconf.h
+	if [ ! -f config.status ]; then \
+	  $(MAKE) -f Makefile.in config.status ; \
+	fi ; \
+	if [ conf/conf.auto -nt config.status -a \
+	     conf/conf.auto -nt include/autoconf.h.in ]; then \
+	  touch $@; \
 	else \
-	  if [ ! -f ./configure ]; then \
-	    autoconf ; \
-	  fi ; \
-	  ./configure ; \
+	  rm -f $@ ; \
+	  ./config.status ; \
 	fi
-
 
 bootstrap: $(CONF)
 

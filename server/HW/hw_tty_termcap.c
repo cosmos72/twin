@@ -78,14 +78,22 @@ static byte *termcap_extract(byte *cap, byte **dest) {
 
 
 static void termcap_cleanup(void) {
-    byte ***np, **tc_quit[] = {
-	&tc_cursor_goto, &tc_cursor_on, &tc_cursor_off,
-	    &tc_bold_on, &tc_blink_on, &tc_attr_off,
-	    &tc_kpad_on, &tc_kpad_off, &tc_scr_clear, &tc_audio_bell,
-	    NULL};
+    byte ** np, *tc_quit[11];
+    
+    tc_quit[0] = tc_cursor_goto;
+    tc_quit[1] = tc_cursor_on;
+    tc_quit[2] = tc_cursor_off;
+    tc_quit[3] = tc_bold_on;
+    tc_quit[4] = tc_blink_on;
+    tc_quit[5] = tc_attr_off;
+    tc_quit[6] = tc_kpad_on;
+    tc_quit[7] = tc_kpad_off;
+    tc_quit[8] = tc_scr_clear;
+    tc_quit[9] = tc_audio_bell;
+    tc_quit[10] = NULL;
     
     for (np = tc_quit; *np; np++)
-	if (**np) FreeMem(**np);
+	if (*np) FreeMem(*np);
 }
 
 static void fixup_colorbug(void) {
@@ -100,22 +108,23 @@ static void fixup_colorbug(void) {
     }
 }
 
+struct tc_init_node {
+    byte *cap, **buf;
+};
+
 static byte termcap_InitVideo(void) {
     byte *term = tty_TERM;
-    struct tc_init_node {
-	byte *cap, **buf;
-    };
     struct tc_init_node *np, tc_init[] = {
-	{ "cm", &tc_cursor_goto },
-	{ "ve", &tc_cursor_on },
-	{ "vi", &tc_cursor_off },
-	{ "md", &tc_bold_on },
-	{ "mb", &tc_blink_on },
-	{ "me", &tc_attr_off },
-	{ "ks", &tc_kpad_on },
-	{ "ke", &tc_kpad_off },
-	{ "cl", &tc_scr_clear },
-	{ "bl", &tc_audio_bell },
+	{ "cm",  },
+	{ "ve",  },
+	{ "vi",  },
+	{ "md",  },
+	{ "mb",  },
+	{ "me",  },
+	{ "ks",  },
+	{ "ke",  },
+	{ "cl",  },
+	{ "bl",  },
 	{ NULL, NULL }
     };
     char tcbuf[2048];		/* by convention, this is enough */
@@ -124,6 +133,18 @@ static byte termcap_InitVideo(void) {
 	printk("      termcap_InitVideo() failed: unknown terminal type.\n");
 	return FALSE;
     }
+    
+    tc_init[0].buf = &tc_cursor_goto;
+    tc_init[1].buf = &tc_cursor_on;
+    tc_init[2].buf = &tc_cursor_off;
+    tc_init[3].buf = &tc_bold_on;
+    tc_init[4].buf = &tc_blink_on;
+    tc_init[5].buf = &tc_attr_off;
+    tc_init[6].buf = &tc_kpad_on;
+    tc_init[7].buf = &tc_kpad_off;
+    tc_init[8].buf = &tc_scr_clear;
+    tc_init[9].buf = &tc_audio_bell;
+    tc_init[10].buf = NULL;
     
     switch (tgetent(tcbuf, term)) {
       case 1:
@@ -176,7 +197,7 @@ static byte termcap_InitVideo(void) {
     HW->HWSelectionExport  = NoOp;
     HW->HWSelectionRequest = (void *)NoOp;
     HW->HWSelectionNotify  = (void *)NoOp;
-    HW->HWSelectionPrivate = NULL;
+    HW->HWSelectionPrivate = 0;
 
     HW->CanDragArea = termcap_CanDragArea;
     HW->DragArea = termcap_DragArea;

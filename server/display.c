@@ -29,9 +29,9 @@
 #include "fdlist.h"
 #include "version.h"
 
-#include "Tw/Tw.h"
-#include "Tw/Twerrno.h"
-#include "Tw/Twstat.h"
+#include <Tw/Tw.h>
+#include <Tw/Twerrno.h>
+#include <Tw/Twstat.h>
 
 /* HW specific headers */
 
@@ -66,7 +66,7 @@ static CONST byte *conf_destdir_lib_twin_modules_ = DIR_LIB_TWIN_MODULES_;
 
 #endif /* CONF__MODULES */
 
-
+static CONST byte *suffix = "." TWIN_VERSION_STR;
 
 static CONST byte *MYname;
 
@@ -326,6 +326,7 @@ static byte module_InitHW(void) {
     byte *(*InitD)(void);
     byte *arg = HW->Name;
     uldat len = HW->NameLen;
+    uldat xtralen = 10 + strlen(suffix);
     module Module;
 
     if (!arg || len <= 4)
@@ -340,30 +341,31 @@ static byte module_InitHW(void) {
     if (name)
 	len = name - arg;
     
-    if ((name = AllocMem(len + 10))) {
-	sprintf(name, "HW/hw_%.*s.so", (int)len, arg);
+    if ((name = AllocMem(len + xtralen + 1))) {
+	sprintf(name, "HW/hw_%.*s.so." TWIN_VERSION_STR, (int)len, arg);
 			
-	Module = DlLoadAny(len+9, name);
+	Module = DlLoadAny(len + xtralen, name);
 	
-	FreeMem(name);
-	    
 	if (Module) {
-	    printk("twdisplay: starting display driver module `HW/hw_%.*s.so'...\n", (int)len, arg);
+	    printk("twdisplay: starting display driver module `%s'...\n", name);
 	    
 	    if ((InitD = Module->Private) && InitD()) {
-		printk("twdisplay: ...module `HW/hw_%.*s.so' successfully started.\n", (int)len, arg);
+		printk("twdisplay: ...module `%s' successfully started.\n", name);
 		HW->Module = Module; Module->Used++;
+		
+		FreeMem(name);
 		return TRUE;
 	    }
 	    /*Delete(Module);*/
 	}
+	FreeMem(name);
     } else
 	ErrStr = "Out of memory!";
 
     if (Module) {
-	printk("twdisplay: ...module `HW/hw_%.*s.so' failed to start.\n", (int)len, arg);
+	printk("twdisplay: ...module `HW/hw_%.*s.so." TWIN_VERSION_STR "' failed to start.\n", (int)len, arg);
     } else
-	printk("twdisplay: unable to load display driver module `HW/hw_%.*s.so' :\n"
+	printk("twdisplay: unable to load display driver module `HW/hw_%.*s.so." TWIN_VERSION_STR "' :\n"
 		"      %s\n", (int)len, arg, ErrStr);
     
     return FALSE;
@@ -710,7 +712,7 @@ static byte ResizeDisplay(void) {
 
     TryDisplayWidth = TryDisplayHeight = 0;
     
-    if (change && (Tmsg = TwCreateMsg(TW_MSG_DISPLAY, sizeof(struct s_tevent_display)))) {
+    if (change && (Tmsg = TwCreateMsg(TW_MSG_DISPLAY, TW_SIZEOF_TEVENT_DISPLAY))) {
 	Tmsg->Event.EventDisplay.Code = TW_DPY_Resize;
 	Tmsg->Event.EventDisplay.Len  = 0;
 	Tmsg->Event.EventDisplay.X    = DisplayWidth;
@@ -732,7 +734,10 @@ void DragAreaHW(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
     
 void SetPaletteHW(udat N, udat R, udat G, udat B) {
     if (N <= MAXCOL) {
-	palette c = {R, G, B};
+	palette c;
+	c.Red = R;
+	c.Green = G;
+	c.Blue = B;
 	if (CmpMem(&Palette[N], &c, sizeof(palette))) {
 	    Palette[N] = c;
 	    HW->SetPalette(N, R, G, B);
@@ -764,7 +769,7 @@ static void HandleMsg(tmsg Msg) {
 	 * Cast it to (obj) as expected by HW displays...
 	 * we will cast it back when needed
 	 */
-	HW->HWSelectionRequest((obj)(Msg->Event.EventSelectionRequest.Requestor),
+	HW->HWSelectionRequest((obj)(topaque)Msg->Event.EventSelectionRequest.Requestor,
 			       Msg->Event.EventSelectionRequest.ReqPrivate);
 	break;
       case TW_MSG_SELECTIONNOTIFY:
@@ -879,7 +884,7 @@ void SelectionExport(void) {
  * treats it as opaque. We will cast it back to (uldat) when needed.
  */
 obj TwinSelectionGetOwner(void) {
-    return (obj)(tobj)TwGetOwnerSelection();
+    return (obj)(topaque)TwGetOwnerSelection();
 }
 
 /* HW back-end function: set selection owner */
@@ -900,7 +905,7 @@ void TwinSelectionNotify(obj Requestor, uldat ReqPrivate, uldat Magic, CONST byt
     printk("twdisplay: Selection Notify to 0x%08x\n", (uldat)Requestor);
 #endif
     /* cast back Requestor from fake (obj) to its original (uldat) */
-    TwNotifySelection((uldat)Requestor, ReqPrivate, Magic, MIME, Len, Data);
+    TwNotifySelection((topaque)Requestor, ReqPrivate, Magic, MIME, Len, Data);
 }
 
 /* HW back-end function: request selection */
@@ -909,7 +914,7 @@ void TwinSelectionRequest(obj Requestor, uldat ReqPrivate, obj Owner) {
     printk("twdisplay: Selection Request from 0x%08x, Owner is 0x%08x\n", (uldat)Requestor, (uldat)Owner);
 #endif
     /* cast back Owner from the fake (obj) to (uldat) */
-    TwRequestSelection((uldat)Owner, ReqPrivate);
+    TwRequestSelection((topaque)Owner, ReqPrivate);
 }
 
 static byte StdAddEventMouse(udat CodeMsg, udat Code, dat MouseX, dat MouseY) {

@@ -39,7 +39,7 @@
 # include "dl.h"
 #endif
 
-#include "Tw/Tw.h"
+#include <Tw/Tw.h>
 
 
 /* HW specific headers */
@@ -194,7 +194,7 @@ static byte module_InitHW(void) {
     byte *name, *tmp;
     byte *(*InitD)(void);
     byte *arg = HW->Name;
-    uldat len = HW->NameLen;
+    uldat len = HW->NameLen, verlen = strlen(TWIN_VERSION_STR);
     module Module;
 
     if (!arg || len <= 4)
@@ -209,13 +209,13 @@ static byte module_InitHW(void) {
     if (name)
 	len = name - arg;
     
-    if ((name = AllocMem(len + 10))) {
-	sprintf(name, "HW/hw_%.*s.so", (int)len, arg);
+    if ((name = AllocMem(len + verlen + 11))) {
+	sprintf(name, "HW/hw_%.*s.so." TWIN_VERSION_STR, (int)len, arg);
 			
-	Module = DlLoadAny(len+9, name);
+	Module = DlLoadAny(len + verlen + 10, name);
 	
 	if (Module) {
-	    printk("twin: starting display driver module `HW/hw_%.*s.so'...\n", (int)len, arg);
+	    printk("twin: starting display driver module `HW/hw_%.*s.so." TWIN_VERSION_STR "'...\n", (int)len, arg);
 	    
 	    if ((InitD = Module->Private) && InitD()) {
 		printk("twin: ...module `%s' successfully started.\n", name);
@@ -657,7 +657,11 @@ void ConfigureHW(udat resource, byte todefault, udat value) {
 
 void SetPaletteHW(udat N, udat R, udat G, udat B) {
     if (N <= MAXCOL) {
-	palette c = {R, G, B};
+	palette c;
+	c.Red = R;
+	c.Green = G;
+	c.Blue = B;
+	
 	if (CmpMem(&Palette[N], &c, sizeof(palette))) {
 	    Palette[N] = c;
 	    forHW {
@@ -694,7 +698,7 @@ obj TwinSelectionGetOwner(void) {
 static void SelectionClear(msgport Owner) {
     msg Msg;
     
-    if ((Msg = Do(Create,Msg)(FnMsg, MSG_SELECTIONCLEAR, sizeof(event_common))))
+    if ((Msg = Do(Create,Msg)(FnMsg, MSG_SELECTIONCLEAR, 0)))
 	SendMsg(Owner, Msg);
 }
 
@@ -738,7 +742,7 @@ void TwinSelectionNotify(obj Requestor, uldat ReqPrivate, uldat Magic, CONST byt
 	if (!Data)
 	    Len = 0;
 
-	if ((NewMsg = Do(Create,Msg)(FnMsg, MSG_SELECTIONNOTIFY, sizeof(event_selectionnotify) + Len))) {
+	if ((NewMsg = Do(Create,Msg)(FnMsg, MSG_SELECTIONNOTIFY, Len))) {
 	    Event = &NewMsg->Event;
 	    Event->EventSelectionNotify.W = NULL;
 	    Event->EventSelectionNotify.Code = 0;
@@ -770,7 +774,7 @@ void TwinSelectionRequest(obj Requestor, uldat ReqPrivate, obj Owner) {
 	if (Owner->Id >> magic_shift == msgport_magic >> magic_shift) {
 	    msg NewMsg;
 	    event_any *Event;
-	    if ((NewMsg = Do(Create,Msg)(FnMsg, MSG_SELECTIONREQUEST, sizeof(event_selectionrequest)))) {
+	    if ((NewMsg = Do(Create,Msg)(FnMsg, MSG_SELECTIONREQUEST, 0))) {
 
 		Event = &NewMsg->Event;
 		Event->EventSelectionRequest.W = NULL;
@@ -988,7 +992,7 @@ void SyntheticKey(widget W, udat Code, udat ShiftFlags, byte Len, byte *Seq) {
     msg Msg;
 
     if (W && Len && Seq &&
-	(Msg=Do(Create,Msg)(FnMsg, MSG_WIDGET_KEY, Len + sizeof(event_keyboard)))) {
+	(Msg=Do(Create,Msg)(FnMsg, MSG_WIDGET_KEY, Len))) {
 	
 	Event = &Msg->Event.EventKeyboard;
 	Event->W = W;
@@ -1224,7 +1228,7 @@ byte StdAddEventMouse(udat CodeMsg, udat Code, dat MouseX, dat MouseY) {
 	Event->Y=MouseY;
 	return TRUE;
     }
-    if ((Msg=Do(Create,Msg)(FnMsg, CodeMsg, sizeof(event_mouse)))) {
+    if ((Msg=Do(Create,Msg)(FnMsg, CodeMsg, 0))) {
 	Event=&Msg->Event.EventMouse;
 	Event->Code=Code;
 	Event->ShiftFlags=(udat)0;
@@ -1243,7 +1247,7 @@ byte KeyboardEventCommon(udat Code, udat ShiftFlags, udat Len, CONST byte *Seq) 
     if (HW->FlagsHW & FlHWNoInput)
 	return TRUE;
 
-    if ((Msg=Do(Create,Msg)(FnMsg, MSG_KEY, Len + sizeof(event_keyboard)))) {
+    if ((Msg=Do(Create,Msg)(FnMsg, MSG_KEY, Len))) {
 	Event = &Msg->Event.EventKeyboard;
 	    
 	Event->Code = Code;

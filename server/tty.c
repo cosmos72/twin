@@ -26,11 +26,12 @@
 #include "common.h"
 #include "tty.h"
 
-#include "Tw/Tw.h"
-#include "Tw/Twstat.h"
+#include <Tw/Tw.h>
+#include <Tw/Twstat.h>
+#include <Tw/Twstat_defs.h>
 
 #ifdef CONF__UNICODE
-# include "Tutf/Tutf.h"
+# include <Tutf/Tutf.h>
 #endif
 
 /*
@@ -75,6 +76,7 @@ static byte dirtyN;
 #define nPar		Data->nPar
 #define currG		Data->currG
 #define Charset		Win->Charset
+#define InvCharset	Data->InvCharset
 #define G		Data->G
 #define G0		Data->G0
 #define G1		Data->G1
@@ -541,9 +543,18 @@ static void update_eff(void) {
 #ifdef CONF__UNICODE
 
 # define setCharset(g) do switch ((currG = (g))) { \
-    case LAT1_MAP: Charset = Tutf_ISO_8859_1_to_UTF_16; break; \
-    case IBMPC_MAP: Charset = Tutf_IBM437_to_UTF_16; break; \
-    case USER_MAP: Charset = All->Gtranslations[USER_MAP]; break; \
+  case LAT1_MAP: \
+    Charset = Tutf_ISO_8859_1_to_UTF_16; \
+    InvCharset = Tutf_UTF_16_to_ISO_8859_1; \
+    break; \
+  case IBMPC_MAP: \
+    Charset = Tutf_IBM437_to_UTF_16; \
+    InvCharset = Tutf_UTF_16_to_IBM437; \
+    break; \
+  case USER_MAP: \
+    Charset = All->Gtranslations[USER_MAP]; \
+    InvCharset = Tutf_UTF_16_to_ISO_8859_1; /* very rough :( */ \
+    break; \
 } while (0)
 
 INLINE hwfont applyG(hwfont c) {
@@ -672,7 +683,7 @@ static void respond_string(byte *p) {
 	/* or we may need to send a Msg to Win->Owner */
 	msg Msg;
 	event_keyboard *Event;
-	if ((Msg = Do(Create,Msg)(FnMsg, MSG_WIDGET_KEY, Len + sizeof(event_keyboard)))) {
+	if ((Msg = Do(Create,Msg)(FnMsg, MSG_WIDGET_KEY, Len))) {
 	    /* this is the same code as in KeyboardEvent() in hw.c */
 	    Event = &Msg->Event.EventKeyboard;
 	    Event->W = (widget)Win;
@@ -1549,7 +1560,7 @@ void TtyWriteAscii(window Window, ldat Len, CONST byte *AsciiSeq) {
 
 #if TW_SIZEOFHWFONT == 1
 void TtyWriteHWFont(window Window, ldat Len, CONST hwfont *HWFont) {
-    TtyWriteAscii(Window, Len, HWFont);
+    TtyWriteAscii(Window, Len, (CONST byte *)HWFont);
 }
 #else
 /* same as TtyWriteAscii(), but writes hwfont (unicode). Useful only if CONF__UNICODE is enabled. */

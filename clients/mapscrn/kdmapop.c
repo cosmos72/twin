@@ -4,7 +4,7 @@
  *
  * Hide the ioctl use in this file.
  */
-#include "Tw/Tw.h"
+#include <Tw/Tw.h>
 
 #include <stdio.h>
 #include <errno.h>
@@ -94,7 +94,7 @@ getuniscrnmap(int fd, unsigned short *map) {
 int
 loaduniscrnmap(int fd, unsigned short *map) {
 	if (sizeof(hwfont) == sizeof(unsigned short)) {
-		TwSetUniFontTranslation(map+0x80);
+		TwSetUniFontTranslation((hwfont *)map+0x80);
 	} else {
 		hwfont buf[E_TABSZ-0x80];
 		int i;

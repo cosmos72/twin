@@ -47,12 +47,16 @@ define(`t_', _)
 define(`tx', x)
 define(`tV', V)
 define(`tW', W)
+define(`tX', X)
+define(`tY', Y)
 
 define(`Tv', `void ')
 define(`T_', `$1 ')
 define(`Tx', `t$1 ')
 define(`TV', `CONST $1 *')
 define(`TW', `CONST $1 *')
+define(`TX', `CONST t$1 *')
+define(`TY', `CONST t$1 *')
 
 define(`TYPE', `T$2($1)')
 
@@ -68,5 +72,5 @@ define(`PROTO', `TYPE($1,$2) NAME($3, $4)(PREFIX_ANY($#) ARGS(1, NSHIFT(5, $@)))
 define(`PROTOFindFunction', defn(`PROTO'))
 define(`PROTOSyncSocket', defn(`PROTO'))
 
-include(`m4/m4_sockproto.m4')
+include(`m4/sockproto.m4h')
 

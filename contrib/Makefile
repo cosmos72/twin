@@ -21,6 +21,7 @@ OBJS_twbiff=biff.o
 # --------------- no user-serviceable parts below this line ----------------
 #
 TOPDIR=..
+THISDIR=$(TOPDIR)/contrib
 
 LD_FLAGS+=-L$(TOPDIR)/lib -lTw
 
@@ -30,6 +31,7 @@ all: everything
 -include $(TOPDIR)/conf/conf.current
 -include .modules
 -include .depend
+-include $(TOPDIR)/.hdepend
 
 include $(TOPDIR)/makerules
 

@@ -20,29 +20,37 @@
 #include "hw_dirty.h"
 #include "common.h"
 
-#include "Tw/Tw.h"
-#include "Tw/Twerrno.h"
-#include "Tw/Twkeys.h"
-#include "Tw/Twstat.h"
+#include <Tw/Tw.h>
+#include <Tw/Twerrno.h>
+#include <Tw/Twkeys.h>
+#include <Tw/Twstat.h>
+#include <Tw/Twstat_defs.h>
 
-struct tw_data {
+typedef struct {
+    tany Requestor;
+    uldat ReqPrivate;
+} sel_req;
+
+#define TSELMAX 2
+
+typedef struct {
     tdisplay Td;
     twindow Twin;
     tmsgport Tmsgport;
-};
+    byte SelCount;
+    byte TSelCount;
+    sel_req SelReq[TSELMAX]; /* buffers to hold selection request data while waiting from twin */
+    sel_req TSelReq[TSELMAX]; /* buffers to hold selection request data while waiting from libTw */
+} tw_data;
 
-#define twdata		((struct tw_data *)HW->Private)
+#define twdata		((tw_data *)HW->Private)
 #define Td		(twdata->Td)
 #define Twin 		(twdata->Twin)
 #define Tmsgport	(twdata->Tmsgport)
-
-struct sel_req {
-    union {
-	void *R;
-	uldat r;
-    } Requestor;
-    uldat ReqPrivate;
-};
+#define SelCount	(twdata->SelCount)
+#define TSelCount	(twdata->TSelCount)
+#define SelReq		(twdata->SelReq)
+#define TSelReq		(twdata->TSelReq)
 
 static void TW_SelectionRequest_up(uldat Requestor, uldat ReqPrivate);
 static void TW_SelectionNotify_up(uldat ReqPrivate, uldat Magic, CONST byte MIME[MAX_MIMELEN],
@@ -103,7 +111,7 @@ static void TW_HandleMsg(tmsg Msg) {
 
     switch (Msg->Type) {
       case TW_MSG_SELECTIONCLEAR:
-	HW->HWSelectionPrivate = NULL; /* selection now owned by some other libTw client */
+	HW->HWSelectionPrivate = 0; /* selection now owned by some other libTw client */
 	TwinSelectionSetOwner((obj)HW, SEL_CURRENTTIME, SEL_CURRENTTIME);
 	return;
       case TW_MSG_SELECTIONREQUEST:
@@ -302,7 +310,10 @@ static byte TW_SelectionImport_TW(void) {
  */
 static void TW_SelectionExport_TW(void) {
     if (!HW->HWSelectionPrivate) {
-	HW->HWSelectionPrivate = (void *)Tmsgport;
+#ifdef DEBUG_HW_TWIN
+	printf("exporting selection to libTw server\n");
+#endif
+	HW->HWSelectionPrivate = Tmsgport;
 	Tw_SetOwnerSelection(Td, SEL_CURRENTTIME, SEL_CURRENTTIME);
 	setFlush();
     }
@@ -313,17 +324,22 @@ static void TW_SelectionExport_TW(void) {
  */
 static void TW_SelectionRequest_TW(obj Requestor, uldat ReqPrivate) {
     if (!HW->HWSelectionPrivate) {
-	struct sel_req *SelReq = AllocMem(sizeof(struct sel_req));
-	/*
-	 * instead of storing (Requestor, ReqPrivate) in some static buffer,
-	 * we exploit the ReqPrivate field of libTw Selection Request/Notify
-	 * 
-	 * FIXME: (uldat)SelReq: libTw uldat are not guaranteed to safely store pointers!
-	 */
-	if (SelReq) {
-	    SelReq->Requestor.R = Requestor;
-	    SelReq->ReqPrivate = ReqPrivate;
-	    Tw_RequestSelection(Td, Tw_GetOwnerSelection(Td), (uldat)SelReq);
+	if (TSelCount < TSELMAX) {
+#ifdef DEBUG_HW_TWIN
+	    printf("requesting selection (%d) from libTw server\n", TSelCount);
+#endif
+	    /*
+	     * we exploit the ReqPrivate field of libTw Selection Request/Notify
+	     */
+	    TSelReq[TSelCount].Requestor = (topaque)Requestor;
+	    TSelReq[TSelCount].ReqPrivate = ReqPrivate;
+	    Tw_RequestSelection(Td, Tw_GetOwnerSelection(Td), TSelCount++);
+	    setFlush();
+	    /* we will get a TW_MSG_SELECTIONNOTIFY event, i.e.
+	     * a TW_SelectionNotify_up() call */
+	} else {
+	    TSelCount = 0;
+	    printk("hw_twin.c: TW_SelectionRequest_TW1(): too many nested Twin Selection Request events!\n");
 	}
     }
     /* else race! someone else became Selection owner in the meanwhile... */
@@ -333,19 +349,22 @@ static void TW_SelectionRequest_TW(obj Requestor, uldat ReqPrivate) {
  * request twin Selection from upper layer
  */
 static void TW_SelectionRequest_up(uldat Requestor, uldat ReqPrivate) {
-    struct sel_req *SelReq = AllocMem(sizeof(struct sel_req));
-    /*
-     * instead of storing (Requestor, ReqPrivate) in some static buffer,
-     * we exploit the ReqPrivate field of libTw Selection Request/Notify
-     * 
-     * FIXME: (uldat)SelReq: libTw uldat are not guaranteed to safely store pointers!
-     */
-    if (SelReq) {
-	SelReq->Requestor.r = Requestor;
-	SelReq->ReqPrivate = ReqPrivate;
-	TwinSelectionRequest((obj)HW, (uldat)SelReq, TwinSelectionGetOwner());
+    if (SelCount < TSELMAX) {
+#ifdef DEBUG_HW_TWIN
+	printf("requesting selection (%d) from twin core\n", SelCount);
+#endif
+	/*
+	 * we exploit the ReqPrivate field of libTw Selection Request/Notify
+	 */
+	SelReq[SelCount].Requestor = Requestor;
+	SelReq[SelCount].ReqPrivate = ReqPrivate;
+	TwinSelectionRequest((obj)HW, SelCount++, TwinSelectionGetOwner());
+	/* we will get a HW->HWSelectionNotify(), i.e. TW_SelectionNotify_TW() call */
+	/* the call **CAN** arrive while we are still inside TwinSelectionRequest() !!! */
+    } else {
+	SelCount = 0;
+	printk("hw_twin.c: TW_SelectionRequest_up(): too many nested libTw Selection Request events!\n");
     }
-    /* we will get a HW->HWSelectionNotify (i.e. TW_SelectionNotify_TW) call */
 }
 
 /*
@@ -353,11 +372,13 @@ static void TW_SelectionRequest_up(uldat Requestor, uldat ReqPrivate) {
  */
 static void TW_SelectionNotify_TW(uldat ReqPrivate, uldat Magic, CONST byte MIME[MAX_MIMELEN],
 				  uldat Len, byte CONST * Data) {
-    struct sel_req *SelReq = (void *)ReqPrivate;
-
-    if (SelReq) {
-        Tw_NotifySelection(Td, SelReq->Requestor.r, SelReq->ReqPrivate, Magic, MIME, Len, Data);
-	FreeMem(SelReq);
+#ifdef DEBUG_HW_TWIN
+    printf("notifying selection (%d/%d) to libTw server\n", ReqPrivate, SelCount-1);
+#endif
+    if (ReqPrivate + 1 == SelCount) {
+	SelCount--;
+        Tw_NotifySelection(Td, SelReq[SelCount].Requestor, SelReq[SelCount].ReqPrivate, Magic, MIME, Len, Data);
+	setFlush();
     }
 }
 
@@ -366,11 +387,12 @@ static void TW_SelectionNotify_TW(uldat ReqPrivate, uldat Magic, CONST byte MIME
  */
 static void TW_SelectionNotify_up(uldat ReqPrivate, uldat Magic, CONST byte MIME[MAX_MIMELEN],
 				  uldat Len, byte CONST * Data) {
-    struct sel_req *SelReq = (void *)ReqPrivate;
-
-    if (SelReq) {
-        TwinSelectionNotify(SelReq->Requestor.R, SelReq->ReqPrivate, Magic, MIME, Len, Data);
-	FreeMem(SelReq);
+#ifdef DEBUG_HW_TWIN
+    printf("notifying selection (%d/%d) to twin core\n", ReqPrivate, TSelCount-1);
+#endif
+    if (ReqPrivate + 1 == TSelCount) {
+	TSelCount--;
+        TwinSelectionNotify((obj)(topaque)TSelReq[TSelCount].Requestor, TSelReq[TSelCount].ReqPrivate, Magic, MIME, Len, Data);
     }
 }
 
@@ -437,7 +459,7 @@ byte TW_InitHW(void) {
 	return FALSE;
     }
 
-    if (!(HW->Private = (struct tw_data *)AllocMem(sizeof(struct tw_data)))) {
+    if (!(HW->Private = (tw_data *)AllocMem(sizeof(tw_data)))) {
 	printk("      TW_InitHW(): Out of memory!\n");
 	if (opt) *opt = ',';
 	return FALSE;
@@ -491,6 +513,8 @@ byte TW_InitHW(void) {
 	     * twin:x displays on twin:y which displays on twin:x
 	     */
 	    
+	    TSelCount = SelCount = 0;
+	    
 	    HW->mouse_slot = NOSLOT;
 	    HW->keyboard_slot = RegisterRemote(Tw_ConnectionFd(Td), (obj)HW, TW_KeyboardEvent);
 	    if (HW->keyboard_slot == NOSLOT)
@@ -518,7 +542,7 @@ byte TW_InitHW(void) {
 	    HW->HWSelectionExport  = TW_SelectionExport_TW;
 	    HW->HWSelectionRequest = TW_SelectionRequest_TW;
 	    HW->HWSelectionNotify  = TW_SelectionNotify_TW;
-	    HW->HWSelectionPrivate = NULL;
+	    HW->HWSelectionPrivate = 0;
 	    
 	    HW->CanDragArea = NULL;
 

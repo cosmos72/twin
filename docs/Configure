@@ -28,41 +28,44 @@
    Since you are still reading, from now on I'll assume you know
    what you are doing.
    
-   To manually configure twin, you can:
+   To manually configure twin, you can proceed in any of these ways:
    
-   * edit conf/conf.auto, possibly using conf/conf.default as template;
-   * run `make config': a shell script asking a lot of questions will start;
-   * run `make menuconfig': a somewhat more friendly interface will be started
-     (requires a fairly recent `dialog' utility);
-   * run `./configure [OPTIONS]': this will automatically disable features that
-     are unavailable on your system, and will enable by default all other
-     (available) features.
-   * run `scripts/Configure [OPTIONS]': lets you manually change each and every
-     configuration option, defaulting to current ones.
-     
-     Note that this lets you set inconsistent options: for example
-     `scripts/Configure --disable--modules --enable-wm=socket' tries to disable
+   1) edit conf/conf.auto, possibly using conf/conf.default as template;
+   2) run `./configure [OPTIONS]': this will automatically disable features that
+      are unavailable on your system, and will enable by default all other
+      (available) features.
+   3) run `scripts/Configure.sh [OPTIONS]': lets you manually change each and every
+      configuration option, defaulting to current ones.
+   
+   If you have GNU bash, you can also try one of these ways:
+   
+   4) run `make config': a shell script asking a lot of questions will start;
+   5) run `make menuconfig' (requires recent 'dialog') or 'make gconfig'
+      (requires 'gdialog'): a somewhat more friendly interface will be started;
+      
+     Be aware that option 3) lets you set inconsistent options: for example
+     `scripts/Configure.sh --disable--modules --enable-wm=socket' tries to disable
      modules and at the same time to enable the window manager as module.
      Provided Makefiles are smart enough to realize this risk and automatically
      regularize the configuration before starting to compile, so it may happen
-     than `scripts/Configure --show' report different configurations before and
+     than `scripts/Configure.sh --show' report different configurations before and
      after compiling: the latter comes from regularizing the former.
      If you want, you can regularize manually with 'make nullconfig'.
      Also, to ensure the configuration you choosed does not use features
      unavailable on your system, you can process it with `./configure';
      this is very easy: just type (including the backquotes)
      
-     ./configure `scripts/Configure --show`
+     ./configure `scripts/Configure.sh --show`
      
    
-   In the first case, you will have to figure out by your own what the various
-   variables mean (tip: look at the CONF_* lines below).
-   In the last two cases, you also need to know that each
-   --enable-feature corresponds to the CONF_FEATURE with the same name
-   (except for prefix and upper/lower case); for example,
-   --enable-wm-rc corresponds to CONF_WM_RC.
-   In the remaining cases (`make config' and `make menuconfig'), the questions
-   asked are the same:
+   With option 1), you will have to know what the various variables mean
+      (look at the CONF_* lines below).
+   With options 2) and 3), you also need to know that each
+      --enable-feature corresponds to the CONF_FEATURE with the same name
+      (except for prefix and upper/lower case); for example,
+      --enable-wm-rc corresponds to CONF_WM_RC.
+   With the remaining options (4) and 5) ), a question for each CONF_FEATURE
+      is asked:
 
    First question:
    
@@ -74,7 +77,7 @@
 	
    Answer `y' if you want to compile shared libraries
    (libTw.so, the library used by clients to talk to twin, and some others)
-   This works only if you have an ELF system.
+   This currently works only if you have an ELF system.
    If you say 'n' only the static version of the libraries will be compiled.
 
 	(CONF__MODULES)
@@ -279,27 +282,34 @@
    Answer `y' to enable blinking/high background colors.
    You can also change this option from the `Options' window inside twin.
    
-	(CONF_OPT_ALWAYSCURSOR)
+	(CONF_OPT_CURSOR_ALWAYS)
 	Runtime option: cursor always visible [y/N] ?
 	
    Answer `y' to force the cursor to always be visible.
    You can also change this option from the `Options' window.
 
-	(CONF_OPT_HIDEMENU)
-	Runtime option: hidden menu [y/N] ?
+	(CONF_OPT_MENU_HIDE)
+	Runtime option: autohide menu [y/N] ?
 
    Answer `y' to keep the menu hidden when not active.
    You can also change this option from the `Options' window inside twin.
 
-	(CONF_OPT_MENUINFO)
+	(CONF_OPT_MENU_INFO)
 	Runtime option: allow menu information row [Y/n] ?
 	
    Answer `y' to show client-specific information on the menu bar
    when the menu is not active. If you answer `n', the menu will always
    show the "normal" menu items.
    You can also change this option from the `Options' window inside twin.
+
+	(CONF_OPT_MENU_RELAX)
+	Runtime option: arrows can open/close submenus [Y/n] ?
 	
-	(CONF_OPT_EDGESCROLL)
+   Answer `y' to enable opening menu subwindows with right arrow and closing
+   menu subwindows with left arrow while navigating in the menu.
+   You can also change this option from the `Options' window inside twin.
+
+	(CONF_OPT_SCREEN_SCROLL)
 	Runtime option: enable screen scrolling [Y/n] ?
 
    Answer `y' to enable virtual screen scrolling. If enabled, dragging

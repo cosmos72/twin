@@ -14,8 +14,8 @@
 #include <string.h>
 #include <signal.h>
 
-#include "Tw/Tw.h"
-#include "Tw/Twerrno.h"
+#include <Tw/Tw.h>
+#include <Tw/Twerrno.h>
 
 byte *name;
 

@@ -1,7 +1,13 @@
 
+if test -z "$BASH"; then
+  echo 'WARNING: $BASH environment variable is not set. This script'
+  echo '(scripts/Configure.tty) requires bash, so it will probably fail.'
+  echo 'If it fails, check that you have bash correctly installed.'
+fi
+
 function yesno() {
-    VAL=$(eval "echo \"\${$1}\"")
-    HELP=$(eval "echo \"\${${1}_HELP}\"")
+    eval "VAL=\${$1}"
+    eval "HELP=\${${1}_HELP}"
     
     if test "$VAL" = "y" -o "$VAL" = "m"; then
 	VAL="on"
@@ -24,8 +30,8 @@ function yesmodno() {
    if test "$CONF__MODULES" = n; then
       yesno "$1"
    else
-      VAL=$(eval "echo \"\${$1}\"")
-      HELP=$(eval "echo \"\${${1}_HELP}\"")
+      eval "VAL=\${$1}"
+      eval "HELP=\${${1}_HELP}"
     
       if test "$VAL" = "y"; then
 	  VAL="on";
@@ -53,7 +59,7 @@ function yesmodno_dep() {
 # here we CAN rely on the value of dependency variable...
 # as it it located in another menu
 function yesno_truedep() {
-   DEP=$(eval "echo \"\${$2}\"")
+   eval "DEP=\${$2}"
    if test "$DEP" != n; then
       yesno "$1"
    else
@@ -64,7 +70,7 @@ function yesno_truedep() {
 # here we CAN rely on the value of dependency variable...
 # as it it located in another menu
 function yesmodno_truedep() {
-   DEP=$(eval "echo \"\${$2}\"")
+   eval "DEP=\${$2}"
    if test "$DEP" != n; then
       yesmodno "$1"
    else
@@ -78,7 +84,7 @@ function msg() {
 }
 
 function menu() {
-   MAINCMD="$MAINCMD ${1#CONF_} \"$(eval "echo \"\${${1}_MENU}\"")\""
+   eval "MAINCMD=\"\$MAINCMD ${1#CONF_} \\\"\${${1}_MENU}\\\"\""
    : $[ MAINITEMS=MAINITEMS+1 ]
    CURRMENU="$1"
    CURRITEMS=0
@@ -86,7 +92,7 @@ function menu() {
 }
 
 function endmenu() {
-   eval $(echo MENU_${CURRMENU})=\"--separate-output --checklist \\\"$(eval "echo \"\${${CURRMENU}_MENU}\"")\\\" $[CURRITEMS+7] 80 $CURRITEMS $CURRCMD\"
+   eval "MENU_${CURRMENU}=\"--separate-output --checklist \\\"\${${CURRMENU}_MENU}\\\" $[CURRITEMS+7] 80 $CURRITEMS $CURRCMD\""
 }
 
 function die() {
@@ -108,21 +114,19 @@ function quit() {
 }
 
 function dump() {
-    VAL=$(eval "echo \"\${$1}\"")
+    eval "VAL=\${$1}"
     if [ "$VAL" = m -a "$CONF__MODULES" = n ]; then
        VAL=y
     fi
-    DEP1=$(eval "echo \"\${yesno_dep_$1}\"")
-    DEP2=$(eval "echo \"\${yesmodno_dep_$1}\"")
+    eval "DEP1=\${yesno_dep_$1}"
+    eval "DEP2=\${yesmodno_dep_$1}"
     if [ "$DEP1" ]; then
-       DEP1VAL=$(eval "echo \"\${$DEP1}\"")
-#      echo "$1 ($VAL) : $DEP1 ($DEP1VAL)" > /dev/tty
+       eval "DEP1VAL=\${$DEP1}"
        if [ "$DEP1VAL" = n ]; then
          VAL=n
        fi
     elif [ "$DEP2" ]; then
-       DEP2VAL=$(eval "echo \"\${$DEP2}\"")
-#      echo "$1 ($VAL) : $DEP2 ($DEP2VAL)" > /dev/tty
+       eval "DEP2VAL=\${$DEP2}"
        if [ "$DEP2VAL" = n ]; then
          VAL=n
        elif [ "$CONF__MODULES" = y -a "$DEP1VAL" = m -a "$VAL" = y ]; then
@@ -148,7 +152,8 @@ EOF
 }
 
 function parse() {
-   CURR=`cat $2`;
+   # skip gtk/gdk error messages
+   CURR=`grep -v WARNING $2`;
    LIST=`cat conf/conf.list | grep CONF_${1}`
    for i in $LIST; do
       THIS=n
@@ -172,17 +177,17 @@ trap die SIGINT SIGQUIT SIGHUP SIGTERM
 MAINCMD=
 MAINITEMS=2
 
-if [ -f conf/conf.current -a -f conf/conf.auto -a conf/conf.current -ot conf/conf.auto ]; then
-    source conf/conf.auto
-elif [ -f conf/conf.current ]; then
-   source conf/conf.current
+. conf/conf.default
+if [ -f conf/conf.current ]; then
+   . conf/conf.current
+   if [ -f conf/conf.auto -a conf/conf.auto -nt conf/conf.current ]; then
+      . conf/conf.auto
+   fi
 elif [ -f conf/conf.auto ]; then
-   source conf/conf.auto
-else
-   source conf/conf.default
+   . conf/conf.auto
 fi
 
-source conf/conf.base
+. conf/conf.base
 
 MENU_MAIN="--separate-output --menu \"Twin Configuration - Top Menu\" $[ MAINITEMS+7 ] 50 $MAINITEMS $MAINCMD SAVE \"Save config and exit\" QUIT \"Exit without saving\""
 
@@ -201,16 +206,17 @@ fi
 while :; do
    eval "$dialog $MENU_MAIN 2>.dialog_MENU_MAIN"
    test $? != $failure || die
-   RES=`cat .dialog_MENU_MAIN`;
+   # skip gtk/gdk error messages
+   RES=`tail -n 1 .dialog_MENU_MAIN`;
    case "$RES" in
       SAVE)
          fulldump; quit ;;
       QUIT)
          die ;;
       *)
-         MENU=$(eval "echo \"\${MENU_CONF_${RES}}\"")
+         eval "MENU=\"\${MENU_CONF_${RES}}\""
          if test "$MENU"; then
-            eval "$dialog $MENU 2>.dialog_MENU_${RES}" && parse $RES .dialog_MENU_${RES} && source conf/conf.base
+            eval "$dialog $MENU 2>.dialog_MENU_${RES}" && parse $RES .dialog_MENU_${RES} && . conf/conf.base
          fi
          ;;
    esac

@@ -14,8 +14,12 @@ define(`A', `a[$1]._')
 
 define(`tV', `V')
 define(`tW', `V')
+define(`tX', `V')
+define(`tY', `V')
 define(`lV', `$1')
 define(`lW', `$1')
+define(`lX', `$1')
+define(`lY', `$1')
 
 define(`VEC', `ifelse($3, V, `NAME`'      case $1: L = $4; break;
 `'define(`NAME')`'define(`ENDNAME', `    }
@@ -30,5 +34,5 @@ define(`PROTO', `define(`NAME', `  case order_`'TRIM($3)`'TRIM($4):
 define(`PROTOSyncSocket', `PROTO($@)')
 define(`PROTOFindFunction', `PROTO($@)')
 
-include(`m4/m4_sockproto.m4')
+include(`m4/sockproto.m4h')
 

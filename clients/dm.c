@@ -18,9 +18,13 @@
 #include <pwd.h>
 #include <sys/stat.h>
 
-#include "Tw/Tw.h"
-#include "Tw/Twkeys.h"
-#include "Tw/Twerrno.h"
+#include <Tw/Tw.h>
+#include <Tw/Twkeys.h>
+#include <Tw/Twerrno.h>
+
+#ifdef CONF__UNICODE
+# include <Tutf/Tutf.h>
+#endif
 
 #include "version.h"
 
@@ -325,7 +329,7 @@ static byte InitClient(void) {
 
 	TwSetColTextWindow(DM_Window, COL(HIGH|RED,BLUE));
 	TwGotoXYWindow(DM_Window, 7, 8);
-	TwWriteRowWindow(DM_Window, 26, "L O G I N   F A I L E D  !");
+	TwWriteAsciiWindow(DM_Window, 26, "L O G I N   F A I L E D  !");
 			 
 	TwSetXYWindow(DM_Window, (X-40)/2, (Y-15)/2);
 	TwSetXYWindow(DM_user, 4, 2);
@@ -345,13 +349,13 @@ static byte InitClient(void) {
 static void ClearKey(void) {
     TwGotoXYWindow(DM_user, 0, 0);
     TwWriteMem(user.txt, ' ', user.len);
-    TwWriteRowWindow(DM_user, user.len, user.txt);
+    TwWriteAsciiWindow(DM_user, user.len, user.txt);
     TwGotoXYWindow(DM_user, user.len = user.x = 0, 0);
     user.txt[0] = '\0';
     
     TwGotoXYWindow(DM_pass, 0, 0);
     TwWriteMem(pass.txt, ' ', pass.len);
-    TwWriteRowWindow(DM_pass, pass.len, pass.txt);
+    TwWriteAsciiWindow(DM_pass, pass.len, pass.txt);
     TwGotoXYWindow(DM_pass, pass.len = pass.x = 0, 0);    
     pass.txt[0] = '\0';
 }
@@ -436,10 +440,10 @@ static void DelKey(twindow W, data u) {
 	
 	if (W == DM_user) {
 	    TwGotoXYWindow(W, 0, 0);
-	    TwWriteRowWindow(W, u->len, u->txt);
+	    TwWriteAsciiWindow(W, u->len, u->txt);
 	} else
 	    TwGotoXYWindow(W, u->len, 0);
-	TwWriteRowWindow(W, 1, " ");
+	TwWriteAsciiWindow(W, 1, " ");
 	TwGotoXYWindow(W, u->x, 0);	
     }
 }
@@ -490,9 +494,21 @@ static void WriteKey(twindow W, data u, udat len, byte *seq) {
 	u->len = _len;
 	if (W == DM_pass)
 	    TwWriteMem(seq, '*', len);
-	TwWriteRowWindow(W, len, seq);
+	TwWriteAsciiWindow(W, len, seq);
     }
 }
+
+#ifdef CONF__UNICODE
+static void WriteHWFontKey(twindow W, data u, udat len, hwfont *h_data) {
+    byte *d_data = (byte *)h_data, *s_data = d_data;
+    udat n = len;
+
+    /* hack warning: this assumes `h_data' is writable and correctly aligned */
+    while (n--)
+	*d_data++ = Tutf_UTF_16_to_IBM437(*h_data++);
+    WriteKey(W, u, len, s_data);
+}
+#endif
 
 static void HandleKey(tevent_keyboard E) {
     data u;
@@ -658,10 +674,15 @@ int main(int argc, char *argv[]) {
 		{
 		    tevent_selectionnotify E = &Msg->Event.EventSelectionNotify;
 
+		    /* react as for keypresses */
 		    if (E->Magic == TW_SEL_TEXTMAGIC)
-			/* react as for keypresses */
 			WriteKey(E->ReqPrivate, E->ReqPrivate == DM_user ? &user : &pass,
 				 E->Len, E->Data);
+#ifdef CONF__UNICODE
+		    else if (E->Magic == TW_SEL_HWFONTMAGIC)
+			WriteHWFontKey(E->ReqPrivate, E->ReqPrivate == DM_user ? &user : &pass,
+				       E->Len / sizeof(hwfont), (hwfont *)E->Data);
+#endif
 		}
 		break;
 	      default:

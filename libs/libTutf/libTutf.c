@@ -21,21 +21,21 @@
  *
  */
 
-#include "Tw/Tw.h"
+#include <Tw/Tw.h>
 
-#include "Tutf/Tutf.h"
-#include "Tutf/Tutf_defs.h"
+#include <Tutf/Tutf.h>
+#include <Tutf/Tutf_defs.h>
 
 typedef struct {
     hwfont utf, ch;
 } utf_to_ch;
 
-static int Cmp(TW_CONST utf_to_ch *u1, TW_CONST utf_to_ch *u2) {
+static int Cmp(TUTF_CONST utf_to_ch *u1, TUTF_CONST utf_to_ch *u2) {
     return u1->utf - u2->utf;
 }
 
-static TW_CONST utf_to_ch *my_bsearch(TW_CONST utf_to_ch *key, TW_CONST utf_to_ch *base, size_t nmemb) {
-    TW_CONST utf_to_ch *low = base, *high = base + nmemb;
+static TUTF_CONST utf_to_ch *my_bsearch(TUTF_CONST utf_to_ch *key, TUTF_CONST utf_to_ch *base, size_t nmemb) {
+    TUTF_CONST utf_to_ch *low = base, *high = base + nmemb;
 
     while (low + 1 < high) {
 	base = low + (high - low) / 2;
@@ -52,7 +52,7 @@ static TW_CONST utf_to_ch *my_bsearch(TW_CONST utf_to_ch *key, TW_CONST utf_to_c
 
 
 #define QSORT(array) qsort((void *)(array), sizeof(array)/sizeof((array)[0]), \
-			       sizeof((array)[0]), (void *)Cmp)
+			       sizeof((array)[0]), (int (*)(TUTF_CONST void *, TUTF_CONST void *))Cmp)
 
 #define BSEARCH(key, array) \
 	my_bsearch((key), (array), sizeof(array)/sizeof((array)[0]))
@@ -125,12 +125,12 @@ _LIST(DECL_NAME)
 #undef DECL_NAME
 
 typedef struct {
-    byte * TW_CONST * names;
+    byte * TUTF_CONST * names;
     Tutf_array array;
     Tutf_function function;
 } Tutf_struct;
 
-#define DECL_CH(ch) { T_CAT(names_,ch), T_CAT(T_CAT(Tutf_,ch),_to_UTF_16), T_CAT(Tutf_UTF_16_to_,ch) },
+#define DECL_CH(ch) { T_CAT(names_,ch), T_CAT3(Tutf_,ch,_to_UTF_16), T_CAT(Tutf_UTF_16_to_,ch) },
 
 static Tutf_struct Tutf_structs[] = {
     { T_CAT(names_,UTF_16), NULL, NULL },
@@ -140,7 +140,7 @@ static Tutf_struct Tutf_structs[] = {
 
 #undef DECL_CH
 
-static int strloosecmp(TW_CONST byte *s1, TW_CONST byte *s2) {
+static int strloosecmp(TUTF_CONST byte *s1, TUTF_CONST byte *s2) {
     byte c1, c2;
 
     for (;;) {
@@ -161,9 +161,9 @@ static int strloosecmp(TW_CONST byte *s1, TW_CONST byte *s2) {
     }
 }
 
-uldat Tutf_charset_id(TW_CONST byte * alias) {
+uldat Tutf_charset_id(TUTF_CONST byte * alias) {
     Tutf_struct *CH;
-    byte * TW_CONST * names;
+    byte * TUTF_CONST * names;
     if (alias) for (CH = Tutf_structs; (names = CH->names); CH++) {
 	for (; *names; names++) {
 	    if (!strloosecmp(alias, *names))
@@ -173,11 +173,11 @@ uldat Tutf_charset_id(TW_CONST byte * alias) {
     return (uldat)-1;
 }
 
-TW_CONST byte *Tutf_charset_name(uldat id) {
+TUTF_CONST byte *Tutf_charset_name(uldat id) {
     return id < sizeof(Tutf_structs)/sizeof(Tutf_structs[0]) ? Tutf_structs[id].names[0] : NULL;
 }
 
-TW_CONST byte *Tutf_charset_alias(TW_CONST byte * alias) {
+TUTF_CONST byte *Tutf_charset_alias(TUTF_CONST byte * alias) {
     uldat id = Tutf_charset_id(alias);
     return id != (uldat)-1 ? Tutf_structs[id].names[0] : NULL;
 }

@@ -9,8 +9,8 @@
 #include <string.h>
 #include <sys/stat.h>
 
-#include "Tw/Tw.h"
-#include "Tw/Twerrno.h"
+#include <Tw/Tw.h>
+#include <Tw/Twerrno.h>
 
 #define COD_QUIT      (udat)1
 
@@ -23,48 +23,33 @@ TW_DECL_MAGIC(cat_magic);
 static byte InitCat(void) {
     twindow Window;
 
-    if (!TwCheckMagic(cat_magic) || !TwOpen(NULL))
-	return FALSE;
-    
-    if ((Cat_MsgPort=TwCreateMsgPort
-	 (8, "Twin Cat", (time_t)0, (frac_t)0, (byte)0)) &&
+    return
+	TwCheckMagic(cat_magic) && TwOpen(NULL) &&
+	(Cat_MsgPort=TwCreateMsgPort
+	 (5, "twcat", (time_t)0, (frac_t)0, (byte)0)) &&
 	(Cat_Menu=TwCreateMenu(
 	  COL(BLACK,WHITE), COL(BLACK,GREEN), COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
-	  COL(RED,WHITE), COL(RED,GREEN), (byte)0))) {
-
-	TwInfo4Menu(Cat_Menu, TW_ROW_ACTIVE, 10, " Twin Cat ", "ptpppptpppppp");
-    } else
-	return FALSE;
-    
-    if ((Cat_Win=TwCreateWindow
-	 (8, "Twin Cat", NULL,
-	  Cat_Menu, COL(BLACK,HIGH|BLACK), TW_LINECURSOR,
-	  TW_WINDOW_DRAG|TW_WINDOW_RESIZE|TW_WINDOW_X_BAR|TW_WINDOW_Y_BAR|TW_WINDOW_CLOSE,
-	  TW_WINDOWFL_USEROWS|TW_WINDOWFL_ROWS_DEFCOL,
-	  80, 25, 0)) &&
+	  COL(RED,WHITE), COL(RED,GREEN), (byte)0)) &&
+	(TwInfo4Menu(Cat_Menu, TW_ROW_ACTIVE, 10, " Twin Cat ", "ptpppptpppppp"),
+	 (Cat_Win=TwCreateWindow
+	  (8, "Twin Cat", NULL,
+	   Cat_Menu, COL(BLACK,HIGH|BLACK), TW_LINECURSOR,
+	   TW_WINDOW_DRAG|TW_WINDOW_RESIZE|TW_WINDOW_X_BAR|TW_WINDOW_Y_BAR|TW_WINDOW_CLOSE,
+	   TW_WINDOWFL_USEROWS|TW_WINDOWFL_ROWS_DEFCOL,
+	   80, 25, 0))) &&
 	(Window=TwWin4Menu(Cat_Menu)) &&
-	TwItem4Menu(Cat_Menu, Window, TRUE, 6, " File ")) {
-
-	TwSetColorsWindow(Cat_Win, 0x1FF,
-			  COL(HIGH|GREEN,WHITE), COL(CYAN,BLUE), COL(HIGH|BLUE,BLACK), COL(HIGH|WHITE,HIGH|BLUE),
-			  COL(HIGH|WHITE,HIGH|BLUE), COL(HIGH|WHITE,HIGH|BLACK),
-			  COL(HIGH|BLACK,WHITE), COL(BLACK,HIGH|BLACK), COL(BLACK,WHITE));
-	TwConfigureWindow(Cat_Win, 0xF<<2, 0, 0, 7, 3, MAXDAT, MAXDAT);
-
-	TwRow4Menu(Window, COD_QUIT, TW_ROW_INACTIVE, 17, " Quit      Alt-X ");
-	
-    } else
-	return FALSE;
-    
-    
-    if (!TwItem4MenuCommon(Cat_Menu))
-	return FALSE;
-    
-    
-    TwMapWindow(Cat_Win, TwFirstScreen());
-    TwFlush();
-    
-    return TRUE;
+	TwItem4Menu(Cat_Menu, Window, TRUE, 6, " File ") &&
+	(TwSetColorsWindow
+	 (Cat_Win, 0x1FF,
+	  COL(HIGH|GREEN,WHITE), COL(CYAN,BLUE), COL(HIGH|BLUE,BLACK), COL(HIGH|WHITE,HIGH|BLUE),
+	  COL(HIGH|WHITE,HIGH|BLUE), COL(HIGH|WHITE,HIGH|BLACK),
+	  COL(HIGH|BLACK,WHITE), COL(BLACK,HIGH|BLACK), COL(BLACK,WHITE)),
+	 TwConfigureWindow(Cat_Win, 0xF<<2, 0, 0, 7, 3, MAXDAT, MAXDAT),
+	 TwRow4Menu(Window, COD_QUIT, TW_ROW_INACTIVE, 17, " Quit      Alt-X "),
+	 TwItem4MenuCommon(Cat_Menu)) &&
+	(TwMapWindow(Cat_Win, TwFirstScreen()),
+	 TwFlush(),
+	 TRUE);
 }
 
 int main(int argc, char *argv[]) {
@@ -101,7 +86,7 @@ int main(int argc, char *argv[]) {
     }
     
     while ((got = read(fd, buf, 4096)) > 0) {
-	TwWriteRowWindow(Cat_Win, got, buf);
+	TwWriteAsciiWindow(Cat_Win, got, buf);
 	TwFlush();
     }
     while ((Msg=TwReadMsg(TRUE))) {

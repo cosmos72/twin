@@ -95,7 +95,7 @@ static void display_HandleEvent(display_hw hw) {
 	    break;
 	  case MSG_SELECTIONCLEAR:
 	    /* selection now owned by some other client on the same display HW as twdisplay */
-	    HW->HWSelectionPrivate = NULL;
+	    HW->HWSelectionPrivate = (tany)0;
 	    /*
 	     * DO NOT use (obj)display here instead of (obj)HW, as it is a msgport
 	     * and would bypass the OwnerOnce mechanism, often resulting in an infinite loop.
@@ -287,7 +287,12 @@ static byte display_CanDragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft,
 }
 
 static void display_DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
-    udat data[4] = {Rgt, Dwn, DstLeft, DstUp};
+    udat data[4];
+    
+    data[0] = Rgt;
+    data[1] = Dwn;
+    data[2] = DstLeft;
+    data[3] = DstUp;
     
     display_CreateMsg(DPY_DragArea, 4*sizeof(dat));
 
@@ -300,7 +305,10 @@ static void display_DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, da
 }
 
 static void display_SetPalette(udat N, udat R, udat G, udat B) {
-    udat data[3] = {R, G, B};
+    udat data[3];
+    data[0] = R;
+    data[1] = G;
+    data[2] = B;
     
     display_CreateMsg(DPY_SetPalette, 4*sizeof(dat));
 
@@ -329,7 +337,7 @@ static byte display_SelectionImport_display(void) {
  */
 static void display_SelectionExport_display(void) {
     if (!HW->HWSelectionPrivate) {
-	HW->HWSelectionPrivate = (void *)display;
+	HW->HWSelectionPrivate = (tany)display;
 	display_CreateMsg(DPY_SelectionExport, 0);
 	Ext(Socket,SendMsg)(display, Msg);
 	setFlush();
@@ -477,7 +485,7 @@ byte display_InitHW(void) {
     HW->HWSelectionExport  = display_SelectionExport_display;
     HW->HWSelectionRequest = display_SelectionRequest_display;
     HW->HWSelectionNotify  = display_SelectionNotify_display;
-    HW->HWSelectionPrivate = NULL;
+    HW->HWSelectionPrivate = (tany)0;
     
     if (arg && strstr(arg, ",drag")) {
 	HW->CanDragArea = display_CanDragArea;

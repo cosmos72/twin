@@ -15,7 +15,7 @@
 #include <sys/ioctl.h>
 #include <signal.h>
 
-#include "Tw/Twautoconf.h"
+#include <Tw/Twautoconf.h>
 
 #ifdef TW_HAVE_SYS_RESOURCE_H
 # include <sys/resource.h>
@@ -33,8 +33,13 @@
 # endif
 #endif
 
-#include "Tw/Tw.h"
-#include "Tw/Twerrno.h"
+#include <Tw/Tw.h>
+#include <Tw/Twerrno.h>
+
+#ifdef CONF__UNICODE
+# include <Tutf/Tutf.h>
+#endif
+
 #include "version.h"
 
 #include "pty.h"
@@ -358,29 +363,25 @@ static byte InitTerm(void) {
     setenv("TERM","linux",1);
 #endif
 
-    if (TwCheckMagic(term_magic) && TwOpen(NULL)) {
-	if ((Term_MsgPort=TwCreateMsgPort
-	     (6, "twterm", (uldat)0, (udat)0, (byte)0)) &&
-	    (Term_Menu=TwCreateMenu(
-	      COL(BLACK,WHITE), COL(BLACK,GREEN), COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
-	      COL(RED,WHITE), COL(RED,GREEN), (byte)0)) &&
-	    (TwInfo4Menu(Term_Menu, TW_ROW_ACTIVE, 18, " Remote Twin Term ", "ptpppppptpppptpppp"),
+    if (TwCheckMagic(term_magic) && TwOpen(NULL) &&
+	(Term_MsgPort=TwCreateMsgPort
+	 (6, "twterm", (uldat)0, (udat)0, (byte)0)) &&
+	(Term_Menu=TwCreateMenu
+	 (COL(BLACK,WHITE), COL(BLACK,GREEN), COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
+	  COL(RED,WHITE), COL(RED,GREEN), (byte)0)) &&
+	(TwInfo4Menu(Term_Menu, TW_ROW_ACTIVE, 18, " Remote Twin Term ", "ptpppppptpppptpppp"), TRUE) &&
+	(Window=TwWin4Menu(Term_Menu)) &&
+	(Add_Spawn_Row4Menu(Window),
+	 TwRow4Menu(Window, COD_QUIT,  FALSE,       6, " Exit "),
+	 TwItem4Menu(Term_Menu, Window, TRUE, 6, " File ")) &&
+	TwItem4MenuCommon(Term_Menu) &&
+	(Term_Screen = TwFirstScreen()) &&
+	(OpenTerm(NULL, NULL)))
+	 
+	return TRUE;
 
-	     (Window=TwWin4Menu(Term_Menu))) &&
-	    (Add_Spawn_Row4Menu(Window),
-	     TwRow4Menu(Window, COD_QUIT,  FALSE,       6, " Exit "),
-	     TwItem4Menu(Term_Menu, Window, TRUE, 6, " File ")) &&
-	    
-	    TwItem4MenuCommon(Term_Menu)) {
-	    
-	    Term_Screen = TwFirstScreen();
-	
-	    if (OpenTerm(NULL, NULL))
-		return TRUE;
-	}
-	TwClose();
-    } while(0);
-
+    TwClose();
+    
     if ((err = TwErrno))
 	fprintf(stderr, "twterm: libTw error: %s%s\n",
 		TwStrError(err), TwStrErrorDetail(err, TwErrnoDetail));
@@ -421,7 +422,20 @@ static void TwinTermH(void) {
 	    Fd = Fd_Slot(Slot);
 
 	    /* react as for keypresses */
-	    write(Fd, Event->EventSelectionNotify.Data, Event->EventSelectionNotify.Len);
+#ifdef CONF__UNICODE
+	    if (Event->EventSelectionNotify.Magic == TW_SEL_HWFONTMAGIC) {
+		byte *Dst = Event->EventSelectionNotify.Data;
+		hwfont *Src = (hwfont *)Dst;
+		uldat n = Event->EventSelectionNotify.Len / sizeof(hwfont);
+
+		/* FIXME: this is rough */
+		while (n--)
+		    *Dst++ = Tutf_UTF_16_to_IBM437(*Src++);
+		
+		write(Fd, Event->EventSelectionNotify.Data, Event->EventSelectionNotify.Len / sizeof(hwfont));
+	    } else
+#endif
+		write(Fd, Event->EventSelectionNotify.Data, Event->EventSelectionNotify.Len);
 
 	} else if (Msg->Type==TW_MSG_WIDGET_MOUSE) {
 	    fprintf(stderr, "twterm: unexpected Mouse event message!\n");

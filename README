@@ -2,7 +2,7 @@
 Twin - a Textmode WINdow environment, by Massimiliano Ghilardi
 --------------------------------------------------------------
 
-Version 0.4.1
+Version 0.4.2
 
 Twin is a windowing environment with mouse support, window manager,
 terminal emulator and networked clients, all inside a text display.
@@ -62,6 +62,8 @@ http://sourceforge.net/projects/twin/
 --------------------------------------------------------------
 Building and installing twin
 
+To build and install twin, GNU make and an ANSI C compiler are required.
+
 For the impatient, it basically reduces to
 ./configure
 make
@@ -71,14 +73,9 @@ But of course you may want to know more details:
 First, you might want to edit the files `makerules' and `makeautoconf.in'
 to change the install directory, tweak compiler flags (enable debugging), etc.
 Also, someone may want to tweak the configuration options generated
-by `./configure'; this is possible with `make config' or `make menuconfig'
--- warning: if you enable options that were disabled by `./configure',
-build will almost certainly fail! --
-but `make config' or `make menuconfig' ask questions for many options
-one may not know the meaning of.
-
-For a discussion about MANUALLY configuring twin (almost never necessary),
-see the file `Configure', distributed with twin in the docs/ subdirectory.
+by `./configure'; this is possible by MANUALLY configuring twin
+(almost never necessary), see the help file `Configure' for this --
+it is distributed with twin in the docs/ subdirectory.
 For instructions about installing twin, see the file `Tutorial',
 section 4, again in the docs/ subdirectory.
 

@@ -67,19 +67,20 @@ typedef union {
 #define	FL_RIGHT	315
 #define	GLOBAL_FLAG	316
 #define	ALTFONT	317
-#define	ALWAYSCURSOR	318
+#define	CURSOR_ALWAYS	318
 #define	BLINK	319
-#define	EDGESCROLL	320
-#define	HIDEMENU	321
-#define	MENUINFO	322
-#define	SHADOWS	323
-#define	PASTEBUTTON	324
-#define	SELECTIONBUTTON	325
-#define	COLOR	326
-#define	COL_HIGH	327
-#define	KBD_FLAG	328
-#define	NUMBER	329
-#define	STRING	330
+#define	MENU_HIDE	320
+#define	MENU_INFO	321
+#define	MENU_RELAX	322
+#define	SCREEN_SCROLL	323
+#define	SHADOWS	324
+#define	BUTTON_PASTE	325
+#define	BUTTON_SELECTION	326
+#define	COLOR	327
+#define	COL_HIGH	328
+#define	KBD_FLAG	329
+#define	NUMBER	330
+#define	STRING	331
 
 
 extern YYSTYPE yylval;

@@ -32,7 +32,7 @@
 #include "hw_dirty.h"
 #include "common.h"
 
-#include "Tw/Twkeys.h"
+#include <Tw/Twkeys.h>
 
 
 #if !defined(CONF_HW_TTY_LINUX) && !defined(CONF_HW_TTY_TWTERM) && !defined(CONF_HW_TTY_TERMCAP)
@@ -47,7 +47,7 @@
 #endif
 
 #ifdef CONF__UNICODE
-# include "Tutf/Tutf.h"
+# include <Tutf/Tutf.h>
 #endif
 
 struct tty_data {
@@ -426,7 +426,7 @@ static void stdin_KeyboardEvent(int fd, display_hw hw) {
 
 static byte warn_NoMouse(void) {
     byte c;
-    byte *Msg =
+    CONST byte *Msg =
 	"\n"
 	"      \033[1m  ALL  MOUSE  DRIVERS  FAILED.\033[0m\n"
 	"\n"
@@ -557,7 +557,7 @@ static void xterm_MouseEvent(int fd, display_hw hw);
 
 /* return FALSE if failed */
 static byte xterm_InitMouse(byte force) {
-    byte *term = tty_TERM, *seq;
+    CONST byte *term = tty_TERM, *seq;
     
     if (force) {
 	printk("      xterm_InitMouse(): xterm-style mouse FORCED.\n"

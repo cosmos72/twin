@@ -4,6 +4,8 @@
 #
 
 TOPDIR=..
+THISDIR=$(TOPDIR)/docs
+
 SUBDIRS=
 
 ALLOBJS=
@@ -17,14 +19,15 @@ TOPDOCS=README BUGS INSTALL README.porting COPYING twin-current.lsm \
 #
 # target
 #
-all: 
+all: alldocs
 
 #
-# read configuration
+# read configuration: currently not needed
 #
--include $(TOPDIR)/conf/conf.current
--include .modules
--include .depend
+#-include $(TOPDIR)/conf/conf.current
+#-include .modules
+#-include .depend
+#-include $(TOPDIR)/.hdepend
 
 #
 # include the do-everything file.
@@ -37,6 +40,11 @@ include $(TOPDIR)/makerules
 #
 # All done. Now just set a few special targets
 #
+
+alldocs: ltrace.conf
+
+ltrace.conf: m4/ltrace.conf.m4 $(wildcard m4/ltrace.conf.*.in)
+	$(M4) -I$(TOPDIR)/include $< > $@
 
 clean:
 

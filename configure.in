@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 PACKAGE=twin
-VERSION=0.4.1
+VERSION=0.4.2
 AC_REVISION($Revision: 1.0 $)dnl
 AC_INIT(server/main.c)
 AC_CONFIG_HEADER(include/autoconf.h)
@@ -55,15 +55,33 @@ AC_ARG_ENABLE(socket_alien,dnl
 enable_socket_alien=yes
 )dnl
 
+dnl support Toolkit library
+AC_ARG_ENABLE(tt,dnl
+[  --enable-tt[=yes|no]                   enable Toolkit library (libTT) ],,
+enable_tt=yes
+)dnl
+
+dnl Toolkit library: use twin (libTw) as display driver
+AC_ARG_ENABLE(tt_hw_twin,dnl
+[  --enable-tt-hw-twin[=yes|mod|no]       enable Toolkit to use twin (libTw) as display driver ],,
+enable_tt_hw_twin=mod
+)dnl
+
+dnl Toolkit library: use gtk as display driver
+AC_ARG_ENABLE(tt_hw_gtk,dnl
+[  --enable-tt-hw-gtk[=yes|mod|no]        enable Toolkit to use gtk as display driver ],,
+enable_tt_hw_gtk=mod
+)dnl
+
 dnl builtin window manager
 AC_ARG_ENABLE(wm,dnl
-[  --enable-wm[=yes|no|mod]               enable the builtin WM (absolutely needed!) ],,
+[  --enable-wm[=yes|mod|no]               enable the builtin WM (absolutely needed!) ],,
 enable_wm=mod
 )dnl
 
 dnl ~/.twinrc parser
 AC_ARG_ENABLE(wm_rc,dnl
-[  --enable-wm-rc[=yes|no|mod]            enable ~/.twinrc configuration parser ],,
+[  --enable-wm-rc[=yes|mod|no]            enable ~/.twinrc configuration parser ],,
 enable_wm_rc=mod
 )dnl
 
@@ -81,7 +99,7 @@ enable_wm_rc_shrink=yes
 
 dnl terminal emulator
 AC_ARG_ENABLE(term,dnl
-[  --enable-term[=yes|no|mod]             enable builtin terminal emulator ],,
+[  --enable-term[=yes|mod|no]             enable builtin terminal emulator ],,
 enable_term=mod
 )dnl
 
@@ -99,7 +117,7 @@ enable_printk=yes
 
 dnl tty drivers
 AC_ARG_ENABLE(hw-tty,dnl
-[  --enable-hw-tty[=yes|no|mod]           enable tty drivers ],,
+[  --enable-hw-tty[=yes|mod|no]           enable tty drivers ],,
 enable_hw_tty=mod
 )dnl
 
@@ -123,25 +141,25 @@ enable_hw_tty_termcap=yes
 
 dnl the X11 driver
 AC_ARG_ENABLE(hw-x11,dnl
-[  --enable-hw-x11[=yes|no|mod]           enable the X11 driver],,
+[  --enable-hw-x11[=yes|mod|no]           enable the X11 driver],,
 enable_hw_x11=mod
 )dnl
 
 dnl the twin driver
 AC_ARG_ENABLE(hw-twin,dnl
-[  --enable-hw-twin[=yes|no|mod]          enable the twin native driver],,
+[  --enable-hw-twin[=yes|mod|no]          enable the twin native driver],,
 enable_hw_twin=mod
 )dnl
 
 dnl the twdisplay driver
 AC_ARG_ENABLE(hw-display,dnl
-[  --enable-hw-display[=yes|no|mod]       enable the twdisplay client driver],,
+[  --enable-hw-display[=yes|mod|no]       enable the twdisplay client driver],,
 enable_hw_display=mod
 )dnl
 
 dnl the ggi driver
 AC_ARG_ENABLE(hw-ggi,dnl
-[  --enable-hw-ggi[=yes|no|mod]           enable the ggi driver],,
+[  --enable-hw-ggi[=yes|mod|no]           enable the ggi driver],,
 enable_hw_ggi=mod
 )dnl
 
@@ -157,6 +175,29 @@ AC_PROG_INSTALL
 AC_PROG_LN_S
 
 dnl
+dnl Check for compiler characteristics.
+dnl
+AC_C_CONST
+AC_C_INLINE
+AC_CACHE_CHECK(for long long, ac_cv_type_long_long, AC_TRY_COMPILE( , [
+  long long a = 0x1234567812345678ll;
+  unsigned long long b = 0x1234567812345678ull;
+  
+  b -= a;
+  a += b;
+],
+  ac_cv_type_long_long=yes,
+  ac_cv_type_long_long=no))
+AC_CACHE_CHECK(for i386 architecture, ac_cv_sys_arch_i386, AC_TRY_COMPILE( , [
+#ifdef __i386__
+#else
+  choke me
+#endif
+],
+  ac_cv_sys_arch_i386=yes,
+  ac_cv_sys_arch_i386=no))
+
+dnl
 dnl Checks for header files.
 dnl
 AC_PATH_X
@@ -170,16 +211,15 @@ AC_CHECK_HEADERS(crypt.h dirent.h dlfcn.h fcntl.h gpm.h ggi/ggi.h limits.h memor
 		 machine/param.h termio.h termios.h unistd.h zlib.h)
 
 dnl
-dnl Checks for typedefs, structures, and compiler characteristics.
+dnl Checks for typedefs, and structures
 dnl
-AC_C_CONST
-AC_C_INLINE
 AC_TYPE_UID_T
 AC_CHECK_TYPE(gid_t,int)
 AC_TYPE_PID_T
 AC_TYPE_SIZE_T
 AC_TYPE_SIGNAL
 AC_STRUCT_TM
+  
 
 dnl
 dnl Checks for library functions.
@@ -187,12 +227,11 @@ dnl
 AC_FUNC_MEMCMP
 AC_FUNC_MMAP
 AC_FUNC_SETVBUF_REVERSED
-AC_FUNC_VPRINTF
 dnl we never use the 'struct rusage' returned by wait3()
 dnl AC_FUNC_WAIT3
-AC_CHECK_FUNCS(gettimeofday getspnam hstrerror initgroups lstat putenv setenv select \
-               strdup strerror strspn strstr scandir alphasort uname \
-	       wait3 wait4 grantpt unlockpt ptsname)
+AC_CHECK_FUNCS(gettimeofday getspnam hstrerror initgroups lstat putenv setenv \
+	       select strdup strerror strspn strstr scandir alphasort uname \
+	       vprintf vsprintf vsnprintf wait3 wait4 grantpt unlockpt ptsname)
 
 AC_CHECK_FUNC(crypt,,AC_CHECK_LIB(crypt,crypt))
 AC_CHECK_FUNC(dlopen,,AC_CHECK_LIB(dl,dlopen))
@@ -215,9 +254,32 @@ LIBS=
 AC_CHECK_LIB(termcap,tgetent,,AC_CHECK_LIB(ncurses,tgetent))
 
 
+dnl test for gtk
+AC_CHECK_PROG(gtk_config, gtk-config, yes)
+if test "$ac_cv_prog_gtk_config" = "yes"; then
+  ac_save_cpp="$ac_cpp"
+  ac_save_link="$ac_link"
+  ac_cpp="$ac_cpp `gtk-config --cflags`"
+  ac_link="$ac_link `gtk-config --libs`"
+fi
+  AC_CHECK_HEADERS(gtk/gtk.h)
+  AC_CHECK_LIB(gtk, gtk_init)
+if test "$ac_cv_prog_gtk_config" = "yes"; then
+  ac_cpp="$ac_save_cpp"
+  ac_link="$ac_save_link"
+fi
+
 dnl
 dnl sanity checkings
 dnl
+
+if test "$ac_cv_c_inline" != no; then
+  AC_DEFINE(HAVE_INLINE, 1, Define if you have the inline keyword)
+fi
+
+if test "$ac_cv_type_long_long" != no; then
+  AC_DEFINE(HAVE_LONG_LONG, 1, Define if you have the long long type)
+fi
 
 if test "$ac_cv_func_gettimeofday" = no; then
   AC_MSG_ERROR(missing gettimeofday(): cannot compile twin! Aborting.)
@@ -231,7 +293,7 @@ if test "$ac_cv_func_gethostbyname" = yes -o "$ac_cv_lib_nsl_gethostbyname" = ye
   AC_DEFINE(HAVE_GETHOSTBYNAME, 1, Define if you have the gethostbyname function)
 fi
 
-if test "$ac_cv_func_memcmp_clean" = yes; then
+if test "$ac_cv_func_memcmp_clean" = yes -o "$ac_cv_func_memcmp_working" = yes; then
   AC_DEFINE(HAVE_MEMCMP, 1, Define if memcmp() is available and works)
 fi
 
@@ -307,9 +369,20 @@ if test "$ac_cv_lib_ggi_ggiOpen" = no -o "$ac_cv_header_ggi_ggi_h" = no; then
   enable_hw_ggi=no
 fi
 
+if test "$ac_cv_header_gtk_gtk_h" = no -o "$ac_cv_lib_gtk_gtk_init" = no; then
+  enable_tt_hw_gtk=no
+fi
+
+
 dnl
 dnl rememeber any library needed to link
 dnl
+
+SYS_ARCH_I386=n
+if test "$ac_cv_sys_arch_i386" = yes; then
+  SYS_ARCH_I386=y
+fi
+AC_SUBST(SYS_ARCH_I386)
 
 if test "$ac_cv_lib_dl_dlopen" = yes; then
   LD_LIBDL=-ldl
@@ -362,6 +435,14 @@ AC_SUBST(LD_LIBX11)
 
 AC_SUBST(LD_LIBCRYPT)
 
+if test "$enable_tt_hw_gtk" != no; then
+  CF_HEADERGTK="`gtk-config --cflags`"
+  LD_LIBGTK="`gtk-config --libs`"
+fi
+AC_SUBST(CF_HEADERGTK)
+AC_SUBST(LD_LIBGTK)
+
+
 dnl
 dnl prepare conf/conf.auto using old conf/conf.current (or conf/conf.default)
 dnl for non-specified, non-autodetectable things (CONF_OPT_*)
@@ -370,6 +451,9 @@ dnl
 . conf/conf.default
 if test -f conf/conf.current; then
   . conf/conf.current
+fi
+if test -f conf/conf.auto; then
+  . conf/conf.auto
 fi
 
 CONF_=
@@ -396,4 +480,18 @@ AC_SUBST(CONF_)
 
 
 AC_OUTPUT(Makefile makeautoconf conf/conf.auto)
+
+echo
+echo "configuration paths are (you can edit them in 'makeautoconf' file"
+echo "or from './configure' command line):"
+echo
+echo "prefix = $prefix"
+echo "exec_prefix = $exec_prefix"
+echo
+echo "to show/change other configuration settings, you can run one of:"
+echo "'make config', 'make menuconfig', 'scripts/Configure.sh <options>'"
+echo
+echo "twin is now (hopefully) configured."
+echo
+echo "As next step, you probably want to run 'make'."
 

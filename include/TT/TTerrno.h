@@ -13,16 +13,25 @@
 #ifndef _TT_ERRNO_H
 #define _TT_ERRNO_H
 
-#define TT_EUNKNOWN_TARGET	1
-#define TT_EALREADY_CONN	2
-#define TT_EXLIB_SIZES		3
+#include <TT/TTtypes.h>
 
-/* this is a libTT internal value. Do not use it in clients! */
-#define TT_MAX_ERROR	256
+#define TT_EXLIB_SIZES		1
+#define TT_EALREADY_CONN	2
+#define TT_ENO_MEM		3
+#define TT_EDLERROR_TARGET	4
+#define TT_EUNKNOWN_TARGET	5
+#define TT_EFAILED_TARGET	6
+#define TT_EBAD_TARGET		7
+#define TT_EVERSION_TARGET	8
+
+
+#define TT_EBAD_ARG		20
+#define TT_EEXIST		21
+
 
 typedef struct tt_errno {
-    uldat E;
-    uldat S;
+    ttuint E;
+    ttuint S;
     /* there may actually be more fields */
 } tt_errno;
 
@@ -35,8 +44,8 @@ tt_errno *TTErrnoLocation(void);
 #define TTErrno			(TTErrnoLocation()->E)
 #define TTErrnoDetail		(TTErrnoLocation()->S)
 
-TW_CONST byte *TTStrError(uldat e) TW_FNATTR_CONST;
-TW_CONST byte *TTStrErrorDetail(uldat e, uldat s) TW_FNATTR_CONST;
+TT_FN_ATTR_CONST TT_CONST byte *TTStrError(ttuint e);
+TT_FN_ATTR_CONST TT_CONST byte *TTStrErrorDetail(ttuint e, ttuint s);
 
 #ifdef __cplusplus
  }

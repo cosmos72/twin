@@ -58,8 +58,6 @@ void panic_free(void *v) {
 #include <sys/types.h>
 #include <sys/mman.h>
 
-#include "util.h"
-
 
 #if TW_PAGE_SIZE <= _MAXUDAT
    typedef udat delta;

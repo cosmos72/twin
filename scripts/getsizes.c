@@ -11,6 +11,7 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <time.h>
 #include <sys/types.h>
 #include <sys/mman.h>
@@ -37,7 +38,6 @@
 #  ifdef HAVE_SYS_PARAM_H
 #   include <sys/param.h>
 #  endif
-
 #  ifdef EXEC_PAGESIZE
 #   define getpagesize() EXEC_PAGESIZE
 #  else /* no EXEC_PAGESIZE */
@@ -55,38 +55,52 @@
 #     else /* no PAGE_SIZE */
 #      ifdef PAGESIZE      
 #	define getpagesize() PAGESIZE
+#      else
+#	error cannot detect mmap() page size
 #      endif /* no PAGESIZE */
 #     endif /* no PAGE_SIZE */
 #    endif /* no NBPC */
 #   endif /* no NBPG */
 #  endif /* no EXEC_PAGESIZE */
 # endif /* no _SC_PAGESIZE */
-
 #endif /* no HAVE_GETPAGESIZE */
 
 
-#include "Tw/datatypes.h"
+#include <Tw/datatypes.h>
 
-
-char endian_str[sizeof(uldat)] = "\1\2\3\4";
-
+#ifdef HAVE_LONG_LONG
+typedef unsigned long long ul;
+# define UL "ull"
+# define LX "%llX"
+# define LX8 "%8llX"
+#else
 typedef unsigned long ul;
-#define UL "ul"
-#define LX "%lX"
+# define UL "ul"
+# define LX "%lX"
+# define LX8 "%8lX"
+#endif
+
+static int my_memcmp(byte *m1, byte *m2, uldat len) {
+    int c = 0;
+    while (len--) {
+	if ((c = (int)*m1++ - (int)*m2++))
+	    return c;
+    }
+    return c;
+}
 
 int main(void) {
+    uldat endian_uldat = 0x04030201;
+    byte *endian_str = (byte *)&endian_uldat;
     char *byte_order, *str_byte16, *str_byte32;
     
-    if (*(uldat *)endian_str == (uldat)0x04030201)
-	byte_order = "1234"; /* little endian */
-    else if (*(uldat *)endian_str == ((uldat)0x01020304 << ((sizeof(uldat)-4) * 8) ))
-	byte_order = "4321"; /* big endian */
-    else {
-	fprintf(stderr, "Fatal: cannot determine byte order: not little endian, not big endian!\n"
-		"       endianity test on string \"\\1\\2\\3\\4\" returned 0x" LX "!\n",
-		(ul)*(uldat *)endian_str);
-	return 1;
-    }
+    char *names[] = { "uldat", "time_t", "frac_t", "topaque" };
+    int sizes[] = { sizeof(uldat), sizeof(time_t), sizeof(frac_t), sizeof(size_t) };
+    
+    ul maxes[] = { MAXULDAT, MAXTIME_T, MAXFRAC_T, MAXU(size_t) };
+    ul mins [] = {    0    , MINTIME_T, MINFRAC_T,      0       };
+    
+    int i, i_tlargest, i_tany;
     
     if (sizeof(byte) != 1 || sizeof(udat) < 2 || sizeof(uldat) < 4 ||
 	sizeof(hwcol) != 1 || sizeof(time_t) < 4 || sizeof(frac_t) < 4) {
@@ -94,7 +108,11 @@ int main(void) {
 	fprintf(stderr, "Fatal: minimum requirements on data sizes not satisfied.\nSee scripts/getsizes.c\n");
 	return 1;
     }
-
+    if (sizeof(size_t) != sizeof(void *)) {
+	fprintf(stderr, "Fatal: sizeof(size_t) != sizeof(void *)\nYour compiler and/or includes are seriously screwed up!\n");
+	return 1;
+    }
+    
     if (sizeof(udat) == 2)
 	str_byte16 = "udat";
     else if (sizeof(unsigned short) == 2)
@@ -117,14 +135,28 @@ int main(void) {
 	return 1;
     }
 
-    if (sizeof(time_t) > sizeof(tlargest)) {
-	fprintf(stderr, "Fatal: `time_t' is %d bytes, which is bigger than `tlargest' (%d bytes).\n"
-		"Please edit include/Tw/datatypes.h and use a wider type for `tlargest'.\n", sizeof(time_t), sizeof(tlargest));
+    for (i_tlargest = 0, i = 1; i < sizeof(sizes)/sizeof(sizes[0]) - 1/* skip size_t */ ; i++) {
+	if (sizes[i_tlargest] < sizes[i])
+	    i_tlargest = i;
+    }
+    for (i_tany = 0, i = 1; i < sizeof(sizes)/sizeof(sizes[0]); i++) {
+	if (sizes[i_tany] < sizes[i])
+	    i_tany = i;
+    }
+
+    if (!my_memcmp(endian_str, "\1\2\3\4", 4))
+	byte_order = "1234"; /* little endian */
+    else if (!my_memcmp(endian_str + (sizeof(uldat) - 4), "\4\3\2\1", 4))
+	byte_order = "4321"; /* big endian */
+    else {
+	fprintf(stderr, "Fatal: cannot determine byte order: not little endian, not big endian!\n"
+		"       endianity test on data 0x04030201 returned 0x" LX8 "!\n",
+		(ul)endian_str[0] | ((ul)endian_str[1]<<8) | ((ul)endian_str[2]<<16) | ((ul)endian_str[3]<<24));
 	return 1;
     }
     
     /*
-     * note about MINDAT, MINLDAT, MINTIME_T:
+     * note about MINSBYTE, MINDAT, MINLDAT, MINTIME_T, MINFRAC_T:
      * if the type is unsigned, -(ul)0 == 0;
      * if the type is signed, extending to (ul) will fill higher bytes with 0xFF.
      * For example doing (ul)0x80000000 when (ul) is 8 bytes will give
@@ -138,15 +170,33 @@ int main(void) {
 	   "#ifndef _TW_DATASIZES_H\n"
 	   "#define _TW_DATASIZES_H\n"
 	   "\n"
+	   "/* the biggest integer data type used by libTw. will be same as uldat or time_t or frac_t */\n"
+	   "typedef %s	tlargest;\n"
+	   "\n"
+	   "/* an unsigned integer type as wide as (void *) */\n"
+	   "typedef size_t	topaque;\n"
+	   "\n"
+	   "/* an integer type as wide as the bigger between tlargest and topaque (void *) */\n"
+	   "typedef %s	tany;\n"
+	   "\n"
+	   "#define MAXTLARGEST    MAXSU(tlargest)\n"
+	   "#define MAXTOPAQUE     MAXSU(topaque)\n"
+	   "#define MAXTANY        MAXSU(tany)\n"
+	   "\n"
+	   "#define MINTLARGEST    MINSU(tlargest)\n"
+	   "#define MINTANY        MINSU(tany)\n"
+	   "\n"
 	   "#define TW_SIZEOFBYTE         %d\n"
 	   "#define TW_SIZEOFUDAT         %d\n"
 	   "#define TW_SIZEOFULDAT        %d\n"
 	   "#define TW_SIZEOFTIME_T       %d\n"
 	   "#define TW_SIZEOFFRAC_T       %d\n"
 	   "#define TW_SIZEOFTLARGEST     %d\n"
+	   "#define TW_SIZEOFTOPAQUE      %d\n"
 	   "#define TW_SIZEOFVOIDP        %d\n"
+	   "#define TW_SIZEOFTANY         %d\n"
 	   "\n"
-	   "#define TW_MAXNUM      0x" LX "\n"
+	   "#define TW_MAXSBYTE    0x" LX "\n"
 	   "#define TW_MAXBYTE     0x" LX "\n"
 	   "#define TW_MAXDAT      0x" LX "\n"
 	   "#define TW_MAXUDAT     0x" LX "\n"
@@ -155,12 +205,16 @@ int main(void) {
 	   "#define TW_MAXTIME_T   0x" LX "\n"
 	   "#define TW_MAXFRAC_T   0x" LX "\n"
 	   "#define TW_MAXTLARGEST 0x" LX "\n"
+	   "#define TW_MAXTOPAQUE  0x" LX "\n"
+	   "#define TW_MAXTANY     0x" LX "\n"
 	   "\n"
-	   "#define TW_MINNUM      0x" LX "\n"
+	   "#define TW_MINSBYTE    0x" LX "\n"
 	   "#define TW_MINDAT      0x" LX "\n"
 	   "#define TW_MINLDAT     0x" LX "\n"
 	   "#define TW_MINTIME_T   0x" LX "\n"
 	   "#define TW_MINFRAC_T   0x" LX "\n"
+	   "#define TW_MINTLARGEST 0x" LX "\n"
+	   "#define TW_MINTANY     0x" LX "\n"
 	   "\n"
 	   "#define TW_BYTE16      %s\n"
 	   "#define TW_BYTE32      %s\n"
@@ -172,16 +226,23 @@ int main(void) {
 	   "#define TW_BIG_ENDIAN       4321\n"
 	   "\n"
 	   "#endif /* _TW_DATASIZES_H */\n",
+	   names[i_tlargest], names[i_tany],
+	   
 	   sizeof(byte), sizeof(udat), sizeof(uldat),
-	   sizeof(time_t), sizeof(frac_t), sizeof(tlargest),
-	   sizeof(void *),
-	   (ul)MAXNUM, (ul)MAXBYTE,
+	   sizeof(time_t), sizeof(frac_t),
+	   sizes[i_tlargest], sizeof(size_t), sizeof(void *), sizes[i_tany],
+	   
+
+	   (ul)MAXSBYTE, (ul)MAXBYTE,
 	   (ul)MAXDAT, (ul)MAXUDAT,
 	   (ul)MAXLDAT, (ul)MAXULDAT,
 	   (ul)MAXTIME_T, (ul)MAXFRAC_T,
-	   (ul)MAXTLARGEST,
-	   -(ul)MINNUM, -(ul)MINDAT, -(ul)MINLDAT,
+	   (ul)maxes[i_tlargest], (ul)MAXU(size_t), (ul)maxes[i_tany],
+	   
+	   -(ul)MINSBYTE, -(ul)MINDAT, -(ul)MINLDAT,
 	   -(ul)MINTIME_T, -(ul)MINFRAC_T,
+	   -(ul)mins[i_tlargest], -(ul)mins[i_tany],
+	   
 	   str_byte16,
 	   str_byte32,
 	   (int)getpagesize(),

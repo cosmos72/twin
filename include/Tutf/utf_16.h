@@ -5,6 +5,7 @@
 #ifndef _TUTF_UTF_16_H
 #define _TUTF_UTF_16_H
 
+
 #define T_UTF_16_NULL	0x0000
 #define T_UTF_16_START_OF_HEADING	0x0001
 #define T_UTF_16_START_OF_TEXT	0x0002
@@ -12963,5 +12964,5 @@
 #define T_UTF_16_CANCEL_TAG	0xE007F
 
 
-#endif _TUTF_UTF_16_H
+#endif /* _TUTF_UTF_16_H */
 

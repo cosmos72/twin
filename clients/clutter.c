@@ -9,8 +9,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "Tw/Tw.h"
-#include "Tw/Twerrno.h"
+#include <Tw/Tw.h>
+#include <Tw/Twerrno.h>
 
 static tmsgport Clutter_MsgPort;
 static tmenu Clutter_Menu;
@@ -50,7 +50,7 @@ static byte InitClutter(void) {
     Y = TwGetDisplayHeight();
 
     if ((Clutter_MsgPort=TwCreateMsgPort
-	 (7, "Clutter", (time_t)0, (frac_t)0, (byte)0)) &&
+	 (9, "twclutter", (time_t)0, (frac_t)0, (byte)0)) &&
 	(Clutter_Menu=TwCreateMenu(
 	  COL(BLACK,WHITE), COL(BLACK,GREEN), COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
 	  COL(RED,WHITE), COL(RED,GREEN), (byte)0)) &&

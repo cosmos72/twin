@@ -2,12 +2,13 @@
 # Makefile for twmapscrn libTw client
 #
 TOPDIR=../..
+THISDIR=$(TOPDIR)/clients/mapscrn
 SUBDIRS=
 
 CC_FLAGS+=-DDATADIR=\"/usr/lib/kbd\"
 CC_FLAGS_mapscrn.o+=-DMAIN
 
-LD_FLAGS+=$(LIBTW)
+LD_FLAGS+=$(LD_LIBTW)
 
 OBJS_twmapscrn=mapscrn.o findfile.o utf8.o xmalloc.o getfd.o kdmapop.o
 BINS=twmapscrn
@@ -18,6 +19,7 @@ all: $(BINS)
 -include $(TOPDIR)/conf/conf.current
 -include .modules
 -include .depend
+-include $(TOPDIR)/.hdepend
 
 #
 # include the do-everything file.

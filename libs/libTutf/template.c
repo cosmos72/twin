@@ -2,7 +2,7 @@
 
 #define T_TEMPLATE T_MAP(TEMPLATE)
 
-hwfont T_CAT(T_CAT(Tutf_,T_TEMPLATE),_to_UTF_16)[0x100] = {
+hwfont T_CAT3(Tutf_,T_TEMPLATE,_to_UTF_16)[0x100] = {
 #define EL(x) T_UTF(UTF_16,x),
     T_LIST(T_TEMPLATE,EL)
 #undef EL
@@ -31,7 +31,7 @@ hwfont T_CAT(Tutf_UTF_16_to_,T_TEMPLATE)(hwfont c) {
 	/* direct-to-font area */
 	(c >= ' ' && c <= '~') ||
 	/* ASCII area */
-	(c > '~' && c < 0x100 && T_CAT(T_CAT(Tutf_,T_TEMPLATE),_to_UTF_16)[c] == c))
+	(c > '~' && c < 0x100 && T_CAT3(Tutf_,T_TEMPLATE,_to_UTF_16)[c] == c))
 	/* c has the same meaning in Unicode and this charset... sheer luck! */
 
 	return c & 0x00ff;

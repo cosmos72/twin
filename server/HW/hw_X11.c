@@ -20,11 +20,11 @@
 #include "hw_dirty.h"
 #include "common.h"
 
-#include "Tw/Twkeys.h"
+#include <Tw/Twkeys.h>
 
 #ifdef CONF__UNICODE
-# include "Tutf/Tutf.h"
-# include "Tutf/Tutf_defs.h"
+# include <Tutf/Tutf.h>
+# include <Tutf/Tutf_defs.h>
 #endif
 
 #include <X11/Xlib.h>
@@ -124,31 +124,32 @@ struct x11_data {
     uldat        XReqCount;
     XSelectionRequestEvent XReq[NEST];
     unsigned long xcol[MAXCOL+1];
-    Atom xWM_PROTOCOLS, xWM_DELETE_WINDOW;
+    Atom xWM_PROTOCOLS, xWM_DELETE_WINDOW, xTARGETS;
 };
 
-#define xdata	((struct x11_data *)HW->Private)
-#define xwidth	(xdata->xwidth)
-#define xheight	(xdata->xheight)
-#define xwfont	(xdata->xwfont)
-#define xhfont	(xdata->xhfont)
-#define xupfont	(xdata->xupfont)
+#define xdata		((struct x11_data *)HW->Private)
+#define xwidth		(xdata->xwidth)
+#define xheight		(xdata->xheight)
+#define xwfont		(xdata->xwfont)
+#define xhfont		(xdata->xhfont)
+#define xupfont		(xdata->xupfont)
 #define xUTF_16_to_charset	(xdata->xUTF_16_to_charset)
 #define xdisplay	(xdata->xdisplay)
-#define xwindow	(xdata->xwindow)
-#define xgc	(xdata->xgc)
-#define xsgc	(xdata->xsgc)
-#define xsfont	(xdata->xsfont)
+#define xwindow		(xdata->xwindow)
+#define xgc		(xdata->xgc)
+#define xsgc		(xdata->xsgc)
+#define xsfont		(xdata->xsfont)
 #define xwindow_AllVisible	(xdata->xwindow_AllVisible)
 #define xfont_map	(xdata->xfont_map)
 #define xRequestor(j)	(xdata->xRequestor[j])
 #define xReqPrivate(j)	(xdata->xReqPrivate[j])
 #define xReqCount	(xdata->xReqCount)
 #define XReqCount	(xdata->XReqCount)
-#define XReq(j)	(xdata->XReq[j])
-#define xcol	(xdata->xcol)
-#define xWM_PROTOCOLS (xdata->xWM_PROTOCOLS)
-#define xWM_DELETE_WINDOW (xdata->xWM_DELETE_WINDOW)
+#define XReq(j)		(xdata->XReq[j])
+#define xcol		(xdata->xcol)
+#define xWM_PROTOCOLS	(xdata->xWM_PROTOCOLS)
+#define xWM_DELETE_WINDOW	(xdata->xWM_DELETE_WINDOW)
+#define xTARGETS	(xdata->xTARGETS)
 
 static void X11_SelectionNotify_up(Window win, Atom prop);
 static void X11_SelectionRequest_up(XSelectionRequestEvent *req);
@@ -157,37 +158,6 @@ static void X11_SelectionRequest_up(XSelectionRequestEvent *req);
 static void X11_Beep(void) {
     XBell(xdisplay, 0);
     setFlush();
-}
-
-static struct {
-    KeySym xkey;
-    udat tkey;
-    byte len;
-    byte *seq;
-} X11_keys[] = {
-
-#define IS(sym,l,s) { XK_##sym, TW_##sym, l, s },
-#  include "hw_keys.h"
-#undef IS
-
-};
-
-static uldat X11_keyn = sizeof(X11_keys) / sizeof(X11_keys[0]);
-
-static byte X11_RemapKeys(void) {
-    uldat i;
-    
-    for (i = 0; i < X11_keyn; i++) {
-	XRebindKeysym(xdisplay, X11_keys[i].xkey, (KeySym *)0, 0, X11_keys[i].seq, X11_keys[i].len);
-	if (i && X11_keys[i-1].xkey >= X11_keys[i].xkey) {
-	    printk("\n"
-		   "      ERROR: twin compiled from a bad server/hw_keys.h file"
-		   "             (data in file is not sorted). X11 support is unusable.\n"
-		   "      X11_InitHW() failed: internal error.\n");
-	    return FALSE;
-	}
-    }
-    return TRUE;
 }
 
 static void X11_Configure(udat resource, byte todefault, udat value) {
@@ -218,13 +188,49 @@ static void X11_Configure(udat resource, byte todefault, udat value) {
     }
 }
 
-    
+
+static struct {
+    KeySym xkey;
+    udat tkey;
+    byte len;
+    CONST byte *seq;
+} X11_keys[] = {
+
+#define IS(sym,l,s) { XK_##sym, TW_##sym, l, s },
+#  include "hw_keys.h"
+#undef IS
+
+};
+
+static uldat X11_keyn = sizeof(X11_keys) / sizeof(X11_keys[0]);
+
+/*
+ * calling XRebindKeysym() on non-english keyboards disrupts keys that use Mode_switch (AltGr),
+ * so we implement a manual translation using binary search on the table above.
+ * But first, check the table is sorted, or binary search would become bugged.
+ */
+static byte X11_CheckRemapKeys(void) {
+    uldat i;
+
+    for (i = 0; i < X11_keyn; i++) {
+	if (i && X11_keys[i-1].xkey >= X11_keys[i].xkey) {
+	    printk("\n"
+		   "      ERROR: twin compiled from a bad server/hw_keys.h file"
+		   "             (data in file is not sorted). X11 support is unusable.\n"
+		   "      X11_InitHW() failed: internal error.\n");
+	    return FALSE;
+	}
+    }
+    return TRUE;
+}
+
 /* convert an X11 KeySym into a libTw key code and ASCII sequence */
 
 static udat X11_LookupKey(XKeyEvent *ev, udat *ShiftFlags, udat *len, char *seq) {
     static udat lastTW = TW_Null;
     static uldat lastI = MAXULDAT;
-    static KeySym sym, lastXK = NoSymbol;
+    static KeySym lastXK = NoSymbol;
+    KeySym sym;
     
     uldat i, low, up, _len = *len;
 
@@ -241,7 +247,9 @@ static udat X11_LookupKey(XKeyEvent *ev, udat *ShiftFlags, udat *len, char *seq)
 	*ShiftFlags |= KBD_NUM_LOCK;
     
     *len = XLookupString(ev, seq, _len, &sym, NULL);
-    
+#ifdef DEBUG_HW_X11
+    printf("hw_X11: keysim=%d (%s) string='%.*s'\n", (int)sym, XKeysymToString(sym), (int)len, seq);
+#endif
     if (sym == XK_BackSpace && ev->state & (ControlMask|Mod1Mask)) {
 	if (ev->state & ControlMask)
 	    *len = 1, *seq = '\x1F';
@@ -250,7 +258,7 @@ static udat X11_LookupKey(XKeyEvent *ev, udat *ShiftFlags, udat *len, char *seq)
 	return TW_BackSpace;
     }
 
-    if (sym >= ' ' && sym <= '~') {
+    if ((sym >= ' ' && sym <= '~') || (sym >= 0xA0 && sym <= 0xFF)) {
 	/* turn ALT+A into ESC+A etc. */
 	if (ev->state & Mod1Mask && *len == 1 && (byte)sym == *seq) {
 	    *len = 2;
@@ -280,16 +288,17 @@ static udat X11_LookupKey(XKeyEvent *ev, udat *ShiftFlags, udat *len, char *seq)
 	}
 	lastXK = sym;
     }
-    if (*len == 0 && lastI < X11_keyn && X11_keys[lastI].len) {
-	/* XLookupString() returned empty string, steal sequence from hw_keys.h */
+    /* XLookupString() returned empty string, or no ShiftFlags: steal sequence from hw_keys.h */
+    if (lastI < X11_keyn && X11_keys[lastI].len && (*len == 0 || *ShiftFlags == 0)) {
 	if (_len > X11_keys[lastI].len)
 	    CopyMem(X11_keys[lastI].seq, seq, *len = X11_keys[lastI].len);
     }
     return lastTW;
-};
+}
 
 
 static void X11_HandleEvent(XEvent *event) {
+    /* this can stay static, X11_HandleEvent() is not reentrant */
     static byte seq[SMALLBUFF];
     dat x, y, dx, dy;
     udat len = SMALLBUFF, TW_key, ShiftFlags;
@@ -363,7 +372,7 @@ static void X11_HandleEvent(XEvent *event) {
 	xwindow_AllVisible = event->xvisibility.state == VisibilityUnobscured;
 	break;
       case SelectionClear:
-	HW->HWSelectionPrivate = NULL; /* selection now owned by some other X11 client */
+	HW->HWSelectionPrivate = 0; /* selection now owned by some other X11 client */
 	TwinSelectionSetOwner((obj)HW, SEL_CURRENTTIME, SEL_CURRENTTIME);
 	break;
       case SelectionRequest:
@@ -607,7 +616,7 @@ static byte X11_SelectionImport_X11(void) {
 static void X11_SelectionExport_X11(void) {
     if (!HW->HWSelectionPrivate) {
 	XSetSelectionOwner(xdisplay, XA_PRIMARY, xwindow, CurrentTime);
-	HW->HWSelectionPrivate = (void *)xwindow;
+	HW->HWSelectionPrivate = (tany)xwindow;
 	setFlush();
     }
 }
@@ -616,11 +625,8 @@ static void X11_SelectionExport_X11(void) {
  * notify our Selection to X11
  */
 static void X11_SelectionNotify_X11(uldat ReqPrivate, uldat Magic, CONST byte MIME[MAX_MIMELEN],
-				    uldat Len, byte CONST * Data) {
+				    uldat Len, CONST byte * Data) {
     XEvent ev;
-    static Atom xa_targets = None;
-    if (xa_targets == None)
-	xa_targets = XInternAtom (xdisplay, "TARGETS", False);
 	
     if (XReqCount == 0) {
 	printk("hw_X11.c: X11_SelectionNotify_X11(): unexpected Twin Selection Notify event!\n");
@@ -641,7 +647,7 @@ static void X11_SelectionNotify_X11(uldat ReqPrivate, uldat Magic, CONST byte MI
     ev.xselection.target    = XReq(XReqCount).target;
     ev.xselection.time      = XReq(XReqCount).time;
 
-    if (XReq(XReqCount).target == xa_targets) {
+    if (XReq(XReqCount).target == xTARGETS) {
 	/*
 	 * On some systems, the Atom typedef is 64 bits wide.
 	 * We need to have a typedef that is exactly 32 bits wide,
@@ -650,18 +656,39 @@ static void X11_SelectionNotify_X11(uldat ReqPrivate, uldat Magic, CONST byte MI
 	typedef CARD32 Atom32;
 	Atom32 target_list[2];
 	
-	target_list[0] = (Atom32) xa_targets;
+	target_list[0] = (Atom32) xTARGETS;
 	target_list[1] = (Atom32) XA_STRING;
 	XChangeProperty (xdisplay, XReq(XReqCount).requestor, XReq(XReqCount).property,
-			 xa_targets, 8*sizeof(target_list[0]), PropModeReplace,
+			 xTARGETS, 8*sizeof(target_list[0]), PropModeReplace,
 			 (char *)target_list,
 			 sizeof(target_list)/sizeof(target_list[0]));
 	ev.xselection.property = XReq(XReqCount).property;
     } else if (XReq(XReqCount).target == XA_STRING) {
+#ifdef CONF__UNICODE
+	uldat l;
+	byte *_Data = NULL, *d;
+	TW_CONST hwfont *s;
+	
+	/* X11 selection contains text, not unicode */
+	if (Magic == SEL_HWFONTMAGIC) {
+	    if ((_Data = d = (byte *)AllocMem(Len))) {
+		s = (TW_CONST hwfont *)Data;
+		for (l = Len; l; l--)
+		    *d++ = Tutf_UTF_16_to_IBM437(*s++);
+		Data = _Data;
+		Len /= sizeof(hwfont);
+	    } else
+		Len = 0;
+	}
+#endif
 	XChangeProperty (xdisplay, XReq(XReqCount).requestor, XReq(XReqCount).property,
-			 XA_STRING, 8, PropModeReplace,
-			 Data, Len);
+			 XA_STRING, 8, PropModeReplace, Data, Len);
 	ev.xselection.property = XReq(XReqCount).property;
+
+#ifdef CONF__UNICODE
+	if (Magic == SEL_HWFONTMAGIC && _Data)
+	    FreeMem(_Data);
+#endif
     }
     XSendEvent (xdisplay, XReq(XReqCount).requestor, False, 0, &ev);
     setFlush();
@@ -765,6 +792,7 @@ static void X11_SelectionRequest_up(XSelectionRequestEvent *req) {
     CopyMem(req, &XReq(XReqCount), sizeof(XSelectionRequestEvent));
     TwinSelectionRequest((obj)HW, XReqCount++, TwinSelectionGetOwner());
     /* we will get a HW->HWSelectionNotify (i.e. X11_SelectionNotify_X11) call */
+    /* the call **CAN** arrive while we are still inside TwinSelectionRequest() !!! */
 }
 
 static byte X11_CanDragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
@@ -995,7 +1023,7 @@ byte X11_InitHW(void) {
 	
 	(void)XSetIOErrorHandler(X11_Die);
 	
-	if (!X11_RemapKeys())
+	if (!X11_CheckRemapKeys())
 	    break;
 
 	xscreen = DefaultScreen(xdisplay);
@@ -1052,7 +1080,8 @@ byte X11_InitHW(void) {
 	     */
 	    xWM_PROTOCOLS = XInternAtom(xdisplay, "WM_PROTOCOLS", False);
 	    xWM_DELETE_WINDOW = XInternAtom(xdisplay, "WM_DELETE_WINDOW", False);
-	    
+	    xTARGETS = XInternAtom(xdisplay, "TARGETS", False);
+
 	    XChangeProperty(xdisplay, xwindow, xWM_PROTOCOLS, XA_ATOM, 32, PropModeReplace,
 			    (unsigned char *) &xWM_DELETE_WINDOW, 1);
 	    
@@ -1098,7 +1127,7 @@ byte X11_InitHW(void) {
 	    HW->HWSelectionExport  = X11_SelectionExport_X11;
 	    HW->HWSelectionRequest = X11_SelectionRequest_X11;
 	    HW->HWSelectionNotify  = X11_SelectionNotify_X11;
-	    HW->HWSelectionPrivate = NULL;
+	    HW->HWSelectionPrivate = 0;
 	    
 	    if (drag) {
 		HW->CanDragArea = X11_CanDragArea;

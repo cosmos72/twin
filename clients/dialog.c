@@ -14,8 +14,8 @@
 #include <string.h>
 #include <sys/stat.h>
 
-#include "Tw/Tw.h"
-#include "Tw/Twerrno.h"
+#include <Tw/Tw.h>
+#include <Tw/Twerrno.h>
 
 #define COD_QUIT      (udat)1
 
@@ -101,7 +101,7 @@ static byte ShowText(void) {
 	int len = strlen(text);
 	if (!memchr(text, '\n', len))
 	    TwGotoXYWindow(Dialog_Win, (width - len) / 2, 0);
-	TwWriteRowWindow(Dialog_Win, len, text);
+	TwWriteAsciiWindow(Dialog_Win, len, text);
     }
     return TRUE;
 }
@@ -136,9 +136,9 @@ static byte InitMenuBox(void) {
 	y = CountNewLines(text) + 2;
 	for (i = 0; i < listN; i++) {
 	    TwGotoXYWindow(Dialog_Win, 3, i+y);
-	    TwWriteRowWindow(Dialog_Win, strlen(list[i].tag), list[i].tag);
+	    TwWriteAsciiWindow(Dialog_Win, strlen(list[i].tag), list[i].tag);
 	    TwGotoXYWindow(Dialog_Win, 10, i+y);
-	    TwWriteRowWindow(Dialog_Win, strlen(list[i].item), list[i].item);
+	    TwWriteAsciiWindow(Dialog_Win, strlen(list[i].item), list[i].item);
 	}
 	return InitButtons("  OK  ", "Cancel");
     }
@@ -240,10 +240,9 @@ TW_DECL_MAGIC(dialog_magic);
 static byte InitDialog(void) {
     twindow Window;
 
-    return TwCheckMagic(dialog_magic) &&
-	TwOpen(NULL) &&
+    return TwCheckMagic(dialog_magic) && TwOpen(NULL) &&
 	(Dialog_MsgPort=TwCreateMsgPort
-	 (8, "TwDialog", (time_t)0, (frac_t)0, (byte)0)) &&
+	 (8, "twdialog", (time_t)0, (frac_t)0, (byte)0)) &&
 	(Dialog_Menu=TwCreateMenu(
 	  COL(BLACK,WHITE), COL(BLACK,GREEN), COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
 	  COL(RED,WHITE), COL(RED,GREEN), (byte)0)) &&

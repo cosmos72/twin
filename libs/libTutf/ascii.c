@@ -1,5 +1,5 @@
 
-hwfont T_CAT(T_CAT(Tutf_,T_MAP(ASCII)),_to_UTF_16)[0x100] = {
+hwfont T_CAT3(Tutf_,T_MAP(ASCII),_to_UTF_16)[0x100] = {
 #define EL(x) T_UTF(UTF_16,x),
 	T_LIST(ASCII,EL)
 #undef EL

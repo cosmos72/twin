@@ -1,3 +1,45 @@
+From 0.4.1 to 0.4.2: (Massimiliano Ghilardi, 26 May 2002)
+	* Finished nested menus support.
+	* Continued libTT: it now begins being usable, even if not 100% complete yet.
+	* Tweaked scripts/Configure* scripts to allow build without GNU bash.
+	  (GNU bash is still required to manually configure twin and to run
+	   `make Torture')
+	* Tweaked Makefile's internal logic; added autoexpanding archives (*.lst)
+	  and added user hints about what to run after each build step.
+	* Removed some GCC extensions lurking in the code (mostly, text after
+	  #endif and non-constant automatic aggregate initialization like:)
+	  void foo(int a, int b, int c) {
+	      int list[] = { a, b, c };
+	  }
+	* Fixed X11 keyboard support to allow non-ASCII keys
+	  (>= 128, found on non-US keyboards) to work.
+	* Fixed buggy libTw TwStat().
+	* Changed libTw to use recursive pthread locks, in order to allow
+	  a listener to call (most) Tw* functions safely.
+	* Cleaned up keyboard-based use of gadgets and buttons in some
+	  builtin windows.
+	* Cleaned up `-hw=twin' selection handling.
+	* Moved module version numbering from internal symbols to filename:
+	  renamed *.so to *.so.$(VERSION).
+	* Added Unicode cut-n-paste, and fixed 8bit cut-n-paste.
+	  (twutils still needs to be updated to handle unicode cut-n-paste).
+	* Redesigned libTw code logic to reduce size: libTw.so shrinked by 35%.
+	  Wrote hand-optimized i386 assembler functions to further reduce size.
+	  (you can disable them compiling with `make SYS_ARCH_I386=n [...]')
+	* Added libTw caching of missing server functions.
+	  Made some minor incompatible changes to TWS_* defines
+	  in <Tw/Twstat_defs.h>.
+	  Partially incompatible changes:
+	  merged TwWriteRowWindow() into TwWriteAsciiWindow(),
+	  renamed TwResizeWindow() to TwResizeWidget()
+	  (server side implementation of TwResizeWidget() still incomplete
+	  for gadgets).
+	* Added more libTw functions, in particular TwFindRowByCodeWindow() and
+	  Tw[Raise|Lower|Circulate|Restack][Widget|Gadget|Window|Screen|Row|MenuItem]()
+	  Glitch warning: altering a menu the user is interacting with may
+	  cause some visual incoherencies like misplaced menu windows,
+	  which go away when you close the misplaced window.
+	  
 From 0.4.0 to 0.4.1: (Massimiliano Ghilardi, 30 Dec 2001)
 	* Fixed window smart placement if screen is scrolled and not at (0,0).
 	* Fixed math overflow causing `twcat' window not to show up.

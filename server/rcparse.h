@@ -66,7 +66,7 @@
  * 
  * Focus [On|Off|Toggle]
  * 
- * GlobalFlags [[+|-]AltFont] [[+|-]AlwaysCursor] [[+|-]Blink] [[+|-]EdgeScroll] [[+|-]HideMenu] [[+|-]MenuItems] [[+|-]Shadows] [Shadows <x> <y>] [SelectionButton <n>]
+ * GlobalFlags [[+|-]AltFont] [[+|-]CursorAlways] [[+|-]Blink] [[+|-]ScreenScroll] [[+|-]MenuHide] [[+|-]MenuItems] [[+|-]Shadows] [Shadows <x> <y>] [ButtonSelection <n>]
  * 
  * Interactive <kind>
  * # Scroll, Move, Resize, Screen, Menu
@@ -371,14 +371,15 @@ static byte ImmGlobalFlags(node l) {
     while (l) {
 	switch (l->id) {
 	  case ALTFONT:      /*ignored for compatibility*/ return TRUE;
-	  case ALWAYSCURSOR: i = SETUP_ALWAYSCURSOR; break;
 	  case BLINK:        i = SETUP_BLINK;        break;
-	  case EDGESCROLL:   i = SETUP_EDGESCROLL;   break;
-	  case HIDEMENU:     i = SETUP_HIDEMENU;     break;
-	  case MENUINFO:     i = SETUP_MENUINFO;     break;
+	  case CURSOR_ALWAYS:i = SETUP_CURSOR_ALWAYS;break;
+	  case SCREEN_SCROLL:i = SETUP_SCREEN_SCROLL;break;
+	  case MENU_HIDE:    i = SETUP_MENU_HIDE;    break;
+	  case MENU_INFO:    i = SETUP_MENU_INFO;    break;
+	  case MENU_RELAX:   i = SETUP_MENU_RELAX;   break;
 	  case SHADOWS:      i = SETUP_SHADOWS;      break;
-	  case PASTEBUTTON:  i = 0;                  break;
-	  case SELECTIONBUTTON: i = -1;              break;
+	  case BUTTON_PASTE:  i = 0;                  break;
+	  case BUTTON_SELECTION: i = -1;              break;
 	  default:           return FALSE;
 	}
 	if (i > 0) switch (l->x.f.flag) {
@@ -405,7 +406,7 @@ static byte ImmGlobalFlags(node l) {
 	  default:
 	    return FALSE;
 	} else {
-	    /* SelectionButton */
+	    /* ButtonSelection or ButtonPaste */
 
 	    j = l->x.f.flag;
 	    if (j >= 1 && j <= 3)
@@ -619,7 +620,7 @@ static node MakeSendToScreen(str name) {
 
 static node MakeSyntheticKey(ldat shiftflags, str label) {
     ldat key;
-    str  seq;
+    CONST byte *seq;
     byte buf[4];
     node n;
     
@@ -755,14 +756,15 @@ static str TokenName(ldat id) {
       case FL_LEFT:	return "Left";
       case FL_RIGHT:	return "Right";
       case ALTFONT:	return "AltFont";
-      case ALWAYSCURSOR:return "AlwaysCursor";
       case BLINK:	return "Blink";
-      case EDGESCROLL:	return "EdgeScroll";
-      case HIDEMENU:	return "HideMenu";
-      case MENUINFO:	return "MenuInfo";
+      case CURSOR_ALWAYS:return "CursorAlways";
+      case MENU_HIDE:	return "MenuHide";
+      case MENU_INFO:	return "MenuInfo";
+      case MENU_RELAX:	return "MenuRelax";
+      case SCREEN_SCROLL:return "ScreenScroll";
       case SHADOWS:	return "Shadows";
-      case PASTEBUTTON: return "PasteButton";
-      case SELECTIONBUTTON: return "SelectionButton";
+      case BUTTON_PASTE:return "ButtonPaste";
+      case BUTTON_SELECTION:return "ButtonSelection";
       default:		break;
     }
     return "(unknown)";
@@ -1254,8 +1256,8 @@ static byte ReadGlobals(void) {
     
     All->SetUp->Flags |= GlobalFlags[0];
     All->SetUp->Flags ^= GlobalFlags[1];
-    All->SetUp->SelectionButton = GlobalFlags[2];
-    All->SetUp->PasteButton = GlobalFlags[3];
+    All->SetUp->ButtonSelection = GlobalFlags[2];
+    All->SetUp->ButtonPaste = GlobalFlags[3];
     All->SetUp->DeltaXShade = GlobalShadows[0];
     All->SetUp->DeltaYShade = GlobalShadows[1];
 

@@ -20,12 +20,12 @@
 #include "compiler.h"
 #include "version.h"
 #include "osincludes.h"
-#include "Tw/compiler.h"
-#include "Tw/datatypes.h"
-#include "Tw/datasizes.h"
-#include "Tw/uni_types.h"
-#include "Tw/version.h"
-#include "Tw/missing.h"
+#include <Tw/compiler.h>
+#include <Tw/datatypes.h>
+#include <Tw/datasizes.h>
+#include <Tw/uni_types.h>
+#include <Tw/version.h>
+#include <Tw/missing.h>
 
 
 #define Abs(x) ((x)>0 ? (x) : -(x))
@@ -276,6 +276,7 @@ struct s_ttydata {
     byte currG, G, G0, G1, saveG, saveG0, saveG1;
     byte utf, utf_count;
     hwfont utf_char;
+    void *InvCharset;	/* pointer to hwfont -> byte translation function */
     
     dat newLen, newMax;
     byte *newName;	/* buffer for xterm set window title escape seq */
@@ -310,8 +311,7 @@ struct s_draw_ctx {
 struct s_obj {
     uldat Id;
     fn_obj Fn;
-    obj Prev, Next;
-    obj_parent Parent;
+    obj Prev, Next, Parent;
 };
 
 struct s_obj_parent {
@@ -321,7 +321,7 @@ struct s_obj_parent {
 struct s_fn_obj {
     uldat Magic, Size, Used;
     obj (*Create)(fn_obj);
-    void (*Insert)(obj Obj, obj_parent, obj Prev, obj Next);
+    void (*Insert)(obj Obj, obj, obj Prev, obj Next);
     void (*Remove)(obj);
     void (*Delete)(obj);
     void (*ChangeField)(obj, udat field, uldat CLEARMask, uldat XORMask);
@@ -386,6 +386,8 @@ struct s_fn_widget {
     void (*Map)(widget, widget Parent);
     void (*UnMap)(widget);
     void (*MapTopReal)(widget, screen);
+    void (*Raise)(widget);
+    void (*Lower)(widget);
     void (*Own)(widget, msgport);
     void (*DisOwn)(widget);    
     void (*RecursiveDelete)(widget, msgport);
@@ -471,6 +473,8 @@ struct s_fn_gadget {
     void (*Map)(gadget, widget Parent);
     void (*UnMap)(gadget);
     void (*MapTopReal)(gadget, screen);
+    void (*Raise)(gadget);
+    void (*Lower)(gadget);
     void (*Own)(gadget, msgport);
     void (*DisOwn)(gadget);    
     void (*RecursiveDelete)(gadget, msgport);
@@ -572,7 +576,8 @@ struct s_window {
 	struct s_wE E;
     } USE;
     /* window */
-    menu Menu;		/* from which the window depends */
+    menu Menu;
+    menuitem MenuItem; /* from which the window depends */
     dat NameLen;
     byte *Name; hwcol *ColName;
     hwfont *BorderPattern[2];
@@ -610,6 +615,8 @@ struct s_fn_window {
     void (*Map)(window, widget Parent);
     void (*UnMap)(window);
     void (*MapTopReal)(window, screen);
+    void (*Raise)(window);
+    void (*Lower)(window);
     void (*Own)(window, msgport);
     void (*DisOwn)(window);    
     void (*RecursiveDelete)(window, msgport);
@@ -618,12 +625,16 @@ struct s_fn_window {
     void (*RemoveHook)(window, fn_hook, fn_hook *Where);
     /* window */
     fn_widget Fn_Widget;
-    void (*WriteAscii)(window, ldat Len, CONST byte *Ascii);
-    void (*WriteString)(window, ldat Len, CONST byte *String);
-    void (*WriteHWFont)(window, ldat Len, CONST hwfont *HWFont);
-    void (*WriteHWAttr)(window, dat x, dat y, ldat Len, CONST hwattr *Attr);
-    byte (*WriteRow)(window, ldat Len, CONST byte *Text);
-    
+    void (*TtyWriteAscii)(window, ldat Len, CONST byte *Ascii);
+    void (*TtyWriteString)(window, ldat Len, CONST byte *String);
+    void (*TtyWriteHWFont)(window, ldat Len, CONST hwfont *HWFont);
+    void (*TtyWriteHWAttr)(window, dat x, dat y, ldat Len, CONST hwattr *Attr);
+
+    byte (*RowWriteAscii)(window, ldat Len, CONST byte *Ascii);
+    byte (*RowWriteString)(window, ldat Len, CONST byte *String);
+    byte (*RowWriteHWFont)(window, ldat Len, CONST hwfont *HWFont);
+    byte (*RowWriteHWAttr)(window, dat x, dat y, ldat Len, CONST hwattr *Attr);
+
     void (*GotoXY)(window, ldat X, ldat Y);
     void (*SetColText)(window, hwcol ColText);
     void (*SetColors)(window, udat Bitmap,
@@ -707,7 +718,7 @@ struct s_fn_window {
 #define SOLIDCURSOR	8
 
 /* window size limits */
-#define MIN_XWIN	4
+#define MIN_XWIN	5
 #define MIN_YWIN	2
 
 struct s_sB {	/* for SCREENFL_USEBG screens */
@@ -765,6 +776,9 @@ struct s_fn_screen {
     widget (*KbdFocus)(screen);
     void (*Map)(screen, widget Parent);
     void (*UnMap)(screen);
+    void (*MapTopReal)(screen, screen);
+    void (*Raise)(screen);
+    void (*Lower)(screen);
     void (*Own)(screen, msgport);
     void (*DisOwn)(screen);    
     void (*RecursiveDelete)(screen, msgport);
@@ -778,7 +792,7 @@ struct s_fn_screen {
     screen (*CreateSimple)(fn_screen, dat NameLen, CONST byte *Name, hwattr Bg);
     void (*BgImage)(screen, dat BgWidth, dat BgHeight, CONST hwattr *Bg);
     void (*DrawMenu)(screen, dat Xstart, dat Xend);
-    void (*ActivateMenu)(screen, menuitem, byte byMouse);
+    void (*ActivateMenu)(screen, menuitem, byte ByMouse);
     void (*DeActivateMenu)(screen);
 };
 
@@ -857,7 +871,9 @@ struct s_fn_row {
     /* row */
     fn_obj Fn_Obj;
     byte (*SetText)(row, ldat Len, CONST byte *Text, byte DefaultCol);
-/*    byte (*SetHWFont)(row, ldat Len, CONST hwfont *HWFont, byte DefaultCol); */
+    byte (*SetHWFont)(row, ldat Len, CONST hwfont *HWFont, byte DefaultCol);
+    void (*Raise)(row);
+    void (*Lower)(row);
 };
 
 /*Flags : */
@@ -884,6 +900,7 @@ struct s_menuitem {
     /* menuitem */
     window Window;
     dat Left, ShortCut;
+    ldat WCurY; 
 };
 struct s_fn_menuitem {
     uldat Magic, Size, Used;
@@ -896,8 +913,10 @@ struct s_fn_menuitem {
     /* row */
     fn_obj Fn_Obj;
     byte (*SetText)(row, ldat Len, CONST byte *Text, byte DefaultCol);
-/*    byte (*SetHWFont)(row, ldat Len, CONST hwfont *HWFont, byte DefaultCol); */
+    byte (*SetHWFont)(row, ldat Len, CONST hwfont *HWFont, byte DefaultCol);
     /* menuitem */	
+    void (*Raise)(menuitem);
+    void (*Lower)(menuitem);
     fn_row Fn_Row;
     menuitem (*Create4Menu)(fn_menuitem, obj Parent, window Window, udat Code,
 			    byte Flags, ldat Len, CONST byte *Name);
@@ -930,8 +949,9 @@ struct s_fn_menu {
     fn_obj Fn_Obj;
     row (*SetInfo)(menu, byte Flags, ldat Len, CONST byte *Text, CONST hwcol *ColText);
     menuitem (*FindItem)(menu, dat i);
-    menuitem (*GetSelectItem)(menu);
-    void (*SetSelectItem)(menu, menuitem);
+    menuitem (*GetSelectedItem)(menu);
+    menuitem (*RecursiveGetSelectedItem)(menu, dat *depth);
+    void (*SetSelectedItem)(menu, menuitem);
 };
 
 
@@ -1023,7 +1043,7 @@ struct s_event_control {
     widget W;
     udat Code, Len;
     dat X, Y;
-    byte Data[1]; /* Data[Len] == '\0' */
+    byte Data[sizeof(uldat)]; /* [Len] bytes actually */
 };
 
 /* some MSG_CONTROL codes */
@@ -1036,8 +1056,13 @@ struct s_event_control {
 typedef struct s_event_clientmsg event_clientmsg;
 struct s_event_clientmsg {
     widget W;
-    udat Code, Len;
-    byte Data[1]; /* [Len] bytes actually */
+    udat Code, Format;
+    uldat Len;
+    union {
+	byte b[sizeof(uldat)];
+	udat d[sizeof(uldat)/sizeof(udat)];
+	uldat l[1];
+    } Data; /* [Len] bytes actually */
 };
 
 typedef struct s_event_display event_display;
@@ -1111,12 +1136,12 @@ struct s_event_selectionnotify {
     uldat Magic;
     byte MIME[MAX_MIMELEN];
     uldat Len;
-    byte Data[1]; /* Data[] is Len bytes actually */
+    byte Data[sizeof(uldat)]; /* Data[] is Len bytes actually */
 };
 /*SelectionNotify Magic*/
 #define SEL_APPEND	0x00000000
 #define SEL_TEXTMAGIC	0x54657874
-#define SEL_HWFONTMAGIC 0x4877666E
+#define SEL_HWFONTMAGIC 0x4877666E /* it's unicode */
 #define SEL_FILEMAGIC	0x46696c65
 #define SEL_URLMAGIC	0xAB1691BA
 #define SEL_DATAMAGIC	0xDA1AA1AD /* check MIME if you get this */
@@ -1298,7 +1323,7 @@ struct s_display_hw {
     void (*HWSelectionRequest)(obj Requestor, uldat ReqPrivate);
     void (*HWSelectionNotify)(uldat ReqPrivate, uldat Magic,
 			      CONST byte MIME[MAX_MIMELEN], uldat Len, CONST byte *Data);
-    void *HWSelectionPrivate;
+    tany HWSelectionPrivate;
 	
     byte (*CanDragArea)(dat Xstart, dat Ystart, dat Xend, dat Yend, dat DstXstart, dat DstYstart);
     void (*DragArea)(dat Xstart, dat Ystart, dat Xend, dat Yend, dat DstXstart, dat DstYstart);
@@ -1448,7 +1473,7 @@ struct s_fn_display_hw {
 
 /* IDs */
 #define NOID		((uldat)0)
-#define ERRID		((uldat)-1)
+#define BADID		((uldat)-1)
 
 #define MAXID		((uldat)0x0FFFFFFFul)
 #define magic_mask	((uldat)0xF0000000ul)
@@ -1468,6 +1493,7 @@ struct s_fn_display_hw {
 #define mutex_magic_id		0xB
 #define module_magic_id		0xC
 #define display_hw_magic_id	0xD
+#define all_magic_id		0xE
 
 /*
  * These must have consecutive values, but obj_magic_STR can be changed
@@ -1490,6 +1516,7 @@ struct s_fn_display_hw {
 #define mutex_magic_STR		"B"
 #define module_magic_STR	"C"
 #define display_hw_magic_STR	"D"
+#define all_magic_STR		"E"
 
 #define obj_magic	((uldat)0x0dead0b1ul)
 #define widget_magic	((uldat)0x161d9743ul)
@@ -1505,10 +1532,10 @@ struct s_fn_display_hw {
 #define mutex_magic	((uldat)0xB0faded0ul)
 #define module_magic	((uldat)0xCb0f1278ul)
 #define display_hw_magic ((uldat)0xDdbcc609ul)
+#define all_magic	((uldat)0xEa11Ea11ul)
 
 
-#define magic_n		14 /* max top hex digit of the above ones + 1 */
-
+#define magic_n		15 /* max top hex digit of the above ones + 1 */
 
 /*
  *   B I G   F A T   WARNING:
@@ -1532,6 +1559,7 @@ struct s_fn_display_hw {
 #define IS_MSG(O)	IS_OBJ(msg,O)
 #define IS_MODULE(O)	IS_OBJ(module,O)
 #define IS_DISPLAY_HW(O) IS_OBJ(display_hw,O)
+#define IS_ALL(O)	IS_OBJ(all,O)
 
 /* in the same order as the #defines above ! */
 struct s_fn {
@@ -1549,22 +1577,24 @@ struct s_fn {
     fn_msg f_msg;
     fn_module f_module;
     fn_display_hw f_display_hw;
+    fn_obj f_all;
 };
 
 struct s_setup {
     dat MaxMouseSnap;
     udat MinAllocSize;
     byte Flags;
-    byte SelectionButton, PasteButton;
+    byte ButtonSelection, ButtonPaste;
     byte DeltaXShade, DeltaYShade;
 };
 /* All->Setup->Flags */
 #define SETUP_SHADOWS		0x01
 #define SETUP_BLINK		0x02
-#define SETUP_ALWAYSCURSOR	0x04
-#define SETUP_HIDEMENU		0x08
-#define SETUP_MENUINFO		0x10
-#define SETUP_EDGESCROLL	0x20
+#define SETUP_CURSOR_ALWAYS	0x04
+#define SETUP_MENU_HIDE		0x08
+#define SETUP_MENU_INFO		0x10
+#define SETUP_MENU_RELAX	0x20
+#define SETUP_SCREEN_SCROLL	0x40
 
 
 #define MAX_XSHADE	9
@@ -1624,14 +1654,19 @@ typedef struct s_selection {
 
 typedef struct s_button_vec {
     hwfont shape[2];
-    num pos;
+    sbyte pos;
     byte exists;
     byte changed;
 } button_vec;
 
 
 struct s_all {
-    uldat Id; /* for compatibility with s_obj */
+    /* for compatibility with s_obj */
+    uldat Id;
+    fn_obj Fn;
+    obj Prev, Next;
+    obj Parent;
+    
     screen FirstScreen, LastScreen;
     msgport FirstMsgPort, LastMsgPort, RunMsgPort;
     mutex FirstMutex, LastMutex;

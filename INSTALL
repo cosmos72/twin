@@ -10,14 +10,15 @@ But of course you may want to know more details:
 First, you might want to edit the files `makerules' and `makeautoconf.in'
 to change the install directory, tweak compiler flags (enable debugging), etc.
 Also, someone may want to tweak the configuration options generated
-by `./configure'; this is possible with `make config' or `make menuconfig'
+by `./configure'; this is possible with `make config', `make menuconfig'
+`make gconfig' or `scripts/Configure.sh [options]'
 -- warning: if you enable options that were disabled by `./configure',
 build will almost certainly fail! --
 but `make config' or `make menuconfig' ask questions for many options
 one may not know the meaning of.
 
 For a discussion about MANUALLY configuring twin (almost never necessary),
-see the file `Configure', distributed with twin in the docs/ subdirectory.
+see the help file `Configure', distributed with twin in the docs/ subdirectory.
 For instructions about installing twin, see the file `Tutorial',
 section 4, again in the docs/ subdirectory.
 

@@ -1,6 +1,6 @@
 #
 # This file contains the configuration for twin look-n-feel.
-# By default, it is installed as ${DESTDIR}/twin/system.twinrc
+# By default, it is installed as ${libdir}/twin/system.twinrc
 # and, provided twin is compiled with RC parser support,
 # it is used as fallback configuration in case the user does not
 # have his own ${HOME}/.twinrc
@@ -201,30 +201,31 @@ GlobalFlags Shadows 3 2 +Shadows
 GlobalFlags +Blink
 #
 # do not force cursor always visible
-GlobalFlags -AlwaysCursor
+GlobalFlags -CursorAlways
 #
 # disable edge screen scrolling
-GlobalFlags -EdgeScroll
+GlobalFlags -ScreenScroll
 #
 # do not hide the menu
-GlobalFlags -HideMenu
+GlobalFlags -MenuHide
 #
 # enable menu information row
 GlobalFlags +MenuInfo
 #
-# do not use alternate font
-GlobalFlags -AltFont 
+# don't relax menu navigation
+GlobalFlags -MenuRelax
+#
 #
 # choose the mouse button used for click-to-focus,
 # for text selection and to activate window gadgets.
 # 1 means Left, 2 means Middle, 3 means Right.
 # this also implies a 'Focus' action when clicking in a non-focused window.
 #
-GlobalFlags SelectionButton 1
+GlobalFlags ButtonSelection 1
 #
 # choose the mouse button used to paste text selection
 #
-GlobalFlags PasteButton 2
+GlobalFlags ButtonPaste 2
 
 #
 # keyboard bindings syntax:
@@ -431,7 +432,7 @@ Mouse H1  M  Interactive Screen
 # 
 # Focus [On|Off|Toggle]
 # 
-# GlobalFlags [+|-][AltFont] [+|-][AlwaysCursor] [+|-][Blink] [+|-][EdgeScroll] [+|-][HideMenu] [+|-]MenuItems [+|-][Shadows <x> <y>]
+# GlobalFlags [+|-][AltFont] [+|-][AlwaysCursor] [+|-][Blink] [+|-][EdgeScroll] [+|-][HideMenu] [+|-][MenuInfo] [+|-][MenuRelax] [+|-][Shadows <x> <y>]
 # 
 # Interactive <kind>
 # # choose one of: Scroll, Move, Resize, Screen, Menu

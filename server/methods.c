@@ -19,17 +19,19 @@
 #include "extensions.h"
 
 #include "draw.h"
+#include "printk.h"
 #include "resize.h"
 #include "util.h"
 #include "hw.h"
 #include "hw_multi.h"
 
-#include "Tw/Tw.h"
-#include "Tw/Twstat.h"
+#include <Tw/Tw.h>
+#include <Tw/Twstat.h>
+#include <Tw/Twstat_defs.h>
 
 #ifdef CONF__UNICODE
-# include "Tutf/Tutf.h"
-# include "Tutf/Tutf_defs.h"
+# include <Tutf/Tutf.h>
+# include <Tutf/Tutf_defs.h>
 #endif
 #ifdef CONF_TERM
 # include "tty.h"
@@ -112,7 +114,7 @@ static obj CreateObj(fn_obj Fn_Obj) {
 	if (AssignId(Fn_Obj, Obj)) {
 	    (Obj->Fn = Fn_Obj)->Used++;
 	    Obj->Prev = Obj->Next = (obj)0;
-	    Obj->Parent = (obj_parent)0;
+	    Obj->Parent = (obj)0;
 	} else {
 	    FreeMem(Obj);
 	    Obj = (obj)0;
@@ -121,18 +123,24 @@ static obj CreateObj(fn_obj Fn_Obj) {
     return Obj;
 }
 
-static void InsertObj(obj Obj, obj_parent Parent, obj Prev, obj Next) {
+static void InsertObj(obj Obj, obj Parent, obj Prev, obj Next) {
+    printk("twin: internal error: virtual function InsertObj() called!\n");
+#if 0
     if (!Obj->Parent && Parent) {
 	InsertGeneric(Obj, Parent, Prev, Next, (ldat *)0);
-	Obj->Parent = Parent;
+	Obj->Parent = (obj)Parent;
     }
+#endif
 }
 
 static void RemoveObj(obj Obj) {
+    printk("twin: internal error: virtual function RemoveObj() called!\n");
+#if 0
     if (Obj->Parent) {
-	RemoveGeneric(Obj, Obj->Parent, (ldat *)0);
-	Obj->Parent = (obj_parent)0;
+	RemoveGeneric(Obj, (obj_parent)Obj->Parent, (ldat *)0);
+	Obj->Parent = (obj)0;
     }
+#endif
 }
 
 static void DeleteObj(obj Obj) {
@@ -190,7 +198,7 @@ static widget CreateWidget(fn_widget Fn_Widget, msgport Owner, dat XWidth, dat Y
 static void InsertWidget(widget W, widget Parent, widget Prev, widget Next) {
     if (Parent)
 	/*
-	 * don't check W->Parent here, as MakeFirst() and MakeLast() call
+	 * don't check W->Parent here, as Raise() and Lower() call
 	 * RemoveWidget() then InsertWidget() but RemoveWidget() does not reset W->Parent
 	 */
 	InsertGeneric((obj)W, (obj_parent)&Parent->FirstW, (obj)Prev, (obj)Next, (ldat *)0);
@@ -311,7 +319,7 @@ static void MapWidget(widget W, widget Parent) {
     
     if (W && !W->Parent && !W->MapQueueMsg && Parent) {
 	if (IS_SCREEN(Parent)) {
-	    if (Ext(WM,MsgPort) && (Msg = Do(Create,Msg)(FnMsg, MSG_MAP, sizeof(event_map)))) {
+	    if (Ext(WM,MsgPort) && (Msg = Do(Create,Msg)(FnMsg, MSG_MAP, 0))) {
 		Msg->Event.EventMap.W = W;
 		Msg->Event.EventMap.Code   = 0;
 		Msg->Event.EventMap.Screen = (screen)Parent;
@@ -393,24 +401,13 @@ static void UnMapWidget(widget W) {
     if (W && (Parent = W->Parent)) {
 	if (IS_SCREEN(Parent)) {
 	    if ((Screen = (screen)Parent) == All->FirstScreen &&
-		(All->State & STATE_ANY) == STATE_MENU) {
-
-		/* take care... menu is active */
-		if (W == (widget)Screen->MenuWindow || 
-		    (W == Screen->FocusW && (W->Flags & WINDOWFL_MENU))) {
-		
-		    /*
-		     * ! DANGER ! 
-		     * Trying to UnMap() either the menu window or the menu owner.
-		     * shutdown the menu first!
-		     */
-		    ChangeMenuFirstScreen((menuitem)0, FALSE, DISABLE_MENU_FLAG);
-		    
-		    if (W->Flags & WINDOWFL_MENU)
-			/* all done */
-			return;
-		    /* else we still must UnMap() the original window */
-		}
+		W == (widget)Screen->MenuWindow) {
+		/*
+		 * ! DANGER ! 
+		 * Trying to UnMap() the menu owner.
+		 * shutdown the menu first!
+		 */
+		CloseMenu();
 	    }
 
 	    if (W->Attrib & WIDGET_WANT_MOUSE_MOTION)
@@ -439,17 +436,18 @@ static void UnMapWidget(widget W) {
 	    else
 		DrawAreaWidget(W);
 	    
+	    if (IS_SCREEN(Parent)) {
+		W->Left = 0;
+		W->Up = MAXDAT;
+	    }
 	    W->Parent = (widget)0;
-	    W->Left = 0;
-	    W->Up = MAXDAT;
 
 	    if (wasFocus) {
 		if (Screen == All->FirstScreen) {
 		    /*
 		     * in case the user was dragging this window...
-		     * or using it as menu :-P
 		     */
-		    if ((All->State & STATE_ANY) <= STATE_MENU)
+		    if ((All->State & STATE_ANY) < STATE_MENU)
 			All->State &= ~STATE_ANY;
 		    
 		    if (Next) {
@@ -490,6 +488,14 @@ static void UnMapWidget(widget W) {
 	Delete(W->MapQueueMsg);
 	W->MapQueueMsg = (msg)0;
     }
+}
+
+static void RaiseW(widget W) {
+    RaiseWidget(W, FALSE);
+}
+
+static void LowerW(widget W) {
+    LowerWidget(W, FALSE);
 }
 
 static void SetXYWidget(widget W, dat X, dat Y) {
@@ -591,6 +597,8 @@ static struct s_fn_widget _FnWidget = {
     MapWidget,
     UnMapWidget,
     MapTopRealWidget,
+    RaiseW,
+    LowerW,
     OwnWidget,
     DisOwnWidget,
     RecursiveDeleteWidget,
@@ -834,6 +842,8 @@ static struct s_fn_gadget _FnGadget = {
     (void *)MapWidget,
     (void *)UnMapWidget,
     (void *)MapTopRealWidget,
+    (void *)RaiseW,
+    (void *)LowerW,
     (void *)OwnWidget,
     (void *)DisOwnWidget,
     (void *)RecursiveDeleteWidget,
@@ -905,7 +915,9 @@ static byte InitTtyData(window Window, dat ScrollBackLines) {
     Data->G1 = Data->saveG1 = GRAF_MAP;
 
     Data->utf = Data->utf_count = Data->utf_char = 0;
-    
+#ifdef CONF__UNICODE
+    Data->InvCharset = Tutf_UTF_16_to_IBM437;
+#endif
     Data->newLen = Data->newMax = 0;
     Data->newName = NULL;
     
@@ -937,6 +949,7 @@ static window CreateWindow(fn_window Fn_Window, dat NameLen, CONST byte *Name, C
 	(Window=(window)Fn_Window->Fn_Widget->Create
 	 ((fn_widget)Fn_Window, Menu->MsgPort, XWidth, YWidth, Attrib, Flags, 0, MAXDAT, (hwattr)0))) {
 	Window->Menu = Menu;
+	Window->MenuItem = (menuitem)0;
 	Window->NameLen = NameLen;
 	Window->Name = _Name;
 	Window->ColName = _ColName;
@@ -1036,6 +1049,8 @@ static void ChangeFieldWindow(window W, udat field, uldat CLEARMask, uldat XORMa
       case TWS_window_YstSel:
       case TWS_window_XendSel:
       case TWS_window_YendSel:
+	/* FIXME: finish this */
+	break;
       case TWS_window_ColGadgets:
       case TWS_window_ColArrows:
       case TWS_window_ColBars:
@@ -1045,7 +1060,27 @@ static void ChangeFieldWindow(window W, udat field, uldat CLEARMask, uldat XORMa
       case TWS_window_ColSelect:
       case TWS_window_ColDisabled:
       case TWS_window_ColSelectDisabled:
-	/* FIXME: finish this */
+	{
+	    hwcol *C = NULL;
+	    switch (field) {
+	      case TWS_window_ColGadgets:	C = &W->ColGadgets; break;
+	      case TWS_window_ColArrows:	C = &W->ColArrows; break;
+	      case TWS_window_ColBars:		C = &W->ColBars; break;
+	      case TWS_window_ColTabs:		C = &W->ColTabs; break;
+	      case TWS_window_ColBorder:	C = &W->ColBorder; break;
+	      case TWS_window_ColText:		C = &W->ColText; break;
+	      case TWS_window_ColSelect:	C = &W->ColSelect; break;
+	      case TWS_window_ColDisabled:	C = &W->ColDisabled; break;
+	      case TWS_window_ColSelectDisabled:C = &W->ColSelectDisabled; break;
+	      default: break;
+	    }
+	    i = (*C & ~CLEARMask) ^ XORMask;
+	    if (i != *C) {
+		*C = i;
+		/* FIXME: this is an overkill */
+		DrawAreaWidget((widget)W);
+	    }
+	}
 	break;
       case TWS_window_Flags:
 	mask = WINDOWFL_CURSOR_ON;
@@ -1240,23 +1275,23 @@ window Create4MenuWindow(fn_window Fn_Window, menu Menu) {
 #ifndef CONF_TERM
 # ifdef CONF__MODULES
 void FakeWriteAscii(window Window, ldat Len, CONST byte *Ascii) {
-    if (DlLoad(TermSo) && Window->Fn->WriteAscii != FakeWriteAscii)
-	Act(WriteAscii,Window)(Window, Len, Ascii);
+    if (DlLoad(TermSo) && Window->Fn->TtyWriteAscii != FakeWriteAscii)
+	Act(TtyWriteAscii,Window)(Window, Len, Ascii);
 }
 
 void FakeWriteString(window Window, ldat Len, CONST byte *String) {
-    if (DlLoad(TermSo) && Window->Fn->WriteString != FakeWriteString)
-	Act(WriteString,Window)(Window, Len, String);
+    if (DlLoad(TermSo) && Window->Fn->TtyWriteString != FakeWriteString)
+	Act(TtyWriteString,Window)(Window, Len, String);
 }
 
 void FakeWriteHWFont(window Window, ldat Len, CONST hwfont *HWFont) {
-    if (DlLoad(TermSo) && Window->Fn->WriteHWFont != FakeWriteHWFont)
-	Act(WriteHWFont,Window)(Window, Len, HWFont);
+    if (DlLoad(TermSo) && Window->Fn->TtyWriteHWFont != FakeWriteHWFont)
+	Act(TtyWriteHWFont,Window)(Window, Len, HWFont);
 }
 
 void FakeWriteHWAttr(window Window, dat x, dat y, ldat Len, CONST hwattr *Attr) {
-    if (DlLoad(TermSo) && Window->Fn->WriteHWAttr != FakeWriteHWAttr)
-	Act(WriteHWAttr,Window)(Window, x, y, Len, Attr);
+    if (DlLoad(TermSo) && Window->Fn->TtyWriteHWAttr != FakeWriteHWAttr)
+	Act(TtyWriteHWAttr,Window)(Window, x, y, Len, Attr);
 }
 
 window FakeOpenTerm(CONST byte *arg0, byte * CONST *argv) {
@@ -1323,6 +1358,8 @@ static row FindRow(window Window, ldat Row) {
 	    while (k>Row && (CurrRow=CurrRow->Prev))
 		k--;
     }
+    if (CurrRow && IS_MENUITEM(CurrRow))
+	((menuitem)CurrRow)->WCurY = Row;
     return CurrRow;
 }
 
@@ -1361,6 +1398,8 @@ static struct s_fn_window _FnWindow = {
     (void *)MapWidget,
     (void *)UnMapWidget,
     (void *)MapTopRealWidget,
+    (void *)RaiseW,
+    (void *)LowerW,
     (void *)OwnWidget,
     (void *)DisOwnWidget,
     (void *)RecursiveDeleteWidget,
@@ -1380,7 +1419,10 @@ static struct s_fn_window _FnWindow = {
     FakeWriteHWFont,
     FakeWriteHWAttr,
 #endif
-    WriteRow,		/* exported by resize.c */
+    RowWriteAscii,		/* exported by resize.c */
+    RowWriteAscii,
+    RowWriteHWFont,
+    (void *)AlwaysFalse,
 	
     GotoXYWindow,
     SetColTextWindow,
@@ -1549,110 +1591,20 @@ static widget FocusScreen(screen tScreen) {
     return (widget)Screen;
 }
 
-static void ActivateMenuScreen(screen Screen, menuitem Item, byte byMouse) {
-    menu Menu;
+static void ActivateMenuScreen(screen Screen, menuitem Item, byte ByMouse) {
     
     if ((All->State & STATE_ANY) != STATE_DEFAULT)
 	return;
     
     if (Screen && Screen != All->FirstScreen)
 	Act(Focus,Screen)(Screen);
-    
-    Menu = Act(FindMenu,Screen)(Screen);
 
-    ChangeMenuFirstScreen(Item, byMouse, ACTIVATE_MENU_FLAG);
-}
-
-static void DrawMenuScreen(screen Screen, dat Xstart, dat Xend) {
-    screen fScreen;
-    menu Menu;
-    menuitem Item;
-    dat DWidth, DHeight, i, j, x;
-    hwfont Font;
-    hwcol Color;
-    byte Select, State, MenuInfo;
-    
-    if (QueuedDrawArea2FullScreen || !Screen || !Screen->All || Xstart>Xend)
-	return;
-    
-    j = Screen->YLimit;
-    DWidth = All->DisplayWidth;
-    DHeight = All->DisplayHeight;
-    
-    if (j<0 || j>=DHeight || Xstart>=DWidth || Xstart > Xend)
-	return;
-    
-    for (fScreen = All->FirstScreen; fScreen && fScreen != Screen; fScreen = fScreen->Next) {
-	if (fScreen->YLimit <= j)
-	    return;
-    }
-    if (fScreen != Screen)
-	return;
-	
-    State = All->State & STATE_ANY;
-    Menu = Act(FindMenu,Screen)(Screen);
-    
-    MenuInfo = State != STATE_MENU && (All->SetUp->Flags & SETUP_MENUINFO);
-    
-    Xstart = Max2(Xstart, 0);
-    Xend   = Min2(Xend, DWidth-1);
-    
-    for (i=Xstart; i<=Xend; i++) {
-	if (i+2>=DWidth) {
-	    Color = State == STATE_SCREEN ? Menu->ColSelShtCut : Menu->ColShtCut;
-	    if (XAND(Screen->Flags, SCREENFL_BACK_SELECT|SCREENFL_BACK_PRESSED))
-		Color = COL( COLBG(Color), COLFG(Color));
-	    Font = Screen_Back[2-(DWidth-i)];
-	}
-	else if (DWidth-i<=(dat)3+lenTWDisplay) {
-	    Color = State == STATE_SCREEN ? Menu->ColSelShtCut : Menu->ColShtCut;
-	    Font = TWDisplay[3 + lenTWDisplay - (DWidth - i)];
-	    if (!Font) Font = ' ';
-	}
-	else if (DWidth-i>(dat)9 && DWidth-i<=(dat)9+All->BuiltinRow->Len) {
-	    Color = State == STATE_SCREEN ? Menu->ColSelect : Menu->ColItem;
-	    Font = All->BuiltinRow->Text[9+All->BuiltinRow->Len - (DWidth-i)];
-	    if (!Font) Font = ' ';
-	}
-	else if (MenuInfo && FindInfo(Menu, i)) {
-	    Select = State == STATE_SCREEN;
-	    FindFontInfo(Menu, i, Select, &Font, &Color);
-	}
-	else {
-	    if (!MenuInfo) {
-		Item = Act(FindItem,Menu)(Menu, i);
-		
-		if (Item) {
-		    /* check if Item is from All->CommonMenu */
-		    if ((menu)Item->Parent == All->CommonMenu && Menu->LastI)
-			x = Menu->LastI->Left + Menu->LastI->Len;
-		    else
-			x = 0;
-
-		    Select = State == STATE_SCREEN ||
-			(State == STATE_MENU && ((menu)Item->Parent)->SelectI == Item);
-		    /*
-		     * CHEAT: Item may be in CommonMenu, not in Menu...
-		     * steal Item color from Menu.
-		     */
-		    FindFontMenuItem(Menu, Item, i - x, Select, &Font, &Color);
-		}
-	    }
-	    if (MenuInfo || !Item) {
-		Color = State == STATE_SCREEN ? Menu->ColSelect : Menu->ColItem;
-		Font = ' ';
-	    }
-	}
-	if (Screen != All->FirstScreen)
-	    Color = Menu->ColDisabled;
-	Video[i+j*DWidth]=HWATTR(Color, Font);
-    }
-    DirtyVideo(Xstart, j, Xend, j);    
+    SetMenuState(Item, ByMouse);
 }
 
 static void DeActivateMenuScreen(screen Screen) {
     if (Screen == All->FirstScreen && (All->State & STATE_ANY) == STATE_MENU)
-	ChangeMenuFirstScreen((menuitem)0, FALSE, DISABLE_MENU_FLAG);
+	CloseMenu();
 }
 
 static struct s_fn_screen _FnScreen = {
@@ -1673,6 +1625,9 @@ static struct s_fn_screen _FnScreen = {
     (void *)NoOp, /* KbdFocusWidget */
     (void *)NoOp, /* MapWidget */
     (void *)NoOp, /* UnMapWidget */
+    (void *)NoOp, /* MapTopRealWidget */
+    (void *)RaiseW,
+    (void *)LowerW,
     (void *)OwnWidget,
     (void *)DisOwnWidget,
     (void *)RecursiveDeleteWidget,
@@ -1829,6 +1784,7 @@ static void RemoveRow(row Row) {
 static void DeleteRow(row Row) {    
     if (Row) {
 	fn_obj Fn_Obj = Row->Fn->Fn_Obj;
+	window W = Row->Window;
 	
 	Remove(Row);
 	if (Row->Text)
@@ -1839,6 +1795,9 @@ static void DeleteRow(row Row) {
 	(Fn_Obj->Delete)((obj)Row);
 	if (!--Fn_Obj->Used)
 	    FreeMem(Fn_Obj);
+	
+	if (W && W->Parent && (W->Flags & WINDOWFL_MENU))
+	    ResizeRelWindow(W, 0, -1);
     }
 }
 
@@ -1870,6 +1829,75 @@ static byte SetTextRow(row Row, ldat Len, CONST byte *Text, byte DefaultCol) {
     return FALSE;
 }
 
+static byte SetHWFontRow(row Row, ldat Len, CONST hwfont *HWFont, byte DefaultCol) {
+    if (EnsureLenRow(Row, Len, DefaultCol)) {
+	if (Len) {
+	    CopyMem(HWFont, Row->Text, Len * sizeof(hwfont));
+	    if (!(Row->Flags & ROW_DEFCOL) && !DefaultCol)
+		/* will not work correctly if sizeof(hwcol) != 1 */
+		WriteMem(Row->ColText, COL(WHITE,BLACK), Len * sizeof(hwcol));
+	}
+	Row->Len = Len;
+	Row->Gap = Row->LenGap = 0;
+	return TRUE;
+    }
+    return FALSE;
+}
+
+
+/*
+ * this is used also for plain rows.
+ * be careful to only access fields that even rows have
+ */
+static void RaiseMenuItem(menuitem M) {
+    obj Parent;
+    menuitem Next;
+    
+    if (M && (Parent = (obj)M->Parent)) {
+	if (IS_MENU(Parent))
+	    Next = ((menu)Parent)->FirstI;
+	else if (IS_WINDOW(Parent) && W_USE((window)Parent, USEROWS))
+	    Next = (menuitem)((window)Parent)->USE.R.FirstRow;
+	else
+	    return;
+	
+	Act(Remove,M)(M);
+	Act(Insert,M)(M, Parent, (menuitem)0, Next);
+	
+	if (IS_MENU(Parent))
+	    SyncMenu((menu)Parent);
+	else
+	    DrawAreaWidget((widget)Parent);
+    }
+}
+
+/*
+ * this is used also for plain rows.
+ * be careful to only access fields that even rows have
+ */
+static void LowerMenuItem(menuitem M) {
+    obj Parent;
+    menuitem Prev;
+    
+    if (M && (Parent = (obj)M->Parent)) {
+	if (IS_MENU(Parent))
+	    Prev = ((menu)Parent)->LastI;
+	else if (IS_WINDOW(Parent) && W_USE((window)Parent, USEROWS))
+	    Prev = (menuitem)((window)Parent)->USE.R.LastRow;
+	else
+	    return;
+	
+	Act(Remove,M)(M);
+	Act(Insert,M)(M, Parent, Prev, (menuitem)0);
+	
+	if (IS_MENU(Parent))
+	    SyncMenu((menu)Parent);
+	else if (Parent->Parent)
+	    DrawAreaWidget((widget)Parent);
+    }
+}
+
+
 static struct s_fn_row _FnRow = {
     row_magic, sizeof(struct s_row), (uldat)1,
     CreateRow,
@@ -1879,7 +1907,10 @@ static struct s_fn_row _FnRow = {
     (void *)NoOp,
     /* row */
     &_FnObj,
-    SetTextRow
+    SetTextRow,
+    SetHWFontRow,
+    (void *)RaiseMenuItem,
+    (void *)LowerMenuItem
 };
 
 
@@ -1892,14 +1923,6 @@ byte FindInfo(menu Menu, dat i) {
 }
 
 /* menuitem */
-
-static void SyncScreenMenus(menu Menu) {
-    screen Screen;
-    for (Screen = All->FirstScreen; Screen; Screen = Screen->Next) {
-	if (Act(FindMenu,Screen)(Screen) == Menu)
-	    Act(DrawMenu,Screen)(Screen, 0, MAXDAT);
-    }
-}
 
 static menuitem CreateMenuItem(fn_menuitem Fn_MenuItem, obj Parent, window Window, udat Code,
 			       byte Flags, dat Left, ldat Len, dat ShortCut, CONST byte *Name) {
@@ -1918,6 +1941,11 @@ static menuitem CreateMenuItem(fn_menuitem Fn_MenuItem, obj Parent, window Windo
 	MenuItem->Window=Window;
 	MenuItem->Left=Left;
 	MenuItem->ShortCut=ShortCut;
+	MenuItem->WCurY=MAXLDAT;
+	
+	if (Window)
+	    Window->MenuItem = MenuItem;
+	
 	if (IS_WINDOW(Parent)) {
 	    Window = (window)Parent;
 	    
@@ -1930,7 +1958,7 @@ static menuitem CreateMenuItem(fn_menuitem Fn_MenuItem, obj Parent, window Windo
 	    Act(Insert, MenuItem)(MenuItem, (obj)Window, (menuitem)Window->USE.R.LastRow, NULL);
 	} else {
 	    Act(Insert, MenuItem)(MenuItem, Parent, ((menu)Parent)->LastI, NULL);
-	    SyncScreenMenus((menu)Parent);
+	    SyncMenu((menu)Parent);
 	}
 	return MenuItem;
     }
@@ -1967,7 +1995,7 @@ static void DeleteMenuItem(menuitem MenuItem) {
 	
 	Remove(MenuItem);
 	if (IS_MENU(Parent))
-	    SyncScreenMenus((menu)Parent);
+	    SyncMenu((menu)Parent);
 	
 	if (MenuItem->Window)
 	    Delete(MenuItem->Window);
@@ -1985,12 +2013,10 @@ menuitem Create4MenuMenuItem(fn_menuitem Fn_MenuItem, obj Parent, window Window,
     if (!Parent)
 	return (menuitem)0;
 
-    if (IS_MENU(Parent)) {
-	if (((menu)Parent)->LastI)
-	    Left=((menu)Parent)->LastI->Left + ((menu)Parent)->LastI->Len;
-	else
-	    Left=(dat)1;
-    }
+    if (IS_MENU(Parent) && ((menu)Parent)->LastI)
+	Left=((menu)Parent)->LastI->Left + ((menu)Parent)->LastI->Len;
+    else
+	Left=(dat)1;
     
     ShortCut=(dat)0;
     while (ShortCut<Len && Name[ShortCut]==' ')
@@ -2006,7 +2032,7 @@ menuitem Create4MenuMenuItem(fn_menuitem Fn_MenuItem, obj Parent, window Window,
 static uldat Create4MenuCommonMenuItem(fn_menuitem Fn_MenuItem, menu Menu) {
     if (Menu) {
 	Menu->CommonItems = TRUE;
-	SyncScreenMenus(Menu);
+	SyncMenu(Menu);
 	return (uldat)1;
     }
     return (uldat)0;
@@ -2021,7 +2047,9 @@ static struct s_fn_menuitem _FnMenuItem = {
     (void *)NoOp,
     &_FnObj,
     SetTextRow,
-    /* SetHWFont, */
+    (void *)SetHWFontRow,
+    RaiseMenuItem,
+    LowerMenuItem,
     &_FnRow,
     Create4MenuMenuItem,
     Create4MenuCommonMenuItem
@@ -2079,7 +2107,7 @@ static void DeleteMenu(menu Menu) {
 	 * the only way to get the list of windows that
 	 * are using this menu is to scan the whole MsgPort.
 	 * We must UnMap() all those windows
-	 * as a window without menu cannot exist.
+	 * as a window without menu cannot be displayed.
 	 *
 	 * optimization: if we are going to UnMap() a lot of windows,
 	 * we set QueuedDrawArea2FullScreen = TRUE, so that the UnMap()
@@ -2102,7 +2130,7 @@ static void DeleteMenu(menu Menu) {
 	    if (IS_WINDOW(W) && ((window)W)->Menu == Menu) {
 		if (W->Parent && IS_SCREEN(W->Parent)) {
 		    Act(UnMap,W)(W);
-		((window)W)->Menu = (menu)0;
+		    ((window)W)->Menu = (menu)0;
 		}
 	    }
 	}
@@ -2161,7 +2189,7 @@ static menuitem FindItem(menu Menu, dat i) {
     return Item;
 }
 
-static menuitem GetSelectItem(menu Menu) {
+static menuitem GetSelectedItem(menu Menu) {
     if (Menu) {
 	if (Menu->SelectI)
 	    return Menu->SelectI;
@@ -2171,14 +2199,35 @@ static menuitem GetSelectItem(menu Menu) {
     return (menuitem)0;
 }
 
-static void SetSelectItem(menu Menu, menuitem Item) {
+static menuitem RecursiveGetSelectedItem(menu Menu, dat *depth) {
+    menuitem _I = Act(GetSelectedItem,Menu)(Menu), I = (menuitem)0;
+    window W = (window)0, FW = (window)All->FirstScreen->FocusW;
+    dat d = -1;
+    
+    while (_I && IS_MENUITEM(_I)) {
+	I = _I;
+	d++;
+	if (W == FW)
+	    break;
+	if ((W = I->Window) && W->Parent)
+	    _I = (menuitem)Act(FindRow,W)(W, W->CurY);
+	else
+	    break;
+    }
+    if (depth) *depth = d > 0 ? d : 0;
+    return I;
+}
+
+static void SetSelectedItem(menu Menu, menuitem Item) {
+    menuitem S;
+    
     if (Menu) {
 	if (Item) {
 	    if (Item->Parent == (obj)Menu) {
+		S = Menu->SelectI;
 		Menu->SelectI = Item;
 		if (Menu->CommonItems && All->CommonMenu)
 		    All->CommonMenu->SelectI = (menuitem)0;
-		
 	    } else if (Menu->CommonItems && Item->Parent == (obj)All->CommonMenu) {
 		Menu->SelectI = (menuitem)0;
 		All->CommonMenu->SelectI = Item;
@@ -2189,6 +2238,8 @@ static void SetSelectItem(menu Menu, menuitem Item) {
 	    if (Menu->CommonItems && All->CommonMenu)
 		All->CommonMenu->SelectI = Item;
 	}
+
+	Act(DrawMenu,All->FirstScreen)(All->FirstScreen, 0, MAXDAT);
     }
 }
 
@@ -2203,8 +2254,9 @@ static struct s_fn_menu _FnMenu = {
     &_FnObj,
     SetInfoMenu,
     FindItem,
-    GetSelectItem,
-    SetSelectItem
+    GetSelectedItem,
+    RecursiveGetSelectedItem,
+    SetSelectedItem
 };
 
 
@@ -2214,6 +2266,29 @@ static struct s_fn_menu _FnMenu = {
 
 static msg CreateMsg(fn_msg Fn_Msg, udat Type, udat EventLen) {
     msg Msg;
+    
+    switch (Type) {
+      case MSG_MAP:		EventLen += sizeof(event_map); break;
+      case MSG_DISPLAY:		EventLen += sizeof(event_display); break;
+      case MSG_KEY:
+      case MSG_WIDGET_KEY:	EventLen += sizeof(event_keyboard); break;
+      case MSG_WIDGET_MOUSE:
+      case MSG_MOUSE:		EventLen += sizeof(event_mouse); break;
+      case MSG_WIDGET_CHANGE:	EventLen += sizeof(event_widget); break;
+      case MSG_WIDGET_GADGET:	EventLen += sizeof(event_gadget); break;
+      case MSG_MENU_ROW:	EventLen += sizeof(event_menu); break;
+      case MSG_SELECTION:	EventLen += sizeof(event_selection); break;
+      case MSG_SELECTIONNOTIFY:	EventLen += sizeof(event_selectionnotify) - sizeof(uldat); break;
+      case MSG_SELECTIONREQUEST:EventLen += sizeof(event_selectionrequest); break;
+      case MSG_CONTROL:
+      case MSG_USER_CONTROL:	EventLen += sizeof(event_control) - sizeof(uldat); break;
+      case MSG_USER_CLIENTMSG:	EventLen += sizeof(event_clientmsg) - sizeof(uldat); break;
+
+      case MSG_SELECTIONCLEAR:	EventLen += sizeof(event_common); break;
+      default:
+	printk("twin: CreateMsg(): internal error: unknown Msg->Type 0x%04x(%d)\n", (int)Type, (int)Type);
+	return (msg)0;
+    }
     
     if ((Msg = (msg)AllocMem(EventLen + Delta))) {
 	if (AssignId((fn_obj)Fn_Msg, (obj)Msg)) {

@@ -10,7 +10,7 @@
 #include <string.h>
 
 #include "autoconf.h"
-#include "Tw/missing.h"
+#include <Tw/Tw.h>
 
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>

@@ -1,0 +1,180 @@
+
+
+
+
+
+dnl This file is m4/hw.m4h : m4 macros to autogenerate hw_*_m4.c
+dnl Tell the user about this.
+/* This file was automatically generated from hw_`'target()_c by m4/hw.m4h, do not edit! */
+
+
+/*
+ *  hw_`'target()_m4.c  --  implementation of libTT methods on "target()" `target' display
+ *
+ *  Copyright (C) 2001,2002 by Massimiliano Ghilardi
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Library General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2 of the License, or (at your option) any later version.
+ *
+ */
+
+
+include(`m4/TTclasses.m4h')
+include(`m4/TThandy.m4h')
+
+divert(-1)
+
+define(`HWDEF',`define(`hw_$1')target()_$1')
+
+define(`DEF',`define(`mtd_$1')target()_$1')
+
+define(`NEW',`$1 DEF(New_$1)(ttfn_$1 FN, $1 o)')
+define(`NEWSUPER',`($1)FN->FN_`'m4super_$1->New((ttfn_`'m4super_$1)FN, (m4super_$1)o)')
+
+define(`BUILD',`$1 DEF(Build_$1)($1 o)')
+define(`BREAK',`void DEF(Break_$1)($1 o)')
+
+define(`FNSUPER',`o->FN->FN_`'m4super_$1')
+
+define(`DEL',`void DEF(Del_$1)($1 o)')
+define(`DELSUPER',`FNSUPER($1)->Del((m4super_$1)o)')
+
+
+define(`opaque_ifpointer', `ifelse(regexp(`$1', `_fn$'), -1, ifelse(index(`$1', `*'), -1, `', (opaque)), (opaque))')
+define(`obj2id_ifdecay', `ifdef(`m4super_$1', `OBJ2ID($2)', $2)')
+
+define(`wrap_export', `ifelse(index(`$3', `r'), -1, `', `exported($1,,get,$2,$1)')`'dnl
+`'ifelse(index(`$3', `w'), -1, `', `exported(void,,set,$2,$1)')')
+
+define(`def_handy', `
+arg_decl_decay($1) TT`'decl_name($2,$3,$4)_`'this`'(decl_args($@)) {
+    body($@)
+}')
+
+defined(`expand', $@)
+
+define(`DEF_DEFAULT_GetValue', `
+`'define(`this', $1)`'dnl
+`'define(`extends')`'dnl
+`'define(`this_count', 0)`'dnl
+`'define(`field', `ifelse(index($'`3, r), -1, `', `define(`this_count', inc(this_count))')')`'dnl
+`'TTdef_$1($1,$1)`'dnl
+`'ifelse(this_count, 0, `', `
+`'define(`mtd_GetValue_$1')`'dnl
+'static ttany target()_GetValue_$1($1 o, ttuint which) {
+    if (o && TTAssert(IS($1,o))) {
+	switch (which) {
+`'define(`exported', `ifelse($'`3, get, `
+	  case this`'_'$'`4`:
+	    return (ttany)opaque_ifpointer('$'`1`)obj2id_ifdecay('$'`1`, o->'$'`4`);', `')')`'dnl
+`'define(`field', `wrap_export($'`@)')`'dnl
+`'TTdef_$1($1,$1)
+	  default:
+	    ifelse($1, ttobj, `break;', `return FNSUPER($1)->GetValue((m4super_$1)o, which);')
+	}
+    }
+    return (ttany)0;
+})`'dnl
+`'define(`field')`'dnl
+`'define(`exported')`'dnl
+`'define(`extends')`'dnl
+`'undefine(`this')`'dnl
+`'undefine(`this_count')`'dnl
+')
+
+define(`DECL_COMMON', `
+
+/* order is crucial here! */
+
+#ifdef CONF_SOCKET_PTHREADS
+# include <pthread.h>
+#endif
+
+/* include our internal copy of TT.h instead of the public one */
+#include "TT.h"
+#include <TT/TTerrno.h>
+
+#include "mutex.h"
+
+#include "TTextern.h"
+#include "TTassert.h"
+
+ifelse(target, `dummy', `', `
+#include "utils.h"
+')
+#include "inlines.h"
+#include "seterrno.h"
+#include "theme.h"
+
+static s_ttfns target()_TTFNs;
+
+')
+
+divert
+
+include(hw_`'target()_c)
+
+
+dnl m4magicmask_*, m4magic_*, m4size_* and m4FN_super_* must always be defined!
+dnl define sizeof(object) for all objects
+define(`el',`define(`m4order_$1')`'dnl
+    define(`m4magicmask_$1')`'dnl
+    define(`m4magic_$1')`'dnl
+    define(`m4size_$1')`'dnl
+    define(`size_$1', `sizeof(s_$1)')`'dnl
+')
+TTlist()
+undefine(`el')
+
+/*
+ * use default values for methods not implemented in hw_`'target()_c
+ *
+ * dummy display `target' MUST IMPLEMENT ALL METHODS, even if as stubs.
+ */
+
+define(`hardfall', `
+`#'error: undefined $1')
+
+define(`fall', `ifelse(target(), `dummy', `hardfall($1)', `NULL /* WARNING: undefined $1 */')')
+
+define(`extends',`TTFNdef_$1($2)
+    TFN_$1,
+')
+define(`superfield',`ifdef(`mtd_$2_$3',`target()_$2_$3', dnl
+`ifelse(`$3',`ttobj',`fall($2)', `superfield(`',`$2',m4super_$3)')')')
+define(`protected',`ifdef(`m4$2_$3',`$2_$3', `ifdef(`mtd_$2_$3',`target()_$2_$3', dnl
+`(void *)superfield(,`$2',m4super_$3)')'),
+')
+define(`public',`protected($@)')
+
+define(`el',`
+  {
+    TTFNdef_$1($1)
+  },
+')
+static s_ttfns target()_TTFNs = {
+
+TTlist()
+undefine(`el')`'dnl
+define(`public')`'dnl
+define(`protected')`'dnl
+define(`extends')`'dnl
+dnl
+dnl
+define(`TTHWlist',
+  `el(Sync) el(Flush) el(TimidFlush) el(MainLoop) el(ExitMainLoop) el(DeleteListener) dnl
+   el(Close) el(ConnectionFd) el(GetErrno) el(GetErrnoDetail) el(StrError) el(StrErrorDetail) dnl
+  ')
+dnl
+define(`el',`ifdef(`hw_$1', `
+    target()_$1,', `
+    hardfall($1)')')
+  {
+TTHWlist()
+  },
+};
+undefine(`el')
+
+

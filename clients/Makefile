@@ -2,17 +2,19 @@
 # Makefile for various libTw clients
 #
 TOPDIR=..
-SUBDIRS=mapscrn
+THISDIR=$(TOPDIR)/clients
+SUBDIRS=
 
 -include $(TOPDIR)/makeautoconf
 
 #
-# twsysmon is Linux-specific
+# twsysmon and twmapscrn are Linux-specific
 #
 ifeq ($(OS),Linux)
-  TWSYSMON=twsysmon
+  SUBDIRS+=mapscrn
+  OS_CLIENTS=twsysmon
 else
-  TWSYSMON=
+  OS_CLIENTS=
 endif
 
 OBJS_twattach=attach.o
@@ -28,38 +30,40 @@ OBJS_twsetroot=setroot.o
 OBJS_twsysmon=sysmon.o
 OBJS_twterm=pty.o tterm.o
 OBJS_twthreadtest=threadtest.o
-OBJS_ttest=tt_test.o
+OBJS_ttdemo=demo.o
 
 CC_FLAGS_threadtest.o+=-D_REENTRANT
 
 #
-# LD_FLAGS+=$(LIBTW)
+# LD_FLAGS+=$(LD_LIBTW)
 # use fine-grained libs instead:
 #
-LD_FLAGS_twattach+=$(LIBTW)
-LD_FLAGS_twcat+=$(LIBTW)
-LD_FLAGS_twclip+=$(LIBTW)
-LD_FLAGS_twevent+=$(LIBTW)
-LD_FLAGS_twdialog+=$(LIBTW)
-LD_FLAGS_twdm+=$(LIBTW)
-LD_FLAGS_twfindtwin+=$(LIBTW)
-LD_FLAGS_twlsobj+=$(LIBTW)
-LD_FLAGS_twsendmsg+=$(LIBTW)
-LD_FLAGS_twsetroot+=$(LIBTW)
-LD_FLAGS_twsysmon+=$(LIBTW)
-LD_FLAGS_twterm+=$(LIBTW)
-LD_FLAGS_twthreadtest+=$(LIBTW) $(LD_LIBPTHREAD)
-LD_FLAGS_ttest+=$(LIBTT)
+LD_FLAGS_twattach+=$(LD_LIBTW)
+LD_FLAGS_twcat+=$(LD_LIBTW)
+LD_FLAGS_twclip+=$(LD_LIBTW)
+LD_FLAGS_twevent+=$(LD_LIBTW)
+LD_FLAGS_twdialog+=$(LD_LIBTW)
+LD_FLAGS_twdm+=$(LD_LIBTW)
+LD_FLAGS_twfindtwin+=$(LD_LIBTW)
+LD_FLAGS_twlsobj+=$(LD_LIBTW)
+LD_FLAGS_twsendmsg+=$(LD_LIBTW)
+LD_FLAGS_twsetroot+=$(LD_LIBTW)
+LD_FLAGS_twsysmon+=$(LD_LIBTW)
+LD_FLAGS_twterm+=$(LD_LIBTW)
+LD_FLAGS_twthreadtest+=$(LD_LIBTW) $(LD_LIBPTHREAD)
+LD_FLAGS_ttdemo+=$(LD_LIBTT)
 
-BINS=twattach twcat twclip twdialog twevent twfindtwin twlsobj twsendmsg twsetroot $(TWSYSMON) twterm
+BINS=twattach twcat twclip twdialog twevent twfindtwin twlsobj twsendmsg twsetroot \
+	$(OS_CLIENTS) twterm
 
-#BINS+=ttest
+BINS+=ttdemo
 
 all: everything
 
 -include $(TOPDIR)/conf/conf.current
 -include .modules
 -include .depend
+-include $(TOPDIR)/.hdepend
 
 ifneq ($(LD_LIBCRYPT),no)
  BINS+=twdm
@@ -69,7 +73,7 @@ ifneq ($(LD_LIBCRYPT),no)
 endif
 
 ifneq ($(bindir),)
-  CC_FLAGS_dm.o=-DBINDIR=\"$(bindir)\"
+  CC_FLAGS_dm.o+=-DBINDIR=\"$(bindir)\"
 endif
  
 ifneq ($(CONF_SOCKET),n)
@@ -85,6 +89,10 @@ else
 	 $(ECHO)
 endif
 
+ifeq ($(CONF__UNICODE),y)
+  LD_FLAGS_twterm+=$(LD_LIBTUTF)
+  LD_FLAGS_twdm+=$(LD_LIBTUTF)
+endif
 
 #
 # include the do-everything file.

@@ -20,98 +20,14 @@
  }
 #endif
 
+#include <Tw/Tw_defs.h>
+
 #ifndef _TWIN_H
 #define _TWIN_H
 
 /* a cutdown version of twin.h */
-
-#ifndef TW_RETSIGTYPE
-# include <Tw/Twautoconf.h>
-#endif
-
-#include <Tw/compiler.h>
-#include <Tw/version.h>
-#include <Tw/osincludes.h>
+#include <Tw/Twtypes.h>
 #include <Tw/missing.h>
-#include <Tw/datatypes.h>
-#include <Tw/datasizes.h>
-#include <Tw/uni_types.h>
-
-#define TW_NOID		((uldat)0)
-#define TW_ERRID	((uldat)-1)
-#define TW_NOFD		(-1)
-#define TW_NOSLOT	MAXULDAT
-
-#ifndef FALSE
-# define FALSE	((byte)0)
-# define TRUE	(!FALSE)
-#endif
-
-/* "Twin" in native byte-order */
-#define TWIN_MAGIC ((uldat)0x6E697754ul)
-/* "Go!!" in native byte-order */
-#define TW_GO_MAGIC   ((uldat)0x21216F47ul)
-/* "Wait" in native byte-order */
-#define TW_WAIT_MAGIC ((uldat)0x74696157ul)
-
-#define TW_INET_PORT	7754
-
-#define TW_SMALLBUFF	256
-#define TW_BIGBUFF	4096
-
-
-/* Macros for HW VGA (not ANSI!) colors */
-#define BLACK	((hwcol)0)
-#define BLUE	((hwcol)1)
-#define GREEN	((hwcol)2)
-#define CYAN	(BLUE|GREEN)
-#define RED	((hwcol)4)
-#define MAGENTA	(BLUE|RED)
-#define YELLOW  (GREEN|RED)
-#define WHITE	(BLUE|GREEN|RED)
-#define HIGH	((hwcol)8)
-#define MAXCOL	((hwcol)0xF)
-
-#define ANSI2VGA(col) (((col) & 0x1 ? RED   : 0) | \
-		       ((col) & 0x2 ? GREEN : 0) | \
-		       ((col) & 0x4 ? BLUE  : 0))
-#define VGA2ANSI(col) ANSI2VGA(col)
-
-/* foreground / background colors handling */
-/*
- * NOTE: draw.c:DoShadowColor() assumes that
- * COL(fg1, bg1) | COL(fg2, bg2) == COL(fg1|fg2, bg1|bg2)
- * and
- * COL(fg1, bg1) & COL(fg2, bg2) == COL(fg1&fg2, bg1&bg2)
- */
-#define FG(col)	(col)
-#define BG(col)	((col)<<4)
-#define COL(fg,bg) (FG(fg)|BG(bg))
-#define COLBG(col) ((col) >> 4)
-#define COLFG(col) ((col) & 0x0F)
-
-
-/* if sizeof(hwattr) == 2, bytes are { 'ascii', 'col' } */
-
-/* hwattr <-> hwcol+hwfont conversion */
-# define HWATTR16(col,ascii) (((byte16)(byte)(col) << 8) | (byte16)(byte)(ascii))
-# define HWATTR_COLMASK16(attr) ((attr) & 0xFF00)
-# define HWATTR_FONTMASK16(attr) ((attr) & 0xFF)
-# define HWCOL16(attr) ((hwcol)((attr) >> 8))
-# define HWFONT16(attr) ((byte)(attr))
-
-
-/* if sizeof(hwattr) == 4, bytes are { 'ascii_low', 'col', 'ascii_high', 'unused' } */
-
-/* hwattr <-> hwcol+hwfont conversion */
-# define HWATTR32(col,ascii) (((byte32)(byte)(col) << 8) | (((byte32)(ascii) & 0xFF00) << 8) | (byte32)(byte)(ascii))
-# define HWATTR_COLMASK32(attr) ((attr) & 0xFF00)
-# define HWATTR_FONTMASK32(attr) ((attr) & 0xFF00FF)
-# define HWCOL32(attr) ((hwcol)((attr) >> 8))
-# define HWFONT32(attr) ((byte16)(((attr) & 0xFF) | (((attr) >> 8) & 0xFF00)))
-
-
-
 
 /* types for time intervals */
 typedef struct s_timevalue  {
@@ -119,127 +35,39 @@ typedef struct s_timevalue  {
     frac_t Fraction;
 } timevalue;
 
-/*
- * Notes about the timevalue struct:
- * 
- * it is used to represent both time intervals and absolute times;
- * the ->Seconds is a time_t numeric field.
- * DON'T assume time_t is 32 bit (or any other arbitrary size)
- * since in 19 Jan 2038 at 04:14:08 any signed, 32 bit time_t will overflow.
- * So use sizeof(time_t) if you really need.
- * 
- * the ->Fraction is a frac_t numeric field.
- * As above, DON'T assume frac_t is 32 bit (or any other arbitrary size)
- * since in the future we may want a finer granularity than the nanosecond one
- * possible with a 32 bit frac_t.
- * So :
- * 1) use sizeof(frac_t) if you really need
- * 2) don't assume (frac_t)1 is a nanosecond (or any other arbitrary time),
- *    but always use the form '1 NanoSECs', '250 MilliSECs + 7 MicroSECs', etc.
- * 3) if you _absolutely_ need to know to what time (frac_t)1 corresponds,
- *    use this: '1 FullSECs' is the number of (frac_t)1 intervals in a second.
- * 4) for the moment, the only defined fractions of a second are:
- *    FullSECs, MilliSECs, MicroSECs, NanoSECs.
- *    Others may be added in the future (PicoSECs, FemtoSECs, AttoSECs, ...)
- */
-#define THOUSAND	((frac_t)1000)
-
-#define NanoSECs	* 1 /* i.e. (frac_t)1 is a nanosecond */
-#define MicroSECs	* (THOUSAND NanoSECs)
-#define MilliSECs	* (THOUSAND MicroSECs)
-#define FullSECs	* (THOUSAND MilliSECs)
-
-
-
-/* keyboard events ShiftFlags */
-#define TW_KBD_SHIFT_FL		0x1
-#define TW_KBD_CTRL_FL		0x2
-#define TW_KBD_ALT_FL		0x4
-#define TW_KBD_CAPS_LOCK	0x8
-#define TW_KBD_NUM_LOCK		0x10
-
-/* mouse events stuff */
-#define HOLD_LEFT	1
-#define HOLD_MIDDLE	2
-#define HOLD_RIGHT	4
-#define HOLD_ANY	(HOLD_LEFT|HOLD_MIDDLE|HOLD_RIGHT)
-
-#define PRESS_LEFT	0x08
-#define PRESS_MIDDLE	0x18
-#define PRESS_RIGHT	0x28
-#define PRESS_ANY	0x38
-
-#define DOWN_LEFT	(HOLD_LEFT|PRESS_LEFT)
-#define DOWN_MIDDLE	(HOLD_MIDDLE|PRESS_MIDDLE)
-#define DOWN_RIGHT	(HOLD_RIGHT|PRESS_RIGHT)
-#define DOWN_ANY	(HOLD_ANY|PRESS_ANY)
-
-#define RELEASE_LEFT	0x10
-#define RELEASE_MIDDLE	0x20
-#define RELEASE_RIGHT	0x30
-#define RELEASE_ANY	0x30
-
-#define DRAG_MOUSE	0x40
-
-#define MOTION_MOUSE	0x00
-
-#define ANY_ACTION_MOUSE	(PRESS_ANY | RELEASE_ANY | DRAG_MOUSE | MOTION_MOUSE)
-
-#define MAX_ACTION_MOUSE	0x48
-
-#define isPRESS(code)	((code) & 0x08)
-#define isDRAG(code)	((code) & DRAG_MOUSE)
-#define isRELEASE(code)	((code) & ANY_ACTION_MOUSE && !isPRESS(code) && !isDRAG(code))
-#define isMOTION(code)	(!(code))
-
-#define isSINGLE_PRESS(code) (isPRESS(code) && ((code) == DOWN_LEFT || (code) == DOWN_MIDDLE || (code) == DOWN_RIGHT))
-#define isSINGLE_DRAG(code) (isDRAG(code) && ((code) == (DRAG_MOUSE|HOLD_LEFT) || (code) == (DRAG_MOUSE|HOLD_MIDDLE) || (code) == (DRAG_MOUSE|HOLD_RIGHT)))
-#define isSINGLE_RELEASE(code) (isRELEASE(code) && !((code) & HOLD_ANY))
-
-
-
-#define msg_magic	((uldat)0xA3a61ce4ul)
-
-
-#define TWVER_MAJOR(n) ((n)>>16)
-#define TWVER_MINOR(n) (((n)>>8) & 0xFF)
-#define TWVER_PATCH(n) ((n) & 0xFF)
-#define TWVER_BUILD(M, m, p) (((M)<<16)|((m)<<8)|(p))
-
-
 #endif /* _TWIN_H */
 
-
-
-typedef uldat tobj;
-typedef uldat tgroup;     
-typedef uldat twidget;
-typedef uldat tgadget;
-typedef uldat twindow;
-typedef uldat tscreen;
-typedef uldat trow;
-typedef uldat tmenuitem;
-typedef uldat tmenu;
-typedef uldat tmsgport;
-typedef uldat tmutex;
+typedef tobj tgroup;     
+typedef tobj twidget;
+typedef tobj tgadget;
+typedef tobj twindow;
+typedef tobj tscreen;
+typedef tobj trow;
+typedef tobj tmenuitem;
+typedef tobj tmenu;
+typedef tobj tmsgport;
+typedef tobj tmutex;
+typedef tobj tall;
 
 
 
 
 /* types for messages from server */
 typedef struct s_tevent_common *tevent_common;
-struct s_tevent_common {
+TW_TYPE_ATTR_PACKED struct s_tevent_common {
     twidget W;
     udat Code, pad;
 };
 
 typedef struct s_tevent_display *tevent_display;
-struct s_tevent_display {
+TW_TYPE_ATTR_PACKED struct s_tevent_display {
     twidget W; /* not used here */
     udat Code, Len;
     dat X, Y;
     byte Data[sizeof(uldat)]; /* [len] bytes actually */
 };
+#define TW_SIZEOF_TEVENT_DISPLAY (sizeof(struct s_tevent_display) - sizeof(uldat))
+
 /* Code */
 #define TW_DPY_DrawHWAttr	((udat)0)
 #define TW_DPY_FlushHW		((udat)1)
@@ -260,21 +88,21 @@ struct s_tevent_display {
 #define TW_DPY_Quit		((udat)16)
 
 typedef struct s_tevent_keyboard *tevent_keyboard;
-struct s_tevent_keyboard {
+TW_TYPE_ATTR_PACKED struct s_tevent_keyboard {
     twidget W;
     udat Code, ShiftFlags, SeqLen;
     byte pad, AsciiSeq[1];  /* actually (SeqLen+1) bytes, including final \0 */
 };
 
 typedef struct s_tevent_mouse *tevent_mouse;
-struct s_tevent_mouse {
+TW_TYPE_ATTR_PACKED struct s_tevent_mouse {
     twidget W;
     udat Code, ShiftFlags;
     dat X, Y; /* these coords are relative to the widget top-left corner */
 };
 
 typedef struct s_tevent_widget *tevent_widget;
-struct s_tevent_widget {
+TW_TYPE_ATTR_PACKED struct s_tevent_widget {
     twidget W;
     udat Code, Flags;
     dat XWidth, YWidth;
@@ -288,20 +116,20 @@ struct s_tevent_widget {
 #define TW_MSG_WIDGETFL_SHADED	1
 
 typedef struct s_tevent_gadget *tevent_gadget;
-struct s_tevent_gadget {
+TW_TYPE_ATTR_PACKED struct s_tevent_gadget {
     twidget W;
     udat Code, Flags; /* the Flags of the gadget that was (de)activated */
 };
 
 typedef struct s_tevent_menu *tevent_menu;
-struct s_tevent_menu {
+TW_TYPE_ATTR_PACKED struct s_tevent_menu {
     twindow W;
     udat Code, pad;
     tmenu Menu;
 };
 
 typedef struct s_tevent_selection *tevent_selection;
-struct s_tevent_selection {
+TW_TYPE_ATTR_PACKED struct s_tevent_selection {
     twidget W;
     udat Code, pad; /* unused */
     dat X, Y; /* these coords are absolute, to allow cross-window cut-n-paste */
@@ -310,25 +138,25 @@ struct s_tevent_selection {
 #define TW_MAX_MIMELEN 64
 
 typedef struct s_tevent_selectionnotify *tevent_selectionnotify;
-struct s_tevent_selectionnotify {
+TW_TYPE_ATTR_PACKED struct s_tevent_selectionnotify {
     twidget W;
     udat Code, pad; /* unused */
     uldat ReqPrivate;
     uldat Magic;
     byte MIME[TW_MAX_MIMELEN];
     uldat Len;
-    byte Data[1]; /* Data[] is Len bytes actually */
+    byte Data[sizeof(uldat)]; /* Data[] is Len bytes actually */
 };
 /*SelectionNotify Magic*/
 #define TW_SEL_TEXTMAGIC	((uldat)0x54657874)
-#define TW_SEL_HWFONTMAGIC	((uldat)0x4877666E)
+#define TW_SEL_HWFONTMAGIC	((uldat)0x4877666E) /* it's unicode */
 #define TW_SEL_FILEMAGIC	((uldat)0x46696c65)
 #define TW_SEL_URLMAGIC		((uldat)0xAB1691BA)
 #define TW_SEL_DATAMAGIC	((uldat)0xDA1AA1AD) /* check MIME if you get this */
 #define TW_SEL_IDMAGIC		((uldat)0x49644964)
 
 typedef struct s_tevent_selectionrequest *tevent_selectionrequest;
-struct s_tevent_selectionrequest {
+TW_TYPE_ATTR_PACKED struct s_tevent_selectionrequest {
     twidget W;
     udat Code, pad; /* unused */
     tmsgport Requestor;
@@ -336,12 +164,13 @@ struct s_tevent_selectionrequest {
 };
 
 typedef struct s_tevent_control *tevent_control;
-struct s_tevent_control {
+TW_TYPE_ATTR_PACKED struct s_tevent_control {
     twidget W;
     udat Code, Len;
     dat X, Y;
     byte Data[sizeof(uldat)]; /* [Len+1] bytes actually, Data[Len] == '\0' */
 };
+#define TW_SIZEOF_TEVENT_CONTROL (sizeof(struct s_tevent_control) - sizeof(uldat))
 
 /* some TW_MSG_CONTROL codes */
 #define TW_MSG_CONTROL_QUIT		((udat)0)
@@ -350,14 +179,20 @@ struct s_tevent_control {
 #define TW_MSG_CONTROL_DRAGNDROP	((udat)3)
 
 typedef struct s_tevent_clientmsg *tevent_clientmsg;
-struct s_tevent_clientmsg {
+TW_TYPE_ATTR_PACKED struct s_tevent_clientmsg {
     twidget W;
-    udat Code, Len;
-    byte Data[sizeof(uldat)]; /* [Len+1] bytes actually, Data[Len] == '\0' */
+    udat Code, Format;
+    uldat Len;
+    union {
+	byte b[sizeof(uldat)];
+	udat d[sizeof(uldat)/sizeof(udat)];
+	uldat l[1];
+    } Data; /* [Len] bytes actually */
 };
+#define TW_SIZEOF_TEVENT_CLIENTMSG (sizeof(struct s_tevent_clientmsg) - sizeof(uldat))
 
 typedef union s_tevent_any *tevent_any;
-union s_tevent_any {
+TW_TYPE_ATTR_PACKED union s_tevent_any {
     struct s_tevent_common    EventCommon;
     struct s_tevent_display   EventDisplay;
     struct s_tevent_keyboard  EventKeyboard;
@@ -373,7 +208,7 @@ union s_tevent_any {
 };
 
 typedef struct s_tmsg *tmsg;
-struct s_tmsg {
+TW_TYPE_ATTR_PACKED struct s_tmsg {
     uldat Len;		/* length of this struct, including `Len' field */
     uldat Magic;	/* == msg_magic (if user-created) or == MSG_MAGIC (if received) */
     uldat Type;		/* only (udat) part is significative */
@@ -411,128 +246,6 @@ typedef struct s_tlistener *tlistener;
 
 
      
-
-
-     
-     
-
-
-
-
-
-
-
-
-
-
-/* Widget->Attrib */
-/*
- * ask the server to send events even for mouse motion without any pressed button.
- * works only if WIDGET_WANT_MOUSE is set too.
- */
-#define TW_WIDGET_WANT_MOUSE_MOTION	0x0001
-#define TW_WIDGET_WANT_KEYS	0x0002
-#define TW_WIDGET_WANT_MOUSE	0x0004
-#define TW_WIDGET_WANT_CHANGES	0x0008
-
-/* Widget->Flags */
-#define TW_WIDGETFL_USEEXPOSE	0x02
-#define TW_WIDGETFL_USEFILL	0x03
-#define TW_WIDGETFL_USEANY	0x07 /* mask of all above ones */
-
-
-
-
-
-
-/* Gadget->Attrib */
-#define TW_GADGET_WANT_MOUSE_MOTION	TW_WIDGET_WANT_MOUSE_MOTION /* 0x0001 */
-#define TW_GADGET_WANT_KEYS	TW_WIDGET_WANT_KEYS	/* 0x0002 */
-#define TW_GADGET_WANT_MOUSE	TW_WIDGET_WANT_MOUSE	/* 0x0004 */
-#define TW_GADGET_WANT_CHANGES	TW_WIDGET_WANT_CHANGES	/* 0x0008 */
-
-
-/* Gadget->Flags */
-#define TW_GADGETFL_USETEXT	0x00   /* it's the default */
-#define TW_GADGETFL_USEEXPOSE	TW_WIDGETFL_USEEXPOSE	/* 0x02 */
-#define TW_GADGETFL_USEFILL	TW_WIDGETFL_USEFILL	/* 0x03 */
-#define TW_GADGETFL_USEANY	TW_WIDGETFL_USEANY	/* 0x07 */
-
-#define TW_GADGETFL_DISABLED	0x0020
-#define TW_GADGETFL_TEXT_DEFCOL	0x0040
-/* this makes the gadget 'checkable' : can be in 'checked' or 'unchecked' state.
- * also necessary to put the gadget in a group */
-#define TW_GADGETFL_TOGGLE	0x0080
-#define TW_GADGETFL_PRESSED	0x0100
-
-
-
-
-
-
-/* Window->Attrib */
-#define TW_WINDOW_WANT_MOUSE_MOTION	TW_WIDGET_WANT_MOUSE_MOTION /* 0x0001 */
-#define TW_WINDOW_WANT_KEYS	TW_WIDGET_WANT_KEYS	/* 0x0002 */
-#define TW_WINDOW_WANT_MOUSE	TW_WIDGET_WANT_MOUSE	/* 0x0004 */
-#define TW_WINDOW_WANT_CHANGES	TW_WIDGET_WANT_CHANGES	/* 0x0008 */
-#define TW_WINDOW_DRAG		0x0100
-#define TW_WINDOW_RESIZE	0x0200
-#define TW_WINDOW_CLOSE		0x0400
-#define TW_WINDOW_ROLLED_UP	0x0800
-#define TW_WINDOW_X_BAR		0x1000
-#define TW_WINDOW_Y_BAR		0x2000
-#define TW_WINDOW_AUTO_KEYS	0x4000
-
-
-
-/* Window->Flags */
-#define TW_WINDOWFL_USEROWS	0x00 /* it's the default */
-#define TW_WINDOWFL_USECONTENTS	0x01
-#define TW_WINDOWFL_USEEXPOSE	TW_WIDGETFL_USEEXPOSE /* 0x02 */
-#define TW_WINDOWFL_USEFILL	TW_WIDGETFL_USEFILL   /* 0x03 */
-#define TW_WINDOWFL_USEANY	TW_WIDGETFL_USEANY	/* 0x07 */
-
-#define	TW_WINDOWFL_CURSOR_ON	0x10
-#define TW_WINDOWFL_MENU	0x20
-#define TW_WINDOWFL_DISABLED	0x40
-#define TW_WINDOWFL_BORDERLESS	0x80
-#define TW_WINDOWFL_ROWS_INSERT	0x0100
-#define TW_WINDOWFL_ROWS_DEFCOL	0x0200
-#define TW_WINDOWFL_ROWS_SELCURRENT	0x0400
-
-
-
-
-
-/* Screen->Flags */
-#define TW_SCREENFL_USEBG	0x00 /* it's the default */
-#define TW_SCREENFL_USEEXPOSE	TW_WIDGETFL_USEEXPOSE	/* 0x02 */
-#define TW_SCREENFL_USEFILL	TW_WIDGETFL_USEFILL	/* 0x03 */
-#define TW_SCREENFL_USEANY	TW_WIDGETFL_USEANY	/* 0x07 */
-
-
-
-
-
-
-
-/* Window CursorType : */
-/* These come from linux/drivers/char/console.c */
-#define TW_DEFAULTCURSOR 0
-#define TW_NOCURSOR	 1
-#define TW_LINECURSOR	 2
-#define TW_SOLIDCURSOR	 8
-
-
-
-
-/* Row Flags : */
-#define TW_ROW_INACTIVE	((byte)0x00)
-#define TW_ROW_ACTIVE	((byte)0x01)
-#define TW_ROW_IGNORE	((byte)0x02)
-#define TW_ROW_DEFCOL	((byte)0x04)
-
-
 
 byte Tw_CheckMagic(TW_CONST byte id[]);
 
@@ -599,6 +312,7 @@ void	Tw_RecursiveDeleteWidget(tdisplay TwD, twidget Widget);
 void	Tw_MapWidget(tdisplay TwD, twidget Widget, twidget Parent);
 void	Tw_UnMapWidget(tdisplay TwD, twidget Widget);
 void	Tw_SetXYWidget(tdisplay TwD, twidget Widget, dat X, dat Y);
+void	Tw_ResizeWidget(tdisplay TwD, twidget Widget, dat XWidth, dat YWidth);
 tmsgport Tw_GetOwnerWidget(tdisplay TwD, twidget Widget);
 twidget Tw_FindWidgetAtWidget(tdisplay TwD, twidget Parent, dat i, dat j);
 
@@ -610,7 +324,22 @@ void	Tw_ExposeTextWidget(tdisplay TwD, twidget W, dat XWidth, dat YWidth, dat Le
 void	Tw_ExposeHWFontWidget(tdisplay TwD, twidget W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch, TW_CONST hwfont *Font);
 void	Tw_ExposeHWAttrWidget(tdisplay TwD, twidget W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch, TW_CONST hwattr *Attr);
 
+void	Tw_LowerWidget(tdisplay TwD, twidget W);
+void	Tw_RaiseWidget(tdisplay TwD, twidget W);
+void	Tw_RestackChildrenWidget(tdisplay TwD, twidget W, uldat N, TW_CONST twidget *arrayW);
+#define Tw_RestackWidgets		Tw_RestackChildrenWidget
+void	Tw_CirculateChildrenWidget(tdisplay TwD, twidget W, byte up_or_down);
+#define Tw_CirculateWidgets		Tw_CirculateChildrenWidget
+#define TW_CIRCULATE_RAISE_LAST 0
+#define TW_CIRCULATE_LOWER_FIRST 1
 
+
+void	Tw_LowerRow(tdisplay TwD, trow R);
+void	Tw_RaiseRow(tdisplay TwD, trow R);
+void	Tw_RestackChildrenRow(tdisplay TwD, tobj O, uldat N, TW_CONST trow *arrayR);
+#define Tw_RestackRows			Tw_RestackChildrenRow
+void	Tw_CirculateChildrenRow(tdisplay TwD, tobj Parent, byte up_or_down);
+#define Tw_CirculateRows		Tw_CirculateChildrenRow
 
 tgroup Tw_CreateGroup(tdisplay TwD);
 void   Tw_InsertGadgetGroup(tdisplay TwD, tgroup, tgadget);
@@ -633,10 +362,19 @@ tgadget Tw_CreateGadget
 #define Tw_MapGadget			Tw_MapWidget
 #define Tw_UnMapGadget			Tw_UnMapWidget
 #define Tw_SetXYGadget			Tw_SetXYWidget
+#define Tw_ResizeGadget			Tw_ResizeWidget
 #define Tw_GetOwnerGadget		Tw_GetOwnerWidget
 #define Tw_ExposeTextGadget		Tw_ExposeTextWidget
 #define Tw_ExposeHWFontGadget		Tw_ExposeHWFontWidget
 #define Tw_ExposeHWAttrGadget		Tw_ExposeHWAttrWidget
+
+#define Tw_LowerGadget			Tw_LowerWidget
+#define Tw_RaiseGadget			Tw_RaiseWidget
+#define Tw_RestackChildrenGadget	Tw_RestackChildrenWidget
+#define Tw_RestackGadgets		Tw_RestackWidgets
+#define Tw_CirculateChildrenGadget	Tw_CirculateChildrenWidget
+#define Tw_CirculateGadgets		Tw_CirculateWidgets
+
 
 tgadget Tw_CreateButtonGadget(tdisplay TwD, twidget Parent, dat XWidth, dat YWidth, TW_CONST byte *Text,
 			      uldat Flags, udat Code, hwcol BgCol, hwcol Col, hwcol ColDisabled,
@@ -666,31 +404,62 @@ twindow Tw_CreateWindow(tdisplay TwD, dat NameLen, TW_CONST byte *Name, TW_CONST
 #define Tw_MapWindow			Tw_MapWidget
 #define Tw_UnMapWindow			Tw_UnMapWidget
 #define Tw_SetXYWindow			Tw_SetXYWidget
+#define Tw_ResizeWindow			Tw_ResizeWidget
 #define Tw_GetOwnerWindow		Tw_GetOwnerWidget
 #define Tw_ExposeTextWindow		Tw_ExposeTextWidget
 #define Tw_ExposeHWFontWindow		Tw_ExposeHWFontWidget
 #define Tw_ExposeHWAttrWindow		Tw_ExposeHWAttrWidget
 
+#define Tw_LowerWindow			Tw_LowerWidget
+#define Tw_RaiseWindow			Tw_RaiseWidget
+#define Tw_RestackChildrenWindow	Tw_RestackChildrenGadget
+#define Tw_RestackWindows		Tw_RestackWidgets
+#define Tw_CirculateChildrenWindow	Tw_CirculateChildrenWidget
+#define Tw_CirculateWindows		Tw_CirculateWidgets
+
 twindow Tw_Create4MenuWindow(tdisplay TwD, tmenu Menu);
 #define Tw_Win4Menu			Tw_Create4MenuWindow
-void	Tw_WriteAsciiWindow(tdisplay TwD, twindow Window, ldat AsciiLen, TW_CONST byte *AsciiSeq);
-void	Tw_WriteStringWindow(tdisplay TwD, twindow Window, ldat AsciiLen, TW_CONST byte *String);
-void	Tw_WriteHWFontWindow(tdisplay TwD, twindow Window, ldat AsciiLen, TW_CONST hwfont *HWFont);
+void	Tw_WriteAsciiWindow(tdisplay TwD, twindow Window, ldat Len, TW_CONST byte *Ascii);
+void	Tw_WriteStringWindow(tdisplay TwD, twindow Window, ldat Len, TW_CONST byte *String);
+void	Tw_WriteHWFontWindow(tdisplay TwD, twindow Window, ldat Len, TW_CONST hwfont *HWFont);
 void    Tw_WriteHWAttrWindow(tdisplay TwD, twindow Window, dat x, dat y, ldat Len, TW_CONST hwattr *Attr);
-void	Tw_WriteRowWindow(tdisplay TwD, twindow Window, ldat Len, TW_CONST byte *Text);
+/* backward compatibility. will be removed */
+#define Tw_WriteRowWindow		Tw_WriteAsciiWindow
+/* backward compatibility. will be removed */
+#define TwWriteRowWindow		TwWriteAsciiWindow
 
 void	Tw_SetColTextWindow(tdisplay TwD, twindow Window, hwcol ColText);
 void	Tw_SetColorsWindow(tdisplay TwD, twindow Window, udat Bitmap, hwcol ColGadgets, hwcol ColArrows, hwcol ColBars, hwcol ColTabs,
 			  hwcol ColBorder, hwcol ColText, hwcol ColSelect, hwcol ColDisabled, hwcol ColSelectDisabled);
 void	Tw_ConfigureWindow(tdisplay TwD, twindow Window, byte Bitmap, dat Left, dat Up, dat MinXWidth, dat MinYWidth, dat MaxXWidth, dat MaxYWidth);
-void	Tw_ResizeWindow(tdisplay TwD, twindow Window, dat XWidth, dat YWidth);
 void	Tw_GotoXYWindow(tdisplay TwD, twindow Window, ldat X, ldat Y);
+trow	Tw_FindRowByCodeWindow(tdisplay TwD, twindow Window, dat Code);
+
+
+/* you cannot Create/Delete screens from a client */
+#define Tw_LowerScreen			Tw_LowerWidget
+#define Tw_RaiseScreen			Tw_RaiseWidget
+#define Tw_RestackChildrenScreen		Tw_RestackChildrenWidget
+#define Tw_RestackScreens		Tw_RestackWidgets
+#define Tw_CirculateChildrenScreen	Tw_CirculateChildrenWidget
+#define Tw_CirculateScreens		Tw_CirculateWidgets
+
+void	Tw_BgImageScreen(tdisplay TwD, tscreen Screen, dat BgWidth, dat BgHeight, TW_CONST hwattr *BgImage);
+
 
 tmenuitem Tw_Create4MenuMenuItem(tdisplay TwD, tobj Parent, twindow Window, byte Flags, dat Len, TW_CONST byte *Name);
 #define   Tw_Item4Menu Tw_Create4MenuMenuItem
 uldat     Tw_Create4MenuCommonMenuItem(tdisplay TwD, tmenu Menu);
 #define   Tw_Item4MenuCommon Tw_Create4MenuCommonMenuItem
 #define   Tw_DeleteMenuItem Tw_DeleteObj
+
+#define	Tw_LowerMenuItem		Tw_LowerRow
+#define Tw_RaiseMenuItem		Tw_RaiseRow
+#define Tw_RestackChildrenMenuItem	Tw_RestackChildrenRow
+#define Tw_RestackMenuItems		Tw_RestackRows
+#define Tw_CirculateChildrenMenuItem	Tw_CirculateChildrenRow
+#define Tw_CirculateMenuItems		Tw_CirculateRows
+
 
 tmenu	Tw_CreateMenu(tdisplay TwD, hwcol ColItem, hwcol ColSelect, hwcol ColDisabled,
 		     hwcol ColSelectDisabled, hwcol ColShtCut, hwcol ColSelShtCut, byte FlagDefColInfo);
@@ -705,8 +474,6 @@ tmsgport Tw_CreateMsgPort(tdisplay TwD, byte NameLen, TW_CONST byte *ProgramName
 #define Tw_DeleteMsgPort Tw_DeleteObj
 tmsgport Tw_FindMsgPort(tdisplay TwD, tmsgport Prev, byte NameLen, TW_CONST byte *ProgramName);
      
-void	Tw_BgImageScreen(tdisplay TwD, tscreen Screen, dat BgWidth, dat BgHeight, TW_CONST hwattr *BgImage);
-
 tobj	Tw_PrevObj(tdisplay TwD, tobj Obj);
 tobj	Tw_NextObj(tdisplay TwD, tobj Obj);
 tobj	Tw_ParentObj(tdisplay TwD, tobj Obj);
@@ -731,6 +498,7 @@ tgadget	Tw_FirstGadget(tdisplay TwD, tgroup Group);
 
 dat  Tw_GetDisplayWidth(tdisplay TwD);
 dat  Tw_GetDisplayHeight(tdisplay TwD);
+tall Tw_GetAll(tdisplay TwD);
 
 tmsg Tw_CreateMsg(tdisplay TwD, uldat Type, uldat Len);
 void Tw_DeleteMsg(tdisplay TwD, tmsg Msg);
@@ -841,6 +609,7 @@ void Tw_SetDefaultListener(tdisplay TwD, tfn_default_listener listener, void *ar
 
 byte  Tw_DispatchMsg(tdisplay TwD, tmsg Msg);
 byte  Tw_MainLoop(tdisplay TwD);
+void  Tw_ExitMainLoop(tdisplay TwD);
 
 
 
@@ -897,280 +666,12 @@ byte  Tw_MainLoop(tdisplay TwD);
  */
 
 
+#include <Tw/Tw_1.h>
 
 
-
-/*
- * libTw.so.1 --- single head compatibility. these are too handy to drop them.
- */
-extern tdisplay Tw_DefaultD;
-
-#define TwCheckMagic(id)		Tw_CheckMagic(id)
-
-#define TwConfigMalloc(my_malloc, my_realloc, my_free) Tw_ConfigMalloc(my_malloc, my_realloc, my_free)
-
-#define TwLenStr(S)			Tw_LenStr(S)
-#define TwCmpStr(S1, S2)		Tw_CmpStr(S1, S2)
-#define TwCopyStr(From,To)		Tw_CopyStr(From, To)
-
-#define TwAllocMem(Size)		Tw_AllocMem(Size)
-#define TwReAllocMem(Mem, Size)		Tw_ReAllocMem(Mem, Size)
-#define TwFreeMem(Mem)			Tw_FreeMem(Mem)
-#define TwCloneMem(Mem,Size)		Tw_CloneMem(Mem,Size)
-#define TwCloneStr(S)			Tw_CloneStr(S)
-#define TwCloneStr2HWFont(Mem, Size)	Tw_CloneMem2HWFont(Mem, Size)
-
-#define TwCopyMem(From, To, Size)	Tw_CopyMem(From, To, Size)
-#define TwMoveMem(From, To, Size)	Tw_MoveMem(From, To, Size)
-#define TwWriteMem(Mem, Char, Size)	Tw_WriteMem(Mem, Char, Size)
-#define TwCmpMem(m1, m2, Size)		Tw_CmpMem(m1, m2, Size)
-
-#define TwDropPrivileges()		Tw_DropPrivileges()
-#define TwGetPrivileges()		Tw_GetPrivileges()
-
-#define TwFindFunction(Len, Name, ProtoLen, Proto)	Tw_FindFunction(Tw_DefaultD, Len, Name, ProtoLen, Proto)
-#define TwServerSizeof(Type)		Tw_ServerSizeof(Tw_DefaultD, Type)
-#define TwEnableGzip()			Tw_EnableGzip(Tw_DefaultD)
-#define TwDisableGzip()			Tw_DisableGzip(Tw_DefaultD)
-#define TwNeedResizeDisplay()		Tw_NeedResizeDisplay(Tw_DefaultD)
-#define TwAttachHW(len, name, flags)	Tw_AttachHW(Tw_DefaultD, len, name, flags)
-#define TwAttachGetReply(len)		Tw_AttachGetReply(Tw_DefaultD, len)
-#define TwAttachConfirm()		Tw_AttachConfirm(Tw_DefaultD)
-#define TwDetachHW(len, name)		Tw_DetachHW(Tw_DefaultD, len, name)
-#define TwSetFontTranslation(trans)	Tw_SetFontTranslation(Tw_DefaultD, trans)
-#define TwSetUniFontTranslation(trans)	Tw_SetUniFontTranslation(Tw_DefaultD, trans)
-
-#define TwDeleteObj(O)			Tw_DeleteObj(Tw_DefaultD, O)
-
-#define TwCreateWidget(XWidth, YWidth, Attrib, Flags, Left, Up, Fill) \
-					Tw_CreateWidget(Tw_DefaultD, XWidth, YWidth, Attrib, Flags, Left, Up, Fill)
-#define TwDeleteWidget(W)		Tw_DeleteWidget(Tw_DefaultD, W)
-#define TwRecursiveDeleteWidget(W)	Tw_RecursiveDeleteWidget(Tw_DefaultD, W)
-#define TwMapWidget(W, Parent)		Tw_MapWidget(Tw_DefaultD, W, Parent)
-#define TwUnMapWidget(W)		Tw_UnMapWidget(Tw_DefaultD, W)
-#define TwSetXYWidget(W, x, y)		Tw_SetXYWidget(Tw_DefaultD, W, x, y)
-#define TwGetOwnerWidget(W)		Tw_GetOwnerWidget(Tw_DefaultD, W)
-#define TwFindWidgetAtWidget(W, i, j)	Tw_FindWidgetAtWidget(Tw_DefaultD, W, i, j)
-#define TwExposeTextWidget(Window, XWidth, YWidth, Left, Up, Pitch, Text) \
-		Tw_ExposeTextWidget(Tw_DefaultD, Window, XWidth, YWidth, Left, Up, Pitch, Text)
-#define TwExposeHWFontWidget(Window, XWidth, YWidth, Left, Up, Pitch, Font) \
-		Tw_ExposeHWFontWidget(Tw_DefaultD, Window, XWidth, YWidth, Left, Up, Pitch, Font)
-#define TwExposeHWAttrWidget(Window, XWidth, YWidth, Left, Up, Pitch, Attr) \
-		Tw_ExposeHWAttrWidget(Tw_DefaultD, Window, XWidth, YWidth, Left, Up, Pitch, Attr)
-
-
-#define TwFocusSubWidget(W)		Tw_FocusSubWidget(Tw_DefaultD, W)
-
-#define TwCreateGroup()			Tw_CreateGroup(Tw_DefaultD)
-#define TwInsertGadgetGroup(Group, G)	Tw_InsertGadgetGroup(Tw_DefaultD, Group, G)
-#define TwRemoveGadgetGroup(Group, G)	Tw_RemoveGadgetGroup(Tw_DefaultD, Group, G)
-#define TwGetSelectedGadgetGroup(Group) Tw_GetSelectedGadgetGroup(Tw_DefaultD, Group)
-#define TwSetSelectedGadgetGroup(Group, G) Tw_SetSelectedGadgetGroup(Tw_DefaultD, Group, G)
-
-#define TwCreateGadget( Parent, XWidth, YWidth, TextNormal, Attrib, Flags, Code, \
-     ColText, ColTextSelect, ColTextDisabled, ColTextSelectDisabled, Left, Up ) \
-  Tw_CreateGadget(Tw_DefaultD, Parent, XWidth, YWidth, TextNormal, Attrib, Flags, Code, \
-     ColText, ColTextSelect, ColTextDisabled, ColTextSelectDisabled, Left, Up )
-#define TwDeleteGadget			TwDeleteObj
-#define TwRecursiveDeleteGadget		TwRecursiveDeleteWidget
-#define TwMapGadget			TwMapWidget
-#define TwUnMapGadget			TwUnMapWidget
-#define TwSetXYGadget			TwSetXYWidget
-#define TwGetOwnerGadget		TwGetOwnerWidget
-#define TwExposeTextGadget		TwExposeTextWidget
-#define TwExposeHWFontGadget		TwExposeHWFontWidget
-#define TwExposeHWAttrGadget		TwExposeHWAttrWidget
-#define TwCreateButtonGadget(Window, BgCol, Col, ColDisabled, Code, Flags, \
-				 Left, Up, XWidth, YWidth, Text) \
-		Tw_CreateButtonGadget(Tw_DefaultD, \
-			     Window, BgCol, Col, ColDisabled, Code, Flags, \
-			     Left, Up, XWidth, YWidth, Text)
-
-#define TwSetPressedGadget(Gadget, on)	Tw_SetPressedGadget(Tw_DefaultD, Gadget, on)
-#define TwIsPressedGadget(Gadget)	Tw_IsPressedGadget(Tw_DefaultD, Gadget)
-#define TwSetToggleGadget(Gadget, on)	Tw_SetToggleGadget(Tw_DefaultD, Gadget, on)
-#define TwIsToggleGadget(Gadget)	Tw_IsToggleGadget(Tw_DefaultD, Gadget)
-#define TwWriteTextGadget(Gadget, X, Y, Text, Left, Up) \
-					Tw_WriteTextGadget(Tw_DefaultD, Gadget, X, Y, Text, Left, Up)
-#define TwWriteTextsGadget(Gadget, bitmap, X, Y, Text, Left, Up) \
-					Tw_WriteTextsGadget(Tw_DefaultD, Gadget, bitmap, X, Y, Text, Left, Up)
-#define TwSetTextGadget(Gadget, X, Y, Text, Left, Up) \
-					Tw_SetTextGadget(Tw_DefaultD, Gadget, X, Y, Text, Left, Up)
-#define TwSetTextsGadget(Gadget, bitmap, X, Y, Text, Left, Up) \
-					Tw_SetTextsGadget(Tw_DefaultD, Gadget, bitmap, X, Y, Text, Left, Up)
-
-#define TwWriteHWFontGadget(Gadget, X, Y, HWFont, Left, Up) \
-					Tw_WriteHWFontGadget(Tw_DefaultD, Gadget, X, Y, HWFont, Left, Up)
-#define TwWriteHWFontsGadget(Gadget, bitmap, X, Y, HWFont, Left, Up) \
-					Tw_WriteHWFontsGadget(Tw_DefaultD, Gadget, bitmap, X, Y, HWFont, Left, Up)
-#define TwSetHWFontGadget(Gadget, X, Y, HWFont, Left, Up) \
-					Tw_SetHWFontGadget(Tw_DefaultD, Gadget, X, Y, HWFont, Left, Up)
-#define TwSetHWFontsGadget(Gadget, bitmap, X, Y, HWFont, Left, Up) \
-					Tw_SetHWFontsGadget(Tw_DefaultD, Gadget, bitmap, X, Y, HWFont, Left, Up)
-
-
-#define TwCreate4MenuRow(Window, Code, FlagActive, TextLen, Text) \
-		Tw_Create4MenuRow(Tw_DefaultD, Window, Code, FlagActive, TextLen, Text)
-#define TwRow4Menu			TwCreate4MenuRow
-#define TwCreateWindow(NameLen, Name, ColName, Menu, ColText, cursorType, \
-		       Attrib, Flags, XWidth, YWidth, ScrollBackLines) \
-		Tw_CreateWindow(Tw_DefaultD, NameLen, Name, ColName, Menu, ColText, cursorType, \
-		       Attrib, Flags, XWidth, YWidth, ScrollBackLines)
-
-#define TwDeleteWindow			TwDeleteObj
-#define TwRecursiveDeleteWindow		TwRecursiveDeleteWidget
-#define TwMapWindow			TwMapWidget
-#define TwUnMapWindow			TwUnMapWidget
-#define TwSetXYWindow			TwSetXYWidget
-#define TwGetOwnerWindow		TwGetOwnerWidget
-#define TwExposeTextWindow		TwExposeTextWidget
-#define TwExposeHWFontWindow		TwExposeHWFontWidget
-#define TwExposeHWAttrWindow		TwExposeHWAttrWidget
-
-#define TwCreate4MenuWindow(Menu)	Tw_Create4MenuWindow(Tw_DefaultD, Menu)
-#define TwWin4Menu			TwCreate4MenuWindow
-#define TwWriteAsciiWindow(Window, Len, AsciiSeq) \
-		Tw_WriteAsciiWindow(Tw_DefaultD, Window, Len, AsciiSeq)
-#define TwWriteStringWindow(Window, Len, String) \
-		Tw_WriteStringWindow(Tw_DefaultD, Window, Len, String)
-#define TwWriteHWFontWindow(Window, Len, HWFont) \
-		Tw_WriteHWFontWindow(Tw_DefaultD, Window, Len, HWFont)
-#define TwWriteHWAttrWindow(Window, x, y, Len, Attr) \
-		Tw_WriteHWAttrWindow(Tw_DefaultD, Window, x, y, Len, Attr)
-#define TwWriteRowWindow(Window, Len, Text) Tw_WriteRowWindow(Tw_DefaultD, Window, Len, Text)
-
-#define TwSetColTextWindow(Window, ColText) Tw_SetColTextWindow(Tw_DefaultD, Window, ColText)
-#define TwSetColorsWindow(Window, Bitmap, ColGadgets, ColArrows, ColBars, ColTabs, \
-			  ColBorder, ColText, ColSelect, ColDisabled, ColSelectDisabled) \
-		Tw_SetColorsWindow(Tw_DefaultD, Window, Bitmap, ColGadgets, ColArrows, ColBars, ColTabs, \
-			  ColBorder, ColText, ColSelect, ColDisabled, ColSelectDisabled)
-#define TwConfigureWindow(Window, Bitmap, Left, Up, MinXWidth, MinYWidth, MaxXWidth, MaxYWidth) \
-	Tw_ConfigureWindow(Tw_DefaultD, Window, Bitmap, Left, Up, MinXWidth, MinYWidth, MaxXWidth, MaxYWidth)
-#define TwResizeWindow(Window, X, Y)	Tw_ResizeWindow(Tw_DefaultD, Window, X, Y)
-#define TwGotoXYWindow(Window, X, Y)	Tw_GotoXYWindow(Tw_DefaultD, Window, X, Y)
-
-#define TwCreate4MenuMenuItem(Parent, Window, Flags, NameLen, Name) \
-		Tw_Create4MenuMenuItem(Tw_DefaultD, Parent, Window, Flags, NameLen, Name)
-#define TwItem4Menu			TwCreate4MenuMenuItem
-#define TwCreate4MenuCommonMenuItem(Menu) Tw_Create4MenuCommonMenuItem(Tw_DefaultD, Menu)
-#define TwItem4MenuCommon		TwCreate4MenuCommonMenuItem
-#define TwDeleteMenuItem(MenuItem)	Tw_DeleteMenuItem(Tw_DefaultD, MenuItem)
-#define TwCreateMenu(ColItem, ColSelect, ColDisabled, \
-		     ColSelectDisabled, ColShtCut, ColSelShtCut, FlagDefColInfo) \
-		Tw_CreateMenu(Tw_DefaultD, ColItem, ColSelect, ColDisabled, \
-		     ColSelectDisabled, ColShtCut, ColSelShtCut, FlagDefColInfo)
-
-#define TwSetInfoMenu(Menu, Flags, Len, Text, ColText) \
-		Tw_SetInfoMenu(Tw_DefaultD, Menu, Flags, Len, Text, ColText)
-#define TwInfo4Menu			TwSetInfoMenu
-#define TwDeleteMenu(Menu)		Tw_DeleteMenu(Tw_DefaultD, Menu)
-     
-#define TwCreateMsgPort(NameLen, ProgramName, PauseSec, PauseFraction, WakeUp) \
-		Tw_CreateMsgPort(Tw_DefaultD, NameLen, ProgramName, PauseSec, PauseFraction, WakeUp)
-#define TwDeleteMsgPort(MsgPort)	Tw_DeleteMsgPort(Tw_DefaultD, MsgPort)
-#define TwFindMsgPort(Prev, NameLen, ProgramName) \
-		Tw_FindMsgPort(Tw_DefaultD, Prev, NameLen, ProgramName)
-     
-#define TwBgImageScreen(Screen, BgWidth, BgHeight, BgImage) \
-		Tw_BgImageScreen(Tw_DefaultD, Screen, BgWidth, BgHeight, BgImage)
-
-#define TwPrevObj(Obj)			Tw_PrevObj(Tw_DefaultD, Obj)
-#define TwNextObj(Obj)			Tw_NextObj(Tw_DefaultD, Obj)
-#define TwParentObj(Obj)		Tw_ParentObj(Tw_DefaultD, Obj)
-#define TwO_PrevWidget(Widget)		Tw_O_PrevWidget(Tw_DefaultD, Widget)
-#define TwO_NextWidget(Widget)		Tw_O_NextWidget(Tw_DefaultD, Widget)
-#define TwOwnerWidget(Widget)		Tw_OwnerWidget(Tw_DefaultD, Widget)
-#define TwG_PrevGadget(Gadget)		Tw_G_PrevGadget(Tw_DefaultD, Gadget)
-#define TwG_NextGadget(Gadget)		Tw_G_NextGadget(Tw_DefaultD, Gadget)
-#define TwGroupGadget(Gadget)		Tw_GroupGadget(Tw_DefaultD, Gadget)
-
-#define TwFirstScreen()			Tw_FirstScreen(Tw_DefaultD)
-#define TwFirstWidget(Parent)		Tw_FirstWidget(Tw_DefaultD, Parent)
-#define TwFirstMsgPort()		Tw_FirstMsgPort(Tw_DefaultD)
-#define TwFirstMenu(MsgPort)		Tw_FirstMenu(Tw_DefaultD, MsgPort)
-#define TwFirstW(MsgPort)		Tw_FirstW(Tw_DefaultD, MsgPort)
-#define TwFirstGroup(MsgPort)		Tw_FirstGroup(Tw_DefaultD, MsgPort)
-#define TwFirstMutex(MsgPort)		Tw_FirstMutex(Tw_DefaultD, MsgPort)
-#define TwFirstMenuItem(Menu)		Tw_FirstMenuItem(Tw_DefaultD, Menu)
-#define TwFirstGadget(Group)		Tw_FirstMenu(Tw_DefaultD, Group)
-
-#define TwGetDisplayWidth()		Tw_GetDisplayWidth(Tw_DefaultD)
-#define TwGetDisplayHeight()		Tw_GetDisplayHeight(Tw_DefaultD)
-
-#define TwCreateMsg(Type, Len)		Tw_CreateMsg(Tw_DefaultD, Type, Len)
-#define TwDeleteMsg(Msg)		Tw_DeleteMsg(Tw_DefaultD, Msg)
-#define TwSendMsg(MsgPort, Msg)		Tw_SendMsg(Tw_DefaultD, MsgPort, Msg)
-#define TwBlindSendMsg(MsgPort, Msg)	Tw_BlindSendMsg(Tw_DefaultD, MsgPort, Msg)
-
-#define TwGetOwnerSelection()		Tw_GetOwnerSelection(Tw_DefaultD)
-#define TwSetOwnerSelection(Time, Frac) Tw_SetOwnerSelection(Tw_DefaultD, Time, Frac)
-#define TwRequestSelection(Owner, ReqPrivate)	Tw_RequestSelection(Tw_DefaultD, Owner, ReqPrivate)
-#define TwNotifySelection(Requestor, ReqPrivate, Magic, MIME, Len, Data) \
-					Tw_NotifySelection(Tw_DefaultD, Requestor, ReqPrivate, \
-							   Magic, MIME, Len, Data)
-
-#define TwSetServerUid(uid, privileges)	Tw_SetServerUid(Tw_DefaultD, uid, privileges)
-
-#define TwOpen(Display)			(!!(Tw_DefaultD = Tw_Open(Display)))
-#define TwClose()			(Tw_Close(Tw_DefaultD), Tw_DefaultD = (tdisplay)0)
-#define TwConnectionFd()		Tw_ConnectionFd(Tw_DefaultD)
-#define TwLibraryVersion()		Tw_LibraryVersion(Tw_DefaultD)
-#define TwServerVersion()		Tw_ServerVersion(Tw_DefaultD)
-#define TwFlush()			Tw_Flush(Tw_DefaultD)
-#define TwTimidFlush()			Tw_TimidFlush(Tw_DefaultD)
-#define TwSync()			Tw_Sync(Tw_DefaultD)
-#define TwInPanic()			Tw_InPanic(Tw_DefaultD)
-#define TwPendingMsg()			Tw_PendingMsg(Tw_DefaultD)
-#define TwPeekMsg()			Tw_PeekMsg(Tw_DefaultD)
-#define TwReadMsg(Wait)			Tw_ReadMsg(Tw_DefaultD, Wait)
-#define TwCloneReadMsg(Wait)		Tw_CloneReadMsg(Tw_DefaultD, Wait)
-
-#define TwAddKeyboardListener(               Widget, Key,  ShiftFlags, Listener, Arg) \
-       Tw_AddKeyboardListener(Tw_DefaultD,   Widget, Key,  ShiftFlags, Listener, Arg)
-
-#define TwAddMouseListener(             Widget, Code, ShiftFlags, Listener, Arg) \
-       Tw_AddMouseListener(Tw_DefaultD, Widget, Code, ShiftFlags, Listener, Arg)
-
-#define TwAddControlListener(             Widget, Code, Listener, Arg) \
-       Tw_AddControlListener(Tw_DefaultD, Widget, Code, Listener, Arg)
-
-#define TwAddClientMsgListener(             Widget, Code, Listener, Arg) \
-       Tw_AddClientMsgListener(Tw_DefaultD, Widget, Code, Listener, Arg)
-
-#define TwAddDisplayListener(             Code, Listener, Arg) \
-       Tw_AddDisplayListener(Tw_DefaultD, Code, Listener, Arg)
-
-#define TwAddWidgetListener(             Widget, Code, Listener, Arg) \
-       Tw_AddWidgetListener(Tw_DefaultD, Widget, Code, Listener, Arg)
-
-#define TwAddGadgetListener(             Widget, Code, Listener, Arg) \
-       Tw_AddGadgetListener(Tw_DefaultD, Widget, Code, Listener, Arg)
-
-#define TwAddMenuListener(             Widget, Menu, Code, Listener, Arg) \
-       Tw_AddMenuListener(Tw_DefaultD, Widget, Menu, Code, Listener, Arg)
-
-#define TwAddSelectionListener(             Widget, Listener, Arg) \
-       Tw_AddSelectionListener(Tw_DefaultD, Widget, Listener, Arg)
-       
-#define TwAddSelectionNotifyListener(             Listener, Arg) \
-       Tw_AddSelectionNotifyListener(Tw_DefaultD, Listener, Arg)
-       
-#define TwAddSelectionRequestListener(             Listener, Arg) \
-       Tw_AddSelectionRequestListener(Tw_DefaultD, Listener, Arg)
-
-#define TwInsertListener(L)		Tw_InsertListener(Tw_DefaultD, L)
-#define TwRemoveListener(L)		Tw_RemoveListener(Tw_DefaultD, L)
-#define TwCreateListener(Type, E, L, Arg) Tw_CreateListener(Tw_DefaultD, Type, E, L, Arg)
-#define TwSetTEListener(L, Type, E)	Tw_SetTEListener(Tw_DefaultD, L, Type, E)
-#define TwDeleteListener(L)		Tw_DeleteListener(Tw_DefaultD, L)
-
-#define TwSetDefaultListener(L, arg)	Tw_SetDefaultListener(Tw_DefaultD, L, arg)
-
-#define TwDispatchMsg(Msg)		Tw_DispatchMsg(Tw_DefaultD, Msg)
-#define TwMainLoop()			Tw_MainLoop(Tw_DefaultD)
 
 #ifdef __cplusplus
- }
+}
 #endif
 
 #endif /* _TW_H */

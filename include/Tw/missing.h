@@ -1,12 +1,9 @@
 
-#ifndef _TWIN_MISSING_H
-#define _TWIN_MISSING_H
+#ifndef _TW_MISSING_H
+#define _TW_MISSING_H
 
-#include "Tw/prefix.h"
-
-#ifndef TW_RETSIGTYPE
-# include "Tw/Twautoconf.h"
-#endif
+#include <Tw/prefix.h>
+#include <Tw/Twautoconf.h>
 
 #ifndef TW_HAVE_MEMCMP
 int Tw_missing_memcmp(TW(CONST) void *s1, TW(CONST) void *s2, size_t n);
@@ -32,12 +29,12 @@ char *Tw_missing_strdup(TW(CONST) char *s, void *(*missing_malloc)(size_t size))
 
 #ifndef TW_HAVE_STRSPN
 size_t Tw_missing_strspn(TW(CONST) char *s, TW(CONST) char *accept);
-# define strspn(s, accept) Tw_missing_strspn(s, accept)
+# define strspn Tw_missing_strspn
 #endif
 
 #ifndef TW_HAVE_STRSTR
 TW(CONST) char *Tw_missing_strstr(TW(CONST) char *haystack, TW(CONST) char *needle);
-# define strstr(haystack, needle) Tw_missing_strstr(haystack, needle)
+# define strstr Tw_missing_strstr
 #endif
 
 #ifndef TW_HAVE_WAIT3
@@ -48,7 +45,7 @@ TW(CONST) char *Tw_missing_strstr(TW(CONST) char *haystack, TW(CONST) char *need
 # endif
 #endif
 
-#include "Tw/unprefix.h"
+#include <Tw/unprefix.h>
 
-#endif /* _TWIN_MISSING_H */
+#endif /* _TW_MISSING_H */
 

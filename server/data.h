@@ -10,10 +10,10 @@ extern all All;
 
 typedef struct keylist keylist;
 struct keylist {
-    byte *name;
+    CONST byte *name;
     udat key;
     byte len;
-    byte *seq;
+    CONST byte *seq;
 };
 
 extern keylist TW_KeyList[];

@@ -23,19 +23,24 @@ static int log_fd = NOFD;
 
 int printk(CONST byte *format, ...) {
     int i = 0;
-#ifdef HAVE_VPRINTF
+#if defined(HAVE_VSNPRINTF) || defined(HAVE_VSPRINTF)
     int left, chunk;
     byte *s = buf;
     va_list ap;
     
     va_start(ap, format);
+# ifdef HAVE_VSNPRINTF
+    i = vsnprintf(buf, sizeof(buf), format, ap);
+    va_end(ap);
+# else
     i = vsprintf(buf, format, ap); /* hopefully i < sizeof(buf) */
     va_end(ap);
     
-    if (i >= SMALLBUFF*4) {
+    if (i > sizeof(buf)) {
 	fputs("twin: internal error: printk() overflow! \033[1mQUIT NOW !\033[0m\n", stderr);
-	return SMALLBUFF*4;
+	return sizeof(buf);
     }
+#endif /* HAVE_VSNPRINTF */
 
 #ifdef CONF_PRINTK
     if (MessagesWin->HLogic > SMALLBUFF) {
@@ -46,7 +51,7 @@ int printk(CONST byte *format, ...) {
 	if (MessagesWin->Parent)
 	    DrawFullWindow2(MessagesWin);
     }
-    Act(WriteRow,MessagesWin)(MessagesWin, i, buf);
+    Act(RowWriteAscii,MessagesWin)(MessagesWin, i, buf);
 #endif /* CONF_PRINTK */
 
     if (log_fd == NOFD)
@@ -65,7 +70,7 @@ int printk(CONST byte *format, ...) {
 	} while (left > 0 && chunk > 0);
     }
     return i;
-#endif /* HAVE_VPRINTF */
+#endif /* defined(HAVE_VSNPRINTF) || defined(HAVE_VPRINTF) */
 }
 
 int flushk(void) {
@@ -81,6 +86,6 @@ byte RegisterPrintk(int fd) {
 }
 
 void UnRegisterPrintk(void) {
-    log_fd = NOSLOT;
+    log_fd = NOFD;
 }
 

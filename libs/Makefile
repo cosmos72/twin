@@ -2,15 +2,14 @@
 # Makefile for the various libraries
 #
 TOPDIR=..
-SUBDIRS=$(filter-out libTT, $(wildcard lib*))
+THISDIR=$(TOPDIR)/libs
+
+#SUBDIRS=$(filter-out libTT, $(wildcard lib*))
+SUBDIRS=$(wildcard lib*)
 
 all: subdirs
 
-# library dependencies:
-dir-libTw: dir-libTutf
-
-dir-libTT: dir-libTw
-
+dir-libTT: dir-libTutf dir-libTw
 
 
 include $(TOPDIR)/makerules

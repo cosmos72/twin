@@ -2,8 +2,8 @@
  * mapscrn.c
  */
 
-#include "Tw/Tw.h"
-#include "Tw/Twerrno.h"
+#include <Tw/Tw.h>
+#include <Tw/Twerrno.h>
 
 #include <string.h>
 #include <stdio.h>
@@ -225,8 +225,7 @@ loadnewmap(int fd, char *mfil) {
 			exit(1);
 #else
 		fprintf(stderr,
-			_("Error: map from file uses Unicode. Recompile me with unicode support!\n"),
-			pathname);
+			_("Error: map from file uses Unicode. Recompile me with unicode support!\n"));
 		exit(1);
 #endif		
 	} else {

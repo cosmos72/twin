@@ -1,51 +1,26 @@
 
+/*
+ *  TTtypes.h  --  INTERNAL (!!) header for libTT types declarations
+ *
+ *  Note: you cannot include both this file and <TT/TTtypes.h>, as they conflict!
+ */
+
 #ifndef _TT_TYPES_H
 #define _TT_TYPES_H
 
+#include <Tw/Twtypes.h>
+#include <Tw/Twavl.h>
 
-#define Min2(a,b) ((a) < (b) ? (a) : (b))
+#include <Tutf/Tutf.h>
 
+#include <TT/compiler.h>
+#include <TT/version.h>
 
-/* set magic_xxx enums */
-typedef enum e_order_ttobjs {
-#define el(obj) TT_CAT(order_,obj),
-TT_LIST(el)
-#undef el
-} order_ttobjs;
-
-typedef enum e_magicbit_ttobjs {
-#define el(obj) TT_CAT(magicbit_,obj) = 1<<TT_CAT(order_,obj),
-TT_LIST(el)
-#undef el
-} magicbit_ttobjs;
-
-typedef enum e_magic_ttobjs {
-    magic_ttobj = magicbit_ttobj,
-#define el(obj) TT_CAT(magic_,obj) = TT_CAT(magicbit_,obj) | TT_CAT(magic_,TT_CAT(TTsuper_,obj)),
-TT_NLIST(el)
-#undef el
-} magic_ttobjs;
-
-
-/* #define IS(xxx,o) macros */
-#define IS(obj,o) ((o)->FN->magic & TT_CAT(magicbit_,obj))
-
-
-typedef struct s_ttobj TT_CONST * ttobj_c;
-
-typedef struct s_ttlistener *ttlistener;
-struct s_ttlistener {
-    ttlistener prev, next;
-    tlistener t;
-};
-
-
-typedef struct s_ttshape *ttshape;
-struct s_ttshape {
-    dat width, height, border[4];
-    hwattr *attr;
-};
-
+/* include our internal copy of headers instead of the public ones */
+#include "flags.h"
+#include "treem4.h"
+#include "datatypes.h"
+#include "defsm4.h"
 
 #endif /* _TT_TYPES_H */
 

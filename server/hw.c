@@ -544,7 +544,7 @@ byte InitTtysave(void) {
 #endif
 #ifdef TABDLY
 			     | TABDLY
-#endif TABDLY
+#endif
 #ifdef BSDLY
 			     | BSDLY
 #endif

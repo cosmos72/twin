@@ -3,59 +3,189 @@ This file explains libTT internals:
 it is only useful if you are a programmer and you want to modify libTT.
 
 1) libTT is plain C code.
-   User visible libTT objects are opaque C structure pointers, and those
-   structures also contain a set of methods (function pointers), inaccessible
-   by libTT clients but internally used by libTT to actually perform work
-   on the objects. Clients can only call global libTT method wrappers that
-   perform extensive sanity checkings (like checking that a ttwindow argument
-   actually IS a ttwindow), then internally call the needed method.
+
+   User visible libTT objects are C opaque struct pointers. They are internally
+   manipulated by libTT to locate the actual objects, which are inaccessible
+   by clients, and are C structures that also contain a set of methods
+   (function pointers), internally used to actually perform work on the objects.
+   Clients can only call global libTT method wrappers that perform extensive
+   sanity checkings (like checking that a ttwindow argument actually IS a ttwindow),
+   then internally call the needed method.
+   
+   At the time of writing, libTT objects (`obj' from now on) may have
+   one of these types:
+   
+   ttfn ttobj ttevent tteventbig ttlistener ttcallback ttcomponent ttvisible ttnative
+   ttwidget ttlabel ttanybutton ttbutton ttcheckbutton ttradiobutton ttscrollbar
+   ttbuttongroup ttwindow ttframe ttscroller ttmenuitem ttcheckmenuitem ttradiomenuitem
+   ttmenu ttmenubar ttanytext tttextfield tttextarea tttheme ttapplication
+
+   ttfn is the type used to represent object types at runtime:
+   you can get the type of an obj `o' with:
+   
+   TTCLASSOF(o)
+   
+   the result is an obj of type `ttfn' and with a value that
+   uniquely indicates the type of `o'.
+   
+   libTT implements inheritance, so it is possible to cast an obj from
+   a type to another under certain conditions:
+   
+   you can cast an obj `o' to type <t> (say, ttlabel) if and only if
+   
+   TTINSTANCEOF(<t>, o)
+   
+   returns 1. to perform the actual cast, just write:
+   
+   (<t>)o
+   
+   in our example, you would write
+   
+   (ttlabel)o
+   
+   if you have a object `t' of type `ttfn' (i.e. a runtime type), you can check
+   whether an object `o' is of type `t' with:
+   
+   TTInstanceOf(t, (ttobj)o)
+   
+   notes: you cannot create or destroy `ttfn' objects.
+          exactly one `ttfn' object exists for each libTT type.
+   	  you cannot cast an obj of type `ttfn' to any other type.
+	  you can access all the `ttfn' objects since they are
+	  libTT global variables: they are named
+	      
+	  TTFN_<type>
+	      
+	  where <type> is one of the libTT types listed above.
+
+          for the curious, TTINSTANCEOF(type, o) is just the macro:
+	  
+	  #define TTINSTANCEOF(type, o)	TTInstanceOf(TT_CAT(TTFN_,type), (ttobj)(o))
+	  
+	  where TT_CAT(a,b) is a macro that concatenates its arguments with a##b
+
+
+   There is also the null object: it has value zero (or 0).
+   You cannot do anything with it, and it is considered an invalid object.
+   
+   If you cast an object `o' to a type for which TTINSTANCEOF() returns 0,
+   the result of the cast is an invalid object.
+   
+   If you pass an invalid object to TTCLASSOF(), the result is zero.
+   If you pass an invalid object to TTINSTANCEOF() or TTInstanceof(), the result
+     is zero (i.e. the cast is not allowed).
+   
+   
+   Things you should NOT do with client-visible libTT objects (`obj'):
+   a) do not assume they point to meaningful (or even existing) memory,
+      since they do not.
+   b) do not assume they are correctly aligned, since they are not.
+   c) (follows a and b) do not try to dereference them.
+   d) do not make any math operation on them. even if you can compare
+      them (see below), you cannot add, subtract, or manipulate in any way them.
+   
+   Things you CAN do with client-visible libTT objects (`obj') :
+   a) you can compare them: each distinct obj is represented by a unique
+      client-visible value. you may need to cast them to (void *) or to (ttobj)
+      in order for the compiler to allow the comparison.
+   b) you can compare an obj with 0 (zero), after you cast 0 to the proper type.
+      in other words, each obj is different from zero.
+   c) (obvious) you can pass an obj as argument to libTT functions where
+      an obj of the same type is expected.
+      
 
 2) Plain C has no object-oriented features like inheritance,
    so all the necessary object-oriented stuff is automagically produced
    using `m4' macros. For this purpose, various files exist:
-   include/TT/m4/m4_TTtypes.m4
+   include/TT/m4/TTclasses.m4h
 	m4 definitions for libTT objects hierarchy:
 	defines all objects fields and methods.
 	used to autogenerate a lot of files.
-	before including it, you should define the m4 macros
-	`extends', `field', `private', `protected', `public'
-	to whatever appropriate for your purpose.
-   libs/libTT/m4/TT.m4
-	properly defines the keywords
-	`extends', `field', `private', `protected', `public'
-	then includes "include/TT/m4/m4_TTtypes.m4" to produce
-	the C header file "libs/libTT/TTm4.h"
-   libs/libTT/TTm4.h
-	autogenerated from "libs/libTT/m4/TT.m4", it is an internal libTT
-	header.
-	contains the complete C definitions of all libTT object types and
-	related method types.
+	after including it, you can define the m4 macros
+	`el', `extends', `field', `private', `protected', `public'
+	then use one of the `TT*list', `TT*def_tt*' macros
+	to autogenerate whatever appropriate for your purpose.
+   include/TT/m4/TThandy.m4h
+	m4 definitions for some handy libTT method helpers.
+	defines a few more objects methods.
+	after including it, you can define the m4 macros
+	`el', `extends', `field', `exported_fields'
+	then use one of the `TT*list', `TT*handy_tt*' macros
+	to autogenerate whatever appropriate for your purpose.
    ------------
-   libs/libTT/methods_base.h
-   	C implementation of all libTT methods.
-	before including it, you should define the m4 macros
-	`DEF', `NEW', `SUPER', `REALIZE', `DEL', `DELSUPER'
-	to whatever appropriate for your purpose.
-   libs/libTT/m4/methods.m4
-	properly defines the keywords
-	`DEF', `NEW', `SUPER', `REALIZE', `DEL', `DELSUPER'
-	then includes "libs/libTT/methods_base.h" to produce
-	the C header file "libs/libTT/methodsm4.h"
-	properly defines the keywords
-	`extends', `field', `private', `protected', `public'
-	then includes "include/TT/m4/m4_TTtypes.m4" to provide
-	fallback implementations of methods not overridden in
-	"libs/libTT/methods_base.h"
-   ------------
-   include/TT/m4/TTdefs.m4
-	properly defines the keywords
-	`extends', `field', `private', `protected', `public'
-	then includes "include/TT/m4/m4_TTtypes.m4" to produce
-	the C header file "include/TT/TTdefsm4.h"
-    
-   include/TT/TTdefsm4.h
-	autogenerated from "libs/libTT/m4/TT.m4", it is a public libTT header.
-	defines all object types and related method types.
+   include/TT/m4/defs.m4
+	includes "include/TT/m4/TTclasses.m4h"
+	then properly defines the keywords
+	`el', `extends', `field', `private', `protected', `public'
+	to produce the C header file "include/TT/defsm4.h"
+   include/TT/defsm4.h
+	autogenerated from "include/TT/m4/defs.m4", it is a libTT header.
+	declares all object types and related method types.
 	intentionally does NOT provide internal informations about
-	the structures, but only opaque pointers.
+	the declared objects, but only C opaque struct pointers.
 	also provides C #defines to handle objects hierarchy.
+   ------------
+   include/TT/m4/handy.m4
+	includes "include/TT/m4/TThandy.m4h"
+	then properly defines the keywords
+	`el', `extends', `field', `exported_fields'
+	to produce the C header file "include/TT/handym4.h"
+   include/TT/handym4.h
+	autogenerated from "include/TT/m4/handy.m4", it is a libTT header.
+	declares some handy object methods.
+   ------------
+   libs/libTT/m4/defs.m4
+	includes "include/TT/m4/TTclasses.m4h"
+	then properly defines the keywords
+	`el', `extends', `field', `private', `protected', `public'
+	to produce the C header file "libs/libTT/defsm4.h"
+   libs/libTT/defsm4.h
+	autogenerated from "libs/libTT/m4/defs.m4", it is an internal libTT header.
+	declares all object types and related method types.
+	provides the full prototype and informations about the libTT object structures.
+	also provides C #defines to handle objects hierarchy.
+   ------------
+   libs/libTT/m4/tree.m4
+	includes "include/TT/m4/TTclasses.m4h"
+	then properly defines the keywords
+	`el', `extends', `field', `private', `protected', `public'
+	to produce the C header file "libs/libTT/treem4.h"
+   libs/libTT/treem4.h
+	autogenerated from "libs/libTT/m4/tree.m4", it is an internal libTT header.
+	uses voodoo m4 magic to define obscure constants for magicmask_* and magic_*
+	fields, in order to handle runtime type checking and casting between
+	libTT types. Also defines constants to identify each object field.
+   ------------
+   libs/libTT/m4/wrap.m4
+	includes "include/TT/m4/TTclasses.m4h"
+	then properly defines the keywords
+	`el', `extends', `field', `private', `protected', `public'
+	to produce the C header file "libs/libTT/wrapm4.h"
+   libs/libTT/wrapm4.h
+	autogenerated from "libs/libTT/m4/wrap.m4", it is an internal libTT header.
+	implements many client-visible methods as wrappers around
+	internal libTT functions.
+   ------------
+   then, for each display target (like "twin", "gtk", ...) :
+   ------------
+   libs/libTT/HW/m4/hw.m4
+	properly defines the keywords
+	`DEF', `NEW', `SUPER', `REALIZE', `DEL', `DELSUPER'
+	to include the various "libs/libTT/hw/hw_*_c" to produce
+	the C header files "libs/libTT/hw_*_m4.c".
+	properly defines the keywords
+	`extends', `field', `private', `protected', `public'
+	then includes "include/TT/m4/TTclasses.m4h" to provide
+	references to fallback implementations of methods not
+	overloaded in "libs/libTT/hw_*_m4.c"
+   ------------
+   libs/libTT/HW/hw_*_c
+   	C implementation of overloaded libTT methods for the specific target.
+	used by libs/libTT/HW/m4/hw.m4 to autogenerate libs/libTT/HW/hw_*_m4.c
+   ------------
+   libs/libTT/HW/hw_*_m4.c
+	autogenerated from "libs/libTT/HW/hw_*_c", it contains,
+	beyond "libs/libTT/HW/hw_*_c" itself, references to
+	fallback implementations of methods not overloaded in
+	"libs/libTT/hw_*_m4.c"
+   ------------

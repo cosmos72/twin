@@ -19,19 +19,11 @@
 #include "dl.h"
 #include "version.h"
 
-static void WrongVer(uldat ver) {
-    static byte buf[80];
-    sprintf(buf, "version mismatch: module is %d.%d.%d, this twin is " TWIN_VERSION_STR,
-	    TW_VER_MAJOR(ver), TW_VER_MINOR(ver), TW_VER_PATCH(ver));
-    ErrStr = buf;
-}
-
 byte DlOpen(module Module) {
     void *Handle = NULL;
     uldat len0 = LenStr(conf_destdir_lib_twin_modules_), len;
     byte *name;
     byte (*init_dl)(module);
-    uldat *version_dl;
     
     if (Module && !Module->Handle && Module->Name && Module->NameLen) {
 	/* dlopen(NULL, ...) returns a handle for the main program */
@@ -57,16 +49,10 @@ byte DlOpen(module Module) {
     }
 
     if (name) {
-	version_dl = dlsym(Handle, "VersionModule");
-	if (version_dl && *version_dl == TWIN_VERSION) {
-	    init_dl = dlsym(Handle, "InitModule");
-	    if (!init_dl || init_dl(Module)) {
-		Module->Handle = Handle;
-		return TRUE;
-	    }
-	} else {
-	    Error(USERERROR);
-	    WrongVer(version_dl ? *version_dl : 0);
+	init_dl = dlsym(Handle, "InitModule");
+	if (!init_dl || init_dl(Module)) {
+	    Module->Handle = Handle;
+	    return TRUE;
 	}
 	dlclose(Handle);
 	return FALSE;
@@ -108,21 +94,23 @@ module DlLoadAny(uldat len, byte *name) {
 static module So[MAX_So];
 
 module DlLoad(uldat code) {
+    uldat len = strlen(TWIN_VERSION_STR);
+    
     module M;
     if (code < MAX_So) {
 	if (!(M = So[code])) {
 	    switch (code) {
 #ifndef CONF_WM
-	      case WMSo:      M = DlLoadAny(5, "wm.so"); break;
+	      case WMSo:      M = DlLoadAny(len + 6, "wm.so." TWIN_VERSION_STR); break;
 #endif
 #ifndef CONF_TERM
-	      case TermSo:    M = DlLoadAny(7, "term.so"); break;
+	      case TermSo:    M = DlLoadAny(len + 8, "term.so." TWIN_VERSION_STR); break;
 #endif
 #ifndef CONF_SOCKET
-	      case SocketSo:  M = DlLoadAny(9, "socket.so"); break;
+	      case SocketSo:  M = DlLoadAny(len + 10, "socket.so." TWIN_VERSION_STR); break;
 #endif
 #ifndef CONF_WM_RC
-	      case RCParseSo: M = DlLoadAny(10, "rcparse.so"); break;
+	      case RCParseSo: M = DlLoadAny(len + 11, "rcparse.so." TWIN_VERSION_STR); break;
 #endif
 	      case MainSo:
 	      default:        M = DlLoadAny(4, "main"); break;

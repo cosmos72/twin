@@ -1,0 +1,121 @@
+
+#include <gtk/gtk.h>
+
+DECL_COMMON
+
+/*
+ * We need to write down only overloaded methods.
+ */
+ 
+
+
+/* ttobj */
+static BREAK(ttobj) {
+    if (o) {
+	if (o->native) {
+	    gtk_object_destroy((GtkObject *)o->native);
+	    o->native = (opaque)0;
+	}
+    }
+}
+
+
+/* ttwidget */
+static NEW(ttwidget) {
+    if ((o->native = (opaque)gtk_fixed_new()))
+	return o;
+    return NULL;
+}
+static BUILD(ttwidget) {
+    gtk_widget_realize((GtkWidget *)o->native);
+    return o;
+}
+static void DEF(AddTo_ttwidget)(ttwidget o, ttvisible parent) {
+    if (parent && !o->parent) {
+	/* prepend to list, cannot use FNSUPER(ttwidget)->AddTo() */
+	if ((o->next = parent->child_first))
+	    parent->child_first->prev = (ttvisible)o;
+	else
+	    parent->child_last = (ttvisible)o;
+	parent->child_first = (ttvisible)o;
+	o->prev = NULL;
+	o->parent = parent;
+
+	gtk_widget_reparent((GtkWidget *)o->native, (GtkWidget *)parent->native);
+	
+	if (o->vflags & ttvisible_vflags_visible)
+	    gtk_widget_show((GtkWidget *)o->native);
+    }
+}
+static void DEF(SetVisible_ttwidget)(ttwidget o, byte on_off) {
+    if (!on_off != !(o->vflags & ttvisible_vflags_visible)) {
+	o->vflags ^= ttvisible_vflags_visible;
+	if (o->parent) {
+	    if (on_off)
+		gtk_widget_show((GtkWidget *)o->native);
+	    else
+		gtk_widget_hide((GtkWidget *)o->native);
+	}
+    }
+}
+static void DEF(Remove_ttwidget)(ttwidget o) {
+    if (o->parent) {
+	FNSUPER(ttwidget)->Remove((super_(ttwidget))o);
+	
+	gtk_widget_reparent((GtkWidget *)o->native, (GtkWidget *)0);
+    }
+}
+
+
+static byte HWDEF(Sync)(void) {
+    return 1;
+}
+static byte HWDEF(Flush)(void) {
+    return 1;
+}
+static byte HWDEF(TimidFlush)(void) {
+    return 1;
+}
+static byte HWDEF(MainLoop)(void) {
+    gtk_main();
+    return 1;
+}
+static void HWDEF(ExitMainLoop)(void) {
+    gtk_main_quit();
+}
+static void HWDEF(DeleteListener)(ttlistener o) {
+}
+static void HWDEF(Close)(void) {
+}
+static int HWDEF(ConnectionFd)(void) {
+  return -1;
+}
+static ttuint HWDEF(GetErrno)(void) {
+  return 0;
+}
+static ttuint HWDEF(GetErrnoDetail)(void) {
+  return 0;
+}
+static TT_CONST byte *HWDEF(StrError)(ttuint E) {
+    return "";
+}
+static TT_CONST byte *HWDEF(StrErrorDetail)(ttuint E, ttuint S) {
+    return "";
+}
+
+
+#ifdef CONF_THIS_MODULE
+ttfns InitModule(tthw *HW)
+#else
+ttfns gtk_InitHW(tthw *HW)
+#endif
+{
+    /*
+     * (*HW) must be set even if initialization fails,
+     * to report error messages.
+     */
+    *HW = &gtk_TTFNs.HW;
+    
+    CommonErrno = TT_EFAILED_TARGET; /* it's unfinished... */
+    return (ttfns)0;
+}

@@ -7,15 +7,15 @@ ifeq ($(makeautoconf),)
 
 # set installation directories
 
-prefix = @prefix@
-exec_prefix=@exec_prefix@
-sysconfdir = @sysconfdir@/twin
-bindir = @bindir@
-includedir=@includedir@
-libdir = @libdir@
-datadir = @datadir@
-mandir = @mandir@
-includedir = @includedir@
+prefix      = @prefix@
+exec_prefix = @exec_prefix@
+sysconfdir  = @sysconfdir@/twin
+bindir      = @bindir@
+includedir  = @includedir@
+libdir      = @libdir@
+datadir     = @datadir@
+mandir      = @mandir@
+includedir  = @includedir@
 
 # set autoconfigured and os-specific stuff
 
@@ -36,10 +36,22 @@ LD_LIBPTHREAD_WEAK=@LD_LIBPTHREAD_WEAK@
 LD_LIBTERMCAP=@LD_LIBTERMCAP@
 LD_LIBTERMCAP_IN_LIBGPM=@LD_LIBTERMCAP_IN_LIBGPM@
 
-LD_LIBX11=@LD_LIBX11@
 CF_HEADERX11=@CF_HEADERX11@
+LD_LIBX11=@LD_LIBX11@
 
 LD_LIBCRYPT=@LD_LIBCRYPT@
+
+CF_HEADERGTK=@CF_HEADERGTK@
+LD_LIBGTK=@LD_LIBGTK@
+
+SYS_ARCH_I386=@SYS_ARCH_I386@
+#
+# we currently can use assembler on i386 architecture with gcc
+#
+CC_ARCH_I386_ASM=n
+ifeq ($(filter gcc,$(CC)),gcc)
+  CC_ARCH_I386_ASM=y
+endif
 
 -include $(TOPDIR)/makeosvalues
 

@@ -1,11 +1,14 @@
 #
-# Makefile for twin - Text mode WINdow manager
+# Makefile for twin hw drivers
 #
 #
 
 TOPDIR=../..
+THISDIR=$(TOPDIR)/server/HW
+
 SUBDIRS=
 
+include ../makeversion
 -include $(TOPDIR)/makeautoconf
 
 CC_FLAGS+=-I..
@@ -18,12 +21,12 @@ TWINOBJS=hw_twin.o
 GGIOBJS=hw_ggi.o
 ALLOBJS:=$(BASEOBJS) $(TTYOBJS) $(X11OBJS) $(DISPLAYOBJS) $(TWINOBJS) $(GGIOBJS)
 
-OBJS_hw.a:=$(BASEOBJS)
-OBJS_hw_tty.so=$(TTYOBJS)
-OBJS_hw_X11.so=$(X11OBJS)
-OBJS_hw_display.so=$(DISPLAYOBJS)
-OBJS_hw_twin.so=$(TWINOBJS)
-OBJS_hw_ggi.so=$(GGIOBJS)
+OBJS_hw.a=$(BASEOBJS)
+OBJS_hw_tty.so.$(VERSION)=$(TTYOBJS)
+OBJS_hw_X11.so.$(VERSION)=$(X11OBJS)
+OBJS_hw_display.so.$(VERSION)=$(DISPLAYOBJS)
+OBJS_hw_twin.so.$(VERSION)=$(TWINOBJS)
+OBJS_hw_ggi.so.$(VERSION)=$(GGIOBJS)
 
 BINS=
 MODBINS=
@@ -31,11 +34,11 @@ ARLIBS=hw.a
 
 CC_FLAGS_hw_X11.o+=$(CF_HEADERX11)
 
-LD_FLAGS_hw_tty.so=-lc -shared
-LD_FLAGS_hw_X11.so=-lc -shared $(LD_LIBX11)
-LD_FLAGS_hw_display.so=-lc -shared
-LD_FLAGS_hw_twin.so=-lc -shared $(LIBTW)
-LD_FLAGS_hw_ggi.so=-lc -shared -lggi
+LD_FLAGS_hw_tty.so.$(VERSION)=$(LD_FLAGS_SOLIB)
+LD_FLAGS_hw_X11.so.$(VERSION)=$(LD_FLAGS_SOLIB) $(LD_LIBX11)
+LD_FLAGS_hw_display.so.$(VERSION)=$(LD_FLAGS_SOLIB)
+LD_FLAGS_hw_twin.so.$(VERSION)=$(LD_FLAGS_SOLIB) $(LD_LIBTW)
+LD_FLAGS_hw_ggi.so.$(VERSION)=$(LD_FLAGS_SOLIB) -lggi
 
 #
 # target
@@ -48,6 +51,7 @@ all: $(ARLIBS) modules
 -include $(TOPDIR)/conf/conf.current
 -include .modules
 -include .depend
+-include $(TOPDIR)/.hdepend
 
 #
 # set variables according conf.current
@@ -59,26 +63,26 @@ ifeq ($(CONF__ALLOC),y)
 endif
 
 #ifeq ($(CONF__UNICODE),y)
-#  LD_FLAGS+=$(LIBTUTF)
+#  LD_FLAGS+=$(LD_LIBTUTF)
 #endif
 
 ifeq ($(CONF_HW_TTY),y)
   OBJS_hw.a+=$(TTYOBJS)
 else
   ifeq ($(CONF_HW_TTY),m)
-    MODBINS+=hw_tty.so
+    MODBINS+=hw_tty.so.$(VERSION)
     ifeq ($(CONF_HW_TTY_LINUX),y)
-      LD_FLAGS_hw_tty.so+=-lgpm
+      LD_FLAGS_hw_tty.so.$(VERSION)+=-lgpm
     endif
     ifeq ($(CONF_HW_TTY_TERMCAP),y)
       CC_FLAGS_hw_tty.o+=-I/usr/include/ncurses
       ifeq ($(CONF_HW_TTY_LINUX),y)
         ifeq ($(LD_LIBTERMCAP_IN_LIBGPM),)
-          LD_FLAGS_hw_tty.so+=$(LD_LIBTERMCAP)
+          LD_FLAGS_hw_tty.so.$(VERSION)+=$(LD_LIBTERMCAP)
 	# else necessary libs are already pulled in with -lgpm above
 	endif
       else
-        LD_FLAGS_hw_tty.so+=$(LD_LIBTERMCAP)
+        LD_FLAGS_hw_tty.so.$(VERSION)+=$(LD_LIBTERMCAP)
       endif
     endif
   else
@@ -91,9 +95,9 @@ ifeq ($(CONF_HW_X11),y)
 else
   ifeq ($(CONF_HW_X11),m)
   
-    all: hw_X.so
+    all: hw_X.so.$(VERSION)
     
-    MODBINS+=hw_X11.so
+    MODBINS+=hw_X11.so.$(VERSION)
     
   else
     EXCL_OBJS+=$(X11OBJS)
@@ -105,7 +109,7 @@ ifneq ($(CONF_SOCKET),n)
     OBJS_hw.a+=$(TWINOBJS)
   else
     ifeq ($(CONF_HW_TWIN),m)
-      MODBINS+=hw_twin.so
+      MODBINS+=hw_twin.so.$(VERSION)
     else
       EXCL_OBJS+=$(TWINOBJS)
     endif
@@ -115,7 +119,7 @@ ifneq ($(CONF_SOCKET),n)
     OBJS_hw.a+=$(DISPLAYOBJS)
   else
     ifeq ($(CONF_HW_DISPLAY),m)
-      MODBINS+=hw_display.so
+      MODBINS+=hw_display.so.$(VERSION)
     else
       EXCL_OBJS+=$(DISPLAYOBJS)
     endif
@@ -126,7 +130,7 @@ ifeq ($(CONF_HW_GGI),y)
   OBJS_hw.a+=$(GGIOBJS)
 else
   ifeq ($(CONF_HW_GGI),m)
-    MODBINS+=hw_ggi.so
+    MODBINS+=hw_ggi.so.$(VERSION)
   else
     EXCL_OBJS+=$(GGIOBJS)
   endif
@@ -143,15 +147,15 @@ include $(TOPDIR)/makerules
 
 modules: $(MODBINS)
 
-hw_X.so: hw_X11.so
+hw_X.so.$(VERSION): hw_X11.so.$(VERSION)
 	$(LN) $< $@
 
 clean:
-	rm -f .*.flags .*.link .*.arlib hw.a hw_*.so $(ALLOBJS)
+	rm -f .*.flags .*.link .*.arlib hw.a hw_*.so.* $(ALLOBJS)
 
 install:
 	if [ "$(MODBINS)" ]; then \
 	  $(INSTALL) -d $(DESTDIR)$(libdir)/twin/modules/HW; \
 	  $(INSTALL) $(MODBINS) $(DESTDIR)$(libdir)/twin/modules/HW; \
-	  $(LN) hw_X11.so $(DESTDIR)$(libdir)/twin/modules/HW/hw_X.so; \
+	  $(LN) hw_X11.so.$(VERSION) $(DESTDIR)$(libdir)/twin/modules/HW/hw_X.so.$(VERSION); \
 	fi

@@ -3,19 +3,37 @@
  * Smart CONF_* processing by Werner Almesberger, Michael Chastain.
  * Tweaked and adapted to `twin' Makefile scheme by Massimiliano Ghilardi.
  * 
- * Usage: mkdep [-I<dir> [...]] file ...
+ * Usage: mkdep [{+|-}C] [{+|-}T] [-P<prefix>] [-I<dir> [...]] file ...
  * 
  * 
- * Search each source file for #include "*.h", CONF_* and DEBUG_* symbol
- * references. Inspection is done dynamically, so the programmer doesn't have
- * to worry about correctly maintaining them.
+ * Search each source file for #include "*.h", #include <*.h>, CONF_* and DEBUG_*
+ * symbol references. Inspection is done dynamically, so the programmer
+ * doesn't have to worry about correctly maintaining them.
  * Plus, only those symbols referenced are passed to the C compiler!
  * 
- * Create simple dependency lines for #include "*.h".
+ * Creates simple dependency lines for #include "*.h" and #include <*.h> ;
+ * they are treated slightly differently:
+ * #include <*.h> files are printed only if the corresponding file actually
+ * exists in one of the -I<dir> directories;
+ * #include "*.h" files are first searched in current directory, then searched as the former,
+ * but finally assumed to exist in the current directory if not existant, and thus printed.
+ * 
  * For instances of CONF_* and DEBUG_* generate dependencies like
  * ifeq ($(CONF_SOCKET),y)
  *   CC_FLAGS_hw_multi.o+=-DCONF_SOCKET
  * endif
+ * 
+ * If -P<prefix> is given, print it before every file name while generating dependecies
+ *       for the following files.
+ * If +C is given (default), enable dependencies for CONF_* and DEBUG_* symbol references
+ *       for the following files.
+ * If -C is given, suppress dependencies for CONF_* and DEBUG_* symbol references
+ *       for the following files.
+ * If +T is given, output fake rules like
+ * twin.h: osincludes.h
+ * 	@touch $@
+ *       for the following files.
+ * If -T is given (default), do not output above fake rules for the following files.
  * 
  * 2.3.99-pre1, Andrew Morton <andrewm@uow.edu.au>
  * - Changed so that 'filename.o' depends upon 'filename.[cC]'.  This is so that
@@ -40,10 +58,11 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-#include "Tw/datasizes.h"
+#include <Tw/datatypes.h> /* to allow including <Tw/datasizes.h> */
+#include <Tw/datasizes.h> /* for TW_BYTE_ORDER */
 
 /* Current input file */
-const char *g_filename;
+static const char *g_filename;
 
 /*
  * This records all the configuration options seen.
@@ -51,20 +70,23 @@ const char *g_filename;
  * of values separated by '\0'.  This is simple and
  * extremely fast.
  */
-char * str_config  = NULL;
-int    size_config = 0;
-int    len_config  = 0;
-int    hasdep      = 0;
+static char * str_config  = NULL;
+static int    size_config = 0;
+static int    len_config  = 0;
+static int    hasdep      = 0;
 
-char depname[512];
+static const char *prefix = "";
+static int suppress_CONFs = 0, fake_rules = 0;
 
-void do_depname(void)
+static char depname[512];
+
+static void do_depname(void)
 {
     if (!hasdep) {
 	hasdep = 1;
-	printf("%s:", depname);
+	printf("%s%s:", prefix, depname);
 	if (g_filename)
-	    printf(" %s", g_filename);
+	    printf(" %s%s", prefix, g_filename);
     }
 }
 
@@ -72,7 +94,7 @@ void do_depname(void)
  * Grow the configuration string to a desired length.
  * Usually the first growth is plenty.
  */
-void grow_config(int len)
+static void grow_config(int len)
 {
     while (len_config + len > size_config) {
 	if (size_config == 0)
@@ -88,7 +110,7 @@ void grow_config(int len)
 /*
  * Lookup a value in the configuration string.
  */
-int is_defined_config(const char * name, int len)
+static int is_defined_config(const char * name, int len)
 {
     const char * pconfig;
     const char * plast = str_config + len_config - len;
@@ -106,7 +128,7 @@ int is_defined_config(const char * name, int len)
 /*
  * Add a new value to the configuration string.
  */
-void define_config(const char * name, int len)
+static void define_config(const char * name, int len)
 {
     grow_config(len + 1);
     
@@ -120,28 +142,35 @@ void define_config(const char * name, int len)
 /*
  * Clear the set of configuration strings.
  */
-void clear_config(void)
+static void clear_config(void)
 {
     hasdep = 0;
     len_config = 0;
     define_config("", 0);
 }
 
-void dump_config(void)
+static void dump_config(void)
 {
     char *pc = str_config, *end_config = str_config + len_config;
+    int printed = 0;
+    if (hasdep && fake_rules)
+	printf("\t@touch $@\n");
+    
     while (pc && pc+1 < end_config && !*pc && *++pc) {
 	printf("ifeq ($(%s),y)\n  CC_FLAGS_%s+=-D%s\nendif\n", pc, depname, pc);
 	pc = memchr(pc, 0, end_config - pc);
+	printed = 1;
     }
+    if (printed)
+	putchar('\n');
 }
 
-char str_path[3][512];
-int  len_path[3];
-int  max_path = 0;
-int  limit_path = sizeof(len_path)/sizeof(len_path[0]);
+static char str_path[3][512];
+static int  len_path[3];
+static int  max_path = 0;
+static int  limit_path = sizeof(len_path)/sizeof(len_path[0]);
 
-void use_path(const char * name, int len)
+static void use_path(const char * name, int len)
 {
     if (max_path < limit_path) {
 	memcpy(str_path[max_path], name, len);
@@ -155,22 +184,41 @@ void use_path(const char * name, int len)
 }
 
 /*
- * Handle an #include line.
+ * Handle an #include <...> line.
  */
-void handle_include(const char * name, int len)
+static int handle_include_global(const char * name, int len)
 {
     int i;
     
-    do_depname();
     for (i = 0; i < max_path; i++) {
 	memcpy(str_path[i] + len_path[i], name, len);
 	str_path[i][len_path[i]+len] = '\0';
 	if (access(str_path[i], R_OK) == 0) {
-	    printf(" %s", str_path[i]);
-	    return;
+	    do_depname();
+	    printf(" %s%s", prefix, str_path[i]);
+	    return 1;
 	}
     }
-    printf(" %.*s", len, name);
+    return 0;
+}
+
+/*
+ * Handle an #include "..." line.
+ */
+static void handle_include_local(const char * name, int len)
+{
+    /*
+     * look first in current directory, then in -I<dir>,
+     * finally fallback on current directory
+     */
+    memcpy(str_path[0] + len_path[0], name, len);
+    str_path[0][len_path[0]+len] = '\0';
+    if (access(str_path[0] + len_path[0], R_OK) != 0) {
+	if (handle_include_global(name, len))
+	    return;
+    }
+    do_depname();
+    printf(" %s%.*s", prefix, len, name);
 }
 
 
@@ -178,7 +226,7 @@ void handle_include(const char * name, int len)
 /*
  * Record the use of a CONF_* word.
  */
-void use_config(const char * name, int len)
+static void use_config(const char * name, int len)
 {
     
     if (len == 16 && !memcmp(name, "CONF_THIS_MODULE", len))
@@ -256,7 +304,7 @@ static int is_alphanum(char c) {
  * per memory read.  The MAX4 and MIN4 tests dispose of most
  * input characters with 1 or 2 comparisons.
  */
-void state_machine(const char * map, const char * end)
+static void state_machine(const char * map, const char * end)
 {
 	const char * next = map;
 	const char * map_dot;
@@ -276,17 +324,15 @@ __start:
 
 /* // */
 slash_slash:
-	GETNEXT
-	CASE('\n', start);
-	NOTCASE('\\', slash_slash);
+	GETNEXT    CASE('\n', start);
+		NOTCASE('\\', slash_slash);
 	GETNEXT
 	goto slash_slash;
 
 /* / */
 slash:
-	GETNEXT
-	CASE('/',  slash_slash);
-	NOTCASE('*', __start);
+	GETNEXT    CASE('/',  slash_slash);
+		NOTCASE('*', __start);
 slash_star_dot_star:
 	GETNEXT
 __slash_star_dot_star:
@@ -297,31 +343,28 @@ __slash_star_dot_star:
 
 /* '.*?' */
 squote:
-	GETNEXT
-	CASE('\'', start);
-	NOTCASE('\\', squote);
+	GETNEXT     CASE('\'', start);
+		NOTCASE('\\', squote);
 	GETNEXT
 	goto squote;
 
 /* ".*?" */
 dquote:
-	GETNEXT
-	CASE('"', start);
-	NOTCASE('\\', dquote);
+	GETNEXT	   CASE('"', start);
+		NOTCASE('\\', dquote);
 	GETNEXT
 	goto dquote;
 
 /* #\s* */
 pound:
-	GETNEXT
-	CASE(' ',  pound);
-	CASE('\t', pound);
-	CASE('i',  pound_i);
+	GETNEXT CASE(' ',  pound);
+		CASE('\t', pound);
+		CASE('i',  pound_i);
 	goto __start;
 
 /* #\s*i */
 pound_i:
-	GETNEXT CASE('f', pound_if);
+	GETNEXT    CASE('f', pound_if);
 		NOTCASE('n', __start);
 	GETNEXT NOTCASE('c', __start);
 	GETNEXT NOTCASE('l', __start);
@@ -336,18 +379,29 @@ pound_include:
 	        CASE(' ',  pound_include);
 	        CASE('\t', pound_include);
 	map_dot = next;
-	CASE('"',  pound_include_dquote);
+	CASE('"', pound_include_dquote);
+	CASE('<', pound_include_langle);
 	goto __start;
 
 /* #\s*include\s*"(.*)" */
 pound_include_dquote:
-	GETNEXT CASE('\n', start);
-	        NOTCASE('"', pound_include_dquote);
-	handle_include(map_dot, next - map_dot - 1);
+	GETNEXT    CASE('\n', start);
+		NOTCASE('"', pound_include_dquote);
+	handle_include_local(map_dot, next - map_dot - 1);
+	goto start;
+
+/* #\s*include\s*<(.*)> */
+pound_include_langle:
+	GETNEXT    CASE('\n', start);
+	        NOTCASE('>', pound_include_langle);
+	handle_include_global(map_dot, next - map_dot - 1);
 	goto start;
 
 pound_if:
 /* #\s*if */
+	if (suppress_CONFs)
+	    goto start;
+
 	GETNEXT	CASE('\n', start);
 	        CASE('\t', pound_ifdef);
 		CASE(' ', pound_ifdef);
@@ -360,13 +414,7 @@ pound_if:
 	GETNEXT NOTCASE('f', __start);
 	goto pound_ifdef;
 
-/*
- * #\s*(if|ifdef)\s*CONF_(\w*)
- *
- * this does not define the word, because it could be inside another
- * conditional (#if 0).  But I do parse the word so that this instance
- * does not count as a use.  -- mec
- */
+/* #\s*(if|ifdef|ifndef)\s*CONF_(\w*) */
 pound_ifdef:
 	CASE('\n', start);
 	GETNEXT CASE('C', pound_ifdef_CONF);
@@ -420,7 +468,7 @@ pound_ifdef_DEBUG_word:
 /*
  * Generate dependencies for one file.
  */
-void do_depend(const char * filename)
+static void do_depend(const char * filename)
 {
     int mapsize;
     int pagesizem1 = getpagesize()-1;
@@ -476,11 +524,32 @@ int main(int argc, char **argv)
     
     while (--argc > 0) {
 	filename = *++argv;
-	len = strlen(filename);
+	if ((len = strlen(filename)) > sizeof(depname) - 1)
+	    len = sizeof(depname) - 1;
 	memcpy(depname, filename, len+1);
 	g_filename = 0;
+	if (len >= 2 && !memcmp("+C", filename, 2)) {
+	    suppress_CONFs = 0;
+	    continue;
+	}
+	if (len >= 2 && !memcmp("-C", filename, 2)) {
+	    suppress_CONFs = 1;
+	    continue;
+	}
+	if (len >= 2 && !memcmp("+T", filename, 2)) {
+	    fake_rules = 1;
+	    continue;
+	}
+	if (len >= 2 && !memcmp("-T", filename, 2)) {
+	    fake_rules = 0;
+	    continue;
+	}
 	if (len > 2 && !memcmp("-I", filename, 2)) {
 	    use_path(filename+2, len-2);
+	    continue;
+	}
+	if (len > 2 && !memcmp("-P", filename, 2)) {
+	    prefix = filename+2;
 	    continue;
 	}
 	if (len > 2 && filename[len-2] == '.') {

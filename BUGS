@@ -1,7 +1,36 @@
 Known bugs and problems:
 
 *  after `./configure [OPTIONS]' you should `make' in the top-level directory,
-   as `make' in a subdirectory may fail to properly update dependencies
+   as `make' in a subdirectory may fail to properly update dependencies.
+   
+   This is not a bug in twin, but rather a kind of dependency that
+   GNU `make' misses.
+   Let's try to explain (hoping GNU `make' authors read this ;-) ) :
+   
+   running top-level `./configure [OPTIONS]' generates a new `conf/conf.auto',
+   which in turn is used to generate `conf/conf.current', which in turn is
+   used to generate each subdirectory's `.modules'.
+   Both `conf/conf.current' and `.modules' are included by all Makefiles.
+   File `.modules' contains data that depends on data from `conf/conf.current',
+   and infact `.modules' has `conf/conf.current' in its prerequisites.
+   
+   The problem is: `make' realizes it must rebuild `conf/conf.current'
+   after a new `conf/conf.auto' is generated, and rebuilds it,
+   but then IMMEDIATELY also rebuilds `.modules', which get generated
+   with out-of-date contents since it uses variables from `make' memory,
+   instead of re-reading `conf/conf.current' to update the variables.
+   
+   What `make' should do is to re-read the newly generated `conf/conf.current'
+   (possibly by re-executing `make'), BEFORE generating `.modules', since
+   `.modules' depends on `conf/conf.current'.
+   
+   Instead rule currently used by `make' instead is this: it first tries
+   to update all Makefiles (and files included by them) in a single shot,
+   and only at the end re-executes `make' to read the updated Makefiles.
+   In this way, dependencies between Makefiles (and files included by them)
+   may be --- and infact are --- incorrectly used.
+   
+   
 *  Compiling with gcc 2.95.2 (is this egcs actually ?)
    may give problems depending on the options you use to compile.
    Using "-g -O2" resulted in a non-working binary for me :(

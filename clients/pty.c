@@ -17,11 +17,10 @@
 
 
 #ifdef CONF_TERM_DEVPTS
-# define __USE_XOPEN
 # include <stdlib.h>
 #endif
 
-#include "Tw/Twautoconf.h"
+#include <Tw/Twautoconf.h>
 
 #ifdef TW_HAVE_TERMIOS_H
 # include <termios.h>
@@ -35,7 +34,7 @@
 # include <sys/ioctl.h>
 #endif
 
-#include "Tw/Tw.h"
+#include <Tw/Tw.h>
 
 #include "tterm.h"
 

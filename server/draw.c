@@ -11,6 +11,7 @@
  */
 
 #include "twin.h"
+#include "main.h"
 #include "data.h"
 #include "methods.h"
 #include "hw.h"
@@ -20,7 +21,8 @@
 #include "draw.h"
 
 #ifdef CONF__UNICODE
-# include "Tutf/Tutf.h"
+# include <Tutf/Tutf.h>
+# include <Tutf/Tutf_defs.h>
 #endif
 
 INLINE hwcol DoShadowColor(hwcol Color, byte Fg, byte Bg) {
@@ -504,7 +506,7 @@ void DrawSelfWidget(draw_ctx *D) {
 	    msg Msg;
 	    event_widget *EventW;
 
-	    if ((Msg=Do(Create,Msg)(FnMsg, MSG_WIDGET_CHANGE, sizeof(event_widget)))) {
+	    if ((Msg=Do(Create,Msg)(FnMsg, MSG_WIDGET_CHANGE, 0))) {
 		EventW = &Msg->Event.EventWidget;
 		EventW->W      = W;
 		EventW->Code   = MSG_WIDGET_EXPOSE;
@@ -840,7 +842,15 @@ void DrawSelfWindow(draw_ctx *D) {
 		
 		for (i=X1; i<=X2; i++, PosInRow++) {
 		    
-		    if ((Absent=(!CurrRow || PosInRow>=CurrRow->Len)))
+		    Absent = (!CurrRow || PosInRow>=CurrRow->Len);
+		    
+		    if (CurrRow && IS_MENUITEM(CurrRow) && ((menuitem)CurrRow)->Window && i == Rgt) {
+#ifdef CONF__UNICODE
+			Font = T_UTF_16_BLACK_RIGHT_POINTING_TRIANGLE;
+#else
+			Font = '\x10'; /* T_IBM437_BLACK_RIGHT_POINTING_TRIANGLE */
+#endif
+		    } else if (Absent)
 			Font = ' ';
 		    else
 			Font = HWFont[PosInRow];
@@ -1642,6 +1652,7 @@ void DrawShadeWindow(window Window, dat X1, dat Y1, dat X2, dat Y2, byte Interna
 }
 
 
+
 /* replaces DrawAreaWindow() */
 void DrawAreaWindow2(window W) {
     draw_ctx D;
@@ -1742,6 +1753,94 @@ void ReDrawRolledUpAreaWindow(window Window, byte Shaded) {
     shDwn=Min2((ldat)DHeight-(ldat)1, shDwn+(ldat)DeltaYShade);
     
     DrawArea2((screen)0, (widget)0, (widget)0, (dat)shLeft, (dat)shUp, (dat)shRgt, (dat)shDwn, Shaded);
+}
+
+
+void DrawMenuScreen(screen Screen, dat Xstart, dat Xend) {
+    screen fScreen;
+    menu Menu;
+    menuitem Item;
+    dat DWidth, DHeight, i, j, x;
+    hwfont Font;
+    hwcol Color;
+    byte Select, State, MenuInfo;
+    
+    if (QueuedDrawArea2FullScreen || !Screen || !Screen->All || Xstart>Xend)
+	return;
+    
+    j = Screen->YLimit;
+    DWidth = All->DisplayWidth;
+    DHeight = All->DisplayHeight;
+    
+    if (j<0 || j>=DHeight || Xstart>=DWidth || Xstart > Xend)
+	return;
+    
+    for (fScreen = All->FirstScreen; fScreen && fScreen != Screen; fScreen = fScreen->Next) {
+	if (fScreen->YLimit <= j)
+	    return;
+    }
+    if (fScreen != Screen)
+	return;
+	
+    State = All->State & STATE_ANY;
+    Menu = Act(FindMenu,Screen)(Screen);
+    
+    MenuInfo = State != STATE_MENU && (All->SetUp->Flags & SETUP_MENU_INFO);
+    
+    Xstart = Max2(Xstart, 0);
+    Xend   = Min2(Xend, DWidth-1);
+    
+    for (i=Xstart; i<=Xend; i++) {
+	if (i+2>=DWidth) {
+	    Color = State == STATE_SCREEN ? Menu->ColSelShtCut : Menu->ColShtCut;
+	    if (XAND(Screen->Flags, SCREENFL_BACK_SELECT|SCREENFL_BACK_PRESSED))
+		Color = COL( COLBG(Color), COLFG(Color));
+	    Font = Screen_Back[2-(DWidth-i)];
+	}
+	else if (DWidth-i<=(dat)3+lenTWDisplay) {
+	    Color = State == STATE_SCREEN ? Menu->ColSelShtCut : Menu->ColShtCut;
+	    Font = TWDisplay[3 + lenTWDisplay - (DWidth - i)];
+	    if (!Font) Font = ' ';
+	}
+	else if (DWidth-i>(dat)9 && DWidth-i<=(dat)9+All->BuiltinRow->Len) {
+	    Color = State == STATE_SCREEN ? Menu->ColSelect : Menu->ColItem;
+	    Font = All->BuiltinRow->Text[9+All->BuiltinRow->Len - (DWidth-i)];
+	    if (!Font) Font = ' ';
+	}
+	else if (MenuInfo && FindInfo(Menu, i)) {
+	    Select = State == STATE_SCREEN;
+	    FindFontInfo(Menu, i, Select, &Font, &Color);
+	}
+	else {
+	    if (!MenuInfo) {
+		Item = Act(FindItem,Menu)(Menu, i);
+		
+		if (Item) {
+		    /* check if Item is from All->CommonMenu */
+		    if ((menu)Item->Parent == All->CommonMenu && Menu->LastI)
+			x = Menu->LastI->Left + Menu->LastI->Len;
+		    else
+			x = 0;
+
+		    Select = State == STATE_SCREEN ||
+			(State == STATE_MENU && ((menu)Item->Parent)->SelectI == Item);
+		    /*
+		     * CHEAT: Item may be in CommonMenu, not in Menu...
+		     * steal Item color from Menu.
+		     */
+		    FindFontMenuItem(Menu, Item, i - x, Select, &Font, &Color);
+		}
+	    }
+	    if (MenuInfo || !Item) {
+		Color = State == STATE_SCREEN ? Menu->ColSelect : Menu->ColItem;
+		Font = ' ';
+	    }
+	}
+	if (Screen != All->FirstScreen)
+	    Color = Menu->ColDisabled;
+	Video[i+j*DWidth]=HWATTR(Color, Font);
+    }
+    DirtyVideo(Xstart, j, Xend, j);    
 }
 
 void DrawScreen(screen Screen) {

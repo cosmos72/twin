@@ -1,0 +1,669 @@
+
+/*
+ *                 WARNING!
+ * 
+ * this file is `hw_dummy_c' and is preprocessed by m4 to produce `hw_dummy_m4.c'
+ * 
+ * It must be a valid m4 file, and must produce a valid C include file.
+ * 
+ */
+
+
+/*
+ * We need to write down only overloaded methods.
+ */
+ 
+DECL_COMMON
+
+/* ttobj */
+static NEW(ttobj) {
+    /*
+     * if argument (o) is non-NULL, use it instead of allocating memory.
+     * in this case, increase o->refcount to avoid deallocating it later
+     * with TTFreeMem().
+     */
+    ttuint oflags = (ttopaque)o ? ttobj_oflags_static : 0;
+    
+    if ((o || (o = (ttobj)TTAllocMem(FN->size)))) {
+	if (AssignId(FN, o)) {
+	    o->FN = FN;
+	    o->refcount = ttobj_refcount_alive;
+	    o->oflags = oflags;
+	    o->native = o->private = o->user_data = (ttany)0;
+	    o->events_inprogress = (ttuint)0;
+	    return o;
+	}
+	if (!(oflags & ttobj_oflags_static))
+	    TTFreeMem(o);
+    }
+    return (ttobj)0;
+}
+static BUILD(ttobj) {
+    /*
+     * this is necessary for all derived classes that do not overload FN->Build.
+     * It is not actually useful for ttobj.
+     */
+    return o;
+}
+static BREAK(ttobj) {
+    /*
+     * this is necessary for all derived classes that do not overload FN->Break.
+     * It is not actually useful for ttobj.
+     */
+}
+static DEL(ttobj) {
+    if (o) {
+	o->FN->Break(o);
+	
+	DropId(o);
+	/* ttobj_refcount_alive flag should already be removed... but better clear it */
+	if (!(o->refcount &= ~ttobj_refcount_alive) &&
+	    !(o->oflags & ttobj_oflags_static))
+	    
+	    TTFreeMem(o);
+    }
+}
+
+static void DEF(SetValue_ttobj)(ttobj o, ttuint which, ttany value) {
+    /* FIXME: finish this */
+}
+static void DEF(ChangeValue_ttobj)(ttobj o, ttuint which, ttany nand_value, ttany xor_value) {
+    /* FIXME: finish this */
+    /* o->{which} = (o->{which} & ~nand_value) ^ xor_value; */
+}
+
+
+
+/* ttevent */
+static NEW(ttevent) {
+    if ((o = NEWSUPER(ttevent))) {
+	o->component = (ttcomponent)0;
+	o->evtype = o->evcode = o->evflags = 0;
+    }
+    return o;
+}
+
+
+/* ttlistener */
+static NEW(ttlistener) {
+    if ((o = NEWSUPER(ttlistener))) {
+	o->lflags = 0;
+	o->component = (ttcomponent)0;
+	o->prev = o->next = (ttlistener)0;
+    }
+    return o;
+}
+static DEL(ttlistener) {
+    if (o) {
+	if (o->next)
+	    o->next->prev = o->prev;
+	if (o->prev)
+	    o->prev->next = o->next;
+	else if (o->component && o->component->listeners == o)
+	    o->component->listeners = o->next;
+
+	o->prev = o->next = (ttlistener)0;
+	
+	THW.DeleteListener(o);
+
+	DELSUPER(ttlistener);
+    }
+}
+
+static ttlistener DEF(Create_ttlistener)(ttcomponent c) {
+    ttlistener o;
+    if ((o = TNEW(ttlistener))) {
+	if ((o->next = c->listeners))
+	    o->next->prev = o;
+	o->component = c;
+	c->listeners = o;
+    }
+    return o;
+}
+
+/* ttcallback */
+static NEW(ttcallback) {
+    if ((o = NEWSUPER(ttcallback))) {
+	o->AVL = empty_AVL;
+	o->prev = o->next = (ttcallback)0;
+	o->event = (ttevent)0;
+	o->narg_component = o->narg_event = (ttuint)-1;
+	o->nargs = 0;
+	o->function = (ttany)0;
+	o->args = (ttany *)0;
+    }
+    return o;
+}
+static DEL(ttcallback) {
+    if (o) {
+	(void)Remove_ttcallback(o);
+	TDEL(o->event);
+	o->event = (ttevent)0;
+	if (o->args)
+	    TTFreeMem(o->args);
+	o->args = (ttany *)0;
+	DELSUPER(ttcallback);
+    }
+}
+
+/* ttcomponent */
+static NEW(ttcomponent) {
+    if ((o = NEWSUPER(ttcomponent))) {
+	o->listeners = (ttlistener)0;
+	o->callbacks = (ttcallback)0;
+    }
+    return o;
+}
+static DEL(ttcomponent) {
+    if (o) {
+	DispatchSimpleEvent(o, ttevent_evtype_del);
+
+	DelAllListeners_ttcomponent(o);
+	DelAllCallbacks_ttcomponent(o);
+	
+	DELSUPER(ttcomponent);
+    }
+}
+
+/* ttvisible */
+static NEW(ttvisible) {
+    if ((o = NEWSUPER(ttvisible))) {
+	o->vflags = ttvisible_vflags_visible;
+	o->prev = o->next = o->parent = o->child_first = o->child_last = NULL;
+	o->theme = NULL;
+	o->repaint = (ttvisible_repaint_fn)0;
+    }
+    return o;
+}
+static void DEF(AddTo_ttvisible)(ttvisible o, ttvisible parent) {
+    /* append */
+    if (parent && !o->parent) {
+	if ((o->prev = parent->child_last))
+	    parent->child_last->next = o;
+	else
+	    parent->child_first = o;
+	parent->child_last = o;
+	o->next = NULL;
+	o->parent = parent;
+    }
+}
+static void DEF(SetVisible_ttvisible)(ttvisible o, byte on_off) {
+    if (on_off)
+	o->vflags |= ttvisible_vflags_visible;
+    else
+	o->vflags &= ~ttvisible_vflags_visible;
+}
+static void DEF(Remove_ttvisible)(ttvisible o) {
+    ttvisible parent;
+    if ((parent = o->parent)) {
+	if (o->prev)
+	    o->prev->next = o->next;
+	else
+	    parent->child_first = o->next;
+	if (o->next)
+	    o->next->prev = o->prev;
+	else
+	    parent->child_last = o->prev;
+	o->parent = NULL;
+    }
+}
+static void DEF(SetTheme_ttvisible)(ttvisible o, tttheme theme) {
+    tttheme oldtheme = myTheme(o);
+    o->theme = theme;
+    if (oldtheme != theme && o->parent && (o->vflags & ttvisible_vflags_visible))
+	Expose_ttvisible(o, ttvisible_repaint_args_WHOLE);
+}
+static void DEF(BuiltinRepaint_ttvisible)(ttvisible o, ttshort x, ttshort y, ttshort w, ttshort h) {
+    /* do-nothing */
+}
+
+/* ttnative */
+static ttnative DEF(GetRoot_ttnative)(void) {
+    return Create_ttnative((ttany)0);
+}
+
+/* ttwidget */
+static NEW(ttwidget) {
+    if ((o = NEWSUPER(ttwidget))) {
+	o->x = o->y = o->w = o->h = (ttuint)0;
+    }
+    return o;
+}
+static void DEF(SetXYWH_ttwidget)(ttwidget o, ttuint mask, ttshort x, ttshort y, ttshort w, ttshort h) {
+    if (mask & 1)
+	o->x = x;
+    if (mask & 2)
+	o->y = y;
+    if (mask & 4)
+	o->w = w;
+    if (mask & 8)
+	o->h = h;
+}
+
+/* ttlabel */
+static NEW(ttlabel) {
+    if ((o = NEWSUPER(ttlabel))) {
+	o->text_len = 0;
+	o->text = (ttfont *)0;
+    }
+    return o;
+}
+static DEL(ttlabel) {
+    if (o->text)
+	TTFreeMem(o->text);
+    o->text = (ttfont *)0;
+    DELSUPER(ttlabel);
+}
+static byte DEF(SetText_ttlabel)(ttlabel o, TT_CONST byte * text) {
+    ttfont *_text;
+    ttshort _text_len;
+    
+    if (text)
+	_text_len = strlen(text);
+    else
+	_text_len = 0;
+    
+    if (!text || (_text = CloneStr2TTFont(text, _text_len))) {
+	if (o->text)
+	    TTFreeMem(o->text);
+	o->text_len = _text_len;
+	o->text = _text;
+	if (o->parent && o->vflags & ttvisible_vflags_visible)
+	    Expose_ttvisible((ttvisible)o, ttvisible_repaint_args_WHOLE);
+	return TRUE;
+    }
+    return FALSE;
+}
+
+/* ttanybutton */
+static NEW(ttanybutton) {
+    if ((o = NEWSUPER(ttanybutton))) {
+	o->text = NULL;
+	o->text_width = o->text_height = 0;
+	TTWriteMem(o->text_shape, '\0', sizeof(o->text_shape));
+	return o;
+    }
+    return NULL;
+}
+static DEL(ttanybutton) {
+    if (o->text)
+	TTFreeMem(o->text);
+    o->text = (ttfont *)0;
+    DELSUPER(ttanybutton);
+}
+static byte DEF(SetText_ttanybutton)(ttanybutton o, TT_CONST ttfont * text, ttshort width, ttshort height, ttshort pitch) {
+    ttfont *_text = NULL;
+    ttuint _text_len = width * height * sizeof(ttfont);
+    byte i;
+    
+    if (!text || !_text_len || (_text = TTAllocMem(_text_len))) {
+	o->text_width = width;
+	o->text_height = height;
+	if (o->text)
+	    TTFreeMem(o->text);
+	o->text = _text_len ? _text : NULL;
+	while (_text_len) {
+	    TTCopyMem(text, _text, width * sizeof(ttfont));
+	    text += pitch;
+	    _text += width;
+	    _text_len -= width;
+	}
+	for (i = 0; i < ttbutton_shape_max; i++) {
+	    if (o->text_shape[i].attr) {
+		TTFreeMem(o->text_shape[i].attr);
+		o->text_shape[i].attr = NULL;
+	    }
+	}
+	if (o->parent && o->vflags & ttvisible_vflags_visible)
+	    Expose_ttvisible((ttvisible)o, ttvisible_repaint_args_WHOLE);
+	return TRUE;
+    }
+    return FALSE;
+    
+}
+
+
+/* ttbutton */
+
+/* default mouse handler */
+static void DefaultMouseEvent_ttbutton(ttany arg) {
+    ttbutton o;
+    tteventbig ev;
+    ttuint old_vflags, code;
+    ttshort x, y;
+    
+    if (!(TTAssert(ev = ID2(tteventbig,arg)) &&
+	  TTAssert(ev->evtype == ttevent_evtype_mouse) &&
+	  TTAssert(o = (ttbutton)ev->component) && TTAssert(IS(ttbutton,o))))
+	
+	return;
+    
+    old_vflags = o->vflags;
+    code = ev->evcode;
+    x = ev->x;
+    y = ev->y;
+    
+    /*fprintf(stderr, "x=%d, y=%d, code=%x\n", x, y, code);*/
+    switch (code) {
+      case MOTION_MOUSE:
+	if (x < 0 || y < 0)
+	    o->vflags &= ~ttanybutton_vflags_prelight;
+	else
+	    o->vflags |= ttanybutton_vflags_prelight;
+	break;
+      case DOWN_LEFT:
+	o->vflags &= ~ttanybutton_vflags_prelight;
+	o->vflags |= ttanybutton_vflags_pressed;
+	break;
+      case DRAG_MOUSE|HOLD_LEFT:
+	if (x >= 0 && y >= 0 && x < o->text_width && y < o->text_height)
+	    o->vflags |= ttanybutton_vflags_pressed;
+	else
+	    o->vflags &= ~ttanybutton_vflags_pressed;
+	break;
+      case RELEASE_LEFT:
+	o->vflags &= ~ttanybutton_vflags_pressed;
+	if (x >= 0 && y >= 0 && x < o->text_width && y < o->text_height) {
+	    o->vflags |= ttanybutton_vflags_prelight;
+	    
+	    DispatchSimpleEvent((ttcomponent)o, ttevent_evtype_activate);
+	}
+      default:
+	break;
+    }
+    
+    if (old_vflags != o->vflags)
+	Expose_ttvisible((ttvisible)o, ttvisible_repaint_args_WHOLE);
+}
+
+static NEW(ttbutton) {
+    if ((o = NEWSUPER(ttbutton))) {
+	if (Create_ttcallback((ttcomponent)o, ttevent_evtype_mouse,
+			      ttcallback_lflags_after|ttcallback_lflags_arg0_event|ttcallback_lflags_function_plain,
+			      (ttcallback_fn)DefaultMouseEvent_ttbutton, (ttany)0))
+	    return o;
+	
+	TDEL(o);
+    }
+    return (ttbutton)0;
+}
+
+static void DEF(SetPressed_ttbutton)(ttbutton o, byte pressed) {
+}
+
+
+/* ttcheckbutton */
+
+
+/* ttradiobutton */
+
+
+/* ttbuttongroup */
+
+
+/* ttwindow */
+
+
+/* ttframe */
+static BUILD(ttframe) {
+    o->vflags &= ~ttvisible_vflags_visible;
+    o->FN->AddTo(o, (ttvisible)TFN_ttnative->GetRoot());
+    return o;
+}
+
+
+/* ttscrollbar */
+
+
+/* ttslider */
+
+
+/* ttscroller */
+
+static NEW(ttscroller) {
+    if ((o = NEWSUPER(ttscroller))) {
+	o->scrollx = o->scrolly = NULL;
+    }
+    return o;
+}
+static DEL(ttscroller) {
+    if (o->scrollx)
+	TDEL(o->scrollx);
+    o->scrollx = (ttscrollbar)0;
+    if (o->scrolly)
+	TDEL(o->scrolly);
+    o->scrolly = (ttscrollbar)0;
+    
+    DELSUPER(ttscroller);
+    return;
+}
+
+
+/* ttmenuitem */
+
+
+/* ttcheckmenuitem */
+
+
+/* ttradiomenuitem */
+
+
+/* ttmenuwindow */
+
+
+/* ttmenu */
+
+static NEW(ttmenu) {
+    if ((o = NEWSUPER(ttmenu))) {
+	o->menubar = (ttmenubar)0;
+	    return o;
+	TDEL(o);
+    }
+    return o;
+}
+
+/* ttmenubar */
+
+static DEL(ttmenubar) {
+    if (TTD.Menubar == o)
+	TTD.Menubar = (ttmenubar)0;
+    DELSUPER(ttmenubar);
+}
+
+/* ttanytext */
+
+static NEW(ttanytext) {
+    if ((o = NEWSUPER(ttanytext))) {
+	o->text = NULL;
+	o->text_len = 0;
+    }
+    return o;
+}
+
+
+/* tttextfield */
+
+
+/* tttextarea */
+
+
+/* tttheme */
+
+static BUILD(tttheme) {
+    /* FIXME finish this */
+    return o;
+}
+static DEL(tttheme) {
+    if (TTD.Theme == o)
+	TTD.Theme = TTD.DummyTheme;
+    DELSUPER(tttheme);
+}
+
+static void AddTransparentShapeButton(ttattr *attr, ttshort w, ttshort h, ttattr *tattr, ttshort tw, ttshort th,
+				      ttshort b_left, ttshort b_up, ttshort b_right, ttshort b_down) {
+    ttshort ti, i, tj, j;
+    
+    /* set left and right upper corners */
+    for (j = 0; j < b_up; j++) {
+	for (i = 0; i < b_left; i++) {
+	    if (tattr[i+j*tw])
+		attr[i+j*w] = tattr[i+j*tw];
+	}
+	
+	for (i = 0; i < b_right; i++) {
+	    if (tattr[i+(j+1)*tw-b_right])
+		attr[i+(j+1)*w-b_right] = tattr[i+(j+1)*tw-b_right];
+	}
+    }
+    /* set left and right borders */
+    for (j = tj = b_up; j < h - b_down; j++, tj++) {
+	if (tj == tw - b_down)
+	    tj = b_up;
+	for (i = 0; i < b_left; i++) {
+	    if (tattr[i+tj*tw])
+		attr[i+j*w] = tattr[i+tj*tw];
+	}
+	for (i = 0; i < b_right; i++) {
+	    if (tattr[i+(tj+1)*tw-b_right])
+		attr[i+(j+1)*w-b_right] = tattr[i+(tj+1)*tw-b_right];
+	}
+    }
+    /* set left and right lower corners */
+    for (j = 0; j < b_down; j++) {
+	for (i = 0; i < b_left; i++) {
+	    if (tattr[i+(th-b_down+j)*tw])
+		attr[i+(h-b_down+j)*w] = tattr[i+(th-b_down+j)*tw];
+	}
+	for (i = 0; i < b_right; i++) {
+	    if (tattr[i+(th-b_down+j+1)*tw-b_right])
+		attr[i+(h-b_down+j+1)*w-b_right] = tattr[i+(th-b_down+j+1)*tw-b_right];
+	}
+    }
+    /* set upper border */
+    for (j = 0; j < b_up; j++) {
+	for (i = ti = b_left; i < w - b_right; i++, ti++) {
+	    if (ti == tw - b_right)
+		ti = 0;
+	    if (tattr[ti+j*tw])
+		attr[i+j*w] = tattr[ti+j*tw];
+	}
+    }
+    /* set lower border */
+    for (j = 0; j < b_down; j++) {
+	for (i = ti = b_left; i < w - b_right; i++, ti++) {
+	    if (ti == tw - b_right)
+		ti = b_left;
+	    if (tattr[ti+(th-b_down+tj)*tw])
+		attr[i+(h-b_down+j)*w] = tattr[ti+(th-b_down+tj)*tw];
+	}
+    }
+}
+				     
+static void AddTextButton(ttattr *attr, ttshort w, ttfont *text, ttshort tw, ttshort th, ttcol bg) {
+    ttshort _tw;
+    
+    for (; th; th--) {
+	for (_tw = tw; _tw; _tw--) {
+	    *attr++ = HWATTR(bg, *text);
+	    text++;
+	}
+	attr += w - tw;
+    }
+}
+
+static ttattr * DEF(ComputeShapeButton_tttheme)(ttbutton o, byte button_i, byte theme_i) {
+    tttheme t = myTheme(o);
+    ttshape t_shape = &t->shape[theme_i][0], s_shape =  &t->shape[theme_i][1];
+    ttattr *shape;
+    ttshort w = o->text_width, h = o->text_height;
+    ttshort b_left = t_shape->border[tt_x_left], b_up = t_shape->border[tt_y_up];
+    ttshort b_right = t_shape->border[tt_x_right], b_down = t_shape->border[tt_y_down];
+    
+    if ((shape = (ttattr *)TTAllocMem((w += b_left+b_right) * (h += b_up+b_down) * sizeof(ttattr) ))) {
+	
+	TTWriteMem(shape, '\0', w * h * sizeof(ttattr));
+	
+	o->text_shape[button_i].width = w;
+	o->text_shape[button_i].height = h;
+	TTCopyMem(t_shape->border, o->text_shape[button_i].border, 4*sizeof(ttshort));
+	
+	AddTransparentShapeButton(shape, w, h, t_shape->attr, t_shape->width, t_shape->height,
+				  b_left, b_up, b_right, b_down);
+    
+    	AddTransparentShapeButton(shape, w, h, s_shape->attr, s_shape->width, s_shape->height,
+				  s_shape->border[tt_x_left], s_shape->border[tt_y_up],
+				  s_shape->border[tt_x_right], s_shape->border[tt_y_down]);
+
+	AddTextButton(shape + b_left + w * b_up, w, o->text, o->text_width, o->text_height,
+		      myTheme(o)->bg[tttheme_bg_normal]);
+	
+    }
+    return shape;
+}
+
+
+/* ttapplication */
+static NEW(ttapplication) {
+    if ((o = NEWSUPER(ttapplication))) {
+	o->name = (ttbyte *)0;
+    }
+    return o;
+}
+
+static DEL(ttapplication) {
+    if (TTD.Application == o)
+	TTD.Application = (ttapplication)0;
+    if (o->name)
+	TTFreeMem(o->name);
+    o->name = (ttbyte *)0;
+    DELSUPER(ttapplication);
+}
+
+
+/* common stuff: */
+
+define(`el', `
+DEF_DEFAULT_GetValue($1)')
+TTlist()
+
+
+static byte HWDEF(Sync)(void) {
+    return TRUE;
+}
+static byte HWDEF(Flush)(void) {
+    return TRUE;
+}
+static byte HWDEF(TimidFlush)(void) {
+    return TRUE;
+}
+static byte HWDEF(MainLoop)(void) {
+    return TRUE;
+}
+static void HWDEF(ExitMainLoop)(void) {
+}
+static void HWDEF(DeleteListener)(ttlistener o) {
+}
+static void HWDEF(Close)(void) {
+}
+static int HWDEF(ConnectionFd)(void) {
+    return TT_NOFD;
+}
+static ttuint HWDEF(GetErrno)(void) {
+    return 0;
+}
+static ttuint HWDEF(GetErrnoDetail)(void) {
+    return 0;
+}
+static TT_CONST byte *HWDEF(StrError)(ttuint E) {
+    return "";
+}
+static TT_CONST byte *HWDEF(StrErrorDetail)(ttuint E, ttuint S) {
+    return "";
+}
+
+
+static ttfns dummy_InitHW(tthw *HW) {
+    *HW = &dummy_TTFNs.HW;
+    return &dummy_TTFNs;
+}
+

@@ -96,6 +96,22 @@ static window OpenTerm(CONST byte *arg0, byte * CONST *argv) {
     return NULL;
 }
 
+#ifdef CONF__UNICODE
+static void TermWriteHWFontWindow(window W, uldat len, CONST hwfont *hwData) {
+    hwfont (*inv_charset)(hwfont) = W->USE.C.TtyData->InvCharset;
+    byte *Data, *sData;
+    uldat n;
+    
+    if ((Data = sData = AllocMem(n = len))) {
+	while (n--)
+	    *Data++ = inv_charset(*hwData++);
+	
+	RemoteWindowWriteQueue(W, len, sData);
+	FreeMem(sData);
+    }
+}
+#endif
+
 static void TwinTermH(msgport MsgPort) {
     msg Msg;
     event_any *Event;
@@ -123,10 +139,16 @@ static void TwinTermH(msgport MsgPort) {
 	} else if (Msg->Type==MSG_SELECTIONNOTIFY) {
 	    
 	    if ((Win = (window)Id2Obj(window_magic_id,
-				      Event->EventSelectionNotify.ReqPrivate)))
-		(void)RemoteWindowWriteQueue(Win, Event->EventSelectionNotify.Len,
-					     Event->EventSelectionNotify.Data);
-	    
+				      Event->EventSelectionNotify.ReqPrivate))) {
+#ifdef CONF__UNICODE
+		if (Event->EventSelectionNotify.Magic == SEL_HWFONTMAGIC)
+		    TermWriteHWFontWindow(Win, Event->EventSelectionNotify.Len / sizeof(hwfont),
+					    (hwfont *)Event->EventSelectionNotify.Data);
+		else
+#endif
+		    (void)RemoteWindowWriteQueue(Win, Event->EventSelectionNotify.Len,
+						 Event->EventSelectionNotify.Data);
+	    }
 	} else if (Msg->Type==MSG_WIDGET_MOUSE) {
 	    if (Win) {
 		byte buf[10];
@@ -178,7 +200,7 @@ static void TwinTermIO(int Fd, window Window) {
     } while (chunk && chunk != (uldat)-1 && (got += chunk) < BIGBUFF - 1);
     
     if (got)
-	Act(WriteAscii,Window)(Window, got, buf);
+	Act(TtyWriteAscii,Window)(Window, got, buf);
     else if (chunk == (uldat)-1 && errno != EINTR && errno != EWOULDBLOCK)
 	/* something bad happened to our child :( */
 	Delete(Window);
@@ -190,22 +212,22 @@ static void TwinTermIO(int Fd, window Window) {
 
 static void OverrideMethods(byte enter) {
     if (enter) {
-	OverrideMethod(Widget,KbdFocus,    FakeKbdFocus,    TtyKbdFocus);
-	OverrideMethod(Gadget,KbdFocus,    FakeKbdFocus,    TtyKbdFocus);
-	OverrideMethod(Window,KbdFocus,    FakeKbdFocus,    TtyKbdFocus);
-	OverrideMethod(Window,WriteAscii,  FakeWriteAscii,  TtyWriteAscii);
-	OverrideMethod(Window,WriteString, FakeWriteString, TtyWriteString);
-	OverrideMethod(Window,WriteHWFont, FakeWriteHWFont, TtyWriteHWFont);
-	OverrideMethod(Window,WriteHWAttr, FakeWriteHWAttr, TtyWriteHWAttr);
+	OverrideMethod(Widget,KbdFocus,      FakeKbdFocus,    TtyKbdFocus);
+	OverrideMethod(Gadget,KbdFocus,      FakeKbdFocus,    TtyKbdFocus);
+	OverrideMethod(Window,KbdFocus,      FakeKbdFocus,    TtyKbdFocus);
+	OverrideMethod(Window,TtyWriteAscii, FakeWriteAscii,  TtyWriteAscii);
+	OverrideMethod(Window,TtyWriteString,FakeWriteString, TtyWriteString);
+	OverrideMethod(Window,TtyWriteHWFont,FakeWriteHWFont, TtyWriteHWFont);
+	OverrideMethod(Window,TtyWriteHWAttr,FakeWriteHWAttr, TtyWriteHWAttr);
 	ForceKbdFocus();
     } else {
-	OverrideMethod(Window,WriteHWAttr, TtyWriteHWAttr,  FakeWriteHWAttr);
-	OverrideMethod(Window,WriteHWFont, TtyWriteHWFont,  FakeWriteHWFont);
-	OverrideMethod(Window,WriteString, TtyWriteString,  FakeWriteString);
-	OverrideMethod(Window,WriteAscii,  TtyWriteAscii,   FakeWriteAscii);
-	OverrideMethod(Window,KbdFocus,    TtyKbdFocus,     FakeKbdFocus);
-	OverrideMethod(Gadget,KbdFocus,    TtyKbdFocus,     FakeKbdFocus);
-	OverrideMethod(Widget,KbdFocus,    TtyKbdFocus,     FakeKbdFocus);
+	OverrideMethod(Window,TtyWriteHWAttr,TtyWriteHWAttr,  FakeWriteHWAttr);
+	OverrideMethod(Window,TtyWriteHWFont,TtyWriteHWFont,  FakeWriteHWFont);
+	OverrideMethod(Window,TtyWriteString,TtyWriteString,  FakeWriteString);
+	OverrideMethod(Window,TtyWriteAscii, TtyWriteAscii,   FakeWriteAscii);
+	OverrideMethod(Window,KbdFocus,      TtyKbdFocus,     FakeKbdFocus);
+	OverrideMethod(Gadget,KbdFocus,      TtyKbdFocus,     FakeKbdFocus);
+	OverrideMethod(Widget,KbdFocus,      TtyKbdFocus,     FakeKbdFocus);
     }
 }
 
@@ -227,7 +249,7 @@ byte InitTerm(void)
 	 ? CloneStr(shell) : CloneStr(shellpath)) &&
     
 	(Term_MsgPort=Do(Create,MsgPort)
-	 (FnMsgPort, 17, "Builtin Twin Term", (uldat)0, (udat)0, (byte)0, TwinTermH)) &&
+	 (FnMsgPort, 14, "builtin twterm", (uldat)0, (udat)0, (byte)0, TwinTermH)) &&
 	(Term_Menu=Do(Create,Menu)
 	 (FnMenu, Term_MsgPort,
 	  COL(BLACK,WHITE), COL(BLACK,GREEN), COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),

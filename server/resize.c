@@ -31,16 +31,17 @@
 #include "data.h"
 #include "methods.h"
 #include "draw.h"
+#include "printk.h"
 #include "resize.h"
 #include "util.h"
 
 #include "hw.h"
 
-#include "Tw/Tw.h"
-#include "Tw/Twstat.h"
+#include <Tw/Tw.h>
+#include <Tw/Twstat.h>
 
 #ifdef CONF__UNICODE
-# include "Tutf/Tutf.h"
+# include <Tutf/Tutf.h>
 #endif
 
 /***************/
@@ -63,7 +64,7 @@ void FlushCursor(void) {
 	Window = FindCursorWindow();
 	
 	if (Window && ((Window->Flags & WINDOWFL_CURSOR_ON) ||
-		       (All->SetUp->Flags & SETUP_ALWAYSCURSOR))) {
+		       (All->SetUp->Flags & SETUP_CURSOR_ALWAYS))) {
 
 	    W = (widget)Window;
 	    
@@ -80,7 +81,7 @@ void FlushCursor(void) {
 					((widget)Screen, (dat)D.X1, (dat)D.Y1 - Screen->YLimit)))) {
 		
 		MoveToXY((dat)D.X1, (dat)D.Y1);
-		if ((type = Window->CursorType) == NOCURSOR && All->SetUp->Flags & SETUP_ALWAYSCURSOR)
+		if ((type = Window->CursorType) == NOCURSOR && All->SetUp->Flags & SETUP_CURSOR_ALWAYS)
 		    type = LINECURSOR;
 	    }
 	}
@@ -244,7 +245,7 @@ byte EnsureLenRow(row Row, ldat Len, byte DefaultCol) {
     return TRUE;
 }
 
-byte WriteRow(window Window, ldat Len, CONST byte *Text) {
+byte RowWriteAscii(window Window, ldat Len, CONST byte *Text) {
     row CurrRow;
     byte CONST * _Text;
     byte FlagNewRows, ModeInsert;
@@ -254,7 +255,7 @@ byte WriteRow(window Window, ldat Len, CONST byte *Text) {
 #endif
     ldat x, y, max, RowLen;
     
-    if (!W_USE(Window, USEROWS))
+    if (!Window || (Len && !Text) || !W_USE(Window, USEROWS))
 	return FALSE;
     
     x=Window->CurX;
@@ -267,7 +268,7 @@ byte WriteRow(window Window, ldat Len, CONST byte *Text) {
 	ClearHilight(Window);
     
     while (Len) {
-	if (max<=y || (max==y+1 && (*Text==(byte)13 || *Text==(byte)10))) {
+	if (max<=y || (max==y+1 && (*Text=='\n' || *Text=='\r'))) {
 	    if (InsertRowsWindow(Window, Max2(y+1-max,1))) {
 		FlagNewRows=TRUE;
 		max=Window->HLogic;
@@ -281,7 +282,7 @@ byte WriteRow(window Window, ldat Len, CONST byte *Text) {
 	
 	RowLen=(ldat)0;
 	_Text=Text;
-	while (RowLen < Len && *_Text!=(byte)13 && *_Text!=(byte)10)
+	while (RowLen < Len && *_Text!='\n' && *_Text!='\r')
 	    ++RowLen, ++_Text;
 	
 	/*	WINDOWFL_INSERT non implementato */
@@ -330,7 +331,7 @@ byte WriteRow(window Window, ldat Len, CONST byte *Text) {
 	    Len -=RowLen;
 	}
 	
-	if (Len && (*Text=='\r' || *Text=='\n')) {
+	if (Len && (*Text=='\n' || *Text=='\r')) {
 	    Window->CurX=x=(ldat)0;
 	    Window->CurY=++y;
 	    Text++, Len--;
@@ -344,6 +345,100 @@ byte WriteRow(window Window, ldat Len, CONST byte *Text) {
     return TRUE;
 }
 
+
+#if TW_SIZEOFHWFONT == 1
+byte RowWriteHWFont(window Window, ldat Len, CONST hwfont *Text) {
+    return RowWriteAscii(Window, Len, (CONST byte *)Text);
+}
+#else
+byte RowWriteHWFont(window Window, ldat Len, CONST hwfont *Text) {
+    row CurrRow;
+    CONST hwfont * _Text;
+    byte FlagNewRows, ModeInsert;
+    ldat i;
+    ldat x, y, max, RowLen;
+    
+    if (!Window || !Len || !W_USE(Window, USEROWS))
+	return FALSE;
+    
+    x=Window->CurX;
+    y=Window->CurY;
+    max=Window->HLogic;
+    CurrRow=Window->USE.R.LastRow;
+    ModeInsert=Window->Flags & WINDOWFL_ROWS_INSERT;
+    
+    if (Window->State & WINDOW_ANYSEL)
+	ClearHilight(Window);
+    
+    while (Len) {
+	if (max<=y || (max==y+1 && (*Text=='\n' || *Text=='\r'))) {
+	    if (InsertRowsWindow(Window, Max2(y+1-max,1))) {
+		FlagNewRows=TRUE;
+		max=Window->HLogic;
+		CurrRow=Window->USE.R.LastRow;
+	    } else
+		return FALSE;
+	} else {
+	    FlagNewRows=FALSE;
+	    CurrRow=Act(FindRow,Window)(Window, y);
+	}
+	
+	RowLen=(ldat)0;
+	_Text=Text;
+	while (RowLen < Len && *_Text!='\n' && *_Text!='\r')
+	    ++RowLen, ++_Text;
+	
+	/*	WINDOWFL_INSERT non implementato */
+	/*  Gap non implementato				 */
+	
+	if (RowLen) {
+	    if (ModeInsert || (CurrRow && CurrRow->LenGap))
+		return FALSE;
+
+	    if (!EnsureLenRow(CurrRow, x+RowLen, (Window->Flags & WINDOWFL_ROWS_DEFCOL)))
+		return FALSE;
+	    
+	    if (Window->USE.R.NumRowOne==y)
+		Window->USE.R.RowOne=CurrRow;
+	    if (Window->USE.R.NumRowSplit==y)
+		Window->USE.R.RowSplit=CurrRow;
+	    CurrRow->Flags=ROW_ACTIVE;
+
+	    CopyMem(Text, CurrRow->Text+x, sizeof(hwfont)*RowLen);
+	    if (CurrRow->Len<x)
+		for (i = CurrRow->Len; i < x; i++)
+		    CurrRow->Text[i] = (hwfont)' ';
+
+	    if (!(Window->Flags & WINDOWFL_ROWS_DEFCOL)) {
+		WriteMem(CurrRow->ColText+x, Window->ColText, sizeof(hwcol)*RowLen);
+		if (CurrRow->Len<x)
+		    WriteMem(CurrRow->ColText+CurrRow->Len, Window->ColText,
+			     sizeof(hwcol)*(x-CurrRow->Len));
+	    }
+	    
+	    if (CurrRow->Len<x+RowLen)
+		CurrRow->Len=x+RowLen;
+
+	    DrawLogicWidget((widget)Window, x, y, x+RowLen-(ldat)1, y);
+	
+	    Text+=RowLen;
+	    Len -=RowLen;
+	}
+	
+	if (Len && (*Text=='\n' || *Text=='\r')) {
+	    Window->CurX=x=(ldat)0;
+	    Window->CurY=++y;
+	    Text++, Len--;
+	} else
+	    Window->CurX=x+=RowLen;
+    }
+    
+    if (Window == FindCursorWindow())
+	UpdateCursor();
+    
+    return TRUE;
+}
+#endif /* CONF__UNICODE */
 
 
 
@@ -379,6 +474,36 @@ void ExposeWidget2(widget W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch
 	W->USE.E.Flags = 0;
     }
 }
+
+
+/***************/
+
+
+void ResizeWidget(widget W, dat X, dat Y) {
+    dat mX, mY;
+
+    if (W) {
+	X = Max2(1, X);
+	Y = Max2(1, Y);
+	mX = Max2(X, W->XWidth);
+	mY = Max2(Y, W->YWidth);
+	W->XWidth = X;
+	W->YWidth = Y;
+	
+	DrawAreaWidget(W);
+    }
+}
+
+void ResizeGadget(gadget G, dat X, dat Y) {
+    if (G) {
+	if (G_USE(G, USETEXT)) {
+	    /* FIXME: finish this */
+	} else {
+	    ResizeWidget((widget)G, X, Y);
+	}
+    }
+}
+
 
 
 /***************/
@@ -898,7 +1023,6 @@ void ResizeRelFirstWindow(dat i, dat j) {
     }
 }
 
-
 void ResizeRelWindow(window Window, dat i, dat j) {
     ldat Left, Up, Rgt, Dwn;
     widget Parent;
@@ -1179,7 +1303,7 @@ byte ExecScrollFocusWindow(void) {
     
     Attrib=Window->Attrib;
     State=Window->State;
-    DeltaX=DeltaY=(num)0;
+    DeltaX=DeltaY=(sbyte)0;
     
     if (Attrib & WINDOW_X_BAR && State & X_BAR_SELECT)
 	DeltaX=1;
@@ -1225,6 +1349,9 @@ byte ExecScrollFocusWindow(void) {
     return TRUE;
 }
 
+
+/* menu traversing functions */
+
 void HideMenu(byte on_off) {
     screen Screen=All->FirstScreen;
     
@@ -1251,95 +1378,214 @@ void HideMenu(byte on_off) {
     }
 }
 
-void ChangeMenuFirstScreen(menuitem NewItem, byte ByMouse, byte Flag) {
-    screen Screen;
-    menu Menu, _Menu;
-    menuitem CurrItem;
-    window NewWin;
-    widget CurrW;
+static void OpenSubMenuItem(menu M, menuitem Item, byte ByMouse) {
+    window P = (window)Item->Parent;
+    window W = Item->Window;
+    screen S = All->FirstScreen;
+    ldat y = P->CurY;
     
-    Screen=All->FirstScreen;
-    Menu=Act(FindMenu,Screen)(Screen);
+    P->CurY = Item->WCurY;
+    if (y != MAXLDAT)
+	DrawLogicWidget((widget)P, 0, y, MAXLDAT, y);
+    if ((y = P->CurY) == MAXLDAT)
+	(void)Act(FindRowByCode,P)(P, Item->Code, &P->CurY);
+    if ((y = P->CurY) != MAXLDAT)
+	DrawLogicWidget((widget)P, 0, y, MAXLDAT, y);
     
-    if (Menu) {
-
-	if (All->SetUp->Flags & SETUP_HIDEMENU && Flag==ACTIVATE_MENU_FLAG)
-	    HideMenu(FALSE);
-	
-	CurrW = Screen->FocusW;
-	
-	if (Flag == ACTIVATE_MENU_FLAG)
-	    CurrItem = (menuitem)0;
-	else
-	    CurrItem = Act(GetSelectItem,Menu)(Menu);
-
-	if (CurrItem == NewItem && Flag == KEEP_ACTIVE_MENU_FLAG)
-	    /* this can happen... on an empty menu with common items enabled */
-	    return;
-    
-	/*
-	 * WARNING:
-	 * UnMapWindow() calls us if unmapping a menu window or a menu owner
-	 * while the menu is active (All->State & STATE_ANY) == STATE_MENU
-	 * 
-	 * when shutting down the menu, disable (All->State & STATE_ANY) == STATE_MENU
-	 * _BEFORE_ calling UnMap() or we will enter an infinite loop
-	 */
-	All->State =
-	    (ByMouse && Flag != DISABLE_MENU_FLAG ? STATE_FL_BYMOUSE : (byte)0) |
-	    (Flag != DISABLE_MENU_FLAG ? STATE_MENU : STATE_DEFAULT);
-	
-	if (Flag!=DISABLE_MENU_FLAG) {
-	    
-	    if (Flag==ACTIVATE_MENU_FLAG) {
-		Screen->MenuWindow = (window)CurrW; /* so that it keeps `active' borders */
-		Screen->FocusW = (widget)0;
-	    }
-	    
-	    if (NewItem) {
-		_Menu = (menu)NewItem->Parent; /* may either be Menu or All->CommonMenu */
-		NewWin = NewItem->Window;
-		
-		NewWin->Up = 1;
-		NewWin->Left = NewItem->Left;
-		
-		if (Menu != _Menu && Menu->LastI)
-		    /* adjust common menu NewWin->Left to the Item position in this menu */
-		    NewWin->Left += Menu->LastI->Left + Menu->LastI->Len;
-	    
-		Act(SetSelectItem,Menu)(Menu, NewItem);
-		
-		if (ByMouse)
-		    NewWin->CurY = MAXLDAT;
-		else if (NewWin->CurY == MAXLDAT)
-		    NewWin->CurY = (ldat)0;
-	    
-		if (NewItem->Flags & ROW_ACTIVE)
-		    NewWin->Flags &= ~WINDOWFL_DISABLED;
-		else
-		    NewWin->Flags |= WINDOWFL_DISABLED;
-		
-		Act(MapTopReal,NewWin)(NewWin, Screen);
-	    } else
-		Act(SetSelectItem,Menu)(Menu, (menuitem)0);
+    if (W) {
+	if (!W->Parent) {
+	    W->Left = P->Left + P->XWidth - S->XLogic;
+	    W->Up = P->Up + P->CurY - P->YLogic - S->YLogic + 1;
 	}
-	if (Flag!=ACTIVATE_MENU_FLAG) {
-	    if (Flag==DISABLE_MENU_FLAG) {
-		if ((NewWin = Screen->MenuWindow)) {
-		    Act(KbdFocus,NewWin)(NewWin);
-		    Screen->MenuWindow = (window)0;
-		} else
-		    Do(KbdFocus,Window)((window)0);
-	    }
-	    if (CurrItem && CurrW && IS_WINDOW(CurrW) && (CurrW->Flags & WINDOWFL_MENU))
-		Act(UnMap,CurrW)(CurrW);
-	    UpdateCursor();
-	}
-	if (All->SetUp->Flags & SETUP_HIDEMENU && Flag==DISABLE_MENU_FLAG)
-	    HideMenu(TRUE);
+	if (ByMouse)
+	    W->CurY = MAXLDAT;
+	else if (W->CurY == MAXLDAT)
+	    W->CurY = (ldat)0;
+	Act(MapTopReal,W)(W, S);
     }
-    Act(DrawMenu,Screen)(Screen, 0, MAXDAT);
+    if ((widget)P != S->FocusW)
+	Act(Focus,P)(P);
 }
+
+static void OpenTopMenuItem(menu M, menuitem Item, byte ByMouse) {
+    menu _M = (menu)Item->Parent; /* may either be M or All->CommonMenu */
+    window W = Item->Window;
+    
+    if (!W->Parent) {
+	W->Up = 1;
+	W->Left = Item->Left;
+    
+	if (M != _M && M->LastI)
+	    /* adjust common menu W->Left to the Item position in this menu */
+	    W->Left += M->LastI->Left + M->LastI->Len;
+    }
+    
+    Act(SetSelectedItem,M)(M, Item);
+    
+    if (ByMouse)
+	W->CurY = MAXLDAT;
+    else if (W->CurY == MAXLDAT)
+	W->CurY = (ldat)0;
+    
+    if (Item->Flags & ROW_ACTIVE)
+	W->Flags &= ~WINDOWFL_DISABLED;
+    else
+	W->Flags |= WINDOWFL_DISABLED;
+    
+    Act(MapTopReal,W)(W, All->FirstScreen);
+    
+    if (W->CurY != MAXLDAT && (Item = (menuitem)Act(FindRow,W)(W, W->CurY)))
+	OpenSubMenuItem(M, Item, ByMouse);
+}
+
+static void OpenMenuItem(menu M, menuitem Item, byte ByMouse) {
+    if (Item) {
+	obj O = Item->Parent;
+	if (O && IS_WINDOW(O))
+	    OpenSubMenuItem(M, Item, ByMouse);
+	else
+	    OpenTopMenuItem(M, Item, ByMouse);
+    } else
+	Act(SetSelectedItem,M)(M, (menuitem)0);
+}
+
+/* this activates the menu bar */
+static void OpenMenu(menuitem Item, byte ByMouse) {
+    screen S = All->FirstScreen;
+    widget W = S->FocusW;
+    menu M = Act(FindMenu,S)(S);
+    
+    if ((All->State & STATE_ANY) == STATE_DEFAULT) {
+	
+	All->State = STATE_MENU | (ByMouse ? STATE_FL_BYMOUSE : 0);
+
+	if (All->SetUp->Flags & SETUP_MENU_HIDE)
+	    HideMenu(FALSE);
+
+	if (!S->MenuWindow && W) {
+	    S->MenuWindow = (window)W; /* so that it keeps `active' borders */
+	    S->FocusW = (widget)0;
+	}
+    }
+    OpenMenuItem(M, Item, ByMouse);
+}
+
+
+/*
+ * up one level; return new selected item;
+ * do NOT use to close the menu, CloseMenu() does that
+ */
+static menuitem CloseMenuItem(menu M, menuitem Item, byte ByMouse) {
+    window P = (window)Item->Parent, W = Item->Window;
+    
+    if (W)
+	Act(UnMap,W)(W);
+
+    if (P && IS_WINDOW(P)) {
+	if (ByMouse) {
+	    ldat y = P->CurY;
+	    P->CurY = MAXLDAT;
+	
+	    if (y != MAXLDAT)
+		DrawLogicWidget((widget)P, 0, y, MAXLDAT, y);
+	}
+	Item = P->MenuItem;
+	if (Item) {
+	    W = (window)Item->Parent;
+	    if (W && IS_WINDOW(W))
+		Act(Focus,W)(W);
+	    else
+		Act(Focus,P)(P);
+	}
+	return Item;
+    } else {
+	Item = (menuitem)0;
+	Act(SetSelectedItem,M)(M, Item);
+	return Item;
+    }
+}
+
+static dat DepthOfMenuItem(menuitem I) {
+    window W;
+    dat d = 0;
+    
+    while (I && (W = (window)I->Parent) && IS_WINDOW(W)) {
+	I = W->MenuItem;
+	d++;
+    }
+    return d;
+}
+
+/* this traverses the menu bar as needed */
+static void TraverseMenu(menu M, menuitem OldItem, dat Odepth, menuitem NewItem, dat Ndepth, byte ByMouse) {
+    while (Odepth > Ndepth && OldItem) {
+	Odepth--;
+	OldItem = CloseMenuItem(M, OldItem, ByMouse);
+    }
+    /* paranoia */
+    Odepth = DepthOfMenuItem(OldItem);
+    
+    if (Ndepth == Odepth) {
+	if (OldItem != NewItem)
+	    CloseMenuItem(M, OldItem, ByMouse);
+	OpenMenuItem(M, NewItem, ByMouse);
+    } else if (Ndepth == Odepth + 1) {
+	OpenMenuItem(M, NewItem, ByMouse);
+    } else
+	printk("twin: internal error: unsupported menu traversing.\n");
+}
+
+/* close the menu bar */
+void CloseMenu(void) {
+    screen S = All->FirstScreen;
+    menu M = Act(FindMenu,S)(S);
+    menuitem Item;
+    window W;
+    
+    if (M) {
+	if ((W = S->MenuWindow)) {
+	    Act(KbdFocus,W)(W);
+	    S->MenuWindow = (window)0;
+	} else
+	    Do(KbdFocus,Window)((window)0);
+	
+	/* close whole currently open menu tree */
+	Item = Act(GetSelectedItem,M)(M);
+	while (Item && IS_MENUITEM(Item) && (W = (window)Item->Window) && IS_WINDOW(W)) {
+	    Item = (menuitem)Act(FindRow,W)(W,W->CurY);
+	    Act(UnMap,W)(W);
+	}
+    }
+    All->State = STATE_DEFAULT;
+    if (All->SetUp->Flags & SETUP_MENU_HIDE)
+	HideMenu(TRUE);
+    else
+	Act(DrawMenu, S)(S, 0, MAXDAT);
+}
+
+/*
+ * exported interface to open and interact with the menu.
+ * do NOT use to close the menu, CloseMenu() does that
+ */
+void SetMenuState(menuitem Item, byte ByMouse) {
+    screen S = All->FirstScreen;
+    menu M = Act(FindMenu,S)(S);
+    menuitem OldItem = (menuitem)0;
+    dat Odepth = 0;
+    
+    if (M && (Item || ByMouse)) {
+	if ((All->State & STATE_ANY) != STATE_DEFAULT)
+	    OldItem = Act(RecursiveGetSelectedItem,M)(M, &Odepth);
+	if (!OldItem)
+	    OpenMenu(Item, ByMouse);
+	else if (OldItem != Item)
+	    TraverseMenu(M, OldItem, Odepth, Item, DepthOfMenuItem(Item), ByMouse);
+	UpdateCursor();
+    }
+}
+
+
+/* ---------------- */
 
 void UnFocusWidget(widget W) {
     if (W && W->Parent == (widget)All->FirstScreen && W == All->FirstScreen->FocusW) {
@@ -1372,7 +1618,10 @@ void RollUpWindow(window W, byte on_off) {
     }
 }
 
-void MakeFirstWidget(widget W, byte alsoFocus) {
+/* ---------------- */
+
+
+void RaiseWidget(widget W, byte alsoFocus) {
     screen Screen;
     
     if (W && (Screen = (screen)W->Parent) && IS_SCREEN(Screen)) {
@@ -1395,7 +1644,7 @@ void MakeFirstWidget(widget W, byte alsoFocus) {
     }
 }
 
-void MakeLastWidget(widget W, byte alsoUnFocus) {
+void LowerWidget(widget W, byte alsoUnFocus) {
     screen Screen;
     widget _W;
     
@@ -1425,14 +1674,76 @@ void MakeLastWidget(widget W, byte alsoUnFocus) {
 }
 
 
+void RestackWidgets(widget W, uldat N, CONST widget *arrayW) {
+    widget FW, CW;
+    byte need_redraw = FALSE;
+    
+    if (W && N && arrayW) {
+	for (FW = (widget)0; N; N--, arrayW++) {
+	    /*
+	     * Allow only children that really have the given parent.
+	     * Also deny WINDOFL_MENU windows
+	     */
+	    if ((CW = *arrayW) && CW->Parent == W && !(CW->Flags & WINDOWFL_MENU)) {
+		if (FW && CW != FW->Next) {
+		    /* restack after arrayW[0] */
+		    Remove(CW);
+		    Act(Insert,CW)(CW, W, FW, FW->Next);
+		    need_redraw = TRUE;
+		}
+		FW = CW;
+	    }
+	}
+	/* FIXME: this is gross */
+	if (need_redraw)
+	    DrawAreaWidget(W);
+    }
+}
 
+
+
+/* ---------------- */
+
+
+void RestackRows(obj O, uldat N, CONST row *arrayR) {
+    row FR, CR;
+    byte need_redraw = FALSE;
+    
+    if (O && (IS_MENU(O) || IS_WINDOW(O)) && N && arrayR) {
+	for (FR = (row)0; N; N--, arrayR++) {
+	    /*
+	     * Allow only children that really have the given parent.
+	     */
+	    if ((CR = *arrayR) && (obj)CR->Window == O) {
+		if (FR && CR != FR->Next) {
+		    /* restack after arrayR[0] */
+		    Remove(CR);
+		    Act(Insert,CR)(CR, (window)O, FR, FR->Next);
+		    need_redraw = TRUE;
+		}
+		FR = CR;
+	    }
+	}
+	/* FIXME: this is gross */
+	if (need_redraw) {
+	    if (IS_MENU(O))
+		SyncMenu((menu)O);
+	    else
+		DrawAreaWidget((widget)O);
+	}
+    }
+}
+
+
+
+/* ---------------- */
 
 
 void SendMsgGadget(gadget G) {
     msg Msg;
     event_gadget *Event;
     if (G->Code && !(G->Flags & GADGETFL_DISABLED)) {
-	if ((Msg=Do(Create,Msg)(FnMsg, MSG_WIDGET_GADGET, sizeof(event_gadget)))) {
+	if ((Msg=Do(Create,Msg)(FnMsg, MSG_WIDGET_GADGET, 0))) {
 	    Event = &Msg->Event.EventGadget;
 	    Event->W = G->Parent;
 	    Event->Code = G->Code;
@@ -1645,6 +1956,24 @@ void WriteHWFontsGadget(gadget G, byte bitmap, dat TW, dat TH, CONST hwfont *HWF
 #endif
 }
 
+void SyncMenu(menu Menu) {
+    menuitem I, PrevI = (menuitem)0;
+    screen Screen;
+    
+    if (Menu) {
+	for (I = Menu->FirstI; I; I = I->Next) {
+	    if (PrevI)
+		I->Left = PrevI->Left + PrevI->Len;
+	    else
+		I->Left = 1;
+	    PrevI = I;
+	}
+	for (Screen = All->FirstScreen; Screen; Screen = Screen->Next) {
+	    if (Act(FindMenu,Screen)(Screen) == Menu)
+		Act(DrawMenu,Screen)(Screen, 0, MAXDAT);
+	}
+    }
+}
 
 #if 0
 void SetNewFont(void) {

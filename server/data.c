@@ -13,12 +13,13 @@
 
 #include "twin.h"
 #include "methods.h"
+#include "util.h"
 #include "data.h"
 
-#include "Tw/Twkeys.h"
+#include <Tw/Twkeys.h>
 
 #ifdef CONF__UNICODE
-# include "Tutf/Tutf.h"
+# include <Tutf/Tutf.h>
 #endif
 
 /* setup configuration paths */
@@ -75,7 +76,8 @@ palette defaultPalette[MAXCOL+1] = {
 #undef L
 
 static struct s_all _All = {
-    NOID,
+    NOID, NULL, NULL, NULL, NULL,
+	
 	(screen)0, (screen)0,
 	(msgport)0, (msgport)0, (msgport)0,
 	(mutex)0, (mutex)0,
@@ -185,5 +187,5 @@ byte InitData(void) {
 	    vec[i][j] = Tutf_IBM437_to_UTF_16[vec[i][j]];
     }
 #endif /* CONF__UNICODE */
-    return TRUE;
+    return AssignId_all(All);
 }

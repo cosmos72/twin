@@ -17,8 +17,10 @@ define(`t_', _)
 define(`tx', x)
 define(`tV', V)
 define(`tW', W)
+define(`tX', X)
+define(`tY', Y)
 
-define(`ARG', `"$3"ifelse($3, x, TRIM($2)_magic_STR, TWS_`'TRIM($2)_STR)')
+define(`ARG', `"$3"ifelse($3, x, TRIM($2)_magic_STR, $3, X, TRIM($2)_magic_STR, $3, Y, TRIM($2)_magic_STR, TWS_`'TRIM($2)_STR)')
 
 define(`PARSE', `ifelse($#, 2, `', `ARG($1,$2,t$3)`'PARSE(incr($1), NSHIFT(3, $@))')')
 
@@ -28,5 +30,5 @@ define(`PROTO', `{ 0, 0, "CHAIN($3, $4)",
 define(`PROTOSyncSocket', `PROTO($@)')
 define(`PROTOFindFunction', `PROTO($@)')
 
-include(`m4/m4_sockproto.m4')
+include(`m4/sockproto.m4h')
 

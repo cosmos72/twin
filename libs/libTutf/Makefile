@@ -2,45 +2,43 @@
 # Makefile for libTutf, the UTF-16 charset conversion library
 #
 TOPDIR=../..
+THISDIR=$(TOPDIR)/libs/libTutf
+
 SUBDIRS=
 
 all: everything
 
-VERSION=0.0.4
+VERSION=0.0.5
 SO_VER=0
 
 BINS=libTutf.so.$(VERSION)
 ARLIBS=libTutf.a
 
+LINKS=libTutf.so.$(SO_VER) libTutf.so
+
 OBJS_libTutf.so.$(VERSION)=libTutf.o
 OBJS_libTutf.a=libTutf_u.o
 
-CC_FLAGS_libTutf.o+=-fPIC -D_REENTRANT
-CC_FLAGS_libTutf_u.o+=-D_REENTRANT
+CC_FLAGS_libTutf.o+=-fPIC
+CC_FLAGS+=-D_REENTRANT
 
-LD_FLAGS_libTutf.so.$(VERSION)=$(LD_FLAGS_SOLIB)libTutf.so.$(SO_VER)
+LD_FLAGS_libTutf.so.$(VERSION)=$(LD_FLAGS_SOLIB_NAME)libTutf.so.$(SO_VER)
 
 -include $(TOPDIR)/conf/conf.current
 -include .modules
 -include .depend
+-include $(TOPDIR)/.hdepend
 
 
-ifneq ($(CONF_SOCKET),n)
-  ifeq ($(CONF__UNICODE),y)
-    everything: lib
-    install: install-real
-  else
-    everything install:
-	@$(ECHO) ; \
-	 $(ECHO) "You disabled \"Build all code with Unicode support\"," ; \
-	 $(ECHO) "so the library libTutf will NOT be compiled!" ; \
-	 $(ECHO)
-  endif
+ifeq ($(CONF__UNICODE),y)
+  everything: lib
+  install: install-real
 else
   everything install:
-	@$(ECHO) ; \
-	 $(ECHO) "You disabled \"Support remote socket connections\"," ; \
-	 $(ECHO) "so the library libTw.so will NOT be compiled!" ; \
+	@rm -f $(ARLIBS) $(BINS) $(LINKS) ; \
+	 $(ECHO) ; \
+	 $(ECHO) "You disabled \"Build all code with Unicode support\"," ; \
+	 $(ECHO) "so the library libTutf will NOT be compiled!" ; \
 	 $(ECHO)
 endif
 
@@ -53,7 +51,8 @@ ifeq ($(CONF__SHLIBS),y)
   lib: $(ARLIBS) $(BINS) links
 else
   lib: $(ARLIBS)
-	@$(ECHO) ; \
+	@rm -f $(BINS) $(LINKS) ; \
+	 $(ECHO) ; \
 	 $(ECHO) "You disabled \"Enable shared libraries (ELF)\"," ; \
 	 $(ECHO) "so only the static library libTutf.a will be compiled!" ; \
 	 $(ECHO)
@@ -69,16 +68,13 @@ include $(TOPDIR)/makerules
 
 
 
-links: libTutf.so.$(SO_VER) libTutf.so
+links: $(LINKS)
 
 libTutf.so.$(SO_VER):
 	$(LN) libTutf.so.$(VERSION) libTutf.so.$(SO_VER)
 
 libTutf.so:
 	$(LN) libTutf.so.$(SO_VER) libTutf.so
-
-libTutf_u.c:
-	$(LN) libTutf.c libTutf_u.c
 
 install-headers:
 	$(INSTALL) -d $(DESTDIR)$(includedir)/Tutf && \

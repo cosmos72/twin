@@ -1,5 +1,5 @@
 /*
- *  TT.h  --  header for libTT
+ *  TT.h  --  public header for libTT
  *
  *  Copyright (C) 2001 by Massimiliano Ghilardi
  *
@@ -13,77 +13,74 @@
 #ifndef _TT_H
 #define _TT_H
 
-#include <Tw/Twtypes.h>
-#include <Tw/Tw.h>
+#include <TT/TTtypes.h>
 
-typedef void (*ttfn_repaint)(void *,dat,dat,dat,dat);
-    
-#include <TT/compiler.h>
-#include <TT/version.h>
-#include <TT/TTflags.h>
-#include <TT/TTdefsm4.h>
+
+#define TT_NOID		((ttopaque)0)
+#define TT_BADID	TW_MAXTOPAQUE
+
 
 #define TT_MIN2(a,b) ((a)<(b) ? (a) : (b))
 
-#define TT_DECL_MAGIC(id) \
-	static TT_CONST byte id[10+sizeof(uldat)] = { \
-	    10+sizeof(uldat), \
-	    sizeof(byte), \
-	    sizeof(udat), \
-	    sizeof(uldat), \
-	    sizeof(hwcol), \
-	    sizeof(time_t), \
-	    sizeof(frac_t), \
-	    sizeof(hwfont), \
-	    sizeof(hwattr), \
-	    0 \
-	}
+#define TT_DECL_MAGIC(id) TW_DECL_MAGIC(id)
 
 
-byte TTCheckMagic(TT_CONST byte id[]);
+extern void *(*TTAllocMem)(size_t);
+extern void *(*TTReAllocMem)(void *, size_t);
+extern void  (*TTFreeMem)(void *);
+void *TTCloneMem(TT_CONST void *S, size_t len);
+ttbyte *TTCloneStr(TT_CONST ttbyte *S);
+void TTConfigMalloc(void *(*my_malloc)(size_t),
+		     void *(*my_realloc)(void *, size_t),
+		     void  (*my_free)(void *));
 
-byte TTInPanic(void);
-uldat TTLibraryVersion(void);
 
-byte TTOpen(TT_CONST byte *target, ...);
+ttbyte TTCheckMagic(TT_CONST ttbyte id[]);
+
+ttbyte TTInPanic(void);
+ttuint TTLibraryVersion(void);
+
+ttbyte TTOpen(TT_CONST ttbyte *target, ...);
+ttbyte TTOpenV(ttuint nargs, TT_CONST ttbyte *ap0, va_list ap);
+ttbyte TTOpenA(ttuint nargs, TT_CONST ttbyte **args);
 void TTClose(void);
+
 int TTConnectionFd(void);
-byte TTFlush(void);
-byte TTTimidFlush(void);
-byte TTSync(void);
+ttbyte TTFlush(void);
+ttbyte TTTimidFlush(void);
+ttbyte TTSync(void);
 
-byte TTMainLoop(void);
+ttbyte TTMainLoop(void);
+void TTExitMainLoop(void);
 
-ttobj TTNew(ttfn_ttobj FN);
+ttobj TTNew(ttfn FN);
 void  TTDel(ttobj o);
 
-byte TTInstanceOf(ttfn_ttobj FN, ttobj o);
-ttfn_ttobj TTClassOf(ttobj o);
+ttbyte TTInstanceOf(ttfn FN, ttobj o);
+ttfn TTClassOf(ttobj o);
 
-#define TT_NEW(obj)		((obj)TTNew((ttfn_ttobj)TT_CAT(TTFN_,obj)))
-#define TT_DEL(o)		TTDel((ttobj)(o))
+#define TTNEW(type)		((type)TTNew(TT_CAT(TTFN_,type)))
+#define TTDEL(o)		TTDel((ttobj)(o))
 
-#define TT_INSTANCEOF(obj, o)	TTInstanceOf((ttfn_ttobj)TT_CAT(TTFN_,obj), (ttobj)o)
-#define TT_CLASSOF(o)		((void *)TTClassOf((ttobj)o))
+#define TTINSTANCEOF(type, o)	TTInstanceOf(TT_CAT(TTFN_,type), (ttobj)(o))
+#define TTCLASSOF(o)		TTClassOf((ttobj)(o))
 
-#define TTAllocMem TwAllocMem
-#define TTReAllocMem TwReAllocMem
-#define TTFreeMem  TwFreeMem
-#define TTCloneMem TwCloneMem
-#define TTWriteMem TwWriteMem
-#define TTCopyMem  TwCopyMem
-#define TTCmpMem   TwCmpMem
 
-#define TTCloneStr TwCloneStr
-#define TTLenStr   TwLenStr
-#define TTCmpStr   TwCmpStr
-#define TTCopyStr  TwCopyStr
+extern void *(*TTAllocMem)(size_t);
+extern void *(*TTReAllocMem)(void *, size_t);
+extern void  (*TTFreeMem)(void *);
+extern void *TTCloneMem(TT_CONST void *, size_t);
+extern ttbyte *TTCloneStr(TT_CONST ttbyte *);
 
-ttnative TTCreate_ttnative(uldat id);
-ttlabel TTCreate_ttlabel(byte TT_CONST *text);
-ttanybutton TTCreate_ttanybutton(hwfont TT_CONST * text, dat width, dat height, dat pitch);
-ttbutton TTCreate_ttbutton(hwfont TT_CONST * text, dat width, dat height, dat pitch);
-ttapplication TTCreate_ttapplication(byte TT_CONST *name);
+#define TTCopyMem(From, To, Size)	memcpy(To, From, Size)
+#define TTMoveMem(From, To, Size)	memmove(To, From, Size)
+#define TTWriteMem			memset
+#define TTCmpMem			memcmp
 
+#define TTLenStr			strlen
+#define TTCmpStr			strcmp
+#define TTCopyStr(From,To)		strcpy(To, From)
+
+ttcallback TTCreateL_ttcallback(ttcomponent o, ttevent ev, ttuint flags, ttuint narg_component, ttuint narg_event, ttuint nargs, ttcallback_fn function, ...);
 
 #endif /* _TT_H */

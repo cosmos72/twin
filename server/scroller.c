@@ -34,7 +34,7 @@ msg Do_Scroll, Dont_Scroll;
 
 byte InitScroller(void) {
     if ((Scroller_MsgPort=Do(Create,MsgPort)
-	 (FnMsgPort, 8, "Scroller", (time_t)0, 401 MilliSECs, (byte)0, ScrollerH)) &&
+	 (FnMsgPort, 16, "builtin scroller", (time_t)0, 401 MilliSECs, (byte)0, ScrollerH)) &&
 	(Do_Scroll=Do(Create,Msg)(FnMsg, 0, 0)) &&
 	(Dont_Scroll=Do(Create,Msg)(FnMsg, 0, 0))) {
 
@@ -98,7 +98,7 @@ static void ScrollerH(msgport MsgPort) {
     } else
 	FlagWinScroll = FALSE;
     
-    FlagDeskScroll = (All->SetUp->Flags & SETUP_EDGESCROLL)
+    FlagDeskScroll = (All->SetUp->Flags & SETUP_SCREEN_SCROLL)
 	&& (Mouse->keys == HOLD_LEFT || Mouse->keys == HOLD_MIDDLE || Mouse->keys == HOLD_RIGHT);
 
     State = All->State & STATE_ANY;

@@ -21,9 +21,9 @@
 #include <sys/stat.h>
 #include <sys/socket.h>
 
-#include "Tw/Twkeys.h"
+#include <Tw/Twkeys.h>
 #ifdef CONF__UNICODE
-# include "Tutf/Tutf.h"
+# include <Tutf/Tutf.h>
 #endif
     
 #include "twin.h"
@@ -124,8 +124,8 @@
 
 %token <val> GLOBAL_FLAG
 /* one of */
-%token ALTFONT ALWAYSCURSOR BLINK EDGESCROLL HIDEMENU MENUINFO SHADOWS
-%token PASTEBUTTON SELECTIONBUTTON
+%token ALTFONT CURSOR_ALWAYS BLINK MENU_HIDE MENU_INFO MENU_RELAX SCREEN_SCROLL SHADOWS
+%token BUTTON_PASTE BUTTON_SELECTION
 
 %token <color> COLOR
 %token COL_HIGH
@@ -249,8 +249,8 @@ global_flag	:      GLOBAL_FLAG { $$ = MakeFlagNode($1,  0); }
 		| flag GLOBAL_FLAG { $$ = MakeFlagNode($2, $1); }
 		|      SHADOWS NUMBER NUMBER { $$ = MakeShadowsNode($2, $3); }
 		| flag SHADOWS     { $$ = MakeFlagNode(SHADOWS, $1); }
-		| PASTEBUTTON NUMBER     { $$ = MakeFlagNode(PASTEBUTTON, $2); }
-		| SELECTIONBUTTON NUMBER { $$ = MakeFlagNode(SELECTIONBUTTON, $2); }
+		| BUTTON_PASTE NUMBER     { $$ = MakeFlagNode(BUTTON_PASTE, $2); }
+		| BUTTON_SELECTION NUMBER { $$ = MakeFlagNode(BUTTON_SELECTION, $2); }
 		;
 
 func		: string		{ $$ = MakeUserFunc($1); }

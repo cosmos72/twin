@@ -15,8 +15,8 @@
 #include <string.h>
 #include <signal.h>
 
-#include "Tw/Tw.h"
-#include "Tw/Twerrno.h"
+#include <Tw/Tw.h>
+#include <Tw/Twerrno.h>
 #include "version.h"
 
 static char *MYname;
@@ -76,9 +76,9 @@ static byte VersionsMatch(byte force) {
 	fprintf(stderr, "%s: %s: socket protocol version mismatch!%s\n"
 		"          client is %d.%d.%d, library is %d.%d.%d, server is %d.%d.%d\n",
 		MYname, (force ? "warning" : "fatal"), (force ? " (ignored)" : ""),
-		TW_VER_MAJOR(cv), TW_VER_MINOR(cv), TW_VER_PATCH(cv),
-		TW_VER_MAJOR(lv), TW_VER_MINOR(lv), TW_VER_PATCH(lv),
-		TW_VER_MAJOR(sv), TW_VER_MINOR(sv), TW_VER_PATCH(sv));
+		(int)TW_VER_MAJOR(cv), (int)TW_VER_MINOR(cv), (int)TW_VER_PATCH(cv),
+		(int)TW_VER_MAJOR(lv), (int)TW_VER_MINOR(lv), (int)TW_VER_PATCH(lv),
+		(int)TW_VER_MAJOR(sv), (int)TW_VER_MINOR(sv), (int)TW_VER_PATCH(sv));
 	return FALSE;
     }
     return TRUE;
@@ -207,7 +207,7 @@ int main(int argc, char *argv[]) {
 
     InitSignals();
 
-    if (TwCheckMagic(attach_magic) && TwOpen(dpy) && TwCreateMsgPort(8, "Twattach", 0, 0, 0)) do {
+    if (TwCheckMagic(attach_magic) && TwOpen(dpy) && TwCreateMsgPort(8, "twattach", 0, 0, 0)) do {
 	
 	if (!VersionsMatch(force)) {
 	    if (!force) {

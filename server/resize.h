@@ -2,7 +2,8 @@
 #define _TWIN_RESIZE_H
 
 byte EnsureLenRow(row Row, ldat Len, byte DefaultCol);
-byte WriteRow(window Window, ldat Len, byte CONST * Text);
+byte RowWriteAscii(window Window, ldat Len, CONST byte * Text);
+byte RowWriteHWFont(window Window, ldat Len, CONST hwfont * Text);
 
 void ExposeWidget2(widget W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch, CONST byte *Text, CONST hwfont *Font, CONST hwattr *Attr);
 
@@ -21,12 +22,13 @@ void SetPalette(void);
 
 void ResizeFirstScreen(dat DeltaY);
 void DragFirstScreen(ldat DeltaX, ldat DeltaY);
-void HideMenu(byte on_off);
-void ChangeMenuFirstScreen(menuitem NewMenuItem, byte ByMouse, byte Flag);
-#define ACTIVATE_MENU_FLAG	(byte)1
-#define DISABLE_MENU_FLAG	(byte)2
-#define KEEP_ACTIVE_MENU_FLAG	(byte)3
 
+void HideMenu(byte on_off);
+void CloseMenu(void);
+void SetMenuState(menuitem Item, byte ByMouse);
+
+void ResizeWidget(widget W, dat X, dat Y);
+void ResizeGadget(gadget G, dat X, dat Y);
 
 void DragFirstWindow(dat i, dat j);
 void DragWindow(window Window, dat i, dat j);
@@ -41,14 +43,19 @@ void ScrollFirstWindowArea(dat X1, dat Y1, dat X2, dat Y2, dat DeltaX, dat Delta
 void UnFocusWidget(widget W);
 void RollUpWindow(window W, byte on_off);
 
-void MakeFirstWidget(widget W, byte alsoFocus);
-void MakeLastWidget(widget W, byte alsoDeFocus);
+void RaiseWidget(widget W, byte alsoFocus);
+void LowerWidget(widget W, byte alsoDeFocus);
+void RestackWidgets(widget P, uldat N, CONST widget *arrayW);
+
+void RestackRows(obj O, uldat N, CONST row *arrayR);
 
 void PressGadget(gadget G);
 void UnPressGadget(gadget G, byte maySendMsgIfNotToggle);
 void SendMsgGadget(gadget G);
 void WriteTextsGadget(gadget G, byte bitmap, dat XWidth, dat YWidth, CONST byte *Text, dat Left, dat Up);
 void WriteHWFontsGadget(gadget G, byte bitmap, dat XWidth, dat YWidth, CONST hwfont *Text, dat Left, dat Up);
+
+void SyncMenu(menu Menu);
 
 #endif /* _TWIN_RESIZE_H */
 

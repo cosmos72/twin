@@ -30,10 +30,10 @@
 
 #include "hw.h"
 
-#include "Tw/Twkeys.h"
+#include <Tw/Twkeys.h>
 
 #ifdef CONF__UNICODE
-# include "Tutf/Tutf.h"
+# include <Tutf/Tutf.h>
 #endif
 
 udat ErrNo;
@@ -361,7 +361,7 @@ byte SendControlMsg(msgport MsgPort, udat Code, udat Len, CONST byte *Data) {
     msg Msg;
     event_control *Event;
     
-    if (MsgPort && (Msg = Do(Create,Msg)(FnMsg, MSG_CONTROL, sizeof(event_control) + Len))) {
+    if (MsgPort && (Msg = Do(Create,Msg)(FnMsg, MSG_CONTROL, Len))) {
 	Event = &Msg->Event.EventControl;
 	Event->Code = Code;
 	Event->Len  = Len;
@@ -418,9 +418,21 @@ byte SelectionStore(uldat Magic, CONST byte MIME[MAX_MIMELEN], uldat Len, CONST 
     return TRUE;
 }
 
+#ifdef CONF__UNICODE
+# define _SEL_MAGIC SEL_HWFONTMAGIC
+# if TW_BYTE_ORDER == TW_LITTLE_ENDIAN
+#  define _SelAppendNL() SelectionAppend(2, "\n\0");
+# else
+#  define _SelAppendNL() SelectionAppend(2, "\0\n");
+# endif
+#else
+# define _SEL_MAGIC SEL_TEXTMAGIC
+# define _SelAppendNL() SelectionAppend(1, "\n");
+#endif
+
 byte SetSelectionFromWindow(window Window) {
     uldat y, slen, len;
-    byte *sData, *Data;
+    hwfont *sData, *Data;
     byte ok = TRUE, w_useC = W_USE(Window, USECONTENTS);
     
     if (!(Window->State & WINDOW_DO_SEL))
@@ -429,7 +441,7 @@ byte SetSelectionFromWindow(window Window) {
     if (!(Window->State & WINDOW_ANYSEL) || Window->YstSel > Window->YendSel ||
 	(Window->YstSel == Window->YendSel && Window->XstSel > Window->XendSel)) {
 	
-	ok &= SelectionStore(SEL_TEXTMAGIC, NULL, 0, NULL);
+	ok &= SelectionStore(_SEL_MAGIC, NULL, 0, NULL);
 	if (ok) NeedHW |= NEEDSelectionExport;
 	return ok;
     }
@@ -467,7 +479,7 @@ byte SetSelectionFromWindow(window Window) {
 	    Window->XendSel = Window->WLogic - 1;
 	}
 	
-	if (!(sData = AllocMem(slen = Window->WLogic)))
+	if (!(sData = (hwfont *)AllocMem(sizeof(hwfont) * (slen = Window->WLogic))))
 	    return FALSE;
 	
 	
@@ -486,7 +498,7 @@ byte SetSelectionFromWindow(window Window) {
 	    hw += Window->XstSel;
 	    while (len--)
 		*Data++ = HWFONT(*hw), hw++;
-	    ok &= SelectionStore(SEL_TEXTMAGIC, NULL, slen, sData);
+	    ok &= SelectionStore(_SEL_MAGIC, NULL, slen * sizeof(hwfont), (byte *)sData);
 	}
 	
 	if (hw >= Window->USE.C.TtyData->Split)
@@ -500,7 +512,7 @@ byte SetSelectionFromWindow(window Window) {
 	    len = slen;
 	    while (len--)
 		*Data++ = HWFONT(*hw), hw++;
-	    ok &= SelectionAppend(slen, sData);
+	    ok &= SelectionAppend(slen * sizeof(hwfont), (byte *)sData);
 	}
 	
 	if (ok && Window->YendSel > Window->YstSel) {
@@ -510,7 +522,7 @@ byte SetSelectionFromWindow(window Window) {
 	    len = slen = Window->XendSel + 1;
 	    while (len--)
 		*Data++ = HWFONT(*hw), hw++;
-	    ok &= SelectionAppend(slen, sData);
+	    ok &= SelectionAppend(slen * sizeof(hwfont), (byte *)sData);
 	}
 	if (ok) NeedHW |= NEEDSelectionExport;
 	return ok;
@@ -527,50 +539,31 @@ byte SetSelectionFromWindow(window Window) {
 		slen = Row->Len - Window->XstSel;
 	    else
 		slen = Min2(Row->Len, Window->XendSel+1) - Min2(Row->Len, Window->XstSel);
-#if TW_SIZEOFHWFONT != 1
-	    {
-		/* FIXME: this should be like below, with SEL_HWFONTMAGIC */
-		hwfont *hf;
-		
-		if (!(sData = Data = AllocMem(slen)))
-		    return FALSE;
-		hf = Row->Text + Min2(Row->Len, Window->XstSel);
-		len = slen;
-		while (len--)
-		    *Data++ = *hf++;
-		
-		ok &= SelectionStore(SEL_TEXTMAGIC, NULL, slen, sData);
-		
-		FreeMem(sData);
-	    }
-	    
-#else
-	    ok &= SelectionStore(SEL_TEXTMAGIC, NULL, slen,
+
+	    ok &= SelectionStore(_SEL_MAGIC, NULL, slen * sizeof(hwfont),
 				 (byte *)(Row->Text + Min2(Row->Len, Window->XstSel)));
-#endif
 	} else
-	    ok &= SelectionStore(SEL_TEXTMAGIC, NULL, 0, "");
+	    ok &= SelectionStore(_SEL_MAGIC, NULL, 0, NULL);
 
 	if (y < Window->YendSel || !Row || !Row->Text || Row->Len <= Window->XendSel)
-	    ok &= SelectionAppend(1, "\n");
+	    ok &= _SelAppendNL();
 
 	for (y = Window->YstSel + 1; ok && y < Window->YendSel; y++) {
 	    if ((Row = Act(FindRow,Window)(Window, y)) && Row->Text)
 		ok &= SelectionAppend(Row->Len * sizeof(hwfont), (byte *)Row->Text);
-	    ok &= SelectionAppend(1, "\n");
+	    ok &= _SelAppendNL();
 	}
 	if (Window->YendSel > Window->YstSel) {
 	    if (Window->XendSel >= 0 && (Row = Act(FindRow,Window)(Window, Window->YendSel)) && Row->Text)
 		ok &= SelectionAppend(Min2(Row->Len, Window->XendSel+1) * sizeof(hwfont), (byte *)Row->Text);
 	    if (!Row || !Row->Text || Row->Len <= Window->XendSel)
-		ok &= SelectionAppend(1, "\n");
+	    ok &= _SelAppendNL();
 	}
 	if (ok) NeedHW |= NEEDSelectionExport;
 	return ok;
     }
     return FALSE;
 }
-
 
 byte CreateXTermMouseEvent(event_mouse *Event, byte buflen, byte *buf) {
     window W;
@@ -658,7 +651,7 @@ static gadget _NextGadget(gadget G) {
 
 
 
-/* handle common keyboard actions like cursor moving */
+/* handle common keyboard actions like cursor moving and button navigation */
 void FallBackKeyAction(window W, event_keyboard *EventK) {
     ldat NumRow, OldNumRow;
     gadget G, H;
@@ -1122,9 +1115,13 @@ byte SetServerUid(uldat uid, byte privileges) {
 byte *FindFile(byte *name, uldat *fsize) {
     byte *path;
     byte CONST *dir;
-    byte CONST *search[3] = { HOME, conf_destdir_lib_twin, "" };
+    byte CONST *search[3];
     int i, min_i, max_i, len, nlen = strlen(name);
     struct stat buf;
+    
+    search[0] = HOME;
+    search[1] = conf_destdir_lib_twin;
+    search[2] = "";
     
     if (flag_secure)
 	min_i = max_i = 1; /* only conf_destdir_lib_twin */
@@ -1247,9 +1244,9 @@ INLINE uldat IdListGrow(byte i) {
     obj *newIdList;
     
     oldsize = IdSize[i];
-    if (oldsize >= MAXID)
+    if (oldsize >= MAXID || i == obj_magic_id || i == all_magic_id)
 	return NOSLOT;
-    
+
     size = oldsize < SMALLBUFF/3 ? SMALLBUFF/2 : oldsize + (oldsize>>1);
     if (size > MAXID)
 	size = MAXID;
@@ -1328,9 +1325,9 @@ byte AssignId(CONST fn_obj Fn_Obj, obj Obj) {
       case display_hw_magic:
       case msg_magic:
 	/*
-	 * we don't use Ids for rows and msgs as we expect to create *lots* of them
-	 * it's unsafe to allow modules and display_hw access remotely,
-	 * so no Ids for them too
+	 * We don't use Ids for rows and msgs as we expect to create *lots* of them.
+	 * It's unsafe to allow modules and display_hw access remotely,
+	 * so no Ids for them too.
 	 */
         Obj->Id = Fn_Obj->Magic;
 	return TRUE;
@@ -1383,17 +1380,29 @@ void DropId(obj Obj) {
     }
 }
 
+static obj IdList_all[1];
+
+byte AssignId_all(all Obj) {
+    byte i = all_magic_id;
+    
+    if (!IdList[i]) {
+	IdList[i] = IdList_all;
+	IdSize[i] = 1;
+	return _AssignId(i, (obj)Obj);
+    }
+    return FALSE;
+}
+
 obj Id2Obj(byte i, uldat Id) {
     byte I = Id >> magic_shift;
     
     if (i < magic_n && I < magic_n) {
 	/* everything is a valid (obj) */
 	/* gadgets, windows, screens are valid (widget) */
-	if (i == I || i == (obj_magic >> magic_shift) ||
-	    (i == (widget_magic >> magic_shift) &&
-	     (I == (gadget_magic >> magic_shift) ||
-	      I == (window_magic >> magic_shift) ||
-	      I == (screen_magic >> magic_shift)))) {
+	/* menuitems are valid (row) */
+	if (i == I || i == obj_magic_id ||
+	    (i == widget_magic_id && (I == gadget_magic_id || I == window_magic_id || I == screen_magic_id)) ||
+	    (i == row_magic_id && I == menuitem_magic_id)) {
 	    
 	    Id &= MAXID;
 	    if (Id < IdTop[I])

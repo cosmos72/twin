@@ -9,8 +9,8 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "Tw/Tw.h"
-#include "Tw/Twerrno.h"
+#include <Tw/Tw.h>
+#include <Tw/Twerrno.h>
 #include "version.h"
 
 byte *argv0;
@@ -97,7 +97,7 @@ int main(int argc, char *argv[]) {
 		if (Type == TW_MSG_USER_CONTROL) {
 		    tevent_control EventC;
 		    if ((Msg = TwCreateMsg(TW_MSG_USER_CONTROL,
-					   DataLen + sizeof(*EventC)))) {
+					   DataLen + TW_SIZEOF_TEVENT_CONTROL))) {
 			EventC = &Msg->Event.EventControl;
 			EventC->W = TW_NOID;
 			EventC->Code = Code;
@@ -112,12 +112,12 @@ int main(int argc, char *argv[]) {
 		} else {
 		    tevent_clientmsg EventC;
 		    if ((Msg = TwCreateMsg(TW_MSG_USER_CLIENTMSG,
-					   DataLen + sizeof(*EventC)))) {
+					   DataLen + TW_SIZEOF_TEVENT_CLIENTMSG))) {
 			EventC->W = TW_NOID;
 			EventC->Code = Code;
 			EventC->Len = DataLen;
 			if (DataLen)
-			    memcpy(EventC->Data, Data, DataLen);
+			    memcpy(EventC->Data.b, Data, DataLen);
 			if (TwSendMsg(MsgPort, Msg))
 			    return 0;
 		    }

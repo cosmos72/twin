@@ -4,7 +4,7 @@
 
 char *progname;
 
-static inline void
+TW_INLINE void
 set_progname(char *name) {
 	char *p;
 
@@ -12,7 +12,7 @@ set_progname(char *name) {
 	progname = (p ? p+1 : name);
 }
 
-static inline void
+TW_INLINE void
 print_version_and_exit(void) {
 	printf(_("%s from %s\n"), progname, "kbd-" VERSION);
 	exit(0);

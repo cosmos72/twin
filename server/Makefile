@@ -4,8 +4,11 @@
 #
 
 TOPDIR=..
+THISDIR=$(TOPDIR)/server
+
 SUBDIRS=HW
 
+include makeversion
 -include $(TOPDIR)/makeautoconf
 
 BASEOBJS=data.o builtin.o methods.o util.o draw.o extensions.o main.o \
@@ -22,22 +25,22 @@ ALLOBJS:=$(BASEOBJS) $(HWOBJS) $(DLOBJS) $(WMOBJS) $(TERMOBJS) \
 	 $(SOCKETOBJS) $(WRAPOBJS) $(DISPLAYOBJS) $(RCPARSEOBJS)
 
 OBJS_twin_real:=$(BASEOBJS) $(HWOBJS)
-OBJS_wm.so:=$(WMOBJS)
-OBJS_rcparse.so:=$(RCPARSEOBJS)
-OBJS_term.so:=$(TERMOBJS)
-OBJS_socket.so:=$(SOCKETOBJS)
+OBJS_wm.so.$(VERSION):=$(WMOBJS)
+OBJS_rcparse.so.$(VERSION):=$(RCPARSEOBJS)
+OBJS_term.so.$(VERSION):=$(TERMOBJS)
+OBJS_socket.so.$(VERSION):=$(SOCKETOBJS)
 OBJS_twin_wrapper:=$(WRAPOBJS)
 OBJS_twdisplay:=$(DISPLAYOBJS) alloc.o missing.o $(HWOBJS)
 
 BINS=twin_real twin_wrapper
 MODBINS=
 
-LD_FLAGS_wm.so=-lc -shared
-LD_FLAGS_rcparse.so=-lc -shared
-LD_FLAGS_rcrun.so=-lc -shared
-LD_FLAGS_term.so=-lc -shared
-LD_FLAGS_socket.so=-lc -shared
-LD_FLAGS_twdisplay=$(LIBTW)
+LD_FLAGS_wm.so.$(VERSION)=$(LD_FLAGS_SOLIB)
+LD_FLAGS_rcparse.so.$(VERSION)=$(LD_FLAGS_SOLIB)
+LD_FLAGS_rcrun.so.$(VERSION)=$(LD_FLAGS_SOLIB)
+LD_FLAGS_term.so.$(VERSION)=$(LD_FLAGS_SOLIB)
+LD_FLAGS_socket.so.$(VERSION)=$(LD_FLAGS_SOLIB)
+LD_FLAGS_twdisplay=$(LD_LIBTW)
 
 #
 # tweak flags based on current paths configuration
@@ -69,6 +72,7 @@ all: bins modules twin handy
 -include $(TOPDIR)/conf/conf.current
 -include .modules
 -include .depend
+-include $(TOPDIR)/.hdepend
 
 #
 # set variables according conf.current
@@ -90,9 +94,10 @@ ifeq ($(CONF_WM),y)
   OBJS_twin_real+=$(WMOBJS)
 else
   ifeq ($(CONF_WM),m)
-    MODBINS+=wm.so
+    MODBINS+=wm.so.$(VERSION)
   else
     EXCL_OBJS+=$(WMOBJS)
+    EXCL_BINS+=wm.so.$(VERSION)
   endif
 endif
 
@@ -100,9 +105,10 @@ ifeq ($(CONF_WM_RC),y)
   OBJS_twin_real+=$(RCPARSEOBJS)
 else
   ifeq ($(CONF_WM_RC),m)
-    MODBINS+=rcparse.so
+    MODBINS+=rcparse.so.$(VERSION)
   else
     EXCL_OBJS+=$(RCPARSEOBJS)
+    EXCL_BINS+=rcparse.so.$(VERSION)
   endif
 endif
 
@@ -111,27 +117,29 @@ ifeq ($(CONF_TERM),y)
   OBJS_twin_real+=$(TERMOBJS)
 else
   ifeq ($(CONF_TERM),m)
-    MODBINS+=term.so
+    MODBINS+=term.so.$(VERSION)
   else
     EXCL_OBJS+=$(TERMOBJS)
+    EXCL_BINS+=term.so.$(VERSION)
   endif
 endif
 
 ifeq ($(CONF_SOCKET),n)
   EXCL_OBJS+=$(SOCKETOBJS)
+  EXCL_BINS+=socket.so.$(VERSION)
 else
   LD_FLAGS_twin_real+=$(LD_LIBSOCKET)
   LD_FLAGS_twdisplay+=$(LD_LIBSOCKET)
   ifeq ($(CONF_SOCKET),y)
     OBJS_twin_real+=$(SOCKETOBJS)
   else
-    MODBINS+=socket.so
+    MODBINS+=socket.so.$(VERSION)
   endif
   ifeq ($(CONF_SOCKET_GZ),y)
     ifeq ($(CONF_SOCKET),y)
       LD_FLAGS_twin_real+=-lz
      else
-      LD_FLAGS_socket.so+=-lz
+      LD_FLAGS_socket.so.$(VERSION)+=-lz
     endif
   endif
 endif
@@ -165,8 +173,8 @@ endif
 # the final link nightmare...
 #
 ifeq ($(CONF__UNICODE),y)
-  LD_FLAGS_twin_real+=$(LIBTUTF)
-  LD_FLAGS_twdisplay+=$(LIBTUTF)
+  LD_FLAGS_twin_real+=$(LD_LIBTUTF)
+  LD_FLAGS_twdisplay+=$(LD_LIBTUTF)
 endif
 
 ifeq ($(CONF_HW_TTY),y)
@@ -200,7 +208,7 @@ ifneq ($(CONF_SOCKET),n)
     BINS+=twdisplay
   endif
   ifeq ($(CONF_HW_TWIN),y)
-    LD_FLAGS_twin_real+=$(LIBTW)
+    LD_FLAGS_twin_real+=$(LD_LIBTW)
   endif
 endif
 
@@ -221,13 +229,16 @@ modules: $(MODBINS)
 #
 
 twin: twin_wrapper
+	if [ "$(EXCL_BINS)" ]; then \
+	  rm -f $(EXCL_BINS) ; \
+	fi ; \
 	$(LN) $< $@
 
 # the '@:' dummy command is to force relinking after HW/hw.a is rebuilt
 HW/hw.a: dir-HW
 	@:
 
-autogen: rcparse_tab.c rcparse_tab.h rcparse_lex.c socket1m4.h socket2m4.h socket3m4.h
+do-autogen: rcparse_tab.c rcparse_tab.h rcparse_lex.c socket1m4.h socket2m4.h socket3m4.h
 
 handy: .twinrc .twenvrc.sh
 
@@ -254,7 +265,7 @@ symbolsdep: all
 
 clean:
 	rm -f .*.flags .*.link .*.arlib gmon.out core log twin \
-	      twin_real twin_wrapper twdisplay *.so \
+	      twin_real twin_wrapper twdisplay *.so.* \
 	      *.o \
 	      rcparse.output y.tab.c lex.yy.c \
 	      *.u *.d

@@ -9,7 +9,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "Tw/Twautoconf.h"
+#include <Tw/Twautoconf.h>
 
 #ifdef TW_HAVE_DIRENT_H
 # include <dirent.h>
@@ -25,8 +25,8 @@
 # endif
 #endif
 
-#include "Tw/Tw.h"
-#include "Tw/Twerrno.h"
+#include <Tw/Tw.h>
+#include <Tw/Twerrno.h>
 
 TW_DECL_MAGIC(findtwin_magic);
 

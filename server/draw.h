@@ -49,6 +49,8 @@ void DrawLogicWidget(widget W, ldat X1, ldat Y1, ldat X2, ldat Y2);
 
 void ReDrawRolledUpAreaWindow(window Window, byte Shaded);
 
+void DrawMenuScreen(screen Screen, dat Xstart, dat Xend);
+
 void ClearHilight(window Window);
 void StartHilight(window Window, ldat XSel, ldat YSel);
 void ExtendHilight(window Window, ldat XSel, ldat YSel);

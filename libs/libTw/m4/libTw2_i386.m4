@@ -1,0 +1,104 @@
+
+
+
+
+dnl This file is m4/libTw2_i386.m4 : m4 macros to autogenerate libTw2_i386m4.h
+dnl Tell the user about this.
+/* This file was automatically generated with m4 from m4/libTw2_i386.m4, do not edit! */
+
+/*
+ * hand-optimized assembler functions for i386 with gcc
+ * 
+ */
+
+divert(-1)
+
+define(`TRIM', `translit(`$1', ` ')')
+
+define(`CHAIN', `TRIM($1)`'TRIM($2)')
+
+define(`TW_NAME', `Tw_`'CHAIN($1,$2)')
+define(`NAME', `CHAIN($1,$2)')
+
+define(`EXPAND', $*)
+
+dnl
+dnl automagically get the symbols order_* to be the index
+dnl of corresponding element in Functions[] :
+dnl
+
+define(`order_i', 0)
+define(`order_n', 0)
+define(`PROTO', `define(order_`'NAME($3, $4), order_n)`'define(`order_n', incr(order_n))')
+define(`PROTOFindFunction', `PROTO($@)')
+define(`PROTOSyncSocket', `PROTO($@)')
+
+include(`m4/sockproto.m4h')
+
+define(`order_n', eval(order_n/2))
+
+
+
+define(`ENCODE_FL_NOLOCK', `1')
+define(`ENCODE_FL_VOID', `2')
+
+define(`FL_NOLOCK', `ENCODE_FL_NOLOCK')
+define(`FL_RETURN', `ifelse(`$2', v, ENCODE_FL_VOID, 0)')
+
+dnl
+dnl place i386_call_02() in the middle of the prototypes
+dnl
+
+define(`i386_call', `
+	.align 4
+	.type	 _Tw_i386_call_$1,@function
+_Tw_i386_call_$1:
+	pushl $`'$1
+	call _Tw_EncodeCall
+	popl %ecx
+	popl %ecx
+	ret
+.L_i386_call_$1:
+	.size	 _Tw_i386_call_$1,.L_i386_call_$1-_Tw_i386_call_$1
+')
+
+define(`i386_call_02', `
+  i386_call(2)
+  i386_call(0)
+')
+
+
+
+define(`PROTO', `ifelse(order_i, order_n, `i386_call_02()', `')`'define(`order_i', incr(order_i))
+	.align 4
+.globl TW_NAME($3, $4)
+	.type	 TW_NAME($3, $4),@function
+TW_NAME($3, $4):
+	pushl $`'EXPAND(order_`'NAME($3, $4))
+	jmp _Tw_i386_call_`'FL_RETURN($1, $2)
+.L_`'NAME($3, $4):
+	.size	 TW_NAME($3, $4),.L_`'NAME($3, $4)-TW_NAME($3, $4)
+')
+
+define(`PROTOSyncSocket', `
+	.align 4
+.globl _`'TW_NAME($3, $4)
+	.type	 _`'TW_NAME($3, $4),@function
+_`'TW_NAME($3, $4):
+	pushl $`'EXPAND(order_`'NAME($3, $4))
+	jmp _Tw_i386_call_`'eval(FL_NOLOCK|FL_RETURN($1, $2))
+.L_`'NAME($3, $4):
+	.size	 _`'TW_NAME($3, $4),.L_`'NAME($3, $4)-_`'TW_NAME($3, $4)
+')
+
+define(`PROTOFindFunction', `PROTOSyncSocket($@)')
+
+
+divert
+
+i386_call(1)
+
+include(`m4/sockproto.m4h')
+
+i386_call(3)
+

@@ -1,61 +1,26 @@
 
-
 #ifndef _TUTF_COMPILER_H
 #define _TUTF_COMPILER_H
 
 /* library stuff. define macros with TUTF_ prefix */
 
 
+#define TUTF_CAT(a,b)		TW__CAT(a,b)
+#define TUTF_CAT3(a,b,c)	TW__CAT3(a,b,c)
+#define TUTF_CAT4(a,b,c,d)	TW__CAT4(a,b,c,d)
+#define T_CAT(a,b)		TW__CAT(a,b)
+#define T_CAT3(a,b,c)		TW__CAT3(a,b,c)
+#define T_CAT4(a,b,c,d)		TW__CAT4(a,b,c,d)
 
-#if !defined(TUTF_CAT)
-# define TUTF__CAT(a,b) a##b
-# define TUTF_CAT(a,b) TUTF__CAT(a,b)
-# define T_CAT(a,b) TUTF__CAT(a,b)
-#endif
+#define TUTF_STR(s)		TW__STR(s)
 
-#if !defined(TUTF_STR)
-# define TUTF__STR(s) #s
-# define TUTF_STR(s) TUTF__STR(s)
-# define T_STR(s) TUTF__STR(s)
-#endif
+#define T_STR(s)		TW__STR(s)
 
-#if !defined(TUTF_CONST)
-# if defined(CONST)
-#  define TUTF_CONST CONST
-# else
-#  define TUTF_CONST const
-# endif
-#endif
-
-/* inline is NOT a standard C feature :( */
-#if !defined(TUTF_INLINE)
-# if defined(INLINE)
-#  define TUTF_INLINE INLINE
-# elif defined(__GNUC__)
-#  define TUTF_INLINE extern __inline__
-# else
-#  define TUTF_INLINE static
-# endif
-#endif
-
-#if !defined(TUTF_VOLATILE)
-# if defined(VOLATILE)
-#  define TUTF_VOLATILE VOLATILE
-# else
-#  define TUTF_VOLATILE volatile
-# endif
-#endif
-
-#if !defined(TUTF_FNATTR_CONST)
-# if defined(FNATTR_CONST)
-#  define TUTF_FNATTR_CONST FNATTR_CONST
-# elif defined(__GNUC__)
-#  define TUTF_FNATTR_CONST __attribute__((const))
-# else
-#  define TUTF_FNATTR_CONST
-# endif
-#endif
-
+#define TUTF_CONST		TW_CONST
+#define TUTF_INLINE		TW_INLINE
+#define TUTF_VOLATILE		TW_VOLATILE
+#define TUTF_FN_ATTR_CONST	TW_FN_ATTR_CONST
+#define TUTF_TYPE_ATTR_PACKED	TW_TYPE_ATTR_PACKED
 
 #endif /* _TUTF_COMPILER_H */
 

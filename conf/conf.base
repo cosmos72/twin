@@ -4,6 +4,7 @@
 
 CONF___MENU="General setup"
 CONF_SOCKET_MENU="Socket support"
+CONF_TT_MENU="Toolkit library support"
 CONF_WM_MENU="Window Manager"
 CONF_TERM_MENU="Terminal emulator"
 CONF_PRINTK_MENU="Messages logging"
@@ -18,6 +19,9 @@ CONF_SOCKET_HELP="Support remote socket connections"
 CONF_SOCKET_GZ_HELP=" -> Sockets: support gzip compression"
 CONF_SOCKET_PTHREADS_HELP=" -> Sockets: thread-safe libs (requires libpthread)"
 CONF_SOCKET_ALIEN_HELP=" -> Sockets: support non-native architectures"
+CONF_TT_HELP="Support libTT Toolkit library"
+CONF_TT_HW_TWIN_HELP=" -> HW support: Twin, native"
+CONF_TT_HW_GTK_HELP=" -> HW support: gtk"
 CONF_WM_HELP="Window Manager: absolutely needed!"
 CONF_WM_RC_HELP="WM: support ~/.twinrc configuration parser"
 CONF_WM_RC_SHMMAP_HELP=" -> WM: RC: use mmapped shared file for parser"
@@ -35,10 +39,11 @@ CONF_HW_DISPLAY_HELP="HW support: twdisplay client as display"
 CONF_HW_GGI_HELP="HW support: libggi"
 CONF_OPT_SHADOWS_HELP="Runtime option: enable shadows"
 CONF_OPT_BLINK_HELP="Runtime option: enable blink/high background"
-CONF_OPT_ALWAYSCURSOR_HELP="Runtime option: force always visible cursor"
-CONF_OPT_HIDEMENU_HELP="Runtime option: hidden menu"
-CONF_OPT_MENUINFO_HELP="Runtime option: enable menu information line"
-CONF_OPT_EDGESCROLL_HELP="Runtime option: enable screen scrolling"
+CONF_OPT_CURSOR_ALWAYS_HELP="Runtime option: force always visible cursor"
+CONF_OPT_MENU_HIDE_HELP="Runtime option: autohide menu"
+CONF_OPT_MENU_INFO_HELP="Runtime option: enable menu information line"
+CONF_OPT_MENU_RELAX_HELP="Runtime option: arrows can open/close submenus"
+CONF_OPT_SCREEN_SCROLL_HELP="Runtime option: enable screen scrolling"
 
 menu CONF__
   yesno CONF__SHLIBS
@@ -51,6 +56,11 @@ menu CONF_SOCKET
   yesno_dep CONF_SOCKET_GZ CONF_SOCKET
   yesno_dep CONF_SOCKET_PTHREADS CONF_SOCKET
   yesno CONF_SOCKET_ALIEN
+endmenu
+menu CONF_TT
+  yesno CONF_TT
+  yesmodno_truedep CONF_TT_HW_TWIN CONF_SOCKET
+  yesmodno CONF_TT_HW_GTK
 endmenu
 menu CONF_WM
   yesmodno CONF_WM
@@ -80,8 +90,9 @@ menu CONF_OPT
   msg "will always override the following options!"
   yesno CONF_OPT_SHADOWS
   yesno CONF_OPT_BLINK
-  yesno CONF_OPT_ALWAYSCURSOR
-  yesno CONF_OPT_HIDEMENU
-  yesno CONF_OPT_MENUINFO
-  yesno CONF_OPT_EDGESCROLL
+  yesno CONF_OPT_CURSOR_ALWAYS
+  yesno CONF_OPT_MENU_HIDE
+  yesno CONF_OPT_MENU_INFO
+  yesno CONF_OPT_MENU_RELAX
+  yesno CONF_OPT_SCREEN_SCROLL
 endmenu

@@ -130,17 +130,20 @@ Active		return FL_ACTIVE;
 Inactive	return FL_INACTIVE;
 Left		return FL_LEFT;
 Right		return FL_RIGHT;
-PasteButton	return PASTEBUTTON;
-SelectionButton	return SELECTIONBUTTON;
+ButtonPaste|PasteButton		return BUTTON_PASTE;
+ButtonSelection|SelectionButton	return BUTTON_SELECTION;
 Shadows		return SHADOWS;
 
 AltFont		{ yylval.val = ALTFONT;      return GLOBAL_FLAG; }
-AlwaysCursor	{ yylval.val = ALWAYSCURSOR; return GLOBAL_FLAG; }
 Blink		{ yylval.val = BLINK;        return GLOBAL_FLAG; }
-EdgeScroll	{ yylval.val = EDGESCROLL;   return GLOBAL_FLAG; }
-HideMenu	{ yylval.val = HIDEMENU;     return GLOBAL_FLAG; }
-MenuInfo	{ yylval.val = MENUINFO;     return GLOBAL_FLAG; }
-
+CursorAlways|AlwaysCursor {
+		  yylval.val = CURSOR_ALWAYS;return GLOBAL_FLAG; }
+MenuHide|HideMenu {
+		  yylval.val = MENU_HIDE;    return GLOBAL_FLAG; }
+MenuInfo	{ yylval.val = MENU_INFO;    return GLOBAL_FLAG; }
+MenuRelax	{ yylval.val = MENU_RELAX;   return GLOBAL_FLAG; }
+ScreenScroll|EdgeScroll	{
+		  yylval.val = SCREEN_SCROLL;return GLOBAL_FLAG; }
 Alt		{ yylval.val = KBD_ALT_FL;   return KBD_FLAG; }
 Ctrl		{ yylval.val = KBD_CTRL_FL;  return KBD_FLAG; }
 Shift		{ yylval.val = KBD_SHIFT_FL; return KBD_FLAG; }

@@ -36,12 +36,12 @@
 # include "dl.h"
 #endif
 
-#include "Tw/Twkeys.h"
+#include <Tw/Twkeys.h>
 #include "hotkey.h"
 
 #ifdef CONF__UNICODE
-# include "Tutf/Tutf.h"
-# include "Tutf/Tutf_defs.h"
+# include <Tutf/Tutf.h>
+# include <Tutf/Tutf_defs.h>
 #endif
 
 
@@ -402,7 +402,8 @@ static byte RCSteps(run *r) {
     ldat flag;
     str *argv;
     byte state, ret;
-
+    int nfd;
+    
     W = RCCheck4WidgetId(r);
     S = ScreenOf(W);
     C = &r->C;
@@ -420,6 +421,11 @@ static byte RCSteps(run *r) {
 	      case -1: /* error */
 		break;
 	      case 0:  /* child */
+		nfd = open("/dev/null", O_RDWR);
+		close(0); close(1); close(2);
+		if (nfd >= 0) {
+		    dup2(nfd, 0); dup2(nfd, 1); dup2(nfd, 2);
+		}
 		execvp((char *)n->x.v.argv[0], (char **)n->x.v.argv);
 		exit(1);
 		break;
@@ -648,18 +654,18 @@ static byte RCSteps(run *r) {
 	    break;
 	  case LOWER:
 	    if (W && S)
-		MakeLastWidget(W, FALSE);
+		LowerWidget(W, FALSE);
 	    break;
 	  case RAISE:
 	    if (W && S)
-		MakeFirstWidget(W, FALSE);
+		RaiseWidget(W, FALSE);
 	    break;
 	  case RAISELOWER:
 	    if (W && S) {
 		if ((widget)W == S->FirstW)
-		    MakeLastWidget(W, TRUE);
+		    LowerWidget(W, TRUE);
 		else
-		    MakeFirstWidget(W, TRUE);
+		    RaiseWidget(W, TRUE);
 	    }
 	    break;
 	  case ROLL:
@@ -823,7 +829,7 @@ static void RCReload(void) {
 
 	FillButtonWin();
 	UpdateOptionWin();
-	HideMenu(!!(All->SetUp->Flags & SETUP_HIDEMENU));
+	HideMenu(!!(All->SetUp->Flags & SETUP_MENU_HIDE));
     }
 }
 
@@ -1127,7 +1133,7 @@ byte InitRC(void) {
 	{ {'>',      '<'     }, -4, TRUE, FALSE }
     };
 
-    str Seq = "";
+    byte *Seq = "";
     /*
      * this is really heavy on the compiler...
      * but it should be able to optimize it
@@ -1151,8 +1157,8 @@ byte InitRC(void) {
     WriteMem(All->ButtonVec, 0, sizeof(All->ButtonVec));
     CopyMem(V, All->ButtonVec, sizeof(V));
     
-    All->SetUp->SelectionButton = HOLD_LEFT;
-    All->SetUp->PasteButton = HOLD_MIDDLE;
+    All->SetUp->ButtonSelection = HOLD_LEFT;
+    All->SetUp->ButtonPaste = HOLD_MIDDLE;
     All->SetUp->DeltaXShade = 3;
     All->SetUp->DeltaXShade = 2;
 
@@ -1161,7 +1167,7 @@ byte InitRC(void) {
 	InitRCOptions();
 	UpdateOptionWin();
 	FillButtonWin();
-	HideMenu(!!(All->SetUp->Flags & SETUP_HIDEMENU));
+	HideMenu(!!(All->SetUp->Flags & SETUP_MENU_HIDE));
 	Act(DrawMenu,All->FirstScreen)(All->FirstScreen, 0, MAXDAT);
 	
 	return TRUE;

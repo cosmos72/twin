@@ -2,9 +2,21 @@
 #ifndef _TT_FLAGS_H
 #define _TT_FLAGS_H
 
-#define ttvisible_Repaint_args_WHOLE	0, 0, MAXDAT, MAXDAT
+#define ttcallback_lflags_arg0_component	1
+#define ttcallback_lflags_arg0_event		2
+#define ttcallback_lflags_after			4
+#define ttcallback_lflags_function_plain	8
+#define ttcallback_lflags_any		      0xC
+
+#define ttvisible_repaint_args_WHOLE	0, 0, MAXDAT, MAXDAT
 
 #define ttvisible_vflags_visible	1
+
+#define ttwidget_vflags_style_fill	2
+#define ttwidget_vflags_style_expose	4
+#define ttwidget_vflags_style_cache	8
+#define ttwidget_vflags_style_contents	0x10
+#define ttwidget_vflags_style_rows	0x20
 
 #define ttanybutton_vflags_normal	0x00
 #define ttanybutton_vflags_prelight	0x10
@@ -17,30 +29,19 @@
 #define ttbutton_shape_pressed		2
 #define ttbutton_shape_disabled		3
 
-#define ttbutton_shape_max		4
+#define ttbutton_vflags_pressed		0x100
 
+#define ttevent_evtype_del		0
+#define ttevent_evtype_askclose		1
+#define ttevent_evtype_key		2
+#define ttevent_evtype_mouse		3
+#define ttevent_evtype_activate		4 /* button, menu, ... */
+#define ttevent_evtype_change		5 /* resize, ... */
+#define ttevent_evtype_expose		6 /* not used */
 
-#define tttheme_bg_normal		0
-#define tttheme_bg_disable		1
-#define tttheme_bg_menu			2
-#define tttheme_bg_menu_select		3
-#define tttheme_bg_menu_disabled	4
-#define tttheme_bg_menu_selectdisabled	5
-#define tttheme_bg_menu_shcut		6
-#define tttheme_bg_menu_selectshcut	7
+#define ttevent_evtype_user_first    0x1000
+#define ttevent_evtype_control       0x1000
+#define ttevent_evtype_clientmsg     0x2000
 
-#define tttheme_bg_max			8
-
-#define tttheme_shape_ttbutton_normal	ttbutton_shape_normal
-#define tttheme_shape_ttbutton_prelight	ttbutton_shape_prelight
-#define tttheme_shape_ttbutton_pressed	ttbutton_shape_pressed
-#define tttheme_shape_ttbutton_disabled	ttbutton_shape_disabled
-
-#define tttheme_shape_max		4
-
-#define x_left		0
-#define y_up		1
-#define x_right		2
-#define y_down		3
 
 #endif /* _TT_FLAGS_H */

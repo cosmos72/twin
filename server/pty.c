@@ -17,7 +17,6 @@
 #include <sys/stat.h>
 
 #ifdef CONF_TERM_DEVPTS
-# define __USE_XOPEN
 # include <stdlib.h>
 #endif
 

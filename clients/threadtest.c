@@ -13,8 +13,8 @@
 
 #include <pthread.h>
 
-#include "Tw/Tw.h"
-#include "Tw/Twerrno.h"
+#include <Tw/Tw.h>
+#include <Tw/Twerrno.h>
 
 tmsgport Thrd_MsgPort;
 tmenu Thrd_Menu;
@@ -25,20 +25,15 @@ pthread_t t1, t2;
 TW_DECL_MAGIC(threadtest_magic);
 
 byte InitThrd(void) {
-    if (TwCheckMagic(threadtest_magic) &&
-	TwOpen(NULL) &&
-	
+    return 
+	TwCheckMagic(threadtest_magic) && TwOpen(NULL) &&
 	(Thrd_MsgPort=TwCreateMsgPort
 	 (10, "threadtest", 0, 0, 0)) &&
 	(Thrd_Menu=TwCreateMenu(
 	  COL(BLACK,WHITE), COL(BLACK,GREEN), COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
 	  COL(RED,WHITE), COL(RED,GREEN), (byte)0)) &&
-	TwItem4MenuCommon(Thrd_Menu)) {
-	
-	TwInfo4Menu(Thrd_Menu, TW_ROW_ACTIVE, 13, " Thread Test ", "ppppppppppppp");
-	return TRUE;
-    }
-    return FALSE;
+	(TwInfo4Menu(Thrd_Menu, TW_ROW_ACTIVE, 13, " Thread Test ", "ppppppppppppp"),
+	 TwItem4MenuCommon(Thrd_Menu));
 }
 
 

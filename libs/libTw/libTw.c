@@ -26,13 +26,13 @@
 
 /*
  * Life is tricky... under SunOS hstrerror() is in an obscure library, so it gets disabled,
- * yet <netdb.h> has its prototype, so the #define hstrerror() in "Tw/missing.h" breaks it.
- * Solution: include "Tw/Tw.h" (pulls in "Tw/missing.h") late, but still include
- * "Tw/Twautoconf.h" and "Tw/osincludes.h" early to pull in TW_HAVE_* and system headers
+ * yet <netdb.h> has its prototype, so the #define hstrerror() in <Tw/missing.h> breaks it.
+ * Solution: include <Tw/Tw.h> (pulls in <Tw/missing.h>) late, but still include
+ * <Tw/Twautoconf.h> and <Tw/osincludes.h> early to pull in TW_HAVE_* and system headers
  * necessary to include <sys/socket.h> under FreeBSD.
  */
-#include "Tw/Twautoconf.h"
-#include "Tw/osincludes.h"
+#include <Tw/Twautoconf.h>
+#include <Tw/osincludes.h>
 
 #include <stdlib.h>
 #include <stdarg.h>
@@ -55,14 +55,19 @@
 # include <sys/ioctl.h>
 #endif
 
-#include "Tw/Tw.h"
+#include <Tw/Tw.h>
 
-#include "Tw/Twstat.h"
-#include "Tw/Twerrno.h"
-#include "Tw/Twavl.h"
+#include <Tw/Twavl.h>
+#include <Tw/Twerrno.h>
+#include <Tw/Twstat.h>
+#include <Tw/Twstat_defs.h>
 
 #include "mutex.h"
 
+#ifdef CONF_SOCKET_PTHREADS
+TH_R_MUTEX_HELPER_DEFS(static);
+#endif
+    
 #include "unaligned.h"
 #include "md5.h"
 #include "version.h"
@@ -73,6 +78,7 @@
 /* early check libTw.h against sockproto.h */
 #include "paranoiam4.h"
 
+#include "asm_i386.h"
 
 #define Min2(a,b) ((a) < (b) ? (a) : (b))
 
@@ -81,7 +87,7 @@
 typedef struct s_tw_errno {
     uldat E;
     uldat S;
-    tw_self T;
+    th_self T;
 } s_tw_errno;
 
 typedef struct s_tw_errno_vec {
@@ -117,7 +123,6 @@ typedef uldat v_id_vec [ sizeof(Functions) / sizeof(Functions[0]) ];
 /*
  * automagically get the symbols order_* to be the index
  * of corresponding element in Functions[] :
- * enums start at 0 and automatically increase...
  */
 typedef enum e_fn_order {
     order_DoesNotExist = -1,
@@ -128,6 +133,7 @@ typedef enum e_fn_order {
     order_StatObj,
 
 } fn_order;
+
 
 static void InitFunctions(void) {
     fn_list *f = Functions;
@@ -158,8 +164,8 @@ struct s_tlistener {
 #define QMAX	 5
 
 typedef struct s_tw_d {
-#ifdef tw_mutex
-    tw_mutex mutex;
+#ifdef th_r_mutex
+    th_r_mutex mutex;
 #endif
     
     byte *Queue[5];
@@ -185,7 +191,7 @@ typedef struct s_tw_d {
     s_tw_errno_vec rErrno_;
 
     byte ServProtocol[3];
-    byte PanicFlag;
+    byte ExitMainLoop, PanicFlag;
 
 #ifdef CONF_SOCKET_GZ
     byte GzipFlag;
@@ -214,17 +220,15 @@ typedef struct s_tw_d {
 #define zW	(TwD->zW)
 
 
-#define LOCK tw_mutex_lock(mutex)
-#define UNLK tw_mutex_unlock(mutex)
-#define NO_LOCK do { } while (0)
-#define NO_UNLK do { } while (0)
+#define LOCK th_r_mutex_lock(mutex)
+#define UNLK th_r_mutex_unlock(mutex)
 
 static s_tw_errno rCommonErrno;
 #define CommonErrno (rCommonErrno.E)
 
 static uldat OpenCount;
-#ifdef tw_mutex
-static tw_mutex OpenCountMutex = TW_MUTEX_INITIALIZER;
+#ifdef th_mutex
+static th_mutex OpenCountMutex = TH_MUTEX_INITIALIZER;
 #endif
 
 /* and this is the 'default' display */
@@ -276,7 +280,7 @@ void Tw_ConfigMalloc(void *(*my_malloc)(size_t),
 		     void *(*my_realloc)(void *, size_t),
 		     void  (*my_free)(void *)) {
     
-    tw_mutex_lock(OpenCountMutex);
+    th_mutex_lock(OpenCountMutex);
     if (!OpenCount) {
 	if (my_malloc && my_realloc && my_free) {
 	    Tw_AllocMem = my_malloc;
@@ -288,7 +292,7 @@ void Tw_ConfigMalloc(void *(*my_malloc)(size_t),
 	    Tw_FreeMem = free;
 	}
     }
-    tw_mutex_unlock(OpenCountMutex);
+    th_mutex_unlock(OpenCountMutex);
 }
 
 #ifdef CONF_SOCKET_PTHREADS
@@ -299,7 +303,7 @@ TW_INLINE byte GrowErrnoLocation(tw_d TwD) {
     
     if ((vec = (s_tw_errno *)Tw_ReAllocMem(rErrno.vec, newmax * sizeof(s_tw_errno)))) {
 
-	/* assume (tw_self)-1 is _NOT_ a valid thread identifier */
+	/* assume (th_self)-1 is _NOT_ a valid thread identifier */
 	Tw_WriteMem(vec + rErrno.max, '\xFF', (newmax-rErrno.max) * sizeof(s_tw_errno));
 	rErrno.vec = vec;
 	rErrno.max = newmax;
@@ -311,10 +315,10 @@ TW_INLINE byte GrowErrnoLocation(tw_d TwD) {
 }
 
 static s_tw_errno *GetErrnoLocation(tw_d TwD) {
-    tw_self self;
+    th_self self;
     uldat i;
     if (TwD) {
-	self = tw_self_get();
+	self = th_self_get();
 	
 	/* we cache last thread that called GetErrnoLocation() */
 	i = rErrno.last;
@@ -324,7 +328,7 @@ static s_tw_errno *GetErrnoLocation(tw_d TwD) {
 	for (i=0; i<rErrno.max; i++) {
 	    if (rErrno.vec[i].T == self)
 		break;
-	    if (rErrno.vec[i].T == (tw_self)-1) {
+	    if (rErrno.vec[i].T == th_self_none) {
 		/* empty slot, initialize it */
 		rErrno.vec[i].T = self;
 		rErrno.vec[i].E = rErrno.vec[i].S = 0;
@@ -393,7 +397,7 @@ TW_INLINE byte *GetQueue(tw_d TwD, byte i, uldat *len) {
     return Queue[i] + Qstart[i];
 }
 
-/* add data to a queue keeping it aligned at 8 bytes (for tmsgs) */
+/* add data to QMSG queue keeping it aligned at 8 bytes (for tmsgs) */
 TW_INLINE uldat ParanoidAddQueueQMSG(tw_d TwD, uldat len, void *data) {
     byte *t = (byte *)data + 2 * sizeof(uldat);
     uldat mtype, minlen, xlen;
@@ -426,13 +430,13 @@ TW_INLINE uldat ParanoidAddQueueQMSG(tw_d TwD, uldat len, void *data) {
 	minlen = sizeof(struct s_tevent_selection);
 	break;
       case TW_MSG_SELECTIONNOTIFY:
-	minlen = (sizeof(struct s_tevent_selectionnotify) - 1) & ~(sizeof(uldat) - 1);
+	minlen = sizeof(struct s_tevent_selectionnotify) - sizeof(uldat);
 	break;
       case TW_MSG_SELECTIONREQUEST:
 	minlen = sizeof(struct s_tevent_selectionrequest);
 	break;
       case TW_MSG_USER_CONTROL:
-	minlen = sizeof(struct s_tevent_control) - sizeof(uldat) + 1;
+	minlen = sizeof(struct s_tevent_control) - sizeof(uldat);
 	break;
       case TW_MSG_USER_CLIENTMSG:
 	minlen = sizeof(struct s_tevent_clientmsg) - sizeof(uldat);
@@ -472,7 +476,7 @@ TW_INLINE uldat ParanoidAddQueueQMSG(tw_d TwD, uldat len, void *data) {
 	    break;
 	}
 	len = (len + 7) & ~7;
-	if (M->Len == xlen + minlen)
+	if (M->Len >= xlen + minlen)
 	    return len;
 	Qlen[QMSG] -= len;
     }
@@ -868,7 +872,7 @@ uldat Tw_LibraryVersion(tw_d TwD) {
 uldat Tw_ServerVersion(tw_d TwD) {
     uldat l;
     LOCK;
-    l = TWVER_BUILD(ServProtocol[0],ServProtocol[1],ServProtocol[2]);
+    l = TW_VER_BUILD(ServProtocol[0],ServProtocol[1],ServProtocol[2]);
     UNLK;
     return l;
 }
@@ -909,6 +913,23 @@ TW_DECL_MAGIC(Tw_MagicData);
 byte Tw_CheckMagic(TW_CONST byte id[])  {
     if (Tw_CmpMem(id+1, Tw_MagicData+1, (id[0] < Tw_MagicData[0] ? id[0] : Tw_MagicData[0]) - 2 - sizeof(uldat))) {
 	CommonErrno = TW_EXLIB_SIZES;
+	return FALSE;
+    }
+    if (sizeof(struct s_tevent_display)  != sizeof(tobj) + 4*sizeof(udat) + sizeof(uldat) ||
+	sizeof(struct s_tevent_keyboard) != sizeof(tobj) + 3*sizeof(udat) + 2 ||
+	sizeof(struct s_tevent_mouse)    != sizeof(tobj) + 4*sizeof(udat) ||
+	sizeof(struct s_tevent_widget)   != sizeof(tobj) + 6*sizeof(udat) ||
+	sizeof(struct s_tevent_gadget)   != sizeof(tobj) + 2*sizeof(udat) ||
+	sizeof(struct s_tevent_menu)   != 2*sizeof(tobj) + 2*sizeof(udat) ||
+	sizeof(struct s_tevent_selection)!= sizeof(tobj) + 4*sizeof(udat) ||
+	sizeof(struct s_tevent_selectionnotify) !=
+		sizeof(tobj) + 2*sizeof(udat) + 3*sizeof(uldat) + TW_MAX_MIMELEN + 4 ||
+	sizeof(struct s_tevent_selectionrequest) !=
+		2*sizeof(tobj) + 2*sizeof(udat) + sizeof(uldat) ||
+	sizeof(struct s_tevent_control)  != sizeof(tobj) + 4*sizeof(udat) + sizeof(uldat) ||
+	sizeof(struct s_tevent_clientmsg) != sizeof(tobj) + 2*sizeof(udat) + 2*sizeof(uldat)) {
+	
+	CommonErrno = TW_EXLIB_STRUCT_SIZES;
 	return FALSE;
     }
     return TRUE;
@@ -1049,7 +1070,7 @@ static byte MagicChallenge(tw_d TwD) {
  */
 tw_d Tw_Open(TW_CONST byte *TwDisplay) {
     tw_d TwD;
-    int result = -1, fd = TW_NOFD;
+    int i, result = -1, fd = TW_NOFD;
     byte *options, gzip = FALSE;
 
     if (Functions[order_FindFunction].len == 0)
@@ -1160,16 +1181,22 @@ tw_d Tw_Open(TW_CONST byte *TwDisplay) {
 	return (tw_d)0;
     }
 
-    Tw_WriteMem(TwD, 0, sizeof(struct s_tw_d));
-    tw_mutex_init(mutex);
+    Tw_WriteMem(TwD, '\0', sizeof(struct s_tw_d) - sizeof(v_id_vec));
+    for (i = 0; i < sizeof(id_Tw)/sizeof(id_Tw[0]); i++)
+	/* initialize function ids to 'unknown' */
+	id_Tw[i] = TW_BADID;
+    /* except for Tw_FindFunction */
+    id_Tw[order_FindFunction] = FIND_MAGIC;
+    
+    th_r_mutex_init(mutex);
     Fd = fd;
 
     fcntl(Fd, F_SETFD, FD_CLOEXEC);
     fcntl(Fd, F_SETFL, O_NONBLOCK);
     
-    tw_mutex_lock(OpenCountMutex);
+    th_mutex_lock(OpenCountMutex);
     OpenCount++;
-    tw_mutex_unlock(OpenCountMutex);
+    th_mutex_unlock(OpenCountMutex);
 
     LOCK;
     if (ProtocolNumbers(TwD) && MagicNumbers(TwD) && MagicChallenge(TwD)) {
@@ -1181,7 +1208,7 @@ tw_d Tw_Open(TW_CONST byte *TwDisplay) {
     UNLK;
     
     if (Fd != TW_NOFD) {
-	close(Fd); Fd = TW_NOFD; /* to skip Sync() */
+	close(Fd); Fd = TW_NOFD; /* to skip Flush() */
     }
     Tw_Close(TwD);
     return (tw_d)0;
@@ -1209,7 +1236,7 @@ void Tw_Close(tw_d TwD) {
     LOCK;
     
     if (Fd != TW_NOFD) {
-	Sync(TwD);
+	Flush(TwD, TRUE);
 	close(Fd);
 	Fd = TW_NOFD;
     }
@@ -1231,14 +1258,14 @@ void Tw_Close(tw_d TwD) {
     
     /*PanicFlag = FALSE;*/
     UNLK;
-    tw_mutex_destroy(mutex);
+    th_r_mutex_destroy(mutex);
     
     FreeErrnoLocation(TwD);
     Tw_FreeMem(TwD);
     
-    tw_mutex_lock(OpenCountMutex);
+    th_mutex_lock(OpenCountMutex);
     OpenCount--;
-    tw_mutex_unlock(OpenCountMutex);
+    th_mutex_unlock(OpenCountMutex);
 }
 
 
@@ -1324,7 +1351,7 @@ tw_errno *Tw_ErrnoLocation(tw_d TwD) {
 /**
  * returns a string description of given error
  */
-TW_FNATTR_CONST TW_CONST byte *Tw_StrError(TW_CONST tw_d TwD, uldat e) {
+TW_FN_ATTR_CONST TW_CONST byte *Tw_StrError(TW_CONST tw_d TwD, uldat e) {
     switch (e) {
       case 0:
 	return "success";
@@ -1374,6 +1401,8 @@ TW_FNATTR_CONST TW_CONST byte *Tw_StrError(TW_CONST tw_d TwD, uldat e) {
 	return "function call rejected by server, invalid arguments? : ";
       case TW_EXLIB_SIZES:
 	return "compiled data sizes are incompatible with libTw now in use!";
+      case TW_EXLIB_STRUCT_SIZES:
+	return "internal error: structs are not packed! Please contact the author.";
       default:
 	return "unknown error";
     }
@@ -1382,7 +1411,7 @@ TW_FNATTR_CONST TW_CONST byte *Tw_StrError(TW_CONST tw_d TwD, uldat e) {
 /**
  * returns a string description of given error detail
  */
-TW_FNATTR_CONST TW_CONST byte *Tw_StrErrorDetail(TW_CONST tw_d TwD, uldat E, uldat S) {
+TW_FN_ATTR_CONST TW_CONST byte *Tw_StrErrorDetail(TW_CONST tw_d TwD, uldat E, uldat S) {
     switch (E) {
       case TW_ELOST_CONN:
 	switch (S) {
@@ -1558,9 +1587,9 @@ static int CompareListeners(tlistener L1, tlistener L2) {
 		     */
 		  case TW_MSG_WIDGET_KEY:
 		  case TW_MSG_WIDGET_MOUSE:
-		    return L2A->EventKeyboard.ShiftFlags - L1A->EventKeyboard.ShiftFlags;
+		    return L1A->EventKeyboard.ShiftFlags - L2A->EventKeyboard.ShiftFlags;
 		  case TW_MSG_MENU_ROW:
-		    return L2A->EventMenu.Menu - L1A->EventMenu.Menu;
+		    return L1A->EventMenu.Menu - L2A->EventMenu.Menu;
 		  case TW_MSG_WIDGET_CHANGE:
 		  case TW_MSG_WIDGET_GADGET:
 		  case TW_MSG_SELECTION:
@@ -1574,11 +1603,11 @@ static int CompareListeners(tlistener L1, tlistener L2) {
 		}
 		return 0;
 	    }
-	    return L2A->EventCommon.Code - L1A->EventCommon.Code;
+	    return L1A->EventCommon.Code - L2A->EventCommon.Code;
 	}
-	return L2A->EventCommon.W - L1A->EventCommon.W;
+	return L1A->EventCommon.W - L2A->EventCommon.W;
     }
-    return L2->Type - L1->Type;
+    return L1->Type - L2->Type;
 }
 
 static tlistener FindListener(tw_d TwD, tmsg Msg) {
@@ -1923,14 +1952,16 @@ byte Tw_MainLoop(tw_d TwD) {
     
     LOCK;
     Errno = 0;
-    while ((Msg = ReadMsg(TwD, TRUE, TRUE)))
+    while (!TwD->ExitMainLoop && (Msg = ReadMsg(TwD, TRUE, TRUE)))
 	(void)DispatchMsg(TwD, Msg, TRUE);	
-    ret = Errno == 0;
+    ret = TwD->ExitMainLoop || Errno == 0;
     UNLK;
     return ret;
 }
 
-
+void Tw_ExitMainLoop(tw_d TwD) {
+    TwD->ExitMainLoop = TRUE;
+}
 
 
 
@@ -1965,7 +1996,256 @@ TW_INLINE void Send(tw_d TwD, uldat Serial, uldat idFN) {
 /***********/
 
 
+#ifdef TW_HAVE_I386_ASM
+#define _ TWS_field_scalar	
+/*
+ * arguments of EncodeCall and EncodeArgs are different if using
+ * asm functions Tw_* : array sizes are not placed as arguments
+ * before the array, so must be calculated separately.
+ */
+static uldat EncodeArraySize(fn_order o, uldat n, tsfield a) {
+    uldat L = 0;
+    switch (o) {
+
+#include "libTw3m4.h"
+
+      case order_StatObj:
+	switch (n) {
+	    case 3: L = a[2]._; break;
+	}
+      default:
+	break;
+    }
+    return L;
+}
+# undef _
+#endif /* TW_HAVE_I386_ASM */
+
+
+/*
+ * read (va_list va) and fill (tsfield a)
+ * 
+ * let (tobj) fields decade into (uldat),
+ * since from client side they are the same.
+ */
+TW_INLINE udat EncodeArgs(fn_order o, uldat *Space, va_list va, tsfield a) {
+    byte *Format = Functions[o].format + 1;
+    uldat arglen, space;
+    udat N;
+    byte c, t;
+    
+    for (N = space = 0; (c = *Format++); N++, a++) {
+	t = *Format++ - TWS_base_CHR;
+	if (t >= TWS_highest)
+	    /*
+	     * let (tobj) fields decade into (uldat),
+	     * since from client side they are the same .
+	     */
+	    t = TWS_uldat;
+	
+	if (N) switch (c) {
+	  case '_':
+	  case 'x':
+	    space += Tw_MagicData[t];
+	    a->type = t;
+	    a->TWS_field_scalar = va_arg(va, tlargest);
+	    break;
+	  case 'W':
+	  case 'Y':
+	    a->type = TWS_vec | TWS_vecW | t;
+#ifdef TW_HAVE_I386_ASM
+	    arglen = EncodeArraySize(o, N, a-N);
+#else
+	    arglen = va_arg(va, tlargest);
+#endif
+	    if (!(a->TWS_field_vecV = va_arg(va, TW_CONST void *)))
+		arglen = 0;
+	    a->TWS_field_vecL = arglen;
+	    space += sizeof(uldat) + arglen;
+	    break;
+	  case 'V':
+	  case 'X':
+	    a->type = TWS_vec | t;
+	    space += 
+#ifdef TW_HAVE_I386_ASM
+	    a->TWS_field_vecL = EncodeArraySize(o, N, a-N);
+#else
+	    a->TWS_field_vecL = va_arg(va, tlargest);
+#endif
+	    a->TWS_field_vecV = va_arg(va, TW_CONST void *);
+	    break;
+	  default:
+	    break;
+	} else switch (c) {
+	    /* parse arg 0 (return value) */
+	  case '_':
+	  case 'x':
+	  case 'v':
+	    a->type = t;
+	    a->hash = Tw_MagicData[t]; /* sizeof(return type) */
+	    break;
+	  default:
+	    break;
+	}
+    }
+    *Space = space;
+    return N - 1; /* arg 0 is not a call argument */
+}
+
+
+TW_INLINE void PushArg(tw_d TwD, tsfield a) {
+    switch (a->type) {
+#define ENC_CASE(type) case TW_CAT(TWS_,type): { type tmp = (type)a->TWS_field_scalar; Push(s,type,tmp); }; break
+	ENC_CASE(byte);
+	ENC_CASE(udat);
+#if 0
+	/* we never meet this here, as EncodeArgs() above turns (tobj) into (uldat) */
+      case TWS_tobj:
+	/* FALLTHROUGH */
+#endif
+	ENC_CASE(uldat);
+	ENC_CASE(hwcol);
+	ENC_CASE(time_t);
+	ENC_CASE(frac_t);
+	ENC_CASE(hwfont);
+	ENC_CASE(hwattr);
+#undef ENC_CASE
+      default:
+	if (a->type & TWS_vec) {
+	    if (a->type & TWS_vecW)
+		Push(s, uldat, a->TWS_field_vecL);
+	    if (a->TWS_field_vecL)
+		PushV(s, a->TWS_field_vecL, a->TWS_field_vecV);
+	}
+	break;
+    }
+}
+
+TW_INLINE void DecodeReply(byte *data, tsfield a) {
+    switch (a->type) {
+#define DEC_CASE(type) case TW_CAT(TWS_,type): { type tmp; Pop(data,type,tmp); a->TWS_field_scalar = tmp; }; break
+	DEC_CASE(byte);
+	DEC_CASE(udat);
+#if 0
+	/* we never meet this here, as EncodeArgs() above turns (tobj) into (uldat) */
+      case TWS_tobj:
+	/* FALLTHROUGH */
+#endif
+	DEC_CASE(uldat);
+	DEC_CASE(hwcol);
+	DEC_CASE(time_t);
+	DEC_CASE(frac_t);
+	DEC_CASE(hwfont);
+	DEC_CASE(hwattr);
+      default:
+	break;
+    }
+}
+
+#if TW_CAN_UNALIGNED != 0
+typedef struct s_reply *reply;
+struct s_reply {
+    uldat Len, Serial, Code, Data;
+};
+# define MyLen  MyReply->Len
+# define MyCode MyReply->Code
+# define MyData (&MyReply->Data)
+# define DECL_MyReply reply MyReply;
+# define INIT_MyReply 
+#else
+# define DECL_MyReply byte *MyReply, *MyData; uldat MyLen, MyCode;
+# define INIT_MyReply (Pop(MyReply,uldat,MyLen), /*skip Serial:*/ Pop(MyReply,uldat,MyCode), Pop(MyReply,uldat,MyCode), MyData=MyReply, MyReply-=3*sizeof(uldat)),
+#endif
+
+#define ENCODE_FL_NOLOCK 1
+#define ENCODE_FL_LOCK   1
+#define ENCODE_FL_VOID   2
+#define ENCODE_FL_RETURN 2
+
+
+
+#ifdef TW_HAVE_I386_ASM
+/*
+ * use hand-optimized assembler version of Tw_* functions
+ * from libTw2_i386m4.S and let _Tw_EncodeCall be visible from it.
+ * 
+ * asm Tw_* functions have different semantics:
+ * they play tricks with the stack (thus the saved_eip parameter)
+ * and using them, array sizes are not placed as arguments before the array,
+ * so must be calculated separately (done in EncodeArraySize())
+ */
+tlargest _Tw_EncodeCall(uldat flags, uldat o, void *saved_eip, tw_d TwD, ...)
+#else
+static tlargest EncodeCall(byte flags, uldat o, tw_d TwD, ...)
+#endif
+{
+    struct s_tsfield a[20];
+    tsfield b;
+    va_list va;
+    DECL_MyReply
+    uldat space, My;
+    udat N;
+
+    a->TWS_field_scalar = TW_NOID;
+    
+    flags ^= (ENCODE_FL_NOLOCK|ENCODE_FL_VOID);
+
+    if (flags & ENCODE_FL_LOCK)
+	LOCK;
+    if (Fd != TW_NOFD && (My = id_Tw[o]) != TW_NOID &&
+       	(My != TW_BADID || (My = FindFunctionId(TwD, o)) != TW_NOID)) {
+
+	va_start(va, (void *)TwD);
+	N = EncodeArgs(o, &space, va, a);
+	va_end(va);
+	
+	if (InitRS(TwD) && WQLeft(space)) {
+	    /* skip over a[0], that will hold return value */
+	    for (b = a+1; N; b++, N--)
+		PushArg(TwD, b);
+	    
+	    Send(TwD, (My = NextSerial(TwD)), id_Tw[o]);
+	    if (flags & ENCODE_FL_RETURN) {
+		if ((MyReply = (void *)Wait4Reply(TwD, My)) && (INIT_MyReply MyCode == OK_MAGIC)) {
+		    if (MyLen == 2*sizeof(uldat) + a[0].hash)
+			DecodeReply((byte *)MyData, a);
+		    else
+			FailedCall(TwD, TW_ESTRANGE_CALL, o);
+		} else {
+		    FailedCall(TwD, MyReply && MyCode != (uldat)-1 ?
+			       TW_EFAILED_ARG_CALL : TW_EFAILED_CALL, o);
+		}
+		if (MyReply)
+		    KillReply(TwD, (byte *)MyReply, MyLen);
+	    }
+	} else {
+	    /* still here? must be out of memory! */
+	    Errno = TW_ENO_MEM;
+	    Fail(TwD);
+	}
+    } else if (Fd != TW_NOFD)
+	FailedCall(TwD, TW_ENO_FUNCTION, o);
+    if (flags & ENCODE_FL_LOCK)
+	UNLK;
+    return a->TWS_field_scalar;
+}
+
+
+#ifdef TW_HAVE_I386_ASM
+
+/* nothing to include here, libTw2_i386.S is compiled separately */
+uldat _Tw_FindFunction(tw_d, byte, TW_CONST byte *, byte, TW_CONST byte *);
+byte  _Tw_SyncSocket(tw_d);
+
+#else
+
 #include "libTw2m4.h"
+
+#endif /* TW_HAVE_i386_ASM */
+
+
+
+
 
 /* handy special cases (also for compatibility) */
 /**
@@ -2005,8 +2285,9 @@ void Tw_ExposeWidget2(tw_d TwD, twidget a1, dat a2, dat a3, dat a4, dat a5, dat 
     uldat len8;
     uldat My;
     LOCK;
-    if (Fd != TW_NOFD && ((My = id_Tw[order_ExposeWidget]) != TW_NOID ||
-		       (My = FindFunctionId(TwD, order_ExposeWidget)) != TW_NOID)) {
+    if (Fd != TW_NOFD && (My = id_Tw[order_ExposeWidget]) != TW_NOID &&
+	(My != TW_BADID || (My = FindFunctionId(TwD, order_ExposeWidget)) != TW_NOID)) {
+	
 	if (InitRS(TwD)) {
             My = (0 + sizeof(uldat) + sizeof(dat) + sizeof(dat) + sizeof(dat) + sizeof(dat) + (len6 = a6 ? (a2*a3) * sizeof(byte) : 0, sizeof(uldat) + len6) + (len7 = a7 ? (a2*a3) * sizeof(hwfont) : 0, sizeof(uldat) + len7) + (len8 = a8 ? (a2*a3) * sizeof(hwattr) : 0, sizeof(uldat) + len8) );
             if (WQLeft(My)) {
@@ -2029,8 +2310,8 @@ void Tw_ExposeWidget2(tw_d TwD, twidget a1, dat a2, dat a3, dat a4, dat a5, dat 
 		    a8 += pitch;
 		    len8 -= a2;
 		}
-	            Send(TwD, (My = NextSerial(TwD)), id_Tw[order_ExposeWidget]);
-                    UNLK;return;
+		Send(TwD, (My = NextSerial(TwD)), id_Tw[order_ExposeWidget]);
+		UNLK;return;
             }
 	}
 	/* still here? must be out of memory! */
@@ -2137,9 +2418,9 @@ static byte Sync(tw_d TwD) {
  * sends all buffered data to connection and waits for server to process it
  */
 byte Tw_Sync(tw_d TwD) {
-    byte left;
-    LOCK; left = Sync(TwD); UNLK;
-    return left;
+    byte ok;
+    LOCK; ok = Sync(TwD); UNLK;
+    return ok;
 }
 
 
@@ -2154,33 +2435,33 @@ byte Tw_Sync(tw_d TwD) {
 
 static uldat FindFunctionId(tw_d TwD, uldat order) {
     uldat My;
-    if ((My = id_Tw[order]) == TW_NOID) {
+    if ((My = id_Tw[order]) == TW_BADID) {
 	My = id_Tw[order] = _Tw_FindFunction
 	    (TwD, Functions[order].len, 3 + Functions[order].name, Functions[order].formatlen, Functions[order].format+1);
     }
     return Fd != TW_NOFD ? My : TW_NOID;
 }
 
-static tslist AStat(tw_d TwD, tobj Id, udat flags, udat hN, TW_CONST udat *h, tsfield f);
+static tslist StatA(tw_d TwD, tobj Id, udat flags, udat hN, TW_CONST udat *h, tslist f);
 
 /**
  * returns information about given object
  */
 tlargest Tw_Stat(tw_d TwD, tobj Id, udat h) {
-    struct s_tsfield f;
-    AStat(TwD, Id, TWS_SCALAR, 1, &h, &f);
-    return f.TWS_field_scalar;
+    struct s_tslist f;
+    if (StatA(TwD, Id, TWS_SCALAR, 1, &h, &f))
+	return f.TSF[0].TWS_field_scalar;
+    return TW_NOID;
 }
-
 /**
  * returns information about given object
  */
-tslist Tw_LStat(tw_d TwD, tobj Id, udat hN, ...) {
+tslist Tw_StatL(tw_d TwD, tobj Id, udat hN, ...) {
     tslist TS;
     va_list ap;
     
     va_start(ap, hN);
-    TS = Tw_VStat(TwD, Id, hN, ap);
+    TS = Tw_StatV(TwD, Id, hN, ap);
     va_end(ap);
     
     return TS;
@@ -2188,34 +2469,33 @@ tslist Tw_LStat(tw_d TwD, tobj Id, udat hN, ...) {
 /**
  * returns information about given object
  */
-tslist Tw_AStat(tw_d TwD, tobj Id, udat hN, TW_CONST udat *h) {
-    return AStat(TwD, Id, 0, hN, h, NULL);
+tslist Tw_StatA(tw_d TwD, tobj Id, udat hN, TW_CONST udat *h) {
+    return StatA(TwD, Id, 0, hN, h, NULL);
 }
 /**
  * returns information about given object
  */
-tslist Tw_VStat(tw_d TwD, tobj Id, udat hN, va_list ap) {
+tslist Tw_StatV(tw_d TwD, tobj Id, udat hN, va_list ap) {
     tslist TS = NULL;
     udat i, *h;
     
     if (hN && (h = Tw_AllocMem(hN * sizeof(udat)))) {
 	for (i = 0; i < hN; i++)
 	    h[i] = va_arg(ap, int);
-	TS = AStat(TwD, Id, 0, hN, h, NULL);
+	TS = StatA(TwD, Id, 0, hN, h, NULL);
 	Tw_FreeMem(h);
     }
     return TS;
 }
-
 /**
  * returns information about given object
  */
-tslist Tw_CloneStat(tw_d TwD, tobj Id, udat hN, ...) {
+tslist Tw_CloneStatL(tw_d TwD, tobj Id, udat hN, ...) {
     tslist TS;
     va_list ap;
     
     va_start(ap, hN);
-    TS = Tw_CloneVStat(TwD, Id, hN, ap);
+    TS = Tw_CloneStatV(TwD, Id, hN, ap);
     va_end(ap);
     
     return TS;
@@ -2223,28 +2503,58 @@ tslist Tw_CloneStat(tw_d TwD, tobj Id, udat hN, ...) {
 /**
  * returns information about given object
  */
-tslist Tw_CloneAStat(tw_d TwD, tobj Id, udat hN, TW_CONST udat *h) {
-    return AStat(TwD, Id, TWS_CLONE_MEM, hN, h, NULL);
+tslist Tw_CloneStatA(tw_d TwD, tobj Id, udat hN, TW_CONST udat *h) {
+    return StatA(TwD, Id, TWS_CLONE_MEM, hN, h, NULL);
 }
 /**
  * returns information about given object
  */
-tslist Tw_CloneVStat(tw_d TwD, tobj Id, udat hN, va_list ap) {
+tslist Tw_CloneStatV(tw_d TwD, tobj Id, udat hN, va_list ap) {
     tslist TS = NULL;
     udat i, *h;
     
     if (hN && (h = Tw_AllocMem(hN * sizeof(udat)))) {
 	for (i = 0; i < hN; i++)
 	    h[i] = va_arg(ap, int);
-	TS = AStat(TwD, Id, TWS_CLONE_MEM, hN, h, NULL);
+	TS = StatA(TwD, Id, TWS_CLONE_MEM, hN, h, NULL);
 	Tw_FreeMem(h);
     }
     return TS;
 }
 
+
+#ifndef __GNUC__
 /**
- * deletes information about an object that was returned with one of
- * the Tw_Clone*Stat() functions
+ * returns information about given object
+ */
+tslist TwStatL(tobj Id, udat hN, ...) {
+    tslist TS;
+    va_list ap;
+    
+    va_start(ap, hN);
+    TS = Tw_StatV(Tw_DefaultD, Id, hN, ap);
+    va_end(ap);
+    
+    return TS;
+}
+/**
+ * returns information about given object
+ */
+tslist TwCloneStatL(tobj Id, udat hN, ...) {
+    tslist TS;
+    va_list ap;
+    
+    va_start(ap, hN);
+    TS = Tw_CloneVStat(Tw_DefaultD, Id, hN, ap);
+    va_end(ap);
+    
+    return TS;
+}
+#endif /* !__GNUC__ */
+
+/**
+ * free information about an object that was returned
+ * with one of the Tw_*Stat() functions
  */
 void Tw_DeleteStat(tw_d TwD, tslist TSL) {
     if (TSL) {
@@ -2254,7 +2564,7 @@ void Tw_DeleteStat(tw_d TwD, tslist TSL) {
 	    for (i = 0; i < TSL->N; i++) {
 		f = TSL->TSF;
 		if (f->type >= TWS_vec && (f->type & ~TWS_vec) < TWS_last && f->TWS_field_vecV)
-		    Tw_FreeMem(f->TWS_field_vecV);
+		    Tw_FreeMem(f->TWS_field_vecVV);
 	    }
 	}
 	Tw_FreeMem(TSL);
@@ -2295,22 +2605,22 @@ static void SortTSL(tslist TSL) {
     }
 }
 
-static tslist StatScalar(tsfield f, byte *data, byte *end) {
-    udat i, pad, N;
+static tslist StatScalar(tslist f, byte *data, byte *end) {
+    udat Type, N;
 
     Pop(data,udat,N);
-    Pop(data,udat,pad);
+    Pop(data,udat,Type); /* pad */
     
     if (N == 1 && data + 2*sizeof(udat) <= end) {
-	Pop(data,udat,i);
-	Pop(data,udat,pad);
-	switch (i) {
+	Pop(data,udat,Type); /* hash */
+	Pop(data,udat,Type);
+	switch (Type) {
 # define Popcase(type) case TWS_CAT(TWS_,type): \
 	    if (data + sizeof(type) <= end) { \
 	        /* avoid padding problems */ \
 		type tmp; \
 		Pop(data,type,tmp); \
-		f->TWS_field_scalar = tmp; \
+		f->TSF[0].TWS_field_scalar = tmp; \
 	    } \
 	    break
 		    
@@ -2325,8 +2635,9 @@ static tslist StatScalar(tsfield f, byte *data, byte *end) {
 	    Popcase(tobj);
 #undef Popcase
 	  default:
-	    break;
+	    return (tslist)0;
 	}
+	return f;
     }
     return (tslist)0;
 }
@@ -2340,7 +2651,7 @@ static tslist StatTSL(tw_d TwD, udat flags, byte *data, byte *end) {
     Pop(data,udat,N);
     Pop(data,udat,i); /* pad */
     
-    if (N && (TSL = Tw_AllocMem(sizeof(struct s_tlist) + (N-1)*sizeof(struct s_tsfield)))) {
+    if (N && (TSL = Tw_AllocMem(sizeof(struct s_tslist) + (N-1)*sizeof(struct s_tsfield)))) {
 	TSL->N = N;
 	TSL->flags = flags;
 	TSF = TSL->TSF;
@@ -2377,7 +2688,7 @@ static tslist StatTSL(tw_d TwD, udat flags, byte *data, byte *end) {
 			if (data + TSF[i].TWS_field_vecL <= end) {
 			    if (flags & TWS_CLONE_MEM) {
 				if ((TSF[i].TWS_field_vecV = Tw_AllocMem(TSF[i].TWS_field_vecL)))
-				    PopV(data, TSF[i].TWS_field_vecL, TSF[i].TWS_field_vecV);
+				    PopV(data, TSF[i].TWS_field_vecL, TSF[i].TWS_field_vecVV);
 				else
 				    ok = FALSE;
 			    } else
@@ -2396,18 +2707,19 @@ static tslist StatTSL(tw_d TwD, udat flags, byte *data, byte *end) {
 	    return TSL;
 	}
 	FailedCall(TwD, TW_ESTRANGE_CALL, order_StatObj);
-	Tw_DeleteStat(/*cheat!*/ NULL, TSL);
+	Tw_DeleteStat(TwD, TSL);
     }
     return (tslist)0;
 }
 
-static tslist AStat(tw_d TwD, tobj Id, udat flags, udat hN, TW_CONST udat *h, tsfield f) {
+static tslist StatA(tw_d TwD, tobj Id, udat flags, udat hN, TW_CONST udat *h, tslist f) {
     tslist a0;
     DECL_MyReply
     uldat My;
     LOCK;
-    if (Fd != TW_NOFD && ((My = id_Tw[order_StatObj]) != TW_NOID ||
-		       (My = FindFunctionId(TwD, order_StatObj)) != TW_NOID)) {
+    if (Fd != TW_NOFD && (My = id_Tw[order_StatObj]) != TW_NOID &&
+	(My != TW_BADID || (My = FindFunctionId(TwD, order_StatObj)) != TW_NOID)) {
+	
 	if (InitRS(TwD)) {
             My = (sizeof(tobj) + sizeof(udat) + hN * sizeof(udat));
 	    if (WQLeft(My)) {
@@ -2532,7 +2844,7 @@ tmsg Tw_CreateMsg(tw_d TwD, uldat Type, uldat EventLen) {
 }
 
 /**
- * deletes an event message: should be called only on messages
+ * frees an event message: should be called only on messages
  * created with Tw_CreateMsg(), and only if they are not sent with
  * Tw_SendMsg() or Tw_BlindSendMsg()
  */
@@ -2582,8 +2894,8 @@ byte Tw_FindFunctions(tw_d TwD, void *F, ...) {
 		;
 	    if (tryF == F) {
 		id = &id_Tw[i];
-		if (*id != TW_NOID ||
-		    (*id = FindFunctionId(TwD, i)) != TW_NOID)
+		if (*id != TW_NOID &&
+		    (*id != TW_BADID || (*id = FindFunctionId(TwD, i)) != TW_NOID))
 		    
 		    continue;
 		E = GetErrnoLocation(TwD);
@@ -2772,4 +3084,17 @@ byte Tw_DisableGzip(tw_d TwD) {
 }
 
 #endif /* CONF_SOCKET_GZ */
+
+
+
+/* backward compatibility. will be removed. */
+#undef Tw_WriteRowWindow
+void Tw_WriteRowWindow(tdisplay TwD, twindow Window, ldat Len, TW_CONST byte *Data) {
+    Tw_WriteAsciiWindow(TwD, Window, Len, Data);
+}
+
+#undef Tw_ResizeWindow
+void Tw_ResizeWindow(tdisplay TwD, twindow Window, dat XWidth, dat YWidth) {
+    Tw_ResizeWidget(TwD, Window, XWidth, YWidth);
+}
 

@@ -315,7 +315,7 @@ static byte vcsa_InitVideo(void) {
     HW->HWSelectionExport  = NoOp;
     HW->HWSelectionRequest = (void *)NoOp;
     HW->HWSelectionNotify  = (void *)NoOp;
-    HW->HWSelectionPrivate = NULL;
+    HW->HWSelectionPrivate = 0;
     
     HW->CanDragArea = linux_CanDragArea;
     HW->DragArea = linux_DragArea;
@@ -560,7 +560,7 @@ static byte linux_InitVideo(void) {
     HW->HWSelectionExport  = NoOp;
     HW->HWSelectionRequest = (void *)NoOp;
     HW->HWSelectionNotify  = (void *)NoOp;
-    HW->HWSelectionPrivate = NULL;
+    HW->HWSelectionPrivate = 0;
 
     HW->CanDragArea = linux_CanDragArea;
     HW->DragArea = linux_DragArea;

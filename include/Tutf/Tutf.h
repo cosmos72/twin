@@ -15,10 +15,7 @@
 #ifndef _TUTF_H
 #define _TUTF_H
 
-#include <Tw/Twtypes.h>
-
-#include <Tutf/compiler.h>
-#include <Tutf/version.h>
+#include <Tutf/Tutftypes.h>
 
 #ifdef __cplusplus
  extern "C" {
@@ -34,7 +31,7 @@
 #define T_LIST(alias,EL)	T_CAT(T_LIST_,T_MAP(alias))(EL)
 #define T_NLIST(alias,EL)	T_CAT(T_NLIST_,T_MAP(alias))(EL)
 #define T_NAME(alias)		T_CAT(T_NAME_,T_MAP(alias))
-#define T_UTF(map,name)		T_CAT(T_CAT(T_,T_MAP(map)),name)
+#define T_UTF(map,name)		T_CAT3(T_,T_MAP(map),name)
 
 
 #define T_MAP_UTF_16	UTF_16
