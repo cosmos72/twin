@@ -28,6 +28,7 @@
 #include "hw.h"
 #include "hw_private.h"
 #include "hw_dirty.h"
+#include "common.h"
 
 #include <ggi/ggi.h>
 
@@ -61,24 +62,8 @@ struct GGI_data {
 #define gbackground	(GGIdata->gbackground)
 #define gcol	(GGIdata->gcol)
 
-#define XY ((udat  *)HW->gotoxybuf)
-#define TT ((uldat *)HW->cursorbuf)
-
 #define WANTED_EVENTS  (emKey | emPointer | emExpose)
 
-
-static void GGI_MoveToXY(udat x, udat y) {
-    XY[2] = x;
-    XY[3] = y;
-}
-
-static void GGI_SetCursorType(uldat CursorType) {
-    if ((CursorType & 0xF) == 0)
-	CursorType |= LINECURSOR;
-    else if ((CursorType & 0xF) > SOLIDCURSOR)
-	CursorType = (CursorType & ~(uldat)0xF) | SOLIDCURSOR;
-    TT[1] = CursorType;
-}
 
 static void GGI_Beep(void) {
     /* not exactly clean... */
@@ -258,7 +243,7 @@ static void GGI_HideCursor(dat x, dat y) {
     ggiPutc(gvis, x * gfont.x, y * gfont.y, HWFONT(V));
 }
 
-static void GGI_ShowCursor(dat x, dat y, uldat type) {
+static void GGI_ShowCursor(uldat type, dat x, dat y) {
     hwattr V = Video[x + y * ScreenWidth];
     hwcol v;
     udat i;
@@ -290,8 +275,9 @@ static void GGI_FlushVideo(void) {
     udat i;
     byte c = ChangedVideoFlag &&
 	(ValidOldVideo
-	 ? Video[XY[0] + XY[1] * ScreenWidth] != OldVideo[XY[0] + XY[1] * ScreenWidth] 
-	 : Plain_isDirtyVideo(XY[0], XY[1]));
+	 ? Video[HW->XY[0] + HW->XY[1] * ScreenWidth]
+	 != OldVideo[HW->XY[0] + HW->XY[1] * ScreenWidth] 
+	 : Plain_isDirtyVideo(HW->XY[0], HW->XY[1]));
     /* TRUE iff the cursor will be erased by burst */
     
     
@@ -307,22 +293,23 @@ static void GGI_FlushVideo(void) {
 	setFlush();
     }
     /* then, we may have to erase the old cursor */
-    if (!c && TT[0] != NOCURSOR && (TT[0] != TT[1] || XY[0] != XY[2] || XY[1] != XY[3])) {
-	GGI_HideCursor(XY[0], XY[1]);
+    if (!c && HW->TT != NOCURSOR &&
+	(CursorType != HW->TT || CursorX != HW->XY[0] || CursorY != HW->XY[1])) {
+	
+	HW->TT = NOCURSOR;
+	GGI_HideCursor(HW->XY[0], HW->XY[1]);
 	setFlush();
     }
     /* finally, redraw the cursor if */
     /* (we want a cursor and (the burst erased the cursor or the cursor changed)) */
-    if (TT[1] != NOCURSOR && (c || TT[0] != TT[1] || XY[0] != XY[2] || XY[1] != XY[3])) {
-	GGI_ShowCursor(XY[2], XY[3], TT[1]);
+    if (CursorType != NOCURSOR &&
+	(c || CursorType != HW->TT || CursorX != HW->XY[0] || CursorY != HW->XY[1])) {
+	
+	GGI_ShowCursor(HW->TT = CursorType, HW->XY[0] = CursorX, HW->XY[1]= CursorY);
 	setFlush();
     }
     
     HW->ChangedMouseFlag = FALSE;
-    
-    TT[0] = TT[1];
-    XY[0] = XY[2];
-    XY[1] = XY[3];
 }
 
 static void GGI_FlushHW(void) {
@@ -343,10 +330,17 @@ static void GGI_CheckResize(udat *x, udat *y) {
 }
 
 static void GGI_Resize(udat x, udat y) {
-    /* clear screen so that extra area will be padded with blanks */
-    ggiSetGCForeground(gvis, gforeground = gcol[0]);
-    ggiFillscreen(gvis);
-    ggiFlush(gvis);
+    if (x < HW->usedX || y < HW->usedY) {
+	/* clear screen so that extra area will be padded with blanks */
+	ggiSetGCForeground(gvis, gforeground = gcol[0]);
+	ggiFillscreen(gvis);
+	ggiFlush(gvis);
+
+	/* using ggiSetMode() would also probably avoid having to do this */
+	NeedRedrawVideo(0, 0, x - 1, y - 1);
+    }
+    HW->usedX = x;
+    HW->usedX = y;
 }
 
 #if 0
@@ -355,8 +349,6 @@ static byte GGI_CanDragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat
 }
 
 static void GGI_DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
-    GGI_FlushVideo(); /* a *must* before any direct libggi operation */
-    
     ggiCopyBox(gvis, Left*gfont.x, Up*gfont.y,
 	       (Rgt-Left+1)*gfont.x, (Dwn-Up+1)*gfont.y, DstLeft*gfont.x, DstUp*gfont.y);
     setFlush();
@@ -388,9 +380,9 @@ static void GGI_InitPalette(void) {
     int i;
     ggi_color pixel;
     for (i=0; i <= MAXCOL; i++) {
-	pixel.r = 257 * (udat)All->Palette[i].Red;
-	pixel.g = 257 * (udat)All->Palette[i].Green;
-	pixel.b = 257 * (udat)All->Palette[i].Blue;
+	pixel.r = 257 * (udat)Palette[i].Red;
+	pixel.g = 257 * (udat)Palette[i].Green;
+	pixel.b = 257 * (udat)Palette[i].Blue;
 	pixel.a = 0;
 	gcol[i] = ggiMapColor(gvis, &pixel);
     }
@@ -485,14 +477,13 @@ byte GGI_InitHW(void) {
 	HW->KeyboardEvent = GGI_KeyboardEvent;
 	HW->MouseEvent = (void *)NoOp; /* mouse events handled by GGI_KeyboardEvent */
 
-	HW->MoveToXY = GGI_MoveToXY;
-	HW->SetCursorType = GGI_SetCursorType;
-	XY[0] = XY[1] = XY[2] = XY[3] = 0;
-	TT[0] = TT[1] = NOCURSOR;
+	HW->XY[0] = HW->XY[1] = 0;
+	HW->TT = (uldat)-1; /* force updating the cursor */
 	
 	HW->ShowMouse = NoOp;
 	HW->HideMouse = NoOp;
 
+	GGI_DetectSize(&HW->usedX, &HW->usedY);
 	HW->DetectSize  = GGI_DetectSize;
 	HW->CheckResize = GGI_CheckResize;
 	HW->Resize      = GGI_Resize;
@@ -524,6 +515,7 @@ byte GGI_InitHW(void) {
 	HW->NeedOldVideo = TRUE;
 	HW->ExpensiveFlushVideo = TRUE;
 	HW->NeedHW = 0;
+	HW->CanResize = FALSE; /* TODO: a real GGI_Resize() */
 	HW->merge_Threshold = 0;
 
 	gOrigSelect = OverrideSelect;
@@ -531,6 +523,13 @@ byte GGI_InitHW(void) {
 
 	GGI_HW = HW;
 	
+	/*
+	 * we must draw everything on our new shiny window
+	 * without forcing all other displays
+	 * to redraw everything too.
+	 */
+	NeedRedrawVideo(0, 0, HW->X - 1, HW->Y - 1);
+
 	return TRUE;
 	
     } while (0); else {

@@ -32,9 +32,9 @@
 #define TW_EBAD_FUNCTION ((uldat)17)
 
 uldat Tw_Errno(tdisplay TwD);
-#define TwErrno		Tw_Errno(TwDefaultD)
+#define TwErrno		Tw_Errno(Tw_DefaultD)
 
 byte *Tw_StrError(tdisplay TwD, uldat e);
-#define TwStrError(e)	Tw_StrError(TwDefaultD, e)
+#define TwStrError(e)	Tw_StrError(Tw_DefaultD, e)
 
 #endif /* _LIB_TW_ERRNO_H */

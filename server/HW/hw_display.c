@@ -19,20 +19,15 @@
 #include "hw.h"
 #include "hw_private.h"
 #include "hw_dirty.h"
+#include "common.h"
 
 struct display_data {
     msgport *display, *Helper;
-    byte CanDragNow, CanResize;
 };
 
 #define displaydata	((struct display_data *)HW->Private)
 #define display		(displaydata->display)
 #define Helper		(displaydata->Helper)
-#define CanDragNow	(displaydata->CanDragNow)
-#define CanResize	(displaydata->CanResize)
-
-#define XY ((udat  *)HW->gotoxybuf)
-#define TT ((uldat *)HW->cursorbuf)
 
 static msg *Msg;
 static event_display *ev;
@@ -41,15 +36,6 @@ static uldat Used;
 INLINE void display_CreateMsg(udat Code, udat Len) {
     Msg->Event.EventDisplay.Code = Code;
     Msg->Event.EventDisplay.Len  = Len;
-}
-
-static void display_MoveToXY(udat x, udat y) {
-    XY[2] = x;
-    XY[3] = y;
-}
-
-static void display_SetCursorType(uldat CursorType) {
-    TT[1] = CursorType;
 }
 
 static void display_Beep(void) {
@@ -62,12 +48,9 @@ static void display_Configure(udat resource, byte todefault, udat value) {
     display_CreateMsg(DPY_Configure, 0);
 	
     ev->X = resource;
-    if (todefault) {
-	if (resource == HW_BELLPITCH || resource == HW_BELLDURATION)
-	    ev->Y = MAXUDAT;
-	else
-	    ev->Y = 0;
-    } else
+    if (todefault)
+	ev->Y = MAXUDAT;
+    else
 	ev->Y = value;
     SocketSendMsg(display, Msg);
     setFlush();
@@ -102,23 +85,41 @@ static void display_KeyboardEvent(int fd, display_hw *hw) {
 	    HW->MouseState.y = y;
 	    HW->MouseState.keys = Event->EventMouse.Code & HOLD_ANY;
 	    break;
-	  case MSG_WINDOW_CHANGE:
-	    if (HW->X != Event->EventWindow.XWidth - 2 ||
-		HW->Y != Event->EventWindow.YWidth - 2) {
-		
-		HW->X = Event->EventWindow.XWidth - 2;
-		HW->Y = Event->EventWindow.YWidth - 2;
-		ResizeDisplayPrefer(HW);
-	    }
-	    break;
 	  case MSG_WINDOW_GADGET:
 	    if (!Event->EventGadget.Code)
 		/* 0 == Close Code */
 		HW->NeedHW |= NEEDPanicHW, NeedHW |= NEEDPanicHW;
+	    break;
+	  case MSG_DISPLAY:
+	    switch (Event->EventDisplay.Code) {
+#if 0
+		/*
+		 * Not needed, twdisplay keeps its own copy of Video[]
+		 * and never generates DPY_RedrawVideo events
+		 */
+	      case DPY_RedrawVideo:
+		if (Event->EventDisplay.Len == sizeof(dat) * 2)
+		    NeedRedrawVideo(Event->EventDisplay.X, Event->EventDisplay.Y,
+				    ((udat *)Event->EventDisplay.Data)[0], 
+				    ((udat *)Event->EventDisplay.Data)[1]);
+		break;
+#endif
+	      case DPY_Resize:
+		if (HW->X != Event->EventDisplay.X ||
+		    HW->Y != Event->EventDisplay.Y) {
+		
+		    HW->X = Event->EventDisplay.X;
+		    HW->Y = Event->EventDisplay.Y;
+		    ResizeDisplayPrefer(HW);
+		}
+		break;
+	      default:
+		break;
+	    }
+	    break;
 	  default:
 	    break;
 	}
-	
 	Delete(hMsg);
     }
     RestoreHW;
@@ -163,19 +164,17 @@ INLINE void display_Mogrify(dat x, dat y, uldat len) {
 	display_DrawHWAttr(xbegin, ybegin, buflen, buf);
 }
 
-INLINE void real_GotoXY(udat x, udat y) {
+INLINE void display_MoveToXY(udat x, udat y) {
     display_CreateMsg(DPY_MoveToXY, 0);
     ev->X = x;
     ev->Y = y;
     SocketSendMsg(display, Msg);
-    setFlush();
 }
 
-INLINE void real_SetCursorType(uldat type) {
-    display_CreateMsg(DPY_MoveToXY, sizeof(uldat));
+INLINE void display_SetCursorType(uldat type) {
+    display_CreateMsg(DPY_SetCursorType, sizeof(uldat));
     ev->Data = (byte *)&type;
     SocketSendMsg(display, Msg);
-    setFlush();
 }
 
 static void display_FlushVideo(void) {
@@ -195,23 +194,21 @@ static void display_FlushVideo(void) {
     }
     
     /* update the cursor */
-    if ((XY[0] != XY[2] || XY[1] != XY[3]) && TT[1] != NOCURSOR)
-	real_GotoXY(XY[2], XY[3]);
-
-    if (TT[0] != TT[1])
-	real_SetCursorType(TT[1]);
-    
+    if (CursorType != NOCURSOR && (CursorX != HW->XY[0] || CursorY != HW->XY[1])) {
+	display_MoveToXY(HW->XY[0] = CursorX, HW->XY[1] = CursorY);
+	setFlush();
+    }
+    if (CursorType != HW->TT) {
+	display_SetCursorType(HW->TT = CursorType);
+	setFlush();
+    }
     HW->ChangedMouseFlag = FALSE;
-    
-    TT[0] = TT[1];
-    XY[0] = XY[2];
-    XY[1] = XY[3];
 }
 
 static void display_FlushHW(void) {
     display_CreateMsg(DPY_FlushHW, 0);
     SocketSendMsg(display, Msg);
-    if (RemoteFlush(HW->attach))
+    if (RemoteFlush(HW->AttachSlot))
 	clrFlush();
 }
 
@@ -221,35 +218,34 @@ static void display_DetectSize(udat *x, udat *y) {
 }
 
 static void display_CheckResize(udat *x, udat *y) {
-    if (!CanResize) {
+    if (!HW->CanResize) {
 	*x = Min2(*x, HW->X);
 	*y = Min2(*y, HW->Y);
     }
 }
 
 static void display_Resize(udat x, udat y) {
-    if (x != HW->X || y != HW->Y) {
+    if (x != HW->usedX || y != HW->usedY) {
 	display_CreateMsg(DPY_Resize, 0);
-	ev->X = x;
-	ev->Y = y;
+	HW->usedX = ev->X = x;
+	HW->usedY = ev->Y = y;
 
-	if (CanResize) {
+	if (HW->CanResize) {
 	    HW->X = x;
 	    HW->Y = y;
 	}
+	    
 	SocketSendMsg(display, Msg);
 	setFlush();
     }
 }
     
 static byte display_CanDragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
-    return CanDragNow && (Rgt-Left+1) * (Dwn-Up+1) > 20;
+    return (Rgt-Left+1) * (Dwn-Up+1) > 20;
 }
 
 static void display_DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
     udat data[4] = {Rgt, Dwn, DstLeft, DstUp};
-    
-    display_FlushVideo(); /* a *must* before any direct operation */
     
     display_CreateMsg(DPY_DragArea, 4*sizeof(dat));
 
@@ -262,21 +258,42 @@ static void display_DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, da
 }
 
 static void display_QuitHW(void) {
+    /* tell twdisplay to cleanly quit */
+    display_CreateMsg(DPY_Quit, 4*sizeof(dat));
+    SocketSendMsg(display, Msg);
+    RemoteFlush(HW->AttachSlot);
+
+    /* then cleanup */
+    
     Helper->AttachHW = (display_hw *)0; /* to avoid infinite loop */
     Delete(Helper);
 
     if (!--Used && Msg)
 	Delete(Msg), Msg = (msg *)0;
     
-    /* the rest is done by Act(Quit,HW)(HW) by the upper layers, */
-    /* including KillSlot(HW->attach); */
+    /*
+     * the rest is done by Act(Quit,HW)(HW) by the upper layers,
+     * including KillSlot(HW->AttachSlot) which forces twdisplay
+     * to shutdown its display and quit
+     */
     
     HW->KeyboardEvent = (void *)NoOp;
     HW->QuitHW = NoOp;
 }
 
+static void fix4display(void) {
+    byte *arg, *arg17;
+    
+    if (HW->Name && HW->NameLen > 17 && !CmpMem(HW->Name, "-hw=display@(-hw=", 17) &&
+	(arg = memchr(arg17 = HW->Name + 17, ')', HW->NameLen - 17))) {
+	
+	sprintf(HW->Name, "-display=%.*s", (int)(arg - arg17), arg17);
+	HW->NameLen = 9 + (arg - arg17);
+    }
+}
+
 byte display_InitHW(void) {
-    byte *arg = HW->Name;
+    byte *s, *arg = HW->Name;
     msgport *Port;
     
     if (arg && HW->NameLen > 4) {
@@ -287,7 +304,7 @@ byte display_InitHW(void) {
     } else
 	arg = NULL;
     
-    if (HW->attach == NOSLOT) {
+    if (HW->AttachSlot == NOSLOT) {
 	/*
 	 * we can't start unless we have a connected twdisplay...
 	 */
@@ -296,7 +313,7 @@ byte display_InitHW(void) {
 	return FALSE;
     }
 
-    if (!(Port = RemoteGetMsgPort(HW->attach))) {
+    if (!(Port = RemoteGetMsgPort(HW->AttachSlot))) {
 	fputs("      display_InitHW() failed: twdisplay did not create a MsgPort.\n", stderr);
 	return FALSE;
     }
@@ -328,15 +345,12 @@ byte display_InitHW(void) {
     HW->KeyboardEvent = (void *)NoOp; /* we must go through display_HelperH */
     HW->MouseEvent = (void *)NoOp; /* mouse events handled by display_KeyboardEvent */
 	    
-    HW->MoveToXY = display_MoveToXY;
-    HW->SetCursorType = display_SetCursorType;
-    XY[0] = XY[1] = XY[2] = XY[3] = 0;
-    TT[0] = TT[1] = -1; /* force updating cursor */
+    HW->XY[0] = HW->XY[1] = 0;
+    HW->TT = (uldat)-1; /* force updating cursor */
 
     HW->ShowMouse = NoOp;
     HW->HideMouse = NoOp;
 
-    CanResize = arg && strstr(arg, ",resize");
     HW->DetectSize  = display_DetectSize;
     HW->CheckResize = display_CheckResize;
     HW->Resize      = display_Resize;
@@ -350,11 +364,10 @@ byte display_InitHW(void) {
 	HW->DragArea = display_DragArea;
     } else
 	HW->CanDragArea = NULL;
-    CanDragNow = !!HW->CanDragArea;
 
     HW->Beep = display_Beep;
     HW->Configure = display_Configure;
-    HW->SetPalette = (void *)NoOp; /* TODO */
+    HW->SetPalette = (void *)NoOp; /* TODO finish this */
     HW->ResetPalette = NoOp;
 	    
     HW->QuitHW = display_QuitHW;
@@ -368,21 +381,36 @@ byte display_InitHW(void) {
     HW->NeedOldVideo = TRUE;
     HW->ExpensiveFlushVideo = arg && strstr(arg, ",slow");
     HW->NeedHW = NEEDPersistentSlot;
+    HW->CanResize = arg && strstr(arg, ",resize");
     HW->merge_Threshold = 0;
 
     display_CreateMsg(DPY_Helper, sizeof(Helper->Id));
     ev->Data = (byte *)&Helper->Id;
     SocketSendMsg(display, Msg);
+    /* don't flush now, twdisplay waits for attach messages */
 
-    HW->X = HW->Y = 0;
-    display_Resize(ScreenWidth, ScreenHeight);
-    HW->X = ScreenWidth;
-    HW->Y = ScreenHeight;
+    if (arg && (s = strstr(arg, ",x=")))
+	HW->X = atoi(s+3);
+    else
+	HW->X = ScreenWidth;
+    if (arg && (s = strstr(arg, ",y=")))
+	HW->Y = atoi(s+3);
+    else
+	HW->Y = ScreenHeight;
     
+    /*
+     * we must draw everything on our new shiny window
+     * without forcing all other displays
+     * to redraw everything too.
+     */
+    NeedRedrawVideo(0, 0, HW->X - 1, HW->Y - 1);
+
     setFlush();
     
     Used++;
 
+    fix4display();
+    
     return TRUE;
 }
 

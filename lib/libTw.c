@@ -107,7 +107,7 @@ typedef struct s_tw_d {
 uldat CommonErrno;
 
 /* and this is the 'default' display */
-tw_d TwDefaultD;
+tw_d Tw_DefaultD;
 
 static uldat Gzip(tw_d TwD);
 static uldat Gunzip(tw_d TwD);
@@ -116,6 +116,42 @@ static void Panic(tw_d TwD);
 static uldat ParseReplies(tw_d TwD);
 
 byte Tw_EnableGzip(tw_d TwD);
+
+void *(*Tw_AllocMem)(size_t) = malloc;
+void *(*Tw_ReAllocMem)(void *, size_t) = realloc;
+void  (*Tw_FreeMem)(void *) = free;
+byte *(*Tw_CloneStr)(byte *) = (byte *(*)(byte *))strdup;
+
+static fd_set fset;
+
+static byte *clone_str(byte *S) {
+    size_t len;
+    byte *T;
+    if (S) {
+	len = 1 + Tw_LenStr(S);
+	if ((T = Tw_AllocMem(len)))
+	    return Tw_CopyMem(S, T, len);
+    }
+    return S;
+}
+
+void Tw_ConfigMalloc(void *(*my_malloc)(size_t),
+		     void *(*my_realloc)(void *, size_t),
+		     void  (*my_free)(void *)) {
+    
+    if (my_malloc && my_realloc && my_free) {
+	Tw_AllocMem = my_malloc;
+	Tw_ReAllocMem = my_realloc;
+	Tw_FreeMem = my_free;
+	Tw_CloneStr = clone_str;
+    } else {
+	Tw_AllocMem = malloc;
+	Tw_ReAllocMem = realloc;
+	Tw_FreeMem = free;
+	Tw_CloneStr = (byte *(*)(byte *))strdup;
+    }
+}
+
 
 static uldat AddQueue(tw_d TwD, byte i, uldat len, void *data) {
     uldat nmax;
@@ -279,6 +315,9 @@ static byte Flush(tw_d TwD, byte timid) {
     byte *t;
     byte Q;
     
+    if (!timid)
+	FD_ZERO(&fset);
+    
     (void)GetQueue(TwD, QWRITE, &left);
 
     if (Fd != NOFD && left) {
@@ -305,7 +344,16 @@ static byte Flush(tw_d TwD, byte timid) {
 	    }
 	    else if (chunk == (uldat)-1 && errno == EINTR)
 		continue;
-	    else
+	    else if (chunk == (uldat)-1 && errno == EAGAIN && !timid) {
+		do {
+		    FD_SET(Fd, &fset);
+		    chunk = select(Fd+1, &fset, NULL, NULL, NULL);
+		} while (chunk == (uldat)-1 && errno == EINTR);
+		if (chunk == (uldat)-1)
+		    break;
+		else
+		    continue;
+	    } else
 		break;
 	}
     } else
@@ -343,7 +391,6 @@ static uldat TryRead(tw_d TwD, byte Wait) {
     uldat got = 0, len = 0;
     byte *t, mayread;
     byte Q;
-    static fd_set fset;
     
 #ifdef CONF_SOCKET_GZ
     if (GzipFlag)
@@ -456,7 +503,7 @@ static byte MagicChallenge(tw_d TwD) {
 	Errno = TW_ENO_AUTH;
 	return FALSE;
     }
-    if (!WQLeft(digestLen) || !(data = TwAllocMem(hAuthLen))) {
+    if (!WQLeft(digestLen) || !(data = Tw_AllocMem(hAuthLen))) {
 	Errno = TW_ENO_MEM;
 	return FALSE;
     }
@@ -469,7 +516,7 @@ static byte MagicChallenge(tw_d TwD) {
     TwCopyMem(home, data, len);
     TwCopyMem("/.TwinAuth", data+len, 11);
     if ((fd = open(data, O_RDONLY)) < 0) {
-	TwFreeMem(data);
+	Tw_FreeMem(data);
 	Errno = TW_ENO_AUTH;
 	return FALSE;
     }
@@ -483,7 +530,7 @@ static byte MagicChallenge(tw_d TwD) {
 
     challenge = ReadUldat(TwD);
     if (Fd == NOFD || got < 0 || len + challenge != challengeLen) {
-	TwFreeMem(data);
+	Tw_FreeMem(data);
 	if (Fd != NOFD)
 	    Errno = TW_ENO_AUTH;
 	return FALSE;
@@ -605,7 +652,7 @@ tw_d Tw_Open(byte *TwDisplay) {
 	return (tw_d)0;
     }
 
-    if ((TwD = (tw_d)TwAllocMem(sizeof(struct s_tw_d)))) {
+    if ((TwD = (tw_d)Tw_AllocMem(sizeof(struct s_tw_d)))) {
 	TwWriteMem(TwD, 0, sizeof(struct s_tw_d));
 	Fd = fd;
     } else {
@@ -623,7 +670,7 @@ tw_d Tw_Open(byte *TwDisplay) {
     }
     CommonErrno = Errno;
     Panic(TwD);
-    TwFreeMem(TwD);
+    Tw_FreeMem(TwD);
     return (tw_d)0;
 }
 
@@ -631,23 +678,29 @@ void Tw_Close(tw_d TwD) {
     byte *q;
     int i;
     
+    if (!TwD)
+	return;
+    
     if (Fd != NOFD) {
 	Tw_Sync(TwD);
-
 	close(Fd);
     }
+#ifdef CONF_SOCKET_GZ
+    if (GzipFlag)
+	Tw_DisableGzip(TwD);
+#endif
     for (i = 0; i < QMAX; i++) {
 	if ((q = Queue[i]))
-	    TwFreeMem(q);
+	    Tw_FreeMem(q);
     }
     CommonErrno = 0;
     /*PanicFlag = FALSE;*/
-    TwFreeMem(TwD);
+    Tw_FreeMem(TwD);
 }
 
 
 /*
- * TwAttachGetReply() returns 0 for failure, 1 for success,
+ * Tw_AttachGetReply() returns 0 for failure, 1 for success,
  * else message string (len) bytes long.
  */
 byte *Tw_AttachGetReply(tw_d TwD, uldat *len) {
@@ -1051,7 +1104,7 @@ NAME(ret,f0,funct,name) (tw_d TwD, \
   SELF(funct##name, \
   P(1 ,arg1 ,f1 ,i##f1 , P(2 ,arg2 ,f2 ,i##f2 , P(3 ,arg3 ,f3 ,i##f3 , P(4 ,arg4 ,f4 ,i##f4 , \
   P(5 ,arg5 ,f5 ,i##f5 , P(6 ,arg6 ,f6 ,i##f6 , P(7 ,arg7 ,f7 ,i##f7 , P(8 ,arg8 ,f8 ,i##f8 , \
-  P(9 ,arg9 ,f9 ,i##f9 , P(10,arg10,f10,i##f10, P(11,arg11,f11,i##f11, P(12,arg12,f12,i##f12, \
+  P(9 ,arg9 ,f9 ,i##f9 , P(10,arg10,f10,i##f10, P(11,arg11,f11,i##f11, P(12,arg12,f12,i##f10, \
   P(13,arg13,f13,i##f13, P(14,arg14,f14,i##f14, P(15,arg15,f15,i##f15, P(16,arg16,f16,i##f16, \
   P(17,arg17,f17,i##f17, P(18,arg18,f18,i##f18, \
   RET(funct##name,ret,f0)))))))))))))))))))) \
@@ -1180,6 +1233,35 @@ byte Tw_Sync(tw_d TwD) {
     return Fd != NOFD ? (GetQueue(TwD, QWRITE, &left), left) ? Tw_SyncSocket(TwD) : TRUE : FALSE;
 }
     
+#define Delta ((size_t)&(((tmsg)0)->Event))
+
+tmsg Tw_CreateMsg(tw_d TwD, udat Type, udat EventLen) {
+    tmsg Msg;
+    
+    if ((Msg = (tmsg)Tw_AllocMem(EventLen += Delta))) {
+	Msg->Magic = msg_magic;
+	Msg->Type = Type;
+	Msg->Len = EventLen;
+    }
+    return Msg;
+}
+
+void Tw_DeleteMsg(tw_d TwD, tmsg Msg) {
+    if (Msg && Msg->Magic == msg_magic)
+	Tw_FreeMem(Msg);
+}
+
+byte Tw_SendMsg(tw_d TwD, tmsgport MsgPort, tmsg Msg) {
+    byte ret = FALSE;
+    if (Msg && Msg->Magic == msg_magic) {
+	ret = Tw_SendToMsgPort(TwD, MsgPort, Msg->Len, (void *)Msg);
+	Tw_FreeMem(Msg);
+    }
+    return ret;
+}
+
+
+    
 
 typedef struct fn_list {
     void *Fn;
@@ -1225,6 +1307,16 @@ byte Tw_FindFunctions(tw_d TwD, void *F, ...) {
 }
 
 #ifdef CONF_SOCKET_GZ
+
+static voidpf Tw_ZAlloc(voidpf opaque, uInt items, uInt size) {
+    void *ret = Tw_AllocMem(items * (size_t)size);
+    return ret ? (voidpf)ret : Z_NULL;
+}
+
+static void Tw_ZFree(voidpf opaque, voidpf address) {
+    if (address != Z_NULL)
+	Tw_FreeMem((void *)address);
+}
 
 /* compress data before sending */
 static uldat Gzip(tw_d TwD) {
@@ -1320,11 +1412,16 @@ static uldat Gunzip(tw_d TwD) {
 
 byte Tw_EnableGzip(tw_d TwD) {
     if (!GzipFlag && Tw_CanCompress(TwD)) {
-	if ((zW = TwAllocMem(sizeof(*zW))) &&
-	    (zR = TwAllocMem(sizeof(*zR)))) {
+	if ((zW = Tw_AllocMem(sizeof(*zW))) &&
+	    (zR = Tw_AllocMem(sizeof(*zR)))) {
 	    
-	    zW->zalloc = zR->zalloc = Z_NULL;
-	    zW->zfree  = zR->zfree  = Z_NULL;
+	    if (Tw_AllocMem == malloc) {
+		zW->zalloc = zR->zalloc = Z_NULL;
+		zW->zfree  = zR->zfree  = Z_NULL;
+	    } else {
+		zW->zalloc = zR->zalloc = Tw_ZAlloc;
+		zW->zfree  = zR->zfree  = Tw_ZFree;
+	    }
 	    zW->opaque = zR->opaque = NULL;
 
 	    if (deflateInit(zW, Z_DEFAULT_COMPRESSION) == Z_OK) {
@@ -1336,18 +1433,18 @@ byte Tw_EnableGzip(tw_d TwD) {
 		deflateEnd(zW);
 	    }
 	}
-	if (zR) TwFreeMem(zR);
-	if (zW) TwFreeMem(zW);
+	if (zR) Tw_FreeMem(zR);
+	if (zW) Tw_FreeMem(zW);
     }
     return FALSE;
 }
 
 byte Tw_DisableGzip(tw_d TwD) {
-    if (GzipFlag && Tw_DoCompress(TwD, FALSE)) {
+    if (GzipFlag && (Fd == NOFD || Tw_DoCompress(TwD, FALSE) || Fd == NOFD)) {
 	inflateEnd(zR);
 	deflateEnd(zW);
-	TwFreeMem(zR);
-	TwFreeMem(zW);
+	Tw_FreeMem(zR);
+	Tw_FreeMem(zW);
 	GzipFlag = FALSE;
 	return TRUE;
     }

@@ -87,12 +87,14 @@ static byte fixup_pty(void) {
     uid_t id = getuid();
     static gid_t grgid = 0;
 
+    /*
     if (!grgid) {
 	struct group *gr;
 	if ((gr = getgrnam("tty")))
 	    grgid = gr->gr_gid;
     }
-    if (grgid && chown(ptydev, id, 0) == 0 && chmod(ptydev, 0600) == 0 &&
+     */
+    if (chown(ptydev, id, 0) == 0 && chmod(ptydev, 0600) == 0 &&
 	chown(ttydev, id, grgid) == 0 && chmod(ttydev, 0620) == 0)
 	return TRUE;
     return FALSE;

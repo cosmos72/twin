@@ -201,8 +201,6 @@ typedef struct msgport msgport;
 typedef struct fn_msgport fn_msgport;
 typedef struct mutex mutex;
 typedef struct fn_mutex fn_mutex;
-typedef struct display display;
-typedef struct fn_display fn_display;
 typedef struct module module;
 typedef struct fn_module fn_module;
 typedef struct display_hw display_hw;
@@ -718,15 +716,14 @@ struct event_map {
 typedef struct event_keyboard event_keyboard;
 struct event_keyboard {
     window *Window;
-    udat Code, FullShiftFlags;
-    udat SeqLen;
+    udat Code, ShiftFlags, SeqLen;
     byte pad, AsciiSeq[1];  /* AsciiSeq[SeqLen] == '\0' */
 };
 
 typedef struct event_mouse event_mouse;
 struct event_mouse {
     window *Window;
-    udat Code, FullShiftFlags;
+    udat Code, ShiftFlags;
     dat X, Y;
 };
 
@@ -753,6 +750,8 @@ struct event_display {
 #define DPY_SetPalette		((udat)12)
 #define DPY_ResetPalette	((udat)13)
 #define DPY_Helper		((udat)14)
+#define DPY_RedrawVideo		((udat)15)
+#define DPY_Quit		((udat)16)
 
 typedef struct event_window event_window;
 struct event_window {
@@ -777,7 +776,7 @@ struct event_menu {
 typedef struct event_clipboard event_clipboard;
 struct event_clipboard {
     window *Window;
-    udat Code, FullShiftFlags; /* Code is unused */
+    udat Code, ShiftFlags; /* Code is unused */
     dat X, Y;
 };
 
@@ -909,9 +908,6 @@ struct display_hw {
     void (*KeyboardEvent)(int fd, display_hw *hw);
     void (*MouseEvent)(int fd, display_hw *hw);
     
-    void (*SetCursorType)(uldat CursorType);
-    void (*MoveToXY)(udat x, udat y);
-
     void (*ShowMouse)(void);
     void (*HideMouse)(void);
 
@@ -955,8 +951,7 @@ struct display_hw {
 
     byte Quitted;
     /*
-     * used internally... is set to TRUE after QuitHW() or KillSlot(attach)
-     * to avoid infinite recursion between them.
+     * used internally... is set to TRUE before InitHW() and after QuitHW()
      */
     
     byte SoftMouse;
@@ -992,11 +987,27 @@ struct display_hw {
     /*
      * various runtime flags
      */
-    
-#if 0
-    hwattr *OldVideo; /* use an ovverride for ChangedVideo here, NOT OldVideo! */
-#endif
 
+    byte CanResize;
+    /*
+     * set to TRUE if the display can actually resize itself (example: X11)
+     * set to FALSE if it can only live with the externally set size (example: tty)
+     */
+    
+    byte RedrawVideo;
+    /*
+     * set to TRUE if the display was corrupted by some external event
+     * example: hw_X11.c sets this when its window gets Expose events
+     */
+    udat RedrawLeft, RedrawUp, RedrawRight, RedrawDown;
+    /*
+     * the corrupted area that needs to be redrawn.
+     * 
+     * the upper layer (i.e. hw.c) automagically updates
+     * ChangedVideoFlag and ChangedVideo[] to include this area
+     * for your display.
+     */
+    
     uldat keyboard_slot, mouse_slot;
 
     mouse_state MouseState;
@@ -1004,6 +1015,11 @@ struct display_hw {
     udat X, Y;
     /*
      * real display size, in character cells.
+     */
+    
+    udat usedX, usedY;
+    /*
+     * used display size (i.e. ScreenWidth, ScreenHeight)
      */
     
     dat Last_x, Last_y;
@@ -1018,15 +1034,15 @@ struct display_hw {
      * intermediate, clean areas, set merge_Threshold to a reasonable value
      * for merge: dirty areas less far than this will be considered as merged
      * by Threshold_isDirtyVideo().
-     * Anyway, it's up to FlushVideo() to actually merge them.
+     * Anyway, it's up to your FlushVideo() to actually merge them.
      * 
      * Otherwise, set this to zero.
      */
     
-    uldat attach; /* slot of process that told us to attach to this display */
+    uldat AttachSlot; /* slot of client that told us to attach to this display */
     
-    byte gotoxybuf[Max2(16,4*sizeof(dat))];  /* hw-dependent data set by MoveToXY */
-    byte cursorbuf[Max2(16,2*sizeof(ldat))]; /* hw-dependent data set by SetCursorType */
+    udat XY[2]; /* hw-dependent cursor position */
+    uldat TT;   /* hw-dependent cursor type */
     
 };
 struct fn_display_hw {
@@ -1048,7 +1064,8 @@ struct fn_display_hw {
 #define NEEDPanicHW		((byte)0x10)
 #define NEEDPersistentSlot	((byte)0x20)
 #define NEEDFromPreviousFlushHW	((byte)0x40)
-    
+#define NEEDBeepHW		((byte)0x80)
+
     
     
 #define NOMEMORY ((udat)1)
@@ -1109,6 +1126,7 @@ struct setup {
 #define SETUP_ALWAYSCURSOR	(byte)0x10
 #define SETUP_NOBLINK		(byte)0x20
 #define SETUP_HIDEMENU		(byte)0x40
+#define SETUP_NOSCROLL		(byte)0x80
 
 /********* State List ***********/
 
@@ -1138,10 +1156,8 @@ struct all {
     byte *Gtranslations[IBMPC_MAP];
     byte MouseOverload;
     byte FlagsMove;
-    udat FullShiftFlags;
     uldat ClipMagic, ClipLen, ClipMax;
     byte *ClipData;
-    palette *Palette;
     void (*AtQuit)(void);
 };
 
@@ -1149,6 +1165,7 @@ struct all {
 #define CLIP_APPEND	((uldat)0x00000000)
 #define CLIP_TEXTMAGIC	((uldat)0x54657874)
 #define CLIP_FILEMAGIC	((uldat)0x46696c65)
+#define CLIP_DATAMAGIC	((uldat)0xDA1AA1AD)
 #define CLIP_IDMAGIC	((uldat)0x49644964)
 
 /*FlagsMove */
@@ -1418,7 +1435,7 @@ struct all {
 #define COD_COMMON_CENTER	(udat)0xFF03
 #define COD_COMMON_ZOOM		(udat)0xFF04
 #define COD_COMMON_MAXZOOM	(udat)0xFF05
-#define COD_COMMON_HIDEMENU	(udat)0xFF06
+#define COD_COMMON_REFRESH	(udat)0xFF06
 #define COD_COMMON_HOTKEY	(udat)0xFF07
 #define COD_COMMON_NEXT		(udat)0xFF08
 #define COD_COMMON_WINLIST	(udat)0xFF09

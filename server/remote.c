@@ -251,14 +251,19 @@ void UnRegisterWindowFdIO(window *Window) {
 
 void remoteKillSlot(uldat slot) {
     msgport *MsgPort;
+    display_hw *D_HW;
+    
     if (slot != NOSLOT) {
 	if ((MsgPort = RemoteGetMsgPort(slot))) {
-	    if (MsgPort->AttachHW) {
+	    /*
+	     * no infinite recursion between KillSlot and DeleteMsgPort...
+	     * DeleteMsgPort doesn't kill the slot, only tries to unregister from it
+	     */
+
+	    if ((D_HW = MsgPort->AttachHW)) {
 		/* avoid KillSlot <-> DeleteDisplayHW infinite recursion */
-		if (!MsgPort->AttachHW->Quitted) {
-		    MsgPort->AttachHW->Quitted = TRUE;
-		    Delete(MsgPort->AttachHW);
-		}
+		MsgPort->AttachHW = (display_hw *)0;
+		Delete(D_HW);
 	    }
 		
 	    Delete(MsgPort); /* and all its children ! */

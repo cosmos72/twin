@@ -17,6 +17,7 @@
 #include "data.h"
 #include "methods.h"
 #include "hw.h"
+#include "hw_multi.h"
 #include "util.h"
 #include "draw.h"
 

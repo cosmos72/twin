@@ -30,6 +30,8 @@
 #include "resize.h"
 #include "draw.h"
 #include "hw.h"
+#include "common.h"
+#include "hw_multi.h"
 #include "builtin.h"
 #include "wm.h"
 #include "scroller.h"
@@ -138,24 +140,33 @@ static void CheckPrivileges(void) {
 static byte Init(void) {
     FD_ZERO(&save_rfds);
     FD_ZERO(&save_wfds);
-    
+
+    OverrideSelect = select;
+
     CheckPrivileges();
     
     if ((origTWDisplay = getenv("TWDISPLAY")))
 	origTWDisplay = strdup(origTWDisplay);
     if ((origTERM = getenv("TERM")))
 	origTERM = strdup(origTERM);
-    
-    InitSignals();
-    InitTtysave();
-    
-    OverrideSelect = select;
+
+    /*
+     * WARNING:
+     * 
+     * do not touch the order of the following InitXXX() calls
+     * unless you *REALLY* know what you're doing.
+     * You may introduce subtle bugs or plainly
+     * have twin segfault at startup.
+     */
     
     return (
+	    InitSignals() &&
 	    SetTWDisplay() &&
 	    (All->AtQuit = UnSetTWDisplay) &&
 	    InitData() &&
-	    InitHW() &&
+	    InitTransUser() &&
+	    InitTtysave() &&
+	    InitHW() && 
 	    InitScroller() &&
 	    InitWM() &&
 #ifdef CONF_TERM
@@ -178,7 +189,9 @@ static byte Init(void) {
 }
     
 void Quit(int status) {
+#if 0
     module *M;
+#endif
     
     if (All->AtQuit)
 	All->AtQuit();
@@ -186,11 +199,13 @@ void Quit(int status) {
     SuspendHW(FALSE);
     /* not QuitHW() as it would fire up socket.so and prepare to run with no HW */
     
+#if 0
     M = All->FirstModule;
     while (M) {
 	Act(DlClose,M)(M);
 	M = M->Next;
     }
+#endif
     if (status < 0)
 	return; /* give control back to signal handler */
     exit(status);
@@ -235,6 +250,8 @@ int main(int argc, char *argv[]) {
     if (!Init())
 	Quit(0);
 
+    DrawArea(FULLSCREEN);
+    
     Now = &All->Now;
     InstantNow(Now);
     SortAllMsgPortsByCallTime();
@@ -244,8 +261,6 @@ int main(int argc, char *argv[]) {
     for (;;) {
 	RemoteFlushAll();
 	
-	read_fds = save_rfds;
-
 	/*
 	 * we could call InstantNow(Now) here, to get a more accurate
 	 * sleep time and don't lag behing, but that doesn't make much sense
@@ -274,17 +289,38 @@ int main(int argc, char *argv[]) {
 	}
 	
 	do {
-	    if (NeedHW & NEEDResizeDisplay)
-		ResizeDisplay(), DrawArea(FULLSCREEN);
+	    if (NeedHW & NEEDResizeDisplay) {
+		ResizeDisplay();
+		DrawArea(FULLSCREEN);
+		UpdateCursor();
+	    }
 	    
 	    if (NeedHW & NEEDExportClipBoard)
 		ExportClipBoard();
 	    
+	    /*
+	     * A display HW could Panic in its Event handlers or in its
+	     * FlushVideo/FlushHW routines. So check for Panic BEFORE or AFTER
+	     * FlushHW? Consider that after a Panic, all displays could get resized
+	     * and thus need a FlushHW.
+	     * I my opinion, it's better to keep open a paniced display HW for a while,
+	     * than not to flush all remaining displays which just resized.
+	     * 
+	     * So first call PanicHW(), then FlushHW()
+	     */
+	    if (NeedHW & NEEDPanicHW)
+		PanicHW();
+
 	    if (StrategyFlag != HW_DELAY)
 		FlushHW();
 	    
-	    if (NeedHW & NEEDPanicHW)
-		PanicHW();
+	    if (NeedHW & NEEDPanicHW) {
+		/* hmm... displays are rotting quickly today */
+		sel_timeout.tv_sec = sel_timeout.tv_usec = 0;
+		this_timeout = &sel_timeout;
+	    }
+	    
+	    read_fds = save_rfds;
 
 	    if (!FdWQueued)
 		pwrite_fds = NULL;

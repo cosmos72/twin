@@ -19,6 +19,8 @@
 
 #include "main.h"
 #include "hw.h"
+#include "hw_multi.h"
+#include "common.h"
 #include "resize.h"
 #include "draw.h"
 #include "util.h"
@@ -253,20 +255,15 @@ void UpdateDisplayWin(window *displayWin) {
 static void DisplayH(msg *Msg) {
     display_hw *hw;
     uldat i;
-    byte isCTTY = FALSE;
-    
+
     switch (Msg->Event.EventGadget.Code) {
       case COD_D_REMOVE:
 	if (Act(SearchRow,DisplayWin)(DisplayWin, i = DisplayWin->CurY)) {
 	    for (hw = All->FirstDisplayHW; hw && i; hw = hw->Next, i--)
 		;
-	    if (hw && !i) {
-		isCTTY = hw == DisplayHWCTTY;
+	    if (hw && !i)
 		Delete(hw);
-	    }
 	}
-	if (isCTTY || !All->FirstDisplayHW)
-	    RunNoHW();
 	break;
       case COD_D_UPDATE:
 	UpdateDisplayWin(DisplayWin);
@@ -342,10 +339,6 @@ static void BuiltinH(msgport *MsgPort) {
 		    Builtin_MsgPort->WakeUp = TIMER_ALWAYS;
 		    break;
 
-		  case COD_REFRESH:
-		    RefreshVideo();
-		    break;
-		    
 		  case COD_QUIT:
 		    Quit(0);
 		    break;
@@ -523,7 +516,7 @@ byte InitBuiltin(void) {
     byte *s, *greeting = "\n"
 	"                TWIN             \n"
 	"        Text WINdows manager     \n\n"
-	"          Version 0.3.0 by       \n\n"
+	"          Version 0.3.1 by       \n\n"
 	"        Massimiliano Ghilardi    \n\n"
 	"         <max@Linuz.sns.it>      ";
     uldat grlen = strlen(greeting);
@@ -540,7 +533,6 @@ byte InitBuiltin(void) {
 	Info4Menu(Builtin_Menu, ROW_ACTIVE, (uldat)42, " Hit PAUSE or Mouse Right Button for Menu ", "tttttttttttttttttttttttttttttttttttttttttt") &&
 	
 	(Window=Win4Menu(Builtin_Menu)) &&
-	Row4Menu(Window, COD_REFRESH,    ROW_ACTIVE, 9, " Refresh ") &&
 	Row4Menu(Window, COD_CLOCK_WIN,  ROW_ACTIVE, 9, " Clock   ") &&
 	Row4Menu(Window, COD_OPTION_WIN, ROW_ACTIVE, 9, " Options ") &&
 	Row4Menu(Window, COD_DISPLAY_WIN,ROW_ACTIVE, 9, " Display ") &&

@@ -24,6 +24,7 @@
 #include "resize.h"
 #include "draw.h"
 #include "hw.h"
+#include "common.h"
 #include "tty.h"
 
 /*
@@ -645,7 +646,7 @@ static void respond_string(byte *p) {
 		Event->Code = p[0];
 	    else
 		Event->Code = 1;
-	    Event->FullShiftFlags = All->FullShiftFlags;
+	    Event->ShiftFlags = (udat)0;
 	    Event->SeqLen = Len;
 	    CopyMem(p, Event->AsciiSeq, Len);
 	    Event->AsciiSeq[Len] = '\0'; /* terminate string with \0 */

@@ -82,7 +82,8 @@
    and `HW support: X11' to `y' there are chances twin will work
    on non-Linux systems too (feedback welcome on this).
    
-   Beyond using X11 or itself for output, twin can write to screen in two ways:
+   Beyond using X11 or another copy of itself for output,
+   twin can write to screen in two ways:
    a: writing to Linux special devices /dev/vcsa* which have the same layout
       as VGA textmode framebuffer. This allows for _any_ ASCII char
       to be displayed, from 0 to 255 but works only on linux console.
@@ -245,15 +246,19 @@
 
    If you want, you can specify the display to use
    instead of letting twin autoprobe; the syntax is:
-     twin [-hw=<display>[,options]]
+   
+     twin [-hw=<display>[,options]] [-hw=<display>[,options]] ...
+     
    where <display> is one of:
+   
         X[@<XDISPLAY>]     or    X11[@<XDISPLAY>]
 	twin[@<TWDISPLAY>]
 	tty[@<tty device>]
-
+	ggi[@<libggi target>]
+	
    for an explanation of the available display methods and their options,
-   see paragraph 8) below about `twattach' :
-   it has the exactly same syntax as twin for `-hw=<display>[,options]'
+   see paragraph 8) below about `twattach' and `twdisplay': they have
+   exactly the same syntax as twin for the argument `-hw=<display>[,options]'
 
 
 5. The Twin UI (User Interface): how to use
@@ -372,59 +377,62 @@
    another machine, using TCP sockets, do something like
 	export TWDISPLAY=<host-name>:<the-value-you-got>
    In the last case, you will also need to authorize your clients to talk
-   to twin: the authorization method currently used is similar to Xauthority,
+   to twin. The authorization method currently used is similar to Xauthority:
    the file .TwinAuth in your home directory holds some magic data that
    clients use to answer the challenge received from twin. If that data
-   is wrong or the file doesn't exist clients can connect to twin only
+   is wrong or the file doesn't exist, clients can connect to twin only
    using the unix socket (TWDISPLAY=:<something>) so they must run
-   on the same machine as twin: remote programs won't be able to connect.
+   on the same machine as twin; remote programs won't be able to connect.
 
    The external programs (clients) distributed with twin are:
    
-	twattach  - utility to attach/detach twin from its display
+	twattach  - utility to attach/detach twin from displays
 	twcat     - twin-aware version of `cat'
 	twedit    - a wannabe twin editor. For now, it's just a test.
 	twevent   - display twin events, like xev (X11) and mev (console/gpm)
 	twmapscrn - twin equivalent of Linux console tool `mapscrn'
 		    NOTE: when started from Linux console, twin will already
-		    load the current consolemap translation, so that twmapscrn
+		    load the current consolemap translation, so using twmapscrn
 		    is often not necessary.
 	twsetroot - customize twin background (see clients/README.twsetroot)
 	twsysmon  - a system resources monitor
-	twterm    - creates remote twin terminal windows
-	            known options: -e <cmd> [<args> ...]
-		    : run "<cmd> [<args>]" instead of user $SHELL
-	
+	twterm    - create remote twin terminal windows
+	            known options:
+		      -e <cmd> [<args> ...]
+			: run "<cmd> [<args> ...]" instead of user $SHELL
+		      -t <title>
+		        : set window name to <title>
+			(you will need to enclose <title> in quotes
+			if it contains spaces or other special chars)
+			
 7. Transparent Compression
 
    Starting from version 0.2.2 twin (and obviously libTw) transparently
-   support gzip compressed sockets. If the connection between twin and
-   the remote programs you want to run is slow, you may benefit from
-   compression.
+   support gzip compressed sockets by using the library `zlib'.
+   If the connection between twin and the remote programs you want to run
+   is slow, you may benefit from compression.
    
-   To allow compression, you must answer `y' to the configure question
+   To allow compression, you must make sure you have zlib installed
+   on your system, then answer `y' to the configure question
    
       Sockets: Support gzip compression [Y/n] ?
   
-   then compile twin and libTw.
+   finally compile twin and libTw.
 
-   To actually use compression, you can either append ",gz"
+   To actually use compression, append ",gz"
    to your $TWDISPLAY like in these examples:
 
       export TWDISPLAY=:0,gz
       export TWDISPLAY=linuz.sns.it:5,gz
       
-   or you can manually add a call to TwEnableGzip() in your client programs,
-   after you called TwOpen(NULL).
-   
    
 8. Attach/Detach
 
-   There are two ways to temporarily stop (and then resume) twin:
+   There are various ways to temporarily close a display used by twin:
    
    1) select `Suspend' from the `File' entry of the default menu.
       This is equivalent to the normal Unix job control associated to CTRL-Z:
-      twin shuts down its display and returns to the shell it was started from.
+      twin shuts down its displays and returns to the shell it was started from.
       To resume twin, just type `fg' (or send a SIGCONT to it).
       This may not work if you used 2) below, because that detaches twin
       from the job control mechanism used by shells.
@@ -433,125 +441,207 @@
       WARNING: Be sure the Socket Server can be started before doing this!
                Otherwise you will not be able to reattach twin to any display
 	       at all!
-      In this case, twin shuts down its display and detaches
+      In this case, twin shuts down its displays and detaches
       (by forking in the background) from the shell it was started from,
       but keeps running as a daemon (with no display).
-      To have twin attach to a display (possibly different than the last used)
-      you must run `twattach' specifying which display you want twin
-      to attach to. Unless you add the option `-s' (silent) to `twattach',
-      it will report all messages generated by twin during the attach.
+   
+   3) run `twdetach' (more explanations below for this, but in this case
+      it is equivalent to selecting `Detach' from the default menu).
+   
+   4) select `Display' from the `ð' entry of the default menu,
+      watch the `Display' window pop up, choose a display from the list
+      and click on `Remove'.
       
-      Examples:
-      if your twin exports $TWDISPLAY set to :5 and you detached it, you can:
+   There are two ways to have twin attach to a display
+   (or to ONE MORE display, as twin can use multiple simultaneous displays):
+   `twattach' and `twdisplay'.
+
+   Let's start with `twattach':
+   
+      Basically, you run twattach specifying which display you want *twin*
+      to attach to.
+      Twin then tries to start that display by its own,
+      while twattach only work is to report all messages generated by twin
+      during the attach (if you run twattach with the option `-s' (silent),
+      then twattach has nothing to do at all).
+   
+   Instead `twdisplay' works differently:
+   
+      You run twdisplay specifying which display you want *twdisplay* to use.
       
-      $ twattach -twin@:5 -hw=X
-      to tell twin to attach to the default X server (corresponding to $DISPLAY)
+      Twdisplay tries to start that display, reporting any generated message.
+      If the display succeeds in starting up, twdisplay connects to twin,
+      registers itself as a special display, and then works as an intermediate
+      layer between the display it started and twin:
+      twdisplay sends to twin the events generated by the display,
+      and when it receives draw requests from twin, it calls the appropriate
+      functions of the display to keep it up-to-date.
       
-      $ twattach -twin@:5 -hw=X@<some X display>
-      to tell twin to attach to the X server corresponding to <some X display>
-      (<some X display> may be :0, or linuz.sns.it:0, or whatever you like)
+   The two different programs have different advantages and disadvantages:
+               
+	       
+   twattach:   advantages:  fast, efficient, extremely lightweight.
+            disadvantages:  completely relies on twin to be able to use
+	                    the display. For example, twin running on a host
+			    cannot connect to `gpm' running on another,
+			    and attaching twin to itself causes a deadlock.
+   
+   twdisplay:  advantages:  starts up the display by its own.
+                            This means that if you have twin running on a host,
+			    you can use twdisplay to attach twin to the console
+			    of another host, WITH mouse support (gpm).
+			    Also protects twdisplay from bugs, quirks and
+			    limitations in display drivers and libraries
+			    needed by them: libgpm can connect only ONCE
+			    to A SINGLE gpm, libX11 tends to call exit() when
+			    its X window gets deleted, etc.
+			    Using `twdisplay' to attach twin to itself works!
+            disadvantages:  eats more CPU and memory.
+	    
+	    
+    Examples:
+      
+      $ twattach -hw=X
+      tell the default twin (corresponding to $TWDISPLAY)
+      to attach to the default X server (corresponding to $DISPLAY)
+
+      $ twdetach -hw=X
+      tell the default twin
+      to detach ONE display attached to the default X server
+
+      $ twdetach -twin@:5
+      tell the twin corresponding to :5 to detach from ALL its displays
+      and keep running in the background (same as using `Detach' from menu)
+
+      $ twattach -twin@<some twin display> -hw=X@<some X display>
+      tell twin correspinding to <some twin display>
+      (for example :5, or myhost.somewhere.net:2)
+      to attach to the X server corresponding to <some X display>
+      The programs `twattach', `twin', and the X server do not need
+      to run on the same host as long as they have the permissions
+      to talk each other (see below for an explanation about how
+      the file .TwinAuth is used for authorization control)
       
       $ twattach -twin@:5 -hw=tty
-      to tell twin to attach to the same tty device
-      you are running `twattach' on.
-      
-      $ twattach -twin@:5 -hw=tty@<some tty device>
-      to tell twin to attach to <some tty device>.
+      tell twin :5 to attach to the same tty device you are running
+      `twattach' on. For this to work, both `twattach' and `twin' must
+      be running on the same host.
+
+      $ twdisplay -twin@myhost.somewhere.net:1 -hw=tty
+      attach twin at myhost.somewhere.net:1 to the tty device you are running
+      `twdisplay' on. Since it is actually twdisplay that attaches to the tty,
+      while twin just receives a connection from twdisplay and forwards
+      drawing commands on that connection, `twdisplay' and `twin' do not need
+      to be running on the same host.
+
+      $ twattach -twin@myhost.somewhere.net:1 -hw=tty@-
+      tell twin at myhost.somewhere.net:1 to attach to its own controlling tty.
+      This does not work if that twin has already detached from its tty,
+      but you will be told so in case it happens.
+
+      $ twdetach -twin@myhost.somewhere.net:1 -hw=tty@-
+      tell twin at myhost.somewhere.net:1 to detach from its own controlling
+      tty (supposing it was used as a display)
+
+      $ twattach -twin@:5 -hw=tty@<some tty device>,TERM=<terminal type>
+      tell twin to attach to <some tty device>.
       In this case you must make sure no program is reading/writing
       on <some tty device> (for example you might run `sleep 365d' on it)
       or things will go BADLY wrong.
 
       WARNING:
-        twin has no way to detect if the tty you specified
-	is a supported terminal (a linux console or a twin terminal).
+        twin has no way to detect if the tty you specified is really
+	a supported terminal (a linux console or a twin terminal).
         If you attach twin to an unsupportd terminal,
 	things might go BADLY wrong.
 
-      Of course you don't need to run twattach on the same host where
-      twin is running... just use
-      $ twattach -twin@<host name>:<TWDISPLAY> -hw=<some display>
+      $ twdisplay -twin@myhost.somewhere.net:1 -hw=twin@yourhost:3,gz
+      attach twin running on myhost.somewhere.net:1
+      to another twin running on yourhost:3 and display on it.
+      The final ",gz" means that the connection between `twdisplay'
+      and the second `twin' will be compressed.
+      
+      $ twattach -twin@<some twin display> -hw=ggi
+      tell twin to fire up libggi and display on it.
+      
+      
 
-      Anyway, if twattach and twin are running on different hosts,
-      using `-hw=tty' or `-hw=tty@<device>' tells twin to attach
-      to a tty device on the host twin is running on,
-      and NOT on the host twattach is running on... so be careful.
+    The most general syntax of twattach is:
+      twattach [-a|-d] [-v|-s] [-twin@<TWDISPLAY>] -hw=<display>[,options]
 
-      The most general syntax of twattach is:
-        twattach [-a|-d] [-v|-s] [-twin@<TWDISPLAY>] -hw=<display>[,options]
+    The most general syntax of twdisplay is:
+      twdisplay [-v|-s] [-twin@<TWDISPLAY>] -hw=<display>[,options]
 
-      switches have the following meaning:
-        -a	: send attach command (default)
-	-d	: send detach command (same as running `twdetach')
-	-v	: be verbose and display all messages generated by twin
+    switches have the following meaning:
+      -a	: send attach command (default)
+      -d	: send detach command (same as running `twdetach [args ...]')
+      -v	: be verbose and display all messages generated by twin
 	          while trying to attach (default)
-	-s	: be silent and display no message
-		  
-      the display to attach to can be one of:
-        X[@<XDISPLAY>]     or    X11[@<XDISPLAY>]
-	twin[@<TWDISPLAY>]
-	tty[@<tty device>]
+      -s	: be silent and display no message
 
-      and known display options are:
+    if you do not specify `-twin@<TWDISPLAY>', the default $TWDISPLAY will
+    be used.
+      
+    know displays are:
+      
+      -hw=X[@<XDISPLAY>]     or    -hw=X11[@<XDISPLAY>]
+      -hw=twin[@<TWDISPLAY>]
+      -hw=tty[@<tty device>]
+      -hw=ggi[@<libggi target>]
+	
+    and known display options are:
+      
       -hw=X  or
-      -hw=X11	: `font=<fontname>' to choose your favourite X11 font
+      -hw=X11	: ",font=<fontname>" to choose your favourite X11 font
 		  (default: vga)
+		: ",drag" to allow using XCopyArea as redrawing speedup.
+		  This is off by default as on many X servers XCopyArea
+		  actually eats more CPU time than a normal redraw.
+		  Your mileage may vary.
       
-      -hw=twin	: `,gz' to enable gzip compression on the connecting socket
+      -hw=twin	: ",gz" to enable gzip compression on the connecting socket
       
-      -hw=tty	: `,stdout' to draw on stdout even if /dev/vcsa* is available
-		: `,TERM=<terminal>' to specify the terminal type
-		
-      A common situation is the following:
-      
-      you have a detached twin, whose TWDISPLAY is :2,
-      running on a host (say plato.alter.net),
-      you are sitting at the console of another host (say globe.alter.net)
-      and you want to attach twin on the console of globe.alter.net.
-      How?
-      Attaching twin to the X server of globe.alter.net is easy, just run
-      this command on globe
-      $ twattach -twin@plato.alter.net:2 -hw=X@globe.alter.net:0
-      
-      (this requires you have the same .TwinAuth on both hosts
-      and that the X server on globe accepts the connection attempt,
-      either due to `xhost +plato.alter.net' or by having a suitable
-      .Xauthority on both hosts)
-      
-      But attaching twin (running on plato) to the console of globe is another
-      matter, since that twin has no way to reach the tty devices on globe.
-      Currently, there are three ways to do this:
-      The first two need to start another twin, this time on globe console.
-      Assume the TWDISPLAY of this newly started twin is :1.
+      -hw=tty	: ",stdout" to draw on stdout even if /dev/vcsa* is available
+		: ",TERM=<terminal>" to specify the terminal type
 
-      Then, the first method consists in opening a twin terminal
-      in twin on globe (and maybe ZOOM it), then start a telnet
-      (or ssh, or whatever) to plato, login and finally attach the twin
-      running on plato to the twin terminal:
-      $ twattach -twin@:2 -hw=tty
+      -hw=ggi	: no options, use the zillion of libggi environment variables
+		  to control libggi behaviour.
+
+
+
+    A common situation is the following:
       
-      This does it, but unluckily requires
-      a) to run one more twin (which uses the screen's top row for menu)
-      b) to telnet (or ssh, ...) to the host twin is running on.
+    You have a detached twin, whose TWDISPLAY is :2,
+    running on a host (say plato.alter.net),
+    you are sitting at the console of another host (say globe.alter.net)
+    and you want to attach twin on the console of globe.alter.net.
+    How?
+
+    Attaching twin to the X server of globe.alter.net is easy, just run
+    this command on globe
+    $ twattach -twin@plato.alter.net:2 -hw=X@globe.alter.net:0
+    
+    or alternatively,
+    $ twdisplay -twin@plato.alter.net:2 -hw=X@globe.alter.net:0
+
+    (this requires you have the same .TwinAuth on both hosts
+    and that the X server on globe accepts the connection attempt,
+    either due to `xhost +plato.alter.net' or by having a suitable
+    .Xauthority on both hosts)
       
-      The second method exploits the fact that twin can directly connect
-      to another twin and open a window as display:
-      you start the Socket Server on the twin running on globe,
-      then type (eventually from a twin terminal)
-      $ twattach -twin@plato.alter.net:2 -hw=twin@globe.alter.net:1
-      
-      In order for this command to work, your .TwinAuth must be
-      the same on both hosts.
-      
-      The third way is easier (and more brutal), but doesn't allow
-      using the mouse: from the `globe' console start a telnet
-      (ssh, or whatever) to `plato', login then type:
-      $ twattach -twin@:2 -hw=tty
-      You will be warned that no mouse driver can be started,
-      but you will have back your fullscreen twin.
-      
-      A last note: running `twdetach' or `twattach -d' is the same as
-      selecting `Detach' from the `File' entry of the default menu.
-      
+    But attaching twin (running on plato) to the console of globe is another
+    matter, since that twin has no way to reach the tty devices on globe.
+    The easiest way is to use `twdisplay', running this command on globe
+    console:
+    
+    $ twdisplay -twin@plato.alter.net:2 -hw=tty
+
+    There are ways to solve the problem without `twdisplay', but they
+    are both more complex and less functional, as they either require
+    using telnet or ssh from globe to plato (and thus losing the mouse)
+    or starting a SECOND twin, this time on globe console, and attaching
+    the first twin on it.
+    
 
 9.  Installing vga.pcf.gz
 
@@ -573,10 +663,10 @@
 
 10. Greetings
 
-   I hope you will like using twin as I liked writing it.
-   Have fun...
+    I hope you will like using twin as I liked writing it.
+    Have fun...
    
    
-   Massimiliano Ghilardi
-   <max@linuz.sns.it>
+    Massimiliano Ghilardi
+    <max@linuz.sns.it>
 

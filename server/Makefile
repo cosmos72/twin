@@ -5,18 +5,22 @@
 
 TOPDIR=..
 
-BASEOBJS=data.o methods.o util.o draw.o main.o hw.o HW/hw.a resize.o scroller.o builtin.o wm.o remote.o
+BASEOBJS=data.o methods.o util.o draw.o main.o hw_multi.o \
+	 resize.o scroller.o builtin.o wm.o remote.o
+HWOBJS=hw.o HW/hw.a
 ALLOCOBJS=alloc.o
 DLOBJS=dl.o
 SOCKETOBJS=socket.o md5.o
 TERMOBJS=pty.o tty.o term.o 
 WRAPOBJS=wrapper.o
-ALLOBJS:=$(BASEOBJS) $(ALLOCOBJS) $(DLOBJS) $(TERMOBJS) $(SOCKETOBJS) $(WRAPOBJS)
+DISPLAYOBJS=display.o
+ALLOBJS:=$(BASEOBJS) $(HWOBJS) $(ALLOCOBJS) $(DLOBJS) $(TERMOBJS) $(SOCKETOBJS) $(WRAPOBJS) $(DISPLAYOBJS)
 
-OBJS_twin_real:=$(BASEOBJS)
+OBJS_twin_real:=$(BASEOBJS) $(HWOBJS)
 OBJS_socket.so:=$(SOCKETOBJS)
 OBJS_term.so:=$(TERMOBJS)
 OBJS_twin_wrapper:=$(WRAPOBJS)
+OBJS_twdisplay:=$(DISPLAYOBJS) $(HWOBJS)
 
 BINS=twin_real twin_wrapper
 MODBINS=
@@ -24,14 +28,16 @@ MODBINS=
 # don't use := here, as DESTDIR is not set yet
 CFLAGS_dl.o=$(strip $(patsubst %,-DCONF_DESTDIR=\"%\",$(DESTDIR)))
 CFLAGS_wrapper.o=$(strip $(patsubst %,-DCONF_DESTDIR=\"%\",$(DESTDIR)))
+CFLAGS_display.o=$(strip $(patsubst %,-DCONF_DESTDIR=\"%\",$(DESTDIR)))
 
 LDFLAGS_socket.so=-lc -shared
 LDFLAGS_term.so=-lc -shared
+LDFLAGS_twdisplay=-L$(TOPDIR)/lib -lTw
 
 #
 # target
 #
-all: $(BINS) modules twin
+all: bins modules twin
 
 twin_real: HW.dir
 
@@ -52,6 +58,7 @@ include $(TOPDIR)/conf/config.status
 ifeq ($(CONF_MODULES),y)
   LDFLAGS_twin_real+=-rdynamic -ldl
   OBJS_twin_real+=$(DLOBJS)
+  LDFLAGS_twdisplay+=-rdynamic -ldl
 else
   EXCL_OBJS+=$(DLOBJS)
 endif
@@ -84,6 +91,7 @@ endif
 
 ifeq ($(CONF_ALLOC),y)
   OBJS_twin_real+=$(ALLOCOBJS)
+  OBJS_twdisplay+=$(ALLOCOBJS)
   CFLAGS+=-DCONF_ALLOC
 else
   EXCL_OBJS+=$(ALLOCOBJS)
@@ -96,15 +104,23 @@ endif
 ifeq ($(CONF_HW_TTY),y)
   ifeq ($(CONF_HW_TTY_LINUX),y)
     LDFLAGS_twin_real+=-lgpm #/usr/lib/libgpm.a
+    LDFLAGS_twdisplay+=-lgpm #/usr/lib/libgpm.a
   endif
 endif
 ifeq ($(CONF_HW_X11),y)
-  LDFLAGS_twin_real+=-L/usr/X11/lib -lX11
+  LDFLAGS_twin_real+=-L/usr/X11R6/lib -lX11
+  LDFLAGS_twdisplay+=-L/usr/X11R6/lib -lX11
 endif
 ifeq ($(CONF_HW_GGI),y)
   LDFLAGS_twin_real+=-lggi
+  LDFLAGS_twdisplay+=-lggi
 endif
 ifneq ($(CONF_SOCKET),n)
+
+  ifneq ($CONF_HW_DISPLAY, n)
+    BINS+=twdisplay # compile it!
+  endif
+  
   ifeq ($(CONF_HW_TWIN),y)
     LDFLAGS_twin_real+=-L$(TOPDIR)/lib -lTw
   endif
@@ -120,14 +136,17 @@ include $(TOPDIR)/Rules
 # All done. Now just set a few special targets
 #
 
+bins: $(BINS)
+
 modules: $(MODBINS)
 
 clean:
 	make clean -C HW
-	rm -f .*.flags .*.link .*.arlib gmon.out core twin_real twin_wrapper twin getsizes socket.so term.so $(ALLOBJS)
+	rm -f .*.flags .*.link .*.arlib gmon.out core log twin \
+	      twin_real twin_wrapper twdisplay socket.so term.so $(ALLOBJS)
 
 install:
-	$(CP) twin_real twin_wrapper twin $(DESTDIR)/bin
+	$(CP) twin $(BINS) $(DESTDIR)/bin
 	chmod u+s $(DESTDIR)/bin/twin_real
 	if [ "$(MODBINS)" ]; then \
 	  $(MKDIR) $(DESTDIR)/lib/twin/modules; \

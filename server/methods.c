@@ -22,6 +22,7 @@
 #include "remote.h"
 #include "wm.h"
 #include "hw.h"
+#include "hw_multi.h"
 
 #ifdef CONF_TERM
 # include "tty.h"
@@ -1473,11 +1474,13 @@ menuitem *Create4MenuCommonMenuItem(fn_menuitem *Fn_MenuItem, menu *Menu) {
 	Row4Menu(Window, COD_COMMON_ZOOM,     ROW_ACTIVE, 15," Zoom          ") &&
 	Row4Menu(Window, COD_COMMON_MAXZOOM,  ROW_ACTIVE, 15," \x11ZOOM\x10        ") &&
 	Row4Menu(Window, (udat)0,             ROW_IGNORE, 15,"ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ") &&
-	Row4Menu(Window, COD_COMMON_HOTKEY,   ROW_ACTIVE, 15," Send HotKey   ") &&
 	Row4Menu(Window, COD_COMMON_RAISELOWER,ROW_ACTIVE,15," Raise / Lower ") &&
 	Row4Menu(Window, COD_COMMON_UNFOCUS,  ROW_ACTIVE, 15," UnFocus       ") &&
 	Row4Menu(Window, COD_COMMON_NEXT,     ROW_ACTIVE, 15," Next          ") &&
 	Row4Menu(Window, COD_COMMON_WINLIST,  ROW_ACTIVE, 15," List...       ") &&
+	Row4Menu(Window, (udat)0,             ROW_IGNORE, 15,"ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ") &&
+	Row4Menu(Window, COD_COMMON_REFRESH,  ROW_ACTIVE, 15," Refresh       ") &&
+	Row4Menu(Window, COD_COMMON_HOTKEY,   ROW_ACTIVE, 15," Send HotKey   ") &&
 	Row4Menu(Window, (udat)0,             ROW_IGNORE, 15,"ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ") &&
 	Row4Menu(Window, COD_COMMON_CLOSE,    ROW_ACTIVE, 15," Close         ")) {
 	
@@ -2080,8 +2083,12 @@ static display_hw *CreateDisplayHW(fn_display_hw *Fn_DisplayHW, uldat NameLen, b
 	DisplayHW->NameLen = NameLen;
 	DisplayHW->Name = newName;
 	DisplayHW->Module = NULL;
-	DisplayHW->Quitted = FALSE;
-	DisplayHW->attach = NOSLOT;
+	DisplayHW->Quitted = TRUE;
+	DisplayHW->AttachSlot = NOSLOT;
+	/*
+	 * ->Quitted will be set to FALSE only
+	 * immediately before trying DisplayHW->InitHW()
+	 */
 	InsertLast(DisplayHW, DisplayHW, All);
     } else if (newName)
 	FreeMem(newName);
@@ -2097,7 +2104,10 @@ static void InsertDisplayHW(display_hw *DisplayHW, all *Parent, display_hw *Prev
 	InsertGeneric((obj *)DisplayHW, (obj_parent *)&Parent->FirstDisplayHW, (obj *)Prev, (obj *)Next, (uldat *)0);
 	DisplayHW->All = Parent;
 #if 0
-	/* here we risk to call uninitialized DisplayHW routines... put after InitHW() */
+	/*
+	 * here we would call uninitialized DisplayHW routines like MoveToXY,
+	 * put this after DisplayHW->InitHW()
+	 */
 	if (All->FnHookDisplayHW)
 	    All->FnHookDisplayHW(All->HookDisplayHW);
 #endif
@@ -2116,12 +2126,26 @@ static void RemoveDisplayHW(display_hw *DisplayHW) {
 
 static void DeleteDisplayHW(display_hw *DisplayHW) {
     if (DisplayHW) {
-	Act(Quit,DisplayHW)(DisplayHW);
+	byte isCTTY = DisplayHW->DisplayIsCTTY && DisplayHW == DisplayHWCTTY;
+	byte Quitted = DisplayHW->Quitted;
+	
+	if (!Quitted)
+	    Act(Quit,DisplayHW)(DisplayHW);
 	
 	Remove(DisplayHW);
 	if (DisplayHW->Name)
 	    FreeMem(DisplayHW->Name);
 	DeleteObj((obj *)DisplayHW);
+	
+	if (!Quitted) {
+	    if (!All->FirstDisplayHW || isCTTY)
+		RunNoHW();
+	    else if (All->FirstDisplayHW && ResizeDisplay()) {
+		/* a bit expensive... but for correctness this must stay here */
+		DrawArea(FULLSCREEN);
+		UpdateCursor();
+	    }
+	}
     }
 }
 

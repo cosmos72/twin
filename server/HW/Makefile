@@ -27,7 +27,7 @@ MODBINS=
 ARLIBS=hw.a
 
 LDFLAGS_hw_tty.so=-lc -shared
-LDFLAGS_hw_X11.so=-lc -shared -L/usr/X11/lib -lX11
+LDFLAGS_hw_X11.so=-lc -shared -L/usr/X11R6/lib -lX11
 LDFLAGS_hw_display.so=-lc -shared
 LDFLAGS_hw_twin.so=-lc -shared -L$(TOPDIR)/lib -lTw
 LDFLAGS_hw_ggi.so=-lc -shared -lggi

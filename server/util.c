@@ -25,13 +25,12 @@
 udat ErrNo;
 byte *ErrStr;
 
+#if 0
 uldat MemLeft(void) {
-    /* TODO */
+    /* TODO? */
     return 0;
 }
-
-void NoOperation(void) {
-}
+#endif
 
 void Error(udat Code_Error) {
     if ((ErrNo = Code_Error) == NOMEMORY) {

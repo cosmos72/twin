@@ -37,6 +37,8 @@
 #include "md5.h"
 #include "resize.h"
 #include "hw.h"
+#include "hw_multi.h"
+#include "common.h"
 
 #include "libTw.h"
 
@@ -317,6 +319,126 @@ static obj *ParentObj(obj *Obj) {
     return Obj ? (obj *)Obj->Parent : Obj;
 }
 
+
+INLINE void *CloneMem(void *From, uldat Size) {
+    void *temp;
+    if (From && Size && (temp = AllocMem(Size)))
+	return CopyMem(From, temp, Size);
+    return NULL;
+}
+
+#define tDelta ((size_t)&(((tmsg)0)->Event))
+#define  Delta ((size_t)&(((msg *)0)->Event))
+
+static byte SendToMsgPort(msgport *MsgPort, udat Len, byte *Data) {
+    msg *Msg;
+    tmsg tMsg = (tmsg)Data;
+    uldat _Len;
+    byte ok = TRUE;
+    
+    if (MsgPort && Len && tMsg && Len >= tDelta && Len == tMsg->Len &&
+	tMsg->Magic == msg_magic) {
+	
+	if (tMsg->Type == TW_MSG_WINDOW_KEY)
+	    _Len = Delta + tMsg->Event.EventKeyboard.SeqLen;
+	else
+	    _Len = FnMsg->Size;
+	
+	if ((Msg = Do(Create,Msg)(FnMsg, tMsg->Type, _Len))) {
+
+	    Msg->Event.EventCommon.Window =
+		(void *)Id2Obj(window_magic >> magic_shift,
+			       tMsg->Event.EventCommon.Window);
+
+	    switch (tMsg->Type) {
+#if defined(CONF_MODULES) || defined (CONF_HW_DISPLAY)
+	      case TW_MSG_DISPLAY:
+
+		if (sizeof(struct tevent_display) == sizeof(twindow) + 4*sizeof(dat) + sizeof(byte *)) {
+		    CopyMem((void *)&tMsg->Event.EventDisplay.Code,
+			    (void *)& Msg->Event.EventDisplay.Code, 4*sizeof(dat));
+		} else {
+		    Msg->Event.EventDisplay.Code   = tMsg->Event.EventDisplay.Code;
+		    Msg->Event.EventDisplay.Len    = tMsg->Event.EventDisplay.Len;
+		    Msg->Event.EventDisplay.X      = tMsg->Event.EventDisplay.X;
+		    Msg->Event.EventDisplay.Y      = tMsg->Event.EventDisplay.Y;
+		}
+		if (!(Msg->Event.EventDisplay.Data =
+		      CloneMem(tMsg->Event.EventDisplay.Data, tMsg->Event.EventDisplay.Len))
+		    && tMsg->Event.EventDisplay.Len)
+		    
+		    ok = FALSE;
+		      
+		break;
+#endif /* defined(CONF_MODULES) || defined (CONF_HW_DISPLAY) */
+	      case TW_MSG_WINDOW_KEY:
+		if (sizeof(struct tevent_keyboard) == sizeof(twindow) + 3*sizeof(dat) + 2*sizeof(byte)) {
+		    CopyMem((void *)&tMsg->Event.EventKeyboard.Code,
+			    (void *)& Msg->Event.EventKeyboard.Code, 3*sizeof(dat) + sizeof(byte));
+		} else {
+		    Msg->Event.EventKeyboard.Code       = tMsg->Event.EventKeyboard.Code;
+		    Msg->Event.EventKeyboard.ShiftFlags = tMsg->Event.EventKeyboard.ShiftFlags;
+		    Msg->Event.EventKeyboard.SeqLen     = tMsg->Event.EventKeyboard.SeqLen;
+		    Msg->Event.EventKeyboard.pad        = tMsg->Event.EventKeyboard.pad;
+		}
+		CopyMem(tMsg->Event.EventKeyboard.AsciiSeq, Msg->Event.EventKeyboard.AsciiSeq,
+			tMsg->Event.EventKeyboard.SeqLen);
+		
+		Msg->Event.EventKeyboard.AsciiSeq[tMsg->Event.EventKeyboard.SeqLen] = '\0';
+		
+		break;
+	      case TW_MSG_WINDOW_MOUSE:
+		if (sizeof(struct tevent_mouse) == sizeof(twindow) + 4*sizeof(dat)) {
+		    CopyMem((void *)&tMsg->Event.EventMouse.Code,
+			    (void *)& Msg->Event.EventMouse.Code, 4*sizeof(dat));
+		} else {
+		    Msg->Event.EventMouse.Code          = tMsg->Event.EventMouse.Code;
+		    Msg->Event.EventMouse.ShiftFlags    = tMsg->Event.EventMouse.ShiftFlags;
+		    Msg->Event.EventMouse.X             = tMsg->Event.EventMouse.X;
+		    Msg->Event.EventMouse.Y             = tMsg->Event.EventMouse.Y;
+		}
+		break;
+/* TODO: finish this */
+#if 0
+	      case MSG_WINDOW_CHANGE:
+		Push(t, udat,    Msg->Event.EventWindow.Code);
+		Push(t, udat,    Msg->Event.EventWindow.XWidth);
+		Push(t, udat,    Msg->Event.EventWindow.YWidth);
+		break;
+	      case MSG_WINDOW_GADGET:
+		Push(t, udat,    Msg->Event.EventGadget.Code);
+		Push(t, udat,    Msg->Event.EventGadget.pad);
+		break;
+	      case MSG_MENU_ROW:
+		Push(t, udat,    Msg->Event.EventMenu.Code);
+		Push(t, udat,    Msg->Event.EventMenu.pad);
+		Push(t, tmenu,   Obj2Id(Msg->Event.EventMenu.Menu));
+		break;
+	      case MSG_CLIPBOARD:
+		Push(t, udat,    Msg->Event.EventClipBoard.Code);
+		Push(t, udat,    Msg->Event.EventClipBoard.ShiftFlags);
+		Push(t, dat,     Msg->Event.EventClipBoard.X);
+		Push(t, dat,     Msg->Event.EventClipBoard.Y);
+		Push(t, uldat,   All->ClipMagic);
+		Push(t, uldat,   All->ClipLen);
+		PushV(t, All->ClipLen, All->ClipData);
+		break;
+#endif
+	      default:
+		ok = FALSE;
+		break;
+	    }
+	    
+	    if (ok) {
+		SendMsg(MsgPort, Msg);
+		return TRUE;
+	    }
+	}
+    }
+    return FALSE;
+}
+
+
 /* Second: socket handling functions */
 
 #include "unaligned.h"
@@ -363,8 +485,8 @@ static uldat FindFunction(byte Len, byte *name);
 #define RET0(ret,f,call) if (s == end) { RET##f(ret,call) } else FAIL##f(-1);
 #define RET1(ret,f,call) if (s == end) { RET##f(ret,call) } else FAIL##f(-1);
 #define RET2(ret,f,call) if (s == end && A(1)) { RET##f(ret,call) } else \
-			 if (A(1)) FAIL##f(1); \
-			 else FAIL##f(-1);
+				if (A(1)) FAIL##f(1); \
+				else FAIL##f(-1);
 
 
 #define NAME(funct,name)	static void sock##funct##name(void)
@@ -854,6 +976,7 @@ static void inetSocketIO(int fd, uldat slot) {
 
 void sockKillSlot(uldat slot) {
     msgport *MsgPort;
+    display_hw *D_HW;
     
     if (slot != NOSLOT) {
 	
@@ -871,12 +994,15 @@ void sockKillSlot(uldat slot) {
 #endif
 	
 	if ((MsgPort = RemoteGetMsgPort(slot))) {
-	    if (MsgPort->AttachHW) {
+	    /*
+	     * no infinite recursion between KillSlot and DeleteMsgPort...
+	     * DeleteMsgPort doesn't kill the slot, only tries to unregister from it
+	     */
+
+	    if ((D_HW = MsgPort->AttachHW)) {
 		/* avoid KillSlot <-> DeleteDisplayHW infinite recursion */
-		if (!MsgPort->AttachHW->Quitted) {
-		    MsgPort->AttachHW->Quitted = TRUE;
-		    Delete(MsgPort->AttachHW);
-		}
+		D_HW->AttachSlot = NOSLOT;
+		Delete(D_HW);
 	    }
 
 	    Delete(MsgPort); /* and all its children ! */
@@ -967,7 +1093,7 @@ static void SocketIO(int fd, uldat slot) {
 static void sockSendMsg(msgport *MsgPort, msg *Msg) {
     tevent_any Event = (tevent_any)0;
     uldat Len = 0, Tot;
-    byte *t, Easy = FALSE;
+    byte *t, Easy = sizeof(twindow) == sizeof(window *);
 
     RequestN = MSG_MAGIC;
     Fd = MsgPort->RemoteData.Fd;
@@ -976,6 +1102,7 @@ static void sockSendMsg(msgport *MsgPort, msg *Msg) {
     switch (Msg->Type) {
 #if defined(CONF_MODULES) || defined (CONF_HW_DISPLAY)
       case MSG_DISPLAY:
+	Easy = FALSE;
 	Reply(Msg->Type, Len = sizeof(twindow) + 4*sizeof(udat) + Msg->Event.EventDisplay.Len, NULL);
 
 	if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
@@ -995,41 +1122,41 @@ static void sockSendMsg(msgport *MsgPort, msg *Msg) {
 	break;
 #endif /* defined(CONF_MODULES) || defined (CONF_HW_DISPLAY) */
       case MSG_WINDOW_KEY:
-	if (sizeof(event_keyboard) == sizeof(twindow) + 3*sizeof(dat) + 2*sizeof(byte)) {
-	    Easy = TRUE;
+	if (Easy && sizeof(event_keyboard) == sizeof(window *) + 3*sizeof(dat) + 2*sizeof(byte))
 	    break;
-	}
+	else
+	    Easy = FALSE;
 	Reply(Msg->Type, Len = sizeof(twindow) + 3*sizeof(udat) + 2*sizeof(byte) + Msg->Event.EventKeyboard.SeqLen, NULL);
 	if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
 	    t += Tot - Len;
 	    Push(t, twindow, Obj2Id(Msg->Event.EventKeyboard.Window));
 	    Push(t, udat,    Msg->Event.EventKeyboard.Code);
-	    Push(t, udat,    Msg->Event.EventKeyboard.FullShiftFlags);
+	    Push(t, udat,    Msg->Event.EventKeyboard.ShiftFlags);
 	    Push(t, udat,    Msg->Event.EventKeyboard.SeqLen);
-	    Push(t, udat,    Msg->Event.EventKeyboard.pad);
+	    Push(t, byte,    Msg->Event.EventKeyboard.pad);
 	    PushV(t, Msg->Event.EventKeyboard.SeqLen+1, Event->EventKeyboard.AsciiSeq);
 	}
 	break;
       case MSG_WINDOW_MOUSE:
-	if (sizeof(event_mouse) == sizeof(twindow) + 4*sizeof(dat)) {
-	    Easy = TRUE;
+	if (Easy && sizeof(event_mouse) == sizeof(window *) + 4*sizeof(dat))
 	    break;
-	}
+	else
+	    Easy = FALSE;
 	Reply(Msg->Type, Len = sizeof(twindow) + 4*sizeof(udat), NULL);
 	if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
 	    t += Tot - Len;
 	    Push(t, twindow, Obj2Id(Msg->Event.EventMouse.Window));
 	    Push(t, udat,    Msg->Event.EventMouse.Code);
-	    Push(t, udat,    Msg->Event.EventMouse.FullShiftFlags);
+	    Push(t, udat,    Msg->Event.EventMouse.ShiftFlags);
 	    Push(t, dat,     Msg->Event.EventMouse.X);
 	    Push(t, dat,     Msg->Event.EventMouse.Y);
 	}
 	break;
       case MSG_WINDOW_CHANGE:
-	if (sizeof(event_window) == sizeof(twindow) + 4*sizeof(dat)) {
-	    Easy = TRUE;
+	if (Easy && sizeof(event_window) == sizeof(window *) + 4*sizeof(dat))
 	    break;
-	}
+	else
+	    Easy = FALSE;
 	Reply(Msg->Type, Len = sizeof(twindow) + 4*sizeof(dat), NULL);
 	if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
 	    t += Tot - Len;
@@ -1040,10 +1167,10 @@ static void sockSendMsg(msgport *MsgPort, msg *Msg) {
 	}
 	break;
       case MSG_WINDOW_GADGET:
-	if (sizeof(event_gadget) == sizeof(twindow) + 2*sizeof(dat)) {
-	    Easy = TRUE;
+	if (Easy && sizeof(event_gadget) == sizeof(window *) + 2*sizeof(dat))
 	    break;
-	}
+	else
+	    Easy = FALSE;
 	Reply(Msg->Type, Len = sizeof(twindow) + 2*sizeof(dat), NULL);
 	if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
 	    t += Tot - Len;
@@ -1053,10 +1180,10 @@ static void sockSendMsg(msgport *MsgPort, msg *Msg) {
 	}
 	break;
       case MSG_MENU_ROW:
-	if (sizeof(event_menu) == sizeof(twindow) + 2*sizeof(udat) + sizeof(tmenu)) {
-	    Easy = TRUE;
+	if (Easy && sizeof(event_menu) == sizeof(window *) + 2*sizeof(udat) + sizeof(menu *))
 	    break;
-	}
+	else
+	    Easy = FALSE;
 	Reply(Msg->Type, Len = sizeof(twindow) + 2*sizeof(dat) + sizeof(tmenu), NULL);
 	if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
 	    t += Tot - Len;
@@ -1067,12 +1194,10 @@ static void sockSendMsg(msgport *MsgPort, msg *Msg) {
 	}
 	break;
       case MSG_CLIPBOARD:
-	if (sizeof(event_clipboard) == sizeof(twindow) + 4*sizeof(dat)) {
-	    /* easy */
-	    Easy = TRUE;
+	if (sizeof(event_clipboard) == sizeof(window *) + 4*sizeof(dat))
 	    break;
-	}
-	/* not so easy */
+	else
+	    Easy = FALSE;
 	if (!All->ClipLen)
 	    return;
 	Reply(Msg->Type, Len = sizeof(twindow) + 4*sizeof(dat) + 2*sizeof(ldat) + All->ClipLen, NULL);
@@ -1080,7 +1205,7 @@ static void sockSendMsg(msgport *MsgPort, msg *Msg) {
 	    t += Tot - Len;
 	    Push(t, twindow, Obj2Id(Msg->Event.EventClipBoard.Window));
 	    Push(t, udat,    Msg->Event.EventClipBoard.Code);
-	    Push(t, udat,    Msg->Event.EventClipBoard.FullShiftFlags);
+	    Push(t, udat,    Msg->Event.EventClipBoard.ShiftFlags);
 	    Push(t, dat,     Msg->Event.EventClipBoard.X);
 	    Push(t, dat,     Msg->Event.EventClipBoard.Y);
 	    Push(t, uldat,   All->ClipMagic);
@@ -1267,7 +1392,7 @@ static void AttachHW(uldat len, byte *arg, byte redirect) {
 	if (D_HW->NeedHW & NEEDPersistentSlot)
 	    LS.MsgPort->AttachHW = D_HW;
 	else
-	    D_HW->attach = NOSLOT; /* we don't need it => forget it */
+	    D_HW->AttachSlot = NOSLOT; /* we don't need it => forget it */
     }
     
     if (D_HW) {
@@ -1280,7 +1405,7 @@ static void AttachHW(uldat len, byte *arg, byte redirect) {
     if (redirect) {
 	/* wait for twattach to display messages... */
 	fd_set set;
-	struct timeval tv = {10,0};
+	struct timeval tv = {2,0};
 
 	FD_ZERO(&set);
 	FD_SET(LS.Fd, &set);

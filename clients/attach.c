@@ -115,7 +115,7 @@ int main(int argc, char *argv[]) {
 	signal(SIGWINCH, SignalWinch);
 	    
 	if (redirect)
-	    printf("reported messages...\n");
+	    fprintf(stderr, "reported messages...\n");
 	
 	for (;;) {
 	    buff = TwAttachGetReply(&chunk);
@@ -126,13 +126,18 @@ int main(int argc, char *argv[]) {
 		/* libTw panic */
 		break;
 
-	    printf("%.*s", (int)chunk, buff);
+	    fprintf(stderr, "%.*s", (int)chunk, buff);
 	}
-	fflush(stdout);
+	fflush(stderr);
 	
 	if (TwInPanic())
 	    break;
 
+	if (ourtty) {
+	    fputs("\033[2J", stdout);
+	    fflush(stdout);
+	}
+	
 	TwAttachConfirm();
 	/*
 	 * twin waits this before grabbing the display...
@@ -159,9 +164,9 @@ int main(int argc, char *argv[]) {
 	    }
 	} else if (redirect) {
 	    if (ret)
-		printf("... ok, twin successfully attached.\n");
+		fprintf(stderr, "... ok, twin successfully attached.\n");
 	    else
-		printf("... ach, twin failed to attach.\n");
+		fprintf(stderr, "... ach, twin failed to attach.\n");
 	}
 	return !ret;
     } while (0);

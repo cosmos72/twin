@@ -1,7 +1,12 @@
 Known bugs and problems:
 
-Attaching to /dev/pts/* does not work.
+*  Attaching to /dev/pts/* does not work.
 
-I am not sure if it's a twin or kernel problem, as attaching to other ttys
-(/dev/tty[1-63], /dev/tty[p-z][a-f], etc.) works.
+   I am not sure if it's a twin or kernel problem, as attaching to other ttys
+   (/dev/tty[1-63], /dev/tty[p-z][a-f], etc.) works.
+
+*  display corruption running `mutt' inside `screen' inside `twterm'
+   Asked `strace' logs to a helpful user, waiting for them.
+   
+*  sparse segfaults :(
 

@@ -1,5 +1,5 @@
 /*
- *  hw.c  --  skeleton and common functions for all HW/hw_* display implementations
+ *  hw.c  --  common functions to use HW/hw_* displays
  *
  *  Copyright (C) 1993-2000 by Massimiliano Ghilardi
  *
@@ -10,21 +10,25 @@
  *
  */
 
-#include <stdio.h>
-#include <sys/time.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/resource.h>
-#include <sys/wait.h>
-#include <unistd.h>
+/*
+ * this is a very sensible part of code, as it must
+ * correctly link both against twin and against twdisplay,
+ * picking the correct versions of functions like
+ * FlushHW(), PanicHW(), AllHWCanDragAreaNow(), DragAreaHW(), etc.
+ * 
+ * This for example rules out calling methods like Delete()
+ * or referencing the variable All.
+ */
+
 #include <signal.h>
 #include <termios.h>
+#include <unistd.h>
 #include <sys/ioctl.h>
-#include <errno.h>
-#include <fcntl.h>
-
-#include <termios.h>
+#include <sys/types.h>
 #include <sys/ttydefaults.h>
+#include <sys/resource.h>
+#include <sys/wait.h>
+
 #ifndef VDISABLE
 # ifdef _POSIX_VDISABLE
 #  define VDISABLE	_POSIX_VDISABLE
@@ -34,99 +38,44 @@
 #endif
 
 #include "twin.h"
-#include "data.h"
-#include "main.h"
-#include "methods.h"
-#include "draw.h"
-#include "remote.h"
 
-#include "resize.h"
-#include "wm.h"
 #include "hw.h"
 #include "hw_private.h"
-#include "util.h"
-#include "socket.h"
-
-#ifdef CONF_MODULES
-# include "dl.h"
-#endif
-
-#include "libTwkeys.h"
-#include "hotkey.h"
-
-/* common data */
+#include "common.h"
 
 display_hw *HW, *DisplayHWCTTY;
 
-#define forHW for (HW = All->FirstDisplayHW; HW; HW = HW->Next)
-
-#define safeforHW(s_HW) for (HW = All->FirstDisplayHW; HW && (((s_HW) = HW->Next), TRUE); HW = (s_HW))
-
 hwattr *Video, *OldVideo;
 
-static byte NeedOldVideo, CanDragArea;
-
+byte NeedOldVideo, CanDragArea;
 byte ExpensiveFlushVideo, ValidOldVideo, NeedHW;
 
 dat (*ChangedVideo)[2][2];
-byte ChangedVideoFlag;
-byte ChangedVideoFlagAgain;
+byte ChangedVideoFlag, ChangedVideoFlagAgain;
 
-static udat savedScreenWidth, savedScreenHeight;
+
 udat ScreenWidth = 100, ScreenHeight = 30;
-udat TryScreenWidth, TryScreenHeight;
 
-static dat AccelVideo[4] = { MAXDAT, MAXDAT, MINDAT, MINDAT };
-byte   StrategyFlag;
-frac_t StrategyDelay = (frac_t)0;
+udat CursorX, CursorY;
+uldat CursorType;
 
 struct termios ttysave;
 
-/* common functions */
 
-
-void saveDisplaySize(void) {
-    savedScreenWidth = ScreenWidth;
-    savedScreenHeight = ScreenHeight;
+static void SignalWinch(int n) {
+    if (DisplayHWCTTY && DisplayHWCTTY != HWCTTY_DETACHED
+	&& DisplayHWCTTY->DisplayIsCTTY) {
+	
+	ResizeDisplayPrefer(DisplayHWCTTY);
+    }
+    signal(SIGWINCH, SignalWinch);
 }
 
-
-
-
-
-
-
-
-
-
-
-#ifdef CONF_HW_X11
-# include "HW/hw_X11.h"
-#endif
-
-#ifdef CONF_HW_DISPLAY
-# include "HW/hw_display.h"
-#endif
-
-#ifdef CONF_HW_TWIN
-# include "HW/hw_twin.h"
-#endif
-
-#ifdef CONF_HW_TTY
-# include "HW/hw_tty.h"
-#endif
-
-#ifdef CONF_HW_GGI
-# include "HW/hw_ggi.h"
-#endif
-
-
-
-
-
-
-
-
+static void SignalChild(int n) {
+    while (wait4((pid_t)-1, (int *)0, WNOHANG, (struct rusage *)0) > 0)
+	;
+    signal(SIGCHLD, SignalChild);
+}
 
 #ifndef DONT_TRAP_SIGNALS
 static void SignalPanic(int n) {
@@ -144,13 +93,8 @@ static void SignalPanic(int n) {
 }
 #endif
 
-static void SignalChild(int n) {
-    while (wait4((pid_t)-1, (int *)0, WNOHANG, (struct rusage *)0) > 0)
-	;
-    signal(SIGCHLD, SignalChild);
-}
-
-void InitSignals(void) {
+byte InitSignals(void) {
+    signal(SIGWINCH,SignalWinch);
     signal(SIGCHLD, SignalChild);
     signal(SIGPIPE, SIG_IGN);
     signal(SIGIO,   SIG_IGN);
@@ -168,464 +112,14 @@ void InitSignals(void) {
     signal(SIGXFSZ, SignalPanic);
     signal(SIGPWR,  SignalPanic);
 #endif
-}
-
-void UpdateFlagsHW(void) {
-    NeedOldVideo = ExpensiveFlushVideo = FALSE;
-    CanDragArea = TRUE;
-
-    forHW {
-	if (!HW->Quitted) {
-	    NeedOldVideo |= HW->NeedOldVideo;
-	    ExpensiveFlushVideo |= HW->ExpensiveFlushVideo;
-	    CanDragArea &= !!HW->CanDragArea;
-	}
-    }
-}
-
-void RunNoHW(void) {
-    savedScreenWidth  = ScreenWidth;
-    savedScreenHeight = ScreenHeight;
-
-    ResizeDisplay();
-
-    if (!DisplayHWCTTY) {
-	/*
-	 * we fork in the background
-	 * so that the shell we were started from
-	 * can realize we have finished with the tty
-	 */
-	switch (fork()) {
-	  case 0: /* child: continue */
-	    DisplayHWCTTY = HWCTTY_DETACHED;
-	    setsid();
-	    break;
-	  case -1:
-	    break;
-	  default: /* parent: exit */
-	    exit(0);
-	}
-    }
-    /* try to fire up the Socket Server ... */
-#if defined (CONF_MODULES) && !defined(CONF_SOCKET)
-    (void)DlLoad(SocketSo);
-#endif
-}
-
-
-#ifdef CONF_MODULES
-
-static byte module_InitHW(void) {
-    byte *name, *tmp;
-    byte *(*InitD)(void);
-    byte *arg = HW->Name;
-    uldat len = HW->NameLen;
-    module *Module;
-
-    if (!arg || len <= 4)
-	return FALSE;
-    
-    arg += 4; len -= 4; /* skip "-hw=" */
-    
-    name = memchr(arg, '@', len);
-    tmp = memchr(arg, ',', len);
-    if (tmp && (!name || tmp < name))
-	name = tmp;
-    if (name)
-	len = name - arg;
-    
-    if ((name = AllocMem(len + 10))) {
-	sprintf(name, "HW/hw_%.*s.so", (int)len, arg);
-			
-	Module = DlLoadAny(len+9, name);
-	
-	FreeMem(name);
-	    
-	if (Module) {
-	    fprintf(stderr, "twin: starting display driver module `HW/hw_%.*s.so'...\n", (int)len, arg);
-	    
-	    if ((InitD = Module->Private) && InitD()) {
-		fprintf(stderr, "twin: ...module `HW/hw_%.*s.so' successfully started.\n", (int)len, arg);
-		HW->Module = Module; Module->Used++;
-		return TRUE;
-	    }
-	    Delete(Module);
-	}
-    }
-
-    if (Module) {
-	fprintf(stderr, "twin: ...module `HW/hw_%.*s.so' failed to start.\n", (int)len, arg);
-    } else
-	fprintf(stderr, "twin: unable to load display driver module `HW/hw_%.*s.so' :\n"
-			"      %s\n", (int)len, arg, ErrStr);
-    
-    return FALSE;
-}
-
-#endif /* CONF_MODULES */
-
-
-
-
-void warn_NoHW(uldat len, char *arg, uldat tried) {
-#ifdef CONF_MODULES
-    if (!tried && !arg)
-	    fputs("twin: no display driver compiled into twin.\n"
-		  "      please run as `twin -hw=<display>'\n", stderr);
-    else
-#endif
-    {
-	fputs("twin: All display drivers failed", stderr);
-	if (arg)
-	    fprintf(stderr, " for `-hw=%.*s\'", (int)len, arg);
-	else
-	    putc('.', stderr);
-	putc('\n', stderr);
-    }
-}
-
-
-#if defined(CONF_HW_X11) || defined(CONF_HW_TWIN) || defined(CONF_HW_DISPLAY) || defined(CONF_HW_TTY) || defined(CONF_HW_GGI)
-static byte check4(byte *s, byte *arg) {
-    if (arg && strncmp(s, arg, strlen(s))) {
-	fprintf(stderr, "twin: `-hw=%s' given, skipping `-hw=%s' display driver.\n",
-		arg, s);
-	return FALSE;
-    } else if (arg)
-	fprintf(stderr, "twin: trying given `-hw=%s' display driver.\n", s);
-    else
-	fprintf(stderr, "twin: autoprobing `-hw=%s' display driver.\n", s);
     return TRUE;
 }
 
-static void fix4(byte *s, display_hw *D_HW) {
-    uldat len;
-    if (!D_HW->NameLen) {
-	if (D_HW->Name)
-	    FreeMem(D_HW->Name), D_HW->Name = NULL;
-	len = strlen(s) + 4;
-	if ((D_HW->Name = AllocMem(len + 1))) {
-	    sprintf(D_HW->Name, "-hw=%s", s);
-	    D_HW->NameLen = len;
-	}
-    }
-}
-#endif /* defined(CONF_HW_X11) || defined(CONF_HW_TWIN) || defined(CONF_HW_DISPLAY) || defined(CONF_HW_TTY) || defined(CONF_HW_GGI) */
 
-/*
- * InitDisplayHW runs HW specific InitXXX() functions, starting from best setup
- * and falling back in case some of them fails.
- */
-byte InitDisplayHW(display_hw *D_HW) {
-    byte *arg = D_HW->Name;
-    uldat tried = 0;
-    byte success;
-
-    SaveHW;
-    SetHW(D_HW);
-
-    D_HW->Quitted = D_HW->DisplayIsCTTY = D_HW->NeedHW = FALSE;
-    
-    if (arg && !strncmp(arg, "-hw=", 4))
-	arg += 4;
-    else
-	arg = NULL;
-
-    success =
-#ifdef CONF_HW_X11
-	(check4("X", arg) && (tried++, X11_InitHW()) && (fix4("X", D_HW), TRUE)) ||
-#endif
-#ifdef CONF_HW_TWIN
-	(check4("twin", arg) && (tried++, TW_InitHW()) && (fix4("twin", D_HW), TRUE)) ||
-#endif
-#ifdef CONF_HW_DISPLAY
-	(check4("display", arg) && (tried++, display_InitHW()) && (fix4("display", D_HW), TRUE)) ||
-#endif
-#ifdef CONF_HW_TTY
-	(check4("tty", arg) && (tried++, tty_InitHW()) && (fix4("tty", D_HW), TRUE)) ||
-#endif
-#ifdef CONF_HW_GGI
-	(check4("ggi", arg) && (tried++, GGI_InitHW()) && (fix4("ggi", D_HW), TRUE)) ||
-#endif
-#ifdef CONF_MODULES
-	module_InitHW() ||
-#endif
-	(warn_NoHW(arg ? D_HW->NameLen - 4 : 0, arg, tried), FALSE);
-
-    if (success) {
-	if (All->FnHookDisplayHW)
-	    All->FnHookDisplayHW(All->HookDisplayHW);
-	UpdateFlagsHW(); /* this garbles HW... not a problem here */
-    }
-    
-    fflush(stderr);
-    RestoreHW;
-
-    return success;
-}
-
-void QuitDisplayHW(display_hw *D_HW) {
-    SaveHW;
-    
-    if (D_HW) {
-	if (D_HW->QuitHW)
-	    HW = D_HW, D_HW->QuitHW();
-	
-	/* avoid KillSlot <-> DeleteDisplayHW infinite recursion */
-	if (!D_HW->Quitted) {
-	    D_HW->Quitted = TRUE;
-	    KillSlot(D_HW->attach);
-	}
-
-#ifdef CONF_MODULES
-	if (D_HW->Module) {
-	    D_HW->Module->Used--;
-	    Delete(D_HW->Module);
-	    D_HW->Module = (module *)0;
-	}
-	UpdateFlagsHW(); /* this garbles HW... not a problem here */
-#endif
-    }
-    RestoreHW;
-}
-
-display_hw *AttachDisplayHW(uldat len, byte *arg, uldat slot) {
-    display_hw *D_HW;
-
-    if ((len && len <= 4) || CmpMem("-hw=", arg, Min2(len,4))) {
-	fprintf(stderr, "twin: specified `%.*s\' is not `-hw=<display>\'\n",
-		(int)len, arg);
-	fflush(stderr);
-	return NULL;
-    }
-    
-    if (!All->FirstDisplayHW) {
-	/* was running with no HW, restore ScreenWidth/ScreenHeight */
-	if (savedScreenWidth && savedScreenHeight) {
-	    TryScreenWidth = savedScreenWidth;
-	    TryScreenHeight = savedScreenHeight;
-	    savedScreenWidth = savedScreenHeight = 0;
-	}
-    }
-    
-    if ((D_HW = Do(Create,DisplayHW)(FnDisplayHW, len, arg))) {
-	D_HW->attach = slot;
-	if (Act(Init,D_HW)(D_HW)) {
-	    ResizeDisplay();
-	    DrawArea(FULLSCREEN);
-	    UpdateCursor();
-	    
-	    return D_HW;
-	}
-	D_HW->attach = NOSLOT;
-	D_HW->QuitHW = NoOp;
-	Delete(D_HW);
-	D_HW = (display_hw *)0;
-    }
-    return D_HW;
-}
-
-
-byte DetachDisplayHW(uldat len, byte *arg) {
-    byte isCTTY = FALSE, done = FALSE;
-    display_hw *s_HW;
-    if (len) {
-	safeforHW(s_HW) {
-	    if (HW->NameLen == len && !CmpMem(HW->Name, arg, len)) {
-		isCTTY = HW == DisplayHWCTTY;
-		Delete(HW);
-		done = TRUE;
-		break;
-	    }
-	}
-    } else {
-	QuitHW();
-	done = TRUE;
-    }
-    if (isCTTY || !All->FirstDisplayHW)
-	RunNoHW();
-    return done;
-}
-
-byte InitHW(void) {
-    byte **arglist = orig_argv;
-    byte *dummy[2] = {"", NULL}, ret = FALSE;
-
-    if (!arglist || !*arglist) {
-	/* autoprobe */
-	arglist = dummy;
-    }
-    while (*arglist) {
-	ret |= !!AttachDisplayHW(strlen(*arglist), *arglist, NOSLOT);
-	arglist++;
-    }
-    if (!ret)
-	fputs("\ntwin:   \033[1mALL  DISPLAY  DRIVERS  FAILED.\033[0m\n", stderr);
-    return ret;
-}
-
-void QuitHW(void) {
-    DeleteList(All->FirstDisplayHW);
-    RunNoHW();
-}
-
-byte RestartHW(byte verbose) {
-    display_hw *s_HW;
-    byte ret = FALSE;
-    
-    if (All->FirstDisplayHW) {
-	safeforHW(s_HW) {
-	    if (Act(Init,HW)(HW))
-		ret = TRUE;
-	    else
-		Delete(HW);
-	}
-	if (ret) {
-	    ResizeDisplay();
-	    DrawArea(FULLSCREEN);
-	    UpdateCursor();
-	} else {
-	    fputs("\ntwin:   \033[1mALL  DISPLAY  DRIVERS  FAILED.\033[0m\n", stderr);
-	    fflush(stderr);
-	    RunNoHW();
-	}
-    } else if (verbose) {
-	fputs("twin: RestartHW(): All display drivers removed by SuspendHW().\n"
-	      "      No display available for restarting, use twattach or twdisplay\n", stderr);
-	fflush(stderr);
-    }
-    return ret;
-}
-
-void SuspendHW(byte verbose) {
-    display_hw *s_HW;
-    safeforHW(s_HW) {
-	if (HW->attach != NOSLOT && HW->NeedHW & NEEDPersistentSlot)
-	    /* we will not be able to restart it */
-	    Delete(HW);
-	else
-	    Act(Quit,HW)(HW);
-    }
-    if (verbose && !All->FirstDisplayHW) {
-	fputs("twin: SuspendHW(): All display drivers had to be removed\n"
-	      "      since they were attached to clients (twattach/twdisplay).\n"
-	      "twin: --- STOPPED ---\n", stderr);
-	fflush(stderr);
-    }
-}
-
-void PanicHW(void) {
-    display_hw *s_HW;
-    
-    if (NeedHW & NEEDPanicHW) {
-	safeforHW(s_HW) {
-	    if (HW->NeedHW & NEEDPanicHW)
-		Delete(HW);
-	}
-	NeedHW &= ~NEEDPanicHW;
-    }
-    if (!All->FirstDisplayHW)
-	RunNoHW();
-}
-
-void ResizeDisplayPrefer(display_hw *D_HW) {
-    SaveHW;
-    SetHW(D_HW);
-    D_HW->DetectSize(&TryScreenWidth, &TryScreenHeight);
-    NeedHW |= NEEDResizeDisplay;
-    RestoreHW;
-}
-
-void SignalWinch(int n) {
-    SaveHW;
-    
-    if (DisplayHWCTTY && DisplayHWCTTY != HWCTTY_DETACHED
-	&& DisplayHWCTTY->DisplayIsCTTY) {
-	
-	SetHW(DisplayHWCTTY);
-	ResizeDisplayPrefer(HW);
-	RestoreHW;
-    }
-    signal(SIGWINCH, SignalWinch);
-}
-
-void ResizeDisplay(void) {
-    screen *fScreen;
-    udat Width, Height;
-
-    if (All->FirstDisplayHW) {
-	
-	if (!TryScreenWidth || !TryScreenHeight) {
-	    /*
-	     * we are trying to come up with a fair display size
-	     * and have all HW agree on it.
-	     */
-	    TryScreenWidth = TryScreenHeight = MAXUDAT;
-	    forHW {
-		HW->DetectSize(&Width, &Height);
-		if (TryScreenWidth  > Width)  TryScreenWidth  = Width;
-		if (TryScreenHeight > Height) TryScreenHeight = Height;
-	    }
-	}
-	
-	/* now let's check how much we can resize all HW displays... */
-	do {
-	    Width = TryScreenWidth;
-	    Height = TryScreenHeight;
-	    forHW {
-		HW->CheckResize(&TryScreenWidth, &TryScreenHeight);
-	    }
-	} while (TryScreenWidth < Width || TryScreenHeight < Height);
-	 
-	if (!TryScreenWidth || TryScreenWidth == MAXUDAT)
-	    TryScreenWidth = ScreenWidth;
-	if (!TryScreenHeight || TryScreenHeight == MAXUDAT)
-	    TryScreenHeight = ScreenHeight;
-	
-	/* size seems reasonable, apply it to all HW displays */
-	forHW {
-	    HW->Resize(TryScreenWidth, TryScreenHeight);
-	}
-    } else
-	TryScreenWidth = TryScreenHeight = 1;
-
-    if (!NeedOldVideo && OldVideo) {
-	free(OldVideo);
-	OldVideo = NULL;
-    } else if ((NeedOldVideo && !OldVideo) || ScreenWidth != TryScreenWidth || ScreenHeight != TryScreenHeight) {
-	if (!(OldVideo = (hwattr *)realloc(OldVideo, TryScreenWidth*TryScreenHeight*sizeof(hwattr)))) {
-	    fprintf(stderr, "twin: out of memory!\n");
-	    Quit(1);
-	}
-    }
-    ValidOldVideo = FALSE; /* to force updating new displays... could be smarter */
-    
-    if (!Video || ScreenWidth != TryScreenWidth || ScreenHeight != TryScreenHeight) {
-	ScreenWidth = TryScreenWidth;
-	ScreenHeight = TryScreenHeight;
-	
-	if (!(Video = (hwattr *)realloc(Video, ScreenWidth*ScreenHeight*sizeof(hwattr))) ||
-	    !(ChangedVideo = (dat (*)[2][2])ReAllocMem(ChangedVideo, ScreenHeight*sizeof(dat)*4))) {
-	    
-	    fprintf(stderr, "twin: out of memory!\n");
-	    Quit(1);
-	}
-	WriteMem(ChangedVideo, 0xff, ScreenHeight*sizeof(dat)*4);
-    
-	for (fScreen = All->FirstScreen; fScreen; fScreen = fScreen->Next) {
-	    fScreen->ScreenHeight = ScreenHeight;
-	    fScreen->ScreenWidth  = ScreenWidth;
-	}
-    }
-    NeedHW &= ~NEEDResizeDisplay;
-
-    TryScreenWidth = TryScreenHeight = 0;
-}
 
 void MoveToXY(udat x, udat y) {
-    forHW {
-	HW->MoveToXY(x, y);
-    }
+    CursorX = x;
+    CursorY = y;
 }
 
 void SetCursorType(uldat type) {
@@ -634,107 +128,23 @@ void SetCursorType(uldat type) {
     else if ((type & 0xF) > SOLIDCURSOR)
 	type = (type & ~(uldat)0xF) | SOLIDCURSOR;
     
-    forHW {
-	HW->SetCursorType(type);
-    }
+    CursorType = type;
 }
 
-void BeepHW(void) {
-    forHW {
-	HW->Beep();
+void NeedRedrawVideo(udat Left, udat Up, udat Right, udat Down) {
+    if (HW->RedrawVideo) {
+	HW->RedrawLeft  = Min2(HW->RedrawLeft,  Left);
+	HW->RedrawUp    = Min2(HW->RedrawUp,    Up);
+	HW->RedrawRight = Max2(HW->RedrawRight, Right);
+	HW->RedrawDown  = Max2(HW->RedrawDown,  Down);
+    } else {
+	HW->RedrawVideo = TRUE;
+	HW->RedrawLeft  = Left;
+	HW->RedrawUp    = Up;
+	HW->RedrawRight = Right;
+	HW->RedrawDown  = Down;
     }
 }
-
-void ConfigureHW(udat resource, byte todefault, udat value) {
-    forHW {
-	HW->Configure(resource, todefault, value);
-    }
-}
-
-void SetPaletteHW(udat N, udat R, udat G, udat B) {
-    if (N <= MAXCOL) {
-	palette c = {R, G, B};
-	if (CmpMem(&All->Palette[N], &c, sizeof(palette))) {
-	    All->Palette[N] = c;
-	    forHW {
-		HW->SetPalette(N, R, G, B);
-	    }
-	}
-    }
-}
-
-void ResetPaletteHW(void) {
-    forHW {
-	HW->ResetPalette();
-    }
-}
-
-void ExportClipBoard(void) {
-    forHW {
-	if (HW->ExportClipBoard)
-	    HW->ExportClipBoard();
-    }
-    NeedHW &= ~NEEDExportClipBoard;
-}
-
-void ImportClipBoard(byte Wait) {
-    if ((HW = All->MouseHW)) {
-	if (HW->ImportClipBoard)
-	    HW->ImportClipBoard(Wait);
-    }
-}
-
-
-INLINE void DiscardBlinkVideo(void) {
-    int i;
-    uldat start, t;
-    hwattr *V;
-    
-    for (i=0; i<ScreenHeight*2; i++) {
-	start = (uldat)ChangedVideo[i>>1][i&1][0];
-	t     = (uldat)ChangedVideo[i>>1][i&1][1] + 1 - start;
-
-	for (V = &Video[start]; t; V++, t--)
-	    *V &= ~HWATTR(COL(0,HIGH), (hwfont)0);
-    }
-}
-
-INLINE void SyncOldVideo(void) {
-    dat start, end;
-    udat i;
-
-    if (ChangedVideoFlag) {
-	for (i=0; i<ScreenHeight*2; i++) {
-	    start = ChangedVideo[i>>1][i&1][0];
-	    end   = ChangedVideo[i>>1][i&1][1];
-	    ChangedVideo[i>>1][i&1][0] = -1;
-	    
-	    if (start != -1)
-		CopyMem(Video + start + (i>>1)*ScreenWidth,
-			OldVideo + start + (i>>1)*ScreenWidth,
-			(end-start+1) * sizeof(hwattr));
-	}
-    }
-    ChangedVideoFlag = FALSE;
-    ValidOldVideo = TRUE;
-}
-
-void FlushHW(void) {
-    
-    if (All->SetUp->Flags & SETUP_NOBLINK)
-	DiscardBlinkVideo();
-
-    forHW {
-	HW->FlushVideo();
-	if (HW->NeedHW & NEEDFlushHW)
-	    HW->FlushHW();
-    }
-    if (NeedHW & NEEDFlushStdout)
-	fflush(stdout), NeedHW &= ~NEEDFlushStdout;
-    
-    SyncOldVideo();
-}
-
 
 /*
  * The following functions are quite os-independent,
@@ -745,168 +155,6 @@ void FlushHW(void) {
  */
 
 
-byte StdAddEventMouse(udat CodeMsg, udat ShiftFlags, udat Code, dat MouseX, dat MouseY) {
-    msg *Msg;
-    event_mouse *Event;
-    
-    if ((Code & ANY_ACTION_MOUSE)==DRAG_MOUSE
-	&& (Msg = WM_MsgPort->LastMsg)
-	&& Msg->Type==MSG_MOUSE
-	&& (Event=&Msg->Event.EventMouse)
-	&& Event->FullShiftFlags==ShiftFlags
-	&& Event->Code==Code) {
-	Event->X=MouseX;
-	Event->Y=MouseY;
-	return TRUE;
-    }
-    if ((Msg=Do(Create,Msg)(FnMsg, CodeMsg, sizeof(event_mouse)))) {
-	Event=&Msg->Event.EventMouse;
-	Event->FullShiftFlags=ShiftFlags;
-	Event->Code=Code;
-	Event->X=MouseX;
-	Event->Y=MouseY;
-	SendMsg(WM_MsgPort, Msg);
-	return TRUE;
-    }
-    return FALSE;
-}
-
-void SendHotKey(window *Window) {
-    event_keyboard *Event;
-    msg *Msg;
-    byte Len, *Seq = NULL;
-
-    
-    /* the following is REALLY heavy on the compiler... but it should optimize drastically. */
-	
-#define IS(key, len, seq) if (TW_##key == HOT_KEY) Len = len, Seq = seq;
-#  include "hw_keys.h"
-#undef IS
-	
-    if (!Seq || !*Seq)
-	return;
-	
-    if ((Msg=Do(Create,Msg)(FnMsg, MSG_WINDOW_KEY, Len + sizeof(event_keyboard)))) {
-	Event = &Msg->Event.EventKeyboard;
-
-	Event->Window = Window;
-	Event->FullShiftFlags = All->FullShiftFlags;
-	Event->Code = HOT_KEY;
-	Event->SeqLen = Len;
-	CopyMem(Seq, Event->AsciiSeq, Len);
-	Event->AsciiSeq[Len] = '\0'; /* terminate string with \0 */
-	SendMsg(Window->Menu->MsgPort, Msg);
-    }
-}
-
-void KeyboardEventCommon(udat Code, udat Len, byte *Seq) {
-    event_keyboard *Event;
-    msg *Msg;
-
-    if ((Msg=Do(Create,Msg)(FnMsg, MSG_KEY, Len + sizeof(event_keyboard)))) {
-	Event = &Msg->Event.EventKeyboard;
-	Event->FullShiftFlags = All->FullShiftFlags;
-	    
-	Event->Code = Code;
-	Event->SeqLen = Len;
-	CopyMem(Seq, Event->AsciiSeq, Len);
-	Event->AsciiSeq[Len] = '\0'; /* terminate string with \0 */
-	SendMsg(WM_MsgPort, Msg);
-    }
-}
-
-void MouseEventCommon(dat x, dat y, dat dx, dat dy, udat IdButtons) {
-    dat prev_x, prev_y;
-    udat Buttons, OldButtons, Overload;
-    mouse_state *OldState;
-    udat result;
-
-    OldState=&HW->MouseState;
-    OldButtons=OldState->keys;
-    prev_x = OldState->x;
-    prev_y = OldState->y;
-
-    x = Max2(x, 0); x = Min2(x, ScreenWidth - 1);
-    OldState->delta_x = x == 0 ? Min2(dx, 0) : x == ScreenWidth - 1 ? Max2(dx, 0) : 0;
-
-    y = Max2(y, 0); y = Min2(y, ScreenHeight - 1);
-    OldState->delta_y = y == 0 ? Min2(dy, 0) : y == ScreenHeight - 1 ? Max2(dy, 0) : 0;
-	
-    if (x != prev_x || y != prev_y)
-	HW->ChangedMouseFlag = TRUE;
-
-    OldState->x = x;
-    OldState->y = y;
-    
-    Buttons=(byte)0;
-    Overload=All->MouseOverload;
-    
-    if (IdButtons & HOLD_LEFT)
-	Buttons |= HOLD << (Overload>>LEFT & OV_ANY);
-    if (IdButtons & HOLD_MIDDLE)
-	Buttons |= HOLD << (Overload>>MIDDLE & OV_ANY);
-    if (IdButtons & HOLD_RIGHT)
-	Buttons |= HOLD << (Overload>>RIGHT & OV_ANY);
-    
-    OldState->keys=Buttons;
-    
-    if (Buttons != OldButtons || (OldButtons && (x != prev_x || y != prev_y))) {
-	
-	if (OldButtons && (x != prev_x || y != prev_y)) {
-	    if (!StdAddEventMouse(MSG_MOUSE, All->FullShiftFlags, DRAG_MOUSE | OldButtons, x, y))
-		Error(NOMEMORY);
-	}
-	if ((Buttons & HOLD_LEFT) != (OldButtons & HOLD_LEFT)) {
-	    result = (Buttons & HOLD_LEFT ? DOWN_LEFT : RELEASE_LEFT) | (OldButtons &= ~HOLD_LEFT);
-	    OldButtons |= Buttons & HOLD_LEFT;
-	    if (!StdAddEventMouse(MSG_MOUSE, All->FullShiftFlags, result, x, y))
-		Error(NOMEMORY);
-	}
-	if ((Buttons & HOLD_MIDDLE) != (OldButtons & HOLD_MIDDLE)) {
-	    result = (Buttons & HOLD_MIDDLE ? DOWN_MIDDLE : RELEASE_MIDDLE) | (OldButtons &= ~HOLD_MIDDLE);
-	    OldButtons |= Buttons & HOLD_MIDDLE;
-	    if (!StdAddEventMouse(MSG_MOUSE, All->FullShiftFlags, result, x, y))
-		Error(NOMEMORY);
-	}
-	if ((Buttons & HOLD_RIGHT) != (OldButtons & HOLD_RIGHT)) {
-	    result = (Buttons & HOLD_RIGHT ? DOWN_RIGHT : RELEASE_RIGHT) | (OldButtons &= ~HOLD_RIGHT);
-	    OldButtons |= Buttons & HOLD_RIGHT;
-	    if (!StdAddEventMouse(MSG_MOUSE, All->FullShiftFlags, result, x, y))
-		Error(NOMEMORY);
-	}
-
-	/* keep it available */
-	All->MouseHW = HW;
-    }
-}
-
-#if 0 /* not used for now */
-byte GetShortShiftFlags(void) {
-    
-    udat FullShiftFlags=All->FullShiftFlags;
-    
-    return FullShiftFlags & FULL_LEFT_CTRL_PRESSED
-	? LEFT_CTRL
-	:	FullShiftFlags & FULL_RIGHT_CTRL_PRESSED
-	? RIGHT_CTRL
-	: FullShiftFlags & FULL_LEFT_ALT_PRESSED
-	? LEFT_ALT
-	: FullShiftFlags & FULL_RIGHT_ALT_PRESSED
-	? RIGHT_ALT
-	: (
-	   FullShiftFlags & FULL_LEFT_SHIFT_PRESSED
-	   ? LEFT_SHIFT
-	   : FullShiftFlags & FULL_RIGHT_SHIFT_PRESSED
-	   ? RIGHT_SHIFT
-	   : (byte)0
-	   )
-	|
-	(FullShiftFlags & FULL_CAPS_LOCK_ACTIVE ? CAPS_LOCK : (byte)0)
-	|
-	(FullShiftFlags & FULL_NUM_LOCK_ACTIVE ? NUM_LOCK : (byte)0)
-	;
-}
-#endif /* 0 */
 
 /* VideoFlipMouse is quite os-independent ;) */
 void VideoFlipMouse(void) {
@@ -916,82 +164,6 @@ void VideoFlipMouse(void) {
 
     Video[pos] = HWATTR( c, HWFONT(h) );
 }
-
-void FillVideo(dat Xstart, dat Ystart, dat Xend, dat Yend, hwattr Attrib) {
-    hwattr *pos;
-    udat _xc, xc, yc, delta;
-    
-    if (Xstart > Xend || Xstart >= ScreenWidth || Xend < 0 ||
-	Ystart > Yend || Ystart >= ScreenHeight || Yend < 0)
-	return;
-    Xstart = Max2(Xstart, 0);
-    Ystart = Max2(Ystart, 0);
-    Xend = Min2(Xend, ScreenWidth-1);
-    Yend = Min2(Yend, ScreenHeight-1);
-    DirtyVideo(Xstart, Ystart, Xend, Yend);
-
-    yc = Yend - Ystart + 1;
-    _xc = Xend - Xstart + 1;
-    delta = ScreenWidth - _xc;
-    pos = Video + Xstart + Ystart * ScreenWidth;
-    
-    while (yc--) {
-	xc = _xc;
-	while (xc--)
-	    *pos++ = Attrib;
-	pos += delta;
-    }
-}
-
-void FillOldVideo(dat Xstart, dat Ystart, dat Xend, dat Yend, hwattr Attrib) {
-    hwattr *pos;
-    udat _xc, xc, yc, delta;
-    
-    if (Xstart > Xend || Xstart >= ScreenWidth || Xend < 0 ||
-	Ystart > Yend || Ystart >= ScreenHeight || Yend < 0)
-	return;
-    Xstart = Max2(Xstart, 0);
-    Ystart = Max2(Ystart, 0);
-    Xend = Min2(Xend, ScreenWidth-1);
-    Yend = Min2(Yend, ScreenHeight-1);
-
-    yc = Yend - Ystart + 1;
-    _xc = Xend - Xstart + 1;
-    delta = ScreenWidth - _xc;
-    pos = OldVideo + Xstart + Ystart * ScreenWidth;
-    
-    while (yc--) {
-	xc = _xc;
-	while (xc--)
-	    *pos++ = Attrib;
-	pos += delta;
-    }
-}
-
-static void Video2OldVideo(dat Xstart, dat Ystart, dat Xend, dat Yend) {
-    hwattr *src, *dst;
-    uldat xc, yc;
-    
-    if (Xstart > Xend || Xstart >= ScreenWidth || Xend < 0 ||
-	Ystart > Yend || Ystart >= ScreenHeight || Yend < 0)
-	return;
-    Xstart = Max2(Xstart, 0);
-    Ystart = Max2(Ystart, 0);
-    Xend = Min2(Xend, ScreenWidth-1);
-    Yend = Min2(Yend, ScreenHeight-1);
-
-    yc = Yend - Ystart + 1;
-    xc = sizeof(hwattr) * (Xend - Xstart + 1);
-    src = Video + Xstart + Ystart * ScreenWidth;
-    dst = OldVideo + Xstart + Ystart * ScreenWidth;
-    
-    while (yc--) {
-	CopyMem(src, dst, xc);
-	src += ScreenWidth;
-	dst += ScreenWidth;
-    }
-}
-
 
 /*
  * for better cleannes, DirtyVideo()
@@ -1109,65 +281,28 @@ void DirtyVideo(dat Xstart, dat Ystart, dat Xend, dat Yend) {
     }
 }
 
-void RefreshVideo(void) {
-    ValidOldVideo = FALSE;
-    DirtyVideo(0, 0, ScreenWidth - 1, ScreenHeight - 1);
-}
-
-INLINE uldat Plain_countDirtyVideo(dat X1, dat Y1, dat X2, dat Y2) {
-    uldat t = 0;
-    dat a, b;
+static void Video2OldVideo(dat Xstart, dat Ystart, dat Xend, dat Yend) {
+    hwattr *src, *dst;
+    uldat xc, yc;
     
-    for (; Y1 <= Y2; Y1++) {
-	a = ChangedVideo[Y1][0][0];
-	b = ChangedVideo[Y1][0][1];
-	if (a != -1 && a <= X2 && b >= X1)
-	    t += Min2(b, X2) - Max2(a, X1) + 1;
-	if (a != -1) {
-	    a = ChangedVideo[Y1][1][0];
-	    b = ChangedVideo[Y1][1][0];
-	    if (a != -1 && a <= X2 && b >= X1)
-		t += Min2(b, X2) - Max2(a, X1) + 1;
-	}
-    }
-    return t;
-}
+    if (Xstart > Xend || Xstart >= ScreenWidth || Xend < 0 ||
+	Ystart > Yend || Ystart >= ScreenHeight || Yend < 0)
+	return;
+    Xstart = Max2(Xstart, 0);
+    Ystart = Max2(Ystart, 0);
+    Xend = Min2(Xend, ScreenWidth-1);
+    Yend = Min2(Yend, ScreenHeight-1);
 
-void StrategyReset(void) {
-    AccelVideo[0] = AccelVideo[1] = MAXDAT;
-    AccelVideo[2] = AccelVideo[3] = MINDAT;
-    StrategyFlag = HW_UNSET;
-}
-
-byte Strategy4Video(dat Xstart, dat Ystart, dat Xend, dat Yend) {
-    uldat Varea = 0, XYarea_2 = (Xend-Xstart+1)*(Yend-Ystart+1)/2;
-    dat x1, y1, x2, y2;
+    yc = Yend - Ystart + 1;
+    xc = sizeof(hwattr) * (Xend - Xstart + 1);
+    src = Video + Xstart + Ystart * ScreenWidth;
+    dst = OldVideo + Xstart + Ystart * ScreenWidth;
     
-    if (StrategyFlag != HW_UNSET && StrategyFlag != HW_ACCEL)
-	return HW_BUFFER;
-
-    /* find the intersection between the current area and AccelVideo[] */
-    if (Xstart < AccelVideo[2] && Ystart < AccelVideo[3] &&
-	Xend >= AccelVideo[0] && Yend >= AccelVideo[1]) {
-	
-	x1 = Max2(Xstart, AccelVideo[0]);
-	y1 = Max2(Ystart, AccelVideo[1]);
-	x2 = Min2(Xend,   AccelVideo[2]);
-	y2 = Min2(Yend,   AccelVideo[3]);
-	
-	Varea = (uldat)(x2-x1+1)*(y2-y1+1);
+    while (yc--) {
+	CopyMem(src, dst, xc);
+	src += ScreenWidth;
+	dst += ScreenWidth;
     }
-    if (Varea < XYarea_2)
-	Varea += Plain_countDirtyVideo(Xstart, Ystart, Xend, Yend);
-    
-    if (Varea < XYarea_2) {
-	AccelVideo[0] = Min2(Xstart, AccelVideo[0]);
-	AccelVideo[1] = Min2(Ystart, AccelVideo[1]);
-	AccelVideo[2] = Max2(Xend,   AccelVideo[2]);
-	AccelVideo[3] = Max2(Yend,   AccelVideo[3]);
-	return StrategyFlag = HW_ACCEL;
-    }
-    return StrategyFlag = HW_BUFFER;
 }
 
 /* An important Video function: copy a rectangle. It must be _*FAST*_ !! */
@@ -1184,23 +319,11 @@ void DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
 
     /* HACK : for consistency problems, we actually drag only if all HW can drag */
     
-    if (CanDragArea && Strategy4Video(DstLeft, DstUp, DstRgt, DstDwn) == HW_ACCEL) {
-	Accel = TRUE;
-	forHW {
-	    if (HW->CanDragArea && HW->CanDragArea(Left, Up, Rgt, Dwn, DstLeft, DstUp))
-		;
-	    else {
-		Accel = FALSE;
-		break;
-	    }
-	}
-    } else
-	Accel = FALSE;
+    Accel = AllHWCanDragAreaNow(Left, Up, Rgt, Dwn, DstLeft, DstUp);
     
     if (Accel) {
-	forHW {
-	    HW->DragArea(Left, Up, Rgt, Dwn, DstLeft, DstUp);
-	}
+	FlushHW();
+	DragAreaHW(Left, Up, Rgt, Dwn, DstLeft, DstUp);
     } else
 	DirtyVideo(DstLeft, DstUp, DstRgt, DstDwn);
 
@@ -1240,26 +363,9 @@ void DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
 	Video2OldVideo(DstLeft, DstUp, DstRgt, DstDwn);
 }
 
-#ifdef __LINUX__
-static void linux_getconsolemap(void) {
-    scrnmap_t map[E_TABSZ];
-    byte c, ret;
-    
-    if ((ret = ioctl(tty_fd, GIO_SCRNMAP, map)) == 0) {
-	if (sizeof(scrnmap_t) == 1)
-	    CopyMem(map+0x80, All->Gtranslations[USER_MAP], 0x80);
-	else {
-	    for (c = 0; c < 0x80; c++)
-		All->Gtranslations[USER_MAP][c] = (byte)map[c | 0x80];
-	}
-    }
-}
-#endif
-
-void InitTtysave(void) {
+byte InitTtysave(void) {
     ioctl(0, TCGETS, &ttysave);
     
-    /* return error - use system defaults */
     ttysave.c_cc [VINTR]	= CINTR;
     ttysave.c_cc [VQUIT]	= CQUIT;
     ttysave.c_cc [VERASE]	= CERASE;
@@ -1317,7 +423,5 @@ void InitTtysave(void) {
 #endif
 		       );
     
-#ifdef __LINUX__
-    linux_getconsolemap();
-#endif
+    return TRUE;
 }

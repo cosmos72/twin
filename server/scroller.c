@@ -15,6 +15,8 @@
 #include "methods.h"
 
 #include "hw.h"
+#include "hw_multi.h"
+#include "common.h"
 #include "resize.h"
 #include "util.h"
 
@@ -88,7 +90,7 @@ static void ScrollerH(msgport *MsgPort) {
     } else
 	FlagWinScroll = FALSE;
     
-    FlagDeskScroll=!(All->FullShiftFlags & FULL_SCROLL_LOCK_ACTIVE) && Mouse->keys;
+    FlagDeskScroll=!(All->SetUp->Flags & SETUP_NOSCROLL) && Mouse->keys;
 
     FlagsMove=All->FlagsMove;
     if (FlagsMove & GLMOVE_1stSCREEN)
@@ -147,7 +149,7 @@ static void ScrollerH(msgport *MsgPort) {
 	if (!WinScrolled)
 	    ScrollerAutoRepeat();
 
-	if (!StdAddEventMouse(MSG_MOUSE, All->FullShiftFlags, CallKey, Mouse->x, Mouse->y))
+	if (!StdAddEventMouse(MSG_MOUSE, CallKey, Mouse->x, Mouse->y))
 	    Error(NOMEMORY);
     } else {
 	if (!WinScrolled)

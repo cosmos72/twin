@@ -163,10 +163,13 @@ void Resize(uldat Slot, udat X, udat Y) {
 
 
 static char **args;
+static char *title = " Twin Term ";
 
 static twindow newTermWindow(void) {
+    uldat len = strlen(title);
+    hwcol *coltitle = TwAllocMem(len * sizeof(hwcol));
     twindow Window = TwCreateWindow
-	((udat)11, " Twin Term ", "\x9F\x9F\x9F\x9F\x9F\x9F\x9F\x9F\x9F\x9F\x9F",
+	(len, title, TwWriteMem(coltitle, COL(HIGH|WHITE,HIGH|BLUE), len * sizeof(hwattr)),
 	 Term_Menu, COL(WHITE,BLACK), TW_LINECURSOR,
 	 TW_WINDOW_WANT_KEYS|TW_WINDOW_WANT_CHANGES|TW_WINDOW_DRAG|TW_WINDOW_RESIZE|TW_WINDOW_Y_BAR|TW_WINDOW_CLOSE,
 	 TW_WINFL_CURSOR_ON|TW_WINFL_USECONTENTS,
@@ -222,26 +225,33 @@ static byte InitTerm(void) {
     
     signal(SIGCHLD, SignalChild);
     
-    if (TwOpen(NULL) &&
-	
-	(Term_MsgPort=TwCreateMsgPort
-	 (9, "Twin Term", (uldat)0, (udat)0, (byte)0)) &&
-	(Term_Menu=TwCreateMenu
-	 (Term_MsgPort,
-	  COL(BLACK,WHITE), COL(BLACK,GREEN), COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
-	  COL(RED,WHITE), COL(RED,GREEN), (byte)0)) &&
-	(TwInfo4Menu(Term_Menu, TW_ROW_ACTIVE, (uldat)18, " Remote Twin Term ", "ptpppppptpppptpppp"),
+    if (TwOpen(NULL)) {
+	if ((Term_MsgPort=TwCreateMsgPort
+	     (9, "Twin Term", (uldat)0, (udat)0, (byte)0)) &&
+	    (Term_Menu=TwCreateMenu
+	     (Term_MsgPort,
+	      COL(BLACK,WHITE), COL(BLACK,GREEN), COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
+	      COL(RED,WHITE), COL(RED,GREEN), (byte)0)) &&
+	    (TwInfo4Menu(Term_Menu, TW_ROW_ACTIVE, (uldat)18, " Remote Twin Term ", "ptpppppptpppptpppp"),
 
-	(Window=TwWin4Menu(Term_Menu))) &&
-	(TwRow4Menu(Window, COD_SPAWN, TW_ROW_ACTIVE, 10, " New Term "),
-	 TwRow4Menu(Window, COD_QUIT,  FALSE,       6, " Exit "),
-	 TwItem4Menu(Term_Menu, Window, TRUE, 6, " File ")) &&
+	     (Window=TwWin4Menu(Term_Menu))) &&
+	    (TwRow4Menu(Window, COD_SPAWN, TW_ROW_ACTIVE, 10, " New Term "),
+	     TwRow4Menu(Window, COD_QUIT,  FALSE,       6, " Exit "),
+	     TwItem4Menu(Term_Menu, Window, TRUE, 6, " File ")) &&
+	    
+	    TwItem4MenuCommon(Term_Menu)) {
+	    
+	    Term_Screen = TwFirstScreen();
 	
-	TwItem4MenuCommon(Term_Menu)) {
-	
-	Term_Screen = TwFirstScreen();
-	return OpenTerm();
-    }
+	    if (OpenTerm())
+		return TRUE;
+	}
+	TwClose();
+    } while(0);
+
+    if (TwErrno)
+	fprintf(stderr, "twterm: libTw error: %s\n", TwStrError(TwErrno));
+
     return FALSE;
 }
 
@@ -350,43 +360,54 @@ static void TwinTermIO(int Slot) {
 	CloseTerm(Slot);
 }
 
-#define Quit() \
-    do { \
-	if (TwErrno) { \
-	    printf("%s: libTw error: %s\n", argv[0], TwStrError(TwErrno)); \
-	    TwClose(); \
-	    exit(1); \
-	} \
-	exit(0); \
-    } while(0)
+static void usage(void) {
+    fprintf(stderr, "Usage: twterm [-t <title>] [-e <command>]\n");
+}
 
 int main(int argc, char *argv[]) {
     fd_set fds;
     int num_fds;
     uldat Slot;
     struct timeval zero = {0, 0}, *pt;
-    char *t, *shell[3];
+    char *t, *name = argv[0], *shell[3];
     
     FD_ZERO(&save_rfds);
 
-    if (argc > 1 && !strcmp(argv[1], "-e")) {
-	argv[1] = argv[2];
-	args = argv + 1;
-    } else if ((shell[0] = getenv("SHELL")) &&
-	(shell[0] = strdup(shell[0])) &&
-	(shell[1] = (t = strrchr(shell[0], '/'))
-	 ? strdup(t) : strdup(shell[0]))) {
-	
-	if (shell[1][0] == '/')
-	    shell[1][0] = '-';
-	shell[2] = NULL;
-	args = shell;
-    } else
-	return 1;
-	
+    argv++, argc--;
+    
+    while (argc) {
+	if (argc > 1 && !strcmp(*argv, "-t")) {
+	    title = *++argv;
+	    argc--;
+	} else if (argc > 1 && !strcmp(*argv, "-e")) {
+	    args = argv;
+	    args[0] = args[1];
+	    break;
+	} else {
+	    fprintf(stderr, "%s: argument `%s' not recognized\n", name, *argv);
+	    usage();
+	    return 1;
+	}
+	argv++;
+	argc--;
+    }
+    
+    if (!args) {
+	if ((shell[0] = getenv("SHELL")) &&
+	    (shell[0] = strdup(shell[0])) &&
+	    (shell[1] = (t = strrchr(shell[0], '/'))
+	     ? strdup(t) : strdup(shell[0]))) {
+	    
+	    if (shell[1][0] == '/')
+		shell[1][0] = '-';
+	    shell[2] = NULL;
+	    args = shell;
+	} else
+	    return 1;
+    }
 
     if (!InitTerm())
-	Quit();
+	return 0;
 
     twin_fd = TwConnectionFd();
     FD_SET(twin_fd, &save_rfds);
@@ -429,8 +450,10 @@ int main(int argc, char *argv[]) {
 		TwinTermIO(Slot), num_fds--;
 	}
     }
-    Quit();
-    
-    /* NOTREACHED */
+    if (TwErrno) {
+	fprintf(stderr, "twterm: libTw error: %s\n", TwStrError(TwErrno));
+	TwClose();
+	return 1;
+    }
     return 0;
 }

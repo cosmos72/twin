@@ -22,6 +22,8 @@
 #include "scroller.h"
 #include "builtin.h"
 #include "hw.h"
+#include "hw_multi.h"
+#include "common.h"
 #include "libTwkeys.h"
 
 msgport *WM_MsgPort;
@@ -106,8 +108,7 @@ static byte CheckForwardMsg(msg *Msg, byte WasUsed) {
 	/* try to leave CurrWin with a clean status */
 	msg *NewMsg;
 	udat Code;
-	if (ClickedInside && CurrWin && CurrWin==FocusWin->Next &&
-	    (CurrWin->Attrib & WINDOW_WANT_MOUSE)) {
+	if (ClickedInside && CurrWin && (CurrWin->Attrib & WINDOW_WANT_MOUSE)) {
 	    
 	    while (LastKeys) {
 		if (!(NewMsg=Do(Create,Msg)(FnMsg, MSG_WINDOW_MOUSE, sizeof(event_mouse))))
@@ -115,7 +116,7 @@ static byte CheckForwardMsg(msg *Msg, byte WasUsed) {
 		else {
 		    Event=&NewMsg->Event;
 		    Event->EventMouse.Window = CurrWin;
-		    Event->EventMouse.FullShiftFlags = All->FullShiftFlags;
+		    Event->EventMouse.ShiftFlags = (udat)0;
 		    Code = LastKeys & HOLD_LEFT ? (LastKeys &= ~HOLD_LEFT, RELEASE_LEFT) :
 			LastKeys & HOLD_MIDDLE ? (LastKeys &= ~HOLD_MIDDLE, RELEASE_MIDDLE) :
 			LastKeys & HOLD_RIGHT ? (LastKeys &= ~HOLD_RIGHT, RELEASE_RIGHT) : 0;
@@ -196,7 +197,7 @@ static byte CheckForwardMsg(msg *Msg, byte WasUsed) {
 			Event = &NewMsg->Event;
 			Event->EventClipBoard.Window = CurrWin;
 			Event->EventClipBoard.Code = 0;
-			Event->EventClipBoard.FullShiftFlags = All->FullShiftFlags;
+			Event->EventClipBoard.ShiftFlags = (udat)0;
 			Event->EventClipBoard.X = x;
 			Event->EventClipBoard.Y = y;
 			SendMsg(CurrWin->Menu->MsgPort, NewMsg);
@@ -279,9 +280,9 @@ static void CommonMenuAction(msg *Msg) {
 	}
 	break;
 
+      case COD_COMMON_CENTER:
       case COD_COMMON_ZOOM:
       case COD_COMMON_MAXZOOM:
-      case COD_COMMON_CENTER:
 	if (CurrWin->Attrib & (WINDOW_DRAG))
 	    CenterWindow(CurrWin);
 	
@@ -305,6 +306,10 @@ static void CommonMenuAction(msg *Msg) {
 	UpdateCursor();
 	break;
 		
+      case COD_COMMON_REFRESH:
+	RefreshVideo();
+	break;
+
       case COD_COMMON_HOTKEY:
 	SendHotKey(CurrWin);
 	break;

@@ -42,7 +42,12 @@ static setup SetUp = {
 #define M 0xAA
 #define H 0xFF
 
-static palette Palette[MAXCOL+1] = {
+palette Palette[MAXCOL+1] = {
+    /* the default colour table, for VGA+ colour systems */
+    {0,0,0}, {0,0,M}, {0,M,0}, {0,M,M}, {M,0,0}, {M,0,M}, {M,M,0}, {M,M,M},
+    {L,L,L}, {L,L,H}, {L,H,L}, {L,H,H}, {H,L,L}, {H,L,H}, {H,H,L}, {H,H,H}};
+
+palette defaultPalette[MAXCOL+1] = {
     /* the default colour table, for VGA+ colour systems */
     {0,0,0}, {0,0,M}, {0,M,0}, {0,M,M}, {M,0,0}, {M,0,M}, {M,M,0}, {M,M,M},
     {L,L,L}, {L,L,H}, {L,H,L}, {L,H,H}, {H,L,L}, {H,L,H}, {H,H,L}, {H,H,H}};
@@ -88,10 +93,8 @@ static all _All = {
     },
 	
 	OV_LEFT<<LEFT | OV_MIDDLE<<MIDDLE | OV_RIGHT<<RIGHT, FALSE,
-	(udat)0,
 	(uldat)0, (uldat)0, (uldat)0,
 	(byte *)0,
-	Palette,
 	(void (*)(void))0
 };
 all *All = &_All;
@@ -305,12 +308,6 @@ NewFont16[] = {
 #endif
 
 byte InitData(void) {
-    byte c;
-    
-    for (c = 0; c < 0x80; c++)
-	GtransUser[c] = c | 0x80;
-    
-    
     /*----------- Default -------------*/
     
     ExecM(STATE_DEFAULT,0)=(udat)0; 	/* Normal Format (not compressed) */

@@ -26,12 +26,12 @@
 #include "hw.h"
 #include "hw_private.h"
 #include "hw_dirty.h"
+#include "common.h"
 
 #include "libTwkeys.h"
 
 #ifdef CONF_HW_TTY_LINUX
 #include <gpm.h>
-#include <linux/kd.h>
 #endif
 
 #if !defined(CONF_HW_TTY_LINUX) && !defined(CONF_HW_TTY_TWTERM)
@@ -386,7 +386,7 @@ static int wrap_GPM_Open(void) {
     extern int gpm_tried;
     
     if (!tty_name) {
-	fputs("      gpm_InitVideo() failed: unable to detect tty device\n", stderr);
+	fputs("      gpm_InitMouse() failed: unable to detect tty device\n", stderr);
 	return NOFD;
     }
     if (tty_number < 1 || tty_number > 63) {
@@ -703,23 +703,33 @@ static void stdin_CheckResize(udat *x, udat *y) {
 }
 
 static void stdin_Resize(udat x, udat y) {
-    /*
-     * can't resize the tty, just clear it so that
-     * extra size will get padded with blanks
-     */
-    if (x < HW->X || y < HW->Y) {
+    if (x < HW->usedX || y < HW->usedY) {
+	/*
+	 * can't resize the tty, just clear it so that
+	 * extra size will get padded with blanks
+	 */
 	fputs("\033[0m\033[2J", stdOUT);
 	fflush(stdOUT);
 	/*
 	 * flush now not to risk arriving late
 	 * and clearing the screen AFTER vcsa_FlushVideo()
 	 */
+	NeedRedrawVideo(0, 0, x - 1, y - 1);
     }
+    HW->usedX = x;
+    HW->usedY = y;
 }
 	    
 
-static void stdout_MoveToXY(udat x, udat y);
-static void stdout_SetCursorType(uldat CursorType);
+INLINE void stdout_SetCursorType(uldat type) {
+    fprintf(stdOUT, "\033[?%d;%d;%dc",
+		(int)(type & 0xFF),
+		(int)((type >> 8) & 0xFF),
+		(int)((type >> 16) & 0xFF));
+}
+INLINE void stdout_MoveToXY(udat x, udat y) {
+    fprintf(stdOUT, "\033[%d;%dH", y+1, x+1);
+}
 static void stdout_Beep(void);
 static void stdout_Configure(udat resource, byte todefault, udat value);
 static void stdout_FlushHW(void);
@@ -765,16 +775,16 @@ static byte vcsa_InitVideo(void) {
     }
     fcntl(VcsaFd, F_SETFD, FD_CLOEXEC);
     
+    fputs("\033[2J", stdOUT); /* clear screen */
+    fflush(stdOUT);
+    
     HW->FlushVideo = vcsa_FlushVideo;
     HW->FlushHW = stdout_FlushHW;
-
-    HW->SetCursorType = stdout_SetCursorType;
-    HW->MoveToXY = stdout_MoveToXY;           
 
     HW->ShowMouse = vcsa_ShowMouse;
     HW->HideMouse = vcsa_HideMouse;
 
-    HW->DetectSize  = stdin_DetectSize;
+    HW->DetectSize  = stdin_DetectSize; stdin_DetectSize(&HW->usedX, &HW->usedY);
     HW->CheckResize = stdin_CheckResize;
     HW->Resize      = stdin_Resize;
     
@@ -783,8 +793,8 @@ static byte vcsa_InitVideo(void) {
     
     HW->CanDragArea = NULL; 
    
-    HW->gotoxybuf[0] = '\0';
-    HW->cursorbuf[0] = '\0';
+    HW->XY[0] = HW->XY[1] = 0;
+    HW->TT = (uldat)-1; /* force updating cursor */
     
     HW->Beep = stdout_Beep;
     HW->Configure = stdout_Configure;
@@ -796,15 +806,15 @@ static byte vcsa_InitVideo(void) {
     HW->NeedOldVideo = TRUE;
     HW->ExpensiveFlushVideo = FALSE;
     HW->NeedHW = 0;
+    HW->CanResize = FALSE;
     HW->merge_Threshold = 40;
 
     return TRUE;
 }
 
 static void vcsa_QuitVideo(void) {
-    HW->MoveToXY(0, ScreenHeight-1);
-    HW->SetCursorType(LINECURSOR);
-    HW->FlushVideo();
+    stdout_MoveToXY(0, ScreenHeight-1);
+    stdout_SetCursorType(LINECURSOR);
     fputs("\033[0m\033[3l\n", stdOUT); /* clear colors, TTY_DISPCTRL */
     
     close(VcsaFd);
@@ -868,15 +878,6 @@ static void vcsa_FlushVideo(void) {
 		_end   += (i>>1) * HW->X;
 		
 		
-		if (ValidOldVideo) {
-		    while (start <= end && Video[start] == OldVideo[start])
-			start++, _start++;
-		    while (start <= end && Video[end] == OldVideo[end])
-			end--, _end--;
-		    if (start > end)
-			continue;
-		}
-		
 		if (prevS != (uldat)-1) {
 		    if (start - prevE < HW->merge_Threshold) {
 			/* the two chunks are (almost) contiguous, merge them */
@@ -912,11 +913,14 @@ static void vcsa_FlushVideo(void) {
     
     /* now the cursor */
     
-    if (HW->gotoxybuf[0])
-	fputs(HW->gotoxybuf, stdOUT), HW->gotoxybuf[0] = '\0', setFlush();
-
-    if (HW->cursorbuf[0])
-	fputs(HW->cursorbuf, stdOUT), HW->cursorbuf[0] = '\0', setFlush();
+    if (CursorType != NOCURSOR && (CursorX != HW->XY[0] || CursorY != HW->XY[1])) {
+	stdout_MoveToXY(HW->XY[0] = CursorX, HW->XY[1] = CursorY);
+	setFlush();
+    }
+    if (CursorType != HW->TT) {
+	stdout_SetCursorType(HW->TT = CursorType);
+	setFlush();
+    }
 
     HW->ChangedMouseFlag = FALSE;
 }
@@ -999,13 +1003,11 @@ static byte stdout_InitVideo(void) {
 	return FALSE;
     } while (0);
 
-    fputs("\033[0;11m\033[3h", stdOUT); /* clear colors, set IBMPC consolemap, set TTY_DISPCTRL */
+    fputs("\033[0;11m\033[2J\033[3h", stdOUT); /* clear colors, clear screen,
+						set IBMPC consolemap, set TTY_DISPCTRL */
     
     HW->FlushVideo = stdout_FlushVideo;
     HW->FlushHW = stdout_FlushHW;
-
-    HW->SetCursorType = stdout_SetCursorType;
-    HW->MoveToXY = stdout_MoveToXY;           
 
     HW->ShowMouse = stdout_ShowMouse;
     HW->HideMouse = stdout_HideMouse;
@@ -1019,9 +1021,9 @@ static byte stdout_InitVideo(void) {
     
     HW->CanDragArea = NULL; 
    
-    HW->gotoxybuf[0] = '\0';
-    HW->cursorbuf[0] = '\0';
-    
+    HW->XY[0] = HW->XY[1] = 0;
+    HW->TT = -1; /* force updateing the cursor */
+	
     HW->Beep = stdout_Beep;
     HW->Configure = stdout_Configure;
     HW->SetPalette = stdout_SetPalette;
@@ -1038,10 +1040,8 @@ static byte stdout_InitVideo(void) {
 }
 
 static void stdout_QuitVideo(void) {
-    HW->MoveToXY(0, ScreenHeight-1);
-    HW->SetCursorType(LINECURSOR);
-    HW->FlushVideo();
-
+    stdout_MoveToXY(0, ScreenHeight-1);
+    stdout_SetCursorType(LINECURSOR);
     fputs("\033[0;10m\033[3l\n", stdOUT); /* restore original colors, consolemap and TTY_DISPCTRL */
     
     HW->QuitVideo = NoOp;
@@ -1052,9 +1052,9 @@ static hwcol _col;
 
 #define CTRL_ALWAYS 0x0800f501	/* Cannot be overridden by TTY_DISPCTRL */
 
+#define stdout_MogrifyInit() fputs("\033[0m", stdOUT); _col = COL(WHITE,BLACK)
 #define stdout_MogrifyNoCursor() fputs("\033[?25l", stdOUT);
 #define stdout_MogrifyYesCursor() fputs("\033[?25h", stdOUT);
-#define stdout_MogrifyInit() fputs("\033[0m", stdOUT); _col = COL(WHITE,BLACK)
 
 INLINE void stdout_SetColor(hwcol col) {
     static byte colbuf[] = "\033[2x;2x;4x;3xm";
@@ -1145,8 +1145,8 @@ static void stdout_FlushVideo(void) {
 	    }
 	}
 	
-	stdout_MogrifyNoCursor();
 	stdout_MogrifyInit();
+	stdout_MogrifyNoCursor();
 	for (i=0; i<ScreenHeight*2; i++) {
 	    start = ChangedVideo[i>>1][i&1][0];
 	    end   = ChangedVideo[i>>1][i&1][1];
@@ -1156,9 +1156,9 @@ static void stdout_FlushVideo(void) {
 	}
 	/* put the cursor back in place */
 	stdout_MogrifyYesCursor();
-	HW->gotoxybuf[0] = '\033';
+	HW->XY[0] = HW->XY[1] = -1;
 	
-	/* setFlush() will be called by fputs(All->gotoxybuf...)... */
+	setFlush();
     } else if (HW->SoftMouse && HW->ChangedMouseFlag)
 	HW->HideMouse();
     
@@ -1170,12 +1170,14 @@ static void stdout_FlushVideo(void) {
 	    HW->ShowMouse();
     }
     
-    if (HW->gotoxybuf[0])
-	fputs(HW->gotoxybuf, stdOUT), HW->gotoxybuf[0] = '\0', setFlush();
-    
-    if (HW->cursorbuf[0])
-	fputs(HW->cursorbuf, stdOUT), HW->cursorbuf[0] = '\0', setFlush();
-
+    if ((CursorX != HW->XY[0] || CursorY != HW->XY[1]) && (CursorType != NOCURSOR)) {
+	stdout_MoveToXY(HW->XY[0] = CursorX, HW->XY[1] = CursorY);
+	setFlush();
+    }
+    if (CursorType != HW->TT) {
+	stdout_SetCursorType(HW->TT = CursorType);
+	setFlush();
+    }
     HW->ChangedMouseFlag = FALSE;
 }
 
@@ -1210,7 +1212,7 @@ static void stdout_ShowMouse(void) {
     stdout_SingleMogrify(HW->MouseState.x, HW->MouseState.y, HWATTR( c, HWFONT(h) ));
 
     /* put the cursor back in place */
-    HW->gotoxybuf[0] = '\033';
+    HW->XY[0] = HW->XY[1] = (udat)-1;
     setFlush();
 }
 
@@ -1220,27 +1222,8 @@ static void stdout_HideMouse(void) {
     stdout_SingleMogrify(HW->Last_x, HW->Last_y, Video[pos]);
 
     /* put the cursor back in place */
-    HW->gotoxybuf[0] = '\033';
+    HW->XY[0] = HW->XY[1] = (udat)-1;
     setFlush();
-}
-
-static void stdout_SetCursorType(uldat CursorType) {
-    if (CursorType != saveCursorType) {
-	sprintf(HW->cursorbuf, "\033[?%d;%d;%dc",
-		(int)(CursorType & 0xFF),
-		(int)((CursorType >> 8) & 0xFF),
-		(int)((CursorType >> 16) & 0xFF));
-	saveCursorType = CursorType;
-    }
-}
-
-static void stdout_MoveToXY(udat x, udat y) {
-    x++, y++;
-    if (x != saveX || y != saveY) {
-	sprintf(HW->gotoxybuf, "\033[%d;%dH", y, x);
-	saveX = x;
-	saveY = y;
-    }
 }
 
 static void stdout_Beep(void) {
@@ -1307,8 +1290,6 @@ void stdout_DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp)
 	DstUp <= Dwn && DstDwn >= Up) {
 	/* ok, prepare for direct tty scroll */
 	
-	if (ChangedVideoFlag)
-	    FlushHW();
 	HW->HideMouse();
 	HW->ChangedMouseFlag = TRUE;
 	
@@ -1330,8 +1311,7 @@ void stdout_DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp)
 	    DirtyVideo(0, 0, ScreenWidth - 1, DstUp-1);
 	
 	/* this will restore the cursor */
-	HW->gotoxybuf[0] = '\033';
-	HW->cursorbuf[0] = '\033';
+	HW->XY[0] = HW->XY[1] = HW->TT = -1;
     } else
     	/* tty scrolls can't do this :( */
 	DirtyVideo(DstLeft, DstUp, DstRgt, DstDwn);
@@ -1473,7 +1453,17 @@ byte tty_InitHW(void) {
 		}
 		HW->QuitHW = tty_QuitHW;
 
-		
+
+		/*
+		 * we must draw everything on our new shiny window
+		 * without forcing all other displays
+		 * to redraw everything too.
+		 */
+		stdin_DetectSize(&HW->usedX, &HW->usedY);
+		HW->usedX = ScreenWidth;
+		HW->usedY = ScreenHeight;
+		NeedRedrawVideo(0, 0, HW->X - 1, HW->Y - 1);
+
 		return TRUE;
 	    }
 	    HW->QuitMouse();

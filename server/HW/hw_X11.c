@@ -16,12 +16,11 @@
 #include "main.h"
 #include "data.h"
 #include "remote.h"
-#include "util.h"
-#include "methods.h"
 
 #include "hw.h"
 #include "hw_private.h"
 #include "hw_dirty.h"
+#include "common.h"
 
 #include "libTwkeys.h"
 
@@ -66,15 +65,6 @@ static void X11_ExportClipBoard(void);
 static void X11_UnExportClipBoard(void);
 static void X11_SendClipBoard(XSelectionRequestEvent *rq);
 
-
-static void X11_MoveToXY(udat x, udat y) {
-    XY[2] = x;
-    XY[3] = y;
-}
-
-static void X11_SetCursorType(uldat CursorType) {
-    TT[1] = CursorType;
-}
 
 static void X11_Beep(void) {
     XBell(xdisplay, 0);
@@ -235,14 +225,13 @@ static void X11_HandleEvent(XEvent *event) {
       case Expose:
 	x = event->xexpose.x / xwfont;
 	y = event->xexpose.y / xhfont;
-	dx = (event->xexpose.x + event->xexpose.width - 1) / xwfont;
-	dy = (event->xexpose.y + event->xexpose.height - 1) / xhfont;
-	/* HACK: all displays will redraw */
-	FillOldVideo(x, y, dx, dy, HWATTR(COL(WHITE,BLACK), ' '));
-	DirtyVideo(x, y, dx, dy);
+	dx = (event->xexpose.x + event->xexpose.width + xwfont - 2) / xwfont;
+	dy = (event->xexpose.y + event->xexpose.height + xhfont - 2) / xhfont;
+	
+	NeedRedrawVideo(x, y, dx, dy);
 	/* must we redraw the cursor too ? */
-	if (XY[0] >= x && XY[0] <= dx && XY[1] >= y && XY[1] <= dy)
-	    TT[0] = (uldat)-1;
+	if (HW->XY[0] >= x && HW->XY[0] <= dx && HW->XY[1] >= y && HW->XY[1] <= dy)
+	    HW->TT = NOCURSOR;
 	break;
       case VisibilityNotify:
 	xwindow_AllVisible = event->xvisibility.state == VisibilityUnobscured;
@@ -323,7 +312,7 @@ static void X11_HideCursor(dat x, dat y) {
 
 #undef XDRAW
 
-static void X11_ShowCursor(dat x, dat y, uldat type) {
+static void X11_ShowCursor(uldat type, dat x, dat y) {
     hwattr V = Video[x + y * ScreenWidth];
     hwcol v;
     byte c;
@@ -363,8 +352,9 @@ static void X11_FlushVideo(void) {
     udat i;
     byte c = ChangedVideoFlag &&
 	(ValidOldVideo
-	 ? Video[XY[0] + XY[1] * ScreenWidth] != OldVideo[XY[0] + XY[1] * ScreenWidth] 
-	 : Plain_isDirtyVideo(XY[0], XY[1]));
+	 ? Video[HW->XY[0] + HW->XY[1] * ScreenWidth]
+	 != OldVideo[HW->XY[0] + HW->XY[1] * ScreenWidth] 
+	 : Plain_isDirtyVideo(HW->XY[0], HW->XY[1]));
     /* TRUE iff the cursor will be erased by burst */
     
     
@@ -380,22 +370,23 @@ static void X11_FlushVideo(void) {
 	setFlush();
     }
     /* then, we may have to erase the old cursor */
-    if (!c && TT[0] != NOCURSOR && (TT[0] != TT[1] || XY[0] != XY[2] || XY[1] != XY[3])) {
-	X11_HideCursor(XY[0], XY[1]);
+    if (!c && HW->TT != NOCURSOR &&
+	(CursorType != HW->TT || CursorX != HW->XY[0] || CursorY != HW->XY[1])) {
+	
+	HW->TT = NOCURSOR;
+	X11_HideCursor(HW->XY[0], HW->XY[1]);
 	setFlush();
     }
     /* finally, redraw the cursor if */
     /* (we want a cursor and (the burst erased the cursor or the cursor changed)) */
-    if (TT[1] != NOCURSOR && (c || TT[0] != TT[1] || XY[0] != XY[2] || XY[1] != XY[3])) {
-	X11_ShowCursor(XY[2], XY[3], TT[1]);
+    if (CursorType != NOCURSOR &&
+	(c || CursorType != HW->TT || CursorX != HW->XY[0] || CursorY != HW->XY[1])) {
+	
+	X11_ShowCursor(HW->TT = CursorType, HW->XY[0] = CursorX, HW->XY[1]= CursorY);
 	setFlush();
     }
-    
+
     HW->ChangedMouseFlag = FALSE;
-    
-    TT[0] = TT[1];
-    XY[0] = XY[2];
-    XY[1] = XY[3];
 }
 
 static void X11_FlushHW(void) {
@@ -467,7 +458,8 @@ static void X11_SendClipBoard(XSelectionRequestEvent *rq) {
     } else if (rq->target == XA_STRING) {
 	XChangeProperty (xdisplay, rq->requestor, rq->property,
 			 XA_STRING, 8, PropModeReplace,
-			 All->ClipData, All->ClipLen);
+			 /* GetClipData() MUST ALWAYS precede GetClipLen() */
+			 GetClipData(), GetClipLen());
 	ev.xselection.property = rq->property;
     }
     XSendEvent (xdisplay, rq->requestor, False, 0, &ev);
@@ -524,24 +516,25 @@ static void X11_ImportClipBoard(byte Wait) {
 
 
 static byte X11_CanDragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
-    return xwindow_AllVisible && (Rgt-Left+1) * (Dwn-Up+1) > 20;
+    return xwindow_AllVisible /* if window is partially covered, XCopyArea() cannot work */
+	&& !HW->RedrawVideo /* if window is not up-to-date, XCopyArea() is unusable */
+	&& (Rgt-Left+1) * (Dwn-Up+1) > 20; /* avoid XCopyArea() for very small areas */
 }
 
 static void X11_DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
     dat DstRgt = (Rgt-Left)+DstLeft;
     dat DstDwn = (Dwn-Up)+DstUp;
-    
-    X11_FlushVideo(); /* a *must* before any direct X11 operation */
-    
-    if (TT[1] != NOCURSOR) {
-	if (XY[2] >= Left && XY[2] <= Rgt && XY[3] >= Up && XY[3] <= Dwn) {
+
+    if (HW->TT != NOCURSOR) {
+	if (HW->XY[0] >= Left && HW->XY[0] <= Rgt && HW->XY[1] >= Up && HW->XY[1] <= Dwn) {
 	    /* must hide the cursor before dragging */
-	    X11_HideCursor(XY[2], XY[3]);
+	    X11_HideCursor(HW->XY[0], HW->XY[1]);
 	    /* and remember redrawing it */
-	    TT[0] = (uldat)-1;
-	} else if (XY[2] >= DstLeft && XY[2] <= DstRgt && XY[3] >= DstUp && XY[3] <= DstDwn) {
+	    HW->TT = (uldat)-1;
+	} else if (HW->XY[0] >= DstLeft && HW->XY[0] <= DstRgt &&
+		   HW->XY[1] >= DstUp && HW->XY[1] <= DstDwn) {
 	    /* cursor will be overwritten by drag, remember to redraw it */
-	    TT[0] = (uldat)-1;
+	    HW->TT = (uldat)-1;
 	}
     }
     XCopyArea(xdisplay, xwindow, xwindow, xgc,
@@ -651,9 +644,9 @@ byte X11_InitHW(void) {
 	xdepth  = DefaultDepth(xdisplay, xscreen);
 	
 	for (i = 0; i <= MAXCOL; i++) {
-	    xcolor.red   = 257 * (udat)All->Palette[i].Red;
-	    xcolor.green = 257 * (udat)All->Palette[i].Green;
-	    xcolor.blue  = 257 * (udat)All->Palette[i].Blue;
+	    xcolor.red   = 257 * (udat)Palette[i].Red;
+	    xcolor.green = 257 * (udat)Palette[i].Green;
+	    xcolor.blue  = 257 * (udat)Palette[i].Blue;
 	    if (!XAllocColor(xdisplay, DefaultColormap(xdisplay, xscreen), &xcolor))
 		break;
 	    xcol[i] = xcolor.pixel;
@@ -669,8 +662,10 @@ byte X11_InitHW(void) {
 	if (((fontname && (xsfont = XLoadQueryFont(xdisplay, fontname))) ||
 	     (xsfont = XLoadQueryFont(xdisplay, "vga")) ||
 	     (xsfont = XLoadQueryFont(xdisplay, "fixed"))) &&
-	    (xwfont = xsfont->min_bounds.width, xwidth = xwfont * ScreenWidth,
-	     xhfont = (xupfont = xsfont->ascent) + xsfont->descent, xheight = xhfont * ScreenHeight,
+	    (xwfont = xsfont->min_bounds.width,
+	     xwidth = xwfont * (HW->X = ScreenWidth),
+	     xhfont = (xupfont = xsfont->ascent) + xsfont->descent,
+	     xheight = xhfont * (HW->Y = ScreenHeight),
 	     xwindow = XCreateWindow(xdisplay, RootWindow(xdisplay, xscreen), 0, 0,
 				     xwidth, xheight, 0, xdepth, InputOutput,
 				     DefaultVisual(xdisplay, xscreen),
@@ -711,10 +706,8 @@ byte X11_InitHW(void) {
 	    HW->KeyboardEvent = X11_KeyboardEvent;
 	    HW->MouseEvent = (void *)NoOp; /* mouse events handled by X11_KeyboardEvent */
 
-	    HW->MoveToXY = X11_MoveToXY;
-	    HW->SetCursorType = X11_SetCursorType;
-	    XY[0] = XY[1] = XY[2] = XY[3] = 0;
-	    TT[0] = TT[1] = NOCURSOR;
+	    HW->XY[0] = HW->XY[1] = 0;
+	    HW->TT = NOCURSOR;
 
 	    HW->ShowMouse = NoOp;
 	    HW->HideMouse = NoOp;
@@ -727,8 +720,11 @@ byte X11_InitHW(void) {
 	    HW->ImportClipBoard = X11_ImportClipBoard;
 	    HW->PrivateClipBoard = NULL;
 
-	    HW->CanDragArea = X11_CanDragArea;
-	    HW->DragArea    = X11_DragArea;
+	    if (arg && strstr(arg, ",drag")) {
+		HW->CanDragArea = X11_CanDragArea;
+		HW->DragArea    = X11_DragArea;
+	    } else
+		HW->CanDragArea = NULL;
 
 	    HW->Beep = X11_Beep;
 	    HW->Configure = X11_Configure;
@@ -746,8 +742,16 @@ byte X11_InitHW(void) {
 	    HW->NeedOldVideo = TRUE;
 	    HW->ExpensiveFlushVideo = TRUE;
 	    HW->NeedHW = 0;
+	    HW->CanResize = TRUE;
 	    HW->merge_Threshold = 0;
 	    
+	    /*
+	     * we must draw everything on our new shiny window
+	     * without forcing all other displays
+	     * to redraw everything too.
+	     */
+	    NeedRedrawVideo(0, 0, HW->X - 1, HW->Y - 1);
+
 	    if (opt) *opt = ',';
 
 	    return TRUE;

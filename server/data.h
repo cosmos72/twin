@@ -3,6 +3,8 @@
 
 byte InitData(void);
 
+extern palette Palette[MAXCOL+1], defaultPalette[MAXCOL+1];
+
 extern all *All;
 
 extern gadget GadgetFlag, GadgetSwitch;

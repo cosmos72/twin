@@ -224,15 +224,14 @@ struct tevent_common {
 typedef struct tevent_keyboard *tevent_keyboard;
 struct tevent_keyboard {
     twindow Window;
-    udat Code, FullShiftFlags;
-    udat SeqLen;
+    udat Code, ShiftFlags, SeqLen;
     byte pad, AsciiSeq[1];  /* including final \0 */
 };
 
 typedef struct tevent_mouse *tevent_mouse;
 struct tevent_mouse {
     twindow Window;
-    udat Code, FullShiftFlags;
+    udat Code, ShiftFlags;
     dat X, Y; /* these coords are relative to the window top-left corner */
 };
 
@@ -245,6 +244,7 @@ struct tevent_display {
 };
 
 #define TW_DPY_DrawHWAttr	((udat)0)
+#define TW_DPY_FlushHW		((udat)1)
 #define TW_DPY_KeyboardEvent	((udat)2)
 #define TW_DPY_MouseEvent	((udat)3)
 #define TW_DPY_SetCursorType	((udat)4)
@@ -258,6 +258,8 @@ struct tevent_display {
 #define TW_DPY_SetPalette	((udat)12)
 #define TW_DPY_ResetPalette	((udat)13)
 #define TW_DPY_Helper		((udat)14)
+#define TW_DPY_RedrawVideo	((udat)15)
+#define TW_DPY_Quit		((udat)16)
 
 typedef struct tevent_window *tevent_window;
 struct tevent_window {
@@ -282,10 +284,11 @@ struct tevent_menu {
 typedef struct tevent_clipboard *tevent_clipboard;
 struct tevent_clipboard {
     twindow Window;
-    udat Code, FullShiftFlags; /* Code is unused */
+    udat Code, ShiftFlags; /* Code is unused */
     dat X, Y; /* these coords are absolute, to allow cross-window cut-n-paste */
     uldat Magic;
     uldat Len;
+    byte MIME[255], MIMELen; /* MIME type */
     byte Data[1];
 };
 /*ClipBoard Magic*/
@@ -295,13 +298,13 @@ struct tevent_clipboard {
 
 typedef union tevent_any *tevent_any;
 union tevent_any {
-    struct tevent_common EventCommon;
-    struct tevent_keyboard EventKeyboard;
-    struct tevent_mouse EventMouse;
-    struct tevent_mouse EventDisplay;
-    struct tevent_window EventWindow;
-    struct tevent_gadget EventGadget;
-    struct tevent_menu EventMenu;
+    struct tevent_common    EventCommon;
+    struct tevent_keyboard  EventKeyboard;
+    struct tevent_mouse     EventMouse;
+    struct tevent_display   EventDisplay;
+    struct tevent_window    EventWindow;
+    struct tevent_gadget    EventGadget;
+    struct tevent_menu      EventMenu;
     struct tevent_clipboard EventClipBoard;
 };
 
@@ -379,21 +382,25 @@ typedef struct s_tw_d *tdisplay;
 
 
 
-
+void Tw_ConfigMalloc(void *(*my_malloc)(size_t),
+		     void *(*my_realloc)(void *, size_t),
+		     void  (*my_free)(void *));
+		     
+extern void *(*Tw_AllocMem)(size_t);
+extern void *(*Tw_ReAllocMem)(void *, size_t);
+extern void  (*Tw_FreeMem)(void *);
+extern byte *(*Tw_CloneStr)(byte *);
 
 
 #define Tw_LenStr(S) strlen(S)
 #define Tw_CmpStr(S1, S2) strcmp((S1), (S2))
 #define Tw_CopyStr(From,To) strcpy((To),(From))
-#define Tw_CloneStr(S) strdup(S)
 
-#define Tw_AllocMem(Size)		malloc(Size)
-#define Tw_ReAllocMem(Mem, Size)	realloc((Mem), (Size))
 #define Tw_CopyMem(From, To, Size)	memcpy((To), (From), (size_t)(Size))
 #define Tw_MoveMem(From, To, Size)	memmove((To), (From), (size_t)(Size))
 #define Tw_WriteMem(Mem, Char, Size)	memset((Mem), (int)(Char), (size_t)(Size))
 #define Tw_CmpMem(m1, m2, Size)		memcmp((m1), (m2), (size_t)(Size))
-#define Tw_FreeMem(Mem)			free(Mem)
+
 
 #define Tw_DropPrivileges() (setegid(getgid()), seteuid(getuid()))
 #define Tw_GetPrivileges() seteuid(0)
@@ -434,7 +441,7 @@ void	Tw_Create4MenuRow(tdisplay TwD, twindow Window, udat Code, byte FlagActive,
 #define Tw_Row4Menu Tw_Create4MenuRow
 
 twindow Tw_CreateWindow(tdisplay TwD, udat TitleLen, byte *Title, hwcol *ColTitle, tmenu Menu,
-		       hwcol ColText, uldat CursorType, uldat Attrib, byte Flags,
+		       hwcol ColText, uldat cursorType, uldat Attrib, byte Flags,
 		       udat XWidth, udat YWidth, udat ScrollBackLines);
 void	Tw_DeleteWindow(tdisplay TwD, twindow Window);
 twindow Tw_Create4MenuWindow(tdisplay TwD, tmenu Menu);
@@ -483,6 +490,14 @@ tmenuitem Tw_FirstMenuItem(tdisplay TwD, tmenu Menu);
 tobj Tw_PrevObj(tdisplay TwD, tobj Obj);
 tobj Tw_NextObj(tdisplay TwD, tobj Obj);
 tobj Tw_ParentObj(tdisplay TwD, tobj Obj);
+
+udat Tw_GetWidthScreen(tdisplay TwD, tscreen Screen);
+udat Tw_GetHeightScreen(tdisplay TwD, tscreen Screen);
+
+tmsg Tw_CreateMsg(tdisplay TwD, udat Type, udat Len);
+void Tw_DeleteMsg(tdisplay TwD, tmsg Msg);
+byte Tw_SendMsg(tdisplay TwD, tmsgport MsgPort, tmsg Msg);
+
 
 tdisplay Tw_Open(byte *Tw_Display);
 void	Tw_Close(tdisplay TwD);
@@ -568,110 +583,119 @@ tmsg	Tw_PeekMsg(tdisplay TwD);
 /*
  * libTw.so.1 --- single head compatibility. these are too handy to drop them.
  */
-extern tdisplay TwDefaultD;
+extern tdisplay Tw_DefaultD;
 
 #define TwLenStr(S)			strlen(S)
 #define TwCmpStr(S1, S2)		strcmp((S1), (S2))
 #define TwCopyStr(From,To)		strcpy((To),(From))
-#define TwCloneStr(S)			strdup(S)
 
-#define TwAllocMem(Size)		malloc(Size)
-#define TwReAllocMem(Mem, Size)		realloc((Mem), (Size))
+#define TwAllocMem(Size)		Tw_AllocMem(Size)
+#define TwReAllocMem(Mem, Size)		Tw_ReAllocMem((Mem), (Size))
+#define TwFreeMem(Mem)			Tw_FreeMem(Mem)
+#define TwCloneStr(S)			Tw_CloneStr(S)
+
 #define TwCopyMem(From, To, Size)	memcpy((To), (From), (size_t)(Size))
 #define TwMoveMem(From, To, Size)	memmove((To), (From), (size_t)(Size))
 #define TwWriteMem(Mem, Char, Size)	memset((Mem), (int)(Char), (size_t)(Size))
 #define TwCmpMem(m1, m2, Size)		memcmp((m1), (m2), (size_t)(Size))
-#define TwFreeMem(Mem)			free(Mem)
 
 #define TwDropPrivileges()		(setegid(getgid()), seteuid(getuid()))
 #define TwGetPrivileges()		seteuid(0)
 
-#define TwFindFunction(Len, Name)	Tw_FindFunction(TwDefaultD, Len, Name)
-#define TwEnableGzip()			Tw_EnableGzip(TwDefaultD)
-#define TwDisableGzip()			Tw_DisableGzip(TwDefaultD)
-#define TwNeedResizeDisplay()		Tw_NeedResizeDisplay(TwDefaultD)
-#define TwAttachHW(len, name, redirect)	Tw_AttachHW(TwDefaultD, len, name, redirect)
-#define TwAttachGetReply(len)		Tw_AttachGetReply(TwDefaultD, len)
-#define TwAttachConfirm()		Tw_AttachConfirm(TwDefaultD)
-#define TwDetachHW(len, name)		Tw_DetachHW(TwDefaultD, len, name)
-#define TwSetFontTranslation(trans)	Tw_SetFontTranslation(TwDefaultD, trans)
+#define TwFindFunction(Len, Name)	Tw_FindFunction(Tw_DefaultD, Len, Name)
+#define TwEnableGzip()			Tw_EnableGzip(Tw_DefaultD)
+#define TwDisableGzip()			Tw_DisableGzip(Tw_DefaultD)
+#define TwNeedResizeDisplay()		Tw_NeedResizeDisplay(Tw_DefaultD)
+#define TwAttachHW(len, name, redirect)	Tw_AttachHW(Tw_DefaultD, len, name, redirect)
+#define TwAttachGetReply(len)		Tw_AttachGetReply(Tw_DefaultD, len)
+#define TwAttachConfirm()		Tw_AttachConfirm(Tw_DefaultD)
+#define TwDetachHW(len, name)		Tw_DetachHW(Tw_DefaultD, len, name)
+#define TwSetFontTranslation(trans)	Tw_SetFontTranslation(Tw_DefaultD, trans)
 #define TwCreateGadget(Window, \
 		       ColText, ColTextSelect, ColTextDisabled, ColTextSelectDisabled, \
 		       Code, Flags, Left, Up, XWidth, YWidth, Bitmap, \
 		       TextNormal, TextSelect, TextDisabled, TextSelectDisabled, \
 		       ColNormal, ColSelect, ColDisabled, ColSelectDisabled) \
-	Tw_CreateGadget(TwDefaultD, Window, \
+	Tw_CreateGadget(Tw_DefaultD, Window, \
 		       ColText, ColTextSelect, ColTextDisabled, ColTextSelectDisabled, \
 		       Code, Flags, Left, Up, XWidth, YWidth, Bitmap, \
 		       TextNormal, TextSelect, TextDisabled, TextSelectDisabled, \
 		       ColNormal, ColSelect, ColDisabled, ColSelectDisabled)
-#define TwCopyGadget(From, To)		Tw_CopyGadget(TwDefaultD, From, To)
-#define TwDeleteGadget(Gadget)		Tw_DeleteGadget(TwDefaultD, Gadget)
-#define TwSearchGadget(Window, i, j)	Tw_SearchGadget(TwDefaultD, Window, i, j)
+#define TwCopyGadget(From, To)		Tw_CopyGadget(Tw_DefaultD, From, To)
+#define TwDeleteGadget(Gadget)		Tw_DeleteGadget(Tw_DefaultD, Gadget)
+#define TwSearchGadget(Window, i, j)	Tw_SearchGadget(Tw_DefaultD, Window, i, j)
 #define TwCreate4MenuRow(Window, Code, FlagActive, TextLen, Text) \
-	Tw_Create4MenuRow(TwDefaultD, Window, Code, FlagActive, TextLen, Text)
+	Tw_Create4MenuRow(Tw_DefaultD, Window, Code, FlagActive, TextLen, Text)
 #define TwRow4Menu			TwCreate4MenuRow
-#define TwCreateWindow(TitleLen, Title, ColTitle, Menu, ColText, CursorType, \
+#define TwCreateWindow(TitleLen, Title, ColTitle, Menu, ColText, cursorType, \
 		       Attrib, Flags, XWidth, YWidth, ScrollBackLines) \
-	Tw_CreateWindow(TwDefaultD, TitleLen, Title, ColTitle, Menu, ColText, CursorType, \
+	Tw_CreateWindow(Tw_DefaultD, TitleLen, Title, ColTitle, Menu, ColText, cursorType, \
 		       Attrib, Flags, XWidth, YWidth, ScrollBackLines)
-#define TwDeleteWindow(Window)		Tw_DeleteWindow(TwDefaultD, Window)
-#define TwCreate4MenuWindow(Menu)	Tw_Create4MenuWindow(TwDefaultD, Menu)
+#define TwDeleteWindow(Window)		Tw_DeleteWindow(Tw_DefaultD, Window)
+#define TwCreate4MenuWindow(Menu)	Tw_Create4MenuWindow(Tw_DefaultD, Menu)
 #define TwWin4Menu			TwCreate4MenuWindow
-#define TwMapWindow(Window, Screen)	Tw_MapWindow(TwDefaultD, Window, Screen)
-#define TwUnMapWindow(Window)		Tw_UnMapWindow(TwDefaultD, Window)
+#define TwMapWindow(Window, Screen)	Tw_MapWindow(Tw_DefaultD, Window, Screen)
+#define TwUnMapWindow(Window)		Tw_UnMapWindow(Tw_DefaultD, Window)
 #define TwWriteAsciiWindow(Window, AsciiLen, AsciiSeq) \
-	Tw_WriteAsciiWindow(TwDefaultD, Window, AsciiLen, AsciiSeq)
+	Tw_WriteAsciiWindow(Tw_DefaultD, Window, AsciiLen, AsciiSeq)
 #define TwWriteHWAttrWindow(Window, x, y, Len, Attr) \
-	Tw_WriteHWAttrWindow(TwDefaultD, Window, x, y, Len, Attr)
-#define TwWriteRowWindow(Window, Len, Text) Tw_WriteRowWindow(TwDefaultD, Window, Len, Text)
-#define TwSetColTextWindow(Window, ColText) Tw_SetColTextWindow(TwDefaultD, Window, ColText)
+	Tw_WriteHWAttrWindow(Tw_DefaultD, Window, x, y, Len, Attr)
+#define TwWriteRowWindow(Window, Len, Text) Tw_WriteRowWindow(Tw_DefaultD, Window, Len, Text)
+#define TwSetColTextWindow(Window, ColText) Tw_SetColTextWindow(Tw_DefaultD, Window, ColText)
 #define TwSetColorsWindow(Window, Bitmap, ColGadgets, ColArrows, ColBars, ColTabs, \
 			  ColBorder, ColText, ColSelect, ColDisabled, ColSelectDisabled) \
-	Tw_SetColorsWindow(TwDefaultD, Window, Bitmap, ColGadgets, ColArrows, ColBars, ColTabs, \
+	Tw_SetColorsWindow(Tw_DefaultD, Window, Bitmap, ColGadgets, ColArrows, ColBars, ColTabs, \
 			  ColBorder, ColText, ColSelect, ColDisabled, ColSelectDisabled)
 #define TwConfigureWindow(Window, Bitmap, Left, Up, MinXWidth, MinYWidth, MaxXWidth, MaxYWidth) \
-	Tw_ConfigureWindow(TwDefaultD, Window, Bitmap, Left, Up, MinXWidth, MinYWidth, MaxXWidth, MaxYWidth)
-#define TwGotoXYWindow(Window, X, Y)	Tw_GotoXYWindow(TwDefaultD, Window, X, Y)
-#define TwSearchGadgetWindow(Window, X, Y) Tw_SearchGadgetWindow(TwDefaultD, Window, X, Y)
+	Tw_ConfigureWindow(Tw_DefaultD, Window, Bitmap, Left, Up, MinXWidth, MinYWidth, MaxXWidth, MaxYWidth)
+#define TwGotoXYWindow(Window, X, Y)	Tw_GotoXYWindow(Tw_DefaultD, Window, X, Y)
+#define TwSearchGadgetWindow(Window, X, Y) Tw_SearchGadgetWindow(Tw_DefaultD, Window, X, Y)
 #define TwCreate4MenuMenuItem(Menu, Window, Flags, NameLen, Name) \
-	Tw_Create4MenuMenuItem(TwDefaultD, Menu, Window, Flags, NameLen, Name)
+	Tw_Create4MenuMenuItem(Tw_DefaultD, Menu, Window, Flags, NameLen, Name)
 #define TwItem4Menu			TwCreate4MenuMenuItem
-#define TwCreate4MenuCommonMenuItem(Menu) Tw_Create4MenuCommonMenuItem(TwDefaultD, Menu)
+#define TwCreate4MenuCommonMenuItem(Menu) Tw_Create4MenuCommonMenuItem(Tw_DefaultD, Menu)
 #define TwItem4MenuCommon		TwCreate4MenuCommonMenuItem
-#define TwDeleteMenuItem(MenuItem)	Tw_DeleteMenuItem(TwDefaultD, MenuItem)
+#define TwDeleteMenuItem(MenuItem)	Tw_DeleteMenuItem(Tw_DefaultD, MenuItem)
 #define TwCreateMenu(MsgPort, ColItem, ColSelect, ColDisabled, \
 		     ColSelectDisabled, ColShtCut, ColSelShtCut, FlagDefColInfo) \
-	Tw_CreateMenu(TwDefaultD, MsgPort, ColItem, ColSelect, ColDisabled, \
+	Tw_CreateMenu(Tw_DefaultD, MsgPort, ColItem, ColSelect, ColDisabled, \
 		     ColSelectDisabled, ColShtCut, ColSelShtCut, FlagDefColInfo)
 
 #define TwSetInfoMenu(Menu, Flags, Len, Text, ColText) \
-	Tw_SetInfoMenu(TwDefaultD, Menu, Flags, Len, Text, ColText)
+	Tw_SetInfoMenu(Tw_DefaultD, Menu, Flags, Len, Text, ColText)
 #define TwInfo4Menu			TwSetInfoMenu
-#define TwDeleteMenu(Menu)		Tw_DeleteMenu(TwDefaultD, Menu)
+#define TwDeleteMenu(Menu)		Tw_DeleteMenu(Tw_DefaultD, Menu)
 #define TwCreateMsgPort(NameLen, ProgramName, PauseSec, PauseFraction, WakeUp) \
-	Tw_CreateMsgPort(TwDefaultD, NameLen, ProgramName, PauseSec, PauseFraction, WakeUp)
-#define TwDeleteMsgPort(MsgPort)	Tw_DeleteMsgPort(TwDefaultD, MsgPort)
+	Tw_CreateMsgPort(Tw_DefaultD, NameLen, ProgramName, PauseSec, PauseFraction, WakeUp)
+#define TwDeleteMsgPort(MsgPort)	Tw_DeleteMsgPort(Tw_DefaultD, MsgPort)
 #define TwBgImageScreen(Screen, BgWidth, BgHeight, BgImage) \
-	Tw_BgImageScreen(TwDefaultD, Screen, BgWidth, BgHeight, BgImage)
-#define TwFirstScreen()			Tw_FirstScreen(TwDefaultD)
-#define TwFirstWindow(Screen)		Tw_FirstWindow(TwDefaultD, Screen)
-#define TwFirstGadget(Window)		Tw_FirstGadget(TwDefaultD, Window)
-#define TwFirstMsgPort()		Tw_FirstMsgPort(TwDefaultD)
-#define TwFirstMenu(MsgPort)		Tw_FirstMenu(TwDefaultD, MsgPort)
-#define TwFirstMenuItem(Menu)		Tw_FirstMenuItem(TwDefaultD, Menu)
-#define TwPrevObj(Obj)			Tw_PrevObj(TwDefaultD, Obj)
-#define TwNextObj(Obj)			Tw_NextObj(TwDefaultD, Obj)
-#define TwParentObj(Obj)		Tw_ParentObj(TwDefaultD, Obj)
-#define TwOpen(Tw_Display)		(!!(TwDefaultD = Tw_Open(Tw_Display)))
-#define TwClose()			Tw_Close(TwDefaultD)
-#define TwConnectionFd()		Tw_ConnectionFd(TwDefaultD)
-#define TwFlush()			Tw_Flush(TwDefaultD)
-#define TwTimidFlush()			Tw_TimidFlush(TwDefaultD)
-#define TwSync()			Tw_Sync(TwDefaultD)
-#define TwInPanic()			Tw_InPanic(TwDefaultD)
-#define TwReadMsg(Wait)			Tw_ReadMsg(TwDefaultD, Wait)
-#define TwPeekMsg()			Tw_PeekMsg(TwDefaultD)
+	Tw_BgImageScreen(Tw_DefaultD, Screen, BgWidth, BgHeight, BgImage)
+#define TwFirstScreen()			Tw_FirstScreen(Tw_DefaultD)
+#define TwFirstWindow(Screen)		Tw_FirstWindow(Tw_DefaultD, Screen)
+#define TwFirstGadget(Window)		Tw_FirstGadget(Tw_DefaultD, Window)
+#define TwFirstMsgPort()		Tw_FirstMsgPort(Tw_DefaultD)
+#define TwFirstMenu(MsgPort)		Tw_FirstMenu(Tw_DefaultD, MsgPort)
+#define TwFirstMenuItem(Menu)		Tw_FirstMenuItem(Tw_DefaultD, Menu)
+#define TwPrevObj(Obj)			Tw_PrevObj(Tw_DefaultD, Obj)
+#define TwNextObj(Obj)			Tw_NextObj(Tw_DefaultD, Obj)
+#define TwParentObj(Obj)		Tw_ParentObj(Tw_DefaultD, Obj)
+#define TwGetWidthScreen(Screen)	Tw_GetWidthScreen(Tw_DefaultD, Screen)
+#define TwGetHeightScreen(Screen)	Tw_GetHeightScreen(Tw_DefaultD, Screen)
+
+#define TwCreateMsg(Type, Len)		Tw_CreateMsg(Tw_DefaultD, Type, Len)
+#define TwDeleteMsg(Msg)		Tw_DeleteMsg(Tw_DefaultD, Msg)
+#define TwSendMsg(MsgPort, Msg)		Tw_SendMsg(Tw_DefaultD, MsgPort, Msg)
+
+
+#define TwOpen(Tw_Display)		(!!(Tw_DefaultD = Tw_Open(Tw_Display)))
+#define TwClose()			Tw_Close(Tw_DefaultD)
+#define TwConnectionFd()		Tw_ConnectionFd(Tw_DefaultD)
+#define TwFlush()			Tw_Flush(Tw_DefaultD)
+#define TwTimidFlush()			Tw_TimidFlush(Tw_DefaultD)
+#define TwSync()			Tw_Sync(Tw_DefaultD)
+#define TwInPanic()			Tw_InPanic(Tw_DefaultD)
+#define TwReadMsg(Wait)			Tw_ReadMsg(Tw_DefaultD, Wait)
+#define TwPeekMsg()			Tw_PeekMsg(Tw_DefaultD)
 
 
 

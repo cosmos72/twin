@@ -117,5 +117,10 @@ PROTO1Abs(obj,x,   Prev,Obj,0, obj,x)
 PROTO1Abs(obj,x,   Next,Obj,0, obj,x)
 PROTO1Abs(obj,x, Parent,Obj,0, obj,x)
 
+PROTO1Abs(udat,_,  GetWidth,Screen,0, screen,x)
+PROTO1Abs(udat,_, GetHeight,Screen,0, screen,x)
+
+PROTO3Abs(byte,_, SendTo,MsgPort,0, msgport,x, udat,_, byte,V(A(2)))
+
 #endif /* _TW_SOCKPROTO_H */
 

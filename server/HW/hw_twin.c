@@ -18,6 +18,7 @@
 #include "hw.h"
 #include "hw_private.h"
 #include "hw_dirty.h"
+#include "common.h"
 
 #include "libTw.h"
 #include "libTwkeys.h"
@@ -34,18 +35,7 @@ struct tw_data {
 #define Twin 		(twdata->Twin)
 #define Tmsgport	(twdata->Tmsgport)
 
-#define XY ((udat  *)HW->gotoxybuf)
-#define TT ((uldat *)HW->cursorbuf)
 
-
-static void TW_MoveToXY(udat x, udat y) {
-    XY[2] = x;
-    XY[3] = y;
-}
-
-static void TW_SetCursorType(uldat CursorType) {
-    TT[1] = CursorType;
-}
 
 static void TW_Beep(void) {
     Tw_WriteAsciiWindow(Td, Twin, 1, "\007");
@@ -128,6 +118,16 @@ static void TW_KeyboardEvent(int fd, display_hw *hw) {
 	    if (!Event->EventGadget.Code)
 		/* 0 == Close Code */
 		HW->NeedHW |= NEEDPanicHW, NeedHW |= NEEDPanicHW;
+	    break;
+	  case TW_MSG_CLIPBOARD:
+	    SetClipBoard(Event->EventClipBoard.Magic,
+			 /*
+			  * Event->EventClipBoard.MIME,
+			  * Event->EventClipBoard.MIMELen,
+			  */
+			 Event->EventClipBoard.Len,
+			 Event->EventClipBoard.Data);
+	    break;
 	  default:
 	    break;
 	}
@@ -181,26 +181,23 @@ static void TW_FlushVideo(void) {
     }
     
     /* update the cursor */
-    if ((XY[0] != XY[2] || XY[1] != XY[3]) && TT[1] != NOCURSOR) {
-	Tw_GotoXYWindow(Td, Twin, XY[2], XY[3]);
+    if (CursorType != NOCURSOR && (CursorX != HW->XY[0] || CursorY != HW->XY[1])) {
+	Tw_GotoXYWindow(Td, Twin, HW->XY[0] = CursorX, HW->XY[1] = CursorY);
 	setFlush();
     }
-    if (TT[0] != TT[1]) {
-	/* Tw_SetCursorWindow(Twin, TT[1]); */
+    if (CursorType != HW->TT) {
+	/* Tw_SetCursorWindow(Twin, CursorType); */
 	byte buff[16];
 	sprintf(buff, "\033[?%d;%d;%dc",
-		(int)(TT[1] & 0xFF),
-		(int)((TT[1] >> 8) & 0xFF),
-		(int)((TT[1] >> 16) & 0xFF));
+		(int)(CursorType & 0xFF),
+		(int)((CursorType >> 8) & 0xFF),
+		(int)((CursorType >> 16) & 0xFF));
 	Tw_WriteAsciiWindow(Td, Twin, strlen(buff), buff);
+	HW->TT = CursorType;
 	setFlush();
     }
     
-    HW->ChangedMouseFlag = FALSE;
-    
-    TT[0] = TT[1];
-    XY[0] = XY[2];
-    XY[1] = XY[3];
+    HW->ChangedMouseFlag = HW->RedrawVideo = FALSE;
 }
 
 static void TW_FlushHW(void) {
@@ -244,8 +241,6 @@ static byte TW_canDragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat 
 }
 
 static void TW_DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
-    TW_FlushVideo(); /* a *must* before any direct libTw operation */
-    
     Tw_DragAreaWindow(Td, Twin, Twin, Left, Up, Rgt, Dwn, DstLeft, DstUp);
     setFlush();
 }
@@ -303,6 +298,10 @@ byte TW_InitHW(void) {
 	return FALSE;
     }
 
+#ifdef CONF_ALLOC
+    Tw_ConfigMalloc(AllocMem, ReAllocMem, FreeMem);
+#endif
+	
     if ((Td = Tw_Open(arg)) &&
 	
 	/*
@@ -360,10 +359,8 @@ byte TW_InitHW(void) {
 	    HW->KeyboardEvent = TW_KeyboardEvent;
 	    HW->MouseEvent = (void *)NoOp; /* mouse events handled by TW_KeyboardEvent */
 	    
-	    HW->MoveToXY = TW_MoveToXY;
-	    HW->SetCursorType = TW_SetCursorType;
-	    XY[0] = XY[1] = XY[2] = XY[3] = 0;
-	    TT[0] = TT[1] = -1; /* force updating cursor */
+	    HW->XY[0] = HW->XY[1] = 0;
+	    HW->TT = (uldat)-1; /* force updating cursor */
 
 	    HW->ShowMouse = NoOp;
 	    HW->HideMouse = NoOp;
@@ -371,7 +368,7 @@ byte TW_InitHW(void) {
 	    HW->DetectSize  = TW_DetectSize;
 	    HW->CheckResize = TW_CheckResize;
 	    HW->Resize      = TW_Resize;
-
+	    
 	    HW->ExportClipBoard = NoOp;
 	    HW->ImportClipBoard = (void *)NoOp;
 	    HW->PrivateClipBoard = NULL;
@@ -394,8 +391,16 @@ byte TW_InitHW(void) {
 	    HW->NeedOldVideo = TRUE;
 	    HW->ExpensiveFlushVideo = FALSE;
 	    HW->NeedHW = 0;
+	    HW->CanResize = TRUE;
 	    HW->merge_Threshold = 0;
 
+	    /*
+	     * we must draw everything on our new shiny window
+	     * without forcing all other displays
+	     * to redraw everything too.
+	     */
+	    NeedRedrawVideo(0, 0, HW->X - 1, HW->Y - 1);
+	    
 	    return TRUE;
 	    
 	} while (0); else {

@@ -1,12 +1,12 @@
 ModuleHook on All->FirstModule...LastModule
 runtime option: disable virtual screen scrolling
-finish hw_display.c: various TODO still there
-finish VNC-style twdisplay: split hw.c in hw_multi and hw_common, ...
+hw_display.c: resizing, startup drawing, various TODO still there
 detect deadlocks in twattach, -f to force
 twrun : contact "twin term" Message Port and tell it to start a command
         same from Menu
 cleanup keycode recognition : ALT + letter, CTRL + letter, [NumLock +] keypad
 unhide menu when unfocusing all windows? (then hide again when focusing a window)
+split WManagerH into humanly sized functions
 .twinrc with runtime configurable WM / options / display+options
 keyboard hotkeys for gadget selection and screen scroll/resize
 info on menubar: time / memory / load, size of window during resize
@@ -16,3 +16,5 @@ cut&paste compatibility with gpm and libTw (X11 done).
 cleanup overflows with shadows at window [xy]width = almost max, move arithmetic to [ul]dat
 screensaver
 finish libGGI keyboard support
+wtmp logging
+support using /dev/pts/* as twterm pty/tty

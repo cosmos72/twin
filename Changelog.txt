@@ -1,3 +1,35 @@
+From 0.3.0 to 0.3.1: (Massimiliano Ghilardi, 16 May 2000)
+	* Updated README for the changes in twattach and for
+	  multiple display support.
+	* Fixed autoloading consolemap translation from
+	  kernel, which got broken in 0.3.0
+	* Fixed 'disable blink/high background' option,
+	  which got broken in 0.3.0
+	* Fixed small redraw glitches on X11 display
+	  when window gets unobscured.
+	* Added option `drag' to X11 display driver.
+	  The driver will try to use XCopyArea to speedup
+	  redrawing only if you explicitly specify `-hw=X[@...],drag...'
+	  Previously this was enabled by default, but I noticed
+	  many X servers eat more CPU with XCopyArea than with a redraw.
+	  Your mileage may vary.
+	* Optimized expose events on X11 display not to cause
+	  redraws also on other displays.
+	* Optimized attach/detach in multi-display scenario
+	  if no resize happens: draw only on the new display HW.
+	* Finished smart display resizing. Try attaching/detaching/resizing
+	  one of the displays when multiple ones are used...
+        * Finished twdisplay (required adding some new libTw functions).
+	  Actually a pair of small things are still missing in twdisplay:
+	  cut-and-paste compatibility with the real display (X11, etc..)
+	  and palette changing support, but it is equally *VERY* usable.
+	  
+	  	Please take a few minutes to carefully (re)read
+	  	section 8. Attach/Detach of the README
+	  	as twdisplay adds noticeable power
+	  	to twin's attach/detach capabilities!
+	  
+	
 From 0.2.8 to 0.3.0: (Massimiliano Ghilardi, 10 May 2000)
 	* Added VNC-style multiple simultaneous displays support
 	  and updated twattach to manage them. Now you can have

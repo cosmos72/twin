@@ -41,7 +41,7 @@
 /***************/
 
 void UpdateCursor(void) {
-    uldat CursorType = NOCURSOR;
+    uldat type = NOCURSOR;
     screen *Screen;
     window *Window;
     ldat NWinDiMenu;
@@ -78,15 +78,15 @@ void UpdateCursor(void) {
 	    (Window == Screen->FirstWindow ||
 	     Window == Act(SearchWindow,Screen)(Screen, (dat)XCursor, (dat)YCursor, NULL))) {
 		
-	    CursorType = Window->CursorType;
-	    if ((All->SetUp->Flags & SETUP_ALWAYSCURSOR) && CursorType == NOCURSOR)
-		CursorType = LINECURSOR;
+	    type = Window->CursorType;
+	    if ((All->SetUp->Flags & SETUP_ALWAYSCURSOR) && type == NOCURSOR)
+		type = LINECURSOR;
 	    
 	    MoveToXY((udat)XCursor, (udat)YCursor);
 	}
     }
 	
-    SetCursorType(CursorType);    
+    SetCursorType(type);    
 }
 
 static int SendResizeSignal(window *Window) {

@@ -13,7 +13,7 @@ include Rules
 #
 
 config $(CONF):
-	@echo Starting configure for twin $(TW_VERSION)...
+	@echo Starting configure for twin $(TW_VERSION) ...
 	@echo
 	$(BASH) scripts/Configure
 
