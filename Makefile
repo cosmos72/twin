@@ -39,7 +39,11 @@ install: all
 	if [ "$(wildcard server/HW/*.so)" ]; then \
 	  cp -df server/HW/*.so $(DESTDIR)/lib/twin/modules/HW; \
 	fi
-	
+	@echo
+	@echo If this is the first time you installed twin,
+	@echo you probably need to run \"ldconfig\" now.
+	@echo
+
 clean:
 	$(MAKE) clean -C boot
 	$(MAKE) clean -C lib

@@ -16,7 +16,7 @@ include $(TOPDIR)/conf/config.status
 -include .depend
 -include .modules
 
-ifeq ($(CONF_SOCKET),y)
+ifneq ($(CONF_SOCKET),n)
   everything: lib links
 
   ifeq ($(CONF_SOCKET_GZ),y)

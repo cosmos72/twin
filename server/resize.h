@@ -15,7 +15,7 @@ void SetPalette(void);
  */
 
 void ResizeFirstScreen(dat DeltaY);
-void DragFirstScreen(dat DeltaX, dat DeltaY);
+void DragFirstScreen(ldat DeltaX, ldat DeltaY);
 void HideMenu(byte on_off);
 void ChangeMenuFirstScreen(menuitem *NewMenuItem, byte ByMouse, byte Flag);
 #define ACTIVATE_MENU_FLAG	(byte)1
@@ -24,15 +24,17 @@ void ChangeMenuFirstScreen(menuitem *NewMenuItem, byte ByMouse, byte Flag);
 
 
 void DragFirstWindow(dat i, dat j);
+void DragWindow(window *Window, dat i, dat j);
 void ResizeFirstWindow(dat i, dat j);
 void ResizeWindow(window *Window, dat i, dat j);
 void CenterWindow(window *Window);
-byte ExecScrollFirstWindow(void);
+byte ExecScrollFocusWindow(void);
 void ScrollFirstWindow(dat DeltaX, dat DeltaY, byte byXYLogic);
+void ScrollWindow(window *Window, dat DeltaX, dat DeltaY);
 void ScrollFirstWindowArea(dat X1, dat Y1, dat X2, dat Y2, dat DeltaX, dat DeltaY);
 
-void MakeFirstWindow(window *Window);
-void MakeLastWindow(window *Window);
+void MakeFirstWindow(window *Window, byte alsoFocus);
+void MakeLastWindow(window *Window, byte alsoDeFocus);
 
 #endif /* _TW_RESIZE_H */
 

@@ -271,7 +271,7 @@ static byte CanCompress(void);
 static byte DoCompress(byte on_off);
 
 static void NeedResizeDisplay(void) {
-    All->NeedResizeDisplay = TRUE;
+    All->NeedHW |= NEEDResizeDisplay;
 }
 
 static void sockShutDown(msgport *MsgPort) {
@@ -1192,13 +1192,6 @@ static byte DoCompress(byte on_off) {
 
 
 
-
-
-INLINE byte SetClipBoard(uldat Magic, uldat Len, byte *Data) {
-    All->ClipLen = 0;
-    All->ClipMagic = Magic;
-    return AddToClipBoard(Len, Data);
-}
 
 
 static void AttachHW(byte len, byte *arg, byte redirect) {

@@ -12,6 +12,8 @@
 
 #include "twin.h"
 
+#include "main.h"
+
 #include "data.h"
 #include "methods.h"
 #include "hw.h"
@@ -21,12 +23,12 @@
 INLINE hwcol DoShadowColor(hwcol Color, byte Fg, byte Bg) {
     return
 	(
-	 Bg ? (Color & COL(0,MAXCOL)) > COL(0,HIGH|BLUE) ? COL(0,HIGH|BLACK) : COL(0,BLACK) :
-	 Fg ? (Color & COL(0,MAXCOL)) > COL(0,HIGH|BLACK) ? Color & COL(0,WHITE) : Color & COL(0,MAXCOL) : Color & COL(0,MAXCOL)
+	 Bg ? (Color & COL(0,MAXCOL)) > COL(0,HIGH|BLACK) ? COL(0,HIGH|BLACK) : COL(0,BLACK) :
+	 Fg ? Color & COL(0,WHITE) : Color & COL(0,MAXCOL)
 	 )
 	|
 	(
-	 Fg ? (Color & COL(MAXCOL,0)) > COL(HIGH|BLUE,0) ? COL(WHITE,0) : COL(HIGH|BLACK,0) : Color & COL(MAXCOL,0)
+	 Fg ? (Color & COL(MAXCOL,0)) > COL(HIGH|BLACK,0) ? COL(WHITE,0) : COL(HIGH|BLACK,0) : Color & COL(MAXCOL,0)
 	 );
 }
 
@@ -130,7 +132,7 @@ byte SearchFontBorderWin(window *Window, udat u, udat v, byte Border, byte MovWi
     Attrib=Window->Attrib;
     Close=!!(Attrib & WINDOW_CLOSE);
     Resize=!!(Attrib & WINDOW_RESIZE);
-    PlaceBack=!(Attrib & (WINDOW_MENU|WINDOW_STAYONTOP));
+    PlaceBack=!(Attrib & WINDOW_MENU);
     BarX=!!(Attrib & WINDOW_X_BAR);
     BarY=!!(Attrib & WINDOW_Y_BAR);
     XWidth=Window->XWidth;
@@ -247,38 +249,67 @@ byte SearchFontBorderWin(window *Window, udat u, udat v, byte Border, byte MovWi
 }
 
 void DrawDesktop(screen *Screen, dat Xstart, dat Ystart, dat Xend, dat Yend, byte Shaded) {
-    byte Color, Font;
+    hwattr *Attr, attr = HWATTR(COL(WHITE,BLACK),' ');
     dat ScreenWidth, ScreenHeight;
-    udat shtCut, YLimit;
+    udat YLimit = 0;
     
     if (Xstart>Xend || Ystart>Yend)
 	return;
     
     if (Screen) {
-	Color=Screen->Color;
-	Color=DoShadowColor(Color, Shaded, Shaded);
-	Font=Screen->Cell;
+	Attr=Screen->Bg;
+	attr=*Attr;
 	YLimit=Screen->YLimit;
+	ScreenWidth=Screen->ScreenWidth;
+	ScreenHeight=Screen->ScreenHeight;
+    } else {
+	ScreenWidth=All->FirstScreen->ScreenWidth;
+	ScreenHeight=All->FirstScreen->ScreenHeight;
     }
-    else {
-	Color=COL(WHITE,BLACK);
-	Font=' ';
-    }
-    shtCut=HWATTR(Color, Font);
-    ScreenWidth=All->FirstScreen->ScreenWidth;
-    ScreenHeight=All->FirstScreen->ScreenHeight;
     
     if (Xstart>=ScreenWidth || Ystart>=ScreenHeight || Xend<(dat)0 || Yend<(Screen ? (dat)YLimit : (dat)0))
 	return;
     
     Xstart=Max2(Xstart, (dat)0);
-    Ystart = Screen
-	? Max2(Ystart, (dat)YLimit)
-	: Max2(Ystart, (dat)0);
+    Ystart = Max2(Ystart, (dat)YLimit);
     Xend=Min2(Xend, ScreenWidth-(dat)1);
     Yend=Min2(Yend, ScreenHeight-(dat)1);
 
-    FillVideo(Xstart, Ystart, Xend, Yend, shtCut);
+    if (Screen && (Screen->BgWidth > 1 || Screen->BgHeight > 1)) {
+	/* use tiling... easier than other solutions */
+	ldat X, Y, x, max = Screen->BgWidth * Screen->BgHeight;
+	ldat y = ((ldat)Ystart + Screen->Up - Screen->YLimit) % Screen->BgHeight;
+	if (y < 0) y += Screen->BgHeight;
+	y *= Screen->BgWidth;
+	
+	DirtyVideo(Xstart, Ystart, Xend, Yend);
+	
+	for (; Ystart <= Yend; Ystart++, y+=Screen->BgWidth) {
+	    Y = Ystart * ScreenWidth;
+
+	    if (y >= max) y -= max;
+	    x = ((ldat)Xstart + Screen->Left) % Screen->BgWidth;
+	    if (x < 0) x += Screen->BgWidth;
+		
+	    if (Shaded) {
+		for (X = Xstart; X <= Xend; X++, x++) {
+		    if (x >= Screen->BgWidth) x -= Screen->BgWidth;
+		    
+		    attr=Attr[x + y];
+		    Video[X + Y] = HWATTR(DoShadowColor(HWCOL(attr), Shaded, Shaded), HWFONT(attr));
+		}
+	    } else {
+		for (X = Xstart; X <= Xend; X++, x++) {
+		    if (x >= Screen->BgWidth) x -= Screen->BgWidth;
+		    Video[X + Y] = Attr[x + y];
+		}
+	    }
+	}
+    } else {
+	if (Shaded)
+	    attr=HWATTR(DoShadowColor(HWCOL(attr), Shaded, Shaded), HWFONT(attr));
+	FillVideo(Xstart, Ystart, Xend, Yend, attr);
+    }
 }
 
 #define INIT do { \
@@ -343,7 +374,7 @@ void DrawWindow(window *Window, gadget *FirstGadget, gadget *OnlyThisGadget, dat
     Xend=(dat)Min2((ldat)Xend, shRgt);
     Yend=(dat)Min2((ldat)Yend, shDwn);
     
-    WinActive= Window==All->FirstScreen->FirstWindow;
+    WinActive= Window==All->FirstScreen->FocusWindow || Window==All->FirstScreen->MenuWindow;
     MovWin = WinActive && All->FlagsMove & GLMOVE_ANY_1stWIN;
     Border = Window->Attrib & WINDOW_MENU || !WinActive;
     if ((ldat)Ystart==shUp) {
@@ -743,6 +774,7 @@ void DrawWindow(window *Window, gadget *FirstGadget, gadget *OnlyThisGadget, dat
 }
     
 void DrawMenuBar(screen *Screen, dat Xstart, dat Xend) {
+    screen *fScreen;
     menu *Menu;
     menuitem *CurrMenuItem;
     dat ScreenWidth, ScreenHeight, i, j;
@@ -752,12 +784,19 @@ void DrawMenuBar(screen *Screen, dat Xstart, dat Xend) {
 	return;
     
     j=(dat)Screen->YLimit;
-    ScreenWidth=All->FirstScreen->ScreenWidth;
+    ScreenWidth=Screen->ScreenWidth;
     ScreenHeight=Screen->ScreenHeight;
     
-    if (!j-- || j>=ScreenHeight || Xstart>=ScreenWidth || Xend<(dat)0)
+    if (!j-- || j>=ScreenHeight || Xstart>=ScreenWidth || Xend<(dat)0 || Xstart > Xend)
 	return;
     
+    for (fScreen = All->FirstScreen; fScreen && fScreen != Screen; fScreen = fScreen->Next) {
+	if (fScreen->YLimit <= j)
+	    return;
+    }
+    if (fScreen != Screen)
+	return;
+	
     Menu=Act(SearchMenu,Screen)(Screen);
     
     Xstart=Max2(Xstart, (dat)0);
@@ -765,27 +804,31 @@ void DrawMenuBar(screen *Screen, dat Xstart, dat Xend) {
     
     if (Menu)
 	for (i=Xstart; i<=Xend; i++) {
-	    if (ScreenWidth-i<(dat)3 && i<ScreenWidth) {
-		Color = All->FirstScreen==Screen ? All->FlagsMove & GLMOVE_1stSCREEN ? Menu->ColSelShtCut : Menu->ColShtCut : Menu->ColDisabled;
+	    if (ScreenWidth-i<=(dat)2) {
+		Color = All->FlagsMove & GLMOVE_1stSCREEN ? Menu->ColSelShtCut : Menu->ColShtCut;
 		if (Screen->Attrib & GADGET_BACK_SELECT && Screen->Attrib & GADGET_PRESSED)
 		    Color = COL( COLBG(Color), COLFG(Color) );
 		Font = GadgetBack[!!(All->SetUp->Flags & SETUP_NEW_FONT)][(udat)2-(udat)(ScreenWidth-(dat)i)];
 	    }
+	    else if (ScreenWidth-i<=(dat)3+lenTWDisplay) {
+		Color = All->FlagsMove & GLMOVE_1stSCREEN ? Menu->ColSelShtCut : Menu->ColShtCut;
+		Font = TWDisplay[(udat)3 + lenTWDisplay - (udat)(ScreenWidth - i)];
+		if (!Font) Font = ' ';
+	    }
 	    else if (All->FlagsMove & GLMOVE_1stMENU && (CurrMenuItem=Act(SearchMenuItem,Menu)(Menu, i))) {
-		Select = All->FirstScreen==Screen &&
-		    (All->FlagsMove & GLMOVE_1stSCREEN ||
-		     Menu->MenuItemSelect==CurrMenuItem);
+		Select = (All->FlagsMove & GLMOVE_1stSCREEN || Menu->MenuItemSelect==CurrMenuItem);
 		SearchFontMenuItem(Menu, CurrMenuItem, i, Select, &Font, &Color);
 	    }
 	    else if (!(All->FlagsMove & GLMOVE_1stMENU) && SearchInfo(Menu, i)) {
-		Select = All->FirstScreen==Screen &&
-		    All->FlagsMove & GLMOVE_1stSCREEN;
+		Select = All->FlagsMove & GLMOVE_1stSCREEN;
 		SearchFontInfo(Menu, i, Select, &Font, &Color);
 	    }
 	    else {
-		Color = All->FirstScreen==Screen && (All->FlagsMove & GLMOVE_1stSCREEN) ? Menu->ColSelect : Menu->ColItem;
+		Color = (All->FlagsMove & GLMOVE_1stSCREEN) ? Menu->ColSelect : Menu->ColItem;
 		Font = ' ';
 	    }
+	    if (Screen != All->FirstScreen)
+		Color = Menu->ColDisabled;
 	    Video[i+j*ScreenWidth]=HWATTR(Color, Font);
 	}
     else {

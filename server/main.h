@@ -3,7 +3,7 @@
 
 extern fd_set save_rfds, save_wfds;
 extern int max_fds;
-extern byte *TWDisplay, *origTWDisplay;
+extern byte *TWDisplay, lenTWDisplay, *origTWDisplay;
 extern byte **main_argv;
 
 void Quit(int status);

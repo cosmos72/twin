@@ -45,8 +45,7 @@ static byte InitEdit(void) {
 	TwSetColorsWindow(Edit_Win, 0x1FF,
 			  COL(HIGH|GREEN,WHITE), COL(CYAN,BLUE), COL(HIGH|BLUE,BLACK), COL(HIGH|WHITE,HIGH|BLUE), COL(HIGH|WHITE,HIGH|BLUE),
 			  COL(HIGH|WHITE,HIGH|BLACK), COL(HIGH|BLACK,WHITE), COL(BLACK,HIGH|BLACK), COL(BLACK,WHITE));
-	TwConfigureWindow(Edit_Win, 0x3F, (dat)2, (udat)15,
-			  (udat)7, (udat)3, MAXDAT, MAXDAT);
+	TwConfigureWindow(Edit_Win, 0xF<<2, 0, 0, (udat)7, (udat)3, MAXUDAT, MAXUDAT);
 
     } else
 	return FALSE;

@@ -63,7 +63,7 @@ static void ScrollerH(msgport *MsgPort) {
     dat Limit;
     dat Mouse_delta_x, Mouse_delta_y;
     byte State, FlagsMove, FlagDeskScroll, FlagWinScroll, WinScrolled = FALSE;
-    window *FirstWindow;
+    window *FocusWindow;
     
     while ((Msg=Scroller_MsgPort->FirstMsg)) {
 	//		Beep();
@@ -79,8 +79,8 @@ static void ScrollerH(msgport *MsgPort) {
 	return;
     }
 
-    if ((FirstWindow=All->FirstScreen->FirstWindow)) {
-	Attrib=FirstWindow->Attrib;
+    if ((FocusWindow=All->FirstScreen->FocusWindow)) {
+	Attrib=FocusWindow->Attrib;
 	FlagWinScroll = (XAND(Attrib, WINDOW_X_BAR | X_BAR_SELECT)
 			 || XAND(Attrib, WINDOW_Y_BAR | Y_BAR_SELECT)) && !(Attrib & TAB_SELECT);
     } else
@@ -104,7 +104,7 @@ static void ScrollerH(msgport *MsgPort) {
     }
     
     if (State==STATE_WINDOW && All->FlagsMove & GLMOVE_SCROLL_1stWIN && FlagWinScroll) {
-	if ((WinScrolled = ExecScrollFirstWindow()))
+	if ((WinScrolled = ExecScrollFocusWindow()))
 	    ScrollerAutoRepeat();
     }
     

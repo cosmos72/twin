@@ -486,7 +486,7 @@ struct fn_window {
     void (*UnMap)(window *);
     void (*Own)(window *, menu *);
     void (*DisOwn)(window *);    
-    void (*KbdFocus)(window *);
+    window *(*Focus)(window *);
     void (*WriteAscii)(window *, uldat Len, byte *Text);
     void (*WriteHWAttr)(window *, udat x, udat y, uldat Len, hwattr *Attr);
     byte (*WriteRow)(window *, uldat Len, byte *Text);
@@ -504,17 +504,16 @@ struct fn_window {
 #define WINDOW_DRAG		((uldat)0x0010)
 #define WINDOW_RESIZE		((uldat)0x0020)
 #define WINDOW_CLOSE		((uldat)0x0040)
-#define WINDOW_STAYONTOP	((uldat)0x0080)
+#define WINDOW_TRANSIENT	((uldat)0x0080)
 #define WINDOW_X_BAR		((uldat)0x0100)
 #define WINDOW_Y_BAR		((uldat)0x0200)
-#define WINDOW_TRANSIENT	((uldat)0x0400)
 
 /* the must fit in `udat' since they are shared by gadget.Flags */
-#define GADGET_CLOSE_SELECT	((uldat)0x0800)
-#define GADGET_BACK_SELECT	((uldat)0x1000)
-#define X_BAR_SELECT		((uldat)0x2000)
-#define Y_BAR_SELECT		((uldat)0x4000)
-#define GADGET_PRESSED		((uldat)0x8000)
+#define GADGET_CLOSE_SELECT	((uldat)0x0400)
+#define GADGET_BACK_SELECT	((uldat)0x0800)
+#define X_BAR_SELECT		((uldat)0x1000)
+#define Y_BAR_SELECT		((uldat)0x2000)
+#define GADGET_PRESSED		((uldat)0x4000)
 #define GADGET_ANY_SELECT	(GADGET_CLOSE_SELECT | GADGET_BACK_SELECT | X_BAR_SELECT | Y_BAR_SELECT)
 
 #define TAB_SELECT		((uldat)0x00020000lu)
@@ -626,17 +625,15 @@ struct screen {
     screen *Prev, *Next;
     all *All;
     dat ScreenWidth, ScreenHeight;
-    window *FirstWindow, *LastWindow;
+    window *FirstWindow, *LastWindow, *FocusWindow, *MenuWindow;
     udat Attrib;
-    dat Left;
-    udat Up;
-    udat YLimit;
-    byte Cell;
-    hwcol Color;
+    dat Left; udat Up; udat YLimit;
+    udat BgWidth, BgHeight;
+    hwattr *Bg;
 };
 struct fn_screen {
     uldat Magic, Size, Used;
-    screen *(*Create)(fn_screen *, byte Cell, hwcol Color);
+    screen *(*Create)(fn_screen *, udat BgWidth, udat BgHeight, hwattr *Bg);
     screen *(*Copy)(screen *From, screen *To);
     void (*Insert)(screen *, all *, screen *Prev, screen *Next);
     void (*Remove)(screen *);
@@ -644,6 +641,8 @@ struct fn_screen {
     window *(*SearchWindow)(screen *, dat i, dat j, byte *Shaded);
     menu *(*SearchMenu)(screen *);
     screen *(*Search)(dat j);
+    screen *(*CreateSimple)(fn_screen *, hwattr Bg);
+    void (*BgImage)(screen *, udat BgWidth, udat BgHeight, hwattr *Bg);
 };
 /*Attrib : */
 /*GADGET_BACK_SELECT==0x0800 */
@@ -928,7 +927,7 @@ struct all {
     setup *SetUp;
     udat *GlobalKeyCodes[STATE_MAX];
     udat *GlobalMouseCodes[STATE_MAX];
-    byte MouseOverload, NeedFlushStdout, NeedFlushHW, NeedResizeDisplay;
+    byte MouseOverload, NeedHW;
     mouse_state *MouseState;
     uldat mouse_slot, keyboard_slot;
     byte FlagsMove;
@@ -942,8 +941,14 @@ struct all {
     uldat attach; /* slot of process that told us to attach to a display */
 };
 
+/* NeedHWOp */
+#define NEEDFlushStdout		((byte)0x01)
+#define NEEDFlushHW		((byte)0x02)
+#define NEEDResizeDisplay	((byte)0x04)
+#define NEEDExportClipBoard	((byte)0x08)
 
 /*ClipMagic*/
+#define CLIP_APPEND	((uldat)0x00000000)
 #define CLIP_TEXTMAGIC	((uldat)0x54657874)
 #define CLIP_FILEMAGIC	((uldat)0x46696c65)
 #define CLIP_IDMAGIC	((uldat)0x49644964)
@@ -1219,6 +1224,7 @@ struct all {
 #define COD_COMMON_HOTKEY	(udat)0xFF07
 #define COD_COMMON_NEXT		(udat)0xFF08
 #define COD_COMMON_WINLIST	(udat)0xFF09
+#define COD_COMMON_RAISELOWER	(udat)0xFF10
 
 /* INLINE/define stuff: */
 

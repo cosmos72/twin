@@ -12,8 +12,9 @@ OBJS_twterm=pty.o term.o
 OBJS_twsysmon=sysmon.o
 OBJS_twattach=attach.o
 OBJS_twevent=event.o
+OBJS_twsetroot=setroot.o
 
-BINS=twcat twedit twterm twsysmon twattach twevent
+BINS=twcat twedit twterm twsysmon twattach twevent twsetroot
 
 
 all: $(BINS) twdetach

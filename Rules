@@ -86,7 +86,7 @@ $(TOPDIR)/scripts/MkDep:
 
 # this would be:
 # % : $(OBJS_%)
-#	$(CC) $(OBJS_$*) $(LDFLAGS) $(LDFLAGS_$*) -o $*
+#	$(CC) -o $* $(OBJS_$*) $(LDFLAGS) $(LDFLAGS_$*)
 #	...
 # but 1) nasty match-all rules like this are a real pain
 # and 2) $(OBJS_%) doesn't expand
@@ -97,9 +97,9 @@ $(TOPDIR)/scripts/MkDep:
 # and we keep implicit the last step:
 #
 .%.link:
-	$(CC) $(OBJS_$*) $(LDFLAGS) $(LDFLAGS_$*) -o $*
+	$(CC) -o $* $(OBJS_$*) $(LDFLAGS) $(LDFLAGS_$*)
 	@ln -sfn $* $@
-	@echo -e ' ifeq ($$(LDFLAGS) $$(LDFLAGS_$*) $$(OBJS_$*),$(LDFLAGS) $(LDFLAGS_$*) $(OBJS_$*))\n'\
+	@echo -e ' ifeq ($$(OBJS_$*) $$(LDFLAGS) $$(LDFLAGS_$*),$(OBJS_$*) $(LDFLAGS) $(LDFLAGS_$*))\n'\
 	'FILES_UP_TO_DATE += $@\n'\
 	'endif' > $@.flags
 

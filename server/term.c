@@ -31,7 +31,6 @@
 
 static char *args[3];
 
-static screen *Term_Screen;
 static msgport *Term_MsgPort;
 menu *Term_Menu;
 
@@ -41,8 +40,7 @@ static void TwinTermIO(int Fd, window *Window);
 static void termShutDown(window *Window) {
     if (Window->RemoteData.Fd != NOFD)
 	close(Window->RemoteData.Fd);
-    if (Window->RemoteData.FdSlot != NOSLOT)
-	UnRegisterWindowFdIO(Window);
+    UnRegisterWindowFdIO(Window);
 }
 
 static window *newTermWindow(void) {
@@ -67,15 +65,8 @@ static byte OpenTerm(void) {
     if ((Window = newTermWindow())) {
         if (SpawnInWindow(Window, args)) {
 	    if (RegisterWindowFdIO(Window, TwinTermIO)) {
-		if (Term_Screen->FirstWindow) {
-		    Window->Up = Term_Screen->FirstWindow->Up + 1;
-		    Window->Left = Term_Screen->FirstWindow->Left + 1;
-		} else {
-		    Window->Up = 1;
-		    Window->Left = 10;
-		}
 		Window->ShutDownHook = termShutDown;
-		Act(Map,Window)(Window, Term_Screen);
+		Act(Map,Window)(Window, All->FirstScreen);
 		return TRUE;
 	    }
 	    close(Window->RemoteData.Fd);
@@ -115,7 +106,6 @@ byte InitTerm(void) {
 
 	if (args[1][0] == '/')
 	    args[1][0] = '-';
-	Term_Screen = All->FirstScreen;
 	return TRUE;
     }
     return FALSE;
@@ -227,7 +217,7 @@ static void TwinTermIO(int Fd, window *Window) {
 static void OverrideMethods(byte enter) {
     static void (*oldWriteAscii)(window *, uldat, byte *);
     static void (*oldWriteHWAttr)(window *, udat, udat, uldat, hwattr *);
-    static void (*oldKbdFocus)(window *);
+    static window *(*oldFocus)(window *);
 
     if (enter) {
 	if (!oldWriteAscii && FnWindow->WriteAscii != WriteAscii) {
@@ -238,9 +228,9 @@ static void OverrideMethods(byte enter) {
 	    oldWriteHWAttr = FnWindow->WriteHWAttr;
 	    FnWindow->WriteHWAttr = WriteHWAttr;
 	}
-	if (!oldKbdFocus && FnWindow->KbdFocus != KbdFocus) {
-	    oldKbdFocus = FnWindow->KbdFocus;
-	    FnWindow->KbdFocus = KbdFocus;
+	if (!oldFocus && FnWindow->Focus != KbdFocus) {
+	    oldFocus = FnWindow->Focus;
+	    FnWindow->Focus = KbdFocus;
 	    ForceKbdFocus();
 	}
     } else {
@@ -252,10 +242,10 @@ static void OverrideMethods(byte enter) {
 	    FnWindow->WriteHWAttr = oldWriteHWAttr;
 	    oldWriteHWAttr = NULL;
 	}
-	if (oldKbdFocus && FnWindow->KbdFocus == KbdFocus) {
+	if (oldFocus && FnWindow->Focus == KbdFocus) {
 	    ForceKbdFocus();
-	    FnWindow->KbdFocus = oldKbdFocus;
-	    oldKbdFocus = NULL;
+	    FnWindow->Focus = oldFocus;
+	    oldFocus = NULL;
 	}
     }
 }

@@ -128,7 +128,7 @@ static void SelectListWin(void) {
 	n--;
     }
     if (!n && Window) {
-	MakeFirstWindow(Window);
+	MakeFirstWindow(Window, TRUE);
 	CenterWindow(Window);
     }
 }
@@ -443,7 +443,7 @@ byte InitBuiltin(void) {
     byte *greeting = "\n"
 	"                TWIN             \n"
 	"        Text WINdows manager     \n\n"
-	"          Version 0.2.6 by       \n\n"
+	"          Version 0.2.7 by       \n\n"
 	"        Massimiliano Ghilardi    \n\n"
 	"         <max@Linuz.sns.it>      ";
     uldat grlen = strlen(greeting);
@@ -531,47 +531,47 @@ byte InitBuiltin(void) {
 	(ButtonOK_About=Do(CreateButton,Gadget)(FnGadget, AboutWin, (udat)8, (udat)1, (byte)0x70)) &&
 	Act(WriteRow,AboutWin)(AboutWin, grlen, greeting) &&
 	
-	Do(Create,Gadget)(FnGadget, OptionWin, COL(BLACK,WHITE), COL(BLACK,GREEN),
+	Do(Create,Gadget)(FnGadget, OptionWin, COL(BLACK,WHITE), COL(HIGH|WHITE,GREEN),
 			  COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
 			  COD_O_SHADOWS, GADGET_USE_DEFCOL, 2, 2, 11, 1, 0x1,
 			  "[ ] Shadows", NULL, NULL, NULL, NULL, NULL, NULL, NULL) &&
 
-	Do(Create,Gadget)(FnGadget, OptionWin, COL(BLACK,WHITE), COL(BLACK,GREEN),
+	Do(Create,Gadget)(FnGadget, OptionWin, COL(BLACK,WHITE), COL(HIGH|WHITE,GREEN),
 			  COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
 			  COD_O_Xp_SHADE, GADGET_USE_DEFCOL, 18, 2, 3, 1, 0x1,
 			  "[+]", NULL, NULL, NULL, NULL, NULL, NULL, NULL) &&
 
-	Do(Create,Gadget)(FnGadget, OptionWin, COL(BLACK,WHITE), COL(BLACK,GREEN),
+	Do(Create,Gadget)(FnGadget, OptionWin, COL(BLACK,WHITE), COL(HIGH|WHITE,GREEN),
 			  COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
 			  COD_O_Xn_SHADE, GADGET_USE_DEFCOL, 21, 2, 3, 1, 0x1,
 			  "[-]", NULL, NULL, NULL, NULL, NULL, NULL, NULL) &&
 
-	Do(Create,Gadget)(FnGadget, OptionWin, COL(BLACK,WHITE), COL(BLACK,GREEN),
+	Do(Create,Gadget)(FnGadget, OptionWin, COL(BLACK,WHITE), COL(HIGH|WHITE,GREEN),
 			  COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
 			  COD_O_Yp_SHADE, GADGET_USE_DEFCOL, 18, 3, 3, 1, 0x1,
 			  "[+]", NULL, NULL, NULL, NULL, NULL, NULL, NULL) &&
 
-	Do(Create,Gadget)(FnGadget, OptionWin, COL(BLACK,WHITE), COL(BLACK,GREEN),
+	Do(Create,Gadget)(FnGadget, OptionWin, COL(BLACK,WHITE), COL(HIGH|WHITE,GREEN),
 			  COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
 			  COD_O_Yn_SHADE, GADGET_USE_DEFCOL, 21, 3, 3, 1, 0x1,
 			  "[-]", NULL, NULL, NULL, NULL, NULL, NULL, NULL) &&
 	
-	Do(Create,Gadget)(FnGadget, OptionWin, COL(BLACK,WHITE), COL(BLACK,GREEN),
+	Do(Create,Gadget)(FnGadget, OptionWin, COL(BLACK,WHITE), COL(HIGH|WHITE,GREEN),
 			  COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
 			  COD_O_ALWAYSCURSOR, GADGET_USE_DEFCOL, 2, 5, 22, 1, 0x1,
 			  "[ ] Always Show Cursor", NULL, NULL, NULL, NULL, NULL, NULL, NULL) &&
 
-	Do(Create,Gadget)(FnGadget, OptionWin, COL(BLACK,WHITE), COL(BLACK,GREEN),
+	Do(Create,Gadget)(FnGadget, OptionWin, COL(BLACK,WHITE), COL(HIGH|WHITE,GREEN),
 			  COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
 			  COD_O_NOBLINK, GADGET_USE_DEFCOL, 2, 7, 36, 1, 0x1,
 			  "[ ] No Blink/High Background on Ttys", NULL, NULL, NULL, NULL, NULL, NULL, NULL) &&
 
-	Do(Create,Gadget)(FnGadget, OptionWin, COL(BLACK,WHITE), COL(BLACK,GREEN),
+	Do(Create,Gadget)(FnGadget, OptionWin, COL(BLACK,WHITE), COL(HIGH|WHITE,GREEN),
 			  COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
 			  COD_O_HIDEMENU, GADGET_USE_DEFCOL, 2, 9, 15, 1, 0x1,
 			  "[ ] Hidden Menu", NULL, NULL, NULL, NULL, NULL, NULL, NULL) &&
 
-	Do(Create,Gadget)(FnGadget, OptionWin, COL(BLACK,WHITE), COL(BLACK,GREEN),
+	Do(Create,Gadget)(FnGadget, OptionWin, COL(BLACK,WHITE), COL(HIGH|WHITE,GREEN),
 			  COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
 			  COD_O_NEWFONT, GADGET_USE_DEFCOL, 2, 11, 15, 1, 0x1,
 			  "[ ] Custom Font", NULL, NULL, NULL, NULL, NULL, NULL, NULL)

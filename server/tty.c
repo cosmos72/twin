@@ -115,7 +115,7 @@ byte WriteContents(window *Window, hwattr *text, uldat len) {
 #endif
 	DrawTextWindow(Window, 0, 0, MAXUDAT, MAXUDAT);
     }
-    if (Window==All->FirstScreen->FirstWindow)
+    if (Window==All->FirstScreen->FocusWindow)
 	UpdateCursor();
 
     return TRUE;
@@ -295,7 +295,7 @@ static void flush_tty(void) {
 	doupdate = TRUE;
     } else
 	doupdate = FALSE;
-    if (Win == All->FirstScreen->FirstWindow && (doupdate || (*Flags & TTY_UPDATECURSOR)))
+    if (Win == All->FirstScreen->FocusWindow && (doupdate || (*Flags & TTY_UPDATECURSOR)))
 	UpdateCursor();
     *Flags &= ~TTY_UPDATECURSOR;
 }
@@ -804,7 +804,7 @@ static void set_mode(byte on_off) {
 	  case 1:	/* Cursor keys send ^[Ox/^[[x */
 	    CHANGE_BIT(TTY_ALTCURSKEYS, on_off);
 	    printf(StrAltCursKeys, on_off ? 'h' : 'l');
-	    All->NeedFlushStdout = TRUE;
+	    setFlush();
 	    break;
 	  case 3:	/* 80/132 mode switch unimplemented */
 	    break;
@@ -891,7 +891,7 @@ static void setterm_command(void) {
 	    printf("\033[%d;%d]", Par[0], Par[1]);
 	else
 	    printf("\033[%d]", Par[0]);
-	All->NeedFlushStdout = TRUE;
+	setFlush();
 	break;
       case 12: /* bring specified console to the front */
 	break;
@@ -1101,12 +1101,12 @@ INLINE void write_ctrl(byte c) {
 	  case '>':  /* Numeric keypad */
 	    *Flags &= ~TTY_KBDAPPLIC;
 	    printf("\033>");
-	    All->NeedFlushStdout = TRUE;
+	    setFlush();
 	    break;
 	  case '=':  /* Appl. keypad */
 	    *Flags |= TTY_KBDAPPLIC;
 	    printf("\033=");
-	    All->NeedFlushStdout = TRUE;
+	    setFlush();
 	    break;
 	}
 	break;
@@ -1119,7 +1119,7 @@ INLINE void write_ctrl(byte c) {
 	    return;
 	} else if (c=='R') {	/* Reset palette */
 	    printf("\033]R");
-	    All->NeedFlushStdout = TRUE;
+	    setFlush();
 	}
 	break;
 
@@ -1129,7 +1129,7 @@ INLINE void write_ctrl(byte c) {
 	    if (nPar==7) {
 		printf("\033]P%1x%1x%1x%1x%1x%1x%1x", Par[0], Par[1], Par[2], Par[3],
 		       Par[4], Par[5], Par[6]);
-		All->NeedFlushStdout = TRUE;
+		setFlush();
 		/*
 		int i = Par[0]*3, j = 1;
 		palette[i] = 16*Par[j++];
@@ -1332,9 +1332,23 @@ INLINE void write_ctrl(byte c) {
 	    fill(Start, HWATTR(ColText, 'E'), (uldat)SizeX * SizeY);
 	}
 	break;
+	
       case ESsetG0:
-      case ESsetG1:
+	if (c == '0' || c == 'B' || c == 'U' || c == 'K') {
+	    byte buf[] = "\033(x";
+	    buf[2] = c;
+	    HW->SetCharset(buf);
+	}
 	break;
+	
+      case ESsetG1:
+	if (c == '0' || c == 'B' || c == 'U' || c == 'K') {
+	    byte buf[] = "\033)x";
+	    buf[2] = c;
+	    HW->SetCharset(buf);
+	}
+	break;
+	
       default:
 	break;
     }
@@ -1342,29 +1356,35 @@ INLINE void write_ctrl(byte c) {
     State = ESnormal;
 }
 
-void KbdFocus(window *newWin) {
+window *KbdFocus(window *newWin) {
     udat newFlags;
-    
+    window *oldWin;
+        
+    oldWin = All->FirstScreen->FocusWindow;
+    All->FirstScreen->FocusWindow = newWin;
+
     if (!newWin || !newWin->TtyData)
 	newFlags = defaultFlags;
     else
 	newFlags = newWin->TtyData->Flags;
-    
+
     if (!(kbdFlags & TTY_KBDAPPLIC) && (newFlags & TTY_KBDAPPLIC))
-	printf("\033="), All->NeedFlushStdout = TRUE;
+	printf("\033="), setFlush();
     else if ((kbdFlags & TTY_KBDAPPLIC) && !(newFlags & TTY_KBDAPPLIC))
-	printf("\033>"), All->NeedFlushStdout = TRUE;
+	printf("\033>"), setFlush();
     if (!(kbdFlags & TTY_ALTCURSKEYS) && (newFlags & TTY_ALTCURSKEYS))
-	printf(StrAltCursKeys, 'h'), All->NeedFlushStdout = TRUE;
+	printf(StrAltCursKeys, 'h'), setFlush();
     else if ((kbdFlags & TTY_ALTCURSKEYS) && !(newFlags & TTY_ALTCURSKEYS))
-	printf(StrAltCursKeys, 'l'), All->NeedFlushStdout = TRUE;
+	printf(StrAltCursKeys, 'l'), setFlush();
     
     kbdFlags = newFlags;
+    
+    return oldWin;
 }
 
 void ForceKbdFocus(void) {
     kbdFlags = ~defaultFlags;
-    KbdFocus((window *)0);
+    (void)KbdFocus(All->FirstScreen->FocusWindow);
 }
     
 /* this is the main entry point */

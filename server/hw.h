@@ -2,6 +2,10 @@
 #define _TW_HW_H
 
 
+#define setFlush() (All->NeedHW |= NEEDFlushStdout)
+#define clrFlush() (All->NeedHW &= ~NEEDFlushStdout)
+
+
 void SendHotKey(window *Window);
 
 
@@ -57,7 +61,12 @@ struct display_hw {
     void (*HideMouse)(void);
 
     void (*DetectSize)(udat *x, udat *y);
+    void (*SetCharset)(byte *);
     
+    void (*ImportClipBoard)(byte Wait);
+    void (*ExportClipBoard)(void);
+    void *PrivateClipBoard;
+	
     byte (*canDragArea)(dat Xstart, dat Ystart, dat Xend, dat Yend, dat DstXstart, dat DstYstart);
     void (*DragArea)(dat Xstart, dat Ystart, dat Xend, dat Yend, dat DstXstart, dat DstYstart);
     /*

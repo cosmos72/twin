@@ -440,6 +440,8 @@ tmsgport TwCreateMsgPort(byte NameLen, byte *ProgramName, time_t PauseSec, frac_
 #define TW_TIMER_ONCE	((byte)2)
 void	TwDeleteMsgPort(tmsgport MsgPort);
 
+void	TwBgImageScreen(tscreen Screen, udat BgWidth, udat BgHeight, hwattr *BgImage);
+
 tscreen	TwFirstScreen(void);
 twindow	TwFirstWindow(tscreen Screen);
 tgadget TwFirstGadget(twindow Window);

@@ -92,7 +92,7 @@ static byte stdin_InitKeyboard(void) {
 	i = read(0, buf, 15);
     } while (i < 0 && (errno == EAGAIN || errno == EINTR));
     if (i <= 0) {
-	fputs("twin: stdin_InitKeyboard() failed: unable to read from the terminal!\n", errFILE);
+	fputs("      stdin_InitKeyboard() failed: unable to read from the terminal!\n", errFILE);
 	ioctl(0, TCSETS, &ttysave);
 	return FALSE;
     }
@@ -357,7 +357,7 @@ static byte gpm_InitMouse(void) {
     Gpm_CONN.maxMod = ~0;		/* ...with any modifier */
 
     if ((gpm_fd = Gpm_Open(&Gpm_CONN, 0)) < 0) {
-	fputs("twin: gpm_InitMouse() failed: unable to connect to `gpm'.\n"
+	fputs("      gpm_InitMouse() failed: unable to connect to `gpm'.\n"
 	      "      make sure you started `twin' from the console\n"
 	      "      and/or check that `gpm' is running.\n", errFILE);
 	return FALSE;
@@ -465,7 +465,7 @@ static byte xterm_InitMouse(void) {
 	 */
 	    
 	if (ttypar[0]<6 || (ttypar[0]==6 && ttypar[1]<3)) {
-	    fputs("twin: xterm_InitMouse() failed: this `linux' terminal\n"
+	    fputs("      xterm_InitMouse() failed: this `linux' terminal\n"
 		  "      has no support for xterm-style mouse reporting.\n", errFILE);
 	    return FALSE;
 	}
@@ -478,7 +478,7 @@ static byte xterm_InitMouse(void) {
     }
 #endif
     else {
-	fprintf(errFILE, "twin: xterm_InitMouse() failed: terminal is `%s', not `linux'.\n", term);
+	fprintf(errFILE, "      xterm_InitMouse() failed: terminal is `%s', not `linux'.\n", term);
 	return FALSE;
     }
 
@@ -504,7 +504,7 @@ static void xterm_QuitMouse(void) {
 #else
     fputs("\033[?9l", stdout);
 #endif
-    toFlush = TRUE;
+    setFlush();
 
     TTY.QuitMouse = NoOp;
 }
@@ -579,7 +579,7 @@ static byte warn_NoMouse(void) {
     byte c;
     
     fputs("\n"
-	  "twin: \033[1m  ALL  MOUSE  DRIVERS  FAILED.\033[0m\n"
+	  "      \033[1m  ALL  MOUSE  DRIVERS  FAILED.\033[0m\n"
 	  "\n"
 	  "      If you really want to run `twin' without mouse\n"
 	  "      hit RETURN to continue, otherwise hit CTRL-C to quit now.\n", errFILE);
@@ -613,6 +613,7 @@ static void stdin_DetectSize(udat *x, udat *y) {
 }
 
 
+static void stdout_SetCharset(byte *);
 static void stdout_MoveToXY(udat x, udat y);
 static void stdout_SetCursorType(uldat CursorType);
 static void stdout_Beep(void);
@@ -634,7 +635,7 @@ static byte vcsa_InitVideo(void) {
     static byte vcsa_name[] = "/dev/vcsaXX";
     byte *tty_s = tty_name;
     
-    if (!tty_name)
+    if (!tty_s)
 	return FALSE;
     
     if (!strncmp(tty_s, "/dev/tty", 8)) {
@@ -649,7 +650,7 @@ static byte vcsa_InitVideo(void) {
     }
     
     if (*tty_s || tty_number < 1 || tty_number > 63) {
-	fprintf(errFILE, "twin: vcsa_InitVideo() failed: terminal `%s'\n"
+	fprintf(errFILE, "      vcsa_InitVideo() failed: terminal `%s'\n"
 			 "      is not a local linux console.\n", tty_name);
 	return FALSE;
     }
@@ -659,15 +660,16 @@ static byte vcsa_InitVideo(void) {
     DropPrivileges();
     
     if (VcsaFd < 0) {
-	fprintf(errFILE, "twin: vcsa_InitVideo() failed: unable to open `%s': %s\n",
+	fprintf(errFILE, "      vcsa_InitVideo() failed: unable to open `%s': %s\n",
 		vcsa_name, strerror(errno));
 	return FALSE;
     }
     fcntl(VcsaFd, F_SETFD, FD_CLOEXEC);
     
     TTY.DetectSize = stdin_DetectSize;
-    TTY.canDragArea = NULL;
-    
+    TTY.canDragArea = NULL; 
+    TTY.SetCharset = stdout_SetCharset;    
+   
     TTY.FlushVideo = vcsa_FlushVideo;
     TTY.QuitVideo = vcsa_QuitVideo;
     TTY.FlushHW = NULL;
@@ -794,10 +796,10 @@ static void vcsa_FlushVideo(void) {
     /* now the cursor */
     
     if (All->gotoxybuf[0])
-	printf(All->gotoxybuf), All->gotoxybuf[0] = '\0', toFlush = TRUE;
+	printf(All->gotoxybuf), All->gotoxybuf[0] = '\0', setFlush();
 
     if (All->cursorbuf[0])
-	printf(All->cursorbuf), All->cursorbuf[0] = '\0', toFlush = TRUE;
+	printf(All->cursorbuf), All->cursorbuf[0] = '\0', setFlush();
 
     ChangedVideoFlag = ChangedMouseFlag = FALSE;
     ValidOldVideo = TRUE;
@@ -854,14 +856,15 @@ static byte stdout_InitVideo(void) {
     byte *term = getenv("TERM");
     
     if (strcmp(term, "linux") /*&& strncmp(term, "xterm", 5) && strncmp(term, "rxvt", 4)*/) {
-	fprintf(errFILE, "twin: stdout_InitVideo() failed: terminal is `%s', not `linux'.\n", term);
+	fprintf(errFILE, "      stdout_InitVideo() failed: terminal is `%s', not `linux'.\n", term);
 	return FALSE;
     }
 
     fputs("\033[0m\033[3h\033(U", stdout); /* clear colors, set TTY_DISPCTRL, set IBMPC consolemap */
     
-    TTY.canDragArea = NULL;
     TTY.DetectSize = stdin_DetectSize;
+    TTY.canDragArea = NULL;
+    TTY.SetCharset = stdout_SetCharset;    
 
     TTY.FlushVideo = stdout_FlushVideo;
     TTY.QuitVideo = stdout_QuitVideo;
@@ -1004,7 +1007,7 @@ static void stdout_FlushVideo(void) {
 	stdout_MogrifyYesCursor();
 	All->gotoxybuf[0] = '\033';
 	
-	/* toFlush will be set by fputs(All->gotoxybuf...)... */
+	/* clrFlush() will be called by fputs(All->gotoxybuf...)... */
     } else if (TTY.SoftMouse && ChangedMouseFlag)
 	TTY.HideMouse();
     
@@ -1017,10 +1020,10 @@ static void stdout_FlushVideo(void) {
     }
     
     if (All->gotoxybuf[0])
-	fputs(All->gotoxybuf, stdout), All->gotoxybuf[0] = '\0', toFlush = TRUE;
+	fputs(All->gotoxybuf, stdout), All->gotoxybuf[0] = '\0', clrFlush();
     
     if (All->cursorbuf[0])
-	fputs(All->cursorbuf, stdout), All->cursorbuf[0] = '\0', toFlush = TRUE;
+	fputs(All->cursorbuf, stdout), All->cursorbuf[0] = '\0', clrFlush();
 
     ChangedVideoFlag = ChangedMouseFlag = FALSE;
     ValidOldVideo = TRUE;
@@ -1041,7 +1044,7 @@ static void stdout_ShowMouse(void) {
 
     /* put the cursor back in place */
     All->gotoxybuf[0] = '\033';
-    toFlush = TRUE;
+    setFlush();
 }
 
 static void stdout_HideMouse(void) {
@@ -1050,7 +1053,7 @@ static void stdout_HideMouse(void) {
 
     /* put the cursor back in place */
     All->gotoxybuf[0] = '\033';
-    toFlush = TRUE;
+    setFlush();
 }
 
 static void stdout_SetCursorType(uldat CursorType) {
@@ -1074,9 +1077,14 @@ static void stdout_MoveToXY(udat x, udat y) {
     }
 }
 
+static void stdout_SetCharset(byte *seq) {
+    fputs(seq, stdout);
+    All->NeedHW |= NEEDFlushStdout;
+}
+
 static void stdout_Beep(void) {
     fputs("\033[3l\007\033[3h", stdout);
-    All->NeedFlushStdout = TRUE;
+    All->NeedHW |= NEEDFlushStdout;
 }
 
 #if 0
@@ -1169,10 +1177,10 @@ display_hw *tty_InitHW(byte *arg) {
 	    
 	    close(ttyfd);
 	}
-    } else {
-	if ((tty_name = ttyname(0)))
-	    tty_name = strdup(tty_name);
     }
+    
+    if (!tty_name && (tty_name = ttyname(0)))
+	tty_name = strdup(tty_name);
 
     if (stdin_InitKeyboard()) {
 	

@@ -48,7 +48,7 @@
 
 fd_set save_rfds, save_wfds;
 int max_fds;
-byte *TWDisplay, *origTWDisplay;
+byte *TWDisplay, *origTWDisplay, lenTWDisplay;
 byte **main_argv, **orig_argv;
 
 static timevalue *Now;
@@ -271,15 +271,22 @@ int main(int argc, char *argv[]) {
 	}
 	
 	do {
-	    if (All->NeedResizeDisplay)
+	    if (All->NeedHW & NEEDResizeDisplay)
 		ResizeDisplay(), DrawArea(FULLSCREEN);
+	    
+	    if (All->NeedHW & NEEDExportClipBoard) {
+		if (HW->ExportClipBoard)
+		    HW->ExportClipBoard();
+		else
+		    All->NeedHW &= ~NEEDExportClipBoard;
+	    }
 	    
 	    if (StrategyFlag != HW_DELAY) {
 		HW->FlushVideo();
-		if (All->NeedFlushHW)
+		if (All->NeedHW & NEEDFlushHW)
 		    HW->FlushHW();
-		if (All->NeedFlushStdout)
-		    fflush(stdout), All->NeedFlushStdout = FALSE;
+		if (All->NeedHW & NEEDFlushStdout)
+		    fflush(stdout), All->NeedHW &= ~NEEDFlushStdout;
 	    }
 	    num_fds = select(max_fds+1, &read_fds, pwrite_fds, NULL, this_timeout);
 	} while (num_fds < 0 && errno == EINTR);

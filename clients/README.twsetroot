@@ -1,0 +1,95 @@
+
+		twsetroot --- set the desktop image in twin
+		
+twsetroot is a tool to manipulate the background (or root window, or desktop)
+or a running twin.
+
+For the moment, twsetroot knows only about one type of image file:
+
+* Ascii art files:
+  they consist of plain ASCII text plus special escape sequences
+  to manipulate colors and cursor position. On such files, the size of the
+  generated image cannot be know beforehand, so twsetroot keeps track
+  of the size while reading more and more data from the ASCII art file.
+  To have twsetroot read an ASCII art file, use `twsetroot -aa <file>'
+
+Whatever the file type is (others will be added in the future), once twsetroot
+has read the whole image, sends it to twin to be stored as the background image
+of the current screen.
+
+If you specify no parameter, twsetroot reads from standard input;
+so for example
+
+echo -e '\033[1;44;30m\261' | twsetroot
+
+sets the background of twin to a 1x1 image,
+with `bold black' (i.e. dark grey) foreground on `blue' background,
+and containing the pseudo-graphical character \261 (or ASCII 177, or '±')
+This also happens to be the default background of twin.
+
+Another example:
+
+echo -e '\033[1;44;34m  \334\337\n\337\334  ' | twsetroot
+This is also in the file twsetroot.sample, so you can instead do
+
+twsetroot -aa twsetroot.sample
+
+If twin is using the correct (VGA) font, this will look as:
+  Ü   Ü   Ü   Ü   Ü   
+   ß Ü ß Ü ß Ü ß Ü ß  
+  Ü ß Ü ß Ü ß Ü ß Ü 
+   ß Ü ß Ü ß Ü ß Ü ß
+  Ü ß Ü ß Ü ß Ü ß Ü  
+   ß   ß   ß   ß   ß  
+
+
+A last (useless ?) example is to use this file, README.twsetroot,
+as background:
+
+twsetroot -aa README.twsetroot
+
+For more background images, you should probably look on the internet
+for ASCII art files, or use aalib (ASCII art lib) to convert some *real* images
+(gif, jpeg, ...) into nice ASCII art files that twsetroot can use.
+
+Last, you probably are interested in knowing all the special escape sequences
+to set colors. Here they are:
+
+the most general color-changing sequence (if I remember correctly,
+it's an ANSI stardard) is:
+
+ESC[<val1>;<val2>...m
+
+where ESC is the `Escape' char (\033 octal, 27 decimal), then you have
+an open square `[', then a list of semi-colon separated numbers,
+then a final `m' to close the sequence. Don't put spaces in the sequence,
+and don't put a semi-colon `;' just before the `m'.
+
+Recognized values are:
+  0	reset colors: set to white foreground on black background
+  1	bold  / high intensity foreground
+  5	blink / high intensity background
+  7	reverse: swap foreground with background
+
+30..37  set foreground to 0..7, with:
+        0 = black
+	1 = red
+	2 = green
+	3 = yellow (brown)
+	4 = blue
+	5 = magenta
+	6 = cyan
+	7 = white
+	
+40..47  set background to 0..7 (see colors above)
+
+
+
+That's all.
+
+
+
+Happy ASCII-arting,
+
+            Massimiliano Ghilardi
+	    

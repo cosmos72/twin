@@ -18,8 +18,8 @@
 #include "twin.h"
 #include "methods.h"
 #include "main.h"
-#include "util.h"
 #include "data.h"
+#include "util.h"
 #include "hw.h"
 
 udat ErrNo;
@@ -268,8 +268,13 @@ void SortAllMsgPortsByCallTime(void) {
     All->LastMsgPort  = End;
 }
 
-byte AddToClipBoard(uldat Len, byte *Data) {
+byte SetClipBoard(uldat Magic, uldat Len, byte *Data) {
     byte *newData;
+    
+    if (Magic != CLIP_APPEND) {
+        All->ClipLen = 0;
+	All->ClipMagic = Magic;
+    }
     if (All->ClipMax < All->ClipLen + Len) {
 	if (!(newData = ReAllocMem(All->ClipData, All->ClipLen + Len)))
 	    return FALSE;
@@ -281,13 +286,9 @@ byte AddToClipBoard(uldat Len, byte *Data) {
     else
 	WriteMem(All->ClipData + All->ClipLen, ' ', Len);
     All->ClipLen += Len;
+    All->NeedHW |= NEEDExportClipBoard;
+    
     return TRUE;
-}
-
-INLINE byte SetClipBoard(uldat Magic, uldat Len, byte *Data) {
-    All->ClipLen = 0;
-    All->ClipMagic = Magic;
-    return AddToClipBoard(Len, Data);
 }
 
 byte SetClipBoardFromWindow(window *Window) {
@@ -384,7 +385,7 @@ byte SetClipBoardFromWindow(window *Window) {
 
 
 
-static byte s[]="/tmp/.Twin:xxx";
+static byte fullTWD[]="/tmp/.Twin:\0\0\0";
 
 /* set TWDISPLAY */
 byte SetTWDisplay(void) {
@@ -392,11 +393,13 @@ byte SetTWDisplay(void) {
     byte *arg0;
     
     for (i=0; i<0x1000; i++) {
-	sprintf(s+11, "%x", i);
-	if ((fd = open(s, O_WRONLY|O_CREAT|O_TRUNC|O_EXCL, 0600)) >= 0) {
+	sprintf(fullTWD+11, "%x", i);
+	if ((fd = open(fullTWD, O_WRONLY|O_CREAT|O_TRUNC|O_EXCL, 0600)) >= 0) {
 	    close(fd);
-	    setenv("TWDISPLAY", s+10, 1);
-	    TWDisplay = strdup(s+10);
+	    TWDisplay = fullTWD+10;
+	    lenTWDisplay = strlen(TWDisplay);
+	    
+	    setenv("TWDISPLAY", TWDisplay, 1);
 	    setenv("TERM", "linux", 1);
 	    if ((arg0 = AllocMem(strlen(TWDisplay) + 6))) {
 		strcpy(arg0, "twin ");
@@ -410,10 +413,9 @@ byte SetTWDisplay(void) {
     return FALSE;
 }
 
-/* unlink /tmp/.Twin:$TWDISPLAY */
+/* unlink /tmp/.Twin$TWDISPLAY */
 void UnSetTWDisplay(void) {
-    CopyStr(TWDisplay, s+10);
-    unlink(s);
+    unlink(fullTWD);
 }
 
 

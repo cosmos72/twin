@@ -24,7 +24,7 @@
 
 
 
-static display_hw twin;
+static display_hw TW;
 
 
 static twindow Twindow = NOID;
@@ -41,6 +41,11 @@ static void TW_MoveToXY(udat x, udat y) {
     XY[3] = y;
 }
 
+static void TW_SetCharset(byte *seq) {
+    TwWriteAsciiWindow(Twindow, strlen(seq), seq);
+    All->NeedHW |= NEEDFlushHW;
+}
+
 static void TW_SetCursorType(uldat CursorType) {
     if ((CursorType & 0xF) == 0)
 	CursorType |= LINECURSOR;
@@ -51,7 +56,7 @@ static void TW_SetCursorType(uldat CursorType) {
 
 static void TW_Beep(void) {
     TwWriteAsciiWindow(Twindow, 1, "\007");
-    All->NeedFlushHW = TRUE;
+    All->NeedHW |= NEEDFlushHW;
 }
 
 static void TW_KeyboardEvent(int fd, uldat slot) {
@@ -83,7 +88,7 @@ static void TW_KeyboardEvent(int fd, uldat slot) {
 		
 		Twidth = Event->EventWindow.XWidth - 2;
 		Theight = Event->EventWindow.YWidth - 2;
-		All->NeedResizeDisplay = TRUE;
+		All->NeedHW |= NEEDResizeDisplay;
 	    }
 	    break;
 	  case TW_MSG_WINDOW_GADGET:
@@ -138,13 +143,13 @@ static void TW_FlushVideo(void) {
 	    if (start != -1)
 		TW_Mogrify(start, i>>1, end-start+1);
 	}
-	All->NeedFlushHW = TRUE;
+	All->NeedHW |= NEEDFlushHW;
     }
     
     /* update the cursor */
     if (XY[0] != XY[2] || XY[1] != XY[3]) {
 	TwGotoXYWindow(Twindow, XY[2], XY[3]);
-	All->NeedFlushHW = TRUE;
+	All->NeedHW |= NEEDFlushHW;
     }
     if (TT[0] != TT[1]) {
 	/* TwSetCursorWindow(Twindow, TT[1]); */
@@ -154,7 +159,7 @@ static void TW_FlushVideo(void) {
 		(int)((TT[1] >> 8) & 0xFF),
 		(int)((TT[1] >> 16) & 0xFF));
 	TwWriteAsciiWindow(Twindow, strlen(buff), buff);
-	All->NeedFlushHW = TRUE;
+	All->NeedHW |= NEEDFlushHW;
     }
     
     ChangedVideoFlag = ChangedMouseFlag = FALSE;
@@ -165,9 +170,9 @@ static void TW_FlushVideo(void) {
     XY[1] = XY[3];
 }
 
-static void TW_Flush(void) {
+static void TW_FlushHW(void) {
     TwFlush();
-    All->NeedFlushHW = FALSE;
+    All->NeedHW &= ~NEEDFlushHW;
 }
 
 static void TW_DetectSize(udat *x, udat *y) {
@@ -184,7 +189,7 @@ static void TW_DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat Dst
     TW_FlushVideo(); /* a *must* before any direct libTw operation */
     
     TwDragAreaWindow(Twindow, Twindow, Left, Up, Rgt, Dwn, DstLeft, DstUp);
-    All->NeedHW_Flush = TRUE;
+    All->NeedHW |= NEEDFlushHW;
 }
 #endif
 
@@ -196,9 +201,9 @@ static void TW_QuitHW(void) {
     UnRegisterRemote(All->keyboard_slot);
     All->keyboard_slot = NOSLOT;
     
-    twin.KeyboardEvent = (void *)NoOp;
+    TW.KeyboardEvent = (void *)NoOp;
     
-    twin.QuitHW = NoOp;
+    TW.QuitHW = NoOp;
 
 }
 
@@ -224,7 +229,7 @@ display_hw *TW_InitHW(byte *arg) {
 	 * returns OUR socket... and using ourself as display isn't
 	 * exactly a bright idea.
 	 */
-	fprintf(errFILE, "twin: TW_InitHW() failed: TWDISPLAY is not set\n");
+	fprintf(errFILE, "      TW_InitHW() failed: TWDISPLAY is not set\n");
 	return NULL;
     }
     
@@ -264,43 +269,44 @@ display_hw *TW_InitHW(byte *arg) {
 	    All->keyboard_slot = RegisterRemote(TwConnectionFd(), TW_KeyboardEvent);
 	    if (All->keyboard_slot == NOSLOT)
 		break;
-	    twin.KeyboardEvent = TW_KeyboardEvent;
-	    twin.QuitKeyboard  = NoOp;
+	    TW.KeyboardEvent = TW_KeyboardEvent;
+	    TW.QuitKeyboard  = NoOp;
 	    
-	    twin.SoftMouse = FALSE; /* mouse pointer handled by X11 server */
-	    twin.MouseEvent = (void *)NoOp; /* mouse events handled by X11_KeyboardEvent */
-	    twin.ShowMouse = NoOp;
-	    twin.HideMouse = NoOp;
-	    twin.QuitMouse = NoOp;
+	    TW.SoftMouse = FALSE; /* mouse pointer handled by X11 server */
+	    TW.MouseEvent = (void *)NoOp; /* mouse events handled by X11_KeyboardEvent */
+	    TW.ShowMouse = NoOp;
+	    TW.HideMouse = NoOp;
+	    TW.QuitMouse = NoOp;
 	    
 	    All->mouse_slot = NOSLOT;
 	    
-	    twin.canDragArea = NULL;
-	    twin.DetectSize  = TW_DetectSize;
+	    TW.DetectSize  = TW_DetectSize;
+	    TW.canDragArea = NULL;
+	    TW.SetCharset = TW_SetCharset;
 	    
-	    twin.FlushVideo = TW_FlushVideo;
-	    twin.QuitVideo = NoOp;
-	    twin.FlushHW = TW_Flush;
+	    TW.FlushVideo = TW_FlushVideo;
+	    TW.QuitVideo = NoOp;
+	    TW.FlushHW = TW_FlushHW;
 	    
-	    twin.NeedOldVideo = TRUE;
-	    twin.merge_Threshold = 0;
-	    twin.ExpensiveFlushVideo = FALSE;
+	    TW.NeedOldVideo = TRUE;
+	    TW.merge_Threshold = 0;
+	    TW.ExpensiveFlushVideo = FALSE;
 	    
-	    twin.MoveToXY = TW_MoveToXY;           XY[0] = XY[1] = XY[2] = XY[3] = 0;
-	    twin.SetCursorType = TW_SetCursorType; TT[0] = TT[1] = -1; /* force updating cursor */
-	    twin.Beep = TW_Beep;
+	    TW.MoveToXY = TW_MoveToXY;           XY[0] = XY[1] = XY[2] = XY[3] = 0;
+	    TW.SetCursorType = TW_SetCursorType; TT[0] = TT[1] = -1; /* force updating cursor */
+	    TW.Beep = TW_Beep;
 	    
-	    twin.QuitHW = TW_QuitHW;
+	    TW.QuitHW = TW_QuitHW;
 	    
 	    InitTtysave();
 	    
-	    return &twin;
+	    return &TW;
 	    
 	} while (0); else {
 	    if (TwErrno)
-		fprintf(errFILE, "twin: TW_InitHW() failed: %s\n", TwStrError(TwErrno));
+		fprintf(errFILE, "      TW_InitHW() failed: %s\n", TwStrError(TwErrno));
 	    else
-		fprintf(errFILE, "twin: TW_InitHW() failed.\n");
+		fprintf(errFILE, "      TW_InitHW() failed.\n");
 	}
     
     if (TwConnectionFd() >= 0)

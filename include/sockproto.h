@@ -101,6 +101,8 @@ PROTO1(void,v,  Delete,Menu,2, menu,x)
 PROTO5CreateMsgPort(msgport,x,Create,MsgPort,1, byte,_, byte,V(A(1)), time_t,_, frac_t,_, byte,_)
 PROTO1(void,v,   Delete,MsgPort,2, msgport,x)
 
+PROTO4(void,v,  BgImage,Screen,2, screen,x, udat,_, udat,_, hwattr,V(A(2)*A(3)))
+
 PROTO0Abs(screen  ,x, First,Screen,  0)
 PROTO1Abs(window  ,x, First,Window,  0, screen, x)
 PROTO1Abs(gadget  ,x, First,Gadget,  0, window, x)

@@ -26,28 +26,14 @@
 msgport *WM_MsgPort;
 static msgport *MapQueue;
 
-#define ZEROSTATE \
-{ \
-    if (FlagsMove & GLMOVE_1stSCREEN) {  \
-	All->FlagsMove &= ~GLMOVE_1stSCREEN; \
-	DrawMenuBar(Screen, MINDAT, MAXDAT); \
-    } \
-    if (FlagsMove & GLMOVE_ANY_1stWIN) {  \
-	All->FlagsMove &= ~GLMOVE_ANY_1stWIN; \
-	DrawBorderWindow(CurrWin, BORDER_ANY);  \
-    } \
-    if (FlagsMove & GLMOVE_1stMENU) { \
-	ChangeMenuFirstScreen((menuitem *)0, FALSE, DISABLE_MENU_FLAG); \
-	CurrWin=Screen->FirstWindow; \
-    } \
-    FlagsMove=All->FlagsMove; \
-}
+static void SmartPlace(window *Window, screen *Screen);
+
 
 static byte CheckForwardMsg(msg *Msg, byte WasUsed) {
     static window *CurrWin = (window *)0;
     static byte ClickedInside = FALSE, LastKeys = 0;
     screen *Screen=All->FirstScreen;
-    window *FirstWin=Screen->FirstWindow;
+    window *FocusWin=Screen->FocusWindow;
     event_any *Event;
     
     if ((All->FlagsMove & GLMOVE_1stWIN_FREEZE) ||
@@ -55,11 +41,11 @@ static byte CheckForwardMsg(msg *Msg, byte WasUsed) {
 	return FALSE;
     }
     
-    if (FirstWin && FirstWin != CurrWin) {
+    if (FocusWin && FocusWin != CurrWin) {
 	/* try to leave CurrWin with a clean status */
 	msg *NewMsg;
 	udat Code;
-	if (ClickedInside && CurrWin && CurrWin==FirstWin->Next &&
+	if (ClickedInside && CurrWin && CurrWin==FocusWin->Next &&
 	    (CurrWin->Attrib & WINDOW_WANT_MOUSE)) {
 	    
 	    while (LastKeys) {
@@ -79,8 +65,8 @@ static byte CheckForwardMsg(msg *Msg, byte WasUsed) {
 		}
 	    }
 	}
-	CurrWin = !FirstWin || (FirstWin->Attrib & WINDOW_MENU) || !FirstWin->Menu ?
-	    (window *)0 : FirstWin;
+	CurrWin = !FocusWin || (FocusWin->Attrib & WINDOW_MENU) || !FocusWin->Menu ?
+	    (window *)0 : FocusWin;
 	
 	ClickedInside = FALSE;
     }
@@ -134,10 +120,14 @@ static byte CheckForwardMsg(msg *Msg, byte WasUsed) {
 		    ExtendSelection(CurrWin, (ldat)x-Left-1+CurrWin->XLogic, (ldat)y-Up-1+CurrWin->YLogic);
 		} else if (isRELEASE(Code) && Code == RELEASE_LEFT) {
 		    SetClipBoardFromWindow(CurrWin);
-		} else if (isRELEASE(Code) && Code == RELEASE_MIDDLE && All->ClipLen) {
+		} else if (isRELEASE(Code) && Code == RELEASE_MIDDLE) {
 		    /* send ClipBoard Paste msg */
 		    msg *NewMsg;
-		    if ((NewMsg = Do(Create,Msg)(FnMsg, MSG_CLIPBOARD, sizeof(event_clipboard)))) {
+		    if (HW->ImportClipBoard)
+			/* HACK: ImportClipBoard(TRUE) could block! */
+			HW->ImportClipBoard(TRUE);
+		    if (All->ClipLen &&
+			(NewMsg = Do(Create,Msg)(FnMsg, MSG_CLIPBOARD, sizeof(event_clipboard)))) {
 			Event = &NewMsg->Event;
 			Event->EventClipBoard.Window = CurrWin;
 			Event->EventClipBoard.Code = 0;
@@ -188,12 +178,14 @@ static void Check4Resize(window *CurrWin) {
 }
 
 static void CommonAction(msg *Msg) {
-    screen *Screen=All->FirstScreen;
     window *CurrWin=Msg->Event.EventCommon.Window;
+    screen *Screen;
     udat Code=Msg->Event.EventCommon.Code;
     msg *NewMsg;
-    
-    if (Code != COD_COMMON_WINLIST && (!CurrWin || !Screen->FirstWindow || CurrWin != Screen->FirstWindow))
+
+    if (Code != COD_COMMON_WINLIST &&
+	(!CurrWin || !(Screen=CurrWin->Screen) ||
+	 !Screen->FocusWindow || CurrWin != Screen->FocusWindow))
 	return;
     
     switch (Code) {
@@ -208,24 +200,27 @@ static void CommonAction(msg *Msg) {
 	break;
 		
       case COD_COMMON_RESIZE:
-	All->FlagsMove = GLMOVE_RESIZE_1stWIN;
-	/* not GLMOVE_1stWIN or window will miss MSG_WINDOW_CHANGE events. */
-	DrawBorderWindow(CurrWin, BORDER_ANY);
+	if (CurrWin->Attrib & (WINDOW_DRAG|WINDOW_RESIZE)) {
+	    All->FlagsMove = GLMOVE_RESIZE_1stWIN;
+	    /* not GLMOVE_1stWIN or window will miss MSG_WINDOW_CHANGE events. */
+	    DrawBorderWindow(CurrWin, BORDER_ANY);
+	}
 	break;
 
       case COD_COMMON_SCROLL:
-	All->FlagsMove = GLMOVE_SCROLL_1stWIN;
-	DrawBorderWindow(CurrWin, BORDER_ANY);
-	break;
-
-      case COD_COMMON_CENTER:
-	CenterWindow(CurrWin);
+	if (CurrWin->Attrib & (WINDOW_X_BAR | WINDOW_Y_BAR)) {
+	    All->FlagsMove = GLMOVE_SCROLL_1stWIN;
+	    DrawBorderWindow(CurrWin, BORDER_ANY);
+	}
 	break;
 
       case COD_COMMON_ZOOM:
       case COD_COMMON_MAXZOOM:
-	CenterWindow(CurrWin);
-	if (!(CurrWin->Attrib & WINDOW_RESIZE))
+      case COD_COMMON_CENTER:
+	if (CurrWin->Attrib & (WINDOW_DRAG))
+	    CenterWindow(CurrWin);
+	
+	if (Code == COD_COMMON_CENTER || !(CurrWin->Attrib & WINDOW_RESIZE))
 	    break;
 	
 	if (Code == COD_COMMON_ZOOM) {
@@ -250,13 +245,24 @@ static void CommonAction(msg *Msg) {
 	break;
 
       case COD_COMMON_NEXT:
-	MakeLastWindow(CurrWin);	
+	MakeLastWindow(CurrWin, TRUE);
 	break;
-	
+
+      case COD_COMMON_RAISELOWER:
+	if (CurrWin == Screen->FirstWindow)
+	    MakeLastWindow(CurrWin, FALSE);
+	else
+	    MakeFirstWindow(CurrWin, FALSE);
+	break;
+
       case COD_COMMON_WINLIST:
 	if (ListWin->Screen)
 	    Act(UnMap,ListWin)(ListWin);
-	Act(RealMap,ListWin)(ListWin,Screen);
+	if (CurrWin && CurrWin->Screen)
+	    Screen = CurrWin->Screen;
+	else
+	    Screen = All->FirstScreen;
+	SmartPlace(ListWin, Screen);
 	break;
 	
       default:
@@ -277,7 +283,7 @@ static void WManagerH(msgport *MsgPort) {
     udat Repeat;
     uldat ltemp;
     setup *SetUp;
-    screen *Screen, *tempScreen, *tempScreenNext;
+    screen *Screen, *tempScreen;
     menu *Menu;
     menuitem *CurrMenuItem, *tempMenuItem;
     row *tempRow;
@@ -286,7 +292,7 @@ static void WManagerH(msgport *MsgPort) {
     uldat NumRow, NumLogicMax, OldNumRow, Delta;
     dat i, j, XDelta, YDelta;
     byte FlagsMove, State, CharFound;
-    byte Shade, Background;
+    byte Shade;
     dat ScreenWidth;
     udat YLimit;
     
@@ -353,9 +359,8 @@ static void WManagerH(msgport *MsgPort) {
 	    Screen=All->FirstScreen;
 	    ScreenWidth=Screen->ScreenWidth;
 	    YLimit=Screen->YLimit;
-	    if ((CurrWin=Screen->FirstWindow)) {
+	    if ((CurrWin=Screen->FocusWindow)) {
 		NWinDiMenu=CurrWin->Attrib & WINDOW_MENU ? 0 : (ldat)~(ldat)0;
-		Background=!(CurrWin->Attrib & WINDOW_STAYONTOP);
 
 		Up=(ldat)CurrWin->Up-((ldat)Screen->Up & NWinDiMenu)+(ldat)YLimit;
 		Left=(ldat)CurrWin->Left-((ldat)Screen->Left & NWinDiMenu);
@@ -363,7 +368,7 @@ static void WManagerH(msgport *MsgPort) {
 		Dwn=Up+(ldat)CurrWin->YWidth-(ldat)1;
 
 	    } else
-		NWinDiMenu=Background=TRUE;
+		NWinDiMenu=TRUE;
 	    
 	    if ((Menu=Act(SearchMenu,Screen)(Screen)))
 		CurrMenuItem=Menu->MenuItemSelect;
@@ -412,7 +417,7 @@ static void WManagerH(msgport *MsgPort) {
 			    Error(NOMEMORY);
 			else {
 			    tempEvent=&NewMsg->Event;
-			    tempEvent->EventMenu.Window = CurrWin->Next;
+			    tempEvent->EventMenu.Window = Screen->MenuWindow;
 			    tempEvent->EventMenu.Code = tempRow->Code;
 			    tempEvent->EventMenu.Menu = Menu;
 			    if (tempRow->Code < COD_COMMON)
@@ -451,22 +456,11 @@ static void WManagerH(msgport *MsgPort) {
 		    else {
 			if (j+1==(dat)YLimit && i>ScreenWidth-(dat)3 && Screen->Attrib & GADGET_BACK_SELECT) {
 			    Screen->Attrib &= ~(GADGET_BACK_SELECT|GADGET_PRESSED);
-			    if (!Background && (!(tempScreen=Screen->Next) || !(tempScreen->FirstWindow->Attrib & WINDOW_STAYONTOP)))
-				DrawMenuBar(Screen, MINDAT, MAXDAT);
-			    else {
-				if (Background)
-				    MoveLast(Screen, All, Screen);
-				else {
-				    tempScreenNext=tempScreen;
-				    while (tempScreenNext && tempScreenNext->FirstWindow->Attrib & WINDOW_STAYONTOP) {
-					tempScreen=tempScreenNext;
-					tempScreenNext=tempScreen->Next;
-				    }
-				    Remove(Screen);
-				    InsertMiddle(Screen, Screen, All, tempScreen, tempScreenNext);
-				}
-				
-				DrawArea(FULLSCREEN);
+			    if (Screen != All->LastScreen) {
+				MoveLast(Screen, All, Screen);
+				DrawArea((screen *)0, (window *)0, (window *)0, (gadget *)0, (gadget *)0,
+					 0, (dat)Min2(Screen->YLimit, All->FirstScreen->YLimit)-(dat)1,
+					 MAXDAT, MAXDAT, FALSE);
 				UpdateCursor();
 			    }
 			}
@@ -484,9 +478,14 @@ static void WManagerH(msgport *MsgPort) {
 			}
 			else if (CurrWin && (ldat)j==Up && Rgt-(ldat)i<(ldat)2 && (ldat)i<=Rgt && CurrWin && !(CurrWin->Attrib & WINDOW_MENU) && CurrWin->Attrib & GADGET_BACK_SELECT) {
 			    CurrWin->Attrib &= ~(GADGET_BACK_SELECT|GADGET_PRESSED);
-			    DrawBorderWindow(CurrWin, BORDER_ANY);
-			    if (Background || ((tempWin=CurrWin->Next) && (tempWin->Attrib & WINDOW_STAYONTOP)))
-				MakeLastWindow(CurrWin);
+			    
+			    if (CurrWin == Screen->LastWindow && CurrWin->Prev)
+				MakeFirstWindow(CurrWin, TRUE);
+			    else if (CurrWin->Next)
+				MakeLastWindow(CurrWin, TRUE);
+			    else
+				DrawArea((screen *)0, (window *)0, CurrWin, (gadget *)0, (gadget *)0,
+					 Rgt-1, Up, Rgt, Up, FALSE);
 			}
 			else if (Screen->Attrib & GADGET_BACK_SELECT) {
 			    Screen->Attrib &= ~(GADGET_BACK_SELECT|GADGET_PRESSED);
@@ -511,8 +510,12 @@ static void WManagerH(msgport *MsgPort) {
 			    }
 			    /* CurrWin->GadgetSelect=(gadget *)0; */
 			    Gadget->Flags &= ~GADGET_PRESSED;
-			    if (Gadget)
-				DrawWindow(CurrWin, (gadget *)0, Gadget, MINDAT, MINDAT, MAXDAT, MAXDAT, FALSE);
+			    if (Gadget) {
+				if (CurrWin == All->FirstScreen->FirstWindow)
+				    DrawWindow(CurrWin, (gadget *)0, Gadget, MINDAT, MINDAT, MAXDAT, MAXDAT, FALSE);
+				else
+				    DrawArea((screen *)0, (window *)0, CurrWin, (gadget *)0, Gadget, MINDAT, MINDAT, MAXDAT, MAXDAT, FALSE);
+			    }
 			}
 		    }
 		}
@@ -523,25 +526,17 @@ static void WManagerH(msgport *MsgPort) {
 	      case STDEF_MOUSE_ACT_NULL:
 		if (!(tempScreen=Do(Search,Screen)(j)))
 		    break;
-		if (!Background && (Funct==STDEF_MOUSE_ACT_MENU
-				    || ((Funct==STDEF_MOUSE_ACT_SOME || tempScreen!=Screen)
-					&& (((tempWin=Act(SearchWindow,tempScreen)(tempScreen, i, j, (byte *)0))
-					     && !(tempWin->Attrib & WINDOW_STAYONTOP))
-					    || (!tempWin && tempScreen!=Screen)
-					    )
-					)
-				    ))
-		    break;
 		else if (tempScreen!=Screen) {
 		    MoveFirst(Screen, All, tempScreen);
-		    DrawArea(FULLSCREEN);
+		    DrawArea((screen *)0, (window *)0, (window *)0, (gadget *)0, (gadget *)0,
+			     0, (dat)Min2(Screen->YLimit, tempScreen->YLimit)-(dat)1,
+			     MAXDAT, MAXDAT, FALSE);
 		    UpdateCursor();
 		    Screen=tempScreen;
 		    ScreenWidth=Screen->ScreenWidth;
 		    YLimit=Screen->YLimit;
-		    if ((CurrWin=Screen->FirstWindow)) {
+		    if ((CurrWin=Screen->FocusWindow)) {
 			NWinDiMenu=CurrWin->Attrib & WINDOW_MENU ? 0 : (ldat)~(ldat)0;
-			Background=!(CurrWin->Attrib & WINDOW_STAYONTOP);
 		    }
 		    
 		    if ((Menu=Act(SearchMenu,Screen)(Screen)))
@@ -551,7 +546,20 @@ static void WManagerH(msgport *MsgPort) {
 		    All->FlagsMove=FlagsMove=GLMOVE_1stWIN_FREEZE;
 		}
 		
-		ZEROSTATE;
+		if (FlagsMove & GLMOVE_1stSCREEN) {
+		    All->FlagsMove &= ~GLMOVE_1stSCREEN;
+		    DrawMenuBar(Screen, MINDAT, MAXDAT);
+		}
+		if (FlagsMove & GLMOVE_ANY_1stWIN) {
+		    All->FlagsMove &= ~GLMOVE_ANY_1stWIN;
+		    DrawBorderWindow(CurrWin, BORDER_ANY);
+		}
+		if (FlagsMove & GLMOVE_1stMENU) {
+		    ChangeMenuFirstScreen((menuitem *)0, FALSE, DISABLE_MENU_FLAG);
+		    CurrWin=Screen->FocusWindow;
+		}
+		FlagsMove=All->FlagsMove;
+
 		tempWin=Act(SearchWindow,Screen)(Screen, i, j, &Shade);
 		
 		if (Funct==STDEF_MOUSE_ACT_MENU) {
@@ -583,13 +591,16 @@ static void WManagerH(msgport *MsgPort) {
 		}
 		else if (tempWin) {
 		    if (tempWin!=CurrWin) {
-			MakeFirstWindow(tempWin);
-			if (Screen->FirstWindow != tempWin)
+			CurrWin=Act(Focus,tempWin)(tempWin);
+			if (Screen->FocusWindow != tempWin)
 			    /* failed for some reason */
 			    break;
+			DrawBorderWindow(tempWin, BORDER_ANY);
+			DrawBorderWindow(CurrWin, BORDER_ANY);
+			DrawMenuBar(Screen, MINDAT, MAXDAT);
+			UpdateCursor();
 			CurrWin = tempWin;
 			All->FlagsMove=FlagsMove=GLMOVE_1stWIN_FREEZE;
-			Background=!(CurrWin->Attrib & WINDOW_STAYONTOP);
 			NWinDiMenu=CurrWin->Attrib & WINDOW_MENU ? 0 : (ldat)~(ldat)0;
 		    }
 		    
@@ -660,12 +671,21 @@ static void WManagerH(msgport *MsgPort) {
 			    All->FlagsMove|=GLMOVE_1stWIN_FREEZE;
 			    CurrWin->GadgetSelect=Gadget;
 			    Gadget->Flags|=GADGET_PRESSED;
-			    DrawWindow(CurrWin, (gadget *)0, Gadget, MINDAT, MINDAT, MAXDAT, MAXDAT, FALSE);
+			    if (CurrWin == All->FirstScreen->FirstWindow)
+				DrawWindow(CurrWin, (gadget *)0, Gadget, MINDAT, MINDAT, MAXDAT, MAXDAT, FALSE);
+			    else
+				DrawArea((screen *)0, (window *)0, CurrWin, (gadget *)0, Gadget, MINDAT, MINDAT, MAXDAT, MAXDAT, FALSE);
 			}
 		    }
 		}
-		else
+		else {
+		    if (CurrWin) {
+			Act(Focus,CurrWin)((window *)0);
+			DrawBorderWindow(CurrWin, BORDER_ANY);
+			DrawMenuBar(Screen, MINDAT, MAXDAT);
+		    }
 		    All->FlagsMove|=GLMOVE_1stWIN_FREEZE;
+		}
 		break;
 	      case STMENU_MOUSE_DRAG:
 		if (EventMouseY+1==YLimit && (tempMenuItem=Act(SearchMenuItem,Menu)(Menu, EventMouseX)) && tempMenuItem!=CurrMenuItem)
@@ -727,8 +747,12 @@ static void WManagerH(msgport *MsgPort) {
 			    Gadget->Flags|=GADGET_PRESSED;
 			else
 			    Gadget->Flags&=~GADGET_PRESSED;
-			if (temp!=Gadget->Flags)
-			    DrawWindow(CurrWin, (gadget *)0, Gadget, MINDAT, MINDAT, MAXDAT, MAXDAT, FALSE);
+			if (temp!=Gadget->Flags) {
+			    if (CurrWin == All->FirstScreen->FirstWindow)
+				DrawWindow(CurrWin, (gadget *)0, Gadget, MINDAT, MINDAT, MAXDAT, MAXDAT, FALSE);
+			    else
+				DrawArea((screen *)0, (window *)0, CurrWin, (gadget *)0, Gadget, MINDAT, MINDAT, MAXDAT, MAXDAT, FALSE);
+			}
 		    }
 		}
 		else if (FlagsMove & GLMOVE_BY_MOUSE && CurrWin && CurrWin->Attrib & TAB_SELECT) {
@@ -736,13 +760,13 @@ static void WManagerH(msgport *MsgPort) {
 			NumLogicMax=Max2((uldat)1024, CurrWin->XLogic+(uldat)CurrWin->XWidth-(uldat)2);
 			if (i-DragPosition>Rgt-(ldat)4)
 			    i=Rgt+DragPosition-(ldat)4;
-			ScrollFirstWindow((i-Left-1-DragPosition-TabStart(CurrWin, (num)1))*(dat)(NumLogicMax/(CurrWin->XWidth-(udat)5)), 0, TRUE);
+			ScrollWindow(CurrWin, (i-Left-1-DragPosition-TabStart(CurrWin, (num)1))*(dat)(NumLogicMax/(CurrWin->XWidth-(udat)5)), 0);
 		    }
 		    else if (CurrWin->Attrib & Y_BAR_SELECT) {
 			NumLogicMax=Max2(CurrWin->MaxNumRow, CurrWin->YLogic+(uldat)CurrWin->YWidth-(uldat)2);
 			if (j-DragPosition>Dwn-(ldat)3)
 			    i=Dwn+DragPosition-(ldat)3;
-			ScrollFirstWindow(0, (j-Up-1-DragPosition-TabStart(CurrWin, (num)0))*(dat)(NumLogicMax/(CurrWin->YWidth-(udat)4)), TRUE);
+			ScrollWindow(CurrWin, 0, (j-Up-1-DragPosition-TabStart(CurrWin, (num)0))*(dat)(NumLogicMax/(CurrWin->YWidth-(udat)4)));
 		    }
 		}
 		else if (FlagsMove & GLMOVE_BY_MOUSE && FlagsMove & GLMOVE_1stSCREEN) {
@@ -754,13 +778,13 @@ static void WManagerH(msgport *MsgPort) {
 		    i=(dat)((ldat)EventMouseX-Left-DragPosition);
 		    j=(dat)((ldat)EventMouseY-Up);
 		    if (i || j)
-			DragFirstWindow(i, j);
+			DragWindow(CurrWin, i, j);
 		}
 		else if (FlagsMove & GLMOVE_BY_MOUSE && FlagsMove & GLMOVE_RESIZE_1stWIN) {
 		    i=(dat)((ldat)EventMouseX-Rgt);
 		    j=(dat)((ldat)EventMouseY-Dwn);
 		    if (i || j)
-			ResizeFirstWindow(i, j);
+			ResizeWindow(CurrWin, i, j);
 		}
 		break;
 
@@ -803,9 +827,9 @@ static void WManagerH(msgport *MsgPort) {
 							      (XDelta= (dat)0, YDelta=-Repeat);
 
 		if (temp == GLMOVE_RESIZE_1stWIN)
-		    ResizeFirstWindow(XDelta, YDelta);
+		    ResizeWindow(CurrWin, XDelta, YDelta);
 		else
-		    DragFirstWindow(XDelta, YDelta);
+		    DragWindow(CurrWin, XDelta, YDelta);
 		
 		break;
 	      case SCROLL_Xn_CHAR:
@@ -832,11 +856,13 @@ static void WManagerH(msgport *MsgPort) {
 		Funct==SCROLL_Yp_PAGE ? (XDelta= (dat)0, YDelta= Repeat*(CurrWin->YWidth-3)) :
 					(XDelta= (dat)0, YDelta=-Repeat*(CurrWin->YWidth-3));
 		
-		ScrollFirstWindow(XDelta, YDelta, TRUE);
+		ScrollWindow(CurrWin, XDelta, YDelta);
 		break;
+#if 0
 	      case STDEF_NEXT_WINDOW:
 		MakeLastWindow(CurrWin);
 		break;
+#endif
 	      case STDEF_CLOSE_WINDOW:
 		if (!(CurrWin->Attrib & WINDOW_CLOSE))
 		    break;
@@ -862,8 +888,6 @@ static void WManagerH(msgport *MsgPort) {
 	      case STDEF_NEXT_SCREEN:
 		if ((tempScreen=All->LastScreen)==Screen)
 		    break;
-		if (!Background && (!(tempWin=tempScreen->FirstWindow) || !(tempWin->Attrib & WINDOW_STAYONTOP)))
-		    break;
 		MoveFirst(Screen, All, tempScreen);
 		DrawArea((screen *)0, (window *)0, (window *)0, (gadget *)0, (gadget *)0, MINDAT, MINDAT, MAXDAT, MAXDAT, FALSE);
 		UpdateCursor();
@@ -873,7 +897,7 @@ static void WManagerH(msgport *MsgPort) {
 		DrawMenuBar(Screen, MINDAT, MAXDAT);
 		break;
 	      case STDEF_ACT_MENU:
-		if (!Menu->FirstMenuItem || !Background)
+		if (!Menu->FirstMenuItem)
 		    break;
 		if (!Menu->MenuItemSelect)
 		    CurrMenuItem=Menu->FirstMenuItem;
@@ -941,7 +965,7 @@ static void WManagerH(msgport *MsgPort) {
     if (!(All->FlagsMove & GLMOVE_ANY)) {
 	while ((Msg=MapQueue->FirstMsg)) {
 	    tempWin=Msg->Event.EventMap.Window;
-	    Act(RealMap,tempWin)(tempWin,Msg->Event.EventMap.Screen);
+	    SmartPlace(tempWin, Msg->Event.EventMap.Screen);
 	    Delete(Msg);
 	}
     }
@@ -957,9 +981,89 @@ static void WManagerH(msgport *MsgPort) {
 }
 
 byte InitWM(void) {
+    srand48(time(NULL));
     return (WM_MsgPort=Do(Create,MsgPort)
 	    (FnMsgPort, 2, "WM", (uldat)0, (udat)0, (byte)0, WManagerH))
 	&& ((MapQueue=Do(Create,MsgPort)
 	    (FnMsgPort, 8, "MapQueue", (uldat)0, (udat)0, (byte)0, (void (*)(msgport *))NoOp))
 	    ? (Remove(MapQueue), TRUE) : FALSE);
 }
+
+
+static dat SLeft;
+static udat SUp, XWidth, YWidth;
+
+#define MAXLRAND48 0x80000000l
+
+static byte doSmartPlace(window *Window, dat *X, udat *Y) {
+    dat WLeft, WRgt, TryX[2];
+    udat WUp, WDwn, TryY[2];
+    byte OK = FALSE;
+
+    if (XWidth > X[1] - X[0] + 1 || YWidth > Y[1] - Y[0] + 1)
+	return FALSE;
+    
+    if (!Window)
+	return TRUE;
+	
+    WRgt = (WLeft = Window->Left) + Window->XWidth - 1;
+    WDwn = (WUp = Window->Up) + Window->YWidth - 1;
+    Window = Window->Next;
+	
+    if (X[0] > WRgt || X[1] < WLeft || Y[0] > WDwn || Y[1] < WUp)
+	return TRUE;
+    
+    if (X[0] < WLeft) {
+	TryX[0] = X[0]; TryX[1] = WLeft - 1;
+	TryY[0] = Y[0]; TryY[1] = Y[1];
+	OK = doSmartPlace(Window, TryX, TryY);
+    }
+    if (!OK && X[1] > WRgt) {
+	TryX[0] = WRgt + 1; TryX[1] = X[1];
+	TryY[0] = Y[0];     TryY[1] = Y[1];
+	OK = doSmartPlace(Window, TryX, TryY);
+    }
+    if (!OK && Y[0] < WUp) {
+	TryX[0] = X[0]; TryX[1] = X[1];
+	TryY[0] = Y[0]; TryY[1] = WUp - 1;
+	OK = doSmartPlace(Window, TryX, TryY);
+    }
+    if (!OK && Y[1] > WDwn) {
+	TryX[0] = X[0];     TryX[1] = X[1];
+	TryY[0] = WDwn + 1; TryY[1] = Y[1];
+	OK = doSmartPlace(Window, TryX, TryY);
+    }
+    if (OK) {
+	X[0] = TryX[0]; X[1] = TryX[1];
+	Y[0] = TryY[0]; Y[1] = TryY[1];
+    }
+    return OK;
+}
+
+static void SmartPlace(window *Window, screen *Screen) {
+    dat X[2];
+    udat Y[2];
+    
+    X[1] = (SLeft = X[0] = Screen->Left) + Screen->ScreenWidth - 1;
+    Y[1] = (SUp = Y[0] = Screen->Up) + Screen->ScreenHeight - Screen->YLimit - 1;
+    
+    XWidth = Window->XWidth;
+    YWidth = Window->YWidth;
+    
+    if (!doSmartPlace(Screen->FirstWindow, X, Y)) {
+	/* can't be smart... be random */
+	if (XWidth <= X[1] - X[0])
+	    X[0] += lrand48() / (MAXLRAND48 / (X[1] - X[0] + 2 - XWidth));
+	if (YWidth <= Y[1] - Y[0])
+	    Y[0] += lrand48() / (MAXLRAND48 / (Y[1] - Y[0] + 2 - YWidth));
+    }
+    if (XWidth > X[1] - X[0] + 1 && X[0] > MINDAT)
+	X[0]--;
+    if (YWidth > Y[1] - Y[0] + 1 && Y[0] > 0)
+	Y[0]--;
+    
+    Window->Left = X[0];
+    Window->Up = Y[0];
+    Act(RealMap,Window)(Window,Screen);
+}
+

@@ -25,7 +25,8 @@ byte Minimum(byte MaxIndex, uldat *Elenco);
 
 void SetArgv_0(byte **argv, byte *src);
 
-byte AddToClipBoard(uldat Len, byte *Data);
+#define AddToClipBoard(Len, Data) SetClipBoard(CLIP_APPEND, Len, Data)
+byte SetClipBoard(uldat Magic, uldat Len, byte *Data);
 byte SetClipBoardFromWindow(window *Window);
 
 byte   SetTWDisplay(void);

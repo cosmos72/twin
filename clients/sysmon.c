@@ -66,8 +66,7 @@ byte InitSysMon(void) {
 	TwSetColorsWindow(SysMon_Win, 0x1FF,
 			  (hwcol)0x3E, (hwcol)0, (hwcol)0, (hwcol)0, (hwcol)0x9F,
 			  (hwcol)0x1E, (hwcol)0x3E, (hwcol)0x18, (hwcol)0x08);
-	TwConfigureWindow(SysMon_Win, 0x3F, (dat)12, (udat)1,
-			  (udat)26, (udat)7, (udat)26, (udat)7);
+	TwConfigureWindow(SysMon_Win, 0xF<<2, 0, 0, (udat)26, (udat)7, (udat)26, (udat)7);
 
 	TwInfo4Menu(SysMon_Menu, TW_ROW_ACTIVE, (uldat)16, " System Monitor ", "pppppppppppppppp");
 	TwWriteRowWindow(SysMon_Win, 26, "CPU \nDISK\nMEM \nSWAP\nUPTIME");
@@ -85,7 +84,7 @@ uldat HBar(hwcol Col, uldat len, uldat scale, uldat frac) {
     byte *s = buf;
     
     if (len) {
-	TwSetColorsWindow(SysMon_Win, 1<<5, 0,0,0,0,0, Col|half, 0,0,0);
+	TwSetColTextWindow(SysMon_Win, Col|half);
 	
 	len *= WIDTH;
 	len += frac;
@@ -105,8 +104,7 @@ uldat HBar(hwcol Col, uldat len, uldat scale, uldat frac) {
 }
 
 void Update(void) {
-    static int ProcStatFd = NOFD, ProcMeminfoFd = NOFD;
-    FILE *ProcUptimeFILE = NULL;
+    static int ProcStatFd = NOFD, ProcMeminfoFd = NOFD, ProcUptimeFd = NOFD;
     static uldat CpuUser[2], CpuNice[2], CpuSystem[2], CpuIdle[2], CpuTotal;
     static uldat DiskR[2], DiskW[2], DiskTotal;
     static uldat MemUsed, MemShared, MemBuff, MemCache, MemFree, MemTotal;
@@ -123,17 +121,16 @@ void Update(void) {
 	close(ProcMeminfoFd);
     ProcMeminfoFd = open("/proc/meminfo", O_RDONLY);
 
-    if (ProcUptimeFILE)
-	fclose(ProcUptimeFILE);
-    ProcUptimeFILE = fopen("/proc/uptime", "r");
+    if (ProcUptimeFd != NOFD)
+	close(ProcUptimeFd);
+    ProcUptimeFd = open("/proc/uptime", O_RDONLY);
 
     if (ProcStatFd != NOFD) {
 	s = buf;
 	len = 0;
 	while ((tmp = read(ProcStatFd, s, BIGBUFF - len)) > 0)
 	    len += tmp, s += tmp;
-	
-	s[len] = '\0';
+	buf[len] = '\0';
 	if ((s = strstr(buf, "cpu "))) {
 	    CpuUser[i] = strtol(s+4, &e, 0) - CpuUser[!i];
 	    CpuNice[i] = strtol(e, &s, 0) - CpuNice[!i];
@@ -170,7 +167,7 @@ void Update(void) {
 	len = 0;
 	while ((tmp = read(ProcMeminfoFd, s, BIGBUFF - len)) > 0)
 	    len += tmp, s += tmp;
-	s[len] = '\0';
+	buf[len] = '\0';
 	if ((s = strstr(buf, "MemTotal:")))
 	    MemTotal = strtol(s+9, &e, 0), s = e;
 	if ((s = strstr(buf, "MemFree:")))
@@ -227,30 +224,33 @@ void Update(void) {
 	(void)HBar(COL(BLUE,0),       SwapFree,  SwapTotal, tmp);
     }
 
-    TwSetColorsWindow(SysMon_Win, 1<<5, 0,0,0,0,0,COL(HIGH|YELLOW,BLUE),0,0,0);
+    TwSetColTextWindow(SysMon_Win, COL(HIGH|YELLOW,BLUE));
 
 /*
  * --- Uptime ---
  * Print to SysMon Window
  * added by Mohammad Bahathir Hashim <bakhtiar@softhome.net>
  */
-    if (ProcUptimeFILE) {
-	double up=0;
-	int updays, uphours, upminutes;
-	char upt[40];
+    if (ProcUptimeFd) {
+	unsigned long updays;
+	int uphours, upminutes;
 
-	fscanf(ProcUptimeFILE, "%lf", &up); /* read first value from /proc/uptime */
+	s = buf;
+	len = 0;
+	while ((tmp = read(ProcUptimeFd, s, BIGBUFF - len)) > 0)
+	    len += tmp, s += tmp;
+	buf[len] = '\0';
 
-	updays = (int)up;
+	updays = strtoul(buf, NULL, 0);
 	/*upseconds = updays % 60;*/
 	upminutes = (updays /= 60) % 60;
 	uphours = (updays /= 60) % 24;
 	updays /= 24;
 	
-	snprintf(upt, 40, "%d days %2d:%02d", updays, uphours, upminutes);
+	snprintf(buf, BIGBUFF, "%d days %2d:%02d", (int)updays, uphours, upminutes);
 
 	TwGotoXYWindow(SysMon_Win, 8, 4);
-	TwWriteRowWindow(SysMon_Win, strlen(upt), upt);
+	TwWriteRowWindow(SysMon_Win, strlen(buf), buf);
     }
 
     CpuUser[i] += CpuUser[!i];

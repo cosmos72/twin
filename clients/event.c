@@ -43,8 +43,7 @@ static byte InitEvent(void) {
 			  COL(HIGH|YELLOW,CYAN), COL(HIGH|GREEN,HIGH|BLUE), COL(WHITE,HIGH|BLUE),
 			  COL(HIGH|WHITE,HIGH|BLUE), COL(HIGH|WHITE,HIGH|BLUE),
 			  COL(WHITE,BLACK), COL(WHITE,HIGH|BLACK), COL(HIGH|BLACK,BLACK), COL(BLACK,HIGH|BLACK));
-	TwConfigureWindow(Event_Win, 0x3F, (dat)30, (udat)15,
-			  (udat)10, (udat)5, (udat)30, (udat)15);
+	TwConfigureWindow(Event_Win, 0xF<<2, 0, 0, (udat)10, (udat)5, (udat)30, (udat)15);
     } else
 	return FALSE;
     

@@ -178,8 +178,7 @@ static twindow newTermWindow(void) {
 	     COL(HIGH|WHITE,HIGH|BLUE), COL(HIGH|WHITE,HIGH|BLUE),
 	     COL(WHITE,BLACK), COL(WHITE,HIGH|BLACK), COL(HIGH|BLACK,BLACK), COL(BLACK,HIGH|BLACK));
 	
-	TwConfigureWindow(Window, 0x3F, (dat)0, (udat)6,
-			  (udat)7, (udat)3, MAXDAT, MAXDAT);
+	TwConfigureWindow(Window, 0xF<<2, 0, 0, (udat)7, (udat)3, MAXUDAT, MAXUDAT);
     }
     return Window;
 }

@@ -58,7 +58,8 @@ IS(KP_F1,	4, "\x1B[[A") /* as F1 */
 IS(KP_F2,	4, "\x1B[[B") /* as F2 */
 IS(KP_F3,	4, "\x1B[[C") /* as F3 */
 IS(KP_F4,	4, "\x1B[[D") /* as F4 */
-/* some of these are duplicates of KP_[0..9] */
+/* these are duplicates of KP_[0..9] */
+#if 0
 IS(KP_Home,	3, "\x1BOw")
 IS(KP_Left,	3, "\x1BOt")
 IS(KP_Up,	3, "\x1BOx")
@@ -69,6 +70,8 @@ IS(KP_Next,	3, "\x1BOs")
 IS(KP_End,	3, "\x1BOq")
 IS(KP_Begin,	3, "\x1BOw") /* as KP_Home */
 IS(KP_Insert,	3, "\x1BOp")
+#endif
+
 IS(KP_Delete,	3, "\x1BOn")
 IS(KP_Multiply,	3, "\x1BOR")
 IS(KP_Add,	3, "\x1BOl")

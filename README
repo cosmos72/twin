@@ -39,7 +39,7 @@
       lines longer that the window width and/or more lines than
       the window height, letting the user scroll them.
    d. Twin implements virtual screens. Each virtual screen has very big
-      sizes in both directions (something like 32K character cells),
+      sizes in both directions (something like 64K character cells),
       and you can scroll them by holding LEFT or MIDDLE mouse buttons
       and moving the mouse to one of the screen borders. Also, you can
       switch to the next virtual screen by clicking on the arrows
@@ -81,7 +81,7 @@
    and `HW support: X11' to `y' there are chances twin will work
    on non-Linux systems too (feedback welcome on this).
    
-   Beyond using X11 (or itself) for output, twin can write to screen in two ways:
+   Beyond using X11 or itself for output, twin can write to screen in two ways:
    a: writing to Linux special devices /dev/vcsa* which have the same layout
       as VGA textmode framebuffer. This allows for _any_ ASCII char
       to be displayed, from 0 to 255 but works only on linux console.
@@ -192,7 +192,7 @@
    
    In case you get errors during compilation and you really can't solve
    the problem by your own, you can e-mail me at <max@linuz.sns.it>
-   sending an _exact_ copy of what `make' printed, and I'll try to help you.
+   sending an _EXACT_ copy of what `make' printed, and I'll try to help you.
 
 4. Starting twin
 
@@ -210,9 +210,9 @@
    it is not necessary to `make install' in order to use modules.
    
    In any case, NEVER try to mix modules from a certain version
-   compiled with some configuration with a `twin' executable compiled
-   with another configuration or (worse) of a different version:
-   all kinds of strange things may happen.
+   with a `twin' executable of a different version:
+   all kinds of bad things may happen.
+   The most common effect is that `twin' dies with a SEGFAULT.
 
    If you want to install twin on your system,
    make sure that the DESTDIR set in `Rules' is correct,
@@ -222,10 +222,10 @@
    libTw.so* will go in $DESTDIR/lib.
    
    WARNING:
-   on some systems, after the installation it is necessary to run `ldconfig'
+   on most systems, after the installation it is necessary to run `ldconfig'
    as root before programs can find libTw.so* shared libraries.
    
-5. The Twin UI (User Interface): using it
+5. The Twin UI (User Interface): how to use
 
    Once twin is installed, you can start playing with it by typing `twin'.
    
@@ -244,7 +244,7 @@
    When twin comes up, you will have a blue screen (or window) with a
    white menu bar on the top saying "Hit PAUSE or Mouse Right Button for Menu"
    
-   To activate the menu (the default menu, actually) do what the writing says:
+   To activate the menu (this is the default menu) do what the writing says:
    either hit the `PAUSE' key or hold down the right mouse button and move
    the mouse on one of the words of the menu bar. A menu window will appear.
    Choose the line you want, then release the right button if you were holding
@@ -276,13 +276,18 @@
    and also lets you open the Window List.
    You can open the Window List also by middle-cliking on the desktop,
    in any area with no windows at all.
-   A nice side effect of opening the Window List is that its menu
-   is the default one, so you can get it back :)
+   A side effect of opening the Window List is that its menu
+   is the default one, so you can get it back. Anyway you can get back
+   the default menu also by left-clicking on the screen background, in an area
+   with no windows: this un-focuses all windows and, when no window is focused,
+   you _always_ get the default menu.
+   
    Clicking or hitting `Return' on a window name of the Window List will
    focus and Center the corresponding window.
    Other not-so-obvious things you can do from the Default menu are:
-   <ZOOM> to hide the Menu and maximize the current window to full-screen
-   (Un)Hide Menu to hide/show the Menu.
+   <ZOOM> to hide the Menu and maximize the current window to full-screen;
+   Raise/Lower to move the focused window to top/bottom of windows stack
+   while keeping it focused.
    
    Starting from twin 0.2.5, you can use the menus even without a mouse.
    Hit the `Pause' key (edit server/hotkey.h and recompile to change it)
@@ -294,7 +299,7 @@
    window with the same keys: arrows for 1-line scrolls and
    Insert,Delete,PageUp,PageDown for 1-page scrolls.
 
-   Now, the next argument: Freezing.
+   Now, the next argument: Focusing and Freezing.
    
    Even if it comes quite natural to most people to press the left mouse button
    on the lower-right corner of windows to resize them, a thing you probably
@@ -304,19 +309,29 @@
    the middle or right button. Also, while the window is `frozen', the virtual
    screen doesn't scroll. The same `freeze' technique can be used while
    dragging a window (to drag a window, press left button on window title).
-   Other more-or-less obvious things are:
+
+   Downside:
+   `Freezing' does not work if twin displays on X, you have a two-button mouse
+   and you configured the X server with Option "Emulate3Buttons".
+   That's a limit of your mouse / X server combination.
+
+   Other maybe not-so-obvious things are:
    the button on top-left of each window, drawn as "[]", is the CLOSE button;
-   the button on top-right, drawn as two up-down arrows, is the BACK button;
+   the button on top-right, drawn as two up-down arrows, is the TOP/BACK button:
+     click on it in the top window and it will become the last window;
+     click on it in a window behind other windows, at it will become
+     the top window;
    the scrollbars are quite intuitive: click on the arrows near the lower-right
    corner to scroll the window contents one line (or row) at time;
    drag the `tab' (the solid white bar) to quickly scroll the window;
    click on the space before or after the `tab' to scroll the window contents
    one page at time.
-   Downside:
-   `Freezing' does not work if twin displays on X, you have a two-button mouse
-   and you configured the X server with Option "Emulate3Buttons".
-   That's a limit of your mouse / X server combination.
-      
+   Unlike older versions (before 0.2.7), twin now splits the concepts
+   of top window and focused window: left-clicking on a window will focus it,
+   so that keypresses will go to that window, but you will need to click
+   on the window's TOP/BACK button to have it become the top window. Clicking
+   on the window's TOP/BACK button again will Lower and UnFocus the window.
+   
    Twin also implements cut-n-paste, in the same way as linux console, xterm,
    and other terminals: you select some text by moving the mouse with
    the left button pressed and paste by clicking with the middle button.
@@ -495,7 +510,7 @@
 
     copy fonts/vga.pcf.gz from the distribution to a misc fonts directory,
     I used /usr/X11R6/lib/X11/fonts/misc on my system.
-    Run `mkfontdir' as soot on the directory used.
+    Run `mkfontdir' as root on the directory used.
     Run `xset fp rehash'.
     Use the commands 'xlsfonts | grep vga' to see if the font has been
     registered correctly.

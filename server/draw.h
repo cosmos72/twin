@@ -11,7 +11,7 @@ void DrawDesktop(screen *Screen, dat Xstart, dat Ystart, dat Xend, dat Yend, byt
 void DrawMenuBar(screen *Screen, dat Xstart, dat Xend);
 
 void DrawArea(screen *FirstScreen, window *FirstWindow, window *OnlyThisWindow, gadget *FirstGadget, gadget *OnlyThisGadget, dat Xstart, dat Ystart, dat Xend, dat Yend, byte Shaded);
-#define FULLSCREEN (screen *)0, (window *)0, (window *)0, (gadget *)0, (gadget *)0, MINDAT, MINDAT, MAXDAT, MAXDAT, FALSE
+#define FULLSCREEN (screen *)0, (window *)0, (window *)0, (gadget *)0, (gadget *)0, (dat)0, (dat)0, MAXDAT, MAXDAT, FALSE
 void DrawScreen(screen *Screen);
 void DrawBorderWindow(window *Window, byte Flags);
 #define BORDER_LEFT	(0x1)

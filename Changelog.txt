@@ -1,3 +1,27 @@
+From 0.2.6 to 0.2.7: (Massimiliano Ghilardi, 17 Apr 2000)
+	* Added configurable screen background, and the external program
+	  `twsetroot' to customize it.
+	* Top window and Focused window are no longer the same thing:
+	  now you can focus a non-top window too.
+	* Also changed the effect of the BACK button on the window
+	  top-right corner: now it acts as Raise+Focus on non-top windows,
+	  and as Lower+UnFocus on top window.
+	* Left-clicking on a window no longer Raises it, only Focuses it:
+	  try dragging or resizing a non-top window ;)
+	* Left-clicking on the screen background UnFocuses all windows
+	  and pops up the Default Menu.
+	* Added Menu -> Window -> Raise/Lower
+        * Added WM Smart Window Placement.
+	  Coders note: Just don't specify where you want to Map the window,
+	  and the WM will (try to) choose a good place.
+	* Added X11 selection compatibility: you can now cut-n-paste
+	  from X11 to twin and vice-versa.
+	* Hopefully fixed non-english (russian, ...) translation table support
+	  when running on Linux console (i.e. mapscrn(8); feedback welcome).
+	  On other displays, it is just not supported yet :(
+	* Fixed a memory leak in twsysmon.
+	* Fixed a SEGFAULT when moving windows out-of-screen.
+	
 From 0.2.5 to 0.2.6: (Massimiliano Ghilardi, 04 Apr 2000)
 	* Fixed random SEGFAULT on Menu -> Window -> Send HotKey
 	* Fixed an insidious bug:

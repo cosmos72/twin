@@ -541,7 +541,7 @@ void VideoFlipMouse(void) {
 }
 
 void SignalWinch(int n) {
-    All->NeedResizeDisplay = TRUE;
+    All->NeedHW |= NEEDResizeDisplay;
 }
 
 void ResizeDisplay(void) {
@@ -564,7 +564,7 @@ void ResizeDisplay(void) {
         fScreen->ScreenWidth  = ScreenWidth;
 	fScreen = fScreen->Next;
     }
-    All->NeedResizeDisplay = FALSE;
+    All->NeedHW &= ~NEEDResizeDisplay;
     
     signal(SIGWINCH, SignalWinch);
 }
@@ -792,24 +792,25 @@ byte Strategy4Video(dat Xstart, dat Ystart, dat Xend, dat Yend) {
     if (StrategyFlag != HW_UNSET && StrategyFlag != HW_ACCEL)
 	return HW_BUFFER;
 
-    if (Xend   <= AccelVideo[0] && Yend   <= AccelVideo[1] &&
-	Xstart >= AccelVideo[2] && Ystart >= AccelVideo[3]) {
+    /* find the intersection between the current area and AccelVideo[] */
+    if (Xstart < AccelVideo[2] && Ystart < AccelVideo[3] &&
+	Xend >= AccelVideo[0] && Yend >= AccelVideo[1]) {
 	
 	x1 = Max2(Xstart, AccelVideo[0]);
 	y1 = Max2(Ystart, AccelVideo[1]);
 	x2 = Min2(Xend,   AccelVideo[2]);
 	y2 = Min2(Yend,   AccelVideo[3]);
 	
-	Varea = (x2-x1+1)*(y2-y1+1);
+	Varea = (uldat)(x2-x1+1)*(y2-y1+1);
     }
     if (Varea < XYarea_2)
 	Varea += Plain_countDirtyVideo(Xstart, Ystart, Xend, Yend);
     
     if (Varea < XYarea_2) {
-	AccelVideo[0] = Min2(AccelVideo[0], Xstart);
-	AccelVideo[1] = Min2(AccelVideo[1], Ystart);
-	AccelVideo[2] = Max2(AccelVideo[2], Xend);
-	AccelVideo[3] = Max2(AccelVideo[3], Yend);
+	AccelVideo[0] = Min2(Xstart, AccelVideo[0]);
+	AccelVideo[1] = Min2(Ystart, AccelVideo[1]);
+	AccelVideo[2] = Max2(Xend,   AccelVideo[2]);
+	AccelVideo[3] = Max2(Yend,   AccelVideo[3]);
 	return StrategyFlag = HW_ACCEL;
     }
     return StrategyFlag = HW_BUFFER;

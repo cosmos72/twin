@@ -992,7 +992,6 @@ static window *SearchWindow(screen *Screen, dat i, dat j, byte *Shaded) {
 static void SetColTextWindow(window *Window, hwcol ColText) {
     if (Window)
 	Window->ColText = ColText;
-    return;
 }
 
 static void SetColorsWindow(window *Window, udat Bitmap,
@@ -1076,7 +1075,7 @@ static void GotoXYWindow(window *Window, uldat X, uldat Y) {
 	}
 	Window->CurX = X;
 	Window->CurY = Y;
-	if (All->FirstScreen->FirstWindow == Window)
+	if (All->FirstScreen->FocusWindow == Window)
 	    UpdateCursor();
     }
 }
@@ -1118,14 +1117,11 @@ static void RealMapWindow(window *Window, screen *Screen) {
 	     */
 	    Window->MapQueueMsg = (msg *)0;
 	
-	OldWindow = Screen->FirstWindow;
-	
 	if (Window->Up == MAXUDAT)
-	    Window->Up = !!Screen->YLimit;
+	    Window->Up = !!Screen->YLimit + Screen->Up;
 	
 	InsertFirst(Window, Window, Screen);
 	Window->Screen = Screen;
-	DrawAreaWindow(Window, FALSE);
 	/*
 	 * warning: if Window is transient and All->TransientWindow
 	 * was already non-zero, we are in trouble as we can't handle
@@ -1134,14 +1130,16 @@ static void RealMapWindow(window *Window, screen *Screen) {
 	if (Window->Attrib & WINDOW_TRANSIENT)
 	    All->TransientWindow = Window;
 	
-	if (Window == Screen->FirstWindow && !(Window->Attrib & WINDOW_MENU))
-	    DrawMenuBar(Screen, MINDAT, MAXDAT);
 	if (Screen == All->FirstScreen) {
+	    OldWindow = Act(Focus,Window)(Window);
+	    if (OldWindow)
+		DrawBorderWindow(OldWindow, BORDER_ANY);
 	    UpdateCursor();
-	    Act(KbdFocus,Window)(Window);
 	}
-	if (OldWindow)
-	    DrawBorderWindow(OldWindow, BORDER_ANY);
+	DrawAreaWindow(Window, FALSE);
+	if (!(Window->Attrib & WINDOW_MENU))
+	    DrawMenuBar(Screen, MINDAT, MAXDAT);
+
 	if (All->TransientWindow)
 	    All->TransientWindow->TransientHook(All->TransientWindow);
     }
@@ -1150,53 +1148,50 @@ static void RealMapWindow(window *Window, screen *Screen) {
 static void UnMapWindow(window *Window) {
     screen *Screen;
     window *NextWindow;
-    byte First = FALSE;
+    byte wasFocus;
     
     if (!Window)
 	return;
     
     if ((Screen = Window->Screen)) {
-	if (!(Window->Attrib & WINDOW_MENU) && /*(All->FlagsMove & GLMOVE_1stMENU) && */
-	    (NextWindow = Screen->FirstWindow) && (NextWindow->Attrib & WINDOW_MENU) &&
-	    Window == NextWindow->Next && Window->Menu == NextWindow->Menu) {
+	if (Window == Screen->MenuWindow) {
 	    /*
 	     * ! DANGER ! 
 	     * Trying to UnMap() a window while its menu is being used.
 	     * UnMap() the menu window first!
 	     */
-	    Act(UnMap,Window)(NextWindow);
+	    Act(UnMap,Window)(Screen->FocusWindow);
 	}
 	    
-	if (Window == Screen->FirstWindow) {
-	    NextWindow = Window->Next;
-	    if (Screen == All->FirstScreen) {
-		First = TRUE;
-		/* in case the user was dragging this window... */
-		All->FlagsMove &= ~GLMOVE_1stWIN;
-		if (NextWindow)
-		    Act(KbdFocus,NextWindow)(NextWindow);
-	    }
-	} else
-	    NextWindow = (window *)0;
+	if ((wasFocus = Window == Screen->FocusWindow))
+	    NextWindow = Window == Screen->FirstWindow ? Window->Next : Screen->FirstWindow;
 	    
 	Remove(Window);
 	DrawAreaWindow(Window, FALSE);
 	Window->Screen = (screen *)0;
-	
+
 	if (Window->Attrib & WINDOW_TRANSIENT && All->TransientWindow == Window)
 	    All->TransientWindow = (window *)0;
-	
-	if (NextWindow)
-	    DrawBorderWindow(NextWindow, BORDER_ANY);
+
+	if (wasFocus) {
+	    if (Screen == All->FirstScreen) {
+		/* in case the user was dragging this window... */
+		All->FlagsMove &= ~GLMOVE_1stWIN;
+		if (NextWindow) {
+		    (void)Act(Focus,NextWindow)(NextWindow);
+		    DrawBorderWindow(NextWindow, BORDER_ANY);
+		} else
+		    Do(Focus,Window)((window *)0);
+		if (!(Window->Attrib & WINDOW_MENU))
+		    DrawMenuBar(Screen, MINDAT, MAXDAT);
+		UpdateCursor();
+	    } else
+		Screen->FocusWindow = NextWindow;
+	}
 	
 	if (All->TransientWindow)
 	    All->TransientWindow->TransientHook(All->TransientWindow);
 	
-	if (First) {
-	    if (!(Window->Attrib & WINDOW_MENU))
-		DrawMenuBar(Screen, MINDAT, MAXDAT);
-	    UpdateCursor();
-	}
     } else if (Window->MapQueueMsg) {
 	/* the window was still waiting to be mapped! */
 	Delete(Window->MapQueueMsg);
@@ -1242,6 +1237,14 @@ static window *SearchCoordScreen(dat x, dat y, uldat *ResX, uldat *ResY) {
 }
 */
 
+#if !defined(CONF_TERM)
+window *SimpleFocus(window *Window) {
+    window *oldWin = All->FirstScreen->FocusWindow;
+    All->FirstScreen->FocusWindow = Window;
+    return oldWin;
+}
+#endif
+
 #if !defined(CONF_TERM) && defined(CONF_MODULES)
 void FakeWriteAscii(window *Window, uldat Len, byte *Text) {
     if (DlLoad(TermSo) && Window->Fn->WriteAscii != FakeWriteAscii)
@@ -1276,11 +1279,11 @@ static fn_window _FnWindow = {
 	WriteAscii,
 	WriteHWAttr,
 #elif defined(CONF_MODULES)
-	(void (*)(window *))NoOp,
+	SimpleFocus,
 	FakeWriteAscii,
 	FakeWriteHWAttr,
 #else
-	(void (*)(window *))NoOp,
+	SimpleFocus,
 	(void (*)(window *, uldat, byte *))NoOp,
 	(void (*)(window *, uldat, hwattr *))NoOp,
 #endif
@@ -1416,17 +1419,18 @@ menuitem *Create4MenuCommonMenuItem(fn_menuitem *Fn_MenuItem, menu *Menu) {
     window *Window;
     
     if ((Window=Win4Menu(Menu)) &&
-	Row4Menu(Window, COD_COMMON_RESIZE, ROW_ACTIVE,  15," Move / Resize ") &&
-	Row4Menu(Window, COD_COMMON_SCROLL, ROW_ACTIVE,  15," Scroll        ") &&
-	Row4Menu(Window, COD_COMMON_CENTER, ROW_ACTIVE,  15," Center        ") &&
-	Row4Menu(Window, COD_COMMON_ZOOM,   ROW_ACTIVE,  15," Zoom          ") &&
-	Row4Menu(Window, COD_COMMON_MAXZOOM,ROW_ACTIVE,  15," \x11ZOOM\x10        ") &&
-	Row4Menu(Window, (udat)0,           ROW_IGNORE,  15,"컴컴컴컴컴컴컴�") &&
-	Row4Menu(Window, COD_COMMON_HOTKEY, ROW_ACTIVE,  15," Send HotKey   ") &&
-	Row4Menu(Window, COD_COMMON_NEXT,   ROW_ACTIVE,  15," Next          ") &&
-	Row4Menu(Window, COD_COMMON_WINLIST,ROW_ACTIVE,  15," List...       ") &&
-	Row4Menu(Window, (udat)0,           ROW_IGNORE,  15,"컴컴컴컴컴컴컴�") &&
-	Row4Menu(Window, COD_COMMON_CLOSE,  ROW_ACTIVE,  15," Close         ")) {
+	Row4Menu(Window, COD_COMMON_RESIZE,   ROW_ACTIVE, 15," Move / Resize ") &&
+	Row4Menu(Window, COD_COMMON_SCROLL,   ROW_ACTIVE, 15," Scroll        ") &&
+	Row4Menu(Window, COD_COMMON_CENTER,   ROW_ACTIVE, 15," Center        ") &&
+	Row4Menu(Window, COD_COMMON_ZOOM,     ROW_ACTIVE, 15," Zoom          ") &&
+	Row4Menu(Window, COD_COMMON_MAXZOOM,  ROW_ACTIVE, 15," \x11ZOOM\x10        ") &&
+	Row4Menu(Window, (udat)0,             ROW_IGNORE, 15,"컴컴컴컴컴컴컴�") &&
+	Row4Menu(Window, COD_COMMON_HOTKEY,   ROW_ACTIVE, 15," Send HotKey   ") &&
+	Row4Menu(Window, COD_COMMON_RAISELOWER,ROW_ACTIVE,15," Raise / Lower ") &&
+	Row4Menu(Window, COD_COMMON_NEXT,     ROW_ACTIVE, 15," Next          ") &&
+	Row4Menu(Window, COD_COMMON_WINLIST,  ROW_ACTIVE, 15," List...       ") &&
+	Row4Menu(Window, (udat)0,             ROW_IGNORE, 15,"컴컴컴컴컴컴컴�") &&
+	Row4Menu(Window, COD_COMMON_CLOSE,    ROW_ACTIVE, 15," Close         ")) {
 	
 	if ((Item = Fn_MenuItem->Create4Menu(Fn_MenuItem, Menu, Window, TRUE, 8, " Window ")))
 	    return Item;
@@ -1574,33 +1578,65 @@ static fn_menu _FnMenu = {
 
 /* screen */
 
-static screen *CreateScreen(fn_screen *Fn_Screen, byte Cell, hwcol Color) {
-    screen *Screen;
+static screen *CreateScreen(fn_screen *Fn_Screen, udat BgWidth, udat BgHeight, hwattr *Bg) {
+    screen *Screen = (screen *)0;
+    size_t size;
     
-    if ((Screen=(screen *)CreateObj((fn_obj *)Fn_Screen))) {
-	Screen->FirstWindow=Screen->LastWindow=(window *)0;
+    if ((size=(size_t)BgWidth * BgHeight * sizeof(hwattr)) &&
+	(Screen=(screen *)CreateObj((fn_obj *)Fn_Screen)) &&
+	(Screen->Bg = AllocMem(size))) {
+
+	Screen->FirstWindow=Screen->LastWindow=
+	    Screen->FocusWindow=Screen->MenuWindow=(window *)0;
 	Screen->ScreenWidth=Screen->ScreenHeight=Screen->YLimit=Screen->Up=1;
 	Screen->Attrib=Screen->Left=0;
-	Screen->Cell=Cell;
-	Screen->Color=Color;
+	Screen->BgWidth=BgWidth;
+	Screen->BgHeight=BgHeight;
+	CopyMem(Bg, Screen->Bg, size);
+    } else if (Screen) {
+	if (Screen->Bg)
+	    FreeMem(Screen->Bg);
+	DeleteObj((obj *)Screen);
+	Screen=(screen *)0;
     }
     return Screen;
 }
 
+static screen *CreateSimpleScreen(fn_screen *Fn_Screen, hwattr Bg) {
+    hwattr bg[1];
+    bg[0] = Bg;
+    return Fn_Screen->Create(Fn_Screen, 1, 1, bg);
+}
+
+static void BgImageScreen(screen *Screen, udat BgWidth, udat BgHeight, hwattr *Bg) {
+    size_t size;
+    
+    if (Screen && Bg && (size=(size_t)BgWidth * BgHeight * sizeof(hwattr)) &&
+	(Screen->Bg = ReAllocMem(Screen->Bg, size))) {
+
+	Screen->BgWidth=BgWidth;
+	Screen->BgHeight=BgHeight;
+	CopyMem(Bg, Screen->Bg, size);
+	DrawArea((screen *)0, (window *)0, (window *)0, (gadget *)0, (gadget *)0, 0, Screen->YLimit, Screen->ScreenWidth-1, Screen->ScreenHeight-1, FALSE);
+    }
+}
+
 static screen *CopyScreen(screen *From, screen *To) {
     all *_All;
-    window *First, *Last;
+    window *First, *Last, *Focus;
     
     if (!From || !To)
 	return (screen *)0;
     
     First = To->FirstWindow;
     Last = To->LastWindow;
+    Focus = To->FocusWindow;
     _All = To->All;
     
     if ((To = (screen *)CopyObj((obj *)From, (obj *)To))) {
 	To->FirstWindow = First;
 	To->LastWindow = Last;
+	To->FocusWindow = Focus;
 	if ((To->All = _All))
 	    DrawScreen(To);
     }
@@ -1632,9 +1668,8 @@ static void DeleteScreen(screen *Screen) {
 
 static menu *SearchMenu(screen *Screen) {
     if (Screen) {
-	if (Screen->FirstWindow) {
-	    return Screen->FirstWindow->Menu;
-	}
+	if (Screen->FocusWindow)
+	    return Screen->FocusWindow->Menu;
 	return All->BuiltinMenu;
     }
     return (menu *)0;
@@ -1664,7 +1699,9 @@ static fn_screen _FnScreen = {
 	DeleteScreen,
 	SearchWindow,
 	SearchMenu,
-	SearchScreen
+	SearchScreen,
+	CreateSimpleScreen,
+	BgImageScreen
 };
 
 /* msg */

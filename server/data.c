@@ -72,7 +72,7 @@ static all _All = {
     { ExecKey[0], ExecKey[1], ExecKey[2], ExecKey[3], ExecKey[4] },
     { ExecMouse[0], ExecMouse[1], ExecMouse[2], ExecMouse[3], ExecMouse[4] },
     
-	OV_LEFT<<LEFT | OV_MIDDLE<<MIDDLE | OV_RIGHT<<RIGHT, FALSE, FALSE, FALSE,
+	OV_LEFT<<LEFT | OV_MIDDLE<<MIDDLE | OV_RIGHT<<RIGHT, FALSE,
 	&MouseState,
 	-1, -1,
 	(byte)0, (udat)0,
@@ -441,13 +441,24 @@ byte InitData(void) {
     
     GadgetFlag.Fn = GadgetSwitch.Fn = FnGadget;
     
-    if ((OneScreen = Do(Create,Screen)(FnScreen, '±', COL(HIGH|BLACK,BLUE))) &&
-	(TwoScreen = Do(Create,Screen)(FnScreen, '²', COL(BLACK,HIGH|BLACK)))) {
+    if ((OneScreen = Do(CreateSimple,Screen)(FnScreen, HWATTR(COL(HIGH|BLACK,BLUE),'±')))) {
 	
-	InsertLast(Screen, OneScreen, All);
-	InsertLast(Screen, TwoScreen, All);
+#define a HWATTR(COL(HIGH|BLUE,BLUE),'Ü')
+#define b HWATTR(COL(HIGH|BLUE,BLUE),' ')
+#define c HWATTR(COL(HIGH|BLUE,BLUE),'ß')
+	hwattr attr[8] = {
+	    b,b,a,c,
+	    c,a,b,b,
+	};
+#undef a
+#undef b
+	if ((TwoScreen = Do(Create,Screen)(FnScreen, 4, 2, attr))) {
 	
-	return TRUE;
+	    InsertLast(Screen, OneScreen, All);
+	    InsertLast(Screen, TwoScreen, All);
+	    
+	    return TRUE;
+	}
     }
     return FALSE;
 }

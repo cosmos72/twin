@@ -31,7 +31,9 @@ LDFLAGS_term.so=-shared
 #
 # target
 #
-all: HW.dir $(BINS) modules twin
+all: $(BINS) modules twin
+
+twin_real: HW.dir
 
 twin: twin_wrapper
 	ln -sf $< $@

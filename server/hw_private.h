@@ -1,7 +1,4 @@
 
-#define toFlush (All->NeedFlushStdout)
-
-
 extern hwattr *OldVideo;
 
 extern byte ValidOldVideo;
