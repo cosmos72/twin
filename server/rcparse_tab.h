@@ -3,7 +3,6 @@ typedef union {
     ldat_list	*val_list;
     str          _string;
     byte         imm;
-    hwcol	 color;
     node	 _node;
 } YYSTYPE;
 #define	ADDSCREEN	257

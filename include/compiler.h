@@ -40,15 +40,13 @@
 
 /* inline is NOT a standard C feature :( */
 #if !defined(INLINE)
-# if defined(HAVE_INLINE) || defined(inline)
-#  if defined(__GNUC__)
-#   define INLINE static inline
-#  else
-#   define INLINE inline
-#  endif
-# else
-#  define INLINE static
+# if defined(HAVE_STATIC_INLINE)
+#  define INLINE static inline
+# elif defined(HAVE_INLINE) || defined(inline)
+#  define INLINE inline
 # endif
+#else
+# define INLINE static
 #endif
 
 #if !defined(VOLATILE)
@@ -56,7 +54,7 @@
 #endif
 
 #if !defined(FN_ATTR_CONST)
-# if defined(__GNUC__)
+# if defined(HAVE_ATTRIBUTE_CONST)
 #  define FN_ATTR_CONST __attribute__((const))
 # else
 #  define FN_ATTR_CONST
@@ -64,7 +62,7 @@
 #endif
 
 #if !defined(TYPE_ATTR_PACKED)
-# if defined(__GNUC__)
+# if defined(HAVE_ATTRIBUTE_PACKED)
 #  define TYPE_ATTR_PACKED __attribute__((packed))
 # else
 #  define TYPE_ATTR_PACKED

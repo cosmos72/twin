@@ -22,9 +22,6 @@
 
 #define TT_MIN2(a,b) ((a)<(b) ? (a) : (b))
 
-#define TT_DECL_MAGIC(id) TW_DECL_MAGIC(id)
-
-
 extern void *(*TTAllocMem)(size_t);
 extern void *(*TTReAllocMem)(void *, size_t);
 extern void  (*TTFreeMem)(void *);
@@ -35,6 +32,9 @@ void TTConfigMalloc(void *(*my_malloc)(size_t),
 		     void  (*my_free)(void *));
 
 
+
+#define TT_DECL_MAGIC(id) TW_DECL_MAGIC(id)
+
 ttbyte TTCheckMagic(TT_CONST ttbyte id[]);
 
 ttbyte TTInPanic(void);
@@ -44,6 +44,7 @@ ttbyte TTOpen(TT_CONST ttbyte *target, ...);
 ttbyte TTOpenV(ttuint nargs, TT_CONST ttbyte *ap0, va_list ap);
 ttbyte TTOpenA(ttuint nargs, TT_CONST ttbyte **args);
 void TTClose(void);
+void TTCloseQuickNDirty(void);
 
 int TTConnectionFd(void);
 ttbyte TTFlush(void);
@@ -59,18 +60,18 @@ void  TTDel(ttobj o);
 ttbyte TTInstanceOf(ttfn FN, ttobj o);
 ttfn TTClassOf(ttobj o);
 
+TT_CONST ttbyte *TTClassNameOf(ttobj o);
+TT_CONST ttbyte *TTGetName_ttfn(ttfn fn);
+ttfn TTGetSuper_ttfn(ttfn fn);
+
 #define TTNEW(type)		((type)TTNew(TT_CAT(TTFN_,type)))
 #define TTDEL(o)		TTDel((ttobj)(o))
 
 #define TTINSTANCEOF(type, o)	TTInstanceOf(TT_CAT(TTFN_,type), (ttobj)(o))
 #define TTCLASSOF(o)		TTClassOf((ttobj)(o))
 
-
-extern void *(*TTAllocMem)(size_t);
-extern void *(*TTReAllocMem)(void *, size_t);
-extern void  (*TTFreeMem)(void *);
-extern void *TTCloneMem(TT_CONST void *, size_t);
-extern ttbyte *TTCloneStr(TT_CONST ttbyte *);
+TT_FN_ATTR_CONST ttuint TTGetValueId(TT_CONST ttbyte *);
+TT_FN_ATTR_CONST TT_CONST ttbyte *TTGetValueName(ttuint);
 
 #define TTCopyMem(From, To, Size)	memcpy(To, From, Size)
 #define TTMoveMem(From, To, Size)	memmove(To, From, Size)

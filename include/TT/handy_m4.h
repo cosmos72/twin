@@ -4,14 +4,14 @@
 
 
 /*
- *  handym4.h  --  public header for handy libTT functions
+ *  handy_m4.h  --  public header for handy libTT functions
  *
  *  Copyright (C) 2002 by Massimiliano Ghilardi
  *
  */
 
-#ifndef _TT_HANDYM4_H
-#define _TT_HANDYM4_H
+#ifndef _TT_HANDY_M4_H
+#define _TT_HANDY_M4_H
 
 
 
@@ -124,7 +124,9 @@ ttvisible_repaint_fn	TTGetRepaint_ttvisible(ttvisible o);
 ttshort	TTGetX_ttwidget(ttwidget o);    
 ttshort	TTGetY_ttwidget(ttwidget o);    
 ttshort	TTGetW_ttwidget(ttwidget o);    
-ttshort	TTGetH_ttwidget(ttwidget o); 
+ttshort	TTGetH_ttwidget(ttwidget o);    
+ttint	TTGetXl_ttwidget(ttwidget o);    
+ttint	TTGetYl_ttwidget(ttwidget o); 
 
 /* handy ttlabel methods */
         
@@ -199,6 +201,7 @@ TT_CONST ttbyte *	TTGetName_tttheme(tttheme o);
 
 /* handy ttapplication methods */
         
+ttbyte *	TTGetName_ttapplication(ttapplication o);
 
 
 
@@ -206,4 +209,4 @@ TT_CONST ttbyte *	TTGetName_tttheme(tttheme o);
 
 
 
-#endif /* _TT_HANDYM4_H */
+#endif /* _TT_HANDY_M4_H */

@@ -44,8 +44,8 @@ tt_errno *TTErrnoLocation(void);
 #define TTErrno			(TTErrnoLocation()->E)
 #define TTErrnoDetail		(TTErrnoLocation()->S)
 
-TT_FN_ATTR_CONST TT_CONST byte *TTStrError(ttuint e);
-TT_FN_ATTR_CONST TT_CONST byte *TTStrErrorDetail(ttuint e, ttuint s);
+TT_CONST byte *TTStrError(ttuint e) TT_FN_ATTR_CONST;
+TT_CONST byte *TTStrErrorDetail(ttuint e, ttuint s) TT_FN_ATTR_CONST;
 
 #ifdef __cplusplus
  }

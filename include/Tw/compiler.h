@@ -26,12 +26,10 @@
 /* inline is NOT a standard C feature :( */
 #if defined(INLINE)
 # define TW_INLINE INLINE
+#elif defined(TW_HAVE_STATIC_INLINE)
+# define TW_INLINE static inline
 #elif defined(TW_HAVE_INLINE) || defined(inline)
-# if defined(__GNUC__)
-#  define TW_INLINE static inline
-# else
-#  define TW_INLINE inline
-# endif
+# define TW_INLINE inline
 #else
 # define TW_INLINE static
 #endif
@@ -44,7 +42,7 @@
 
 #if defined(FN_ATTR_CONST)
 # define TW_FN_ATTR_CONST FN_ATTR_CONST
-#elif defined(__GNUC__)
+#elif defined(TW_HAVE_ATTRIBUTE_CONST)
 # define TW_FN_ATTR_CONST __attribute__((const))
 #else
 # define TW_FN_ATTR_CONST
@@ -52,7 +50,7 @@
 
 #if defined(TYPE_ATTR_PACKED)
 # define TW_TYPE_ATTR_PACKED TYPE_ATTR_PACKED
-#elif defined(__GNUC__)
+#elif defined(TW_HAVE_ATTRIBUTE_PACKED)
 # define TW_TYPE_ATTR_PACKED __attribute__((packed))
 #else
 # define TW_TYPE_ATTR_PACKED

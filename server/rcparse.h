@@ -697,6 +697,10 @@ static node AddtoStringList(node l, str string) {
 
 static str TokenName(ldat id) {
     switch (id) {
+      case BLACK:	return "BLACK";
+      case BLUE:	return "BLUE";
+      case GREEN:	return "GREEN";
+
       case '+':		return "+";
       case '-':		return "-";
       case ADDSCREEN:	return "AddScreen";
@@ -793,16 +797,16 @@ static str ColorName(hwcol col) {
 static void DumpColorName(hwcol col) {
     hwcol fg = COLFG(col), bg = COLBG(col);
     
-    if (fg & HIGH) printf("%s ", ColorName(HIGH));
-    printf("%s %s ", ColorName(fg & ~HIGH), TokenName(FL_ON));
-    if (bg & HIGH) printf("%s ", ColorName(HIGH));
-    printf("%s ", ColorName(bg & ~HIGH));
+    if (fg & HIGH) fprintf(stderr, "%s ", ColorName(HIGH));
+    fprintf(stderr, "%s %s ", ColorName(fg & ~HIGH), TokenName(FL_ON));
+    if (bg & HIGH) fprintf(stderr, "%s ", ColorName(HIGH));
+    fprintf(stderr, "%s ", ColorName(bg & ~HIGH));
 }
 
 static void DumpNameList(node l, byte nl) {
     for (; l; l = l->next) {
 	if (l->name)
-	    printf("\"%s\"%c", l->name, nl ? '\n' : ' ');
+	    fprintf(stderr, "\"%s\"%c", l->name, nl ? '\n' : ' ');
     }
 }
 
@@ -811,17 +815,17 @@ static void DumpGenericNode(node n) {
 
     if (n) {
 	if (n->id)
-	    printf("%s ", TokenName(n->id));
+	    fprintf(stderr, "%s ", TokenName(n->id));
 	if (n->name)
-	    printf("\"%s\" ", n->name);
+	    fprintf(stderr, "\"%s\" ", n->name);
 	if ((f = n->x.f.plus_minus))
-	    printf("%s", TokenName(f));
+	    fprintf(stderr, "%s", TokenName(f));
 	if ((x = n->x.f.a) || f == '+' || f == '-')
-	    printf("%d ", x);
+	    fprintf(stderr, "%d ", x);
 	if ((f = n->x.f.flag))
-	    printf("%s", TokenName(f));
+	    fprintf(stderr, "%s", TokenName(f));
 	if ((x = n->x.f.b) || f == '+' || f == '-')
-	    printf("%d ", x);
+	    fprintf(stderr, "%d ", x);
 	if (n->body)
 	    DumpGenericNode(n->body);
     }
@@ -830,9 +834,9 @@ static void DumpGenericNode(node n) {
 static void DumpPlusList(node l) {
     for (; l; l = l->next) {
 	if (l->name)
-	    printf("\"%s\" ", l->name);
+	    fprintf(stderr, "\"%s\" ", l->name);
 	DumpGenericNode(l->body);
-	printf("\n");
+	fprintf(stderr, "\n");
     }
 }
 
@@ -840,9 +844,9 @@ static void DumpFuncNode(node n) {
     if (!n)
 	return;
     
-    printf("%s \"%s\" (\n", TokenName(ADDTOFUNC), n->name);
+    fprintf(stderr, "%s \"%s\" (\n", TokenName(ADDTOFUNC), n->name);
     DumpPlusList(n->body);
-    printf(")\n");
+    fprintf(stderr, ")\n");
 }
 
 
@@ -850,28 +854,28 @@ static void DumpMenuNode(node n) {
     if (!n)
 	return;
     
-    printf("%s \"%s\" (\n", TokenName(ADDTOMENU), n->name);
+    fprintf(stderr, "%s \"%s\" (\n", TokenName(ADDTOMENU), n->name);
     DumpPlusList(n->body);
-    printf(")\n");
+    fprintf(stderr, ")\n");
 }
 
 static void DumpScreenNode(node n) {
     if (!n)
 	return;
     
-    printf("%s \"%s\"\n%s \"%s\" ", TokenName(ADDSCREEN), n->name,
+    fprintf(stderr, "%s \"%s\"\n%s \"%s\" ", TokenName(ADDSCREEN), n->name,
 	   TokenName(BACKGROUND), n->name);
     DumpColorName(n->x.color);
-    printf("(\n");
+    fprintf(stderr, "(\n");
     DumpNameList(n->body, TRUE);
-    printf(")\n");
+    fprintf(stderr, ")\n");
 }
 
 static void DumpBorderNode(node n) {
     if (!n)
 	return;
     
-    printf("%s \"%s\" %s (\n"
+    fprintf(stderr, "%s \"%s\" %s (\n"
 	   "\"%.3s\"\n"
 	   "\"%.3s\"\n"
 	   "\"%.3s\"\n"
@@ -883,9 +887,9 @@ static void DumpBorderNode(node n) {
 static void DumpKeyNode(node n) {
     if (!n)
 	return;
-    printf("%s %s ", TokenName(KEY), n->name);
+    fprintf(stderr, "%s %s ", TokenName(KEY), n->name);
     DumpGenericNode(n->body);
-    printf("\n");
+    fprintf(stderr, "\n");
 }
 
 static void DumpMouseNode(node n) {
@@ -900,9 +904,9 @@ static void DumpMouseNode(node n) {
     if (n->id & HOLD_RIGHT)
 	*b++ = '3';
     
-    printf("%s %s %s ", TokenName(MOUSE), buttons, n->name);
+    fprintf(stderr, "%s %s %s ", TokenName(MOUSE), buttons, n->name);
     DumpGenericNode(n->body);
-    printf("\n");
+    fprintf(stderr, "\n");
 }
 
 static void DumpGlobals(void) {
@@ -928,7 +932,7 @@ static void DumpGlobals(void) {
 
     for (l = CallList; l; l = l->next) {
 	DumpGenericNode(l);
-	printf("\n");
+	fprintf(stderr, "\n");
     }
 }
 
@@ -1270,7 +1274,7 @@ static byte ReadGlobals(void) {
 
 static byte rcparse(str path);
 
-#ifdef CONF_THIS_MODULE
+#ifdef THIS_MODULE
 static
 #endif
 byte rcload(void) {
@@ -1355,9 +1359,7 @@ byte rcload(void) {
 }
 
 
-#ifdef CONF_THIS_MODULE
-
-MODULEVERSION;
+#ifdef THIS_MODULE
 
 byte InitModule(module Module) {
     Module->Private = (void *)rcload;
@@ -1366,5 +1368,5 @@ byte InitModule(module Module) {
 
 void QuitModule(module Module) {
 }
-#endif
+#endif /* THIS_MODULE */
 

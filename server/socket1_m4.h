@@ -122,6 +122,10 @@ case order_ResizeWidget:
     sockResizeWidget((widget)a[1].x, (dat)a[2]._, (dat)a[3]._);
     break;
 
+case order_ScrollWidget:
+    sockScrollWidget((widget)a[1].x, (ldat)a[2]._, (ldat)a[3]._);
+    break;
+
 case order_GetOwnerWidget:
     a[0].x = (obj)sockGetOwnerWidget((widget)a[1].x);
     break;

@@ -3,13 +3,13 @@
 
 
 
-dnl This file is `m4/defs.m4' : m4 macros to autogenerate defsm4.h
+dnl This file is `m4/defs.m4' : m4 macros to autogenerate defs_m4.h
 dnl Tell the user about this.
 /* This file was automatically generated from `m4/defs.m4', do not edit! */
 
 
 /*
- *  defsm4.h  --  public header for libTT types declarations
+ *  defs_m4.h  --  public header for libTT types declarations
  *
  *  Copyright (C) 2001 by Massimiliano Ghilardi
  *

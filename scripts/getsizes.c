@@ -228,9 +228,9 @@ int main(void) {
 	   "#endif /* _TW_DATASIZES_H */\n",
 	   names[i_tlargest], names[i_tany],
 	   
-	   sizeof(byte), sizeof(udat), sizeof(uldat),
-	   sizeof(time_t), sizeof(frac_t),
-	   sizes[i_tlargest], sizeof(size_t), sizeof(void *), sizes[i_tany],
+	   (int)sizeof(byte), (int)sizeof(udat), (int)sizeof(uldat),
+	   (int)sizeof(time_t), (int)sizeof(frac_t),
+	   sizes[i_tlargest], (int)sizeof(size_t), (int)sizeof(void *), sizes[i_tany],
 	   
 
 	   (ul)MAXSBYTE, (ul)MAXBYTE,

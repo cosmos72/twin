@@ -1,19 +1,19 @@
 
-dnl This file is `m4/handy.m4' : m4 macros to autogenerate handym4.h
+dnl This file is `m4/handy.m4' : m4 macros to autogenerate handy_m4.h
 dnl Tell the user about this.
 /* This file was automatically generated from `m4/handy.m4', do not edit! */
 
 
 
 /*
- *  handym4.h  --  public header for handy libTT functions
+ *  handy_m4.h  --  public header for handy libTT functions
  *
  *  Copyright (C) 2002 by Massimiliano Ghilardi
  *
  */
 
-#ifndef _TT_HANDYM4_H
-#define _TT_HANDYM4_H
+#ifndef _TT_HANDY_M4_H
+#define _TT_HANDY_M4_H
 
 include(`m4/TThandy.m4h')
 
@@ -54,4 +54,4 @@ define(`field')
 undefine(`el')
 
 
-#endif /* _TT_HANDYM4_H */
+#endif /* _TT_HANDY_M4_H */

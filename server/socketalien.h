@@ -572,7 +572,7 @@ static void alienDecode(uldat id) {
 static void AlienIO(int fd, uldat slot) {
     uldat len, Funct;
     byte *t, *tend;
-    size_t tot;
+    int tot = 0;
 #ifdef CONF_SOCKET_GZ
     uldat gzSlot;
 #endif

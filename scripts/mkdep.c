@@ -228,10 +228,6 @@ static void handle_include_local(const char * name, int len)
  */
 static void use_config(const char * name, int len)
 {
-    
-    if (len == 16 && !memcmp(name, "CONF_THIS_MODULE", len))
-	return;
-    
     if (is_defined_config(name, len))
 	return;
     
@@ -553,7 +549,7 @@ int main(int argc, char **argv)
 	    continue;
 	}
 	if (len > 2 && filename[len-2] == '.') {
-	    if (filename[len-1] == 'c' || filename[len-1] == 'C') {
+	    if (filename[len-1] == 'c' || filename[len-1] == 'C' || filename[len-1] == 'S') {
 		depname[len-1] = 'o';
 		g_filename = filename;
 	    }

@@ -11,6 +11,7 @@ prefix      = @prefix@
 exec_prefix = @exec_prefix@
 sysconfdir  = @sysconfdir@/twin
 bindir      = @bindir@
+sbindir     = @sbindir@
 includedir  = @includedir@
 libdir      = @libdir@
 datadir     = @datadir@
@@ -19,12 +20,27 @@ includedir  = @includedir@
 
 # set autoconfigured and os-specific stuff
 
-CC=@CC@
-INSTALL=@INSTALL@
+CC:=@CC@
+AR:=@AR@
+RANLIB:=@RANLIB@
+INSTALL-BIN=@INSTALL@
+
+OS:=@OS@
+
+ECHO_E:=@ECHO_E@
+ECHO_N:=@ECHO_N@
+ECHO_C:=@ECHO_C@
+BASH:=@BASH@
+
+GCC_I386_ASM=@GCC_I386_ASM@
+GNU_LD=@GNU_LD@
 
 CC_AC_FLAGS=@CFLAGS@ @CPPFLAGS@
 #CFLAGS+=@DEFS@
 LD_FLAGS+=@LDFLAGS@
+
+LD_FLAGS_SOLIB:=@LD_FLAGS_SOLIB@
+LD_FLAGS_SOLIB_NAME:=@LD_FLAGS_SOLIB_NAME@
 
 LD_LIBSOCKET=@LD_LIBSOCKET@ @LD_LIBNSL@
 
@@ -43,17 +59,6 @@ LD_LIBCRYPT=@LD_LIBCRYPT@
 
 CF_HEADERGTK=@CF_HEADERGTK@
 LD_LIBGTK=@LD_LIBGTK@
-
-SYS_ARCH_I386=@SYS_ARCH_I386@
-#
-# we currently can use assembler on i386 architecture with gcc
-#
-CC_ARCH_I386_ASM=n
-ifeq ($(filter gcc,$(CC)),gcc)
-  CC_ARCH_I386_ASM=y
-endif
-
--include $(TOPDIR)/makeosvalues
 
 # avoid being included twice: end
 endif

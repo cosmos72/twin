@@ -53,6 +53,7 @@ extern tdisplay Tw_DefaultD;
 #define TwUnMapWidget(W)		Tw_UnMapWidget(Tw_DefaultD, W)
 #define TwSetXYWidget(W, x, y)		Tw_SetXYWidget(Tw_DefaultD, W, x, y)
 #define TwResizeWidget(W, x, y)		Tw_ResizeWidget(Tw_DefaultD, W, x, y)
+#define TwScrollWidget(W, x, y)		Tw_ScrollWidget(Tw_DefaultD, W, x, y)
 #define TwGetOwnerWidget(W)		Tw_GetOwnerWidget(Tw_DefaultD, W)
 #define TwFindWidgetAtWidget(W, i, j)	Tw_FindWidgetAtWidget(Tw_DefaultD, W, i, j)
 #define TwExposeTextWidget(Window, XWidth, YWidth, Left, Up, Pitch, Text) \
@@ -94,6 +95,7 @@ Tw_CreateGadget(Tw_DefaultD, Parent, XWidth, YWidth, TextNormal, Attrib, Flags, 
 #define TwUnMapGadget			TwUnMapWidget
 #define TwSetXYGadget			TwSetXYWidget
 #define TwResizeGadget			TwResizeWidget
+#define TwScrollGadget			TwScrollWidget
 #define TwGetOwnerGadget		TwGetOwnerWidget
 #define TwExposeTextGadget		TwExposeTextWidget
 #define TwExposeHWFontGadget		TwExposeHWFontWidget
@@ -149,6 +151,7 @@ Tw_CreateGadget(Tw_DefaultD, Parent, XWidth, YWidth, TextNormal, Attrib, Flags, 
 #define TwUnMapWindow			TwUnMapWidget
 #define TwSetXYWindow			TwSetXYWidget
 #define TwResizeWindow			TwResizeWidget
+#define TwScrollWindow			TwScrollWidget
 #define TwGetOwnerWindow		TwGetOwnerWidget
 #define TwExposeTextWindow		TwExposeTextWidget
 #define TwExposeHWFontWindow		TwExposeHWFontWidget

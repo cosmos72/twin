@@ -6,6 +6,7 @@ DECL_COMMON
 /*
  * We need to write down only overloaded methods.
  */
+#define TT_GTK_EUNFINISHED 1
  
 
 
@@ -47,7 +48,7 @@ static void DEF(AddTo_ttwidget)(ttwidget o, ttvisible parent) {
 	    gtk_widget_show((GtkWidget *)o->native);
     }
 }
-static void DEF(SetVisible_ttwidget)(ttwidget o, byte on_off) {
+static void DEF(SetVisible_ttwidget)(ttwidget o, ttbyte on_off) {
     if (!on_off != !(o->vflags & ttvisible_vflags_visible)) {
 	o->vflags ^= ttvisible_vflags_visible;
 	if (o->parent) {
@@ -67,16 +68,16 @@ static void DEF(Remove_ttwidget)(ttwidget o) {
 }
 
 
-static byte HWDEF(Sync)(void) {
+static ttbyte HWDEF(Sync)(void) {
     return 1;
 }
-static byte HWDEF(Flush)(void) {
+static ttbyte HWDEF(Flush)(void) {
     return 1;
 }
-static byte HWDEF(TimidFlush)(void) {
+static ttbyte HWDEF(TimidFlush)(void) {
     return 1;
 }
-static byte HWDEF(MainLoop)(void) {
+static ttbyte HWDEF(MainLoop)(void) {
     gtk_main();
     return 1;
 }
@@ -91,23 +92,27 @@ static int HWDEF(ConnectionFd)(void) {
   return -1;
 }
 static ttuint HWDEF(GetErrno)(void) {
-  return 0;
+  return TT_GTK_EUNFINISHED;
 }
 static ttuint HWDEF(GetErrnoDetail)(void) {
   return 0;
 }
-static TT_CONST byte *HWDEF(StrError)(ttuint E) {
+static TT_CONST ttbyte *HWDEF(StrError)(ttuint E) {
+    switch (E) {
+      case TT_GTK_EUNFINISHED:
+	return "gtk support is not finished yet :(";
+    }
     return "";
 }
-static TT_CONST byte *HWDEF(StrErrorDetail)(ttuint E, ttuint S) {
+static TT_CONST ttbyte *HWDEF(StrErrorDetail)(ttuint E, ttuint S) {
     return "";
 }
 
 
-#ifdef CONF_THIS_MODULE
+#ifdef THIS_MODULE
 ttfns InitModule(tthw *HW)
 #else
-ttfns gtk_InitHW(tthw *HW)
+ttfns _TT_gtk_InitHW(tthw *HW)
 #endif
 {
     /*
@@ -116,6 +121,7 @@ ttfns gtk_InitHW(tthw *HW)
      */
     *HW = &gtk_TTFNs.HW;
     
-    CommonErrno = TT_EFAILED_TARGET; /* it's unfinished... */
+    FAIL(TT_GTK_EUNFINISHED, 0); /* it's unfinished... */
+    
     return (ttfns)0;
 }

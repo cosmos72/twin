@@ -55,58 +55,69 @@ Torture: fakeconf autogen
 
 #
 install:
-	$(INSTALL) -d $(DESTDIR)$(libdir)/twin
+	$(INSTALL-DIR) $(DESTDIR)$(libdir)/twin
 	$(INSTALL-TXT) system.twinrc $(DESTDIR)$(libdir)/twin
 	$(LN) system.twinrc $(DESTDIR)$(libdir)/twin/.twinrc
 	$(INSTALL) system.twenvrc.sh $(DESTDIR)$(libdir)/twin
 	$(LN) system.twenvrc.sh $(DESTDIR)$(libdir)/twin/.twenvrc.sh
 	@echo [1m ; \
 	 echo If this is the first time you installed twin $(TWIN_VERSION_STR) ; \
-	 echo you probably need to run \"ldconfig\" now. ; \
+	 echo you probably need to run some kind of administrative command ; \
+	 echo to let your system know about newly installed libraries ; \
+	 echo ; \
+	 echo if you do not know what to run, libtool can usually do it for you: ; \
+	 echo just execute: ; \
+	 echo $(TOPDIR)/libtool --finish $(libdir) ; \
 	 echo [0m ; \
 	 echo "As next step, you probably want to run '$(MAKE) clean'" ; \
 	 echo ; \
 	 echo "Installation should be completed. Type 'twstart' and enjoy."
 
 clean: fakeconf autogen
-	rm -f .*.flags .*.link .*.arlib gmon.out core log .dialog_*
+	rm -f .uni_types.conf .dialog_* ; \
 	if [ ! -s $(CONF) ]; then rm -f $(CONF); fi
 
 
 distclean: clean
-	rm -f $(CONF) $(LINKS) \
-	      config.status config.cache config.log \
-	      Makefile makeautoconf makeosvalues conf/conf.auto \
+	rm -f $(CONF) \
+	      config.status config.cache config.log libtool \
+	      Makefile makeautoconf conf/conf.auto \
 	      include/autoconf.h include/Tw/Twautoconf.h \
 	      scripts/Mkdep scripts/Bitmap scripts/Getsizes \
 	      include/Tw/datasizes.h include/Tw/uni_types.h \
-	      .hdepend `find . -type l` \
+	      .uni_types.flags .hdepend `find . -type l` \
 	      `find . -name .modules -o -name .depend` ; \
 	$(CP) Makefile.fake Makefile
 
 pure: distclean
-	rm -f Makefile configure include/autoconf.h.in server/rcparse_*.? \
-	`find . -name \*m4.h -o -name \*m4.c`
+	rm -f Makefile admin/lt* admin/config.* configure include/autoconf.h.in \
+	      server/rcparse_*.? `find . -name \*_m4.h -o -name \*_m4.c`
 
 
+# libtool and autoconf stuff
 
 
-# autoconf stuff
+ADMIN_LIBTOOLS:=admin/ltmain.sh admin/config.guess admin/config.sub
+
+$(ADMIN_LIBTOOLS):
+	libtoolize -c
 
 #
-# include/autoconf.h.in must already be present in order for
-# './configure' to correctly generate include/autoconf.h
+# libtool scripts must already exist in order for './configure'
+# to be generated correctly
+# and include/autoconf.h.in must already exist in order for './configure'
+# to correctly generate include/autoconf.h
 #
-configure: configure.in include/autoconf.h.in
-	rm -f $@ && autoconf
+configure: configure.in $(ADMIN_LIBTOOLS) include/autoconf.h.in
+	rm -f $@ && autoconf --localdir=admin
 
 include/autoconf.h.in: configure.in
 	rm -f $@ && autoheader
 
-config.status: configure
-	@echo Updating config.status
+config.status libtool: configure $(ADMIN_LIBTOOLS)
+	@echo Updating config.status libtool
 	./configure --cache-file=config.cache --no-create
-	
+
 Makefile: Makefile.in
 
 makeautoconf: makeautoconf.in

@@ -402,7 +402,7 @@ static void GGI_QuitHW(void) {
 	GGI_HW = NULL;
 }
 
-#ifdef CONF_THIS_MODULE
+#ifdef THIS_MODULE
 static
 #endif
 byte GGI_InitHW(void) {
@@ -562,11 +562,8 @@ byte GGI_InitHW(void) {
 
 
 
-#ifdef CONF_THIS_MODULE
+#ifdef THIS_MODULE
 
-#include "version.h"
-MODULEVERSION;
-		       
 byte InitModule(module Module) {
     Module->Private = GGI_InitHW;
     return TRUE;
@@ -576,7 +573,7 @@ byte InitModule(module Module) {
 void QuitModule(module Module) {
 }
 
-#endif /* CONF_THIS_MODULE */
+#endif /* THIS_MODULE */
 
 
 #if 0

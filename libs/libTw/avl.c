@@ -60,7 +60,9 @@ TW_INLINE void AVL_Insert(tavl node, tavl Parent, tavl old, tavl *root) {
     if (node) node->AVLParent = Parent;
 }
 
-#define AVLHeightOf(node) (node ? node->AVLHeight : 0)
+#ifndef AVLHeightOf
+# define AVLHeightOf(node) (node ? node->AVLHeight : 0)
+#endif
 
 void AVLRebalance(tavl P /*base*/, tavl_compare cmp, tavl *root) {
     tavl L, R, PP;

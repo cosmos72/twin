@@ -59,9 +59,7 @@
 #include "TTextern.h"
 #include "TTassert.h"
 
-
 #include "utils.h"
-
 #include "inlines.h"
 #include "seterrno.h"
 #include "theme.h"
@@ -73,6 +71,7 @@ static s_ttfns gtk_TTFNs;
 /*
  * We need to write down only overloaded methods.
  */
+#define TT_GTK_EUNFINISHED 1
  
 
 
@@ -114,7 +113,7 @@ static void gtk_AddTo_ttwidget(ttwidget o, ttvisible parent) {
 	    gtk_widget_show((GtkWidget *)o->native);
     }
 }
-static void gtk_SetVisible_ttwidget(ttwidget o, byte on_off) {
+static void gtk_SetVisible_ttwidget(ttwidget o, ttbyte on_off) {
     if (!on_off != !(o->vflags & ttvisible_vflags_visible)) {
 	o->vflags ^= ttvisible_vflags_visible;
 	if (o->parent) {
@@ -134,16 +133,16 @@ static void gtk_Remove_ttwidget(ttwidget o) {
 }
 
 
-static byte gtk_Sync(void) {
+static ttbyte gtk_Sync(void) {
     return 1;
 }
-static byte gtk_Flush(void) {
+static ttbyte gtk_Flush(void) {
     return 1;
 }
-static byte gtk_TimidFlush(void) {
+static ttbyte gtk_TimidFlush(void) {
     return 1;
 }
-static byte gtk_MainLoop(void) {
+static ttbyte gtk_MainLoop(void) {
     gtk_main();
     return 1;
 }
@@ -158,23 +157,27 @@ static int gtk_ConnectionFd(void) {
   return -1;
 }
 static ttuint gtk_GetErrno(void) {
-  return 0;
+  return TT_GTK_EUNFINISHED;
 }
 static ttuint gtk_GetErrnoDetail(void) {
   return 0;
 }
-static TT_CONST byte *gtk_StrError(ttuint E) {
+static TT_CONST ttbyte *gtk_StrError(ttuint E) {
+    switch (E) {
+      case TT_GTK_EUNFINISHED:
+	return "gtk support is not finished yet :(";
+    }
     return "";
 }
-static TT_CONST byte *gtk_StrErrorDetail(ttuint E, ttuint S) {
+static TT_CONST ttbyte *gtk_StrErrorDetail(ttuint E, ttuint S) {
     return "";
 }
 
 
-#ifdef CONF_THIS_MODULE
+#ifdef THIS_MODULE
 ttfns InitModule(tthw *HW)
 #else
-ttfns gtk_InitHW(tthw *HW)
+ttfns _TT_gtk_InitHW(tthw *HW)
 #endif
 {
     /*
@@ -183,7 +186,8 @@ ttfns gtk_InitHW(tthw *HW)
      */
     *HW = &gtk_TTFNs.HW;
     
-    CommonErrno = TT_EFAILED_TARGET; /* it's unfinished... */
+    FAIL(TT_GTK_EUNFINISHED, 0); /* it's unfinished... */
+    
     return (ttfns)0;
 }
 
@@ -196,7 +200,7 @@ ttfns gtk_InitHW(tthw *HW)
 /*
  * use default values for methods not implemented in hw_gtk_c
  *
- * dummy display target MUST IMPLEMENT ALL METHODS, even if as stubs.
+ * null display target MUST IMPLEMENT ALL METHODS, even if as stubs.
  */
 
 
@@ -396,7 +400,8 @@ static s_ttfns gtk_TTFNs = {
             
     TFN_ttvisible,
     (void *)NULL /* WARNING: undefined SetXYWH */,
-        
+    (void *)NULL /* WARNING: undefined SetXlYl */,
+                
   },
  
   {
@@ -423,7 +428,8 @@ static s_ttfns gtk_TTFNs = {
             
     TFN_ttvisible,
     (void *)NULL /* WARNING: undefined SetXYWH */,
-        
+    (void *)NULL /* WARNING: undefined SetXlYl */,
+                
     TFN_ttwidget,
     (void *)NULL /* WARNING: undefined SetText */,
     
@@ -453,7 +459,8 @@ static s_ttfns gtk_TTFNs = {
             
     TFN_ttvisible,
     (void *)NULL /* WARNING: undefined SetXYWH */,
-        
+    (void *)NULL /* WARNING: undefined SetXlYl */,
+                
     TFN_ttwidget,
     (void *)NULL /* WARNING: undefined SetText */,
     
@@ -483,7 +490,8 @@ static s_ttfns gtk_TTFNs = {
             
     TFN_ttvisible,
     (void *)NULL /* WARNING: undefined SetXYWH */,
-        
+    (void *)NULL /* WARNING: undefined SetXlYl */,
+                
     TFN_ttwidget,
     (void *)NULL /* WARNING: undefined SetText */,
     
@@ -516,7 +524,8 @@ static s_ttfns gtk_TTFNs = {
             
     TFN_ttvisible,
     (void *)NULL /* WARNING: undefined SetXYWH */,
-        
+    (void *)NULL /* WARNING: undefined SetXlYl */,
+                
     TFN_ttwidget,
     (void *)NULL /* WARNING: undefined SetText */,
     
@@ -551,7 +560,8 @@ static s_ttfns gtk_TTFNs = {
             
     TFN_ttvisible,
     (void *)NULL /* WARNING: undefined SetXYWH */,
-        
+    (void *)NULL /* WARNING: undefined SetXlYl */,
+                
     TFN_ttwidget,
     (void *)NULL /* WARNING: undefined SetText */,
     
@@ -588,7 +598,8 @@ static s_ttfns gtk_TTFNs = {
             
     TFN_ttvisible,
     (void *)NULL /* WARNING: undefined SetXYWH */,
-        
+    (void *)NULL /* WARNING: undefined SetXlYl */,
+                
     TFN_ttwidget,
     (void *)NULL /* WARNING: undefined SetText */,
     
@@ -639,7 +650,8 @@ static s_ttfns gtk_TTFNs = {
             
     TFN_ttvisible,
     (void *)NULL /* WARNING: undefined SetXYWH */,
-        
+    (void *)NULL /* WARNING: undefined SetXlYl */,
+                
     TFN_ttwidget,
 
   },
@@ -668,7 +680,8 @@ static s_ttfns gtk_TTFNs = {
             
     TFN_ttvisible,
     (void *)NULL /* WARNING: undefined SetXYWH */,
-        
+    (void *)NULL /* WARNING: undefined SetXlYl */,
+                
     TFN_ttwidget,
 
     TFN_ttwindow,
@@ -699,7 +712,8 @@ static s_ttfns gtk_TTFNs = {
             
     TFN_ttvisible,
     (void *)NULL /* WARNING: undefined SetXYWH */,
-        
+    (void *)NULL /* WARNING: undefined SetXlYl */,
+                
     TFN_ttwidget,
 
     TFN_ttwindow,
@@ -868,7 +882,8 @@ static s_ttfns gtk_TTFNs = {
             
     TFN_ttvisible,
     (void *)NULL /* WARNING: undefined SetXYWH */,
-        
+    (void *)NULL /* WARNING: undefined SetXlYl */,
+                
     TFN_ttwidget,
 
     TFN_ttwindow,
@@ -899,7 +914,8 @@ static s_ttfns gtk_TTFNs = {
             
     TFN_ttvisible,
     (void *)NULL /* WARNING: undefined SetXYWH */,
-        
+    (void *)NULL /* WARNING: undefined SetXlYl */,
+                
     TFN_ttwidget,
 
     TFN_ttwindow,
@@ -932,7 +948,8 @@ static s_ttfns gtk_TTFNs = {
             
     TFN_ttvisible,
     (void *)NULL /* WARNING: undefined SetXYWH */,
-        
+    (void *)NULL /* WARNING: undefined SetXlYl */,
+                
     TFN_ttwidget,
 
     TFN_ttwindow,

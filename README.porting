@@ -22,8 +22,8 @@ Compiling on FreeBSD:
 	Tips and caveats:
 	
 	You need to have GNU make (gmake) installed.
-	After running `./configure', use `gmake' and NOT plain `make'
-	to compile.
+	After running `MAKE=gmake ./configure', use `gmake'
+	and NOT plain `make' to compile.
 	Due to incompatible `dialog' utility, `gmake menuconfig' aborts;
 	if you need it, use `gmake config' instead.
 	Only X and twin driver are tested, tty (termcap/ncurses) driver
@@ -68,29 +68,29 @@ Compiling on SunOS:
 	
 	to clients/findtwin.c, and/or change the line saying
 	
-	LDFLAGS_twfindtwin+=$(LIBTW)
+	LDFLAGS_twfindtwin+=$(LD_LIBTW)
 
 	in clients/Makefile into
 	
-	LDFLAGS_twfindtwin+=$(LIBTW) -L/usr/ucblib -lucb
+	LDFLAGS_twfindtwin+=$(LD_LIBTW) -L/usr/ucblib -lucb
 	
 Compiling on ELKS:
 
 	UNFINISHED!
 	
-	ELKS support is currently under development, using Linux/i386 as host
-	for cross-platform compiling.
+	ELKS support is currently stopped at what looks like a dead end.
+	If you want to check the exact development point, keep reading.
 	
 	Requirements to build `twin' for ELKS is a Linux/i386 box with:
 	`elks' and `dev86' packages installed.
-		The `elksemu' emulator distributed with dev86 must be
-		installed too. It also needs to be registered to the
-		binfmt_misc module with:
+	The `elksemu' emulator distributed with dev86 must be
+	installed too. It also needs to be registered to the
+	binfmt_misc module with:
+	  
+	modprobe binfmt_misc
 	
-		modprobe binfmt_misc
-		
-		echo ':i86-elks:M::\x01\x03\x20\x00:\xff\xff\xff\x83:/lib/elksemu:' \
-			> /proc/sys/fs/binfmt_misc/register
+	echo ':i86-elks:M::\x01\x03\x20\x00:\xff\xff\xff\x83:/lib/elksemu:' \
+	     > /proc/sys/fs/binfmt_misc/register
 
 	As of elks-0.1.0-pre4, some includes seem to be missing. Supposing
 	you have elks sources installed in /usr/src/elks, and dev86 sources
@@ -107,6 +107,12 @@ Compiling on ELKS:
 	
 	CC='bcc -0 -O -ansi' make
 	
-	Anyway, compiling scripts/Getsizes and scripts/Mkdep still fails.
-	I.E, the porting is unfinished.
+	Anyway, compiling scripts/Getsizes and scripts/Mkdep still fails,
+	since 'bcc -ansi' just runs 'unprotoize' to have function prototypes
+	conform old-style K&R C, but does not remove other ANSI stuff from
+	sources, like automatic aggregate initialization (i.e. this:
+	void test(void) {
+	  int a[] = { 1, 2, 3 };
+	}
+	) so compile will fail.
 	

@@ -948,7 +948,7 @@ static hwfont X11_UTF_16_to_UTF_16(hwfont c) {
 #endif
 
     
-#ifdef CONF_THIS_MODULE
+#ifdef THIS_MODULE
 static
 #endif
 byte X11_InitHW(void) {
@@ -1190,11 +1190,8 @@ byte X11_InitHW(void) {
     return FALSE;
 }
 
-#ifdef CONF_THIS_MODULE
+#ifdef THIS_MODULE
 
-#include "version.h"
-MODULEVERSION;
-		       
 byte InitModule(module Module) {
     Module->Private = X11_InitHW;
     return TRUE;
@@ -1204,4 +1201,4 @@ byte InitModule(module Module) {
 void QuitModule(module Module) {
 }
 
-#endif /* CONF_THIS_MODULE */
+#endif /* THIS_MODULE */

@@ -3,7 +3,7 @@
 # General configuration options
 #---------------------------------------------------------------------------
 PROJECT_NAME           = libTw
-PROJECT_NUMBER         = 0.4.2
+PROJECT_NUMBER         = 0.4.3
 OUTPUT_DIRECTORY       = ../../docs/libTw/
 OUTPUT_LANGUAGE        = English
 EXTRACT_ALL            = YES
@@ -52,8 +52,8 @@ WARN_LOGFILE           =
 #---------------------------------------------------------------------------
 INPUT                  = .
 FILE_PATTERNS          = libTw.c \
-                         libTw1m4.h \
-                         libTw2m4.h
+                         libTw1_m4.h \
+                         libTw2_m4.h
 RECURSIVE              = YES
 EXCLUDE                = 
 EXCLUDE_PATTERNS       = 

@@ -358,6 +358,7 @@ static void sockRecursiveDeleteWidget(widget W);
 static msgport sockGetOwnerWidget(widget W);
 static void sockSetXYWidget(widget W, dat x, dat y);
 static void sockResizeWidget(widget W, dat XWidth, dat YWidth);
+#define sockScrollWidget ScrollWidget
 static void sockExposeWidget(widget W, dat XWidth, dat YWidth, dat Left, dat Up, CONST byte *Text, CONST hwfont *Font, CONST hwattr *Attr);
 
 static void sockFocusSubWidget(widget W);
@@ -455,7 +456,7 @@ static void SocketIO(int fd, uldat slot);
 enum sockid {
     order_DoesNotExist = -1,
 #define EL(name) CAT(order_,name),
-#include "socklistm4.h"
+#include "socklist_m4.h"
 #undef EL
     order_StatObj
 };
@@ -464,7 +465,7 @@ static void sockStat(any *a);
 
 static void sockMultiplex(uldat Id, any *a) {
     switch (Id) {
-#include "socket1m4.h"
+#include "socket1_m4.h"
       case order_StatObj:
 	sockStat(a);
 	break;
@@ -479,7 +480,7 @@ typedef struct {
 } sockfn;
 
 static sockfn sockF [] = {
-#include "socket2m4.h"
+#include "socket2_m4.h"
     { 0, 0, "StatObj", "0S0x"obj_magic_STR"_"TWS_udat_STR"V"TWS_udat_STR },
     { 0, 0, NULL, NULL }
 };
@@ -490,7 +491,7 @@ static uldat sockLengths(uldat id, uldat n, const any *a) {
 
     switch (id) {
 	
-#include "socket3m4.h"
+#include "socket3_m4.h"
 	
       case order_StatObj:
 	switch (n) {
@@ -541,15 +542,15 @@ static CONST obj *AllocId2ObjVec(byte *alloced, byte c, uldat n, byte *VV) {
     *alloced = FALSE;
     return aX;
 #else
-    CONST byte *s;
+    CONST byte *S;
     CONST obj *aX;
     obj *X;
     uldat i;
     
     if ((aX = X = (obj *)AllocMem(n * sizeof(obj)))) {
-	s = a->V;
+	S = (CONST byte *)VV;
 	while (n--) {
-	    Pop(s, uldat, i);
+	    Pop(S, uldat, i);
 	    *X++ = Id2Obj(c, i);
 	}
 	*alloced = TRUE;
@@ -2298,7 +2299,7 @@ static void sockKillSlot(uldat slot) {
 static void SocketIO(int fd, uldat slot) {
     uldat len, Funct;
     byte *t, *tend;
-    size_t tot;
+    int tot = 0;
 #ifdef CONF_SOCKET_GZ
     uldat gzSlot;
 #endif
@@ -2410,9 +2411,7 @@ static void SocketH(msgport MsgPort) {
 }
 
 
-#ifdef CONF_THIS_MODULE
-
-MODULEVERSION;
+#ifdef THIS_MODULE
 
 static void (*save_unixSocketIO)(int fd, uldat slot);
 
@@ -2465,7 +2464,7 @@ byte InitSocket(void)
 	CopyMem(&m, TwinMagicData+TwinMagicData[0]-sizeof(uldat), sizeof(uldat));
 
 	if (unixSlot != NOSLOT) {
-#ifdef CONF_THIS_MODULE
+#ifdef THIS_MODULE
 	    save_unixSocketIO = FdList[unixSlot].HandlerIO.S;
 #endif
 	    FdList[unixSlot].HandlerIO.S = unixSocketIO;
@@ -2477,7 +2476,7 @@ byte InitSocket(void)
     return FALSE;
 }
 
-#ifdef CONF_THIS_MODULE
+#ifdef THIS_MODULE
 void QuitModule(module Module) {
     if (unixSlot != NOSLOT)
 	FdList[unixSlot].HandlerIO.S = save_unixSocketIO;

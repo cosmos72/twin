@@ -13,14 +13,15 @@
 
 #include <Tutf/Tutf.h>
 
+#include <TT/osincludes.h>
 #include <TT/compiler.h>
 #include <TT/version.h>
 
 /* include our internal copy of headers instead of the public ones */
 #include "flags.h"
-#include "treem4.h"
+#include "tree_m4.h"
 #include "datatypes.h"
-#include "defsm4.h"
+#include "defs_m4.h"
 
 #endif /* _TT_TYPES_H */
 

@@ -407,7 +407,7 @@ static void fix4display(void) {
     }
 }
 
-#ifdef CONF_THIS_MODULE
+#ifdef THIS_MODULE
 static
 #endif
 byte display_InitHW(void) {
@@ -547,11 +547,8 @@ byte display_InitHW(void) {
     return TRUE;
 }
 
-#ifdef CONF_THIS_MODULE
+#ifdef THIS_MODULE
 
-#include "version.h"
-MODULEVERSION;
-		       
 byte InitModule(module Module) {
     Module->Private = display_InitHW;
     return TRUE;
@@ -561,4 +558,4 @@ byte InitModule(module Module) {
 void QuitModule(module Module) {
 }
 
-#endif /* CONF_THIS_MODULE */
+#endif /* THIS_MODULE */

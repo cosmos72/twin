@@ -917,11 +917,13 @@ static void reset_tty(byte do_clear) {
     
     G = saveG = 0;
     /*
-     * this probably violates some standard, 
-     * but starting with the identity mapping
-     * seems the only reasonable choice to me
+     * default to latin1 charset if CONF__UNICODE is enabled
      */
+#ifdef CONF__UNICODE
+    setCharset(G0 = saveG0 = LAT1_MAP);
+#else
     setCharset(G0 = saveG0 = IBMPC_MAP);
+#endif
     G1 = saveG1 = GRAF_MAP;
 
     utf = utf_count = utf_char = 0;

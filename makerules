@@ -5,9 +5,12 @@
 #
 # do NOT touch this
 #
-ifneq ($(wildcard $(TOPDIR)/makeautoconf),)
-  include $(TOPDIR)/makeautoconf
-endif
+-include $(TOPDIR)/makeautoconf
+
+#
+# this version of twin
+#
+TWIN_VERSION_STR=0.4.3
 
 
 #
@@ -33,11 +36,11 @@ else
  else
    ifeq ($(CC),gcc)
      CFLAGS+=-O2 -fomit-frame-pointer
+     LDFLAGS+=-s
    else
      # detected by `./configure' :
      CFLAGS+=$(CC_AC_FLAGS)
    endif
-   LDFLAGS+=-s
  endif
 endif
 
@@ -56,33 +59,35 @@ ifeq ($(CC),gcc)
 endif
 
 # try to get some extensions if available (recursive pthread mutexes, grantpt(), ...)
-CFLAGS+=-D_GNU_SOURCE -D_XOPEN_SOURCE
-
-#
-# save user-specified or above default values in the right place
-#
-CC_FLAGS+=$(CFLAGS) $(EXTRA_CFLAGS)
-LD_FLAGS+=$(LDFLAGS) $(EXTRA_LDFLAGS)
+CFLAGS+=-D_GNU_SOURCE
 
 #
 # set 'install' program
 # keep commented to let `./configure' autodetect it
 #
-# INSTALL=install
+#INSTALL-BIN=install
+
+#
+# create an install directory
+#
+INSTALL-DIR=$(INSTALL-BIN) -d
 
 #
 # install with 644 permission:
 #
-INSTALL-TXT=$(INSTALL) -m 644
+INSTALL-TXT=$(INSTALL-BIN) -m 644
 
 #
-# set `ar' archiver...
+# how to install a program or library: wrap with libtool
 #
-AR=ar
-
+INSTALL=$(TOPDIR)/libtool $(INSTALL-BIN) -s
 
 #
-# set `ranlib' archiver (not needed on Linux and other 'modern' OS)
+# set `ar' archiver... (autodetected)
+#
+#AR=ar
+#
+# set `ranlib' archiver (autodetected)
 #
 #RANLIB=ranlib
 
@@ -107,8 +112,8 @@ MKDIR=mkdir -p
 # choose a variation of `echo' that interprets \n as newline.
 # keep commented to enable autodetection.
 #
-#ECHO=echo
-#ECHO=echo -e
+#ECHO_E=echo
+#ECHO_E=echo -e
 
 #
 # where is bash on your system?
@@ -118,85 +123,75 @@ MKDIR=mkdir -p
 
 
 #
-# only if you know what you are doing:
-# options to used to link shared libraries.
-# keep commented to enable autodetection.
+# m4 preprocessor
 #
-# this is for Linux and *BSD
-#LD_FLAGS_SOLIB_NAME=-lc -shared -Wl,-soname,
-#LD_FLAGS_SOLIB=-lc -shared
-#
-# and this for SunOS
-#LD_FLAGS_SOLIB_NAME=-lc -shared -Wl,-h,
-#LD_FLAGS_SOLIB=-lc -shared
+M4=m4
 
 
 #
 # --------------- no user-serviceable parts below this line ----------------
 #
 
-#
-# m4 preprocessor
-#
-M4=m4
+# compile normal (static) objects (i.e. ones used in $(BINS) $(ARLIBS) $(CLLIBS))
+CC_BIN:=$(CC)
 
-ifeq ($(wildcard $(TOPDIR)/makeosvalues),)
-  OS:=$(shell uname)
-  GNULD:=$(filter GNU,$(shell ld -V))
-  ifeq ($(ECHO),)
-    ifeq ($(strip $(shell echo -e "\n")),)
-      ECHO:=echo -e
-    else
-      ECHO:=echo
-    endif
-    ifeq ($(strip $(shell ( echo "test\c"; echo "test" ) | grep c)),)
-      ECHO_N:=
-      ECHO_C:=\c
-    else
-      ECHO_N:=-n
-      ECHO_C:=
-    endif
-  endif
-  ifeq ($(BASH),)
-    BASH:=$(shell if [ -x /bin/bash ]; then echo /bin/bash; \
-            else if bash -c : 2>/dev/null; then echo bash; \
-	    else if [ -x "$$BASH" ]; then echo $$BASH; \
-	    else echo sh; fi; fi; fi)
-  endif
-  ifeq ($(LD_FLAGS_SOLIB_NAME),)
-    ifeq ($(GNULD),GNU)
-      # this is correct for at least Linux and FreeBSD.
-      # for the others, it is just a guess
-      LD_FLAGS_SOLIB_NAME=-lc -shared -Wl,-soname,
-      LD_FLAGS_SOLIB=-lc -shared
-    else
-      # this is ok at least on SunOS with native linker
-      LD_FLAGS_SOLIB_NAME=-lc -shared -Wl,-h,
-      LD_FLAGS_SOLIB=-lc -shared
-    endif
+# link normal (static) binaries (may have to link against shared libraries)
+LD_BIN:=$(TOPDIR)/libtool --silent $(CC)
+
+# compile shared libraries or modules
+CC_SH:=$(TOPDIR)/libtool --silent $(CC)
+
+
+# install path for shared libraries or modules
+ifeq ($(libdir_SHLIBS_MODS),)
+  ifeq ($(libdir),)
+    libdir_SHLIBS_MODS:=$(shell pwd)
+  else
+    libdir_SHLIBS_MODS:=$(libdir)
   endif
 endif
 
-$(TOPDIR)/makeosvalues: $(TOPDIR)/makerules
-	@$(ECHO) "OS:=$(OS)" > $@ ; \
-	 $(ECHO) "GNULD:=$(GNULD)" >> $@ ; \
-	 $(ECHO) "ECHO:=$(ECHO)" >> $@ ; \
-	 $(ECHO) "ECHO_N:=$(ECHO_N)" >> $@ ; \
-	 $(ECHO) "ECHO_C:=$(ECHO_C)" >> $@ ; \
-	 $(ECHO) "BASH:=$(BASH)" >> $@ ; \
-	 $(ECHO) "LD_FLAGS_SOLIB_NAME:=$(LD_FLAGS_SOLIB_NAME)" >> $@ ; \
-	 $(ECHO) "LD_FLAGS_SOLIB:=$(LD_FLAGS_SOLIB)" >> $@
+ifeq ($(libdir_MODS),)
+  libdir_MODS=$(libdir_SHLIBS_MODS)
+endif
+ifeq ($(libdir_SHLIBS),)
+  libdir_SHLIBS=$(libdir_SHLIBS_MODS)
+endif
+
+# link shared modules
+LD_MOD:=$(TOPDIR)/libtool --silent $(CC) -module -rpath $(libdir_MODS)
+
+# link shared libraries
+LD_SH:=$(TOPDIR)/libtool --silent $(CC) -rpath $(libdir_SHLIBS)
+
+#
+# convert version from major,minor,patch
+# to current:revision:age
+# (on linux: major = current - age, minor = age, patch = revision,
+# and we use this scheme for all platforms; it's just a little math
+# from one scheme to the other)
+# 
+libtool-version-info=-version-info $(shell expr $(1) + $(2)):$(3):$(2)
+
+# compile from assembler
+CC_AS:=$(CC)
+
+#
+# save user-specified or above default values in the right place
+#
+CC_FLAGS+=$(CFLAGS) $(EXTRA_CFLAGS)
+LD_FLAGS+=$(LDFLAGS) $(EXTRA_LDFLAGS)
+
+
+LD_FLAGS_SHLIBS+=$(call libtool-version-info,$(MAJOR_VER),$(MINOR_VER),$(PATCH_VER))
+SHLIBS_VER=$(MAJOR_VER).$(MINOR_VER).$(PATCH_VER)
 
 ifeq ($(filter -r,$(MAKEFLAGS)),)
   MAKEFLAGS+=-r
 endif
 
-TWIN_VERSION_STR=0.4.2
 
 CC_FLAGS+=-I$(TOPDIR)/include
-
-MODFLAGS+=-fPIC -DCONF_THIS_MODULE
-
 
 CONF=$(TOPDIR)/conf/conf.current
 
@@ -204,10 +199,10 @@ CONF=$(TOPDIR)/conf/conf.current
 # once shared libraries are installed, it's ok to link just with
 # one of -lTutf, -lTw or -lTT
 #
-# but linking against $(TOPDIR)/libs/libTT/libTT.so fails
+# but linking against $(TOPDIR)/libs/libTT/.libs/libTT.so fails
 # if there is no libTw.so in the linker path (as it happens
-# while building twin for the first time), so we need to use
-# -Wl,-rpath-link <directory> for each dependency library.
+# if twin is not already installed), so we need to use
+# libtool magic to handle library dependencies.
 #
 # when using static libraries, we must always explicitly
 # link all of them... (linker knows no dependencies with them)
@@ -238,29 +233,28 @@ ifeq ($(CONF__SHLIBS),n)
     LD_LIBTT+=$(LD_LIBGTK)
   endif
 else
-  LD_LIBTUTF:=-L$(TOPDIR)/libs/libTutf -lTutf
-  LD_LIBTW:=-L$(TOPDIR)/libs/libTw -lTw
-  LD_LIBTT:=-L$(TOPDIR)/libs/libTT -lTT
-  
-  ifeq ($(GNULD),GNU)
-    # ok, ld is GNU ld
-    ifeq ($(CONF__UNICODE),y)
-      LD_LIBTT+=-Wl,-rpath-link,$(TOPDIR)/libs/libTutf
-    endif
-    ifeq ($(CONF_TT_HW_TWIN),y)
-      LD_LIBTT+=-Wl,-rpath-link,$(TOPDIR)/libs/libTw
-    endif
-  else
-    ifeq ($(CONF__UNICODE),y)
-      LD_LIBTT+=$(LD_LIBTUTF)
-    endif
-    ifeq ($(CONF_TT_HW_TWIN),y)
-      LD_LIBTT+=$(LD_LIBTW)
-    endif
-    ifeq ($(CONF_TT_HW_GTK),y)
-      LD_LIBTT+=$(LD_LIBGTK)
-    endif
-  endif
+  #
+  # this is for libtool 1.3.5, that does not allow
+  # a libtool library to depend on another libtool library
+  # (libTT is linked against, and needs, libTutf)
+  #
+  # LD_LIBTUTF:=-L$(TOPDIR)/libs/libTutf/.libs -lTutf
+  # LD_LIBTW:=-L$(TOPDIR)/libs/libTw/.libs -lTw
+  # LD_LIBTT:=-L$(TOPDIR)/libs/libTT/.libs -lTT
+  # # libTT depends on libTutf:
+  # ifeq ($(CONF__UNICODE),y)
+  #   ifeq ($(GNU_LD),yes)
+  #     LD_LIBTT+=-Wl,-rpath-link,$(TOPDIR)/libs/libTutf/.libs
+  #   else
+  #     LD_LIBTT+=$(LD_LIBTUTF)
+  #   endif
+  # endif
+  #
+  # this is for libtool >= 1.4.1, that has no such limitation
+  #
+  LD_LIBTUTF:=$(TOPDIR)/libs/libTutf/libTutf.la
+  LD_LIBTW:=$(TOPDIR)/libs/libTw/libTw.la
+  LD_LIBTT:=$(TOPDIR)/libs/libTT/libTT.la
 endif
 
 
@@ -291,60 +285,59 @@ nullconfig:
 
 
 # collect together in $(OBJS) all objs from $(BINS) looking in $(OBJS_xxx)
+_BIN_OBJS:=$(foreach B,$(BINS),$(OBJS_$(B)))
 
-OBJS:=$(foreach B,$(BINS),$(OBJS_$(B)))
+# same with $(_MOD_OBJS) from $(MODS)
+_MOD_OBJS:=$(foreach B,$(MODS),$(OBJS_$(B)))
 
-# same with $(MODOBJS) from $(MODBINS)
-MODOBJS:=$(foreach B,$(MODBINS),$(OBJS_$(B)))
+# same with $(_SHLIB_OBJS) from $(SHLIBS)
+_SHLIB_OBJS:=$(foreach B,$(SHLIBS),$(OBJS_$(B)))
 
-# same with $(ARLIBOBJS) from $(ARLIBS)
-ARLIBOBJS:=$(foreach B,$(ARLIBS),$(OBJS_$(B)))
+# same with $(_ARLIB_OBJS) from $(ARLIBS)
+_ARLIB_OBJS:=$(foreach B,$(ARLIBS),$(OBJS_$(B)))
 
-# same with $(COLLECTOBJS) from $(COLLECTS)
-COLLECTOBJS:=$(foreach B,$(COLLECTS),$(OBJS_$(B)))
+# same with $(_CLLIB_OBJS) from $(CLLIBS)
+_CLLIB_OBJS:=$(foreach B,$(CLLIBS),$(OBJS_$(B)))
 
 
-# set correct CC_FLAGS for objs compiled as modules
-ifneq ($(MODOBJS),)
-  _ALLFLAGS:=$(strip $(patsubst %,CC_FLAGS_%+=$(MODFLAGS)\n,$(MODOBJS)))
-endif
+_ALL_BINS:=$(sort $(BINS) $(MODS) $(SHLIBS) $(ARLIBS) $(CLLIBS))
 
-_ALLBINS:=$(strip $(BINS) $(MODBINS) $(ARLIBS) $(COLLECTS))
-
-_ALLOBJS:=$(strip $(OBJS) $(MODOBJS) $(ARLIBOBJS) $(COLLECTOBJS) $(EXCL_OBJS))
+_ALL_OBJS:=$(sort $(_BIN_OBJS) $(_MOD_OBJS) $(_SHLIB_OBJS) $(_ARLIB_OBJS) $(_CLLIB_OBJS) $(ALL_OBJS))
 
 #
 # try to autodetect whether a %.o object comes from
 # %.c, %.S or %.C source:
 # if a %.S or %.C file exists, take it, else assume %.c
 #
-#_ALLSRCS:=$(strip $(subst .o,.c,$(filter %.o,$(_ALLOBJS))))
+# we must take care since we have %.o and %.lo objects
+# and they all come from the same %.c, %.S or %.C source
 #
-__ALLOBJS:=$(filter %.o,$(_ALLOBJS))
-__ALLSRCS_ASM:=$(strip $(wildcard $(subst .o,.S,$(__ALLOBJS))))
-__ALLSRCS_CXX:=$(strip $(wildcard $(subst .o,.C,$(__ALLOBJS))))
+__ALLOBJS_RAW:=$(sort $(foreach E, o lo, $(patsubst %.$(E), %.o, $(filter %.$(E),$(_ALL_OBJS)))))
+__ALLSRCS_ASM:=$(strip $(wildcard $(subst .o,.S,$(__ALLOBJS_RAW))))
+__ALLSRCS_CXX:=$(strip $(wildcard $(subst .o,.C,$(__ALLOBJS_RAW))))
 __ALLOBJS_ASM:=$(subst .S,.o,$(__ALLSRCS_ASM))
 __ALLOBJS_CXX:=$(subst .S,.o,$(__ALLSRCS_CXX))
 
-_ALLSRCS:=$(subst .o,.c,$(filter-out $(__ALLOBJS_ASM) $(__ALLOBJS_CXX), $(__ALLOBJS))) \
-	  $(__ALLSRCS_ASM) $(__ALLSRCS_CXX)
+_ALL_SRCS:=$(subst .o,.c,$(filter-out $(__ALLOBJS_ASM) $(__ALLOBJS_CXX), $(__ALLOBJS_RAW))) \
+	   $(__ALLSRCS_ASM) $(__ALLSRCS_CXX)
 
-.SECONDARY: $(_ALLSRCS) $(_ALLOBJS) Makefile $(wildcard make*)
+.SECONDARY: $(_ALL_SRCS) $(_ALL_OBJS) Makefile $(wildcard make*)
 
 $(CONF): $(TOPDIR)/conf/conf.auto $(TOPDIR)/include/Tw/Twautoconf.h
 	cd $(TOPDIR) && ( \
 	 $(BASH) scripts/Configure.tty || \
-	 scripts/Configure.fallback \
+	 /bin/sh scripts/Configure.fallback \
 	) < /dev/null > /dev/null
 
 
-.modules: Makefile $(TOPDIR)/makerules $(TOPDIR)/makeosvalues $(CONF)
-	@$(ECHO) $(ECHO_N) "Building .modules... $(ECHO_C)" ; \
-	 $(ECHO) " $(_ALLFLAGS)" > $@ ; \
-	 $(ECHO) " $(foreach B,$(BINS) $(MODBINS),$(B): .$(B).link\n .$(B).link: $(OBJS_$(B))\n)" >> $@ ; \
-	 $(ECHO) " $(foreach B,$(ARLIBS),$(B): .$(B).arlib\n .$(B).arlib: $(OBJS_$(B))\n)" >> $@ ; \
-	 $(ECHO) " $(foreach B,$(COLLECTS),$(B): .$(B).collect\n .$(B).collect: $(OBJS_$(B))\n)" >> $@ ; \
-	 $(ECHO) done
+.modules: Makefile $(TOPDIR)/makerules $(TOPDIR)/makeautoconf $(CONF)
+	@echo $(ECHO_N) "Building .modules... $(ECHO_C)" ; \
+	 $(ECHO_E) " $(foreach B,$(BINS),$(B): .$(B).bin\n .$(B).bin: $(OBJS_$(B))\n)" >> $@ ; \
+	 $(ECHO_E) " $(foreach B,$(MODS),$(B): .$(B).mod\n .$(B).mod: $(OBJS_$(B))\n)" >> $@ ; \
+	 $(ECHO_E) " $(foreach B,$(SHLIBS),$(B): .$(B).shlib\n .$(B).shlib: $(OBJS_$(B))\n)" >> $@ ; \
+	 $(ECHO_E) " $(foreach B,$(ARLIBS),$(B): .$(B).arlib\n .$(B).arlib: $(OBJS_$(B))\n)" >> $@ ; \
+	 $(ECHO_E) " $(foreach B,$(CLLIBS),$(B): .$(B).cllib\n .$(B).cllib: $(OBJS_$(B))\n)" >> $@ ; \
+	 echo done
 
 
 #
@@ -354,7 +347,7 @@ $(CONF): $(TOPDIR)/conf/conf.auto $(TOPDIR)/include/Tw/Twautoconf.h
 # add them to .depend dependencies.
 # 
 #
-M4_INCS=$(strip $(sort $(patsubst $(1)m4/%.m4,$(1)%m4.h,$(wildcard $(1)m4/*.m4))))
+M4_INCS=$(strip $(sort $(patsubst $(1)m4/%.m4,$(1)%_m4.h,$(wildcard $(1)m4/*.m4))))
 
 H_INCS=$(strip $(sort $(filter-out $(call M4_INCS,$(1)),$(wildcard $(1)*.h))))
 
@@ -366,25 +359,172 @@ _M4_FILES:=$(call M4_INCS,)
 #
 # cheat a little with what gets printed...
 #
-.depend: $(TOPDIR)/scripts/Mkdep Makefile $(TOPDIR)/makerules $(_ALLSRCS) $(_H_FILES) $(_M4_FILES)
-	@$(ECHO) $(ECHO_N) "Building .depend... $(ECHO_C)" ; \
-	 $< $(filter -I%,$(CC_FLAGS)) $(sort $(_ALLSRCS)) \
+.depend: $(TOPDIR)/scripts/Mkdep Makefile $(TOPDIR)/makerules $(_ALL_SRCS) $(_H_FILES) $(_M4_FILES)
+	@echo $(ECHO_N) "Building .depend... $(ECHO_C)" ; \
+	 $< $(filter -I%,$(CC_FLAGS)) $(sort $(_ALL_SRCS)) \
 	   -C $(call M4_INCS,) \
 	   +T $(call H_INCS,) > $@ ; \
-   	 $(ECHO) done
+   	 echo done
 
 
 _H_DIRS:=$(TOPDIR)/include/ $(TOPDIR)/include/T*/
-_H_FILES:=$(call map,H_INCS,$(_H_DIRS))
-_M4_FILES:=$(call map,M4_INCS,$(_H_DIRS))
+_GL_H_FILES:=$(call map,H_INCS,$(_H_DIRS))
+_GL_M4_FILES:=$(call map,M4_INCS,$(_H_DIRS))
 
-$(TOPDIR)/.hdepend: $(TOPDIR)/scripts/Mkdep $(TOPDIR)/makerules $(_H_FILES) $(_M4_FILES)
-	@$(ECHO) $(ECHO_N) "Building $(TOPDIR)/.hdepend... $(ECHO_C)" ; \
+$(TOPDIR)/.hdepend: $(TOPDIR)/scripts/Mkdep $(TOPDIR)/makerules $(_GL_H_FILES) $(_GL_M4_FILES)
+	@echo $(ECHO_N) "Building $(TOPDIR)/.hdepend... $(ECHO_C)" ; \
 	 cd $(TOPDIR) && \
 	 scripts/Mkdep '-P$$(TOPDIR)/' -Iinclude \
-	   -C $(patsubst $(TOPDIR)/%,%,$(_M4_FILES)) \
-	   +T $(patsubst $(TOPDIR)/%,%,$(_H_FILES)) > .hdepend ; \
-   	 $(ECHO) done
+	   -C $(patsubst $(TOPDIR)/%,%,$(_GL_M4_FILES)) \
+	   +T $(patsubst $(TOPDIR)/%,%,$(_GL_H_FILES)) > .hdepend ; \
+   	 echo done
+
+
+
+%_m4.h: m4/%.m4 $(wildcard m4/m4_*.m4 $(TOPDIR)/include/m4/*.m4h)
+	$(M4) -I$(TOPDIR)/include $< > $@
+
+#
+# rules for the various kind of objects:
+#
+
+#
+# normal (unshared) objects (from $(BINS) $(ARLIBS) $(CLLIBS))
+#
+%.o: %.c
+	$(CC_BIN) $(sort $(CC_FLAGS) $(CC_FLAGS_$@)) -c $< -o $@
+	@$(ECHO_E) ' ifeq ($$(CC_BIN) $$(sort $$(CC_FLAGS) $$(CC_FLAGS_$@)),$(CC_BIN) $(sort $(CC_FLAGS) $(CC_FLAGS_$@)))\n'\
+	'  FILES_UP_TO_DATE += $@\n'\
+	'endif' > .$@.flags
+
+#
+# shared objects (from $(MODS) $(SHLIBS))
+# WARNING: we use CC_FLAGS_%.o, not CC_FLAGS_%.lo 
+#
+%.lo: %.c
+	$(CC_SH) $(sort $(CC_FLAGS) $(CC_FLAGS.lo) $(CC_FLAGS_$(patsubst %.lo,%.o, $@))) -c $< -o $@
+	@$(ECHO_E) ' ifeq ($$(CC_SH) $$(sort $$(CC_FLAGS) $$(CC_FLAGS.lo) $$(CC_FLAGS_$(patsubst %.lo,%.o, $@))),$(CC_SH) $(sort $(CC_FLAGS) $(CC_FLAGS.lo) $(CC_FLAGS_$(patsubst %.lo,%.o, $@))))\n'\
+	'  FILES_UP_TO_DATE += $@\n'\
+	'endif' > .$@.flags
+
+#
+# assembler objects (if they are PIC or not depends on their contents...
+# we add -DPIC while compiling %.lo as a hook to allow for #ifdef PIC conditionals in the source)
+#
+%.o: %.S
+	$(CC_AS) $(sort $(CC_FLAGS) $(CC_FLAGS_$@)) -c $< -o $@
+	@$(ECHO_E) ' ifeq ($$(CC_AS) $$(sort $$(CC_FLAGS) $$(CC_FLAGS_$@)),$(CC_AS) $(sort $(CC_FLAGS) $(CC_FLAGS_$@)))\n'\
+	'  FILES_UP_TO_DATE += $@\n'\
+	'endif' > .$@.flags
+
+%.lo: %.S
+	$(CC_AS) $(sort $(CC_FLAGS) $(CC_FLAGS_$@) -DPIC) -c $< -o $@
+	@$(ECHO_E) ' ifeq ($$(CC_AS) $$(sort $$(CC_FLAGS) $$(CC_FLAGS_$@) -DPIC),$(CC_AS) $(sort $(CC_FLAGS) $(CC_FLAGS_$@) -DPIC))\n'\
+	'  FILES_UP_TO_DATE += $@\n'\
+	'endif' > .$@.flags
+
+#
+# C++ objects (unused)
+# 
+%.o: %.C
+	$(CXX) $(sort $(CC_FLAGS) $(CXX_FLAGS) $(CC_FLAGS_$@) $(CXX_FLAGS_$@)) -c $< -o $@
+	@$(ECHO_E) ' ifeq ($(CXX) $$(sort $(CC_FLAGS) $(CXX_FLAGS) $(CC_FLAGS_$@) $(CXX_FLAGS_$@)),$(CXX) $(sort $(CC_FLAGS) $(CXX_FLAGS) $(CC_FLAGS_$@) $(CXX_FLAGS_$@)))\n'\
+	'  FILES_UP_TO_DATE += $@\n'\
+	'endif' > .$@.flags
+
+
+#
+# function to extract actual .o files from a .lst collection:
+#
+collect-lst=$(strip $(filter-out %.lst,$(1)) $(foreach L,$(filter %.lst,$(1)),$(call cat-lst,$(L))))
+cat-lst=$(foreach F,$(shell cat $(1)),$(patsubst %,$(dir $(1))%,$(F)))
+#cat-lst=$(shell echo $(1)> /dev/tty)
+
+#
+# this is the rule to link a binary. It should look like:
+# % : $(OBJS_%)
+#	$(CC) -o $* $(OBJS_$*) $(LD_FLAGS) $(LD_FLAGS_$*)
+#	...
+# but 1) nasty match-all rules like this are a real pain
+# and 2) $(OBJS_%) doesn't expand
+# so we put into .modules an explicited version of what follows:
+# % : .%.bin
+# .%.bin : $(OBJS_%)
+#
+# and we use patterns for the last step:
+#       
+.%.bin: $(TOPDIR)/makerules
+	$(LD_BIN) -o $* $(call collect-lst,$(OBJS_$*)) $(LD_FLAGS) $(LD_FLAGS_$*)
+	@$(LN) $* $@ ; \
+	 $(ECHO_E) ' ifeq ($$(strip $$(LD_BIN) $$(OBJS_$*) $$(LD_FLAGS) $$(LD_FLAGS_$*)),$(strip $(LD_BIN) $(OBJS_$*) $(LD_FLAGS) $(LD_FLAGS_$*)))\n'\
+	 '  FILES_UP_TO_DATE += $@\n'\
+	 'endif' > .$*.flags
+
+.%.mod: $(TOPDIR)/makerules
+	$(LD_MOD) -o $* $(call collect-lst,$(OBJS_$*)) $(LD_FLAGS) $(LD_FLAGS_SHLIBS) $(LD_FLAGS_$*)
+	@$(LN) $* $@ ; \
+	 $(ECHO_E) ' ifeq ($$(strip $$(LD_MOD) $$(OBJS_$*) $$(LD_FLAGS) $$(LD_FLAGS_SHLIBS) $$(LD_FLAGS_$*)),$(strip $(LD_MOD) $(OBJS_$*) $(LD_FLAGS) $(LD_FLAGS_SHLIBS) $(LD_FLAGS_$*)))\n'\
+	 '  FILES_UP_TO_DATE += $@\n'\
+	 'endif' > .$*.flags
+
+.%.shlib: $(TOPDIR)/makerules
+	$(LD_SH) -o $* $(call collect-lst,$(OBJS_$*)) $(LD_FLAGS) $(LD_FLAGS_SHLIBS) $(LD_FLAGS_$*)
+	@$(LN) $* $@ ; \
+	 $(ECHO_E) ' ifeq ($$(strip $$(LD_SH) $$(OBJS_$*) $$(LD_FLAGS) $$(LD_FLAGS_SHLIBS) $$(LD_FLAGS_$*)),$(strip $(LD_SH) $(OBJS_$*) $(LD_FLAGS) $(LD_FLAGS_SHLIBS) $(LD_FLAGS_$*)))\n'\
+	 '  FILES_UP_TO_DATE += $@\n'\
+	 'endif' > .$*.flags
+
+.%.arlib: $(TOPDIR)/makerules
+	rm -f $* && $(AR) cr $* $(call collect-lst,$(OBJS_$*)) && $(RANLIB) $*
+	@$(LN) $* $@ ; \
+	 $(ECHO_E) ' ifeq ($$(strip $$(OBJS_$*)),$(strip $(OBJS_$*)))\n'\
+	 '  FILES_UP_TO_DATE += $@\n'\
+	 'endif' > .$*.flags
+
+.%.cllib: $(TOPDIR)/makerules
+	echo $(call collect-lst,$(OBJS_$*)) > $*
+	@$(LN) $* $@ ; \
+	 $(ECHO_E) ' ifeq ($$(strip $$(OBJS_$*)),$(strip $(OBJS_$*)))\n'\
+	 '  FILES_UP_TO_DATE += $@\n'\
+	 'endif' > .$*.flags
+
+
+#
+# useful (used for dlopen()) links
+#
+%.so.$(SHLIBS_VER): %.la
+	@if [ -f .libs/$@ ]; then \
+	  echo $(LN) .libs/$@ $@ ; \
+	  $(LN) .libs/$@ $@ ; \
+	else \
+	  dst=`grep library_names $*.la | cut -d" " -f1 | cut -d"'" -f2` ; \
+	  echo $(LN) .libs/$$dst $@ ; \
+	  $(LN) .libs/$$dst $@ ; \
+	fi
+
+#
+# install and also add
+# useful (used for dlopen()) links
+#
+install-mod-%.la:
+	@if [ -f .libs/$*.so.$(SHLIBS_VER) ]; then \
+	  echo $(INSTALL-BIN) -s .libs/$*.so.$(SHLIBS_VER) $(DESTDIR)$(libdir)/$(INSTALLSUBDIR) ; \
+	  $(INSTALL-BIN) -s .libs/$*.so.$(SHLIBS_VER) $(DESTDIR)$(libdir)/$(INSTALLSUBDIR) ; \
+	else \
+	  echo $(INSTALL) $*.la $(DESTDIR)$(libdir)/$(INSTALLSUBDIR) ; \
+	  $(INSTALL) $*.la $(DESTDIR)$(libdir)/$(INSTALLSUBDIR) ; \
+	  \
+	  lto="`grep library_names $*.la | cut -d' ' -f1 | cut -d\' -f2`" ; \
+	  frm="$(DESTDIR)$(libdir)/$(INSTALLSUBDIR)/$*.so.$(SHLIBS_VER)" ; \
+	  \
+	  if [ -f "$(DESTDIR)$(libdir)/$(INSTALLSUBDIR)/$$lto" ]; then \
+	    echo $(LN) "$$lto" "$$frm"; \
+	    $(LN) "$$lto" "$$frm"; \
+	  fi ; \
+	fi
+
+# forbid GNU-make to `rm -f $(OBJS) $(SHLIBOBJS) $(ARLIBOBJS)' after build
+# .SECONDARY: $(OBJS) $(SHLIBOBJS) $(ARLIBOBJS)
 
 
 #
@@ -407,15 +547,15 @@ ifeq ($(CONF__UNICODE),)
   endif
 endif
 
-ifneq ($(wildcard $(TOPDIR)/.uni_types.flags),)
-  include $(TOPDIR)/.uni_types.flags
+ifneq ($(wildcard $(TOPDIR)/.uni_types.conf),)
+  include $(TOPDIR)/.uni_types.conf
 else
   PREVIOUS_CONF__UNICODE=x
 endif
 
 #
 # force re-making after building include/Tw/uni_types.h,
-# so that 'make' reads new .uni_types.flags
+# so that 'make' reads new .uni_types.conf
 #
 ifneq ($(CONF__UNICODE),$(PREVIOUS_CONF__UNICODE))
   $(TOPDIR)/include/Tw/uni_types.h: force-remake
@@ -428,18 +568,22 @@ endif
 #
 
 ifeq ($(CONF__UNICODE),n)
-  $(TOPDIR)/include/Tw/uni_types.h: $(TOPDIR)/scripts/Mkunitypes16
-	$< $(MAKE) > $@
-	@$(ECHO) "PREVIOUS_CONF__UNICODE=$(CONF__UNICODE)" > $(TOPDIR)/.uni_types.flags
+  $(TOPDIR)/include/Tw/uni_types.h: $(TOPDIR)/scripts/unitypes16
+	cat $< > $@
+	@echo "PREVIOUS_CONF__UNICODE=$(CONF__UNICODE)" > $(TOPDIR)/.uni_types.conf
 else
-  $(TOPDIR)/include/Tw/uni_types.h: $(TOPDIR)/scripts/Mkunitypes32
-	$< $(MAKE) > $@
-	@$(ECHO) "PREVIOUS_CONF__UNICODE=$(CONF__UNICODE)" > $(TOPDIR)/.uni_types.flags
+  $(TOPDIR)/include/Tw/uni_types.h: $(TOPDIR)/scripts/unitypes32
+	cat $< > $@
+	@echo "PREVIOUS_CONF__UNICODE=$(CONF__UNICODE)" > $(TOPDIR)/.uni_types.conf
 endif
 
 
-$(TOPDIR)/include/Tw/Twautoconf.h: $(TOPDIR)/include/autoconf.h $(TOPDIR)/makerules
-	@$(ECHO) $(ECHO_N) "Building $(TOPDIR)/include/Tw/Twautoconf.h... $(ECHO_C)" ; \
+#
+# do not have Tw/Twautoconf.h depend on makerules ...
+# (it actually should, but it's an overkill)
+# 
+$(TOPDIR)/include/Tw/Twautoconf.h: $(TOPDIR)/include/autoconf.h
+	@echo $(ECHO_N) "Building $(TOPDIR)/include/Tw/Twautoconf.h... $(ECHO_C)" ; \
 	 echo "#ifndef _TW_AUTOCONF_H" > $@ && \
 	 echo "#define _TW_AUTOCONF_H" >> $@ && \
 	 echo >> $@ && \
@@ -449,7 +593,7 @@ $(TOPDIR)/include/Tw/Twautoconf.h: $(TOPDIR)/include/autoconf.h $(TOPDIR)/makeru
 	  -e 's/TM_IN_SYS_TIME/TW_TM_IN_SYS_TIME/g' < $< >> $@ && \
 	 echo >> $@ && \
 	 echo "#endif /* _TW_AUTOCONF_H */" >> $@ ; \
-	$(ECHO) done
+	echo done
 
 
 
@@ -486,7 +630,7 @@ torture-%.c: %.c Makefile $(TOPDIR)/makerules $(TOPDIR)/scripts/Torture $(TOPDIR
 	@echo; echo "Torturing $< ..."; echo;
 	$(BASH) $(TOPDIR)/scripts/Torture $(TOPDIR)/scripts/Bitmap $(CC) $(CC_FLAGS) $(CC_FLAGS_$*.o) -c $< -o $*.o -- $<
 
-torture: $(_ALLSRCS) $(foreach S,$(_ALLSRCS),torture-$(S))
+torture: $(filter %.c, $(_ALL_SRCS) $(foreach S,$(_ALL_SRCS),torture-$(S)))
 	
 Torture: torture $(foreach D, $(SUBDIRS), Torture-dir-$(D))
 
@@ -521,82 +665,9 @@ clean: $(foreach D, $(SUBDIRS), clean-dir-$(D))
 clean-dir-%:
 	$(MAKE) clean -C $*
 
-%m4.h: m4/%.m4 $(wildcard m4/m4_*.m4 $(TOPDIR)/include/m4/*.m4h)
-	$(M4) -I$(TOPDIR)/include $< > $@
-
-%_u.c: %.c
-	$(LN) $(notdir $<) $@
-
-%.o: %.c
-	$(CC) $(sort $(CC_FLAGS) $(CC_FLAGS_$@)) -c $< -o $@
-	@$(ECHO) ' ifeq ($$(CC) $$(sort $$(CC_FLAGS) $$(CC_FLAGS_$@)),$(CC) $(sort $(CC_FLAGS) $(CC_FLAGS_$@)))\n'\
-	'  FILES_UP_TO_DATE += $@\n'\
-	'endif' > .$@.flags
-
-%.o: %.S
-	$(CC) $(sort $(CC_FLAGS) $(CC_FLAGS_$@)) -c $< -o $@
-	@$(ECHO) ' ifeq ($$(CC) $$(sort $$(CC_FLAGS) $$(CC_FLAGS_$@)),$(CC) $(sort $(CC_FLAGS) $(CC_FLAGS_$@)))\n'\
-	'  FILES_UP_TO_DATE += $@\n'\
-	'endif' > .$@.flags
-
-%.o: %.C
-	$(CXX) $(sort $(CC_FLAGS) $(CXX_FLAGS) $(CC_FLAGS_$@) $(CXX_FLAGS_$@)) -c $< -o $@
-	@$(ECHO) ' ifeq ($(CXX) $$(sort $(CC_FLAGS) $(CXX_FLAGS) $(CC_FLAGS_$@) $(CXX_FLAGS_$@)),$(CXX) $(sort $(CC_FLAGS) $(CXX_FLAGS) $(CC_FLAGS_$@) $(CXX_FLAGS_$@)))\n'\
-	'  FILES_UP_TO_DATE += $@\n'\
-	'endif' > .$@.flags
 
 
-#
-# function to extract actual .o files from a .lst collection:
-#
-collect-lst=$(strip $(filter-out %.lst,$(1)) $(foreach L,$(filter %.lst,$(1)),$(call cat-lst,$(L))))
-cat-lst=$(foreach F,$(shell cat $(1)),$(patsubst %,$(dir $(1))%,$(F)))
-#cat-lst=$(shell echo $(1)> /dev/tty)
 
-#
-# this is the rule to link a binary. It should look like:
-# % : $(OBJS_%)
-#	$(CC) -o $* $(OBJS_$*) $(LD_FLAGS) $(LD_FLAGS_$*)
-#	...
-# but 1) nasty match-all rules like this are a real pain
-# and 2) $(OBJS_%) doesn't expand
-# so we put into .modules an explicited version of what follows:
-# % : .%.link
-# .%.link : $(OBJS_%)
-#
-# and we use patterns for the last step:
-#       
-.%.link: $(TOPDIR)/makerules
-	$(CC) -o $* $(call collect-lst,$(OBJS_$*)) $(LD_FLAGS) $(LD_FLAGS_$*)
-	@$(LN) $* $@ ; \
-	$(ECHO) ' ifeq ($$(strip $$(CC) $$(OBJS_$*) $$(LD_FLAGS) $$(LD_FLAGS_$*)),$(strip $(CC) $(OBJS_$*) $(LD_FLAGS) $(LD_FLAGS_$*)))\n'\
-	'  FILES_UP_TO_DATE += $@\n'\
-	'endif' > $@.flags
-
-#
-# same with `ar' archives
-#
-ifeq ($(RANLIB),)
-  RANLIB=:
-endif
-
-.%.arlib: $(TOPDIR)/makerules
-	rm -f $* && $(AR) cr $* $(call collect-lst,$(OBJS_$*)) && $(RANLIB) $*
-	@$(LN) $* $@ ; \
-	 $(ECHO) ' ifeq ($$(strip $$(ARLIB) $$(OBJS_$*)),$(strip $(ARLIB) $(OBJS_$*)))\n'\
-	 '  FILES_UP_TO_DATE += $@\n'\
-	 'endif' > $@.flags
-
-.%.collect: $(TOPDIR)/makerules
-	$(ECHO) $(call collect-lst,$(OBJS_$*)) > $*
-	@$(LN) $* $@ ; \
-	 $(ECHO) ' ifeq ($$(strip $$(OBJS_$*)),$(strip $(OBJS_$*)))\n'\
-	 '  FILES_UP_TO_DATE += $@\n'\
-	 'endif' > $@.flags
-
-
-# forbid GNU-make to `rm -f $(OBJS) $(MODOBJS) $(ARLIBOBJS)' after build
-# .SECONDARY: $(OBJS) $(MODOBJS) $(ARLIBOBJS)
 
 
 #
@@ -604,10 +675,12 @@ endif
 # For safety, this works in the converse direction:
 # every file is forced, except those whose flags are positively up-to-date.
 #
-FILES := $(OBJS) $(MODOBJS) $(ARLIBOBJS) $(COLLECTOBJS) \
-	 $(patsubst %,.%.link,$(BINS) $(MODBINS)) \
+FILES := $(_BIN_OBJS) $(_MOD_OBJS) $(_SHLIB_OBJS) $(_ARLIB_OBJS) $(_CLLIB_OBJS) \
+	 $(patsubst %,.%.bin,$(BINS)) \
+	 $(patsubst %,.%.mod,$(MODS)) \
+	 $(patsubst %,.%.shlib,$(SHLIBS)) \
 	 $(patsubst %,.%.arlib,$(ARLIBS)) \
-	 $(patsubst %,.%.collect,$(COLLECTS)) \
+	 $(patsubst %,.%.cllib,$(CLLIBS)) \
 
 #
 # to avoid useless re-making, assume files in other dirs are already up-to-date:
@@ -629,12 +702,12 @@ FILES_CHANGED := $(strip $(filter-out $(FILES_UP_TO_DATE), $(FILES)))
 #
 # force remaking by using a phony target as prerequisite
 #
-dummy:
+phony-force-remake:
 	@:
 
 ifneq ($(FILES_CHANGED),)
 
-$(FILES_CHANGED): dummy
+$(FILES_CHANGED) $(patsubst %.o,%.lo,$(FILES_CHANGED)): phony-force-remake
 
 endif
 

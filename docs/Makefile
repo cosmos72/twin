@@ -10,11 +10,11 @@ SUBDIRS=
 
 ALLOBJS=
 BINS=
-MODBINS=
+SHLIBS=
 
-DOCS=Configure Tutorial libTw.txt twin.1
-TOPDOCS=README BUGS INSTALL README.porting COPYING twin-current.lsm \
-	COPYING.LIB Changelog.txt 
+DOCS=Configure Tutorial libTw.txt twin.1 ltrace.conf
+TOPDOCS:=$(patsubst %,$(TOPDIR)/%, README BUGS INSTALL README.porting \
+	COPYING twin-current.lsm COPYING.LIB Changelog.txt)
 
 #
 # target
@@ -43,14 +43,14 @@ include $(TOPDIR)/makerules
 
 alldocs: ltrace.conf
 
-ltrace.conf: m4/ltrace.conf.m4 $(wildcard m4/ltrace.conf.*.in)
+ltrace.conf: m4/ltrace.conf.m4 $(wildcard m4/ltrace.conf.*.in $(TOPDIR)/include/m4/TT*.m4h)
 	$(M4) -I$(TOPDIR)/include $< > $@
 
 clean:
 
 install:
-	$(INSTALL) -d $(DESTDIR)$(mandir)/man1
+	$(INSTALL-DIR) $(DESTDIR)$(mandir)/man1
 	$(INSTALL-TXT) twin.1 $(DESTDIR)$(mandir)/man1
-	$(INSTALL) -d $(DESTDIR)$(datadir)/twin/docs
+	$(INSTALL-DIR) $(DESTDIR)$(datadir)/twin/docs
 	$(INSTALL-TXT) $(DOCS) $(DESTDIR)$(datadir)/twin/docs
-	cd $(TOPDIR) && $(INSTALL-TXT) $(TOPDOCS) $(DESTDIR)$(datadir)/twin
+	$(INSTALL-TXT) $(TOPDOCS) $(DESTDIR)$(datadir)/twin

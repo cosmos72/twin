@@ -2,7 +2,7 @@
 
 
 
-dnl This file is `m4/socket1.m4' : m4 macros to autogenerate socket1m4.h
+dnl This file is `m4/socket1.m4' : m4 macros to autogenerate socket1_m4.h
 dnl Tell the user about this.
 /* This file was automatically generated from `m4/socket1.m4', do not edit! */
 

@@ -3,21 +3,8 @@
 #define _TT_CREATE_H
 
 
-/* ttobj */
-TT_INLINE void Ref_ttobj(ttobj o) {
-    if (o)
-	o->refcount++;
-}
-
-TT_INLINE void Unref_ttobj(ttobj o) {
-    if (o && !--o->refcount)
-	Del(o);
-}
-
-
-
 /* ttevent */
-TT_INLINE ttevent Create_ttevent(ttuint evtype, ttuint evcode, ttuint evflags) {
+static ttevent Create_ttevent(ttuint evtype, ttuint evcode, ttuint evflags) {
     ttevent o;
     if ((o = TNEW(ttevent))) {
 	o->evtype = evtype;
@@ -101,16 +88,23 @@ static ttcallback CreateA_ttcallback(ttcomponent c, ttevent ev, ttuint flags,
     return o;
 }
 
+/*
+ * va_list is not a scalar type on some archs (Alpha),
+ * so you cannot cast a scalar type to (va_list), as we would need
+ * in CallMethod to invoke CreateV_ttcallback().
+ * 
+ * For this reason, we use a (va_list *) here.
+ */
 static ttcallback CreateV_ttcallback(ttcomponent c, ttevent ev, ttuint flags,
 				    ttuint narg_component, ttuint narg_event, ttuint nargs,
-				    ttcallback_fn function, va_list vargs) {
+				    ttcallback_fn function, va_list *vargs) {
     ttany *args = (ttany *)0;
     ttcallback l = (ttcallback)0;
     ttuint i;
     
     if (!nargs || (args = TTAllocMem(nargs * sizeof(ttany)))) {
 	for (i = 0; i < nargs; i++)
-	    args[i] = va_arg(vargs, ttany);
+	    args[i] = va_arg((*vargs), ttany);
 
 	l = CreateA_ttcallback(c, ev, flags | ttcallback_lflags_args_swallow,
 			      narg_component, narg_event, nargs, function, args);
@@ -120,19 +114,23 @@ static ttcallback CreateV_ttcallback(ttcomponent c, ttevent ev, ttuint flags,
     return l;
 }
 
-tt_obj TTCreateL_ttcallback(tt_obj a1, tt_obj a2, ttuint a3, ttuint a4, ttuint a5, ttuint a6, ttcallback_fn a7, ...) {
-    ttcomponent o = ID2(ttcomponent,a1);
-    va_list a8;
+tt_obj TTCreateL_ttcallback(tt_obj c, tt_obj ev, ttuint flags,
+			    ttuint narg_component, ttuint narg_event, ttuint nargs,
+			    ttcallback_fn function, ...) {
+    ttcomponent o = ID2(ttcomponent,c);
+    va_list ap;
     if (o) {
-	va_start(a8, a7);
-	return (tt_obj)OBJ2ID(CreateV_ttcallback(o, ID2(ttevent,a2), a3, a4, a5, a6, a7, a8));
-	va_end(a8);
+	va_start(ap, function);
+	return (tt_obj)OBJ2ID(CreateV_ttcallback(o, ID2(ttevent,ev), flags,
+						 narg_component, narg_event, nargs,
+						 function, &ap));
+	va_end(ap);
     }
     return (tt_obj)(opaque)0;
 }
 
 
-TT_INLINE ttcallback Create_ttcallback(ttcomponent c, ttuint evtype, ttuint lflags, ttcallback_fn function, ttany arg) {
+static ttcallback Create_ttcallback(ttcomponent c, ttuint evtype, ttuint lflags, ttcallback_fn function, ttany arg) {
     return CreateA_ttcallback
 	(c, Create_ttevent(evtype, 0, 0), lflags,
 	 (lflags & ttcallback_lflags_arg0_component) ? 0 : (ttuint)-1,
@@ -141,22 +139,9 @@ TT_INLINE ttcallback Create_ttcallback(ttcomponent c, ttuint evtype, ttuint lfla
 }
 
 
-/* ttvisible */
-TT_INLINE void Add_ttvisible(ttvisible o, ttvisible child) {
-    if (o && child && TTAssert(IS(ttvisible,o)) && TTAssert(IS(ttvisible,child)))
-	child->FN->AddTo(child, o);
-}
-TT_INLINE void SetRepaint_ttvisible(ttvisible o, ttvisible_repaint_fn repaint) {
-    if (o && TTAssert(IS(ttvisible,o)) && o->repaint != repaint) {
-	o->repaint = repaint;
-	if (o->vflags & ttvisible_vflags_visible)
-	    Expose_ttvisible(o, ttvisible_repaint_args_WHOLE);
-    }
-}
-
 
 /* ttnative */
-TT_INLINE ttnative Create_ttnative(ttany id) {
+static ttnative Create_ttnative(ttany id) {
     ttnative o; ttobj a;
 
     if ((a = FindNative(id)))
@@ -170,19 +155,8 @@ TT_INLINE ttnative Create_ttnative(ttany id) {
 }
 
 
-/* ttwidget */
-TT_INLINE void SetXY_ttwidget(ttwidget o, ttshort x, ttshort y) {
-    if (o && TTAssert(IS(ttwidget,o)))
-	o->FN->SetXYWH(o, 0x03, x, y, 0, 0);
-}
-TT_INLINE void SetWH_ttwidget(ttwidget o, ttshort w, ttshort h) {
-    if (o && TTAssert(IS(ttwidget,o)))
-	o->FN->SetXYWH(o, 0x0a, 0, 0, w, h);
-}
-
-
 /* ttlabel */
-TT_INLINE ttlabel Create_ttlabel(TT_CONST byte * text) {
+static ttlabel Create_ttlabel(TT_CONST byte * text) {
     ttlabel o;
     if ((o = TFN_ttlabel->New(TFN_ttlabel, (ttlabel)0))) {
 	o->text_len = text ? strlen(text) : 0;
@@ -195,7 +169,7 @@ TT_INLINE ttlabel Create_ttlabel(TT_CONST byte * text) {
 
 
 /* ttanybutton */
-TT_INLINE ttanybutton Create_ttanybutton(TT_CONST ttfont * text, ttshort width, ttshort height, ttshort pitch) {
+static ttanybutton Create_ttanybutton(TT_CONST ttfont * text, ttshort width, ttshort height, ttshort pitch) {
     ttanybutton o;
     ttfont *_text;
     if ((o = TFN_ttanybutton->New(TFN_ttanybutton, (ttanybutton)0))) {
@@ -218,7 +192,7 @@ TT_INLINE ttanybutton Create_ttanybutton(TT_CONST ttfont * text, ttshort width, 
 
 
 /* ttbutton */
-TT_INLINE ttbutton Create_ttbutton(TT_CONST ttfont * text, ttshort width, ttshort height, ttshort pitch) {
+static ttbutton Create_ttbutton(TT_CONST ttfont * text, ttshort width, ttshort height, ttshort pitch) {
     ttbutton o;
     ttfont *_text;
     if ((o = TFN_ttbutton->New(TFN_ttbutton, (ttbutton)0))) {
@@ -237,11 +211,6 @@ TT_INLINE ttbutton Create_ttbutton(TT_CONST ttfont * text, ttshort width, ttshor
 	TDEL(o);
     }
     return (ttbutton)0;
-}
-TT_INLINE byte IsPressed_ttbutton(ttbutton o) {
-    if (o && TTAssert(IS(ttbutton,o)))
-	return !!(o->vflags & ttbutton_vflags_pressed);
-    return FALSE;
 }
     
 
@@ -294,26 +263,6 @@ TT_INLINE byte IsPressed_ttbutton(ttbutton o) {
 
 
 /* ttapplication */
-TT_INLINE ttapplication Set_ttapplication(TT_CONST byte * name) {
-    byte *apname;
-    
-    if (!name)
-	return (ttapplication)0;
-    
-    if (TTD.Application || (TTD.Application = TFN_ttapplication->New(TFN_ttapplication, NULL))) {
-
-	if ((apname = TTCloneStr(name))) {
-	    if (TTD.Application->name)
-		TTFreeMem(TTD.Application->name);
-	    TTD.Application->name = apname;
-
-	    return (ttapplication)Build((ttobj)TTD.Application);
-	}
-	TDEL(TTD.Application);
-    }
-    return TTD.Application;
-}
-
 
 
 #endif /* _TT_CREATE_H */

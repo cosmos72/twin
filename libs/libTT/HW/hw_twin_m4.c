@@ -71,9 +71,7 @@
 #include "TTextern.h"
 #include "TTassert.h"
 
-
 #include "utils.h"
-
 #include "inlines.h"
 #include "seterrno.h"
 #include "theme.h"
@@ -170,35 +168,27 @@ static void twin_Remove_ttwidget(ttwidget o) {
     }
 }
 static void twin_SetXYWH_ttwidget(ttwidget o, ttuint mask, ttshort x, ttshort y, ttshort w, ttshort h) {
-    if (mask & 1) {
-	if (o->x != x)
-	    o->x = x;
-	else
-	    mask &= ~1;
-    }
-    if (mask & 2) {
-	if (o->y != y)
-	    o->y = y;
-	else
-	    mask &= ~2;
-    }
+    if (mask & 1)
+	o->x = x;
+    if (mask & 2)
+	o->y = y;
     if (mask & 3)
-	TwSetXYWidget(o->native, x, y);
-    if (mask & 4) {
-	if (o->w != w)
-	    o->w = w;
-	else
-	    mask &= ~4;
-    }
-    if (mask & 8) {
-	if (o->h != h)
-	    o->h = h;
-	else
-	    mask &= ~4;
-    }
-    if (mask & 0xA)
-	/* should be TwResizeWidget... */
-	TwResizeWindow(o->native, w, h);
+	TwSetXYWidget(o->native, o->x, o->y);
+    if (mask & 4)
+	o->w = w;
+    if (mask & 8)
+	o->h = h;
+    if (mask & 0x0c)
+	TwResizeWidget(o->native, o->w, o->h);
+}
+static void twin_SetXlYl_ttwidget(ttwidget o, ttuint mask, ttint xl, ttint yl) {
+    ttint o_xl = o->xl, o_yl = o->yl;
+    if (mask & 1)
+	o->xl = xl;
+    if (mask & 2)
+	o->yl = yl;
+    if (mask & 3)
+       TwScrollWidget(o->native, o->xl - o_xl, o->yl - o_yl);
 }
 
 
@@ -556,10 +546,10 @@ static TT_CONST byte *twin_StrErrorDetail(ttuint E, ttuint S) {
 
 TW_DECL_MAGIC(TT_Tw_magic);
 
-#ifdef CONF_THIS_MODULE
+#ifdef THIS_MODULE
 ttfns InitModule(tthw *HW)
 #else
-ttfns twin_InitHW(tthw *HW)
+ttfns _TT_twin_InitHW(tthw *HW)
 #endif
 {
     /*
@@ -574,6 +564,7 @@ ttfns twin_InitHW(tthw *HW)
         return &twin_TTFNs;
 
     FAIL(TwErrno, TwErrnoDetail);
+    
     return (ttfns)0;
 }
 
@@ -586,7 +577,7 @@ ttfns twin_InitHW(tthw *HW)
 /*
  * use default values for methods not implemented in hw_twin_c
  *
- * dummy display target MUST IMPLEMENT ALL METHODS, even if as stubs.
+ * null display target MUST IMPLEMENT ALL METHODS, even if as stubs.
  */
 
 
@@ -786,7 +777,8 @@ static s_ttfns twin_TTFNs = {
             
     TFN_ttvisible,
     twin_SetXYWH_ttwidget,
-        
+    twin_SetXlYl_ttwidget,
+                
   },
  
   {
@@ -813,7 +805,8 @@ static s_ttfns twin_TTFNs = {
             
     TFN_ttvisible,
     (void *)twin_SetXYWH_ttwidget,
-        
+    (void *)twin_SetXlYl_ttwidget,
+                
     TFN_ttwidget,
     (void *)NULL /* WARNING: undefined SetText */,
     
@@ -843,7 +836,8 @@ static s_ttfns twin_TTFNs = {
             
     TFN_ttvisible,
     (void *)twin_SetXYWH_ttwidget,
-        
+    (void *)twin_SetXlYl_ttwidget,
+                
     TFN_ttwidget,
     (void *)NULL /* WARNING: undefined SetText */,
     
@@ -873,7 +867,8 @@ static s_ttfns twin_TTFNs = {
             
     TFN_ttvisible,
     (void *)twin_SetXYWH_ttwidget,
-        
+    (void *)twin_SetXlYl_ttwidget,
+                
     TFN_ttwidget,
     (void *)NULL /* WARNING: undefined SetText */,
     
@@ -906,7 +901,8 @@ static s_ttfns twin_TTFNs = {
             
     TFN_ttvisible,
     (void *)twin_SetXYWH_ttwidget,
-        
+    (void *)twin_SetXlYl_ttwidget,
+                
     TFN_ttwidget,
     (void *)NULL /* WARNING: undefined SetText */,
     
@@ -941,7 +937,8 @@ static s_ttfns twin_TTFNs = {
             
     TFN_ttvisible,
     (void *)twin_SetXYWH_ttwidget,
-        
+    (void *)twin_SetXlYl_ttwidget,
+                
     TFN_ttwidget,
     (void *)NULL /* WARNING: undefined SetText */,
     
@@ -978,7 +975,8 @@ static s_ttfns twin_TTFNs = {
             
     TFN_ttvisible,
     (void *)twin_SetXYWH_ttwidget,
-        
+    (void *)twin_SetXlYl_ttwidget,
+                
     TFN_ttwidget,
     (void *)NULL /* WARNING: undefined SetText */,
     
@@ -1029,7 +1027,8 @@ static s_ttfns twin_TTFNs = {
             
     TFN_ttvisible,
     (void *)twin_SetXYWH_ttwidget,
-        
+    (void *)twin_SetXlYl_ttwidget,
+                
     TFN_ttwidget,
 
   },
@@ -1058,7 +1057,8 @@ static s_ttfns twin_TTFNs = {
             
     TFN_ttvisible,
     (void *)twin_SetXYWH_ttwidget,
-        
+    (void *)twin_SetXlYl_ttwidget,
+                
     TFN_ttwidget,
 
     TFN_ttwindow,
@@ -1089,7 +1089,8 @@ static s_ttfns twin_TTFNs = {
             
     TFN_ttvisible,
     (void *)twin_SetXYWH_ttwidget,
-        
+    (void *)twin_SetXlYl_ttwidget,
+                
     TFN_ttwidget,
 
     TFN_ttwindow,
@@ -1258,7 +1259,8 @@ static s_ttfns twin_TTFNs = {
             
     TFN_ttvisible,
     (void *)twin_SetXYWH_ttwidget,
-        
+    (void *)twin_SetXlYl_ttwidget,
+                
     TFN_ttwidget,
 
     TFN_ttwindow,
@@ -1289,7 +1291,8 @@ static s_ttfns twin_TTFNs = {
             
     TFN_ttvisible,
     (void *)twin_SetXYWH_ttwidget,
-        
+    (void *)twin_SetXlYl_ttwidget,
+                
     TFN_ttwidget,
 
     TFN_ttwindow,
@@ -1322,7 +1325,8 @@ static s_ttfns twin_TTFNs = {
             
     TFN_ttvisible,
     (void *)twin_SetXYWH_ttwidget,
-        
+    (void *)twin_SetXlYl_ttwidget,
+                
     TFN_ttwidget,
 
     TFN_ttwindow,

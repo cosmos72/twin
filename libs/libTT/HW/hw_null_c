@@ -2,7 +2,7 @@
 /*
  *                 WARNING!
  * 
- * this file is `hw_dummy_c' and is preprocessed by m4 to produce `hw_dummy_m4.c'
+ * this file is `hw_null_c' and is preprocessed by m4 to produce `hw_null_m4.c'
  * 
  * It must be a valid m4 file, and must produce a valid C include file.
  * 
@@ -15,12 +15,14 @@
  
 DECL_COMMON
 
+#include "Tw/Tw_defs.h"
+
 /* ttobj */
 static NEW(ttobj) {
     /*
      * if argument (o) is non-NULL, use it instead of allocating memory.
-     * in this case, increase o->refcount to avoid deallocating it later
-     * with TTFreeMem().
+     * in this case, set o->oflags to ttobj_oflags_static to avoid
+     * deallocating it later with TTFreeMem().
      */
     ttuint oflags = (ttopaque)o ? ttobj_oflags_static : 0;
     
@@ -64,12 +66,14 @@ static DEL(ttobj) {
     }
 }
 
-static void DEF(SetValue_ttobj)(ttobj o, ttuint which, ttany value) {
+static ttbyte DEF(SetValue_ttobj)(ttobj o, ttuint which, ttany value) {
     /* FIXME: finish this */
+    return FALSE;
 }
-static void DEF(ChangeValue_ttobj)(ttobj o, ttuint which, ttany nand_value, ttany xor_value) {
+static ttbyte DEF(ChangeValue_ttobj)(ttobj o, ttuint which, ttany nand_value, ttany xor_value) {
     /* FIXME: finish this */
     /* o->{which} = (o->{which} & ~nand_value) ^ xor_value; */
+    return FALSE;
 }
 
 
@@ -120,6 +124,8 @@ static ttlistener DEF(Create_ttlistener)(ttcomponent c) {
     }
     return o;
 }
+
+static TT_CONST struct s_tavl empty_AVL;
 
 /* ttcallback */
 static NEW(ttcallback) {
@@ -225,7 +231,7 @@ static ttnative DEF(GetRoot_ttnative)(void) {
 /* ttwidget */
 static NEW(ttwidget) {
     if ((o = NEWSUPER(ttwidget))) {
-	o->x = o->y = o->w = o->h = (ttuint)0;
+	o->x = o->y = o->w = o->h = o->xl = o->yl = (ttuint)0;
     }
     return o;
 }
@@ -239,6 +245,13 @@ static void DEF(SetXYWH_ttwidget)(ttwidget o, ttuint mask, ttshort x, ttshort y,
     if (mask & 8)
 	o->h = h;
 }
+static void DEF(SetXlYl_ttwidget)(ttwidget o, ttuint mask, ttint xl, ttint yl) {
+    if (mask & 1)
+	o->xl = xl;
+    if (mask & 2)
+	o->yl = yl;
+}
+
 
 /* ttlabel */
 static NEW(ttlabel) {
@@ -662,8 +675,8 @@ static TT_CONST byte *HWDEF(StrErrorDetail)(ttuint E, ttuint S) {
 }
 
 
-static ttfns dummy_InitHW(tthw *HW) {
-    *HW = &dummy_TTFNs.HW;
-    return &dummy_TTFNs;
+ttfns _TT_null_InitHW(tthw *HW) {
+    *HW = &null_TTFNs.HW;
+    return &null_TTFNs;
 }
 

@@ -1,14 +1,11 @@
 
+#include <Tw/Twautoconf.h>
+#include "check_asm.h"
 
-/*
- * wrapper file for hand-optimized assembler functions for i386 with gcc
- */
-
-#include "asm_i386.h"
-
+/* remove the `Obj' suffix from Tw_ChangeFieldObj() */
 #define Tw_ChangeFieldObj Tw_ChangeField
 
-#ifdef TW_HAVE_I386_ASM
-# include "libTw2_i386m4.h"
+#ifdef TW_HAVE_GCC_I386_ASM
+# include "libTw2_i386_m4.h"
 #endif
 

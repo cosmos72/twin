@@ -26,6 +26,7 @@
 #include <Tw/Twstat.h>
 #include <Tw/Twstat_defs.h>
 
+
 typedef struct {
     tany Requestor;
     uldat ReqPrivate;
@@ -416,7 +417,7 @@ static void TW_QuitHW(void) {
 
 TW_DECL_MAGIC(hw_twin_magic);
 
-#ifdef CONF_THIS_MODULE
+#ifdef THIS_MODULE
 static
 #endif
 byte TW_InitHW(void) {
@@ -592,11 +593,8 @@ byte TW_InitHW(void) {
     return FALSE;
 }
 
-#ifdef CONF_THIS_MODULE
+#ifdef THIS_MODULE
 
-#include "version.h"
-MODULEVERSION;
-		       
 byte InitModule(module Module) {
     Module->Private = TW_InitHW;
     return TRUE;

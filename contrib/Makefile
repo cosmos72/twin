@@ -40,10 +40,10 @@ ifneq ($(CONF_SOCKET),n)
   everything: $(BINS)
 else
   everything:
-	@$(ECHO) ; \
-	 $(ECHO) "You disabled \"Support remote socket connections\"," ; \
-	 $(ECHO) "so the clients will NOT be compiled!" ; \
-	 $(ECHO)
+	@echo ; \
+	 echo "You disabled \"Support remote socket connections\"," ; \
+	 echo "so the clients will NOT be compiled!" ; \
+	 echo
 endif
 
 
@@ -55,7 +55,7 @@ include $(TOPDIR)/makerules
 
 
 install:
-	$(INSTALL) -d $(DESTDIR)$(bindir)
+	$(INSTALL-DIR) $(DESTDIR)$(bindir)
 	$(INSTALL) $(BINS) $(DESTDIR)$(bindir)
 
 clean:

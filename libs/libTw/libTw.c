@@ -37,6 +37,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <sys/socket.h>
 #include <netdb.h>
 #include <netinet/in.h>
@@ -76,9 +77,9 @@ TH_R_MUTEX_HELPER_DEFS(static);
 #define Tw_ChangeFieldObj Tw_ChangeField
 
 /* early check libTw.h against sockproto.h */
-#include "paranoiam4.h"
+#include "paranoia_m4.h"
 
-#include "asm_i386.h"
+#include "check_asm.h"
 
 #define Min2(a,b) ((a) < (b) ? (a) : (b))
 
@@ -111,9 +112,9 @@ typedef struct s_fn_list {
 
 static fn_list Functions[] = {
 
-#include "libTw1m4.h"
+#include "libTw1_m4.h"
     
-    {Tw_Stat, 0, 0, "Tw_StatObj", "0S0x"magic_id_STR(obj)"_"TWS_udat_STR"V"TWS_udat_STR },
+    {Tw_Stat, 7, 8, "Tw_StatObj", "0S0x"magic_id_STR(obj)"_"TWS_udat_STR"V"TWS_udat_STR },
     
     {NULL, 0, 0, NULL, NULL }
 };
@@ -127,22 +128,12 @@ typedef uldat v_id_vec [ sizeof(Functions) / sizeof(Functions[0]) ];
 typedef enum e_fn_order {
     order_DoesNotExist = -1,
 #   define EL(funct) order_##funct,
-#   include "socklistm4.h"
+#   include "socklist_m4.h"
 #   undef EL
 	
     order_StatObj,
 
 } fn_order;
-
-
-static void InitFunctions(void) {
-    fn_list *f = Functions;
-    if (f->len == 0) while (f->name) {
-	f->len = Tw_LenStr(3 + f->name); /* skip "Tw_" */
-	f->formatlen = Tw_LenStr(1 + f->format); /* skip "<self>" */
-	f++;
-    }
-}
 
 
 struct s_tlistener {
@@ -749,10 +740,17 @@ static uldat TryRead(tw_d TwD, byte Wait) {
 	} while (sel != 1);
     }
     
-    mayread = ioctl(Fd, FIONREAD, &len) >= 0;
-    if (!mayread || !len)
+
+    /* for ioctl(int, FIONREAD, int *) */
+    sel = 0;
+    mayread = ioctl(Fd, FIONREAD, &sel) >= 0;
+    if (!mayread || !sel)
 	len = TW_SMALLBUFF;
-    
+    else if (sel > TW_BIGBUFF * TW_BIGBUFF)
+	len = TW_BIGBUFF * TW_BIGBUFF;
+    else
+	len = sel;
+
     if (QLeft(Q,len)) {
 	t = GetQueue(TwD, Q, &got);
 	t += got - len;
@@ -1073,9 +1071,6 @@ tw_d Tw_Open(TW_CONST byte *TwDisplay) {
     int i, result = -1, fd = TW_NOFD;
     byte *options, gzip = FALSE;
 
-    if (Functions[order_FindFunction].len == 0)
-	InitFunctions();
-    
     if (!TwDisplay && (!(TwDisplay = getenv("TWDISPLAY")) || !*TwDisplay)) {
 	CommonErrno = TW_ENO_DISPLAY;
 	return (tw_d)0;
@@ -1965,8 +1960,6 @@ void Tw_ExitMainLoop(tw_d TwD) {
 
 
 
-static uldat FindFunctionId(tw_d TwD, uldat order);
-
 static void FailedCall(tw_d TwD, uldat err, uldat order) {
     s_tw_errno *vec = GetErrnoLocation(TwD);
     vec->E = err;
@@ -1981,7 +1974,7 @@ TW_INLINE uldat NextSerial(tw_d TwD) {
 
 TW_INLINE void Send(tw_d TwD, uldat Serial, uldat idFN) {
     /* be careful with aligmnent!! */
-#ifdef __i386__
+#if TW_CAN_UNALIGNED != 0
     r[0] = s - (byte *)(r+1);
     r[1] = Serial;
     r[2] = idFN;
@@ -1996,7 +1989,7 @@ TW_INLINE void Send(tw_d TwD, uldat Serial, uldat idFN) {
 /***********/
 
 
-#ifdef TW_HAVE_I386_ASM
+#ifdef TW_HAVE_GCC_I386_ASM
 #define _ TWS_field_scalar	
 /*
  * arguments of EncodeCall and EncodeArgs are different if using
@@ -2007,7 +2000,7 @@ static uldat EncodeArraySize(fn_order o, uldat n, tsfield a) {
     uldat L = 0;
     switch (o) {
 
-#include "libTw3m4.h"
+#include "libTw3_m4.h"
 
       case order_StatObj:
 	switch (n) {
@@ -2019,7 +2012,7 @@ static uldat EncodeArraySize(fn_order o, uldat n, tsfield a) {
     return L;
 }
 # undef _
-#endif /* TW_HAVE_I386_ASM */
+#endif /* TW_HAVE_GCC_I386_ASM */
 
 
 /*
@@ -2053,7 +2046,7 @@ TW_INLINE udat EncodeArgs(fn_order o, uldat *Space, va_list va, tsfield a) {
 	  case 'W':
 	  case 'Y':
 	    a->type = TWS_vec | TWS_vecW | t;
-#ifdef TW_HAVE_I386_ASM
+#ifdef TW_HAVE_GCC_I386_ASM
 	    arglen = EncodeArraySize(o, N, a-N);
 #else
 	    arglen = va_arg(va, tlargest);
@@ -2067,7 +2060,7 @@ TW_INLINE udat EncodeArgs(fn_order o, uldat *Space, va_list va, tsfield a) {
 	  case 'X':
 	    a->type = TWS_vec | t;
 	    space += 
-#ifdef TW_HAVE_I386_ASM
+#ifdef TW_HAVE_GCC_I386_ASM
 	    a->TWS_field_vecL = EncodeArraySize(o, N, a-N);
 #else
 	    a->TWS_field_vecL = va_arg(va, tlargest);
@@ -2142,6 +2135,8 @@ TW_INLINE void DecodeReply(byte *data, tsfield a) {
     }
 }
 
+static uldat FindFunctionId(tw_d TwD, uldat order);
+
 #if TW_CAN_UNALIGNED != 0
 typedef struct s_reply *reply;
 struct s_reply {
@@ -2163,15 +2158,13 @@ struct s_reply {
 #define ENCODE_FL_RETURN 2
 
 
-
-#ifdef TW_HAVE_I386_ASM
+#ifdef TW_HAVE_GCC_I386_ASM
 /*
- * use hand-optimized assembler version of Tw_* functions
- * from libTw2_i386m4.S and let _Tw_EncodeCall be visible from it.
- * 
- * asm Tw_* functions have different semantics:
- * they play tricks with the stack (thus the saved_eip parameter)
- * and using them, array sizes are not placed as arguments before the array,
+ * and let _Tw_EncodeCall be visible from libTw2_i386.S:
+ * it implements hand-optimized assembler version of Tw_* functions
+ * that use different arguments, since they play tricks with the stack
+ * (thus the saved_eip parameter) and using them, array sizes
+ * are not placed as arguments before the array,
  * so must be calculated separately (done in EncodeArraySize())
  */
 tlargest _Tw_EncodeCall(uldat flags, uldat o, void *saved_eip, tw_d TwD, ...)
@@ -2231,17 +2224,55 @@ static tlargest EncodeCall(byte flags, uldat o, tw_d TwD, ...)
 }
 
 
-#ifdef TW_HAVE_I386_ASM
+#ifdef TW_HAVE_GCC_I386_ASM
 
-/* nothing to include here, libTw2_i386.S is compiled separately */
-uldat _Tw_FindFunction(tw_d, byte, TW_CONST byte *, byte, TW_CONST byte *);
-byte  _Tw_SyncSocket(tw_d);
+uldat _Tw_FindFunction(tw_d TwD, byte Len, TW_CONST byte *Name, byte ProtoLen, TW_CONST byte *Proto);
+byte  _Tw_SyncSocket(tw_d TwD);
 
 #else
 
-#include "libTw2m4.h"
+#include "libTw2_m4.h"
 
-#endif /* TW_HAVE_i386_ASM */
+#endif /* TW_HAVE_GCC_I386_ASM */
+
+
+
+static byte Sync(tw_d TwD) {
+    uldat left;
+    return Fd != TW_NOFD ? (GetQueue(TwD, QWRITE, &left), left) ? _Tw_SyncSocket(TwD) : TRUE : FALSE;
+}
+
+/**
+ * sends all buffered data to connection and waits for server to process it
+ */
+byte Tw_Sync(tw_d TwD) {
+    byte ok;
+    LOCK; ok = Sync(TwD); UNLK;
+    return ok;
+}
+
+/* wrap _Tw_FindFunction() with LOCKs */
+/**
+ * returns the server-dependant order number of a function (specified as string),
+ * or NOID if server is missing that function
+ */
+uldat Tw_FindFunction(tw_d TwD, byte Len, TW_CONST byte *Name, byte FormatLen, TW_CONST byte *Format) {
+    uldat MyId;
+    LOCK; MyId = _Tw_FindFunction(TwD, Len, Name, FormatLen, Format); UNLK;
+    return MyId;
+}
+
+
+static uldat FindFunctionId(tw_d TwD, uldat order) {
+    uldat My;
+    if ((My = id_Tw[order]) == TW_BADID) {
+	My = id_Tw[order] = _Tw_FindFunction
+	    (TwD, Functions[order].len, 3 + Functions[order].name, Functions[order].formatlen, Functions[order].format+1);
+    }
+    return Fd != TW_NOFD ? My : TW_NOID;
+}
+
+
 
 
 
@@ -2409,20 +2440,6 @@ void Tw_SetHWFontsGadget(tw_d TwD, tgadget G, byte bitmap, dat Width, dat Height
 }
 
 
-static byte Sync(tw_d TwD) {
-    uldat left;
-    return Fd != TW_NOFD ? (GetQueue(TwD, QWRITE, &left), left) ? _Tw_SyncSocket(TwD) : TRUE : FALSE;
-}
-
-/**
- * sends all buffered data to connection and waits for server to process it
- */
-byte Tw_Sync(tw_d TwD) {
-    byte ok;
-    LOCK; ok = Sync(TwD); UNLK;
-    return ok;
-}
-
 
 /***********/
 
@@ -2432,15 +2449,6 @@ byte Tw_Sync(tw_d TwD) {
 #define TWS_SORTED    2
 #define TWS_SCALAR    4
 
-
-static uldat FindFunctionId(tw_d TwD, uldat order) {
-    uldat My;
-    if ((My = id_Tw[order]) == TW_BADID) {
-	My = id_Tw[order] = _Tw_FindFunction
-	    (TwD, Functions[order].len, 3 + Functions[order].name, Functions[order].formatlen, Functions[order].format+1);
-    }
-    return Fd != TW_NOFD ? My : TW_NOID;
-}
 
 static tslist StatA(tw_d TwD, tobj Id, udat flags, udat hN, TW_CONST udat *h, tslist f);
 
@@ -2763,17 +2771,6 @@ static tslist StatA(tw_d TwD, tobj Id, udat flags, udat hN, TW_CONST udat *h, ts
 
 
 /***********/
-
-/* wrap _Tw_FindFunction() with LOCKs */
-/**
- * returns the server-dependant order number of a function (specified as string),
- * or NOID if server is missing that function
- */
-uldat Tw_FindFunction(tw_d TwD, byte Len, TW_CONST byte *Name, byte FormatLen, TW_CONST byte *Format) {
-    uldat MyId;
-    LOCK; MyId = _Tw_FindFunction(TwD, Len, Name, FormatLen, Format); UNLK;
-    return MyId;
-}
 
 
 

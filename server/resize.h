@@ -35,10 +35,14 @@ void DragWindow(window Window, dat i, dat j);
 void ResizeRelFirstWindow(dat i, dat j);
 void ResizeRelWindow(window Window, dat i, dat j);
 void CenterWindow(window Window);
+
 byte ExecScrollFocusWindow(void);
-void ScrollFirstWindow(dat DeltaX, dat DeltaY, byte byXYLogic);
-void ScrollWindow(window Window, dat DeltaX, dat DeltaY);
-void ScrollFirstWindowArea(dat X1, dat Y1, dat X2, dat Y2, dat DeltaX, dat DeltaY);
+void ScrollFirstWindowArea(dat X1, dat Y1, dat X2, dat Y2, ldat DeltaX, ldat DeltaY);
+void ScrollFirstWindow(ldat DeltaX, ldat DeltaY, byte byXYLogic);
+void ScrollWindow(window Window, ldat DeltaX, ldat DeltaY);
+
+void ScrollWidget(widget W, ldat DeltaX, ldat DeltaY);
+
 
 void UnFocusWidget(widget W);
 void RollUpWindow(window W, byte on_off);

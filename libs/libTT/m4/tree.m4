@@ -1,11 +1,11 @@
 
-dnl This file is `m4/tree.m4' : m4 macros to autogenerate treem4.h
+dnl This file is `m4/tree.m4' : m4 macros to autogenerate tree_m4.h
 dnl Tell the user about this.
 /* This file was automatically generated from `m4/tree.m4', do not edit! */
 
 
 /*
- *  treem4.h  --  internal header for libTT objects hierarchy tree
+ *  tree_m4.h  --  internal header for libTT objects hierarchy tree
  */
 
 #ifndef _TT_TREEM4_H
@@ -205,12 +205,14 @@ define(`exported', `ifelse(`$3', `get', `field(`$1', `$4', r)', `')')
 define(`field', `ifelse(`$3', `', `', `
     this`'_$2,')')
 define(`el', `define(`this', $1)
-
-    this`'_not_a_value = order_`'this << 16, TThandy_$1($1,$1)')
-typedef enum e_value_ttobj {
+    this`'_field_first,dnl
+TThandy_$1($1,$1)
+    this`'_field_last,
+')
+typedef enum e_order_fields {
 TTlist()
-    value_last
-} e_value_ttobj;
+    ttobj_field_max
+} e_order_fields;
 define(`field')
 undefine(`el')
 

@@ -29,9 +29,10 @@ include $(TOPDIR)/makerules
 
 
 install:
-	$(INSTALL) -d $(DESTDIR)$(bindir)
+	$(INSTALL-DIR) $(DESTDIR)$(bindir)
 	$(INSTALL) $(BINS) $(DESTDIR)$(bindir)
 
 clean:
-	rm -f .*.flags .*.link gmon.out core $(OBJS) $(BINS)
+	rm -f .*.flags .*.bin gmon.out core *.o tw* ; \
+	rm -fr .libs
 	

@@ -4,25 +4,19 @@
 TOPDIR=../..
 THISDIR=$(TOPDIR)/libs/libTutf
 
+include makeversion
+
 SUBDIRS=
 
 all: everything
 
-VERSION=0.0.5
-SO_VER=0
-
-BINS=libTutf.so.$(VERSION)
+SHLIBS=libTutf.la
 ARLIBS=libTutf.a
 
-LINKS=libTutf.so.$(SO_VER) libTutf.so
+OBJS_libTutf.la=libTutf.lo
+OBJS_libTutf.a=libTutf.o
 
-OBJS_libTutf.so.$(VERSION)=libTutf.o
-OBJS_libTutf.a=libTutf_u.o
-
-CC_FLAGS_libTutf.o+=-fPIC
 CC_FLAGS+=-D_REENTRANT
-
-LD_FLAGS_libTutf.so.$(VERSION)=$(LD_FLAGS_SOLIB_NAME)libTutf.so.$(SO_VER)
 
 -include $(TOPDIR)/conf/conf.current
 -include .modules
@@ -35,11 +29,11 @@ ifeq ($(CONF__UNICODE),y)
   install: install-real
 else
   everything install:
-	@rm -f $(ARLIBS) $(BINS) $(LINKS) ; \
-	 $(ECHO) ; \
-	 $(ECHO) "You disabled \"Build all code with Unicode support\"," ; \
-	 $(ECHO) "so the library libTutf will NOT be compiled!" ; \
-	 $(ECHO)
+	@rm -f $(SHLIBS) $(ARLIBS) ; \
+	 echo ; \
+	 echo "You disabled \"Build all code with Unicode support\"," ; \
+	 echo "so the library libTutf will NOT be compiled!" ; \
+	 echo
 endif
 
 #
@@ -48,14 +42,14 @@ endif
 
 
 ifeq ($(CONF__SHLIBS),y)
-  lib: $(ARLIBS) $(BINS) links
+  lib: $(ARLIBS) $(SHLIBS)
 else
   lib: $(ARLIBS)
-	@rm -f $(BINS) $(LINKS) ; \
-	 $(ECHO) ; \
-	 $(ECHO) "You disabled \"Enable shared libraries (ELF)\"," ; \
-	 $(ECHO) "so only the static library libTutf.a will be compiled!" ; \
-	 $(ECHO)
+	@rm -f $(SHLIBS) ; \
+	 echo ; \
+	 echo "You disabled \"Enable shared libraries (ELF)\"," ; \
+	 echo "so only the static library libTutf.a will be compiled!" ; \
+	 echo
 endif
 
 
@@ -67,28 +61,18 @@ endif
 include $(TOPDIR)/makerules
 
 
-
-links: $(LINKS)
-
-libTutf.so.$(SO_VER):
-	$(LN) libTutf.so.$(VERSION) libTutf.so.$(SO_VER)
-
-libTutf.so:
-	$(LN) libTutf.so.$(SO_VER) libTutf.so
-
 install-headers:
-	$(INSTALL) -d $(DESTDIR)$(includedir)/Tutf && \
+	$(INSTALL-DIR) $(DESTDIR)$(includedir)/Tutf && \
 	$(INSTALL-TXT) $(TOPDIR)/include/Tutf/*.h $(DESTDIR)$(includedir)/Tutf
 
 install-real: install-headers
-	$(INSTALL) -d $(DESTDIR)$(libdir) && \
+	$(INSTALL-DIR) $(DESTDIR)$(libdir) && \
 	$(INSTALL-TXT) $(ARLIBS) $(DESTDIR)$(libdir) && \
-	if [ -f libTutf.so.$(VERSION) ]; then \
-		$(INSTALL) libTutf.so.$(VERSION) $(DESTDIR)$(libdir) && \
-		$(LN) libTutf.so.$(VERSION) $(DESTDIR)$(libdir)/libTutf.so.$(SO_VER) && \
-		$(LN) libTutf.so.$(SO_VER)  $(DESTDIR)$(libdir)/libTutf.so; \
+	if [ -f libTutf.la ]; then \
+	  $(INSTALL) libTutf.la $(DESTDIR)$(libdir) ; \
 	fi
 	
 clean:
-	rm -f .*.flags .*.link .*.arlib libTutf.so* libTutf.a $(_ALLOBJS)
+	rm -f .*.flags .*.shlib .*.arlib libTutf.la libTutf.a $(_ALL_OBJS) ; \
+	rm -fr .libs
 

@@ -189,7 +189,7 @@ fi
 
 . conf/conf.base
 
-MENU_MAIN="--separate-output --menu \"Twin Configuration - Top Menu\" $[ MAINITEMS+7 ] 50 $MAINITEMS $MAINCMD SAVE \"Save config and exit\" QUIT \"Exit without saving\""
+MENU_MAIN="--menu \"Twin Configuration - Top Menu\" $[ MAINITEMS+7 ] 50 $MAINITEMS $MAINCMD SAVE \"Save config and exit\" QUIT \"Exit without saving\""
 
 if test "$1"; then
   failure="$1"

@@ -2,11 +2,11 @@
 
 
 
-/* This file was automatically generated from m4/wrap.m4, do not edit! */
+/* This file was automatically generated from m4/call.m4, do not edit! */
 
 
 /*
- *  wrapm4.h  --  wrappers around exported libTT methods
+ *  call_m4.h  --  implementation of callbacks to libTT methods
  *
  */
 
@@ -30,74 +30,33 @@
 
 
 
-/* public and exported methods */
+/* prototypes for public and exported methods */
 
 
 
 /* ttobj methods */
                                 
-ttany TTGetValue_ttobj(tt_obj a1, ttuint a2) {
-    ttobj o;
-    ttany a0 = (ttany)0;
-    LOCK;
-    if ((o = ID2(ttobj,a1)))
-	a0 = o->FN->GetValue(o, a2);
-    UNLK;
-    return a0;
-}    
-void TTSetValue_ttobj(tt_obj a1, ttuint a2, ttany a3) {
-    ttobj o;
-    LOCK;
-    if ((o = ID2(ttobj,a1)))
-	 o->FN->SetValue(o, a2, a3);
-    UNLK;
-    return ;
-}    
-void TTChangeValue_ttobj(tt_obj a1, ttuint a2, ttany a3, ttany a4) {
-    ttobj o;
-    LOCK;
-    if ((o = ID2(ttobj,a1)))
-	 o->FN->ChangeValue(o, a2, a3, a4);
-    UNLK;
-    return ;
-}    
-void TTRef_ttobj(tt_obj a1) {
-    ttobj o;
-    LOCK;
-    if ((o = ID2(ttobj,a1)))
-	 Ref_ttobj(o);
-    UNLK;
-    return ;
-}    
-void TTUnref_ttobj(tt_obj a1) {
-    ttobj o;
-    LOCK;
-    if ((o = ID2(ttobj,a1)))
-	 Unref_ttobj(o);
-    UNLK;
-    return ;
-}
+ttbyte TTGetValue_ttobj(tt_obj a1, ttuint a2, ttany * a3);
+    
+ttbyte TTSetValue_ttobj(tt_obj a1, ttuint a2, ttany a3);
+    
+ttbyte TTChangeValue_ttobj(tt_obj a1, ttuint a2, ttany a3, ttany a4);
+    
+void TTRef_ttobj(tt_obj a1);
+    
+void TTUnref_ttobj(tt_obj a1);
+
   
 /* ttevent methods */
     
-tt_obj TTCreate_ttevent(ttuint a1, ttuint a2, ttuint a3) {
-    tt_obj a0 = (tt_obj)(opaque)0;
-    LOCK;
-    a0 = (tt_obj)OBJ2ID(Create_ttevent(a1, a2, a3));
-    UNLK;
-    return a0;
-}
+tt_obj TTCreate_ttevent(ttuint a1, ttuint a2, ttuint a3);
+
  
 /* tteventbig methods */
 
     
-tt_obj TTCreate_tteventbig(ttuint a1, ttuint a2, ttuint a3, ttshort a4, ttshort a5, ttshort a6, ttshort a7, ttuint a8, TT_CONST ttbyte * a9) {
-    tt_obj a0 = (tt_obj)(opaque)0;
-    LOCK;
-    a0 = (tt_obj)OBJ2ID(Create_tteventbig(a1, a2, a3, a4, a5, a6, a7, a8, a9));
-    UNLK;
-    return a0;
-}
+tt_obj TTCreate_tteventbig(ttuint a1, ttuint a2, ttuint a3, ttshort a4, ttshort a5, ttshort a6, ttshort a7, ttuint a8, TT_CONST ttbyte * a9);
+
  
 /* ttlistener methods */
 
@@ -105,212 +64,79 @@ tt_obj TTCreate_tteventbig(ttuint a1, ttuint a2, ttuint a3, ttshort a4, ttshort 
  
 /* ttcallback methods */
     
-tt_obj TTCreate_ttcallback(tt_obj a1, ttuint a2, ttuint a3, ttcallback_fn a4, ttany a5) {
-    ttcomponent o;
-    tt_obj a0 = (tt_obj)(opaque)0;
-    LOCK;
-    if ((o = ID2(ttcomponent,a1)))
-	a0 = (tt_obj)OBJ2ID(Create_ttcallback(o, a2, a3, a4, a5));
-    UNLK;
-    return a0;
-}    
-tt_obj TTCreateA_ttcallback(tt_obj a1, tt_obj a2, ttuint a3, ttuint a4, ttuint a5, ttuint a6, ttcallback_fn a7, ttany TT_CONST * a8) {
-    ttcomponent o;
-    tt_obj a0 = (tt_obj)(opaque)0;
-    LOCK;
-    if ((o = ID2(ttcomponent,a1)))
-	a0 = (tt_obj)OBJ2ID(CreateA_ttcallback(o, ID2(ttevent,a2), a3, a4, a5, a6, a7, a8));
-    UNLK;
-    return a0;
-}    
-tt_obj TTCreateV_ttcallback(tt_obj a1, tt_obj a2, ttuint a3, ttuint a4, ttuint a5, ttuint a6, ttcallback_fn a7, va_list a8) {
-    ttcomponent o;
-    tt_obj a0 = (tt_obj)(opaque)0;
-    LOCK;
-    if ((o = ID2(ttcomponent,a1)))
-	a0 = (tt_obj)OBJ2ID(CreateV_ttcallback(o, ID2(ttevent,a2), a3, a4, a5, a6, a7, a8));
-    UNLK;
-    return a0;
-}
+tt_obj TTCreate_ttcallback(tt_obj a1, ttuint a2, ttuint a3, ttcallback_fn a4, ttany a5);
+    
+tt_obj TTCreateA_ttcallback(tt_obj a1, tt_obj a2, ttuint a3, ttuint a4, ttuint a5, ttuint a6, ttcallback_fn a7, ttany TT_CONST * a8);
+    
+tt_obj TTCreateV_ttcallback(tt_obj a1, tt_obj a2, ttuint a3, ttuint a4, ttuint a5, ttuint a6, ttcallback_fn a7, va_list * a8);
+
  
 /* ttcomponent methods */
 
  
 /* ttvisible methods */
     
-void TTAddTo_ttvisible(tt_obj a1, tt_obj a2) {
-    ttvisible o;
-    LOCK;
-    if ((o = ID2(ttvisible,a1)))
-	 o->FN->AddTo(o, ID2(ttvisible,a2));
-    UNLK;
-    return ;
-}    
-void TTRemove_ttvisible(tt_obj a1) {
-    ttvisible o;
-    LOCK;
-    if ((o = ID2(ttvisible,a1)))
-	 o->FN->Remove(o);
-    UNLK;
-    return ;
-}    
-void TTSetVisible_ttvisible(tt_obj a1, ttbyte a2) {
-    ttvisible o;
-    LOCK;
-    if ((o = ID2(ttvisible,a1)))
-	 o->FN->SetVisible(o, a2);
-    UNLK;
-    return ;
-}    
-void TTSetTheme_ttvisible(tt_obj a1, tt_obj a2) {
-    ttvisible o;
-    LOCK;
-    if ((o = ID2(ttvisible,a1)))
-	 o->FN->SetTheme(o, ID2(tttheme,a2));
-    UNLK;
-    return ;
-}    
-void TTBuiltinRepaint_ttvisible(tt_obj a1, ttshort a2, ttshort a3, ttshort a4, ttshort a5) {
-    ttvisible o;
-    LOCK;
-    if ((o = ID2(ttvisible,a1)))
-	 o->FN->BuiltinRepaint(o, a2, a3, a4, a5);
-    UNLK;
-    return ;
-}    
-void TTSetRepaint_ttvisible(tt_obj a1, ttvisible_repaint_fn a2) {
-    ttvisible o;
-    LOCK;
-    if ((o = ID2(ttvisible,a1)))
-	 SetRepaint_ttvisible(o, a2);
-    UNLK;
-    return ;
-}    
-void TTAdd_ttvisible(tt_obj a1, tt_obj a2) {
-    ttvisible o;
-    LOCK;
-    if ((o = ID2(ttvisible,a1)))
-	 Add_ttvisible(o, ID2(ttvisible,a2));
-    UNLK;
-    return ;
-}    
-void TTExpose_ttvisible(tt_obj a1, ttshort a2, ttshort a3, ttshort a4, ttshort a5) {
-    ttvisible o;
-    LOCK;
-    if ((o = ID2(ttvisible,a1)))
-	 Expose_ttvisible(o, a2, a3, a4, a5);
-    UNLK;
-    return ;
-}
+void TTAddTo_ttvisible(tt_obj a1, tt_obj a2);
+    
+void TTRemove_ttvisible(tt_obj a1);
+    
+void TTSetVisible_ttvisible(tt_obj a1, ttbyte a2);
+    
+void TTSetTheme_ttvisible(tt_obj a1, tt_obj a2);
+    
+void TTBuiltinRepaint_ttvisible(tt_obj a1, ttshort a2, ttshort a3, ttshort a4, ttshort a5);
+    
+void TTSetRepaint_ttvisible(tt_obj a1, ttvisible_repaint_fn a2);
+    
+void TTAdd_ttvisible(tt_obj a1, tt_obj a2);
+    
+void TTExpose_ttvisible(tt_obj a1, ttshort a2, ttshort a3, ttshort a4, ttshort a5);
+
  
 /* ttnative methods */
     
-tt_obj TTGetRoot_ttnative(void) {
-    tt_obj a0 = (tt_obj)(opaque)0;
-    LOCK;
-    a0 = (tt_obj)OBJ2ID(TFN_ttnative->GetRoot());
-    UNLK;
-    return a0;
-}    
-tt_obj TTCreate_ttnative(ttany a1) {
-    tt_obj a0 = (tt_obj)(opaque)0;
-    LOCK;
-    a0 = (tt_obj)OBJ2ID(Create_ttnative(a1));
-    UNLK;
-    return a0;
-}
+tt_obj TTGetRoot_ttnative(void);
+    
+tt_obj TTCreate_ttnative(ttany a1);
+
  
 /* ttwidget methods */
     
-void TTSetXYWH_ttwidget(tt_obj a1, ttbyte a2, ttshort a3, ttshort a4, ttshort a5, ttshort a6) {
-    ttwidget o;
-    LOCK;
-    if ((o = ID2(ttwidget,a1)))
-	 o->FN->SetXYWH(o, a2, a3, a4, a5, a6);
-    UNLK;
-    return ;
-}    
-void TTSetXY_ttwidget(tt_obj a1, ttshort a2, ttshort a3) {
-    ttwidget o;
-    LOCK;
-    if ((o = ID2(ttwidget,a1)))
-	 SetXY_ttwidget(o, a2, a3);
-    UNLK;
-    return ;
-}    
-void TTSetWH_ttwidget(tt_obj a1, ttshort a2, ttshort a3) {
-    ttwidget o;
-    LOCK;
-    if ((o = ID2(ttwidget,a1)))
-	 SetWH_ttwidget(o, a2, a3);
-    UNLK;
-    return ;
-}
+void TTSetXYWH_ttwidget(tt_obj a1, ttbyte a2, ttshort a3, ttshort a4, ttshort a5, ttshort a6);
+    
+void TTSetXlYl_ttwidget(tt_obj a1, ttbyte a2, ttint a3, ttint a4);
+    
+void TTSetXY_ttwidget(tt_obj a1, ttshort a2, ttshort a3);
+    
+void TTSetWH_ttwidget(tt_obj a1, ttshort a2, ttshort a3);
+    
+void TTSetXl_ttwidget(tt_obj a1, ttint a2);
+    
+void TTSetYl_ttwidget(tt_obj a1, ttint a2);
+
  
 /* ttlabel methods */
     
-ttbyte TTSetText_ttlabel(tt_obj a1, TT_CONST ttbyte * a2) {
-    ttlabel o;
-    ttbyte a0 = (ttbyte)0;
-    LOCK;
-    if ((o = ID2(ttlabel,a1)))
-	a0 = o->FN->SetText(o, a2);
-    UNLK;
-    return a0;
-}    
-tt_obj TTCreate_ttlabel(TT_CONST ttbyte * a1) {
-    tt_obj a0 = (tt_obj)(opaque)0;
-    LOCK;
-    a0 = (tt_obj)OBJ2ID(Create_ttlabel(a1));
-    UNLK;
-    return a0;
-}
+ttbyte TTSetText_ttlabel(tt_obj a1, TT_CONST ttbyte * a2);
+    
+tt_obj TTCreate_ttlabel(TT_CONST ttbyte * a1);
+
  
 /* ttanybutton methods */
     
-ttbyte TTSetText_ttanybutton(tt_obj a1, TT_CONST ttfont * a2, ttshort a3, ttshort a4, ttshort a5) {
-    ttanybutton o;
-    ttbyte a0 = (ttbyte)0;
-    LOCK;
-    if ((o = ID2(ttanybutton,a1)))
-	a0 = o->FN->SetText(o, a2, a3, a4, a5);
-    UNLK;
-    return a0;
-}    
-tt_obj TTCreate_ttanybutton(TT_CONST ttfont * a1, ttshort a2, ttshort a3, ttshort a4) {
-    tt_obj a0 = (tt_obj)(opaque)0;
-    LOCK;
-    a0 = (tt_obj)OBJ2ID(Create_ttanybutton(a1, a2, a3, a4));
-    UNLK;
-    return a0;
-}
+ttbyte TTSetText_ttanybutton(tt_obj a1, TT_CONST ttfont * a2, ttshort a3, ttshort a4, ttshort a5);
+    
+tt_obj TTCreate_ttanybutton(TT_CONST ttfont * a1, ttshort a2, ttshort a3, ttshort a4);
+
  
 /* ttbutton methods */
     
-void TTSetPressed_ttbutton(tt_obj a1, ttbyte a2) {
-    ttbutton o;
-    LOCK;
-    if ((o = ID2(ttbutton,a1)))
-	 o->FN->SetPressed(o, a2);
-    UNLK;
-    return ;
-}    
-tt_obj TTCreate_ttbutton(TT_CONST ttfont * a1, ttshort a2, ttshort a3, ttshort a4) {
-    tt_obj a0 = (tt_obj)(opaque)0;
-    LOCK;
-    a0 = (tt_obj)OBJ2ID(Create_ttbutton(a1, a2, a3, a4));
-    UNLK;
-    return a0;
-}    
-ttbyte TTIsPressed_ttbutton(tt_obj a1) {
-    ttbutton o;
-    ttbyte a0 = (ttbyte)0;
-    LOCK;
-    if ((o = ID2(ttbutton,a1)))
-	a0 = IsPressed_ttbutton(o);
-    UNLK;
-    return a0;
-}
+void TTSetPressed_ttbutton(tt_obj a1, ttbyte a2);
+    
+tt_obj TTCreate_ttbutton(TT_CONST ttfont * a1, ttshort a2, ttshort a3, ttshort a4);
+    
+ttbyte TTIsPressed_ttbutton(tt_obj a1);
+
  
 /* ttcheckbutton methods */
 
@@ -347,13 +173,8 @@ ttbyte TTIsPressed_ttbutton(tt_obj a1) {
  
 /* ttmenubar methods */
     
-tt_obj TTGetDefault_ttmenubar(void) {
-    tt_obj a0 = (tt_obj)(opaque)0;
-    LOCK;
-    a0 = (tt_obj)OBJ2ID(GetDefault_ttmenubar());
-    UNLK;
-    return a0;
-}
+tt_obj TTGetDefault_ttmenubar(void);
+
  
 /* ttanytext methods */
 
@@ -366,23 +187,12 @@ tt_obj TTGetDefault_ttmenubar(void) {
  
 /* tttheme methods */
         
-tt_obj TTGetDefault_tttheme(void) {
-    tt_obj a0 = (tt_obj)(opaque)0;
-    LOCK;
-    a0 = (tt_obj)OBJ2ID(GetDefault_tttheme());
-    UNLK;
-    return a0;
-}
+tt_obj TTGetDefault_tttheme(void);
+
  
 /* ttapplication methods */
     
-tt_obj TTSet_ttapplication(TT_CONST ttbyte * a1) {
-    tt_obj a0 = (tt_obj)(opaque)0;
-    LOCK;
-    a0 = (tt_obj)OBJ2ID(Set_ttapplication(a1));
-    UNLK;
-    return a0;
-}
+tt_obj TTSet_ttapplication(TT_CONST ttbyte * a1);
 
 
 
@@ -390,9 +200,7 @@ tt_obj TTSet_ttapplication(TT_CONST ttbyte * a1) {
 
 
 
-/* handy public and exported methods */
-
-
+/* prototypes for handy public and exported methods */
 
 
 
@@ -411,268 +219,184 @@ tt_obj TTSet_ttapplication(TT_CONST ttbyte * a1) {
 
 
 
-
-
-
-
-
-/* handy ttobj methods */
+/* prototypes for handy ttobj methods */
         
-ttopaque TTGetId_ttobj(tt_obj o) {
-    return (ttopaque)TTGetValue_ttobj(o, ttobj_id);
-}    
-ttuint TTGetRefcount_ttobj(tt_obj o) {
-    return (ttuint)TTGetValue_ttobj(o, ttobj_refcount);
-}    
-ttuint TTGetOflags_ttobj(tt_obj o) {
-    return (ttuint)TTGetValue_ttobj(o, ttobj_oflags);
-}            
-ttany TTGetUserData_ttobj(tt_obj o) {
-    return (ttany)TTGetValue_ttobj(o, ttobj_user_data);
-}
-void TTSetUserData_ttobj(tt_obj o, ttany user_data) {
-    TTSetValue_ttobj(o, ttobj_user_data, (ttany)user_data);
-}    
-ttuint TTGetEventsInprogress_ttobj(tt_obj o) {
-    return (ttuint)TTGetValue_ttobj(o, ttobj_events_inprogress);
-}  
-
-/* handy ttevent methods */
-        
-tt_obj TTGetCallback_ttevent(tt_obj o) {
-    return (tt_obj)(opaque)TTGetValue_ttobj(o, ttevent_callback);
-}    
-tt_obj TTGetComponent_ttevent(tt_obj o) {
-    return (tt_obj)(opaque)TTGetValue_ttobj(o, ttevent_component);
-}    
-ttuint TTGetEvtype_ttevent(tt_obj o) {
-    return (ttuint)TTGetValue_ttobj(o, ttevent_evtype);
-}    
-ttuint TTGetEvcode_ttevent(tt_obj o) {
-    return (ttuint)TTGetValue_ttobj(o, ttevent_evcode);
-}    
-ttuint TTGetEvflags_ttevent(tt_obj o) {
-    return (ttuint)TTGetValue_ttobj(o, ttevent_evflags);
-}    
-void TTConsume_ttevent(tt_obj o) {
-    TTChangeValue_ttobj(o, ttevent_evflags, ttevent_evflags_consumed, ttevent_evflags_consumed);
-} 
-
-/* handy tteventbig methods */
-        
-ttshort TTGetX_tteventbig(tt_obj o) {
-    return (ttshort)TTGetValue_ttobj(o, tteventbig_x);
-}    
-ttshort TTGetY_tteventbig(tt_obj o) {
-    return (ttshort)TTGetValue_ttobj(o, tteventbig_y);
-}    
-ttshort TTGetW_tteventbig(tt_obj o) {
-    return (ttshort)TTGetValue_ttobj(o, tteventbig_w);
-}    
-ttshort TTGetH_tteventbig(tt_obj o) {
-    return (ttshort)TTGetValue_ttobj(o, tteventbig_h);
-}    
-ttuint TTGetLen_tteventbig(tt_obj o) {
-    return (ttuint)TTGetValue_ttobj(o, tteventbig_len);
-}    
-TT_CONST ttbyte * TTGetData_tteventbig(tt_obj o) {
-    return (TT_CONST ttbyte *)(opaque)TTGetValue_ttobj(o, tteventbig_data);
-} 
-
-/* handy ttlistener methods */
-        
-ttuint TTGetLflags_ttlistener(tt_obj o) {
-    return (ttuint)TTGetValue_ttobj(o, ttlistener_lflags);
-}    
-tt_obj TTGetComponent_ttlistener(tt_obj o) {
-    return (tt_obj)(opaque)TTGetValue_ttobj(o, ttlistener_component);
-}    
-tt_obj TTGetPrev_ttlistener(tt_obj o) {
-    return (tt_obj)(opaque)TTGetValue_ttobj(o, ttlistener_prev);
-}    
-tt_obj TTGetNext_ttlistener(tt_obj o) {
-    return (tt_obj)(opaque)TTGetValue_ttobj(o, ttlistener_next);
-} 
-
-/* handy ttcallback methods */
+ttopaque TTGetId_ttobj(tt_obj o);
     
-tt_obj TTGetAvlLeft_ttcallback(tt_obj o) {
-    return (tt_obj)(opaque)TTGetValue_ttobj(o, ttcallback_avl_left);
-}    
-tt_obj TTGetAvlRight_ttcallback(tt_obj o) {
-    return (tt_obj)(opaque)TTGetValue_ttobj(o, ttcallback_avl_right);
-}    
-tt_obj TTGetAvlParent_ttcallback(tt_obj o) {
-    return (tt_obj)(opaque)TTGetValue_ttobj(o, ttcallback_avl_parent);
-}            
-tt_obj TTGetEvent_ttcallback(tt_obj o) {
-    return (tt_obj)(opaque)TTGetValue_ttobj(o, ttcallback_event);
-}    
-ttuint TTGetNargComponent_ttcallback(tt_obj o) {
-    return (ttuint)TTGetValue_ttobj(o, ttcallback_narg_component);
-}    
-ttuint TTGetNargEvent_ttcallback(tt_obj o) {
-    return (ttuint)TTGetValue_ttobj(o, ttcallback_narg_event);
-}    
-ttuint TTGetNargs_ttcallback(tt_obj o) {
-    return (ttuint)TTGetValue_ttobj(o, ttcallback_nargs);
-}    
-ttcallback_fn TTGetFunction_ttcallback(tt_obj o) {
-    return (ttcallback_fn)(opaque)TTGetValue_ttobj(o, ttcallback_function);
-}        
-TT_CONST ttany * TTGetArgs_ttcallback(tt_obj o) {
-    return (TT_CONST ttany *)(opaque)TTGetValue_ttobj(o, ttcallback_args);
-} 
-
-/* handy ttcomponent methods */
-        
-tt_obj TTGetListeners_ttcomponent(tt_obj o) {
-    return (tt_obj)(opaque)TTGetValue_ttobj(o, ttcomponent_listeners);
-}    
-tt_obj TTGetCallbacks_ttcomponent(tt_obj o) {
-    return (tt_obj)(opaque)TTGetValue_ttobj(o, ttcomponent_callbacks);
-} 
-
-/* handy ttvisible methods */
-        
-ttuint TTGetVflags_ttvisible(tt_obj o) {
-    return (ttuint)TTGetValue_ttobj(o, ttvisible_vflags);
-}    
-tt_obj TTGetPrev_ttvisible(tt_obj o) {
-    return (tt_obj)(opaque)TTGetValue_ttobj(o, ttvisible_prev);
-}    
-tt_obj TTGetNext_ttvisible(tt_obj o) {
-    return (tt_obj)(opaque)TTGetValue_ttobj(o, ttvisible_next);
-}    
-tt_obj TTGetParent_ttvisible(tt_obj o) {
-    return (tt_obj)(opaque)TTGetValue_ttobj(o, ttvisible_parent);
-}    
-tt_obj TTGetChildFirst_ttvisible(tt_obj o) {
-    return (tt_obj)(opaque)TTGetValue_ttobj(o, ttvisible_child_first);
-}    
-tt_obj TTGetChildLast_ttvisible(tt_obj o) {
-    return (tt_obj)(opaque)TTGetValue_ttobj(o, ttvisible_child_last);
-}    
-tt_obj TTGetTheme_ttvisible(tt_obj o) {
-    return (tt_obj)(opaque)TTGetValue_ttobj(o, ttvisible_theme);
-}    
-ttvisible_repaint_fn TTGetRepaint_ttvisible(tt_obj o) {
-    return (ttvisible_repaint_fn)(opaque)TTGetValue_ttobj(o, ttvisible_repaint);
-} 
-
-/* handy ttnative methods */
-     
-
-/* handy ttwidget methods */
-        
-ttshort TTGetX_ttwidget(tt_obj o) {
-    return (ttshort)TTGetValue_ttobj(o, ttwidget_x);
-}    
-ttshort TTGetY_ttwidget(tt_obj o) {
-    return (ttshort)TTGetValue_ttobj(o, ttwidget_y);
-}    
-ttshort TTGetW_ttwidget(tt_obj o) {
-    return (ttshort)TTGetValue_ttobj(o, ttwidget_w);
-}    
-ttshort TTGetH_ttwidget(tt_obj o) {
-    return (ttshort)TTGetValue_ttobj(o, ttwidget_h);
-} 
-
-/* handy ttlabel methods */
-        
-ttshort TTGetTextLen_ttlabel(tt_obj o) {
-    return (ttshort)TTGetValue_ttobj(o, ttlabel_text_len);
-}        
-TT_CONST ttfont * TTGetText_ttlabel(tt_obj o) {
-    return (TT_CONST ttfont *)(opaque)TTGetValue_ttobj(o, ttlabel_text);
-} 
-
-/* handy ttanybutton methods */
+ttuint TTGetRefcount_ttobj(tt_obj o);
+    
+ttuint TTGetOflags_ttobj(tt_obj o);
             
-ttshort TTGetTextWidth_ttanybutton(tt_obj o) {
-    return (ttshort)TTGetValue_ttobj(o, ttanybutton_text_width);
-}    
-ttshort TTGetTextHeight_ttanybutton(tt_obj o) {
-    return (ttshort)TTGetValue_ttobj(o, ttanybutton_text_height);
-}        
-TT_CONST ttfont * TTGetText_ttanybutton(tt_obj o) {
-    return (TT_CONST ttfont *)(opaque)TTGetValue_ttobj(o, ttanybutton_text);
-} 
+ttany TTGetUserData_ttobj(tt_obj o);
 
-/* handy ttbutton methods */
-     
-
-/* handy ttcheckbutton methods */
-     
-
-/* handy ttradiobutton methods */
-     
-
-/* handy ttscrollbar methods */
-     
-
-/* handy ttbuttongroup methods */
-     
-
-/* handy ttwindow methods */
-         
-
-/* handy ttframe methods */
-     
-
-/* handy ttscroller methods */
+void TTSetUserData_ttobj(tt_obj o, ttany user_data);
+    
+ttuint TTGetEventsInprogress_ttobj(tt_obj o);
+  
+/* prototypes for handy ttevent methods */
         
-tt_obj TTGetScrollx_ttscroller(tt_obj o) {
-    return (tt_obj)(opaque)TTGetValue_ttobj(o, ttscroller_scrollx);
-}    
-tt_obj TTGetScrolly_ttscroller(tt_obj o) {
-    return (tt_obj)(opaque)TTGetValue_ttobj(o, ttscroller_scrolly);
-} 
-
-/* handy ttmenuitem methods */
+tt_obj TTGetCallback_ttevent(tt_obj o);
+    
+tt_obj TTGetComponent_ttevent(tt_obj o);
+    
+ttuint TTGetEvtype_ttevent(tt_obj o);
+    
+ttuint TTGetEvcode_ttevent(tt_obj o);
+    
+ttuint TTGetEvflags_ttevent(tt_obj o);
+    
+void TTConsume_ttevent(tt_obj o);
+ 
+/* prototypes for handy tteventbig methods */
+        
+ttshort TTGetX_tteventbig(tt_obj o);
+    
+ttshort TTGetY_tteventbig(tt_obj o);
+    
+ttshort TTGetW_tteventbig(tt_obj o);
+    
+ttshort TTGetH_tteventbig(tt_obj o);
+    
+ttuint TTGetLen_tteventbig(tt_obj o);
+    
+TT_CONST ttbyte * TTGetData_tteventbig(tt_obj o);
+ 
+/* prototypes for handy ttlistener methods */
+        
+ttuint TTGetLflags_ttlistener(tt_obj o);
+    
+tt_obj TTGetComponent_ttlistener(tt_obj o);
+    
+tt_obj TTGetPrev_ttlistener(tt_obj o);
+    
+tt_obj TTGetNext_ttlistener(tt_obj o);
+ 
+/* prototypes for handy ttcallback methods */
+    
+tt_obj TTGetAvlLeft_ttcallback(tt_obj o);
+    
+tt_obj TTGetAvlRight_ttcallback(tt_obj o);
+    
+tt_obj TTGetAvlParent_ttcallback(tt_obj o);
+            
+tt_obj TTGetEvent_ttcallback(tt_obj o);
+    
+ttuint TTGetNargComponent_ttcallback(tt_obj o);
+    
+ttuint TTGetNargEvent_ttcallback(tt_obj o);
+    
+ttuint TTGetNargs_ttcallback(tt_obj o);
+    
+ttcallback_fn TTGetFunction_ttcallback(tt_obj o);
+        
+TT_CONST ttany * TTGetArgs_ttcallback(tt_obj o);
+ 
+/* prototypes for handy ttcomponent methods */
+        
+tt_obj TTGetListeners_ttcomponent(tt_obj o);
+    
+tt_obj TTGetCallbacks_ttcomponent(tt_obj o);
+ 
+/* prototypes for handy ttvisible methods */
+        
+ttuint TTGetVflags_ttvisible(tt_obj o);
+    
+tt_obj TTGetPrev_ttvisible(tt_obj o);
+    
+tt_obj TTGetNext_ttvisible(tt_obj o);
+    
+tt_obj TTGetParent_ttvisible(tt_obj o);
+    
+tt_obj TTGetChildFirst_ttvisible(tt_obj o);
+    
+tt_obj TTGetChildLast_ttvisible(tt_obj o);
+    
+tt_obj TTGetTheme_ttvisible(tt_obj o);
+    
+ttvisible_repaint_fn TTGetRepaint_ttvisible(tt_obj o);
+ 
+/* prototypes for handy ttnative methods */
+     
+/* prototypes for handy ttwidget methods */
+        
+ttshort TTGetX_ttwidget(tt_obj o);
+    
+ttshort TTGetY_ttwidget(tt_obj o);
+    
+ttshort TTGetW_ttwidget(tt_obj o);
+    
+ttshort TTGetH_ttwidget(tt_obj o);
+    
+ttint TTGetXl_ttwidget(tt_obj o);
+    
+ttint TTGetYl_ttwidget(tt_obj o);
+ 
+/* prototypes for handy ttlabel methods */
+        
+ttshort TTGetTextLen_ttlabel(tt_obj o);
+        
+TT_CONST ttfont * TTGetText_ttlabel(tt_obj o);
+ 
+/* prototypes for handy ttanybutton methods */
+            
+ttshort TTGetTextWidth_ttanybutton(tt_obj o);
+    
+ttshort TTGetTextHeight_ttanybutton(tt_obj o);
+        
+TT_CONST ttfont * TTGetText_ttanybutton(tt_obj o);
+ 
+/* prototypes for handy ttbutton methods */
+     
+/* prototypes for handy ttcheckbutton methods */
+     
+/* prototypes for handy ttradiobutton methods */
+     
+/* prototypes for handy ttscrollbar methods */
+     
+/* prototypes for handy ttbuttongroup methods */
+     
+/* prototypes for handy ttwindow methods */
          
-
-/* handy ttcheckmenuitem methods */
+/* prototypes for handy ttframe methods */
      
-
-/* handy ttradiomenuitem methods */
+/* prototypes for handy ttscroller methods */
+        
+tt_obj TTGetScrollx_ttscroller(tt_obj o);
+    
+tt_obj TTGetScrolly_ttscroller(tt_obj o);
+ 
+/* prototypes for handy ttmenuitem methods */
+         
+/* prototypes for handy ttcheckmenuitem methods */
      
-
-/* handy ttmenu methods */
+/* prototypes for handy ttradiomenuitem methods */
+     
+/* prototypes for handy ttmenu methods */
     
     
-tt_obj TTGetMenubar_ttmenu(tt_obj o) {
-    return (tt_obj)(opaque)TTGetValue_ttobj(o, ttmenu_menubar);
-} 
-
-/* handy ttmenubar methods */
+tt_obj TTGetMenubar_ttmenu(tt_obj o);
+ 
+/* prototypes for handy ttmenubar methods */
      
-
-/* handy ttanytext methods */
+/* prototypes for handy ttanytext methods */
         
-ttshort TTGetTextLen_ttanytext(tt_obj o) {
-    return (ttshort)TTGetValue_ttobj(o, ttanytext_text_len);
-}        
-TT_CONST ttfont * TTGetText_ttanytext(tt_obj o) {
-    return (TT_CONST ttfont *)(opaque)TTGetValue_ttobj(o, ttanytext_text);
-} 
-
-/* handy tttextfield methods */
+ttshort TTGetTextLen_ttanytext(tt_obj o);
+        
+TT_CONST ttfont * TTGetText_ttanytext(tt_obj o);
+ 
+/* prototypes for handy tttextfield methods */
      
-
-/* handy tttextarea methods */
+/* prototypes for handy tttextarea methods */
      
-
-/* handy tttheme methods */
+/* prototypes for handy tttheme methods */
     
             
         
-TT_CONST ttbyte * TTGetName_tttheme(tt_obj o) {
-    return (TT_CONST ttbyte *)(opaque)TTGetValue_ttobj(o, tttheme_name);
-} 
-
-/* handy ttapplication methods */
+TT_CONST ttbyte * TTGetName_tttheme(tt_obj o);
+ 
+/* prototypes for handy ttapplication methods */
         
+ttbyte * TTGetName_ttapplication(tt_obj o);
 
 
 
@@ -724,8 +448,11 @@ typedef enum e_order_methods {
     order_Create_ttnative, 
     /* ttwidget methods */    
     order_SetXYWH_ttwidget,    
+    order_SetXlYl_ttwidget,    
     order_SetXY_ttwidget,    
-    order_SetWH_ttwidget, 
+    order_SetWH_ttwidget,    
+    order_SetXl_ttwidget,    
+    order_SetYl_ttwidget, 
     /* ttlabel methods */    
     order_SetText_ttlabel,    
     order_Create_ttlabel, 
@@ -821,7 +548,9 @@ typedef enum e_order_methods {
     order_GetX_ttwidget,    
     order_GetY_ttwidget,    
     order_GetW_ttwidget,    
-    order_GetH_ttwidget, 
+    order_GetH_ttwidget,    
+    order_GetXl_ttwidget,    
+    order_GetYl_ttwidget, 
     /* handy ttlabel methods */        
     order_GetTextLen_ttlabel,        
     order_GetText_ttlabel, 
@@ -856,6 +585,7 @@ typedef enum e_order_methods {
         
     order_GetName_tttheme, 
     /* handy ttapplication methods */        
+    order_GetName_ttapplication,
 
 
 
@@ -875,7 +605,7 @@ struct s_ttmethod {
 
 /* array for method callbacks */
 
-static struct s_ttmethod methods_array[] = {
+static struct s_ttmethod method_array[] = {
     /* generic functions */
     { order_ExitMainLoop, (void *)TTExitMainLoop, },
     { order_New, (void *)TTNew, },
@@ -915,8 +645,11 @@ static struct s_ttmethod methods_array[] = {
     { order_Create_ttnative, (void *)TTCreate_ttnative, }, 
     /* ttwidget methods */    
     { order_SetXYWH_ttwidget, (void *)TTSetXYWH_ttwidget, },    
+    { order_SetXlYl_ttwidget, (void *)TTSetXlYl_ttwidget, },    
     { order_SetXY_ttwidget, (void *)TTSetXY_ttwidget, },    
-    { order_SetWH_ttwidget, (void *)TTSetWH_ttwidget, }, 
+    { order_SetWH_ttwidget, (void *)TTSetWH_ttwidget, },    
+    { order_SetXl_ttwidget, (void *)TTSetXl_ttwidget, },    
+    { order_SetYl_ttwidget, (void *)TTSetYl_ttwidget, }, 
     /* ttlabel methods */    
     { order_SetText_ttlabel, (void *)TTSetText_ttlabel, },    
     { order_Create_ttlabel, (void *)TTCreate_ttlabel, }, 
@@ -1010,7 +743,9 @@ static struct s_ttmethod methods_array[] = {
     { order_GetX_ttwidget, (void *)TTGetX_ttwidget, },    
     { order_GetY_ttwidget, (void *)TTGetY_ttwidget, },    
     { order_GetW_ttwidget, (void *)TTGetW_ttwidget, },    
-    { order_GetH_ttwidget, (void *)TTGetH_ttwidget, }, 
+    { order_GetH_ttwidget, (void *)TTGetH_ttwidget, },    
+    { order_GetXl_ttwidget, (void *)TTGetXl_ttwidget, },    
+    { order_GetYl_ttwidget, (void *)TTGetYl_ttwidget, }, 
     /* handy ttlabel methods */        
     { order_GetTextLen_ttlabel, (void *)TTGetTextLen_ttlabel, },        
     { order_GetText_ttlabel, (void *)TTGetText_ttlabel, }, 
@@ -1045,6 +780,7 @@ static struct s_ttmethod methods_array[] = {
         
     { order_GetName_tttheme, (void *)TTGetName_tttheme, }, 
     /* handy ttapplication methods */        
+    { order_GetName_ttapplication, (void *)TTGetName_ttapplication, },
 
 
 
@@ -1053,7 +789,7 @@ static struct s_ttmethod methods_array[] = {
 
 };
 
-static ttbyte methods_needsort = TRUE;
+static ttbyte method_needsort = TRUE;
 
 static int CompareMethods(TT_CONST ttmethod m1, TT_CONST ttmethod m2) {
     return (int)((byte *)m1->mth - (byte *)m2->mth);
@@ -1065,15 +801,15 @@ static int CompareMethods(TT_CONST ttmethod m1, TT_CONST ttmethod m2) {
 static opaque Method2Order(void *method) {
     s_ttmethod key, *m;
     
-    if (methods_needsort) {
-	methods_needsort = FALSE;
-	qsort(methods_array, order_FN_n, sizeof(struct s_ttmethod),
+    if (method_needsort) {
+	method_needsort = FALSE;
+	qsort(method_array, order_FN_n, sizeof(struct s_ttmethod),
 	      (int (*)(TT_CONST void *, TT_CONST void *))CompareMethods);
     }
     
     key.mth = method;
     
-    if ((m = bsearch(&key, methods_array, order_FN_n, sizeof(struct s_ttmethod),
+    if ((m = bsearch(&key, method_array, order_FN_n, sizeof(struct s_ttmethod),
 	             (int (*)(TT_CONST void *, TT_CONST void *))CompareMethods))) {
 	return m->mtho;
     }
@@ -1117,8 +853,8 @@ static void CallMethod(ttuint order, ttuint nargs, TT_CONST ttany *a) {
     /* ttobj methods */
                                     
       case order_GetValue_ttobj:
-	if (nargs >= 2)
-	    TTGetValue_ttobj((tt_obj)(opaque)a[0], (ttuint)a[1]);
+	if (nargs >= 3)
+	    TTGetValue_ttobj((tt_obj)(opaque)a[0], (ttuint)a[1], (ttany *)(opaque)a[2]);
 	break;    
       case order_SetValue_ttobj:
 	if (nargs >= 3)
@@ -1168,7 +904,7 @@ static void CallMethod(ttuint order, ttuint nargs, TT_CONST ttany *a) {
 	break;    
       case order_CreateV_ttcallback:
 	if (nargs >= 8)
-	    TTCreateV_ttcallback((tt_obj)(opaque)a[0], (tt_obj)(opaque)a[1], (ttuint)a[2], (ttuint)a[3], (ttuint)a[4], (ttuint)a[5], (ttcallback_fn)(opaque)a[6], (va_list)a[7]);
+	    TTCreateV_ttcallback((tt_obj)(opaque)a[0], (tt_obj)(opaque)a[1], (ttuint)a[2], (ttuint)a[3], (ttuint)a[4], (ttuint)a[5], (ttcallback_fn)(opaque)a[6], (va_list *)(opaque)a[7]);
 	break;
  
     /* ttcomponent methods */
@@ -1226,6 +962,10 @@ static void CallMethod(ttuint order, ttuint nargs, TT_CONST ttany *a) {
 	if (nargs >= 6)
 	    TTSetXYWH_ttwidget((tt_obj)(opaque)a[0], (ttbyte)a[1], (ttshort)a[2], (ttshort)a[3], (ttshort)a[4], (ttshort)a[5]);
 	break;    
+      case order_SetXlYl_ttwidget:
+	if (nargs >= 4)
+	    TTSetXlYl_ttwidget((tt_obj)(opaque)a[0], (ttbyte)a[1], (ttint)a[2], (ttint)a[3]);
+	break;    
       case order_SetXY_ttwidget:
 	if (nargs >= 3)
 	    TTSetXY_ttwidget((tt_obj)(opaque)a[0], (ttshort)a[1], (ttshort)a[2]);
@@ -1233,6 +973,14 @@ static void CallMethod(ttuint order, ttuint nargs, TT_CONST ttany *a) {
       case order_SetWH_ttwidget:
 	if (nargs >= 3)
 	    TTSetWH_ttwidget((tt_obj)(opaque)a[0], (ttshort)a[1], (ttshort)a[2]);
+	break;    
+      case order_SetXl_ttwidget:
+	if (nargs >= 2)
+	    TTSetXl_ttwidget((tt_obj)(opaque)a[0], (ttint)a[1]);
+	break;    
+      case order_SetYl_ttwidget:
+	if (nargs >= 2)
+	    TTSetYl_ttwidget((tt_obj)(opaque)a[0], (ttint)a[1]);
 	break;
  
     /* ttlabel methods */
@@ -1361,7 +1109,7 @@ static void CallMethod(ttuint order, ttuint nargs, TT_CONST ttany *a) {
     /* handy ttcomponent methods */             
     /* handy ttvisible methods */                                     
     /* handy ttnative methods */     
-    /* handy ttwidget methods */                     
+    /* handy ttwidget methods */                             
     /* handy ttlabel methods */                 
     /* handy ttanybutton methods */                         
     /* handy ttbutton methods */     

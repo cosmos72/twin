@@ -63,19 +63,20 @@ define(`DEF_DEFAULT_GetValue', `
 `'TTdef_$1($1,$1)`'dnl
 `'ifelse(this_count, 0, `', `
 `'define(`mtd_GetValue_$1')`'dnl
-'static ttany target()_GetValue_$1($1 o, ttuint which) {
-    if (o && TTAssert(IS($1,o))) {
-	switch (which) {
+'static ttbyte target()_GetValue_$1($1 o, ttuint which, ttany *value) {
+    if (which && which < this`'_field_last && o && TTAssert(IS($1,o))) {
+	if (which > this`'_field_first) switch (which) {
 `'define(`exported', `ifelse($'`3, get, `
 	  case this`'_'$'`4`:
-	    return (ttany)opaque_ifpointer('$'`1`)obj2id_ifdecay('$'`1`, o->'$'`4`);', `')')`'dnl
+	    *value = (ttany)opaque_ifpointer('$'`1`)obj2id_ifdecay('$'`1`, o->'$'`4`);
+	    return TRUE;', `')')`'dnl
 `'define(`field', `wrap_export($'`@)')`'dnl
 `'TTdef_$1($1,$1)
-	  default:
-	    ifelse($1, ttobj, `break;', `return FNSUPER($1)->GetValue((m4super_$1)o, which);')
 	}
+	ifelse($1, ttobj, `', `else
+	    return FNSUPER($1)->GetValue((m4super_$1)o, which, value);')
     }
-    return (ttany)0;
+    return FALSE;
 })`'dnl
 `'define(`field')`'dnl
 `'define(`exported')`'dnl
@@ -101,9 +102,7 @@ define(`DECL_COMMON', `
 #include "TTextern.h"
 #include "TTassert.h"
 
-ifelse(target, `dummy', `', `
 #include "utils.h"
-')
 #include "inlines.h"
 #include "seterrno.h"
 #include "theme.h"
@@ -131,13 +130,13 @@ undefine(`el')
 /*
  * use default values for methods not implemented in hw_`'target()_c
  *
- * dummy display `target' MUST IMPLEMENT ALL METHODS, even if as stubs.
+ * null display `target' MUST IMPLEMENT ALL METHODS, even if as stubs.
  */
 
 define(`hardfall', `
 `#'error: undefined $1')
 
-define(`fall', `ifelse(target(), `dummy', `hardfall($1)', `NULL /* WARNING: undefined $1 */')')
+define(`fall', `ifelse(target(), `null', `hardfall($1)', `NULL /* WARNING: undefined $1 */')')
 
 define(`extends',`TTFNdef_$1($2)
     TFN_$1,

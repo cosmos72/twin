@@ -7,7 +7,7 @@
 
 
 /*
- *  defsm4.h  --  public header for libTT types declarations
+ *  defs_m4.h  --  public header for libTT types declarations
  *
  *  Copyright (C) 2001 by Massimiliano Ghilardi
  *
@@ -125,7 +125,7 @@ extern ttfn	TTFN_ttfn;
 #define TTsuper_ttcomponent	ttobj         
 #define TTsuper_ttvisible	ttcomponent                                 
 #define TTsuper_ttnative	ttvisible 
-#define TTsuper_ttwidget	ttvisible                 
+#define TTsuper_ttwidget	ttvisible                         
 #define TTsuper_ttlabel	ttwidget         
 #define TTsuper_ttanybutton	ttwidget                 
 #define TTsuper_ttbutton	ttanybutton 
@@ -166,9 +166,9 @@ extern ttfn	TTFN_ttfn;
 
 
 /* ttobj public and exported methods */                                
-ttany TTGetValue_ttobj(ttobj o, ttuint which);    
-void TTSetValue_ttobj(ttobj o, ttuint which, ttany value);    
-void TTChangeValue_ttobj(ttobj o, ttuint which, ttany nand_value, ttany xor_value);    
+ttbyte TTGetValue_ttobj(ttobj o, ttuint which, ttany *value);    
+ttbyte TTSetValue_ttobj(ttobj o, ttuint which, ttany value);    
+ttbyte TTChangeValue_ttobj(ttobj o, ttuint which, ttany nand_value, ttany xor_value);    
 void TTRef_ttobj(ttobj o);    
 void TTUnref_ttobj(ttobj o);  
 
@@ -185,7 +185,7 @@ tteventbig TTCreate_tteventbig(ttuint evtype, ttuint evcode, ttuint evflags     
 /* ttcallback public and exported methods */    
 ttcallback TTCreate_ttcallback(ttcomponent o, ttuint evtype, ttuint flags, ttcallback_fn function, ttany arg);    
 ttcallback TTCreateA_ttcallback(ttcomponent o, ttevent ev, ttuint flags, ttuint narg_component, ttuint narg_event, ttuint nargs, ttcallback_fn function, ttany TT_CONST *args);    
-ttcallback TTCreateV_ttcallback(ttcomponent o, ttevent ev, ttuint flags, ttuint narg_component, ttuint narg_event, ttuint nargs, ttcallback_fn function, va_list vargs); 
+ttcallback TTCreateV_ttcallback(ttcomponent o, ttevent ev, ttuint flags, ttuint narg_component, ttuint narg_event, ttuint nargs, ttcallback_fn function, va_list *vargs); 
 
 /* ttcomponent public and exported methods */ 
 
@@ -205,8 +205,11 @@ ttnative TTCreate_ttnative(ttany);
 
 /* ttwidget public and exported methods */    
 void TTSetXYWH_ttwidget(ttwidget o, ttuint mask, ttshort x, ttshort y, ttshort w, ttshort h);    
+void TTSetXlYl_ttwidget(ttwidget o, ttuint mask, ttint xl, ttint yl);    
 void TTSetXY_ttwidget(ttwidget o, ttshort x, ttshort y);    
-void TTSetWH_ttwidget(ttwidget o, ttshort w, ttshort h); 
+void TTSetWH_ttwidget(ttwidget o, ttshort w, ttshort h);    
+void TTSetXl_ttwidget(ttwidget o, ttint xl);    
+void TTSetYl_ttwidget(ttwidget o, ttint yl); 
 
 /* ttlabel public and exported methods */    
 ttbyte TTSetText_ttlabel(ttlabel o, TT_CONST ttbyte * text);    

@@ -4,6 +4,11 @@
 TOPDIR=../../..
 THISDIR=$(TOPDIR)/libs/libTT/HW
 
+#
+# where to install modules (relative to $(libdir))
+#
+INSTALLSUBDIR=TT/HW
+
 SUBDIRS=
 
 include ../makeversion
@@ -11,33 +16,35 @@ include ../makeversion
 all: everything
 
 BINS=
-MODBINS=
+SHLIBS=
 ARLIBS=
-COLLECTS=hw_u.lst
+CLLIBS=hw.lst
 
-ALLBINS=$(ARLIBS) $(BINS) $(MODBINS) $(COLLECTS)
-ALLBINS_FULL=hw.lst hw_u.lst hw_twin.so.$(VERSION) hw_gtk.so.$(VERSION)
+ALLBINS=$(BINS) $(MODS) $(SHLIBS) $(ARLIBS) $(CLLIBS)
+ALLBINS_FULL=hw_l.lst hw.lst hw_twin.la hw_gtk.la
 
-HWOBJS=
-HWOBJS_u=
+HWOBJS=hw_null_m4.o
+HWOBJS_l=hw_null_m4.lo
+
 TWINOBJS=hw_twin_m4.o
-TWINOBJS_u=hw_twin_m4_u.o
+TWINOBJS_l=hw_twin_m4.lo
 GTKOBJS=hw_gtk_m4.o
-GTKOBJS_u=hw_gtk_m4_u.o
+GTKOBJS_l=hw_gtk_m4.lo
 
 OBJS_hw.lst=$(HWOBJS)
-OBJS_hw_u.lst=$(HWOBJS_u)
-OBJS_hw_twin.so.$(VERSION)=$(TWINOBJS)
-OBJS_hw_gtk.so.$(VERSION)=$(GTKOBJS)
+OBJS_hw_l.lst=$(HWOBJS_l)
+OBJS_hw_twin.la=$(TWINOBJS_l)
+OBJS_hw_gtk.la=$(GTKOBJS_l)
+
+ALLOBJS=$(HWOBJS) $(HWOBJS_l) $(TWINOBJS) $(TWINOBJS_l) $(GTKOBJS) $(GTKOBJS_l)
 
 CC_FLAGS+=-I.. -D_REENTRANT
 
-CC_FLAGS_hw_gtk_m4.o+=-fPIC $(CF_HEADERGTK)
-CC_FLAGS_hw_gtk_m4_u.o+=$(CF_HEADERGTK)
-LD_FLAGS_hw_gtk.so.$(VERSION)=$(LD_FLAGS_SOLIB) $(LD_LIBGTK)
+CC_FLAGS_hw_gtk_m4.lo+=$(CF_HEADERGTK)
+CC_FLAGS_hw_gtk_m4.o+=$(CF_HEADERGTK)
+LD_FLAGS_hw_gtk.la=$(LD_LIBGTK)
 
-CC_FLAGS_hw_twin_m4.o+=-fPIC
-LD_FLAGS_hw_twin.so.$(VERSION)=$(LD_FLAGS_SOLIB) $(LD_LIBTW)
+LD_FLAGS_hw_twin.la=$(LD_LIBTW)
 
 -include $(TOPDIR)/conf/conf.current
 -include .modules
@@ -45,7 +52,7 @@ LD_FLAGS_hw_twin.so.$(VERSION)=$(LD_FLAGS_SOLIB) $(LD_LIBTW)
 -include $(TOPDIR)/.hdepend
 
 ifeq ($(CONF__SHLIBS),y)
-  COLLECTS+=hw.lst
+  CLLIBS+=hw_l.lst
 endif
 
 #
@@ -57,23 +64,21 @@ endif
 
 ifeq ($(CONF_TT_HW_TWIN),y)
   HWOBJS+=$(TWINOBJS)
-  HWOBJS_u+=$(TWINOBJS_u)
+  HWOBJS_l+=$(TWINOBJS_l)
 else
   ifeq ($(CONF_TT_HW_TWIN),m)
-    MODBINS+=hw_twin.so.$(VERSION)
-  else
-    EXCL_OBJS+=$(TWINOBJS)
+    MODS+=hw_twin.la
+    CC_FLAGS_hw_twin_m4.o+=-DTHIS_MODULE
   endif
 endif
 
 ifeq ($(CONF_TT_HW_GTK),y)
   HWOBJS+=$(GTKOBJS)
-  HWOBJS_u+=$(GTKOBJS_u)
+  HWOBJS_l+=$(GTKOBJS_l)
 else
   ifeq ($(CONF_TT_HW_GTK),m)
-    MODBINS+=hw_gtk.so.$(VERSION)
-  else
-    EXCL_OBJS+=$(GTKOBJS)
+    MODS+=hw_gtk.la
+    CC_FLAGS_hw_gtk_m4.o+=-DTHIS_MODULE
   endif
 endif
 
@@ -81,10 +86,10 @@ endif
 ifeq ($(CONF__MODULES),n)
   everything:
 	@rm -f $(filter-out $(ALLBINS), $(ALLBINS_FULL)) ; \
-	 $(ECHO) ; \
-	 $(ECHO) "You disabled \"Enable modules (ELF)\", so only" ; \
-	 $(ECHO) "the static display targets $(COLLECTS) will be compiled!" ; \
-	 $(ECHO)
+	 echo ; \
+	 echo "You disabled \"Enable modules (ELF)\", so only" ; \
+	 echo "the built-in display targets $(CLLIBS) will be compiled!" ; \
+	 echo
 endif
 
 
@@ -94,7 +99,7 @@ endif
 #
 include $(TOPDIR)/makerules
 
-everything: $(ALLBINS)
+everything: $(ALLBINS) links
 
 hw_%_m4.c: m4/hw.m4h hw_%_c $(wildcard m4/*.m4h $(TOPDIR)/include/m4/*.m4h)
 	$(M4) '-Dtarget=$*' -I$(TOPDIR)/include $< > $@
@@ -106,21 +111,15 @@ hw_%_m4.c: m4/hw.m4h hw_%_c $(wildcard m4/*.m4h $(TOPDIR)/include/m4/*.m4h)
 
 do-autogen: $(patsubst hw_%_c,hw_%_m4.c,$(wildcard hw_*_c))
 
-install: install-real
+links: $(patsubst %.la,%.so.$(SHLIBS_VER),$(MODS))
 
-install-fake:
-	@echo ; \
-	 echo "libTT display targets will not be installed," ; \
-	 echo "since they are still experimental." ; \
-	 echo
+install-dir:
+	$(INSTALL-DIR) $(DESTDIR)$(libdir)/TT/HW
 
-install-real:
-	if [ "$(MODBINS)" ]; then \
-	  $(INSTALL) -d $(DESTDIR)$(libdir)/TT/HW; \
-	  $(INSTALL) $(MODBINS) $(DESTDIR)$(libdir)/TT/HW; \
-	fi
+install: install-dir $(foreach M,$(MODS),install-mod-$(M))
 	
 clean:
-	rm -f .*.flags .*.link .*.arlib .*.collect hw_*.o hw_*.so.* hw*.lst
+	rm -f .*.flags .*.mod .*.shlib .*.arlib .*.cllib *.la hw_*.o hw_*.lo hw_*.so.* hw*.lst ; \
+	rm -fr .libs
 
 

@@ -1,3 +1,24 @@
+From 0.4.2 to 0.4.3: (Massimiliano Ghilardi, 09 Jun 2002)
+	* Fixed various compile errors on non Linux/i386 architectures
+	  (Linux/<any>, FreeBSD/i386, SunOS/sparc).
+	* Fixed a bug in rcparse.y causing colors not to be read correctly
+	  from ~/.twinrc on big-endian machines.
+	* Fixed compile error if hw_display was configured as built-in.
+	* Fixed non-working twlsobj (bug introduced in 0.4.2).
+	* Fixed twin not detecting resizes of controlling tty used as
+	  display (with `-hw=tty'; bug introduced in 0.4.1).
+	* Added `libtool' support. Twin now uses GNU `libtool' to build
+	  shared libraries. A few portability issues remain due to incomplete
+	  inter-library dependency support in libtool 1.3.5.
+	* Added detailed libTT error reporting about failed display targets.
+	* Various libTT tweaks.
+	* Changed twterm to default to latin1 charset after reset
+	  if unicode is enabled.
+	* Changed ./configure to check for various gcc-compatible extensions
+	  and moved OS-specific settings from makerules -> makeosvalues
+	  to configure -> makeautoconf.
+	* Changed twdm install path from ${exec_prefix}/bin to ${exec_prefix}/sbin
+	  
 From 0.4.1 to 0.4.2: (Massimiliano Ghilardi, 26 May 2002)
 	* Finished nested menus support.
 	* Continued libTT: it now begins being usable, even if not 100% complete yet.
@@ -127,7 +148,7 @@ From 0.3.9 to 0.3.10: (Massimiliano Ghilardi, 31 Jul 2001)
 	* Added `-secure' option to twin, forbids starting external programs
 	  (used by `twdm' to stop users from opening root shells).
 	* Merged include/sockprotolist.h and libs/libTw/listmacros.h
-	  into include/socklistm4.h
+	  into include/socklist_m4.h
 	* Started writing libTT, `The Text Toolkit' library.
 	* Fixed some more build problems on FreeBSD and SunOS.
 	  Disabled threads on FreeBSD since cause clients to segfault.

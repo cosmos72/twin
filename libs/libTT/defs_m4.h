@@ -7,9 +7,9 @@
 
 
 /*
- *  defsm4.h  --  INTERNAL (!!) header for libTT types declarations
+ *  defs_m4.h  --  INTERNAL (!!) header for libTT types declarations
  *
- *  Note: you cannot include both this file and <TT/defsm4.h>, as they conflict!
+ *  Note: you cannot include both this file and <TT/defs_m4.h>, as they conflict!
  */
 
 #ifndef _TT_DEFSM4_H
@@ -43,7 +43,7 @@
 #define super_ttcomponent	ttobj         
 #define super_ttvisible	ttcomponent                                 
 #define super_ttnative	ttvisible 
-#define super_ttwidget	ttvisible                 
+#define super_ttwidget	ttvisible                         
 #define super_ttlabel	ttwidget         
 #define super_ttanybutton	ttwidget                 
 #define super_ttbutton	ttanybutton 
@@ -329,6 +329,8 @@ typedef struct s_ttwidget {
     ttshort y;
     ttshort w;
     ttshort h;
+    ttint xl;
+    ttint yl;
 } s_ttwidget;
  
 typedef struct s_ttlabel {
@@ -357,6 +359,8 @@ typedef struct s_ttlabel {
     ttshort y;
     ttshort w;
     ttshort h;
+    ttint xl;
+    ttint yl;
     /* extends ttwidget */
     ttshort text_len;
     ttfont * text;
@@ -388,6 +392,8 @@ typedef struct s_ttanybutton {
     ttshort y;
     ttshort w;
     ttshort h;
+    ttint xl;
+    ttint yl;
     /* extends ttwidget */
     ttfont * text;
     ttshort text_width;
@@ -421,6 +427,8 @@ typedef struct s_ttbutton {
     ttshort y;
     ttshort w;
     ttshort h;
+    ttint xl;
+    ttint yl;
     /* extends ttwidget */
     ttfont * text;
     ttshort text_width;
@@ -455,6 +463,8 @@ typedef struct s_ttcheckbutton {
     ttshort y;
     ttshort w;
     ttshort h;
+    ttint xl;
+    ttint yl;
     /* extends ttwidget */
     ttfont * text;
     ttshort text_width;
@@ -490,6 +500,8 @@ typedef struct s_ttradiobutton {
     ttshort y;
     ttshort w;
     ttshort h;
+    ttint xl;
+    ttint yl;
     /* extends ttwidget */
     ttfont * text;
     ttshort text_width;
@@ -526,6 +538,8 @@ typedef struct s_ttscrollbar {
     ttshort y;
     ttshort w;
     ttshort h;
+    ttint xl;
+    ttint yl;
     /* extends ttwidget */
     ttfont * text;
     ttshort text_width;
@@ -575,6 +589,8 @@ typedef struct s_ttwindow {
     ttshort y;
     ttshort w;
     ttshort h;
+    ttint xl;
+    ttint yl;
     /* extends ttwidget */
     ttmenubar menubar;
 } s_ttwindow;
@@ -605,6 +621,8 @@ typedef struct s_ttframe {
     ttshort y;
     ttshort w;
     ttshort h;
+    ttint xl;
+    ttint yl;
     /* extends ttwidget */
     ttmenubar menubar;
     /* extends ttwindow */
@@ -636,6 +654,8 @@ typedef struct s_ttscroller {
     ttshort y;
     ttshort w;
     ttshort h;
+    ttint xl;
+    ttint yl;
     /* extends ttwidget */
     ttmenubar menubar;
     /* extends ttwindow */
@@ -799,6 +819,8 @@ typedef struct s_ttanytext {
     ttshort y;
     ttshort w;
     ttshort h;
+    ttint xl;
+    ttint yl;
     /* extends ttwidget */
     ttmenubar menubar;
     /* extends ttwindow */
@@ -832,6 +854,8 @@ typedef struct s_tttextfield {
     ttshort y;
     ttshort w;
     ttshort h;
+    ttint xl;
+    ttint yl;
     /* extends ttwidget */
     ttmenubar menubar;
     /* extends ttwindow */
@@ -866,6 +890,8 @@ typedef struct s_tttextarea {
     ttshort y;
     ttshort w;
     ttshort h;
+    ttint xl;
+    ttint yl;
     /* extends ttwidget */
     ttmenubar menubar;
     /* extends ttwindow */
@@ -932,9 +958,9 @@ typedef struct s_ttfn_ttobj {
     ttobj (*Build)(ttobj o);
     void (*Break)(ttobj o);
     void (*Del)(ttobj);
-    ttany (*GetValue)(ttobj o, ttuint which);
-    void (*SetValue)(ttobj o, ttuint which, ttany value);
-    void (*ChangeValue)(ttobj o, ttuint which, ttany nand_value, ttany xor_value);
+    ttbyte (*GetValue)(ttobj o, ttuint which, ttany *value);
+    ttbyte (*SetValue)(ttobj o, ttuint which, ttany value);
+    ttbyte (*ChangeValue)(ttobj o, ttuint which, ttany nand_value, ttany xor_value);
         
 } s_ttfn_ttobj;
   
@@ -947,9 +973,9 @@ typedef struct s_ttfn_ttevent {
     ttevent (*Build)(ttevent o);
     void (*Break)(ttevent o);
     void (*Del)(ttevent);
-    ttany (*GetValue)(ttevent o, ttuint which);
-    void (*SetValue)(ttevent o, ttuint which, ttany value);
-    void (*ChangeValue)(ttevent o, ttuint which, ttany nand_value, ttany xor_value);
+    ttbyte (*GetValue)(ttevent o, ttuint which, ttany *value);
+    ttbyte (*SetValue)(ttevent o, ttuint which, ttany value);
+    ttbyte (*ChangeValue)(ttevent o, ttuint which, ttany nand_value, ttany xor_value);
         
     ttfn_ttobj FN_ttobj;
     
@@ -964,9 +990,9 @@ typedef struct s_ttfn_tteventbig {
     tteventbig (*Build)(tteventbig o);
     void (*Break)(tteventbig o);
     void (*Del)(tteventbig);
-    ttany (*GetValue)(tteventbig o, ttuint which);
-    void (*SetValue)(tteventbig o, ttuint which, ttany value);
-    void (*ChangeValue)(tteventbig o, ttuint which, ttany nand_value, ttany xor_value);
+    ttbyte (*GetValue)(tteventbig o, ttuint which, ttany *value);
+    ttbyte (*SetValue)(tteventbig o, ttuint which, ttany value);
+    ttbyte (*ChangeValue)(tteventbig o, ttuint which, ttany nand_value, ttany xor_value);
         
     ttfn_ttobj FN_ttobj;
     
@@ -984,9 +1010,9 @@ typedef struct s_ttfn_ttlistener {
     ttlistener (*Build)(ttlistener o);
     void (*Break)(ttlistener o);
     void (*Del)(ttlistener);
-    ttany (*GetValue)(ttlistener o, ttuint which);
-    void (*SetValue)(ttlistener o, ttuint which, ttany value);
-    void (*ChangeValue)(ttlistener o, ttuint which, ttany nand_value, ttany xor_value);
+    ttbyte (*GetValue)(ttlistener o, ttuint which, ttany *value);
+    ttbyte (*SetValue)(ttlistener o, ttuint which, ttany value);
+    ttbyte (*ChangeValue)(ttlistener o, ttuint which, ttany nand_value, ttany xor_value);
         
     ttfn_ttobj FN_ttobj;
 
@@ -1003,9 +1029,9 @@ typedef struct s_ttfn_ttcallback {
     ttcallback (*Build)(ttcallback o);
     void (*Break)(ttcallback o);
     void (*Del)(ttcallback);
-    ttany (*GetValue)(ttcallback o, ttuint which);
-    void (*SetValue)(ttcallback o, ttuint which, ttany value);
-    void (*ChangeValue)(ttcallback o, ttuint which, ttany nand_value, ttany xor_value);
+    ttbyte (*GetValue)(ttcallback o, ttuint which, ttany *value);
+    ttbyte (*SetValue)(ttcallback o, ttuint which, ttany value);
+    ttbyte (*ChangeValue)(ttcallback o, ttuint which, ttany nand_value, ttany xor_value);
         
     ttfn_ttobj FN_ttobj;
 
@@ -1024,9 +1050,9 @@ typedef struct s_ttfn_ttcomponent {
     ttcomponent (*Build)(ttcomponent o);
     void (*Break)(ttcomponent o);
     void (*Del)(ttcomponent);
-    ttany (*GetValue)(ttcomponent o, ttuint which);
-    void (*SetValue)(ttcomponent o, ttuint which, ttany value);
-    void (*ChangeValue)(ttcomponent o, ttuint which, ttany nand_value, ttany xor_value);
+    ttbyte (*GetValue)(ttcomponent o, ttuint which, ttany *value);
+    ttbyte (*SetValue)(ttcomponent o, ttuint which, ttany value);
+    ttbyte (*ChangeValue)(ttcomponent o, ttuint which, ttany nand_value, ttany xor_value);
         
     ttfn_ttobj FN_ttobj;
 
@@ -1041,9 +1067,9 @@ typedef struct s_ttfn_ttvisible {
     ttvisible (*Build)(ttvisible o);
     void (*Break)(ttvisible o);
     void (*Del)(ttvisible);
-    ttany (*GetValue)(ttvisible o, ttuint which);
-    void (*SetValue)(ttvisible o, ttuint which, ttany value);
-    void (*ChangeValue)(ttvisible o, ttuint which, ttany nand_value, ttany xor_value);
+    ttbyte (*GetValue)(ttvisible o, ttuint which, ttany *value);
+    ttbyte (*SetValue)(ttvisible o, ttuint which, ttany value);
+    ttbyte (*ChangeValue)(ttvisible o, ttuint which, ttany nand_value, ttany xor_value);
         
     ttfn_ttobj FN_ttobj;
 
@@ -1065,9 +1091,9 @@ typedef struct s_ttfn_ttnative {
     ttnative (*Build)(ttnative o);
     void (*Break)(ttnative o);
     void (*Del)(ttnative);
-    ttany (*GetValue)(ttnative o, ttuint which);
-    void (*SetValue)(ttnative o, ttuint which, ttany value);
-    void (*ChangeValue)(ttnative o, ttuint which, ttany nand_value, ttany xor_value);
+    ttbyte (*GetValue)(ttnative o, ttuint which, ttany *value);
+    ttbyte (*SetValue)(ttnative o, ttuint which, ttany value);
+    ttbyte (*ChangeValue)(ttnative o, ttuint which, ttany nand_value, ttany xor_value);
         
     ttfn_ttobj FN_ttobj;
 
@@ -1092,9 +1118,9 @@ typedef struct s_ttfn_ttwidget {
     ttwidget (*Build)(ttwidget o);
     void (*Break)(ttwidget o);
     void (*Del)(ttwidget);
-    ttany (*GetValue)(ttwidget o, ttuint which);
-    void (*SetValue)(ttwidget o, ttuint which, ttany value);
-    void (*ChangeValue)(ttwidget o, ttuint which, ttany nand_value, ttany xor_value);
+    ttbyte (*GetValue)(ttwidget o, ttuint which, ttany *value);
+    ttbyte (*SetValue)(ttwidget o, ttuint which, ttany value);
+    ttbyte (*ChangeValue)(ttwidget o, ttuint which, ttany nand_value, ttany xor_value);
         
     ttfn_ttobj FN_ttobj;
 
@@ -1107,7 +1133,8 @@ typedef struct s_ttfn_ttwidget {
             
     ttfn_ttvisible FN_ttvisible;
     void (*SetXYWH)(ttwidget o, ttuint mask, ttshort x, ttshort y, ttshort w, ttshort h);
-        
+    void (*SetXlYl)(ttwidget o, ttuint mask, ttint xl, ttint yl);
+                
 } s_ttfn_ttwidget;
  
 typedef struct s_ttfn_ttlabel {
@@ -1119,9 +1146,9 @@ typedef struct s_ttfn_ttlabel {
     ttlabel (*Build)(ttlabel o);
     void (*Break)(ttlabel o);
     void (*Del)(ttlabel);
-    ttany (*GetValue)(ttlabel o, ttuint which);
-    void (*SetValue)(ttlabel o, ttuint which, ttany value);
-    void (*ChangeValue)(ttlabel o, ttuint which, ttany nand_value, ttany xor_value);
+    ttbyte (*GetValue)(ttlabel o, ttuint which, ttany *value);
+    ttbyte (*SetValue)(ttlabel o, ttuint which, ttany value);
+    ttbyte (*ChangeValue)(ttlabel o, ttuint which, ttany nand_value, ttany xor_value);
         
     ttfn_ttobj FN_ttobj;
 
@@ -1134,7 +1161,8 @@ typedef struct s_ttfn_ttlabel {
             
     ttfn_ttvisible FN_ttvisible;
     void (*SetXYWH)(ttlabel o, ttuint mask, ttshort x, ttshort y, ttshort w, ttshort h);
-        
+    void (*SetXlYl)(ttlabel o, ttuint mask, ttint xl, ttint yl);
+                
     ttfn_ttwidget FN_ttwidget;
     ttbyte (*SetText)(ttlabel o, TT_CONST ttbyte * text);
     
@@ -1149,9 +1177,9 @@ typedef struct s_ttfn_ttanybutton {
     ttanybutton (*Build)(ttanybutton o);
     void (*Break)(ttanybutton o);
     void (*Del)(ttanybutton);
-    ttany (*GetValue)(ttanybutton o, ttuint which);
-    void (*SetValue)(ttanybutton o, ttuint which, ttany value);
-    void (*ChangeValue)(ttanybutton o, ttuint which, ttany nand_value, ttany xor_value);
+    ttbyte (*GetValue)(ttanybutton o, ttuint which, ttany *value);
+    ttbyte (*SetValue)(ttanybutton o, ttuint which, ttany value);
+    ttbyte (*ChangeValue)(ttanybutton o, ttuint which, ttany nand_value, ttany xor_value);
         
     ttfn_ttobj FN_ttobj;
 
@@ -1164,7 +1192,8 @@ typedef struct s_ttfn_ttanybutton {
             
     ttfn_ttvisible FN_ttvisible;
     void (*SetXYWH)(ttanybutton o, ttuint mask, ttshort x, ttshort y, ttshort w, ttshort h);
-        
+    void (*SetXlYl)(ttanybutton o, ttuint mask, ttint xl, ttint yl);
+                
     ttfn_ttwidget FN_ttwidget;
     ttbyte (*SetText)(ttanybutton o, TT_CONST ttfont * text, ttshort width, ttshort height, ttshort pitch);
     
@@ -1179,9 +1208,9 @@ typedef struct s_ttfn_ttbutton {
     ttbutton (*Build)(ttbutton o);
     void (*Break)(ttbutton o);
     void (*Del)(ttbutton);
-    ttany (*GetValue)(ttbutton o, ttuint which);
-    void (*SetValue)(ttbutton o, ttuint which, ttany value);
-    void (*ChangeValue)(ttbutton o, ttuint which, ttany nand_value, ttany xor_value);
+    ttbyte (*GetValue)(ttbutton o, ttuint which, ttany *value);
+    ttbyte (*SetValue)(ttbutton o, ttuint which, ttany value);
+    ttbyte (*ChangeValue)(ttbutton o, ttuint which, ttany nand_value, ttany xor_value);
         
     ttfn_ttobj FN_ttobj;
 
@@ -1194,7 +1223,8 @@ typedef struct s_ttfn_ttbutton {
             
     ttfn_ttvisible FN_ttvisible;
     void (*SetXYWH)(ttbutton o, ttuint mask, ttshort x, ttshort y, ttshort w, ttshort h);
-        
+    void (*SetXlYl)(ttbutton o, ttuint mask, ttint xl, ttint yl);
+                
     ttfn_ttwidget FN_ttwidget;
     ttbyte (*SetText)(ttbutton o, TT_CONST ttfont * text, ttshort width, ttshort height, ttshort pitch);
     
@@ -1212,9 +1242,9 @@ typedef struct s_ttfn_ttcheckbutton {
     ttcheckbutton (*Build)(ttcheckbutton o);
     void (*Break)(ttcheckbutton o);
     void (*Del)(ttcheckbutton);
-    ttany (*GetValue)(ttcheckbutton o, ttuint which);
-    void (*SetValue)(ttcheckbutton o, ttuint which, ttany value);
-    void (*ChangeValue)(ttcheckbutton o, ttuint which, ttany nand_value, ttany xor_value);
+    ttbyte (*GetValue)(ttcheckbutton o, ttuint which, ttany *value);
+    ttbyte (*SetValue)(ttcheckbutton o, ttuint which, ttany value);
+    ttbyte (*ChangeValue)(ttcheckbutton o, ttuint which, ttany nand_value, ttany xor_value);
         
     ttfn_ttobj FN_ttobj;
 
@@ -1227,7 +1257,8 @@ typedef struct s_ttfn_ttcheckbutton {
             
     ttfn_ttvisible FN_ttvisible;
     void (*SetXYWH)(ttcheckbutton o, ttuint mask, ttshort x, ttshort y, ttshort w, ttshort h);
-        
+    void (*SetXlYl)(ttcheckbutton o, ttuint mask, ttint xl, ttint yl);
+                
     ttfn_ttwidget FN_ttwidget;
     ttbyte (*SetText)(ttcheckbutton o, TT_CONST ttfont * text, ttshort width, ttshort height, ttshort pitch);
     
@@ -1247,9 +1278,9 @@ typedef struct s_ttfn_ttradiobutton {
     ttradiobutton (*Build)(ttradiobutton o);
     void (*Break)(ttradiobutton o);
     void (*Del)(ttradiobutton);
-    ttany (*GetValue)(ttradiobutton o, ttuint which);
-    void (*SetValue)(ttradiobutton o, ttuint which, ttany value);
-    void (*ChangeValue)(ttradiobutton o, ttuint which, ttany nand_value, ttany xor_value);
+    ttbyte (*GetValue)(ttradiobutton o, ttuint which, ttany *value);
+    ttbyte (*SetValue)(ttradiobutton o, ttuint which, ttany value);
+    ttbyte (*ChangeValue)(ttradiobutton o, ttuint which, ttany nand_value, ttany xor_value);
         
     ttfn_ttobj FN_ttobj;
 
@@ -1262,7 +1293,8 @@ typedef struct s_ttfn_ttradiobutton {
             
     ttfn_ttvisible FN_ttvisible;
     void (*SetXYWH)(ttradiobutton o, ttuint mask, ttshort x, ttshort y, ttshort w, ttshort h);
-        
+    void (*SetXlYl)(ttradiobutton o, ttuint mask, ttint xl, ttint yl);
+                
     ttfn_ttwidget FN_ttwidget;
     ttbyte (*SetText)(ttradiobutton o, TT_CONST ttfont * text, ttshort width, ttshort height, ttshort pitch);
     
@@ -1284,9 +1316,9 @@ typedef struct s_ttfn_ttscrollbar {
     ttscrollbar (*Build)(ttscrollbar o);
     void (*Break)(ttscrollbar o);
     void (*Del)(ttscrollbar);
-    ttany (*GetValue)(ttscrollbar o, ttuint which);
-    void (*SetValue)(ttscrollbar o, ttuint which, ttany value);
-    void (*ChangeValue)(ttscrollbar o, ttuint which, ttany nand_value, ttany xor_value);
+    ttbyte (*GetValue)(ttscrollbar o, ttuint which, ttany *value);
+    ttbyte (*SetValue)(ttscrollbar o, ttuint which, ttany value);
+    ttbyte (*ChangeValue)(ttscrollbar o, ttuint which, ttany nand_value, ttany xor_value);
         
     ttfn_ttobj FN_ttobj;
 
@@ -1299,7 +1331,8 @@ typedef struct s_ttfn_ttscrollbar {
             
     ttfn_ttvisible FN_ttvisible;
     void (*SetXYWH)(ttscrollbar o, ttuint mask, ttshort x, ttshort y, ttshort w, ttshort h);
-        
+    void (*SetXlYl)(ttscrollbar o, ttuint mask, ttint xl, ttint yl);
+                
     ttfn_ttwidget FN_ttwidget;
     ttbyte (*SetText)(ttscrollbar o, TT_CONST ttfont * text, ttshort width, ttshort height, ttshort pitch);
     
@@ -1316,9 +1349,9 @@ typedef struct s_ttfn_ttbuttongroup {
     ttbuttongroup (*Build)(ttbuttongroup o);
     void (*Break)(ttbuttongroup o);
     void (*Del)(ttbuttongroup);
-    ttany (*GetValue)(ttbuttongroup o, ttuint which);
-    void (*SetValue)(ttbuttongroup o, ttuint which, ttany value);
-    void (*ChangeValue)(ttbuttongroup o, ttuint which, ttany nand_value, ttany xor_value);
+    ttbyte (*GetValue)(ttbuttongroup o, ttuint which, ttany *value);
+    ttbyte (*SetValue)(ttbuttongroup o, ttuint which, ttany value);
+    ttbyte (*ChangeValue)(ttbuttongroup o, ttuint which, ttany nand_value, ttany xor_value);
         
     ttfn_ttobj FN_ttobj;
 
@@ -1335,9 +1368,9 @@ typedef struct s_ttfn_ttwindow {
     ttwindow (*Build)(ttwindow o);
     void (*Break)(ttwindow o);
     void (*Del)(ttwindow);
-    ttany (*GetValue)(ttwindow o, ttuint which);
-    void (*SetValue)(ttwindow o, ttuint which, ttany value);
-    void (*ChangeValue)(ttwindow o, ttuint which, ttany nand_value, ttany xor_value);
+    ttbyte (*GetValue)(ttwindow o, ttuint which, ttany *value);
+    ttbyte (*SetValue)(ttwindow o, ttuint which, ttany value);
+    ttbyte (*ChangeValue)(ttwindow o, ttuint which, ttany nand_value, ttany xor_value);
         
     ttfn_ttobj FN_ttobj;
 
@@ -1350,7 +1383,8 @@ typedef struct s_ttfn_ttwindow {
             
     ttfn_ttvisible FN_ttvisible;
     void (*SetXYWH)(ttwindow o, ttuint mask, ttshort x, ttshort y, ttshort w, ttshort h);
-        
+    void (*SetXlYl)(ttwindow o, ttuint mask, ttint xl, ttint yl);
+                
     ttfn_ttwidget FN_ttwidget;
 
 } s_ttfn_ttwindow;
@@ -1364,9 +1398,9 @@ typedef struct s_ttfn_ttframe {
     ttframe (*Build)(ttframe o);
     void (*Break)(ttframe o);
     void (*Del)(ttframe);
-    ttany (*GetValue)(ttframe o, ttuint which);
-    void (*SetValue)(ttframe o, ttuint which, ttany value);
-    void (*ChangeValue)(ttframe o, ttuint which, ttany nand_value, ttany xor_value);
+    ttbyte (*GetValue)(ttframe o, ttuint which, ttany *value);
+    ttbyte (*SetValue)(ttframe o, ttuint which, ttany value);
+    ttbyte (*ChangeValue)(ttframe o, ttuint which, ttany nand_value, ttany xor_value);
         
     ttfn_ttobj FN_ttobj;
 
@@ -1379,7 +1413,8 @@ typedef struct s_ttfn_ttframe {
             
     ttfn_ttvisible FN_ttvisible;
     void (*SetXYWH)(ttframe o, ttuint mask, ttshort x, ttshort y, ttshort w, ttshort h);
-        
+    void (*SetXlYl)(ttframe o, ttuint mask, ttint xl, ttint yl);
+                
     ttfn_ttwidget FN_ttwidget;
 
     ttfn_ttwindow FN_ttwindow;
@@ -1395,9 +1430,9 @@ typedef struct s_ttfn_ttscroller {
     ttscroller (*Build)(ttscroller o);
     void (*Break)(ttscroller o);
     void (*Del)(ttscroller);
-    ttany (*GetValue)(ttscroller o, ttuint which);
-    void (*SetValue)(ttscroller o, ttuint which, ttany value);
-    void (*ChangeValue)(ttscroller o, ttuint which, ttany nand_value, ttany xor_value);
+    ttbyte (*GetValue)(ttscroller o, ttuint which, ttany *value);
+    ttbyte (*SetValue)(ttscroller o, ttuint which, ttany value);
+    ttbyte (*ChangeValue)(ttscroller o, ttuint which, ttany nand_value, ttany xor_value);
         
     ttfn_ttobj FN_ttobj;
 
@@ -1410,7 +1445,8 @@ typedef struct s_ttfn_ttscroller {
             
     ttfn_ttvisible FN_ttvisible;
     void (*SetXYWH)(ttscroller o, ttuint mask, ttshort x, ttshort y, ttshort w, ttshort h);
-        
+    void (*SetXlYl)(ttscroller o, ttuint mask, ttint xl, ttint yl);
+                
     ttfn_ttwidget FN_ttwidget;
 
     ttfn_ttwindow FN_ttwindow;
@@ -1426,9 +1462,9 @@ typedef struct s_ttfn_ttmenuitem {
     ttmenuitem (*Build)(ttmenuitem o);
     void (*Break)(ttmenuitem o);
     void (*Del)(ttmenuitem);
-    ttany (*GetValue)(ttmenuitem o, ttuint which);
-    void (*SetValue)(ttmenuitem o, ttuint which, ttany value);
-    void (*ChangeValue)(ttmenuitem o, ttuint which, ttany nand_value, ttany xor_value);
+    ttbyte (*GetValue)(ttmenuitem o, ttuint which, ttany *value);
+    ttbyte (*SetValue)(ttmenuitem o, ttuint which, ttany value);
+    ttbyte (*ChangeValue)(ttmenuitem o, ttuint which, ttany nand_value, ttany xor_value);
         
     ttfn_ttobj FN_ttobj;
 
@@ -1452,9 +1488,9 @@ typedef struct s_ttfn_ttcheckmenuitem {
     ttcheckmenuitem (*Build)(ttcheckmenuitem o);
     void (*Break)(ttcheckmenuitem o);
     void (*Del)(ttcheckmenuitem);
-    ttany (*GetValue)(ttcheckmenuitem o, ttuint which);
-    void (*SetValue)(ttcheckmenuitem o, ttuint which, ttany value);
-    void (*ChangeValue)(ttcheckmenuitem o, ttuint which, ttany nand_value, ttany xor_value);
+    ttbyte (*GetValue)(ttcheckmenuitem o, ttuint which, ttany *value);
+    ttbyte (*SetValue)(ttcheckmenuitem o, ttuint which, ttany value);
+    ttbyte (*ChangeValue)(ttcheckmenuitem o, ttuint which, ttany nand_value, ttany xor_value);
         
     ttfn_ttobj FN_ttobj;
 
@@ -1480,9 +1516,9 @@ typedef struct s_ttfn_ttradiomenuitem {
     ttradiomenuitem (*Build)(ttradiomenuitem o);
     void (*Break)(ttradiomenuitem o);
     void (*Del)(ttradiomenuitem);
-    ttany (*GetValue)(ttradiomenuitem o, ttuint which);
-    void (*SetValue)(ttradiomenuitem o, ttuint which, ttany value);
-    void (*ChangeValue)(ttradiomenuitem o, ttuint which, ttany nand_value, ttany xor_value);
+    ttbyte (*GetValue)(ttradiomenuitem o, ttuint which, ttany *value);
+    ttbyte (*SetValue)(ttradiomenuitem o, ttuint which, ttany value);
+    ttbyte (*ChangeValue)(ttradiomenuitem o, ttuint which, ttany nand_value, ttany xor_value);
         
     ttfn_ttobj FN_ttobj;
 
@@ -1510,9 +1546,9 @@ typedef struct s_ttfn_ttmenu {
     ttmenu (*Build)(ttmenu o);
     void (*Break)(ttmenu o);
     void (*Del)(ttmenu);
-    ttany (*GetValue)(ttmenu o, ttuint which);
-    void (*SetValue)(ttmenu o, ttuint which, ttany value);
-    void (*ChangeValue)(ttmenu o, ttuint which, ttany nand_value, ttany xor_value);
+    ttbyte (*GetValue)(ttmenu o, ttuint which, ttany *value);
+    ttbyte (*SetValue)(ttmenu o, ttuint which, ttany value);
+    ttbyte (*ChangeValue)(ttmenu o, ttuint which, ttany nand_value, ttany xor_value);
         
     ttfn_ttobj FN_ttobj;
 
@@ -1538,9 +1574,9 @@ typedef struct s_ttfn_ttmenubar {
     ttmenubar (*Build)(ttmenubar o);
     void (*Break)(ttmenubar o);
     void (*Del)(ttmenubar);
-    ttany (*GetValue)(ttmenubar o, ttuint which);
-    void (*SetValue)(ttmenubar o, ttuint which, ttany value);
-    void (*ChangeValue)(ttmenubar o, ttuint which, ttany nand_value, ttany xor_value);
+    ttbyte (*GetValue)(ttmenubar o, ttuint which, ttany *value);
+    ttbyte (*SetValue)(ttmenubar o, ttuint which, ttany value);
+    ttbyte (*ChangeValue)(ttmenubar o, ttuint which, ttany nand_value, ttany xor_value);
         
     ttfn_ttobj FN_ttobj;
 
@@ -1564,9 +1600,9 @@ typedef struct s_ttfn_ttanytext {
     ttanytext (*Build)(ttanytext o);
     void (*Break)(ttanytext o);
     void (*Del)(ttanytext);
-    ttany (*GetValue)(ttanytext o, ttuint which);
-    void (*SetValue)(ttanytext o, ttuint which, ttany value);
-    void (*ChangeValue)(ttanytext o, ttuint which, ttany nand_value, ttany xor_value);
+    ttbyte (*GetValue)(ttanytext o, ttuint which, ttany *value);
+    ttbyte (*SetValue)(ttanytext o, ttuint which, ttany value);
+    ttbyte (*ChangeValue)(ttanytext o, ttuint which, ttany nand_value, ttany xor_value);
         
     ttfn_ttobj FN_ttobj;
 
@@ -1579,7 +1615,8 @@ typedef struct s_ttfn_ttanytext {
             
     ttfn_ttvisible FN_ttvisible;
     void (*SetXYWH)(ttanytext o, ttuint mask, ttshort x, ttshort y, ttshort w, ttshort h);
-        
+    void (*SetXlYl)(ttanytext o, ttuint mask, ttint xl, ttint yl);
+                
     ttfn_ttwidget FN_ttwidget;
 
     ttfn_ttwindow FN_ttwindow;
@@ -1595,9 +1632,9 @@ typedef struct s_ttfn_tttextfield {
     tttextfield (*Build)(tttextfield o);
     void (*Break)(tttextfield o);
     void (*Del)(tttextfield);
-    ttany (*GetValue)(tttextfield o, ttuint which);
-    void (*SetValue)(tttextfield o, ttuint which, ttany value);
-    void (*ChangeValue)(tttextfield o, ttuint which, ttany nand_value, ttany xor_value);
+    ttbyte (*GetValue)(tttextfield o, ttuint which, ttany *value);
+    ttbyte (*SetValue)(tttextfield o, ttuint which, ttany value);
+    ttbyte (*ChangeValue)(tttextfield o, ttuint which, ttany nand_value, ttany xor_value);
         
     ttfn_ttobj FN_ttobj;
 
@@ -1610,7 +1647,8 @@ typedef struct s_ttfn_tttextfield {
             
     ttfn_ttvisible FN_ttvisible;
     void (*SetXYWH)(tttextfield o, ttuint mask, ttshort x, ttshort y, ttshort w, ttshort h);
-        
+    void (*SetXlYl)(tttextfield o, ttuint mask, ttint xl, ttint yl);
+                
     ttfn_ttwidget FN_ttwidget;
 
     ttfn_ttwindow FN_ttwindow;
@@ -1628,9 +1666,9 @@ typedef struct s_ttfn_tttextarea {
     tttextarea (*Build)(tttextarea o);
     void (*Break)(tttextarea o);
     void (*Del)(tttextarea);
-    ttany (*GetValue)(tttextarea o, ttuint which);
-    void (*SetValue)(tttextarea o, ttuint which, ttany value);
-    void (*ChangeValue)(tttextarea o, ttuint which, ttany nand_value, ttany xor_value);
+    ttbyte (*GetValue)(tttextarea o, ttuint which, ttany *value);
+    ttbyte (*SetValue)(tttextarea o, ttuint which, ttany value);
+    ttbyte (*ChangeValue)(tttextarea o, ttuint which, ttany nand_value, ttany xor_value);
         
     ttfn_ttobj FN_ttobj;
 
@@ -1643,7 +1681,8 @@ typedef struct s_ttfn_tttextarea {
             
     ttfn_ttvisible FN_ttvisible;
     void (*SetXYWH)(tttextarea o, ttuint mask, ttshort x, ttshort y, ttshort w, ttshort h);
-        
+    void (*SetXlYl)(tttextarea o, ttuint mask, ttint xl, ttint yl);
+                
     ttfn_ttwidget FN_ttwidget;
 
     ttfn_ttwindow FN_ttwindow;
@@ -1663,9 +1702,9 @@ typedef struct s_ttfn_tttheme {
     tttheme (*Build)(tttheme o);
     void (*Break)(tttheme o);
     void (*Del)(tttheme);
-    ttany (*GetValue)(tttheme o, ttuint which);
-    void (*SetValue)(tttheme o, ttuint which, ttany value);
-    void (*ChangeValue)(tttheme o, ttuint which, ttany nand_value, ttany xor_value);
+    ttbyte (*GetValue)(tttheme o, ttuint which, ttany *value);
+    ttbyte (*SetValue)(tttheme o, ttuint which, ttany value);
+    ttbyte (*ChangeValue)(tttheme o, ttuint which, ttany nand_value, ttany xor_value);
         
     ttfn_ttobj FN_ttobj;
 
@@ -1683,9 +1722,9 @@ typedef struct s_ttfn_ttapplication {
     ttapplication (*Build)(ttapplication o);
     void (*Break)(ttapplication o);
     void (*Del)(ttapplication);
-    ttany (*GetValue)(ttapplication o, ttuint which);
-    void (*SetValue)(ttapplication o, ttuint which, ttany value);
-    void (*ChangeValue)(ttapplication o, ttuint which, ttany nand_value, ttany xor_value);
+    ttbyte (*GetValue)(ttapplication o, ttuint which, ttany *value);
+    ttbyte (*SetValue)(ttapplication o, ttuint which, ttany value);
+    ttbyte (*ChangeValue)(ttapplication o, ttuint which, ttany nand_value, ttany xor_value);
         
     ttfn_ttobj FN_ttobj;
 

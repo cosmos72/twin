@@ -6,7 +6,6 @@
 
 /*
  * hand-optimized assembler functions for i386 with gcc
- * 
  */
 
 
@@ -224,10 +223,20 @@ Tw_ResizeWidget:
 
 
 	.align 4
+.globl Tw_ScrollWidget
+	.type	 Tw_ScrollWidget,@function
+Tw_ScrollWidget:
+	pushl $18
+	jmp _Tw_i386_call_2
+.L_ScrollWidget:
+	.size	 Tw_ScrollWidget,.L_ScrollWidget-Tw_ScrollWidget
+
+
+	.align 4
 .globl Tw_GetOwnerWidget
 	.type	 Tw_GetOwnerWidget,@function
 Tw_GetOwnerWidget:
-	pushl $18
+	pushl $19
 	jmp _Tw_i386_call_0
 .L_GetOwnerWidget:
 	.size	 Tw_GetOwnerWidget,.L_GetOwnerWidget-Tw_GetOwnerWidget
@@ -237,7 +246,7 @@ Tw_GetOwnerWidget:
 .globl Tw_ExposeWidget
 	.type	 Tw_ExposeWidget,@function
 Tw_ExposeWidget:
-	pushl $19
+	pushl $20
 	jmp _Tw_i386_call_2
 .L_ExposeWidget:
 	.size	 Tw_ExposeWidget,.L_ExposeWidget-Tw_ExposeWidget
@@ -248,7 +257,7 @@ Tw_ExposeWidget:
 .globl Tw_FocusSubWidget
 	.type	 Tw_FocusSubWidget,@function
 Tw_FocusSubWidget:
-	pushl $20
+	pushl $21
 	jmp _Tw_i386_call_2
 .L_FocusSubWidget:
 	.size	 Tw_FocusSubWidget,.L_FocusSubWidget-Tw_FocusSubWidget
@@ -258,7 +267,7 @@ Tw_FocusSubWidget:
 .globl Tw_FindWidgetAtWidget
 	.type	 Tw_FindWidgetAtWidget,@function
 Tw_FindWidgetAtWidget:
-	pushl $21
+	pushl $22
 	jmp _Tw_i386_call_0
 .L_FindWidgetAtWidget:
 	.size	 Tw_FindWidgetAtWidget,.L_FindWidgetAtWidget-Tw_FindWidgetAtWidget
@@ -269,7 +278,7 @@ Tw_FindWidgetAtWidget:
 .globl Tw_RaiseWidget
 	.type	 Tw_RaiseWidget,@function
 Tw_RaiseWidget:
-	pushl $22
+	pushl $23
 	jmp _Tw_i386_call_2
 .L_RaiseWidget:
 	.size	 Tw_RaiseWidget,.L_RaiseWidget-Tw_RaiseWidget
@@ -279,7 +288,7 @@ Tw_RaiseWidget:
 .globl Tw_LowerWidget
 	.type	 Tw_LowerWidget,@function
 Tw_LowerWidget:
-	pushl $23
+	pushl $24
 	jmp _Tw_i386_call_2
 .L_LowerWidget:
 	.size	 Tw_LowerWidget,.L_LowerWidget-Tw_LowerWidget
@@ -289,7 +298,7 @@ Tw_LowerWidget:
 .globl Tw_RestackChildrenWidget
 	.type	 Tw_RestackChildrenWidget,@function
 Tw_RestackChildrenWidget:
-	pushl $24
+	pushl $25
 	jmp _Tw_i386_call_2
 .L_RestackChildrenWidget:
 	.size	 Tw_RestackChildrenWidget,.L_RestackChildrenWidget-Tw_RestackChildrenWidget
@@ -299,7 +308,7 @@ Tw_RestackChildrenWidget:
 .globl Tw_CirculateChildrenWidget
 	.type	 Tw_CirculateChildrenWidget,@function
 Tw_CirculateChildrenWidget:
-	pushl $25
+	pushl $26
 	jmp _Tw_i386_call_2
 .L_CirculateChildrenWidget:
 	.size	 Tw_CirculateChildrenWidget,.L_CirculateChildrenWidget-Tw_CirculateChildrenWidget
@@ -311,7 +320,7 @@ Tw_CirculateChildrenWidget:
 .globl Tw_CreateGadget
 	.type	 Tw_CreateGadget,@function
 Tw_CreateGadget:
-	pushl $26
+	pushl $27
 	jmp _Tw_i386_call_0
 .L_CreateGadget:
 	.size	 Tw_CreateGadget,.L_CreateGadget-Tw_CreateGadget
@@ -322,7 +331,7 @@ Tw_CreateGadget:
 .globl Tw_CreateButtonGadget
 	.type	 Tw_CreateButtonGadget,@function
 Tw_CreateButtonGadget:
-	pushl $27
+	pushl $28
 	jmp _Tw_i386_call_0
 .L_CreateButtonGadget:
 	.size	 Tw_CreateButtonGadget,.L_CreateButtonGadget-Tw_CreateButtonGadget
@@ -333,7 +342,7 @@ Tw_CreateButtonGadget:
 .globl Tw_WriteTextsGadget
 	.type	 Tw_WriteTextsGadget,@function
 Tw_WriteTextsGadget:
-	pushl $28
+	pushl $29
 	jmp _Tw_i386_call_2
 .L_WriteTextsGadget:
 	.size	 Tw_WriteTextsGadget,.L_WriteTextsGadget-Tw_WriteTextsGadget
@@ -343,7 +352,7 @@ Tw_WriteTextsGadget:
 .globl Tw_WriteHWFontsGadget
 	.type	 Tw_WriteHWFontsGadget,@function
 Tw_WriteHWFontsGadget:
-	pushl $29
+	pushl $30
 	jmp _Tw_i386_call_2
 .L_WriteHWFontsGadget:
 	.size	 Tw_WriteHWFontsGadget,.L_WriteHWFontsGadget-Tw_WriteHWFontsGadget
@@ -354,7 +363,7 @@ Tw_WriteHWFontsGadget:
 .globl Tw_CreateWindow
 	.type	 Tw_CreateWindow,@function
 Tw_CreateWindow:
-	pushl $30
+	pushl $31
 	jmp _Tw_i386_call_0
 .L_CreateWindow:
 	.size	 Tw_CreateWindow,.L_CreateWindow-Tw_CreateWindow
@@ -364,7 +373,7 @@ Tw_CreateWindow:
 .globl Tw_Create4MenuWindow
 	.type	 Tw_Create4MenuWindow,@function
 Tw_Create4MenuWindow:
-	pushl $31
+	pushl $32
 	jmp _Tw_i386_call_0
 .L_Create4MenuWindow:
 	.size	 Tw_Create4MenuWindow,.L_Create4MenuWindow-Tw_Create4MenuWindow
@@ -375,7 +384,7 @@ Tw_Create4MenuWindow:
 .globl Tw_WriteAsciiWindow
 	.type	 Tw_WriteAsciiWindow,@function
 Tw_WriteAsciiWindow:
-	pushl $32
+	pushl $33
 	jmp _Tw_i386_call_2
 .L_WriteAsciiWindow:
 	.size	 Tw_WriteAsciiWindow,.L_WriteAsciiWindow-Tw_WriteAsciiWindow
@@ -385,7 +394,7 @@ Tw_WriteAsciiWindow:
 .globl Tw_WriteStringWindow
 	.type	 Tw_WriteStringWindow,@function
 Tw_WriteStringWindow:
-	pushl $33
+	pushl $34
 	jmp _Tw_i386_call_2
 .L_WriteStringWindow:
 	.size	 Tw_WriteStringWindow,.L_WriteStringWindow-Tw_WriteStringWindow
@@ -395,7 +404,7 @@ Tw_WriteStringWindow:
 .globl Tw_WriteHWFontWindow
 	.type	 Tw_WriteHWFontWindow,@function
 Tw_WriteHWFontWindow:
-	pushl $34
+	pushl $35
 	jmp _Tw_i386_call_2
 .L_WriteHWFontWindow:
 	.size	 Tw_WriteHWFontWindow,.L_WriteHWFontWindow-Tw_WriteHWFontWindow
@@ -405,7 +414,7 @@ Tw_WriteHWFontWindow:
 .globl Tw_WriteHWAttrWindow
 	.type	 Tw_WriteHWAttrWindow,@function
 Tw_WriteHWAttrWindow:
-	pushl $35
+	pushl $36
 	jmp _Tw_i386_call_2
 .L_WriteHWAttrWindow:
 	.size	 Tw_WriteHWAttrWindow,.L_WriteHWAttrWindow-Tw_WriteHWAttrWindow
@@ -416,7 +425,7 @@ Tw_WriteHWAttrWindow:
 .globl Tw_GotoXYWindow
 	.type	 Tw_GotoXYWindow,@function
 Tw_GotoXYWindow:
-	pushl $36
+	pushl $37
 	jmp _Tw_i386_call_2
 .L_GotoXYWindow:
 	.size	 Tw_GotoXYWindow,.L_GotoXYWindow-Tw_GotoXYWindow
@@ -426,7 +435,7 @@ Tw_GotoXYWindow:
 .globl Tw_SetColTextWindow
 	.type	 Tw_SetColTextWindow,@function
 Tw_SetColTextWindow:
-	pushl $37
+	pushl $38
 	jmp _Tw_i386_call_2
 .L_SetColTextWindow:
 	.size	 Tw_SetColTextWindow,.L_SetColTextWindow-Tw_SetColTextWindow
@@ -436,7 +445,7 @@ Tw_SetColTextWindow:
 .globl Tw_SetColorsWindow
 	.type	 Tw_SetColorsWindow,@function
 Tw_SetColorsWindow:
-	pushl $38
+	pushl $39
 	jmp _Tw_i386_call_2
 .L_SetColorsWindow:
 	.size	 Tw_SetColorsWindow,.L_SetColorsWindow-Tw_SetColorsWindow
@@ -446,7 +455,7 @@ Tw_SetColorsWindow:
 .globl Tw_ConfigureWindow
 	.type	 Tw_ConfigureWindow,@function
 Tw_ConfigureWindow:
-	pushl $39
+	pushl $40
 	jmp _Tw_i386_call_2
 .L_ConfigureWindow:
 	.size	 Tw_ConfigureWindow,.L_ConfigureWindow-Tw_ConfigureWindow
@@ -456,7 +465,7 @@ Tw_ConfigureWindow:
 .globl Tw_FindRowByCodeWindow
 	.type	 Tw_FindRowByCodeWindow,@function
 Tw_FindRowByCodeWindow:
-	pushl $40
+	pushl $41
 	jmp _Tw_i386_call_0
 .L_FindRowByCodeWindow:
 	.size	 Tw_FindRowByCodeWindow,.L_FindRowByCodeWindow-Tw_FindRowByCodeWindow
@@ -467,7 +476,7 @@ Tw_FindRowByCodeWindow:
 .globl Tw_CreateGroup
 	.type	 Tw_CreateGroup,@function
 Tw_CreateGroup:
-	pushl $41
+	pushl $42
 	jmp _Tw_i386_call_0
 .L_CreateGroup:
 	.size	 Tw_CreateGroup,.L_CreateGroup-Tw_CreateGroup
@@ -477,7 +486,7 @@ Tw_CreateGroup:
 .globl Tw_InsertGadgetGroup
 	.type	 Tw_InsertGadgetGroup,@function
 Tw_InsertGadgetGroup:
-	pushl $42
+	pushl $43
 	jmp _Tw_i386_call_2
 .L_InsertGadgetGroup:
 	.size	 Tw_InsertGadgetGroup,.L_InsertGadgetGroup-Tw_InsertGadgetGroup
@@ -487,21 +496,11 @@ Tw_InsertGadgetGroup:
 .globl Tw_RemoveGadgetGroup
 	.type	 Tw_RemoveGadgetGroup,@function
 Tw_RemoveGadgetGroup:
-	pushl $43
+	pushl $44
 	jmp _Tw_i386_call_2
 .L_RemoveGadgetGroup:
 	.size	 Tw_RemoveGadgetGroup,.L_RemoveGadgetGroup-Tw_RemoveGadgetGroup
 
-
-
-	.align 4
-.globl Tw_GetSelectedGadgetGroup
-	.type	 Tw_GetSelectedGadgetGroup,@function
-Tw_GetSelectedGadgetGroup:
-	pushl $44
-	jmp _Tw_i386_call_0
-.L_GetSelectedGadgetGroup:
-	.size	 Tw_GetSelectedGadgetGroup,.L_GetSelectedGadgetGroup-Tw_GetSelectedGadgetGroup
 
 
   
@@ -530,10 +529,20 @@ _Tw_i386_call_0:
 
 
 	.align 4
+.globl Tw_GetSelectedGadgetGroup
+	.type	 Tw_GetSelectedGadgetGroup,@function
+Tw_GetSelectedGadgetGroup:
+	pushl $45
+	jmp _Tw_i386_call_0
+.L_GetSelectedGadgetGroup:
+	.size	 Tw_GetSelectedGadgetGroup,.L_GetSelectedGadgetGroup-Tw_GetSelectedGadgetGroup
+
+
+	.align 4
 .globl Tw_SetSelectedGadgetGroup
 	.type	 Tw_SetSelectedGadgetGroup,@function
 Tw_SetSelectedGadgetGroup:
-	pushl $45
+	pushl $46
 	jmp _Tw_i386_call_2
 .L_SetSelectedGadgetGroup:
 	.size	 Tw_SetSelectedGadgetGroup,.L_SetSelectedGadgetGroup-Tw_SetSelectedGadgetGroup
@@ -544,7 +553,7 @@ Tw_SetSelectedGadgetGroup:
 .globl Tw_Create4MenuRow
 	.type	 Tw_Create4MenuRow,@function
 Tw_Create4MenuRow:
-	pushl $46
+	pushl $47
 	jmp _Tw_i386_call_2
 .L_Create4MenuRow:
 	.size	 Tw_Create4MenuRow,.L_Create4MenuRow-Tw_Create4MenuRow
@@ -555,7 +564,7 @@ Tw_Create4MenuRow:
 .globl Tw_RaiseRow
 	.type	 Tw_RaiseRow,@function
 Tw_RaiseRow:
-	pushl $47
+	pushl $48
 	jmp _Tw_i386_call_2
 .L_RaiseRow:
 	.size	 Tw_RaiseRow,.L_RaiseRow-Tw_RaiseRow
@@ -565,7 +574,7 @@ Tw_RaiseRow:
 .globl Tw_LowerRow
 	.type	 Tw_LowerRow,@function
 Tw_LowerRow:
-	pushl $48
+	pushl $49
 	jmp _Tw_i386_call_2
 .L_LowerRow:
 	.size	 Tw_LowerRow,.L_LowerRow-Tw_LowerRow
@@ -575,7 +584,7 @@ Tw_LowerRow:
 .globl Tw_RestackChildrenRow
 	.type	 Tw_RestackChildrenRow,@function
 Tw_RestackChildrenRow:
-	pushl $49
+	pushl $50
 	jmp _Tw_i386_call_2
 .L_RestackChildrenRow:
 	.size	 Tw_RestackChildrenRow,.L_RestackChildrenRow-Tw_RestackChildrenRow
@@ -585,7 +594,7 @@ Tw_RestackChildrenRow:
 .globl Tw_CirculateChildrenRow
 	.type	 Tw_CirculateChildrenRow,@function
 Tw_CirculateChildrenRow:
-	pushl $50
+	pushl $51
 	jmp _Tw_i386_call_2
 .L_CirculateChildrenRow:
 	.size	 Tw_CirculateChildrenRow,.L_CirculateChildrenRow-Tw_CirculateChildrenRow
@@ -596,7 +605,7 @@ Tw_CirculateChildrenRow:
 .globl Tw_Create4MenuMenuItem
 	.type	 Tw_Create4MenuMenuItem,@function
 Tw_Create4MenuMenuItem:
-	pushl $51
+	pushl $52
 	jmp _Tw_i386_call_0
 .L_Create4MenuMenuItem:
 	.size	 Tw_Create4MenuMenuItem,.L_Create4MenuMenuItem-Tw_Create4MenuMenuItem
@@ -606,7 +615,7 @@ Tw_Create4MenuMenuItem:
 .globl Tw_Create4MenuCommonMenuItem
 	.type	 Tw_Create4MenuCommonMenuItem,@function
 Tw_Create4MenuCommonMenuItem:
-	pushl $52
+	pushl $53
 	jmp _Tw_i386_call_0
 .L_Create4MenuCommonMenuItem:
 	.size	 Tw_Create4MenuCommonMenuItem,.L_Create4MenuCommonMenuItem-Tw_Create4MenuCommonMenuItem
@@ -617,7 +626,7 @@ Tw_Create4MenuCommonMenuItem:
 .globl Tw_CreateMenu
 	.type	 Tw_CreateMenu,@function
 Tw_CreateMenu:
-	pushl $53
+	pushl $54
 	jmp _Tw_i386_call_0
 .L_CreateMenu:
 	.size	 Tw_CreateMenu,.L_CreateMenu-Tw_CreateMenu
@@ -627,7 +636,7 @@ Tw_CreateMenu:
 .globl Tw_SetInfoMenu
 	.type	 Tw_SetInfoMenu,@function
 Tw_SetInfoMenu:
-	pushl $54
+	pushl $55
 	jmp _Tw_i386_call_2
 .L_SetInfoMenu:
 	.size	 Tw_SetInfoMenu,.L_SetInfoMenu-Tw_SetInfoMenu
@@ -638,7 +647,7 @@ Tw_SetInfoMenu:
 .globl Tw_CreateMsgPort
 	.type	 Tw_CreateMsgPort,@function
 Tw_CreateMsgPort:
-	pushl $55
+	pushl $56
 	jmp _Tw_i386_call_0
 .L_CreateMsgPort:
 	.size	 Tw_CreateMsgPort,.L_CreateMsgPort-Tw_CreateMsgPort
@@ -648,7 +657,7 @@ Tw_CreateMsgPort:
 .globl Tw_FindMsgPort
 	.type	 Tw_FindMsgPort,@function
 Tw_FindMsgPort:
-	pushl $56
+	pushl $57
 	jmp _Tw_i386_call_0
 .L_FindMsgPort:
 	.size	 Tw_FindMsgPort,.L_FindMsgPort-Tw_FindMsgPort
@@ -659,7 +668,7 @@ Tw_FindMsgPort:
 .globl Tw_BgImageScreen
 	.type	 Tw_BgImageScreen,@function
 Tw_BgImageScreen:
-	pushl $57
+	pushl $58
 	jmp _Tw_i386_call_2
 .L_BgImageScreen:
 	.size	 Tw_BgImageScreen,.L_BgImageScreen-Tw_BgImageScreen
@@ -670,7 +679,7 @@ Tw_BgImageScreen:
 .globl Tw_PrevObj
 	.type	 Tw_PrevObj,@function
 Tw_PrevObj:
-	pushl $58
+	pushl $59
 	jmp _Tw_i386_call_0
 .L_PrevObj:
 	.size	 Tw_PrevObj,.L_PrevObj-Tw_PrevObj
@@ -680,7 +689,7 @@ Tw_PrevObj:
 .globl Tw_NextObj
 	.type	 Tw_NextObj,@function
 Tw_NextObj:
-	pushl $59
+	pushl $60
 	jmp _Tw_i386_call_0
 .L_NextObj:
 	.size	 Tw_NextObj,.L_NextObj-Tw_NextObj
@@ -690,7 +699,7 @@ Tw_NextObj:
 .globl Tw_ParentObj
 	.type	 Tw_ParentObj,@function
 Tw_ParentObj:
-	pushl $60
+	pushl $61
 	jmp _Tw_i386_call_0
 .L_ParentObj:
 	.size	 Tw_ParentObj,.L_ParentObj-Tw_ParentObj
@@ -701,7 +710,7 @@ Tw_ParentObj:
 .globl Tw_G_PrevGadget
 	.type	 Tw_G_PrevGadget,@function
 Tw_G_PrevGadget:
-	pushl $61
+	pushl $62
 	jmp _Tw_i386_call_0
 .L_G_PrevGadget:
 	.size	 Tw_G_PrevGadget,.L_G_PrevGadget-Tw_G_PrevGadget
@@ -711,7 +720,7 @@ Tw_G_PrevGadget:
 .globl Tw_G_NextGadget
 	.type	 Tw_G_NextGadget,@function
 Tw_G_NextGadget:
-	pushl $62
+	pushl $63
 	jmp _Tw_i386_call_0
 .L_G_NextGadget:
 	.size	 Tw_G_NextGadget,.L_G_NextGadget-Tw_G_NextGadget
@@ -721,7 +730,7 @@ Tw_G_NextGadget:
 .globl Tw_GroupGadget
 	.type	 Tw_GroupGadget,@function
 Tw_GroupGadget:
-	pushl $63
+	pushl $64
 	jmp _Tw_i386_call_0
 .L_GroupGadget:
 	.size	 Tw_GroupGadget,.L_GroupGadget-Tw_GroupGadget
@@ -732,7 +741,7 @@ Tw_GroupGadget:
 .globl Tw_O_PrevWidget
 	.type	 Tw_O_PrevWidget,@function
 Tw_O_PrevWidget:
-	pushl $64
+	pushl $65
 	jmp _Tw_i386_call_0
 .L_O_PrevWidget:
 	.size	 Tw_O_PrevWidget,.L_O_PrevWidget-Tw_O_PrevWidget
@@ -742,7 +751,7 @@ Tw_O_PrevWidget:
 .globl Tw_O_NextWidget
 	.type	 Tw_O_NextWidget,@function
 Tw_O_NextWidget:
-	pushl $65
+	pushl $66
 	jmp _Tw_i386_call_0
 .L_O_NextWidget:
 	.size	 Tw_O_NextWidget,.L_O_NextWidget-Tw_O_NextWidget
@@ -752,7 +761,7 @@ Tw_O_NextWidget:
 .globl Tw_OwnerWidget
 	.type	 Tw_OwnerWidget,@function
 Tw_OwnerWidget:
-	pushl $66
+	pushl $67
 	jmp _Tw_i386_call_0
 .L_OwnerWidget:
 	.size	 Tw_OwnerWidget,.L_OwnerWidget-Tw_OwnerWidget
@@ -763,7 +772,7 @@ Tw_OwnerWidget:
 .globl Tw_FirstScreen
 	.type	 Tw_FirstScreen,@function
 Tw_FirstScreen:
-	pushl $67
+	pushl $68
 	jmp _Tw_i386_call_0
 .L_FirstScreen:
 	.size	 Tw_FirstScreen,.L_FirstScreen-Tw_FirstScreen
@@ -773,7 +782,7 @@ Tw_FirstScreen:
 .globl Tw_FirstWidget
 	.type	 Tw_FirstWidget,@function
 Tw_FirstWidget:
-	pushl $68
+	pushl $69
 	jmp _Tw_i386_call_0
 .L_FirstWidget:
 	.size	 Tw_FirstWidget,.L_FirstWidget-Tw_FirstWidget
@@ -783,7 +792,7 @@ Tw_FirstWidget:
 .globl Tw_FirstMsgPort
 	.type	 Tw_FirstMsgPort,@function
 Tw_FirstMsgPort:
-	pushl $69
+	pushl $70
 	jmp _Tw_i386_call_0
 .L_FirstMsgPort:
 	.size	 Tw_FirstMsgPort,.L_FirstMsgPort-Tw_FirstMsgPort
@@ -793,7 +802,7 @@ Tw_FirstMsgPort:
 .globl Tw_FirstMenu
 	.type	 Tw_FirstMenu,@function
 Tw_FirstMenu:
-	pushl $70
+	pushl $71
 	jmp _Tw_i386_call_0
 .L_FirstMenu:
 	.size	 Tw_FirstMenu,.L_FirstMenu-Tw_FirstMenu
@@ -803,7 +812,7 @@ Tw_FirstMenu:
 .globl Tw_FirstW
 	.type	 Tw_FirstW,@function
 Tw_FirstW:
-	pushl $71
+	pushl $72
 	jmp _Tw_i386_call_0
 .L_FirstW:
 	.size	 Tw_FirstW,.L_FirstW-Tw_FirstW
@@ -813,7 +822,7 @@ Tw_FirstW:
 .globl Tw_FirstGroup
 	.type	 Tw_FirstGroup,@function
 Tw_FirstGroup:
-	pushl $72
+	pushl $73
 	jmp _Tw_i386_call_0
 .L_FirstGroup:
 	.size	 Tw_FirstGroup,.L_FirstGroup-Tw_FirstGroup
@@ -823,7 +832,7 @@ Tw_FirstGroup:
 .globl Tw_FirstMutex
 	.type	 Tw_FirstMutex,@function
 Tw_FirstMutex:
-	pushl $73
+	pushl $74
 	jmp _Tw_i386_call_0
 .L_FirstMutex:
 	.size	 Tw_FirstMutex,.L_FirstMutex-Tw_FirstMutex
@@ -833,7 +842,7 @@ Tw_FirstMutex:
 .globl Tw_FirstMenuItem
 	.type	 Tw_FirstMenuItem,@function
 Tw_FirstMenuItem:
-	pushl $74
+	pushl $75
 	jmp _Tw_i386_call_0
 .L_FirstMenuItem:
 	.size	 Tw_FirstMenuItem,.L_FirstMenuItem-Tw_FirstMenuItem
@@ -843,7 +852,7 @@ Tw_FirstMenuItem:
 .globl Tw_FirstGadget
 	.type	 Tw_FirstGadget,@function
 Tw_FirstGadget:
-	pushl $75
+	pushl $76
 	jmp _Tw_i386_call_0
 .L_FirstGadget:
 	.size	 Tw_FirstGadget,.L_FirstGadget-Tw_FirstGadget
@@ -854,7 +863,7 @@ Tw_FirstGadget:
 .globl Tw_GetDisplayWidth
 	.type	 Tw_GetDisplayWidth,@function
 Tw_GetDisplayWidth:
-	pushl $76
+	pushl $77
 	jmp _Tw_i386_call_0
 .L_GetDisplayWidth:
 	.size	 Tw_GetDisplayWidth,.L_GetDisplayWidth-Tw_GetDisplayWidth
@@ -864,7 +873,7 @@ Tw_GetDisplayWidth:
 .globl Tw_GetDisplayHeight
 	.type	 Tw_GetDisplayHeight,@function
 Tw_GetDisplayHeight:
-	pushl $77
+	pushl $78
 	jmp _Tw_i386_call_0
 .L_GetDisplayHeight:
 	.size	 Tw_GetDisplayHeight,.L_GetDisplayHeight-Tw_GetDisplayHeight
@@ -874,7 +883,7 @@ Tw_GetDisplayHeight:
 .globl Tw_GetAll
 	.type	 Tw_GetAll,@function
 Tw_GetAll:
-	pushl $78
+	pushl $79
 	jmp _Tw_i386_call_0
 .L_GetAll:
 	.size	 Tw_GetAll,.L_GetAll-Tw_GetAll
@@ -885,7 +894,7 @@ Tw_GetAll:
 .globl Tw_SendToMsgPort
 	.type	 Tw_SendToMsgPort,@function
 Tw_SendToMsgPort:
-	pushl $79
+	pushl $80
 	jmp _Tw_i386_call_0
 .L_SendToMsgPort:
 	.size	 Tw_SendToMsgPort,.L_SendToMsgPort-Tw_SendToMsgPort
@@ -895,7 +904,7 @@ Tw_SendToMsgPort:
 .globl Tw_BlindSendToMsgPort
 	.type	 Tw_BlindSendToMsgPort,@function
 Tw_BlindSendToMsgPort:
-	pushl $80
+	pushl $81
 	jmp _Tw_i386_call_2
 .L_BlindSendToMsgPort:
 	.size	 Tw_BlindSendToMsgPort,.L_BlindSendToMsgPort-Tw_BlindSendToMsgPort
@@ -906,7 +915,7 @@ Tw_BlindSendToMsgPort:
 .globl Tw_GetOwnerSelection
 	.type	 Tw_GetOwnerSelection,@function
 Tw_GetOwnerSelection:
-	pushl $81
+	pushl $82
 	jmp _Tw_i386_call_0
 .L_GetOwnerSelection:
 	.size	 Tw_GetOwnerSelection,.L_GetOwnerSelection-Tw_GetOwnerSelection
@@ -916,7 +925,7 @@ Tw_GetOwnerSelection:
 .globl Tw_SetOwnerSelection
 	.type	 Tw_SetOwnerSelection,@function
 Tw_SetOwnerSelection:
-	pushl $82
+	pushl $83
 	jmp _Tw_i386_call_2
 .L_SetOwnerSelection:
 	.size	 Tw_SetOwnerSelection,.L_SetOwnerSelection-Tw_SetOwnerSelection
@@ -926,7 +935,7 @@ Tw_SetOwnerSelection:
 .globl Tw_RequestSelection
 	.type	 Tw_RequestSelection,@function
 Tw_RequestSelection:
-	pushl $83
+	pushl $84
 	jmp _Tw_i386_call_2
 .L_RequestSelection:
 	.size	 Tw_RequestSelection,.L_RequestSelection-Tw_RequestSelection
@@ -936,7 +945,7 @@ Tw_RequestSelection:
 .globl Tw_NotifySelection
 	.type	 Tw_NotifySelection,@function
 Tw_NotifySelection:
-	pushl $84
+	pushl $85
 	jmp _Tw_i386_call_2
 .L_NotifySelection:
 	.size	 Tw_NotifySelection,.L_NotifySelection-Tw_NotifySelection
@@ -947,7 +956,7 @@ Tw_NotifySelection:
 .globl Tw_SetServerUid
 	.type	 Tw_SetServerUid,@function
 Tw_SetServerUid:
-	pushl $85
+	pushl $86
 	jmp _Tw_i386_call_0
 .L_SetServerUid:
 	.size	 Tw_SetServerUid,.L_SetServerUid-Tw_SetServerUid

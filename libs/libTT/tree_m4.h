@@ -3,7 +3,7 @@
 
 
 /*
- *  treem4.h  --  internal header for libTT objects hierarchy tree
+ *  tree_m4.h  --  internal header for libTT objects hierarchy tree
  */
 
 #ifndef _TT_TREEM4_H
@@ -187,38 +187,41 @@ typedef enum e_magic_ttobj {
 
 
 
-typedef enum e_value_ttobj {
+typedef enum e_order_fields {
 
-
-    ttobj_not_a_value = order_ttobj << 16,         
+    ttobj_field_first,        
     ttobj_id,    
     ttobj_refcount,    
     ttobj_oflags,            
     ttobj_user_data,    
-    ttobj_events_inprogress,  
-
-    ttevent_not_a_value = order_ttevent << 16,         
+    ttobj_events_inprogress,
+    ttobj_field_last,
+  
+    ttevent_field_first,        
     ttevent_callback,    
     ttevent_component,    
     ttevent_evtype,    
     ttevent_evcode,    
-    ttevent_evflags,     
-
-    tteventbig_not_a_value = order_tteventbig << 16,         
+    ttevent_evflags,    
+    ttevent_field_last,
+ 
+    tteventbig_field_first,        
     tteventbig_x,    
     tteventbig_y,    
     tteventbig_w,    
     tteventbig_h,    
     tteventbig_len,    
-    tteventbig_data, 
-
-    ttlistener_not_a_value = order_ttlistener << 16,         
+    tteventbig_data,
+    tteventbig_field_last,
+ 
+    ttlistener_field_first,        
     ttlistener_lflags,    
     ttlistener_component,    
     ttlistener_prev,    
-    ttlistener_next, 
-
-    ttcallback_not_a_value = order_ttcallback << 16,     
+    ttlistener_next,
+    ttlistener_field_last,
+ 
+    ttcallback_field_first,    
     ttcallback_avl_left,    
     ttcallback_avl_right,    
     ttcallback_avl_parent,            
@@ -227,13 +230,15 @@ typedef enum e_value_ttobj {
     ttcallback_narg_event,    
     ttcallback_nargs,    
     ttcallback_function,        
-    ttcallback_args, 
-
-    ttcomponent_not_a_value = order_ttcomponent << 16,         
+    ttcallback_args,
+    ttcallback_field_last,
+ 
+    ttcomponent_field_first,        
     ttcomponent_listeners,    
-    ttcomponent_callbacks, 
-
-    ttvisible_not_a_value = order_ttvisible << 16,         
+    ttcomponent_callbacks,
+    ttcomponent_field_last,
+ 
+    ttvisible_field_first,        
     ttvisible_vflags,    
     ttvisible_prev,    
     ttvisible_next,    
@@ -241,71 +246,98 @@ typedef enum e_value_ttobj {
     ttvisible_child_first,    
     ttvisible_child_last,    
     ttvisible_theme,    
-    ttvisible_repaint, 
-
-    ttnative_not_a_value = order_ttnative << 16,      
-
-    ttwidget_not_a_value = order_ttwidget << 16,         
+    ttvisible_repaint,
+    ttvisible_field_last,
+ 
+    ttnative_field_first,    
+    ttnative_field_last,
+ 
+    ttwidget_field_first,        
     ttwidget_x,    
     ttwidget_y,    
     ttwidget_w,    
-    ttwidget_h, 
-
-    ttlabel_not_a_value = order_ttlabel << 16,         
+    ttwidget_h,    
+    ttwidget_xl,    
+    ttwidget_yl,
+    ttwidget_field_last,
+ 
+    ttlabel_field_first,        
     ttlabel_text_len,        
-    ttlabel_text, 
-
-    ttanybutton_not_a_value = order_ttanybutton << 16,             
+    ttlabel_text,
+    ttlabel_field_last,
+ 
+    ttanybutton_field_first,            
     ttanybutton_text_width,    
     ttanybutton_text_height,        
-    ttanybutton_text, 
-
-    ttbutton_not_a_value = order_ttbutton << 16,      
-
-    ttcheckbutton_not_a_value = order_ttcheckbutton << 16,      
-
-    ttradiobutton_not_a_value = order_ttradiobutton << 16,      
-
-    ttscrollbar_not_a_value = order_ttscrollbar << 16,      
-
-    ttbuttongroup_not_a_value = order_ttbuttongroup << 16,      
-
-    ttwindow_not_a_value = order_ttwindow << 16,          
-
-    ttframe_not_a_value = order_ttframe << 16,      
-
-    ttscroller_not_a_value = order_ttscroller << 16,         
+    ttanybutton_text,
+    ttanybutton_field_last,
+ 
+    ttbutton_field_first,    
+    ttbutton_field_last,
+ 
+    ttcheckbutton_field_first,    
+    ttcheckbutton_field_last,
+ 
+    ttradiobutton_field_first,    
+    ttradiobutton_field_last,
+ 
+    ttscrollbar_field_first,    
+    ttscrollbar_field_last,
+ 
+    ttbuttongroup_field_first,    
+    ttbuttongroup_field_last,
+ 
+    ttwindow_field_first,        
+    ttwindow_field_last,
+ 
+    ttframe_field_first,    
+    ttframe_field_last,
+ 
+    ttscroller_field_first,        
     ttscroller_scrollx,    
-    ttscroller_scrolly, 
-
-    ttmenuitem_not_a_value = order_ttmenuitem << 16,          
-
-    ttcheckmenuitem_not_a_value = order_ttcheckmenuitem << 16,      
-
-    ttradiomenuitem_not_a_value = order_ttradiomenuitem << 16,      
-
-    ttmenu_not_a_value = order_ttmenu << 16,     
+    ttscroller_scrolly,
+    ttscroller_field_last,
+ 
+    ttmenuitem_field_first,        
+    ttmenuitem_field_last,
+ 
+    ttcheckmenuitem_field_first,    
+    ttcheckmenuitem_field_last,
+ 
+    ttradiomenuitem_field_first,    
+    ttradiomenuitem_field_last,
+ 
+    ttmenu_field_first,    
     
-    ttmenu_menubar, 
-
-    ttmenubar_not_a_value = order_ttmenubar << 16,      
-
-    ttanytext_not_a_value = order_ttanytext << 16,         
+    ttmenu_menubar,
+    ttmenu_field_last,
+ 
+    ttmenubar_field_first,    
+    ttmenubar_field_last,
+ 
+    ttanytext_field_first,        
     ttanytext_text_len,        
-    ttanytext_text, 
-
-    tttextfield_not_a_value = order_tttextfield << 16,      
-
-    tttextarea_not_a_value = order_tttextarea << 16,      
-
-    tttheme_not_a_value = order_tttheme << 16,     
+    ttanytext_text,
+    ttanytext_field_last,
+ 
+    tttextfield_field_first,    
+    tttextfield_field_last,
+ 
+    tttextarea_field_first,    
+    tttextarea_field_last,
+ 
+    tttheme_field_first,    
             
         
-    tttheme_name, 
+    tttheme_name,
+    tttheme_field_last,
+ 
+    ttapplication_field_first,        
+    ttapplication_name,
+    ttapplication_field_last,
 
-    ttapplication_not_a_value = order_ttapplication << 16,         
-    value_last
-} e_value_ttobj;
+    ttobj_field_max
+} e_order_fields;
 
 
 

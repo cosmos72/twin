@@ -412,6 +412,8 @@ struct s_fn_widget {
 #define WIDGETFL_USEFILL	0x03
 #define WIDGETFL_USEANY		0x07 /* mask of all above ones */
 
+#define WIDGETFL_NOTVISIBLE	0x8000
+
 #define w_USE(w, USExxx)	(((w)->Flags & WIDGETFL_USEANY) == CAT(WIDGETFL_,USExxx))
 
 
@@ -516,6 +518,8 @@ struct s_fn_gadget {
  * also necessary to put the gadget in a group */
 #define GADGETFL_TOGGLE		0x0080
 #define GADGETFL_PRESSED	0x0100
+
+#define GADGETFL_NOTVISIBLE	0x8000
 
 
 /*              NOTE :
@@ -680,6 +684,7 @@ struct s_fn_window {
 #define WINDOWFL_ROWS_INSERT	0x0100
 #define WINDOWFL_ROWS_DEFCOL	0x0200
 #define WINDOWFL_ROWS_SELCURRENT	0x0400
+#define WINDOWFL_NOTVISIBLE	0x8000
 
 
 /* Window->State */
@@ -811,7 +816,7 @@ struct s_fn_screen {
 
 #define SCREENFL_BACK_SELECT	0x0010
 #define SCREENFL_BACK_PRESSED	0x0020
-
+#define SCREENFL_NOTVISIBLE	0x8000
 
 
 /* group -- gadget group */

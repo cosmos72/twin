@@ -24,14 +24,10 @@ Known bugs and problems:
    (possibly by re-executing `make'), BEFORE generating `.modules', since
    `.modules' depends on `conf/conf.current'.
    
-   Instead rule currently used by `make' instead is this: it first tries
+   Instead the rule currently used by `make' is this: it first tries
    to update all Makefiles (and files included by them) in a single shot,
    and only at the end re-executes `make' to read the updated Makefiles.
    In this way, dependencies between Makefiles (and files included by them)
    may be --- and infact are --- incorrectly used.
    
-   
-*  Compiling with gcc 2.95.2 (is this egcs actually ?)
-   may give problems depending on the options you use to compile.
-   Using "-g -O2" resulted in a non-working binary for me :(
    

@@ -28,7 +28,7 @@ OBJS_twlsobj=lsobj.o
 OBJS_twsendmsg=sendmsg.o
 OBJS_twsetroot=setroot.o
 OBJS_twsysmon=sysmon.o
-OBJS_twterm=pty.o tterm.o
+OBJS_twterm=pty.o term.o
 OBJS_twthreadtest=threadtest.o
 OBJS_ttdemo=demo.o
 
@@ -53,10 +53,9 @@ LD_FLAGS_twterm+=$(LD_LIBTW)
 LD_FLAGS_twthreadtest+=$(LD_LIBTW) $(LD_LIBPTHREAD)
 LD_FLAGS_ttdemo+=$(LD_LIBTT)
 
-BINS=twattach twcat twclip twdialog twevent twfindtwin twlsobj twsendmsg twsetroot \
-	$(OS_CLIENTS) twterm
+BINS=twattach twcat twclip twdialog twevent twfindtwin twlsobj twsendmsg twsetroot twterm
 
-BINS+=ttdemo
+BINS+=$(OS_CLIENTS) ttdemo
 
 all: everything
 
@@ -83,10 +82,10 @@ ifneq ($(CONF_SOCKET),n)
   everything: $(BINS) twdetach subdirs
 else
   everything:
-	@$(ECHO) ; \
-	 $(ECHO) "You disabled \"Support remote socket connections\"," ; \
-	 $(ECHO) "so the remote clients will NOT be compiled!" ; \
-	 $(ECHO)
+	@echo ; \
+	 echo "You disabled \"Support remote socket connections\"," ; \
+	 echo "so the remote clients will NOT be compiled!" ; \
+	 echo
 endif
 
 ifeq ($(CONF__UNICODE),y)
@@ -96,7 +95,7 @@ endif
 
 #
 # include the do-everything file.
-# Must correctly set all BINS, MODBINS, ARLIBS, CC_FLAGS* and LD_FLAGS* before including this!
+# Must correctly set all BINS, SHLIBS, ARLIBS, CC_FLAGS* and LD_FLAGS* before including this!
 #
 include $(TOPDIR)/makerules
 
@@ -104,10 +103,13 @@ twdetach: twattach
 	$(LN) $< $@
 
 install:
-	$(INSTALL) -d $(DESTDIR)$(bindir)
-	$(INSTALL) $(BINS) $(DESTDIR)$(bindir)
+	$(INSTALL-DIR) $(DESTDIR)$(bindir) && \
+	$(INSTALL-DIR) $(DESTDIR)$(sbindir) && \
+	$(INSTALL) $(filter-out twdm,$(BINS)) $(DESTDIR)$(bindir) && \
+	$(INSTALL) twdm $(DESTDIR)$(sbindir) && \
 	$(LN) twattach $(DESTDIR)$(bindir)/twdetach
 
 clean:
-	rm -f .*.flags .*.link gmon.out core *.o $(BINS)
+	rm -f .*.flags .*.bin gmon.out core *.o tw* tt* ; \
+	rm -fr .libs
 

@@ -85,6 +85,7 @@ PROTO(void,v,        Map,Widget,2, widget,x, widget,x)
 PROTO(void,v,      UnMap,Widget,2, widget,x)
 PROTO(void,v,      SetXY,Widget,0, widget,x, dat,_, dat,_)
 PROTO(void,v,     Resize,Widget,0, widget,x, dat,_, dat,_)
+PROTO(void,v,     Scroll,Widget,0, widget,x, ldat,_, ldat,_)
 PROTO(msgport,x,GetOwner,Widget,0, widget,x)
 PROTO(void,v,     Expose,Widget,0, widget,x, dat,_, dat,_, dat,_, dat,_, byte,W(A(2)*A(3)), hwfont,W(A(2)*A(3)), hwattr,W(A(2)*A(3)))
 

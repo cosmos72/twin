@@ -7,30 +7,19 @@ THISDIR=$(TOPDIR)/libs/libTw
 SUBDIRS=
 
 -include $(TOPDIR)/makeautoconf
+include makeversion
 
 LD_FLAGS+=$(LD_LIBSOCKET)
 
 all: everything
 
-VERSION=3.0.5
-SO_VER=3
-
-BINS=libTw.so.$(VERSION)
+SHLIBS=libTw.la
 ARLIBS=libTw.a
 
-LINKS=libTw.so.$(SO_VER) libTw.so
+OBJS_libTw.la=libTw.lo avl.lo md5.lo missing.lo
+OBJS_libTw.a=libTw.o avl.o md5.o missing.o
 
-
-OBJS_libTw.so.$(VERSION)=libTw.o avl.o md5.o missing.o
-OBJS_libTw.a=libTw_u.o avl_u.o md5_u.o missing_u.o
-
-CC_FLAGS_libTw.o+=-fPIC
-CC_FLAGS_avl.o+=-fPIC
-CC_FLAGS_md5.o+=-fPIC
-CC_FLAGS_missing.o+=-fPIC
 CC_FLAGS+=-D_REENTRANT
-
-LD_FLAGS_libTw.so.$(VERSION)=$(LD_FLAGS_SOLIB_NAME)libTw.so.$(SO_VER)
 
 -include $(TOPDIR)/conf/conf.current
 -include .modules
@@ -44,39 +33,28 @@ ifneq ($(CONF_SOCKET),n)
   # avoiding overhead.
   #
   ifeq ($(CONF_SOCKET_PTHREADS),y)
-    LD_FLAGS_libTw.so.$(VERSION)+=$(LD_LIBPTHREAD_WEAK)
+    LD_FLAGS_libTw.la+=$(LD_LIBPTHREAD_WEAK)
   endif
   everything: lib
   install: install-real
   ifeq ($(CONF_SOCKET_GZ),y)
-    LD_FLAGS_libTw.so.$(VERSION)+=-lz
+    LD_FLAGS_libTw.la+=-lz
   endif
 else
   everything: warn
   install: warn
   warn:
-	@rm -f (ARLIBS) $(BINS) $(LINKS) ; \
-	 $(ECHO) ; \
-	 $(ECHO) "You disabled \"Support remote socket connections\"," ; \
-	 $(ECHO) "so the library libTw.so will NOT be compiled!" ; \
-	 $(ECHO)
+	@rm -f (ARLIBS) $(SHLIBS) ; \
+	 echo ; \
+	 echo "You disabled \"Support remote socket connections\"," ; \
+	 echo "so the library libTw.so will NOT be compiled!" ; \
+	 echo
 endif
 
-#
-# hand-optimized assembler functions for i386 with gcc
-# 
-# makerules autodetect that libTw2_i386.o must be compiled from libTw2_i386.S
-# and also generates dependencies scanning libTw2_i386.S :-)
-#
-ifeq ($(CC_ARCH_I386_ASM),y)
-  CC_FLAGS_libTw.o+=-DTW_HAVE_I386_ASM
-  CC_FLAGS_libTw_u.o+=-DTW_HAVE_I386_ASM
-  CC_FLAGS_libTw2_i386.o+=-DTW_HAVE_I386_ASM
-    
-  OBJS_libTw.so.$(VERSION)+=libTw2_i386.o
+ifeq ($(GCC_I386_ASM),yes)
+  OBJS_libTw.la+=libTw2_i386.lo
   OBJS_libTw.a+=libTw2_i386.o
 endif
-
 
 #
 # include the do-everything file.
@@ -89,23 +67,15 @@ include $(TOPDIR)/makerules
 # handy targets
 #
 ifeq ($(CONF__SHLIBS),y)
-  lib: $(ARLIBS) $(BINS) links
+  lib: $(ARLIBS) $(SHLIBS)
 else
   lib: $(ARLIBS)
-	@rm -f $(BINS) $(LINKS) ; \
-	 $(ECHO) ; \
-	 $(ECHO) "You disabled \"Enable shared libraries (ELF)\"," ; \
-	 $(ECHO) "so only the static library libTw.a will be compiled!" ; \
-	 $(ECHO)
+	@rm -f $(SHLIBS) ; \
+	 echo ; \
+	 echo "You disabled \"Enable shared libraries (ELF)\"," ; \
+	 echo "so only the static library libTw.a will be compiled!" ; \
+	 echo
 endif
-
-links: $(LINKS)
-
-libTw.so.$(SO_VER):
-	$(LN) libTw.so.$(VERSION) $@
-
-libTw.so:
-	$(LN) libTw.so.$(SO_VER) $@
 
 md5.c:
 	$(LN) $(TOPDIR)/server/md5.c $@
@@ -113,21 +83,24 @@ md5.c:
 missing.c:
 	$(LN) $(TOPDIR)/server/missing.c $@
 
-do-autogen: paranoiam4.h libTw1m4.h libTw2m4.h libTw2_i386m4.h libTw3m4.h
+do-autogen: paranoia_m4.h libTw1_m4.h libTw2_m4.h libTw2_i386_m4.h libTw3_m4.h
 
 install-headers:
-	$(INSTALL) -d $(DESTDIR)$(includedir)/Tw && \
+	$(INSTALL-DIR) $(DESTDIR)$(includedir)/Tw && \
 	$(INSTALL-TXT) $(TOPDIR)/include/Tw/*.h $(DESTDIR)$(includedir)/Tw
 
-install-real: install-headers
-	$(INSTALL) -d $(DESTDIR)$(libdir) && \
-	$(INSTALL-TXT) $(ARLIBS) $(DESTDIR)$(libdir) && \
-	if [ -f libTw.so.$(VERSION) ]; then \
-		$(INSTALL) libTw.so.$(VERSION) $(DESTDIR)$(libdir) && \
-		$(LN) libTw.so.$(VERSION) $(DESTDIR)$(libdir)/libTw.so.$(SO_VER) && \
-		$(LN) libTw.so.$(SO_VER)  $(DESTDIR)$(libdir)/libTw.so; \
+install-libTw.a:
+	$(INSTALL-DIR) $(DESTDIR)$(libdir) && \
+	$(INSTALL-TXT) $(ARLIBS) $(DESTDIR)$(libdir)
+
+install-libTw.la:
+	if [ -f libTw.la ]; then \
+	  $(INSTALL) libTw.la $(DESTDIR)$(libdir) ; \
 	fi
 
+install-real: install-headers install-libTw.a install-libTw.la
+
 clean:
-	rm -f .*.flags .*.link .*.arlib libTw.so* libTw.a *.o
+	rm -f .*.flags .*.shlib .*.arlib libTw.la libTw.a *.o *.lo ; \
+	rm -fr .libs
 

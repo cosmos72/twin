@@ -81,6 +81,8 @@
     "0""v"TWS_void_STR"x"widget_magic_STR"_"TWS_dat_STR"_"TWS_dat_STR },
 { 0, 0, "ResizeWidget",
     "0""v"TWS_void_STR"x"widget_magic_STR"_"TWS_dat_STR"_"TWS_dat_STR },
+{ 0, 0, "ScrollWidget",
+    "0""v"TWS_void_STR"x"widget_magic_STR"_"TWS_ldat_STR"_"TWS_ldat_STR },
 { 0, 0, "GetOwnerWidget",
     "0""x"msgport_magic_STR"x"widget_magic_STR },
 { 0, 0, "ExposeWidget",

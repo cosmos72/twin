@@ -175,7 +175,7 @@ static void GPM_EnableMouseMotionEvents(byte enable) {
 
 
 static void GPM_MouseEvent(int fd, display_hw hw) {
-    int left;
+    int left = 0;
     udat IdButtons, Buttons = 0;
     Gpm_Event GPM_EV;
     

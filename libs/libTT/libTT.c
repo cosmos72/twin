@@ -52,10 +52,10 @@
 TH_R_MUTEX_HELPER_DEFS(static);
 #endif
 
-static ttfns dummy_InitHW(tthw *HW);
+ttfns _TT_null_InitHW(tthw *HW);
 static ttfns module_InitHW(tthw *HW);
-ttfns twin_InitHW(tthw *HW);
-ttfns gtk_InitHW(tthw *HW);
+ttfns _TT_twin_InitHW(tthw *HW);
+ttfns _TT_gtk_InitHW(tthw *HW);
 
 static ttobj FindNative(ttany id);
 
@@ -69,8 +69,7 @@ static opaque Method2Order(void *method);
 static ttcallback AddTo_ttcallback(ttcallback c, ttcomponent o);
 static void Remove_ttcallback(ttcallback c);
 
-static void DelAllQuickNDirty_ttobj(void);
-static void DelAll_ttobj(void);
+static void DelAll_ttobj(ttbyte quick);
 
 static void Expose_ttvisible(ttvisible o, ttshort x, ttshort y, ttshort w, ttshort h);
 
@@ -82,8 +81,6 @@ static ttfont *CloneStr2TTFont(TT_CONST ttbyte * s, size_t len);
 
 #include "inlines.h"
 
-
-static TT_CONST struct s_tavl empty_AVL;
 
 void *(*TTAllocMem)(size_t) = malloc;
 void *(*TTReAllocMem)(void *, size_t) = realloc;
@@ -207,7 +204,7 @@ static void FreeErrnoLocation(void) {
 
 #else /* !CONF_SOCKET_PTHREADS */
 
-# define GetErrnoLocation()	(&TTD.rErrno_)
+# define GetErrnoLocation()	(TTD.OpenFlag ? &TTD.rErrno_ : &TTD.rCommonErrno_)
 # define FreeErrnoLocation()	do { } while (0)
 
 #endif /* CONF_SOCKET_PTHREADS */
@@ -219,7 +216,7 @@ static void FreeErrnoLocation(void) {
 
 
 void TTAssertFail (char *assertion, char *file, unsigned int line, char *function) {
-    fprintf(stderr, "TT-WARNING: %s:%u: %s: assertion `%s' failed\n",
+    fprintf(stderr, "TT-CRITICAL: %s:%u: %s: assertion `%s' failed\n",
 	    file, line, function, assertion);
 }
 
@@ -243,6 +240,18 @@ ttbyte TTCheckMagic(TT_CONST ttbyte id[])  {
     return TRUE;
 }
 
+static ttuint PrintInitError(tthw HW, TT_CONST ttbyte *target, ttbyte module) {
+    s_tt_errno *L = GetErrnoLocation();
+    /* set TTD.FN.HW to allow error reporting */
+    if (HW)
+	TTD.FN.HW = *HW;
+    fprintf(stderr, "TT-ERROR: %s display target%s `%s' failed: %s%s\n",
+	    module ? "loading" : "compiled in",
+	    module ? " module" : "",
+	    target ? target : (TT_CONST ttbyte *)"(NULL)",
+	    TTStrError(L->E), TTStrErrorDetail(L->E, L->S));
+    return 0;
+}
 
 #ifdef CONF__MODULES
 # ifdef LIBDIR
@@ -303,6 +312,7 @@ static ttfns module_InitHW(tthw *HW) {
 		CommonErrno = TT_EDLERROR_TARGET;
 		TTD.str_dlerror = dlerror();
 	    }
+	    PrintInitError(*HW, name[i], TRUE);
 	}
 	TTFreeMem(buf);
     } else
@@ -313,6 +323,12 @@ static ttfns module_InitHW(tthw *HW) {
 #else /* !CONF__MODULES */
 
 static ttfns module_InitHW(tthw *HW) {
+    if (TTD.HWArgs[0])
+	fprintf(stderr, "TT-ERROR: modules not enabled, cannot load display target `%s'\n",
+		TTD.HWArgs[0]);
+    else
+	fprintf(stderr, "TT-ERROR: modules not enabled, cannot load any display target\n");
+    
     if (!CommonErrno)
 	CommonErrno = TT_EFAILED_TARGET;
     return (ttfns)0;
@@ -340,7 +356,7 @@ static void InitFNs(ttfns FNs) {
     void **src, **dst;
     void *c;
     
-    if (FNs != TTD.dummy_FNs) {
+    if (FNs != TTD.null_FNs) {
 	for (i = order_ttobj; i < order_n; i++) {
 	    j = DeltaFN(i) + TT_OFFSETOF(ttfn_ttobj,New);
 	    src = (void **)((ttbyte *)FNs     + j);
@@ -360,7 +376,7 @@ static void CloseTarget(void) {
 	THW.Close();
     
     /* reinitialize at each TTClose() */
-    TTD.FN = *TTD.dummy_FNs;
+    TTD.FN = *TTD.null_FNs;
 
 #ifdef CONF__MODULES
     /* unload module if needed */
@@ -372,7 +388,7 @@ static void CloseTarget(void) {
 }
 
 
-static void Close(void) {
+static void Close(ttbyte quick) {
     ttuint i;
     
     if (TTD.OpenFlag || TTD.PanicFlag) {
@@ -386,16 +402,17 @@ static void Close(void) {
 	if (TTD.OpenFlag)
 	    CloseTarget();
 
-	/* always check at least two args */
-	if (TTD.HWArgsN < 2)
-	    TTD.HWArgsN = 2;
-	for (i = 0; i < TTD.HWArgsN; i++) {
-	    if (TTD.HWArgs[i])
-		TTFreeMem(TTD.HWArgs[i]);
+	if (TTD.HWArgs) {
+	    /* always check at least two args */
+	    if (TTD.HWArgsN < 2)
+		TTD.HWArgsN = 2;
+	    for (i = 0; i < TTD.HWArgsN; i++) {
+		if (TTD.HWArgs[i])
+		    TTFreeMem(TTD.HWArgs[i]);
+	    }
+	    TTFreeMem(TTD.HWArgs);
 	}
-	TTFreeMem(TTD.HWArgs);
-	
-	DelAll_ttobj();
+	DelAll_ttobj(quick);
 	
 	TTD.OpenFlag = TTD.ExitMainLoopFlag = TTD.PanicFlag = FALSE;
 	FreeErrnoLocation();
@@ -404,20 +421,26 @@ static void Close(void) {
 
 void TTClose(void) {
     LOCK;
-    Close();
+    Close(0);
     UNLK;
 }
-    
 
-static ttfns OpenTarget(tthw *HW) {
+void TTCloseQuickNDirty(void) {
+    LOCK;
+    Close(1);
+    UNLK;
+}
+
+static ttfns OpenTarget(void) {
     ttfns FNs;
+    tthw HW;
     TT_CONST ttbyte * t, * s;
     ttbyte * d;
 	
     /* reinitialize at each TTOpen() */
-    TTD.FN = *(TTD.dummy_FNs = dummy_InitHW(HW));
+    TTD.FN = *(TTD.null_FNs = _TT_null_InitHW(&HW));
     
-    if (!TTD.HWArgs[0] && (t = getenv("TTDISPLAY"))) {
+    if (!TTD.HWArgs[0] && (t = getenv("TTDISPLAY")) && *t) {
 	/* client did not ask for a specific target. pick from environment */
 	if ((s = TTD.HWArgs[0] = TTCloneStr(t))) {
 	    if ((d = strchr(s, '@'))) {
@@ -430,27 +453,30 @@ static ttfns OpenTarget(tthw *HW) {
 	}
     }
 #define CHECK4(t) (!TTD.HWArgs[0] || !strcmp(t, TTD.HWArgs[0]))
+#define TRY4(t) (CHECK4(TT_STR(t)) && ((FNs = TT_CAT(TT_CAT(_TT_,t),_InitHW)(&HW)) || PrintInitError(HW, TT_STR(t), FALSE)))
     
-    /* use dummy target ONLY if explicitly requested */
+    /* use null target ONLY if explicitly requested */
     if (
-	(TTD.HWArgs[0] && !strcmp("dummy", TTD.HWArgs[0]) && (FNs = TTD.dummy_FNs)) ||
+	(TTD.HWArgs[0] && !strcmp("null", TTD.HWArgs[0]) && (FNs = TTD.null_FNs)) ||
 #ifdef CONF_TT_HW_TWIN
-	(CHECK4("twin") && (FNs = twin_InitHW(HW))) ||
+	TRY4(twin) ||
 #endif
 #ifdef CONF_TT_HW_GTK
-	(CHECK4("gtk") && (FNs = gtk_InitHW(HW))) ||
+	TRY4(gtk) ||
 #endif
-	(FNs = module_InitHW(HW))
+	(FNs = module_InitHW(&HW))
 #undef CHECK4
+#undef TRY4
 	)
 	;
+    else if (!CommonErrno || CommonErrno == TT_EDLERROR_TARGET || CommonErrno >= TT_MAX_ERROR)
+	CommonErrno = TT_EFAILED_TARGET;
     
     return FNs;
 }
 
 static ttbyte Open(ttuint nargs, byte **args) {
     ttfns FNs;
-    tthw HW;
     
     if (!TTAssertAlways(sizeof(s_ttfn_ttobj) == TT_OFFSETOF(ttfn_ttobj,New) + 7 * sizeof(void *)))
 	return FALSE;
@@ -458,7 +484,7 @@ static ttbyte Open(ttuint nargs, byte **args) {
     LOCK;
     if (!TTD.OpenFlag && TTD.PanicFlag) {
 	/* cleanup after a failed TTOpen() */
-	Close();
+	Close(1);
     }
     if (TTD.OpenFlag) {
 	CommonErrno = TT_EALREADY_CONN;
@@ -469,7 +495,7 @@ static ttbyte Open(ttuint nargs, byte **args) {
     TTD.HWArgsN = nargs;
     TTD.HWArgs = args;
 
-    if ((FNs = OpenTarget(&HW))) {
+    if ((FNs = OpenTarget())) {
 	CommonErrno = 0;
 	
 	TTD.Theme = &s_DummyTheme;
@@ -485,9 +511,9 @@ static ttbyte Open(ttuint nargs, byte **args) {
 
 	InitFNs(FNs);
     } else {
-	/* to report error messages even if initialization fails: */
-	if (HW)
-	    THW = *HW;
+	TTD.HWArgsN = 0;
+	TTD.HWArgs = NULL;
+
 	TTD.PanicFlag = TRUE;
     }
     UNLK;
@@ -519,11 +545,11 @@ ttbyte TTOpenA(ttuint nargs, TT_CONST byte **args) {
 /*
  * CAUTION:
  * 
- * nargs *already* includes ap0 argument, so you must call
- * TTOpenV(0, NULL); or TTOpenV(1, "twin"); or TTOpenV(2, "twin", ":0");
+ * nargs *already* includes arg0 argument, so you must call
+ * TTOpenV(0, NULL, {}); or TTOpenV(1, "twin", {}); or TTOpenV(2, "twin", {":0"});
  * and so on.
  */
-ttbyte TTOpenV(ttuint nargs, TT_CONST ttbyte *ap0, va_list ap) {
+ttbyte TTOpenV(ttuint nargs, TT_CONST ttbyte *arg0, va_list vargs) {
     ttuint n;
     byte **args, ret = FALSE;
 
@@ -532,9 +558,9 @@ ttbyte TTOpenV(ttuint nargs, TT_CONST ttbyte *ap0, va_list ap) {
 	n = 2;
     if ((args = TTAllocMem(n * sizeof(TT_CONST byte *)))) {
 	if (nargs) {
-	    if ((args[0] = TTCloneStr(ap0))) {
+	    if ((args[0] = TTCloneStr(arg0))) {
 		for (n = 1; n < nargs; n++) {
-		    if (!(args[n] = TTCloneStr(va_arg(ap, TT_CONST byte *))))
+		    if (!(args[n] = TTCloneStr(va_arg(vargs, TT_CONST byte *))))
 			break;
 		}
 		nargs = n;
@@ -549,18 +575,20 @@ ttbyte TTOpenV(ttuint nargs, TT_CONST ttbyte *ap0, va_list ap) {
     return ret;
 }
 
-ttbyte TTOpen(TT_CONST ttbyte *ap0, ...) {
+ttbyte TTOpen(TT_CONST ttbyte *arg0, ...) {
     ttuint nargs = 0;
-    va_list ap;
+    va_list vargs;
     
-    if (ap0) {
-	va_start(ap, ap0);
-	for (nargs = 1; va_arg(ap, TT_CONST ttbyte *); nargs++)
+    if (arg0) {
+	va_start(vargs, arg0);
+	for (nargs = 1; va_arg(vargs, TT_CONST ttbyte *); nargs++)
 	    ;
-	va_end(ap);
+	va_end(vargs);
     }
-    
-    return TTOpenV(nargs, ap0, ap);
+    va_start(vargs, arg0);
+    nargs = (ttuint)TTOpenV(nargs, arg0, vargs);
+    va_end(vargs);
+    return (ttbyte)nargs;
 }
 
 
@@ -582,20 +610,34 @@ TT_FN_ATTR_CONST TT_CONST ttbyte *TTStrError(ttuint E) {
 	return "already connected";
 	
       case TT_EDLERROR_TARGET:
-	return "unable to load display target module: ";
+	/*return "unable to load display target module: ";*/
+	return "";
 	
       case TT_EFAILED_TARGET:
 #if defined(CONF_TT_HW_TWIN) || defined(CONF_TT_HW_GTK)
-	return "all compiled-in "
-# ifdef CONF__MODULES
-	    "and module-probed "
+	return "all compiled-in display targets ("
+# ifdef CONF_TT_HW_TWIN
+	    "twin"
 # endif
-	    "display targets failed. Known targets are: twin, gtk.";
+# if defined(CONF_TT_HW_TWIN) || defined(CONF_TT_HW_GTK)
+	    ", "
+# endif
+# ifdef CONF_TT_HW_GTK
+	    "gtk"
+# endif
+# ifdef CONF__MODULES
+	    ") and all probed modules failed"
+# else
+	    ") failed and modules not enabled"
+# endif
+	    "\n\t(all known targets: twin, gtk)";
 #else /* !(defined(CONF_TT_HW_TWIN) || defined(CONF_TT_HW_GTK)) */
 # ifdef CONF__MODULES
-	return "no display target compiled in, and all module-probed ones failed. Known targets are: twin, gtk.";
+	return "no display target compiled in, and all probed modules failed"
+	    
+	    "\n\t(all known targets: twin, gtk)";
 # else
-	return "no display target compiled in, and modules not enabled. Please recompile me!";
+	return "no display target compiled in, and modules not enabled. Please recompile libTT !!";
 # endif /* CONF__MODULES */
 #endif/* defined(CONF_TT_HW_TWIN) || defined(CONF_TT_HW_GTK) */
 	
@@ -903,6 +945,51 @@ tt_fn TTClassOf(tt_obj o) {
     return ret;
 }
 
+/*
+ * return the superclass of the class fn
+ */
+tt_fn TTGetSuper_ttfn(tt_fn fn) {
+    ttfn_ttobj FN, FN_super;
+    opaque i;
+    
+    /*
+     * this could be *MUCH* smarter than a dumb linear search,
+     * but hardcoding the class tree here would make it impossible
+     * to create more classes at runtime.
+     */
+    if ((FN = ID2FN((opaque)fn))) {
+	for (i = (opaque)fn - 1; i >= order_ttobj; i--) {
+	    if ((FN_super = ID2FN(i)) && (FN->magic & FN_super->magicmask) == FN_super->magic)
+		return FN_super;
+	}
+    }
+    return (tt_fn)0;
+}
+
+static TT_CONST ttbyte *ttfn_names[] = {
+    NULL,
+#define el(t) TT_STR(t),
+    TT_LIST(el)
+#undef el
+    TT_STR(ttfn),
+};
+
+/*
+ * return the name of the class fn
+ */
+TT_CONST ttbyte *TTGetName_ttfn(tt_fn fn) {
+    if ((opaque)fn > 0 && (opaque)fn <= order_n)
+	return ttfn_names[(opaque)fn];
+    return NULL;
+}
+    
+/*
+ * return the name of the class of o
+ */
+TT_CONST ttbyte *TTClassNameOf(tt_obj o) {
+    return TTGetName_ttfn(TTClassOf(o));
+}
+
 /* constructors */
 tt_obj TTNew(tt_fn FN) {
     tt_obj ret;
@@ -920,8 +1007,8 @@ void TTDel(tt_obj o) {
 }
 
 
-/* "wrapm4.h" requires "create.h" */
-#include "wrapm4.h"
+/* "call_m4.h" requires "create.h" */
+#include "call_m4.h"
 
 
 
@@ -1046,7 +1133,7 @@ static void CallFunctionPlain(void *function, ttuint nargs, ttany *args) {
 
 /*
  * this must come *after*
- * #include "wrapm4.h"
+ * #include "wrap_m4.h"
  * as it uses a lot of stuff from it
  */
 static void DispatchEvent(ttcomponent o, ttevent ev, ttbyte dflags) {
@@ -1148,6 +1235,8 @@ static void DispatchSimpleEvent(ttcomponent o, ttuint evtype) {
 	 */
     }
 }
+
+static TT_CONST struct s_tavl empty_AVL;
 
 static ttcallback AddTo_ttcallback(ttcallback c, ttcomponent o) {
     ttavl root;
@@ -1278,31 +1367,7 @@ TT_INLINE void DelAllCallbacks_ttcomponent(ttcomponent o) {
     }
 }
 
-static void DelAllQuickNDirty_ttobj(void) {
-    ttuint n, i;
-    ttobj o;
-    
-    for (n = order_n - 1; n != (ttuint)-1; n--) {
-	for (;;) {
-	    /* IdTop[n] decreases with us. */
-	    if ((i = IdTop[n] - 1) != (ttuint)-1) {
-		if (TTAssertAlways(o = IdList[n][i])) {
-		    if (IS(ttcomponent,o)) {
-			/* don't generate delete events */
-			DelAllListeners_ttcomponent((ttcomponent)o);
-			DelAllCallbacks_ttcomponent((ttcomponent)o);
-		    }
-		    o->FN->Del(o);
-		}
-		if (n == 0 && i == 0)
-		    return;
-	    } else
-		break;
-	}
-    }
-}
-
-static void DelAll_ttobj(void) {
+static void DelAll_ttobj(ttbyte quick) {
     ttuint n, i;
     ttobj o;
     
@@ -1311,7 +1376,15 @@ static void DelAll_ttobj(void) {
 	    /* IdTop[n] decreases with us. */
 	    if ((i = IdTop[n] - 1) != (ttuint)-1) {
 		if (TTAssertAlways(o = IdList[n][i]))
-		    /* this generates *LOTS* of delete events :( */
+		    if (quick && IS(ttcomponent,o)) {
+			/* don't generate delete events */
+			DelAllListeners_ttcomponent((ttcomponent)o);
+			DelAllCallbacks_ttcomponent((ttcomponent)o);
+		    }
+		    /*
+		     * this is "the right thing" but may
+		     * generate *LOTS* of delete events :(
+		     */
 		    TDEL(o);
 		if (n == 0 && i == 0)
 		    return;
@@ -1362,7 +1435,7 @@ s_tt_d TTD = {
     { 0, }, { 0, }, NULL,
 	
     {
-#include "create_initm4.h"
+#include "create_init_m4.h"
     },
     {
 #ifdef CONF_SOCKET_PTHREADS
@@ -1399,9 +1472,4 @@ TT_LIST(el)
 TT_LIST(el)
 #undef el
 tt_fn TTFN_ttfn = (tt_fn)order_n;
-
-
-#include "theme.h"
-
-#include "HW/hw_dummy_m4.c"
 

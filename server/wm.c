@@ -34,7 +34,6 @@
 #include "rctypes.h"
 #include "rcrun.h"
 
-
 static void DetailCtx(wm_ctx *C);
 
 byte ClickWindowPos = MAXBYTE;
@@ -81,7 +80,7 @@ INLINE sbyte IsTabPosition(window Window, udat pos, sbyte isX) {
     return pos >= (start = TabStart(Window, isX)) ? pos - start < TabLen(Window, isX) ? 0 : 1 : -1;
 }
 
-#ifdef CONF_THIS_MODULE
+#ifdef THIS_MODULE
 static
 #endif
 byte WMFindBorderWindow(window W, dat u, dat v, byte Border, hwfont *PtrChar, hwcol *PtrColor) {
@@ -1762,7 +1761,7 @@ static void SmartPlace(widget W, screen Screen) {
 }
 
 
-#ifdef CONF_THIS_MODULE
+#ifdef THIS_MODULE
 static void OverrideMethods(byte enter) {
     if (enter)
 	OverrideMethod(Window,FindBorder, FakeFindBorderWindow, WMFindBorderWindow);
@@ -1771,9 +1770,6 @@ static void OverrideMethods(byte enter) {
 }
 
 
-# include "version.h"
-MODULEVERSION;
-    
 byte InitModule(module Module)
 #else
 byte InitWM(void)
@@ -1795,7 +1791,7 @@ byte InitWM(void)
 		
 		if (InitRC()) {
 
-#ifdef CONF_THIS_MODULE
+#ifdef THIS_MODULE
 		    OverrideMethods(TRUE);
 #endif
 		    return TRUE;
@@ -1818,7 +1814,7 @@ byte InitWM(void)
     return FALSE;
 }
 
-#ifdef CONF_THIS_MODULE
+#ifdef THIS_MODULE
 void QuitModule(module Module) {
     QuitRC();
     OverrideMethods(FALSE);
@@ -1826,4 +1822,4 @@ void QuitModule(module Module) {
     Delete(WM_MsgPort);
     Delete(MapQueue);
 }
-#endif /* CONF_THIS_MODULE */
+#endif /* THIS_MODULE */

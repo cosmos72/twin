@@ -50,38 +50,47 @@ extern void *(*TTAllocMem)(size_t);
 extern void *(*TTReAllocMem)(void *, size_t);
 extern void  (*TTFreeMem)(void *);
 void *TTCloneMem(TT_CONST void *S, size_t len);
-byte *TTCloneStr(TT_CONST byte *S);
+ttbyte *TTCloneStr(TT_CONST ttbyte *S);
 void TTConfigMalloc(void *(*my_malloc)(size_t),
 		     void *(*my_realloc)(void *, size_t),
 		     void  (*my_free)(void *));
 
 
-byte TTCheckMagic(TT_CONST byte id[]);
+ttbyte TTCheckMagic(TT_CONST ttbyte id[]);
 
-byte TTInPanic(void);
+ttbyte TTInPanic(void);
 ttuint TTLibraryVersion(void);
 
-byte TTOpen(TT_CONST byte *target, ...);
+ttbyte TTOpen(TT_CONST ttbyte *target, ...);
 void TTClose(void);
+void TTCloseQuickNDirty(void);
 int TTConnectionFd(void);
-byte TTFlush(void);
-byte TTTimidFlush(void);
-byte TTSync(void);
+ttbyte TTFlush(void);
+ttbyte TTTimidFlush(void);
+ttbyte TTSync(void);
 
-byte TTMainLoop(void);
+ttbyte TTMainLoop(void);
 void TTExitMainLoop(void);
 
 tt_obj TTNew(tt_fn FN);
 void  TTDel(tt_obj o);
 
-byte TTInstanceOf(tt_fn FN, tt_obj o);
+ttbyte TTInstanceOf(tt_fn FN, tt_obj o);
 tt_fn TTClassOf(tt_obj o);
+
+TT_CONST ttbyte *TTClassNameOf(tt_obj o);
+
+TT_CONST ttbyte *TTGetName_ttfn(tt_fn fn);
+tt_fn TTGetSuper_ttfn(tt_fn fn);
+
+TT_FN_ATTR_CONST ttuint TTGetValueId(TT_CONST ttbyte *);
+TT_FN_ATTR_CONST TT_CONST ttbyte *TTGetValueName(ttuint);
 
 extern void *(*TTAllocMem)(size_t);
 extern void *(*TTReAllocMem)(void *, size_t);
 extern void  (*TTFreeMem)(void *);
 extern void *TTCloneMem(TT_CONST void *, size_t);
-extern byte *TTCloneStr(TT_CONST byte *);
+extern ttbyte *TTCloneStr(TT_CONST ttbyte *);
 
 #define TTCopyMem(From, To, Size)	memcpy(To, From, Size)
 #define TTMoveMem(From, To, Size)	memmove(To, From, Size)

@@ -34,7 +34,7 @@
    2) run `./configure [OPTIONS]': this will automatically disable features that
       are unavailable on your system, and will enable by default all other
       (available) features.
-   3) run `scripts/Configure.sh [OPTIONS]': lets you manually change each and every
+   3) run `sh scripts/Configure.sh [OPTIONS]': lets you manually change each and every
       configuration option, defaulting to current ones.
    
    If you have GNU bash, you can also try one of these ways:
@@ -44,18 +44,18 @@
       (requires 'gdialog'): a somewhat more friendly interface will be started;
       
      Be aware that option 3) lets you set inconsistent options: for example
-     `scripts/Configure.sh --disable--modules --enable-wm=socket' tries to disable
+     `sh scripts/Configure.sh --disable--modules --enable-wm=socket' tries to disable
      modules and at the same time to enable the window manager as module.
      Provided Makefiles are smart enough to realize this risk and automatically
      regularize the configuration before starting to compile, so it may happen
-     than `scripts/Configure.sh --show' report different configurations before and
+     than `sh scripts/Configure.sh --show' report different configurations before and
      after compiling: the latter comes from regularizing the former.
      If you want, you can regularize manually with 'make nullconfig'.
      Also, to ensure the configuration you choosed does not use features
      unavailable on your system, you can process it with `./configure';
      this is very easy: just type (including the backquotes)
      
-     ./configure `scripts/Configure.sh --show`
+     ./configure `sh scripts/Configure.sh --show`
      
    
    With option 1), you will have to know what the various variables mean

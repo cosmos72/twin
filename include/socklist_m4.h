@@ -54,6 +54,7 @@ EL(MapWidget)
 EL(UnMapWidget)
 EL(SetXYWidget)
 EL(ResizeWidget)
+EL(ScrollWidget)
 EL(GetOwnerWidget)
 EL(ExposeWidget)
 

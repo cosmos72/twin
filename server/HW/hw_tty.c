@@ -34,7 +34,6 @@
 
 #include <Tw/Twkeys.h>
 
-
 #if !defined(CONF_HW_TTY_LINUX) && !defined(CONF_HW_TTY_TWTERM) && !defined(CONF_HW_TTY_TERMCAP)
 # warning trying to compile textmode terminals driver without support for any specific ttys.
 # warning twin terminal driver will be enabled by default.
@@ -703,7 +702,7 @@ static void xterm_MouseEvent(int fd, display_hw hw) {
  * note: during xxx_InitHW() initialization, DON'T use DisplayWidth/DisplayHeight
  * as they may be not up to date. Use GetDisplayWidth() / GetDisplayHeight().
  */
-#ifdef CONF_THIS_MODULE
+#ifdef THIS_MODULE
 static
 #endif
 byte tty_InitHW(void) {
@@ -808,7 +807,12 @@ byte tty_InitHW(void) {
 	     */
 	    if ((display_is_ctty = try_ctty &&
 		 (!DisplayHWCTTY || DisplayHWCTTY == HWCTTY_DETACHED) &&
-		 ioctl(tty_fd, TIOCSCTTY, 1) >= 0)) {
+#ifdef TIOCSCTTY
+		 ioctl(tty_fd, TIOCSCTTY, 1) >= 0
+#else
+		 0
+#endif
+		 )) {
 
 		if (tty_fd != 0) {
 		    close(0);
@@ -839,6 +843,7 @@ byte tty_InitHW(void) {
 		    : "is already in use as display");
 	    return FALSE;
 	} else {
+	    display_is_ctty = TRUE;
 	    tty_fd = 0;
 	    stdOUT = stdout;
 	    tty_name = CloneStr(ttyname(0));
@@ -951,11 +956,8 @@ byte tty_InitHW(void) {
     return FALSE;
 }
 
-#ifdef CONF_THIS_MODULE
+#ifdef THIS_MODULE
 
-#include "version.h"
-MODULEVERSION;
-		       
 byte InitModule(module Module) {
     Module->Private = tty_InitHW;
     return TRUE;
@@ -965,4 +967,4 @@ byte InitModule(module Module) {
 void QuitModule(module Module) {
 }
 
-#endif /* CONF_THIS_MODULE */
+#endif /* THIS_MODULE */

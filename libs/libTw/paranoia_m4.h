@@ -106,6 +106,7 @@ void  Tw_MapWidget(PREFIX twidget a1, twidget a2) ;
 void  Tw_UnMapWidget(PREFIX twidget a1) ;
 void  Tw_SetXYWidget(PREFIX twidget a1, dat a2, dat a3) ;
 void  Tw_ResizeWidget(PREFIX twidget a1, dat a2, dat a3) ;
+void  Tw_ScrollWidget(PREFIX twidget a1, ldat a2, ldat a3) ;
 tmsgport  Tw_GetOwnerWidget(PREFIX twidget a1) ;
 void  Tw_ExposeWidget(PREFIX twidget a1, dat a2, dat a3, dat a4, dat a5, CONST byte *a6, CONST hwfont *a7, CONST hwattr *a8) ;
 

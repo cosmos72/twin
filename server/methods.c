@@ -367,7 +367,10 @@ static void MapTopRealWidget(widget W, screen Screen) {
 	
 	InsertFirst(W, W, (widget)Screen);
 	W->Parent = (widget)Screen;
-	
+
+	/* top-level widgets must be visible */
+	W->Flags &= ~WINDOWFL_NOTVISIBLE;
+
 	if (W->Attrib & WIDGET_WANT_MOUSE_MOTION)
 	    IncMouseMotionN();
 	
@@ -907,16 +910,18 @@ static byte InitTtyData(window Window, dat ScrollBackLines) {
 
     Data->G = Data->saveG = 0;
     /*
-     * this probably violates some standard, 
-     * but starting with the identity mapping
-     * seems the only reasonable choice to me
+     * default to latin1 charset if CONF__UNICODE is enabled
      */
+#ifdef CONF__UNICODE
+    Data->currG = Data->G0 = Data->saveG0 = LAT1_MAP;
+#else
     Data->currG = Data->G0 = Data->saveG0 = IBMPC_MAP;
+#endif	
     Data->G1 = Data->saveG1 = GRAF_MAP;
 
     Data->utf = Data->utf_count = Data->utf_char = 0;
 #ifdef CONF__UNICODE
-    Data->InvCharset = Tutf_UTF_16_to_IBM437;
+    Data->InvCharset = Tutf_UTF_16_to_ISO_8859_1;
 #endif
     Data->newLen = Data->newMax = 0;
     Data->newName = NULL;

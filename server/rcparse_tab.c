@@ -146,7 +146,6 @@ typedef union {
     ldat_list	*val_list;
     str          _string;
     byte         imm;
-    hwcol	 color;
     node	 _node;
 } YYSTYPE;
 #include <stdio.h>
@@ -254,17 +253,17 @@ static const short yyrhs[] = {    84,
 
 #if YYDEBUG != 0
 static const short yyrline[] = { 0,
-   163,   166,   167,   170,   171,   172,   173,   176,   177,   180,
-   181,   184,   185,   186,   187,   188,   189,   190,   191,   192,
-   193,   194,   195,   196,   197,   198,   199,   200,   201,   204,
-   207,   208,   211,   214,   217,   218,   221,   224,   227,   228,
-   231,   234,   235,   236,   237,   240,   241,   244,   245,   248,
-   249,   250,   251,   252,   253,   256,   257,   258,   259,   260,
-   261,   263,   264,   265,   267,   268,   269,   270,   271,   272,
-   273,   274,   275,   276,   277,   280,   281,   284,   285,   288,
-   289,   290,   291,   292,   295,   296,   297,   298,   301,   302,
-   305,   306,   309,   310,   313,   314,   317,   318,   319,   320,
-   323,   324,   327,   328
+   162,   165,   166,   169,   170,   171,   172,   175,   176,   179,
+   180,   183,   184,   185,   186,   187,   188,   189,   190,   191,
+   192,   193,   194,   195,   196,   197,   198,   199,   200,   203,
+   206,   207,   210,   213,   216,   217,   220,   223,   226,   227,
+   230,   233,   234,   235,   236,   239,   240,   243,   244,   247,
+   248,   249,   250,   251,   252,   255,   256,   257,   258,   259,
+   260,   262,   263,   264,   266,   267,   268,   269,   270,   271,
+   272,   273,   274,   275,   276,   279,   280,   283,   284,   287,
+   288,   289,   290,   291,   294,   295,   296,   297,   300,   301,
+   304,   305,   308,   309,   312,   313,   316,   317,   318,   319,
+   322,   323,   326,   327
 };
 #endif
 
@@ -1038,10 +1037,10 @@ case 16:
 { yyval.imm = MergeFunc(yyvsp[-1]._string,  yyvsp[0]._node ); ;
     break;}
 case 17:
-{ yyval.imm = ImmBackground(yyvsp[-1]._string, yyvsp[0].color, NULL); ;
+{ yyval.imm = ImmBackground(yyvsp[-1]._string, yyvsp[0].val, NULL); ;
     break;}
 case 18:
-{ yyval.imm = ImmBackground(yyvsp[-2]._string, yyvsp[-1].color,  yyvsp[0]._node ); ;
+{ yyval.imm = ImmBackground(yyvsp[-2]._string, yyvsp[-1].val,  yyvsp[0]._node ); ;
     break;}
 case 19:
 { yyval.imm = ImmBorder(yyvsp[-1]._string, yyvsp[0].val, NULL); ;
@@ -1113,22 +1112,22 @@ case 41:
 { yyval._node = MakeNode(yyvsp[-1]._string); ;
     break;}
 case 42:
-{ yyval.color = (hwcol) yyvsp[0].val; ;
+{ yyval.val = (hwcol) yyvsp[0].val; ;
     break;}
 case 43:
-{ yyval.color = COL(yyvsp[-1].color|yyvsp[0].color, BLACK); ;
+{ yyval.val = COL(yyvsp[-1].val|yyvsp[0].val, BLACK); ;
     break;}
 case 44:
-{ yyval.color = COL(yyvsp[-4].color|yyvsp[-3].color, yyvsp[-1].color|yyvsp[0].color); ;
+{ yyval.val = COL(yyvsp[-4].val|yyvsp[-3].val, yyvsp[-1].val|yyvsp[0].val); ;
     break;}
 case 45:
-{ yyval.color = COL(WHITE, yyvsp[-1].color|yyvsp[0].color); ;
+{ yyval.val = COL(WHITE, yyvsp[-1].val|yyvsp[0].val); ;
     break;}
 case 46:
-{ yyval.color = (hwcol)0; ;
+{ yyval.val = (hwcol)0; ;
     break;}
 case 47:
-{ yyval.color = HIGH; ;
+{ yyval.val = HIGH; ;
     break;}
 case 48:
 { yyval._node = AddtoNodeList(NULL, yyvsp[0]._node); ;

@@ -8,12 +8,17 @@ THISDIR=$(TOPDIR)/server
 
 SUBDIRS=HW
 
+#
+# where to install modules (relative to $(libdir))
+#
+INSTALLSUBDIR=twin/modules
+
 include makeversion
 -include $(TOPDIR)/makeautoconf
 
 BASEOBJS=data.o builtin.o methods.o util.o draw.o extensions.o main.o \
          missing.o hw_multi.o printk.o resize.o scroller.o remote.o alloc.o
-HWOBJS=hw.o HW/hw.a
+HWOBJS=hw.o HW/hw.lst
 DLOBJS=dl.o
 WMOBJS=wm.o rcrun.o rcopt.o
 RCPARSEOBJS=rcparse_tab.o rcparse_lex.o shm.o
@@ -23,24 +28,23 @@ WRAPOBJS=wrapper.o
 DISPLAYOBJS=display.o
 ALLOBJS:=$(BASEOBJS) $(HWOBJS) $(DLOBJS) $(WMOBJS) $(TERMOBJS) \
 	 $(SOCKETOBJS) $(WRAPOBJS) $(DISPLAYOBJS) $(RCPARSEOBJS)
+ALLOBJS+=$(patsubst %.o,%.lo,$(ALLOBJS))
 
 OBJS_twin_real:=$(BASEOBJS) $(HWOBJS)
-OBJS_wm.so.$(VERSION):=$(WMOBJS)
-OBJS_rcparse.so.$(VERSION):=$(RCPARSEOBJS)
-OBJS_term.so.$(VERSION):=$(TERMOBJS)
-OBJS_socket.so.$(VERSION):=$(SOCKETOBJS)
+OBJS_wm.la:=$(patsubst %.o,%.lo,$(WMOBJS))
+OBJS_rcparse.la:=$(patsubst %.o,%.lo,$(RCPARSEOBJS))
+OBJS_term.la:=$(patsubst %.o,%.lo,$(TERMOBJS))
+OBJS_socket.la:=$(patsubst %.o,%.lo,$(SOCKETOBJS))
 OBJS_twin_wrapper:=$(WRAPOBJS)
 OBJS_twdisplay:=$(DISPLAYOBJS) alloc.o missing.o $(HWOBJS)
 
 BINS=twin_real twin_wrapper
-MODBINS=
+MODS=
 
-LD_FLAGS_wm.so.$(VERSION)=$(LD_FLAGS_SOLIB)
-LD_FLAGS_rcparse.so.$(VERSION)=$(LD_FLAGS_SOLIB)
-LD_FLAGS_rcrun.so.$(VERSION)=$(LD_FLAGS_SOLIB)
-LD_FLAGS_term.so.$(VERSION)=$(LD_FLAGS_SOLIB)
-LD_FLAGS_socket.so.$(VERSION)=$(LD_FLAGS_SOLIB)
 LD_FLAGS_twdisplay=$(LD_LIBTW)
+
+
+CC_FLAGS.lo+=-DTHIS_MODULE
 
 #
 # tweak flags based on current paths configuration
@@ -48,6 +52,10 @@ LD_FLAGS_twdisplay=$(LD_LIBTW)
 ifneq ($(libdir),)
   CC_FLAGS_data.o=-DLIBDIR=\"$(libdir)\"
   CC_FLAGS_display.o=-DLIBDIR=\"$(libdir)\"
+  #
+  # where to install modules?
+  #
+  libdir_MODS=$(libdir)/twin/modules
 endif
 ifneq ($(bindir),)
   CC_FLAGS_wrapper.o=-DBINDIR=\"$(bindir)\"
@@ -55,16 +63,9 @@ endif
 
 
 #
-# OS-specific stuff
-#
-ifneq ($(GNULD),)
-  LD_FLAGS_rdynamic:=-rdynamic
-endif
-
-#
 # target
 #
-all: bins modules twin handy
+all: bins modules twin links
 
 #
 # read configuration
@@ -79,11 +80,13 @@ all: bins modules twin handy
 # and group together all *.o objects needed by each binary
 #
 ifeq ($(CONF__MODULES),y)
-  LD_FLAGS_twin_real+=$(LD_LIBDL) $(LD_FLAGS_rdynamic)
+  #
+  # help resolving symbols in modules loaded at runtime
+  #
+  LD_FLAGS_twin_real+=$(LD_LIBDL) -export-dynamic
+  LD_FLAGS_twdisplay+=$(LD_LIBDL) -export-dynamic
+
   OBJS_twin_real+=$(DLOBJS)
-  LD_FLAGS_twdisplay+=$(LD_LIBDL) $(LD_FLAGS_rdynamic)
-else
-  EXCL_OBJS+=$(DLOBJS)
 endif
 
 ifeq ($(CONF__ALLOC),y)
@@ -94,10 +97,7 @@ ifeq ($(CONF_WM),y)
   OBJS_twin_real+=$(WMOBJS)
 else
   ifeq ($(CONF_WM),m)
-    MODBINS+=wm.so.$(VERSION)
-  else
-    EXCL_OBJS+=$(WMOBJS)
-    EXCL_BINS+=wm.so.$(VERSION)
+    MODS+=wm.la
   endif
 endif
 
@@ -105,10 +105,7 @@ ifeq ($(CONF_WM_RC),y)
   OBJS_twin_real+=$(RCPARSEOBJS)
 else
   ifeq ($(CONF_WM_RC),m)
-    MODBINS+=rcparse.so.$(VERSION)
-  else
-    EXCL_OBJS+=$(RCPARSEOBJS)
-    EXCL_BINS+=rcparse.so.$(VERSION)
+    MODS+=rcparse.la
   endif
 endif
 
@@ -117,29 +114,23 @@ ifeq ($(CONF_TERM),y)
   OBJS_twin_real+=$(TERMOBJS)
 else
   ifeq ($(CONF_TERM),m)
-    MODBINS+=term.so.$(VERSION)
-  else
-    EXCL_OBJS+=$(TERMOBJS)
-    EXCL_BINS+=term.so.$(VERSION)
+    MODS+=term.la
   endif
 endif
 
-ifeq ($(CONF_SOCKET),n)
-  EXCL_OBJS+=$(SOCKETOBJS)
-  EXCL_BINS+=socket.so.$(VERSION)
-else
+ifneq ($(CONF_SOCKET),n)
   LD_FLAGS_twin_real+=$(LD_LIBSOCKET)
   LD_FLAGS_twdisplay+=$(LD_LIBSOCKET)
   ifeq ($(CONF_SOCKET),y)
     OBJS_twin_real+=$(SOCKETOBJS)
   else
-    MODBINS+=socket.so.$(VERSION)
+    MODS+=socket.la
   endif
   ifeq ($(CONF_SOCKET_GZ),y)
     ifeq ($(CONF_SOCKET),y)
       LD_FLAGS_twin_real+=-lz
      else
-      LD_FLAGS_socket.so.$(VERSION)+=-lz
+      LD_FLAGS_socket.la+=-lz
     endif
   endif
 endif
@@ -204,6 +195,9 @@ ifeq ($(CONF_HW_GGI),y)
   LD_FLAGS_twdisplay+=-lggi
 endif
 ifneq ($(CONF_SOCKET),n)
+  ifeq ($(CONF_HW_DISPLAY),y)
+    OBJS_twin_real+=HW/hw_display.lst
+  endif
   ifneq ($(CONF_HW_DISPLAY),n)
     BINS+=twdisplay
   endif
@@ -221,7 +215,7 @@ include $(TOPDIR)/makerules
 
 bins: $(BINS)
 
-modules: $(MODBINS)
+modules: $(MODS)
 
 
 #
@@ -229,18 +223,15 @@ modules: $(MODBINS)
 #
 
 twin: twin_wrapper
-	if [ "$(EXCL_BINS)" ]; then \
-	  rm -f $(EXCL_BINS) ; \
-	fi ; \
 	$(LN) $< $@
 
-# the '@:' dummy command is to force relinking after HW/hw.a is rebuilt
-HW/hw.a: dir-HW
+# the '@:' dummy command is to force relinking after HW/hw.lst is rebuilt
+HW/hw.lst: dir-HW
 	@:
 
-do-autogen: rcparse_tab.c rcparse_tab.h rcparse_lex.c socket1m4.h socket2m4.h socket3m4.h
+do-autogen: rcparse_tab.c rcparse_tab.h rcparse_lex.c socket1_m4.h socket2_m4.h socket3_m4.h
 
-handy: .twinrc .twenvrc.sh
+links: .twinrc .twenvrc.sh $(patsubst %.la,%.so.$(SHLIBS_VER),$(MODS))
 
 .twinrc:
 	$(LN) ../system.twinrc .twinrc
@@ -260,31 +251,29 @@ socketmacros%.h: m4/macros%.m4 $(TOPDIR)/include/sockproto.h
 symbolsdep: all
 	for i in *.o; do nm $$i | grep 'U ' | cut -dU -f2- > $${i%%.o}.u; done; :
 	for i in *.o; do nm $$i | grep 'B \| C \| D \| T ' > $${i%%.o}.d; done; :
-	for i in *.u; do $(ECHO); $(ECHO) $$i; for j in `cat $$i`; do \
+	for i in *.u; do echo; echo $$i; for j in `cat $$i`; do \
 	grep -e " $${j}\$$" *.d; done | sort; done > $@; :
 
 clean:
 	rm -f .*.flags .*.link .*.arlib gmon.out core log twin \
-	      twin_real twin_wrapper twdisplay *.so.* \
-	      *.o \
-	      rcparse.output y.tab.c lex.yy.c \
-	      *.u *.d
+	      twin_real twin_wrapper twdisplay *.la *.o *.lo \
+	      rcparse.output y.tab.c lex.yy.c *.u *.d ; \
+	rm -fr .libs
 
-
-install:
-	$(INSTALL) -d $(DESTDIR)$(bindir) $(DESTDIR)/$(libdir)/twin/modules
-	$(INSTALL) $(BINS) twstart $(DESTDIR)$(bindir)
+install-bins:
+	$(INSTALL-DIR) $(DESTDIR)$(bindir) $(DESTDIR)$(libdir)/twin/modules ; \
+	$(INSTALL) $(BINS) $(DESTDIR)$(bindir) ; \
+	$(INSTALL-BIN) twstart $(DESTDIR)$(bindir)/twin ; \
 	$(LN) twin_wrapper $(DESTDIR)$(bindir)/twin
-	if [ "$(MODBINS)" ]; then \
-	  $(INSTALL) $(MODBINS) $(DESTDIR)$(libdir)/twin/modules; \
-	fi
+
+install: install-bins $(foreach M,$(MODS),install-mod-$(M))
 	@if [ "$(SETPRIV)" ]; then \
-	  $(ECHO) [1m ; \
-	  $(ECHO) Twin may need special privileges for the terminal emulator to work. ; \
-	  $(ECHO) More exactly, the following command could be necessary: ; \
-	  $(ECHO) "   $(SETPRIV)" ; \
-	  $(ECHO) "$(SETPRIV_COMM)" ; \
-	  $(ECHO) Since twin has not been extensively tested against vulnerabilities, ; \
-	  $(ECHO) you will grant special privileges to twin AT YOUR OWN RISK. ; \
-	  $(ECHO) [0m ; \
+	  echo [1m ; \
+	  echo Twin may need special privileges for the terminal emulator to work. ; \
+	  echo More exactly, the following command could be necessary: ; \
+	  echo "   $(SETPRIV)" ; \
+	  echo "$(SETPRIV_COMM)" ; \
+	  echo Since twin has not been extensively tested against vulnerabilities, ; \
+	  echo you will grant special privileges to twin AT YOUR OWN RISK. ; \
+	  echo [0m ; \
 	fi

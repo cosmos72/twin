@@ -54,7 +54,7 @@ typedef struct s_ttutil {
 } s_ttutil;
 
 typedef struct s_ttcreates {
-#include "create_declm4.h"
+#include "create_decl_m4.h"
 } s_ttcreates;
 
 typedef struct s_tt_d {
@@ -72,14 +72,14 @@ typedef struct s_tt_d {
     byte OpenFlag, ExitMainLoopFlag, PanicFlag;
     s_tt_errno rCommonErrno_;
     s_tt_errno_vec rErrno_;
-    byte *str_dlerror;
+    TT_CONST byte *str_dlerror;
     
     s_ttcreates CREATE;
     s_ttutil UTIL;
     
     ttfn_ttobj FN_[order_n];
     
-    ttfns dummy_FNs;
+    ttfns null_FNs;
     s_ttfns FN;
 } s_tt_d;
 
@@ -95,7 +95,8 @@ extern s_tt_d TTD;
 #define LOCK th_r_mutex_lock(mutex)
 #define UNLK th_r_mutex_unlock(mutex)
 
-#define FAIL(E, S) (CommonErrno = TT_MAX_ERROR+(E), CommonErrnoDetail = (S), FALSE)
+#define FAIL(E, S)		(CommonErrno = TT_MAX_ERROR+(E), CommonErrnoDetail = (S), FALSE)
+#define FAIL_PRINT(E, S, name)	(FAIL((E), (S)), _TTPrintInitError(name), FALSE)
 
 #endif /* _TT_EXTERN_H */
 

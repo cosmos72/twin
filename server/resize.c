@@ -1110,7 +1110,7 @@ void ResizeRelWindow(window Window, dat i, dat j) {
  * (0,0) is the (XLogic,YLogic) cell of the Window,
  * i.e. the first visible one.
  */
-void ScrollFirstWindowArea(dat X1, dat Y1, dat X2, dat Y2, dat DeltaX, dat DeltaY) {
+void ScrollFirstWindowArea(dat X1, dat Y1, dat X2, dat Y2, ldat DeltaX, ldat DeltaY) {
     screen Screen;
     dat DWidth, DHeight;
     window Window;
@@ -1130,7 +1130,12 @@ void ScrollFirstWindowArea(dat X1, dat Y1, dat X2, dat Y2, dat DeltaX, dat Delta
 
     if (X1 > X2 || X1 > XWidth-3 || X2 < 0 || Y1 > Y2 || Y1 > YWidth-3 || Y2 < 0)
 	return;
-    
+
+    if (DeltaX >= XWidth || -DeltaX >= XWidth || DeltaY >= YWidth || -DeltaY >= YWidth) {
+	DrawWidget((widget)Window, (dat)0, (dat)0, MAXDAT, MAXDAT, FALSE);
+	return;
+    }
+
     DWidth = All->DisplayWidth;
     DHeight = All->DisplayHeight;
     YLimit=Screen->YLimit;
@@ -1191,7 +1196,7 @@ void ScrollFirstWindowArea(dat X1, dat Y1, dat X2, dat Y2, dat DeltaX, dat Delta
     }
 }
 
-void ScrollFirstWindow(dat DeltaX, dat DeltaY, byte byXYLogic) {
+void ScrollFirstWindow(ldat DeltaX, ldat DeltaY, byte byXYLogic) {
     window Window;
     ldat XLogic, YLogic;
     dat XWidth, YWidth;
@@ -1207,24 +1212,24 @@ void ScrollFirstWindow(dat DeltaX, dat DeltaY, byte byXYLogic) {
 	XLogic=Window->XLogic;
 	YLogic=Window->YLogic;
 	
-	if (DeltaX>(dat)0 && XLogic>=MAXLDAT-(ldat)DeltaX)
-	    DeltaX=(dat)(MAXLDAT-XLogic-(ldat)1);
-	else if (DeltaX<(dat)0 && XLogic<(ldat)-DeltaX)
-	    DeltaX=-(dat)XLogic;
+	if (DeltaX>0 && XLogic>=MAXLDAT-DeltaX)
+	    DeltaX=MAXLDAT-XLogic-1;
+	else if (DeltaX<0 && XLogic<-DeltaX)
+	    DeltaX=-XLogic;
 	if (!W_USE(Window, USEROWS)) {
 	    /*
 	     * WARNING: Window->USE.C.Contents and other methods
 	     * may be unable to handle out-of-bound rows
 	     */
-	    if (DeltaY>(dat)0 && (ldat)YLogic+YWidth-2+DeltaY>=Window->HLogic)
-		DeltaY=(dat)(Window->HLogic-YLogic-YWidth+2);
-	    else if (DeltaY<(dat)0 && YLogic<(ldat)-DeltaY)
-		DeltaY=-(dat)YLogic;
+	    if (DeltaY>0 && YLogic+YWidth-2+DeltaY>=Window->HLogic)
+		DeltaY=Window->HLogic-YLogic-YWidth+2;
+	    else if (DeltaY<0 && YLogic<-DeltaY)
+		DeltaY=-YLogic;
 	} else {
-	    if (DeltaY>(dat)0 && YLogic+DeltaY>=Window->HLogic)
-		DeltaY=(dat)(Window->HLogic-YLogic-(ldat)1);
-	    else if (DeltaY<(dat)0 && YLogic<(ldat)-DeltaY)
-		DeltaY=-(dat)YLogic;
+	    if (DeltaY>0 && YLogic+DeltaY>=Window->HLogic)
+		DeltaY=Window->HLogic-YLogic-1;
+	    else if (DeltaY<0 && YLogic<-DeltaY)
+		DeltaY=-YLogic;
 	}
 	if (DeltaX)
 	    Window->XLogic = (XLogic += DeltaX);
@@ -1236,11 +1241,11 @@ void ScrollFirstWindow(dat DeltaX, dat DeltaY, byte byXYLogic) {
 
     ScrollFirstWindowArea(0, 0, XWidth-3, YWidth-3, -DeltaX, -DeltaY);
     
-    if (byXYLogic && Window == (window)All->FirstScreen->FocusW)
+    if (byXYLogic && ContainsCursor((widget)Window))
 	UpdateCursor();
 }
 
-void ScrollWindow(window Window, dat DeltaX, dat DeltaY) {
+void ScrollWindow(window Window, ldat DeltaX, ldat DeltaY) {
     ldat XLogic, YLogic;
     dat YWidth;
     
@@ -1256,24 +1261,24 @@ void ScrollWindow(window Window, dat DeltaX, dat DeltaY) {
     XLogic=Window->XLogic;
     YLogic=Window->YLogic;
 	
-    if (DeltaX>(dat)0 && XLogic>=MAXLDAT-(ldat)DeltaX)
-	DeltaX=(dat)(MAXLDAT-XLogic-(ldat)1);
-    else if (DeltaX<(dat)0 && XLogic<(ldat)-DeltaX)
-	DeltaX=-(dat)XLogic;
+    if (DeltaX>0 && XLogic>=MAXLDAT-DeltaX)
+	DeltaX=MAXLDAT-XLogic-1;
+    else if (DeltaX<0 && XLogic<-DeltaX)
+	DeltaX=-XLogic;
     if (!W_USE(Window, USEROWS)) {
 	/*
 	 * WARNING: Window->USE.C.Contents and other methods
 	 * may be unable to handle out-of-bound rows
 	 */
-	if (DeltaY>(dat)0 && (ldat)YLogic+YWidth-2+DeltaY>=Window->HLogic)
-	    DeltaY=(dat)(Window->HLogic-YLogic-YWidth+2);
-	else if (DeltaY<(dat)0 && YLogic<(ldat)-DeltaY)
-	    DeltaY=-(dat)YLogic;
+	if (DeltaY>0 && YLogic+YWidth-2+DeltaY>=Window->HLogic)
+	    DeltaY=Window->HLogic-YLogic-YWidth+2;
+	else if (DeltaY<0 && YLogic<-DeltaY)
+	    DeltaY=-YLogic;
     } else {
-	if (DeltaY>(dat)0 && YLogic+DeltaY>=Window->HLogic)
-	    DeltaY=(dat)(Window->HLogic-YLogic-(ldat)1);
-	else if (DeltaY<(dat)0 && YLogic<(ldat)-DeltaY)
-	    DeltaY=-(dat)YLogic;
+	if (DeltaY>0 && YLogic+DeltaY>=Window->HLogic)
+	    DeltaY=Window->HLogic-YLogic-1;
+	else if (DeltaY<0 && YLogic<-DeltaY)
+	    DeltaY=-YLogic;
     }
     if (DeltaX)
 	Window->XLogic = (XLogic += DeltaX);
@@ -1282,7 +1287,47 @@ void ScrollWindow(window Window, dat DeltaX, dat DeltaY) {
 
     DrawFullWindow2(Window);
 
-    if (Window == (window)All->FirstScreen->FocusW)
+    if (ContainsCursor((widget)Window))
+	UpdateCursor();
+}
+
+void ScrollWidget(widget W, ldat DeltaX, ldat DeltaY) {
+    ldat XLogic, YLogic;
+    dat YWidth;
+
+    if (!W || !(DeltaX || DeltaY))
+	return;
+    
+    if (IS_WINDOW(W)) {
+	ScrollWindow((window)W, DeltaX, DeltaY);
+	return;
+    }
+    
+    YWidth=W->YWidth;
+    XLogic=W->XLogic;
+    YLogic=W->YLogic;
+	
+    if (DeltaX>0 && XLogic>=MAXLDAT-DeltaX)
+	DeltaX=MAXLDAT-XLogic-1;
+    else if (DeltaX<0 && XLogic<-DeltaX)
+	DeltaX=-XLogic;
+    /*
+     * WARNING: content methods may be
+     * unable to handle out-of-bound areas
+     */
+    if (DeltaY>0 && YLogic+YWidth-2>=MAXLDAT-DeltaY)
+	DeltaY=MAXLDAT-YLogic-YWidth+2;
+    else if (DeltaY<0 && YLogic<-DeltaY)
+	DeltaY=-YLogic;
+
+    if (DeltaX)
+	W->XLogic = (XLogic += DeltaX);
+    if (DeltaY)
+	W->YLogic = (YLogic += DeltaY);
+
+    DrawAreaWidget(W);
+
+    if (ContainsCursor(W))
 	UpdateCursor();
 }
 
@@ -1400,7 +1445,7 @@ static void OpenSubMenuItem(menu M, menuitem Item, byte ByMouse) {
 	if (ByMouse)
 	    W->CurY = MAXLDAT;
 	else if (W->CurY == MAXLDAT)
-	    W->CurY = (ldat)0;
+	    W->CurY = 0;
 	Act(MapTopReal,W)(W, S);
     }
     if ((widget)P != S->FocusW)

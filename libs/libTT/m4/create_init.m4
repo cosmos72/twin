@@ -1,6 +1,6 @@
 
 
-dnl This file is `m4/exports_decl.m4' : m4 macros to autogenerate exports_declm4.h
+dnl This file is `m4/exports_decl.m4' : m4 macros to autogenerate exports_decl_m4.h
 dnl Tell the user about this.
 
 
@@ -8,7 +8,7 @@ dnl Tell the user about this.
 
 
 /*
- *  exports_declm4.h  --  exported wrappers around libTT methods
+ *  exports_decl_m4.h  --  exported wrappers around libTT methods
  *
  */
 

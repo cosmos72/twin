@@ -2,7 +2,7 @@
 
 
 
-dnl This file is `m4/paranoia.m4' : m4 macros to autogenerate paranoiam4.h
+dnl This file is `m4/paranoia.m4' : m4 macros to autogenerate paranoia_m4.h
 dnl Tell the user about this.
 /* This file was automatically generated with `m4' from `m4/paranoia.m4', do not edit! */
 

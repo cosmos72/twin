@@ -1,7 +1,7 @@
 /*
- *  mutex.h  --  mutex locking functions for libTw
+ *  mutex.h  --  mutex locking functions for libTw, libTT, ...
  *
- *  Copyright (C) 2001 by Massimiliano Ghilardi
+ *  Copyright (C) 2001-2002 by Massimiliano Ghilardi
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Library General Public
@@ -76,8 +76,8 @@ typedef struct {
 	    /* some other thread might steal us __mx->__m2 here, but that's semantically ok */ \
 	    th_mutex_lock(__mx->__m2); \
 	    th_mutex_lock(__mx->__m1); \
-	    __mx->__c++; \
 	    __mx->__s = __self; \
+	    __mx->__c++; \
 	} \
 	th_mutex_unlock(__mx->__m1); \
     } \
@@ -115,7 +115,7 @@ typedef struct {
 # define th_r_mutex_lock(__mx)    do { } while (0)
 # define th_r_mutex_unlock(__mx)  do { } while (0)
 # define th_r_mutex_destroy(__mx) do { } while (0)
-# define TH_R_MUTEX_HELPER_DEFS()
+# define TH_R_MUTEX_HELPER_DEFS(attr) typedef int _th_r_mutex
 
 
 

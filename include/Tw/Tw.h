@@ -54,18 +54,18 @@ typedef tobj tall;
 
 /* types for messages from server */
 typedef struct s_tevent_common *tevent_common;
-TW_TYPE_ATTR_PACKED struct s_tevent_common {
+struct s_tevent_common {
     twidget W;
     udat Code, pad;
-};
+} TW_TYPE_ATTR_PACKED;
 
 typedef struct s_tevent_display *tevent_display;
-TW_TYPE_ATTR_PACKED struct s_tevent_display {
+struct s_tevent_display {
     twidget W; /* not used here */
     udat Code, Len;
     dat X, Y;
     byte Data[sizeof(uldat)]; /* [len] bytes actually */
-};
+} TW_TYPE_ATTR_PACKED;
 #define TW_SIZEOF_TEVENT_DISPLAY (sizeof(struct s_tevent_display) - sizeof(uldat))
 
 /* Code */
@@ -88,26 +88,27 @@ TW_TYPE_ATTR_PACKED struct s_tevent_display {
 #define TW_DPY_Quit		((udat)16)
 
 typedef struct s_tevent_keyboard *tevent_keyboard;
-TW_TYPE_ATTR_PACKED struct s_tevent_keyboard {
+struct s_tevent_keyboard {
     twidget W;
     udat Code, ShiftFlags, SeqLen;
     byte pad, AsciiSeq[1];  /* actually (SeqLen+1) bytes, including final \0 */
-};
+} TW_TYPE_ATTR_PACKED;
 
 typedef struct s_tevent_mouse *tevent_mouse;
-TW_TYPE_ATTR_PACKED struct s_tevent_mouse {
+struct s_tevent_mouse {
     twidget W;
     udat Code, ShiftFlags;
     dat X, Y; /* these coords are relative to the widget top-left corner */
-};
+} TW_TYPE_ATTR_PACKED;
 
 typedef struct s_tevent_widget *tevent_widget;
-TW_TYPE_ATTR_PACKED struct s_tevent_widget {
+struct s_tevent_widget {
     twidget W;
     udat Code, Flags;
     dat XWidth, YWidth;
     dat X, Y;
-};
+} TW_TYPE_ATTR_PACKED;
+
 /* some TW_MSG_WIDGET_CHANGE codes */
 #define TW_MSG_WIDGET_RESIZE	0
 #define TW_MSG_WIDGET_EXPOSE	1
@@ -116,29 +117,29 @@ TW_TYPE_ATTR_PACKED struct s_tevent_widget {
 #define TW_MSG_WIDGETFL_SHADED	1
 
 typedef struct s_tevent_gadget *tevent_gadget;
-TW_TYPE_ATTR_PACKED struct s_tevent_gadget {
+struct s_tevent_gadget {
     twidget W;
     udat Code, Flags; /* the Flags of the gadget that was (de)activated */
-};
+} TW_TYPE_ATTR_PACKED;
 
 typedef struct s_tevent_menu *tevent_menu;
-TW_TYPE_ATTR_PACKED struct s_tevent_menu {
+struct s_tevent_menu {
     twindow W;
     udat Code, pad;
     tmenu Menu;
-};
+} TW_TYPE_ATTR_PACKED;
 
 typedef struct s_tevent_selection *tevent_selection;
-TW_TYPE_ATTR_PACKED struct s_tevent_selection {
+struct s_tevent_selection {
     twidget W;
     udat Code, pad; /* unused */
     dat X, Y; /* these coords are absolute, to allow cross-window cut-n-paste */
-};
+} TW_TYPE_ATTR_PACKED;
 
 #define TW_MAX_MIMELEN 64
 
 typedef struct s_tevent_selectionnotify *tevent_selectionnotify;
-TW_TYPE_ATTR_PACKED struct s_tevent_selectionnotify {
+struct s_tevent_selectionnotify {
     twidget W;
     udat Code, pad; /* unused */
     uldat ReqPrivate;
@@ -146,7 +147,8 @@ TW_TYPE_ATTR_PACKED struct s_tevent_selectionnotify {
     byte MIME[TW_MAX_MIMELEN];
     uldat Len;
     byte Data[sizeof(uldat)]; /* Data[] is Len bytes actually */
-};
+} TW_TYPE_ATTR_PACKED;
+
 /*SelectionNotify Magic*/
 #define TW_SEL_TEXTMAGIC	((uldat)0x54657874)
 #define TW_SEL_HWFONTMAGIC	((uldat)0x4877666E) /* it's unicode */
@@ -156,20 +158,21 @@ TW_TYPE_ATTR_PACKED struct s_tevent_selectionnotify {
 #define TW_SEL_IDMAGIC		((uldat)0x49644964)
 
 typedef struct s_tevent_selectionrequest *tevent_selectionrequest;
-TW_TYPE_ATTR_PACKED struct s_tevent_selectionrequest {
+struct s_tevent_selectionrequest {
     twidget W;
     udat Code, pad; /* unused */
     tmsgport Requestor;
     uldat ReqPrivate;
-};
+} TW_TYPE_ATTR_PACKED;
 
 typedef struct s_tevent_control *tevent_control;
-TW_TYPE_ATTR_PACKED struct s_tevent_control {
+struct s_tevent_control {
     twidget W;
     udat Code, Len;
     dat X, Y;
     byte Data[sizeof(uldat)]; /* [Len+1] bytes actually, Data[Len] == '\0' */
-};
+} TW_TYPE_ATTR_PACKED;
+
 #define TW_SIZEOF_TEVENT_CONTROL (sizeof(struct s_tevent_control) - sizeof(uldat))
 
 /* some TW_MSG_CONTROL codes */
@@ -179,7 +182,7 @@ TW_TYPE_ATTR_PACKED struct s_tevent_control {
 #define TW_MSG_CONTROL_DRAGNDROP	((udat)3)
 
 typedef struct s_tevent_clientmsg *tevent_clientmsg;
-TW_TYPE_ATTR_PACKED struct s_tevent_clientmsg {
+struct s_tevent_clientmsg {
     twidget W;
     udat Code, Format;
     uldat Len;
@@ -188,11 +191,12 @@ TW_TYPE_ATTR_PACKED struct s_tevent_clientmsg {
 	udat d[sizeof(uldat)/sizeof(udat)];
 	uldat l[1];
     } Data; /* [Len] bytes actually */
-};
+} TW_TYPE_ATTR_PACKED;
+
 #define TW_SIZEOF_TEVENT_CLIENTMSG (sizeof(struct s_tevent_clientmsg) - sizeof(uldat))
 
 typedef union s_tevent_any *tevent_any;
-TW_TYPE_ATTR_PACKED union s_tevent_any {
+union s_tevent_any {
     struct s_tevent_common    EventCommon;
     struct s_tevent_display   EventDisplay;
     struct s_tevent_keyboard  EventKeyboard;
@@ -205,15 +209,16 @@ TW_TYPE_ATTR_PACKED union s_tevent_any {
     struct s_tevent_selectionrequest EventSelectionRequest;
     struct s_tevent_control   EventControl;
     struct s_tevent_clientmsg EventClientMsg;
-};
+} TW_TYPE_ATTR_PACKED;
 
 typedef struct s_tmsg *tmsg;
-TW_TYPE_ATTR_PACKED struct s_tmsg {
+struct s_tmsg {
     uldat Len;		/* length of this struct, including `Len' field */
     uldat Magic;	/* == msg_magic (if user-created) or == MSG_MAGIC (if received) */
     uldat Type;		/* only (udat) part is significative */
     union s_tevent_any Event;
-};
+} TW_TYPE_ATTR_PACKED;
+
 /* Msg Type : */
 #define TW_MSG_DISPLAY		((udat)0x0FFF)
 
@@ -312,6 +317,7 @@ void	Tw_RecursiveDeleteWidget(tdisplay TwD, twidget Widget);
 void	Tw_MapWidget(tdisplay TwD, twidget Widget, twidget Parent);
 void	Tw_UnMapWidget(tdisplay TwD, twidget Widget);
 void	Tw_SetXYWidget(tdisplay TwD, twidget Widget, dat X, dat Y);
+void	Tw_ScrollWidget(tdisplay TwD, twidget Widget, ldat deltaX, ldat deltaY);
 void	Tw_ResizeWidget(tdisplay TwD, twidget Widget, dat XWidth, dat YWidth);
 tmsgport Tw_GetOwnerWidget(tdisplay TwD, twidget Widget);
 twidget Tw_FindWidgetAtWidget(tdisplay TwD, twidget Parent, dat i, dat j);
@@ -363,6 +369,7 @@ tgadget Tw_CreateGadget
 #define Tw_UnMapGadget			Tw_UnMapWidget
 #define Tw_SetXYGadget			Tw_SetXYWidget
 #define Tw_ResizeGadget			Tw_ResizeWidget
+#define Tw_ScrollGadget			Tw_ScrollWidget
 #define Tw_GetOwnerGadget		Tw_GetOwnerWidget
 #define Tw_ExposeTextGadget		Tw_ExposeTextWidget
 #define Tw_ExposeHWFontGadget		Tw_ExposeHWFontWidget
@@ -405,6 +412,7 @@ twindow Tw_CreateWindow(tdisplay TwD, dat NameLen, TW_CONST byte *Name, TW_CONST
 #define Tw_UnMapWindow			Tw_UnMapWidget
 #define Tw_SetXYWindow			Tw_SetXYWidget
 #define Tw_ResizeWindow			Tw_ResizeWidget
+#define Tw_ScrollWindow			Tw_ScrollWidget
 #define Tw_GetOwnerWindow		Tw_GetOwnerWidget
 #define Tw_ExposeTextWindow		Tw_ExposeTextWidget
 #define Tw_ExposeHWFontWindow		Tw_ExposeHWFontWidget

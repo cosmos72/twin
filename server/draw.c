@@ -200,6 +200,10 @@ byte InitDrawCtx(widget W, dat X1, dat Y1, dat X2, dat Y2, byte Shaded, draw_ctx
     D->Y2  = Y2;
 
     while (W) {
+	
+	if (W->Flags & WIDGETFL_NOTVISIBLE)
+	    return FALSE;
+	
 	HasTopBar = HasBorder = 0;
 
 	if (!IS_WINDOW(W) || !(((window)W)->Attrib & WINDOW_ROLLED_UP))
@@ -332,6 +336,10 @@ widget FindWidgetAt(widget Parent, dat X, dat Y) {
     }
     
     for (W = Parent->FirstW; W; W = W->Next) {
+	
+	if (W->Flags & WIDGETFL_NOTVISIBLE)
+	    continue;
+	
 	i = X + Parent->XLogic;
 	j = Y + Parent->YLogic;
 
@@ -370,13 +378,11 @@ widget RecursiveFindWidgetAt(widget Parent, dat X, dat Y) {
 
 
 void DrawSelfWidget(draw_ctx *D) {
-    widget W;
-    
-    if (QueuedDrawArea2FullScreen)
+    widget W = D->TopW;
+
+    if (QueuedDrawArea2FullScreen || (W->Flags & WIDGETFL_NOTVISIBLE))
 	return;
     
-    W = D->TopW;
-
     if (w_USE(W, USEEXPOSE)) {
 	CONST byte *Text = NULL;
 	CONST hwfont *HWFont = NULL;
@@ -524,12 +530,10 @@ void DrawSelfWidget(draw_ctx *D) {
 
 
 void DrawSelfGadget(draw_ctx *D) {
-    gadget G;
+    gadget G = (gadget)D->TopW;
 
-    if (QueuedDrawArea2FullScreen)
+    if (QueuedDrawArea2FullScreen || (G->Flags & WIDGETFL_NOTVISIBLE))
 	return;
-    
-    G = (gadget)D->TopW;
     
     if (!G_USE(G, USETEXT)) {
 	G->Fn->Fn_Widget->DrawSelf(D);
@@ -624,7 +628,7 @@ static void DrawSelfBorder(window Window, ldat Left, ldat Up, ldat Rgt, ldat Dwn
     hwfont Font;
     hwcol Color;
     
-    if (QueuedDrawArea2FullScreen)
+    if (QueuedDrawArea2FullScreen || (Window->Flags & WIDGETFL_NOTVISIBLE))
 	return;
     
     if ((ldat)Y1==Up) {
@@ -681,12 +685,10 @@ static void DrawSelfBorder(window Window, ldat Left, ldat Up, ldat Rgt, ldat Dwn
 }
 
 void DrawSelfWindow(draw_ctx *D) {
-    window W;
+    window W = (window)D->TopW;
 
-    if (QueuedDrawArea2FullScreen)
+    if (QueuedDrawArea2FullScreen || (W->Flags & WIDGETFL_NOTVISIBLE))
 	return;
-
-    W = (window)D->TopW;
 
     if (!W_USE(W, USEROWS) && !W_USE(W, USECONTENTS)) {
 	W->Fn->Fn_Widget->DrawSelf(D);
@@ -1022,7 +1024,7 @@ static void DrawWCtx(draw_ctx *D) {
 		    cR =       cL + ChildNext->XWidth-1;
 		    cU = Up   + ChildNext->Up;
 		    cD =       cU + ChildNext->YWidth-1;
-		    if (cL>X2 || cU>Y2 || cR<X1 || cD<Y1)
+		    if (cL>X2 || cU>Y2 || cR<X1 || cD<Y1 || (ChildNext->Flags & WIDGETFL_NOTVISIBLE))
 			ChildNext=ChildNext->Next;
 		    else
 			ChildFound=TRUE;
@@ -1290,6 +1292,10 @@ static void DrawAreaCtx(draw_ctx *D) {
 
 	WidgetFound=FALSE;
 	while (W && !WidgetFound) {
+	    if (W->Flags & WIDGETFL_NOTVISIBLE) {
+		W=W->Next;
+		continue;
+	    }
 	    shLeft = (ldat)W->Left + (ldat)FirstScreen->dummyLeft - FirstScreen->XLogic;
 	    shUp   = (ldat)W->Up + (ldat)YLimit - FirstScreen->YLogic;
 	    shRgt=shLeft + (ldat)W->XWidth-1;
@@ -1534,7 +1540,8 @@ void DrawBorderWindow(window Window, byte Flags) {
     widget Parent;
     screen Screen, FirstScreen;
 
-    if (QueuedDrawArea2FullScreen || !Window || (Window->Flags & WINDOWFL_BORDERLESS) ||
+    if (QueuedDrawArea2FullScreen || !Window ||
+	(Window->Flags & (WINDOWFL_BORDERLESS|WINDOWFL_NOTVISIBLE)) ||
 	!(Parent=Window->Parent) || !IS_SCREEN(Parent))
 	return;
 
@@ -1583,7 +1590,8 @@ void DrawAreaShadeWindow(screen Screen, window Window, dat X1, dat Y1, dat X2, d
     setup *SetUp;
     
     SetUp=All->SetUp;
-    if (QueuedDrawArea2FullScreen || !Window || !Screen ||
+    if (QueuedDrawArea2FullScreen || !Window ||
+	(Window->Flags & WINDOWFL_NOTVISIBLE) || !Screen ||
 	X1>X2 || Y1>Y2 || !(SetUp->Flags & SETUP_SHADOWS))
 	return;
     
@@ -1695,7 +1703,8 @@ void DrawLogicWidget(widget W, ldat X1, ldat Y1, ldat X2, ldat Y2) {
     ldat XL, YL;
     byte HasBorder;
     
-    if (!QueuedDrawArea2FullScreen && W && (!IS_WINDOW(W) || !(((window)W)->Attrib & WINDOW_ROLLED_UP)) && X2>=X1 && Y2>=Y1) {
+    if (!QueuedDrawArea2FullScreen && W && !(W->Flags & WIDGETFL_NOTVISIBLE) &&
+	(!IS_WINDOW(W) || !(((window)W)->Attrib & WINDOW_ROLLED_UP)) && X2>=X1 && Y2>=Y1) {
 	XL = W->XLogic;
 	YL = W->YLogic;
     
@@ -1726,7 +1735,9 @@ void ReDrawRolledUpAreaWindow(window Window, byte Shaded) {
     dat DWidth, DHeight;
     dat YLimit;
     
-    if (QueuedDrawArea2FullScreen || !Window || !Window->Parent || !IS_SCREEN(Window->Parent))
+    if (QueuedDrawArea2FullScreen || !Window ||
+	(Window->Flags & WINDOWFL_NOTVISIBLE) ||
+	!Window->Parent || !IS_SCREEN(Window->Parent))
 	return;
 
     Screen = (screen)Window->Parent;

@@ -6,6 +6,12 @@
 /* Define if you have the <asm/page.h> header file. */
 #undef HAVE_ASM_PAGE_H
 
+/* Define if you have gcc-compatible '__attribute__((const))' */
+#undef HAVE_ATTRIBUTE_CONST
+
+/* Define if you have gcc-compatible '__attribute__((packed))' */
+#undef HAVE_ATTRIBUTE_PACKED
+
 /* Define if you have the <crypt.h> header file. */
 #undef HAVE_CRYPT_H
 
@@ -17,6 +23,9 @@
 
 /* Define if you have the <fcntl.h> header file. */
 #undef HAVE_FCNTL_H
+
+/* Define if you have gcc-compatible i386 assembler */
+#undef HAVE_GCC_I386_ASM
 
 /* Define if you have the gethostbyname function */
 #undef HAVE_GETHOSTBYNAME
@@ -134,6 +143,9 @@
 
 /* Define if you have the <shadow.h> header file. */
 #undef HAVE_SHADOW_H
+
+/* Define if you have gcc-compatible 'static inline' */
+#undef HAVE_STATIC_INLINE
 
 /* Define if you have the <stdint.h> header file. */
 #undef HAVE_STDINT_H

@@ -2,13 +2,12 @@
 
 
 
-dnl This file is m4/libTw2_i386.m4 : m4 macros to autogenerate libTw2_i386m4.h
+dnl This file is m4/libTw2_i386.m4 : m4 macros to autogenerate libTw2_i386_m4.h
 dnl Tell the user about this.
 /* This file was automatically generated with m4 from m4/libTw2_i386.m4, do not edit! */
 
 /*
  * hand-optimized assembler functions for i386 with gcc
- * 
  */
 
 divert(-1)

@@ -16,13 +16,13 @@
 #define DispatchEvent		TTD.UTIL.DispatchEvent
 #define DispatchSimpleEvent	TTD.UTIL.DispatchSimpleEvent
 
-#define DelAllListeners_ttobj	TTD.UTIL.DelAllListeners_ttobj
-#define DelAllCallbacks_ttobj	TTD.UTIL.DelAllCallbacks_ttobj
+#define DelAllListeners_ttcomponent	TTD.UTIL.DelAllListeners_ttcomponent
+#define DelAllCallbacks_ttcomponent	TTD.UTIL.DelAllCallbacks_ttcomponent
 #define AddTo_ttcallback	TTD.UTIL.AddTo_ttcallback
 #define Remove_ttcallback	TTD.UTIL.Remove_ttcallback
 #define Expose_ttvisible	TTD.UTIL.Expose_ttvisible
 
-#include "create_defsm4.h"
+#include "create_defs_m4.h"
 
 #endif /* _TT_UTILS_H */
 

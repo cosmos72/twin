@@ -8,42 +8,58 @@ THISDIR=$(TOPDIR)/server/HW
 
 SUBDIRS=
 
+#
+# where to install modules (relative to $(libdir))
+#
+INSTALLSUBDIR=twin/modules/HW
+
 include ../makeversion
 -include $(TOPDIR)/makeautoconf
 
-CC_FLAGS+=-I..
-
 BASEOBJS=
 TTYOBJS=hw_tty.o
+TTYOBJS_l=hw_tty.lo
 X11OBJS=hw_X11.o
+X11OBJS_l=hw_X11.lo
 DISPLAYOBJS=hw_display.o
+DISPLAYOBJS_l=hw_display.lo
 TWINOBJS=hw_twin.o
+TWINOBJS_l=hw_twin.lo
 GGIOBJS=hw_ggi.o
-ALLOBJS:=$(BASEOBJS) $(TTYOBJS) $(X11OBJS) $(DISPLAYOBJS) $(TWINOBJS) $(GGIOBJS)
+GGIOBJS_l=hw_ggi.lo
+ALLOBJS:=$(BASEOBJS) $(TTYOBJS) $(TTYOBJS_l) $(X11OBJS) $(X11OBJS_l) \
+	$(DISPLAYOBJS) $(DISPLAYOBJS_l) $(TWINOBJS) $(TWINOBJS_l) $(GGIOBJS) $(GGIOBJS_l)
 
-OBJS_hw.a=$(BASEOBJS)
-OBJS_hw_tty.so.$(VERSION)=$(TTYOBJS)
-OBJS_hw_X11.so.$(VERSION)=$(X11OBJS)
-OBJS_hw_display.so.$(VERSION)=$(DISPLAYOBJS)
-OBJS_hw_twin.so.$(VERSION)=$(TWINOBJS)
-OBJS_hw_ggi.so.$(VERSION)=$(GGIOBJS)
+OBJS_hw.lst=$(BASEOBJS)
+OBJS_hw_display.lst=
+OBJS_hw_tty.la=$(TTYOBJS_l)
+OBJS_hw_X11.la=$(X11OBJS_l)
+OBJS_hw_display.la=$(DISPLAYOBJS_l)
+OBJS_hw_twin.la=$(TWINOBJS_l)
+OBJS_hw_ggi.la=$(GGIOBJS_l)
 
 BINS=
-MODBINS=
-ARLIBS=hw.a
+MODS=
+SHLIBS=
+ARLIBS=
+CLLIBS=hw.lst hw_display.lst
+
+
+
+CC_FLAGS+=-I..
+
+CC_FLAGS.lo+=-DTHIS_MODULE
 
 CC_FLAGS_hw_X11.o+=$(CF_HEADERX11)
 
-LD_FLAGS_hw_tty.so.$(VERSION)=$(LD_FLAGS_SOLIB)
-LD_FLAGS_hw_X11.so.$(VERSION)=$(LD_FLAGS_SOLIB) $(LD_LIBX11)
-LD_FLAGS_hw_display.so.$(VERSION)=$(LD_FLAGS_SOLIB)
-LD_FLAGS_hw_twin.so.$(VERSION)=$(LD_FLAGS_SOLIB) $(LD_LIBTW)
-LD_FLAGS_hw_ggi.so.$(VERSION)=$(LD_FLAGS_SOLIB) -lggi
+LD_FLAGS_hw_X11.la=$(LD_LIBX11)
+LD_FLAGS_hw_twin.la=$(LD_LIBTW)
+LD_FLAGS_hw_ggi.la=-lggi
 
 #
 # target
 #
-all: $(ARLIBS) modules
+all: everything
 
 #
 # read configuration
@@ -67,72 +83,61 @@ endif
 #endif
 
 ifeq ($(CONF_HW_TTY),y)
-  OBJS_hw.a+=$(TTYOBJS)
+  OBJS_hw.lst+=$(TTYOBJS)
 else
   ifeq ($(CONF_HW_TTY),m)
-    MODBINS+=hw_tty.so.$(VERSION)
+    MODS+=hw_tty.la
     ifeq ($(CONF_HW_TTY_LINUX),y)
-      LD_FLAGS_hw_tty.so.$(VERSION)+=-lgpm
+      LD_FLAGS_hw_tty.la+=-lgpm
     endif
     ifeq ($(CONF_HW_TTY_TERMCAP),y)
       CC_FLAGS_hw_tty.o+=-I/usr/include/ncurses
       ifeq ($(CONF_HW_TTY_LINUX),y)
         ifeq ($(LD_LIBTERMCAP_IN_LIBGPM),)
-          LD_FLAGS_hw_tty.so.$(VERSION)+=$(LD_LIBTERMCAP)
+          LD_FLAGS_hw_tty.la+=$(LD_LIBTERMCAP)
 	# else necessary libs are already pulled in with -lgpm above
 	endif
       else
-        LD_FLAGS_hw_tty.so.$(VERSION)+=$(LD_LIBTERMCAP)
+        LD_FLAGS_hw_tty.la+=$(LD_LIBTERMCAP)
       endif
     endif
-  else
-    EXCL_OBJS+=$(TTYOBJS)
   endif
 endif
 
 ifeq ($(CONF_HW_X11),y)
-  OBJS_hw.a+=$(X11OBJS)
+  OBJS_hw.lst+=$(X11OBJS)
 else
   ifeq ($(CONF_HW_X11),m)
-  
-    all: hw_X.so.$(VERSION)
-    
-    MODBINS+=hw_X11.so.$(VERSION)
-    
-  else
-    EXCL_OBJS+=$(X11OBJS)
+    MODS+=hw_X11.la
   endif
 endif
 
 ifneq ($(CONF_SOCKET),n)
   ifeq ($(CONF_HW_TWIN),y)
-    OBJS_hw.a+=$(TWINOBJS)
+    OBJS_hw.lst+=$(TWINOBJS)
   else
     ifeq ($(CONF_HW_TWIN),m)
-      MODBINS+=hw_twin.so.$(VERSION)
-    else
-      EXCL_OBJS+=$(TWINOBJS)
+      MODS+=hw_twin.la
     endif
   endif
   
+  #
+  # do NOT add $(DISPLAYOBJS) to hw.lst, since twdisplay does not link with it
+  #
   ifeq ($(CONF_HW_DISPLAY),y)
-    OBJS_hw.a+=$(DISPLAYOBJS)
+    OBJS_hw_display.lst+=$(DISPLAYOBJS)
   else
     ifeq ($(CONF_HW_DISPLAY),m)
-      MODBINS+=hw_display.so.$(VERSION)
-    else
-      EXCL_OBJS+=$(DISPLAYOBJS)
+      MODS+=hw_display.la
     endif
   endif
 endif
 
 ifeq ($(CONF_HW_GGI),y)
-  OBJS_hw.a+=$(GGIOBJS)
+  OBJS_hw.lst+=$(GGIOBJS)
 else
   ifeq ($(CONF_HW_GGI),m)
-    MODBINS+=hw_ggi.so.$(VERSION)
-  else
-    EXCL_OBJS+=$(GGIOBJS)
+    MODS+=hw_ggi.la
   endif
 endif
 
@@ -145,17 +150,23 @@ include $(TOPDIR)/makerules
 # All done. Now just set a few special targets
 #
 
-modules: $(MODBINS)
+links: $(patsubst %.la,%.so.$(SHLIBS_VER),$(MODS))
 
-hw_X.so.$(VERSION): hw_X11.so.$(VERSION)
-	$(LN) $< $@
+everything: $(BINS) $(MODS) $(SHLIBS) $(ARLIBS) $(CLLIBS) links
+
+modules: $(MODS) links
 
 clean:
-	rm -f .*.flags .*.link .*.arlib hw.a hw_*.so.* $(ALLOBJS)
+	rm -f .*.flags .*.bin .*.mod .*.arlib hw*.lst *.la $(ALLOBJS) ; \
+	rm -fr .libs
 
-install:
-	if [ "$(MODBINS)" ]; then \
-	  $(INSTALL) -d $(DESTDIR)$(libdir)/twin/modules/HW; \
-	  $(INSTALL) $(MODBINS) $(DESTDIR)$(libdir)/twin/modules/HW; \
-	  $(LN) hw_X11.so.$(VERSION) $(DESTDIR)$(libdir)/twin/modules/HW/hw_X.so.$(VERSION); \
-	fi
+install-dir:
+	$(INSTALL-DIR) $(DESTDIR)$(libdir)/twin/modules/HW
+
+install-mod-link-hw_X11.la:
+	$(LN) hw_X11.so.$(SHLIBS_VER) $(DESTDIR)$(libdir)/twin/modules/HW/hw_X.so.$(SHLIBS_VER)
+
+install-mod-hw_X11.la: install-mod-link-hw_X11.la
+
+install: install-dir $(foreach M,$(MODS),install-mod-$(M))
+

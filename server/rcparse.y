@@ -82,7 +82,6 @@
     ldat_list	*val_list;
     str          _string;
     byte         imm;
-    hwcol	 color;
     node	 _node;
 }
 
@@ -127,7 +126,7 @@
 %token ALTFONT CURSOR_ALWAYS BLINK MENU_HIDE MENU_INFO MENU_RELAX SCREEN_SCROLL SHADOWS
 %token BUTTON_PASTE BUTTON_SELECTION
 
-%token <color> COLOR
+%token <val> COLOR
 %token COL_HIGH
 
 %token <val> KBD_FLAG
@@ -139,7 +138,7 @@
 
 
 /* complicated things: */
-%type <color>       color high
+%type <val>         color high
 %type <_string>     string
 %type <val>	    interactive_mode move_or_resize
 %type <val>         flag opt_flag flag_active opt_flag_toggle flag_lr

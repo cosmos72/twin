@@ -29,7 +29,7 @@ define(`TTlist', `el(ttobj) TTnlist()')
 define(`TTappend',  `define(`TTnlist', TTnlist() el($1))')
 
 dnl
-dnl I could have protected/public fields... for now, they all are just fields,
+dnl We could have protected/public fields... for now, they all are just fields,
 dnl and third argument can be one of:
 dnl `'  : field is protected
 dnl `r' : filed is public, clients can read it
@@ -37,7 +37,7 @@ dnl `w' : filed is public, clients can read and write it
 dnl
 
 dnl
-dnl I could fill all fields of `protected' as I do for `exported',
+dnl We could fill all fields of `protected' as I do for `exported',
 dnl but currently those fields are not used with `protected', so no problem.
 dnl
 
@@ -60,9 +60,9 @@ define(`TTFNdef_ttobj',`protected(ttuint order,order,$1)`'dnl
     protected($1 (*Build)($1 o),Build,$1)`'dnl
     protected(void (*Break)($1 o),Break,$1)`'dnl
     protected(void (*Del)($1),Del,$1)`'dnl
-    public(ttany (*GetValue)($1 o, ttuint which),GetValue,$1,2,ttany,$1,ttuint)`'dnl
-    public(void (*SetValue)($1 o, ttuint which, ttany value),SetValue,$1,3,void,$1,ttuint,ttany)`'dnl
-    public(void (*ChangeValue)($1 o, ttuint which, ttany nand_value, ttany xor_value),ChangeValue,$1,4,void,$1,ttuint,ttany,ttany)`'dnl
+    public(ttbyte (*GetValue)($1 o, ttuint which, ttany *value),GetValue,$1,3,ttbyte,$1,ttuint,ttany *)`'dnl
+    public(ttbyte (*SetValue)($1 o, ttuint which, ttany value),SetValue,$1,3,ttbyte,$1,ttuint,ttany)`'dnl
+    public(ttbyte (*ChangeValue)($1 o, ttuint which, ttany nand_value, ttany xor_value),ChangeValue,$1,4,ttbyte,$1,ttuint,ttany,ttany)`'dnl
     exported(void (*Ref)($1 o),Ref,$1,1,void,$1)`'dnl
     exported(void (*Unref)($1 o),Unref,$1,1,void,$1)`'dnl
 ')
@@ -123,9 +123,9 @@ define(`TTdef_ttcallback',`extends(ttlistener,$1)`'dnl
 define(`TTFNdef_ttcallback',`extends(ttlistener,$1)`'dnl
     exported($1 (*Create)(ttcomponent o, ttuint evtype, ttuint flags, ttcallback_fn function, ttany arg),Create,$1,5,$1,ttcomponent,ttuint,ttuint,ttcallback_fn,ttany)`'dnl
     exported($1 (*CreateA)(ttcomponent o, ttevent ev, ttuint flags, ttuint narg_component, ttuint narg_event, ttuint nargs, ttcallback_fn function, ttany TT_CONST *args)`'dnl
-    ,CreateA,$1,8,$1,ttcomponent,ttevent,ttuint,ttuint,ttuint,ttuint,ttcallback_fn,ttany TT_CONST *)`'dnl
-    exported($1 (*CreateV)(ttcomponent o, ttevent ev, ttuint flags, ttuint narg_component, ttuint narg_event, ttuint nargs, ttcallback_fn function, va_list vargs)`'dnl
-    ,CreateV,$1,8,$1,ttcomponent,ttevent,ttuint,ttuint,ttuint,ttuint,ttcallback_fn,va_list)`'dnl
+,CreateA,$1,8,$1,ttcomponent,ttevent,ttuint,ttuint,ttuint,ttuint,ttcallback_fn,ttany TT_CONST *)`'dnl
+    exported($1 (*CreateV)(ttcomponent o, ttevent ev, ttuint flags, ttuint narg_component, ttuint narg_event, ttuint nargs, ttcallback_fn function, va_list *vargs)`'dnl
+,CreateV,$1,8,$1,ttcomponent,ttevent,ttuint,ttuint,ttuint,ttuint,ttcallback_fn,va_list *)`'dnl
 ')
 
 dnl ttcomponent: The superclass of all components (visible objects, groups, applications, ...)
@@ -176,11 +176,16 @@ define(`TTdef_ttwidget',`extends(ttvisible,$1)`'dnl
     field(ttshort,y,r)`'dnl
     field(ttshort,w,r)`'dnl
     field(ttshort,h,r)`'dnl
+    field(ttint,xl,r)`'dnl
+    field(ttint,yl,r)`'dnl
 ')
 define(`TTFNdef_ttwidget',`extends(ttvisible,$1)`'dnl
     public(void (*SetXYWH)($1 o, ttuint mask, ttshort x, ttshort y, ttshort w, ttshort h),SetXYWH,$1,6,void,$1,ttbyte,ttshort,ttshort,ttshort,ttshort)`'dnl
+    public(void (*SetXlYl)($1 o, ttuint mask, ttint xl, ttint yl),SetXlYl,$1,4,void,$1,ttbyte,ttint,ttint)`'dnl
     exported(void (*SetXY)($1 o, ttshort x, ttshort y),SetXY,$1,3,void,$1,ttshort,ttshort)`'dnl
     exported(void (*SetWH)($1 o, ttshort w, ttshort h),SetWH,$1,3,void,$1,ttshort,ttshort)`'dnl
+    exported(void (*SetXl)($1 o, ttint xl),SetXl,$1,2,void,$1,ttint)`'dnl
+    exported(void (*SetYl)($1 o, ttint yl),SetYl,$1,2,void,$1,ttint)`'dnl
 ')
 
 dnl ttlabel: A simple text label
@@ -344,7 +349,7 @@ define(`TTFNdef_tttheme',`extends(ttcomponent,$1)`'dnl
 dnl ttapplication: The topmost object
 TTappend(ttapplication)
 define(`TTdef_ttapplication',`extends(ttcomponent,$1)`'dnl
-    field(ttbyte *,name)`'dnl
+    field(ttbyte *,name,r)`'dnl
 ')
 define(`TTFNdef_ttapplication',`extends(ttcomponent,$1)`'dnl
     exported(ttapplication (*Set)(TT_CONST ttbyte * name),Set,$1,1,ttapplication,TT_CONST ttbyte *)`'dnl

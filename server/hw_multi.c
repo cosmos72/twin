@@ -211,7 +211,7 @@ static byte module_InitHW(void) {
     
     if ((name = AllocMem(len + verlen + 11))) {
 	sprintf(name, "HW/hw_%.*s.so." TWIN_VERSION_STR, (int)len, arg);
-			
+
 	Module = DlLoadAny(len + verlen + 10, name);
 	
 	if (Module) {

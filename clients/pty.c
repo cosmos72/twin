@@ -36,7 +36,7 @@
 
 #include <Tw/Tw.h>
 
-#include "tterm.h"
+#include "term.h"
 
 /* pseudo-teletype connections handling functions */
 

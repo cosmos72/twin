@@ -133,6 +133,13 @@ void Tw_ResizeWidget(tw_d TwD, twidget a1, dat a2, dat a3) {
     , c(a3));
 }
 
+void Tw_ScrollWidget(tw_d TwD, twidget a1, ldat a2, ldat a3) {
+    EncodeCall(ENCODE_FL_VOID, order_ScrollWidget, TwD 
+    , c(a1)
+    , c(a2)
+    , c(a3));
+}
+
 tmsgport Tw_GetOwnerWidget(tw_d TwD, twidget a1) {
     return (tobj)EncodeCall(0, order_GetOwnerWidget, TwD 
     , c(a1));
