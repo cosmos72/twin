@@ -1,4 +1,4 @@
-From 0.5.1 to 0.5.2: (Massimiliano Ghilardi, 01 Dec 2007)
+From 0.5.1 to 0.6.0: (Massimiliano Ghilardi, 01 Dec 2007)
 	* Fixed build errors with gcc 4.0, 4.1 and 4.2.
 	* Fixed some (not all) pointer <-> integer conversion issues on 64 bit archs.
         * Fixed time arithmetic overflow bug often causing twin to hang
