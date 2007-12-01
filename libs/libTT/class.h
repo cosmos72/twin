@@ -89,7 +89,7 @@ ttopaque TTGetSize_ttclass(tt_obj _Class) {
     if (Class >= id_ttclass_type_first && Class < id_ttclass_type_last) {
 	/* handle the case Class is one of TTClass_void...TTClass_tttype */
 	switch (Class & TT_MAGIC_MASK) {
-#define el(t) case TT_CAT(order_,t): return sizeof(t);
+#define el(t) case TT_CAT(order_,t): return TT_CAT(order_,t) == order_void ? 0 : sizeof(t);
 	    TT_TYPELIST(el)
 #undef el
 	  default:

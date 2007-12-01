@@ -1,85 +1,207 @@
-typedef union {
+/* A Bison parser, made by GNU Bison 1.875d.  */
+
+/* Skeleton parser for Yacc-like parsing with Bison,
+   Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
+
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 2, or (at your option)
+   any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 59 Temple Place - Suite 330,
+   Boston, MA 02111-1307, USA.  */
+
+/* As a special exception, when this file is copied by Bison into a
+   Bison output file, you may use that output file without restriction.
+   This special exception was added by the Free Software Foundation
+   in version 1.24 of Bison.  */
+
+/* Tokens.  */
+#ifndef YYTOKENTYPE
+# define YYTOKENTYPE
+   /* Put the tokens into the symbol table, so that GDB and other debuggers
+      know about them.  */
+   enum yytokentype {
+     ADDSCREEN = 258,
+     ADDTOMENU = 259,
+     ADDTOFUNC = 260,
+     BACKGROUND = 261,
+     BORDER = 262,
+     BUTTON = 263,
+     DELETEFUNC = 264,
+     DELETEMENU = 265,
+     DELETEBUTTON = 266,
+     DELETESCREEN = 267,
+     READ = 268,
+     EXEC = 269,
+     EXECTTY = 270,
+     GLOBALFLAGS = 271,
+     INTERACTIVE = 272,
+     KEY = 273,
+     MENU = 274,
+     MODULE = 275,
+     MOUSE = 276,
+     MOVE = 277,
+     MOVESCREEN = 278,
+     NEXT = 279,
+     NOP = 280,
+     PREV = 281,
+     RESTART = 282,
+     RESIZE = 283,
+     RESIZESCREEN = 284,
+     SCREEN = 285,
+     SCROLL = 286,
+     SENDTOSCREEN = 287,
+     SLEEP = 288,
+     STDERR = 289,
+     SYNTHETICKEY = 290,
+     WAIT = 291,
+     WINDOW = 292,
+     EASY_FUNC = 293,
+     BEEP = 294,
+     CENTER = 295,
+     CLOSE = 296,
+     KILL = 297,
+     QUIT = 298,
+     REFRESH = 299,
+     WINDOWLIST = 300,
+     FLAG_FUNC = 301,
+     FOCUS = 302,
+     MAXIMIZE = 303,
+     FULLSCREEN = 304,
+     LOWER = 305,
+     RAISE = 306,
+     RAISELOWER = 307,
+     ROLL = 308,
+     USERFUNC = 309,
+     FL_ON = 310,
+     FL_OFF = 311,
+     FL_TOGGLE = 312,
+     FL_ACTIVE = 313,
+     FL_INACTIVE = 314,
+     FL_LEFT = 315,
+     FL_RIGHT = 316,
+     GLOBAL_FLAG = 317,
+     ALTFONT = 318,
+     CURSOR_ALWAYS = 319,
+     BLINK = 320,
+     MENU_HIDE = 321,
+     MENU_INFO = 322,
+     MENU_RELAX = 323,
+     SCREEN_SCROLL = 324,
+     SHADOWS = 325,
+     BUTTON_PASTE = 326,
+     BUTTON_SELECTION = 327,
+     COLOR = 328,
+     COL_HIGH = 329,
+     KBD_FLAG = 330,
+     NUMBER = 331,
+     STRING = 332
+   };
+#endif
+#define ADDSCREEN 258
+#define ADDTOMENU 259
+#define ADDTOFUNC 260
+#define BACKGROUND 261
+#define BORDER 262
+#define BUTTON 263
+#define DELETEFUNC 264
+#define DELETEMENU 265
+#define DELETEBUTTON 266
+#define DELETESCREEN 267
+#define READ 268
+#define EXEC 269
+#define EXECTTY 270
+#define GLOBALFLAGS 271
+#define INTERACTIVE 272
+#define KEY 273
+#define MENU 274
+#define MODULE 275
+#define MOUSE 276
+#define MOVE 277
+#define MOVESCREEN 278
+#define NEXT 279
+#define NOP 280
+#define PREV 281
+#define RESTART 282
+#define RESIZE 283
+#define RESIZESCREEN 284
+#define SCREEN 285
+#define SCROLL 286
+#define SENDTOSCREEN 287
+#define SLEEP 288
+#define STDERR 289
+#define SYNTHETICKEY 290
+#define WAIT 291
+#define WINDOW 292
+#define EASY_FUNC 293
+#define BEEP 294
+#define CENTER 295
+#define CLOSE 296
+#define KILL 297
+#define QUIT 298
+#define REFRESH 299
+#define WINDOWLIST 300
+#define FLAG_FUNC 301
+#define FOCUS 302
+#define MAXIMIZE 303
+#define FULLSCREEN 304
+#define LOWER 305
+#define RAISE 306
+#define RAISELOWER 307
+#define ROLL 308
+#define USERFUNC 309
+#define FL_ON 310
+#define FL_OFF 311
+#define FL_TOGGLE 312
+#define FL_ACTIVE 313
+#define FL_INACTIVE 314
+#define FL_LEFT 315
+#define FL_RIGHT 316
+#define GLOBAL_FLAG 317
+#define ALTFONT 318
+#define CURSOR_ALWAYS 319
+#define BLINK 320
+#define MENU_HIDE 321
+#define MENU_INFO 322
+#define MENU_RELAX 323
+#define SCREEN_SCROLL 324
+#define SHADOWS 325
+#define BUTTON_PASTE 326
+#define BUTTON_SELECTION 327
+#define COLOR 328
+#define COL_HIGH 329
+#define KBD_FLAG 330
+#define NUMBER 331
+#define STRING 332
+
+
+
+
+#if ! defined (YYSTYPE) && ! defined (YYSTYPE_IS_DECLARED)
+
+typedef union YYSTYPE {
     ldat	 val;
     ldat_list	*val_list;
     str          _string;
     byte         imm;
     node	 _node;
 } YYSTYPE;
-#define	ADDSCREEN	257
-#define	ADDTOMENU	258
-#define	ADDTOFUNC	259
-#define	BACKGROUND	260
-#define	BORDER	261
-#define	BUTTON	262
-#define	DELETEFUNC	263
-#define	DELETEMENU	264
-#define	DELETEBUTTON	265
-#define	DELETESCREEN	266
-#define	READ	267
-#define	EXEC	268
-#define	EXECTTY	269
-#define	GLOBALFLAGS	270
-#define	INTERACTIVE	271
-#define	KEY	272
-#define	MENU	273
-#define	MODULE	274
-#define	MOUSE	275
-#define	MOVE	276
-#define	MOVESCREEN	277
-#define	NEXT	278
-#define	NOP	279
-#define	PREV	280
-#define	RESTART	281
-#define	RESIZE	282
-#define	RESIZESCREEN	283
-#define	SCREEN	284
-#define	SCROLL	285
-#define	SENDTOSCREEN	286
-#define	SLEEP	287
-#define	STDERR	288
-#define	SYNTHETICKEY	289
-#define	WAIT	290
-#define	WINDOW	291
-#define	EASY_FUNC	292
-#define	BEEP	293
-#define	CENTER	294
-#define	CLOSE	295
-#define	KILL	296
-#define	QUIT	297
-#define	REFRESH	298
-#define	WINDOWLIST	299
-#define	FLAG_FUNC	300
-#define	FOCUS	301
-#define	MAXIMIZE	302
-#define	FULLSCREEN	303
-#define	LOWER	304
-#define	RAISE	305
-#define	RAISELOWER	306
-#define	ROLL	307
-#define	USERFUNC	308
-#define	FL_ON	309
-#define	FL_OFF	310
-#define	FL_TOGGLE	311
-#define	FL_ACTIVE	312
-#define	FL_INACTIVE	313
-#define	FL_LEFT	314
-#define	FL_RIGHT	315
-#define	GLOBAL_FLAG	316
-#define	ALTFONT	317
-#define	CURSOR_ALWAYS	318
-#define	BLINK	319
-#define	MENU_HIDE	320
-#define	MENU_INFO	321
-#define	MENU_RELAX	322
-#define	SCREEN_SCROLL	323
-#define	SHADOWS	324
-#define	BUTTON_PASTE	325
-#define	BUTTON_SELECTION	326
-#define	COLOR	327
-#define	COL_HIGH	328
-#define	KBD_FLAG	329
-#define	NUMBER	330
-#define	STRING	331
+/* Line 1285 of yacc.c.  */
 
+# define yystype YYSTYPE /* obsolescent; will be withdrawn */
+# define YYSTYPE_IS_DECLARED 1
+# define YYSTYPE_IS_TRIVIAL 1
+#endif
 
 extern YYSTYPE yylval;
+
+
+

@@ -40,11 +40,12 @@
 #include <linux/kd.h>
 #include <linux/keyboard.h>
 #include <linux/vt.h>
-#include <linux/bitops.h>
-
 
 #define SIZE(array)		(sizeof(array)/sizeof(array[0]))
 #define BITS_PER_ULDAT		(sizeof(uldat)*8)
+
+#include "kbd_bitops.h"
+
 
 
 #define VC_APPLIC	0	/* application key mode */
@@ -137,7 +138,7 @@ static void applkey(byte key, byte mode)
     puts_queue(buf);
 }
 
-static void nop(void)
+static void noop_fn(void)
 {
 }
 
@@ -343,7 +344,7 @@ static udat do_ignore(byte value, byte up_flag)
     return TW_Null;
 }
 
-static void do_null()
+static void do_null(void)
 {
     compute_shiftstate();
 }
@@ -653,16 +654,16 @@ static int compute_shiftstate(void)
     ldat i, j, k, sym, val;
     
     lrawkbd_shiftstate = 0;
-    for(i=0; i < SIZE(k_down); i++)
+    for (i=0; i < SIZE(k_down); i++)
 	k_down[i] = 0;
     
-    for(i=0; i < SIZE(key_down); i++) {
-	if(key_down[i]) {	/* skip this word if not a single bit on */
+    for (i=0; i < SIZE(key_down); i++) {
+	if (key_down[i]) {	/* skip this word if not a single bit on */
 	    k = i*BITS_PER_ULDAT;
-	    for(j=0; j<BITS_PER_ULDAT; j++,k++) {
-		if(test_bit(k, key_down)) {
+	    for (j=0; j<BITS_PER_ULDAT; j++,k++) {
+		if (lrawkbd_test_bit(k, (void *)key_down)) {
 		    sym = U(get_kbentry(k, 0));
-		    if(KTYP(sym) == KT_SHIFT || KTYP(sym) == KT_SLOCK) {
+		    if (KTYP(sym) == KT_SHIFT || KTYP(sym) == KT_SLOCK) {
 			val = KVAL(sym);
 			if (val == KVAL(K_CAPSSHIFT))
 			    val = KVAL(K_SHIFT);
@@ -771,9 +772,9 @@ static udat do_slock(byte value, byte up_flag)
 
 typedef void (*void_fnp)(void);
 
-#define show_ptregs	nop
-#define show_mem	nop
-#define show_state	nop
+#define show_ptregs	noop_fn
+#define show_mem	noop_fn
+#define show_state	noop_fn
 
 static void_fnp table_SPEC[] = {
 	do_null,	enter,		show_ptregs,	show_mem,
@@ -918,9 +919,9 @@ static udat handle_keycode(byte keycode, byte up)
 
     if (up_flag) {
 	rep = 0;
-	clear_bit(keycode, key_down);
+	lrawkbd_clear_bit(keycode, (void *)key_down);
     } else
-	rep = test_and_set_bit(keycode, key_down);
+	rep = lrawkbd_test_and_set_bit(keycode, (void *)key_down);
 
     if (!rep || vc_kbd_mode(kbd,VC_REPEAT)) {
 	ldat keysym;

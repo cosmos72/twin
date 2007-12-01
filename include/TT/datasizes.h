@@ -2,6 +2,7 @@
 #ifndef _TT_DATASIZES_H
 #define _TT_DATASIZES_H
 
+#define TT_SIZEOF_void		0
 #define TT_SIZEOF_ttchar	TW_SIZEOFBYTE
 #define TT_SIZEOF_ttbyte	TW_SIZEOFBYTE
 #define TT_SIZEOF_ttshort	TW_SIZEOFUDAT

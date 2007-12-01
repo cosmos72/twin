@@ -229,7 +229,7 @@ typedef enum {
 #undef DECL_TYPE
 } id_e;
 
-#define DECL_NAME(ch) static byte *T_CAT(names_,ch) [] = { T_CAT(T_NAME_,ch), T_CAT(T_ALIASES_,ch), NULL };
+#define DECL_NAME(ch) static byte *T_CAT(names_,ch) [] = { T_CAT((byte *)T_NAME_,ch), T_CAT((byte *)T_ALIASES_,ch), NULL };
 _LIST(DECL_NAME)
 #undef DECL_NAME
 

@@ -122,9 +122,12 @@ distclean: clean
 	for i in $(DISTCLEAN_EMPTY_FILES); do \
 	  echo > $$i; \
 	done && \
-	find . -type f | xargs touch
+	(find . -type f | xargs touch || true)
 
-pure: distclean
+
+ifneq ($(MAINTAINER),)
+
+ pure: distclean
 	rm -f Makefile $(T)admin/config.* \
 	      $(DISTCLEAN_REMOVE_FILES) $(DISTCLEAN_EMPTY_FILES) \
 	      $(T)configure $(T)makeversion $(T)server/rcparse_*.? \
@@ -133,4 +136,6 @@ pure: distclean
 	      `find $(T)include -name version.h` `find $(TT) -name '*_m4.[ch]'` \
 	      `find $(TT) -name makefragment` \
 	      $(PURE_REMOVE_FILES)
+
+endif
 

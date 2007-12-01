@@ -197,7 +197,7 @@ ttbyte TTCallY_ttmethod(tt_obj id, TT_ARG_WRITE TT_ARG_ARRAY((1)) ttarg * return
 	a0 = TTToEvcode_ttfield((tt_obj)(opaque)a[0]);
 	break;
       case ttmethod_FromEvcode_ttfield:
-	a0 = (opaque)TTFromEvcode_ttfield((ttuint)a[0]);
+	a0 = (opaque)TTFromEvcode_ttfield((ttopaque)a[0]);
 	break;
       case ttmethod_GetEvcode_ttfield:
 	a0 = TTGetEvcode_ttfield((TT_ARG_READ TT_ARG_ARRAY_Z ttbyte *)(opaque)a[0]);

@@ -153,7 +153,7 @@ static void FreeErrnoLocation(void) {
 
 
 
-void TTAssertFail (char *assertion, char *file, unsigned int line, char *function) {
+void TTAssertFail (const char *assertion, const char *file, unsigned int line, const char *function) {
     fprintf(stderr, "TT-CRITICAL: %s:%u: %s(): assertion `%s' failed\n",
 	    file, line, function, assertion);
 }
@@ -558,7 +558,7 @@ static ttbyte BeforeOpenTarget(TT_CONST byte *arg) {
     if (!TTAssertAlways(sizeof(s_ttclass_ttobj) ==
 			TT_OFFSETOF(ttclass_ttobject,New)) ||
 	!TTAssertAlways(sizeof(s_ttclass_ttobject) ==
-			sizeof(s_ttclass_ttobj) + 4 * sizeof(void (*)())))
+			sizeof(s_ttclass_ttobj) + 4 * sizeof(void (*)(void))))
 	return TT_FALSE;
 
     if (!TTD.OpenFlag && TTD.PanicFlag) {

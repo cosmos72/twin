@@ -200,7 +200,7 @@ static void lrawkbd_GrabConsole(void) {
 
     vt.mode   = VT_PROCESS;
     vt.waitv  = 0;
-    vt.relsig = SIGUSR1;
+    vt.relsig = SIGUSR2;
     vt.acqsig = SIGUSR1;
     vt.frsig  = 0;
     
@@ -231,7 +231,7 @@ static RETSIGTYPE lrawkbd_ReactSignalOut(int sig) {
 
     /* we just got SIGUSR1. restore settings and tell kernel we allow the switch */
 
-    signal(sig, lrawkbd_ReactSignalIn);
+    signal(sig, lrawkbd_ReactSignalOut);
 
     lrawkbd_RestoreKeyboard();
 
@@ -250,7 +250,7 @@ static RETSIGTYPE lrawkbd_ReactSignalIn(int sig) {
 
     /* we just got SIGUSR2. tell kernel we allow the switch and initialize settings */
 
-    signal(sig, lrawkbd_ReactSignalOut);
+    signal(sig, lrawkbd_ReactSignalIn);
     
     ioctl(tty_fd, VT_RELDISP, 2);
 
@@ -262,11 +262,13 @@ static RETSIGTYPE lrawkbd_ReactSignalIn(int sig) {
 }
 
 static void lrawkbd_InitSignals(void) {
-    signal(SIGUSR1, lrawkbd_ReactSignalOut);
+    signal(SIGUSR1, lrawkbd_ReactSignalIn);
+    signal(SIGUSR2, lrawkbd_ReactSignalOut);
 }
 
 static void lrawkbd_QuitSignals(void) {
     signal(SIGUSR1, SIG_DFL);
+    signal(SIGUSR2, SIG_DFL);
 }
 
 

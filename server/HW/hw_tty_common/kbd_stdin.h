@@ -7,11 +7,9 @@
 static void stdin_QuitKeyboard(void);
 static void stdin_KeyboardEvent(int fd, display_hw hw);
 static udat linux_LookupKey(udat *ShiftFlags, byte *slen, byte *s, byte *retlen, byte **ret);
+static void xterm_MouseEvent(int, display_hw);
 
-
-
-/* return FALSE if failed */
-static byte stdin_InitKeyboard(void) {
+static byte stdin_TestTty(void) {
     struct termios ttyb;
     byte buf[16], *s = buf+3, c;
     int i;
@@ -35,8 +33,7 @@ static byte stdin_InitKeyboard(void) {
 	i = read(tty_fd, buf, 15);
     } while (i < 0 && (errno == EWOULDBLOCK || errno == EINTR));
     if (i <= 0) {
-	printk("      stdin_InitKeyboard() failed: unable to read from the terminal!\n");
-	tty_setioctl(tty_fd, &ttysave);
+        tty_setioctl(tty_fd, &ttysave);
 	return FALSE;
     }
     buf[i] = '\0';
@@ -50,6 +47,16 @@ static byte stdin_InitKeyboard(void) {
 	else
 	    break;
 	s++;
+    }
+    return TRUE;
+}
+
+/* return FALSE if failed */
+static byte stdin_InitKeyboard(void) {
+
+    if (!stdin_TestTty()) {
+	printk("      stdin_InitKeyboard() failed: unable to read from the terminal!\n");
+        return FALSE;
     }
 
     HW->keyboard_slot = RegisterRemote(tty_fd, (obj)HW, stdin_KeyboardEvent);
@@ -275,7 +282,6 @@ static udat linux_LookupKey(udat *ShiftFlags, byte *slen, byte *s, byte *retlen,
 static byte xterm_MouseData[10] = "\033[M#!!!!";
 
 static void stdin_KeyboardEvent(int fd, display_hw hw) {
-    static void xterm_MouseEvent(int, display_hw);
     static byte buf[SMALLBUFF];
     static fd_set rfds;
     static struct timeval t;

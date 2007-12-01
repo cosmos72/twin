@@ -98,9 +98,9 @@ static TT_CONST ttbyte * TT_CONST method_proto[] = {
    S(ttbyte) S(ttfield) S(ttobject) S(ttarg),
    S(ttbyte) S(ttfield) S(ttobject) S(ttarg),
    S(ttbyte) S(ttfield) S(ttobject) S(ttany) S(ttany),
-   S(ttuint) S(ttfield),
-   S(ttfield) S(ttuint),
-   S(ttuint) S(ttbyte), 
+   S(ttopaque) S(ttfield),
+   S(ttfield) S(ttopaque),
+   S(ttopaque) S(ttbyte), 
     /* ttmethod methods */
     
    S(ttmethod) S(ttbyte),
@@ -339,7 +339,7 @@ static TT_CONST ttbyte * TT_CONST method_proto[] = {
     /* TTGet*_ttobj methods */         
     /* TTGet*_ttclass methods */             
     /* TTGet*_ttobject methods */    
-   S(ttuint) S(ttobject),    
+   S(ttopaque) S(ttobject),    
    S(ttuint) S(ttobject),            
    S(ttany) S(ttobject),    
    S(ttopaque) S(ttobject),    

@@ -511,24 +511,22 @@ byte tty_InitHW(void) {
 	(TRY_V(termcap) && termcap_InitVideo()) ||
 #endif
 	FALSE) {
-	
-	
-	if (
+		
+        if (
 #ifdef CONF_HW_TTY_LINUX
-	    GPM_InitMouse() ||
+            GPM_InitMouse() ||
 #else
-	    (printk("      tty_InitHW(): gpm mouse support not compiled in, skipping.\n"), FALSE) ||
+            (printk("      tty_InitHW(): gpm mouse support not compiled in, skipping.\n"), FALSE) ||
 #endif
-	    xterm_InitMouse(force_mouse) ||
-	    null_InitMouseConfirm()) {
+            xterm_InitMouse(force_mouse) ||
+            null_InitMouseConfirm()) {
 
-	    if (
+            if (
 #if defined(CONF_HW_TTY_LINUX) && defined(CONF_HW_TTY_LRAWKBD)
-		(TRY_K(lrawkbd) && lrawkbd_InitKeyboard()) ||
+                (TRY_K(lrawkbd) && lrawkbd_InitKeyboard()) ||
 #endif
-		(autotry_kbd && stdin_InitKeyboard())) {
-		
-		
+                (autotry_kbd && stdin_InitKeyboard())) {
+                
 		/*
 		 * must be deferred until now, as HW-specific functions
 		 * can clobber HW->NeedHW

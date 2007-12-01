@@ -3,6 +3,11 @@
 for ac_option
 do
   case "$ac_option" in
+  -*=*) ac_optarg=`echo "$ac_option" | sed 's/[-_a-zA-Z0-9]*=//'` ;;
+  *) ac_optarg= ;;
+  esac
+  
+  case "$ac_option" in
 
   -help | --help | --hel | --he )
     cat << EOF
@@ -14,7 +19,7 @@ Options: [defaults in brackets after descriptions]
   --help                  print this message
   --show                  show current configuration
   --top-srcdir=DIR        set top source directory
-  --top-buildir=DIR       set top build directory
+  --top-builddir=DIR      set top build directory
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
 --enable options recognized:
@@ -81,12 +86,12 @@ EOF
   --show | --sho | --sh )
     ;;
   
-  -top-srcdir | --top-srcdir )
-    T=`echo $ac_option|sed -e 's/-*top-srcdir-//'`
+  -top-srcdir=* | --top-srcdir=* )
+    T="$ac_optarg"
     ;;
    
-  -top-builddir | --top-builddir )
-    B=`echo $ac_option|sed -e 's/-*top-builddir-//'`
+  -top-builddir=* | --top-builddir=* )
+    B="$ac_optarg"
     ;;
     
   *)
@@ -107,7 +112,7 @@ fi
 #
 if [ ! -f "$T"conf/conf.default ]; then
   echo "scripts/Configure.sh: fatal: \"$Tconf/conf.default\" does not exist!"
-  echo "        maybe you forgot to use --top-srcdir=DIR and --top-buildir=DIR ?"
+  echo "        maybe you forgot to use --top-srcdir=DIR and --top-builddir=DIR ?"
   exit 1
 fi
 

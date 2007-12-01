@@ -62,22 +62,40 @@ IS(KP_F3,	4, "\x1B[[C") /* as F3 */
 IS(KP_F4,	4, "\x1B[[D") /* as F4 */
 
 /* these are duplicates of KP_[0..9] but have different X11 keysim */
-#if defined(XK_space) && (XK_KP_Insert != XK_KP_0)
+#if defined(XK_KP_Home) && (XK_KP_Home != XK_KP_7)
 IS(KP_Home,	3, "\x1BOw")
+#endif
+#if defined(XK_KP_Left) && (XK_KP_Left != XK_KP_4)
 IS(KP_Left,	3, "\x1BOt")
+#endif
+#if defined(XK_KP_Up) && (XK_KP_Up != XK_KP_8)
 IS(KP_Up,	3, "\x1BOx")
+#endif
+#if defined(XK_KP_Right) && (XK_KP_Right != XK_KP_6)
 IS(KP_Right,	3, "\x1BOv")
+#endif
+#if defined(XK_KP_Down) && (XK_KP_Down != XK_KP_2)
 IS(KP_Down,	3, "\x1BOr")
+#endif
+#if defined(XK_KP_Prior) && (XK_KP_Prior != XK_KP_9)
 IS(KP_Prior,	3, "\x1BOy")
+#endif
+#if defined(XK_KP_Next) && (XK_KP_Next != XK_KP_3)
 IS(KP_Next,	3, "\x1BOs")
+#endif
+#if defined(XK_KP_End) && (XK_KP_End != XK_KP_1)
 IS(KP_End,	3, "\x1BOq")
-IS(KP_Begin,	3, "\x1BOw") /* as KP_Home */
+#endif
+#if defined(XK_KP_Begin) && (XK_KP_Begin != XK_KP_5)
+IS(KP_Begin,	3, "\x1BOu")
+#endif
+#if defined(XK_KP_Insert) && (XK_KP_Insert != XK_KP_0)
 IS(KP_Insert,	3, "\x1BOp")
 #endif
-
-#if defined(XK_space) && defined(XK_KP_Delete)
+#if defined(XK_KP_Delete) && (XK_KP_Delete != XK_KP_Decimal)
 IS(KP_Delete,	3, "\x1BOn")
 #endif
+
 IS(KP_Multiply,	3, "\x1BOR")
 IS(KP_Add,	3, "\x1BOl")
 IS(KP_Separator,3, "\x1BOm")

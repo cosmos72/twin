@@ -31,6 +31,12 @@ static byte xterm_InitMouse(byte force) {
 	return FALSE;
     }
 
+    /* stdin_TestTty() will also fill ttypar[] */
+    if (!stdin_TestTty()) {
+	printk("      xterm_InitMouse() failed: unable to read from the terminal!\n");
+        return FALSE;
+    }
+    
     mouse_start_seq = "\033[?9h";
     mouse_end_seq = "\033[?9l";
     mouse_motion_seq = "\033[?999h";

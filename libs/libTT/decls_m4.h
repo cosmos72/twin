@@ -174,7 +174,7 @@ typedef struct s_ttobject {
     ttclass_ttobject Class;
     ttopaque id;
     /* extends ttobj */
-    ttuint refcount;
+    ttopaque refcount;
     ttuint oflags;
     ttany native;
     ttany target_private;
@@ -187,7 +187,7 @@ typedef struct s_ttvector {
     ttclass_ttvector Class;
     ttopaque id;
     /* extends ttobj */
-    ttuint refcount;
+    ttopaque refcount;
     ttuint oflags;
     ttany native;
     ttany target_private;
@@ -224,7 +224,7 @@ typedef struct s_ttevent {
     ttclass_ttevent Class;
     ttopaque id;
     /* extends ttobj */
-    ttuint refcount;
+    ttopaque refcount;
     ttuint oflags;
     ttany native;
     ttany target_private;
@@ -244,7 +244,7 @@ typedef struct s_tteventbig {
     ttclass_tteventbig Class;
     ttopaque id;
     /* extends ttobj */
-    ttuint refcount;
+    ttopaque refcount;
     ttuint oflags;
     ttany native;
     ttany target_private;
@@ -273,7 +273,7 @@ typedef struct s_ttbitmask {
     ttclass_ttbitmask Class;
     ttopaque id;
     /* extends ttobj */
-    ttuint refcount;
+    ttopaque refcount;
     ttuint oflags;
     ttany native;
     ttany target_private;
@@ -291,7 +291,7 @@ typedef struct s_tteventmask {
     ttclass_tteventmask Class;
     ttopaque id;
     /* extends ttobj */
-    ttuint refcount;
+    ttopaque refcount;
     ttuint oflags;
     ttany native;
     ttany target_private;
@@ -309,7 +309,7 @@ typedef struct s_ttcallback {
     ttclass_ttcallback Class;
     ttopaque id;
     /* extends ttobj */
-    ttuint refcount;
+    ttopaque refcount;
     ttuint oflags;
     ttany native;
     ttany target_private;
@@ -327,7 +327,7 @@ typedef struct s_ttlistener {
     ttclass_ttlistener Class;
     ttopaque id;
     /* extends ttobj */
-    ttuint refcount;
+    ttopaque refcount;
     ttuint oflags;
     ttany native;
     ttany target_private;
@@ -355,7 +355,7 @@ typedef struct s_tttimer {
     ttclass_tttimer Class;
     ttopaque id;
     /* extends ttobj */
-    ttuint refcount;
+    ttopaque refcount;
     ttuint oflags;
     ttany native;
     ttany target_private;
@@ -388,7 +388,7 @@ typedef struct s_ttcomponent {
     ttclass_ttcomponent Class;
     ttopaque id;
     /* extends ttobj */
-    ttuint refcount;
+    ttopaque refcount;
     ttuint oflags;
     ttany native;
     ttany target_private;
@@ -406,7 +406,7 @@ typedef struct s_ttdata {
     ttclass_ttdata Class;
     ttopaque id;
     /* extends ttobj */
-    ttuint refcount;
+    ttopaque refcount;
     ttuint oflags;
     ttany native;
     ttany target_private;
@@ -430,7 +430,7 @@ typedef struct s_ttvisible {
     ttclass_ttvisible Class;
     ttopaque id;
     /* extends ttobj */
-    ttuint refcount;
+    ttopaque refcount;
     ttuint oflags;
     ttany native;
     ttany target_private;
@@ -458,7 +458,7 @@ typedef struct s_ttlayout {
     ttclass_ttlayout Class;
     ttopaque id;
     /* extends ttobj */
-    ttuint refcount;
+    ttopaque refcount;
     ttuint oflags;
     ttany native;
     ttany target_private;
@@ -478,7 +478,7 @@ typedef struct s_ttboxlayout {
     ttclass_ttboxlayout Class;
     ttopaque id;
     /* extends ttobj */
-    ttuint refcount;
+    ttopaque refcount;
     ttuint oflags;
     ttany native;
     ttany target_private;
@@ -500,7 +500,7 @@ typedef struct s_ttborderlayout {
     ttclass_ttborderlayout Class;
     ttopaque id;
     /* extends ttobj */
-    ttuint refcount;
+    ttopaque refcount;
     ttuint oflags;
     ttany native;
     ttany target_private;
@@ -521,7 +521,7 @@ typedef struct s_ttnative {
     ttclass_ttnative Class;
     ttopaque id;
     /* extends ttobj */
-    ttuint refcount;
+    ttopaque refcount;
     ttuint oflags;
     ttany native;
     ttany target_private;
@@ -550,7 +550,7 @@ typedef struct s_ttwidget {
     ttclass_ttwidget Class;
     ttopaque id;
     /* extends ttobj */
-    ttuint refcount;
+    ttopaque refcount;
     ttuint oflags;
     ttany native;
     ttany target_private;
@@ -590,7 +590,7 @@ typedef struct s_ttlabel {
     ttclass_ttlabel Class;
     ttopaque id;
     /* extends ttobj */
-    ttuint refcount;
+    ttopaque refcount;
     ttuint oflags;
     ttany native;
     ttany target_private;
@@ -633,7 +633,7 @@ typedef struct s_tttooltip {
     ttclass_tttooltip Class;
     ttopaque id;
     /* extends ttobj */
-    ttuint refcount;
+    ttopaque refcount;
     ttuint oflags;
     ttany native;
     ttany target_private;
@@ -679,7 +679,7 @@ typedef struct s_ttbuttongroup {
     ttclass_ttbuttongroup Class;
     ttopaque id;
     /* extends ttobj */
-    ttuint refcount;
+    ttopaque refcount;
     ttuint oflags;
     ttany native;
     ttany target_private;
@@ -701,7 +701,7 @@ typedef struct s_ttanybutton {
     ttclass_ttanybutton Class;
     ttopaque id;
     /* extends ttobj */
-    ttuint refcount;
+    ttopaque refcount;
     ttuint oflags;
     ttany native;
     ttany target_private;
@@ -746,7 +746,7 @@ typedef struct s_ttbutton {
     ttclass_ttbutton Class;
     ttopaque id;
     /* extends ttobj */
-    ttuint refcount;
+    ttopaque refcount;
     ttuint oflags;
     ttany native;
     ttany target_private;
@@ -792,7 +792,7 @@ typedef struct s_ttcheckbutton {
     ttclass_ttcheckbutton Class;
     ttopaque id;
     /* extends ttobj */
-    ttuint refcount;
+    ttopaque refcount;
     ttuint oflags;
     ttany native;
     ttany target_private;
@@ -839,7 +839,7 @@ typedef struct s_ttradiobutton {
     ttclass_ttradiobutton Class;
     ttopaque id;
     /* extends ttobj */
-    ttuint refcount;
+    ttopaque refcount;
     ttuint oflags;
     ttany native;
     ttany target_private;
@@ -890,7 +890,7 @@ typedef struct s_ttanyscroll {
     ttclass_ttanyscroll Class;
     ttopaque id;
     /* extends ttobj */
-    ttuint refcount;
+    ttopaque refcount;
     ttuint oflags;
     ttany native;
     ttany target_private;
@@ -944,7 +944,7 @@ typedef struct s_ttscrollbar {
     ttclass_ttscrollbar Class;
     ttopaque id;
     /* extends ttobj */
-    ttuint refcount;
+    ttopaque refcount;
     ttuint oflags;
     ttany native;
     ttany target_private;
@@ -1000,7 +1000,7 @@ typedef struct s_ttslider {
     ttclass_ttslider Class;
     ttopaque id;
     /* extends ttobj */
-    ttuint refcount;
+    ttopaque refcount;
     ttuint oflags;
     ttany native;
     ttany target_private;
@@ -1058,7 +1058,7 @@ typedef struct s_ttprogressbar {
     ttclass_ttprogressbar Class;
     ttopaque id;
     /* extends ttobj */
-    ttuint refcount;
+    ttopaque refcount;
     ttuint oflags;
     ttany native;
     ttany target_private;
@@ -1115,7 +1115,7 @@ typedef struct s_ttscrollpane {
     ttclass_ttscrollpane Class;
     ttopaque id;
     /* extends ttobj */
-    ttuint refcount;
+    ttopaque refcount;
     ttuint oflags;
     ttany native;
     ttany target_private;
@@ -1158,7 +1158,7 @@ typedef struct s_ttwindow {
     ttclass_ttwindow Class;
     ttopaque id;
     /* extends ttobj */
-    ttuint refcount;
+    ttopaque refcount;
     ttuint oflags;
     ttany native;
     ttany target_private;
@@ -1201,7 +1201,7 @@ typedef struct s_ttframe {
     ttclass_ttframe Class;
     ttopaque id;
     /* extends ttobj */
-    ttuint refcount;
+    ttopaque refcount;
     ttuint oflags;
     ttany native;
     ttany target_private;
@@ -1246,7 +1246,7 @@ typedef struct s_ttscroller {
     ttclass_ttscroller Class;
     ttopaque id;
     /* extends ttobj */
-    ttuint refcount;
+    ttopaque refcount;
     ttuint oflags;
     ttany native;
     ttany target_private;
@@ -1291,7 +1291,7 @@ typedef struct s_ttmenuitem {
     ttclass_ttmenuitem Class;
     ttopaque id;
     /* extends ttobj */
-    ttuint refcount;
+    ttopaque refcount;
     ttuint oflags;
     ttany native;
     ttany target_private;
@@ -1322,7 +1322,7 @@ typedef struct s_ttcheckmenuitem {
     ttclass_ttcheckmenuitem Class;
     ttopaque id;
     /* extends ttobj */
-    ttuint refcount;
+    ttopaque refcount;
     ttuint oflags;
     ttany native;
     ttany target_private;
@@ -1354,7 +1354,7 @@ typedef struct s_ttradiomenuitem {
     ttclass_ttradiomenuitem Class;
     ttopaque id;
     /* extends ttobj */
-    ttuint refcount;
+    ttopaque refcount;
     ttuint oflags;
     ttany native;
     ttany target_private;
@@ -1387,7 +1387,7 @@ typedef struct s_ttmenu {
     ttclass_ttmenu Class;
     ttopaque id;
     /* extends ttobj */
-    ttuint refcount;
+    ttopaque refcount;
     ttuint oflags;
     ttany native;
     ttany target_private;
@@ -1420,7 +1420,7 @@ typedef struct s_ttmenubar {
     ttclass_ttmenubar Class;
     ttopaque id;
     /* extends ttobj */
-    ttuint refcount;
+    ttopaque refcount;
     ttuint oflags;
     ttany native;
     ttany target_private;
@@ -1449,7 +1449,7 @@ typedef struct s_ttanytext {
     ttclass_ttanytext Class;
     ttopaque id;
     /* extends ttobj */
-    ttuint refcount;
+    ttopaque refcount;
     ttuint oflags;
     ttany native;
     ttany target_private;
@@ -1495,7 +1495,7 @@ typedef struct s_tttextfield {
     ttclass_tttextfield Class;
     ttopaque id;
     /* extends ttobj */
-    ttuint refcount;
+    ttopaque refcount;
     ttuint oflags;
     ttany native;
     ttany target_private;
@@ -1542,7 +1542,7 @@ typedef struct s_tttextarea {
     ttclass_tttextarea Class;
     ttopaque id;
     /* extends ttobj */
-    ttuint refcount;
+    ttopaque refcount;
     ttuint oflags;
     ttany native;
     ttany target_private;
@@ -1590,7 +1590,7 @@ typedef struct s_tttheme {
     ttclass_tttheme Class;
     ttopaque id;
     /* extends ttobj */
-    ttuint refcount;
+    ttopaque refcount;
     ttuint oflags;
     ttany native;
     ttany target_private;
@@ -1615,7 +1615,7 @@ typedef struct s_ttapplication {
     ttclass_ttapplication Class;
     ttopaque id;
     /* extends ttobj */
-    ttuint refcount;
+    ttopaque refcount;
     ttuint oflags;
     ttany native;
     ttany target_private;
@@ -3420,11 +3420,11 @@ ttbyte  TTSetValue_ttfield(TT_ARG_READ tt_obj f, tt_obj o, TT_ARG_READ TT_ARG_AR
 
 ttbyte  TTChangeValue_ttfield(TT_ARG_READ tt_obj f, tt_obj o, ttany nand_value, ttany xor_value);
 
-ttuint  TTToEvcode_ttfield(TT_ARG_READ tt_obj f);
+ttopaque  TTToEvcode_ttfield(TT_ARG_READ tt_obj f);
 
-TT_ARG_READ tt_obj  TTFromEvcode_ttfield(ttuint i);
+TT_ARG_READ tt_obj  TTFromEvcode_ttfield(ttopaque i);
 
-ttuint  TTGetEvcode_ttfield(TT_ARG_READ TT_ARG_ARRAY_Z ttbyte * name);
+ttopaque  TTGetEvcode_ttfield(TT_ARG_READ TT_ARG_ARRAY_Z ttbyte * name);
 
  
 /* ttmethod methods */
@@ -3854,7 +3854,7 @@ tt_obj  TTGet_ttapplication(void);
 /* prototypes for TTGet*_ttclass and TTSet*_ttclass methods */             
 
 /* prototypes for TTGet*_ttobject and TTSet*_ttobject methods */    
-ttuint 	TTGetRefcount_ttobject(TT_ARG_READ tt_obj o);    
+ttopaque 	TTGetRefcount_ttobject(TT_ARG_READ tt_obj o);    
 ttuint 	TTGetOflags_ttobject(TT_ARG_READ tt_obj o);            
 ttany 	TTGetUserData_ttobject(TT_ARG_READ tt_obj o);
 ttbyte 	TTSetUserData_ttobject(tt_obj o, ttany user_data);    

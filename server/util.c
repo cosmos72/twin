@@ -194,8 +194,13 @@ timevalue *IncrTime(timevalue *Time, timevalue *Incr) {
 }
 
 timevalue *DecrTime(timevalue *Time, timevalue *Decr) {
-    Time->Seconds-=Decr->Seconds;
-    Time->Fraction-=Decr->Fraction;
+    Time->Seconds -= Decr->Seconds;
+    if (Time->Fraction >= Decr->Fraction)
+        Time->Fraction -= Decr->Fraction;
+    else {
+        Time->Seconds--;
+        Time->Fraction += (1 FullSECs - Decr->Fraction);
+    }
     NormalizeTime(Time);
     return Time;
 }

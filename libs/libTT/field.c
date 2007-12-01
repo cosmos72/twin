@@ -63,27 +63,27 @@ TT_ARG_READ tt_obj TTGet_ttfield(TT_ARG_READ TT_ARG_ARRAY_Z ttbyte * name) {
 }
 
 
-ttuint TTToEvcode_ttfield(/*TT_CONST*/ tt_obj f) {
+ttopaque TTToEvcode_ttfield(/*TT_CONST*/ tt_obj f) {
     if (ID2(ttfield,f)) {
-	return (ttuint)f;
+	return (ttopaque)f;
     }
-    return (ttuint)0;
+    return (ttopaque)0;
 }
 
-TT_ARG_READ tt_obj TTFromEvcode_ttfield(ttuint i) {
+TT_ARG_READ tt_obj TTFromEvcode_ttfield(ttopaque i) {
     if (ID2(ttfield,i)) {
 	return (tt_obj)i;
     }
     return (tt_obj)0;
 }
 
-ttuint TTGetEvcode_ttfield(TT_CONST ttbyte *name) {
+ttopaque TTGetEvcode_ttfield(TT_CONST ttbyte *name) {
     tt_obj f;
     
     if ((f = TTGet_ttfield(name))) {
 	return TTToEvcode_ttfield(f);
     }
-    return (ttuint)0;
+    return (ttopaque)0;
 }
 
 

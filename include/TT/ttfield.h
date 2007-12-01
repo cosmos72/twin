@@ -64,13 +64,13 @@ ttbyte TTSetValue_ttfield(TT_ARG_READ ttfield f,ttobject o,TT_ARG_READ TT_ARG_AR
 ttbyte TTChangeValue_ttfield(TT_ARG_READ ttfield f,ttobject o,ttany nand_value,ttany xor_value);
 
 /** return the ttuint representing field `f' in evcodes */
-ttuint TTToEvcode_ttfield(TT_ARG_READ ttfield f);
+ttopaque TTToEvcode_ttfield(TT_ARG_READ ttfield f);
 
 /** return the field corresponding to ttuint `i' in evcodes */
-TT_ARG_READ ttfield TTFromEvcode_ttfield(ttuint i);
+TT_ARG_READ ttfield TTFromEvcode_ttfield(ttopaque i);
 
 /** get the ttuint representing field `f' in evcodes given its name */
-ttuint TTGetEvcode_ttfield(TT_ARG_READ TT_ARG_ARRAY_Z ttbyte * name);
+ttopaque TTGetEvcode_ttfield(TT_ARG_READ TT_ARG_ARRAY_Z ttbyte * name);
 
 
 

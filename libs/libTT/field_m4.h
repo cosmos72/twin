@@ -61,7 +61,7 @@ static TT_CONST struct s_ttfield field_array[] = {
     { E(ttclass_field_last)	18, F(ttclass_field_last) G(void, 0) }, 
     /* ttobject fields */    
     { E(ttobject_field_first)	20, F(ttobject_field_first) G(void, 0) },        
-    { E(ttobject_refcount)	17, F(ttobject_refcount) G(ttuint, 0) },    
+    { E(ttobject_refcount)	17, F(ttobject_refcount) G(ttopaque, 0) },    
     { E(ttobject_oflags)	15, F(ttobject_oflags) G(ttuint, 0) },            
     { E(ttobject_user_data)	18, F(ttobject_user_data) G(ttany, 0) },    
     { E(ttobject_events_inprogress)	26, F(ttobject_events_inprogress) G(ttopaque, 0) },    

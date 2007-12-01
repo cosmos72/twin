@@ -56,7 +56,7 @@
 
 /* TTGet*_ttobject methods */
     
-ttuint TTGetRefcount_ttobject(TT_ARG_READ tt_obj o) {
+ttopaque TTGetRefcount_ttobject(TT_ARG_READ tt_obj o) {
     ttobject a0;
     if ((a0 = ID2(ttobject, o)))
 	return a0->refcount;

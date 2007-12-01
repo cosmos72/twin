@@ -35,92 +35,39 @@
 #include <X11/Xmd.h>                /* CARD32 */
 
 
-#define THIS "hw_X11"
+#define HW_THIS "hw_X11"
+#define THIS	"X11"
+#define INIT_THIS X11_InitHW
 
-/*
- * a user reported his system lacks DefaultRootWindow() ...
- */
-#ifndef DefaultRootWindow
-# define DefaultRootWindow(xdpy) XDefaultRootWindow(xdpy)
-#endif
-#ifndef DefaultScreen
-# define DefaultScreen(xdpy) XDefaultScreen(xdpy)
-#endif
-#ifndef DefaultDepth
-# define DefaultDepth(xdpy,xscreen) XDefaultDepth(xdpy,xscreen)
-#endif
 
-/*
- * I always said X11 Selection is a nightmare... this is the worst bug I have ever seen:
- * 
- * Suppose twin is running on X, and you also have twdisplay running on the same X.
- * You select something inside a twterm. Twin will export the selection on all displays,
- * in this case hw_X11 and hw_display (which talks to twdisplay and its other hw_X11).
- * Both the hw_X11 will do a XSetSelectionOwner, causing a race: one wins,
- * the other receives a SelectionClear event from X.
- * 
- * Suppose twdisplay wins.
- * 
- * Ok, so you have twin holding some selected data, but twdisplay actually holding
- * X11 Selection ownership. Now try to click on an xterm to paste that data.... nightmare!
- * 
- * 
- * note the nesting... here is what happens:
- *   |      |
- *   v      v
- * twdisplay   receives a "Selection Request" from X (xterm), and knows twin Selection owner is twin -> hw_X11 (twdisplay)
- *             so it forwards the request to twin
- * 
- *  twin       receives a "Selection Request" from twdisplay, and knows twin Selection owner is twin -> hw_X11 (twdisplay)
- *             so it resets the Selection owner (displays hold selection only for a single request) and forwards
- *             the request to hw_X11 (twdisplay), so that twdisplay receives the request AS AN X11 SELECTION REQUEST!
- * 
- *   twdisplay receives a "Selection Request" from X (twin), and knows twin Selection owner is None
- *             so it forwards the request to twin.
- *             PROBLEM: twdisplay must remember the TWO NESTED X11 SELECTION REQUESTS!
- * 
- *    twin     receives a "Selection Request" from twdisplay, and knows twin Selection owner is None
- *             so it picks its internal Selection data and Notifies it back to twdisplay
- * 
- *   twdisplay receives a "Selection Notify" from twin and forwards it to whoever asked it...
- *             in this case to X (twin).
- * 
- *  twin       receives a "Selection Notify" from twdisplay, and knows Requestor is twdisplay
- *             so it forwards the notify to twdisplay.
- * 
- * twdisplay   receives a "Selection Notify" from twin and forwards it to whoever asked it...
- *             If it remembered the nesting, it will correctly remove the previous
- *             request from its list, and forward this notify to X (xterm), else will happily
- *             forward this notify to X (twin), causing an INFINITE LOOP!
- * 
- * 
- * solution:
- * 
- * Twdisplay must remember the two nested x11 selection requests.
- * Will only TWO nested requests suffice for any case?
- * Adding more twdisplay/twattach to the same X server
- * will not change anything, as only one will own X11 Selection, so I think so.
- * In any case, I add a counter and make twdisplay complain loud if it overflows.
- * 
- */
+#include "hw_X11_gfx_common0.h"
+
 
 /* Display variables */
 
 #define NEST 4
 
 
-
 struct x11_data {
     unsigned int xwidth, xheight;
     int xwfont, xhfont, xupfont;
+    
+    /* we support showing only a portion of the whole twin display */
+    dat xhw_view, xhw_startx, xhw_starty, xhw_endx, xhw_endy;
+    
 #ifdef CONF__UNICODE
     Tutf_function xUTF_16_to_charset;
 #endif    
-    Display     *dpy;
+    Display     *xdisplay;
     Window       xwindow;
     GC           xgc;
     XGCValues    xsgc;
     XFontStruct *xsfont;
+#ifdef HW_X11_HAVE_XIM_XIC
+    XIM		 xim;
+    XIC		 xic;
+#endif
+    XComposeStatus xcompose;
     byte         xwindow_AllVisible, xfont_map;
     obj          xRequestor[NEST];
     uldat        xReqPrivate[NEST];
@@ -137,12 +84,23 @@ struct x11_data {
 #define xwfont		(xdata->xwfont)
 #define xhfont		(xdata->xhfont)
 #define xupfont		(xdata->xupfont)
+
+#define xhw_view	(xdata->xhw_view)
+#define xhw_startx	(xdata->xhw_startx)
+#define xhw_starty	(xdata->xhw_starty)
+#define xhw_endx	(xdata->xhw_endx)
+#define xhw_endy	(xdata->xhw_endy)
+
 #define xUTF_16_to_charset	(xdata->xUTF_16_to_charset)
-#define dpy	(xdata->dpy)
+#define xdisplay	(xdata->xdisplay)
 #define xwindow		(xdata->xwindow)
 #define xgc		(xdata->xgc)
 #define xsgc		(xdata->xsgc)
 #define xsfont		(xdata->xsfont)
+#define xim		(xdata->xim)
+#define xic		(xdata->xic)
+#define xcompose	(xdata->xcompose)
+
 #define xwindow_AllVisible	(xdata->xwindow_AllVisible)
 #define xfont_map	(xdata->xfont_map)
 #define xRequestor(j)	(xdata->xRequestor[j])
@@ -155,307 +113,28 @@ struct x11_data {
 #define xWM_DELETE_WINDOW	(xdata->xWM_DELETE_WINDOW)
 #define xTARGETS	(xdata->xTARGETS)
 
-static void X11_SelectionNotify_up(Window win, Atom prop);
-static void X11_SelectionRequest_up(XSelectionRequestEvent *req);
+#include "hw_X11_gfx_common1.h"
 
-
-static void X11_Beep(void) {
-    XBell(dpy, 0);
-    setFlush();
-}
-
-static void X11_Configure(udat resource, byte todefault, udat value) {
-    XKeyboardControl xctrl;
-    
-    switch (resource) {
-      case HW_KBDAPPLIC:
-	/* TODO */
-	break;
-      case HW_ALTCURSKEYS:
-	/* TODO */
-	break;
-      case HW_BELLPITCH:
-	xctrl.bell_pitch = todefault ? -1 : value;
-	XChangeKeyboardControl(dpy, KBBellPitch, &xctrl);
-	setFlush();
-	break;
-      case HW_BELLDURATION:
-	xctrl.bell_duration = todefault ? -1 : value;
-	XChangeKeyboardControl(dpy, KBBellDuration, &xctrl);
-	setFlush();
-	break;
-      case HW_MOUSEMOTIONEVENTS:
-	/* nothing to do */
-	break;
-      default:
-	break;
-    }
-}
-
-
-static struct {
-    KeySym xkey;
-    udat tkey;
-    byte len;
-    CONST byte *seq;
-} X11_keys[] = {
-
-#define IS(sym,l,s) { XK_##sym, TW_##sym, l, s },
-#  include "hw_keys.h"
-#undef IS
-
-};
-
-static uldat X11_keyn = sizeof(X11_keys) / sizeof(X11_keys[0]);
-
-/*
- * calling XRebindKeysym() on non-english keyboards disrupts keys that use Mode_switch (AltGr),
- * so we implement a manual translation using binary search on the table above.
- * But first, check the table is sorted, or binary search would become bugged.
- */
-static byte X11_CheckRemapKeys(void) {
-    uldat i;
-
-    for (i = 0; i < X11_keyn; i++) {
-	if (i && X11_keys[i-1].xkey >= X11_keys[i].xkey) {
-	    printk("\n"
-		   "      ERROR: twin compiled from a bad server/hw_keys.h file"
-		   "             (data in file is not sorted). -hw=X11 driver is unusable.\n"
-		   "      X11_InitHW() failed: internal error.\n");
-	    return FALSE;
-	}
-    }
-    return TRUE;
-}
-
-/* convert an X11 KeySym into a libTw key code and ASCII sequence */
-
-static udat X11_LookupKey(XKeyEvent *ev, udat *ShiftFlags, udat *len, char *seq) {
-    static udat lastTW = TW_Null;
-    static uldat lastI = MAXULDAT;
-    static KeySym lastXK = NoSymbol;
-    KeySym sym;
-    
-    uldat i, low, up, _len = *len;
-
-    *ShiftFlags = 0;
-    if (ev->state & ShiftMask)
-	*ShiftFlags |= KBD_SHIFT_FL;
-    if (ev->state & LockMask)
-	*ShiftFlags |= KBD_CAPS_LOCK;
-    if (ev->state & ControlMask)
-	*ShiftFlags |= KBD_CTRL_FL;
-    if (ev->state & (Mod1Mask|Mod3Mask)) /* Alt|AltGr */
-	*ShiftFlags |= KBD_ALT_FL;
-    if (ev->state & Mod2Mask) /* Num_Lock */
-	*ShiftFlags |= KBD_NUM_LOCK;
-    
-    *len = XLookupString(ev, seq, _len, &sym, NULL);
-#ifdef DEBUG_HW_X11
-    printf(THIS ": keysym=%d (%s) string='%.*s'\n", (int)sym, XKeysymToString(sym), (int)len, seq);
-#endif
-    if (sym == XK_BackSpace && ev->state & (ControlMask|Mod1Mask)) {
-	if (ev->state & ControlMask)
-	    *len = 1, *seq = '\x1F';
-	else
-	    *len = 2, seq[0] = '\x1B', seq[1] = '\x7F';
-	return TW_BackSpace;
-    }
-
-    if ((sym >= ' ' && sym <= '~') || (sym >= 0xA0 && sym <= 0xFF)) {
-	/* turn ALT+A into ESC+A etc. */
-	if (ev->state & Mod1Mask && *len == 1 && (byte)sym == *seq) {
-	    *len = 2;
-	    seq[1] = seq[0];
-	    seq[0] = '\x1B';
-	}
-	return (udat)sym;
-    }
-    
-    if (sym != lastXK) {
-	low = 0;		/* the first possible */
-	up = X11_keyn;	/* 1 + the last possible */
-    
-	while (low < up) {
-	    i = (low + up) / 2;
-	    if (sym == X11_keys[i].xkey) {
-		lastTW = X11_keys[lastI = i].tkey;
-		break;
-	    } else if (sym > X11_keys[i].xkey)
-		low = i + 1;
-	    else
-		up = i;
-	}
-	if (low == up) {
-	    lastI = X11_keyn;
-	    lastTW = TW_Null;
-	}
-	lastXK = sym;
-    }
-    /* XLookupString() returned empty string, or no ShiftFlags: steal sequence from hw_keys.h */
-    if (lastI < X11_keyn && X11_keys[lastI].len && (*len == 0 || *ShiftFlags == 0)) {
-	if (_len > X11_keys[lastI].len)
-	    CopyMem(X11_keys[lastI].seq, seq, *len = X11_keys[lastI].len);
-    }
-    return lastTW;
-}
-
-
-static void X11_HandleEvent(XEvent *event) {
-    /* this can stay static, X11_HandleEvent() is not reentrant */
-    static byte seq[SMALLBUFF];
-    dat x, y, dx, dy;
-    udat len = SMALLBUFF, TW_key, ShiftFlags;
-
-    if (event->xany.window == xwindow) switch (event->type) {
-      case KeyPress:
-	TW_key = X11_LookupKey(&event->xkey, &ShiftFlags, &len, seq);
-	if (TW_key != TW_Null)
-	    KeyboardEventCommon(TW_key, ShiftFlags, len, seq);
-	break;
-      case KeyRelease:
-	break;
-      case MotionNotify:
-      case ButtonPress:
-      case ButtonRelease:
-	x = event->xbutton.x / xwfont;
-	if (x < 0) x = 0;
-	else if (x >= DisplayWidth) x = DisplayWidth - 1;
-	
-	y = event->xbutton.y / xhfont;
-	if (y < 0) y = 0;
-	else if (y >= DisplayHeight) y = DisplayHeight - 1;
-	
-	if (event->type == MotionNotify) {
-	    dx = event->xbutton.x < xwfont/2 ? -1 : xwidth - event->xbutton.x <= xwfont/2 ? 1 : 0;
-	    dy = event->xbutton.y < xhfont/2 ? -1 : xheight- event->xbutton.y <= xhfont/2 ? 1 : 0;
-	    if (dx || dy || x != HW->MouseState.x || y != HW->MouseState.y)
-		MouseEventCommon(x, y, dx, dy, HW->MouseState.keys);
-	    break;
-	}
-	
-	dx = event->xbutton.state;
-	dy =(dx & Button1Mask ? HOLD_LEFT : 0) |
-	    (dx & Button2Mask ? HOLD_MIDDLE : 0) |
-	    (dx & Button3Mask ? HOLD_RIGHT : 0) |
-#ifdef HOLD_WHEEL_REV
-	    (dx & Button4Mask ? HOLD_WHEEL_REV : 0) |
-#endif
-#ifdef HOLD_WHEEL_FWD
-	    (dx & Button5Mask ? HOLD_WHEEL_FWD : 0) |
-#endif
-	    0;
-	
-	
-	/*
-	 * when sending ButtonRelease event, X11 reports that button
-	 * as still held down in event->xbutton.state ButtonMask...
-	 * 
-	 * instead when sending ButtonPress event, X11 reports that
-	 * button as still NOT held down in event->xbutton.state ButtonMask...
-	 * 
-	 * fix both cases here.
-	 */
-	dx = event->xbutton.button;
-	dx = (dx == Button1 ? HOLD_LEFT :
-	      dx == Button2 ? HOLD_MIDDLE :
-	      dx == Button3 ? HOLD_RIGHT :
-#ifdef HOLD_WHEEL_REV
-	      dx == Button4 ? HOLD_WHEEL_REV :
-#endif
-#ifdef HOLD_WHEEL_FWD
-	      dx == Button5 ? HOLD_WHEEL_FWD :
-#endif
-	      0);
-	if (event->type == ButtonPress)
-	    dy |= dx;
-	else
-	    dy &= ~dx;
-	    
-	MouseEventCommon(x, y, 0, 0, dy);
-	
-	break;
-      case ConfigureNotify:
-	if (HW->X != event->xconfigure.width  / xwfont ||
-	    HW->Y != event->xconfigure.height / xhfont) {
-	    
-	    HW->X = (xwidth  = event->xconfigure.width) / xwfont;
-	    HW->Y = (xheight = event->xconfigure.height) / xhfont;
-	    ResizeDisplayPrefer(HW);
-	}
-	break;
-      case Expose:
-	x = event->xexpose.x / xwfont;
-	y = event->xexpose.y / xhfont;
-	dx = (event->xexpose.x + event->xexpose.width + xwfont - 2) / xwfont;
-	dy = (event->xexpose.y + event->xexpose.height + xhfont - 2) / xhfont;
-	
-	NeedRedrawVideo(x, y, dx, dy);
-	/* must we redraw the cursor too ? */
-	if (HW->XY[0] >= x && HW->XY[0] <= dx && HW->XY[1] >= y && HW->XY[1] <= dy)
-	    HW->TT = NOCURSOR;
-	break;
-      case VisibilityNotify:
-	xwindow_AllVisible = event->xvisibility.state == VisibilityUnobscured;
-	break;
-      case SelectionClear:
-	HW->HWSelectionPrivate = 0; /* selection now owned by some other X11 client */
-	TwinSelectionSetOwner((obj)HW, SEL_CURRENTTIME, SEL_CURRENTTIME);
-	break;
-      case SelectionRequest:
-	X11_SelectionRequest_up(&event->xselectionrequest);
-	break;
-      case SelectionNotify:
-	X11_SelectionNotify_up(event->xselection.requestor, event->xselection.property);
-	break;
-      case ClientMessage:
-	if (event->xclient.message_type == xWM_PROTOCOLS &&
-	    event->xclient.format == 32 &&
-	    event->xclient.data.l[0] == xWM_DELETE_WINDOW) {
-
-	    /* going to close this display */
-	    HW->NeedHW |= NEEDPanicHW, NeedHW |= NEEDPanicHW;
-	    
-	}
-	break;
-      default:
-	break;
-    }
-}
-
-static void X11_KeyboardEvent(int fd, display_hw D_HW) {
-    XEvent event;
-    SaveHW;
-    SetHW(D_HW);
-    
-    while (XPending(dpy) > 0) {
-	XNextEvent(dpy, &event);
-	X11_HandleEvent(&event);
-    }
-    
-    RestoreHW;
-}
 
 /* this can stay static, X11_FlushHW() is not reentrant */
 static hwcol _col;
 
-
-
 #ifdef CONF__UNICODE
-# define XDRAW(col, buf, buflen) \
-    if (xsgc.foreground != xcol[COLFG(col)]) \
-	XSetForeground(dpy, xgc, xsgc.foreground = xcol[COLFG(col)]); \
-    if (xsgc.background != xcol[COLBG(col)]) \
-	XSetBackground(dpy, xgc, xsgc.background = xcol[COLBG(col)]); \
-    XDrawImageString16(dpy, xwindow, xgc, xbegin, ybegin + xupfont, buf, buflen)
+# define myXDrawImageString XDrawImageString16
 #else
-# define XDRAW(col, buf, buflen) \
-    if (xsgc.foreground != xcol[COLFG(col)]) \
-	XSetForeground(dpy, xgc, xsgc.foreground = xcol[COLFG(col)]); \
-    if (xsgc.background != xcol[COLBG(col)]) \
-	XSetBackground(dpy, xgc, xsgc.background = xcol[COLBG(col)]); \
-    XDrawImageString(dpy, xwindow, xgc, xbegin, ybegin + xupfont, buf, buflen)
+# define myXDrawImageString XDrawImageString
 #endif
+
+#define XDRAW(col, buf, buflen) do { \
+    if (xsgc.foreground != xcol[COLFG(col)]) \
+	XSetForeground(xdisplay, xgc, xsgc.foreground = xcol[COLFG(col)]); \
+    if (xsgc.background != xcol[COLBG(col)]) \
+	XSetBackground(xdisplay, xgc, xsgc.background = xcol[COLBG(col)]); \
+    myXDrawImageString(xdisplay, xwindow, xgc, xbegin, ybegin + xupfont, buf, buflen); \
+} while(0)
+
+#define XDRAW_ANY(buf, buflen, col, gfx) XDRAW(col, buf, buflen)
+
 
 INLINE void X11_Mogrify(dat x, dat y, uldat len) {
     hwattr *V, *oV;
@@ -467,7 +146,24 @@ INLINE void X11_Mogrify(dat x, dat y, uldat len) {
 #else
     byte buf[SMALLBUFF];
 #endif
-    int xbegin = x * xwfont, ybegin = y * xhfont;
+    int xbegin, ybegin;
+    
+    if (xhw_view) {
+	if (x >= xhw_endx || x + len < xhw_startx ||
+	    y < xhw_starty || y >= xhw_endy)
+	    return;
+    
+	if (x + len >= xhw_endx)
+	    len = xhw_endx - x;
+    
+	if (x < xhw_startx) {
+	    len -= xhw_startx - x;
+	    x = xhw_startx;
+	}
+    }
+
+    xbegin = (x - xhw_startx) * xwfont;
+    ybegin = (y - xhw_starty) * xhfont;
     
     V = Video + x + y * DisplayWidth;
     oV = OldVideo + x + y * DisplayWidth;
@@ -480,7 +176,7 @@ INLINE void X11_Mogrify(dat x, dat y, uldat len) {
 	}
 	if (!ValidOldVideo || *V != *oV) {
 	    if (!buflen) {
-		xbegin = x * xwfont;
+		xbegin = (x - xhw_startx) * xwfont;
 		_col = col;
 	    }
 #ifdef CONF__UNICODE
@@ -498,369 +194,25 @@ INLINE void X11_Mogrify(dat x, dat y, uldat len) {
     }
 }
 
-static void X11_HideCursor(dat x, dat y) {
-    int xbegin = x * xwfont, ybegin = y * xhfont;
-    hwattr V = Video[x + y * DisplayWidth];
-    hwcol col = HWCOL(V);
-#ifdef CONF__UNICODE
-    XChar2b c;
-    hwfont f = xUTF_16_to_charset(HWFONT(V));
-    c.byte1 = f >> 8;
-    c.byte2 = f & 0xFF;
-#else
-    byte c = HWFONT(V);
-#endif
-    
-    XDRAW(col, &c, 1);
-}
+#include "hw_X11_gfx_common2.h"
 
+#undef XDRAW_ANY
 #undef XDRAW
-
-static void X11_ShowCursor(uldat type, dat x, dat y) {
-    udat i;
-    hwcol v;
-    hwattr V = Video[x + y * DisplayWidth];
-#ifdef CONF__UNICODE
-    hwfont f;
-    XChar2b c;
-#else
-    byte c;
-#endif
-    
-    if (type & 0x10) {
-	/* soft cursor */
-	v = (HWCOL(V) | ((type >> 16) & 0xff)) ^ ((type >> 8) & 0xff);
-	if ((type & 0x20) && (HWCOL(V) & COL(0,WHITE)) == (v & COL(0,WHITE)))
-	    v ^= COL(0,WHITE);
-	if ((type & 0x40) && ((COLFG(v) & WHITE) == (COLBG(v) & WHITE)))
-	    v ^= COL(WHITE,0);
-	if (xsgc.foreground != xcol[COLFG(v)])
-	    XSetForeground(dpy, xgc, xsgc.foreground = xcol[COLFG(v)]);
-	if (xsgc.background != xcol[COLBG(v)])
-	    XSetBackground(dpy, xgc, xsgc.background = xcol[COLBG(v)]);
-#ifdef CONF__UNICODE
-	f = xUTF_16_to_charset(HWFONT(V));
-	c.byte1 = f >> 8;
-	c.byte2 = f & 0xFF;
-	XDrawImageString16(dpy, xwindow, xgc, x * xwfont, y * xhfont + xupfont, &c, 1);
-#else
-	c = HWFONT(V);
-	XDrawImageString(dpy, xwindow, xgc, x * xwfont, y * xhfont + xupfont, &c, 1);
-#endif
-    }
-    if (type & 0xF) {
-	/* VGA hw-like cursor */
-	i = xhfont * ((type & 0xF)-NOCURSOR) / (SOLIDCURSOR-NOCURSOR);
-	
-	/* doesn't work as expected on paletted visuals... */
-	if (xsgc.foreground != xcol[COLFG(HWCOL(V)) ^ COLBG(HWCOL(V))])
-	    XSetForeground(dpy, xgc, xsgc.foreground = xcol[COLFG(HWCOL(V)) ^ COLBG(HWCOL(V))]);
-	
-	XSetFunction(dpy, xgc, xsgc.function = GXxor);
-	XFillRectangle(dpy, xwindow, xgc,
-		       x * xwfont, y * xhfont + xhfont - i, xwfont, i);
-	XSetFunction(dpy, xgc, xsgc.function = GXcopy);
-    }
-}
-
-static void X11_FlushVideo(void) {
-    dat start, end;
-    udat i;
-    byte iff;
-    
-    
-    if (ValidOldVideo)
-	iff = ChangedVideoFlag &&
-	Video[HW->XY[0] + HW->XY[1] * DisplayWidth] != OldVideo[HW->XY[0] + HW->XY[1] * DisplayWidth];
-    /* TRUE if and only if the cursor will be erased by burst */
-    
-    
-    /* first burst all changes */
-    if (ChangedVideoFlag) {
-	for (i=0; i<DisplayHeight*2; i++) {
-	    start = ChangedVideo[i>>1][i&1][0];
-	    end   = ChangedVideo[i>>1][i&1][1];
-	    
-	    if (start != -1)
-		X11_Mogrify(start, i>>1, end-start+1);
-	}
-	setFlush();
-    }
-    /* then, we may have to erase the old cursor */
-    if (!ValidOldVideo || (!iff && HW->TT != NOCURSOR &&
-	(CursorType != HW->TT || CursorX != HW->XY[0] || CursorY != HW->XY[1]))) {
-	
-	HW->TT = NOCURSOR;
-	X11_HideCursor(HW->XY[0], HW->XY[1]);
-	setFlush();
-    }
-    /* finally, redraw the cursor if forced to redraw or */
-    /* (we want a cursor and (the burst erased the cursor or the cursor changed)) */
-    if (!ValidOldVideo ||
-	(CursorType != NOCURSOR &&
-	 (iff || CursorType != HW->TT || CursorX != HW->XY[0] || CursorY != HW->XY[1]))) {
-	
-	X11_ShowCursor(HW->TT = CursorType, HW->XY[0] = CursorX, HW->XY[1]= CursorY);
-	setFlush();
-    }
-
-    HW->FlagsHW &= ~FlHWChangedMouseFlag;
-}
-
-static void X11_FlushHW(void) {
-    XFlush(dpy);
-    clrFlush();
-}
-
-static void X11_DetectSize(dat *x, dat *y) {
-    *x = HW->X = xwidth  / xwfont;
-    *y = HW->Y = xheight / xhfont;
-}
-
-static void X11_CheckResize(dat *x, dat *y) {
-    /* always ok */
-}
-
-static void X11_Resize(dat x, dat y) {
-    if (x != HW->X || y != HW->Y) {
-	XResizeWindow(dpy, xwindow,
-		      xwidth = xwfont * (HW->X = x),
-		      xheight = xhfont * (HW->Y = y));
-	setFlush();
-    }
-}
-     
-/*
- * import X11 Selection
- */
-static byte X11_SelectionImport_X11(void) {
-    return !HW->HWSelectionPrivate;
-}
-
-/*
- * export our Selection to X11
- */
-static void X11_SelectionExport_X11(void) {
-    if (!HW->HWSelectionPrivate) {
-	XSetSelectionOwner(dpy, XA_PRIMARY, xwindow, CurrentTime);
-	HW->HWSelectionPrivate = (tany)xwindow;
-	setFlush();
-    }
-}
-
-/*
- * notify our Selection to X11
- */
-static void X11_SelectionNotify_X11(uldat ReqPrivate, uldat Magic, CONST byte MIME[MAX_MIMELEN],
-				    uldat Len, CONST byte * Data) {
-    XEvent ev;
-	
-    if (XReqCount == 0) {
-	printk(THIS ".c: X11_SelectionNotify_X11(): unexpected Twin Selection Notify event!\n");
-	return;
-    }
-#if 0
-    else {
-	printk(THIS ".c: X11_SelectionNotify_X11(): %d nested Twin Selection Notify events\n", XReqCount);
-    }
-#endif
-    
-    XReqCount--;
-    ev.xselection.type      = SelectionNotify;
-    ev.xselection.property  = None;
-    ev.xselection.display   = XReq(XReqCount).display;
-    ev.xselection.requestor = XReq(XReqCount).requestor;
-    ev.xselection.selection = XReq(XReqCount).selection;
-    ev.xselection.target    = XReq(XReqCount).target;
-    ev.xselection.time      = XReq(XReqCount).time;
-
-    if (XReq(XReqCount).target == xTARGETS) {
-	/*
-	 * On some systems, the Atom typedef is 64 bits wide.
-	 * We need to have a typedef that is exactly 32 bits wide,
-	 * because a format of 64 is not allowed by the X11 protocol.
-	 */
-	typedef CARD32 Atom32;
-	Atom32 target_list[2];
-	
-	target_list[0] = (Atom32) xTARGETS;
-	target_list[1] = (Atom32) XA_STRING;
-	XChangeProperty (dpy, XReq(XReqCount).requestor, XReq(XReqCount).property,
-			 xTARGETS, 8*sizeof(target_list[0]), PropModeReplace,
-			 (char *)target_list,
-			 sizeof(target_list)/sizeof(target_list[0]));
-	ev.xselection.property = XReq(XReqCount).property;
-    } else if (XReq(XReqCount).target == XA_STRING) {
-#ifdef CONF__UNICODE
-	uldat l;
-	byte *_Data = NULL, *d;
-	TW_CONST hwfont *s;
-	
-	/* X11 selection contains text, not unicode */
-	if (Magic == SEL_HWFONTMAGIC) {
-	    if ((_Data = d = (byte *)AllocMem(Len))) {
-		s = (TW_CONST hwfont *)Data;
-		for (l = Len; l; l--)
-		    *d++ = Tutf_UTF_16_to_CP437(*s++);
-		Data = _Data;
-		Len /= sizeof(hwfont);
-	    } else
-		Len = 0;
-	}
-#endif
-	XChangeProperty (dpy, XReq(XReqCount).requestor, XReq(XReqCount).property,
-			 XA_STRING, 8, PropModeReplace, Data, Len);
-	ev.xselection.property = XReq(XReqCount).property;
-
-#ifdef CONF__UNICODE
-	if (Magic == SEL_HWFONTMAGIC && _Data)
-	    FreeMem(_Data);
-#endif
-    }
-    XSendEvent (dpy, XReq(XReqCount).requestor, False, 0, &ev);
-    setFlush();
-}
-
-/*
- * notify the X11 Selection to twin upper layer
- */
-static void X11_SelectionNotify_up(Window win, Atom prop) {
-    long nread = 0;
-    unsigned long nitems, bytes_after = BIGBUFF;
-    Atom actual_type;
-    int actual_fmt;
-    byte *data, *buff = NULL;
-
-    if (xReqCount == 0) {
-	printk(THIS ".c: X11_SelectionNotify_up(): unexpected X Selection Notify event!\n");
-	return;
-    }
-#if 0
-    else {
-	printk(THIS ".c: X11_SelectionNotify_up(): %d nested X Selection Notify event\n", xReqCount);
-    }
-#endif
-    if (prop == None)
-	return;
-
-    xReqCount--;
-
-    do {
-	if ((XGetWindowProperty(dpy, win, prop,
-				nread/4, bytes_after/4, False,
-				AnyPropertyType, &actual_type, &actual_fmt,
-				&nitems, &bytes_after, &data)
-	     != Success) || (actual_type != XA_STRING)) {
-	    
-	    XFree(data);
-	    if (buff)
-		FreeMem(buff);
-	    return;
-	}
-	
-	if (buff || (buff = AllocMem(nitems + bytes_after))) {
-	    CopyMem(data, buff + nread, nitems);
-	    nread += nitems;
-	}
-	XFree(data);
-	if (!buff)
-	    return;
-    } while (bytes_after > 0);
-    
-    TwinSelectionNotify(xRequestor(xReqCount), xReqPrivate(xReqCount), SEL_TEXTMAGIC, NULL, nread, buff);
-    FreeMem(buff);
-}
-
-/*
- * request X11 Selection
- */
-static void X11_SelectionRequest_X11(obj Requestor, uldat ReqPrivate) {
-    if (!HW->HWSelectionPrivate) {
-
-	if (xReqCount == NEST) {
-	    printk(THIS ".c: X11_SelectionRequest_X11(): too many nested Twin Selection Request events!\n");
-	    return;
-	}
-#if 0
-	else {
-	    printk(THIS ".c: X11_SelectionRequest_X11(): %d nested Twin Selection Request events\n", xReqCount+1);
-	}
-#endif
-	xRequestor(xReqCount) = Requestor;
-	xReqPrivate(xReqCount) = ReqPrivate;
-	xReqCount++;
-	
-	if (XGetSelectionOwner(dpy, XA_PRIMARY) == None)
-	    X11_SelectionNotify_up(DefaultRootWindow(dpy), XA_CUT_BUFFER0);
-	else {
-	    Atom prop = XInternAtom (dpy, "VT_SELECTION", False);
-	    XConvertSelection(dpy, XA_PRIMARY, XA_STRING, prop, xwindow, CurrentTime);
-	    setFlush();
-	    /* we will get an X11 SelectionNotify event */
-	}
-    }
-    /* else race! someone else became Selection owner in the meanwhile... */
-}
-
-
-/*
- * request twin Selection
- */
-static void X11_SelectionRequest_up(XSelectionRequestEvent *req) {
-    if (XReqCount == NEST) {
-	printk(THIS ".c: X11_SelectionRequest_up(): too many nested X Selection Request events!\n");
-	return;
-    }
-#if 0
-    else {
-	printk(THIS ".c: X11_SelectionRequest_up(): %d nested X Selection Request events\n", XReqCount+1);
-    }
-#endif
-    CopyMem(req, &XReq(XReqCount), sizeof(XSelectionRequestEvent));
-    TwinSelectionRequest((obj)HW, XReqCount++, TwinSelectionGetOwner());
-    /* we will get a HW->HWSelectionNotify (i.e. X11_SelectionNotify_X11) call */
-    /* the call **CAN** arrive while we are still inside TwinSelectionRequest() !!! */
-}
-
-static byte X11_CanDragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
-    return xwindow_AllVisible /* if window is partially covered, XCopyArea() cannot work */
-	&& !HW->RedrawVideo /* if window is not up-to-date, XCopyArea() is unusable */
-	&& (Rgt-Left+1) * (Dwn-Up+1) > 20; /* avoid XCopyArea() for very small areas */
-}
-
-static void X11_DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
-    dat DstRgt = (Rgt-Left)+DstLeft;
-    dat DstDwn = (Dwn-Up)+DstUp;
-
-    if (HW->TT != NOCURSOR) {
-	if (HW->XY[0] >= Left && HW->XY[0] <= Rgt && HW->XY[1] >= Up && HW->XY[1] <= Dwn) {
-	    /* must hide the cursor before dragging */
-	    X11_HideCursor(HW->XY[0], HW->XY[1]);
-	    /* and remember to redraw it */
-	    HW->TT = (uldat)-1;
-	} else if (HW->XY[0] >= DstLeft && HW->XY[0] <= DstRgt &&
-		   HW->XY[1] >= DstUp && HW->XY[1] <= DstDwn) {
-	    /* cursor will be overwritten by drag, remember to redraw it */
-	    HW->TT = (uldat)-1;
-	}
-    }
-    XCopyArea(dpy, xwindow, xwindow, xgc,
-	      Left*xwfont, Up*xhfont, (Rgt-Left+1)*xwfont, (Dwn-Up+1)*xhfont,
-	      DstLeft*xwfont, DstUp*xhfont);
-    setFlush();
-}
-
 
 static void X11_QuitHW(void) {
 
-    if (xsfont) XFreeFont(dpy, xsfont);
-    if (xgc != None) XFreeGC(dpy, xgc);
+#ifdef HW_X11_HAVE_XIM_XIC
+    if (xic)    XDestroyIC(xic);
+    if (xim)    XCloseIM(xim);
+#endif
+    if (xsfont) XFreeFont(xdisplay, xsfont);
+    if (xgc != None) XFreeGC(xdisplay, xgc);
     if (xwindow != None) {
-	XUnmapWindow(dpy, xwindow);
-	XDestroyWindow(dpy, xwindow);
+	XUnmapWindow(xdisplay, xwindow);
+	XDestroyWindow(xdisplay, xwindow);
     }
-    XCloseDisplay(dpy);
-    dpy = NULL;
+    XCloseDisplay(xdisplay);
+    xdisplay = NULL;
     
     if (HW->keyboard_slot != NOSLOT)
 	UnRegisterRemote(HW->keyboard_slot);
@@ -872,114 +224,11 @@ static void X11_QuitHW(void) {
     FreeMem(HW->Private);
 }
 
-#if 0
-/* does NOT work... libX11 insists on doing exit(1) */
-static int X11_Die(Display *d) {
-    /*
-     * this is not exactly trivial:
-     * find our HW, shut it down
-     * and quit if it was the last HW.
-     * 
-     * don't rely on HW->Private only, as non-X11 displays
-     * may use it differently and have by chance the same value for it.
-     */
-    forallHW {
-	if (HW->QuitHW == X11_QuitHW && HW->Private
-	    && d == dpy) { /* expands to HW->Private->dpy */
-	    
-	    HW->NeedHW |= NEEDPanicHW, NeedHW |= NEEDPanicHW;
-	    
-	    break;
-	}
-    }
-    return 0;
-}
-#else
-static int X11_Die(Display *d) {
-    Quit(0);
-    return 0;
-}
-#endif
-
-
-#ifdef CONF__UNICODE
-static Tutf_function X11_UTF_16_to_charset_function(CONST byte *charset) {
-    XFontProp *fp;
-    Atom fontatom;
-    CONST byte *s, *fontname = NULL;
-    uldat i;
-    
-    if (!charset) {
-	/* attempt to autodetect encoding. */
-	fp = xsfont->properties;
-	fontatom = XInternAtom (dpy, "FONT", False);
-	i = xsfont->n_properties;
-	
-	while (i--) {
-	    if (fp->name == fontatom) {
-		fontname = XGetAtomName(dpy, fp->card32);
-		/*fprintf(stderr, "    X11_UTF_16_to...: font name: `%s\'\n", fontname);*/
-		break;
-	    }
-	    fp++;
-	}
-	if (fontname && !strcmp(fontname, "vga")) {
-	    charset = T_NAME_CP437;
-	} else if (fontname) {
-	    i = 2;
-	    for (s = fontname + strlen(fontname) - 1; i && s >= fontname; s--) {
-		if (*s == '-')
-		    i--;
-	    }
-	    if (!i)
-		charset = s + 2; /* skip current char and '-' */
-	}
-	    
-	if (!charset) {
-	    if (xsfont->min_byte1 < xsfont->max_byte1) {
-		/* font is more than just 8-bit. For now, assume it's unicode */
-		printk("    X11_InitHW: font `%."STR(SMALLBUFF)"s\' has no known charset encoding,\n"
-		       "                assuming Unicode.\n", fontname);
-		return NULL;
-	    }
-	    /* else assume codepage437. gross. */
-	    printk("    X11_InitHW: font `%."STR(SMALLBUFF)"s\' has no known charset encoding,\n"
-		   "                assuming CP437 codepage (\"VGA\").\n", fontname);
-	    return Tutf_UTF_16_to_CP437;
-	}
-    }
-    
-    i = Tutf_charset_id(charset);
-    s = Tutf_charset_name(i);
-    if (s && !strcmp(s, T_NAME_UTF_16)) {
-	/* this is an Unicode font. good. */
-	return NULL;
-    }
-    
-    if (i == (uldat)-1) {
-	printk("      X11_InitHW(): libTutf warning: unknown charset `%." STR(SMALLBUFF) "s', assuming `CP437'\n", charset);
-	return Tutf_UTF_16_to_CP437;
-    }
-    
-    return Tutf_UTF_16_to_charset_function(i);
-}
-
-
-static hwfont X11_UTF_16_to_UTF_16(hwfont c) {
-    if ((c & 0xFE00) == 0xF000)
-	/* direct-to-font zone */
-	c &= 0x01FF;
-    return c;
-}
-
-#endif
-
-    
 #ifdef THIS_MODULE
 static
 #endif
 byte X11_InitHW(void) {
-    byte *arg = HW->Name;
+    char *arg = HW->Name;
     int xscreen;
     unsigned int xdepth;
     XSetWindowAttributes xattr;
@@ -987,7 +236,7 @@ byte X11_InitHW(void) {
     XSizeHints *xhints;
     XEvent event;
     int i;
-    byte *s, *dpy_ = NULL, *dpy0 = NULL,
+    byte *s, *xdisplay_ = NULL, *xdisplay0 = NULL,
     *fontname = NULL, *fontname0 = NULL,
     *charset = NULL, *charset0 = NULL,
     name[] = "twin :??? on X";
@@ -997,6 +246,8 @@ byte X11_InitHW(void) {
 	printk("      X11_InitHW(): Out of memory!\n");
 	return FALSE;
     }
+
+    xhw_view = xhw_startx = xhw_starty = xhw_endx = xhw_endy = 0;
     
     if (arg && HW->NameLen > 4) {
 	arg += 4; /* skip "-hw=" */
@@ -1008,8 +259,8 @@ byte X11_InitHW(void) {
 	    arg += 2; /* `X11' is same as `X' */
 
 	if (*arg == '@') {
-	    if ((s = strchr(dpy_ = ++arg, ','))) {
-		*(dpy0 = s) = '\0';
+	    if ((s = strchr(xdisplay_ = ++arg, ','))) {
+		*(xdisplay0 = s) = '\0';
 		arg = s + 1;
 	    } else
 		arg = NULL;
@@ -1031,6 +282,14 @@ byte X11_InitHW(void) {
 		s = strchr(arg, ',');
 		if (s) *(charset0 = s++) = '\0';
 		arg = s;
+	    } else if (!strncmp(arg, "view=", 5)) {
+		xhw_view = 1;
+		xhw_endx = strtol(arg+5, &arg, 0);
+		xhw_endy = strtol(arg+1, &arg, 0);
+		xhw_startx = strtol(arg+1, &arg, 0);
+		xhw_starty = strtol(arg+1, &arg, 0);
+		xhw_endx += xhw_startx;
+		xhw_endy += xhw_starty;
 	    } else if (!strncmp(arg, "drag", 4)) {
 		arg += 4;
 		drag = TRUE;
@@ -1047,21 +306,21 @@ byte X11_InitHW(void) {
     xReqCount = XReqCount = 0;
     HW->keyboard_slot = NOSLOT;
     
-    if ((dpy = XOpenDisplay(dpy_))) do {
+    if ((xdisplay = XOpenDisplay(xdisplay_))) do {
 	
 	(void)XSetIOErrorHandler(X11_Die);
 
 	if (!X11_CheckRemapKeys())
 	    break;
 
-	xscreen = DefaultScreen(dpy);
-	xdepth  = DefaultDepth(dpy, xscreen);
+	xscreen = DefaultScreen(xdisplay);
+	xdepth  = DefaultDepth(xdisplay, xscreen);
 	
 	for (i = 0; i <= MAXCOL; i++) {
 	    xcolor.red   = 257 * (udat)Palette[i].Red;
 	    xcolor.green = 257 * (udat)Palette[i].Green;
 	    xcolor.blue  = 257 * (udat)Palette[i].Blue;
-	    if (!XAllocColor(dpy, DefaultColormap(dpy, xscreen), &xcolor)) {
+	    if (!XAllocColor(xdisplay, DefaultColormap(xdisplay, xscreen), &xcolor)) {
 		printk("      X11_InitHW() failed to allocate colors\n");
 		break;
 	    }
@@ -1075,27 +334,57 @@ byte X11_InitHW(void) {
 	    StructureNotifyMask | SubstructureNotifyMask |
 	    KeyPressMask | ButtonPressMask | ButtonReleaseMask | PointerMotionMask;
 
-	if (((fontname && (xsfont = XLoadQueryFont(dpy, fontname))) ||
-	     (xsfont = XLoadQueryFont(dpy, "vga")) ||
-	     (xsfont = XLoadQueryFont(dpy, "fixed"))) &&
-	    (xwfont = xsfont->min_bounds.width,
-	     xwidth = xwfont * (HW->X = GetDisplayWidth()),
-	     xhfont = (xupfont = xsfont->ascent) + xsfont->descent,
-	     xheight = xhfont * (HW->Y = GetDisplayHeight()),
-	     xwindow = XCreateWindow(dpy, DefaultRootWindow(dpy), 0, 0,
+	if (!((fontname && (xsfont = XLoadQueryFont(xdisplay, fontname))) ||
+	     (xsfont = XLoadQueryFont(xdisplay, "vga")) ||
+	     (xsfont = XLoadQueryFont(xdisplay, "fixed"))))
+	    break;
+	
+	xwfont = xsfont->min_bounds.width;
+	xwidth = xwfont * (HW->X = GetDisplayWidth());
+	xhfont = (xupfont = xsfont->ascent) + xsfont->descent;
+	xheight = xhfont * (HW->Y = GetDisplayHeight());
+	
+	if (xhw_view && xhw_startx >= 0 && xhw_starty >= 0 && xhw_endx > xhw_startx && xhw_endy > xhw_starty) {
+	    /* a valid view was specified */
+	    
+	    xwidth  = xwfont * (xhw_endx - xhw_startx);
+	    xheight = xhfont * (xhw_endy - xhw_starty);
+	} else {
+	    xhw_view = xhw_startx = xhw_starty = 0;
+	    xhw_endx = HW->X;
+	    xhw_endy = HW->Y;
+	}
+	
+	if ((xwindow = XCreateWindow(xdisplay, DefaultRootWindow(xdisplay), 0, 0,
 				     xwidth, xheight, 0, xdepth, InputOutput,
-				     DefaultVisual(dpy, xscreen),
+				     DefaultVisual(xdisplay, xscreen),
 				     CWBackPixel | CWEventMask, &xattr)) &&
 
 	    (xsgc.foreground = xsgc.background = xcol[0],
 	     xsgc.graphics_exposures = False,
 	     xsgc.font = xsfont->fid,
-	     xgc = XCreateGC(dpy, xwindow, GCFont|GCForeground|GCBackground|GCGraphicsExposures, &xsgc)) &&
+	     xgc = XCreateGC(xdisplay, xwindow, GCFont|GCForeground|GCBackground|GCGraphicsExposures, &xsgc)) &&
 
-	    (xhints = XAllocSizeHints())) {
+	    (xhints = XAllocSizeHints()))
+        {
 	    
+            static XComposeStatus static_xcompose;
+            xcompose = static_xcompose;
+
+#ifdef HW_X11_HAVE_XIM_XIC
+            xim = XOpenIM(xdisplay, NULL, NULL, NULL);
+            if (xim != NULL) {
+                xic = XCreateIC(xim, XNInputStyle, XIMStatusNothing|XIMPreeditNothing,
+                                XNClientWindow, xwindow, XNFocusWindow, xwindow, NULL);
+                if (xic == NULL) {
+                    XCloseIM(xim);
+                    xim = NULL;
+                }
+            } else
+                xic = NULL;
+#endif
 	    sprintf(name, "twin %s on X", TWDisplay);
-	    XStoreName(dpy, xwindow, name);
+	    XStoreName(xdisplay, xwindow, name);
 
 
 #ifdef CONF__UNICODE
@@ -1106,28 +395,34 @@ byte X11_InitHW(void) {
 	     * ask ICCCM-compliant window manager to tell us when close window
 	     * has been chosen, rather than just killing us
 	     */
-	    xWM_PROTOCOLS = XInternAtom(dpy, "WM_PROTOCOLS", False);
-	    xWM_DELETE_WINDOW = XInternAtom(dpy, "WM_DELETE_WINDOW", False);
-	    xTARGETS = XInternAtom(dpy, "TARGETS", False);
+	    xWM_PROTOCOLS = XInternAtom(xdisplay, "WM_PROTOCOLS", False);
+	    xWM_DELETE_WINDOW = XInternAtom(xdisplay, "WM_DELETE_WINDOW", False);
+	    xTARGETS = XInternAtom(xdisplay, "TARGETS", False);
 
-	    XChangeProperty(dpy, xwindow, xWM_PROTOCOLS, XA_ATOM, 32, PropModeReplace,
+	    XChangeProperty(xdisplay, xwindow, xWM_PROTOCOLS, XA_ATOM, 32, PropModeReplace,
 			    (unsigned char *) &xWM_DELETE_WINDOW, 1);
+
+	    if (xhw_view) {
+		xhints->flags = PMinSize|PMaxSize;
+		xhints->min_width = xhints->max_width = xwidth;
+		xhints->min_height = xhints->max_height = xheight;
+	    } else {
+		xhints->flags = PResizeInc;
+		xhints->width_inc  = xwfont;
+		xhints->height_inc = xhfont;
+	    }
+	    XSetWMNormalHints(xdisplay, xwindow, xhints);
 	    
-	    xhints->flags = PResizeInc;
-	    xhints->width_inc  = xwfont;
-	    xhints->height_inc = xhfont;
-	    XSetWMNormalHints(dpy, xwindow, xhints);
-	    
-	    XMapWindow(dpy, xwindow);
+	    XMapWindow(xdisplay, xwindow);
 	    
 	    do {
-		XNextEvent(dpy, &event);
+		XNextEvent(xdisplay, &event);
 	    } while (event.type != MapNotify);
 	    
 	    XFree(xhints); xhints = NULL;
 	    
 	    HW->mouse_slot = NOSLOT;
-	    HW->keyboard_slot = RegisterRemote(i = XConnectionNumber(dpy), (obj)HW,
+	    HW->keyboard_slot = RegisterRemote(i = XConnectionNumber(xdisplay), (obj)HW,
 					       X11_KeyboardEvent);
 	    if (HW->keyboard_slot == NOSLOT)
 		break;
@@ -1193,24 +488,24 @@ byte X11_InitHW(void) {
 	    HW->RedrawVideo = FALSE;
 	    NeedRedrawVideo(0, 0, HW->X - 1, HW->Y - 1);
 	    
-	    if (dpy0) *dpy0 = ',';
+	    if (xdisplay0) *xdisplay0 = ',';
 	    if (fontname0) *fontname0 = ',';
 	    if (charset0) *charset0 = ',';
 	    
 	    return TRUE;
 	}
     } while (0); else {
-	if (dpy_ || (dpy_ = getenv("DISPLAY")))
+	if (xdisplay_ || (xdisplay_ = getenv("DISPLAY")))
 	    printk("      X11_InitHW() failed to open display %."STR(SMALLBUFF)"s\n", HW->Name);
 	else
 	    printk("      X11_InitHW() failed: DISPLAY is not set\n");
     }
 	
-    if (dpy0) *dpy0 = ',';
+    if (xdisplay0) *xdisplay0 = ',';
     if (fontname0) *fontname0 = ',';
     if (charset0) *charset0 = ',';
 	
-    if (dpy)
+    if (xdisplay)
 	X11_QuitHW();
 
     FreeMem(HW->Private);

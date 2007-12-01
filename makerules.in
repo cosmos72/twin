@@ -29,15 +29,15 @@
 CC_NAME:=$(word 1, $(subst -, ,$(CC)))
 
 ifdef DEBUG
- CFLAGS+=-g -DINLINE=static
+ CFLAGS+=$(CC_FLAGS_DEBUG) -DINLINE=static
  LDFLAGS+=-g
 else
  ifdef PROFILE
-   CFLAGS+=-p -pg
+   CFLAGS+=$(CC_FLAGS_PROFILE)
    LDFLAGS+=-p -pg
  else
-   ifeq ($(CC_NAME),gcc)
-     CFLAGS+=-O2 -fomit-frame-pointer
+   ifneq ($(findstring gcc,$(CC_NAME)),)
+     CFLAGS+=$(CC_FLAGS_OPT)
      LDFLAGS+=-s
    else
      # detected by `./configure' :
@@ -48,22 +48,11 @@ else
  endif
 endif
 
-#
-# how picky should your compiler be? uncomment for paranoid gcc settings.
-# PARANOID_GCC=1
+CFLAGS+=$(CC_FLAGS_BASE)
 
+# how picky should your compiler be? uncomment for paranoid settings.
 #
-# apply known-good GCC compiler flags.
-#
-ifeq ($(CC_NAME),gcc)
-  CFLAGS+=-pipe -Wall -Wshadow -Wno-uninitialized -Winline
-  ifdef DEBUG
-    CFLAGS+=-Wno-unused
-  endif
-  ifdef PARANOID_GCC
-    CFLAGS+=-Wundef -Wstrict-prototypes -Wcast-qual -Wcast-align -Wpointer-arith -Wbad-function-cast -Waggregate-return
-  endif
-endif
+# CFLAGS+=$(CC_FLAGS_PARANOID)
 
 # try to get some extensions if available (recursive pthread mutexes, grantpt(), ...)
 CFLAGS+=-D_GNU_SOURCE
@@ -202,16 +191,18 @@ CONF=$(B)conf/conf.current
 # to correctly generate include/autoconf.h
 #
 
-ADMIN_LIBTOOLS:=$(T)admin/ltmain.sh $(T)admin/config.guess $(T)admin/config.sub
+ifneq ($(MAINTAINER),)
 
-$(ADMIN_LIBTOOLS):
+ ADMIN_LIBTOOLS:=$(T)admin/ltmain.sh $(T)admin/config.guess $(T)admin/config.sub
+
+ $(ADMIN_LIBTOOLS):
 	cd $(TT) && libtoolize
 
-ADMIN_ACLOCAL:=$(T)admin/aclocal.m4
+ ADMIN_ACLOCAL:=$(T)admin/aclocal.m4
 
-DISTCLEAN_EMPTY_FILES:=$(ADMIN_ACLOCAL) $(ADMIN_LIBTOOLS)
+ DISTCLEAN_EMPTY_FILES:=$(ADMIN_ACLOCAL) $(ADMIN_LIBTOOLS)
 
-$(ADMIN_ACLOCAL):
+ $(ADMIN_ACLOCAL):
 	@if [ -f /usr/share/aclocal/libtool.m4 ]; then \
 	  echo $(LN) /usr/share/aclocal/libtool.m4 $@ ; \
 	  $(LN) /usr/share/aclocal/libtool.m4 $@ ; \
@@ -220,17 +211,20 @@ $(ADMIN_ACLOCAL):
 	  touch $@; \
 	fi
 
-$(T)configure: $(T)configure.in $(ADMIN_LIBTOOLS) $(ADMIN_ACLOCAL) $(T)scripts/Makefiles.sh $(T)include/autoconf.h.in
-	rm -f $@ && cd $(TT) && autoconf --localdir=admin
+ $(T)configure: $(T)configure.in $(ADMIN_LIBTOOLS) $(ADMIN_ACLOCAL) $(T)scripts/Makefiles.sh $(T)include/autoconf.h.in
+	rm -f $@ && cd $(TT) && autoconf2.50 -I admin
 
-$(T)include/autoconf.h.in: $(T)configure.in
-	rm -f $@ && cd $(TT) && autoheader
+ $(T)include/autoconf.h.in: $(T)configure.in
+	rm -f $@ && cd $(TT) && autoheader2.50
 
-$(B)config.status: $(T)configure $(ADMIN_LIBTOOLS)
+ $(B)config.status: $(T)configure $(ADMIN_LIBTOOLS)
 	@echo Updating config.status libtool; \
 	$(TT)configure --cache-file=config.cache --no-create
 
-$(B)libtool: $(B)config.status
+ $(B)libtool: $(B)config.status
+
+endif
+
 
 $(T)makeversion: $(T)include/version.in $(T)makerules.in
 	@echo Updating $@; \

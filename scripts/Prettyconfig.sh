@@ -127,7 +127,7 @@ Configuration:
   Items in parenthesis (...) will be built as shared libraries/modules
 
   Compiler:                   ${CC}
-  Compiler flags:             ${CFLAGS}
+  Compiler flags:             ${CC_FLAGS_OPT}
   Compiler features used:     ${echo_cc_feat}
   Shared libraries support:   ${echo_shlibs}
   Server features:            ${echo_feat}

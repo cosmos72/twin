@@ -3,7 +3,7 @@
 #define	_TT_ASSERT_H
 
 /* this prints an "assertion failed" message. */
-void TTAssertFail (char *assertion, char *file, unsigned int line, char *function);
+void TTAssertFail (const char *assertion, const char *file, unsigned int line, const char *function);
 
 # define TTAssertAlways(expr)			\
     ((expr) ? 1 :				\

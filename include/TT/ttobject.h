@@ -70,7 +70,7 @@ ttbyte TTSetUserData_ttobject(ttobject o,ttany user_data);
 /* TTGet*_ttobject and TTSet*_ttobject methods */
     
 /** get `refcount' of ttobject `o' */
-ttuint 	TTGetRefcount_ttobject(TT_ARG_READ ttobject o);
+ttopaque 	TTGetRefcount_ttobject(TT_ARG_READ ttobject o);
     
 /** get `oflags' of ttobject `o' */
 ttuint 	TTGetOflags_ttobject(TT_ARG_READ ttobject o);

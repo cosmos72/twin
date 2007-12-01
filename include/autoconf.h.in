@@ -1,4 +1,4 @@
-/* include/autoconf.h.in.  Generated automatically from configure.in by autoheader.  */
+/* include/autoconf.h.in.  Generated automatically from configure.in by autoheader 2.13.  */
 
 /* Define to empty if the keyword does not work.  */
 #undef const
@@ -176,6 +176,12 @@
 /* Define if you have the <shadow.h> header file.  */
 #undef HAVE_SHADOW_H
 
+/* Define if you have the <stddef.h> header file.  */
+#undef HAVE_STDDEF_H
+
+/* Define if you have the <stdlib.h> header file.  */
+#undef HAVE_STDLIB_H
+
 /* Define if you have the <sys/filio.h> header file.  */
 #undef HAVE_SYS_FILIO_H
 
@@ -199,6 +205,9 @@
 
 /* Define if you have the <sys/ttydefaults.h> header file.  */
 #undef HAVE_SYS_TTYDEFAULTS_H
+
+/* Define if you have the <sys/types.h> header file.  */
+#undef HAVE_SYS_TYPES_H
 
 /* Define if you have the <sys/utsname.h> header file.  */
 #undef HAVE_SYS_UTSNAME_H

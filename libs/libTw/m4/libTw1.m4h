@@ -34,7 +34,8 @@ define(`ARG', `"$3"ifelse($3, x, magic_id_STR(TRIM($2)), $3, X, magic_id_STR(TRI
 
 define(`PARSE', `ifelse(eval($# < 3), 1, `', `ARG($1,$2,t$3)`'PARSE(incr($1), NSHIFT(4, $@))')')
 
-define(`PROTO', `{ Tw_`'CHAIN($3, $4), eval(len(Tw_`'CHAIN($3, $4))-3), eval(2+($#-5)/3*2), "Tw_`'CHAIN($3, $4)", "$5"ARG(0, $1, $2)`'PARSE(1, NSHIFT(5, $@)) },')
+define(`PROTO', `{ Tw_`'CHAIN($3, $4), eval(len(Tw_`'CHAIN($3, $4))-3),
+eval(2+($#-5)/3*2), (byte *)"Tw_`'CHAIN($3, $4)", (byte *)"$5"ARG(0, $1, $2)`'PARSE(1, NSHIFT(5, $@)) },')
 
 define(`PROTOSyncSocket', `PROTO($@)')
 define(`PROTOFindFunction', `PROTO($@)')

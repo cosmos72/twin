@@ -57,7 +57,8 @@ void mainloop(twindow *Win) {
     tevent_any Event;
     /*struct timeval p = {0, 0};*/
     fd_set readfds;
-    long x, y;
+    hwattr x;
+    int y;
 
     FD_ZERO(&readfds);
     srand48(++seed);
@@ -74,7 +75,7 @@ void mainloop(twindow *Win) {
 	for (y = 256; y; y--) {
 	    x = lrand48();
 	    TwWriteHWAttrWindow(*Win, lrand48() >> 26, lrand48() >> 27,
-				sizeof(long)/sizeof(hwattr), (hwattr *)&x);
+				sizeof(long)/sizeof(hwattr), &x);
 	}
 	
 	/* bail out if something goes *really* wrong */

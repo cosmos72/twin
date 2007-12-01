@@ -81,8 +81,8 @@
 
 
 
-static tobj *sockAllocListDeltaObjs(obj F, uldat *len, udat fdelta) {
-    uldat L = 0;
+static tobj *sockAllocListDeltaObjs(obj F, topaque *len, udat fdelta) {
+    topaque L = 0;
     tobj *_LW, *LW;
     obj O = F;
     while (O) {

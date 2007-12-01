@@ -233,6 +233,8 @@ static uldat Gunzip(tw_d TwD);
 static byte Sync(tw_d TwD);
 static void Panic(tw_d TwD);
 static void ParseReplies(tw_d TwD);
+static void DeleteAllListeners(tlistener);
+static void RemoveListener(tw_d TwD, tlistener L);
 
 byte Tw_EnableGzip(tw_d TwD);
 
@@ -1130,7 +1132,7 @@ tw_d Tw_Open(TW_CONST byte *TwDisplay) {
 	addr.sin_port = htons(port);
 	addr.sin_addr.s_addr = inet_addr(server);
 
-	if (addr.sin_addr.s_addr == (unsigned long)-1) {
+	if (addr.sin_addr.s_addr == (uint32_t)-1) {
 #ifdef TW_HAVE_GETHOSTBYNAME
 	    /* may be a FQDN host like "www.gnu.org" */
 	    host_info = gethostbyname(server);
@@ -1221,7 +1223,6 @@ tw_d Tw_Open(TW_CONST byte *TwDisplay) {
  * closes a server connection
  */
 void Tw_Close(tw_d TwD) {
-    static void DeleteAllListeners(tlistener);
     s_tw_errno *E;
     byte *q;
     int i;

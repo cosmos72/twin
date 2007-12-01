@@ -761,7 +761,7 @@ void UpdateWinList(void) {
 	if (W == (widget)WinList || !IS_WINDOW(W) ||
 	    (((window)W)->Flags & (WINDOWFL_NOTVISIBLE|WINDOWFL_MENU)))
 	    continue;
-	Row4Menu(WinList, (udat)0, ROW_ACTIVE, ((window)W)->NameLen, ((window)W)->Name);
+	(void)Row4Menu(WinList, (udat)0, ROW_ACTIVE, ((window)W)->NameLen, ((window)W)->Name);
     }
 }
 

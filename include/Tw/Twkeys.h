@@ -127,7 +127,6 @@
 #define TW_BackSpace		0x7F
 
 #define TW_Home			0x100
-#define TW_Begin		TW_Home
 #define TW_Left			0x101
 #define TW_Up			0x102
 #define TW_Right		0x103
@@ -137,6 +136,7 @@
 #define TW_Next			0x106
 #define TW_Page_Down		TW_Next
 #define TW_End			0x107
+#define TW_Begin		0x108
 #define TW_Insert		0x109
 #define TW_Delete		0x10A
 
@@ -160,8 +160,8 @@
 #define TW_Shift_Lock		0x11D
 #define TW_Num_Lock		0x11E
 
+#define TW_KP_Begin		0x11F
 #define TW_KP_Home		0x120
-#define TW_KP_Begin		TW_KP_Home
 #define TW_KP_Left		0x121
 #define TW_KP_Up		0x122
 #define TW_KP_Right		0x123

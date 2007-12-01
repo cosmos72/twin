@@ -142,7 +142,7 @@ define(`TTdef_ttclass_ttclass',`extends(ttobj,$1)`'dnl
 
 TTappend(ttobject)
 define(`TTdef_ttobject', `extends(ttobj,$1)`'dnl
-    field(,ttuint,refcount,r)`'dnl
+    field(,ttopaque,refcount,r)`'dnl
     field(,ttuint,oflags,r)`'dnl
     field(,ttany,native)`'dnl
     field(,ttany,target_private)`'dnl
@@ -229,11 +229,11 @@ define(`TTdef_ttclass_ttfield',`extends(ttobj,$1)`'dnl
 `'`'c_doxygen(`/** change the value of field `f' in object `o' */')`'dnl
 `'`'final_alt(ChangeValue,$1,4, _G0(,ttbyte,), _G(_R,$1,f), _G(,ttobject,o), _G(,ttany,nand_value), _G(,ttany,xor_value))`'dnl
 `'`'c_doxygen(`/** return the ttuint representing field `f' in evcodes */')`'dnl
-`'`'final_alt(ToEvcode,$1,1, _G0(,ttuint,), _G(_R,$1,f))`'dnl
+`'`'final_alt(ToEvcode,$1,1, _G0(,ttopaque,), _G(_R,$1,f))`'dnl
 `'`'c_doxygen(`/** return the field corresponding to ttuint `i' in evcodes */')`'dnl
-`'`'final_alt(FromEvcode,$1,1, _G0(_R,$1,), _G(,ttuint,i))`'dnl
+`'`'final_alt(FromEvcode,$1,1, _G0(_R,$1,), _G(,ttopaque,i))`'dnl
 `'`'c_doxygen(`/** get the ttuint representing field `f' in evcodes given its name */')`'dnl
-`'`'final_alt(GetEvcode,$1,1, _G0(,ttuint,), _G(_R _Z,ttbyte *,name))`'dnl
+`'`'final_alt(GetEvcode,$1,1, _G0(,ttopaque,), _G(_R _Z,ttbyte *,name))`'dnl
 ')
 
 

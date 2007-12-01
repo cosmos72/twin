@@ -2,10 +2,10 @@
 # Makefile for libTT, `The Text Toolkit' library sitting on top of libTw
 #
 
-SUBDIRS=HW
-
 include $(T)include/TT/version.in
 -include $(B)makeautoconf
+
+
 
 all: build-subdirs build-all
 
@@ -19,12 +19,22 @@ COLLECTS=
 #
 ALLBINS=libTT.a libTT.la
 
+-include $(B)conf/conf.current
 
 AVLOBJS=avl.o
 AVLOBJS_L=avl.lo
 
-HWOBJS=HW/hw.lst
-HWOBJS_L=HW/hw_l.lst
+ifeq ($(CONF_TT),y)
+  SUBDIRS=HW
+  
+  HWOBJS=HW/hw.lst
+  HWOBJS_L=HW/hw_l.lst
+else
+  SUBDIRS=
+  
+  HWOBJS=
+  HWOBJS_L=
+endif
 
 OBJS_libTT.a=libTT.o field.o getset.o method.o array.o wrap.o mem.o missing.o $(HWOBJS)
 OBJS_libTT.la=libTT.lo field.lo getset.lo method.lo array.lo wrap.lo mem.lo missing.lo $(HWOBJS_L)
@@ -34,7 +44,6 @@ ALLOBJS=$(AVLOBJS) $(AVLOBJS_L) $(HWOBJS) $(HWOBJS_L) $(OBJS_libTT.a) $(OBJS_lib
 
 CC_FLAGS+=-I. -D_REENTRANT 
 
--include $(B)conf/conf.current
 -include .modules
 -include .depend
 -include $(B).hdepend
@@ -60,8 +69,8 @@ else
   warn:
 	@rm -f $(ALLBINS) ; \
 	 echo ; \
-	 echo "You disabled \"Support Text Toolkit library (libTT)\"," ; \
-	 echo "so the library libTT will NOT be compiled!" ; \
+	 echo "\"Support Text Toolkit library (libTT)\" has been disabled," ; \
+	 echo "so the library libTT will NOT be compiled or installed!" ; \
 	 echo
 endif
 

@@ -233,7 +233,7 @@ endif
 include $(T)makerules.in
 
 
-bins: $(BINS)
+bins: $(BINS) build-subdirs
 
 modules: $(MODS)
 
@@ -242,7 +242,7 @@ modules: $(MODS)
 # All done. Now just set a few special targets
 #
 
-twin: twin_wrapper
+twin: twin_wrapper bins
 	$(LN) $< $@
 
 # the '@:' dummy command is to force relinking after HW/HW.lst is rebuilt

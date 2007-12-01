@@ -70,16 +70,15 @@ undefine(`order_type_last')
 
 
 
-/* set order_xxx enums for objects */
-typedef enum e_order_ttobj {
+/* set order_xxx defines for objects */
 
 define(`m4_order_type_last', 0)dnl
 
 define(`el', `define(`m4_order_type_last', incr(m4_order_type_last))
-    order_$1 = m4_order_type_last,')dnl
+`#'define order_$1	m4_order_type_last')dnl
     
-    order_first = m4_order_type_last,
-    order_ttobj = order_first,
+`#'define order_first	m4_order_type_last
+`#'define order_ttobj	order_first
 TTnlist()
     el(last)
 
@@ -89,17 +88,15 @@ TTtypelist()
     
 undefine(`el')dnl
 define(`el', `
-    order_$1	= order_$2,')dnl
+`#'define order_$1	order_$2')dnl
 
 TTtypealiaslist()`'dnl
 
 undefine(`el')dnl
 
-    order_type_first = order_`'TTtypefirst(),
-    order_type_last = order_`'TTtypelast() + 1
+`#'define order_type_first	order_`'TTtypefirst(),
+`#'define order_type_last	(order_`'TTtypelast() + 1)
     
-} e_order_types;
-
 divert(-1)
 define(`log2', `_log2($1, 0)')
 define(`_log2', `ifelse(`$1', 0, `$2', `_log2(eval(`$1'/2), incr(`$2'))')')
@@ -310,6 +307,7 @@ undefine(`el')
 } e_magicmask_ttobj;
 
 
+/* set magic_xxx enums */
 typedef enum e_magic_ttobj {
     magic_ttobj = 0,
 define(`el', `
@@ -326,18 +324,18 @@ define(`m4_order_field_last', 0)dnl
 define(`extends')
 define(`fake_field', `field($@)')
 define(`field', `ifelse(`$4', `', `', `
-    this`'_$3	=     m4_order_field_last,dnl
+`#'define this`'_$3	m4_order_field_last`'dnl
 define(`m4_order_field_last', incr(m4_order_field_last))')')
 define(`el', `define(`this', $1)
-    this`'_field_first	= m4_order_field_last,dnl
+`#'define this`'_field_first	m4_order_field_last`'dnl
 TTdef_$1($1)
-    this`'_field_last	= m4_order_field_last,
+`#'define this`'_field_last	m4_order_field_last
 ')
-/* enum for existing object fields */
-typedef enum e_order_fields {
+/* defines for existing object fields */
+
 TTlist()
-    ttobj_field_max	= m4_order_field_last
-} e_order_fields;
+`#'define ttobj_field_max	m4_order_field_last
+
 define(`fake_field')
 define(`field')
 undefine(`this')
@@ -353,6 +351,8 @@ define(`el', `define(`this', $1)
 `'field(,,field_last,r)')
 
     
+divert(-1)
+
 /* defines for existing object fields */
 TTlist()
 define(`this', `ttobj')
@@ -365,7 +365,6 @@ undefine(`el')
 
 
 
-divert(-1)
 
 
 
@@ -385,13 +384,12 @@ define(`m4_order_method_last', 0)
 
 divert
 
-/* enum of existing object methods */
+/* defines of existing object methods */
 
-typedef enum e_order_methods {
 
     /* generic functions */
 define(`decl_ttmethod', `ifdef(`done_ttmethod_$1', `', `define(`done_ttmethod_$1')
-    ttmethod_$1	= m4_order_method_last,dnl
+`#'define ttmethod_$1	m4_order_method_last`'dnl
 `'define(`m4_order_method_last', incr(m4_order_method_last))')')
 
 
@@ -416,23 +414,23 @@ undefine(`decl_ttmethod')
     /* TTSet*_* methods omitted, they are listed above! */
     
 #if 0
-    ttmethod_FN_set_first	= m4_order_method_last,
+`#'define ttmethod_FN_set_first		m4_order_method_last
 
-    ttmethod_SetField_ttobj,
-    ttmethod_ChangeField_ttobj,
+`#'define ttmethod_SetField_ttobj	eval(m4_order_method_last+1)
+`#'define ttmethod_ChangeField_ttobj	eval(m4_order_method_last+2)
 
-    ttmethod_FN_set_last	= m4_order_method_last,
+`#'define ttmethod_FN_set_last		m4_order_method_last
 #endif
 
     /* TTGet*_* methods */
 
-    ttmethod_FN_get_first	= m4_order_method_last,
+`#'define ttmethod_FN_get_first	m4_order_method_last
 
 define(`el', `define(`this', `$1')
     /* TTGet*_$1 methods */TTdef_$1($1)')
 define(`extends')
 define(`getset_method', `
-    ttmethod_`'Toupper2($1,$2)_`'this`'	= m4_order_method_last,dnl
+`#'define ttmethod_`'Toupper2($1,$2)_`'this`'	m4_order_method_last`'dnl
 `'define(`m4_order_method_last', incr(m4_order_method_last))')
 define(`field', `get_field($@)')
 TTlist()
@@ -441,62 +439,9 @@ define(`field')
 undefine(`this')
 undefine(`el')
 
-    ttmethod_FN_get_last	= m4_order_method_last,
-    ttmethod_FN_last = m4_order_method_last
-} e_order_methods;
+`#'define ttmethod_FN_get_last	m4_order_method_last
+`#'define ttmethod_FN_last m4_order_method_last
 
-
-/* defines for existing object methods */
-
-define(`decl_ttmethod', `ifdef(`done_def_ttmethod_$1', `', `define(`done_def_ttmethod_$1')
-`#'define ttmethod_$1	ttmethod_$1')')
-
-define(`handy_method', `decl_ttmethod($1)')
-TTdef_ttclass_handymethods()
-undefine(`handy_method')
-
-define(`final', `decl_ttmethod(`$1_$2')')
-define(`public', `final($@)')
-define(`public_set', `final($@)')
-define(`el',`
-    /* $1 methods */TTdef_ttclass_$1($1)')
-TTlist()
-undefine(`el')
-define(`final')
-define(`public')
-define(`public_set')
-
-undefine(`decl_ttmethod')
-
-    /* TTSet*_* methods omitted, they are listed above! */
-    
-#if 0
-# define ttmethod_FN_set_first	ttmethod_FN_set_first
-
-# define ttmethod_SetField_ttobj	ttmethod_SetField_ttobj
-# define ttmethod_ChangeField_ttobj	ttmethod_ChangeField_ttobj
-
-# define ttmethod_FN_set_last	ttmethod_FN_set_last
-#endif
-
-    /* TTGet*_* methods */
-
-#define ttmethod_FN_get_first	ttmethod_FN_get_first
-
-define(`el', `define(`this', `$1')
-    /* TTGet*_$1 methods */TTdef_$1($1)')
-define(`extends')
-define(`getset_method', `
-`#'define ttmethod_`'Toupper2($1,$2)_`'this	ttmethod_`'Toupper2($1,$2)_`'this')
-define(`field', `get_field($@)')
-TTlist()
-define(`extends')
-define(`field')
-undefine(`this')
-undefine(`el')
-
-#define ttmethod_FN_get_last	ttmethod_FN_get_last
-#define ttmethod_FN_last	ttmethod_FN_last
 
 
 #endif /* _TT_TREEM4_H */

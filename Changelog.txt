@@ -1,3 +1,28 @@
+From 0.5.1 to 0.5.2: (Massimiliano Ghilardi, 01 Dec 2007)
+	* Fixed build errors with gcc 4.0, 4.1 and 4.2.
+	* Fixed some (not all) pointer <-> integer conversion issues on 64 bit archs.
+        * Fixed time arithmetic overflow bug often causing twin to hang
+          in a busy loop for several seconds on 64 bit archs.
+	* Fixed raw keyboard support for --hw=tty on Linux console
+	  which sometimes got confused between being in the active console
+	  and being switched away, resulting in raw keyboard to screw up.
+	* Added dead keys and compose (Multi_key) support to --hw=X11 and --hw=gfx.
+        * Added `view=<W>x<H>+<X>+<Y>' option to --hw=X11 and --hw=gfx,
+          allowing to show only a portion of twin desktop. It is not possible
+          to resize the X11 windows created using this option.
+	  Used with multiple twdisplay/twattach allows to split twin desktop
+	  across multiple X11 screens/servers.
+	  Example: suppose your twin is using a 100x30 desktop. Then:
+	    $ twdisplay --hw=X11@:0,view=50x15+0+0 &
+	    $ twdisplay --hw=X11@:1,view=50x15+50+0 &
+	    $ twdisplay --hw=X11@:2,view=50x15+0+15 &
+	    $ twdisplay --hw=X11@:3,view=50x15+50+15 &
+	  will show your whole twin desktop split in four equal parts, each one
+	  on a different X11 server (in this example on :0 :1 :2 :3 servers).
+	* Updated twsysmon to linux kernel 2.6 style disk activity report
+	  (using /proc/diskstats) and cpu activity report (added new states
+	  'irq' as MAGENTA and 'wait' as HIGH|BLUE)
+
 From 0.5.0 to 0.5.1: (Massimiliano Ghilardi, 29 May 2003)
 	* Added raw keyboard support for --hw=tty on Linux console.
 	  This is hopefully very complete, since it queries the kernel tables

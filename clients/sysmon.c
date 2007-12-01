@@ -24,13 +24,16 @@ tmsgport SysMon_MsgPort;
 tmenu SysMon_Menu;
 twindow SysMon_Win;
 
+byte numeric = 1;
+
 char buf[TW_BIGBUFF];
 
 TW_DECL_MAGIC(sysmon_magic);
 
-byte InitSysMon(void) {
+byte InitSysMon(int argc, char ** argv) {
     byte *name;
     ldat len;
+    byte border = 1;
     
 #if defined(TW_HAVE_SYS_UTSNAME_H) && defined(TW_HAVE_UNAME)
     struct utsname uts;
@@ -48,6 +51,17 @@ byte InitSysMon(void) {
     
     name[len] = '\0';
 
+    while (--argc) {
+	if (!strcmp(*++argv, "+numeric"))
+	    numeric = 1;
+	else if (!strcmp(*argv, "-numeric"))
+	    numeric = 0;
+	else if (!strcmp(*argv, "+border"))
+	    border = 1;
+	else if (!strcmp(*argv, "-border"))
+	    border = 0;
+    }
+    
     return
 	TwCheckMagic(sysmon_magic) && TwOpen(NULL) &&
 	
@@ -59,12 +73,12 @@ byte InitSysMon(void) {
 	
 	(SysMon_Win = TwCreateWindow
 	 (len, name, NULL, SysMon_Menu, COL(HIGH|YELLOW,BLUE),
-	  TW_NOCURSOR, TW_WINDOW_DRAG|TW_WINDOW_CLOSE, 0,
-	  24, 5, 0)) &&
+	  TW_NOCURSOR, TW_WINDOW_DRAG|TW_WINDOW_CLOSE, (border ? 0 : TW_WINDOWFL_BORDERLESS),
+	  numeric ? 29 : 24, 5, 0)) &&
 
 	(TwSetColorsWindow(SysMon_Win, 0x1FF,
-			   (hwcol)0x3E, (hwcol)0, (hwcol)0, (hwcol)0, (hwcol)0x9F,
-			   (hwcol)0x1E, (hwcol)0x3E, (hwcol)0x18, (hwcol)0x08),
+			   (hwcol)0x3F, (hwcol)0, (hwcol)0, (hwcol)0, (hwcol)0x9F,
+			   (hwcol)0x17, (hwcol)0x3F, (hwcol)0x18, (hwcol)0x08),
 	 TwInfo4Menu(SysMon_Menu, TW_ROW_ACTIVE, 16, " System Monitor ", "pppppppppppppppp"),
 	 TwWriteAsciiWindow(SysMon_Win, 26, "CPU \nDISK\nMEM \nSWAP\nUPTIME"),
 	 TwMapWindow(SysMon_Win, TwFirstScreen()),
@@ -98,96 +112,165 @@ uldat HBar(hwcol Col, uldat len, uldat scale, uldat frac) {
     return frac;
 }
 
+void PrintPercent(hwcol Col, uldat percent) { 
+    
+    if (percent > 100)
+	percent = 100;
+    sprintf(buf, " %3d%%", percent);
+    
+    TwSetColTextWindow(SysMon_Win, Col);
+    TwWriteAsciiWindow(SysMon_Win, 5, buf);
+}
+
+void PrintAbsolute(hwcol Col, uldat n) { 
+    uldat G = n >> 30;
+    uldat M = (n >> 20) & 0x3FF;
+    uldat k = (n >> 10) & 0x3FF;
+    uldat a, b;
+    char c;
+
+    n &= 0x3FF;
+
+    if (G)
+	a = G, b = M, c = 'G';
+    else if (M)
+	a = M, b = k, c = 'M';
+    else
+	a = k, b = n, c = 'k';
+    
+	
+    if (a >= 10)
+	sprintf(buf, " %3d%c", a, c);
+    else if (a)
+	sprintf(buf, " %1d.%1d%c", a, b/103, c);
+    else
+	sprintf(buf, " %4d", n);
+	
+    TwSetColTextWindow(SysMon_Win, Col);
+    TwWriteAsciiWindow(SysMon_Win, 5, buf);
+}
+
 void Update(void) {
-    static int ProcStatFd = TW_NOFD, ProcMeminfoFd = TW_NOFD, ProcUptimeFd = TW_NOFD;
-    static uldat CpuUser[2], CpuNice[2], CpuSystem[2], CpuIdle[2], CpuTotal;
-    static uldat DiskR[2], DiskW[2], DiskTotal;
+    static int Fd;
+    static uldat CpuUser[2], CpuNice[2], CpuSystem[2], CpuIdle[2],
+	CpuWait[2], CpuHardInt[2], CpuSoftInt[2], CpuTotal;
+    static uldat DiskR[2], DiskW[2], DiskMax;
     static uldat MemUsed, MemShared, MemBuff, MemCache, MemFree, MemTotal;
     static uldat SwapUsed, SwapFree, SwapTotal;
     static byte i;
     uldat len, tmp;
     char *s, *e;
     
-    if (ProcStatFd != TW_NOFD)
-	close(ProcStatFd);
-    ProcStatFd = open("/proc/stat", O_RDONLY);
-    
-    if (ProcMeminfoFd != TW_NOFD)
-	close(ProcMeminfoFd);
-    ProcMeminfoFd = open("/proc/meminfo", O_RDONLY);
-
-    if (ProcUptimeFd != TW_NOFD)
-	close(ProcUptimeFd);
-    ProcUptimeFd = open("/proc/uptime", O_RDONLY);
-
-    if (ProcStatFd != TW_NOFD) {
+    if ((Fd = open("/proc/stat", O_RDONLY)) != TW_NOFD) {
 	s = buf;
 	len = 0;
-	while ((tmp = read(ProcStatFd, s, TW_BIGBUFF - len)) > 0)
+	while ((tmp = read(Fd, s, TW_BIGBUFF - len)) > 0)
 	    len += tmp, s += tmp;
 	buf[len] = '\0';
 	if ((s = strstr(buf, "cpu "))) {
-	    CpuUser[i] = strtol(s+4, &e, 0) - CpuUser[!i];
-	    CpuNice[i] = strtol(e, &s, 0) - CpuNice[!i];
-	    CpuSystem[i] = strtol(s, &e, 0) - CpuSystem[!i];
-	    CpuIdle[i] = strtol(e, &s, 0) - CpuIdle[!i];
+	    CpuUser[i] = strtoul(s+4, &e, 0) - CpuUser[!i];
+	    CpuNice[i] = strtoul(e, &s, 0) - CpuNice[!i];
+	    CpuSystem[i] = strtoul(s, &e, 0) - CpuSystem[!i];
+	    CpuIdle[i] = strtoul(e, &s, 0) - CpuIdle[!i];
+	    /* linux kernel 2.6 cpu stats: */
+	    CpuWait[i] = strtoul(s, &e, 0) - CpuWait[!i];
+	    CpuHardInt[i] = strtoul(e, &s, 0) - CpuHardInt[!i];
+	    CpuSoftInt[i] = strtoul(s, &e, 0) - CpuSoftInt[!i];
 	}
-	/* linux kernel 2.2 style: */
+	CpuTotal = CpuUser[i] + CpuNice[i] + CpuSystem[i] + CpuIdle[i]
+	    + CpuWait[i] + CpuHardInt[i] + CpuSoftInt[i];
+
+	/* linux kernel 2.2 disk stats: */
 	if ((s = strstr(buf, "disk_rio "))) {
-	    DiskR[i] = strtol(s+9, &e, 0);
-	    DiskR[i] += strtol(e, &s, 0);
-	    DiskR[i] += strtol(s, &e, 0);
-	    DiskR[i] += strtol(e, &s, 0) - DiskR[!i];
+	    DiskR[i] = strtoul(s+9, &e, 0);
+	    DiskR[i] += strtoul(e, &s, 0);
+	    DiskR[i] += strtoul(s, &e, 0);
+	    DiskR[i] += strtoul(e, &s, 0) - DiskR[!i];
 	}
 	if ((s = strstr(buf, "disk_wio "))) {
-	    DiskW[i] = strtol(s+9, &e, 0);
-	    DiskW[i] += strtol(e, &s, 0);
-	    DiskW[i] += strtol(s, &e, 0);
-	    DiskW[i] += strtol(e, &s, 0) - DiskW[!i];
+	    DiskW[i] = strtoul(s+9, &e, 0);
+	    DiskW[i] += strtoul(e, &s, 0);
+	    DiskW[i] += strtoul(s, &e, 0);
+	    DiskW[i] += strtoul(e, &s, 0) - DiskW[!i];
 	}
 	if ((s = strstr(buf, "disk_io: "))) {
-	    /* linux kernel 2.4 style: */
+	    /* linux kernel 2.4 disk stats: */
 	    s += 10;
 	    DiskR[i] = DiskW[i] = 0;
 	    while (s && (s = strstr(s, "):("))) {
 		if ((s = strchr(s+3, ',')) && (s = strchr(s+1, ','))) {
-		    DiskR[i] += strtol(s+1, &e, 0);
+		    DiskR[i] += strtoul(s+1, &e, 0);
 		    if (*e == ',' && (e = strchr(e+1, ',')))
-			DiskW[i] += strtol(e+1, &s, 0);
+			DiskW[i] += strtoul(e+1, &s, 0);
 		}
 	    }
 	    DiskR[i] -= DiskR[!i];
 	    DiskW[i] -= DiskW[!i];
 	}
-	CpuTotal = CpuUser[i] + CpuNice[i] + CpuSystem[i] + CpuIdle[i];
 
-	if (DiskTotal) {
-	    if (DiskTotal < DiskR[i] + DiskW[i])
-		DiskTotal = DiskR[i] + DiskW[i];
-	} else {
-	    /* first cycle... cannot know bandwidth */
-	    DiskR[!i] = DiskR[i];
-	    DiskW[!i] = DiskW[i];
-	    DiskR[i] = DiskW[i] = 0;
-	    DiskTotal = 1;
-	}
+	close(Fd);
     }
-    if (ProcMeminfoFd != TW_NOFD) {
+
+    if ((Fd = open("/proc/diskstats", O_RDONLY)) != TW_NOFD) {
+	/* linux kernel 2.6 disk stats: */
+
 	s = buf;
 	len = 0;
-	while ((tmp = read(ProcMeminfoFd, s, TW_BIGBUFF - len)) > 0)
+	while ((tmp = read(Fd, s, TW_BIGBUFF - len)) > 0)
+	    len += tmp, s += tmp;
+	buf[len] = '\0';
+	s = buf;
+
+	DiskR[i] = DiskW[i] = 0;
+
+	while ((e = strstr(s, " hd")) || (e = strstr(s, " sd"))) {
+	    s = e+3;
+	    
+	    if (s[0] != ' ' && s[1] == ' ') {
+		/* match hd? and sd? */
+		strtoul(s+2, &s, 0);           /* skip  'reads'         */
+		strtoul(s, &s, 0);             /* skip  'read_merges'   */
+		DiskR[i] += strtoul(s, &s, 0); /* parse 'read_sectors'  */
+		strtoul(s, &s, 0);             /* skip  'read_ticks'    */
+		strtoul(s, &s, 0);             /* skip  'writes'        */
+		strtoul(s, &s, 0);             /* skip  'write_merges'  */
+		DiskW[i] += strtoul(s, &s, 0); /* parse 'write_sectors' */
+	    }
+	}
+
+	DiskR[i] -= DiskR[!i];
+	DiskW[i] -= DiskW[!i];
+	
+	close(Fd);
+    }
+
+    if (DiskMax) {
+	if (DiskMax < DiskR[i] + DiskW[i])
+	    DiskMax = DiskR[i] + DiskW[i];
+    } else {
+	/* first cycle... cannot know bandwidth */
+	DiskR[!i] = DiskR[i];
+	DiskW[!i] = DiskW[i];
+	DiskR[i] = DiskW[i] = 0;
+	DiskMax = 1;
+    }
+
+    if ((Fd = open("/proc/meminfo", O_RDONLY)) != TW_NOFD) {
+	s = buf;
+	len = 0;
+	while ((tmp = read(Fd, s, TW_BIGBUFF - len)) > 0)
 	    len += tmp, s += tmp;
 	buf[len] = '\0';
 	if ((s = strstr(buf, "MemTotal:")))
-	    MemTotal = strtol(s+9, &e, 0), s = e;
+	    MemTotal = strtoul(s+9, &e, 0), s = e;
 	if ((s = strstr(buf, "MemFree:")))
-	    MemFree = strtol(s+8, &e, 0), s = e;
+	    MemFree = strtoul(s+8, &e, 0), s = e;
 	if ((s = strstr(buf, "MemShared:")))
-	    MemShared = strtol(s+10, &e, 0), s = e;
+	    MemShared = strtoul(s+10, &e, 0), s = e;
 	if ((s = strstr(buf, "Buffers:")))
-	    MemBuff = strtol(s+8, &e, 0), s = e;
+	    MemBuff = strtoul(s+8, &e, 0), s = e;
 	if ((s = strstr(buf, "Cached:")))
-	    MemCache = strtol(s+8, &e, 0), s = e;
+	    MemCache = strtoul(s+8, &e, 0), s = e;
 
 	MemUsed = MemTotal - MemFree;	
 	if (MemCache > MemUsed)
@@ -201,27 +284,38 @@ void Update(void) {
 	MemUsed -= MemShared;
 
 	if ((s = strstr(buf, "SwapTotal:")))
-	    SwapTotal = strtol(s+10, &e, 0), s = e;
+	    SwapTotal = strtoul(s+10, &e, 0), s = e;
 	if ((s = strstr(buf, "SwapFree:")))
-	    SwapFree = strtol(s+9, &e, 0), s = e;
+	    SwapFree = strtoul(s+9, &e, 0), s = e;
 	SwapUsed = SwapTotal - SwapFree;
+
+	close(Fd);
     }
-    
+
     if (CpuTotal) {
 	TwGotoXYWindow(SysMon_Win, 4, 0);
+	if (numeric)
+	    PrintPercent(COL(HIGH|YELLOW,BLUE), 100 * (CpuTotal - CpuIdle[i] - CpuWait[i]) / CpuTotal);
 	tmp = HBar(COL(HIGH|GREEN,0), CpuUser[i],   CpuTotal, 0);
 	tmp = HBar(COL(HIGH|YELLOW,0),CpuNice[i],   CpuTotal, tmp);
 	tmp = HBar(COL(HIGH|RED,0),   CpuSystem[i], CpuTotal, tmp);
+	tmp = HBar(COL(HIGH|MAGENTA,0),CpuHardInt[i],CpuTotal, tmp);
+	tmp = HBar(COL(HIGH|CYAN,0),  CpuSoftInt[i],CpuTotal, tmp);
+	tmp = HBar(COL(HIGH|BLUE,0),  CpuWait[i],   CpuTotal, tmp);
 	(void)HBar(COL(BLUE,0),       CpuIdle[i],   CpuTotal, tmp);
     }
-    if (DiskTotal) {
+    if (DiskMax) {
 	TwGotoXYWindow(SysMon_Win, 4, 1);
-	tmp = HBar(COL(HIGH|GREEN,0), DiskR[i], DiskTotal, 0);
-	tmp = HBar(COL(HIGH|RED,0),   DiskW[i], DiskTotal, tmp);
-	(void)HBar(COL(BLUE,0),       DiskTotal - DiskR[i] - DiskW[i], DiskTotal, tmp);
+	if (numeric)
+	    PrintAbsolute(COL(HIGH|YELLOW,BLUE), (DiskR[i]+DiskW[i])<<9);
+	tmp = HBar(COL(HIGH|GREEN,0), DiskR[i], DiskMax, 0);
+	tmp = HBar(COL(HIGH|RED,0),   DiskW[i], DiskMax, tmp);
+	(void)HBar(COL(BLUE,0),       DiskMax - DiskR[i] - DiskW[i], DiskMax, tmp);
     }
     if (MemTotal) {
 	TwGotoXYWindow(SysMon_Win, 4, 2);
+	if (numeric)
+	    PrintAbsolute(COL(HIGH|YELLOW,BLUE), (MemTotal-MemFree)<<10);
 	tmp = HBar(COL(HIGH|GREEN,0), MemUsed,   MemTotal, 0);
 	tmp = HBar(COL(HIGH|CYAN,0),  MemShared, MemTotal, tmp);
 	tmp = HBar(COL(HIGH|YELLOW,0),MemBuff,   MemTotal, tmp);
@@ -230,24 +324,27 @@ void Update(void) {
     }
     if (SwapTotal) {
 	TwGotoXYWindow(SysMon_Win, 4, 3);
+	if (numeric)
+	    PrintAbsolute(COL(HIGH|YELLOW,BLUE), SwapUsed<<10);
 	tmp = HBar(COL(HIGH|GREEN,0), SwapUsed,  SwapTotal, 0);
 	(void)HBar(COL(BLUE,0),       SwapFree,  SwapTotal, tmp);
     }
 
-    TwSetColTextWindow(SysMon_Win, COL(HIGH|YELLOW,BLUE));
+    TwSetColTextWindow(SysMon_Win, COL(WHITE,BLUE));
 
-/*
- * --- Uptime ---
- * Print to SysMon Window
- * added by Mohammad Bahathir Hashim <bakhtiar@softhome.net>
- */
-    if (ProcUptimeFd) {
+    /*
+     * --- Uptime ---
+     * Print to SysMon Window
+     * added by Mohammad Bahathir Hashim <bakhtiar@softhome.net>
+     */
+    if ((Fd = open("/proc/uptime", O_RDONLY)) != TW_NOFD) {
+
 	unsigned long updays;
 	int uphours, upminutes;
 
 	s = buf;
 	len = 0;
-	while ((tmp = read(ProcUptimeFd, s, TW_BIGBUFF - len)) > 0)
+	while ((tmp = read(Fd, s, TW_BIGBUFF - len)) > 0)
 	    len += tmp, s += tmp;
 	buf[len] = '\0';
 
@@ -261,12 +358,18 @@ void Update(void) {
 
 	TwGotoXYWindow(SysMon_Win, 8, 4);
 	TwWriteAsciiWindow(SysMon_Win, strlen(buf), buf);
+
+	close(Fd);
     }
 
     CpuUser[i] += CpuUser[!i];
     CpuNice[i] += CpuNice[!i];
     CpuSystem[i] += CpuSystem[!i];
     CpuIdle[i] += CpuIdle[!i];
+    CpuWait[i] += CpuWait[!i];
+    CpuHardInt[i] += CpuHardInt[!i];
+    CpuSoftInt[i] += CpuSoftInt[!i];
+    
     DiskR[i] += DiskR[!i];
     DiskW[i] += DiskW[!i];
     
@@ -292,7 +395,7 @@ int main(int argc, char *argv[]) {
     int fd;
     uldat err;
     
-    if (!InitSysMon())
+    if (!InitSysMon(argc, argv))
 	Quit();
 
     fd = TwConnectionFd();
