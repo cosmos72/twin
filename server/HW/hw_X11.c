@@ -247,6 +247,7 @@ byte X11_InitHW(void) {
 	return FALSE;
     }
 
+    /* default: show the whole screen */
     xhw_view = xhw_startx = xhw_starty = xhw_endx = xhw_endy = 0;
     
     if (arg && HW->NameLen > 4) {

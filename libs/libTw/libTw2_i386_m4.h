@@ -5,6 +5,16 @@
 /* This file was automatically generated with m4 from m4/libTw2_i386.m4, do not edit! */
 
 /*
+ *
+ *  Copyright (C) 2002 by Massimiliano Ghilardi
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Library General Public
+ * License as published by the Free Software Foundation; either
+ * version 2 of the License, or (at your option) any later version.
+ * 
+ */
+/*
  * hand-optimized assembler functions for i386 with gcc
  */
 

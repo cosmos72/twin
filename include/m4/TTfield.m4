@@ -1,4 +1,11 @@
-
+/*  Copyright (C) 2002 by Massimiliano Ghilardi
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Library General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2 of the License, or (at your option) any later version.
+ *
+ */
 define(`tolower', `translit(`$1', `A-Z', `a-z')')
 define(`toupper', `translit(`$1', `a-z', `A-Z')')
 define(`Toupper', `toupper(substr(`$1', 0, 1))`'patsubst(substr(`$1', 1), `_\(\w\)',``'toupper(`\1')')')

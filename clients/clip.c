@@ -1,5 +1,5 @@
 /*
- *  edit.c  --  a wannabe editor for twin. Currently just echoes keyboard.
+ *  clip.c  --  a wannabe editor for twin. Currently just echoes keyboard.
  *
  *  This program is placed in the public domain.
  *

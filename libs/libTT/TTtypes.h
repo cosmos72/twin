@@ -3,6 +3,15 @@
  *  TTtypes.h  --  INTERNAL (!!) header for libTT types declarations
  *
  *  Note: you cannot include both this file and <TT/TTtypes.h>, as they conflict!
+ *
+ *
+ *  Copyright (C) 2002 by Massimiliano Ghilardi
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Library General Public
+ * License as published by the Free Software Foundation; either
+ * version 2 of the License, or (at your option) any later version.
+ * 
  */
 
 #ifndef _TT_TYPES_H

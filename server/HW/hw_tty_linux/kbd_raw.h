@@ -193,9 +193,9 @@ static void lrawkbd_GrabConsole(void) {
     };
 # define VT_GETMODE	0x5601	/* get mode of active vt */
 # define VT_SETMODE	0x5602	/* set mode of active vt */
-# define		VT_AUTO		0x00	/* auto vt switching */
-# define		VT_PROCESS	0x01	/* process controls switching */
-# define		VT_ACKACQ	0x02	/* acknowledge switch */
+# define VT_AUTO	0x00	/* auto vt switching */
+# define VT_PROCESS	0x01	/* process controls switching */
+# define VT_ACKACQ	0x02	/* acknowledge switch */
 #endif
 
     vt.mode   = VT_PROCESS;

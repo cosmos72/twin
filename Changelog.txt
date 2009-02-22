@@ -1,3 +1,9 @@
+From 0.6.0 to 0.6.1: (Massimiliano Ghilardi, Milos Jakubicek, 17 Feb 2009)
+        * Fixed uninitialized variable bug in --hw=gfx introduced in 0.6.0,
+          sometimes causing twin/twdisplay not to draw anything when using --hw=gfx,
+          especially on 64 bit archs.
+        * Added explicit copyright statement to all source files (thanks, Milos!)
+
 From 0.5.1 to 0.6.0: (Massimiliano Ghilardi, 01 Dec 2007)
 	* Fixed build errors with gcc 4.0, 4.1 and 4.2.
 	* Fixed some (not all) pointer <-> integer conversion issues on 64 bit archs.

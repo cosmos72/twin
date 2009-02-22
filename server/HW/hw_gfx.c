@@ -474,6 +474,9 @@ byte gfx_InitHW(void) {
     /* conservative default settings to reduce CPU usage */
     xroot_flag = xbg_flag = GFX_USE_NONE;
 
+    /* default: show the whole screen */
+    xhw_view = xhw_startx = xhw_starty = xhw_endx = xhw_endy = 0;
+
     if (arg && HW->NameLen > 4) {
 	arg += 4; /* skip "-hw=" */
 	

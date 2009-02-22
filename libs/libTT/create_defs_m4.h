@@ -4,13 +4,30 @@
 
 /* This file was automatically generated from m4/create_defs.m4, do not edit! */
 
+/*
+ *
+ *  Copyright (C) 2002 by Massimiliano Ghilardi
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Library General Public
+ * License as published by the Free Software Foundation; either
+ * version 2 of the License, or (at your option) any later version.
+ * 
+ */
 
 /*
  *  create_defs_m4.h  --  #defines for libTT internal Create* function pointers
  *
  */
 
-
+/*  Copyright (C) 2002 by Massimiliano Ghilardi
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Library General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2 of the License, or (at your option) any later version.
+ *
+ */
 
 
 
