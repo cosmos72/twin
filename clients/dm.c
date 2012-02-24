@@ -64,6 +64,7 @@
 #define DM_GADGET_CLEAR 2
 #define DM_GADGET_CONSOLE 3
 
+#define DM_AUTO 0
 #define DM_ATTACH 1
 #define DM_DISPLAY 2
 
@@ -78,7 +79,7 @@ static TW_VOLATILE pid_t ServerPid = (pid_t)-1, AttachPid = (pid_t)-1;
 
 static byte * TW_CONST * Args;
 static TW_CONST byte *hw_name = "--hw=tty", *title, *TwEnvRC = NULL;
-static byte use_twdisplay = DM_ATTACH, Privileges = TW_PRIV_NONE;
+static byte use_twdisplay = DM_AUTO, Privileges = TW_PRIV_NONE;
 
 typedef struct s_data {
     byte txt[30];
@@ -95,8 +96,9 @@ static void Usage(void) {
 	    " -V, --version           output version information and exit\n"
 	    " -k, --kill              kill twin server upon display detach\n"
 	    " -q, --quiet             quiet; suppress diagnostic messages\n"
-	    " --attach                use \"twattach\" to start display (default)\n"
+	    " --attach                use \"twattach\" to start display\n"
 	    " --display               use \"twdisplay\" to start display\n"
+            "                             (default unless --hw=tty)\n"
 	    " --envrc                 tell twin to run .twenvrc.sh to get environment\n"
 	    " --suidroot              tell twin to keep suid root privileges\n"
 	    " --sgidtty               tell twin to keep sgid tty privileges\n"
@@ -237,7 +239,7 @@ static byte InitAttach(void) {
     char buff[] = "--twin@:\0\0\0";
 
     if (use_twdisplay == DM_ATTACH ||
-	(use_twdisplay == 0 &&
+	(use_twdisplay == DM_AUTO &&
 	 !Tw_option_strcmp(hw_name, "-hw=tty"))) {
 	
         attach = "twattach";

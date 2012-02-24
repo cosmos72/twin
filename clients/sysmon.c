@@ -122,29 +122,27 @@ void PrintPercent(hwcol Col, uldat percent) {
     TwWriteAsciiWindow(SysMon_Win, 5, buf);
 }
 
-void PrintAbsolute(hwcol Col, uldat n) { 
-    uldat G = n >> 30;
-    uldat M = (n >> 20) & 0x3FF;
-    uldat k = (n >> 10) & 0x3FF;
-    uldat a, b;
-    char c;
-
-    n &= 0x3FF;
+void PrintAbsoluteK(hwcol Col, unsigned long nK) { 
+    unsigned long G =  nK >> 20;
+    unsigned long M = (nK >> 10) & 0x3FF;
+    unsigned long k =  nK & 0x3FF;
+    unsigned long hi, lo;
+    char label;
 
     if (G)
-	a = G, b = M, c = 'G';
+	hi = G, lo = M, label = 'G';
     else if (M)
-	a = M, b = k, c = 'M';
+	hi = M, lo = k, label = 'M';
     else
-	a = k, b = n, c = 'k';
+	hi = k, lo = 0, label = 'k';
     
 	
-    if (a >= 10)
-	sprintf(buf, " %3d%c", a, c);
-    else if (a)
-	sprintf(buf, " %1d.%1d%c", a, b/103, c);
+    if (hi >= 10)
+	sprintf(buf, " %3lu%c", hi, label);
+    else if (hi || lo)
+	sprintf(buf, " %1lu.%1lu%c", hi, lo/103, label);
     else
-	sprintf(buf, " %4d", n);
+	sprintf(buf, "    0");
 	
     TwSetColTextWindow(SysMon_Win, Col);
     TwWriteAsciiWindow(SysMon_Win, 5, buf);
@@ -152,14 +150,14 @@ void PrintAbsolute(hwcol Col, uldat n) {
 
 void Update(void) {
     static int Fd;
-    static uldat CpuUser[2], CpuNice[2], CpuSystem[2], CpuIdle[2],
+    static unsigned long CpuUser[2], CpuNice[2], CpuSystem[2], CpuIdle[2],
 	CpuWait[2], CpuHardInt[2], CpuSoftInt[2], CpuTotal;
-    static uldat DiskR[2], DiskW[2], DiskMax;
-    static uldat MemUsed, MemShared, MemBuff, MemCache, MemFree, MemTotal;
-    static uldat SwapUsed, SwapFree, SwapTotal;
+    static unsigned long DiskR[2], DiskW[2], DiskMax;
+    static unsigned long MemUsed, MemShared, MemBuff, MemCache, MemFree, MemTotal;
+    static unsigned long SwapUsed, SwapFree, SwapTotal;
     static byte i;
     uldat len, tmp;
-    char *s, *e;
+    char *s, *e, *e2;
     
     if ((Fd = open("/proc/stat", O_RDONLY)) != TW_NOFD) {
 	s = buf;
@@ -223,8 +221,11 @@ void Update(void) {
 
 	DiskR[i] = DiskW[i] = 0;
 
-	while ((e = strstr(s, " hd")) || (e = strstr(s, " sd"))) {
-	    s = e+3;
+	while ((e = strstr(s, " hd")), (e2 = strstr(s, " sd")), e || e2) {
+            if (e && (!e2 || e < e2))
+                s = e+3;
+            else
+                s = e2+3;
 	    
 	    if (s[0] != ' ' && s[1] == ' ') {
 		/* match hd? and sd? */
@@ -307,7 +308,7 @@ void Update(void) {
     if (DiskMax) {
 	TwGotoXYWindow(SysMon_Win, 4, 1);
 	if (numeric)
-	    PrintAbsolute(COL(HIGH|YELLOW,BLUE), (DiskR[i]+DiskW[i])<<9);
+	    PrintAbsoluteK(COL(HIGH|YELLOW,BLUE), (DiskR[i]+DiskW[i])>>1);
 	tmp = HBar(COL(HIGH|GREEN,0), DiskR[i], DiskMax, 0);
 	tmp = HBar(COL(HIGH|RED,0),   DiskW[i], DiskMax, tmp);
 	(void)HBar(COL(BLUE,0),       DiskMax - DiskR[i] - DiskW[i], DiskMax, tmp);
@@ -315,7 +316,7 @@ void Update(void) {
     if (MemTotal) {
 	TwGotoXYWindow(SysMon_Win, 4, 2);
 	if (numeric)
-	    PrintAbsolute(COL(HIGH|YELLOW,BLUE), (MemTotal-MemFree)<<10);
+	    PrintAbsoluteK(COL(HIGH|YELLOW,BLUE), (MemTotal-MemFree));
 	tmp = HBar(COL(HIGH|GREEN,0), MemUsed,   MemTotal, 0);
 	tmp = HBar(COL(HIGH|CYAN,0),  MemShared, MemTotal, tmp);
 	tmp = HBar(COL(HIGH|YELLOW,0),MemBuff,   MemTotal, tmp);
@@ -325,7 +326,7 @@ void Update(void) {
     if (SwapTotal) {
 	TwGotoXYWindow(SysMon_Win, 4, 3);
 	if (numeric)
-	    PrintAbsolute(COL(HIGH|YELLOW,BLUE), SwapUsed<<10);
+	    PrintAbsoluteK(COL(HIGH|YELLOW,BLUE), SwapUsed);
 	tmp = HBar(COL(HIGH|GREEN,0), SwapUsed,  SwapTotal, 0);
 	(void)HBar(COL(BLUE,0),       SwapFree,  SwapTotal, tmp);
     }

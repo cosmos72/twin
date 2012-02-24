@@ -29,6 +29,9 @@ static byte lrawkbd_GetKeyboard(void);
 static void lrawkbd_SetKeyboard(void);
 static void lrawkbd_RestoreKeyboard(void);
 
+static void lrawkbd_LoadKeymaps(void);
+static void lrawkbd_FreeKeymaps(void);
+
 static void lrawkbd_GrabConsole(void);
 static void lrawkbd_ReleaseConsole(void);
 
@@ -76,6 +79,7 @@ static byte lrawkbd_InitKeyboard(void) {
 
     lrawkbd_InitSignals();
     lrawkbd_GrabConsole();
+    lrawkbd_LoadKeymaps();
     lrawkbd_SetKeyboard();
 
     return TRUE;
@@ -84,6 +88,7 @@ static byte lrawkbd_InitKeyboard(void) {
 static void lrawkbd_QuitKeyboard(void) {
 
     lrawkbd_RestoreKeyboard();
+    lrawkbd_FreeKeymaps();
     lrawkbd_ReleaseConsole();
     lrawkbd_QuitSignals();
     
@@ -117,6 +122,23 @@ static void lrawkbd_ConfigureKeyboard(udat resource, byte todefault, udat value)
 	set_vc_kbd_mode(kbd, flag);
 }
 
+#ifdef DEBUG_HW_TTY_LRAWKBD
+static void dump_bytes(byte * s, uldat len) {
+    uldat i;
+    byte c;
+    
+    printk("lrawkbd: received `");
+    
+    for (i = 0; (c = s[i]) && i<len; i++) {
+	if (c >= ' ' && c <= '~')
+	    printk("%c", (int)c);
+	else
+	    printk("\\x%02X", (int)c);
+    }
+    printk("'\n");
+}
+#endif // DEBUG_HW_TTY_LRAWKBD
+
 
 static void lrawkbd_KeyboardEvent(int fd, display_hw hw) {
     byte buf[16], *s, *ret;
@@ -139,7 +161,11 @@ static void lrawkbd_KeyboardEvent(int fd, display_hw hw) {
 	
 	chunk = got;
 
-	Code = lrawkbd_LookupKey(&ShiftFlags, &chunk, s, &retlen, &ret);
+#ifdef DEBUG_HW_TTY_LRAWKBD
+        dump_bytes(s, got);
+#endif // DEBUG_HW_TTY_LRAWKBD
+	
+        Code = lrawkbd_LookupKey(&ShiftFlags, &chunk, s, &retlen, &ret);
 
 	if (Code != TW_Null)
 	    KeyboardEventCommon(Code, ShiftFlags, retlen, ret);
@@ -196,7 +222,7 @@ static void lrawkbd_GrabConsole(void) {
 # define VT_AUTO	0x00	/* auto vt switching */
 # define VT_PROCESS	0x01	/* process controls switching */
 # define VT_ACKACQ	0x02	/* acknowledge switch */
-#endif
+#endif /* 0 */
 
     vt.mode   = VT_PROCESS;
     vt.waitv  = 0;

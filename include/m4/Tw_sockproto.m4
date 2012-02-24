@@ -37,7 +37,7 @@ rem([
  <flag> : v = void
 	  _ = scalar (any integer)
 	  x = pointer
-	  V(len) = vector of <len> elements
+	  V(len) = vector of <len> elements (<len> has 'uldat' type)
 		<len> can be an expression, and may access the other arguments
 		of the function as A(n) where <n> is the progressive number
 		of the argument: A(1) is the first arg, A(2) the second, ...
@@ -45,7 +45,7 @@ rem([
 		so that you can safely pass NULL instead of the vector.
 	  X(len) = same as V(len), but is a vector of pointers (x)
 	  Y(len) = same as W(len), but is a vector of pointers (x)
-	  O = variable return type. the function hash a special (byte [2]) last argument
+	  O = variable return type. the function has a special (byte [2]) last argument
 	      that contains the actual return type.
 
 

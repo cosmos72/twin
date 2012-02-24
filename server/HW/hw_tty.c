@@ -279,7 +279,11 @@ byte tty_InitHW(void) {
 #define NEVER  0
 #define MAYBE  1
 #define ALWAYS 2
-    byte autotry_video = MAYBE, try_vcsa = MAYBE,
+    /*
+     * writing through /dev/vcsa* is slow (too many sycalls),
+     * enable only if explicitly requested
+     */
+    byte autotry_video = MAYBE, try_vcsa = NEVER,
 	try_stdout = MAYBE, try_termcap = MAYBE,
 	autotry_kbd = MAYBE, try_lrawkbd = MAYBE,
 	
@@ -339,16 +343,16 @@ byte tty_InitHW(void) {
 	    } else if (!strncmp(arg, ",termcap", 8)) {
 		try_termcap = !(autotry_video = !strncmp(arg+8, "=no", 3)) << 1;
 		arg = strchr(arg+8, ',');
-	    } else if (!strncmp(arg, ",raw", 7)) {
-		try_lrawkbd = !(autotry_kbd = !strncmp(arg+7, "=no", 3)) << 1;
-		arg = strchr(arg+7, ',');
+	    } else if (!strncmp(arg, ",raw", 4)) {
+		try_lrawkbd = !(autotry_kbd = !strncmp(arg+4, "=no", 3)) << 1;
+		arg = strchr(arg+4, ',');
 	    } else if (!strncmp(arg, ",ctty", 5)) {
 		arg = strchr(arg+5, ',');
 		try_ctty = TRUE;
 	    } else if (!strncmp(arg, ",colorbug", 9)) {
 		arg = strchr(arg+9, ',');
 		tc_colorbug = TRUE;
-	    } else if (!strncmp(arg, ",mouse=", 6)) {
+	    } else if (!strncmp(arg, ",mouse=", 7)) {
 		if (!strncmp(arg+7, "xterm", 5))
 		    force_mouse = TRUE;
 		else if (!strncmp(arg+7, "twterm", 5))
@@ -494,7 +498,8 @@ byte tty_InitHW(void) {
      * 
      * Thus mouse initialization must come *AFTER* video initialization
      * 
-     * null_InitMouseConfirm() tries a blocking read() from tty_fd,
+     * null_InitMouseConfirm() tries a blocking read() from tty_fd
+     * (it asks user if he/she really wants to run twin without mouse),
      * while lrawkbd_InitKeyboard() puts tty_fd in non-blocking mode.
      * 
      * Thus mouse initialization must come *BEFORE* keyboard initialization

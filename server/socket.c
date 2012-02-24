@@ -689,7 +689,7 @@ static CONST obj *AllocId2ObjVec(byte *alloced, byte c, uldat n, byte *VV) {
 
 TW_INLINE ldat sockDecodeArg(uldat id, CONST byte * Format, uldat n, tsfield a, uldat mask[1], byte flag[1], ldat fail) {
     void *av;
-    uldat nlen;
+    topaque nlen;
     byte c;
     
     switch ((c = *Format++)) {
@@ -752,8 +752,9 @@ TW_INLINE ldat sockDecodeArg(uldat id, CONST byte * Format, uldat n, tsfield a, 
 	fail = -fail;
 	break;
       case 'W':
-	if (Left(sizeof(uldat))) {
-	    Pop(s,uldat,nlen);
+        /* ensure 'topaque' size WAS negotiated */
+	if (AlienSizeof(topaque, Slot) && Left(sizeof(topaque))) {
+	    Pop(s,topaque,nlen);
 	    
 	    c = *Format;
 	    /* ensure type size WAS negotiated */
@@ -784,8 +785,10 @@ TW_INLINE ldat sockDecodeArg(uldat id, CONST byte * Format, uldat n, tsfield a, 
 	fail = -fail;
 	break;
       case 'Y':
-	if (Left(sizeof(uldat))) {
-	    Pop(s,uldat,nlen);
+        /* ensure 'topaque' size WAS negotiated */
+	if (AlienSizeof(topaque, Slot) && Left(sizeof(topaque))) {
+	    Pop(s,topaque,nlen);
+
 	    nlen *= sizeof(uldat);
 	    if (Left(nlen)) {
 		c = *Format - base_magic_CHR;

@@ -1,3 +1,9 @@
+From 0.6.1 to 0.6.2: (Massimiliano Ghilardi, 24 Mar 2009)
+	* Fixed buggy RAW keyboard support on Linux console
+          (numeric keys did not work with some keymaps)
+        * Fixed numeric overflow in twsysmon CPU and disk monitors.
+	* Fixed broken libTw on 64 bit archs.
+
 From 0.6.0 to 0.6.1: (Massimiliano Ghilardi, Milos Jakubicek, 17 Feb 2009)
         * Fixed uninitialized variable bug in --hw=gfx introduced in 0.6.0,
           sometimes causing twin/twdisplay not to draw anything when using --hw=gfx,

@@ -199,8 +199,8 @@ Button 2 "><" Right
 # set shadows to 3x2 and enable them
 GlobalFlags Shadows 3 2 +Shadows
 #
-# enable blink/high background
-GlobalFlags +Blink
+# disable blink/high background
+GlobalFlags -Blink
 #
 # do not force cursor always visible
 GlobalFlags -CursorAlways
@@ -211,8 +211,8 @@ GlobalFlags -ScreenScroll
 # do not hide the menu
 GlobalFlags -MenuHide
 #
-# enable menu information row
-GlobalFlags +MenuInfo
+# disable menu information row
+GlobalFlags -MenuInfo
 #
 # don't relax menu navigation
 GlobalFlags -MenuRelax
@@ -256,9 +256,10 @@ GlobalFlags ButtonPaste 2
 #
 
 #
-# PAUSE pops up the menu. Feel free to use any other key.
+# Both PAUSE and F12 pop up the menu. Feel free to use any other key.
 #
 Key  "Pause"   Interactive Menu
+Key  "F12"     Interactive Menu
 
 
 #
@@ -368,22 +369,20 @@ Mouse H2  R  WindowList
 # Choose your favorite setup... for twin-classic menus, which appear only
 # after you press right mouse button, use this:
 #
-GlobalFlags +MenuInfo
-# right button always opens the menu
-Mouse H3  A  Interactive Menu
-# mouse left on menu-bar does screen resize
-Mouse H1  M  Interactive Screen
+# # right button always opens the menu
+# Mouse H3  A  Interactive Menu
+# # mouse left on menu-bar does screen resize
+# Mouse H1  M  Interactive Screen
 
 
-# # Otherwise you can use turbovision style menus:
-# # they always stay visible and are selected with left button
-# # _on_menu_bar_
-# #
-# GlobalFlags -MenuInfo
-# # left button on menu-bar opens the menu
-# Mouse H1  M  Interactive Menu
-# # in this case, use mouse right button on menu-bar for screen resize
-# Mouse H3  M  Interactive Screen
+# Otherwise you can use turbovision style menus:
+# they always stay visible and are selected with left button
+# _on_menu_bar_
+#
+# left button on menu-bar opens the menu
+Mouse H1  M  Interactive Menu
+# in this case, use mouse right button on menu-bar for screen resize
+Mouse H3  M  Interactive Screen
 
 # # Or better yet, create your personal style!
 # #
@@ -393,8 +392,8 @@ Mouse H1  M  Interactive Screen
 # uncomment to pop-up a terminal and maximize it.
 # `;' is the same as a newline...
 #
-# ExecTty "" ; Wait "Twin Term" ; Maximize
-#
+ExecTty "" ; Wait "Twin Term" ; Maximize
+
 # for all users too lazy to manually load the socket server from the menu:
 #
 # Module "socket" On

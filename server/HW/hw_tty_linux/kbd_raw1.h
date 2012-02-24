@@ -37,7 +37,6 @@
 #undef WUNTRACED
 
 #include <linux/kd.h>
-#include <linux/kd.h>
 #include <linux/keyboard.h>
 #include <linux/vt.h>
 
@@ -529,8 +528,8 @@ static udat map_PAD [] = {
 
 static udat do_pad(byte value, byte up_flag)
 {
-    static const byte *pad_chars = "0123456789+-*/\015,.?()";
-    static const byte *app_map = "pqrstuvwxylSRQMnnmPQ";
+    static const byte * const pad_chars = "0123456789+-*/\015,.?()";
+    static const byte * const app_map = "pqrstuvwxylSRQMnnmPQ";
     
     if (up_flag)
 	return TW_Null;	/* no action, if this is a key release */
@@ -586,7 +585,7 @@ static udat map_CUR [] = {
 
 static udat do_cur(byte value, byte up_flag)
 {
-    static const byte *cur_chars = "BDCA";
+    static const byte * const cur_chars = "BDCA";
     if (up_flag)
 	return TW_Null;
     
@@ -634,7 +633,7 @@ static udat do_shift(byte value, byte up_flag)
     if (k_down[value])
 	lrawkbd_shiftstate |= (1 << value);
     else
-	lrawkbd_shiftstate &= ~ (1 << value);
+	lrawkbd_shiftstate &= ~(1 << value);
     
     /* kludge */
     if (up_flag && lrawkbd_shiftstate != old_state && npadch != -1) {
@@ -855,26 +854,77 @@ static void set_lights(int lights) {
 }
 
 
+#define lrawkbd_KEYMAPS_N (1 << (NR_SHIFT <= 8*sizeof(byte) ? NR_SHIFT : 8*sizeof(byte)))
+
+static udat * lrawkbd_keymaps[lrawkbd_KEYMAPS_N];
+
+static void lrawkbd_FreeKeymaps(void) {
+    udat * keymap;
+    ldat table;
+    for (table = 0; table < lrawkbd_KEYMAPS_N; table++) {
+        if ((keymap = lrawkbd_keymaps[table]) != NULL) {
+            FreeMem(keymap);
+            lrawkbd_keymaps[table] = NULL;
+        }
+    }
+}
+
+static void lrawkbd_LoadKeymaps(void) {
+    struct kbentry ke;
+    ldat table, keycode;
+
+    /*
+     * set UNICODE keyboard mode.
+     * needed to get accurate results from ioctl(tty_fd, KDGKBENT, ...)
+     * 
+     * keyboard mode will be overridden in lrawkbd_SetKeyboard(),
+     * no need to restore it here.
+     */
+    ioctl(tty_fd, KDSKBMODE, K_UNICODE);
+
+    for (table = 0; table < lrawkbd_KEYMAPS_N; table++) {
+        for (keycode = 0; keycode < 0x80; keycode++) {
+
+            ke.kb_table = table;
+            ke.kb_index = keycode;
+            ke.kb_value = 0;
+
+            if (ioctl (tty_fd, KDGKBENT, &ke) == 0) {
+
+#ifdef DEBUG_HW_TTY_LRAWKBD
+                printk("\t... ioctl(tty_fd = %d, KDGKBENT, {table = 0x%X, index = 0x%X} ) = 0x%X\n",
+                       (int)tty_fd, table, keycode, (int)ke.kb_value);
+#endif
+
+                if (keycode == 0 && ke.kb_value == K_NOSUCHMAP)
+                    break;
+                else if (!lrawkbd_keymaps[table] &&
+                         !(lrawkbd_keymaps[table] = AllocMem(0x80 * sizeof(udat))))
+                    break;
+                
+                lrawkbd_keymaps[table][keycode] = ke.kb_value;
+            }
+        }
+    }
+}
+
 
 static udat get_kbentry(byte keycode, byte table)
 {
-    static struct kbentry ke;
-
-    /*
-     struct kbentry {
-	byte kb_table;
-	byte kb_index;
-	udat kb_value;
-     };
-     */
+    if (table < lrawkbd_KEYMAPS_N) {
+        udat * keymap = lrawkbd_keymaps[table];
+        if (keymap != NULL) {
+#ifdef DEBUG_HW_TTY_LRAWKBD
+            printk("\tget_kbentry(table = 0x%X, keycode = 0x%X) = 0x%X\n",
+                   (int)table, (int)keycode, (int)keymap[keycode & 0x7F]);
+#endif
+            return keymap[keycode & 0x7F];
+        }
+    } else
+        printk("internal error! invalid arguments in get_kbentry(keycode = 0x%X, table = 0x%X): table must be < 0x%X\n",
+               (int)keycode, (int)table, (int)lrawkbd_KEYMAPS_N);
     
-    ke.kb_table = table;
-    ke.kb_index = keycode & ~0x80;
-    ke.kb_value = 0;
-
-    ioctl (tty_fd, KDGKBENT, &ke);
-    
-    return ke.kb_value;
+    return K_NOSUCHMAP;
 }
 
 static byte *get_kbsentry(byte keysym) {
@@ -899,15 +949,14 @@ static void dump_key(udat twk, ldat keysym, byte *s, uldat len) {
     uldat f;
     byte c;
     
-    printk("lrawkbd: TWsym = 0x%X, ksym = 0x%X, `", (int)twk, (int)keysym);
+    printk("\tTWsym = 0x%X, ksym = 0x%X, `", (int)twk, (int)keysym);
     
     for (f = 0; (c = s[f]) && f<len; f++) {
-	if (c >= 32)
+	if (c >= ' ' && c <= '~')
 	    printk("%c", (int)c);
 	else
 	    printk("\\x%02X", (int)c);
     }
-
     printk("'\n");
 }
 #endif
@@ -937,11 +986,13 @@ static udat handle_keycode(byte keycode, byte up)
 	
 	if (type == KT_LETTER) {
 	    type = KT_LATIN;
-	    if (vc_kbd_led(kbd, VC_CAPSLOCK)) {
+	    if (vc_kbd_led(kbd, VC_CAPSLOCK))
 		keysym = get_kbentry(keycode, shift_final ^ (1<<KG_SHIFT));
-	    }
-	}
-
+	} else if (type == 0xf0) {
+            // treat UNICODE as plain ASCII (should be handled properly)
+            type = KT_LATIN;
+        }
+                
 	val = KVAL(keysym);
 	if (type < SIZE(key_handler_maxval) && val <= key_handler_maxval[type])
 	    twk = (*key_handler[type])(val, up_flag);
@@ -980,9 +1031,4 @@ static udat lrawkbd_LookupKey(udat *ShiftFlags, byte *slen, byte *s, byte *retle
     
     return twk;
 }
-
-
-
-
-
 

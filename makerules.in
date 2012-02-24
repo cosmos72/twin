@@ -971,7 +971,7 @@ $(B)include/Tw/Twautoconf.h: $(B)include/autoconf.h
 	 sed -e 's/HAVE_/TW_HAVE_/g' -e 's/RETSIGTYPE/TW_RETSIGTYPE/g' \
 	  -e 's/STDC_HEADERS/TW_STDC_HEADERS/g' -e 's/SETVBUF/TW_SETVBUF/g' \
 	  -e 's/TIME_WITH_SYS_TIME/TW_TIME_WITH_SYS_TIME/g' \
-	  -e 's/TM_IN_SYS_TIME/TW_TM_IN_SYS_TIME/g' < $< >> $@ && \
+	  -e 's/TM_IN_SYS_TIME/TW_TM_IN_SYS_TIME/g' < $< | grep TW_ >> $@ && \
 	 echo >> $@ && \
 	 echo "#endif /* _TW_AUTOCONF_H */" >> $@
 

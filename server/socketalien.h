@@ -299,10 +299,11 @@ static void alienTranslateHWAttrV_CP437_to_UTF_16(hwattr *H, uldat Len) {
 #endif
 
 TW_INLINE ldat alienDecodeArg(uldat id, CONST byte * Format, uldat n, tsfield a, uldat mask[1], byte flag[1], ldat fail) {
-    uldat a0, nlen;
-    byte c;
-    void *av;
     CONST void *A;
+    void *av;
+    topaque nlen;
+    uldat a0;
+    byte c;
     
     switch ((c = *Format++)) {
       case '_':
@@ -412,8 +413,9 @@ TW_INLINE ldat alienDecodeArg(uldat id, CONST byte * Format, uldat n, tsfield a,
 	fail = -fail;
 	break;
       case 'W':
-	if (Left(SIZEOF(uldat))) {
-	    POP(s,uldat,nlen);
+        /* ensure 'topaque' size WAS negotiated */
+        if (SIZEOF(topaque) && Left(SIZEOF(topaque))) {
+	    POP(s,topaque,nlen);
 		
 	    c = *Format;
 	    /* ensure type size WAS negotiated */
@@ -477,8 +479,10 @@ TW_INLINE ldat alienDecodeArg(uldat id, CONST byte * Format, uldat n, tsfield a,
 	break;
       case 'Y':
 	c = *Format - base_magic_CHR;
-	if (Left(sizeof(uldat))) {
-	    Pop(s,uldat,nlen);
+        
+        /* ensure 'topaque' size WAS negotiated */
+        if (SIZEOF(topaque) && Left(SIZEOF(topaque))) {
+	    POP(s,topaque,nlen);
 	    nlen *= sizeof(uldat);
 	    if (Left(nlen)) {
 		PopAddr(s,byte,nlen,av);
