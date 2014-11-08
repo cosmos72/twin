@@ -77,11 +77,12 @@ static byte get_pty(void)
 	
 	if (grantpt(fd) == 0) {
 	    if (unlockpt(fd) == 0) {
-		ptydev = ttydev = ptsname(fd);
-		if ((sfd = open(ptydev, O_RDWR|O_NOCTTY)) >= 0)
+		char * devname = ptsname(fd);
+                ptydev = ttydev = devname;
+		if ((sfd = open(devname, O_RDWR|O_NOCTTY)) >= 0)
 		    goto Found;
 		else
-		    get_pty_error("slave open", ptydev);
+		    get_pty_error("slave open", devname);
 	    } else
 		get_pty_error("unlockpt", "");
 	} else

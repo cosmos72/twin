@@ -23960,14 +23960,14 @@ OS="$ac_cv_sys_uname"
 
 if test "${ECHO_E+set}" != set; then
   ECHO_E=echo
-  if test "`echo -e '\n'`" = ""; then
-    ECHO_E='echo -e'
-  elif test "`echo '\n'`" = ""; then
-    ECHO_E=echo
-  elif test "`/bin/echo -e '\n'`" = ""; then
+  if test "`/bin/echo -e '\n'`" = ""; then
     ECHO_E='/bin/echo -e'
   elif test "`/bin/echo '\n'`" = ""; then
     ECHO_E=/bin/echo
+  elif test "`/bin/sh -c \"echo -e '\n'`\"" = ""; then
+    ECHO_E='echo -e'
+  elif test "`/bin/sh -c \"echo '\n'`\"" = ""; then
+    ECHO_E=echo
   fi
 fi
 

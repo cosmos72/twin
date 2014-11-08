@@ -295,7 +295,7 @@ static void fwd_copy(hwattr *s, hwattr *d, ldat len) {
     
     while (len > 0) {
 	l = Min2(len, Split - s); l = Min2(l, Split - d);
-	CopyMem(s, d, l * sizeof(hwattr));
+	MoveMem(s, d, l * sizeof(hwattr)); // s and d can overlap!
 	s += l; d += l; len -= l;
 	if (s == Split) s = Base;
 	if (d == Split) d = Base;
@@ -1208,8 +1208,7 @@ INLINE void write_ctrl(byte c) {
 	    break;
 	  case 'H': case 'f':
 	    if (Par[0]) Par[0]--;
-	    if (!nPar)
-		Par[1] = nPar;
+	    if (!nPar)  Par[1] = 0;
 	    else if (Par[1]) Par[1]--;
 	    goto_axy(Par[1],Par[0]);
 	    break;

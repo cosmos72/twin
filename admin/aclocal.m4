@@ -1,0 +1,5 @@
+m4_include(/usr/share/aclocal/libtool.m4)
+m4_include(/usr/share/aclocal/ltoptions.m4)
+m4_include(/usr/share/aclocal/ltversion.m4)
+m4_include(/usr/share/aclocal/ltsugar.m4)
+m4_include(/usr/share/aclocal/lt~obsolete.m4)

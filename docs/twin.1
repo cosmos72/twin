@@ -1,38 +1,37 @@
-.TH "twin" "1" "0.5.0" "" ""
+.TH "twin" "1" "0.6.3" "" ""
 .SH "NAME"
 twin \- a Textmode WINdow environment
 .SH "SYNTAX"
-.B twin
-[OPTION [...]]
+.B twin [OPTION [...]]
 .SH "NOTE"
 This manual page uses some parts of /usr/local/share/doc/twin/Tutorial.
 you should look at this file if you need further info.
 .SH "DESCRIPTION"
 Twin creates, draws and manages windows inside a text display.
 It implements in text mode the same concepts that X11 does in graphics:
-.PP
+.PP 
 a. draw on some kind of screen (tipically a computer monitor).
-.PP
+.PP 
 b. allow multiple windows to coexist on the same screen, and draw independently on each of them.
-.PP
+.PP 
 c. talk to external programs (even on other machines) so that the programs receive keystrokes, mouse movements, etc. and can send back drawing commands.
-.PP
+.PP 
 Twin runs on the linux console, inside itself, in a twin terminal and on X11: it creates a window and draws in it, does not run inside an xterm or similar. It can also run on generic text terminals (ttys) using the termcap/ncurses driver, but it will work far from optimal.
 .SH "OPTIONS"
 .TP 
-\fB\-h\fR, \fB\--help\fR
+\fB\-h\fR, \fB\-\-help\fR
 display this help and exit
 .TP 
-\fB\-V\fR, \fB\--version\fR
+\fB\-V\fR, \fB\-\-version\fR
 output version information and exit
 .TP 
-\fB\-x\fR, \fB\--excl\fR
+\fB\-x\fR, \fB\-\-excl\fR
 start display as exclusive
 .TP 
-\fB\--nohw\fR
+\fB\-\-nohw\fR
 start in background without display
 .TP 
-\fB\--hw=<display>[,options]\fR
+\fB\-\-hw=<display>[,options]\fR
 start with the given display (multiple \-hw=... allowed)
 .TP 
 Currently known display methods:
@@ -70,12 +69,11 @@ so it is easy to find out what you type and what you see in the client windows b
 run a twin server, and let it try to autodetect the type of display (X11, tty or twin):
 .LP 
 .B twin
-.PP
+.PP 
 run a twin server, specifying to create an X11 window to use as display:
-.LP
-.B twin
-\--hw=X
+.LP 
+.B twin \-\-hw=X
 .SH "AUTHORS"
-Massimiliano Ghilardi <max@linuz.sns.it>
+Massimiliano Ghilardi <paperinik@users.sourceforge.net>
 .SH "SEE ALSO"
 

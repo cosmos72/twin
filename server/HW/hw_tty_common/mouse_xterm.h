@@ -57,14 +57,14 @@ static byte xterm_InitMouse(byte force) {
 	    printk("      xterm_InitMouse() warning: this `linux' terminal\n"
 		   "      can only report click, drag and release, not motion.\n");
 	    
-	    mouse_motion_seq = NULL;
+	    mouse_motion_seq = mouse_start_seq;
 	}
     } else if (!strncmp(term, "xterm", 5) ||
 	       !strncmp(term, "rxvt", 4) ||
 	       !strncmp(term, "Eterm", 5)) {
 	mouse_start_seq = "\033[?1001s\033[?1000h";
 	mouse_end_seq = "\033[?1000l\033[?1001r";
-	mouse_motion_seq = NULL;
+	mouse_motion_seq = mouse_start_seq;
     } else {
 	printk("      xterm_InitMouse() failed: terminal `%."STR(SMALLBUFF)"s' is not supported.\n", term);
 	return FALSE;

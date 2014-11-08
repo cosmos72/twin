@@ -1,3 +1,11 @@
+From 0.6.2 to 0.6.2.1: (Massimiliano Ghilardi, 08 Nov 2014)
+	* Fixed scroll glitch in twterm, affecting architectures
+          with strongly pipelined memcpy() - for example amd64.
+        * Fixed segfault with --hw=tty running inside xterm or similar
+          (including konsole, putty ...) when some program in a twterm
+          enables mouse events.
+          Thanks to R. Corrado for reporting and debugging it.
+
 From 0.6.1 to 0.6.2: (Massimiliano Ghilardi, 24 Mar 2009)
 	* Fixed buggy RAW keyboard support on Linux console
           (numeric keys did not work with some keymaps)
