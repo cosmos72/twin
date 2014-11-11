@@ -747,18 +747,19 @@ dnl
 OS="$ac_cv_sys_uname"
 AC_SUBST(OS)
 
-if test "${ECHO_E+set}" != set; then
-  ECHO_E=echo
+if test "$ECHO_E" = ""; then
+  ECHO_E='echo'
   if test "`/bin/echo -e '\n'`" = ""; then
     ECHO_E='/bin/echo -e'
   elif test "`/bin/echo '\n'`" = ""; then
-    ECHO_E=/bin/echo
-  if test "`/bin/sh -c \"echo -e '\n'`\"" = ""; then
+    ECHO_E='/bin/echo'
+  elif test "`/bin/sh -c "echo -e '\n'"`" = ""; then
     ECHO_E='echo -e'
-  elif test "`/bin/sh -c \"echo '\n'`\"" = ""; then
-    ECHO_E=echo
+  elif test "`/bin/sh -c \"echo '\n'\"`" = ""; then
+    ECHO_E='echo'
   fi
 fi
+echo "checking for echo -e... $ECHO_E"
 
 ECHO_C=
 ECHO_N=
@@ -767,6 +768,8 @@ if test "`( echo '1\c'; echo 2 ) | grep 12`" = "12"; then
 elif test "`( echo -n "1"; echo 2 ) | grep 12`" = 12; then
   ECHO_N='-n'
 fi
+echo "checking for echo -n... echo $ECHO_C$ECHO_N"
+
 if test -x /bin/bash; then
   BASH=/bin/bash
 elif bash -c : 2>/dev/null; then
@@ -774,12 +777,14 @@ elif bash -c : 2>/dev/null; then
 elif test -x "$BASH"; then
   :
 else
- BASH=sh
+  BASH=sh
 fi
 AC_SUBST(ECHO_E)
 AC_SUBST(ECHO_N)
 AC_SUBST(ECHO_C)
 AC_SUBST(BASH)
+
+echo "checking for bash... $BASH"
 
 if test "$ac_cv_prog_RANLIB"; then
   RANLIB="$ac_cv_prog_RANLIB"
@@ -791,6 +796,8 @@ fi
 if test "$ac_cv_prog_AR"; then
   AR="$ac_cv_prog_AR"
 fi
+echo "checking for ranlib... $RANLIB"
+echo "checking for ar... $AR"
 
 AC_SUBST(RANLIB)
 AC_SUBST(AR)
@@ -908,6 +915,7 @@ for ac_FEATURE in `cat ${TOP_SRCDIR}/conf/conf.list`; do
   fi
 done
 AC_SUBST(CONF_)
+
 
 # all done. now just output makefiles.
 
