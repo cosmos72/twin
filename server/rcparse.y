@@ -44,6 +44,7 @@
 # include "version.h"
 #endif
 
+#include "rcparse_tab.h" /* needed by rcparse.h */
 #include "rcparse.h"
 
 

@@ -1,8 +1,8 @@
-/* A Bison parser, made by GNU Bison 3.0.2.  */
+/* A Bison parser, made by GNU Bison 3.0.4.  */
 
 /* Bison implementation for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989-1990, 2000-2013 Free Software Foundation, Inc.
+   Copyright (C) 1984, 1989-1990, 2000-2015 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -44,7 +44,7 @@
 #define YYBISON 1
 
 /* Bison version.  */
-#define YYBISON_VERSION "3.0.2"
+#define YYBISON_VERSION "3.0.4"
 
 /* Skeleton name.  */
 #define YYSKELETON_NAME "yacc.c"
@@ -96,6 +96,7 @@
 # include "version.h"
 #endif
 
+#include "rcparse_tab.h" /* needed by rcparse.h */
 #include "rcparse.h"
 
 
@@ -239,7 +240,7 @@ extern int yydebug;
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
-typedef union YYSTYPE YYSTYPE;
+
 union YYSTYPE
 {
 
@@ -252,6 +253,8 @@ union YYSTYPE
 
 
 };
+
+typedef union YYSTYPE YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1
 #endif
@@ -570,17 +573,17 @@ static const yytype_uint8 yytranslate[] =
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_uint16 yyrline[] =
 {
-       0,   162,   162,   165,   166,   169,   170,   171,   172,   175,
-     176,   179,   180,   183,   184,   185,   186,   187,   188,   189,
-     190,   191,   192,   193,   194,   195,   196,   197,   198,   199,
-     200,   203,   206,   207,   210,   213,   216,   217,   220,   223,
-     226,   227,   230,   233,   234,   235,   236,   239,   240,   243,
-     244,   247,   248,   249,   250,   251,   252,   255,   256,   257,
-     258,   259,   260,   262,   263,   264,   266,   267,   268,   269,
-     270,   271,   272,   273,   274,   275,   276,   279,   280,   283,
-     284,   287,   288,   289,   290,   291,   294,   295,   296,   297,
-     300,   301,   304,   305,   308,   309,   312,   313,   316,   317,
-     318,   319,   322,   323,   326,   327
+       0,   163,   163,   166,   167,   170,   171,   172,   173,   176,
+     177,   180,   181,   184,   185,   186,   187,   188,   189,   190,
+     191,   192,   193,   194,   195,   196,   197,   198,   199,   200,
+     201,   204,   207,   208,   211,   214,   217,   218,   221,   224,
+     227,   228,   231,   234,   235,   236,   237,   240,   241,   244,
+     245,   248,   249,   250,   251,   252,   253,   256,   257,   258,
+     259,   260,   261,   263,   264,   265,   267,   268,   269,   270,
+     271,   272,   273,   274,   275,   276,   277,   280,   281,   284,
+     285,   288,   289,   290,   291,   292,   295,   296,   297,   298,
+     301,   302,   305,   306,   309,   310,   313,   314,   317,   318,
+     319,   320,   323,   324,   327,   328
 };
 #endif
 

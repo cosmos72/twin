@@ -298,7 +298,7 @@ byte tty_InitHW(void) {
     saveCursorType = (uldat)-1;
 #ifdef CONF__UNICODE
     tty_charset = (uldat)-1;
-    tty_can_utf8 = TRUE+TRUE;
+    tty_can_utf8 = TRUE+TRUE; /* i.e. unknown */
 #endif
     saveX = saveY = 0;
     stdOUT = NULL;
@@ -463,6 +463,7 @@ byte tty_InitHW(void) {
 
 #ifdef CONF__UNICODE
     if (charset) {
+        /* honor user-specified charset */
 	if ((tty_charset = Tutf_charset_id(charset)) == (uldat)-1)
 	    printk("      tty_InitHW(): libTutf warning: unknown charset `%." STR(SMALLBUFF) "s', assuming `CP437'\n", charset);
 	else if (tty_charset == Tutf_charset_id(T_NAME(UTF_16))) {
@@ -472,6 +473,11 @@ byte tty_InitHW(void) {
 	    tty_can_utf8 = TRUE;
 	}
 	FreeMem(charset);
+    }
+    else if (tty_TERM != NULL) {
+        /* autodetect some tty features */
+        if (!strcmp(tty_TERM, "xterm"))
+            tty_can_utf8 = TRUE;
     }
     if (tty_charset == (uldat)-1) {
 	tty_UTF_16_to_charset = Tutf_UTF_16_to_CP437;
