@@ -1,16 +1,26 @@
-
+# Copyright (C) 2000 by Massimiliano Ghilardi
 #
-# This file was generated automatically by scripts/Makefiles.sh. Do not edit.
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
 #
 
-# TOP_SRCDIR
-T:=
 
-# THIS_SRCDIR
-S:=
 
-# TOP_BUILDDIR
-B:=
+all:
+	@echo "You should run './configure [options]'" ; \
+	 echo "to configure twin for your system" ; \
+	 false
 
-include $(S)Makefile.sub
+build:
+	B="build-on-`hostname`" ; \
+	mkdir "$$B" 2>/dev/null ; \
+	cd "$$B" && \
+	$(MAKE) -f ../Makefile.sub TOP_SRCDIR="../"
 
+install:
+	B="build-on-`hostname`" ; \
+	cd "$$B" && \
+	$(MAKE) install
