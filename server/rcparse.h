@@ -11,6 +11,9 @@
  */
 
 
+#ifndef _TWIN_RCPARSE_H
+#define _TWIN_RCPARSE_H
+
 /*
  * ~/.twinrc syntax :
  * 
@@ -158,6 +161,7 @@
  * WindowList
  */
 
+#include "rcparse_tab.h"
 
 ldat GlobalFlags[4];
 ldat GlobalShadows[2];
@@ -1388,3 +1392,4 @@ void QuitModule(module Module) {
 }
 #endif /* THIS_MODULE */
 
+#endif /* _TWIN_RCPARSE_H */

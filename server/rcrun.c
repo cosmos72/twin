@@ -264,11 +264,13 @@ INLINE void RCRemove(run **p) {
 #define RCAddFirst(r, head) do { (r)->next = (head); (head) = (r); } while (0)
 
 static void RCKillAll(void) {
-    run *r, *s, **l, *list[4];
-
-    list[0] = Run;  list[1] = Sleep;
-    list[2] = Wait; list[3] = Interactive;
-    for (s = *(l = list); l < list + 4; s = *++l) {
+    run *list[4] = {
+      Run, Sleep, Wait, Interactive,
+    };
+    udat i;
+  
+    for (i = 0; i < 4; i++) {
+        run *s = list[i], *r;
 	while ((r = s)) {
 	    s = r->next;
 	    FreeMem(r);

@@ -115,16 +115,16 @@ module DlLoad(uldat code) {
 	if (!(M = So[code])) {
 	    switch (code) {
 #ifndef CONF_WM
-	      case WMSo:      M = DlLoadAny(6, "wm"); break;
+	      case WMSo:      M = DlLoadAny(2, "wm"); break;
 #endif
 #ifndef CONF_TERM
-	      case TermSo:    M = DlLoadAny(8, "term"); break;
+	      case TermSo:    M = DlLoadAny(4, "term"); break;
 #endif
 #ifndef CONF_SOCKET
-	      case SocketSo:  M = DlLoadAny(10, "socket"); break;
+	      case SocketSo:  M = DlLoadAny(6, "socket"); break;
 #endif
 #ifndef CONF_WM_RC
-	      case RCParseSo: M = DlLoadAny(11, "rcparse"); break;
+	      case RCParseSo: M = DlLoadAny(7, "rcparse"); break;
 #endif
 	      case MainSo:
 	      default:        M = DlLoadAny(0, NULL); break;
