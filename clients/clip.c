@@ -65,14 +65,12 @@ static byte InitClip(void) {
 
 int main(int argc, char *argv[]) {
     tmsg Msg;
-    udat Code;
     uldat err, WinN = 1;
     
     if (InitClip()) while ((Msg=TwReadMsg(TRUE))) {
 	if (Msg->Type==TW_MSG_WIDGET_KEY) {
 	    
 	    tevent_keyboard EventK = &Msg->Event.EventKeyboard;
-	    Code=EventK->Code;
 	    (void)TwWriteAsciiWindow(EventK->W, EventK->SeqLen, EventK->AsciiSeq);
 	    
 	} else if (Msg->Type==TW_MSG_SELECTION) {

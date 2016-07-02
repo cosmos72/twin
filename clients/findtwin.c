@@ -42,7 +42,7 @@ static void test(TW_CONST char *dpy) {
 #define HX(c) (((c) >= '0' && (c) <= '9') || ((c) >= 'a' && (c) <= 'f'))
 
 static int match_twsocket(TW_CONST struct dirent *d) {
-    char *s = d->d_name;
+    const char *s = d->d_name;
     
     return !strncmp(s, ".Twin:", 6) &&
 	HX(s[6]) && (!s[7] ||

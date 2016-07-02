@@ -2231,12 +2231,9 @@ static menuitem RecursiveGetSelectedItem(menu Menu, dat *depth) {
 }
 
 static void SetSelectedItem(menu Menu, menuitem Item) {
-    menuitem S;
-    
     if (Menu) {
 	if (Item) {
 	    if (Item->Parent == (obj)Menu) {
-		S = Menu->SelectI;
 		Menu->SelectI = Item;
 		if (Menu->CommonItems && All->CommonMenu)
 		    All->CommonMenu->SelectI = (menuitem)0;

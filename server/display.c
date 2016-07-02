@@ -399,15 +399,6 @@ static struct s_display_hw _HW = {
 	&_FnDisplayHW,
 };
 
-#if defined(CONF__MODULES) || defined(CONF_HW_TWIN)
-static byte check4(byte *s, byte *arg) {
-    if (arg && !strncmp(s, arg, strlen(s))) {
-	printk("twin: trying given `--hw=%."STR(SMALLBUFF)"s' display driver.\n", s);
-	return TRUE;
-    }
-    return FALSE;
-}
-#endif /* defined(CONF__MODULES) || defined(CONF_HW_TWIN) */
 
 #if defined(CONF__MODULES) || defined(CONF_HW_GFX) || defined(CONF_HW_X11) || defined(CONF_HW_TTY) || defined(CONF_HW_GGI)
 static byte autocheck4(byte *s, byte *arg) {
@@ -541,7 +532,6 @@ static byte InitDisplayHW(display_hw D_HW) {
     else
 	arg = NULL;
 
-#define     TRY4(hw) (    check4(STR(hw), arg) && (tried++, CAT(hw,_InitHW)()) && (fix4(STR(hw), D_HW), TRUE))
 #define AUTOTRY4(hw) (autocheck4(STR(hw), arg) && (tried++, CAT(hw,_InitHW)()) && (fix4(STR(hw), D_HW), TRUE))
 
     success =
@@ -556,7 +546,7 @@ static byte InitDisplayHW(display_hw D_HW) {
 #endif
 #if defined(CONF__MODULES) || defined(CONF_HW_DISPLAY)
 #if 0 /* cannot use `--hw=display' inside twdisplay! */
-	TRY4(display) ||
+	AUTOTRY4(display) ||
 # endif
 #endif
 #if defined(CONF__MODULES) || defined(CONF_HW_TTY)

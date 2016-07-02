@@ -256,7 +256,7 @@ byte EnsureLenRow(row Row, ldat Len, byte DefaultCol) {
 byte RowWriteAscii(window Window, ldat Len, CONST byte *Text) {
     row CurrRow;
     byte CONST * _Text;
-    byte FlagNewRows, ModeInsert;
+    byte ModeInsert;
     hwfont CONST * to_UTF_16;
     ldat i;
     ldat x, y, max, RowLen;
@@ -276,13 +276,11 @@ byte RowWriteAscii(window Window, ldat Len, CONST byte *Text) {
     while (Len) {
 	if (max<=y || (max==y+1 && (*Text=='\n' || *Text=='\r'))) {
 	    if (InsertRowsWindow(Window, Max2(y+1-max,1))) {
-		FlagNewRows=TRUE;
 		max=Window->HLogic;
 		CurrRow=Window->USE.R.LastRow;
 	    } else
 		return FALSE;
 	} else {
-	    FlagNewRows=FALSE;
 	    CurrRow=Act(FindRow,Window)(Window, y);
 	}
 	
@@ -349,7 +347,7 @@ byte RowWriteAscii(window Window, ldat Len, CONST byte *Text) {
 byte RowWriteHWFont(window Window, ldat Len, CONST hwfont *Text) {
     row CurrRow;
     CONST hwfont * _Text;
-    byte FlagNewRows, ModeInsert;
+    byte ModeInsert;
     ldat i;
     ldat x, y, max, RowLen;
     
@@ -368,13 +366,11 @@ byte RowWriteHWFont(window Window, ldat Len, CONST hwfont *Text) {
     while (Len) {
 	if (max<=y || (max==y+1 && (*Text=='\n' || *Text=='\r'))) {
 	    if (InsertRowsWindow(Window, Max2(y+1-max,1))) {
-		FlagNewRows=TRUE;
 		max=Window->HLogic;
 		CurrRow=Window->USE.R.LastRow;
 	    } else
 		return FALSE;
 	} else {
-	    FlagNewRows=FALSE;
 	    CurrRow=Act(FindRow,Window)(Window, y);
 	}
 	
@@ -559,17 +555,16 @@ void ExposeWindow2(window W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch
 
 
 void ResizeWidget(widget W, dat X, dat Y) {
-    dat mX, mY;
-
     if (W) {
 	X = Max2(1, X);
 	Y = Max2(1, Y);
-	mX = Max2(X, W->XWidth);
-	mY = Max2(Y, W->YWidth);
+	/* mX = Max2(X, W->XWidth); */
+	/* mY = Max2(Y, W->YWidth); */
 	W->XWidth = X;
 	W->YWidth = Y;
 
 	if (!(W->Flags & WIDGETFL_NOTVISIBLE))
+            /* FIXME: use mX and mY */
 	    DrawAreaWidget(W);
     }
 }
@@ -732,17 +727,11 @@ INLINE void DrawDeltaShadeFirstWindow(dat i, dat j) {
     screen Screen;
     window Window;
     dat YLimit;
-    dat DWidth, DHeight;
-    byte DeltaXShade, DeltaYShade;
 
     Screen=All->FirstScreen;
     if (!(Window=(window)Screen->FirstW) || !IS_WINDOW(Window))
 	return;
 
-    DWidth=All->DisplayWidth;
-    DHeight=All->DisplayHeight;
-    DeltaXShade=All->SetUp->DeltaXShade;
-    DeltaYShade=All->SetUp->DeltaYShade;
     YLimit=Screen->YLimit;
     
      Left_= (ldat)Window->Left - Screen->XLogic;
@@ -768,7 +757,7 @@ void DragFirstWindow(dat i, dat j) {
     window Window;
     dat YLimit;
     dat DWidth, DHeight;
-    byte Shade, DeltaXShade, DeltaYShade;
+    byte Shade;
     
     Screen=All->FirstScreen;
     if (!(Window=(window)Screen->FirstW) || !IS_WINDOW(Window) || !(Window->Attrib & WINDOW_DRAG))
@@ -789,8 +778,6 @@ void DragFirstWindow(dat i, dat j) {
     DHeight=All->DisplayHeight;
     SetUp=All->SetUp;
     Shade=!!(SetUp->Flags & SETUP_SHADOWS);
-    DeltaXShade=Shade ? SetUp->DeltaXShade : (byte)0;
-    DeltaYShade=Shade ? SetUp->DeltaYShade : (byte)0;
    
     Left = (ldat)Window->Left - Screen->XLogic;
     Rgt  = Left+(ldat)Window->XWidth-(ldat)1;
@@ -1110,7 +1097,6 @@ void ResizeRelWindow(window Window, dat i, dat j) {
     dat DeltaX, DeltaY;
     dat YLimit, XWidth, YWidth;
     dat MinXWidth, MinYWidth, MaxXWidth, MaxYWidth;
-    dat DWidth, DHeight;
     byte Shade, DeltaXShade, DeltaYShade, visible;
     
     if (!Window || (!i && !j)) /* || !(Window->Attrib & WINDOW_RESIZE) */
@@ -1131,8 +1117,6 @@ void ResizeRelWindow(window Window, dat i, dat j) {
     MaxYWidth=Window->MaxYWidth;
 
     if (visible && (Parent=Window->Parent) && IS_SCREEN(Parent)) {
-	DWidth=All->DisplayWidth;
-	DHeight=All->DisplayHeight;
 	SetUp=All->SetUp;
 	Shade=!!(SetUp->Flags & SETUP_SHADOWS);
 	DeltaXShade=Shade ? SetUp->DeltaXShade : (byte)0;
@@ -1196,7 +1180,7 @@ void ScrollFirstWindowArea(dat X1, dat Y1, dat X2, dat Y2, ldat DeltaX, ldat Del
     screen Screen;
     dat DWidth, DHeight;
     window Window;
-    ldat shLeft, shUp, shRgt, shDwn;
+    ldat shLeft, shUp;
     dat Left, Up, Rgt, Dwn;
     dat Xstart, Ystart, Xend, Yend;
     dat XWidth, YWidth, YLimit;
@@ -1223,8 +1207,6 @@ void ScrollFirstWindowArea(dat X1, dat Y1, dat X2, dat Y2, ldat DeltaX, ldat Del
     YLimit=Screen->YLimit;
     shUp=(ldat)Window->Up - Screen->YLogic + (ldat)YLimit;
     shLeft=(ldat)Window->Left - Screen->XLogic;
-    shRgt=shLeft+(ldat)Window->XWidth-(ldat)1;
-    shDwn=shUp+(ldat)Window->YWidth-(ldat)1;
     
     X1=Max2(X1, 0);
     Y1=Max2(Y1, 0);

@@ -176,7 +176,7 @@ void Resize(uldat Slot, dat X, dat Y) {
 
 static byte **TokenizeStringVec(uldat len, byte *s) {
     byte **cmd = NULL, *buf, c;
-    uldat save_len, save_n, n = 0;
+    uldat save_len, n = 0;
     
     /* skip initial spaces */
     while (len && ((c = *s) == '\0' || c == ' ')) {
@@ -199,7 +199,6 @@ static byte **TokenizeStringVec(uldat len, byte *s) {
 	    }
 	}
 	if ((cmd = TwAllocMem((n + 1) * sizeof(byte *)))) {
-	    save_n = n;
 	    n = 0;
 	    len = save_len;
 	    s = buf;

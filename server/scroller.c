@@ -63,7 +63,6 @@ INLINE void ScrollerDelayRepeat(void) {
 static void ScrollerH(msgport MsgPort) {
     msg Msg, saveMsg;
     mouse_state *Mouse;
-    screen Screen;
     uldat Attrib, WState;
     dat Limit;
     dat Mouse_delta_x, Mouse_delta_y;
@@ -128,8 +127,6 @@ static void ScrollerH(msgport MsgPort) {
     }
     
     if (FlagDeskScroll) {
-	Screen=All->FirstScreen;
-
 	Limit=All->SetUp->MaxMouseSnap;
 	if (Scroller_MsgPort->PauseDuration.Fraction > 333 MilliSECs) {
 	    Mouse_delta_x = Sign(Mouse_delta_x);

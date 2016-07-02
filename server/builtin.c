@@ -483,7 +483,6 @@ static void BuiltinH(msgport MsgPort) {
     window NewWindow, tempWin;
     row Row;
     udat Code;
-    byte /*FontHeight,*/ Flags;
     
     Screen = All->FirstScreen;
     
@@ -517,7 +516,6 @@ static void BuiltinH(msgport MsgPort) {
 	  case MSG_MENU_ROW:
 	    if (Event->EventMenu.Menu==Builtin_Menu) {
 		Code=Event->EventMenu.Code;
-		Flags=All->SetUp->Flags;
 		switch (Code) {
 		  case COD_EXECUTE:
 		  case COD_CLOCK_WIN:

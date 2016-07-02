@@ -445,7 +445,7 @@ byte tty_InitHW(void) {
     }
 
 
-#ifdef HW_TTY_TERMCAP
+#ifdef CONF_HW_TTY_TERMCAP
     colorbug = tc_colorbug;
 #endif
 

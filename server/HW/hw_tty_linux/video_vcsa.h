@@ -136,7 +136,7 @@ INLINE void vcsa_write(int fd, hwattr *buf, uldat count, uldat pos) {
 
 static void vcsa_FlushVideo(void) {
     dat i, j;
-    uldat prevS = (uldat)-1, prevE = (uldat)-1, _prevS, _prevE, _start, _end, start, end;
+    uldat prevS = (uldat)-1, prevE = (uldat)-1, _prevS, _start, _end, start, end;
     byte FlippedVideo = FALSE, FlippedOldVideo = FALSE;
     hwattr savedOldVideo;
     
@@ -202,7 +202,7 @@ static void vcsa_FlushVideo(void) {
 		    /* the two chunks are (almost) contiguous, merge them */
 		    /* if HW->X != DisplayWidth we can merge only if they do not wrap */
 		    if (HW->X == DisplayWidth || prevS / DisplayWidth == end / DisplayWidth) {
-			_prevE = prevE = end;
+			prevE = end;
 			continue;
 		    }
 		}
@@ -211,7 +211,6 @@ static void vcsa_FlushVideo(void) {
 	    prevS = start;
 	    prevE = end;
 	    _prevS = _start;
-	    _prevE = _end;
 	}
     }
     if (prevS != (uldat)-1) {

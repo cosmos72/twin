@@ -394,7 +394,7 @@ void DrawSelfWidget(draw_ctx *D) {
 	CONST byte *Text = NULL;
 	CONST hwfont *HWFont = NULL;
 	CONST hwattr *HWAttr = NULL;
-	ldat Left, Up, Rgt, Dwn;
+	ldat Left, Up;
 	ldat v;
 	dat Pitch, X1, X2, Y1, Y2, dX, dY;
 	ldat _X1, _X2, _Y1, _Y2;
@@ -417,7 +417,6 @@ void DrawSelfWidget(draw_ctx *D) {
 	    break;
 	}
 	Left = D->Left; Up = D->Up;
-	Rgt = D->Rgt; Dwn = D->Dwn;
 	X1 = D->X1; Y1 = D->Y1;
 	X2 = D->X2; Y2 = D->Y2;
 	Shaded = D->Shaded;
@@ -550,7 +549,6 @@ void DrawSelfGadget(draw_ctx *D) {
     }
     
     {
-	widget Parent;
 	byte Select, Disabled, Absent;
 	dat width, DWidth, i, i_min, i_max, j, j_min, j_max;
 	ldat Offset;
@@ -558,7 +556,6 @@ void DrawSelfGadget(draw_ctx *D) {
 	hwcol *ColText, **GadgetColor;
 	hwcol Color;
 
-	Parent = G->Parent;
 	Select = !!(G->Flags & GADGETFL_PRESSED);
 	Disabled = !!(G->Flags & GADGETFL_DISABLED);
 	Absent = !!(G->Flags & GADGETFL_TEXT_DEFCOL);
@@ -705,7 +702,7 @@ void DrawSelfWindow(draw_ctx *D) {
     }
 	
     {
-	ldat Left, Up, Rgt, Dwn;
+	ldat Left, Up, Rgt;
 	dat X1, Y1, X2, Y2;
 	dat DWidth, i, j;
 	ldat u, v;
@@ -722,7 +719,7 @@ void DrawSelfWindow(draw_ctx *D) {
 	X1 = D->X1; Y1 = D->Y1;
 	X2 = D->X2; Y2 = D->Y2;
 	Left = D->Left; Up = D->Up;
-	Rgt = D->Rgt; Dwn = D->Dwn;
+	Rgt = D->Rgt;
 	Shaded = D->Shaded;
 	DWidth = D->DWidth;
     
@@ -947,7 +944,6 @@ static void DrawWCtx(draw_ctx *D) {
     window Window;
     byte Shaded, Border, WinActive, NoChildren;
     byte ChildFound=FALSE, lError=FALSE, FirstCycle=TRUE;
-    screen Screen;
     dat DWidth, DHeight;
     ldat cL, cU, cR, cD;
 
@@ -962,7 +958,6 @@ static void DrawWCtx(draw_ctx *D) {
 	X2 = D->X2; Y2 = D->Y2;
 	Left = D->Left; Up = D->Up;
 	Rgt  = D->Rgt; Dwn = D->Dwn;
-	Screen = D->Screen;
 	DWidth = D->DWidth;
 	DHeight = D->DHeight;
 	Shaded = D->Shaded;
