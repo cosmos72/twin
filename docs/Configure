@@ -96,16 +96,6 @@
    and furthermore they shoot heavily on the kernel mmap() subsystem,
    so on some OSes / hardware they may give troubles.
    
-	(CONF__UNICODE)
-	Build all code with Unicode support [Y/n] ?
-   
-   Answer 'y' unless you know what you are doing. Saying 'n' skips compiling
-   all necessary code to support Unicode, and produced clients and libraries
-   will be _incompatible_ with ones built with Unicode support. Also, mixing
-   Unicode aware clients with a non-Unicode server or vice-versa may result
-   in non-ASCII characters being rendered wrongly. It makes sense to say 'n'
-   only if you have _extremely_ tight memory requirements.
-   
 	#
 	# Socket support
 	#

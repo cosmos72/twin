@@ -235,7 +235,6 @@ static CONST byte *alienAllocReadVec(CONST byte *src, uldat len, uldat srcsize, 
  * translate to alien data, copying len bytes from srcsize chunks to dstsize chunks, optionally flipping byte order.
  * assume dst is large enough to hold translated data.
  */
-#ifdef CONF__UNICODE
 static void alienWriteVec(CONST byte *src, byte *dst, uldat len, uldat srcsize, uldat dstsize, byte flag) {
     /* round to srcsize multiple */
     len = (len / srcsize) * srcsize;
@@ -261,7 +260,6 @@ static void alienWriteVec(CONST byte *src, byte *dst, uldat len, uldat srcsize, 
 	}
     }
 }
-#endif
 
 static void alienReply(uldat code, uldat alien_len, uldat len, CONST void *data) {
     byte AlienSizeofUldat = SIZEOF(uldat);
@@ -287,7 +285,6 @@ static void alienReply(uldat code, uldat alien_len, uldat len, CONST void *data)
     }
 }
 
-#ifdef CONF__UNICODE
 static void alienTranslateHWAttrV_CP437_to_UTF_16(hwattr *H, uldat Len) {
     hwfont f;
     while (Len--) {
@@ -296,7 +293,6 @@ static void alienTranslateHWAttrV_CP437_to_UTF_16(hwattr *H, uldat Len) {
 	H++;
     }
 }
-#endif
 
 TW_INLINE ldat alienDecodeArg(uldat id, CONST byte * Format, uldat n, tsfield a, uldat mask[1], byte flag[1], ldat fail) {
     CONST void *A;
@@ -328,42 +324,8 @@ TW_INLINE ldat alienDecodeArg(uldat id, CONST byte * Format, uldat n, tsfield a,
 	    CASE_(ldat);
 	    CASE_(topaque);
 	    CASE_(tany);
-#ifndef CONF__UNICODE
 	    CASE_(hwfont);
-#else
-	  case TWS_hwfont:
-	    /* ensure hwattr size WAS negotiated */
-	    if (SIZEOF(hwfont) && Left(SIZEOF(hwfont))) {
-		hwfont an;
-		POP(s,hwfont,an);
-		a[n]_any = (tany)an & 0xFF;
-		if (SIZEOF(hwfont) == 1)
-		    a[n]_any = Tutf_CP437_to_UTF_16[a[n]_any];
-		a[n]_type = c;
-		break;
-	    }
-	    fail = -fail;
-	    break;
-#endif
-#ifndef CONF__UNICODE
 	    CASE_(hwattr);
-#else
-	  case TWS_hwattr:
-	    /* ensure hwattr size WAS negotiated */
-	    if (SIZEOF(hwattr) && Left(SIZEOF(hwattr))) {
-		hwattr an;
-		POP(s,hwattr,an);
-		a[n]_any = HWATTR_COLMASK(an);
-		an = HWFONT(an) & 0xFF;
-		if (SIZEOF(hwattr) == 2)
-		    an = Tutf_CP437_to_UTF_16[an];
-		a[n]_any |= HWATTR(0, an);
-		a[n]_type = c;
-		break;
-	    }
-	    fail = -fail;
-	    break;
-#endif
 #undef CASE_
 	  default:
 	    break;
@@ -399,10 +361,8 @@ TW_INLINE ldat alienDecodeArg(uldat id, CONST byte * Format, uldat n, tsfield a,
 			(av, nlen, AlienMagic(Slot)[c], TwinMagicData[c],
 			 AlienXendian(Slot) == MagicAlienXendian);
 		    if (a[n]_vec) {
-#ifdef CONF__UNICODE
 			if (c == TWS_hwattr && SIZEOF(hwattr) == 2)
 			    alienTranslateHWAttrV_CP437_to_UTF_16((hwattr *)a[n]_vec, nlen);
-#endif
 			*mask |= 1 << n;
 		    } else
 			fail = -fail;
@@ -434,10 +394,8 @@ TW_INLINE ldat alienDecodeArg(uldat id, CONST byte * Format, uldat n, tsfield a,
 			     AlienXendian(Slot) == MagicAlienXendian);
 			    
 			if (a[n]_vec) {
-#ifdef CONF__UNICODE
 			    if (c == TWS_hwattr && SIZEOF(hwattr) == 2)
 				alienTranslateHWAttrV_CP437_to_UTF_16((hwattr *)a[n]_vec, nlen);
-#endif
 			    *mask |= 1 << n;
 			} else
 			    fail = -fail;
@@ -611,24 +569,7 @@ static void alienMultiplexB(uldat id) {
 		CASE_(topaque);
 		CASE_(tany);
 		CASE_(hwfont);
-#ifndef CONF__UNICODE
 		CASE_(hwattr);
-#else
-	      case TWS_hwattr:
-		/* ensure hwattr size WAS negotiated */
-		if (TWS_hwattr <= TWS_hwcol || SIZEOF(hwattr)) {
-		    if (SIZEOF(hwattr) == 1) {
-			hwfont f = Tutf_UTF_16_to_CP437(HWFONT(a[0]_any));
-			a[0]_any = HWATTR_COLMASK(a[0]_any) | HWATTR(0, f);
-		    }
-		    /* move to first bytes on MSB machines */
-		    *(hwattr *)&a[0]_any = (hwattr)a[0]_any;
-		    c = SIZEOF(hwattr);
-		    tmp = sizeof(hwattr);
-		} else
-		    fail = -fail;
-		break;
-#endif
 #undef CASE_
 	      default:
 		c = self = 0;
@@ -829,16 +770,14 @@ static void alienSendMsg(msgport MsgPort, msg Msg) {
     uldat Len = 0, Tot;
     byte *t;
     uldat N;
-#if defined(CONF__MODULES) || defined (CONF_HW_DISPLAY) || defined(CONF__UNICODE)
+#if defined(CONF__MODULES) || defined (CONF_HW_DISPLAY)
     byte *Src;
 #endif
 #if defined(CONF__MODULES) || defined (CONF_HW_DISPLAY)
     byte Type;
 #endif
-#ifdef CONF__UNICODE
     byte16 h;
     hwattr H;
-#endif
     
     RequestN = MSG_MAGIC;
     Fd = MsgPort->RemoteData.Fd;
@@ -885,7 +824,6 @@ static void alienSendMsg(msgport MsgPort, msg Msg) {
 	    
 	    if (Type == TWS_byte) {
 		PushV(t, N, Src);
-# ifdef CONF__UNICODE
 	    } else if (Type == TWS_hwattr && AlienMagic(Slot)[Type] == 2) {
 		/* on the fly conversion from Unicode to CP437 */
 		while (N--) {
@@ -894,7 +832,6 @@ static void alienSendMsg(msgport MsgPort, msg Msg) {
 		    h = HWATTR16(HWCOL(H),Tutf_UTF_16_to_CP437(HWFONT(H)));
 		    alienPush((CONST byte *)&h, sizeof(hwattr), &t, 2);
 		}
-# endif
 	    } else {
 		Tot = TwinMagicData[Type];
 		Len = AlienMagic(Slot)[Type];
@@ -976,10 +913,8 @@ static void alienSendMsg(msgport MsgPort, msg Msg) {
 	break;
       case MSG_SELECTIONNOTIFY:
 	N = Msg->Event.EventSelectionNotify.Len;
-#ifdef CONF__UNICODE
 	if (Msg->Event.EventSelectionNotify.Magic == SEL_HWFONTMAGIC)
 	    N = (N / sizeof(hwfont)) * SIZEOF(hwfont);
-#endif
 	alienReply(Msg->Type, Len = 4*SIZEOF(uldat) + 2*SIZEOF(dat) + MAX_MIMELEN + N, 0, NULL);
 
 	if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
@@ -991,7 +926,6 @@ static void alienSendMsg(msgport MsgPort, msg Msg) {
 	    alienPUSH(t, uldat, Msg->Event.EventSelectionNotify.Magic);
 	    PushV(t, MAX_MIMELEN, Msg->Event.EventSelectionNotify.MIME);
 	    
-#ifdef CONF__UNICODE
 	    /* client may be not unicode aware while we are */
 	    if (Msg->Event.EventSelectionNotify.Magic == SEL_HWFONTMAGIC) {
 		N = Msg->Event.EventSelectionNotify.Len;
@@ -1018,9 +952,7 @@ static void alienSendMsg(msgport MsgPort, msg Msg) {
 				  AlienXendian(Slot) == MagicAlienXendian);
 		    t += N;
 		}
-	    } else
-#endif
-	    {
+	    } else {
 		alienPUSH(t, uldat, Msg->Event.EventSelectionNotify.Len);
 		PushV(t, Msg->Event.EventSelectionNotify.Len, Msg->Event.EventSelectionNotify.Data);
 	    }

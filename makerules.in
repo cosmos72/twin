@@ -432,9 +432,7 @@ endif
 #
 
 ifeq ($(CONF__SHLIBS),n)
-  ifeq ($(CONF__UNICODE),y)
-    LD_LIBTUTF:=$(B)libs/libTutf/libTutf.a
-  endif
+  LD_LIBTUTF:=$(B)libs/libTutf/libTutf.a
   ifneq ($(CONF__SOCKET),n)
     LD_LIBTW:=$(B)libs/libTw/libTw.a
   
@@ -456,9 +454,7 @@ ifeq ($(CONF__SHLIBS),n)
         LD_LIBTT+=-export-dynamic
       endif
     endif
-    ifeq ($(CONF__UNICODE),y)
-      LD_LIBTT+=$(LD_LIBTUTF)
-    endif
+    LD_LIBTT+=$(LD_LIBTUTF)
     ifeq ($(CONF_SOCKET_PTHREADS),y)
       LD_LIBTT+=$(LD_LIBPTHREAD_WEAK)
     endif
@@ -478,18 +474,13 @@ else
     # you just need to specify the first one when linking a program,
     # provided GNU ld can find also the second one in its search path
     #
-    ifeq ($(CONF__UNICODE),y)
-      LD_LIBTUTF:=-L$(B)libs/libTutf -lTutf
-    endif
+    LD_LIBTUTF:=-L$(B)libs/libTutf -lTutf
     ifneq ($(CONF__SOCKET),n)
       LD_LIBTW:=-L$(B)libs/libTw -lTw
     endif
     ifeq ($(CONF_TT),y)
       LD_LIBTT:=-L$(B)libs/libTT -lTT
-      
-      ifeq ($(CONF__UNICODE),y)
-        LD_LIBTT+=-Wl,-rpath-link,$(B)libs/libTutf
-      endif
+      LD_LIBTT+=-Wl,-rpath-link,$(B)libs/libTutf
       ifeq ($(CONF_TT_HW_TWIN),y)
         LD_LIBTT+=-Wl,-rpath-link,$(B)libs/libTw
       endif
@@ -500,9 +491,7 @@ else
     # a libtool library to depend on another libtool library
     # (libTT is linked against, and needs, libTutf)
     #
-    ifeq ($(CONF__UNICODE),y)
-      LD_LIBTUTF:=$(B)libs/libTutf/libTutf.la
-    endif
+    LD_LIBTUTF:=$(B)libs/libTutf/libTutf.la
     ifneq ($(CONF__SOCKET),n)
       LD_LIBTW:=$(B)libs/libTw/libTw.la
     endif
@@ -920,26 +909,8 @@ endif
 
 
 
-ifeq ($(CONF__UNICODE),)
-  ifneq ($(wildcard $(CONF)),)
-    include $(CONF)
-  endif
-endif
-
-ifneq ($(wildcard $(B).unicode.conf),)
-  include $(B).unicode.conf
-else
-  PREVIOUS_CONF__UNICODE=x
-endif
-
-
-
-#
-# force re-making after building include/Tw/uni_types.h,
-# so that 'make' reads new .unicode.conf
-#
-ifneq ($(CONF__UNICODE),$(PREVIOUS_CONF__UNICODE))
-  $(B)include/Tw/uni_types.h: force-remake
+ifneq ($(wildcard $(CONF)),)
+  include $(CONF)
 endif
 
 #
@@ -948,15 +919,8 @@ endif
 # $(B)include/Tw/uni_types.h: $(CONF)
 #
 
-ifeq ($(CONF__UNICODE),n)
-  $(B)include/Tw/uni_types.h $(B).unicode.conf: $(T)scripts/unitypes16.in
+$(B)include/Tw/uni_types.h $(B).unicode.conf: $(T)scripts/unitypes32.in
 	cat $< > $@
-	@echo "PREVIOUS_CONF__UNICODE=$(CONF__UNICODE)" > $(B).unicode.conf
-else
-  $(B)include/Tw/uni_types.h $(B).unicode.conf: $(T)scripts/unitypes32.in
-	cat $< > $@
-	@echo "PREVIOUS_CONF__UNICODE=$(CONF__UNICODE)" > $(B).unicode.conf
-endif
 
 
 #

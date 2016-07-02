@@ -28,11 +28,9 @@
 #include <Tw/Tw.h>
 #include <Tw/Twstat.h>
 #include <Tw/Twstat_defs.h>
+#include <Tutf/Tutf.h>
+#include <Tutf/Tutf_defs.h>
 
-#ifdef CONF__UNICODE
-# include <Tutf/Tutf.h>
-# include <Tutf/Tutf_defs.h>
-#endif
 #ifdef CONF_TERM
 # include "tty.h"
 #endif
@@ -47,11 +45,7 @@
 #endif
 
 
-#ifdef CONF__UNICODE
 extern hwattr extra_POS_INSIDE;
-#else
-# define extra_POS_INSIDE 0
-#endif
 
 
 /* some object-oriented ones not included in fn_obj */
@@ -727,15 +721,10 @@ static gadget CreateEmptyButton(fn_gadget Fn_Gadget, msgport Owner, dat XWidth, 
     ldat Size;
     byte i;
     dat j, k;
-#ifdef CONF__UNICODE
 # define _FULL  T_UTF_16_FULL_BLOCK
 # define _LOWER T_UTF_16_LOWER_HALF_BLOCK
 # define _UPPER T_UTF_16_UPPER_HALF_BLOCK
-#else
-# define _FULL  ((byte)'Û')
-# define _LOWER ((byte)'Ü')
-# define _UPPER ((byte)'ß')
-#endif
+
     if ((G=(gadget)Fn_Gadget->Fn_Widget->Create
 	 ((fn_widget)Fn_Gadget, Owner, ++XWidth, ++YWidth, 0, GADGETFL_USETEXT|GADGETFL_BUTTON, 0, 0, (hwattr)0))) {
 	
@@ -806,11 +795,7 @@ byte FillButton(gadget G, widget Parent, udat Code, dat Left, dat Up,
 	for (i=(dat)0; i<XWidth-(dat)1; i++) {
 	    G->USE.T.Text[0][i+j] = G->USE.T.Text[1][i+j+1] =
 		G->USE.T.Text[2][i+j] = G->USE.T.Text[3][i+j+1] =
-#ifdef CONF__UNICODE
 		Tutf_CP437_to_UTF_16[*(T++)];
-#else
-		*(T++);
-#endif
 	    
 	    G->USE.T.Color[0][i+j] = G->USE.T.Color[1][i+j+1] = Color;
 	    G->USE.T.Color[2][i+j] = G->USE.T.Color[3][i+j+1] = ColorDisabled;
@@ -921,20 +906,12 @@ static byte InitTtyData(window Window, dat ScrollBackLines) {
     Data->nPar = 0;
 
     Data->G = Data->saveG = 0;
-    /*
-     * default to latin1 charset if CONF__UNICODE is enabled
-     */
-#ifdef CONF__UNICODE
+    /* default to latin1 charset */
     Data->currG = Data->G0 = Data->saveG0 = LAT1_MAP;
-#else
-    Data->currG = Data->G0 = Data->saveG0 = IBMPC_MAP;
-#endif	
     Data->G1 = Data->saveG1 = GRAF_MAP;
 
     Data->utf = Data->utf_count = Data->utf_char = 0;
-#ifdef CONF__UNICODE
     Data->InvCharset = Tutf_UTF_16_to_ISO_8859_1;
-#endif
     Data->newLen = Data->newMax = 0;
     Data->newName = NULL;
     
@@ -1002,9 +979,7 @@ static window CreateWindow(fn_window Fn_Window, msgport Owner,
 	Window->MaxXWidth = MAXDAT;
 	Window->MaxYWidth = MAXDAT;
 
-#ifdef CONF__UNICODE
 	Window->Charset = Tutf_CP437_to_UTF_16;
-#endif
 	WriteMem(&Window->USE, '\0', sizeof(Window->USE));
 
 	if (W_USE(Window, USECONTENTS)) {
@@ -1854,19 +1829,11 @@ static byte SetTextRow(row Row, ldat Len, CONST byte *Text, byte DefaultCol) {
     if (EnsureLenRow(Row, Len, DefaultCol)) {
 	if (Len) {
 
-#if TW_SIZEOFHWFONT != 1
 	    hwfont *RowText = Row->Text;
 	    ldat i = Len;
 	    while (i-- > 0) {
-# ifdef CONF__UNICODE
 		*RowText++ = Tutf_CP437_to_UTF_16[*Text++];
-# else /* !CONF__UNICODE */
-		*RowText++ = *Text++;
-# endif /* CONF__UNICODE */
 	    }
-#else /* TW_SIZEOFHWFONT == 1 */
-	    CopyMem(Text, Row->Text, Len);
-#endif /* TW_SIZEOFHWFONT != 1 */
 	    if (!(Row->Flags & ROW_DEFCOL) && !DefaultCol)
 		/* will not work correctly if sizeof(hwcol) != 1 */
 		WriteMem(Row->ColText, COL(WHITE,BLACK), Len * sizeof(hwcol));

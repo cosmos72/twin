@@ -22,9 +22,7 @@
 #include <sys/socket.h>
 
 #include <Tw/Twkeys.h>
-#ifdef CONF__UNICODE
-# include <Tutf/Tutf.h>
-#endif
+#include <Tutf/Tutf.h>
     
 #include "twin.h"
 #include "methods.h"

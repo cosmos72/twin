@@ -11,11 +11,8 @@
  */
 
 #include <Tw/Twkeys.h>
-
-#ifdef CONF__UNICODE
-# include <Tutf/Tutf.h>
-# include <Tutf/Tutf_defs.h>
-#endif
+#include <Tutf/Tutf.h>
+#include <Tutf/Tutf_defs.h>
 
 #include "twin.h"
 #include "main.h"
@@ -55,9 +52,7 @@ struct x11_data {
     /* we support showing only a portion of the whole twin display */
     dat xhw_view, xhw_startx, xhw_starty, xhw_endx, xhw_endy;
     
-#ifdef CONF__UNICODE
     Tutf_function xUTF_16_to_charset;
-#endif    
     Display     *xdisplay;
     Window       xwindow;
     GC           xgc;
@@ -119,11 +114,7 @@ struct x11_data {
 /* this can stay static, X11_FlushHW() is not reentrant */
 static hwcol _col;
 
-#ifdef CONF__UNICODE
 # define myXDrawImageString XDrawImageString16
-#else
-# define myXDrawImageString XDrawImageString
-#endif
 
 #define XDRAW(col, buf, buflen) do { \
     if (xsgc.foreground != xcol[COLFG(col)]) \
@@ -140,12 +131,8 @@ INLINE void X11_Mogrify(dat x, dat y, uldat len) {
     hwattr *V, *oV;
     hwcol col;
     udat buflen = 0;
-#ifdef CONF__UNICODE
     hwfont f;
     XChar2b buf[SMALLBUFF];
-#else
-    byte buf[SMALLBUFF];
-#endif
     int xbegin, ybegin;
     
     if (xhw_view) {
@@ -179,13 +166,9 @@ INLINE void X11_Mogrify(dat x, dat y, uldat len) {
 		xbegin = (x - xhw_startx) * xwfont;
 		_col = col;
 	    }
-#ifdef CONF__UNICODE
 	    f = xUTF_16_to_charset(HWFONT(*V));
 	    buf[buflen  ].byte1 = f >> 8;
 	    buf[buflen++].byte2 = f & 0xFF;
-#else
-	    buf[buflen++] = HWFONT(*V);
-#endif
 	}
     }
     if (buflen) {
@@ -388,10 +371,8 @@ byte X11_InitHW(void) {
 	    XStoreName(xdisplay, xwindow, name);
 
 
-#ifdef CONF__UNICODE
 	    if (!(xUTF_16_to_charset = X11_UTF_16_to_charset_function(charset)))
 		xUTF_16_to_charset = X11_UTF_16_to_UTF_16;
-#endif	    
 	    /*
 	     * ask ICCCM-compliant window manager to tell us when close window
 	     * has been chosen, rather than just killing us

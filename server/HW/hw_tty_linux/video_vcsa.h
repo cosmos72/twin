@@ -122,11 +122,7 @@ INLINE void vcsa_write(int fd, hwattr *buf, uldat count, uldat pos) {
 	buf8 = vcsa_buff;
 	pos = chunk = Min2(count, BIGBUFF);
 	while (pos--) {
-# ifdef CONF__UNICODE
 	    *buf8++ = tty_UTF_16_to_charset(HWFONT(*buf));
-# else
-	    *buf8++ = HWFONT(*buf);
-# endif
 	    *buf8++ = HWCOL(*buf);
 	    buf++;
 	}

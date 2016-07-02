@@ -19,6 +19,14 @@
  */
 
 
+/*  Copyright (C) 2002 by Massimiliano Ghilardi
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Library General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 2 of the License, or (at your option) any later version.
+ *
+ */
 
 
 
@@ -42,7 +50,16 @@
 
 
 
-
+/*
+ *
+ *  Copyright (C) 2002 by Massimiliano Ghilardi
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Library General Public
+ * License as published by the Free Software Foundation; either
+ * version 2 of the License, or (at your option) any later version.
+ * 
+ */
 
 /*
  *                 WARNING!
@@ -125,32 +142,19 @@ static ttcol _col;
 
 
 
-#ifdef CONF__UNICODE
 # define XDRAW(col, buf, buflen) \
     if (xsgc.foreground != xcol[COLFG(col)]) \
 	XSetForeground(dpy, xgc, xsgc.foreground = xcol[COLFG(col)]); \
     if (xsgc.background != xcol[COLBG(col)]) \
 	XSetBackground(dpy, xgc, xsgc.background = xcol[COLBG(col)]); \
     XDrawImageString16(dpy, w, xgc, xbegin, ybegin + xupfont, buf, buflen)
-#else
-# define XDRAW(col, buf, buflen) \
-    if (xsgc.foreground != xcol[COLFG(col)]) \
-	XSetForeground(dpy, xgc, xsgc.foreground = xcol[COLFG(col)]); \
-    if (xsgc.background != xcol[COLBG(col)]) \
-	XSetBackground(dpy, xgc, xsgc.background = xcol[COLBG(col)]); \
-    XDrawImageString(dpy, w, xgc, xbegin, ybegin + xupfont, buf, buflen)
-#endif
 
 TT_INLINE void X11_Mogrify(Window w, ttshort x, ttshort y, ttattr *Text, ttattr *OldText, ttuint len, ttbyte ValidOldText) {
     ttattr *V, *oV;
     ttcol col;
     ttushort buflen = 0;
-#ifdef CONF__UNICODE
     ttfont f;
     XChar2b buf[TT_SMALLBUFF];
-#else
-    ttbyte buf[TT_SMALLBUFF];
-#endif
     int xbegin = x * xwfont, ybegin = y * xhfont;
     
     V = Text;
@@ -167,13 +171,9 @@ TT_INLINE void X11_Mogrify(Window w, ttshort x, ttshort y, ttattr *Text, ttattr 
 		xbegin = x * xwfont;
 		_col = col;
 	    }
-#ifdef CONF__UNICODE
 	    f = xUTF_16_to_charset(HWFONT(*V));
 	    buf[buflen  ].byte1 = f >> 8;
 	    buf[buflen++].byte2 = f & 0xFF;
-#else
-	    buf[buflen++] = HWFONT(*V);
-#endif
 	}
     }
     if (buflen) {
@@ -343,7 +343,6 @@ static TT_CONST ttbyte *X11_StrErrorDetail(ttuint E, ttuint S) {
 
 
 
-#ifdef CONF__UNICODE
 static Tutf_function X11_UTF_16_to_charset_function(TT_CONST ttbyte *charset) {
     XFontProp *fp;
     Atom fontatom;
@@ -410,7 +409,6 @@ static Tutf_function X11_UTF_16_to_charset_function(TT_CONST ttbyte *charset) {
     
     return Tutf_UTF_16_to_charset_function(i);
 }
-#endif
 
 
 
@@ -480,10 +478,8 @@ ttclasses _TT_X11_InitHW(tthw *HW)
 		xhints.width_inc  = xwfont;
 		xhints.height_inc = xhfont;
 		
-#ifdef CONF__UNICODE
 		if (!(xUTF_16_to_charset = X11_UTF_16_to_charset_function(charset)))
 		    xUTF_16_to_charset = X11_UTF_16_to_UTF_16;
-#endif	    
 		return &X11_TTClasses;
 	    }
 	}

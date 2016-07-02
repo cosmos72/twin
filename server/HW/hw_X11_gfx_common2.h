@@ -3,16 +3,11 @@ static void X11_HideCursor(dat x, dat y) {
     int xbegin = (x - xhw_startx) * xwfont, ybegin = (y - xhw_starty) * xhfont;
     hwattr V = Video[x + y * DisplayWidth];
     hwcol col = HWCOL(V);
-#ifdef CONF__UNICODE
     XChar2b c;
     hwattr extra = HWEXTRA32(V);
     hwfont f = xUTF_16_to_charset(HWFONT(V));
     c.byte1 = f >> 8;
     c.byte2 = f & 0xFF;
-#else
-    hwattr extra = 0;
-    byte c = HWFONT(V);
-#endif
     
     XDRAW_ANY(&c, 1, col, extra);
 }
@@ -21,12 +16,8 @@ static void X11_ShowCursor(uldat type, dat x, dat y) {
     udat i;
     hwcol v;
     hwattr V = Video[x + y * DisplayWidth];
-#ifdef CONF__UNICODE
     hwfont f;
     XChar2b c;
-#else
-    byte c;
-#endif
 
     ldat xbegin = (x - xhw_startx) * xwfont;
     ldat ybegin = (y - xhw_starty) * xhfont;
@@ -42,15 +33,10 @@ static void X11_ShowCursor(uldat type, dat x, dat y) {
 	    XSetForeground(xdisplay, xgc, xsgc.foreground = xcol[COLFG(v)]);
 	if (xsgc.background != xcol[COLBG(v)])
 	    XSetBackground(xdisplay, xgc, xsgc.background = xcol[COLBG(v)]);
-#ifdef CONF__UNICODE
 	f = xUTF_16_to_charset(HWFONT(V));
 	c.byte1 = f >> 8;
 	c.byte2 = f & 0xFF;
 	XDrawImageString16(xdisplay, xwindow, xgc, xbegin, ybegin + xupfont, &c, 1);
-#else
-	c = HWFONT(V);
-	XDrawImageString(xdisplay, xwindow, xgc, xbegin, ybegin + xupfont, &c, 1);
-#endif
     }
     if (type & 0xF) {
 	/* VGA hw-like cursor */
@@ -198,7 +184,6 @@ static void X11_SelectionNotify_X11(uldat ReqPrivate, uldat Magic, CONST byte MI
 			 sizeof(target_list)/sizeof(target_list[0]));
 	ev.xselection.property = XReq(XReqCount).property;
     } else if (XReq(XReqCount).target == XA_STRING) {
-#ifdef CONF__UNICODE
 	uldat l;
 	byte *_Data = NULL, *d;
 	TW_CONST hwfont *s;
@@ -214,15 +199,12 @@ static void X11_SelectionNotify_X11(uldat ReqPrivate, uldat Magic, CONST byte MI
 	    } else
 		Len = 0;
 	}
-#endif
 	XChangeProperty (xdisplay, XReq(XReqCount).requestor, XReq(XReqCount).property,
 			 XA_STRING, 8, PropModeReplace, Data, Len);
 	ev.xselection.property = XReq(XReqCount).property;
 
-#ifdef CONF__UNICODE
 	if (Magic == SEL_HWFONTMAGIC && _Data)
 	    FreeMem(_Data);
-#endif
     }
     XSendEvent (xdisplay, XReq(XReqCount).requestor, False, 0, &ev);
     setFlush();
@@ -388,7 +370,6 @@ static int X11_Die(Display *d) {
 #endif
 
 
-#ifdef CONF__UNICODE
 static Tutf_function X11_UTF_16_to_charset_function(CONST byte *charset) {
     XFontProp *fp;
     Atom fontatom;
@@ -457,7 +438,5 @@ static hwfont X11_UTF_16_to_UTF_16(hwfont c) {
 	c &= 0x01FF;
     return c;
 }
-
-#endif
 
     

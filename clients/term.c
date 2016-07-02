@@ -35,10 +35,7 @@
 
 #include <Tw/Tw.h>
 #include <Tw/Twerrno.h>
-
-#ifdef CONF__UNICODE
-# include <Tutf/Tutf.h>
-#endif
+#include <Tutf/Tutf.h>
 
 #include "version.h"
 
@@ -416,7 +413,6 @@ static void TwinTermH(void) {
 	    Fd = Fd_Slot(Slot);
 
 	    /* react as for keypresses */
-#ifdef CONF__UNICODE
 	    if (Event->EventSelectionNotify.Magic == TW_SEL_HWFONTMAGIC) {
 		byte *Dst = Event->EventSelectionNotify.Data;
 		hwfont *Src = (hwfont *)Dst;
@@ -428,7 +424,6 @@ static void TwinTermH(void) {
 		
 		write(Fd, Event->EventSelectionNotify.Data, Event->EventSelectionNotify.Len / sizeof(hwfont));
 	    } else
-#endif
 		write(Fd, Event->EventSelectionNotify.Data, Event->EventSelectionNotify.Len);
 
 	} else if (Msg->Type==TW_MSG_WIDGET_MOUSE) {

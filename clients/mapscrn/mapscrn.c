@@ -228,15 +228,9 @@ loadnewmap(int fd, char *mfil) {
 
 	/* do we need to use loaduniscrnmap() ? */
 	if (u) {
-#ifdef CONF__UNICODE
 		/* yes */
 		if (loaduniscrnmap(fd, ubuf))
 			exit(1);
-#else
-		fprintf(stderr,
-			_("Error: map from file uses Unicode. Recompile me with unicode support!\n"));
-		exit(1);
-#endif		
 	} else {
 		/* no */
 		if (loadscrnmap(fd,buf))

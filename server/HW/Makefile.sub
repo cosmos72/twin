@@ -84,10 +84,6 @@ ifeq ($(CONF__ALLOC),y)
   CC_FLAGS+=-DCONF__ALLOC
 endif
 
-#ifeq ($(CONF__UNICODE),y)
-#  LD_FLAGS+=$(LD_LIBTUTF)
-#endif
-
 ifeq ($(CONF_HW_TTY),y)
   OBJS_HW.lst+=$(TTYOBJS)
 else

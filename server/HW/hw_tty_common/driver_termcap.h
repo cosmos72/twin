@@ -166,12 +166,10 @@ static byte termcap_InitVideo(void) {
 	return FALSE;
     }
 
-#ifdef CONF__UNICODE
     if (tty_charset_to_UTF_16 != Tutf_CP437_to_UTF_16) {
 	tc_name[tc_seq_charset_start] = NULL;
 	tc_charset_start = tc_charset_end = NULL;
     }
-#endif
 
     for (n = tc_name, d = tc_cap; *n; n++, d++) {
 	if (*n && !termcap_extract(*n, d)) {
@@ -187,11 +185,9 @@ static byte termcap_InitVideo(void) {
 	return FALSE;
     }
 
-# ifdef CONF__UNICODE
     if (tty_can_utf8 == TRUE+TRUE)
 	/* cannot autodetect an utf8-capable terminal, assume it cannot do utf8 */
 	tty_can_utf8 = FALSE;
-# endif
 
     wrapglitch = tgetflag("xn");
     if (colorbug)
@@ -336,7 +332,6 @@ INLINE void termcap_Mogrify(dat x, dat y, uldat len) {
 		termcap_SetColor(col);
 	
 	    c = _c = HWFONT(*V);
-#ifdef CONF__UNICODE
 	    c = tty_UTF_16_to_charset(_c);
 	    if (tty_can_utf8 && (tty_charset_to_UTF_16[c] != _c || (utf8used && c > 0x80))) {
 		/*
@@ -348,14 +343,9 @@ INLINE void termcap_Mogrify(dat x, dat y, uldat len) {
 		tty_MogrifyUTF8(_c);
 		continue;
 	    }
-#endif
 	    if (c < 32 || c == 127 || c == 128+27) {
 		/* can't display it */
-#ifdef CONF__UNICODE
 		c = T_CAT(Tutf_CP437_to_,T_MAP(US_ASCII))[c];
-#else
-		c = ' ';
-#endif
 	    }
 	    putc((char)c, stdOUT);
 	} else
@@ -375,7 +365,6 @@ INLINE void termcap_SingleMogrify(dat x, dat y, hwattr V) {
 	termcap_SetColor(HWCOL(V));
 	
     c = _c = HWFONT(V);
-#ifdef CONF__UNICODE
     c = tty_UTF_16_to_charset(c);
     if (tty_can_utf8 && (tty_charset_to_UTF_16[c] != _c || (utf8used && c > 0x80))) {
 	/*
@@ -387,14 +376,9 @@ INLINE void termcap_SingleMogrify(dat x, dat y, hwattr V) {
 	tty_MogrifyUTF8(_c);
 	return;
     }
-#endif
     if (c < 32 || c == 127 || c == 128+27) {
 	/* can't display it */
-#ifdef CONF__UNICODE
 	c = T_CAT(Tutf_CP437_to_,T_MAP(US_ASCII))[c];
-#else
-	c = ' ';
-#endif
     }
     putc((char)c, stdOUT);
 }

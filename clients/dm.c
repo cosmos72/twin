@@ -21,10 +21,7 @@
 #include <Tw/Tw.h>
 #include <Tw/Twkeys.h>
 #include <Tw/Twerrno.h>
-
-#ifdef CONF__UNICODE
-# include <Tutf/Tutf.h>
-#endif
+#include <Tutf/Tutf.h>
 
 #include "version.h"
 
@@ -507,7 +504,6 @@ static void WriteKey(twindow W, data u, udat len, byte *seq) {
     }
 }
 
-#ifdef CONF__UNICODE
 static void WriteHWFontKey(twindow W, data u, udat len, hwfont *h_data) {
     byte *d_data = (byte *)h_data, *s_data = d_data;
     udat n = len;
@@ -517,7 +513,6 @@ static void WriteHWFontKey(twindow W, data u, udat len, hwfont *h_data) {
 	*d_data++ = Tutf_UTF_16_to_CP437(*h_data++);
     WriteKey(W, u, len, s_data);
 }
-#endif
 
 static void HandleKey(tevent_keyboard E) {
     data u;
@@ -680,11 +675,9 @@ int main(int argc, char *argv[]) {
 		    if (E->Magic == TW_SEL_TEXTMAGIC)
 			WriteKey(E->ReqPrivate, E->ReqPrivate == DM_user ? &user : &pass,
 				 E->Len, E->Data);
-#ifdef CONF__UNICODE
 		    else if (E->Magic == TW_SEL_HWFONTMAGIC)
 			WriteHWFontKey(E->ReqPrivate, E->ReqPrivate == DM_user ? &user : &pass,
 				       E->Len / sizeof(hwfont), (hwfont *)E->Data);
-#endif
 		}
 		break;
 	      default:

@@ -21,11 +21,8 @@
 
 #include "TTextern.h"
 
-#ifdef CONF__UNICODE
-# define Str2Unicode(c) Tutf_CP437_to_UTF_16[c]
-#else
-# define Str2Unicode(c) (c)
-#endif
+#define Str2Unicode(c) Tutf_CP437_to_UTF_16[c]
+
 
 /*
  * TT<op>Mem functions

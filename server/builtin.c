@@ -33,22 +33,13 @@
 
 #include <Tw/Twkeys.h>
 
-#ifdef CONF__UNICODE
-# include <Tutf/Tutf.h>
-# include <Tutf/Tutf_defs.h>
-
-# define _CHECK T_UTF_16_CHECK_MARK
-# define _FULL	T_UTF_16_FULL_BLOCK
-# define _LOWER T_UTF_16_LOWER_HALF_BLOCK
-# define _UPPER T_UTF_16_UPPER_HALF_BLOCK
-# define _MEDIUM_SHADE	T_UTF_16_MEDIUM_SHADE
-#else
-# define _CHECK 'û'
-# define _FULL  'Û'
-# define _LOWER 'Ü'
-# define _UPPER 'ß'
-# define _MEDIUM_SHADE	'±'
-#endif
+#include <Tutf/Tutf.h>
+#include <Tutf/Tutf_defs.h>
+#define _CHECK T_UTF_16_CHECK_MARK
+#define _FULL	T_UTF_16_FULL_BLOCK
+#define _LOWER T_UTF_16_LOWER_HALF_BLOCK
+#define _UPPER T_UTF_16_UPPER_HALF_BLOCK
+#define _MEDIUM_SHADE	T_UTF_16_MEDIUM_SHADE
 
 #define COD_QUIT	(udat)1 /* as in term.c */
 #define COD_SPAWN	(udat)3 /* as COD_SPAWN in term.c */
@@ -357,7 +348,6 @@ void FillButtonWin(void) {
 	    s = "Close ";
 	Act(TtyWriteAscii,ButtonWin)(ButtonWin, 7, "Button ");
 	Act(TtyWriteAscii,ButtonWin)(ButtonWin, 6, s);
-#ifdef CONF__UNICODE
 	{
 	    hwattr h[2];
 	    hwfont *f = All->ButtonVec[j].shape;
@@ -366,9 +356,6 @@ void FillButtonWin(void) {
 	    
 	    Act(TtyWriteHWAttr,ButtonWin)(ButtonWin, 15, 1+i*2, 2, h);
 	}
-#else
-	Act(TtyWriteHWFont,ButtonWin)(ButtonWin, 2, All->ButtonVec[j].shape);
-#endif
 	Do(Create,Gadget)(FnGadget, Builtin_MsgPort, (widget)ButtonWin, 3, 1, "[+]",
 			  0, GADGETFL_TEXT_DEFCOL, 3 | (j<<2),
 			  COL(BLACK,WHITE), COL(HIGH|WHITE,GREEN),
@@ -810,11 +797,7 @@ byte InitBuiltin(void) {
     CONST byte *greeting = "\n"
 	"                TWIN             \n"
 	"        Text WINdows manager     \n\n"
-#ifdef CONF__UNICODE
 	"     Version " TWIN_VERSION_STR TWIN_VERSION_EXTRA_STR " (Unicode) by  \n\n"
-#else
-	"          Version " TWIN_VERSION_STR TWIN_VERSION_EXTRA_STR " by       \n\n"
-#endif
 	"        Massimiliano Ghilardi    \n\n"
 	"         <max@Linuz.sns.it>      ";
     uldat grlen = strlen(greeting);

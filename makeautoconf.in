@@ -8,10 +8,8 @@ ifeq ($(makeautoconf),)
 ifeq ($(CONF),)
   CONF=$(B)conf/conf.current
 endif
-ifeq ($(CONF__UNICODE),)
-  ifneq ($(wildcard $(CONF)),)
-    include $(CONF)
-  endif
+ifneq ($(wildcard $(CONF)),)
+  include $(CONF)
 endif
 
 @SET_MAKE@

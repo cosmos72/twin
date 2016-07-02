@@ -31,6 +31,7 @@
 #include "common.h"
 
 #include <Tw/Twkeys.h>
+#include <Tutf/Tutf.h>
 
 #if !defined(CONF_HW_TTY_LINUX) && !defined(CONF_HW_TTY_TWTERM) && !defined(CONF_HW_TTY_TERMCAP)
 # warning trying to compile hw_tty.c without support for any specific terminal.
@@ -43,9 +44,6 @@
 # include <gpm.h>
 #endif
 
-#ifdef CONF__UNICODE
-# include <Tutf/Tutf.h>
-#endif
 
 #ifdef CONF_HW_TTY_TERMCAP
 # include "hw_tty_common/driver_termcap1.h"
@@ -54,12 +52,10 @@
 struct tty_data {
     int tty_fd, VcsaFd, tty_number;
     byte *tty_name, *tty_TERM;
-#ifdef CONF__UNICODE
     uldat tty_charset;
     Tutf_function tty_UTF_16_to_charset;
     Tutf_array tty_charset_to_UTF_16;
     byte tty_can_utf8;
-#endif
     dat ttypar[3];
     FILE *stdOUT;
     uldat saveCursorType;
@@ -135,10 +131,8 @@ static void stdin_CheckResize(dat *x, dat *y);
 static void stdin_Resize(dat x, dat y);
 static void stdout_FlushHW(void);
 
-#ifdef CONF__UNICODE
 static void tty_MogrifyUTF8(hwfont h);
 static byte utf8used;
-#endif
 
 /* this can stay static, as it's used only as temporary storage */
 static hwcol _col;
@@ -249,7 +243,6 @@ static void stdout_FlushHW(void) {
 
 
 
-#ifdef CONF__UNICODE
 static void tty_MogrifyUTF8(hwfont h) {
     byte c;
     if (!utf8used)
@@ -261,7 +254,6 @@ static void tty_MogrifyUTF8(hwfont h) {
 	c = (h >> 6) | 0xC0, putc(c, stdOUT);
     c = (h & 0x3F) | 0x80, putc(c, stdOUT);
 }
-#endif
 
 
 
@@ -296,10 +288,8 @@ byte tty_InitHW(void) {
 	return FALSE;
     }
     saveCursorType = (uldat)-1;
-#ifdef CONF__UNICODE
     tty_charset = (uldat)-1;
     tty_can_utf8 = TRUE+TRUE; /* i.e. unknown */
-#endif
     saveX = saveY = 0;
     stdOUT = NULL;
     tty_fd = -1;
@@ -364,11 +354,9 @@ byte tty_InitHW(void) {
 	    } else if (!strncmp(arg, ",slow", 5)) {
 		arg = strchr(arg + 5, ',');
 		HW->FlagsHW |= FlHWExpensiveFlushVideo;
-#ifdef CONF__UNICODE
 	    } else if (!strncmp(arg, ",utf8", 5)) {
 		arg = strchr(arg + 5, ',');
 		tty_can_utf8 = TRUE;
-#endif
 	    } else {
 		if (*arg == ',')
 		    arg++;
@@ -461,7 +449,6 @@ byte tty_InitHW(void) {
     colorbug = tc_colorbug;
 #endif
 
-#ifdef CONF__UNICODE
     if (charset) {
         /* honor user-specified charset */
 	if ((tty_charset = Tutf_charset_id(charset)) == (uldat)-1)
@@ -486,12 +473,6 @@ byte tty_InitHW(void) {
 	tty_UTF_16_to_charset = Tutf_UTF_16_to_charset_function(tty_charset);
 	tty_charset_to_UTF_16 = Tutf_charset_to_UTF_16_array(tty_charset);
     }
-#else
-    if (charset) {
-	FreeMem(charset);
-	printk("      tty_InitHW(): warning: `charset=' option requires Unicode support\n");
-    }
-#endif
 
 #define TRY_V(name) (autotry_video + try_##name >= ALWAYS)
 #define TRY_K(name) (autotry_kbd + try_##name >= ALWAYS)

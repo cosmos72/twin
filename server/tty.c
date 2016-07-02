@@ -29,16 +29,9 @@
 #include <Tw/Tw.h>
 #include <Tw/Twstat.h>
 #include <Tw/Twstat_defs.h>
+#include <Tutf/Tutf.h>
 
-#ifdef CONF__UNICODE
-# include <Tutf/Tutf.h>
-#endif
-
-#ifdef CONF__UNICODE
 extern hwattr extra_POS_INSIDE;
-#else
-# define extra_POS_INSIDE 0
-#endif
 
 
 /*
@@ -547,8 +540,6 @@ static void update_eff(void) {
     Color = COL(fg, bg);
 }
 
-#ifdef CONF__UNICODE
-
 # define setCharset(g) do switch ((currG = (g))) { \
   case LAT1_MAP: \
     Charset = Tutf_ISO_8859_1_to_UTF_16; \
@@ -570,17 +561,6 @@ INLINE hwfont applyG(hwfont c) {
     return c;
 }
 
-#else /* !CONF__UNICODE */
-
-# define setCharset(g) (currG = (g))
-
-INLINE hwfont applyG(hwfont c) {
-    if (currG == IBMPC_MAP)
-	return c;
-    return All->Gtranslations[currG][c & 0xFF];
-}
-
-#endif /* CONF__UNICODE */
 
 INLINE void csi_m(void) {
     dat i;
@@ -923,14 +903,8 @@ static void reset_tty(byte do_clear) {
     nPar = 0;
     
     G = saveG = 0;
-    /*
-     * default to latin1 charset if CONF__UNICODE is enabled
-     */
-#ifdef CONF__UNICODE
+    /* default to latin1 charset */
     setCharset(G0 = saveG0 = LAT1_MAP);
-#else
-    setCharset(G0 = saveG0 = IBMPC_MAP);
-#endif
     G1 = saveG1 = GRAF_MAP;
 
     utf = utf_count = utf_char = 0;
@@ -1549,12 +1523,7 @@ void TtyWriteAscii(window Window, ldat Len, CONST byte *AsciiSeq) {
 }
 
 
-#if TW_SIZEOFHWFONT == 1
-void TtyWriteHWFont(window Window, ldat Len, CONST hwfont *HWFont) {
-    TtyWriteAscii(Window, Len, (CONST byte *)HWFont);
-}
-#else
-/* same as TtyWriteAscii(), but writes hwfont (unicode). Useful only if CONF__UNICODE is enabled. */
+/* same as TtyWriteAscii(), but writes hwfont (UCS-2 + colors + graph tiles). */
 void TtyWriteHWFont(window Window, ldat Len, CONST hwfont *HWFont) {
     hwfont c;
     byte ok;
@@ -1603,7 +1572,6 @@ void TtyWriteHWFont(window Window, ldat Len, CONST hwfont *HWFont) {
     }
     flush_tty();
 }
-#endif
 
 /*
  * this writes String literally, without interpreting specially any character
@@ -1649,10 +1617,8 @@ void TtyWriteString(window Window, ldat Len, CONST byte *String) {
  */
 void TtyWriteHWAttr(window Window, dat x, dat y, ldat len, CONST hwattr *text) {
     ldat left, max, chunk;
-#ifdef CONF__UNICODE
     ldat i;
     hwattr extra;
-#endif
     hwattr *dst;
     
     if (!Window || !len || !text || !W_USE(Window, USECONTENTS) || !Window->USE.C.TtyData)
@@ -1688,18 +1654,12 @@ void TtyWriteHWAttr(window Window, dat x, dat y, ldat len, CONST hwattr *text) {
 	    dst -= Split - Base;
 	max = Split - dst;
 	chunk = Min2(left, max);
-#ifdef CONF__UNICODE
 	for (i = chunk; i; i--, text++, dst++) {
 	    if ((extra = HWEXTRA32(*text)))
 		*dst = *text;
 	    else
 		*dst = *text | extra_POS_INSIDE;
 	}
-#else
-	CopyMem(text, dst, chunk * sizeof(hwattr));
-	text += chunk;
-	dst += chunk;
-#endif
     } while ((left -= chunk) > 0);
 
     if (len > SizeX - x)

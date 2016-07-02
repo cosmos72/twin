@@ -26,10 +26,7 @@
 #include "hw_multi.h"
 #include "common.h"
 #include <Tw/Twkeys.h>	/* for TW_* key defines */
-
-#ifdef CONF__UNICODE
-# include <Tutf/Tutf.h>
-#endif
+#include <Tutf/Tutf.h>  /* for UCS-2 to charset conversions */
 
 #include "rctypes.h"
 #include "rcrun.h"
@@ -170,11 +167,7 @@ byte WMFindBorderWindow(window W, dat u, dat v, byte Border, hwattr *PtrAttr) {
 	    k = 2*(ldat)u - ( (ldat)XWidth-(ldat)W->NameLen-(ldat)3 );
 	    if (k > 0) k /= 2;
 	    if (k > 0 && k <= W->NameLen) {
-#ifdef CONF__UNICODE
 		Font = Tutf_CP437_to_UTF_16[W->Name[--k]];
-#else
-		Font = W->Name[--k];
-#endif
 		Found = POS_TITLE;
 	    } else if (k == 0 || k == W->NameLen + 1) {
 		Font = ' ';
@@ -243,11 +236,7 @@ byte WMFindBorderWindow(window W, dat u, dat v, byte Border, hwattr *PtrAttr) {
 	    k = 2*(ldat)u - ( (ldat)XWidth-(ldat)W->NameLen-(ldat)3);
 	    if (k > 0) k /= 2;
 	    if (k > 0 && k <= W->NameLen) {
-#ifdef CONF__UNICODE
 		Font = Tutf_CP437_to_UTF_16[W->Name[--k]];
-#else
-		Font = W->Name[--k];
-#endif
 		Found = POS_TITLE;
 	    } else if (k == 0 || k == W->NameLen + 1) {
 		Font = ' ';
@@ -325,12 +314,8 @@ byte WMFindBorderWindow(window W, dat u, dat v, byte Border, hwattr *PtrAttr) {
 	FlPressed = TRUE;
     }
     
-#ifdef CONF__UNICODE
     extra_u = EncodeToHWAttrExtra(Found, extra_u, !Border, FlPressed);
     *PtrAttr = HWATTR_EXTRA32(HWATTR(Color,Font), extra_u);
-#else
-    *PtrAttr = HWATTR(Color,Font);
-#endif
 
     return Found;
 }

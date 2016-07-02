@@ -1328,13 +1328,8 @@ byte InitTransUser(void) {
     udat c;
 #ifdef __linux__
 
-# ifdef CONF__UNICODE
 #  define SCRNMAP_T unsigned short
 #  define SCRNMAP_IOCTL GIO_UNISCRNMAP
-# else
-#  define SCRNMAP_T unsigned char
-#  define SCRNMAP_IOCTL GIO_SCRNMAP
-# endif
 
     SCRNMAP_T map[E_TABSZ];
 

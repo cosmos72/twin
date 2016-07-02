@@ -33,18 +33,9 @@ CC_FLAGS+=-D_REENTRANT
 -include $(B).hdepend
 
 
-ifeq ($(CONF__UNICODE),y)
-  build-all: lib
-  install: install-real
-  uninstall: uninstall-real
-else
-  build-all install uninstall:
-	@rm -f $(SHLIBS) $(ARLIBS) ; \
-	 echo ; \
-	 echo "You disabled \"Build all code with Unicode support\"," ; \
-	 echo "so the library libTutf will NOT be compiled!" ; \
-	 echo
-endif
+build-all: lib
+install: install-real
+uninstall: uninstall-real
 
 #
 # handy targets

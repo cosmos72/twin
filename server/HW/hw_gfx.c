@@ -68,9 +68,7 @@ struct x11_data {
     dat xhw_view, xhw_startx, xhw_starty, xhw_endx, xhw_endy;
     
     int xmonochrome;
-#ifdef CONF__UNICODE
     Tutf_function xUTF_16_to_charset;
-#endif
     Display     *xdisplay;
     Window       xwindow;
     Pixmap       xtheme, xroot, xbg;
@@ -146,15 +144,10 @@ static hwcol _col;
 
 #define pitch 15
 
-#ifdef CONF__UNICODE
 # define myXDrawImageString XDrawImageString16
 # define myXDrawString XDrawString16
 # define myXChar XChar2b
-#else
-# define myXDrawImageString XDrawImageString
-# define myXDrawString XDrawString
-# define myXChar byte
-#endif
+
 
 #define XDRAW_FN(FN, col, buf, buflen) do { \
     unsigned long __mask = 0; \
@@ -276,12 +269,8 @@ INLINE void X11_Mogrify(dat x, dat y, uldat len) {
     hwcol col;
     udat buflen = 0;
     hwattr gfx;
-#ifdef CONF__UNICODE
     hwfont f;
-    XChar2b buf[SMALLBUFF];
-#else
-    byte buf[SMALLBUFF];
-#endif
+    myXChar buf[SMALLBUFF];
     int xbegin, ybegin;
     
     if (xhw_view) {
@@ -317,13 +306,9 @@ INLINE void X11_Mogrify(dat x, dat y, uldat len) {
 		_col = col;
 		bufgfx = gfx;
 	    }
-#ifdef CONF__UNICODE
 	    f = xUTF_16_to_charset(HWFONT(*V));
 	    buf[buflen  ].byte1 = f >> 8;
 	    buf[buflen++].byte2 = f & 0xFF;
-#else
-	    buf[buflen++] = HWFONT(*V);
-#endif
 	}
     }
     if (buflen) {
@@ -693,10 +678,8 @@ byte gfx_InitHW(void) {
 	    XStoreName(xdisplay, xwindow, name);
 	    
 	    
-#ifdef CONF__UNICODE
 	    if (!(xUTF_16_to_charset = X11_UTF_16_to_charset_function(charset)))
 		xUTF_16_to_charset = X11_UTF_16_to_UTF_16;
-#endif
 	    /*
 	     * ask ICCCM-compliant window manager to tell us when close window
 	     * has been chosen, rather than just killing us

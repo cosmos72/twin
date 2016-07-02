@@ -1,3 +1,8 @@
+From 0.6.2.1 to 0.6.2.2: (Massimiliano Ghilardi, 02 July 2016)
+	* Removed support for non-Unicode builds. From now on, twin
+          can ONLY be compiled in Unicode-aware mode (currently uses
+          UCS-2).
+          
 From 0.6.2 to 0.6.2.1: (Massimiliano Ghilardi, 08 Nov 2014)
 	* Fixed scroll glitch in twterm, affecting architectures
           with strongly pipelined memcpy() - for example amd64.

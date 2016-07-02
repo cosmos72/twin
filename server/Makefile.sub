@@ -177,10 +177,8 @@ endif
 #
 # the final link nightmare...
 #
-ifeq ($(CONF__UNICODE),y)
-  LD_FLAGS_$(TWIN_SERVER)+=$(LD_LIBTUTF)
-  LD_FLAGS_twdisplay+=$(LD_LIBTUTF)
-endif
+LD_FLAGS_$(TWIN_SERVER)+=$(LD_LIBTUTF)
+LD_FLAGS_twdisplay+=$(LD_LIBTUTF)
 
 ifeq ($(CONF_HW_TTY),y)
   ifeq ($(CONF_HW_TTY_LINUX),y)

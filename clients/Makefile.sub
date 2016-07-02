@@ -107,10 +107,8 @@ ifneq ($(CONF_SOCKET),n)
   endif
 endif
 
-ifeq ($(CONF__UNICODE),y)
-  LD_FLAGS_twterm+=$(LD_LIBTUTF)
-  LD_FLAGS_twdm+=$(LD_LIBTUTF)
-endif
+LD_FLAGS_twterm+=$(LD_LIBTUTF)
+LD_FLAGS_twdm+=$(LD_LIBTUTF)
 
 #
 # include the do-everything file.

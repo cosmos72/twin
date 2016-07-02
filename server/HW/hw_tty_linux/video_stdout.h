@@ -48,13 +48,11 @@ static byte linux_InitVideo(void) {
 	return FALSE;
     }
 
-#ifdef CONF__UNICODE
     if (tty_can_utf8 == TRUE+TRUE && ttypar[0]==6 && ttypar[1]!=3 && ttypar[1]!=4)
 	/* plain linux console supports utf-8, and also twin >= 0.3.11 does. */
 	tty_can_utf8 = TRUE;
     else
 	tty_can_utf8 = FALSE;
-#endif
 
     tc_scr_clear = "\033[2J";
     fprintf(stdOUT, "\033[0;11m\033%%@%s\033[3h", tc_scr_clear);
@@ -113,11 +111,7 @@ static void linux_QuitVideo(void) {
 
 #define linux_MogrifyInit() fputs("\033[m", stdOUT); _col = COL(WHITE,BLACK);
 
-#ifdef CONF__UNICODE
 # define linux_MogrifyFinish() do { if (utf8used) utf8used = FALSE, fputs("\033%@", stdOUT); } while (0)
-#else
-# define linux_MogrifyFinish() do { } while (0)
-#endif
 
 INLINE void linux_SetColor(hwcol col) {
     static byte colbuf[] = "\033[2x;2x;4x;3xm";
@@ -168,7 +162,6 @@ INLINE void linux_Mogrify(dat x, dat y, uldat len) {
 		linux_SetColor(col);
 	
 	    c = _c = HWFONT(*V);
-#ifdef CONF__UNICODE
 	    c = tty_UTF_16_to_charset(_c);
 	    if (tty_can_utf8 && (tty_charset_to_UTF_16[c] != _c || (utf8used && c > 0x80))) {
 		/*
@@ -180,15 +173,10 @@ INLINE void linux_Mogrify(dat x, dat y, uldat len) {
 		tty_MogrifyUTF8(_c);
 		continue;
 	    }
-#endif
 	    
 	    if ((c < 32 && ((CTRL_ALWAYS >> c) & 1)) || c == 128+27) {
 		/* can't display it */
-#ifdef CONF__UNICODE
 		c = T_CAT(Tutf_CP437_to_,T_MAP(US_ASCII)) [ Tutf_UTF_16_to_CP437(_c) ];
-#else
-		c = ' ';
-#endif
 	    }
 	    putc((char)c, stdOUT);
 	} else
@@ -205,7 +193,6 @@ INLINE void linux_SingleMogrify(dat x, dat y, hwattr V) {
 	linux_SetColor(HWCOL(V));
 	
     c = _c = HWFONT(V);
-#ifdef CONF__UNICODE
     c = tty_UTF_16_to_charset(_c);
     if (tty_can_utf8 && (tty_charset_to_UTF_16[c] != _c || (utf8used && c > 0x80))) {
 	/*
@@ -217,15 +204,10 @@ INLINE void linux_SingleMogrify(dat x, dat y, hwattr V) {
 	tty_MogrifyUTF8(_c);
 	return;
     }
-#endif
 
     if ((c < 32 && ((CTRL_ALWAYS >> c) & 1)) || c == 128+27) {
 	/* can't display it */
-#ifdef CONF__UNICODE
 	c = T_CAT(Tutf_CP437_to_,T_MAP(US_ASCII)) [ Tutf_UTF_16_to_CP437(_c) ];
-#else
-	c = ' ';
-#endif
     }
     putc((char)c, stdOUT);
 }

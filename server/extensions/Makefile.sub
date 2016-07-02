@@ -56,9 +56,7 @@ ifeq ($(CONF__ALLOC),y)
   CC_FLAGS+=-DCONF__ALLOC
 endif
 
-#ifeq ($(CONF__UNICODE),y)
-#  LD_FLAGS+=$(LD_LIBTUTF)
-#endif
+LD_FLAGS+=$(LD_LIBTUTF)
 
 ifeq ($(CONF_EXT_TT),y)
   OBJS_ext.lst+=$(TTOBJS)

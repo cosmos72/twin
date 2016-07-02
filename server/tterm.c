@@ -96,7 +96,6 @@ static window OpenTerm(CONST byte *arg0, byte * CONST *argv) {
     return NULL;
 }
 
-#ifdef CONF__UNICODE
 static void TermWriteHWFontWindow(window W, uldat len, CONST hwfont *hwData) {
     hwfont (*inv_charset)(hwfont) = W->USE.C.TtyData->InvCharset;
     byte *Data, *sData;
@@ -110,7 +109,6 @@ static void TermWriteHWFontWindow(window W, uldat len, CONST hwfont *hwData) {
 	FreeMem(sData);
     }
 }
-#endif
 
 static void TwinTermH(msgport MsgPort) {
     msg Msg;
@@ -140,12 +138,10 @@ static void TwinTermH(msgport MsgPort) {
 	    
 	    if ((Win = (window)Id2Obj(window_magic_id,
 				      Event->EventSelectionNotify.ReqPrivate))) {
-#ifdef CONF__UNICODE
 		if (Event->EventSelectionNotify.Magic == SEL_HWFONTMAGIC)
 		    TermWriteHWFontWindow(Win, Event->EventSelectionNotify.Len / sizeof(hwfont),
 					    (hwfont *)Event->EventSelectionNotify.Data);
 		else
-#endif
 		    (void)RemoteWindowWriteQueue(Win, Event->EventSelectionNotify.Len,
 						 Event->EventSelectionNotify.Data);
 	    }

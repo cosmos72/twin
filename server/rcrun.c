@@ -39,10 +39,8 @@
 #include <Tw/Twkeys.h>
 #include "hotkey.h"
 
-#ifdef CONF__UNICODE
-# include <Tutf/Tutf.h>
-# include <Tutf/Tutf_defs.h>
-#endif
+#include <Tutf/Tutf.h>
+#include <Tutf/Tutf_defs.h>
 
 
 
@@ -1133,11 +1131,7 @@ byte InitRC(void) {
 	{ HOLD_LEFT|PRESS_,    "M", NULL,M+11,NULL, { { CTX_MENU, } } },
 	{ INTERACTIVE, NULL, NULL, NULL, NULL, { { 0, SCREEN, }, } }
     };
-#ifdef CONF__UNICODE
 # define UD_ARROW T_UTF_16_UP_DOWN_ARROW
-#else
-# define UD_ARROW '\x12'
-#endif
     static button_vec V[] = {
 	{ {'[',      ']'     },  0, TRUE, FALSE },
 	{ {UD_ARROW, UD_ARROW}, -2, TRUE, FALSE },

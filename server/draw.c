@@ -20,25 +20,16 @@
 #include "util.h"
 #include "draw.h"
 
-#ifdef CONF__UNICODE
-# include <Tutf/Tutf.h>
-# include <Tutf/Tutf_defs.h>
-#endif
+#include <Tutf/Tutf.h>
+#include <Tutf/Tutf_defs.h>
 
-#ifdef CONF__UNICODE
 hwattr extra_POS_INSIDE;
 hwattr extra_POS_ROOT;
-#else
-# define extra_POS_INSIDE 0
-# define extra_POS_ROOT 0
-#endif
 
 
 byte InitDraw(void) {
-#ifdef CONF__UNICODE
     extra_POS_INSIDE = HWATTR_EXTRA32(0, EncodeToHWAttrExtra(POS_INSIDE, 0, 0, 0));
     extra_POS_ROOT   = HWATTR_EXTRA32(0, EncodeToHWAttrExtra(POS_ROOT, 0, 0, 0));
-#endif
     return TRUE;
 }
 
@@ -866,11 +857,7 @@ void DrawSelfWindow(draw_ctx *D) {
 		    Absent = (!CurrRow || PosInRow>=CurrRow->Len);
 		    
 		    if (CurrRow && IS_MENUITEM(CurrRow) && ((menuitem)CurrRow)->Window && i == Rgt) {
-#ifdef CONF__UNICODE
 			Font = T_UTF_16_BLACK_RIGHT_POINTING_TRIANGLE;
-#else
-			Font = '\x10'; /* T_IBM437_BLACK_RIGHT_POINTING_TRIANGLE */
-#endif
 		    } else if (Absent)
 			Font = ' ';
 		    else
@@ -1787,9 +1774,7 @@ void ReDrawRolledUpAreaWindow(window Window, byte Shaded) {
 
 
 void DrawMenuScreen(screen Screen, dat Xstart, dat Xend) {
-#ifdef CONF__UNICODE
     static hwattr extra;
-#endif
     screen fScreen;
     menu Menu;
     menuitem Item;
@@ -1825,10 +1810,8 @@ void DrawMenuScreen(screen Screen, dat Xstart, dat Xend) {
     Xend   = Min2(Xend, DWidth-1);
     
 
-#ifdef CONF__UNICODE	
     if (!extra)
 	extra = EncodeToHWAttrExtra(POS_MENU, 0, 0, 0);
-#endif
 
     for (i=Xstart; i<=Xend; i++) {
 	if (i+2>=DWidth) {
@@ -1882,11 +1865,7 @@ void DrawMenuScreen(screen Screen, dat Xstart, dat Xend) {
 	}
 	if (Screen != All->FirstScreen)
 	    Color = Menu->ColDisabled;
-#ifdef CONF__UNICODE
 	Video[i+j*DWidth]=HWATTR_EXTRA32(HWATTR(Color, Font), extra);
-#else
-	Video[i+j*DWidth]=HWATTR(Color, Font);
-#endif
     }
     DirtyVideo(Xstart, j, Xend, j);    
 }

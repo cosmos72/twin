@@ -96,9 +96,7 @@ ifeq ($(CONF__MODULES),y)
   LD_FLAGS+=$(LD_LIBDL)
 endif
 
-ifeq ($(CONF__UNICODE),y)
-  LD_FLAGS_libTT.la+=$(LD_LIBTUTF)
-endif
+LD_FLAGS_libTT.la+=$(LD_LIBTUTF)
 
 ifeq ($(CONF_TT_HW_TWIN),y)
   LD_FLAGS_libTT.la+=$(LD_LIBTW)

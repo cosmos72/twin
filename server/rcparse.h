@@ -314,13 +314,8 @@ static ldat FreeButtonPos(ldat n, ldat lr) {
 
 static byte ImmButton(ldat n, str shape, ldat lr, ldat flag, ldat pos) {
     if (n >= 0 && n < BUTTON_MAX && strlen(shape) >= 2) {
-#ifdef CONF__UNICODE
 	All->ButtonVec[n].shape[0] = Tutf_CP437_to_UTF_16[shape[0]];
 	All->ButtonVec[n].shape[1] = Tutf_CP437_to_UTF_16[shape[1]];
-#else
-	All->ButtonVec[n].shape[0] = shape[0];
-	All->ButtonVec[n].shape[1] = shape[1];
-#endif
 	if (lr == FL_RIGHT)
 	    pos = -pos;
 	if (flag == '+' || flag == '-')
@@ -1017,9 +1012,7 @@ static byte CreateNeededScreens(node list, screen *res_Screens) {
     hwcol c;
     uldat w, h, len, _len;
     byte *n;
-#ifdef CONF__UNICODE
     hwfont f;
-#endif
     
     while (list) {
 	w = h = 0;
@@ -1041,13 +1034,8 @@ static byte CreateNeededScreens(node list, screen *res_Screens) {
 		    c = list->x.color;
 		    r = attr + w * h;
 		    while (len--) {
-#ifdef CONF__UNICODE
 			f = Tutf_CP437_to_UTF_16[*n++];
 			*r++ = HWATTR(c, f);
-#else
-			*r++ = HWATTR(c, *n);
-			n++;
-#endif			
 		    }
 		    while (_len++ < w)
 			*r++ = HWATTR(c, ' ');

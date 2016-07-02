@@ -61,10 +61,7 @@
 #include <Tw/Twkeys.h>
 #include <Tw/Twstat.h>
 #include <Tw/Twstat_defs.h>
-
-#ifdef CONF__UNICODE
-# include <Tutf/Tutf.h>
-#endif
+#include <Tutf/Tutf.h>
 
 
 
@@ -1078,7 +1075,6 @@ static void sockSetFontTranslation(CONST byte trans[0x80]) {
 }
 
 static void sockSetHWFontTranslation(CONST hwfont trans[0x80]) {
-#ifdef CONF__UNICODE
     if (trans) {
 	int i;
 	hwfont *G = All->Gtranslations[USER_MAP];
@@ -1087,9 +1083,6 @@ static void sockSetHWFontTranslation(CONST hwfont trans[0x80]) {
 	    G[i] = i;
 	CopyMem(trans, G + 0x80, sizeof(hwfont) * 0x80);
     }
-#else
-    sockSetFontTranslation((CONST byte *)trans);
-#endif
 }
 
 static msgport sockGetMsgPortObj(obj P) {
@@ -2460,11 +2453,7 @@ static byte Check4MagicTranslation(uldat slot, byte *magic, byte len) {
 		if (warn_count == 5)
 		    printk("twin: warning: many client with different sizes, suppressing further messages.\n");
 		else
-		    printk("twin: warning: client has different `%."STR(SMALLBUFF)"s' size, it may "
-# ifdef CONF__UNICODE
-			   "not "
-# endif
-			   "be Unicode aware.\n", zero);
+		    printk("twin: warning: client has different `%."STR(SMALLBUFF)"s' size, it may not be Unicode aware.\n", zero);
 		warn_count++;
 	    }
 	}

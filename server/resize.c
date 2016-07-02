@@ -39,18 +39,11 @@
 
 #include <Tw/Tw.h>
 #include <Tw/Twstat.h>
-
-#ifdef CONF__UNICODE
-# include <Tutf/Tutf.h>
-#endif
+#include <Tutf/Tutf.h>
 
 /***************/
 
-#ifdef CONF__UNICODE
 extern hwattr extra_POS_INSIDE;
-#else
-# define extra_POS_INSIDE 0
-#endif
 
 
 byte NeedUpdateCursor;
@@ -361,11 +354,6 @@ byte RowWriteAscii(window Window, ldat Len, CONST byte *Text) {
 }
 
 
-#if TW_SIZEOFHWFONT == 1
-byte RowWriteHWFont(window Window, ldat Len, CONST hwfont *Text) {
-    return RowWriteAscii(Window, Len, (CONST byte *)Text);
-}
-#else
 byte RowWriteHWFont(window Window, ldat Len, CONST hwfont *Text) {
     row CurrRow;
     CONST hwfont * _Text;
@@ -453,7 +441,6 @@ byte RowWriteHWFont(window Window, ldat Len, CONST hwfont *Text) {
     
     return TRUE;
 }
-#endif /* CONF__UNICODE */
 
 
 
@@ -2015,35 +2002,20 @@ void WriteTextsGadget(gadget G, byte bitmap, dat TW, dat TH, CONST byte *Text, d
 		    TT = Text + TL + TU * TW;
 		    /* update the specified part, do not touch the rest */
 		    while (H-- > 0) {
-#if TW_SIZEOFHWFONT == 1
-			CopyMem(TT, GT, W);
-			GT += GW;
-			TT += TW;
-#else
 			_W = W;
 			while (_W-- > 0) {
-# ifdef CONF__UNICODE
 			    *GT++ = Tutf_CP437_to_UTF_16[*TT++];
-# else
-			    *GT++ = *TT++;
-# endif
 			}
 			GT += GW - W;
 			TT += TW - W;
-#endif
 		    }
 		} else {
 		    /* clear the specified part of gadget contents */
 		    while (H-- > 0) {
-#if TW_SIZEOFHWFONT == 1
-			WriteMem(GT, ' ', W);
-			GT += GW;
-#else
 			_W = W;
 			while (_W-- > 0)
 			    *GT++ = ' ';
 			GT += GW - W;
-#endif
 		    }
 		}
 	    }
@@ -2056,9 +2028,6 @@ void WriteTextsGadget(gadget G, byte bitmap, dat TW, dat TH, CONST byte *Text, d
 /* Left < 0 means right-align leaving (-Left-1) margin */
 /* Up   < 0 means down-align  leaving (-Up-1)   margin */
 void WriteHWFontsGadget(gadget G, byte bitmap, dat TW, dat TH, CONST hwfont *HWFont, dat L, dat U) {
-#if TW_SIZEOFHWFONT == 1
-    Act(WriteTexts,G)(G,bitmap,TW,TH,HWFont,L,U);
-#else
     dat GW = G->XWidth, GH = G->YWidth;
     dat TL = 0, TU = 0, W, H;
     dat _W;
@@ -2104,11 +2073,7 @@ void WriteHWFontsGadget(gadget G, byte bitmap, dat TW, dat TH, CONST hwfont *HWF
 		    while (H-- > 0) {
 			_W = W;
 			while (_W-- > 0) {
-# ifdef CONF__UNICODE   
 			    *GT++ = Tutf_CP437_to_UTF_16[*TT++];
-# else
-			    *GT++ = *TT++;
-# endif
 			}
 			GT += GW - W;
 			TT += TW - W;
@@ -2126,7 +2091,6 @@ void WriteHWFontsGadget(gadget G, byte bitmap, dat TW, dat TH, CONST hwfont *HWF
 	}
 	DrawAreaWidget((widget)G);
     }
-#endif
 }
 
 void SyncMenu(menu Menu) {

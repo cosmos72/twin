@@ -35,10 +35,7 @@
 #include "hw.h"
 
 #include <Tw/Twkeys.h>
-
-#ifdef CONF__UNICODE
-# include <Tutf/Tutf.h>
-#endif
+#include <Tutf/Tutf.h>
 
 udat ErrNo;
 byte CONST * ErrStr;
@@ -112,11 +109,7 @@ hwfont *CloneStr2HWFont(CONST byte *s, uldat len) {
     if (s) {
 	if ((temp = save = (hwfont *)AllocMem((len+1) * sizeof(hwfont)))) {
 	    while (len--) {
-# ifdef CONF__UNICODE
 		*temp++ = Tutf_CP437_to_UTF_16[*s++];
-# else
-		*temp++ = *s++;
-# endif
 	    }
 	    *temp = '\0';
 	}
@@ -443,17 +436,13 @@ byte SelectionStore(uldat Magic, CONST byte MIME[MAX_MIMELEN], uldat Len, CONST 
     return TRUE;
 }
 
-#ifdef CONF__UNICODE
-# define _SEL_MAGIC SEL_HWFONTMAGIC
-# if TW_BYTE_ORDER == TW_LITTLE_ENDIAN
+#define _SEL_MAGIC SEL_HWFONTMAGIC
+#if TW_BYTE_ORDER == TW_LITTLE_ENDIAN
 #  define _SelAppendNL() SelectionAppend(2, "\n\0");
-# else
-#  define _SelAppendNL() SelectionAppend(2, "\0\n");
-# endif
 #else
-# define _SEL_MAGIC SEL_TEXTMAGIC
-# define _SelAppendNL() SelectionAppend(1, "\n");
+#  define _SelAppendNL() SelectionAppend(2, "\0\n");
 #endif
+
 
 byte SetSelectionFromWindow(window Window) {
     uldat y, slen, len;
