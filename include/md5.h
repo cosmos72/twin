@@ -28,10 +28,12 @@
 # include <stdint.h> /* for uint32_t */
   typedef uint32_t md5_uint32;
 #else
-# warning <stdint.h> not found, checking that 'unsigned int' is 32 bits wide...
-  typedef char md5_uint32_check [sizeof(unsigned int) == 4 ? 1 : -1];
-  typedef unsigned int md5_uint32;
+# include <Tw/datatypes.h>
+# include <Tw/datasizes.h>
+  typedef TW_BYTE32 md5_uint32;
 #endif
+
+typedef char assert_md5_uint32_is_really_32_bits_wide [sizeof(md5_uint32) == 4 ? 1 : -1];
 
 struct MD5Context {
     md5_uint32 buf[4];

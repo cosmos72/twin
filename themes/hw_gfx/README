@@ -168,10 +168,8 @@ E,6 : (currently unused)
 A last note:
 Unless you have copyright problems and/or are very selfish ;-),
 you should really consider distributing your themes.
-A possible way is to send them to me at <max@linuz.sns.it>, including
-"twin gfx theme" in the subject, and I will add your theme together
-with existing ones on twin home page at
-http://linuz.sns.it/~max/twin/themes/hw_gfx/
+The preferred way is to open an issue or a pull request at
+https://github.com/cosmos72/twin
 
 
 
