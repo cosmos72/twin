@@ -98,11 +98,6 @@ byte *CloneStrL(CONST byte *s, uldat len) {
     return NULL;
 }
 
-#if TW_SIZEOFHWFONT == 1
-hwfont *CloneStr2HWFont(CONST byte *s, uldat len) {
-    return CloneStrL(s, len);
-}
-#else
 hwfont *CloneStr2HWFont(CONST byte *s, uldat len) {
     hwfont *temp, *save;
     
@@ -117,7 +112,6 @@ hwfont *CloneStr2HWFont(CONST byte *s, uldat len) {
     }
     return NULL;
 }
-#endif
 
 byte **CloneStrList(byte **s) {
     uldat n = 1;
@@ -843,11 +837,6 @@ void FreeStringVec(byte **cmd) {
  * "a b" is the string `a b' NOT the two strings `"a' `b"'
  * (same for single quotes, backslashes, ...)
  */
-#if TW_SIZEOFHWFONT == 1
-byte **TokenizeHWFontVec(uldat len, hwfont *s) {
-    return TokenizeStringVec(len, s);
-}
-#else /* TW_SIZEOFHWFONT != 1 */
 byte **TokenizeHWFontVec(uldat len, hwfont *s) {
     byte **cmd = NULL, *buf, *v;
     hwfont c;
@@ -896,7 +885,6 @@ byte **TokenizeHWFontVec(uldat len, hwfont *s) {
     }
     return cmd;
 }
-#endif /* TW_SIZEOFHWFONT == 1 */
 
 int unixFd;
 uldat unixSlot;

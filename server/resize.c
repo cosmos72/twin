@@ -257,10 +257,8 @@ byte RowWriteAscii(window Window, ldat Len, CONST byte *Text) {
     row CurrRow;
     byte CONST * _Text;
     byte FlagNewRows, ModeInsert;
-#if TW_SIZEOFHWFONT != 1
     hwfont CONST * to_UTF_16;
     ldat i;
-#endif
     ldat x, y, max, RowLen;
     
     if (!Window || (Len && !Text) || !W_USE(Window, USEROWS))
@@ -309,7 +307,6 @@ byte RowWriteAscii(window Window, ldat Len, CONST byte *Text) {
 		Window->USE.R.RowSplit=CurrRow;
 	    CurrRow->Flags=ROW_ACTIVE;
 
-#if TW_SIZEOFHWFONT != 1
 	    to_UTF_16 = Window->Charset;
 	    
 	    for (i = 0; i < RowLen; i++)
@@ -317,11 +314,6 @@ byte RowWriteAscii(window Window, ldat Len, CONST byte *Text) {
 	    if (CurrRow->Len < x)
 		for (i = CurrRow->Len; i < x; i++)
 		    CurrRow->Text[i] = (hwfont)' ';
-#else
-	    CopyMem(Text, CurrRow->Text+x, RowLen);
-	    if (CurrRow->Len<x)
-		WriteMem(CurrRow->Text+CurrRow->Len, ' ', x-CurrRow->Len);
-#endif
 
 	    if (!(Window->Flags & WINDOWFL_ROWS_DEFCOL)) {
 		WriteMem(CurrRow->ColText+x, Window->ColText, sizeof(hwcol)*RowLen);
@@ -1959,9 +1951,7 @@ void UnPressGadget(gadget G, byte maySendMsgIfNotToggle) {
 void WriteTextsGadget(gadget G, byte bitmap, dat TW, dat TH, CONST byte *Text, dat L, dat U) {
     dat GW = G->XWidth, GH = G->YWidth;
     dat TL = 0, TU = 0, W, H;
-#if TW_SIZEOFHWFONT != 1
     dat _W;
-#endif
     hwfont *GT;
     CONST byte *TT;
     byte i;
