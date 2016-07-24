@@ -167,7 +167,7 @@ static byte termcap_InitVideo(void) {
     }
 
     if (tty_charset_to_UTF_16 != Tutf_CP437_to_UTF_16) {
-	tc_name[tc_seq_charset_start] = NULL;
+	tc_name[tc_seq_charset_start] = tc_name[tc_seq_charset_end] = NULL;
 	tc_charset_start = tc_charset_end = NULL;
     }
 
@@ -188,6 +188,16 @@ static byte termcap_InitVideo(void) {
     if (tty_can_utf8 == TRUE+TRUE)
 	/* cannot autodetect an utf8-capable terminal, assume it cannot do utf8 */
 	tty_can_utf8 = FALSE;
+    else if (tty_can_utf8 == TRUE)
+    {
+        if (!(tc_charset_start = CloneStr("\033%G")) || !(tc_charset_end = CloneStr("\033%@")))
+        {
+	    printk("      termcap_InitVideo() failed: Out of memory!\n");
+	    termcap_cleanup();
+	    return FALSE;
+        }
+        utf8used = TRUE;
+    }
 
     wrapglitch = tgetflag("xn");
     if (colorbug)
@@ -254,7 +264,7 @@ static void termcap_QuitVideo(void) {
 
 
 #define termcap_MogrifyInit() fputs(tc_attr_off, stdOUT); _col = COL(WHITE,BLACK)
-#define termcap_MogrifyFinish() do { if (utf8used) utf8used = FALSE, fputs("\033%@", stdOUT); } while (0)
+#define termcap_MogrifyFinish() do { } while (0)
 
 INLINE byte *termcap_CopyAttr(byte *attr, byte *dest) {
     while ((*dest++ = *attr++))
@@ -333,11 +343,11 @@ INLINE void termcap_Mogrify(dat x, dat y, uldat len) {
 	
 	    c = _c = HWFONT(*V);
 	    c = tty_UTF_16_to_charset(_c);
-	    if (tty_can_utf8 && (tty_charset_to_UTF_16[c] != _c || (utf8used && c > 0x80))) {
+	    if (tty_can_utf8 && (tty_charset_to_UTF_16[c] != _c || (utf8used && c >= 0x80))) {
 		/*
 		 * translation to charset did not find an exact match,
 		 * use utf-8 to output this char.
-		 * also use utf-8 if we already output ESC % G and we must putc(c > 0x80),
+		 * also use utf-8 if we already output ESC % G and we must putc(c >= 0x80),
 		 * which would be interpreted as part of an utf-8 sequence.
 		 */
 		tty_MogrifyUTF8(_c);
@@ -366,11 +376,11 @@ INLINE void termcap_SingleMogrify(dat x, dat y, hwattr V) {
 	
     c = _c = HWFONT(V);
     c = tty_UTF_16_to_charset(c);
-    if (tty_can_utf8 && (tty_charset_to_UTF_16[c] != _c || (utf8used && c > 0x80))) {
+    if (tty_can_utf8 && (tty_charset_to_UTF_16[c] != _c || (utf8used && c >= 0x80))) {
 	/*
 	 * translation to charset did not find an exact match,
 	 * use utf-8 to output this char
-	 * also use utf-8 if we already output ESC % G and we must putc(c > 0x80),
+	 * also use utf-8 if we already output ESC % G and we must putc(c >= 0x80),
 	 * which would be interpreted as part of an utf-8 sequence.
 	 */
 	tty_MogrifyUTF8(_c);

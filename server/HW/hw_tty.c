@@ -463,7 +463,7 @@ byte tty_InitHW(void) {
     }
     else if (tty_TERM != NULL) {
         /* autodetect some tty features */
-        if (!strcmp(tty_TERM, "xterm"))
+        if (!strcmp(tty_TERM, "xterm") || !strcmp(tty_TERM, "linux"))
             tty_can_utf8 = TRUE;
     }
     if (tty_charset == (uldat)-1) {
