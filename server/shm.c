@@ -297,6 +297,11 @@ void shm_TSR_quit(void) {
     shm_abort();
 }
 
+void shm_quit(void) {
+    shm_TSR_abort();
+    shm_abort();
+}
+
 /*
  * send all data structures through the fd
  * (we don't have a real shared memory now,
