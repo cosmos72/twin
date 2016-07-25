@@ -161,15 +161,23 @@ static void setup_pty_error(CONST byte *f, CONST byte *arg) {
  * do it before the fork() and NOT in the child to avoid
  * races with future tty resizes performed by the parent!
  */
-static byte setup_tty(udat x, udat y) {
+static byte setup_tty(ttydata * Data) {
     struct winsize wsiz;
     /* from hw.c, ttysave is the console original state */
     extern struct termios ttysave;
     
-    wsiz.ws_col = x;
-    wsiz.ws_row = y;
+    const char * lang = getenv("LANG");
+    size_t len = lang ? strlen(lang) : 0;
+    /* if environment variable $LANG ends with ".UTF-8" then initialize tty emulator in UTF-8 mode */
+    if (len > 6 && !memcmp(lang + len - 6, ".UTF-8", 6)) {
+        Data->utf = 1;
+    }
+    
+    wsiz.ws_col = Data->SizeX;
+    wsiz.ws_row = Data->SizeY;
     wsiz.ws_xpixel = 0;
     wsiz.ws_ypixel = 0;
+    
     
     if (ioctl(ptyfd, TIOCSWINSZ, &wsiz) >= 0) {
 	if (tty_setioctl(ttyfd, &ttysave) >= 0)
@@ -240,7 +248,7 @@ byte SpawnInWindow(window Window, CONST byte *arg0, byte * CONST *argv) {
     DropPrivileges();
 
     /* 3 */
-    if (setup_tty(Window->USE.C.TtyData->SizeX, Window->USE.C.TtyData->SizeY)) {
+    if (setup_tty(Window->USE.C.TtyData)) {
 	switch ((childpid = fork())) {
 	  case -1:
 	    /* failed */

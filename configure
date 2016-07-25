@@ -19910,7 +19910,7 @@ fi
 
 for ac_header in crypt.h dirent.h dlfcn.h fcntl.h gpm.h ggi/ggi.h limits.h ltdl.h memory.h \
 		 ncurses.h ncurses/ncurses.h termcap.h ncurses/termcap.h pthread.h shadow.h \
-                 stddef.h stdlib.h sys/filio.h sys/ioctl.h sys/mman.h sys/param.h sys/resource.h \
+                 stddef.h stdint.h stdlib.h sys/filio.h sys/ioctl.h sys/mman.h sys/param.h sys/resource.h \
 		 sys/select.h sys/timeb.h sys/ttydefaults.h sys/types.h sys/utsname.h sys/wait.h \
 		 asm/page.h machine/param.h termio.h termios.h unistd.h zlib.h
 do
