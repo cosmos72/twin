@@ -1,3 +1,41 @@
+#define X11_TITLE_MAXLEN 80
+
+static void X11_FillWindowTitle(byte * title, int maxlen) {
+  int left = maxlen;
+  int chunk = 0;
+
+  memset(title, '\0', left);
+  if (left < 6)
+    return;
+  
+  left--; /* reserve space for final '\0' */
+  
+  memcpy(title, "twin ", 5);
+  title += 5; left -= 5;
+    
+  if (gethostname(title, left) == 0)
+  {
+    byte * end = memchr(title, '\0', left);
+    chunk = (end == NULL) ? 0 : (int)(end - title);
+    if (chunk > 0 && chunk <= left)
+    {
+      title[-1] = '@';
+      title += chunk;
+      left -= chunk;
+    }
+  }
+  chunk = strlen(TWDisplay);
+  if (chunk > 0 && chunk <= left)
+  {
+    memcpy(title, TWDisplay, chunk);
+    title += chunk;
+    left -= chunk;
+  }
+  if (left <= 0)
+    title--;
+  title[0] = '\0';
+}
+
 
 static void X11_HideCursor(dat x, dat y) {
     int xbegin = (x - xhw_startx) * xwfont, ybegin = (y - xhw_starty) * xhfont;

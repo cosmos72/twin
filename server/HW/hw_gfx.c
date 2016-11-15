@@ -437,7 +437,7 @@ byte gfx_InitHW(void) {
 	*charset = NULL, *charset0 = NULL,
 	*file_bg = NULL, *file_root = NULL,
 	*file_theme = "default",
-	name[] = "twin :??? on gfx";
+	title[X11_TITLE_MAXLEN];
     uldat file_bg_len, file_root_len, file_theme_len = strlen(file_theme);
     
     byte drag = FALSE, noinput = FALSE;
@@ -674,8 +674,8 @@ byte gfx_InitHW(void) {
             } else
                 xic = NULL;
 #endif            
-	    sprintf(name, "twin %s on gfx", TWDisplay);
-	    XStoreName(xdisplay, xwindow, name);
+            X11_FillWindowTitle(title, sizeof(title));
+	    XStoreName(xdisplay, xwindow, title);
 	    
 	    
 	    if (!(xUTF_16_to_charset = X11_UTF_16_to_charset_function(charset)))

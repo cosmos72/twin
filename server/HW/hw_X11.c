@@ -222,7 +222,7 @@ byte X11_InitHW(void) {
     byte *s, *xdisplay_ = NULL, *xdisplay0 = NULL,
     *fontname = NULL, *fontname0 = NULL,
     *charset = NULL, *charset0 = NULL,
-    name[] = "twin :??? on X";
+    title[X11_TITLE_MAXLEN];
     byte drag = FALSE, noinput = FALSE;
     
     if (!(HW->Private = (struct x11_data *)AllocMem(sizeof(struct x11_data)))) {
@@ -367,8 +367,8 @@ byte X11_InitHW(void) {
             } else
                 xic = NULL;
 #endif
-	    sprintf(name, "twin %s on X", TWDisplay);
-	    XStoreName(xdisplay, xwindow, name);
+            X11_FillWindowTitle(title, sizeof(title));
+	    XStoreName(xdisplay, xwindow, title);
 
 
 	    if (!(xUTF_16_to_charset = X11_UTF_16_to_charset_function(charset)))
