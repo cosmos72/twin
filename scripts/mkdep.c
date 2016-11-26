@@ -55,19 +55,19 @@
 
 #include "autoconf.h"
 
-#ifdef HAVE_FCNTL_H
+#ifdef TW_HAVE_FCNTL_H
 # include <fcntl.h>
 #endif
 
-#ifdef HAVE_LIMITS_H
+#ifdef TW_HAVE_LIMITS_H
 # include <limits.h>
 #endif
 
-#ifdef HAVE_UNISTD_H
+#ifdef TW_HAVE_UNISTD_H
 # include <unistd.h>
 #endif
 
-#ifdef HAVE_SYS_MMAN_H
+#ifdef TW_HAVE_SYS_MMAN_H
 # include <sys/mman.h>
 #endif
 
@@ -542,7 +542,7 @@ static void do_depend(const char * filename)
     }
     
     mapsize = st.st_size;
-#ifdef HAVE_MMAP
+#ifdef TW_HAVE_MMAP
     mapsize = (mapsize + pagesizem1) & ~pagesizem1;
     map = mmap(NULL, mapsize, PROT_READ, MAP_PRIVATE, fd, 0);
     if ((long) map == -1) {
@@ -573,7 +573,7 @@ static void do_depend(const char * filename)
     clear_config();
     state_machine(map, map+st.st_size);
     
-#ifdef HAVE_MMAP
+#ifdef TW_HAVE_MMAP
     munmap(map, mapsize);
 #else
     free(map);

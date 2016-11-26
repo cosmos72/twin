@@ -159,7 +159,7 @@ byte Error(udat Code_Error) {
 
 int printk(CONST byte *format, ...) {
     int i = 0;
-#ifdef HAVE_VPRINTF
+#ifdef TW_HAVE_VPRINTF
     va_list ap;
     va_start(ap, format);
     i = vfprintf(stderr, (CONST char *)format, ap);

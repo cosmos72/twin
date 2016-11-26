@@ -68,7 +68,7 @@ static byte get_pty(void)
     
     /* open master pty */
     if (
-# ifdef HAVE_GETPT
+# ifdef TW_HAVE_GETPT
 	(fd = getpt()) >= 0
 # else
 	(fd = open("/dev/ptmx", O_RDWR|O_NOCTTY)) >= 0
@@ -91,7 +91,7 @@ static byte get_pty(void)
 	close(fd);
     } else
 	get_pty_error(
-# ifdef HAVE_GETPT
+# ifdef TW_HAVE_GETPT
 		      "getpt", ""
 # else
 		      "open", "/dev/ptmx"

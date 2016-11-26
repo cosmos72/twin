@@ -1,7 +1,7 @@
 
 /* Linux console keyboard input */
 
-#ifdef HAVE_SYS_WAIT_H
+#ifdef TW_HAVE_SYS_WAIT_H
 # include <sys/wait.h>
 #endif
 

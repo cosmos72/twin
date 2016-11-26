@@ -17,21 +17,21 @@
 
 #include "autoconf.h"
 
-#ifdef HAVE_FCNTL_H
+#ifdef TW_HAVE_FCNTL_H
 # include <fcntl.h>
 #endif
 
-#ifdef HAVE_SYS_MMAN_H
+#ifdef TW_HAVE_SYS_MMAN_H
 # include <sys/mman.h>
 #endif
 
-#ifdef HAVE_UNISTD_H
+#ifdef TW_HAVE_UNISTD_H
 # include <unistd.h>
 #endif
 
 #include <Tw/datatypes.h>
 
-#ifdef HAVE_LONG_LONG
+#ifdef TW_HAVE_LONG_LONG
 typedef unsigned long long ul;
 # define UL "ull"
 # define LX "%llX"

@@ -13,7 +13,7 @@
 
 #include "autoconf.h"
 
-#ifdef HAVE_UNISTD_H
+#ifdef TW_HAVE_UNISTD_H
 # include <unistd.h>
 #endif
 #include <sys/stat.h>

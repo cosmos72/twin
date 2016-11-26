@@ -15,14 +15,14 @@
 
 #include "autoconf.h"
 
-#ifdef HAVE_SYS_IOCTL_H
+#ifdef TW_HAVE_SYS_IOCTL_H
 # include <sys/ioctl.h>
 #endif
 
-#ifdef HAVE_TERMIOS_H
+#ifdef TW_HAVE_TERMIOS_H
 # include <termios.h>
 #else
-# ifdef HAVE_TERMIO_H
+# ifdef TW_HAVE_TERMIO_H
 #  include <termio.h>
 # endif
 #endif

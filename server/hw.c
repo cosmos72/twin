@@ -25,17 +25,17 @@
 
 #include "autoconf.h"
 
-#ifdef HAVE_SYS_RESOURCE_H
+#ifdef TW_HAVE_SYS_RESOURCE_H
 # include <sys/resource.h>
 #endif
 
-#ifdef HAVE_SYS_TTYDEFAULTS_H
+#ifdef TW_HAVE_SYS_TTYDEFAULTS_H
 # include <sys/ttydefaults.h>
 #else
 # include "my_ttydefaults.h"
 #endif
 
-#ifdef HAVE_SYS_WAIT_H
+#ifdef TW_HAVE_SYS_WAIT_H
 # include <sys/wait.h>
 #endif
 

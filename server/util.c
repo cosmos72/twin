@@ -18,7 +18,7 @@
 #include <grp.h>
 #include <pwd.h>
 
-#ifdef HAVE_SYS_TIMEB_H
+#ifdef TW_HAVE_SYS_TIMEB_H
 # include <sys/timeb.h>
 #endif
 
@@ -1065,7 +1065,7 @@ byte SetServerUid(uldat uid, byte privileges) {
 	if ((WM_MsgPort = Ext(WM,MsgPort))) {
 	    if ((p = getpwuid(uid)) && p->pw_uid == uid &&
 		chown(fullTWD, p->pw_uid, p->pw_gid) >= 0
-#ifdef HAVE_INITGROUPS
+#ifdef TW_HAVE_INITGROUPS
 		&& initgroups(p->pw_name, p->pw_gid) >= 0
 #endif
 		) {

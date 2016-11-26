@@ -29,7 +29,7 @@
 ## 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 #####
 
-ACLOCAL_AMFLAGS = -I ../../m4
+ACLOCAL_AMFLAGS = -I ../m4
 AUTOMAKE_OPTIONS = foreign
 AM_CPPFLAGS =
 AM_LDFLAGS =
@@ -87,8 +87,8 @@ EXTRA_DIST	       += lt__dirent.c \
 
 libltdl_la_CPPFLAGS	= -DLTDLOPEN=$(LTDLOPEN) $(AM_CPPFLAGS)
 libltdl_la_LDFLAGS	= $(AM_LDFLAGS) $(LTDL_VERSION_INFO) $(LT_DLPREOPEN)
-libltdl_la_LIBADD	= $(LTLIBOBJS)
-libltdl_la_DEPENDENCIES	= $(LT_DLLOADERS) $(LTLIBOBJS)
+libltdl_la_LIBADD	= $(ltdl_LTLIBOBJS)
+libltdl_la_DEPENDENCIES	= $(LT_DLLOADERS) $(ltdl_LTLIBOBJS)
 
 libltdlc_la_SOURCES	= $(libltdl_la_SOURCES)
 libltdlc_la_CPPFLAGS	= -DLTDLOPEN=$(LTDLOPEN)c $(AM_CPPFLAGS)
@@ -135,7 +135,7 @@ CLEANFILES		       += libltdl.la \
 
 ## Automake-1.9.6 doesn't clean subdir AC_LIBOBJ compiled objects
 ## automatically:
-CLEANFILES	       += $(LIBOBJS) $(LTLIBOBJS)
+CLEANFILES	       += $(ltdl_LIBOBJS) $(ltdl_LTLIBOBJS)
 
 EXTRA_DIST	       += COPYING.LIB \
 			  README

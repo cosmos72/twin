@@ -16,27 +16,27 @@
 #include <time.h>
 #include <sys/types.h>
 
-#ifdef HAVE_FCNTL_H
+#ifdef TW_HAVE_FCNTL_H
 # include <fcntl.h>
 #endif
 
-#ifdef HAVE_LIMITS_H
+#ifdef TW_HAVE_LIMITS_H
 # include <limits.h>
 #endif
 
-#ifdef HAVE_UNISTD_H
+#ifdef TW_HAVE_UNISTD_H
 # include <unistd.h>
 #endif
 
-#ifdef HAVE_MACHINE_PARAM_H
+#ifdef TW_HAVE_MACHINE_PARAM_H
 # include <machine/param.h>
 #endif
 
-#ifdef HAVE_SYS_FILIO_H
+#ifdef TW_HAVE_SYS_FILIO_H
 # include <sys/filio.h>
 #endif
 
-#ifdef HAVE_SYS_SELECT_H
+#ifdef TW_HAVE_SYS_SELECT_H
 # include <sys/select.h>
 #endif
 

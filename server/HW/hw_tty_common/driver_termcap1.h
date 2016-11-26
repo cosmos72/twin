@@ -20,16 +20,16 @@
 
 # else /* rest of the world */
 
-#  ifdef HAVE_TERMCAP_H
+#  ifdef TW_HAVE_TERMCAP_H
 #   include <termcap.h>
 #  else
-#   ifdef HAVE_NCURSES_TERMCAP_H
+#   ifdef TW_HAVE_NCURSES_TERMCAP_H
 #    include <ncurses/termcap.h>
 #   else
-#    ifdef HAVE_NCURSES_H
+#    ifdef TW_HAVE_NCURSES_H
 #     include <ncurses.h>
 #    else
-#     ifdef HAVE_NCURSES_NCURSES_H
+#     ifdef TW_HAVE_NCURSES_NCURSES_H
 #      include <ncurses/ncurses.h>
 #     endif
 #    endif

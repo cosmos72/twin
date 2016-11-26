@@ -14,7 +14,7 @@
 #define _TWIN_H
 
 #ifndef RETSIGTYPE
-# include "autoconf.h"
+# include "tw_autoconf.h"
 #endif
 
 /* pull in "obj" field in <Tw/stattypes.h> */

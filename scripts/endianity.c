@@ -15,24 +15,24 @@
 
 #include "autoconf.h"
 
-#ifdef HAVE_SYS_MMAN_H
+#ifdef TW_HAVE_SYS_MMAN_H
 # include <sys/mman.h>
 #endif
 
 /* This mess was adapted from the GNU getpagesize.h.  */
-#ifdef HAVE_UNISTD_H
+#ifdef TW_HAVE_UNISTD_H
 # include <unistd.h>
 #endif
 
-#ifndef HAVE_GETPAGESIZE
+#ifndef TW_HAVE_GETPAGESIZE
 
 # ifdef _SC_PAGESIZE
 #  define getpagesize() sysconf(_SC_PAGESIZE)
 # else /* no _SC_PAGESIZE */
-#  ifdef HAVE_ASM_PAGE_H
+#  ifdef TW_HAVE_ASM_PAGE_H
 #   include <asm/page.h>
 #  endif
-#  ifdef HAVE_SYS_PARAM_H
+#  ifdef TW_HAVE_SYS_PARAM_H
 #   include <sys/param.h>
 #  endif
 #  ifdef EXEC_PAGESIZE
@@ -60,7 +60,7 @@
 #   endif /* no NBPG */
 #  endif /* no EXEC_PAGESIZE */
 # endif /* no _SC_PAGESIZE */
-#endif /* no HAVE_GETPAGESIZE */
+#endif /* no TW_HAVE_GETPAGESIZE */
 
 
 static int my_memcmp(char *m1, char *m2, int len) {

@@ -66,7 +66,7 @@ int printk(CONST byte *format, ...) {
     va_list ap;
     
     va_start(ap, format);
-# ifdef HAVE_VSNPRINTF
+# ifdef TW_HAVE_VSNPRINTF
     len = vsnprintf(buf, sizeof(buf), format, ap);
     va_end(ap);
 # else
@@ -77,7 +77,7 @@ int printk(CONST byte *format, ...) {
 	fputs("twin: internal error: printk() overflow! \033[1mQUIT NOW !\033[0m\n", stderr);
 	return sizeof(buf);
     }
-#endif /* HAVE_VSNPRINTF */
+#endif /* TW_HAVE_VSNPRINTF */
 
     printk_str(len, buf);
     

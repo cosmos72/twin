@@ -10,7 +10,7 @@
 #define Tw_ChangeFieldObj Tw_ChangeField
 
 
-#if defined(CONF__ASM) && defined(TW_HAVE_ASM) && defined(TW_HAVE_GCC_I386_ASM)
+#if defined(TW_HAVE_ASM) && defined(TW_HAVE_GCC_I386_ASM)
 
  /* backward compatibility. will be removed */
 # define Tw_Create4MenuMenuItem _Tw_Create4MenuMenuItem
@@ -20,6 +20,6 @@
  /* backward compatibility. will be removed */
 # undef Tw_Create4MenuMenuItem
 
-#endif /* defined(CONF__ASM) && defined(TW_HAVE_ASM) && defined(TW_HAVE_GCC_I386_ASM) */
+#endif /* defined(TW_HAVE_ASM) && defined(TW_HAVE_GCC_I386_ASM) */
 
 

@@ -18,13 +18,13 @@
 #ifndef MD5_H
 #define MD5_H
 
-#include "autoconf.h"
+#include "tw_autoconf.h"
 
-#ifdef HAVE_STDDEF_H
+#ifdef TW_HAVE_STDDEF_H
 # include <stddef.h> /* for size_t */
 #endif
 
-#ifdef HAVE_STDINT_H
+#ifdef TW_HAVE_STDINT_H
 # include <stdint.h> /* for uint32_t */
   typedef uint32_t md5_uint32;
 #else
