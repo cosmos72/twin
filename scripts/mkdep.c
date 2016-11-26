@@ -53,7 +53,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "autoconf.h"
+#include "tw_autoconf.h"
 
 #ifdef TW_HAVE_FCNTL_H
 # include <fcntl.h>

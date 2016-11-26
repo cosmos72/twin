@@ -14,10 +14,10 @@
  * Life is tricky... under SunOS hstrerror() is in an obscure library, so it gets disabled,
  * yet <netdb.h> has its prototype, so the #define hstrerror() in "missing.h" breaks it.
  * Solution: include "twin.h" (pulls in "missing.h") late, but still include
- * "autoconf.h" and "osincludes.h" early to pull in TW_HAVE_* and system headers
+ * "tw_autoconf.h" and "osincludes.h" early to pull in TW_HAVE_* and system headers
  * necessary to include <sys/socket.h> under FreeBSD.
  */
-#include "autoconf.h"
+#include "tw_autoconf.h"
 #include "osincludes.h"
 
 #include <sys/socket.h>

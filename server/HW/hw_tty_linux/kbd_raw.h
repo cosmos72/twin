@@ -248,9 +248,9 @@ static void lrawkbd_ReleaseConsole(void) {
 
 
 
-static RETSIGTYPE lrawkbd_ReactSignalIn(int sig);
+static TW_RETSIGTYPE lrawkbd_ReactSignalIn(int sig);
 
-static RETSIGTYPE lrawkbd_ReactSignalOut(int sig) {
+static TW_RETSIGTYPE lrawkbd_ReactSignalOut(int sig) {
     /* HW may not be set here... use lrawkbd_HW */
     SaveHW;
     SetHW(lrawkbd_HW);
@@ -269,7 +269,7 @@ static RETSIGTYPE lrawkbd_ReactSignalOut(int sig) {
 }
 
 
-static RETSIGTYPE lrawkbd_ReactSignalIn(int sig) {
+static TW_RETSIGTYPE lrawkbd_ReactSignalIn(int sig) {
     /* HW may not be set here... use lrawkbd_HW */
     SaveHW;
     SetHW(lrawkbd_HW);

@@ -13,7 +13,7 @@
 # define TW_PREFIX	0
 # define Tw(arg)	arg
 # define TW(arg)	arg
-# ifndef RETSIGTYPE
+# ifndef TW_RETSIGTYPE
 #  include "tw_autoconf.h"
 # endif
 #endif

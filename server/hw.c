@@ -23,7 +23,7 @@
 #include <signal.h>
 #include <sys/stat.h>
 
-#include "autoconf.h"
+#include "tw_autoconf.h"
 
 #ifdef TW_HAVE_SYS_RESOURCE_H
 # include <sys/resource.h>
@@ -76,13 +76,13 @@ static VOLATILE byte GotSignalWinch;
 static VOLATILE byte GotSignalChild;
 static VOLATILE byte GotSignalHangup;
 
-static RETSIGTYPE SignalWinch(int n) {
+static TW_RETSIGTYPE SignalWinch(int n) {
     GotSignals = GotSignalWinch = TRUE;
     signal(SIGWINCH, SignalWinch);
     RETFROMSIGNAL(0);
 }
 
-static RETSIGTYPE HandleSignalWinch(void) {
+static TW_RETSIGTYPE HandleSignalWinch(void) {
     GotSignalWinch = FALSE;
     if (DisplayHWCTTY && DisplayHWCTTY != HWCTTY_DETACHED
 	&& DisplayHWCTTY->DisplayIsCTTY) {
@@ -92,7 +92,7 @@ static RETSIGTYPE HandleSignalWinch(void) {
     RETFROMSIGNAL(0);
 }
 
-static RETSIGTYPE SignalChild(int n) {
+static TW_RETSIGTYPE SignalChild(int n) {
     GotSignals = GotSignalChild = TRUE;
     signal(SIGCHLD, SignalChild);
     RETFROMSIGNAL(0);
@@ -111,7 +111,7 @@ static void HandleSignalChild(void) {
 /*
  * got a SIGHUP. shutdown the display on controlling tty, if any
  */
-static RETSIGTYPE SignalHangup(int n) {
+static TW_RETSIGTYPE SignalHangup(int n) {
     GotSignals = GotSignalHangup = TRUE;
     signal(SIGHUP, SignalHangup);
     RETFROMSIGNAL(0);
@@ -138,7 +138,7 @@ void HandleSignals(void) {
 
 
 #ifndef DONT_TRAP_SIGNALS
-static RETSIGTYPE SignalFatal(int n) {
+static TW_RETSIGTYPE SignalFatal(int n) {
     sigset_t s, t;
 
     signal(n, SIG_DFL);

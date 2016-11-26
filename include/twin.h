@@ -13,7 +13,7 @@
 #ifndef _TWIN_H
 #define _TWIN_H
 
-#ifndef RETSIGTYPE
+#ifndef TW_RETSIGTYPE
 # include "tw_autoconf.h"
 #endif
 
@@ -79,7 +79,7 @@ typedef struct s_obj *obj;
 
 /* return from signal macros */
 
-#define RETFROMSIGNAL(value)		return ARG_IFNOTVOID(value, RETSIGTYPE)
+#define RETFROMSIGNAL(value)		return ARG_IFNOTVOID(value, TW_RETSIGTYPE)
 #define ARG_IFNOTVOID(value, type)	CAT(ARG_IFNOTVOID_,type)(value)
 #define ARG_IFNOTVOID_void(value)
 #define ARG_IFNOTVOID_int(value)	(value)

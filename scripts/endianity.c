@@ -13,7 +13,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "autoconf.h"
+#include "tw_autoconf.h"
 
 #ifdef TW_HAVE_SYS_MMAN_H
 # include <sys/mman.h>

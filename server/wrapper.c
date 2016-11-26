@@ -9,7 +9,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "autoconf.h"
+#include "tw_autoconf.h"
 #include "version.h"
 #include <Tw/Tw.h>
 

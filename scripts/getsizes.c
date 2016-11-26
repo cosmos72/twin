@@ -15,7 +15,7 @@
 #include <time.h>
 #include <sys/types.h>
 
-#include "autoconf.h"
+#include "tw_autoconf.h"
 
 #ifdef TW_HAVE_FCNTL_H
 # include <fcntl.h>

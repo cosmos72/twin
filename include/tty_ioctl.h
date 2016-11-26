@@ -8,8 +8,8 @@
 #ifndef _TWIN_TTY_IOCTL_H
 #define _TWIN_TTY_IOCTL_H
 
-#ifndef RETSIGTYPE
-# include "autoconf.h"
+#ifndef TW_RETSIGTYPE
+# include "tw_autoconf.h"
 #endif
 
 #if defined(HAVE_TERMIOS_H)
