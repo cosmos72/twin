@@ -25,7 +25,7 @@
  * (assumed to be as wide as (void *))
  */
 #ifdef CONF__ASM
-# if TW_SIZEOFTANY > TW_SIZEOFTOPAQUE
+# if TW_SIZEOF_TANY > TW_SIZEOF_TOPAQUE
 #  undef CONF__ASM
 # endif
 #endif
@@ -35,7 +35,7 @@
  * if (tany) does not fit a i386 machine register (4 bytes)
  */
 #ifdef TW_HAVE_GCC_I386_ASM
-# if TW_SIZEOFTANY > 4
+# if TW_SIZEOF_TANY > 4
 #  undef TW_HAVE_GCC_I386_ASM
 # endif
 #endif

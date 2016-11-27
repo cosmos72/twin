@@ -3,18 +3,18 @@
 #define _TT_DATASIZES_H
 
 #define TT_SIZEOF_void		0
-#define TT_SIZEOF_ttchar	TW_SIZEOFBYTE
-#define TT_SIZEOF_ttbyte	TW_SIZEOFBYTE
-#define TT_SIZEOF_ttshort	TW_SIZEOFUDAT
-#define TT_SIZEOF_ttushort	TW_SIZEOFUDAT
-#define TT_SIZEOF_ttint		TW_SIZEOFULDAT
-#define TT_SIZEOF_ttuint	TW_SIZEOFULDAT
+#define TT_SIZEOF_ttchar	TW_SIZEOF_BYTE
+#define TT_SIZEOF_ttbyte	TW_SIZEOF_BYTE
+#define TT_SIZEOF_ttshort	TW_SIZEOF_UDAT
+#define TT_SIZEOF_ttushort	TW_SIZEOF_UDAT
+#define TT_SIZEOF_ttint		TW_SIZEOF_ULDAT
+#define TT_SIZEOF_ttuint	TW_SIZEOF_ULDAT
 #define TT_SIZEOF_ttcol		TW_SIZEOF_HWCOL
 #define TT_SIZEOF_ttfont	TW_SIZEOF_HWFONT
 #define TT_SIZEOF_ttattr	TW_SIZEOF_HWATTR
-#define TT_SIZEOF_ttopaque	TW_SIZEOFTOPAQUE
-#define TT_SIZEOF_ttany		TW_SIZEOFTANY
-#define TT_SIZEOF_tttype	TW_SIZEOFTOPAQUE
+#define TT_SIZEOF_ttopaque	TW_SIZEOF_TOPAQUE
+#define TT_SIZEOF_ttany		TW_SIZEOF_TANY
+#define TT_SIZEOF_tttype	TW_SIZEOF_TOPAQUE
 
 #define TT_MAX_ttchar		TW_MAXSBYTE
 #define TT_MAX_ttbyte		TW_MAXBYTE

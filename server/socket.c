@@ -655,7 +655,7 @@ TW_DECL_MAGIC(TwinMagicData);
  * if success, return array of obj, else return NULL.
  */
 static CONST obj *AllocId2ObjVec(byte *alloced, byte c, uldat n, byte *VV) {
-#if TW_SIZEOFULDAT >= TW_SIZEOFTOPAQUE && TW_CAN_UNALIGNED != 0
+#if TW_SIZEOF_ULDAT >= TW_SIZEOF_TOPAQUE && TW_CAN_UNALIGNED != 0
     CONST uldat *L = (CONST uldat *)VV;
     CONST obj *aX;
     obj *X;
@@ -1749,7 +1749,7 @@ static void sockSendMsg(msgport MsgPort, msg Msg) {
       default:
 	Easy = FALSE;
     }
-#if TW_SIZEOFTOPAQUE == TW_SIZEOFULDAT
+#if TW_SIZEOF_TOPAQUE == TW_SIZEOF_ULDAT
     if (Easy) {
 	Msg->Event.EventCommon.W = (void *)Obj2Id(Msg->Event.EventCommon.W);
 	if (Msg->Type == MSG_MENU_ROW) {

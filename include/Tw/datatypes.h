@@ -2,7 +2,9 @@
 #ifndef _TW_DATATYPES_H
 #define _TW_DATATYPES_H
 
-#include <Tw/Twautoconf.h>
+#ifndef _TW_TWAUTOCONF_H
+# include <Tw/Twautoconf.h>
+#endif
 
 #ifdef TW_WORDS_BIGENDIAN
 # define TW_IS_LITTLE_ENDIAN 0
@@ -22,6 +24,10 @@ typedef unsigned int   uldat;
 typedef uldat	        tobj;
 typedef size_t       topaque;
 typedef size_t          tany;
+
+#define TW_SIZEOF_TOBJ    TW_SIZEOF_INT
+#define TW_SIZEOF_TOPAQUE TW_SIZEOF_SIZE_T
+#define TW_SIZEOF_TANY    TW_SIZEOF_SIZE_T
 
 typedef uint8_t        hwcol;
 typedef uint16_t      hwfont;

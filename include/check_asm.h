@@ -13,7 +13,7 @@
 #define _TWIN_CHECK_ASM_H
 
 #include <Tw/Twautoconf.h>
-#include <Tw/datasizes.h>
+#include <Tw/datatypes.h>
 
 /*
  * disable i386 gcc assembler code
@@ -21,7 +21,7 @@
  */
 # ifdef TW_HAVE_ASM
 #  ifdef TW_HAVE_GCC_I386_ASM
-#   if TW_SIZEOFTANY > 4
+#   if TW_SIZEOF_TANY > 4
 #    undef TW_HAVE_GCC_I386_ASM
 #    undef TW_HAVE_ASM
 #    warning gcc-i386 assembler support disabled because sizeof(tany) > 4
@@ -34,13 +34,9 @@
  * generically disable assembler code
  * if (tany) does not fit a machine register
  * (assumed to be as wide as (void *))
- * 
- * #undef CONF__ASM does not work because
- * -DCONF__ASM is given on compiler command line
- * so we use #undef TW_HAVE_ASM
  */
 # ifdef TW_HAVE_ASM
-#  if TW_SIZEOFTANY > TW_SIZEOFTOPAQUE
+#  if TW_SIZEOF_TANY_T > TW_SIZEOF_VOID_P
 #   undef TW_HAVE_ASM
 #   warning assembler support disabled because sizeof(tany) > sizeof(void *)
 #  endif
@@ -55,7 +51,7 @@
  * to pass all function arguments as (tany)
  */
 # ifdef TW_HAVE_ASM
-#  if TW_SIZEOFTANY != TW_SIZEOFINT
+#  if TW_SIZEOF_TANY != TW_SIZEOF_INT
 #   undef TW_HAVE_ASM
 #   warning assembler support disabled because sizeof(tany) != sizeof(int)
 #  endif
