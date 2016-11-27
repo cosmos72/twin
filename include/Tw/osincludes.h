@@ -2,10 +2,25 @@
 #define _TW_OSINCLUDES_H
 
 #include <errno.h>
-#include <stddef.h>
+
+#ifdef TW_HAVE_STDDEF_H
+# include <stddef.h>
+#endif
+
 #include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
+
+#ifdef TW_HAVE_STDLIB_H
+# include <stdlib.h>
+#endif
+
+#ifdef TW_HAVE_STDINT_H
+# include <stdint.h>
+#endif
+
+#ifdef TW_HAVE_STDARG_H
+# include <stdarg.h>
+#endif
+
 #include <string.h>
 #include <time.h>
 #include <sys/types.h>

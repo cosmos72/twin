@@ -754,7 +754,7 @@ static gadget CreateEmptyButton(fn_gadget Fn_Gadget, msgport Owner, dat XWidth, 
 	    G->USE.T.Text[i][k] = ' ';
 	    for (j=(dat)0; j<XWidth; j++)
 		G->USE.T.Text[i][k+1+j] = i & 1 ? ' ' : _UPPER;
-#if TW_SIZEOFHWCOL == 1
+#if TW_SIZEOF_HWCOL == 1
 	    WriteMem((void *)(G->USE.T.Color[i]+k), BgCol, XWidth+1);
 #else
 	    for (j=(dat)0; j<=XWidth; j++)

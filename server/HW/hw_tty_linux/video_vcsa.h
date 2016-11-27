@@ -91,25 +91,14 @@ static void vcsa_QuitVideo(void) {
 }
 
 
-#if TW_SIZEOFHWATTR == 2 && TW_BYTE_ORDER == TW_LITTLE_ENDIAN
+#if TW_SIZEOF_HWATTR == 2 && TW_IS_LITTLE_ENDIAN
 
-# ifdef TW_HAVE_PWRITE /* always 0... */
-
-#  define vcsa_write(fd, buf, count, pos) pwrite(fd, buf, (count)*2, (pos)*2+4)
-
-# else /* !TW_HAVE_PWRITE */
-/*
- * we do not need the complete seek + write + seek back
- * but only seek + write
- */
 #  define vcsa_write(fd, buf, count, pos) do { \
     lseek(fd, (pos)*2+4, SEEK_SET); \
     write(fd, buf, (count)*2); \
 } while (0)
 
-# endif /* TW_HAVE_PWRITE */
-
-#else /* TW_SIZEOFHWATTR != 2 || TW_BYTE_ORDER != TW_LITTLE_ENDIAN */
+#else /* TW_SIZEOF_HWATTR != 2 || !TW_IS_LITTLE_ENDIAN */
 
 static byte vcsa_buff[BIGBUFF*2];
 
@@ -131,7 +120,7 @@ INLINE void vcsa_write(int fd, hwattr *buf, uldat count, uldat pos) {
     }
 }
 
-#endif /* TW_SIZEOFHWATTR == 2 && TW_BYTE_ORDER == TW_LITTLE_ENDIAN */
+#endif /* TW_SIZEOF_HWATTR == 2 && TW_IS_LITTLE_ENDIAN */
 
 
 static void vcsa_FlushVideo(void) {

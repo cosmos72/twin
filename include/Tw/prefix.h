@@ -14,7 +14,7 @@
 # define Tw(arg)	arg
 # define TW(arg)	arg
 # ifndef TW_RETSIGTYPE
-#  include "tw_autoconf.h"
+#  include "twautoconf.h"
 # endif
 #endif
 

@@ -15,7 +15,7 @@
 #include <time.h>
 #include <sys/types.h>
 
-#include "tw_autoconf.h"
+#include "twautoconf.h"
 
 #ifdef TW_HAVE_FCNTL_H
 # include <fcntl.h>
@@ -31,40 +31,17 @@
 
 #include <Tw/datatypes.h>
 
-#ifdef TW_HAVE_LONG_LONG
-typedef unsigned long long ul;
-# define UL "ull"
-# define LX "%llX"
-# define LX8 "%8llX"
-# else
 typedef unsigned long ul;
 # define UL "ul"
 # define LX "%lX"
 # define LX8 "%8lX"
-#endif
-
-/* user can choose NOT to use 'long long' even if it is available... */
-#if defined(CONF__LONG_LONG) && defined(HAVE_LONG_LONG)
-# define ULLONG_NAME "unsigned long long"
-# define ULLONG_SPEC "ull"
-# define ULLONG_SIZE sizeof(ul)
-# define ULLONG_MAX  MAXU(ul)
-#else
-# define ULLONG_NAME
-# define ULLONG_SPEC
-# define ULLONG_SIZE
-# define ULLONG_MAX
-#endif
 
 int main(void) {
     char *str_byte16, *str_byte32;
     
-    char *names[] = { "uldat",      "unsigned long",       "size_t",        ULLONG_NAME };
-#if 0
-    char *specs[] = { "",           "ul",                  "",              ULLONG_SPEC };
-#endif
-    int  sizes[]  = { sizeof(uldat), sizeof(unsigned long), sizeof(size_t), ULLONG_SIZE };
-    ul   maxes[]  = { MAXU(uldat),   MAXU(unsigned long),   MAXU(size_t),   ULLONG_MAX  };
+    char *names[] = { "uldat",      "unsigned long",       "size_t" };
+    int  sizes[]  = { sizeof(uldat), sizeof(unsigned long), sizeof(size_t) };
+    ul   maxes[]  = { MAXU(uldat),   MAXU(unsigned long),   MAXU(size_t)  };
     
     int i, i_tany;
     
@@ -125,8 +102,7 @@ int main(void) {
 	   "typedef size_t	topaque;\n"
 	   "\n"
 	   "/*\n"
-	   " * the widest libTw type. At least as wide as topaque, uldat, unsigned long and,\n"
-	   " * if supported by the compiler and enabled, unsigned long long.\n"
+	   " * the widest libTw type. At least as wide as topaque, uldat and unsigned long\n"
 	   " */\n"
 	   "typedef %s	tany;\n"
 	   "\n"
@@ -147,12 +123,7 @@ int main(void) {
 	   "#define TW_MAXLDAT     0x" LX "\n"
 	   "#define TW_MAXULDAT    0x" LX "\n"
 	   "#define TW_MAXTOPAQUE  0x" LX "\n"
-	   "\n"
-	   "/*\n"
-	   " * WARNING: if 'long long' support exists and is enabled,\n"
-	   " * TW_MAXTANY may be so large that C preprocessor cannot handle it\n"
-	   " */\n"
-	   "#define TW_MAXTANY     0x" LX /*"%s"*/ "\n"
+	   "#define TW_MAXTANY     0x" LX "\n"
 	   "\n"
 	   "#define TW_MINSBYTE    0x" LX "\n"
 	   "#define TW_MINDAT      0x" LX "\n"
@@ -172,7 +143,7 @@ int main(void) {
 	   (ul)MAXSBYTE, (ul)MAXBYTE,
 	   (ul)MAXDAT, (ul)MAXUDAT,
 	   (ul)MAXLDAT, (ul)MAXULDAT,
-	   (ul)MAXU(size_t), (ul)maxes[i_tany], /* specs[i_tany], */
+	   (ul)MAXU(size_t), (ul)maxes[i_tany],
 	   
 	   /*
 	    * note about MINSBYTE, MINDAT, MINLDAT:

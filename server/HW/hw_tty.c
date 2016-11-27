@@ -11,7 +11,7 @@
  *
  */
 
-#include "tw_autoconf.h"
+#include "twautoconf.h"
 
 #ifdef TW_HAVE_UNISTD_H
 # include <unistd.h>

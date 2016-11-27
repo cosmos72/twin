@@ -4,10 +4,12 @@
 AC_PREREQ([2.65])
 AC_INIT([twin], [0.6.2.work], [BUG-REPORT-ADDRESS])
 AC_CONFIG_SRCDIR([server/main.c])
-AC_CONFIG_HEADERS([config.h]) dnl due to a bug in current libltdl Makefile.in in [recursive] mode, config.h must be in top-level directory
+AC_CONFIG_HEADERS([include/config.h])
 AC_CONFIG_MACRO_DIRS([m4])
 AC_CONFIG_AUX_DIR([admin])
 AM_INIT_AUTOMAKE([1.15 foreign subdir-objects])
+
+m4_define([AH_HEADER], [config.h]) dnl filename of first AC_CONFIG_HEADERS. works around a bug in current libltdl
 
 LT_INIT
 LT_CONFIG_LTDL_DIR([libs/libltdl])
@@ -25,10 +27,13 @@ AC_PROG_SED
 # Checks for header files.
 AC_PATH_X
 AC_FUNC_ALLOCA
-AC_CHECK_HEADERS([arpa/inet.h crypt.h fcntl.h inttypes.h libintl.h limits.h locale.h malloc.h memory.h netdb.h netinet/in.h shadow.h signal.h stddef.h stdint.h stdlib.h string.h sys/ioctl.h sys/param.h sys/socket.h sys/time.h sys/timeb.h termio.h termios.h unistd.h])
+AC_HEADER_TIME
+AC_HEADER_SYS_WAIT
+AC_CHECK_HEADERS([arpa/inet.h asm/page.h crypt.h fcntl.h inttypes.h libintl.h limits.h locale.h machine/param.h malloc.h memory.h netdb.h netinet/in.h shadow.h signal.h stdarg.h stddef.h stdint.h stdlib.h string.h sys/filio.h sys/ioctl.h sys/mman.h sys/param.h sys/select.h sys/socket.h sys/timeb.h termio.h termios.h unistd.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_INLINE
+AC_C_BIGENDIAN()
 AC_TYPE_PID_T
 AC_TYPE_SIGNAL
 AC_TYPE_SIZE_T
@@ -41,6 +46,13 @@ AC_TYPE_UINT8_T
 AC_TYPE_UINT16_T
 AC_TYPE_UINT32_T
 
+AC_CHECK_SIZEOF([char])
+AC_CHECK_SIZEOF([short])
+AC_CHECK_SIZEOF([int])
+AC_CHECK_SIZEOF([long])
+AC_CHECK_SIZEOF([size_t])
+AC_CHECK_SIZEOF([void *])
+
 # Checks for library functions.
 AC_FUNC_CHOWN
 AC_FUNC_FORK
@@ -49,7 +61,7 @@ AC_FUNC_MALLOC
 AC_FUNC_MMAP
 AC_FUNC_REALLOC
 AC_FUNC_WAIT3
-AC_CHECK_FUNCS([dup2 ftime gethostbyname gethostname getpagesize getspnam gettimeofday memchr memmove memset munmap putenv select setenv setlocale socket strchr strdup strerror strrchr strspn strstr strtol strtoul uname])
+AC_CHECK_FUNCS([dup2 ftime gethostbyname gethostname getpagesize getspnam gettimeofday memchr memmove memset munmap putenv select setenv setlocale socket strchr strdup strerror strrchr strspn strstr strtol strtoul uname wait4])
 
 dnl crypt() is needed by twdm
 AC_CHECK_FUNC(crypt,,AC_CHECK_LIB(crypt,crypt))

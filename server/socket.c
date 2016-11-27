@@ -14,10 +14,10 @@
  * Life is tricky... under SunOS hstrerror() is in an obscure library, so it gets disabled,
  * yet <netdb.h> has its prototype, so the #define hstrerror() in "missing.h" breaks it.
  * Solution: include "twin.h" (pulls in "missing.h") late, but still include
- * "tw_autoconf.h" and "osincludes.h" early to pull in TW_HAVE_* and system headers
+ * "twautoconf.h" and "osincludes.h" early to pull in TW_HAVE_* and system headers
  * necessary to include <sys/socket.h> under FreeBSD.
  */
-#include "tw_autoconf.h"
+#include "twautoconf.h"
 #include "osincludes.h"
 
 #include <sys/socket.h>
@@ -2469,10 +2469,10 @@ static byte Check4MagicTranslation(uldat slot, byte *magic, byte len) {
 	 */
 	if (!CmpMem(magic+len1+1, "Twin", 4))
 	    /* little endian client. and us? */
-	    return TW_BYTE_ORDER == TW_LITTLE_ENDIAN ? MagicAlien : MagicAlienXendian;
+	    return TW_IS_LITTLE_ENDIAN ? MagicAlien : MagicAlienXendian;
 	if (!CmpMem(magic+len1+1+(magic[TWS_uldat]-4), "niwT", 4))
 	    /* big endian client. and us? */
-	    return TW_BYTE_ORDER == TW_BIG_ENDIAN ? MagicAlien : MagicAlienXendian;
+	    return TW_IS_BIG_ENDIAN ? MagicAlien : MagicAlienXendian;
     }
 
 #endif /* CONF_SOCKET_ALIEN */

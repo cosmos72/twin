@@ -7,10 +7,12 @@
 *.so.?.?.?
 Makefile
 Makefile.in
-config.h
 config.log
 config.status
+.deps
+.dirstamp
 autom4te.cache
+libtool
 clients/mapscrn/twmapscrn
 clients/twattach
 clients/twcat
@@ -28,7 +30,10 @@ clients/twsetroot
 clients/twsysmon
 clients/twterm
 clients/twthreadtest
-include/tw_autoconf.h
+include/config.h
+include/stamp-h1
+include/twautoconf.h
+include/Tw/Twautoconf.h
 server/twdisplay
 server/twin
 server/twin_real

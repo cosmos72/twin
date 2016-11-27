@@ -15,9 +15,6 @@
 #include <Tw/Twautoconf.h>
 #include <Tw/datasizes.h>
 
-#ifdef CONF__ASM
-
-
 /*
  * disable i386 gcc assembler code
  * if (tany) does not fit a i386 machine register (4 bytes)
@@ -63,9 +60,6 @@
 #   warning assembler support disabled because sizeof(tany) != sizeof(int)
 #  endif
 # endif
-
-
-#endif /* CONF__ASM */
 
 
 #endif /* _TWIN_CONFIG_H */

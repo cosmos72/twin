@@ -34,12 +34,12 @@
 
 
 
-#if TW_BYTE_ORDER == TW_LITTLE_ENDIAN
+#if TW_IS_LITTLE_ENDIAN
 /* we can use hton?() functions to speed up translation */
 # include <netinet/in.h>
 #endif
 
-#if TW_BYTE_ORDER == TW_LITTLE_ENDIAN && TW_CAN_UNALIGNED != 0 /* due to lack of alignment */
+#if TW_IS_LITTLE_ENDIAN && TW_CAN_UNALIGNED != 0 /* due to lack of alignment */
 INLINE void FlipCopyMem(CONST byte *src, byte *dst, uldat len) {
     switch (len) {
       case 2:
@@ -66,14 +66,14 @@ INLINE void FlipCopyMem(CONST byte *src, byte *dst, uldat len) {
     while (len--)
 	*dst++ = *src--;
 }
-#endif /* TW_BYTE_ORDER == TW_LITTLE_ENDIAN */
+#endif /* TW_IS_LITTLE_ENDIAN */
 
 
 
 /*translate from alien data, copying srclen bytes to dstlen bytes, optionally flipping byte order*/
 static void alienRead(CONST byte *src, uldat srclen, byte *dst, uldat dstlen, byte flip) {
     
-#if TW_BYTE_ORDER == TW_LITTLE_ENDIAN
+#if TW_IS_LITTLE_ENDIAN
     
     /* copy the least significant bits */
     if (flip)
@@ -84,7 +84,7 @@ static void alienRead(CONST byte *src, uldat srclen, byte *dst, uldat dstlen, by
     if (dstlen > srclen)
 	WriteMem(dst + srclen, '\0', dstlen - srclen);
     
-#else /* TW_BYTE_ORDER == TW_BIG_ENDIAN */
+#else /* TW_IS_BIG_ENDIAN */
     
     /* copy the least significant bits */
     if (flip)
@@ -97,13 +97,13 @@ static void alienRead(CONST byte *src, uldat srclen, byte *dst, uldat dstlen, by
     if (dstlen > srclen)
 	WriteMem(dst, '\0', dstlen - srclen);
 
-#endif /* TW_BYTE_ORDER == TW_LITTLE_ENDIAN */
+#endif /* TW_IS_LITTLE_ENDIAN */
 }
 
 /*translate to alien data, copying srclen bytes to dstlen bytes, optionally flipping byte order*/
 static void alienWrite(CONST byte *src, uldat srclen, byte *dst, uldat dstlen, byte flip) {
     
-#if TW_BYTE_ORDER == TW_LITTLE_ENDIAN
+#if TW_IS_LITTLE_ENDIAN
     
     /* copy the least significant bits */
     if (flip)
@@ -114,7 +114,7 @@ static void alienWrite(CONST byte *src, uldat srclen, byte *dst, uldat dstlen, b
     if (dstlen > srclen)
 	WriteMem(dst + (flip ? 0: srclen), '\0', dstlen - srclen);
     
-#else /* TW_BYTE_ORDER == TW_BIG_ENDIAN */
+#else /* TW_IS_BIG_ENDIAN */
     
     /* copy the least significant bits */
     if (flip)
@@ -127,7 +127,7 @@ static void alienWrite(CONST byte *src, uldat srclen, byte *dst, uldat dstlen, b
     if (dstlen > srclen)
 	WriteMem(dst + (flip ? srclen : 0), '\0', dstlen - srclen);
 
-#endif /* TW_BYTE_ORDER == TW_LITTLE_ENDIAN */
+#endif /* TW_IS_LITTLE_ENDIAN */
 }
 
 /* convert alien type at (*src) to native and put it at (dst) */
@@ -153,7 +153,7 @@ INLINE void alienReadVec(CONST byte *src, byte *dst, uldat len, uldat srcsize, u
     
     /* optimize common cases */
     
-#if TW_BYTE_ORDER == TW_LITTLE_ENDIAN
+#if TW_IS_LITTLE_ENDIAN
     if (srcsize == 1) {
 	while (len--) {
 	    WriteMem(dst+1, '\0', dstsize-1);
@@ -173,7 +173,7 @@ INLINE void alienReadVec(CONST byte *src, byte *dst, uldat len, uldat srcsize, u
 	    }
 	}
     }
-#else /* TW_BYTE_ORDER == TW_BIG_ENDIAN */
+#else /* TW_IS_BIG_ENDIAN */
     if (srcsize == 1) {
 	while (len--) {
 	    WriteMem(dst, '\0', dstsize-1);
@@ -193,7 +193,7 @@ INLINE void alienReadVec(CONST byte *src, byte *dst, uldat len, uldat srcsize, u
 	    }
 	}
     }
-#endif /* TW_BYTE_ORDER == TW_LITTLE_ENDIAN */
+#endif /* TW_IS_LITTLE_ENDIAN */
 	
     else if (srcsize == dstsize) {
 	if (flag) {
@@ -712,7 +712,7 @@ static void AlienIO(int fd, uldat slot) {
 static void FlipMoveMem(byte *mem, uldat len, uldat chunk) {
     uldat i, j;
     byte c;
-#if TW_BYTE_ORDER == TW_LITTLE_ENDIAN
+#if TW_IS_LITTLE_ENDIAN
     byte32 t;
     
     switch (chunk) {

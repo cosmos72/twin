@@ -16,11 +16,11 @@
  */
 
 #include "md5.h"
-#include "twin.h"		/* for INLINE, TW_BYTE_ORDER, memcpy() */
+#include "twin.h"		/* for INLINE, TW_IS_LITTLE_ENDIAN, memcpy() */
 
-#if TW_BYTE_ORDER == TW_LITTLE_ENDIAN
-# define byteReverse(buf, len)	/* Nothing */
-#elif TW_BYTE_ORDER == TW_BIG_ENDIAN
+#if TW_IS_LITTLE_ENDIAN
+# define byteReverse(buf, len)	((void)0)
+#elif TW_IS_BIG_ENDIAN
 
 #ifdef ASM_MD5
 void byteReverse(unsigned char *buf, unsigned longs);
@@ -39,7 +39,7 @@ INLINE void byteReverse(unsigned char *buf, unsigned longs)
     } while (--longs);
 }
 #endif /* ASM_MD5 */
-#else /* TW_BYTE_ORDER == TW_LITTLE_ENDIAN */
+#else /* TW_IS_LITTLE_ENDIAN */
 # error unknown endianity: not little endian, not big endian
 #endif
 

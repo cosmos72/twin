@@ -23,7 +23,7 @@
 #include <signal.h>
 #include <sys/stat.h>
 
-#include "tw_autoconf.h"
+#include "twautoconf.h"
 
 #ifdef TW_HAVE_SYS_RESOURCE_H
 # include <sys/resource.h>

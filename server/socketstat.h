@@ -555,7 +555,7 @@ static void sockStat(obj x, udat n, CONST byte *in) {
 		Push(data,udat,TSF[i].type);
 		
 		switch (TSF[i].type) {
-#if TW_BYTE_ORDER == TW_LITTLE_ENDIAN
+#if TW_IS_LITTLE_ENDIAN
 #define Pushcase(type) case CAT(TWS_,type): \
 			Push(data,type,TSF[i].CAT(TWS_field_,type)); \
 		    break

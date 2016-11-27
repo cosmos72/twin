@@ -419,7 +419,7 @@ byte SelectionStore(uldat Magic, CONST byte MIME[MAX_MIMELEN], uldat Len, CONST 
 	WriteMem(Sel->Data + Sel->Len, ' ', Len);
     Sel->Len += Len;
     if (pad) {
-#if TW_BYTE_ORDER == TW_LITTLE_ENDIAN
+#if TW_IS_LITTLE_ENDIAN
 	Sel->Data[Sel->Len++] = '\0';
 #else
 	Sel->Data[Sel->Len] = Sel->Data[Sel->Len-1];
@@ -431,7 +431,7 @@ byte SelectionStore(uldat Magic, CONST byte MIME[MAX_MIMELEN], uldat Len, CONST 
 }
 
 #define _SEL_MAGIC SEL_HWFONTMAGIC
-#if TW_BYTE_ORDER == TW_LITTLE_ENDIAN
+#if TW_IS_LITTLE_ENDIAN
 #  define _SelAppendNL() SelectionAppend(2, "\n\0");
 #else
 #  define _SelAppendNL() SelectionAppend(2, "\0\n");

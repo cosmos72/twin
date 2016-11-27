@@ -13,8 +13,8 @@
 #ifndef _TWIN_H
 #define _TWIN_H
 
-#ifndef TW_RETSIGTYPE
-# include "tw_autoconf.h"
+#ifndef _TW_AUTOCONF_H
+# include "twautoconf.h"
 #endif
 
 /* pull in "obj" field in <Tw/stattypes.h> */
@@ -26,10 +26,7 @@ typedef struct s_obj *obj;
 #include "osincludes.h"
 #include <Tw/compiler.h>
 #include <Tw/datatypes.h>
-#include <Tw/datasizes.h>
 #include <Tw/stattypes.h>
-#include <Tw/endianity.h>
-#include <Tw/uni_types.h>
 #include <Tw/version.h>
 #include <Tw/missing.h>
 #include <Tw/mouse.h>
