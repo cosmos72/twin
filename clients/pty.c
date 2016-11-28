@@ -17,6 +17,10 @@
  *
  */
 
+/* tell <stdlib.h> to declare grantpt(), unlockpt(), ptsname() */
+# define _GNU_SOURCE
+# define _XOPEN_SOURCE
+
 #include <Tw/autoconf.h>
 
 #ifdef TW_HAVE_STDLIB_H
@@ -48,15 +52,19 @@
 
 /* pseudo-teletype connections handling functions */
 
+#if defined(TW_HAVE_GRANTPT) && defined(TW_HAVE_UNLOCKPT) && defined(TW_HAVE_PTSNAME)
+# define CONF_TERM_DEVPTS
+#else
+# undef CONF_TERM_DEVPTS
+#endif
+
 /* 0. variables */
 static char *ptydev, *ttydev;
 static int ptyfd, ttyfd;
 
-#define SS "%s"
-
 #ifdef CONF_TERM_DEVPTS
 static void pty_error(TW_CONST byte *d, TW_CONST byte *f, TW_CONST byte *arg) {
-    fprintf(stderr, "twterm: "SS": "SS"(\""SS"\") failed: "SS"\n",
+    fprintf(stderr, "twterm: %s: %s(\"%s\") failed: %s\n",
 	    d ? d : (TW_CONST byte *)"<NULL>",
 	    f ? f : (TW_CONST byte *)"<NULL>",
 	    arg ? arg : (TW_CONST byte *)"<NULL>",
@@ -209,7 +217,7 @@ static byte switchto_tty(void)
 #endif
 
 /* set process group */
-#if defined (_POSIX_VERSION) || defined (__svr4__)
+#if defined (TW_HAVE_TCSETPGRP)
     tcsetpgrp(0, pid);
 #elif defined (TIOCSPGRP)
     ioctl(0, TIOCSPGRP, &pid);

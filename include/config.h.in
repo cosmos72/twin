@@ -112,6 +112,9 @@
 /* Define to 1 if you have the `gettimeofday' function. */
 #undef HAVE_GETTIMEOFDAY
 
+/* Define to 1 if you have the `grantpt' function. */
+#undef HAVE_GRANTPT
+
 /* Define to 1 if you have the <grp.h> header file. */
 #undef HAVE_GRP_H
 
@@ -178,6 +181,9 @@
 
 /* Define if libtool can extract symbol lists from object files. */
 #undef HAVE_PRELOADED_SYMBOLS
+
+/* Define to 1 if you have the `ptsname' function. */
+#undef HAVE_PTSNAME
 
 /* Define to 1 if you have the `putenv' function. */
 #undef HAVE_PUTENV
@@ -297,6 +303,9 @@
 /* Define to 1 if you have <sys/wait.h> that is POSIX.1 compatible. */
 #undef HAVE_SYS_WAIT_H
 
+/* Define to 1 if you have the `tcsetpgrp' function. */
+#undef HAVE_TCSETPGRP
+
 /* Define to 1 if you have the <termios.h> header file. */
 #undef HAVE_TERMIOS_H
 
@@ -308,6 +317,9 @@
 
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
+
+/* Define to 1 if you have the `unlockpt' function. */
+#undef HAVE_UNLOCKPT
 
 /* Define to 1 if you have the `vfork' function. */
 #undef HAVE_VFORK

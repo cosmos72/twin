@@ -61,7 +61,7 @@ AC_FUNC_MALLOC
 AC_FUNC_MMAP
 AC_FUNC_REALLOC
 AC_FUNC_WAIT3
-AC_CHECK_FUNCS([dup2 ftime gethostbyname gethostname getpagesize getspnam gettimeofday memchr memmove memset munmap putenv select setenv setlocale socket strchr strdup strerror strrchr strspn strstr strtol strtoul uname wait4])
+AC_CHECK_FUNCS([dup2 ftime gethostbyname gethostname getpagesize getspnam gettimeofday grantpt memchr memmove memset munmap ptsname putenv select setenv setlocale socket strchr strdup strerror strrchr strspn strstr strtol strtoul tcsetpgrp uname unlockpt wait4])
 
 AC_SEARCH_LIBS(crypt, crypt)                  dnl crypt() is needed by twdm
 AC_SEARCH_LIBS(pthread_create, [pthread c_r]) dnl -lc_r is needed on FreeBSD to use pthread functions
