@@ -1,10 +1,7 @@
 #ifndef _TW_TYPES_H
 #define _TW_TYPES_H
 
-#ifndef _TW_TWAUTOCONF_H
-#include <Tw/Twautoconf.h>
-#endif
-
+#include <Tw/autoconf.h>
 #include <Tw/osincludes.h>
 #include <Tw/compiler.h>
 #include <Tw/datatypes.h>

@@ -12,7 +12,7 @@
 #ifndef _TWIN_CHECK_ASM_H
 #define _TWIN_CHECK_ASM_H
 
-#include <Tw/Twautoconf.h>
+#include <Tw/autoconf.h>
 #include <Tw/datasizes.h>
 
 /*

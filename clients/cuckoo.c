@@ -16,7 +16,7 @@
 #include <signal.h>
 #include <time.h>
 
-#include <Tw/Twautoconf.h>
+#include <Tw/autoconf.h>
 
 #ifdef TW_HAVE_UNISTD_H
 # include <unistd.h>

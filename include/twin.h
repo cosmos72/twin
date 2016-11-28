@@ -13,9 +13,7 @@
 #ifndef _TWIN_H
 #define _TWIN_H
 
-#ifndef _TWAUTOCONF_H
-# include "twautoconf.h"
-#endif
+#include "twautoconf.h"
 
 /* pull in "obj" field in <Tw/stattypes.h> */
 #define obj obj
@@ -25,6 +23,7 @@ typedef struct s_obj *obj;
 #include "version.h"
 #include "osincludes.h"
 #include <Tw/compiler.h>
+#include <Tw/osincludes.h>
 #include <Tw/datatypes.h>
 #include <Tw/datasizes.h>
 #include <Tw/stattypes.h>
@@ -53,94 +52,8 @@ typedef struct s_obj *obj;
 #endif
 #define NOSLOT TW_MAXULDAT
 
-#ifndef FALSE
-# define FALSE	((byte)0)
-# define TRUE	(!FALSE)
-#endif
-
-/* "Twin" in native byte-order */
-#define TWIN_MAGIC ((uldat)0x6E697754ul)
-/* "Go!!" in native byte-order */
-#define GO_MAGIC   ((uldat)0x21216F47ul)
-/* "Wait" in native byte-order */
-#define WAIT_MAGIC ((uldat)0x74696157ul)
-/* "Stop" in native byte-order */
-#define STOP_MAGIC ((uldat)0x706F7453ul)
-
-#define TW_INET_PORT	7754
-
-#define SMALLBUFF	256
-#define BIGBUFF		4096
-#define HUGEBUFF	131072
 
 
-
-/* return from signal macros */
-
-#define RETFROMSIGNAL(value)		return ARG_IFNOTVOID(value, TW_RETSIGTYPE)
-#define ARG_IFNOTVOID(value, type)	CAT(ARG_IFNOTVOID_,type)(value)
-#define ARG_IFNOTVOID_void(value)
-#define ARG_IFNOTVOID_int(value)	(value)
-
-
-
-/* maximum number of arguments of a libTw function */
-#define TW_MAX_ARGS_N	20
-
-
-/* Macros for HW VGA (not ANSI!) colors */
-#define BLACK	((hwcol)0)
-#define BLUE	((hwcol)1)
-#define GREEN	((hwcol)2)
-#define CYAN	(BLUE|GREEN)
-#define RED	((hwcol)4)
-#define MAGENTA	(BLUE|RED)
-#define YELLOW  (GREEN|RED)
-#define WHITE	(BLUE|GREEN|RED)
-#define HIGH	((hwcol)8)
-#define MAXCOL	((hwcol)0xF)
-
-#define ANSI2VGA(col) (((col) & 0x1 ? RED   : 0) | \
-		       ((col) & 0x2 ? GREEN : 0) | \
-		       ((col) & 0x4 ? BLUE  : 0))
-#define VGA2ANSI(col) ANSI2VGA(col)
-
-/* foreground / background colors handling */
-/*
- * NOTE: draw.c:DoShadowColor() assumes that
- * COL(fg1, bg1) | COL(fg2, bg2) == COL(fg1|fg2, bg1|bg2)
- * and
- * COL(fg1, bg1) & COL(fg2, bg2) == COL(fg1&fg2, bg1&bg2)
- */
-#define FG(col)	(col)
-#define BG(col)	((col)<<4)
-#define COL(fg,bg) (FG(fg)|BG(bg))
-#define COLBG(col) ((col) >> 4)
-#define COLFG(col) ((col) & 0x0F)
-
-
-/* if sizeof(hwattr) == 2, bytes are { 'ascii', 'col' } */
-
-/* hwattr <-> hwcol+hwfont conversion */
-# define HWATTR16(col,ascii) (((byte16)(byte)(col) << 8) | (byte16)(byte)(ascii))
-# define HWATTR_COLMASK16(attr) ((attr) & 0xFF00)
-# define HWATTR_FONTMASK16(attr) ((attr) & 0xFF)
-# define HWCOL16(attr) ((hwcol)((attr) >> 8))
-# define HWFONT16(attr) ((byte)(attr))
-
-
-/* if sizeof(hwattr) == 4, bytes are { 'ascii_low', 'col', 'ascii_high', 'extra' } */
-
-/* hwattr <-> hwcol+hwfont conversion */
-# define HWATTR32(col,ascii) (((byte32)(byte)(col) << 8) | (((byte32)(ascii) & 0xFF00) << 8) | (byte32)(byte)(ascii))
-# define HWATTR_COLMASK32(attr) ((attr) & 0xFF00)
-# define HWATTR_FONTMASK32(attr) ((attr) & 0xFF00FF)
-# define HWCOL32(attr) ((hwcol)((attr) >> 8))
-# define HWFONT32(attr) ((byte16)(((attr) & 0xFF) | (((attr) >> 8) & 0xFF00)))
-
-# define HWATTR_EXTRA32(attr,extra) (((byte32)(byte)(extra) << 24) | ((byte32)(attr) & 0xFFFFFF))
-# define HWATTR_EXTRAMASK32(attr) ((attr) & 0xFF000000)
-# define HWEXTRA32(attr) ((byte)((attr) >> 24))
 
 /*
  * Notes about the timevalue struct:

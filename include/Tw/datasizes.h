@@ -2,7 +2,7 @@
 #define _TW_DATASIZES_H
 
 #ifndef _TW_TWAUTOCONF_H
-# include <Tw/Twautoconf.h>
+# include <Tw/autoconf.h>
 #endif
 
 #if defined(TW_HAVE_LIMITS_H)

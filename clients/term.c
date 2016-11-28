@@ -15,7 +15,7 @@
 #include <sys/ioctl.h>
 #include <signal.h>
 
-#include <Tw/Twautoconf.h>
+#include <Tw/autoconf.h>
 
 #ifdef TW_HAVE_SYS_RESOURCE_H
 # include <sys/resource.h>

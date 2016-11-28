@@ -17,7 +17,7 @@
  *
  */
 
-#include <Tw/Twautoconf.h>
+#include <Tw/autoconf.h>
 
 #ifdef TW_HAVE_STDLIB_H
 # include <stdlib.h>

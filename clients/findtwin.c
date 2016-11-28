@@ -9,7 +9,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include <Tw/Twautoconf.h>
+#include <Tw/autoconf.h>
 
 #ifdef TW_HAVE_DIRENT_H
 # include <dirent.h>

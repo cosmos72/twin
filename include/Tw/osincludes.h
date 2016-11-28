@@ -21,7 +21,10 @@
 # include <stdarg.h>
 #endif
 
-#include <string.h>
+#ifdef TW_HAVE_STRING_H
+# include <string.h>
+#endif
+
 #include <time.h>
 #include <sys/types.h>
 

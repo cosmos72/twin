@@ -3,7 +3,7 @@ SUBDIRS = mapscrn
 bin_PROGRAMS = twattach twcat twclip twclutter twcuckoo twdialog twevent twfindtwin twlsmsgport twlsobj twsendmsg twsetroot twsysmon twterm twthreadtest
 sbin_PROGRAMS = twdm
 
-AM_CPPFLAGS=-I$(top_srcdir)/include
+AM_CPPFLAGS = -I$(top_srcdir)/include
 
 LIBCRYPT   = @LIBCRYPT@
 LIBPTHREAD = @LIBPTHREAD@

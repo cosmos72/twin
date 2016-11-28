@@ -19005,6 +19005,6 @@ fi
   echo '#endif /* _TWAUTOCONF_H */' >> include/twautoconf.h
 
   mkdir include/Tw 2>/dev/null
-  $SED -e 's/_TWAUTOCONF_H/_TW_TWAUTOCONF_H/g' < include/twautoconf.h > include/Tw/Twautoconf.h
+  $SED -e 's/_TWAUTOCONF_H/_TW_AUTOCONF_H/g' < include/twautoconf.h > include/Tw/autoconf.h
 
 

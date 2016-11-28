@@ -19,14 +19,14 @@
 #define TW_GO_MAGIC   ((uldat)0x21216F47ul)
 /* "Wait" in native byte-order */
 #define TW_WAIT_MAGIC ((uldat)0x74696157ul)
+/* "Stop" in native byte-order */
+#define TW_STOP_MAGIC ((uldat)0x706F7453ul)
 
 #define TW_INET_PORT	7754
 
 #define TW_SMALLBUFF	256
 #define TW_BIGBUFF	4096
 
-
-#ifndef _TWIN_H
 
 
 /* return from signal macros */
@@ -139,9 +139,6 @@
 
 
 #define msg_magic	((uldat)0xA3a61ce4ul)
-
-
-#endif /* _TWIN_H */
 
 
 

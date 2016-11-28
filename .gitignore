@@ -34,7 +34,7 @@ clients/twthreadtest
 include/config.h
 include/stamp-h1
 include/twautoconf.h
-include/Tw/Twautoconf.h
+include/Tw/autoconf.h
 server/twdisplay
 server/twin
 server/twin_real

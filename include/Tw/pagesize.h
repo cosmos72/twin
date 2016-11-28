@@ -2,7 +2,7 @@
 #define _TW_PAGESIZE_H
 
 #ifndef _TW_TWAUTOCONF_H
-# include <Tw/Twautoconf.h>
+# include <Tw/autoconf.h>
 #endif
 
 #ifdef TW_HAVE_SYS_MMAN_H
