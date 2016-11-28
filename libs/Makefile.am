@@ -1,4 +1,1 @@
-SUBDIRS = libltdl libTutf libTw
-
-# libTT is disabled
-# SUBDIRS = libltdl libTutf libTw libTT
+SUBDIRS = $(SUBDIR_LIBLTDL) libTutf libTw $(SUBDIR_LIBTT)

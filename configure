@@ -646,6 +646,8 @@ LIBGPM
 LIBZ
 LIBPTHREAD
 LIBCRYPT
+SUBDIR_LIBTT
+SUBDIR_LIBLTDL
 LIBOBJS
 ALLOCA
 XMKMF
@@ -16644,6 +16646,10 @@ fi
 
 
 # Output
+if test "$with_included_ltdl" = yes; then
+  SUBDIR_LIBLTDL=libltdl
+
+fi
 
 LIBCRYPT="`echo \"$ac_cv_search_crypt\"          | $SED -e 's/^none required$//g' -e 's/^no$//g'`"
 

@@ -22,12 +22,9 @@ typedef struct s_obj *obj;
 #include "compiler.h"
 #include "version.h"
 #include "osincludes.h"
-#include <Tw/compiler.h>
-#include <Tw/osincludes.h>
-#include <Tw/datatypes.h>
-#include <Tw/datasizes.h>
-#include <Tw/stattypes.h>
-#include <Tw/version.h>
+
+#include <Tw/Twtypes.h>
+#include <Tw/Tw_defs.h>
 #include <Tw/missing.h>
 #include <Tw/mouse.h>
 
@@ -54,42 +51,6 @@ typedef struct s_obj *obj;
 
 
 
-
-/*
- * Notes about the timevalue struct:
- * 
- * it is used to represent both time intervals and absolute times;
- * the ->Seconds is a tany numeric field.
- * DON'T assume time_t is 32 bit (or any other arbitrary size)
- * since in 19 Jan 2038 at 04:14:08 any signed, 32 bit tany will overflow.
- * So use sizeof(tany) if you really need.
- * 
- * the ->Fraction is a tany numeric field (tany is unsigned).
- * As above, DON'T assume tany is 32 bit (or any other arbitrary size)
- * since in the future we may want a finer granularity than the nanosecond one
- * possible with a 32 bit tany.
- * So :
- * 1) use sizeof(tany) if you really need
- * 2) don't assume (tany)1 is a nanosecond (or any other arbitrary time),
- *    but always use the form '1 NanoSECs', '250 MilliSECs + 7 MicroSECs', etc.
- * 3) if you _absolutely_ need to know to what time (tany)1 corresponds,
- *    use this: '1 FullSECs' is the number of (tany)1 intervals in a second.
- * 4) for the moment, the only defined fractions of a second are:
- *    FullSECs, MilliSECs, MicroSECs, NanoSECs.
- *    Others may be added in the future (PicoSECs, FemtoSECs, AttoSECs, ...)
- */
-
-typedef struct s_timevalue  {
-    tany Seconds;
-    tany Fraction;
-} timevalue;
-
-#define THOUSAND	((tany)1000)
-
-#define NanoSECs	* 1 /* i.e. (frac_t)1 is a nanosecond */
-#define MicroSECs	* (THOUSAND NanoSECs)
-#define MilliSECs	* (THOUSAND MicroSECs)
-#define FullSECs	* (THOUSAND MilliSECs)
 
 #define ABS(x) ((x)>0 ? (x) : -(x))
 

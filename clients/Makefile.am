@@ -5,10 +5,8 @@ sbin_PROGRAMS = twdm
 
 AM_CPPFLAGS = -I$(top_srcdir)/include
 
-LIBCRYPT   = @LIBCRYPT@
-LIBPTHREAD = @LIBPTHREAD@
-LIBTUTF    = $(top_builddir)/libs/libTutf/libTutf.la
-LIBTW      = $(top_builddir)/libs/libTw/libTw.la
+LIBTUTF = $(top_builddir)/libs/libTutf/libTutf.la
+LIBTW = $(top_builddir)/libs/libTw/libTw.la
 
 twattach_SOURCES     = attach.c
 twcat_SOURCES        = cat.c

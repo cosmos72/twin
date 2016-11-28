@@ -71,6 +71,10 @@ AC_SEARCH_LIBS(tgetent, [gpm tinfo ncurses termcap])
 AC_SEARCH_LIBS(ggiOpen, ggi)
 
 # Output
+if test "$with_included_ltdl" = yes; then
+  AC_SUBST(SUBDIR_LIBLTDL, libltdl)
+fi
+AC_SUBST(SUBDIR_LIBTT, ) dnl libTT is disabled
 
 AC_SUBST(LIBCRYPT,   "`echo \"$ac_cv_search_crypt\"          | $SED -e 's/^none required$//g' -e 's/^no$//g'`")
 AC_SUBST(LIBPTHREAD, "`echo \"$ac_cv_search_pthread_create\" | $SED -e 's/^none required$//g' -e 's/^no$//g'`")
