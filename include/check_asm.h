@@ -13,7 +13,7 @@
 #define _TWIN_CHECK_ASM_H
 
 #include <Tw/Twautoconf.h>
-#include <Tw/datatypes.h>
+#include <Tw/datasizes.h>
 
 /*
  * disable i386 gcc assembler code

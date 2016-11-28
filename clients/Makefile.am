@@ -3,10 +3,12 @@ SUBDIRS = mapscrn
 bin_PROGRAMS = twattach twcat twclip twclutter twcuckoo twdialog twevent twfindtwin twlsmsgport twlsobj twsendmsg twsetroot twsysmon twterm twthreadtest
 sbin_PROGRAMS = twdm
 
-AM_CPPFLAGS=-I$(top_srcdir)/include -I$(top_builddir)/include
+AM_CPPFLAGS=-I$(top_srcdir)/include
 
-LIBTW=$(top_builddir)/libs/libTw/libTw.la
-LIBTUTF=$(top_builddir)/libs/libTutf/libTutf.la
+LIBCRYPT   = @LIBCRYPT@
+LIBPTHREAD = @LIBPTHREAD@
+LIBTUTF    = $(top_builddir)/libs/libTutf/libTutf.la
+LIBTW      = $(top_builddir)/libs/libTw/libTw.la
 
 twattach_SOURCES     = attach.c
 twcat_SOURCES        = cat.c
@@ -31,7 +33,7 @@ twclip_LDADD       = $(LIBTW)
 twclutter_LDADD    = $(LIBTW)
 twcuckoo_LDADD     = $(LIBTW)
 twdialog_LDADD     = $(LIBTW)
-twdm_LDADD         = $(LIBTW) $(LIBTUTF)
+twdm_LDADD         = $(LIBTW) $(LIBTUTF) $(LIBCRYPT)
 twevent_LDADD      = $(LIBTW)
 twfindtwin_LDADD   = $(LIBTW)
 twlsmsgport_LDADD  = $(LIBTW)
@@ -40,4 +42,4 @@ twsendmsg_LDADD    = $(LIBTW)
 twsetroot_LDADD    = $(LIBTW)
 twsysmon_LDADD     = $(LIBTW)
 twterm_LDADD       = $(LIBTW) $(LIBTUTF)
-twthreadtest_LDADD = $(LIBTW)
+twthreadtest_LDADD = $(LIBTW) $(LIBPTHREAD)

@@ -115,7 +115,7 @@
 
 
 /** arguments to pass to a ttvisible_repaint_fn function to repaint the whole ttvisible */
-#define ttvisible_repaint_args_WHOLE	0, 0, MAXDAT, MAXDAT
+#define ttvisible_repaint_args_WHOLE	0, 0, TW_MAXDAT, TW_MAXDAT
 
 /** ttvisible flag indicating it is visible */
 #define ttvisible_vflags_visible	1

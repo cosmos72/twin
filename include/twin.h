@@ -13,7 +13,7 @@
 #ifndef _TWIN_H
 #define _TWIN_H
 
-#ifndef _TW_AUTOCONF_H
+#ifndef _TWAUTOCONF_H
 # include "twautoconf.h"
 #endif
 
@@ -26,6 +26,7 @@ typedef struct s_obj *obj;
 #include "osincludes.h"
 #include <Tw/compiler.h>
 #include <Tw/datatypes.h>
+#include <Tw/datasizes.h>
 #include <Tw/stattypes.h>
 #include <Tw/version.h>
 #include <Tw/missing.h>
@@ -50,7 +51,7 @@ typedef struct s_obj *obj;
 #ifndef NOPID		/* some OSes (Solaris for one) already define NOPID */
 # define NOPID  ((pid_t)0)
 #endif
-#define NOSLOT MAXULDAT
+#define NOSLOT TW_MAXULDAT
 
 #ifndef FALSE
 # define FALSE	((byte)0)
@@ -98,8 +99,6 @@ typedef struct s_obj *obj;
 #define WHITE	(BLUE|GREEN|RED)
 #define HIGH	((hwcol)8)
 #define MAXCOL	((hwcol)0xF)
-
-#define MAXHWCOL	COL(MAXCOL,MAXCOL)
 
 #define ANSI2VGA(col) (((col) & 0x1 ? RED   : 0) | \
 		       ((col) & 0x2 ? GREEN : 0) | \

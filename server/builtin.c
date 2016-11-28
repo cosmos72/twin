@@ -661,7 +661,7 @@ static void BuiltinH(msgport MsgPort) {
 		    && EventMouseY >= 0 && EventMouseY <= tempWin->YWidth-2
 		    && (uldat)EventMouseY+tempWin->YLogic < (uldat)tempWin->HLogic;
 
-		SelectRowWindow(tempWin, temp ? (uldat)EventMouseY+tempWin->YLogic : MAXLDAT);
+		SelectRowWindow(tempWin, temp ? (uldat)EventMouseY+tempWin->YLogic : TW_MAXLDAT);
 		
 		if (tempWin == WinList &&
 		    isRELEASE(Msg->Event.EventMouse.Code)) {
@@ -901,7 +901,7 @@ byte InitBuiltin(void) {
 	(DisplaySubWin = Do(Create,Window)
 	 (FnWindow, Builtin_MsgPort, 0, NULL, NULL, Builtin_Menu, COL(HIGH|BLACK,WHITE),
 	  NOCURSOR, WINDOW_AUTO_KEYS, WINDOWFL_USEROWS|WINDOWFL_ROWS_DEFCOL,
-	  10, MAXDAT, 0)) &&
+	  10, TW_MAXDAT, 0)) &&
 
 	(WinList = Do(Create,Window)
 	 (FnWindow, Builtin_MsgPort, 11, "Window List", NULL, Builtin_Menu, COL(WHITE,BLUE),

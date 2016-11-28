@@ -1103,7 +1103,7 @@ static void DeleteUnneededScreens(node list) {
 
 static void NewCommonMenu_Overflow(void) {
     printk("twin: RC parser: user-defined menu is too big! (max is %d entries)\n",
-	    (int)(MAXUDAT - COD_RESERVED + 1));
+	    (int)(TW_MAXUDAT - COD_RESERVED + 1));
 }
 
 /*
@@ -1135,7 +1135,7 @@ static byte NewCommonMenu(void **shm_M, menu *res_CommonMenu,
 	}
     }
     
-    if (new_MenuBindsMax > MAXUDAT - COD_RESERVED) {
+    if (new_MenuBindsMax > TW_MAXUDAT - COD_RESERVED) {
 	NewCommonMenu_Overflow();
 	return FALSE;
     }
@@ -1291,7 +1291,7 @@ byte rcload(void) {
      * try to guess a reasonable size:
      * assume a failsafe avg of a node every 4 bytes
      */
-    len = Min2(len, MAXULDAT / sizeof(node));
+    len = Min2(len, TW_MAXULDAT / sizeof(node));
     len = Max2(len, BIGBUFF) * sizeof(node) / 4;
     
     if (!shm_init(len)) {

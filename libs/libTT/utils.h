@@ -63,7 +63,7 @@
 
 #define BOUND(a, min, max) ((a) < (min) ? (min) : (a) > (max) ? (max) : (a))
 #define minBOUND(a, min) ((a) < (min) ? (min) : (a))
-#define MAXBOUND(a, max) ((a) > (max) ? (max) : (a))
+#define TW_MAXBOUND(a, max) ((a) > (max) ? (max) : (a))
 
 
 #endif /* _TT_UTILS_H */

@@ -75,7 +75,7 @@
 /* if sizeof(hwattr) == 2, bytes are { 'ascii', 'col' } */
 
 /* hwattr <-> hwcol+hwfont conversion */
-#define HWATTR16(col,ascii) (((byte16)(byte)(col) << 8) | (byte16)(byte)(ascii))
+#define HWATTR16(col,ascii) (((uint16_t)(byte)(col) << 8) | (uint16_t)(byte)(ascii))
 #define HWATTR_COLMASK16(attr) ((attr) & 0xFF00)
 #define HWATTR_FONTMASK16(attr) ((attr) & 0xFF)
 #define HWCOL16(attr) ((hwcol)((attr) >> 8))
@@ -85,11 +85,11 @@
 /* if sizeof(hwattr) == 4, bytes are { 'ascii_low', 'col', 'ascii_high', 'unused' } */
 
 /* hwattr <-> hwcol+hwfont conversion */
-#define HWATTR32(col,ascii) (((byte32)(byte)(col) << 8) | (((byte32)(ascii) & 0xFF00) << 8) | (byte32)(byte)(ascii))
+#define HWATTR32(col,ascii) (((uint32_t)(byte)(col) << 8) | (((uint32_t)(ascii) & 0xFF00) << 8) | (uint32_t)(byte)(ascii))
 #define HWATTR_COLMASK32(attr) ((attr) & 0xFF00)
 #define HWATTR_FONTMASK32(attr) ((attr) & 0xFF00FF)
 #define HWCOL32(attr) ((hwcol)((attr) >> 8))
-#define HWFONT32(attr) ((byte16)(((attr) & 0xFF) | (((attr) >> 8) & 0xFF00)))
+#define HWFONT32(attr) ((uint16_t)(((attr) & 0xFF) | (((attr) >> 8) & 0xFF00)))
 
 
 

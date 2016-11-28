@@ -38,13 +38,13 @@ static uldat FdListGrow(void) {
     uldat oldsize, size;
     fdlist *newFdList;
     
-    if ((oldsize = FdSize) == MAXULDAT) {
+    if ((oldsize = FdSize) == TW_MAXULDAT) {
 	Error(NOMEMORY);
 	return NOSLOT;
     }
     
     if ((size = oldsize < SMALLBUFF/3 ? SMALLBUFF/2 : oldsize + (oldsize>>1)) < oldsize)
-	size = MAXULDAT;
+	size = TW_MAXULDAT;
     
     if (!(newFdList = (fdlist *)ReAllocMem(FdList, size*sizeof(fdlist)))) {
 	Error(NOMEMORY);

@@ -533,8 +533,8 @@ byte InitTtysave(void) {
 	
 	/* input modes */
 	ttysave.c_iflag |= (BRKINT | IGNPAR | ICRNL | IXON
-#ifdef IMAXBEL
-			   | IMAXBEL
+#ifdef ITW_MAXBEL
+			   | ITW_MAXBEL
 #endif
 			   );
 	
@@ -641,8 +641,8 @@ byte InitTtysave(void) {
 	
 	/* input modes */
 	ttysave.c_iflag = (BRKINT | IGNPAR | ICRNL | IXON
-#ifdef IMAXBEL
-			   | IMAXBEL
+#ifdef ITW_MAXBEL
+			   | ITW_MAXBEL
 #endif
 			   );
 	

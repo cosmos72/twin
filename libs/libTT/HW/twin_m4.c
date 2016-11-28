@@ -200,7 +200,7 @@ static ttwidget twin_Build_ttwidget(ttwidget o) {
     tttheme t = myTheme(o);
     hwfont f = t->fill;
     hwcol c = o->col;
-    if (TW_NOID != (o->native = TwCreateWidget(o->w,o->h,0,TW_WIDGETFL_USEFILL,0,MAXDAT,HWATTR(c, f)))) {
+    if (TW_NOID != (o->native = TwCreateWidget(o->w,o->h,0,TW_WIDGETFL_USEFILL,0,TW_MAXDAT,HWATTR(c, f)))) {
 	twin_AtBuild_ttvisible((ttvisible)o);
 	return o;
     }
@@ -260,7 +260,7 @@ static void twin_Draw_ttwidget(ttwidget o, ttshort x, ttshort y, ttshort w, ttsh
 
 /* ttlabel */
 static ttlabel twin_Build_ttlabel(ttlabel o) {
-    if (TW_NOID != (o->native = TwCreateWidget(o->text_len,1,0,TW_WIDGETFL_USEEXPOSE,0,MAXDAT,HWATTR(o->col, myTheme(o)->fill)))) {
+    if (TW_NOID != (o->native = TwCreateWidget(o->text_len,1,0,TW_WIDGETFL_USEEXPOSE,0,TW_MAXDAT,HWATTR(o->col, myTheme(o)->fill)))) {
 	if (twin_AddCommonCallbacks_ttwidget((ttwidget)o)) {
 	    twin_AtBuild_ttvisible((ttvisible)o);
 	    return o;

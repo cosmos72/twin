@@ -114,7 +114,7 @@ static void dirty_tty(dat x1, dat y1, dat x2, dat y2) {
     ldat S[2] = {0, 0};
     dat xy[2][4];
     
-    if (dirtyN == MAXBYTE || x1 > x2 || x1 >= SizeX || y1 > y2 || y1 >= SizeY)
+    if (dirtyN == TW_MAXBYTE || x1 > x2 || x1 >= SizeX || y1 > y2 || y1 >= SizeY)
 	return;
 
     x2 = Min2(x2, SizeX-1);
@@ -134,7 +134,7 @@ static void dirty_tty(dat x1, dat y1, dat x2, dat y2) {
     i = dirtyN && S[0] > S[1];
 
     if (S[i] >= SizeX*SizeY*3/4) {
-	dirtyN = MAXBYTE;
+	dirtyN = TW_MAXBYTE;
 	return;
     } else if (i < dirtyN) {
 	CopyMem(xy[i], dirty[i], 4*sizeof(dat));
@@ -154,7 +154,7 @@ static void flush_tty(void) {
     
     /* first, draw on screen whatever changed in the window */
     if (dirtyN) {
-	if (dirtyN == MAXBYTE)
+	if (dirtyN == TW_MAXBYTE)
 	    DrawLogicWidget((widget)Win, 0, ScrollBack, SizeX-1, SizeY-1 + ScrollBack);
 	else for (i=0; i<dirtyN; i++)
 	    DrawLogicWidget((widget)Win, dirty[i][0], dirty[i][1] + ScrollBack, dirty[i][2], dirty[i][3] + ScrollBack);
@@ -197,7 +197,7 @@ static void invert_screen(void) {
     
     while (count--) {
 	a = *p;
-	*p++ = (a & ~HWATTR(MAXHWCOL, 0)) | HWATTR(COL(COLBG(HWCOL(a)), COLFG(HWCOL(a))), 0);
+	*p++ = (a & ~HWATTR(TW_MAXWCOL, 0)) | HWATTR(COL(COLBG(HWCOL(a)), COLFG(HWCOL(a))), 0);
 	if (p == Split) p = Base;
     }
 }
@@ -926,10 +926,10 @@ static void reset_tty(byte do_clear) {
 static byte grow_newtitle(void) {
     ldat _Max;
     byte *_Name;
-    if (newMax < MAXDAT) {
+    if (newMax < TW_MAXDAT) {
 	_Max = ((ldat)newMax + (newMax >> 1) + 3) | All->SetUp->MinAllocSize;
-	if (_Max > MAXDAT)
-	    _Max = MAXDAT;
+	if (_Max > TW_MAXDAT)
+	    _Max = TW_MAXDAT;
 	if ((_Name = ReAllocMem(newName, _Max))) {
 	    newName = _Name;
 	    newMax = _Max;

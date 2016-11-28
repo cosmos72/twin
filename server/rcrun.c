@@ -765,8 +765,8 @@ static byte RCSleep(timevalue *_t) {
     timevalue *t = _t;
     run *r = Sleep;
 
-    t->Seconds = MAXTANY;
-    t->Fraction = (tany)0; /* not MAXTANY as Normalize() would overflow */
+    t->Seconds = TW_MAXTANY;
+    t->Fraction = (tany)0; /* not TW_MAXTANY as Normalize() would overflow */
 
     while (r) {
 	if (CmpTime(&r->SW.WakeUp, t) < 0)
@@ -1173,7 +1173,7 @@ byte InitRC(void) {
 	UpdateOptionWin();
 	FillButtonWin();
 	HideMenu(!!(All->SetUp->Flags & SETUP_MENU_HIDE));
-	Act(DrawMenu,All->FirstScreen)(All->FirstScreen, 0, MAXDAT);
+	Act(DrawMenu,All->FirstScreen)(All->FirstScreen, 0, TW_MAXDAT);
 	
 	return TRUE;
     }

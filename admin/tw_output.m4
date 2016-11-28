@@ -10,5 +10,6 @@ m4_define([TW_OUTPUT], [[
   echo                              >> include/twautoconf.h
   echo '#endif /* _TWAUTOCONF_H */' >> include/twautoconf.h
   
+  mkdir include/Tw 2>/dev/null
   $SED -e 's/_TWAUTOCONF_H/_TW_TWAUTOCONF_H/g' < include/twautoconf.h > include/Tw/Twautoconf.h
 ]])

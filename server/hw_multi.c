@@ -78,7 +78,7 @@ static dat (*saveChangedVideo)[2][2];
 static dat savedDisplayWidth = 100, savedDisplayHeight = 30;
 static dat TryDisplayWidth, TryDisplayHeight;
 
-static dat AccelVideo[4] = { MAXDAT, MAXDAT, MINDAT, MINDAT };
+static dat AccelVideo[4] = { TW_MAXDAT, TW_MAXDAT, TW_MINDAT, TW_MINDAT };
 byte   StrategyFlag;
 tany   StrategyDelay = (tany)0;
 
@@ -647,7 +647,7 @@ byte ResizeDisplay(void) {
 	     * we are trying to come up with a fair display size
 	     * and have all HW agree on it.
 	     */
-	    TryDisplayWidth = TryDisplayHeight = MAXDAT;
+	    TryDisplayWidth = TryDisplayHeight = TW_MAXDAT;
 	    forHW {
 		if (!HW->Quitted) {
 		    HW->DetectSize(&Width, &Height);
@@ -667,9 +667,9 @@ byte ResizeDisplay(void) {
 	    }
 	} while (TryDisplayWidth < Width || TryDisplayHeight < Height);
 	 
-	if (!TryDisplayWidth || TryDisplayWidth == MAXDAT)
+	if (!TryDisplayWidth || TryDisplayWidth == TW_MAXDAT)
 	    TryDisplayWidth = DisplayWidth;
-	if (!TryDisplayHeight || TryDisplayHeight == MAXDAT)
+	if (!TryDisplayHeight || TryDisplayHeight == TW_MAXDAT)
 	    TryDisplayHeight = DisplayHeight;
 	
 	/* size seems reasonable, apply it to all HW displays */
@@ -1157,8 +1157,8 @@ INLINE uldat Plain_countDirtyVideo(dat X1, dat Y1, dat X2, dat Y2) {
 }
 
 void StrategyReset(void) {
-    AccelVideo[0] = AccelVideo[1] = MAXDAT;
-    AccelVideo[2] = AccelVideo[3] = MINDAT;
+    AccelVideo[0] = AccelVideo[1] = TW_MAXDAT;
+    AccelVideo[2] = AccelVideo[3] = TW_MINDAT;
     StrategyFlag = HW_UNSET;
 }
 

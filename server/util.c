@@ -234,7 +234,7 @@ byte Minimum(byte MaxIndex, CONST uldat *Array) {
     byte i, MinIndex;
     uldat Temp;
     
-    Temp=MAXULDAT;
+    Temp=TW_MAXULDAT;
     MinIndex=(byte)0;
     if (!MaxIndex)
 	return 0xFF;
@@ -466,7 +466,7 @@ byte SetSelectionFromWindow(window Window) {
 	Window->XstSel = 0;
     } else if (Window->YstSel >= Window->HLogic) {
 	Window->YstSel = Window->HLogic - 1;
-	Window->XstSel = w_useC ? Window->WLogic - 1 : MAXLDAT;
+	Window->XstSel = w_useC ? Window->WLogic - 1 : TW_MAXLDAT;
     }
 
     if (w_useC) {
@@ -715,38 +715,38 @@ void FallBackKeyAction(window W, event_keyboard *EventK) {
 	if (!W->HLogic)
 	    break;
 	OldNumRow=W->CurY;
-	if (OldNumRow<MAXLDAT) {
+	if (OldNumRow<TW_MAXLDAT) {
 	    if (!OldNumRow)
 		NumRow=W->HLogic-(ldat)1;
 	    else
 		NumRow=OldNumRow-(ldat)1;
 	    W->CurY=NumRow;
 	    if (W->Flags & WINDOWFL_ROWS_SELCURRENT)
-		DrawLogicWidget((widget)W, (ldat)0, OldNumRow, (ldat)MAXDAT-(ldat)2, OldNumRow);
+		DrawLogicWidget((widget)W, (ldat)0, OldNumRow, (ldat)TW_MAXDAT-(ldat)2, OldNumRow);
 	}
 	else
 	    W->CurY=NumRow=W->HLogic-(ldat)1;
 	if (W->Flags & WINDOWFL_ROWS_SELCURRENT)
-	    DrawLogicWidget((widget)W, (ldat)0, NumRow, (ldat)MAXDAT-(ldat)2, NumRow);
+	    DrawLogicWidget((widget)W, (ldat)0, NumRow, (ldat)TW_MAXDAT-(ldat)2, NumRow);
 	UpdateCursor();
 	break;
       case TW_Down:
 	if (!W->HLogic)
 	    break;
 	OldNumRow=W->CurY;
-	if (OldNumRow<MAXLDAT) {
+	if (OldNumRow<TW_MAXLDAT) {
 	    if (OldNumRow>=W->HLogic-(ldat)1)
 		NumRow=(ldat)0;
 	    else
 		NumRow=OldNumRow+(ldat)1;
 	    W->CurY=NumRow;
 	    if (W->Flags & WINDOWFL_ROWS_SELCURRENT)
-		DrawLogicWidget((widget)W, (ldat)0, OldNumRow, (ldat)MAXDAT-(ldat)2, OldNumRow);
+		DrawLogicWidget((widget)W, (ldat)0, OldNumRow, (ldat)TW_MAXDAT-(ldat)2, OldNumRow);
 	}
 	else
 	    W->CurY=NumRow=(ldat)0;
 	if (W->Flags & WINDOWFL_ROWS_SELCURRENT)
-	    DrawLogicWidget((widget)W, (ldat)0, NumRow, (ldat)MAXDAT-(ldat)2, NumRow);
+	    DrawLogicWidget((widget)W, (ldat)0, NumRow, (ldat)TW_MAXDAT-(ldat)2, NumRow);
 	UpdateCursor();
 	break;
       case TW_Left:
@@ -757,7 +757,7 @@ void FallBackKeyAction(window W, event_keyboard *EventK) {
 	break;
       case TW_Right:
 	if ((W_USE(W, USECONTENTS) && W->CurX < W->XWidth - 3) ||
-	    (W_USE(W, USEROWS) && W->CurX < MAXLDAT - 1)) {
+	    (W_USE(W, USEROWS) && W->CurX < TW_MAXLDAT - 1)) {
 	    W->CurX++;
 	    UpdateCursor();
 	}

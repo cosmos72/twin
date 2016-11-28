@@ -157,7 +157,7 @@ static byte X11_CheckRemapKeys(void) {
 
 static udat X11_LookupKey(XEvent *ev, udat *ShiftFlags, udat *len, char *seq) {
     static udat lastTW = TW_Null;
-    static uldat lastI = MAXULDAT;
+    static uldat lastI = TW_MAXULDAT;
     static KeySym lastXK = NoSymbol;
     KeySym sym = XK_VoidSymbol;
     XKeyEvent * kev = &ev->xkey;

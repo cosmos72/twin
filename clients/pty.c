@@ -17,16 +17,20 @@
  *
  */
 
-#include <grp.h>
-#include <sys/stat.h>
-
-
-#ifdef CONF_TERM_DEVPTS
-# include <stdlib.h>
-#endif
-
 #include <Tw/Twautoconf.h>
 
+#ifdef TW_HAVE_STDLIB_H
+# include <stdlib.h>
+#endif
+#ifdef TW_HAVE_SYS_STAT_H
+# include <sys/stat.h>
+#endif
+#ifdef TW_HAVE_FCNTL_H
+# include <fcntl.h>
+#endif
+#ifdef TW_HAVE_GRP_H
+# include <grp.h>
+#endif
 #ifdef TW_HAVE_TERMIOS_H
 # include <termios.h>
 #else
@@ -34,7 +38,6 @@
 #  include <termio.h>
 # endif
 #endif
-
 #ifdef TW_HAVE_SYS_IOCTL_H
 # include <sys/ioctl.h>
 #endif

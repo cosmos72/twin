@@ -274,7 +274,7 @@ widget FocusWidget(widget W) {
 	if ((W && IS_WINDOW(W)) || (oldW && IS_WINDOW(oldW))) {
 	    UpdateCursor();
 	    if (!W || !IS_WINDOW(W) || !(((window)W)->Flags & WINDOWFL_MENU))
-		Act(DrawMenu,All->FirstScreen)(All->FirstScreen, 0, MAXDAT);
+		Act(DrawMenu,All->FirstScreen)(All->FirstScreen, 0, TW_MAXDAT);
 	}
     }
     return oldW;
@@ -333,7 +333,7 @@ static void MapWidget(widget W, widget Parent) {
 	    } else
 		Act(MapTopReal,W)(W, (screen)Parent);
 	} else if (IS_WIDGET(Parent)) {
-	    if (W->Up == MAXDAT) {
+	    if (W->Up == TW_MAXDAT) {
 		W->Left = Parent->XLogic;
 		W->Up = Parent->YLogic;
 	    }
@@ -362,7 +362,7 @@ static void MapTopRealWidget(widget W, screen Screen) {
 	     */
 	    W->MapQueueMsg = (msg)0;
 	
-	if (W->Up == MAXDAT) {
+	if (W->Up == TW_MAXDAT) {
 	    W->Left = Screen->XLogic;
 	    W->Up = Max2(Screen->YLimit+1, 0) + Screen->YLogic;
 	} else {
@@ -390,7 +390,7 @@ static void MapTopRealWidget(widget W, screen Screen) {
 	else
 	    DrawAreaWidget(W);
 	if (!(W->Flags & WINDOWFL_MENU))
-	    Act(DrawMenu,Screen)(Screen, 0, MAXDAT);
+	    Act(DrawMenu,Screen)(Screen, 0, TW_MAXDAT);
 
 	if (W->MapUnMapHook)
 	    W->MapUnMapHook(W);
@@ -446,7 +446,7 @@ static void UnMapWidget(widget W) {
 	    
 	    if (IS_SCREEN(Parent)) {
 		W->Left = 0;
-		W->Up = MAXDAT;
+		W->Up = TW_MAXDAT;
 	    }
 	    W->Parent = (widget)0;
 
@@ -464,7 +464,7 @@ static void UnMapWidget(widget W) {
 		    } else
 			Do(KbdFocus,Window)((window)0);
 		    if (!(W->Flags & WINDOWFL_MENU))
-			Act(DrawMenu,Screen)(Screen, 0, MAXDAT);
+			Act(DrawMenu,Screen)(Screen, 0, TW_MAXDAT);
 		    UpdateCursor();
 		} else
 		    Screen->FocusW = (widget)Next;
@@ -938,7 +938,7 @@ static window CreateWindow(fn_window Fn_Window, msgport Owner,
 	(!ColTitle || (_ColTitle=CloneMem(ColTitle, TitleLen*sizeof(hwcol)))) &&
 	Owner && (Window=(window)Fn_Window->Fn_Widget->Create
 		  ((fn_widget)Fn_Window, Owner, XWidth, YWidth,
-		   Attrib, Flags, 0, MAXDAT, HWATTR(ColText, ' ')))) {
+		   Attrib, Flags, 0, TW_MAXDAT, HWATTR(ColText, ' ')))) {
 	Window->Menu = Menu;
 	Window->MenuItem = (menuitem)0;
 	Window->NameLen = TitleLen;
@@ -972,15 +972,15 @@ static window CreateWindow(fn_window Fn_Window, msgport Owner,
 	Window->MinYWidth=MIN_YWIN;
 	Window->XWidth = XWidth = Max2(MIN_XWIN, XWidth);
 	Window->YWidth = YWidth = Max2(MIN_YWIN, YWidth);
-	Window->MaxXWidth = MAXDAT;
-	Window->MaxYWidth = MAXDAT;
+	Window->MaxXWidth = TW_MAXDAT;
+	Window->MaxYWidth = TW_MAXDAT;
 
 	Window->Charset = Tutf_CP437_to_UTF_16;
 	WriteMem(&Window->USE, '\0', sizeof(Window->USE));
 
 	if (W_USE(Window, USECONTENTS)) {
-	    if (MAXDAT - ScrollBackLines < YWidth - HasBorder)
-		ScrollBackLines = MAXDAT - YWidth + HasBorder;
+	    if (TW_MAXDAT - ScrollBackLines < YWidth - HasBorder)
+		ScrollBackLines = TW_MAXDAT - YWidth + HasBorder;
 	    Window->CurY = Window->YLogic = ScrollBackLines;
 	    Window->WLogic = XWidth - HasBorder;
 	    Window->HLogic = ScrollBackLines + YWidth - HasBorder;
@@ -1226,25 +1226,25 @@ static void ConfigureWindow(window W, byte Bitmap, dat Left, dat Up,
     }
 
     if (Bitmap & 4) {
-	if (MinXWidth <= MAXDAT - HasBorder)
+	if (MinXWidth <= TW_MAXDAT - HasBorder)
 	    MinXWidth = Max2(MinXWidth, MinXWidth + HasBorder);
 	W->MinXWidth = MinXWidth;
 	W->XWidth = Max2(MinXWidth, W->XWidth);
     }
     if (Bitmap & 8) {
-	if (MinYWidth <= MAXDAT - HasBorder)
+	if (MinYWidth <= TW_MAXDAT - HasBorder)
 	    MinYWidth = Max2(MinYWidth, MinYWidth + HasBorder);
 	W->MinYWidth = MinYWidth;
 	W->YWidth = Max2(MinYWidth, W->YWidth);
     }
     if (Bitmap & 0x10) {
-	if (MaxXWidth <= MAXDAT - HasBorder)
+	if (MaxXWidth <= TW_MAXDAT - HasBorder)
 	    MaxXWidth = Max2(MaxXWidth, MaxXWidth + HasBorder);
 	W->MaxXWidth = Max2(W->MinXWidth, MaxXWidth);
 	W->XWidth = Min2(MaxXWidth, W->XWidth);
     }
     if (Bitmap & 0x20) {
-	if (MaxYWidth <= MAXDAT - HasBorder)
+	if (MaxYWidth <= TW_MAXDAT - HasBorder)
 	    MaxYWidth = Max2(MaxYWidth, MaxYWidth + HasBorder);
 	W->MaxYWidth = Max2(W->MinYWidth, MaxYWidth);
 	W->YWidth = Min2(MaxYWidth, W->YWidth);
@@ -1288,7 +1288,7 @@ window Create4MenuWindow(fn_window Fn_Window, menu Menu) {
 	
 	Act(SetColors,Window)(Window, 0x1FF, COL(0,0), COL(0,0), COL(0,0), COL(0,0), COL(HIGH|WHITE,WHITE),
 			      COL(BLACK,WHITE), COL(BLACK,GREEN), COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK));
-	Act(Configure,Window)(Window, 0x3F, 0, 1, MIN_XWIN, MIN_YWIN, MAXDAT, MAXDAT);
+	Act(Configure,Window)(Window, 0x3F, 0, 1, MIN_XWIN, MIN_YWIN, TW_MAXDAT, TW_MAXDAT);
     }
     return Window;
 }
@@ -1360,8 +1360,8 @@ static row FindRow(window Window, ldat Row) {
     ElNumRows[1] = Window->USE.R.NumRowSplit;
     ElNumRows[2] = (ldat)0;
     ElNumRows[3] = Window->HLogic-(ldat)1;
-    ElDist[0] = (ElNumRows[0] ? Abs(ElNumRows[0]-Row) : MAXULDAT);
-    ElDist[1] = (ElNumRows[1] ? Abs(ElNumRows[1]-Row) : MAXULDAT);
+    ElDist[0] = (ElNumRows[0] ? Abs(ElNumRows[0]-Row) : TW_MAXULDAT);
+    ElDist[1] = (ElNumRows[1] ? Abs(ElNumRows[1]-Row) : TW_MAXULDAT);
     ElDist[2] = Row;
     ElDist[3] = Abs(ElNumRows[3]-Row);
     
@@ -1471,7 +1471,7 @@ static screen CreateScreen(fn_screen Fn_Screen, dat NameLen, CONST byte *Name,
     if ((size=(size_t)BgWidth * BgHeight * sizeof(hwattr))) {
 	
 	if ((S=(screen)Fn_Screen->Fn_Widget->Create
-	     ((fn_widget)Fn_Screen, Builtin_MsgPort, MAXDAT, MAXDAT, 0, SCREENFL_USEBG, 0, 0, Bg[0]))) {
+	     ((fn_widget)Fn_Screen, Builtin_MsgPort, TW_MAXDAT, TW_MAXDAT, 0, SCREENFL_USEBG, 0, 0, Bg[0]))) {
 
 	    if (!(S->Name=NULL, Name) || (S->Name=CloneStrL(Name, NameLen))) {
 		if ((S->USE.B.Bg = AllocMem(size))) {
@@ -1511,7 +1511,7 @@ static void BgImageScreen(screen Screen, dat BgWidth, dat BgHeight, CONST hwattr
 	Screen->USE.B.BgWidth = BgWidth;
 	Screen->USE.B.BgHeight = BgHeight;
 	CopyMem(Bg, Screen->USE.B.Bg, size);
-	DrawArea2((screen)0, (widget)0, (widget)0, 0, Screen->YLimit+1, MAXDAT, MAXDAT, FALSE);
+	DrawArea2((screen)0, (widget)0, (widget)0, 0, Screen->YLimit+1, TW_MAXDAT, TW_MAXDAT, FALSE);
     }
 }
 
@@ -1605,7 +1605,7 @@ static widget FocusScreen(screen tScreen) {
     if (tScreen && Screen != tScreen) {
 	MoveFirst(Screen, All, tScreen);
 	DrawArea2((screen)0, (widget)0, (widget)0,
-		 0, Min2(Screen->YLimit, tScreen->YLimit), MAXDAT, MAXDAT, FALSE);
+		 0, Min2(Screen->YLimit, tScreen->YLimit), TW_MAXDAT, TW_MAXDAT, FALSE);
 	UpdateCursor();
     }
     return (widget)Screen;
@@ -1953,7 +1953,7 @@ static menuitem CreateMenuItem(fn_menuitem Fn_MenuItem, obj Parent, window Windo
 	MenuItem->Window=Window;
 	MenuItem->Left=Left;
 	MenuItem->ShortCut=ShortCut;
-	MenuItem->WCurY=MAXLDAT;
+	MenuItem->WCurY=TW_MAXLDAT;
 	
 	if (Window)
 	    Window->MenuItem = MenuItem;
@@ -1964,7 +1964,7 @@ static menuitem CreateMenuItem(fn_menuitem Fn_MenuItem, obj Parent, window Windo
 	    if ((ldat)Window->XWidth<(Len=Max2((ldat)10, Len+(ldat)2)))
 		Window->XWidth = Len;
     
-	    if ((ldat)Window->YWidth<(Len=Min2(MAXDAT, Window->HLogic+(ldat)3)))
+	    if ((ldat)Window->YWidth<(Len=Min2(TW_MAXDAT, Window->HLogic+(ldat)3)))
 		Window->YWidth = Len;
 
 	    Act(Insert, MenuItem)(MenuItem, (obj)Window, (menuitem)Window->USE.R.LastRow, NULL);
@@ -2248,7 +2248,7 @@ static void SetSelectedItem(menu Menu, menuitem Item) {
 		All->CommonMenu->SelectI = Item;
 	}
 
-	Act(DrawMenu,All->FirstScreen)(All->FirstScreen, 0, MAXDAT);
+	Act(DrawMenu,All->FirstScreen)(All->FirstScreen, 0, TW_MAXDAT);
     }
 }
 

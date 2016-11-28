@@ -29,7 +29,7 @@ AC_PATH_X
 AC_FUNC_ALLOCA
 AC_HEADER_TIME
 AC_HEADER_SYS_WAIT
-AC_CHECK_HEADERS([arpa/inet.h asm/page.h crypt.h fcntl.h inttypes.h libintl.h limits.h locale.h machine/param.h malloc.h memory.h netdb.h netinet/in.h shadow.h signal.h stdarg.h stddef.h stdint.h stdlib.h string.h sys/filio.h sys/ioctl.h sys/mman.h sys/param.h sys/select.h sys/socket.h sys/timeb.h termio.h termios.h unistd.h])
+AC_CHECK_HEADERS([arpa/inet.h asm/page.h crypt.h fcntl.h grp.h inttypes.h libintl.h limits.h locale.h machine/param.h malloc.h memory.h netdb.h netinet/in.h shadow.h signal.h stdarg.h stddef.h stdint.h stdlib.h string.h sys/filio.h sys/ioctl.h sys/mman.h sys/param.h sys/select.h sys/socket.h sys/stat.h sys/timeb.h sys/un.h sys/utsname.h termio.h termios.h unistd.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_INLINE
@@ -63,21 +63,22 @@ AC_FUNC_REALLOC
 AC_FUNC_WAIT3
 AC_CHECK_FUNCS([dup2 ftime gethostbyname gethostname getpagesize getspnam gettimeofday memchr memmove memset munmap putenv select setenv setlocale socket strchr strdup strerror strrchr strspn strstr strtol strtoul uname wait4])
 
-dnl crypt() is needed by twdm
-AC_CHECK_FUNC(crypt,,AC_CHECK_LIB(crypt,crypt))
-
-dnl -lc_r is needed on FreeBSD to use pthread functions
-AC_CHECK_FUNC(pthread_self,,AC_CHECK_LIB(pthread,pthread_self,,AC_CHECK_LIB(c_r,pthread_self)))
-
-AC_CHECK_LIB(z, deflate)
-AC_CHECK_LIB(gpm, Gpm_Open)
-AC_CHECK_LIB(ggi, ggiOpen)
-
-dnl libgpm is often linked against ncurses...
-dnl no need for additional libraries in that case
-AC_CHECK_LIB(gpm,tgetent,,AC_CHECK_LIB(tinfo,tgetent,,AC_CHECK_LIB(ncurses,tgetent,,AC_CHECK_LIB(termcap,tgetent))))
+AC_SEARCH_LIBS(crypt, crypt)                  dnl crypt() is needed by twdm
+AC_SEARCH_LIBS(pthread_create, [pthread c_r]) dnl -lc_r is needed on FreeBSD to use pthread functions
+AC_SEARCH_LIBS(deflate, z)
+AC_SEARCH_LIBS(Gpm_Open, gpm)
+AC_SEARCH_LIBS(tgetent, [gpm tinfo ncurses termcap])
+AC_SEARCH_LIBS(ggiOpen, ggi)
 
 # Output
+
+AC_SUBST(LIBCRYPT,   "`echo \"$ac_cv_search_crypt\"          | $SED -e 's/^none required$//g' -e 's/^no$//g'`")
+AC_SUBST(LIBPTHREAD, "`echo \"$ac_cv_search_pthread_create\" | $SED -e 's/^none required$//g' -e 's/^no$//g'`")
+AC_SUBST(LIBZ,       "`echo \"$ac_cv_search_deflate\"        | $SED -e 's/^none required$//g' -e 's/^no$//g'`")
+AC_SUBST(LIBGPM,     "`echo \"$ac_cv_search_Gpm_Open\"       | $SED -e 's/^none required$//g' -e 's/^no$//g'`")
+AC_SUBST(LIBTERMCAP, "`echo \"$ac_cv_search_tgetent\"        | $SED -e 's/^none required$//g' -e 's/^no$//g'`")
+AC_SUBST(LIBGGI,     "`echo \"$ac_cv_search_ggiOpen\"        | $SED -e 's/^none required$//g' -e 's/^no$//g'`")
+
 LIBS=
 
 AC_CONFIG_FILES([Makefile clients/Makefile clients/mapscrn/Makefile contrib/Makefile contrib/twcd/Makefile docs/Makefile libs/Makefile libs/libTT/Makefile libs/libTT/HW/Makefile libs/libTutf/Makefile libs/libTw/Makefile libs/libltdl/Makefile server/Makefile server/extensions/Makefile server/HW/Makefile themes/Makefile themes/hw_gfx/Makefile])

@@ -474,7 +474,7 @@ static ttbyte CombineB_ttbitmask(ttbitmask o, TT_ARG_READ ttbitmask o2, ttuint t
 	    
 	    m1 = reverse1 ? ~o1->mask0 : o1->mask0;
 	    m2 = reverse2 ? ~o2->mask0 : o2->mask0;
-	    m0 = Combine_ttany(m1, m2, MINS(ttany), truth_table);
+	    m0 = Combine_ttany(m1, m2, TW_MINS(ttany), truth_table);
 	    o->mask0 = reverse0 ? ~m0 : m0;
 	    
 	    TDEL(o1);

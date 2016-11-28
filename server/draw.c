@@ -271,7 +271,7 @@ byte InitDrawCtx(widget W, dat X1, dat Y1, dat X2, dat Y2, byte Shaded, draw_ctx
  */
 byte InitAbsoluteDrawCtx(widget W, dat X1, dat Y1, dat X2, dat Y2, byte Shaded, draw_ctx *D) {
 
-    if (InitDrawCtx(W, 0, 0, MAXDAT, MAXDAT, Shaded, D)) {
+    if (InitDrawCtx(W, 0, 0, TW_MAXDAT, TW_MAXDAT, Shaded, D)) {
 	
 	D->X1 = Max2(D->X1, X1);
 	D->X2 = Min2(D->X2, X2);
@@ -295,7 +295,7 @@ void TranslateCoordsWidget(widget W1, widget W2, dat *X, dat *Y, byte *Inside) {
     draw_ctx D;
     if (W1 || W2) {
 	if (W1) {
-	    InitDrawCtx(W1, 0, 0, MAXDAT, MAXDAT, FALSE, &D);
+	    InitDrawCtx(W1, 0, 0, TW_MAXDAT, TW_MAXDAT, FALSE, &D);
 	    if (IS_WINDOW(W1) && !(((window)W1)->Flags & WINDOWFL_BORDERLESS)) {
 		(*X)++, (*Y)++;
 	    }
@@ -303,7 +303,7 @@ void TranslateCoordsWidget(widget W1, widget W2, dat *X, dat *Y, byte *Inside) {
 	    *Y += D.Up;
 	}
 	if (W2) {
-	    InitDrawCtx(W2, 0, 0, MAXDAT, MAXDAT, FALSE, &D);
+	    InitDrawCtx(W2, 0, 0, TW_MAXDAT, TW_MAXDAT, FALSE, &D);
 	    if (Inside) {
 		if (*X >= D.Left && *X <= D.Rgt && *Y >= D.Up && *Y <= D.Dwn) {
 		    *Inside = TRUE;
@@ -642,7 +642,7 @@ static void DrawSelfBorder(window Window, ldat Left, ldat Up, ldat Rgt, ldat Dwn
 	for (i=X1, u=(ldat)i-Left; i<=X2; i++, u++) {
 	    Act(FindBorder,Window)(Window, u, 0, Border, &Attr);
 	    Color = DoShadowColor(HWCOL(Attr), Shaded || !WinActive, Shaded);
-	    Video[i+j] = HWATTR(Color, 0) | (Attr & ~HWATTR(MAXHWCOL, 0));
+	    Video[i+j] = HWATTR(Color, 0) | (Attr & ~HWATTR(TW_MAXWCOL, 0));
 	}
 	DirtyVideo(X1, Y1, X2, Y1);
 	Y1++;
@@ -656,7 +656,7 @@ static void DrawSelfBorder(window Window, ldat Left, ldat Up, ldat Rgt, ldat Dwn
 	for (i=X1, u=(ldat)i-Left; i<=X2; i++, u++) {
 	    Act(FindBorder,Window)(Window, u, v, Border, &Attr);
 	    Color = DoShadowColor(HWCOL(Attr), Shaded || !WinActive, Shaded);
-	    Video[i+j] = HWATTR(Color, 0) | (Attr & ~HWATTR(MAXHWCOL, 0));
+	    Video[i+j] = HWATTR(Color, 0) | (Attr & ~HWATTR(TW_MAXWCOL, 0));
 	}
 	DirtyVideo(X1, Y2, X2, Y2);
 	Y2--;
@@ -668,7 +668,7 @@ static void DrawSelfBorder(window Window, ldat Left, ldat Up, ldat Rgt, ldat Dwn
 	for (j=Y1, v=(ldat)j-Up; j<=Y2; j++, v++) {
 	    Act(FindBorder,Window)(Window, 0, v, Border, &Attr);
 	    Color = DoShadowColor(HWCOL(Attr), Shaded || !WinActive, Shaded);
-	    Video[X1+j*DWidth] = HWATTR(Color, 0) | (Attr & ~HWATTR(MAXHWCOL, 0));
+	    Video[X1+j*DWidth] = HWATTR(Color, 0) | (Attr & ~HWATTR(TW_MAXWCOL, 0));
 	}
 	DirtyVideo(X1, Y1, X1, Y2);
 	X1++;
@@ -681,7 +681,7 @@ static void DrawSelfBorder(window Window, ldat Left, ldat Up, ldat Rgt, ldat Dwn
 	for (j=Y1, v=(ldat)j-Up; j<=Y2; j++, v++) {
 	    Act(FindBorder,Window)(Window, u, v, Border, &Attr);
 	    Color = DoShadowColor(HWCOL(Attr), Shaded || !WinActive, Shaded);
-	    Video[X2+j*DWidth] = HWATTR(Color, 0) | (Attr & ~HWATTR(MAXHWCOL, 0));
+	    Video[X2+j*DWidth] = HWATTR(Color, 0) | (Attr & ~HWATTR(TW_MAXWCOL, 0));
 	}
 	DirtyVideo(X2, Y1, X2, Y2);
 	X2--;
@@ -1116,7 +1116,7 @@ static void DrawAreaCtx(draw_ctx *D);
 void DrawAreaWidget(widget W) {
     draw_ctx D;
     
-    if (!QueuedDrawArea2FullScreen && W && InitAbsoluteDrawCtx(W, 0, 0, MAXDAT, MAXDAT, FALSE, &D)) {
+    if (!QueuedDrawArea2FullScreen && W && InitAbsoluteDrawCtx(W, 0, 0, TW_MAXDAT, TW_MAXDAT, FALSE, &D)) {
 	D.TopW = D.W = D.OnlyW = NULL;
 	DrawAreaCtx(&D);
     }
@@ -1668,17 +1668,17 @@ void DrawAreaWindow2(window W) {
     byte Dvalid = FALSE;
     if (!QueuedDrawArea2FullScreen && W && W->Parent && IS_SCREEN(W->Parent)) {
 	if ((widget)W == All->FirstScreen->FirstW) {
-	    DrawWidget((widget)W, 0, 0, MAXDAT, MAXDAT, FALSE);
+	    DrawWidget((widget)W, 0, 0, TW_MAXDAT, TW_MAXDAT, FALSE);
 	    
-	} else if (InitDrawCtx((widget)W, 0, 0, MAXDAT, MAXDAT, FALSE, &D)){
+	} else if (InitDrawCtx((widget)W, 0, 0, TW_MAXDAT, TW_MAXDAT, FALSE, &D)){
 	    Dvalid = TRUE;
 	    D.W = D.TopW = NULL;
 	    DrawAreaCtx(&D);
 	}
 	if (All->SetUp->Flags & SETUP_SHADOWS) {
 	    if (!Dvalid)
-		InitDrawCtx((widget)W, 0, 0, MAXDAT, MAXDAT, FALSE, &D);
-	    DrawAreaShadeWindow((screen)W->Parent, W, 0, 0, MAXDAT, MAXDAT,
+		InitDrawCtx((widget)W, 0, 0, TW_MAXDAT, TW_MAXDAT, FALSE, &D);
+	    DrawAreaShadeWindow((screen)W->Parent, W, 0, 0, TW_MAXDAT, TW_MAXDAT,
 				D.Left, D.Up, D.Rgt, D.Dwn, FALSE);
 	}
     }
@@ -1711,17 +1711,17 @@ void DrawLogicWidget(widget W, ldat X1, ldat Y1, ldat X2, ldat Y2) {
     
 	HasBorder = IS_WINDOW(W) && !(((window)W)->Flags & WINDOWFL_BORDERLESS);
 	
-	if (X2>=XL && Y2>=YL && Y1<MAXLDAT &&
+	if (X2>=XL && Y2>=YL && Y1<TW_MAXLDAT &&
 	    X1<XL+(ldat)W->XWidth-2*HasBorder &&
 	    Y1<YL+(ldat)W->YWidth-2*HasBorder) {
 
-	    X1 = Max2(X1-XL, 0); X1 = Min2(X1+HasBorder, MAXDAT);
+	    X1 = Max2(X1-XL, 0); X1 = Min2(X1+HasBorder, TW_MAXDAT);
 	    X2 = Min2(X2, XL+(ldat)W->XWidth-1-2*HasBorder);
-	    X2 = Max2(X2-XL, 0); X2 = Min2(X2+HasBorder, MAXDAT);
+	    X2 = Max2(X2-XL, 0); X2 = Min2(X2+HasBorder, TW_MAXDAT);
 	    
-	    Y1 = Max2(Y1-YL, 0); Y1 = Min2(Y1+HasBorder, MAXDAT);
+	    Y1 = Max2(Y1-YL, 0); Y1 = Min2(Y1+HasBorder, TW_MAXDAT);
 	    Y2 = Min2(Y2, YL+(ldat)W->YWidth-1-2*HasBorder);
-	    Y2 = Max2(Y2-YL, 0); Y2 = Min2(Y2+HasBorder, MAXDAT);
+	    Y2 = Max2(Y2-YL, 0); Y2 = Min2(Y2+HasBorder, TW_MAXDAT);
 	    
 	    DrawPartialWidget(W, (dat)X1, (dat)Y1, (dat)X2, (dat)Y2);
 	}
@@ -1869,7 +1869,7 @@ void DrawScreen(screen Screen) {
     screen FirstScreen;
     if (!QueuedDrawArea2FullScreen) {
 	FirstScreen= Screen==All->FirstScreen ? Screen : (screen)0;
-	DrawArea2(FirstScreen, (widget)0, (widget)0, 0, (dat)Screen->YLimit, MAXDAT, MAXDAT, FALSE);
+	DrawArea2(FirstScreen, (widget)0, (widget)0, 0, (dat)Screen->YLimit, TW_MAXDAT, TW_MAXDAT, FALSE);
     }
 }
 

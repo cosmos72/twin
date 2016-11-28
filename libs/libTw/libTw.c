@@ -34,24 +34,33 @@
 #include <Tw/Twautoconf.h>
 #include <Tw/osincludes.h>
 
-#include <stdlib.h>
-#include <stdarg.h>
-#include <string.h>
-#include <sys/stat.h>
-#include <sys/socket.h>
-#include <netdb.h>
-#include <netinet/in.h>
-#include <sys/un.h>
-#include <arpa/inet.h>
-
-#ifdef CONF_SOCKET_GZ
+#ifdef TW_HAVE_SYS_STAT_H
+# include <sys/stat.h>
+#endif
+#ifdef TW_HAVE_SYS_SOCKET_H
+# include <sys/socket.h>
+#endif
+#ifdef TW_HAVE_FCNTL_H
+# include <fcntl.h>
+#endif
+#ifdef TW_HAVE_NETDB_H
+# include <netdb.h>
+#endif
+#ifdef TW_HAVE_NETINET_IN_H
+# include <netinet/in.h>
+#endif
+#ifdef TW_HAVE_SYS_UN_H
+# include <sys/un.h>
+#endif
+#ifdef TW_HAVE_ARPA_INET_H
+# include <arpa/inet.h>
+#endif
+#ifdef TW_HAVE_ZLIB_H
 # include <zlib.h>
 #endif
-
-#ifdef CONF_SOCKET_PTHREADS
+#ifdef TW_HAVE_PTHREAD_H
 # include <pthread.h>
 #endif
-
 #ifdef TW_HAVE_SYS_IOCTL_H
 # include <sys/ioctl.h>
 #endif
@@ -2320,7 +2329,7 @@ void Tw_WriteTextGadget(tw_d TwD, tgadget G, dat Width, dat Height, TW_CONST byt
  */
 void Tw_SetTextGadget(tw_d TwD, tgadget G, dat Width, dat Height, TW_CONST byte *Text, dat Left, dat Up) {
     /* clear the whole gadget */
-    Tw_WriteTextsGadget(TwD, G, 1, MAXDAT, MAXDAT, NULL, 0, 0);
+    Tw_WriteTextsGadget(TwD, G, 1, TW_MAXDAT, TW_MAXDAT, NULL, 0, 0);
     /* write the specified text */
     Tw_WriteTextsGadget(TwD, G, 1, Width, Height, Text, Left, Up);
 }
@@ -2330,7 +2339,7 @@ void Tw_SetTextGadget(tw_d TwD, tgadget G, dat Width, dat Height, TW_CONST byte 
  */
 void Tw_SetTextsGadget(tw_d TwD, tgadget G, byte bitmap, dat Width, dat Height, TW_CONST byte *Text, dat Left, dat Up) {
     /* clear the whole gadget */
-    Tw_WriteTextsGadget(TwD, G, bitmap, MAXDAT, MAXDAT, NULL, 0, 0);
+    Tw_WriteTextsGadget(TwD, G, bitmap, TW_MAXDAT, TW_MAXDAT, NULL, 0, 0);
     /* write the specified text */
     Tw_WriteTextsGadget(TwD, G, bitmap, Width, Height, Text, Left, Up);
 }
@@ -2348,7 +2357,7 @@ void Tw_WriteHWFontGadget(tw_d TwD, tgadget G, dat Width, dat Height, TW_CONST h
  */
 void Tw_SetHWFontGadget(tw_d TwD, tgadget G, dat Width, dat Height, TW_CONST hwfont *HWFont, dat Left, dat Up) {
     /* clear the whole gadget */
-    Tw_WriteHWFontsGadget(TwD, G, 1, MAXDAT, MAXDAT, NULL, 0, 0);
+    Tw_WriteHWFontsGadget(TwD, G, 1, TW_MAXDAT, TW_MAXDAT, NULL, 0, 0);
     /* write the specified text */
     Tw_WriteHWFontsGadget(TwD, G, 1, Width, Height, HWFont, Left, Up);
 }
@@ -2358,7 +2367,7 @@ void Tw_SetHWFontGadget(tw_d TwD, tgadget G, dat Width, dat Height, TW_CONST hwf
  */
 void Tw_SetHWFontsGadget(tw_d TwD, tgadget G, byte bitmap, dat Width, dat Height, TW_CONST hwfont *HWFont, dat Left, dat Up) {
     /* clear the whole gadget */
-    Tw_WriteHWFontsGadget(TwD, G, bitmap, MAXDAT, MAXDAT, NULL, 0, 0);
+    Tw_WriteHWFontsGadget(TwD, G, bitmap, TW_MAXDAT, TW_MAXDAT, NULL, 0, 0);
     /* write the specified text */
     Tw_WriteHWFontsGadget(TwD, G, bitmap, Width, Height, HWFont, Left, Up);
 }

@@ -2220,7 +2220,7 @@ static uldat GetRandomData(void) {
 		got = 4;
 		res = (unsigned long)mrand48();
 	    }
-	    AuthData[len++] = res & MAXBYTE;
+	    AuthData[len++] = res & TW_MAXBYTE;
 	    res >>= 8;
 	    got--;
 	}
@@ -2487,7 +2487,7 @@ static void Wait4Magic(int fd, uldat slot, byte isUnix) {
     
     t = RemoteReadGetQueue(Slot = slot, &max);
     if (max == 0)
-	max = MAXBYTE;
+	max = TW_MAXBYTE;
     else
 	max = t[0];
 
