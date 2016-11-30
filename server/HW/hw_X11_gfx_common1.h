@@ -242,7 +242,7 @@ static udat X11_LookupKey(XEvent *ev, udat *ShiftFlags, udat *len, char *seq) {
 
 static void X11_HandleEvent(XEvent *event) {
     /* this can stay static, X11_HandleEvent() is not reentrant */
-    static byte seq[SMALLBUFF];
+    static byte seq[TW_SMALLBUFF];
     dat x, y, dx, dy;
     udat len = sizeof(seq), TW_key, ShiftFlags;
 

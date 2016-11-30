@@ -196,7 +196,7 @@ INLINE void GGI_Mogrify(dat x, dat y, uldat len) {
     hwattr *V, *oV;
     hwcol col;
     udat buflen = 0;
-    byte buf[SMALLBUFF];
+    byte buf[TW_SMALLBUFF];
     int xbegin = x * gfont.x, ybegin = y * gfont.y;
     
     V = Video + x + y * DisplayWidth;
@@ -204,7 +204,7 @@ INLINE void GGI_Mogrify(dat x, dat y, uldat len) {
     
     for (_col = ~HWCOL(*V); len; x++, V++, oV++, len--) {
 	col = HWCOL(*V);
-	if (buflen && (col != _col || (ValidOldVideo && *V == *oV) || buflen == SMALLBUFF-1)) {
+	if (buflen && (col != _col || (ValidOldVideo && *V == *oV) || buflen == TW_SMALLBUFF-1)) {
 	    buf[buflen] = '\0';
 	    GDRAW(_col, buf, buflen);
 	    buflen = 0;
@@ -547,7 +547,7 @@ byte GGI_InitHW(void) {
 	
     } while (0); else {
 	if (arg || (arg = getenv("GGI_DISPLAY")))
-	    printk("      GGI_InitHW() failed to open display %."STR(SMALLBUFF)"s\n", arg);
+	    printk("      GGI_InitHW() failed to open display %."STR(TW_SMALLBUFF)"s\n", arg);
 	else
 	    printk("      GGI_InitHW() failed: GGI_DISPLAY is not set\n");
 	

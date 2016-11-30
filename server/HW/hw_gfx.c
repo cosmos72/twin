@@ -270,7 +270,7 @@ INLINE void X11_Mogrify(dat x, dat y, uldat len) {
     udat buflen = 0;
     hwattr gfx;
     hwfont f;
-    myXChar buf[SMALLBUFF];
+    myXChar buf[TW_SMALLBUFF];
     int xbegin, ybegin;
     
     if (xhw_view) {
@@ -296,7 +296,7 @@ INLINE void X11_Mogrify(dat x, dat y, uldat len) {
     for (_col = ~HWCOL(*V); len; x++, V++, oV++, len--) {
 	col = HWCOL(*V);
 	gfx = HWEXTRA32(*V);
-	if (buflen && (col != _col || gfx != bufgfx || (ValidOldVideo && *V == *oV) || buflen == SMALLBUFF)) {
+	if (buflen && (col != _col || gfx != bufgfx || (ValidOldVideo && *V == *oV) || buflen == TW_SMALLBUFF)) {
 	    XDRAW_ANY(buf, buflen, _col, bufgfx);
 	    buflen = 0;
 	}
@@ -382,7 +382,7 @@ static byte X11_LoadPixmap(Pixmap *px, byte *name, int nlen, byte strict) {
 	if (!path[0] && !path[1] && !path[2])
 	    printk("      gfx_InitHW(): Out of memory!\n");
 	else
-	    printk("      gfx_InitHW(): failed to open `%."STR(SMALLBUFF)"s': %."STR(SMALLBUFF)"s\n",
+	    printk("      gfx_InitHW(): failed to open `%."STR(TW_SMALLBUFF)"s': %."STR(TW_SMALLBUFF)"s\n",
 		   path[0] ? path[0] : path[1] ? path[1] : path[2],
 		   strerror(errno));
     }
@@ -785,7 +785,7 @@ byte gfx_InitHW(void) {
 	}
     } while (0); else {
 	if (dpy || (dpy = getenv("DISPLAY")))
-	    printk("      gfx_InitHW() failed to open display %."STR(SMALLBUFF)"s\n", HW->Name);
+	    printk("      gfx_InitHW() failed to open display %."STR(TW_SMALLBUFF)"s\n", HW->Name);
 	else
 	    printk("      gfx_InitHW() failed: DISPLAY is not set\n");
     }

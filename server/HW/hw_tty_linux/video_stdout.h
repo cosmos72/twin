@@ -44,7 +44,7 @@ static byte linux_InitVideo(void) {
     }
     
     if (strcmp(term, "linux")) {
-	printk("      linux_InitVideo() failed: terminal `%."STR(SMALLBUFF)"s' is not `linux'.\n", term);
+	printk("      linux_InitVideo() failed: terminal `%."STR(TW_SMALLBUFF)"s' is not `linux'.\n", term);
 	return FALSE;
     }
 

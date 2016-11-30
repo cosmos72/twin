@@ -16,13 +16,13 @@ static void warn_NoExtension(topaque len, CONST byte *name, uldat tried) {
 #ifdef CONF__MODULES
     if (!tried)
 	printk("twin: no extension compiled into twin, and all extension modules failed\n"
-	       "      for extension `%.*s'\n", Min2((int)len,SMALLBUFF), name);
+	       "      for extension `%.*s'\n", Min2((int)len,TW_SMALLBUFF), name);
     else
 #endif
     {
 	printk("twin: all extensions failed");
 	if (name)
-	    printk("for `%.*s'\n", Min2((int)len,SMALLBUFF), name);
+	    printk("for `%.*s'\n", Min2((int)len,TW_SMALLBUFF), name);
 	else
 	    printk(".\n");
     }
@@ -33,7 +33,7 @@ static byte check4(byte *s, uldat len, CONST byte *name) {
     if (len && strncmp(s, name, len))
 	return FALSE;
 #if 0
-    printk("twin: trying given `%.*s' server extension.\n", Min2((int)len,SMALLBUFF), s);
+    printk("twin: trying given `%.*s' server extension.\n", Min2((int)len,TW_SMALLBUFF), s);
 #endif
     return TRUE;
 }

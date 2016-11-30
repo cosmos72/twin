@@ -2453,7 +2453,7 @@ static byte Check4MagicTranslation(uldat slot, byte *magic, byte len) {
 		if (warn_count == 5)
 		    printk("twin: warning: many client with different sizes, suppressing further messages.\n");
 		else
-		    printk("twin: warning: client has different `%."STR(SMALLBUFF)"s' size, it may not be Unicode aware.\n", zero);
+		    printk("twin: warning: client has different `%."STR(TW_SMALLBUFF)"s' size, it may not be Unicode aware.\n", zero);
 		warn_count++;
 	    }
 	}
@@ -2634,7 +2634,7 @@ static void SocketIO(int fd, uldat slot) {
     Slot = slot;
 
     if (ioctl(Fd, FIONREAD, &tot) != 0 || tot == 0)	
-	tot = SMALLBUFF;
+	tot = TW_SMALLBUFF;
     else if (tot > BIGBUFF*BIGBUFF)
 	tot = BIGBUFF*BIGBUFF;
     
@@ -2751,7 +2751,7 @@ byte InitSocket(void)
     char opt[15];
 
     if (!sockInitAuth()) {
-	printk("twin: failed to create ~/.TwinAuth: %."STR(SMALLBUFF)"s\n", ErrStr);
+	printk("twin: failed to create ~/.TwinAuth: %."STR(TW_SMALLBUFF)"s\n", ErrStr);
 	return FALSE;
     }
     
@@ -2800,7 +2800,7 @@ byte InitSocket(void)
 
 	return TRUE;
     }
-    printk("twin: failed to create sockets: %."STR(SMALLBUFF)"s\n", ErrStr);
+    printk("twin: failed to create sockets: %."STR(TW_SMALLBUFF)"s\n", ErrStr);
     return FALSE;
 }
 

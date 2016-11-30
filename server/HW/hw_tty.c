@@ -406,7 +406,7 @@ byte tty_InitHW(void) {
 	    stdOUT = fdopen(tty_fd, "r+");
 	}
 	if (tty_fd == -1 || !stdOUT) {
-	    printk("      tty_InitHW(): open(\"%."STR(SMALLBUFF)"s\") failed: %."STR(SMALLBUFF)"s\n", tty_name, strerror(errno));
+	    printk("      tty_InitHW(): open(\"%."STR(TW_SMALLBUFF)"s\") failed: %."STR(TW_SMALLBUFF)"s\n", tty_name, strerror(errno));
 	    FreeMem(tty_name);
 	    if (tty_TERM)
 		FreeMem(tty_TERM);
@@ -417,7 +417,7 @@ byte tty_InitHW(void) {
 	 * open our controlling tty as display
 	 */
 	if (DisplayHWCTTY) {
-	    printk("      tty_InitHW() failed: controlling tty %."STR(SMALLBUFF)"s\n",
+	    printk("      tty_InitHW() failed: controlling tty %."STR(TW_SMALLBUFF)"s\n",
 		    DisplayHWCTTY == HWCTTY_DETACHED
 		    ? "not usable after Detach"
 		    : "is already in use as display");
@@ -452,10 +452,10 @@ byte tty_InitHW(void) {
     if (charset) {
         /* honor user-specified charset */
 	if ((tty_charset = Tutf_charset_id(charset)) == (uldat)-1)
-	    printk("      tty_InitHW(): libTutf warning: unknown charset `%." STR(SMALLBUFF) "s', assuming `CP437'\n", charset);
+	    printk("      tty_InitHW(): libTutf warning: unknown charset `%." STR(TW_SMALLBUFF) "s', assuming `CP437'\n", charset);
 	else if (tty_charset == Tutf_charset_id(T_NAME(UTF_16))) {
-	    printk("      tty_InitHW(): warning: charset `%." STR(SMALLBUFF) "s' is Unicode,\n"
-		   "      handling as %." STR(SMALLBUFF) "s (latin1) with utf8\n", charset, T_NAME(ISO8859_1));
+	    printk("      tty_InitHW(): warning: charset `%." STR(TW_SMALLBUFF) "s' is Unicode,\n"
+		   "      handling as %." STR(TW_SMALLBUFF) "s (latin1) with utf8\n", charset, T_NAME(ISO8859_1));
 	    tty_charset = Tutf_charset_id(T_NAME(ISO8859_1));
 	    tty_can_utf8 = TRUE;
 	}

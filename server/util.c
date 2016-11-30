@@ -982,7 +982,7 @@ byte InitTWDisplay(void) {
     }
     if (fd != NOFD)
 	close(fd);
-    printk("twin: failed to create any /tmp/.Twin* socket: %."STR(SMALLBUFF)"s\n", ErrStr);
+    printk("twin: failed to create any /tmp/.Twin* socket: %."STR(TW_SMALLBUFF)"s\n", ErrStr);
     printk("      possible reasons: either /tmp not writable, or all TWDISPLAY already in use,\n"
 	   "      or too many stale /tmp/.Twin* sockets. Aborting.\n");
     return FALSE;
@@ -1106,14 +1106,14 @@ byte SetServerUid(uldat uid, byte privileges) {
 		    if (setuid(0) < 0 || setgid(0) < 0 ||
 			chown(fullTWD, 0, 0) < 0) {
 			/* tried to recover, but screwed up uids too badly. */
-			printk("twin: failed switching to uid %u: %."STR(SMALLBUFF)"s\n", uid, strerror(errno));
+			printk("twin: failed switching to uid %u: %."STR(TW_SMALLBUFF)"s\n", uid, strerror(errno));
 			printk("twin: also failed to recover. Quitting NOW!\n");
 			Quit(0);
 		    }
 		    SetEnvs(getpwuid(0));
 		}
 	    }
-	    printk("twin: failed switching to uid %u: %."STR(SMALLBUFF)"s\n", uid, strerror(errno));
+	    printk("twin: failed switching to uid %u: %."STR(TW_SMALLBUFF)"s\n", uid, strerror(errno));
 	}
     } else
 	printk("twin: SetServerUid() can be called only if started by root with \"-secure\".\n");
@@ -1219,7 +1219,7 @@ void RunTwEnvRC(void) {
 		  case -1: /* error */
 		    close(fds[0]);
 		    close(fds[1]);
-		    printk("twin: RunTwEnvRC(): fork() failed: %."STR(SMALLBUFF)"s\n", strerror(errno));
+		    printk("twin: RunTwEnvRC(): fork() failed: %."STR(TW_SMALLBUFF)"s\n", strerror(errno));
 		    break;
 		  case 0:  /* child */
 		    close(fds[0]);
@@ -1240,7 +1240,7 @@ void RunTwEnvRC(void) {
 		    break;
 		}
 	    } else
-		printk("twin: RunTwEnvRC(): pipe() failed: %."STR(SMALLBUFF)"s\n", strerror(errno));
+		printk("twin: RunTwEnvRC(): pipe() failed: %."STR(TW_SMALLBUFF)"s\n", strerror(errno));
 	} else
 	    printk("twin: RunTwEnvRC(): .twenvrc.sh: File not found\n", strerror(errno));
     } else
@@ -1328,7 +1328,7 @@ INLINE uldat IdListGrow(byte i) {
     if (oldsize >= MAXID || i == obj_magic_id || i == all_magic_id)
 	return NOSLOT;
 
-    size = oldsize < SMALLBUFF/3 ? SMALLBUFF/2 : oldsize + (oldsize>>1);
+    size = oldsize < TW_SMALLBUFF/3 ? TW_SMALLBUFF/2 : oldsize + (oldsize>>1);
     if (size > MAXID)
 	size = MAXID;
     

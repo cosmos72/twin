@@ -30,8 +30,8 @@ void printk_str(int len, CONST byte *s) {
 
 #ifdef CONF_PRINTK
 	if (MessagesWin) {
-	    if (MessagesWin->HLogic > SMALLBUFF) {
-		while (MessagesWin->HLogic > SMALLBUFF) {
+	    if (MessagesWin->HLogic > TW_SMALLBUFF) {
+		while (MessagesWin->HLogic > TW_SMALLBUFF) {
 		    Delete(MessagesWin->USE.R.FirstRow);
 		    MessagesWin->CurY--;
 		}

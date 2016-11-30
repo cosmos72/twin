@@ -132,7 +132,7 @@ INLINE void X11_Mogrify(dat x, dat y, uldat len) {
     hwcol col;
     udat buflen = 0;
     hwfont f;
-    XChar2b buf[SMALLBUFF];
+    XChar2b buf[TW_SMALLBUFF];
     int xbegin, ybegin;
     
     if (xhw_view) {
@@ -157,7 +157,7 @@ INLINE void X11_Mogrify(dat x, dat y, uldat len) {
     
     for (_col = ~HWCOL(*V); len; x++, V++, oV++, len--) {
 	col = HWCOL(*V);
-	if (buflen && (col != _col || (ValidOldVideo && *V == *oV) || buflen == SMALLBUFF)) {
+	if (buflen && (col != _col || (ValidOldVideo && *V == *oV) || buflen == TW_SMALLBUFF)) {
 	    XDRAW(_col, buf, buflen);
 	    buflen = 0;
 	}
@@ -478,7 +478,7 @@ byte X11_InitHW(void) {
 	}
     } while (0); else {
 	if (xdisplay_ || (xdisplay_ = getenv("DISPLAY")))
-	    printk("      X11_InitHW() failed to open display %."STR(SMALLBUFF)"s\n", HW->Name);
+	    printk("      X11_InitHW() failed to open display %."STR(TW_SMALLBUFF)"s\n", HW->Name);
 	else
 	    printk("      X11_InitHW() failed: DISPLAY is not set\n");
     }

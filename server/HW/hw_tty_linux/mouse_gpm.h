@@ -28,7 +28,7 @@ static int wrap_Gpm_Open(void) {
 	return NOFD;
     }
     if (tty_number < 1 || tty_number > 63) {
-	printk("      GPM_InitMouse() failed: terminal `%."STR(SMALLBUFF)"s'\n"
+	printk("      GPM_InitMouse() failed: terminal `%."STR(TW_SMALLBUFF)"s'\n"
 		        "      is not a local linux console.\n", tty_name);
 	return NOFD;
     }

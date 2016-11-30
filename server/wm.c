@@ -1905,7 +1905,7 @@ byte InitWM(void)
 		    return TRUE;
 		} else {
 		    sent = TRUE;
-		    printk("twin: RC: %."STR(SMALLBUFF)"s\n", ErrStr);
+		    printk("twin: RC: %."STR(TW_SMALLBUFF)"s\n", ErrStr);
 		}
 	    }
 	    UnRegisterExt(WM,MsgPort,WM_MsgPort);
@@ -1917,7 +1917,7 @@ byte InitWM(void)
     if (WM_MsgPort)
 	Delete(WM_MsgPort);
     if (!sent) {
-	printk("twin: WM: %."STR(SMALLBUFF)"s\n", ErrStr);
+	printk("twin: WM: %."STR(TW_SMALLBUFF)"s\n", ErrStr);
     }
     return FALSE;
 }

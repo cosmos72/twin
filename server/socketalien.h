@@ -632,7 +632,7 @@ static void AlienIO(int fd, uldat slot) {
     Slot = slot;
 
     if (ioctl(Fd, FIONREAD, &tot) != 0 || tot == 0)	
-	tot = SMALLBUFF;
+	tot = TW_SMALLBUFF;
     else if (tot > BIGBUFF*BIGBUFF)
 	tot = BIGBUFF*BIGBUFF;
     

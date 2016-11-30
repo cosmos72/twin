@@ -16,7 +16,7 @@ static byte vcsa_InitVideo(void) {
     }
     
     if (tty_number < 1 || tty_number > 63) {
-	printk("      vcsa_InitVideo() failed: terminal `%."STR(SMALLBUFF)"s'\n"
+	printk("      vcsa_InitVideo() failed: terminal `%."STR(TW_SMALLBUFF)"s'\n"
 			 "      is not a local linux console.\n", tty_name);
 	return FALSE;
     }
@@ -29,7 +29,7 @@ static byte vcsa_InitVideo(void) {
     DropPrivileges();
     
     if (VcsaFd < 0) {
-	printk("      vcsa_InitVideo() failed: unable to open `%."STR(SMALLBUFF)"s': %."STR(SMALLBUFF)"s\n",
+	printk("      vcsa_InitVideo() failed: unable to open `%."STR(TW_SMALLBUFF)"s': %."STR(TW_SMALLBUFF)"s\n",
 		vcsa_name, strerror(errno));
 	return FALSE;
     }

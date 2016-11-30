@@ -157,11 +157,11 @@ static byte termcap_InitVideo(void) {
       case 1:
 	break;
       case 0:
-	printk("      termcap_InitVideo() failed: no entry for `%."STR(SMALLBUFF)"s' in the terminal database.\n"
+	printk("      termcap_InitVideo() failed: no entry for `%."STR(TW_SMALLBUFF)"s' in the terminal database.\n"
 	       "      Please set your $TERM environment variable correctly.\n", term);
 	return FALSE;
       default:
-	printk("      termcap_InitVideo() failed: system call error in tgetent(): %."STR(SMALLBUFF)"s\n",
+	printk("      termcap_InitVideo() failed: system call error in tgetent(): %."STR(TW_SMALLBUFF)"s\n",
 		strerror(errno));
 	return FALSE;
     }

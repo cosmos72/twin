@@ -168,7 +168,7 @@ static byte Check4SpecialArgs(void) {
 #if !defined(CONF_WM)
 static byte DieWMSo(void) {
 #if defined(CONF__MODULES)
-    printk("twin: fatal: failed to load the window manager: %."STR(SMALLBUFF)"s\n", ErrStr);
+    printk("twin: fatal: failed to load the window manager: %."STR(TW_SMALLBUFF)"s\n", ErrStr);
 #else
     printk("twin: fatal: no window manager and no module loader compiled in.\n"
 	   "      Where should I get the window manager from!?\n");

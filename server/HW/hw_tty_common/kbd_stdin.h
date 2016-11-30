@@ -282,7 +282,7 @@ static udat linux_LookupKey(udat *ShiftFlags, byte *slen, byte *s, byte *retlen,
 static byte xterm_MouseData[10] = "\033[M#!!!!";
 
 static void stdin_KeyboardEvent(int fd, display_hw hw) {
-    static byte buf[SMALLBUFF];
+    static byte buf[TW_SMALLBUFF];
     static fd_set rfds;
     static struct timeval t;
     byte *s = buf, *ret = buf+sizeof(buf)-1;

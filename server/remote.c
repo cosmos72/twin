@@ -43,7 +43,7 @@ static uldat FdListGrow(void) {
 	return NOSLOT;
     }
     
-    if ((size = oldsize < SMALLBUFF/3 ? SMALLBUFF/2 : oldsize + (oldsize>>1)) < oldsize)
+    if ((size = oldsize < TW_SMALLBUFF/3 ? TW_SMALLBUFF/2 : oldsize + (oldsize>>1)) < oldsize)
 	size = TW_MAXULDAT;
     
     if (!(newFdList = (fdlist *)ReAllocMem(FdList, size*sizeof(fdlist)))) {
@@ -61,7 +61,7 @@ static uldat FdListGrow(void) {
 
 INLINE void FdListShrink(void) {
     fdlist *newFdList;
-    uldat size = Max2(SMALLBUFF, FdTop << 1);
+    uldat size = Max2(TW_SMALLBUFF, FdTop << 1);
     
     if (size < FdSize && (newFdList = (fdlist *)ReAllocMem(FdList, size*sizeof(fdlist)))) {
 	FdList = newFdList;
@@ -248,7 +248,7 @@ void UnRegisterRemote(uldat Slot) {
 		break;
 	FdTop = (j == FdBottom) ? j : j + 1;
 	
-	if (FdSize > (FdTop << 4) && FdSize > SMALLBUFF)
+	if (FdSize > (FdTop << 4) && FdSize > TW_SMALLBUFF)
 	    FdListShrink();
     }
 }
@@ -379,7 +379,7 @@ void RemoteParanoia(void) {
 	if (test < 10) {
 	    /* solved ? */
 	    printk("                    ... problem disappeared after a few tries, was:\n"
-		   "                        errno = %d (%."STR(SMALLBUFF)"s)\n",
+		   "                        errno = %d (%."STR(TW_SMALLBUFF)"s)\n",
 		   strerror(last_errno));
 	    return;
 	}

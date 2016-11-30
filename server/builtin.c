@@ -786,7 +786,7 @@ static byte InitScreens(void) {
 	return TRUE;
     }
     Error(NOMEMORY);
-    printk("twin: InitScreens(): %."STR(SMALLBUFF)"s\n", ErrStr);
+    printk("twin: InitScreens(): %."STR(TW_SMALLBUFF)"s\n", ErrStr);
     return FALSE;
 }
 
@@ -1026,7 +1026,7 @@ byte InitBuiltin(void) {
 	return TRUE;
     }
     Error(NOMEMORY);
-    printk("twin: InitBuiltin(): %."STR(SMALLBUFF)"s\n", ErrStr);
+    printk("twin: InitBuiltin(): %."STR(TW_SMALLBUFF)"s\n", ErrStr);
     return FALSE;
 }
 
