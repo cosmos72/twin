@@ -20,10 +20,15 @@
  * or referencing the variable All.
  */
 
-#include <signal.h>
-#include <sys/stat.h>
-
 #include "twautoconf.h"
+
+#ifdef TW_HAVE_SIGNAL_H
+# include <signal.h>
+#endif
+
+#ifdef TW_HAVE_SYS_STAT_H
+# include <sys/stat.h>
+#endif
 
 #ifdef TW_HAVE_SYS_RESOURCE_H
 # include <sys/resource.h>
@@ -79,7 +84,7 @@ static VOLATILE byte GotSignalHangup;
 static TW_RETSIGTYPE SignalWinch(int n) {
     GotSignals = GotSignalWinch = TRUE;
     signal(SIGWINCH, SignalWinch);
-    RETFROMSIGNAL(0);
+    TW_RETFROMSIGNAL(0);
 }
 
 static TW_RETSIGTYPE HandleSignalWinch(void) {
@@ -89,13 +94,13 @@ static TW_RETSIGTYPE HandleSignalWinch(void) {
 	
 	ResizeDisplayPrefer(DisplayHWCTTY);
     }
-    RETFROMSIGNAL(0);
+    TW_RETFROMSIGNAL(0);
 }
 
 static TW_RETSIGTYPE SignalChild(int n) {
     GotSignals = GotSignalChild = TRUE;
     signal(SIGCHLD, SignalChild);
-    RETFROMSIGNAL(0);
+    TW_RETFROMSIGNAL(0);
 }
 
 static void HandleSignalChild(void) {
@@ -114,7 +119,7 @@ static void HandleSignalChild(void) {
 static TW_RETSIGTYPE SignalHangup(int n) {
     GotSignals = GotSignalHangup = TRUE;
     signal(SIGHUP, SignalHangup);
-    RETFROMSIGNAL(0);
+    TW_RETFROMSIGNAL(0);
 }
 
 static void HandleSignalHangup(void) {
@@ -151,7 +156,7 @@ static TW_RETSIGTYPE SignalFatal(int n) {
     
     kill(getpid(), n);
     
-    RETFROMSIGNAL(0);
+    TW_RETFROMSIGNAL(0);
 }
 #endif
 

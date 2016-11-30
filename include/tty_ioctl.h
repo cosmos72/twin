@@ -12,9 +12,9 @@
 # include "twautoconf.h"
 #endif
 
-#if defined(HAVE_TERMIOS_H)
+#if defined(TW_HAVE_TERMIOS_H)
 # include <termios.h>
-#elif defined(HAVE_TERMIO_H)
+#elif defined(TW_HAVE_TERMIO_H)
 # include <termio.h>
 #endif
 

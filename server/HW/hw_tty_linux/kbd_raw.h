@@ -265,7 +265,7 @@ static TW_RETSIGTYPE lrawkbd_ReactSignalOut(int sig) {
     
     RestoreHW;
     
-    RETFROMSIGNAL(0);
+    TW_RETFROMSIGNAL(0);
 }
 
 
@@ -284,7 +284,7 @@ static TW_RETSIGTYPE lrawkbd_ReactSignalIn(int sig) {
 
     RestoreHW;
     
-    RETFROMSIGNAL(0);
+    TW_RETFROMSIGNAL(0);
 }
 
 static void lrawkbd_InitSignals(void) {

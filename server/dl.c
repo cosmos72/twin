@@ -17,23 +17,20 @@
 #include "dl.h"
 #include "version.h"
 
-#if defined(HAVE_DLFCN_H) && defined(HAVE_DLOPEN)
-# include <dlfcn.h>
-# define my(fn) fn
-# define my_handle void *
-# define my_dlopen_extra_args , RTLD_NOW|RTLD_GLOBAL
-# define my_VERSION ".so." TWIN_VERSION_STR
-
-#elif defined(HAVE_LTDL_H) && defined(HAVE_LT_DLOPEN)
-
-# include <ltdl.h>
-# define my(fn) lt_##fn
-# define my_handle lt_dlhandle
-# define my_dlopen_extra_args
-# define my_VERSION ".la"
-
+#if defined(TW_HAVE_DLFCN_H) && defined(TW_HAVE_DLOPEN)
+#  include <dlfcn.h>
+#  define my(fn) fn
+#  define my_handle void *
+#  define my_dlopen_extra_args , RTLD_NOW|RTLD_GLOBAL
+#  define my_VERSION ".so." TWIN_VERSION_STR
+#elif defined(TW_HAVE_LTDL) || defined(TW_HAVE_INCLUDED_LTDL)
+#  include <ltdl.h>
+#  define my(fn) lt_##fn
+#  define my_handle lt_dlhandle
+#  define my_dlopen_extra_args
+#  define my_VERSION ".la"
 #else
-# error nor dlopen() nor lt_dlopen() module loading API available!  
+#  error nor dlopen() nor lt_dlopen() module loading API available!  
 #endif
 
 
