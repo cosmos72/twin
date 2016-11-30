@@ -1040,7 +1040,7 @@ void GainPrivileges(void) {
 }
 
 static void SetEnvs(struct passwd *p) {
-    byte buf[BIGBUFF];
+    byte buf[TW_BIGBUFF];
     
     chdir(HOME = p->pw_dir);
 #if defined(HAVE_SETENV)
@@ -1162,8 +1162,8 @@ byte *FindFile(byte *name, uldat *fsize) {
  * read data from infd and set environment variables accordingly
  */
 static void ReadTwEnvRC(int infd) {
-    byte buff[BIGBUFF], *p = buff, *end, *q, *eq;
-    int got, left = BIGBUFF;
+    byte buff[TW_BIGBUFF], *p = buff, *end, *q, *eq;
+    int got, left = TW_BIGBUFF;
     for (;;) {
 	do {
 	    got = read(infd, p, left);
@@ -1188,13 +1188,13 @@ static void ReadTwEnvRC(int infd) {
 	    p = q;
 	}
 	left = end - p;
-	if (left == BIGBUFF)
+	if (left == TW_BIGBUFF)
 	    /* line too long! */
 	    left = 0;
 	    
 	memmove(buff, p, left);
 	p = buff + left;
-	left = BIGBUFF - left;
+	left = TW_BIGBUFF - left;
     }
 }
 
@@ -1345,7 +1345,7 @@ INLINE uldat IdListGrow(byte i) {
 
 INLINE void IdListShrink(byte i) {
     obj *newIdList;
-    uldat size = Max2(BIGBUFF, IdTop[i] << 1);
+    uldat size = Max2(TW_BIGBUFF, IdTop[i] << 1);
     
     if (size < IdSize[i] && (newIdList = (obj *)ReAllocMem(IdList[i], size*sizeof(obj)))) {
 	IdList[i] = newIdList;
@@ -1390,7 +1390,7 @@ INLINE void _DropId(byte i, obj Obj) {
 		break;
 	IdTop[i] = (j == IdBottom[i]) ? j : j + 1;
 	
-	if (IdSize[i] > (IdTop[i] << 4) && IdSize[i] > BIGBUFF)
+	if (IdSize[i] > (IdTop[i] << 4) && IdSize[i] > TW_BIGBUFF)
 	    IdListShrink(i);
     }
 }

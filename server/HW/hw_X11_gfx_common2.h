@@ -253,7 +253,7 @@ static void X11_SelectionNotify_X11(uldat ReqPrivate, uldat Magic, CONST byte MI
  */
 static void X11_SelectionNotify_up(Window win, Atom prop) {
     long nread = 0;
-    unsigned long nitems, bytes_after = BIGBUFF;
+    unsigned long nitems, bytes_after = TW_BIGBUFF;
     Atom actual_type;
     int actual_fmt;
     byte *data, *buff = NULL;

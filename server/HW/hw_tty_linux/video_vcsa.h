@@ -100,7 +100,7 @@ static void vcsa_QuitVideo(void) {
 
 #else /* TW_SIZEOF_HWATTR != 2 || !TW_IS_LITTLE_ENDIAN */
 
-static byte vcsa_buff[BIGBUFF*2];
+static byte vcsa_buff[TW_BIGBUFF*2];
 
 INLINE void vcsa_write(int fd, hwattr *buf, uldat count, uldat pos) {
     byte *buf8;
@@ -109,7 +109,7 @@ INLINE void vcsa_write(int fd, hwattr *buf, uldat count, uldat pos) {
     lseek(fd, pos*2+4, SEEK_SET);
     while (count) {
 	buf8 = vcsa_buff;
-	pos = chunk = Min2(count, BIGBUFF);
+	pos = chunk = Min2(count, TW_BIGBUFF);
 	while (pos--) {
 	    *buf8++ = tty_UTF_16_to_charset(HWFONT(*buf));
 	    *buf8++ = HWCOL(*buf);

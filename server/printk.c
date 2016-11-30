@@ -18,7 +18,7 @@
 #include "builtin.h"
 #include "draw.h"
 
-static byte buf[BIGBUFF]; /* hope it's enough */
+static byte buf[TW_BIGBUFF]; /* hope it's enough */
 static int printk_fd = NOFD;
 
 

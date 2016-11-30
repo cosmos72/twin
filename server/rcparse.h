@@ -1292,7 +1292,7 @@ byte rcload(void) {
      * assume a failsafe avg of a node every 4 bytes
      */
     len = Min2(len, TW_MAXULDAT / sizeof(node));
-    len = Max2(len, BIGBUFF) * sizeof(node) / 4;
+    len = Max2(len, TW_BIGBUFF) * sizeof(node) / 4;
     
     if (!shm_init(len)) {
 	FreeMem(path);

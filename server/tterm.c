@@ -184,16 +184,16 @@ static void TwinTermH(msgport MsgPort) {
 }
 
 static void TwinTermIO(int Fd, window Window) {
-    static byte buf[BIGBUFF];
+    static byte buf[TW_BIGBUFF];
     uldat got = 0, chunk = 0;
     
     do {
 	/*
-	 * BIGBUFF - 1 to avoid silly windows...
+	 * TW_BIGBUFF - 1 to avoid silly windows...
 	 * linux ttys buffer up to 4095 bytes.
 	 */
-	chunk = read(Fd, buf + got, BIGBUFF - 1 - got);
-    } while (chunk && chunk != (uldat)-1 && (got += chunk) < BIGBUFF - 1);
+	chunk = read(Fd, buf + got, TW_BIGBUFF - 1 - got);
+    } while (chunk && chunk != (uldat)-1 && (got += chunk) < TW_BIGBUFF - 1);
     
     if (got)
 	Act(TtyWriteAscii,Window)(Window, got, buf);
