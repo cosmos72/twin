@@ -675,6 +675,9 @@ SUBDIR_LIBTT
 SUBDIR_LIBLTDL
 LIBOBJS
 ALLOCA
+LIBX11
+X11_LDFLAGS
+X11_CPPFLAGS
 XMKMF
 am__fastdepCCAS_FALSE
 am__fastdepCCAS_TRUE
@@ -14715,8 +14718,6 @@ $as_echo "$ac_cv_path_SED" >&6; }
   rm -f conftest.sed
 
 
-# Checks for libraries.
-
 # Checks for header files.
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for X" >&5
 $as_echo_n "checking for X... " >&6; }
@@ -14909,6 +14910,19 @@ else
 	ac_x_libraries='$x_libraries'"
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: libraries $x_libraries, headers $x_includes" >&5
 $as_echo "libraries $x_libraries, headers $x_includes" >&6; }
+fi
+
+if test "$have_x" = yes; then
+  if test x"$ac_x_includes" != x; then
+    X11_CPPFLAGS="-I$ac_x_includes"
+  fi
+  if test x"$ac_x_libraries" != x; then
+    X11_LDFLAGS="-L$ac_x_libraries"
+  fi
+
+
+  LIBX11="-lX11"
+
 fi
 
 ac_fn_c_check_type "$LINENO" "size_t" "ac_cv_type_size_t" "$ac_includes_default"
@@ -15189,7 +15203,7 @@ for ac_header in arpa/inet.h asm/page.h crypt.h dlfcn.h fcntl.h grp.h inttypes.h
        ncurses.h ncurses/ncurses.h ncurses/termcap.h netdb.h netinet/in.h pthread.h \
        shadow.h signal.h stdarg.h stddef.h stdint.h stdlib.h string.h \
        sys/filio.h sys/ioctl.h sys/mman.h sys/param.h sys/select.h sys/socket.h sys/stat.h \
-       sys/timeb.h sys/un.h sys/utsname.h termcap.h termio.h termios.h unistd.h X11/xpm.h zlib.h
+       sys/timeb.h sys/un.h sys/utsname.h termcap.h termio.h termios.h unistd.h zlib.h
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
@@ -15730,6 +15744,7 @@ $as_echo "$ac_cv_prog_gcc_i386_asm" >&6; }
 
 # CC flags '-g -O2' are already tested by AC_PROG_CC
 # CC flags '-p -pg' are incompatible with -fomit-frame-pointer
+initial_CFLAGS="$CFLAGS"
 for try_cflag in -fomit-frame-pointer -fno-strict-aliasing -pipe -Wall -Wshadow \
                  -Wno-uninitialized -Wno-pointer-sign -Wno-unused -Wundef -Wstrict-prototypes \
                  -Wcast-qual -Wcast-align -Wpointer-arith -Wbad-function-cast -Waggregate-return
@@ -15775,6 +15790,8 @@ eval ac_res=\$ac_cv_cflag$try_cflag_id
 	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
 $as_echo "$ac_res" >&6; }
 done
+custom_CFLAGS="$CFLAGS"
+CFLAGS="$initial_CFLAGS"
 
 
 ac_fn_c_check_type "$LINENO" "gid_t" "ac_cv_type_gid_t" "$ac_includes_default"
@@ -16148,7 +16165,7 @@ _ACEOF
 
 
 
-# Checks for library functions.
+# Checks for functions and libraries.
 for ac_header in unistd.h
 do :
   ac_fn_c_check_header_mongrel "$LINENO" "unistd.h" "ac_cv_header_unistd_h" "$ac_includes_default"
@@ -17412,63 +17429,7 @@ if test "$ac_res" != no; then :
   test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
 
 fi
-         { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing XpmReadFileToPixmap" >&5
-$as_echo_n "checking for library containing XpmReadFileToPixmap... " >&6; }
-if ${ac_cv_search_XpmReadFileToPixmap+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_func_search_save_LIBS=$LIBS
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char XpmReadFileToPixmap ();
-int
-main ()
-{
-return XpmReadFileToPixmap ();
-  ;
-  return 0;
-}
-_ACEOF
-for ac_lib in '' Xpm; do
-  if test -z "$ac_lib"; then
-    ac_res="none required"
-  else
-    ac_res=-l$ac_lib
-    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
-  fi
-  if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_search_XpmReadFileToPixmap=$ac_res
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext
-  if ${ac_cv_search_XpmReadFileToPixmap+:} false; then :
-  break
-fi
-done
-if ${ac_cv_search_XpmReadFileToPixmap+:} false; then :
-
-else
-  ac_cv_search_XpmReadFileToPixmap=no
-fi
-rm conftest.$ac_ext
-LIBS=$ac_func_search_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_XpmReadFileToPixmap" >&5
-$as_echo "$ac_cv_search_XpmReadFileToPixmap" >&6; }
-ac_res=$ac_cv_search_XpmReadFileToPixmap
-if test "$ac_res" != no; then :
-  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
-
-fi
-
-                                                      LIBS=
+                                                               LIBS=
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing tgetent" >&5
 $as_echo_n "checking for library containing tgetent... " >&6; }
 if ${ac_cv_search_tgetent+:} false; then :
@@ -17526,6 +17487,83 @@ if test "$ac_res" != no; then :
 fi
 
 
+if test "$have_x" = yes; then
+  save_CPPFLAGS="$CPPFLAGS"
+  save_LDFLAGS="$LDFLAGS"
+  CPPFLAGS="$CPPFLAGS $X11_CPPFLAGS"
+  LDFLAGS="$LDFLAGS $X11_LDFLAGS"
+
+  for ac_header in X11/xpm.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "X11/xpm.h" "ac_cv_header_X11_xpm_h" "$ac_includes_default"
+if test "x$ac_cv_header_X11_xpm_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_X11_XPM_H 1
+_ACEOF
+
+fi
+
+done
+                         { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing XpmReadFileToPixmap" >&5
+$as_echo_n "checking for library containing XpmReadFileToPixmap... " >&6; }
+if ${ac_cv_search_XpmReadFileToPixmap+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char XpmReadFileToPixmap ();
+int
+main ()
+{
+return XpmReadFileToPixmap ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' Xpm; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_search_XpmReadFileToPixmap=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+  if ${ac_cv_search_XpmReadFileToPixmap+:} false; then :
+  break
+fi
+done
+if ${ac_cv_search_XpmReadFileToPixmap+:} false; then :
+
+else
+  ac_cv_search_XpmReadFileToPixmap=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_XpmReadFileToPixmap" >&5
+$as_echo "$ac_cv_search_XpmReadFileToPixmap" >&6; }
+ac_res=$ac_cv_search_XpmReadFileToPixmap
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+
+fi
+
+  CPPFLAGS="$save_CPPFLAGS"
+  LDFLAGS="$save_LDFLAGS"
+fi
+
 
 # Output
 if test "$with_included_ltdl" = yes; then
@@ -17581,32 +17619,6 @@ if test "$ac_cv_search_XpmReadFileToPixmap" != "no"; then
 $as_echo "#define HAVE_XPMREADFILETOPIXMAP 1" >>confdefs.h
 
 fi
-
-LIBCRYPT="`echo \"$ac_cv_search_crypt\"          | $SED -e 's/^none required$//g' -e 's/^no$//g'`"
-
-LIBDL="`echo \"$ac_cv_search_dlopen\"         | $SED -e 's/^none required$//g' -e 's/^no$//g'`"
-
-LIBGGI="`echo \"$ac_cv_search_ggiOpen\"        | $SED -e 's/^none required$//g' -e 's/^no$//g'`"
-
-LIBGPM="`echo \"$ac_cv_search_Gpm_Open\"       | $SED -e 's/^none required$//g' -e 's/^no$//g'`"
-
-LIBSOCK="`echo \"$ac_cv_search_gethostbyname\"  | $SED -e 's/^none required$//g' -e 's/^no$//g'` `echo \"$ac_cv_search_socket\" | $SED -e 's/^none required$//g' -e 's/^no$//g'` `echo \"$ac_cv_search_connect\"  | $SED -e 's/^none required$//g' -e 's/^no$//g'`"
-
-LIBPTHREAD="`echo \"$ac_cv_search_pthread_create\" | $SED -e 's/^none required$//g' -e 's/^no$//g'`"
-
-LIBTERMCAP="`echo \"$ac_cv_search_tgetent\"        | $SED -e 's/^none required$//g' -e 's/^no$//g'`"
-
-LIBXPM="`echo \"$ac_cv_search_XpmReadFileToPixmap\"  | $SED -e 's/^none required$//g' -e 's/^no$//g'`"
-
-LIBZ="`echo \"$ac_cv_search_deflate\"        | $SED -e 's/^none required$//g' -e 's/^no$//g'`"
-
-
-LIBTUTF='$(top_builddir)/libs/libTutf/libTutf.la'
-
-LIBTW='$(top_builddir)/libs/libTw/libTw.la'
-
-
-LIBS=
 
 
 
@@ -17671,11 +17683,38 @@ if test "$have_x" != yes; then
   enable_hw_x11=no
 fi
 
-if test "$have_x" != yes -o "$ac_cv_header_X11_xpm_h" = no -o "$ac_cv_lib_Xpm_XpmReadFileToPixmap" = no; then
+if test "$have_x" != yes -o "$ac_cv_header_X11_xpm_h" = no -o "$ac_cv_search_XpmReadFileToPixmap" = no; then
   enable_hw_gfx=no
 fi
 
 
+
+LIBCRYPT="`echo \"$ac_cv_search_crypt\"          | $SED -e 's/^none required$//g' -e 's/^no$//g'`"
+
+LIBDL="`echo \"$ac_cv_search_dlopen\"         | $SED -e 's/^none required$//g' -e 's/^no$//g'`"
+
+LIBGGI="`echo \"$ac_cv_search_ggiOpen\"        | $SED -e 's/^none required$//g' -e 's/^no$//g'`"
+
+LIBGPM="`echo \"$ac_cv_search_Gpm_Open\"       | $SED -e 's/^none required$//g' -e 's/^no$//g'`"
+
+LIBSOCK="`echo \"$ac_cv_search_gethostbyname\"  | $SED -e 's/^none required$//g' -e 's/^no$//g'` `echo \"$ac_cv_search_socket\" | $SED -e 's/^none required$//g' -e 's/^no$//g'` `echo \"$ac_cv_search_connect\"  | $SED -e 's/^none required$//g' -e 's/^no$//g'`"
+
+LIBPTHREAD="`echo \"$ac_cv_search_pthread_create\" | $SED -e 's/^none required$//g' -e 's/^no$//g'`"
+
+LIBTERMCAP="`echo \"$ac_cv_search_tgetent\"        | $SED -e 's/^none required$//g' -e 's/^no$//g'`"
+
+LIBXPM="`echo \"$ac_cv_search_XpmReadFileToPixmap\"  | $SED -e 's/^none required$//g' -e 's/^no$//g'`"
+
+if test "$enable_socket_gz" = yes; then
+  LIBZ="`echo \"$ac_cv_search_deflate\"        | $SED -e 's/^none required$//g' -e 's/^no$//g'`"
+
+fi
+LIBTUTF='$(top_builddir)/libs/libTutf/libTutf.la'
+
+LIBTW='$(top_builddir)/libs/libTw/libTw.la'
+
+
+LIBS=
 
  if test "$enable_hw_display" = yes; then
   LIBHW_DISPLAY_la_TRUE=
@@ -17757,6 +17796,8 @@ else
   LIBWM_la_FALSE=
 fi
 
+
+CFLAGS="$custom_CFLAGS"
 
 ac_config_files="$ac_config_files Makefile clients/Makefile clients/mapscrn/Makefile contrib/Makefile contrib/twcd/Makefile docs/Makefile libs/Makefile libs/libTutf/Makefile libs/libTw/Makefile libs/libltdl/Makefile server/Makefile server/hw/Makefile themes/Makefile themes/hw_gfx/Makefile"
 

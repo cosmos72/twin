@@ -58,7 +58,7 @@ if test "$have_x" != yes; then
   enable_hw_x11=no
 fi
 
-if test "$have_x" != yes -o "$ac_cv_header_X11_xpm_h" = no -o "$ac_cv_lib_Xpm_XpmReadFileToPixmap" = no; then
+if test "$have_x" != yes -o "$ac_cv_header_X11_xpm_h" = no -o "$ac_cv_search_XpmReadFileToPixmap" = no; then
   enable_hw_gfx=no
 fi
 
