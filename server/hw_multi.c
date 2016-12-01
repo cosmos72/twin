@@ -14,7 +14,7 @@
 #include <stdio.h>
 #include <sys/stat.h>
 
-#include "twautoconf.h"
+#include "twconfig.h"
 
 #ifdef TW_HAVE_SYS_IOCTL_H
 # include <sys/ioctl.h>
@@ -194,10 +194,10 @@ static byte module_InitHW(byte *arg, uldat len) {
     if (name)
 	len = name - arg;
     
-    if ((name = AllocMem(len + 7))) {
-	sprintf(name, "HW/libhw_%.*s", (int)len, arg);
+    if ((name = AllocMem(len + 7 + my_PREFIX_LEN))) {
+	sprintf(name, "HW/%shw_%.*s", my_PREFIX, (int)len, arg);
 
-	Module = DlLoadAny(len + 6, name);
+	Module = DlLoadAny(len + 6 + my_PREFIX_LEN, name);
 	
 	if (Module) {
 	    printk("twin: starting display driver module `%."STR(TW_SMALLBUFF)"s'...\n", name);

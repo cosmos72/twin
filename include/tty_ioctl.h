@@ -8,7 +8,7 @@
 #ifndef _TWIN_TTY_IOCTL_H
 #define _TWIN_TTY_IOCTL_H
 
-#ifndef TW_RETSIGTYPE
+#ifndef _TWAUTOCONF_H
 # include "twautoconf.h"
 #endif
 

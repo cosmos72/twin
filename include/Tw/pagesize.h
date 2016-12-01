@@ -15,9 +15,9 @@
 #endif
 
 #ifndef TW_HAVE_GETPAGESIZE
-# ifdef _SC_PAGESIZE
-#  define getpagesize() sysconf(_SC_PAGESIZE)
-# else /* no _SC_PAGESIZE */
+# if defined(_SC_PAGESIZE) && defined(TW_HAVE_SYSCONF)
+#  define getpagesize() (sysconf(_SC_PAGESIZE))
+# else /* no sysconf(_SC_PAGESIZE) */
 #  ifdef TW_HAVE_ASM_PAGE_H
 #   include <asm/page.h>
 #  endif
@@ -25,22 +25,22 @@
 #   include <sys/param.h>
 #  endif
 #  ifdef EXEC_PAGESIZE
-#   define getpagesize() EXEC_PAGESIZE
+#   define getpagesize() (EXEC_PAGESIZE)
 #  else /* no EXEC_PAGESIZE */
 #   ifdef NBPG
-#    define getpagesize() NBPG * CLSIZE
 #    ifndef CLSIZE
 #     define CLSIZE 1
 #    endif /* no CLSIZE */
+#    define getpagesize() ((NBPG) * (CLSIZE))
 #   else /* no NBPG */
 #    ifdef NBPC
-#     define getpagesize() NBPC
+#     define getpagesize() (NBPC)
 #    else /* no NBPC */
 #     ifdef PAGE_SIZE
-#      define getpagesize() PAGE_SIZE
+#      define getpagesize() (PAGE_SIZE)
 #     else /* no PAGE_SIZE */
 #      ifdef PAGESIZE      
-#	define getpagesize() PAGESIZE
+#	define getpagesize() (PAGESIZE)
 #      else
 #	error cannot detect PAGESIZE
 #      endif /* no PAGESIZE */

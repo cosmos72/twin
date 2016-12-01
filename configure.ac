@@ -46,7 +46,9 @@ AC_C_INLINE
 
 TW_C_FEATURES
 
-for try_cflag in -g -O2 -fomit-frame-pointer -fno-strict-aliasing -pipe -Wall -Wshadow \
+# CC flags '-g -O2' are already tested by AC_PROG_CC
+# CC flags '-p -pg' are incompatible with -fomit-frame-pointer
+for try_cflag in -fomit-frame-pointer -fno-strict-aliasing -pipe -Wall -Wshadow \
                  -Wno-uninitialized -Wno-pointer-sign -Wno-unused -Wundef -Wstrict-prototypes \
                  -Wcast-qual -Wcast-align -Wpointer-arith -Wbad-function-cast -Waggregate-return
 do
@@ -102,8 +104,8 @@ dnl we never use the 'struct rusage' returned by wait3()
 dnl AC_FUNC_WAIT3
 AC_CHECK_FUNCS([dup2 ftime gethostname getpagesize getspnam gettimeofday grantpt \
       memchr memmove memset munmap ptsname putenv select setenv setlocale socket strchr strdup \
-      strerror strrchr strspn strstr strtol strtoul tcsetpgrp uname unlockpt vsprintf vsnprintf \
-      wait3 wait4])
+      strerror strrchr strspn strstr strtol strtoul sysconf tcsetpgrp uname unlockpt \
+      vsprintf vsnprintf wait3 wait4])
 
 
 AC_SEARCH_LIBS(crypt, crypt)                          dnl crypt() is needed by twdm
@@ -177,9 +179,11 @@ AC_OUTPUT
 function tw_cfg()
 {
   if test "$2" = yes; then
-    echo "#define $1" >> include/twautoconf.h
+    echo "#define $1" >> include/twconfig.h
+  elif test "$2" = mod -a "$enable__modules" = no; then
+    echo "#define $1" >> include/twconfig.h
   else
-    echo "#undef  $1" >> include/twautoconf.h
+    echo "#undef  $1" >> include/twconfig.h
   fi
 }
 

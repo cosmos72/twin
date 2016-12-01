@@ -20,7 +20,7 @@
  * or referencing the variable All.
  */
 
-#include "twautoconf.h"
+#include "twconfig.h"
 
 #ifdef TW_HAVE_SIGNAL_H
 # include <signal.h>

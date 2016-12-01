@@ -306,6 +306,9 @@
 /* Define to 1 if you have the `strtoul' function. */
 #undef HAVE_STRTOUL
 
+/* Define to 1 if you have the `sysconf' function. */
+#undef HAVE_SYSCONF
+
 /* Define to 1 if you have the <sys/dl.h> header file. */
 #undef HAVE_SYS_DL_H
 

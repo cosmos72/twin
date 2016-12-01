@@ -20,18 +20,18 @@
 #include "dl.h"
 #include "version.h"
 
-#if defined(TW_HAVE_DLFCN_H) && defined(TW_HAVE_DLOPEN)
-#  include <dlfcn.h>
-#  define my(fn) fn
-#  define my_handle void *
-#  define my_dlopen_extra_args , RTLD_NOW|RTLD_GLOBAL
-#  define my_VERSION ".so." TWIN_VERSION_STR
-#elif defined(TW_HAVE_LTDL) || defined(TW_HAVE_INCLUDED_LTDL)
+#if defined(TW_HAVE_LTDL) || defined(TW_HAVE_INCLUDED_LTDL)
 #  include <ltdl.h>
 #  define my(fn) lt_##fn
 #  define my_handle lt_dlhandle
 #  define my_dlopen_extra_args
 #  define my_VERSION ".la"
+#elif defined(TW_HAVE_DLFCN_H) && defined(TW_HAVE_DLOPEN)
+#  include <dlfcn.h>
+#  define my(fn) fn
+#  define my_handle void *
+#  define my_dlopen_extra_args , RTLD_NOW|RTLD_GLOBAL
+#  define my_VERSION ".so." TWIN_VERSION_STR
 #else
 #  error nor dlopen() nor lt_dlopen() module loading API available!  
 #endif
@@ -115,16 +115,16 @@ module DlLoad(uldat code) {
 	if (!(M = So[code])) {
 	    switch (code) {
 #ifndef CONF_WM
-	      case WMSo:      M = DlLoadAny(2, "libwm"); break;
+	      case WMSo:      M = DlLoadAny(with_PREFIX("wm")); break;
 #endif
 #ifndef CONF_TERM
-	      case TermSo:    M = DlLoadAny(4, "libterm"); break;
+	      case TermSo:    M = DlLoadAny(with_PREFIX("term")); break;
 #endif
 #ifndef CONF_SOCKET
-	      case SocketSo:  M = DlLoadAny(6, "libsocket"); break;
+	      case SocketSo:  M = DlLoadAny(with_PREFIX("socket")); break;
 #endif
 #ifndef CONF_WM_RC
-	      case RCParseSo: M = DlLoadAny(7, "librcparse"); break;
+	      case RCParseSo: M = DlLoadAny(with_PREFIX("rcparse")); break;
 #endif
 	      case MainSo:
 	      default:        M = DlLoadAny(0, NULL); break;
@@ -156,8 +156,8 @@ module DlIsLoaded(uldat code) {
 }
 
 udat DlName2Code(byte *name) {
-    if (!CmpStrN(name, "lib", 3))
-        name += 3;
+    if (!CmpStrN(name, my_PREFIX, my_PREFIX_LEN))
+        name += my_PREFIX_LEN;
     if (!CmpStr(name, "wm"))
 	return WMSo;
     if (!CmpStr(name, "term"))

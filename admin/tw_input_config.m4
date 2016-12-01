@@ -12,6 +12,12 @@ AC_ARG_ENABLE(-asm,dnl
 enable__asm=yes
 )dnl
 
+dnl shared modules
+AC_ARG_ENABLE(-modules,dnl
+[  --enable--modules[=yes|no]             enable compiling and loading shared modules ],,
+enable__modules=yes
+)dnl
+
 dnl socket server
 AC_ARG_ENABLE(socket,dnl
 [  --enable-socket[=yes|no]               enable remote socket connections (libTw) ],,

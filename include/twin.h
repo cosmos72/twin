@@ -13,7 +13,8 @@
 #ifndef _TWIN_H
 #define _TWIN_H
 
-#include "twautoconf.h"
+#include "twconfig.h" /* for TW_HAVE_* and CONF_* macros */
+
 
 /* pull in "obj" field in <Tw/stattypes.h> */
 #define obj obj

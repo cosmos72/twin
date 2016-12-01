@@ -1,4 +1,7 @@
 #include "twin.h"
+
+#ifdef CONF_EXT
+
 #include "data.h"
 #include "methods.h"
 #include "printk.h"
@@ -95,3 +98,4 @@ extension QueryExtension(byte len, CONST byte *name) {
     return LoadExtension(namelen, name);
 }
 
+#endif /* CONF_EXT */

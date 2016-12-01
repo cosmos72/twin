@@ -41,25 +41,35 @@
 #ifdef CONF__MODULES
 
 
-# if defined(TW_HAVE_DLFCN_H) && defined(TW_HAVE_DLOPEN)
+# if defined(TW_HAVE_LTDL) || defined(TW_HAVE_INCLUDED_LTDL)
+
+#  include <ltdl.h>
+#  define my(fn) lt_##fn
+#  define my_handle lt_dlhandle
+#  define my_dlopen_extra_args
+#  define my_VERSION ".la"
+#  ifdef TW_LT_LIBPREFIX
+#    define my_PREFIX TW_LT_LIBPREFIX
+#  else
+#    define my_PREFIX ""
+#  endif
+
+# elif defined(TW_HAVE_DLFCN_H) && defined(TW_HAVE_DLOPEN)
 
 #  include <dlfcn.h>
 #  define my(fn) fn
 #  define my_handle void *
 #  define my_dlopen_extra_args , RTLD_NOW|RTLD_GLOBAL
 #  define my_VERSION ".so." TWIN_VERSION_STR
-
-# elif defined(TW_HAVE_LTDL) || defined(TW_HAVE_INCLUDED_LTDL)
-
-# include <ltdl.h>
-# define my(fn) lt_##fn
-# define my_handle lt_dlhandle
-# define my_dlopen_extra_args
-# define my_VERSION ".la"
+#  define my_PREFIX "lib"
 
 # else
 #  error nor dlopen() nor lt_dlopen() module loading API available!  
 # endif
+
+#define my_LEN(str)        (sizeof(str) - 1)
+#define my_PREFIX_LEN      my_LEN(my_PREFIX)
+#define with_PREFIX(str)   my_LEN(my_PREFIX str), my_PREFIX str
 
 
 #ifdef LIBDIR
@@ -344,10 +354,10 @@ static byte module_InitHW(byte *arg, uldat len) {
     if (name)
 	len = name - arg;
     
-    if ((name = AllocMem(len + 7))) {
-	sprintf(name, "HW/libhw_%.*s", (int)len, arg);
+    if ((name = AllocMem(len + 7 + my_PREFIX_LEN))) {
+	sprintf(name, "HW/%shw_%.*s", my_PREFIX, (int)len, arg);
 			
-	Module = DlLoadAny(len + 6, name);
+	Module = DlLoadAny(len + 6 + my_PREFIX_LEN, name);
 	
 	if (Module) {
 	    printk("twdisplay: starting display driver module `%."STR(TW_SMALLBUFF)"s'...\n", name);

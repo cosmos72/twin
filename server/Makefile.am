@@ -15,7 +15,7 @@ libwm_la_SOURCES      = rcopt.c rcrun.c shm.c wm.c
 
 twdisplay_SOURCES  = alloc.c display.c missing.c hw.c
 twin_SOURCES       = wrapper.c
-twin_real_SOURCES  = alloc.c builtin.c data.c dl.c draw.c extreg.c hw.c hw_multi.c main.c methods.c missing.c printk.c remote.c resize.c scroller.c util.c 
+twin_real_SOURCES  = alloc.c builtin.c data.c dl.c draw.c extensions/ext_query.c extreg.c hw.c hw_multi.c main.c methods.c missing.c printk.c remote.c resize.c scroller.c util.c 
 
 twdisplay_LDADD    = $(LIBTW) $(LIBTUTF) $(LIBLTDL) $(LIBDL)
 twin_real_LDADD    =          $(LIBTUTF) $(LIBLTDL) $(LIBDL)

@@ -12,7 +12,9 @@
  *
  */
 
-#include "twautoconf.h"
+#include "twconfig.h"
+
+#include <Tw/pagesize.h>
 
 #ifdef TW_HAVE_SYS_STAT_H
 # include <sys/stat.h>
@@ -114,11 +116,16 @@ static void shm_shrink_error(void) {
 
 static byte shmfile[]="/tmp/.Twin_shm\0\0\0\0";
 
+static size_t TW_PAGE_SIZE = 0; /* set by first call to shm_init() */
+
 #define TW_PAGE_ALIGN_DOWN(l) ((l) & ~(size_t)(TW_PAGE_SIZE - 1))
 #define TW_PAGE_ALIGN_UP(l) (((l) + (TW_PAGE_SIZE - 1)) & ~(size_t)(TW_PAGE_SIZE - 1))
 
 byte shm_init(size_t len) {
     int fd = NOFD;
+    
+    if (TW_PAGE_SIZE == 0)
+        TW_PAGE_SIZE = getpagesize();
     
     CopyMem(TWDisplay, shmfile+14, lenTWDisplay);
     unlink(shmfile);
