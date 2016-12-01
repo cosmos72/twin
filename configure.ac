@@ -190,7 +190,7 @@ AM_CONDITIONAL(LIBWM_la,         [test "$enable_wm"         = yes])
 AC_CONFIG_FILES([
       Makefile clients/Makefile clients/mapscrn/Makefile contrib/Makefile contrib/twcd/Makefile docs/Makefile \
       libs/Makefile libs/libTutf/Makefile libs/libTw/Makefile libs/libltdl/Makefile \
-      server/Makefile server/HW/Makefile themes/Makefile themes/hw_gfx/Makefile])
+      server/Makefile server/hw/Makefile themes/Makefile themes/hw_gfx/Makefile])
 
 AC_OUTPUT
 

@@ -350,7 +350,7 @@ static void do_null(void)
 
 static udat do_lowercase(byte value, byte up_flag)
 {
-    printk("twin: HW/linux/kbd_low.h: do_lowercase() called - kernel bug!\n");
+    printk("twin: hw/linux/kbd_low.h: do_lowercase() called - kernel bug!\n");
     return TW_Null;
 }
 

@@ -1,4 +1,4 @@
-SUBDIRS = HW
+SUBDIRS = hw
 
 bin_PROGRAMS       = twdisplay twin twin_real
 noinst_LTLIBRARIES = 

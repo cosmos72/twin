@@ -17758,7 +17758,7 @@ else
 fi
 
 
-ac_config_files="$ac_config_files Makefile clients/Makefile clients/mapscrn/Makefile contrib/Makefile contrib/twcd/Makefile docs/Makefile libs/Makefile libs/libTutf/Makefile libs/libTw/Makefile libs/libltdl/Makefile server/Makefile server/HW/Makefile themes/Makefile themes/hw_gfx/Makefile"
+ac_config_files="$ac_config_files Makefile clients/Makefile clients/mapscrn/Makefile contrib/Makefile contrib/twcd/Makefile docs/Makefile libs/Makefile libs/libTutf/Makefile libs/libTw/Makefile libs/libltdl/Makefile server/Makefile server/hw/Makefile themes/Makefile themes/hw_gfx/Makefile"
 
 
 cat >confcache <<\_ACEOF
@@ -18857,7 +18857,7 @@ do
     "libs/libTw/Makefile") CONFIG_FILES="$CONFIG_FILES libs/libTw/Makefile" ;;
     "libs/libltdl/Makefile") CONFIG_FILES="$CONFIG_FILES libs/libltdl/Makefile" ;;
     "server/Makefile") CONFIG_FILES="$CONFIG_FILES server/Makefile" ;;
-    "server/HW/Makefile") CONFIG_FILES="$CONFIG_FILES server/HW/Makefile" ;;
+    "server/hw/Makefile") CONFIG_FILES="$CONFIG_FILES server/hw/Makefile" ;;
     "themes/Makefile") CONFIG_FILES="$CONFIG_FILES themes/Makefile" ;;
     "themes/hw_gfx/Makefile") CONFIG_FILES="$CONFIG_FILES themes/hw_gfx/Makefile" ;;
 
