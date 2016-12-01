@@ -12,12 +12,12 @@ if test "$ac_cv_prog_gcc_i386_asm" = no; then
   enable__asm=no
 fi
 
-if test "$ac_cv_func_socket" = no -a "$ac_cv_lib_socket_socket" = no -a "$ac_cv_lib_wsock32_socket" = no; then
+if test "$ac_cv_search_socket" = no; then
   AC_MSG_WARN(missing socket(): disabling socket connections (libTw)!)
   enable_socket=no
 fi
 
-if test "$ac_cv_func_connect" = no -a "$ac_cv_lib_socket_connect" = no -a "$ac_cv_lib_wsock32_connect" = no; then
+if test "$ac_cv_search_connect" = no; then
   AC_MSG_WARN(missing connect(): disabling socket connections (libTw)!)
   enable_socket=no
 fi
@@ -26,11 +26,11 @@ if test "$ac_cv_search_gethostbyname" = no; then
   AC_MSG_WARN(missing gethostbyname(): libTw will only accept numerical IP addresses!)
 fi
 
-if test "$ac_cv_lib_pthread_pthread_create" = no -o "$ac_cv_header_pthread_h" = no; then
+if test "$ac_cv_search_pthread_create" = no -o "$ac_cv_header_pthread_h" = no; then
   enable_socket_pthreads=no
 fi
 
-if test "$ac_cv_lib_z_deflate" = no -o "$ac_cv_header_zlib_h" = no; then
+if test "$ac_cv_search_deflate" = no -o "$ac_cv_header_zlib_h" = no; then
   enable_socket_gz=no
 fi
 

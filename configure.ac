@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.65])
-AC_INIT([twin], [0.6.2.work], [BUG-REPORT-ADDRESS])
+AC_INIT([twin], [0.6.3], [BUG-REPORT-ADDRESS])
 AC_CONFIG_SRCDIR([server/main.c])
 AC_CONFIG_HEADERS([include/config.h])
 AC_CONFIG_MACRO_DIRS([m4])
@@ -91,6 +91,7 @@ AC_CHECK_SIZEOF([long])
 AC_CHECK_SIZEOF([size_t])
 AC_CHECK_SIZEOF([void *])
 
+
 # Checks for library functions.
 AC_FUNC_CHOWN
 AC_FUNC_FORK
@@ -108,15 +109,20 @@ AC_CHECK_FUNCS([dup2 ftime gethostname getpagesize getspnam gettimeofday grantpt
       vsprintf vsnprintf wait3 wait4])
 
 
-AC_SEARCH_LIBS(crypt, crypt)                          dnl crypt() is needed by twdm
-AC_SEARCH_LIBS(deflate, z)
-AC_SEARCH_LIBS(dlopen, dl)
-AC_SEARCH_LIBS(gethostbyname, [nsl wsock32])
-AC_SEARCH_LIBS(ggiOpen, ggi)
-AC_SEARCH_LIBS(Gpm_Open, gpm)
+AC_SEARCH_LIBS(crypt,          crypt)                   dnl crypt() is needed by twdm
+AC_SEARCH_LIBS(deflate,        z)
+AC_SEARCH_LIBS(dlopen,         dl)
+AC_SEARCH_LIBS(socket,         [socket wsock32])
+AC_SEARCH_LIBS(connect,        [socket wsock32])
+AC_SEARCH_LIBS(gethostbyname,  [nsl    wsock32])
+AC_SEARCH_LIBS(ggiOpen,        ggi)
+AC_SEARCH_LIBS(Gpm_Open,       gpm)
 AC_SEARCH_LIBS(pthread_create, [pthread c_r])         dnl -lc_r is needed on FreeBSD to use pthread functions
-AC_SEARCH_LIBS(tgetent, [gpm tinfo ncurses termcap])  dnl search AFTER Gpm_Open in -lgpm, since we look in -lgpm too
 AC_SEARCH_LIBS(XpmReadFileToPixmap, Xpm)
+                                                      dnl reset LIBS, because we check -lgpm again
+LIBS=
+AC_SEARCH_LIBS(tgetent, [gpm tinfo ncurses termcap])
+
 
 # Output
 if test "$with_included_ltdl" = yes; then
@@ -157,7 +163,7 @@ AC_SUBST(LIBCRYPT,   "`echo \"$ac_cv_search_crypt\"          | $SED -e 's/^none 
 AC_SUBST(LIBDL,      "`echo \"$ac_cv_search_dlopen\"         | $SED -e 's/^none required$//g' -e 's/^no$//g'`")
 AC_SUBST(LIBGGI,     "`echo \"$ac_cv_search_ggiOpen\"        | $SED -e 's/^none required$//g' -e 's/^no$//g'`")
 AC_SUBST(LIBGPM,     "`echo \"$ac_cv_search_Gpm_Open\"       | $SED -e 's/^none required$//g' -e 's/^no$//g'`")
-AC_SUBST(LIBNSL,     "`echo \"$ac_cv_search_gethostbyname\"  | $SED -e 's/^none required$//g' -e 's/^no$//g'`")
+AC_SUBST(LIBSOCK,    "`echo \"$ac_cv_search_gethostbyname\"  | $SED -e 's/^none required$//g' -e 's/^no$//g'` `echo \"$ac_cv_search_socket\" | $SED -e 's/^none required$//g' -e 's/^no$//g'` `echo \"$ac_cv_search_connect\"  | $SED -e 's/^none required$//g' -e 's/^no$//g'`")
 AC_SUBST(LIBPTHREAD, "`echo \"$ac_cv_search_pthread_create\" | $SED -e 's/^none required$//g' -e 's/^no$//g'`")
 AC_SUBST(LIBTERMCAP, "`echo \"$ac_cv_search_tgetent\"        | $SED -e 's/^none required$//g' -e 's/^no$//g'`")
 AC_SUBST(LIBXPM,     "`echo \"$ac_cv_search_XpmReadFileToPixmap\"  | $SED -e 's/^none required$//g' -e 's/^no$//g'`")
@@ -170,9 +176,21 @@ LIBS=
 
 TW_FIX_CONFIG
 
-AC_CONFIG_FILES([Makefile clients/Makefile clients/mapscrn/Makefile contrib/Makefile contrib/twcd/Makefile docs/Makefile \
-      libs/Makefile libs/libTT/Makefile libs/libTT/HW/Makefile libs/libTutf/Makefile libs/libTw/Makefile libs/libltdl/Makefile \
-      server/Makefile server/extensions/Makefile server/HW/Makefile themes/Makefile themes/hw_gfx/Makefile])
+AM_CONDITIONAL(LIBHW_DISPLAY_la, [test "$enable_hw_display" = yes])
+AM_CONDITIONAL(LIBHW_GFX_la,     [test "$enable_hw_gfx"     = yes])
+AM_CONDITIONAL(LIBHW_GGI_la,     [test "$enable_hw_ggi"     = yes])
+AM_CONDITIONAL(LIBHW_TTY_la,     [test "$enable_hw_tty"     = yes])
+AM_CONDITIONAL(LIBHW_TWIN_la,    [test "$enable_hw_twin"    = yes])
+AM_CONDITIONAL(LIBHW_X11_la,     [test "$enable_hw_x11"     = yes])
+AM_CONDITIONAL(LIBRCPARSE_la,    [test "$enable_wm_rc"      = yes])
+AM_CONDITIONAL(LIBSOCKET_la,     [test "$enable_socket"     = yes])
+AM_CONDITIONAL(LIBTERM_la,       [test "$enable_term"       = yes])
+AM_CONDITIONAL(LIBWM_la,         [test "$enable_wm"         = yes])
+
+AC_CONFIG_FILES([
+      Makefile clients/Makefile clients/mapscrn/Makefile contrib/Makefile contrib/twcd/Makefile docs/Makefile \
+      libs/Makefile libs/libTutf/Makefile libs/libTw/Makefile libs/libltdl/Makefile \
+      server/Makefile server/HW/Makefile themes/Makefile themes/hw_gfx/Makefile])
 
 AC_OUTPUT
 
