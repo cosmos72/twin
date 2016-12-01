@@ -74,7 +74,7 @@ struct x11_data {
     Pixmap       xtheme, xroot, xbg;
     GC           xgc, xthemegc, xrootgc, xbggc;
     XFontStruct *xsfont;
-#ifdef HW_X11_HAVE_XIM_XIC
+#ifdef HW_X11_HAVE_XIM_XIC /* autodetected by hw_X11_gfx_common0.h */
     XIM		 xim;
     XIC		 xic;
 #endif
@@ -424,10 +424,7 @@ static void GfxUse(byte *arg, byte *how) {
 	*how = GFX_USE_BG;
 }
 
-#ifdef THIS_MODULE
-static
-#endif
-byte gfx_InitHW(void) {
+static byte gfx_InitHW(void) {
     char *arg = HW->Name;
     int xscreen;
     unsigned int xdepth;
@@ -661,7 +658,7 @@ byte gfx_InitHW(void) {
 
             static XComposeStatus static_xcompose;
             xcompose = static_xcompose;
-            
+
 #ifdef HW_X11_HAVE_XIM_XIC
             xim = XOpenIM(xdisplay, NULL, NULL, NULL);
             if (xim != NULL) {
@@ -802,8 +799,6 @@ byte gfx_InitHW(void) {
     return FALSE;
 }
 
-#ifdef THIS_MODULE
-
 byte InitModule(module Module) {
     Module->Private = gfx_InitHW;
     return TRUE;
@@ -812,5 +807,3 @@ byte InitModule(module Module) {
 /* this MUST be included, or it seems that a bug in dlsym() gets triggered */
 void QuitModule(module Module) {
 }
-
-#endif /* THIS_MODULE */

@@ -402,10 +402,7 @@ static void GGI_QuitHW(void) {
 	GGI_HW = NULL;
 }
 
-#ifdef THIS_MODULE
-static
-#endif
-byte GGI_InitHW(void) {
+static byte GGI_InitHW(void) {
     byte *arg = HW->Name, *opt = NULL;
     uldat len = HW->NameLen;
     int i, j;
@@ -562,8 +559,6 @@ byte GGI_InitHW(void) {
 
 
 
-#ifdef THIS_MODULE
-
 byte InitModule(module Module) {
     Module->Private = GGI_InitHW;
     return TRUE;
@@ -573,7 +568,6 @@ byte InitModule(module Module) {
 void QuitModule(module Module) {
 }
 
-#endif /* THIS_MODULE */
 
 
 #if 0

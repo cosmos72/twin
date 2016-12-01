@@ -406,10 +406,7 @@ static void fix4display(void) {
     }
 }
 
-#ifdef THIS_MODULE
-static
-#endif
-byte display_InitHW(void) {
+static byte display_InitHW(void) {
     byte *s, *arg = HW->Name;
     msgport Port;
     
@@ -546,8 +543,6 @@ byte display_InitHW(void) {
     return TRUE;
 }
 
-#ifdef THIS_MODULE
-
 byte InitModule(module Module) {
     Module->Private = display_InitHW;
     return TRUE;
@@ -557,4 +552,3 @@ byte InitModule(module Module) {
 void QuitModule(module Module) {
 }
 
-#endif /* THIS_MODULE */

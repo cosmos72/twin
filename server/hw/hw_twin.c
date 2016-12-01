@@ -415,10 +415,7 @@ static void TW_QuitHW(void) {
 
 TW_DECL_MAGIC(hw_twin_magic);
 
-#ifdef THIS_MODULE
-static
-#endif
-byte TW_InitHW(void) {
+static byte TW_InitHW(void) {
     byte *arg = HW->Name, *opt = NULL;
     byte name[] = "twin :??? on twin";
     uldat len;
@@ -590,8 +587,6 @@ byte TW_InitHW(void) {
     return FALSE;
 }
 
-#ifdef THIS_MODULE
-
 byte InitModule(module Module) {
     Module->Private = TW_InitHW;
     return TRUE;
@@ -601,4 +596,3 @@ byte InitModule(module Module) {
 void QuitModule(module Module) {
 }
 
-#endif /* THIS_MODULE */

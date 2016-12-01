@@ -58,7 +58,7 @@ struct x11_data {
     GC           xgc;
     XGCValues    xsgc;
     XFontStruct *xsfont;
-#ifdef HW_X11_HAVE_XIM_XIC
+#ifdef HW_X11_HAVE_XIM_XIC /* autodetected by hw_X11_gfx_common0.h */
     XIM		 xim;
     XIC		 xic;
 #endif
@@ -207,10 +207,7 @@ static void X11_QuitHW(void) {
     FreeMem(HW->Private);
 }
 
-#ifdef THIS_MODULE
-static
-#endif
-byte X11_InitHW(void) {
+static byte X11_InitHW(void) {
     char *arg = HW->Name;
     int xscreen;
     unsigned int xdepth;
@@ -495,8 +492,6 @@ byte X11_InitHW(void) {
     return FALSE;
 }
 
-#ifdef THIS_MODULE
-
 byte InitModule(module Module) {
     Module->Private = X11_InitHW;
     return TRUE;
@@ -505,5 +500,3 @@ byte InitModule(module Module) {
 /* this MUST be included, or it seems that a bug in dlsym() gets triggered */
 void QuitModule(module Module) {
 }
-
-#endif /* THIS_MODULE */

@@ -261,10 +261,7 @@ static void tty_MogrifyUTF8(hwfont h) {
  * note: during xxx_InitHW() initialization, DON'T use DisplayWidth/DisplayHeight
  * as they may be not up to date. Use GetDisplayWidth() / GetDisplayHeight().
  */
-#ifdef THIS_MODULE
-static
-#endif
-byte tty_InitHW(void) {
+static byte tty_InitHW(void) {
     byte *arg = HW->Name;
     byte *s;
     byte *charset = NULL;
@@ -598,10 +595,6 @@ static void tty_QuitHW(void) {
 }
 
 
-
-
-#ifdef THIS_MODULE
-
 byte InitModule(module Module) {
     Module->Private = tty_InitHW;
     return TRUE;
@@ -611,4 +604,3 @@ byte InitModule(module Module) {
 void QuitModule(module Module) {
 }
 
-#endif /* THIS_MODULE */
