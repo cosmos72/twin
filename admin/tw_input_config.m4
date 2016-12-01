@@ -12,16 +12,10 @@ AC_ARG_ENABLE(-asm,dnl
 enable__asm=yes
 )dnl
 
-dnl shared modules
-AC_ARG_ENABLE(-modules,dnl
-[  --enable--modules[=yes|no]             enable compiling and loading shared modules ],,
-enable__modules=yes
-)dnl
-
 dnl socket server
 AC_ARG_ENABLE(socket,dnl
 [  --enable-socket[=yes|no]               enable remote socket connections (libTw) ],,
-enable_socket=mod
+enable_socket=yes
 )dnl
 
 dnl socket compression
@@ -44,14 +38,14 @@ enable_socket_alien=yes
 
 dnl builtin window manager
 AC_ARG_ENABLE(wm,dnl
-[  --enable-wm[=yes|mod|no]               enable the builtin WM (absolutely needed!) ],,
-enable_wm=mod
+[  --enable-wm[=yes|no]                   enable the builtin WM (absolutely needed!) ],,
+enable_wm=yes
 )dnl
 
 dnl ~/.twinrc parser
 AC_ARG_ENABLE(wm_rc,dnl
-[  --enable-wm-rc[=yes|mod|no]            enable ~/.twinrc configuration parser ],,
-enable_wm_rc=mod
+[  --enable-wm-rc[=yes|no]                enable ~/.twinrc configuration parser ],,
+enable_wm_rc=yes
 )dnl
 
 dnl use mmapped shared file for parser
@@ -68,8 +62,8 @@ enable_wm_rc_shrink=yes
 
 dnl terminal emulator
 AC_ARG_ENABLE(term,dnl
-[  --enable-term[=yes|mod|no]             enable builtin terminal emulator ],,
-enable_term=mod
+[  --enable-term[=yes|no]                 enable builtin terminal emulator ],,
+enable_term=yes
 )dnl
 
 dnl use /dev/pts/* for terminal emulator
@@ -86,8 +80,8 @@ enable_printk=yes
 
 dnl tty drivers
 AC_ARG_ENABLE(hw-tty,dnl
-[  --enable-hw-tty[=yes|mod|no]           enable tty drivers ],,
-enable_hw_tty=mod
+[  --enable-hw-tty[=yes|no]               enable tty drivers ],,
+enable_hw_tty=yes
 )dnl
 
 dnl the Linux console driver
@@ -110,32 +104,32 @@ enable_hw_tty_termcap=yes
 
 dnl the X11 driver
 AC_ARG_ENABLE(hw-x11,dnl
-[  --enable-hw-x11[=yes|mod|no]           enable the X11 driver ],,
-enable_hw_x11=mod
+[  --enable-hw-x11[=yes|no]               enable the X11 driver ],,
+enable_hw_x11=yes
 )dnl
 
 dnl the gfx driver
 AC_ARG_ENABLE(hw-gfx,dnl
-[  --enable-hw-gfx[=yes|mod|no]           enable the gfx (enhanced X11) driver ],,
-enable_hw_gfx=mod
+[  --enable-hw-gfx[=yes|no]               enable the gfx (enhanced X11) driver ],,
+enable_hw_gfx=yes
 )dnl
 
 dnl the twin driver
 AC_ARG_ENABLE(hw-twin,dnl
-[  --enable-hw-twin[=yes|mod|no]          enable the twin native driver ],,
-enable_hw_twin=mod
+[  --enable-hw-twin[=yes|no]              enable the twin nested driver ],,
+enable_hw_twin=yes
 )dnl
 
 dnl the twdisplay driver
 AC_ARG_ENABLE(hw-display,dnl
-[  --enable-hw-display[=yes|mod|no]       enable the twdisplay client driver ],,
-enable_hw_display=mod
+[  --enable-hw-display[=yes|no]           enable the twdisplay client driver ],,
+enable_hw_display=yes
 )dnl
 
 dnl the ggi driver
 AC_ARG_ENABLE(hw-ggi,dnl
-[  --enable-hw-ggi[=yes|mod|no]           enable the ggi driver (UNFINISHED) ],,
-enable_hw_ggi=mod
+[  --enable-hw-ggi[=yes|no]               enable the ggi driver (UNFINISHED) ],,
+enable_hw_ggi=yes
 )dnl
 
 dnl server extensions

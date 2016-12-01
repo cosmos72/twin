@@ -19,6 +19,7 @@
 #include "util.h"
 #include "wm.h"
 
+#include "dl.h"
 #include "extreg.h"
 #include "methods.h"
 #include "hw.h"
@@ -31,9 +32,6 @@
 
 #ifdef CONF_WM_RC
 # include "rcproto.h"
-#endif
-#ifdef CONF__MODULES
-# include "dl.h"
 #endif
 
 #include <Tw/Twkeys.h>
@@ -473,14 +471,12 @@ static byte RCSteps(run *r) {
 	    ActivateCtx(C, STATE_MENU);
 	    break;
 	  case MODULE:
-#ifdef CONF__MODULES
 	    if (n->x.f.a == -1)
 		n->x.f.a = DlName2Code(n->name);
 	    if (n->x.f.flag == FL_ON)
 		DlLoad(n->x.f.a);
 	    else
 		DlUnLoad(n->x.f.a);
-#endif
 	    break;
 	  case MOVE:
 	    if (W && IS_WINDOW(W))
@@ -796,10 +792,9 @@ static byte RCSleep(timevalue *_t) {
  * kill the queues, reload .twinrc and restart queues
  */
 static void RCReload(void) {
-    byte success;
-#if !defined(CONF_WM_RC) && defined(CONF__MODULES)
     module M;
     byte (*mod_rcload)(void) = (byte (*)(void))0;
+    byte success;
 
     if ((M = DlLoad(RCParseSo)))
 	mod_rcload = M->Private;
@@ -809,23 +804,11 @@ static void RCReload(void) {
 	printk("twin: failed to load the RC parser:\n"
 		"      %."STR(TW_SMALLBUFF)"s\n", ErrStr);
 # endif
-#endif
     
-
-    success =
-#if defined(CONF_WM_RC)
-	rcload()
-#elif defined(CONF__MODULES)
-	(mod_rcload && mod_rcload())
-#else
-	0
-#endif
-	;
+    success = mod_rcload && mod_rcload();
     
-#if !defined(CONF_WM_RC) && defined(CONF__MODULES)
     if (M)
 	DlUnLoad(RCParseSo);
-#endif
     
     if (success) {
 	QueuedDrawArea2FullScreen = TRUE;

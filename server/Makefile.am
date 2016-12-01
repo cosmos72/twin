@@ -4,6 +4,8 @@ noinst_LTLIBRARIES = librcparse.la libsocket.la libterm.la libwm.la
 bin_PROGRAMS       = twdisplay twin twin_real
 
 AM_CPPFLAGS        = -I$(top_srcdir)/include $(LTDLINCL)
+data_CPPFLAGS      = -I$(top_srcdir)/include $(LTDLINCL) -DPACKAGE_LIBDIR=$(pkglibdir)
+display_CPPFLAGS   = -I$(top_srcdir)/include $(LTDLINCL) -DPACKAGE_LIBDIR=$(pkglibdir)
 
 #LIBTUTF = $(top_builddir)/libs/libTutf/libTutf.la
 #LIBTW = $(top_builddir)/libs/libTw/libTw.la

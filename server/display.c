@@ -11,7 +11,7 @@
  */
 
 /*
- * this is basically a chopped down version of twin,
+ * this is basically a chopped down version of twin server,
  * with the minimum required features to startup a display driver,
  * plus libTw code to talk to twin, register on it as a special display,
  * and forward messages and commands between the display driver and twin.
@@ -38,9 +38,6 @@
 
 
 
-#ifdef CONF__MODULES
-
-
 # if defined(TW_HAVE_LTDL) || defined(TW_HAVE_INCLUDED_LTDL)
 
 #  include <ltdl.h>
@@ -60,27 +57,20 @@
 #  define my(fn) fn
 #  define my_handle void *
 #  define my_dlopen_extra_args , RTLD_NOW|RTLD_GLOBAL
-#  define my_VERSION ".so." TWIN_VERSION_STR
+#  define my_VERSION "-" TWIN_VERSION_STR ".so" 
 #  define my_PREFIX "lib"
 
 # else
 #  error nor dlopen() nor lt_dlopen() module loading API available!  
 # endif
 
-#define my_LEN(str)        (sizeof(str) - 1)
-#define my_PREFIX_LEN      my_LEN(my_PREFIX)
-#define with_PREFIX(str)   my_LEN(my_PREFIX str), my_PREFIX str
+#ifdef PACKAGE_LIBDIR
+# define MODULES_DIR PACKAGE_LIBDIR "/twin/modules"
+#else
+# define MODULES_DIR "."
+#endif
 
-
-#ifdef LIBDIR
-#  define DIR_LIB_TWIN_MODULES_ LIBDIR "/twin/modules/"
-# else
-#  define DIR_LIB_TWIN_MODULES_ "./"
-# endif
-
-static CONST byte *conf_destdir_lib_twin_modules_ = DIR_LIB_TWIN_MODULES_;
-
-#endif /* CONF__MODULES */
+static CONST byte * CONST modules_prefix = MODULES_DIR "/" my_PREFIX;
 
 static CONST byte *MYname;
 
@@ -291,8 +281,6 @@ static void RemoteEvent(int FdCount, fd_set *FdSet) {
 }
 
 
-#ifdef CONF__MODULES
-
 static struct s_fn_module _FnModule = {
     module_magic, (uldat)sizeof(struct s_module), (uldat)1,
 	(void *)NoOp, /* CreateModule */
@@ -315,9 +303,9 @@ static module DlLoadAny(uldat len, byte *name) {
     byte *_name;
     
     if ((Module->Name = CloneStrL(name, len)) &&
-	(_name = AllocMem(len + strlen(conf_destdir_lib_twin_modules_) + strlen(my_VERSION) + 1))) {
+	(_name = AllocMem(len + strlen(modules_prefix) + strlen(my_VERSION) + 1))) {
 	
-	sprintf(_name, "%s%.*s%s", conf_destdir_lib_twin_modules_, (int)len, name, my_VERSION);
+	sprintf(_name, "%s%.*s%s", modules_prefix, (int)len, name, my_VERSION);
 
 	if ((Module->Handle = my(dlopen)(_name my_dlopen_extra_args)) &&
 	    /*
@@ -354,10 +342,10 @@ static byte module_InitHW(byte *arg, uldat len) {
     if (name)
 	len = name - arg;
     
-    if ((name = AllocMem(len + 7 + my_PREFIX_LEN))) {
-	sprintf(name, "HW/%shw_%.*s", my_PREFIX, (int)len, arg);
+    if ((name = AllocMem(len + 4))) {
+	sprintf(name, "hw_%.*s", (int)len, arg);
 			
-	Module = DlLoadAny(len + 6 + my_PREFIX_LEN, name);
+	Module = DlLoadAny(len + 3, name);
 	
 	if (Module) {
 	    printk("twdisplay: starting display driver module `%."STR(TW_SMALLBUFF)"s'...\n", name);
@@ -386,8 +374,6 @@ static byte module_InitHW(byte *arg, uldat len) {
     return FALSE;
 }
 
-#endif /* CONF__MODULES */
-
 static display_hw CreateDisplayHW(uldat len, CONST byte *name);
 static byte InitDisplayHW(display_hw);
 static void QuitDisplayHW(display_hw);
@@ -410,7 +396,6 @@ static struct s_display_hw _HW = {
 };
 
 
-#if defined(CONF__MODULES) || defined(CONF_HW_GFX) || defined(CONF_HW_X11) || defined(CONF_HW_TTY) || defined(CONF_HW_GGI)
 static byte autocheck4(byte *s, byte *arg) {
     if (arg && strncmp(s, arg, strlen(s))) {
 	printk("twdisplay: `--hw=%."STR(TW_SMALLBUFF)"s' given, skipping `--hw=%."STR(TW_SMALLBUFF)"s' display driver.\n",
@@ -422,10 +407,8 @@ static byte autocheck4(byte *s, byte *arg) {
 	printk("twdisplay: autoprobing `--hw=%."STR(TW_SMALLBUFF)"s' display driver.\n", s);
     return TRUE;
 }
-#endif /* defined(CONF__MODULES) || defined(CONF_HW_GFX) || defined(CONF_HW_X11) || defined(CONF_HW_TTY) || defined(CONF_HW_GGI) */
 
 
-#if defined(CONF__MODULES) || defined(CONF_HW_GFX) || defined(CONF_HW_X11) || defined(CONF_HW_TWIN) || defined(CONF_HW_TTY) || defined(CONF_HW_GGI)
 static void fix4(byte *s, display_hw D_HW) {
     uldat len;
     if (!D_HW->NameLen) {
@@ -438,15 +421,12 @@ static void fix4(byte *s, display_hw D_HW) {
 	}
     }
 }
-#endif /* defined(CONF__MODULES) || defined(CONF_HW_GFX) || defined(CONF_HW_X11) || defined(CONF_HW_TWIN) || defined(CONF_HW_TTY) || defined(CONF_HW_GGI) */
 
-static void warn_NoHW(uldat len, char *arg, uldat tried) {
-#ifdef CONF__MODULES
+void warn_NoHW(uldat len, char *arg, uldat tried) {
     if (!tried && !arg)
 	printk("twdisplay: no display driver compiled into twdisplay.\n"
 	       "      please run as `twdisplay [--twin@<TWDISPLAY>] --hw=<display>'\n");
     else
-#endif
     {
 	printk("twdisplay: All display drivers failed");
 	if (arg)
@@ -465,7 +445,6 @@ static void UpdateFlagsHW(void) {
     }
 }
 
-#ifdef CONF__MODULES
 # define DEF_INITHW(hw) \
 static byte CAT(hw,_InitHW)(void) { \
     byte *arg; \
@@ -479,45 +458,15 @@ static byte CAT(hw,_InitHW)(void) { \
     } \
     return module_InitHW(arg, len); \
 }
-#else
-# define DEF_INITHW(hw)
-#endif
 
 
 /* HW specific functions */
 
-#ifdef CONF_HW_GFX
-# include "HW/hw_gfx.h"
-#else
-  DEF_INITHW(gfx)
-#endif
-
-#ifdef CONF_HW_X11
-# include "HW/hw_X11.h"
-# define X_InitHW X11_InitHW
-#else
-  DEF_INITHW(X)
-#endif
-	
-#ifdef CONF_HW_TWIN
-# include "HW/hw_twin.h"
-# define twin_InitHW TW_InitHW
-#else
-  DEF_INITHW(twin)
-#endif
-
-#ifdef CONF_HW_TTY
-# include "HW/hw_tty.h"
-#else
-  DEF_INITHW(tty)
-#endif
-
-#ifdef CONF_HW_GGI
-# include "HW/hw_ggi.h"
-# define ggi_InitHW GGI_InitHW
-#else
-  DEF_INITHW(ggi)
-#endif
+DEF_INITHW(gfx)
+DEF_INITHW(X)
+DEF_INITHW(twin)
+DEF_INITHW(tty)
+DEF_INITHW(ggi)
 
 #undef DEF_INITHW
 
@@ -545,30 +494,15 @@ static byte InitDisplayHW(display_hw D_HW) {
 #define AUTOTRY4(hw) (autocheck4(STR(hw), arg) && (tried++, CAT(hw,_InitHW)()) && (fix4(STR(hw), D_HW), TRUE))
 
     success =
-#if defined(CONF__MODULES) || defined(CONF_HW_GFX)
 	AUTOTRY4(gfx) ||
-#endif
-#if defined(CONF__MODULES) || defined(CONF_HW_X11)
 	AUTOTRY4(X) ||
-#endif
-#if defined(CONF__MODULES) || defined(CONF_HW_TWIN)
 	AUTOTRY4(twin) ||
-#endif
-#if defined(CONF__MODULES) || defined(CONF_HW_DISPLAY)
 #if 0 /* cannot use `--hw=display' inside twdisplay! */
 	AUTOTRY4(display) ||
-# endif
 #endif
-#if defined(CONF__MODULES) || defined(CONF_HW_TTY)
 	AUTOTRY4(tty) ||
-#endif
-#if defined(CONF__MODULES) || defined(CONF_HW_GGI)
 	AUTOTRY4(ggi) ||
-#endif
-
-#ifdef CONF__MODULES
 	module_InitHW(D_HW->Name, D_HW->NameLen) ||
-#endif
 	(warn_NoHW(arg ? D_HW->NameLen - 4 : 0, arg, tried), FALSE);
 
     if (success) {

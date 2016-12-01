@@ -771,16 +771,13 @@ static void alienSendMsg(msgport MsgPort, msg Msg) {
     int save_Fd = Fd;
     hwattr H;
     uint16_t h;
-#if defined(CONF__MODULES) || defined (CONF_HW_DISPLAY)
     byte Type;
-#endif
     
     RequestN = MSG_MAGIC;
     Fd = MsgPort->RemoteData.Fd;
     Slot = MsgPort->RemoteData.FdSlot;
 
     switch (Msg->Type) {
-#if defined(CONF__MODULES) || defined (CONF_HW_DISPLAY)
       case MSG_DISPLAY:
 	Src = Msg->Event.EventDisplay.Data;
 	N = 1;
@@ -839,7 +836,6 @@ static void alienSendMsg(msgport MsgPort, msg Msg) {
 	}
 	
 	break;
-#endif /* defined(CONF__MODULES) || defined (CONF_HW_DISPLAY) */
       case MSG_WIDGET_KEY:
 	alienReply(Msg->Type, Len = SIZEOF(uldat) + 3*SIZEOF(udat) + 2*SIZEOF(byte) + Msg->Event.EventKeyboard.SeqLen, 0, NULL);
 	if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {

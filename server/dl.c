@@ -12,8 +12,6 @@
 
 #include "twin.h"
 
-#ifdef CONF__MODULES
-
 #include "methods.h"
 #include "data.h"
 #include "util.h"
@@ -26,20 +24,25 @@
 #  define my_handle lt_dlhandle
 #  define my_dlopen_extra_args
 #  define my_VERSION ".la"
+#  ifdef TW_LT_LIBPREFIX
+#    define my_PREFIX TW_LT_LIBPREFIX
+#  else
+#    define my_PREFIX ""
+#  endif
 #elif defined(TW_HAVE_DLFCN_H) && defined(TW_HAVE_DLOPEN)
 #  include <dlfcn.h>
 #  define my(fn) fn
 #  define my_handle void *
 #  define my_dlopen_extra_args , RTLD_NOW|RTLD_GLOBAL
-#  define my_VERSION ".so." TWIN_VERSION_STR
+#  define my_VERSION "-" TWIN_VERSION_STR ".so"
+#  define my_PREFIX "lib"
 #else
 #  error nor dlopen() nor lt_dlopen() module loading API available!  
 #endif
 
-
 byte DlOpen(module Module) {
     my_handle Handle = NULL;
-    uldat len0 = LenStr(conf_destdir_lib_twin_modules_) + LenStr(my_VERSION), len;
+    uldat len, len0 = LenStr(conf_destdir_lib_twin_modules_) + LenStr(my_PREFIX) + LenStr(my_VERSION);
     byte *name = NULL;
     byte (*init_dl)(module);
     
@@ -48,7 +51,7 @@ byte DlOpen(module Module) {
 	if (Module->NameLen) {
 	    len = len0 + Module->NameLen;
 	    if ((name = AllocMem(len+1)))
-		sprintf(name, "%s%.*s%s", conf_destdir_lib_twin_modules_, (int)Module->NameLen, Module->Name, my_VERSION);
+		sprintf(name, "%s%s%.*s%s", conf_destdir_lib_twin_modules_, my_PREFIX, (int)Module->NameLen, Module->Name, my_VERSION);
 	    else {
 		Error(NOMEMORY);
 		return FALSE;
@@ -114,20 +117,12 @@ module DlLoad(uldat code) {
     if (code < MAX_So) {
 	if (!(M = So[code])) {
 	    switch (code) {
-#ifndef CONF_WM
-	      case WMSo:      M = DlLoadAny(with_PREFIX("wm")); break;
-#endif
-#ifndef CONF_TERM
-	      case TermSo:    M = DlLoadAny(with_PREFIX("term")); break;
-#endif
-#ifndef CONF_SOCKET
-	      case SocketSo:  M = DlLoadAny(with_PREFIX("socket")); break;
-#endif
-#ifndef CONF_WM_RC
-	      case RCParseSo: M = DlLoadAny(with_PREFIX("rcparse")); break;
-#endif
-	      case MainSo:
-	      default:        M = DlLoadAny(0, NULL); break;
+	      case WMSo:      M = DlLoadAny(2, "wm"); break;
+	      case TermSo:    M = DlLoadAny(4, "term"); break;
+	      case SocketSo:  M = DlLoadAny(6, "socket"); break;
+	      case RCParseSo: M = DlLoadAny(7, "rcparse"); break;
+	      default:
+	      case MainSo:    M = DlLoadAny(0, NULL); break;
 	    }
 	    if ((So[code] = M)) {
 		if (All->FnHookModule)
@@ -156,8 +151,6 @@ module DlIsLoaded(uldat code) {
 }
 
 udat DlName2Code(byte *name) {
-    if (!CmpStrN(name, my_PREFIX, my_PREFIX_LEN))
-        name += my_PREFIX_LEN;
     if (!CmpStr(name, "wm"))
 	return WMSo;
     if (!CmpStr(name, "term"))
@@ -177,4 +170,3 @@ void *DlSym(module Module, CONST byte *name) {
     return NULL;
 }
 
-#endif /* CONF__MODULES */

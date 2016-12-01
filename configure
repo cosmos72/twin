@@ -799,7 +799,6 @@ enable_option_checking
 enable_silent_rules
 enable__alloc
 enable__asm
-enable__modules
 enable_socket
 enable_socket_gz
 enable_socket_pthreads
@@ -1486,27 +1485,26 @@ Optional Features:
   --disable-silent-rules  verbose build output (undo: "make V=0")
   --enable--alloc=yes|no               enable custom malloc/free routines
   --enable--asm=yes|no                 enable hand-optimized assembler if supported
-  --enable--modules=yes|no             enable compiling and loading shared modules
   --enable-socket=yes|no               enable remote socket connections (libTw)
   --enable-socket-gz=yes|no            enable gzip compression on sockets
   --enable-socket-pthreads=yes|no      enable thread safe libraries (requires pthread)
   --enable-socket-alien=yes|no         enable support for non-native architectures
-  --enable-wm=yes|mod|no               enable the builtin WM (absolutely needed!)
-  --enable-wm-rc=yes|mod|no            enable ~/.twinrc configuration parser
+  --enable-wm=yes|no                   enable the builtin WM (absolutely needed!)
+  --enable-wm-rc=yes|no                enable ~/.twinrc configuration parser
   --enable-wm-rc-shmmap=yes|no         enable mmapped shared file for parser
   --enable-wm-rc-shrink=yes|no         enable shrinking memory when parser finished
-  --enable-term=yes|mod|no             enable builtin terminal emulator
+  --enable-term=yes|no                 enable builtin terminal emulator
   --enable-term-devpts=yes|no          enable Unix98 /dev/pts/* pseudo-ttys
   --enable-printk=yes|no               enable logging messages in Messages window
-  --enable-hw-tty=yes|mod|no           enable tty drivers
+  --enable-hw-tty=yes|no               enable tty drivers
   --enable-hw-tty-linux=yes|no         enable the Linux console driver (gpm mouse, /dev/vcsa)
   --enable-hw-tty-twterm=yes|no        enable the twterm terminal driver
   --enable-hw-tty-termcap=yes|no       enable the termcap/ncurses terminal driver
-  --enable-hw-x11=yes|mod|no           enable the X11 driver
-  --enable-hw-gfx=yes|mod|no           enable the gfx (enhanced X11) driver
-  --enable-hw-twin=yes|mod|no          enable the twin native driver
-  --enable-hw-display=yes|mod|no       enable the twdisplay client driver
-  --enable-hw-ggi=yes|mod|no           enable the ggi driver (UNFINISHED)
+  --enable-hw-x11=yes|no               enable the X11 driver
+  --enable-hw-gfx=yes|no               enable the gfx (enhanced X11) driver
+  --enable-hw-twin=yes|no              enable the twin nested driver
+  --enable-hw-display=yes|no           enable the twdisplay client driver
+  --enable-hw-ggi=yes|no               enable the ggi driver (UNFINISHED)
   --enable-ext=yes|no                  enable server extensions
   --enable-shared[=PKGS]  build shared libraries [default=yes]
   --enable-static[=PKGS]  build static libraries [default=yes]
@@ -3381,19 +3379,11 @@ else
 
 fi
 
-# Check whether --enable--modules was given.
-if test "${enable__modules+set}" = set; then :
-  enableval=$enable__modules;
-else
-  enable__modules=yes
-
-fi
-
 # Check whether --enable-socket was given.
 if test "${enable_socket+set}" = set; then :
   enableval=$enable_socket;
 else
-  enable_socket=mod
+  enable_socket=yes
 
 fi
 
@@ -3425,7 +3415,7 @@ fi
 if test "${enable_wm+set}" = set; then :
   enableval=$enable_wm;
 else
-  enable_wm=mod
+  enable_wm=yes
 
 fi
 
@@ -3433,7 +3423,7 @@ fi
 if test "${enable_wm_rc+set}" = set; then :
   enableval=$enable_wm_rc;
 else
-  enable_wm_rc=mod
+  enable_wm_rc=yes
 
 fi
 
@@ -3457,7 +3447,7 @@ fi
 if test "${enable_term+set}" = set; then :
   enableval=$enable_term;
 else
-  enable_term=mod
+  enable_term=yes
 
 fi
 
@@ -3481,7 +3471,7 @@ fi
 if test "${enable_hw_tty+set}" = set; then :
   enableval=$enable_hw_tty;
 else
-  enable_hw_tty=mod
+  enable_hw_tty=yes
 
 fi
 
@@ -3513,7 +3503,7 @@ fi
 if test "${enable_hw_x11+set}" = set; then :
   enableval=$enable_hw_x11;
 else
-  enable_hw_x11=mod
+  enable_hw_x11=yes
 
 fi
 
@@ -3521,7 +3511,7 @@ fi
 if test "${enable_hw_gfx+set}" = set; then :
   enableval=$enable_hw_gfx;
 else
-  enable_hw_gfx=mod
+  enable_hw_gfx=yes
 
 fi
 
@@ -3529,7 +3519,7 @@ fi
 if test "${enable_hw_twin+set}" = set; then :
   enableval=$enable_hw_twin;
 else
-  enable_hw_twin=mod
+  enable_hw_twin=yes
 
 fi
 
@@ -3537,7 +3527,7 @@ fi
 if test "${enable_hw_display+set}" = set; then :
   enableval=$enable_hw_display;
 else
-  enable_hw_display=mod
+  enable_hw_display=yes
 
 fi
 
@@ -3545,7 +3535,7 @@ fi
 if test "${enable_hw_ggi+set}" = set; then :
   enableval=$enable_hw_ggi;
 else
-  enable_hw_ggi=mod
+  enable_hw_ggi=yes
 
 fi
 
@@ -19889,8 +19879,6 @@ function tw_cfg()
 {
   if test "$2" = yes; then
     echo "#define $1" >> include/twconfig.h
-  elif test "$2" = mod -a "$enable__modules" = no; then
-    echo "#define $1" >> include/twconfig.h
   else
     echo "#undef  $1" >> include/twconfig.h
   fi
@@ -19928,31 +19916,30 @@ function tw_cfg()
   echo '#endif'                     >> include/twconfig.h
   echo                              >> include/twconfig.h
 
-  tw_cfg CONF__MODULES "$enable__modules"
-  tw_cfg CONF__ALLOC "$enable__alloc"
-  tw_cfg CONF__ASM   "$enable__asm"
-  tw_cfg CONF_SOCKET "$enable_socket"
+  tw_cfg CONF__ALLOC            "$enable__alloc"
+  tw_cfg CONF__ASM              "$enable__asm"
+  tw_cfg CONF_SOCKET            "$enable_socket"
   tw_cfg CONF_SOCKET_GZ         "$enable_socket_gz"
   tw_cfg CONF_SOCKET_PTHREADS   "$enable_socket_pthreads"
   tw_cfg CONF_SOCKET_ALIEN      "$enable_socket_alien"
   tw_cfg CONF_SOCKET_EXTENSIONS "$enable_socket_extensions"
-  tw_cfg CONF_WM           "$enable_wm"
-  tw_cfg CONF_WM_RC        "$enable_wm_rc"
-  tw_cfg CONF_WM_RC_SHMMAP "$enable_wm_rc_shmmap"
-  tw_cfg CONF_WM_RC_SHRINK "$enable_wm_rc_shrink"
-  tw_cfg CONF_TERM         "$enable_term"
-  tw_cfg CONF_TERM_DEVPTS  "$enable_term_devpts"
-  tw_cfg CONF_PRINTK       "$enable_printk"
-  tw_cfg CONF_HW_TTY         "$enable_hw_tty"
-  tw_cfg CONF_HW_TTY_LINUX   "$enable_hw_tty_linux"
-  tw_cfg CONF_HW_TTY_LRAWKBD "$enable_hw_tty_lrawkbd"
-  tw_cfg CONF_HW_TTY_TWTERM  "$enable_hw_tty_twterm"
-  tw_cfg CONF_HW_TTY_TERMCAP "$enable_hw_tty_termcap"
-  tw_cfg CONF_HW_X11         "$enable_hw_x11"
-  tw_cfg CONF_HW_GFX         "$enable_hw_gfx"
-  tw_cfg CONF_HW_TWIN        "$enable_hw_twin"
-  tw_cfg CONF_HW_DISPLAY     "$enable_hw_display"
-  tw_cfg CONF_HW_GGI         "$enable_hw_ggi"
+  tw_cfg CONF_WM                "$enable_wm"
+  tw_cfg CONF_WM_RC             "$enable_wm_rc"
+  tw_cfg CONF_WM_RC_SHMMAP      "$enable_wm_rc_shmmap"
+  tw_cfg CONF_WM_RC_SHRINK      "$enable_wm_rc_shrink"
+  tw_cfg CONF_TERM              "$enable_term"
+  tw_cfg CONF_TERM_DEVPTS       "$enable_term_devpts"
+  tw_cfg CONF_PRINTK            "$enable_printk"
+  tw_cfg CONF_HW_TTY            "$enable_hw_tty"
+  tw_cfg CONF_HW_TTY_LINUX      "$enable_hw_tty_linux"
+  tw_cfg CONF_HW_TTY_LRAWKBD    "$enable_hw_tty_lrawkbd"
+  tw_cfg CONF_HW_TTY_TWTERM     "$enable_hw_tty_twterm"
+  tw_cfg CONF_HW_TTY_TERMCAP    "$enable_hw_tty_termcap"
+  tw_cfg CONF_HW_X11            "$enable_hw_x11"
+  tw_cfg CONF_HW_GFX            "$enable_hw_gfx"
+  tw_cfg CONF_HW_TWIN           "$enable_hw_twin"
+  tw_cfg CONF_HW_DISPLAY        "$enable_hw_display"
+  tw_cfg CONF_HW_GGI            "$enable_hw_ggi"
   tw_cfg CONF_EXT               "$enable_ext"
   tw_cfg CONF_OPT_SHADOWS       "$enable_opt_shadows"
   tw_cfg CONF_OPT_BLINK         "$enable_opt_blink"

@@ -1563,7 +1563,6 @@ static void sockSendMsg(msgport MsgPort, msg Msg) {
     Slot = MsgPort->RemoteData.FdSlot;
 
     switch (Msg->Type) {
-#if defined(CONF__MODULES) || defined(CONF_HW_DISPLAY)
       case MSG_DISPLAY:
 	Easy = FALSE;
 	sockReply(Msg->Type, Len = sizeof(twindow) + 4*sizeof(udat) + Msg->Event.EventDisplay.Len, NULL);
@@ -1583,7 +1582,6 @@ static void sockSendMsg(msgport MsgPort, msg Msg) {
 	    PushV(t, Msg->Event.EventDisplay.Len, Msg->Event.EventDisplay.Data);
 	}
 	break;
-#endif /* defined(CONF__MODULES) || defined (CONF_HW_DISPLAY) */
       case MSG_WIDGET_KEY:
 	if (Easy && sizeof(event_keyboard) == sizeof(window) + 3*sizeof(dat) + 2*sizeof(byte))
 	    break;
@@ -1861,7 +1859,6 @@ static byte sockSendToMsgPort(msgport MsgPort, udat Len, CONST byte *Data) {
 	    Msg->Event.EventCommon.W = (void *)Id2Obj(widget_magic_id, tMsg->Event.EventCommon.W);
 
 	    switch (tMsg->Type) {
-#if defined(CONF__MODULES) || defined (CONF_HW_DISPLAY)
 	      case TW_MSG_DISPLAY:
 		if (sizeof(struct s_event_display)  == sizeof(window)  + 4*sizeof(dat) + sizeof(byte *) &&
 		    sizeof(struct s_tevent_display) == sizeof(twindow) + 4*sizeof(dat) + sizeof(uldat)) {
@@ -1881,7 +1878,6 @@ static byte sockSendToMsgPort(msgport MsgPort, udat Len, CONST byte *Data) {
 		    ok = FALSE;
 		      
 		break;
-#endif /* defined(CONF__MODULES) || defined (CONF_HW_DISPLAY) */
 	      case TW_MSG_WIDGET_KEY:
 		if (sizeof(struct s_event_keyboard)  == sizeof(window)  + 3*sizeof(dat) + 2*sizeof(byte) &&
 		    sizeof(struct s_tevent_keyboard) == sizeof(twindow) + 3*sizeof(dat) + 2*sizeof(byte)) {

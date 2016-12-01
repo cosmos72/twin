@@ -21,12 +21,12 @@
 
 /* setup configuration paths */
 
-#ifdef LIBDIR
-CONST byte *conf_destdir_lib_twin = LIBDIR "/twin";
-CONST byte *conf_destdir_lib_twin_modules_ = LIBDIR "/twin/modules/";
+#ifdef PACKAGE_LIBDIR
+CONST byte * CONST conf_destdir_lib_twin = PACKAGE_LIBDIR "/twin";
+CONST byte * CONST conf_destdir_lib_twin_modules_ = PACKAGE_LIBDIR "/twin/modules/";
 #else
-CONST byte *conf_destdir_lib_twin = ".";
-CONST byte *conf_destdir_lib_twin_modules_ = "./";
+CONST byte * CONST conf_destdir_lib_twin = ".";
+CONST byte * CONST conf_destdir_lib_twin_modules_ = "./";
 #endif
 
 

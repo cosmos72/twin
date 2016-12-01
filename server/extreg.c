@@ -15,12 +15,7 @@
 #include "main.h"
 #include "remote.h"
 #include "extreg.h"
-
-#if defined(CONF_TERM) || !defined(CONF__MODULES)
-# define FakeOpenTerm (void *)AlwaysNull
-#else
-# include "methods.h"
-#endif
+#include "methods.h"
 
 exts Exts = {
     { NULL },

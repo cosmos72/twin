@@ -18,6 +18,7 @@
 #include "data.h"
 #include "extreg.h"
 
+#include "dl.h"
 #include "draw.h"
 #include "printk.h"
 #include "resize.h"
@@ -31,15 +32,7 @@
 #include <Tutf/Tutf.h>
 #include <Tutf/Tutf_defs.h>
 
-#ifdef CONF_TERM
-# include "tty.h"
-#endif
-#ifdef CONF__MODULES
-# include "dl.h"
-#endif
-#ifdef CONF_WM
-# include "wm.h"
-#endif
+
 #ifdef CONF_EXT
 # include "extensions/ext_query.h"
 #endif
@@ -280,7 +273,6 @@ widget FocusWidget(widget W) {
     return oldW;
 }
 
-#ifndef CONF_TERM
 # define TtyKbdFocus FakeKbdFocus
 widget FakeKbdFocus(widget W) {
     widget oldW;
@@ -295,7 +287,6 @@ widget FakeKbdFocus(widget W) {
 	    
     return oldW;
 }
-#endif
 
 static gadget FindGadgetByCode(widget Parent, udat Code) {
     widget W;
@@ -1293,8 +1284,6 @@ window Create4MenuWindow(fn_window Fn_Window, menu Menu) {
     return Window;
 }
 
-#ifndef CONF_TERM
-# ifdef CONF__MODULES
 void FakeWriteAscii(window Window, ldat Len, CONST byte *Ascii) {
     if (DlLoad(TermSo) && Window->Fn->TtyWriteAscii != FakeWriteAscii)
 	Act(TtyWriteAscii,Window)(Window, Len, Ascii);
@@ -1320,19 +1309,8 @@ window FakeOpenTerm(CONST byte *arg0, byte * CONST *argv) {
 	return Ext(Term,Open)(arg0, argv);
     return NULL;
 }
-# else  /* CONF__MODULES */
-#  define FakeWriteAscii  (void (*)(window, ldat, CONST byte *))NoOp
-#  define FakeWriteString   (void (*)(window, ldat, CONST byte *))NoOp
-#  define FakeWriteHWFont (void (*)(window, ldat, CONST hwfont *))NoOp
-#  define FakeWriteHWAttr (void (*)(window, dat, dat, ldat, CONST hwattr *))NoOp
-# endif /* CONF__MODULES */
-#endif  /* CONF_TERM */
 
 
-#ifdef CONF_WM
-byte WMFindBorderWindow(window Window, dat u, dat v, byte Border, hwattr *PtrAttr);
-
-#else
 byte FakeFindBorderWindow(window W, dat u, dat v, byte Border, hwattr *PtrAttr) {
     byte Horiz, Vert;
     
@@ -1344,7 +1322,6 @@ byte FakeFindBorderWindow(window W, dat u, dat v, byte Border, hwattr *PtrAttr) 
     
     return v ? POS_ROOT : POS_TITLE;
 }
-#endif /* CONF_WM */
 
 
 static row FindRow(window Window, ldat Row) {
@@ -1427,17 +1404,10 @@ static struct s_fn_window _FnWindow = {
     (void *)RemoveHookWidget,
     /* window */
     &_FnWidget,
-#ifdef CONF_TERM
-    TtyWriteAscii,
-    TtyWriteString,
-    TtyWriteHWFont,
-    TtyWriteHWAttr,
-#else
     FakeWriteAscii,
     FakeWriteString,
     FakeWriteHWFont,
     FakeWriteHWAttr,
-#endif
     RowWriteAscii,		/* exported by resize.c */
     RowWriteAscii,
     RowWriteHWFont,
@@ -1449,11 +1419,7 @@ static struct s_fn_window _FnWindow = {
     SetColorsWindow,
     ConfigureWindow,
     Create4MenuWindow,
-#ifdef CONF_WM
-    WMFindBorderWindow,
-#else
     FakeFindBorderWindow,
-#endif
     FindRow,
     FindRowByCode,
 };
@@ -2706,13 +2672,8 @@ static struct s_fn_module _FnModule = {
     (void *)NoOp,
     /* module */
     &_FnObj,
-#ifdef CONF__MODULES
     DlOpen,
     DlClose
-#else
-    (byte (*)(module))AlwaysFalse,
-    (void (*)(module))NoOp
-#endif
 };
 
 
@@ -2753,13 +2714,8 @@ static struct s_fn_extension _FnExtension = {
     (void *)NoOp,
     /* module */
     &_FnObj,
-#ifdef CONF__MODULES
     (void *)DlOpen,
     (void *)DlClose,
-#else
-    (byte (*)(extension))AlwaysFalse,
-    (void (*)(extension))NoOp,
-#endif
     &_FnModule,
 #ifdef CONF_EXT
     QueryExtension, /* exported by extensions/ext_query.c */

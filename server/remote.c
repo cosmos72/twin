@@ -81,7 +81,6 @@ byte RemoteFlush(uldat Slot) {
     if (Slot == NOSLOT || Slot >= FdTop || LS.Fd == NOFD)
 	return FALSE;
 
-#if defined(CONF_SOCKET_GZ) || defined(CONF__MODULES)
     if (LS.PrivateFlush) {
 	/* a (gzipped) paired slot:
 	 * PrivateFlush() does everything:
@@ -95,7 +94,6 @@ byte RemoteFlush(uldat Slot) {
 	
 	return (byte)chunk;
     }
-#endif
 
     if (LS.WQlen == 0) {
 	if (LS.PrivateAfterFlush)

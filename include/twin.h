@@ -1757,7 +1757,6 @@ INLINE void *ReAllocMem(void *Mem, uldat Size) {
 
 # define LenStr(S)          strlen(S)
 # define CmpStr(S1, S2)     strcmp(S1, S2)
-# define CmpStrN(S1, S2, N) strncmp(S1, S2, N)
 # define CopyStr(From,To)   strcpy(To, From)
 
 # define CopyMem(From, To, Size)	memcpy(To, From, Size)

@@ -180,8 +180,6 @@ function tw_cfg()
 {
   if test "$2" = yes; then
     echo "#define $1" >> include/twconfig.h
-  elif test "$2" = mod -a "$enable__modules" = no; then
-    echo "#define $1" >> include/twconfig.h
   else
     echo "#undef  $1" >> include/twconfig.h
   fi
