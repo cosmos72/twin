@@ -165,10 +165,10 @@ static byte module_InitHW(byte *arg, uldat len) {
     if (name)
 	len = name - arg;
     
-    if ((name = AllocMem(len + 7))) {
+    if ((name = AllocMem(len + 4))) {
 	sprintf(name, "hw_%.*s", (int)len, arg);
 
-	Module = DlLoadAny(len + 6, name);
+	Module = DlLoadAny(len + 3, name);
 	
 	if (Module) {
 	    printk("twin: starting display driver module `%."STR(TW_SMALLBUFF)"s'...\n", name);

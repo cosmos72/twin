@@ -41,10 +41,10 @@
 # if defined(TW_HAVE_LTDL) || defined(TW_HAVE_INCLUDED_LTDL)
 
 #  include <ltdl.h>
-#  define my(fn) lt_##fn
-#  define my_handle lt_dlhandle
+#  define my(fn)      lt_##fn
+#  define my_handle   lt_dlhandle
 #  define my_dlopen_extra_args
-#  define my_VERSION ".la"
+#  define my_VERSION  ".la"
 #  ifdef TW_LT_LIBPREFIX
 #    define my_PREFIX TW_LT_LIBPREFIX
 #  else
@@ -54,11 +54,12 @@
 # elif defined(TW_HAVE_DLFCN_H) && defined(TW_HAVE_DLOPEN)
 
 #  include <dlfcn.h>
-#  define my(fn) fn
-#  define my_handle void *
+#  define dlinit()    (0)
+#  define my(fn)      fn
+#  define my_handle   void *
 #  define my_dlopen_extra_args , RTLD_NOW|RTLD_GLOBAL
-#  define my_VERSION "-" TWIN_VERSION_STR ".so" 
-#  define my_PREFIX "lib"
+#  define my_VERSION  "-" TWIN_VERSION_STR ".so" 
+#  define my_PREFIX  "lib"
 
 # else
 #  error nor dlopen() nor lt_dlopen() module loading API available!  
@@ -297,11 +298,23 @@ static struct s_module _Module = {
 	&_FnModule,
 };
 
+static int initialized = 0, init_error = 0;
+
 static module DlLoadAny(uldat len, byte *name) {
     module Module = &_Module;
     byte (*init_dl)(module);
     byte *_name;
     
+    if (!initialized) {
+        initialized = 1;
+        init_error = my(dlinit)();
+    }
+    if (init_error) {
+        Error(DLERROR);
+        ErrStr = my(dlerror)();
+        return FALSE;
+    }
+        
     if ((Module->Name = CloneStrL(name, len)) &&
 	(_name = AllocMem(len + strlen(modules_prefix) + strlen(my_VERSION) + 1))) {
 	
