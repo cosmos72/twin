@@ -10,13 +10,15 @@
  *
  */
 
-#include <stdarg.h>
-
 #include "twin.h"
 #include "remote.h"
 #include "methods.h"
 #include "builtin.h"
 #include "draw.h"
+
+#ifdef TW_HAVE_STDARG_H
+# include <stdarg.h>
+#endif
 
 static byte buf[TW_BIGBUFF]; /* hope it's enough */
 static int printk_fd = NOFD;
@@ -62,7 +64,7 @@ void printk_str(int len, CONST byte *s) {
 
 int printk(CONST byte *format, ...) {
     int len = 0;
-#if defined(HAVE_VSNPRINTF) || defined(HAVE_VSPRINTF)
+#if defined(TW_HAVE_VSNPRINTF) || defined(TW_HAVE_VSPRINTF)
     va_list ap;
     
     va_start(ap, format);
@@ -78,12 +80,10 @@ int printk(CONST byte *format, ...) {
 	return sizeof(buf);
     }
 #endif /* TW_HAVE_VSNPRINTF */
-
     printk_str(len, buf);
-    
-    return len;
 
-#endif /* defined(HAVE_VSNPRINTF) || defined(HAVE_VPRINTF) */
+#endif /* defined(TW_HAVE_VSNPRINTF) || defined(TW_HAVE_VPRINTF) */
+    return len;
 }
 
     

@@ -640,9 +640,13 @@ ltdl_LIBOBJS
 am__EXEEXT_FALSE
 am__EXEEXT_TRUE
 LTLIBOBJS
+LIBTW
+LIBTUTF
 LIBZ
+LIBXPM
 LIBTERMCAP
 LIBPTHREAD
+LIBNSL
 LIBGPM
 LIBGGI
 LIBDL
@@ -793,6 +797,29 @@ ac_subst_files=''
 ac_user_opts='
 enable_option_checking
 enable_silent_rules
+enable__alloc
+enable__asm
+enable_socket
+enable_socket_gz
+enable_socket_pthreads
+enable_socket_alien
+enable_wm
+enable_wm_rc
+enable_wm_rc_shmmap
+enable_wm_rc_shrink
+enable_term
+enable_term_devpts
+enable_printk
+enable_hw_tty
+enable_hw_tty_linux
+enable_hw_tty_twterm
+enable_hw_tty_termcap
+enable_hw_x11
+enable_hw_gfx
+enable_hw_twin
+enable_hw_display
+enable_hw_ggi
+enable_ext
 enable_shared
 enable_static
 with_pic
@@ -1456,6 +1483,29 @@ Optional Features:
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --enable-silent-rules   less verbose build output (undo: "make V=1")
   --disable-silent-rules  verbose build output (undo: "make V=0")
+  --enable--alloc=yes|no               enable custom malloc/free routines
+  --enable--asm=yes|no                 enable hand-optimized assembler if supported
+  --enable-socket=yes|no               enable remote socket connections (libTw)
+  --enable-socket-gz=yes|no            enable gzip compression on sockets
+  --enable-socket-pthreads=yes|no      enable thread safe libraries (requires pthread)
+  --enable-socket-alien=yes|no         enable support for non-native architectures
+  --enable-wm=yes|mod|no               enable the builtin WM (absolutely needed!)
+  --enable-wm-rc=yes|mod|no            enable ~/.twinrc configuration parser
+  --enable-wm-rc-shmmap=yes|no         enable mmapped shared file for parser
+  --enable-wm-rc-shrink=yes|no         enable shrinking memory when parser finished
+  --enable-term=yes|mod|no             enable builtin terminal emulator
+  --enable-term-devpts=yes|no          enable Unix98 /dev/pts/* pseudo-ttys
+  --enable-printk=yes|no               enable logging messages in Messages window
+  --enable-hw-tty=yes|mod|no           enable tty drivers
+  --enable-hw-tty-linux=yes|no         enable the Linux console driver (gpm mouse, /dev/vcsa)
+  --enable-hw-tty-twterm=yes|no        enable the twterm terminal driver
+  --enable-hw-tty-termcap=yes|no       enable the termcap/ncurses terminal driver
+  --enable-hw-x11=yes|mod|no           enable the X11 driver
+  --enable-hw-gfx=yes|mod|no           enable the gfx (enhanced X11) driver
+  --enable-hw-twin=yes|mod|no          enable the twin native driver
+  --enable-hw-display=yes|mod|no       enable the twdisplay client driver
+  --enable-hw-ggi=yes|mod|no           enable the ggi driver (UNFINISHED)
+  --enable-ext=yes|no                  enable server extensions
   --enable-shared[=PKGS]  build shared libraries [default=yes]
   --enable-static[=PKGS]  build static libraries [default=yes]
   --enable-fast-install[=PKGS]
@@ -3308,6 +3358,202 @@ END
     as_fn_error $? "Your 'rm' program is bad, sorry." "$LINENO" 5
   fi
 fi
+
+
+
+
+
+# Check whether --enable--alloc was given.
+if test "${enable__alloc+set}" = set; then :
+  enableval=$enable__alloc;
+else
+  enable__alloc=yes
+
+fi
+
+# Check whether --enable--asm was given.
+if test "${enable__asm+set}" = set; then :
+  enableval=$enable__asm;
+else
+  enable__asm=yes
+
+fi
+
+# Check whether --enable-socket was given.
+if test "${enable_socket+set}" = set; then :
+  enableval=$enable_socket;
+else
+  enable_socket=mod
+
+fi
+
+# Check whether --enable-socket_gz was given.
+if test "${enable_socket_gz+set}" = set; then :
+  enableval=$enable_socket_gz;
+else
+  enable_socket_gz=yes
+
+fi
+
+# Check whether --enable-socket_pthreads was given.
+if test "${enable_socket_pthreads+set}" = set; then :
+  enableval=$enable_socket_pthreads;
+else
+  enable_socket_pthreads=yes
+
+fi
+
+# Check whether --enable-socket_alien was given.
+if test "${enable_socket_alien+set}" = set; then :
+  enableval=$enable_socket_alien;
+else
+  enable_socket_alien=yes
+
+fi
+
+# Check whether --enable-wm was given.
+if test "${enable_wm+set}" = set; then :
+  enableval=$enable_wm;
+else
+  enable_wm=mod
+
+fi
+
+# Check whether --enable-wm_rc was given.
+if test "${enable_wm_rc+set}" = set; then :
+  enableval=$enable_wm_rc;
+else
+  enable_wm_rc=mod
+
+fi
+
+# Check whether --enable-wm_rc_shmmap was given.
+if test "${enable_wm_rc_shmmap+set}" = set; then :
+  enableval=$enable_wm_rc_shmmap;
+else
+  enable_wm_rc_shmmap=yes
+
+fi
+
+# Check whether --enable-wm_rc_shrink was given.
+if test "${enable_wm_rc_shrink+set}" = set; then :
+  enableval=$enable_wm_rc_shrink;
+else
+  enable_wm_rc_shrink=yes
+
+fi
+
+# Check whether --enable-term was given.
+if test "${enable_term+set}" = set; then :
+  enableval=$enable_term;
+else
+  enable_term=mod
+
+fi
+
+# Check whether --enable-term_devpts was given.
+if test "${enable_term_devpts+set}" = set; then :
+  enableval=$enable_term_devpts;
+else
+  enable_term_devpts=yes
+
+fi
+
+# Check whether --enable-printk was given.
+if test "${enable_printk+set}" = set; then :
+  enableval=$enable_printk;
+else
+  enable_printk=yes
+
+fi
+
+# Check whether --enable-hw-tty was given.
+if test "${enable_hw_tty+set}" = set; then :
+  enableval=$enable_hw_tty;
+else
+  enable_hw_tty=mod
+
+fi
+
+# Check whether --enable-hw-tty-linux was given.
+if test "${enable_hw_tty_linux+set}" = set; then :
+  enableval=$enable_hw_tty_linux;
+else
+  enable_hw_tty_linux=yes
+
+fi
+
+# Check whether --enable-hw-tty-twterm was given.
+if test "${enable_hw_tty_twterm+set}" = set; then :
+  enableval=$enable_hw_tty_twterm;
+else
+  enable_hw_tty_twterm=yes
+
+fi
+
+# Check whether --enable-hw-tty-termcap was given.
+if test "${enable_hw_tty_termcap+set}" = set; then :
+  enableval=$enable_hw_tty_termcap;
+else
+  enable_hw_tty_termcap=yes
+
+fi
+
+# Check whether --enable-hw-x11 was given.
+if test "${enable_hw_x11+set}" = set; then :
+  enableval=$enable_hw_x11;
+else
+  enable_hw_x11=mod
+
+fi
+
+# Check whether --enable-hw-gfx was given.
+if test "${enable_hw_gfx+set}" = set; then :
+  enableval=$enable_hw_gfx;
+else
+  enable_hw_gfx=mod
+
+fi
+
+# Check whether --enable-hw-twin was given.
+if test "${enable_hw_twin+set}" = set; then :
+  enableval=$enable_hw_twin;
+else
+  enable_hw_twin=mod
+
+fi
+
+# Check whether --enable-hw-display was given.
+if test "${enable_hw_display+set}" = set; then :
+  enableval=$enable_hw_display;
+else
+  enable_hw_display=mod
+
+fi
+
+# Check whether --enable-hw-ggi was given.
+if test "${enable_hw_ggi+set}" = set; then :
+  enableval=$enable_hw_ggi;
+else
+  enable_hw_ggi=mod
+
+fi
+
+# Check whether --enable-ext was given.
+if test "${enable_ext+set}" = set; then :
+  enableval=$enable_ext;
+else
+  enable_ext=yes
+
+fi
+
+enable_opt_shadows=yes
+enable_opt_blink=no
+enable_opt_cursor_always=no
+enable_opt_menu_hide=no
+enable_opt_menu_info=no
+enable_opt_menu_relax=yes
+enable_opt_screen_scroll=no
 
 
 
@@ -14918,7 +15164,12 @@ $as_echo "#define HAVE_SYS_WAIT_H 1" >>confdefs.h
 
 fi
 
-for ac_header in arpa/inet.h asm/page.h crypt.h dlfcn.h fcntl.h grp.h inttypes.h libintl.h limits.h locale.h machine/param.h malloc.h memory.h netdb.h netinet/in.h shadow.h signal.h stdarg.h stddef.h stdint.h stdlib.h string.h sys/filio.h sys/ioctl.h sys/mman.h sys/param.h sys/select.h sys/socket.h sys/stat.h sys/timeb.h sys/un.h sys/utsname.h termio.h termios.h unistd.h
+for ac_header in arpa/inet.h asm/page.h crypt.h dlfcn.h fcntl.h grp.h inttypes.h libintl.h limits.h \
+       linux/kd.h linux/keyboard.h linux/vt.h locale.h machine/param.h malloc.h memory.h \
+       ncurses.h ncurses/ncurses.h ncurses/termcap.h netdb.h netinet/in.h pthread.h \
+       shadow.h signal.h stdarg.h stddef.h stdint.h stdlib.h string.h \
+       sys/filio.h sys/ioctl.h sys/mman.h sys/param.h sys/select.h sys/socket.h sys/stat.h \
+       sys/timeb.h sys/un.h sys/utsname.h termcap.h termio.h termios.h unistd.h X11/xpm.h zlib.h
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
@@ -14931,50 +15182,43 @@ fi
 
 done
 
-
-# Checks for typedefs, structures, and compiler characteristics.
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for inline" >&5
-$as_echo_n "checking for inline... " >&6; }
-if ${ac_cv_c_inline+:} false; then :
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether struct tm is in sys/time.h or time.h" >&5
+$as_echo_n "checking whether struct tm is in sys/time.h or time.h... " >&6; }
+if ${ac_cv_struct_tm+:} false; then :
   $as_echo_n "(cached) " >&6
 else
-  ac_cv_c_inline=no
-for ac_kw in inline __inline__ __inline; do
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-#ifndef __cplusplus
-typedef int foo_t;
-static $ac_kw foo_t static_foo () {return 0; }
-$ac_kw foo_t foo () {return 0; }
-#endif
+#include <sys/types.h>
+#include <time.h>
 
+int
+main ()
+{
+struct tm tm;
+				     int *p = &tm.tm_sec;
+				     return !p;
+  ;
+  return 0;
+}
 _ACEOF
 if ac_fn_c_try_compile "$LINENO"; then :
-  ac_cv_c_inline=$ac_kw
+  ac_cv_struct_tm=time.h
+else
+  ac_cv_struct_tm=sys/time.h
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-  test "$ac_cv_c_inline" != no && break
-done
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_struct_tm" >&5
+$as_echo "$ac_cv_struct_tm" >&6; }
+if test $ac_cv_struct_tm = sys/time.h; then
+
+$as_echo "#define TM_IN_SYS_TIME 1" >>confdefs.h
 
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_c_inline" >&5
-$as_echo "$ac_cv_c_inline" >&6; }
 
-case $ac_cv_c_inline in
-  inline | yes) ;;
-  *)
-    case $ac_cv_c_inline in
-      no) ac_val=;;
-      *) ac_val=$ac_cv_c_inline;;
-    esac
-    cat >>confdefs.h <<_ACEOF
-#ifndef __cplusplus
-#define inline $ac_val
-#endif
-_ACEOF
-    ;;
-esac
 
+# Checks for typedefs, structures, and compiler characteristics.
  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether byte ordering is bigendian" >&5
 $as_echo_n "checking whether byte ordering is bigendian... " >&6; }
 if ${ac_cv_c_bigendian+:} false; then :
@@ -15198,6 +15442,329 @@ $as_echo "#define AC_APPLE_UNIVERSAL_BUILD 1" >>confdefs.h
      as_fn_error $? "unknown endianness
  presetting ac_cv_c_bigendian=no (or yes) will help" "$LINENO" 5 ;;
  esac
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for an ANSI C-conforming const" >&5
+$as_echo_n "checking for an ANSI C-conforming const... " >&6; }
+if ${ac_cv_c_const+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+#ifndef __cplusplus
+  /* Ultrix mips cc rejects this sort of thing.  */
+  typedef int charset[2];
+  const charset cs = { 0, 0 };
+  /* SunOS 4.1.1 cc rejects this.  */
+  char const *const *pcpcc;
+  char **ppc;
+  /* NEC SVR4.0.2 mips cc rejects this.  */
+  struct point {int x, y;};
+  static struct point const zero = {0,0};
+  /* AIX XL C 1.02.0.0 rejects this.
+     It does not let you subtract one const X* pointer from another in
+     an arm of an if-expression whose if-part is not a constant
+     expression */
+  const char *g = "string";
+  pcpcc = &g + (g ? g-g : 0);
+  /* HPUX 7.0 cc rejects these. */
+  ++pcpcc;
+  ppc = (char**) pcpcc;
+  pcpcc = (char const *const *) ppc;
+  { /* SCO 3.2v4 cc rejects this sort of thing.  */
+    char tx;
+    char *t = &tx;
+    char const *s = 0 ? (char *) 0 : (char const *) 0;
+
+    *t++ = 0;
+    if (s) return 0;
+  }
+  { /* Someone thinks the Sun supposedly-ANSI compiler will reject this.  */
+    int x[] = {25, 17};
+    const int *foo = &x[0];
+    ++foo;
+  }
+  { /* Sun SC1.0 ANSI compiler rejects this -- but not the above. */
+    typedef const int *iptr;
+    iptr p = 0;
+    ++p;
+  }
+  { /* AIX XL C 1.02.0.0 rejects this sort of thing, saying
+       "k.c", line 2.27: 1506-025 (S) Operand must be a modifiable lvalue. */
+    struct s { int j; const int *ap[3]; } bx;
+    struct s *b = &bx; b->j = 5;
+  }
+  { /* ULTRIX-32 V3.1 (Rev 9) vcc rejects this */
+    const int foo = 10;
+    if (!foo) return 0;
+  }
+  return !cs[0] && !zero.x;
+#endif
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ac_cv_c_const=yes
+else
+  ac_cv_c_const=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_c_const" >&5
+$as_echo "$ac_cv_c_const" >&6; }
+if test $ac_cv_c_const = no; then
+
+$as_echo "#define const /**/" >>confdefs.h
+
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for inline" >&5
+$as_echo_n "checking for inline... " >&6; }
+if ${ac_cv_c_inline+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_cv_c_inline=no
+for ac_kw in inline __inline__ __inline; do
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#ifndef __cplusplus
+typedef int foo_t;
+static $ac_kw foo_t static_foo () {return 0; }
+$ac_kw foo_t foo () {return 0; }
+#endif
+
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ac_cv_c_inline=$ac_kw
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  test "$ac_cv_c_inline" != no && break
+done
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_c_inline" >&5
+$as_echo "$ac_cv_c_inline" >&6; }
+
+case $ac_cv_c_inline in
+  inline | yes) ;;
+  *)
+    case $ac_cv_c_inline in
+      no) ac_val=;;
+      *) ac_val=$ac_cv_c_inline;;
+    esac
+    cat >>confdefs.h <<_ACEOF
+#ifndef __cplusplus
+#define inline $ac_val
+#endif
+_ACEOF
+    ;;
+esac
+
+
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for gcc-compatible 'static inline'" >&5
+$as_echo_n "checking for gcc-compatible 'static inline'... " >&6; }
+if ${ac_cv_c_static_inline+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#undef inline
+  static inline int ret0(void) {
+    return 0;
+  }
+
+int
+main ()
+{
+
+  int a = ret0();
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ac_cv_c_static_inline=yes
+else
+  ac_cv_c_static_inline=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_c_static_inline" >&5
+$as_echo "$ac_cv_c_static_inline" >&6; }
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for gcc-compatible 'attribute((const))'" >&5
+$as_echo_n "checking for gcc-compatible 'attribute((const))'... " >&6; }
+if ${ac_cv_c_attribute_const+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#undef __attribute__
+  static int ret0(void) __attribute__((const));
+  static int ret0(void) {
+    return 0;
+  }
+
+int
+main ()
+{
+
+  int a = ret0();
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ac_cv_c_attribute_const=yes
+else
+  ac_cv_c_attribute_const=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_c_attribute_const" >&5
+$as_echo "$ac_cv_c_attribute_const" >&6; }
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for gcc-compatible 'attribute((packed))'" >&5
+$as_echo_n "checking for gcc-compatible 'attribute((packed))'... " >&6; }
+if ${ac_cv_c_attribute_packed+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+#undef __attribute__
+  struct sp {
+    int a;
+    char b;
+  } __attribute__((packed));
+  struct sp s2;
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ac_cv_c_attribute_packed=yes
+else
+  ac_cv_c_attribute_packed=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_c_attribute_packed" >&5
+$as_echo "$ac_cv_c_attribute_packed" >&6; }
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for gcc-compatible i386 assembler" >&5
+$as_echo_n "checking for gcc-compatible i386 assembler... " >&6; }
+if ${ac_cv_prog_gcc_i386_asm+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+#ifdef __i386__
+#undef asm
+  asm ("\n\tmovl %eax,%eax"
+       "\n\tpushl %ecx"
+       "\n\tpushl "
+       "\n\tpopl %ecx"
+       "\n\tpopl %ecx");
+#else
+  choke me
+#endif
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ac_cv_prog_gcc_i386_asm=yes
+else
+  ac_cv_prog_gcc_i386_asm=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_prog_gcc_i386_asm" >&5
+$as_echo "$ac_cv_prog_gcc_i386_asm" >&6; }
+
+
+
+for try_cflag in -g -O2 -fomit-frame-pointer -fno-strict-aliasing -pipe -Wall -Wshadow \
+                 -Wno-uninitialized -Wno-pointer-sign -Wno-unused -Wundef -Wstrict-prototypes \
+                 -Wcast-qual -Wcast-align -Wpointer-arith -Wbad-function-cast -Waggregate-return
+do
+  save_CFLAGS="$CFLAGS"
+  CFLAGS="$CFLAGS $try_cflag"
+  try_cflag_id="`echo \"$try_cflag\" | tr - _`"
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for compiler flag $try_cflag" >&5
+$as_echo_n "checking for compiler flag $try_cflag... " >&6; }
+if eval \${ac_cv_cflag$try_cflag_id+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+    static inline int ret0(void) {
+      return 0;
+    }
+
+int
+main ()
+{
+
+    int a = ret0();
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+
+    eval "ac_cv_cflag$try_cflag_id=yes"
+
+else
+
+    eval "ac_cv_cflag$try_cflag_id=no"
+    CFLAGS="$save_CFLAGS"
+
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+eval ac_res=\$ac_cv_cflag$try_cflag_id
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+done
+
+
+ac_fn_c_check_type "$LINENO" "gid_t" "ac_cv_type_gid_t" "$ac_includes_default"
+if test "x$ac_cv_type_gid_t" = xyes; then :
+
+else
+
+cat >>confdefs.h <<_ACEOF
+#define gid_t int
+_ACEOF
+
+fi
 
 ac_fn_c_check_type "$LINENO" "pid_t" "ac_cv_type_pid_t" "$ac_includes_default"
 if test "x$ac_cv_type_pid_t" = xyes; then :
@@ -15966,6 +16533,68 @@ $as_echo "#define malloc rpl_malloc" >>confdefs.h
 fi
 
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for working memcmp" >&5
+$as_echo_n "checking for working memcmp... " >&6; }
+if ${ac_cv_func_memcmp_working+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test "$cross_compiling" = yes; then :
+  ac_cv_func_memcmp_working=no
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+$ac_includes_default
+int
+main ()
+{
+
+  /* Some versions of memcmp are not 8-bit clean.  */
+  char c0 = '\100', c1 = '\200', c2 = '\201';
+  if (memcmp(&c0, &c2, 1) >= 0 || memcmp(&c1, &c2, 1) >= 0)
+    return 1;
+
+  /* The Next x86 OpenStep bug shows up only when comparing 16 bytes
+     or more and with at least one buffer not starting on a 4-byte boundary.
+     William Lewis provided this test program.   */
+  {
+    char foo[21];
+    char bar[21];
+    int i;
+    for (i = 0; i < 4; i++)
+      {
+	char *a = foo + i;
+	char *b = bar + i;
+	strcpy (a, "--------01111111");
+	strcpy (b, "--------10000000");
+	if (memcmp (a, b, 16) >= 0)
+	  return 1;
+      }
+    return 0;
+  }
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_run "$LINENO"; then :
+  ac_cv_func_memcmp_working=yes
+else
+  ac_cv_func_memcmp_working=no
+fi
+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
+  conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_func_memcmp_working" >&5
+$as_echo "$ac_cv_func_memcmp_working" >&6; }
+test $ac_cv_func_memcmp_working = no && case " $LIBOBJS " in
+  *" memcmp.$ac_objext "* ) ;;
+  *) LIBOBJS="$LIBOBJS memcmp.$ac_objext"
+ ;;
+esac
+
+
 
 
 
@@ -16234,71 +16863,17 @@ $as_echo "#define realloc rpl_realloc" >>confdefs.h
 fi
 
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for wait3 that fills in rusage" >&5
-$as_echo_n "checking for wait3 that fills in rusage... " >&6; }
-if ${ac_cv_func_wait3_rusage+:} false; then :
+if ${ac_cv_func_setvbuf_reversed+:} false; then :
   $as_echo_n "(cached) " >&6
 else
-  if test "$cross_compiling" = yes; then :
-  ac_cv_func_wait3_rusage=no
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-$ac_includes_default
-#include <sys/time.h>
-#include <sys/resource.h>
-#include <sys/wait.h>
-/* HP-UX has wait3 but does not fill in rusage at all.  */
-int
-main ()
-{
-  struct rusage r;
-  int i;
-  /* Use a field that we can force nonzero --
-     voluntary context switches.
-     For systems like NeXT and OSF/1 that don't set it,
-     also use the system CPU time.  And page faults (I/O) for Linux.  */
-  r.ru_nvcsw = 0;
-  r.ru_stime.tv_sec = 0;
-  r.ru_stime.tv_usec = 0;
-  r.ru_majflt = r.ru_minflt = 0;
-  switch (fork ())
-    {
-    case 0: /* Child.  */
-      sleep(1); /* Give up the CPU.  */
-      _exit(0);
-      break;
-    case -1: /* What can we do?  */
-      _exit(0);
-      break;
-    default: /* Parent.  */
-      wait3(&i, 0, &r);
-      /* Avoid "text file busy" from rm on fast HP-UX machines.  */
-      sleep(2);
-      return (r.ru_nvcsw == 0 && r.ru_majflt == 0 && r.ru_minflt == 0
-	      && r.ru_stime.tv_sec == 0 && r.ru_stime.tv_usec == 0);
-    }
-}
-_ACEOF
-if ac_fn_c_try_run "$LINENO"; then :
-  ac_cv_func_wait3_rusage=yes
-else
-  ac_cv_func_wait3_rusage=no
-fi
-rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
-  conftest.$ac_objext conftest.beam conftest.$ac_ext
+  ac_cv_func_setvbuf_reversed=no
 fi
 
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_func_wait3_rusage" >&5
-$as_echo "$ac_cv_func_wait3_rusage" >&6; }
-if test $ac_cv_func_wait3_rusage = yes; then
 
-$as_echo "#define HAVE_WAIT3 1" >>confdefs.h
-
-fi
-
-for ac_func in dup2 ftime gethostbyname gethostname getpagesize getspnam gettimeofday grantpt memchr memmove memset munmap ptsname putenv select setenv setlocale socket strchr strdup strerror strrchr strspn strstr strtol strtoul tcsetpgrp uname unlockpt wait4
+for ac_func in dup2 ftime gethostname getpagesize getspnam gettimeofday grantpt \
+      memchr memmove memset munmap ptsname putenv select setenv setlocale socket strchr strdup \
+      strerror strrchr strspn strstr strtol strtoul tcsetpgrp uname unlockpt vsprintf vsnprintf \
+      wait3 wait4
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
@@ -16309,6 +16884,7 @@ _ACEOF
 
 fi
 done
+
 
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing crypt" >&5
@@ -16366,7 +16942,7 @@ if test "$ac_res" != no; then :
   test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
 
 fi
-                  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing deflate" >&5
+                          { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing deflate" >&5
 $as_echo_n "checking for library containing deflate... " >&6; }
 if ${ac_cv_search_deflate+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -16473,6 +17049,62 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_dlopen" >&5
 $as_echo "$ac_cv_search_dlopen" >&6; }
 ac_res=$ac_cv_search_dlopen
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing gethostbyname" >&5
+$as_echo_n "checking for library containing gethostbyname... " >&6; }
+if ${ac_cv_search_gethostbyname+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char gethostbyname ();
+int
+main ()
+{
+return gethostbyname ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' nsl wsock32; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_search_gethostbyname=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+  if ${ac_cv_search_gethostbyname+:} false; then :
+  break
+fi
+done
+if ${ac_cv_search_gethostbyname+:} false; then :
+
+else
+  ac_cv_search_gethostbyname=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_gethostbyname" >&5
+$as_echo "$ac_cv_search_gethostbyname" >&6; }
+ac_res=$ac_cv_search_gethostbyname
 if test "$ac_res" != no; then :
   test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
 
@@ -16700,6 +17332,62 @@ if test "$ac_res" != no; then :
   test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
 
 fi
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing XpmReadFileToPixmap" >&5
+$as_echo_n "checking for library containing XpmReadFileToPixmap... " >&6; }
+if ${ac_cv_search_XpmReadFileToPixmap+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char XpmReadFileToPixmap ();
+int
+main ()
+{
+return XpmReadFileToPixmap ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' Xpm; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_search_XpmReadFileToPixmap=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+  if ${ac_cv_search_XpmReadFileToPixmap+:} false; then :
+  break
+fi
+done
+if ${ac_cv_search_XpmReadFileToPixmap+:} false; then :
+
+else
+  ac_cv_search_XpmReadFileToPixmap=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_XpmReadFileToPixmap" >&5
+$as_echo "$ac_cv_search_XpmReadFileToPixmap" >&6; }
+ac_res=$ac_cv_search_XpmReadFileToPixmap
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+
+fi
+
 
 # Output
 if test "$with_included_ltdl" = yes; then
@@ -16710,9 +17398,49 @@ $as_echo "#define HAVE_INCLUDED_LTDL 1" >>confdefs.h
 
 fi
 
+if test "$ac_cv_search_crypt" != "no"; then
+
+$as_echo "#define HAVE_CRYPT 1" >>confdefs.h
+
+fi
+if test "$ac_cv_search_deflate" != "no"; then
+
+$as_echo "#define HAVE_DEFLATE 1" >>confdefs.h
+
+fi
 if test "$ac_cv_search_dlopen" != "no"; then
 
 $as_echo "#define HAVE_DLOPEN 1" >>confdefs.h
+
+fi
+if test "$ac_cv_search_gethostbyname" != "no"; then
+
+$as_echo "#define HAVE_GETHOSTBYNAME 1" >>confdefs.h
+
+fi
+if test "$ac_cv_search_ggiOpen" != "no"; then
+
+$as_echo "#define HAVE_GGIOPEN 1" >>confdefs.h
+
+fi
+if test "$ac_cv_search_Gpm_Open" != "no"; then
+
+$as_echo "#define HAVE_GPM_OPEN 1" >>confdefs.h
+
+fi
+if test "$ac_cv_search_pthread_create" != "no"; then
+
+$as_echo "#define HAVE_PTHREAD_CREATE 1" >>confdefs.h
+
+fi
+if test "$ac_cv_search_tgetent" != "no"; then
+
+$as_echo "#define HAVE_TGETENT 1" >>confdefs.h
+
+fi
+if test "$ac_cv_search_XpmReadFileToPixmap" != "no"; then
+
+$as_echo "#define HAVE_XPMREADFILETOPIXMAP 1" >>confdefs.h
 
 fi
 
@@ -16724,16 +17452,92 @@ LIBGGI="`echo \"$ac_cv_search_ggiOpen\"        | $SED -e 's/^none required$//g' 
 
 LIBGPM="`echo \"$ac_cv_search_Gpm_Open\"       | $SED -e 's/^none required$//g' -e 's/^no$//g'`"
 
+LIBNSL="`echo \"$ac_cv_search_gethostbyname\"  | $SED -e 's/^none required$//g' -e 's/^no$//g'`"
+
 LIBPTHREAD="`echo \"$ac_cv_search_pthread_create\" | $SED -e 's/^none required$//g' -e 's/^no$//g'`"
 
 LIBTERMCAP="`echo \"$ac_cv_search_tgetent\"        | $SED -e 's/^none required$//g' -e 's/^no$//g'`"
 
+LIBXPM="`echo \"$ac_cv_search_XpmReadFileToPixmap\"  | $SED -e 's/^none required$//g' -e 's/^no$//g'`"
+
 LIBZ="`echo \"$ac_cv_search_deflate\"        | $SED -e 's/^none required$//g' -e 's/^no$//g'`"
+
+
+LIBTUTF='$(top_builddir)/libs/libTutf/libTutf.la'
+
+LIBTW='$(top_builddir)/libs/libTw/libTw.la'
 
 
 LIBS=
 
+
+
+if test "$ac_cv_func_mmap_fixed_mapped" = no; then
+  enable__alloc=no
+  enable_wm_rc_shmmap=no
+fi
+
+if test "$ac_cv_prog_gcc_i386_asm" = no; then
+  enable__asm=no
+fi
+
+if test "$ac_cv_func_socket" = no -a "$ac_cv_lib_socket_socket" = no -a "$ac_cv_lib_wsock32_socket" = no; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: missing socket(): disabling socket connections (libTw)!" >&5
+$as_echo "$as_me: WARNING: missing socket(): disabling socket connections (libTw)!" >&2;}
+  enable_socket=no
+fi
+
+if test "$ac_cv_func_connect" = no -a "$ac_cv_lib_socket_connect" = no -a "$ac_cv_lib_wsock32_connect" = no; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: missing connect(): disabling socket connections (libTw)!" >&5
+$as_echo "$as_me: WARNING: missing connect(): disabling socket connections (libTw)!" >&2;}
+  enable_socket=no
+fi
+
+if test "$ac_cv_search_gethostbyname" = no; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: missing gethostbyname(): libTw will only accept numerical IP addresses!" >&5
+$as_echo "$as_me: WARNING: missing gethostbyname(): libTw will only accept numerical IP addresses!" >&2;}
+fi
+
+if test "$ac_cv_lib_pthread_pthread_create" = no -o "$ac_cv_header_pthread_h" = no; then
+  enable_socket_pthreads=no
+fi
+
+if test "$ac_cv_lib_z_deflate" = no -o "$ac_cv_header_zlib_h" = no; then
+  enable_socket_gz=no
+fi
+
+if test "$ac_cv_func_grantpt" = no -o "$ac_cv_func_unlockpt" = no -o "$ac_cv_func_ptsname" = no; then
+  enable_term_devpts=no
+fi
+
+if test "$ac_cv_search_Gpm_Open" = no -o "$ac_cv_header_gpm_h" = no; then
+  enable_hw_tty_linux=no
+fi
+
+if test "$ac_cv_header_linux_kd_h" = no -o "$ac_cv_header_linux_keyboard_h" = no -o "$ac_cv_header_linux_vt_h" = no; then
+  enable_hw_tty_lrawkbd=no
+fi
+
+if test "$ac_cv_search_tgetent" = no; then
+  enable_hw_tty_termcap=no
+fi
+
+if test "$ac_cv_search_ggiOpen" = no -o "$ac_cv_header_ggi_ggi_h" = no; then
+  enable_hw_ggi=no
+fi
+
+if test "$have_x" != yes; then
+  enable_hw_x11=no
+fi
+
+if test "$have_x" != yes -o "$ac_cv_header_X11_xpm_h" = no -o "$ac_cv_lib_Xpm_XpmReadFileToPixmap" = no; then
+  enable_hw_gfx=no
+fi
+
+
+
 ac_config_files="$ac_config_files Makefile clients/Makefile clients/mapscrn/Makefile contrib/Makefile contrib/twcd/Makefile docs/Makefile libs/Makefile libs/libTT/Makefile libs/libTT/HW/Makefile libs/libTutf/Makefile libs/libTw/Makefile libs/libltdl/Makefile server/Makefile server/extensions/Makefile server/HW/Makefile themes/Makefile themes/hw_gfx/Makefile"
+
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -19066,6 +19870,16 @@ $as_echo "$as_me: WARNING: unrecognized options: $ac_unrecognized_opts" >&2;}
 fi
 
 
+function tw_cfg()
+{
+  if test "$2" = yes; then
+    echo "#define $1" >> include/twautoconf.h
+  else
+    echo "#undef  $1" >> include/twautoconf.h
+  fi
+}
+
+
   echo '#ifndef _TWAUTOCONF_H'      >  include/twautoconf.h
   echo '#define _TWAUTOCONF_H'      >> include/twautoconf.h
   echo                              >> include/twautoconf.h
@@ -19075,9 +19889,47 @@ fi
        -e 's/ifndef *\([A-Z]\)/ifndef TW_\1/g' \
                  < include/config.h >> include/twautoconf.h
   echo                              >> include/twautoconf.h
+
+  tw_cfg CONF__ALLOC "$enable__alloc"
+  tw_cfg CONF__ASM   "$enable__asm"
+  tw_cfg CONF_SOCKET "$enable_socket"
+  tw_cfg CONF_SOCKET_GZ         "$enable_socket_gz"
+  tw_cfg CONF_SOCKET_PTHREADS   "$enable_socket_pthreads"
+  tw_cfg CONF_SOCKET_ALIEN      "$enable_socket_alien"
+  tw_cfg CONF_SOCKET_EXTENSIONS "$enable_socket_extensions"
+  tw_cfg CONF_WM           "$enable_wm"
+  tw_cfg CONF_WM_RC        "$enable_wm_rc"
+  tw_cfg CONF_WM_RC_SHMMAP "$enable_wm_rc_shmmap"
+  tw_cfg CONF_WM_RC_SHRINK "$enable_wm_rc_shrink"
+  tw_cfg CONF_TERM         "$enable_term"
+  tw_cfg CONF_TERM_DEVPTS  "$enable_term_devpts"
+  tw_cfg CONF_PRINTK       "$enable_printk"
+  tw_cfg CONF_HW_TTY         "$enable_hw_tty"
+  tw_cfg CONF_HW_TTY_LINUX   "$enable_hw_tty_linux"
+  tw_cfg CONF_HW_TTY_LRAWKBD "$enable_hw_tty_lrawkbd"
+  tw_cfg CONF_HW_TTY_TWTERM  "$enable_hw_tty_twterm"
+  tw_cfg CONF_HW_TTY_TERMCAP "$enable_hw_tty_termcap"
+  tw_cfg CONF_HW_X11         "$enable_hw_x11"
+  tw_cfg CONF_HW_GFX         "$enable_hw_gfx"
+  tw_cfg CONF_HW_TWIN        "$enable_hw_twin"
+  tw_cfg CONF_HW_DISPLAY     "$enable_hw_display"
+  tw_cfg CONF_HW_GGI         "$enable_hw_ggi"
+  tw_cfg CONF_EXT               "$enable_ext"
+  tw_cfg CONF_OPT_SHADOWS       "$enable_opt_shadows"
+  tw_cfg CONF_OPT_BLINK         "$enable_opt_blink"
+  tw_cfg CONF_OPT_CURSOR_ALWAYS "$enable_opt_cursor_always"
+  tw_cfg CONF_OPT_MENU_HIDE     "$enable_opt_menu_hide"
+  tw_cfg CONF_OPT_MENU_INFO     "$enable_opt_menu_info"
+  tw_cfg CONF_OPT_MENU_RELAX    "$enable_opt_menu_relax"
+  tw_cfg CONF_OPT_SCREEN_SCROLL "$enable_opt_screen_scroll"
+
+  echo                              >> include/twautoconf.h
+  echo '#include "twfixconfig.h" /* to clean CONF_* macros */'  >> include/twautoconf.h
+  echo                              >> include/twautoconf.h
   echo '#endif /* _TWAUTOCONF_H */' >> include/twautoconf.h
 
-  mkdir include/Tw 2>/dev/null
-  $SED -e 's/_TWAUTOCONF_H/_TW_AUTOCONF_H/g' < include/twautoconf.h > include/Tw/autoconf.h
+  $MKDIR_P include/Tw 2>/dev/null
+
+  $GREP -v ' CONF_' < include/twautoconf.h | $GREP -v '#include' | $SED -e 's/_TWAUTOCONF_H/_TW_AUTOCONF_H/g' > include/Tw/autoconf.h
 
 

@@ -21,7 +21,7 @@
 # define _GNU_SOURCE
 # define _XOPEN_SOURCE
 
-#include <Tw/autoconf.h>
+#include "twautoconf.h" /* not <Tw/autoconf.h> because we need CONF_TERM_DEVPTS */
 
 #ifdef TW_HAVE_STDLIB_H
 # include <stdlib.h>
@@ -51,12 +51,6 @@
 #include "term.h"
 
 /* pseudo-teletype connections handling functions */
-
-#if defined(TW_HAVE_GRANTPT) && defined(TW_HAVE_UNLOCKPT) && defined(TW_HAVE_PTSNAME)
-# define CONF_TERM_DEVPTS
-#else
-# undef CONF_TERM_DEVPTS
-#endif
 
 /* 0. variables */
 static char *ptydev, *ttydev;

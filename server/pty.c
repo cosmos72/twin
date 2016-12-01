@@ -20,12 +20,36 @@
  *
  */
 
-#include <grp.h>
-#include <signal.h>
-#include <sys/stat.h>
+/* tell <stdlib.h> to declare grantpt(), unlockpt(), ptsname() */
+# define _GNU_SOURCE
+# define _XOPEN_SOURCE
 
-#ifdef CONF_TERM_DEVPTS
+#include "twautoconf.h" /* not <Tw/autoconf.h> because we need CONF_TERM_DEVPTS */
+
+#ifdef TW_HAVE_STDLIB_H
 # include <stdlib.h>
+#endif
+#ifdef TW_HAVE_SYS_STAT_H
+# include <sys/stat.h>
+#endif
+#ifdef TW_HAVE_FCNTL_H
+# include <fcntl.h>
+#endif
+#ifdef TW_HAVE_GRP_H
+# include <grp.h>
+#endif
+#ifdef TW_HAVE_TERMIOS_H
+# include <termios.h>
+#else
+# ifdef TW_HAVE_TERMIO_H
+#  include <termio.h>
+# endif
+#endif
+#ifdef TW_HAVE_SYS_IOCTL_H
+# include <sys/ioctl.h>
+#endif
+#ifdef TW_HAVE_SIGNAL_H
+# include <signal.h>
 #endif
 
 #include "tty_ioctl.h"

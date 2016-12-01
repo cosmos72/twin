@@ -12,10 +12,13 @@
  *
  */
 
+#include "twautoconf.h"
 
-#include <sys/stat.h>
+#ifdef TW_HAVE_SYS_STAT_H
+# include <sys/stat.h>
+#endif
 
-#ifdef CONF_WM_RC_SHMMAP
+#ifdef TW_HAVE_SYS_MMAN_H
 # include <sys/mman.h>
 #endif
 

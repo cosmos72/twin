@@ -28,6 +28,20 @@
 #define TW_MAXS(t)	((t)~TW_MINS(t))
 
 
+#define TW_SIZEOF_BYTE		TW_SIZEOF_CHAR
+#define TW_SIZEOF_SBYTE		TW_SIZEOF_CHAR
+#define TW_SIZEOF_DAT		TW_SIZEOF_SHORT
+#define TW_SIZEOF_UDAT		TW_SIZEOF_SHORT
+#define TW_SIZEOF_LDAT		TW_SIZEOF_INT
+#define TW_SIZEOF_ULDAT		TW_SIZEOF_INT
+#define TW_SIZEOF_TOBJ		TW_SIZEOF_INT
+#define TW_SIZEOF_TOPAQUE	TW_SIZEOF_SIZE_T
+#define TW_SIZEOF_TANY		TW_SIZEOF_SIZE_T
+#define TW_SIZEOF_HWCOL		1
+#define TW_SIZEOF_HWFONT	2
+#define TW_SIZEOF_HWATTR	4
+
+
 #ifdef UCHAR_MAX
 # define TW_MAXBYTE	UCHAR_MAX
 # define TW_MAXUDAT	USHRT_MAX
@@ -52,10 +66,6 @@
 # define TW_MAXLDAT	TW_MAXS(ldat)
 #endif
 
-#define TW_SIZEOF_TOBJ		TW_SIZEOF_INT
-#define TW_SIZEOF_TOPAQUE	TW_SIZEOF_SIZE_T
-#define TW_SIZEOF_TANY		TW_SIZEOF_SIZE_T
-
 #ifdef SIZE_MAX
 # define TW_MAXTOBJ	TW_MAXULDAT
 # define TW_MAXTOPAQUE	SIZE_MAX
@@ -66,15 +76,9 @@
 # define TW_MAXTANY	TW_MAXU(tany)
 #endif
 
-
-
-#define TW_SIZEOF_HWCOL        1
-#define TW_SIZEOF_HWFONT       2
-#define TW_SIZEOF_HWATTR       4
-
-#define TW_MAXWCOL           0xFF
-#define TW_MAXWFONT          0xFFFF
-#define TW_MAXWATTR          0xFFFFFFFF
+#define TW_MAXWCOL      0xFF
+#define TW_MAXWFONT     0xFFFF
+#define TW_MAXWATTR     0xFFFFFFFF
 
 #define HWATTR(col,ascii)     HWATTR32(col,ascii)
 #define HWATTR_COLMASK(attr)  HWATTR_COLMASK32(attr)

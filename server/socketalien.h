@@ -43,14 +43,14 @@
 INLINE void FlipCopyMem(CONST byte *src, byte *dst, uldat len) {
     switch (len) {
       case 2:
-	*(byte16 *)dst = htons(*(CONST byte16 *)src);
+	*(uint16_t *)dst = htons(*(CONST uint16_t *)src);
 	break;
       case 4:
-	*(byte32 *)dst = htonl(*(CONST byte32 *)src);
+	*(uint32_t *)dst = htonl(*(CONST uint32_t *)src);
 	break;
       case 8:
-	((byte32 *)dst)[0] = htonl(((CONST byte32 *)src)[1]);
-	((byte32 *)dst)[1] = htonl(((CONST byte32 *)src)[0]);
+	((uint32_t *)dst)[0] = htonl(((CONST uint32_t *)src)[1]);
+	((uint32_t *)dst)[1] = htonl(((CONST uint32_t *)src)[0]);
 	break;
       default:
 	src += len - 1;
@@ -713,30 +713,30 @@ static void FlipMoveMem(byte *mem, uldat len, uldat chunk) {
     uldat i, j;
     byte c;
 #if TW_IS_LITTLE_ENDIAN
-    byte32 t;
+    uint32_t t;
     
     switch (chunk) {
       case 1:
 	return;
       case 2:
 	while (len >= 2) {
-	    *(byte16 *)mem = htons(*(CONST byte16 *)mem);
+	    *(uint16_t *)mem = htons(*(CONST uint16_t *)mem);
 	    mem += 2;
 	    len -= 2;
 	}
 	return;
       case 4:
 	while (len >= 4) {
-	    *(byte32 *)mem = htonl(*(CONST byte32 *)mem);
+	    *(uint32_t *)mem = htonl(*(CONST uint32_t *)mem);
 	    mem += 4;
 	    len -= 4;
 	}
 	return;
       case 8:
 	while (len >= 8) {
-	    t = htonl(((CONST byte32 *)mem)[0]);
-	    ((byte32 *)mem)[0] = htonl(((CONST byte32 *)mem)[1]);
-	    ((byte32 *)mem)[1] = t;
+	    t = htonl(((CONST uint32_t *)mem)[0]);
+	    ((uint32_t *)mem)[0] = htonl(((CONST uint32_t *)mem)[1]);
+	    ((uint32_t *)mem)[1] = t;
 	    mem += 8;
 	    len -= 8;
 	}
@@ -765,19 +765,15 @@ static void FlipMoveMem(byte *mem, uldat len, uldat chunk) {
  * when an exclusive one is started. Must preserve Slot, Fd and other globals!
  */
 static void alienSendMsg(msgport MsgPort, msg Msg) {
-    uldat save_Slot = Slot;
-    int save_Fd = Fd;
-    uldat Len = 0, Tot;
     byte *t;
-    uldat N;
-#if defined(CONF__MODULES) || defined (CONF_HW_DISPLAY)
     byte *Src;
-#endif
+    uldat save_Slot = Slot, Len = 0, Tot, N;
+    int save_Fd = Fd;
+    hwattr H;
+    uint16_t h;
 #if defined(CONF__MODULES) || defined (CONF_HW_DISPLAY)
     byte Type;
 #endif
-    byte16 h;
-    hwattr H;
     
     RequestN = MSG_MAGIC;
     Fd = MsgPort->RemoteData.Fd;

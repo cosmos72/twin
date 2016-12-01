@@ -195,7 +195,7 @@ static byte module_InitHW(byte *arg, uldat len) {
 	len = name - arg;
     
     if ((name = AllocMem(len + 7))) {
-	sprintf(name, "HW/hw_%.*s", (int)len, arg);
+	sprintf(name, "HW/libhw_%.*s", (int)len, arg);
 
 	Module = DlLoadAny(len + 6, name);
 	

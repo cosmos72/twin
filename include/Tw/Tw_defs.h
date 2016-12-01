@@ -90,6 +90,7 @@
 #define HWATTR_FONTMASK32(attr) ((attr) & 0xFF00FF)
 #define HWCOL32(attr) ((hwcol)((attr) >> 8))
 #define HWFONT32(attr) ((uint16_t)(((attr) & 0xFF) | (((attr) >> 8) & 0xFF00)))
+#define HWEXTRA32(attr) ((byte)((attr) >> 24))
 
 #define HWATTR_EXTRA32(attr,extra) (((uint32_t)(byte)(extra) << 24) | ((uint32_t)(attr) & 0xFFFFFF))
 #define HWATTR_EXTRAMASK32(attr) ((attr) & 0xFF000000)

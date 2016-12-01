@@ -142,7 +142,7 @@ void HandleSignals(void) {
 }
 
 
-#ifndef DONT_TRAP_SIGNALS
+#ifndef TW_DONT_TRAP_SIGNALS
 static TW_RETSIGTYPE SignalFatal(int n) {
     sigset_t s, t;
 

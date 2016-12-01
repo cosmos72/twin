@@ -41,15 +41,15 @@
 #ifdef CONF__MODULES
 
 
-# if defined(HAVE_DLFCN_H) && defined(HAVE_DLOPEN)
+# if defined(TW_HAVE_DLFCN_H) && defined(TW_HAVE_DLOPEN)
 
 #  include <dlfcn.h>
-# define my(fn) fn
-# define my_handle void *
-# define my_dlopen_extra_args , RTLD_NOW|RTLD_GLOBAL
-# define my_VERSION ".so." TWIN_VERSION_STR
+#  define my(fn) fn
+#  define my_handle void *
+#  define my_dlopen_extra_args , RTLD_NOW|RTLD_GLOBAL
+#  define my_VERSION ".so." TWIN_VERSION_STR
 
-#elif defined(HAVE_LTDL_H) && defined(HAVE_LT_DLOPEN)
+# elif defined(TW_HAVE_LTDL) || defined(TW_HAVE_INCLUDED_LTDL)
 
 # include <ltdl.h>
 # define my(fn) lt_##fn
@@ -57,9 +57,9 @@
 # define my_dlopen_extra_args
 # define my_VERSION ".la"
 
-#else
-# error nor dlopen() nor lt_dlopen() module loading API available!  
-#endif
+# else
+#  error nor dlopen() nor lt_dlopen() module loading API available!  
+# endif
 
 
 #ifdef LIBDIR
@@ -345,7 +345,7 @@ static byte module_InitHW(byte *arg, uldat len) {
 	len = name - arg;
     
     if ((name = AllocMem(len + 7))) {
-	sprintf(name, "HW/hw_%.*s", (int)len, arg);
+	sprintf(name, "HW/libhw_%.*s", (int)len, arg);
 			
 	Module = DlLoadAny(len + 6, name);
 	

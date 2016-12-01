@@ -11,6 +11,9 @@
  */
 
 #include "twin.h"
+
+#ifdef CONF__MODULES
+
 #include "methods.h"
 #include "data.h"
 #include "util.h"
@@ -112,16 +115,16 @@ module DlLoad(uldat code) {
 	if (!(M = So[code])) {
 	    switch (code) {
 #ifndef CONF_WM
-	      case WMSo:      M = DlLoadAny(2, "wm"); break;
+	      case WMSo:      M = DlLoadAny(2, "libwm"); break;
 #endif
 #ifndef CONF_TERM
-	      case TermSo:    M = DlLoadAny(4, "term"); break;
+	      case TermSo:    M = DlLoadAny(4, "libterm"); break;
 #endif
 #ifndef CONF_SOCKET
-	      case SocketSo:  M = DlLoadAny(6, "socket"); break;
+	      case SocketSo:  M = DlLoadAny(6, "libsocket"); break;
 #endif
 #ifndef CONF_WM_RC
-	      case RCParseSo: M = DlLoadAny(7, "rcparse"); break;
+	      case RCParseSo: M = DlLoadAny(7, "librcparse"); break;
 #endif
 	      case MainSo:
 	      default:        M = DlLoadAny(0, NULL); break;
@@ -153,6 +156,8 @@ module DlIsLoaded(uldat code) {
 }
 
 udat DlName2Code(byte *name) {
+    if (!CmpStrN(name, "lib", 3))
+        name += 3;
     if (!CmpStr(name, "wm"))
 	return WMSo;
     if (!CmpStr(name, "term"))
@@ -172,3 +177,4 @@ void *DlSym(module Module, CONST byte *name) {
     return NULL;
 }
 
+#endif /* CONF__MODULES */

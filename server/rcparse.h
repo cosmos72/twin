@@ -167,7 +167,7 @@ ldat GlobalFlags[4];
 ldat GlobalShadows[2];
 
 
-static void yyerror(char *s) {
+static void yyerror(const char *s) {
     printk("twin: %s:%d: %s\n", FILE_NAME, LINE_NO, s);
 }
 

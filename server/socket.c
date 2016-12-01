@@ -34,7 +34,7 @@
 # include <sys/utsname.h>
 #endif
 
-#ifdef CONF_SOCKET_GZ
+#ifdef TW_HAVE_ZLIB_H
 # include <zlib.h>
 #endif
 
@@ -66,6 +66,7 @@
 
 
 
+#define CONF_SOCKET_ALIEN
 
 #ifdef CONF_SOCKET_ALIEN
 
@@ -2385,14 +2386,14 @@ static void Wait4AuthIO(int fd, uldat slot) {
 	    /* OK! */
 	    if ((LS.HandlerIO.S = GetHandlerIO())) {
 		RemoteReadDeQueue(Slot, digestLen*2);
-		SendUldat(GO_MAGIC);
+		SendUldat(TW_GO_MAGIC);
 		return;
 	    }
 	}
     }
     
     /* I/O error or Auth error */
-    SendUldat(STOP_MAGIC);
+    SendUldat(TW_STOP_MAGIC);
     RemoteFlush(Slot);
     UnRegisterRemote(Slot);
     close(fd);
@@ -2526,11 +2527,11 @@ static void Wait4Magic(int fd, uldat slot, byte isUnix) {
 	
 	if (got) {
 	    if (isUnix) {
-		if ((LS.HandlerIO.S = GetHandlerIO()) && SendUldat(GO_MAGIC))
+		if ((LS.HandlerIO.S = GetHandlerIO()) && SendUldat(TW_GO_MAGIC))
 		    return;
 	    } else {
 		LS.HandlerIO.S = Wait4AuthIO;
-		if (SendUldat(WAIT_MAGIC) && SendChallenge())
+		if (SendUldat(TW_WAIT_MAGIC) && SendChallenge())
 		    return;
 	    }
 	}
