@@ -1,6 +1,7 @@
 SUBDIRS = hw
 
 bin_PROGRAMS       = twdisplay twin twin_server
+bin_SCRIPTS        = twstart
 pkglib_LTLIBRARIES = 
 
 if LIBRCPARSE_la
