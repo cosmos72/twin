@@ -679,6 +679,10 @@ LIBX11
 X11_LDFLAGS
 X11_CPPFLAGS
 XMKMF
+PACKAGE_VERSION_EXTRA
+PACKAGE_VERSION_PATCH
+PACKAGE_VERSION_MINOR
+PACKAGE_VERSION_MAJOR
 am__fastdepCCAS_FALSE
 am__fastdepCCAS_TRUE
 CCASDEPMODE
@@ -14718,6 +14722,22 @@ $as_echo "$ac_cv_path_SED" >&6; }
   rm -f conftest.sed
 
 
+
+
+
+PACKAGE_VERSION_MAJOR="`echo \"$PACKAGE_VERSION\" | $SED 's|^\([0-9]*\)\..*|\1|g'`"
+PACKAGE_VERSION_MINOR="`echo \"$PACKAGE_VERSION\" | $SED 's|^\([0-9]*\)\.\([0-9]*\)\..*|\2|g'`"
+PACKAGE_VERSION_PATCH="`echo \"$PACKAGE_VERSION\" | $SED 's|^\([0-9]*\)\.\([0-9]*\)\.\([0-9]*\).*|\3|g'`"
+PACKAGE_VERSION_EXTRA="`echo \"$PACKAGE_VERSION\" | $SED 's|^\([0-9]*\)\.\([0-9]*\)\.\([0-9]*\)\(.*\)|\4|g'`"
+
+
+
+
+
+
+
+
+
 # Checks for header files.
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for X" >&5
 $as_echo_n "checking for X... " >&6; }
@@ -17799,7 +17819,7 @@ fi
 
 CFLAGS="$custom_CFLAGS"
 
-ac_config_files="$ac_config_files Makefile clients/Makefile clients/mapscrn/Makefile contrib/Makefile contrib/twcd/Makefile docs/Makefile libs/Makefile libs/libTutf/Makefile libs/libTw/Makefile libs/libltdl/Makefile server/Makefile server/hw/Makefile themes/Makefile themes/hw_gfx/Makefile"
+ac_config_files="$ac_config_files Makefile clients/Makefile clients/mapscrn/Makefile contrib/Makefile contrib/twcd/Makefile docs/Makefile include/version.h libs/Makefile libs/libTutf/Makefile libs/libTw/Makefile libs/libltdl/Makefile server/Makefile server/hw/Makefile themes/Makefile themes/hw_gfx/Makefile"
 
 
 cat >confcache <<\_ACEOF
@@ -18893,6 +18913,7 @@ do
     "contrib/Makefile") CONFIG_FILES="$CONFIG_FILES contrib/Makefile" ;;
     "contrib/twcd/Makefile") CONFIG_FILES="$CONFIG_FILES contrib/twcd/Makefile" ;;
     "docs/Makefile") CONFIG_FILES="$CONFIG_FILES docs/Makefile" ;;
+    "include/version.h") CONFIG_FILES="$CONFIG_FILES include/version.h" ;;
     "libs/Makefile") CONFIG_FILES="$CONFIG_FILES libs/Makefile" ;;
     "libs/libTutf/Makefile") CONFIG_FILES="$CONFIG_FILES libs/libTutf/Makefile" ;;
     "libs/libTw/Makefile") CONFIG_FILES="$CONFIG_FILES libs/libTw/Makefile" ;;

@@ -24,6 +24,9 @@ AC_PROG_INSTALL
 AC_PROG_LIBTOOL
 AC_PROG_SED
 
+dnl TW_VERSION requires $SED
+TW_VERSION
+
 # Checks for header files.
 AC_PATH_X
 if test "$have_x" = yes; then
@@ -216,7 +219,8 @@ AM_CONDITIONAL(LIBWM_la,         [test "$enable_wm"         = yes])
 CFLAGS="$custom_CFLAGS"
 
 AC_CONFIG_FILES([
-      Makefile clients/Makefile clients/mapscrn/Makefile contrib/Makefile contrib/twcd/Makefile docs/Makefile \
+      Makefile clients/Makefile clients/mapscrn/Makefile contrib/Makefile contrib/twcd/Makefile \
+      docs/Makefile include/version.h \
       libs/Makefile libs/libTutf/Makefile libs/libTw/Makefile libs/libltdl/Makefile \
       server/Makefile server/hw/Makefile themes/Makefile themes/hw_gfx/Makefile])
 

@@ -26,6 +26,7 @@
 #include "hw.h"
 #include "hw_private.h"
 #include "common.h"
+#include "dl_helper.h"
 #include "fdlist.h"
 #include "version.h"
 
@@ -36,42 +37,13 @@
 
 
 
-
-
-# if defined(TW_HAVE_LTDL) || defined(TW_HAVE_INCLUDED_LTDL)
-
-#  include <ltdl.h>
-#  define my(fn)      lt_##fn
-#  define my_handle   lt_dlhandle
-#  define my_dlopen_extra_args
-#  define my_VERSION  ".la"
-#  ifdef TW_LT_LIBPREFIX
-#    define my_PREFIX TW_LT_LIBPREFIX
-#  else
-#    define my_PREFIX ""
-#  endif
-
-# elif defined(TW_HAVE_DLFCN_H) && defined(TW_HAVE_DLOPEN)
-
-#  include <dlfcn.h>
-#  define dlinit()    (0)
-#  define my(fn)      fn
-#  define my_handle   void *
-#  define my_dlopen_extra_args , RTLD_NOW|RTLD_GLOBAL
-#  define my_VERSION  "-" TWIN_VERSION_STR ".so" 
-#  define my_PREFIX  "lib"
-
-# else
-#  error nor dlopen() nor lt_dlopen() module loading API available!  
-# endif
-
-#ifdef PACKAGE_LIBDIR
-# define MODULES_DIR PACKAGE_LIBDIR "/twin/modules"
-#else
-# define MODULES_DIR "."
+#ifndef PKG_LIBDIR
+# warning PKG_LIBDIR is not #defined, assuming "/usr/local/lib/twin"
+# define PKG_LIBDIR "/usr/local/lib/twin"
 #endif
 
-static CONST byte * CONST modules_prefix = MODULES_DIR "/" my_PREFIX;
+
+static CONST byte * CONST modules_prefix = PKG_LIBDIR "/" DL_PREFIX;
 
 static CONST byte *MYname;
 
@@ -298,41 +270,35 @@ static struct s_module _Module = {
 	&_FnModule,
 };
 
-static int initialized = 0, init_error = 0;
+
 
 static module DlLoadAny(uldat len, byte *name) {
     module Module = &_Module;
-    byte (*init_dl)(module);
-    byte *_name;
-    
-    if (!initialized) {
-        initialized = 1;
-        init_error = my(dlinit)();
-    }
-    if (init_error) {
-        Error(DLERROR);
-        ErrStr = my(dlerror)();
-        return FALSE;
-    }
-        
-    if ((Module->Name = CloneStrL(name, len)) &&
-	(_name = AllocMem(len + strlen(modules_prefix) + strlen(my_VERSION) + 1))) {
-	
-	sprintf(_name, "%s%.*s%s", modules_prefix, (int)len, name, my_VERSION);
+    byte (*init_func)(module);
+    byte *path;
 
-	if ((Module->Handle = my(dlopen)(_name my_dlopen_extra_args)) &&
+    if (!dlinit_once()) {
+        return (module)0;
+    }
+
+    if ((Module->Name = CloneStrL(name, len)) &&
+	(path = AllocMem(len + strlen(modules_prefix) + strlen(DL_SUFFIX) + 1))) {
+	
+	sprintf(path, "%s%.*s%s", modules_prefix, (int)len, name, DL_SUFFIX);
+
+	if ((Module->Handle = (void *)dlopen(path)) &&
 	    /*
 	     * Module MUST have a InitModule function, as it needs to set
 	     * Module->Private to its xxx_InitHW() startup code.
 	     */
-	    (init_dl = (byte (*)(module)) my(dlsym)((my_handle)Module->Handle, "InitModule")) &&
-	    init_dl(Module)) {
+	    (init_func = (byte (*)(module)) dlsym((dlhandle)Module->Handle, "InitModule")) &&
+	    init_func(Module)) {
 
-	    FreeMem(_name);
+	    FreeMem(path);
 	    return Module;
 	} else
-	    ErrStr = my(dlerror)();
-	FreeMem(_name);
+	    ErrStr = dlerror();
+	FreeMem(path);
     } else
 	ErrStr = "Out of memory!";
     return (module)0;

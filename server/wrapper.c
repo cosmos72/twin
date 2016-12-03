@@ -11,18 +11,18 @@
 
 #include "twconfig.h"
 #include "version.h"
-#include <Tw/Tw.h>
 
 #ifdef TW_HAVE_UNISTD_H
 # include <unistd.h>
 #endif
 
 #ifndef BINDIR
-# define BINDIR "."
+# warning BINDIR is not #defined, assuming "/usr/local/bin"
+# define BINDIR "/usr/local/bin"
 #endif
 
 int main(int argc, char *argv[]) {
-    argv[0] = BINDIR "/twin_real";
+    argv[0] = BINDIR "/twin_server";
     execv(argv[0], argv);
     printf("failed to exec %s: %s\n", argv[0], strerror(errno));
     return 1;

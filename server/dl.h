@@ -9,10 +9,6 @@
 #ifndef _TWIN_DL_H
 #define _TWIN_DL_H
 
-#ifndef _TWAUTOCONF_H
-# include "twautoconf.h" /* for TW_HAVE_* macros */
-#endif
-
 byte DlOpen(module Module);
 void DlClose(module Module);
 

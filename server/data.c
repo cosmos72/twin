@@ -21,13 +21,12 @@
 
 /* setup configuration paths */
 
-#ifdef PACKAGE_LIBDIR
-CONST byte * CONST conf_destdir_lib_twin = PACKAGE_LIBDIR "/twin";
-CONST byte * CONST conf_destdir_lib_twin_modules_ = PACKAGE_LIBDIR "/twin/modules/";
-#else
-CONST byte * CONST conf_destdir_lib_twin = ".";
-CONST byte * CONST conf_destdir_lib_twin_modules_ = "./";
+#ifndef PKG_LIBDIR
+# warning PKG_LIBDIR is not #defined, assuming "/usr/local/lib/twin"
+# define PKG_LIBDIR "/usr/local/lib/twin"
 #endif
+
+CONST byte * CONST conf_destdir_lib_twin = PKG_LIBDIR;
 
 
 

@@ -1,40 +1,42 @@
 SUBDIRS = hw
 
-bin_PROGRAMS       = twdisplay twin twin_real
-noinst_LTLIBRARIES = 
+bin_PROGRAMS       = twdisplay twin twin_server
+pkglib_LTLIBRARIES = 
 
 if LIBRCPARSE_la
-  noinst_LTLIBRARIES += librcparse.la
+  pkglib_LTLIBRARIES += librcparse.la
 endif
 if LIBSOCKET_la
-  noinst_LTLIBRARIES += libsocket.la
+  pkglib_LTLIBRARIES += libsocket.la
 endif
 if LIBTERM_la
-  noinst_LTLIBRARIES += libterm.la
+  pkglib_LTLIBRARIES += libterm.la
 endif
 if LIBWM_la
-  noinst_LTLIBRARIES += libwm.la
+  pkglib_LTLIBRARIES += libwm.la
 endif
 
-AM_CPPFLAGS           = -I$(top_srcdir)/include $(LTDLINCL)
-data_CPPFLAGS         = -I$(top_srcdir)/include $(LTDLINCL) -DPACKAGE_LIBDIR=$(pkglibdir)
-display_CPPFLAGS      = -I$(top_srcdir)/include $(LTDLINCL) -DPACKAGE_LIBDIR=$(pkglibdir)
+AM_CPPFLAGS           = -I$(top_srcdir)/include $(LTDLINCL) -DPKG_LIBDIR="\"$(pkglibdir)\""
+twin_CPPFLAGS         = -I$(top_srcdir)/include $(LTDLINCL) -DBINDIR="\"$(bindir)\""
 
-twdisplay_SOURCES     = alloc.c display.c missing.c hw.c
+twdisplay_SOURCES     = alloc.c display.c dl_helper.c missing.c hw.c
 twin_SOURCES          = wrapper.c
-twin_real_SOURCES     = alloc.c builtin.c data.c dl.c draw.c extensions/ext_query.c extreg.c hw.c hw_multi.c main.c methods.c missing.c printk.c remote.c resize.c scroller.c util.c 
+twin_server_SOURCES   = alloc.c builtin.c data.c dl.c dl_helper.c draw.c extensions/ext_query.c extreg.c hw.c hw_multi.c main.c methods.c missing.c printk.c remote.c resize.c scroller.c util.c 
 
 librcparse_la_SOURCES = rcparse_tab.c rcparse_lex.c
 libterm_la_SOURCES    = pty.c tterm.c tty.c
 libsocket_la_SOURCES  = md5.c socket.c
 libwm_la_SOURCES      = rcopt.c rcrun.c shm.c wm.c
 
-twdisplay_LDADD       = $(LIBTW) $(LIBTUTF) $(LIBLTDL) $(LIBDL)
-twin_real_LDADD       =          $(LIBTUTF) $(LIBLTDL) $(LIBDL)
+twdisplay_LDFLAGS     = -export-dynamic
+twin_server_LDFLAGS   = -export-dynamic
 
-librcparse_la_LDFLAGS = -release $(PACKAGE_VERSION) -rpath $(pkglibdir)/modules
-libsocket_la_LDFLAGS  = -release $(PACKAGE_VERSION) -rpath $(pkglibdir)/modules
-libterm_la_LDFLAGS    = -release $(PACKAGE_VERSION) -rpath $(pkglibdir)/modules
-libwm_la_LDFLAGS      = -release $(PACKAGE_VERSION) -rpath $(pkglibdir)/modules
+librcparse_la_LDFLAGS = -export-dynamic -release $(PACKAGE_VERSION)
+libsocket_la_LDFLAGS  = -export-dynamic -release $(PACKAGE_VERSION)
+libterm_la_LDFLAGS    = -export-dynamic -release $(PACKAGE_VERSION)
+libwm_la_LDFLAGS      = -export-dynamic -release $(PACKAGE_VERSION)
+
+twdisplay_LDADD       = $(LIBTW) $(LIBTUTF) $(LIBLTDL) $(LIBDL)
+twin_server_LDADD     =          $(LIBTUTF) $(LIBLTDL) $(LIBDL)
 
 libsocket_la_LIBADD   = $(LIBSOCK) $(LIBZ)

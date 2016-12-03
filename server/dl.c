@@ -11,51 +11,21 @@
  */
 
 #include "twin.h"
-
 #include "methods.h"
 #include "data.h"
 #include "util.h"
 #include "dl.h"
 #include "version.h"
 
-#if defined(TW_HAVE_LTDL) || defined(TW_HAVE_INCLUDED_LTDL)
-#  include <ltdl.h>
-#  define my(fn)      lt_##fn
-#  define my_handle   lt_dlhandle
-#  define my_dlopen_extra_args
-#  define my_VERSION ".la"
-#  ifdef TW_LT_LIBPREFIX
-#    define my_PREFIX TW_LT_LIBPREFIX
-#  else
-#    define my_PREFIX ""
-#  endif
-#elif defined(TW_HAVE_DLFCN_H) && defined(TW_HAVE_DLOPEN)
-#  include <dlfcn.h>
-#  define dlinit()    (0)
-#  define my(fn)      fn
-#  define my_handle   void *
-#  define my_dlopen_extra_args , RTLD_NOW|RTLD_GLOBAL
-#  define my_VERSION  "-" TWIN_VERSION_STR ".so"
-#  define my_PREFIX   "lib"
-#else
-#  error nor dlopen() nor lt_dlopen() module loading API available!  
-#endif
-
-static int initialized = 0, init_error = 0;
+#include "dl_helper.h"
 
 byte DlOpen(module Module) {
-    my_handle Handle = NULL;
-    uldat len, len0 = LenStr(conf_destdir_lib_twin_modules_) + LenStr(my_PREFIX) + LenStr(my_VERSION);
+    dlhandle Handle = NULL;
+    uldat len, len0 = 1 + LenStr(conf_destdir_lib_twin) + LenStr(DL_PREFIX) + LenStr(DL_SUFFIX);
     byte *name = NULL;
-    byte (*init_dl)(module);
+    byte (*init_func)(module);
     
-    if (!initialized) {
-        initialized = 1;
-        init_error = my(dlinit)();
-    }
-    if (init_error) {
-        Error(DLERROR);
-        ErrStr = my(dlerror)();
+    if (!dlinit_once()) {
         return FALSE;
     }
         
@@ -64,44 +34,42 @@ byte DlOpen(module Module) {
 	if (Module->NameLen) {
 	    len = len0 + Module->NameLen;
 	    if ((name = AllocMem(len+1)))
-		sprintf(name, "%s%s%.*s%s", conf_destdir_lib_twin_modules_, my_PREFIX, (int)Module->NameLen, Module->Name, my_VERSION);
+		sprintf(name, "%s/%s%.*s%s", conf_destdir_lib_twin, DL_PREFIX, (int)Module->NameLen, Module->Name, DL_SUFFIX);
 	    else {
 		Error(NOMEMORY);
 		return FALSE;
 	    }
 	}
-	Handle = my(dlopen)(name my_dlopen_extra_args);
+	Handle = dlopen(name);
 	if (name)
 	    FreeMem(name);
     }
     if (!Handle) {
 	Error(DLERROR);
-	ErrStr = my(dlerror)();
+	ErrStr = dlerror();
 	return FALSE;
     }
 
     if (name) {
-	init_dl = (byte (*)(module)) my(dlsym)(Handle, "InitModule");
-	if (!init_dl || init_dl(Module)) {
+	init_func = (byte (*)(module)) dlsym(Handle, "InitModule");
+	if (!init_func || init_func(Module)) {
 	    Module->Handle = (void *)Handle;
 	    return TRUE;
 	}
-	my(dlclose)(Handle);
+	dlclose(Handle);
 	return FALSE;
     }
     return TRUE;
 }
 
 void DlClose(module Module) {
-    void (*quit_dl)(module);
-    
     if (Module && Module->Handle) {
 	if (Module->NameLen != 0) {
-	    quit_dl = (void (*)(module)) my(dlsym)((my_handle)Module->Handle, "QuitModule");
-	    if (quit_dl)
-		quit_dl(Module);
+            void (*quit_func)(module) = (void (*)(module)) dlsym((dlhandle)Module->Handle, "QuitModule");
+	    if (quit_func)
+		quit_func(Module);
 	}
-	my(dlclose)((my_handle)Module->Handle);
+	dlclose((dlhandle)Module->Handle);
 	Module->Handle = NULL;
     }
 }
@@ -178,7 +146,7 @@ udat DlName2Code(byte *name) {
 
 void *DlSym(module Module, CONST byte *name) {
     if (Module && name)
-	return (void *)my(dlsym)((my_handle)Module->Handle, name);
+	return (void *)dlsym((dlhandle)Module->Handle, name);
     
     return NULL;
 }
