@@ -20,8 +20,8 @@
 #include "hw_dirty.h"
 #include "common.h"
 
-#ifdef DATADIR
-# define GFXDIR DATADIR "/twin/themes/hw_gfx"
+#ifdef PKG_DATADIR
+# define GFXDIR PKG_DATADIR "/themes/hw_gfx"
 #else
 # define GFXDIR "themes/hw_gfx"
 #endif

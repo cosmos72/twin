@@ -18,7 +18,7 @@ endif
 
 AM_CPPFLAGS           = -I$(top_srcdir)/include -I$(top_srcdir)/server
 libhw_X11_la_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/server $(X11_CPPFLAGS)
-libhw_gfx_la_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/server $(X11_CPPFLAGS)
+libhw_gfx_la_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/server $(X11_CPPFLAGS) -DPKG_DATADIR="\"$(pkgdatadir)\""
 
 libhw_X11_la_SOURCES  = hw_X11.c
 libhw_gfx_la_SOURCES  = hw_gfx.c
