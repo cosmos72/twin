@@ -287,8 +287,9 @@ static run *RCNew(node l) {
     run *r;
     
     if ((r = (run *)AllocMem(sizeof(run)))) {
-	r->cycle = 0;
-	r->stack[ r->depth = 0 ] = l;
+        WriteMem(r, 0, sizeof(run));
+        r->cycle = 0;
+        r->stack[ r->depth = 0 ] = l;    
 	RCAddFirst(r, Run);
     }
     return r;

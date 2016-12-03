@@ -1272,10 +1272,7 @@ static byte ReadGlobals(void) {
 
 static byte rcparse(str path);
 
-#ifdef THIS_MODULE
-static
-#endif
-byte rcload(void) {
+static byte rcload(void) {
     str path;
     uldat len;
 #ifndef DEBUG_FORK
@@ -1368,9 +1365,6 @@ byte rcload(void) {
 #endif
 }
 
-
-#ifdef THIS_MODULE
-
 byte InitModule(module Module) {
     Module->Private = (void *)rcload;
     return TRUE;
@@ -1378,6 +1372,5 @@ byte InitModule(module Module) {
 
 void QuitModule(module Module) {
 }
-#endif /* THIS_MODULE */
 
 #endif /* _TWIN_RCPARSE_H */

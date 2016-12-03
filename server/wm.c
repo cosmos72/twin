@@ -77,10 +77,7 @@ INLINE sbyte IsTabPosition(window Window, udat pos, sbyte isX) {
     return pos >= (start = TabStart(Window, isX)) ? pos - start < TabLen(Window, isX) ? 0 : 1 : -1;
 }
 
-#ifdef THIS_MODULE
-static
-#endif
-byte WMFindBorderWindow(window W, dat u, dat v, byte Border, hwattr *PtrAttr) {
+static byte WMFindBorderWindow(window W, dat u, dat v, byte Border, hwattr *PtrAttr) {
     hwfont *BorderFont, Font;
     ldat k;
     uldat Attrib;
@@ -1869,7 +1866,6 @@ static void SmartPlace(widget W, screen Screen) {
 }
 
 
-#ifdef THIS_MODULE
 static void OverrideMethods(byte enter) {
     if (enter)
 	OverrideMethod(Window,FindBorder, FakeFindBorderWindow, WMFindBorderWindow);
@@ -1879,9 +1875,6 @@ static void OverrideMethods(byte enter) {
 
 
 byte InitModule(module Module)
-#else
-byte InitWM(void)
-#endif
 {
     byte sent = FALSE;
     
@@ -1898,10 +1891,7 @@ byte InitWM(void)
 		Remove(MapQueue);
 		
 		if (InitRC()) {
-
-#ifdef THIS_MODULE
 		    OverrideMethods(TRUE);
-#endif
 		    return TRUE;
 		} else {
 		    sent = TRUE;
@@ -1922,7 +1912,6 @@ byte InitWM(void)
     return FALSE;
 }
 
-#ifdef THIS_MODULE
 void QuitModule(module Module) {
     QuitRC();
     OverrideMethods(FALSE);
@@ -1930,4 +1919,3 @@ void QuitModule(module Module) {
     Delete(WM_MsgPort);
     Delete(MapQueue);
 }
-#endif /* THIS_MODULE */

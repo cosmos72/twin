@@ -27,23 +27,18 @@
 #include "twin.h"
 #include "methods.h"
 #include "data.h"
+#include "extreg.h"
+#include "hw.h"
 #include "main.h"
 #include "printk.h"
-#include "util.h"
-#include "hw.h"
-#include "extreg.h"
-
 #include "rctypes.h"
-
+#include "util.h"
+#include "version.h"
 #include "wm.h"
-#include "rcrun.h"
 
-#ifdef CONF_THIS_MODULE
-# include "version.h"
-#endif
-
-#include "rcparse_tab.h" /* needed by rcparse.h */
-#include "rcparse.h"
+#include "rcrun.h"       /* needs wm.h, rctypes.h */
+#include "rcparse_tab.h" /* needs rcrun.h         */
+#include "rcparse.h"     /* needs rcparse_tab.h   */
 
 
 /* also put here the CONF_* and DEBUG_* used in rcparse.h so that MkDep catches them */

@@ -285,22 +285,32 @@ static module DlLoadAny(uldat len, byte *name) {
 	(path = AllocMem(len + strlen(modules_prefix) + strlen(DL_SUFFIX) + 1))) {
 	
 	sprintf(path, "%s%.*s%s", modules_prefix, (int)len, name, DL_SUFFIX);
+	Module->Handle = (void *)dlopen(path);
+        FreeMem(path);
 
-	if ((Module->Handle = (void *)dlopen(path)) &&
+        if (Module->Handle) {
 	    /*
 	     * Module MUST have a InitModule function, as it needs to set
 	     * Module->Private to its xxx_InitHW() startup code.
 	     */
-	    (init_func = (byte (*)(module)) dlsym((dlhandle)Module->Handle, "InitModule")) &&
-	    init_func(Module)) {
-
-	    FreeMem(path);
-	    return Module;
-	} else
+	    if ((init_func = (byte (*)(module)) dlsym((dlhandle)Module->Handle, "InitModule"))) {
+                if (init_func(Module)) {
+                    return Module;
+                } else if (ErrStr == NULL || *ErrStr == '\0') {
+                    Error(DLERROR);
+                    ErrStr = "InitModule() failed";
+                }
+            } else {
+                Error(DLERROR);
+                ErrStr = "InitModule() not found in module";
+            }
+        } else {
+            Error(DLERROR);
 	    ErrStr = dlerror();
-	FreeMem(path);
-    } else
+	}
+    } else {
 	ErrStr = "Out of memory!";
+    }
     return (module)0;
 }
 

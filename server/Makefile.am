@@ -31,10 +31,11 @@ libwm_la_SOURCES      = rcopt.c rcrun.c shm.c wm.c
 twdisplay_LDFLAGS     = -export-dynamic
 twin_server_LDFLAGS   = -export-dynamic
 
-librcparse_la_LDFLAGS = -export-dynamic -release $(PACKAGE_VERSION)
-libsocket_la_LDFLAGS  = -export-dynamic -release $(PACKAGE_VERSION)
-libterm_la_LDFLAGS    = -export-dynamic -release $(PACKAGE_VERSION)
-libwm_la_LDFLAGS      = -export-dynamic -release $(PACKAGE_VERSION)
+librcparse_la_LDFLAGS = -export-dynamic -export-symbols-regex '^(Init|Quit)Module$$' -release $(PACKAGE_VERSION)
+libsocket_la_LDFLAGS  = -export-dynamic -export-symbols-regex '^(Init|Quit)Module$$' -release $(PACKAGE_VERSION)
+libterm_la_LDFLAGS    = -export-dynamic -export-symbols-regex '^(Init|Quit)Module$$' -release $(PACKAGE_VERSION)
+# libwm exports some symbols needed by librcparse, do not constrain them with -export-symbols-regex
+libwm_la_LDFLAGS      = -export-dynamic                                              -release $(PACKAGE_VERSION)
 
 twdisplay_LDADD       = $(LIBTW) $(LIBTUTF) $(LIBLTDL) $(LIBDL)
 twin_server_LDADD     =          $(LIBTUTF) $(LIBLTDL) $(LIBDL)

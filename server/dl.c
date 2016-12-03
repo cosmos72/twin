@@ -13,8 +13,9 @@
 #include "twin.h"
 #include "methods.h"
 #include "data.h"
-#include "util.h"
 #include "dl.h"
+#include "util.h"
+#include "printk.h"
 #include "version.h"
 
 #include "dl_helper.h"
@@ -52,11 +53,21 @@ byte DlOpen(module Module) {
 
     if (name) {
 	init_func = (byte (*)(module)) dlsym(Handle, "InitModule");
-	if (!init_func || init_func(Module)) {
+	if (init_func && init_func(Module)) {
 	    Module->Handle = (void *)Handle;
 	    return TRUE;
 	}
 	dlclose(Handle);
+
+        if (init_func) {
+            if (ErrStr == NULL || *ErrStr == '\0') {
+                Error(DLERROR);
+                ErrStr = "InitModule() failed";
+            }
+        } else {
+            Error(DLERROR);
+            ErrStr = "InitModule() not found in module";
+        }
 	return FALSE;
     }
     return TRUE;
@@ -74,7 +85,7 @@ void DlClose(module Module) {
     }
 }
 
-module DlLoadAny(uldat len, byte *name) {
+module DlLoadAny(uldat len, CONST byte *name) {
     module Module;
     
     for (Module = All->FirstModule; Module; Module = Module->Next) {
@@ -93,22 +104,44 @@ module DlLoadAny(uldat len, byte *name) {
 
 static module So[MAX_So];
 
+udat DlName2Code(CONST byte *name) {
+    if (!CmpStr(name, "wm"))
+	return WMSo;
+    if (!CmpStr(name, "term"))
+	return TermSo;
+    if (!CmpStr(name, "socket"))
+	return SocketSo;
+    if (!CmpStr(name, "rcparse"))
+	return RCParseSo;
+    return MainSo;
+}
+
+static CONST byte * DlCode2Name(uldat code) {
+    switch (code)
+    {
+    case WMSo:      return "wm";
+    case TermSo:    return "term";
+    case SocketSo:  return "socket";
+    case RCParseSo: return "rcparse";
+    default:
+    case MainSo:    return NULL;
+    }
+}
+
+
+
 module DlLoad(uldat code) {
-    module M;
-    if (code < MAX_So) {
-	if (!(M = So[code])) {
-	    switch (code) {
-	      case WMSo:      M = DlLoadAny(2, "wm"); break;
-	      case TermSo:    M = DlLoadAny(4, "term"); break;
-	      case SocketSo:  M = DlLoadAny(6, "socket"); break;
-	      case RCParseSo: M = DlLoadAny(7, "rcparse"); break;
-	      default:
-	      case MainSo:    M = DlLoadAny(0, NULL); break;
-	    }
-	    if ((So[code] = M)) {
-		if (All->FnHookModule)
-		    All->FnHookModule(All->HookModule);
-	    }
+    module M = (module)0;
+    if (code < MAX_So && !(M = So[code])) {
+        CONST byte * name = DlCode2Name(code);
+        M = DlLoadAny(name ? LenStr(name) : 0, name);
+        if ((So[code] = M)) {
+            if (All->FnHookModule)
+                All->FnHookModule(All->HookModule);
+        } else {
+            printk("failed to load module %s: %s\n",
+                   name ? name : (CONST byte *)"(NULL)",
+                   ErrStr ? ErrStr : (CONST byte *)"unknown error");
 	}
     }
     return M;
@@ -130,19 +163,6 @@ module DlIsLoaded(uldat code) {
 	return So[code];
     return (module)0;
 }
-
-udat DlName2Code(byte *name) {
-    if (!CmpStr(name, "wm"))
-	return WMSo;
-    if (!CmpStr(name, "term"))
-	return TermSo;
-    if (!CmpStr(name, "socket"))
-	return SocketSo;
-    if (!CmpStr(name, "rcparse"))
-	return RCParseSo;
-    return MainSo;
-}
-
 
 void *DlSym(module Module, CONST byte *name) {
     if (Module && name)

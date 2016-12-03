@@ -26,11 +26,9 @@ libhw_ggi_la_SOURCES  = hw_ggi.c
 libhw_tty_la_SOURCES  = hw_tty.c
 libhw_twin_la_SOURCES = hw_twin.c
 
+AM_LDFLAGS            = -export-dynamic -export-symbols-regex '^(Init|Quit)Module$$' -release $(PACKAGE_VERSION)
 libhw_X11_la_LDFLAGS  = -export-dynamic -export-symbols-regex '^(Init|Quit)Module$$' -release $(PACKAGE_VERSION) $(X11_LDFLAGS)
 libhw_gfx_la_LDFLAGS  = -export-dynamic -export-symbols-regex '^(Init|Quit)Module$$' -release $(PACKAGE_VERSION) $(X11_LDFLAGS)
-libhw_ggi_la_LDFLAGS  = -export-dynamic -export-symbols-regex '^(Init|Quit)Module$$' -release $(PACKAGE_VERSION)
-libhw_tty_la_LDFLAGS  = -export-dynamic -export-symbols-regex '^(Init|Quit)Module$$' -release $(PACKAGE_VERSION)
-libhw_twin_la_LDFLAGS = -export-dynamic -export-symbols-regex '^(Init|Quit)Module$$' -release $(PACKAGE_VERSION)
 
 libhw_X11_la_LIBADD   = $(LIBX11)
 libhw_gfx_la_LIBADD   = $(LIBX11) $(LIBXPM)

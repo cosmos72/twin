@@ -348,6 +348,7 @@ static void X11_QuitHW(void) {
     HW->QuitHW = NoOp;
 
     FreeMem(HW->Private);
+    HW->Private = NULL;
 }
 
 static byte X11_LoadPixmap(Pixmap *px, byte *name, int nlen, byte strict) {
@@ -449,6 +450,7 @@ static byte gfx_InitHW(void) {
 	printk("      gfx_InitHW(): Out of memory!\n");
 	return FALSE;
     }
+    WriteMem(HW->Private, 0, sizeof(struct x11_data));
     
     /* autodetect */
     xmonochrome = TRUE + TRUE;
@@ -459,11 +461,14 @@ static byte gfx_InitHW(void) {
     /* default: show the whole screen */
     xhw_view = xhw_startx = xhw_starty = xhw_endx = xhw_endy = 0;
 
+    /* not yet opened */
+    xdisplay = (Display *)0;
+    
     if (arg && HW->NameLen > 4) {
 	arg += 4; /* skip "-hw=" */
 	
 	if (strncmp(arg, "gfx", 3))
-	    return FALSE; /* user said "use <arg> as display, not gfx" */
+	    goto fail; /* user said "use <arg> as display, not gfx" */
 	
 	/* skip "gfx" */
 	arg += 3;
@@ -786,7 +791,8 @@ static byte gfx_InitHW(void) {
 	else
 	    printk("      gfx_InitHW() failed: DISPLAY is not set\n");
     }
-	
+
+fail:
     if (dpy0)       *dpy0       = ',';
     if (fontname0)  *fontname0  = ',';
     if (charset0)   *charset0   = ',';
@@ -795,6 +801,7 @@ static byte gfx_InitHW(void) {
 	X11_QuitHW();
 
     FreeMem(HW->Private);
+    HW->Private = NULL;
     
     return FALSE;
 }

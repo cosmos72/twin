@@ -2734,18 +2734,13 @@ static void SocketH(msgport MsgPort) {
 }
 
 
-#ifdef THIS_MODULE
-
 static void (*save_unixSocketIO)(int fd, uldat slot);
 
 byte InitModule(module Module)
-#else
-byte InitSocket(void)
-#endif
 {
     uldat m;
     struct sockaddr_in addr;
-    char opt[15];
+    char opt[TW_SIZEOF_SIZE_T] = { 0, };
 
     if (!sockInitAuth()) {
 	printk("twin: failed to create ~/.TwinAuth: %."STR(TW_SMALLBUFF)"s\n", ErrStr);
@@ -2758,7 +2753,7 @@ byte InitSocket(void)
     addr.sin_port = htons(TW_INET_PORT + strtoul(TWDisplay+1, NULL, 16));
 	
     if ((inetFd = socket(AF_INET, SOCK_STREAM, 0)) >= 0 &&
-	setsockopt(inetFd, SOL_SOCKET, SO_REUSEADDR, (void *)&opt, sizeof(opt)) >= 0 &&
+	setsockopt(inetFd, SOL_SOCKET, SO_REUSEADDR, (void *)opt, sizeof(opt)) >= 0 &&
 	bind(inetFd, (struct sockaddr *)&addr, sizeof(addr)) >= 0 &&
 	listen(inetFd, 1) >= 0 &&
 	fcntl(inetFd, F_SETFD, FD_CLOEXEC) >= 0) {
@@ -2789,9 +2784,7 @@ byte InitSocket(void)
 	CopyMem(&m, TwinMagicData+TwinMagicData[0]-sizeof(uldat), sizeof(uldat));
 
 	if (unixSlot != NOSLOT) {
-#ifdef THIS_MODULE
 	    save_unixSocketIO = FdList[unixSlot].HandlerIO.S;
-#endif
 	    FdList[unixSlot].HandlerIO.S = unixSocketIO;
 	}
 
@@ -2801,7 +2794,6 @@ byte InitSocket(void)
     return FALSE;
 }
 
-#ifdef THIS_MODULE
 void QuitModule(module Module) {
     if (unixSlot != NOSLOT)
 	FdList[unixSlot].HandlerIO.S = save_unixSocketIO;
@@ -2827,4 +2819,3 @@ void QuitModule(module Module) {
     UnRegisterExt(Socket,DecodeExtension,sockDecodeExtension);
     UnRegisterExt(Socket,MultiplexS,sockMultiplexS);
 }
-#endif

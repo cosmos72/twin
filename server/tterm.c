@@ -202,8 +202,6 @@ static void TwinTermIO(int Fd, window Window) {
 	Delete(Window);
 }
 
-#ifdef THIS_MODULE
-
 #include "tty.h"
 
 static void OverrideMethods(byte enter) {
@@ -229,9 +227,6 @@ static void OverrideMethods(byte enter) {
 
 
 byte InitModule(module Module)
-#else
-byte InitTerm(void)
-#endif
 {
     window Window;
     byte *shellpath, *shell;
@@ -257,9 +252,7 @@ byte InitTerm(void)
 	Item4MenuCommon(Term_Menu)) {
 
 	RegisterExt(Term,Open,OpenTerm);
-#ifdef THIS_MODULE
 	OverrideMethods(TRUE);
-#endif
 
 	if (default_args[1][0] == '/')
 	    default_args[1][0] = '-';
@@ -272,11 +265,9 @@ byte InitTerm(void)
     return FALSE;
 }
 
-#ifdef THIS_MODULE
 void QuitModule(module Module) {
     UnRegisterExt(Term,Open,OpenTerm);
     OverrideMethods(FALSE);
     if (Term_MsgPort)
 	Delete(Term_MsgPort);
 }
-#endif /* THIS_MODULE */

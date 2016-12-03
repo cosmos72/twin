@@ -157,10 +157,7 @@ static ttbyte IsSafeMethod(ttopaque m) {
 }
 
 
-#ifdef THIS_MODULE
-static
-#endif
-tany ext_TT_CallBExtension(extension Extension, topaque len, TT_CONST byte *data, void *return_type) {
+static tany ext_TT_CallBExtension(extension Extension, topaque len, TT_CONST byte *data, void *return_type) {
     ttarg args[TW_MAX_ARGS_N];
     struct s_tsfield tws[TW_MAX_ARGS_N];
     ttarg arg0[1];
@@ -215,11 +212,7 @@ tany ext_TT_CallBExtension(extension Extension, topaque len, TT_CONST byte *data
 
 TT_DECL_MAGIC(ext_TT_magic);
 
-#ifdef THIS_MODULE
 byte InitModule(extension E)
-#else
-byte ext_TT_Init(extension E)
-#endif
 {
     return
 	TTCheckMagic(ext_TT_magic) &&
@@ -236,11 +229,7 @@ TT_INLINE void ext_TT_quit_data(void) {
 }
 
 
-#ifdef THIS_MODULE
 void QuitModule(extension E)
-#else
-void ext_TT_Quit(extension E)
-#endif
 {
     ext_TT_quit_data();
     TTClose();

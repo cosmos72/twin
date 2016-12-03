@@ -165,6 +165,11 @@ static byte module_InitHW(byte *arg, uldat len) {
     if (name)
 	len = name - arg;
     
+    if (len == 1 && *arg == 'X') {
+        len = 3;
+        arg = "X11";
+    }
+    
     if ((name = AllocMem(len + 4))) {
 	sprintf(name, "hw_%.*s", (int)len, arg);
 

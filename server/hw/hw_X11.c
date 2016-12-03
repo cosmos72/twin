@@ -205,6 +205,7 @@ static void X11_QuitHW(void) {
     HW->QuitHW = NoOp;
 
     FreeMem(HW->Private);
+    HW->Private = NULL;
 }
 
 static byte X11_InitHW(void) {
@@ -226,15 +227,19 @@ static byte X11_InitHW(void) {
 	printk("      X11_InitHW(): Out of memory!\n");
 	return FALSE;
     }
+    WriteMem(HW->Private, 0, sizeof(struct x11_data));
 
     /* default: show the whole screen */
     xhw_view = xhw_startx = xhw_starty = xhw_endx = xhw_endy = 0;
+
+    /* not yet opened */
+    xdisplay = NULL;
     
     if (arg && HW->NameLen > 4) {
 	arg += 4; /* skip "-hw=" */
 	
 	if (*arg++ != 'X')
-	    return FALSE; /* user said "use <arg> as display, not X" */
+	    goto fail; /* user said "use <arg> as display, not X11" */
 	
 	if (*arg == '1' && arg[1] == '1')
 	    arg += 2; /* `X11' is same as `X' */
@@ -479,7 +484,8 @@ static byte X11_InitHW(void) {
 	else
 	    printk("      X11_InitHW() failed: DISPLAY is not set\n");
     }
-	
+
+fail:
     if (xdisplay0) *xdisplay0 = ',';
     if (fontname0) *fontname0 = ',';
     if (charset0) *charset0 = ',';
@@ -488,6 +494,7 @@ static byte X11_InitHW(void) {
 	X11_QuitHW();
 
     FreeMem(HW->Private);
+    HW->Private = NULL;
     
     return FALSE;
 }
