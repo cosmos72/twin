@@ -1,6 +1,6 @@
 SUBDIRS = mapscrn
 
-bin_PROGRAMS = twattach twcat twclip twclutter twcuckoo twdialog twevent twfindtwin twlsmsgport twlsobj twsendmsg twsetroot twsysmon twterm twthreadtest
+bin_PROGRAMS  = twattach twcat twclip twclutter twcuckoo twdialog twevent twfindtwin twlsmsgport twlsobj twsendmsg twsetroot twsysmon twterm twthreadtest
 sbin_PROGRAMS = twdm
 
 AM_CPPFLAGS = -I$(top_srcdir)/include
@@ -41,3 +41,8 @@ twsetroot_LDADD    = $(LIBTW)
 twsysmon_LDADD     = $(LIBTW)
 twterm_LDADD       = $(LIBTW) $(LIBTUTF)
 twthreadtest_LDADD = $(LIBTW) $(LIBPTHREAD)
+
+install-exec-hook:
+	rm -f            $(DESTDIR)$(bindir)/twdetach
+	$(LN_S) twattach $(DESTDIR)$(bindir)/twdetach
+
