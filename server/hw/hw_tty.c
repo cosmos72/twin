@@ -35,7 +35,7 @@
 
 #if !defined(CONF_HW_TTY_LINUX) && !defined(CONF_HW_TTY_TWTERM) && !defined(CONF_HW_TTY_TERMCAP)
 # warning trying to compile hw_tty.c without support for any specific terminal.
-# warning twin terminal driver will be enabled by default.
+# warning twterm driver will be enabled by default.
 # define CONF_HW_TTY_TWTERM
 #endif
 
