@@ -8,7 +8,7 @@ AC_CONFIG_HEADERS([include/config.h])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_MACRO_DIRS([m4])
 AC_CONFIG_AUX_DIR([admin])
-AM_INIT_AUTOMAKE([1.15 foreign subdir-objects])
+AM_INIT_AUTOMAKE([1.14 foreign subdir-objects])
 
 m4_define([AH_HEADER], [config.h]) dnl filename of first AC_CONFIG_HEADERS. works around a bug in included libltdl Makefiles
 
@@ -46,12 +46,16 @@ fi
 AC_FUNC_ALLOCA
 AC_HEADER_TIME
 AC_HEADER_SYS_WAIT
-AC_CHECK_HEADERS([arpa/inet.h asm/page.h crypt.h dlfcn.h fcntl.h grp.h inttypes.h libintl.h limits.h \
+AC_CHECK_HEADERS([ \
+       arpa/inet.h asm/page.h crypt.h dirent.h dlfcn.h fcntl.h grp.h inttypes.h libintl.h limits.h \
        linux/kd.h linux/keyboard.h linux/vt.h locale.h machine/param.h malloc.h memory.h \
-       ncurses.h ncurses/ncurses.h ncurses/termcap.h netdb.h netinet/in.h pthread.h \
+       ncurses.h ncurses/ncurses.h ncurses/termcap.h ndir.h netdb.h netinet/in.h pthread.h \
        shadow.h signal.h stdarg.h stddef.h stdint.h stdlib.h string.h \
-       sys/filio.h sys/ioctl.h sys/mman.h sys/param.h sys/select.h sys/socket.h sys/stat.h \
-       sys/timeb.h sys/un.h sys/utsname.h termcap.h termio.h termios.h unistd.h zlib.h])
+       sys/dir.h sys/filio.h sys/ioctl.h sys/mman.h sys/ndir.h sys/param.h sys/select.h sys/socket.h \
+       sys/stat.h sys/timeb.h sys/un.h sys/utsname.h termcap.h termio.h termios.h unistd.h zlib.h])
+       
+
+
 AC_STRUCT_TM
 
 # Checks for typedefs, structures, and compiler characteristics.
@@ -121,11 +125,10 @@ AC_FUNC_REALLOC
 AC_FUNC_SETVBUF_REVERSED
 dnl we never use the 'struct rusage' returned by wait3()
 dnl AC_FUNC_WAIT3
-AC_CHECK_FUNCS([dup2 ftime gethostname getpagesize getspnam gettimeofday grantpt initgroups \
-      memchr memmove memset munmap ptsname putenv select setenv setlocale socket strchr strdup \
+AC_CHECK_FUNCS([alphasort dup2 ftime gethostname getpagesize getspnam gettimeofday grantpt initgroups \
+      memchr memmove memset munmap ptsname putenv scandir select setenv setlocale socket strchr strdup \
       strerror strrchr strspn strstr strtol strtoul sysconf tcsetpgrp uname unlockpt \
       vsprintf vsnprintf wait3 wait4])
-
 
 AC_SEARCH_LIBS(crypt,          crypt)                   dnl crypt() is needed by twdm
 AC_SEARCH_LIBS(deflate,        z)
