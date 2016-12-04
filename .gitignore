@@ -1,3 +1,4 @@
+*~
 *.a
 *.o
 *.lo
@@ -8,9 +9,9 @@
 autom4te.cache
 libtool
 config.log
+config.cache
 config.status
 Makefile
-Makefile.in
 .deps
 .dirstamp
 .libs
@@ -33,9 +34,10 @@ clients/twterm
 clients/twthreadtest
 include/config.h
 include/stamp-h1
-include/twautoconf.h
 include/Tw/autoconf.h
+include/twautoconf.h
+include/version.h
 server/twdisplay
 server/twin
-server/twin_real
-server/twin_wrapper
+server/twin_server
+
