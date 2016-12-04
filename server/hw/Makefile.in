@@ -78,11 +78,12 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-@LIBHW_X11_la_TRUE@am__append_1 = libhw_X11.la
-@LIBHW_GFX_la_TRUE@am__append_2 = libhw_gfx.la
-@LIBHW_GGI_la_TRUE@am__append_3 = libhw_ggi.la
-@LIBHW_TTY_la_TRUE@am__append_4 = libhw_tty.la
-@LIBHW_TWIN_la_TRUE@am__append_5 = libhw_twin.la
+@LIBHW_DISPLAY_la_TRUE@am__append_1 = libhw_display.la
+@LIBHW_X11_la_TRUE@am__append_2 = libhw_X11.la
+@LIBHW_GFX_la_TRUE@am__append_3 = libhw_gfx.la
+@LIBHW_GGI_la_TRUE@am__append_4 = libhw_ggi.la
+@LIBHW_TTY_la_TRUE@am__append_5 = libhw_tty.la
+@LIBHW_TWIN_la_TRUE@am__append_6 = libhw_twin.la
 subdir = server/hw
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/admin/depcomp
@@ -144,6 +145,10 @@ libhw_X11_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(libhw_X11_la_LDFLAGS) $(LDFLAGS) -o $@
 @LIBHW_X11_la_TRUE@am_libhw_X11_la_rpath = -rpath $(pkglibdir)
+libhw_display_la_DEPENDENCIES =
+am_libhw_display_la_OBJECTS = hw_display.lo
+libhw_display_la_OBJECTS = $(am_libhw_display_la_OBJECTS)
+@LIBHW_DISPLAY_la_TRUE@am_libhw_display_la_rpath = -rpath $(pkglibdir)
 libhw_gfx_la_DEPENDENCIES = $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_libhw_gfx_la_OBJECTS = libhw_gfx_la-hw_gfx.lo
@@ -200,12 +205,12 @@ AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
-SOURCES = $(libhw_X11_la_SOURCES) $(libhw_gfx_la_SOURCES) \
-	$(libhw_ggi_la_SOURCES) $(libhw_tty_la_SOURCES) \
-	$(libhw_twin_la_SOURCES)
-DIST_SOURCES = $(libhw_X11_la_SOURCES) $(libhw_gfx_la_SOURCES) \
-	$(libhw_ggi_la_SOURCES) $(libhw_tty_la_SOURCES) \
-	$(libhw_twin_la_SOURCES)
+SOURCES = $(libhw_X11_la_SOURCES) $(libhw_display_la_SOURCES) \
+	$(libhw_gfx_la_SOURCES) $(libhw_ggi_la_SOURCES) \
+	$(libhw_tty_la_SOURCES) $(libhw_twin_la_SOURCES)
+DIST_SOURCES = $(libhw_X11_la_SOURCES) $(libhw_display_la_SOURCES) \
+	$(libhw_gfx_la_SOURCES) $(libhw_ggi_la_SOURCES) \
+	$(libhw_tty_la_SOURCES) $(libhw_twin_la_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -387,10 +392,11 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 pkglib_LTLIBRARIES = $(am__append_1) $(am__append_2) $(am__append_3) \
-	$(am__append_4) $(am__append_5)
+	$(am__append_4) $(am__append_5) $(am__append_6)
 AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/server
 libhw_X11_la_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/server $(X11_CPPFLAGS)
 libhw_gfx_la_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/server $(X11_CPPFLAGS) -DPKG_DATADIR="\"$(pkgdatadir)\""
+libhw_display_la_SOURCES = hw_display.c
 libhw_X11_la_SOURCES = hw_X11.c
 libhw_gfx_la_SOURCES = hw_gfx.c
 libhw_ggi_la_SOURCES = hw_ggi.c
@@ -399,6 +405,7 @@ libhw_twin_la_SOURCES = hw_twin.c
 AM_LDFLAGS = -export-dynamic -export-symbols-regex '^(Init|Quit)Module$$' -release $(PACKAGE_VERSION)
 libhw_X11_la_LDFLAGS = -export-dynamic -export-symbols-regex '^(Init|Quit)Module$$' -release $(PACKAGE_VERSION) $(X11_LDFLAGS)
 libhw_gfx_la_LDFLAGS = -export-dynamic -export-symbols-regex '^(Init|Quit)Module$$' -release $(PACKAGE_VERSION) $(X11_LDFLAGS)
+libhw_display_la_LIBADD = 
 libhw_X11_la_LIBADD = $(LIBTUTF) $(LIBX11)
 libhw_gfx_la_LIBADD = $(LIBTUTF) $(LIBX11) $(LIBXPM)
 libhw_ggi_la_LIBADD = $(LIBGGI)
@@ -477,6 +484,9 @@ clean-pkglibLTLIBRARIES:
 libhw_X11.la: $(libhw_X11_la_OBJECTS) $(libhw_X11_la_DEPENDENCIES) $(EXTRA_libhw_X11_la_DEPENDENCIES) 
 	$(AM_V_CCLD)$(libhw_X11_la_LINK) $(am_libhw_X11_la_rpath) $(libhw_X11_la_OBJECTS) $(libhw_X11_la_LIBADD) $(LIBS)
 
+libhw_display.la: $(libhw_display_la_OBJECTS) $(libhw_display_la_DEPENDENCIES) $(EXTRA_libhw_display_la_DEPENDENCIES) 
+	$(AM_V_CCLD)$(LINK) $(am_libhw_display_la_rpath) $(libhw_display_la_OBJECTS) $(libhw_display_la_LIBADD) $(LIBS)
+
 libhw_gfx.la: $(libhw_gfx_la_OBJECTS) $(libhw_gfx_la_DEPENDENCIES) $(EXTRA_libhw_gfx_la_DEPENDENCIES) 
 	$(AM_V_CCLD)$(libhw_gfx_la_LINK) $(am_libhw_gfx_la_rpath) $(libhw_gfx_la_OBJECTS) $(libhw_gfx_la_LIBADD) $(LIBS)
 
@@ -495,6 +505,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hw_display.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hw_ggi.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hw_tty.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hw_twin.Plo@am__quote@
