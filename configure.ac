@@ -51,10 +51,10 @@ AC_CHECK_HEADERS([ \
        linux/kd.h linux/keyboard.h linux/vt.h locale.h machine/param.h malloc.h memory.h \
        ncurses.h ncurses/ncurses.h ncurses/termcap.h ndir.h netdb.h netinet/in.h pthread.h \
        shadow.h signal.h stdarg.h stddef.h stdint.h stdlib.h string.h \
-       sys/dir.h sys/filio.h sys/ioctl.h sys/mman.h sys/ndir.h sys/param.h sys/select.h sys/socket.h \
-       sys/stat.h sys/timeb.h sys/un.h sys/utsname.h termcap.h termio.h termios.h unistd.h zlib.h])
+       sys/dir.h sys/filio.h sys/ioctl.h sys/mman.h sys/ndir.h sys/param.h sys/resource.h \
+       sys/select.h sys/socket.h sys/stat.h sys/timeb.h sys/ttydefaults.h sys/un.h sys/utsname.h \
+       termcap.h termio.h termios.h unistd.h zlib.h])
        
-
 
 AC_STRUCT_TM
 
@@ -125,10 +125,12 @@ AC_FUNC_REALLOC
 AC_FUNC_SETVBUF_REVERSED
 dnl we never use the 'struct rusage' returned by wait3()
 dnl AC_FUNC_WAIT3
-AC_CHECK_FUNCS([alphasort dup2 ftime gethostname getpagesize getspnam gettimeofday grantpt initgroups \
-      memchr memmove memset munmap ptsname putenv scandir select setenv setlocale socket strchr strdup \
-      strerror strrchr strspn strstr strtol strtoul sysconf tcsetpgrp uname unlockpt \
-      vsprintf vsnprintf wait3 wait4])
+AC_CHECK_FUNCS([ \
+      alphasort dup2 ftime gethostname getpagesize getpt getspnam gettimeofday grantpt \
+      hstrerror initgroups lstat memchr memcmp memmove memset munmap \
+      ptsname putenv scandir select setenv setlocale socket strchr strdup \
+      strerror strrchr strspn strstr strtol strtoul sysconf tcsetpgrp \
+      uname unlockpt usleep vprintf vsprintf vsnprintf wait3 wait4])
 
 AC_SEARCH_LIBS(crypt,          crypt)                   dnl crypt() is needed by twdm
 AC_SEARCH_LIBS(deflate,        z)

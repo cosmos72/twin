@@ -118,6 +118,9 @@
 /* Define to 1 if you have the `getpagesize' function. */
 #undef HAVE_GETPAGESIZE
 
+/* Define to 1 if you have the `getpt' function. */
+#undef HAVE_GETPT
+
 /* Define to 1 if you have the `getspnam' function. */
 #undef HAVE_GETSPNAM
 
@@ -135,6 +138,9 @@
 
 /* Define to 1 if you have the <grp.h> header file. */
 #undef HAVE_GRP_H
+
+/* Define to 1 if you have the `hstrerror' function. */
+#undef HAVE_HSTRERROR
 
 /* Define to 1 if using the libltdl included with this package sources */
 #undef HAVE_INCLUDED_LTDL
@@ -169,6 +175,9 @@
 /* Define to 1 if you have the <locale.h> header file. */
 #undef HAVE_LOCALE_H
 
+/* Define to 1 if you have the `lstat' function. */
+#undef HAVE_LSTAT
+
 /* Define this if a modern libltdl is already installed */
 #undef HAVE_LTDL
 
@@ -187,6 +196,9 @@
 
 /* Define to 1 if you have the `memchr' function. */
 #undef HAVE_MEMCHR
+
+/* Define to 1 if you have the `memcmp' function. */
+#undef HAVE_MEMCMP
 
 /* Define to 1 if you have the `memmove' function. */
 #undef HAVE_MEMMOVE
@@ -342,6 +354,9 @@
 /* Define to 1 if you have the <sys/param.h> header file. */
 #undef HAVE_SYS_PARAM_H
 
+/* Define to 1 if you have the <sys/resource.h> header file. */
+#undef HAVE_SYS_RESOURCE_H
+
 /* Define to 1 if you have the <sys/select.h> header file. */
 #undef HAVE_SYS_SELECT_H
 
@@ -353,6 +368,9 @@
 
 /* Define to 1 if you have the <sys/timeb.h> header file. */
 #undef HAVE_SYS_TIMEB_H
+
+/* Define to 1 if you have the <sys/ttydefaults.h> header file. */
+#undef HAVE_SYS_TTYDEFAULTS_H
 
 /* Define to 1 if you have the <sys/types.h> header file. */
 #undef HAVE_SYS_TYPES_H
@@ -390,11 +408,17 @@
 /* Define to 1 if you have the `unlockpt' function. */
 #undef HAVE_UNLOCKPT
 
+/* Define to 1 if you have the `usleep' function. */
+#undef HAVE_USLEEP
+
 /* Define to 1 if you have the `vfork' function. */
 #undef HAVE_VFORK
 
 /* Define to 1 if you have the <vfork.h> header file. */
 #undef HAVE_VFORK_H
+
+/* Define to 1 if you have the `vprintf' function. */
+#undef HAVE_VPRINTF
 
 /* Define to 1 if you have the `vsnprintf' function. */
 #undef HAVE_VSNPRINTF

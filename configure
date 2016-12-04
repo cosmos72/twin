@@ -14722,8 +14722,9 @@ for ac_header in  \
        linux/kd.h linux/keyboard.h linux/vt.h locale.h machine/param.h malloc.h memory.h \
        ncurses.h ncurses/ncurses.h ncurses/termcap.h ndir.h netdb.h netinet/in.h pthread.h \
        shadow.h signal.h stdarg.h stddef.h stdint.h stdlib.h string.h \
-       sys/dir.h sys/filio.h sys/ioctl.h sys/mman.h sys/ndir.h sys/param.h sys/select.h sys/socket.h \
-       sys/stat.h sys/timeb.h sys/un.h sys/utsname.h termcap.h termio.h termios.h unistd.h zlib.h
+       sys/dir.h sys/filio.h sys/ioctl.h sys/mman.h sys/ndir.h sys/param.h sys/resource.h \
+       sys/select.h sys/socket.h sys/stat.h sys/timeb.h sys/ttydefaults.h sys/un.h sys/utsname.h \
+       termcap.h termio.h termios.h unistd.h zlib.h
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
@@ -14735,7 +14736,6 @@ _ACEOF
 fi
 
 done
-
 
 
 
@@ -16433,10 +16433,12 @@ else
 fi
 
 
-for ac_func in alphasort dup2 ftime gethostname getpagesize getspnam gettimeofday grantpt initgroups \
-      memchr memmove memset munmap ptsname putenv scandir select setenv setlocale socket strchr strdup \
-      strerror strrchr strspn strstr strtol strtoul sysconf tcsetpgrp uname unlockpt \
-      vsprintf vsnprintf wait3 wait4
+for ac_func in  \
+      alphasort dup2 ftime gethostname getpagesize getpt getspnam gettimeofday grantpt \
+      hstrerror initgroups lstat memchr memcmp memmove memset munmap \
+      ptsname putenv scandir select setenv setlocale socket strchr strdup \
+      strerror strrchr strspn strstr strtol strtoul sysconf tcsetpgrp \
+      uname unlockpt usleep vprintf vsprintf vsnprintf wait3 wait4
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"

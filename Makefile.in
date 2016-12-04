@@ -84,7 +84,7 @@ DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/include/config.h.in \
 	$(top_srcdir)/include/version.h.in COPYING COPYING.LIB INSTALL \
 	README admin/compile admin/config.guess admin/config.sub \
-	admin/depcomp admin/install-sh admin/missing admin/ltmain.sh \
+	admin/install-sh admin/missing admin/ltmain.sh \
 	$(top_srcdir)/admin/compile $(top_srcdir)/admin/config.guess \
 	$(top_srcdir)/admin/config.sub $(top_srcdir)/admin/install-sh \
 	$(top_srcdir)/admin/ltmain.sh $(top_srcdir)/admin/missing

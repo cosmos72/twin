@@ -15,7 +15,7 @@
 #define LOCALEDIR "/usr/share/locale"
 #endif
 
-#ifdef TW_HAVE_locale_h
+#ifdef TW_HAVE_LOCALE_H
 # include <locale.h>
 #endif
 
