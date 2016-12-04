@@ -43,7 +43,7 @@ static void test(TW_CONST char *dpy) {
 
 static int match_twsocket(TW_CONST struct dirent *d) {
     const char *s = d->d_name;
-    
+
     return !strncmp(s, ".Twin:", 6) &&
 	HX(s[6]) && (!s[7] ||
 		     (HX(s[7]) && (!s[8] ||
@@ -52,14 +52,14 @@ static int match_twsocket(TW_CONST struct dirent *d) {
 
 #if defined(TW_HAVE_SCANDIR) && defined(TW_HAVE_ALPHASORT)
 static void unix_socket_test(void) {
-    int alphasort();
+    int alphasort(const struct dirent **a, const struct dirent **b);
     struct dirent **namelist;
     char *s;
     int n = scandir("/tmp", &namelist, match_twsocket, alphasort);
 
     while (n > 0) {
 	s = namelist[0]->d_name;
-	    
+
 	test(s+5);
 
 	namelist++;
@@ -69,13 +69,13 @@ static void unix_socket_test(void) {
 #endif
 
 int main(int argc, char *argv[]) {
-    
+
     /* first: if given, check _ONLY_ command-line specified servers */
     if (*++argv) {
 	do {
 	    test(*argv);
 	} while (*++argv);
-	
+
 	/* bomb out */
 	return 1;
     }
@@ -84,15 +84,15 @@ int main(int argc, char *argv[]) {
 	fprintf(stderr, "twfindtwin: %s%s\n", TwStrError(TwErrno), TwStrErrorDetail(TwErrno, TwErrnoDetail));
 	return 1;
     }
-    
+
     /* then, check for environment TWDISPLAY */
     test(NULL);
-    
+
 #if defined(TW_HAVE_SCANDIR) && defined(TW_HAVE_ALPHASORT)
     /* last resort: exhaustive search in /tmp */
     unix_socket_test();
 #endif
-    
+
     return 1;
 }
 
