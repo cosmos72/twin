@@ -132,7 +132,8 @@ am__uninstall_files_from_dir = { \
 am__installdirs = "$(DESTDIR)$(pkglibdir)"
 LTLIBRARIES = $(pkglib_LTLIBRARIES)
 am__DEPENDENCIES_1 =
-libhw_X11_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
+libhw_X11_la_DEPENDENCIES = $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am_libhw_X11_la_OBJECTS = libhw_X11_la-hw_X11.lo
 libhw_X11_la_OBJECTS = $(am_libhw_X11_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
@@ -144,7 +145,7 @@ libhw_X11_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(libhw_X11_la_LDFLAGS) $(LDFLAGS) -o $@
 @LIBHW_X11_la_TRUE@am_libhw_X11_la_rpath = -rpath $(pkglibdir)
 libhw_gfx_la_DEPENDENCIES = $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_libhw_gfx_la_OBJECTS = libhw_gfx_la-hw_gfx.lo
 libhw_gfx_la_OBJECTS = $(am_libhw_gfx_la_OBJECTS)
 libhw_gfx_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
@@ -156,7 +157,7 @@ am_libhw_ggi_la_OBJECTS = hw_ggi.lo
 libhw_ggi_la_OBJECTS = $(am_libhw_ggi_la_OBJECTS)
 @LIBHW_GGI_la_TRUE@am_libhw_ggi_la_rpath = -rpath $(pkglibdir)
 libhw_tty_la_DEPENDENCIES = $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_libhw_tty_la_OBJECTS = hw_tty.lo
 libhw_tty_la_OBJECTS = $(am_libhw_tty_la_OBJECTS)
 @LIBHW_TTY_la_TRUE@am_libhw_tty_la_rpath = -rpath $(pkglibdir)
@@ -398,11 +399,11 @@ libhw_twin_la_SOURCES = hw_twin.c
 AM_LDFLAGS = -export-dynamic -export-symbols-regex '^(Init|Quit)Module$$' -release $(PACKAGE_VERSION)
 libhw_X11_la_LDFLAGS = -export-dynamic -export-symbols-regex '^(Init|Quit)Module$$' -release $(PACKAGE_VERSION) $(X11_LDFLAGS)
 libhw_gfx_la_LDFLAGS = -export-dynamic -export-symbols-regex '^(Init|Quit)Module$$' -release $(PACKAGE_VERSION) $(X11_LDFLAGS)
-libhw_X11_la_LIBADD = $(LIBX11)
-libhw_gfx_la_LIBADD = $(LIBX11) $(LIBXPM)
+libhw_X11_la_LIBADD = $(LIBTUTF) $(LIBX11)
+libhw_gfx_la_LIBADD = $(LIBTUTF) $(LIBX11) $(LIBXPM)
 libhw_ggi_la_LIBADD = $(LIBGGI)
-libhw_tty_la_LIBADD = $(LIBTERMCAP) $(LIBGPM)
-libhw_twin_la_LIBADD = $(LIBTW) $(LIBTUTF) $(LIBZ)
+libhw_tty_la_LIBADD = $(LIBTUTF) $(LIBTERMCAP) $(LIBGPM)
+libhw_twin_la_LIBADD = $(LIBTUTF) $(LIBTW) $(LIBZ)
 all: all-am
 
 .SUFFIXES:

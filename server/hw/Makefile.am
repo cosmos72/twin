@@ -30,8 +30,8 @@ AM_LDFLAGS            = -export-dynamic -export-symbols-regex '^(Init|Quit)Modul
 libhw_X11_la_LDFLAGS  = -export-dynamic -export-symbols-regex '^(Init|Quit)Module$$' -release $(PACKAGE_VERSION) $(X11_LDFLAGS)
 libhw_gfx_la_LDFLAGS  = -export-dynamic -export-symbols-regex '^(Init|Quit)Module$$' -release $(PACKAGE_VERSION) $(X11_LDFLAGS)
 
-libhw_X11_la_LIBADD   = $(LIBX11)
-libhw_gfx_la_LIBADD   = $(LIBX11) $(LIBXPM)
+libhw_X11_la_LIBADD   = $(LIBTUTF) $(LIBX11)
+libhw_gfx_la_LIBADD   = $(LIBTUTF) $(LIBX11) $(LIBXPM)
 libhw_ggi_la_LIBADD   = $(LIBGGI)
-libhw_tty_la_LIBADD   = $(LIBTERMCAP) $(LIBGPM)
-libhw_twin_la_LIBADD  = $(LIBTW) $(LIBTUTF) $(LIBZ)
+libhw_tty_la_LIBADD   = $(LIBTUTF) $(LIBTERMCAP) $(LIBGPM)
+libhw_twin_la_LIBADD  = $(LIBTUTF) $(LIBTW) $(LIBZ)
