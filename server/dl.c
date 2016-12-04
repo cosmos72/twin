@@ -22,7 +22,7 @@
 
 byte DlOpen(module Module) {
     dlhandle Handle = NULL;
-    uldat len, len0 = 1 + LenStr(conf_destdir_lib_twin) + LenStr(DL_PREFIX) + LenStr(DL_SUFFIX);
+    uldat len, len0 = 1 + LenStr(pkg_libdir) + LenStr(DL_PREFIX) + LenStr(DL_SUFFIX);
     byte *name = NULL;
     byte (*init_func)(module);
     
@@ -35,7 +35,7 @@ byte DlOpen(module Module) {
 	if (Module->NameLen) {
 	    len = len0 + Module->NameLen;
 	    if ((name = AllocMem(len+1)))
-		sprintf(name, "%s/%s%.*s%s", conf_destdir_lib_twin, DL_PREFIX, (int)Module->NameLen, Module->Name, DL_SUFFIX);
+		sprintf(name, "%s/%s%.*s%s", pkg_libdir, DL_PREFIX, (int)Module->NameLen, Module->Name, DL_SUFFIX);
 	    else {
 		Error(NOMEMORY);
 		return FALSE;

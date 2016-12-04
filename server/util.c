@@ -1122,31 +1122,33 @@ byte SetServerUid(uldat uid, byte privileges) {
 
 
 /*
- * search for a file relative to HOME, to CONF_DESTDIR or as path
+ * search for a file relative to HOME, to PKG_LIBDIR or as path
  * 
  * this for example will search "foo"
- * as "{HOME}/foo", "{CONF_DESTDIR}/lib/twin/foo" or plain "foo"
+ * as "${HOME}/foo", "${PKG_LIBDIR}/system.foo" or plain "foo"
  */
 byte *FindFile(byte *name, uldat *fsize) {
+    byte CONST *prefix[3], *infix[3];
     byte *path;
     byte CONST *dir;
-    byte CONST *search[3];
     int i, min_i, max_i, len, nlen = strlen(name);
     struct stat buf;
     
-    search[0] = HOME;
-    search[1] = conf_destdir_lib_twin;
-    search[2] = "";
+    prefix[0] = HOME;       infix[0] = (HOME && *HOME) ? "/" : "";
+    prefix[1] = pkg_libdir; infix[1] = "/system";
+    prefix[2] = "";         infix[2] = "";
     
     if (flag_secure)
-	min_i = max_i = 1; /* only conf_destdir_lib_twin */
+	min_i = max_i = 1; /* only pkg_libdir */
     else
 	min_i = 0, max_i = 2;
 
-    for (i = min_i; i <= max_i && (dir = search[i]); i++) {
-	len = strlen(dir);
+    for (i = min_i; i <= max_i; i++) {
+        if (!(dir = prefix[i]))
+	    continue;
+	len = strlen(dir) + strlen(infix[i]);
 	if ((path = AllocMem(len + nlen + 2))) {
-	    sprintf(path, "%s%s%s", dir, *dir ? "/" : "", name);
+	    sprintf(path, "%s%s%s", dir, infix[i], name);
 	    if (stat(path, &buf) == 0) {
 		if (fsize)
 		    *fsize = buf.st_size;
