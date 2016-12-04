@@ -49,16 +49,16 @@
 
 /* inline is NOT a standard C feature :( */
 #if !defined(INLINE)
-# if defined(HAVE_STATIC_INLINE)
+# if defined(TW_HAVE_STATIC_INLINE)
 #  define INLINE static inline
-# elif defined(HAVE_INLINE) || defined(inline)
+# elif defined(TW_HAVE_INLINE) || defined(inline)
 #  define INLINE inline
 # else
 #  define INLINE static
 # endif
 #endif
 
-#if defined(HAVE_STATIC_INLINE) || defined(HAVE_INLINE) || defined(inline)
+#if defined(TW_HAVE_STATIC_INLINE) || defined(TW_HAVE_INLINE) || defined(inline)
 # define CAN_INLINE 1
 #endif
 
@@ -67,7 +67,7 @@
 #endif
 
 #if !defined(FN_ATTR_CONST)
-# if defined(HAVE_ATTRIBUTE_CONST)
+# if defined(TW_HAVE_ATTRIBUTE_CONST)
 #  define FN_ATTR_CONST __attribute__((const))
 # else
 #  define FN_ATTR_CONST
@@ -75,7 +75,7 @@
 #endif
 
 #if !defined(TYPE_ATTR_PACKED)
-# if defined(HAVE_ATTRIBUTE_PACKED)
+# if defined(TW_HAVE_ATTRIBUTE_PACKED)
 #  define TYPE_ATTR_PACKED __attribute__((packed))
 # else
 #  define TYPE_ATTR_PACKED

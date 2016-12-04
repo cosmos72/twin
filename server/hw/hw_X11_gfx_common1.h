@@ -176,7 +176,7 @@ static udat X11_LookupKey(XEvent *ev, udat *ShiftFlags, udat *len, char *seq) {
     if (kev->state & Mod2Mask) /* Num_Lock */
 	*ShiftFlags |= KBD_NUM_LOCK;
 
-#ifdef HW_X11_HAVE_XIM_XIC
+#ifdef TW_HAVE_X11_XIM_XIC
     if (xic) {
         Status status_return;
         *len = XmbLookupString(xic, kev, seq, _len, &sym, &status_return);
