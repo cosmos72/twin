@@ -154,14 +154,14 @@ void NormalizeTime(timevalue *Time) {
 }
 
 timevalue *InstantNow(timevalue *Now) {
-#if defined(HAVE_GETTIMEOFDAY)
+#if defined(TW_HAVE_GETTIMEOFDAY)
     struct timeval sysNow;
 
     gettimeofday(&sysNow, NULL);
     
     Now->Seconds = sysNow.tv_sec;
     Now->Fraction = sysNow.tv_usec MicroSECs;
-#elif defined(HAVE_FTIME)
+#elif defined(TW_HAVE_FTIME)
     timeb sysNow;
 
     ftime(&sysNow);
@@ -960,10 +960,10 @@ byte InitTWDisplay(void) {
 			TWDisplay = fullTWD+10;
 			lenTWDisplay = LenStr(TWDisplay);
 			CopyMem(TWDisplay, envTWD+10, lenTWDisplay);
-#if defined(HAVE_SETENV)
+#if defined(TW_HAVE_SETENV)
 			setenv("TWDISPLAY",TWDisplay,1);
 			setenv("TERM","linux",1);
-#elif defined(HAVE_PUTENV)
+#elif defined(TW_HAVE_PUTENV)
 			putenv(envTWD);
 			putenv("TERM=linux");
 #endif
@@ -1043,16 +1043,16 @@ static void SetEnvs(struct passwd *p) {
     byte buf[TW_BIGBUFF];
     
     chdir(HOME = p->pw_dir);
-#if defined(HAVE_SETENV)
+#if defined(TW_HAVE_SETENV)
     setenv("HOME", HOME, 1);
     setenv("SHELL", p->pw_shell, 1);
     setenv("LOGNAME", p->pw_name, 1);
-    sprintf(buf, "/var/mail/%s", p->pw_name); setenv("MAIL", buf, 1);
-#elif defined(HAVE_PUTENV)
-    sprintf(buf, "HOME=%s", HOME); putenv(buf);
-    sprintf(buf, "SHELL=%s", p->pw_shell); putenv(buf);
-    sprintf(buf, "LOGNAME=%s", p->pw_name); putenv(buf);
-    sprintf(buf, "MAIL=/var/mail/%s", p->pw_name); putenv(buf);
+    sprintf(buf, "/var/mail/%.*s", (int)(TW_BIGBUFF-11), p->pw_name); setenv("MAIL", buf, 1);
+#elif defined(TW_HAVE_PUTENV)
+    sprintf(buf, "HOME=%.*s",          (int)(TW_BIGBUFF-6), HOME);        putenv(buf);
+    sprintf(buf, "SHELL=%.*s",         (int)(TW_BIGBUFF-7), p->pw_shell); putenv(buf);
+    sprintf(buf, "LOGNAME=%.*s",       (int)(TW_BIGBUFF-9), p->pw_name);  putenv(buf);
+    sprintf(buf, "MAIL=/var/mail/%.*s",(int)(TW_BIGBUFF-16) p->pw_name);  putenv(buf);
 #endif
 }
 
@@ -1179,10 +1179,10 @@ static void ReadTwEnvRC(int infd) {
 	       (q = memchr(eq, '\n', end - eq))) {
 		
 	    *q++ = '\0';
-#if defined(HAVE_SETENV)
+#if defined(TW_HAVE_SETENV)
 	    *eq++ = '\0';
 	    setenv(p, eq, 1);
-#elif defined(HAVE_PUTENV)
+#elif defined(TW_HAVE_PUTENV)
 	    putenv(p);
 #endif
 	    p = q;

@@ -120,7 +120,7 @@ AC_FUNC_REALLOC
 AC_FUNC_SETVBUF_REVERSED
 dnl we never use the 'struct rusage' returned by wait3()
 dnl AC_FUNC_WAIT3
-AC_CHECK_FUNCS([dup2 ftime gethostname getpagesize getspnam gettimeofday grantpt \
+AC_CHECK_FUNCS([dup2 ftime gethostname getpagesize getspnam gettimeofday grantpt initgroups \
       memchr memmove memset munmap ptsname putenv select setenv setlocale socket strchr strdup \
       strerror strrchr strspn strstr strtol strtoul sysconf tcsetpgrp uname unlockpt \
       vsprintf vsnprintf wait3 wait4])

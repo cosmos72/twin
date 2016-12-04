@@ -19,6 +19,7 @@ clients/mapscrn/twmapscrn
 clients/twattach
 clients/twcat
 clients/twclip
+clients/twclutter
 clients/twcuckoo
 clients/twdetach
 clients/twdialog
@@ -36,6 +37,7 @@ include/config.h
 include/stamp-h1
 include/Tw/autoconf.h
 include/twautoconf.h
+include/twconfig.h
 include/version.h
 server/twdisplay
 server/twin

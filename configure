@@ -16941,7 +16941,7 @@ else
 fi
 
 
-for ac_func in dup2 ftime gethostname getpagesize getspnam gettimeofday grantpt \
+for ac_func in dup2 ftime gethostname getpagesize getspnam gettimeofday grantpt initgroups \
       memchr memmove memset munmap ptsname putenv select setenv setlocale socket strchr strdup \
       strerror strrchr strspn strstr strtol strtoul sysconf tcsetpgrp uname unlockpt \
       vsprintf vsnprintf wait3 wait4
