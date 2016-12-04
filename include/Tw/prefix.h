@@ -6,15 +6,15 @@
 # define TW_PREFIX	1
 # define Tw(arg)	Tw_##arg
 # define TW(arg)	TW_##arg
-# ifndef TW_RETSIGTYPE
-#  include <Tw/Twautoconf.h>
+# ifndef _TW_AUTOCONF_H
+#  include <Tw/autoconf.h>
 # endif
 #else
 # define TW_PREFIX	0
 # define Tw(arg)	arg
 # define TW(arg)	arg
-# ifndef RETSIGTYPE
-#  include "autoconf.h"
+# ifndef _TWAUTOCONF_H
+#  include "twautoconf.h"
 # endif
 #endif
 

@@ -42,7 +42,7 @@ static byte InitClip(void) {
 	 (Clip_Win, 0x1FF,
 	  COL(HIGH|GREEN,WHITE), COL(CYAN,BLUE), COL(HIGH|BLUE,BLACK), COL(HIGH|WHITE,HIGH|BLUE), COL(HIGH|WHITE,HIGH|BLUE),
 	  COL(HIGH|WHITE,HIGH|BLACK), COL(HIGH|BLACK,WHITE), COL(BLACK,HIGH|BLACK), COL(BLACK,WHITE)),
-	 TwConfigureWindow(Clip_Win, 0xF<<2, 0, 0, 7, 3, MAXDAT, MAXDAT),
+	 TwConfigureWindow(Clip_Win, 0xF<<2, 0, 0, 7, 3, TW_MAXDAT, TW_MAXDAT),
 	 (Window=TwWin4Menu(Clip_Menu))) &&
 	TwItem4Menu(Clip_Menu, Window, FALSE, 6, " Clip ") &&
 	TwRow4Menu(Window, (udat)0, TW_ROW_INACTIVE,16, " Undo           ") &&

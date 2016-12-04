@@ -26,11 +26,11 @@ void DrawDesktop(screen Screen, dat Xstart, dat Ystart, dat Xend, dat Yend, byte
 
 void DrawArea2(screen FirstScreen, widget Top, widget OnlyW,
 	       dat X1, dat Y1, dat X2, dat Y2, byte Shaded);
-#define FULL_SCREEN (screen)0, (widget)0, (widget)0, (dat)0, (dat)0, MAXDAT, MAXDAT, FALSE
+#define FULL_SCREEN (screen)0, (widget)0, (widget)0, (dat)0, (dat)0, TW_MAXDAT, TW_MAXDAT, FALSE
 
 /* DrawWidget() assumes W is not obscured */
 void DrawWidget(widget W, dat Xstart, dat Ystart, dat Xend, dat Yend, byte Shaded);
-#define DrawFirstWidget(W) DrawWidget((W), 0, 0, MAXDAT, MAXDAT, FALSE)
+#define DrawFirstWidget(W) DrawWidget((W), 0, 0, TW_MAXDAT, TW_MAXDAT, FALSE)
 void DrawAreaWidget(widget W);
 
 /* like DrawAreaWindow2, but does not draw the shadow: */

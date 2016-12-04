@@ -8,17 +8,17 @@
 #ifndef _TWIN_TTY_IOCTL_H
 #define _TWIN_TTY_IOCTL_H
 
-#ifndef RETSIGTYPE
-# include "autoconf.h"
+#ifndef _TWAUTOCONF_H
+# include "twautoconf.h"
 #endif
 
-#if defined(HAVE_TERMIOS_H)
+#if defined(TW_HAVE_TERMIOS_H)
 # include <termios.h>
-#elif defined(HAVE_TERMIO_H)
+#elif defined(TW_HAVE_TERMIO_H)
 # include <termio.h>
 #endif
 
-#ifdef HAVE_SYS_IOCTL_H
+#ifdef TW_HAVE_SYS_IOCTL_H
 # include <sys/ioctl.h>
 #endif
 

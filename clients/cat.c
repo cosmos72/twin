@@ -5,12 +5,20 @@
  *
  */
 
-#include <stdio.h>
-#include <string.h>
-#include <sys/stat.h>
-
 #include <Tw/Tw.h>
 #include <Tw/Twerrno.h>
+
+#include <stdio.h>
+
+#ifdef TW_HAVE_STRING_H
+# include <string.h>
+#endif
+#ifdef TW_HAVE_SYS_STAT_H
+# include <sys/stat.h>
+#endif
+#ifdef TW_HAVE_FCNTL_H
+# include <fcntl.h>
+#endif
 
 #define COD_QUIT      (udat)1
 
@@ -43,7 +51,7 @@ static byte InitCat(void) {
 	  COL(HIGH|GREEN,WHITE), COL(CYAN,BLUE), COL(HIGH|BLUE,BLACK), COL(HIGH|WHITE,HIGH|BLUE),
 	  COL(HIGH|WHITE,HIGH|BLUE), COL(HIGH|WHITE,HIGH|BLACK),
 	  COL(HIGH|BLACK,WHITE), COL(BLACK,HIGH|BLACK), COL(BLACK,WHITE)),
-	 TwConfigureWindow(Cat_Win, 0xF<<2, 0, 0, 7, 3, MAXDAT, MAXDAT),
+	 TwConfigureWindow(Cat_Win, 0xF<<2, 0, 0, 7, 3, TW_MAXDAT, TW_MAXDAT),
 	 TwRow4Menu(Window, COD_QUIT, TW_ROW_INACTIVE, 17, " Quit      Alt-X ")) &&
 	TwItem4MenuCommon(Cat_Menu) &&
 	(TwMapWindow(Cat_Win, TwFirstScreen()),

@@ -19,6 +19,7 @@
 #include "util.h"
 #include "wm.h"
 
+#include "dl.h"
 #include "extreg.h"
 #include "methods.h"
 #include "hw.h"
@@ -31,9 +32,6 @@
 
 #ifdef CONF_WM_RC
 # include "rcproto.h"
-#endif
-#ifdef CONF__MODULES
-# include "dl.h"
 #endif
 
 #include <Tw/Twkeys.h>
@@ -289,8 +287,9 @@ static run *RCNew(node l) {
     run *r;
     
     if ((r = (run *)AllocMem(sizeof(run)))) {
-	r->cycle = 0;
-	r->stack[ r->depth = 0 ] = l;
+        WriteMem(r, 0, sizeof(run));
+        r->cycle = 0;
+        r->stack[ r->depth = 0 ] = l;    
 	RCAddFirst(r, Run);
     }
     return r;
@@ -473,14 +472,12 @@ static byte RCSteps(run *r) {
 	    ActivateCtx(C, STATE_MENU);
 	    break;
 	  case MODULE:
-#ifdef CONF__MODULES
 	    if (n->x.f.a == -1)
 		n->x.f.a = DlName2Code(n->name);
 	    if (n->x.f.flag == FL_ON)
 		DlLoad(n->x.f.a);
 	    else
 		DlUnLoad(n->x.f.a);
-#endif
 	    break;
 	  case MOVE:
 	    if (W && IS_WINDOW(W))
@@ -535,7 +532,7 @@ static byte RCSteps(run *r) {
 	  case STDERR:
 	    argv = n->x.v.argv;
 	    while (*argv)
-		printk("%."STR(SMALLBUFF)"s ", *argv++);
+		printk("%."STR(TW_SMALLBUFF)"s ", *argv++);
 	    printk("\n");
 	    break;
 	  case SYNTHETICKEY:
@@ -765,8 +762,8 @@ static byte RCSleep(timevalue *_t) {
     timevalue *t = _t;
     run *r = Sleep;
 
-    t->Seconds = MAXTANY;
-    t->Fraction = (tany)0; /* not MAXTANY as Normalize() would overflow */
+    t->Seconds = TW_MAXTANY;
+    t->Fraction = (tany)0; /* not TW_MAXTANY as Normalize() would overflow */
 
     while (r) {
 	if (CmpTime(&r->SW.WakeUp, t) < 0)
@@ -796,10 +793,9 @@ static byte RCSleep(timevalue *_t) {
  * kill the queues, reload .twinrc and restart queues
  */
 static void RCReload(void) {
-    byte success;
-#if !defined(CONF_WM_RC) && defined(CONF__MODULES)
     module M;
     byte (*mod_rcload)(void) = (byte (*)(void))0;
+    byte success;
 
     if ((M = DlLoad(RCParseSo)))
 	mod_rcload = M->Private;
@@ -807,25 +803,13 @@ static void RCReload(void) {
     /* this would garble -hw=tty display */
     else
 	printk("twin: failed to load the RC parser:\n"
-		"      %."STR(SMALLBUFF)"s\n", ErrStr);
+		"      %."STR(TW_SMALLBUFF)"s\n", ErrStr);
 # endif
-#endif
     
-
-    success =
-#if defined(CONF_WM_RC)
-	rcload()
-#elif defined(CONF__MODULES)
-	(mod_rcload && mod_rcload())
-#else
-	0
-#endif
-	;
+    success = mod_rcload && mod_rcload();
     
-#if !defined(CONF_WM_RC) && defined(CONF__MODULES)
     if (M)
 	DlUnLoad(RCParseSo);
-#endif
     
     if (success) {
 	QueuedDrawArea2FullScreen = TRUE;
@@ -1173,7 +1157,7 @@ byte InitRC(void) {
 	UpdateOptionWin();
 	FillButtonWin();
 	HideMenu(!!(All->SetUp->Flags & SETUP_MENU_HIDE));
-	Act(DrawMenu,All->FirstScreen)(All->FirstScreen, 0, MAXDAT);
+	Act(DrawMenu,All->FirstScreen)(All->FirstScreen, 0, TW_MAXDAT);
 	
 	return TRUE;
     }

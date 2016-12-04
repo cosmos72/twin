@@ -84,7 +84,7 @@ static void InitSignals(void) {
     signal(SIGCHLD, SIG_IGN);
     signal(SIGPIPE, SIG_IGN);
     signal(SIGIO,   SIG_IGN);
-#ifndef DONT_TRAP_SIGNALS
+#ifndef TW_DONT_TRAP_SIGNALS
     signal(SIGHUP,  SignalPanic);
     signal(SIGINT,  SignalPanic);
     signal(SIGQUIT, SignalPanic);

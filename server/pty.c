@@ -20,12 +20,36 @@
  *
  */
 
-#include <grp.h>
-#include <signal.h>
-#include <sys/stat.h>
+/* tell <stdlib.h> to declare grantpt(), unlockpt(), ptsname() */
+# define _GNU_SOURCE
+# define _XOPEN_SOURCE
 
-#ifdef CONF_TERM_DEVPTS
+#include "twconfig.h" /* not <Tw/autoconf.h> because we need CONF_TERM_DEVPTS */
+
+#ifdef TW_HAVE_STDLIB_H
 # include <stdlib.h>
+#endif
+#ifdef TW_HAVE_SYS_STAT_H
+# include <sys/stat.h>
+#endif
+#ifdef TW_HAVE_FCNTL_H
+# include <fcntl.h>
+#endif
+#ifdef TW_HAVE_GRP_H
+# include <grp.h>
+#endif
+#ifdef TW_HAVE_TERMIOS_H
+# include <termios.h>
+#else
+# ifdef TW_HAVE_TERMIO_H
+#  include <termio.h>
+# endif
+#endif
+#ifdef TW_HAVE_SYS_IOCTL_H
+# include <sys/ioctl.h>
+#endif
+#ifdef TW_HAVE_SIGNAL_H
+# include <signal.h>
 #endif
 
 #include "tty_ioctl.h"
@@ -41,7 +65,7 @@
 static char *ptydev, *ttydev;
 static int ptyfd, ttyfd;
 
-#define SS "%."STR(SMALLBUFF)"s"
+#define SS "%."STR(TW_SMALLBUFF)"s"
 
 static void pty_error(CONST byte *d, CONST byte *f, CONST byte *arg) {
     printk("twin: "SS": "SS"(\""SS"\") failed: "SS"\n",
@@ -68,7 +92,7 @@ static byte get_pty(void)
     
     /* open master pty */
     if (
-# ifdef HAVE_GETPT
+# ifdef TW_HAVE_GETPT
 	(fd = getpt()) >= 0
 # else
 	(fd = open("/dev/ptmx", O_RDWR|O_NOCTTY)) >= 0
@@ -91,7 +115,7 @@ static byte get_pty(void)
 	close(fd);
     } else
 	get_pty_error(
-# ifdef HAVE_GETPT
+# ifdef TW_HAVE_GETPT
 		      "getpt", ""
 # else
 		      "open", "/dev/ptmx"

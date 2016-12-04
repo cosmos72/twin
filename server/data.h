@@ -9,8 +9,8 @@
 #ifndef _TWIN_DATA_H
 #define _TWIN_DATA_H
 
-extern CONST byte *conf_destdir_lib_twin;
-extern CONST byte *conf_destdir_lib_twin_modules_;
+extern CONST byte * CONST conf_destdir_lib_twin;
+extern CONST byte * CONST conf_destdir_lib_twin_modules_;
 
 extern palette Palette[MAXCOL+1], defaultPalette[MAXCOL+1];
 

@@ -11,13 +11,16 @@
  *
  */
 
+
+#include "twconfig.h"
+
 #include <stdio.h>
-#include <sys/stat.h>
 
-#include "autoconf.h"
-
-#ifdef HAVE_SYS_IOCTL_H
+#ifdef TW_HAVE_SYS_IOCTL_H
 # include <sys/ioctl.h>
+#endif
+#ifdef TW_HAVE_SYS_STAT_H
+# include <sys/stat.h>
 #endif
 
 #include "twin.h"
@@ -28,42 +31,16 @@
 #include "remote.h"
 #include "extreg.h"
 
-#include "resize.h"
+#include "dl.h"
 #include "hw.h"
 #include "hw_private.h"
 #include "hw_multi.h"
 #include "printk.h"
+#include "resize.h"
 #include "util.h"
 
-#ifdef CONF__MODULES
-# include "dl.h"
-#endif
 
 #include <Tw/Tw.h>
-
-
-/* HW specific headers */
-
-#ifdef CONF_HW_GFX
-# include "HW/hw_gfx.h"
-#endif
-
-#ifdef CONF_HW_X11
-# include "HW/hw_X11.h"
-#endif
-
-#if !defined(CONF__MODULES) && !defined(CONF_SOCKET)
-
-# undef CONF_HW_DISPLAY
-# undef CONF_HW_TWIN
-
-#endif
-
-
-
-
-
-
 
 
 #define forHW for (HW = All->FirstDisplayHW; HW; HW = HW->Next)
@@ -78,7 +55,7 @@ static dat (*saveChangedVideo)[2][2];
 static dat savedDisplayWidth = 100, savedDisplayHeight = 30;
 static dat TryDisplayWidth, TryDisplayHeight;
 
-static dat AccelVideo[4] = { MAXDAT, MAXDAT, MINDAT, MINDAT };
+static dat AccelVideo[4] = { TW_MAXDAT, TW_MAXDAT, TW_MINDAT, TW_MINDAT };
 byte   StrategyFlag;
 tany   StrategyDelay = (tany)0;
 
@@ -151,29 +128,23 @@ void RunNoHW(byte print_info) {
     }
     
     /* try to fire up the Socket Server ... */
-#if defined (CONF__MODULES) && !defined(CONF_SOCKET)
     (void)DlLoad(SocketSo);
-#endif
 }
 
 
 static void warn_NoHW(uldat len, char *arg, uldat tried) {
-#ifdef CONF__MODULES
     if (!tried && !arg)
 	printk("twin: no display driver compiled into twin.\n"
 	       "      please run as `twin --hw=<display>'\n");
     else
-#endif
     {
 	printk("twin: all display drivers failed");
 	if (arg)
-	    printk(" for `--hw=%.*s\'\n", Min2((int)len,SMALLBUFF), arg);
+	    printk(" for `--hw=%.*s\'\n", Min2((int)len,TW_SMALLBUFF), arg);
 	else
 	    printk(".\n");
     }
 }
-
-#ifdef CONF__MODULES
 
 static byte module_InitHW(byte *arg, uldat len) {
     byte *name, *tmp;
@@ -194,15 +165,20 @@ static byte module_InitHW(byte *arg, uldat len) {
     if (name)
 	len = name - arg;
     
-    if ((name = AllocMem(len + 7))) {
-	sprintf(name, "HW/hw_%.*s", (int)len, arg);
+    if (len == 1 && *arg == 'X') {
+        len = 3;
+        arg = "X11";
+    }
+    
+    if ((name = AllocMem(len + 4))) {
+	sprintf(name, "hw_%.*s", (int)len, arg);
 
-	Module = DlLoadAny(len + 6, name);
+	Module = DlLoadAny(len + 3, name);
 	
 	if (Module) {
-	    printk("twin: starting display driver module `%."STR(SMALLBUFF)"s'...\n", name);
+	    printk("twin: starting display driver module `%."STR(TW_SMALLBUFF)"s'...\n", name);
 	    if ((InitD = Module->Private) && InitD()) {
-		printk("twin: ...module `%."STR(SMALLBUFF)"s' successfully started.\n", name);
+		printk("twin: ...module `%."STR(TW_SMALLBUFF)"s' successfully started.\n", name);
 		FreeMem(name);
 		HW->Module = Module; Module->Used++;
 		return TRUE;
@@ -213,20 +189,16 @@ static byte module_InitHW(byte *arg, uldat len) {
 	Error(NOMEMORY);
     
     if (Module) {
-	printk("twin: ...module `%."STR(SMALLBUFF)"s' failed to start.\n", name ? name : (byte *)"(NULL)");
+	printk("twin: ...module `%."STR(TW_SMALLBUFF)"s' failed to start.\n", name ? name : (byte *)"(NULL)");
     } else
-	printk("twin: unable to load display driver module `%."STR(SMALLBUFF)"s' :\n"
-	       "      %."STR(SMALLBUFF)"s\n", name ? name : (byte *)"(NULL)", ErrStr);
+	printk("twin: unable to load display driver module `%."STR(TW_SMALLBUFF)"s' :\n"
+	       "      %."STR(TW_SMALLBUFF)"s\n", name ? name : (byte *)"(NULL)", ErrStr);
     if (name)
 	FreeMem(name);
     
     return FALSE;
 }
 
-#endif /* CONF__MODULES */
-
-
-#ifdef CONF__MODULES
 # define DEF_INITHW(hw) \
 static byte CAT(hw,_InitHW)(void) { \
     byte *arg; \
@@ -240,78 +212,41 @@ static byte CAT(hw,_InitHW)(void) { \
     } \
     return module_InitHW(arg, len); \
 }
-#else
-# define DEF_INITHW(hw)
-#endif
 
 
 /* HW specific functions */
 
-#ifdef CONF_HW_GFX
-# include "HW/hw_gfx.h"
-#else
-  DEF_INITHW(gfx)
-#endif
-
-#ifdef CONF_HW_X11
-# include "HW/hw_X11.h"
-# define X_InitHW X11_InitHW
-#else
-  DEF_INITHW(X)
-#endif
-	
-#ifdef CONF_HW_TWIN
-# include "HW/hw_twin.h"
-# define twin_InitHW TW_InitHW
-#else
-  DEF_INITHW(twin)
-#endif
-
-#ifdef CONF_HW_DISPLAY
-# include "HW/hw_display.h"
-#else
-  DEF_INITHW(display)
-#endif
-
-#ifdef CONF_HW_TTY
-# include "HW/hw_tty.h"
-#else
-  DEF_INITHW(tty)
-#endif
-
-#ifdef CONF_HW_GGI
-# include "HW/hw_ggi.h"
-# define ggi_InitHW GGI_InitHW
-#else
-  DEF_INITHW(ggi)
-#endif
+DEF_INITHW(gfx)
+DEF_INITHW(X)
+DEF_INITHW(twin)
+DEF_INITHW(display)
+DEF_INITHW(tty)
+DEF_INITHW(ggi)
 
 #undef DEF_INITHW
 
 
-#if defined(CONF__MODULES) || defined(CONF_HW_DISPLAY)
 static byte check4(byte *s, byte *arg) {
     if (arg && !strncmp(s, arg, strlen(s))) {
-	printk("twin: trying given `--hw=%."STR(SMALLBUFF)"s' display driver.\n", s);
+	printk("twin: trying given `--hw=%."STR(TW_SMALLBUFF)"s' display driver.\n", s);
 	return TRUE;
     }
     return FALSE;
 }
-#endif /* defined(CONF__MODULES) || defined(CONF_HW_DISPLAY) */
 
 static byte autocheck4(byte *s, byte *arg) {
     if (arg && !strncmp(s, arg, strlen(s))) {
-	printk("twin: trying given `--hw=%."STR(SMALLBUFF)"s' display driver.\n", s);
+	printk("twin: trying given `--hw=%."STR(TW_SMALLBUFF)"s' display driver.\n", s);
 	return TRUE;
     }
     if (arg) {
 	/*
-	printk("twin: `-hw=%."STR(SMALLBUFF)"s' given, skipping `-hw=%."STR(SMALLBUFF)"s' display driver.\n",
+	printk("twin: `-hw=%."STR(TW_SMALLBUFF)"s' given, skipping `-hw=%."STR(TW_SMALLBUFF)"s' display driver.\n",
 		arg, s);
 	 */
 	return FALSE;
     }
-    printk("twin: autoprobing `--hw=%."STR(SMALLBUFF)"s' display driver.\n", s);
+    printk("twin: autoprobing `--hw=%."STR(TW_SMALLBUFF)"s' display driver.\n", s);
     return TRUE;
 }
 
@@ -351,27 +286,13 @@ byte InitDisplayHW(display_hw D_HW) {
 #define     TRY4(hw) (    check4(STR(hw), arg) && (tried++, CAT(hw,_InitHW)()) && (fix4(STR(hw), D_HW), TRUE))
     
     success =
-#if defined(CONF__MODULES) || defined(CONF_HW_GFX)
 	AUTOTRY4(gfx) ||
-#endif
-#if defined(CONF__MODULES) || defined(CONF_HW_X11)
 	AUTOTRY4(X) ||
-#endif
-#if defined(CONF__MODULES) || defined(CONF_HW_TWIN)
 	AUTOTRY4(twin) ||
-#endif
-#if defined(CONF__MODULES) || defined(CONF_HW_DISPLAY)
 	TRY4(display) ||
-#endif
-#if defined(CONF__MODULES) || defined(CONF_HW_TTY)
 	AUTOTRY4(tty) ||
-#endif
-#if defined(CONF__MODULES) || defined(CONF_HW_GGI)
 	AUTOTRY4(ggi) ||
-#endif
-#ifdef CONF__MODULES
 	module_InitHW(D_HW->Name, D_HW->NameLen) ||
-#endif
 	(warn_NoHW(arg ? D_HW->NameLen - 4 : 0, arg, tried), FALSE);
 
 #undef     TRY4
@@ -416,13 +337,11 @@ void QuitDisplayHW(display_hw D_HW) {
 	    Ext(Remote,KillSlot)(slot);
 	}
 
-#ifdef CONF__MODULES
 	if (D_HW->Module) {
 	    D_HW->Module->Used--;
 	    Delete(D_HW->Module);
 	    D_HW->Module = (module)0;
 	}
-#endif
 	UpdateFlagsHW(); /* this garbles HW... not a problem here */
     }
     RestoreHW;
@@ -431,7 +350,7 @@ void QuitDisplayHW(display_hw D_HW) {
 static byte IsValidHW(uldat len, CONST byte *arg) {
     CONST byte *slash = memchr(arg, '/', len), *at = memchr(arg, '@', len), *comma = memchr(arg, ',', len);
     if (slash && (!at || slash < at) && (!comma || slash < comma)) {
-	printk("twin: slash ('/') not allowed in display HW name: %.*s\n", Min2((int)len,SMALLBUFF), arg);
+	printk("twin: slash ('/') not allowed in display HW name: %.*s\n", Min2((int)len,TW_SMALLBUFF), arg);
 	return FALSE;
     }
     return TRUE;
@@ -443,7 +362,7 @@ display_hw AttachDisplayHW(uldat len, CONST byte *arg, uldat slot, byte flags) {
     if ((len && len <= 4) || CmpMem("-hw=", arg, Min2(len,4))) {
 	printk("twin: specified `%.*s\' is not a known option.\n"
 		"      try `twin --help' for usage summary.\n",
-	       Min2((int)len,SMALLBUFF), arg);
+	       Min2((int)len,TW_SMALLBUFF), arg);
 	return NULL;
     }
     
@@ -529,7 +448,7 @@ byte InitHW(void) {
 	else if (!strncmp(*arglist, "-hw=", 4))
 	    hwcount++;
 	else
-	    printk("twin: ignoring unknown option `%."STR(SMALLBUFF)"s'\n", *arglist);
+	    printk("twin: ignoring unknown option `%."STR(TW_SMALLBUFF)"s'\n", *arglist);
     }
 
     if (nohw && hwcount > 0) {
@@ -647,7 +566,7 @@ byte ResizeDisplay(void) {
 	     * we are trying to come up with a fair display size
 	     * and have all HW agree on it.
 	     */
-	    TryDisplayWidth = TryDisplayHeight = MAXDAT;
+	    TryDisplayWidth = TryDisplayHeight = TW_MAXDAT;
 	    forHW {
 		if (!HW->Quitted) {
 		    HW->DetectSize(&Width, &Height);
@@ -667,9 +586,9 @@ byte ResizeDisplay(void) {
 	    }
 	} while (TryDisplayWidth < Width || TryDisplayHeight < Height);
 	 
-	if (!TryDisplayWidth || TryDisplayWidth == MAXDAT)
+	if (!TryDisplayWidth || TryDisplayWidth == TW_MAXDAT)
 	    TryDisplayWidth = DisplayWidth;
-	if (!TryDisplayHeight || TryDisplayHeight == MAXDAT)
+	if (!TryDisplayHeight || TryDisplayHeight == TW_MAXDAT)
 	    TryDisplayHeight = DisplayHeight;
 	
 	/* size seems reasonable, apply it to all HW displays */
@@ -1157,8 +1076,8 @@ INLINE uldat Plain_countDirtyVideo(dat X1, dat Y1, dat X2, dat Y2) {
 }
 
 void StrategyReset(void) {
-    AccelVideo[0] = AccelVideo[1] = MAXDAT;
-    AccelVideo[2] = AccelVideo[3] = MINDAT;
+    AccelVideo[0] = AccelVideo[1] = TW_MAXDAT;
+    AccelVideo[2] = AccelVideo[3] = TW_MINDAT;
     StrategyFlag = HW_UNSET;
 }
 

@@ -34,23 +34,23 @@
 
 
 
-#if TW_BYTE_ORDER == TW_LITTLE_ENDIAN
+#if TW_IS_LITTLE_ENDIAN
 /* we can use hton?() functions to speed up translation */
 # include <netinet/in.h>
 #endif
 
-#if TW_BYTE_ORDER == TW_LITTLE_ENDIAN && TW_CAN_UNALIGNED != 0 /* due to lack of alignment */
+#if TW_IS_LITTLE_ENDIAN && TW_CAN_UNALIGNED != 0 /* due to lack of alignment */
 INLINE void FlipCopyMem(CONST byte *src, byte *dst, uldat len) {
     switch (len) {
       case 2:
-	*(byte16 *)dst = htons(*(CONST byte16 *)src);
+	*(uint16_t *)dst = htons(*(CONST uint16_t *)src);
 	break;
       case 4:
-	*(byte32 *)dst = htonl(*(CONST byte32 *)src);
+	*(uint32_t *)dst = htonl(*(CONST uint32_t *)src);
 	break;
       case 8:
-	((byte32 *)dst)[0] = htonl(((CONST byte32 *)src)[1]);
-	((byte32 *)dst)[1] = htonl(((CONST byte32 *)src)[0]);
+	((uint32_t *)dst)[0] = htonl(((CONST uint32_t *)src)[1]);
+	((uint32_t *)dst)[1] = htonl(((CONST uint32_t *)src)[0]);
 	break;
       default:
 	src += len - 1;
@@ -66,14 +66,14 @@ INLINE void FlipCopyMem(CONST byte *src, byte *dst, uldat len) {
     while (len--)
 	*dst++ = *src--;
 }
-#endif /* TW_BYTE_ORDER == TW_LITTLE_ENDIAN */
+#endif /* TW_IS_LITTLE_ENDIAN */
 
 
 
 /*translate from alien data, copying srclen bytes to dstlen bytes, optionally flipping byte order*/
 static void alienRead(CONST byte *src, uldat srclen, byte *dst, uldat dstlen, byte flip) {
     
-#if TW_BYTE_ORDER == TW_LITTLE_ENDIAN
+#if TW_IS_LITTLE_ENDIAN
     
     /* copy the least significant bits */
     if (flip)
@@ -84,7 +84,7 @@ static void alienRead(CONST byte *src, uldat srclen, byte *dst, uldat dstlen, by
     if (dstlen > srclen)
 	WriteMem(dst + srclen, '\0', dstlen - srclen);
     
-#else /* TW_BYTE_ORDER == TW_BIG_ENDIAN */
+#else /* TW_IS_BIG_ENDIAN */
     
     /* copy the least significant bits */
     if (flip)
@@ -97,13 +97,13 @@ static void alienRead(CONST byte *src, uldat srclen, byte *dst, uldat dstlen, by
     if (dstlen > srclen)
 	WriteMem(dst, '\0', dstlen - srclen);
 
-#endif /* TW_BYTE_ORDER == TW_LITTLE_ENDIAN */
+#endif /* TW_IS_LITTLE_ENDIAN */
 }
 
 /*translate to alien data, copying srclen bytes to dstlen bytes, optionally flipping byte order*/
 static void alienWrite(CONST byte *src, uldat srclen, byte *dst, uldat dstlen, byte flip) {
     
-#if TW_BYTE_ORDER == TW_LITTLE_ENDIAN
+#if TW_IS_LITTLE_ENDIAN
     
     /* copy the least significant bits */
     if (flip)
@@ -114,7 +114,7 @@ static void alienWrite(CONST byte *src, uldat srclen, byte *dst, uldat dstlen, b
     if (dstlen > srclen)
 	WriteMem(dst + (flip ? 0: srclen), '\0', dstlen - srclen);
     
-#else /* TW_BYTE_ORDER == TW_BIG_ENDIAN */
+#else /* TW_IS_BIG_ENDIAN */
     
     /* copy the least significant bits */
     if (flip)
@@ -127,7 +127,7 @@ static void alienWrite(CONST byte *src, uldat srclen, byte *dst, uldat dstlen, b
     if (dstlen > srclen)
 	WriteMem(dst + (flip ? srclen : 0), '\0', dstlen - srclen);
 
-#endif /* TW_BYTE_ORDER == TW_LITTLE_ENDIAN */
+#endif /* TW_IS_LITTLE_ENDIAN */
 }
 
 /* convert alien type at (*src) to native and put it at (dst) */
@@ -153,7 +153,7 @@ INLINE void alienReadVec(CONST byte *src, byte *dst, uldat len, uldat srcsize, u
     
     /* optimize common cases */
     
-#if TW_BYTE_ORDER == TW_LITTLE_ENDIAN
+#if TW_IS_LITTLE_ENDIAN
     if (srcsize == 1) {
 	while (len--) {
 	    WriteMem(dst+1, '\0', dstsize-1);
@@ -173,7 +173,7 @@ INLINE void alienReadVec(CONST byte *src, byte *dst, uldat len, uldat srcsize, u
 	    }
 	}
     }
-#else /* TW_BYTE_ORDER == TW_BIG_ENDIAN */
+#else /* TW_IS_BIG_ENDIAN */
     if (srcsize == 1) {
 	while (len--) {
 	    WriteMem(dst, '\0', dstsize-1);
@@ -193,7 +193,7 @@ INLINE void alienReadVec(CONST byte *src, byte *dst, uldat len, uldat srcsize, u
 	    }
 	}
     }
-#endif /* TW_BYTE_ORDER == TW_LITTLE_ENDIAN */
+#endif /* TW_IS_LITTLE_ENDIAN */
 	
     else if (srcsize == dstsize) {
 	if (flag) {
@@ -632,9 +632,9 @@ static void AlienIO(int fd, uldat slot) {
     Slot = slot;
 
     if (ioctl(Fd, FIONREAD, &tot) != 0 || tot == 0)	
-	tot = SMALLBUFF;
-    else if (tot > BIGBUFF*BIGBUFF)
-	tot = BIGBUFF*BIGBUFF;
+	tot = TW_SMALLBUFF;
+    else if (tot > TW_BIGBUFF*TW_BIGBUFF)
+	tot = TW_BIGBUFF*TW_BIGBUFF;
     
     if (!(t = RemoteReadGrowQueue(Slot, tot)))
 	return;
@@ -712,31 +712,31 @@ static void AlienIO(int fd, uldat slot) {
 static void FlipMoveMem(byte *mem, uldat len, uldat chunk) {
     uldat i, j;
     byte c;
-#if TW_BYTE_ORDER == TW_LITTLE_ENDIAN
-    byte32 t;
+#if TW_IS_LITTLE_ENDIAN
+    uint32_t t;
     
     switch (chunk) {
       case 1:
 	return;
       case 2:
 	while (len >= 2) {
-	    *(byte16 *)mem = htons(*(CONST byte16 *)mem);
+	    *(uint16_t *)mem = htons(*(CONST uint16_t *)mem);
 	    mem += 2;
 	    len -= 2;
 	}
 	return;
       case 4:
 	while (len >= 4) {
-	    *(byte32 *)mem = htonl(*(CONST byte32 *)mem);
+	    *(uint32_t *)mem = htonl(*(CONST uint32_t *)mem);
 	    mem += 4;
 	    len -= 4;
 	}
 	return;
       case 8:
 	while (len >= 8) {
-	    t = htonl(((CONST byte32 *)mem)[0]);
-	    ((byte32 *)mem)[0] = htonl(((CONST byte32 *)mem)[1]);
-	    ((byte32 *)mem)[1] = t;
+	    t = htonl(((CONST uint32_t *)mem)[0]);
+	    ((uint32_t *)mem)[0] = htonl(((CONST uint32_t *)mem)[1]);
+	    ((uint32_t *)mem)[1] = t;
 	    mem += 8;
 	    len -= 8;
 	}
@@ -765,26 +765,19 @@ static void FlipMoveMem(byte *mem, uldat len, uldat chunk) {
  * when an exclusive one is started. Must preserve Slot, Fd and other globals!
  */
 static void alienSendMsg(msgport MsgPort, msg Msg) {
-    uldat save_Slot = Slot;
-    int save_Fd = Fd;
-    uldat Len = 0, Tot;
     byte *t;
-    uldat N;
-#if defined(CONF__MODULES) || defined (CONF_HW_DISPLAY)
     byte *Src;
-#endif
-#if defined(CONF__MODULES) || defined (CONF_HW_DISPLAY)
-    byte Type;
-#endif
-    byte16 h;
+    uldat save_Slot = Slot, Len = 0, Tot, N;
+    int save_Fd = Fd;
     hwattr H;
+    uint16_t h;
+    byte Type;
     
     RequestN = MSG_MAGIC;
     Fd = MsgPort->RemoteData.Fd;
     Slot = MsgPort->RemoteData.FdSlot;
 
     switch (Msg->Type) {
-#if defined(CONF__MODULES) || defined (CONF_HW_DISPLAY)
       case MSG_DISPLAY:
 	Src = Msg->Event.EventDisplay.Data;
 	N = 1;
@@ -843,7 +836,6 @@ static void alienSendMsg(msgport MsgPort, msg Msg) {
 	}
 	
 	break;
-#endif /* defined(CONF__MODULES) || defined (CONF_HW_DISPLAY) */
       case MSG_WIDGET_KEY:
 	alienReply(Msg->Type, Len = SIZEOF(uldat) + 3*SIZEOF(udat) + 2*SIZEOF(byte) + Msg->Event.EventKeyboard.SeqLen, 0, NULL);
 	if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {

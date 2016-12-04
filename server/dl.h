@@ -22,9 +22,9 @@ void DlClose(module Module);
 module DlLoad(uldat code);
 void   DlUnLoad(uldat code);
 module DlIsLoaded(uldat code);
-udat   DlName2Code(byte *name);
+udat   DlName2Code(CONST byte *name);
 
-module DlLoadAny(uldat len, byte *name);
+module DlLoadAny(uldat len, CONST byte *name);
 
 void *DlSym(module Module, CONST byte *name);
 

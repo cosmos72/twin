@@ -19,14 +19,14 @@
 #define TW_GO_MAGIC   ((uldat)0x21216F47ul)
 /* "Wait" in native byte-order */
 #define TW_WAIT_MAGIC ((uldat)0x74696157ul)
+/* "Stop" in native byte-order */
+#define TW_STOP_MAGIC ((uldat)0x706F7453ul)
 
 #define TW_INET_PORT	7754
 
 #define TW_SMALLBUFF	256
 #define TW_BIGBUFF	4096
 
-
-#ifndef _TWIN_H
 
 
 /* return from signal macros */
@@ -75,63 +75,27 @@
 /* if sizeof(hwattr) == 2, bytes are { 'ascii', 'col' } */
 
 /* hwattr <-> hwcol+hwfont conversion */
-#define HWATTR16(col,ascii) (((byte16)(byte)(col) << 8) | (byte16)(byte)(ascii))
+#define HWATTR16(col,ascii) (((uint16_t)(byte)(col) << 8) | (uint16_t)(byte)(ascii))
 #define HWATTR_COLMASK16(attr) ((attr) & 0xFF00)
 #define HWATTR_FONTMASK16(attr) ((attr) & 0xFF)
 #define HWCOL16(attr) ((hwcol)((attr) >> 8))
 #define HWFONT16(attr) ((byte)(attr))
 
 
-/* if sizeof(hwattr) == 4, bytes are { 'ascii_low', 'col', 'ascii_high', 'unused' } */
+/* if sizeof(hwattr) == 4, bytes are { 'ascii_low', 'col', 'ascii_high', 'extra_pseudo_graphics' } */
 
 /* hwattr <-> hwcol+hwfont conversion */
-#define HWATTR32(col,ascii) (((byte32)(byte)(col) << 8) | (((byte32)(ascii) & 0xFF00) << 8) | (byte32)(byte)(ascii))
+#define HWATTR32(col,ascii) (((uint32_t)(byte)(col) << 8) | (((uint32_t)(ascii) & 0xFF00) << 8) | (uint32_t)(byte)(ascii))
 #define HWATTR_COLMASK32(attr) ((attr) & 0xFF00)
 #define HWATTR_FONTMASK32(attr) ((attr) & 0xFF00FF)
 #define HWCOL32(attr) ((hwcol)((attr) >> 8))
-#define HWFONT32(attr) ((byte16)(((attr) & 0xFF) | (((attr) >> 8) & 0xFF00)))
+#define HWFONT32(attr) ((uint16_t)(((attr) & 0xFF) | (((attr) >> 8) & 0xFF00)))
+#define HWEXTRA32(attr) ((byte)((attr) >> 24))
+
+#define HWATTR_EXTRA32(attr,extra) (((uint32_t)(byte)(extra) << 24) | ((uint32_t)(attr) & 0xFFFFFF))
+#define HWATTR_EXTRAMASK32(attr) ((attr) & 0xFF000000)
 
 
-
-
-
-
-
-/*
- * Notes about the timevalue struct:
- * 
- * it is used to represent both time intervals and absolute times;
- * the ->Seconds is a ttany numeric field.
- * DON'T assume ttany is 32 bit (or any other arbitrary size)
- * since in 19 Jan 2038 at 04:14:08 any signed, 32 bit ttany will overflow.
- * So use sizeof(ttany) if you really need.
- * 
- * the ->Fraction is a ttany numeric field.
- * As above, DON'T assume ttany is 32 bit (or any other arbitrary size)
- * since in the future we may want a finer granularity than the nanosecond one
- * possible with a 32 bit ttany.
- * So :
- * 1) use sizeof(ttany) if you really need
- * 2) don't assume (ttany)1 is a nanosecond (or any other arbitrary time),
- *    but always use the form '1 NanoSECs', '250 MilliSECs + 7 MicroSECs', etc.
- * 3) if you _absolutely_ need to know to what time (ttany)1 corresponds,
- *    use this: '1 FullSECs' is the number of (ttany)1 intervals in a second.
- * 4) for the moment, the only defined fractions of a second are:
- *    FullSECs, MilliSECs, MicroSECs, NanoSECs.
- *    Others may be added in the future (PicoSECs, FemtoSECs, AttoSECs, ...)
- */
-#define THOUSAND	((ttany)1000)
-
-#define NanoSEC		1 /* i.e. (ttany)1 is a nanosecond */
-#define MicroSEC	(THOUSAND * NanoSEC)
-#define MilliSEC	(THOUSAND * MicroSEC)
-#define FullSEC		(THOUSAND * MilliSEC)
-
-
-#define NanoSECs	* NanoSEC
-#define MicroSECs	* MicroSEC
-#define MilliSECs	* MilliSEC
-#define FullSECs	* FullSEC
 
 
 /**********************************/
@@ -139,9 +103,6 @@
 
 
 #define msg_magic	((uldat)0xA3a61ce4ul)
-
-
-#endif /* _TWIN_H */
 
 
 

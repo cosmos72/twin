@@ -20,22 +20,27 @@
  * or referencing the variable All.
  */
 
-#include <signal.h>
-#include <sys/stat.h>
+#include "twconfig.h"
 
-#include "autoconf.h"
+#ifdef TW_HAVE_SIGNAL_H
+# include <signal.h>
+#endif
 
-#ifdef HAVE_SYS_RESOURCE_H
+#ifdef TW_HAVE_SYS_STAT_H
+# include <sys/stat.h>
+#endif
+
+#ifdef TW_HAVE_SYS_RESOURCE_H
 # include <sys/resource.h>
 #endif
 
-#ifdef HAVE_SYS_TTYDEFAULTS_H
+#ifdef TW_HAVE_SYS_TTYDEFAULTS_H
 # include <sys/ttydefaults.h>
 #else
 # include "my_ttydefaults.h"
 #endif
 
-#ifdef HAVE_SYS_WAIT_H
+#ifdef TW_HAVE_SYS_WAIT_H
 # include <sys/wait.h>
 #endif
 
@@ -76,26 +81,26 @@ static VOLATILE byte GotSignalWinch;
 static VOLATILE byte GotSignalChild;
 static VOLATILE byte GotSignalHangup;
 
-static RETSIGTYPE SignalWinch(int n) {
+static TW_RETSIGTYPE SignalWinch(int n) {
     GotSignals = GotSignalWinch = TRUE;
     signal(SIGWINCH, SignalWinch);
-    RETFROMSIGNAL(0);
+    TW_RETFROMSIGNAL(0);
 }
 
-static RETSIGTYPE HandleSignalWinch(void) {
+static TW_RETSIGTYPE HandleSignalWinch(void) {
     GotSignalWinch = FALSE;
     if (DisplayHWCTTY && DisplayHWCTTY != HWCTTY_DETACHED
 	&& DisplayHWCTTY->DisplayIsCTTY) {
 	
 	ResizeDisplayPrefer(DisplayHWCTTY);
     }
-    RETFROMSIGNAL(0);
+    TW_RETFROMSIGNAL(0);
 }
 
-static RETSIGTYPE SignalChild(int n) {
+static TW_RETSIGTYPE SignalChild(int n) {
     GotSignals = GotSignalChild = TRUE;
     signal(SIGCHLD, SignalChild);
-    RETFROMSIGNAL(0);
+    TW_RETFROMSIGNAL(0);
 }
 
 static void HandleSignalChild(void) {
@@ -111,10 +116,10 @@ static void HandleSignalChild(void) {
 /*
  * got a SIGHUP. shutdown the display on controlling tty, if any
  */
-static RETSIGTYPE SignalHangup(int n) {
+static TW_RETSIGTYPE SignalHangup(int n) {
     GotSignals = GotSignalHangup = TRUE;
     signal(SIGHUP, SignalHangup);
-    RETFROMSIGNAL(0);
+    TW_RETFROMSIGNAL(0);
 }
 
 static void HandleSignalHangup(void) {
@@ -137,8 +142,8 @@ void HandleSignals(void) {
 }
 
 
-#ifndef DONT_TRAP_SIGNALS
-static RETSIGTYPE SignalFatal(int n) {
+#ifndef TW_DONT_TRAP_SIGNALS
+static TW_RETSIGTYPE SignalFatal(int n) {
     sigset_t s, t;
 
     signal(n, SIG_DFL);
@@ -151,7 +156,7 @@ static RETSIGTYPE SignalFatal(int n) {
     
     kill(getpid(), n);
     
-    RETFROMSIGNAL(0);
+    TW_RETFROMSIGNAL(0);
 }
 #endif
 
@@ -533,8 +538,8 @@ byte InitTtysave(void) {
 	
 	/* input modes */
 	ttysave.c_iflag |= (BRKINT | IGNPAR | ICRNL | IXON
-#ifdef IMAXBEL
-			   | IMAXBEL
+#ifdef ITW_MAXBEL
+			   | ITW_MAXBEL
 #endif
 			   );
 	
@@ -641,8 +646,8 @@ byte InitTtysave(void) {
 	
 	/* input modes */
 	ttysave.c_iflag = (BRKINT | IGNPAR | ICRNL | IXON
-#ifdef IMAXBEL
-			   | IMAXBEL
+#ifdef ITW_MAXBEL
+			   | ITW_MAXBEL
 #endif
 			   );
 	

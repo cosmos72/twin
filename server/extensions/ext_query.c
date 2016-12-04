@@ -1,44 +1,27 @@
 #include "twin.h"
+
+#ifdef CONF_EXT
+
 #include "data.h"
+#include "dl.h"
 #include "methods.h"
 #include "printk.h"
 #include "ext_query.h"
 
-#ifdef CONF__MODULES
-# include "dl.h"
-#endif
-#ifdef CONF_EXT_TT
-# include "ext_TT.h"
-#endif
-
 
 static void warn_NoExtension(topaque len, CONST byte *name, uldat tried) {
-#ifdef CONF__MODULES
     if (!tried)
 	printk("twin: no extension compiled into twin, and all extension modules failed\n"
-	       "      for extension `%.*s'\n", Min2((int)len,SMALLBUFF), name);
+	       "      for extension `%.*s'\n", Min2((int)len,TW_SMALLBUFF), name);
     else
-#endif
     {
 	printk("twin: all extensions failed");
 	if (name)
-	    printk("for `%.*s'\n", Min2((int)len,SMALLBUFF), name);
+	    printk("for `%.*s'\n", Min2((int)len,TW_SMALLBUFF), name);
 	else
 	    printk(".\n");
     }
 }
-
-#if defined(CONF_EXT_TT) /* || defined(...) */
-static byte check4(byte *s, uldat len, CONST byte *name) {
-    if (len && strncmp(s, name, len))
-	return FALSE;
-#if 0
-    printk("twin: trying given `%.*s' server extension.\n", Min2((int)len,SMALLBUFF), s);
-#endif
-    return TRUE;
-}
-#endif
-
 
 static extension LoadExtension(topaque namelen, CONST byte *name) {
     extension E = (extension)0;
@@ -61,12 +44,7 @@ static extension LoadExtension(topaque namelen, CONST byte *name) {
 	
 #define TRY4(e) (check4(STR(e), namelen, name) && (tried++, E->Quit = CAT3(ext_,e,_Quit), CAT3(ext_,e,_Init)(E)))
 	success =
-#ifdef CONF_EXT_TT
-	    TRY4(TT) ||
-#endif
-#ifdef CONF__MODULES
 	    (E->Quit = NULL, Act(DlOpen,E)(E)) ||
-#endif
 	    (warn_NoExtension(namelen, name, tried), FALSE);
 
 #undef TRY4
@@ -95,3 +73,4 @@ extension QueryExtension(byte len, CONST byte *name) {
     return LoadExtension(namelen, name);
 }
 
+#endif /* CONF_EXT */

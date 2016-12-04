@@ -90,20 +90,6 @@
 #include <Tw/missing.h>
 #include <Tw/mouse.h>
 
-#ifndef _TWIN_H
-#define _TWIN_H
-
-/* a cutdown version of twin.h */
-
-
-/** a structure containing high resolution time */
-typedef struct s_timevalue  {
-    tany Seconds;
-    tany Fraction;
-} timevalue;
-
-#endif /* _TWIN_H */
-
 /** type for groups of radio buttons */
 typedef tobj tgroup;     
 /** type for generic widgets */

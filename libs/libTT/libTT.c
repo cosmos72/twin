@@ -41,11 +41,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/time.h>
-
-
-#ifdef CONF__MODULES
-# include <dlfcn.h>
-#endif
+#include <dlfcn.h>
 
 static void RealClose(void);
 
@@ -274,13 +270,11 @@ static void CloseTarget(void) {
     /* reinitialize at each TTClose() */
     InitClasses(TTD.Class_hw_null);
 
-#ifdef CONF__MODULES
     /* unload module if needed */
     if (TTD.DlHandle) {
 	dlclose(TTD.DlHandle);
 	TTD.DlHandle = NULL;
     }
-#endif
     
     TTD.PanicFlag = TT_FALSE;
 }
@@ -347,29 +341,20 @@ void TTCloseQuickNDirty(void) {
 
 
 
-#ifdef CONF__MODULES
-# ifdef LIBDIR
-static TT_CONST ttbyte *conf_libdir = LIBDIR "/TT/modules/HW" ;
+#ifdef PACKAGE_LIBDIR
+static TT_CONST ttbyte *conf_libdir = PACKAGE_LIBDIR "/modules" ;
 # else
-#  define conf_libdir "HW"
+static TT_CONST ttbyte *conf_libdir = "HW";
 # endif
 
 static ttclasses module_InitHW(tthw *HW) {
     /* put all known driver names here (for autoprobing) */
     /* do not autoprobe for `twin_detunnel', `null' or `xml' */
     TT_CONST ttbyte * name [] = {
-# ifndef CONF_TT_HW_TWIN_TUNNEL
 	    "twin_tunnel",
-# endif
-# ifndef CONF_TT_HW_TWIN
 	    "twin",
-# endif
-# ifndef CONF_TT_HW_GTK
 	    "gtk",
-# endif
-# ifndef CONF_TT_HW_X11
 	    "X11",
-# endif
 	    NULL, NULL,
     };
     
@@ -421,24 +406,6 @@ static ttclasses module_InitHW(tthw *HW) {
 
     return (ttclasses)0;
 }
-#else /* !CONF__MODULES */
-
-static ttclasses module_InitHW(tthw *HW) {
-    if (TTD.HWTarget)
-	fprintf(stderr, "TT-ERROR: modules not enabled, cannot load display target `%s'\n",
-		TTD.HWTarget);
-    else
-	fprintf(stderr, "TT-ERROR: modules not enabled, cannot load any display target\n");
-    
-    if (!CommonErrno)
-	CommonErrno = TT_ETARGET_FAILED;
-    return (ttclasses)0;
-}
-
-#endif /* CONF__MODULES */
-
-
-
 
 static ttclasses module_InitHW(tthw *HW);
 ttclasses _TT_null_InitHW(tthw *HW);
@@ -465,33 +432,21 @@ static struct s_target_hw target_array [] = {
     /* WARNING: this currently allows only for ONE client-specified target */
     { NULL, NULL, TT_TRUE },
 
-#ifdef CONF_TT_HW_TWIN_TUNNEL
     AUTOTARGET(twin_tunnel),
-#endif
     /*
      * cannot link twin_detunnel, it references twin server symbols
      * and would break *ALL* other libTT clients
      */
 #if 0
-# ifdef CONF_TT_HW_TWIN_DETUNNEL
     TARGET(twin_detunnel),
-# endif
 #endif
-#ifdef CONF_TT_HW_TWIN
     AUTOTARGET(twin),
-#endif
-#ifdef CONF_TT_HW_GTK
     AUTOTARGET(gtk),
-#endif
-#ifdef CONF_TT_HW_X11
     AUTOTARGET(X11),
-#endif
     
     /* use `null' or `xml' targets ONLY if explicitly requested */
 
-#ifdef CONF_TT_HW_XML
     TARGET(xml),
-#endif
     TARGET(null),
 };
     
@@ -699,44 +654,8 @@ TT_FN_ATTR_CONST TT_CONST ttbyte *TTStrError(ttuint E) {
 	return "";
 	
       case TT_ETARGET_FAILED:
-#if defined(CONF_TT_HW_TWIN_TUNNEL) || defined(CONF_TT_HW_TWIN) || defined(CONF_TT_HW_GTK) || defined(CONF_TT_HW_X11)
-	return "all compiled-in display targets failed ("
-# ifdef CONF_TT_HW_TWIN_TUNNEL
-	    "twin_tunnel"
-# endif
-# ifdef CONF_TT_HW_TWIN
-#  if defined(CONF_TT_HW_TWIN_TUNNEL)
-	    ", "
-#  endif
-	    "twin"
-# endif
-# ifdef CONF_TT_HW_GTK
-#  if defined(CONF_TT_HW_TWIN_TUNNEL) || defined(CONF_TT_HW_TWIN)
-	    ", "
-#  endif
-	    "gtk"
-# endif
-# ifdef CONF_TT_HW_X11
-#  if defined(CONF_TT_HW_TWIN_TUNNEL) || defined(CONF_TT_HW_TWIN) || defined(CONF_TT_HW_GTK)
-	    ", "
-#  endif
-	    "X11"
-# endif
-# ifdef CONF__MODULES
-	    ")\n\tand all probed modules failed"
-# else
-	    ")\n\tand modules not enabled"
-# endif
-	    "\n\t(all known targets: twin_tunnel, twin, gtk, X11, [twin_detunnel], [xml], [null])";
-#else /* !(defined(CONF_TT_HW_TWIN_TUNNEL) || defined(CONF_TT_HW_TWIN) || defined(CONF_TT_HW_GTK) || defined(CONF_TT_HW_X11)) */
-# ifdef CONF__MODULES
 	return "no display target compiled in, and all probed modules failed"
-	    
 	    "\n\t(all known targets: twin_tunnel, twin, gtk, X11, [twin_detunnel], [xml], [null])";
-# else
-	return "no display target compiled in, and modules not enabled. Please recompile libTT !!";
-# endif /* CONF__MODULES */
-#endif /* defined(CONF_TT_HW_TWIN) || defined(CONF_TT_HW_GTK) || defined(CONF_TT_HW_X11) */
 	
       case TT_ETARGET_BAD:
 	return "malformed TTDISPLAY environment variable";

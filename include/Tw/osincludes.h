@@ -2,17 +2,31 @@
 #define _TW_OSINCLUDES_H
 
 #include <errno.h>
-#include <stddef.h>
+
+#ifdef TW_HAVE_STDDEF_H
+# include <stddef.h>
+#endif
+
 #include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <string.h>
+
+#ifdef TW_HAVE_STDLIB_H
+# include <stdlib.h>
+#endif
+
+#ifdef TW_HAVE_STDINT_H
+# include <stdint.h>
+#endif
+
+#ifdef TW_HAVE_STDARG_H
+# include <stdarg.h>
+#endif
+
+#ifdef TW_HAVE_STRING_H
+# include <string.h>
+#endif
+
 #include <time.h>
 #include <sys/types.h>
-
-#ifdef TW_HAVE_FCNTL_H
-# include <fcntl.h>
-#endif
 
 #ifdef TW_HAVE_LIMITS_H
 # include <limits.h>
@@ -20,18 +34,6 @@
 
 #ifdef TW_HAVE_UNISTD_H
 # include <unistd.h>
-#endif
-
-#ifdef TW_HAVE_MACHINE_PARAM_H
-# include <machine/param.h>
-#endif
-
-#ifdef TW_HAVE_SYS_FILIO_H
-# include <sys/filio.h>
-#endif
-
-#ifdef TW_HAVE_SYS_SELECT_H
-# include <sys/select.h>
 #endif
 
 #ifdef TW_TIME_WITH_SYS_TIME

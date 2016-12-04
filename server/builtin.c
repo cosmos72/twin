@@ -18,18 +18,15 @@
 #include "main.h"
 #include "extreg.h"
 
+#include "dl.h"
+#include "draw.h"
+#include "common.h"
 #include "hw.h"
 #include "hw_multi.h"
-#include "common.h"
 #include "resize.h"
-#include "draw.h"
 #include "printk.h"
 #include "util.h"
 #include "version.h"
-
-#ifdef CONF__MODULES
-# include "dl.h"
-#endif
 
 #include <Tw/Twkeys.h>
 
@@ -83,9 +80,7 @@ msgport Builtin_MsgPort;
 
 static menu Builtin_Menu;
 static menuitem Builtin_File;
-#if defined(CONF__MODULES) && !(defined(CONF_SOCKET) && defined(CONF_TERM))
 static menuitem Builtin_Modules;
-#endif
 
 static window AboutWin, ClockWin, OptionWin, ButtonWin,
     DisplayWin, DisplaySubWin, ExecuteWin;
@@ -111,7 +106,6 @@ static void Clock_Update(void) {
     Builtin_MsgPort->PauseDuration.Seconds = 0;
 }
 
-#if defined(CONF__MODULES) && !(defined(CONF_TERM) && defined(CONF_SOCKET))
 static void TweakMenuRows(menuitem Item, udat code, byte flag) {
     window Win;
     row Row;
@@ -122,7 +116,6 @@ static void TweakMenuRows(menuitem Item, udat code, byte flag) {
 }
 
 static void UpdateMenuRows(widget dummy) {
-#ifndef CONF_TERM
     if (DlIsLoaded(TermSo)) {
 	TweakMenuRows(Builtin_Modules, COD_TERM_ON,    ROW_INACTIVE);
 	TweakMenuRows(Builtin_Modules, COD_TERM_OFF,   ROW_ACTIVE);
@@ -130,8 +123,6 @@ static void UpdateMenuRows(widget dummy) {
 	TweakMenuRows(Builtin_Modules, COD_TERM_ON,    ROW_ACTIVE);
 	TweakMenuRows(Builtin_Modules, COD_TERM_OFF,   ROW_INACTIVE);
     }
-#endif
-#ifndef CONF_SOCKET
     if (DlIsLoaded(SocketSo)) {
 	TweakMenuRows(Builtin_Modules, COD_SOCKET_ON,  ROW_INACTIVE);
 	TweakMenuRows(Builtin_Modules, COD_SOCKET_OFF, ROW_ACTIVE);
@@ -139,11 +130,7 @@ static void UpdateMenuRows(widget dummy) {
 	TweakMenuRows(Builtin_Modules, COD_SOCKET_ON,  ROW_ACTIVE);
 	TweakMenuRows(Builtin_Modules, COD_SOCKET_OFF, ROW_INACTIVE);
     }
-#endif
 }
-
-#endif
-
 
 static void SelectWinList(void) {
     screen Screen = All->FirstScreen;
@@ -572,23 +559,19 @@ static void BuiltinH(msgport MsgPort) {
 		    SendControlMsg(Ext(WM,MsgPort), MSG_CONTROL_RESTART, 0, NULL);
 		    break;
 
-#if defined(CONF__MODULES) && !defined(CONF_TERM)
 		  case COD_TERM_ON:
 		    if (!DlLoad(TermSo))
 			break;
 		    /* FALLTHROUGH */
-#endif
-#if defined(CONF__MODULES) || defined(CONF_TERM)
-		 case COD_SPAWN:
+
+                  case COD_SPAWN:
 		    Ext(Term,Open)(NULL, NULL);
 		    break;
-#endif
-#if defined(CONF__MODULES) && !defined(CONF_TERM)
+
 		  case COD_TERM_OFF:
 		    DlUnLoad(TermSo);
 		    break;
-#endif
-#if defined(CONF__MODULES) && !defined(CONF_SOCKET)
+
 		  case COD_SOCKET_OFF:
 		    DlUnLoad(SocketSo);
 		    if (All->FirstDisplayHW)
@@ -599,7 +582,7 @@ static void BuiltinH(msgport MsgPort) {
 		    if (!DlLoad(SocketSo))
 			break;
 		    break;
-#endif
+
 		  default:
 		    break;
 		}
@@ -661,7 +644,7 @@ static void BuiltinH(msgport MsgPort) {
 		    && EventMouseY >= 0 && EventMouseY <= tempWin->YWidth-2
 		    && (uldat)EventMouseY+tempWin->YLogic < (uldat)tempWin->HLogic;
 
-		SelectRowWindow(tempWin, temp ? (uldat)EventMouseY+tempWin->YLogic : MAXLDAT);
+		SelectRowWindow(tempWin, temp ? (uldat)EventMouseY+tempWin->YLogic : TW_MAXLDAT);
 		
 		if (tempWin == WinList &&
 		    isRELEASE(Msg->Event.EventMouse.Code)) {
@@ -786,7 +769,7 @@ static byte InitScreens(void) {
 	return TRUE;
     }
     Error(NOMEMORY);
-    printk("twin: InitScreens(): %."STR(SMALLBUFF)"s\n", ErrStr);
+    printk("twin: InitScreens(): %."STR(TW_SMALLBUFF)"s\n", ErrStr);
     return FALSE;
 }
 
@@ -823,17 +806,10 @@ byte InitBuiltin(void) {
 	Item4Menu(Builtin_Menu, Window, TRUE, 3, " ð ") &&
 	
 	(Window=Win4Menu(Builtin_Menu)) &&
-#if defined(CONF_TERM) || defined(CONF__MODULES)
-
 	Row4Menu(Window, COD_SPAWN,  ROW_ACTIVE,10, " New Term ") &&
-#endif
 	Row4Menu(Window, COD_EXECUTE,ROW_ACTIVE,10, " Execute  ") &&
-#if defined(CONF_WM_RC) || defined(CONF__MODULES)
 	Row4Menu(Window, COD_RELOAD_RC,ROW_ACTIVE,11," Reload RC ") &&
 	Row4Menu(Window, (udat)0,    ROW_IGNORE,11, "ÄÄÄÄÄÄÄÄÄÄÄ") &&
-#else
-	Row4Menu(Window, (udat)0,    ROW_IGNORE,10, "ÄÄÄÄÄÄÄÄÄÄ") &&
-#endif
 	Row4Menu(Window, COD_DETACH, ROW_ACTIVE,10, " Detach   ") &&
 	Row4Menu(Window, COD_SUSPEND,ROW_ACTIVE,10, " Suspend  ") &&
 	Row4Menu(Window, COD_QUIT,   ROW_ACTIVE,10, " Quit     ") &&
@@ -851,23 +827,15 @@ byte InitBuiltin(void) {
 	Row4Menu(Window, (udat)0, ROW_INACTIVE,11," Clipboard ") &&
 	Item4Menu(Builtin_Menu, Window, TRUE, 6," Edit ") &&
 	
-#if defined(CONF__MODULES) && !(defined(CONF_TERM) && defined(CONF_SOCKET))
 	(Window=Win4Menu(Builtin_Menu)) &&
 	(Act(InstallHook,Window)(Window, UpdateMenuRows, &All->FnHookModule), TRUE) &&
 	
-#if !defined(CONF_TERM)
 	Row4Menu(Window, COD_TERM_ON,	ROW_ACTIVE,  20, " Run Twin Term      ") &&
 	Row4Menu(Window, COD_TERM_OFF,	ROW_INACTIVE,20, " Stop Twin Term     ") &&
-#endif
-#if !defined(CONF_SOCKET) && !defined(CONF_TERM)
 	Row4Menu(Window, (udat)0,       ROW_IGNORE,  20, "ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ") &&
-#endif	
-#if !defined(CONF_SOCKET)
 	Row4Menu(Window, COD_SOCKET_ON,	ROW_ACTIVE,  20, " Run Socket Server  ") &&
 	Row4Menu(Window, COD_SOCKET_OFF,ROW_INACTIVE,20, " Stop Socket Server ") &&
-#endif
 	(Builtin_Modules=Item4Menu(Builtin_Menu, Window, TRUE, 9," Modules ")) &&
-#endif
 	
 	Item4MenuCommon(Builtin_Menu) &&
 		
@@ -901,7 +869,7 @@ byte InitBuiltin(void) {
 	(DisplaySubWin = Do(Create,Window)
 	 (FnWindow, Builtin_MsgPort, 0, NULL, NULL, Builtin_Menu, COL(HIGH|BLACK,WHITE),
 	  NOCURSOR, WINDOW_AUTO_KEYS, WINDOWFL_USEROWS|WINDOWFL_ROWS_DEFCOL,
-	  10, MAXDAT, 0)) &&
+	  10, TW_MAXDAT, 0)) &&
 
 	(WinList = Do(Create,Window)
 	 (FnWindow, Builtin_MsgPort, 11, "Window List", NULL, Builtin_Menu, COL(WHITE,BLUE),
@@ -1026,7 +994,7 @@ byte InitBuiltin(void) {
 	return TRUE;
     }
     Error(NOMEMORY);
-    printk("twin: InitBuiltin(): %."STR(SMALLBUFF)"s\n", ErrStr);
+    printk("twin: InitBuiltin(): %."STR(TW_SMALLBUFF)"s\n", ErrStr);
     return FALSE;
 }
 

@@ -242,7 +242,7 @@ static ttwidget twin_detunnel_Build_ttwidget(ttwidget o) {
     tttheme t = myTheme(o);
     hwfont f = t->fill;
     hwcol c = o->col;
-    if (TW_NOID != (o->native = Multiplex(order_CreateWidget,o->w,o->h,0,TW_WIDGETFL_USEFILL,0,MAXDAT,HWATTR(c, f)))) {
+    if (TW_NOID != (o->native = Multiplex(order_CreateWidget,o->w,o->h,0,TW_WIDGETFL_USEFILL,0,TW_MAXDAT,HWATTR(c, f)))) {
 	twin_detunnel_AtBuild_ttvisible((ttvisible)o);
 	return o;
     }
@@ -302,7 +302,7 @@ static void twin_detunnel_Draw_ttwidget(ttwidget o, ttshort x, ttshort y, ttshor
 
 /* ttlabel */
 static ttlabel twin_detunnel_Build_ttlabel(ttlabel o) {
-    if (TW_NOID != (o->native = Multiplex(order_CreateWidget,o->text_len,1,0,TW_WIDGETFL_USEEXPOSE,0,MAXDAT,HWATTR(o->col, myTheme(o)->fill)))) {
+    if (TW_NOID != (o->native = Multiplex(order_CreateWidget,o->text_len,1,0,TW_WIDGETFL_USEEXPOSE,0,TW_MAXDAT,HWATTR(o->col, myTheme(o)->fill)))) {
 	if (twin_detunnel_AddCommonCallbacks_ttwidget((ttwidget)o)) {
 	    twin_detunnel_AtBuild_ttvisible((ttvisible)o);
 	    return o;

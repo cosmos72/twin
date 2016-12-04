@@ -14,10 +14,10 @@
  * Life is tricky... under SunOS hstrerror() is in an obscure library, so it gets disabled,
  * yet <netdb.h> has its prototype, so the #define hstrerror() in "missing.h" breaks it.
  * Solution: include "twin.h" (pulls in "missing.h") late, but still include
- * "autoconf.h" and "osincludes.h" early to pull in HAVE_* and system headers
+ * "twconfig.h" and "osincludes.h" early to pull in TW_HAVE_* and system headers
  * necessary to include <sys/socket.h> under FreeBSD.
  */
-#include "autoconf.h"
+#include "twconfig.h"
 #include "osincludes.h"
 
 #include <sys/socket.h>
@@ -26,15 +26,15 @@
 #include <netdb.h>
 #include <netinet/in.h>
 
-#ifdef HAVE_SYS_IOCTL_H
+#ifdef TW_HAVE_SYS_IOCTL_H
 # include <sys/ioctl.h>
 #endif
 
-#ifdef HAVE_SYS_UTSNAME_H
+#ifdef TW_HAVE_SYS_UTSNAME_H
 # include <sys/utsname.h>
 #endif
 
-#ifdef CONF_SOCKET_GZ
+#ifdef TW_HAVE_ZLIB_H
 # include <zlib.h>
 #endif
 
@@ -66,6 +66,7 @@
 
 
 
+#define CONF_SOCKET_ALIEN
 
 #ifdef CONF_SOCKET_ALIEN
 
@@ -655,7 +656,7 @@ TW_DECL_MAGIC(TwinMagicData);
  * if success, return array of obj, else return NULL.
  */
 static CONST obj *AllocId2ObjVec(byte *alloced, byte c, uldat n, byte *VV) {
-#if TW_SIZEOFULDAT >= TW_SIZEOFTOPAQUE && TW_CAN_UNALIGNED != 0
+#if TW_SIZEOF_ULDAT >= TW_SIZEOF_TOPAQUE && TW_CAN_UNALIGNED != 0
     CONST uldat *L = (CONST uldat *)VV;
     CONST obj *aX;
     obj *X;
@@ -1562,7 +1563,6 @@ static void sockSendMsg(msgport MsgPort, msg Msg) {
     Slot = MsgPort->RemoteData.FdSlot;
 
     switch (Msg->Type) {
-#if defined(CONF__MODULES) || defined(CONF_HW_DISPLAY)
       case MSG_DISPLAY:
 	Easy = FALSE;
 	sockReply(Msg->Type, Len = sizeof(twindow) + 4*sizeof(udat) + Msg->Event.EventDisplay.Len, NULL);
@@ -1582,7 +1582,6 @@ static void sockSendMsg(msgport MsgPort, msg Msg) {
 	    PushV(t, Msg->Event.EventDisplay.Len, Msg->Event.EventDisplay.Data);
 	}
 	break;
-#endif /* defined(CONF__MODULES) || defined (CONF_HW_DISPLAY) */
       case MSG_WIDGET_KEY:
 	if (Easy && sizeof(event_keyboard) == sizeof(window) + 3*sizeof(dat) + 2*sizeof(byte))
 	    break;
@@ -1749,7 +1748,7 @@ static void sockSendMsg(msgport MsgPort, msg Msg) {
       default:
 	Easy = FALSE;
     }
-#if TW_SIZEOFTOPAQUE == TW_SIZEOFULDAT
+#if TW_SIZEOF_TOPAQUE == TW_SIZEOF_ULDAT
     if (Easy) {
 	Msg->Event.EventCommon.W = (void *)Obj2Id(Msg->Event.EventCommon.W);
 	if (Msg->Type == MSG_MENU_ROW) {
@@ -1860,7 +1859,6 @@ static byte sockSendToMsgPort(msgport MsgPort, udat Len, CONST byte *Data) {
 	    Msg->Event.EventCommon.W = (void *)Id2Obj(widget_magic_id, tMsg->Event.EventCommon.W);
 
 	    switch (tMsg->Type) {
-#if defined(CONF__MODULES) || defined (CONF_HW_DISPLAY)
 	      case TW_MSG_DISPLAY:
 		if (sizeof(struct s_event_display)  == sizeof(window)  + 4*sizeof(dat) + sizeof(byte *) &&
 		    sizeof(struct s_tevent_display) == sizeof(twindow) + 4*sizeof(dat) + sizeof(uldat)) {
@@ -1880,7 +1878,6 @@ static byte sockSendToMsgPort(msgport MsgPort, udat Len, CONST byte *Data) {
 		    ok = FALSE;
 		      
 		break;
-#endif /* defined(CONF__MODULES) || defined (CONF_HW_DISPLAY) */
 	      case TW_MSG_WIDGET_KEY:
 		if (sizeof(struct s_event_keyboard)  == sizeof(window)  + 3*sizeof(dat) + 2*sizeof(byte) &&
 		    sizeof(struct s_tevent_keyboard) == sizeof(twindow) + 3*sizeof(dat) + 2*sizeof(byte)) {
@@ -2220,7 +2217,7 @@ static uldat GetRandomData(void) {
 		got = 4;
 		res = (unsigned long)mrand48();
 	    }
-	    AuthData[len++] = res & MAXBYTE;
+	    AuthData[len++] = res & TW_MAXBYTE;
 	    res >>= 8;
 	    got--;
 	}
@@ -2385,14 +2382,14 @@ static void Wait4AuthIO(int fd, uldat slot) {
 	    /* OK! */
 	    if ((LS.HandlerIO.S = GetHandlerIO())) {
 		RemoteReadDeQueue(Slot, digestLen*2);
-		SendUldat(GO_MAGIC);
+		SendUldat(TW_GO_MAGIC);
 		return;
 	    }
 	}
     }
     
     /* I/O error or Auth error */
-    SendUldat(STOP_MAGIC);
+    SendUldat(TW_STOP_MAGIC);
     RemoteFlush(Slot);
     UnRegisterRemote(Slot);
     close(fd);
@@ -2453,7 +2450,7 @@ static byte Check4MagicTranslation(uldat slot, byte *magic, byte len) {
 		if (warn_count == 5)
 		    printk("twin: warning: many client with different sizes, suppressing further messages.\n");
 		else
-		    printk("twin: warning: client has different `%."STR(SMALLBUFF)"s' size, it may not be Unicode aware.\n", zero);
+		    printk("twin: warning: client has different `%."STR(TW_SMALLBUFF)"s' size, it may not be Unicode aware.\n", zero);
 		warn_count++;
 	    }
 	}
@@ -2469,10 +2466,10 @@ static byte Check4MagicTranslation(uldat slot, byte *magic, byte len) {
 	 */
 	if (!CmpMem(magic+len1+1, "Twin", 4))
 	    /* little endian client. and us? */
-	    return TW_BYTE_ORDER == TW_LITTLE_ENDIAN ? MagicAlien : MagicAlienXendian;
+	    return TW_IS_LITTLE_ENDIAN ? MagicAlien : MagicAlienXendian;
 	if (!CmpMem(magic+len1+1+(magic[TWS_uldat]-4), "niwT", 4))
 	    /* big endian client. and us? */
-	    return TW_BYTE_ORDER == TW_BIG_ENDIAN ? MagicAlien : MagicAlienXendian;
+	    return TW_IS_BIG_ENDIAN ? MagicAlien : MagicAlienXendian;
     }
 
 #endif /* CONF_SOCKET_ALIEN */
@@ -2487,7 +2484,7 @@ static void Wait4Magic(int fd, uldat slot, byte isUnix) {
     
     t = RemoteReadGetQueue(Slot = slot, &max);
     if (max == 0)
-	max = MAXBYTE;
+	max = TW_MAXBYTE;
     else
 	max = t[0];
 
@@ -2526,11 +2523,11 @@ static void Wait4Magic(int fd, uldat slot, byte isUnix) {
 	
 	if (got) {
 	    if (isUnix) {
-		if ((LS.HandlerIO.S = GetHandlerIO()) && SendUldat(GO_MAGIC))
+		if ((LS.HandlerIO.S = GetHandlerIO()) && SendUldat(TW_GO_MAGIC))
 		    return;
 	    } else {
 		LS.HandlerIO.S = Wait4AuthIO;
-		if (SendUldat(WAIT_MAGIC) && SendChallenge())
+		if (SendUldat(TW_WAIT_MAGIC) && SendChallenge())
 		    return;
 	    }
 	}
@@ -2634,9 +2631,9 @@ static void SocketIO(int fd, uldat slot) {
     Slot = slot;
 
     if (ioctl(Fd, FIONREAD, &tot) != 0 || tot == 0)	
-	tot = SMALLBUFF;
-    else if (tot > BIGBUFF*BIGBUFF)
-	tot = BIGBUFF*BIGBUFF;
+	tot = TW_SMALLBUFF;
+    else if (tot > TW_BIGBUFF*TW_BIGBUFF)
+	tot = TW_BIGBUFF*TW_BIGBUFF;
     
     if (!(t = RemoteReadGrowQueue(Slot, tot)))
 	return;
@@ -2737,21 +2734,16 @@ static void SocketH(msgport MsgPort) {
 }
 
 
-#ifdef THIS_MODULE
-
 static void (*save_unixSocketIO)(int fd, uldat slot);
 
 byte InitModule(module Module)
-#else
-byte InitSocket(void)
-#endif
 {
     uldat m;
     struct sockaddr_in addr;
-    char opt[15];
+    char opt[TW_SIZEOF_SIZE_T] = { 0, };
 
     if (!sockInitAuth()) {
-	printk("twin: failed to create ~/.TwinAuth: %."STR(SMALLBUFF)"s\n", ErrStr);
+	printk("twin: failed to create ~/.TwinAuth: %."STR(TW_SMALLBUFF)"s\n", ErrStr);
 	return FALSE;
     }
     
@@ -2761,7 +2753,7 @@ byte InitSocket(void)
     addr.sin_port = htons(TW_INET_PORT + strtoul(TWDisplay+1, NULL, 16));
 	
     if ((inetFd = socket(AF_INET, SOCK_STREAM, 0)) >= 0 &&
-	setsockopt(inetFd, SOL_SOCKET, SO_REUSEADDR, (void *)&opt, sizeof(opt)) >= 0 &&
+	setsockopt(inetFd, SOL_SOCKET, SO_REUSEADDR, (void *)opt, sizeof(opt)) >= 0 &&
 	bind(inetFd, (struct sockaddr *)&addr, sizeof(addr)) >= 0 &&
 	listen(inetFd, 1) >= 0 &&
 	fcntl(inetFd, F_SETFD, FD_CLOEXEC) >= 0) {
@@ -2792,19 +2784,16 @@ byte InitSocket(void)
 	CopyMem(&m, TwinMagicData+TwinMagicData[0]-sizeof(uldat), sizeof(uldat));
 
 	if (unixSlot != NOSLOT) {
-#ifdef THIS_MODULE
 	    save_unixSocketIO = FdList[unixSlot].HandlerIO.S;
-#endif
 	    FdList[unixSlot].HandlerIO.S = unixSocketIO;
 	}
 
 	return TRUE;
     }
-    printk("twin: failed to create sockets: %."STR(SMALLBUFF)"s\n", ErrStr);
+    printk("twin: failed to create sockets: %."STR(TW_SMALLBUFF)"s\n", ErrStr);
     return FALSE;
 }
 
-#ifdef THIS_MODULE
 void QuitModule(module Module) {
     if (unixSlot != NOSLOT)
 	FdList[unixSlot].HandlerIO.S = save_unixSocketIO;
@@ -2830,4 +2819,3 @@ void QuitModule(module Module) {
     UnRegisterExt(Socket,DecodeExtension,sockDecodeExtension);
     UnRegisterExt(Socket,MultiplexS,sockMultiplexS);
 }
-#endif

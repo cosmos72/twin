@@ -15,7 +15,7 @@
 #include <sys/ioctl.h>
 #include <signal.h>
 
-#include <Tw/Twautoconf.h>
+#include <Tw/autoconf.h>
 
 #ifdef TW_HAVE_SYS_RESOURCE_H
 # include <sys/resource.h>
@@ -75,11 +75,11 @@ static uldat FdListGrow(void) {
     uldat oldsize, size;
     fdlist *newFdList;
     
-    if ((oldsize = FdSize) == MAXULDAT)
+    if ((oldsize = FdSize) == TW_MAXULDAT)
 	return TW_NOSLOT;
     
     if ((size = oldsize < 64 ? 96 : oldsize + (oldsize>>1)) < oldsize)
-	size = MAXULDAT;
+	size = TW_MAXULDAT;
     
     if (!(newFdList = (fdlist *)TwReAllocMem(FdList, size*sizeof(fdlist))))
 	return TW_NOSLOT;

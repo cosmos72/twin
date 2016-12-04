@@ -10,15 +10,17 @@
  *
  */
 
-#include <stdarg.h>
-
 #include "twin.h"
 #include "remote.h"
 #include "methods.h"
 #include "builtin.h"
 #include "draw.h"
 
-static byte buf[BIGBUFF]; /* hope it's enough */
+#ifdef TW_HAVE_STDARG_H
+# include <stdarg.h>
+#endif
+
+static byte buf[TW_BIGBUFF]; /* hope it's enough */
 static int printk_fd = NOFD;
 
 
@@ -30,8 +32,8 @@ void printk_str(int len, CONST byte *s) {
 
 #ifdef CONF_PRINTK
 	if (MessagesWin) {
-	    if (MessagesWin->HLogic > SMALLBUFF) {
-		while (MessagesWin->HLogic > SMALLBUFF) {
+	    if (MessagesWin->HLogic > TW_SMALLBUFF) {
+		while (MessagesWin->HLogic > TW_SMALLBUFF) {
 		    Delete(MessagesWin->USE.R.FirstRow);
 		    MessagesWin->CurY--;
 		}
@@ -62,11 +64,11 @@ void printk_str(int len, CONST byte *s) {
 
 int printk(CONST byte *format, ...) {
     int len = 0;
-#if defined(HAVE_VSNPRINTF) || defined(HAVE_VSPRINTF)
+#if defined(TW_HAVE_VSNPRINTF) || defined(TW_HAVE_VSPRINTF)
     va_list ap;
     
     va_start(ap, format);
-# ifdef HAVE_VSNPRINTF
+# ifdef TW_HAVE_VSNPRINTF
     len = vsnprintf(buf, sizeof(buf), format, ap);
     va_end(ap);
 # else
@@ -77,13 +79,11 @@ int printk(CONST byte *format, ...) {
 	fputs("twin: internal error: printk() overflow! \033[1mQUIT NOW !\033[0m\n", stderr);
 	return sizeof(buf);
     }
-#endif /* HAVE_VSNPRINTF */
-
+#endif /* TW_HAVE_VSNPRINTF */
     printk_str(len, buf);
-    
-    return len;
 
-#endif /* defined(HAVE_VSNPRINTF) || defined(HAVE_VPRINTF) */
+#endif /* defined(TW_HAVE_VSNPRINTF) || defined(TW_HAVE_VPRINTF) */
+    return len;
 }
 
     

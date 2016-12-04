@@ -18,7 +18,7 @@
 #include <grp.h>
 #include <pwd.h>
 
-#ifdef HAVE_SYS_TIMEB_H
+#ifdef TW_HAVE_SYS_TIMEB_H
 # include <sys/timeb.h>
 #endif
 
@@ -154,14 +154,14 @@ void NormalizeTime(timevalue *Time) {
 }
 
 timevalue *InstantNow(timevalue *Now) {
-#if defined(HAVE_GETTIMEOFDAY)
+#if defined(TW_HAVE_GETTIMEOFDAY)
     struct timeval sysNow;
 
     gettimeofday(&sysNow, NULL);
     
     Now->Seconds = sysNow.tv_sec;
     Now->Fraction = sysNow.tv_usec MicroSECs;
-#elif defined(HAVE_FTIME)
+#elif defined(TW_HAVE_FTIME)
     timeb sysNow;
 
     ftime(&sysNow);
@@ -234,7 +234,7 @@ byte Minimum(byte MaxIndex, CONST uldat *Array) {
     byte i, MinIndex;
     uldat Temp;
     
-    Temp=MAXULDAT;
+    Temp=TW_MAXULDAT;
     MinIndex=(byte)0;
     if (!MaxIndex)
 	return 0xFF;
@@ -419,7 +419,7 @@ byte SelectionStore(uldat Magic, CONST byte MIME[MAX_MIMELEN], uldat Len, CONST 
 	WriteMem(Sel->Data + Sel->Len, ' ', Len);
     Sel->Len += Len;
     if (pad) {
-#if TW_BYTE_ORDER == TW_LITTLE_ENDIAN
+#if TW_IS_LITTLE_ENDIAN
 	Sel->Data[Sel->Len++] = '\0';
 #else
 	Sel->Data[Sel->Len] = Sel->Data[Sel->Len-1];
@@ -431,7 +431,7 @@ byte SelectionStore(uldat Magic, CONST byte MIME[MAX_MIMELEN], uldat Len, CONST 
 }
 
 #define _SEL_MAGIC SEL_HWFONTMAGIC
-#if TW_BYTE_ORDER == TW_LITTLE_ENDIAN
+#if TW_IS_LITTLE_ENDIAN
 #  define _SelAppendNL() SelectionAppend(2, "\n\0");
 #else
 #  define _SelAppendNL() SelectionAppend(2, "\0\n");
@@ -466,7 +466,7 @@ byte SetSelectionFromWindow(window Window) {
 	Window->XstSel = 0;
     } else if (Window->YstSel >= Window->HLogic) {
 	Window->YstSel = Window->HLogic - 1;
-	Window->XstSel = w_useC ? Window->WLogic - 1 : MAXLDAT;
+	Window->XstSel = w_useC ? Window->WLogic - 1 : TW_MAXLDAT;
     }
 
     if (w_useC) {
@@ -715,38 +715,38 @@ void FallBackKeyAction(window W, event_keyboard *EventK) {
 	if (!W->HLogic)
 	    break;
 	OldNumRow=W->CurY;
-	if (OldNumRow<MAXLDAT) {
+	if (OldNumRow<TW_MAXLDAT) {
 	    if (!OldNumRow)
 		NumRow=W->HLogic-(ldat)1;
 	    else
 		NumRow=OldNumRow-(ldat)1;
 	    W->CurY=NumRow;
 	    if (W->Flags & WINDOWFL_ROWS_SELCURRENT)
-		DrawLogicWidget((widget)W, (ldat)0, OldNumRow, (ldat)MAXDAT-(ldat)2, OldNumRow);
+		DrawLogicWidget((widget)W, (ldat)0, OldNumRow, (ldat)TW_MAXDAT-(ldat)2, OldNumRow);
 	}
 	else
 	    W->CurY=NumRow=W->HLogic-(ldat)1;
 	if (W->Flags & WINDOWFL_ROWS_SELCURRENT)
-	    DrawLogicWidget((widget)W, (ldat)0, NumRow, (ldat)MAXDAT-(ldat)2, NumRow);
+	    DrawLogicWidget((widget)W, (ldat)0, NumRow, (ldat)TW_MAXDAT-(ldat)2, NumRow);
 	UpdateCursor();
 	break;
       case TW_Down:
 	if (!W->HLogic)
 	    break;
 	OldNumRow=W->CurY;
-	if (OldNumRow<MAXLDAT) {
+	if (OldNumRow<TW_MAXLDAT) {
 	    if (OldNumRow>=W->HLogic-(ldat)1)
 		NumRow=(ldat)0;
 	    else
 		NumRow=OldNumRow+(ldat)1;
 	    W->CurY=NumRow;
 	    if (W->Flags & WINDOWFL_ROWS_SELCURRENT)
-		DrawLogicWidget((widget)W, (ldat)0, OldNumRow, (ldat)MAXDAT-(ldat)2, OldNumRow);
+		DrawLogicWidget((widget)W, (ldat)0, OldNumRow, (ldat)TW_MAXDAT-(ldat)2, OldNumRow);
 	}
 	else
 	    W->CurY=NumRow=(ldat)0;
 	if (W->Flags & WINDOWFL_ROWS_SELCURRENT)
-	    DrawLogicWidget((widget)W, (ldat)0, NumRow, (ldat)MAXDAT-(ldat)2, NumRow);
+	    DrawLogicWidget((widget)W, (ldat)0, NumRow, (ldat)TW_MAXDAT-(ldat)2, NumRow);
 	UpdateCursor();
 	break;
       case TW_Left:
@@ -757,7 +757,7 @@ void FallBackKeyAction(window W, event_keyboard *EventK) {
 	break;
       case TW_Right:
 	if ((W_USE(W, USECONTENTS) && W->CurX < W->XWidth - 3) ||
-	    (W_USE(W, USEROWS) && W->CurX < MAXLDAT - 1)) {
+	    (W_USE(W, USEROWS) && W->CurX < TW_MAXLDAT - 1)) {
 	    W->CurX++;
 	    UpdateCursor();
 	}
@@ -960,10 +960,10 @@ byte InitTWDisplay(void) {
 			TWDisplay = fullTWD+10;
 			lenTWDisplay = LenStr(TWDisplay);
 			CopyMem(TWDisplay, envTWD+10, lenTWDisplay);
-#if defined(HAVE_SETENV)
+#if defined(TW_HAVE_SETENV)
 			setenv("TWDISPLAY",TWDisplay,1);
 			setenv("TERM","linux",1);
-#elif defined(HAVE_PUTENV)
+#elif defined(TW_HAVE_PUTENV)
 			putenv(envTWD);
 			putenv("TERM=linux");
 #endif
@@ -982,7 +982,7 @@ byte InitTWDisplay(void) {
     }
     if (fd != NOFD)
 	close(fd);
-    printk("twin: failed to create any /tmp/.Twin* socket: %."STR(SMALLBUFF)"s\n", ErrStr);
+    printk("twin: failed to create any /tmp/.Twin* socket: %."STR(TW_SMALLBUFF)"s\n", ErrStr);
     printk("      possible reasons: either /tmp not writable, or all TWDISPLAY already in use,\n"
 	   "      or too many stale /tmp/.Twin* sockets. Aborting.\n");
     return FALSE;
@@ -1040,19 +1040,19 @@ void GainPrivileges(void) {
 }
 
 static void SetEnvs(struct passwd *p) {
-    byte buf[BIGBUFF];
+    byte buf[TW_BIGBUFF];
     
     chdir(HOME = p->pw_dir);
-#if defined(HAVE_SETENV)
+#if defined(TW_HAVE_SETENV)
     setenv("HOME", HOME, 1);
     setenv("SHELL", p->pw_shell, 1);
     setenv("LOGNAME", p->pw_name, 1);
-    sprintf(buf, "/var/mail/%s", p->pw_name); setenv("MAIL", buf, 1);
-#elif defined(HAVE_PUTENV)
-    sprintf(buf, "HOME=%s", HOME); putenv(buf);
-    sprintf(buf, "SHELL=%s", p->pw_shell); putenv(buf);
-    sprintf(buf, "LOGNAME=%s", p->pw_name); putenv(buf);
-    sprintf(buf, "MAIL=/var/mail/%s", p->pw_name); putenv(buf);
+    sprintf(buf, "/var/mail/%.*s", (int)(TW_BIGBUFF-11), p->pw_name); setenv("MAIL", buf, 1);
+#elif defined(TW_HAVE_PUTENV)
+    sprintf(buf, "HOME=%.*s",          (int)(TW_BIGBUFF-6), HOME);        putenv(buf);
+    sprintf(buf, "SHELL=%.*s",         (int)(TW_BIGBUFF-7), p->pw_shell); putenv(buf);
+    sprintf(buf, "LOGNAME=%.*s",       (int)(TW_BIGBUFF-9), p->pw_name);  putenv(buf);
+    sprintf(buf, "MAIL=/var/mail/%.*s",(int)(TW_BIGBUFF-16) p->pw_name);  putenv(buf);
 #endif
 }
 
@@ -1065,7 +1065,7 @@ byte SetServerUid(uldat uid, byte privileges) {
 	if ((WM_MsgPort = Ext(WM,MsgPort))) {
 	    if ((p = getpwuid(uid)) && p->pw_uid == uid &&
 		chown(fullTWD, p->pw_uid, p->pw_gid) >= 0
-#ifdef HAVE_INITGROUPS
+#ifdef TW_HAVE_INITGROUPS
 		&& initgroups(p->pw_name, p->pw_gid) >= 0
 #endif
 		) {
@@ -1106,14 +1106,14 @@ byte SetServerUid(uldat uid, byte privileges) {
 		    if (setuid(0) < 0 || setgid(0) < 0 ||
 			chown(fullTWD, 0, 0) < 0) {
 			/* tried to recover, but screwed up uids too badly. */
-			printk("twin: failed switching to uid %u: %."STR(SMALLBUFF)"s\n", uid, strerror(errno));
+			printk("twin: failed switching to uid %u: %."STR(TW_SMALLBUFF)"s\n", uid, strerror(errno));
 			printk("twin: also failed to recover. Quitting NOW!\n");
 			Quit(0);
 		    }
 		    SetEnvs(getpwuid(0));
 		}
 	    }
-	    printk("twin: failed switching to uid %u: %."STR(SMALLBUFF)"s\n", uid, strerror(errno));
+	    printk("twin: failed switching to uid %u: %."STR(TW_SMALLBUFF)"s\n", uid, strerror(errno));
 	}
     } else
 	printk("twin: SetServerUid() can be called only if started by root with \"-secure\".\n");
@@ -1162,8 +1162,8 @@ byte *FindFile(byte *name, uldat *fsize) {
  * read data from infd and set environment variables accordingly
  */
 static void ReadTwEnvRC(int infd) {
-    byte buff[BIGBUFF], *p = buff, *end, *q, *eq;
-    int got, left = BIGBUFF;
+    byte buff[TW_BIGBUFF], *p = buff, *end, *q, *eq;
+    int got, left = TW_BIGBUFF;
     for (;;) {
 	do {
 	    got = read(infd, p, left);
@@ -1179,22 +1179,22 @@ static void ReadTwEnvRC(int infd) {
 	       (q = memchr(eq, '\n', end - eq))) {
 		
 	    *q++ = '\0';
-#if defined(HAVE_SETENV)
+#if defined(TW_HAVE_SETENV)
 	    *eq++ = '\0';
 	    setenv(p, eq, 1);
-#elif defined(HAVE_PUTENV)
+#elif defined(TW_HAVE_PUTENV)
 	    putenv(p);
 #endif
 	    p = q;
 	}
 	left = end - p;
-	if (left == BIGBUFF)
+	if (left == TW_BIGBUFF)
 	    /* line too long! */
 	    left = 0;
 	    
 	memmove(buff, p, left);
 	p = buff + left;
-	left = BIGBUFF - left;
+	left = TW_BIGBUFF - left;
     }
 }
 
@@ -1219,7 +1219,7 @@ void RunTwEnvRC(void) {
 		  case -1: /* error */
 		    close(fds[0]);
 		    close(fds[1]);
-		    printk("twin: RunTwEnvRC(): fork() failed: %."STR(SMALLBUFF)"s\n", strerror(errno));
+		    printk("twin: RunTwEnvRC(): fork() failed: %."STR(TW_SMALLBUFF)"s\n", strerror(errno));
 		    break;
 		  case 0:  /* child */
 		    close(fds[0]);
@@ -1240,7 +1240,7 @@ void RunTwEnvRC(void) {
 		    break;
 		}
 	    } else
-		printk("twin: RunTwEnvRC(): pipe() failed: %."STR(SMALLBUFF)"s\n", strerror(errno));
+		printk("twin: RunTwEnvRC(): pipe() failed: %."STR(TW_SMALLBUFF)"s\n", strerror(errno));
 	} else
 	    printk("twin: RunTwEnvRC(): .twenvrc.sh: File not found\n", strerror(errno));
     } else
@@ -1328,7 +1328,7 @@ INLINE uldat IdListGrow(byte i) {
     if (oldsize >= MAXID || i == obj_magic_id || i == all_magic_id)
 	return NOSLOT;
 
-    size = oldsize < SMALLBUFF/3 ? SMALLBUFF/2 : oldsize + (oldsize>>1);
+    size = oldsize < TW_SMALLBUFF/3 ? TW_SMALLBUFF/2 : oldsize + (oldsize>>1);
     if (size > MAXID)
 	size = MAXID;
     
@@ -1345,7 +1345,7 @@ INLINE uldat IdListGrow(byte i) {
 
 INLINE void IdListShrink(byte i) {
     obj *newIdList;
-    uldat size = Max2(BIGBUFF, IdTop[i] << 1);
+    uldat size = Max2(TW_BIGBUFF, IdTop[i] << 1);
     
     if (size < IdSize[i] && (newIdList = (obj *)ReAllocMem(IdList[i], size*sizeof(obj)))) {
 	IdList[i] = newIdList;
@@ -1390,7 +1390,7 @@ INLINE void _DropId(byte i, obj Obj) {
 		break;
 	IdTop[i] = (j == IdBottom[i]) ? j : j + 1;
 	
-	if (IdSize[i] > (IdTop[i] << 4) && IdSize[i] > BIGBUFF)
+	if (IdSize[i] > (IdTop[i] << 4) && IdSize[i] > TW_BIGBUFF)
 	    IdListShrink(i);
     }
 }

@@ -27,26 +27,15 @@
 #include "resize.h"
 #include "extreg.h"
 
-#include "hw.h"
 #include "common.h"
+#include "dl.h"
+#include "hw.h"
 #include "hw_multi.h"
 #include "scroller.h"
 #include "util.h"
 #include "remote.h"
 #include "version.h"
 
-#ifdef CONF_WM
-# include "wm.h"
-#endif
-#ifdef CONF_SOCKET
-# include "socket.h"
-#endif
-#ifdef CONF_TERM
-# include "tterm.h"
-#endif
-#ifdef CONF__MODULES
-# include "dl.h"
-#endif
 
 /*-------------*/
 
@@ -165,18 +154,11 @@ static byte Check4SpecialArgs(void) {
     return FALSE;
 }
 
-#if !defined(CONF_WM)
 static byte DieWMSo(void) {
-#if defined(CONF__MODULES)
-    printk("twin: fatal: failed to load the window manager: %."STR(SMALLBUFF)"s\n", ErrStr);
-#else
-    printk("twin: fatal: no window manager and no module loader compiled in.\n"
-	   "      Where should I get the window manager from!?\n");
-#endif
+    printk("twin: fatal: failed to load the window manager: %."STR(TW_SMALLBUFF)"s\n", ErrStr);
     flushk();
     return FALSE;
 }
-#endif
 
 static byte Init(void) {
     FD_ZERO(&save_rfds);
@@ -214,27 +196,11 @@ static byte Init(void) {
 	     * No DrawArea2() are allowed at all before InitHW() !
 	     */
 	    && InitDraw()   
-#ifdef CONF_WM
-	    && InitWM()
-#elif defined(CONF__MODULES)
 	    && (DlLoad(WMSo) || DieWMSo())
-#else
-	    && DieWMSo()
-#endif
-#ifdef CONF_TERM
-	    && InitTerm()
-#endif
-#ifdef CONF_SOCKET
-	    && InitSocket()
-#endif
 	   );
 }
     
 void Quit(int status) {
-#if 0
-    module M;
-#endif
-    
     RemoteFlushAll();
     
     if (All->AtQuit)
@@ -243,13 +209,6 @@ void Quit(int status) {
     SuspendHW(FALSE);
     /* not QuitHW() as it would fire up socket.so and maybe fork() in bg */
     
-#if 0
-    M = All->FirstModule;
-    while (M) {
-	Act(DlClose,M)(M);
-	M = M->Next;
-    }
-#endif
     if (status < 0)
 	return; /* give control back to signal handler */
     exit(status);

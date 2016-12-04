@@ -167,7 +167,7 @@ ldat GlobalFlags[4];
 ldat GlobalShadows[2];
 
 
-static void yyerror(char *s) {
+static void yyerror(const char *s) {
     printk("twin: %s:%d: %s\n", FILE_NAME, LINE_NO, s);
 }
 
@@ -1103,7 +1103,7 @@ static void DeleteUnneededScreens(node list) {
 
 static void NewCommonMenu_Overflow(void) {
     printk("twin: RC parser: user-defined menu is too big! (max is %d entries)\n",
-	    (int)(MAXUDAT - COD_RESERVED + 1));
+	    (int)(TW_MAXUDAT - COD_RESERVED + 1));
 }
 
 /*
@@ -1135,7 +1135,7 @@ static byte NewCommonMenu(void **shm_M, menu *res_CommonMenu,
 	}
     }
     
-    if (new_MenuBindsMax > MAXUDAT - COD_RESERVED) {
+    if (new_MenuBindsMax > TW_MAXUDAT - COD_RESERVED) {
 	NewCommonMenu_Overflow();
 	return FALSE;
     }
@@ -1272,10 +1272,7 @@ static byte ReadGlobals(void) {
 
 static byte rcparse(str path);
 
-#ifdef THIS_MODULE
-static
-#endif
-byte rcload(void) {
+static byte rcload(void) {
     str path;
     uldat len;
 #ifndef DEBUG_FORK
@@ -1291,8 +1288,8 @@ byte rcload(void) {
      * try to guess a reasonable size:
      * assume a failsafe avg of a node every 4 bytes
      */
-    len = Min2(len, MAXULDAT / sizeof(node));
-    len = Max2(len, BIGBUFF) * sizeof(node) / 4;
+    len = Min2(len, TW_MAXULDAT / sizeof(node));
+    len = Max2(len, TW_BIGBUFF) * sizeof(node) / 4;
     
     if (!shm_init(len)) {
 	FreeMem(path);
@@ -1368,9 +1365,6 @@ byte rcload(void) {
 #endif
 }
 
-
-#ifdef THIS_MODULE
-
 byte InitModule(module Module) {
     Module->Private = (void *)rcload;
     return TRUE;
@@ -1378,6 +1372,5 @@ byte InitModule(module Module) {
 
 void QuitModule(module Module) {
 }
-#endif /* THIS_MODULE */
 
 #endif /* _TWIN_RCPARSE_H */

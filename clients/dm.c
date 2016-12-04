@@ -603,7 +603,7 @@ static void InitSignals(void) {
     signal(SIGPIPE, SIG_IGN);
     signal(SIGIO,   SIG_IGN);
     signal(SIGHUP,  SIG_IGN);
-#ifndef DONT_TRAP_SIGNALS
+#ifndef TW_DONT_TRAP_SIGNALS
     signal(SIGINT,  SignalPanic);
     signal(SIGQUIT, SignalPanic);
     signal(SIGILL,  SignalPanic);

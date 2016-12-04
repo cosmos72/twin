@@ -12,7 +12,7 @@
 
 /*
  * this file exports "private" stuff from hw.c,
- * i.e. intended to be used only by HW/hw_*.c drivers
+ * i.e. intended to be used only by hw/hw_*.c drivers
  */
 
 extern dat (*ChangedVideo)[2][2];

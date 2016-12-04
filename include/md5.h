@@ -18,20 +18,17 @@
 #ifndef MD5_H
 #define MD5_H
 
-#include "autoconf.h"
+#include "twautoconf.h"
 
-#ifdef HAVE_STDDEF_H
+#ifdef TW_HAVE_STDINT_H
+# include <stdint.h> /* for uint32_t */
+#endif
+
+#ifdef TW_HAVE_STDDEF_H
 # include <stddef.h> /* for size_t */
 #endif
 
-#ifdef HAVE_STDINT_H
-# include <stdint.h> /* for uint32_t */
-  typedef uint32_t md5_uint32;
-#else
-# include <Tw/datatypes.h>
-# include <Tw/datasizes.h>
-  typedef TW_BYTE32 md5_uint32;
-#endif
+typedef uint32_t md5_uint32;
 
 typedef char assert_md5_uint32_is_really_32_bits_wide [sizeof(md5_uint32) == 4 ? 1 : -1];
 

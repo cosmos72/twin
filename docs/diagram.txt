@@ -44,7 +44,7 @@ in the diagram below (which enhances the diagram I previously wrote):
  ^                         |
  |                         |
  |                         |
- |   ......... network...........................................................................................
+ ............. network...........................................................................................
  |                         |
  |                         |
  |                         V
@@ -54,7 +54,7 @@ in the diagram below (which enhances the diagram I previously wrote):
  |                                    |                                     ^                |
  |                                    V                                     |                V
  |   +-------------------------------------------------------------------+  |  +--------------------------------+
- |   |             server HW drivers (server/HW/hw_*.c)                  |  |  | server extensions (server/ext/)|
+ |   |             server HW drivers (server/hw/hw_*.c)                  |  |  | server extensions (server/ext/)|
  |   +-------------------------------------------------------------------+  |  +--------------------------------+
  |        |       ^        |              |            |            |       |           |
  |        V       |        V              V            V            V       |           V

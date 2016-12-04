@@ -79,23 +79,18 @@
 #include "twin.h"
 #include "methods.h"
 #include "data.h"
+#include "extreg.h"
+#include "hw.h"
 #include "main.h"
 #include "printk.h"
-#include "util.h"
-#include "hw.h"
-#include "extreg.h"
-
 #include "rctypes.h"
-
+#include "util.h"
+#include "version.h"
 #include "wm.h"
-#include "rcrun.h"
 
-#ifdef CONF_THIS_MODULE
-# include "version.h"
-#endif
-
-#include "rcparse_tab.h" /* needed by rcparse.h */
-#include "rcparse.h"
+#include "rcrun.h"       /* needs wm.h, rctypes.h */
+#include "rcparse_tab.h" /* needs rcrun.h         */
+#include "rcparse.h"     /* needs rcparse_tab.h   */
 
 
 /* also put here the CONF_* and DEBUG_* used in rcparse.h so that MkDep catches them */
@@ -522,10 +517,10 @@ union yyalloc
 /* YYTRANSLATE[YYX] -- Symbol number corresponding to YYX as returned
    by yylex, with out-of-bounds checking.  */
 #define YYUNDEFTOK  2
-#define YYMAXUTOK   332
+#define YYTW_MAXUTOK   332
 
 #define YYTRANSLATE(YYX)                                                \
-  ((unsigned int) (YYX) <= YYMAXUTOK ? yytranslate[YYX] : YYUNDEFTOK)
+  ((unsigned int) (YYX) <= YYTW_MAXUTOK ? yytranslate[YYX] : YYUNDEFTOK)
 
 /* YYTRANSLATE[TOKEN-NUM] -- Symbol number corresponding to TOKEN-NUM
    as returned by yylex, without out-of-bounds checking.  */

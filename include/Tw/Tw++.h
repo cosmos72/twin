@@ -223,7 +223,7 @@ class TGadget : public TWidget {
 	if (text && text[0])
 	    TwSetTextGadget(Id, strlen(text), 1, (TW_CONST byte *)text, Left, Up);
 	else
-	    TwSetTextGadget(Id, MAXDAT, MAXDAT, NULL, 0, 0);
+	    TwSetTextGadget(Id, TW_MAXDAT, TW_MAXDAT, NULL, 0, 0);
     }
     inline void setTextLines(dat XWidth, dat YWidth, const char *text = 0, dat Left = 0, dat Up = 0) const
     {
@@ -339,7 +339,7 @@ class TWindow : public TWidget {
 			  ColBorder, ColText, ColSelect, ColDisabled, ColSelectDisabled);
     }
     inline void	configure(byte Bitmap, dat Left = 0, dat Up = 0, dat MinXWidth = 0,
-			  dat MinYWidth = 0, dat MaxXWidth = MAXDAT, dat MaxYWidth = MAXDAT) const
+			  dat MinYWidth = 0, dat MaxXWidth = TW_MAXDAT, dat MaxYWidth = TW_MAXDAT) const
     {
 	TwConfigureWindow(Id, Bitmap, Left, Up, MinXWidth, MinYWidth, MaxXWidth, MaxYWidth);
     }

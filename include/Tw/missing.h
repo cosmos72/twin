@@ -3,7 +3,7 @@
 #define _TW_MISSING_H
 
 #include <Tw/prefix.h>
-#include <Tw/Twautoconf.h>
+#include <Tw/autoconf.h>
 
 #ifndef TW_HAVE_MEMCMP
 int Tw_missing_memcmp(TW(CONST) void *s1, TW(CONST) void *s2, size_t n);
