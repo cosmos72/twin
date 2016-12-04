@@ -1,4 +1,4 @@
-SUBDIRS = docs libs clients themes server
+SUBDIRS = docs include libs clients themes server
 
 ACLOCAL_AMFLAGS = -I m4
 

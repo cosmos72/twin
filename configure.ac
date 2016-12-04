@@ -227,7 +227,7 @@ CFLAGS="$custom_CFLAGS"
 
 AC_CONFIG_FILES([
       Makefile clients/Makefile clients/mapscrn/Makefile contrib/Makefile contrib/twcd/Makefile \
-      docs/Makefile include/version.h \
+      docs/Makefile include/version.h include/Makefile include/Tutf/Makefile include/Tw/Makefile \
       libs/Makefile libs/libTutf/Makefile libs/libTw/Makefile libs/libltdl/Makefile \
       server/Makefile server/hw/Makefile themes/Makefile themes/hw_gfx/Makefile])
 
