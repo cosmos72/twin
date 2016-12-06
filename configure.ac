@@ -233,7 +233,7 @@ AC_CONFIG_FILES([
 
 AC_OUTPUT
 
-function tw_cfg()
+tw_cfg()
 {
   if test "$2" = yes; then
     echo "#define $1" >> include/twconfig.h
