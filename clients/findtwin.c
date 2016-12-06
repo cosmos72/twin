@@ -52,7 +52,7 @@ static int match_twsocket(TW_CONST struct dirent *d) {
 
 #if defined(TW_HAVE_SCANDIR) && defined(TW_HAVE_ALPHASORT)
 static void unix_socket_test(void) {
-    int alphasort(const struct dirent **a, const struct dirent **b);
+    int alphasort();
     struct dirent **namelist;
     char *s;
     int n = scandir("/tmp", &namelist, match_twsocket, alphasort);
