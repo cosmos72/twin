@@ -168,8 +168,10 @@ timevalue *InstantNow(timevalue *Now) {
     
     Now->Seconds = sysNow.time ;
     Now->Fraction = sysNow.millitm  MilliSECs;
+#else
+    Now->Seconds = time(NULL);
+    Now->Fraction = 0;
 #endif
-    
     return Now;
 }
 

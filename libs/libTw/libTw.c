@@ -81,8 +81,9 @@
 TH_R_MUTEX_HELPER_DEFS(static);
 #endif
     
-#include "unaligned.h"
 #include "md5.h"
+#include "unaligned.h"
+#include "util.h"
 #include "version.h"
 
 /* remove the `Obj' suffix from Tw_ChangeFieldObj() */
@@ -722,40 +723,17 @@ byte Tw_TimidFlush(tw_d TwD) {
     return b;
 }
     
-#ifdef TW_HAVE_ALARM
-static volatile int AlarmReceived = 0;
+static TW_CONST timevalue TimeoutZero = {0,0}, Timeout5Seconds = {5,0};
+#define TIMEOUT_INFINITE  ((timevalue *)0)
+#define TIMEOUT_ZERO      (&TimeoutZero)
+#define TIMEOUT_5_SECONDS (&Timeout5Seconds)
 
-static TW_RETSIGTYPE AlarmHandler(int sig)
-{
-    AlarmReceived = 1;
-    TW_RETFROMSIGNAL(0);
-}
-static void SetAlarm(unsigned seconds) {
-    typedef TW_RETSIGTYPE (*sigfunction)(int);
-    static sigfunction orig = SIG_DFL;
-
-    if (seconds != 0) {
-        orig = signal(SIGALRM, &AlarmHandler);
-        alarm(seconds);
-    } else {
-        alarm(seconds);
-        signal(SIGALRM, orig);
-        AlarmReceived = 0;
-    }
-}
-#else
-# define SetAlarm(seconds) ((void)0)
-# define AlarmReceived     (0)
-#endif
-
-
-
-/* return bytes read, or (uldat)-1 for errors */
-static uldat TryRead(tw_d TwD, byte Wait) {
+/* return bytes read, or (uldat)-1 for errors / timeout */
+static uldat TryRead(tw_d TwD, TW_CONST timevalue * Timeout) {
     uldat got = 0, len = 0;
     int sel, fd;
     byte *t, mayread;
-    byte Q;
+    byte Q, timedout = FALSE;
     
 #ifdef CONF_SOCKET_GZ
     if (GzipFlag)
@@ -764,22 +742,46 @@ static uldat TryRead(tw_d TwD, byte Wait) {
 #endif
 	Q = QREAD;
     
-    if (Wait) {
+    if (!Timeout || Timeout->Seconds || Timeout->Fraction) {
         fd_set fset;
+        struct timeval timeout;
+        timevalue deadline;
 	FD_ZERO(&fset);
-	do {
+        if (Timeout) {
+            timeout.tv_sec = Timeout->Seconds;
+            timeout.tv_usec = Timeout->Fraction / MicroSEC;
+            InstantNow(&deadline);
+            IncrTime(&deadline, Timeout);
+        }
+	for (;;) {
 	    fd = Fd;
 	    /* drop LOCK before sleeping! */
 	    UNLK;
 	    FD_SET(fd, &fset);
-	    sel = select(fd+1, &fset, NULL, NULL, NULL); 
+	    sel = select(fd+1, &fset, NULL, NULL, Timeout ? &timeout : NULL); 
 	    FD_CLR(fd, &fset);
 	    LOCK;
 
 	    /* maybe another thread received some data? */
 	    (void)GetQueue(TwD, QREAD, &len);
+            if (len != 0 || sel > 0)
+                break;
+            if (sel == -1 && errno != EINTR && errno != EAGAIN && errno != EWOULDBLOCK)
+                break;
             
-	} while (len == 0 && sel == 0 && AlarmReceived == 0);
+            if (Timeout) {
+                timevalue actual, to_sleep;
+                InstantNow(&actual);
+                if (CmpTime(&actual, &deadline) >= 0) {
+                    timedout = TRUE;
+                    break;
+                }
+                to_sleep = deadline; /* struct copy */
+                DecrTime(&to_sleep, &actual);
+                timeout.tv_sec = to_sleep.Seconds;
+                timeout.tv_usec = to_sleep.Fraction / MicroSEC;
+            }
+        }
     }
     
 
@@ -798,12 +800,12 @@ static uldat TryRead(tw_d TwD, byte Wait) {
 	t += got - len;
 	do {
 	    got = read(Fd, t, len);
-	} while (got == (uldat)-1 && errno == EINTR && AlarmReceived == 0);
+	} while (got == (uldat)-1 && errno == EINTR && !timedout);
 	
 	Qlen[Q] -= len - (got == (uldat)-1 ? 0 : got);
 	
-	if (got == 0 || (got == (uldat)-1 && (AlarmReceived != 0 || (errno != EINTR && errno != EAGAIN && errno != EWOULDBLOCK)))) {
-            if (got == (uldat)-1 && AlarmReceived != 0)
+	if (got == 0 || (got == (uldat)-1 && (timedout || (errno != EINTR && errno != EAGAIN && errno != EWOULDBLOCK)))) {
+            if (got == (uldat)-1 && timedout)
                 Errno = TW_ESERVER_READ_TIMEOUT;
             else
                 Errno = TW_ESERVER_LOST_CONNECT;
@@ -853,7 +855,7 @@ static byte *Wait4Reply(tw_d TwD, uldat Serial) {
     byte *MyReply = NULL;
     if (Fd != TW_NOFD && ((void)GetQueue(TwD, QWRITE, &left), left)) {
 	if (Flush(TwD, TRUE)) while (Fd != TW_NOFD && !(MyReply = FindReply(TwD, Serial)))
-	    if (TryRead(TwD, TRUE) != (uldat)-1)
+	    if (TryRead(TwD, TIMEOUT_INFINITE) != (uldat)-1)
 		ParseReplies(TwD);
     }
     return Fd != TW_NOFD ? MyReply : NULL;
@@ -865,7 +867,7 @@ static uldat ReadUldat(tw_d TwD) {
     
     (void)GetQueue(TwD, QREAD, &l);
     while (Fd != TW_NOFD && l < sizeof(uldat)) {
-	if ((chunk = TryRead(TwD, TRUE)) != (uldat)-1)
+	if ((chunk = TryRead(TwD, TIMEOUT_INFINITE)) != (uldat)-1)
 	    l += chunk;
 	else
 	    return 0;
@@ -926,7 +928,7 @@ static byte ProtocolNumbers(tw_d TwD) {
     uldat len = 0, chunk, _len = strlen(hostdata);
     
     while (Fd != TW_NOFD && (!len || ((servdata = GetQueue(TwD, QREAD, NULL)), len < *servdata))) {
-	if ((chunk = TryRead(TwD, TRUE)) != (uldat)-1)
+	if ((chunk = TryRead(TwD, TIMEOUT_5_SECONDS)) != (uldat)-1)
 	    len += chunk;
     }
 
@@ -990,7 +992,7 @@ static byte MagicNumbers(tw_d TwD) {
 
     /* wait for server magic */
     while (Fd != TW_NOFD && (!len || ((hostdata = GetQueue(TwD, QREAD, NULL)), len < *hostdata))) {
-	if ((chunk = TryRead(TwD, TRUE)) != (uldat)-1)
+	if ((chunk = TryRead(TwD, TIMEOUT_5_SECONDS)) != (uldat)-1)
 	    len += chunk;
     }
 
@@ -1079,7 +1081,7 @@ static byte MagicChallenge(tw_d TwD) {
     
     (void)GetQueue(TwD, QREAD, &got);
     while (Fd != TW_NOFD && got < challenge) {
-	if ((chunk = TryRead(TwD, TRUE)) != (uldat)-1)
+	if ((chunk = TryRead(TwD, TIMEOUT_5_SECONDS)) != (uldat)-1)
 	    got += chunk;
     }
     
@@ -1238,12 +1240,9 @@ tw_d Tw_Open(TW_CONST byte *TwDisplay) {
     OpenCount++;
     th_mutex_unlock(OpenCountMutex);
 
-    /* set a 10 seconds timeout for the initial handshake */
-    SetAlarm(10);
     LOCK;
     handshake = ProtocolNumbers(TwD) && MagicNumbers(TwD) && MagicChallenge(TwD);
     UNLK;
-    SetAlarm(0);
     
     if (handshake) {
         if (gzip)
@@ -1341,7 +1340,7 @@ TW_CONST byte *Tw_AttachGetReply(tw_d TwD, uldat *len) {
 	
 	answ = GetQueue(TwD, QREAD, &chunk);
 	if (!chunk) {
-	    (void)TryRead(TwD, TRUE);
+	    (void)TryRead(TwD, TIMEOUT_INFINITE);
 	    answ = GetQueue(TwD, QREAD, &chunk);
 	}
 	if (chunk) {
@@ -1534,7 +1533,7 @@ static tmsg ReadMsg(tw_d TwD, byte Wait, byte deQueue) {
 	if (!len) {
 	    Flush(TwD, Wait);
 	    do {
-		if (TryRead(TwD, Wait) != (uldat)-1) {
+		if (TryRead(TwD, Wait ? TIMEOUT_INFINITE : TIMEOUT_ZERO) != (uldat)-1) {
 		    ParseReplies(TwD);
 		    Msg = (tmsg)GetQueue(TwD, QMSG, &len);
 		}

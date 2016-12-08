@@ -137,7 +137,8 @@ am__installdirs = "$(DESTDIR)$(libdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 am__DEPENDENCIES_1 =
 libTw_la_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
-am_libTw_la_OBJECTS = avl.lo libTw.lo libTw2_i386.lo md5.lo missing.lo
+am_libTw_la_OBJECTS = avl.lo libTw.lo libTw2_i386.lo md5.lo missing.lo \
+	util.lo
 libTw_la_OBJECTS = $(am_libTw_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -376,7 +377,7 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 lib_LTLIBRARIES = libTw.la
-libTw_la_SOURCES = avl.c libTw.c libTw2_i386.S md5.c missing.c
+libTw_la_SOURCES = avl.c libTw.c libTw2_i386.S md5.c missing.c util.c
 libTw_la_LDFLAGS = -version-info 10:3:6 -no-undefined
 libTw_la_LIBADD = $(LIBSOCK) $(LIBZ)
 AM_CPPFLAGS = -I$(top_srcdir)/include
@@ -463,6 +464,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libTw2_i386.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/md5.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/missing.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/util.Plo@am__quote@
 
 .S.o:
 @am__fastdepCCAS_TRUE@	$(AM_V_CPPAS)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\

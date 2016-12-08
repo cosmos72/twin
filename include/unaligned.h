@@ -19,7 +19,6 @@
 # if defined(__i386__) || defined(__x86_64__)
 #  define TW_CAN_UNALIGNED 1
 # else /* !__i386__ */
-#  warning not ix86 arch, using memcpy
 #  define TW_CAN_UNALIGNED 0
 # endif /* __i386__ */
 #endif /* TW_CAN_UNALIGNED */

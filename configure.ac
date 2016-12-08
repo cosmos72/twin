@@ -126,10 +126,11 @@ AC_FUNC_SETVBUF_REVERSED
 dnl we never use the 'struct rusage' returned by wait3()
 dnl AC_FUNC_WAIT3
 AC_CHECK_FUNCS([ \
-      alarm alphasort dup2 ftime gethostname getpagesize getpt getspnam gettimeofday grantpt \
+      alphasort dup2 ftime gethostname getpagesize getpt getspnam gettimeofday grantpt \
       hstrerror initgroups lstat memchr memcmp memmove memset munmap ptsname putenv \
-      scandir select setenv setlocale socket strchr strdup strerror strrchr strspn strstr strtol strtoul sysconf \
-      tcsetpgrp uname unlockpt usleep vprintf vsprintf vsnprintf wait3 wait4])
+      scandir select setenv setlocale socket strchr strdup strerror strrchr \
+      strspn strstr strtol strtoul sysconf tcsetpgrp uname unlockpt usleep \
+      vprintf vsprintf vsnprintf wait3 wait4])
 
 AC_SEARCH_LIBS(crypt,          crypt)                 dnl crypt() is needed by twdm
 AC_SEARCH_LIBS(deflate,        z)
