@@ -1,13 +1,7 @@
 /*
- *  alloc.c  --  a custom version of malloc/realloc/free routines
- *               which exclusively uses mmap/munmap to get/release memory.
- *               this implementation is not particularly smart or optimized,
- *               but has a big advantage for a long-term lived program like twin:
- *               it's extremely clever at giving free()d memory back to the OS.
- *               it uses up to 32 memory pages (4k each on i386) as memory pool
- *               to reduce frequency of mmap/munmap calls.
+ *  alloc.c  --  wrappers around malloc() / realloc() / free()
  *
- *  Copyright (C) 1999-2000 by Massimiliano Ghilardi
+ *  Copyright (C) 1999-2000,2016 by Massimiliano Ghilardi
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
