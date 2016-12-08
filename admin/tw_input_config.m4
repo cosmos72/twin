@@ -1,10 +1,11 @@
 m4_define([TW_OPTIONS], [
 
 dnl custom malloc/free
-AC_ARG_ENABLE(-alloc,dnl
-[  --enable--alloc[=yes|no]               enable custom malloc/free routines ],,
-enable__alloc=yes
-)dnl
+dnl AC_ARG_ENABLE(-alloc,dnl
+dnl [  --enable--alloc[=yes|no]               enable custom malloc/free routines ],,
+dnl enable__alloc=yes
+dnl )dnl
+enable__alloc=no
 
 dnl hand-optimized assembler (if available for your platform)
 AC_ARG_ENABLE(-asm,dnl

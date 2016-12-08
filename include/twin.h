@@ -1690,70 +1690,10 @@ struct s_all {
 /* INLINE/define stuff: */
 
 
-
-
-
-#ifdef DEBUG_MALLOC
-  /*
-   * with the current MkDep, DEBUG_MALLOC gets defined only if doing
-   * `make DEBUG_MALLOC=y ...' and the C file that includes twin.h actually
-   * checks for DEBUG_MALLOC. Anyway, this is acceptable :-)
-   */
-  extern byte *S;
-  extern byte *E;
-  void panic_free(void *v);
-# define FAIL(v) ((v) && ((byte *)(v) < S || (byte *)(v) > E) ? (panic_free(v), TRUE) : FALSE)
-#endif /* DEBUG_MALLOC */
-
-#ifdef CONF__ALLOC
-  byte InitAlloc(void);
-  void *AllocStatHighest(void);
-  void *AllocMem(size_t Size);
-  void FreeMem(void *Mem);
-  void *ReAllocMem(void *Mem, size_t Size);
-#else /* !CONF__ALLOC */
-
 void *AllocMem(size_t Size);
+void *ReAllocMem(void *Mem, size_t Size);
 
-# ifdef DEBUG_MALLOC
-INLINE void FreeMem(void *Mem) {
-    if (!FAIL(Mem))
-	free(Mem);
-}
-# else /* !DEBUG_MALLOC */
-
-#  define FreeMem(Mem)		free(Mem)
-
-# endif /* DEBUG_MALLOC */
-
-# ifdef USE_MY_REALLOC
-INLINE void *ReAllocMem(void *Mem, uldat Size) {
-    void *res = (void *)0;
-    if (Size) {
-	if (Mem) {
-	    if ((res = realloc(Mem, Size)))
-		return res;
-	    if ((res = AllocMem(Size))) {
-		CopyMem(Mem, res, Size);
-		FreeMem(Mem);
-		return res;
-	    }
-	    return res;
-	}
-	FreeMem(Mem);
-	return res;
-    }
-    if (Size)
-	return malloc(Size);
-    return res;
-}
-# else /* !USE_MY_REALLOC */
-
-#  define ReAllocMem(Mem, Size)	realloc(Mem, Size)
-
-# endif /* USE_MY_REALLOC */
-
-#endif /* CONF__ALLOC */
+# define FreeMem(Mem)       free(Mem)
 
 # define LenStr(S)          strlen(S)
 # define CmpStr(S1, S2)     strcmp(S1, S2)

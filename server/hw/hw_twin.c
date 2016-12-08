@@ -592,7 +592,7 @@ byte InitModule(module Module) {
     return TRUE;
 }
 
-/* this MUST be included, or it seems that a bug in dlsym() gets triggered */
+/* this MUST be defined, or it seems that a bug in dlsym() gets triggered */
 void QuitModule(module Module) {
 }
 

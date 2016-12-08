@@ -47,7 +47,6 @@ static uldat FdListGrow(void) {
 	size = TW_MAXULDAT;
     
     if (!(newFdList = (fdlist *)ReAllocMem(FdList, size*sizeof(fdlist)))) {
-	Error(NOMEMORY);
 	return NOSLOT;
     }
     

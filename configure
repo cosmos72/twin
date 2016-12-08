@@ -824,7 +824,6 @@ ac_subst_files=''
 ac_user_opts='
 enable_option_checking
 enable_silent_rules
-enable__alloc
 enable__asm
 enable_socket
 enable_socket_gz
@@ -1510,7 +1509,6 @@ Optional Features:
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --enable-silent-rules   less verbose build output (undo: "make V=1")
   --disable-silent-rules  verbose build output (undo: "make V=0")
-  --enable--alloc=yes|no               enable custom malloc/free routines
   --enable--asm=yes|no                 enable hand-optimized assembler if supported
   --enable-socket=yes|no               enable remote socket connections (libTw)
   --enable-socket-gz=yes|no            enable gzip compression on sockets
@@ -3391,13 +3389,7 @@ fi
 
 
 
-# Check whether --enable--alloc was given.
-if test "${enable__alloc+set}" = set; then :
-  enableval=$enable__alloc;
-else
-  enable__alloc=yes
-
-fi
+enable__alloc=no
 
 # Check whether --enable--asm was given.
 if test "${enable__asm+set}" = set; then :

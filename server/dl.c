@@ -37,7 +37,6 @@ byte DlOpen(module Module) {
 	    if ((name = AllocMem(len+1)))
 		sprintf(name, "%s/%s%.*s%s", pkg_libdir, DL_PREFIX, (int)Module->NameLen, Module->Name, DL_SUFFIX);
 	    else {
-		Error(NOMEMORY);
 		return FALSE;
 	    }
 	}

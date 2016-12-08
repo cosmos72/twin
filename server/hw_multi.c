@@ -185,8 +185,7 @@ static byte module_InitHW(byte *arg, uldat len) {
 	    }
 	    Delete(Module);
 	}
-    } else
-	Error(NOMEMORY);
+    }
     
     if (Module) {
 	printk("twin: ...module `%."STR(TW_SMALLBUFF)"s' failed to start.\n", name ? name : (byte *)"(NULL)");
