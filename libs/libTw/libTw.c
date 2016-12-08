@@ -31,9 +31,12 @@
  * "twconfig.h" and <Tw/osincludes.h> early to pull in TW_HAVE_* and system headers
  * necessary to include <sys/socket.h> under FreeBSD.
  */
-#include "twconfig.h" /* not <Tw/autoconf.h> because we need CONF_SOCKET_PTHREADS */
+#include "twconfig.h" /* not <Tw/autoconf.h> because we also need CONF_SOCKET_PTHREADS */
 #include <Tw/osincludes.h>
 
+#ifdef TW_HAVE_SIGNAL_H
+# include <signal.h>
+#endif
 #ifdef TW_HAVE_SYS_STAT_H
 # include <sys/stat.h>
 #endif
@@ -719,10 +722,37 @@ byte Tw_TimidFlush(tw_d TwD) {
     return b;
 }
     
+#ifdef TW_HAVE_ALARM
+static volatile int AlarmReceived = 0;
+
+static TW_RETSIGTYPE AlarmHandler(int sig)
+{
+    AlarmReceived = 1;
+    TW_RETFROMSIGNAL(0);
+}
+static void SetAlarm(unsigned seconds) {
+    typedef TW_RETSIGTYPE (*sigfunction)(int);
+    static sigfunction orig = SIG_DFL;
+
+    if (seconds != 0) {
+        orig = signal(SIGALRM, &AlarmHandler);
+        alarm(seconds);
+    } else {
+        alarm(seconds);
+        signal(SIGALRM, orig);
+        AlarmReceived = 0;
+    }
+}
+#else
+# define SetAlarm(seconds) ((void)0)
+# define AlarmReceived     (0)
+#endif
+
+
+
 /* return bytes read, or (uldat)-1 for errors */
 static uldat TryRead(tw_d TwD, byte Wait) {
-    fd_set fset;
-    uldat got = 0, len;
+    uldat got = 0, len = 0;
     int sel, fd;
     byte *t, mayread;
     byte Q;
@@ -735,6 +765,7 @@ static uldat TryRead(tw_d TwD, byte Wait) {
 	Q = QREAD;
     
     if (Wait) {
+        fd_set fset;
 	FD_ZERO(&fset);
 	do {
 	    fd = Fd;
@@ -747,9 +778,8 @@ static uldat TryRead(tw_d TwD, byte Wait) {
 
 	    /* maybe another thread received some data? */
 	    (void)GetQueue(TwD, QREAD, &len);
-	    if (len)
-		break;
-	} while (sel != 1);
+            
+	} while (len == 0 && sel == 0 && AlarmReceived == 0);
     }
     
 
@@ -768,12 +798,15 @@ static uldat TryRead(tw_d TwD, byte Wait) {
 	t += got - len;
 	do {
 	    got = read(Fd, t, len);
-	} while (got == (uldat)-1 && errno == EINTR);
+	} while (got == (uldat)-1 && errno == EINTR && AlarmReceived == 0);
 	
 	Qlen[Q] -= len - (got == (uldat)-1 ? 0 : got);
 	
-	if (got == 0 || (got == (uldat)-1 && errno != EINTR && errno != EAGAIN && errno != EWOULDBLOCK)) {
-	    Errno = TW_ESERVER_LOST_CONNECT;
+	if (got == 0 || (got == (uldat)-1 && (AlarmReceived != 0 || (errno != EINTR && errno != EAGAIN && errno != EWOULDBLOCK)))) {
+            if (got == (uldat)-1 && AlarmReceived != 0)
+                Errno = TW_ESERVER_READ_TIMEOUT;
+            else
+                Errno = TW_ESERVER_LOST_CONNECT;
 	    Panic(TwD);
 	    return (uldat)-1;
 	}
@@ -1081,7 +1114,7 @@ static byte MagicChallenge(tw_d TwD) {
 tw_d Tw_Open(TW_CONST byte *TwDisplay) {
     tw_d TwD;
     int i, result = -1, fd = TW_NOFD;
-    byte *options, gzip = FALSE;
+    byte *options, gzip = FALSE, handshake = FALSE;
 
     if (!TwDisplay && (!(TwDisplay = getenv("TWDISPLAY")) || !*TwDisplay)) {
 	CommonErrno = TW_ENO_DISPLAY;
@@ -1205,17 +1238,22 @@ tw_d Tw_Open(TW_CONST byte *TwDisplay) {
     OpenCount++;
     th_mutex_unlock(OpenCountMutex);
 
+    /* set a 10 seconds timeout for the initial handshake */
+    SetAlarm(10);
     LOCK;
-    if (ProtocolNumbers(TwD) && MagicNumbers(TwD) && MagicChallenge(TwD)) {
-	UNLK;
-	if (gzip)
+    handshake = ProtocolNumbers(TwD) && MagicNumbers(TwD) && MagicChallenge(TwD);
+    UNLK;
+    SetAlarm(0);
+    
+    if (handshake) {
+        if (gzip)
 	    (void)Tw_EnableGzip(TwD);
 	return TwD;
     }
-    UNLK;
     
     if (Fd != TW_NOFD) {
-	close(Fd); Fd = TW_NOFD; /* to skip Flush() */
+	close(Fd);
+        Fd = TW_NOFD; /* to skip Flush() */
     }
     Tw_Close(TwD);
     return (tw_d)0;
@@ -1409,6 +1447,8 @@ TW_FN_ATTR_CONST TW_CONST byte *Tw_StrError(TW_CONST tw_d TwD, uldat e) {
 	return "function call rejected by server, wrong data sizes? : ";
       case TW_ECALL_BAD_ARG:
 	return "function call rejected by server, invalid arguments? : ";
+      case TW_ESERVER_READ_TIMEOUT:
+	return "failed to receive data from server: read timeout";
       default:
 	return "unknown error";
     }

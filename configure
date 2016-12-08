@@ -16939,11 +16939,10 @@ fi
 
 
 for ac_func in  \
-      alphasort dup2 ftime gethostname getpagesize getpt getspnam gettimeofday grantpt \
-      hstrerror initgroups lstat memchr memcmp memmove memset munmap \
-      ptsname putenv scandir select setenv setlocale socket strchr strdup \
-      strerror strrchr strspn strstr strtol strtoul sysconf tcsetpgrp \
-      uname unlockpt usleep vprintf vsprintf vsnprintf wait3 wait4
+      alarm alphasort dup2 ftime gethostname getpagesize getpt getspnam gettimeofday grantpt \
+      hstrerror initgroups lstat memchr memcmp memmove memset munmap ptsname putenv \
+      scandir select setenv setlocale socket strchr strdup strerror strrchr strspn strstr strtol strtoul sysconf \
+      tcsetpgrp uname unlockpt usleep vprintf vsprintf vsnprintf wait3 wait4
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
@@ -17011,7 +17010,7 @@ if test "$ac_res" != no; then :
   test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
 
 fi
-                   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing deflate" >&5
+                 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing deflate" >&5
 $as_echo_n "checking for library containing deflate... " >&6; }
 if ${ac_cv_search_deflate+:} false; then :
   $as_echo_n "(cached) " >&6
