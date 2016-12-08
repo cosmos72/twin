@@ -58,7 +58,7 @@ struct x11_data {
     GC           xgc;
     XGCValues    xsgc;
     XFontStruct *xsfont;
-#ifdef TW_HAVE_X11_XIM_XIC /* autodetected by hw_X11_gfx_common0.h */
+#ifdef TW_FOUND_X11_XIM_XIC /* autodetected by hw_X11_gfx_common0.h */
     XIM		 xim;
     XIC		 xic;
 #endif
@@ -184,7 +184,7 @@ INLINE void X11_Mogrify(dat x, dat y, uldat len) {
 
 static void X11_QuitHW(void) {
 
-#ifdef TW_HAVE_X11_XIM_XIC
+#ifdef TW_FOUND_X11_XIM_XIC
     if (xic)    XDestroyIC(xic);
     if (xim)    XCloseIM(xim);
 #endif
@@ -357,7 +357,7 @@ static byte X11_InitHW(void) {
             static XComposeStatus static_xcompose;
             xcompose = static_xcompose;
 
-#ifdef TW_HAVE_X11_XIM_XIC
+#ifdef TW_FOUND_X11_XIM_XIC
             xim = XOpenIM(xdisplay, NULL, NULL, NULL);
             if (xim != NULL) {
                 xic = XCreateIC(xim, XNInputStyle, XIMStatusNothing|XIMPreeditNothing,

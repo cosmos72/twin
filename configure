@@ -20211,7 +20211,7 @@ $as_echo "$as_me: WARNING: unrecognized options: $ac_unrecognized_opts" >&2;}
 fi
 
 
-tw_cfg ()
+tw_cfg()
 {
   if test "$2" = yes; then
     echo "#define $1" >> include/twconfig.h

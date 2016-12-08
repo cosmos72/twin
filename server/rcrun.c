@@ -214,6 +214,9 @@ static ldat Pos2Ctx(udat Pos) {
 
 static node RCFindKeyBind(ldat label, ldat shiftflags) {
     node l = KeyList;
+    
+    shiftflags &= ~(KBD_CAPS_LOCK|KBD_NUM_LOCK); /* ignore CapsLock and NumLock when looking for a keybind! */
+    
     for (; l; l = l->next) {
 	if (label == l->id && shiftflags == l->x.ctx)
 	    return l->body;

@@ -120,8 +120,8 @@ static void X11_Configure(udat resource, byte todefault, udat value) {
 
 static struct {
     KeySym xkey;
-    udat tkey;
-    byte len;
+    Twkey  tkey;
+    byte   len;
     CONST byte *seq;
 } X11_keys[] = {
 
@@ -141,22 +141,41 @@ static uldat X11_keyn = sizeof(X11_keys) / sizeof(X11_keys[0]);
 static byte X11_CheckRemapKeys(void) {
     uldat i;
 
-    for (i = 0; i < X11_keyn; i++) {
-	if (i && X11_keys[i-1].xkey >= X11_keys[i].xkey) {
+    for (i = 1; i < X11_keyn; i++) {
+	if (X11_keys[i-1].xkey >= X11_keys[i].xkey) {
 	    printk("\n"
-		   "      ERROR: twin compiled from a bad server/hw_keys.h file"
-		   "             (data in file is not sorted). -hw=" THIS " driver is unusable.\n"
-		   "      " THIS "_InitHW() failed: internal error.\n");
+		   "      ERROR: twin compiled from a bad server/hw_keys.h file\n"
+		   "             (data in file is not sorted). " __FILE__ " driver is unusable!\n"
+		   "      InitHW() failed: internal error.\n");
 	    return FALSE;
 	}
     }
     return TRUE;
 }
 
+#ifdef DEBUG_HW_X11
+void X11_DEBUG_SHOW_KEY(CONST char * prefix, KeySym sym, udat len, CONST char * seq)
+{
+    udat i;
+    byte ch;
+    printf("X11_LookupKey(): %s xkeysym=%d[%s] string=[", prefix, (int)sym, XKeysymToString(sym));
+    for (i = 0; i < len; i++) {
+        ch = (byte)seq[i];
+        if (ch >= ' ' && ch <= '~' && ch != '\\')
+            putchar((int)ch);
+        else
+            printf("\\x%02x", (unsigned)ch);
+    }
+    puts("]");
+}
+#else
+# define X11_DEBUG_SHOW_KEY(prefix, sym, len, seq) ((void)0)
+#endif
+
 /* convert an X11 KeySym into a libTw key code and ASCII sequence */
 
-static udat X11_LookupKey(XEvent *ev, udat *ShiftFlags, udat *len, char *seq) {
-    static udat lastTW = TW_Null;
+static Twkey X11_LookupKey(XEvent *ev, udat *ShiftFlags, udat *len, char *seq) {
+    static Twkey lastTW = TW_Null;
     static uldat lastI = TW_MAXULDAT;
     static KeySym lastXK = NoSymbol;
     KeySym sym = XK_VoidSymbol;
@@ -176,7 +195,7 @@ static udat X11_LookupKey(XEvent *ev, udat *ShiftFlags, udat *len, char *seq) {
     if (kev->state & Mod2Mask) /* Num_Lock */
 	*ShiftFlags |= KBD_NUM_LOCK;
 
-#ifdef TW_HAVE_X11_XIM_XIC
+#ifdef TW_FOUND_X11_XIM_XIC
     if (xic) {
         Status status_return;
         *len = XmbLookupString(xic, kev, seq, _len, &sym, &status_return);
@@ -190,10 +209,9 @@ static udat X11_LookupKey(XEvent *ev, udat *ShiftFlags, udat *len, char *seq) {
     if (sym == XK_VoidSymbol || sym == 0)
         *len = XLookupString(kev, seq, _len, &sym, &xcompose);
     
-#ifdef DEBUG_HW_X11
-    printf(THIS ": keysym=%d (%s) string='%.*s'\n", (int)sym, XKeysymToString(sym), (int)*len, seq);
-#endif
-    if (sym == XK_BackSpace && kev->state & (ControlMask|Mod1Mask)) {
+    X11_DEBUG_SHOW_KEY("", sym, *len, seq);
+    
+    if (sym == XK_BackSpace && (kev->state & (ControlMask|Mod1Mask)) != 0) {
 	if (kev->state & ControlMask)
 	    *len = 1, *seq = '\x1F';
 	else
@@ -203,16 +221,18 @@ static udat X11_LookupKey(XEvent *ev, udat *ShiftFlags, udat *len, char *seq) {
 
     if ((sym >= ' ' && sym <= '~') || (sym >= 0xA0 && sym <= 0xFF)) {
 	/* turn ALT+A into ESC+A etc. */
-	if (kev->state & Mod1Mask && *len == 1 && (byte)sym == *seq) {
+	if ((kev->state & Mod1Mask) != 0 && *len == 1 && (byte)sym == *seq) {
 	    *len = 2;
 	    seq[1] = seq[0];
 	    seq[0] = '\x1B';
+            
+            X11_DEBUG_SHOW_KEY("replaced(1)", sym, *len, seq);
 	}
-	return (udat)sym;
+	return (Twkey)sym;
     }
     
     if (sym != lastXK) {
-	low = 0;		/* the first possible */
+	low = 0;	/* the first possible */
 	up = X11_keyn;	/* 1 + the last possible */
     
 	while (low < up) {
@@ -231,10 +251,13 @@ static udat X11_LookupKey(XEvent *ev, udat *ShiftFlags, udat *len, char *seq) {
 	}
 	lastXK = sym;
     }
-    /* XLookupString() returned empty string, or no ShiftFlags: steal sequence from hw_keys.h */
-    if (lastI < X11_keyn && X11_keys[lastI].len && (*len == 0 || *ShiftFlags == 0)) {
-	if (_len > X11_keys[lastI].len)
+    /* XLookupString() returned empty string, or no ShiftFlags (ignoring CapsLock/NumLock): use the sequence stated in hw_keys.h */
+    if (lastI < X11_keyn && X11_keys[lastI].len && (*len == 0 || (*ShiftFlags & ~(KBD_CAPS_LOCK|KBD_NUM_LOCK)) == 0)) {
+	if (_len > X11_keys[lastI].len) {
 	    CopyMem(X11_keys[lastI].seq, seq, *len = X11_keys[lastI].len);
+
+            X11_DEBUG_SHOW_KEY("replaced(2)", sym, *len, seq);
+        }
     }
     return lastTW;
 }
@@ -244,7 +267,8 @@ static void X11_HandleEvent(XEvent *event) {
     /* this can stay static, X11_HandleEvent() is not reentrant */
     static byte seq[TW_SMALLBUFF];
     dat x, y, dx, dy;
-    udat len = sizeof(seq), TW_key, ShiftFlags;
+    udat len = sizeof(seq), ShiftFlags;
+    Twkey TW_key;
 
     if (event->xany.window == xwindow) switch (event->type) {
       case KeyPress:
