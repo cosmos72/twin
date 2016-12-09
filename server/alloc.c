@@ -26,12 +26,8 @@ void *ReAllocMem(void *Mem, size_t Size) {
     void *res;
     if (Mem) {
         if (Size) {
-            if (!(res = realloc(Mem, Size))) {
-                if ((res = AllocMem(Size))) {
-                    CopyMem(Mem, res, Size);
-                    FreeMem(Mem);
-                }
-            }
+            res = realloc(Mem, Size);
+            /* cannot use AllocMem() + CopyMem() here: we don't know Mem current size */
 	} else {
             FreeMem(Mem);
             res = NULL;
@@ -58,9 +54,11 @@ void *ReAllocMem0(void *Mem, size_t ElementSize, size_t OldCount, size_t NewCoun
     if (Mem) {
         if (ElementSize && NewCount) {
             if ((res = realloc(Mem, ElementSize * NewCount))) {
-                WriteMem((byte *)res + ElementSize * OldCount, '\0', ElementSize * (NewCount - OldCount));
+                if (NewCount > OldCount)
+                    WriteMem((byte *)res + ElementSize * OldCount, '\0', ElementSize * (NewCount - OldCount));
             } else if ((res = AllocMem0(ElementSize, NewCount))) {
-                CopyMem(Mem, res, ElementSize * OldCount);
+                size_t MinCount = OldCount < NewCount ? OldCount : NewCount;
+                CopyMem(Mem, res, ElementSize * MinCount);
                 FreeMem(Mem);
             }
 	} else {
