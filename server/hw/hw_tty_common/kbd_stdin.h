@@ -3,6 +3,7 @@
 
 /* it can't update FullShiftFlags :( */
 
+#include "util.h" /* for SetAlarm(), AlarmReceived */
 
 static void stdin_QuitKeyboard(void);
 static void stdin_KeyboardEvent(int fd, display_hw hw);
@@ -12,7 +13,7 @@ static void xterm_MouseEvent(int, display_hw);
 static byte stdin_TestTty(void) {
     struct termios ttyb;
     byte buf[16], *s = buf+3, c;
-    int i;
+    int i, alarmReceived;
 
     ttyb = ttysave;
     /* NL=='\n'==^J; CR=='\r'==^M */
@@ -29,10 +30,17 @@ static byte stdin_TestTty(void) {
 
     write(tty_fd, "\033Z", 2); /* request ID */
     /* ensure we CAN read from the tty */
+    SetAlarm(5);
     do {
 	i = read(tty_fd, buf, 15);
-    } while (i < 0 && (errno == EWOULDBLOCK || errno == EINTR));
+    } while ((alarmReceived = AlarmReceived) == 0 && i < 0 && (errno == EWOULDBLOCK || errno == EINTR));
+    SetAlarm(0);
     if (i <= 0) {
+        Error(SYSCALLERROR);
+        if (alarmReceived)
+            ErrStr = "read() from tty timed out";
+        else if (i == 0)
+            ErrStr = "read() from tty returned END-OF-FILE";
         tty_setioctl(tty_fd, &ttysave);
 	return FALSE;
     }
@@ -53,11 +61,6 @@ static byte stdin_TestTty(void) {
 
 /* return FALSE if failed */
 static byte stdin_InitKeyboard(void) {
-
-    if (!stdin_TestTty()) {
-	printk("      stdin_InitKeyboard() failed: unable to read from the terminal!\n");
-        return FALSE;
-    }
 
     HW->keyboard_slot = RegisterRemote(tty_fd, (obj)HW, stdin_KeyboardEvent);
     if (HW->keyboard_slot == NOSLOT) {

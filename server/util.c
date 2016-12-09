@@ -12,14 +12,26 @@
 
 #include "twin.h"
 
-#include <sys/socket.h>  
-#include <sys/stat.h>
-#include <sys/un.h>
-#include <grp.h>
-#include <pwd.h>
-
+#ifdef TW_HAVE_SIGNAL_H
+# include <signal.h>
+#endif
+#ifdef TW_HAVE_SYS_SOCKET_H
+# include <sys/socket.h>  
+#endif
+#ifdef TW_HAVE_SYS_STAT_H
+# include <sys/stat.h>
+#endif
 #ifdef TW_HAVE_SYS_TIMEB_H
 # include <sys/timeb.h>
+#endif
+#ifdef TW_HAVE_SYS_UN_H
+# include <sys/un.h>
+#endif
+#ifdef TW_HAVE_GRP_H
+# include <grp.h>
+#endif
+#ifdef TW_HAVE_PWD_H
+# include <pwd.h>
 #endif
 
 #include "data.h"
@@ -64,40 +76,6 @@ byte Error(udat Code_Error) {
     return FALSE;
 }
 
-void *CloneMem(CONST void *From, uldat Size) {
-    void *temp;
-    if (From && Size && (temp = AllocMem(Size)))
-	return CopyMem(From, temp, Size);
-    return NULL;
-}
-
-byte *CloneStr(CONST byte *s) {
-    byte *q;
-    uldat len;
-    
-    if (s) {
-	len = 1 + LenStr(s);
-	if ((q = AllocMem(len)))
-	    CopyMem(s, q, len);
-	return q;
-    }
-    return NULL;
-}
-
-byte *CloneStrL(CONST byte *s, uldat len) {
-    byte *q;
-    
-    if (s) {
-	if ((q = AllocMem(len+1))) {
-	    if (len)
-		CopyMem(s, q, len);
-	    q[len] = '\0';
-	}
-	return q;
-    }
-    return NULL;
-}
-
 hwfont *CloneStr2HWFont(CONST byte *s, uldat len) {
     hwfont *temp, *save;
     
@@ -113,34 +91,6 @@ hwfont *CloneStr2HWFont(CONST byte *s, uldat len) {
     return NULL;
 }
 
-byte **CloneStrList(byte **s) {
-    uldat n = 1;
-    byte **t = s, **v;
-    
-    if (t) {
-	while (*t) {
-	    t++;
-	    n++;
-	}
-	t = AllocMem(n * sizeof(byte *));
-    }
-    
-    if ((v = t)) {
-	for (; *s && n; v++, s++, n--) {
-	    if (!(*v = CloneStr(*s)))
-		break;
-	}
-
-	if (*s && n) {
-	    /* failed... clean up */
-	    for (; t < v; t++)
-		FreeMem(*t);
-	    t = NULL;
-	} else
-	    *v = NULL;
-    }
-    return t;
-}
 
 void NormalizeTime(timevalue *Time) {
     while (Time->Fraction >= 1 FullSECs) {

@@ -149,33 +149,6 @@ static void OutOfMemory(void) {
     printk("twdisplay: Out of memory!\n");
 }
 
-byte *CloneStr(CONST byte *s) {
-    byte *q;
-    uldat len;
-    
-    if (s) {
-	len = 1 + LenStr(s);
-	if ((q = AllocMem(len)))
-	    CopyMem(s, q, len);
-	return q;
-    }
-    return NULL;
-}
-
-byte *CloneStrL(CONST byte *s, uldat len) {
-    byte *q;
-    
-    if (s) {
-	if ((q = AllocMem(len+1))) {
-	    if (len)
-		CopyMem(s, q, len);
-	    q[len] = '\0';
-	}
-	return q;
-    }
-    return NULL;
-}
-
 INLINE uldat FdListGet(void) {
     if (FdBottom < FdSize)
 	return FdBottom;

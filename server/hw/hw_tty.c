@@ -16,7 +16,9 @@
 #ifdef TW_HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-#include <sys/stat.h>
+#ifdef TW_HAVE_SYS_STAT_H
+# include <sys/stat.h>
+#endif
 
 #include "tty_ioctl.h"
 
@@ -24,6 +26,7 @@
 #include "main.h"
 #include "data.h"
 #include "remote.h"
+#include "util.h" /* for SetAlarm() and AlarmReceived */
 
 #include "hw.h"
 #include "hw_private.h"
@@ -168,13 +171,14 @@ static void null_InitMouse(void) {
 
 
 static byte null_InitMouseConfirm(void) {
-    byte c;
+    byte c = '\0';
     CONST byte *Msg =
 	"\n"
 	"      \033[1m  ALL  MOUSE  DRIVERS  FAILED.\033[0m\n"
 	"\n"
 	"      If you really want to run `twin' without mouse\n"
-	"      hit RETURN to continue, otherwise hit CTRL-C to quit now.\n";
+	"      hit RETURN within 10 seconds to continue,\n"
+        "      otherwise hit CTRL-C (or wait 10 seconds) to cancel.\n";
     
     fprintf(stdOUT, "%s", Msg);
     fflush(stdOUT);
@@ -182,7 +186,10 @@ static byte null_InitMouseConfirm(void) {
     printk("%s", Msg);
     flushk();
     
+    SetAlarm(10);
     read(tty_fd, &c, 1);
+    SetAlarm(0);
+    
     if (c == '\n' || c == '\r') {
     
 	null_InitMouse();
@@ -377,10 +384,9 @@ static byte tty_InitHW(void) {
     
 	if ((tty_fd = open(tty_name, O_RDWR)) >= 0) {
 	    /*
-	     * we try to set this tty as our controlling tty
-	     * if user asks us to do so. this will greatly help
-	     * detecting tty resizes, but may hangup other processes
-	     * running on that tty.
+	     * try to set this tty as our controlling tty if user asked us.
+	     * this will greatly help detecting tty resizes,
+             * but may hangup other processes running on that tty.
 	     */
 	    if ((display_is_ctty = try_ctty &&
 		 (!DisplayHWCTTY || DisplayHWCTTY == HWCTTY_DETACHED) &&
@@ -483,23 +489,27 @@ static byte tty_InitHW(void) {
      * Thus mouse initialization must come *AFTER* video initialization
      * 
      * null_InitMouseConfirm() tries a blocking read() from tty_fd
-     * (it asks user if he/she really wants to run twin without mouse),
+     * (it asks user if he/she really wants to run without mouse),
      * while lrawkbd_InitKeyboard() puts tty_fd in non-blocking mode.
      * 
      * Thus mouse initialization must come *BEFORE* keyboard initialization
      */
     
-    if (
+    if (!stdin_TestTty()) {
+	printk("      tty_InitHW() failed: unable to read from the terminal: %."STR(TW_SMALLBUFF)"s\n", ErrStr);
+    }
+    else if (
+    
 #ifdef CONF_HW_TTY_LINUX
-	(TRY_V(vcsa) && vcsa_InitVideo()) ||
+             (TRY_V(vcsa) && vcsa_InitVideo()) ||
 #endif
 #if defined(CONF_HW_TTY_LINUX) || defined(CONF_HW_TTY_TWTERM)
-	(TRY_V(stdout) && linux_InitVideo()) ||
+             (TRY_V(stdout) && linux_InitVideo()) ||
 #endif
 #ifdef CONF_HW_TTY_TERMCAP
-	(TRY_V(termcap) && termcap_InitVideo()) ||
+             (TRY_V(termcap) && termcap_InitVideo()) ||
 #endif
-	FALSE) {
+             FALSE) {
 		
         if (
 #ifdef CONF_HW_TTY_LINUX
@@ -548,7 +558,9 @@ static byte tty_InitHW(void) {
 	    HW->QuitMouse();
 	}
 	HW->QuitVideo();
-    }
+    } else if (tty_fd >= 0)
+        tty_setioctl(tty_fd, &ttysave);
+    
     if (tty_fd) {
 	close(tty_fd);
 	fclose(stdOUT);

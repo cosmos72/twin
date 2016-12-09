@@ -132,22 +132,9 @@ void RunNoHW(byte print_info) {
 }
 
 
-static void warn_NoHW(uldat len, char *arg, uldat tried) {
-    if (!tried && !arg)
-	printk("twin: no display driver compiled into twin.\n"
-	       "      please run as `twin --hw=<display>'\n");
-    else
-    {
-	printk("twin: all display drivers failed");
-	if (arg)
-	    printk(" for `--hw=%.*s\'\n", Min2((int)len,TW_SMALLBUFF), arg);
-	else
-	    printk(".\n");
-    }
-}
-
-static byte module_InitHW(byte *arg, uldat len) {
-    byte *name, *tmp;
+static byte module_InitHW(TW_CONST byte *arg, uldat len) {
+    TW_CONST byte *name, *tmp;
+    byte * alloc_name;
     byte *(*InitD)(void);
     module Module;
 
@@ -170,16 +157,16 @@ static byte module_InitHW(byte *arg, uldat len) {
         arg = "X11";
     }
     
-    if ((name = AllocMem(len + 4))) {
-	sprintf(name, "hw_%.*s", (int)len, arg);
+    if ((alloc_name = AllocMem(len + 4))) {
+	sprintf(alloc_name, "hw_%.*s", (int)len, arg);
 
-	Module = DlLoadAny(len + 3, name);
+	Module = DlLoadAny(len + 3, alloc_name);
 	
 	if (Module) {
-	    printk("twin: starting display driver module `%."STR(TW_SMALLBUFF)"s'...\n", name);
+	    printk("twin: starting display driver module `%."STR(TW_SMALLBUFF)"s'...\n", alloc_name);
 	    if ((InitD = Module->Private) && InitD()) {
-		printk("twin: ...module `%."STR(TW_SMALLBUFF)"s' successfully started.\n", name);
-		FreeMem(name);
+		printk("twin: ...module `%."STR(TW_SMALLBUFF)"s' successfully started.\n", alloc_name);
+		FreeMem(alloc_name);
 		HW->Module = Module; Module->Used++;
 		return TRUE;
 	    }
@@ -187,80 +174,48 @@ static byte module_InitHW(byte *arg, uldat len) {
 	}
     }
     
+    if (alloc_name)
+        name = alloc_name;
+    else if (!name)
+        name = (byte *)"(NULL)";
+
     if (Module) {
-	printk("twin: ...module `%."STR(TW_SMALLBUFF)"s' failed to start.\n", name ? name : (byte *)"(NULL)");
+	printk("twin: ...module `%."STR(TW_SMALLBUFF)"s' failed to start.\n", name);
     } else
 	printk("twin: unable to load display driver module `%."STR(TW_SMALLBUFF)"s' :\n"
-	       "      %."STR(TW_SMALLBUFF)"s\n", name ? name : (byte *)"(NULL)", ErrStr);
-    if (name)
-	FreeMem(name);
+	       "      %."STR(TW_SMALLBUFF)"s\n", name, ErrStr);
+    if (alloc_name)
+	FreeMem(alloc_name);
     
     return FALSE;
 }
 
-# define DEF_INITHW(hw) \
-static byte CAT(hw,_InitHW)(void) { \
-    byte *arg; \
-    uldat len; \
-    if (HW->Name && HW->NameLen) { \
-	arg = HW->Name; \
-	len = HW->NameLen; \
-    } else { \
-	arg = "-hw=" STR(hw); \
-	len = strlen(arg); \
-    } \
-    return module_InitHW(arg, len); \
+static void show_probe4(TW_CONST byte *name, uldat namelen) {
+    printk("twin: autoprobing `%.*s' display driver.\n",
+           Min2((int)namelen,TW_SMALLBUFF),
+           name);
 }
 
-
-/* HW specific functions */
-
-DEF_INITHW(gfx)
-DEF_INITHW(X)
-DEF_INITHW(twin)
-DEF_INITHW(display)
-DEF_INITHW(tty)
-DEF_INITHW(ggi)
-
-#undef DEF_INITHW
-
-
-static byte check4(byte *s, byte *arg) {
-    if (arg && !strncmp(s, arg, strlen(s))) {
-	printk("twin: trying given `--hw=%."STR(TW_SMALLBUFF)"s' display driver.\n", s);
-	return TRUE;
+static byte set_hw_name(display_hw D_HW, TW_CONST byte * name, uldat namelen) {
+    byte * alloc_name;
+    
+    if (D_HW && (alloc_name = CloneStrL(name, namelen)) != NULL) {
+        if (D_HW->Name)
+            FreeMem(D_HW->Name);
+        D_HW->Name = alloc_name;
+        D_HW->NameLen = namelen;
     }
-    return FALSE;
-}
-
-static byte autocheck4(byte *s, byte *arg) {
-    if (arg && !strncmp(s, arg, strlen(s))) {
-	printk("twin: trying given `--hw=%."STR(TW_SMALLBUFF)"s' display driver.\n", s);
-	return TRUE;
-    }
-    if (arg) {
-	/*
-	printk("twin: `-hw=%."STR(TW_SMALLBUFF)"s' given, skipping `-hw=%."STR(TW_SMALLBUFF)"s' display driver.\n",
-		arg, s);
-	 */
-	return FALSE;
-    }
-    printk("twin: autoprobing `--hw=%."STR(TW_SMALLBUFF)"s' display driver.\n", s);
     return TRUE;
 }
 
-static void fix4(byte *s, display_hw D_HW) {
-    uldat len;
-    if (!D_HW->NameLen) {
-	if (D_HW->Name)
-	    FreeMem(D_HW->Name), D_HW->Name = NULL;
-	len = strlen(s) + 4;
-	if ((D_HW->Name = AllocMem(len + 1))) {
-	    sprintf(D_HW->Name, "-hw=%s", s);
-	    D_HW->NameLen = len;
-	}
-    }
+static void warn_NoHW(TW_CONST byte *arg, uldat len) {
+    printk("twin: all display drivers failed");
+    if (arg)
+        printk(" for `%.*s\'\n", Min2((int)len,TW_SMALLBUFF), arg);
+    else
+        printk(".\n");
 }
+
 
 /*
  * InitDisplayHW runs HW specific InitXXX() functions, starting from best setup
@@ -268,7 +223,7 @@ static void fix4(byte *s, display_hw D_HW) {
  */
 byte InitDisplayHW(display_hw D_HW) {
     byte *arg = D_HW->Name;
-    uldat tried = 0;
+    uldat arglen = D_HW->NameLen;
     byte success;
 
     SaveHW;
@@ -276,28 +231,24 @@ byte InitDisplayHW(display_hw D_HW) {
 
     D_HW->DisplayIsCTTY = D_HW->NeedHW = D_HW->FlagsHW = FALSE;
     
-    if (arg && !strncmp(arg, "-hw=", 4))
-	arg += 4;
-    else
-	arg = NULL;
-
-#define AUTOTRY4(hw) (autocheck4(STR(hw), arg) && (tried++, CAT(hw,_InitHW)()) && (fix4(STR(hw), D_HW), TRUE))
-#define     TRY4(hw) (    check4(STR(hw), arg) && (tried++, CAT(hw,_InitHW)()) && (fix4(STR(hw), D_HW), TRUE))
+#define AUTOTRY4(hw, len) (show_probe4(hw, len), module_InitHW(hw, len) && set_hw_name(D_HW, hw, len))
     
-    success =
-	AUTOTRY4(gfx) ||
-	AUTOTRY4(X) ||
-	AUTOTRY4(twin) ||
-	TRY4(display) ||
-	AUTOTRY4(tty) ||
-	AUTOTRY4(ggi) ||
-	module_InitHW(D_HW->Name, D_HW->NameLen) ||
-	(warn_NoHW(arg ? D_HW->NameLen - 4 : 0, arg, tried), FALSE);
+    if (arglen == 0) {
+        success =
+            AUTOTRY4("-hw=gfx", 7) ||
+            AUTOTRY4("-hw=X11", 7) ||
+            AUTOTRY4("-hw=twin", 8) ||
+            AUTOTRY4("-hw=tty", 7) ||
+            AUTOTRY4("-hw=ggi", 7);
+    } else {
+        success = module_InitHW(D_HW->Name, D_HW->NameLen);
+    }
 
-#undef     TRY4
 #undef AUTOTRY4
 
     if (success) {
+        udat tried;
+        
 	D_HW->Quitted = FALSE;
 	
 	/* configure correctly the new HW */
@@ -311,6 +262,8 @@ byte InitDisplayHW(display_hw D_HW) {
 	if (All->FnHookDisplayHW)
 	    All->FnHookDisplayHW(All->HookDisplayHW);
 	UpdateFlagsHW(); /* this garbles HW... not a problem here */
+    } else {
+        warn_NoHW(arg, arglen);
     }
     
     RestoreHW;

@@ -9,10 +9,23 @@
 #ifndef _TWIN_UTIL_H
 #define _TWIN_UTIL_H
 
+#ifndef _TWAUTOCONF_H
+# include "twautoconf.h" /* for TW_HAVE_ALARM */
+#endif
+
 extern udat ErrNo;
 extern byte CONST * ErrStr;
 extern uldat unixSlot;
 extern int unixFd;
+
+
+#if defined(TW_HAVE_ALARM) && defined(TW_HAVE_SIGACTION)
+extern volatile int AlarmReceived;
+void SetAlarm(unsigned seconds);
+#else
+# define SetAlarm(seconds) ((void)0)
+# define AlarmReceived     (0)
+#endif
 
 void *CloneMem(CONST void *From, uldat Size);
 byte *CloneStr(CONST byte *From);

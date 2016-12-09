@@ -49,7 +49,7 @@ AC_HEADER_SYS_WAIT
 AC_CHECK_HEADERS([ \
        arpa/inet.h asm/page.h crypt.h dirent.h dlfcn.h fcntl.h grp.h inttypes.h libintl.h limits.h \
        linux/kd.h linux/keyboard.h linux/vt.h locale.h machine/param.h malloc.h memory.h \
-       ncurses.h ncurses/ncurses.h ncurses/termcap.h ndir.h netdb.h netinet/in.h pthread.h \
+       ncurses.h ncurses/ncurses.h ncurses/termcap.h ndir.h netdb.h netinet/in.h pthread.h pwd.h \
        shadow.h signal.h stdarg.h stddef.h stdint.h stdlib.h string.h \
        sys/dir.h sys/filio.h sys/ioctl.h sys/mman.h sys/ndir.h sys/param.h sys/resource.h \
        sys/select.h sys/socket.h sys/stat.h sys/timeb.h sys/ttydefaults.h sys/un.h sys/utsname.h \
@@ -126,9 +126,9 @@ AC_FUNC_SETVBUF_REVERSED
 dnl we never use the 'struct rusage' returned by wait3()
 dnl AC_FUNC_WAIT3
 AC_CHECK_FUNCS([ \
-      alphasort dup2 ftime gethostname getpagesize getpt getspnam gettimeofday grantpt \
+      alarm alphasort dup2 ftime gethostname getpagesize getpt getspnam gettimeofday grantpt \
       hstrerror initgroups lstat memchr memcmp memmove memset munmap ptsname putenv \
-      scandir select setenv setlocale socket strchr strdup strerror strrchr \
+      scandir select setenv setlocale sigaction socket strchr strdup strerror strrchr \
       strspn strstr strtol strtoul sysconf tcsetpgrp uname unlockpt usleep \
       vprintf vsprintf vsnprintf wait3 wait4])
 
