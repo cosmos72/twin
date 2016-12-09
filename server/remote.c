@@ -49,9 +49,12 @@ static uldat FdListGrow(void) {
     if (!(newFdList = (fdlist *)ReAllocMem(FdList, size*sizeof(fdlist)))) {
 	return NOSLOT;
     }
+
+    WriteMem(newFdList + oldsize*sizeof(fdlist), 0, (size - oldsize)*sizeof(fdlist));
     
-    for (FdSize = oldsize+1; FdSize<size; FdSize++)
-	newFdList[FdSize].Fd = NOFD;
+    for (FdSize = oldsize+1; FdSize<size; FdSize++) {
+        newFdList[FdSize].Fd = NOFD;
+    }
     
     FdList = newFdList;
     
