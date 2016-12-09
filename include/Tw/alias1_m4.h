@@ -6,10 +6,10 @@
 
 
 
-/* This file was automatically generated with m4 from m4/Twalias.m4, do not edit! */
+/* This file was automatically generated with m4 from m4/Tw_alias.m4, do not edit! */
 
 /*
- *  alias1_m4.h  --  handy aliases for libTw function prototypes
+ *  alias_m4.h  --  handy aliases for libTw function prototypes
  *
  *  Copyright (C) 2002 by Massimiliano Ghilardi
  *

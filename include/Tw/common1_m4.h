@@ -6,10 +6,10 @@
 
 
 
-/* This file was automatically generated with m4 from m4/Twcommon.m4, do not edit! */
+/* This file was automatically generated with m4 from m4/Tw_common.m4, do not edit! */
 
 /*
- *  common1_m4.h  --  common libTw function prototypes
+ *  common_m4.h  --  common libTw function prototypes
  *
  *  Copyright (C) 2002 by Massimiliano Ghilardi
  *
@@ -37,6 +37,12 @@
 #define TwReAllocMem		Tw_ReAllocMem
 
 #define TwFreeMem		Tw_FreeMem
+
+
+#define TwAllocMem0		Tw_AllocMem0
+
+#define TwReAllocMem0		Tw_ReAllocMem0
+
 
 #define TwCloneMem		Tw_CloneMem
 

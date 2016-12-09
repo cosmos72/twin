@@ -6,7 +6,7 @@
 
 
 
-/* This file was automatically generated with m4 from m4/Twcommon.m4, do not edit! */
+/* This file was automatically generated with m4 from m4/Tw_common.m4, do not edit! */
 
 /*
  *  common_m4.h  --  common libTw function prototypes
@@ -39,6 +39,12 @@ extern void *(*Tw_AllocMem)(size_t);
 extern void *(*Tw_ReAllocMem)(void *, size_t);
 /** pointer to custom free() function; use Tw_ConfigMalloc() to change it */
 extern void  (*Tw_FreeMem)(void *);
+
+/** equivalet to calloc() */
+void *Tw_AllocMem0(size_t ElementSize, size_t Count);
+/** equivalet to realloc()+memset() */
+void *Tw_ReAllocMem0(void * Mem, size_t ElementSize, size_t OldCount, size_t NewCount);
+
 /** custom malloc()+memcpy() function */
 extern void *Tw_CloneMem(TW_CONST void *, size_t);
 /** custom strdup() function */

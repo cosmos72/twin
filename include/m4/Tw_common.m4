@@ -3,12 +3,12 @@
 
 
 
-dnl This file is `m4/Twcommon.m4' : m4 macros to autogenerate common`'TARGET`'_m4.h
+dnl This file is `m4/Tw_common.m4' : m4 macros to autogenerate Tw_common_m4.h
 dnl Tell the user about this.
-/* This file was automatically generated with `m4' from `m4/Twcommon.m4', do not edit! */
+/* This file was automatically generated with `m4' from `m4/Tw_common.m4', do not edit! */
 
 /*
- *  common`'TARGET`'_m4.h  --  common libTw function prototypes
+ *  common_m4.h  --  common libTw function prototypes
  *
  *  Copyright (C) 2002 by Massimiliano Ghilardi
  *
@@ -59,6 +59,12 @@ c_doxygen(/** pointer to custom realloc() function; use Tw_ConfigMalloc() to cha
 EASY(ReAllocMem, extern void *(*Tw_ReAllocMem)(void *, size_t);)
 c_doxygen(/** pointer to custom free() function; use Tw_ConfigMalloc() to change it */)
 EASY(FreeMem, extern void  (*Tw_FreeMem)(void *);)
+
+c_doxygen(/** equivalent to calloc() */)
+EASY(AllocMem0, void *Tw_AllocMem0(size_t ElementSize, size_t Count);)
+c_doxygen(/** equivalent to realloc()+memset() */)
+EASY(ReAllocMem0, void *Tw_ReAllocMem0(void * Mem, size_t ElementSize, size_t OldCount, size_t NewCount);)
+
 c_doxygen(/** custom malloc()+memcpy() function */)
 EASY(CloneMem, extern void *Tw_CloneMem(TW_CONST void *, size_t);)
 c_doxygen(/** custom strdup() function */)

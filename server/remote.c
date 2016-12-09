@@ -46,12 +46,10 @@ static uldat FdListGrow(void) {
     if ((size = oldsize < TW_SMALLBUFF/3 ? TW_SMALLBUFF/2 : oldsize + (oldsize>>1)) < oldsize)
 	size = TW_MAXULDAT;
     
-    if (!(newFdList = (fdlist *)ReAllocMem(FdList, size*sizeof(fdlist)))) {
+    if (!(newFdList = (fdlist *)ReAllocMem0(FdList, sizeof(fdlist), oldsize, size))) {
 	return NOSLOT;
     }
 
-    WriteMem(newFdList + oldsize*sizeof(fdlist), 0, (size - oldsize)*sizeof(fdlist));
-    
     for (FdSize = oldsize+1; FdSize<size; FdSize++) {
         newFdList[FdSize].Fd = NOFD;
     }
@@ -65,7 +63,7 @@ INLINE void FdListShrink(void) {
     fdlist *newFdList;
     uldat size = Max2(TW_SMALLBUFF, FdTop << 1);
     
-    if (size < FdSize && (newFdList = (fdlist *)ReAllocMem(FdList, size*sizeof(fdlist)))) {
+    if (size < FdSize && (newFdList = (fdlist *)ReAllocMem0(FdList, sizeof(fdlist), FdSize, size))) {
 	FdList = newFdList;
 	FdSize = size;
     }
@@ -460,6 +458,8 @@ uldat RemoteWriteQueue(uldat Slot, uldat len, CONST void *data) {
 	FdWQueued++;
     if (data)
 	CopyMem(data, LS.WQueue + LS.WQlen, len);
+    else
+        WriteMem(LS.WQueue + LS.WQlen, '\0', len);
     LS.WQlen += len;
     return len;
 }

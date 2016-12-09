@@ -2442,7 +2442,7 @@ static byte GrowExtensionMsgPort(msgport M) {
     if (size > MAXID)
 	size = MAXID;
     
-    if (!(newEs = (extension *)ReAllocMem(M->Es, size*sizeof(extension))))
+    if (!(newEs = (extension *)ReAllocMem0(M->Es, sizeof(extension), oldsize, size)))
 	return FALSE;
     
     M->Es = newEs;

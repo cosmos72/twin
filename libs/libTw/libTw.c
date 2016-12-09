@@ -255,6 +255,24 @@ void *(*Tw_AllocMem)(size_t) = malloc;
 void *(*Tw_ReAllocMem)(void *, size_t) = realloc;
 void  (*Tw_FreeMem)(void *) = free;
 
+void *Tw_AllocMem0(size_t ElementSize, size_t Count) {
+    void * Mem;
+    if (Tw_AllocMem == malloc) {
+        Mem = calloc(Count, ElementSize);
+    } else if ((Mem = Tw_AllocMem(Count * ElementSize)) != NULL) {
+        Tw_WriteMem(Mem, '\0', Count * ElementSize);
+    }
+    return Mem;
+}
+
+void *Tw_ReAllocMem0(void * Mem, size_t ElementSize, size_t OldCount, size_t NewCount) {
+    void * newMem;
+    if ((newMem = Tw_ReAllocMem(Mem, NewCount * ElementSize)) != NULL) {
+        Tw_WriteMem((char *)newMem + OldCount * ElementSize, '\0', (NewCount - OldCount) * ElementSize); 
+    }
+    return newMem;
+}
+
 /**
  * creates a copy of a chunk of memory
  */

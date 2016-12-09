@@ -81,7 +81,7 @@ static uldat FdListGrow(void) {
     if ((size = oldsize < 64 ? 96 : oldsize + (oldsize>>1)) < oldsize)
 	size = TW_MAXULDAT;
     
-    if (!(newFdList = (fdlist *)TwReAllocMem(FdList, size*sizeof(fdlist))))
+    if (!(newFdList = (fdlist *)TwReAllocMem0(FdList, sizeof(fdlist), oldsize, size)))
 	return TW_NOSLOT;
     
     for (FdSize = oldsize+1; FdSize<size; FdSize++)

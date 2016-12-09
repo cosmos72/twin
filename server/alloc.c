@@ -42,3 +42,34 @@ void *ReAllocMem(void *Mem, size_t Size) {
     return res;
 }
 
+
+void *AllocMem0(size_t ElementSize, size_t Count) {
+    void *res = NULL;
+    if (ElementSize || Count) {
+        if (!(res = calloc(Count, ElementSize)))
+            Error(NOMEMORY);
+    }
+    return res;
+}
+
+
+void *ReAllocMem0(void *Mem, size_t ElementSize, size_t OldCount, size_t NewCount) {
+    void *res;
+    if (Mem) {
+        if (ElementSize && NewCount) {
+            if ((res = realloc(Mem, ElementSize * NewCount))) {
+                WriteMem((byte *)Mem + ElementSize * OldCount, '\0', ElementSize * (NewCount - OldCount));
+            } else if ((res = AllocMem0(ElementSize, NewCount))) {
+                CopyMem(Mem, res, ElementSize * OldCount);
+                FreeMem(Mem);
+            }
+	} else {
+            FreeMem(Mem);
+            res = NULL;
+        }
+    }
+    else
+        res = AllocMem0(ElementSize, NewCount);
+    return res;
+}
+

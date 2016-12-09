@@ -88,13 +88,7 @@ static size_t full_read(int fd, byte *data, size_t len) {
 static void shm_shrink_error(void) {
     
     may_shrink = FALSE;
-    printk("twin: shm_shrink(): "
-# ifdef CONF__ALLOC
-	  "ReAllocMem"
-# else
-	  "realloc"
-# endif
-	  "() relocated memory while shrinking! \n"
+    printk("twin: shm_shrink(): ReAllocMem() relocated memory while shrinking! \n"
 # ifdef CONF__ALLOC
 	  "      This should not happen! Please report.\n"
 # endif

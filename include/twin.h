@@ -1686,14 +1686,19 @@ struct s_all {
 
 
 
+/* memory allocation. these function call Error(NOMEMORY) on failure */
 
-/* INLINE/define stuff: */
+void *AllocMem(size_t Size);              /* wrapper for malloc() */
+void *ReAllocMem(void *Mem, size_t Size); /* wrapper for realloc() */
 
-
-void *AllocMem(size_t Size);
-void *ReAllocMem(void *Mem, size_t Size);
+void *AllocMem0(size_t ElementSize, size_t Count);                                  /* wrapper for calloc() */
+void *ReAllocMem0(void *Mem, size_t ElementSize, size_t OldCount, size_t NewCount); /* wrapper for realloc() + memset() */
 
 # define FreeMem(Mem)       free(Mem)
+
+
+
+/* INLINE/define stuff: */
 
 # define LenStr(S)          strlen(S)
 # define CmpStr(S1, S2)     strcmp(S1, S2)
