@@ -400,9 +400,15 @@ static void fix4display(void) {
     
     if (HW->Name && HW->NameLen > 17 && !CmpMem(HW->Name, "-hw=display@(-hw=", 17) &&
 	(arg = memchr(arg17 = HW->Name + 17, ')', HW->NameLen - 17))) {
-	
-	sprintf(HW->Name, "-display=%.*s", (int)(arg - arg17), arg17);
-	HW->NameLen = 9 + (arg - arg17);
+
+        uldat n = arg - arg17;
+        /*
+          cannot use sprintf(HW->Name, "-display=%.*s", (int)n, arg17)
+          because arg17 points inside HW->Name -> undefined behaviour
+        */
+        CopyMem("-display=", HW->Name, 9);
+        MoveMem(arg17, HW->Name + 9, n);
+        HW->NameLen = 9 + n;
     }
 }
 

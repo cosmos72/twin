@@ -38,12 +38,16 @@ static void X11_FillWindowTitle(byte * title, int maxlen) {
 
 
 static void X11_HideCursor(dat x, dat y) {
-    int xbegin = (x - xhw_startx) * xwfont, ybegin = (y - xhw_starty) * xhfont;
-    hwattr V = Video[x + y * DisplayWidth];
+    int xbegin = (x - xhw_startx) * xwfont, ybegin = (y - xhw_starty) * xhfont; /* needed by XDRAW_ANY */
+
+    hwattr V = (x >= 0 && x < DisplayWidth && y >= 0 && y < DisplayHeight)
+      ? Video[x + y * DisplayWidth]
+      : HWATTR( COL(HIGH|WHITE, BLACK), ' ');
     hwcol col = HWCOL(V);
     XChar2b c;
     hwattr extra = HWEXTRA32(V);
     hwfont f = xUTF_16_to_charset(HWFONT(V));
+    
     c.byte1 = f >> 8;
     c.byte2 = f & 0xFF;
     
@@ -53,7 +57,9 @@ static void X11_HideCursor(dat x, dat y) {
 static void X11_ShowCursor(uldat type, dat x, dat y) {
     udat i;
     hwcol v;
-    hwattr V = Video[x + y * DisplayWidth];
+    hwattr V = (x >= 0 && x < DisplayWidth && y >= 0 && y < DisplayHeight)
+      ? Video[x + y * DisplayWidth]
+      : HWATTR( COL(HIGH|WHITE, BLACK), ' ');
     hwfont f;
     XChar2b c;
 
