@@ -1,2 +1,9 @@
-#6 valgring twin_server: read of uninitialized memory when talking with twdisplay
-#7 valgring twin_server: glitch in drawing window borders and illegal memory access when DisplayHeight > 70
+----------------------------------- outstanding bugs -----------------------------------
+
+#6 valgrind twin_server: read of uninitialized memory when talking with twdisplay
+
+-------------------------------------- fixed bugs --------------------------------------
+
+fixed in commit 6420aaa0d5abf47784eb1e9d19f7081840bf48fd:
+#7 valgrind twin_server: glitch in drawing window borders and illegal memory access when DisplayHeight > 70
+
