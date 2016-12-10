@@ -545,17 +545,17 @@ static display_hw AttachDisplayHW(uldat len, CONST byte *arg, uldat slot, byte f
 /* not needed, server-side hw_display already does optimization for us */
 INLINE void OptimizeChangedVideo(void) {
     uldat _start, start, _end, end;
-    int i;
+    ldat i;
     
-    for (i=0; i<DisplayHeight*2; i++) {
+    for (i=0; i<(ldat)DisplayHeight*2; i++) {
 	start = (uldat)ChangedVideo[i>>1][!(i&1)][0];
 	    
 	if (start != (uldat)-1) {
 	    
-	    start += (i>>1) * DisplayWidth;
+	    start += (i>>1) * (ldat)DisplayWidth;
 	    _start = start;
 
-	    _end = end = (uldat)ChangedVideo[i>>1][!(i&1)][1] + (i>>1) * DisplayWidth;
+	    _end = end = (uldat)ChangedVideo[i>>1][!(i&1)][1] + (i>>1) * (ldat)DisplayWidth;
 		
 	    while (start <= end && Video[start] == OldVideo[start])
 		start++;
@@ -590,15 +590,15 @@ INLINE void OptimizeChangedVideo(void) {
 
 INLINE void SyncOldVideo(void) {
     uldat start, len;
-    int i;
+    ldat i;
 
     if (ChangedVideoFlag) {
-	for (i=0; i<DisplayHeight*2; i++) {
+	for (i=0; i<(ldat)DisplayHeight*2; i++) {
 	    start = ChangedVideo[i>>1][i&1][0];
 	    
 	    if (start != -1) {
 		len = ChangedVideo[i>>1][i&1][1] + 1 - start;
-		start += (i>>1)*DisplayWidth;
+		start += (i>>1) * (ldat)DisplayWidth;
 		
 		ChangedVideo[i>>1][i&1][0] = -1;
 	    
@@ -655,7 +655,7 @@ static byte ReAllocVideo(dat Width, dat Height) {
 	FreeMem(OldVideo);
 	OldVideo = NULL;
     } else if ((NeedOldVideo && !OldVideo) || change) {
-	if (!(OldVideo = (hwattr *)ReAllocMem(OldVideo, Width*Height*sizeof(hwattr))) && Width && Height) {
+	if (!(OldVideo = (hwattr *)ReAllocMem(OldVideo, (ldat)Width*Height*sizeof(hwattr))) && Width && Height) {
 	    OutOfMemory();
 	    Quit(1);
 	}
@@ -666,15 +666,15 @@ static byte ReAllocVideo(dat Width, dat Height) {
 	DisplayWidth = Width;
 	DisplayHeight = Height;
 	
-	if ((!(Video = (hwattr *)ReAllocMem(Video, DisplayWidth*DisplayHeight*sizeof(hwattr))) ||
-	     !(ChangedVideo = (dat (*)[2][2])ReAllocMem(ChangedVideo, DisplayHeight*sizeof(dat)*4))) &&
+	if ((!(Video = (hwattr *)ReAllocMem(Video, (ldat)DisplayWidth*DisplayHeight*sizeof(hwattr))) ||
+	     !(ChangedVideo = (dat (*)[2][2])ReAllocMem(ChangedVideo, (ldat)DisplayHeight*sizeof(dat)*4))) &&
 	     DisplayWidth && DisplayHeight) {
 	    
 	    OutOfMemory();
 	    Quit(1);
 	}
 	ValidVideo = FALSE;
-	WriteMem(ChangedVideo, 0xff, DisplayHeight*sizeof(dat)*4);
+	WriteMem(ChangedVideo, 0xff, (ldat)DisplayHeight*sizeof(dat)*4);
     
     }
     return change;
@@ -789,7 +789,7 @@ static void HandleMsg(tmsg Msg) {
 			break;
 		}
 		DirtyVideo(EventD->X, EventD->Y, EventD->X + EventD->Len - 1, EventD->Y);
-		CopyMem(EventD->Data, &Video[EventD->X + EventD->Y * DisplayWidth], EventD->Len * sizeof(hwattr));
+		CopyMem(EventD->Data, &Video[EventD->X + EventD->Y * (ldat)DisplayWidth], (uldat)EventD->Len * sizeof(hwattr));
 	    }
 	    break;
 	  case TW_DPY_FlushHW:

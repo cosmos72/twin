@@ -319,7 +319,7 @@ INLINE void termcap_SetColor(hwcol col) {
 
 
 INLINE void termcap_Mogrify(dat x, dat y, uldat len) {
-    uldat delta = x + (uldat)y * DisplayWidth;
+    uldat delta = x + y * (uldat)DisplayWidth;
     hwattr *V, *oV;
     hwcol col;
     hwfont c, _c;
@@ -396,7 +396,7 @@ INLINE void termcap_SingleMogrify(dat x, dat y, hwattr V) {
 /* HideMouse and ShowMouse depend on Video setup, not on Mouse.
  * so we have vcsa_ and termcap_ versions, not GPM_ ones... */
 static void termcap_ShowMouse(void) {
-    uldat pos = (HW->Last_x = HW->MouseState.x) + (HW->Last_y = HW->MouseState.y) * DisplayWidth;
+    uldat pos = (HW->Last_x = HW->MouseState.x) + (HW->Last_y = HW->MouseState.y) * (ldat)DisplayWidth;
     hwattr h  = Video[pos], 
 	c = HWATTR_COLMASK(~h) ^ HWATTR(COL(HIGH,HIGH),0);
 
@@ -408,7 +408,7 @@ static void termcap_ShowMouse(void) {
 }
 
 static void termcap_HideMouse(void) {
-    uldat pos = HW->Last_x + HW->Last_y * DisplayWidth;
+    uldat pos = HW->Last_x + HW->Last_y * (ldat)DisplayWidth;
 
     termcap_SingleMogrify(HW->Last_x, HW->Last_y, Video[pos]);
 
@@ -529,8 +529,9 @@ static void termcap_FlushVideo(void) {
 	    DirtyVideo(HW->Last_x, HW->Last_y, HW->Last_x, HW->Last_y);
 	    if (ValidOldVideo) {
 		FlippedOldVideo = TRUE;
-		savedOldVideo = OldVideo[HW->Last_x + HW->Last_y * DisplayWidth];
-		OldVideo[HW->Last_x + HW->Last_y * DisplayWidth] = ~Video[HW->Last_x + HW->Last_y * DisplayWidth];
+		savedOldVideo = OldVideo[HW->Last_x + HW->Last_y * (ldat)DisplayWidth];
+		OldVideo[HW->Last_x + HW->Last_y * (ldat)DisplayWidth]
+		 = ~Video[HW->Last_x + HW->Last_y * (ldat)DisplayWidth];
 	    }
 	}
 	
@@ -569,7 +570,7 @@ static void termcap_FlushVideo(void) {
     /* ... and this redraws the mouse */
     if (HW->FlagsHW & FlHWSoftMouse) {
 	if (FlippedOldVideo)
-	    OldVideo[HW->Last_x + HW->Last_y * DisplayWidth] = savedOldVideo;
+	    OldVideo[HW->Last_x + HW->Last_y * (ldat)DisplayWidth] = savedOldVideo;
 	if (FlippedVideo)
 	    VideoFlip(HW->Last_x = HW->MouseState.x, HW->Last_y = HW->MouseState.y);
 	else if (HW->FlagsHW & FlHWChangedMouseFlag)

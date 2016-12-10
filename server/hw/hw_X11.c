@@ -149,11 +149,11 @@ INLINE void X11_Mogrify(dat x, dat y, uldat len) {
 	}
     }
 
-    xbegin = (x - xhw_startx) * xwfont;
-    ybegin = (y - xhw_starty) * xhfont;
+    xbegin = (x - xhw_startx) * (ldat)xwfont;
+    ybegin = (y - xhw_starty) * (ldat)xhfont;
     
-    V = Video + x + y * DisplayWidth;
-    oV = OldVideo + x + y * DisplayWidth;
+    V = Video + x + y * (ldat)DisplayWidth;
+    oV = OldVideo + x + y * (ldat)DisplayWidth;
     
     for (_col = ~HWCOL(*V); len; x++, V++, oV++, len--) {
 	col = HWCOL(*V);
@@ -163,7 +163,7 @@ INLINE void X11_Mogrify(dat x, dat y, uldat len) {
 	}
 	if (!ValidOldVideo || *V != *oV) {
 	    if (!buflen) {
-		xbegin = (x - xhw_startx) * xwfont;
+		xbegin = (x - xhw_startx) * (ldat)xwfont;
 		_col = col;
 	    }
 	    f = xUTF_16_to_charset(HWFONT(*V));
@@ -326,15 +326,15 @@ static byte X11_InitHW(void) {
 	    break;
 	
 	xwfont = xsfont->min_bounds.width;
-	xwidth = xwfont * (HW->X = GetDisplayWidth());
+	xwidth = xwfont * (ldat)(HW->X = GetDisplayWidth());
 	xhfont = (xupfont = xsfont->ascent) + xsfont->descent;
-	xheight = xhfont * (HW->Y = GetDisplayHeight());
+	xheight = xhfont * (ldat)(HW->Y = GetDisplayHeight());
 	
 	if (xhw_view && xhw_startx >= 0 && xhw_starty >= 0 && xhw_endx > xhw_startx && xhw_endy > xhw_starty) {
 	    /* a valid view was specified */
 	    
-	    xwidth  = xwfont * (xhw_endx - xhw_startx);
-	    xheight = xhfont * (xhw_endy - xhw_starty);
+	    xwidth  = xwfont * (ldat)(xhw_endx - xhw_startx);
+	    xheight = xhfont * (ldat)(xhw_endy - xhw_starty);
 	} else {
 	    xhw_view = xhw_startx = xhw_starty = 0;
 	    xhw_endx = HW->X;

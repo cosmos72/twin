@@ -415,9 +415,9 @@ static void Video2OldVideo(dat Xstart, dat Ystart, dat Xend, dat Yend) {
     Yend = Min2(Yend, DisplayHeight-1);
 
     yc = Yend - Ystart + 1;
-    xc = sizeof(hwattr) * (Xend - Xstart + 1);
-    src = Video + Xstart + Ystart * DisplayWidth;
-    dst = OldVideo + Xstart + Ystart * DisplayWidth;
+    xc = sizeof(hwattr) * (uldat)(Xend - Xstart + 1);
+    src = Video + Xstart + Ystart * (ldat)DisplayWidth;
+    dst = OldVideo + Xstart + Ystart * (ldat)DisplayWidth;
     
     while (yc--) {
 	CopyMem(src, dst, xc);
@@ -437,7 +437,7 @@ void DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
 	return;
     
     count = Dwn - Up + 1;
-    len   = (Rgt-Left+1) * sizeof(hwattr);
+    len   = (ldat)(Rgt-Left+1) * sizeof(hwattr);
 
     /* if HW can do the scroll, use it instead of redrawing */
 
@@ -455,8 +455,8 @@ void DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
     /* do the drag inside Video[] */
     
     if (DstUp <= Up) {
-	src +=    Left +    Up * DisplayWidth;
-	dst += DstLeft + DstUp * DisplayWidth;
+	src +=    Left +    Up * (ldat)DisplayWidth;
+	dst += DstLeft + DstUp * (ldat)DisplayWidth;
 	if (DstUp != Up) {
 	    /* copy forward */
 	    while (count--) {
@@ -475,8 +475,8 @@ void DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
 	}
     } else if (DstUp > Up) {
 	/* copy backward */
-	src +=    Left +    Dwn * DisplayWidth;
-	dst += DstLeft + DstDwn * DisplayWidth;
+	src +=    Left +    Dwn * (ldat)DisplayWidth;
+	dst += DstLeft + DstDwn * (ldat)DisplayWidth;
 	while (count--) {
 	    CopyMem(src, dst, len);
 	    dst -= DisplayWidth;

@@ -148,8 +148,8 @@ INLINE void linux_Mogrify(dat x, dat y, uldat len) {
     hwfont c, _c;
     byte sending = FALSE;
     
-    V = Video + x + y * DisplayWidth;
-    oV = OldVideo + x + y * DisplayWidth;
+    V = Video + x + y * (ldat)DisplayWidth;
+    oV = OldVideo + x + y * (ldat)DisplayWidth;
 	
     for (; len; V++, oV++, x++, len--) {
 	if (!ValidOldVideo || *V != *oV) {
@@ -215,7 +215,7 @@ INLINE void linux_SingleMogrify(dat x, dat y, hwattr V) {
 /* HideMouse and ShowMouse depend on Video setup, not on Mouse.
  * so we have vcsa_ and linux_ versions, not GPM_ ones... */
 static void linux_ShowMouse(void) {
-    uldat pos = (HW->Last_x = HW->MouseState.x) + (HW->Last_y = HW->MouseState.y) * DisplayWidth;
+    uldat pos = (HW->Last_x = HW->MouseState.x) + (HW->Last_y = HW->MouseState.y) * (ldat)DisplayWidth;
     hwattr h  = Video[pos];
     hwcol c = ~HWCOL(h) ^ COL(HIGH,HIGH);
     
@@ -230,7 +230,7 @@ static void linux_ShowMouse(void) {
 }
 
 static void linux_HideMouse(void) {
-    uldat pos = HW->Last_x + HW->Last_y * DisplayWidth;
+    uldat pos = HW->Last_x + HW->Last_y * (ldat)DisplayWidth;
 
     linux_SingleMogrify(HW->Last_x, HW->Last_y, Video[pos]);
 
@@ -288,8 +288,9 @@ static void linux_FlushVideo(void) {
 	    DirtyVideo(HW->Last_x, HW->Last_y, HW->Last_x, HW->Last_y);
 	    if (ValidOldVideo) {
 		FlippedOldVideo = TRUE;
-		savedOldVideo = OldVideo[HW->Last_x + HW->Last_y * DisplayWidth];
-		OldVideo[HW->Last_x + HW->Last_y * DisplayWidth] = ~Video[HW->Last_x + HW->Last_y * DisplayWidth];
+		savedOldVideo = OldVideo[HW->Last_x + HW->Last_y * (ldat)DisplayWidth];
+		OldVideo[HW->Last_x + HW->Last_y * (ldat)DisplayWidth]
+		 = ~Video[HW->Last_x + HW->Last_y * (ldat)DisplayWidth];
 	    }
 	}
 	
@@ -331,7 +332,7 @@ static void linux_FlushVideo(void) {
     /* ... and this redraws the mouse */
     if (HW->FlagsHW & FlHWSoftMouse) {
 	if (FlippedOldVideo)
-	    OldVideo[HW->Last_x + HW->Last_y * DisplayWidth] = savedOldVideo;
+	    OldVideo[HW->Last_x + HW->Last_y * (ldat)DisplayWidth] = savedOldVideo;
 	if (FlippedVideo)
 	    VideoFlip(HW->Last_x = HW->MouseState.x, HW->Last_y = HW->MouseState.y);
 	else if (HW->FlagsHW & FlHWChangedMouseFlag)

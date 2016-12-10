@@ -193,8 +193,8 @@ INLINE void X11_DrawString(myXChar *buf, uldat buflen, hwcol col, int xbegin, in
 # define IS_GFX_ROOT(gfx)    ((gfx) == GFX_ROOT)
 
 INLINE void X11_DrawGfx1Mono(myXChar *f, hwcol col, hwattr gfx, int xbegin, int ybegin) {
-    int i = (gfx % pitch) * xwfont;
-    int j = (gfx / pitch) * xhfont;
+    int i = (gfx % pitch) * (ldat)xwfont;
+    int j = (gfx / pitch) * (ldat)xhfont;
     unsigned long mask = 0;
     if (xthemesgc.foreground != xcol[COLFG(col)])
 	xthemesgc.foreground = xcol[COLFG(col)], mask |= GCForeground;
@@ -220,19 +220,19 @@ static void X11_DrawGfxMono(myXChar *buf, udat buflen, hwcol col, hwattr gfx, in
 }
 
 INLINE void X11_DrawRoot(myXChar *f, udat flen, hwcol col, int xbegin, int ybegin) {
-    XFillRectangle(xdisplay, xwindow, xrootgc, xbegin, ybegin, xwfont * flen, xhfont);
+    XFillRectangle(xdisplay, xwindow, xrootgc, xbegin, ybegin, xwfont * (uldat)flen, xhfont);
     XDRAW_S(f, flen, col);
 }
 
 INLINE void X11_DrawBg(myXChar *f, udat flen, hwcol col, int xbegin, int ybegin) {
-    XFillRectangle(xdisplay, xwindow, xbggc, xbegin, ybegin, xwfont * flen, xhfont);
+    XFillRectangle(xdisplay, xwindow, xbggc, xbegin, ybegin, xwfont * (uldat)flen, xhfont);
     XDRAW_S(f, flen, col);
 }
 
 
 INLINE void X11_DrawGfx1Color(myXChar *f, hwcol col, hwattr gfx, int xbegin, int ybegin) {
-    int i = (gfx % pitch) * xwfont;
-    int j = (gfx / pitch) * xhfont;
+    int i = (gfx % pitch) * (ldat)xwfont;
+    int j = (gfx / pitch) * (ldat)xhfont;
 
     XCopyArea(xdisplay, xtheme, xwindow, xgc, i, j, xwfont, xhfont, xbegin, ybegin);
     
@@ -287,11 +287,11 @@ INLINE void X11_Mogrify(dat x, dat y, uldat len) {
 	}
     }
 
-    xbegin = (x - xhw_startx) * xwfont;
-    ybegin = (y - xhw_starty) * xhfont;
+    xbegin = (x - xhw_startx) * (ldat)xwfont;
+    ybegin = (y - xhw_starty) * (ldat)xhfont;
     
-    V = Video + x + y * DisplayWidth;
-    oV = OldVideo + x + y * DisplayWidth;
+    V = Video + x + y * (ldat)DisplayWidth;
+    oV = OldVideo + x + y * (ldat)DisplayWidth;
     
     for (_col = ~HWCOL(*V); len; x++, V++, oV++, len--) {
 	col = HWCOL(*V);
@@ -302,7 +302,7 @@ INLINE void X11_Mogrify(dat x, dat y, uldat len) {
 	}
 	if (!ValidOldVideo || *V != *oV) {
 	    if (!buflen) {
-		xbegin = (x - xhw_startx) * xwfont;
+		xbegin = (x - xhw_startx) * (ldat)xwfont;
 		_col = col;
 		bufgfx = gfx;
 	    }
@@ -611,9 +611,9 @@ static byte gfx_InitHW(void) {
 	     (xsfont = XLoadQueryFont(xdisplay, "vga")) ||
 	     (xsfont = XLoadQueryFont(xdisplay, "fixed"))) &&
 	    (xwfont = xsfont->min_bounds.width,
-	     xwidth = xwfont * (HW->X = GetDisplayWidth()),
+	     xwidth = xwfont * (ldat)(HW->X = GetDisplayWidth()),
 	     xhfont = (xupfont = xsfont->ascent) + xsfont->descent,
-	     xheight = xhfont * (HW->Y = GetDisplayHeight()),
+	     xheight = xhfont * (ldat)(HW->Y = GetDisplayHeight()),
 	     xwindow = XCreateWindow(xdisplay, DefaultRootWindow(xdisplay), 0, 0,
 				     xwidth, xheight, 0, xdepth, InputOutput,
 				     DefaultVisual(xdisplay, xscreen),

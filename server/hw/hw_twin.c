@@ -193,8 +193,8 @@ INLINE void TW_Mogrify(dat x, dat y, uldat len) {
     hwattr *buf;
     dat xbegin = x, ybegin = y;
     
-    V = Video + x + y * DisplayWidth;
-    oV = OldVideo + x + y * DisplayWidth;
+    V = Video + x + y * (ldat)DisplayWidth;
+    oV = OldVideo + x + y * (ldat)DisplayWidth;
     
     for (; len; x++, V++, oV++, len--) {
 	if (buflen && ValidOldVideo && *V == *oV) {
@@ -288,7 +288,7 @@ static void TW_Resize(dat x, dat y) {
     
 #if 0
 static byte TW_canDragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
-    return (Rgt-Left+1) * (Dwn-Up+1) > 20;
+    return (ldat)(Rgt-Left+1) * (Dwn-Up+1) > 20;
 }
 
 static void TW_DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {

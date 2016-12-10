@@ -181,8 +181,8 @@ INLINE void display_Mogrify(dat x, dat y, uldat len) {
     hwattr *buf;
     dat xbegin = x, ybegin = y;
     
-    V = Video + x + y * DisplayWidth;
-    oV = OldVideo + x + y * DisplayWidth;
+    V = Video + x + y * (ldat)DisplayWidth;
+    oV = OldVideo + x + y * (ldat)DisplayWidth;
     
     for (; len; x++, V++, oV++, len--) {
 	if (buflen && ValidOldVideo && *V == *oV) {

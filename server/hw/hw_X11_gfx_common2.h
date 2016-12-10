@@ -41,7 +41,7 @@ static void X11_HideCursor(dat x, dat y) {
     int xbegin = (x - xhw_startx) * xwfont, ybegin = (y - xhw_starty) * xhfont; /* needed by XDRAW_ANY */
 
     hwattr V = (x >= 0 && x < DisplayWidth && y >= 0 && y < DisplayHeight)
-      ? Video[x + y * DisplayWidth]
+      ? Video[x + y * (ldat)DisplayWidth]
       : HWATTR( COL(HIGH|WHITE, BLACK), ' ');
     hwcol col = HWCOL(V);
     XChar2b c;
@@ -58,7 +58,7 @@ static void X11_ShowCursor(uldat type, dat x, dat y) {
     udat i;
     hwcol v;
     hwattr V = (x >= 0 && x < DisplayWidth && y >= 0 && y < DisplayHeight)
-      ? Video[x + y * DisplayWidth]
+      ? Video[x + y * (ldat)DisplayWidth]
       : HWATTR( COL(HIGH|WHITE, BLACK), ' ');
     hwfont f;
     XChar2b c;
@@ -98,19 +98,20 @@ static void X11_ShowCursor(uldat type, dat x, dat y) {
 }
 
 static void X11_FlushVideo(void) {
+    uldat i;
     dat start, end;
-    udat i;
     byte iff;
     
-    if (ValidOldVideo)
-	iff = ChangedVideoFlag &&
-	Video[HW->XY[0] + HW->XY[1] * DisplayWidth] != OldVideo[HW->XY[0] + HW->XY[1] * DisplayWidth];
+    if (ValidOldVideo) {
+       iff = ChangedVideoFlag
+	 && Video[HW->XY[0] + HW->XY[1] * (ldat)DisplayWidth]
+	 != OldVideo[HW->XY[0] + HW->XY[1] * (ldat)DisplayWidth];
     /* TRUE if and only if the cursor will be erased by burst */
-    
-    
+    }
+       
     /* first burst all changes */
     if (ChangedVideoFlag) {
-	for (i=0; i<DisplayHeight*2; i++) {
+	for (i=0; i<(ldat)DisplayHeight*2; i++) {
 	    start = ChangedVideo[i>>1][i&1][0];
 	    end   = ChangedVideo[i>>1][i&1][1];
 	    

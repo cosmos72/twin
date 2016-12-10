@@ -66,12 +66,12 @@ static byte ConfigureHWDefault[HW_CONFIGURE_MAX];
 
 /* common functions */
 
-udat GetDisplayWidth(void) {
+dat GetDisplayWidth(void) {
     return All->FirstDisplayHW && !All->FirstDisplayHW->Quitted
 	? DisplayWidth : savedDisplayWidth;
 }
 
-udat GetDisplayHeight(void) {
+dat GetDisplayHeight(void) {
     return All->FirstDisplayHW && !All->FirstDisplayHW->Quitted
 	? DisplayHeight : savedDisplayHeight;
 }
@@ -571,7 +571,7 @@ byte ResizeDisplay(void) {
 	FreeMem(OldVideo);
 	OldVideo = NULL;
     } else if ((NeedOldVideo && !OldVideo) || change) {
-	if (!(OldVideo = (hwattr *)ReAllocMem(OldVideo, TryDisplayWidth*TryDisplayHeight*sizeof(hwattr)))) {
+	if (!(OldVideo = (hwattr *)ReAllocMem(OldVideo, (ldat)TryDisplayWidth*TryDisplayHeight*sizeof(hwattr)))) {
 	    printk("twin: out of memory!\n");
 	    Quit(1);
 	}
@@ -582,14 +582,14 @@ byte ResizeDisplay(void) {
 	All->DisplayWidth  = DisplayWidth  = TryDisplayWidth;
 	All->DisplayHeight = DisplayHeight = TryDisplayHeight;
 	
-	if (!(Video = (hwattr *)ReAllocMem(Video, DisplayWidth*DisplayHeight*sizeof(hwattr))) ||
-	    !(ChangedVideo = (dat (*)[2][2])ReAllocMem(ChangedVideo, DisplayHeight*sizeof(dat)*4)) ||
-	    !(saveChangedVideo = (dat (*)[2][2])ReAllocMem(saveChangedVideo, DisplayHeight*sizeof(dat)*4))) {
+	if (!(Video = (hwattr *)ReAllocMem(Video, (ldat)DisplayWidth*DisplayHeight*sizeof(hwattr))) ||
+	    !(ChangedVideo = (dat (*)[2][2])ReAllocMem(ChangedVideo, (ldat)DisplayHeight*sizeof(dat)*4)) ||
+	    !(saveChangedVideo = (dat (*)[2][2])ReAllocMem(saveChangedVideo, (ldat)DisplayHeight*sizeof(dat)*4))) {
 	    
 	    printk("twin: out of memory!\n");
 	    Quit(1);
 	}
-	WriteMem(ChangedVideo, 0xff, DisplayHeight*sizeof(dat)*4);
+	WriteMem(ChangedVideo, 0xff, (ldat)DisplayHeight*sizeof(dat)*4);
     
     }
     NeedHW &= ~NEEDResizeDisplay;
@@ -772,16 +772,16 @@ void SelectionImport(void) {
 }
 
 INLINE void DiscardBlinkVideo(void) {
-    int i;
+    ldat i;
     uldat start, len;
     hwattr *V;
     
-    for (i=0; i<DisplayHeight*2; i++) {
+    for (i=0; i<(ldat)DisplayHeight*2; i++) {
 	start = (uldat)ChangedVideo[i>>1][i&1][0];
 
-	if (start != -1) {
+	if (start != (uldat)-1) {
 	    len = (uldat)ChangedVideo[i>>1][i&1][1] + 1 - start;
-	    start += (i>>1)*DisplayWidth;
+	    start += (i>>1) * (ldat)DisplayWidth;
 
 	    for (V = &Video[start]; len; V++, len--)
 		*V &= ~HWATTR(COL(0,HIGH), (byte)0);
@@ -791,19 +791,19 @@ INLINE void DiscardBlinkVideo(void) {
 
 INLINE void OptimizeChangedVideo(void) {
     uldat _start, start, _end, end;
-    int i;
+    ldat i;
 
     ChangedVideoFlag = FALSE;
     
-    for (i=0; i<DisplayHeight*2; i++) {
+    for (i=0; i<(ldat)DisplayHeight*2; i++) {
 	start = (uldat)ChangedVideo[i>>1][!(i&1)][0];
 	    
 	if (start != (uldat)-1) {
 	    
-	    start += (i>>1) * DisplayWidth;
+	    start += (i>>1) * (ldat)DisplayWidth;
 	    _start = start;
 
-	    _end = end = (uldat)ChangedVideo[i>>1][!(i&1)][1] + (i>>1) * DisplayWidth;
+	    _end = end = (uldat)ChangedVideo[i>>1][!(i&1)][1] + (i>>1) * (ldat)DisplayWidth;
 		
 	    while (start <= end && Video[start] == OldVideo[start])
 		start++;
@@ -838,14 +838,14 @@ INLINE void OptimizeChangedVideo(void) {
 
 INLINE void SyncOldVideo(void) {
     uldat start, len;
-    int i;
+    ldat i;
 	
-    for (i=0; i<DisplayHeight*2; i++) {
+    for (i=0; i<(ldat)DisplayHeight*2; i++) {
 	start = ChangedVideo[i>>1][i&1][0];
 	
 	if (start != -1) {
 	    len = ChangedVideo[i>>1][i&1][1] + 1 - start;
-	    start += (i>>1)*DisplayWidth;
+	    start += (i>>1) * (ldat)DisplayWidth;
 	    
 	    ChangedVideo[i>>1][i&1][0] = -1;
 	    
@@ -907,7 +907,7 @@ void FlushHW(void) {
 	if (mangled) {
 	    ValidOldVideo = saveValidOldVideo;
 	    ChangedVideoFlag = saveChangedVideoFlag;
-	    CopyMem(saveChangedVideo, ChangedVideo, DisplayHeight*sizeof(dat)*4);
+	    CopyMem(saveChangedVideo, ChangedVideo, (ldat)DisplayHeight*sizeof(dat)*4);
 	    mangled = FALSE;
 	}
 	if (HW->RedrawVideo || ((HW->FlagsHW & FlHWSoftMouse) &&
@@ -915,7 +915,7 @@ void FlushHW(void) {
 	    if (!saved) {
 		saveValidOldVideo = ValidOldVideo;
 		saveChangedVideoFlag = ChangedVideoFlag;
-		CopyMem(ChangedVideo, saveChangedVideo, DisplayHeight*sizeof(dat)*4);
+		CopyMem(ChangedVideo, saveChangedVideo, (ldat)DisplayHeight*sizeof(dat)*4);
 		saved = TRUE;
 	    }
 	    if (HW->RedrawVideo) {
@@ -980,7 +980,7 @@ void FillVideo(dat Xstart, dat Ystart, dat Xend, dat Yend, hwattr Attrib) {
     yc = Yend - Ystart + 1;
     _xc = Xend - Xstart + 1;
     delta = DisplayWidth - _xc;
-    pos = Video + Xstart + Ystart * DisplayWidth;
+    pos = Video + Xstart + Ystart * (ldat)DisplayWidth;
     
     while (yc--) {
 	xc = _xc;
@@ -1005,7 +1005,7 @@ void FillOldVideo(dat Xstart, dat Ystart, dat Xend, dat Yend, hwattr Attrib) {
     yc = Yend - Ystart + 1;
     _xc = Xend - Xstart + 1;
     delta = DisplayWidth - _xc;
-    pos = OldVideo + Xstart + Ystart * DisplayWidth;
+    pos = OldVideo + Xstart + Ystart * (ldat)DisplayWidth;
     
     while (yc--) {
 	xc = _xc;
@@ -1166,13 +1166,15 @@ byte StdAddMouseEvent(udat Code, dat MouseX, dat MouseY) {
 	&& (Msg = Ext(WM,MsgPort)->LastMsg)
 	&& Msg->Type==MSG_MOUSE
 	&& (Event=&Msg->Event.EventMouse)
-	&& Event->Code==Code) {
+	&& Event->Code==Code)
+    {
 	/* merge the two events */
 	Event->X=MouseX;
 	Event->Y=MouseY;
 	return TRUE;
     }
-    if ((Msg=Do(Create,Msg)(FnMsg, MSG_MOUSE, 0))) {
+    if ((Msg=Do(Create,Msg)(FnMsg, MSG_MOUSE, 0)))
+    {
 	Event=&Msg->Event.EventMouse;
 	Event->Code=Code;
 	Event->ShiftFlags=(udat)0;

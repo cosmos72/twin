@@ -70,7 +70,8 @@ static void GGI_Beep(void) {
 static void GGI_KeyboardEvent(int fd, display_hw hw) {
     ggi_event ev;
     struct timeval tv;
-    dat x, y, dx = 0, dy = 0;
+    ldat dx = 0, dy = 0;
+    dat x, y;
     byte keys;
 
     SaveHW;
@@ -155,8 +156,8 @@ static void GGI_KeyboardEvent(int fd, display_hw hw) {
 	    x = Max2(x, 0); x = Min2(x, DisplayWidth - 1);
 	    y = Max2(y, 0); y = Min2(y, DisplayHeight - 1);
 	    
-	    dx = ev.pmove.x < gfont.x/2 ? -1 : DisplayWidth *gfont.x - ev.pmove.x <= gfont.x/2 ? 1 : 0;
-	    dy = ev.pmove.y < gfont.y/2 ? -1 : DisplayHeight*gfont.y - ev.pmove.y <= gfont.y/2 ? 1 : 0;
+	    dx = ev.pmove.x < gfont.x/2 ? -1 : (ldat)DisplayWidth *gfont.x - ev.pmove.x <= gfont.x/2 ? 1 : 0;
+	    dy = ev.pmove.y < gfont.y/2 ? -1 : (ldat)DisplayHeight*gfont.y - ev.pmove.y <= gfont.y/2 ? 1 : 0;
 	    
 	    break;
 	    
@@ -199,8 +200,8 @@ INLINE void GGI_Mogrify(dat x, dat y, uldat len) {
     byte buf[TW_SMALLBUFF];
     int xbegin = x * gfont.x, ybegin = y * gfont.y;
     
-    V = Video + x + y * DisplayWidth;
-    oV = OldVideo + x + y * DisplayWidth;
+    V = Video + x + y * (ldat)DisplayWidth;
+    oV = OldVideo + x + y * (ldat)DisplayWidth;
     
     for (_col = ~HWCOL(*V); len; x++, V++, oV++, len--) {
 	col = HWCOL(*V);
@@ -211,7 +212,7 @@ INLINE void GGI_Mogrify(dat x, dat y, uldat len) {
 	}
 	if (!ValidOldVideo || *V != *oV) {
 	    if (!buflen) {
-		xbegin = x * gfont.x;
+		xbegin = x * (ldat)gfont.x;
 		_col = col;
 	    }
 	    buf[buflen++] = HWFONT(*V) ? HWFONT(*V) : ' ';
@@ -228,7 +229,7 @@ INLINE void GGI_Mogrify(dat x, dat y, uldat len) {
 #undef GDRAW
 
 static void GGI_HideCursor(dat x, dat y) {
-    hwattr V = Video[x + y * DisplayWidth];
+    hwattr V = Video[x + y * (ldat)DisplayWidth];
     hwcol col = HWCOL(V);
     
     GFG(col);
@@ -237,7 +238,7 @@ static void GGI_HideCursor(dat x, dat y) {
 }
 
 static void GGI_ShowCursor(uldat type, dat x, dat y) {
-    hwattr V = Video[x + y * DisplayWidth];
+    hwattr V = Video[x + y * (ldat)DisplayWidth];
     hwcol v;
     udat i;
     
@@ -264,20 +265,20 @@ static void GGI_ShowCursor(uldat type, dat x, dat y) {
 }
 
 static void GGI_FlushVideo(void) {
+    uldat i;
     dat start, end;
-    udat i;
     byte iff;
     
-    if (ValidOldVideo)
-	iff = ChangedVideoFlag &&
-	Video[HW->XY[0] + HW->XY[1] * DisplayWidth]
-	!= OldVideo[HW->XY[0] + HW->XY[1] * DisplayWidth];
-    /* TRUE if and only if the cursor will be erased by burst */
-    
-    
+    if (ValidOldVideo) {
+       iff = ChangedVideoFlag
+	 && Video[HW->XY[0] + HW->XY[1] * (ldat)DisplayWidth]
+	 != OldVideo[HW->XY[0] + HW->XY[1] * (ldat)DisplayWidth];
+       /* TRUE if and only if the cursor will be erased by burst */
+    }
+   
     /* first burst all changes */
     if (ChangedVideoFlag) {
-	for (i=0; i<DisplayHeight*2; i++) {
+	for (i=0; i<(ldat)DisplayHeight*2; i++) {
 	    start = ChangedVideo[i>>1][i&1][0];
 	    end   = ChangedVideo[i>>1][i&1][1];
 	    
@@ -341,12 +342,14 @@ static void GGI_Resize(dat x, dat y) {
 
 #if 0
 static byte GGI_CanDragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
-    return (Rgt-Left+1) * (Dwn-Up+1) > 20;
+    return (ldat)(Rgt-Left+1) * (Dwn-Up+1) > 20;
 }
 
 static void GGI_DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
-    ggiCopyBox(gvis, Left*gfont.x, Up*gfont.y,
-	       (Rgt-Left+1)*gfont.x, (Dwn-Up+1)*gfont.y, DstLeft*gfont.x, DstUp*gfont.y);
+    ggiCopyBox(gvis,
+	       (ldat)Left*gfont.x, (ldat)Up*gfont.y,
+	       (ldat)(Rgt-Left+1)*gfont.x, (ldat)(Dwn-Up+1)*gfont.y,
+	       (ldat)DstLeft*gfont.x, (ldat)DstUp*gfont.y);
     setFlush();
 }
 #endif

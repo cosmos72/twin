@@ -124,7 +124,7 @@ INLINE void vcsa_write(int fd, hwattr *buf, uldat count, uldat pos) {
 
 
 static void vcsa_FlushVideo(void) {
-    dat i, j;
+    ldat i, j;
     uldat prevS = (uldat)-1, prevE = (uldat)-1, _prevS, _start, _end, start, end;
     byte FlippedVideo = FALSE, FlippedOldVideo = FALSE;
     hwattr savedOldVideo;
@@ -149,8 +149,9 @@ static void vcsa_FlushVideo(void) {
 	    DirtyVideo(HW->Last_x, HW->Last_y, HW->Last_x, HW->Last_y);
 	    if (ValidOldVideo) {
 		FlippedOldVideo = TRUE;
-		savedOldVideo = OldVideo[HW->Last_x + HW->Last_y * DisplayWidth];
-		OldVideo[HW->Last_x + HW->Last_y * DisplayWidth] = ~Video[HW->Last_x + HW->Last_y * DisplayWidth];
+		savedOldVideo = OldVideo[HW->Last_x + HW->Last_y * (ldat)DisplayWidth];
+		OldVideo[HW->Last_x + HW->Last_y * (ldat)DisplayWidth]
+		 = ~Video[HW->Last_x + HW->Last_y * (ldat)DisplayWidth];
 	    }
 	}
 	
@@ -179,11 +180,11 @@ static void vcsa_FlushVideo(void) {
 	if (start != (uldat)-1) {
 		
 	    /* actual tty size could be different from DisplayWidth*DisplayHeight... */
-	    start += (i>>1) * DisplayWidth;
-	    end   += (i>>1) * DisplayWidth;
+	    start += (i>>1) * (ldat)DisplayWidth;
+	    end   += (i>>1) * (ldat)DisplayWidth;
 
-	    _start += (i>>1) * HW->X;
-	    _end   += (i>>1) * HW->X;
+	    _start += (i>>1) * (ldat)HW->X;
+	    _end   += (i>>1) * (ldat)HW->X;
 		
 		
 	    if (prevS != (uldat)-1) {
@@ -209,7 +210,7 @@ static void vcsa_FlushVideo(void) {
     /* ... and this redraws the mouse */
     if (HW->FlagsHW & FlHWSoftMouse) {
 	if (FlippedOldVideo)
-	    OldVideo[HW->Last_x + HW->Last_y * DisplayWidth] = savedOldVideo;
+	    OldVideo[HW->Last_x + HW->Last_y * (ldat)DisplayWidth] = savedOldVideo;
 	if (FlippedVideo)
 	    VideoFlip(HW->Last_x = HW->MouseState.x, HW->Last_y = HW->MouseState.y);
 	else if (HW->FlagsHW & FlHWChangedMouseFlag)
@@ -234,8 +235,8 @@ static void vcsa_FlushVideo(void) {
 /* HideMouse and ShowMouse depend on Video setup, not on Mouse.
  * so we have vcsa_ and stdout_ versions, not GPM_ ones... */
 static void vcsa_ShowMouse(void) {
-    uldat pos = (HW->Last_x = HW->MouseState.x) + (HW->Last_y = HW->MouseState.y) * DisplayWidth;
-    uldat _pos = HW->Last_x + HW->Last_y * HW->X;
+    uldat pos = (HW->Last_x = HW->MouseState.x) + (HW->Last_y = HW->MouseState.y) * (ldat)DisplayWidth;
+    uldat _pos = HW->Last_x + HW->Last_y * (ldat)HW->X;
     
     hwattr h  = Video[pos], c = HWATTR_COLMASK(~h) ^ HWATTR(COL(HIGH,HIGH),0);
 
@@ -245,8 +246,8 @@ static void vcsa_ShowMouse(void) {
 }
 
 static void vcsa_HideMouse(void) {
-    uldat pos = HW->Last_x + HW->Last_y * DisplayWidth;
-    uldat _pos = HW->Last_x + HW->Last_y * HW->X;
+    uldat pos = HW->Last_x + HW->Last_y * (ldat)DisplayWidth;
+    uldat _pos = HW->Last_x + HW->Last_y * (ldat)HW->X;
 
     vcsa_write(VcsaFd, (void *)&Video[pos], 1, _pos);
 }
