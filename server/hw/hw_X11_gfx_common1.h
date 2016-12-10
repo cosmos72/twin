@@ -183,17 +183,12 @@ static Twkey X11_LookupKey(XEvent *ev, udat *ShiftFlags, udat *len, char *seq) {
     
     uldat i, low, up, _len = *len;
 
-    *ShiftFlags = 0;
-    if (kev->state & ShiftMask)
-	*ShiftFlags |= KBD_SHIFT_FL;
-    if (kev->state & LockMask)
-	*ShiftFlags |= KBD_CAPS_LOCK;
-    if (kev->state & ControlMask)
-	*ShiftFlags |= KBD_CTRL_FL;
-    if (kev->state & (Mod1Mask|Mod3Mask)) /* Alt|AltGr */
-	*ShiftFlags |= KBD_ALT_FL;
-    if (kev->state & Mod2Mask) /* Num_Lock */
-	*ShiftFlags |= KBD_NUM_LOCK;
+    *ShiftFlags =
+        ((kev->state & ShiftMask)   ? KBD_SHIFT_FL  : 0) |
+        ((kev->state & LockMask)    ? KBD_CAPS_LOCK : 0) |
+        ((kev->state & ControlMask) ? KBD_CTRL_FL   : 0) |
+        ((kev->state & (Mod1Mask|Mod3Mask)) ? KBD_ALT_FL : 0) | /* Alt|AltGr */
+        ((kev->state & Mod2Mask)    ? KBD_NUM_LOCK  : 0); /* Num_Lock */
 
 #ifdef TW_FOUND_X11_XIM_XIC
     if (xic) {

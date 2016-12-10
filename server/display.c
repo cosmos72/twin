@@ -507,14 +507,23 @@ static display_hw CreateDisplayHW(uldat NameLen, CONST byte *Name) {
 }
 
 static byte IsValidHW(uldat len, CONST byte *arg) {
-    CONST byte *slash = memchr(arg, '/', len), *at = memchr(arg, '@', len), *comma = memchr(arg, ',', len);
-    if (slash && (!at || slash < at) && (!comma || slash < comma)) {
-	printk("twdisplay: slash ('/') not allowed in display HW name: %.*s\n", (int)len, arg);
-	return FALSE;
+    uldat i;
+    byte b;
+    if (len >= 4 && !CmpMem(arg, "-hw=", 4))
+        arg += 4, len -=4;
+    
+    for (i = 0; i < len; i++) {
+        b = arg[i];
+        if (b == '@' || b == ',')
+            /* the rest are options - validated by each display HW */
+            break;
+        if ((b < '0' || b > '9') && (b < 'A' || b > 'Z') && (b < 'a' || b > 'z') && b != '_') {
+            printk("twdisplay: invalid non-alphanumeric character `%c' in display HW name: `%.*s'\n", (int)b, Min2((int)len,TW_SMALLBUFF), arg);
+            return FALSE;
+        }
     }
     return TRUE;
 }
-
 
 static display_hw AttachDisplayHW(uldat len, CONST byte *arg, uldat slot, byte flags) {
     if ((len && len <= 4) || CmpMem("-hw=", arg, Min2(len,4))) {

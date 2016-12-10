@@ -300,27 +300,37 @@ void QuitDisplayHW(display_hw D_HW) {
 }
 
 static byte IsValidHW(uldat len, CONST byte *arg) {
-    CONST byte *slash = memchr(arg, '/', len), *at = memchr(arg, '@', len), *comma = memchr(arg, ',', len);
-    if (slash && (!at || slash < at) && (!comma || slash < comma)) {
-	printk("twin: slash ('/') not allowed in display HW name: %.*s\n", Min2((int)len,TW_SMALLBUFF), arg);
-	return FALSE;
+    uldat i;
+    byte b;
+    if (len >= 4 && !CmpMem(arg, "-hw=", 4))
+        arg += 4, len -=4;
+
+    for (i = 0; i < len; i++) {
+        b = arg[i];
+        if (b == '@' || b == ',')
+            /* the rest are options - validated by each display HW */
+            break;
+        if ((b < '0' || b > '9') && (b < 'A' || b > 'Z') && (b < 'a' || b > 'z') && b != '_') {
+            printk("twin: invalid non-alphanumeric character `%c' in display HW name `%.*s'\n", (int)b, Min2((int)len,TW_SMALLBUFF), arg);
+            return FALSE;
+        }
     }
     return TRUE;
 }
 
 display_hw AttachDisplayHW(uldat len, CONST byte *arg, uldat slot, byte flags) {
-    display_hw D_HW;
+    display_hw D_HW = NULL;
 
     if ((len && len <= 4) || CmpMem("-hw=", arg, Min2(len,4))) {
 	printk("twin: specified `%.*s\' is not a known option.\n"
-		"      try `twin --help' for usage summary.\n",
+               "      try `twin --help' for usage summary.\n",
 	       Min2((int)len,TW_SMALLBUFF), arg);
-	return NULL;
+	return D_HW;
     }
     
     if (All->ExclusiveHW) {
 	printk("twin: exclusive display in use, permission to display denied!\n");
-	return NULL;
+	return D_HW;
     }
     
     if (IsValidHW(len, arg) && (D_HW = Do(Create,DisplayHW)(FnDisplayHW, len, arg))) {
@@ -350,7 +360,7 @@ display_hw AttachDisplayHW(uldat len, CONST byte *arg, uldat slot, byte flags) {
 	D_HW->AttachSlot = NOSLOT;
 	D_HW->QuitHW = NoOp;
 	Delete(D_HW);
-	D_HW = (display_hw)0;
+	D_HW = NULL;
     }
     return D_HW;
 }
@@ -381,26 +391,28 @@ byte DetachDisplayHW(uldat len, CONST byte *arg, byte flags) {
 /* initialize all required HW displays. Since we are at it, also parse command line */
 byte InitHW(void) {
     byte **arglist = orig_argv;
-    byte ret = FALSE, flags = 0, nohw = FALSE;
+    byte *arg;
     udat hwcount = 0;
+    
+    byte ret = FALSE, flags = 0, nohw = FALSE;
     
     WriteMem(ConfigureHWDefault, '\1', HW_CONFIGURE_MAX); /* set everything to default (-1) */
     
-    for (arglist = orig_argv; *arglist; arglist++) {
-	if (!strcmp(*arglist, "-nohw"))
+    for (arglist = orig_argv; (arg = *arglist); arglist++) {
+        if (!strcmp(arg, "-nohw"))
 	    nohw = TRUE;
-	else if (!strcmp(*arglist, "-x") || !strcmp(*arglist, "-excl"))
+	else if (!strcmp(arg, "-x") || !strcmp(arg, "-excl"))
 	    flags |= TW_ATTACH_HW_EXCLUSIVE;
-	else if (!strcmp(*arglist, "-s") || !strcmp(*arglist, "-share"))
+	else if (!strcmp(arg, "-s") || !strcmp(arg, "-share"))
 	    flags &= ~TW_ATTACH_HW_EXCLUSIVE;
-	else if (!strcmp(*arglist, "-secure"))
+	else if (!strcmp(arg, "-secure"))
 	    flag_secure = TRUE;
-	else if (!strcmp(*arglist, "-envrc"))
+	else if (!strcmp(arg, "-envrc"))
 	    flag_envrc = TRUE;
-	else if (!strncmp(*arglist, "-hw=", 4))
+	else if (!strncmp(arg, "-hw=", 4))
 	    hwcount++;
 	else
-	    printk("twin: ignoring unknown option `%."STR(TW_SMALLBUFF)"s'\n", *arglist);
+	    printk("twin: ignoring unknown option `%."STR(TW_SMALLBUFF)"s'\n", arg);
     }
 
     if (nohw && hwcount > 0) {
@@ -408,9 +420,9 @@ byte InitHW(void) {
 	return ret;
     }
     if (flags & TW_ATTACH_HW_EXCLUSIVE) {
-	if (hwcount == 0 || hwcount > 1) {
-	    printk("twin: `--excl' used with%s `--hw='. make up your mind.\n",
-		   hwcount == 0 ? "out" : " multiple");
+	if (nohw || hwcount > 1) {
+	    printk("twin: `--excl' used with %s. make up your mind.\n",
+		   nohw ? "`--nohw'" : "multiple `--hw'");
 	    return ret;
 	}
     }
@@ -421,16 +433,18 @@ byte InitHW(void) {
      */
     RunTwEnvRC();
 
-    for (arglist = orig_argv; *arglist; arglist++) {
-	if (!strcmp(*arglist, "-nohw")) {
-	    RunNoHW(ret = TRUE);
-	} else if (!strncmp(*arglist, "-hw=", 4)) {
-	    ret |= !!AttachDisplayHW(strlen(*arglist), *arglist, NOSLOT, flags);
-	}
+    if (nohw)
+        RunNoHW(ret = TRUE);
+    else if (hwcount) {
+        for (arglist = orig_argv; (arg = *arglist); arglist++) {
+            if (!strncmp(arg, "-hw=", 4)) {
+                ret |= !!AttachDisplayHW(strlen(arg), arg, NOSLOT, flags);
+            }
+        }
     }
     if (hwcount == 0 && !ret)
 	/* autoprobe */
-	ret |= !!AttachDisplayHW(0, "", NOSLOT, flags);
+	ret = !!AttachDisplayHW(0, "", NOSLOT, flags);
     
     if (!ret)
 	printk("\ntwin:  \033[1mALL  DISPLAY  DRIVERS  FAILED.  QUITTING.\033[0m\n");
