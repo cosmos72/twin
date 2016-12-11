@@ -209,41 +209,57 @@ static uldat X11_MonospaceFontScore(CONST XFontStruct *info, uldat fontsize) {
 /* return name of selected font in allocated (char *) */
 static char * X11_AutodetectFont(uldat fontsize) {
     CONST char * patterns[] = {
-        "-*-*-medium-r-normal-*-*-*-*-*-*-*-iso10646-1",
-        "-*-*-medium-r-normal-*-*-*-*-*-*-*-*-cp437",
-        "-*-*-medium-r-normal-*-*-*-*-*-*-*-*-cp850",
-        "-*-*-medium-r-normal-*-*-*-*-*-*-*-ibm-850",
-        "-*-*-medium-r-normal-*-*-*-*-*-*-*-iso8859-*",
+        "-misc-fixed-medium-r-normal-*-%s?-*-*-*-*-*-iso10646-1",
+        "-*-*-medium-r-normal-*-%s?-*-*-*-*-*-iso10646-1",
+        "-*-*-medium-r-normal-*-%s?-*-*-*-*-*-*-cp437",
+        "-*-*-medium-r-normal-*-%s?-*-*-*-*-*-*-cp850",
+        "-*-*-medium-r-normal-*-%s?-*-*-*-*-*-ibm-850",
+        "-*-*-medium-r-normal-*-%s?-*-*-*-*-*-iso8859-*",
     };
     enum { max_fonts = 1000, n_patterns = sizeof(patterns)/sizeof(patterns[0]) };
     
     XFontStruct *info;
-    int i, j, n_fonts;
+    int i, j, k, n_fonts;
     
+    char * pattern = AllocMem(LenStr(patterns[0]) + 1 + 3 * sizeof(unsigned));
+    char digits[1 + 3 * sizeof(unsigned)];
     char ** names = NULL;
     char * candidate = NULL;
     uldat score, candidate_score = 0;
+    byte look_up = fontsize >= 10 && (fontsize % 10) >= 5;
+    if (!pattern)
+        return NULL;
     
     for (i = 0; i < n_patterns && !candidate; i++) {
-        n_fonts = 0;
-        info = NULL;
-        names = XListFontsWithInfo(xdisplay, patterns[i], max_fonts, &n_fonts, &info);
+        for (j = 0; j < 2; j++) {
+            n_fonts = 0;
+            info = NULL;
+            sprintf(digits, "%u", (unsigned)(fontsize / 10 + (j != 0 ? look_up ? 1 : -1 : 0)));
+            sprintf(pattern, patterns[i], digits + (digits[0] == '0'));
+            names = XListFontsWithInfo(xdisplay, pattern, max_fonts, &n_fonts, &info);
 
-        if (names == NULL)
-            continue;
-        
-        for (j = 0; j < n_fonts; j++) {
-            score = X11_MonospaceFontScore(&info[j], fontsize) - i * 5; /* prefer patterns early in the list */
-            if (score <= candidate_score)
+            if (names == NULL)
                 continue;
-            
-            candidate_score = score;
-            FreeMem(candidate);
-            candidate = CloneStr(names[j]);
-        }
         
-        XFreeFontInfo(names, info, n_fonts);
+            for (k = 0; k < n_fonts; k++)
+            {
+                if (info[k].direction == FontLeftToRight
+                    && info[k].min_byte1 == 0
+                    && info[k].min_char_or_byte2 <= 32)
+                {
+                    score = X11_MonospaceFontScore(&info[k], fontsize) - i * 5; /* prefer patterns early in the list */
+                    if (score <= candidate_score)
+                        continue;
+            
+                    candidate_score = score;
+                    FreeMem(candidate);
+                    candidate = CloneStr(names[k]);
+                }
+            }
+            XFreeFontInfo(names, info, n_fonts);
+        }
     }
+    FreeMem(pattern);
     return candidate;
 }
 
@@ -264,7 +280,7 @@ static byte X11_LoadFont(CONST char * fontname, uldat fontsize) {
         xhfont = (xupfont = xsfont->ascent) + xsfont->descent;
         xheight = xhfont * (unsigned)(HW->Y = GetDisplayHeight());
         
-        printk("      using font `%."STR(TW_SMALLBUFF)"s'\n", fontname);
+        printk("      selected font `%."STR(TW_SMALLBUFF)"s'\n", fontname);
     }
     if (alloc_fontname)
         FreeMem(alloc_fontname);

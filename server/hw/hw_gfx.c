@@ -450,17 +450,17 @@ static byte gfx_ParseOptions(gfx_options * opt, char * arg) {
                 *(opt->fontname0 = s++) = '\0';
             arg = s;
         } else if (!strncmp(arg, "fontsize=", 9)) {
-            int width = atoi(arg += 9), height = 0;
+            int n1 = atoi(arg += 9), n2 = 0;
             byte ch;
-            if (width > 0) {
+            if (n1 > 0) {
                 while ((ch = (byte)*++arg) && ch != ',') {
-                    if (ch == ':' || ch == 'x') {
-                        height = atoi(arg+1);
+                    if (ch == 'x') {
+                        n2 = atoi(arg+1);
                         break;
                     }
                 }
-                opt->fontwidth = width;
-                opt->fontheight = height > 0 ? height : width * 2;
+                opt->fontwidth = n2 > 0 ? n1 : n1 / 2;
+                opt->fontheight = n2 > 0 ? n2 : n1;
             }
             arg = strchr(arg, ',');
         } else if (!strncmp(arg, "charset=", 8)) {
@@ -552,6 +552,7 @@ cleanup:
 static char * gfx_AutodetectFont(uldat fontwidth, uldat fontheight) {
     CONST char * patterns[] = {
         "-misc-fixed-medium-r-normal-*-%u-*-*-*-*-*-iso10646-1",
+        "-*-*-medium-r-normal-*-%u-*-*-*-*-*-iso10646-1",
         "-*-*-medium-r-normal-*-%u-*-*-*-*-*-*-cp437",
         "-*-*-medium-r-normal-*-%u-*-*-*-*-*-*-cp850",
         "-*-*-medium-r-normal-*-%u-*-*-*-*-*-ibm-850",
@@ -575,12 +576,14 @@ static char * gfx_AutodetectFont(uldat fontwidth, uldat fontheight) {
 
         if (names == NULL)
             continue;
-        
+
         for (j = 0; j < n_fonts && !selected; j++) {
             uldat width = info[j].max_bounds.width;
             
             if (width == fontwidth && width == info[j].min_bounds.width
-                && fontheight == info[j].ascent + info[j].descent)
+                && fontheight == info[j].ascent + info[j].descent
+                && info[j].direction == FontLeftToRight
+                && info[j].min_byte1 == 0 && info[j].min_char_or_byte2 <= 32)
             {
                 selected = CloneStr(names[j]);
             }
@@ -610,7 +613,7 @@ static byte gfx_LoadFont(CONST char * fontname, uldat fontwidth, uldat fontheigh
         xhfont = (xupfont = xsfont->ascent) + xsfont->descent;
         xheight = xhfont * (unsigned)(HW->Y = GetDisplayHeight());
         
-        printk("      using font `%."STR(TW_SMALLBUFF)"s'\n", fontname);
+        printk("      selected font `%."STR(TW_SMALLBUFF)"s'\n", fontname);
     }
     if (alloc_fontname)
         FreeMem(alloc_fontname);
