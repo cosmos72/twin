@@ -178,6 +178,101 @@ INLINE void X11_Mogrify(dat x, dat y, uldat len) {
 #undef XDRAW_ANY
 #undef XDRAW
 
+/* if font is monospaced, return its score. otherwise return 0 */
+static uldat X11_MonospaceFontScore(CONST XFontStruct *info, uldat fontsize) {
+    uldat score = 0,
+        width = info->max_bounds.width,
+        min_width = info->min_bounds.width;
+    
+    if (width == min_width) {
+        uldat height = info->ascent + info->descent;
+        uldat fontwidth = fontsize / 2; /* preferred width */
+
+        score = 1;
+        if (height < fontsize)
+            score += height;
+        else if (height < fontsize * 2)
+            score += fontsize * 2 - height;
+            
+        if (width < fontwidth)
+            score += width;
+        else if (width < fontwidth * 2)
+            score += fontwidth * 2 - width;
+            
+        if (height * 3 >= width * 4 && height * 2 <= width * 5)
+            /* height/width ratio is between 4/3 and 5/2 */
+            score += 5;
+    }
+    return score;
+}
+
+/* return name of selected font in allocated (char *) */
+static char * X11_AutodetectFont(uldat fontsize) {
+    CONST char * patterns[] = {
+        "-*-*-medium-r-normal-*-*-*-*-*-*-*-iso10646-1",
+        "-*-*-medium-r-normal-*-*-*-*-*-*-*-*-cp437",
+        "-*-*-medium-r-normal-*-*-*-*-*-*-*-*-cp850",
+        "-*-*-medium-r-normal-*-*-*-*-*-*-*-ibm-850",
+        "-*-*-medium-r-normal-*-*-*-*-*-*-*-iso8859-*",
+    };
+    enum { max_fonts = 1000, n_patterns = sizeof(patterns)/sizeof(patterns[0]) };
+    
+    XFontStruct *info;
+    int i, j, n_fonts;
+    
+    char ** names = NULL;
+    char * candidate = NULL;
+    uldat score, candidate_score = 0;
+    
+    for (i = 0; i < n_patterns && !candidate; i++) {
+        n_fonts = 0;
+        info = NULL;
+        names = XListFontsWithInfo(xdisplay, patterns[i], max_fonts, &n_fonts, &info);
+
+        if (names == NULL)
+            continue;
+        
+        for (j = 0; j < n_fonts; j++) {
+            score = X11_MonospaceFontScore(&info[j], fontsize) - i * 5; /* prefer patterns early in the list */
+            if (score <= candidate_score)
+                continue;
+            
+            candidate_score = score;
+            FreeMem(candidate);
+            candidate = CloneStr(names[j]);
+        }
+        
+        XFreeFontInfo(names, info, n_fonts);
+    }
+    return candidate;
+}
+
+static byte X11_LoadFont(CONST char * fontname, uldat fontsize) {
+    char * alloc_fontname = 0;
+    byte loaded = FALSE;
+
+    if (!fontname)
+        fontname = alloc_fontname = X11_AutodetectFont(fontsize);
+    
+    if ((fontname && (xsfont = XLoadQueryFont(xdisplay, fontname)))
+        || (xsfont = XLoadQueryFont(xdisplay, fontname = "fixed")))
+    {
+        loaded = TRUE;
+
+        xwfont = xsfont->min_bounds.width;
+        xwidth = xwfont * (unsigned)(HW->X = GetDisplayWidth());
+        xhfont = (xupfont = xsfont->ascent) + xsfont->descent;
+        xheight = xhfont * (unsigned)(HW->Y = GetDisplayHeight());
+        
+        printk("      using font `%."STR(TW_SMALLBUFF)"s'\n", fontname);
+    }
+    if (alloc_fontname)
+        FreeMem(alloc_fontname);
+
+    return loaded;
+}
+
+
 static void X11_QuitHW(void) {
 
 #ifdef TW_FEATURE_X11_XIM_XIC
@@ -212,11 +307,12 @@ static byte X11_InitHW(void) {
     XColor xcolor;
     XSizeHints *xhints;
     XEvent event;
-    int i;
     byte *s, *xdisplay_ = NULL, *xdisplay0 = NULL,
-    *fontname = NULL, *fontname0 = NULL,
-    *charset = NULL, *charset0 = NULL,
-    title[X11_TITLE_MAXLEN];
+        *fontname = NULL, *fontname0 = NULL,
+        *charset = NULL, *charset0 = NULL,
+        title[X11_TITLE_MAXLEN];
+    int i;
+    uldat fontsize = 20;
     byte drag = FALSE, noinput = FALSE;
     
     if (!(HW->Private = (struct x11_data *)AllocMem(sizeof(struct x11_data)))) {
@@ -259,6 +355,11 @@ static byte X11_InitHW(void) {
 		s = strchr(arg, ',');
 		if (s) *(fontname0 = s++) = '\0';
 		arg = s;
+            } else if (!strncmp(arg, "fontsize=", 9)) {
+		int size = atoi(arg+9);
+                if (size > 0)
+                    fontsize = size;
+		arg = strchr(arg, ',');
 	    } else if (!strncmp(arg, "charset=", 8)) {
 		charset = arg += 8;
 		s = strchr(arg, ',');
@@ -316,15 +417,8 @@ static byte X11_InitHW(void) {
 	    StructureNotifyMask | SubstructureNotifyMask |
 	    KeyPressMask | ButtonPressMask | ButtonReleaseMask | PointerMotionMask;
 
-	if (!((fontname && (xsfont = XLoadQueryFont(xdisplay, fontname))) ||
-	     (xsfont = XLoadQueryFont(xdisplay, "vga")) ||
-	     (xsfont = XLoadQueryFont(xdisplay, "fixed"))))
+	if (!X11_LoadFont(fontname, fontsize))
 	    break;
-	
-	xwfont = xsfont->min_bounds.width;
-	xwidth = xwfont * (ldat)(HW->X = GetDisplayWidth());
-	xhfont = (xupfont = xsfont->ascent) + xsfont->descent;
-	xheight = xhfont * (ldat)(HW->Y = GetDisplayHeight());
 	
 	if (xhw_view && xhw_startx >= 0 && xhw_starty >= 0 && xhw_endx > xhw_startx && xhw_endy > xhw_starty) {
 	    /* a valid view was specified */

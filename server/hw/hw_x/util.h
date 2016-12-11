@@ -1,48 +1,48 @@
 #define X11_TITLE_MAXLEN 80
 
 static void X11_FillWindowTitle(byte * title, int maxlen) {
-  int left = maxlen;
-  int chunk = 0;
-
-  memset(title, '\0', left);
-  if (left < 6)
-    return;
-  
-  left--; /* reserve space for final '\0' */
-  
-  memcpy(title, "twin ", 5);
-  title += 5; left -= 5;
+    int left = maxlen;
+    int chunk = 0;
     
-  if (gethostname(title, left) == 0)
-  {
-    byte * end = memchr(title, '\0', left);
-    chunk = (end == NULL) ? 0 : (int)(end - title);
+    memset(title, '\0', left);
+    if (left < 6)
+        return;
+    
+    left--; /* reserve space for final '\0' */
+    
+    memcpy(title, "twin ", 5);
+    title += 5; left -= 5;
+    
+    if (gethostname(title, left) == 0)
+    {
+        byte * end = memchr(title, '\0', left);
+        chunk = (end == NULL) ? 0 : (int)(end - title);
+        if (chunk > 0 && chunk <= left)
+        {
+            title[-1] = '@';
+            title += chunk;
+            left -= chunk;
+        }
+    }
+    chunk = strlen(TWDisplay);
     if (chunk > 0 && chunk <= left)
     {
-      title[-1] = '@';
-      title += chunk;
-      left -= chunk;
+        memcpy(title, TWDisplay, chunk);
+        title += chunk;
+        left -= chunk;
     }
-  }
-  chunk = strlen(TWDisplay);
-  if (chunk > 0 && chunk <= left)
-  {
-    memcpy(title, TWDisplay, chunk);
-    title += chunk;
-    left -= chunk;
-  }
-  if (left <= 0)
-    title--;
-  title[0] = '\0';
+    if (left <= 0)
+        title--;
+    title[0] = '\0';
 }
 
 
 static void X11_HideCursor(dat x, dat y) {
     int xbegin = (x - xhw_startx) * xwfont, ybegin = (y - xhw_starty) * xhfont; /* needed by XDRAW_ANY */
-
+    
     hwattr V = (x >= 0 && x < DisplayWidth && y >= 0 && y < DisplayHeight)
-      ? Video[x + y * (ldat)DisplayWidth]
-      : HWATTR( COL(HIGH|WHITE, BLACK), ' ');
+        ? Video[x + y * (ldat)DisplayWidth]
+        : HWATTR( COL(HIGH|WHITE, BLACK), ' ');
     hwcol col = HWCOL(V);
     XChar2b c;
     hwattr extra = HWEXTRA32(V);
@@ -58,11 +58,11 @@ static void X11_ShowCursor(uldat type, dat x, dat y) {
     udat i;
     hwcol v;
     hwattr V = (x >= 0 && x < DisplayWidth && y >= 0 && y < DisplayHeight)
-      ? Video[x + y * (ldat)DisplayWidth]
-      : HWATTR( COL(HIGH|WHITE, BLACK), ' ');
+        ? Video[x + y * (ldat)DisplayWidth]
+        : HWATTR( COL(HIGH|WHITE, BLACK), ' ');
     hwfont f;
     XChar2b c;
-
+    
     ldat xbegin = (x - xhw_startx) * xwfont;
     ldat ybegin = (y - xhw_starty) * xhfont;
     
@@ -103,12 +103,12 @@ static void X11_FlushVideo(void) {
     byte iff;
     
     if (ValidOldVideo) {
-       iff = ChangedVideoFlag
-	 && Video[HW->XY[0] + HW->XY[1] * (ldat)DisplayWidth]
-	 != OldVideo[HW->XY[0] + HW->XY[1] * (ldat)DisplayWidth];
-    /* TRUE if and only if the cursor will be erased by burst */
+        iff = ChangedVideoFlag
+            && Video[HW->XY[0] + HW->XY[1] * (ldat)DisplayWidth]
+            != OldVideo[HW->XY[0] + HW->XY[1] * (ldat)DisplayWidth];
+        /* TRUE if and only if the cursor will be erased by burst */
     }
-       
+    
     /* first burst all changes */
     if (ChangedVideoFlag) {
 	for (i=0; i<(ldat)DisplayHeight*2; i++) {
@@ -122,7 +122,7 @@ static void X11_FlushVideo(void) {
     }
     /* then, we may have to erase the old cursor */
     if (!ValidOldVideo || (!iff && HW->TT != NOCURSOR &&
-	(CursorType != HW->TT || CursorX != HW->XY[0] || CursorY != HW->XY[1]))) {
+                           (CursorType != HW->TT || CursorX != HW->XY[0] || CursorY != HW->XY[1]))) {
 	
 	HW->TT = NOCURSOR;
 	X11_HideCursor(HW->XY[0], HW->XY[1]);
@@ -132,12 +132,12 @@ static void X11_FlushVideo(void) {
     /* (we want a cursor and (the burst erased the cursor or the cursor changed)) */
     if (!ValidOldVideo ||
 	(CursorType != NOCURSOR &&
-	 (iff || CursorType != HW->TT || CursorX != HW->XY[0] || CursorY != HW->XY[1]))) {
+            (iff || CursorType != HW->TT || CursorX != HW->XY[0] || CursorY != HW->XY[1]))) {
 	
 	X11_ShowCursor(HW->TT = CursorType, HW->XY[0] = CursorX, HW->XY[1]= CursorY);
 	setFlush();
     }
-
+    
     HW->FlagsHW &= ~FlHWChangedMouseFlag;
 }
 
@@ -167,7 +167,7 @@ static void X11_Resize(dat x, dat y) {
 	setFlush();
     }
 }
-     
+
 /*
  * import X11 Selection
  */
@@ -192,7 +192,7 @@ static void X11_SelectionExport_X11(void) {
 static void X11_SelectionNotify_X11(uldat ReqPrivate, uldat Magic, CONST byte MIME[MAX_MIMELEN],
 				    uldat Len, CONST byte * Data) {
     XEvent ev;
-	
+    
     if (XReqCount == 0) {
 	printk(THIS ".c: X11_SelectionNotify_X11(): unexpected Twin Selection Notify event!\n");
 	return;
@@ -211,7 +211,7 @@ static void X11_SelectionNotify_X11(uldat ReqPrivate, uldat Magic, CONST byte MI
     ev.xselection.selection = XReq(XReqCount).selection;
     ev.xselection.target    = XReq(XReqCount).target;
     ev.xselection.time      = XReq(XReqCount).time;
-
+    
     if (XReq(XReqCount).target == xTARGETS) {
 	/*
 	 * On some systems, the Atom typedef is 64 bits wide.
@@ -247,7 +247,7 @@ static void X11_SelectionNotify_X11(uldat ReqPrivate, uldat Magic, CONST byte MI
 	XChangeProperty (xdisplay, XReq(XReqCount).requestor, XReq(XReqCount).property,
 			 XA_STRING, 8, PropModeReplace, Data, Len);
 	ev.xselection.property = XReq(XReqCount).property;
-
+        
 	if (Magic == SEL_HWFONTMAGIC && _Data)
 	    FreeMem(_Data);
     }
@@ -264,7 +264,7 @@ static void X11_SelectionNotify_up(Window win, Atom prop) {
     Atom actual_type;
     int actual_fmt;
     byte *data, *buff = NULL;
-
+    
     if (xReqCount == 0) {
 	printk(THIS ".c: X11_SelectionNotify_up(): unexpected X Selection Notify event!\n");
 	return;
@@ -276,9 +276,9 @@ static void X11_SelectionNotify_up(Window win, Atom prop) {
 #endif
     if (prop == None)
 	return;
-
+    
     xReqCount--;
-
+    
     do {
 	if ((XGetWindowProperty(xdisplay, win, prop,
 				nread/4, bytes_after/4, False,
@@ -310,7 +310,7 @@ static void X11_SelectionNotify_up(Window win, Atom prop) {
  */
 static void X11_SelectionRequest_X11(obj Requestor, uldat ReqPrivate) {
     if (!HW->HWSelectionPrivate) {
-
+        
 	if (xReqCount == NEST) {
 	    printk(THIS ".c: X11_SelectionRequest_X11(): too many nested Twin Selection Request events!\n");
 	    return;
@@ -365,7 +365,7 @@ static byte X11_CanDragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat
 static void X11_DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
     dat DstRgt = (Rgt-Left)+DstLeft;
     dat DstDwn = (Dwn-Up)+DstUp;
-
+    
     if (HW->TT != NOCURSOR) {
 	if (HW->XY[0] >= Left && HW->XY[0] <= Rgt && HW->XY[1] >= Up && HW->XY[1] <= Dwn) {
 	    /* must hide the cursor before dragging */
@@ -446,7 +446,7 @@ static Tutf_function X11_UTF_16_to_charset_function(CONST byte *charset) {
 	    if (!i)
 		charset = s + 2; /* skip current char and '-' */
 	}
-	    
+        
 	if (!charset) {
 	    if (xsfont->min_byte1 < xsfont->max_byte1) {
 		/* font is more than just 8-bit. For now, assume it's unicode */
@@ -484,4 +484,3 @@ static hwfont X11_UTF_16_to_UTF_16(hwfont c) {
     return c;
 }
 
-    

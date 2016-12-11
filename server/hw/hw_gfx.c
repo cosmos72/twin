@@ -74,7 +74,7 @@ struct x11_data {
     Pixmap       xtheme, xroot, xbg;
     GC           xgc, xthemegc, xrootgc, xbggc;
     XFontStruct *xsfont;
-#ifdef TW_FEATURE_X11_XIM_XIC /* autodetected by hw_X11_gfx_common0.h */
+#ifdef TW_FEATURE_X11_XIM_XIC /* autodetected by hw_x/features.h */
     XIM		 xim;
     XIC		 xic;
 #endif
@@ -174,8 +174,8 @@ INLINE void X11_DrawString(myXChar *buf, uldat buflen, hwcol col, int xbegin, in
 #define XDRAW_S(buf, buflen, col)    X11_DrawString(buf, buflen, col, xbegin, ybegin)
 #define XDRAW_ROOT(buf, buflen, col) X11_DrawRoot(buf, buflen, col, xbegin, ybegin)
 #define XDRAW_BG(buf, buflen, col)   X11_DrawBg(buf, buflen, col, xbegin, ybegin)
-#define XDRAW_GFX(buf, buflen, col, gfx) (xmonochrome ? X11_DrawGfxMono : X11_DrawGfxColor)(buf, buflen, col, gfx, xbegin, ybegin)
-#define XDRAW_GFX1(font, col, gfx)       (xmonochrome ? X11_DrawGfx1Mono : X11_DrawGfx1Color)(font, col, gfx, xbegin, ybegin)
+#define XDRAW_GFX(buf, buflen, col, gfx) (xmonochrome ? gfx_DrawMono : gfx_DrawColor)(buf, buflen, col, gfx, xbegin, ybegin)
+#define XDRAW_GFX1(font, col, gfx)       (xmonochrome ? gfx_Draw1Mono : gfx_Draw1Color)(font, col, gfx, xbegin, ybegin)
 
 
 # define IS_POS_TITLE(i, j)  ((i) == 4 && (j) >= 4 && (j) <= 6)
@@ -192,7 +192,7 @@ INLINE void X11_DrawString(myXChar *buf, uldat buflen, hwcol col, int xbegin, in
 # define IS_GFX_MENU(gfx)    ((gfx) == GFX_MENU)
 # define IS_GFX_ROOT(gfx)    ((gfx) == GFX_ROOT)
 
-INLINE void X11_DrawGfx1Mono(myXChar *f, hwcol col, hwattr gfx, int xbegin, int ybegin) {
+INLINE void gfx_Draw1Mono(myXChar *f, hwcol col, hwattr gfx, int xbegin, int ybegin) {
     int i = (gfx % pitch) * (ldat)xwfont;
     int j = (gfx / pitch) * (ldat)xhfont;
     unsigned long mask = 0;
@@ -213,9 +213,9 @@ INLINE void X11_DrawGfx1Mono(myXChar *f, hwcol col, hwattr gfx, int xbegin, int 
     }
 }
 
-static void X11_DrawGfxMono(myXChar *buf, udat buflen, hwcol col, hwattr gfx, int xbegin, int ybegin) {
+static void gfx_DrawMono(myXChar *buf, udat buflen, hwcol col, hwattr gfx, int xbegin, int ybegin) {
     for (; buflen; buf++, buflen--, xbegin += xwfont) {
-	X11_DrawGfx1Mono(buf, col, gfx, xbegin, ybegin);
+	gfx_Draw1Mono(buf, col, gfx, xbegin, ybegin);
     }
 }
 
@@ -230,7 +230,7 @@ INLINE void X11_DrawBg(myXChar *f, udat flen, hwcol col, int xbegin, int ybegin)
 }
 
 
-INLINE void X11_DrawGfx1Color(myXChar *f, hwcol col, hwattr gfx, int xbegin, int ybegin) {
+INLINE void gfx_Draw1Color(myXChar *f, hwcol col, hwattr gfx, int xbegin, int ybegin) {
     int i = (gfx % pitch) * (ldat)xwfont;
     int j = (gfx / pitch) * (ldat)xhfont;
 
@@ -241,9 +241,9 @@ INLINE void X11_DrawGfx1Color(myXChar *f, hwcol col, hwattr gfx, int xbegin, int
     }
 }
 
-static void X11_DrawGfxColor(myXChar *buf, udat buflen, hwcol col, hwattr gfx, int xbegin, int ybegin) {
+static void gfx_DrawColor(myXChar *buf, udat buflen, hwcol col, hwattr gfx, int xbegin, int ybegin) {
     for (; buflen; buf++, buflen--, xbegin += xwfont) {
-	X11_DrawGfx1Color(buf, col, gfx, xbegin, ybegin);
+	gfx_Draw1Color(buf, col, gfx, xbegin, ybegin);
     }
 }
 
@@ -322,36 +322,7 @@ INLINE void X11_Mogrify(dat x, dat y, uldat len) {
 #undef XDRAW_ANY
 
 
-static void X11_QuitHW(void) {
-
-#ifdef TW_FEATURE_X11_XIM_XIC
-    if (xic)              XDestroyIC(xic);
-    if (xim)              XCloseIM(xim);
-#endif
-    if (xsfont)           XFreeFont(xdisplay, xsfont);
-    if (xgc      != None) XFreeGC(xdisplay, xgc);
-    if (xthemegc != None) XFreeGC(xdisplay, xthemegc);
-    if (xroot    != None) XFreePixmap(xdisplay, xroot);
-    if (xbg      != None) XFreePixmap(xdisplay, xbg);
-    if (xwindow  != None) {
-	XUnmapWindow(xdisplay, xwindow);
-	XDestroyWindow(xdisplay, xwindow);
-    }
-    XCloseDisplay(xdisplay);
-    xdisplay = NULL;
-    
-    if (HW->keyboard_slot != NOSLOT)
-	UnRegisterRemote(HW->keyboard_slot);
-    HW->keyboard_slot = NOSLOT;
-    HW->KeyboardEvent = (void *)NoOp;
-    
-    HW->QuitHW = NoOp;
-
-    FreeMem(HW->Private);
-    HW->Private = NULL;
-}
-
-static byte X11_LoadPixmap(Pixmap *px, byte *name, int nlen, byte strict) {
+static byte gfx_LoadPixmap(Pixmap *px, byte *name, int nlen, byte strict) {
     byte *path[3] = { NULL, NULL, NULL }, *prefix[3], *infix[3];
     byte i, ret = FALSE;
     XpmAttributes pxattr;
@@ -429,11 +400,12 @@ typedef struct {
     byte *dpy, *dpy0, *fontname, *fontname0;
     byte *charset, *charset0, *file_bg, *file_root, *file_theme;
     uldat file_bg_len, file_root_len, file_theme_len;
+    uldat fontwidth, fontheight;
     byte drag, noinput;
 } gfx_options;
 
 
-static byte GfxParseOptions(gfx_options * opt, char * arg) {
+static byte gfx_ParseOptions(gfx_options * opt, char * arg) {
     byte * s;
     
     /* autodetect */
@@ -450,7 +422,9 @@ static byte GfxParseOptions(gfx_options * opt, char * arg) {
     xReqCount = XReqCount = 0;
     HW->keyboard_slot = NOSLOT;
     
-    if (!arg || strncmp(arg, "-hw=gfx", 7))
+    if (!arg || !*arg)
+        goto cleanup;
+    else if (strncmp(arg, "-hw=gfx", 7))
         return FALSE;
     
     arg += 7; /* skip "-hw=gfx" */
@@ -462,7 +436,7 @@ static byte GfxParseOptions(gfx_options * opt, char * arg) {
         } else
             arg = NULL;
     }
-	
+    
     while (arg && *arg) {
         /* parse options */
         if (*arg == ',') {
@@ -475,6 +449,20 @@ static byte GfxParseOptions(gfx_options * opt, char * arg) {
             if (s)
                 *(opt->fontname0 = s++) = '\0';
             arg = s;
+        } else if (!strncmp(arg, "fontsize=", 9)) {
+            int width = atoi(arg += 9), height = 0;
+            byte ch;
+            if (width > 0) {
+                while ((ch = (byte)*++arg) && ch != ',') {
+                    if (ch == ':' || ch == 'x') {
+                        height = atoi(arg+1);
+                        break;
+                    }
+                }
+                opt->fontwidth = width;
+                opt->fontheight = height > 0 ? height : width * 2;
+            }
+            arg = strchr(arg, ',');
         } else if (!strncmp(arg, "charset=", 8)) {
             opt->charset = arg += 8;
             s = strchr(arg, ',');
@@ -520,7 +508,8 @@ static byte GfxParseOptions(gfx_options * opt, char * arg) {
         } else
             arg = strchr(arg, ',');
     }
-    
+
+cleanup:
     if (xmonochrome == TRUE + TRUE)
 	xmonochrome = opt->file_theme_len >= 4 && !strcmp(opt->file_theme + opt->file_theme_len - 4, "mono");
 
@@ -559,6 +548,78 @@ static byte GfxParseOptions(gfx_options * opt, char * arg) {
     return TRUE;
 }
 
+/* return name of selected font in allocated (char *) */
+static char * gfx_AutodetectFont(uldat fontwidth, uldat fontheight) {
+    CONST char * patterns[] = {
+        "-misc-fixed-medium-r-normal-*-%u-*-*-*-*-*-iso10646-1",
+        "-*-*-medium-r-normal-*-%u-*-*-*-*-*-*-cp437",
+        "-*-*-medium-r-normal-*-%u-*-*-*-*-*-*-cp850",
+        "-*-*-medium-r-normal-*-%u-*-*-*-*-*-ibm-850",
+        "-*-*-medium-r-normal-*-%u-*-*-*-*-*-iso8859-*",
+    };
+    enum { max_fonts = 100, n_patterns = sizeof(patterns)/sizeof(patterns[0]) };
+    
+    XFontStruct *info;
+    char * pattern = AllocMem(LenStr(patterns[0]) + 1 + 3 * sizeof(unsigned));
+    char * selected = NULL;
+    char ** names = NULL;
+    int i, j, n_fonts;
+    if (!pattern)
+        return NULL;
+    
+    for (i = 0; i < n_patterns && !selected; i++) {
+        n_fonts = 0;
+        info = NULL;
+        sprintf(pattern, patterns[i], (unsigned)fontheight);
+        names = XListFontsWithInfo(xdisplay, pattern, max_fonts, &n_fonts, &info);
+
+        if (names == NULL)
+            continue;
+        
+        for (j = 0; j < n_fonts && !selected; j++) {
+            uldat width = info[j].max_bounds.width;
+            
+            if (width == fontwidth && width == info[j].min_bounds.width
+                && fontheight == info[j].ascent + info[j].descent)
+            {
+                selected = CloneStr(names[j]);
+            }
+        }
+        XFreeFontInfo(names, info, n_fonts);
+    }
+    FreeMem(pattern);
+    return selected;
+}
+
+
+static byte gfx_LoadFont(CONST char * fontname, uldat fontwidth, uldat fontheight) {
+    char * alloc_fontname = 0;
+    byte loaded = FALSE;
+
+    if (!fontname)
+        fontname = alloc_fontname = gfx_AutodetectFont(fontwidth, fontheight);
+    
+    if ((fontname && (xsfont = XLoadQueryFont(xdisplay, fontname)))
+        || (xsfont = XLoadQueryFont(xdisplay, fontname = "vga"))
+        || (xsfont = XLoadQueryFont(xdisplay, fontname = "fixed")))
+    {
+        loaded = TRUE;
+
+        xwfont = xsfont->min_bounds.width;
+        xwidth = xwfont * (unsigned)(HW->X = GetDisplayWidth());
+        xhfont = (xupfont = xsfont->ascent) + xsfont->descent;
+        xheight = xhfont * (unsigned)(HW->Y = GetDisplayHeight());
+        
+        printk("      using font `%."STR(TW_SMALLBUFF)"s'\n", fontname);
+    }
+    if (alloc_fontname)
+        FreeMem(alloc_fontname);
+
+    return loaded;
+}
+
+static void gfx_QuitHW(void);
+
 static byte gfx_InitHW(void) {
     gfx_options opt;
     byte title[X11_TITLE_MAXLEN];
@@ -580,10 +641,12 @@ static byte gfx_InitHW(void) {
     xdisplay = (Display *)0;
     
     WriteMem(&opt, '\0', sizeof(gfx_options));
+    opt.fontwidth = 9;
+    opt.fontheight = 19;
     opt.file_theme = "default";
     opt.file_theme_len = strlen(opt.file_theme);
     
-    if (!GfxParseOptions(&opt, HW->Name))
+    if (!gfx_ParseOptions(&opt, HW->Name))
         goto fail;
     
     if ((xdisplay = XOpenDisplay(opt.dpy))) do {
@@ -614,14 +677,9 @@ static byte gfx_InitHW(void) {
 	    StructureNotifyMask | SubstructureNotifyMask |
 	    KeyPressMask | ButtonPressMask | ButtonReleaseMask | PointerMotionMask;
 
-        if (((opt.fontname && (xsfont = XLoadQueryFont(xdisplay, opt.fontname))) ||
-	     (xsfont = XLoadQueryFont(xdisplay, "vga")) ||
-	     (xsfont = XLoadQueryFont(xdisplay, "fixed"))) &&
-	    (xwfont = xsfont->min_bounds.width,
-	     xwidth = xwfont * (unsigned)(HW->X = GetDisplayWidth()),
-	     xhfont = (xupfont = xsfont->ascent) + xsfont->descent,
-	     xheight = xhfont * (unsigned)(HW->Y = GetDisplayHeight()),
-	     xwindow = XCreateWindow(xdisplay, DefaultRootWindow(xdisplay), 0, 0,
+        if (gfx_LoadFont(opt.fontname, opt.fontwidth, opt.fontheight) &&
+            
+            (xwindow = XCreateWindow(xdisplay, DefaultRootWindow(xdisplay), 0, 0,
 				     xwidth, xheight, 0, xdepth, InputOutput,
 				     DefaultVisual(xdisplay, xscreen),
 				     CWBackPixel | CWEventMask, &xattr)) &&
@@ -632,9 +690,9 @@ static byte gfx_InitHW(void) {
 	     xgc = XCreateGC(xdisplay, xwindow, GCFont|GCForeground|
 			     GCBackground|GCGraphicsExposures, &xsgc)) &&
 	    
-	    X11_LoadPixmap(&xtheme, opt.file_theme, opt.file_theme_len, TRUE) &&
-	    (!opt.file_root || X11_LoadPixmap(&xroot, opt.file_root, opt.file_root_len, FALSE)) &&
-	    (!opt.file_bg || X11_LoadPixmap(&xbg, opt.file_bg, opt.file_bg_len, FALSE)) &&
+	    gfx_LoadPixmap(&xtheme, opt.file_theme, opt.file_theme_len, TRUE) &&
+	    (!opt.file_root || gfx_LoadPixmap(&xroot, opt.file_root, opt.file_root_len, FALSE)) &&
+	    (!opt.file_bg || gfx_LoadPixmap(&xbg, opt.file_bg, opt.file_bg_len, FALSE)) &&
 	    
 	    (xmonochrome ?
 	     (xthemesgc.foreground = xthemesgc.background = xcol[0],
@@ -761,7 +819,7 @@ static byte gfx_InitHW(void) {
 	    HW->SetPalette = (void *)NoOp;
 	    HW->ResetPalette = NoOp;
 	    
-	    HW->QuitHW = X11_QuitHW;
+	    HW->QuitHW = gfx_QuitHW;
 	    HW->QuitKeyboard  = NoOp;
 	    HW->QuitMouse = NoOp;
 	    HW->QuitVideo = NoOp;
@@ -805,12 +863,41 @@ fail:
     if (opt.charset0)   *opt.charset0   = ',';
 	
     if (xdisplay)
-	X11_QuitHW();
+	gfx_QuitHW();
 
     FreeMem(HW->Private);
     HW->Private = NULL;
     
     return FALSE;
+}
+
+static void gfx_QuitHW(void) {
+
+#ifdef TW_FEATURE_X11_XIM_XIC
+    if (xic)              XDestroyIC(xic);
+    if (xim)              XCloseIM(xim);
+#endif
+    if (xsfont)           XFreeFont(xdisplay, xsfont);
+    if (xgc      != None) XFreeGC(xdisplay, xgc);
+    if (xthemegc != None) XFreeGC(xdisplay, xthemegc);
+    if (xroot    != None) XFreePixmap(xdisplay, xroot);
+    if (xbg      != None) XFreePixmap(xdisplay, xbg);
+    if (xwindow  != None) {
+	XUnmapWindow(xdisplay, xwindow);
+	XDestroyWindow(xdisplay, xwindow);
+    }
+    XCloseDisplay(xdisplay);
+    xdisplay = NULL;
+    
+    if (HW->keyboard_slot != NOSLOT)
+	UnRegisterRemote(HW->keyboard_slot);
+    HW->keyboard_slot = NOSLOT;
+    HW->KeyboardEvent = (void *)NoOp;
+    
+    HW->QuitHW = NoOp;
+
+    FreeMem(HW->Private);
+    HW->Private = NULL;
 }
 
 byte InitModule(module Module) {
