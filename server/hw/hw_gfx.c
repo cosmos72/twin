@@ -61,7 +61,7 @@
 
 
 struct x11_data {
-    unsigned int xwidth, xheight;
+    unsigned xwidth, xheight;
     int xwfont, xhfont, xupfont;
 
     /* we support showing only a portion of the whole twin display */
@@ -425,32 +425,16 @@ static void GfxUse(byte *arg, byte *how) {
 	*how = GFX_USE_BG;
 }
 
-static byte gfx_InitHW(void) {
-    char *arg = HW->Name;
-    int xscreen;
-    unsigned int xdepth;
-    int i;
-    byte *s, *dpy = NULL, *dpy0 = NULL,
-	*fontname = NULL, *fontname0 = NULL,
-	*charset = NULL, *charset0 = NULL,
-	*file_bg = NULL, *file_root = NULL,
-	*file_theme = "default",
-	title[X11_TITLE_MAXLEN];
-    uldat file_bg_len, file_root_len, file_theme_len = strlen(file_theme);
-    
-    byte drag = FALSE, noinput = FALSE;
-    
-    XSetWindowAttributes xattr;
-    XColor xcolor;
-    XSizeHints *xhints;
-    XEvent event;
-    XGCValues xs_gc;
-    
-    if (!(HW->Private = (struct x11_data *)AllocMem(sizeof(struct x11_data)))) {
-	printk("      gfx_InitHW(): Out of memory!\n");
-	return FALSE;
-    }
-    WriteMem(HW->Private, 0, sizeof(struct x11_data));
+typedef struct {
+    byte *dpy, *dpy0, *fontname, *fontname0;
+    byte *charset, *charset0, *file_bg, *file_root, *file_theme;
+    uldat file_bg_len, file_root_len, file_theme_len;
+    byte drag, noinput;
+} gfx_options;
+
+
+static byte GfxParseOptions(gfx_options * opt, char * arg) {
+    byte * s;
     
     /* autodetect */
     xmonochrome = TRUE + TRUE;
@@ -461,99 +445,93 @@ static byte gfx_InitHW(void) {
     /* default: show the whole screen */
     xhw_view = xhw_startx = xhw_starty = xhw_endx = xhw_endy = 0;
 
-    /* not yet opened */
-    xdisplay = (Display *)0;
-    
-    if (arg && HW->NameLen > 4) {
-	arg += 4; /* skip "-hw=" */
-	
-	if (strncmp(arg, "gfx", 3))
-	    goto fail; /* user said "use <arg> as display, not gfx" */
-	
-	/* skip "gfx" */
-	arg += 3;
-	
-	if (*arg == '@') {
-	    if ((s = strchr(dpy = ++arg, ','))) {
-		*(dpy0 = s) = '\0';
-		arg = s + 1;
-	    } else
-		arg = NULL;
-	}
-	
-	while (arg && *arg) {
-	    /* parse options */
-	    if (*arg == ',') {
-		arg++;
-		continue;
-	    }
-	    if (!strncmp(arg, "font=", 5)) {
-		fontname = arg += 5;
-		s = strchr(arg, ',');
-		if (s) *(fontname0 = s++) = '\0';
-		arg = s;
-	    } else if (!strncmp(arg, "charset=", 8)) {
-		charset = arg += 8;
-		s = strchr(arg, ',');
-		if (s) *(charset0 = s++) = '\0';
-		arg = s;
-	    } else if (!strncmp(arg, "view=", 5)) {
-		xhw_view = 1;
-		xhw_endx = strtol(arg+5, &arg, 0);
-		xhw_endy = strtol(arg+1, &arg, 0);
-		xhw_startx = strtol(arg+1, &arg, 0);
-		xhw_starty = strtol(arg+1, &arg, 0);
-		xhw_endx += xhw_startx;
-		xhw_endy += xhw_starty;
-	    } else if (!strncmp(arg, "drag", 4)) {
-		arg += 4;
-		drag = TRUE;
-	    } else if (!strncmp(arg, "noinput", 7)) {
-		arg += 7;
-		noinput = TRUE;
-	    } else if (!strncmp(arg, "color", 5)) {
-		arg += 5;
-		xmonochrome = FALSE;
-	    } else if (!strncmp(arg, "mono", 4)) {
-		arg += 4;
-		xmonochrome = TRUE;
-	    } else if (!strncmp(arg, "bg=", 3)) {
-		arg = GfxFile(arg + 3, &file_bg, &file_bg_len);
-		xbg_flag = GFX_USE_BG;
-	    } else if (!strncmp(arg, "root=", 5)) {
-		arg = GfxFile(arg + 5, &file_root, &file_root_len);
-		xroot_flag = GFX_USE_ROOT;
-	    } else if (!strncmp(arg, "theme=", 6)) {
-		arg = GfxFile(arg + 6, &file_theme, &file_theme_len);
-	    } else if (!strncmp(arg, "bg-as-", 6)) {
-		arg += 6;
-		GfxUse(arg, &xbg_flag);
-		arg = strchr(arg, ',');
-	    } else if (!strncmp(arg, "root-as-", 8)) {
-		arg += 8;
-		GfxUse(arg, &xroot_flag);
-		arg = strchr(arg, ',');
-	    } else
-		arg = strchr(arg, ',');
-	}
-    }
-    
-    xsfont = NULL; xhints = NULL;
+    xsfont = NULL;
     xwindow = None; xgc = None;
     xReqCount = XReqCount = 0;
     HW->keyboard_slot = NOSLOT;
     
+    if (!arg || strncmp(arg, "-hw=gfx", 7))
+        return FALSE;
+    
+    arg += 7; /* skip "-hw=gfx" */
+	
+    if (*arg == '@') {
+        if ((s = strchr(opt->dpy = ++arg, ','))) {
+            *(opt->dpy0 = s) = '\0';
+            arg = s + 1;
+        } else
+            arg = NULL;
+    }
+	
+    while (arg && *arg) {
+        /* parse options */
+        if (*arg == ',') {
+            arg++;
+            continue;
+        }
+        if (!strncmp(arg, "font=", 5)) {
+            opt->fontname = arg += 5;
+            s = strchr(arg, ',');
+            if (s)
+                *(opt->fontname0 = s++) = '\0';
+            arg = s;
+        } else if (!strncmp(arg, "charset=", 8)) {
+            opt->charset = arg += 8;
+            s = strchr(arg, ',');
+            if (s)
+                *(opt->charset0 = s++) = '\0';
+            arg = s;
+        } else if (!strncmp(arg, "view=", 5)) {
+            xhw_view = 1;
+            xhw_endx = strtol(arg+5, &arg, 0);
+            xhw_endy = strtol(arg+1, &arg, 0);
+            xhw_startx = strtol(arg+1, &arg, 0);
+            xhw_starty = strtol(arg+1, &arg, 0);
+            xhw_endx += xhw_startx;
+            xhw_endy += xhw_starty;
+        } else if (!strncmp(arg, "drag", 4)) {
+            arg += 4;
+            opt->drag = TRUE;
+        } else if (!strncmp(arg, "noinput", 7)) {
+            arg += 7;
+            opt->noinput = TRUE;
+        } else if (!strncmp(arg, "color", 5)) {
+            arg += 5;
+            xmonochrome = FALSE;
+        } else if (!strncmp(arg, "mono", 4)) {
+            arg += 4;
+            xmonochrome = TRUE;
+        } else if (!strncmp(arg, "bg=", 3)) {
+            arg = GfxFile(arg + 3, &opt->file_bg, &opt->file_bg_len);
+            xbg_flag = GFX_USE_BG;
+        } else if (!strncmp(arg, "root=", 5)) {
+            arg = GfxFile(arg + 5, &opt->file_root, &opt->file_root_len);
+            xroot_flag = GFX_USE_ROOT;
+        } else if (!strncmp(arg, "theme=", 6)) {
+            arg = GfxFile(arg + 6, &opt->file_theme, &opt->file_theme_len);
+        } else if (!strncmp(arg, "bg-as-", 6)) {
+            arg += 6;
+            GfxUse(arg, &xbg_flag);
+            arg = strchr(arg, ',');
+        } else if (!strncmp(arg, "root-as-", 8)) {
+            arg += 8;
+            GfxUse(arg, &xroot_flag);
+            arg = strchr(arg, ',');
+        } else
+            arg = strchr(arg, ',');
+    }
+    
     if (xmonochrome == TRUE + TRUE)
-	xmonochrome = file_theme_len >= 4 && !strcmp(file_theme + file_theme_len - 4, "mono");
+	xmonochrome = opt->file_theme_len >= 4 && !strcmp(opt->file_theme + opt->file_theme_len - 4, "mono");
 
     /* sanity checks: must specify pixmap name to use it */
-    if (!file_root) {
+    if (!opt->file_root) {
 	if (xroot_flag == GFX_USE_ROOT)
 	    xroot_flag = GFX_USE_THEME;
 	if (xbg_flag == GFX_USE_ROOT)
 	    xbg_flag = GFX_USE_THEME;
     }
-    if (!file_bg) {
+    if (!opt->file_bg) {
 	if (xroot_flag == GFX_USE_BG)
 	    xroot_flag = GFX_USE_THEME;
 	if (xbg_flag == GFX_USE_BG)
@@ -570,16 +548,45 @@ static byte gfx_InitHW(void) {
 
     /* sanity checks: clear pixmap name if not used */
     if (xroot_flag != GFX_USE_ROOT && xbg_flag != GFX_USE_ROOT)
-	file_root = NULL;
+	opt->file_root = NULL;
     if (xroot_flag != GFX_USE_BG && xbg_flag != GFX_USE_BG)
-	file_bg = NULL;
-
+	opt->file_bg = NULL;
     
     /* XCopyArea() not supported if using background or root */
     if (xroot_flag > GFX_USE_THEME || xbg_flag > GFX_USE_THEME)
-	drag = FALSE;
+	opt->drag = FALSE;
+
+    return TRUE;
+}
+
+static byte gfx_InitHW(void) {
+    gfx_options opt;
+    byte title[X11_TITLE_MAXLEN];
+    int i, xscreen;
+    unsigned int xdepth;
     
-    if ((xdisplay = XOpenDisplay(dpy))) do {
+    XSetWindowAttributes xattr;
+    XColor xcolor;
+    XSizeHints *xhints = NULL;
+    XEvent event;
+    XGCValues xs_gc;
+    
+    if (!(HW->Private = (struct x11_data *)AllocMem0(sizeof(struct x11_data), 1))) {
+	printk("      gfx_InitHW(): Out of memory!\n");
+	return FALSE;
+    }
+
+    /* not yet opened */
+    xdisplay = (Display *)0;
+    
+    WriteMem(&opt, '\0', sizeof(gfx_options));
+    opt.file_theme = "default";
+    opt.file_theme_len = strlen(opt.file_theme);
+    
+    if (!GfxParseOptions(&opt, HW->Name))
+        goto fail;
+    
+    if ((xdisplay = XOpenDisplay(opt.dpy))) do {
 	
 	(void)XSetIOErrorHandler(X11_Die);
 
@@ -607,13 +614,13 @@ static byte gfx_InitHW(void) {
 	    StructureNotifyMask | SubstructureNotifyMask |
 	    KeyPressMask | ButtonPressMask | ButtonReleaseMask | PointerMotionMask;
 
-        if (((fontname && (xsfont = XLoadQueryFont(xdisplay, fontname))) ||
+        if (((opt.fontname && (xsfont = XLoadQueryFont(xdisplay, opt.fontname))) ||
 	     (xsfont = XLoadQueryFont(xdisplay, "vga")) ||
 	     (xsfont = XLoadQueryFont(xdisplay, "fixed"))) &&
 	    (xwfont = xsfont->min_bounds.width,
-	     xwidth = xwfont * (ldat)(HW->X = GetDisplayWidth()),
+	     xwidth = xwfont * (unsigned)(HW->X = GetDisplayWidth()),
 	     xhfont = (xupfont = xsfont->ascent) + xsfont->descent,
-	     xheight = xhfont * (ldat)(HW->Y = GetDisplayHeight()),
+	     xheight = xhfont * (unsigned)(HW->Y = GetDisplayHeight()),
 	     xwindow = XCreateWindow(xdisplay, DefaultRootWindow(xdisplay), 0, 0,
 				     xwidth, xheight, 0, xdepth, InputOutput,
 				     DefaultVisual(xdisplay, xscreen),
@@ -625,9 +632,9 @@ static byte gfx_InitHW(void) {
 	     xgc = XCreateGC(xdisplay, xwindow, GCFont|GCForeground|
 			     GCBackground|GCGraphicsExposures, &xsgc)) &&
 	    
-	    X11_LoadPixmap(&xtheme, file_theme, file_theme_len, TRUE) &&
-	    (!file_root || X11_LoadPixmap(&xroot, file_root, file_root_len, FALSE)) &&
-	    (!file_bg || X11_LoadPixmap(&xbg, file_bg, file_bg_len, FALSE)) &&
+	    X11_LoadPixmap(&xtheme, opt.file_theme, opt.file_theme_len, TRUE) &&
+	    (!opt.file_root || X11_LoadPixmap(&xroot, opt.file_root, opt.file_root_len, FALSE)) &&
+	    (!opt.file_bg || X11_LoadPixmap(&xbg, opt.file_bg, opt.file_bg_len, FALSE)) &&
 	    
 	    (xmonochrome ?
 	     (xthemesgc.foreground = xthemesgc.background = xcol[0],
@@ -638,7 +645,7 @@ static byte gfx_InitHW(void) {
 				      GCForeground|GCBackground|GCGraphicsExposures, &xthemesgc)))
 	     : TRUE) &&
 	    
-	    (file_root ?
+	    (opt.file_root ?
 	     (xs_gc.foreground = xs_gc.background = xcol[0],
 	      xs_gc.graphics_exposures = False,
 	      xs_gc.tile = xroot,
@@ -648,7 +655,7 @@ static byte gfx_InitHW(void) {
 				     GCForeground|GCBackground|GCGraphicsExposures, &xs_gc)))
 	     : TRUE) &&
 	    
-	    (file_bg ?
+	    (opt.file_bg ?
 	     (xs_gc.foreground = xs_gc.background = xcol[0],
 	      xs_gc.graphics_exposures = False,
 	      xs_gc.tile = xbg,
@@ -680,7 +687,7 @@ static byte gfx_InitHW(void) {
 	    XStoreName(xdisplay, xwindow, title);
 	    
 	    
-	    if (!(xUTF_16_to_charset = X11_UTF_16_to_charset_function(charset)))
+	    if (!(xUTF_16_to_charset = X11_UTF_16_to_charset_function(opt.charset)))
 		xUTF_16_to_charset = X11_UTF_16_to_UTF_16;
 	    /*
 	     * ask ICCCM-compliant window manager to tell us when close window
@@ -743,7 +750,7 @@ static byte gfx_InitHW(void) {
 	    HW->HWSelectionNotify  = X11_SelectionNotify_X11;
 	    HW->HWSelectionPrivate = 0;
 	    
-	    if (drag) {
+	    if (opt.drag) {
 		HW->CanDragArea = X11_CanDragArea;
 		HW->DragArea    = X11_DragArea;
 	    } else
@@ -764,7 +771,7 @@ static byte gfx_InitHW(void) {
 	    
 	    HW->FlagsHW |= FlHWNeedOldVideo;
 	    HW->FlagsHW |= FlHWExpensiveFlushVideo;
-	    if (noinput)
+	    if (opt.noinput)
 		HW->FlagsHW |= FlHWNoInput;
 	    
 	    HW->NeedHW = 0;
@@ -779,23 +786,23 @@ static byte gfx_InitHW(void) {
 	    HW->RedrawVideo = FALSE;
 	    NeedRedrawVideo(0, 0, HW->X - 1, HW->Y - 1);
 	    
-	    if (dpy0) *dpy0 = ',';
-	    if (fontname0) *fontname0 = ',';
-	    if (charset0) *charset0 = ',';
+	    if (opt.dpy0)      *opt.dpy0      = ',';
+	    if (opt.fontname0) *opt.fontname0 = ',';
+	    if (opt.charset0)  *opt.charset0  = ',';
 	    
 	    return TRUE;
 	}
     } while (0); else {
-	if (dpy || (dpy = getenv("DISPLAY")))
+	if (opt.dpy || (opt.dpy = getenv("DISPLAY")))
 	    printk("      gfx_InitHW() failed to open display %."STR(TW_SMALLBUFF)"s\n", HW->Name);
 	else
 	    printk("      gfx_InitHW() failed: DISPLAY is not set\n");
     }
 
 fail:
-    if (dpy0)       *dpy0       = ',';
-    if (fontname0)  *fontname0  = ',';
-    if (charset0)   *charset0   = ',';
+    if (opt.dpy0)       *opt.dpy0       = ',';
+    if (opt.fontname0)  *opt.fontname0  = ',';
+    if (opt.charset0)   *opt.charset0   = ',';
 	
     if (xdisplay)
 	X11_QuitHW();
