@@ -49,7 +49,7 @@
 
 
 #ifdef CONF_HW_TTY_TERMCAP
-# include "hw_tty_common/driver_termcap1.h"
+# include "hw_tty_common/driver_termcap_decls.h"
 #endif
 
 struct tty_data {

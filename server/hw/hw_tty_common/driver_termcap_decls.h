@@ -14,7 +14,7 @@
 #  include <term.h>
 
 #  ifdef __sun__
-   /*  Some one forget a few prototypes!  ugh  (Solaris7, bwitt) */
+   /*  Someone forgot a few prototypes!  ugh  (Solaris7, bwitt) */
    extern char * tgoto(), * tgetstr();
 #  endif
 
