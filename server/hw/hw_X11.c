@@ -31,13 +31,9 @@
 #include <X11/Xatom.h>
 #include <X11/Xmd.h>                /* CARD32 */
 
+#define THIS "hw_X11"
 
-#define HW_THIS "hw_X11"
-#define THIS	"X11"
-#define INIT_THIS X11_InitHW
-
-
-#include "hw_X11_gfx_common0.h"
+#include "hw_x/features.h"
 
 
 /* Display variables */
@@ -58,7 +54,7 @@ struct x11_data {
     GC           xgc;
     XGCValues    xsgc;
     XFontStruct *xsfont;
-#ifdef TW_FOUND_X11_XIM_XIC /* autodetected by hw_X11_gfx_common0.h */
+#ifdef TW_FEATURE_X11_XIM_XIC /* autodetected by hw_X11_gfx_common0.h */
     XIM		 xim;
     XIC		 xic;
 #endif
@@ -108,7 +104,7 @@ struct x11_data {
 #define xWM_DELETE_WINDOW	(xdata->xWM_DELETE_WINDOW)
 #define xTARGETS	(xdata->xTARGETS)
 
-#include "hw_X11_gfx_common1.h"
+#include "hw_x/keyboard.h"
 
 
 /* this can stay static, X11_FlushHW() is not reentrant */
@@ -177,14 +173,14 @@ INLINE void X11_Mogrify(dat x, dat y, uldat len) {
     }
 }
 
-#include "hw_X11_gfx_common2.h"
+#include "hw_x/util.h"
 
 #undef XDRAW_ANY
 #undef XDRAW
 
 static void X11_QuitHW(void) {
 
-#ifdef TW_FOUND_X11_XIM_XIC
+#ifdef TW_FEATURE_X11_XIM_XIC
     if (xic)    XDestroyIC(xic);
     if (xim)    XCloseIM(xim);
 #endif
@@ -357,7 +353,7 @@ static byte X11_InitHW(void) {
             static XComposeStatus static_xcompose;
             xcompose = static_xcompose;
 
-#ifdef TW_FOUND_X11_XIM_XIC
+#ifdef TW_FEATURE_X11_XIM_XIC
             xim = XOpenIM(xdisplay, NULL, NULL, NULL);
             if (xim != NULL) {
                 xic = XCreateIC(xim, XNInputStyle, XIMStatusNothing|XIMPreeditNothing,

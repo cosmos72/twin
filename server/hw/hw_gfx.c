@@ -20,11 +20,11 @@
 #include "hw_dirty.h"
 #include "common.h"
 
-#ifdef PKG_DATADIR
-# define GFXDIR PKG_DATADIR "/themes/hw_gfx"
-#else
-# define GFXDIR "themes/hw_gfx"
+#ifndef PKG_DATADIR
+# define PKG_DATADIR "/usr/local/share/twin"
 #endif
+
+#define GFXDIR PKG_DATADIR "/themes/hw_gfx"
 
 #include <Tw/Twkeys.h>
 
@@ -39,14 +39,14 @@
 
 #include <X11/xpm.h>
 
-#include <unistd.h>
+#ifdef TW_HAVE_UNISTD_H
+# include <unistd.h>
+#endif
 
-#define HW_THIS "hw_gfx"
-#define THIS 	"gfx"
-#define INIT_THIS gfx_InitHW
+#define THIS "hw_gfx"
 
 
-#include "hw_X11_gfx_common0.h"
+#include "hw_x/features.h"
 
 
 /* Display variables */
@@ -74,7 +74,7 @@ struct x11_data {
     Pixmap       xtheme, xroot, xbg;
     GC           xgc, xthemegc, xrootgc, xbggc;
     XFontStruct *xsfont;
-#ifdef TW_FOUND_X11_XIM_XIC /* autodetected by hw_X11_gfx_common0.h */
+#ifdef TW_FEATURE_X11_XIM_XIC /* autodetected by hw_X11_gfx_common0.h */
     XIM		 xim;
     XIC		 xic;
 #endif
@@ -135,7 +135,7 @@ struct x11_data {
 #define xsgc		(xdata->xsgc)
 #define xthemesgc	(xdata->xthemesgc)
 
-#include "hw_X11_gfx_common1.h"
+#include "hw_x/keyboard.h"
 
 
 /* this can stay static, X11_FlushHW() is not reentrant */
@@ -317,14 +317,14 @@ INLINE void X11_Mogrify(dat x, dat y, uldat len) {
     }
 }
 
-#include "hw_X11_gfx_common2.h"
+#include "hw_x/util.h"
 
 #undef XDRAW_ANY
 
 
 static void X11_QuitHW(void) {
 
-#ifdef TW_FOUND_X11_XIM_XIC
+#ifdef TW_FEATURE_X11_XIM_XIC
     if (xic)              XDestroyIC(xic);
     if (xim)              XCloseIM(xim);
 #endif
@@ -664,7 +664,7 @@ static byte gfx_InitHW(void) {
             static XComposeStatus static_xcompose;
             xcompose = static_xcompose;
 
-#ifdef TW_FOUND_X11_XIM_XIC
+#ifdef TW_FEATURE_X11_XIM_XIC
             xim = XOpenIM(xdisplay, NULL, NULL, NULL);
             if (xim != NULL) {
                 xic = XCreateIC(xim, XNInputStyle, XIMStatusNothing|XIMPreeditNothing,
