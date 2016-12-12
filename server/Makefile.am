@@ -29,8 +29,8 @@ libterm_la_SOURCES    = pty.c tterm.c tty.c
 libsocket_la_SOURCES  = md5.c socket.c
 libwm_la_SOURCES      = rcopt.c rcrun.c shm.c wm.c
 
-twdisplay_LDFLAGS     = -export-dynamic
-twin_server_LDFLAGS   = -export-dynamic
+twdisplay_LDFLAGS     = -export-dynamic $(LDFLAGS_BIN_EXPORT_DYNAMIC)
+twin_server_LDFLAGS   = -export-dynamic $(LDFLAGS_BIN_EXPORT_DYNAMIC)
 
 librcparse_la_LDFLAGS = -export-dynamic -export-symbols-regex '^(Init|Quit)Module$$' -release $(PACKAGE_VERSION)
 libsocket_la_LDFLAGS  = -export-dynamic -export-symbols-regex '^(Init|Quit)Module$$' -release $(PACKAGE_VERSION)

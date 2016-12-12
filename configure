@@ -640,6 +640,7 @@ ltdl_LIBOBJS
 am__EXEEXT_FALSE
 am__EXEEXT_TRUE
 LTLIBOBJS
+LDFLAGS_BIN_EXPORT_DYNAMIC
 LIBWM_la_FALSE
 LIBWM_la_TRUE
 LIBTERM_la_FALSE
@@ -15770,25 +15771,27 @@ $as_echo "$ac_cv_prog_gcc_i386_asm" >&6; }
 
 
 
+################################################################################
+
 # CC flags '-g -O2' are already tested by AC_PROG_CC
 # CC flags '-p -pg' are incompatible with -fomit-frame-pointer
 initial_CFLAGS="$CFLAGS"
-for try_cflag in -fomit-frame-pointer -fno-strict-aliasing -pipe -Wall -Wshadow \
+for try_flag in -fomit-frame-pointer -fno-strict-aliasing -pipe -Wall -Wshadow \
                  -Wno-uninitialized -Wno-pointer-sign -Wno-unused -Wundef -Wstrict-prototypes \
                  -Wcast-qual -Wcast-align -Wpointer-arith -Wbad-function-cast -Waggregate-return
 do
   save_CFLAGS="$CFLAGS"
-  CFLAGS="$CFLAGS $try_cflag"
-  try_cflag_id="`echo \"$try_cflag\" | tr - _`"
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for compiler flag $try_cflag" >&5
-$as_echo_n "checking for compiler flag $try_cflag... " >&6; }
-if eval \${ac_cv_cflag$try_cflag_id+:} false; then :
+  CFLAGS="$CFLAGS $try_flag"
+  try_flag_id="`echo \"$try_flag\" | tr - _`"
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for compiler flag $try_flag" >&5
+$as_echo_n "checking for compiler flag $try_flag... " >&6; }
+if eval \${ac_cv_cflag$try_flag_id+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
-    static inline int ret0(void) {
+    int ret0(void) {
       return 0;
     }
 
@@ -15804,23 +15807,80 @@ main ()
 _ACEOF
 if ac_fn_c_try_compile "$LINENO"; then :
 
-    eval "ac_cv_cflag$try_cflag_id=yes"
+    eval "ac_cv_cflag$try_flag_id=yes"
 
 else
 
-    eval "ac_cv_cflag$try_cflag_id=no"
+    eval "ac_cv_cflag$try_flag_id=no"
     CFLAGS="$save_CFLAGS"
 
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 fi
-eval ac_res=\$ac_cv_cflag$try_cflag_id
+eval ac_res=\$ac_cv_cflag$try_flag_id
 	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
 $as_echo "$ac_res" >&6; }
 done
 custom_CFLAGS="$CFLAGS"
 CFLAGS="$initial_CFLAGS"
 
+################################################################################
+
+# on Mac OS X El Capitan, libtool ignores -export-dynamic
+# so pass the linker flag -Wl,-export_dynamic if supported
+#
+if test "`uname 2>/dev/null`" = Darwin; then
+  initial_LDFLAGS="$LDFLAGS"
+  LDFLAGS=
+  for try_flag in -Wl,-export_dynamic
+  do
+    save_LDFLAGS="$LDFLAGS"
+    LDFLAGS="$LDFLAGS $try_flag"
+    try_flag_id="`echo \"$try_flag\" | tr ,- __`"
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for compiler flag $try_flag" >&5
+$as_echo_n "checking for compiler flag $try_flag... " >&6; }
+if eval \${ac_cv_ldflag$try_flag_id+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+      int ret0(void) {
+        return 0;
+      }
+
+int
+main ()
+{
+
+      int a = ret0();
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+
+      eval "ac_cv_ldflag$try_flag_id=yes"
+
+else
+
+      eval "ac_cv_ldflag$try_flag_id=no"
+      LDFLAGS="$save_LDFLAGS"
+
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+fi
+eval ac_res=\$ac_cv_ldflag$try_flag_id
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+  done
+  LDFLAGS_BIN_EXPORT_DYNAMIC="$LDFLAGS"
+  LDFLAGS="$initial_LDFLAGS"
+fi
+
+################################################################################
 
 ac_fn_c_check_type "$LINENO" "gid_t" "ac_cv_type_gid_t" "$ac_includes_default"
 if test "x$ac_cv_type_gid_t" = xyes; then :
@@ -17827,6 +17887,9 @@ fi
 
 
 CFLAGS="$custom_CFLAGS"
+
+LDFLAGS_BIN_EXPORT_DYNAMIC="$LDFLAGS_BIN_EXPORT_DYNAMIC"
+
 
 ac_config_files="$ac_config_files Makefile clients/Makefile clients/mapscrn/Makefile contrib/Makefile contrib/twcd/Makefile docs/Makefile include/version.h include/Makefile include/Tutf/Makefile include/Tw/Makefile libs/Makefile libs/libTutf/Makefile libs/libTw/Makefile libs/libltdl/Makefile server/Makefile server/hw/Makefile themes/Makefile themes/hw_gfx/Makefile"
 

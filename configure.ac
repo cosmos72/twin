@@ -65,33 +65,67 @@ AC_C_INLINE
 
 TW_C_FEATURES
 
+################################################################################
+
 # CC flags '-g -O2' are already tested by AC_PROG_CC
 # CC flags '-p -pg' are incompatible with -fomit-frame-pointer
 initial_CFLAGS="$CFLAGS"
-for try_cflag in -fomit-frame-pointer -fno-strict-aliasing -pipe -Wall -Wshadow \
+for try_flag in -fomit-frame-pointer -fno-strict-aliasing -pipe -Wall -Wshadow \
                  -Wno-uninitialized -Wno-pointer-sign -Wno-unused -Wundef -Wstrict-prototypes \
                  -Wcast-qual -Wcast-align -Wpointer-arith -Wbad-function-cast -Waggregate-return
 do
   save_CFLAGS="$CFLAGS"
-  CFLAGS="$CFLAGS $try_cflag"
-  try_cflag_id="`echo \"$try_cflag\" | tr - _`"
-  AC_CACHE_CHECK(for compiler flag $try_cflag, ac_cv_cflag$try_cflag_id, AC_TRY_COMPILE(
+  CFLAGS="$CFLAGS $try_flag"
+  try_flag_id="`echo \"$try_flag\" | tr - _`"
+  AC_CACHE_CHECK(for compiler flag $try_flag, ac_cv_cflag$try_flag_id, AC_TRY_COMPILE(
   [
-    static inline int ret0(void) {
+    int ret0(void) {
       return 0;
     }
   ] , [
     int a = ret0();
   ], [
-    eval "ac_cv_cflag$try_cflag_id=yes"
+    eval "ac_cv_cflag$try_flag_id=yes"
   ], [
-    eval "ac_cv_cflag$try_cflag_id=no"
+    eval "ac_cv_cflag$try_flag_id=no"
     CFLAGS="$save_CFLAGS"
   ]))
 done
 custom_CFLAGS="$CFLAGS"
 CFLAGS="$initial_CFLAGS"
 
+################################################################################
+
+# on Mac OS X El Capitan, libtool ignores -export-dynamic
+# so pass the linker flag -Wl,-export_dynamic if supported
+#
+if test "`uname 2>/dev/null`" = Darwin; then
+  initial_LDFLAGS="$LDFLAGS"
+  LDFLAGS=
+  for try_flag in -Wl,-export_dynamic
+  do
+    save_LDFLAGS="$LDFLAGS"
+    LDFLAGS="$LDFLAGS $try_flag"
+    try_flag_id="`echo \"$try_flag\" | tr ,- __`"
+    AC_CACHE_CHECK(for compiler flag $try_flag, ac_cv_ldflag$try_flag_id, AC_TRY_LINK(
+    [
+      int ret0(void) {
+        return 0;
+      }
+    ] , [
+      int a = ret0();
+    ], [
+      eval "ac_cv_ldflag$try_flag_id=yes"
+    ], [
+      eval "ac_cv_ldflag$try_flag_id=no"
+      LDFLAGS="$save_LDFLAGS"
+    ]))
+  done
+  LDFLAGS_BIN_EXPORT_DYNAMIC="$LDFLAGS"
+  LDFLAGS="$initial_LDFLAGS"
+fi
+    
+################################################################################
 
 AC_CHECK_TYPE(gid_t,int)
 AC_TYPE_PID_T
@@ -225,6 +259,8 @@ AM_CONDITIONAL(LIBWM_la,         [test "$enable_wm"         = yes])
 
 CFLAGS="$custom_CFLAGS"
 
+AC_SUBST(LDFLAGS_BIN_EXPORT_DYNAMIC, "$LDFLAGS_BIN_EXPORT_DYNAMIC")
+         
 AC_CONFIG_FILES([
       Makefile clients/Makefile clients/mapscrn/Makefile contrib/Makefile contrib/twcd/Makefile \
       docs/Makefile include/version.h include/Makefile include/Tutf/Makefile include/Tw/Makefile \
