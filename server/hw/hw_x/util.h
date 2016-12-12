@@ -417,24 +417,15 @@ static int X11_Die(Display *d) {
 
 static Tutf_function X11_UTF_16_to_charset_function(CONST byte *charset) {
     XFontProp *fp;
-    Atom fontatom;
+    unsigned long prop;
     CONST byte *s, *fontname = NULL;
     uldat i;
     
     if (!charset) {
-	/* attempt to autodetect encoding. */
-	fp = xsfont->properties;
-	fontatom = XInternAtom (xdisplay, "FONT", False);
-	i = xsfont->n_properties;
-	
-	while (i--) {
-	    if (fp->name == fontatom) {
-		fontname = XGetAtomName(xdisplay, fp->card32);
-		/*fprintf(stderr, "    X11_UTF_16_to...: font name: `%s\'\n", fontname);*/
-		break;
-	    }
-	    fp++;
-	}
+	/* attempt to autodetect encoding from fontname */
+        if (XGetFontProperty(xsfont, XA_FONT, &prop))
+            fontname = XGetAtomName(xdisplay, (Atom)prop);
+
 	if (fontname && !strcmp(fontname, "vga")) {
 	    charset = T_NAME_CP437;
 	} else if (fontname) {
