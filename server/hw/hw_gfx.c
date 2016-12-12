@@ -400,7 +400,7 @@ typedef struct {
     byte *dpy, *dpy0, *fontname, *fontname0;
     byte *charset, *charset0, *file_bg, *file_root, *file_theme;
     uldat file_bg_len, file_root_len, file_theme_len;
-    uldat fontwidth, fontheight;
+    udat fontwidth, fontheight;
     byte drag, noinput;
 } gfx_options;
 
@@ -459,8 +459,8 @@ static byte gfx_ParseOptions(gfx_options * opt, char * arg) {
                         break;
                     }
                 }
-                opt->fontwidth = n2 > 0 ? n1 : n1 / 2;
-                opt->fontheight = n2 > 0 ? n2 : n1;
+                opt->fontwidth = Min2(TW_MAXUDAT, n2 > 0 ? n1 : n1 / 2);
+                opt->fontheight = Min2(TW_MAXUDAT, n2 > 0 ? n2 : n1);
             }
             arg = strchr(arg, ',');
         } else if (!strncmp(arg, "charset=", 8)) {
@@ -549,7 +549,7 @@ cleanup:
 }
 
 /* return name of selected font in allocated (char *) */
-static char * gfx_AutodetectFont(uldat fontwidth, uldat fontheight) {
+static char * gfx_AutodetectFont(udat fontwidth, udat fontheight) {
     CONST char * patterns[] = {
         "-misc-fixed-medium-r-normal-*-%u-*-*-*-*-*-iso10646-1",
         "-*-*-medium-r-normal-*-%u-*-*-*-*-*-iso10646-1",
@@ -595,7 +595,7 @@ static char * gfx_AutodetectFont(uldat fontwidth, uldat fontheight) {
 }
 
 
-static byte gfx_LoadFont(CONST char * fontname, uldat fontwidth, uldat fontheight) {
+static byte gfx_LoadFont(CONST char * fontname, udat fontwidth, udat fontheight) {
     char * alloc_fontname = 0;
     byte loaded = FALSE;
 
@@ -613,7 +613,7 @@ static byte gfx_LoadFont(CONST char * fontname, uldat fontwidth, uldat fontheigh
         xhfont = (xupfont = xsfont->ascent) + xsfont->descent;
         xheight = xhfont * (unsigned)(HW->Y = GetDisplayHeight());
         
-        printk("      selected font `%."STR(TW_SMALLBUFF)"s'\n", fontname);
+        printk("      selected %ux%u font `%."STR(TW_SMALLBUFF)"s'\n", (unsigned)xwfont, (unsigned)xhfont, fontname);
     }
     if (alloc_fontname)
         FreeMem(alloc_fontname);
