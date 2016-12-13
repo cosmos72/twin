@@ -34,7 +34,7 @@ byte InitRCOptions(void) {
     }
         
     All->SetUp->Flags
-        = (utf8 ? SETUP_TTY_UTF8 : 0)
+        = (utf8 ? SETUP_TERMINALS_UTF8 : 0)
 #ifdef CONF_OPT_SHADOWS
 	| SETUP_SHADOWS
 #endif

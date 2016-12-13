@@ -1546,7 +1546,7 @@ struct s_setup {
 #define SETUP_MENU_INFO		0x10
 #define SETUP_MENU_RELAX	0x20
 #define SETUP_SCREEN_SCROLL	0x40
-#define SETUP_TTY_UTF8		0x80
+#define SETUP_TERMINALS_UTF8		0x80
 
 
 #define MAX_XSHADE	9

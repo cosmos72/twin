@@ -191,7 +191,7 @@ static byte setup_tty(ttydata * Data) {
     /* from hw.c, ttysave is the console original state */
     extern struct termios ttysave;
     
-    if (All->SetUp->Flags & SETUP_TTY_UTF8)
+    if (All->SetUp->Flags & SETUP_TERMINALS_UTF8)
         Data->utf8 = 1;
     
     wsiz.ws_col = Data->SizeX;

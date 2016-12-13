@@ -112,7 +112,7 @@ extern int yydebug;
     MENU_INFO = 322,
     MENU_RELAX = 323,
     SCREEN_SCROLL = 324,
-    TTY_UTF8 = 325,
+    TERMINALS_UTF8 = 325,
     SHADOWS = 326,
     BUTTON_PASTE = 327,
     BUTTON_SELECTION = 328,

@@ -70,7 +70,7 @@
 #define COD_O_MENU_INFO	(udat)48
 #define COD_O_MENU_RELAX	(udat)49
 #define COD_O_SCREEN_SCROLL	(udat)50
-#define COD_O_TTY_UTF8	(udat)51
+#define COD_O_TERMINALS_UTF8	(udat)51
 
 #define COD_D_REMOVE	(udat)60
 #define COD_D_THIS	(udat)61
@@ -231,8 +231,8 @@ void UpdateOptionWin(void) {
 	G->USE.T.Text[0][1] = Flags & SETUP_MENU_RELAX ? _CHECK : ' ';
     if ((G = Act(FindGadgetByCode,OptionWin)(OptionWin, COD_O_SCREEN_SCROLL)))
 	G->USE.T.Text[0][1] = Flags & SETUP_SCREEN_SCROLL ? _CHECK : ' ';
-    if ((G = Act(FindGadgetByCode,OptionWin)(OptionWin, COD_O_TTY_UTF8)))
-	G->USE.T.Text[0][1] = Flags & SETUP_TTY_UTF8 ? _CHECK : ' ';
+    if ((G = Act(FindGadgetByCode,OptionWin)(OptionWin, COD_O_TERMINALS_UTF8)))
+	G->USE.T.Text[0][1] = Flags & SETUP_TERMINALS_UTF8 ? _CHECK : ' ';
     
     OptionWin->CurX = 25; OptionWin->CurY = 1;
     i = (Flags & SETUP_SHADOWS ? All->SetUp->DeltaXShade : 0) + '0';
@@ -289,8 +289,8 @@ static void OptionH(msg Msg) {
 	Flags ^= SETUP_SCREEN_SCROLL;
 	redraw = FALSE;
 	break;
-      case COD_O_TTY_UTF8:
-	Flags ^= SETUP_TTY_UTF8;
+      case COD_O_TERMINALS_UTF8:
+	Flags ^= SETUP_TERMINALS_UTF8;
 	redraw = FALSE;
 	break;
       default:
@@ -926,7 +926,7 @@ byte InitBuiltin(void) {
 			  COL(BLACK,WHITE), COL(HIGH|WHITE,GREEN),
 			  COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK), 2, 6) &&
 	Do(Create,Gadget)(FnGadget, Builtin_MsgPort, (widget)OptionWin, 37, 1, "[ ] New terminals start in UTF-8 mode",
-			  0, GADGETFL_TEXT_DEFCOL, COD_O_TTY_UTF8,
+			  0, GADGETFL_TEXT_DEFCOL, COD_O_TERMINALS_UTF8,
 			  COL(BLACK,WHITE), COL(HIGH|WHITE,GREEN),
 			  COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK), 2, 4) &&
 	Do(Create,Gadget)(FnGadget, Builtin_MsgPort, (widget)OptionWin, 3, 1, "[+]",
