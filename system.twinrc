@@ -201,8 +201,10 @@ Button 2 "><" Right
 # set shadows to 3x2 and enable them
 GlobalFlags Shadows 3 2 +Shadows
 #
-# start new terminals in UTF-8 mode. these days it's probably a good idea
-GlobalFlags +TerminalsUtf8
+# do not (yet) start new terminals in UTF-8 mode. these days it would probably be a good idea,
+# but let users decide - and it gets enabled anyway if twin detects UTF-8 locale from environment variables
+#
+# GlobalFlags +TerminalsUtf8
 #
 # disable blink/high background
 GlobalFlags -Blink

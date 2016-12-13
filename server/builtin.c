@@ -859,7 +859,7 @@ byte InitBuiltin(void) {
 	(OptionWin = Do(Create,Window)
 	 (FnWindow, Builtin_MsgPort, 7, "Options", NULL, Builtin_Menu, COL(HIGH|BLACK,BLACK),
 	  NOCURSOR, WINDOW_AUTO_KEYS|WINDOW_WANT_MOUSE|WINDOW_DRAG|WINDOW_CLOSE,WINDOWFL_USEROWS|WINDOWFL_ROWS_DEFCOL,
-	  37, 16, 0)) &&
+	  40, 18, 0)) &&
 
 	(ButtonWin = Do(Create,Window)
 	 (FnWindow, Builtin_MsgPort, 7, "Buttons", NULL, Builtin_Menu, COL(HIGH|WHITE,WHITE),
@@ -920,7 +920,7 @@ byte InitBuiltin(void) {
 	Do(Create,Gadget)(FnGadget, Builtin_MsgPort, (widget)OptionWin, 32, 1, "[ ] Enable Blink/High Background",
 			  0, GADGETFL_TEXT_DEFCOL, COD_O_BLINK,
 			  COL(BLACK,WHITE), COL(HIGH|WHITE,GREEN),
-			  COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK), 2, 7) &&
+			  COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK), 2, 8) &&
 	Do(Create,Gadget)(FnGadget, Builtin_MsgPort, (widget)OptionWin, 22, 1, "[ ] Always Show Cursor",
 			  0, GADGETFL_TEXT_DEFCOL, COD_O_CURSOR_ALWAYS,
 			  COL(BLACK,WHITE), COL(HIGH|WHITE,GREEN),
