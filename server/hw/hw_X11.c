@@ -182,7 +182,7 @@ INLINE ldat diff(ldat x, ldat y) {
     return x >= y ? x - y : y - x;
 }
 
-enum { MAX_FONT_SCORE = 1000 };
+enum { MAX_FONT_SCORE = 100 };
 
 /* if font is monospaced, return its score. otherwise return MINLDAT */
 static ldat X11_MonospaceFontScore(CONST XFontStruct *info, udat fontwidth, udat fontheight, ldat best_score) {
@@ -211,6 +211,7 @@ static char * X11_AutodetectFont(udat fontwidth, udat fontheight) {
         CONST char * wildcard;
         ldat score_adj;
     } patterns[] = {
+        { "-misc-console-medium-r-normal-*-%s?-*-*-*-*-*-iso10646-1", 0 },
         { "-misc-fixed-medium-r-normal-*-%s?-*-*-*-*-*-iso10646-1", 0 },
         { "-*-*-medium-r-normal-*-%s?-*-*-*-*-*-iso10646-1",        0 },
         { "-*-*-medium-r-normal-*-%s?-*-*-*-*-*-*-cp437",          -5 },
@@ -226,16 +227,18 @@ static char * X11_AutodetectFont(udat fontwidth, udat fontheight) {
     char * pattern = AllocMem(LenStr(patterns[0].wildcard) + 1 + 3 * sizeof(unsigned));
     char digits[1 + 3 * sizeof(unsigned)];
     char ** names = NULL;
-    char * candidate = NULL;
-    ldat score, candidate_score = TW_MINLDAT;
-    byte perfect_score = FALSE, look_up = fontheight >= 10 && (fontheight % 10) >= 5;
+    char * best = NULL;
+    ldat score, best_score = TW_MINLDAT;
+    byte beatable_score = TRUE, look_up = fontheight >= 10 && (fontheight % 10) >= 5;
     if (!pattern)
         return NULL;
     
-    for (i = 0; i < n_patterns && !candidate && !perfect_score; i++) {
+    for (i = 0; i < n_patterns && beatable_score; i++) {
         ldat score_adj = patterns[i].score_adj;
-            
-        for (j = 0; j < 2; j++) {
+
+        beatable_score = best_score <= MAX_FONT_SCORE + score_adj;
+        
+        for (j = 0; j < 2 && beatable_score; j++) {
             n_fonts = 0;
             info = NULL;
             sprintf(digits, "%u", (unsigned)(fontheight / 10 + (j != 0 ? look_up ? 1 : -1 : 0)));
@@ -245,28 +248,28 @@ static char * X11_AutodetectFont(udat fontwidth, udat fontheight) {
             if (names == NULL)
                 continue;
         
-            for (k = 0; k < n_fonts && !perfect_score; k++)
+            for (k = 0; k < n_fonts && beatable_score; k++)
             {
                 if (info[k].direction == FontLeftToRight
                     && info[k].min_byte1 == 0
                     && info[k].min_char_or_byte2 <= 32)
                 {
-                    score = X11_MonospaceFontScore(&info[k], fontwidth, fontheight, candidate_score - score_adj);
-                    perfect_score = score == MAX_FONT_SCORE;
-                    score += score_adj;
-                    if (score <= candidate_score)
+                    score = X11_MonospaceFontScore(&info[k], fontwidth, fontheight, best_score - score_adj) + score_adj;
+                    if (score <= best_score)
                         continue;
             
-                    candidate_score = score;
-                    FreeMem(candidate);
-                    candidate = CloneStr(names[k]);
+                    best_score = score;
+                    beatable_score = best_score <= MAX_FONT_SCORE + score_adj;
+
+                    FreeMem(best);
+                    best = CloneStr(names[k]);
                 }
             }
             XFreeFontInfo(names, info, n_fonts);
         }
     }
     FreeMem(pattern);
-    return candidate;
+    return best;
 }
 
 static byte X11_LoadFont(CONST char * fontname, udat fontwidth, udat fontheight) {
