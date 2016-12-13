@@ -172,8 +172,8 @@ struct s_ttydata {
     uldat nPar, Par[NPAR];
     
     byte currG, G, G0, G1, saveG, saveG0, saveG1;
-    byte utf, utf_count;
-    hwfont utf_char;
+    byte utf8, utf8_count;
+    hwfont utf8_char;
     void *InvCharset;	/* pointer to hwfont -> byte translation function */
     
     dat newLen, newMax;
@@ -1546,6 +1546,7 @@ struct s_setup {
 #define SETUP_MENU_INFO		0x10
 #define SETUP_MENU_RELAX	0x20
 #define SETUP_SCREEN_SCROLL	0x40
+#define SETUP_TERMINALS_UTF8		0x80
 
 
 #define MAX_XSHADE	9

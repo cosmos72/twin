@@ -112,14 +112,15 @@ extern int yydebug;
     MENU_INFO = 322,
     MENU_RELAX = 323,
     SCREEN_SCROLL = 324,
-    SHADOWS = 325,
-    BUTTON_PASTE = 326,
-    BUTTON_SELECTION = 327,
-    COLOR = 328,
-    COL_HIGH = 329,
-    KBD_FLAG = 330,
-    NUMBER = 331,
-    STRING = 332
+    TERMINALS_UTF8 = 325,
+    SHADOWS = 326,
+    BUTTON_PASTE = 327,
+    BUTTON_SELECTION = 328,
+    COLOR = 329,
+    COL_HIGH = 330,
+    KBD_FLAG = 331,
+    NUMBER = 332,
+    STRING = 333
   };
 #endif
 

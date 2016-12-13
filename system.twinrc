@@ -201,6 +201,9 @@ Button 2 "><" Right
 # set shadows to 3x2 and enable them
 GlobalFlags Shadows 3 2 +Shadows
 #
+# start new terminals in UTF-8 mode. these days it's probably a good idea
+GlobalFlags +TerminalsUtf8
+#
 # disable blink/high background
 GlobalFlags -Blink
 #

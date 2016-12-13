@@ -55,6 +55,7 @@
 #include "tty_ioctl.h"
 
 #include "twin.h"
+#include "data.h"
 #include "main.h"
 #include "printk.h"
 #include "util.h"
@@ -190,12 +191,8 @@ static byte setup_tty(ttydata * Data) {
     /* from hw.c, ttysave is the console original state */
     extern struct termios ttysave;
     
-    const char * lang = getenv("LANG");
-    size_t len = lang ? strlen(lang) : 0;
-    /* if environment variable $LANG ends with ".UTF-8" then initialize tty emulator in UTF-8 mode */
-    if (len > 6 && !memcmp(lang + len - 6, ".UTF-8", 6)) {
-        Data->utf = 1;
-    }
+    if (All->SetUp->Flags & SETUP_TERMINALS_UTF8)
+        Data->utf8 = 1;
     
     wsiz.ws_col = Data->SizeX;
     wsiz.ws_row = Data->SizeY;

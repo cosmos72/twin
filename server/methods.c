@@ -897,7 +897,7 @@ static byte InitTtyData(window Window, dat ScrollBackLines) {
     Data->currG = Data->G0 = Data->saveG0 = LAT1_MAP;
     Data->G1 = Data->saveG1 = GRAF_MAP;
 
-    Data->utf = Data->utf_count = Data->utf_char = 0;
+    Data->utf8 = Data->utf8_count = Data->utf8_char = 0;
     Data->InvCharset = Tutf_UTF_16_to_ISO_8859_1;
     Data->newLen = Data->newMax = 0;
     Data->newName = NULL;
