@@ -99,7 +99,7 @@ CFLAGS="$initial_CFLAGS"
 # on Mac OS X El Capitan, libtool ignores -export-dynamic
 # so pass the linker flag -Wl,-export_dynamic if supported
 #
-if test echo "$ac_cv_host" | $GREP darwin >/dev/null 2>&1 ; then
+if echo "$ac_cv_host" | $GREP darwin >/dev/null 2>&1 ; then
   initial_LDFLAGS="$LDFLAGS"
   LDFLAGS=
   for try_flag in -Wl,-export_dynamic
