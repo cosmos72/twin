@@ -377,8 +377,9 @@ static byte ImmGlobalFlags(node l) {
 	  case MENU_INFO:    i = SETUP_MENU_INFO;    break;
 	  case MENU_RELAX:   i = SETUP_MENU_RELAX;   break;
 	  case SHADOWS:      i = SETUP_SHADOWS;      break;
-	  case BUTTON_PASTE:  i = 0;                  break;
-	  case BUTTON_SELECTION: i = -1;              break;
+          case TTY_UTF8:     i = SETUP_TTY_UTF8;     break;
+	  case BUTTON_PASTE:  i = 0;                 break;
+	  case BUTTON_SELECTION: i = -1;             break;
 	  default:           return FALSE;
 	}
 	if (i > 0) switch (l->x.f.flag) {
