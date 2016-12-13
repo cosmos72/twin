@@ -334,7 +334,7 @@ static byte X11_InitHW(void) {
         *charset = NULL, *charset0 = NULL,
         title[X11_TITLE_MAXLEN];
     int i;
-    udat fontwidth = 10, fontheight = 20;
+    udat fontwidth = 8, fontheight = 16;
     byte drag = FALSE, noinput = FALSE;
     
     if (!(HW->Private = (struct x11_data *)AllocMem(sizeof(struct x11_data)))) {

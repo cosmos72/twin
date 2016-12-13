@@ -644,8 +644,8 @@ static byte gfx_InitHW(void) {
     xdisplay = (Display *)0;
     
     WriteMem(&opt, '\0', sizeof(gfx_options));
-    opt.fontwidth = 9;
-    opt.fontheight = 19;
+    opt.fontwidth = 8;
+    opt.fontheight = 16;
     opt.file_theme = "default";
     opt.file_theme_len = strlen(opt.file_theme);
     

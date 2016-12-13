@@ -31,7 +31,7 @@
 # define dlhandle         void *
 # define dlopen(name)     dlopen((name), RTLD_NOW|RTLD_GLOBAL)
 # define DL_PREFIX        "lib"
-# ifdef __MACOSX__
+# ifdef __APPLE__
 #  define DL_EXT            ".dylib"
 # else
 #  define DL_EXT            ".so"
