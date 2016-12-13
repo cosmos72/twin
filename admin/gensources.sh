@@ -1,3 +1,4 @@
+BISON=bison
 FIND=find
 FLEX=flex
 SED=sed
@@ -19,3 +20,4 @@ do
 done
 
 $FLEX -o server/rcparse_lex.c server/rcparse.l
+$BISON --no-lines --defines -o server/rcparse_tab.c server/rcparse.y
