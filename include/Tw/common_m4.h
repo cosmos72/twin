@@ -40,9 +40,9 @@ extern void *(*Tw_ReAllocMem)(void *, size_t);
 /** pointer to custom free() function; use Tw_ConfigMalloc() to change it */
 extern void  (*Tw_FreeMem)(void *);
 
-/** equivalet to calloc() */
+/** equivalent to calloc() */
 void *Tw_AllocMem0(size_t ElementSize, size_t Count);
-/** equivalet to realloc()+memset() */
+/** equivalent to realloc()+memset() */
 void *Tw_ReAllocMem0(void * Mem, size_t ElementSize, size_t OldCount, size_t NewCount);
 
 /** custom malloc()+memcpy() function */

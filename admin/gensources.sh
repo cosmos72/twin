@@ -19,5 +19,14 @@ do
   $LN -f -n "server/$i" "libs/libTw/$i"
 done
 
-$FLEX -o server/rcparse_lex.c server/rcparse.l
-$BISON --no-lines --defines -o server/rcparse_tab.c server/rcparse.y
+echo "cd server"
+cd server
+
+echo "$FLEX -o rcparse_lex.c rcparse.l"
+$FLEX -o rcparse_lex.c rcparse.l
+
+echo "$BISON --no-lines --defines -o rcparse_tab.c rcparse.y"
+$BISON --no-lines --defines -o rcparse_tab.c rcparse.y
+
+echo "cd .."
+cd ..
