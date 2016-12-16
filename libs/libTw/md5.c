@@ -23,19 +23,19 @@
 #elif TW_IS_BIG_ENDIAN
 
 #ifdef ASM_MD5
-void byteReverse(unsigned char *buf, unsigned longs);
+void byteReverse(md5_uint32 *buf, unsigned longs);
 #else /* !ASM_MD5 */
 /*
  * Note: this code is harmless on little-endian machines.
  */
-INLINE void byteReverse(unsigned char *buf, unsigned longs)
+INLINE void byteReverse(md5_uint32 *buf, unsigned longs)
 {
     md5_uint32 t;
     do {
-	t = (md5_uint32) ((unsigned) buf[3] << 8 | buf[2]) << 16 |
-	    ((unsigned) buf[1] << 8 | buf[0]);
-	*(md5_uint32 *) buf = t;
-	buf += 4;
+# define BUF(i) ((md5_uint32) * ((unsigned char *)(buf) + (i)))
+	t = BUF(0) | BUF(1) << 8 | BUF(2) << 16 | BUF(3) << 24;
+	* buf++ = t;
+# undef BUF
     } while (--longs);
 }
 #endif /* ASM_MD5 */
@@ -63,7 +63,7 @@ void MD5Init(struct MD5Context *ctx)
  * Update context to reflect the concatenation of another buffer full
  * of bytes.
  */
-void MD5Update(struct MD5Context *ctx, unsigned char const *buf, size_t len)
+void MD5Update(struct MD5Context *ctx, unsigned char CONST *buf, size_t len)
 {
     md5_uint32 t;
 
@@ -79,7 +79,7 @@ void MD5Update(struct MD5Context *ctx, unsigned char const *buf, size_t len)
     /* Handle any leading odd-sized chunks */
 
     if (t) {
-	unsigned char *p = (unsigned char *) ctx->in + t;
+	unsigned char *p = (unsigned char *)ctx->in + t;
 
 	t = 64 - t;
 	if (len < t) {
@@ -88,7 +88,7 @@ void MD5Update(struct MD5Context *ctx, unsigned char const *buf, size_t len)
 	}
 	memcpy(p, buf, t);
 	byteReverse(ctx->in, 16);
-	MD5Transform(ctx->buf, (md5_uint32 *) ctx->in);
+	MD5Transform(ctx->buf, ctx->in);
 	buf += t;
 	len -= t;
     }
@@ -97,7 +97,7 @@ void MD5Update(struct MD5Context *ctx, unsigned char const *buf, size_t len)
     while (len >= 64) {
 	memcpy(ctx->in, buf, 64);
 	byteReverse(ctx->in, 16);
-	MD5Transform(ctx->buf, (md5_uint32 *) ctx->in);
+	MD5Transform(ctx->buf, ctx->in);
 	buf += 64;
 	len -= 64;
     }
@@ -121,7 +121,7 @@ void MD5Final(unsigned char digest[16], struct MD5Context *ctx)
 
     /* Set the first char of padding to 0x80.  This is safe since there is
        always at least one byte free */
-    p = ctx->in + count;
+    p = (unsigned char *)ctx->in + count;
     *p++ = 0x80;
 
     /* Bytes of padding needed to make 64 bytes */
@@ -132,7 +132,7 @@ void MD5Final(unsigned char digest[16], struct MD5Context *ctx)
 	/* Two lots of padding:  Pad the first block to 64 bytes */
 	memset(p, 0, count);
 	byteReverse(ctx->in, 16);
-	MD5Transform(ctx->buf, (md5_uint32 *) ctx->in);
+	MD5Transform(ctx->buf, ctx->in);
 
 	/* Now fill the next block with 56 bytes */
 	memset(ctx->in, 0, 56);
@@ -143,11 +143,11 @@ void MD5Final(unsigned char digest[16], struct MD5Context *ctx)
     byteReverse(ctx->in, 14);
 
     /* Append length in bits and transform */
-    ((md5_uint32 *) ctx->in)[14] = ctx->bits[0];
-    ((md5_uint32 *) ctx->in)[15] = ctx->bits[1];
-
-    MD5Transform(ctx->buf, (md5_uint32 *) ctx->in);
-    byteReverse((unsigned char *) ctx->buf, 4);
+    ctx->in[14] = ctx->bits[0];
+    ctx->in[15] = ctx->bits[1];
+    
+    MD5Transform(ctx->buf, ctx->in);
+    byteReverse(ctx->buf, 4);
     memcpy(digest, ctx->buf, 16);
     memset(ctx, 0, sizeof(*ctx));	/* In case it's sensitive */
 }
@@ -171,7 +171,7 @@ void MD5Final(unsigned char digest[16], struct MD5Context *ctx)
  * reflect the addition of 16 longwords of new data.  MD5Update blocks
  * the data and converts bytes into longwords for this routine.
  */
-void MD5Transform(md5_uint32 buf[4], md5_uint32 const in[16])
+void MD5Transform(md5_uint32 buf[4], md5_uint32 CONST in[16])
 {
     register md5_uint32 a, b, c, d;
 
@@ -256,3 +256,27 @@ void MD5Transform(md5_uint32 buf[4], md5_uint32 const in[16])
 
 #endif
 
+#ifdef TW_DEBUG_MD5_MAIN
+
+#include <stdio.h>
+#include <string.h>
+
+int main(int argc, char CONST *argv[])
+{
+    unsigned char digest[16];
+    struct MD5Context ctx;
+    char CONST * str = argc > 1 ? argv[1] : "abc\n";
+    unsigned i;
+    
+    MD5Init(&ctx);
+    MD5Update(&ctx, (unsigned char CONST *)str, strlen(str));
+    MD5Final(digest, &ctx);
+    
+    for (i = 0; i < sizeof(digest); i++) {
+        printf("%02x", (unsigned)digest[i]);
+    }
+    putchar('\n');
+    return 0;
+}
+
+#endif /* TW_DEBUG_MD5_MAIN */
