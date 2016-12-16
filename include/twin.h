@@ -152,7 +152,7 @@ typedef void (*fn_hook)(widget);
 typedef enum ttystate {
     ESnormal = 0, ESesc, ESsquare, ESgetpars, ESgotpars, ESfunckey,
       EShash, ESsetG0, ESsetG1, ESpercent, ESignore, ESnonstd,
-      ESpalette, ESxterm_1_, ESxterm_1, ESxterm_2_, ESxterm_2, ESany = 0xFF, ESques = 0x100
+      ESpalette, ESxterm_ignore_, ESxterm_ignore, ESxterm_title_, ESxterm_title, ESany = 0xFF, ESques = 0x100
 } ttystate;
 
 struct s_ttydata {

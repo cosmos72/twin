@@ -978,11 +978,11 @@ INLINE void write_ctrl(byte c) {
       case 0:
 	return;
       case 7:
-	if (DState != ESxterm_1 && DState != ESxterm_2) {
+	if (DState != ESxterm_ignore && DState != ESxterm_title) {
 	    BeepHW();
 	    return;
 	}
-	if (DState == ESxterm_2)
+	if (DState == ESxterm_title)
 	    set_newtitle();
 	DState = ESnormal;
 	return;
@@ -1098,11 +1098,11 @@ INLINE void write_ctrl(byte c) {
 	    ResetPaletteHW();
 	else if (c=='1') {
 	    /* may be xterm set window icon title */
-	    DState = ESxterm_1_;
+	    DState = ESxterm_ignore_;
 	    return;
-	} else if (c=='2') {
-	    /* may be xterm set window title */
-	    DState = ESxterm_2_;
+	} else if (c=='0'||c=='2'||c=='7') {
+	    /* may be xterm "set icon name & window title" or xterm "set window title" or OS X "set current directory title" */
+	    DState = ESxterm_title_;
 	    return;
 	}
 	break;
@@ -1328,25 +1328,25 @@ INLINE void write_ctrl(byte c) {
 	    setCharset(G1);
 	break;
 	
-      case ESxterm_1_:
+      case ESxterm_ignore_:
 	if (c == ';') {
-	    DState = ESxterm_1;
+	    DState = ESxterm_ignore;
 	    return;
 	}
 	break;
 	
-      case ESxterm_1:
-	/* ignore, cannot set window icon title */
+      case ESxterm_ignore:
+	/* ignore, cannot set icon name */
 	return;
 	
-      case ESxterm_2_:
+      case ESxterm_title_:
 	if (c == ';') {
-	    DState = ESxterm_2;
+	    DState = ESxterm_title;
 	    return;
 	}
 	break;
 	
-      case ESxterm_2:
+      case ESxterm_title:
 	if (c >= ' ' && insert_newtitle(c))
 	    return;
 	break;
