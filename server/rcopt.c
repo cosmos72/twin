@@ -14,7 +14,10 @@
 #include "data.h"
 
 byte InitRCOptions(void) {
-    /* if any of these environment variables end with ".UTF-8" then initialize tty emulator in UTF-8 mode */
+    /*
+       if any of these environment variables is "UTF-8" or ends with ".UTF-8"
+       then initialize tty emulator in UTF-8 mode
+     */
     CONST char * keys[] = {
         "LANG",  "LANGUAGE", "LC_ALL",
         "LC_CTYPE", "LC_NUMERIC", "LC_TIME", "LC_COLLATE", "LC_MONETARY", "LC_MESSAGES",
@@ -26,7 +29,9 @@ byte InitRCOptions(void) {
     for (i = 0; i < sizeof(keys)/sizeof(keys[0]); i++) {
         if ((env = getenv(keys[i])) && *env) {
             len = LenStr(env);
-            if (len > 6 && !CmpMem(env + len - 6, ".UTF-8", 6)) {
+            if ((len == 5 && !CmpMem(env, "UTF-8", 5)) ||
+                (len > 6 && !CmpMem(env + len - 6, ".UTF-8", 6)))
+            {
                 utf8 = TRUE;
                 break;
             }
