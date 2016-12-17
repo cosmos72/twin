@@ -1,1 +1,2 @@
 SUBDIRS = $(SUBDIR_LIBLTDL) libTutf libTw $(SUBDIR_LIBTT)
+

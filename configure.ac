@@ -10,6 +10,8 @@ AC_CONFIG_MACRO_DIRS([m4])
 AC_CONFIG_AUX_DIR([admin])
 AM_INIT_AUTOMAKE([1.14 foreign subdir-objects])
 
+AM_MAINTAINER_MODE        dnl by default, do not try to run libtoolize/automake/autoconf/autoreconf because build system may lack them
+
 m4_define([AH_HEADER], [config.h]) dnl filename of first AC_CONFIG_HEADERS. works around a bug in included libltdl Makefiles
 
 TW_OPTIONS
