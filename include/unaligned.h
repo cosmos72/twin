@@ -16,7 +16,7 @@
 
 
 #ifndef TW_CAN_UNALIGNED
-# if defined(__i386__) || defined(__x86_64__)
+# if defined(__i386__) || defined(__x86_64__) || defined(__ARM_FEATURE_UNALIGNED)
 #  define TW_CAN_UNALIGNED 1
 # else /* !__i386__ */
 #  define TW_CAN_UNALIGNED 0
