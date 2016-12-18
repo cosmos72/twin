@@ -1412,7 +1412,7 @@ tw_errno *Tw_ErrnoLocation(tw_d TwD) {
 /**
  * returns a string description of given error
  */
-TW_FN_ATTR_CONST TW_CONST byte *Tw_StrError(TW_CONST tw_d TwD, uldat e) {
+TW_ATTR_FN_CONST TW_CONST byte *Tw_StrError(TW_CONST tw_d TwD, uldat e) {
     switch (e) {
       case 0:
 	return "success";
@@ -1474,7 +1474,7 @@ TW_FN_ATTR_CONST TW_CONST byte *Tw_StrError(TW_CONST tw_d TwD, uldat e) {
 /**
  * returns a string description of given error detail
  */
-TW_FN_ATTR_CONST TW_CONST byte *Tw_StrErrorDetail(TW_CONST tw_d TwD, uldat E, uldat S) {
+TW_ATTR_FN_CONST TW_CONST byte *Tw_StrErrorDetail(TW_CONST tw_d TwD, uldat E, uldat S) {
     switch (E) {
       case TW_ESERVER_LOST_CONNECT:
 	switch (S) {

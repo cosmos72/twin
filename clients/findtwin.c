@@ -50,12 +50,18 @@ static int match_twsocket(TW_CONST struct dirent *d) {
 				   (HX(s[8]) && !s[9]))));
 }
 
-#if defined(TW_HAVE_SCANDIR) && defined(TW_HAVE_ALPHASORT)
+#if defined(TW_HAVE_SCANDIR) && (defined(TW_HAVE_VERSIONSORT) || defined(TW_HAVE_ALPHASORT))
 static void unix_socket_test(void) {
-    int alphasort();
+    
+# ifdef TW_HAVE_VERSIONSORT
+#  define my_sort versionsort
+# else
+#  define my_sort alphasort
+# endif
+    int my_sort();
     struct dirent **namelist;
     char *s;
-    int n = scandir("/tmp", &namelist, match_twsocket, alphasort);
+    int n = scandir("/tmp", &namelist, match_twsocket, my_sort);
 
     while (n > 0) {
 	s = namelist[0]->d_name;

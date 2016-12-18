@@ -56,9 +56,9 @@ tt_errno *TTErrnoLocation(void);
 #define TTErrnoDetail		(TTErrnoLocation()->S)
 
 /* get human-readable string describing error number `e' */
-TT_FN_ATTR_CONST TT_CONST byte *TTStrError(ttuint e);
+TT_ATTR_FN_CONST TT_CONST byte *TTStrError(ttuint e);
 /* get human-readable string describing error number `e' and error detail number `s' */
-TT_FN_ATTR_CONST TT_CONST byte *TTStrErrorDetail(ttuint e, ttuint s);
+TT_ATTR_FN_CONST TT_CONST byte *TTStrErrorDetail(ttuint e, ttuint s);
 
 #ifdef __cplusplus
  }

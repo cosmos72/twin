@@ -15662,6 +15662,40 @@ esac
 
 
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for volatile" >&5
+$as_echo_n "checking for volatile... " >&6; }
+if ${ac_cv_c_volatile+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#undef volatile
+  int deref(int volatile * i) {
+    return *i;
+  }
+
+int
+main ()
+{
+
+  volatile int a = 3;
+  int b = deref(&a);
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ac_cv_c_volatile=yes
+else
+  ac_cv_c_volatile=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_c_volatile" >&5
+$as_echo "$ac_cv_c_volatile" >&6; }
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for gcc-compatible 'static inline'" >&5
 $as_echo_n "checking for gcc-compatible 'static inline'... " >&6; }
 if ${ac_cv_c_static_inline+:} false; then :
@@ -15720,7 +15754,7 @@ main ()
 }
 _ACEOF
 if ac_fn_c_try_compile "$LINENO"; then :
-  ac_cv_c_attribute_const=yes
+  ac_cv_c_attribute_const='__attribute__((const))'
 else
   ac_cv_c_attribute_const=no
 fi
@@ -15737,23 +15771,25 @@ else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
+#undef __attribute__
+  struct sp {
+    char a;
+    int b;
+  } __attribute__((packed));
+
 int
 main ()
 {
 
-#undef __attribute__
-  struct sp {
-    int a;
-    char b;
-  } __attribute__((packed));
-  struct sp s2;
+  struct sp s[2];
+  char compare_sizeof_packed_struct[ sizeof(struct sp) == sizeof(char) + sizeof(int) ? 1 : -1 ];
 
   ;
   return 0;
 }
 _ACEOF
 if ac_fn_c_try_compile "$LINENO"; then :
-  ac_cv_c_attribute_packed=yes
+  ac_cv_c_attribute_packed='__attribute__((packed))'
 else
   ac_cv_c_attribute_packed=no
 fi
@@ -15762,6 +15798,38 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_c_attribute_packed" >&5
 $as_echo "$ac_cv_c_attribute_packed" >&6; }
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for gcc-compatible 'attribute((aligned(1)))'" >&5
+$as_echo_n "checking for gcc-compatible 'attribute((aligned(1)))'... " >&6; }
+if ${ac_cv_c_attribute_aligned_1+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+
+int
+main ()
+{
+
+#undef __attribute__
+  char buf[2 * sizeof(int)];
+  int * __attribute__((aligned(1))) p = buf + 1;
+  *(int * __attribute__((aligned(1))))p = 0;
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ac_cv_c_attribute_aligned_1='__attribute__((aligned(1)))'
+else
+  ac_cv_c_attribute_aligned_1=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_c_attribute_aligned_1" >&5
+$as_echo "$ac_cv_c_attribute_aligned_1" >&6; }
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for gcc-compatible i386 assembler" >&5
 $as_echo_n "checking for gcc-compatible i386 assembler... " >&6; }
 if ${ac_cv_prog_gcc_i386_asm+:} false; then :
@@ -15769,6 +15837,7 @@ if ${ac_cv_prog_gcc_i386_asm+:} false; then :
 else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
+
 
 int
 main ()
@@ -17033,7 +17102,7 @@ for ac_func in  \
       hstrerror initgroups lstat memchr memcmp memmove memset munmap ptsname putenv \
       scandir select setenv setlocale sigaction socket strchr strdup strerror strrchr \
       strspn strstr strtol strtoul sysconf tcsetpgrp uname unlockpt usleep \
-      vprintf vsprintf vsnprintf wait3 wait4
+      versionsort vprintf vsprintf vsnprintf wait3 wait4
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
@@ -17692,6 +17761,35 @@ $as_echo "#define HAVE_INCLUDED_LTDL 1" >>confdefs.h
   SUBDIR_LIBLTDL=libltdl
 
 fi
+
+
+if test "$ac_cv_c_volatile" != "no"; then
+
+$as_echo "#define HAVE_VOLATILE 1" >>confdefs.h
+
+fi
+if test "$ac_cv_c_static_inline" != "no"; then
+
+$as_echo "#define HAVE_STATIC_INLINE 1" >>confdefs.h
+
+fi
+
+
+cat >>confdefs.h <<_ACEOF
+#define ATTR_FN_CONST `echo $ac_cv_c_attribute_const     | $SED -e 's/^no$//g'`
+_ACEOF
+
+
+cat >>confdefs.h <<_ACEOF
+#define ATTR_TYPE_PACKED `echo $ac_cv_c_attribute_packed    | $SED -e 's/^no$//g'`
+_ACEOF
+
+
+cat >>confdefs.h <<_ACEOF
+#define ATTR_PTR_ALIGNED_1 `echo $ac_cv_c_attribute_aligned_1 | $SED -e 's/^no$//g'`
+_ACEOF
+
+
 
 if test "$ac_cv_search_crypt" != "no"; then
 

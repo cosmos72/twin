@@ -17,51 +17,29 @@
 #define TW__STR(s) #s
 #define TW_STR(s) TW__STR(s)
 
-#if defined(CONST)
-# define TW_CONST CONST
-#else
+
+#ifndef TW_CONST
 # define TW_CONST const
 #endif
 
-/* inline is NOT a standard C feature :( */
-#if defined(INLINE)
-# define TW_INLINE INLINE
-#elif defined(TW_HAVE_STATIC_INLINE)
-# define TW_INLINE static inline
-#elif defined(TW_HAVE_INLINE) || defined(inline)
-# define TW_INLINE inline
-#else
-# define TW_INLINE static
+#ifndef TW_VOLATILE
+# if defined(TW_HAVE_VOLATILE) || defined(volatile)
+#  define TW_VOLATILE volatile
+# else
+#  define TW_VOLATILE
+# endif
 #endif
 
-#if defined(TW_HAVE_STATIC_INLINE) || defined(TW_HAVE_INLINE) || defined(inline)
-# define TW_CAN_INLINE 1
+/* inline is NOT a standard C89 feature :( */
+#ifndef TW_INLINE
+# if defined(TW_HAVE_STATIC_INLINE)
+#  define TW_INLINE static inline
+# elif defined(TW_HAVE_INLINE) || defined(inline)
+#  define TW_INLINE inline
+# else
+#  define TW_INLINE static
+# endif
 #endif
-
-#if defined(VOLATILE)
-# define TW_VOLATILE VOLATILE
-#else
-# define TW_VOLATILE volatile
-#endif
-
-#if defined(FN_ATTR_CONST)
-# define TW_FN_ATTR_CONST FN_ATTR_CONST
-#elif defined(TW_HAVE_ATTRIBUTE_CONST)
-# define TW_FN_ATTR_CONST __attribute__((const))
-#else
-# define TW_FN_ATTR_CONST
-#endif
-
-#if defined(TYPE_ATTR_PACKED)
-# define TW_TYPE_ATTR_PACKED TYPE_ATTR_PACKED
-#elif defined(TW_HAVE_ATTRIBUTE_PACKED)
-# define TW_TYPE_ATTR_PACKED __attribute__((packed))
-#else
-# define TW_TYPE_ATTR_PACKED
-#endif
-
-
-
 
 #endif /* _TW_COMPILER_H */
 

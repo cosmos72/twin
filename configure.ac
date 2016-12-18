@@ -166,7 +166,7 @@ AC_CHECK_FUNCS([ \
       hstrerror initgroups lstat memchr memcmp memmove memset munmap ptsname putenv \
       scandir select setenv setlocale sigaction socket strchr strdup strerror strrchr \
       strspn strstr strtol strtoul sysconf tcsetpgrp uname unlockpt usleep \
-      vprintf vsprintf vsnprintf wait3 wait4])
+      versionsort vprintf vsprintf vsnprintf wait3 wait4])
 
 AC_SEARCH_LIBS(crypt,          crypt)                 dnl crypt() is needed by twdm
 AC_SEARCH_LIBS(deflate,        z)
@@ -202,6 +202,19 @@ if test "$with_included_ltdl" = yes; then
 fi
 AC_SUBST(SUBDIR_LIBTT, ) dnl libTT is disabled
 
+
+if test "$ac_cv_c_volatile" != "no"; then
+  AC_DEFINE(HAVE_VOLATILE, 1, [Define to 1 if compiler supports 'volatile' keyword.])
+fi
+if test "$ac_cv_c_static_inline" != "no"; then
+  AC_DEFINE(HAVE_STATIC_INLINE, 1, [Define to 1 if compiler supports 'static inline' functions.])
+fi
+
+AC_DEFINE_UNQUOTED(ATTR_FN_CONST,      [`echo $ac_cv_c_attribute_const     | $SED -e 's/^no$//g'`], [Define to compiler's variant of __attribute__((const)),      or to empty if not supported.])
+AC_DEFINE_UNQUOTED(ATTR_TYPE_PACKED,   [`echo $ac_cv_c_attribute_packed    | $SED -e 's/^no$//g'`], [Define to compiler's variant of __attribute__((packed)),     or to empty if not supported.])
+AC_DEFINE_UNQUOTED(ATTR_PTR_ALIGNED_1, [`echo $ac_cv_c_attribute_aligned_1 | $SED -e 's/^no$//g'`], [Define to compiler's variant of __attribute__((aligned(1))), or to empty if not supported.])
+
+  
 if test "$ac_cv_search_crypt" != "no"; then
   AC_DEFINE(HAVE_CRYPT, 1, [Define to 1 if you have the `crypt'  function.])
 fi

@@ -43,12 +43,21 @@
 #endif
 
 
-#if !defined(CONST)
+#ifndef CONST
 # define CONST const
 #endif
 
-/* inline is NOT a standard C feature :( */
-#if !defined(INLINE)
+#ifndef VOLATILE
+# if defined(HAVE_VOLATILE) || defined(volatile)
+#  define VOLATILE volatile
+# else
+#  define VOLATILE
+# endif
+#endif
+
+
+/* inline is NOT a standard C89 feature :( */
+#ifndef INLINE
 # if defined(TW_HAVE_STATIC_INLINE)
 #  define INLINE static inline
 # elif defined(TW_HAVE_INLINE) || defined(inline)
@@ -57,33 +66,6 @@
 #  define INLINE static
 # endif
 #endif
-
-#if defined(TW_HAVE_STATIC_INLINE) || defined(TW_HAVE_INLINE) || defined(inline)
-# define CAN_INLINE 1
-#endif
-
-#if !defined(VOLATILE)
-# define VOLATILE volatile
-#endif
-
-#if !defined(FN_ATTR_CONST)
-# if defined(TW_HAVE_ATTRIBUTE_CONST)
-#  define FN_ATTR_CONST __attribute__((const))
-# else
-#  define FN_ATTR_CONST
-# endif
-#endif
-
-#if !defined(TYPE_ATTR_PACKED)
-# if defined(TW_HAVE_ATTRIBUTE_PACKED)
-#  define TYPE_ATTR_PACKED __attribute__((packed))
-# else
-#  define TYPE_ATTR_PACKED
-# endif
-#endif
-
-
-
 
 #endif /* _TWIN_COMPILER_H */
 

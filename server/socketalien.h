@@ -30,27 +30,29 @@
 #define POP(s,type,lval)		alienPOP(s,type,lval)
 /* wrap alienPUSH() to work with non-lvalue `val' */
 #define PUSH(s,type,val)		do {type tmp = (val); alienPUSH(s,type,tmp); } while(0)
-#define POPADDR(s,type,len,ptr)		PopAddr(s,type,len,ptr)
+#define POPADDR(s,type,len,ptr)		PopConstAddr(s,type,len,ptr)
 
 
+#if TW_IS_LITTLE_ENDIAN && TW_CAN_UNALIGNED != 0 /* little endian, and unaligned access is supported. hton?() functions to speed up translation */
 
-#if TW_IS_LITTLE_ENDIAN
-/* we can use hton?() functions to speed up translation */
-# include <netinet/in.h>
+#ifdef TW_HAVE_ARPA_INET_H
+# include <arpa/inet.h>  /* for htons(), htonl() */
+#endif
+#ifdef TW_HAVE_NETINET_IN_H
+# include <netinet/in.h> /* for htons(), htonl() - alternate location */
 #endif
 
-#if TW_IS_LITTLE_ENDIAN && TW_CAN_UNALIGNED != 0 /* due to lack of alignment */
 INLINE void FlipCopyMem(CONST byte *src, byte *dst, uldat len) {
     switch (len) {
       case 2:
-	*(uint16_t *)dst = htons(*(CONST uint16_t *)src);
+	*(uint16_t * TW_ATTR_PTR_ALIGNED_1)dst = htons(*(uint16_t CONST * TW_ATTR_PTR_ALIGNED_1)src);
 	break;
       case 4:
-	*(uint32_t *)dst = htonl(*(CONST uint32_t *)src);
+	*(uint32_t * TW_ATTR_PTR_ALIGNED_1)dst = htonl(*(uint32_t CONST * TW_ATTR_PTR_ALIGNED_1)src);
 	break;
       case 8:
-	((uint32_t *)dst)[0] = htonl(((CONST uint32_t *)src)[1]);
-	((uint32_t *)dst)[1] = htonl(((CONST uint32_t *)src)[0]);
+	((uint32_t * TW_ATTR_PTR_ALIGNED_1)dst)[0] = htonl(((uint32_t CONST * TW_ATTR_PTR_ALIGNED_1)src)[1]);
+	((uint32_t * TW_ATTR_PTR_ALIGNED_1)dst)[1] = htonl(((uint32_t CONST * TW_ATTR_PTR_ALIGNED_1)src)[0]);
 	break;
       default:
 	src += len - 1;
@@ -131,7 +133,7 @@ static void alienWrite(CONST byte *src, uldat srclen, byte *dst, uldat dstlen, b
 }
 
 /* convert alien type at (*src) to native and put it at (dst) */
-static void alienPop(CONST byte ** src, uldat alien_len, byte *dst, uldat len) {
+static void alienPop(byte CONST ** src, uldat alien_len, byte *dst, uldat len) {
     alienRead(*src, alien_len, dst, len, AlienXendian(Slot) == MagicAlienXendian);
     *src += alien_len;
 }
@@ -295,7 +297,7 @@ static void alienTranslateHWAttrV_CP437_to_UTF_16(hwattr *H, uldat Len) {
 }
 
 TW_INLINE ldat alienDecodeArg(uldat id, CONST byte * Format, uldat n, tsfield a, uldat mask[1], byte flag[1], ldat fail) {
-    CONST void *A;
+    void *A;
     void *av;
     topaque nlen;
     uldat a0;
@@ -443,7 +445,7 @@ TW_INLINE ldat alienDecodeArg(uldat id, CONST byte * Format, uldat n, tsfield a,
 	    POP(s,topaque,nlen);
 	    nlen *= sizeof(uldat);
 	    if (Left(nlen)) {
-		PopAddr(s,byte,nlen,av);
+		PopConstAddr(s,byte,nlen,av);
 		a[n]_vec = av;
 		a[n]_len = nlen / SIZEOF(uldat) * sizeof(uldat);
 		a[n]_type = vec_|obj_;
@@ -458,7 +460,7 @@ TW_INLINE ldat alienDecodeArg(uldat id, CONST byte * Format, uldat n, tsfield a,
 		    A = a[n]_vec;
 		    
 		if (A) {
-		    a[n]_vec = AllocId2ObjVec(flag, c, nlen/sizeof(uldat), (byte *)A);
+		    a[n]_vec = AllocId2ObjVec(flag, c, nlen/sizeof(uldat), (byte CONST *)A);
 		    FreeMem((void *)A);
 		    if (a[n]_vec) {
 			*mask |= *flag << n;
@@ -1053,7 +1055,7 @@ case CAT(TWS_,type): \
 		a[n]_len = nlen;
 		
 		if (!nlen || Left(nlen)) {
-		    void *addr;
+		    void CONST *addr;
 		    left -= nlen;
 		    POPADDR(data,byte,nlen,addr);
 		    a[n]_vec = addr;

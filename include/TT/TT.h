@@ -81,16 +81,16 @@ ttobj TTGetLast(ttclass Class);
 
 
 /** get size needed to store object `o' (i.e. sizeof(ttobj), NOT sizeof(*ttobj)) */
-TT_FN_ATTR_CONST ttuint  TTSizeOf(ttobj o);
+TT_ATTR_FN_CONST ttuint  TTSizeOf(ttobj o);
 
 /** return the class (runtime type) of `o' (will be one of the `TTClass_*' types) */
-TT_FN_ATTR_CONST ttclass TTClassOf(ttobj o);
+TT_ATTR_FN_CONST ttclass TTClassOf(ttobj o);
 
 /** return TT_TRUE if `o' can be cast to class represented by `Class' */
-TT_FN_ATTR_CONST ttbyte  TTInstanceOf(ttclass Class, ttobj o);
+TT_ATTR_FN_CONST ttbyte  TTInstanceOf(ttclass Class, ttobj o);
 
 /** return the name of the class of `o' (i.e "ttbutton", "ttwindow", ...) */
-TT_FN_ATTR_CONST TT_CONST TT_ARG_ARRAY_Z ttbyte *TTClassNameOf(ttobj o);
+TT_ATTR_FN_CONST TT_CONST TT_ARG_ARRAY_Z ttbyte *TTClassNameOf(ttobj o);
 
 
 

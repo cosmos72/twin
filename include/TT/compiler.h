@@ -17,9 +17,9 @@
 /** `volatile' if your compiler understands it, else nothing */
 #define TT_VOLATILE		TW_VOLATILE
 /** `__attribute__((const))' if your compiler understands it, else nothing */
-#define TT_FN_ATTR_CONST	TW_FN_ATTR_CONST
+#define TT_ATTR_FN_CONST	TW_ATTR_FN_CONST
 /** `__attribute__((packed))' if your compiler understands it, else nothing */
-#define TT_TYPE_ATTR_PACKED	TW_TYPE_ATTR_PACKED
+#define TT_ATTR_TYPE_PACKED	TW_ATTR_TYPE_PACKED
 
 
 /*

@@ -10,9 +10,16 @@
 
 #include <Tw/prefix.h>
 
+#ifdef _TW_H
+# include <Tw/compiler.h>
+#else
+# include <compiler.h>
+#endif
+
 #define PushV(s,len,vec)	(Tw(CopyMem)(vec, s, len), (s) += (len))
 #define PopV(s,len,vec)		(Tw(CopyMem)(s, vec, len), (s) += (len))
-#define PopAddr(s,type,len,ptr) ((ptr) = (len) ? (type *)(s) : (type *)0, (s) += (len))
+#define PopAddr(s,type,len,ptr)      ((ptr) = (len) ? (type           *)(s) : (type           *)0, (s) += (len))
+#define PopConstAddr(s,type,len,ptr) ((ptr) = (len) ? (type TW(CONST) *)(s) : (type TW(CONST) *)0, (s) += (len))
 
 
 #ifndef TW_CAN_UNALIGNED
@@ -27,8 +34,8 @@
 
 #if TW_CAN_UNALIGNED == 1
 
-# define Push(s,type,val)	(*(type *)(s) = (val), (s) += sizeof(type))
-# define Pop(s,type,lval)	((lval) = *(type TW(CONST) *)(s), (s) += sizeof(type))
+# define Push(s,type,val)	(*(type * TW_ATTR_PTR_ALIGNED_1)(s) = (val), (s) += sizeof(type))
+# define Pop(s,type,lval)	((lval) = *(type TW(CONST) * TW_ATTR_PTR_ALIGNED_1)(s), (s) += sizeof(type))
 
 #else /* TW_CAN_UNALIGNED == 0 */
 

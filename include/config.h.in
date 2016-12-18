@@ -3,6 +3,18 @@
 /* Define if building universal (internal helper macro) */
 #undef AC_APPLE_UNIVERSAL_BUILD
 
+/* Define to compiler's variant of __attribute__((const)), or to empty if not
+   supported. */
+#undef ATTR_FN_CONST
+
+/* Define to compiler's variant of __attribute__((aligned(1))), or to empty if
+   not supported. */
+#undef ATTR_PTR_ALIGNED_1
+
+/* Define to compiler's variant of __attribute__((packed)), or to empty if not
+   supported. */
+#undef ATTR_TYPE_PACKED
+
 /* Define to one of `_getb67', `GETB67', `getb67' for Cray-2 and Cray-YMP
    systems. This function is required for `alloca.c' support on those systems.
    */
@@ -291,6 +303,9 @@
 /* Define to 1 if you have the `socket' function. */
 #undef HAVE_SOCKET
 
+/* Define to 1 if compiler supports 'static inline' functions. */
+#undef HAVE_STATIC_INLINE
+
 /* Define to 1 if you have the <stdarg.h> header file. */
 #undef HAVE_STDARG_H
 
@@ -420,11 +435,17 @@
 /* Define to 1 if you have the `usleep' function. */
 #undef HAVE_USLEEP
 
+/* Define to 1 if you have the `versionsort' function. */
+#undef HAVE_VERSIONSORT
+
 /* Define to 1 if you have the `vfork' function. */
 #undef HAVE_VFORK
 
 /* Define to 1 if you have the <vfork.h> header file. */
 #undef HAVE_VFORK_H
+
+/* Define to 1 if compiler supports 'volatile' keyword. */
+#undef HAVE_VOLATILE
 
 /* Define to 1 if you have the `vprintf' function. */
 #undef HAVE_VPRINTF

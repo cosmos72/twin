@@ -638,7 +638,7 @@ tt_errno *TTErrnoLocation(void) {
     return (tt_errno *)t;
 }
 
-TT_FN_ATTR_CONST TT_CONST ttbyte *TTStrError(ttuint E) {
+TT_ATTR_FN_CONST TT_CONST ttbyte *TTStrError(ttuint E) {
     switch (E) {
       case 0:
 	return "success";
@@ -679,7 +679,7 @@ TT_FN_ATTR_CONST TT_CONST ttbyte *TTStrError(ttuint E) {
     }
 }
 
-TT_FN_ATTR_CONST TT_CONST ttbyte *TTStrErrorDetail(ttuint E, ttuint S) {
+TT_ATTR_FN_CONST TT_CONST ttbyte *TTStrErrorDetail(ttuint E, ttuint S) {
     static ttbyte buf[] = "255.255.255";
     
     switch (E) {

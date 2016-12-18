@@ -1449,9 +1449,9 @@ case CAT(TWS_,type): \
 		a[n]_len = nlen;
 		
 		if (nlen <= left) {
-		    void *addr;
+		    void CONST *addr;
 		    left -= nlen;
-		    PopAddr(data,byte,nlen,addr);
+		    PopConstAddr(data,byte,nlen,addr);
 		    a[n]_vec = addr;
 		    break;
 		}

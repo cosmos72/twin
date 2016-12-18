@@ -201,8 +201,8 @@ am__DIST_COMMON = $(srcdir)/Makefile.in $(top_srcdir)/admin/compile \
 	$(top_srcdir)/admin/config.sub $(top_srcdir)/admin/install-sh \
 	$(top_srcdir)/admin/ltmain.sh $(top_srcdir)/admin/missing \
 	COPYING COPYING.LIB INSTALL README admin/compile \
-	admin/config.guess admin/config.sub admin/depcomp \
-	admin/install-sh admin/ltmain.sh admin/missing
+	admin/config.guess admin/config.sub admin/install-sh \
+	admin/ltmain.sh admin/missing
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 distdir = $(PACKAGE)-$(VERSION)
 top_distdir = $(distdir)

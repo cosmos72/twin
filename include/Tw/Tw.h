@@ -124,7 +124,7 @@ typedef struct s_tevent_common *tevent_common;
 struct s_tevent_common {
     twidget W;
     udat Code, pad;
-} TW_TYPE_ATTR_PACKED;
+} TW_ATTR_TYPE_PACKED;
 
 typedef struct s_tevent_display *tevent_display;
 /** type for display-driver related events (not used by normal clients) */
@@ -133,7 +133,7 @@ struct s_tevent_display {
     udat Code, Len;
     dat X, Y;
     byte Data[sizeof(uldat)]; /* [len] bytes actually */
-} TW_TYPE_ATTR_PACKED;
+} TW_ATTR_TYPE_PACKED;
 #define TW_SIZEOF_TEVENT_DISPLAY (sizeof(struct s_tevent_display) - sizeof(uldat))
 
 /* Code */
@@ -161,7 +161,7 @@ struct s_tevent_keyboard {
     twidget W;
     udat Code, ShiftFlags, SeqLen;
     byte pad, AsciiSeq[1];  /* actually (SeqLen+1) bytes, including final \0 */
-} TW_TYPE_ATTR_PACKED;
+} TW_ATTR_TYPE_PACKED;
 
 typedef struct s_tevent_mouse *tevent_mouse;
 /** type for mouse events */
@@ -169,7 +169,7 @@ struct s_tevent_mouse {
     twidget W;
     udat Code, ShiftFlags;
     dat X, Y; /* these coords are relative to the widget top-left corner */
-} TW_TYPE_ATTR_PACKED;
+} TW_ATTR_TYPE_PACKED;
 
 typedef struct s_tevent_widget *tevent_widget;
 /** type for widget-related events (resize,expose,...) */
@@ -178,7 +178,7 @@ struct s_tevent_widget {
     udat Code, Flags;
     dat XWidth, YWidth;
     dat X, Y;
-} TW_TYPE_ATTR_PACKED;
+} TW_ATTR_TYPE_PACKED;
 
 /* some TW_MSG_WIDGET_CHANGE codes */
 #define TW_MSG_WIDGET_RESIZE	0
@@ -192,7 +192,7 @@ typedef struct s_tevent_gadget *tevent_gadget;
 struct s_tevent_gadget {
     twidget W;
     udat Code, Flags; /* the Flags of the gadget that was (de)activated */
-} TW_TYPE_ATTR_PACKED;
+} TW_ATTR_TYPE_PACKED;
 
 typedef struct s_tevent_menu *tevent_menu;
 /** type for menu-related events (user activation of a menu row) */
@@ -201,7 +201,7 @@ struct s_tevent_menu {
     udat Code, pad;
     tmenu Menu;
     trow Row;
-} TW_TYPE_ATTR_PACKED;
+} TW_ATTR_TYPE_PACKED;
 
 typedef struct s_tevent_selection *tevent_selection;
 /** type for 'user wants to paste selection' event */
@@ -209,7 +209,7 @@ struct s_tevent_selection {
     twidget W;
     udat Code, pad; /* unused */
     dat X, Y; /* these coords are absolute, to allow cross-window cut-n-paste */
-} TW_TYPE_ATTR_PACKED;
+} TW_ATTR_TYPE_PACKED;
 
 #define TW_MAX_MIMELEN 64
 
@@ -223,7 +223,7 @@ struct s_tevent_selectionnotify {
     byte MIME[TW_MAX_MIMELEN];
     uldat Len;
     byte Data[sizeof(uldat)]; /* Data[] is Len bytes actually */
-} TW_TYPE_ATTR_PACKED;
+} TW_ATTR_TYPE_PACKED;
 
 /*SelectionNotify Magic*/
 #define TW_SEL_TEXTMAGIC	((uldat)0x54657874)
@@ -240,7 +240,7 @@ struct s_tevent_selectionrequest {
     udat Code, pad; /* unused */
     tmsgport Requestor;
     uldat ReqPrivate;
-} TW_TYPE_ATTR_PACKED;
+} TW_ATTR_TYPE_PACKED;
 
 typedef struct s_tevent_control *tevent_control;
 /** type for inter-client control messages (quit,restart,open,dragndrop,...) */
@@ -249,7 +249,7 @@ struct s_tevent_control {
     udat Code, Len;
     dat X, Y;
     byte Data[sizeof(uldat)]; /* [Len+1] bytes actually, Data[Len] == '\0' */
-} TW_TYPE_ATTR_PACKED;
+} TW_ATTR_TYPE_PACKED;
 
 #define TW_SIZEOF_TEVENT_CONTROL (sizeof(struct s_tevent_control) - sizeof(uldat))
 
@@ -270,7 +270,7 @@ struct s_tevent_clientmsg {
 	udat d[sizeof(uldat)/sizeof(udat)];
 	uldat l[1];
     } Data; /* [Len] bytes actually */
-} TW_TYPE_ATTR_PACKED;
+} TW_ATTR_TYPE_PACKED;
 
 #define TW_SIZEOF_TEVENT_CLIENTMSG (sizeof(struct s_tevent_clientmsg) - sizeof(uldat))
 
@@ -289,7 +289,7 @@ union s_tevent_any {
     struct s_tevent_selectionrequest EventSelectionRequest;
     struct s_tevent_control   EventControl;
     struct s_tevent_clientmsg EventClientMsg;
-} TW_TYPE_ATTR_PACKED;
+} TW_ATTR_TYPE_PACKED;
 
 typedef struct s_tmsg *tmsg;
 /** type to send/receive events; contains union s_tevent_any */
@@ -298,7 +298,7 @@ struct s_tmsg {
     uldat Magic;	/* == msg_magic (if user-created) or == MSG_MAGIC (if received) */
     uldat Type;		/* only (udat) part is significative */
     union s_tevent_any Event;
-} TW_TYPE_ATTR_PACKED;
+} TW_ATTR_TYPE_PACKED;
 
 /* Msg Type : */
 #define TW_MSG_DISPLAY		((udat)0x0FFF)
