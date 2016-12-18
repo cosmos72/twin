@@ -31,7 +31,7 @@ install-exec-hook:
 	    CMD_ERR3="cross-compile detected, host system \"$(host_triplet)\" != build system \"$(build_triplet)\""; \
 	  fi; \
 	  if test "x$$CMD_ERR1$$CMD_ERR2$$CMD_ERR3" = x ; then \
-	    echo "$$CMD_LDCONFIG" ; \
+	    echo " $$CMD_LDCONFIG" ; \
 	    $$CMD_LDCONFIG ; \
 	  else \
 	    echo "[33;1m==================================================================="; \

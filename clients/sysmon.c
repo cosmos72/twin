@@ -104,10 +104,10 @@ uldat HBar(hwcol Col, uldat len, uldat scale, uldat frac) {
 	len += frac;
 	
 	if (frac * 4 >= scale && len >= scale)
-	    TwWriteMem(s++, 'Þ', 1), len -= scale;
+	    TwWriteMem(s++, '\xDE', 1), len -= scale;
 	else
 	    frac = 0;
-	TwWriteMem(s, 'Û', len/scale/2);
+	TwWriteMem(s, '\xDB', len/scale/2);
 	
 	TwWriteAsciiWindow(SysMon_Win, len/scale/2 + !!frac, buf);
 	

@@ -118,23 +118,23 @@ keylist TW_KeyList[] = {
 };
 
 
-hwfont GadgetResize[2] = {(byte)'Í', (byte)'¼'},
-ScrollBarX[3] = {(byte)'±', (byte)'\x11', (byte)'\x10'},
-ScrollBarY[3] = {(byte)'±', (byte)'\x1E', (byte)'\x1f'},
-TabX = (byte)'Û', TabY = (byte)'Û',
+hwfont GadgetResize[2] = {0xCD, 0xBC},
+ScrollBarX[3] = {0xB1, 0x11, 0x10},
+ScrollBarY[3] = {0xB1, 0x1E, 0x1f},
+TabX = 0xDB, TabY = 0xDB,
 StdBorder[2][9] =
 {
     {
-	(byte)'É',(byte)'Í',(byte)'»',
-	(byte)'º',(byte)' ',(byte)'º',
-	(byte)'È',(byte)'Í',(byte)'¼'
+	0xC9,0xCD,0xBB,
+	0xBA,0x20,0xBA,
+	0xC8,0xCD,0xBC
     }, {
-	(byte)'Ú',(byte)'Ä',(byte)'¿',
-	(byte)'³',(byte)' ',(byte)'³',
-	(byte)'À',(byte)'Ä',(byte)'Ù'
+	0xDA,0xC4,0xBF,
+	0xB3,0x20,0xB3,
+	0xC0,0xC4,0xD9
     }
 },
-Screen_Back[2] = { (byte)'\x12', (byte)'\x12' };
+Screen_Back[2] = { 0x12, 0x12 };
 
 
 hwcol DEFAULT_ColGadgets = COL(HIGH|YELLOW,CYAN),

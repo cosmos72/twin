@@ -47,12 +47,12 @@ static byte InitClip(void) {
 	TwItem4Menu(Clip_Menu, Window, FALSE, 6, " Clip ") &&
 	TwRow4Menu(Window, (udat)0, TW_ROW_INACTIVE,16, " Undo           ") &&
 	TwRow4Menu(Window, (udat)0, TW_ROW_INACTIVE,16, " Redo           ") &&
-	TwRow4Menu(Window, (udat)0, TW_ROW_IGNORE,  16, "컴컴컴컴컴컴컴컴") &&
+	TwRow4Menu(Window, (udat)0, TW_ROW_IGNORE,  16, "\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4") &&
 	TwRow4Menu(Window, (udat)0, TW_ROW_ACTIVE,  16, " Cut            ") &&
 	TwRow4Menu(Window, (udat)0, TW_ROW_ACTIVE,  16, " Copy           ") &&
 	TwRow4Menu(Window, (udat)0, TW_ROW_ACTIVE,  16, " Paste          ") &&
 	TwRow4Menu(Window, (udat)0, TW_ROW_ACTIVE,  16, " Clear          ") &&
-	TwRow4Menu(Window, (udat)0, TW_ROW_IGNORE,  16, "컴컴컴컴컴컴컴컴") &&
+	TwRow4Menu(Window, (udat)0, TW_ROW_IGNORE,  16, "\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4") &&
 	TwRow4Menu(Window, (udat)0, TW_ROW_INACTIVE,16, " Show Clipboard ") &&
 	(Window=TwWin4Menu(Clip_Menu)) &&
 	TwItem4Menu(Clip_Menu, Window, TRUE, 8, " Search ") &&

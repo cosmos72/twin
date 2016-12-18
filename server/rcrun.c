@@ -1030,15 +1030,15 @@ static byte USEDefaultCommonMenu(void) {
 	(Row = Row4Menu(W, 0, ROW_ACTIVE, 13," Maximize    ")) && (Row->Code = COD_COMMON_MAXIMIZE) &&
 	(Row = Row4Menu(W, 0, ROW_ACTIVE, 13," Full Screen ")) && (Row->Code = COD_COMMON_FULLSCREEN) &&
 	(Row = Row4Menu(W, 0, ROW_ACTIVE, 13," Roll Up     ")) && (Row->Code = COD_COMMON_ROLLTOGGLE) &&
-	       Row4Menu(W, 0, ROW_IGNORE, 13,"ÄÄÄÄÄÄÄÄÄÄÄÄÄ") &&
+	       Row4Menu(W, 0, ROW_IGNORE, 13,"\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4") &&
 	(Row = Row4Menu(W, 0, ROW_ACTIVE, 13," Raise/Lower ")) && (Row->Code = COD_COMMON_RAISELOWER) &&
 	(Row = Row4Menu(W, 0, ROW_ACTIVE, 13," UnFocus     ")) && (Row->Code = COD_COMMON_UNFOCUS) &&
 	(Row = Row4Menu(W, 0, ROW_ACTIVE, 13," Next        ")) && (Row->Code = COD_COMMON_NEXT) &&
 	(Row = Row4Menu(W, 0, ROW_ACTIVE, 13," List...     ")) && (Row->Code = COD_COMMON_WINDOWLIST) &&
-	Row4Menu(W, 0, ROW_IGNORE, 13,"ÄÄÄÄÄÄÄÄÄÄÄÄÄ") &&
+	Row4Menu(W, 0, ROW_IGNORE, 13,"\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4") &&
 	(Row = Row4Menu(W, 0, ROW_ACTIVE, 13," Refresh     ")) && (Row->Code = COD_COMMON_REFRESH) &&
 	(Row = Row4Menu(W, 0, ROW_ACTIVE, 13," Send HotKey ")) && (Row->Code = COD_COMMON_HOTKEY) &&
-	Row4Menu(W, 0, ROW_IGNORE, 13,"ÄÄÄÄÄÄÄÄÄÄÄÄÄ") &&
+	Row4Menu(W, 0, ROW_IGNORE, 13,"\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4") &&
 	(Row = Row4Menu(W, 0, ROW_ACTIVE, 13," Close       ")) && (Row->Code = COD_COMMON_CLOSE)) {
 
 	/* success */

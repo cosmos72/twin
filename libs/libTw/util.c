@@ -29,12 +29,12 @@ timevalue *InstantNow(timevalue *Now) {
     Now->Seconds = sysNow.tv_sec;
     Now->Fraction = sysNow.tv_usec MicroSECs;
 #elif defined(TW_HAVE_FTIME)
-    timeb sysNow;
+    struct timeb sysNow;
 
     ftime(&sysNow);
     
     Now->Seconds = sysNow.time;
-    Now->Fraction = sysNow.millitm  MilliSECs;
+    Now->Fraction = sysNow.millitm MilliSECs;
 #else
     Now->Seconds = time(NULL);
     Now->Fraction = 0;

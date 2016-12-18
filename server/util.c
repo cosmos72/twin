@@ -93,13 +93,10 @@ hwfont *CloneStr2HWFont(CONST byte *s, uldat len) {
 
 
 void NormalizeTime(timevalue *Time) {
-    while (Time->Fraction >= 1 FullSECs) {
-	Time->Seconds++;
-	Time->Fraction -= 1 FullSECs;
-    }
-    while (Time->Fraction < 0) {
-	Time->Seconds--;
-	Time->Fraction += 1 FullSECs;
+    if (Time->Fraction >= 1 FullSECs || Time->Fraction < 0) {
+	tany delta = Time->Fraction / 1 FullSECs;
+	Time->Seconds += delta;
+	Time->Fraction -= delta FullSECs;
     }
 }
 

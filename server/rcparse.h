@@ -1172,7 +1172,7 @@ static byte NewCommonMenu(void **shm_M, menu *res_CommonMenu,
 	    if (!(Line = (str )AllocMem(maxlen + 1)))
 		break;
 	    
-	    WriteMem(Line, 'Ä', maxlen);
+	    WriteMem(Line, 0xC4, maxlen);
 	    Line[maxlen] = '\0'; /* not strictly necessary */
 
 	    for (N = M->body; N; N = N->next) {
