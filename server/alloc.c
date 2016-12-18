@@ -154,8 +154,10 @@ void SetAlarm(unsigned seconds) {
         sigemptyset(&act.sa_mask);
         act.sa_flags = SA_RESETHAND;
         
-        if (sigaction(SIGALRM, &act, NULL) == 0)
+        if (sigaction(SIGALRM, &act, NULL) == 0) {
+            AlarmReceived = 0;
             alarm(seconds);
+        }
     } else {
         alarm(0);
         

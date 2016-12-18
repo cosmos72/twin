@@ -12,7 +12,7 @@
  */
 
 
-#include "twconfig.h"
+#include "twautoconf.h"
 
 #include <stdio.h>
 

@@ -58,7 +58,7 @@ struct tty_data {
     uldat tty_charset;
     Tutf_function tty_UTF_16_to_charset;
     Tutf_array tty_charset_to_UTF_16;
-    byte tty_can_utf8;
+    byte tty_use_utf8;
     dat ttypar[3];
     FILE *stdOUT;
     uldat saveCursorType;
@@ -90,7 +90,7 @@ struct tty_data {
 #define tty_charset	(ttydata->tty_charset)
 #define tty_UTF_16_to_charset	(ttydata->tty_UTF_16_to_charset)
 #define tty_charset_to_UTF_16	(ttydata->tty_charset_to_UTF_16)
-#define tty_can_utf8		(ttydata->tty_can_utf8)
+#define tty_use_utf8		(ttydata->tty_use_utf8)
 #define ttypar		(ttydata->ttypar)
 #define stdOUT		(ttydata->stdOUT)
 #define saveCursorType	(ttydata->saveCursorType)
@@ -135,7 +135,6 @@ static void stdin_Resize(dat x, dat y);
 static void stdout_FlushHW(void);
 
 static void tty_MogrifyUTF8(hwfont h);
-static byte utf8used;
 
 /* this can stay static, as it's used only as temporary storage */
 static hwcol _col;
@@ -251,15 +250,38 @@ static void stdout_FlushHW(void) {
 
 
 static void tty_MogrifyUTF8(hwfont h) {
-    byte c;
-    if (!utf8used)
-	utf8used = TRUE, fputs("\033%G", stdOUT);
-    if (h >= 0x800) {
-	c = (h >> 12) | 0xE0, putc(c, stdOUT);
-	c = ((h >> 6) & 0x3F) | 0x80, putc(c, stdOUT);
-    } else
-	c = (h >> 6) | 0xC0, putc(c, stdOUT);
-    c = (h & 0x3F) | 0x80, putc(c, stdOUT);
+    char buf[5];
+    
+    if (h <= 0x7FF) {
+	buf[0] = (h >> 6) | 0xC0;
+        buf[1] = (h & 0x3F) | 0x80;
+        buf[2] = 0;
+    }
+#if 1 /* hwfont is currently limited to 16 bits */
+    else {
+	buf[0] = (h >> 12) | 0xE0;
+	buf[1] = ((h >> 6) & 0x3F) | 0x80;
+        buf[2] = (h & 0x3F) | 0x80;
+        buf[3] = 0;
+    }
+#else /* ! 1 */
+    else if (h <= 0xFFFF) {
+	buf[0] = (h >> 12) | 0xE0;
+	buf[1] = ((h >> 6) & 0x3F) | 0x80;
+        buf[2] = (h & 0x3F) | 0x80;
+        buf[3] = 0;
+    } else if (h <= 0x10FFFF) {
+	buf[0] = (h >> 18) | 0xF0;
+	buf[1] = ((h >> 12) & 0x3F) | 0x80;
+	buf[2] = ((h >>  6) & 0x3F) | 0x80;
+        buf[3] = (h & 0x3F) | 0x80;
+        buf[4] = 0;
+    } else {
+        buf[0] = ' ';
+        buf[1] = 0;
+    }
+#endif
+    fputs(buf, stdOUT);
 }
 
 
@@ -293,7 +315,7 @@ static byte tty_InitHW(void) {
     }
     saveCursorType = (uldat)-1;
     tty_charset = (uldat)-1;
-    tty_can_utf8 = TRUE+TRUE; /* i.e. unknown */
+    tty_use_utf8 = TRUE+TRUE; /* i.e. unknown */
     saveX = saveY = 0;
     stdOUT = NULL;
     tty_fd = -1;
@@ -356,11 +378,11 @@ static byte tty_InitHW(void) {
 		arg = strchr(arg+8, ',');
 		HW->FlagsHW |= FlHWNoInput;
 	    } else if (!strncmp(arg, ",slow", 5)) {
-		arg = strchr(arg + 5, ',');
+		arg = strchr(arg+5, ',');
 		HW->FlagsHW |= FlHWExpensiveFlushVideo;
 	    } else if (!strncmp(arg, ",utf8", 5)) {
-		arg = strchr(arg + 5, ',');
-		tty_can_utf8 = TRUE;
+		tty_use_utf8 = !!strncmp(arg+5, "=no", 3);
+		arg = strchr(arg+5, ',');
 	    } else {
 		if (*arg == ',')
 		    arg++;
@@ -455,26 +477,13 @@ static byte tty_InitHW(void) {
     if (charset) {
         /* honor user-specified charset */
 	if ((tty_charset = Tutf_charset_id(charset)) == (uldat)-1)
-	    printk("      tty_InitHW(): libTutf warning: unknown charset `%." STR(TW_SMALLBUFF) "s', assuming `CP437'\n", charset);
+	    printk("      tty_InitHW(): libTutf warning: unknown charset `%." STR(TW_SMALLBUFF) "s', assuming `ASCII'\n", charset);
 	else if (tty_charset == Tutf_charset_id(T_NAME(UTF_16))) {
-	    printk("      tty_InitHW(): warning: charset `%." STR(TW_SMALLBUFF) "s' is Unicode,\n"
-		   "      handling as %." STR(TW_SMALLBUFF) "s (latin1) with utf8\n", charset, T_NAME(ISO8859_1));
-	    tty_charset = Tutf_charset_id(T_NAME(ISO8859_1));
-	    tty_can_utf8 = TRUE;
+	    printk("      tty_InitHW(): charset `%." STR(TW_SMALLBUFF) "s' is Unicode, assuming terminal supports UTF-8\n", charset);
+	    tty_use_utf8 = TRUE;
+            tty_charset = (uldat)-1;
 	}
 	FreeMem(charset);
-    }
-    else if (tty_TERM != NULL) {
-        /* autodetect some tty features */
-        if (!strcmp(tty_TERM, "xterm") || !strcmp(tty_TERM, "linux"))
-            tty_can_utf8 = TRUE;
-    }
-    if (tty_charset == (uldat)-1) {
-	tty_UTF_16_to_charset = Tutf_UTF_16_to_CP437;
-	tty_charset_to_UTF_16 = Tutf_CP437_to_UTF_16;
-    } else {
-	tty_UTF_16_to_charset = Tutf_UTF_16_to_charset_function(tty_charset);
-	tty_charset_to_UTF_16 = Tutf_charset_to_UTF_16_array(tty_charset);
     }
 
 #define TRY_V(name) (autotry_video + try_##name >= ALWAYS)
@@ -515,7 +524,7 @@ static byte tty_InitHW(void) {
 #ifdef CONF_HW_TTY_LINUX
             GPM_InitMouse() ||
 #else
-            (printk("      tty_InitHW(): gpm mouse support not compiled in, skipping.\n"), FALSE) ||
+            (printk("      tty_InitHW(): gpm mouse support not compiled, skipping it.\n"), FALSE) ||
 #endif
             xterm_InitMouse(force_mouse) ||
             null_InitMouseConfirm()) {
@@ -526,6 +535,14 @@ static byte tty_InitHW(void) {
 #endif
                 (autotry_kbd && stdin_InitKeyboard())) {
                 
+                if (tty_charset == (uldat)-1) {
+                    tty_UTF_16_to_charset = Tutf_UTF_16_to_ASCII;
+                    tty_charset_to_UTF_16 = Tutf_ASCII_to_UTF_16;
+                } else {
+                    tty_UTF_16_to_charset = Tutf_UTF_16_to_charset_function(tty_charset);
+                    tty_charset_to_UTF_16 = Tutf_charset_to_UTF_16_array(tty_charset);
+                }
+
 		/*
 		 * must be deferred until now, as HW-specific functions
 		 * can clobber HW->NeedHW

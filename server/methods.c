@@ -108,7 +108,7 @@ INLINE void RemoveGeneric(obj Obj, obj_parent Parent, ldat *ObjCount) {
 static obj CreateObj(fn_obj Fn_Obj) {
     obj Obj;
     
-    if ((Obj=(obj)AllocMem(Fn_Obj->Size))) {
+    if ((Obj=(obj)AllocMem0(Fn_Obj->Size, 1))) {
 	if (AssignId(Fn_Obj, Obj)) {
 	    (Obj->Fn = Fn_Obj)->Used++;
 	    Obj->Prev = Obj->Next = (obj)0;
@@ -122,7 +122,7 @@ static obj CreateObj(fn_obj Fn_Obj) {
 }
 
 static void InsertObj(obj Obj, obj Parent, obj Prev, obj Next) {
-    printk("twin: internal error: virtual function InsertObj() called!\n");
+    printk("twin: internal error: pure virtual function InsertObj() called!\n");
 #if 0
     if (!Obj->Parent && Parent) {
 	InsertGeneric(Obj, Parent, Prev, Next, (ldat *)0);
@@ -132,7 +132,7 @@ static void InsertObj(obj Obj, obj Parent, obj Prev, obj Next) {
 }
 
 static void RemoveObj(obj Obj) {
-    printk("twin: internal error: virtual function RemoveObj() called!\n");
+    printk("twin: internal error: pure virtual function RemoveObj() called!\n");
 #if 0
     if (Obj->Parent) {
 	RemoveGeneric(Obj, (obj_parent)Obj->Parent, (ldat *)0);

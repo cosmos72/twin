@@ -407,6 +407,7 @@ Tutf_array Tutf_charset_to_UTF_16_array(uldat id);
 
 
 /* specific translation functions */
+#define Tutf_UTF_16_to_ASCII      Tutf_UTF_16_to_ANSI_X3_4
 hwfont Tutf_UTF_16_to_ANSI_X3_4(hwfont c);
 hwfont Tutf_UTF_16_to_ISO_8859_1(hwfont c);
 hwfont Tutf_UTF_16_to_ISO_8859_2(hwfont c);
@@ -453,6 +454,7 @@ hwfont Tutf_UTF_16_to_KOI8_R(hwfont c);
 hwfont Tutf_UTF_16_to_KOI8_U(hwfont c);
 
 /* specific translation arrays */
+#define Tutf_ASCII_to_UTF_16     Tutf_ANSI_X3_4_to_UTF_16
 extern hwfont Tutf_ANSI_X3_4_to_UTF_16[0x100];
 extern hwfont Tutf_ISO_8859_1_to_UTF_16[0x100];
 extern hwfont Tutf_ISO_8859_2_to_UTF_16[0x100];

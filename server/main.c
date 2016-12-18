@@ -57,14 +57,13 @@ INLINE struct timeval *CalcSleepTime(struct timeval *sleeptime, msgport Port, ti
 
     if (Port->WakeUp) {
 	if (CmpTime(call, now) > 0) {
-	    sleeptime->tv_sec = call->Seconds - now->Seconds;
-	    if (call->Fraction >= now->Fraction) {
-		sleeptime->tv_usec = (call->Fraction - now->Fraction) / (1 MicroSECs);
-	    } else {
-		sleeptime->tv_usec = (1 FullSECs + call->Fraction - now->Fraction) / (1 MicroSECs);
-		sleeptime->tv_sec--;
-	    }
-	    got = 1;
+	    timevalue delta;
+
+            SubTime(&delta, call, now);
+            sleeptime->tv_sec = delta.Seconds;
+            sleeptime->tv_usec = delta.Fraction / (1 MicroSECs);
+	    
+            got = 1;
 	} else {
 	    sleeptime->tv_sec = (time_t)0;
 	    sleeptime->tv_usec = 0;

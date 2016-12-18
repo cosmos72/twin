@@ -9,8 +9,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "twconfig.h"
-#include "version.h"
+#include "twautoconf.h"
 
 #ifdef TW_HAVE_UNISTD_H
 # include <unistd.h>

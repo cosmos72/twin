@@ -95,7 +95,7 @@ IS(Down,	3, "\x1B[B")
     return TW_Null;
 }
 
-static byte *termcap_extract(byte *cap, byte **dest) {
+static char *termcap_extract(CONST char *cap, byte **dest) {
     char buf[20], *d = buf, *s = tgetstr(cap, &d);
 
     if (!s || !*s) {
@@ -139,13 +139,14 @@ static void fixup_colorbug(void) {
 }
 
 static byte termcap_InitVideo(void) {
-    byte *term = tty_TERM;
-    byte *tc_name[tc_cap_N + 1] = {
+    CONST byte *term = tty_TERM;
+    CONST char *tc_name[tc_cap_N + 1] = {
 	"cl", "cm", "ve", "vi", "md", "mb", "me", "ks", "ke", "bl", "as", "ae",
 	    "k1", "k2", "k3", "k4", "k5", "k6", "k7", "k8", "k9", "k;", "F1", "F2",
 	    "kD", "kI", "kN", "kP", "kl", "ku", "kr", "kd", NULL
     };
-    byte **n, **d;
+    CONST char **n;
+    byte **d;
     char tcbuf[2048];		/* by convention, this is enough */
 
     if (!term) {
@@ -162,47 +163,47 @@ static byte termcap_InitVideo(void) {
 	return FALSE;
       default:
 	printk("      termcap_InitVideo() failed: system call error in tgetent(): %."STR(TW_SMALLBUFF)"s\n",
-		strerror(errno));
+               strerror(errno));
 	return FALSE;
     }
-
-    if (tty_charset_to_UTF_16 != Tutf_CP437_to_UTF_16) {
-	tc_name[tc_seq_charset_start] = tc_name[tc_seq_charset_end] = NULL;
-	tc_charset_start = tc_charset_end = NULL;
-    }
-
+    
+    /* do not use alternate character set mode, i.e. "as" and "ae" ... it causes more problems than it solves */
+    tc_name[tc_seq_charset_start] = tc_name[tc_seq_charset_end] = "";
+    tc_charset_start = tc_charset_end = NULL;
+    
     for (n = tc_name, d = tc_cap; *n; n++, d++) {
-	if (*n && !termcap_extract(*n, d)) {
+	if (**n && !termcap_extract(*n, d)) {
 	    printk("      termcap_InitVideo() failed: Out of memory!\n");
 	    termcap_cleanup();
 	    return FALSE;
 	}
     }
-
+    
     if (!*tc_cursor_goto) {
 	printk("      termcap_InitVideo() failed: terminal misses `cursor goto' capability\n");
 	termcap_cleanup();
 	return FALSE;
     }
-
-    if (tty_can_utf8 == TRUE+TRUE)
-	/* cannot autodetect an utf8-capable terminal, assume it cannot do utf8 */
-	tty_can_utf8 = FALSE;
-    else if (tty_can_utf8 == TRUE)
-    {
+    
+    if (tty_use_utf8 == TRUE+TRUE) {
+	/* cannot really autodetect an utf8-capable terminal... use a whitelist */
+        uldat termlen = LenStr(term);
+	tty_use_utf8 = ((termlen == 5 && !CmpMem(term, "xterm", 5)) ||
+                        (termlen >= 6 && !CmpMem(term, "xterm-", 6)));
+    }
+    if (tty_use_utf8 == TRUE) {
         if (!(tc_charset_start = CloneStr("\033%G")) || !(tc_charset_end = CloneStr("\033%@")))
         {
 	    printk("      termcap_InitVideo() failed: Out of memory!\n");
 	    termcap_cleanup();
 	    return FALSE;
         }
-        utf8used = TRUE;
     }
-
+    
     wrapglitch = tgetflag("xn");
     if (colorbug)
 	fixup_colorbug();
-
+    
     fprintf(stdOUT, "%s%s%s", tc_attr_off, tc_scr_clear, tc_charset_start ? tc_charset_start : (byte *)"");
     
     HW->FlushVideo = termcap_FlushVideo;
@@ -240,14 +241,14 @@ static byte termcap_InitVideo(void) {
     HW->FlagsHW &= ~FlHWExpensiveFlushVideo;
     HW->NeedHW = 0;
     HW->merge_Threshold = 0;
-
+    
     LookupKey = termcap_LookupKey;
     
     return TRUE;
 }
 
 static void termcap_QuitVideo(void) {
-
+    
     termcap_MoveToXY(0, DisplayHeight-1);
     termcap_SetCursorType(LINECURSOR);
     /* reset colors and charset */
@@ -256,7 +257,7 @@ static void termcap_QuitVideo(void) {
     /* restore original alt cursor keys, keypad settings */
     HW->Configure(HW_KBDAPPLIC, TRUE, 0);
     HW->Configure(HW_ALTCURSKEYS, TRUE, 0);
-
+    
     termcap_cleanup();
     
     HW->QuitVideo = NoOp;
@@ -290,27 +291,28 @@ INLINE void termcap_SetColor(hwcol col) {
 	if ((col & COL(0,HIGH)) && !(_col & COL(0,HIGH)))
 	    colp = termcap_CopyAttr(tc_blink_on, colp);
     }
-        
-
+    
+    
     if ((col & COL(WHITE,WHITE)) != (_col & COL(WHITE,WHITE))) {
 	*colp++ = '\033'; *colp++ = '[';
-
+        
 	if ((col & COL(WHITE,0)) != (_col & COL(WHITE,0))) {
 	    *colp++ = '3';
 	    c = COLFG(col) & ~HIGH;
 	    *colp++ = VGA2ANSI(c) + '0';
 	    *colp++ = ';';
 	}
-
+        
 	if ((col & COL(0,WHITE)) != (_col & COL(0,WHITE))) {
 	    *colp++ = '4';
 	    c = COLBG(col) & ~HIGH;
 	    *colp++ = VGA2ANSI(c) + '0';
 	    *colp++ = 'm';
-	} else if (colp[-1] == ';')
-	    colp[-1] = 'm';
+	} else if (colp[-1] == ';') {
+            colp[-1] = 'm';
+        }
     }
-	
+    
     *colp = '\0';
     _col = col;
     
@@ -330,33 +332,33 @@ INLINE void termcap_Mogrify(dat x, dat y, uldat len) {
     
     V = Video + delta;
     oV = OldVideo + delta;
-	
+    
     for (; len; V++, oV++, x++, len--) {
 	if (!ValidOldVideo || *V != *oV) {
 	    if (!sending)
 		sending = TRUE, termcap_MoveToXY(x,y);
-
+            
 	    col = HWCOL(*V);
 	    
 	    if (col != _col)
 		termcap_SetColor(col);
-	
+            
 	    c = _c = HWFONT(*V);
-	    c = tty_UTF_16_to_charset(_c);
-	    if (tty_can_utf8 && (tty_charset_to_UTF_16[c] != _c || (utf8used && c >= 0x80))) {
-		/*
-		 * translation to charset did not find an exact match,
-		 * use utf-8 to output this char.
-		 * also use utf-8 if we already output ESC % G and we must putc(c >= 0x80),
-		 * which would be interpreted as part of an utf-8 sequence.
-		 */
-		tty_MogrifyUTF8(_c);
-		continue;
-	    }
-	    if (c < 32 || c == 127 || c == 128+27) {
-		/* can't display it */
-		c = T_CAT(Tutf_CP437_to_,T_MAP(US_ASCII))[c];
-	    }
+            if (c >= 128) {
+                if (tty_use_utf8) {
+                    /* use utf-8 to output this non-ASCII char */
+                    tty_MogrifyUTF8(_c);
+                    continue;
+                } else if (tty_charset_to_UTF_16[c] != c) {
+                    c = tty_UTF_16_to_charset(_c);
+                }
+            }
+            if (c < 32 || c == 127 || c == 128+27) {
+                /* can't display it */
+                c = Tutf_UTF_16_to_ASCII(_c);
+                if (c < 32 || c >= 127)
+                    c = 32;
+            }
 	    putc((char)c, stdOUT);
 	} else
 	    sending = FALSE;
@@ -367,6 +369,7 @@ INLINE void termcap_SingleMogrify(dat x, dat y, hwattr V) {
     hwfont c, _c;
     
     if (!wrapglitch && x == DisplayWidth-1 && y == DisplayHeight-1)
+        /* wrapglitch is required to write to last screen position without scrolling */
 	return;
     
     termcap_MoveToXY(x,y);
@@ -375,20 +378,20 @@ INLINE void termcap_SingleMogrify(dat x, dat y, hwattr V) {
 	termcap_SetColor(HWCOL(V));
 	
     c = _c = HWFONT(V);
-    c = tty_UTF_16_to_charset(c);
-    if (tty_can_utf8 && (tty_charset_to_UTF_16[c] != _c || (utf8used && c >= 0x80))) {
-	/*
-	 * translation to charset did not find an exact match,
-	 * use utf-8 to output this char
-	 * also use utf-8 if we already output ESC % G and we must putc(c >= 0x80),
-	 * which would be interpreted as part of an utf-8 sequence.
-	 */
-	tty_MogrifyUTF8(_c);
-	return;
+    if (c >= 128) {
+        if (tty_use_utf8) {
+            /* use utf-8 to output this non-ASCII char */
+            tty_MogrifyUTF8(_c);
+            return;
+        } else if (tty_charset_to_UTF_16[c] != c) {
+            c = tty_UTF_16_to_charset(_c);
+        }
     }
     if (c < 32 || c == 127 || c == 128+27) {
-	/* can't display it */
-	c = T_CAT(Tutf_CP437_to_,T_MAP(US_ASCII))[c];
+        /* can't display it */
+        c = Tutf_UTF_16_to_ASCII(_c);
+        if (c < 32 || c >= 127)
+            c = 32;
     }
     putc((char)c, stdOUT);
 }
@@ -399,9 +402,9 @@ static void termcap_ShowMouse(void) {
     uldat pos = (HW->Last_x = HW->MouseState.x) + (HW->Last_y = HW->MouseState.y) * (ldat)DisplayWidth;
     hwattr h  = Video[pos], 
 	c = HWATTR_COLMASK(~h) ^ HWATTR(COL(HIGH,HIGH),0);
-
+    
     termcap_SingleMogrify(HW->MouseState.x, HW->MouseState.y, c | HWATTR_FONTMASK(h));
-
+    
     /* force updating the cursor */
     HW->XY[0] = HW->XY[1] = -1;
     setFlush();
@@ -409,7 +412,7 @@ static void termcap_ShowMouse(void) {
 
 static void termcap_HideMouse(void) {
     uldat pos = HW->Last_x + HW->Last_y * (ldat)DisplayWidth;
-
+    
     termcap_SingleMogrify(HW->Last_x, HW->Last_y, Video[pos]);
 
     /* force updating the cursor */
@@ -439,17 +442,17 @@ static void termcap_UpdateMouseAndCursor(void) {
 	HW->ShowMouse();
 	HW->FlagsHW &= ~FlHWChangedMouseFlag;
     }
-
+    
     termcap_UpdateCursor();
 }
 
 static void termcap_ConfigureKeyboard(udat resource, byte todefault, udat value) {
     switch (resource) {
-      case HW_KBDAPPLIC:
+    case HW_KBDAPPLIC:
 	fputs(todefault || !value ? tc_kpad_on : tc_kpad_off, stdOUT);
 	setFlush();
 	break;
-      case HW_ALTCURSKEYS:
+    case HW_ALTCURSKEYS:
 	/*
 	 fputs(todefault || !value ? "\033[?1l" : "\033[?1h", stdOUT);
 	 setFlush();
@@ -460,18 +463,18 @@ static void termcap_ConfigureKeyboard(udat resource, byte todefault, udat value)
 
 static void termcap_Configure(udat resource, byte todefault, udat value) {
     switch (resource) {
-      case HW_KBDAPPLIC:
-      case HW_ALTCURSKEYS:
+    case HW_KBDAPPLIC:
+    case HW_ALTCURSKEYS:
 	HW->ConfigureKeyboard(resource, todefault, value);
 	break;
-      case HW_BELLPITCH:
-      case HW_BELLDURATION:
+    case HW_BELLPITCH:
+    case HW_BELLDURATION:
 	/* unsupported */
 	break;
-      case HW_MOUSEMOTIONEVENTS:
+    case HW_MOUSEMOTIONEVENTS:
 	HW->ConfigureMouse(resource, todefault, value);
 	break;
-      default:
+    default:
 	break;
     }
 }
@@ -482,18 +485,18 @@ static byte termcap_CanDragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft,
 
 static void termcap_DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
     udat delta = Up - DstUp;
-	
+    
     HW->HideMouse();
     HW->FlagsHW |= FlHWChangedMouseFlag;
-	
+    
     fprintf(stdOUT, "%s\033[0m%s",			/* hide cursor, reset color */
 	    tc_cursor_off, tgoto(tc_cursor_goto, 0, HW->Y-1));/* go to last line */
-	    
+    
     while (delta--)
 	putc('\n', stdOUT);
     
     setFlush();
-	
+    
     /* force updating the cursor */
     HW->XY[0] = HW->XY[1] = -1;
     
@@ -514,7 +517,7 @@ static void termcap_FlushVideo(void) {
 	HW->UpdateMouseAndCursor();
 	return;
     }
-
+    
     /* hide the mouse if needed */
     
     /* first, check the old mouse position */
@@ -550,7 +553,7 @@ static void termcap_FlushVideo(void) {
 	} else
 	    FlippedVideo = FALSE;
     }
-
+    
     termcap_MogrifyInit();
     if (HW->TT != NOCURSOR)
 	termcap_SetCursorType(HW->TT = NOCURSOR);
