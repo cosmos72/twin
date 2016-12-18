@@ -64,7 +64,7 @@ AC_CACHE_CHECK(for gcc-compatible i386 assembler, ac_cv_prog_gcc_i386_asm, AC_TR
 #undef asm
   asm ("\n\tmovl %eax,%eax"
        "\n\tpushl %ecx"
-       "\n\tpushl $1"
+       "\n\tpushl [$]1"
        "\n\tpopl %ecx"
        "\n\tpopl %ecx");
 #else

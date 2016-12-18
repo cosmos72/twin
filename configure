@@ -15847,7 +15847,7 @@ main ()
 #undef asm
   asm ("\n\tmovl %eax,%eax"
        "\n\tpushl %ecx"
-       "\n\tpushl "
+       "\n\tpushl $1"
        "\n\tpopl %ecx"
        "\n\tpopl %ecx");
 #else
