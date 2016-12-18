@@ -20,7 +20,7 @@
  * or referencing the variable All.
  */
 
-#include "twconfig.h"
+#include "twin.h"
 
 #ifdef TW_HAVE_SIGNAL_H
 # include <signal.h>
@@ -46,7 +46,6 @@
 
 #include "tty_ioctl.h"
 
-#include "twin.h"
 #include "hw.h"
 #include "common.h"
 

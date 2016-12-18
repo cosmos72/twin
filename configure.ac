@@ -196,12 +196,6 @@ fi
 
 
 # Output
-if test "$with_included_ltdl" = yes; then
-  AC_DEFINE(HAVE_INCLUDED_LTDL, 1, [Define to 1 if using the libltdl included with this package sources])
-  AC_SUBST(SUBDIR_LIBLTDL, libltdl)
-fi
-AC_SUBST(SUBDIR_LIBTT, ) dnl libTT is disabled
-
 
 if test "$ac_cv_c_volatile" != "no"; then
   AC_DEFINE(HAVE_VOLATILE, 1, [Define to 1 if compiler supports 'volatile' keyword.])
@@ -245,8 +239,20 @@ fi
 
 TW_FIX_CONFIG
 
+
+if test "$enable__dlopen" = yes ; then
+  AC_SUBST(LIBDL, "`echo \"$ac_cv_search_dlopen\"         | $SED -e 's/^none required$//g' -e 's/^no$//g'`")
+else
+  # if dlopen() or <dlfcn.h> are missing, or user specified --enable-dlopen=no, link against libtool
+  AC_SUBST(LIBDL, "$LIBLTDL")
+
+  if test "$with_included_ltdl" = yes ; then
+    AC_DEFINE(HAVE_INCLUDED_LTDL, 1, [Define to 1 if using the libltdl included with this package sources])
+    AC_SUBST(SUBDIR_LIBLTDL, libltdl)
+  fi
+fi
+
 AC_SUBST(LIBCRYPT,    "`echo \"$ac_cv_search_crypt\"          | $SED -e 's/^none required$//g' -e 's/^no$//g'`")
-AC_SUBST(LIBDL,       "`echo \"$ac_cv_search_dlopen\"         | $SED -e 's/^none required$//g' -e 's/^no$//g'`")
 AC_SUBST(LIBGGI,      "`echo \"$ac_cv_search_ggiOpen\"        | $SED -e 's/^none required$//g' -e 's/^no$//g'`")
 AC_SUBST(LIBGPM,      "`echo \"$ac_cv_search_Gpm_Open\"       | $SED -e 's/^none required$//g' -e 's/^no$//g'`")
 AC_SUBST(LIBSOCK,     "`echo \"$ac_cv_search_gethostbyname\"  | $SED -e 's/^none required$//g' -e 's/^no$//g'` `echo \"$ac_cv_search_socket\" | $SED -e 's/^none required$//g' -e 's/^no$//g'` `echo \"$ac_cv_search_connect\"  | $SED -e 's/^none required$//g' -e 's/^no$//g'`")
@@ -258,6 +264,7 @@ if test "$enable_socket_gz" = yes; then
 fi
 AC_SUBST(LIBTUTF,    '$(top_builddir)/libs/libTutf/libTutf.la')
 AC_SUBST(LIBTW,      '$(top_builddir)/libs/libTw/libTw.la')
+AC_SUBST(SUBDIR_LIBTT,                                    ) dnl libTT is disabled
 
 LIBS=
 

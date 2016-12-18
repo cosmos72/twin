@@ -93,10 +93,6 @@
 #include "rcparse.h"     /* needs rcparse_tab.h   */
 
 
-/* also put here the CONF_* and DEBUG_* used in rcparse.h so that MkDep catches them */
-#if defined(DEBUG_RC) || defined(DEBUG_FORK)
-#endif
-
 /*
  * try to get meaningful error messages
  */

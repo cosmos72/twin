@@ -12,7 +12,7 @@
 #ifndef _TWFIXCONFIG_H
 #define _TWFIXCONFIG_H
 
- /*
+/*
  * disable i386 gcc assembler code
  * if (tany) does not fit a i386 machine register (4 bytes)
  */

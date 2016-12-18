@@ -13,18 +13,13 @@
 #ifndef _TWIN_DL_HELPER_H
 #define _TWIN_DL_HELPER_H
 
-#ifndef _TWAUTOCONF_H
-#  include "twautoconf.h"
+#ifndef _TWIN_H
+# include "twin.h"
 #endif
 
 
-/* on unix-like systems, prefer dlopen() to lt_dlopen() if both are available */
-#ifdef __unix__
-# define TW_PREFER_DLOPEN
-#endif
+#ifdef CONF__DLOPEN
 
-
-#if defined(TW_HAVE_DLFCN_H) && defined(TW_HAVE_DLOPEN) && (defined(TW_PREFER_DLOPEN) || !defined(TW_HAVE_LTDL) || !defined(TW_HAVE_INCLUDED_LTDL))
 # include <dlfcn.h>
 # undef  dlinit           /* dlopen() requires no initialization */
 # define dlinit_once()    TRUE

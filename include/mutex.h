@@ -39,7 +39,7 @@
 #  define th_r_mutex_unlock(__mx)   th_mutex_unlock(__mx)
 #  define TH_R_MUTEX_HELPER_DEFS(attr) typedef th_r_mutex _th_r_mutex
 
-#else
+# else
 
 #  warning no recursive pthreads available, trying emulation
 

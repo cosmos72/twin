@@ -13,7 +13,7 @@
 #include <sys/stat.h>
 #include <signal.h>
 
-#include "twconfig.h"
+#include "twautoconf.h"
 
 #ifdef TW_HAVE_SYS_IOCTL_H
 # include <sys/ioctl.h>

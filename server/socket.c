@@ -17,23 +17,23 @@
  * "twconfig.h" and "osincludes.h" early to pull in TW_HAVE_* and system headers
  * necessary to include <sys/socket.h> under FreeBSD.
  */
-#include "twconfig.h"
+#include "twautoconf.h"
 #include "osincludes.h"
 
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <sys/stat.h>
 #include <netdb.h>
-#include <netinet/in.h>
 
+#ifdef TW_HAVE_NETINET_IN_H
+# include <netinet/in.h>
+#endif
 #ifdef TW_HAVE_SYS_IOCTL_H
 # include <sys/ioctl.h>
 #endif
-
 #ifdef TW_HAVE_SYS_UTSNAME_H
 # include <sys/utsname.h>
 #endif
-
 #ifdef TW_HAVE_ZLIB_H
 # include <zlib.h>
 #endif

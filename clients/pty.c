@@ -21,7 +21,8 @@
 # define _GNU_SOURCE
 # define _XOPEN_SOURCE
 
-#include "twconfig.h" /* not <Tw/autoconf.h> because we need CONF_TERM_DEVPTS */
+#include "twautoconf.h" /* for TW_HAVE_* macros */
+#include "twconfig.h"   /* for CONF_* macros */
 
 #ifdef TW_HAVE_STDLIB_H
 # include <stdlib.h>

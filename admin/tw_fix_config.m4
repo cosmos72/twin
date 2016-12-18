@@ -12,6 +12,10 @@ if test "$ac_cv_prog_gcc_i386_asm" = no; then
   enable__asm=no
 fi
 
+if test "$ac_cv_header_dlfcn_h" = no -o "$ac_cv_search_dlopen" = no; then
+  enable__dlopen=no
+fi
+
 if test "$ac_cv_search_socket" = no; then
   AC_MSG_WARN(missing socket(): disabling socket connections (libTw)!)
   enable_socket=no

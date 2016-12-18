@@ -31,7 +31,8 @@
  * "twconfig.h" and <Tw/osincludes.h> early to pull in TW_HAVE_* and system headers
  * necessary to include <sys/socket.h> under FreeBSD.
  */
-#include "twconfig.h" /* not <Tw/autoconf.h> because we also need CONF_SOCKET_PTHREADS */
+#include "twautoconf.h" /* for TW_HAVE* macros */
+#include "twconfig.h"   /* for CONF_* macros */
 #include <Tw/osincludes.h>
 
 #ifdef TW_HAVE_SIGNAL_H

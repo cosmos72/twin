@@ -13,6 +13,12 @@ AC_ARG_ENABLE(-asm,dnl
 enable__asm=yes
 )dnl
 
+dnl dlopen() and friends
+AC_ARG_ENABLE(-dlopen,dnl
+[  --enable--dlopen[=yes|no]              use dlopen() to load modules instead of libtool lt_dlopen()],,
+enable__dlopen=yes
+)dnl
+
 dnl socket server
 AC_ARG_ENABLE(socket,dnl
 [  --enable-socket[=yes|no]               enable remote socket connections (libTw) ],,

@@ -11,6 +11,7 @@
  */
 
 #include "dl_helper.h"
+#include "util.h"
 
 #ifdef dlinit
 byte dlinit_once(void) {
