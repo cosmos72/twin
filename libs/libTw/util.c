@@ -13,10 +13,10 @@
 #include <Tw/Tw.h>
 
 void NormalizeTime(timevalue *Time) {
-    if (Time->Fraction >= 1 FullSECs || Time->Fraction < 0) {
-	tany delta = Time->Fraction / 1 FullSECs;
+    if (Time->Fraction >= FullSEC || Time->Fraction < 0) {
+	tany delta = Time->Fraction / FullSEC;
 	Time->Seconds += delta;
-	Time->Fraction -= delta FullSECs;
+	Time->Fraction -= delta * FullSEC;
     }
 }
 
@@ -55,9 +55,8 @@ timevalue *DecrTime(timevalue *Time, TW_CONST timevalue *Decr) {
         Time->Fraction -= Decr->Fraction;
     else {
         Time->Seconds--;
-        Time->Fraction += (1 FullSECs - Decr->Fraction);
+        Time->Fraction += (FullSEC - Decr->Fraction);
     }
-    NormalizeTime(Time);
     return Time;
 }
 

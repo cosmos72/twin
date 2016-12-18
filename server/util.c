@@ -93,10 +93,10 @@ hwfont *CloneStr2HWFont(CONST byte *s, uldat len) {
 
 
 void NormalizeTime(timevalue *Time) {
-    if (Time->Fraction >= 1 FullSECs || Time->Fraction < 0) {
-	tany delta = Time->Fraction / 1 FullSECs;
+    if (Time->Fraction >= FullSEC || Time->Fraction < 0) {
+	tany delta = Time->Fraction / FullSEC;
 	Time->Seconds += delta;
-	Time->Fraction -= delta FullSECs;
+	Time->Fraction -= delta * FullSEC;
     }
 }
 
@@ -114,7 +114,7 @@ timevalue *InstantNow(timevalue *Now) {
     ftime(&sysNow);
     
     Now->Seconds = sysNow.time ;
-    Now->Fraction = sysNow.millitm  MilliSECs;
+    Now->Fraction = sysNow.millitm MilliSECs;
 #else
     Now->Seconds = time(NULL);
     Now->Fraction = 0;
@@ -123,21 +123,28 @@ timevalue *InstantNow(timevalue *Now) {
 }
 
 timevalue *IncrTime(timevalue *Time, timevalue *Incr) {
-    Time->Seconds+=Incr->Seconds;
-    Time->Fraction+=Incr->Fraction;
     NormalizeTime(Time);
+    NormalizeTime(Incr);
+    
+    Time->Seconds += Incr->Seconds;
+    if ((Time->Fraction += Incr->Fraction) >= FullSEC) {
+        Time->Seconds++;
+        Time->Fraction -= FullSEC;
+    }
     return Time;
 }
 
 timevalue *DecrTime(timevalue *Time, timevalue *Decr) {
+    NormalizeTime(Time);
+    NormalizeTime(Decr);
+
     Time->Seconds -= Decr->Seconds;
     if (Time->Fraction >= Decr->Fraction)
         Time->Fraction -= Decr->Fraction;
     else {
         Time->Seconds--;
-        Time->Fraction += (1 FullSECs - Decr->Fraction);
+        Time->Fraction += (FullSEC - Decr->Fraction);
     }
-    NormalizeTime(Time);
     return Time;
 }
 
@@ -155,16 +162,15 @@ dat CmpTime(timevalue *T1, timevalue *T2) {
     NormalizeTime(T1);
     NormalizeTime(T2);
     
-    if (T1->Seconds>T2->Seconds)
+    if (T1->Seconds > T2->Seconds)
 	return (dat)1;
-    else if (T1->Seconds==T2->Seconds) {
-	if (T1->Fraction>T2->Fraction)
-	    return (dat)1;
-	else if (T1->Fraction==T2->Fraction)
-	    return (dat)0;
-    }
-    
-    return (dat)-1;
+    if (T1->Seconds < T2->Seconds)
+	return (dat)-1;
+    if (T1->Fraction > T2->Fraction)
+        return (dat)1;
+    if (T1->Fraction < T2->Fraction)
+	    return (dat)-1;
+    return (dat)0;
 }
 
 static dat CmpCallTime(msgport m1, msgport m2) {
