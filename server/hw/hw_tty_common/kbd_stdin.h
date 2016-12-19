@@ -282,8 +282,6 @@ static udat linux_LookupKey(udat *ShiftFlags, byte *slen, byte *s, byte *retlen,
 
 
 
-static byte xterm_MouseData[10] = "\033[M#!!!!";
-
 static void stdin_KeyboardEvent(int fd, display_hw hw) {
     static byte buf[TW_SMALLBUFF];
     static fd_set rfds;
@@ -320,10 +318,10 @@ static void stdin_KeyboardEvent(int fd, display_hw hw) {
 	    while (got) {
 		if (got >= 6 && !memcmp(s, "\033[M", 3)) {
 		    /* classic xterm mouse reporting (X11 specs) */
-		    CopyMem(s, xterm_MouseData, chunk = 6);
+		    CopyMem(s, xterm_mouse_seq, xterm_mouse_len = chunk = 6);
 		} else if (got >= 9 && !memcmp(s, "\033[5M", 4)) {
 		    /* enhanced xterm-style reporting (twin specs) */
-		    CopyMem(s, xterm_MouseData, chunk = 9);
+		    CopyMem(s, xterm_mouse_seq, xterm_mouse_len = chunk = 9);
 		} else
 		    break;
 

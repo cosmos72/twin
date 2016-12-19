@@ -72,6 +72,9 @@ struct tty_data {
     int GPM_fd;
     int GPM_keys;
 #endif
+    byte xterm_mouse_seq[9];
+    byte xterm_mouse_len;
+    dat xterm_prev_x, xterm_prev_y;
 
 #ifdef CONF_HW_TTY_TERMCAP
     byte *tc_cap[tc_cap_N],
@@ -103,6 +106,11 @@ struct tty_data {
 #define GPM_Conn	(ttydata->GPM_Conn)
 #define GPM_fd		(ttydata->GPM_fd)
 #define GPM_keys	(ttydata->GPM_keys)
+
+#define xterm_mouse_seq (ttydata->xterm_mouse_seq)
+#define xterm_mouse_len (ttydata->xterm_mouse_len)
+#define xterm_prev_x    (ttydata->xterm_prev_x)
+#define xterm_prev_y    (ttydata->xterm_prev_y)
 
 #ifdef CONF_HW_TTY_TERMCAP
 # define tc_cap		(ttydata->tc_cap)
@@ -309,7 +317,7 @@ static byte tty_InitHW(void) {
 	need_persistent_slot = FALSE,
 	try_ctty = FALSE, display_is_ctty = FALSE;
 
-    if (!(HW->Private = (struct tty_data *)AllocMem(sizeof(struct tty_data)))) {
+    if (!(HW->Private = (struct tty_data *)AllocMem0(sizeof(struct tty_data), 1))) {
 	printk("      tty_InitHW(): Out of memory!\n");
 	return FALSE;
     }
