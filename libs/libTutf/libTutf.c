@@ -252,24 +252,22 @@ static Tutf_struct Tutf_structs[] = {
 static int strloosecmp(TUTF_CONST byte *s1, TUTF_CONST byte *s2) {
     byte c1, c2;
 
-    for (;;) {
-	c1 = *s1++;
-	if (c1 == '-' || c1 == '_' || c1 == '.' || c1 == ':')
-	    c1 = *s1++;
+    do {
+	while ((c1 = *s1++) && (c1 == ' ' || c1 == '-' || c1 == '_' || c1 == '.' || c1 == ':'))
+	    ;
 	
-	c2 = *s2++;
-	if (c2 == '-' || c2 == '_' || c2 == '.' || c2 == ':')
-	    c2 = *s2++;
-	
-	if (!c1 || !c2 ||
-	    !(c1 == c2 ||
-	      (c1 >= 'A' && c1 <= 'Z' && c1 + ('a'-'A') == c2) ||
-	      (c2 >= 'A' && c2 <= 'Z' && c2 + ('a'-'A') == c1)
-	     )
-	   )
-	    
-	    return (int)c1-(int)c2;
-    }
+	while ((c2 = *s2++) && (c2 == ' ' || c2 == '-' || c2 == '_' || c2 == '.' || c2 == ':'))
+	    ;
+
+        if (c1 >= 'A' && c1 <= 'Z')
+            c1 += 'a'-'A';
+
+        if (c2 >= 'A' && c2 <= 'Z')
+            c2 += 'a'-'A';
+
+    } while (c1 == c2 && c1 && c2);
+
+    return (int)c1-(int)c2;
 }
 
 uldat Tutf_charset_id(TUTF_CONST byte * alias) {
