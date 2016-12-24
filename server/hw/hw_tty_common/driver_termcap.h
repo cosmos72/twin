@@ -12,37 +12,44 @@ INLINE void termcap_MoveToXY(udat x, udat y) {
 
 
 static udat termcap_LookupKey(udat *ShiftFlags, byte *slen, byte *s, byte *retlen, byte **ret) {
-    byte len = *slen;
-    byte **key;
-    static struct {
+    struct linux_keys {
 	udat k;
 	byte l, *s;
-    } CONST linux_key[] = {
+    };
+    static struct linux_keys CONST linux_key[] = {
 # define IS(k, l, s) { CAT(TW_,k), l, s },
-IS(F1,		4, "\x1B[[A")
-IS(F2,		4, "\x1B[[B")
-IS(F3,		4, "\x1B[[C")
-IS(F4,		4, "\x1B[[D")
-IS(F5,		4, "\x1B[[E")
-IS(F6,		5, "\x1B[17~")
-IS(F7,		5, "\x1B[18~")
-IS(F8,		5, "\x1B[19~")
-IS(F9,		5, "\x1B[20~")
-IS(F10,		5, "\x1B[21~")
-IS(F11,		5, "\x1B[23~")
-IS(F12,		5, "\x1B[24~")
+IS(F1,		4, "\033[[A")
+IS(F2,		4, "\033[[B")
+IS(F3,		4, "\033[[C")
+IS(F4,		4, "\033[[D")
+IS(F5,		4, "\033[[E")
+IS(F6,		5, "\033[17~")
+IS(F7,		5, "\033[18~")
+IS(F8,		5, "\033[19~")
+IS(F9,		5, "\033[20~")
+IS(F10,		5, "\033[21~")
+IS(F11,		5, "\033[23~")
+IS(F12,		5, "\033[24~")
 
-IS(Delete,	4, "\x1B[3~")
-IS(Insert,	4, "\x1B[2~")
-IS(Next,	4, "\x1B[6~")
-IS(Prior,	4, "\x1B[5~")
-IS(Left,	3, "\x1B[D")
-IS(Up,		3, "\x1B[A")
-IS(Right,	3, "\x1B[C")
-IS(Down,	3, "\x1B[B")
+IS(Pause,       3, "\033[P")
+IS(Home,        4, "\033[1~")
+IS(End,         4, "\033[4~")
+IS(Delete,	4, "\033[3~")
+IS(Insert,	4, "\033[2~")
+IS(Next,	4, "\033[6~")
+IS(Prior,	4, "\033[5~")
+
+IS(Left,	3, "\033[D")
+IS(Up,		3, "\033[A")
+IS(Right,	3, "\033[C")
+IS(Down,	3, "\033[B")
 #undef IS
-    }, *lk;
+    };
+    struct linux_keys CONST *lk;
     
+    byte **key;
+    byte keylen, len = *slen;
+   
     *ret = s;
     *ShiftFlags = 0;
 
@@ -51,7 +58,7 @@ IS(Down,	3, "\x1B[B")
 	return TW_Null;
     }
     
-    if (len > 1 && *s == '\x1B') {
+    if (len > 1 && *s == '\033') {
 	
 	if (len == 2 && s[1] >= ' ' && s[1] <= '~') {
 	    /* try to handle ALT + <some key> */
@@ -60,10 +67,11 @@ IS(Down,	3, "\x1B[B")
 	    return (udat)s[1];
 	}
 	
-	for (key = &tc_cap[tc_key_first]; key < &tc_cap[tc_key_last]; key++) {
-	    if (*key && !strncmp(*key, s, len)) {
+	for (key = tc_cap + tc_key_first; key < tc_cap + tc_key_last; key++) {
+	    if (*key && **key && (keylen = strlen(*key)) <= len && !memcmp(*key, s, keylen)) {
 		lk = linux_key + (key - &tc_cap[tc_key_first]);
-		*slen = *retlen = lk->l;
+	        *slen = keylen;
+		*retlen = lk->l;
 		*ret = lk->s;
 		return lk->k;
 	    }
@@ -141,13 +149,13 @@ static void fixup_colorbug(void) {
 static byte termcap_InitVideo(void) {
     CONST byte *term = tty_TERM;
     CONST char *tc_name[tc_cap_N + 1] = {
-	"cl", "cm", "ve", "vi", "md", "mb", "me", "ks", "ke", "bl", "as", "ae",
-	    "k1", "k2", "k3", "k4", "k5", "k6", "k7", "k8", "k9", "k;", "F1", "F2",
-	    "kD", "kI", "kN", "kP", "kl", "ku", "kr", "kd", NULL
+        "cl", "cm", "ve", "vi", "md", "mb", "me", "ks", "ke", "bl", "as", "ae",
+        "k1", "k2", "k3", "k4", "k5", "k6", "k7", "k8", "k9", "k;", "F1", "F2",
+        "&7", "kh", "@7", "kD", "kI", "kN", "kP", "kl", "ku", "kr", "kd", NULL
     };
     CONST char **n;
     byte **d;
-    char tcbuf[2048];		/* by convention, this is enough */
+    char tcbuf[4096];		/* by convention, this is enough */
 
     if (!term) {
 	printk("      termcap_InitVideo() failed: unknown terminal type.\n");
@@ -449,8 +457,11 @@ static void termcap_UpdateMouseAndCursor(void) {
 static void termcap_ConfigureKeyboard(udat resource, byte todefault, udat value) {
     switch (resource) {
     case HW_KBDAPPLIC:
-	fputs(todefault || !value ? tc_kpad_on : tc_kpad_off, stdOUT);
-	setFlush();
+        /* on xterm, tc_kpad_off has the undesired side-effect of changing the sequences produced by cursor keys */
+        /*
+	 fputs(todefault || !value ? tc_kpad_on : tc_kpad_off, stdOUT);
+	 setFlush();
+	 */
 	break;
     case HW_ALTCURSKEYS:
 	/*

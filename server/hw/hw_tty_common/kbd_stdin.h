@@ -62,6 +62,13 @@ static byte stdin_TestTty(void) {
 /* return FALSE if failed */
 static byte stdin_InitKeyboard(void) {
 
+    if (LookupKey == NULL
+#if defined(CONF_HW_TTY_LINUX) || defined(CONF_HW_TTY_TWTERM)
+	&& CmpStr(tty_TERM, "linux") && CmpStr(tty_TERM, "twterm")
+#endif
+	)
+        return FALSE;
+   
     HW->keyboard_slot = RegisterRemote(tty_fd, (obj)HW, stdin_KeyboardEvent);
     if (HW->keyboard_slot == NOSLOT) {
 	stdin_QuitKeyboard();
@@ -70,7 +77,8 @@ static byte stdin_InitKeyboard(void) {
     HW->KeyboardEvent = stdin_KeyboardEvent;
     HW->QuitKeyboard = stdin_QuitKeyboard;
 
-    LookupKey = linux_LookupKey;
+    if (LookupKey == NULL)
+        LookupKey = linux_LookupKey;
     
     return TRUE;
 }

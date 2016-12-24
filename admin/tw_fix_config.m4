@@ -1,6 +1,5 @@
 m4_define([TW_FIX_CONFIG], [
 
-# FIXME: server/alloc.c expects getpagesize() to be a compile-time constant
 enable__alloc=no
 
 if test "$ac_cv_func_mmap_fixed_mapped" = no; then

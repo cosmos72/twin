@@ -69,7 +69,10 @@ static void termcap_DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, da
  * k; : f10 function key
  * F1 : f11 function key
  * F2 : f12 function key
- * [...]
+ * 
+ * &7 : Suspend key
+ * kh : Home key
+ * @7 : End key
  * kD : Delete (Remove) key
  * kI : Insert key
  * kN : Next Page key
@@ -95,8 +98,8 @@ enum {
 	tc_seq_last, tc_key_first = tc_seq_last,
 	
 	tc_key_FN = tc_key_first,
-	tc_key_Delete = tc_key_FN + 12, tc_key_Insert,
-	tc_key_Page_Down, tc_key_Page_Up,
+	tc_key_Suspend = tc_key_FN + 12, tc_key_Home, tc_key_End,
+	tc_key_Delete, tc_key_Insert, tc_key_Page_Down, tc_key_Page_Up,
 	tc_key_Left, tc_key_Up, tc_key_Right, tc_key_Down,
 
 	tc_key_last, tc_cap_N = tc_key_last
