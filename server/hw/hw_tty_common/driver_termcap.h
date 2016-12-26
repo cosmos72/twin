@@ -175,6 +175,8 @@ static byte termcap_InitVideo(void) {
 	return FALSE;
     }
     
+    tty_is_xterm = !strncmp(term, "xterm", 5);
+    
     /* do not use alternate character set mode, i.e. "as" and "ae" ... it causes more problems than it solves */
     tc_name[tc_seq_charset_start] = tc_name[tc_seq_charset_end] = "";
     tc_charset_start = tc_charset_end = NULL;
@@ -212,7 +214,7 @@ static byte termcap_InitVideo(void) {
     if (colorbug)
 	fixup_colorbug();
     
-    fprintf(stdOUT, "%s%s%s", tc_attr_off, tc_scr_clear, tc_charset_start ? tc_charset_start : (byte *)"");
+    fprintf(stdOUT, "%s%s%s%s", tc_attr_off, tc_scr_clear, (tc_charset_start ? (CONST char *)tc_charset_start : ""), (tty_is_xterm ? "\033[?1h" : ""));
     
     HW->FlushVideo = termcap_FlushVideo;
     HW->FlushHW = stdout_FlushHW;
@@ -457,11 +459,16 @@ static void termcap_UpdateMouseAndCursor(void) {
 static void termcap_ConfigureKeyboard(udat resource, byte todefault, udat value) {
     switch (resource) {
     case HW_KBDAPPLIC:
-        /* on xterm, tc_kpad_off has the undesired side-effect of changing the sequences produced by cursor keys */
-        /*
-	 fputs(todefault || !value ? tc_kpad_on : tc_kpad_off, stdOUT);
-	 setFlush();
-	 */
+        if (tty_is_xterm) {
+            fputs(todefault || !value ? tc_kpad_on : tc_kpad_off, stdOUT);
+            /*
+             * on xterm, tc_kpad_off has the undesired side-effect
+             * of changing the sequences produced by cursor keys,
+             * so we must restore the usual sequences
+             */
+            fputs("\033[?1h", stdOUT);
+            setFlush();
+        }
 	break;
     case HW_ALTCURSKEYS:
 	/*

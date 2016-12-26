@@ -58,7 +58,7 @@ struct tty_data {
     uldat tty_charset;
     Tutf_function tty_UTF_16_to_charset;
     Tutf_array tty_charset_to_UTF_16;
-    byte tty_use_utf8;
+    byte tty_use_utf8, tty_is_xterm;
     dat ttypar[3];
     FILE *stdOUT;
     uldat saveCursorType;
@@ -94,6 +94,7 @@ struct tty_data {
 #define tty_UTF_16_to_charset	(ttydata->tty_UTF_16_to_charset)
 #define tty_charset_to_UTF_16	(ttydata->tty_charset_to_UTF_16)
 #define tty_use_utf8		(ttydata->tty_use_utf8)
+#define tty_is_xterm		(ttydata->tty_is_xterm)
 #define ttypar		(ttydata->ttypar)
 #define stdOUT		(ttydata->stdOUT)
 #define saveCursorType	(ttydata->saveCursorType)
