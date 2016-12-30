@@ -31,7 +31,7 @@
 #define T_LIST(alias,EL)	T_CAT(T_LIST_,T_MAP(alias))(EL)
 #define T_NLIST(alias,EL)	T_CAT(T_NLIST_,T_MAP(alias))(EL)
 #define T_NAME(alias)		T_CAT(T_NAME_,T_MAP(alias))
-#define T_UTF(map,name)		T_CAT3(T_,T_MAP(map),name)
+#define T_UTF(alias,name)	T_CAT3(T_,T_MAP(alias),name)
 
 
 #define T_MAP_UTF_16	UTF_16
@@ -73,8 +73,8 @@
 #define T_MAP_LAT1		ISO8859_1
 #define T_MAP_LATIN1		ISO8859_1
 #define T_MAP_LATIN_1		ISO8859_1
-#define T_NAME_ISO_8859_1	"ISO-8859-1"
-#define T_ALIASES_ISO_8859_1	"ISO_8859-1:1987", "ISO8859-1", "819", "cp819", "ibm819", "iso-ir-100", "l1", "lat1", "latin1", "Latin-1"
+#define T_NAME_ISO8859_1	"ISO-8859-1"
+#define T_ALIASES_ISO8859_1	"ISO_8859-1:1987", "ISO8859-1", "819", "cp819", "ibm819", "iso-ir-100", "l1", "lat1", "latin1", "Latin-1"
 
 
 #define T_MAP_ISO_8859_2	ISO8859_2
@@ -86,8 +86,8 @@
 #define T_MAP_ISO_IR_101	ISO8859_2
 #define T_MAP_L2		ISO8859_2
 #define T_MAP_LATIN2		ISO8859_2
-#define T_NAME_ISO_8859_2	"ISO-8859-2"
-#define T_ALIASES_ISO_8859_2	"ISO_8859-2:1987", "ISO8859-2", "912", "cp912", "ibm912", "iso-ir-101", "l2", "latin2"
+#define T_NAME_ISO8859_2	"ISO-8859-2"
+#define T_ALIASES_ISO8859_2	"ISO_8859-2:1987", "ISO8859-2", "912", "cp912", "ibm912", "iso-ir-101", "l2", "latin2"
 
 
 #define T_MAP_ISO_8859_3	ISO8859_3
@@ -96,8 +96,8 @@
 #define T_MAP_ISO_IR_109	ISO8859_3
 #define T_MAP_L3		ISO8859_3
 #define T_MAP_LATIN3		ISO8859_3
-#define T_NAME_ISO_8859_3	"ISO-8859-3"
-#define T_ALIASES_ISO_8859_3	"ISO_8859-3:1988", "ISO8859-3", "iso-ir-109", "l3", "latin3"
+#define T_NAME_ISO8859_3	"ISO-8859-3"
+#define T_ALIASES_ISO8859_3	"ISO_8859-3:1988", "ISO8859-3", "iso-ir-109", "l3", "latin3"
 
 
 #define T_MAP_ISO_8859_4	ISO8859_4
@@ -106,8 +106,8 @@
 #define T_MAP_ISO_IR_110	ISO8859_4
 #define T_MAP_L4		ISO8859_4
 #define T_MAP_LATIN4		ISO8859_4
-#define T_NAME_ISO_8859_4	"ISO-8859-4"
-#define T_ALIASES_ISO_8859_4	"ISO_8859-4:1988", "ISO8859-4", "iso-ir-109", "l4", "latin4"
+#define T_NAME_ISO8859_4	"ISO-8859-4"
+#define T_ALIASES_ISO8859_4	"ISO_8859-4:1988", "ISO8859-4", "iso-ir-109", "l4", "latin4"
 
 
 #define T_MAP_ISO_8859_5	ISO8859_5
@@ -115,8 +115,8 @@
 #define T_MAP_ISO8859_5		ISO8859_5
 #define T_MAP_ISO_IR_144	ISO8859_5
 #define T_MAP_CYRILLIC		ISO8859_5
-#define T_NAME_ISO_8859_5	"ISO-8859-5"
-#define T_ALIASES_ISO_8859_5	"ISO_8859-5:1988", "ISO8859-5", "iso-ir-144", "cyrillic"
+#define T_NAME_ISO8859_5	"ISO-8859-5"
+#define T_ALIASES_ISO8859_5	"ISO_8859-5:1988", "ISO8859-5", "iso-ir-144", "cyrillic"
 
 
 #define T_MAP_ISO_8859_6	ISO8859_6
@@ -126,8 +126,8 @@
 #define T_MAP_ASMO_708		ISO8859_6
 #define T_MAP_ECMA_114		ISO8859_6
 #define T_MAP_ISO_IR_127	ISO8859_6
-#define T_NAME_ISO_8859_6	"ISO-8859-6"
-#define T_ALIASES_ISO_8859_6	"ISO_8859-6:1987", "ISO8859-6", "arabic", "ASMO-708", "ECMA-114", "iso-ir-127"
+#define T_NAME_ISO8859_6	"ISO-8859-6"
+#define T_ALIASES_ISO8859_6	"ISO_8859-6:1987", "ISO8859-6", "arabic", "ASMO-708", "ECMA-114", "iso-ir-127"
 
 
 #define T_MAP_ISO_8859_7	ISO8859_7
@@ -138,8 +138,8 @@
 #define T_MAP_ISO_IR_126	ISO8859_7
 #define T_MAP_ELOT_928		ISO8859_7
 #define T_MAP_ECMA_118		ISO8859_7
-#define T_NAME_ISO_8859_7	"ISO-8859-7"
-#define T_ALIASES_ISO_8859_7	"ISO_8859-7:1987", "ISO8859-7", "greek", "greek8", "iso-ir-126", "ECMA-118", "ELOT_928"
+#define T_NAME_ISO8859_7	"ISO-8859-7"
+#define T_ALIASES_ISO8859_7	"ISO_8859-7:1987", "ISO8859-7", "greek", "greek8", "iso-ir-126", "ECMA-118", "ELOT_928"
 
 
 #define T_MAP_ISO_8859_8	ISO8859_8
@@ -147,8 +147,8 @@
 #define T_MAP_ISO8859_8		ISO8859_8
 #define T_MAP_HEBREW		ISO8859_8
 #define T_MAP_ISO_IR_138	ISO8859_8
-#define T_NAME_ISO_8859_8	"ISO-8859-8"
-#define T_ALIASES_ISO_8859_8	"ISO_8859-8:1988", "ISO8859-8", "hebrew", "iso-ir-138"
+#define T_NAME_ISO8859_8	"ISO-8859-8"
+#define T_ALIASES_ISO8859_8	"ISO_8859-8:1988", "ISO8859-8", "hebrew", "iso-ir-138"
 
 
 #define T_MAP_ISO_8859_9	ISO8859_9
@@ -158,20 +158,20 @@
 #define T_MAP_LATIN5		ISO8859_9
 #define T_MAP_ISO_IR_148	ISO8859_9
 #define T_MAP_TURKISH		ISO8859_9
-#define T_NAME_ISO_8859_9	"ISO-8859-9"
-#define T_ALIASES_ISO_8859_9	"ISO_8859-9:1989", "ISO8859-9", "l5", "latin5", "iso-ir-148", "turkish"
+#define T_NAME_ISO8859_9	"ISO-8859-9"
+#define T_ALIASES_ISO8859_9	"ISO_8859-9:1989", "ISO8859-9", "l5", "latin5", "iso-ir-148", "turkish"
 
 
 #define T_MAP_ISO_8859_10	ISO8859_10
 #define T_MAP_ISO8859_10	ISO8859_10
-#define T_NAME_ISO_8859_10	"ISO-8859-10"
-#define T_ALIASES_ISO_8859_10	"ISO8859-10"
+#define T_NAME_ISO8859_10	"ISO-8859-10"
+#define T_ALIASES_ISO8859_10	"ISO8859-10"
 
 
 #define T_MAP_ISO_8859_11	ISO8859_11
 #define T_MAP_ISO8859_11	ISO8859_11
-#define T_NAME_ISO_8859_11	"ISO-8859-11"
-#define T_ALIASES_ISO_8859_11	"ISO_8859-11:2001", "ISO8859-11"
+#define T_NAME_ISO8859_11	"ISO-8859-11"
+#define T_ALIASES_ISO8859_11	"ISO_8859-11:2001", "ISO8859-11"
 
 
 #define T_MAP_ISO_8859_13	ISO8859_13
@@ -180,8 +180,8 @@
 #define T_MAP_LATIN7		ISO8859_13
 #define T_MAP_BALTIC		ISO8859_13
 #define T_MAP_ISO_IR_179A	ISO8859_13
-#define T_NAME_ISO_8859_13	"ISO-8859-13"
-#define T_ALIASES_ISO_8859_13	"ISO8859-13", "l7", "latin7", "iso-baltic", "iso-ir-179a"
+#define T_NAME_ISO8859_13	"ISO-8859-13"
+#define T_ALIASES_ISO8859_13	"ISO8859-13", "l7", "latin7", "iso-baltic", "iso-ir-179a"
 
 
 #define T_MAP_ISO_8859_14	ISO8859_14
@@ -190,8 +190,8 @@
 #define T_MAP_LATIN8		ISO8859_14
 #define T_MAP_CELTIC		ISO8859_14
 #define T_MAP_ISO_IR_199	ISO8859_14
-#define T_NAME_ISO_8859_14	"ISO-8859-14"
-#define T_ALIASES_ISO_8859_14	"ISO8859-14", "l8", "latin8", "iso-celtic", "iso-ir-199"
+#define T_NAME_ISO8859_14	"ISO-8859-14"
+#define T_ALIASES_ISO8859_14	"ISO8859-14", "l8", "latin8", "iso-celtic", "iso-ir-199"
 
 
 #define T_MAP_ISO_8859_15	ISO8859_15
@@ -200,14 +200,14 @@
 #define T_MAP_LATIN9		ISO8859_15
 #define T_MAP_EURO		ISO8859_15
 #define T_MAP_ISO_IR_203	ISO8859_15
-#define T_NAME_ISO_8859_15	"ISO-8859-15"
-#define T_ALIASES_ISO_8859_15	"ISO8859-15", "l9", "latin9", "euro", "iso-ir-203"
+#define T_NAME_ISO8859_15	"ISO-8859-15"
+#define T_ALIASES_ISO8859_15	"ISO8859-15", "l9", "latin9", "euro", "iso-ir-203"
 
 
 #define T_MAP_ISO_8859_16	ISO8859_16
 #define T_MAP_ISO8859_16	ISO8859_16
-#define T_NAME_ISO_8859_16	"ISO-8859-16"
-#define T_ALIASES_ISO_8859_16	"ISO_8859-16:2001", "ISO8859-16", "latin10"
+#define T_NAME_ISO8859_16	"ISO-8859-16"
+#define T_ALIASES_ISO8859_16	"ISO_8859-16:2001", "ISO8859-16", "latin10"
 
 
 /*******************  Codepage / IBM  charsets  *************/
@@ -376,7 +376,7 @@
 #define T_MAP_WINDOWS_1250	CP1250
 #define T_MAP_SLAVIC	CP1250
 #define T_NAME_CP1250	"cp1250"
-#define T_ALIASES_CP1250	"1250", "ms-ee", "windows-1250", "slavic"
+#define T_ALIASES_CP1250	"1250", "ms-ee", "windows-1250", "slavic", "ms-latin2"
 
 
 #define T_MAP_CP1251	CP1251
@@ -385,56 +385,56 @@
 #define T_MAP_WINDOWS_1251	CP1251
 #define T_MAP_BULGARIAN	CP1251
 #define T_NAME_CP1251	"cp1251"
-#define T_ALIASES_CP1251	"1251", "ms-cyrl", "windows-1251", "bulgarian"
+#define T_ALIASES_CP1251	"1251", "windows-1251", "bulgarian", "ms-cyrillic", "ms-cyrl"
 
 
 #define T_MAP_CP1252	CP1252
 #define T_MAP_1252	CP1252
 #define T_MAP_WINDOWS_1252	CP1252
 #define T_NAME_CP1252	"cp1252"
-#define T_ALIASES_CP1252	"1252", "windows-1252"
+#define T_ALIASES_CP1252	"1252", "windows-1252", "ms-latin1"
 
 
 #define T_MAP_CP1253	CP1253
 #define T_MAP_1253	CP1253
 #define T_MAP_WINDOWS_1253	CP1253
 #define T_NAME_CP1253	"cp1253"
-#define T_ALIASES_CP1253	"1253", "windows-1253"
+#define T_ALIASES_CP1253	"1253", "windows-1253", "ms-greek"
 
 
 #define T_MAP_CP1254	CP1254
 #define T_MAP_1254	CP1254
 #define T_MAP_WINDOWS_1254	CP1254
 #define T_NAME_CP1254	"cp1254"
-#define T_ALIASES_CP1254	"1254", "windows-1254"
+#define T_ALIASES_CP1254	"1254", "windows-1254", "ms-turkish"
 
 
 #define T_MAP_CP1255	CP1255
 #define T_MAP_1255	CP1255
 #define T_MAP_WINDOWS_1255	CP1255
 #define T_NAME_CP1255	"cp1255"
-#define T_ALIASES_CP1255	"1255", "windows-1255"
+#define T_ALIASES_CP1255	"1255", "windows-1255", "ms-hebrew"
 
 
 #define T_MAP_CP1256	CP1256
 #define T_MAP_1256	CP1256
 #define T_MAP_WINDOWS_1256	CP1256
 #define T_NAME_CP1256	"cp1256"
-#define T_ALIASES_CP1256	"1256", "windows-1256"
+#define T_ALIASES_CP1256	"1256", "windows-1256", "ms-arabic"
 
 
 #define T_MAP_CP1257	CP1257
 #define T_MAP_1257	CP1257
 #define T_MAP_WINDOWS_1257	CP1257
 #define T_NAME_CP1257	"cp1257"
-#define T_ALIASES_CP1257	"1257", "windows-1257"
+#define T_ALIASES_CP1257	"1257", "windows-1257", "baltic-rim", "ms-baltic-rim"
 
 
 #define T_MAP_CP1258	CP1258
 #define T_MAP_1258	CP1258
 #define T_MAP_WINDOWS_1258	CP1258
 #define T_NAME_CP1258	"cp1258"
-#define T_ALIASES_CP1258	"1258", "windows-1258"
+#define T_ALIASES_CP1258	"1258", "windows-1258", "vietnamese", "ms-vietnamese"
 
 
 #define T_MAP_ADOBE_STDENC	ADOBE_STDENC
@@ -607,6 +607,12 @@
 #define T_ALIASES_APPLE_TURKISH	"macos-turkish"
 
 
+#define T_MAP_APPLE_UKRAINE	APPLE_UKRAINE
+#define T_MAP_MACOS_UKRAINE	APPLE_UKRAINE
+#define T_NAME_APPLE_UKRAINE	"apple-ukraine"
+#define T_ALIASES_APPLE_UKRAINE	"macos-ukraine"
+
+
 /*********** Microsoft charsets for Mac OS ******************/
 
 #define T_MAP_MS_MAC_CYRILLIC		MS_MAC_CYRILLIC
@@ -625,19 +631,15 @@
 #define T_ALIASES_MS_MAC_GREEK		"ms-macos-greek", "ms-macintosh-greek", "cp10006"
 
 
-#define T_MAP_MS_MAC_ICELANDIC		MS_MAC_ICELANDIC
-#define T_MAP_MS_MACOS_ICELANDIC	MS_MAC_ICELANDIC
-#define T_MAP_MS_MACINTOSH_ICELANDIC	MS_MAC_ICELANDIC
-#define T_MAP_CP10079			MS_MAC_ICELANDIC
-#define T_NAME_MS_MAC_ICELANDIC		"ms-mac-icelandic"
-#define T_ALIASES_MS_MAC_ICELANDIC	"ms-macos-icelandic", "ms-macintosh-icelandic", "cp10006"
-
-
-#define T_MAP_MS_MAC_ICELANDIC		MS_MAC_ICELANDIC
-#define T_MAP_MS_MACINTOSH_ICELANDIC	MS_MAC_ICELANDIC
-#define T_MAP_CP10079			MS_MAC_ICELANDIC
-#define T_NAME_MS_MAC_ICELANDIC		"ms-mac-icelandic"
-#define T_ALIASES_MS_MAC_ICELANDIC	"ms-macos-icelandic", "ms-macintosh-icelandic", "cp10006"
+#define T_MAP_MS_MAC_ICELAND		MS_MAC_ICELAND
+#define T_MAP_MS_MAC_ICELANDIC		MS_MAC_ICELAND
+#define T_MAP_MS_MACOS_ICELAND		MS_MAC_ICELAND
+#define T_MAP_MS_MACOS_ICELANDIC	MS_MAC_ICELAND
+#define T_MAP_MS_MACINTOSH_ICELAND	MS_MAC_ICELAND
+#define T_MAP_MS_MACINTOSH_ICELANDIC	MS_MAC_ICELAND
+#define T_MAP_CP10079			MS_MAC_ICELAND
+#define T_NAME_MS_MAC_ICELAND		"ms-mac-icelandic"
+#define T_ALIASES_MS_MAC_ICELAND	"ms-macos-icelandic", "ms-macintosh-icelandic", "cp10006"
 
 
 #define T_MAP_MS_MAC_LATIN2		MS_MAC_LATIN2
@@ -677,13 +679,15 @@
 
 
 #define T_MAP_ATARIST		ATARIST
+#define T_MAP_ATARI_ST		ATARIST
 #define T_NAME_ATARIST		"Atari ST"
-#define T_ALIASES_ATARIST
+#define T_ALIASES_ATARIST	"atarist"
 
 
 #define T_MAP_HP_ROMAN8		HP_ROMAN8
+#define T_MAP_HP_ROMAN_8	HP_ROMAN8
 #define T_NAME_HP_ROMAN8	"hp-roman8"
-#define T_ALIASES_HP_ROMAN8
+#define T_ALIASES_HP_ROMAN8	"hp-roman-8"
 
 
 #define T_MAP_JISX0201		JISX0201
@@ -702,12 +706,12 @@
 
 #define T_MAP_KOI8_R	KOI8_R
 #define T_NAME_KOI8_R	"koi8-r"
-#define T_ALIASES_KOI8_R
+#define T_ALIASES_KOI8_R	"cp878", "ibm878"
 
 
 #define T_MAP_KOI8_U	KOI8_U
 #define T_NAME_KOI8_U	"koi8-u"
-#define T_ALIASES_KOI8_U
+#define T_ALIASES_KOI8_U	"cp1168", "ibm1168"
 
 
 #define T_MAP_NEXTSTEP		NEXTSTEP
@@ -828,7 +832,6 @@ hwfont Tutf_UTF_16_to_APPLE_CELTIC(hwfont c);
 hwfont Tutf_UTF_16_to_APPLE_CENTEURO(hwfont c);
 hwfont Tutf_UTF_16_to_APPLE_CHINSIMP(hwfont c);
 hwfont Tutf_UTF_16_to_APPLE_CHINTRAD(hwfont c);
-hwfont Tutf_UTF_16_to_APPLE_CORPCHAR(hwfont c);
 hwfont Tutf_UTF_16_to_APPLE_CROATIAN(hwfont c);
 hwfont Tutf_UTF_16_to_APPLE_CYRILLIC(hwfont c);
 hwfont Tutf_UTF_16_to_APPLE_DEVANAGA(hwfont c);
@@ -944,7 +947,6 @@ extern hwfont Tutf_APPLE_CELTIC_to_UTF_16[0x100];
 extern hwfont Tutf_APPLE_CENTEURO_to_UTF_16[0x100];
 extern hwfont Tutf_APPLE_CHINSIMP_to_UTF_16[0x100];
 extern hwfont Tutf_APPLE_CHINTRAD_to_UTF_16[0x100];
-extern hwfont Tutf_APPLE_CORPCHAR_to_UTF_16[0x100];
 extern hwfont Tutf_APPLE_CROATIAN_to_UTF_16[0x100];
 extern hwfont Tutf_APPLE_CYRILLIC_to_UTF_16[0x100];
 extern hwfont Tutf_APPLE_DEVANAGA_to_UTF_16[0x100];

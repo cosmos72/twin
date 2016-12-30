@@ -9,19 +9,19 @@
  * 
  */
 
-#define T_ISO_8859_X T_MAP(ISO_8859_X)
+#define T_ISO8859_X T_MAP(ISO8859_X)
 
-hwfont T_CAT3(Tutf_,T_ISO_8859_X,_to_UTF_16)[0x100] = {
+hwfont T_CAT3(Tutf_,T_ISO8859_X,_to_UTF_16)[0x100] = {
 #define EL(x) T_UTF(UTF_16,x),
-    T_LIST(ISO_8859_X,EL)
+    T_LIST(ISO8859_X,EL)
 #undef EL
 };
 
-static byte T_CAT(flag_,T_ISO_8859_X);
+static byte T_CAT(flag_,T_ISO8859_X);
 
-static utf_to_ch T_CAT(array_,T_ISO_8859_X) [] = {
-#define EL(x) { T_UTF(UTF_16,x), T_UTF(ISO_8859_X,x) },
-    T_NLIST(ISO_8859_X,EL)
+static utf_to_ch T_CAT(array_,T_ISO8859_X) [] = {
+#define EL(x) { T_UTF(UTF_16,x), T_UTF(ISO8859_X,x) },
+    T_NLIST(ISO8859_X,EL)
 #undef EL
 
 #define BOX_(x,y) { T_UTF(UTF_16,T_CAT(_BOX_DRAWINGS_LIGHT,x)), y }, \
@@ -57,14 +57,14 @@ static utf_to_ch T_CAT(array_,T_ISO_8859_X) [] = {
     { T_UTF_16_LOWER_HALF_BLOCK,	'_' },
 };
 
-hwfont T_CAT(Tutf_UTF_16_to_,T_ISO_8859_X)(hwfont c) {
+hwfont T_CAT(Tutf_UTF_16_to_,T_ISO8859_X)(hwfont c) {
     static utf_to_ch key;
     TW_CONST utf_to_ch *res;
     
-    /* ISO_8859_X obviously cannot contain all unicode chars. this is just a best effort. */
-    if (!T_CAT(flag_,T_ISO_8859_X)) {
-	T_CAT(flag_,T_ISO_8859_X) = TRUE;
-	QSORT(T_CAT(array_,T_ISO_8859_X));
+    /* ISO8859_X obviously cannot contain all unicode chars. this is just a best effort. */
+    if (!T_CAT(flag_,T_ISO8859_X)) {
+	T_CAT(flag_,T_ISO8859_X) = TRUE;
+	QSORT(T_CAT(array_,T_ISO8859_X));
     }
     if (c == key.utf)
 	return key.ch;
@@ -72,13 +72,13 @@ hwfont T_CAT(Tutf_UTF_16_to_,T_ISO_8859_X)(hwfont c) {
 	/* direct-to-font area */
 	(c >= ' ' && c <= '~') ||
 	/* ASCII area */
-	(c > '~' && c < 0x100 && T_CAT3(Tutf_,T_ISO_8859_X,_to_UTF_16)[c] == c))
+	(c > '~' && c < 0x100 && T_CAT3(Tutf_,T_ISO8859_X,_to_UTF_16)[c] == c))
 	/* c has the same meaning in Unicode and this charset... sheer luck! */
 
 	return c & 0x00ff;
     
     key.utf = c;
-    res = BSEARCH(&key, T_CAT(array_,T_ISO_8859_X));
+    res = BSEARCH(&key, T_CAT(array_,T_ISO8859_X));
     
     if (res)
 	c = res->ch;
@@ -90,4 +90,4 @@ hwfont T_CAT(Tutf_UTF_16_to_,T_ISO_8859_X)(hwfont c) {
     return key.ch = c;
 }
 
-#undef T_ISO_8859_X
+#undef T_ISO8859_X

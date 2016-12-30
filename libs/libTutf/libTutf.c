@@ -59,51 +59,51 @@ static TUTF_CONST utf_to_ch *my_bsearch(TUTF_CONST utf_to_ch *key, TUTF_CONST ut
 
 #include "ascii.c" /* hand-tuned */
 
-#define ISO_8859_X ISO_8859_1
-#include "iso_8859_x.c"
-#undef ISO_8859_X
-#define ISO_8859_X ISO_8859_2
-#include "iso_8859_x.c"
-#undef ISO_8859_X
-#define ISO_8859_X ISO_8859_3
-#include "iso_8859_x.c"
-#undef ISO_8859_X
-#define ISO_8859_X ISO_8859_4
-#include "iso_8859_x.c"
-#undef ISO_8859_X
-#define ISO_8859_X ISO_8859_5
-#include "iso_8859_x.c"
-#undef ISO_8859_X
-#define ISO_8859_X ISO_8859_6
-#include "iso_8859_x.c"
-#undef ISO_8859_X
-#define ISO_8859_X ISO_8859_7
-#include "iso_8859_x.c"
-#undef ISO_8859_X
-#define ISO_8859_X ISO_8859_8
-#include "iso_8859_x.c"
-#undef ISO_8859_X
-#define ISO_8859_X ISO_8859_9
-#include "iso_8859_x.c"
-#undef ISO_8859_X
-#define ISO_8859_X ISO_8859_10
-#include "iso_8859_x.c"
-#undef ISO_8859_X
-#define ISO_8859_X ISO_8859_11
-#include "iso_8859_x.c"
-#undef ISO_8859_X
-#define ISO_8859_X ISO_8859_13
-#include "iso_8859_x.c"
-#undef ISO_8859_X
-#define ISO_8859_X ISO_8859_14
-#include "iso_8859_x.c"
-#undef ISO_8859_X
-#define ISO_8859_X ISO_8859_15
-#include "iso_8859_x.c"
-#undef ISO_8859_X
-#define ISO_8859_X ISO_8859_16
-#include "iso_8859_x.c"
-#undef ISO_8859_X
+#define ISO8859_X ISO8859_1
+#include "iso8859_x.c"
+#undef ISO8859_X
+#define ISO8859_X ISO8859_2
+#include "iso8859_x.c"
+#undef ISO8859_X
+#define ISO8859_X ISO8859_3
+#include "iso8859_x.c"
+#undef ISO8859_X
+#define ISO8859_X ISO8859_4
+#include "iso8859_x.c"
+#undef ISO8859_X
+#define ISO8859_X ISO8859_5
+#include "iso8859_x.c"
+#undef ISO8859_X
+#define ISO8859_X ISO8859_6
+#include "iso8859_x.c"
+#undef ISO8859_X
+#define ISO8859_X ISO8859_7
+#include "iso8859_x.c"
+#undef ISO8859_X
+#define ISO8859_X ISO8859_8
+#include "iso8859_x.c"
+#undef ISO8859_X
+#define ISO8859_X ISO8859_9
+#include "iso8859_x.c"
+#undef ISO8859_X
+#define ISO8859_X ISO8859_10
+#include "iso8859_x.c"
+#undef ISO8859_X
+#define ISO8859_X ISO8859_11
+#include "iso8859_x.c"
+#undef ISO8859_X
+#define ISO8859_X ISO8859_13
+#include "iso8859_x.c"
+#undef ISO8859_X
+#define ISO8859_X ISO8859_14
+#include "iso8859_x.c"
+#undef ISO8859_X
+#define ISO8859_X ISO8859_15
+#include "iso8859_x.c"
+#undef ISO8859_X
+#define ISO8859_X ISO8859_16
+#include "iso8859_x.c"
+#undef ISO8859_X
 
 #include "cp437.c" /* hand-tuned */
 #include "cp850.c" /* hand-tuned */
@@ -327,11 +327,11 @@ static TUTF_CONST utf_to_ch *my_bsearch(TUTF_CONST utf_to_ch *key, TUTF_CONST ut
 
 #define _NLIST(EL) \
 	EL(T_MAP(ASCII)) \
-	EL(T_MAP(ISO_8859_1)) EL(T_MAP(ISO_8859_2)) EL(T_MAP(ISO_8859_3)) \
-	EL(T_MAP(ISO_8859_4)) EL(T_MAP(ISO_8859_5)) EL(T_MAP(ISO_8859_6)) \
-	EL(T_MAP(ISO_8859_7)) EL(T_MAP(ISO_8859_8)) EL(T_MAP(ISO_8859_9)) \
-	EL(T_MAP(ISO_8859_10)) EL(T_MAP(ISO_8859_11)) EL(T_MAP(ISO_8859_13)) \
-	EL(T_MAP(ISO_8859_14)) EL(T_MAP(ISO_8859_15)) EL(T_MAP(ISO_8859_16)) \
+	EL(T_MAP(ISO8859_1)) EL(T_MAP(ISO8859_2)) EL(T_MAP(ISO8859_3)) \
+	EL(T_MAP(ISO8859_4)) EL(T_MAP(ISO8859_5)) EL(T_MAP(ISO8859_6)) \
+	EL(T_MAP(ISO8859_7)) EL(T_MAP(ISO8859_8)) EL(T_MAP(ISO8859_9)) \
+	EL(T_MAP(ISO8859_10)) EL(T_MAP(ISO8859_11)) EL(T_MAP(ISO8859_13)) \
+	EL(T_MAP(ISO8859_14)) EL(T_MAP(ISO8859_15)) EL(T_MAP(ISO8859_16)) \
         \
 	EL(T_MAP(CP424)) EL(T_MAP(CP437)) EL(T_MAP(CP737)) EL(T_MAP(CP775)) \
         EL(T_MAP(CP850)) EL(T_MAP(CP852)) EL(T_MAP(CP855)) EL(T_MAP(CP856)) \
@@ -345,7 +345,7 @@ static TUTF_CONST utf_to_ch *my_bsearch(TUTF_CONST utf_to_ch *key, TUTF_CONST ut
 	EL(T_MAP(ADOBE_STDENC)) EL(T_MAP(ADOBE_SYMBOL)) \
 	\
 	EL(T_MAP(APPLE_ARABIC)) EL(T_MAP(APPLE_CELTIC)) EL(T_MAP(APPLE_CENTEURO)) \
-	EL(T_MAP(APPLE_CHINSIMP)) EL(T_MAP(APPLE_CHINTRAD)) EL(T_MAP(APPLE_CORPCHAR)) \
+	EL(T_MAP(APPLE_CHINSIMP)) EL(T_MAP(APPLE_CHINTRAD)) \
 	EL(T_MAP(APPLE_CROATIAN)) EL(T_MAP(APPLE_CYRILLIC)) EL(T_MAP(APPLE_DEVANAGA)) \
 	EL(T_MAP(APPLE_DINGBATS)) EL(T_MAP(APPLE_FARSI)) EL(T_MAP(APPLE_GAELIC)) \
 	EL(T_MAP(APPLE_GREEK)) EL(T_MAP(APPLE_GUJARATI)) EL(T_MAP(APPLE_GURMUKHI)) \
