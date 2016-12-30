@@ -99,15 +99,18 @@ static struct s_all _All = {
     { { {0, }, }, }, /* ButtonVec[] */
 
     
-    {	    /* LAT1_MAP mapped to Unicode -- it's the identity */
-	    NULL,
-	    /* IBMPC_MAP mapped to Unicode -- get from libTutf */
-	    Tutf_CP437_to_UTF_16,
-	    /* USER_MAP */
-	    GtransUser
+    {
+	/* VT100GR_MAP mapped to Unicode -- get from libTutf */
+	Tutf_VT100GR_to_UTF_16,
+        /* LATIN1_MAP mapped to Unicode -- it's the identity */
+        NULL,
+	/* IBMPC_MAP mapped to Unicode -- get from libTutf */
+	Tutf_CP437_to_UTF_16,
+	/* USER_MAP */
+	GtransUser
     },
 };
-all All = &_All;
+all CONST All = &_All;
 
 
 keylist TW_KeyList[] = {

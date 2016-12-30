@@ -14,7 +14,7 @@ extern CONST byte * CONST pkg_libdir_modules_;
 
 extern palette Palette[MAXCOL+1], defaultPalette[MAXCOL+1];
 
-extern all All;
+extern all CONST All;
 
 typedef struct keylist keylist;
 struct keylist {

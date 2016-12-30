@@ -1464,7 +1464,7 @@ static byte combine_utf8(hwfont *pc) {
 /* this is the main entry point */
 void TtyWriteAscii(window Window, ldat Len, CONST byte *AsciiSeq) {
     hwfont c;
-    byte ok;
+    byte ok, utf8_in_use;
     
     if (!Window || !Len || !AsciiSeq || !W_USE(Window, USECONTENTS) || !Window->USE.C.TtyData)
 	return;
@@ -1482,21 +1482,24 @@ void TtyWriteAscii(window Window, ldat Len, CONST byte *AsciiSeq) {
 	 * as the console would be pretty useless without them; to display an arbitrary
 	 * font position use the direct-to-font zone in UTF-8 mode.
 	 */
-	if (utf8) {
+        utf8_in_use = utf8 && !(*Flags & TTY_DISPCTRL);
+            
+	if (utf8_in_use) {
 	    if (c & 0x80) {
 		if (!combine_utf8(&c))
 		    continue;
 	    } else
 		utf8_count = 0;
 	} else {
-	    /* !utf8 */
+	    /* !utf8 || (*Flags & TTY_DISPCTRL) */
 	    if (*Flags & TTY_SETMETA)
 		c |= 0x80;
+            
 	}
 
-	ok = (c >= 32 || (!utf8 && !(((*Flags & TTY_DISPCTRL ? CTRL_ALWAYS : CTRL_ACTION) >> c) & 1)))
+	ok = (c >= 32 || (!utf8_in_use && !(((*Flags & TTY_DISPCTRL ? CTRL_ALWAYS : CTRL_ACTION) >> c) & 1)))
 	    && (c != 127 || (*Flags & TTY_DISPCTRL)) && (c != 128+27) &&
-	    (utf8 || (c = applyG((byte)c)));
+	    (utf8_in_use || (c = applyG((byte)c)));
 
 	
 	if (DState == ESnormal && ok) {
