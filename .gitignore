@@ -6,10 +6,10 @@
 *.so
 *.so.?
 *.so.?.?.?
+*.cache
 autom4te.cache
 libtool
 config.log
-config.cache
 config.status
 Makefile
 .deps
@@ -42,4 +42,5 @@ include/version.h
 server/twdisplay
 server/twin
 server/twin_server
-
+scripts/include
+scripts/txt

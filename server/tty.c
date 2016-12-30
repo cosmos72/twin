@@ -541,11 +541,15 @@ static void update_eff(void) {
 }
 
 # define setCharset(g) do switch ((currG = (g))) { \
-  case LAT1_MAP: \
+  case VT100G_MAP: \
     Charset = Tutf_ISO_8859_1_to_UTF_16; \
     InvCharset = Tutf_UTF_16_to_ISO_8859_1; \
     break; \
-  case IBMPC_MAP: \
+  case LATIN1_MAP: \
+    Charset = Tutf_ISO_8859_1_to_UTF_16; \
+    InvCharset = Tutf_UTF_16_to_ISO_8859_1; \
+    break; \
+  case IBM_PC_MAP: \
     Charset = Tutf_CP437_to_UTF_16; \
     InvCharset = Tutf_UTF_16_to_CP437; \
     break; \
@@ -603,7 +607,7 @@ INLINE void csi_m(void) {
 		* Select first alternate font, lets
 		* chars < 32 be displayed as ROM chars.
 		*/
-	setCharset(IBMPC_MAP);
+	setCharset(IBM_PC_MAP);
 	*Flags |= TTY_DISPCTRL;
 	*Flags &= ~TTY_SETMETA;
 	break;
@@ -611,7 +615,7 @@ INLINE void csi_m(void) {
 		* Select second alternate font, toggle
 		* high bit before displaying as ROM char.
 		*/
-	setCharset(IBMPC_MAP);
+	setCharset(IBM_PC_MAP);
 	*Flags |= TTY_DISPCTRL | TTY_SETMETA;
 	break;
       case 21:
@@ -904,8 +908,8 @@ static void reset_tty(byte do_clear) {
     
     G = saveG = 0;
     /* default to latin1 charset */
-    setCharset(G0 = saveG0 = LAT1_MAP);
-    G1 = saveG1 = GRAF_MAP;
+    setCharset(G0 = saveG0 = LATIN1_MAP);
+    G1 = saveG1 = VT100G_MAP;
 
     utf8 = utf8_count = utf8_char = 0;
     
@@ -1306,9 +1310,9 @@ INLINE void write_ctrl(byte c) {
 	
       case ESsetG0:
 	switch (c) {
-	  case '0': G0 = GRAF_MAP; break;
-	  case 'B': G0 = LAT1_MAP; break;
-	  case 'U': G0 = IBMPC_MAP; break;
+	  case '0': G0 = VT100G_MAP; break;
+	  case 'B': G0 = LATIN1_MAP; break;
+	  case 'U': G0 = IBM_PC_MAP; break;
 	  case 'K': G0 = USER_MAP; break;
 	  default: break;
 	}
@@ -1318,9 +1322,9 @@ INLINE void write_ctrl(byte c) {
 	
       case ESsetG1:
 	switch (c) {
-	  case '0': G1 = GRAF_MAP; break;
-	  case 'B': G1 = LAT1_MAP; break;
-	  case 'U': G1 = IBMPC_MAP; break;
+	  case '0': G1 = VT100G_MAP; break;
+	  case 'B': G1 = LATIN1_MAP; break;
+	  case 'U': G1 = IBM_PC_MAP; break;
 	  case 'K': G1 = USER_MAP; break;
 	  default: break;
 	}
@@ -1537,7 +1541,7 @@ void TtyWriteHWFont(window Window, ldat Len, CONST hwfont *HWFont) {
 	c = *HWFont++;
 	Len--;
 	
-	/* If the original code is 8-bit, behave as TtyWriteAscii() with LAT1_MAP*/
+	/* If the original code is 8-bit, behave as TtyWriteAscii() with LATIN1_MAP*/
 	if (c < 0x100) {
 	    if (*Flags & TTY_SETMETA)
 		c |= 0x80;

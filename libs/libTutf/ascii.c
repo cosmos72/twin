@@ -11,7 +11,7 @@
 
 hwfont T_CAT3(Tutf_,T_MAP(ASCII),_to_UTF_16)[0x100] = {
 #define EL(x) T_UTF(UTF_16,x),
-	T_LIST(ASCII,EL)
+	T_LIST(T_MAP(ASCII),EL)
 #undef EL
 };
 
