@@ -52,7 +52,7 @@ hwfont Tutf_UTF_16_to_CP437(hwfont c) {
     /* else c might have the same meaning in Unicode and this charset... */
     else if (c > '~')
 	/* try to approximate (todo) */
-	c = T_UTF(CP437,_NULL);
+	c = T_UTF(CP437,_CTRL_NULL);
     /* else c = c; */
 
     return key.ch = c;

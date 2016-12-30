@@ -145,10 +145,12 @@ typedef void (*fn_hook)(widget);
 #define NPAR		16
 
 /* ttydata->*G? */
-#define GRAF_MAP	0 /*GRAF_MAP: in the range 0x80 - 0xFF it's identical to LAT1_MAP*/
-#define LAT1_MAP	0
-#define IBMPC_MAP	1
-#define USER_MAP	2
+enum {
+    VT100GR_MAP = 0,
+    LATIN1_MAP = 1,
+    IBMPC_MAP = 2,
+    USER_MAP = 3,
+};
 
 typedef enum ttystate {
     ESnormal = 0, ESesc, ESsquare, ESgetpars, ESgotpars, ESfunckey,

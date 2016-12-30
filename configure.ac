@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.65])
-AC_INIT([twin], [0.6.3], [BUG-REPORT-ADDRESS])
+AC_INIT([twin], [0.7.4], [BUG-REPORT-ADDRESS])
 AC_CONFIG_SRCDIR([server/main.c])
 AC_CONFIG_HEADERS([include/config.h])
 AC_CONFIG_MACRO_DIR([m4])

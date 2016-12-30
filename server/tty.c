@@ -541,9 +541,13 @@ static void update_eff(void) {
 }
 
 # define setCharset(g) do switch ((currG = (g))) { \
-  case LAT1_MAP: \
-    Charset = Tutf_ISO_8859_1_to_UTF_16; \
-    InvCharset = Tutf_UTF_16_to_ISO_8859_1; \
+  case VT100GR_MAP: \
+    Charset = Tutf_VT100GR_to_UTF_16; \
+    InvCharset = Tutf_UTF_16_to_VT100GR; \
+    break; \
+  case LATIN1_MAP: \
+    Charset = Tutf_ISO8859_1_to_UTF_16; \
+    InvCharset = Tutf_UTF_16_to_ISO8859_1; \
     break; \
   case IBMPC_MAP: \
     Charset = Tutf_CP437_to_UTF_16; \
@@ -551,7 +555,7 @@ static void update_eff(void) {
     break; \
   case USER_MAP: \
     Charset = All->Gtranslations[USER_MAP]; \
-    InvCharset = Tutf_UTF_16_to_ISO_8859_1; /* very rough :( */ \
+    InvCharset = Tutf_UTF_16_to_ISO8859_1; /* very rough :( */ \
     break; \
 } while (0)
 
@@ -904,8 +908,8 @@ static void reset_tty(byte do_clear) {
     
     G = saveG = 0;
     /* default to latin1 charset */
-    setCharset(G0 = saveG0 = LAT1_MAP);
-    G1 = saveG1 = GRAF_MAP;
+    setCharset(G0 = saveG0 = LATIN1_MAP);
+    G1 = saveG1 = VT100GR_MAP;
 
     utf8 = utf8_count = utf8_char = 0;
     
@@ -1306,8 +1310,8 @@ INLINE void write_ctrl(byte c) {
 	
       case ESsetG0:
 	switch (c) {
-	  case '0': G0 = GRAF_MAP; break;
-	  case 'B': G0 = LAT1_MAP; break;
+	  case '0': G0 = VT100GR_MAP; break;
+	  case 'B': G0 = LATIN1_MAP; break;
 	  case 'U': G0 = IBMPC_MAP; break;
 	  case 'K': G0 = USER_MAP; break;
 	  default: break;
@@ -1318,8 +1322,8 @@ INLINE void write_ctrl(byte c) {
 	
       case ESsetG1:
 	switch (c) {
-	  case '0': G1 = GRAF_MAP; break;
-	  case 'B': G1 = LAT1_MAP; break;
+	  case '0': G1 = VT100GR_MAP; break;
+	  case 'B': G1 = LATIN1_MAP; break;
 	  case 'U': G1 = IBMPC_MAP; break;
 	  case 'K': G1 = USER_MAP; break;
 	  default: break;
@@ -1460,7 +1464,7 @@ static byte combine_utf8(hwfont *pc) {
 /* this is the main entry point */
 void TtyWriteAscii(window Window, ldat Len, CONST byte *AsciiSeq) {
     hwfont c;
-    byte ok;
+    byte printable, utf8_in_use, disp_ctrl, state_normal;
     
     if (!Window || !Len || !AsciiSeq || !W_USE(Window, USECONTENTS) || !Window->USE.C.TtyData)
 	return;
@@ -1478,24 +1482,33 @@ void TtyWriteAscii(window Window, ldat Len, CONST byte *AsciiSeq) {
 	 * as the console would be pretty useless without them; to display an arbitrary
 	 * font position use the direct-to-font zone in UTF-8 mode.
 	 */
-	if (utf8) {
-	    if (c & 0x80) {
-		if (!combine_utf8(&c))
-		    continue;
-	    } else
-		utf8_count = 0;
-	} else {
-	    /* !utf8 */
-	    if (*Flags & TTY_SETMETA)
-		c |= 0x80;
-	}
+	if ((state_normal = (DState == ESnormal))) {
+            disp_ctrl = *Flags & TTY_DISPCTRL;
+            utf8_in_use = utf8 && !disp_ctrl;
+            
+            if (utf8_in_use) {
+                if (c & 0x80) {
+                    if (!combine_utf8(&c))
+                        continue;
+                } else
+                    utf8_count = 0;
+                
+                printable = c >= 32 && c != 127 && c != 128+27;
 
-	ok = (c >= 32 || (!utf8 && !(((*Flags & TTY_DISPCTRL ? CTRL_ALWAYS : CTRL_ACTION) >> c) & 1)))
-	    && (c != 127 || (*Flags & TTY_DISPCTRL)) && (c != 128+27) &&
-	    (utf8 || (c = applyG((byte)c)));
+            } else {
+                if (*Flags & TTY_SETMETA)
+                    c |= 0x80;
+                
+                printable = (c >= 32 || !(((disp_ctrl ? CTRL_ALWAYS : CTRL_ACTION) >> c) & 1)) &&
+                    (c != 127 || disp_ctrl) && (c != 128+27);
 
-	
-	if (DState == ESnormal && ok) {
+                if (printable)
+                    c = applyG((byte)c);
+            }
+        } else
+            utf8_in_use = printable = FALSE;
+
+	if (printable && state_normal) {
 	    /* Now try to find out how to display it */
 	    if (*Flags & TTY_NEEDWRAP) {
 		cr();
@@ -1537,7 +1550,7 @@ void TtyWriteHWFont(window Window, ldat Len, CONST hwfont *HWFont) {
 	c = *HWFont++;
 	Len--;
 	
-	/* If the original code is 8-bit, behave as TtyWriteAscii() with LAT1_MAP*/
+	/* If the original code is 8-bit, behave as TtyWriteAscii() with LATIN1_MAP*/
 	if (c < 0x100) {
 	    if (*Flags & TTY_SETMETA)
 		c |= 0x80;

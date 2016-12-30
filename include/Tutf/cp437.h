@@ -6,7 +6,7 @@
 #define _TUTF_CP437_H
 
 
-#define T_CP437_NULL	0x0000
+#define T_CP437_CTRL_NULL	0x0000
 #define T_CP437_WHITE_SMILING_FACE	0x0001
 #define T_CP437_BLACK_SMILING_FACE	0x0002
 #define T_CP437_BLACK_HEART_SUIT	0x0003
@@ -265,7 +265,7 @@
 
 /* list of all characters */
 #define T_LIST_CP437(EL) \
-    EL(_NULL) \
+    EL(_CTRL_NULL) \
     EL(_WHITE_SMILING_FACE) \
     EL(_BLACK_SMILING_FACE) \
     EL(_BLACK_HEART_SUIT) \
@@ -525,7 +525,6 @@
 
 /* list of all characters NOT IDENTICALLY MAPPED to UTF-16 */
 #define T_NLIST_CP437(EL) \
-    EL(_NULL) \
     EL(_WHITE_SMILING_FACE) \
     EL(_BLACK_SMILING_FACE) \
     EL(_BLACK_HEART_SUIT) \

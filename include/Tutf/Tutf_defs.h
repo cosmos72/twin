@@ -16,27 +16,43 @@
 #include <Tutf/utf_16.h>
 #include <Tutf/ascii.h>
 
-#include <Tutf/iso_8859_1.h>
-#include <Tutf/iso_8859_2.h>
-#include <Tutf/iso_8859_3.h>
-#include <Tutf/iso_8859_4.h>
-#include <Tutf/iso_8859_5.h>
-#include <Tutf/iso_8859_6.h>
-#include <Tutf/iso_8859_7.h>
-#include <Tutf/iso_8859_8.h>
-#include <Tutf/iso_8859_9.h>
-#include <Tutf/iso_8859_10.h>
-#include <Tutf/iso_8859_13.h>
-#include <Tutf/iso_8859_14.h>
-#include <Tutf/iso_8859_15.h>
-#include <Tutf/iso_8859_16.h>
+#include <Tutf/adobe_stdenc.h>
+#include <Tutf/adobe_symbol.h>
 
+#include <Tutf/apple_arabic.h>
+#include <Tutf/apple_celtic.h>
+#include <Tutf/apple_centeuro.h>
+#include <Tutf/apple_chinsimp.h>
+#include <Tutf/apple_chintrad.h>
+#include <Tutf/apple_croatian.h>
+#include <Tutf/apple_cyrillic.h>
+#include <Tutf/apple_devanaga.h>
+#include <Tutf/apple_dingbats.h>
+#include <Tutf/apple_farsi.h>
+#include <Tutf/apple_gaelic.h>
+#include <Tutf/apple_greek.h>
+#include <Tutf/apple_gujarati.h>
+#include <Tutf/apple_gurmukhi.h>
+#include <Tutf/apple_hebrew.h>
+#include <Tutf/apple_iceland.h>
+#include <Tutf/apple_inuit.h>
+#include <Tutf/apple_japanese.h>
+#include <Tutf/apple_korean.h>
+#include <Tutf/apple_roman.h>
+#include <Tutf/apple_romanian.h>
+#include <Tutf/apple_symbol.h>
+#include <Tutf/apple_thai.h>
+#include <Tutf/apple_turkish.h>
+#include <Tutf/apple_ukraine.h>
+
+#include <Tutf/cp424.h>
 #include <Tutf/cp437.h>
 #include <Tutf/cp737.h>
 #include <Tutf/cp775.h>
 #include <Tutf/cp850.h>
 #include <Tutf/cp852.h>
 #include <Tutf/cp855.h>
+#include <Tutf/cp856.h>
 #include <Tutf/cp857.h>
 #include <Tutf/cp860.h>
 #include <Tutf/cp861.h>
@@ -47,7 +63,11 @@
 #include <Tutf/cp866.h>
 #include <Tutf/cp869.h>
 #include <Tutf/cp874.h>
-    
+#include <Tutf/cp932.h>
+#include <Tutf/cp936.h>
+#include <Tutf/cp949.h>
+#include <Tutf/cp950.h>
+#include <Tutf/cp1006.h>
 #include <Tutf/cp1250.h>
 #include <Tutf/cp1251.h>
 #include <Tutf/cp1252.h>
@@ -56,7 +76,42 @@
 #include <Tutf/cp1255.h>
 #include <Tutf/cp1256.h>
 #include <Tutf/cp1257.h>
+#include <Tutf/cp1258.h>
+
+#include <Tutf/iso8859_1.h>
+#include <Tutf/iso8859_2.h>
+#include <Tutf/iso8859_3.h>
+#include <Tutf/iso8859_4.h>
+#include <Tutf/iso8859_5.h>
+#include <Tutf/iso8859_6.h>
+#include <Tutf/iso8859_7.h>
+#include <Tutf/iso8859_8.h>
+#include <Tutf/iso8859_9.h>
+#include <Tutf/iso8859_10.h>
+#include <Tutf/iso8859_11.h>
+#include <Tutf/iso8859_13.h>
+#include <Tutf/iso8859_14.h>
+#include <Tutf/iso8859_15.h>
+#include <Tutf/iso8859_16.h>
+
+#include <Tutf/ms_mac_cyrillic.h>
+#include <Tutf/ms_mac_greek.h>
+#include <Tutf/ms_mac_iceland.h>
+#include <Tutf/ms_mac_latin2.h>
+#include <Tutf/ms_mac_roman.h>
+#include <Tutf/ms_mac_turkish.h>
+
+/* miscellaneous encodings */
+
+#include <Tutf/apl_iso_ir_68.h>
+#include <Tutf/atarist.h>
+#include <Tutf/hp_roman8.h>
+#include <Tutf/jisx0201.h>
+#include <Tutf/koi8_r.h>
+#include <Tutf/koi8_u.h>
+#include <Tutf/kz1048.h>
+#include <Tutf/nextstep.h>
+#include <Tutf/vt100gr.h>
 
 #endif /* _TUTF_DEFS_H */
-
 
