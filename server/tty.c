@@ -1464,7 +1464,7 @@ static byte combine_utf8(hwfont *pc) {
 /* this is the main entry point */
 void TtyWriteAscii(window Window, ldat Len, CONST byte *AsciiSeq) {
     hwfont c;
-    byte ok, utf8_in_use;
+    byte printable, utf8_in_use, disp_ctrl, state_normal;
     
     if (!Window || !Len || !AsciiSeq || !W_USE(Window, USECONTENTS) || !Window->USE.C.TtyData)
 	return;
@@ -1482,27 +1482,33 @@ void TtyWriteAscii(window Window, ldat Len, CONST byte *AsciiSeq) {
 	 * as the console would be pretty useless without them; to display an arbitrary
 	 * font position use the direct-to-font zone in UTF-8 mode.
 	 */
-        utf8_in_use = utf8 && !(*Flags & TTY_DISPCTRL);
+	if ((state_normal = (DState == ESnormal))) {
+            disp_ctrl = *Flags & TTY_DISPCTRL;
+            utf8_in_use = utf8 && !disp_ctrl;
             
-	if (utf8_in_use) {
-	    if (c & 0x80) {
-		if (!combine_utf8(&c))
-		    continue;
-	    } else
-		utf8_count = 0;
-	} else {
-	    /* !utf8 || (*Flags & TTY_DISPCTRL) */
-	    if (*Flags & TTY_SETMETA)
-		c |= 0x80;
-            
-	}
+            if (utf8_in_use) {
+                if (c & 0x80) {
+                    if (!combine_utf8(&c))
+                        continue;
+                } else
+                    utf8_count = 0;
+                
+                printable = c >= 32 && c != 127 && c != 128+27;
 
-	ok = (c >= 32 || (!utf8_in_use && !(((*Flags & TTY_DISPCTRL ? CTRL_ALWAYS : CTRL_ACTION) >> c) & 1)))
-	    && (c != 127 || (*Flags & TTY_DISPCTRL)) && (c != 128+27) &&
-	    (utf8_in_use || (c = applyG((byte)c)));
+            } else {
+                if (*Flags & TTY_SETMETA)
+                    c |= 0x80;
+                
+                printable = (c >= 32 || !(((disp_ctrl ? CTRL_ALWAYS : CTRL_ACTION) >> c) & 1)) &&
+                    (c != 127 || disp_ctrl) && (c != 128+27);
 
-	
-	if (DState == ESnormal && ok) {
+                if (printable)
+                    c = applyG((byte)c);
+            }
+        } else
+            utf8_in_use = printable = FALSE;
+
+	if (printable && state_normal) {
 	    /* Now try to find out how to display it */
 	    if (*Flags & TTY_NEEDWRAP) {
 		cr();
