@@ -894,8 +894,8 @@ static byte InitTtyData(window Window, dat ScrollBackLines) {
 
     Data->G = Data->saveG = 0;
     /* default to latin1 charset */
-    Data->currG = Data->G0 = Data->saveG0 = LAT1_MAP;
-    Data->G1 = Data->saveG1 = GRAF_MAP;
+    Data->currG = Data->G0 = Data->saveG0 = LATIN1_MAP;
+    Data->G1 = Data->saveG1 = VT100GR_MAP;
 
     Data->utf8 = Data->utf8_count = Data->utf8_char = 0;
     Data->InvCharset = Tutf_UTF_16_to_ISO_8859_1;
