@@ -449,224 +449,166 @@
 #define T_ALIASES_ADOBE_SYMBOL  "adobe-symbol-encoding"
 
 
-/*******************  APPLE  charsets  *************/
-
-#define T_MAP_APPLE_ARABIC	APPLE_ARABIC
-#define T_MAP_MACOS_ARABIC	APPLE_ARABIC
-#define T_NAME_APPLE_ARABIC	"apple-arabic"
-#define T_ALIASES_APPLE_ARABIC	"macos-arabic"
+/******************* APPLE charsets for Mac OS *************/
 
 
-#define T_MAP_APPLE_CELTIC	APPLE_CELTIC
-#define T_MAP_MACOS_CELTIC	APPLE_CELTIC
-#define T_NAME_APPLE_CELTIC	"apple-celtic"
-#define T_ALIASES_APPLE_CELTIC	"macos-celtic"
+#define T_MAP_MAC_ARABIC	MAC_ARABIC
+#define T_MAP_APPLE_ARABIC	MAC_ARABIC
+#define T_NAME_MAC_ARABIC	"mac-arabic"
+#define T_ALIASES_MAC_ARABIC	"apple-arabic"
 
 
-#define T_MAP_APPLE_CENTEURO	APPLE_CENTEURO
-#define T_MAP_APPLE_CENTRAL_EUROPEAN	APPLE_CENTEURO
-#define T_MAP_MACOS_CENTEURO	APPLE_CENTEURO
-#define T_MAP_MACOS_CENTRAL_EUROPEAN	APPLE_CENTEURO
-#define T_NAME_APPLE_CENTEURO	"apple-central-european"
-#define T_ALIASES_APPLE_CENTEURO	"apple-centeuro", "macos-central-european", "macos-centeuro"
+#define T_MAP_MAC_CELTIC	MAC_CELTIC
+#define T_MAP_APPLE_CELTIC	MAC_CELTIC
+#define T_NAME_MAC_CELTIC	"mac-celtic"
+#define T_ALIASES_MAC_CELTIC	"apple-celtic"
 
 
-#define T_MAP_APPLE_CHINSIMP	APPLE_CHINSIMP
-#define T_MAP_APPLE_CHINESE_SIMPLIFIED	APPLE_CHINSIMP
-#define T_MAP_MACOS_CHINSIMP	APPLE_CHINSIMP
-#define T_MAP_MACOS_CHINESE_SIMPLIFIED	APPLE_CHINSIMP
-#define T_NAME_APPLE_CHINSIMP	"apple-chinese-simplified"
-#define T_ALIASES_APPLE_CHINSIMP	"apple-chinsimp", "macos-chinese-simplified", "macos-chinsimp"
+#define T_MAP_MAC_CENTRALEUROPE		MAC_CENTRALEUROPE
+#define T_MAP_APPLE_CENTRALEUROPE	MAC_CENTRALEUROPE
+#define T_NAME_MAC_CENTRALEUROPE	"mac-central-europe"
+#define T_ALIASES_MAC_CENTRALEUROPE	"apple-central-europe"
 
 
-#define T_MAP_APPLE_CHINTRAD	APPLE_CHINTRAD
-#define T_MAP_APPLE_CHINESE_TRADITIONAL	APPLE_CHINTRAD
-#define T_MAP_MACOS_CHINTRAD	APPLE_CHINTRAD
-#define T_MAP_MACOS_CHINESE_TRADITIONAL	APPLE_CHINTRAD
-#define T_NAME_APPLE_CHINTRAD	"apple-chinese-traditional"
-#define T_ALIASES_APPLE_CHINTRAD	"apple-chintrad", "macos-chinese-traditional", "macos-chintrad"
+#define T_MAP_MAC_CROATIAN	MAC_CROATIAN
+#define T_MAP_APPLE_CROATIAN	MAC_CROATIAN
+#define T_NAME_MAC_CROATIAN	"mac-croatian"
+#define T_ALIASES_MAC_CROATIAN	"apple-croatian"
 
 
-#define T_MAP_APPLE_CROATIAN	APPLE_CROATIAN
-#define T_MAP_MACOS_CROATIAN	APPLE_CROATIAN
-#define T_NAME_APPLE_CROATIAN	"apple-croatian"
-#define T_ALIASES_APPLE_CROATIAN	"macos-croatian"
+#define T_MAP_MAC_CYRILLIC	MAC_CYRILLIC
+#define T_MAP_APPLE_CYRILLIC	MAC_CYRILLIC
+#define T_NAME_MAC_CYRILLIC	"mac-cyrillic"
+#define T_ALIASES_MAC_CYRILLIC	"apple-cyrillic"
 
 
-#define T_MAP_APPLE_CYRILLIC	APPLE_CYRILLIC
-#define T_MAP_MACOS_CYRILLIC	APPLE_CYRILLIC
-#define T_NAME_APPLE_CYRILLIC	"apple-cyrillic"
-#define T_ALIASES_APPLE_CYRILLIC	"macos-cyrillic"
+#define T_MAP_MAC_DEVANAGARI	MAC_DEVANAGARI
+#define T_MAP_APPLE_DEVANAGARI	MAC_DEVANAGARI
+#define T_NAME_MAC_DEVANAGARI	"mac-devanagari"
+#define T_ALIASES_MAC_DEVANAGARI	"apple-devanagari"
 
 
-#define T_MAP_APPLE_DEVANAGA	APPLE_DEVANAGA
-#define T_MAP_APPLE_DEVANAGARI	APPLE_DEVANAGA
-#define T_MAP_MACOS_DEVANAGA	APPLE_DEVANAGA
-#define T_MAP_MACOS_DEVANAGARI	APPLE_DEVANAGA
-#define T_NAME_APPLE_DEVANAGA	"apple-devanagari"
-#define T_ALIASES_APPLE_DEVANAGA "macos-devanagari"
+#define T_MAP_MAC_DINGBATS	MAC_DINGBATS
+#define T_MAP_APPLE_DINGBATS	MAC_DINGBATS
+#define T_NAME_MAC_DINGBATS	"mac-dingbats"
+#define T_ALIASES_MAC_DINGBATS	"apple-dingbats"
 
 
-#define T_MAP_APPLE_DINGBATS	APPLE_DINGBATS
-#define T_MAP_MACOS_DINGBATS	APPLE_DINGBATS
-#define T_NAME_APPLE_DINGBATS	"apple-dingbats"
-#define T_ALIASES_APPLE_DINGBATS	"macos-dingbats"
+#define T_MAP_MAC_FARSI		MAC_FARSI
+#define T_MAP_APPLE_FARSI	MAC_FARSI
+#define T_NAME_MAC_FARSI	"mac-farsi"
+#define T_ALIASES_MAC_FARSI	"apple-farsi"
 
 
-#define T_MAP_APPLE_FARSI	APPLE_FARSI
-#define T_MAP_MACOS_FARSI	APPLE_FARSI
-#define T_NAME_APPLE_FARSI	"apple-farsi"
-#define T_ALIASES_APPLE_FARSI	"macos-farsi"
+#define T_MAP_MAC_GAELIC	MAC_GAELIC
+#define T_MAP_APPLE_GAELIC	MAC_GAELIC
+#define T_NAME_MAC_GAELIC	"mac-gaelic"
+#define T_ALIASES_MAC_GAELIC	"apple-gaelic"
 
 
-#define T_MAP_APPLE_GAELIC	APPLE_GAELIC
-#define T_MAP_MACOS_GAELIC	APPLE_GAELIC
-#define T_NAME_APPLE_GAELIC	"apple-gaelic"
-#define T_ALIASES_APPLE_GAELIC	"macos-gaelic"
+#define T_MAP_MAC_GREEK		MAC_GREEK
+#define T_MAP_APPLE_GREEK	MAC_GREEK
+#define T_NAME_MAC_GREEK	"mac-greek"
+#define T_ALIASES_MAC_GREEK	"apple-greek"
 
 
-#define T_MAP_APPLE_GREEK	APPLE_GREEK
-#define T_MAP_MACOS_GREEK	APPLE_GREEK
-#define T_NAME_APPLE_GREEK	"apple-greek"
-#define T_ALIASES_APPLE_GREEK	"macos-greek"
+#define T_MAP_MAC_GUJARATI	MAC_GUJARATI
+#define T_MAP_APPLE_GUJARATI	MAC_GUJARATI
+#define T_NAME_MAC_GUJARATI	"mac-gujarati"
+#define T_ALIASES_MAC_GUJARATI	"apple-gujarati"
 
 
-#define T_MAP_APPLE_GUJARATI	APPLE_GUJARATI
-#define T_MAP_MACOS_GUJARATI	APPLE_GUJARATI
-#define T_NAME_APPLE_GUJARATI	"apple-gujarati"
-#define T_ALIASES_APPLE_GUJARATI	"macos-gujarati"
+#define T_MAP_MAC_GURMUKHI	MAC_GURMUKHI
+#define T_MAP_APPLE_GURMUKHI	MAC_GURMUKHI
+#define T_NAME_MAC_GURMUKHI	"mac-gurmukhi"
+#define T_ALIASES_MAC_GURMUKHI	"apple-gurmukhi"
 
 
-#define T_MAP_APPLE_GURMUKHI	APPLE_GURMUKHI
-#define T_MAP_MACOS_GURMUKHI	APPLE_GURMUKHI
-#define T_NAME_APPLE_GURMUKHI	"apple-gurmukhi"
-#define T_ALIASES_APPLE_GURMUKHI	"macos-gurmukhi"
+#define T_MAP_MAC_HEBREW	MAC_HEBREW
+#define T_MAP_APPLE_HEBREW	MAC_HEBREW
+#define T_NAME_MAC_HEBREW	"mac-hebrew"
+#define T_ALIASES_MAC_HEBREW	"apple-hebrew"
 
 
-#define T_MAP_APPLE_HEBREW	APPLE_HEBREW
-#define T_MAP_MACOS_HEBREW	APPLE_HEBREW
-#define T_NAME_APPLE_HEBREW	"apple-hebrew"
-#define T_ALIASES_APPLE_HEBREW	"macos-hebrew"
+#define T_MAP_MAC_ICELANDIC	MAC_ICELANDIC
+#define T_MAP_APPLE_ICELANDIC	MAC_ICELANDIC
+#define T_NAME_MAC_ICELANDIC	"mac-icelandic"
+#define T_ALIASES_MAC_ICELANDIC	"apple-icelandic"
 
 
-#define T_MAP_APPLE_ICELAND	APPLE_ICELAND
-#define T_MAP_APPLE_ICELANDIC	APPLE_ICELAND
-#define T_MAP_MACOS_ICELAND	APPLE_ICELAND
-#define T_MAP_MACOS_ICELANDIC	APPLE_ICELAND
-#define T_NAME_APPLE_ICELAND	"apple-icelandic"
-#define T_ALIASES_APPLE_ICELAND	"apple-iceland", "macos-icelandic", "macos-iceland"
+#define T_MAP_MAC_INUIT		MAC_INUIT
+#define T_MAP_APPLE_INUIT	MAC_INUIT
+#define T_NAME_MAC_INUIT	"mac-inuit"
+#define T_ALIASES_MAC_INUIT	"apple-inuit"
 
 
-#define T_MAP_APPLE_INUIT	APPLE_INUIT
-#define T_MAP_MACOS_INUIT	APPLE_INUIT
-#define T_NAME_APPLE_INUIT	"apple-inuit"
-#define T_ALIASES_APPLE_INUIT	"macos-inuit"
+#define T_MAP_MAC_ROMANIAN	MAC_ROMANIAN
+#define T_MAP_APPLE_ROMANIAN	MAC_ROMANIAN
+#define T_NAME_MAC_ROMANIAN	"mac-romanian"
+#define T_ALIASES_MAC_ROMANIAN	"apple-romanian"
 
 
-#define T_MAP_APPLE_JAPANESE	APPLE_JAPANESE
-#define T_MAP_APPLE_JAPAN	APPLE_JAPANESE
-#define T_MAP_MACOS_JAPANESE	APPLE_JAPANESE
-#define T_MAP_MACOS_JAPAN	APPLE_JAPANESE
-#define T_NAME_APPLE_JAPANESE	"apple-japanese"
-#define T_ALIASES_APPLE_JAPANESE	"apple-japan", "macos-japanese", "macos-japan"
+#define T_MAP_MAC_ROMAN		MAC_ROMAN
+#define T_MAP_APPLE_ROMAN	MAC_ROMAN
+#define T_NAME_MAC_ROMAN	"mac-roman"
+#define T_ALIASES_MAC_ROMAN	"apple-roman"
 
 
-#define T_MAP_APPLE_KOREAN	APPLE_KOREAN
-#define T_MAP_MACOS_KOREAN	APPLE_KOREAN
-#define T_NAME_APPLE_KOREAN	"apple-korean"
-#define T_ALIASES_APPLE_KOREAN	"macos-korean"
+#define T_MAP_MAC_SYMBOL	MAC_SYMBOL
+#define T_MAP_APPLE_SYMBOL	MAC_SYMBOL
+#define T_NAME_MAC_SYMBOL	"mac-symbol"
+#define T_ALIASES_MAC_SYMBOL	"apple-symbol"
 
 
-#define T_MAP_APPLE_ROMANIAN	APPLE_ROMANIAN
-#define T_MAP_MACOS_ROMANIAN	APPLE_ROMANIAN
-#define T_NAME_APPLE_ROMANIAN	"apple-romanian"
-#define T_ALIASES_APPLE_ROMANIAN	"macos-romanian"
+#define T_MAP_MAC_THAI		MAC_THAI
+#define T_MAP_APPLE_THAI	MAC_THAI
+#define T_NAME_MAC_THAI		"mac-thai"
+#define T_ALIASES_MAC_THAI	"apple-thai"
 
 
-#define T_MAP_APPLE_ROMAN	APPLE_ROMAN
-#define T_MAP_MACOS_ROMAN	APPLE_ROMAN
-#define T_NAME_APPLE_ROMAN	"apple-roman"
-#define T_ALIASES_APPLE_ROMAN	"macos-roman"
-
-
-#define T_MAP_APPLE_SYMBOL	APPLE_SYMBOL
-#define T_MAP_MACOS_SYMBOL	APPLE_SYMBOL
-#define T_NAME_APPLE_SYMBOL	"apple-symbol"
-#define T_ALIASES_APPLE_SYMBOL	"macos-symbol"
-
-
-#define T_MAP_APPLE_THAI	APPLE_THAI
-#define T_MAP_MACOS_THAI	APPLE_THAI
-#define T_NAME_APPLE_THAI	"apple-thai"
-#define T_ALIASES_APPLE_THAI	"macos-thai"
-
-
-#define T_MAP_APPLE_TURKISH	APPLE_TURKISH
-#define T_MAP_MACOS_TURKISH	APPLE_TURKISH
-#define T_NAME_APPLE_TURKISH	"apple-turkish"
-#define T_ALIASES_APPLE_TURKISH	"macos-turkish"
-
-
-#define T_MAP_APPLE_UKRAINE	APPLE_UKRAINE
-#define T_MAP_MACOS_UKRAINE	APPLE_UKRAINE
-#define T_NAME_APPLE_UKRAINE	"apple-ukraine"
-#define T_ALIASES_APPLE_UKRAINE	"macos-ukraine"
+#define T_MAP_MAC_TURKISH	MAC_TURKISH
+#define T_MAP_APPLE_TURKISH	MAC_TURKISH
+#define T_NAME_MAC_TURKISH	"mac-turkish"
+#define T_ALIASES_MAC_TURKISH	"apple-turkish"
 
 
 /*********** Microsoft charsets for Mac OS ******************/
 
 #define T_MAP_MS_MAC_CYRILLIC		MS_MAC_CYRILLIC
-#define T_MAP_MS_MACOS_CYRILLIC		MS_MAC_CYRILLIC
-#define T_MAP_MS_MACINTOSH_CYRILLIC	MS_MAC_CYRILLIC
 #define T_MAP_CP10007			MS_MAC_CYRILLIC
 #define T_NAME_MS_MAC_CYRILLIC		"ms-mac-cyrillic"
-#define T_ALIASES_MS_MAC_CYRILLIC	"ms-macos-cyrillic", "ms-macintosh-cyrillic", "cp10007"
+#define T_ALIASES_MS_MAC_CYRILLIC	"cp10007"
 
 
 #define T_MAP_MS_MAC_GREEK		MS_MAC_GREEK
-#define T_MAP_MS_MACOS_GREEK		MS_MAC_GREEK
-#define T_MAP_MS_MACINTOSH_GREEK	MS_MAC_GREEK
 #define T_MAP_CP10006			MS_MAC_GREEK
 #define T_NAME_MS_MAC_GREEK		"ms-mac-greek"
-#define T_ALIASES_MS_MAC_GREEK		"ms-macos-greek", "ms-macintosh-greek", "cp10006"
+#define T_ALIASES_MS_MAC_GREEK		"cp10006"
 
 
-#define T_MAP_MS_MAC_ICELAND		MS_MAC_ICELAND
-#define T_MAP_MS_MAC_ICELANDIC		MS_MAC_ICELAND
-#define T_MAP_MS_MACOS_ICELAND		MS_MAC_ICELAND
-#define T_MAP_MS_MACOS_ICELANDIC	MS_MAC_ICELAND
-#define T_MAP_MS_MACINTOSH_ICELAND	MS_MAC_ICELAND
-#define T_MAP_MS_MACINTOSH_ICELANDIC	MS_MAC_ICELAND
-#define T_MAP_CP10079			MS_MAC_ICELAND
-#define T_NAME_MS_MAC_ICELAND		"ms-mac-icelandic"
-#define T_ALIASES_MS_MAC_ICELAND	"ms-macos-icelandic", "ms-macintosh-icelandic", "cp10006"
+#define T_MAP_MS_MAC_ICELANDIC		MS_MAC_ICELANDIC
+#define T_MAP_CP10079			MS_MAC_ICELANDIC
+#define T_NAME_MS_MAC_ICELANDIC		"ms-mac-icelandic"
+#define T_ALIASES_MS_MAC_ICELANDIC	"cp10079"
 
 
 #define T_MAP_MS_MAC_LATIN2		MS_MAC_LATIN2
-#define T_MAP_MS_MACOS_LATIN2		MS_MAC_LATIN2
-#define T_MAP_MS_MACINTOSH_LATIN2	MS_MAC_LATIN2
-#define T_MAP_MS_MAC_CENTRAL_EUROPE	MS_MAC_CENTRAL_EUROPE
-#define T_MAP_MS_MACOS_CENTRAL_EUROPE	MS_MAC_CENTRAL_EUROPE
-#define T_MAP_MS_MACINTOSH_CENTRAL_EUROPE	MS_MAC_CENTRAL_EUROPE
+#define T_MAP_MS_MAC_CENTRAL_EUROPE	MS_MAC_LATIN2
 #define T_MAP_CP10029			MS_MAC_LATIN2
 #define T_NAME_MS_MAC_LATIN2		"ms-mac-latin2"
-#define T_ALIASES_MS_MAC_LATIN2		"ms-macos-latin2", "ms-macintosh-latin2", "ms-mac-central-europe", "ms-macos-central-europe", "ms-macintosh-central-europe", "cp10029"
+#define T_ALIASES_MS_MAC_LATIN2		"ms-mac-central-europe", "cp10029"
 
 
 #define T_MAP_MS_MAC_ROMAN		MS_MAC_ROMAN
-#define T_MAP_MS_MACOS_ROMAN		MS_MAC_ROMAN
-#define T_MAP_MS_MACINTOSH_ROMAN	MS_MAC_ROMAN
 #define T_MAP_CP10000			MS_MAC_ROMAN
 #define T_NAME_MS_MAC_ROMAN		"ms-mac-roman"
-#define T_ALIASES_MS_MAC_ROMAN		"ms-macos-roman", "ms-macintosh-roman", "cp10000"
+#define T_ALIASES_MS_MAC_ROMAN		"cp10000"
 
 
 #define T_MAP_MS_MAC_TURKISH		MS_MAC_TURKISH
-#define T_MAP_MS_MACOS_TURKISH		MS_MAC_TURKISH
-#define T_MAP_MS_MACINTOSH_TURKISH	MS_MAC_TURKISH
 #define T_MAP_CP10081			MS_MAC_TURKISH
 #define T_NAME_MS_MAC_TURKISH		"ms-mac-turkish"
-#define T_ALIASES_MS_MAC_TURKISH	"ms-macos-turkish", "ms-macintosh-turkish", "cp10081"
+#define T_ALIASES_MS_MAC_TURKISH	"cp10081"
 
 
 /*******************  misc  charsets  *************/
@@ -696,21 +638,25 @@
 #define T_ALIASES_JISX0201	"jis-c-6220"
 
 
-#define T_MAP_KZ1048	KZ1048
-#define T_MAP_KZ_1048	KZ1048
-#define T_MAP_STRK1048	KZ1048
+#define T_MAP_KZ1048		KZ1048
+#define T_MAP_KZ_1048		KZ1048
+#define T_MAP_STRK1048		KZ1048
 #define T_MAP_STRK1048_2002	KZ1048
 #define T_NAME_KZ1048		"KZ-1048"
 #define T_ALIASES_KZ1048	"STRK1048", "STRK1048-2002"
 
 
-#define T_MAP_KOI8_R	KOI8_R
-#define T_NAME_KOI8_R	"koi8-r"
+#define T_MAP_KOI8_R		KOI8_R
+#define T_MAP_CP878		KOI8_R
+#define T_MAP_IBM878		KOI8_R
+#define T_NAME_KOI8_R		"koi8-r"
 #define T_ALIASES_KOI8_R	"cp878", "ibm878"
 
 
-#define T_MAP_KOI8_U	KOI8_U
-#define T_NAME_KOI8_U	"koi8-u"
+#define T_MAP_KOI8_U		KOI8_U
+#define T_MAP_CP1168		KOI8_U
+#define T_MAP_IBM1168		KOI8_U
+#define T_NAME_KOI8_U		"koi8-u"
 #define T_ALIASES_KOI8_U	"cp1168", "ibm1168"
 
 
@@ -827,35 +773,30 @@ hwfont Tutf_UTF_16_to_CP1258(hwfont c);
 hwfont Tutf_UTF_16_to_ADOBE_STDENC(hwfont c);
 hwfont Tutf_UTF_16_to_ADOBE_SYMBOL(hwfont c);
 
-hwfont Tutf_UTF_16_to_APPLE_ARABIC(hwfont c);
-hwfont Tutf_UTF_16_to_APPLE_CELTIC(hwfont c);
-hwfont Tutf_UTF_16_to_APPLE_CENTEURO(hwfont c);
-hwfont Tutf_UTF_16_to_APPLE_CHINSIMP(hwfont c);
-hwfont Tutf_UTF_16_to_APPLE_CHINTRAD(hwfont c);
-hwfont Tutf_UTF_16_to_APPLE_CROATIAN(hwfont c);
-hwfont Tutf_UTF_16_to_APPLE_CYRILLIC(hwfont c);
-hwfont Tutf_UTF_16_to_APPLE_DEVANAGA(hwfont c);
-hwfont Tutf_UTF_16_to_APPLE_DINGBATS(hwfont c);
-hwfont Tutf_UTF_16_to_APPLE_FARSI(hwfont c);
-hwfont Tutf_UTF_16_to_APPLE_GAELIC(hwfont c);
-hwfont Tutf_UTF_16_to_APPLE_GREEK(hwfont c);
-hwfont Tutf_UTF_16_to_APPLE_GUJARATI(hwfont c);
-hwfont Tutf_UTF_16_to_APPLE_GURMUKHI(hwfont c);
-hwfont Tutf_UTF_16_to_APPLE_HEBREW(hwfont c);
-hwfont Tutf_UTF_16_to_APPLE_ICELAND(hwfont c);
-hwfont Tutf_UTF_16_to_APPLE_INUIT(hwfont c);
-hwfont Tutf_UTF_16_to_APPLE_JAPANESE(hwfont c);
-hwfont Tutf_UTF_16_to_APPLE_KOREAN(hwfont c);
-hwfont Tutf_UTF_16_to_APPLE_ROMAN(hwfont c);
-hwfont Tutf_UTF_16_to_APPLE_ROMANIAN(hwfont c);
-hwfont Tutf_UTF_16_to_APPLE_SYMBOL(hwfont c);
-hwfont Tutf_UTF_16_to_APPLE_THAI(hwfont c);
-hwfont Tutf_UTF_16_to_APPLE_TURKISH(hwfont c);
-hwfont Tutf_UTF_16_to_APPLE_UKRAINE(hwfont c);
+hwfont Tutf_UTF_16_to_MAC_ARABIC(hwfont c);
+hwfont Tutf_UTF_16_to_MAC_CELTIC(hwfont c);
+hwfont Tutf_UTF_16_to_MAC_CENTRALEUROPE(hwfont c);
+hwfont Tutf_UTF_16_to_MAC_CROATIAN(hwfont c);
+hwfont Tutf_UTF_16_to_MAC_CYRILLIC(hwfont c);
+hwfont Tutf_UTF_16_to_MAC_DEVANAGARI(hwfont c);
+hwfont Tutf_UTF_16_to_MAC_DINGBATS(hwfont c);
+hwfont Tutf_UTF_16_to_MAC_FARSI(hwfont c);
+hwfont Tutf_UTF_16_to_MAC_GAELIC(hwfont c);
+hwfont Tutf_UTF_16_to_MAC_GREEK(hwfont c);
+hwfont Tutf_UTF_16_to_MAC_GUJARATI(hwfont c);
+hwfont Tutf_UTF_16_to_MAC_GURMUKHI(hwfont c);
+hwfont Tutf_UTF_16_to_MAC_HEBREW(hwfont c);
+hwfont Tutf_UTF_16_to_MAC_ICELANDIC(hwfont c);
+hwfont Tutf_UTF_16_to_MAC_INUIT(hwfont c);
+hwfont Tutf_UTF_16_to_MAC_ROMAN(hwfont c);
+hwfont Tutf_UTF_16_to_MAC_ROMANIAN(hwfont c);
+hwfont Tutf_UTF_16_to_MAC_SYMBOL(hwfont c);
+hwfont Tutf_UTF_16_to_MAC_THAI(hwfont c);
+hwfont Tutf_UTF_16_to_MAC_TURKISH(hwfont c);
 
 hwfont Tutf_UTF_16_to_MS_MAC_CYRILLIC(hwfont c);
 hwfont Tutf_UTF_16_to_MS_MAC_GREEK(hwfont c);
-hwfont Tutf_UTF_16_to_MS_MAC_ICELAND(hwfont c);
+hwfont Tutf_UTF_16_to_MS_MAC_ICELANDIC(hwfont c);
 hwfont Tutf_UTF_16_to_MS_MAC_LATIN2(hwfont c);
 hwfont Tutf_UTF_16_to_MS_MAC_ROMAN(hwfont c);
 hwfont Tutf_UTF_16_to_MS_MAC_TURKISH(hwfont c);
@@ -942,35 +883,31 @@ extern hwfont Tutf_CP1258_to_UTF_16[0x100];
 extern hwfont Tutf_ADOBE_STDENC_to_UTF_16[0x100];
 extern hwfont Tutf_ADOBE_SYMBOL_to_UTF_16[0x100];
 
-extern hwfont Tutf_APPLE_ARABIC_to_UTF_16[0x100];
-extern hwfont Tutf_APPLE_CELTIC_to_UTF_16[0x100];
-extern hwfont Tutf_APPLE_CENTEURO_to_UTF_16[0x100];
-extern hwfont Tutf_APPLE_CHINSIMP_to_UTF_16[0x100];
-extern hwfont Tutf_APPLE_CHINTRAD_to_UTF_16[0x100];
-extern hwfont Tutf_APPLE_CROATIAN_to_UTF_16[0x100];
-extern hwfont Tutf_APPLE_CYRILLIC_to_UTF_16[0x100];
-extern hwfont Tutf_APPLE_DEVANAGA_to_UTF_16[0x100];
-extern hwfont Tutf_APPLE_DINGBATS_to_UTF_16[0x100];
-extern hwfont Tutf_APPLE_FARSI_to_UTF_16[0x100];
-extern hwfont Tutf_APPLE_GAELIC_to_UTF_16[0x100];
-extern hwfont Tutf_APPLE_GREEK_to_UTF_16[0x100];
-extern hwfont Tutf_APPLE_GUJARATI_to_UTF_16[0x100];
-extern hwfont Tutf_APPLE_GURMUKHI_to_UTF_16[0x100];
-extern hwfont Tutf_APPLE_HEBREW_to_UTF_16[0x100];
-extern hwfont Tutf_APPLE_ICELAND_to_UTF_16[0x100];
-extern hwfont Tutf_APPLE_INUIT_to_UTF_16[0x100];
-extern hwfont Tutf_APPLE_JAPANESE_to_UTF_16[0x100];
-extern hwfont Tutf_APPLE_KOREAN_to_UTF_16[0x100];
-extern hwfont Tutf_APPLE_ROMAN_to_UTF_16[0x100];
-extern hwfont Tutf_APPLE_ROMANIAN_to_UTF_16[0x100];
-extern hwfont Tutf_APPLE_SYMBOL_to_UTF_16[0x100];
-extern hwfont Tutf_APPLE_THAI_to_UTF_16[0x100];
-extern hwfont Tutf_APPLE_TURKISH_to_UTF_16[0x100];
-extern hwfont Tutf_APPLE_UKRAINE_to_UTF_16[0x100];
+extern hwfont Tutf_MAC_ARABIC_to_UTF_16[0x100];
+extern hwfont Tutf_MAC_CELTIC_to_UTF_16[0x100];
+extern hwfont Tutf_MAC_CENTRALEUROPE_to_UTF_16[0x100];
+extern hwfont Tutf_MAC_CROATIAN_to_UTF_16[0x100];
+extern hwfont Tutf_MAC_CYRILLIC_to_UTF_16[0x100];
+extern hwfont Tutf_MAC_DEVANAGARI_to_UTF_16[0x100];
+extern hwfont Tutf_MAC_DINGBATS_to_UTF_16[0x100];
+extern hwfont Tutf_MAC_FARSI_to_UTF_16[0x100];
+extern hwfont Tutf_MAC_GAELIC_to_UTF_16[0x100];
+extern hwfont Tutf_MAC_GREEK_to_UTF_16[0x100];
+extern hwfont Tutf_MAC_GUJARATI_to_UTF_16[0x100];
+extern hwfont Tutf_MAC_GURMUKHI_to_UTF_16[0x100];
+extern hwfont Tutf_MAC_HEBREW_to_UTF_16[0x100];
+extern hwfont Tutf_MAC_ICELANDIC_to_UTF_16[0x100];
+extern hwfont Tutf_MAC_INUIT_to_UTF_16[0x100];
+extern hwfont Tutf_MAC_ROMAN_to_UTF_16[0x100];
+extern hwfont Tutf_MAC_ROMANIAN_to_UTF_16[0x100];
+extern hwfont Tutf_MAC_SYMBOL_to_UTF_16[0x100];
+extern hwfont Tutf_MAC_THAI_to_UTF_16[0x100];
+extern hwfont Tutf_MAC_TURKISH_to_UTF_16[0x100];
+extern hwfont Tutf_MAC_UKRAINE_to_UTF_16[0x100];
 
 extern hwfont Tutf_MS_MAC_CYRILLIC_to_UTF_16[0x100];
 extern hwfont Tutf_MS_MAC_GREEK_to_UTF_16[0x100];
-extern hwfont Tutf_MS_MAC_ICELAND_to_UTF_16[0x100];
+extern hwfont Tutf_MS_MAC_ICELANDIC_to_UTF_16[0x100];
 extern hwfont Tutf_MS_MAC_LATIN2_to_UTF_16[0x100];
 extern hwfont Tutf_MS_MAC_ROMAN_to_UTF_16[0x100];
 extern hwfont Tutf_MS_MAC_TURKISH_to_UTF_16[0x100];
