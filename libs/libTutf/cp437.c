@@ -15,46 +15,45 @@ hwfont Tutf_CP437_to_UTF_16[0x100] = {
 #undef EL
 };
 
-static byte flag_CP437;
-
-static utf_to_ch array_CP437 [] = {
-#define EL(x) { T_UTF(UTF_16,x), T_UTF(CP437,x) },
-    T_NLIST(CP437,EL)
-#undef EL
-    { T_UTF_16_CHECK_MARK, T_UTF(CP437,_SQUARE_ROOT) },
+#define EL(x) +1
+enum {
+   n_CP437 = T_NLIST(CP437,EL) + 1,    /* +1 to manually map T_UTF_16_CHECK_MARK below */
+   n_CP437_power_of_2 = NEXT_POWER_OF_2(n_CP437)
 };
+#undef EL
+
+static byte             index_CP437 [n_CP437_power_of_2];
+static utf16_to_charset array_CP437 [n_CP437]; 
 
 hwfont Tutf_UTF_16_to_CP437(hwfont c) {
-    static utf_to_ch key;
-    TW_CONST utf_to_ch *res;
+    static TUTF_CONST utf16_to_charset *last = NULL;
+    TUTF_CONST utf16_to_charset *res;
     
     /* Codepage 437 (VGA) obviously cannot contain all unicode chars. this is just a best effort. */
-    if (!flag_CP437) {
-	flag_CP437 = TRUE;
-	QSORT(array_CP437);
-    }
-    if (c == key.utf)
-	return key.ch;
-    if ((c & ~0x00ff) == 0xf000 ||
-	/* direct-to-font area */
-	(c >= ' ' && c <= '~') ||
-	/* ASCII area */
-	(c > '~' && c < 0x100 && Tutf_CP437_to_UTF_16[c] == c))
-	/* c has the same meaning in Unicode and this charset... sheer luck! */
-	
-	return c & 0x00ff;
-    
-    key.utf = c;
-    res = BSEARCH(&key, array_CP437);
-    
-    if (res)
-	c = res->ch;
-    /* else c might have the same meaning in Unicode and this charset... */
-    else if (c > '~')
-	/* try to approximate (todo) */
-	c = T_UTF(CP437,_CTRL_NULL);
-    /* else c = c; */
+    if (!last) {
+	utf16_hash_init(Tutf_CP437_to_UTF_16, index_CP437, array_CP437, n_CP437_power_of_2);
+        
+        /* manually map T_UTF_16_CHECK_MARK to T_UTF(CP437,_SQUARE_ROOT) */
+        utf16_hash_insert_at(T_UTF_16_CHECK_MARK, T_UTF(CP437,_SQUARE_ROOT), index_CP437,
+			     array_CP437, n_CP437 - 1, n_CP437_power_of_2);
 
-    return key.ch = c;
+        last = array_CP437;
+    }
+    if (c == last->utf16)
+	return last->ch;
+   
+    if ((c >= ' ' && c <= '~')  || /* ASCII area */
+	(c & ~0x00ff) == 0xf000 || /* direct-to-font area */
+	(c < 0x100 && Tutf_CP437_to_UTF_16[c] == c)) /* does c have the same meaning in Unicode and this charset? */
+
+        return c & 0x00ff;
+    
+    res = utf16_hash_search(c, index_CP437, array_CP437, n_CP437_power_of_2);
+
+    if (res)
+	c = (last = res)->ch;
+    else
+        c = T_UTF(CP437,_CTRL_NULL);
+    return c;
 }
 

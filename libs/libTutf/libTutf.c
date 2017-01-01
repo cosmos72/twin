@@ -26,10 +26,79 @@
 #include <Tutf/Tutf.h>
 #include <Tutf/Tutf_defs.h>
 
+struct s_utf16_to_charset {
+    hwfont utf16;
+    byte ch;
+    byte next;
+};
+
+typedef struct s_utf16_to_charset utf16_to_charset;
+
+#define NEXT_POWER_OF_2(n) ((n) < 0 ? -1 : (n) <= 1 ? 1 : (n) <= 2 ? 2 : (n) <= 4 ? 4 : (n) <= 8 ? 8 : (n) <= 16 ? 16 : (n) <= 32 ? 32 : (n) <= 64 ? 64 : (n) <= 128 ? 128 : (n) <= 256 ? 256 : -1)
+
+TUTF_INLINE byte utf16_hash(hwfont h, udat mod_power_of_2) {
+   if (mod_power_of_2 >= 128)
+       return (h ^ (h >> 8)) & (mod_power_of_2 - 1);
+   
+   if (mod_power_of_2 == 64)
+       return (h ^ (h >> 6) ^ (h >> 12)) & (mod_power_of_2 - 1);
+   
+   return (h ^ (h >> 4) ^ (h >> 8) ^ (h >> 12)) & (mod_power_of_2 - 1);
+}
+
+TUTF_INLINE TUTF_CONST utf16_to_charset * utf16_hash_search(hwfont utf16, TUTF_CONST byte *hash_index,
+							    TUTF_CONST utf16_to_charset *base, udat n_power_of_2)
+{
+   TUTF_CONST utf16_to_charset * e = base + hash_index[ utf16_hash(utf16, n_power_of_2) ];
+   byte key0_visited = FALSE;
+   
+   while (e->utf16 != utf16) {
+      key0_visited |= e == base;
+      e = base + e->next;
+      if (e == base && key0_visited) {
+	 e = NULL;
+	 break;
+      }
+   }
+   return e;
+}
+
+static void utf16_hash_insert_at(hwfont utf16, byte ch, byte hash_index[0x100 /* actually n_power_of_2 */],
+				 utf16_to_charset * base, byte offset, udat n_power_of_2)
+{
+   utf16_to_charset * e = base + offset;
+   byte hashkey = utf16_hash(utf16, n_power_of_2);
+
+   e->utf16 = utf16;
+   e->ch = ch;
+   e->next = hash_index[hashkey]; /* either 0 or another entry with same hash */
+   hash_index[hashkey] = offset; /* build a linked list as needed */
+}
+
+
+static void utf16_hash_init(TUTF_CONST hwfont charset[0x100], byte hash_index[0x100 /* actually n_power_of_2 */],
+			    utf16_to_charset *base, udat n_power_of_2)
+{
+   hwfont utf16;
+   dat i;
+   byte offset = 0;
+   
+   for (i = 0; i < 0x100; i++)
+   {
+      if ((utf16 = charset[i]) == (udat)i)
+	  continue;
+      utf16_hash_insert_at(utf16, i, hash_index, base, offset, n_power_of_2);
+      offset++;
+   }
+}
+
+
+
 typedef struct {
-    hwfont utf, ch;
+   hwfont utf, ch;
 } utf_to_ch;
 
+   
 static int Cmp(TUTF_CONST utf_to_ch *u1, TUTF_CONST utf_to_ch *u2) {
     return u1->utf - u2->utf;
 }
@@ -57,56 +126,55 @@ static TUTF_CONST utf_to_ch *my_bsearch(TUTF_CONST utf_to_ch *key, TUTF_CONST ut
 #define BSEARCH(key, array) \
 	my_bsearch((key), (array), sizeof(array)/sizeof((array)[0]))
 
-#include "ascii.c" /* hand-tuned */
+#include "ascii.c" /* hand-written */
 
-#define ISO8859_X ISO8859_1
-#include "iso8859_x.c"
-#undef ISO8859_X
-#define ISO8859_X ISO8859_2
-#include "iso8859_x.c"
-#undef ISO8859_X
-#define ISO8859_X ISO8859_3
-#include "iso8859_x.c"
-#undef ISO8859_X
-#define ISO8859_X ISO8859_4
-#include "iso8859_x.c"
-#undef ISO8859_X
-#define ISO8859_X ISO8859_5
-#include "iso8859_x.c"
-#undef ISO8859_X
-#define ISO8859_X ISO8859_6
-#include "iso8859_x.c"
-#undef ISO8859_X
-#define ISO8859_X ISO8859_7
-#include "iso8859_x.c"
-#undef ISO8859_X
-#define ISO8859_X ISO8859_8
-#include "iso8859_x.c"
-#undef ISO8859_X
-#define ISO8859_X ISO8859_9
-#include "iso8859_x.c"
-#undef ISO8859_X
-#define ISO8859_X ISO8859_10
-#include "iso8859_x.c"
-#undef ISO8859_X
-#define ISO8859_X ISO8859_11
-#include "iso8859_x.c"
-#undef ISO8859_X
-#define ISO8859_X ISO8859_13
-#include "iso8859_x.c"
-#undef ISO8859_X
-#define ISO8859_X ISO8859_14
-#include "iso8859_x.c"
-#undef ISO8859_X
-#define ISO8859_X ISO8859_15
-#include "iso8859_x.c"
-#undef ISO8859_X
-#define ISO8859_X ISO8859_16
-#include "iso8859_x.c"
-#undef ISO8859_X
+#define TEMPLATE ISO8859_1
+#include "template.c"
+#undef TEMPLATE
+#define TEMPLATE ISO8859_2
+#include "template.c"
+#undef TEMPLATE
+#define TEMPLATE ISO8859_3
+#include "template.c"
+#undef TEMPLATE
+#define TEMPLATE ISO8859_4
+#include "template.c"
+#undef TEMPLATE
+#define TEMPLATE ISO8859_5
+#include "template.c"
+#undef TEMPLATE
+#define TEMPLATE ISO8859_6
+#include "template.c"
+#undef TEMPLATE
+#define TEMPLATE ISO8859_7
+#include "template.c"
+#undef TEMPLATE
+#define TEMPLATE ISO8859_8
+#include "template.c"
+#undef TEMPLATE
+#define TEMPLATE ISO8859_9
+#include "template.c"
+#undef TEMPLATE
+#define TEMPLATE ISO8859_10
+#include "template.c"
+#undef TEMPLATE
+#define TEMPLATE ISO8859_11
+#include "template.c"
+#undef TEMPLATE
+#define TEMPLATE ISO8859_13
+#include "template.c"
+#undef TEMPLATE
+#define TEMPLATE ISO8859_14
+#include "template.c"
+#undef TEMPLATE
+#define TEMPLATE ISO8859_15
+#include "template.c"
+#undef TEMPLATE
+#define TEMPLATE ISO8859_16
+#include "template.c"
+#undef TEMPLATE
 
 #include "cp437.c" /* hand-tuned */
-#include "cp850.c" /* hand-tuned */
 #include "cp865.c" /* hand-tuned */
 
 #define TEMPLATE CP424
@@ -119,6 +187,9 @@ static TUTF_CONST utf_to_ch *my_bsearch(TUTF_CONST utf_to_ch *key, TUTF_CONST ut
 #include "template.c"
 #undef TEMPLATE
 #define TEMPLATE CP852
+#include "template.c"
+#undef TEMPLATE
+#define TEMPLATE CP850
 #include "template.c"
 #undef TEMPLATE
 #define TEMPLATE CP855
@@ -304,8 +375,11 @@ static TUTF_CONST utf_to_ch *my_bsearch(TUTF_CONST utf_to_ch *key, TUTF_CONST ut
 #define TEMPLATE KZ1048
 #include "template.c"
 #undef TEMPLATE
+
 #define TEMPLATE VT100GR
+#define TEMPLATE_REDEFINES_ASCII
 #include "template.c"
+#undef  TEMPLATE_REDEFINES_ASCII
 #undef TEMPLATE
 
 
