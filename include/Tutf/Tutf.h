@@ -438,9 +438,10 @@
 
 
 #define T_MAP_ADOBE_STDENC	ADOBE_STDENC
+#define T_MAP_ADOBE_STANDARD	ADOBE_STDENC
 #define T_MAP_ADOBE_STANDARD_ENCODING	ADOBE_STDENC
 #define T_NAME_ADOBE_STDENC	"adobe-stdenc"
-#define T_ALIASES_ADOBE_STDENC  "adobe-standard-encoding"
+#define T_ALIASES_ADOBE_STDENC  "adobe-standard", "adobe-standard-encoding"
 
 
 #define T_MAP_ADOBE_SYMBOL	ADOBE_SYMBOL
@@ -670,8 +671,8 @@
 #define T_MAP_VT100GR		VT100GR
 #define T_MAP_VT100_GR		VT100GR
 #define T_MAP_VT100_GRAPHICS	VT100GR
-#define T_NAME_VT100GR		"vt100-gr"
-#define T_ALIASES_VT100GR	"vt100", "vt100-graphics"
+#define T_NAME_VT100GR		"vt100-graphics"
+#define T_ALIASES_VT100GR	"vt100-gr", "vt100"
 
 
 
