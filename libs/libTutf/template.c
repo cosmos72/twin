@@ -18,56 +18,26 @@ hwfont T_CAT3(Tutf_,T_TEMPLATE,_to_UTF_16)[0x100] = {
 #undef EL
 };
 
-
+hwfont T_CAT(Tutf_UTF_16_to_,T_TEMPLATE) (hwfont c)
+{
 #define EL(x) +1
-enum {
-   T_CAT(n_,T_TEMPLATE) = 0 T_NLIST(T_TEMPLATE,EL),
-
-   T_CAT3(n_,T_TEMPLATE,_power_of_2) = NEXT_POWER_OF_2(T_CAT(n_,T_TEMPLATE))
-};
+    enum {
+        n = T_NLIST(T_TEMPLATE,EL) + 0, /* +0 in case T_NLIST() expands to nothing */
+        n_power_of_2 = NEXT_POWER_OF_2(n)
+    };
 #undef EL
-
-static byte             T_CAT(index_,T_TEMPLATE) [T_CAT3(n_,T_TEMPLATE,_power_of_2)];
-static utf16_to_charset T_CAT(array_,T_TEMPLATE) [T_CAT(n_,T_TEMPLATE)]; 
-
-hwfont T_CAT(Tutf_UTF_16_to_,T_TEMPLATE) (hwfont c) {
-    static TUTF_CONST utf16_to_charset *last = NULL;
-    TUTF_CONST utf16_to_charset *res;
     
-    /* Codepage 865 (VGA) obviously cannot contain all unicode chars. this is just a best effort. */
-    if (!last) {
-	utf16_hash_init(T_CAT3(Tutf_,T_TEMPLATE,_to_UTF_16),
-			T_CAT(index_,T_TEMPLATE),
-			T_CAT(array_,T_TEMPLATE),
-			T_CAT3(n_,T_TEMPLATE,_power_of_2));
-        
-        last = T_CAT(array_,T_TEMPLATE);
-    }
-    if (c == last->utf16)
-	return last->ch;
-   
-    if (
-#ifndef TEMPLATE_REDEFINES_ASCII
-	(c >= ' ' && c <= '~')  || /* ASCII area */
-#endif
-	(c & ~0x00ff) == 0xf000 || /* direct-to-font area */
-	(c < 0x100 && T_CAT3(Tutf_,T_TEMPLATE,_to_UTF_16[c]) == c)) /* does c have the same meaning in Unicode and this charset? */
-
-        return c & 0x00ff;
+    static utf16_hash_table * table = NULL;
     
-    res = utf16_hash_search(c, T_CAT(index_,T_TEMPLATE), T_CAT(array_,T_TEMPLATE), T_CAT3(n_,T_TEMPLATE,_power_of_2));
+    /* a single 8-bit charset obviously cannot contain all unicode chars. this is just a best effort. */
+    if (!table)
+	table = utf16_hash_create(T_CAT3(Tutf_,T_TEMPLATE,_to_UTF_16), n, n_power_of_2);
 
-    if (res)
-	c = (last = res)->ch;
-    else 
-    {
-	c = Tutf_UTF_16_to_ASCII(c); /* try to approximate */
 #ifdef TEMPLATE_REDEFINES_ASCII
-        if (c != T_CAT3(Tutf_,T_TEMPLATE,_to_UTF_16)[c])
-	    c = ' ';
+    return utf16_hash_search(table, c, FALSE);
+#else
+    return utf16_hash_search(table, c, TRUE);
 #endif
-    }
-    return c;
 }
 
 #undef T_TEMPLATE

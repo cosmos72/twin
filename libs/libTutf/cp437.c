@@ -15,45 +15,24 @@ hwfont Tutf_CP437_to_UTF_16[0x100] = {
 #undef EL
 };
 
+hwfont Tutf_UTF_16_to_CP437(hwfont c)
+{
 #define EL(x) +1
-enum {
-   n_CP437 = T_NLIST(CP437,EL) + 1,    /* +1 to manually map T_UTF_16_CHECK_MARK below */
-   n_CP437_power_of_2 = NEXT_POWER_OF_2(n_CP437)
-};
+    enum {
+        n = T_NLIST(CP437,EL) + 1,    /* +1 to manually map T_UTF_16_CHECK_MARK -> T_CP437_SQUARE_ROOT below */
+        n_power_of_2 = NEXT_POWER_OF_2(n)
+    };
 #undef EL
-
-static byte             index_CP437 [n_CP437_power_of_2];
-static utf16_to_charset array_CP437 [n_CP437]; 
-
-hwfont Tutf_UTF_16_to_CP437(hwfont c) {
-    static TUTF_CONST utf16_to_charset *last = NULL;
-    TUTF_CONST utf16_to_charset *res;
+    
+    static utf16_hash_table * table = NULL;
     
     /* Codepage 437 (VGA) obviously cannot contain all unicode chars. this is just a best effort. */
-    if (!last) {
-	utf16_hash_init(Tutf_CP437_to_UTF_16, index_CP437, array_CP437, n_CP437_power_of_2);
-        
-        /* manually map T_UTF_16_CHECK_MARK to T_UTF(CP437,_SQUARE_ROOT) */
-        utf16_hash_insert_at(T_UTF_16_CHECK_MARK, T_UTF(CP437,_SQUARE_ROOT), index_CP437,
-			     array_CP437, n_CP437 - 1, n_CP437_power_of_2);
+    if (!table) {
+	table = utf16_hash_create(Tutf_CP437_to_UTF_16, n, n_power_of_2);
 
-        last = array_CP437;
+        /* manually map T_UTF_16_CHECK_MARK -> T_CP437_SQUARE_ROOT */
+        utf16_hash_insert_at(table, n - 1, T_UTF_16_CHECK_MARK, T_CP437_SQUARE_ROOT);
     }
-    if (c == last->utf16)
-	return last->ch;
-   
-    if ((c >= ' ' && c <= '~')  || /* ASCII area */
-	(c & ~0x00ff) == 0xf000 || /* direct-to-font area */
-	(c < 0x100 && Tutf_CP437_to_UTF_16[c] == c)) /* does c have the same meaning in Unicode and this charset? */
-
-        return c & 0x00ff;
-    
-    res = utf16_hash_search(c, index_CP437, array_CP437, n_CP437_power_of_2);
-
-    if (res)
-	c = (last = res)->ch;
-    else
-        c = T_UTF(CP437,_CTRL_NULL);
-    return c;
+    return utf16_hash_search(table, c, TRUE);
 }
 

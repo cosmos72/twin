@@ -783,11 +783,11 @@ static byte InitScreens(void) {
 byte InitBuiltin(void) {
     window Window;
     CONST byte *greeting = "\n"
-	"                TWIN             \n"
-	"        Text WINdows manager     \n\n"
-	"     Version " TWIN_VERSION_STR TWIN_VERSION_EXTRA_STR " (Unicode) by  \n\n"
-	"        Massimiliano Ghilardi    \n\n"
-	" https://github.com/cosmos72/twin";
+	"                TWIN              \n"
+	"        Text WINdows manager      \n\n"
+	"     Version " TWIN_VERSION_STR TWIN_VERSION_EXTRA_STR " (Unicode) by   \n\n"
+	"        Massimiliano Ghilardi     \n\n"
+	"  https://github.com/cosmos72/twin";
     uldat grlen = strlen(greeting);
     
     if ((Builtin_MsgPort=Do(Create,MsgPort)
