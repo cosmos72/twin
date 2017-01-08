@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright (C) 2000 by Massimiliano Ghilardi
+# Copyright (C) 2000,2017 by Massimiliano Ghilardi
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -10,8 +10,17 @@
 
 ARGS=
 DPY=
+CH0="`printf '\0'`"
 
-while [ "$1" ]; do
+append_arg() {
+  if [ "$ARGS" ]; then
+    ARGS="$ARGS$CH0$1"
+  else
+    ARGS="$1"
+  fi
+}
+
+while [ "$#" != 0 ]; do
   case "$1" in
     -h|--help|-help )
       echo "Usage: twstart [OPTIONS]
@@ -38,11 +47,13 @@ Currently known options:
     -- )
       # end of twstart options, pass the rest to twin or twdisplay
       shift
-      ARGS="$ARGS $@"
+      while [ "$#" != 0 ]; do
+        append_arg "$1"
+      done
       break
       ;;
     --*|-* )
-      ARGS="$ARGS $1";
+      append_arg "$1"
       ;;
     *:[0-9a-fA-F]* )
       DPY="$1";
@@ -64,9 +75,9 @@ else
 fi
 
 if [ "$DPY" ]; then
-  echo twstart: detected twin running on "$DPY"
-  exec twdisplay --twin@"$DPY" $ARGS
+  echo "twstart: detected twin running on $DPY"
+  printf "%s" "$ARGS" | exec xargs -0 twdisplay --twin@"$DPY"
 else
-  exec twin $ARGS
+  printf "%s" "$ARGS" | exec xargs -0 twin
 fi
 
