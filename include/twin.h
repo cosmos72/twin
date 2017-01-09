@@ -1498,7 +1498,7 @@ struct s_fn_display_hw {
  */
 
 
-#define IS_OBJ(type,O)	(((O)->Id & magic_mask) == (type##_magic & magic_mask))
+#define IS_OBJ(type,O)	(((O)->Id >> magic_shift) == type##_magic_id)
 #define IS_WIDGET(O)	(IS_OBJ(widget,O) || IS_OBJ(gadget,O) || IS_OBJ(window,O) || IS_OBJ(screen,O))
 #define IS_GADGET(O)	IS_OBJ(gadget,O)
 #define IS_WINDOW(O)	IS_OBJ(window,O)

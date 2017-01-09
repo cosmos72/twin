@@ -1092,12 +1092,12 @@ static msgport sockGetMsgPortObj(obj P) {
 	    return (msgport)P;
 	}
 	switch (P->Id >> magic_shift) {
-	  case row_magic:
-	  case menuitem_magic:
-	  case menu_magic:
+	  case row_magic_id:
+	  case menuitem_magic_id:
+	  case menu_magic_id:
 	    P = (obj) P->Parent;
 	    break;
-	  case mutex_magic:
+	  case mutex_magic_id:
 	    P = (obj) ((mutex)P)->Owner;
 	    break;
 	  default:
