@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # Copyright (C) 2000,2017 by Massimiliano Ghilardi
 #
 # This program is free software; you can redistribute it and/or modify
@@ -8,55 +8,48 @@
 #
 #
 
-ARGS=
+ARGI=1
 DPY=
-CH0="`printf '\0'`"
 
-append_arg() {
-  if [ "$ARGS" ]; then
-    ARGS="$ARGS$CH0$1"
-  else
-    ARGS="$1"
-  fi
-}
-
-while [ "$#" != 0 ]; do
-  case "$1" in
+while [ "$ARGI" -le "$#" ]; do
+  eval ARG="\${$ARGI}"
+  # echo "twstart: $# arguments [$@], now parsing $ARGI-nth: [$ARG]"
+  case "$ARG" in
     -h|--help|-help )
       echo "Usage: twstart [OPTIONS]
 Attach a running twin server to a display or start a new server.
-If a server is found, \`twdisplay' is used to attach it to a display,
-else a new server is started.
+If a twin server is found, \`twdisplay' is used to attach it to a display,
+else a new twin server is started.
 
 Currently known options:
 
  -h, --help            show this help and exit
- --twin@<TWDISPLAY>    specify server to contact instead of \`$TWDISPLAY'
+ --twin@<TWDISPLAY>    specify server to contact instead of autodetecting it
  <TWDISPLAY>           shortcut for --twin@<TWDISPLAY>
  --                    end of options: pass further args to twin or twdisplay
  --<OPTION>            other options are passed verbatim to twin or twdisplay
 "
       exit 0
       ;;
-    --twin@* )
-      DPY="${1:7}";
-      ;;
-    -twin@* )
-      DPY="${1:6}";
-      ;;
     -- )
       # end of twstart options, pass the rest to twin or twdisplay
-      shift
-      while [ "$#" != 0 ]; do
-        append_arg "$1"
-      done
+      eval "set -- \"\${@:1:$(( ARGI-1 ))}\" \"\${@:$(( ARGI+1 ))}\""  # remove current parameter from $@
       break
       ;;
+    --twin@* )
+      DPY="${ARG:7}";
+      eval "set -- \"\${@:1:$(( ARGI-1 ))}\" \"\${@:$(( ARGI+1 ))}\""  # remove current parameter from $@
+      ;;
+    -twin@* )
+      DPY="${ARG:6}";
+      eval "set -- \"\${@:1:$(( ARGI-1 ))}\" \"\${@:$(( ARGI+1 ))}\""  # remove current parameter from $@
+      ;;
     --*|-* )
-      append_arg "$1"
+      : $(( ARGI=ARGI+1 )) # preserve current parameter
       ;;
     *:[0-9a-fA-F]* )
-      DPY="$1";
+      DPY="$ARG";
+      eval "set -- \"\${@:1:$(( ARGI-1 ))}\" \"\${@:$(( ARGI+1 ))}\""  # remove current parameter from $@
       ;;
     * )
       echo "twstart: unknown option \`$1\'
@@ -64,11 +57,9 @@ try \`twstart --help\' for usage summary."
       exit 1
       ;;
   esac
-  shift
 done
 
 if [ "$DPY" ]; then
-  # check it is a valid TWDISPLAY!
   DPY="`twfindtwin \"$DPY\"`"
 else
   DPY="`twfindtwin`"
@@ -76,8 +67,8 @@ fi
 
 if [ "$DPY" ]; then
   echo "twstart: detected twin running on $DPY"
-  printf "%s" "$ARGS" | exec xargs -0 twdisplay --twin@"$DPY"
+  ./mycat twdisplay --twin@"$DPY" "$@"
 else
-  printf "%s" "$ARGS" | exec xargs -0 twin
+  ./mycat twin "$@"
 fi
 

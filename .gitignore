@@ -39,6 +39,7 @@ include/Tw/autoconf.h
 include/twautoconf.h
 include/twconfig.h
 include/version.h
+server/mycat
 server/twdisplay
 server/twin
 server/twin_server
