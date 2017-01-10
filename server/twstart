@@ -67,8 +67,8 @@ fi
 
 if [ "$DPY" ]; then
   echo "twstart: detected twin running on $DPY"
-  ./mycat twdisplay --twin@"$DPY" "$@"
+  exec twdisplay --twin@"$DPY" "$@"
 else
-  ./mycat twin "$@"
+  exec twin "$@"
 fi
 
