@@ -8,15 +8,23 @@
 #
 #
 
-ARGI=1
+FIRSTARG=1
+MODE=normal
 DPY=
 
-while [ "$ARGI" -le "$#" ]; do
-  eval ARG="\${$ARGI}"
-  # echo "twstart: $# arguments [$@], now parsing $ARGI-nth: [$ARG]"
-  case "$ARG" in
-    -h|--help|-help )
-      echo "Usage: twstart [OPTIONS]
+#echo "twstart: $# arguments [$@]"
+
+for ARG
+do
+  #echo "twstart: now parsing [$ARG]"
+  if [ "$FIRSTARG" = 1 ]; then
+    set --
+    FIRSTARG=0
+  fi
+  if [ "$MODE" = normal ]; then
+    case "$ARG" in
+      -h|--help|-help )
+        echo "Usage: twstart [OPTIONS]
 Attach a running twin server to a display or start a new server.
 If a twin server is found, \`twdisplay' is used to attach it to a display,
 else a new twin server is started.
@@ -29,34 +37,36 @@ Currently known options:
  --                    end of options: pass further args to twin or twdisplay
  --<OPTION>            other options are passed verbatim to twin or twdisplay
 "
-      exit 0
-      ;;
-    -- )
-      # end of twstart options, pass the rest to twin or twdisplay
-      eval "set -- \"\${@:1:$(( ARGI-1 ))}\" \"\${@:$(( ARGI+1 ))}\""  # remove current parameter from $@
-      break
-      ;;
-    --twin@* )
-      DPY="${ARG:7}";
-      eval "set -- \"\${@:1:$(( ARGI-1 ))}\" \"\${@:$(( ARGI+1 ))}\""  # remove current parameter from $@
-      ;;
-    -twin@* )
-      DPY="${ARG:6}";
-      eval "set -- \"\${@:1:$(( ARGI-1 ))}\" \"\${@:$(( ARGI+1 ))}\""  # remove current parameter from $@
-      ;;
-    --*|-* )
-      : $(( ARGI=ARGI+1 )) # preserve current parameter
-      ;;
-    *:[0-9a-fA-F]* )
-      DPY="$ARG";
-      eval "set -- \"\${@:1:$(( ARGI-1 ))}\" \"\${@:$(( ARGI+1 ))}\""  # remove current parameter from $@
-      ;;
-    * )
-      echo "twstart: unknown option \`$1\'
+        exit 0
+        ;;
+      -- )
+        # end of twstart options, pass the rest to twin or twdisplay
+        MODE=literal
+        ;;
+      --twin@* )
+        DPY="${ARG:7}";
+        ;;
+      -twin@* )
+        DPY="${ARG:6}";
+        ;;
+      --*|-* )
+        # accumulate current argument
+        set -- "$@" "$ARG"
+        ;;
+      *:[0-9a-fA-F]* )
+        DPY="$ARG";
+        ;;
+      * )
+        echo "twstart: unknown option \`$ARG\'
 try \`twstart --help\' for usage summary."
-      exit 1
-      ;;
-  esac
+        exit 1
+        ;;
+    esac
+  else
+    # accumulate current argument
+    set -- "$@" "$ARG"
+  fi
+  #echo "twstart: accumulated arguments [$@]"
 done
 
 if [ "$DPY" ]; then
