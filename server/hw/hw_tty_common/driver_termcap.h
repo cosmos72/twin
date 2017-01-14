@@ -199,7 +199,8 @@ static byte termcap_InitVideo(void) {
 	/* cannot really autodetect an utf8-capable terminal... use a whitelist */
         uldat termlen = LenStr(term);
 	tty_use_utf8 = ((termlen == 5 && (!CmpMem(term, "xterm", 5) || !CmpMem(term, "linux", 5))) ||
-                        (termlen >= 6 && !CmpMem(term, "xterm-", 6)));
+                        (termlen >= 6 && !CmpMem(term, "xterm-", 6)) ||
+                        (termlen >= 12 && !CmpMem(term, "rxvt-unicode", 12)));
     }
     if (tty_use_utf8 == TRUE) {
         if (!(tc_charset_start = CloneStr("\033%G")) || !(tc_charset_end = CloneStr("\033%@")))
