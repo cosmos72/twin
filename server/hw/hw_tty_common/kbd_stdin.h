@@ -14,6 +14,7 @@ static byte stdin_TestTty(void) {
     struct termios ttyb;
     byte buf[16], *s = buf+3, c;
     int i, alarmReceived;
+    byte ok = TRUE;
 
     ttyb = ttysave;
     /* NL=='\n'==^J; CR=='\r'==^M */
@@ -28,22 +29,31 @@ static byte stdin_TestTty(void) {
     ttyb.c_cc[VINTR] = 0;
     tty_setioctl(tty_fd, &ttyb);
 
-    write(tty_fd, "\033Z", 2); /* request ID */
-    /* ensure we CAN read from the tty */
-    SetAlarm(5);
-    do {
-	i = read(tty_fd, buf, 15);
-    } while ((alarmReceived = AlarmReceived) == 0 && i < 0 && (errno == EWOULDBLOCK || errno == EINTR));
-    SetAlarm(0);
-    if (i <= 0) {
-        Error(SYSCALLERROR);
-        if (alarmReceived)
-            ErrStr = "read() from tty timed out";
-        else if (i == 0)
-            ErrStr = "read() from tty returned END-OF-FILE";
-        tty_setioctl(tty_fd, &ttysave);
-	return FALSE;
+    /* request ID */
+    if (write(tty_fd, "\033Z", 2) != 2) {
+        ErrStr = "write() to tty failed";
+        ok = FALSE;
+    } else {
+        /* ensure we CAN read from the tty */
+        SetAlarm(5);
+        do {
+	   i = read(tty_fd, buf, 15);
+	} while ((alarmReceived = AlarmReceived) == 0 && i < 0 && (errno == EWOULDBLOCK || errno == EINTR));
+        SetAlarm(0);
+        if (i <= 0) {
+	   Error(SYSCALLERROR);
+	   if (alarmReceived)
+	      ErrStr = "read() from tty timed out";
+	   else if (i == 0)
+	      ErrStr = "read() from tty returned END-OF-FILE";
+	   ok = FALSE;
+	}
     }
+    if (!ok) {
+       tty_setioctl(tty_fd, &ttysave);
+       return ok;
+    }
+   
     buf[i] = '\0';
     ttypar[0] = ttypar[1] = ttypar[2] = i = 0;
 
@@ -56,7 +66,7 @@ static byte stdin_TestTty(void) {
 	    break;
 	s++;
     }
-    return TRUE;
+    return ok;
 }
 
 /* return FALSE if failed */

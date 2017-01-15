@@ -63,7 +63,7 @@ static byte linux_InitVideo(void) {
     }
     /* clear colors, enable/disable UTF-8 mode, clear screen */
     /* if UTF-8 mode is disabled, set TTY_DISPCTRL */
-    fprintf(stdOUT, "\033[0m%s%s", (tty_use_utf8 ? "\033%G" : "\033%@\033[3h"), tc_scr_clear);
+    fprintf(stdOUT, "\033[0m%s%s", (tty_use_utf8 ? "\033[3l\033%G" : "\033%@\033[3h"), tc_scr_clear);
     
     HW->FlushVideo = linux_FlushVideo;
     HW->FlushHW = stdout_FlushHW;
@@ -116,9 +116,16 @@ static void linux_QuitVideo(void) {
 
 #define CTRL_ALWAYS 0x0800f501	/* Cannot be overridden by TTY_DISPCTRL */
 
-#define linux_MogrifyInit() fputs("\033[m", stdOUT); _col = COL(WHITE,BLACK);
+/*
+ * the linux console is a noisy place... kernel and daemons often write there.
+ * for better results, reinit UTF-8 mode and TTY_DISPCTRL every time
+ */
+#define linux_MogrifyInit() \
+   (fputs(tty_use_utf8 ? "\033[3l\033%G\033[m" : "\033%@\033[3h\033[m", stdOUT), \
+       _col = COL(WHITE,BLACK))
+     
 
-# define linux_MogrifyFinish() do { } while (0)
+# define linux_MogrifyFinish() ((void)0)
 
 INLINE void linux_SetColor(hwcol col) {
     static byte colbuf[] = "\033[2x;2x;4x;3xm";
