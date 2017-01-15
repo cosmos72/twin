@@ -30,7 +30,7 @@ static byte stdin_TestTty(void) {
     tty_setioctl(tty_fd, &ttyb);
 
     /* request ID */
-    if (write(tty_fd, "\033Z", 2) != 2) {
+    if (write(tty_fd, "\033[c", 3) != 3) {
         ErrStr = "write() to tty failed";
         ok = FALSE;
     } else {
