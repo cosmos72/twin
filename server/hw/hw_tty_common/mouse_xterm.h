@@ -27,7 +27,7 @@ static byte xterm_InitMouse(byte force) {
     }
 
     if (!term) {
-	printk("      xterm_InitMouse() failed: unknown terminal type.\n");
+        printk("%s", "      xterm_InitMouse() failed: unknown terminal type.\n");
 	return FALSE;
     }
 
@@ -43,14 +43,14 @@ static byte xterm_InitMouse(byte force) {
 	 * doesn't have xterm-style mouse reporting
 	 */
 	if (ttypar[0]<6 || (ttypar[0]==6 && ttypar[1]<3)) {
-	    printk("      xterm_InitMouse() failed: this `linux' terminal\n"
-		   "      has no support for xterm-style mouse reporting.\n");
+            printk("%s",
+                   "      xterm_InitMouse() failed: this `linux' terminal\n"
+                   "      has no support for xterm-style mouse reporting.\n");
 	    return FALSE;
 	}
 	if (ttypar[0]==6 && ttypar[1]<4) {
 	    printk("      xterm_InitMouse() warning: this `linux' terminal\n"
 		   "      can only report click, drag and release, not motion.\n");
-	    
 	    mouse_motion_seq = mouse_start_seq;
 	}
     } else if (!strncmp(term, "xterm", 5) ||
@@ -60,7 +60,7 @@ static byte xterm_InitMouse(byte force) {
 	mouse_end_seq = "\033[?1002l\033[?1000l\033[?1001r";
 	mouse_motion_seq = mouse_start_seq;
     } else {
-	printk("      xterm_InitMouse() failed: terminal `%."STR(TW_SMALLBUFF)"s' is not supported.\n", term);
+        printk("%s", "      xterm_InitMouse() failed: terminal `%."STR(TW_SMALLBUFF)"s' is not supported.\n", term);
 	return FALSE;
     }
 

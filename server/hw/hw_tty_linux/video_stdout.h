@@ -61,9 +61,9 @@ static byte linux_InitVideo(void) {
                 printk("      linux_InitVideo() warning: this 'linux' terminal seems to be an old twin (version <= 0.3.11) without UTF-8 support. Setting charset='ASCII'\n");
         }
     }
-    /* clear colors, enable/disable UTF-8 mode, clear screen */
+    /* clear colors, enable/disable UTF-8 mode */
     /* if UTF-8 mode is disabled, set TTY_DISPCTRL */
-    fprintf(stdOUT, "\033[0m%s%s", (tty_use_utf8 ? "\033%G" : "\033%@\033[3h"), tc_scr_clear);
+    fprintf(stdOUT, "\033[0m%s", (tty_use_utf8 ? "\033%G" : "\033%@\033[3h"));
     
     HW->FlushVideo = linux_FlushVideo;
     HW->FlushHW = stdout_FlushHW;

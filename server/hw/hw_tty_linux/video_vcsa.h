@@ -36,8 +36,6 @@ static byte vcsa_InitVideo(void) {
     fcntl(VcsaFd, F_SETFD, FD_CLOEXEC);
     
     tc_scr_clear = "\033[2J";
-    fputs(tc_scr_clear, stdOUT); /* clear screen */
-    fflush(stdOUT);
     
     HW->FlushVideo = vcsa_FlushVideo;
     HW->FlushHW = stdout_FlushHW;

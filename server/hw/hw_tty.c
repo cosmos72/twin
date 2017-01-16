@@ -180,20 +180,17 @@ static void null_InitMouse(void) {
 
 static byte null_InitMouseConfirm(void) {
     byte c = '\0';
-    CONST byte *Msg =
-	"\n"
-	"      \033[1m  ALL  MOUSE  DRIVERS  FAILED.\033[0m\n"
-	"\n"
-	"      If you really want to run `twin' without mouse\n"
-	"      hit RETURN within 10 seconds to continue,\n"
-        "      otherwise hit CTRL-C (or wait 10 seconds) to cancel.\n";
-    
-    fprintf(stdOUT, "%s", Msg);
-    fflush(stdOUT);
 
-    printk("%s", Msg);
+    fflush(stdOUT);
+    printk("%s", 
+           "\n"
+           "      \033[1m  ALL  MOUSE  DRIVERS  FAILED.\033[0m\n"
+           "\n"
+           "      If you really want to run `twin' without mouse\n"
+           "      hit RETURN within 10 seconds to continue,\n"
+           "      otherwise hit CTRL-C (or wait 10 seconds) to cancel.\n");
     flushk();
-    
+
     SetAlarm(10);
     read(tty_fd, &c, 1);
     SetAlarm(0);
@@ -578,6 +575,10 @@ static byte tty_InitHW(void) {
 		
 		HW->RedrawVideo = FALSE;
 		NeedRedrawVideo(0, 0, HW->X - 1, HW->Y - 1);
+
+                if (tc_scr_clear)
+                    fputs(tc_scr_clear, stdOUT);
+                fflush(stdOUT);
 
 		return TRUE;
 	    }

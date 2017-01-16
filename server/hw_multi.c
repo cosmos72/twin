@@ -190,12 +190,6 @@ static byte module_InitHW(TW_CONST byte *arg, uldat len) {
     return FALSE;
 }
 
-static void show_probe4(TW_CONST byte *name, uldat namelen) {
-    printk("twin: autoprobing `%.*s' display driver.\n",
-           Min2((int)namelen,TW_SMALLBUFF),
-           name);
-}
-
 static byte set_hw_name(display_hw D_HW, TW_CONST byte * name, uldat namelen) {
     byte * alloc_name;
     
@@ -231,7 +225,7 @@ byte InitDisplayHW(display_hw D_HW) {
 
     D_HW->DisplayIsCTTY = D_HW->NeedHW = D_HW->FlagsHW = FALSE;
     
-#define AUTOTRY4(hw, len) (show_probe4(hw, len), module_InitHW(hw, len) && set_hw_name(D_HW, hw, len))
+#define AUTOTRY4(hw, len) (module_InitHW(hw, len) && set_hw_name(D_HW, hw, len))
     
     if (arglen == 0) {
         success =

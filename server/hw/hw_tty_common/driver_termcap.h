@@ -215,7 +215,7 @@ static byte termcap_InitVideo(void) {
     if (colorbug)
 	fixup_colorbug();
     
-    fprintf(stdOUT, "%s%s%s%s", tc_attr_off, tc_scr_clear, (tc_charset_start ? (CONST char *)tc_charset_start : ""), (tty_is_xterm ? "\033[?1h" : ""));
+    fprintf(stdOUT, "%s%s%s", tc_attr_off, (tc_charset_start ? (CONST char *)tc_charset_start : ""), (tty_is_xterm ? "\033[?1h" : ""));
     
     HW->FlushVideo = termcap_FlushVideo;
     HW->FlushHW = stdout_FlushHW;

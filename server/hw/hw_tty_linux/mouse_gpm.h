@@ -24,12 +24,13 @@ static int wrap_Gpm_Open(void) {
     extern int gpm_tried;
     
     if (!tty_name) {
-	printk("      GPM_InitMouse() failed: unable to detect tty device\n");
+        printk("%s", "      GPM_InitMouse() failed: unable to detect tty device\n");
 	return NOFD;
     }
     if (tty_number < 1 || tty_number > 63) {
-	printk("      GPM_InitMouse() failed: terminal `%."STR(TW_SMALLBUFF)"s'\n"
-		        "      is not a local linux console.\n", tty_name);
+        printk("      GPM_InitMouse() failed: terminal `%."STR(TW_SMALLBUFF)"s'\n"
+               "      is not a local linux console.\n",
+               tty_name);
 	return NOFD;
     }
 
@@ -48,9 +49,10 @@ static int wrap_Gpm_Open(void) {
 	/* gpm_consolefd is opened by GPM_Open() */
 	fcntl(gpm_consolefd, F_SETFD, FD_CLOEXEC);
     } else {
-	printk("      GPM_InitMouse() failed: unable to connect to `gpm'.\n"
-	       "      make sure you started `twin' from the console\n"
-	       "      and/or check that `gpm' is running.\n");
+        printk("%s",
+               "      GPM_InitMouse() failed: unable to connect to `gpm'.\n"
+               "      make sure you started `twin' from the console\n"
+               "      and/or check that `gpm' is running.\n");
     }
     return GPM_fd;
 }
