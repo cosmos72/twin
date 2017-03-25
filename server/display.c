@@ -939,7 +939,7 @@ byte KeyboardEventCommon(udat Code, udat ShiftFlags, udat Len, CONST byte *Seq) 
 }
 
 static void MainLoop(int Fd) {
-    struct timeval sel_timeout, *this_timeout;
+    struct timeval sel_timeout;
     fd_set read_fds, write_fds, *pwrite_fds;
     uldat err, detail;
     int sys_errno, num_fds;
@@ -983,32 +983,45 @@ static void MainLoop(int Fd) {
 	if (!TwFlush())
 	    break;
 	
-	if (TwPendingMsg()) {
-	    /*
-	     * messages can arrive during Tw* function calls,
-	     * so the FD_ISSET() test alone does not suffice.
-	     */
-	    sel_timeout.tv_sec = sel_timeout.tv_usec = 0;
-	    this_timeout = &sel_timeout;
-	} else
-	    this_timeout = NULL;
+        /*
+	 * messages can arrive during Tw* function calls,
+	 * so the FD_ISSET() test alone does not suffice.
+	 * also use an inactivity timeout: 2min...
+	 */
+	sel_timeout.tv_sec  = TwPendingMsg() ? 0 : 120;
+	sel_timeout.tv_usec = 0;
 
 	if (NeedHW & NEEDPanicHW)
 	    break;
 
-	num_fds = OverrideSelect(max_fds+1, &read_fds, pwrite_fds, NULL, this_timeout);
+	num_fds = OverrideSelect(max_fds+1, &read_fds, pwrite_fds, NULL, &sel_timeout);
 
 	if (num_fds < 0 && errno != EINTR)
 	    /* ach, problem. */
 	    break;
 
+        if (num_fds == 0 && !TwPendingMsg()) {
+	    /*
+	     * no activity during timeout delay && no pending messages..
+	     * just ping twin to keep connection active..
+	     * however, if width <= 0 : means we lost connection, so exit..
+	     */
+	    if (TwGetDisplayWidth() <= 0) {
+		QuitDisplayHW(HW);
+		printk( "twdisplay: lost connection to TWIN.. \n" );
+ 		exit(1);
+	    }
+	}
+       
 	if ((num_fds > 0 && FD_ISSET(Fd, &read_fds)) || TwPendingMsg()) {
 	    /*
 	     * messages can arrive during Tw* function calls,
 	     * so the FD_ISSET() test alone does not suffice.
 	     */
-	    FD_CLR(Fd, &read_fds);
-	    num_fds--;
+	    if (FD_ISSET(Fd, &read_fds)) {
+		num_fds--;
+		FD_CLR(Fd, &read_fds);
+	    }
 	    SocketIO();
 	}
 	if (num_fds > 0)
