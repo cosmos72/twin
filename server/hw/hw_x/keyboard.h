@@ -166,7 +166,7 @@ void X11_DEBUG_SHOW_KEY(CONST char * prefix, KeySym sym, udat len, CONST char * 
         else
             printf("\\x%02x", (unsigned)ch);
     }
-    puts("]");
+    printf("] locale=%s\n", XLocaleOfIM(xim));
 }
 #else
 # define X11_DEBUG_SHOW_KEY(prefix, sym, len, seq) ((void)0)
@@ -190,11 +190,15 @@ static Twkey X11_LookupKey(XEvent *ev, udat *ShiftFlags, udat *len, char *seq) {
         ((kev->state & (Mod1Mask|Mod3Mask)) ? KBD_ALT_FL : 0) | /* Alt|AltGr */
         ((kev->state & Mod2Mask)    ? KBD_NUM_LOCK  : 0); /* Num_Lock */
 
-#ifdef TW_FOUND_X11_XIM_XIC
+#ifdef TW_FEATURE_X11_XIM_XIC
     if (xic) {
         Status status_return;
+# ifdef TW_FEATURE_X11_Xutf8LookupString
+        *len = Xutf8LookupString(xic, kev, seq, _len, &sym, &status_return);
+# else
         *len = XmbLookupString(xic, kev, seq, _len, &sym, &status_return);
-        if (XFilterEvent(ev, None))
+#endif
+       if (XFilterEvent(ev, None))
             return TW_Null;
         
         if (status_return != XLookupBoth && status_return != XLookupChars && status_return != XLookupKeySym)
