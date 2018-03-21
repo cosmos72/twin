@@ -38,10 +38,10 @@ byte InitScroller(void) {
 	(Do_Scroll=Do(Create,Msg)(FnMsg, 0, 0)) &&
 	(Dont_Scroll=Do(Create,Msg)(FnMsg, 0, 0))) {
 
-	return TRUE;
+	return ttrue;
     }
     printk("twin: Scroller: %."STR(TW_SMALLBUFF)"s\n", ErrStr);
-    return FALSE;
+    return tfalse;
 }
 
 INLINE void ScrollerDeactivate(void) {
@@ -66,7 +66,7 @@ static void ScrollerH(msgport MsgPort) {
     uldat Attrib, WState;
     dat Limit;
     dat Mouse_delta_x, Mouse_delta_y;
-    byte State, FlagDeskScroll, FlagWinScroll, WinScrolled = FALSE;
+    byte State, FlagDeskScroll, FlagWinScroll, WinScrolled = tfalse;
     window FocusWindow;
     
     while ((Msg=Scroller_MsgPort->FirstMsg)) {
@@ -95,7 +95,7 @@ static void ScrollerH(msgport MsgPort) {
 			 || ((Attrib & WINDOW_Y_BAR) && (WState | Y_BAR_SELECT)))
 	    && !(WState & TAB_SELECT);
     } else
-	FlagWinScroll = FALSE;
+	FlagWinScroll = tfalse;
     
     FlagDeskScroll = (All->SetUp->Flags & SETUP_SCREEN_SCROLL)
 	/* only a single button must be held */

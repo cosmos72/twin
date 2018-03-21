@@ -229,7 +229,7 @@ static char * X11_AutodetectFont(udat fontwidth, udat fontheight) {
     char ** names = NULL;
     char * best = NULL;
     ldat score, best_score = TW_MINLDAT;
-    byte beatable_score = TRUE, look_up = fontheight >= 10 && (fontheight % 10) >= 5;
+    byte beatable_score = ttrue, look_up = fontheight >= 10 && (fontheight % 10) >= 5;
     if (!pattern)
         return NULL;
     
@@ -274,7 +274,7 @@ static char * X11_AutodetectFont(udat fontwidth, udat fontheight) {
 
 static byte X11_LoadFont(CONST char * fontname, udat fontwidth, udat fontheight) {
     char * alloc_fontname = 0;
-    byte loaded = FALSE;
+    byte loaded = tfalse;
 
     if (!fontname)
         fontname = alloc_fontname = X11_AutodetectFont(fontwidth, fontheight);
@@ -282,7 +282,7 @@ static byte X11_LoadFont(CONST char * fontname, udat fontwidth, udat fontheight)
     if ((fontname && (xsfont = XLoadQueryFont(xdisplay, fontname)))
         || (xsfont = XLoadQueryFont(xdisplay, fontname = "fixed")))
     {
-        loaded = TRUE;
+        loaded = ttrue;
 
         xwfont = xsfont->min_bounds.width;
         xwidth = xwfont * (unsigned)(HW->X = GetDisplayWidth());
@@ -338,11 +338,11 @@ static byte X11_InitHW(void) {
         title[X11_TITLE_MAXLEN];
     int i;
     udat fontwidth = 8, fontheight = 16;
-    byte drag = FALSE, noinput = FALSE;
+    byte drag = tfalse, noinput = tfalse;
     
     if (!(HW->Private = (struct x11_data *)AllocMem(sizeof(struct x11_data)))) {
 	printk("      X11_InitHW(): Out of memory!\n");
-	return FALSE;
+	return tfalse;
     }
     WriteMem(HW->Private, 0, sizeof(struct x11_data));
 
@@ -408,10 +408,10 @@ static byte X11_InitHW(void) {
 		xhw_endy += xhw_starty;
 	    } else if (!strncmp(arg, "drag", 4)) {
 		arg += 4;
-		drag = TRUE;
+		drag = ttrue;
 	    } else if (!strncmp(arg, "noinput", 7)) {
 		arg += 7;
-		noinput = TRUE;
+		noinput = ttrue;
 	    } else
 		arg = strchr(arg, ',');
 	}
@@ -575,7 +575,7 @@ static byte X11_InitHW(void) {
 	    HW->QuitMouse = NoOp;
 	    HW->QuitVideo = NoOp;
 	    
-	    HW->DisplayIsCTTY = FALSE;
+	    HW->DisplayIsCTTY = tfalse;
 	    HW->FlagsHW &= ~FlHWSoftMouse; /* mouse pointer handled by X11 server */
 	    
 	    HW->FlagsHW |= FlHWNeedOldVideo;
@@ -584,7 +584,7 @@ static byte X11_InitHW(void) {
 		HW->FlagsHW |= FlHWNoInput;
 	    
 	    HW->NeedHW = 0;
-	    HW->CanResize = TRUE;
+	    HW->CanResize = ttrue;
 	    HW->merge_Threshold = 0;
 	    
 	    /*
@@ -592,14 +592,14 @@ static byte X11_InitHW(void) {
 	     * without forcing all other displays
 	     * to redraw everything too.
 	     */
-	    HW->RedrawVideo = FALSE;
+	    HW->RedrawVideo = tfalse;
 	    NeedRedrawVideo(0, 0, HW->X - 1, HW->Y - 1);
 	    
 	    if (xdisplay0) *xdisplay0 = ',';
 	    if (fontname0) *fontname0 = ',';
 	    if (charset0) *charset0 = ',';
 	    
-	    return TRUE;
+	    return ttrue;
 	}
     } while (0); else {
 	if (xdisplay_ || (xdisplay_ = getenv("DISPLAY")))
@@ -619,12 +619,12 @@ fail:
     FreeMem(HW->Private);
     HW->Private = NULL;
     
-    return FALSE;
+    return tfalse;
 }
 
 byte InitModule(module Module) {
     Module->Private = X11_InitHW;
-    return TRUE;
+    return ttrue;
 }
 
 /* this MUST be included, or it seems that a bug in dlsym() gets triggered */

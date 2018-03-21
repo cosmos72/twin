@@ -1295,12 +1295,12 @@ struct s_display_hw {
 
     byte DisplayIsCTTY;
     /*
-     * set to TRUE if display is the controlling terminal
+     * set to ttrue if display is the controlling terminal
      */
 
     byte Quitted;
     /*
-     * used internally... is set to TRUE before InitHW() and after QuitHW()
+     * used internally... is set to ttrue before InitHW() and after QuitHW()
      */
     
     byte FlagsHW;
@@ -1326,13 +1326,13 @@ struct s_display_hw {
 
     byte CanResize;
     /*
-     * set to TRUE if the display can actually resize itself (example: X11)
-     * set to FALSE if it can only live with the externally set size (example: ttys)
+     * set to ttrue if the display can actually resize itself (example: X11)
+     * set to tfalse if it can only live with the externally set size (example: ttys)
      */
     
     byte RedrawVideo;
     /*
-     * set to TRUE if the display was corrupted by some external event
+     * set to ttrue if the display was corrupted by some external event
      * example: hw_X11.c sets this when its window gets Expose events
      */
     dat RedrawLeft, RedrawUp, RedrawRight, RedrawDown;

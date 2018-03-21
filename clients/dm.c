@@ -117,9 +117,9 @@ static void ParseArgs(void) {
 	    ShowVersion();
 	    exit(0);
 	} else if (!strcmp(s, "-k") || !Tw_option_strcmp(s, "-kill")) {
-	    DM_Kill = TRUE;
+	    DM_Kill = ttrue;
 	} else if (!strcmp(s, "-q") || !Tw_option_strcmp(s, "-quiet")) {
-	    quiet = TRUE;
+	    quiet = ttrue;
 	} else if (!Tw_option_strcmp(s, "-attach")) {
 	    use_twdisplay = DM_ATTACH;
 	} else if (!Tw_option_strcmp(s, "-display")) {
@@ -186,13 +186,13 @@ static byte InitServer(void) {
 	execlp("twin", "twin", "--secure", "--nohw", TwEnvRC, NULL);
 	fprintf(stderr, "twdm: exec(twin) failed: %s\n", strerror(errno));
 	exit(1);
-	return FALSE;
+	return tfalse;
       case (pid_t)-1:
 	/* error */
 	close(fd[0]);
 	close(fd[1]);
 	fprintf(stderr, "twdm: fork() failed: %s\n", strerror(errno));
-	return FALSE;
+	return tfalse;
       default:
 	/* parent */
 	close(fd[1]);
@@ -212,7 +212,7 @@ static byte InitServer(void) {
 		if (!strncmp(buff+i, "(pid ", 5))
 		    ServerPid = atoi(buff+i+5);
 	    }
-	    return TRUE;
+	    return ttrue;
 	}
 	
 	if (i <= 0)
@@ -220,10 +220,10 @@ static byte InitServer(void) {
 	else
 	    fprintf(stderr, "twdm: error starting twin:\n\t%.*s\n", i, buff);
 	    
-	return FALSE;
+	return tfalse;
     }
     fprintf(stderr, "twdm: pipe() failed: %s\n", strerror(errno));
-    return FALSE;
+    return tfalse;
 }
 
 static void shortsleep(void) {
@@ -258,11 +258,11 @@ static byte InitAttach(void) {
 	execlp(attach, attach, "--quiet", buff, hw_name, NULL);
 	fprintf(stderr, "twdm: exec(%s) failed: %s\n", attach, strerror(errno));
 	exit(1);
-	return FALSE;
+	return tfalse;
       case (pid_t)-1:
 	/* error */
 	fprintf(stderr, "twdm: fork() failed: %s\n", strerror(errno));
-	return FALSE;
+	return tfalse;
       default:
 	/* parent */
 	break;
@@ -271,7 +271,7 @@ static byte InitAttach(void) {
     /* sleep a little to let twdisplay start up */
     shortsleep();
     
-    return TRUE;
+    return ttrue;
 }
 
 
@@ -282,7 +282,7 @@ static byte InitClient(void) {
     byte *tbuf;
     
     if (!TwCheckMagic(DM_magic) || !TwOpen(DM_Display))
-	return FALSE;
+	return tfalse;
     
     DM_Screen = TwFirstScreen();
     X = TwGetDisplayWidth();
@@ -303,7 +303,7 @@ static byte InitClient(void) {
 	 (COL(BLACK,WHITE), COL(BLACK,GREEN), COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
 	  COL(RED,WHITE), COL(RED,GREEN), (byte)0)) &&
 	TwItem4MenuCommon(DM_Menu) &&
-	(TwInfo4Menu(DM_Menu, TW_ROW_ACTIVE, 61, " Twin Display Manager. Enter user name and password to login.", NULL), TRUE) &&
+	(TwInfo4Menu(DM_Menu, TW_ROW_ACTIVE, 61, " Twin Display Manager. Enter user name and password to login.", NULL), ttrue) &&
 	
 	(DM_Window = TwCreateWindow
 	 (strlen(title), title, NULL,
@@ -347,9 +347,9 @@ static byte InitClient(void) {
 	    
 	TwFocusSubWidget(DM_user);
 	    
-	return TRUE;
+	return ttrue;
     }
-    return FALSE;
+    return tfalse;
 }
 
 static void ClearKey(void) {
@@ -382,7 +382,7 @@ static void kill_attach(void) {
 
 static void Login(void) {
     struct passwd *p;
-    byte *pw_passwd = NULL, ok = FALSE;
+    byte *pw_passwd = NULL, ok = tfalse;
     char *c;
     
 
@@ -397,14 +397,14 @@ static void Login(void) {
 	    pw_passwd = p->pw_passwd;
 
 	if (pw_passwd && (((c = crypt(pass.txt, pw_passwd)) && !strcmp(c, pw_passwd)) || !*pw_passwd))
-	    ok = TRUE;
+	    ok = ttrue;
 
     
         if (ok && TwSetServerUid(p->pw_uid, Privileges)) {
 	    /* all ok */
 	    ClearKey();
 	    TwDeleteMsgPort(DM_MsgPort);
-	    logged_in = TRUE;
+	    logged_in = ttrue;
 	    return;
 	}
     }
@@ -417,17 +417,17 @@ static void Login(void) {
     TwMapWindow(DM_pass, DM_Window);
     /* we slept. swallow all events ready to be received */
     while (TwPeekMsg())
-	TwReadMsg(FALSE);
+	TwReadMsg(tfalse);
 }
 
 static void Logout(void) {
     TwClose();
-    if (DM_Kill || logged_in == FALSE)
+    if (DM_Kill || logged_in == tfalse)
 	kill_server();
     else
 	kill_attach();
     shortsleep();
-    logged_in = FALSE;
+    logged_in = tfalse;
 }
 
 static void quit(void) {
@@ -650,9 +650,9 @@ int main(int argc, char *argv[]) {
 
 	/* wait for user to login */
 	while (AttachPid != (pid_t)-1 && ServerPid != (pid_t)-1 &&
-	       logged_in == FALSE && !TwInPanic()) {
+	       logged_in == tfalse && !TwInPanic()) {
 
-	    while ((Msg = TwReadMsg(FALSE))) switch (Msg->Type) {
+	    while ((Msg = TwReadMsg(tfalse))) switch (Msg->Type) {
 	      case TW_MSG_WIDGET_KEY:
 		HandleKey(&Msg->Event.EventKeyboard);
 		break;
@@ -686,7 +686,7 @@ int main(int argc, char *argv[]) {
 	    
 	    /*
 	     * sleep until a message or a signal arrives.
-	     * using TwReadMsg(TRUE) would *NOT* immediately return
+	     * using TwReadMsg(ttrue) would *NOT* immediately return
 	     * after a signal is received.
 	     */
 	    FD_SET(fd, &fset);
@@ -696,9 +696,9 @@ int main(int argc, char *argv[]) {
 	
 	/* wait for user to logout */
 	while (AttachPid != (pid_t)-1 && ServerPid != (pid_t)-1 &&
-	       logged_in == TRUE && !TwInPanic()) {
+	       logged_in == ttrue && !TwInPanic()) {
 
-	    while ((Msg=TwReadMsg(FALSE)))
+	    while ((Msg=TwReadMsg(tfalse)))
 		;
 	    
 	    /* sleep until a message or a signal arrives (as above) */

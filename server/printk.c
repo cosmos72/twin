@@ -88,7 +88,7 @@ int printk(CONST byte *format, ...) {
 
     
 int flushk(void) {
-    return printk_fd == NOFD ? fflush(stderr) : TRUE;
+    return printk_fd == NOFD ? fflush(stderr) : ttrue;
 }
 
 int printk_receive_fd(int fd) {
@@ -112,9 +112,9 @@ int printk_receive_fd(int fd) {
 byte RegisterPrintk(int fd) {
     if (printk_fd == NOFD) {
 	printk_fd = fd;
-	return TRUE;
+	return ttrue;
     }
-    return FALSE;
+    return tfalse;
 }
 
 void UnRegisterPrintk(void) {

@@ -652,7 +652,7 @@ TW_DECL_MAGIC(TwinMagicData);
 
 /*
  * translate an array of IDs to an array of obj of type c;
- * *alloced is TRUE if needed to allocate a buffer, FALSE otherwise.
+ * *alloced is ttrue if needed to allocate a buffer, tfalse otherwise.
  * if success, return array of obj, else return NULL.
  */
 static CONST obj *AllocId2ObjVec(byte *alloced, byte c, uldat n, byte *VV) {
@@ -664,7 +664,7 @@ static CONST obj *AllocId2ObjVec(byte *alloced, byte c, uldat n, byte *VV) {
     aX = X = (obj *)VV;	
     while (n--)
 	*X++ = Id2Obj(c, *L++);
-    *alloced = FALSE;
+    *alloced = tfalse;
     return aX;
 #else
     CONST byte *S;
@@ -678,9 +678,9 @@ static CONST obj *AllocId2ObjVec(byte *alloced, byte c, uldat n, byte *VV) {
 	    Pop(S, uldat, i);
 	    *X++ = Id2Obj(c, i);
 	}
-	*alloced = TRUE;
+	*alloced = ttrue;
     } else
-	*alloced = FALSE;
+	*alloced = tfalse;
     return aX;
 #endif
 }
@@ -810,7 +810,7 @@ TW_INLINE ldat sockDecodeArg(uldat id, CONST byte * Format, uldat n, tsfield a, 
 
 static void sockMultiplexB(uldat id) {
     static struct s_tsfield a[TW_MAX_ARGS_N];
-    static byte warned = FALSE;
+    static byte warned = tfalse;
     uldat mask = 0; /* at least 32 bits. we need TW_MAX_ARGS_N... */
     uldat nlen, n = 1;
     ldat fail = 1;
@@ -828,7 +828,7 @@ static void sockMultiplexB(uldat id) {
 	
 	} else /* (n >= TW_MAX_ARGS_N) */ {
 	    if (!warned) {
-		warned = TRUE;
+		warned = ttrue;
 		printk("twin: sockMultiplexB(): got a call with %d args, only %d supported!\n",
 		       n, TW_MAX_ARGS_N);
 	    }
@@ -990,7 +990,7 @@ static uldat sockFindFunction(byte Len, CONST byte *Name, byte FormatLen, CONST 
 }
 
 static byte sockSyncSocket(void) {
-    return TRUE;
+    return ttrue;
 }
 
 static byte sockServerSizeof(byte Type) {
@@ -1517,7 +1517,7 @@ static tany sockCallBExtension(extension e, topaque len, CONST byte *data, CONST
 #else /* !CONF_EXT */
 
 static byte sockDecodeExtension(topaque *len, CONST byte **data, topaque *args_n, tsfield args) {
-    return FALSE;
+    return tfalse;
 }
 static extension sockOpenExtension(byte namelen, CONST byte *name) {
     return (extension)0;
@@ -1564,7 +1564,7 @@ static void sockSendMsg(msgport MsgPort, msg Msg) {
 
     switch (Msg->Type) {
       case MSG_DISPLAY:
-	Easy = FALSE;
+	Easy = tfalse;
 	sockReply(Msg->Type, Len = sizeof(twindow) + 4*sizeof(udat) + Msg->Event.EventDisplay.Len, NULL);
 
 	if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
@@ -1586,7 +1586,7 @@ static void sockSendMsg(msgport MsgPort, msg Msg) {
 	if (Easy && sizeof(event_keyboard) == sizeof(window) + 3*sizeof(dat) + 2*sizeof(byte))
 	    break;
 	else
-	    Easy = FALSE;
+	    Easy = tfalse;
 	sockReply(Msg->Type, Len = sizeof(twindow) + 3*sizeof(udat) + 2*sizeof(byte) + Msg->Event.EventKeyboard.SeqLen, NULL);
 	if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
 	    t += Tot - Len;
@@ -1603,7 +1603,7 @@ static void sockSendMsg(msgport MsgPort, msg Msg) {
 	if (Easy && sizeof(event_mouse) == sizeof(window) + 4*sizeof(dat))
 	    break;
 	else
-	    Easy = FALSE;
+	    Easy = tfalse;
 	sockReply(Msg->Type, Len = sizeof(twindow) + 4*sizeof(udat), NULL);
 	if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
 	    t += Tot - Len;
@@ -1618,7 +1618,7 @@ static void sockSendMsg(msgport MsgPort, msg Msg) {
 	if (Easy && sizeof(event_widget) == sizeof(widget) + 6*sizeof(dat))
 	    break;
 	else
-	    Easy = FALSE;
+	    Easy = tfalse;
 	sockReply(Msg->Type, Len = sizeof(twindow) + 6*sizeof(dat), NULL);
 	if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
 	    t += Tot - Len;
@@ -1635,7 +1635,7 @@ static void sockSendMsg(msgport MsgPort, msg Msg) {
 	if (Easy && sizeof(event_gadget) == sizeof(window) + 2*sizeof(dat))
 	    break;
 	else
-	    Easy = FALSE;
+	    Easy = tfalse;
 	sockReply(Msg->Type, Len = sizeof(twindow) + 2*sizeof(dat), NULL);
 	if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
 	    t += Tot - Len;
@@ -1648,7 +1648,7 @@ static void sockSendMsg(msgport MsgPort, msg Msg) {
 	if (Easy && sizeof(event_menu) == sizeof(window) + 2*sizeof(udat) + sizeof(menu) + sizeof(row))
 	    break;
 	else
-	    Easy = FALSE;
+	    Easy = tfalse;
 	sockReply(Msg->Type, Len = sizeof(twindow) + 2*sizeof(dat) + sizeof(tmenu) + sizeof(row), NULL);
 	if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
 	    t += Tot - Len;
@@ -1663,7 +1663,7 @@ static void sockSendMsg(msgport MsgPort, msg Msg) {
 	if (Easy && sizeof(event_selection) == sizeof(window) + 4*sizeof(dat))
 	    break;
 	else
-	    Easy = FALSE;
+	    Easy = tfalse;
 	sockReply(Msg->Type, Len = sizeof(twindow) + 4*sizeof(dat), NULL);
 	if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
 	    t += Tot - Len;
@@ -1679,7 +1679,7 @@ static void sockSendMsg(msgport MsgPort, msg Msg) {
 	    3*sizeof(ldat) + MAX_MIMELEN + sizeof(uldat))
 	    break;
 	else
-	    Easy = FALSE;
+	    Easy = tfalse;
 	sockReply(Msg->Type, Len = sizeof(twindow) + 2*sizeof(dat) + 3*sizeof(ldat)
 	      + MAX_MIMELEN + Msg->Event.EventSelectionNotify.Len, NULL);
 	if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
@@ -1698,7 +1698,7 @@ static void sockSendMsg(msgport MsgPort, msg Msg) {
 	if (Easy && sizeof(event_selectionrequest) == sizeof(window) + 2*sizeof(dat) + sizeof(obj) + sizeof(ldat))
 	    break;
 	else
-	    Easy = FALSE;
+	    Easy = tfalse;
 	sockReply(Msg->Type, Len = sizeof(twindow) + 2*sizeof(dat) + sizeof(tobj) + sizeof(ldat), NULL);
 	if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
 	    t += Tot - Len;
@@ -1714,7 +1714,7 @@ static void sockSendMsg(msgport MsgPort, msg Msg) {
 	if (Easy && sizeof(event_control) == sizeof(window) + 4*sizeof(dat) + sizeof(uldat))
 	    break;
 	else
-	    Easy = FALSE;
+	    Easy = tfalse;
 	sockReply(Msg->Type, Len = sizeof(twindow) + 4*sizeof(dat) +
 		  Msg->Event.EventControl.Len, NULL);
 	if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
@@ -1732,7 +1732,7 @@ static void sockSendMsg(msgport MsgPort, msg Msg) {
 	if (Easy && sizeof(event_clientmsg) == sizeof(window) + 2*sizeof(dat) + 2*sizeof(uldat))
 	    break;
 	else
-	    Easy = FALSE;
+	    Easy = tfalse;
 	sockReply(Msg->Type, Len = sizeof(twindow) + 2*sizeof(dat) +
 		  Msg->Event.EventClientMsg.Len, NULL);
 	if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
@@ -1746,7 +1746,7 @@ static void sockSendMsg(msgport MsgPort, msg Msg) {
 	break;
 	
       default:
-	Easy = FALSE;
+	Easy = tfalse;
     }
 #if TW_SIZEOF_TOPAQUE == TW_SIZEOF_ULDAT
     if (Easy) {
@@ -1778,7 +1778,7 @@ static byte sockSendToMsgPort(msgport MsgPort, udat Len, CONST byte *Data) {
     msg Msg;
     uldat dstSlot;
     udat _Len, minType;
-    byte ok = TRUE;
+    byte ok = ttrue;
 
     /* FIXME: must code alienSendToMsgPort() and call it if AlienMagic(Slot) != MagicNative */
     
@@ -1810,7 +1810,7 @@ static byte sockSendToMsgPort(msgport MsgPort, udat Len, CONST byte *Data) {
 		_Len += tMsg->Event.EventKeyboard.SeqLen;
 	    } else
 		/* (tmsg) too short */
-		ok = FALSE;
+		ok = tfalse;
 	    break;
 	  case TW_MSG_USER_CONTROL:
 	    if (Len >= tmsgEventOffset(EventControl.Data)) {
@@ -1819,7 +1819,7 @@ static byte sockSendToMsgPort(msgport MsgPort, udat Len, CONST byte *Data) {
 		_Len += tMsg->Event.EventControl.Len;
 	    } else
 		/* (tmsg) too short */
-		ok = FALSE;
+		ok = tfalse;
 	    break;
 	  case TW_MSG_USER_CLIENTMSG:
 	    if (Len >= tmsgEventOffset(EventClientMsg.Data)) {
@@ -1828,7 +1828,7 @@ static byte sockSendToMsgPort(msgport MsgPort, udat Len, CONST byte *Data) {
 		_Len += tMsg->Event.EventClientMsg.Len;
 	    } else
 		/* (tmsg) too short */
-		ok = FALSE;
+		ok = tfalse;
 	    break;
 	  default:
 	    break;
@@ -1875,7 +1875,7 @@ static byte sockSendToMsgPort(msgport MsgPort, udat Len, CONST byte *Data) {
 		      CloneMem(tMsg->Event.EventDisplay.Data, tMsg->Event.EventDisplay.Len))
 		    && tMsg->Event.EventDisplay.Len)
 		    
-		    ok = FALSE;
+		    ok = tfalse;
 		      
 		break;
 	      case TW_MSG_WIDGET_KEY:
@@ -1973,14 +1973,14 @@ static byte sockSendToMsgPort(msgport MsgPort, udat Len, CONST byte *Data) {
 		    tevent_clientmsg tC = &tMsg->Event.EventClientMsg;
 		    event_clientmsg *C = &Msg->Event.EventClientMsg;
 		    
-		    alienReadVec(tC->Data.b, C->Data.b, tC->Len, tC->Format, tC->Format, TRUE);
+		    alienReadVec(tC->Data.b, C->Data.b, tC->Len, tC->Format, tC->Format, ttrue);
 		} else
 #endif
 		    CopyMem(tMsg->Event.EventClientMsg.Data.b, Msg->Event.EventClientMsg.Data.b,
 			    tMsg->Event.EventClientMsg.Len);
 		break;
 	      default:
-		ok = FALSE;
+		ok = tfalse;
 		break;
 	    }
 	    
@@ -2027,7 +2027,7 @@ static void sockRequestSelection(obj Owner, uldat ReqPrivate) {
 #ifdef CONF_SOCKET_GZ
 
 static byte sockCanCompress(void) {
-    return TRUE;
+    return ttrue;
 }
 
 static voidpf sockZAlloc(voidpf opaque, uInt items, uInt size) {
@@ -2100,7 +2100,7 @@ static byte sockDoCompress(byte on_off) {
 		    
 		    /* we have ls.Fd == specFD. it will be fixed by LS.PrivateAfterFlush() */
 		    
-		    return TRUE;
+		    return ttrue;
 		}
 		deflateEnd(z1);
 	    }
@@ -2108,23 +2108,23 @@ static byte sockDoCompress(byte on_off) {
 	if (z2) FreeMem(z2);
 	if (z1) FreeMem(z1);
 	if (slot != NOSLOT) UnRegisterRemote(slot);
-	return FALSE;
+	return tfalse;
     } else {
 	/* inform RemoteFlush() we are shutting down the compression... */
 	LS.PrivateAfterFlush = ShutdownGzip;
 	
-	return TRUE;
+	return ttrue;
     }
 }
 
 #else
 
 static byte sockCanCompress(void) {
-    return FALSE;
+    return tfalse;
 }
 
 static byte sockDoCompress(byte on_off) {
-    return FALSE;
+    return tfalse;
 }
 
 #endif /* CONF_SOCKET_GZ */
@@ -2152,7 +2152,7 @@ static byte sockReply(uldat code, uldat len, CONST void *data) {
     buf[2] = code;
     if (RemoteWriteQueue(Slot, 3*sizeof(uldat), buf) == 3*sizeof(uldat) && len)
 	return RemoteWriteQueue(Slot, len, data) == len;
-    return FALSE;
+    return tfalse;
 }
 
 static byte SendUldat(uldat data) {
@@ -2170,9 +2170,9 @@ static byte SendUldat(uldat data) {
 	    t = RemoteWriteGetQueue(Slot, &len);
 	    t += len - AlienSizeofUldat;
 	    alienPUSH(t,uldat,data);
-	    return TRUE;
+	    return ttrue;
 	}
-	return FALSE;
+	return tfalse;
     }
 #else /* !CONF_SOCKET_ALIEN */
     
@@ -2246,7 +2246,7 @@ static byte CreateAuth(byte *path) {
 	close(fd);
     }
     
-    return len == AuthLen ? TRUE : Error(SYSCALLERROR);
+    return len == AuthLen ? ttrue : Error(SYSCALLERROR);
 }
 
 static byte sockInitAuth(void) {
@@ -2254,7 +2254,7 @@ static byte sockInitAuth(void) {
     uldat len;
     
     if (!HOME)
-	return FALSE;
+	return tfalse;
     
     len = LenStr(HOME);
     len = Min2(len, TotalLen-11);
@@ -2279,7 +2279,7 @@ static byte sockInitAuth(void) {
     if (len < AuthLen)
     	return CreateAuth(AuthData);
 
-    return TRUE;
+    return ttrue;
 }
 
 static byte SendChallenge(void) {
@@ -2289,7 +2289,7 @@ static byte SendChallenge(void) {
     byte *t;
     
     if ((fd = open("/dev/urandom", O_RDONLY)) < 0)
-	return FALSE;
+	return tfalse;
     len = AuthLen;
     for (got = 1; len < TotalLen && got; len += got) {
 	do {
@@ -2309,9 +2309,9 @@ static byte SendChallenge(void) {
 	MD5Update(&ctx, AuthData, TotalLen);
 	MD5Final(t, &ctx); /* write digest into t */
 	
-	return TRUE;
+	return ttrue;
     }
-    return FALSE;
+    return tfalse;
 }
 
 /*
@@ -2539,11 +2539,11 @@ static void Wait4Magic(int fd, uldat slot, byte isUnix) {
 }
 
 static void Wait4MagicUnixIO(int fd, uldat slot) {
-    Wait4Magic(fd, slot, TRUE);
+    Wait4Magic(fd, slot, ttrue);
 }
 
 static void Wait4MagicInetIO(int fd, uldat slot) {
-    Wait4Magic(fd, slot, FALSE);
+    Wait4Magic(fd, slot, tfalse);
 }
 
 
@@ -2744,7 +2744,7 @@ byte InitModule(module Module)
 
     if (!sockInitAuth()) {
 	printk("twin: failed to create ~/.TwinAuth: %."STR(TW_SMALLBUFF)"s\n", ErrStr);
-	return FALSE;
+	return tfalse;
     }
     
     WriteMem(&addr, 0, sizeof(addr));
@@ -2788,10 +2788,10 @@ byte InitModule(module Module)
 	    FdList[unixSlot].HandlerIO.S = unixSocketIO;
 	}
 
-	return TRUE;
+	return ttrue;
     }
     printk("twin: failed to create sockets: %."STR(TW_SMALLBUFF)"s\n", ErrStr);
-    return FALSE;
+    return tfalse;
 }
 
 void QuitModule(module Module) {

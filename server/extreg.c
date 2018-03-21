@@ -35,16 +35,16 @@ static exts OrigExts = {
 byte Register_Ext(void **where, void *data) {
     if (*where == *OrigExt(where)) {
 	*where = data;
-	return TRUE;
+	return ttrue;
     }
-    return FALSE;
+    return tfalse;
 }
 
 byte UnRegister_Ext(void **where, void *data) {
     if (*where == data) {
 	*where = *OrigExt(where);
-	return TRUE;
+	return ttrue;
     }
-    return FALSE;
+    return tfalse;
 }
 

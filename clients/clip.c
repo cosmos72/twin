@@ -37,14 +37,14 @@ static byte InitClip(void) {
 	   38, 18, 0))) &&
 	(Window=TwWin4Menu(Clip_Menu)) &&
 	TwRow4Menu(Window, COD_QUIT, TW_ROW_INACTIVE, 17, " Quit      Alt-X ") &&
-	TwItem4Menu(Clip_Menu, Window, TRUE, 6, " File ") &&
+	TwItem4Menu(Clip_Menu, Window, ttrue, 6, " File ") &&
 	(TwSetColorsWindow
 	 (Clip_Win, 0x1FF,
 	  COL(HIGH|GREEN,WHITE), COL(CYAN,BLUE), COL(HIGH|BLUE,BLACK), COL(HIGH|WHITE,HIGH|BLUE), COL(HIGH|WHITE,HIGH|BLUE),
 	  COL(HIGH|WHITE,HIGH|BLACK), COL(HIGH|BLACK,WHITE), COL(BLACK,HIGH|BLACK), COL(BLACK,WHITE)),
 	 TwConfigureWindow(Clip_Win, 0xF<<2, 0, 0, 7, 3, TW_MAXDAT, TW_MAXDAT),
 	 (Window=TwWin4Menu(Clip_Menu))) &&
-	TwItem4Menu(Clip_Menu, Window, FALSE, 6, " Clip ") &&
+	TwItem4Menu(Clip_Menu, Window, tfalse, 6, " Clip ") &&
 	TwRow4Menu(Window, (udat)0, TW_ROW_INACTIVE,16, " Undo           ") &&
 	TwRow4Menu(Window, (udat)0, TW_ROW_INACTIVE,16, " Redo           ") &&
 	TwRow4Menu(Window, (udat)0, TW_ROW_IGNORE,  16, "\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4") &&
@@ -55,7 +55,7 @@ static byte InitClip(void) {
 	TwRow4Menu(Window, (udat)0, TW_ROW_IGNORE,  16, "\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4") &&
 	TwRow4Menu(Window, (udat)0, TW_ROW_INACTIVE,16, " Show Clipboard ") &&
 	(Window=TwWin4Menu(Clip_Menu)) &&
-	TwItem4Menu(Clip_Menu, Window, TRUE, 8, " Search ") &&
+	TwItem4Menu(Clip_Menu, Window, ttrue, 8, " Search ") &&
 	TwRow4Menu(Window, (udat)0, TW_ROW_ACTIVE,  9, " Find    ") &&
 	TwRow4Menu(Window, (udat)0, TW_ROW_ACTIVE,  9, " Replace ") &&
 	TwItem4MenuCommon(Clip_Menu) &&
@@ -67,7 +67,7 @@ int main(int argc, char *argv[]) {
     tmsg Msg;
     uldat err, WinN = 1;
     
-    if (InitClip()) while ((Msg=TwReadMsg(TRUE))) {
+    if (InitClip()) while ((Msg=TwReadMsg(ttrue))) {
 	if (Msg->Type==TW_MSG_WIDGET_KEY) {
 	    
 	    tevent_keyboard EventK = &Msg->Event.EventKeyboard;

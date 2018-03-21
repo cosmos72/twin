@@ -162,7 +162,7 @@ static gint gtk_AskCloseCallback_ttframe(GtkWidget *widget, GdkEvent *event, gpo
     ttframe o = ID2(ttframe,(opaque)data);
     if (o)
 	FireSimpleEvent((ttcomponent)o, ttevent_evtype_askclose);
-    return TRUE; /* The event handler will delete the window itself if it wants to */
+    return ttrue; /* The event handler will delete the window itself if it wants to */
 }
 static ttcallback gtk_AddAskCloseCallback_ttframe(ttframe o) {
     ttcallback l;

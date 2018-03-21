@@ -373,7 +373,7 @@ static byte handle_diacr(byte ch)
     diacr = 0;
     
     if (!accent_tables_init) {
-	accent_tables_init = TRUE;
+	accent_tables_init = ttrue;
 	ioctl(tty_fd, KDGKBDIACR, &accent_tables);
     }
     

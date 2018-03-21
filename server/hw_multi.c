@@ -45,7 +45,7 @@
 
 #define forHW for (HW = All->FirstDisplayHW; HW; HW = HW->Next)
 
-#define safeforHW(s_HW) for (HW = All->FirstDisplayHW; HW && (((s_HW) = HW->Next), TRUE); HW = (s_HW))
+#define safeforHW(s_HW) for (HW = All->FirstDisplayHW; HW && (((s_HW) = HW->Next), ttrue); HW = (s_HW))
 
 
 /* common data */
@@ -79,8 +79,8 @@ dat GetDisplayHeight(void) {
 void UpdateFlagsHW(void) {
     StrategyReset(); /* reset StrategyFlag */
     
-    NeedOldVideo = ExpensiveFlushVideo = FALSE;
-    CanDragArea = TRUE;
+    NeedOldVideo = ExpensiveFlushVideo = tfalse;
+    CanDragArea = ttrue;
 
     forHW {
 	if (!HW->Quitted) {
@@ -139,7 +139,7 @@ static byte module_InitHW(TW_CONST byte *arg, uldat len) {
     module Module;
 
     if (!arg || !len)
-	return FALSE;
+	return tfalse;
     
     if (len >= 4 && !memcmp(arg, "-hw=", 4)) {
 	arg += 4; len -= 4; /* skip "-hw=" */
@@ -168,7 +168,7 @@ static byte module_InitHW(TW_CONST byte *arg, uldat len) {
 		printk("twin: ...module `%."STR(TW_SMALLBUFF)"s' successfully started.\n", alloc_name);
 		FreeMem(alloc_name);
 		HW->Module = Module; Module->Used++;
-		return TRUE;
+		return ttrue;
 	    }
 	    Delete(Module);
 	}
@@ -187,7 +187,7 @@ static byte module_InitHW(TW_CONST byte *arg, uldat len) {
     if (alloc_name)
 	FreeMem(alloc_name);
     
-    return FALSE;
+    return tfalse;
 }
 
 static byte set_hw_name(display_hw D_HW, TW_CONST byte * name, uldat namelen) {
@@ -199,7 +199,7 @@ static byte set_hw_name(display_hw D_HW, TW_CONST byte * name, uldat namelen) {
         D_HW->Name = alloc_name;
         D_HW->NameLen = namelen;
     }
-    return TRUE;
+    return ttrue;
 }
 
 static void warn_NoHW(TW_CONST byte *arg, uldat len) {
@@ -223,7 +223,7 @@ byte InitDisplayHW(display_hw D_HW) {
     SaveHW;
     SetHW(D_HW);
 
-    D_HW->DisplayIsCTTY = D_HW->NeedHW = D_HW->FlagsHW = FALSE;
+    D_HW->DisplayIsCTTY = D_HW->NeedHW = D_HW->FlagsHW = tfalse;
     
 #define AUTOTRY4(hw, len) (module_InitHW(hw, len) && set_hw_name(D_HW, hw, len))
     
@@ -243,12 +243,12 @@ byte InitDisplayHW(display_hw D_HW) {
     if (success) {
         udat tried;
         
-	D_HW->Quitted = FALSE;
+	D_HW->Quitted = tfalse;
 	
 	/* configure correctly the new HW */
 	for (tried = 0; tried < HW_CONFIGURE_MAX; tried++) {
 	    if (!(ConfigureHWDefault[tried]))
-		D_HW->Configure(tried, FALSE, ConfigureHWValue[tried]);
+		D_HW->Configure(tried, tfalse, ConfigureHWValue[tried]);
 	}
 	
 	if (!DisplayHWCTTY && D_HW->DisplayIsCTTY)
@@ -274,7 +274,7 @@ void QuitDisplayHW(display_hw D_HW) {
 	if (D_HW->QuitHW)
 	    HW = D_HW, D_HW->QuitHW();
 
-	D_HW->Quitted = TRUE;
+	D_HW->Quitted = ttrue;
 	
 	if ((slot = D_HW->AttachSlot) != NOSLOT) {
 	    /* avoid KillSlot <-> DeleteDisplayHW infinite recursion */
@@ -306,10 +306,10 @@ static byte IsValidHW(uldat len, CONST byte *arg) {
             break;
         if ((b < '0' || b > '9') && (b < 'A' || b > 'Z') && (b < 'a' || b > 'z') && b != '_') {
             printk("twin: invalid non-alphanumeric character `%c' in display HW name `%.*s'\n", (int)b, Min2((int)len,TW_SMALLBUFF), arg);
-            return FALSE;
+            return tfalse;
         }
     }
-    return TRUE;
+    return ttrue;
 }
 
 display_hw AttachDisplayHW(uldat len, CONST byte *arg, uldat slot, byte flags) {
@@ -345,12 +345,12 @@ display_hw AttachDisplayHW(uldat len, CONST byte *arg, uldat slot, byte flags) {
 	    }
 
 	    if (ResizeDisplay()) {
-		QueuedDrawArea2FullScreen = TRUE;
+		QueuedDrawArea2FullScreen = ttrue;
 	    }
 	    return D_HW;
 	}
 	/* failed, clean up without calling RunNoHW() or KillSlot() */
-	D_HW->Quitted = TRUE;
+	D_HW->Quitted = ttrue;
 	D_HW->AttachSlot = NOSLOT;
 	D_HW->QuitHW = NoOp;
 	Delete(D_HW);
@@ -361,23 +361,23 @@ display_hw AttachDisplayHW(uldat len, CONST byte *arg, uldat slot, byte flags) {
 
 
 byte DetachDisplayHW(uldat len, CONST byte *arg, byte flags) {
-    byte done = FALSE;
+    byte done = tfalse;
     display_hw s_HW;
     
     if (All->ExclusiveHW && !(flags & TW_ATTACH_HW_EXCLUSIVE))
-	return FALSE;
+	return tfalse;
     
     if (len) {
 	safeforHW(s_HW) {
 	    if (HW->NameLen == len && !CmpMem(HW->Name, arg, len)) {
 		Delete(HW);
-		done = TRUE;
+		done = ttrue;
 		break;
 	    }
 	}
     } else {
 	QuitHW();
-	done = TRUE;
+	done = ttrue;
     }
     return done;
 }
@@ -388,21 +388,21 @@ byte InitHW(void) {
     byte *arg;
     udat hwcount = 0;
     
-    byte ret = FALSE, flags = 0, nohw = FALSE;
+    byte ret = tfalse, flags = 0, nohw = tfalse;
     
     WriteMem(ConfigureHWDefault, '\1', HW_CONFIGURE_MAX); /* set everything to default (-1) */
     
     for (arglist = orig_argv; (arg = *arglist); arglist++) {
         if (!strcmp(arg, "-nohw"))
-	    nohw = TRUE;
+	    nohw = ttrue;
 	else if (!strcmp(arg, "-x") || !strcmp(arg, "-excl"))
 	    flags |= TW_ATTACH_HW_EXCLUSIVE;
 	else if (!strcmp(arg, "-s") || !strcmp(arg, "-share"))
 	    flags &= ~TW_ATTACH_HW_EXCLUSIVE;
 	else if (!strcmp(arg, "-secure"))
-	    flag_secure = TRUE;
+	    flag_secure = ttrue;
 	else if (!strcmp(arg, "-envrc"))
-	    flag_envrc = TRUE;
+	    flag_envrc = ttrue;
 	else if (!strncmp(arg, "-hw=", 4))
 	    hwcount++;
 	else
@@ -428,7 +428,7 @@ byte InitHW(void) {
     RunTwEnvRC();
 
     if (nohw)
-        RunNoHW(ret = TRUE);
+        RunNoHW(ret = ttrue);
     else if (hwcount) {
         for (arglist = orig_argv; (arg = *arglist); arglist++) {
             if (!strncmp(arg, "-hw=", 4)) {
@@ -452,22 +452,22 @@ void QuitHW(void) {
 
 byte RestartHW(byte verbose) {
     display_hw s_HW;
-    byte ret = FALSE;
+    byte ret = tfalse;
     
     if (All->FirstDisplayHW) {
 	safeforHW(s_HW) {
 	    if (Act(Init,HW)(HW))
-		ret = TRUE;
+		ret = ttrue;
 	    else
 		Delete(HW);
 	}
 	if (ret) {
 	    ResizeDisplay();
-	    QueuedDrawArea2FullScreen = TRUE;
+	    QueuedDrawArea2FullScreen = ttrue;
 	} else {
 	    printk("\ntwin:   \033[1mALL  DISPLAY  DRIVERS  FAILED.\033[0m\n"
 		   "\ntwin: continuing in background with no display.\n");
-	    RunNoHW(FALSE);
+	    RunNoHW(tfalse);
 	}
     } else if (verbose) {
 	printk("twin: RestartHW(): All display drivers removed by SuspendHW().\n"
@@ -513,11 +513,11 @@ void ResizeDisplayPrefer(display_hw D_HW) {
 }
 
 /*
- * return TRUE if DisplayWidth or DisplayHeight were changed
+ * return ttrue if DisplayWidth or DisplayHeight were changed
  */
 byte ResizeDisplay(void) {
     udat Width, Height;
-    byte change = FALSE;
+    byte change = tfalse;
     
     if (All->FirstDisplayHW) {
 	
@@ -569,7 +569,7 @@ byte ResizeDisplay(void) {
 	    printk("twin: out of memory!\n");
 	    Quit(1);
 	}
-	ValidOldVideo = FALSE;
+	ValidOldVideo = tfalse;
     }
     
     if (!Video || change) {
@@ -787,7 +787,7 @@ INLINE void OptimizeChangedVideo(void) {
     uldat _start, start, _end, end;
     ldat i;
 
-    ChangedVideoFlag = FALSE;
+    ChangedVideoFlag = tfalse;
     
     for (i=0; i<(ldat)DisplayHeight*2; i++) {
 	start = (uldat)ChangedVideo[i>>1][!(i&1)][0];
@@ -820,7 +820,7 @@ INLINE void OptimizeChangedVideo(void) {
 		    ChangedVideo[i>>1][1][0] = -1;
 		continue;
 	    } else {
-		ChangedVideoFlag = TRUE;
+		ChangedVideoFlag = ttrue;
 		if (start > _start)
 		    ChangedVideo[i>>1][!(i&1)][0] += start - _start;
 		if (end < _end)
@@ -853,10 +853,10 @@ INLINE void SyncOldVideo(void) {
 void FlushHW(void) {
     static timevalue LastBeep = {(tany)0, (tany)0};
     timevalue tmp = {(tany)0, 100 MilliSECs};
-    byte doBeep = FALSE, saved = FALSE, mangled = FALSE;
+    byte doBeep = tfalse, saved = tfalse, mangled = tfalse;
     byte saveChangedVideoFlag, saveValidOldVideo;
     /*
-     * we can NEVER get (saved == FALSE && mangled == TRUE)
+     * we can NEVER get (saved == tfalse && mangled == ttrue)
      * as it would mean we have irreversibly lost ChangedVideo[]
      */
 
@@ -868,13 +868,13 @@ void FlushHW(void) {
 	IncrTime(&tmp, &LastBeep);
 	if (CmpTime(&All->Now, &tmp) >= 0) {
 	    CopyMem(&All->Now, &LastBeep, sizeof(timevalue));
-	    doBeep = TRUE;
+	    doBeep = ttrue;
 	}
 	NeedHW &= ~NEEDBeepHW;
     }
 
     if (QueuedDrawArea2FullScreen) {
-	QueuedDrawArea2FullScreen = FALSE;
+	QueuedDrawArea2FullScreen = tfalse;
 	DirtyVideo(0, 0, DisplayWidth-1, DisplayHeight-1);
 	DrawArea2(FULL_SCREEN);
 	UpdateCursor();
@@ -902,7 +902,7 @@ void FlushHW(void) {
 	    ValidOldVideo = saveValidOldVideo;
 	    ChangedVideoFlag = saveChangedVideoFlag;
 	    CopyMem(saveChangedVideo, ChangedVideo, (ldat)DisplayHeight*sizeof(dat)*4);
-	    mangled = FALSE;
+	    mangled = tfalse;
 	}
 	if (HW->RedrawVideo || ((HW->FlagsHW & FlHWSoftMouse) &&
 				(HW->FlagsHW & FlHWChangedMouseFlag))) {
@@ -910,21 +910,21 @@ void FlushHW(void) {
 		saveValidOldVideo = ValidOldVideo;
 		saveChangedVideoFlag = ChangedVideoFlag;
 		CopyMem(ChangedVideo, saveChangedVideo, (ldat)DisplayHeight*sizeof(dat)*4);
-		saved = TRUE;
+		saved = ttrue;
 	    }
 	    if (HW->RedrawVideo) {
 		DirtyVideo(HW->RedrawLeft, HW->RedrawUp, HW->RedrawRight, HW->RedrawDown);
-		ValidOldVideo = FALSE;
+		ValidOldVideo = tfalse;
 		/* the OldVideo[] caching would make all this stuff useless otherwise */
 	    }
-	    mangled = TRUE;
+	    mangled = ttrue;
 	}
 	if (doBeep)
 	    HW->Beep();
 
 	HW->FlushVideo();
 
-	HW->RedrawVideo = FALSE;
+	HW->RedrawVideo = tfalse;
 	
 	if (HW->NeedHW & NEEDFlushHW)
 	    HW->FlushHW();
@@ -935,8 +935,8 @@ void FlushHW(void) {
     if (ChangedVideoFlag && NeedOldVideo)
 	SyncOldVideo();
 
-    ChangedVideoFlag = FALSE;
-    ValidOldVideo = TRUE;
+    ChangedVideoFlag = tfalse;
+    ValidOldVideo = ttrue;
 }
 
 
@@ -1010,8 +1010,8 @@ void FillOldVideo(dat Xstart, dat Ystart, dat Xend, dat Yend, hwattr Attrib) {
 }
 
 void RefreshVideo(void) {
-    ValidOldVideo = FALSE;
-    QueuedDrawArea2FullScreen = TRUE;
+    ValidOldVideo = tfalse;
+    QueuedDrawArea2FullScreen = ttrue;
     /* safer than DirtyVideo(0, 0, DisplayWidth - 1, DisplayHeight - 1),
      * and also updates the cursor */
 }
@@ -1077,17 +1077,17 @@ byte AllHWCanDragAreaNow(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat Ds
     byte Accel;
 
     if (CanDragArea && Strategy4Video(DstLeft, DstUp, DstRgt, DstDwn) == HW_ACCEL) {
-	Accel = TRUE;
+	Accel = ttrue;
 	forHW {
 	    if (HW->CanDragArea && HW->CanDragArea(Left, Up, Rgt, Dwn, DstLeft, DstUp))
 		;
 	    else {
-		Accel = FALSE;
+		Accel = tfalse;
 		break;
 	    }
 	}
     } else
-	Accel = FALSE;
+	Accel = tfalse;
 
     return Accel;
 }
@@ -1100,7 +1100,7 @@ void DragAreaHW(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
 
 
 void EnableMouseMotionEvents(byte enable) {
-    ConfigureHW(HW_MOUSEMOTIONEVENTS, FALSE, enable);
+    ConfigureHW(HW_MOUSEMOTIONEVENTS, tfalse, enable);
 }
 
 byte MouseEventCommon(dat x, dat y, dat dx, dat dy, udat Buttons) {
@@ -1108,7 +1108,7 @@ byte MouseEventCommon(dat x, dat y, dat dx, dat dy, udat Buttons) {
     udat OldButtons, i;
     mouse_state *OldState;
     udat result;
-    byte ret = TRUE;
+    byte ret = ttrue;
     byte alsoMotionEvents = All->MouseMotionN > 0;
     
     OldState=&HW->MouseState;
@@ -1154,7 +1154,7 @@ byte StdAddMouseEvent(udat Code, dat MouseX, dat MouseY) {
     event_mouse *Event;
 
     if (HW && HW == All->MouseHW && HW->FlagsHW & FlHWNoInput)
-	return TRUE;
+	return ttrue;
     
     if ((Code & MOUSE_ACTION_ANY) == MOVE_MOUSE
 	&& (Msg = Ext(WM,MsgPort)->LastMsg)
@@ -1165,7 +1165,7 @@ byte StdAddMouseEvent(udat Code, dat MouseX, dat MouseY) {
 	/* merge the two events */
 	Event->X=MouseX;
 	Event->Y=MouseY;
-	return TRUE;
+	return ttrue;
     }
     if ((Msg=Do(Create,Msg)(FnMsg, MSG_MOUSE, 0)))
     {
@@ -1175,9 +1175,9 @@ byte StdAddMouseEvent(udat Code, dat MouseX, dat MouseY) {
 	Event->X=MouseX;
 	Event->Y=MouseY;
 	SendMsg(Ext(WM,MsgPort), Msg);
-	return TRUE;
+	return ttrue;
     }
-    return FALSE;
+    return tfalse;
 }
 
 byte KeyboardEventCommon(udat Code, udat ShiftFlags, udat Len, CONST byte *Seq) {
@@ -1185,7 +1185,7 @@ byte KeyboardEventCommon(udat Code, udat ShiftFlags, udat Len, CONST byte *Seq) 
     msg Msg;
 
     if (HW->FlagsHW & FlHWNoInput)
-	return TRUE;
+	return ttrue;
 
     if ((Msg=Do(Create,Msg)(FnMsg, MSG_KEY, Len))) {
 	Event = &Msg->Event.EventKeyboard;
@@ -1196,9 +1196,9 @@ byte KeyboardEventCommon(udat Code, udat ShiftFlags, udat Len, CONST byte *Seq) 
 	CopyMem(Seq, Event->AsciiSeq, Len);
 	Event->AsciiSeq[Len] = '\0'; /* terminate string with \0 */
 	SendMsg(Ext(WM,MsgPort), Msg);
-	return TRUE;
+	return ttrue;
     }
-    return FALSE;
+    return tfalse;
 }
 
 #ifdef __linux__
@@ -1230,6 +1230,6 @@ byte InitTransUser(void) {
     }
     for (c = 0; c < 0x80; c++)
 	All->Gtranslations[USER_MAP][c] = (hwfont)c;
-    return TRUE;
+    return ttrue;
 }
 

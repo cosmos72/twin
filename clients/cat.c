@@ -45,7 +45,7 @@ static byte InitCat(void) {
 	   TW_WINDOWFL_USEROWS|TW_WINDOWFL_ROWS_DEFCOL,
 	   80, 25, 0))) &&
 	(Window=TwWin4Menu(Cat_Menu)) &&
-	TwItem4Menu(Cat_Menu, Window, TRUE, 6, " File ") &&
+	TwItem4Menu(Cat_Menu, Window, ttrue, 6, " File ") &&
 	(TwSetColorsWindow
 	 (Cat_Win, 0x1FF,
 	  COL(HIGH|GREEN,WHITE), COL(CYAN,BLUE), COL(HIGH|BLUE,BLACK), COL(HIGH|WHITE,HIGH|BLUE),
@@ -97,7 +97,7 @@ int main(int argc, char *argv[]) {
 	TwWriteAsciiWindow(Cat_Win, got, buf);
 	TwFlush();
     }
-    while ((Msg=TwReadMsg(TRUE))) {
+    while ((Msg=TwReadMsg(ttrue))) {
 	if (Msg->Type==TW_MSG_WIDGET_GADGET) {
 	    EventG=&Msg->Event.EventGadget;
 	    if (EventG->Code == 0 && EventG->W == Cat_Win)

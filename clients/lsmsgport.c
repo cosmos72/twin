@@ -49,7 +49,7 @@ int main(int argc, char *argv[]) {
 
 	    printf("twlsmgport: existing twin tmsgports:\n");
             while (n--) {
-                fl = FALSE;
+                fl = tfalse;
                 printf("0x%x:\t", (unsigned) *data);
                 reply2 = Tw_StatL(td, (*data), 1, TWS_msgport_Name);
                 if (reply2 && reply2->N >= 1) {
@@ -57,7 +57,7 @@ int main(int argc, char *argv[]) {
                     if (f && f->type == (TWS_vec|TWS_byte) && f->hash == TWS_msgport_Name) {
                         TW_CONST byte *Name = (TW_CONST byte*)f->TWS_field_vecV;
                         uldat NameLen = f->TWS_field_vecL;
-                        fl = TRUE;
+                        fl = ttrue;
                         printf("%.*s\n", (int) NameLen, Name);
                     }
                 }

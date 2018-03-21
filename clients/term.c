@@ -278,7 +278,7 @@ static byte OpenTerm(TW_CONST byte *arg0, byte * TW_CONST *argv) {
 	}
 	TwDeleteWindow(Window);
     }
-    return FALSE;
+    return tfalse;
 }
 
 static void CloseTerm(uldat Slot) {
@@ -296,7 +296,7 @@ static void CloseTerm(uldat Slot) {
 static volatile byte ReceivedSignalChild;
 
 static TW_RETSIGTYPE SignalChild(int n) {
-    ReceivedSignalChild = TRUE;
+    ReceivedSignalChild = ttrue;
     signal(SIGCHLD, SignalChild);
     TW_RETFROMSIGNAL(0);
 }
@@ -319,7 +319,7 @@ static void HandleSignalChild(void) {
 	if (WIFEXITED(status) || WIFSIGNALED(status))
 	    RemotePidIsDead(pid);
     }
-    ReceivedSignalChild = FALSE;
+    ReceivedSignalChild = tfalse;
 }
 
 static byte Add_Spawn_Row4Menu(twindow Window) {
@@ -359,16 +359,16 @@ static byte InitTerm(void) {
 	(Term_Menu=TwCreateMenu
 	 (COL(BLACK,WHITE), COL(BLACK,GREEN), COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
 	  COL(RED,WHITE), COL(RED,GREEN), (byte)0)) &&
-	(TwInfo4Menu(Term_Menu, TW_ROW_ACTIVE, 18, " Remote Twin Term ", "ptpppppptpppptpppp"), TRUE) &&
+	(TwInfo4Menu(Term_Menu, TW_ROW_ACTIVE, 18, " Remote Twin Term ", "ptpppppptpppptpppp"), ttrue) &&
 	(Window=TwWin4Menu(Term_Menu)) &&
 	Add_Spawn_Row4Menu(Window) &&
-	TwRow4Menu(Window, COD_QUIT,  FALSE, 6, " Exit ") &&
-	TwItem4Menu(Term_Menu, Window, TRUE, 6, " File ") &&
+	TwRow4Menu(Window, COD_QUIT,  tfalse, 6, " Exit ") &&
+	TwItem4Menu(Term_Menu, Window, ttrue, 6, " File ") &&
 	TwItem4MenuCommon(Term_Menu) &&
 	(Term_Screen = TwFirstScreen()) &&
 	(OpenTerm(NULL, NULL)))
 	 
-	return TRUE;
+	return ttrue;
 
     TwClose();
     
@@ -376,7 +376,7 @@ static byte InitTerm(void) {
 	fprintf(stderr, "twterm: libTw error: %s%s\n",
 		TwStrError(err), TwStrErrorDetail(err, TwErrnoDetail));
 
-    return FALSE;
+    return tfalse;
 }
 
 static void TwinTermH(void) {
@@ -387,7 +387,7 @@ static void TwinTermH(void) {
     uldat Slot;
     int Fd;
     
-    while ((Msg=TwReadMsg(FALSE))) {
+    while ((Msg=TwReadMsg(tfalse))) {
 	
 	Event=&Msg->Event;
 	Win = Event->EventCommon.W;

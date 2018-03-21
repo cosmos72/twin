@@ -480,7 +480,7 @@ TW_INLINE ldat alienDecodeArg(uldat id, CONST byte * Format, uldat n, tsfield a,
 
 static void alienMultiplexB(uldat id) {
     static struct s_tsfield a[TW_MAX_ARGS_N];
-    static byte warned = FALSE;
+    static byte warned = tfalse;
     uldat mask = 0; /* at least 32 bits. we need 20... */
     uldat nlen, n = 1;
     ldat fail = 1;
@@ -498,7 +498,7 @@ static void alienMultiplexB(uldat id) {
 	
 	} else /* (n >= TW_MAX_ARGS_N) */ {
 	    if (!warned) {
-		warned = TRUE;
+		warned = ttrue;
 		printk("twin: alienMultiplexB(): got a call with %d args, only %d supported!\n",
 		       n, TW_MAX_ARGS_N);
 	    }

@@ -246,28 +246,28 @@ byte InitModule(module Module)
 
 	(Window=Win4Menu(Term_Menu)) &&
 	Row4Menu(Window, COD_SPAWN, ROW_ACTIVE, 10, " New Term ") &&
-	Row4Menu(Window, COD_QUIT,  FALSE,       6, " Exit ") &&
-	Item4Menu(Term_Menu, Window, TRUE, 6, " File ") &&
+	Row4Menu(Window, COD_QUIT,  tfalse,       6, " Exit ") &&
+	Item4Menu(Term_Menu, Window, ttrue, 6, " File ") &&
 	
 	Item4MenuCommon(Term_Menu)) {
 
 	RegisterExt(Term,Open,OpenTerm);
-	OverrideMethods(TRUE);
+	OverrideMethods(ttrue);
 
 	if (default_args[1][0] == '/')
 	    default_args[1][0] = '-';
-	return TRUE;
+	return ttrue;
     }
     if (shellpath)
 	printk("twin: InitTerm(): %."STR(TW_SMALLBUFF)"s\n", ErrStr);
     else
 	printk("twin: environment variable $SHELL not set!\n");
-    return FALSE;
+    return tfalse;
 }
 
 void QuitModule(module Module) {
     UnRegisterExt(Term,Open,OpenTerm);
-    OverrideMethods(FALSE);
+    OverrideMethods(tfalse);
     if (Term_MsgPort)
 	Delete(Term_MsgPort);
 }

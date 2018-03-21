@@ -83,7 +83,7 @@ static void get_pty_error(CONST byte *f, CONST byte *arg) {
 
 /* 1. Acquire a pseudo-teletype from the system. */
 /*
- * On failure, returns FALSE.
+ * On failure, returns tfalse.
  * On success, fills ttydev and ptydev with the names of the
  * master and slave parts and sets ptyfd to the pty file descriptor
  */
@@ -150,14 +150,14 @@ static byte get_pty(void)
     printk("twin: failed to get a pty/tty pseudo-tty pair\n");
     
 #endif
-    return FALSE;
+    return tfalse;
 
 Found:
     fcntl(fd, F_SETFL, O_NDELAY);
     fcntl(fd, F_SETFD, FD_CLOEXEC);
     ttyfd = sfd;
     ptyfd = fd;
-    return TRUE;
+    return ttrue;
 }
 
 /* 2. Fixup permission for pty master/slave pairs */
@@ -173,8 +173,8 @@ static byte fixup_pty(void) {
 	chown(ptydev, id, 0) == 0 && chmod(ptydev, 0600) == 0 &&
 #endif
 	chown(ttydev, id, tty_gid) == 0 && chmod(ttydev, 0620) == 0)
-	return TRUE;
-    return FALSE;
+	return ttrue;
+    return tfalse;
 }
 
 
@@ -203,12 +203,12 @@ static byte setup_tty(ttydata * Data) {
     
     if (ioctl(ptyfd, TIOCSWINSZ, &wsiz) >= 0) {
 	if (tty_setioctl(ttyfd, &ttysave) >= 0)
-	    return TRUE;
+	    return ttrue;
 	else
 	    setup_pty_error("tty_setioctl", "");
     } else
 	setup_pty_error("ioctl", "TIOCSWINSZ");
-    return FALSE;
+    return tfalse;
 }
 
 
@@ -220,7 +220,7 @@ static byte switchto_tty(void)
 
     pid = setsid();
     if (pid < 0)
-	return FALSE;
+	return tfalse;
 
     /*
      * Hope all other file descriptors are set to fcntl(fd, F_SETFD, FD_CLOEXEC)
@@ -245,7 +245,7 @@ static byte switchto_tty(void)
     ioctl(0, TIOCSPGRP, &pid);
 #endif
 
-    return TRUE;
+    return ttrue;
 }
 
 /* exported API: fork() a program in a pseudo-teletype */
@@ -256,14 +256,14 @@ byte SpawnInWindow(window Window, CONST byte *arg0, byte * CONST *argv) {
     /* 0 */
     if (flag_secure) {
 	printk(flag_secure_msg);
-	return FALSE;
+	return tfalse;
     }
     GainPrivileges();
     
     /* 1 */
     if (!get_pty()) {
 	DropPrivileges();
-	return FALSE;
+	return tfalse;
     }
     /* 2 */
     (void)fixup_pty();

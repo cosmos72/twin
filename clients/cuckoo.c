@@ -95,7 +95,7 @@ static tslist wlist = NULL;
 static TW_CONST byte *wtitle;
 static uldat wtitle_len;
 
-static volatile int ReceivedFatalSignal = FALSE;
+static volatile int ReceivedFatalSignal = tfalse;
 
 static TW_RETSIGTYPE SignalChild(int n) {
     pid_t pid;
@@ -129,7 +129,7 @@ byte InitSignals(void) {
 # ifdef SIGPWR
     signal(SIGPWR,  SignalFatal);
 # endif
-    return TRUE;
+    return ttrue;
 }
 
 static byte Init(void) {
@@ -217,7 +217,7 @@ int main(int argc, char *argv[]) {
 	
 	/* discard any message we may get... */
 	while (TwPeekMsg())
-	    TwReadMsg(FALSE);
+	    TwReadMsg(tfalse);
 
 	if (cmd_args == NULL) {
 	    

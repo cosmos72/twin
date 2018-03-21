@@ -14,7 +14,7 @@ static byte stdin_TestTty(void) {
     struct termios ttyb;
     byte buf[16], *s = buf+3, c;
     int i, alarmReceived;
-    byte ok = TRUE;
+    byte ok = ttrue;
 
     ttyb = ttysave;
     /* NL=='\n'==^J; CR=='\r'==^M */
@@ -32,7 +32,7 @@ static byte stdin_TestTty(void) {
     /* request ID */
     if (write(tty_fd, "\033[c", 3) != 3) {
         ErrStr = "write() to tty failed";
-        ok = FALSE;
+        ok = tfalse;
     } else {
         /* ensure we CAN read from the tty */
         SetAlarm(5);
@@ -46,7 +46,7 @@ static byte stdin_TestTty(void) {
 	      ErrStr = "read() from tty timed out";
 	   else if (i == 0)
 	      ErrStr = "read() from tty returned END-OF-FILE";
-	   ok = FALSE;
+	   ok = tfalse;
 	}
     }
     if (!ok) {
@@ -69,7 +69,7 @@ static byte stdin_TestTty(void) {
     return ok;
 }
 
-/* return FALSE if failed */
+/* return tfalse if failed */
 static byte stdin_InitKeyboard(void) {
 
     if (LookupKey == NULL
@@ -77,12 +77,12 @@ static byte stdin_InitKeyboard(void) {
 	&& CmpStr(tty_TERM, "linux") && CmpStr(tty_TERM, "twterm")
 #endif
 	)
-        return FALSE;
+        return tfalse;
    
     HW->keyboard_slot = RegisterRemote(tty_fd, (obj)HW, stdin_KeyboardEvent);
     if (HW->keyboard_slot == NOSLOT) {
 	stdin_QuitKeyboard();
-	return FALSE;
+	return tfalse;
     }
     HW->KeyboardEvent = stdin_KeyboardEvent;
     HW->QuitKeyboard = stdin_QuitKeyboard;
@@ -90,7 +90,7 @@ static byte stdin_InitKeyboard(void) {
     if (LookupKey == NULL)
         LookupKey = linux_LookupKey;
     
-    return TRUE;
+    return ttrue;
 }
 
 static void stdin_QuitKeyboard(void) {

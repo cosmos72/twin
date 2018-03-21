@@ -33,6 +33,6 @@ hwfont Tutf_UTF_32_to_CP437(hwfont c)
         /* manually map T_UTF_32_CHECK_MARK -> T_CP437_SQUARE_ROOT */
         utf32_hash_insert_at(table, n - 1, T_UTF_32_CHECK_MARK, T_CP437_SQUARE_ROOT);
     }
-    return utf32_hash_search(table, c, TRUE);
+    return utf32_hash_search(table, c, ttrue);
 }
 

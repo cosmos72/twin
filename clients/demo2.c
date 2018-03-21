@@ -213,7 +213,7 @@ static ttbyte my_mainloop(void) {
     fd_set rfds;
 
     if ((fd = TTConnectionFd()) < 0)
-	return FALSE;
+	return tfalse;
     
     FD_ZERO(&rfds);
     for (; !my_exitmainloop; ) {
@@ -231,7 +231,7 @@ static ttbyte my_mainloop(void) {
 	     * else if `wait' is set waits for at least one event and dispatches it,
 	     * else just returns
 	     */
-	    if (!TTMainLoopOnce(FALSE))
+	    if (!TTMainLoopOnce(tfalse))
 		break;
     }
     return my_exitmainloop;

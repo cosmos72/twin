@@ -98,7 +98,7 @@ static hwfont utf32_hash_search(utf32_hash_table * table, hwfont utf32, byte asc
     
         base = table->base;
         e = base + table->index[ utf32_hash(utf32, table->n_power_of_2) ];
-        key0_visited = FALSE;
+        key0_visited = tfalse;
     
         while (utf32_get(e) != utf32) {
             key0_visited |= e == base;

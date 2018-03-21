@@ -17,7 +17,7 @@
 	TSF->type = CAT(TWS_,fieldtype); \
 	break; \
     } \
-    return FALSE
+    return tfalse
 
 #define TWScaseUSE(objtype,use,field,fieldtype) \
   case CAT6(TWS_,objtype,_USE_,use,_,field): \
@@ -28,7 +28,7 @@
 	TSF->type = CAT(TWS_,fieldtype); \
 	break; \
     } \
-    return FALSE
+    return tfalse
 
 #define TWScaseA(objtype,field,n,fieldtype) \
   case CAT5(TWS_,objtype,_,field,V,n): \
@@ -39,7 +39,7 @@
 	TSF->type = CAT(TWS_,fieldtype); \
 	break; \
     } \
-    return FALSE
+    return tfalse
 
 #define TWScaseAUSE(objtype,use,field,n,fieldtype) \
   case CAT8(TWS_,objtype,_USE_,use,_,field,V,n): \
@@ -50,7 +50,7 @@
 	TSF->type = CAT(TWS_,fieldtype); \
 	break; \
     } \
-    return FALSE
+    return tfalse
 
 #define TWScasevec(objtype,field,_type,len) \
   case CAT4(TWS_,objtype,_,field): \
@@ -118,21 +118,21 @@ static byte sockStatObj(obj x, tsfield TSF) {
       case TWS_obj_Prev_List:
 	TSF->TWS_field_vecV = sockAllocListPrevObjs(x->Prev, &TSF->TWS_field_vecL);
 	TSF->type = TWS_vec | TWS_tobj;
-	return TRUE;
+	return ttrue;
       case TWS_obj_Next_List:
 	TSF->TWS_field_vecV = sockAllocListNextObjs(x->Next, &TSF->TWS_field_vecL);
 	TSF->type = TWS_vec | TWS_tobj;
-	return TRUE;
+	return ttrue;
       case TWS_obj_Parent_List:
 	TSF->TWS_field_vecV = sockAllocListParentObjs(x->Parent, &TSF->TWS_field_vecL);
 	TSF->type = TWS_vec | TWS_tobj;
-	return TRUE;
+	return ttrue;
       default:
-	return FALSE;
+	return tfalse;
     }
     TSF->TWS_field_obj = x;
     TSF->type = TWS_obj;
-    return TRUE;
+    return ttrue;
 }
 
 static byte sockStatWidget(widget x, tsfield TSF) {
@@ -167,7 +167,7 @@ static byte sockStatWidget(widget x, tsfield TSF) {
 	TSF->type = TWS_vec | TWS_tobj;
 	break;
       default:
-	return FALSE;
+	return tfalse;
     }
     /* correct for screen scrolling */
     if (x->Parent && IS_SCREEN(x->Parent)) {
@@ -176,7 +176,7 @@ static byte sockStatWidget(widget x, tsfield TSF) {
 	else if (TSF->hash == TWS_widget_Up)
 	    TSF->TWS_field_scalar -= x->Parent->YLogic;
     }
-    return TRUE;
+    return ttrue;
 }
 
 static byte sockStatGadget(gadget x, tsfield TSF) {
@@ -212,13 +212,13 @@ static byte sockStatGadget(gadget x, tsfield TSF) {
 		TWScaseAvecUSE(gadget,T,Color,2,hwcol, x->XWidth * x->YWidth);
 		TWScaseAvecUSE(gadget,T,Color,3,hwcol, x->XWidth * x->YWidth);
 	      default:
-		return FALSE;
+		return tfalse;
 	    }
 	} else
-	    return FALSE;
+	    return tfalse;
 	break;
     }
-    return TRUE;
+    return ttrue;
 }
 
 static byte sockStatWindow(window x, tsfield TSF) {
@@ -265,7 +265,7 @@ static byte sockStatWindow(window x, tsfield TSF) {
 		TWScasevecUSE(window,C,Contents,hwattr,x->WLogic * x->HLogic);
 		TWScaseUSE(window,C,HSplit,ldat);
 	      default:
-		return FALSE;
+		return tfalse;
 	    }
 	} else if (W_USE((window)x, USEROWS)) {
 	    switch (TSF->hash) {
@@ -276,10 +276,10 @@ static byte sockStatWindow(window x, tsfield TSF) {
 		TSF->type = TWS_vec | TWS_tobj;
 		break;
 	      default:
-		return FALSE;
+		return tfalse;
 	    }
 	} else
-	    return FALSE;
+	    return tfalse;
 	break;
     }
     /* correct for window borders */
@@ -289,7 +289,7 @@ static byte sockStatWindow(window x, tsfield TSF) {
 	else if (TSF->hash == TWS_widget_XWidth || TSF->hash == TWS_widget_YWidth)
 	    TSF->TWS_field_scalar -= 2;
     }
-    return TRUE;
+    return ttrue;
 }
 
 static byte sockStatScreen(screen x, tsfield TSF) {
@@ -303,13 +303,13 @@ static byte sockStatScreen(screen x, tsfield TSF) {
 		TWScaseUSE(screen,B,BgHeight,dat);
 		TWScasevecUSE(screen,B,Bg,hwattr,x->USE.B.BgWidth * x->USE.B.BgHeight);
 	      default:
-		return FALSE;
+		return tfalse;
 	    }
 	} else
-	    return FALSE;
+	    return tfalse;
 	break;
     }
-    return TRUE;
+    return ttrue;
 }
 
 static byte sockStatGroup(group x, tsfield TSF) {
@@ -323,9 +323,9 @@ static byte sockStatGroup(group x, tsfield TSF) {
 	TSF->type = TWS_vec | TWS_tobj;
 	break;
       default:
-	return FALSE;
+	return tfalse;
     }
-    return TRUE;
+    return ttrue;
 }
 
 static byte sockStatRow(row x, tsfield TSF) {
@@ -336,9 +336,9 @@ static byte sockStatRow(row x, tsfield TSF) {
 	TWScasevec(row,Text,hwfont,x->Len);
 	TWScasevec(row,ColText,hwcol,x->Len);
       default:
-	return FALSE;
+	return tfalse;
     }
-    return TRUE;
+    return ttrue;
 }
 
 static byte sockStatMenuItem(menuitem x, tsfield TSF) {
@@ -353,9 +353,9 @@ static byte sockStatMenuItem(menuitem x, tsfield TSF) {
 	TWScase(menuitem,Left,dat);
 	TWScase(menuitem,ShortCut,dat);
       default:
-	return FALSE;
+	return tfalse;
     }
-    return TRUE;
+    return ttrue;
 }
 
 static byte sockStatMenu(menu x, tsfield TSF) {
@@ -376,9 +376,9 @@ static byte sockStatMenu(menu x, tsfield TSF) {
 	TSF->type = TWS_vec | TWS_tobj;
 	break;
       default:
-	return FALSE;
+	return tfalse;
     }
-    return TRUE;
+    return ttrue;
 }
 
 static byte sockStatMsgPort(msgport x, tsfield TSF) {
@@ -414,9 +414,9 @@ static byte sockStatMsgPort(msgport x, tsfield TSF) {
 	TSF->type = TWS_vec | TWS_tobj;
 	break;
       default:
-	return FALSE;
+	return tfalse;
     }
-    return TRUE;
+    return ttrue;
 }
 
 static byte sockStatMutex(mutex x, tsfield TSF) {
@@ -438,9 +438,9 @@ static byte sockStatMutex(mutex x, tsfield TSF) {
 	TSF->type = TWS_vec | TWS_tobj;
 	break;
       default:
-	return FALSE;
+	return tfalse;
     }
-    return TRUE;
+    return ttrue;
 }
 
 static byte sockStatAll(all x, tsfield TSF) {
@@ -468,9 +468,9 @@ static byte sockStatAll(all x, tsfield TSF) {
 	TSF->type = TWS_vec | TWS_tobj;
 	break;
       default:
-	return FALSE;
+	return tfalse;
     }
-    return TRUE;
+    return ttrue;
 }
 
 static void sockStat(obj x, udat n, CONST byte *in) {
@@ -516,7 +516,7 @@ static void sockStat(obj x, udat n, CONST byte *in) {
 		ok = sockStatAll((all)x, TSF+i) || sockStatObj(x, TSF+i);
 		break;
 	      default:
-		ok = FALSE;
+		ok = tfalse;
 		break;
 	    }
 	    if (ok)

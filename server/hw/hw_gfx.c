@@ -320,7 +320,7 @@ INLINE void X11_Mogrify(dat x, dat y, uldat len) {
 
 static byte gfx_LoadPixmap(Pixmap *px, byte *name, int nlen, byte strict) {
     byte *path[3] = { NULL, NULL, NULL }, *prefix[3], *infix[3];
-    byte i, ret = FALSE;
+    byte i, ret = tfalse;
     XpmAttributes pxattr;
 
     prefix[0] = HOME;		infix[0] = "/.twin/themes/hw_gfx/";
@@ -405,7 +405,7 @@ static byte gfx_ParseOptions(gfx_options * opt, char * arg) {
     byte * s;
     
     /* autodetect */
-    xmonochrome = TRUE + TRUE;
+    xmonochrome = ttrue + ttrue;
     
     /* conservative default settings to reduce CPU usage */
     xroot_flag = xbg_flag = GFX_USE_NONE;
@@ -421,7 +421,7 @@ static byte gfx_ParseOptions(gfx_options * opt, char * arg) {
     if (!arg || !*arg)
         goto cleanup;
     else if (strncmp(arg, "-hw=gfx", 7))
-        return FALSE;
+        return tfalse;
     
     arg += 7; /* skip "-hw=gfx" */
 	
@@ -475,16 +475,16 @@ static byte gfx_ParseOptions(gfx_options * opt, char * arg) {
             xhw_endy += xhw_starty;
         } else if (!strncmp(arg, "drag", 4)) {
             arg += 4;
-            opt->drag = TRUE;
+            opt->drag = ttrue;
         } else if (!strncmp(arg, "noinput", 7)) {
             arg += 7;
-            opt->noinput = TRUE;
+            opt->noinput = ttrue;
         } else if (!strncmp(arg, "color", 5)) {
             arg += 5;
-            xmonochrome = FALSE;
+            xmonochrome = tfalse;
         } else if (!strncmp(arg, "mono", 4)) {
             arg += 4;
-            xmonochrome = TRUE;
+            xmonochrome = ttrue;
         } else if (!strncmp(arg, "bg=", 3)) {
             arg = GfxFile(arg + 3, &opt->file_bg, &opt->file_bg_len);
             xbg_flag = GFX_USE_BG;
@@ -506,7 +506,7 @@ static byte gfx_ParseOptions(gfx_options * opt, char * arg) {
     }
 
 cleanup:
-    if (xmonochrome == TRUE + TRUE)
+    if (xmonochrome == ttrue + ttrue)
 	xmonochrome = opt->file_theme_len >= 4 && !strcmp(opt->file_theme + opt->file_theme_len - 4, "mono");
 
     /* sanity checks: must specify pixmap name to use it */
@@ -539,9 +539,9 @@ cleanup:
     
     /* XCopyArea() not supported if using background or root */
     if (xroot_flag > GFX_USE_THEME || xbg_flag > GFX_USE_THEME)
-	opt->drag = FALSE;
+	opt->drag = tfalse;
 
-    return TRUE;
+    return ttrue;
 }
 
 /* return name of selected font in allocated (char *) */
@@ -594,7 +594,7 @@ static char * gfx_AutodetectFont(udat fontwidth, udat fontheight) {
 
 static byte gfx_LoadFont(CONST char * fontname, udat fontwidth, udat fontheight) {
     char * alloc_fontname = 0;
-    byte loaded = FALSE;
+    byte loaded = tfalse;
 
     if (!fontname)
         fontname = alloc_fontname = gfx_AutodetectFont(fontwidth, fontheight);
@@ -603,7 +603,7 @@ static byte gfx_LoadFont(CONST char * fontname, udat fontwidth, udat fontheight)
         || (xsfont = XLoadQueryFont(xdisplay, fontname = "vga"))
         || (xsfont = XLoadQueryFont(xdisplay, fontname = "fixed")))
     {
-        loaded = TRUE;
+        loaded = ttrue;
 
         xwfont = xsfont->min_bounds.width;
         xwidth = xwfont * (unsigned)(HW->X = GetDisplayWidth());
@@ -634,7 +634,7 @@ static byte gfx_InitHW(void) {
     
     if (!(HW->Private = (struct x11_data *)AllocMem0(sizeof(struct x11_data), 1))) {
 	printk("      gfx_InitHW(): Out of memory!\n");
-	return FALSE;
+	return tfalse;
     }
 
     /* not yet opened */
@@ -690,9 +690,9 @@ static byte gfx_InitHW(void) {
 	     xgc = XCreateGC(xdisplay, xwindow, GCFont|GCForeground|
 			     GCBackground|GCGraphicsExposures, &xsgc)) &&
 	    
-	    gfx_LoadPixmap(&xtheme, opt.file_theme, opt.file_theme_len, TRUE) &&
-	    (!opt.file_root || gfx_LoadPixmap(&xroot, opt.file_root, opt.file_root_len, FALSE)) &&
-	    (!opt.file_bg || gfx_LoadPixmap(&xbg, opt.file_bg, opt.file_bg_len, FALSE)) &&
+	    gfx_LoadPixmap(&xtheme, opt.file_theme, opt.file_theme_len, ttrue) &&
+	    (!opt.file_root || gfx_LoadPixmap(&xroot, opt.file_root, opt.file_root_len, tfalse)) &&
+	    (!opt.file_bg || gfx_LoadPixmap(&xbg, opt.file_bg, opt.file_bg_len, tfalse)) &&
 	    
 	    (xmonochrome ?
 	     (xthemesgc.foreground = xthemesgc.background = xcol[0],
@@ -701,7 +701,7 @@ static byte gfx_InitHW(void) {
 	      xthemesgc.fill_style = FillOpaqueStippled,
 	      !!(xthemegc = XCreateGC(xdisplay, xwindow, GCStipple|GCFillStyle|
 				      GCForeground|GCBackground|GCGraphicsExposures, &xthemesgc)))
-	     : TRUE) &&
+	     : ttrue) &&
 	    
 	    (opt.file_root ?
 	     (xs_gc.foreground = xs_gc.background = xcol[0],
@@ -711,7 +711,7 @@ static byte gfx_InitHW(void) {
 	      xs_gc.ts_x_origin = xs_gc.ts_y_origin = 0,
 	      !!(xrootgc = XCreateGC(xdisplay, xwindow, GCTile|GCFillStyle|GCTileStipXOrigin|GCTileStipYOrigin|
 				     GCForeground|GCBackground|GCGraphicsExposures, &xs_gc)))
-	     : TRUE) &&
+	     : ttrue) &&
 	    
 	    (opt.file_bg ?
 	     (xs_gc.foreground = xs_gc.background = xcol[0],
@@ -721,7 +721,7 @@ static byte gfx_InitHW(void) {
 	      xs_gc.ts_x_origin = xs_gc.ts_y_origin = 0,
 	      !!(xbggc = XCreateGC(xdisplay, xwindow, GCTile|GCFillStyle|GCTileStipXOrigin|GCTileStipYOrigin|
 				   GCForeground|GCBackground|GCGraphicsExposures, &xs_gc)))
-	     : TRUE) &&
+	     : ttrue) &&
 	    
 	    (xhints = XAllocSizeHints()))
         {
@@ -824,7 +824,7 @@ static byte gfx_InitHW(void) {
 	    HW->QuitMouse = NoOp;
 	    HW->QuitVideo = NoOp;
 	    
-	    HW->DisplayIsCTTY = FALSE;
+	    HW->DisplayIsCTTY = tfalse;
 	    HW->FlagsHW &= ~FlHWSoftMouse; /* mouse pointer handled by X11 server */
 	    
 	    HW->FlagsHW |= FlHWNeedOldVideo;
@@ -833,7 +833,7 @@ static byte gfx_InitHW(void) {
 		HW->FlagsHW |= FlHWNoInput;
 	    
 	    HW->NeedHW = 0;
-	    HW->CanResize = TRUE;
+	    HW->CanResize = ttrue;
 	    HW->merge_Threshold = 0;
 	    
 	    /*
@@ -841,14 +841,14 @@ static byte gfx_InitHW(void) {
 	     * without forcing all other displays
 	     * to redraw everything too.
 	     */
-	    HW->RedrawVideo = FALSE;
+	    HW->RedrawVideo = tfalse;
 	    NeedRedrawVideo(0, 0, HW->X - 1, HW->Y - 1);
 	    
 	    if (opt.dpy0)      *opt.dpy0      = ',';
 	    if (opt.fontname0) *opt.fontname0 = ',';
 	    if (opt.charset0)  *opt.charset0  = ',';
 	    
-	    return TRUE;
+	    return ttrue;
 	}
     } while (0); else {
 	if (opt.dpy || (opt.dpy = getenv("DISPLAY")))
@@ -868,7 +868,7 @@ fail:
     FreeMem(HW->Private);
     HW->Private = NULL;
     
-    return FALSE;
+    return tfalse;
 }
 
 static void gfx_QuitHW(void) {
@@ -902,7 +902,7 @@ static void gfx_QuitHW(void) {
 
 byte InitModule(module Module) {
     Module->Private = gfx_InitHW;
-    return TRUE;
+    return ttrue;
 }
 
 /* this MUST be included, or it seems that a bug in dlsym() gets triggered */

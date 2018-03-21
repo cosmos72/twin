@@ -34,28 +34,28 @@ INLINE void linux_MoveToXY(udat x, udat y) {
 }
 
 
-/* return FALSE if failed */
+/* return tfalse if failed */
 static byte linux_InitVideo(void) {
     byte *term = tty_TERM;
     
     if (!term) {
 	printk("      linux_InitVideo() failed: unknown terminal type.\n");
-	return FALSE;
+	return tfalse;
     }
     
     if (strcmp(term, "linux")) {
 	printk("      linux_InitVideo() failed: terminal `%."STR(TW_SMALLBUFF)"s' is not `linux'.\n", term);
-	return FALSE;
+	return tfalse;
     }
 
     tc_scr_clear = "\033[2J";
 
-    if (tty_use_utf8 == TRUE+TRUE) {
+    if (tty_use_utf8 == ttrue+ttrue) {
         if (ttypar[0]==6 && ttypar[1]!=3 && ttypar[1]!=4) {
             /* plain linux console supports utf-8, and also twin >= 0.3.11 does. */
-            tty_use_utf8 = TRUE;
+            tty_use_utf8 = ttrue;
         } else {
-            tty_use_utf8 = FALSE;
+            tty_use_utf8 = tfalse;
         
             if (tty_charset == (uldat)-1)
                 printk("      linux_InitVideo() warning: this 'linux' terminal seems to be an old twin (version <= 0.3.11) without UTF-8 support. Setting charset='ASCII'\n");
@@ -101,7 +101,7 @@ static byte linux_InitVideo(void) {
     HW->NeedHW = 0;
     HW->merge_Threshold = 0;
 
-    return TRUE;
+    return ttrue;
 }
 
 static void linux_QuitVideo(void) {
@@ -160,7 +160,7 @@ INLINE void linux_Mogrify(dat x, dat y, uldat len) {
     hwattr *V, *oV;
     hwcol col;
     hwfont c, _c;
-    byte sending = FALSE;
+    byte sending = tfalse;
     
     V = Video + x + y * (ldat)DisplayWidth;
     oV = OldVideo + x + y * (ldat)DisplayWidth;
@@ -168,7 +168,7 @@ INLINE void linux_Mogrify(dat x, dat y, uldat len) {
     for (; len; V++, oV++, x++, len--) {
 	if (!ValidOldVideo || *V != *oV) {
 	    if (!sending)
-		sending = TRUE, linux_MoveToXY(x,y);
+		sending = ttrue, linux_MoveToXY(x,y);
 
 	    col = HWCOL(*V);
 	    
@@ -196,7 +196,7 @@ INLINE void linux_Mogrify(dat x, dat y, uldat len) {
 	    }
 	    putc((char)c, stdOUT);
 	} else
-	    sending = FALSE;
+	    sending = tfalse;
     }
 }
 
@@ -283,7 +283,7 @@ static void linux_UpdateMouseAndCursor(void) {
 
 static void linux_FlushVideo(void) {
     dat i, j, start, end, XY[2];
-    byte FlippedVideo = FALSE, FlippedOldVideo = FALSE;
+    byte FlippedVideo = tfalse, FlippedOldVideo = tfalse;
     hwattr savedOldVideo;
     
     if (!ChangedVideoFlag) {
@@ -305,7 +305,7 @@ static void linux_FlushVideo(void) {
 	     */
 	    DirtyVideo(HW->Last_x, HW->Last_y, HW->Last_x, HW->Last_y);
 	    if (ValidOldVideo) {
-		FlippedOldVideo = TRUE;
+		FlippedOldVideo = ttrue;
 		savedOldVideo = OldVideo[HW->Last_x + HW->Last_y * (ldat)DisplayWidth];
 		OldVideo[HW->Last_x + HW->Last_y * (ldat)DisplayWidth]
 		 = ~Video[HW->Last_x + HW->Last_y * (ldat)DisplayWidth];
@@ -323,9 +323,9 @@ static void linux_FlushVideo(void) {
 	    if (!FlippedVideo)
 		DirtyVideo(i, j, i, j);
 	    HW->FlagsHW &= ~FlHWChangedMouseFlag;
-	    FlippedVideo = TRUE;
+	    FlippedVideo = ttrue;
 	} else
-	    FlippedVideo = FALSE;
+	    FlippedVideo = tfalse;
     }
 
     linux_MogrifyInit();

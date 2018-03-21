@@ -365,5 +365,5 @@ fallback_setthreaderrormode (DWORD mode, DWORD *oldmode)
   DWORD old = (DWORD) SetErrorMode (mode);
   if (oldmode)
     *oldmode = old;
-  return TRUE;
+  return ttrue;
 }

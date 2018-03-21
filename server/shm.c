@@ -35,7 +35,7 @@
 #include "rcrun.h"
 
 #if !defined(CONF_WM_RC_SHMMAP) && defined(CONF_WM_RC_SHRINK)
-static byte may_shrink = TRUE;
+static byte may_shrink = ttrue;
 #endif
 
 
@@ -87,7 +87,7 @@ static size_t full_read(int fd, byte *data, size_t len) {
 #if !defined(CONF_WM_RC_SHMMAP) && defined(CONF_WM_RC_SHRINK)
 static void shm_shrink_error(void) {
     
-    may_shrink = FALSE;
+    may_shrink = tfalse;
     printk("twin: shm_shrink(): ReAllocMem() relocated memory while shrinking! \n"
 # ifdef CONF__ALLOC
 	  "      This should not happen! Please report.\n"
@@ -147,13 +147,13 @@ byte shm_init(size_t len) {
 		
 		close(fd);
 		unlink(shmfile);
-		return TRUE;
+		return ttrue;
 	    }
 	}
 	close(fd);
 	unlink(shmfile);
     }
-    return FALSE;
+    return tfalse;
 }
 
 
@@ -168,7 +168,7 @@ byte shm_shrink(void) {
 	L = new_L;
     }
     
-    return TRUE;
+    return ttrue;
 }
 
 void shm_abort(void) {
@@ -217,9 +217,9 @@ byte shm_receive(int fd) {
     
     if (full_read(fd, (byte *)&len, sizeof(size_t)) == sizeof(size_t)) {
 	S = M + len;
-	return TRUE;
+	return ttrue;
     }
-    return FALSE;
+    return tfalse;
 }
 
 
@@ -253,7 +253,7 @@ byte shm_shrink(void) {
 	
 	    if (new_M == M) {
 		L = new_L;
-		return TRUE;
+		return ttrue;
 	    }
 	    if (new_M) {
 		/* ReAllocMem relocated ! inform the user and disable may_shrink ! */
@@ -262,11 +262,11 @@ byte shm_shrink(void) {
 		L = new_L;
 	    }
 	    /* ReAllocMem failed or relocated... the only thing to do here is shm_abort() */
-	    return FALSE;
+	    return tfalse;
 	}
     }
 #endif /* CONF_WM_RC_SHRINK */
-    return TRUE;
+    return ttrue;
 }
 
 
@@ -329,7 +329,7 @@ static byte full_read0(int fd, byte *data, size_t *dlen) {
 	return *dlen == first + len;
     }
     *dlen = first;
-    return FALSE;
+    return tfalse;
 }
 
 byte shm_receive(int fd) {
@@ -340,9 +340,9 @@ byte shm_receive(int fd) {
 	 * also update S, it allows strict FAILc() checks
 	 */
 	S = M + len;
-	return TRUE;
+	return ttrue;
     }
-    return FALSE;
+    return tfalse;
 }
 
 

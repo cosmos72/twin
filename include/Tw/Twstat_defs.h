@@ -148,7 +148,7 @@
 # define TWS_window_BorderPatternV0	0x0304
 # define TWS_window_BorderPatternV1	0x0305
 # define TWS_window_BorderPatternVN(n)	(TWS_window_BorderPatternV0+(n))
-#endif 0 
+#endif /* 1 */
 #define TWS_window_CurX			0x0306
 #define TWS_window_CurY			0x0307
 #define TWS_window_XstSel		0x0308

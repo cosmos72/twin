@@ -22,7 +22,7 @@
 
 # include <dlfcn.h>
 # undef  dlinit           /* dlopen() requires no initialization */
-# define dlinit_once()    TRUE
+# define dlinit_once()    ttrue
 # define dlhandle         void *
 # define dlopen(name)     dlopen((name), RTLD_NOW|RTLD_GLOBAL)
 # define DL_PREFIX        "lib"

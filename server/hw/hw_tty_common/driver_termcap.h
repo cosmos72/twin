@@ -159,7 +159,7 @@ static byte termcap_InitVideo(void) {
 
     if (!term) {
 	printk("      termcap_InitVideo() failed: unknown terminal type.\n");
-	return FALSE;
+	return tfalse;
     }
 
     switch (tgetent(tcbuf, term)) {
@@ -168,11 +168,11 @@ static byte termcap_InitVideo(void) {
       case 0:
 	printk("      termcap_InitVideo() failed: no entry for `%."STR(TW_SMALLBUFF)"s' in the terminal database.\n"
 	       "      Please set your $TERM environment variable correctly.\n", term);
-	return FALSE;
+	return tfalse;
       default:
 	printk("      termcap_InitVideo() failed: system call error in tgetent(): %."STR(TW_SMALLBUFF)"s\n",
                strerror(errno));
-	return FALSE;
+	return tfalse;
     }
     
     tty_is_xterm = !strncmp(term, "xterm", 5);
@@ -185,29 +185,29 @@ static byte termcap_InitVideo(void) {
 	if (**n && !termcap_extract(*n, d)) {
 	    printk("      termcap_InitVideo() failed: Out of memory!\n");
 	    termcap_cleanup();
-	    return FALSE;
+	    return tfalse;
 	}
     }
     
     if (!*tc_cursor_goto) {
 	printk("      termcap_InitVideo() failed: terminal misses `cursor goto' capability\n");
 	termcap_cleanup();
-	return FALSE;
+	return tfalse;
     }
     
-    if (tty_use_utf8 == TRUE+TRUE) {
+    if (tty_use_utf8 == ttrue+ttrue) {
 	/* cannot really autodetect an utf8-capable terminal... use a whitelist */
         uldat termlen = LenStr(term);
 	tty_use_utf8 = ((termlen == 5 && (!CmpMem(term, "xterm", 5) || !CmpMem(term, "linux", 5))) ||
                         (termlen >= 6 && !CmpMem(term, "xterm-", 6)) ||
                         (termlen >= 12 && !CmpMem(term, "rxvt-unicode", 12)));
     }
-    if (tty_use_utf8 == TRUE) {
+    if (tty_use_utf8 == ttrue) {
         if (!(tc_charset_start = CloneStr("\033%G")) || !(tc_charset_end = CloneStr("\033%@")))
         {
 	    printk("      termcap_InitVideo() failed: Out of memory!\n");
 	    termcap_cleanup();
-	    return FALSE;
+	    return tfalse;
         }
     }
     
@@ -255,7 +255,7 @@ static byte termcap_InitVideo(void) {
     
     LookupKey = termcap_LookupKey;
     
-    return TRUE;
+    return ttrue;
 }
 
 static void termcap_QuitVideo(void) {
@@ -266,8 +266,8 @@ static void termcap_QuitVideo(void) {
     fprintf(stdOUT, "%s%s", tc_attr_off, tc_charset_end ? tc_charset_end : (byte *)"");
     
     /* restore original alt cursor keys, keypad settings */
-    HW->Configure(HW_KBDAPPLIC, TRUE, 0);
-    HW->Configure(HW_ALTCURSKEYS, TRUE, 0);
+    HW->Configure(HW_KBDAPPLIC, ttrue, 0);
+    HW->Configure(HW_ALTCURSKEYS, ttrue, 0);
     
     termcap_cleanup();
     
@@ -336,7 +336,7 @@ INLINE void termcap_Mogrify(dat x, dat y, uldat len) {
     hwattr *V, *oV;
     hwcol col;
     hwfont c, _c;
-    byte sending = FALSE;
+    byte sending = tfalse;
     
     if (!wrapglitch && delta + len >= (uldat)DisplayWidth * DisplayHeight)
 	len = (uldat)DisplayWidth * DisplayHeight - delta - 1;
@@ -347,7 +347,7 @@ INLINE void termcap_Mogrify(dat x, dat y, uldat len) {
     for (; len; V++, oV++, x++, len--) {
 	if (!ValidOldVideo || *V != *oV) {
 	    if (!sending)
-		sending = TRUE, termcap_MoveToXY(x,y);
+		sending = ttrue, termcap_MoveToXY(x,y);
             
 	    col = HWCOL(*V);
 	    
@@ -372,7 +372,7 @@ INLINE void termcap_Mogrify(dat x, dat y, uldat len) {
             }
 	    putc((char)c, stdOUT);
 	} else
-	    sending = FALSE;
+	    sending = tfalse;
     }
 }
 
@@ -529,7 +529,7 @@ static void termcap_DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, da
 static void termcap_FlushVideo(void) {
     dat i, j;
     dat start, end;
-    byte FlippedVideo = FALSE, FlippedOldVideo = FALSE;
+    byte FlippedVideo = tfalse, FlippedOldVideo = tfalse;
     hwattr savedOldVideo;
     
     if (!ChangedVideoFlag) {
@@ -550,7 +550,7 @@ static void termcap_FlushVideo(void) {
 	     */
 	    DirtyVideo(HW->Last_x, HW->Last_y, HW->Last_x, HW->Last_y);
 	    if (ValidOldVideo) {
-		FlippedOldVideo = TRUE;
+		FlippedOldVideo = ttrue;
 		savedOldVideo = OldVideo[HW->Last_x + HW->Last_y * (ldat)DisplayWidth];
 		OldVideo[HW->Last_x + HW->Last_y * (ldat)DisplayWidth]
 		 = ~Video[HW->Last_x + HW->Last_y * (ldat)DisplayWidth];
@@ -568,9 +568,9 @@ static void termcap_FlushVideo(void) {
 	    if (!FlippedVideo)
 		DirtyVideo(i, j, i, j);
 	    HW->FlagsHW &= ~FlHWChangedMouseFlag;
-	    FlippedVideo = TRUE;
+	    FlippedVideo = ttrue;
 	} else
-	    FlippedVideo = FALSE;
+	    FlippedVideo = tfalse;
     }
     
     termcap_MogrifyInit();

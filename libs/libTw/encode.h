@@ -51,7 +51,7 @@ TW_INLINE udat EncodeArgs(fn_order o, uldat *Space, va_list va, tsfield a) {
     TW_CONST byte *Format = Functions[o].format + 1;
     uldat arglen, space;
     udat N;
-    byte c, t, variable_return_type = FALSE;
+    byte c, t, variable_return_type = tfalse;
     
     for (N = space = 0; (c = *Format++); N++, a++) {
 	t = *Format++;
@@ -105,7 +105,7 @@ TW_INLINE udat EncodeArgs(fn_order o, uldat *Space, va_list va, tsfield a) {
 	    break;
 	  case 'O':
 	    /* will be filled by last arg */
-	    variable_return_type = TRUE;
+	    variable_return_type = ttrue;
 	    break;
 	  default:
 	    return (udat)-1;

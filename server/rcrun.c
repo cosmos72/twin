@@ -90,25 +90,25 @@ static byte wildcard_match(str p, str q) {
 	    break;
 	  case '\\':
 	    if (*q++ != *p++)
-		return FALSE;
+		return tfalse;
 	    break;
 	  case '?':
 	    if (*q++ == '\0')
-		return FALSE;
+		return tfalse;
 	    break;
 	  case '*':
 	    c = *p;
 	    if (c != '\\' && c != '?' && c != '*' && c != '[') {
 		while (*q != c) {
 		    if (*q++ == '\0')
-			return FALSE;
+			return tfalse;
 		}
 	    }
 	    do {
 		if (wildcard_match(p, q))
-		    return TRUE;
+		    return ttrue;
 	    } while (*q++ != '\0');
-	    return FALSE;
+	    return tfalse;
 	  case '[': {
 	      str endp;
 	      byte invert = 0, found = 0;
@@ -148,13 +148,13 @@ static byte wildcard_match(str p, str q) {
 	      } while ((c = *p++) != ']');
 	      
 	      if (found == invert)
-		  return FALSE;
+		  return tfalse;
 	      break;
 	  }
 	  dft:
 	  default:
 	    if (*q++ != c)
-		return FALSE;
+		return tfalse;
 	    break;
 	}
     }
@@ -472,7 +472,7 @@ static byte RCSteps(run *r) {
 	    if (!C->Screen && !(C->Screen=S))
 		C->Screen = All->FirstScreen;
 	    
-	    ret = FALSE;
+	    ret = tfalse;
 	    switch (n->x.f.flag) {
 	      case MENU:   ret = ActivateCtx(C, STATE_MENU);   break;
 	      case SCROLL: ret = ActivateCtx(C, STATE_SCROLL); break;
@@ -676,18 +676,18 @@ static byte RCSteps(run *r) {
 	    break;
 	  case LOWER:
 	    if (W && S)
-		LowerWidget(W, FALSE);
+		LowerWidget(W, tfalse);
 	    break;
 	  case RAISE:
 	    if (W && S)
-		RaiseWidget(W, FALSE);
+		RaiseWidget(W, tfalse);
 	    break;
 	  case RAISELOWER:
 	    if (W && S) {
 		if ((widget)W == S->FirstW)
-		    LowerWidget(W, TRUE);
+		    LowerWidget(W, ttrue);
 		else
-		    RaiseWidget(W, TRUE);
+		    RaiseWidget(W, ttrue);
 	    }
 	    break;
 	  case ROLL:
@@ -772,7 +772,7 @@ static void RCRun(void) {
 
 /*
  * let's see how much we can sleep:
- * return FALSE if no limit to sleep time;
+ * return tfalse if no limit to sleep time;
  * else _t will be filled with max time to sleep.
  */
 static byte RCSleep(timevalue *_t) {
@@ -796,9 +796,9 @@ static byte RCSleep(timevalue *_t) {
 	    _t->Seconds = 0;
 	    _t->Fraction = 10 MilliSECs;
 	}
-	return TRUE;
+	return ttrue;
     }
-    return FALSE;
+    return tfalse;
 }
 
 
@@ -829,7 +829,7 @@ static void RCReload(void) {
 	DlUnLoad(RCParseSo);
     
     if (success) {
-	QueuedDrawArea2FullScreen = TRUE;
+	QueuedDrawArea2FullScreen = ttrue;
 	
 	RCKillAll();
 	if (CallList)
@@ -885,12 +885,12 @@ static void RCWake4Window(window W) {
 static byte MouseClickReleaseSameCtx(uldat W1, uldat W2, ldat clickCtx, ldat relCtx, ldat ctx) {
     if ((ctx & clickCtx) && (ctx & relCtx)) {
 	if ((clickCtx & CTX_ANY_WIN) != (relCtx & CTX_ANY_WIN))
-	    return FALSE;
+	    return tfalse;
 	if ((clickCtx & CTX_ANY_WIN) && (relCtx & CTX_ANY_WIN))
 	    return W1 == W2;
-	return TRUE;
+	return ttrue;
     }
-    return FALSE;
+    return tfalse;
 }
 
 
@@ -903,7 +903,7 @@ byte RC_VMQueue(CONST wm_ctx *C) {
     node n;
     run *r;
     udat Code;
-    byte used = FALSE;
+    byte used = tfalse;
     /* from wm.c : */
     extern byte ClickWindowPos;
 
@@ -938,22 +938,22 @@ byte RC_VMQueue(CONST wm_ctx *C) {
 	    n = RCFindKeyBind((ldat)C->Code, (ldat)C->ShiftFlags);
 	    
 	if (n && (r = RCNew(n))) {
-	    used = TRUE, CopyMem(C, &r->C, sizeof(wm_ctx));
+	    used = ttrue, CopyMem(C, &r->C, sizeof(wm_ctx));
 	    r->W = ClickWinId;
 	    /* to preserve execution orded, run it right now ! */
 	    RCRun();
 	}
 	break;
       case MSG_MAP:
-	used = TRUE, RCWake4Window((window)C->W);
+	used = ttrue, RCWake4Window((window)C->W);
 	break;
       case MSG_CONTROL:
 	if (C->Code == MSG_CONTROL_OPEN) {
-	    used = TRUE;
+	    used = ttrue;
 	    if (All->State != STATE_DEFAULT)
 		/*
 		 * return to STATE_DEFAULT, and rely on RCReload()
-		 * to set QueuedDrawArea2FullScreen = TRUE
+		 * to set QueuedDrawArea2FullScreen = ttrue
 		 */
 		ForceRelease(C);
 	    
@@ -964,11 +964,11 @@ byte RC_VMQueue(CONST wm_ctx *C) {
 	if (C->Code >= COD_RESERVED && C->Code < MenuBindsMax + COD_RESERVED) {
 	    n = MenuBinds[C->Code - COD_RESERVED];
 	    if (n && (r = RCNew(n))) {
-		used = TRUE;
+		used = ttrue;
 		CopyMem(C, &r->C, sizeof(wm_ctx));
 		W = All->FirstScreen->FocusW;
 		r->W = W ? W->Id : NOID;
-		r->C.ByMouse = FALSE;
+		r->C.ByMouse = tfalse;
 		/* to preserve execution orded, run it right now ! */
 		RCRun();
 	    }
@@ -1029,11 +1029,11 @@ static byte USEDefaultCommonMenu(void) {
     row Row;
     
     if (!(Menu = Do(Create,Menu)(FnMenu, Ext(WM,MsgPort), (hwcol)0, (hwcol)0, (hwcol)0,
-				 (hwcol)0, (hwcol)0, (hwcol)0, TRUE)))
-	return FALSE;
+				 (hwcol)0, (hwcol)0, (hwcol)0, ttrue)))
+	return tfalse;
     
     if ((W=Win4Menu(Menu)) &&
-	(Item = Item4Menu(Menu, W, TRUE, 8, " Window ")) &&
+	(Item = Item4Menu(Menu, W, ttrue, 8, " Window ")) &&
 
 	/* we cannot create rows with codes >= COD_RESERVED... */
 	(Row = Row4Menu(W, 0, ROW_ACTIVE, 13," Move        ")) && (Row->Code = COD_COMMON_DRAG) &&
@@ -1061,12 +1061,12 @@ static byte USEDefaultCommonMenu(void) {
 	if (All->CommonMenu)
 	    Delete(All->CommonMenu);
 	All->CommonMenu = Menu;
-	return TRUE;
+	return ttrue;
     }
     
     /* out of memory */
     Delete(Menu);
-    return FALSE;
+    return tfalse;
 }
 
 byte InitRC(void) {
@@ -1133,9 +1133,9 @@ byte InitRC(void) {
     };
 # define UD_ARROW T_UTF_32_UP_DOWN_ARROW
     static button_vec V[] = {
-	{ {'[',      ']'     },  0, TRUE, FALSE },
-	{ {UD_ARROW, UD_ARROW}, -2, TRUE, FALSE },
-	{ {'>',      '<'     }, -4, TRUE, FALSE }
+	{ {'[',      ']'     },  0, ttrue, tfalse },
+	{ {UD_ARROW, UD_ARROW}, -2, ttrue, tfalse },
+	{ {'>',      '<'     }, -4, ttrue, tfalse }
     };
 
     byte *Seq = "";
@@ -1157,7 +1157,7 @@ byte InitRC(void) {
     
     MenuBinds = pN;
     MenuBindsMax = COD_COMMON_LAST - COD_COMMON_FIRST + 1;
-    GlobalsAreStatic = TRUE;
+    GlobalsAreStatic = ttrue;
 
     WriteMem(All->ButtonVec, 0, sizeof(All->ButtonVec));
     CopyMem(V, All->ButtonVec, sizeof(V));
@@ -1176,8 +1176,8 @@ byte InitRC(void) {
 	HideMenu(!!(All->SetUp->Flags & SETUP_MENU_HIDE));
 	Act(DrawMenu,All->FirstScreen)(All->FirstScreen, 0, TW_MAXDAT);
 	
-	return TRUE;
+	return ttrue;
     }
-    return FALSE;    
+    return tfalse;    
 }
 

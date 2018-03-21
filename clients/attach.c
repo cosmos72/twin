@@ -49,13 +49,13 @@ static TW_VOLATILE byte gotSignals, gotSignalWinch, gotSignalPanic;
 
 static TW_RETSIGTYPE SignalWinch(int n) {
     signal(SIGWINCH, SignalWinch);
-    gotSignals = gotSignalWinch = TRUE;
+    gotSignals = gotSignalWinch = ttrue;
     TW_RETFROMSIGNAL(0);
 }
 
 static TW_RETSIGTYPE SignalPanic(int n) {
     signal(n, SIG_IGN);
-    gotSignals = gotSignalPanic = TRUE;
+    gotSignals = gotSignalPanic = ttrue;
     TW_RETFROMSIGNAL(0);
 }
 
@@ -74,9 +74,9 @@ static byte VersionsMatch(byte force) {
 		(int)TW_VER_MAJOR(cv), (int)TW_VER_MINOR(cv), (int)TW_VER_PATCH(cv),
 		(int)TW_VER_MAJOR(lv), (int)TW_VER_MINOR(lv), (int)TW_VER_PATCH(lv),
 		(int)TW_VER_MAJOR(sv), (int)TW_VER_MINOR(sv), (int)TW_VER_PATCH(sv));
-	return FALSE;
+	return tfalse;
     }
-    return TRUE;
+    return ttrue;
 }
 
 static void InitSignals(void) {
@@ -263,12 +263,12 @@ int main(int argc, char *argv[]) {
 	    FD_ZERO(&fds);
 	    
 	    while (!gotSignalPanic && !TwInPanic()) {
-		while (TwReadMsg(FALSE))
+		while (TwReadMsg(tfalse))
 		    ;
 		FD_SET(fd, &fds);
 		select(fd+1, &fds, NULL, NULL, NULL);
 		if (gotSignalWinch)
-		    TwNeedResizeDisplay(), TwFlush(), gotSignalWinch = FALSE;
+		    TwNeedResizeDisplay(), TwFlush(), gotSignalWinch = tfalse;
 	    }
 	} else if (redirect) {
 	    if (ret)

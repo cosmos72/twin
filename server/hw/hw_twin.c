@@ -166,7 +166,7 @@ static void TW_HandleMsg(tmsg Msg) {
 }
 
 static void TW_KeyboardEvent(int fd, display_hw hw) {
-    byte firstloop = TRUE;
+    byte firstloop = ttrue;
     tmsg Msg;
     SaveHW;
     SetHW(hw);
@@ -177,9 +177,9 @@ static void TW_KeyboardEvent(int fd, display_hw hw) {
      * To compensate this and avoid to lag behind, we do a small loop checking
      * for all messages received while reading the first one.
      */
-    while ((firstloop || Tw_PendingMsg(Td)) && (Msg = Tw_ReadMsg(Td, FALSE))) {
+    while ((firstloop || Tw_PendingMsg(Td)) && (Msg = Tw_ReadMsg(Td, tfalse))) {
 	TW_HandleMsg(Msg);
-	firstloop = FALSE;
+	firstloop = tfalse;
     }
 	
     if (Tw_InPanic(Td))
@@ -248,21 +248,21 @@ static void TW_FlushVideo(void) {
     }
     
     HW->FlagsHW &= ~FlHWChangedMouseFlag;
-    HW->RedrawVideo = FALSE;
+    HW->RedrawVideo = tfalse;
 }
 
 static void TW_FlushHW(void) {
     byte ret = Tw_TimidFlush(Td);
-    if (ret == FALSE)
+    if (ret == tfalse)
 	HW->NeedHW |= NEEDPanicHW, NeedHW |= NEEDPanicHW;
-    else if (ret == TRUE) {
+    else if (ret == ttrue) {
 	if (HW->NeedHW & NEEDFromPreviousFlushHW) {
 	    HW->NeedHW &= ~NEEDFromPreviousFlushHW;
 	    RemoteCouldWrite(HW->keyboard_slot);
 	}
 	clrFlush();
     }
-    else { /* ret == TRUE+TRUE */
+    else { /* ret == ttrue+ttrue */
 	if (!(HW->NeedHW & NEEDFromPreviousFlushHW)) {
 	    HW->NeedHW |= NEEDFromPreviousFlushHW;
 	    RemoteCouldntWrite(HW->keyboard_slot);
@@ -425,7 +425,7 @@ static byte TW_InitHW(void) {
     if (arg && HW->NameLen > 4) {
 	arg += 4;
 	if (strncmp(arg, "twin", 4))
-	    return FALSE; /* user said "use <arg> as display, not libTw" */
+	    return tfalse; /* user said "use <arg> as display, not libTw" */
 
 	arg += 4;
 	
@@ -452,13 +452,13 @@ static byte TW_InitHW(void) {
 	 */
 	printk("      TW_InitHW() failed: TWDISPLAY is not set\n");
 	if (opt) *opt = ',';
-	return FALSE;
+	return tfalse;
     }
 
     if (!(HW->Private = (tw_data *)AllocMem(sizeof(tw_data)))) {
 	printk("      TW_InitHW(): Out of memory!\n");
 	if (opt) *opt = ',';
-	return FALSE;
+	return tfalse;
     }
 
 #ifdef CONF__ALLOC
@@ -551,13 +551,13 @@ static byte TW_InitHW(void) {
 	    HW->QuitMouse = NoOp;
 	    HW->QuitVideo = NoOp;
 
-	    HW->DisplayIsCTTY = FALSE;
+	    HW->DisplayIsCTTY = tfalse;
 	    HW->FlagsHW &= ~FlHWSoftMouse; /* mouse pointer handled by X11 server */
 
 	    HW->FlagsHW |= FlHWNeedOldVideo;
 	    HW->FlagsHW &= ~FlHWExpensiveFlushVideo;
 	    HW->NeedHW = 0;
-	    HW->CanResize = TRUE;
+	    HW->CanResize = ttrue;
 	    HW->merge_Threshold = 0;
 
 	    /*
@@ -565,11 +565,11 @@ static byte TW_InitHW(void) {
 	     * without forcing all other displays
 	     * to redraw everything too.
 	     */
-	    HW->RedrawVideo = FALSE;
+	    HW->RedrawVideo = tfalse;
 	    NeedRedrawVideo(0, 0, HW->X - 1, HW->Y - 1);
 	    
 	    if (opt) *opt = ',';
-	    return TRUE;
+	    return ttrue;
 	    
 	} while (0); else {
 	    /* TwErrno(NULL) is valid... used when Tw_Open fails */
@@ -584,12 +584,12 @@ static byte TW_InitHW(void) {
 	TW_QuitHW();
 
     if (opt) *opt = ',';
-    return FALSE;
+    return tfalse;
 }
 
 byte InitModule(module Module) {
     Module->Private = TW_InitHW;
-    return TRUE;
+    return ttrue;
 }
 
 /* this MUST be defined, or it seems that a bug in dlsym() gets triggered */

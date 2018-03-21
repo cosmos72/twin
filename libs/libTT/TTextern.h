@@ -157,9 +157,9 @@ extern s_tt_d TTD;
 #define LOCK Lock()
 #define UNLK Unlock()
 
-#define FAIL_TT(E, S)		(CommonErrno = (E), CommonErrnoDetail = (S), FALSE)
+#define FAIL_TT(E, S)		(CommonErrno = (E), CommonErrnoDetail = (S), tfalse)
 #define FAIL(E, S)		FAIL_TT(TT_MAX_ERROR+(E), (S))
-#define FAIL_PRINT(E, S, name)	(FAIL((E), (S)), _TTPrintInitError(name), FALSE)
+#define FAIL_PRINT(E, S, name)	(FAIL((E), (S)), _TTPrintInitError(name), tfalse)
 
 #endif /* _TT_EXTERN_H */
 

@@ -40,23 +40,23 @@ static void lrawkbd_QuitSignals(void);
 
 
 
-/* return FALSE if failed */
+/* return tfalse if failed */
 static byte lrawkbd_InitKeyboard(void) {
     struct termios ttyb;
 
     if (lrawkbd_HW) {
 	printk("lrawkbd_InitKeyboard(): error: another display is already using raw-keyboard mode.\n");
-	return FALSE;
+	return tfalse;
     } else if (!lrawkbd_GetKeyboard()) {
 	printk("lrawkbd_InitKeyboard(): error: tty is not a Linux console: ioctl(KDGKBMODE) failed!\n");
-	return FALSE;
+	return tfalse;
     }
 
     lrawkbd_HW = HW;
     
     HW->keyboard_slot = RegisterRemote(tty_fd, (obj)HW, lrawkbd_KeyboardEvent);
     if (HW->keyboard_slot == NOSLOT)
-	return FALSE;
+	return tfalse;
 
     HW->KeyboardEvent = lrawkbd_KeyboardEvent;
     HW->ConfigureKeyboard = lrawkbd_ConfigureKeyboard;
@@ -82,7 +82,7 @@ static byte lrawkbd_InitKeyboard(void) {
     lrawkbd_LoadKeymaps();
     lrawkbd_SetKeyboard();
 
-    return TRUE;
+    return ttrue;
 }
 
 static void lrawkbd_QuitKeyboard(void) {

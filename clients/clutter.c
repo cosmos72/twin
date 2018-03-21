@@ -32,9 +32,9 @@ static byte NewClutterWindow(void) {
 	TwConfigureWindow(Window, 0x3, lrand48() / (MAXLRAND48 / X),
 			  lrand48() / (MAXLRAND48 / Y), 0, 0, 0, 0);
 	TwMapWindow(Window, Clutter_Screen);
-	return TRUE;
+	return ttrue;
     }
-    return FALSE;
+    return tfalse;
 }
 
 TW_DECL_MAGIC(clutter_magic);
@@ -42,7 +42,7 @@ TW_DECL_MAGIC(clutter_magic);
 static byte InitClutter(void) {
 
     if (!TwCheckMagic(clutter_magic) || !TwOpen(NULL))
-	return FALSE;
+	return tfalse;
     
     srand48(time(NULL));
     Clutter_Screen = TwFirstScreen();
@@ -57,9 +57,9 @@ static byte InitClutter(void) {
 	
 	TwInfo4Menu(Clutter_Menu, TW_ROW_ACTIVE, 17, " Useless Clutter ", NULL);
 
-	return TRUE;
+	return ttrue;
     }
-    return FALSE;
+    return tfalse;
 }
 
 int main(int argc, char *argv[]) {
@@ -74,7 +74,7 @@ int main(int argc, char *argv[]) {
     }
     
     while (NewClutterWindow()) {
-	while ((Msg=TwReadMsg(FALSE))) {
+	while ((Msg=TwReadMsg(tfalse))) {
 	    if (Msg->Type==TW_MSG_WIDGET_GADGET) {
 		if (Msg->Event.EventGadget.Code == 0) {
 		    return 0;

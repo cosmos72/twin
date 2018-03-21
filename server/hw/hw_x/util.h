@@ -106,7 +106,7 @@ static void X11_FlushVideo(void) {
         iff = ChangedVideoFlag
             && Video[HW->XY[0] + HW->XY[1] * (ldat)DisplayWidth]
             != OldVideo[HW->XY[0] + HW->XY[1] * (ldat)DisplayWidth];
-        /* TRUE if and only if the cursor will be erased by burst */
+        /* ttrue if and only if the cursor will be erased by burst */
     }
     
     /* first burst all changes */

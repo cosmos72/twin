@@ -25,7 +25,7 @@ void TTAssertFail (const char *assertion, const char *file, unsigned int line, c
 #endif
 
 #if TT_ASSERT_LEVEL == 0
-# define TTAssert(expr) TRUE
+# define TTAssert(expr) ttrue
 #elif TT_ASSERT_LEVEL == 1
 # define TTAssert(expr) (expr)
 #else

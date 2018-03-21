@@ -72,7 +72,7 @@ static void human_print(TW_CONST byte *data, uldat len, byte may_trim) {
     if (may_trim && len > 100)
 	len = 100;
     else
-	may_trim = FALSE;
+	may_trim = tfalse;
     while (len--) {
 	switch (*data) {
 	  case '\0':
@@ -100,7 +100,7 @@ static void human_print_tobjs(TW_CONST byte *data, uldat len, byte may_trim) {
     if (may_trim && len > 100)
 	len = 100;
     else
-	may_trim = FALSE;
+	may_trim = tfalse;
     while (len >= sizeof(tobj)) {
 	len -= sizeof(tobj);
 	printf("0x%lx%s", (long)*(TW_CONST tobj *)data, len >= sizeof(tobj) ? ", " : "");
@@ -117,7 +117,7 @@ int main(int argc, char *argv[]) {
     tsfield TSF;
     uldat n, v_id;
     udat type_id, max_list;
-    byte verbose = FALSE, recursive = FALSE, isvec;
+    byte verbose = tfalse, recursive = tfalse, isvec;
     
     TwMergeHyphensArgv(argc, argv);
     
@@ -134,9 +134,9 @@ int main(int argc, char *argv[]) {
 	    ShowVersion();
 	    return 0;
 	} else if (!strcmp(*argv, "-r") || !strcmp(*argv, "-recursive")) {
-	    recursive = TRUE;
+	    recursive = ttrue;
 	} else if (!strcmp(*argv, "-v") || !strcmp(*argv, "-verbose")) {
-	    verbose = TRUE;
+	    verbose = ttrue;
 	} else if ((id = strtoul(*argv, NULL, 0)) != TW_NOID) {
 	    err = 0;
 	}

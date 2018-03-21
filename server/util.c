@@ -73,7 +73,7 @@ byte Error(udat Code_Error) {
       default:
 	break;
     }
-    return FALSE;
+    return tfalse;
 }
 
 hwfont *CloneStr2HWFont(CONST byte *s, uldat len) {
@@ -214,12 +214,12 @@ byte HexDigitToNum(byte HexDigit, byte *Error) {
      if (HexDigit>='a' && HexDigit<='f')
 	 return (byte)10 + HexDigit - (byte)'a';
      
-     *Error = TRUE;
+     *Error = ttrue;
      return (byte)0;
 }
 
 uldat HexStrToNum(byte *StringHex) {
-     byte Len, Error = FALSE;
+     byte Len, Error = tfalse;
      uldat Value=(uldat)0;
      
      Len=(byte)LenStr(StringHex);
@@ -335,9 +335,9 @@ byte SendControlMsg(msgport MsgPort, udat Code, udat Len, CONST byte *Data) {
 	CopyMem(Data, Event->Data, Len);
 	SendMsg(MsgPort, Msg);
 	
-	return TRUE;
+	return ttrue;
     }
-    return FALSE;
+    return tfalse;
 }
 
 byte SelectionStore(uldat Magic, CONST byte MIME[MAX_MIMELEN], uldat Len, CONST byte *Data) {
@@ -355,7 +355,7 @@ byte SelectionStore(uldat Magic, CONST byte MIME[MAX_MIMELEN], uldat Len, CONST 
     
     if (Sel->Max < newLen) {
 	if (!(newData = ReAllocMem(Sel->Data, newLen)))
-	    return FALSE;
+	    return tfalse;
 	Sel->Data = newData;
 	Sel->Max = newLen;
     }
@@ -382,7 +382,7 @@ byte SelectionStore(uldat Magic, CONST byte MIME[MAX_MIMELEN], uldat Len, CONST 
 	Sel->Len++;
 #endif
     }
-    return TRUE;
+    return ttrue;
 }
 
 #define _SEL_MAGIC SEL_HWFONTMAGIC
@@ -396,7 +396,7 @@ byte SelectionStore(uldat Magic, CONST byte MIME[MAX_MIMELEN], uldat Len, CONST 
 byte SetSelectionFromWindow(window Window) {
     uldat y, slen, len;
     hwfont *sData, *Data;
-    byte ok = TRUE, w_useC = W_USE(Window, USECONTENTS);
+    byte ok = ttrue, w_useC = W_USE(Window, USECONTENTS);
     
     if (!(Window->State & WINDOW_DO_SEL))
 	return ok;
@@ -443,7 +443,7 @@ byte SetSelectionFromWindow(window Window) {
 	}
 	
 	if (!(sData = (hwfont *)AllocMem(sizeof(hwfont) * (slen = Window->WLogic))))
-	    return FALSE;
+	    return tfalse;
 	
 	
 	hw = Window->USE.C.Contents + (Window->YstSel + Window->USE.C.HSplit) * slen;
@@ -525,7 +525,7 @@ byte SetSelectionFromWindow(window Window) {
 	if (ok) NeedHW |= NEEDSelectionExport;
 	return ok;
     }
-    return FALSE;
+    return tfalse;
 }
 
 byte CreateXTermMouseEvent(event_mouse *Event, byte buflen, byte *buf) {
@@ -622,18 +622,18 @@ void FallBackKeyAction(window W, event_keyboard *EventK) {
     
     if ((G = (gadget)W->SelectW) && IS_GADGET(G)) switch (EventK->Code) {
       case TW_Escape:
-	UnPressGadget(G, FALSE);
+	UnPressGadget(G, tfalse);
 	W->SelectW = (widget)0;
 	break;
       case TW_Return:
-	UnPressGadget(G, TRUE);
+	UnPressGadget(G, ttrue);
 	PressGadget(G);
 	break;
       case TW_Up:
       case TW_Left:
 	if ((H = _PrevGadget(G))) {
 	    if (!(G->Flags & GADGETFL_TOGGLE))
-		UnPressGadget(G, FALSE);
+		UnPressGadget(G, tfalse);
 	    W->SelectW = (widget)H;
 	    PressGadget(H);
 	}
@@ -643,7 +643,7 @@ void FallBackKeyAction(window W, event_keyboard *EventK) {
       case TW_Tab:
 	if ((H = _NextGadget(G))) {
 	    if (!(G->Flags & GADGETFL_TOGGLE))
-		UnPressGadget(G, FALSE);
+		UnPressGadget(G, tfalse);
 	    W->SelectW = (widget)H;
 	    PressGadget(H);
 	}
@@ -917,7 +917,7 @@ byte InitTWDisplay(void) {
 			    SetArgv0(main_argv, main_argv_usable_len, arg0);
 			    FreeMem(arg0);
 			}
-			return TRUE;
+			return ttrue;
 		    }
 		} else
 		    Error(SYSCALLERROR);
@@ -930,7 +930,7 @@ byte InitTWDisplay(void) {
     printk("twin: failed to create any /tmp/.Twin* socket: %."STR(TW_SMALLBUFF)"s\n", ErrStr);
     printk("      possible reasons: either /tmp not writable, or all TWDISPLAY already in use,\n"
 	   "      or too many stale /tmp/.Twin* sockets. Aborting.\n");
-    return FALSE;
+    return tfalse;
 }
 
 /* unlink /tmp/.Twin<TWDISPLAY> */
@@ -1004,7 +1004,7 @@ static void SetEnvs(struct passwd *p) {
 byte SetServerUid(uldat uid, byte privileges) {
     msgport WM_MsgPort;
     struct passwd *p;
-    byte ok = FALSE;
+    byte ok = tfalse;
     
     if (flag_secure && uid == (uldat)(uid_t)uid && Uid == 0 && EUid == 0) {
 	if ((WM_MsgPort = Ext(WM,MsgPort))) {
@@ -1041,10 +1041,10 @@ byte SetServerUid(uldat uid, byte privileges) {
 			
 			/* tell the WM to restart itself (so that it reads user's .twinrc) */
 			SendControlMsg(WM_MsgPort, MSG_CONTROL_OPEN, 0, NULL);
-			return TRUE;
+			return ttrue;
 		    }
 		} else
-		    ok = FALSE;
+		    ok = tfalse;
 		
 		if (!ok) {
 		    flag_secure = 1;
@@ -1062,7 +1062,7 @@ byte SetServerUid(uldat uid, byte privileges) {
 	}
     } else
 	printk("twin: SetServerUid() can be called only if started by root with \"-secure\".\n");
-    return FALSE;
+    return tfalse;
 }
 
 
@@ -1314,10 +1314,10 @@ INLINE byte _AssignId(byte i, obj Obj) {
 	    if (!IdList[i][j])
 		break;
 	IdBottom[i] = j;
-	return TRUE;
+	return ttrue;
     }
     Error(NOTABLES);
-    return FALSE;
+    return tfalse;
 }
 
 INLINE void _DropId(byte i, obj Obj) {
@@ -1354,7 +1354,7 @@ byte AssignId(CONST fn_obj Fn_Obj, obj Obj) {
 	 * so no Ids for them too.
 	 */
         Obj->Id = Fn_Obj->Magic;
-	return TRUE;
+	return ttrue;
       case widget_magic:
       case gadget_magic:	
       case window_magic:
@@ -1370,7 +1370,7 @@ byte AssignId(CONST fn_obj Fn_Obj, obj Obj) {
       default:
 	break;
     }
-    return FALSE;
+    return tfalse;
 }
 
 void DropId(obj Obj) {
@@ -1415,7 +1415,7 @@ byte AssignId_all(all Obj) {
 	IdSize[i] = 1;
 	return _AssignId(i, (obj)Obj);
     }
-    return FALSE;
+    return tfalse;
 }
 
 obj Id2Obj(byte i, uldat Id) {

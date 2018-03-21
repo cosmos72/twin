@@ -93,9 +93,9 @@ static ttbyte open_dump_file(void) {
 		"<?xml version=\"1.0\"?>\n"
 		"<TT:dump xmlns:TT=\"http://twin.sourceforge.net/libTT/xml/\">\n"
 		);
-	return TRUE;
+	return ttrue;
     }
-    return FALSE;
+    return tfalse;
 }
 
 static void close_dump_file(void) {

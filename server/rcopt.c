@@ -33,7 +33,7 @@ static byte strfuzzy_ends_with(CONST char *s1, CONST char *s2) {
             c2 += 'a'-'A';
 
         if (c1 != c2)
-            return FALSE;
+            return tfalse;
     }
     return p2 == s2;
 }
@@ -51,12 +51,12 @@ byte InitRCOptions(void) {
     };
     CONST char * env;
     size_t i;
-    byte utf8 = FALSE;
+    byte utf8 = tfalse;
     for (i = 0; i < sizeof(keys)/sizeof(keys[0]); i++) {
         if ((env = getenv(keys[i])) && *env) {
             if (strfuzzy_ends_with(env, "utf8"))
             {
-                utf8 = TRUE;
+                utf8 = ttrue;
                 break;
             }
         }
@@ -87,6 +87,6 @@ byte InitRCOptions(void) {
 #endif
 	;
 
-    return TRUE;
+    return ttrue;
 }
 

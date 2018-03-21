@@ -34,9 +34,9 @@ hwfont T_CAT(Tutf_UTF_32_to_,T_TEMPLATE) (hwfont c)
 	table = utf32_hash_create(T_CAT3(Tutf_,T_TEMPLATE,_to_UTF_32), n, n_power_of_2);
 
 #ifdef TEMPLATE_REDEFINES_ASCII
-    return utf32_hash_search(table, c, FALSE);
+    return utf32_hash_search(table, c, tfalse);
 #else
-    return utf32_hash_search(table, c, TRUE);
+    return utf32_hash_search(table, c, ttrue);
 #endif
 }
 

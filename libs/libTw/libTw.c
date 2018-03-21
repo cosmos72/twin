@@ -333,10 +333,10 @@ TW_INLINE byte GrowErrnoLocation(tw_d TwD) {
 	rErrno.vec = vec;
 	rErrno.max = newmax;
 	
-	return TRUE;
+	return ttrue;
     }
     /* out of memory! */
-    return FALSE;
+    return tfalse;
 }
 
 static s_tw_errno *GetErrnoLocation(tw_d TwD) {
@@ -637,11 +637,11 @@ static void Panic(tw_d TwD) {
 	Fd = TW_NOFD;
     }
     
-    PanicFlag = TRUE;
+    PanicFlag = ttrue;
 }
 
 /**
- * returns TRUE if a fatal error occurred, FALSE otherwise;
+ * returns ttrue if a fatal error occurred, tfalse otherwise;
  * after a fatal error, the only useful thing to do is Tw_Close()
  */
 byte Tw_InPanic(tw_d TwD) {
@@ -671,7 +671,7 @@ static byte Flush(tw_d TwD, byte Wait) {
 	    if (Gzip(TwD)) {
 		t = GetQueue(TwD, Q = QgzWRITE, &left);
 	    } else
-		return FALSE; /* TwGzip() calls Panic() if needed */
+		return tfalse; /* TwGzip() calls Panic() if needed */
 	}
 #endif
 	FD_ZERO(&fset);
@@ -728,7 +728,7 @@ static byte Flush(tw_d TwD, byte Wait) {
  */
 byte Tw_Flush(tw_d TwD) {
     byte b;
-    LOCK; b = Flush(TwD, TRUE); UNLK;
+    LOCK; b = Flush(TwD, ttrue); UNLK;
     return b;
 }
 
@@ -738,7 +738,7 @@ byte Tw_Flush(tw_d TwD) {
  */
 byte Tw_TimidFlush(tw_d TwD) {
     byte b;
-    LOCK; b = Flush(TwD, FALSE); UNLK;
+    LOCK; b = Flush(TwD, tfalse); UNLK;
     return b;
 }
     
@@ -752,7 +752,7 @@ static uldat TryRead(tw_d TwD, TW_CONST timevalue * Timeout) {
     uldat got = 0, len = 0;
     int sel, fd;
     byte *t, mayread;
-    byte Q, timedout = FALSE;
+    byte Q, timedout = tfalse;
     
 #ifdef CONF_SOCKET_GZ
     if (GzipFlag)
@@ -792,7 +792,7 @@ static uldat TryRead(tw_d TwD, TW_CONST timevalue * Timeout) {
                 timevalue actual, to_sleep;
                 InstantNow(&actual);
                 if (CmpTime(&actual, &deadline) >= 0) {
-                    timedout = TRUE;
+                    timedout = ttrue;
                     break;
                 }
                 to_sleep = deadline; /* struct copy */
@@ -873,7 +873,7 @@ static byte *Wait4Reply(tw_d TwD, uldat Serial) {
     uldat left;
     byte *MyReply = NULL;
     if (Fd != TW_NOFD && ((void)GetQueue(TwD, QWRITE, &left), left)) {
-	if (Flush(TwD, TRUE)) while (Fd != TW_NOFD && !(MyReply = FindReply(TwD, Serial)))
+	if (Flush(TwD, ttrue)) while (Fd != TW_NOFD && !(MyReply = FindReply(TwD, Serial)))
 	    if (TryRead(TwD, TIMEOUT_INFINITE) != (uldat)-1)
 		ParseReplies(TwD);
     }
@@ -957,27 +957,27 @@ static byte ProtocolNumbers(tw_d TwD) {
 	if (*servdata >= _len && !TwCmpMem(hostdata+1, servdata+1, _len-1)) {
 	    ExtractServProtocol(TwD, servdata+6, *servdata-6);
 	    DeQueue(TwD, QREAD, *servdata);
-	    return TRUE;
+	    return ttrue;
 	} else
 	    Errno = TW_ESERVER_BAD_VERSION;
     } else if (len == 0) {
 	/* server immediately closed the socket. socket module not running? */
 	GetErrnoLocation(TwD)->S = TW_EDETAIL_NO_MODULE;
     }
-    return FALSE;
+    return tfalse;
 }
 
 TW_DECL_MAGIC(Tw_MagicData);
 
 /**
- * returns TRUE if user-provided magic numbers
+ * returns ttrue if user-provided magic numbers
  * are compatible with library ones; used to avoid mixing
  * unicode clients with non-unicode library and vice-versa
  */
 byte Tw_CheckMagic(TW_CONST byte id[])  {
     if (Tw_CmpMem(id+1, Tw_MagicData+1, (id[0] < Tw_MagicData[0] ? id[0] : Tw_MagicData[0]) - 2 - sizeof(uldat))) {
 	CommonErrno = TW_EBAD_SIZES;
-	return FALSE;
+	return tfalse;
     }
     if (sizeof(struct s_tevent_display)  !=  sizeof(tobj) + 4*sizeof(udat) + sizeof(uldat) ||
 	sizeof(struct s_tevent_keyboard) !=  sizeof(tobj) + 3*sizeof(udat) + 2 ||
@@ -994,9 +994,9 @@ byte Tw_CheckMagic(TW_CONST byte id[])  {
 	sizeof(struct s_tevent_clientmsg) != sizeof(tobj) + 2*sizeof(udat) + 2*sizeof(uldat)) {
 	
 	CommonErrno = TW_EBAD_STRUCTS;
-	return FALSE;
+	return tfalse;
     }
-    return TRUE;
+    return ttrue;
 }
 
 static byte MagicNumbers(tw_d TwD) {
@@ -1006,8 +1006,8 @@ static byte MagicNumbers(tw_d TwD) {
     Tw_CopyMem(&chunk, Tw_MagicData+Tw_MagicData[0]-sizeof(uldat), sizeof(uldat));
     
     /* send our magic to server */
-    if (!AddQueue(TwD, QWRITE, Tw_MagicData[0], Tw_MagicData) || !Flush(TwD, TRUE))
-	return FALSE;
+    if (!AddQueue(TwD, QWRITE, Tw_MagicData[0], Tw_MagicData) || !Flush(TwD, ttrue))
+	return tfalse;
 
     /* wait for server magic */
     while (Fd != TW_NOFD && (!len || ((hostdata = GetQueue(TwD, QREAD, NULL)), len < *hostdata))) {
@@ -1032,13 +1032,13 @@ static byte MagicNumbers(tw_d TwD) {
 	    if (!TwCmpMem(Tw_MagicData + Tw_MagicData[0] - sizeof(uldat),
 			  hostdata + *hostdata - sizeof(uldat), sizeof(uldat))) {
 		DeQueue(TwD, QREAD, *hostdata);
-		return TRUE;
+		return ttrue;
 	    } else
 		Errno = TW_ESERVER_BAD_ENDIAN;
 	} else
 	    Errno = TW_ESERVER_BAD_SIZES;
     }
-    return FALSE;
+    return tfalse;
 }
 
 #define digestLen       16  /* hardcoded in MD5 routines */
@@ -1053,20 +1053,20 @@ static byte MagicChallenge(tw_d TwD) {
     
     challenge = ReadUldat(TwD);
     if (Fd == TW_NOFD)
-	return FALSE;
+	return tfalse;
     if (challenge == TW_GO_MAGIC)
-	return TRUE;
+	return ttrue;
     if (challenge != TW_WAIT_MAGIC) {
 	Errno = TW_ESERVER_BAD_PROTOCOL;
-	return FALSE;
+	return tfalse;
     }
     if (!(home = getenv("HOME"))) {
 	Errno = TW_ENO_AUTH;
-	return FALSE;
+	return tfalse;
     }
     if (!WQLeft(digestLen) || !(data = Tw_AllocMem(hAuthLen))) {
 	Errno = TW_ESYS_NO_MEM;
-	return FALSE;
+	return tfalse;
     }
 	
     
@@ -1079,7 +1079,7 @@ static byte MagicChallenge(tw_d TwD) {
     if ((fd = open(data, O_RDONLY)) < 0) {
 	Tw_FreeMem(data);
 	Errno = TW_ENO_AUTH;
-	return FALSE;
+	return tfalse;
     }
     for (len = 0, got = 1; got && len < hAuthLen; len += got) {
 	do {
@@ -1095,7 +1095,7 @@ static byte MagicChallenge(tw_d TwD) {
 	Tw_FreeMem(data);
 	if (Fd != TW_NOFD)
 	    Errno = TW_ENO_AUTH;
-	return FALSE;
+	return tfalse;
     }
     
     (void)GetQueue(TwD, QREAD, &got);
@@ -1105,7 +1105,7 @@ static byte MagicChallenge(tw_d TwD) {
     }
     
     if (Fd == TW_NOFD)
-	return FALSE;
+	return tfalse;
     
     MD5Init(&ctx);
     MD5Update(&ctx, data, len);
@@ -1118,14 +1118,14 @@ static byte MagicChallenge(tw_d TwD) {
 
     DeQueue(TwD, QREAD, challenge);
     
-    Flush(TwD, TRUE);
+    Flush(TwD, ttrue);
     challenge = ReadUldat(TwD);
     
     if (challenge == TW_GO_MAGIC)
-	return TRUE;
+	return ttrue;
     if (Fd != TW_NOFD)
 	Errno = TW_ESERVER_DENIED_CONNECT;
-    return FALSE;
+    return tfalse;
 }
 
 /**
@@ -1135,7 +1135,7 @@ static byte MagicChallenge(tw_d TwD) {
 tw_d Tw_Open(TW_CONST byte *TwDisplay) {
     tw_d TwD;
     int i, result = -1, fd = TW_NOFD;
-    byte *options, gzip = FALSE, handshake = FALSE;
+    byte *options, gzip = tfalse, handshake = tfalse;
 
     if (!TwDisplay && (!(TwDisplay = getenv("TWDISPLAY")) || !*TwDisplay)) {
 	CommonErrno = TW_ENO_DISPLAY;
@@ -1145,7 +1145,7 @@ tw_d Tw_Open(TW_CONST byte *TwDisplay) {
     if ((options = strchr(TwDisplay, ','))) {
 	*options = '\0';
 	if (!TwCmpMem(options+1, "gz", 2))
-	    gzip = TRUE;
+	    gzip = ttrue;
     }
 
     CommonErrno = 0;
@@ -1298,7 +1298,7 @@ void Tw_Close(tw_d TwD) {
     LOCK;
     
     if (Fd != TW_NOFD) {
-	Flush(TwD, TRUE);
+	Flush(TwD, ttrue);
 	close(Fd);
 	Fd = TW_NOFD;
     }
@@ -1318,7 +1318,7 @@ void Tw_Close(tw_d TwD) {
     
     DeleteAllListeners(TwD->AVLRoot);
     
-    /*PanicFlag = FALSE;*/
+    /*PanicFlag = tfalse;*/
     UNLK;
     th_r_mutex_destroy(mutex);
     
@@ -1352,7 +1352,7 @@ TW_CONST byte *Tw_AttachGetReply(tw_d TwD, uldat *len) {
     
 #ifdef CONF_SOCKET_GZ
     wasGzipFlag = GzipFlag;
-    GzipFlag = FALSE;
+    GzipFlag = tfalse;
 #endif
     
     if (Fd != TW_NOFD) do {
@@ -1592,13 +1592,13 @@ tmsg Tw_PendingMsg(tw_d TwD) {
  */
 tmsg Tw_PeekMsg(tw_d TwD) {
     tmsg Msg;
-    LOCK; Msg = ReadMsg(TwD, FALSE, FALSE); UNLK;
+    LOCK; Msg = ReadMsg(TwD, tfalse, tfalse); UNLK;
     return Msg;
 }
 
 /**
  * returns the first tmsg already received, or tries to read non-blocking
- * more messages from the connection; if Wait is TRUE and no messages are
+ * more messages from the connection; if Wait is ttrue and no messages are
  * immediately available, blocks until a message is received
  * and returns NULL only in case of a fatal error (panic);
  * 
@@ -1606,7 +1606,7 @@ tmsg Tw_PeekMsg(tw_d TwD) {
  */
 tmsg Tw_ReadMsg(tw_d TwD, byte Wait) {
     tmsg Msg;
-    LOCK; Msg = ReadMsg(TwD, Wait, TRUE); UNLK;
+    LOCK; Msg = ReadMsg(TwD, Wait, ttrue); UNLK;
     return Msg;
 }
 
@@ -1618,7 +1618,7 @@ tmsg Tw_ReadMsg(tw_d TwD, byte Wait) {
 tmsg Tw_CloneReadMsg(tw_d TwD, byte Wait) {
     tmsg Msg, ClonedMsg = (tmsg)0;
     LOCK;
-    if ((Msg = ReadMsg(TwD, Wait, TRUE)) &&
+    if ((Msg = ReadMsg(TwD, Wait, ttrue)) &&
 	(ClonedMsg = (tmsg)Tw_AllocMem(Msg->Len))) {
 	
 	Tw_CopyMem(Msg, ClonedMsg, Msg->Len);
@@ -1968,7 +1968,7 @@ static byte DispatchMsg(tdisplay TwD, tmsg Msg, byte mustClone) {
 	Arg = TwD->DefaultArg;
 	Listener = NULL;
     } else
-	return FALSE;
+	return tfalse;
 
     /*
      * Tw_MainLoop calls us with a Msg still inside Queue[].
@@ -1993,9 +1993,9 @@ static byte DispatchMsg(tdisplay TwD, tmsg Msg, byte mustClone) {
 	LOCK;
 	if (mustClone)
 	    Tw_FreeMem(ClonedMsg);
-	return TRUE;
+	return ttrue;
     }
-    return FALSE;
+    return tfalse;
 }
 
 /**
@@ -2004,7 +2004,7 @@ static byte DispatchMsg(tdisplay TwD, tmsg Msg, byte mustClone) {
 byte Tw_DispatchMsg(tdisplay TwD, tmsg Msg) {
     byte ret;
     LOCK;
-    ret = DispatchMsg(TwD, Msg, FALSE);
+    ret = DispatchMsg(TwD, Msg, tfalse);
     UNLK;
     return ret;
 }
@@ -2019,15 +2019,15 @@ byte Tw_MainLoop(tw_d TwD) {
     
     LOCK;
     Errno = 0;
-    while (!TwD->ExitMainLoop && (Msg = ReadMsg(TwD, TRUE, TRUE)))
-	(void)DispatchMsg(TwD, Msg, TRUE);	
+    while (!TwD->ExitMainLoop && (Msg = ReadMsg(TwD, ttrue, ttrue)))
+	(void)DispatchMsg(TwD, Msg, ttrue);	
     ret = TwD->ExitMainLoop || Errno == 0;
     UNLK;
     return ret;
 }
 
 void Tw_ExitMainLoop(tw_d TwD) {
-    TwD->ExitMainLoop = TRUE;
+    TwD->ExitMainLoop = ttrue;
 }
 
 
@@ -2181,7 +2181,7 @@ byte  _Tw_SyncSocket(tw_d TwD);
 
 static byte Sync(tw_d TwD) {
     uldat left;
-    return Fd != TW_NOFD ? (GetQueue(TwD, QWRITE, &left), left) ? _Tw_SyncSocket(TwD) : TRUE : FALSE;
+    return Fd != TW_NOFD ? (GetQueue(TwD, QWRITE, &left), left) ? _Tw_SyncSocket(TwD) : ttrue : tfalse;
 }
 
 /**
@@ -2337,7 +2337,7 @@ void Tw_SetPressedGadget(tw_d TwD, tgadget a1, byte a2) {
  * returns wether a gadget is pressed or not
  */
 byte Tw_IsPressedGadget(tw_d TwD, tgadget a1) {
-    return Tw_Stat(TwD, a1, TWS_gadget_Flags) & TW_GADGETFL_PRESSED ? TRUE : FALSE;
+    return Tw_Stat(TwD, a1, TWS_gadget_Flags) & TW_GADGETFL_PRESSED ? ttrue : tfalse;
 }
 
 /**
@@ -2351,7 +2351,7 @@ void Tw_SetToggleGadget(tw_d TwD, tgadget a1, byte a2) {
  * return wether a gadget is toggle-type or not
  */
 byte Tw_IsToggleGadget(tw_d TwD, tgadget a1) {
-    return Tw_Stat(TwD, a1, TWS_gadget_Flags) & TW_GADGETFL_TOGGLE ? TRUE : FALSE;
+    return Tw_Stat(TwD, a1, TWS_gadget_Flags) & TW_GADGETFL_TOGGLE ? ttrue : tfalse;
 }
 
 /**
@@ -2669,7 +2669,7 @@ static tslist StatTSL(tw_d TwD, udat flags, byte *data, byte *end) {
     tslist TSL;
     tsfield TSF;
     udat i, N;
-    byte ok = TRUE;
+    byte ok = ttrue;
     
     Pop(data,udat,N);
     Pop(data,udat,i); /* pad */
@@ -2689,7 +2689,7 @@ static tslist StatTSL(tw_d TwD, udat flags, byte *data, byte *end) {
 		    Pop(data,type,tmp); \
 		    TSF[i].TWS_field_scalar = tmp; \
 		} else \
-		    ok = FALSE; \
+		    ok = tfalse; \
 		break
 		
 		Popcase(byte);
@@ -2713,15 +2713,15 @@ static tslist StatTSL(tw_d TwD, udat flags, byte *data, byte *end) {
 				if ((TSF[i].TWS_field_vecV = Tw_AllocMem(TSF[i].TWS_field_vecL)))
 				    PopV(data, TSF[i].TWS_field_vecL, TSF[i].TWS_field_vecVV);
 				else
-				    ok = FALSE;
+				    ok = tfalse;
 			    } else
 				PopAddr(data, byte, TSF[i].TWS_field_vecL, TSF[i].TWS_field_vecV);
 			} else
-			    ok = FALSE;
+			    ok = tfalse;
 		    } else
 			TSF[i].TWS_field_vecV = NULL;
 		} else
-		    ok = FALSE;
+		    ok = tfalse;
 		break;
 	    }
 	}
@@ -2869,7 +2869,7 @@ void Tw_DeleteMsg(tw_d TwD, tmsg Msg) {
  * sends message to given client, blocking to see if it could be delivered
  */
 byte Tw_SendMsg(tw_d TwD, tmsgport MsgPort, tmsg Msg) {
-    byte ret = FALSE;
+    byte ret = tfalse;
     if (Msg && Msg->Magic == msg_magic) {
 	ret = Tw_SendToMsgPort(TwD, MsgPort, Msg->Len, (void *)Msg);
 	Tw_FreeMem(Msg);
@@ -2891,7 +2891,7 @@ void Tw_BlindSendMsg(tw_d TwD, tmsgport MsgPort, tmsg Msg) {
     
 
 /**
- * returns TRUE if server implements all given functions, FALSE otherwise
+ * returns ttrue if server implements all given functions, tfalse otherwise
  */
 byte Tw_FindVFunction(tw_d TwD, va_list V) {
     void *F, *tryF;
@@ -2914,11 +2914,11 @@ byte Tw_FindVFunction(tw_d TwD, va_list V) {
 	} else {
 	    Errno = TW_ESERVER_BAD_FUNCTION;
 	}
-	return FALSE;
+	return tfalse;
 	
     }
 
-    return TRUE;
+    return ttrue;
 }
 
 byte Tw_FindLFunction(tw_d TwD, ...) {
@@ -2945,7 +2945,7 @@ byte TwFindLFunction(void *F, ...) {
 	
 	return ret;
     }
-    return TRUE;
+    return ttrue;
 }
 #endif
     
@@ -3021,7 +3021,7 @@ static uldat Gzip(tw_d TwD) {
 	    Panic(TwD);
 	}
     }
-    return FALSE;
+    return tfalse;
 }
 
 static uldat Gunzip(tw_d TwD) {
@@ -3068,11 +3068,11 @@ static uldat Gunzip(tw_d TwD) {
 	    Panic(TwD);
 	}
     }
-    return FALSE;
+    return tfalse;
 }
 
 /**
- * tries to enable compression on the connection; returns TRUE if succeeded
+ * tries to enable compression on the connection; returns ttrue if succeeded
  */
 byte Tw_EnableGzip(tw_d TwD) {
     if (!GzipFlag && Tw_CanCompress(TwD)) {
@@ -3090,8 +3090,8 @@ byte Tw_EnableGzip(tw_d TwD) {
 
 	    if (deflateInit(zW, Z_BEST_COMPRESSION) == Z_OK) {
 		if (inflateInit(zR) == Z_OK) {
-		    if (Tw_DoCompress(TwD, TRUE))
-			return GzipFlag = TRUE;
+		    if (Tw_DoCompress(TwD, ttrue))
+			return GzipFlag = ttrue;
 		    inflateEnd(zR);
 		}
 		deflateEnd(zW);
@@ -3100,32 +3100,32 @@ byte Tw_EnableGzip(tw_d TwD) {
 	if (zR) Tw_FreeMem(zR);
 	if (zW) Tw_FreeMem(zW);
     }
-    return FALSE;
+    return tfalse;
 }
 
 /**
- * tries to disable compression on the connection; returns TRUE if succeeded
+ * tries to disable compression on the connection; returns ttrue if succeeded
  */
 byte Tw_DisableGzip(tw_d TwD) {
-    if (GzipFlag && (Fd == TW_NOFD || Tw_DoCompress(TwD, FALSE) || Fd == TW_NOFD)) {
+    if (GzipFlag && (Fd == TW_NOFD || Tw_DoCompress(TwD, tfalse) || Fd == TW_NOFD)) {
 	inflateEnd(zR);
 	deflateEnd(zW);
 	Tw_FreeMem(zR);
 	Tw_FreeMem(zW);
-	GzipFlag = FALSE;
-	return TRUE;
+	GzipFlag = tfalse;
+	return ttrue;
     }
-    return FALSE;
+    return tfalse;
 }
 
 #else /* !CONF_SOCKET_GZ */
 
 byte Tw_EnableGzip(tw_d TwD) {
-    return FALSE;
+    return tfalse;
 }
 
 byte Tw_DisableGzip(tw_d TwD) {
-    return FALSE;
+    return tfalse;
 }
 
 #endif /* CONF_SOCKET_GZ */

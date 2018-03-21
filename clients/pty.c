@@ -74,7 +74,7 @@ static void get_pty_error(TW_CONST byte *f, TW_CONST byte *arg) {
 
 /* 1. Acquire a pseudo-teletype from the system. */
 /*
- * On failure, returns FALSE.
+ * On failure, returns tfalse.
  * On success, fills ttydev and ptydev with the names of the master
  * and slave parts and sets ttyfd and ptyfd to the file descriptors
  */
@@ -139,14 +139,14 @@ static byte get_pty(void)
     fprintf(stderr, "twterm: failed to get a pty/tty pseudo-tty pair\n");
     
 #endif
-    return FALSE;
+    return tfalse;
 
 Found:
     fcntl(fd, F_SETFL, O_NDELAY);
     fcntl(fd, F_SETFD, FD_CLOEXEC);
     ttyfd = sfd;
     ptyfd = fd;
-    return TRUE;
+    return ttrue;
 }
 
 static gid_t tty_grgid;
@@ -181,8 +181,8 @@ static byte fixup_pty(dat X, dat Y) {
 #endif
 	chown(ttydev, id, tty_gid) == 0 && chmod(ttydev, 0620) == 0)
 	
-	return TRUE;
-    return FALSE;
+	return ttrue;
+    return tfalse;
 }
 
 /* 3. Establish ttyfd as controlling teletype for new session and switch to it */
@@ -193,7 +193,7 @@ static byte switchto_tty(void)
 
     pid = setsid();
     if (pid < 0)
-	return FALSE;
+	return tfalse;
 
     /*
      * Hope all other file descriptors are set to fcntl(fd, F_SETFD, FD_CLOEXEC)
@@ -218,7 +218,7 @@ static byte switchto_tty(void)
     ioctl(0, TIOCSPGRP, &pid);
 #endif
 
-    return TRUE;
+    return ttrue;
 }
 
 /* 5. fork() a program in a pseudo-teletype */
@@ -228,7 +228,7 @@ uldat Spawn(twindow Window, pid_t *ppid, dat X, dat Y, TW_CONST byte *arg0, byte
     
     if (!get_pty()) {
 	TwDropPrivileges();
-	return FALSE;
+	return tfalse;
     }
     (void)fixup_pty(X, Y);
     

@@ -82,7 +82,7 @@ static byte InitButtons(char *bt1, char *bt2) {
 }
 
 static byte InitGadgets(byte radio) {
-    return FALSE;
+    return tfalse;
 }
 
 static int CountNewLines(char *s) {
@@ -103,11 +103,11 @@ static byte ShowText(void) {
 	    TwGotoXYWindow(Dialog_Win, (width - len) / 2, 0);
 	TwWriteAsciiWindow(Dialog_Win, len, text);
     }
-    return TRUE;
+    return ttrue;
 }
 
 static byte ShowFile(void) {
-    return FALSE;
+    return tfalse;
 }
 
 static byte InitYesNoBox(void) {
@@ -123,7 +123,7 @@ static byte InitInfoBox(void) {
 }
 
 static byte InitInputBox(void) {
-    return FALSE;
+    return tfalse;
 }
 
 static byte InitTextBox(void) {
@@ -142,15 +142,15 @@ static byte InitMenuBox(void) {
 	}
 	return InitButtons("  OK  ", "Cancel");
     }
-    return FALSE;
+    return tfalse;
 }
 
 static byte InitCheckBox(void) {
-    return ShowText() && InitGadgets(TRUE);
+    return ShowText() && InitGadgets(ttrue);
 }
 
 static byte InitRadioBox(void) {
-    return ShowText() && InitGadgets(FALSE);
+    return ShowText() && InitGadgets(tfalse);
 }
 
 static byte InitGaugeBox(void) {
@@ -162,13 +162,13 @@ static byte ParseArgs(int argc, char *argv[]) {
     
     if (++argv, !--argc) {
 	Usage();
-	return FALSE;
+	return tfalse;
     }
     while (argc) {
 	eaten = 1;
 	
 	if (!strcmp(*argv, "--separate-output"))
-	    separate_output = TRUE;
+	    separate_output = ttrue;
 	else if (argc >= 2 && !strcmp(*argv, "--title"))
 	    title = argv[1], eaten = 2;
 	else if (argc >= 2 && !strcmp(*argv, "--backtitle"))
@@ -225,14 +225,14 @@ static byte ParseArgs(int argc, char *argv[]) {
 	    percent = atoi(argv[4]);
 	} else {
 	    Usage();
-	    return FALSE;
+	    return tfalse;
 	}
 	argc -= eaten;
 	argv += eaten;
     }
     width -= 2;
     height -= 2;
-    return TRUE;
+    return ttrue;
 }
 
 TW_DECL_MAGIC(dialog_magic);
@@ -246,10 +246,10 @@ static byte InitDialog(void) {
 	(Dialog_Menu=TwCreateMenu(
 	  COL(BLACK,WHITE), COL(BLACK,GREEN), COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
 	  COL(RED,WHITE), COL(RED,GREEN), (byte)0)) &&
-	(TwInfo4Menu(Dialog_Menu, TW_ROW_ACTIVE, 10, " Twin Dialog ", "ptpppptpppppp"), TRUE) &&
+	(TwInfo4Menu(Dialog_Menu, TW_ROW_ACTIVE, 10, " Twin Dialog ", "ptpppptpppppp"), ttrue) &&
 	(Window=TwWin4Menu(Dialog_Menu)) &&
 	TwRow4Menu(Window, COD_QUIT, TW_ROW_INACTIVE, 6, " Quit ") &&
-	TwItem4Menu(Dialog_Menu, Window, TRUE, 6, " File ") &&
+	TwItem4Menu(Dialog_Menu, Window, ttrue, 6, " File ") &&
 	TwItem4MenuCommon(Dialog_Menu) &&
 	(Dialog_Win=TwCreateWindow
 	 (strlen(title), title, NULL,
@@ -257,9 +257,9 @@ static byte InitDialog(void) {
 	  TW_WINDOW_DRAG|TW_WINDOW_RESIZE|TW_WINDOW_CLOSE,
 	  TW_WINDOWFL_ROWS_DEFCOL,
 	  width, height, 0)) &&
-	(TwSetColorsWindow(Dialog_Win, 1 << 6, 0, 0, 0, 0, 0, 0, COL(HIGH|WHITE,BLUE), 0, 0), TRUE) &&
+	(TwSetColorsWindow(Dialog_Win, 1 << 6, 0, 0, 0, 0, 0, 0, COL(HIGH|WHITE,BLUE), 0, 0), ttrue) &&
 	(*mode)() &&
-	(TwMapWindow(Dialog_Win, TwFirstScreen()), TRUE) &&
+	(TwMapWindow(Dialog_Win, TwFirstScreen()), ttrue) &&
 	TwFlush();
 }
 
@@ -271,7 +271,7 @@ int main(int argc, char *argv[]) {
     if (!ParseArgs(argc, argv))
 	return 255;
 
-    if (InitDialog()) while ((Msg=TwReadMsg(TRUE))) {
+    if (InitDialog()) while ((Msg=TwReadMsg(ttrue))) {
 	if (Msg->Type==TW_MSG_WIDGET_GADGET) {
 	    EventG=&Msg->Event.EventGadget;
 	    if (EventG->W == Dialog_Win) switch (EventG->Code) {
