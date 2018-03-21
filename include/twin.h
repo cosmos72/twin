@@ -487,7 +487,6 @@ struct s_window {
     menuitem MenuItem; /* from which the window depends */
     dat NameLen;
     byte *Name; hwcol *ColName;
-    hwfont *BorderPattern[2];
     remotedata RemoteData;
     ldat CurX, CurY;
     ldat XstSel, YstSel, XendSel, YendSel;
@@ -1562,49 +1561,66 @@ struct s_setup {
  * in scroller.c:ScrollerH(),
  * do not change it!
  */
-/*#define STATE_BUTTON(n)	((byte)(n)) */
-#define STATE_DRAG		((byte)10)
-#define STATE_RESIZE		((byte)15)
-#define STATE_SCROLL		((byte)16)
-#define STATE_GADGET		((byte)26)
-#define STATE_MENU		((byte)27)
-#define STATE_SCREEN		((byte)28)
-#define STATE_BUTTON_SCREEN	((byte)29)
-#define STATE_ROOT		((byte)30)
-#define STATE_DEFAULT		((byte)31)
-
-/* mask for all the above */
-#define STATE_ANY		((byte)0x1F)
-
-/* furher All->State flags */
-#define STATE_FL_BYMOUSE	((byte)0x40)
+typedef enum {
+    STATE_DRAG = 10, STATE_RESIZE = 15, STATE_SCROLL = 16,
+    STATE_GADGET = 26, STATE_MENU = 27, STATE_SCREEN = 28,
+    STATE_BUTTON_SCREEN = 29, STATE_ROOT = 30, STATE_DEFAULT = 31,
+    
+    /* mask for all the above */
+    STATE_ANY = 0x1F,
+    
+    /* further All->State flags */
+    STATE_FL_BYMOUSE = 0x40,
+} tstate;
+    
+#define STATE_BUTTON(n)		((tstate)(n))
+#define STATE_DRAG		STATE_DRAG
+#define STATE_RESIZE		STATE_RESIZE
+#define STATE_SCROLL		STATE_SCROLL
+#define STATE_GADGET		STATE_GADGET
+#define STATE_MENU		STATE_MENU
+#define STATE_SCREEN		STATE_SCREEN
+#define STATE_BUTTON_SCREEN	STATE_BUTTON_SCREEN
+#define STATE_ROOT		STATE_ROOT
+#define STATE_DEFAULT		STATE_DEFAULT
+#define STATE_ANY		STATE_ANY
+#define STATE_FL_BYMOUSE	STATE_FL_BYMOUSE
 
 
 /* values returned by FnWindow->FindBorder (modeled after STATE_*) */
-/*#define POS_BUTTON(n)		((byte)(n))*/
-#define POS_TITLE		((byte)10)
-#define POS_SIDE_LEFT		((byte)11)
-#define POS_SIDE_UP		((byte)12)
-#define POS_SIDE_RIGHT		((byte)13)
-#define POS_SIDE_DOWN		((byte)14)
-#define POS_BUTTON_RESIZE	((byte)15)
 
-#define POS_X_BAR_BACK		((byte)16)
-#define POS_X_BAR_FWD		((byte)17)
-#define POS_X_TAB		((byte)18)
-#define POS_X_ARROW_BACK	((byte)19)
-#define POS_X_ARROW_FWD		((byte)20)
+typedef enum {
+    POS_TITLE = 10, POS_SIDE_LEFT = 11, POS_SIDE_UP = 12, POS_SIDE_RIGHT = 13, POS_SIDE_DOWN = 14, POS_BUTTON_RESIZE = 15,
+    POS_X_BAR_BACK = 16, POS_X_BAR_FWD = 17, POS_X_TAB = 18, POS_X_ARROW_BACK = 19, POS_X_ARROW_FWD = 20,
+    POS_Y_BAR_BACK = 21, POS_Y_BAR_FWD = 22, POS_Y_TAB = 23, POS_Y_ARROW_BACK = 24, POS_Y_ARROW_FWD = 25,
+    POS_INSIDE = 26, POS_MENU = 27, POS_BUTTON_SCREEN = 29, POS_ROOT = 30,
+} tpos;
+    
+#define POS_BUTTON(n)		((tpos)(n))
+#define POS_TITLE		POS_TITLE
+#define POS_SIDE_LEFT		POS_SIDE_LEFT
+#define POS_SIDE_UP		POS_SIDE_UP
+#define POS_SIDE_RIGHT		POS_SIDE_RIGHT
+#define POS_SIDE_DOWN		POS_SIDE_DOWN
+#define POS_BUTTON_RESIZE	POS_BUTTON_RESIZE
 
-#define POS_Y_BAR_BACK		((byte)21)
-#define POS_Y_BAR_FWD		((byte)22)
-#define POS_Y_TAB		((byte)23)
-#define POS_Y_ARROW_BACK	((byte)24)
-#define POS_Y_ARROW_FWD		((byte)25)
+#define POS_X_BAR_BACK		POS_X_BAR_BACK
+#define POS_X_BAR_FWD		POS_X_BAR_FWD
+#define POS_X_TAB		POS_X_TAB
+#define POS_X_ARROW_BACK	POS_X_ARROW_BACK
+#define POS_X_ARROW_FWD		POS_X_ARROW_FWD
 
-#define POS_INSIDE		((byte)26)
-#define POS_MENU		((byte)27)
-#define POS_BUTTON_SCREEN	((byte)29)
-#define POS_ROOT		((byte)30)
+#define POS_Y_BAR_BACK		POS_Y_BAR_BACK
+#define POS_Y_BAR_FWD		POS_Y_BAR_FWD
+#define POS_Y_TAB		POS_Y_TAB
+#define POS_Y_ARROW_BACK	POS_Y_ARROW_BACK
+#define POS_Y_ARROW_FWD		POS_Y_ARROW_FWD
+
+#define POS_INSIDE		POS_INSIDE
+#define POS_MENU		POS_MENU
+#define POS_BUTTON_SCREEN	POS_BUTTON_SCREEN
+#define POS_ROOT		POS_ROOT
+
 
 typedef struct s_selection {
     timevalue Time;

@@ -101,11 +101,11 @@ static struct s_all _All = {
     
     {
 	/* VT100GR_MAP mapped to Unicode -- get from libTutf */
-	Tutf_VT100GR_to_UTF_16,
+	Tutf_VT100GR_to_UTF_32,
         /* LATIN1_MAP mapped to Unicode -- it's the identity */
         NULL,
 	/* IBMPC_MAP mapped to Unicode -- get from libTutf */
-	Tutf_CP437_to_UTF_16,
+	Tutf_CP437_to_UTF_32,
 	/* USER_MAP */
 	GtransUser
     },
@@ -155,7 +155,7 @@ byte InitData(void) {
     
     for (i = 0; i < sizeof(vec)/sizeof(vec[0]); i++) {
 	for (j = 0; j < sizes[i]; j++)
-	    vec[i][j] = Tutf_CP437_to_UTF_16[vec[i][j]];
+	    vec[i][j] = Tutf_CP437_to_UTF_32[vec[i][j]];
     }
     return AssignId_all(All);
 }

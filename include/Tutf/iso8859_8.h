@@ -491,7 +491,7 @@
     EL(_LEFT_TO_RIGHT_MARK) \
     EL(_RIGHT_TO_LEFT_MARK)
 
-/* list of all characters NOT IDENTICALLY MAPPED to UTF-16 */
+/* list of all characters NOT IDENTICALLY MAPPED to UTF-32 */
 #define T_NLIST_ISO8859_8(EL) \
     EL(_MULTIPLICATION_SIGN) \
     EL(_DIVISION_SIGN) \

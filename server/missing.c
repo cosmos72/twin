@@ -83,4 +83,76 @@ int Tw_option_strncmp(TW_CONST char *s1, TW_CONST char *s2, size_t n) {
     return strncmp(s1, s2, n);
 }
 
+enum {
+    pitch = 15,
+    menu_bar = 1,
+    window_title = 4 * pitch + 4,        /* == 64 */
+    window_title_focus = 5 * pitch + 4,  /* == 79 */
+    window_title_pressed = 6 * pitch + 4 /* == 94 */
+};
 
+hwattr Tw_hwattr3(hwcol col, hwfont font, hwattr extra) {
+    hwattr attr = HWATTR(col, font & 0x1FFFFF);
+    switch (extra) {
+    case 0:
+        break;
+    case menu_bar:
+	attr |= (1 << 21);
+	break;
+    case window_title: 
+        attr |= (2 << 21);
+        break;
+    case window_title_focus:
+        attr |= (3 << 21);
+        break;
+    case window_title_pressed:
+        attr |= (4 << 21);
+        break;
+    default:
+        attr = extra | (5 << 21) | HWATTR_COLMASK(attr);
+        break;
+    }
+    return attr;
+}
+
+hwfont Tw_hwfont_infer_from_extra[0x100] = {
+    ' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ', 
+    ' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ', 
+    ' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ', 
+    ' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ', 
+    ' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ', 
+    ' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ', 
+    ' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ', 
+    ' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ', 
+    ' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ', 
+    ' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ', 
+    ' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ', 
+    ' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ', 
+    ' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ', 
+    ' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ', 
+    ' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ', 
+    ' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ', 
+};
+
+hwfont Tw_hwfont(hwattr attr) {
+    attr &= 0x00FFFFFF;
+    if (attr < (5 << 21))
+        attr &= 0x1FFFFF;
+    else
+        attr = Tw_hwfont_infer_from_extra[(attr - (5 << 21)) & 0xFF];
+    return attr;
+}
+
+static TW_CONST byte decode_hwextra[5] = {
+    0, menu_bar, window_title,
+    window_title_focus, window_title_pressed,
+};
+
+hwattr Tw_hwextra(hwattr attr) {
+    attr &= 0x00FFFFFF;
+    if (attr < (5 << 21))
+	attr = decode_hwextra[attr >> 21];
+    else
+	attr -= (5 << 21);
+    return attr;
+}

@@ -241,17 +241,31 @@ static node RCFindMouseBind(ldat code, ldat ctx) {
     return NULL;
 }
 
-hwfont *RCFindBorderPattern(window W, byte Border) {
+static void RCLoadBorderPatterns(void) {
     node l;
-    
-    if (!W)
-	return NULL;
+    udat n;
+    byte border, ch;
     
     for (l = BorderList; l; l=l->next) {
-	if ((l->x.f.flag == FL_INACTIVE) == Border && wildcard_match(l->name, W->Name))
-	    break;
+	border = (l->x.f.flag == FL_INACTIVE);
+	if (!l->data)
+	    continue;
+	for (n = 0; n < 9; n++) {
+	    ch = l->data[n];
+	    if (!ch)
+		break;
+	    StdBorder[border][n] = Tutf_CP437_to_UTF_32[ch];
+	}
     }
-    return W->BorderPattern[Border] = l ? (hwfont *)l->data : NULL;
+    /*
+     * copy StdBorder[][] into Tw_hwfont_infer_from_extra[] because
+     * pseudo-graphics in window borders overwrites hwattr font information
+     * (they cannot fit together in 24 bits)
+     * so window borders must be inferred from pseudo-graphics.
+     * 
+     * The alternative would be enlarging hwattr to 5 bytes - ugly and inefficient.
+     */
+    
 }
 
 INLINE void RCRemove(run **p) {
@@ -817,11 +831,11 @@ static void RCReload(void) {
     if (success) {
 	QueuedDrawArea2FullScreen = TRUE;
 	
-	ResetBorderPattern();
 	RCKillAll();
 	if (CallList)
 	    RCNew(CallList);
 
+	RCLoadBorderPatterns();
 	FillButtonWin();
 	UpdateOptionWin();
 	HideMenu(!!(All->SetUp->Flags & SETUP_MENU_HIDE));
@@ -976,7 +990,6 @@ byte RC_VM(timevalue *t) {
 }
 
 void QuitRC(void) {
-    ResetBorderPattern();
     RCKillAll();
     shm_quit();
 }
@@ -1118,7 +1131,7 @@ byte InitRC(void) {
 	{ HOLD_LEFT|PRESS_,    "M", NULL,M+11,NULL, { { CTX_MENU, } } },
 	{ INTERACTIVE, NULL, NULL, NULL, NULL, { { 0, SCREEN, }, } }
     };
-# define UD_ARROW T_UTF_16_UP_DOWN_ARROW
+# define UD_ARROW T_UTF_32_UP_DOWN_ARROW
     static button_vec V[] = {
 	{ {'[',      ']'     },  0, TRUE, FALSE },
 	{ {UD_ARROW, UD_ARROW}, -2, TRUE, FALSE },
@@ -1157,6 +1170,7 @@ byte InitRC(void) {
     if (USEDefaultCommonMenu()) {
 	
 	InitRCOptions();
+	RCLoadBorderPatterns();
 	UpdateOptionWin();
 	FillButtonWin();
 	HideMenu(!!(All->SetUp->Flags & SETUP_MENU_HIDE));

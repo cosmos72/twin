@@ -527,7 +527,7 @@
     EL(_CYRILLIC_SMALL_LETTER_YU) \
     EL(_EURO_SIGN)
 
-/* list of all characters NOT IDENTICALLY MAPPED to UTF-16 */
+/* list of all characters NOT IDENTICALLY MAPPED to UTF-32 */
 #define T_NLIST_MAC_CYRILLIC(EL) \
     EL(_CYRILLIC_CAPITAL_LETTER_A) \
     EL(_CYRILLIC_CAPITAL_LETTER_BE) \

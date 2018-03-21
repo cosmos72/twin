@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-rm -f utf16_cache.sh
+rm -f utf32_cache.sh
 mkdir txt 2>/dev/null || true
 cd txt
 

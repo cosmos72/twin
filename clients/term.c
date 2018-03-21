@@ -419,7 +419,7 @@ static void TwinTermH(void) {
 
 		/* FIXME: this is rough */
 		while (n--)
-		    *Dst++ = Tutf_UTF_16_to_CP437(*Src++);
+		    *Dst++ = Tutf_UTF_32_to_CP437(*Src++);
 		
 		write(Fd, Event->EventSelectionNotify.Data, Event->EventSelectionNotify.Len / sizeof(hwfont));
 	    } else

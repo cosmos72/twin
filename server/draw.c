@@ -23,13 +23,7 @@
 #include <Tutf/Tutf.h>
 #include <Tutf/Tutf_defs.h>
 
-hwattr extra_POS_INSIDE;
-hwattr extra_POS_ROOT;
-
-
 byte InitDraw(void) {
-    extra_POS_INSIDE = HWATTR_EXTRA32(0, EncodeToHWAttrExtra(POS_INSIDE, 0, 0, 0));
-    extra_POS_ROOT   = HWATTR_EXTRA32(0, EncodeToHWAttrExtra(POS_ROOT, 0, 0, 0));
     return TRUE;
 }
 
@@ -145,14 +139,14 @@ void DrawDesktop(screen Screen, dat X1, dat Y1, dat X2, dat Y2, byte Shaded) {
 		    attr = Attr[x + y];
 		    col = DoShadowColor(HWCOL(attr), Shaded, Shaded);
 
-		    Video[X + Y] = HWATTR(col, HWFONT(attr)) | extra_POS_ROOT;
+		    Video[X + Y] = HWATTR(col, HWFONTEXTRA(attr));
 		}
 	    } else {
 		for (X = X1; X <= X2; X++, x++) {
 		    if (x >= BgWidth)
 			x -= BgWidth;
 		    
-		    Video[X + Y] = Attr[x + y] | extra_POS_ROOT;
+		    Video[X + Y] = Attr[x + y];
 		}
 	    }
 	}
@@ -167,9 +161,9 @@ void DrawDesktop(screen Screen, dat X1, dat Y1, dat X2, dat Y2, byte Shaded) {
 
 	if (Shaded) {
 	    col = DoShadowColor(HWCOL(attr), Shaded, Shaded);
-	    attr = HWATTR(col, 0) | HWATTR_FONTMASK(attr);
+	    attr = HWATTR(col, HWFONTEXTRA(attr));
 	}
-	FillVideo(X1, Y1, X2, Y2, attr | extra_POS_ROOT);
+	FillVideo(X1, Y1, X2, Y2, attr);
     }
 }
 
@@ -442,7 +436,7 @@ void DrawSelfWidget(draw_ctx *D) {
 	    dX = _X1 - W->USE.E.X1 - Left;
 	    dY = _Y1 - W->USE.E.Y1 - Up;
 	    
-	    h = W->USE_Fill | extra_POS_INSIDE;
+	    h = W->USE_Fill;
 	    if (_X1 > _X2 || _Y1 > _Y2) {
 		/* no valid ->USE.E, fill with spaces */
 		FillVideo(X1, Y1, X2, Y2, h);
@@ -530,7 +524,7 @@ void DrawSelfWidget(draw_ctx *D) {
 	    }
 	}
     } else
-	FillVideo(D->X1, D->Y1, D->X2, D->Y2, W->USE_Fill | extra_POS_INSIDE);
+	FillVideo(D->X1, D->Y1, D->X2, D->Y2, W->USE_Fill);
 }
 
 
@@ -614,8 +608,7 @@ void DrawSelfGadget(draw_ctx *D) {
 		    Font = Text[i + j * width];
 		if (!Absent)
 		    Color = DoShadowColor(ColText[i + j * width], D->Shaded, D->Shaded);
-		Video[i + j * (ldat)DWidth + Offset] =
-		    HWATTR(Color, Font) | extra_POS_INSIDE;
+		Video[i + j * (ldat)DWidth + Offset] = HWATTR(Color, Font);
 	    }
 	}
 	DirtyVideo(D->X1, D->Y1, D->X2, D->Y2);
@@ -698,18 +691,18 @@ void DrawSelfWindow(draw_ctx *D) {
     }
 	
     {
+	CONST hwattr *Contents, *CurrCont;
+	CONST hwfont *HWFont;
+	hwcol *ColText;
 	ldat Left, Up, Rgt;
 	ldat DWidth, i, j, u, v; /* (ldat) to avoid multiplication overflows */
+	ldat Row, PosInRow;
+	hwfont Font;
+	row CurrRow;
 	dat X1, Y1, X2, Y2;
 	byte Shaded, Absent;
 	byte Select, RowDisabled;
-	row CurrRow;
-	CONST hwattr *Contents, *CurrCont;
-	ldat Row, PosInRow;
-	CONST hwfont *HWFont;
-	hwcol *ColText;
 	hwcol Color;
-	hwfont Font;
 	
 	X1 = D->X1; Y1 = D->Y1;
 	X2 = D->X2; Y2 = D->Y2;
@@ -740,13 +733,13 @@ void DrawSelfWindow(draw_ctx *D) {
 	    if (Y2 - Up >= W->HLogic) {
 		/* the ->Contents buffer is smaller than the window size... pad with SPACEs */
 		dat Ynew = Up + W->HLogic;
-		FillVideo(X1, Ynew, X2, Y2, HWATTR(W->ColText, ' ') | extra_POS_INSIDE);
+		FillVideo(X1, Ynew, X2, Y2, HWATTR(W->ColText, ' '));
 		Y2 = Ynew - 1;
 	    }
 	    if (X2 - Left >= W->WLogic) {
 		/* the ->Contents buffer is smaller than the window size... pad with SPACEs */
 		dat Xnew = Left + W->WLogic;
-		FillVideo(Xnew, Y1, X2, Y2, HWATTR(W->ColText, ' ') | extra_POS_INSIDE);
+		FillVideo(Xnew, Y1, X2, Y2, HWATTR(W->ColText, ' '));
 		X2 = Xnew - 1;
 	    }
 	    if (X1 <= X2 && Y1 <= Y2) {
@@ -777,7 +770,7 @@ void DrawSelfWindow(draw_ctx *D) {
 				else
 				    Color = HWCOL(CurrCont[v]);
 				
-				Video[i+j*(ldat)DWidth] = HWATTR(Color, HWFONT(CurrCont[v])) | extra_POS_INSIDE;
+				Video[i+j*(ldat)DWidth] = HWATTR(Color, HWFONTEXTRA(CurrCont[v]));
 			    }
 			}
 			CurrCont += W->WLogic;
@@ -800,7 +793,7 @@ void DrawSelfWindow(draw_ctx *D) {
 				Color = HWCOL(CurrCont[v]);
 			    Color = DoShadowColor(Color, Shaded, Shaded);
 			    
-			    Video[i+j*(ldat)DWidth] = HWATTR(Color, HWFONT(CurrCont[v])) | extra_POS_INSIDE;
+			    Video[i+j*(ldat)DWidth] = HWATTR(Color, HWFONTEXTRA(CurrCont[v]));
 			}
 			CurrCont += W->WLogic;
 			if (!Row)
@@ -849,7 +842,7 @@ void DrawSelfWindow(draw_ctx *D) {
 		    Absent = (!CurrRow || PosInRow>=CurrRow->Len);
 		    
 		    if (CurrRow && IS_MENUITEM(CurrRow) && ((menuitem)CurrRow)->Window && i == Rgt) {
-			Font = T_UTF_16_BLACK_RIGHT_POINTING_TRIANGLE;
+			Font = T_UTF_32_BLACK_RIGHT_POINTING_TRIANGLE;
 		    } else if (Absent)
 			Font = ' ';
 		    else
@@ -877,7 +870,7 @@ void DrawSelfWindow(draw_ctx *D) {
 			Color = ColText[PosInRow];
 		    
 		    Color=DoShadowColor(Color, Shaded, Shaded);
-		    Video[i+j*(ldat)DWidth] = HWATTR(Color, Font) | extra_POS_INSIDE;
+		    Video[i+j*(ldat)DWidth] = HWATTR(Color, Font);
 		}
 		if (CurrRow) {
 		    W->USE.R.RowSplit = CurrRow;
@@ -890,7 +883,7 @@ void DrawSelfWindow(draw_ctx *D) {
 	    /* either an unknown window type or just one of the above, but empty */
 	    Color = W->ColText;
 	    Color = DoShadowColor(Color, Shaded, Shaded);
-	    FillVideo(X1, Y1, X2, Y2, HWATTR(Color, ' ') | extra_POS_INSIDE);
+	    FillVideo(X1, Y1, X2, Y2, HWATTR(Color, ' '));
 	}
     }
 }
@@ -1856,7 +1849,7 @@ void DrawMenuScreen(screen Screen, dat Xstart, dat Xend) {
 	}
 	if (Screen != All->FirstScreen)
 	    Color = Menu->ColDisabled;
-	Video[i+j*(ldat)DWidth]=HWATTR_EXTRA32(HWATTR(Color, Font), extra);
+	Video[i+j*(ldat)DWidth]=HWATTR3(Color, Font, extra);
     }
     DirtyVideo(Xstart, j, Xend, j);    
 }

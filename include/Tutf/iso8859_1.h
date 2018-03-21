@@ -527,7 +527,7 @@
     EL(_LATIN_SMALL_LETTER_THORN) \
     EL(_LATIN_SMALL_LETTER_Y_WITH_DIAERESIS)
 
-/* list of all characters NOT IDENTICALLY MAPPED to UTF-16 */
+/* list of all characters NOT IDENTICALLY MAPPED to UTF-32 */
 #define T_NLIST_ISO8859_1(EL)
 
 

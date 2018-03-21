@@ -271,7 +271,7 @@ static byte ImmBackground(str name, hwattr color, node shape) {
 }
 
 
-static void UnwindShape(node n) {
+static void UnwindBorderShape(node n) {
     str s = NULL, d = n->data = my_malloc(n->x.ctx = 10);
     node shape = n->body;
 
@@ -289,9 +289,14 @@ static void UnwindShape(node n) {
 static byte ImmBorder(str wildcard, ldat flag, node shape) {
     node n;
     if (shape) {
-	n = MakeNodeBody(wildcard, shape, &BorderList);
+	/*
+	 * Unicode char (21 bit) + color (8 bit) + pseudo-graphic (7 bit) does not fit hwattr (32 bits)
+	 * so hwattr discards chars for window borders - it can be reconstructed from pseudo-graphic,
+	 * as long as all windows have the same border
+	 */
+	n = MakeNodeBody("*", shape, &BorderList);
 	n->x.f.flag = flag;
-	UnwindShape(n);
+	UnwindBorderShape(n);
 	n->body = NULL;
 	return TRUE;
     }
@@ -314,8 +319,8 @@ static ldat FreeButtonPos(ldat n, ldat lr) {
 
 static byte ImmButton(ldat n, str shape, ldat lr, ldat flag, ldat pos) {
     if (n >= 0 && n < BUTTON_MAX && strlen(shape) >= 2) {
-	All->ButtonVec[n].shape[0] = Tutf_CP437_to_UTF_16[shape[0]];
-	All->ButtonVec[n].shape[1] = Tutf_CP437_to_UTF_16[shape[1]];
+	All->ButtonVec[n].shape[0] = Tutf_CP437_to_UTF_32[shape[0]];
+	All->ButtonVec[n].shape[1] = Tutf_CP437_to_UTF_32[shape[1]];
 	if (lr == FL_RIGHT)
 	    pos = -pos;
 	if (flag == '+' || flag == '-')
@@ -1035,7 +1040,7 @@ static byte CreateNeededScreens(node list, screen *res_Screens) {
 		    c = list->x.color;
 		    r = attr + w * h;
 		    while (len--) {
-			f = Tutf_CP437_to_UTF_16[*n++];
+			f = Tutf_CP437_to_UTF_32[*n++];
 			*r++ = HWATTR(c, f);
 		    }
 		    while (_len++ < w)

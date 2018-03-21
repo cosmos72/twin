@@ -360,13 +360,13 @@ INLINE void termcap_Mogrify(dat x, dat y, uldat len) {
                     /* use utf-8 to output this non-ASCII char */
                     tty_MogrifyUTF8(_c);
                     continue;
-                } else if (tty_charset_to_UTF_16[c] != c) {
-                    c = tty_UTF_16_to_charset(_c);
+                } else if (tty_charset_to_UTF_32[c] != c) {
+                    c = tty_UTF_32_to_charset(_c);
                 }
             }
             if (c < 32 || c == 127 || c == 128+27) {
                 /* can't display it */
-                c = Tutf_UTF_16_to_ASCII(_c);
+                c = Tutf_UTF_32_to_ASCII(_c);
                 if (c < 32 || c >= 127)
                     c = 32;
             }
@@ -394,13 +394,13 @@ INLINE void termcap_SingleMogrify(dat x, dat y, hwattr V) {
             /* use utf-8 to output this non-ASCII char */
             tty_MogrifyUTF8(_c);
             return;
-        } else if (tty_charset_to_UTF_16[c] != c) {
-            c = tty_UTF_16_to_charset(_c);
+        } else if (tty_charset_to_UTF_32[c] != c) {
+            c = tty_UTF_32_to_charset(_c);
         }
     }
     if (c < 32 || c == 127 || c == 128+27) {
         /* can't display it */
-        c = Tutf_UTF_16_to_ASCII(_c);
+        c = Tutf_UTF_32_to_ASCII(_c);
         if (c < 32 || c >= 127)
             c = 32;
     }

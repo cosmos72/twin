@@ -32,11 +32,11 @@
 
 #include <Tutf/Tutf.h>
 #include <Tutf/Tutf_defs.h>
-#define _CHECK T_UTF_16_CHECK_MARK
-#define _FULL	T_UTF_16_FULL_BLOCK
-#define _LOWER T_UTF_16_LOWER_HALF_BLOCK
-#define _UPPER T_UTF_16_UPPER_HALF_BLOCK
-#define _MEDIUM_SHADE	T_UTF_16_MEDIUM_SHADE
+#define _CHECK T_UTF_32_CHECK_MARK
+#define _FULL	T_UTF_32_FULL_BLOCK
+#define _LOWER T_UTF_32_LOWER_HALF_BLOCK
+#define _UPPER T_UTF_32_UPPER_HALF_BLOCK
+#define _MEDIUM_SHADE	T_UTF_32_MEDIUM_SHADE
 
 #define COD_QUIT	(udat)1 /* as in term.c */
 #define COD_SPAWN	(udat)3 /* as COD_SPAWN in term.c */
@@ -98,7 +98,7 @@ static void Clock_Update(void) {
     ClockWin->CurX=ClockWin->CurY=(uldat)0;
     Date = localtime(&Time);
     
-    sprintf((char *)Buffer, "%02u/%02u/%04u\n %02u:%02u:%02u",
+    sprintf((char *)Buffer, "%02hu/%02hu/%04hu\n %02hu:%02hu:%02hu",
 	    (udat)Date->tm_mday, (udat)Date->tm_mon+1, (udat)Date->tm_year + 1900,
 	    (udat)Date->tm_hour, (udat)Date->tm_min,   (udat)Date->tm_sec);
     Act(RowWriteAscii,ClockWin)(ClockWin, strlen(Buffer), Buffer);
@@ -345,8 +345,8 @@ void FillButtonWin(void) {
 	{
 	    hwattr h[2];
 	    hwfont *f = All->ButtonVec[j].shape;
-	    h[0] = HWATTR_EXTRA32(HWATTR(ButtonWin->ColGadgets, f[0]), EncodeToHWAttrExtra(j, 0, 0, 0));
-	    h[1] = HWATTR_EXTRA32(HWATTR(ButtonWin->ColGadgets, f[1]), EncodeToHWAttrExtra(j, 1, 0, 0));
+	    h[0] = HWATTR3(ButtonWin->ColGadgets, f[0], EncodeToHWAttrExtra(j, 0, 0, 0));
+	    h[1] = HWATTR3(ButtonWin->ColGadgets, f[1], EncodeToHWAttrExtra(j, 1, 0, 0));
 	    
 	    Act(TtyWriteHWAttr,ButtonWin)(ButtonWin, 15, 1+i*2, 2, h);
 	}

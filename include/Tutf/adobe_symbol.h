@@ -343,7 +343,7 @@
     EL(_ACUTE_ACCENT) \
     EL(_CEDILLA)
 
-/* list of all characters NOT IDENTICALLY MAPPED to UTF-16 */
+/* list of all characters NOT IDENTICALLY MAPPED to UTF-32 */
 #define T_NLIST_ADOBE_SYMBOL(EL) \
     EL(_UNDEFINED_00A0) \
     EL(_LATIN_CAPITAL_LETTER_O_WITH_STROKE) \

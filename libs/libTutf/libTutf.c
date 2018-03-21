@@ -1,8 +1,8 @@
 
 /*
- *   libTwUTF.c -- ASCII/VGA/UTF/UNICODE pseudographics characters database
+ *   libTutf.c -- Unicode <-> charset conversion routines
  * 
- *  Copyright (C) 2001 by Massimiliano Ghilardi
+ *  Copyright (C) 2001,2018 by Massimiliano Ghilardi
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -319,7 +319,7 @@
 	EL(T_MAP(KZ1048)) EL(T_MAP(NEXTSTEP)) EL(T_MAP(VT100GR))
 
 #define _LIST(EL) \
-	EL(T_MAP(UTF_16)) _NLIST(EL)
+	EL(T_MAP(UTF_32)) _NLIST(EL)
 
 typedef enum {
 #define DECL_TYPE(x) T_CAT(T_ID_,x) ,
@@ -337,10 +337,10 @@ typedef struct {
     Tutf_function function;
 } Tutf_struct;
 
-#define DECL_CH(ch) { T_CAT(names_,ch), T_CAT3(Tutf_,ch,_to_UTF_16), T_CAT(Tutf_UTF_16_to_,ch) },
+#define DECL_CH(ch) { T_CAT(names_,ch), T_CAT3(Tutf_,ch,_to_UTF_32), T_CAT(Tutf_UTF_32_to_,ch) },
 
 static Tutf_struct Tutf_structs[] = {
-    { T_CAT(names_,UTF_16), NULL, NULL },
+    { T_CAT(names_,UTF_32), NULL, NULL },
     _NLIST(DECL_CH)
     { NULL }
 };
@@ -390,13 +390,13 @@ TUTF_CONST byte *Tutf_charset_alias(TUTF_CONST byte * alias) {
 }
 
 
-/* return a function capable to translate from UTF_16 to given charset */
-Tutf_function Tutf_UTF_16_to_charset_function(uldat id) {
+/* return a function capable to translate from UTF_32 to given charset */
+Tutf_function Tutf_UTF_32_to_charset_function(uldat id) {
     return id < sizeof(Tutf_structs)/sizeof(Tutf_structs[0]) ? Tutf_structs[id].function : NULL;
 }
 
-/* return the array to translate from given charset to UTF_16 */
-Tutf_array Tutf_charset_to_UTF_16_array(uldat id) {
+/* return the array to translate from given charset to UTF_32 */
+Tutf_array Tutf_charset_to_UTF_32_array(uldat id) {
     return id < sizeof(Tutf_structs)/sizeof(Tutf_structs[0]) ? Tutf_structs[id].array : NULL;
 }
 

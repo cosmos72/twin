@@ -527,7 +527,7 @@
     EL(_UNDEFINED_00FE) \
     EL(_UNDEFINED_00FF)
 
-/* list of all characters NOT IDENTICALLY MAPPED to UTF-16 */
+/* list of all characters NOT IDENTICALLY MAPPED to UTF-32 */
 #define T_NLIST_CP874(EL) \
     EL(_EURO_SIGN) \
     EL(_UNDEFINED_0081) \

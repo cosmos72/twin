@@ -133,10 +133,7 @@ static byte WMFindBorderWindow(window W, dat u, dat v, byte Border, hwattr *PtrA
     Vert  =           v ? rev_v ? (byte)1 : (byte)2 : (byte)0;
 
     
-    if (!(BorderFont = W->BorderPattern[Border]) &&
-	!(BorderFont = RCFindBorderPattern(W, Border)))
-	
-	BorderFont = W->BorderPattern[Border] = StdBorder[Border];
+    BorderFont = StdBorder[Border];
     
     if (W->Parent && IS_SCREEN(W->Parent)) switch (Vert) {
       case 0:
@@ -164,7 +161,7 @@ static byte WMFindBorderWindow(window W, dat u, dat v, byte Border, hwattr *PtrA
 	    k = 2*(ldat)u - ( (ldat)XWidth-(ldat)W->NameLen-(ldat)3 );
 	    if (k > 0) k /= 2;
 	    if (k > 0 && k <= W->NameLen) {
-		Font = Tutf_CP437_to_UTF_16[W->Name[--k]];
+		Font = Tutf_CP437_to_UTF_32[W->Name[--k]];
 		Found = POS_TITLE;
 	    } else if (k == 0 || k == W->NameLen + 1) {
 		Font = ' ';
@@ -233,7 +230,7 @@ static byte WMFindBorderWindow(window W, dat u, dat v, byte Border, hwattr *PtrA
 	    k = 2*(ldat)u - ( (ldat)XWidth-(ldat)W->NameLen-(ldat)3);
 	    if (k > 0) k /= 2;
 	    if (k > 0 && k <= W->NameLen) {
-		Font = Tutf_CP437_to_UTF_16[W->Name[--k]];
+		Font = Tutf_CP437_to_UTF_32[W->Name[--k]];
 		Found = POS_TITLE;
 	    } else if (k == 0 || k == W->NameLen + 1) {
 		Font = ' ';
@@ -312,7 +309,7 @@ static byte WMFindBorderWindow(window W, dat u, dat v, byte Border, hwattr *PtrA
     }
     
     extra_u = EncodeToHWAttrExtra(Found, extra_u, !Border, FlPressed);
-    *PtrAttr = HWATTR_EXTRA32(HWATTR(Color,Font), extra_u);
+    *PtrAttr = HWATTR3(Color, Font, extra_u);
 
     return Found;
 }

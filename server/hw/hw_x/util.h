@@ -45,8 +45,8 @@ static void X11_HideCursor(dat x, dat y) {
         : HWATTR( COL(HIGH|WHITE, BLACK), ' ');
     hwcol col = HWCOL(V);
     XChar2b c;
-    hwattr extra = HWEXTRA32(V);
-    hwfont f = xUTF_16_to_charset(HWFONT(V));
+    hwattr extra = HWEXTRA(V);
+    hwfont f = xUTF_32_to_charset(HWFONT(V));
     
     c.byte1 = f >> 8;
     c.byte2 = f & 0xFF;
@@ -77,7 +77,7 @@ static void X11_ShowCursor(uldat type, dat x, dat y) {
 	    XSetForeground(xdisplay, xgc, xsgc.foreground = xcol[COLFG(v)]);
 	if (xsgc.background != xcol[COLBG(v)])
 	    XSetBackground(xdisplay, xgc, xsgc.background = xcol[COLBG(v)]);
-	f = xUTF_16_to_charset(HWFONT(V));
+	f = xUTF_32_to_charset(HWFONT(V));
 	c.byte1 = f >> 8;
 	c.byte2 = f & 0xFF;
 	XDrawImageString16(xdisplay, xwindow, xgc, xbegin, ybegin + xupfont, &c, 1);
@@ -238,7 +238,7 @@ static void X11_SelectionNotify_X11(uldat ReqPrivate, uldat Magic, CONST byte MI
 	    if ((_Data = d = (byte *)AllocMem(Len))) {
 		s = (TW_CONST hwfont *)Data;
 		for (l = Len; l; l--)
-		    *d++ = Tutf_UTF_16_to_CP437(*s++);
+		    *d++ = Tutf_UTF_32_to_CP437(*s++);
 		Data = _Data;
 		Len /= sizeof(hwfont);
 	    } else
@@ -415,7 +415,7 @@ static int X11_Die(Display *d) {
 #endif
 
 
-static Tutf_function X11_UTF_16_to_charset_function(CONST byte *charset) {
+static Tutf_function X11_UTF_32_to_charset_function(CONST byte *charset) {
     XFontProp *fp;
     unsigned long prop;
     CONST byte *s, *fontname = NULL;
@@ -448,30 +448,33 @@ static Tutf_function X11_UTF_16_to_charset_function(CONST byte *charset) {
 	    /* else assume codepage437. gross. */
 	    printk("    X11_InitHW: font `%."STR(TW_SMALLBUFF)"s\' has no known charset encoding,\n"
 		   "                assuming CP437 codepage (\"VGA\").\n", fontname);
-	    return Tutf_UTF_16_to_CP437;
+	    return Tutf_UTF_32_to_CP437;
 	}
     }
     
     i = Tutf_charset_id(charset);
     s = Tutf_charset_name(i);
-    if (s && !strcmp(s, T_NAME_UTF_16)) {
+    if (s && !strcmp(s, T_NAME_UTF_32)) {
 	/* this is an Unicode font. good. */
 	return NULL;
     }
     
     if (i == (uldat)-1) {
 	printk("      X11_InitHW(): libTutf warning: unknown charset `%." STR(TW_SMALLBUFF) "s', assuming `CP437'\n", charset);
-	return Tutf_UTF_16_to_CP437;
+	return Tutf_UTF_32_to_CP437;
     }
     
-    return Tutf_UTF_16_to_charset_function(i);
+    return Tutf_UTF_32_to_charset_function(i);
 }
 
 
-static hwfont X11_UTF_16_to_UTF_16(hwfont c) {
-    if ((c & 0xFE00) == 0xF000)
-	/* direct-to-font zone */
+static hwfont X11_UTF_32_to_UCS_2(hwfont c) {
+    if ((c & 0x1FFE00) == 0xF000)
+	/* private use codepoints. for compatibility, treat as "direct-to-font" zone */
 	c &= 0x01FF;
+    if (c > 0x10FFFF)
+	/* not representable in two bytes */
+	c = 0xFFFD;
     return c;
 }
 

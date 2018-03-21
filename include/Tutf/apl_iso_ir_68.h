@@ -366,7 +366,7 @@
     EL(_RIGHT_CURLY_BRACKET) \
     EL(_DOLLAR_SIGN)
 
-/* list of all characters NOT IDENTICALLY MAPPED to UTF-16 */
+/* list of all characters NOT IDENTICALLY MAPPED to UTF-32 */
 #define T_NLIST_APL_ISO_IR_68(EL) \
     EL(_DIAERESIS) \
     EL(_RIGHT_PARENTHESIS) \

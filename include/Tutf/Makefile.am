@@ -15,5 +15,5 @@ tutfinclude_HEADERS = adobe_stdenc.h adobe_symbol.h apl_iso_ir_68.h \
     mac_hebrew.h mac_icelandic.h mac_inuit.h mac_roman.h mac_romanian.h \
     mac_symbol.h mac_thai.h mac_turkish.h ms_mac_cyrillic.h ms_mac_greek.h \
     ms_mac_icelandic.h ms_mac_latin2.h ms_mac_roman.h ms_mac_turkish.h \
-    nextstep.h Tutf_defs.h Tutf.h Tutftypes.h utf_16_aux.h utf_16.h \
+    nextstep.h Tutf_defs.h Tutf.h Tutftypes.h utf_32_aux.h utf_32.h \
     version.h vt100gr.h

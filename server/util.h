@@ -60,7 +60,6 @@ void doSelectionSetOwner(obj Owner, tany Time, tany Frac);
 
 byte CreateXTermMouseEvent(event_mouse *Event, byte buflen, byte *buf);
 
-void ResetBorderPattern(void);
 void FallBackKeyAction(window W, event_keyboard *EventK);
 
 byte **TokenizeStringVec(uldat len, byte *text);
@@ -78,7 +77,7 @@ byte SetServerUid(uldat uid, byte privileges);
 byte *FindFile(byte *name, uldat *fsize);
 void RunTwEnvRC(void);
 
-hwattr EncodeToHWAttrExtra(byte pos, byte detail, byte active, byte pressed);
+hwattr EncodeToHWAttrExtra(tpos pos, tternary detail, tbool active, tbool pressed);
 
 byte AssignId(CONST fn_obj Fn_Obj, obj Obj);
 byte AssignId_all(all Obj);

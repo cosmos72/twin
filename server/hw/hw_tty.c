@@ -56,8 +56,8 @@ struct tty_data {
     int tty_fd, VcsaFd, tty_number;
     byte *tty_name, *tty_TERM;
     uldat tty_charset;
-    Tutf_function tty_UTF_16_to_charset;
-    Tutf_array tty_charset_to_UTF_16;
+    Tutf_function tty_UTF_32_to_charset;
+    Tutf_array tty_charset_to_UTF_32;
     byte tty_use_utf8, tty_is_xterm;
     dat ttypar[3];
     FILE *stdOUT;
@@ -91,8 +91,8 @@ struct tty_data {
 #define tty_name	(ttydata->tty_name)
 #define tty_TERM	(ttydata->tty_TERM)
 #define tty_charset	(ttydata->tty_charset)
-#define tty_UTF_16_to_charset	(ttydata->tty_UTF_16_to_charset)
-#define tty_charset_to_UTF_16	(ttydata->tty_charset_to_UTF_16)
+#define tty_UTF_32_to_charset	(ttydata->tty_UTF_32_to_charset)
+#define tty_charset_to_UTF_32	(ttydata->tty_charset_to_UTF_32)
 #define tty_use_utf8		(ttydata->tty_use_utf8)
 #define tty_is_xterm		(ttydata->tty_is_xterm)
 #define ttypar		(ttydata->ttypar)
@@ -484,7 +484,7 @@ static byte tty_InitHW(void) {
         /* honor user-specified charset */
 	if ((tty_charset = Tutf_charset_id(charset)) == (uldat)-1)
 	    printk("      tty_InitHW(): libTutf warning: unknown charset `%." STR(TW_SMALLBUFF) "s', assuming `ASCII'\n", charset);
-	else if (tty_charset == Tutf_charset_id(T_NAME(UTF_16))) {
+	else if (tty_charset == Tutf_charset_id(T_NAME(UTF_32))) {
 	    printk("      tty_InitHW(): charset `%." STR(TW_SMALLBUFF) "s' is Unicode, assuming terminal supports UTF-8\n", charset);
 	    tty_use_utf8 = TRUE;
             tty_charset = (uldat)-1;
@@ -542,11 +542,11 @@ static byte tty_InitHW(void) {
                 (autotry_kbd && stdin_InitKeyboard())) {
                 
                 if (tty_charset == (uldat)-1) {
-                    tty_UTF_16_to_charset = Tutf_UTF_16_to_ASCII;
-                    tty_charset_to_UTF_16 = Tutf_ASCII_to_UTF_16;
+                    tty_UTF_32_to_charset = Tutf_UTF_32_to_ASCII;
+                    tty_charset_to_UTF_32 = Tutf_ASCII_to_UTF_32;
                 } else {
-                    tty_UTF_16_to_charset = Tutf_UTF_16_to_charset_function(tty_charset);
-                    tty_charset_to_UTF_16 = Tutf_charset_to_UTF_16_array(tty_charset);
+                    tty_UTF_32_to_charset = Tutf_UTF_32_to_charset_function(tty_charset);
+                    tty_charset_to_UTF_32 = Tutf_charset_to_UTF_32_array(tty_charset);
                 }
 
 		/*

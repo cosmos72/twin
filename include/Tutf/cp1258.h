@@ -527,7 +527,7 @@
     EL(_DONG_SIGN) \
     EL(_LATIN_SMALL_LETTER_Y_WITH_DIAERESIS)
 
-/* list of all characters NOT IDENTICALLY MAPPED to UTF-16 */
+/* list of all characters NOT IDENTICALLY MAPPED to UTF-32 */
 #define T_NLIST_CP1258(EL) \
     EL(_EURO_SIGN) \
     EL(_UNDEFINED_0081) \

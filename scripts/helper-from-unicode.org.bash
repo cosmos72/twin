@@ -21,19 +21,19 @@ echo ' * PLEASE DO NOT EDIT!'
 echo ' */'
 echo
 
-if [ -f utf_16.bash.cache ]; then
-  . utf_16.bash.cache
+if [ -f utf_32.bash.cache ]; then
+  . utf_32.bash.cache
 else
-  if [ ! -r include/utf_16.h ]; then
-    echo "File 'include/utf_16.h' not found! please run the script '1-make-utf_16_h.bash' first" 1>&2
+  if [ ! -r include/utf_32.h ]; then
+    echo "File 'include/utf_32.h' not found! please run the script '1-make-utf_32_h.bash' first" 1>&2
     exit 1
   fi
   while read define name value; do
-    if [ "$define" = '#define' -a "${name:0:9}" = 'T_UTF_16_' ]; then
+    if [ "$define" = '#define' -a "${name:0:9}" = 'T_UTF_32_' ]; then
       names["$(( value ))"]="${name:9}"
     fi
-  done < include/utf_16.h
-  set | grep ^names= > utf_16.bash.cache
+  done < include/utf_32.h
+  set | grep ^names= > utf_32.bash.cache
 fi
 
 parse_hex() {
@@ -100,8 +100,8 @@ while read hex_index hex_value comments; do
     continue
   fi
   index="$(( hex_index ))"
-  if [ "$index" -ge 256 ]; then
-    # this is a byte-to-utf16 mapping... cannot define mappings from (> 0xFF)
+  if [ "$index" -gt 255 ]; then
+    # this is a byte-to-utf32 mapping... cannot define mappings from (> 0xFF)
     continue
   fi
   
@@ -109,8 +109,8 @@ while read hex_index hex_value comments; do
   hex_value="$result"
   if [ "$hex_value" != "" ]; then
     value="$(( hex_value ))"
-    if [ "$value" -ge 65536 ]; then
-      # this is a byte-to-utf16 mapping... cannot define mappings to (> 0xFFFF)
+    if [ "$value" -gt 1114111 ]; then
+      # mappings to (> 0x10FFFF) are forbidden by Unicode standard
       continue
     fi
   else
@@ -167,7 +167,7 @@ done
 echo
 
 echo
-echo '/* list of all characters NOT IDENTICALLY MAPPED to UTF-16 */'
+echo '/* list of all characters NOT IDENTICALLY MAPPED to UTF-32 */'
 echo -n "#define T_NLIST_${CHARSET}(EL)"
 
 index=0

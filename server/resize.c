@@ -43,9 +43,6 @@
 
 /***************/
 
-extern hwattr extra_POS_INSIDE;
-
-
 byte NeedUpdateCursor;
 
 void FlushCursor(void) {
@@ -130,7 +127,7 @@ byte ResizeWindowContents(window Window) {
     if (!(Window->Flags & WINDOWFL_BORDERLESS))
 	x -= 2, y -= 2;
 
-    h = HWATTR(Window->ColText, ' ') | extra_POS_INSIDE;
+    h = HWATTR(Window->ColText, ' ');
 
     /* safety check: */
     if (x > 0 && y > 0) {
@@ -257,7 +254,7 @@ byte RowWriteAscii(window Window, ldat Len, CONST byte *Text) {
     row CurrRow;
     byte CONST * _Text;
     byte ModeInsert;
-    hwfont CONST * to_UTF_16;
+    hwfont CONST * to_UTF_32;
     ldat i;
     ldat x, y, max, RowLen;
     
@@ -305,10 +302,10 @@ byte RowWriteAscii(window Window, ldat Len, CONST byte *Text) {
 		Window->USE.R.RowSplit=CurrRow;
 	    CurrRow->Flags=ROW_ACTIVE;
 
-	    to_UTF_16 = Window->Charset;
+	    to_UTF_32 = Window->Charset;
 	    
 	    for (i = 0; i < RowLen; i++)
-		CurrRow->Text[x+i] = to_UTF_16[Text[i]];
+		CurrRow->Text[x+i] = to_UTF_32[Text[i]];
 	    if (CurrRow->Len < x)
 		for (i = CurrRow->Len; i < x; i++)
 		    CurrRow->Text[i] = (hwfont)' ';
@@ -1976,7 +1973,7 @@ void WriteTextsGadget(gadget G, byte bitmap, dat TW, dat TH, CONST byte *Text, d
 		    while (H-- > 0) {
 			_W = W;
 			while (_W-- > 0) {
-			    *GT++ = Tutf_CP437_to_UTF_16[*TT++];
+			    *GT++ = Tutf_CP437_to_UTF_32[*TT++];
 			}
 			GT += GW - W;
 			TT += TW - W;
@@ -2045,7 +2042,7 @@ void WriteHWFontsGadget(gadget G, byte bitmap, dat TW, dat TH, CONST hwfont *HWF
 		    while (H-- > 0) {
 			_W = W;
 			while (_W-- > 0) {
-			    *GT++ = Tutf_CP437_to_UTF_16[*TT++];
+			    *GT++ = Tutf_CP437_to_UTF_32[*TT++];
 			}
 			GT += GW - W;
 			TT += TW - W;

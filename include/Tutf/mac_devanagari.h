@@ -496,7 +496,7 @@
     EL(_DEVANAGARI_DIGIT_EIGHT) \
     EL(_DEVANAGARI_DIGIT_NINE)
 
-/* list of all characters NOT IDENTICALLY MAPPED to UTF-16 */
+/* list of all characters NOT IDENTICALLY MAPPED to UTF-32 */
 #define T_NLIST_MAC_DEVANAGARI(EL) \
     EL(_MULTIPLICATION_SIGN) \
     EL(_MINUS_SIGN) \

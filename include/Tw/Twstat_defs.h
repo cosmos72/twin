@@ -144,9 +144,11 @@
 #define TWS_window_NameLen		0x0301
 #define TWS_window_Name			0x0302
 #define TWS_window_ColName		0x0303
-#define TWS_window_BorderPatternV0	0x0304
-#define TWS_window_BorderPatternV1	0x0305
-#define TWS_window_BorderPatternVN(n)	(TWS_window_BorderPatternV0+(n))
+#if 1 /* removed in twin 0.8.0, but may still be retrieved from older servers */
+# define TWS_window_BorderPatternV0	0x0304
+# define TWS_window_BorderPatternV1	0x0305
+# define TWS_window_BorderPatternVN(n)	(TWS_window_BorderPatternV0+(n))
+#endif 0 
 #define TWS_window_CurX			0x0306
 #define TWS_window_CurY			0x0307
 #define TWS_window_XstSel		0x0308

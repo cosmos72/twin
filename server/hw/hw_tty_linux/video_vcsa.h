@@ -109,7 +109,7 @@ INLINE void vcsa_write(int fd, hwattr *buf, uldat count, uldat pos) {
 	buf8 = vcsa_buff;
 	pos = chunk = Min2(count, TW_BIGBUFF);
 	while (pos--) {
-	    *buf8++ = tty_UTF_16_to_charset(HWFONT(*buf));
+	    *buf8++ = tty_UTF_32_to_charset(HWFONT(*buf));
 	    *buf8++ = HWCOL(*buf);
 	    buf++;
 	}

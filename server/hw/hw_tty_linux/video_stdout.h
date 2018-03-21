@@ -181,8 +181,8 @@ INLINE void linux_Mogrify(dat x, dat y, uldat len) {
                     /* use utf-8 to output this non-ASCII char. */
                     tty_MogrifyUTF8(c);
                     continue;
-                } else if (tty_charset_to_UTF_16[c] != c) {
-                    c = tty_UTF_16_to_charset(_c);
+                } else if (tty_charset_to_UTF_32[c] != c) {
+                    c = tty_UTF_32_to_charset(_c);
                 }
             }
             if (tty_use_utf8
@@ -190,7 +190,7 @@ INLINE void linux_Mogrify(dat x, dat y, uldat len) {
                 : (c < 32 && ((CTRL_ALWAYS >> c) & 1)) || c == 127 || c == 128+27)
             {
 		/* can't display it */
-		c = Tutf_UTF_16_to_ASCII(_c);
+		c = Tutf_UTF_32_to_ASCII(_c);
                 if (c < 32 || c >= 127)
                     c = 32;
 	    }
@@ -214,8 +214,8 @@ INLINE void linux_SingleMogrify(dat x, dat y, hwattr V) {
             /* use utf-8 to output this non-ASCII char. */
             tty_MogrifyUTF8(c);
             return;
-        } else if (tty_charset_to_UTF_16[c] != c) {
-            c = tty_UTF_16_to_charset(_c);
+        } else if (tty_charset_to_UTF_32[c] != c) {
+            c = tty_UTF_32_to_charset(_c);
         }
     }
     if (tty_use_utf8
@@ -223,7 +223,7 @@ INLINE void linux_SingleMogrify(dat x, dat y, hwattr V) {
         : (c < 32 && ((CTRL_ALWAYS >> c) & 1)) || c == 127 || c == 128+27)
     {
         /* can't display it */
-        c = Tutf_UTF_16_to_ASCII(_c);
+        c = Tutf_UTF_32_to_ASCII(_c);
         if (c < 32 || c >= 127)
             c = 32;
     }
@@ -237,7 +237,7 @@ static void linux_ShowMouse(void) {
     hwattr h  = Video[pos];
     hwcol c = ~HWCOL(h) ^ COL(HIGH,HIGH);
     
-    linux_SingleMogrify(HW->MouseState.x, HW->MouseState.y, HWATTR( c, HWFONT(h)));
+    linux_SingleMogrify(HW->MouseState.x, HW->MouseState.y, HWATTR(c, HWFONTEXTRA(h)));
 
     /* store current cursor state for correct updating */
     HW->XY[1] = HW->MouseState.y;

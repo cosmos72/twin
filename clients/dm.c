@@ -510,7 +510,7 @@ static void WriteHWFontKey(twindow W, data u, udat len, hwfont *h_data) {
 
     /* hack warning: this assumes `h_data' is writable and correctly aligned */
     while (n--)
-	*d_data++ = Tutf_UTF_16_to_CP437(*h_data++);
+	*d_data++ = Tutf_UTF_32_to_CP437(*h_data++);
     WriteKey(W, u, len, s_data);
 }
 

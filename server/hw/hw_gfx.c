@@ -68,7 +68,7 @@ struct x11_data {
     dat xhw_view, xhw_startx, xhw_starty, xhw_endx, xhw_endy;
     
     int xmonochrome;
-    Tutf_function xUTF_16_to_charset;
+    Tutf_function xUTF_32_to_charset;
     Display     *xdisplay;
     Window       xwindow;
     Pixmap       xtheme, xroot, xbg;
@@ -104,7 +104,7 @@ struct x11_data {
 #define xhw_endy	(xdata->xhw_endy)
 
 #define xmonochrome	(xdata->xmonochrome)
-#define xUTF_16_to_charset	(xdata->xUTF_16_to_charset)
+#define xUTF_32_to_charset	(xdata->xUTF_32_to_charset)
 #define xdisplay	(xdata->xdisplay)
 #define xwindow		(xdata->xwindow)
 #define xtheme		(xdata->xtheme)
@@ -136,10 +136,6 @@ struct x11_data {
 #define xthemesgc	(xdata->xthemesgc)
 
 #include "hw_x/keyboard.h"
-
-
-/* this can stay static, X11_FlushHW() is not reentrant */
-static hwcol _col;
 
 
 #define pitch 15
@@ -266,7 +262,7 @@ static void gfx_DrawColor(myXChar *buf, udat buflen, hwcol col, hwattr gfx, int 
 
 INLINE void X11_Mogrify(dat x, dat y, uldat len) {
     hwattr *V, *oV, bufgfx;
-    hwcol col;
+    hwcol col, _col;
     udat buflen = 0;
     hwattr gfx;
     hwfont f;
@@ -295,7 +291,7 @@ INLINE void X11_Mogrify(dat x, dat y, uldat len) {
     
     for (_col = ~HWCOL(*V); len; x++, V++, oV++, len--) {
 	col = HWCOL(*V);
-	gfx = HWEXTRA32(*V);
+	gfx = HWEXTRA(*V);
 	if (buflen && (col != _col || gfx != bufgfx || (ValidOldVideo && *V == *oV) || buflen == TW_SMALLBUFF)) {
 	    XDRAW_ANY(buf, buflen, _col, bufgfx);
 	    buflen = 0;
@@ -306,7 +302,7 @@ INLINE void X11_Mogrify(dat x, dat y, uldat len) {
 		_col = col;
 		bufgfx = gfx;
 	    }
-	    f = xUTF_16_to_charset(HWFONT(*V));
+	    f = xUTF_32_to_charset(HWFONT(*V));
 	    buf[buflen  ].byte1 = f >> 8;
 	    buf[buflen++].byte2 = f & 0xFF;
 	}
@@ -749,8 +745,8 @@ static byte gfx_InitHW(void) {
 	    XStoreName(xdisplay, xwindow, title);
 	    
 	    
-	    if (!(xUTF_16_to_charset = X11_UTF_16_to_charset_function(opt.charset)))
-		xUTF_16_to_charset = X11_UTF_16_to_UTF_16;
+	    if (!(xUTF_32_to_charset = X11_UTF_32_to_charset_function(opt.charset)))
+		xUTF_32_to_charset = X11_UTF_32_to_UCS_2;
 	    /*
 	     * ask ICCCM-compliant window manager to tell us when close window
 	     * has been chosen, rather than just killing us

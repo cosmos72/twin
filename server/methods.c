@@ -38,9 +38,6 @@
 #endif
 
 
-extern hwattr extra_POS_INSIDE;
-
-
 /* some object-oriented ones not included in fn_obj */
 
 void *OverrideMth(void **where, void *OrigMth, void *NewMth) {
@@ -712,9 +709,9 @@ static gadget CreateEmptyButton(fn_gadget Fn_Gadget, msgport Owner, dat XWidth, 
     ldat Size;
     byte i;
     dat j, k;
-# define _FULL  T_UTF_16_FULL_BLOCK
-# define _LOWER T_UTF_16_LOWER_HALF_BLOCK
-# define _UPPER T_UTF_16_UPPER_HALF_BLOCK
+# define _FULL  T_UTF_32_FULL_BLOCK
+# define _LOWER T_UTF_32_LOWER_HALF_BLOCK
+# define _UPPER T_UTF_32_UPPER_HALF_BLOCK
 
     if ((G=(gadget)Fn_Gadget->Fn_Widget->Create
 	 ((fn_widget)Fn_Gadget, Owner, ++XWidth, ++YWidth, 0, GADGETFL_USETEXT|GADGETFL_BUTTON, 0, 0, (hwattr)0))) {
@@ -782,7 +779,7 @@ byte FillButton(gadget G, widget Parent, udat Code, dat Left, dat Up,
 	for (i=(dat)0; i<XWidth-(dat)1; i++) {
 	    G->USE.T.Text[0][i+j] = G->USE.T.Text[1][i+j+1] =
 		G->USE.T.Text[2][i+j] = G->USE.T.Text[3][i+j+1] =
-		Tutf_CP437_to_UTF_16[*(T++)];
+		Tutf_CP437_to_UTF_32[*(T++)];
 	    
 	    G->USE.T.Color[0][i+j] = G->USE.T.Color[1][i+j+1] = Color;
 	    G->USE.T.Color[2][i+j] = G->USE.T.Color[3][i+j+1] = ColorDisabled;
@@ -858,7 +855,7 @@ static byte InitTtyData(window Window, dat ScrollBackLines) {
     if (!p && !(Window->USE.C.Contents = p = AllocMem(count * sizeof(hwattr))))
 	return FALSE;
     
-    h = HWATTR( COL(WHITE,BLACK), ' ') | extra_POS_INSIDE;
+    h = HWATTR( COL(WHITE,BLACK), ' ');
     while (count--)
 	*p++ = h;
     
@@ -898,7 +895,7 @@ static byte InitTtyData(window Window, dat ScrollBackLines) {
     Data->G1 = Data->saveG1 = VT100GR_MAP;
 
     Data->utf8 = Data->utf8_count = Data->utf8_char = 0;
-    Data->InvCharset = Tutf_UTF_16_to_ISO_8859_1;
+    Data->InvCharset = Tutf_UTF_32_to_ISO_8859_1;
     Data->newLen = Data->newMax = 0;
     Data->newName = NULL;
     
@@ -935,7 +932,6 @@ static window CreateWindow(fn_window Fn_Window, msgport Owner,
 	Window->NameLen = TitleLen;
 	Window->Name = _Title;
 	Window->ColName = _ColTitle;
-	Window->BorderPattern[0] = Window->BorderPattern[1] = (void *)0;
 	Window->RemoteData.Fd = NOFD;
 	Window->RemoteData.ChildPid = NOPID;
 	Window->RemoteData.FdSlot = NOSLOT;
@@ -966,7 +962,7 @@ static window CreateWindow(fn_window Fn_Window, msgport Owner,
 	Window->MaxXWidth = TW_MAXDAT;
 	Window->MaxYWidth = TW_MAXDAT;
 
-	Window->Charset = Tutf_CP437_to_UTF_16;
+	Window->Charset = Tutf_CP437_to_UTF_32;
 	WriteMem(&Window->USE, '\0', sizeof(Window->USE));
 
 	if (W_USE(Window, USECONTENTS)) {
@@ -1121,17 +1117,7 @@ static void SetTitleWindow(window W, dat titlelen, byte *title) {
     W->NameLen = titlelen;
     W->Name = title;
     
-#if 1
-    /*
-     * do not allow changing window borders just because
-     * some untrusted application set a new title
-     */
     DrawBorderWindow(W, BORDER_UP);
-#else
-    /* user may have title-dependent borders in ~/.twinrc, honour them: */
-    Win->BorderPattern[0] = Win->BorderPattern[1] = NULL;
-    DrawBorderWindow(W, BORDER_ANY);
-#endif
     
     if ((P = W->Parent) && IS_SCREEN(P)) {
 	/* need to update window list with new name ? */
@@ -1794,7 +1780,7 @@ static byte SetTextRow(row Row, ldat Len, CONST byte *Text, byte DefaultCol) {
 	    hwfont *RowText = Row->Text;
 	    ldat i = Len;
 	    while (i-- > 0) {
-		*RowText++ = Tutf_CP437_to_UTF_16[*Text++];
+		*RowText++ = Tutf_CP437_to_UTF_32[*Text++];
 	    }
 	    if (!(Row->Flags & ROW_DEFCOL) && !DefaultCol)
 		/* will not work correctly if sizeof(hwcol) != 1 */

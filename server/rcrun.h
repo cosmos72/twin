@@ -32,8 +32,6 @@ void QuitRC(void);
 
 node LookupNodeName(str name, node head);
 
-hwfont *RCFindBorderPattern(window W, byte Border);
-
 byte RC_VM(timevalue *t);
 byte RC_VMQueue(CONST wm_ctx *C);
 

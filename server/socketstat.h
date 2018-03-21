@@ -234,8 +234,6 @@ static byte sockStatWindow(window x, tsfield TSF) {
         TWScase(window,NameLen,dat);
         TWScasevec(window,Name,byte,x->NameLen);
         TWScasevec(window,ColName,hwcol,x->NameLen);
-        TWScaseAvec(window,BorderPattern,0,hwfont,9);
-        TWScaseAvec(window,BorderPattern,1,hwfont,9);
         TWScase(window,CurX,ldat);
         TWScase(window,CurY,ldat);
         TWScase(window,XstSel,ldat);

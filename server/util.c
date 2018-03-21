@@ -82,7 +82,7 @@ hwfont *CloneStr2HWFont(CONST byte *s, uldat len) {
     if (s) {
 	if ((temp = save = (hwfont *)AllocMem((len+1) * sizeof(hwfont)))) {
 	    while (len--) {
-		*temp++ = Tutf_CP437_to_UTF_16[*s++];
+		*temp++ = Tutf_CP437_to_UTF_32[*s++];
 	    }
 	    *temp = '\0';
 	}
@@ -595,18 +595,6 @@ byte CreateXTermMouseEvent(event_mouse *Event, byte buflen, byte *buf) {
     return len;
 }
 
-void ResetBorderPattern(void) {
-    msgport MsgP;
-    widget W;
-    
-    for (MsgP = All->FirstMsgPort; MsgP; MsgP=MsgP->Next) {
-	for (W = MsgP->FirstW; W; W = W->O_Next) {
-	    if (IS_WINDOW(W))
-		((window)W)->BorderPattern[0] = ((window)W)->BorderPattern[1] = NULL;
-	}
-    }
-}
-
 static gadget _PrevGadget(gadget G) {
     while (G->Prev) {
 	G = (gadget)G->Prev;
@@ -851,14 +839,16 @@ static void TWDisplayIO(int fd, uldat slot) {
     }
 }
 
-static byte fullTWD[]="/tmp/.Twin:\0\0\0";
-static byte envTWD[]="TWDISPLAY=\0\0\0\0";
+static byte fullTWD[]="/tmp/.Twin:\0\0\0\0";
+static byte envTWD[]="TWDISPLAY=\0\0\0\0\0";
 
 /* set TWDISPLAY and create /tmp/.Twin:<x> */
 byte InitTWDisplay(void) {
     struct sockaddr_un addr;
-    int i, fd = NOFD;
-    byte *arg0, ok;
+    byte *arg0;
+    int fd = NOFD;
+    unsigned short i;
+    byte ok;
     
     HOME = getenv("HOME");
 
@@ -869,7 +859,7 @@ byte InitTWDisplay(void) {
 	addr.sun_family = AF_UNIX;
 
 	for (i=0; i<0x1000; i++) {
-	    sprintf(fullTWD+11, "%x", i);
+	    sprintf(fullTWD+11, "%hx", i);
 	    CopyStr(fullTWD, addr.sun_path);
 
 	    ok = bind(unixFd, (struct sockaddr *)&addr, sizeof(addr)) >= 0;
@@ -1212,11 +1202,11 @@ void RunTwEnvRC(void) {
  * not all bits are preserved... this is just
  * a fair effort that covers most cases
  * 
- * this is used for example to decide where each icon
- * is placed inside hw_gfx_themes/<*>.xpm theme files.
+ * this is used to decide which pseudo-graphic cell to load
+ * from hw_gfx_themes/<*>.xpm theme files.
  */
-hwattr EncodeToHWAttrExtra(byte pos, byte detail, byte active, byte pressed) {
-#define pitch 15
+hwattr EncodeToHWAttrExtra(tpos pos, tternary detail, tbool active, tbool pressed) {
+    enum { pitch = 15 };
     byte o12 = active ? pressed ? 2 : 1 : 0;
     byte sides = (4 + o12) * pitch;
     byte scrollx = 9 + (4 + o12) * pitch;
@@ -1268,9 +1258,7 @@ hwattr EncodeToHWAttrExtra(byte pos, byte detail, byte active, byte pressed) {
 	break;
     }
     return 0;
-#undef pitch
 }
-
 
 /* finally, functions to manage Ids */
 

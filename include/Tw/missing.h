@@ -49,6 +49,7 @@ int Tw_option_strcmp(TW_CONST char *s1, TW_CONST char *s2);
 
 int Tw_option_strncmp(TW_CONST char *s1, TW_CONST char *s2, size_t n);
 
+
 #include <Tw/unprefix.h>
 
 #endif /* _TW_MISSING_H */
