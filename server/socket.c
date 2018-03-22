@@ -2441,14 +2441,14 @@ static byte Check4MagicTranslation(uldat slot, byte *magic, byte len) {
 
 	if (warn_count < 6) {
 	    zero = NULL;
-	    if (AlienMagic(slot)[TWS_hwattr] != sizeof(hwattr))
+	    if (AlienMagic(slot)[TWS_hwattr] < sizeof(hwattr))
 		zero = "hwattr";
-	    else if (AlienMagic(slot)[TWS_hwfont] != sizeof(hwfont))
+	    else if (AlienMagic(slot)[TWS_hwfont] < sizeof(hwfont))
 		zero = "hwfont";
 	    
 	    if (zero) {
 		if (warn_count == 5)
-		    printk("twin: warning: many client with different sizes, suppressing further messages.\n");
+		    printk("twin: warning: many clients with different sizes, suppressing further messages.\n");
 		else
 		    printk("twin: warning: client has different `%."STR(TW_SMALLBUFF)"s' size, it may not be Unicode aware.\n", zero);
 		warn_count++;

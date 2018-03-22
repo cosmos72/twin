@@ -595,6 +595,18 @@ byte CreateXTermMouseEvent(event_mouse *Event, byte buflen, byte *buf) {
     return len;
 }
 
+void ResetBorderPattern(void) {
+    msgport MsgP;
+    widget W;
+    
+    for (MsgP = All->FirstMsgPort; MsgP; MsgP=MsgP->Next) {
+	for (W = MsgP->FirstW; W; W = W->O_Next) {
+	    if (IS_WINDOW(W))
+		((window)W)->BorderPattern[0] = ((window)W)->BorderPattern[1] = NULL;
+	}
+    }
+}
+
 static gadget _PrevGadget(gadget G) {
     while (G->Prev) {
 	G = (gadget)G->Prev;

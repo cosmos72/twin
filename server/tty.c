@@ -1427,7 +1427,7 @@ static void common(window Window) {
  * combine (*pc) with partial utf-8 char stored in utf8_char.
  * return ttrue if the utf-8 char is complete, and can be displayed.
  */
-static byte combine_utf8(hwfont *pc) {
+static tbool combine_utf8(hwfont *pc) {
     hwfont c = *pc;
     
     if (utf8_count > 0 && (c & 0xc0) == 0x80) {
@@ -1447,12 +1447,6 @@ static byte combine_utf8(hwfont *pc) {
     } else if ((c & 0xf8) == 0xf0) {
 	utf8_count = 3;
 	utf8_char = (c & 0x07);
-    } else if ((c & 0xfc) == 0xf8) {
-	utf8_count = 4;
-	utf8_char = (c & 0x03);
-    } else if ((c & 0xfe) == 0xfc) {
-	utf8_count = 5;
-	utf8_char = (c & 0x01);
     } else
 	utf8_count = 0;
     return tfalse;

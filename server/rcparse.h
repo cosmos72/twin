@@ -289,12 +289,7 @@ static void UnwindBorderShape(node n) {
 static byte ImmBorder(str wildcard, ldat flag, node shape) {
     node n;
     if (shape) {
-	/*
-	 * Unicode char (21 bit) + color (8 bit) + pseudo-graphic (7 bit) does not fit hwattr (32 bits)
-	 * so hwattr discards chars for window borders - it can be reconstructed from pseudo-graphic,
-	 * as long as all windows have the same border
-	 */
-	n = MakeNodeBody("*", shape, &BorderList);
+	n = MakeNodeBody(wildcard, shape, &BorderList);
 	n->x.f.flag = flag;
 	UnwindBorderShape(n);
 	n->body = NULL;

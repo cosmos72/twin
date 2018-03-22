@@ -60,6 +60,7 @@ void doSelectionSetOwner(obj Owner, tany Time, tany Frac);
 
 byte CreateXTermMouseEvent(event_mouse *Event, byte buflen, byte *buf);
 
+void ResetBorderPattern(void);
 void FallBackKeyAction(window W, event_keyboard *EventK);
 
 byte **TokenizeStringVec(uldat len, byte *text);

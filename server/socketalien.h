@@ -296,6 +296,35 @@ static void alienTranslateHWAttrV_CP437_to_UTF_32(hwattr *H, uldat Len) {
     }
 }
 
+#define alienFixIdentity(x) x
+
+/*
+ * twin < 0.8.0 used a different encoding {utf16_lo, color, utf16_hi, extra}
+ * for hwattr. detected by SIZEOF(hwfont) == 2 && SIZEOF(hwattr) == 4
+ */
+TW_INLINE hwattr alienFixDecodeHWAttr(hwattr attr) {
+    hwfont f = (attr & 0xFF) | ((attr >> 8) & 0xFF00);
+    hwcol col = (attr >> 8) & 0xFF;
+    hwattr extra = (attr >> 24) & 0x7F;
+    attr = HWATTR3(col, f, extra);
+    return attr;
+}
+
+TW_INLINE hwattr alienMaybeFixDecodeHWAttr(hwattr attr) {
+    if (SIZEOF(hwfont) == 2 && SIZEOF(hwattr) == 4)
+	attr = alienFixDecodeHWAttr(attr);
+    return attr;
+}
+
+
+static void alienFixDecodeHWAttrV(hwattr * H, uldat Len) {
+    while (Len--) {
+	*H = alienFixDecodeHWAttr(*H);
+	H++;
+    }
+}
+
+
 TW_INLINE ldat alienDecodeArg(uldat id, CONST byte * Format, uldat n, tsfield a, uldat mask[1], byte flag[1], ldat fail) {
     void *A;
     void *av;
@@ -306,18 +335,19 @@ TW_INLINE ldat alienDecodeArg(uldat id, CONST byte * Format, uldat n, tsfield a,
     switch ((c = *Format++)) {
       case '_':
 	switch ((c = *Format)) {
-#define CASE_(type) \
+#define CASE_fix(type, fixtype) \
 	  case CAT(TWS_,type): \
 	    /* ensure type size WAS negotiated */ \
 	    if (SIZEOF(type) && Left(SIZEOF(type))) { \
 		type an; \
 		POP(s,type,an); \
-		a[n]_any = (tany)an; \
+		a[n]_any = (tany)fixtype(an); \
 		a[n]_type = c; \
-		break; \
-	    } \
-	    fail = -fail; \
-	    break
+	    } else \
+		fail = -fail; \
+            break;
+#define CASE_(type)   CASE_fix(type, alienFixIdentity)
+#define CASE_hwattr() CASE_fix(hwattr, alienMaybeFixDecodeHWAttr)
 		
 	  case TWS_hwcol:
 	    /*FALLTHROUGH*/
@@ -327,7 +357,9 @@ TW_INLINE ldat alienDecodeArg(uldat id, CONST byte * Format, uldat n, tsfield a,
 	    CASE_(topaque);
 	    CASE_(tany);
 	    CASE_(hwfont);
-	    CASE_(hwattr);
+	    CASE_hwattr();
+#undef CASE_hwattr
+#undef CASE_fix
 #undef CASE_
 	  default:
 	    break;
@@ -369,6 +401,8 @@ TW_INLINE ldat alienDecodeArg(uldat id, CONST byte * Format, uldat n, tsfield a,
 		    } else
 			fail = -fail;
 		}
+		if (c == TWS_hwattr && SIZEOF(hwfont) == 2 && SIZEOF(hwattr) == 4 && a[n]_vec)
+		    alienFixDecodeHWAttrV((hwattr *)a[n]_vec, nlen / TW_SIZEOF_HWATTR);
 		break;
 	    }
 	}
@@ -402,6 +436,8 @@ TW_INLINE ldat alienDecodeArg(uldat id, CONST byte * Format, uldat n, tsfield a,
 			} else
 			    fail = -fail;
 		    }
+		    if (c == TWS_hwattr && SIZEOF(hwfont) == 2 && SIZEOF(hwattr) == 4 && a[n]_vec)
+			alienFixDecodeHWAttrV((hwattr *)a[n]_vec, nlen / TW_SIZEOF_HWATTR);
 		    break;
 		}
 	    }
@@ -1021,18 +1057,20 @@ static byte alienDecodeExtension(tany *Len, CONST byte **Data, tany *Args_n, tsf
     while (fail > 0 && n < args_n) {
 	switch ((t = a[n]_type)) {
 
-# define CASE_(type) \
-case CAT(TWS_,type): \
+# define CASE_fix(type, fixtype) \
+ case CAT(TWS_,type): \
     /* ensure type size WAS negotiated */ \
     if ((len = AlienSizeof(type, Slot)) && left >= len) { \
 	type an; \
 	\
 	left -= len; \
 	POP(data,type,an); \
-	a[n]_any = (tany)an; \
+	a[n]_any = (tany)fixtype(an); \
     } else \
 	fail = -fail; \
     break
+# define CASE_(type)   CASE_fix(type, alienFixIdentity)
+# define CASE_hwattr() CASE_fix(hwattr, alienMaybeFixDecodeHWAttr)
 
 	  case TWS_hwcol:
 	    /*FALLTHROUGH*/
@@ -1042,7 +1080,9 @@ case CAT(TWS_,type): \
 	    CASE_(topaque);
 	    CASE_(tany);
 	    CASE_(hwfont);
-	    CASE_(hwattr);
+	    CASE_hwattr();
+#undef CASE_hwattr
+#undef CASE_fix
 #undef CASE_
 
 	  case TWS_vec|TWS_vecW|TWS_byte:

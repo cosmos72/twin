@@ -932,6 +932,7 @@ static window CreateWindow(fn_window Fn_Window, msgport Owner,
 	Window->NameLen = TitleLen;
 	Window->Name = _Title;
 	Window->ColName = _ColTitle;
+	Window->BorderPattern[0] = Window->BorderPattern[1] = (void *)0;
 	Window->RemoteData.Fd = NOFD;
 	Window->RemoteData.ChildPid = NOPID;
 	Window->RemoteData.FdSlot = NOSLOT;
@@ -1117,7 +1118,17 @@ static void SetTitleWindow(window W, dat titlelen, byte *title) {
     W->NameLen = titlelen;
     W->Name = title;
     
+#if 1
+    /*
+     * do not allow changing window borders just because
+     * some untrusted application set a new title
+     */
     DrawBorderWindow(W, BORDER_UP);
+#else
+    /* user may have title-dependent borders in ~/.twinrc, honour them: */
+    Win->BorderPattern[0] = Win->BorderPattern[1] = NULL;
+    DrawBorderWindow(W, BORDER_ANY);
+#endif
     
     if ((P = W->Parent) && IS_SCREEN(P)) {
 	/* need to update window list with new name ? */

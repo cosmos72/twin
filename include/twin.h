@@ -487,6 +487,7 @@ struct s_window {
     menuitem MenuItem; /* from which the window depends */
     dat NameLen;
     byte *Name; hwcol *ColName;
+    hwfont *BorderPattern[2];
     remotedata RemoteData;
     ldat CurX, CurY;
     ldat XstSel, YstSel, XendSel, YendSel;

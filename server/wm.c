@@ -133,7 +133,10 @@ static byte WMFindBorderWindow(window W, dat u, dat v, byte Border, hwattr *PtrA
     Vert  =           v ? rev_v ? (byte)1 : (byte)2 : (byte)0;
 
     
-    BorderFont = StdBorder[Border];
+    if (!(BorderFont = W->BorderPattern[Border]) &&
+	!(BorderFont = RCFindBorderPattern(W, Border)))
+	
+	BorderFont = W->BorderPattern[Border] = StdBorder[Border];
     
     if (W->Parent && IS_SCREEN(W->Parent)) switch (Vert) {
       case 0:

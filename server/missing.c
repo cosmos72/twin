@@ -86,60 +86,54 @@ int Tw_option_strncmp(TW_CONST char *s1, TW_CONST char *s2, size_t n) {
 enum {
     pitch = 15,
     menu_bar = 1,
-    window_title = 4 * pitch + 4,        /* == 64 */
-    window_title_focus = 5 * pitch + 4,  /* == 79 */
-    window_title_pressed = 6 * pitch + 4 /* == 94 */
+    window_title = 4 * pitch + 4,         /* == 64 */
+    window_title_focus = 5 * pitch + 4,   /* == 79 */
+    window_title_pressed = 6 * pitch + 4, /* == 94 */
+};
+enum {
+    utf16_replacement_char = 0xFFFD,
+    utf16_size = 0x10000,
+    utf21_size = 0x110000,
+    extra_flag = 1 << 23,
 };
 
 hwattr Tw_hwattr3(hwcol col, hwfont font, hwattr extra) {
-    hwattr attr = HWATTR(col, font & 0x1FFFFF);
+    hwattr attr;
+    if (font >= utf21_size)
+        font = utf16_replacement_char;
     switch (extra) {
     case 0:
-        break;
+        return HWATTR(col, font);
     case menu_bar:
-	attr |= (1 << 21);
+	attr = 1;
 	break;
     case window_title: 
-        attr |= (2 << 21);
+        attr = 2;
         break;
     case window_title_focus:
-        attr |= (3 << 21);
+        attr = 3;
         break;
     case window_title_pressed:
-        attr |= (4 << 21);
+        attr = 4;
         break;
     default:
-        attr = extra | (5 << 21) | HWATTR_COLMASK(attr);
-        break;
+        if (font >= utf16_size)
+            /*
+             * window borders support only the first 64k unicode characters:
+             * not enough bits for full unicode support in this case...
+             */
+            font = utf16_replacement_char;
+        return HWATTR(col, font) | (extra << 16) | extra_flag;
     }
-    return attr;
+    return HWATTR(col, attr * utf21_size + font);
 }
-
-hwfont Tw_hwfont_infer_from_extra[0x100] = {
-    ' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ', 
-    ' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ', 
-    ' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ', 
-    ' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ', 
-    ' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ', 
-    ' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ', 
-    ' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ', 
-    ' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ', 
-    ' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ', 
-    ' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ', 
-    ' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ', 
-    ' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ', 
-    ' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ', 
-    ' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ', 
-    ' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ', 
-    ' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ', 
-};
 
 hwfont Tw_hwfont(hwattr attr) {
     attr &= 0x00FFFFFF;
-    if (attr < (5 << 21))
-        attr &= 0x1FFFFF;
-    else
-        attr = Tw_hwfont_infer_from_extra[(attr - (5 << 21)) & 0xFF];
+    if (attr & extra_flag)
+        return attr & 0xFFFF;
+    while (attr >= utf21_size)
+        attr -= utf21_size;
     return attr;
 }
 
@@ -149,10 +143,11 @@ static TW_CONST byte decode_hwextra[5] = {
 };
 
 hwattr Tw_hwextra(hwattr attr) {
+    byte i;
     attr &= 0x00FFFFFF;
-    if (attr < (5 << 21))
-	attr = decode_hwextra[attr >> 21];
-    else
-	attr -= (5 << 21);
-    return attr;
+    if (attr & extra_flag)
+        return (attr >> 16) & 0x7F;
+    for (i = 0; attr >= utf21_size; i++)
+        attr -= utf21_size;
+    return decode_hwextra[i];
 }

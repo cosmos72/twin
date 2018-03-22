@@ -241,31 +241,17 @@ static node RCFindMouseBind(ldat code, ldat ctx) {
     return NULL;
 }
 
-static void RCLoadBorderPatterns(void) {
+hwfont *RCFindBorderPattern(window W, byte Border) {
     node l;
-    udat n;
-    byte border, ch;
+    
+    if (!W)
+	return NULL;
     
     for (l = BorderList; l; l=l->next) {
-	border = (l->x.f.flag == FL_INACTIVE);
-	if (!l->data)
-	    continue;
-	for (n = 0; n < 9; n++) {
-	    ch = l->data[n];
-	    if (!ch)
-		break;
-	    StdBorder[border][n] = Tutf_CP437_to_UTF_32[ch];
-	}
+	if ((l->x.f.flag == FL_INACTIVE) == Border && wildcard_match(l->name, W->Name))
+	    break;
     }
-    /*
-     * copy StdBorder[][] into Tw_hwfont_infer_from_extra[] because
-     * pseudo-graphics in window borders overwrites hwattr font information
-     * (they cannot fit together in 24 bits)
-     * so window borders must be inferred from pseudo-graphics.
-     * 
-     * The alternative would be enlarging hwattr to 5 bytes - ugly and inefficient.
-     */
-    
+    return W->BorderPattern[Border] = l ? (hwfont *)l->data : NULL;
 }
 
 INLINE void RCRemove(run **p) {
@@ -831,11 +817,11 @@ static void RCReload(void) {
     if (success) {
 	QueuedDrawArea2FullScreen = ttrue;
 	
+	ResetBorderPattern();
 	RCKillAll();
 	if (CallList)
 	    RCNew(CallList);
 
-	RCLoadBorderPatterns();
 	FillButtonWin();
 	UpdateOptionWin();
 	HideMenu(!!(All->SetUp->Flags & SETUP_MENU_HIDE));
@@ -990,6 +976,7 @@ byte RC_VM(timevalue *t) {
 }
 
 void QuitRC(void) {
+    ResetBorderPattern();
     RCKillAll();
     shm_quit();
 }
@@ -1170,7 +1157,6 @@ byte InitRC(void) {
     if (USEDefaultCommonMenu()) {
 	
 	InitRCOptions();
-	RCLoadBorderPatterns();
 	UpdateOptionWin();
 	FillButtonWin();
 	HideMenu(!!(All->SetUp->Flags & SETUP_MENU_HIDE));
