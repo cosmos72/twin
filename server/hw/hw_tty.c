@@ -263,30 +263,18 @@ static void tty_MogrifyUTF8(hwfont h) {
         buf[1] = (h & 0x3F) | 0x80;
         buf[2] = 0;
     }
-#if 1 /* hwfont is currently limited to 16 bits */
-    else {
-	buf[0] = (h >> 12) | 0xE0;
-	buf[1] = ((h >> 6) & 0x3F) | 0x80;
-        buf[2] = (h & 0x3F) | 0x80;
-        buf[3] = 0;
-    }
-#else /* ! 1 */
     else if (h <= 0xFFFF) {
 	buf[0] = (h >> 12) | 0xE0;
 	buf[1] = ((h >> 6) & 0x3F) | 0x80;
         buf[2] = (h & 0x3F) | 0x80;
         buf[3] = 0;
-    } else if (h <= 0x10FFFF) {
+    } else {
 	buf[0] = (h >> 18) | 0xF0;
 	buf[1] = ((h >> 12) & 0x3F) | 0x80;
 	buf[2] = ((h >>  6) & 0x3F) | 0x80;
         buf[3] = (h & 0x3F) | 0x80;
         buf[4] = 0;
-    } else {
-        buf[0] = ' ';
-        buf[1] = 0;
     }
-#endif
     fputs(buf, stdOUT);
 }
 

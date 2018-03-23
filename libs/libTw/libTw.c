@@ -196,7 +196,7 @@ typedef struct s_tw_d {
     s_tw_errno_vec rErrno_;
 
     byte ServProtocol[3];
-    byte ExitMainLoop, PanicFlag;
+    byte ExitMainLoop, PanicFlag, ServFlags;
 
 #ifdef CONF_SOCKET_GZ
     byte GzipFlag;
@@ -207,26 +207,32 @@ typedef struct s_tw_d {
     
 } *tw_d;
 
-#define rErrno	(TwD->rErrno_)
-#define mutex	(TwD->mutex)
-#define id_Tw	(TwD->id_vec)
-#define Queue	(TwD->Queue)
-#define Qstart	(TwD->Qstart)
-#define Qlen	(TwD->Qlen)
-#define Qmax	(TwD->Qmax)
-#define r	(TwD->r)
-#define s	(TwD->s)
-#define Fd	(TwD->Fd)
-#define RequestN  (TwD->RequestN)
-#define ServProtocol (TwD->ServProtocol)
-#define PanicFlag (TwD->PanicFlag)
-#define GzipFlag  (TwD->GzipFlag)
-#define zR	(TwD->zR)
-#define zW	(TwD->zW)
+#define rErrno		(TwD->rErrno_)
+#define mutex		(TwD->mutex)
+#define id_Tw		(TwD->id_vec)
+#define Queue		(TwD->Queue)
+#define Qstart		(TwD->Qstart)
+#define Qlen		(TwD->Qlen)
+#define Qmax		(TwD->Qmax)
+#define r		(TwD->r)
+#define s		(TwD->s)
+#define Fd		(TwD->Fd)
+#define RequestN	(TwD->RequestN)
+#define ServProtocol	(TwD->ServProtocol)
+#define PanicFlag	(TwD->PanicFlag)
+#define ServFlags	(TwD->ServFlags)
+#define GzipFlag	(TwD->GzipFlag)
+#define zR		(TwD->zR)
+#define zW		(TwD->zW)
 
 
 #define LOCK th_r_mutex_lock(mutex)
 #define UNLK th_r_mutex_unlock(mutex)
+
+enum {
+    ServFlagHWFont2 = 1,   /* server hwfont is two bytes, i.e. limited to 64k Unicode characters */
+    ServFlagHWAttr47x = 2, /* server hwattr has <= 4.7.x encoding {unicode64k_lo, color, unicode64k_hi, extra}. implies ServFlagHWFont2 */
+};
 
 static s_tw_errno rCommonErrno;
 #define CommonErrno (rCommonErrno.E)
@@ -259,9 +265,9 @@ void  (*Tw_FreeMem)(void *) = free;
 void *Tw_AllocMem0(size_t ElementSize, size_t Count) {
     void * Mem;
     if (Tw_AllocMem == malloc) {
-        Mem = calloc(Count, ElementSize);
+	Mem = calloc(Count, ElementSize);
     } else if ((Mem = Tw_AllocMem(Count * ElementSize)) != NULL) {
-        Tw_WriteMem(Mem, '\0', Count * ElementSize);
+	Tw_WriteMem(Mem, '\0', Count * ElementSize);
     }
     return Mem;
 }
@@ -269,7 +275,7 @@ void *Tw_AllocMem0(size_t ElementSize, size_t Count) {
 void *Tw_ReAllocMem0(void * Mem, size_t ElementSize, size_t OldCount, size_t NewCount) {
     void * newMem;
     if ((newMem = Tw_ReAllocMem(Mem, NewCount * ElementSize)) != NULL) {
-        Tw_WriteMem((char *)newMem + OldCount * ElementSize, '\0', (NewCount - OldCount) * ElementSize); 
+	Tw_WriteMem((char *)newMem + OldCount * ElementSize, '\0', (NewCount - OldCount) * ElementSize); 
     }
     return newMem;
 }
@@ -762,16 +768,16 @@ static uldat TryRead(tw_d TwD, TW_CONST timevalue * Timeout) {
 	Q = QREAD;
     
     if (!Timeout || Timeout->Seconds || Timeout->Fraction) {
-        fd_set fset;
-        struct timeval timeout;
-        timevalue deadline;
+	fd_set fset;
+	struct timeval timeout;
+	timevalue deadline;
 	FD_ZERO(&fset);
-        if (Timeout) {
-            timeout.tv_sec = Timeout->Seconds;
-            timeout.tv_usec = Timeout->Fraction / MicroSEC;
-            InstantNow(&deadline);
-            IncrTime(&deadline, Timeout);
-        }
+	if (Timeout) {
+	    timeout.tv_sec = Timeout->Seconds;
+	    timeout.tv_usec = Timeout->Fraction / MicroSEC;
+	    InstantNow(&deadline);
+	    IncrTime(&deadline, Timeout);
+	}
 	for (;;) {
 	    fd = Fd;
 	    /* drop LOCK before sleeping! */
@@ -783,24 +789,24 @@ static uldat TryRead(tw_d TwD, TW_CONST timevalue * Timeout) {
 
 	    /* maybe another thread received some data? */
 	    (void)GetQueue(TwD, QREAD, &len);
-            if (len != 0 || sel > 0)
-                break;
-            if (sel == -1 && errno != EINTR && errno != EAGAIN && errno != EWOULDBLOCK)
-                break;
-            
-            if (Timeout) {
-                timevalue actual, to_sleep;
-                InstantNow(&actual);
-                if (CmpTime(&actual, &deadline) >= 0) {
-                    timedout = ttrue;
-                    break;
-                }
-                to_sleep = deadline; /* struct copy */
-                DecrTime(&to_sleep, &actual);
-                timeout.tv_sec = to_sleep.Seconds;
-                timeout.tv_usec = to_sleep.Fraction / MicroSEC;
-            }
-        }
+	    if (len != 0 || sel > 0)
+		break;
+	    if (sel == -1 && errno != EINTR && errno != EAGAIN && errno != EWOULDBLOCK)
+		break;
+
+	    if (Timeout) {
+		timevalue actual, to_sleep;
+		InstantNow(&actual);
+		if (CmpTime(&actual, &deadline) >= 0) {
+		    timedout = ttrue;
+		    break;
+		}
+		to_sleep = deadline; /* struct copy */
+		DecrTime(&to_sleep, &actual);
+		timeout.tv_sec = to_sleep.Seconds;
+		timeout.tv_usec = to_sleep.Fraction / MicroSEC;
+	    }
+	}
     }
     
 
@@ -824,10 +830,10 @@ static uldat TryRead(tw_d TwD, TW_CONST timevalue * Timeout) {
 	Qlen[Q] -= len - (got == (uldat)-1 ? 0 : got);
 	
 	if (got == 0 || (got == (uldat)-1 && (timedout || (errno != EINTR && errno != EAGAIN && errno != EWOULDBLOCK)))) {
-            if (got == (uldat)-1 && timedout)
-                Errno = TW_ESERVER_READ_TIMEOUT;
-            else
-                Errno = TW_ESERVER_LOST_CONNECT;
+	    if (got == (uldat)-1 && timedout)
+		Errno = TW_ESERVER_READ_TIMEOUT;
+	    else
+		Errno = TW_ESERVER_LOST_CONNECT;
 	    Panic(TwD);
 	    return (uldat)-1;
 	}
@@ -920,6 +926,10 @@ static void ExtractServProtocol(tw_d TwD, byte *servdata, uldat len) {
 	}
 	if (++i >= 3)
 	    break;
+    }
+    if (ServProtocol[0] < 4 || (ServProtocol[0] == 4 && ServProtocol[1] <= 7)) {
+	/* server protocol is <= 4.7.x : has two-byte hwfont and old hwattr enconding */
+	ServFlags |= ServFlagHWFont2 | ServFlagHWAttr47x;
     }
 }
 
@@ -1264,14 +1274,14 @@ tw_d Tw_Open(TW_CONST byte *TwDisplay) {
     UNLK;
     
     if (handshake) {
-        if (gzip)
+	if (gzip)
 	    (void)Tw_EnableGzip(TwD);
 	return TwD;
     }
     
     if (Fd != TW_NOFD) {
 	close(Fd);
-        Fd = TW_NOFD; /* to skip Flush() */
+	Fd = TW_NOFD; /* to skip Flush() */
     }
     Tw_Close(TwD);
     return (tw_d)0;
@@ -2215,6 +2225,38 @@ static uldat FindFunctionId(tw_d TwD, uldat order) {
 }
 
 
+/* convert hwattr to protocol <= 4.7.x i.e. {unicode64k_lo, color, unicode64k_hi, extra} */
+static hwattr ConvertHWAttrTo47x(hwattr attr) {
+    hwattr extra = HWEXTRA(attr);
+    hwfont f = HWFONT(attr);
+    hwcol col = HWCOL(attr);
+    if (f > 0xFFFF) /* maximum supported by protocol <= 4.7.x is 64k */
+	f = 0xFFFD; /* use replacement char instead */
+    return (f & 0xFF) | ((hwattr)col << 8) | (((hwattr)f & 0xFF00) << 8) | (extra << 24);
+}
+
+TW_INLINE hwattr MaybeConvertHWAttr(tw_d TwD, hwattr attr) {
+    if (ServFlags & ServFlagHWAttr47x)
+	attr = ConvertHWAttrTo47x(attr);
+    return attr;
+}
+
+#define PushVMaybeConvertHWAttr(TwD, dst, len, vec) ((dst) = VecMaybeConvertHWAttr(TwD, dst, len, vec))
+
+static byte * VecMaybeConvertHWAttr(tw_d TwD, byte * dst, uldat len, const hwattr * attr) {
+    if (ServFlags & ServFlagHWAttr47x) {
+	uldat i;
+	hwattr h;
+	len /= sizeof(hwattr);
+	for (i = 0; i < len; i++) {
+	    h = ConvertHWAttrTo47x(attr[i]);
+	    Push(dst, hwattr, h);
+	}
+    } else {
+	PushV(dst, len, attr);
+    }
+    return dst;
+}
 
 
 /**
@@ -2253,6 +2295,7 @@ tgadget Tw_O_NextWidget(tw_d TwD, twidget a1) {
  * change the fill patter of given widget
  */
 void Tw_SetFillWidget(tw_d TwD, twidget a1, hwattr a2) {
+    a2 = MaybeConvertHWAttr(TwD, a2);
     Tw_ChangeField(TwD, a1, TWS_widget_Fill, ~(hwattr)0, a2);
 }
 
@@ -2261,39 +2304,40 @@ void Tw_SetFillWidget(tw_d TwD, twidget a1, hwattr a2) {
  */
 void Tw_Draw2Widget(tw_d TwD, twidget a1, dat a2, dat a3, dat a4, dat a5, dat pitch,
 		    TW_CONST byte *a6, TW_CONST hwfont *a7, TW_CONST hwattr *a8) {
-    uldat len6;
-    uldat len7;
-    uldat len8;
-    uldat My;
+    uldat len6, len7, len8, My;
     LOCK;
     if (Fd != TW_NOFD && (My = id_Tw[order_DrawWidget]) != TW_NOID &&
 	(My != TW_BADID || (My = FindFunctionId(TwD, order_DrawWidget)) != TW_NOID)) {
 	
 	if (InitRS(TwD)) {
-            My = (0 + sizeof(uldat) + sizeof(dat) + sizeof(dat) + sizeof(dat) + sizeof(dat) + (len6 = a6 ? (a2*a3) * sizeof(byte) : 0, sizeof(uldat) + len6) + (len7 = a7 ? (a2*a3) * sizeof(hwfont) : 0, sizeof(uldat) + len7) + (len8 = a8 ? (a2*a3) * sizeof(hwattr) : 0, sizeof(uldat) + len8) );
-            if (WQLeft(My)) {
-                Push(s,uldat,a1); Push(s,dat,a2); Push(s,dat,a3); Push(s,dat,a4); Push(s,dat,a5);
-		Push(s,uldat,len6);
+	    My = (0 + sizeof(uldat) + sizeof(dat) + sizeof(dat) + sizeof(dat) + sizeof(dat)
+		  + (len6 = a6 ? (uldat)a2 * a3 * sizeof(byte)   : 0, sizeof(uldat) + len6)
+		  + (len7 = a7 ? (uldat)a2 * a3 * sizeof(hwfont) : 0, sizeof(uldat) + len7)
+		  + (len8 = a8 ? (uldat)a2 * a3 * sizeof(hwattr) : 0, sizeof(uldat) + len8) );
+	    if (WQLeft(My)) {
+		Push(s,uldat,a1); Push(s,dat,a2); Push(s,dat,a3);
+		Push(s,dat,a4);   Push(s,dat,a5); Push(s,uldat,len6);
 		while (len6) {
-		    PushV(s,a2*sizeof(byte),a6);
+		    PushV(s, (uldat)a2*sizeof(byte), a6);
 		    a6 += pitch;
-		    len6 -= a2*sizeof(byte);
+		    len6 -= (uldat)a2*sizeof(byte);
 		}
 		Push(s,uldat,len7);
 		while (len7) {
-		    PushV(s,a2*sizeof(hwfont),a7);
+		    PushV(s, (uldat)a2*sizeof(hwfont), a7);
 		    a7 += pitch;
-		    len7 -= a2*sizeof(hwfont);
+		    len7 -= (uldat)a2*sizeof(hwfont);
 		}
 		Push(s,uldat,len8);
 		while (len8) {
-		    PushV(s,a2*sizeof(hwattr),a8);
+		    PushVMaybeConvertHWAttr(TwD, s, (uldat)a2*sizeof(hwattr), a8);
 		    a8 += pitch;
-		    len8 -= a2*sizeof(hwattr);
+		    len8 -= (uldat)a2*sizeof(hwattr);
 		}
 		Send(TwD, (My = NextSerial(TwD)), id_Tw[order_DrawWidget]);
-		UNLK;return;
-            }
+		UNLK;
+		return;
+	    }
 	}
 	/* still here? must be out of memory! */
 	Errno = TW_ESYS_NO_MEM;
@@ -2640,7 +2684,7 @@ static tslist StatScalar(tslist f, byte *data, byte *end) {
 	switch (Type) {
 # define Popcase(type) case TWS_CAT(TWS_,type): \
 	    if (data + sizeof(type) <= end) { \
-	        /* avoid padding problems */ \
+		/* avoid padding problems */ \
 		type tmp; \
 		Pop(data,type,tmp); \
 		f->TSF[0].TWS_field_scalar = tmp; \
@@ -2684,7 +2728,7 @@ static tslist StatTSL(tw_d TwD, udat flags, byte *data, byte *end) {
 	    switch (TSF[i].type) {
 # define Popcase(type) case TWS_CAT(TWS_,type): \
 		if (data + sizeof(type) <= end) { \
-	            /* avoid padding problems */ \
+		    /* avoid padding problems */ \
 		    type tmp; \
 		    Pop(data,type,tmp); \
 		    TSF[i].TWS_field_scalar = tmp; \
@@ -2744,7 +2788,7 @@ static tslist StatA(tw_d TwD, tobj Id, udat flags, udat hN, TW_CONST udat *h, ts
 	(My != TW_BADID || (My = FindFunctionId(TwD, order_StatObj)) != TW_NOID)) {
 	
 	if (InitRS(TwD)) {
-            My = (sizeof(tobj) + sizeof(udat) + hN * sizeof(udat));
+	    My = (sizeof(tobj) + sizeof(udat) + hN * sizeof(udat));
 	    if (WQLeft(My)) {
 		Push(s, tobj, Id); 
 		Push(s, udat, hN);
