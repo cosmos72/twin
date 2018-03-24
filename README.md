@@ -76,17 +76,21 @@ For detailed instructions about compiling and installing twin,
 see sections 3 and 4 of the file [docs/Tutorial](docs/Tutorial) 
 
 For the impatient, it basically reduces to
+```
   ./configure
   make
-  
+```
 then run as root
+```
   make install
-  
+```
 on Linux, also remember to run as root:
+```
   ldconfig
-
 on FreeBSD instead, remember to run as root:
+```
   ldconfig -R
+```
 
 To compile twin you need the following programs installed
 on your system:
