@@ -132,9 +132,7 @@ hwfont Tw_hwfont(hwattr attr) {
     attr &= 0x00FFFFFF;
     if (attr & extra_flag)
         return attr & 0xFFFF;
-    while (attr >= utf21_size)
-        attr -= utf21_size;
-    return attr;
+    return attr % utf21_size;
 }
 
 static TW_CONST byte decode_hwextra[5] = {
@@ -147,7 +145,6 @@ hwattr Tw_hwextra(hwattr attr) {
     attr &= 0x00FFFFFF;
     if (attr & extra_flag)
         return (attr >> 16) & 0x7F;
-    for (i = 0; attr >= utf21_size; i++)
-        attr -= utf21_size;
+    i = attr / utf21_size;
     return decode_hwextra[i];
 }
