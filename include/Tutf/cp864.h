@@ -527,7 +527,7 @@
     EL(_BLACK_SQUARE) \
     EL(_UNDEFINED_00FF)
 
-/* list of all characters NOT IDENTICALLY MAPPED to UTF-16 */
+/* list of all characters NOT IDENTICALLY MAPPED to UTF-32 */
 #define T_NLIST_CP864(EL) \
     EL(_ARABIC_PERCENT_SIGN) \
     EL(_DEGREE_SIGN) \

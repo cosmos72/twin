@@ -59,16 +59,16 @@ static int wrap_Gpm_Open(void) {
 
 
 
-/* return FALSE if failed */
+/* return tfalse if failed */
 static byte GPM_InitMouse(void) {
     
     if (GPM_InUse) {
 	printk("      GPM_InitMouse() failed: already connected to `gpm'.\n");
-	return FALSE;
+	return tfalse;
     }
     
     if (wrap_Gpm_Open() < 0)
-	return FALSE;
+	return tfalse;
 
     fcntl(GPM_fd, F_SETFD, FD_CLOEXEC);
     fcntl(GPM_fd, F_SETFL, O_NONBLOCK);
@@ -76,7 +76,7 @@ static byte GPM_InitMouse(void) {
     HW->mouse_slot = RegisterRemote(GPM_fd, (obj)HW, GPM_MouseEvent);
     if (HW->mouse_slot == NOSLOT) {
 	Gpm_Close();
-	return FALSE;
+	return tfalse;
     }
     
     HW->FlagsHW |= FlHWSoftMouse; /* _we_ Hide/Show it */
@@ -85,9 +85,9 @@ static byte GPM_InitMouse(void) {
     HW->ConfigureMouse = GPM_ConfigureMouse;
     HW->QuitMouse = GPM_QuitMouse;
 
-    GPM_InUse = TRUE;
+    GPM_InUse = ttrue;
     
-    return TRUE;
+    return ttrue;
 }
 
 static void GPM_QuitMouse(void) {
@@ -100,7 +100,7 @@ static void GPM_QuitMouse(void) {
     UnRegisterRemote(HW->mouse_slot);
     HW->mouse_slot = NOSLOT;
 
-    GPM_InUse = FALSE;
+    GPM_InUse = tfalse;
     
     HW->QuitMouse = NoOp;
 }

@@ -38,7 +38,7 @@
 #define TW_SIZEOF_TOPAQUE	TW_SIZEOF_SIZE_T
 #define TW_SIZEOF_TANY		TW_SIZEOF_SIZE_T
 #define TW_SIZEOF_HWCOL		1
-#define TW_SIZEOF_HWFONT	2
+#define TW_SIZEOF_HWFONT	4
 #define TW_SIZEOF_HWATTR	4
 
 
@@ -77,14 +77,7 @@
 #endif
 
 #define TW_MAXWCOL      0xFF
-#define TW_MAXWFONT     0xFFFF
+#define TW_MAXWFONT     0xFFFFFFFF
 #define TW_MAXWATTR     0xFFFFFFFF
-
-#define HWATTR(col,ascii)     HWATTR32(col,ascii)
-#define HWATTR_COLMASK(attr)  HWATTR_COLMASK32(attr)
-#define HWATTR_FONTMASK(attr) HWATTR_FONTMASK32(attr)
-#define HWCOL(attr)           HWCOL32(attr)
-#define HWFONT(attr)          HWFONT32(attr)
-
 
 #endif /* _TW_DATASIZES_H */

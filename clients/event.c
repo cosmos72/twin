@@ -32,7 +32,7 @@ static byte InitEvent(void) {
 	  COL(RED,WHITE), COL(RED,GREEN), (byte)0)) &&
 	TwItem4MenuCommon(Event_Menu) &&
 	(TwInfo4Menu(Event_Menu, TW_ROW_ACTIVE, 14, " Event Tester ", "ptppppptpppppp"),
-	 TRUE) &&
+	 ttrue) &&
 	(Event_Win=TwCreateWindow
 	 (12, "Event Tester", NULL,
 	  Event_Menu, COL(WHITE,BLACK), TW_NOCURSOR,
@@ -46,7 +46,7 @@ static byte InitEvent(void) {
 	  COL(WHITE,BLACK), COL(WHITE,HIGH|BLACK), COL(HIGH|BLACK,BLACK), COL(BLACK,HIGH|BLACK)),
 	 TwConfigureWindow(Event_Win, 0xF<<2, 0, 0, 10, 5, 30, 15),
 	 TwMapWindow(Event_Win, TwFirstScreen()),
-	 TRUE) &&
+	 ttrue) &&
 
 	(Event_SubWin=TwCreateWindow
 	 (9, "SubWindow", NULL,
@@ -57,7 +57,7 @@ static byte InitEvent(void) {
 	
 	(TwSetXYWindow(Event_SubWin, 5, 2),
 	 TwMapWindow(Event_SubWin, Event_Win),
-	 TRUE) &&
+	 ttrue) &&
 
 	TwFlush();
 }
@@ -230,7 +230,7 @@ int main(int argc, char *argv[]) {
     uldat err;
     udat Code;
     
-    if (InitEvent()) while ((Msg=TwReadMsg(TRUE))) {
+    if (InitEvent()) while ((Msg=TwReadMsg(ttrue))) {
 	if (Msg->Event.EventCommon.W != Event_Win)
 	    printf("SubWindow: ");
 	    

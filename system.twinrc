@@ -121,48 +121,23 @@ AddToFunc _Next ( Lower; Window 1; Focus; )
 # These are not needed... and they override
 # the borders defined by Alternate Font
 #
-# Border "*" Inactive (
-#   "⁄ƒø"
-#   "≥ ≥"
-#   "¿ƒŸ"
-# )
-#
 # Border "*" Active (
 #    "…Õª"
 #    "∫ ∫"
 #    "»Õº"
 # )
 #
-# But maybe you feel funky and want different borders
-# for different windows:
+# menu windows are always considered Inactive
 #
-# Border "*Term*" Inactive (
-#    " ﬂ "
-#    "› ﬁ"
-#    " ‹ "
+# Border "*" Inactive (
+#   "⁄ƒø"
+#   "≥ ≥"
+#   "¿ƒŸ"
 # )
 #
-# Border "Clock" Active (
-#    "   "
-#    "   "
-#    "   "
-# )
+# note: since twin 0.8.0, all windows must have the same borders.
+# it's no longer possible to differentiate borders depending on the window name
 #
-# Border "Tw*" Active (
-#    "÷Õ∑"
-#    "≥ ≥"
-#    "”ÕΩ"
-# )
-#
-# menu windows have no name... and are always considered Inactive
-#
-# Border "" Inactive (
-#   "€ﬂ€"
-#   "€ €"
-#   "€‹€"
-# )
-
-
 
 #
 # create the buttons on window top border.
@@ -437,7 +412,7 @@ ExecTty "" ; Wait "Twin Term" ; Maximize
 # 
 # Beep
 # 
-# Border <wildcard-pattern> {Active|Inactive} (
+# Border "*" {Active|Inactive} (
 #   "…Õª"
 #   "∫ ∫"
 #   "»Õº"

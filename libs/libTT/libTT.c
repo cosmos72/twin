@@ -398,7 +398,7 @@ static ttclasses module_InitHW(tthw *HW) {
 		CommonErrno = TT_ETARGET_DLERROR;
 		TTD.str_dlerror = dlerror();
 	    }
-	    PrintInitError(*HW, name[i], TRUE);
+	    PrintInitError(*HW, name[i], ttrue);
 	}
 	TTFreeMem(buf);
     } else
@@ -563,7 +563,7 @@ static void AfterOpenTarget(ttclasses Classes) {
 	    TTFreeMem(TTD.HWTarget);
 	TTD.HWOptions = TTD.HWTarget = NULL;
 
-	TTD.PanicFlag = TRUE;
+	TTD.PanicFlag = ttrue;
     }
 }
 
@@ -735,7 +735,7 @@ int TTConnectionFd(void) {
 }
 
 ttbyte TTFlush(void) {
-    ttbyte ret = TRUE;
+    ttbyte ret = ttrue;
     LOCK;
     ret = !(TTD.PanicFlag || (TTD.PanicFlag = !THW.Flush()));
     UNLK;
@@ -743,7 +743,7 @@ ttbyte TTFlush(void) {
 }
 
 ttbyte TTTimidFlush(void) {
-    ttbyte ret = TRUE;
+    ttbyte ret = ttrue;
     LOCK;
     ret = !(TTD.PanicFlag || (TTD.PanicFlag = !THW.TimidFlush()));
     UNLK;
@@ -751,7 +751,7 @@ ttbyte TTTimidFlush(void) {
 }
 
 ttbyte TTSync(void) {
-    ttbyte ret = TRUE;
+    ttbyte ret = ttrue;
     LOCK;
     ret = !(TTD.PanicFlag || (TTD.PanicFlag = !THW.Sync()));
     UNLK;
@@ -848,7 +848,7 @@ TT_INLINE ttbyte _AssignId(ttopaque i, ttobj Obj) {
 	    if (!IdList[i][j])
 		break;
 	IdBottom[i] = j;
-	return TRUE;
+	return ttrue;
     }
     Errno = TT_ENO_MEM;
     return TT_FALSE;
@@ -867,7 +867,7 @@ TT_INLINE ttbyte _FixedAssignId(ttopaque i, ttobj Obj) {
 	    if (!IdList[i][j])
 		break;
 	IdBottom[i] = j;
-	return TRUE;
+	return ttrue;
     }
     Errno = TT_ENO_MEM;
     return TT_FALSE;
@@ -1893,7 +1893,7 @@ static void Expose_ttvisible(ttvisible o, ttshort x, ttshort y, ttshort w, ttsho
 
 void TTExitMainLoop(void) {
     /* no LOCK here */
-    TTD.ExitMainLoopFlag = TRUE;
+    TTD.ExitMainLoopFlag = ttrue;
 }
 
 static void NormalizeTimeval(struct timeval *t) {

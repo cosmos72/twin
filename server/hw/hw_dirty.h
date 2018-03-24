@@ -9,9 +9,9 @@ INLINE byte Plain_isDirtyVideo(dat X, dat Y) {
     if (s == -1 || s > X || ChangedVideo[Y][0][1] < X) {
 	s = ChangedVideo[Y][1][0];
 	if (s == -1 || s > X || ChangedVideo[Y][1][1] < X)
-	    return FALSE;
+	    return tfalse;
     }
-    return TRUE;
+    return ttrue;
 }
 
 
@@ -23,11 +23,11 @@ INLINE byte Threshold_isDirtyVideo(dat X, dat Y) {
     dat s1, s2, e1, e2, delta;
     
     if ((s1 = ChangedVideo[Y][0][0]) == -1)
-	return FALSE;
+	return tfalse;
 
     e1 = ChangedVideo[Y][0][1];
     if (s1 <= X && e1 >= X)
-	return TRUE;
+	return ttrue;
 
     if (e1 < X) {
 	/* check the second slot */
@@ -35,7 +35,7 @@ INLINE byte Threshold_isDirtyVideo(dat X, dat Y) {
 	if (s2 != -1) {
 	    e2 = ChangedVideo[Y][1][1];
 	    if (s2 <= X && e2 >= X)
-		return TRUE;
+		return ttrue;
 	    if (s2 > X)
 		return s2-e1 < HW->merge_Threshold;
 	    s1 = s2;
@@ -49,13 +49,13 @@ INLINE byte Threshold_isDirtyVideo(dat X, dat Y) {
     else if (e1 < X && Y < DisplayHeight - 1)
 	delta = 1;
     else
-	return FALSE;
+	return tfalse;
     
     s2 = ChangedVideo[Y+delta][delta<0][0];
     if (s2 == -1) {
 	s2 = ChangedVideo[Y+delta][delta>0][0];
 	if (s2 == -1)
-	    return FALSE;
+	    return tfalse;
 	e2 = ChangedVideo[Y+delta][delta>0][1];
     } else
 	e2 = ChangedVideo[Y+delta][delta<0][1];

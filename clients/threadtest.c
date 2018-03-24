@@ -93,7 +93,7 @@ void mainloop(twindow *Win) {
 	 * as the other thread is calling Tw* functions...
 	 * they invalidate the static buffer used by TwReadMsg()
 	 */
-	while ((Msg = TwCloneReadMsg(FALSE))) {
+	while ((Msg = TwCloneReadMsg(tfalse))) {
 	    Event=&Msg->Event;
 	    if (Msg->Type==TW_MSG_WIDGET_GADGET) {
 		if (Event->EventGadget.Code == 0)

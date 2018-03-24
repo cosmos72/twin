@@ -419,7 +419,7 @@ static byte display_InitHW(void) {
     if (arg && HW->NameLen > 4) {
 	arg += 4;
 	if (strncmp(arg, "display", 7))
-	    return FALSE; /* user said "use <arg> as display, not twdisplay" */
+	    return tfalse; /* user said "use <arg> as display, not twdisplay" */
 	arg += 7;
     } else
 	arg = NULL;
@@ -430,18 +430,18 @@ static byte display_InitHW(void) {
 	 */
 	printk("      display_InitHW() failed: not connected to twdisplay.\n"
 	       "      (you cannot use -hw=display from command line or twattach)\n");
-	return FALSE;
+	return tfalse;
     }
 
     if (!(Port = RemoteGetMsgPort(HW->AttachSlot))) {
 	printk("      display_InitHW() failed: twdisplay did not create a MsgPort.\n");
-	return FALSE;
+	return tfalse;
     }
     
     if (!Ext(Socket,SendMsg)) {
 	printk("      display_InitHW() failed: SocketSendMsg() not available.\n"
 	       "      (maybe you should load Socket Server module?)\n");
-	return FALSE;
+	return tfalse;
     }
     
     if (!(HW->Private = (struct display_data *)AllocMem(sizeof(struct display_data)))
@@ -455,7 +455,7 @@ static byte display_InitHW(void) {
 	    FreeMem(HW->Private);
 	}
 	printk("      display_InitHW(): Out of memory!\n");
-	return FALSE;
+	return tfalse;
     }
 
     ev = &Msg->Event.EventDisplay;
@@ -505,7 +505,7 @@ static byte display_InitHW(void) {
     HW->QuitMouse = NoOp;
     HW->QuitVideo = NoOp;
 
-    HW->DisplayIsCTTY = FALSE;
+    HW->DisplayIsCTTY = tfalse;
     HW->FlagsHW &= ~FlHWSoftMouse;
 
     HW->FlagsHW |= FlHWNeedOldVideo;
@@ -537,7 +537,7 @@ static byte display_InitHW(void) {
      * without forcing all other displays
      * to redraw everything too.
      */
-    HW->RedrawVideo = FALSE;
+    HW->RedrawVideo = tfalse;
     NeedRedrawVideo(0, 0, HW->X - 1, HW->Y - 1);
 
     setFlush();
@@ -546,12 +546,12 @@ static byte display_InitHW(void) {
 
     fix4display();
     
-    return TRUE;
+    return ttrue;
 }
 
 byte InitModule(module Module) {
     Module->Private = display_InitHW;
-    return TRUE;
+    return ttrue;
 }
 
 /* this MUST be included, or it seems that a bug in dlsym() gets triggered */

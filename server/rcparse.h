@@ -221,7 +221,7 @@ static node MakeNodeBody(str name, node body, node *head) {
 
 static byte ImmAddScreen(str name) {
     MakeNodeBody(name, NULL, &ScreenList);
-    return TRUE;
+    return ttrue;
 }
 
 static void MergeNodeLists(node n, node l) {
@@ -243,7 +243,7 @@ static byte MergeMenu(str name, node l) {
 	MergeNodeLists(n, ReverseList(l));
     else
 	MakeNodeBody(name, l, &MenuList);
-    return TRUE;
+    return ttrue;
 }
 
 static byte MergeFunc(str name, node l) {
@@ -253,7 +253,7 @@ static byte MergeFunc(str name, node l) {
 	MergeNodeLists(n, ReverseList(l));
     else
 	MakeNodeBody(name, l, &FuncList);
-    return TRUE;
+    return ttrue;
 }
 
 static byte ImmBackground(str name, hwattr color, node shape) {
@@ -265,13 +265,13 @@ static byte ImmBackground(str name, hwattr color, node shape) {
 	
 	n->body = ReverseList(shape);
 	n->x.color = color;
-	return TRUE;
+	return ttrue;
     }
-    return FALSE;
+    return tfalse;
 }
 
 
-static void UnwindShape(node n) {
+static void UnwindBorderShape(node n) {
     str s = NULL, d = n->data = my_malloc(n->x.ctx = 10);
     node shape = n->body;
 
@@ -291,11 +291,11 @@ static byte ImmBorder(str wildcard, ldat flag, node shape) {
     if (shape) {
 	n = MakeNodeBody(wildcard, shape, &BorderList);
 	n->x.f.flag = flag;
-	UnwindShape(n);
+	UnwindBorderShape(n);
 	n->body = NULL;
-	return TRUE;
+	return ttrue;
     }
-    return FALSE;
+    return tfalse;
 }
 
 static ldat FreeButtonPos(ldat n, ldat lr) {
@@ -314,8 +314,8 @@ static ldat FreeButtonPos(ldat n, ldat lr) {
 
 static byte ImmButton(ldat n, str shape, ldat lr, ldat flag, ldat pos) {
     if (n >= 0 && n < BUTTON_MAX && strlen(shape) >= 2) {
-	All->ButtonVec[n].shape[0] = Tutf_CP437_to_UTF_16[shape[0]];
-	All->ButtonVec[n].shape[1] = Tutf_CP437_to_UTF_16[shape[1]];
+	All->ButtonVec[n].shape[0] = Tutf_CP437_to_UTF_32[shape[0]];
+	All->ButtonVec[n].shape[1] = Tutf_CP437_to_UTF_32[shape[1]];
 	if (lr == FL_RIGHT)
 	    pos = -pos;
 	if (flag == '+' || flag == '-')
@@ -328,10 +328,10 @@ static byte ImmButton(ldat n, str shape, ldat lr, ldat flag, ldat pos) {
 	    /* -2 is the position corresponding to `Right 0' */
 	}
 	All->ButtonVec[n].pos = pos;
-	All->ButtonVec[n].exists = All->ButtonVec[n].changed = TRUE;
-	return TRUE;
+	All->ButtonVec[n].exists = All->ButtonVec[n].changed = ttrue;
+	return ttrue;
     }
-    return FALSE;
+    return tfalse;
 }
     
 static void DeleteNodeName(str name, node *l) {
@@ -345,23 +345,23 @@ static void DeleteNodeName(str name, node *l) {
 
 static byte ImmDeleteFunc(str name) {
     DeleteNodeName(name, &FuncList);
-    return TRUE;
+    return ttrue;
 }
     
 static byte ImmDeleteMenu(str name) {
     DeleteNodeName(name, &MenuList);
-    return TRUE;
+    return ttrue;
 }
 
 static byte ImmDeleteButton(ldat n) {
     if (n >= 0 && n < BUTTON_MAX)
-	All->ButtonVec[n].exists = FALSE;
-    return TRUE;
+	All->ButtonVec[n].exists = tfalse;
+    return ttrue;
 }
 
 static byte ImmDeleteScreen(str name) {
     DeleteNodeName(name, &ScreenList);
-    return TRUE;
+    return ttrue;
 }
 
 static byte ImmGlobalFlags(node l) {
@@ -369,7 +369,7 @@ static byte ImmGlobalFlags(node l) {
     
     while (l) {
 	switch (l->id) {
-	  case ALTFONT:      /*ignored for compatibility*/ return TRUE;
+	  case ALTFONT:      /*ignored for compatibility*/ return ttrue;
 	  case BLINK:        i = SETUP_BLINK;        break;
 	  case CURSOR_ALWAYS:i = SETUP_CURSOR_ALWAYS;break;
 	  case SCREEN_SCROLL:i = SETUP_SCREEN_SCROLL;break;
@@ -380,7 +380,7 @@ static byte ImmGlobalFlags(node l) {
           case TERMINALS_UTF8:     i = SETUP_TERMINALS_UTF8;     break;
 	  case BUTTON_PASTE:  i = 0;                 break;
 	  case BUTTON_SELECTION: i = -1;             break;
-	  default:           return FALSE;
+	  default:           return tfalse;
 	}
 	if (i > 0) switch (l->x.f.flag) {
 	  case FL_ON:  case '+': case 0:
@@ -404,7 +404,7 @@ static byte ImmGlobalFlags(node l) {
 	    }
 	    break;
 	  default:
-	    return FALSE;
+	    return tfalse;
 	} else {
 	    /* ButtonSelection or ButtonPaste */
 
@@ -416,7 +416,7 @@ static byte ImmGlobalFlags(node l) {
 	}
 	l = l->next;
     }
-    return TRUE;
+    return ttrue;
 }
 
 
@@ -471,13 +471,13 @@ static byte BindKey(ldat shiftflags, str label, node func) {
     
     switch (strlen(label)) {
       case 0:
-	return FALSE;
+	return tfalse;
       case 1:
 	key = (byte)*label;
 	break;
       default:
 	if ((key = FindTwKey(label)) == -1)
-	    return FALSE;
+	    return tfalse;
 	key = TW_KeyList[key].key;
 	break;
     }
@@ -489,7 +489,7 @@ static byte BindKey(ldat shiftflags, str label, node func) {
 	KeyList = AddtoNodeList(KeyList, n);
     }
     n->body = ReverseList(func);
-    return TRUE;
+    return ttrue;
 }
     
 static byte BindMouse(str buttons, str _ctx, node func) {
@@ -518,9 +518,9 @@ static byte BindMouse(str buttons, str _ctx, node func) {
 	    MouseList = AddtoNodeList(MouseList, n);
 	}
 	n->body = ReverseList(func);
-	return TRUE;
+	return ttrue;
     }
-    return FALSE;
+    return tfalse;
 }
 
 static node MakeFlagNode(ldat id, ldat flag) {
@@ -872,7 +872,7 @@ static void DumpScreenNode(node n) {
 	   TokenName(BACKGROUND), n->name);
     DumpColorName(n->x.color);
     fprintf(stderr, "(\n");
-    DumpNameList(n->body, TRUE);
+    DumpNameList(n->body, ttrue);
     fprintf(stderr, ")\n");
 }
 
@@ -1035,7 +1035,7 @@ static byte CreateNeededScreens(node list, screen *res_Screens) {
 		    c = list->x.color;
 		    r = attr + w * h;
 		    while (len--) {
-			f = Tutf_CP437_to_UTF_16[*n++];
+			f = Tutf_CP437_to_UTF_32[*n++];
 			*r++ = HWATTR(c, f);
 		    }
 		    while (_len++ < w)
@@ -1049,7 +1049,7 @@ static byte CreateNeededScreens(node list, screen *res_Screens) {
 	}
 	if (!attr || !s) {
 	    DeleteScreens(top);
-	    return FALSE;
+	    return tfalse;
 	}
 	if (prev)
 	    prev->Next = s;
@@ -1060,7 +1060,7 @@ static byte CreateNeededScreens(node list, screen *res_Screens) {
 	list = list->next;
     }
     *res_Screens = top;
-    return TRUE;
+    return ttrue;
 }
 
 /*
@@ -1138,24 +1138,24 @@ static byte NewCommonMenu(void **shm_M, menu *res_CommonMenu,
     
     if (new_MenuBindsMax > TW_MAXUDAT - COD_RESERVED) {
 	NewCommonMenu_Overflow();
-	return FALSE;
+	return tfalse;
     }
     
     if (new_MenuBindsMax && !(new_MenuBinds = (node *)AllocMem(new_MenuBindsMax * sizeof(node ))))
-	return FALSE;
+	return tfalse;
 	
     new_MenuBindsMax = 0;
     new_MenuList = *(shm_M + (&MenuList - Globals));
     
     if (!(Menu = Do(Create,Menu)(FnMenu, Ext(WM,MsgPort), (hwcol)0, (hwcol)0, (hwcol)0,
-				 (hwcol)0, (hwcol)0, (hwcol)0, TRUE)))
-	return FALSE;
+				 (hwcol)0, (hwcol)0, (hwcol)0, ttrue)))
+	return tfalse;
     
     /* ok, now create the CommonMenu. Fill new_MenuBinds[] as we proceed */
 
     for (M = new_MenuList; M; M = M->next) {
 	if ((W = Win4Menu(Menu)) &&
-	    (Item = Item4Menu(Menu, W, TRUE, strlen(M->name), M->name))) {
+	    (Item = Item4Menu(Menu, W, ttrue, strlen(M->name), M->name))) {
 	    
 	    if (!Item->Prev)
 		Item->Left = 0; /* remove padding */
@@ -1198,13 +1198,13 @@ static byte NewCommonMenu(void **shm_M, menu *res_CommonMenu,
 	*res_CommonMenu = Menu;
 	*res_MenuBinds = new_MenuBinds;
 	*res_MenuBindsMax = new_MenuBindsMax;
-	return TRUE;
+	return ttrue;
     }
     
     /* out of memory! */
     FreeMem(new_MenuBinds);
     Delete(Menu);
-    return FALSE;
+    return tfalse;
 }
 
 /*
@@ -1220,11 +1220,11 @@ static byte ReadGlobals(void) {
     screen new_Screens = (screen)0;
     
     if (!CreateNeededScreens(M[ScreenIndex], &new_Screens))
-	return FALSE;
+	return tfalse;
     
     if (!NewCommonMenu(M, &new_CommonMenu, &new_MenuBinds, &new_MenuBindsMax)) {
 	DeleteScreens(new_Screens);
-	return FALSE;
+	return tfalse;
     }
     
     /* ok, this is the no-return point. we must succeed now */
@@ -1234,7 +1234,7 @@ static byte ReadGlobals(void) {
     
     if (!GlobalsAreStatic)
 	FreeMem(MenuBinds);
-    GlobalsAreStatic = FALSE;
+    GlobalsAreStatic = tfalse;
     
     if (All->CommonMenu)
 	Delete(All->CommonMenu);
@@ -1266,9 +1266,9 @@ static byte ReadGlobals(void) {
 
     shm_TSR();
 
-    QueuedDrawArea2FullScreen = TRUE;
+    QueuedDrawArea2FullScreen = ttrue;
     
-    return TRUE;
+    return ttrue;
 }
 
 static byte rcparse(str path);
@@ -1280,7 +1280,7 @@ static byte rcload(void) {
     int fdm[2];
     int fdl[2];
 #endif
-    byte c = FALSE;
+    byte c = tfalse;
 
     if (!(path = FindFile(".twinrc", &len)))
 	return c;
@@ -1368,7 +1368,7 @@ static byte rcload(void) {
 
 byte InitModule(module Module) {
     Module->Private = (void *)rcload;
-    return TRUE;
+    return ttrue;
 }
 
 void QuitModule(module Module) {

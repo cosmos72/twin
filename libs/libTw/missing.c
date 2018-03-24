@@ -83,4 +83,68 @@ int Tw_option_strncmp(TW_CONST char *s1, TW_CONST char *s2, size_t n) {
     return strncmp(s1, s2, n);
 }
 
+enum {
+    pitch = 15,
+    menu_bar = 1,
+    window_title = 4 * pitch + 4,         /* == 64 */
+    window_title_focus = 5 * pitch + 4,   /* == 79 */
+    window_title_pressed = 6 * pitch + 4, /* == 94 */
+};
+enum {
+    utf16_replacement_char = 0xFFFD,
+    utf16_size = 0x10000,
+    utf21_size = 0x110000,
+    extra_flag = 1 << 23,
+};
 
+hwattr Tw_hwattr3(hwcol col, hwfont font, hwattr extra) {
+    hwattr attr;
+    if (font >= utf21_size)
+        font = utf16_replacement_char;
+    switch (extra) {
+    case 0:
+        return HWATTR(col, font);
+    case menu_bar:
+	attr = 1;
+	break;
+    case window_title: 
+        attr = 2;
+        break;
+    case window_title_focus:
+        attr = 3;
+        break;
+    case window_title_pressed:
+        attr = 4;
+        break;
+    default:
+        if (font >= utf16_size)
+            /*
+             * window borders support only the first 64k unicode characters:
+             * not enough bits for full unicode support in this case...
+             */
+            font = utf16_replacement_char;
+        return HWATTR(col, font) | (extra << 16) | extra_flag;
+    }
+    return HWATTR(col, attr * utf21_size + font);
+}
+
+hwfont Tw_hwfont(hwattr attr) {
+    attr &= 0x00FFFFFF;
+    if (attr & extra_flag)
+        return attr & 0xFFFF;
+    return attr % utf21_size;
+}
+
+static TW_CONST byte decode_hwextra[5] = {
+    0, menu_bar, window_title,
+    window_title_focus, window_title_pressed,
+};
+
+hwattr Tw_hwextra(hwattr attr) {
+    byte i;
+    attr &= 0x00FFFFFF;
+    if (attr & extra_flag)
+        return (attr >> 16) & 0x7F;
+    i = attr / utf21_size;
+    return decode_hwextra[i];
+}

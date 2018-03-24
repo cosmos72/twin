@@ -13,6 +13,7 @@
 #ifndef _TW_DEFS_H
 #define _TW_DEFS_H
 
+
 /* "Twin" in native byte-order */
 #define TWIN_MAGIC ((uldat)0x6E697754ul)
 /* "Go!!" in native byte-order */
@@ -70,31 +71,6 @@
 #define COL(fg,bg) (FG(fg)|BG(bg))
 #define COLBG(col) ((col) >> 4)
 #define COLFG(col) ((col) & 0x0F)
-
-
-/* if sizeof(hwattr) == 2, bytes are { 'ascii', 'col' } */
-
-/* hwattr <-> hwcol+hwfont conversion */
-#define HWATTR16(col,ascii) (((uint16_t)(byte)(col) << 8) | (uint16_t)(byte)(ascii))
-#define HWATTR_COLMASK16(attr) ((attr) & 0xFF00)
-#define HWATTR_FONTMASK16(attr) ((attr) & 0xFF)
-#define HWCOL16(attr) ((hwcol)((attr) >> 8))
-#define HWFONT16(attr) ((byte)(attr))
-
-
-/* if sizeof(hwattr) == 4, bytes are { 'ascii_low', 'col', 'ascii_high', 'extra_pseudo_graphics' } */
-
-/* hwattr <-> hwcol+hwfont conversion */
-#define HWATTR32(col,ascii) (((uint32_t)(byte)(col) << 8) | (((uint32_t)(ascii) & 0xFF00) << 8) | (uint32_t)(byte)(ascii))
-#define HWATTR_COLMASK32(attr) ((attr) & 0xFF00)
-#define HWATTR_FONTMASK32(attr) ((attr) & 0xFF00FF)
-#define HWCOL32(attr) ((hwcol)((attr) >> 8))
-#define HWFONT32(attr) ((uint16_t)(((attr) & 0xFF) | (((attr) >> 8) & 0xFF00)))
-#define HWEXTRA32(attr) ((byte)((attr) >> 24))
-
-#define HWATTR_EXTRA32(attr,extra) (((uint32_t)(byte)(extra) << 24) | ((uint32_t)(attr) & 0xFFFFFF))
-#define HWATTR_EXTRAMASK32(attr) ((attr) & 0xFF000000)
-
 
 
 

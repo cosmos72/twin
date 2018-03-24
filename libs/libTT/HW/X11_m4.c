@@ -273,7 +273,7 @@ static ttframe X11_Build_ttframe(ttframe o) {
 
 static ttbyte X11_FireEvent(XEvent *ev) {
     /* FIXME: finish this */
-    return TRUE;
+    return ttrue;
 }
 
 static ttbyte X11_Sync(void) {
@@ -294,7 +294,7 @@ static ttbyte X11_MainLoop(void) {
 	    break;
     }
     
-    exitmainloop = FALSE;
+    exitmainloop = tfalse;
     return 1;
 }
 static void X11_ExitMainLoop(void) {

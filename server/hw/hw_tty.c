@@ -56,8 +56,8 @@ struct tty_data {
     int tty_fd, VcsaFd, tty_number;
     byte *tty_name, *tty_TERM;
     uldat tty_charset;
-    Tutf_function tty_UTF_16_to_charset;
-    Tutf_array tty_charset_to_UTF_16;
+    Tutf_function tty_UTF_32_to_charset;
+    Tutf_array tty_charset_to_UTF_32;
     byte tty_use_utf8, tty_is_xterm;
     dat ttypar[3];
     FILE *stdOUT;
@@ -91,8 +91,8 @@ struct tty_data {
 #define tty_name	(ttydata->tty_name)
 #define tty_TERM	(ttydata->tty_TERM)
 #define tty_charset	(ttydata->tty_charset)
-#define tty_UTF_16_to_charset	(ttydata->tty_UTF_16_to_charset)
-#define tty_charset_to_UTF_16	(ttydata->tty_charset_to_UTF_16)
+#define tty_UTF_32_to_charset	(ttydata->tty_UTF_32_to_charset)
+#define tty_charset_to_UTF_32	(ttydata->tty_charset_to_UTF_32)
 #define tty_use_utf8		(ttydata->tty_use_utf8)
 #define tty_is_xterm		(ttydata->tty_is_xterm)
 #define ttypar		(ttydata->ttypar)
@@ -199,9 +199,9 @@ static byte null_InitMouseConfirm(void) {
     
 	null_InitMouse();
 	
-	return TRUE;
+	return ttrue;
     }
-    return FALSE;
+    return tfalse;
 }
 
 
@@ -263,30 +263,18 @@ static void tty_MogrifyUTF8(hwfont h) {
         buf[1] = (h & 0x3F) | 0x80;
         buf[2] = 0;
     }
-#if 1 /* hwfont is currently limited to 16 bits */
-    else {
-	buf[0] = (h >> 12) | 0xE0;
-	buf[1] = ((h >> 6) & 0x3F) | 0x80;
-        buf[2] = (h & 0x3F) | 0x80;
-        buf[3] = 0;
-    }
-#else /* ! 1 */
     else if (h <= 0xFFFF) {
 	buf[0] = (h >> 12) | 0xE0;
 	buf[1] = ((h >> 6) & 0x3F) | 0x80;
         buf[2] = (h & 0x3F) | 0x80;
         buf[3] = 0;
-    } else if (h <= 0x10FFFF) {
+    } else {
 	buf[0] = (h >> 18) | 0xF0;
 	buf[1] = ((h >> 12) & 0x3F) | 0x80;
 	buf[2] = ((h >>  6) & 0x3F) | 0x80;
         buf[3] = (h & 0x3F) | 0x80;
         buf[4] = 0;
-    } else {
-        buf[0] = ' ';
-        buf[1] = 0;
     }
-#endif
     fputs(buf, stdOUT);
 }
 
@@ -311,17 +299,17 @@ static byte tty_InitHW(void) {
 	try_stdout = MAYBE, try_termcap = MAYBE,
 	autotry_kbd = MAYBE, try_lrawkbd = MAYBE,
 	
-	force_mouse = FALSE, tc_colorbug = FALSE,
-	need_persistent_slot = FALSE,
-	try_ctty = FALSE, display_is_ctty = FALSE;
+	force_mouse = tfalse, tc_colorbug = tfalse,
+	need_persistent_slot = tfalse,
+	try_ctty = tfalse, display_is_ctty = tfalse;
 
     if (!(HW->Private = (struct tty_data *)AllocMem0(sizeof(struct tty_data), 1))) {
 	printk("      tty_InitHW(): Out of memory!\n");
-	return FALSE;
+	return tfalse;
     }
     saveCursorType = (uldat)-1;
     tty_charset = (uldat)-1;
-    tty_use_utf8 = TRUE+TRUE; /* i.e. unknown */
+    tty_use_utf8 = ttrue+ttrue; /* i.e. unknown */
     saveX = saveY = 0;
     stdOUT = NULL;
     tty_fd = -1;
@@ -331,7 +319,7 @@ static byte tty_InitHW(void) {
 	arg += 4;
 	
 	if (strncmp(arg, "tty", 3))
-	    return FALSE; /* user said "use <arg> as display, not tty" */
+	    return tfalse; /* user said "use <arg> as display, not tty" */
 	arg += 3;
 	
 	if (*arg == '@') {
@@ -370,15 +358,15 @@ static byte tty_InitHW(void) {
 		arg = strchr(arg+4, ',');
 	    } else if (!strncmp(arg, ",ctty", 5)) {
 		arg = strchr(arg+5, ',');
-		try_ctty = TRUE;
+		try_ctty = ttrue;
 	    } else if (!strncmp(arg, ",colorbug", 9)) {
 		arg = strchr(arg+9, ',');
-		tc_colorbug = TRUE;
+		tc_colorbug = ttrue;
 	    } else if (!strncmp(arg, ",mouse=", 7)) {
 		if (!strncmp(arg+7, "xterm", 5))
-		    force_mouse = TRUE;
+		    force_mouse = ttrue;
 		else if (!strncmp(arg+7, "twterm", 5))
-		    force_mouse = TRUE+TRUE;
+		    force_mouse = ttrue+ttrue;
 		arg = strchr(arg+7, ',');
 	    } else if (!strncmp(arg, ",noinput", 8)) {
 		arg = strchr(arg+8, ',');
@@ -408,7 +396,7 @@ static byte tty_InitHW(void) {
 	 * that was not our controlling tty
 	 * (even if we grab it as our new controlling tty)
 	 */
-	need_persistent_slot = TRUE;
+	need_persistent_slot = ttrue;
     
 	if ((tty_fd = open(tty_name, O_RDWR)) >= 0) {
 	    /*
@@ -441,7 +429,7 @@ static byte tty_InitHW(void) {
 	    FreeMem(tty_name);
 	    if (tty_TERM)
 		FreeMem(tty_TERM);
-	    return FALSE;
+	    return tfalse;
 	}
     } else {
 	/*
@@ -452,9 +440,9 @@ static byte tty_InitHW(void) {
 		    DisplayHWCTTY == HWCTTY_DETACHED
 		    ? "not usable after Detach"
 		    : "is already in use as display");
-	    return FALSE;
+	    return tfalse;
 	} else {
-	    display_is_ctty = TRUE;
+	    display_is_ctty = ttrue;
 	    tty_fd = 0;
 	    stdOUT = stdout;
 	    tty_name = CloneStr(ttyname(0));
@@ -484,9 +472,9 @@ static byte tty_InitHW(void) {
         /* honor user-specified charset */
 	if ((tty_charset = Tutf_charset_id(charset)) == (uldat)-1)
 	    printk("      tty_InitHW(): libTutf warning: unknown charset `%." STR(TW_SMALLBUFF) "s', assuming `ASCII'\n", charset);
-	else if (tty_charset == Tutf_charset_id(T_NAME(UTF_16))) {
+	else if (tty_charset == Tutf_charset_id(T_NAME(UTF_32))) {
 	    printk("      tty_InitHW(): charset `%." STR(TW_SMALLBUFF) "s' is Unicode, assuming terminal supports UTF-8\n", charset);
-	    tty_use_utf8 = TRUE;
+	    tty_use_utf8 = ttrue;
             tty_charset = (uldat)-1;
 	}
 	FreeMem(charset);
@@ -524,13 +512,13 @@ static byte tty_InitHW(void) {
 #ifdef CONF_HW_TTY_TERMCAP
              (TRY_V(termcap) && termcap_InitVideo()) ||
 #endif
-             FALSE) {
+             tfalse) {
 		
         if (
 #ifdef CONF_HW_TTY_LINUX
             GPM_InitMouse() ||
 #else
-            (printk("      tty_InitHW(): gpm mouse support not compiled, skipping it.\n"), FALSE) ||
+            (printk("      tty_InitHW(): gpm mouse support not compiled, skipping it.\n"), tfalse) ||
 #endif
             xterm_InitMouse(force_mouse) ||
             null_InitMouseConfirm()) {
@@ -542,11 +530,11 @@ static byte tty_InitHW(void) {
                 (autotry_kbd && stdin_InitKeyboard())) {
                 
                 if (tty_charset == (uldat)-1) {
-                    tty_UTF_16_to_charset = Tutf_UTF_16_to_ASCII;
-                    tty_charset_to_UTF_16 = Tutf_ASCII_to_UTF_16;
+                    tty_UTF_32_to_charset = Tutf_UTF_32_to_ASCII;
+                    tty_charset_to_UTF_32 = Tutf_ASCII_to_UTF_32;
                 } else {
-                    tty_UTF_16_to_charset = Tutf_UTF_16_to_charset_function(tty_charset);
-                    tty_charset_to_UTF_16 = Tutf_charset_to_UTF_16_array(tty_charset);
+                    tty_UTF_32_to_charset = Tutf_UTF_32_to_charset_function(tty_charset);
+                    tty_charset_to_UTF_32 = Tutf_charset_to_UTF_32_array(tty_charset);
                 }
 
 		/*
@@ -556,7 +544,7 @@ static byte tty_InitHW(void) {
 		if (need_persistent_slot)
 		    HW->NeedHW |= NEEDPersistentSlot;
 		if (display_is_ctty) {
-		    HW->DisplayIsCTTY = TRUE;
+		    HW->DisplayIsCTTY = ttrue;
 		    DisplayHWCTTY = HW;
 		}
 		HW->QuitHW = tty_QuitHW;
@@ -573,14 +561,14 @@ static byte tty_InitHW(void) {
 		HW->usedX = GetDisplayWidth();
 		HW->usedY = GetDisplayHeight();
 		
-		HW->RedrawVideo = FALSE;
+		HW->RedrawVideo = tfalse;
 		NeedRedrawVideo(0, 0, HW->X - 1, HW->Y - 1);
 
                 if (tc_scr_clear)
                     fputs(tc_scr_clear, stdOUT);
                 fflush(stdOUT);
 
-		return TRUE;
+		return ttrue;
 	    }
 	    HW->QuitMouse();
 	}
@@ -592,7 +580,7 @@ static byte tty_InitHW(void) {
 	close(tty_fd);
 	fclose(stdOUT);
     }
-    return FALSE;
+    return tfalse;
 }
 
 
@@ -636,7 +624,7 @@ static void tty_QuitHW(void) {
 
 byte InitModule(module Module) {
     Module->Private = tty_InitHW;
-    return TRUE;
+    return ttrue;
 }
 
 /* this MUST be included, or it seems that a bug in dlsym() gets triggered */

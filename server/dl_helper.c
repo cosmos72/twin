@@ -27,7 +27,7 @@ byte dlinit_once(void) {
             initialized = init_ok;
         }
     }
-    return initialized == init_ok ? TRUE : FALSE;
+    return initialized == init_ok ? ttrue : tfalse;
 }
 #endif
 

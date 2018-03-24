@@ -38,9 +38,6 @@
 #endif
 
 
-extern hwattr extra_POS_INSIDE;
-
-
 /* some object-oriented ones not included in fn_obj */
 
 void *OverrideMth(void **where, void *OrigMth, void *NewMth) {
@@ -301,12 +298,12 @@ static gadget FindGadgetByCode(widget Parent, udat Code) {
 
 static void IncMouseMotionN(void) {
     if (!All->MouseMotionN++)
-	EnableMouseMotionEvents(TRUE);
+	EnableMouseMotionEvents(ttrue);
 }
 
 static void DecMouseMotionN(void) {
     if (All->MouseMotionN && !--All->MouseMotionN)
-	EnableMouseMotionEvents(FALSE);
+	EnableMouseMotionEvents(tfalse);
 }
 
 
@@ -490,11 +487,11 @@ static void UnMapWidget(widget W) {
 }
 
 static void RaiseW(widget W) {
-    RaiseWidget(W, FALSE);
+    RaiseWidget(W, tfalse);
 }
 
 static void LowerW(widget W) {
-    LowerWidget(W, FALSE);
+    LowerWidget(W, tfalse);
 }
 
 static void SetXYWidget(widget W, dat X, dat Y) {
@@ -562,9 +559,9 @@ static byte InstallHookWidget(widget W, fn_hook Hook, fn_hook *WhereHook) {
 	W->Hook = WhereHook[0] = Hook;
 	W->WhereHook = WhereHook;
 	WhereHook[1] = (void *)W;
-	return TRUE;
+	return ttrue;
     }
-    return FALSE;
+    return tfalse;
 }
 
 static void RemoveHookWidget(widget W, fn_hook Hook, fn_hook *WhereHook) {
@@ -690,7 +687,7 @@ static void ChangeFieldGadget(gadget G, udat field, uldat CLEARMask, uldat XORMa
 		if (i & GADGETFL_PRESSED)
 		    PressGadget(G);
 		else
-		    UnPressGadget(G, TRUE);
+		    UnPressGadget(G, ttrue);
 	    }
 	    mask = GADGETFL_DISABLED|GADGETFL_TEXT_DEFCOL;
 	    if ((i & mask) != (G->Flags & mask)) {
@@ -712,9 +709,9 @@ static gadget CreateEmptyButton(fn_gadget Fn_Gadget, msgport Owner, dat XWidth, 
     ldat Size;
     byte i;
     dat j, k;
-# define _FULL  T_UTF_16_FULL_BLOCK
-# define _LOWER T_UTF_16_LOWER_HALF_BLOCK
-# define _UPPER T_UTF_16_UPPER_HALF_BLOCK
+# define _FULL  T_UTF_32_FULL_BLOCK
+# define _LOWER T_UTF_32_LOWER_HALF_BLOCK
+# define _UPPER T_UTF_32_UPPER_HALF_BLOCK
 
     if ((G=(gadget)Fn_Gadget->Fn_Widget->Create
 	 ((fn_widget)Fn_Gadget, Owner, ++XWidth, ++YWidth, 0, GADGETFL_USETEXT|GADGETFL_BUTTON, 0, 0, (hwattr)0))) {
@@ -768,7 +765,7 @@ byte FillButton(gadget G, widget Parent, udat Code, dat Left, dat Up,
     byte CONST *T;
     
     if (Code >= COD_RESERVED)
-	return FALSE;
+	return tfalse;
 
     G->Code = Code;
     G->Left = Left;
@@ -782,7 +779,7 @@ byte FillButton(gadget G, widget Parent, udat Code, dat Left, dat Up,
 	for (i=(dat)0; i<XWidth-(dat)1; i++) {
 	    G->USE.T.Text[0][i+j] = G->USE.T.Text[1][i+j+1] =
 		G->USE.T.Text[2][i+j] = G->USE.T.Text[3][i+j+1] =
-		Tutf_CP437_to_UTF_16[*(T++)];
+		Tutf_CP437_to_UTF_32[*(T++)];
 	    
 	    G->USE.T.Color[0][i+j] = G->USE.T.Color[1][i+j+1] = Color;
 	    G->USE.T.Color[2][i+j] = G->USE.T.Color[3][i+j+1] = ColorDisabled;
@@ -791,7 +788,7 @@ byte FillButton(gadget G, widget Parent, udat Code, dat Left, dat Up,
     if (Parent)
 	Act(Map,G)(G, Parent);
     
-    return TRUE;
+    return ttrue;
 }
 
 
@@ -853,12 +850,12 @@ static byte InitTtyData(window Window, dat ScrollBackLines) {
     hwattr *p = Window->USE.C.Contents, h;
     
     if (!Data && !(Window->USE.C.TtyData = Data = AllocMem(sizeof(ttydata))))
-	return FALSE;
+	return tfalse;
 
     if (!p && !(Window->USE.C.Contents = p = AllocMem(count * sizeof(hwattr))))
-	return FALSE;
+	return tfalse;
     
-    h = HWATTR( COL(WHITE,BLACK), ' ') | extra_POS_INSIDE;
+    h = HWATTR( COL(WHITE,BLACK), ' ');
     while (count--)
 	*p++ = h;
     
@@ -898,11 +895,11 @@ static byte InitTtyData(window Window, dat ScrollBackLines) {
     Data->G1 = Data->saveG1 = VT100GR_MAP;
 
     Data->utf8 = Data->utf8_count = Data->utf8_char = 0;
-    Data->InvCharset = Tutf_UTF_16_to_ISO_8859_1;
+    Data->InvCharset = Tutf_UTF_32_to_ISO_8859_1;
     Data->newLen = Data->newMax = 0;
     Data->newName = NULL;
     
-    return TRUE;
+    return ttrue;
 }
 
 /* window */
@@ -966,7 +963,7 @@ static window CreateWindow(fn_window Fn_Window, msgport Owner,
 	Window->MaxXWidth = TW_MAXDAT;
 	Window->MaxYWidth = TW_MAXDAT;
 
-	Window->Charset = Tutf_CP437_to_UTF_16;
+	Window->Charset = Tutf_CP437_to_UTF_32;
 	WriteMem(&Window->USE, '\0', sizeof(Window->USE));
 
 	if (W_USE(Window, USECONTENTS)) {
@@ -1477,7 +1474,7 @@ static void BgImageScreen(screen Screen, dat BgWidth, dat BgHeight, CONST hwattr
 	Screen->USE.B.BgWidth = BgWidth;
 	Screen->USE.B.BgHeight = BgHeight;
 	CopyMem(Bg, Screen->USE.B.Bg, size);
-	DrawArea2((screen)0, (widget)0, (widget)0, 0, Screen->YLimit+1, TW_MAXDAT, TW_MAXDAT, FALSE);
+	DrawArea2((screen)0, (widget)0, (widget)0, 0, Screen->YLimit+1, TW_MAXDAT, TW_MAXDAT, tfalse);
     }
 }
 
@@ -1551,7 +1548,7 @@ static menu FindMenuScreen(screen Screen) {
 
 static screen FindScreen(dat j) {
     screen CurrScreen;
-    byte VirtScrFound = FALSE;
+    byte VirtScrFound = tfalse;
     
     CurrScreen = All->FirstScreen;
     while (CurrScreen &&
@@ -1571,7 +1568,7 @@ static widget FocusScreen(screen tScreen) {
     if (tScreen && Screen != tScreen) {
 	MoveFirst(Screen, All, tScreen);
 	DrawArea2((screen)0, (widget)0, (widget)0,
-		 0, Min2(Screen->YLimit, tScreen->YLimit), TW_MAXDAT, TW_MAXDAT, FALSE);
+		 0, Min2(Screen->YLimit, tScreen->YLimit), TW_MAXDAT, TW_MAXDAT, tfalse);
 	UpdateCursor();
     }
     return (widget)Screen;
@@ -1712,7 +1709,7 @@ static gadget GetSelectedGadget(group Group) {
 static void SetSelectedGadget(group Group, gadget G) {
     if (!G || (G && G->Group == Group)) {
 	if (Group->SelectG)
-	    UnPressGadget(Group->SelectG, TRUE);
+	    UnPressGadget(Group->SelectG, ttrue);
 	if (G)
 	    PressGadget(G);
     }
@@ -1794,7 +1791,7 @@ static byte SetTextRow(row Row, ldat Len, CONST byte *Text, byte DefaultCol) {
 	    hwfont *RowText = Row->Text;
 	    ldat i = Len;
 	    while (i-- > 0) {
-		*RowText++ = Tutf_CP437_to_UTF_16[*Text++];
+		*RowText++ = Tutf_CP437_to_UTF_32[*Text++];
 	    }
 	    if (!(Row->Flags & ROW_DEFCOL) && !DefaultCol)
 		/* will not work correctly if sizeof(hwcol) != 1 */
@@ -1802,9 +1799,9 @@ static byte SetTextRow(row Row, ldat Len, CONST byte *Text, byte DefaultCol) {
 	}
 	Row->Len = Len;
 	Row->Gap = Row->LenGap = 0;
-	return TRUE;
+	return ttrue;
     }
-    return FALSE;
+    return tfalse;
 }
 
 static byte SetHWFontRow(row Row, ldat Len, CONST hwfont *HWFont, byte DefaultCol) {
@@ -1817,9 +1814,9 @@ static byte SetHWFontRow(row Row, ldat Len, CONST hwfont *HWFont, byte DefaultCo
 	}
 	Row->Len = Len;
 	Row->Gap = Row->LenGap = 0;
-	return TRUE;
+	return ttrue;
     }
-    return FALSE;
+    return tfalse;
 }
 
 
@@ -1896,8 +1893,8 @@ byte FindInfo(menu Menu, dat i) {
     row Info;
     
     if (Menu && (Info=Menu->Info) && Info->Len>(udat)i)
-	return TRUE;
-    return FALSE;
+	return ttrue;
+    return tfalse;
 }
 
 /* menuitem */
@@ -2009,7 +2006,7 @@ menuitem Create4MenuMenuItem(fn_menuitem Fn_MenuItem, obj Parent, window Window,
 /* this returns non-zero for compatibility */
 static uldat Create4MenuCommonMenuItem(fn_menuitem Fn_MenuItem, menu Menu) {
     if (Menu) {
-	Menu->CommonItems = TRUE;
+	Menu->CommonItems = ttrue;
 	SyncMenu(Menu);
 	return (uldat)1;
     }
@@ -2050,7 +2047,7 @@ static menu CreateMenu(fn_menu Fn_Menu, msgport MsgPort, hwcol ColItem, hwcol Co
 	Menu->ColShtCut=ColShtCut;
 	Menu->ColSelShtCut=ColSelShtCut;
 	Menu->FirstI=Menu->LastI=Menu->SelectI=(menuitem)0;
-	Menu->CommonItems = FALSE;
+	Menu->CommonItems = tfalse;
 	Menu->FlagDefColInfo=FlagDefColInfo;
 	Menu->Info=(row)0;
 	InsertLast(Menu, Menu, MsgPort);
@@ -2088,7 +2085,7 @@ static void DeleteMenu(menu Menu) {
 	 * as a window without menu cannot be displayed.
 	 *
 	 * optimization: if we are going to UnMap() a lot of windows,
-	 * we set QueuedDrawArea2FullScreen = TRUE, so that the UnMap()
+	 * we set QueuedDrawArea2FullScreen = ttrue, so that the UnMap()
 	 * calls do not have to redraw every time.
 	 */
 	if (!QueuedDrawArea2FullScreen) {
@@ -2101,7 +2098,7 @@ static void DeleteMenu(menu Menu) {
 		}
 	    }
 	    if (!count)
-		QueuedDrawArea2FullScreen = TRUE;
+		QueuedDrawArea2FullScreen = ttrue;
 	}
 	for (W = MsgPort->FirstW; W; W = WNext) {
 	    WNext = W->O_Next;
@@ -2394,7 +2391,7 @@ static void DeleteMsgPort(msgport MsgPort) {
 	
 	/*
 	 * optimization: if we are going to UnMap() a lot of windows,
-	 * we set QueuedDrawArea2FullScreen = TRUE, so that the UnMap()
+	 * we set QueuedDrawArea2FullScreen = ttrue, so that the UnMap()
 	 * calls do not have to redraw every time.
 	 */
 	for (W = MsgPort->FirstW; W && count; W = W->O_Next) {
@@ -2403,7 +2400,7 @@ static void DeleteMsgPort(msgport MsgPort) {
 	    }
 	}
 	if (!count)
-	    QueuedDrawArea2FullScreen = TRUE;
+	    QueuedDrawArea2FullScreen = ttrue;
 	
 	if (MsgPort->ShutDownHook)
 	    MsgPort->ShutDownHook(MsgPort);
@@ -2443,10 +2440,10 @@ static byte GrowExtensionMsgPort(msgport M) {
 	size = MAXID;
     
     if (!(newEs = (extension *)ReAllocMem0(M->Es, sizeof(extension), oldsize, size)))
-	return FALSE;
+	return tfalse;
     
     M->Es = newEs;
-    return TRUE;
+    return ttrue;
 }
 
 static void UseExtensionMsgPort(msgport M, extension E) {
@@ -2740,10 +2737,10 @@ static display_hw CreateDisplayHW(fn_display_hw Fn_DisplayHW, uldat NameLen, CON
 	    DisplayHW->NameLen = NameLen;
 	    DisplayHW->Name = newName;
 	    DisplayHW->Module = NULL;
-	    DisplayHW->Quitted = TRUE;
+	    DisplayHW->Quitted = ttrue;
 	    DisplayHW->AttachSlot = NOSLOT;
 	    /*
-	     * ->Quitted will be set to FALSE only
+	     * ->Quitted will be set to tfalse only
 	     * after DisplayHW->InitHW() has succeeded
 	     */
 	    InsertLast(DisplayHW, DisplayHW, All);
@@ -2803,9 +2800,9 @@ static void DeleteDisplayHW(display_hw DisplayHW) {
     
     if (!Quitted) {
 	if (!All->FirstDisplayHW || isCTTY)
-	    RunNoHW(FALSE);
+	    RunNoHW(tfalse);
 	else if (All->FirstDisplayHW && ResizeDisplay()) {
-	    QueuedDrawArea2FullScreen = TRUE;
+	    QueuedDrawArea2FullScreen = ttrue;
 	}
     }
 }

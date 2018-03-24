@@ -12,13 +12,13 @@
 
 #define T_TEMPLATE T_MAP(TEMPLATE)
 
-hwfont T_CAT3(Tutf_,T_TEMPLATE,_to_UTF_16)[0x100] = {
-#define EL(x) T_UTF(UTF_16,x),
+hwfont T_CAT3(Tutf_,T_TEMPLATE,_to_UTF_32)[0x100] = {
+#define EL(x) T_UTF(UTF_32,x),
     T_LIST(T_TEMPLATE,EL)
 #undef EL
 };
 
-hwfont T_CAT(Tutf_UTF_16_to_,T_TEMPLATE) (hwfont c)
+hwfont T_CAT(Tutf_UTF_32_to_,T_TEMPLATE) (hwfont c)
 {
 #define EL(x) +1
     enum {
@@ -27,16 +27,16 @@ hwfont T_CAT(Tutf_UTF_16_to_,T_TEMPLATE) (hwfont c)
     };
 #undef EL
     
-    static utf16_hash_table * table = NULL;
+    static utf32_hash_table * table = NULL;
     
     /* a single 8-bit charset obviously cannot contain all unicode chars. this is just a best effort. */
     if (!table)
-	table = utf16_hash_create(T_CAT3(Tutf_,T_TEMPLATE,_to_UTF_16), n, n_power_of_2);
+	table = utf32_hash_create(T_CAT3(Tutf_,T_TEMPLATE,_to_UTF_32), n, n_power_of_2);
 
 #ifdef TEMPLATE_REDEFINES_ASCII
-    return utf16_hash_search(table, c, FALSE);
+    return utf32_hash_search(table, c, tfalse);
 #else
-    return utf16_hash_search(table, c, TRUE);
+    return utf32_hash_search(table, c, ttrue);
 #endif
 }
 

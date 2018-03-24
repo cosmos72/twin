@@ -31,9 +31,6 @@
 #include <Tw/Twstat_defs.h>
 #include <Tutf/Tutf.h>
 
-extern hwattr extra_POS_INSIDE;
-
-
 /*
  * VT102 emulator
  */
@@ -149,7 +146,7 @@ static void dirty_tty(dat x1, dat y1, dat x2, dat y2) {
 }
 
 static void flush_tty(void) {
-    byte doupdate = FALSE;
+    byte doupdate = tfalse;
     dat i;
     
     /* first, draw on screen whatever changed in the window */
@@ -169,9 +166,9 @@ static void flush_tty(void) {
 	Pos = Base + Win->CurX + (Win->CurY + Win->USE.C.HSplit) * SizeX;
 	if (Pos >= Split) Pos -= Split - Base;
 	
-	doupdate = TRUE;
+	doupdate = ttrue;
     } else
-	doupdate = FALSE;
+	doupdate = tfalse;
 
     if ((doupdate || (*Flags & TTY_UPDATECURSOR)) && ContainsCursor((widget)Win))
 	UpdateCursor();
@@ -213,7 +210,7 @@ static void insert_char(ldat nr) {
 	p[nr] = *p;
     
     while (nr--)
-	*q++ = HWATTR(ColText, ' ') | extra_POS_INSIDE;
+	*q++ = HWATTR(ColText, ' ');
 
     *Flags &= ~TTY_NEEDWRAP;
 }
@@ -231,7 +228,7 @@ INLINE void delete_char(ldat nr) {
 	p++;
     }
     while (nr--)
-	*p++ = HWATTR(ColText, ' ') | extra_POS_INSIDE;
+	*p++ = HWATTR(ColText, ' ');
     
     *Flags &= ~TTY_NEEDWRAP;
 }
@@ -329,7 +326,7 @@ static void fill(hwattr *s, hwattr c, ldat len) {
 
 static void scrollup(dat t, dat b, dat nr) {
     hwattr *d, *s;
-    byte accel = FALSE;
+    byte accel = tfalse;
     
     if (t + nr >= b)
 	nr = b - t - 1;
@@ -338,7 +335,7 @@ static void scrollup(dat t, dat b, dat nr) {
 
     /* try to accelerate this */
     if ((widget)Win == All->FirstScreen->FirstW) {
-	accel = TRUE;
+	accel = ttrue;
 	flush_tty();
     } else
 	dirty_tty(0, t, SizeX-1, b-1);
@@ -366,7 +363,7 @@ static void scrollup(dat t, dat b, dat nr) {
     }
     
     /* clear the last nr lines */
-    fill(d + (b-t-nr) * SizeX, HWATTR(ColText, ' ') | extra_POS_INSIDE, nr * SizeX);
+    fill(d + (b-t-nr) * SizeX, HWATTR(ColText, ' '), nr * SizeX);
     
     if (accel)
 	ScrollFirstWindowArea(0, t, SizeX-1, b-1, 0, -nr);
@@ -375,7 +372,7 @@ static void scrollup(dat t, dat b, dat nr) {
 static void scrolldown(dat t, dat b, dat nr) {
     hwattr *s;
     ldat step;
-    byte accel = FALSE;
+    byte accel = tfalse;
     
     if (t+nr >= b)
 	nr = b - t - 1;
@@ -384,7 +381,7 @@ static void scrolldown(dat t, dat b, dat nr) {
 
     /* try to accelerate this */
     if ((widget)Win == All->FirstScreen->FirstW) {
-	accel = TRUE;
+	accel = ttrue;
 	flush_tty();
     } else
 	dirty_tty(0, t, SizeX-1, b-1);
@@ -393,7 +390,7 @@ static void scrolldown(dat t, dat b, dat nr) {
     step = SizeX * nr;
 
     rev_copy(s, s + step, (b-t-nr)*SizeX);
-    fill(s, HWATTR(ColText, ' ') | extra_POS_INSIDE, step);
+    fill(s, HWATTR(ColText, ' '), step);
 
     if (accel)
 	ScrollFirstWindowArea(0, t, SizeX-1, b-1, 0, nr);
@@ -470,7 +467,7 @@ static void csi_J(int vpar) {
       default:
 	return;
     }
-    fill(start, HWATTR(ColText, ' ') | extra_POS_INSIDE, count);
+    fill(start, HWATTR(ColText, ' '), count);
     
     *Flags &= ~TTY_NEEDWRAP;
 }
@@ -499,7 +496,7 @@ static void csi_K(int vpar) {
 	return;
     }
     while (count--)
-	*start++ = HWATTR(ColText, ' ') | extra_POS_INSIDE;
+	*start++ = HWATTR(ColText, ' ');
 
     *Flags &= ~TTY_NEEDWRAP;
 }
@@ -515,7 +512,7 @@ static void csi_X(int vpar) /* erase the following vpar positions */
     dirty_tty(X, Y, X+vpar-1, Y);
     
     while (vpar--)
-	*start++ = HWATTR(ColText, ' ') | extra_POS_INSIDE;
+	*start++ = HWATTR(ColText, ' ');
     
     *Flags &= ~TTY_NEEDWRAP;
 }
@@ -542,20 +539,20 @@ static void update_eff(void) {
 
 # define setCharset(g) do switch ((currG = (g))) { \
   case VT100GR_MAP: \
-    Charset = Tutf_VT100GR_to_UTF_16; \
-    InvCharset = Tutf_UTF_16_to_VT100GR; \
+    Charset = Tutf_VT100GR_to_UTF_32; \
+    InvCharset = Tutf_UTF_32_to_VT100GR; \
     break; \
   case LATIN1_MAP: \
-    Charset = Tutf_ISO8859_1_to_UTF_16; \
-    InvCharset = Tutf_UTF_16_to_ISO8859_1; \
+    Charset = Tutf_ISO8859_1_to_UTF_32; \
+    InvCharset = Tutf_UTF_32_to_ISO8859_1; \
     break; \
   case IBMPC_MAP: \
-    Charset = Tutf_CP437_to_UTF_16; \
-    InvCharset = Tutf_UTF_16_to_CP437; \
+    Charset = Tutf_CP437_to_UTF_32; \
+    InvCharset = Tutf_UTF_32_to_CP437; \
     break; \
   case USER_MAP: \
     Charset = All->Gtranslations[USER_MAP]; \
-    InvCharset = Tutf_UTF_16_to_ISO8859_1; /* very rough :( */ \
+    InvCharset = Tutf_UTF_32_to_ISO8859_1; /* very rough :( */ \
     break; \
 } while (0)
 
@@ -743,7 +740,7 @@ static void set_mode(byte on_off) {
 	    break;
 	  case 9: /* new style */
 	    CHANGE_BIT(TTY_REPORTMOUSE, on_off);
-	    CHANGE_BIT(TTY_REPORTMOUSE2, FALSE);
+	    CHANGE_BIT(TTY_REPORTMOUSE2, tfalse);
 	    Act(ChangeField,Win)
 		(Win, TWS_window_Attrib, WINDOW_WANT_MOUSE_MOTION|WINDOW_WANT_MOUSE,
 		 on_off ? WINDOW_WANT_MOUSE : 0);
@@ -761,7 +758,7 @@ static void set_mode(byte on_off) {
 		 on_off ? WINDOW_WANT_MOUSE|WINDOW_WANT_MOUSE_MOTION : 0);
 	    break;
 	  case 1000: /* classic xterm style */
-	    CHANGE_BIT(TTY_REPORTMOUSE, FALSE);
+	    CHANGE_BIT(TTY_REPORTMOUSE, tfalse);
 	    CHANGE_BIT(TTY_REPORTMOUSE2, on_off);
 	    Act(ChangeField,Win)
 		(Win, TWS_window_Attrib, WINDOW_WANT_MOUSE|WINDOW_WANT_MOUSE_MOTION,
@@ -937,18 +934,18 @@ static byte grow_newtitle(void) {
 	if ((_Name = ReAllocMem(newName, _Max))) {
 	    newName = _Name;
 	    newMax = _Max;
-	    return TRUE;
+	    return ttrue;
 	}
     }
-    return FALSE;
+    return tfalse;
 }
 
 static byte insert_newtitle(byte c) {
     if (newLen < newMax || grow_newtitle()) {
 	newName[ newLen++ ] = c;
-	return TRUE;
+	return ttrue;
     }
-    return FALSE;
+    return tfalse;
 }
 
 static void set_newtitle(void) {
@@ -1080,7 +1077,7 @@ INLINE void write_ctrl(byte c) {
 	    DState = EShash;
 	    return;
 	  case 'c':
-	    reset_tty(TRUE);
+	    reset_tty(ttrue);
 	    break;
 	  case '>':  /* Numeric keypad */
 	    *Flags &= ~TTY_KBDAPPLIC;
@@ -1304,7 +1301,7 @@ INLINE void write_ctrl(byte c) {
 	if (c == '8') {
 	    /* DEC screen alignment test */
 	    dirty_tty(0, 0, SizeX-1, SizeY-1);
-	    fill(Start, HWATTR(ColText, 'E') | extra_POS_INSIDE, (ldat)SizeX * SizeY);
+	    fill(Start, HWATTR(ColText, 'E'), (ldat)SizeX * SizeY);
 	}
 	break;
 	
@@ -1387,10 +1384,10 @@ widget TtyKbdFocus(widget newW) {
 	    newFlags = ((window)newW)->USE.C.TtyData->Flags;
 	
 	if ((newFlags ^ kbdFlags) & TTY_KBDAPPLIC)
-	    ConfigureHW(HW_KBDAPPLIC, FALSE, newFlags & TTY_KBDAPPLIC);
+	    ConfigureHW(HW_KBDAPPLIC, tfalse, newFlags & TTY_KBDAPPLIC);
 	
 	if ((newFlags ^ kbdFlags) & TTY_ALTCURSKEYS)
-	    ConfigureHW(HW_ALTCURSKEYS, FALSE, newFlags & TTY_ALTCURSKEYS);
+	    ConfigureHW(HW_ALTCURSKEYS, tfalse, newFlags & TTY_ALTCURSKEYS);
 	
 	kbdFlags = newFlags;
     }
@@ -1414,7 +1411,7 @@ static void common(window Window) {
     /* scroll YLogic to bottom */
     if (Win->YLogic < ScrollBack) {
 	if ((widget)Win == All->FirstScreen->FirstW)
-	    ScrollFirstWindow(0, ScrollBack - Win->YLogic, TRUE);
+	    ScrollFirstWindow(0, ScrollBack - Win->YLogic, ttrue);
 	else {
 	    dirty_tty(0, 0, SizeX-1, SizeY-1);
 	    Win->YLogic = ScrollBack;
@@ -1428,9 +1425,9 @@ static void common(window Window) {
 
 /*
  * combine (*pc) with partial utf-8 char stored in utf8_char.
- * return TRUE if the utf-8 char is complete, and can be displayed.
+ * return ttrue if the utf-8 char is complete, and can be displayed.
  */
-static byte combine_utf8(hwfont *pc) {
+static tbool combine_utf8(hwfont *pc) {
     hwfont c = *pc;
     
     if (utf8_count > 0 && (c & 0xc0) == 0x80) {
@@ -1450,15 +1447,9 @@ static byte combine_utf8(hwfont *pc) {
     } else if ((c & 0xf8) == 0xf0) {
 	utf8_count = 3;
 	utf8_char = (c & 0x07);
-    } else if ((c & 0xfc) == 0xf8) {
-	utf8_count = 4;
-	utf8_char = (c & 0x03);
-    } else if ((c & 0xfe) == 0xfc) {
-	utf8_count = 5;
-	utf8_char = (c & 0x01);
     } else
 	utf8_count = 0;
-    return FALSE;
+    return tfalse;
 }
 
 /* this is the main entry point */
@@ -1506,7 +1497,7 @@ void TtyWriteAscii(window Window, ldat Len, CONST byte *AsciiSeq) {
                     c = applyG((byte)c);
             }
         } else
-            utf8_in_use = printable = FALSE;
+            utf8_in_use = printable = tfalse;
 
 	if (printable && state_normal) {
 	    /* Now try to find out how to display it */
@@ -1518,7 +1509,7 @@ void TtyWriteAscii(window Window, ldat Len, CONST byte *AsciiSeq) {
 		insert_char(1);
 	    
 	    dirty_tty(X, Y, X, Y);
-	    *Pos = HWATTR(Color, c) | extra_POS_INSIDE;
+	    *Pos = HWATTR(Color, c);
 	    
 	    if (X == SizeX - 1) {
 		if (*Flags & TTY_AUTOWRAP) 
@@ -1558,7 +1549,7 @@ void TtyWriteHWFont(window Window, ldat Len, CONST hwfont *HWFont) {
 	    ok = (c >= 32 || !(((*Flags & TTY_DISPCTRL ? CTRL_ALWAYS : CTRL_ACTION) >> c) & 1))
 		&& (c != 127 || (*Flags & TTY_DISPCTRL)) && (c != 128+27);
 	} else
-	    ok = TRUE;
+	    ok = ttrue;
 	
 	if (DState == ESnormal && ok) {
 
@@ -1571,7 +1562,7 @@ void TtyWriteHWFont(window Window, ldat Len, CONST hwfont *HWFont) {
 		insert_char(1);
 	    
 	    dirty_tty(X, Y, X, Y);
-	    *Pos = HWATTR(Color, c) | extra_POS_INSIDE;
+	    *Pos = HWATTR(Color, c);
 	    
 	    if (X == SizeX - 1) {
 		if (*Flags & TTY_AUTOWRAP) 
@@ -1610,7 +1601,7 @@ void TtyWriteString(window Window, ldat Len, CONST byte *String) {
 	}
 	    
 	dirty_tty(X, Y, X, Y);
-	*Pos = HWATTR(Color, c) | extra_POS_INSIDE;
+	*Pos = HWATTR(Color, c);
 	    
 	if (X == SizeX - 1) {
 	    if (*Flags & TTY_AUTOWRAP) 
@@ -1631,7 +1622,6 @@ void TtyWriteString(window Window, ldat Len, CONST byte *String) {
 void TtyWriteHWAttr(window Window, dat x, dat y, ldat len, CONST hwattr *text) {
     ldat left, max, chunk;
     ldat i;
-    hwattr extra;
     hwattr *dst;
     
     if (!Window || !len || !text || !W_USE(Window, USECONTENTS) || !Window->USE.C.TtyData)
@@ -1651,7 +1641,7 @@ void TtyWriteHWAttr(window Window, dat x, dat y, ldat len, CONST hwattr *text) {
     /* scroll YLogic to bottom */
     if (Win->YLogic < ScrollBack) {
 	if ((widget)Win == All->FirstScreen->FirstW)
-	    ScrollFirstWindow(0, ScrollBack - Win->YLogic, TRUE);
+	    ScrollFirstWindow(0, ScrollBack - Win->YLogic, ttrue);
 	else {
 	    dirty_tty(0, 0, SizeX-1, SizeY-1);
 	    Win->YLogic = ScrollBack;
@@ -1667,11 +1657,8 @@ void TtyWriteHWAttr(window Window, dat x, dat y, ldat len, CONST hwattr *text) {
 	    dst -= Split - Base;
 	max = Split - dst;
 	chunk = Min2(left, max);
-	for (i = chunk; i; i--, text++, dst++) {
-	    if ((extra = HWEXTRA32(*text)))
-		*dst = *text;
-	    else
-		*dst = *text | extra_POS_INSIDE;
+	for (i = chunk; i; i--) {
+            *dst++ = *text++;
 	}
     } while ((left -= chunk) > 0);
 

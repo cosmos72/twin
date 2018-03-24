@@ -527,7 +527,7 @@
     EL(_LATIN_SMALL_LETTER_T_WITH_CEDILLA) \
     EL(_DOT_ABOVE)
 
-/* list of all characters NOT IDENTICALLY MAPPED to UTF-16 */
+/* list of all characters NOT IDENTICALLY MAPPED to UTF-32 */
 #define T_NLIST_ISO8859_2(EL) \
     EL(_LATIN_CAPITAL_LETTER_A_WITH_OGONEK) \
     EL(_BREVE) \

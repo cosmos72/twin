@@ -144,19 +144,19 @@ static byte Check4SpecialArgs(void) {
     if (main_argv[1] && !main_argv[2]) {
 	if (!strcmp(main_argv[1], "-h") || !strcmp(main_argv[1], "-help")) {
 	    Usage();
-	    return TRUE;
+	    return ttrue;
 	} else if (!strcmp(main_argv[1], "-V") || !strcmp(main_argv[1], "-version")) {
 	    ShowVersion();
-	    return TRUE;
+	    return ttrue;
 	}
     }
-    return FALSE;
+    return tfalse;
 }
 
 static byte DieWMSo(void) {
     printk("twin: fatal: failed to load the window manager: %."STR(TW_SMALLBUFF)"s\n", ErrStr);
     flushk();
-    return FALSE;
+    return tfalse;
 }
 
 static byte Init(void) {
@@ -205,7 +205,7 @@ void Quit(int status) {
     if (All->AtQuit)
 	All->AtQuit();
     
-    SuspendHW(FALSE);
+    SuspendHW(tfalse);
     /* not QuitHW() as it would fire up socket.so and maybe fork() in bg */
     
     if (status < 0)
@@ -217,11 +217,11 @@ void NoOp(void) {
 }
 
 byte AlwaysTrue(void) {
-    return TRUE;
+    return ttrue;
 }
 
 byte AlwaysFalse(void) {
-    return FALSE;
+    return tfalse;
 }
 
 void *AlwaysNull(void) {
@@ -275,7 +275,7 @@ int main(int argc, char *argv[]) {
 	Quit(0);
 
     /* not needed... done by InitHW() */
-    /* QueuedDrawArea2FullScreen = TRUE; */
+    /* QueuedDrawArea2FullScreen = ttrue; */
     
     InstantNow(Now); /* read again... */
     SortAllMsgPortsByCallTime();
@@ -308,7 +308,7 @@ int main(int argc, char *argv[]) {
 		    this_timeout->tv_usec = MINDELAY;
 		}
 		StrategyFlag = HW_DELAY;
-		ChangedVideoFlagAgain = FALSE;
+		ChangedVideoFlagAgain = tfalse;
 	    }
 	}
 	
@@ -319,7 +319,7 @@ int main(int argc, char *argv[]) {
 	    
 	    if (NeedHW & NEEDResizeDisplay) {
 		ResizeDisplay();
-		QueuedDrawArea2FullScreen = TRUE;
+		QueuedDrawArea2FullScreen = ttrue;
 	    }
 	    
 	    if (NeedHW & NEEDSelectionExport)

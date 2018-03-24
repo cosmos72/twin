@@ -273,7 +273,7 @@ static void GGI_FlushVideo(void) {
        iff = ChangedVideoFlag
 	 && Video[HW->XY[0] + HW->XY[1] * (ldat)DisplayWidth]
 	 != OldVideo[HW->XY[0] + HW->XY[1] * (ldat)DisplayWidth];
-       /* TRUE if and only if the cursor will be erased by burst */
+       /* ttrue if and only if the cursor will be erased by burst */
     }
    
     /* first burst all changes */
@@ -412,14 +412,14 @@ static byte GGI_InitHW(void) {
     
     if (GGI_HW) {
 	printk("      GGI_InitHW() failed: libggi already in use.\n");
-	return FALSE;
+	return tfalse;
     }
 
     if (arg && len > 4) {
 
 	arg += 4;
 	if (strncmp(arg, "ggi", 3))
-	    return FALSE; /* user said "use <arg> as display, not ggi" */
+	    return tfalse; /* user said "use <arg> as display, not ggi" */
 	arg += 3;
 	
 	if ((opt = strstr(arg, ",noinput"))) {
@@ -436,11 +436,11 @@ static byte GGI_InitHW(void) {
 
     if (ggiInit() < 0) {
 	if (opt) *opt = ',';
-	return FALSE;
+	return tfalse;
     }
     if (!(HW->Private = (struct GGI_data *)AllocMem(sizeof(struct GGI_data)))) {
 	printk("      GGI_InitHW(): Out of memory!\n");
-	return FALSE;
+	return tfalse;
     }
 
     gvis = arg ? ggiOpen(arg, NULL) : ggiOpen(NULL);
@@ -520,13 +520,13 @@ static byte GGI_InitHW(void) {
 	HW->QuitMouse = NoOp;
 	HW->QuitVideo = NoOp;
 
-	HW->DisplayIsCTTY = FALSE;
+	HW->DisplayIsCTTY = tfalse;
 	HW->FlagsHW &= ~FlHWSoftMouse; /* mouse pointer handled by X11 server */
 
 	HW->FlagsHW |= FlHWNeedOldVideo;
 	HW->FlagsHW |= FlHWExpensiveFlushVideo;
 	HW->NeedHW = 0;
-	HW->CanResize = FALSE; /* TODO: a real GGI_Resize() */
+	HW->CanResize = tfalse; /* TODO: a real GGI_Resize() */
 	HW->merge_Threshold = 0;
 
 	gOrigSelect = OverrideSelect;
@@ -539,11 +539,11 @@ static byte GGI_InitHW(void) {
 	 * without forcing all other displays
 	 * to redraw everything too.
 	 */
-	HW->RedrawVideo = FALSE;
+	HW->RedrawVideo = tfalse;
 	NeedRedrawVideo(0, 0, HW->X - 1, HW->Y - 1);
 
 	if (opt) *opt = ',';
-	return TRUE;
+	return ttrue;
 	
     } while (0); else {
 	if (arg || (arg = getenv("GGI_DISPLAY")))
@@ -557,14 +557,14 @@ static byte GGI_InitHW(void) {
     ggiExit();
     
     if (opt) *opt = ',';
-    return FALSE;
+    return tfalse;
 }
 
 
 
 byte InitModule(module Module) {
     Module->Private = GGI_InitHW;
-    return TRUE;
+    return ttrue;
 }
 
 /* this MUST be included, or it seems that a bug in dlsym() gets triggered */

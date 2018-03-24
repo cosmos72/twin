@@ -527,7 +527,7 @@
     EL(_GREEK_SMALL_LETTER_OMEGA_WITH_TONOS) \
     EL(_UNDEFINED_00FF)
 
-/* list of all characters NOT IDENTICALLY MAPPED to UTF-16 */
+/* list of all characters NOT IDENTICALLY MAPPED to UTF-32 */
 #define T_NLIST_CP1253(EL) \
     EL(_EURO_SIGN) \
     EL(_UNDEFINED_0081) \

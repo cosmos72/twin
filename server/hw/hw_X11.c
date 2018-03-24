@@ -48,7 +48,7 @@ struct x11_data {
     /* we support showing only a portion of the whole twin display */
     dat xhw_view, xhw_startx, xhw_starty, xhw_endx, xhw_endy;
     
-    Tutf_function xUTF_16_to_charset;
+    Tutf_function xUTF_32_to_charset;
     Display     *xdisplay;
     Window       xwindow;
     GC           xgc;
@@ -82,7 +82,7 @@ struct x11_data {
 #define xhw_endx	(xdata->xhw_endx)
 #define xhw_endy	(xdata->xhw_endy)
 
-#define xUTF_16_to_charset	(xdata->xUTF_16_to_charset)
+#define xUTF_32_to_charset	(xdata->xUTF_32_to_charset)
 #define xdisplay	(xdata->xdisplay)
 #define xwindow		(xdata->xwindow)
 #define xgc		(xdata->xgc)
@@ -162,7 +162,7 @@ INLINE void X11_Mogrify(dat x, dat y, uldat len) {
 		xbegin = (x - xhw_startx) * (ldat)xwfont;
 		_col = col;
 	    }
-	    f = xUTF_16_to_charset(HWFONT(*V));
+	    f = xUTF_32_to_charset(HWFONT(*V));
 	    buf[buflen  ].byte1 = f >> 8;
 	    buf[buflen++].byte2 = f & 0xFF;
 	}
@@ -184,13 +184,40 @@ INLINE ldat diff(ldat x, ldat y) {
 
 enum { MAX_FONT_SCORE = 100 };
 
+/*
+ * return ttrue if each font glyph is either 'narrow' (latin, etc.) or 'wide' (CJK...)
+ * with 'wide' characters exactly twice as wide as 'narrow' ones
+ */
+static tbool X11_FontIsDualWidth(CONST XFontStruct *info) {
+    XCharStruct * p = info->per_char;
+    ldat  wide = info->max_bounds.width,
+	narrow = info->min_bounds.width,
+	i, n_chars, w;
+    if (wide != narrow * 2)
+	return tfalse;
+    if (p == NULL)
+	/*
+	 * no way to check per-character bounding box. hope for the best... 
+	 * at least GNU unifont falls in this case.
+	 */
+	return ttrue;
+
+    n_chars = (ldat)(info->max_byte1 - info->min_byte1 + 1) * (info->max_char_or_byte2 - info->min_char_or_byte2 + 1);
+    for (i = 0; i < n_chars; i++) {
+	w = p[i].width;
+	if (w != 0 && w != narrow && w != wide)
+	    return tfalse;
+    }
+    return ttrue;
+}
+
 /* if font is monospaced, return its score. otherwise return MINLDAT */
 static ldat X11_MonospaceFontScore(CONST XFontStruct *info, udat fontwidth, udat fontheight, ldat best_score) {
     ldat score = TW_MINLDAT,
-        width = info->max_bounds.width,
-        min_width = info->min_bounds.width;
+        width = info->min_bounds.width,
+        max_width = info->max_bounds.width;
     
-    if (width == min_width) {
+    if (width == max_width || X11_FontIsDualWidth(info)) {
         ldat height = (ldat)info->ascent + info->descent;
         ldat prod1 = (ldat)height * fontwidth;
         ldat prod2 = (ldat)width * fontheight;
@@ -211,6 +238,7 @@ static char * X11_AutodetectFont(udat fontwidth, udat fontheight) {
         CONST char * wildcard;
         ldat score_adj;
     } patterns[] = {
+        /* { "-gnu-unifont-medium-r-normal-*-%s?-*-*-*-*-*-iso10646-1",  0 }, double-width chars not supported yet */
         { "-misc-console-medium-r-normal-*-%s?-*-*-*-*-*-iso10646-1", 0 },
         { "-misc-fixed-medium-r-normal-*-%s?-*-*-*-*-*-iso10646-1", 0 },
         { "-*-*-medium-r-normal-*-%s?-*-*-*-*-*-iso10646-1",        0 },
@@ -229,7 +257,7 @@ static char * X11_AutodetectFont(udat fontwidth, udat fontheight) {
     char ** names = NULL;
     char * best = NULL;
     ldat score, best_score = TW_MINLDAT;
-    byte beatable_score = TRUE, look_up = fontheight >= 10 && (fontheight % 10) >= 5;
+    byte beatable_score = ttrue, look_up = fontheight >= 10 && (fontheight % 10) >= 5;
     if (!pattern)
         return NULL;
     
@@ -245,11 +273,17 @@ static char * X11_AutodetectFont(udat fontwidth, udat fontheight) {
             sprintf(pattern, patterns[i].wildcard, digits + (digits[0] == '0'));
             names = XListFontsWithInfo(xdisplay, pattern, max_fonts, &n_fonts, &info);
 
+	    /* printk("%4d fonts match '%s'\n", names ? n_fonts : 0, pattern); */
             if (names == NULL)
                 continue;
-        
+
             for (k = 0; k < n_fonts && beatable_score; k++)
             {
+		/*
+		printk("     font        '%s'\t direction = %u, min_byte1 = %u, max_byte1 = %u, min_char_or_byte2 = %d, max_char_or_byte2 = %d\n",
+		       names[k], info[k].direction, info[k].min_byte1, info[k].max_byte1, info[k].min_char_or_byte2, info[k].max_char_or_byte2);
+		 */
+
                 if (info[k].direction == FontLeftToRight
                     && info[k].min_byte1 == 0
                     && info[k].min_char_or_byte2 <= 32)
@@ -259,7 +293,7 @@ static char * X11_AutodetectFont(udat fontwidth, udat fontheight) {
                         continue;
             
                     best_score = score;
-                    beatable_score = best_score <= MAX_FONT_SCORE + score_adj;
+                    beatable_score = best_score < MAX_FONT_SCORE + score_adj;
 
                     FreeMem(best);
                     best = CloneStr(names[k]);
@@ -274,7 +308,7 @@ static char * X11_AutodetectFont(udat fontwidth, udat fontheight) {
 
 static byte X11_LoadFont(CONST char * fontname, udat fontwidth, udat fontheight) {
     char * alloc_fontname = 0;
-    byte loaded = FALSE;
+    byte loaded = tfalse;
 
     if (!fontname)
         fontname = alloc_fontname = X11_AutodetectFont(fontwidth, fontheight);
@@ -282,7 +316,7 @@ static byte X11_LoadFont(CONST char * fontname, udat fontwidth, udat fontheight)
     if ((fontname && (xsfont = XLoadQueryFont(xdisplay, fontname)))
         || (xsfont = XLoadQueryFont(xdisplay, fontname = "fixed")))
     {
-        loaded = TRUE;
+        loaded = ttrue;
 
         xwfont = xsfont->min_bounds.width;
         xwidth = xwfont * (unsigned)(HW->X = GetDisplayWidth());
@@ -338,11 +372,11 @@ static byte X11_InitHW(void) {
         title[X11_TITLE_MAXLEN];
     int i;
     udat fontwidth = 8, fontheight = 16;
-    byte drag = FALSE, noinput = FALSE;
+    byte drag = tfalse, noinput = tfalse;
     
     if (!(HW->Private = (struct x11_data *)AllocMem(sizeof(struct x11_data)))) {
 	printk("      X11_InitHW(): Out of memory!\n");
-	return FALSE;
+	return tfalse;
     }
     WriteMem(HW->Private, 0, sizeof(struct x11_data));
 
@@ -408,10 +442,10 @@ static byte X11_InitHW(void) {
 		xhw_endy += xhw_starty;
 	    } else if (!strncmp(arg, "drag", 4)) {
 		arg += 4;
-		drag = TRUE;
+		drag = ttrue;
 	    } else if (!strncmp(arg, "noinput", 7)) {
 		arg += 7;
-		noinput = TRUE;
+		noinput = ttrue;
 	    } else
 		arg = strchr(arg, ',');
 	}
@@ -496,8 +530,8 @@ static byte X11_InitHW(void) {
 	    XStoreName(xdisplay, xwindow, title);
 
 
-	    if (!(xUTF_16_to_charset = X11_UTF_16_to_charset_function(charset)))
-		xUTF_16_to_charset = X11_UTF_16_to_UTF_16;
+	    if (!(xUTF_32_to_charset = X11_UTF_32_to_charset_function(charset)))
+		xUTF_32_to_charset = X11_UTF_32_to_UCS_2;
 	    /*
 	     * ask ICCCM-compliant window manager to tell us when close window
 	     * has been chosen, rather than just killing us
@@ -575,7 +609,7 @@ static byte X11_InitHW(void) {
 	    HW->QuitMouse = NoOp;
 	    HW->QuitVideo = NoOp;
 	    
-	    HW->DisplayIsCTTY = FALSE;
+	    HW->DisplayIsCTTY = tfalse;
 	    HW->FlagsHW &= ~FlHWSoftMouse; /* mouse pointer handled by X11 server */
 	    
 	    HW->FlagsHW |= FlHWNeedOldVideo;
@@ -584,7 +618,7 @@ static byte X11_InitHW(void) {
 		HW->FlagsHW |= FlHWNoInput;
 	    
 	    HW->NeedHW = 0;
-	    HW->CanResize = TRUE;
+	    HW->CanResize = ttrue;
 	    HW->merge_Threshold = 0;
 	    
 	    /*
@@ -592,14 +626,14 @@ static byte X11_InitHW(void) {
 	     * without forcing all other displays
 	     * to redraw everything too.
 	     */
-	    HW->RedrawVideo = FALSE;
+	    HW->RedrawVideo = tfalse;
 	    NeedRedrawVideo(0, 0, HW->X - 1, HW->Y - 1);
 	    
 	    if (xdisplay0) *xdisplay0 = ',';
 	    if (fontname0) *fontname0 = ',';
 	    if (charset0) *charset0 = ',';
 	    
-	    return TRUE;
+	    return ttrue;
 	}
     } while (0); else {
 	if (xdisplay_ || (xdisplay_ = getenv("DISPLAY")))
@@ -619,12 +653,12 @@ fail:
     FreeMem(HW->Private);
     HW->Private = NULL;
     
-    return FALSE;
+    return tfalse;
 }
 
 byte InitModule(module Module) {
     Module->Private = X11_InitHW;
-    return TRUE;
+    return ttrue;
 }
 
 /* this MUST be included, or it seems that a bug in dlsym() gets triggered */

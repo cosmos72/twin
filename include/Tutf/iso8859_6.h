@@ -482,7 +482,7 @@
     EL(_ARABIC_SHADDA) \
     EL(_ARABIC_SUKUN)
 
-/* list of all characters NOT IDENTICALLY MAPPED to UTF-16 */
+/* list of all characters NOT IDENTICALLY MAPPED to UTF-32 */
 #define T_NLIST_ISO8859_6(EL) \
     EL(_ARABIC_COMMA) \
     EL(_ARABIC_SEMICOLON) \

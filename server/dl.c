@@ -27,7 +27,7 @@ byte DlOpen(module Module) {
     byte (*init_func)(module);
     
     if (!dlinit_once()) {
-        return FALSE;
+        return tfalse;
     }
         
     if (Module && !Module->Handle && (!Module->NameLen || Module->Name)) {
@@ -37,7 +37,7 @@ byte DlOpen(module Module) {
 	    if ((name = AllocMem(len+1)))
 		sprintf(name, "%s/%s%.*s%s", pkg_libdir, DL_PREFIX, (int)Module->NameLen, Module->Name, DL_SUFFIX);
 	    else {
-		return FALSE;
+		return tfalse;
 	    }
 	}
 	Handle = dlopen(name);
@@ -47,14 +47,14 @@ byte DlOpen(module Module) {
     if (!Handle) {
 	Error(DLERROR);
 	ErrStr = dlerror();
-	return FALSE;
+	return tfalse;
     }
 
     if (name) {
 	init_func = (byte (*)(module)) dlsym(Handle, "InitModule");
 	if (init_func && init_func(Module)) {
 	    Module->Handle = (void *)Handle;
-	    return TRUE;
+	    return ttrue;
 	}
 	dlclose(Handle);
 
@@ -67,9 +67,9 @@ byte DlOpen(module Module) {
             Error(DLERROR);
             ErrStr = "InitModule() not found in module";
         }
-	return FALSE;
+	return tfalse;
     }
-    return TRUE;
+    return ttrue;
 }
 
 void DlClose(module Module) {

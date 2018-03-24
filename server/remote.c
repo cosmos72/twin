@@ -79,7 +79,7 @@ byte RemoteFlush(uldat Slot) {
     uldat chunk = 0, offset = 0;
     
     if (Slot == NOSLOT || Slot >= FdTop || LS.Fd == NOFD)
-	return FALSE;
+	return tfalse;
 
     if (LS.PrivateFlush) {
 	/* a (gzipped) paired slot:
@@ -98,7 +98,7 @@ byte RemoteFlush(uldat Slot) {
     if (LS.WQlen == 0) {
 	if (LS.PrivateAfterFlush)
 	    LS.PrivateAfterFlush(Slot);
-	return TRUE;
+	return ttrue;
     }
     
     while (LS.WQlen && ((chunk = write(LS.Fd, LS.WQueue + offset, LS.WQlen)),
@@ -132,8 +132,8 @@ void RemoteFlushAll(void) {
 void RemoteCouldntWrite(uldat Slot) {
     if (Slot == NOSLOT || Slot >= FdTop || LS.Fd == NOFD)
 	return;
-    if (LS.extern_couldntwrite == FALSE) {
-	LS.extern_couldntwrite = TRUE;
+    if (LS.extern_couldntwrite == tfalse) {
+	LS.extern_couldntwrite = ttrue;
 	FdWQueued++;
     }
     FD_SET(LS.Fd, &save_wfds);
@@ -142,8 +142,8 @@ void RemoteCouldntWrite(uldat Slot) {
 void RemoteCouldWrite(uldat Slot) {
     if (Slot == NOSLOT || Slot >= FdTop || LS.Fd == NOFD)
 	return;
-    if (LS.extern_couldntwrite == TRUE) {
-	LS.extern_couldntwrite = FALSE;
+    if (LS.extern_couldntwrite == ttrue) {
+	LS.extern_couldntwrite = tfalse;
 	FdWQueued--;
     }
     FD_CLR(LS.Fd, &save_wfds);
@@ -189,7 +189,7 @@ uldat RegisterRemote(int Fd, obj HandlerData, void *HandlerIO) {
     LS.WQueue = LS.RQueue = (byte *)0;
     LS.WQlen = LS.WQmax = LS.RQlen = LS.RQmax = (uldat)0;
     LS.PrivateAfterFlush = LS.PrivateData = LS.PrivateFlush = NULL;
-    LS.extern_couldntwrite = FALSE;
+    LS.extern_couldntwrite = tfalse;
     
     return Slot;
 }

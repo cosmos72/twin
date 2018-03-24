@@ -81,13 +81,13 @@ static VOLATILE byte GotSignalChild;
 static VOLATILE byte GotSignalHangup;
 
 static TW_RETSIGTYPE SignalWinch(int n) {
-    GotSignals = GotSignalWinch = TRUE;
+    GotSignals = GotSignalWinch = ttrue;
     signal(SIGWINCH, SignalWinch);
     TW_RETFROMSIGNAL(0);
 }
 
 static TW_RETSIGTYPE HandleSignalWinch(void) {
-    GotSignalWinch = FALSE;
+    GotSignalWinch = tfalse;
     if (DisplayHWCTTY && DisplayHWCTTY != HWCTTY_DETACHED
 	&& DisplayHWCTTY->DisplayIsCTTY) {
 	
@@ -97,7 +97,7 @@ static TW_RETSIGTYPE HandleSignalWinch(void) {
 }
 
 static TW_RETSIGTYPE SignalChild(int n) {
-    GotSignals = GotSignalChild = TRUE;
+    GotSignals = GotSignalChild = ttrue;
     signal(SIGCHLD, SignalChild);
     TW_RETFROMSIGNAL(0);
 }
@@ -105,7 +105,7 @@ static TW_RETSIGTYPE SignalChild(int n) {
 static void HandleSignalChild(void) {
     pid_t pid;
     int status;
-    GotSignalChild = FALSE;
+    GotSignalChild = tfalse;
     while ((pid = wait3(&status, WNOHANG, (struct rusage *)0)) != 0 && pid != (pid_t)-1) {
 	if (WIFEXITED(status) || WIFSIGNALED(status))
 	    RemotePidIsDead(pid);
@@ -116,13 +116,13 @@ static void HandleSignalChild(void) {
  * got a SIGHUP. shutdown the display on controlling tty, if any
  */
 static TW_RETSIGTYPE SignalHangup(int n) {
-    GotSignals = GotSignalHangup = TRUE;
+    GotSignals = GotSignalHangup = ttrue;
     signal(SIGHUP, SignalHangup);
     TW_RETFROMSIGNAL(0);
 }
 
 static void HandleSignalHangup(void) {
-    GotSignalHangup = FALSE;
+    GotSignalHangup = tfalse;
     if (DisplayHWCTTY && DisplayHWCTTY != HWCTTY_DETACHED
 	&& DisplayHWCTTY->DisplayIsCTTY) {
 	
@@ -131,7 +131,7 @@ static void HandleSignalHangup(void) {
 }
 
 void HandleSignals(void) {
-    GotSignals = FALSE;
+    GotSignals = tfalse;
     if (GotSignalWinch)
 	HandleSignalWinch();
     if (GotSignalChild)
@@ -230,7 +230,7 @@ byte InitSignals(void) {
 	signal(signals_ignore[i], SIG_IGN);
     for (i = 0; i < sizeof(signals_fatal)/sizeof(signals_fatal[0]); i++)
 	signal(signals_fatal[i], SignalFatal);
-    return TRUE;
+    return ttrue;
 }
 
 void QuitSignals(void) {
@@ -265,7 +265,7 @@ void NeedRedrawVideo(dat Left, dat Up, dat Right, dat Down) {
 	HW->RedrawRight = Max2(HW->RedrawRight, Right);
 	HW->RedrawDown  = Max2(HW->RedrawDown,  Down);
     } else {
-	HW->RedrawVideo = TRUE;
+	HW->RedrawVideo = ttrue;
 	HW->RedrawLeft  = Left;
 	HW->RedrawUp    = Up;
 	HW->RedrawRight = Right;
@@ -301,7 +301,7 @@ void DirtyVideo(dat Xstart, dat Ystart, dat Xend, dat Yend) {
     Xend = Min2(Xend, DisplayWidth-1);
     Yend = Min2(Yend, DisplayHeight-1);
 
-    ChangedVideoFlag = ChangedVideoFlagAgain = TRUE;
+    ChangedVideoFlag = ChangedVideoFlagAgain = ttrue;
     
     for (; Ystart <= Yend; Ystart++) {
 	s0 = ChangedVideo[Ystart][0][0];
@@ -667,5 +667,5 @@ byte InitTtysave(void) {
 #endif
 			   );
     }
-    return TRUE;
+    return ttrue;
 }

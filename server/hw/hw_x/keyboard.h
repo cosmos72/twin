@@ -147,10 +147,10 @@ static byte X11_CheckRemapKeys(void) {
 		   "      ERROR: twin compiled from a bad server/hw_keys.h file\n"
 		   "             (data in file is not sorted). " __FILE__ " driver is unusable!\n"
 		   "      InitHW() failed: internal error.\n");
-	    return FALSE;
+	    return tfalse;
 	}
     }
-    return TRUE;
+    return ttrue;
 }
 
 #ifdef DEBUG_HW_X11

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 for path in txt/*.txt; do
-  if [ "$path" = "txt/UnicodeData.txt" ]; then
+  if [ "$path" = "txt/UnicodeData.txt" -o "$path" = "txt/EastAsianWidth.txt" ]; then
     continue
   fi
   f="${path#txt/}"

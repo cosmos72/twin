@@ -287,14 +287,43 @@ static void alienReply(uldat code, uldat alien_len, uldat len, CONST void *data)
     }
 }
 
-static void alienTranslateHWAttrV_CP437_to_UTF_16(hwattr *H, uldat Len) {
+static void alienTranslateHWAttrV_CP437_to_UTF_32(hwattr *H, uldat Len) {
     hwfont f;
     while (Len--) {
-	f = Tutf_CP437_to_UTF_16[HWFONT(*H) & 0xFF];
+	f = Tutf_CP437_to_UTF_32[HWFONT(*H) & 0xFF];
 	*H = HWATTR_COLMASK(*H) | HWATTR(0, f);
 	H++;
     }
 }
+
+#define alienFixIdentity(x) x
+
+/*
+ * twin < 0.8.0 used a different encoding {utf16_lo, color, utf16_hi, extra}
+ * for hwattr. detected by SIZEOF(hwfont) == 2 && SIZEOF(hwattr) == 4
+ */
+TW_INLINE hwattr alienFixDecodeHWAttr(hwattr attr) {
+    hwfont f = (attr & 0xFF) | ((attr >> 8) & 0xFF00);
+    hwcol col = (attr >> 8) & 0xFF;
+    hwattr extra = (attr >> 24) & 0x7F;
+    attr = HWATTR3(col, f, extra);
+    return attr;
+}
+
+TW_INLINE hwattr alienMaybeFixDecodeHWAttr(hwattr attr) {
+    if (SIZEOF(hwfont) == 2 && SIZEOF(hwattr) == 4)
+	attr = alienFixDecodeHWAttr(attr);
+    return attr;
+}
+
+
+static void alienFixDecodeHWAttrV(hwattr * H, uldat Len) {
+    while (Len--) {
+	*H = alienFixDecodeHWAttr(*H);
+	H++;
+    }
+}
+
 
 TW_INLINE ldat alienDecodeArg(uldat id, CONST byte * Format, uldat n, tsfield a, uldat mask[1], byte flag[1], ldat fail) {
     void *A;
@@ -306,18 +335,19 @@ TW_INLINE ldat alienDecodeArg(uldat id, CONST byte * Format, uldat n, tsfield a,
     switch ((c = *Format++)) {
       case '_':
 	switch ((c = *Format)) {
-#define CASE_(type) \
+#define CASE_fix(type, fixtype) \
 	  case CAT(TWS_,type): \
 	    /* ensure type size WAS negotiated */ \
 	    if (SIZEOF(type) && Left(SIZEOF(type))) { \
 		type an; \
 		POP(s,type,an); \
-		a[n]_any = (tany)an; \
+		a[n]_any = (tany)fixtype(an); \
 		a[n]_type = c; \
-		break; \
-	    } \
-	    fail = -fail; \
-	    break
+	    } else \
+		fail = -fail; \
+            break;
+#define CASE_(type)   CASE_fix(type, alienFixIdentity)
+#define CASE_hwattr() CASE_fix(hwattr, alienMaybeFixDecodeHWAttr)
 		
 	  case TWS_hwcol:
 	    /*FALLTHROUGH*/
@@ -327,7 +357,9 @@ TW_INLINE ldat alienDecodeArg(uldat id, CONST byte * Format, uldat n, tsfield a,
 	    CASE_(topaque);
 	    CASE_(tany);
 	    CASE_(hwfont);
-	    CASE_(hwattr);
+	    CASE_hwattr();
+#undef CASE_hwattr
+#undef CASE_fix
 #undef CASE_
 	  default:
 	    break;
@@ -364,11 +396,13 @@ TW_INLINE ldat alienDecodeArg(uldat id, CONST byte * Format, uldat n, tsfield a,
 			 AlienXendian(Slot) == MagicAlienXendian);
 		    if (a[n]_vec) {
 			if (c == TWS_hwattr && SIZEOF(hwattr) == 2)
-			    alienTranslateHWAttrV_CP437_to_UTF_16((hwattr *)a[n]_vec, nlen);
+			    alienTranslateHWAttrV_CP437_to_UTF_32((hwattr *)a[n]_vec, nlen);
 			*mask |= 1 << n;
 		    } else
 			fail = -fail;
 		}
+		if (c == TWS_hwattr && SIZEOF(hwfont) == 2 && SIZEOF(hwattr) == 4 && a[n]_vec)
+		    alienFixDecodeHWAttrV((hwattr *)a[n]_vec, nlen / TW_SIZEOF_HWATTR);
 		break;
 	    }
 	}
@@ -397,11 +431,13 @@ TW_INLINE ldat alienDecodeArg(uldat id, CONST byte * Format, uldat n, tsfield a,
 			    
 			if (a[n]_vec) {
 			    if (c == TWS_hwattr && SIZEOF(hwattr) == 2)
-				alienTranslateHWAttrV_CP437_to_UTF_16((hwattr *)a[n]_vec, nlen);
+				alienTranslateHWAttrV_CP437_to_UTF_32((hwattr *)a[n]_vec, nlen);
 			    *mask |= 1 << n;
 			} else
 			    fail = -fail;
 		    }
+		    if (c == TWS_hwattr && SIZEOF(hwfont) == 2 && SIZEOF(hwattr) == 4 && a[n]_vec)
+			alienFixDecodeHWAttrV((hwattr *)a[n]_vec, nlen / TW_SIZEOF_HWATTR);
 		    break;
 		}
 	    }
@@ -480,7 +516,7 @@ TW_INLINE ldat alienDecodeArg(uldat id, CONST byte * Format, uldat n, tsfield a,
 
 static void alienMultiplexB(uldat id) {
     static struct s_tsfield a[TW_MAX_ARGS_N];
-    static byte warned = FALSE;
+    static byte warned = tfalse;
     uldat mask = 0; /* at least 32 bits. we need 20... */
     uldat nlen, n = 1;
     ldat fail = 1;
@@ -498,7 +534,7 @@ static void alienMultiplexB(uldat id) {
 	
 	} else /* (n >= TW_MAX_ARGS_N) */ {
 	    if (!warned) {
-		warned = TRUE;
+		warned = ttrue;
 		printk("twin: alienMultiplexB(): got a call with %d args, only %d supported!\n",
 		       n, TW_MAX_ARGS_N);
 	    }
@@ -824,7 +860,7 @@ static void alienSendMsg(msgport MsgPort, msg Msg) {
 		while (N--) {
 		    Pop(Src,hwattr,H);
 		    
-		    h = HWATTR16(HWCOL(H),Tutf_UTF_16_to_CP437(HWFONT(H)));
+		    h = ((uint16_t)HWCOL(H) << 8) | Tutf_UTF_32_to_CP437(HWFONT(H));
 		    alienPush((CONST byte *)&h, sizeof(hwattr), &t, 2);
 		}
 	    } else {
@@ -934,7 +970,7 @@ static void alienSendMsg(msgport MsgPort, msg Msg) {
 		    while (N--) {
 			Pop(Src,hwattr,H);
 			
-			h = HWATTR16(HWCOL(H),Tutf_UTF_16_to_CP437(HWFONT(H)));
+			h = ((uint16_t)HWCOL(H) << 8) | Tutf_UTF_32_to_CP437(HWFONT(H));
 			alienPush((CONST byte *)&h, sizeof(hwattr), &t, 2);
 		    }
 		} else {
@@ -1021,18 +1057,20 @@ static byte alienDecodeExtension(tany *Len, CONST byte **Data, tany *Args_n, tsf
     while (fail > 0 && n < args_n) {
 	switch ((t = a[n]_type)) {
 
-# define CASE_(type) \
-case CAT(TWS_,type): \
+# define CASE_fix(type, fixtype) \
+ case CAT(TWS_,type): \
     /* ensure type size WAS negotiated */ \
     if ((len = AlienSizeof(type, Slot)) && left >= len) { \
 	type an; \
 	\
 	left -= len; \
 	POP(data,type,an); \
-	a[n]_any = (tany)an; \
+	a[n]_any = (tany)fixtype(an); \
     } else \
 	fail = -fail; \
     break
+# define CASE_(type)   CASE_fix(type, alienFixIdentity)
+# define CASE_hwattr() CASE_fix(hwattr, alienMaybeFixDecodeHWAttr)
 
 	  case TWS_hwcol:
 	    /*FALLTHROUGH*/
@@ -1042,7 +1080,9 @@ case CAT(TWS_,type): \
 	    CASE_(topaque);
 	    CASE_(tany);
 	    CASE_(hwfont);
-	    CASE_(hwattr);
+	    CASE_hwattr();
+#undef CASE_hwattr
+#undef CASE_fix
 #undef CASE_
 
 	  case TWS_vec|TWS_vecW|TWS_byte:

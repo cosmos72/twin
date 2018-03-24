@@ -12,15 +12,15 @@ static void xterm_MouseEvent(int fd, display_hw hw);
 static void xterm_ConfigureMouse(udat resource, byte todefault, udat value);
 
 
-/* return FALSE if failed */
+/* return tfalse if failed */
 static byte xterm_InitMouse(byte force) {
     CONST byte *term = tty_TERM;
     
-    if (force == TRUE) {
+    if (force == ttrue) {
 	printk("      xterm_InitMouse(): xterm-style mouse FORCED.\n"
 	       "      Assuming terminal has xterm compatible mouse reporting.\n");
 	term = "xterm";
-    } else if (force == TRUE+TRUE) {
+    } else if (force == ttrue+ttrue) {
 	printk("      xterm_InitMouse(): twterm-style mouse FORCED.\n"
 	       "      Assuming terminal has twterm compatible mouse reporting.\n");
 	term = "twterm";
@@ -28,7 +28,7 @@ static byte xterm_InitMouse(byte force) {
 
     if (!term) {
         printk("%s", "      xterm_InitMouse() failed: unknown terminal type.\n");
-	return FALSE;
+	return tfalse;
     }
 
     mouse_start_seq = "\033[?9h";
@@ -46,7 +46,7 @@ static byte xterm_InitMouse(byte force) {
             printk("%s",
                    "      xterm_InitMouse() failed: this `linux' terminal\n"
                    "      has no support for xterm-style mouse reporting.\n");
-	    return FALSE;
+	    return tfalse;
 	}
 	if (ttypar[0]==6 && ttypar[1]<4) {
 	    printk("      xterm_InitMouse() warning: this `linux' terminal\n"
@@ -61,7 +61,7 @@ static byte xterm_InitMouse(byte force) {
 	mouse_motion_seq = mouse_start_seq;
     } else {
         printk("%s", "      xterm_InitMouse() failed: terminal `%."STR(TW_SMALLBUFF)"s' is not supported.\n", term);
-	return FALSE;
+	return tfalse;
     }
 
     fputs(mouse_start_seq, stdOUT);
@@ -76,7 +76,7 @@ static byte xterm_InitMouse(byte force) {
     HW->FlagsHW &= ~FlHWSoftMouse; /* no need to Hide/Show it */
     HW->ShowMouse = HW->HideMouse = NoOp; /* override the ones set by InitVideo() */
     
-    return TRUE;
+    return ttrue;
 }
 
 static void xterm_QuitMouse(void) {

@@ -99,10 +99,10 @@ void Quit(int status);
 void NoOp(void) {
 }
 byte AlwaysFalse(void) {
-    return FALSE;
+    return tfalse;
 }
 byte AlwaysTrue(void) {
-    return TRUE;
+    return ttrue;
 }
 void *AlwaysNull(void) {
     return NULL;
@@ -127,7 +127,7 @@ byte Error(udat Code_Error) {
       default:
 	break;
     }
-    return FALSE;
+    return tfalse;
 }
 
 int printk(CONST byte *format, ...) {
@@ -169,7 +169,7 @@ uldat RegisterRemote(int Fd, obj HandlerData, void *HandlerIO) {
 	LS.HandlerIO.D = HandlerIO;
     else
 	LS.HandlerIO.S = HandlerIO;
-    LS.extern_couldntwrite = FALSE;
+    LS.extern_couldntwrite = tfalse;
     
     if (FdTop <= Slot)
 	FdTop = Slot + 1;
@@ -193,8 +193,8 @@ void UnRegisterRemote(uldat Slot) {
 void RemoteCouldntWrite(uldat Slot) {
     if (Slot == NOSLOT || Slot >= FdTop || LS.Fd == NOFD)
 	return;
-    if (LS.extern_couldntwrite == FALSE) {
-	LS.extern_couldntwrite = TRUE;
+    if (LS.extern_couldntwrite == tfalse) {
+	LS.extern_couldntwrite = ttrue;
 	FdWQueued++;
     }
     FD_SET(LS.Fd, &save_wfds);
@@ -203,8 +203,8 @@ void RemoteCouldntWrite(uldat Slot) {
 void RemoteCouldWrite(uldat Slot) {
     if (Slot == NOSLOT || Slot >= FdTop || LS.Fd == NOFD)
 	return;
-    if (LS.extern_couldntwrite == TRUE) {
-	LS.extern_couldntwrite = FALSE;
+    if (LS.extern_couldntwrite == ttrue) {
+	LS.extern_couldntwrite = tfalse;
 	FdWQueued--;
     }
     FD_CLR(LS.Fd, &save_wfds);
@@ -293,7 +293,7 @@ static byte module_InitHW(byte *arg, uldat len) {
     module Module = NULL;
 
     if (!arg || len <= 4)
-	return FALSE;
+	return tfalse;
     
     arg += 4; len -= 4; /* skip "-hw=" */
     
@@ -320,7 +320,7 @@ static byte module_InitHW(byte *arg, uldat len) {
 		HW->Module = Module; Module->Used++;
 		
 		FreeMem(name);
-		return TRUE;
+		return ttrue;
 	    }
 	    /*Delete(Module);*/
 	}
@@ -336,7 +336,7 @@ static byte module_InitHW(byte *arg, uldat len) {
     if (name)
     	FreeMem(name);
 
-    return FALSE;
+    return tfalse;
 }
 
 static display_hw CreateDisplayHW(uldat len, CONST byte *name);
@@ -391,7 +391,7 @@ static byte InitDisplayHW(display_hw D_HW) {
     SaveHW;
     SetHW(D_HW);
 
-    D_HW->DisplayIsCTTY = D_HW->NeedHW = D_HW->FlagsHW = FALSE;
+    D_HW->DisplayIsCTTY = D_HW->NeedHW = D_HW->FlagsHW = tfalse;
     
     if (arg && !strncmp(arg, "-hw=", 4))
 	arg += 4;
@@ -414,7 +414,7 @@ static byte InitDisplayHW(display_hw D_HW) {
 	success = module_InitHW(D_HW->Name, D_HW->NameLen);
     }
     if (success) {
-        D_HW->Quitted = FALSE;
+        D_HW->Quitted = tfalse;
 	if (!DisplayHWCTTY && D_HW->DisplayIsCTTY)
 	    DisplayHWCTTY = D_HW;
 	UpdateFlagsHW();
@@ -441,10 +441,10 @@ static display_hw CreateDisplayHW(uldat NameLen, CONST byte *Name) {
 	HW->NameLen = NameLen;
 	HW->Name = newName;
 	HW->Module = NULL;
-	HW->Quitted = TRUE;
+	HW->Quitted = ttrue;
 	HW->AttachSlot = NOSLOT;
 	/*
-	 * ->Quitted will be set to FALSE only
+	 * ->Quitted will be set to tfalse only
 	 * after DisplayHW->InitHW() has succeeded.
 	 */
 	return HW;
@@ -467,10 +467,10 @@ static byte IsValidHW(uldat len, CONST byte *arg) {
             break;
         if ((b < '0' || b > '9') && (b < 'A' || b > 'Z') && (b < 'a' || b > 'z') && b != '_') {
             printk("twdisplay: invalid non-alphanumeric character `%c' in display HW name: `%.*s'\n", (int)b, Min2((int)len,TW_SMALLBUFF), arg);
-            return FALSE;
+            return tfalse;
         }
     }
-    return TRUE;
+    return ttrue;
 }
 
 static display_hw AttachDisplayHW(uldat len, CONST byte *arg, uldat slot, byte flags) {
@@ -562,18 +562,18 @@ void FlushHW(void) {
 	return;
     
     if (QueuedDrawArea2FullScreen) {
-	QueuedDrawArea2FullScreen = FALSE;
+	QueuedDrawArea2FullScreen = tfalse;
 	DirtyVideo(0, 0, DisplayWidth - 1, DisplayHeight - 1);
-	ValidOldVideo = FALSE;
+	ValidOldVideo = tfalse;
     } else if (HW->RedrawVideo) {
 	DirtyVideo(HW->RedrawLeft, HW->RedrawUp, HW->RedrawRight, HW->RedrawDown);
-	ValidOldVideo = FALSE;
+	ValidOldVideo = tfalse;
     } else if (NeedOldVideo && ValidOldVideo)
 	OptimizeChangedVideo();
     
     HW->FlushVideo();
     
-    HW->RedrawVideo = FALSE;
+    HW->RedrawVideo = tfalse;
     
     if (HW->NeedHW & NEEDFlushHW)
 	HW->FlushHW();
@@ -583,8 +583,8 @@ void FlushHW(void) {
     
     SyncOldVideo();
 
-    ChangedVideoFlag = FALSE;
-    ValidOldVideo = TRUE;
+    ChangedVideoFlag = tfalse;
+    ValidOldVideo = ttrue;
 }
 
 
@@ -607,7 +607,7 @@ static byte ReAllocVideo(dat Width, dat Height) {
 	    OutOfMemory();
 	    Quit(1);
 	}
-	ValidOldVideo = FALSE;
+	ValidOldVideo = tfalse;
     }
     
     if (!Video || change) {
@@ -621,7 +621,7 @@ static byte ReAllocVideo(dat Width, dat Height) {
 	    OutOfMemory();
 	    Quit(1);
 	}
-	ValidVideo = FALSE;
+	ValidVideo = tfalse;
 	WriteMem(ChangedVideo, 0xff, (ldat)DisplayHeight*sizeof(dat)*4);
     
     }
@@ -630,10 +630,10 @@ static byte ReAllocVideo(dat Width, dat Height) {
 
 
 /*
- * return TRUE if DisplayWidth or DisplayHeight were changed
+ * return ttrue if DisplayWidth or DisplayHeight were changed
  */
 static byte ResizeDisplay(void) {
-    byte change = FALSE;
+    byte change = tfalse;
     tmsg Tmsg;
     
     if (!TryDisplayWidth || !TryDisplayHeight)
@@ -741,7 +741,7 @@ static void HandleMsg(tmsg Msg) {
 	    }
 	    break;
 	  case TW_DPY_FlushHW:
-	    ValidVideo = TRUE;
+	    ValidVideo = ttrue;
 	    FlushHW();
 	    break;
 	  case TW_DPY_SetCursorType:
@@ -802,7 +802,7 @@ static void HandleMsg(tmsg Msg) {
 
 static void SocketIO(void) {
     tmsg Msg;
-    while ((Msg = TwReadMsg(FALSE)))
+    while ((Msg = TwReadMsg(tfalse)))
 	HandleMsg(Msg);
 }
 
@@ -858,7 +858,7 @@ static byte StdAddMouseEvent(udat Code, dat MouseX, dat MouseY) {
     tmsg Msg;
 
     if (HW->FlagsHW & FlHWNoInput)
-	return TRUE;
+	return ttrue;
 
     if ((Msg=TwCreateMsg(TW_MSG_WIDGET_MOUSE, sizeof(event_mouse)))) {
 	Event = &Msg->Event.EventMouse;
@@ -869,9 +869,9 @@ static byte StdAddMouseEvent(udat Code, dat MouseX, dat MouseY) {
 	Event->Y = MouseY;
 	
 	TwBlindSendMsg(THelper, Msg);
-	return TRUE;
+	return ttrue;
     }
-    return FALSE;
+    return tfalse;
 }
 
 byte MouseEventCommon(dat x, dat y, dat dx, dat dy, udat Buttons) {
@@ -879,7 +879,7 @@ byte MouseEventCommon(dat x, dat y, dat dx, dat dy, udat Buttons) {
     udat OldButtons, i;
     mouse_state *OldState;
     udat result;
-    byte ret = TRUE;
+    byte ret = ttrue;
      
     OldState=&HW->MouseState;
     OldButtons=OldState->keys;
@@ -921,7 +921,7 @@ byte KeyboardEventCommon(udat Code, udat ShiftFlags, udat Len, CONST byte *Seq) 
     tmsg Msg;
 
     if (HW->FlagsHW & FlHWNoInput)
-	return TRUE;
+	return ttrue;
 
     if ((Msg=TwCreateMsg(TW_MSG_WIDGET_KEY, Len + sizeof(event_keyboard)))) {
 	Event = &Msg->Event.EventKeyboard;
@@ -933,9 +933,9 @@ byte KeyboardEventCommon(udat Code, udat ShiftFlags, udat Len, CONST byte *Seq) 
 	Event->AsciiSeq[Len] = '\0'; /* terminate string with \0 */
 	
 	TwBlindSendMsg(THelper, Msg);
-	return TRUE;
+	return ttrue;
     }
-    return FALSE;
+    return tfalse;
 }
 
 static void MainLoop(int Fd) {
@@ -1105,9 +1105,9 @@ static byte VersionsMatch(byte force) {
 		TW_VER_MAJOR(cv), TW_VER_MINOR(cv), TW_VER_PATCH(cv),
 		TW_VER_MAJOR(lv), TW_VER_MINOR(lv), TW_VER_PATCH(lv),
 		TW_VER_MAJOR(sv), TW_VER_MINOR(sv), TW_VER_PATCH(sv));
-	return FALSE;
+	return tfalse;
     }
-    return TRUE;
+    return ttrue;
 }
 
 static void MergeHyphensArgv(int argc, char **argv) {
@@ -1272,7 +1272,7 @@ int main(int argc, char *argv[]) {
 	
 	sprintf(buf, "-hw=display@(%.*s),x=%d,y=%d%s%s%s", (int)HW->NameLen, HW->Name,
 		(int)HW->X, (int)HW->Y, HW->CanResize ? ",resize" : "",
-		/* CanDragArea */ TRUE ? ",drag" : "", ExpensiveFlushVideo ? ",slow" : "");
+		/* CanDragArea */ ttrue ? ",drag" : "", ExpensiveFlushVideo ? ",slow" : "");
 	
 	TwAttachHW(strlen(buf), buf, flags);
 	TwFlush();

@@ -32,11 +32,11 @@
 
 #include <Tutf/Tutf.h>
 #include <Tutf/Tutf_defs.h>
-#define _CHECK T_UTF_16_CHECK_MARK
-#define _FULL	T_UTF_16_FULL_BLOCK
-#define _LOWER T_UTF_16_LOWER_HALF_BLOCK
-#define _UPPER T_UTF_16_UPPER_HALF_BLOCK
-#define _MEDIUM_SHADE	T_UTF_16_MEDIUM_SHADE
+#define _CHECK T_UTF_32_CHECK_MARK
+#define _FULL	T_UTF_32_FULL_BLOCK
+#define _LOWER T_UTF_32_LOWER_HALF_BLOCK
+#define _UPPER T_UTF_32_UPPER_HALF_BLOCK
+#define _MEDIUM_SHADE	T_UTF_32_MEDIUM_SHADE
 
 #define COD_QUIT	(udat)1 /* as in term.c */
 #define COD_SPAWN	(udat)3 /* as COD_SPAWN in term.c */
@@ -98,7 +98,7 @@ static void Clock_Update(void) {
     ClockWin->CurX=ClockWin->CurY=(uldat)0;
     Date = localtime(&Time);
     
-    sprintf((char *)Buffer, "%02u/%02u/%04u\n %02u:%02u:%02u",
+    sprintf((char *)Buffer, "%02hu/%02hu/%04hu\n %02hu:%02hu:%02hu",
 	    (udat)Date->tm_mday, (udat)Date->tm_mon+1, (udat)Date->tm_year + 1900,
 	    (udat)Date->tm_hour, (udat)Date->tm_min,   (udat)Date->tm_sec);
     Act(RowWriteAscii,ClockWin)(ClockWin, strlen(Buffer), Buffer);
@@ -147,7 +147,7 @@ static void SelectWinList(void) {
 	n--;
     }
     if (!n && W) {
-	RaiseWidget(W, TRUE);
+	RaiseWidget(W, ttrue);
 	CenterWindow((window)W);
     }
 }
@@ -245,7 +245,7 @@ void UpdateOptionWin(void) {
 
 static void OptionH(msg Msg) {
     byte Flags = All->SetUp->Flags, XShade = All->SetUp->DeltaXShade, YShade = All->SetUp->DeltaYShade;
-    byte redraw = TRUE;
+    byte redraw = ttrue;
     
     switch (Msg->Event.EventGadget.Code) {
       case COD_O_SHADOWS:
@@ -272,12 +272,12 @@ static void OptionH(msg Msg) {
 	break;
       case COD_O_CURSOR_ALWAYS:
 	Flags ^= SETUP_CURSOR_ALWAYS;
-	redraw = FALSE;
+	redraw = tfalse;
 	break;
       case COD_O_MENU_HIDE:
 	Flags ^= SETUP_MENU_HIDE;
 	HideMenu(!!(Flags & SETUP_MENU_HIDE));
-	redraw = FALSE;
+	redraw = tfalse;
 	break;
       case COD_O_MENU_INFO:
 	Flags ^= SETUP_MENU_INFO;
@@ -287,14 +287,14 @@ static void OptionH(msg Msg) {
 	break;
       case COD_O_SCREEN_SCROLL:
 	Flags ^= SETUP_SCREEN_SCROLL;
-	redraw = FALSE;
+	redraw = tfalse;
 	break;
       case COD_O_TERMINALS_UTF8:
 	Flags ^= SETUP_TERMINALS_UTF8;
-	redraw = FALSE;
+	redraw = tfalse;
 	break;
       default:
-	redraw = FALSE;
+	redraw = tfalse;
 	break;
     }
     if (Flags != All->SetUp->Flags || XShade != All->SetUp->DeltaXShade
@@ -305,8 +305,8 @@ static void OptionH(msg Msg) {
 	All->SetUp->DeltaYShade = YShade;
 	
 	UpdateOptionWin();
-	if (redraw == TRUE)
-	    QueuedDrawArea2FullScreen = TRUE;
+	if (redraw == ttrue)
+	    QueuedDrawArea2FullScreen = ttrue;
 	else {
 	    DrawFullWindow2(OptionWin);
 	    UpdateCursor();
@@ -345,8 +345,8 @@ void FillButtonWin(void) {
 	{
 	    hwattr h[2];
 	    hwfont *f = All->ButtonVec[j].shape;
-	    h[0] = HWATTR_EXTRA32(HWATTR(ButtonWin->ColGadgets, f[0]), EncodeToHWAttrExtra(j, 0, 0, 0));
-	    h[1] = HWATTR_EXTRA32(HWATTR(ButtonWin->ColGadgets, f[1]), EncodeToHWAttrExtra(j, 1, 0, 0));
+	    h[0] = HWATTR3(ButtonWin->ColGadgets, f[0], EncodeToHWAttrExtra(j, 0, 0, 0));
+	    h[1] = HWATTR3(ButtonWin->ColGadgets, f[1], EncodeToHWAttrExtra(j, 1, 0, 0));
 	    
 	    Act(TtyWriteHWAttr,ButtonWin)(ButtonWin, 15, 1+i*2, 2, h);
 	}
@@ -407,7 +407,7 @@ static void BordersH(msg Msg) {
     
     All->ButtonVec[Code >> 2].pos += op;
     
-    QueuedDrawArea2FullScreen = TRUE;
+    QueuedDrawArea2FullScreen = ttrue;
     UpdateButtonWin();
 }
 
@@ -495,7 +495,7 @@ static void BuiltinH(msgport MsgPort) {
 		/* no window needs Delete() here */
 		
 		if (tempWin == ClockWin)
-		    Builtin_MsgPort->WakeUp = FALSE;
+		    Builtin_MsgPort->WakeUp = tfalse;
 		
 	    } else if (tempWin == OptionWin)
 		OptionH(Msg);
@@ -550,12 +550,12 @@ static void BuiltinH(msgport MsgPort) {
 		    break;
 		    
 		  case COD_SUSPEND:
-		    SuspendHW(TRUE);
+		    SuspendHW(ttrue);
 		    flushk();
 		    
 		    kill(getpid(), SIGSTOP);
 		    
-		    (void)RestartHW(TRUE);
+		    (void)RestartHW(ttrue);
 		    break;
 
 		  case COD_DETACH:
@@ -773,11 +773,11 @@ static byte InitScreens(void) {
     if ((OneScreen = Do(CreateSimple,Screen)(FnScreen, 1, "1", HWATTR(COL(HIGH|BLACK,BLUE),_MEDIUM_SHADE)))) {
 	
 	InsertLast(Screen, OneScreen, All);
-	return TRUE;
+	return ttrue;
     }
     Error(NOMEMORY);
     printk("twin: InitScreens(): %."STR(TW_SMALLBUFF)"s\n", ErrStr);
-    return FALSE;
+    return tfalse;
 }
 
 byte InitBuiltin(void) {
@@ -810,7 +810,7 @@ byte InitBuiltin(void) {
 	Row4Menu(Window,COD_MESSAGES_WIN,ROW_ACTIVE,10, " Messages ") &&
 #endif
 	Row4Menu(Window, COD_ABOUT_WIN,  ROW_ACTIVE, 9, " About   ") &&
-	Item4Menu(Builtin_Menu, Window, TRUE, 3, " \xF0 ") &&
+	Item4Menu(Builtin_Menu, Window, ttrue, 3, " \xF0 ") &&
 	
 	(Window=Win4Menu(Builtin_Menu)) &&
 	Row4Menu(Window, COD_SPAWN,  ROW_ACTIVE,10, " New Term ") &&
@@ -820,7 +820,7 @@ byte InitBuiltin(void) {
 	Row4Menu(Window, COD_DETACH, ROW_ACTIVE,10, " Detach   ") &&
 	Row4Menu(Window, COD_SUSPEND,ROW_ACTIVE,10, " Suspend  ") &&
 	Row4Menu(Window, COD_QUIT,   ROW_ACTIVE,10, " Quit     ") &&
-	(Builtin_File=Item4Menu(Builtin_Menu, Window, TRUE, 6, " File ")) &&
+	(Builtin_File=Item4Menu(Builtin_Menu, Window, ttrue, 6, " File ")) &&
 	
 	(Window=Win4Menu(Builtin_Menu)) &&
 	Row4Menu(Window, (udat)0, ROW_INACTIVE,11," Undo      ") &&
@@ -832,17 +832,17 @@ byte InitBuiltin(void) {
 	Row4Menu(Window, (udat)0, ROW_INACTIVE,11," Clear     ") &&
 	Row4Menu(Window, (udat)0, ROW_IGNORE,  11,"\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4") &&
 	Row4Menu(Window, (udat)0, ROW_INACTIVE,11," Clipboard ") &&
-	Item4Menu(Builtin_Menu, Window, TRUE, 6," Edit ") &&
+	Item4Menu(Builtin_Menu, Window, ttrue, 6," Edit ") &&
 	
 	(Window=Win4Menu(Builtin_Menu)) &&
-	(Act(InstallHook,Window)(Window, UpdateMenuRows, &All->FnHookModule), TRUE) &&
+	(Act(InstallHook,Window)(Window, UpdateMenuRows, &All->FnHookModule), ttrue) &&
 	
 	Row4Menu(Window, COD_TERM_ON,	ROW_ACTIVE,  20, " Run Twin Term      ") &&
 	Row4Menu(Window, COD_TERM_OFF,	ROW_INACTIVE,20, " Stop Twin Term     ") &&
 	Row4Menu(Window, (udat)0,       ROW_IGNORE,  20, "\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4") &&
 	Row4Menu(Window, COD_SOCKET_ON,	ROW_ACTIVE,  20, " Run Socket Server  ") &&
 	Row4Menu(Window, COD_SOCKET_OFF,ROW_INACTIVE,20, " Stop Socket Server ") &&
-	(Builtin_Modules=Item4Menu(Builtin_Menu, Window, TRUE, 9," Modules ")) &&
+	(Builtin_Modules=Item4Menu(Builtin_Menu, Window, ttrue, 9," Modules ")) &&
 	
 	Item4MenuCommon(Builtin_Menu) &&
 		
@@ -1002,11 +1002,11 @@ byte InitBuiltin(void) {
 
 	All->BuiltinMenu=Builtin_Menu;
 
-	return TRUE;
+	return ttrue;
     }
     Error(NOMEMORY);
     printk("twin: InitBuiltin(): %."STR(TW_SMALLBUFF)"s\n", ErrStr);
-    return FALSE;
+    return tfalse;
 }
 
 

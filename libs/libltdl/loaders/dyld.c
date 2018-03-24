@@ -106,11 +106,11 @@ get_vtable (lt_user_data loader_data)
 /* We have to put some stuff here that isn't in older dyld.h files */
 #if !defined ENUM_DYLD_BOOL
 # define ENUM_DYLD_BOOL
-# undef FALSE
-# undef TRUE
+# undef tfalse
+# undef ttrue
  enum DYLD_BOOL {
-    FALSE,
-    TRUE
+    tfalse,
+    ttrue
  };
 #endif
 #if !defined LC_REQ_DYLD

@@ -32,7 +32,7 @@ byte InitTWCD(void) {
     twindow FileWindow,PlayWindow;
 
     if (!TwCheckMagic(twcd_magic) || !TwOpen(NULL))
-	return FALSE;
+	return tfalse;
 
     TWCD_MsgPort=TwCreateMsgPort(4,"twcd");
 
@@ -48,20 +48,20 @@ byte InitTWCD(void) {
         TW_WINDOWFL_USEROWS|TW_WINDOWFL_ROWS_DEFCOL, (udat)18, (udat)3, (udat)0);
 
     FileWindow=TwWin4Menu(TWCD_Menu);
-    TwItem4Menu(TWCD_Menu, FileWindow, TRUE, 6, " File ");
+    TwItem4Menu(TWCD_Menu, FileWindow, ttrue, 6, " File ");
     TwRow4Menu(FileWindow, COD_QUIT, TW_ROW_ACTIVE, 6, " Quit ");
     PlayWindow=TwWin4Menu(TWCD_Menu);
-    TwItem4Menu(TWCD_Menu, PlayWindow, TRUE, 6, " Play ");
+    TwItem4Menu(TWCD_Menu, PlayWindow, ttrue, 6, " Play ");
 
     if (!TwItem4MenuCommon(TWCD_Menu))
-    	return FALSE;
+    	return tfalse;
 
     TwGotoXYWindow(TWCD_Win, 0, 2);
     TwWriteAsciiWindow(TWCD_Win, 17, "<< [] || -> >> /\\");
     TwMapWindow(TWCD_Win, TwFirstScreen());
     TwFlush();
 
-    return TRUE;
+    return ttrue;
 }
 
 void writeTrack (char *title) {
@@ -94,7 +94,7 @@ int main(int argc, char **argv) {
         return 1;
     }
     writeTrack("   Twin CD 0.1");
-    while ((Msg=TwReadMsg(TRUE))) {
+    while ((Msg=TwReadMsg(ttrue))) {
         static byte eject = 0;
         EventA=&Msg->Event;
         if (Msg->Type==TW_MSG_WIDGET_MOUSE) {

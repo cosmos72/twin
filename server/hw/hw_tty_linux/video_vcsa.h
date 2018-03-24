@@ -6,19 +6,19 @@ static void vcsa_FlushVideo(void);
 static void vcsa_ShowMouse(void);
 static void vcsa_HideMouse(void);
 
-/* return FALSE if failed */
+/* return tfalse if failed */
 static byte vcsa_InitVideo(void) {
     static byte vcsa_name[] = "/dev/vcsaXX";
 
     if (!tty_name) {
 	printk("      vcsa_InitVideo() failed: unable to detect tty device\n");
-	return FALSE;
+	return tfalse;
     }
     
     if (tty_number < 1 || tty_number > 63) {
 	printk("      vcsa_InitVideo() failed: terminal `%."STR(TW_SMALLBUFF)"s'\n"
 			 "      is not a local linux console.\n", tty_name);
-	return FALSE;
+	return tfalse;
     }
 
     vcsa_name[9] = tty_name[8];
@@ -31,7 +31,7 @@ static byte vcsa_InitVideo(void) {
     if (VcsaFd < 0) {
 	printk("      vcsa_InitVideo() failed: unable to open `%."STR(TW_SMALLBUFF)"s': %."STR(TW_SMALLBUFF)"s\n",
 		vcsa_name, strerror(errno));
-	return FALSE;
+	return tfalse;
     }
     fcntl(VcsaFd, F_SETFD, FD_CLOEXEC);
     
@@ -71,10 +71,10 @@ static byte vcsa_InitVideo(void) {
     HW->FlagsHW |= FlHWNeedOldVideo;
     HW->FlagsHW &= ~FlHWExpensiveFlushVideo;
     HW->NeedHW = 0;
-    HW->CanResize = FALSE;
+    HW->CanResize = tfalse;
     HW->merge_Threshold = 40;
 
-    return TRUE;
+    return ttrue;
 }
 
 static void vcsa_QuitVideo(void) {
@@ -109,7 +109,7 @@ INLINE void vcsa_write(int fd, hwattr *buf, uldat count, uldat pos) {
 	buf8 = vcsa_buff;
 	pos = chunk = Min2(count, TW_BIGBUFF);
 	while (pos--) {
-	    *buf8++ = tty_UTF_16_to_charset(HWFONT(*buf));
+	    *buf8++ = tty_UTF_32_to_charset(HWFONT(*buf));
 	    *buf8++ = HWCOL(*buf);
 	    buf++;
 	}
@@ -124,7 +124,7 @@ INLINE void vcsa_write(int fd, hwattr *buf, uldat count, uldat pos) {
 static void vcsa_FlushVideo(void) {
     ldat i, j;
     uldat prevS = (uldat)-1, prevE = (uldat)-1, _prevS, _start, _end, start, end;
-    byte FlippedVideo = FALSE, FlippedOldVideo = FALSE;
+    byte FlippedVideo = tfalse, FlippedOldVideo = tfalse;
     hwattr savedOldVideo;
     
     if (!ChangedVideoFlag) {
@@ -146,7 +146,7 @@ static void vcsa_FlushVideo(void) {
 	     */
 	    DirtyVideo(HW->Last_x, HW->Last_y, HW->Last_x, HW->Last_y);
 	    if (ValidOldVideo) {
-		FlippedOldVideo = TRUE;
+		FlippedOldVideo = ttrue;
 		savedOldVideo = OldVideo[HW->Last_x + HW->Last_y * (ldat)DisplayWidth];
 		OldVideo[HW->Last_x + HW->Last_y * (ldat)DisplayWidth]
 		 = ~Video[HW->Last_x + HW->Last_y * (ldat)DisplayWidth];
@@ -166,9 +166,9 @@ static void vcsa_FlushVideo(void) {
 	    if (!FlippedVideo)
 		DirtyVideo(i, j, i, j);
 	    HW->FlagsHW &= ~FlHWChangedMouseFlag;
-	    FlippedVideo = TRUE;
+	    FlippedVideo = ttrue;
 	} else
-	    FlippedVideo = FALSE;
+	    FlippedVideo = tfalse;
     }
     
     for (i=0; i<DisplayHeight*2; i++) {

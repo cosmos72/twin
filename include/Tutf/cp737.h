@@ -527,7 +527,7 @@
     EL(_BLACK_SQUARE) \
     EL(_NO_BREAK_SPACE)
 
-/* list of all characters NOT IDENTICALLY MAPPED to UTF-16 */
+/* list of all characters NOT IDENTICALLY MAPPED to UTF-32 */
 #define T_NLIST_CP737(EL) \
     EL(_GREEK_CAPITAL_LETTER_ALPHA) \
     EL(_GREEK_CAPITAL_LETTER_BETA) \

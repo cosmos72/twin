@@ -45,7 +45,7 @@ static extension LoadExtension(topaque namelen, CONST byte *name) {
 #define TRY4(e) (check4(STR(e), namelen, name) && (tried++, E->Quit = CAT3(ext_,e,_Quit), CAT3(ext_,e,_Init)(E)))
 	success =
 	    (E->Quit = NULL, Act(DlOpen,E)(E)) ||
-	    (warn_NoExtension(namelen, name, tried), FALSE);
+	    (warn_NoExtension(namelen, name, tried), tfalse);
 
 #undef TRY4
 

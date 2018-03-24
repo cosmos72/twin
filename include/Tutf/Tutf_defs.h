@@ -13,7 +13,7 @@
 #ifndef _TUTF_DEFS_H
 #define _TUTF_DEFS_H
 
-#include <Tutf/utf_16.h>
+#include <Tutf/utf_32.h>
 #include <Tutf/ascii.h>
 
 #include <Tutf/iso8859_1.h>

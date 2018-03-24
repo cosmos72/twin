@@ -52,7 +52,7 @@ byte InitSysMon(int argc, char ** argv) {
     if ((name = strdup("System Monitor")))
 	len = 14;
     else
-	return FALSE;
+	return tfalse;
     
     name[len] = '\0';
 
@@ -87,7 +87,7 @@ byte InitSysMon(int argc, char ** argv) {
 	 TwInfo4Menu(SysMon_Menu, TW_ROW_ACTIVE, 16, " System Monitor ", "pppppppppppppppp"),
 	 TwWriteAsciiWindow(SysMon_Win, 26, "CPU \nDISK\nMEM \nSWAP\nUPTIME"),
 	 TwMapWindow(SysMon_Win, TwFirstScreen()),
-	 TRUE);
+	 ttrue);
 }
 
 
@@ -416,7 +416,7 @@ int main(int argc, char *argv[]) {
 	    p.tv_usec = 0;
 	}
 
-	while ((Msg = TwReadMsg(FALSE))) {
+	while ((Msg = TwReadMsg(tfalse))) {
 	    Event=&Msg->Event;
 	    if (Event->EventCommon.W == SysMon_Win) {
 		if (Msg->Type==TW_MSG_WIDGET_GADGET) {

@@ -17,7 +17,7 @@ void ExposeWidget2(widget W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch
 void ExposeWindow2(window W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch, CONST byte *Text, CONST hwfont *Font, CONST hwattr *Attr);
 
 extern byte NeedUpdateCursor;
-#define UpdateCursor() (NeedUpdateCursor = TRUE)
+#define UpdateCursor() (NeedUpdateCursor = ttrue)
 void FlushCursor(void);
 
 byte CheckResizeWindowContents(window Window);

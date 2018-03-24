@@ -9,6 +9,11 @@
 # include <stddef.h> /* for SIZE_T */
 #endif
 
+#if defined(TW_HAVE_STDINT_H)
+# include <stdint.h> /* for uint8_t, uint32_t */
+#endif
+
+#include <Tw/compiler.h> // for TW_INLINE
 
 /* common datatypes */
 typedef   signed char  sbyte;
@@ -27,10 +32,18 @@ typedef size_t          tany;
 
 /* hw* datatypes */
 
+#ifdef TW_HAVE_STDINT_H
 typedef uint8_t        hwcol;
-typedef uint16_t      hwfont;
+typedef uint32_t      hwfont;
 typedef uint32_t      hwattr;
+#else
+typedef byte           hwcol;
+typedef uldat         hwfont;
+typedef uldat         hwattr;
+#endif
 
+typedef enum { tfalse, ttrue } tbool;
+typedef enum { tzero, tone, ttwo } tternary;
 
 /* miscellaneous types and constants */
 
@@ -38,13 +51,6 @@ typedef uint32_t      hwattr;
 #define TW_BADID	((uldat)-1)
 #define TW_NOFD		(-1)
 #define TW_NOSLOT	TW_MAXULDAT
-
-#ifndef FALSE
-# define FALSE	0
-#endif
-#ifndef TRUE
-# define TRUE	(!FALSE)
-#endif
 
 #define TW_DECL_MAGIC(id) \
 	static byte id[10+sizeof(uldat)] = { \
@@ -59,6 +65,29 @@ typedef uint32_t      hwattr;
 	    sizeof(hwattr), \
 	    0 \
 	}
+
+
+/* hwattr bytes are { 'utf21_low', 'utf21_mid', 'utf21_high', 'color' } */
+
+/* hwattr <-> hwcol+hwfont conversion */
+#define HWATTR(col,font) ((hwattr)(font) | ((hwattr)(byte)(col) << 24))
+#define HWATTR_COLMASK(attr) ((attr) & 0xFF000000)
+#define HWATTR_FONTMASK(attr) ((attr) & 0x00FFFFFF)
+#define HWCOL(attr) ((hwcol)((attr) >> 24))
+#define HWFONTEXTRA(attr) ((attr) & 0x00FFFFFF)
+
+#define HWATTR3(col, font, extra) Tw_hwattr3(col, font, extra)
+#define HWFONT(attr)              Tw_hwfont(attr)
+#define HWEXTRA(attr)             Tw_hwextra(attr)
+    
+hwattr Tw_hwattr3(hwcol col, hwfont font, hwattr extra);
+
+hwfont Tw_hwfont(hwattr attr);
+
+hwattr Tw_hwextra(hwattr attr);
+
+extern hwfont Tw_hwfont_infer_from_extra[0x100];
+
 
 /*
  * Notes about the timevalue struct:
@@ -100,5 +129,6 @@ typedef struct s_timevalue  {
 #define MicroSECs	* MicroSEC
 #define MilliSECs	* MilliSEC
 #define FullSECs	* FullSEC
+
 
 #endif /* _TW_DATATYPES_H */

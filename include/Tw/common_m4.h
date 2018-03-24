@@ -125,16 +125,16 @@ uldat Tw_ServerVersion(tdisplay TwD);
 
 byte Tw_InPanic(tdisplay TwD);
 
-/** this returns FALSE only after libTw has paniced */
+/** this returns tfalse only after libTw has paniced */
 byte Tw_Flush(tdisplay TwD);
-/** this returns FALSE only after libTw has paniced */
+/** this returns tfalse only after libTw has paniced */
 byte Tw_Sync(tdisplay TwD);
 
 /**
  * try to write to the underlying socket.
  * if not all data could be written,write as much as possible,* keep the rest queued,then return.
  * 
- * returns FALSE only after libTw has paniced,* returns TRUE+TRUE if not all data could be written.
+ * returns tfalse only after libTw has paniced,* returns ttrue+ttrue if not all data could be written.
  */
 byte Tw_TimidFlush(tdisplay TwD);
 
@@ -156,8 +156,8 @@ tmsg Tw_PeekMsg(tdisplay TwD);
 
 /**
  * This is the function you must call to get a Msg from the server.
- * If Wait is TRUE  and no Msg is available,it waits until a Msg arrives.
- * If Wait is FALSE and no Msg is available,it tries non-blocking
+ * If Wait is ttrue  and no Msg is available,it waits until a Msg arrives.
+ * If Wait is tfalse and no Msg is available,it tries non-blocking
  *                  to receive more Msgs.
  * 
  * In both cases,if there is at least a Msgs available it is returned

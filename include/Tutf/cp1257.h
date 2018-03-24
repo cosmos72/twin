@@ -527,7 +527,7 @@
     EL(_LATIN_SMALL_LETTER_Z_WITH_CARON) \
     EL(_DOT_ABOVE)
 
-/* list of all characters NOT IDENTICALLY MAPPED to UTF-16 */
+/* list of all characters NOT IDENTICALLY MAPPED to UTF-32 */
 #define T_NLIST_CP1257(EL) \
     EL(_EURO_SIGN) \
     EL(_UNDEFINED_0081) \

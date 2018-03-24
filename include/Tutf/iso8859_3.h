@@ -520,7 +520,7 @@
     EL(_LATIN_SMALL_LETTER_S_WITH_CIRCUMFLEX) \
     EL(_DOT_ABOVE)
 
-/* list of all characters NOT IDENTICALLY MAPPED to UTF-16 */
+/* list of all characters NOT IDENTICALLY MAPPED to UTF-32 */
 #define T_NLIST_ISO8859_3(EL) \
     EL(_LATIN_CAPITAL_LETTER_H_WITH_STROKE) \
     EL(_BREVE) \

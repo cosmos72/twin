@@ -7,8 +7,8 @@
 # if defined (__sun__) || defined(__SVR4)
 
    /*  curses interfaces (emulated) to the termcap library (Solaris7, bwitt) */
-#  undef TRUE
-#  undef FALSE
+#  undef ttrue
+#  undef tfalse
 #  include <curses.h>
 #  include <termio.h>         /* Solaris7: needed "typedef struct sgttyb SGTTY" */
 #  include <term.h>
