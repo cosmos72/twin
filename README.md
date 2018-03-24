@@ -87,6 +87,7 @@ then run as root
 on Linux, also remember to run as root:
 ```
   ldconfig
+```
 on FreeBSD instead, remember to run as root:
 ```
   ldconfig -R
