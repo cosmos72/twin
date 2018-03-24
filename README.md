@@ -2,7 +2,7 @@
 Twin - a Textmode WINdow environment, by Massimiliano Ghilardi
 --------------------------------------------------------------
 
-Version 0.6.3
+Version 0.8.0
 
 Twin is a windowing environment with mouse support, window manager,
 terminal emulator and networked clients, all inside a text display.
@@ -20,34 +20,45 @@ on Mac OS X (x86_64) and on FreeBSD (i386, x86_64).
 I had yet no chance to seriously test it on other systems.
 
 --------------------------------------------------------------
+
 Documentation
 
+[Tutorial](docs/Tutorial)
+	A quite complete tour of twin features: the user interface,
+	how to use twin clients, compression, attaching/detaching
+	displays, fonts. It also contains installation instructions
+	and some caveats for system administrators.
 
-Twin comes with the following documentation:
+[COPYING](COPYING)
+	License: twin server and clients are GPL'ed software.
 
-README		This file.
-README.git	Hints to build twin from GIT repository (for developers).
-README.porting  Tips and warnings to compile twin on unsupported OSes.
-COPYING		License: twin server and clients are GPL'ed software.
-COPYING.LIB	Library license: libTutf, libTw, libTT are LGPL'ed.
-Changelog.txt	List of all changes between the various versions of twin.
-BUGS		Known bugs.
-INSTALL		Quick compile/install guide.
-system.twinrc	A detailed example of ~/.twinrc look-n-feel configuration file.
+[COPYING.LIB](COPYING.LIB)
+	Library license: the libraries libTutf, libTw, libTT
+	are LGPL'ed software.
 
+[INSTALL](INSTALL)
+	Quick compile/install guide.
 
-The docs/ subdirectory contains additional documentation:
+[system.twinrc](system.twinrc)
+	A detailed example of ~/.twinrc look-n-feel configuration file.
 
-Configure	Description of twin configuration script with the meaning
-		of every single option.
-Tutorial	A quite complete tour of twin features: the user interface,
-		how to use twin clients, compression, attaching/detaching
-		displays, fonts. It also contains installation instructions
-		and some caveats for system administrators.
-libTw.txt	a reference file for programmers who want to write
-		twin clients (INCOMPLETE).
-libTw++.txt	a reference file for programmers who want to write
-		twin C++ clients (INCOMPLETE).
+The following documentation is useful mostly to developers:
+
+[Configure](docs/Configure)
+	Description of twin configuration options with the meaning
+	of every single one.
+
+[README.git](README.git)
+	Hints to build twin from GIT repository.
+
+[README.porting](README.porting)
+	Tips and warnings to compile twin on unsupported OSes.
+
+[libTw.txt](docs/libTw.txt)
+	reference API for programmers who want to write twin clients (INCOMPLETE).
+		
+[libTw++.txt](docs/libTw++.txt)
+	reference API for programmers who want to write	twin C++ clients (INCOMPLETE).
 
 --------------------------------------------------------------
 Getting twin
@@ -58,9 +69,11 @@ anyway twin can be downloaded from
 
 https://github.com/cosmos72/twin
 
-
 --------------------------------------------------------------
 Building and installing twin
+
+For detailed instructions about compiling and installing twin,
+see sections 3 and 4 of the file [docs/Tutorial](docs/Tutorial) 
 
 For the impatient, it basically reduces to
   ./configure
@@ -85,10 +98,7 @@ on your system:
   * an ANSI C compiler (for example gcc or clang)
 
 
-For detailed instructions about compiling and installing twin, see the file `Tutorial',
-sections 3 and 4, distributed with twin in the docs/ subdirectory.
-
-In summary, it is STRONGLY recommended to install at least the following packages before compiling twin
+Note: it is STRONGLY recommended to install at least the following packages before compiling twin
 (the exact names depend on the operating system or Linux distribution):
 
   * x11-dev      - may be named x11-devel, libx11-dev ...
@@ -101,14 +111,14 @@ On Linux, it is STRONGLY recommended to also install the following package befor
   * gpm-dev      - may be named gpm-devel, libgpm-dev ...
 
 For a discussion about MANUALLY configuring twin (almost never necessary),
-see the help file `Configure', again in the docs/ subdirectory.
+see the file [docs/Configure](docs/Configure).
 -- WARNING: if you manually enable options that were disabled by `./configure',
 build will almost certainly fail! --
 
 --------------------------------------------------------------
 Other topics:
 
-See the rest of the documentation.
+See the rest of the documentation, starting from the [Tutorial](doc/Tutorial)
 
 
 Greetings,

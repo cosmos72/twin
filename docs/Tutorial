@@ -147,9 +147,11 @@
 	To compile twin you need the following programs installed
 	on your system:
 	
-	a recent GNU make (versions <= 3.76.1 do not to work)
-			
-	an ANSI C compiler (gcc for example)
+	* a Bourne-shell or compatible (for example bash, dash, ash...)
+  
+	* make (most variants are supported: GNU make, BSD make...)
+
+	* an ANSI C compiler (for example gcc or clang)
    
    Once you have the necessary programs listed above, you can start:
    
