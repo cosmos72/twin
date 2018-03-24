@@ -123,7 +123,7 @@ build will almost certainly fail! --
 --------------------------------------------------------------
 Other topics:
 
-See the rest of the documentation, starting from the [Tutorial](doc/Tutorial)
+See the rest of the documentation, starting from the [Tutorial](docs/Tutorial)
 
 
 Greetings,
