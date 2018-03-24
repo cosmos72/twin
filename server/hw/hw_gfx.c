@@ -547,6 +547,7 @@ cleanup:
 /* return name of selected font in allocated (char *) */
 static char * gfx_AutodetectFont(udat fontwidth, udat fontheight) {
     CONST char * patterns[] = {
+        /* "-gnu-unifont-medium-r-normal-*-%u-*-*-*-*-*-iso10646-1", double-width chars not supported yet */
         "-misc-console-medium-r-normal-*-%u-*-*-*-*-*-iso10646-1",
         "-misc-fixed-medium-r-normal-*-%u-*-*-*-*-*-iso10646-1",
         "-*-*-medium-r-normal-*-%u-*-*-*-*-*-iso10646-1",

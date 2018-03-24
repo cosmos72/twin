@@ -184,13 +184,40 @@ INLINE ldat diff(ldat x, ldat y) {
 
 enum { MAX_FONT_SCORE = 100 };
 
+/*
+ * return ttrue if each font glyph is either 'narrow' (latin, etc.) or 'wide' (CJK...)
+ * with 'wide' characters exactly twice as wide as 'narrow' ones
+ */
+static tbool X11_FontIsDualWidth(CONST XFontStruct *info) {
+    XCharStruct * p = info->per_char;
+    ldat  wide = info->max_bounds.width,
+	narrow = info->min_bounds.width,
+	i, n_chars, w;
+    if (wide != narrow * 2)
+	return tfalse;
+    if (p == NULL)
+	/*
+	 * no way to check per-character bounding box. hope for the best... 
+	 * at least GNU unifont falls in this case.
+	 */
+	return ttrue;
+
+    n_chars = (ldat)(info->max_byte1 - info->min_byte1 + 1) * (info->max_char_or_byte2 - info->min_char_or_byte2 + 1);
+    for (i = 0; i < n_chars; i++) {
+	w = p[i].width;
+	if (w != 0 && w != narrow && w != wide)
+	    return tfalse;
+    }
+    return ttrue;
+}
+
 /* if font is monospaced, return its score. otherwise return MINLDAT */
 static ldat X11_MonospaceFontScore(CONST XFontStruct *info, udat fontwidth, udat fontheight, ldat best_score) {
     ldat score = TW_MINLDAT,
-        width = info->max_bounds.width,
-        min_width = info->min_bounds.width;
+        width = info->min_bounds.width,
+        max_width = info->max_bounds.width;
     
-    if (width == min_width) {
+    if (width == max_width || X11_FontIsDualWidth(info)) {
         ldat height = (ldat)info->ascent + info->descent;
         ldat prod1 = (ldat)height * fontwidth;
         ldat prod2 = (ldat)width * fontheight;
@@ -211,6 +238,7 @@ static char * X11_AutodetectFont(udat fontwidth, udat fontheight) {
         CONST char * wildcard;
         ldat score_adj;
     } patterns[] = {
+        /* { "-gnu-unifont-medium-r-normal-*-%s?-*-*-*-*-*-iso10646-1",  0 }, double-width chars not supported yet */
         { "-misc-console-medium-r-normal-*-%s?-*-*-*-*-*-iso10646-1", 0 },
         { "-misc-fixed-medium-r-normal-*-%s?-*-*-*-*-*-iso10646-1", 0 },
         { "-*-*-medium-r-normal-*-%s?-*-*-*-*-*-iso10646-1",        0 },
@@ -245,11 +273,17 @@ static char * X11_AutodetectFont(udat fontwidth, udat fontheight) {
             sprintf(pattern, patterns[i].wildcard, digits + (digits[0] == '0'));
             names = XListFontsWithInfo(xdisplay, pattern, max_fonts, &n_fonts, &info);
 
+	    /* printk("%4d fonts match '%s'\n", names ? n_fonts : 0, pattern); */
             if (names == NULL)
                 continue;
-        
+
             for (k = 0; k < n_fonts && beatable_score; k++)
             {
+		/*
+		printk("     font        '%s'\t direction = %u, min_byte1 = %u, max_byte1 = %u, min_char_or_byte2 = %d, max_char_or_byte2 = %d\n",
+		       names[k], info[k].direction, info[k].min_byte1, info[k].max_byte1, info[k].min_char_or_byte2, info[k].max_char_or_byte2);
+		 */
+
                 if (info[k].direction == FontLeftToRight
                     && info[k].min_byte1 == 0
                     && info[k].min_char_or_byte2 <= 32)
@@ -259,7 +293,7 @@ static char * X11_AutodetectFont(udat fontwidth, udat fontheight) {
                         continue;
             
                     best_score = score;
-                    beatable_score = best_score <= MAX_FONT_SCORE + score_adj;
+                    beatable_score = best_score < MAX_FONT_SCORE + score_adj;
 
                     FreeMem(best);
                     best = CloneStr(names[k]);
