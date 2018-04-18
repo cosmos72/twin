@@ -9,10 +9,6 @@ Various users asked for twin portings on many platforms,
 yet the author only has access to Linux and SunOS systems
 so this file is/will be mostly user contributed.
 
-A requirement of twin on ALL platforms is that you need GNU make
-installed. GNU make should be invoked from the command line instead of
-the default make.
-
 Compiling on FreeBSD:
 
 	Andreas Schweitzer contributed the patch to have twin correctly
@@ -21,17 +17,11 @@ Compiling on FreeBSD:
 	
 	Tips and caveats:
 	
-	You need to have GNU make (gmake) installed.
-	After running `MAKE=gmake ./configure', use `gmake'
-	and NOT plain `make' to compile.
-	Due to incompatible `dialog' utility, `gmake menuconfig' aborts;
-	if you need it, use `gmake config' instead.
 	Only X and twin driver are tested, tty (termcap/ncurses) driver
 	has known problems on FreeBSD console: in particular, the PAUSE key
 	does not work; use F4 instead.
 	Quite obviously, Linux console driver does not compile:
 	it's Linux specific and will get disabled.
-	To be on the safe side, you may want to disable Custom malloc/free.
 
 	Running `ldconfig' with no parameters may be not a good idea on FreeBSD:
 	try with `ldconfig -R'.
@@ -40,29 +30,13 @@ Compiling on FreeBSD:
 	Any volunteer going to code it?
 	
 	
-Compiling on AIX 3.2:
+Compiling on AIX:
 
-	The author tried this personally, and managed to "mostly" do it.
-	here's what you can try (good luck) :
-
-	Before starting you need to have installed GNU make (gmake)
-	and (very probably) GNU gcc; you can try with AIX cc, but I have not
-	tested compiling twin with it.
-
-	Then `MAKE=gmake ./configure' and `gmake'. The logic in `./configure' should
-	disable Shared libraries, Modules, Custom malloc/free,
-	Linux console support and probably Socket compression.
-	If `gmake' fails, run `gmake config', disable all above	options
-	and try again.
-
-	Known problems on AIX 3.2 :
-		twdisplay does not work, I suspect an endianity problem.
+	Once it "mostly" worked, but it's untested and unmaintained.
 
 Compiling on SunOS:
 
-	As usual, you need GNU make (gmake).
-	Run `MAKE=gmake ./configure' and `gmake'. If you have problems compiling
-	clients/findtwin.c, add a line
+	If you have problems compilingclients/findtwin.c, add a line
 	
 	int alphasort();
 	
@@ -76,43 +50,11 @@ Compiling on SunOS:
 	
 Compiling on ELKS:
 
-	UNFINISHED!
-	
-	ELKS support is currently stopped at what looks like a dead end.
-	If you want to check the exact development point, keep reading.
-	
-	Requirements to build `twin' for ELKS is a Linux/i386 box with:
-	`elks' and `dev86' packages installed.
-	The `elksemu' emulator distributed with dev86 must be
-	installed too. It also needs to be registered to the
-	binfmt_misc module with:
-	  
-	modprobe binfmt_misc
-	
-	echo ':i86-elks:M::\x01\x03\x20\x00:\xff\xff\xff\x83:/lib/elksemu:' \
-	     > /proc/sys/fs/binfmt_misc/register
-
-	As of elks-0.1.0-pre4, some includes seem to be missing. Supposing
-	you have elks sources installed in /usr/src/elks, and dev86 sources
-	installed in /usr/src/dev86, type:
-	
-	cp /usr/src/dev86/include/linux/mman.h /usr/src/elks/include/linuxmt/
-	
-	Now, since `bcc' error messages are different from usual compilers,
-	the `./configure' script is unable to detect compile failures.
-	This means that running `./configure' will not work, and a manually
-	tailored version of `config.cache' is needed.
-
-	To actually compile, type:
-	
-	CC='bcc -0 -O -ansi' make
-	
-	Anyway, compiling scripts/Getsizes and scripts/Mkdep still fails,
-	since 'bcc -ansi' just runs 'unprotoize' to have function prototypes
-	conform old-style K&R C, but does not remove other ANSI stuff from
-	sources, like automatic aggregate initialization (i.e. this:
+	Stopped at a dead end:
+	when it was attempted, the 'bcc' compiler available with ELKS
+	does not support ANSI C features as automatic aggregate
+	initialization, i.e. the following:
 	void test(void) {
 	  int a[] = { 1, 2, 3 };
 	}
-	) so compile will fail.
-	
+	so compile fails.
