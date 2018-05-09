@@ -55,20 +55,18 @@ static void X11_HideCursor(dat x, dat y) {
 }
 
 static void X11_ShowCursor(uldat type, dat x, dat y) {
-    udat i;
-    hwcol v;
     hwattr V = (x >= 0 && x < DisplayWidth && y >= 0 && y < DisplayHeight)
         ? Video[x + y * (ldat)DisplayWidth]
         : HWATTR( COL(HIGH|WHITE, BLACK), ' ');
-    hwfont f;
-    XChar2b c;
     
     ldat xbegin = (x - xhw_startx) * xwfont;
     ldat ybegin = (y - xhw_starty) * xhfont;
     
     if (type & 0x10) {
 	/* soft cursor */
-	v = (HWCOL(V) | ((type >> 16) & 0xff)) ^ ((type >> 8) & 0xff);
+	hwcol v = (HWCOL(V) | ((type >> 16) & 0xff)) ^ ((type >> 8) & 0xff);
+	hwfont f;
+	XChar2b c;
 	if ((type & 0x20) && (HWCOL(V) & COL(0,WHITE)) == (v & COL(0,WHITE)))
 	    v ^= COL(0,WHITE);
 	if ((type & 0x40) && ((COLFG(v) & WHITE) == (COLBG(v) & WHITE)))
@@ -81,14 +79,16 @@ static void X11_ShowCursor(uldat type, dat x, dat y) {
 	c.byte1 = f >> 8;
 	c.byte2 = f & 0xFF;
 	XDrawImageString16(xdisplay, xwindow, xgc, xbegin, ybegin + xupfont, &c, 1);
-    }
-    if (type & 0xF) {
+    } else if (type & 0xF) {
 	/* VGA hw-like cursor */
-	i = xhfont * ((type & 0xF)-NOCURSOR) / (SOLIDCURSOR-NOCURSOR);
-	
+
 	/* doesn't work as expected on paletted visuals... */
-	if (xsgc.foreground != xcol[COLFG(HWCOL(V)) ^ COLBG(HWCOL(V))])
-	    XSetForeground(xdisplay, xgc, xsgc.foreground = xcol[COLFG(HWCOL(V)) ^ COLBG(HWCOL(V))]);
+	unsigned long fg = xcol[COLFG(HWCOL(V)) ^ COLBG(HWCOL(V))];
+
+	udat i = xhfont * ((type & 0xF)-NOCURSOR) / (SOLIDCURSOR-NOCURSOR);
+	
+	if (xsgc.foreground != fg)
+	    XSetForeground(xdisplay, xgc, xsgc.foreground = fg);
 	
 	XSetFunction(xdisplay, xgc, xsgc.function = GXxor);
 	XFillRectangle(xdisplay, xwindow, xgc,
