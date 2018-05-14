@@ -354,6 +354,9 @@
 /* Define to 1 if you have the `strtoul' function. */
 #undef HAVE_STRTOUL
 
+/* Define to 1 if the `Gpm_Event' struct has a `wdy' member. */
+#undef HAVE_STRUCT_GPM_EVENT_WDY
+
 /* Define to 1 if you have the `sysconf' function. */
 #undef HAVE_SYSCONF
 

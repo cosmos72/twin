@@ -176,6 +176,9 @@ AC_SEARCH_LIBS(connect,        [socket wsock32])
 AC_SEARCH_LIBS(gethostbyname,  [nsl    wsock32])
 AC_SEARCH_LIBS(ggiOpen,        ggi)
 AC_SEARCH_LIBS(Gpm_Open,       gpm)
+
+AC_CHECK_MEMBER([Gpm_Event.wdy],,, [[#include <gpm.h>]])
+
 AC_SEARCH_LIBS(pthread_create, [pthread c_r])         dnl -lc_r is needed on FreeBSD to use pthread functions
                                                       dnl reset LIBS, because we check -lgpm again
 LIBS=
@@ -193,7 +196,6 @@ if test "$have_x" = yes; then
   CPPFLAGS="$save_CPPFLAGS"
   LDFLAGS="$save_LDFLAGS"
 fi
-
 
 # Output
 
@@ -226,6 +228,9 @@ if test "$ac_cv_search_ggiOpen" != "no"; then
 fi
 if test "$ac_cv_search_Gpm_Open" != "no"; then
   AC_DEFINE(HAVE_GPM_OPEN, 1, [Define to 1 if you have the `Gpm_Open'  function.])
+fi
+if test "$ac_cv_member_Gpm_Event_wdy" != "no"; then
+  AC_DEFINE(HAVE_STRUCT_GPM_EVENT_WDY, 1, [Define to 1 if the `Gpm_Event' struct has a `wdy' member.])
 fi
 if test "$ac_cv_search_pthread_create" != "no"; then
   AC_DEFINE(HAVE_PTHREAD_CREATE, 1, [Define to 1 if you have the `pthread_create'  function.])

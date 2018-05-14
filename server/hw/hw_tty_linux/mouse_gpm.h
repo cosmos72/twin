@@ -165,16 +165,31 @@ static void GPM_MouseEvent(int fd, display_hw hw) {
 	    (IdButtons & GPM_B_LEFT   ? HOLD_LEFT   : 0) |
 	    (IdButtons & GPM_B_MIDDLE ? HOLD_MIDDLE : 0) |
 	    (IdButtons & GPM_B_RIGHT  ? HOLD_RIGHT  : 0) |
-#if defined(GPM_B_WHEEL_REV) && defined(HOLD_WHEEL_REV)
-	    (IdButtons & GPM_B_WHEEL_REV ? HOLD_WHEEL_REV : 0) |
+#if defined(GPM_B_UP)
+	    (IdButtons & GPM_B_UP   ? HOLD_WHEEL_REV : 0) |
 #endif
-#if defined(GPM_B_WHEEL_FWD) && defined(HOLD_WHEEL_FWD)
-	    (IdButtons & GPM_B_WHEEL_FWD ? HOLD_WHEEL_FWD : 0) |
+#if defined(GPM_B_DOWN)
+	    (IdButtons & GPM_B_DOWN ? HOLD_WHEEL_FWD : 0) |
 #endif	
-	    0;
+	0;
 	
-	MouseEventCommon(GPM_EV.x, GPM_EV.y, GPM_EV.dx, GPM_EV.dy, Buttons);
-	
+#ifdef TW_HAVE_STRUCT_GPM_EVENT_WDY
+	if (GPM_EV.wdy != 0) {
+	    while (GPM_EV.wdy > 0) {
+		MouseEventCommon(GPM_EV.x, GPM_EV.y, 0, 0, Buttons | HOLD_WHEEL_REV);
+		MouseEventCommon(GPM_EV.x, GPM_EV.y, 0, 0, Buttons);
+		GPM_EV.wdy--;
+	    }
+	    while (GPM_EV.wdy < 0) {
+		MouseEventCommon(GPM_EV.x, GPM_EV.y, 0, 0, Buttons | HOLD_WHEEL_FWD);
+		MouseEventCommon(GPM_EV.x, GPM_EV.y, 0, 0, Buttons);
+		GPM_EV.wdy++;
+	    }
+	} else
+#endif
+	    MouseEventCommon(GPM_EV.x, GPM_EV.y, GPM_EV.dx, GPM_EV.dy, Buttons);
+
+
     } while (loopN-- && ioctl(GPM_fd, FIONREAD, &left) >= 0 && left > 0);
     
     RestoreHW;

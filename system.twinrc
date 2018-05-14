@@ -366,6 +366,10 @@ Mouse H1  M  Interactive Menu
 # in this case, use mouse right button on menu-bar for screen resize
 Mouse H3  M  Interactive Screen
 
+# Mouse wheel scrolls currently focused window
+Mouse H4   I  Scroll +0 -10
+Mouse H5   I  Scroll +0 +10
+
 # # Or better yet, create your personal style!
 # #
 
