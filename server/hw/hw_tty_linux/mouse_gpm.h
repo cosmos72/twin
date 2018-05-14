@@ -176,14 +176,16 @@ static void GPM_MouseEvent(int fd, display_hw hw) {
 #ifdef TW_HAVE_STRUCT_GPM_EVENT_WDY
 	if (GPM_EV.wdy != 0) {
 	    while (GPM_EV.wdy > 0) {
-		MouseEventCommon(GPM_EV.x, GPM_EV.y, 0, 0, Buttons | HOLD_WHEEL_REV);
+		MouseEventCommon(GPM_EV.x, GPM_EV.y, GPM_EV.dx, GPM_EV.dy, Buttons | HOLD_WHEEL_REV);
 		MouseEventCommon(GPM_EV.x, GPM_EV.y, 0, 0, Buttons);
+		GPM_EV.dx = GPM_EV.dy = 0;
 		GPM_EV.wdy--;
 	    }
 	    while (GPM_EV.wdy < 0) {
-		MouseEventCommon(GPM_EV.x, GPM_EV.y, 0, 0, Buttons | HOLD_WHEEL_FWD);
+		MouseEventCommon(GPM_EV.x, GPM_EV.y, GPM_EV.dx, GPM_EV.dy, Buttons | HOLD_WHEEL_FWD);
 		MouseEventCommon(GPM_EV.x, GPM_EV.y, 0, 0, Buttons);
 		GPM_EV.wdy++;
+		GPM_EV.dx = GPM_EV.dy = 0;
 	    }
 	} else
 #endif
