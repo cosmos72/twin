@@ -130,10 +130,12 @@ static void linux_QuitVideo(void) {
 INLINE void linux_SetColor(hwcol col) {
     static byte colbuf[] = "\033[2x;2x;4x;3xm";
     byte c, *colp = colbuf+2;
-    
+
     if ((col & COL(HIGH,0)) != (_col & COL(HIGH,0))) {
-	if (_col & COL(HIGH,0)) *colp++ = '2';
-	*colp++ = '1'; *colp++ = ';';
+	if (col & COL(HIGH,0)) *colp++ = '1';
+	/* '22m' is normal intensity. we used '21m', which is actually 'doubly underlined' */
+	else *colp++ = '2', *colp++ = '2';
+	*colp++ = ';';
     }
     if ((col & COL(0,HIGH)) != (_col & COL(0,HIGH))) {
 	if (_col & COL(0,HIGH)) *colp++ = '2';
