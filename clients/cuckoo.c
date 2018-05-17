@@ -100,7 +100,7 @@ static volatile int ReceivedFatalSignal = tfalse;
 static TW_RETSIGTYPE SignalChild(int n) {
     pid_t pid;
     signal(SIGCHLD, SignalChild);
-    while ((pid = wait3(NULL, WNOHANG, NULL)) != 0 && pid != (pid_t)-1)
+    while ((pid = Tw_wait3(NULL, WNOHANG, NULL)) != 0 && pid != (pid_t)-1)
 	;
     TW_RETFROMSIGNAL(0);
 }

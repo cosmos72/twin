@@ -384,22 +384,22 @@ static void Login(void) {
     struct passwd *p;
     byte *pw_passwd = NULL, ok = tfalse;
     char *c;
-    
+
 
     if ((p = getpwnam(user.txt))) {
 #ifdef TW_HAVE_GETSPNAM
 	struct spwd *s = getspnam(user.txt);
-	
+
 	if (s)
 	    pw_passwd = s->sp_pwdp;
 	else
 #endif
 	    pw_passwd = p->pw_passwd;
-
+#if defined(TW_HAVE_CRYPT) || defined(TW_HAVE_CRYPT_CRYPT)
 	if (pw_passwd && (((c = crypt(pass.txt, pw_passwd)) && !strcmp(c, pw_passwd)) || !*pw_passwd))
 	    ok = ttrue;
+#endif
 
-    
         if (ok && TwSetServerUid(p->pw_uid, Privileges)) {
 	    /* all ok */
 	    ClearKey();
@@ -588,7 +588,7 @@ static TW_RETSIGTYPE SignalChild(int n) {
     
     signal(SIGCHLD, SignalChild);
     
-    while ((pid = wait3(&status, WNOHANG, (struct rusage *)0)) != 0 && pid != (pid_t)-1) {
+    while ((pid = Tw_wait3(&status, WNOHANG, (struct rusage *)0)) != 0 && pid != (pid_t)-1) {
 	if (WIFEXITED(status) || WIFSIGNALED(status)) {
 	    if (pid == AttachPid)
 		AttachPid = (pid_t)-1;

@@ -162,7 +162,7 @@ AC_FUNC_SETVBUF_REVERSED
 dnl we never use the 'struct rusage' returned by wait3()
 dnl AC_FUNC_WAIT3
 AC_CHECK_FUNCS([ \
-      alarm alphasort dup2 ftime gethostname getpagesize getpt getspnam gettimeofday grantpt \
+      alarm alphasort crypt dup2 ftime gethostname getpagesize getpt getspnam gettimeofday grantpt \
       hstrerror initgroups lstat memchr memcmp memmove memset munmap ptsname putenv \
       scandir select setenv setlocale sigaction socket strchr strdup strerror strrchr \
       strspn strstr strtol strtoul sysconf tcsetpgrp uname unlockpt usleep \
@@ -211,7 +211,7 @@ AC_DEFINE_UNQUOTED(ATTR_TYPE_PACKED,   [`echo $ac_cv_c_attribute_packed    | $SE
 AC_DEFINE_UNQUOTED(ATTR_PTR_ALIGNED_1, [`echo $ac_cv_c_attribute_aligned_1 | $SED -e 's/^no$//g'`], [Define to compiler's variant of __attribute__((aligned(1))), or to empty if not supported.])
 
   
-if test "$ac_cv_search_crypt" != "no"; then
+if test "$ac_cv_search_crypt" != "no" -o "$ac_cv_func_crypt" != "no"; then
   AC_DEFINE(HAVE_CRYPT, 1, [Define to 1 if you have the `crypt'  function.])
 fi
 if test "$ac_cv_search_deflate" != "no"; then

@@ -17167,7 +17167,7 @@ fi
 
 
 for ac_func in  \
-      alarm alphasort dup2 ftime gethostname getpagesize getpt getspnam gettimeofday grantpt \
+      alarm alphasort crypt dup2 ftime gethostname getpagesize getpt getspnam gettimeofday grantpt \
       hstrerror initgroups lstat memchr memcmp memmove memset munmap ptsname putenv \
       scandir select setenv setlocale sigaction socket strchr strdup strerror strrchr \
       strspn strstr strtol strtoul sysconf tcsetpgrp uname unlockpt usleep \
@@ -17859,7 +17859,7 @@ _ACEOF
 
 
 
-if test "$ac_cv_search_crypt" != "no"; then
+if test "$ac_cv_search_crypt" != "no" -o "$ac_cv_func_crypt" != "no"; then
 
 $as_echo "#define HAVE_CRYPT 1" >>confdefs.h
 
