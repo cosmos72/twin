@@ -33,6 +33,7 @@
 #include "rctypes.h"
 #include "rcproto.h"
 #include "rcrun.h"
+#include "util.h"
 
 #if !defined(CONF_WM_RC_SHMMAP) && defined(CONF_WM_RC_SHRINK)
 static byte may_shrink = ttrue;
@@ -108,20 +109,24 @@ static void shm_shrink_error(void) {
 /* value returned on mmap() failure */
 #define NOCORE ((void *)-1)
 
-static byte shmfile[]="/tmp/.Twin_shm\0\0\0\0";
-
 static size_t TW_PAGE_SIZE = 0; /* set by first call to shm_init() */
 
 #define TW_PAGE_ALIGN_DOWN(l) ((l) & ~(size_t)(TW_PAGE_SIZE - 1))
 #define TW_PAGE_ALIGN_UP(l) (((l) + (TW_PAGE_SIZE - 1)) & ~(size_t)(TW_PAGE_SIZE - 1))
 
 byte shm_init(size_t len) {
+    struct sockaddr_un addr; // for sun_path
+    char * shmfile = addr.sun_path;
     int fd = NOFD;
+    udat pathlen;
     
     if (TW_PAGE_SIZE == 0)
         TW_PAGE_SIZE = getpagesize();
     
-    CopyMem(TWDisplay, shmfile+14, lenTWDisplay);
+    pathlen = CopyToSockaddrUn(TmpDir(), &addr, 0);
+    pathlen = CopyToSockaddrUn("/.Twin_shm", &addr, pathlen);
+    pathlen = CopyToSockaddrUn(TWDisplay, &addr, pathlen);
+
     unlink(shmfile);
 
     len += GL_SIZE;

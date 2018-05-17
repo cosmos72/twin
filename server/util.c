@@ -21,12 +21,6 @@
 #ifdef TW_HAVE_SYS_STAT_H
 # include <sys/stat.h>
 #endif
-#ifdef TW_HAVE_SYS_TIMEB_H
-# include <sys/timeb.h>
-#endif
-#ifdef TW_HAVE_SYS_UN_H
-# include <sys/un.h>
-#endif
 #ifdef TW_HAVE_GRP_H
 # include <grp.h>
 #endif
@@ -851,15 +845,36 @@ static void TWDisplayIO(int fd, uldat slot) {
     }
 }
 
-static byte fullTWD[]="/tmp/.Twin:\0\0\0\0";
 static byte envTWD[]="TWDISPLAY=\0\0\0\0\0";
+
+TW_CONST char * TmpDir(void) {
+    TW_CONST char * tmp = getenv("TMPDIR");
+    if (tmp == NULL)
+	tmp = "/tmp";
+    return tmp;
+}
+
+udat CopyToSockaddrUn(TW_CONST char * src, struct sockaddr_un * addr, udat pos) {
+    size_t len = LenStr(src), max = sizeof(addr->sun_path) - 1; /* for final '\0' */
+    if (pos < max) {
+	if (len >= max - pos)
+	    len = max - pos - 1;
+	CopyMem(src, addr->sun_path + pos, len);
+	addr->sun_path[pos += len] = '\0';
+    }
+    return pos;
+}
+
+static struct sockaddr_un addr;
+static TW_CONST char * fullTWD = addr.sun_path;
+static char twd[12];
 
 /* set TWDISPLAY and create /tmp/.Twin:<x> */
 byte InitTWDisplay(void) {
-    struct sockaddr_un addr;
     byte *arg0;
     int fd = NOFD;
     unsigned short i;
+    udat len;
     byte ok;
     
     HOME = getenv("HOME");
@@ -870,10 +885,14 @@ byte InitTWDisplay(void) {
 	WriteMem(&addr, 0, sizeof(addr));
 	addr.sun_family = AF_UNIX;
 
-	for (i=0; i<0x1000; i++) {
-	    sprintf(fullTWD+11, "%hx", i);
-	    CopyStr(fullTWD, addr.sun_path);
 
+	for (i=0; i<0x1000; i++) {
+	    sprintf(twd, ":%hx", i);
+	    
+	    len = CopyToSockaddrUn(TmpDir(), &addr, 0);
+	    len = CopyToSockaddrUn("/.Twin", &addr, len);
+	    len = CopyToSockaddrUn(twd, &addr, len);
+	    
 	    ok = bind(unixFd, (struct sockaddr *)&addr, sizeof(addr)) >= 0;
 	    if (!ok) {
 		Error(SYSCALLERROR);
@@ -914,7 +933,7 @@ byte InitTWDisplay(void) {
 			
 			if (fd != NOFD)
 			    close(fd);
-			TWDisplay = fullTWD+10;
+			TWDisplay = twd;
 			lenTWDisplay = LenStr(TWDisplay);
 			CopyMem(TWDisplay, envTWD+10, lenTWDisplay);
 #if defined(TW_HAVE_SETENV)

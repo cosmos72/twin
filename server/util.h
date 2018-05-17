@@ -13,6 +13,13 @@
 # include "twautoconf.h" /* for TW_HAVE_ALARM */
 #endif
 
+#ifdef TW_HAVE_SYS_TIMEB_H
+# include <sys/timeb.h>
+#endif
+#ifdef TW_HAVE_SYS_UN_H
+# include <sys/un.h>
+#endif
+
 extern udat ErrNo;
 extern byte CONST * ErrStr;
 extern uldat unixSlot;
@@ -32,6 +39,9 @@ byte *CloneStr(CONST byte *From);
 byte *CloneStrL(CONST byte *From, uldat Size);
 byte **CloneStrList(byte **FromList);
 hwfont *CloneStr2HWFont(CONST byte *From, uldat Size);
+
+TW_CONST char * TmpDir(void);
+udat CopyToSockaddrUn(TW_CONST char * src, struct sockaddr_un * addr, udat pos);
 
 byte Error(udat Code_Error);
 

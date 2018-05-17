@@ -5,6 +5,11 @@
 #include <Tw/prefix.h>
 #include <Tw/autoconf.h>
 
+#ifndef TW_HAVE_GETENV
+char *Tw_missing_getenv(TW(CONST) char *name);
+# define getenv Tw_missing_getenv
+#endif
+
 #ifndef TW_HAVE_MEMCMP
 int Tw_missing_memcmp(TW(CONST) void *s1, TW(CONST) void *s2, size_t n);
 # define memcmp Tw_missing_memcmp

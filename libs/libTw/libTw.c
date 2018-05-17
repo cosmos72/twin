@@ -1138,6 +1138,25 @@ static byte MagicChallenge(tw_d TwD) {
     return tfalse;
 }
 
+static TW_CONST char * tmpdir(void) {
+    TW_CONST char * tmp = getenv("TMPDIR");
+    if (tmp == NULL)
+	tmp = "/tmp";
+    return tmp;
+}
+
+static udat copyToSockaddrUn(TW_CONST char * src, struct sockaddr_un * addr, udat pos) {
+    size_t len = Tw_LenStr(src), max = sizeof(addr->sun_path) - 1; /* for final '\0' */
+    if (pos < max) {
+	if (len >= max - pos)
+	    len = max - pos - 1;
+	Tw_CopyMem(src, addr->sun_path + pos, len);
+	addr->sun_path[pos += len] = '\0';
+    }
+    return pos;
+}
+
+
 /**
  * opens a connection to server; TwDisplay is the server to contact;
  * if NULL the environment variable $TWDISPLAY is used
@@ -1163,6 +1182,7 @@ tw_d Tw_Open(TW_CONST byte *TwDisplay) {
     if (*TwDisplay == ':') do {
 	/* unix socket */
 	struct sockaddr_un addr;
+	udat len;
 	
 	if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) < 0) {
 	    CommonErrno = TW_ESYS_NO_SOCKET;
@@ -1171,8 +1191,9 @@ tw_d Tw_Open(TW_CONST byte *TwDisplay) {
 	Tw_WriteMem(&addr, 0, sizeof(addr));
 	addr.sun_family = AF_UNIX;
 
-	Tw_CopyStr("/tmp/.Twin", addr.sun_path);
-	Tw_CopyStr(TwDisplay, addr.sun_path + 10);
+	len = copyToSockaddrUn(tmpdir(), &addr, 0);
+	len = copyToSockaddrUn("/.Twin", &addr, len);
+	len = copyToSockaddrUn(TwDisplay, &addr, len);
 	
 	result = connect(fd, (struct sockaddr *)&addr, sizeof(addr));
 	

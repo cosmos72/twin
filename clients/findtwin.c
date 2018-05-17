@@ -51,6 +51,13 @@ static int match_twsocket(TW_CONST struct dirent *d) {
 }
 
 #if defined(TW_HAVE_SCANDIR) && (defined(TW_HAVE_VERSIONSORT) || defined(TW_HAVE_ALPHASORT))
+static TW_CONST char * tmpdir(void) {
+    TW_CONST char * tmp = getenv("TMPDIR");
+    if (tmp == NULL)
+	tmp = "/tmp";
+    return tmp;
+}
+
 static void unix_socket_test(void) {
     
 # ifdef TW_HAVE_VERSIONSORT
@@ -61,7 +68,7 @@ static void unix_socket_test(void) {
     int my_sort();
     struct dirent **namelist;
     char *s;
-    int n = scandir("/tmp", &namelist, match_twsocket, my_sort);
+    int n = scandir(tmpdir(), &namelist, match_twsocket, my_sort);
 
     while (n > 0) {
 	s = namelist[0]->d_name;

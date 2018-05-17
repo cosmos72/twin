@@ -11,6 +11,12 @@
 
 #include <Tw/Twtypes.h>
 
+#ifndef TW_HAVE_GETENV
+char *Tw_missing_getenv(TW_CONST char *name) {
+    return NULL;
+}
+#endif
+
 #ifndef TW_HAVE_MEMCMP
 int Tw_missing_memcmp(TW_CONST void *s1, TW_CONST void *s2, size_t n) {
     TW_CONST byte *b1, *b2;
