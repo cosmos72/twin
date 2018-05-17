@@ -878,13 +878,11 @@ byte InitTWDisplay(void) {
     byte ok;
     
     HOME = getenv("HOME");
-
+    WriteMem(&addr, 0, sizeof(addr));
     
     if ((unixFd = socket(AF_UNIX, SOCK_STREAM, 0)) >= 0) {
 	
-	WriteMem(&addr, 0, sizeof(addr));
 	addr.sun_family = AF_UNIX;
-
 
 	for (i=0; i<0x1000; i++) {
 	    sprintf(twd, ":%hx", i);
@@ -958,9 +956,13 @@ byte InitTWDisplay(void) {
     }
     if (fd != NOFD)
 	close(fd);
-    printk("twin: failed to create any /tmp/.Twin* socket: %."STR(TW_SMALLBUFF)"s\n", ErrStr);
-    printk("      possible reasons: either /tmp not writable, or all TWDISPLAY already in use,\n"
-	   "      or too many stale /tmp/.Twin* sockets. Aborting.\n");
+
+    CopyToSockaddrUn(TmpDir(), &addr, 0);
+    arg0 = addr.sun_path;
+
+    printk("twin: failed to create any %."STR(TW_SMALLBUFF)"s/.Twin* socket: %."STR(TW_SMALLBUFF)"s\n", addr.sun_path, ErrStr);
+    printk("      possible reasons: either %."STR(TW_SMALLBUFF)"s not writable, or all TWDISPLAY already in use,\n"
+	   "      or too many stale %."STR(TW_SMALLBUFF)"s/.Twin* sockets. Aborting.\n", arg0, arg0);
     return tfalse;
 }
 
