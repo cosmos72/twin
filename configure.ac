@@ -192,6 +192,12 @@ if test "$have_x" = yes; then
 
   AC_CHECK_HEADERS([X11/xpm.h])                       dnl needs X11_CPPFLAGS
   AC_SEARCH_LIBS(XpmReadFileToPixmap, Xpm)            dnl needs X11_LDFLAGS
+
+  CPPFLAGS="$CPPFLAGS $X11_CPPFLAGS -I/usr/include/freetype2"
+
+  AC_CHECK_HEADERS([X11/Xft/Xft.h])                   dnl needs X11_CPPFLAGS
+  AC_CHECK_HEADERS([fontconfig/fontconfig.h])         dnl needs X11_CPPFLAGS
+  AC_SEARCH_LIBS(XftFontOpen, Xft)                    dnl needs X11_LDFLAGS
   
   CPPFLAGS="$save_CPPFLAGS"
   LDFLAGS="$save_LDFLAGS"
@@ -264,6 +270,7 @@ AC_SUBST(LIBSOCK,     "`echo \"$ac_cv_search_gethostbyname\"  | $SED -e 's/^none
 AC_SUBST(LIBPTHREAD,  "`echo \"$ac_cv_search_pthread_create\" | $SED -e 's/^none required$//g' -e 's/^no$//g'`")
 AC_SUBST(LIBTERMCAP,  "`echo \"$ac_cv_search_tgetent\"        | $SED -e 's/^none required$//g' -e 's/^no$//g'`")
 AC_SUBST(LIBXPM,      "`echo \"$ac_cv_search_XpmReadFileToPixmap\"  | $SED -e 's/^none required$//g' -e 's/^no$//g'`")
+AC_SUBST(LIBXFT,      "`echo \"$ac_cv_search_XftFontOpen\"    | $SED -e 's/^none required$//g' -e 's/^no$//g'`")
 if test "$enable_socket_gz" = yes; then
   AC_SUBST(LIBZ,      "`echo \"$ac_cv_search_deflate\"        | $SED -e 's/^none required$//g' -e 's/^no$//g'`")
 fi

@@ -24,7 +24,7 @@ endif
 
 AM_CPPFLAGS           = -I$(top_srcdir)/include -I$(top_srcdir)/server
 libhw_X11_la_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/server $(X11_CPPFLAGS)
-libhw_xft_la_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/server $(X11_CPPFLAGS)
+libhw_xft_la_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/server $(X11_CPPFLAGS) -I/usr/include/freetype2
 libhw_gfx_la_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/server $(X11_CPPFLAGS) -DPKG_DATADIR="\"$(pkgdatadir)\""
 
 libhw_display_la_SOURCES = hw_display.c
@@ -42,7 +42,7 @@ libhw_gfx_la_LDFLAGS  = -export-dynamic -export-symbols-regex '^(Init|Quit)Modul
 
 libhw_display_la_LIBADD =
 libhw_X11_la_LIBADD   = $(LIBTUTF) $(LIBX11)
-libhw_xft_la_LIBADD   = $(LIBTUTF) $(LIBX11)
+libhw_xft_la_LIBADD   = $(LIBTUTF) $(LIBX11) $(LIBXFT)
 libhw_gfx_la_LIBADD   = $(LIBTUTF) $(LIBX11) $(LIBXPM)
 libhw_ggi_la_LIBADD   = $(LIBGGI)
 libhw_tty_la_LIBADD   = $(LIBTUTF) $(LIBTERMCAP) $(LIBGPM)

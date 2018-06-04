@@ -13,17 +13,25 @@ struct x11_data {
     Window       xwindow;
     GC           xgc;
     XGCValues    xsgc;
-    XFontStruct *xsfont;
-#ifdef TW_FEATURE_X11_XIM_XIC /* autodetected */
-    XIM		 xim;
-    XIC		 xic;
-#endif
 #ifdef HW_GFX
     int          xmonochrome;
     Pixmap       xtheme, xroot, xbg;
     GC           xthemegc, xrootgc, xbggc;
     XGCValues    xthemesgc;
     byte         xroot_flag, xbg_flag;
+#endif
+#ifdef HW_XFT
+    XftFont     *xsfont;
+    XftDraw     *xftdraw;
+    XftColor    *foreground; // current foreground color
+    XftColor    *background; // current background color
+    XftColor    *xftcolors[MAXCOL+1];
+#else
+    XFontStruct *xsfont;
+#endif
+#ifdef TW_FEATURE_X11_XIM_XIC /* autodetected */
+    XIM		 xim;
+    XIC		 xic;
 #endif
     XComposeStatus xcompose;
     byte         xwindow_AllVisible, xfont_map;
@@ -82,4 +90,11 @@ struct x11_data {
 #define xbg_flag	(xdata->xbg_flag)
 #define xbg		(xdata->xbg)
 #define xbggc		(xdata->xbggc)
+#endif
+
+#ifdef HW_XFT
+#define xftdraw         (xdata->xftdraw)
+#define xforeground	(xdata->foreground)
+#define xbackground     (xdata->background)
+#define xftcolors       (xdata->xftcolors)
 #endif

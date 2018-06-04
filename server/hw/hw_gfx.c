@@ -50,6 +50,7 @@
 #include "hw_x/features.h"
 #include "hw_x/x11_data.h"
 #include "hw_x/keyboard.h"
+#include "hw_x/xchar16.h"
 
 /* how to draw screen root and widgets interior: */
 #define GFX_USE_NONE	0	/* no pixmap */
@@ -61,7 +62,7 @@
 
 # define myXDrawImageString XDrawImageString16
 # define myXDrawString XDrawString16
-# define myXChar XChar2b
+# define myXChar XChar16
 
 
 #define XDRAW_FN(FN, col, buf, buflen) do { \
