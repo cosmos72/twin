@@ -47,6 +47,7 @@ m4_define([TW_OUTPUT], [[
   tw_cfg CONF_HW_TTY_TWTERM     "$enable_hw_tty_twterm"
   tw_cfg CONF_HW_TTY_TERMCAP    "$enable_hw_tty_termcap"
   tw_cfg CONF_HW_X11            "$enable_hw_x11"
+  tw_cfg CONF_HW_XFT            "$enable_hw_xft"
   tw_cfg CONF_HW_GFX            "$enable_hw_gfx"
   tw_cfg CONF_HW_TWIN           "$enable_hw_twin"
   tw_cfg CONF_HW_DISPLAY        "$enable_hw_display"

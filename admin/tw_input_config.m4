@@ -115,6 +115,12 @@ AC_ARG_ENABLE(hw-x11,dnl
 enable_hw_x11=yes
 )dnl
 
+dnl the xft driver
+AC_ARG_ENABLE(hw-xft,dnl
+[  --enable-hw-xft[=yes|no]               enable the xft (X11 with truetype fonts) driver ],,
+enable_hw_xft=yes
+)dnl
+
 dnl the gfx driver
 AC_ARG_ENABLE(hw-gfx,dnl
 [  --enable-hw-gfx[=yes|no]               enable the gfx (enhanced X11) driver ],,

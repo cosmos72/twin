@@ -31,7 +31,11 @@
 #include <X11/Xatom.h>
 #include <X11/Xmd.h>                /* CARD32 */
 
+#ifdef ENABLE_HW_XFT
+#define THIS "hw_xft"
+#else
 #define THIS "hw_X11"
+#endif
 
 #include "hw_x/features.h"
 
@@ -386,6 +390,10 @@ static byte X11_InitHW(void) {
     /* not yet opened */
     xdisplay = NULL;
     
+#ifdef ENABLE_HW_XFT
+    if (arg && (strncmp(arg, "-hw=xft", 7) == 0)) {
+        arg += 7; /* skip "-hw=xft" */
+#else
     if (arg && HW->NameLen > 4) {
 	arg += 4; /* skip "-hw=" */
 	
@@ -394,6 +402,7 @@ static byte X11_InitHW(void) {
 	
 	if (*arg == '1' && arg[1] == '1')
 	    arg += 2; /* `X11' is same as `X' */
+#endif
 
 	if (*arg == '@') {
 	    if ((s = strchr(xdisplay_ = ++arg, ','))) {

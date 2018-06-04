@@ -61,6 +61,10 @@ if test "$have_x" != yes; then
   enable_hw_x11=no
 fi
 
+if test "x$have_x" != xyes; then
+  enable_hw_xft=no
+fi
+
 if test "$have_x" != yes -o "$ac_cv_header_X11_xpm_h" = no -o "$ac_cv_search_XpmReadFileToPixmap" = no; then
   enable_hw_gfx=no
 fi
