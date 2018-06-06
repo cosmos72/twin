@@ -3,16 +3,16 @@
 static void X11_FillWindowTitle(byte * title, int maxlen) {
     int left = maxlen;
     int chunk = 0;
-
+    
     memset(title, '\0', left);
     if (left < 6)
         return;
-
+    
     left--; /* reserve space for final '\0' */
-
+    
     memcpy(title, "twin ", 5);
     title += 5; left -= 5;
-
+    
     if (gethostname(title, left) == 0)
     {
         byte * end = memchr(title, '\0', left);
@@ -38,9 +38,8 @@ static void X11_FillWindowTitle(byte * title, int maxlen) {
 
 
 static void X11_HideCursor(dat x, dat y) {
-    /* needed by XDRAW_ANY */
-    int xbegin = (x - xhw_startx) * xwfont, ybegin = (y - xhw_starty) * xhfont;
-
+    int xbegin = (x - xhw_startx) * xwfont, ybegin = (y - xhw_starty) * xhfont; /* needed by XDRAW_ANY */
+    
     hwattr V = (x >= 0 && x < DisplayWidth && y >= 0 && y < DisplayHeight)
         ? Video[x + y * (ldat)DisplayWidth]
         : HWATTR( COL(HIGH|WHITE, BLACK), ' ');
@@ -48,50 +47,52 @@ static void X11_HideCursor(dat x, dat y) {
     XChar16 c;
     hwattr extra = HWEXTRA(V);
     hwfont f = xUTF_32_to_charset(HWFONT(V));
-
+    
     XChar16FromRaw(f, &c);
-
+    
     XDRAW_ANY(&c, 1, col, extra);
 }
 
 static void X11_ShowCursor(uldat type, dat x, dat y) {
+    hwcol v;
     hwattr V = (x >= 0 && x < DisplayWidth && y >= 0 && y < DisplayHeight)
         ? Video[x + y * (ldat)DisplayWidth]
         : HWATTR( COL(HIGH|WHITE, BLACK), ' ');
+    hwfont f;
+    XChar16 c;
+    
     ldat xbegin = (x - xhw_startx) * xwfont;
     ldat ybegin = (y - xhw_starty) * xhfont;
-
+    
     if (type & 0x10) {
-        /* soft cursor */
-        hwcol v = (HWCOL(V) | ((type >> 16) & 0xff)) ^ ((type >> 8) & 0xff);
-        XChar16 c;
-        hwfont f;
-        if ((type & 0x20) && (HWCOL(V) & COL(0,WHITE)) == (v & COL(0,WHITE)))
-            v ^= COL(0,WHITE);
-        if ((type & 0x40) && ((COLFG(v) & WHITE) == (COLBG(v) & WHITE)))
-            v ^= COL(WHITE,0);
-        f = xUTF_32_to_charset(HWFONT(V));
+	/* soft cursor */
+	v = (HWCOL(V) | ((type >> 16) & 0xff)) ^ ((type >> 8) & 0xff);
+	if ((type & 0x20) && (HWCOL(V) & COL(0,WHITE)) == (v & COL(0,WHITE)))
+	    v ^= COL(0,WHITE);
+	if ((type & 0x40) && ((COLFG(v) & WHITE) == (COLBG(v) & WHITE)))
+	    v ^= COL(WHITE,0);
+	f = xUTF_32_to_charset(HWFONT(V));
         XChar16FromRaw(f, &c);
         XDRAW_ANY(&c, 1, v, HWEXTRA(V));
     } else if (type & 0xF) {
         /* VGA hw-like cursor */
 
         /* doesn't work as expected on paletted visuals... */
-        unsigned long fg = xcol[COLFG(HWCOL(V)) ^ COLBG(HWCOL(V))];
+	unsigned long fg = xcol[COLFG(HWCOL(V)) ^ COLBG(HWCOL(V))];
 
-        udat i = xhfont * ((type & 0xF)-NOCURSOR) / (SOLIDCURSOR-NOCURSOR);
-
-        if (xsgc.foreground != fg) {
-            XSetForeground(xdisplay, xgc, xsgc.foreground = fg);
+	udat i = xhfont * ((type & 0xF)-NOCURSOR) / (SOLIDCURSOR-NOCURSOR);
+	
+	if (xsgc.foreground != fg) {
+	    XSetForeground(xdisplay, xgc, xsgc.foreground = fg);
 #ifdef HW_XFT
             xforeground = xftcolors[COLFG(HWCOL(V)) ^ COLBG(HWCOL(V))];
 #endif
         }
-
-        XSetFunction(xdisplay, xgc, xsgc.function = GXxor);
-        XFillRectangle(xdisplay, xwindow, xgc,
-        xbegin, ybegin + xhfont - i, xwfont, i);
-        XSetFunction(xdisplay, xgc, xsgc.function = GXcopy);
+	
+	XSetFunction(xdisplay, xgc, xsgc.function = GXxor);
+	XFillRectangle(xdisplay, xwindow, xgc,
+		       xbegin, ybegin + xhfont - i, xwfont, i);
+	XSetFunction(xdisplay, xgc, xsgc.function = GXcopy);
     }
 }
 
@@ -99,43 +100,43 @@ static void X11_FlushVideo(void) {
     uldat i;
     dat start, end;
     byte iff;
-
+    
     if (ValidOldVideo) {
         iff = ChangedVideoFlag
-        && Video[HW->XY[0] + HW->XY[1] * (ldat)DisplayWidth]
-        != OldVideo[HW->XY[0] + HW->XY[1] * (ldat)DisplayWidth];
+            && Video[HW->XY[0] + HW->XY[1] * (ldat)DisplayWidth]
+            != OldVideo[HW->XY[0] + HW->XY[1] * (ldat)DisplayWidth];
         /* ttrue if and only if the cursor will be erased by burst */
     }
-
+    
     /* first burst all changes */
     if (ChangedVideoFlag) {
-        for (i=0; i<(ldat)DisplayHeight*2; i++) {
-            start = ChangedVideo[i>>1][i&1][0];
-            end   = ChangedVideo[i>>1][i&1][1];
-
-            if (start != -1)
-                X11_Mogrify(start, i>>1, end-start+1);
-        }
-        setFlush();
+	for (i=0; i<(ldat)DisplayHeight*2; i++) {
+	    start = ChangedVideo[i>>1][i&1][0];
+	    end   = ChangedVideo[i>>1][i&1][1];
+	    
+	    if (start != -1)
+		X11_Mogrify(start, i>>1, end-start+1);
+	}
+	setFlush();
     }
     /* then, we may have to erase the old cursor */
     if (!ValidOldVideo || (!iff && HW->TT != NOCURSOR &&
-                (CursorType != HW->TT || CursorX != HW->XY[0] || CursorY != HW->XY[1]))) {
-
-        HW->TT = NOCURSOR;
-        X11_HideCursor(HW->XY[0], HW->XY[1]);
-        setFlush();
+                           (CursorType != HW->TT || CursorX != HW->XY[0] || CursorY != HW->XY[1]))) {
+	
+	HW->TT = NOCURSOR;
+	X11_HideCursor(HW->XY[0], HW->XY[1]);
+	setFlush();
     }
     /* finally, redraw the cursor if forced to redraw or */
     /* (we want a cursor and (the burst erased the cursor or the cursor changed)) */
     if (!ValidOldVideo ||
-            (CursorType != NOCURSOR &&
-             (iff || CursorType != HW->TT || CursorX != HW->XY[0] || CursorY != HW->XY[1]))) {
-
-        X11_ShowCursor(HW->TT = CursorType, HW->XY[0] = CursorX, HW->XY[1]= CursorY);
-        setFlush();
+	(CursorType != NOCURSOR &&
+            (iff || CursorType != HW->TT || CursorX != HW->XY[0] || CursorY != HW->XY[1]))) {
+	
+	X11_ShowCursor(HW->TT = CursorType, HW->XY[0] = CursorX, HW->XY[1]= CursorY);
+	setFlush();
     }
-
+    
     HW->FlagsHW &= ~FlHWChangedMouseFlag;
 }
 
@@ -146,8 +147,8 @@ static void X11_FlushHW(void) {
 
 static void X11_DetectSize(dat *x, dat *y) {
     if (!xhw_view) {
-        *x = HW->X = xwidth  / xwfont;
-        *y = HW->Y = xheight / xhfont;
+	*x = HW->X = xwidth  / xwfont;
+	*y = HW->Y = xheight / xhfont;
     }
 }
 
@@ -157,12 +158,12 @@ static void X11_CheckResize(dat *x, dat *y) {
 
 static void X11_Resize(dat x, dat y) {
     if (x != HW->X || y != HW->Y) {
-        if (!xhw_view) {
-            XResizeWindow(xdisplay, xwindow,
-            xwidth = xwfont * (HW->X = xhw_endx = x),
-            xheight = xhfont * (HW->Y = xhw_endy = y));
-        }
-        setFlush();
+	if (!xhw_view) {
+	    XResizeWindow(xdisplay, xwindow,
+			  xwidth = xwfont * (HW->X = xhw_endx = x),
+			  xheight = xhfont * (HW->Y = xhw_endy = y));
+	}
+	setFlush();
     }
 }
 
@@ -178,9 +179,9 @@ static byte X11_SelectionImport_X11(void) {
  */
 static void X11_SelectionExport_X11(void) {
     if (!HW->HWSelectionPrivate) {
-        XSetSelectionOwner(xdisplay, XA_PRIMARY, xwindow, CurrentTime);
-        HW->HWSelectionPrivate = (tany)xwindow;
-        setFlush();
+	XSetSelectionOwner(xdisplay, XA_PRIMARY, xwindow, CurrentTime);
+	HW->HWSelectionPrivate = (tany)xwindow;
+	setFlush();
     }
 }
 
@@ -188,19 +189,19 @@ static void X11_SelectionExport_X11(void) {
  * notify our Selection to X11
  */
 static void X11_SelectionNotify_X11(uldat ReqPrivate, uldat Magic, CONST byte MIME[MAX_MIMELEN],
-        uldat Len, CONST byte * Data) {
+				    uldat Len, CONST byte * Data) {
     XEvent ev;
-
+    
     if (XReqCount == 0) {
-        printk(THIS ".c: X11_SelectionNotify_X11(): unexpected Twin Selection Notify event!\n");
-        return;
+	printk(THIS ".c: X11_SelectionNotify_X11(): unexpected Twin Selection Notify event!\n");
+	return;
     }
 #if 0
     else {
-        printk(THIS ".c: X11_SelectionNotify_X11(): %d nested Twin Selection Notify events\n", XReqCount);
+	printk(THIS ".c: X11_SelectionNotify_X11(): %d nested Twin Selection Notify events\n", XReqCount);
     }
 #endif
-
+    
     XReqCount--;
     ev.xselection.type      = SelectionNotify;
     ev.xselection.property  = None;
@@ -209,45 +210,45 @@ static void X11_SelectionNotify_X11(uldat ReqPrivate, uldat Magic, CONST byte MI
     ev.xselection.selection = XReq(XReqCount).selection;
     ev.xselection.target    = XReq(XReqCount).target;
     ev.xselection.time      = XReq(XReqCount).time;
-
+    
     if (XReq(XReqCount).target == xTARGETS) {
-        /*
-         * On some systems, the Atom typedef is 64 bits wide.
-         * We need to have a typedef that is exactly 32 bits wide,
-         * because a format of 64 is not allowed by the X11 protocol.
-         */
-        typedef CARD32 Atom32;
-        Atom32 target_list[2];
-
-        target_list[0] = (Atom32) xTARGETS;
-        target_list[1] = (Atom32) XA_STRING;
-        XChangeProperty (xdisplay, XReq(XReqCount).requestor, XReq(XReqCount).property,
-                xTARGETS, 8*sizeof(target_list[0]), PropModeReplace,
-                (char *)target_list,
-                sizeof(target_list)/sizeof(target_list[0]));
-        ev.xselection.property = XReq(XReqCount).property;
+	/*
+	 * On some systems, the Atom typedef is 64 bits wide.
+	 * We need to have a typedef that is exactly 32 bits wide,
+	 * because a format of 64 is not allowed by the X11 protocol.
+	 */
+	typedef CARD32 Atom32;
+	Atom32 target_list[2];
+	
+	target_list[0] = (Atom32) xTARGETS;
+	target_list[1] = (Atom32) XA_STRING;
+	XChangeProperty (xdisplay, XReq(XReqCount).requestor, XReq(XReqCount).property,
+			 xTARGETS, 8*sizeof(target_list[0]), PropModeReplace,
+			 (char *)target_list,
+			 sizeof(target_list)/sizeof(target_list[0]));
+	ev.xselection.property = XReq(XReqCount).property;
     } else if (XReq(XReqCount).target == XA_STRING) {
-        uldat l;
-        byte *_Data = NULL, *d;
-        TW_CONST hwfont *s;
-
-        /* X11 selection contains text, not unicode */
-        if (Magic == SEL_HWFONTMAGIC) {
-            if ((_Data = d = (byte *)AllocMem(Len))) {
-                s = (TW_CONST hwfont *)Data;
-                for (l = Len; l; l--)
-                    *d++ = Tutf_UTF_32_to_CP437(*s++);
-                Data = _Data;
-                Len /= sizeof(hwfont);
-            } else
-                Len = 0;
-        }
-        XChangeProperty (xdisplay, XReq(XReqCount).requestor, XReq(XReqCount).property,
-        XA_STRING, 8, PropModeReplace, Data, Len);
-        ev.xselection.property = XReq(XReqCount).property;
-
-        if (Magic == SEL_HWFONTMAGIC && _Data)
-            FreeMem(_Data);
+	uldat l;
+	byte *_Data = NULL, *d;
+	TW_CONST hwfont *s;
+	
+	/* X11 selection contains text, not unicode */
+	if (Magic == SEL_HWFONTMAGIC) {
+	    if ((_Data = d = (byte *)AllocMem(Len))) {
+		s = (TW_CONST hwfont *)Data;
+		for (l = Len; l; l--)
+		    *d++ = Tutf_UTF_32_to_CP437(*s++);
+		Data = _Data;
+		Len /= sizeof(hwfont);
+	    } else
+		Len = 0;
+	}
+	XChangeProperty (xdisplay, XReq(XReqCount).requestor, XReq(XReqCount).property,
+			 XA_STRING, 8, PropModeReplace, Data, Len);
+	ev.xselection.property = XReq(XReqCount).property;
+        
+	if (Magic == SEL_HWFONTMAGIC && _Data)
+	    FreeMem(_Data);
     }
     XSendEvent (xdisplay, XReq(XReqCount).requestor, False, 0, &ev);
     setFlush();
@@ -262,45 +263,44 @@ static void X11_SelectionNotify_up(Window win, Atom prop) {
     Atom actual_type;
     int actual_fmt;
     byte *data, *buff = NULL;
-
+    
     if (xReqCount == 0) {
-        printk(THIS ".c: X11_SelectionNotify_up(): unexpected X Selection Notify event!\n");
-        return;
+	printk(THIS ".c: X11_SelectionNotify_up(): unexpected X Selection Notify event!\n");
+	return;
     }
 #if 0
     else {
-        printk(THIS ".c: X11_SelectionNotify_up(): %d nested X Selection Notify event\n", xReqCount);
+	printk(THIS ".c: X11_SelectionNotify_up(): %d nested X Selection Notify event\n", xReqCount);
     }
 #endif
     if (prop == None)
-        return;
-
+	return;
+    
     xReqCount--;
-
+    
     do {
-        if ((XGetWindowProperty(xdisplay, win, prop,
-                        nread/4, bytes_after/4, False,
-                        AnyPropertyType, &actual_type, &actual_fmt,
-                        &nitems, &bytes_after, &data) != Success) ||
-                (actual_type != XA_STRING)) {
-
-            XFree(data);
-            if (buff)
-                FreeMem(buff);
-            return;
-        }
-
-        if (buff || (buff = AllocMem(nitems + bytes_after))) {
-            CopyMem(data, buff + nread, nitems);
-            nread += nitems;
-        }
-        XFree(data);
-        if (!buff)
-            return;
+	if ((XGetWindowProperty(xdisplay, win, prop,
+				nread/4, bytes_after/4, False,
+				AnyPropertyType, &actual_type, &actual_fmt,
+				&nitems, &bytes_after, &data)
+	     != Success) || (actual_type != XA_STRING)) {
+	    
+	    XFree(data);
+	    if (buff)
+		FreeMem(buff);
+	    return;
+	}
+	
+	if (buff || (buff = AllocMem(nitems + bytes_after))) {
+	    CopyMem(data, buff + nread, nitems);
+	    nread += nitems;
+	}
+	XFree(data);
+	if (!buff)
+	    return;
     } while (bytes_after > 0);
-
-    TwinSelectionNotify(xRequestor(xReqCount), xReqPrivate(xReqCount), SEL_TEXTMAGIC, NULL,
-            nread, buff);
+    
+    TwinSelectionNotify(xRequestor(xReqCount), xReqPrivate(xReqCount), SEL_TEXTMAGIC, NULL, nread, buff);
     FreeMem(buff);
 }
 
@@ -309,28 +309,28 @@ static void X11_SelectionNotify_up(Window win, Atom prop) {
  */
 static void X11_SelectionRequest_X11(obj Requestor, uldat ReqPrivate) {
     if (!HW->HWSelectionPrivate) {
-
-        if (xReqCount == NEST) {
-            printk(THIS ".c: X11_SelectionRequest_X11(): too many nested Twin Selection Request events!\n");
-            return;
-        }
+        
+	if (xReqCount == NEST) {
+	    printk(THIS ".c: X11_SelectionRequest_X11(): too many nested Twin Selection Request events!\n");
+	    return;
+	}
 #if 0
-        else {
-            printk(THIS ".c: X11_SelectionRequest_X11(): %d nested Twin Selection Request events\n", xReqCount+1);
-        }
+	else {
+	    printk(THIS ".c: X11_SelectionRequest_X11(): %d nested Twin Selection Request events\n", xReqCount+1);
+	}
 #endif
-        xRequestor(xReqCount) = Requestor;
-        xReqPrivate(xReqCount) = ReqPrivate;
-        xReqCount++;
-
-        if (XGetSelectionOwner(xdisplay, XA_PRIMARY) == None)
-            X11_SelectionNotify_up(DefaultRootWindow(xdisplay), XA_CUT_BUFFER0);
-        else {
-            Atom prop = XInternAtom (xdisplay, "VT_SELECTION", False);
-            XConvertSelection(xdisplay, XA_PRIMARY, XA_STRING, prop, xwindow, CurrentTime);
-            setFlush();
-            /* we will get an X11 SelectionNotify event */
-        }
+	xRequestor(xReqCount) = Requestor;
+	xReqPrivate(xReqCount) = ReqPrivate;
+	xReqCount++;
+	
+	if (XGetSelectionOwner(xdisplay, XA_PRIMARY) == None)
+	    X11_SelectionNotify_up(DefaultRootWindow(xdisplay), XA_CUT_BUFFER0);
+	else {
+	    Atom prop = XInternAtom (xdisplay, "VT_SELECTION", False);
+	    XConvertSelection(xdisplay, XA_PRIMARY, XA_STRING, prop, xwindow, CurrentTime);
+	    setFlush();
+	    /* we will get an X11 SelectionNotify event */
+	}
     }
     /* else race! someone else became Selection owner in the meanwhile... */
 }
@@ -341,12 +341,12 @@ static void X11_SelectionRequest_X11(obj Requestor, uldat ReqPrivate) {
  */
 static void X11_SelectionRequest_up(XSelectionRequestEvent *req) {
     if (XReqCount == NEST) {
-        printk(THIS ".c: X11_SelectionRequest_up(): too many nested X Selection Request events!\n");
-        return;
+	printk(THIS ".c: X11_SelectionRequest_up(): too many nested X Selection Request events!\n");
+	return;
     }
 #if 0
     else {
-        printk(THIS ".c: X11_SelectionRequest_up(): %d nested X Selection Request events\n", XReqCount+1);
+	printk(THIS ".c: X11_SelectionRequest_up(): %d nested X Selection Request events\n", XReqCount+1);
     }
 #endif
     CopyMem(req, &XReq(XReqCount), sizeof(XSelectionRequestEvent));
@@ -357,29 +357,29 @@ static void X11_SelectionRequest_up(XSelectionRequestEvent *req) {
 
 static byte X11_CanDragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
     return xwindow_AllVisible /* if window is partially covered, XCopyArea() cannot work */
-        && !HW->RedrawVideo /* if window is not up-to-date, XCopyArea() is unusable */
-        && (Rgt-Left+1) * (Dwn-Up+1) > 20; /* avoid XCopyArea() for very small areas */
+	&& !HW->RedrawVideo /* if window is not up-to-date, XCopyArea() is unusable */
+	&& (Rgt-Left+1) * (Dwn-Up+1) > 20; /* avoid XCopyArea() for very small areas */
 }
 
 static void X11_DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
     dat DstRgt = (Rgt-Left)+DstLeft;
     dat DstDwn = (Dwn-Up)+DstUp;
-
+    
     if (HW->TT != NOCURSOR) {
-        if (HW->XY[0] >= Left && HW->XY[0] <= Rgt && HW->XY[1] >= Up && HW->XY[1] <= Dwn) {
-            /* must hide the cursor before dragging */
-            X11_HideCursor(HW->XY[0], HW->XY[1]);
-            /* and remember to redraw it */
-            HW->TT = (uldat)-1;
-        } else if (HW->XY[0] >= DstLeft && HW->XY[0] <= DstRgt &&
-            HW->XY[1] >= DstUp && HW->XY[1] <= DstDwn) {
-            /* cursor will be overwritten by drag, remember to redraw it */
-            HW->TT = (uldat)-1;
-        }
+	if (HW->XY[0] >= Left && HW->XY[0] <= Rgt && HW->XY[1] >= Up && HW->XY[1] <= Dwn) {
+	    /* must hide the cursor before dragging */
+	    X11_HideCursor(HW->XY[0], HW->XY[1]);
+	    /* and remember to redraw it */
+	    HW->TT = (uldat)-1;
+	} else if (HW->XY[0] >= DstLeft && HW->XY[0] <= DstRgt &&
+		   HW->XY[1] >= DstUp && HW->XY[1] <= DstDwn) {
+	    /* cursor will be overwritten by drag, remember to redraw it */
+	    HW->TT = (uldat)-1;
+	}
     }
     XCopyArea(xdisplay, xwindow, xwindow, xgc,
-    Left*xwfont, Up*xhfont, (Rgt-Left+1)*xwfont, (Dwn-Up+1)*xhfont,
-    DstLeft*xwfont, DstUp*xhfont);
+	      Left*xwfont, Up*xhfont, (Rgt-Left+1)*xwfont, (Dwn-Up+1)*xhfont,
+	      DstLeft*xwfont, DstUp*xhfont);
     setFlush();
 }
 
@@ -396,13 +396,13 @@ static int X11_Die(Display *d) {
      * may use it differently and have by chance the same value for it.
      */
     forallHW {
-        if (HW->QuitHW == X11_QuitHW && HW->Private
-                && d == xdisplay) { /* expands to HW->Private->xdisplay */
-
-            HW->NeedHW |= NEEDPanicHW, NeedHW |= NEEDPanicHW;
-
-            break;
-        }
+	if (HW->QuitHW == X11_QuitHW && HW->Private
+	    && d == xdisplay) { /* expands to HW->Private->xdisplay */
+	    
+	    HW->NeedHW |= NEEDPanicHW, NeedHW |= NEEDPanicHW;
+	    
+	    break;
+	}
     }
     return 0;
 }
@@ -415,70 +415,67 @@ static int X11_Die(Display *d) {
 
 static hwfont X11_UTF_32_to_UCS_2(hwfont c) {
     if ((c & 0x1FFE00) == 0xF000)
-        /* private use codepoints. for compatibility, treat as "direct-to-font" zone */
-        c &= 0x01FF;
+	/* private use codepoints. for compatibility, treat as "direct-to-font" zone */
+	c &= 0x01FF;
     if (c > 0x10FFFF)
-        /* not representable in two bytes */
-        c = 0xFFFD;
+	/* not representable in two bytes */
+	c = 0xFFFD;
     return c;
 }
 
 static Tutf_function X11_UTF_32_to_charset_function(CONST byte *charset) {
 #ifdef HW_XFT
-    // this is sufficient for xft fonts which are 16-bit unicode by definition
+    // this is sufficient for xft fonts which are 16-bit unicode
     return X11_UTF_32_to_UCS_2;
 #else
     XFontProp *fp;
     unsigned long prop;
     CONST byte *s, *fontname = NULL;
     uldat i;
-
+    
     if (!charset) {
-        /* attempt to autodetect encoding from fontname */
+	/* attempt to autodetect encoding from fontname */
         if (XGetFontProperty(xsfont, XA_FONT, &prop))
             fontname = XGetAtomName(xdisplay, (Atom)prop);
 
-        if (fontname && !strcmp(fontname, "vga")) {
-            charset = T_NAME_CP437;
-        } else if (fontname) {
-            i = 2;
-            for (s = fontname + strlen(fontname) - 1; i && s >= fontname; s--) {
-                if (*s == '-')
-                    i--;
-            }
-            if (!i)
-                charset = s + 2; /* skip current char and '-' */
-        }
-
-        if (!charset) {
-            if (xsfont->min_byte1 < xsfont->max_byte1) {
-                /* font is more than just 8-bit. For now, assume it's unicode */
-                printk("    X11_InitHW: font `%."STR(TW_SMALLBUFF)"s\' "
-                        "has no known charset encoding,\n"
-                        "                assuming Unicode.\n", fontname);
-                return NULL;
-            }
-            /* else assume codepage437. gross. */
-            printk("    X11_InitHW: font `%."STR(TW_SMALLBUFF)"s\' "
-                    "has no known charset encoding,\n"
-                    "                assuming CP437 codepage (\"VGA\").\n", fontname);
-            return Tutf_UTF_32_to_CP437;
-        }
+	if (fontname && !strcmp(fontname, "vga")) {
+	    charset = T_NAME_CP437;
+	} else if (fontname) {
+	    i = 2;
+	    for (s = fontname + strlen(fontname) - 1; i && s >= fontname; s--) {
+		if (*s == '-')
+		    i--;
+	    }
+	    if (!i)
+		charset = s + 2; /* skip current char and '-' */
+	}
+        
+	if (!charset) {
+	    if (xsfont->min_byte1 < xsfont->max_byte1) {
+		/* font is more than just 8-bit. For now, assume it's unicode */
+		printk("    X11_InitHW: font `%."STR(TW_SMALLBUFF)"s\' has no known charset encoding,\n"
+		       "                assuming Unicode.\n", fontname);
+		return NULL;
+	    }
+	    /* else assume codepage437. gross. */
+	    printk("    X11_InitHW: font `%."STR(TW_SMALLBUFF)"s\' has no known charset encoding,\n"
+		   "                assuming CP437 codepage (\"VGA\").\n", fontname);
+	    return Tutf_UTF_32_to_CP437;
+	}
     }
-
+    
     i = Tutf_charset_id(charset);
     s = Tutf_charset_name(i);
     if (s && !strcmp(s, T_NAME_UTF_32)) {
-        /* this is an Unicode font. good. */
-        return NULL;
+	/* this is an Unicode font. good. */
+	return NULL;
     }
-
+    
     if (i == (uldat)-1) {
-        printk("      X11_InitHW(): libTutf warning: "
-                "unknown charset `%." STR(TW_SMALLBUFF) "s', assuming `CP437'\n", charset);
-        return Tutf_UTF_32_to_CP437;
+	printk("      X11_InitHW(): libTutf warning: unknown charset `%." STR(TW_SMALLBUFF) "s', assuming `CP437'\n", charset);
+	return Tutf_UTF_32_to_CP437;
     }
-
+    
     return Tutf_UTF_32_to_charset_function(i);
 #endif
 }
