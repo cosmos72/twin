@@ -134,6 +134,11 @@ INLINE void X11_Mogrify(dat x, dat y, uldat len) {
 }
 
 #include "hw_x/util.h"
+#ifdef HW_XFT
+#include "hw_xft/tuft_function.h"
+#else
+#include "hw_x/tuft_function.h"
+#endif
 
 #undef XDRAW_ANY
 #undef XDRAW
