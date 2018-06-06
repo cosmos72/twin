@@ -89,7 +89,8 @@ static void X11_ShowCursor(uldat type, dat x, dat y) {
         }
 
         XSetFunction(xdisplay, xgc, xsgc.function = GXxor);
-        XFillRectangle(xdisplay, xwindow, xgc, xbegin, ybegin + xhfont - i, xwfont, i);
+        XFillRectangle(xdisplay, xwindow, xgc,
+        xbegin, ybegin + xhfont - i, xwfont, i);
         XSetFunction(xdisplay, xgc, xsgc.function = GXcopy);
     }
 }
@@ -101,8 +102,8 @@ static void X11_FlushVideo(void) {
 
     if (ValidOldVideo) {
         iff = ChangedVideoFlag
-            && Video[HW->XY[0] + HW->XY[1] * (ldat)DisplayWidth]
-            != OldVideo[HW->XY[0] + HW->XY[1] * (ldat)DisplayWidth];
+        && Video[HW->XY[0] + HW->XY[1] * (ldat)DisplayWidth]
+        != OldVideo[HW->XY[0] + HW->XY[1] * (ldat)DisplayWidth];
         /* ttrue if and only if the cursor will be erased by burst */
     }
 
@@ -127,8 +128,9 @@ static void X11_FlushVideo(void) {
     }
     /* finally, redraw the cursor if forced to redraw or */
     /* (we want a cursor and (the burst erased the cursor or the cursor changed)) */
-    if (!ValidOldVideo || (CursorType != NOCURSOR &&
-                (iff || CursorType != HW->TT || CursorX != HW->XY[0] || CursorY != HW->XY[1]))) {
+    if (!ValidOldVideo ||
+            (CursorType != NOCURSOR &&
+             (iff || CursorType != HW->TT || CursorX != HW->XY[0] || CursorY != HW->XY[1]))) {
 
         X11_ShowCursor(HW->TT = CursorType, HW->XY[0] = CursorX, HW->XY[1]= CursorY);
         setFlush();
@@ -376,8 +378,8 @@ static void X11_DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat Ds
         }
     }
     XCopyArea(xdisplay, xwindow, xwindow, xgc,
-            Left*xwfont, Up*xhfont, (Rgt-Left+1)*xwfont, (Dwn-Up+1)*xhfont,
-            DstLeft*xwfont, DstUp*xhfont);
+    Left*xwfont, Up*xhfont, (Rgt-Left+1)*xwfont, (Dwn-Up+1)*xhfont,
+    DstLeft*xwfont, DstUp*xhfont);
     setFlush();
 }
 

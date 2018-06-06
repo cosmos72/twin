@@ -370,19 +370,19 @@ static byte X11_LoadFont(CONST char * fontname, udat fontwidth, udat fontheight)
             || (xsfont = XLoadQueryFont(xdisplay, fontname = "fixed")))
 #endif
     {
-        loaded = ttrue;
+    loaded = ttrue;
 
 #ifdef HW_XFT
-        xwfont = xsfont->max_advance_width;
+    xwfont = xsfont->max_advance_width;
 #else
-        xwfont = xsfont->min_bounds.width;
+    xwfont = xsfont->min_bounds.width;
 #endif
-        xwidth = xwfont * (unsigned)(HW->X = GetDisplayWidth());
-        xhfont = (xupfont = xsfont->ascent) + xsfont->descent;
-        xheight = xhfont * (unsigned)(HW->Y = GetDisplayHeight());
+    xwidth = xwfont * (unsigned)(HW->X = GetDisplayWidth());
+    xhfont = (xupfont = xsfont->ascent) + xsfont->descent;
+    xheight = xhfont * (unsigned)(HW->Y = GetDisplayHeight());
 
-        printk("      selected %ux%u font `%."STR(TW_SMALLBUFF)"s'\n",
-                (unsigned)xwfont, (unsigned)xhfont, fontname);
+    printk("      selected %ux%u font `%."STR(TW_SMALLBUFF)"s'\n",
+            (unsigned)xwfont, (unsigned)xhfont, fontname);
     }
     if (alloc_fontname)
         FreeMem(alloc_fontname);
@@ -508,7 +508,7 @@ static byte X11_InitHW(void) {
                 fontname = arg += 5;
                 s = strchr(arg, ',');
                 if (s) *(fontname0 = s++) = '\0';
-                arg = s;
+                    arg = s;
             } else if (!strncmp(arg, "fontsize=", 9)) {
                 int n1 = atoi(arg += 9), n2 = 0;
                 byte ch;
@@ -526,7 +526,7 @@ static byte X11_InitHW(void) {
                 charset = arg += 8;
                 s = strchr(arg, ',');
                 if (s) *(charset0 = s++) = '\0';
-                arg = s;
+                    arg = s;
             } else if (!strncmp(arg, "view=", 5)) {
                 xhw_view = 1;
                 xhw_endx = strtol(arg+5, &arg, 0);
@@ -593,8 +593,8 @@ static byte X11_InitHW(void) {
 
         xattr.background_pixel = xcol[0];
         xattr.event_mask = ExposureMask | VisibilityChangeMask |
-            StructureNotifyMask | SubstructureNotifyMask |
-            KeyPressMask | ButtonPressMask | ButtonReleaseMask | PointerMotionMask;
+        StructureNotifyMask | SubstructureNotifyMask |
+        KeyPressMask | ButtonPressMask | ButtonReleaseMask | PointerMotionMask;
 
         if (!X11_LoadFont(fontname, fontwidth, fontheight))
             break;
@@ -686,8 +686,8 @@ static byte X11_InitHW(void) {
             XFree(xhints); xhints = NULL;
 
             HW->mouse_slot = NOSLOT;
-            HW->keyboard_slot =
-                RegisterRemote(i = XConnectionNumber(xdisplay), (obj)HW, X11_KeyboardEvent);
+            HW->keyboard_slot = RegisterRemote(i = XConnectionNumber(xdisplay), (obj)HW,
+            X11_KeyboardEvent);
             if (HW->keyboard_slot == NOSLOT)
                 break;
             fcntl(i, F_SETFD, FD_CLOEXEC);
