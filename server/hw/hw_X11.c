@@ -136,8 +136,10 @@ INLINE void X11_Mogrify(dat x, dat y, uldat len) {
 #include "hw_x/util.h"
 #ifdef HW_XFT
 #include "hw_xft/tuft_function.h"
+#include "hw_xft/x11alloccolor.h"
 #else
 #include "hw_x/tuft_function.h"
+#include "hw_x/x11alloccolor.h"
 #endif
 
 #undef XDRAW_ANY
@@ -452,7 +454,6 @@ static byte X11_InitHW(void) {
     XSetWindowAttributes xattr;
 #ifdef HW_XFT
     XRenderColor xcolor;
-    XftColor *cur_xft_color;
 #else
     XColor xcolor;
 #endif
@@ -572,26 +573,9 @@ static byte X11_InitHW(void) {
 	    xcolor.red   = 257 * (udat)Palette[i].Red;
 	    xcolor.green = 257 * (udat)Palette[i].Green;
 	    xcolor.blue  = 257 * (udat)Palette[i].Blue;
-#ifdef HW_XFT
-            xcolor.alpha = 65535;
-            if (!(cur_xft_color = (XftColor *)AllocMem(sizeof(XftColor)))) {
-                printk("      X11_InitHW(): Out of memory!\n");
+            if (!X11_AllocColor(i,xdisplay,xvisual,colormap,&xcolor)) {
                 break;
             }
-            WriteMem(cur_xft_color, 0, sizeof(XftColor));
-            if (!XftColorAllocValue(xdisplay,xvisual,colormap,&xcolor,cur_xft_color)) {
-                printk("      X11_InitHW() failed to allocate colors\n");
-                break;
-            }
-            xcol[i] = cur_xft_color->pixel;
-            xftcolors[i] = cur_xft_color;
-#else
-	    if (!XAllocColor(xdisplay, colormap, &xcolor)) {
-		printk("      X11_InitHW() failed to allocate colors\n");
-		break;
-	    }
-	    xcol[i] = xcolor.pixel;
-#endif
 	}
 	if (i <= MAXCOL)
 	    break;
