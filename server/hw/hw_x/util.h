@@ -54,19 +54,18 @@ static void X11_HideCursor(dat x, dat y) {
 }
 
 static void X11_ShowCursor(uldat type, dat x, dat y) {
-    hwcol v;
     hwattr V = (x >= 0 && x < DisplayWidth && y >= 0 && y < DisplayHeight)
         ? Video[x + y * (ldat)DisplayWidth]
         : HWATTR( COL(HIGH|WHITE, BLACK), ' ');
-    hwfont f;
-    XChar16 c;
     
     ldat xbegin = (x - xhw_startx) * xwfont;
     ldat ybegin = (y - xhw_starty) * xhfont;
     
     if (type & 0x10) {
 	/* soft cursor */
-	v = (HWCOL(V) | ((type >> 16) & 0xff)) ^ ((type >> 8) & 0xff);
+	hwcol v = (HWCOL(V) | ((type >> 16) & 0xff)) ^ ((type >> 8) & 0xff);
+	hwfont f;
+	XChar2b c;
 	if ((type & 0x20) && (HWCOL(V) & COL(0,WHITE)) == (v & COL(0,WHITE)))
 	    v ^= COL(0,WHITE);
 	if ((type & 0x40) && ((COLFG(v) & WHITE) == (COLBG(v) & WHITE)))
@@ -75,9 +74,9 @@ static void X11_ShowCursor(uldat type, dat x, dat y) {
         XChar16FromRaw(f, &c);
         XDRAW_ANY(&c, 1, v, HWEXTRA(V));
     } else if (type & 0xF) {
-        /* VGA hw-like cursor */
+	/* VGA hw-like cursor */
 
-        /* doesn't work as expected on paletted visuals... */
+	/* doesn't work as expected on paletted visuals... */
 	unsigned long fg = xcol[COLFG(HWCOL(V)) ^ COLBG(HWCOL(V))];
 
 	udat i = xhfont * ((type & 0xF)-NOCURSOR) / (SOLIDCURSOR-NOCURSOR);
@@ -413,15 +412,7 @@ static int X11_Die(Display *d) {
 }
 #endif
 
-static hwfont X11_UTF_32_to_UCS_2(hwfont c) {
-    if ((c & 0x1FFE00) == 0xF000)
-	/* private use codepoints. for compatibility, treat as "direct-to-font" zone */
-	c &= 0x01FF;
-    if (c > 0x10FFFF)
-	/* not representable in two bytes */
-	c = 0xFFFD;
-    return c;
-}
+static hwfont X11_UTF_32_to_UCS_2(hwfont c);
 
 static Tutf_function X11_UTF_32_to_charset_function(CONST byte *charset) {
 #ifdef HW_XFT
@@ -479,3 +470,15 @@ static Tutf_function X11_UTF_32_to_charset_function(CONST byte *charset) {
     return Tutf_UTF_32_to_charset_function(i);
 #endif
 }
+
+
+static hwfont X11_UTF_32_to_UCS_2(hwfont c) {
+    if ((c & 0x1FFE00) == 0xF000)
+	/* private use codepoints. for compatibility, treat as "direct-to-font" zone */
+	c &= 0x01FF;
+    if (c > 0x10FFFF)
+	/* not representable in two bytes */
+	c = 0xFFFD;
+    return c;
+}
+

@@ -58,22 +58,15 @@
 static hwcol _col;
 
 #ifdef HW_XFT
-static void X11_XftDrawString16(
-    Display *display,
-    Drawable d,
-    GC gc,
-    int x,
-    int y,
-    XChar16 *string,
-    int length) {
-
-  // XftDrawString16 doesn't erase the existing character before it draws a new one, and when
-  // it draws the new one, it only draws the strokes, so you see some of the previous character
-  // "underneath" the new one.  So we first draw a rectangle with the background color, and then
-  // draw the text on top of it in the foreground color.
-  XftDrawRect (xftdraw, xbackground, x, y - xsfont->ascent, length * xsfont->max_advance_width,
-      xsfont->ascent + xsfont->descent);
-  XftDrawString16(xftdraw, xforeground, xsfont, x, y, string, length);
+static void X11_XftDrawString16(Display *display, Drawable d, GC gc, int x, int y,
+        XChar16 *string, int length) {
+    // XftDrawString16 doesn't erase the existing character before it draws a new one, and when
+    // it draws the new one, it only draws the strokes, so you see some of the previous character
+    // "underneath" the new one.  So we first draw a rectangle with the background color, and then
+    // draw the text on top of it in the foreground color.
+    XftDrawRect (xftdraw, xbackground, x, y - xsfont->ascent, length * xsfont->max_advance_width,
+            xsfont->ascent + xsfont->descent);
+    XftDrawString16(xftdraw, xforeground, xsfont, x, y, string, length);
 }
 #endif
 
@@ -158,7 +151,7 @@ static ldat calcFontScore(udat fontwidth, udat fontheight, ldat width, ldat heig
      */
     ldat prod1 = (ldat)height * fontwidth;
     ldat prod2 = (ldat)width * fontheight;
-    ldat score = MAX_FONT_SCORE - diff(height, fontheight) - 2 * diff(width, fontwidth) 
+    ldat score = MAX_FONT_SCORE - diff(height, fontheight) - 2 * diff(width, fontwidth)
         /* compare height/width ratio with requested one */
         - diff(prod1, prod2) / Max3(1, fontwidth, width);
     return score;
@@ -300,63 +293,64 @@ static char * X11_AutodetectFont(udat fontwidth, udat fontheight) {
     //    medium weight (75 <= weight <= 100)
     //    highest font score (closest to fontwidth X fontheight)
     fontset = XftListFonts (xdisplay, DefaultScreen(xdisplay),
-        XFT_OUTLINE, XftTypeBool, FcTrue,
-        XFT_SCALABLE, XftTypeBool, FcTrue,
-        XFT_SPACING, XftTypeInteger, 100,
-        XFT_SLANT, XftTypeInteger, 0,
-        (char *)0,
-        XFT_WEIGHT, XFT_FILE, (char *)0);
+            XFT_OUTLINE, XftTypeBool, FcTrue,
+            XFT_SCALABLE, XftTypeBool, FcTrue,
+            XFT_SPACING, XftTypeInteger, 100,
+            XFT_SLANT, XftTypeInteger, 0,
+            (char *)0,
+            XFT_WEIGHT, XFT_FILE, (char *)0);
     if (fontset) {
-      for (int i = 0; i < fontset->nfont; i++) {
-        int weight;
-        int len;
-        FcChar8 *file;
+        for (int i = 0; i < fontset->nfont; i++) {
+            int weight;
+            int len;
+            FcChar8 *file;
 
-        if (FcPatternGetInteger (fontset->fonts[i], XFT_WEIGHT, 0, &weight) != FcResultMatch) {
-          continue;
-        }
-        if ((weight < FC_WEIGHT_BOOK) || (weight > FC_WEIGHT_MEDIUM)) {
-          continue;
-        }
-        if (FcPatternGetString (fontset->fonts[i], XFT_FILE, 0, &file) != FcResultMatch) {
-          continue;
-        }
-
-        // reuse existing t_fontname if possible, otherwise allocate a new one
-        len = LenStr(file) + LenStr(":file=") + 1;
-        if (!t_fontname || (len > t_fontname_len)) {
-          if (t_fontname) {
-            FreeMem(t_fontname);
-          }
-          t_fontname = AllocMem(t_fontname_len = len);
-          if (!t_fontname) {
-            printk("      X11_AutodetectFont(): Out of memory!\n");
-            break;
-          }
-        }
-        sprintf(t_fontname, ":file=%s", file);
-
-        fontp = XftFontOpenName(xdisplay, xscreen, t_fontname);
-        if (fontp) {
-          score = calcFontScore(fontwidth, fontheight, (ldat)fontp->max_advance_width, (ldat)fontp->ascent + fontp->descent);
-          XftFontClose(xdisplay, fontp);
-
-          if (!fontname || (score > best_score)) {
-            best_score = score;
-            if (fontname) {
-              FreeMem(fontname);
+            if (FcPatternGetInteger (fontset->fonts[i], XFT_WEIGHT, 0, &weight) != FcResultMatch) {
+                continue;
             }
-            fontname = t_fontname;
-            t_fontname = NULL;
-          }
+            if ((weight < FC_WEIGHT_BOOK) || (weight > FC_WEIGHT_MEDIUM)) {
+                continue;
+            }
+            if (FcPatternGetString (fontset->fonts[i], XFT_FILE, 0, &file) != FcResultMatch) {
+                continue;
+            }
+
+            // reuse existing t_fontname if possible, otherwise allocate a new one
+            len = LenStr(file) + LenStr(":file=") + 1;
+            if (!t_fontname || (len > t_fontname_len)) {
+                if (t_fontname) {
+                    FreeMem(t_fontname);
+                }
+                t_fontname = AllocMem(t_fontname_len = len);
+                if (!t_fontname) {
+                    printk("      X11_AutodetectFont(): Out of memory!\n");
+                    break;
+                }
+            }
+            sprintf(t_fontname, ":file=%s", file);
+
+            fontp = XftFontOpenName(xdisplay, xscreen, t_fontname);
+            if (fontp) {
+                score = calcFontScore(fontwidth, fontheight, (ldat)fontp->max_advance_width,
+                        (ldat)fontp->ascent + fontp->descent);
+                XftFontClose(xdisplay, fontp);
+
+                if (!fontname || (score > best_score)) {
+                    best_score = score;
+                    if (fontname) {
+                        FreeMem(fontname);
+                    }
+                    fontname = t_fontname;
+                    t_fontname = NULL;
+                }
+            }
         }
-      }
-      FcFontSetDestroy(fontset);
+        FcFontSetDestroy(fontset);
     }
 
     if (t_fontname) {
-      FreeMem(t_fontname);
-      t_fontname = NULL;
+        FreeMem(t_fontname);
+        t_fontname = NULL;
     }
 
     return fontname;
@@ -581,10 +575,10 @@ static byte X11_InitHW(void) {
             }
             WriteMem(cur_xft_color, 0, sizeof(XftColor));
             if (!XftColorAllocValue(xdisplay,xvisual,colormap,&xcolor,cur_xft_color)) {
-		printk("      X11_InitHW() failed to allocate colors\n");
-		break;
+                printk("      X11_InitHW() failed to allocate colors\n");
+                break;
             }
-	    xcol[i] = cur_xft_color->pixel;
+            xcol[i] = cur_xft_color->pixel;
             xftcolors[i] = cur_xft_color;
 #else
 	    if (!XAllocColor(xdisplay, colormap, &xcolor)) {
@@ -618,8 +612,7 @@ static byte X11_InitHW(void) {
 	
 	if ((xwindow = XCreateWindow(xdisplay, DefaultRootWindow(xdisplay), 0, 0,
 				     xwidth, xheight, 0, xdepth, InputOutput,
-				     xvisual,
-				     CWBackPixel | CWEventMask, &xattr)) &&
+				     xvisual, CWBackPixel | CWEventMask, &xattr)) &&
 
 	    (xsgc.foreground = xsgc.background = xcol[0],
 	     xsgc.graphics_exposures = False,
