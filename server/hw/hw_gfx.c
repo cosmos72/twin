@@ -234,7 +234,7 @@ INLINE void X11_Mogrify(dat x, dat y, uldat len) {
 }
 
 #include "hw_x/util.h"
-#include "hw_x/tuft_function.h"
+#include "hw_x/x11_utf32_to_charset.h"
 
 #undef XDRAW_ANY
 

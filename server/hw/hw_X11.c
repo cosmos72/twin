@@ -135,10 +135,10 @@ INLINE void X11_Mogrify(dat x, dat y, uldat len) {
 
 #include "hw_x/util.h"
 #ifdef HW_XFT
-#include "hw_xft/tuft_function.h"
+#include "hw_xft/x11_utf32_to_charset.h"
 #include "hw_xft/x11alloccolor.h"
 #else
-#include "hw_x/tuft_function.h"
+#include "hw_x/x11_utf32_to_charset.h"
 #include "hw_x/x11alloccolor.h"
 #endif
 
