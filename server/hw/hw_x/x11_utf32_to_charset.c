@@ -1,3 +1,4 @@
+/* basic X-11 version of X11_UTF_32_to_charset_function */
 static Tutf_function X11_UTF_32_to_charset_function(CONST byte *charset) {
     XFontProp *fp;
     unsigned long prop;
