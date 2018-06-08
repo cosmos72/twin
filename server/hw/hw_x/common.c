@@ -78,19 +78,19 @@ static byte X11_LoadFont(CONST char * fontname, udat fontwidth, udat fontheight)
     if (!fontname)
         fontname = alloc_fontname = X11_AutodetectFont(fontwidth, fontheight);
     
-#if HW_X_DRIVER == HW_XFT
-    if (fontname && (xsfont = XftFontOpenName(xdisplay, DefaultScreen(xdisplay), fontname)))
-#else
+#if HW_X_DRIVER == HW_X11
     if ((fontname && (xsfont = XLoadQueryFont(xdisplay, fontname)))
         || (xsfont = XLoadQueryFont(xdisplay, fontname = "fixed")))
+#elif HW_X_DRIVER == HW_XFT
+    if (fontname && (xsfont = XftFontOpenName(xdisplay, DefaultScreen(xdisplay), fontname)))
 #endif
     {
         loaded = ttrue;
 
-#if HW_X_DRIVER == HW_XFT
-        xwfont = xsfont->max_advance_width;
-#else
+#if HW_X_DRIVER == HW_X11
         xwfont = xsfont->min_bounds.width;
+#elif HW_X_DRIVER == HW_XFT
+        xwfont = xsfont->max_advance_width;
 #endif
         xwidth = xwfont * (unsigned)(HW->X = GetDisplayWidth());
         xhfont = (xupfont = xsfont->ascent) + xsfont->descent;
@@ -105,35 +105,11 @@ static byte X11_LoadFont(CONST char * fontname, udat fontwidth, udat fontheight)
 }
 
 static void X11_QuitHW(void) {
-#if HW_X_DRIVER == HW_XFT
-    int xscreen;
-    Colormap colormap;
-    Visual *xvisual;
-    if (xdisplay) {
-        xscreen = DefaultScreen(xdisplay);
-        colormap = DefaultColormap(xdisplay, xscreen);
-        xvisual = DefaultVisual(xdisplay, xscreen);
-    }
-#endif
-
 #ifdef TW_FEATURE_X11_XIM_XIC
     if (xic)    XDestroyIC(xic);
     if (xim)    XCloseIM(xim);
 #endif
-#if HW_X_DRIVER == HW_XFT
-    if (xsfont) XftFontClose(xdisplay, xsfont);
-    if (xftdraw) XftDrawDestroy(xftdraw);
-    for (int i = 0; i < MAXCOL; i++) {
-        if (xftcolors[i] == NULL) {
-            break;
-        }
-        XftColorFree (xdisplay, xvisual, colormap, xftcolors[i]);
-        FreeMem(xftcolors[i]);
-        xftcolors[i] = NULL;
-    }
-#else
-    if (xsfont) XFreeFont(xdisplay, xsfont);
-#endif
+    X11_FlavorQuitHW();
     if (xgc != None) XFreeGC(xdisplay, xgc);
     if (xwindow != None) {
 	XUnmapWindow(xdisplay, xwindow);
@@ -158,12 +134,7 @@ static byte X11_InitHW(void) {
     int xscreen;
     unsigned int xdepth;
     XSetWindowAttributes xattr;
-#if HW_X_DRIVER == HW_XFT
-    XRenderColor xcolor;
-    XftColor *cur_xft_color;
-#else
     XColor xcolor;
-#endif
     XSizeHints *xhints;
     XEvent event;
     Visual *xvisual;
@@ -172,7 +143,7 @@ static byte X11_InitHW(void) {
         *fontname = NULL, *fontname0 = NULL,
         *charset = NULL, *charset0 = NULL,
         title[X11_TITLE_MAXLEN];
-    int i;
+    int i, nskip;
     udat fontwidth = 8, fontheight = 16;
     byte drag = tfalse, noinput = tfalse;
     unsigned long xcreategc_mask = GCForeground|GCBackground|GCGraphicsExposures;
@@ -189,19 +160,8 @@ static byte X11_InitHW(void) {
     /* not yet opened */
     xdisplay = NULL;
     
-#if HW_X_DRIVER == HW_XFT
-    if (arg && (strncmp(arg, "-hw=xft", 7) == 0)) {
-        arg += 7; /* skip "-hw=xft" */
-#else
-    if (arg && HW->NameLen > 4) {
-	arg += 4; /* skip "-hw=" */
-	
-	if (*arg++ != 'X')
-	    goto fail; /* user said "use <arg> as display, not X11" */
-	
-	if (*arg == '1' && arg[1] == '1')
-	    arg += 2; /* `X11' is same as `X' */
-#endif
+    if (arg && ((nskip = check_hw_name(arg)) > 0)) {
+        arg += nskip;
 
 	if (*arg == '@') {
 	    if ((s = strchr(xdisplay_ = ++arg, ','))) {
@@ -280,26 +240,10 @@ static byte X11_InitHW(void) {
 	    xcolor.red   = 257 * (udat)Palette[i].Red;
 	    xcolor.green = 257 * (udat)Palette[i].Green;
 	    xcolor.blue  = 257 * (udat)Palette[i].Blue;
-#if HW_X_DRIVER == HW_XFT
-            xcolor.alpha = 65535;
-            if (!(cur_xft_color = (XftColor *)AllocMem(sizeof(XftColor)))) {
-                printk("      X11_InitHW(): Out of memory!\n");
-                break;
-            }
-            WriteMem(cur_xft_color, 0, sizeof(XftColor));
-            if (!XftColorAllocValue(xdisplay,xvisual,colormap,&xcolor,cur_xft_color)) {
+            if (!X11_AllocColor(xdisplay, xvisual, colormap, &xcolor, &xcol[i], i)) {
                 printk("      X11_InitHW() failed to allocate colors\n");
                 break;
             }
-            xcol[i] = cur_xft_color->pixel;
-            xftcolors[i] = cur_xft_color;
-#else
-	    if (!XAllocColor(xdisplay, colormap, &xcolor)) {
-		printk("      X11_InitHW() failed to allocate colors\n");
-		break;
-	    }
-	    xcol[i] = xcolor.pixel;
-#endif
 	}
 	if (i <= MAXCOL)
 	    break;
@@ -329,11 +273,11 @@ static byte X11_InitHW(void) {
 
 	    (xsgc.foreground = xsgc.background = xcol[0],
 	     xsgc.graphics_exposures = False,
-#if HW_X_DRIVER == HW_XFT
-             xforeground = xbackground = xftcolors[0],
-#else
+#if HW_X_DRIVER == HW_X11
 	     xsgc.font = xsfont->fid,
              xcreategc_mask = xcreategc_mask|GCFont,
+#elif HW_X_DRIVER == HW_XFT
+             xforeground = xbackground = xftcolors[0],
 #endif
 	     xgc = XCreateGC(xdisplay, xwindow, xcreategc_mask, &xsgc)) &&
 

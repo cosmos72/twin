@@ -166,3 +166,64 @@ static char * X11_AutodetectFont(udat fontwidth, udat fontheight) {
 
     return fontname;
 }
+
+static int X11_AllocColor(Display *display, Visual *xvisual, Colormap colormap,
+        XColor *xcolor, unsigned long *pixel, int color_num) {
+    XRenderColor xrcolor;
+    XftColor *xft_color;
+
+    if (!(xft_color = (XftColor *)AllocMem(sizeof(XftColor)))) {
+        printk("      X11_AllocColor(): Out of memory!\n");
+        return -1;
+    }
+    WriteMem(xft_color, 0, sizeof(XftColor));
+
+    xrcolor.red = xcolor->red;
+    xrcolor.green = xcolor->green;
+    xrcolor.blue  = xcolor->blue;
+    xrcolor.alpha = 65535;
+
+    if (!XftColorAllocValue(xdisplay, xvisual, colormap, &xrcolor, xft_color)) {
+        return -1;
+    }
+    *pixel = xft_color->pixel;
+    xftcolors[color_num] = xft_color;
+
+    return 1;
+}
+
+static void X11_FlavorQuitHW(void) {
+    int xscreen;
+    Colormap colormap;
+    Visual *xvisual;
+
+    if (xdisplay) {
+        if (xsfont) XftFontClose(xdisplay, xsfont);
+        xscreen = DefaultScreen(xdisplay);
+        colormap = DefaultColormap(xdisplay, xscreen);
+        xvisual = DefaultVisual(xdisplay, xscreen);
+    }
+    if (xftdraw) XftDrawDestroy(xftdraw);
+    for (int i = 0; i < MAXCOL; i++) {
+        if (xftcolors[i] == NULL) {
+            break;
+        }
+        if (xdisplay) XftColorFree (xdisplay, xvisual, colormap, xftcolors[i]);
+        FreeMem(xftcolors[i]);
+        xftcolors[i] = NULL;
+    }
+}
+
+static int check_hw_name(char *hw_name) {
+    if (strncmp(hw_name, "-hw=xft", 7) == 0) {
+        return 7;
+    }
+    printk("      invalid -hw=xyz argument: %s\n", hw_name);
+    return -1;
+}
+
+/* custom version of X11_UTF_32_to_charset_function for the XFT driver */
+static Tutf_function X11_UTF_32_to_charset_function(CONST byte *charset) {
+    // this is sufficient for xft fonts which are 16-bit unicode
+    return X11_UTF_32_to_UCS_2;
+}

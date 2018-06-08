@@ -16,13 +16,6 @@ struct x11_data {
 #if HW_X_DRIVER == HW_X11
     XFontStruct *xsfont;
 #endif
-#if HW_X_DRIVER == HW_XFT
-    XftFont     *xsfont;
-    XftDraw     *xftdraw;
-    XftColor    *foreground; // current foreground color
-    XftColor    *background; // current background color
-    XftColor    *xftcolors[MAXCOL+1];
-#endif
 #if HW_X_DRIVER == HW_GFX
     XFontStruct *xsfont;
     int          xmonochrome;
@@ -30,6 +23,13 @@ struct x11_data {
     GC           xthemegc, xrootgc, xbggc;
     XGCValues    xthemesgc;
     byte         xroot_flag, xbg_flag;
+#endif
+#if HW_X_DRIVER == HW_XFT
+    XftFont     *xsfont;
+    XftDraw     *xftdraw;
+    XftColor    *foreground; // current foreground color
+    XftColor    *background; // current background color
+    XftColor    *xftcolors[MAXCOL+1];
 #endif
 #ifdef TW_FEATURE_X11_XIM_XIC /* autodetected */
     XIM		 xim;

@@ -180,3 +180,27 @@ static char * X11_AutodetectFont(udat fontwidth, udat fontheight) {
     FreeMem(pattern);
     return best;
 }
+
+static int X11_AllocColor(Display *display, Visual *xvisual, Colormap colormap,
+        XColor *xcolor, unsigned long *pixel, int color_num) {
+    if (!XAllocColor(display, colormap, xcolor)) {
+        return -1;
+    }
+    *pixel = xcolor->pixel;
+    return 1;
+}
+
+static void X11_FlavorQuitHW(void) {
+    if (xsfont) XFreeFont(xdisplay, xsfont);
+}
+
+static int check_hw_name(char *hw_name) {
+    if (strncmp(hw_name, "-hw=X11", 7) == 0) {
+        return 7;
+    }
+    if (strncmp(hw_name, "-hw=X", 5) == 0) {
+        return 7;
+    }
+    printk("      invalid -hw=xyz argument: %s\n", hw_name);
+    return -1;
+}

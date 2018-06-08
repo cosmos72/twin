@@ -414,11 +414,8 @@ static int X11_Die(Display *d) {
 }
 #endif
 
+#if HW_X_DRIVER != HW_XFT
 static Tutf_function X11_UTF_32_to_charset_function(CONST byte *charset) {
-#if HW_X_DRIVER == HW_XFT
-    // this is sufficient for xft fonts which are 16-bit unicode
-    return X11_UTF_32_to_UCS_2;
-#else
     XFontProp *fp;
     unsigned long prop;
     CONST byte *s, *fontname = NULL;
@@ -468,8 +465,8 @@ static Tutf_function X11_UTF_32_to_charset_function(CONST byte *charset) {
     }
     
     return Tutf_UTF_32_to_charset_function(i);
-#endif
 }
+#endif
 
 
 static hwfont X11_UTF_32_to_UCS_2(hwfont c) {
