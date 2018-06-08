@@ -67,7 +67,7 @@ static void X11_ShowCursor(uldat type, dat x, dat y) {
 	/* soft cursor */
 	hwcol v = (HWCOL(V) | ((type >> 16) & 0xff)) ^ ((type >> 8) & 0xff);
 	hwfont f;
-	XChar2b c;
+	XChar16 c;
 	if ((type & 0x20) && (HWCOL(V) & COL(0,WHITE)) == (v & COL(0,WHITE)))
 	    v ^= COL(0,WHITE);
 	if ((type & 0x40) && ((COLFG(v) & WHITE) == (COLBG(v) & WHITE)))
