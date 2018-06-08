@@ -47,10 +47,10 @@
 
 #ifdef HW_XFT
 #include "hw_xft/xchar16.h"
-#include "hw_xft/x11setcolors.h"
+#include "hw_xft/x11_setcolors.c"
 #else
 #include "hw_x/xchar16.h"
-#include "hw_x/x11setcolors.h"
+#include "hw_x/x11_setcolors.c"
 #endif
 
 
