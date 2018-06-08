@@ -1,3 +1,5 @@
+/* Functions that are common between hw_x11, hw_xft, and hw_gfx. */
+
 #define X11_TITLE_MAXLEN 80
 
 static void X11_FillWindowTitle(byte * title, int maxlen) {
@@ -411,8 +413,6 @@ static int X11_Die(Display *d) {
     return 0;
 }
 #endif
-
-static hwfont X11_UTF_32_to_UCS_2(hwfont c);
 
 static Tutf_function X11_UTF_32_to_charset_function(CONST byte *charset) {
 #if HW_X_DRIVER == HW_XFT

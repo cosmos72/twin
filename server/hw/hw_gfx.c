@@ -235,6 +235,7 @@ INLINE void X11_Mogrify(dat x, dat y, uldat len) {
     }
 }
 
+#include "hw_x/util_protos.h"
 #include "hw_x/util.h"
 
 #undef XDRAW_ANY
