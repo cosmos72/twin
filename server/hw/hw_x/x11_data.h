@@ -13,21 +13,23 @@ struct x11_data {
     Window       xwindow;
     GC           xgc;
     XGCValues    xsgc;
-#ifdef HW_GFX
-    int          xmonochrome;
-    Pixmap       xtheme, xroot, xbg;
-    GC           xthemegc, xrootgc, xbggc;
-    XGCValues    xthemesgc;
-    byte         xroot_flag, xbg_flag;
+#if HW_X_FLAVOR == HW_X11
+    XFontStruct *xsfont;
 #endif
-#ifdef HW_XFT
+#if HW_X_FLAVOR == HW_XFT
     XftFont     *xsfont;
     XftDraw     *xftdraw;
     XftColor    *foreground; // current foreground color
     XftColor    *background; // current background color
     XftColor    *xftcolors[MAXCOL+1];
-#else
+#endif
+#if HW_X_FLAVOR == HW_GFX
     XFontStruct *xsfont;
+    int          xmonochrome;
+    Pixmap       xtheme, xroot, xbg;
+    GC           xthemegc, xrootgc, xbggc;
+    XGCValues    xthemesgc;
+    byte         xroot_flag, xbg_flag;
 #endif
 #ifdef TW_FEATURE_X11_XIM_XIC /* autodetected */
     XIM		 xim;
@@ -79,7 +81,7 @@ struct x11_data {
 #define xWM_DELETE_WINDOW	(xdata->xWM_DELETE_WINDOW)
 #define xTARGETS	(xdata->xTARGETS)
 
-#ifdef HW_GFX
+#if HW_X_FLAVOR == HW_GFX
 #define xmonochrome	(xdata->xmonochrome)
 #define xtheme		(xdata->xtheme)
 #define xthemegc	(xdata->xthemegc)
@@ -92,7 +94,7 @@ struct x11_data {
 #define xbggc		(xdata->xbggc)
 #endif
 
-#ifdef HW_XFT
+#if HW_X_FLAVOR == HW_XFT
 #define xftdraw         (xdata->xftdraw)
 #define xforeground	(xdata->foreground)
 #define xbackground     (xdata->background)
