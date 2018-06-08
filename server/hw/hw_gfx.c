@@ -46,8 +46,8 @@
 #define THIS "hw_gfx"
 
 #include "hw_x/flavor.h"
-#undef HW_X_FLAVOR
-#define HW_X_FLAVOR HW_GFX
+#undef HW_X_DRIVER
+#define HW_X_DRIVER HW_GFX
 
 #include "hw_x/features.h"
 #include "hw_x/x11_data.h"

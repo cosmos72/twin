@@ -83,7 +83,7 @@ static void X11_ShowCursor(uldat type, dat x, dat y) {
 	
 	if (xsgc.foreground != fg) {
 	    XSetForeground(xdisplay, xgc, xsgc.foreground = fg);
-#if HW_X_FLAVOR == HW_XFT
+#if HW_X_DRIVER == HW_XFT
             xforeground = xftcolors[COLFG(HWCOL(V)) ^ COLBG(HWCOL(V))];
 #endif
         }
@@ -415,7 +415,7 @@ static int X11_Die(Display *d) {
 static hwfont X11_UTF_32_to_UCS_2(hwfont c);
 
 static Tutf_function X11_UTF_32_to_charset_function(CONST byte *charset) {
-#if HW_X_FLAVOR == HW_XFT
+#if HW_X_DRIVER == HW_XFT
     // this is sufficient for xft fonts which are 16-bit unicode
     return X11_UTF_32_to_UCS_2;
 #else

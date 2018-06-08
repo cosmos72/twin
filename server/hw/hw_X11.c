@@ -34,8 +34,8 @@
 #define THIS "hw_X11"
 
 #include "hw_x/flavor.h"
-#undef HW_X_FLAVOR
-#define HW_X_FLAVOR HW_X11
+#undef HW_X_DRIVER
+#define HW_X_DRIVER HW_X11
 
 #include "hw_x/features.h"
 #include "hw_x/x11_data.h"
@@ -253,7 +253,7 @@ static byte X11_LoadFont(CONST char * fontname, udat fontwidth, udat fontheight)
     if (!fontname)
         fontname = alloc_fontname = X11_AutodetectFont(fontwidth, fontheight);
     
-#if HW_X_FLAVOR == HW_XFT
+#if HW_X_DRIVER == HW_XFT
     if (fontname && (xsfont = XftFontOpenName(xdisplay, DefaultScreen(xdisplay), fontname)))
 #else
     if ((fontname && (xsfont = XLoadQueryFont(xdisplay, fontname)))
@@ -262,7 +262,7 @@ static byte X11_LoadFont(CONST char * fontname, udat fontwidth, udat fontheight)
     {
         loaded = ttrue;
 
-#if HW_X_FLAVOR == HW_XFT
+#if HW_X_DRIVER == HW_XFT
         xwfont = xsfont->max_advance_width;
 #else
         xwfont = xsfont->min_bounds.width;
@@ -281,7 +281,7 @@ static byte X11_LoadFont(CONST char * fontname, udat fontwidth, udat fontheight)
 
 
 static void X11_QuitHW(void) {
-#if HW_X_FLAVOR == HW_XFT
+#if HW_X_DRIVER == HW_XFT
     int xscreen;
     Colormap colormap;
     Visual *xvisual;
@@ -296,7 +296,7 @@ static void X11_QuitHW(void) {
     if (xic)    XDestroyIC(xic);
     if (xim)    XCloseIM(xim);
 #endif
-#if HW_X_FLAVOR == HW_XFT
+#if HW_X_DRIVER == HW_XFT
     if (xsfont) XftFontClose(xdisplay, xsfont);
     if (xftdraw) XftDrawDestroy(xftdraw);
     for (int i = 0; i < MAXCOL; i++) {
@@ -334,7 +334,7 @@ static byte X11_InitHW(void) {
     int xscreen;
     unsigned int xdepth;
     XSetWindowAttributes xattr;
-#if HW_X_FLAVOR == HW_XFT
+#if HW_X_DRIVER == HW_XFT
     XRenderColor xcolor;
     XftColor *cur_xft_color;
 #else
@@ -365,7 +365,7 @@ static byte X11_InitHW(void) {
     /* not yet opened */
     xdisplay = NULL;
     
-#if HW_X_FLAVOR == HW_XFT
+#if HW_X_DRIVER == HW_XFT
     if (arg && (strncmp(arg, "-hw=xft", 7) == 0)) {
         arg += 7; /* skip "-hw=xft" */
 #else
@@ -456,7 +456,7 @@ static byte X11_InitHW(void) {
 	    xcolor.red   = 257 * (udat)Palette[i].Red;
 	    xcolor.green = 257 * (udat)Palette[i].Green;
 	    xcolor.blue  = 257 * (udat)Palette[i].Blue;
-#if HW_X_FLAVOR == HW_XFT
+#if HW_X_DRIVER == HW_XFT
             xcolor.alpha = 65535;
             if (!(cur_xft_color = (XftColor *)AllocMem(sizeof(XftColor)))) {
                 printk("      X11_InitHW(): Out of memory!\n");
@@ -505,7 +505,7 @@ static byte X11_InitHW(void) {
 
 	    (xsgc.foreground = xsgc.background = xcol[0],
 	     xsgc.graphics_exposures = False,
-#if HW_X_FLAVOR == HW_XFT
+#if HW_X_DRIVER == HW_XFT
              xforeground = xbackground = xftcolors[0],
 #else
 	     xsgc.font = xsfont->fid,
@@ -519,7 +519,7 @@ static byte X11_InitHW(void) {
             static XComposeStatus static_xcompose;
             xcompose = static_xcompose;
 
-#if HW_X_FLAVOR == HW_XFT
+#if HW_X_DRIVER == HW_XFT
             xftdraw = XftDrawCreate(xdisplay,xwindow,xvisual,colormap);
 #endif
 
