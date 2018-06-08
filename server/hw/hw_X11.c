@@ -41,7 +41,9 @@
 #include "hw_x/x11_data.h"
 #include "hw_x/keyboard.h"
 #include "hw_x/xchar16.h"
-#include "hw_x/x11_setcolors.c"
+#include "hw_x/flavor_protos.h"
+#include "hw_x/util_protos.h"
+#include "hw_x/common_protos.h"
 
 # define myXDrawImageString XDrawImageString16
 
@@ -52,11 +54,16 @@
 
 #define XDRAW_ANY(buf, buflen, col, gfx) XDRAW(col, buf, buflen)
 
-#include "hw_x/flavor_protos.h"
-#include "hw_x/util_protos.h"
-#include "hw_x/common_protos.h"
 #include "hw_x/util.h"
 #include "hw_x/common.c"
+
+/* manage foreground/background colors */
+static void X11_SetColors(hwcol col) {
+    if (xsgc.foreground != xcol[COLFG(col)])
+        XSetForeground(xdisplay, xgc, xsgc.foreground = xcol[COLFG(col)]);
+    if (xsgc.background != xcol[COLBG(col)])
+        XSetBackground(xdisplay, xgc, xsgc.background = xcol[COLBG(col)]);
+}
 
 /*
  * return ttrue if each font glyph is either 'narrow' (latin, etc.) or 'wide' (CJK...)

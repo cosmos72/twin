@@ -36,13 +36,16 @@
 #define THIS "hw_xft"
 
 #include "hw_x/flavor.h"
+#undef HW_X_DRIVER
 #define HW_X_DRIVER HW_XFT
 
 #include "hw_x/features.h"
 #include "hw_x/x11_data.h"
 #include "hw_x/keyboard.h"
 #include "hw_xft/xchar16.h"
-#include "hw_xft/x11_setcolors.c"
+#include "hw_x/flavor_protos.h"
+#include "hw_x/util_protos.h"
+#include "hw_x/common_protos.h"
 
 // forward declaration...
 static void X11_XftDrawString16(Display *display, Drawable d, GC gc, int x, int y,
@@ -57,9 +60,6 @@ static void X11_XftDrawString16(Display *display, Drawable d, GC gc, int x, int 
 
 #define XDRAW_ANY(buf, buflen, col, gfx) XDRAW(col, buf, buflen)
 
-#include "hw_x/flavor_protos.h"
-#include "hw_x/util_protos.h"
-#include "hw_x/common_protos.h"
 #include "hw_x/util.h"
 #include "hw_x/common.c"
 
@@ -72,6 +72,19 @@ static void X11_XftDrawString16(Display *display, Drawable d, GC gc, int x, int 
     XftDrawRect (xftdraw, xbackground, x, y - xsfont->ascent, length * xsfont->max_advance_width,
             xsfont->ascent + xsfont->descent);
     XftDrawString16(xftdraw, xforeground, xsfont, x, y, string, length);
+}
+
+/* manage foreground/background colors */
+static void X11_SetColors(hwcol col) {
+    if (xsgc.foreground != xcol[COLFG(col)]) {
+        XSetForeground(xdisplay, xgc, xsgc.foreground = xcol[COLFG(col)]);
+        xforeground = xftcolors[COLFG(col)];
+    }
+
+    if (xsgc.background != xcol[COLBG(col)]) {
+        XSetBackground(xdisplay, xgc, xsgc.background = xcol[COLBG(col)]);
+        xbackground = xftcolors[COLBG(col)];
+    }
 }
 
 /* return name of selected font in allocated (char *) */
