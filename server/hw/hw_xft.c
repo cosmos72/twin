@@ -47,7 +47,7 @@
 #include "hw_x/util_protos.h"
 #include "hw_x/common_protos.h"
 
-// forward declaration...
+/* forward declaration... */
 static void X11_XftDrawString16(Display *display, Drawable d, GC gc, int x, int y,
         XChar16 *string, int length);
 
@@ -65,10 +65,12 @@ static void X11_XftDrawString16(Display *display, Drawable d, GC gc, int x, int 
 
 static void X11_XftDrawString16(Display *display, Drawable d, GC gc, int x, int y,
         XChar16 *string, int length) {
-    // XftDrawString16 doesn't erase the existing character before it draws a new one, and when
-    // it draws the new one, it only draws the strokes, so you see some of the previous character
-    // "underneath" the new one.  So we first draw a rectangle with the background color, and then
-    // draw the text on top of it in the foreground color.
+    /*
+     * XftDrawString16 doesn't erase the existing character before it draws a new one, and when
+     * it draws the new one, it only draws the strokes, so you see some of the previous character
+     * "underneath" the new one.  So we first draw a rectangle with the background color, and then
+     * draw the text on top of it in the foreground color.
+     */
     XftDrawRect (xftdraw, xbackground, x, y - xsfont->ascent, length * xsfont->max_advance_width,
             xsfont->ascent + xsfont->descent);
     XftDrawString16(xftdraw, xforeground, xsfont, x, y, string, length);
@@ -87,6 +89,50 @@ static void X11_SetColors(hwcol col) {
     }
 }
 
+static ldat xftCalcFontScore(udat fontwidth, udat fontheight, XftFont *fontp, CONST char * fontname) {
+    if (FC_CHARSET_MAP_SIZE >= 256/32) {
+	FcChar32 map[FC_CHARSET_MAP_SIZE] = {}, *ptr = map, mask = (FcChar32)-1;
+	FcChar32 next, first = FcCharSetFirstPage(fontp->charset, map, &next);
+	/* check that font contains at least ASCII (space is not necessary since it's blank) */
+	if (first == FC_CHARSET_DONE || first > ' ' + 1)
+	    return 0;
+	if (first == 0) {
+	    first = 32;
+	} else {
+	    if (first < ' ') {
+		FcChar32 n = ' ' - first;
+		first = 32;
+		map[0] >>= n;
+		mask >>= n;
+	    }
+	    if ((map[0] & mask) != mask)
+		return 0;
+	}
+	ptr++;
+	while (first < '~') {
+	    if (ptr >= map + FC_CHARSET_MAP_SIZE)
+		return 0;
+	    mask = (FcChar32)-1;
+	    if ('~' - first < 32)
+		mask >>= '~' - first;
+	    if ((ptr[0] & mask) != mask)
+		return 0;
+	    first += 32;
+	    ptr++;
+	}
+    }
+    ldat score = calcFontScore(fontwidth, fontheight, (ldat)fontp->max_advance_width,
+			       (ldat)fontp->ascent + fontp->descent);
+    /* slightly prefer fonts with "DejaVu" "Sans" and "Mono" in their name */
+    if (!strstr(fontname, "DejaVu") && !strstr(fontname, "dejavu"))
+	score -= 5;
+    if (!strstr(fontname, "Sans") && !strstr(fontname, "sans"))
+	score--;
+    if (!strstr(fontname, "Mono") && !strstr(fontname, "mono"))
+	score -= 2;
+    return score;
+}
+
 /* return name of selected font in allocated (char *) */
 static char * X11_AutodetectFont(udat fontwidth, udat fontheight) {
     FcFontSet *fontset;
@@ -97,12 +143,14 @@ static char * X11_AutodetectFont(udat fontwidth, udat fontheight) {
     ldat score, best_score = TW_MINLDAT;
     int xscreen = DefaultScreen(xdisplay);
 
-    // find a usable font as follows
-    //    an xft font (outline=true, scalable=true)
-    //    monospace (spacing=100)
-    //    not italic (slant=0)
-    //    medium weight (75 <= weight <= 100)
-    //    highest font score (closest to fontwidth X fontheight)
+    /*
+     * find a usable font as follows
+     *    an xft font (outline=true, scalable=true)
+     *    monospace (spacing=100)
+     *    not italic (slant=0)
+     *    medium weight (75 <= weight <= 100)
+     *    highest font score (closest to fontwidth X fontheight)
+     */
     fontset = XftListFonts (xdisplay, DefaultScreen(xdisplay),
             XFT_OUTLINE, XftTypeBool, FcTrue,
             XFT_SCALABLE, XftTypeBool, FcTrue,
@@ -126,7 +174,7 @@ static char * X11_AutodetectFont(udat fontwidth, udat fontheight) {
                 continue;
             }
 
-            // reuse existing t_fontname if possible, otherwise allocate a new one
+            /* reuse existing t_fontname if possible, otherwise allocate a new one */
             len = LenStr(file) + LenStr(":file=") + 1;
             if (!t_fontname || (len > t_fontname_len)) {
                 if (t_fontname) {
@@ -142,8 +190,7 @@ static char * X11_AutodetectFont(udat fontwidth, udat fontheight) {
 
             fontp = XftFontOpenName(xdisplay, xscreen, t_fontname);
             if (fontp) {
-                score = calcFontScore(fontwidth, fontheight, (ldat)fontp->max_advance_width,
-                        (ldat)fontp->ascent + fontp->descent);
+                score = xftCalcFontScore(fontwidth, fontheight, fontp, t_fontname);
                 XftFontClose(xdisplay, fontp);
 
                 if (!fontname || (score > best_score)) {
@@ -224,6 +271,6 @@ static int check_hw_name(char *hw_name) {
 
 /* custom version of X11_UTF_32_to_charset_function for the XFT driver */
 static Tutf_function X11_UTF_32_to_charset_function(CONST byte *charset) {
-    // this is sufficient for xft fonts which are 16-bit unicode
+    /* this is sufficient for xft fonts which are 16-bit unicode */
     return X11_UTF_32_to_UCS_2;
 }
