@@ -15,16 +15,14 @@ struct x11_data {
     XGCValues    xsgc;
 #if HW_X_DRIVER == HW_X11
     XFontStruct *xsfont;
-#endif
-#if HW_X_DRIVER == HW_GFX
+#elif HW_X_DRIVER == HW_GFX
     XFontStruct *xsfont;
     int          xmonochrome;
     Pixmap       xtheme, xroot, xbg;
     GC           xthemegc, xrootgc, xbggc;
     XGCValues    xthemesgc;
     byte         xroot_flag, xbg_flag;
-#endif
-#if HW_X_DRIVER == HW_XFT
+#elif HW_X_DRIVER == HW_XFT
     XftFont     *xsfont;
     XftDraw     *xftdraw;
     XftColor    *foreground; // current foreground color
@@ -82,21 +80,19 @@ struct x11_data {
 #define xTARGETS	(xdata->xTARGETS)
 
 #if HW_X_DRIVER == HW_GFX
-#define xmonochrome	(xdata->xmonochrome)
-#define xtheme		(xdata->xtheme)
-#define xthemegc	(xdata->xthemegc)
-#define xthemesgc	(xdata->xthemesgc)
-#define xroot_flag	(xdata->xroot_flag)
-#define xroot		(xdata->xroot)
-#define xrootgc		(xdata->xrootgc)
-#define xbg_flag	(xdata->xbg_flag)
-#define xbg		(xdata->xbg)
-#define xbggc		(xdata->xbggc)
-#endif
-
-#if HW_X_DRIVER == HW_XFT
-#define xftdraw         (xdata->xftdraw)
-#define xforeground	(xdata->foreground)
-#define xbackground     (xdata->background)
-#define xftcolors       (xdata->xftcolors)
+# define xmonochrome	(xdata->xmonochrome)
+# define xtheme		(xdata->xtheme)
+# define xthemegc	(xdata->xthemegc)
+# define xthemesgc	(xdata->xthemesgc)
+# define xroot_flag	(xdata->xroot_flag)
+# define xroot		(xdata->xroot)
+# define xrootgc	(xdata->xrootgc)
+# define xbg_flag	(xdata->xbg_flag)
+# define xbg		(xdata->xbg)
+# define xbggc		(xdata->xbggc)
+#elif HW_X_DRIVER == HW_XFT
+# define xftdraw	(xdata->xftdraw)
+# define xforeground	(xdata->foreground)
+# define xbackground	(xdata->background)
+# define xftcolors	(xdata->xftcolors)
 #endif

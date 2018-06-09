@@ -74,7 +74,7 @@ TW_C_FEATURES
 initial_CFLAGS="$CFLAGS"
 for try_flag in -fomit-frame-pointer -fno-strict-aliasing -pipe -Wall -Wshadow \
                  -Wno-uninitialized -Wno-pointer-sign -Wno-unused -Wundef -Wstrict-prototypes \
-                 -Wcast-qual -Wcast-align -Wpointer-arith -Wbad-function-cast -Waggregate-return
+                 -Wcast-qual -Wcast-align -Wpointer-arith -Wbad-function-cast
 do
   save_CFLAGS="$CFLAGS"
   CFLAGS="$CFLAGS $try_flag"

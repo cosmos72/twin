@@ -649,6 +649,8 @@ LIBSOCKET_la_FALSE
 LIBSOCKET_la_TRUE
 LIBRCPARSE_la_FALSE
 LIBRCPARSE_la_TRUE
+LIBHW_XFT_la_FALSE
+LIBHW_XFT_la_TRUE
 LIBHW_X11_la_FALSE
 LIBHW_X11_la_TRUE
 LIBHW_TWIN_la_FALSE
@@ -665,6 +667,7 @@ SUBDIR_LIBTT
 LIBTW
 LIBTUTF
 LIBZ
+LIBXFT
 LIBXPM
 LIBTERMCAP
 LIBPTHREAD
@@ -847,6 +850,7 @@ enable_hw_tty_linux
 enable_hw_tty_twterm
 enable_hw_tty_termcap
 enable_hw_x11
+enable_hw_xft
 enable_hw_gfx
 enable_hw_twin
 enable_hw_display
@@ -1536,6 +1540,7 @@ Optional Features:
   --enable-hw-tty-twterm=yes|no        enable the twterm terminal driver
   --enable-hw-tty-termcap=yes|no       enable the termcap/ncurses terminal driver
   --enable-hw-x11=yes|no               enable the X11 driver
+  --enable-hw-xft=yes|no               enable the xft (X11 with truetype fonts) driver
   --enable-hw-gfx=yes|no               enable the gfx (enhanced X11) driver
   --enable-hw-twin=yes|no              enable the twin nested driver
   --enable-hw-display=yes|no           enable the twdisplay client driver
@@ -3622,6 +3627,14 @@ if test "${enable_hw_x11+set}" = set; then :
   enableval=$enable_hw_x11;
 else
   enable_hw_x11=yes
+
+fi
+
+# Check whether --enable-hw-xft was given.
+if test "${enable_hw_xft+set}" = set; then :
+  enableval=$enable_hw_xft;
+else
+  enable_hw_xft=yes
 
 fi
 
@@ -17825,6 +17838,86 @@ if test "$ac_res" != no; then :
 
 fi
 
+  CPPFLAGS="$CPPFLAGS $X11_CPPFLAGS -I/usr/include/freetype2"
+
+  for ac_header in X11/Xft/Xft.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "X11/Xft/Xft.h" "ac_cv_header_X11_Xft_Xft_h" "$ac_includes_default"
+if test "x$ac_cv_header_X11_Xft_Xft_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_X11_XFT_XFT_H 1
+_ACEOF
+
+fi
+
+done
+                     for ac_header in fontconfig/fontconfig.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "fontconfig/fontconfig.h" "ac_cv_header_fontconfig_fontconfig_h" "$ac_includes_default"
+if test "x$ac_cv_header_fontconfig_fontconfig_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_FONTCONFIG_FONTCONFIG_H 1
+_ACEOF
+
+fi
+
+done
+           { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing XftFontOpen" >&5
+$as_echo_n "checking for library containing XftFontOpen... " >&6; }
+if ${ac_cv_search_XftFontOpen+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char XftFontOpen ();
+int
+main ()
+{
+return XftFontOpen ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' Xft; do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_search_XftFontOpen=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext
+  if ${ac_cv_search_XftFontOpen+:} false; then :
+  break
+fi
+done
+if ${ac_cv_search_XftFontOpen+:} false; then :
+
+else
+  ac_cv_search_XftFontOpen=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_XftFontOpen" >&5
+$as_echo "$ac_cv_search_XftFontOpen" >&6; }
+ac_res=$ac_cv_search_XftFontOpen
+if test "$ac_res" != no; then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+
+fi
+
   CPPFLAGS="$save_CPPFLAGS"
   LDFLAGS="$save_LDFLAGS"
 fi
@@ -17976,6 +18069,10 @@ if test "$have_x" != yes; then
   enable_hw_x11=no
 fi
 
+if test "x$have_x" != xyes -o "x$ac_cv_header_X11_Xft_Xft_h" != xyes -o "x$ac_cv_header_fontconfig_fontconfig_h" != xyes -o "x$ac_cv_search_XftFontOpen" = xno; then
+  enable_hw_xft=no
+fi
+
 if test "$have_x" != yes -o "$ac_cv_header_X11_xpm_h" = no -o "$ac_cv_search_XpmReadFileToPixmap" = no; then
   enable_hw_gfx=no
 fi
@@ -18013,6 +18110,8 @@ LIBPTHREAD="`echo \"$ac_cv_search_pthread_create\" | $SED -e 's/^none required$/
 LIBTERMCAP="`echo \"$ac_cv_search_tgetent\"        | $SED -e 's/^none required$//g' -e 's/^no$//g'`"
 
 LIBXPM="`echo \"$ac_cv_search_XpmReadFileToPixmap\"  | $SED -e 's/^none required$//g' -e 's/^no$//g'`"
+
+LIBXFT="`echo \"$ac_cv_search_XftFontOpen\"    | $SED -e 's/^none required$//g' -e 's/^no$//g'`"
 
 if test "$enable_socket_gz" = yes; then
   LIBZ="`echo \"$ac_cv_search_deflate\"        | $SED -e 's/^none required$//g' -e 's/^no$//g'`"
@@ -18071,6 +18170,14 @@ fi
 else
   LIBHW_X11_la_TRUE='#'
   LIBHW_X11_la_FALSE=
+fi
+
+ if test "$enable_hw_xft"     = yes; then
+  LIBHW_XFT_la_TRUE=
+  LIBHW_XFT_la_FALSE='#'
+else
+  LIBHW_XFT_la_TRUE='#'
+  LIBHW_XFT_la_FALSE=
 fi
 
  if test "$enable_wm_rc"      = yes; then
@@ -18307,6 +18414,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${LIBHW_X11_la_TRUE}" && test -z "${LIBHW_X11_la_FALSE}"; then
   as_fn_error $? "conditional \"LIBHW_X11_la\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${LIBHW_XFT_la_TRUE}" && test -z "${LIBHW_XFT_la_FALSE}"; then
+  as_fn_error $? "conditional \"LIBHW_XFT_la\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${LIBRCPARSE_la_TRUE}" && test -z "${LIBRCPARSE_la_FALSE}"; then
@@ -20550,6 +20661,7 @@ tw_cfg()
   tw_cfg CONF_HW_TTY_TWTERM     "$enable_hw_tty_twterm"
   tw_cfg CONF_HW_TTY_TERMCAP    "$enable_hw_tty_termcap"
   tw_cfg CONF_HW_X11            "$enable_hw_x11"
+  tw_cfg CONF_HW_XFT            "$enable_hw_xft"
   tw_cfg CONF_HW_GFX            "$enable_hw_gfx"
   tw_cfg CONF_HW_TWIN           "$enable_hw_twin"
   tw_cfg CONF_HW_DISPLAY        "$enable_hw_display"

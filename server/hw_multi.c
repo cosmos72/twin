@@ -231,6 +231,7 @@ byte InitDisplayHW(display_hw D_HW) {
         success =
             AUTOTRY4("-hw=gfx", 7) ||
             AUTOTRY4("-hw=X11", 7) ||
+            AUTOTRY4("-hw=xft", 7) ||
             AUTOTRY4("-hw=twin", 8) ||
             AUTOTRY4("-hw=tty", 7) ||
             AUTOTRY4("-hw=ggi", 7);

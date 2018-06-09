@@ -338,6 +338,7 @@ LIBTOOL = @LIBTOOL@
 LIBTUTF = $(top_builddir)/libs/libTutf/libTutf.la
 LIBTW = $(top_builddir)/libs/libTw/libTw.la
 LIBX11 = @LIBX11@
+LIBXFT = @LIBXFT@
 LIBXPM = @LIBXPM@
 LIBZ = @LIBZ@
 LIPO = @LIPO@

@@ -43,7 +43,7 @@ INLINE void X11_Mogrify(dat x, dat y, uldat len) {
 		_col = col;
 	    }
 	    f = xUTF_32_to_charset(HWFONT(*V));
-            XChar16FromRaw(f, &buf[buflen++]);
+            buf[buflen++] = RawToXChar16(f);
 	}
     }
     if (buflen) {
@@ -160,7 +160,7 @@ static byte X11_InitHW(void) {
     /* not yet opened */
     xdisplay = NULL;
     
-    if (arg && ((nskip = check_hw_name(arg)) > 0)) {
+    if (arg && *arg && ((nskip = check_hw_name(arg)) > 0)) {
         arg += nskip;
 
 	if (*arg == '@') {

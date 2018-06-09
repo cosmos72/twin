@@ -46,11 +46,10 @@ static void X11_HideCursor(dat x, dat y) {
         ? Video[x + y * (ldat)DisplayWidth]
         : HWATTR( COL(HIGH|WHITE, BLACK), ' ');
     hwcol col = HWCOL(V);
-    XChar16 c;
     hwattr extra = HWEXTRA(V);
     hwfont f = xUTF_32_to_charset(HWFONT(V));
     
-    XChar16FromRaw(f, &c);
+    XChar16 c = RawToXChar16(f);
     
     XDRAW_ANY(&c, 1, col, extra);
 }
@@ -73,7 +72,7 @@ static void X11_ShowCursor(uldat type, dat x, dat y) {
 	if ((type & 0x40) && ((COLFG(v) & WHITE) == (COLBG(v) & WHITE)))
 	    v ^= COL(WHITE,0);
 	f = xUTF_32_to_charset(HWFONT(V));
-        XChar16FromRaw(f, &c);
+        c = RawToXChar16(f);
         XDRAW_ANY(&c, 1, v, HWEXTRA(V));
     } else if (type & 0xF) {
 	/* VGA hw-like cursor */
