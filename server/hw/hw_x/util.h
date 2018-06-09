@@ -1,3 +1,5 @@
+/* Functions that are common between hw_x11, hw_xft, and hw_gfx. */
+
 #define X11_TITLE_MAXLEN 80
 
 static void X11_FillWindowTitle(byte * title, int maxlen) {
@@ -44,12 +46,10 @@ static void X11_HideCursor(dat x, dat y) {
         ? Video[x + y * (ldat)DisplayWidth]
         : HWATTR( COL(HIGH|WHITE, BLACK), ' ');
     hwcol col = HWCOL(V);
-    XChar2b c;
     hwattr extra = HWEXTRA(V);
     hwfont f = xUTF_32_to_charset(HWFONT(V));
     
-    c.byte1 = f >> 8;
-    c.byte2 = f & 0xFF;
+    XChar16 c = RawToXChar16(f);
     
     XDRAW_ANY(&c, 1, col, extra);
 }
@@ -66,19 +66,14 @@ static void X11_ShowCursor(uldat type, dat x, dat y) {
 	/* soft cursor */
 	hwcol v = (HWCOL(V) | ((type >> 16) & 0xff)) ^ ((type >> 8) & 0xff);
 	hwfont f;
-	XChar2b c;
+	XChar16 c;
 	if ((type & 0x20) && (HWCOL(V) & COL(0,WHITE)) == (v & COL(0,WHITE)))
 	    v ^= COL(0,WHITE);
 	if ((type & 0x40) && ((COLFG(v) & WHITE) == (COLBG(v) & WHITE)))
 	    v ^= COL(WHITE,0);
-	if (xsgc.foreground != xcol[COLFG(v)])
-	    XSetForeground(xdisplay, xgc, xsgc.foreground = xcol[COLFG(v)]);
-	if (xsgc.background != xcol[COLBG(v)])
-	    XSetBackground(xdisplay, xgc, xsgc.background = xcol[COLBG(v)]);
 	f = xUTF_32_to_charset(HWFONT(V));
-	c.byte1 = f >> 8;
-	c.byte2 = f & 0xFF;
-	XDrawImageString16(xdisplay, xwindow, xgc, xbegin, ybegin + xupfont, &c, 1);
+        c = RawToXChar16(f);
+        XDRAW_ANY(&c, 1, v, HWEXTRA(V));
     } else if (type & 0xF) {
 	/* VGA hw-like cursor */
 
@@ -87,8 +82,12 @@ static void X11_ShowCursor(uldat type, dat x, dat y) {
 
 	udat i = xhfont * ((type & 0xF)-NOCURSOR) / (SOLIDCURSOR-NOCURSOR);
 	
-	if (xsgc.foreground != fg)
+	if (xsgc.foreground != fg) {
 	    XSetForeground(xdisplay, xgc, xsgc.foreground = fg);
+#if HW_X_DRIVER == HW_XFT
+            xforeground = xftcolors[COLFG(HWCOL(V)) ^ COLBG(HWCOL(V))];
+#endif
+        }
 	
 	XSetFunction(xdisplay, xgc, xsgc.function = GXxor);
 	XFillRectangle(xdisplay, xwindow, xgc,
@@ -414,7 +413,7 @@ static int X11_Die(Display *d) {
 }
 #endif
 
-
+#if HW_X_DRIVER != HW_XFT
 static Tutf_function X11_UTF_32_to_charset_function(CONST byte *charset) {
     XFontProp *fp;
     unsigned long prop;
@@ -466,6 +465,7 @@ static Tutf_function X11_UTF_32_to_charset_function(CONST byte *charset) {
     
     return Tutf_UTF_32_to_charset_function(i);
 }
+#endif
 
 
 static hwfont X11_UTF_32_to_UCS_2(hwfont c) {

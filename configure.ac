@@ -74,7 +74,7 @@ TW_C_FEATURES
 initial_CFLAGS="$CFLAGS"
 for try_flag in -fomit-frame-pointer -fno-strict-aliasing -pipe -Wall -Wshadow \
                  -Wno-uninitialized -Wno-pointer-sign -Wno-unused -Wundef -Wstrict-prototypes \
-                 -Wcast-qual -Wcast-align -Wpointer-arith -Wbad-function-cast -Waggregate-return
+                 -Wcast-qual -Wcast-align -Wpointer-arith -Wbad-function-cast
 do
   save_CFLAGS="$CFLAGS"
   CFLAGS="$CFLAGS $try_flag"
@@ -192,6 +192,12 @@ if test "$have_x" = yes; then
 
   AC_CHECK_HEADERS([X11/xpm.h])                       dnl needs X11_CPPFLAGS
   AC_SEARCH_LIBS(XpmReadFileToPixmap, Xpm)            dnl needs X11_LDFLAGS
+
+  CPPFLAGS="$CPPFLAGS $X11_CPPFLAGS -I/usr/include/freetype2"
+
+  AC_CHECK_HEADERS([X11/Xft/Xft.h])                   dnl needs X11_CPPFLAGS
+  AC_CHECK_HEADERS([fontconfig/fontconfig.h])         dnl needs X11_CPPFLAGS
+  AC_SEARCH_LIBS(XftFontOpen, Xft)                    dnl needs X11_LDFLAGS
   
   CPPFLAGS="$save_CPPFLAGS"
   LDFLAGS="$save_LDFLAGS"
@@ -264,6 +270,7 @@ AC_SUBST(LIBSOCK,     "`echo \"$ac_cv_search_gethostbyname\"  | $SED -e 's/^none
 AC_SUBST(LIBPTHREAD,  "`echo \"$ac_cv_search_pthread_create\" | $SED -e 's/^none required$//g' -e 's/^no$//g'`")
 AC_SUBST(LIBTERMCAP,  "`echo \"$ac_cv_search_tgetent\"        | $SED -e 's/^none required$//g' -e 's/^no$//g'`")
 AC_SUBST(LIBXPM,      "`echo \"$ac_cv_search_XpmReadFileToPixmap\"  | $SED -e 's/^none required$//g' -e 's/^no$//g'`")
+AC_SUBST(LIBXFT,      "`echo \"$ac_cv_search_XftFontOpen\"    | $SED -e 's/^none required$//g' -e 's/^no$//g'`")
 if test "$enable_socket_gz" = yes; then
   AC_SUBST(LIBZ,      "`echo \"$ac_cv_search_deflate\"        | $SED -e 's/^none required$//g' -e 's/^no$//g'`")
 fi
@@ -279,6 +286,7 @@ AM_CONDITIONAL(LIBHW_GGI_la,     [test "$enable_hw_ggi"     = yes])
 AM_CONDITIONAL(LIBHW_TTY_la,     [test "$enable_hw_tty"     = yes])
 AM_CONDITIONAL(LIBHW_TWIN_la,    [test "$enable_hw_twin"    = yes])
 AM_CONDITIONAL(LIBHW_X11_la,     [test "$enable_hw_x11"     = yes])
+AM_CONDITIONAL(LIBHW_XFT_la,     [test "$enable_hw_xft"     = yes])
 AM_CONDITIONAL(LIBRCPARSE_la,    [test "$enable_wm_rc"      = yes])
 AM_CONDITIONAL(LIBSOCKET_la,     [test "$enable_socket"     = yes])
 AM_CONDITIONAL(LIBTERM_la,       [test "$enable_term"       = yes])

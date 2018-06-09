@@ -45,13 +45,14 @@
 
 #define THIS "hw_gfx"
 
+#include "hw_x/flavor.h"
+#undef HW_X_DRIVER
+#define HW_X_DRIVER HW_GFX
 
 #include "hw_x/features.h"
-
-
-/* Display variables */
-
-#define NEST 4
+#include "hw_x/x11_data.h"
+#include "hw_x/keyboard.h"
+#include "hw_x/xchar16.h"
 
 /* how to draw screen root and widgets interior: */
 #define GFX_USE_NONE	0	/* no pixmap */
@@ -59,90 +60,11 @@
 #define GFX_USE_ROOT	2	/* use root pixmap */
 #define GFX_USE_BG	3	/* use background pixmap */
 
-
-struct x11_data {
-    unsigned xwidth, xheight;
-    int xwfont, xhfont, xupfont;
-
-    /* we support showing only a portion of the whole twin display */
-    dat xhw_view, xhw_startx, xhw_starty, xhw_endx, xhw_endy;
-    
-    int xmonochrome;
-    Tutf_function xUTF_32_to_charset;
-    Display     *xdisplay;
-    Window       xwindow;
-    Pixmap       xtheme, xroot, xbg;
-    GC           xgc, xthemegc, xrootgc, xbggc;
-    XFontStruct *xsfont;
-#ifdef TW_FEATURE_X11_XIM_XIC /* autodetected by hw_x/features.h */
-    XIM		 xim;
-    XIC		 xic;
-#endif
-    XComposeStatus xcompose;
-    byte         xwindow_AllVisible, xfont_map, xroot_flag, xbg_flag;
-    unsigned long xcol[MAXCOL+1];
-    obj          xRequestor[NEST];
-    uldat        xReqPrivate[NEST];
-    uldat        xReqCount;
-    uldat        XReqCount;
-    XSelectionRequestEvent XReq[NEST];
-    Atom xWM_PROTOCOLS, xWM_DELETE_WINDOW, xTARGETS;
-    XGCValues    xsgc, xthemesgc;
-};
-
-#define xdata		((struct x11_data *)HW->Private)
-#define xwidth		(xdata->xwidth)
-#define xheight		(xdata->xheight)
-#define xwfont		(xdata->xwfont)
-#define xhfont		(xdata->xhfont)
-#define xupfont		(xdata->xupfont)
-
-#define xhw_view	(xdata->xhw_view)
-#define xhw_startx	(xdata->xhw_startx)
-#define xhw_starty	(xdata->xhw_starty)
-#define xhw_endx	(xdata->xhw_endx)
-#define xhw_endy	(xdata->xhw_endy)
-
-#define xmonochrome	(xdata->xmonochrome)
-#define xUTF_32_to_charset	(xdata->xUTF_32_to_charset)
-#define xdisplay	(xdata->xdisplay)
-#define xwindow		(xdata->xwindow)
-#define xtheme		(xdata->xtheme)
-#define xroot		(xdata->xroot)
-#define xbg		(xdata->xbg)
-#define xgc		(xdata->xgc)
-#define xthemegc	(xdata->xthemegc)
-#define xrootgc		(xdata->xrootgc)
-#define xbggc		(xdata->xbggc)
-#define xsfont		(xdata->xsfont)
-#define xim		(xdata->xim)
-#define xic		(xdata->xic)
-#define xcompose	(xdata->xcompose)
-
-#define xwindow_AllVisible	(xdata->xwindow_AllVisible)
-#define xfont_map	(xdata->xfont_map)
-#define xroot_flag	(xdata->xroot_flag)
-#define xbg_flag	(xdata->xbg_flag)
-#define xcol		(xdata->xcol)
-#define xRequestor(j)	(xdata->xRequestor[j])
-#define xReqPrivate(j)	(xdata->xReqPrivate[j])
-#define xReqCount	(xdata->xReqCount)
-#define XReqCount	(xdata->XReqCount)
-#define XReq(j)		(xdata->XReq[j])
-#define xWM_PROTOCOLS	(xdata->xWM_PROTOCOLS)
-#define xWM_DELETE_WINDOW	(xdata->xWM_DELETE_WINDOW)
-#define xTARGETS	(xdata->xTARGETS)
-#define xsgc		(xdata->xsgc)
-#define xthemesgc	(xdata->xthemesgc)
-
-#include "hw_x/keyboard.h"
-
-
 #define pitch 15
 
 # define myXDrawImageString XDrawImageString16
 # define myXDrawString XDrawString16
-# define myXChar XChar2b
+# define myXChar XChar16
 
 
 #define XDRAW_FN(FN, col, buf, buflen) do { \
@@ -313,6 +235,7 @@ INLINE void X11_Mogrify(dat x, dat y, uldat len) {
     }
 }
 
+#include "hw_x/util_protos.h"
 #include "hw_x/util.h"
 
 #undef XDRAW_ANY

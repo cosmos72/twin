@@ -90,10 +90,11 @@ build_triplet = @build@
 host_triplet = @host@
 @LIBHW_DISPLAY_la_TRUE@am__append_1 = libhw_display.la
 @LIBHW_X11_la_TRUE@am__append_2 = libhw_X11.la
-@LIBHW_GFX_la_TRUE@am__append_3 = libhw_gfx.la
-@LIBHW_GGI_la_TRUE@am__append_4 = libhw_ggi.la
-@LIBHW_TTY_la_TRUE@am__append_5 = libhw_tty.la
-@LIBHW_TWIN_la_TRUE@am__append_6 = libhw_twin.la
+@LIBHW_XFT_la_TRUE@am__append_3 = libhw_xft.la
+@LIBHW_GFX_la_TRUE@am__append_4 = libhw_gfx.la
+@LIBHW_GGI_la_TRUE@am__append_5 = libhw_ggi.la
+@LIBHW_TTY_la_TRUE@am__append_6 = libhw_tty.la
+@LIBHW_TWIN_la_TRUE@am__append_7 = libhw_twin.la
 subdir = server/hw
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/libtool.m4 \
@@ -180,6 +181,14 @@ libhw_twin_la_DEPENDENCIES = $(am__DEPENDENCIES_1) \
 am_libhw_twin_la_OBJECTS = hw_twin.lo
 libhw_twin_la_OBJECTS = $(am_libhw_twin_la_OBJECTS)
 @LIBHW_TWIN_la_TRUE@am_libhw_twin_la_rpath = -rpath $(pkglibdir)
+libhw_xft_la_DEPENDENCIES = $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+am_libhw_xft_la_OBJECTS = libhw_xft_la-hw_xft.lo
+libhw_xft_la_OBJECTS = $(am_libhw_xft_la_OBJECTS)
+libhw_xft_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(libhw_xft_la_LDFLAGS) $(LDFLAGS) -o $@
+@LIBHW_XFT_la_TRUE@am_libhw_xft_la_rpath = -rpath $(pkglibdir)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -216,10 +225,12 @@ am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
 SOURCES = $(libhw_X11_la_SOURCES) $(libhw_display_la_SOURCES) \
 	$(libhw_gfx_la_SOURCES) $(libhw_ggi_la_SOURCES) \
-	$(libhw_tty_la_SOURCES) $(libhw_twin_la_SOURCES)
+	$(libhw_tty_la_SOURCES) $(libhw_twin_la_SOURCES) \
+	$(libhw_xft_la_SOURCES)
 DIST_SOURCES = $(libhw_X11_la_SOURCES) $(libhw_display_la_SOURCES) \
 	$(libhw_gfx_la_SOURCES) $(libhw_ggi_la_SOURCES) \
-	$(libhw_tty_la_SOURCES) $(libhw_twin_la_SOURCES)
+	$(libhw_tty_la_SOURCES) $(libhw_twin_la_SOURCES) \
+	$(libhw_xft_la_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -303,6 +314,7 @@ LIBTOOL = @LIBTOOL@
 LIBTUTF = @LIBTUTF@
 LIBTW = @LIBTW@
 LIBX11 = @LIBX11@
+LIBXFT = @LIBXFT@
 LIBXPM = @LIBXPM@
 LIBZ = @LIBZ@
 LIPO = @LIPO@
@@ -406,21 +418,26 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 pkglib_LTLIBRARIES = $(am__append_1) $(am__append_2) $(am__append_3) \
-	$(am__append_4) $(am__append_5) $(am__append_6)
+	$(am__append_4) $(am__append_5) $(am__append_6) \
+	$(am__append_7)
 AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/server
 libhw_X11_la_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/server $(X11_CPPFLAGS)
+libhw_xft_la_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/server $(X11_CPPFLAGS) -I/usr/include/freetype2
 libhw_gfx_la_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/server $(X11_CPPFLAGS) -DPKG_DATADIR="\"$(pkgdatadir)\""
 libhw_display_la_SOURCES = hw_display.c
 libhw_X11_la_SOURCES = hw_X11.c
+libhw_xft_la_SOURCES = hw_xft.c
 libhw_gfx_la_SOURCES = hw_gfx.c
 libhw_ggi_la_SOURCES = hw_ggi.c
 libhw_tty_la_SOURCES = hw_tty.c
 libhw_twin_la_SOURCES = hw_twin.c
 AM_LDFLAGS = -export-dynamic -export-symbols-regex '^(Init|Quit)Module$$' -release $(PACKAGE_VERSION)
 libhw_X11_la_LDFLAGS = -export-dynamic -export-symbols-regex '^(Init|Quit)Module$$' -release $(PACKAGE_VERSION) $(X11_LDFLAGS)
+libhw_xft_la_LDFLAGS = -export-dynamic -export-symbols-regex '^(Init|Quit)Module$$' -release $(PACKAGE_VERSION) $(X11_LDFLAGS)
 libhw_gfx_la_LDFLAGS = -export-dynamic -export-symbols-regex '^(Init|Quit)Module$$' -release $(PACKAGE_VERSION) $(X11_LDFLAGS)
 libhw_display_la_LIBADD = 
 libhw_X11_la_LIBADD = $(LIBTUTF) $(LIBX11)
+libhw_xft_la_LIBADD = $(LIBTUTF) $(LIBX11) $(LIBXFT)
 libhw_gfx_la_LIBADD = $(LIBTUTF) $(LIBX11) $(LIBXPM)
 libhw_ggi_la_LIBADD = $(LIBGGI)
 libhw_tty_la_LIBADD = $(LIBTUTF) $(LIBTERMCAP) $(LIBGPM)
@@ -512,6 +529,9 @@ libhw_tty.la: $(libhw_tty_la_OBJECTS) $(libhw_tty_la_DEPENDENCIES) $(EXTRA_libhw
 libhw_twin.la: $(libhw_twin_la_OBJECTS) $(libhw_twin_la_DEPENDENCIES) $(EXTRA_libhw_twin_la_DEPENDENCIES) 
 	$(AM_V_CCLD)$(LINK) $(am_libhw_twin_la_rpath) $(libhw_twin_la_OBJECTS) $(libhw_twin_la_LIBADD) $(LIBS)
 
+libhw_xft.la: $(libhw_xft_la_OBJECTS) $(libhw_xft_la_DEPENDENCIES) $(EXTRA_libhw_xft_la_DEPENDENCIES) 
+	$(AM_V_CCLD)$(libhw_xft_la_LINK) $(am_libhw_xft_la_rpath) $(libhw_xft_la_OBJECTS) $(libhw_xft_la_LIBADD) $(LIBS)
+
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
 
@@ -524,6 +544,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hw_twin.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libhw_X11_la-hw_X11.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libhw_gfx_la-hw_gfx.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libhw_xft_la-hw_xft.Plo@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
@@ -562,6 +583,13 @@ libhw_gfx_la-hw_gfx.lo: hw_gfx.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='hw_gfx.c' object='libhw_gfx_la-hw_gfx.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libhw_gfx_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libhw_gfx_la-hw_gfx.lo `test -f 'hw_gfx.c' || echo '$(srcdir)/'`hw_gfx.c
+
+libhw_xft_la-hw_xft.lo: hw_xft.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libhw_xft_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libhw_xft_la-hw_xft.lo -MD -MP -MF $(DEPDIR)/libhw_xft_la-hw_xft.Tpo -c -o libhw_xft_la-hw_xft.lo `test -f 'hw_xft.c' || echo '$(srcdir)/'`hw_xft.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libhw_xft_la-hw_xft.Tpo $(DEPDIR)/libhw_xft_la-hw_xft.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='hw_xft.c' object='libhw_xft_la-hw_xft.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libhw_xft_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libhw_xft_la-hw_xft.lo `test -f 'hw_xft.c' || echo '$(srcdir)/'`hw_xft.c
 
 mostlyclean-libtool:
 	-rm -f *.lo
