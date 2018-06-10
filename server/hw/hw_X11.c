@@ -194,13 +194,3 @@ static void X11_FlavorQuitHW(void) {
     if (xsfont) XFreeFont(xdisplay, xsfont);
 }
 
-static int check_hw_name(char *hw_name) {
-    if (strncmp(hw_name, "-hw=X11", 7) == 0) {
-        return 7;
-    }
-    if (strncmp(hw_name, "-hw=X", 5) == 0) {
-        return 7;
-    }
-    printk("      invalid -hw=xyz argument: %s\n", hw_name);
-    return -1;
-}

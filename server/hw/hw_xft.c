@@ -261,14 +261,6 @@ static void X11_FlavorQuitHW(void) {
     }
 }
 
-static int check_hw_name(char *hw_name) {
-    if (strncmp(hw_name, "-hw=xft", 7) == 0) {
-        return 7;
-    }
-    printk("      invalid -hw=xyz argument: %s\n", hw_name);
-    return -1;
-}
-
 /* custom version of X11_UTF_32_to_charset_function for the XFT driver */
 static Tutf_function X11_UTF_32_to_charset_function(CONST byte *charset) {
     /* this is sufficient for xft fonts which are 16-bit unicode */

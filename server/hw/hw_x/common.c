@@ -129,6 +129,23 @@ static void X11_QuitHW(void) {
     HW->Private = NULL;
 }
 
+static int check_hw_name(char *hw_name) {
+    char * comma, * at;
+    if (strncmp(hw_name, "-hw=", 4) != 0) {
+        return -1;
+    }
+    comma = strchr(hw_name, ',');
+    at = strchr(hw_name, '@');
+    if (comma == NULL) {
+        if (at == NULL)
+            return -1;
+        comma = at;
+    } else if (at != NULL && at < comma) {
+        comma = at;
+    }
+    return comma - hw_name - 1;
+}
+
 static byte X11_InitHW(void) {
     char *arg = HW->Name;
     int xscreen;

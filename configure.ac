@@ -28,6 +28,8 @@ AC_PROG_LIBTOOL
 AC_PROG_LN_S
 AC_PROG_SED
 
+PKG_PROG_PKG_CONFIG([0.25])
+
 dnl TW_VERSION requires $SED
 TW_VERSION
 
@@ -193,11 +195,14 @@ if test "$have_x" = yes; then
   AC_CHECK_HEADERS([X11/xpm.h])                       dnl needs X11_CPPFLAGS
   AC_SEARCH_LIBS(XpmReadFileToPixmap, Xpm)            dnl needs X11_LDFLAGS
 
-  CPPFLAGS="$CPPFLAGS $X11_CPPFLAGS -I/usr/include/freetype2"
+  PKG_CHECK_MODULES([XFT], [xft freetype2])
 
-  AC_CHECK_HEADERS([X11/Xft/Xft.h])                   dnl needs X11_CPPFLAGS
-  AC_CHECK_HEADERS([fontconfig/fontconfig.h])         dnl needs X11_CPPFLAGS
-  AC_SEARCH_LIBS(XftFontOpen, Xft)                    dnl needs X11_LDFLAGS
+  CPPFLAGS="$CPPFLAGS $XFT_CFLAGS"
+  LDFLAGS="$LDFLAGS $XFT_LIBS"
+
+  AC_CHECK_HEADERS([X11/Xft/Xft.h])                   dnl needs XFT_CFLAGS
+  AC_CHECK_HEADERS([fontconfig/fontconfig.h])         dnl needs XFT_CFLAGS
+  AC_SEARCH_LIBS(XftFontOpen, Xft)                    dnl needs XFT_LIBS
   
   CPPFLAGS="$save_CPPFLAGS"
   LDFLAGS="$save_LDFLAGS"

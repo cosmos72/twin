@@ -182,7 +182,8 @@ am_libhw_twin_la_OBJECTS = hw_twin.lo
 libhw_twin_la_OBJECTS = $(am_libhw_twin_la_OBJECTS)
 @LIBHW_TWIN_la_TRUE@am_libhw_twin_la_rpath = -rpath $(pkglibdir)
 libhw_xft_la_DEPENDENCIES = $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am_libhw_xft_la_OBJECTS = libhw_xft_la-hw_xft.lo
 libhw_xft_la_OBJECTS = $(am_libhw_xft_la_OBJECTS)
 libhw_xft_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
@@ -350,6 +351,9 @@ PACKAGE_VERSION_MAJOR = @PACKAGE_VERSION_MAJOR@
 PACKAGE_VERSION_MINOR = @PACKAGE_VERSION_MINOR@
 PACKAGE_VERSION_PATCH = @PACKAGE_VERSION_PATCH@
 PATH_SEPARATOR = @PATH_SEPARATOR@
+PKG_CONFIG = @PKG_CONFIG@
+PKG_CONFIG_LIBDIR = @PKG_CONFIG_LIBDIR@
+PKG_CONFIG_PATH = @PKG_CONFIG_PATH@
 RANLIB = @RANLIB@
 SED = @SED@
 SET_MAKE = @SET_MAKE@
@@ -360,6 +364,8 @@ SUBDIR_LIBTT = @SUBDIR_LIBTT@
 VERSION = @VERSION@
 X11_CPPFLAGS = @X11_CPPFLAGS@
 X11_LDFLAGS = @X11_LDFLAGS@
+XFT_CFLAGS = @XFT_CFLAGS@
+XFT_LIBS = @XFT_LIBS@
 XMKMF = @XMKMF@
 abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
@@ -422,7 +428,7 @@ pkglib_LTLIBRARIES = $(am__append_1) $(am__append_2) $(am__append_3) \
 	$(am__append_7)
 AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/server
 libhw_X11_la_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/server $(X11_CPPFLAGS)
-libhw_xft_la_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/server $(X11_CPPFLAGS) -I/usr/include/freetype2
+libhw_xft_la_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/server $(X11_CPPFLAGS) $(XFT_CFLAGS)
 libhw_gfx_la_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/server $(X11_CPPFLAGS) -DPKG_DATADIR="\"$(pkgdatadir)\""
 libhw_display_la_SOURCES = hw_display.c
 libhw_X11_la_SOURCES = hw_X11.c
@@ -437,7 +443,7 @@ libhw_xft_la_LDFLAGS = -export-dynamic -export-symbols-regex '^(Init|Quit)Module
 libhw_gfx_la_LDFLAGS = -export-dynamic -export-symbols-regex '^(Init|Quit)Module$$' -release $(PACKAGE_VERSION) $(X11_LDFLAGS)
 libhw_display_la_LIBADD = 
 libhw_X11_la_LIBADD = $(LIBTUTF) $(LIBX11)
-libhw_xft_la_LIBADD = $(LIBTUTF) $(LIBX11) $(LIBXFT)
+libhw_xft_la_LIBADD = $(LIBTUTF) $(LIBX11) $(XFT_LIBS) $(LIBXFT)
 libhw_gfx_la_LIBADD = $(LIBTUTF) $(LIBX11) $(LIBXPM)
 libhw_ggi_la_LIBADD = $(LIBGGI)
 libhw_tty_la_LIBADD = $(LIBTUTF) $(LIBTERMCAP) $(LIBGPM)
