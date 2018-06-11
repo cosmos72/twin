@@ -17976,7 +17976,7 @@ if test "$ac_res" != no; then :
 
 fi
 
-  if test x"$ac_cv_path_PKG_CONFIG" != x; then
+  if test x"$PKG_CONFIG" != x; then
 
 pkg_failed=no
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for XFT" >&5

@@ -195,7 +195,7 @@ if test "$have_x" = yes; then
   AC_CHECK_HEADERS([X11/xpm.h])                       dnl needs X11_CPPFLAGS
   AC_SEARCH_LIBS(XpmReadFileToPixmap, Xpm)            dnl needs X11_LDFLAGS
 
-  if test x"$ac_cv_path_PKG_CONFIG" != x; then
+  if test x"$PKG_CONFIG" != x; then
     PKG_CHECK_MODULES([XFT], [xft freetype2], , [XFT_CFLAGS="-I/usr/include/freetype2"])
   else
     XFT_CFLAGS="-I/usr/include/freetype2"
