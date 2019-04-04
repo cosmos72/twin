@@ -52,7 +52,7 @@ static window newTermWindow(byte *title) {
 	 Term_Menu, COL(WHITE,BLACK), LINECURSOR,
 	 WINDOW_WANT_KEYS|WINDOW_DRAG|WINDOW_RESIZE|WINDOW_Y_BAR|WINDOW_CLOSE,
 	 WINDOWFL_CURSOR_ON|WINDOWFL_USECONTENTS,
-	 80, 25, 200);
+	 /*width*/ 80, /*height*/ 25, /*scrollbacklines*/ 1000);
     
     if (Window) {
 	Act(SetColors,Window)
