@@ -852,6 +852,7 @@ enable_term_devpts
 enable_printk
 enable_hw_tty
 enable_hw_tty_linux
+enable_hw_tty_lrawkbd
 enable_hw_tty_twterm
 enable_hw_tty_termcap
 enable_hw_x11
@@ -1547,6 +1548,7 @@ Optional Features:
   --enable-printk=yes|no               enable logging messages in Messages window
   --enable-hw-tty=yes|no               enable tty drivers
   --enable-hw-tty-linux=yes|no         enable the Linux console driver (gpm mouse, /dev/vcsa)
+  --enable-hw-tty-lrawkbd=yes|no       enable the Linux console raw keyboard driver
   --enable-hw-tty-twterm=yes|no        enable the twterm terminal driver
   --enable-hw-tty-termcap=yes|no       enable the termcap/ncurses terminal driver
   --enable-hw-x11=yes|no               enable the X11 driver
@@ -3620,6 +3622,14 @@ if test "${enable_hw_tty_linux+set}" = set; then :
   enableval=$enable_hw_tty_linux;
 else
   enable_hw_tty_linux=yes
+
+fi
+
+# Check whether --enable-hw-tty-lrawkbd was given.
+if test "${enable_hw_tty_lrawkbd+set}" = set; then :
+  enableval=$enable_hw_tty_lrawkbd;
+else
+  enable_hw_tty_lrawkbd=yes
 
 fi
 

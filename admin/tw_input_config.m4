@@ -97,6 +97,12 @@ AC_ARG_ENABLE(hw-tty-linux,dnl
 enable_hw_tty_linux=yes
 )dnl
 
+dnl the Linux raw keyboard driver
+AC_ARG_ENABLE(hw-tty-lrawkbd,dnl
+[  --enable-hw-tty-lrawkbd[=yes|no]       enable the Linux console raw keyboard driver],,
+enable_hw_tty_lrawkbd=yes
+)dnl
+
 dnl the twterm terminal driver
 AC_ARG_ENABLE(hw-tty-twterm,dnl
 [  --enable-hw-tty-twterm[=yes|no]        enable the twterm terminal driver ],,
