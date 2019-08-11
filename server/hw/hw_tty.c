@@ -169,7 +169,7 @@ static void tty_QuitHW(void);
 
 static void null_InitMouse(void) {
     HW->mouse_slot = NOSLOT; /* no mouse at all :( */
-    
+    HW->ConfigureMouse = (void *)NoOp;
     HW->MouseEvent = (void *)NoOp;
     HW->QuitMouse = NoOp;
     
