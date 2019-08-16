@@ -1228,6 +1228,14 @@ int main(int argc, char *argv[]) {
     TWDisplay = dpy ? CloneStr(dpy) : origTWDisplay;
     origTERM = CloneStr(getenv("TERM"));
     HOME = CloneStr(getenv("HOME"));
+
+    if (!strcmp(origTWDisplay, TWDisplay)) {
+        if (!force) {
+            printk("twdisplay: Aborting. Use option `-f' to open a display inside itself.\n");
+            TwClose();
+            return 1;
+        }
+    }
     
     InitSignals();
     InitTtysave();
