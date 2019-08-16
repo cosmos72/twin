@@ -4,7 +4,7 @@
  *            a Text mode WINdow manager.
  *
  *                   Author:
- *      Massimiliano Ghilardi <max@linuz.sns.it>
+ *      Massimiliano Ghilardi <https://github.com/cosmos72>
  *
  *
  *  Copyright (C) 1993-2001 by Massimiliano Ghilardi

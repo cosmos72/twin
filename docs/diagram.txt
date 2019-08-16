@@ -1,5 +1,5 @@
 Date: Mon, 4 Nov 2002 20:12:03 +0100 (CET)
-From: Massimiliano Ghilardi <max@linuz.sns.it>
+From: Massimiliano Ghilardi <e-mail omitted>
 To: Adam Olsen <e-mail omitted>
 Cc: twin-develop@lists.sourceforge.net
 Subject: architecture of twin
