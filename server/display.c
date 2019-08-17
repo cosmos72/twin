@@ -1124,11 +1124,11 @@ TW_DECL_MAGIC(display_magic);
 int main(int argc, char *argv[]) {
     byte flags = TW_ATTACH_HW_REDIRECT, force = 0;
     byte *dpy = NULL, *arg = NULL, *tty = ttyname(0);
-    byte ret = 0, ourtty = 0;
-    byte *s;
+    byte *s, *client_dpy = NULL;
     TW_CONST byte *buff;
     uldat chunk;
     int Fd;
+    byte ret = 0, ourtty = 0;
     
     MergeHyphensArgv(argc, argv);
     
@@ -1199,13 +1199,18 @@ int main(int argc, char *argv[]) {
 		    sprintf(arg, "-hw=tty%s%s%s", (buff ? (byte *)",TERM=" : buff), buff, s);
 		} else
 		    arg = *argv;
-	    } else if ((*argv)[4])
-		arg = *argv;
-	    else {
-		TryUsage(*argv);
-		return 1;
-	    }
-	} else {
+	    } else if ((*argv)[4]) {
+                arg = *argv;
+                if (!strncmp(*argv+4, "twin@", 5)) {
+                    client_dpy = *argv+9;
+                } else if (!strcmp(*argv+4, "twin")) {
+                    client_dpy = "";
+                }
+            } else {
+                TryUsage(*argv);
+                return 1;
+            }
+        } else {
 	    TryUsage(*argv);
 	    return 1;
 	}
@@ -1228,6 +1233,18 @@ int main(int argc, char *argv[]) {
     TWDisplay = dpy ? CloneStr(dpy) : origTWDisplay;
     origTERM = CloneStr(getenv("TERM"));
     HOME = CloneStr(getenv("HOME"));
+
+    if (((ourtty || (client_dpy && !*client_dpy))
+         && origTWDisplay && TWDisplay && !strcmp(origTWDisplay, TWDisplay))
+        || (client_dpy && *client_dpy
+            && TWDisplay && !strcmp(client_dpy, TWDisplay))) {
+
+        if (!force) {
+            printk("twdisplay: refusing to display twin inside itself. Use option `-f' to override.\n");
+            TwClose();
+            return 1;
+        }
+    }
     
     InitSignals();
     InitTtysave();
