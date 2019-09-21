@@ -268,6 +268,7 @@ func		: string		{ $$ = MakeUserFunc($1); }
 		| WAIT string		{ $$ = MakeWait($2); }
 		| WINDOW opt_flag NUMBER	{ $$ = MakeWindowNumber($2, $3); }
 		| WINDOW STRING			{ $$ = MakeWindow($2); }
+		| funcbody_list		{ $$ = $1; }
 		;
 
 string_list	:             string { $$ = AddtoStringList(NULL, $1); }
