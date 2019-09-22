@@ -573,13 +573,13 @@ static byte tty_InitHW(void) {
 	    HW->QuitMouse();
 	}
 	HW->QuitVideo();
-    } else if (tty_fd >= 0)
-        tty_setioctl(tty_fd, &ttysave);
-    
-    if (tty_fd) {
-	close(tty_fd);
-	fclose(stdOUT);
     }
+    if (tty_fd >= 0)
+        tty_setioctl(tty_fd, &ttysave);
+    if (tty_fd > 0)
+	close(tty_fd);
+    if (stdOUT && stdOUT != stdout)
+	fclose(stdOUT);
     return tfalse;
 }
 
