@@ -10,10 +10,10 @@
 #define _TWIN_METHODS_H
 
 byte FindInfo(menu Menu, dat i);
-window FakeOpenTerm(CONST byte *arg0, byte * CONST * argv);
+window FakeOpenTerm(CONST char *arg0, char * CONST * argv);
 widget FakeKbdFocus(widget W);
-void FakeWriteAscii(window Window, ldat Len, CONST byte *Ascii);
-void FakeWriteString(window Window, ldat Len, CONST byte *String);
+void FakeWriteAscii(window Window, ldat Len, CONST char *Ascii);
+void FakeWriteString(window Window, ldat Len, CONST char *String);
 void FakeWriteHWFont(window Window, ldat Len, CONST hwfont *HWFont);
 void FakeWriteHWAttr(window Window, dat x, dat y, ldat Len, CONST hwattr *Attr);
 byte FakeFindBorderWindow(window W, dat u, dat v, byte Border, hwattr *PtrAttr);

@@ -27,7 +27,7 @@ struct exts {
 	tany (*MultiplexL)(uldat order, ...);
     } Socket;
     struct {
-	window (*Open)(CONST byte *arg0, byte * CONST * argv);
+	window (*Open)(CONST char *arg0, char * CONST * argv);
     } Term;
 };
 

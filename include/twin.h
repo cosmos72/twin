@@ -60,7 +60,7 @@ typedef struct s_obj *obj;
 
 typedef struct s_font {
     byte AsciiCode;
-    byte *Bitmap;
+    char *Bitmap;
 } font;
 
 typedef struct s_palette {
@@ -177,10 +177,10 @@ struct s_ttydata {
     byte currG, G, G0, G1, saveG, saveG0, saveG1;
     byte utf8, utf8_count;
     hwfont utf8_char;
-    void *InvCharset;	/* pointer to hwfont -> byte translation function */
+    hwfont (*InvCharset)(hwfont); /* pointer to hwfont -> byte translation function */
     
     dat newLen, newMax;
-    byte *newName;	/* buffer for xterm set window title escape seq */
+    char *newName;	/* buffer for xterm set window title escape seq */
 };
 
 
@@ -231,7 +231,7 @@ struct s_fn_obj {
 
 struct s_wE {		/* for WIDGET_USEEXPOSE widgets */
     union {
-	CONST byte *Text;
+	CONST char *Text;
 	CONST hwfont *HWFont;
 	CONST hwattr *HWAttr;
     } E;
@@ -292,7 +292,7 @@ struct s_fn_widget {
     void (*Own)(widget, msgport);
     void (*DisOwn)(widget);    
     void (*RecursiveDelete)(widget, msgport);
-    void (*Expose)(widget, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch, CONST byte *, CONST hwfont *, CONST hwattr *);
+    void (*Expose)(widget, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch, CONST char *, CONST hwfont *, CONST hwattr *);
     byte (*InstallHook)(widget, fn_hook, fn_hook *Where);
     void (*RemoveHook)(widget, fn_hook, fn_hook *Where);
 };
@@ -358,7 +358,7 @@ struct s_fn_gadget {
     uldat Magic, Size, Used;
     gadget (*Create)
 	(fn_gadget, msgport Owner, widget Parent, dat XWidth, dat YWidth,
-	 CONST byte *TextNormal, uldat Attrib, uldat Flags, udat Code,
+	 CONST char *TextNormal, uldat Attrib, uldat Flags, udat Code,
 	 hwcol ColText, hwcol ColTextSelect, hwcol ColTextDisabled, hwcol ColTextSelectDisabled,
 	 dat Left, dat Up);
     void (*Insert)(gadget, widget Parent, widget Prev, widget Next);
@@ -382,18 +382,18 @@ struct s_fn_gadget {
     void (*Own)(gadget, msgport);
     void (*DisOwn)(gadget);    
     void (*RecursiveDelete)(gadget, msgport);
-    void (*Expose)(gadget, dat XWidth, dat YWidth, dat Left, dat Up, CONST byte *, CONST hwfont *, CONST hwattr *);
+    void (*Expose)(gadget, dat XWidth, dat YWidth, dat Left, dat Up, CONST char *, CONST hwfont *, CONST hwattr *);
     byte (*InstallHook)(gadget, fn_hook, fn_hook *Where);
     void (*RemoveHook)(gadget, fn_hook, fn_hook *Where);
     /* gadget */
     fn_widget Fn_Widget;
     gadget (*CreateEmptyButton)(fn_gadget Fn_Gadget, msgport Owner, dat XWidth, dat YWidth, hwcol BgCol);
     byte (*FillButton)(gadget Gadget, widget Parent, udat Code, dat Left, dat Up,
-		       udat Flags, CONST byte *Text, hwcol Color, hwcol ColorDisabled);
-    gadget (*CreateButton)(fn_gadget Fn_Gadget, widget Parent, dat XWidth, dat YWidth, CONST byte *Text,
+		       udat Flags, CONST char *Text, hwcol Color, hwcol ColorDisabled);
+    gadget (*CreateButton)(fn_gadget Fn_Gadget, widget Parent, dat XWidth, dat YWidth, CONST char *Text,
 			      uldat Flags, udat Code, hwcol BgCol, hwcol Col, hwcol ColDisabled,
 			      dat Left, dat Up);
-    void (*WriteTexts)(gadget Gadget, byte bitmap, dat XWidth, dat YWidth, CONST byte *Text, dat Left, dat Up);
+    void (*WriteTexts)(gadget Gadget, byte bitmap, dat XWidth, dat YWidth, CONST char *Text, dat Left, dat Up);
     void (*WriteHWFonts)(gadget Gadget, byte bitmap, dat XWidth, dat YWidth, CONST hwfont *HWFont, dat Left, dat Up);
 };
 
@@ -486,7 +486,7 @@ struct s_window {
     menu Menu;
     menuitem MenuItem; /* from which the window depends */
     dat NameLen;
-    byte *Name; hwcol *ColName;
+    char *Name; hwcol *ColName;
     hwfont *BorderPattern[2];
     remotedata RemoteData;
     ldat CurX, CurY;
@@ -503,7 +503,7 @@ struct s_window {
 
 struct s_fn_window {
     uldat Magic, Size, Used;
-    window (*Create)(fn_window, msgport Owner, dat NameLen, CONST byte *Name, CONST hwcol *ColName,
+    window (*Create)(fn_window, msgport Owner, dat NameLen, CONST char *Name, CONST hwcol *ColName,
 		     menu Menu, hwcol ColText, uldat CursorType, uldat Attrib, uldat Flags,
 		     dat XWidth, dat YWidth, dat ScrollBackLines);
     void (*Insert)(window, widget Parent, widget Prev, widget Next);
@@ -527,23 +527,23 @@ struct s_fn_window {
     void (*Own)(window, msgport);
     void (*DisOwn)(window);    
     void (*RecursiveDelete)(window, msgport);
-    void (*Expose)(window, dat XWidth, dat YWidth, dat Left, dat Up, CONST byte *, CONST hwfont *, CONST hwattr *);
+    void (*Expose)(window, dat XWidth, dat YWidth, dat Left, dat Up, CONST char *, CONST hwfont *, CONST hwattr *);
     byte (*InstallHook)(window, fn_hook, fn_hook *Where);
     void (*RemoveHook)(window, fn_hook, fn_hook *Where);
     /* window */
     fn_widget Fn_Widget;
-    void (*TtyWriteAscii)(window, ldat Len, CONST byte *Ascii);
-    void (*TtyWriteString)(window, ldat Len, CONST byte *String);
+    void (*TtyWriteAscii)(window, ldat Len, CONST char *Ascii);
+    void (*TtyWriteString)(window, ldat Len, CONST char *String);
     void (*TtyWriteHWFont)(window, ldat Len, CONST hwfont *HWFont);
     void (*TtyWriteHWAttr)(window, dat x, dat y, ldat Len, CONST hwattr *Attr);
 
-    byte (*RowWriteAscii)(window, ldat Len, CONST byte *Ascii);
-    byte (*RowWriteString)(window, ldat Len, CONST byte *String);
+    byte (*RowWriteAscii)(window, ldat Len, CONST char *Ascii);
+    byte (*RowWriteString)(window, ldat Len, CONST char *String);
     byte (*RowWriteHWFont)(window, ldat Len, CONST hwfont *HWFont);
     byte (*RowWriteHWAttr)(window, dat x, dat y, ldat Len, CONST hwattr *Attr);
 
     void (*GotoXY)(window, ldat X, ldat Y);
-    void (*SetTitle)(window, dat titlelen, byte *title);
+    void (*SetTitle)(window, dat titlelen, char *title);
     void (*SetColText)(window, hwcol ColText);
     void (*SetColors)(window, udat Bitmap,
 		      hwcol ColGadgets, hwcol ColArrows, hwcol ColBars, hwcol ColTabs, hwcol ColBorder,
@@ -661,7 +661,7 @@ struct s_screen {
     } USE;
     /* screen */
     dat NameLen;
-    byte *Name;
+    char *Name;
     window MenuWindow, ClickWindow;
     all All;
     fn_hook FnHookW;/* allow hooks on children Map()/UnMap() inside this widget */
@@ -669,7 +669,7 @@ struct s_screen {
 };
 struct s_fn_screen {
     uldat Magic, Size, Used;
-    screen (*Create)(fn_screen, dat NameLen, CONST byte *Name,
+    screen (*Create)(fn_screen, dat NameLen, CONST char *Name,
 		     dat BgWidth, dat BgHeight, CONST hwattr *Bg);
     void (*Insert)(screen, all, screen Prev, screen Next);
     void (*Remove)(screen);
@@ -692,14 +692,14 @@ struct s_fn_screen {
     void (*Own)(screen, msgport);
     void (*DisOwn)(screen);    
     void (*RecursiveDelete)(screen, msgport);
-    void (*Expose)(screen, dat XWidth, dat YWidth, dat Left, dat Up, CONST byte *, CONST hwfont *, CONST hwattr *);
+    void (*Expose)(screen, dat XWidth, dat YWidth, dat Left, dat Up, CONST char *, CONST hwfont *, CONST hwattr *);
     byte (*InstallHook)(screen, fn_hook, fn_hook *Where);
     void (*RemoveHook)(screen, fn_hook, fn_hook *Where);
     /* screen */
     fn_widget Fn_Widget;
     menu (*FindMenu)(screen);
     screen (*Find)(dat j);
-    screen (*CreateSimple)(fn_screen, dat NameLen, CONST byte *Name, hwattr Bg);
+    screen (*CreateSimple)(fn_screen, dat NameLen, CONST char *Name, hwattr Bg);
     void (*BgImage)(screen, dat BgWidth, dat BgHeight, CONST hwattr *Bg);
     void (*DrawMenu)(screen, dat Xstart, dat Xend);
     void (*ActivateMenu)(screen, menuitem, byte ByMouse);
@@ -780,7 +780,7 @@ struct s_fn_row {
     void (*ChangeField)(row, udat field, uldat CLEARMask, uldat XORMask);
     /* row */
     fn_obj Fn_Obj;
-    byte (*SetText)(row, ldat Len, CONST byte *Text, byte DefaultCol);
+    byte (*SetText)(row, ldat Len, CONST char *Text, byte DefaultCol);
     byte (*SetHWFont)(row, ldat Len, CONST hwfont *HWFont, byte DefaultCol);
     void (*Raise)(row);
     void (*Lower)(row);
@@ -815,21 +815,21 @@ struct s_menuitem {
 struct s_fn_menuitem {
     uldat Magic, Size, Used;
     menuitem (*Create)(fn_menuitem, obj Parent, window Window, udat Code, byte Flags,
-		       dat Left, ldat Len, dat ShortCut, CONST byte *Name);
+		       dat Left, ldat Len, dat ShortCut, CONST char *Name);
     void (*Insert)(menuitem, obj, menuitem Prev, menuitem Next);
     void (*Remove)(menuitem);
     void (*Delete)(menuitem);
     void (*ChangeField)(menuitem, udat field, uldat CLEARMask, uldat XORMask);
     /* row */
     fn_obj Fn_Obj;
-    byte (*SetText)(row, ldat Len, CONST byte *Text, byte DefaultCol);
+    byte (*SetText)(row, ldat Len, CONST char *Text, byte DefaultCol);
     byte (*SetHWFont)(row, ldat Len, CONST hwfont *HWFont, byte DefaultCol);
     /* menuitem */	
     void (*Raise)(menuitem);
     void (*Lower)(menuitem);
     fn_row Fn_Row;
     menuitem (*Create4Menu)(fn_menuitem, obj Parent, window Window, udat Code,
-			    byte Flags, ldat Len, CONST byte *Name);
+			    byte Flags, ldat Len, CONST char *Name);
     uldat (*Create4MenuCommon)(fn_menuitem, menu);
     /* for compatibility this must return a non-zero value. */
 };
@@ -857,7 +857,7 @@ struct s_fn_menu {
     void (*ChangeField)(menu, udat field, uldat CLEARMask, uldat XORMask);
     /* menu */
     fn_obj Fn_Obj;
-    row (*SetInfo)(menu, byte Flags, ldat Len, CONST byte *Text, CONST hwcol *ColText);
+    row (*SetInfo)(menu, byte Flags, ldat Len, CONST char *Text, CONST hwcol *ColText);
     menuitem (*FindItem)(menu, dat i);
     menuitem (*GetSelectedItem)(menu);
     menuitem (*RecursiveGetSelectedItem)(menu, dat *depth);
@@ -1046,7 +1046,7 @@ struct s_event_selectionnotify {
     udat Code, pad; /* unused */
     uldat ReqPrivate;
     uldat Magic;
-    byte MIME[MAX_MIMELEN];
+    char MIME[MAX_MIMELEN];
     uldat Len;
     byte Data[sizeof(uldat)]; /* Data[] is Len bytes actually */
 };
@@ -1113,7 +1113,8 @@ struct s_msgport {
     msgport Prev, Next; /* list in the same All */
     all All;
     /* msgport */
-    byte WakeUp, NameLen, *Name;
+    byte WakeUp, NameLen;
+    char *Name;
     /* Note : a MsgPort is always woken up if it has pending messages. */
     void (*Handler)(msgport);
     void (*ShutDownHook)(msgport);
@@ -1130,7 +1131,7 @@ struct s_msgport {
 };
 struct s_fn_msgport {
     uldat Magic, Size, Used;
-    msgport (*Create)(fn_msgport, byte NameLen, CONST byte *Name,
+    msgport (*Create)(fn_msgport, byte NameLen, CONST char *Name,
 		      tany PauseSec, tany PauseFraction,
 		      byte WakeUp, void (*Handler)(msgport));
     void (*Insert)(msgport, all, msgport Prev, msgport Next);
@@ -1156,11 +1157,11 @@ struct s_mutex {
     mutex O_Prev, O_Next; /* owned by the same MsgPort */
     msgport Owner;
     byte Perm, NameLen;
-    byte *Name;
+    char *Name;
 };
 struct s_fn_mutex {
     uldat Magic, Size, Used;
-    mutex (*Create)(fn_mutex, msgport Owner, byte NameLen, CONST byte *Name, byte Perm);
+    mutex (*Create)(fn_mutex, msgport Owner, byte NameLen, CONST char *Name, byte Perm);
     void (*Insert)(mutex, all, mutex Prev, mutex Next);
     void (*Remove)(mutex);
     void (*Delete)(mutex);
@@ -1184,12 +1185,12 @@ struct s_module {
     all All;
     /* module */
     uldat NameLen, Used;
-    byte *Name;
+    char *Name;
     void *Handle, *Private;
 };
 struct s_fn_module {
     uldat Magic, Size, Used;
-    module (*Create)(fn_module, uldat NameLen, CONST byte *Name);
+    module (*Create)(fn_module, uldat NameLen, CONST char *Name);
     void (*Insert)(module, all, module Prev, module Next);
     void (*Remove)(module);
     void (*Delete)(module);
@@ -1209,7 +1210,7 @@ struct s_extension {
     all All;
     /* module */
     uldat NameLen, Used;
-    byte *Name;
+    char *Name;
     void *Handle, *Private;
     /* extension */
     tany (*CallB)(extension, topaque len, CONST byte *data, void *return_type); /* call extension-specific functions */
@@ -1217,7 +1218,7 @@ struct s_extension {
 };
 struct s_fn_extension {
     uldat Magic, Size, Used;
-    extension (*Create)(fn_extension, uldat NameLen, CONST byte *Name);
+    extension (*Create)(fn_extension, uldat NameLen, CONST char *Name);
     void (*Insert)(extension, all, extension Prev, extension Next);
     void (*Remove)(extension);
     void (*Delete)(extension);
@@ -1228,7 +1229,7 @@ struct s_fn_extension {
     void (*DlClose)(extension);
     /* extension */
     fn_module Fn_Module;
-    extension (*Query)(byte namelen, CONST byte *name);
+    extension (*Query)(byte namelen, CONST char *name);
 };
 
 
@@ -1241,7 +1242,7 @@ struct s_display_hw {
     
     /* display_hw */
     uldat NameLen;
-    byte *Name;
+    char *Name;
     module Module;
 
     void *Private;	/* used to store HW-specific data */
@@ -1269,7 +1270,7 @@ struct s_display_hw {
     void (*HWSelectionExport)(void);
     void (*HWSelectionRequest)(obj Requestor, uldat ReqPrivate);
     void (*HWSelectionNotify)(uldat ReqPrivate, uldat Magic,
-			      CONST byte MIME[MAX_MIMELEN], uldat Len, CONST byte *Data);
+			      CONST char MIME[MAX_MIMELEN], uldat Len, CONST byte *Data);
     tany HWSelectionPrivate;
 	
     byte (*CanDragArea)(dat Xstart, dat Ystart, dat Xend, dat Yend, dat DstXstart, dat DstYstart);
@@ -1384,7 +1385,7 @@ struct s_display_hw {
 
 struct s_fn_display_hw {
     uldat Magic, Size, Used;
-    display_hw (*Create)(fn_display_hw, uldat NameLen, CONST byte *Name);
+    display_hw (*Create)(fn_display_hw, uldat NameLen, CONST char *Name);
     void (*Insert)(display_hw, all, display_hw Prev, display_hw Next);
     void (*Remove)(display_hw);
     void (*Delete)(display_hw);
@@ -1737,7 +1738,7 @@ typedef enum { none, sgidtty, suidroot } e_privilege;
 # define GainRootPrivileges() seteuid(0)
 # define GainGroupPrivileges(g) setegid(g)
 
-byte *CloneStr(CONST byte *s);
+char *CloneStr(CONST char *s);
 
 #endif /* _TWIN_H */
 

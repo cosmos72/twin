@@ -44,7 +44,7 @@
 #include <Tutf/Tutf.h>
 
 udat ErrNo;
-byte CONST * ErrStr;
+char CONST * ErrStr;
 
 #if 0
 uldat MemLeft(void) {
@@ -70,7 +70,7 @@ byte Error(udat Code_Error) {
     return tfalse;
 }
 
-hwfont *CloneStr2HWFont(CONST byte *s, uldat len) {
+hwfont *CloneStr2HWFont(CONST char *s, uldat len) {
     hwfont *temp, *save;
     
     if (s) {
@@ -179,21 +179,22 @@ static dat CmpCallTime(msgport m1, msgport m2) {
     return CmpTime(&m1->CallTime, &m2->CallTime);
 }
 
-byte Minimum(byte MaxIndex, CONST uldat *Array) {
+byte Minimum(byte MaxIndex, CONST ldat *Array) {
     byte i, MinIndex;
-    uldat Temp;
+    ldat Temp;
     
-    Temp=TW_MAXULDAT;
-    MinIndex=(byte)0;
     if (!MaxIndex)
 	return 0xFF;
+
+    Temp=Array[0];
+    MinIndex = 0;
     
-    for(i=0; i<MaxIndex; i++)
+    for(i=1; i<MaxIndex; i++) {
 	if (Array[i]<Temp) {
 	    Temp = Array[i];
 	    MinIndex = i;
 	}
-    
+    }
     return MinIndex;
 }
 
@@ -230,8 +231,8 @@ uldat HexStrToNum(byte *StringHex) {
 */
 
 /* adapted from similar code in bdflush */
-uldat ComputeUsableLenArgv(byte *CONST *argv) {
-    byte *ptr;
+uldat ComputeUsableLenArgv(char *CONST *argv) {
+    char *ptr;
     uldat count;
     
     ptr = argv[0] + LenStr(argv[0]);
@@ -242,7 +243,7 @@ uldat ComputeUsableLenArgv(byte *CONST *argv) {
     return ptr - argv[0];
 }
 
-void SetArgv0(byte *CONST *argv, uldat argv_usable_len, CONST byte *src) {
+void SetArgv0(char *CONST *argv, uldat argv_usable_len, CONST char *src) {
     uldat len = strlen(src);
     
     if (len + 1 < argv_usable_len) {
@@ -334,7 +335,7 @@ byte SendControlMsg(msgport MsgPort, udat Code, udat Len, CONST byte *Data) {
     return tfalse;
 }
 
-byte SelectionStore(uldat Magic, CONST byte MIME[MAX_MIMELEN], uldat Len, CONST byte *Data) {
+byte SelectionStore(uldat Magic, CONST char MIME[MAX_MIMELEN], uldat Len, CONST byte *Data) {
     uldat newLen;
     byte *newData, pad;
     selection *Sel = All->Selection;
@@ -724,8 +725,8 @@ void FallBackKeyAction(window W, event_keyboard *EventK) {
  * "a b" is the string `a b' NOT the two strings `"a' `b"'
  * (same for single quotes, backslashes, ...)
  */
-byte **TokenizeStringVec(uldat len, byte *s) {
-    byte **cmd = NULL, *buf, c;
+char **TokenizeStringVec(uldat len, char *s) {
+    char **cmd = NULL, *buf, c;
     uldat save_len, n = 0;
     
     /* skip initial spaces */
@@ -748,7 +749,7 @@ byte **TokenizeStringVec(uldat len, byte *s) {
 		}
 	    }
 	}
-	if ((cmd = AllocMem((n + 1) * sizeof(byte *)))) {
+	if ((cmd = AllocMem((n + 1) * sizeof(char *)))) {
 	    n = 0;
 	    len = save_len;
 	    s = buf;
@@ -770,7 +771,7 @@ byte **TokenizeStringVec(uldat len, byte *s) {
     return cmd;
 }
 
-void FreeStringVec(byte **cmd) {
+void FreeStringVec(char **cmd) {
     if (cmd) {
 	FreeMem(cmd[0]);
 	FreeMem(cmd);
@@ -785,8 +786,8 @@ void FreeStringVec(byte **cmd) {
  * "a b" is the string `a b' NOT the two strings `"a' `b"'
  * (same for single quotes, backslashes, ...)
  */
-byte **TokenizeHWFontVec(uldat len, hwfont *s) {
-    byte **cmd = NULL, *buf, *v;
+char **TokenizeHWFontVec(uldat len, hwfont *s) {
+    char **cmd = NULL, *buf, *v;
     hwfont c;
     uldat save_len, n = 0, i;
     
@@ -798,7 +799,7 @@ byte **TokenizeHWFontVec(uldat len, hwfont *s) {
     
     if (len && (buf = AllocMem(len + 1))) {
 	for (i = 0; i < len; i++)
-	    buf[i] = (byte)s[i];
+	    buf[i] = s[i];
 	buf[len] = '\0';
 	
 	/* how many args? */
@@ -811,7 +812,7 @@ byte **TokenizeHWFontVec(uldat len, hwfont *s) {
 		}
 	    }
 	}
-	if ((cmd = AllocMem((n + 1) * sizeof(byte *)))) {
+	if ((cmd = (char **)AllocMem((n + 1) * sizeof(char *)))) {
 	    n = 0;
 	    len = save_len;
 	    v = buf;
@@ -845,7 +846,7 @@ static void TWDisplayIO(int fd, uldat slot) {
     }
 }
 
-static byte envTWD[]="TWDISPLAY=\0\0\0\0\0";
+static char envTWD[]="TWDISPLAY=\0\0\0\0\0";
 
 TW_CONST char * TmpDir(void) {
     TW_CONST char * tmp = getenv("TMPDIR");
@@ -1018,7 +1019,7 @@ void GainPrivileges(void) {
 }
 
 static void SetEnvs(struct passwd *p) {
-    byte buf[TW_BIGBUFF];
+    char buf[TW_BIGBUFF];
     
     chdir(HOME = p->pw_dir);
 #if defined(TW_HAVE_SETENV)
@@ -1105,10 +1106,10 @@ byte SetServerUid(uldat uid, byte privileges) {
  * this for example will search "foo"
  * as "${HOME}/foo", "${PKG_LIBDIR}/system.foo" or plain "foo"
  */
-byte *FindFile(byte *name, uldat *fsize) {
-    byte CONST *prefix[3], *infix[3];
-    byte *path;
-    byte CONST *dir;
+char *FindFile(char *name, uldat *fsize) {
+    char CONST *prefix[3], *infix[3];
+    char *path;
+    char CONST *dir;
     int i, min_i, max_i, len, nlen = strlen(name);
     struct stat buf;
     
@@ -1142,7 +1143,7 @@ byte *FindFile(byte *name, uldat *fsize) {
  * read data from infd and set environment variables accordingly
  */
 static void ReadTwEnvRC(int infd) {
-    byte buff[TW_BIGBUFF], *p = buff, *end, *q, *eq;
+    char buff[TW_BIGBUFF], *p = buff, *end, *q, *eq;
     int got, left = TW_BIGBUFF;
     for (;;) {
 	do {
@@ -1183,7 +1184,7 @@ static void ReadTwEnvRC(int infd) {
  * environment variables (mostly useful for twdm)
  */
 void RunTwEnvRC(void) {
-    byte *path;
+    char *path;
     uldat len;
     int fds[2];
     

@@ -20,12 +20,12 @@
 # include <stdarg.h>
 #endif
 
-static byte buf[TW_BIGBUFF]; /* hope it's enough */
+static char buf[TW_BIGBUFF]; /* hope it's enough */
 static int printk_fd = NOFD;
 
 
 
-void printk_str(int len, CONST byte *s) {
+void printk_str(int len, CONST char *s) {
     int chunk;
 
     if (len > 0) {
@@ -62,7 +62,7 @@ void printk_str(int len, CONST byte *s) {
 
 
 
-int printk(CONST byte *format, ...) {
+int printk(CONST char *format, ...) {
     int len = 0;
 #if defined(TW_HAVE_VSNPRINTF) || defined(TW_HAVE_VSPRINTF)
     va_list ap;

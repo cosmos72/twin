@@ -3,7 +3,7 @@
 
 AC_PREREQ([2.65])
 AC_INIT([twin], [0.8.0], [BUG-REPORT-ADDRESS])
-AC_CONFIG_SRCDIR([server/main.c])
+AC_CONFIG_SRCDIR([server/main.cpp])
 AC_CONFIG_HEADERS([include/config.h])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_MACRO_DIRS([m4])
@@ -22,6 +22,7 @@ LTDL_INIT([recursive])
 
 # Checks for programs.
 AC_PROG_CC
+AC_PROG_CXX
 AM_PROG_AS
 AC_PROG_INSTALL
 AC_PROG_LIBTOOL
@@ -47,6 +48,8 @@ if test "$have_x" = yes; then
   AC_SUBST(LIBX11, "-lX11")
 fi
 
+AC_LANG_PUSH([C++])
+
 AC_FUNC_ALLOCA
 AC_HEADER_TIME
 AC_HEADER_SYS_WAIT
@@ -63,6 +66,7 @@ AC_CHECK_HEADERS([ \
 AC_STRUCT_TM
 
 # Checks for typedefs, structures, and compiler characteristics.
+
 AC_C_BIGENDIAN
 AC_C_CONST
 AC_C_INLINE
@@ -71,15 +75,15 @@ TW_C_FEATURES
 
 ################################################################################
 
-# CC flags '-g -O2' are already tested by AC_PROG_CC
-# CC flags '-p -pg' are incompatible with -fomit-frame-pointer
-initial_CFLAGS="$CFLAGS"
+# CXX flags '-g -O2' are already tested by AC_PROG_CC
+# CXX flags '-p -pg' are incompatible with -fomit-frame-pointer
+initial_CXXFLAGS="$CXXFLAGS"
 for try_flag in -fomit-frame-pointer -fno-strict-aliasing -pipe -Wall -Wshadow \
                  -Wno-uninitialized -Wno-pointer-sign -Wno-unused -Wundef -Wstrict-prototypes \
                  -Wcast-qual -Wcast-align -Wpointer-arith -Wbad-function-cast
 do
-  save_CFLAGS="$CFLAGS"
-  CFLAGS="$CFLAGS $try_flag"
+  save_CXXFLAGS="$CXXFLAGS"
+  CXXFLAGS="$CXXFLAGS $try_flag"
   try_flag_id="`echo \"$try_flag\" | tr - _`"
   AC_CACHE_CHECK(for compiler flag $try_flag, ac_cv_cflag$try_flag_id, AC_TRY_COMPILE(
   [
@@ -92,11 +96,12 @@ do
     eval "ac_cv_cflag$try_flag_id=yes"
   ], [
     eval "ac_cv_cflag$try_flag_id=no"
-    CFLAGS="$save_CFLAGS"
+    CXXFLAGS="$save_CXXFLAGS"
   ]))
 done
-custom_CFLAGS="$CFLAGS"
-CFLAGS="$initial_CFLAGS"
+custom_CXXFLAGS="$CXXFLAGS"
+CXXFLAGS="$initial_CXXFLAGS"
+AC_LANG_POP([C++])
 
 ################################################################################
 

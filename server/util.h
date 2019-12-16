@@ -21,7 +21,7 @@
 #endif
 
 extern udat ErrNo;
-extern byte CONST * ErrStr;
+extern char CONST * ErrStr;
 extern uldat unixSlot;
 extern int unixFd;
 
@@ -35,10 +35,10 @@ void SetAlarm(unsigned seconds);
 #endif
 
 void *CloneMem(CONST void *From, uldat Size);
-byte *CloneStr(CONST byte *From);
-byte *CloneStrL(CONST byte *From, uldat Size);
-byte **CloneStrList(byte **FromList);
-hwfont *CloneStr2HWFont(CONST byte *From, uldat Size);
+char *CloneStr(CONST char *From);
+char *CloneStrL(CONST char *From, uldat Size);
+char **CloneStrList(char **FromList);
+hwfont *CloneStr2HWFont(CONST char *From, uldat Size);
 
 TW_CONST char * TmpDir(void);
 udat CopyToSockaddrUn(TW_CONST char * src, struct sockaddr_un * addr, udat pos);
@@ -56,26 +56,26 @@ void SortMsgPortByCallTime(msgport Port);
 void SortAllMsgPortsByCallTime(void);
 byte SendControlMsg(msgport MsgPort, udat Code, udat Len, CONST byte *Data);
 
-byte Minimum(byte MaxIndex, CONST uldat *Array);
+byte Minimum(byte MaxIndex, CONST ldat *Array);
 
-uldat ComputeUsableLenArgv(byte *CONST *argv);
-void SetArgv0(byte *CONST *argv, uldat argv_usable_len, CONST byte *src);
+uldat ComputeUsableLenArgv(char *CONST *argv);
+void SetArgv0(char *CONST *argv, uldat argv_usable_len, CONST char *src);
 
 
 #define SelectionAppend(Len, Data) SelectionStore(SEL_APPEND, NULL, Len, Data)
-byte SelectionStore(uldat Magic, CONST byte MIME[MAX_MIMELEN], uldat Len, CONST byte *Data);
+byte SelectionStore(uldat Magic, CONST char MIME[MAX_MIMELEN], uldat Len, CONST byte *Data);
 byte SetSelectionFromWindow(window Window);
 void doSelectionSetOwner(obj Owner, tany Time, tany Frac);
 #define SEL_CURRENTTIME ((tany)0)
 
-byte CreateXTermMouseEvent(event_mouse *Event, byte buflen, byte *buf);
+byte CreateXTermMouseEvent(event_mouse *Event, byte buflen, char *buf);
 
 void ResetBorderPattern(void);
 void FallBackKeyAction(window W, event_keyboard *EventK);
 
-byte **TokenizeStringVec(uldat len, byte *text);
-byte **TokenizeHWFontVec(uldat len, hwfont *text);
-void FreeStringVec(byte **argv);
+char **TokenizeStringVec(uldat len, char *text);
+char **TokenizeHWFontVec(uldat len, hwfont *text);
+void FreeStringVec(char **argv);
 
 byte InitTWDisplay(void);
 void QuitTWDisplay(void);
@@ -85,7 +85,7 @@ byte CheckPrivileges(void);
 void GainPrivileges(void);
 byte SetServerUid(uldat uid, byte privileges);
 
-byte *FindFile(byte *name, uldat *fsize);
+char *FindFile(char *name, uldat *fsize);
 void RunTwEnvRC(void);
 
 hwattr EncodeToHWAttrExtra(tpos pos, tternary detail, tbool active, tbool pressed);
