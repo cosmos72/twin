@@ -96,7 +96,7 @@ static byte X11_LoadFont(const char * fontname, udat fontwidth, udat fontheight)
         xhfont = (xupfont = xsfont->ascent) + xsfont->descent;
         xheight = xhfont * (unsigned)(HW->Y = GetDisplayHeight());
         
-        printk("      selected %ux%u font `%." STR(TW_SMALLBUFF) "s'\n", (unsigned)xwfont, (unsigned)xhfont, fontname);
+        printk("      selected %ux%u font `" SS "'\n", (unsigned)xwfont, (unsigned)xhfont, fontname);
     }
     if (alloc_fontname)
         FreeMem(alloc_fontname);
@@ -433,7 +433,7 @@ static byte X11_InitHW(void) {
 	}
     } while (0); else {
 	if (xdisplay_ || (xdisplay_ = getenv("DISPLAY")))
-	    printk("      X11_InitHW() failed to open display %." STR(TW_SMALLBUFF) "s\n", HW->Name);
+	    printk("      X11_InitHW() failed to open display " SS "\n", HW->Name);
 	else
 	    printk("      X11_InitHW() failed: DISPLAY is not set\n");
     }

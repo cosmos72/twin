@@ -961,9 +961,9 @@ byte InitTWDisplay(void) {
     CopyToSockaddrUn(TmpDir(), &addr, 0);
     arg0 = addr.sun_path;
 
-    printk("twin: failed to create any %."STR(TW_SMALLBUFF)"s/.Twin* socket: %."STR(TW_SMALLBUFF)"s\n", addr.sun_path, ErrStr);
-    printk("      possible reasons: either %."STR(TW_SMALLBUFF)"s not writable, or all TWDISPLAY already in use,\n"
-	   "      or too many stale %."STR(TW_SMALLBUFF)"s/.Twin* sockets. Aborting.\n", arg0, arg0);
+    printk("twin: failed to create any " SS "/.Twin* socket: " SS "\n", addr.sun_path, ErrStr);
+    printk("      possible reasons: either " SS " not writable, or all TWDISPLAY already in use,\n"
+	   "      or too many stale " SS "/.Twin* sockets. Aborting.\n", arg0, arg0);
     return tfalse;
 }
 
@@ -1085,14 +1085,14 @@ byte SetServerUid(uldat uid, byte privileges) {
 		    if (setuid(0) < 0 || setgid(0) < 0 ||
 			chown(fullTWD, 0, 0) < 0) {
 			/* tried to recover, but screwed up uids too badly. */
-			printk("twin: failed switching to uid %u: %."STR(TW_SMALLBUFF)"s\n", uid, strerror(errno));
+			printk("twin: failed switching to uid %u: " SS "\n", uid, strerror(errno));
 			printk("twin: also failed to recover. Quitting NOW!\n");
 			Quit(0);
 		    }
 		    SetEnvs(getpwuid(0));
 		}
 	    }
-	    printk("twin: failed switching to uid %u: %."STR(TW_SMALLBUFF)"s\n", uid, strerror(errno));
+	    printk("twin: failed switching to uid %u: " SS "\n", uid, strerror(errno));
 	}
     } else
 	printk("twin: SetServerUid() can be called only if started by root with \"-secure\".\n");
@@ -1200,7 +1200,7 @@ void RunTwEnvRC(void) {
 		  case -1: /* error */
 		    close(fds[0]);
 		    close(fds[1]);
-		    printk("twin: RunTwEnvRC(): fork() failed: %."STR(TW_SMALLBUFF)"s\n", strerror(errno));
+		    printk("twin: RunTwEnvRC(): fork() failed: " SS "\n", strerror(errno));
 		    break;
 		  case 0:  /* child */
 		    close(fds[0]);
@@ -1221,7 +1221,7 @@ void RunTwEnvRC(void) {
 		    break;
 		}
 	    } else
-		printk("twin: RunTwEnvRC(): pipe() failed: %."STR(TW_SMALLBUFF)"s\n", strerror(errno));
+		printk("twin: RunTwEnvRC(): pipe() failed: " SS "\n", strerror(errno));
 	} else
 	    printk("twin: RunTwEnvRC(): .twenvrc.sh: File not found\n", strerror(errno));
     } else

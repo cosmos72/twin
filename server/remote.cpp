@@ -377,7 +377,7 @@ void RemoteParanoia(void) {
 	if (test < 10) {
 	    /* solved ? */
 	    printk("                    ... problem disappeared after a few tries, was:\n"
-		   "                        errno = %d (%."STR(TW_SMALLBUFF)"s)\n",
+		   "                        errno = %d (" SS ")\n",
 		   strerror(last_errno));
 	    return;
 	}

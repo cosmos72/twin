@@ -11,10 +11,12 @@ INLINE void termcap_MoveToXY(udat x, udat y) {
 }
 
 
-static udat termcap_LookupKey(udat *ShiftFlags, byte *slen, byte *s, byte *retlen, byte **ret) {
+static udat termcap_LookupKey(udat *ShiftFlags, byte *slen, char *s,
+                              byte *retlen, const char **ret) {
     struct linux_keys {
 	udat k;
-	byte l, *s;
+	byte l;
+        const char *s;
     };
     static struct linux_keys const linux_key[] = {
 # define IS(k, l, s) { CAT(TW_,k), l, s },
@@ -47,7 +49,7 @@ IS(Down,	3, "\033[B")
     };
     struct linux_keys const *lk;
     
-    byte **key;
+    const char **key;
     byte keylen, len = *slen;
    
     *ret = s;
@@ -166,11 +168,11 @@ static byte termcap_InitVideo(void) {
       case 1:
 	break;
       case 0:
-	printk("      termcap_InitVideo() failed: no entry for `%."STR(TW_SMALLBUFF)"s' in the terminal database.\n"
+	printk("      termcap_InitVideo() failed: no entry for `" SS "' in the terminal database.\n"
 	       "      Please set your $TERM environment variable correctly.\n", term);
 	return tfalse;
       default:
-	printk("      termcap_InitVideo() failed: system call error in tgetent(): %."STR(TW_SMALLBUFF)"s\n",
+	printk("      termcap_InitVideo() failed: system call error in tgetent(): " SS "\n",
                strerror(errno));
 	return tfalse;
     }

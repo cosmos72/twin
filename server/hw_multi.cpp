@@ -163,9 +163,9 @@ static byte module_InitHW(const byte *arg, uldat len) {
 	Module = DlLoadAny(len + 3, alloc_name);
 	
 	if (Module) {
-	    printk("twin: starting display driver module `%."STR(TW_SMALLBUFF)"s'...\n", alloc_name);
+	    printk("twin: starting display driver module `" SS "'...\n", alloc_name);
 	    if ((InitD = Module->Private) && InitD()) {
-		printk("twin: ...module `%."STR(TW_SMALLBUFF)"s' successfully started.\n", alloc_name);
+		printk("twin: ...module `" SS "' successfully started.\n", alloc_name);
 		FreeMem(alloc_name);
 		HW->Module = Module; Module->Used++;
 		return ttrue;
@@ -180,10 +180,10 @@ static byte module_InitHW(const byte *arg, uldat len) {
         name = (byte *)"(NULL)";
 
     if (Module) {
-	printk("twin: ...module `%."STR(TW_SMALLBUFF)"s' failed to start.\n", name);
+	printk("twin: ...module `" SS "' failed to start.\n", name);
     } else
-	printk("twin: unable to load display driver module `%."STR(TW_SMALLBUFF)"s' :\n"
-	       "      %."STR(TW_SMALLBUFF)"s\n", name, ErrStr);
+	printk("twin: unable to load display driver module `" SS "' :\n"
+	       "      " SS "\n", name, ErrStr);
     if (alloc_name)
 	FreeMem(alloc_name);
     
@@ -407,7 +407,7 @@ byte InitHW(void) {
 	else if (!strncmp(arg, "-hw=", 4))
 	    hwcount++;
 	else
-	    printk("twin: ignoring unknown option `%."STR(TW_SMALLBUFF)"s'\n", arg);
+	    printk("twin: ignoring unknown option `" SS "'\n", arg);
     }
 
     if (nohw && hwcount > 0) {

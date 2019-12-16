@@ -275,7 +275,7 @@ static byte gfx_LoadPixmap(Pixmap *px, const char *name, int nlen, byte strict) 
 	if (!path[0] && !path[1] && !path[2])
 	    printk("      gfx_InitHW(): Out of memory!\n");
 	else
-	    printk("      gfx_InitHW(): failed to open `%." STR(TW_SMALLBUFF) "s': %." STR(TW_SMALLBUFF) "s\n",
+	    printk("      gfx_InitHW(): failed to open `" SS "': " SS "\n",
 		   path[0] ? path[0] : path[1] ? path[1] : path[2],
 		   strerror(errno));
     }
@@ -538,7 +538,7 @@ static byte gfx_LoadFont(const char * fontname, udat fontwidth, udat fontheight)
         xhfont = (xupfont = xsfont->ascent) + xsfont->descent;
         xheight = xhfont * (unsigned)(HW->Y = GetDisplayHeight());
         
-        printk("      selected %ux%u font `%." STR(TW_SMALLBUFF) "s'\n", (unsigned)xwfont, (unsigned)xhfont, fontname);
+        printk("      selected %ux%u font `" SS "'\n", (unsigned)xwfont, (unsigned)xhfont, fontname);
     }
     if (alloc_fontname)
         FreeMem(alloc_fontname);
@@ -781,7 +781,7 @@ static byte gfx_InitHW(void) {
 	}
     } while (0); else {
 	if (opt.dpy || (opt.dpy = getenv("DISPLAY")))
-	    printk("      gfx_InitHW() failed to open display %." STR(TW_SMALLBUFF) "s\n", HW->Name);
+	    printk("      gfx_InitHW() failed to open display " SS "\n", HW->Name);
 	else
 	    printk("      gfx_InitHW() failed: DISPLAY is not set\n");
     }

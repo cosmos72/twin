@@ -313,10 +313,10 @@ static byte module_InitHW(byte *arg, uldat len) {
 	Module = DlLoadAny(len + 3, name);
 	
 	if (Module) {
-	    printk("twdisplay: starting display driver module `%."STR(TW_SMALLBUFF)"s'...\n", name);
+	    printk("twdisplay: starting display driver module `" SS "'...\n", name);
 	    
 	    if ((InitD = Module->Private) && InitD()) {
-		printk("twdisplay: ...module `%."STR(TW_SMALLBUFF)"s' successfully started.\n", name);
+		printk("twdisplay: ...module `" SS "' successfully started.\n", name);
 		HW->Module = Module; Module->Used++;
 		
 		FreeMem(name);
@@ -328,10 +328,10 @@ static byte module_InitHW(byte *arg, uldat len) {
 	ErrStr = "Out of memory!";
     
     if (Module) {
-	printk("twdisplay: ...module `%."STR(TW_SMALLBUFF)"s' failed to start.\n", name ? name : (byte *)"(NULL)");
+	printk("twdisplay: ...module `" SS "' failed to start.\n", name ? name : (byte *)"(NULL)");
     } else
-	printk("twdisplay: unable to load display driver module `%."STR(TW_SMALLBUFF)"s' :\n"
-	       "      %."STR(TW_SMALLBUFF)"s\n", name ? name : (byte *)"(NULL)", ErrStr);
+	printk("twdisplay: unable to load display driver module `" SS "' :\n"
+	       "      " SS "\n", name ? name : (byte *)"(NULL)", ErrStr);
 
     if (name)
     	FreeMem(name);
@@ -1033,14 +1033,14 @@ static void MainLoop(int Fd) {
     
     if (num_fds < 0 && errno != EINTR) {
 	QuitDisplayHW(HW);
-	printk("twdisplay: select(): %."STR(TW_SMALLBUFF)"s\n", strerror(errno));
+	printk("twdisplay: select(): " SS "\n", strerror(errno));
 	exit(1);
     }
     if (TwInPanic()) {
 	err = TwErrno;
 	detail = TwErrnoDetail;
     	QuitDisplayHW(HW);
-	printk("%."STR(TW_SMALLBUFF)"s: libTw error: %."STR(TW_SMALLBUFF)"s%."STR(TW_SMALLBUFF)"s\n", MYname,
+	printk("" SS ": libTw error: " SS "" SS "\n", MYname,
 		TwStrError(err), TwStrErrorDetail(err, detail));
 	exit(1);
     }
@@ -1048,9 +1048,9 @@ static void MainLoop(int Fd) {
     detail = TwErrnoDetail;
     sys_errno = errno;
     QuitDisplayHW(HW);
-    printk("%."STR(TW_SMALLBUFF)"s: shouldn't happen! Please report:\n"
-	    "\tlibTw TwErrno: %d(%d),\t%."STR(TW_SMALLBUFF)"s%."STR(TW_SMALLBUFF)"s\n"
-	    "\tsystem  errno: %d,\t%."STR(TW_SMALLBUFF)"s\n", MYname,
+    printk("" SS ": shouldn't happen! Please report:\n"
+	    "\tlibTw TwErrno: %d(%d),\t" SS "" SS "\n"
+	    "\tsystem  errno: %d,\t" SS "\n", MYname,
 	    err, detail, TwStrError(err), TwStrErrorDetail(err, detail),
 	    sys_errno, strerror(sys_errno));
     exit(1);
@@ -1086,7 +1086,7 @@ static void Usage(void) {
 
 static void TryUsage(const char *opt) {
     if (opt)
-	fprintf(stdout, "twdisplay: unknown option `%."STR(TW_SMALLBUFF)"s'\n", opt);
+	fprintf(stdout, "twdisplay: unknown option `" SS "'\n", opt);
     fputs("           try `twdisplay --help' for usage summary.\n", stdout);
 }
 
@@ -1099,7 +1099,7 @@ static byte VersionsMatch(byte force) {
     uldat cv = TW_PROTOCOL_VERSION, lv = TwLibraryVersion(), sv = TwServerVersion();
 	
     if (lv != sv || lv != cv) {
-	printk("twdisplay: %."STR(TW_SMALLBUFF)"s: socket protocol version mismatch!%."STR(TW_SMALLBUFF)"s\n"
+	printk("twdisplay: " SS ": socket protocol version mismatch!" SS "\n"
 		"           client is %d.%d.%d, library is %d.%d.%d, server is %d.%d.%d\n",
 		(force ? "warning" : "fatal"), (force ? " (ignored)" : ""),
 		TW_VER_MAJOR(cv), TW_VER_MINOR(cv), TW_VER_PATCH(cv),
@@ -1155,7 +1155,7 @@ int main(int argc, char *argv[]) {
 	    dpy = *argv + 6;
 	else if (!strncmp(*argv, "-hw=", 4)) {
 	    if (!strncmp(*argv+4, "display", 7)) {
-		printk("%."STR(TW_SMALLBUFF)"s: argument `--hw=display' is for internal use only.\n", MYname);
+		printk("" SS ": argument `--hw=display' is for internal use only.\n", MYname);
 		TryUsage(NULL);
 		return 1;
 	    }
@@ -1172,18 +1172,18 @@ int main(int argc, char *argv[]) {
 			/*
 			 * using server controlling tty makes no sense for twdisplay
 			 */
-			printk("%."STR(TW_SMALLBUFF)"s: `%."STR(TW_SMALLBUFF)"s' makes sense only with twattach.\n", MYname, *argv);
+			printk("" SS ": `" SS "' makes sense only with twattach.\n", MYname, *argv);
 			return 1;
 		    } else if (tty) {
 			if (!strcmp(buff+1, tty))
 			    /* attach twin to our tty */
 			    ourtty = 1;
 		    } else {
-			printk("%."STR(TW_SMALLBUFF)"s: ttyname() failed: cannot find controlling tty!\n", MYname);
+			printk("" SS ": ttyname() failed: cannot find controlling tty!\n", MYname);
 			return 1;
 		    }
 		} else {
-		    printk("%."STR(TW_SMALLBUFF)"s: malformed display hw `%."STR(TW_SMALLBUFF)"s'\n", MYname, *argv);
+		    printk("" SS ": malformed display hw `" SS "'\n", MYname, *argv);
 		    return 1;
 		}
 
@@ -1344,12 +1344,12 @@ int main(int argc, char *argv[]) {
 	     */
 	    MainLoop(Fd);
 	else if (ret)
-	    printk("%."STR(TW_SMALLBUFF)"s: twin said we can quit... strange!\n", MYname);
+	    printk("" SS ": twin said we can quit... strange!\n", MYname);
 	
 	Quit(!ret);
     } while (0);
     
-    printk("%."STR(TW_SMALLBUFF)"s: libTw error: %."STR(TW_SMALLBUFF)"s%."STR(TW_SMALLBUFF)"s\n", MYname,
+    printk("" SS ": libTw error: " SS "" SS "\n", MYname,
 	    TwStrError(TwErrno), TwStrErrorDetail(TwErrno, TwErrnoDetail));
     return 1;
 }

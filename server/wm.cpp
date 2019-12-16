@@ -1895,7 +1895,7 @@ EXTERN_C byte InitModule(module Module)
 		    return ttrue;
 		} else {
 		    sent = ttrue;
-		    printk("twin: RC: %."STR(TW_SMALLBUFF)"s\n", ErrStr);
+		    printk("twin: RC: " SS "\n", ErrStr);
 		}
 	    }
 	    UnRegisterExt(WM,MsgPort,WM_MsgPort);
@@ -1907,7 +1907,7 @@ EXTERN_C byte InitModule(module Module)
     if (WM_MsgPort)
 	Delete(WM_MsgPort);
     if (!sent) {
-	printk("twin: WM: %."STR(TW_SMALLBUFF)"s\n", ErrStr);
+	printk("twin: WM: " SS "\n", ErrStr);
     }
     return tfalse;
 }

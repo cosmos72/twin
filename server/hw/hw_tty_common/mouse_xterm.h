@@ -14,7 +14,7 @@ static void xterm_ConfigureMouse(udat resource, byte todefault, udat value);
 
 /* return tfalse if failed */
 static byte xterm_InitMouse(byte force) {
-    const byte *term = tty_TERM;
+    const char *term = tty_TERM;
     
     if (force == ttrue) {
 	printk("      xterm_InitMouse(): xterm-style mouse FORCED.\n"
@@ -60,7 +60,7 @@ static byte xterm_InitMouse(byte force) {
 	mouse_end_seq = "\033[?1002l\033[?1000l\033[?1001r";
 	mouse_motion_seq = mouse_start_seq;
     } else {
-        printk("%s", "      xterm_InitMouse() failed: terminal `%." STR(TW_SMALLBUFF) "s' is not supported.\n", term);
+        printk("%s", "      xterm_InitMouse() failed: terminal `" SS "' is not supported.\n", term);
 	return tfalse;
     }
 
@@ -101,13 +101,13 @@ static void xterm_MouseEvent(int fd, display_hw hw) {
     udat Buttons = 0, Id;
     dat x, y, dx, dy;
     dat prev_x = xterm_prev_x, prev_y = xterm_prev_y;
-    const byte *s = xterm_mouse_seq;
+    const char *s = xterm_mouse_seq;
     byte len = xterm_mouse_len;
     
     if (s[0] != '\033' || s[1] != '[')
         return;
     
-    if (len == 6 && s[2] == 'M' && (Id=s[3]) >= 32 && Id < 96) {
+    if (len == 6 && s[2] == 'M' && (Id=(byte)s[3]) >= 32 && Id < 96) {
         /* classic xterm mouse reporting (X11 specs) */
         /* |32 if click/release, or |64 if drag. Ignore them. */
         /* also ignore keyboard modifiers: |4 (shift) |8 (alt) and |16 (ctrl) */
@@ -119,19 +119,21 @@ static void xterm_MouseEvent(int fd, display_hw hw) {
         else if (Id == 2)
             Buttons |= HOLD_RIGHT;
         
-        x = s[4] - '!'; /* s must be (unsigned char *) */
-        y = s[5] - '!';
-    } else if (len == 9 && s[2] == '5' && s[3] == 'M' && (Id = s[4]) >= ' ' && (Id -= ' ') <= (HOLD_ANY>>HOLD_BITSHIFT)) {
+        x = (byte)s[4] - '!';
+        y = (byte)s[5] - '!';
+    } else if (len == 9 && s[2] == '5' && s[3] == 'M' &&
+               (Id = (byte)s[4]) >= ' ' && (Id -= ' ') <= (HOLD_ANY>>HOLD_BITSHIFT)) {
         /* enhanced xterm-style reporting (twin specs) */
         Buttons = Id << HOLD_BITSHIFT;
 
-        x = (udat)((s[5]-'!') & 0x7f) | (udat)((udat)((s[6]-'!') & 0x7f) << 7);
+        x = (udat)(((byte)s[5]-'!') & 0x7f) | (udat)((udat)(((byte)s[6]-'!') & 0x7f) << 7);
         if (x & ((udat)1 << 13))
             /* top bit is set, set also higher ones */
             x |= (udat)~0 << 14;
 	    
-        y = (udat)((s[7]-'!') & 0x7f) | (udat)((udat)((s[8]-'!') & 0x7f) << 7);
+        y = (udat)(((byte)s[7]-'!') & 0x7f) | (udat)((udat)(((byte)s[8]-'!') & 0x7f) << 7);
         if (y & ((udat)1 << 13))
+            /* top bit is set, set also higher ones */
             y |= (udat)~0 << 14;
     } else
 	return;

@@ -259,7 +259,7 @@ EXTERN_C byte InitModule(module Module)
 	return ttrue;
     }
     if (shellpath)
-	printk("twin: InitTerm(): %."STR(TW_SMALLBUFF)"s\n", ErrStr);
+	printk("twin: InitTerm(): " SS "\n", ErrStr);
     else
 	printk("twin: environment variable $SHELL not set!\n");
     return tfalse;

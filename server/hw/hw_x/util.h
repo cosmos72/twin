@@ -440,12 +440,12 @@ static Tutf_function X11_UTF_32_to_charset_function(const char *charset) {
 	if (!charset) {
 	    if (xsfont->min_byte1 < xsfont->max_byte1) {
 		/* font is more than just 8-bit. For now, assume it's unicode */
-		printk("    X11_InitHW: font `%." STR(TW_SMALLBUFF) "s\' has no known charset encoding,\n"
+		printk("    X11_InitHW: font `" SS "\' has no known charset encoding,\n"
 		       "                assuming Unicode.\n", fontname);
 		return NULL;
 	    }
 	    /* else assume codepage437. gross. */
-	    printk("    X11_InitHW: font `%." STR(TW_SMALLBUFF) "s\' has no known charset encoding,\n"
+	    printk("    X11_InitHW: font `" SS "\' has no known charset encoding,\n"
 		   "                assuming CP437 codepage (\"VGA\").\n", fontname);
 	    return Tutf_UTF_32_to_CP437;
 	}
@@ -459,7 +459,7 @@ static Tutf_function X11_UTF_32_to_charset_function(const char *charset) {
     }
     
     if (i == (uldat)-1) {
-	printk("      X11_InitHW(): libTutf warning: unknown charset `%." STR(TW_SMALLBUFF) "s', assuming `CP437'\n", charset);
+	printk("      X11_InitHW(): libTutf warning: unknown charset `" SS "', assuming `CP437'\n", charset);
 	return Tutf_UTF_32_to_CP437;
     }
     

@@ -547,7 +547,7 @@ static byte GGI_InitHW(void) {
 	
     } while (0); else {
 	if (arg || (arg = getenv("GGI_DISPLAY")))
-	    printk("      GGI_InitHW() failed to open display %."STR(TW_SMALLBUFF)"s\n", arg);
+	    printk("      GGI_InitHW() failed to open display " SS "\n", arg);
 	else
 	    printk("      GGI_InitHW() failed: GGI_DISPLAY is not set\n");
 	

@@ -67,7 +67,7 @@
 static char *ptydev, *ttydev;
 static int ptyfd, ttyfd;
 
-#define SS "%."STR(TW_SMALLBUFF)"s"
+#define SS "" SS ""
 
 static void pty_error(const byte *d, const byte *f, const byte *arg) {
     printk("twin: "SS": "SS"(\""SS"\") failed: "SS"\n",

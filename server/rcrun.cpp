@@ -535,7 +535,7 @@ static byte RCSteps(run *r) {
 	  case STDERR:
 	    argv = n->x.v.argv;
 	    while (*argv)
-		printk("%."STR(TW_SMALLBUFF)"s ", *argv++);
+		printk("" SS " ", *argv++);
 	    printk("\n");
 	    break;
 	  case SYNTHETICKEY:
@@ -806,7 +806,7 @@ static void RCReload(void) {
     /* this would garble -hw=tty display */
     else
 	printk("twin: failed to load the RC parser:\n"
-		"      %."STR(TW_SMALLBUFF)"s\n", ErrStr);
+		"      " SS "\n", ErrStr);
 # endif
     
     success = mod_rcload && mod_rcload();

@@ -2450,7 +2450,7 @@ static byte Check4MagicTranslation(uldat slot, byte *magic, byte len) {
 		if (warn_count == 5)
 		    printk("twin: warning: many clients with different sizes, suppressing further messages.\n");
 		else
-		    printk("twin: warning: client has different `%."STR(TW_SMALLBUFF)"s' size, it may not be Unicode aware.\n", zero);
+		    printk("twin: warning: client has different `" SS "' size, it may not be Unicode aware.\n", zero);
 		warn_count++;
 	    }
 	}
@@ -2743,7 +2743,7 @@ EXTERN_C byte InitModule(module Module)
     char opt[TW_SIZEOF_SIZE_T] = { 0, };
 
     if (!sockInitAuth()) {
-	printk("twin: failed to create ~/.TwinAuth: %."STR(TW_SMALLBUFF)"s\n", ErrStr);
+	printk("twin: failed to create ~/.TwinAuth: " SS "\n", ErrStr);
 	return tfalse;
     }
     
@@ -2790,7 +2790,7 @@ EXTERN_C byte InitModule(module Module)
 
 	return ttrue;
     }
-    printk("twin: failed to create sockets: %."STR(TW_SMALLBUFF)"s\n", ErrStr);
+    printk("twin: failed to create sockets: " SS "\n", ErrStr);
     return tfalse;
 }
 

@@ -9,6 +9,10 @@
 #ifndef _TWIN_PRINTK_H
 #define _TWIN_PRINTK_H
 
+#ifndef SS
+# define SS "%." STR(TW_SMALLBUFF) "s"
+#endif
+
 int printk(const char *format, ...);
 void printk_str(int len, const char *s);
 int printk_receive_fd(int fd);

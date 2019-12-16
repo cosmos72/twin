@@ -95,12 +95,12 @@ static ldat dead_key_next;
 
 
 static ldat npadch = -1;		/* -1 or number assembled on pad */
-static byte diacr;
+static char diacr;
 static byte rep;			/* flag telling character repeat */
 
 
-static byte  queue_buf[512];
-static byte *queue;			/* the ASCII sequence of the current keycode */
+static char  queue_buf[512];
+static char *queue;			/* the ASCII sequence of the current keycode */
 static uldat queue_len;			/* its length */
 
 
@@ -108,18 +108,18 @@ static int compute_shiftstate(void);
 static udat get_shiftstate_tw(void);
 static void set_lights(int lights);
 static udat get_kbentry(byte keycode, byte table);
-static byte *get_kbsentry(byte keysym);
+static const char *get_kbsentry(byte keysym);
 
 static udat do_spec(byte value, byte up_flag);
 static udat do_cur(byte value, byte up_flag);
 
 
-static void put_queue(byte ch)
+static void put_queue(char ch)
 {
     queue[queue_len++] = ch;
 }
 
-static void puts_queue(byte *cp)
+static void puts_queue(const char *cp)
 {
     while (*cp) {
 	queue[queue_len++] = *cp++;
@@ -128,9 +128,9 @@ static void puts_queue(byte *cp)
 
 
 
-static void applkey(byte key, byte mode)
+static void applkey(char key, byte mode)
 {
-    static byte buf[] = { 0x1b, 'O', 0x00, 0x00 };
+    static char buf[] = { 0x1b, 'O', 0x00, 0x00 };
     
     buf[1] = (mode ? 'O' : '[');
     buf[2] = key;
@@ -361,13 +361,13 @@ static udat do_lowercase(byte value, byte up_flag)
  * Otherwise, conclude that DIACR was not combining after all,
  * queue it and return CH.
  */
-static byte handle_diacr(byte ch)
+static char handle_diacr(char ch)
 {
     static struct kbdiacrs accent_tables;
     static byte accent_tables_init;
     
     struct kbdiacr *accent_table;
-    byte d = diacr;
+    char d = diacr;
     ldat i;
     
     diacr = 0;
@@ -393,7 +393,7 @@ static byte handle_diacr(byte ch)
 }
 
 
-static udat post_latin(byte value)
+static udat post_latin(udat value)
 {
     if (value < 32) {
 	udat shifts = get_shiftstate_tw();
@@ -525,17 +525,22 @@ static udat map_PAD [] = {
 	/* K_PPARENL */	TW_Null,
 	/* K_PPARENR */	TW_Null,
 };
+enum { map_PAD_len = sizeof(map_PAD)/sizeof(map_PAD[0]) };
+
 
 static udat do_pad(byte value, byte up_flag)
 {
-    static const byte * const pad_chars = "0123456789+-*/\015,.?()";
-    static const byte * const app_map = "pqrstuvwxylSRQMnnmPQ";
+    static const char * const pad_chars = "0123456789+-*/\015,.?()";
+    static const char * const app_map = "pqrstuvwxylSRQMnnmPQ";
     
     if (up_flag)
 	return TW_Null;	/* no action, if this is a key release */
     
     /* kludge... shift forces cursor/number keys */
     if (vc_kbd_mode(kbd,VC_APPLIC) && !k_down[KG_SHIFT]) {
+        if (value >= map_PAD_len) {
+            return TW_Null;
+        }
 	applkey(app_map[value], 1);
 	return map_PAD[value];
     }
@@ -569,6 +574,9 @@ static udat do_pad(byte value, byte up_flag)
 	}
     }
     
+    if (value >= map_PAD_len) {
+        return TW_Null;
+    }
     put_queue(pad_chars[value]);
     if (value == KVAL(K_PENTER) && vc_kbd_mode(kbd, VC_CRLF))
 	put_queue(10);
@@ -582,11 +590,12 @@ static udat map_CUR [] = {
 	/* K_RIGHT */	TW_Right,
 	/* K_UP */	TW_Up,
 };
+enum { map_CUR_len = sizeof(map_CUR)/sizeof(map_CUR[0]) };
 
 static udat do_cur(byte value, byte up_flag)
 {
-    static const byte * const cur_chars = "BDCA";
-    if (up_flag)
+    static const char * const cur_chars = "BDCA";
+    if (up_flag || value >= map_CUR_len)
 	return TW_Null;
     
     applkey(cur_chars[value], vc_kbd_mode(kbd,VC_CKMODE));
@@ -606,12 +615,13 @@ static udat map_SHIFT [] = {
 	/* K_CTRLR */	TW_Control_R,
 	/* K_CAPSSHIFT*/TW_Shift_R,
 };
+enum { map_SHIFT_len = sizeof(map_SHIFT)/sizeof(map_SHIFT[0]) };
 
 static udat do_shift(byte value, byte up_flag)
 {
     ldat old_state = lrawkbd_shiftstate;
     
-    if (rep)
+    if (rep && value < map_SHIFT_len)
 	return map_SHIFT[value];
     
     /* Mimic typewriter:
@@ -637,12 +647,12 @@ static udat do_shift(byte value, byte up_flag)
     
     /* kludge */
     if (up_flag && lrawkbd_shiftstate != old_state && npadch != -1) {
-	byte ch = npadch & 0xff;
+	char ch = npadch & 0xff;
 	KeyboardEventCommon(ch, get_shiftstate_tw(), 1, &ch);
 	npadch = -1;
     }
     
-    return up_flag ? TW_Null : map_SHIFT[value];
+    return (up_flag || value >= map_SHIFT_len) ? TW_Null : map_SHIFT[value];
 }
 
 /* called after returning from RAW mode or when changing consoles -
@@ -899,7 +909,7 @@ static void lrawkbd_LoadKeymaps(void) {
                 if (keycode == 0 && ke.kb_value == K_NOSUCHMAP)
                     break;
                 else if (!lrawkbd_keymaps[table] &&
-                         !(lrawkbd_keymaps[table] = AllocMem(0x80 * sizeof(udat))))
+                         !(lrawkbd_keymaps[table] = (udat *)AllocMem(0x80 * sizeof(udat))))
                     break;
                 
                 lrawkbd_keymaps[table][keycode] = ke.kb_value;
@@ -927,7 +937,7 @@ static udat get_kbentry(byte keycode, byte table)
     return K_NOSUCHMAP;
 }
 
-static byte *get_kbsentry(byte keysym) {
+static const char *get_kbsentry(byte keysym) {
     static struct kbsentry ks;
     /*
      struct kbsentry {
@@ -941,7 +951,7 @@ static byte *get_kbsentry(byte keysym) {
     
     ioctl(tty_fd, KDGKBSENT, &ks);
     
-    return ks.kb_string;
+    return (const char *)ks.kb_string;
 }
 
 #ifdef DEBUG_HW_TTY_LRAWKBD
@@ -1009,9 +1019,10 @@ static udat handle_keycode(byte keycode, byte up)
 }
 
 
-static udat lrawkbd_LookupKey(udat *ShiftFlags, byte *slen, byte *s, byte *retlen, byte **ret) {
+static udat lrawkbd_LookupKey(udat *ShiftFlags, byte *slen, char *s,
+                              byte *retlen, char **ret) {
     udat twk;
-    byte k = *s;
+    byte k = (byte)*s;
     
     queue = queue_buf;
     queue_len = 0;
