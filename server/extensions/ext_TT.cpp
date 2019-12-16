@@ -212,7 +212,7 @@ static tany ext_TT_CallBExtension(extension Extension, topaque len, TT_CONST byt
 
 TT_DECL_MAGIC(ext_TT_magic);
 
-byte InitModule(extension E)
+EXTERN_C byte InitModule(extension E)
 {
     return
 	TTCheckMagic(ext_TT_magic) &&
@@ -229,7 +229,7 @@ TT_INLINE void ext_TT_quit_data(void) {
 }
 
 
-void QuitModule(extension E)
+EXTERN_C void QuitModule(extension E)
 {
     ext_TT_quit_data();
     TTClose();

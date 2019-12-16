@@ -135,7 +135,7 @@ static void termcap_cleanup(void) {
 }
 
 static void fixup_colorbug(void) {
-    uldat len = LenStr(tc_attr_off);
+    uldat len = strlen(tc_attr_off);
     byte *s = AllocMem( len + 9);
     
     if (s) {
@@ -197,7 +197,7 @@ static byte termcap_InitVideo(void) {
     
     if (tty_use_utf8 == ttrue+ttrue) {
 	/* cannot really autodetect an utf8-capable terminal... use a whitelist */
-        uldat termlen = LenStr(term);
+        uldat termlen = strlen(term);
 	tty_use_utf8 = ((termlen == 5 && (!CmpMem(term, "xterm", 5) || !CmpMem(term, "linux", 5))) ||
                         (termlen >= 6 && !CmpMem(term, "xterm-", 6)) ||
                         (termlen >= 12 && !CmpMem(term, "rxvt-unicode", 12)));

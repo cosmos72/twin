@@ -217,7 +217,7 @@ uldat HexStrToNum(byte *StringHex) {
      byte Len, Error = tfalse;
      uldat Value=(uldat)0;
      
-     Len=(byte)LenStr(StringHex);
+     Len=(byte)strlen(StringHex);
      if (Len>(byte)8)
 	 return (uldat)0;
      
@@ -235,10 +235,10 @@ uldat ComputeUsableLenArgv(char *CONST *argv) {
     char *ptr;
     uldat count;
     
-    ptr = argv[0] + LenStr(argv[0]);
+    ptr = argv[0] + strlen(argv[0]);
     for (count = 1; argv[count]; count++) {
 	if (argv[count] == ptr + 1)
-	    ptr += LenStr(ptr + 1) + 1;
+	    ptr += strlen(ptr + 1) + 1;
     }
     return ptr - argv[0];
 }
@@ -856,7 +856,7 @@ TW_CONST char * TmpDir(void) {
 }
 
 udat CopyToSockaddrUn(TW_CONST char * src, struct sockaddr_un * addr, udat pos) {
-    size_t len = LenStr(src), max = sizeof(addr->sun_path) - 1; /* for final '\0' */
+    size_t len = strlen(src), max = sizeof(addr->sun_path) - 1; /* for final '\0' */
     if (pos < max) {
 	if (len >= max - pos)
 	    len = max - pos - 1;
@@ -933,7 +933,7 @@ byte InitTWDisplay(void) {
 			if (fd != NOFD)
 			    close(fd);
 			TWDisplay = twd;
-			lenTWDisplay = LenStr(TWDisplay);
+			lenTWDisplay = strlen(TWDisplay);
 			CopyMem(TWDisplay, envTWD+10, lenTWDisplay);
 #if defined(TW_HAVE_SETENV)
 			setenv("TWDISPLAY",TWDisplay,1);
@@ -942,7 +942,7 @@ byte InitTWDisplay(void) {
 			putenv(envTWD);
 			putenv("TERM=linux");
 #endif
-			if ((arg0 = AllocMem(LenStr(TWDisplay) + 6))) {
+			if ((arg0 = AllocMem(strlen(TWDisplay) + 6))) {
 			    sprintf(arg0, "twin %s", TWDisplay);
 			    SetArgv0(main_argv, main_argv_usable_len, arg0);
 			    FreeMem(arg0);

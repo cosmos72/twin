@@ -1,5 +1,5 @@
 /*
- *  hw_X11.c  --  functions to let twin display on X11
+ *  hw_X11.cpp  --  functions to let twin display on X11
  *
  *  Copyright (C) 1999-2001 by Massimiliano Ghilardi
  *
@@ -7,7 +7,6 @@
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2 of the License, or
  *  (at your option) any later version.
- *
  */
 
 #include <Tw/Twkeys.h>
@@ -55,7 +54,7 @@
 #define XDRAW_ANY(buf, buflen, col, gfx) XDRAW(col, buf, buflen)
 
 #include "hw_x/util.h"
-#include "hw_x/common.c"
+#include "hw_x/common.cpp"
 
 /* manage foreground/background colors */
 static void X11_SetColors(hwcol col) {
@@ -127,7 +126,7 @@ static char * X11_AutodetectFont(udat fontwidth, udat fontheight) {
     XFontStruct *info;
     int i, j, k, n_fonts;
     
-    char * pattern = AllocMem(LenStr(patterns[0].wildcard) + 1 + 3 * sizeof(unsigned));
+    char * pattern = (char *)AllocMem(strlen(patterns[0].wildcard) + 1 + 3 * sizeof(unsigned));
     char digits[1 + 3 * sizeof(unsigned)];
     char ** names = NULL;
     char * best = NULL;

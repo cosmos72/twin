@@ -939,7 +939,8 @@ typedef struct s_event_keyboard event_keyboard;
 struct s_event_keyboard {
     widget W;
     udat Code, ShiftFlags, SeqLen;
-    byte pad, AsciiSeq[1];  /* AsciiSeq[SeqLen] == '\0' */
+    byte pad;
+    char AsciiSeq[1];  /* AsciiSeq[SeqLen] == '\0' */
 };
 
 typedef struct s_event_mouse event_mouse;

@@ -61,7 +61,7 @@ static void X11_XftDrawString16(Display *display, Drawable d, GC gc, int x, int 
 #define XDRAW_ANY(buf, buflen, col, gfx) XDRAW(col, buf, buflen)
 
 #include "hw_x/util.h"
-#include "hw_x/common.c"
+#include "hw_x/common.cpp"
 
 static void X11_XftDrawString16(Display *display, Drawable d, GC gc, int x, int y,
         XChar16 *string, int length) {
@@ -175,12 +175,12 @@ static char * X11_AutodetectFont(udat fontwidth, udat fontheight) {
             }
 
             /* reuse existing t_fontname if possible, otherwise allocate a new one */
-            len = LenStr(file) + LenStr(":file=") + 1;
+            len = strlen((CONST char *)file) + strlen(":file=") + 1;
             if (!t_fontname || (len > t_fontname_len)) {
                 if (t_fontname) {
                     FreeMem(t_fontname);
                 }
-                t_fontname = AllocMem(t_fontname_len = len);
+                t_fontname = (char *)AllocMem(t_fontname_len = len);
                 if (!t_fontname) {
                     printk("      X11_AutodetectFont(): Out of memory!\n");
                     break;
@@ -262,7 +262,7 @@ static void X11_FlavorQuitHW(void) {
 }
 
 /* custom version of X11_UTF_32_to_charset_function for the XFT driver */
-static Tutf_function X11_UTF_32_to_charset_function(CONST byte *charset) {
+static Tutf_function X11_UTF_32_to_charset_function(CONST char *charset) {
     /* this is sufficient for xft fonts which are 16-bit unicode */
     return X11_UTF_32_to_UCS_2;
 }

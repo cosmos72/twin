@@ -587,12 +587,12 @@ static byte TW_InitHW(void) {
     return tfalse;
 }
 
-byte InitModule(module Module) {
+EXTERN_C byte InitModule(module Module) {
     Module->Private = TW_InitHW;
     return ttrue;
 }
 
 /* this MUST be defined, or it seems that a bug in dlsym() gets triggered */
-void QuitModule(module Module) {
+EXTERN_C void QuitModule(module Module) {
 }
 

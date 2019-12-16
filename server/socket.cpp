@@ -2256,7 +2256,7 @@ static byte sockInitAuth(void) {
     if (!HOME)
 	return tfalse;
     
-    len = LenStr(HOME);
+    len = strlen(HOME);
     len = Min2(len, TotalLen-11);
     CopyMem(HOME, AuthData, len);
     CopyMem("/.TwinAuth", AuthData+len, 11);
@@ -2736,7 +2736,7 @@ static void SocketH(msgport MsgPort) {
 
 static void (*save_unixSocketIO)(int fd, uldat slot);
 
-byte InitModule(module Module)
+EXTERN_C byte InitModule(module Module)
 {
     uldat m;
     struct sockaddr_in addr;
@@ -2794,7 +2794,7 @@ byte InitModule(module Module)
     return tfalse;
 }
 
-void QuitModule(module Module) {
+EXTERN_C void QuitModule(module Module) {
     if (unixSlot != NOSLOT)
 	FdList[unixSlot].HandlerIO.S = save_unixSocketIO;
     

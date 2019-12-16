@@ -562,13 +562,13 @@ static byte GGI_InitHW(void) {
 
 
 
-byte InitModule(module Module) {
+EXTERN_C byte InitModule(module Module) {
     Module->Private = GGI_InitHW;
     return ttrue;
 }
 
 /* this MUST be included, or it seems that a bug in dlsym() gets triggered */
-void QuitModule(module Module) {
+EXTERN_C void QuitModule(module Module) {
 }
 
 

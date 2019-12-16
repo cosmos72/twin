@@ -50,9 +50,9 @@ static CONST byte *MYname;
 static dat TryDisplayWidth, TryDisplayHeight;
 static byte ValidVideo;
 
-CONST byte *TWDisplay, *origTWDisplay, *origTERM;
+CONST char *TWDisplay, *origTWDisplay, *origTERM;
 
-byte nullMIME[TW_MAX_MIMELEN];
+char nullMIME[TW_MAX_MIMELEN];
 
 udat ErrNo;
 byte CONST * ErrStr;
@@ -398,7 +398,7 @@ static byte InitDisplayHW(display_hw D_HW) {
     else
 	arg = NULL;
 
-#define TRY4(hw) (tried++, module_InitHW(hw, LenStr(hw)))
+#define TRY4(hw) (tried++, module_InitHW(hw, strlen(hw)))
 
     if (!arg || !*arg) {
         success =
@@ -833,7 +833,7 @@ void TwinSelectionSetOwner(obj Owner, tany Time, tany Frac) {
 }
 
 /* HW back-end function: notify selection */
-void TwinSelectionNotify(obj Requestor, uldat ReqPrivate, uldat Magic, CONST byte MIME[MAX_MIMELEN],
+void TwinSelectionNotify(obj Requestor, uldat ReqPrivate, uldat Magic, CONST char MIME[MAX_MIMELEN],
 			    uldat Len, CONST byte *Data) {
     if (!MIME)
 	MIME = nullMIME;
@@ -916,7 +916,7 @@ byte MouseEventCommon(dat x, dat y, dat dx, dat dy, udat Buttons) {
     return ret;
 }
 
-byte KeyboardEventCommon(udat Code, udat ShiftFlags, udat Len, CONST byte *Seq) {
+byte KeyboardEventCommon(udat Code, udat ShiftFlags, udat Len, CONST char *Seq) {
     tevent_keyboard Event;
     tmsg Msg;
 

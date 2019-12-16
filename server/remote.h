@@ -9,10 +9,14 @@
 #ifndef _TWIN_REMOTE_H
 #define _TWIN_REMOTE_H
 
-uldat	RegisterRemoteFd(int Fd, void (*HandlerIO)(int Fd, uldat Slot));
-uldat	RegisterRemote(int Fd, obj HandlerData, void *HandlerIO); /* (void (*HandlerIO))(int Fd, obj HandlerData) */
+typedef void (*handler_io)(int Fd, uldat Slot);
+typedef void (*handler_obj)(int Fd, obj HandlerObj);
+typedef void (*handler_window)(int Fd, window Window);
+    
+uldat	RegisterRemoteFd(int Fd, handler_io HandlerIO);
+uldat	RegisterRemote(int Fd, obj HandlerData, handler_obj HandlerObj);
 void  UnRegisterRemote(uldat Slot);
-byte	RegisterWindowFdIO(window Window, void (*HandlerIO)(int Fd, window Window));
+byte	RegisterWindowFdIO(window Window, handler_window HandlerWindow);
 void  UnRegisterWindowFdIO(window Window);
 uldat	RemoteWriteQueue(uldat Slot, uldat len, CONST void *data);
 #define	RemoteWindowWriteQueue(Window, len, data) RemoteWriteQueue((Window)->RemoteData.FdSlot, (len), (data))

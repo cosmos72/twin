@@ -683,7 +683,7 @@ void TwinSelectionSetOwner(obj Owner, tany Time, tany Frac) {
     }
 }
 
-void TwinSelectionNotify(obj Requestor, uldat ReqPrivate, uldat Magic, CONST byte MIME[MAX_MIMELEN],
+void TwinSelectionNotify(obj Requestor, uldat ReqPrivate, uldat Magic, CONST char MIME[MAX_MIMELEN],
 			    uldat Len, CONST byte *Data) {
     msg NewMsg;
     event_any *Event;

@@ -987,7 +987,7 @@ static screen FindNameInScreens(uldat len, byte *name, screen S) {
 
 static node FindNameInList(uldat len, byte *name, node list) {
     while (list) {
-	if (list->name && LenStr(list->name) == len && !CmpMem(name, list->name, len))
+	if (list->name && strlen(list->name) == len && !CmpMem(name, list->name, len))
 	    return list;
 	list = list->next;
     }
@@ -1018,7 +1018,7 @@ static byte CreateNeededScreens(node list, screen *res_Screens) {
     while (list) {
 	w = h = 0;
 	for (body = list->body; body; body = body->next) {
-	    len = body->name ? LenStr(body->name) : 0;
+	    len = body->name ? strlen(body->name) : 0;
 	    if (w < len)
 		w = len;
 	    h++;
@@ -1031,7 +1031,7 @@ static byte CreateNeededScreens(node list, screen *res_Screens) {
 	    for (body = list->body; body; body = body->next) {
 		if (body->name) {
 		    n = body->name;
-		    _len = len = LenStr(n);
+		    _len = len = strlen(n);
 		    c = list->x.color;
 		    r = attr + w * h;
 		    while (len--) {
@@ -1043,7 +1043,7 @@ static byte CreateNeededScreens(node list, screen *res_Screens) {
 		}
 		h++;
 	    }
-	    s = Do(Create,Screen)(FnScreen, LenStr(list->name), list->name, w, h, attr);
+	    s = Do(Create,Screen)(FnScreen, strlen(list->name), list->name, w, h, attr);
 
 	    FreeMem(attr);
 	}
@@ -1366,12 +1366,12 @@ static byte rcload(void) {
 #endif
 }
 
-byte InitModule(module Module) {
+EXTERN_C byte InitModule(module Module) {
     Module->Private = (void *)rcload;
     return ttrue;
 }
 
-void QuitModule(module Module) {
+EXTERN_C void QuitModule(module Module) {
 }
 
 #endif /* _TWIN_RCPARSE_H */

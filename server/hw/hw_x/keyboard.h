@@ -122,7 +122,7 @@ static struct {
     KeySym xkey;
     Twkey  tkey;
     byte   len;
-    CONST byte *seq;
+    CONST char *seq;
 } X11_keys[] = {
 
 #define IS(sym,l,s) { XK_##sym, TW_##sym, l, s },
@@ -264,7 +264,7 @@ static Twkey X11_LookupKey(XEvent *ev, udat *ShiftFlags, udat *len, char *seq) {
 
 static void X11_HandleEvent(XEvent *event) {
     /* this can stay static, X11_HandleEvent() is not reentrant */
-    static byte seq[TW_SMALLBUFF];
+    static char seq[TW_SMALLBUFF];
     dat x, y, dx, dy;
     udat len = sizeof(seq), ShiftFlags;
     Twkey TW_key;

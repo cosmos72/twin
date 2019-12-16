@@ -152,7 +152,7 @@ static struct s_fn_obj _FnObj = {
     InsertObj,
     RemoveObj,
     DeleteObj,
-    (void (*)(obj, udat, uldat, uldat))NoOp
+    (void (*)(obj, udat, uldat, uldat))NoOp,
 };
 
 /* widget */
@@ -1376,30 +1376,31 @@ static row FindRowByCode(window Window, udat Code, ldat *NumRow) {
 static struct s_fn_window _FnWindow = {
     window_magic, sizeof(struct s_window), (uldat)1,
     CreateWindow,
-    (void *)InsertWidget,
-    (void *)RemoveWidget,
+    (void (*)(window, widget, widget, widget))InsertWidget,
+    (void (*)(window))RemoveWidget,
     DeleteWindow,
     ChangeFieldWindow,
     /* widget */
     &_FnObj,
     DrawSelfWindow,
-    (void *)FindWidgetAt,
-    (void *)FindGadgetByCode,
+    (widget (*)(window, dat, dat))FindWidgetAt,
+    (gadget (*)(window, udat))FindGadgetByCode,
     SetXYWindow,
-    (void *)SetFillWidget,
-    (void *)FocusWidget,
-    (void *)TtyKbdFocus,
-    (void *)MapWidget,
-    (void *)UnMapWidget,
-    (void *)MapTopRealWidget,
-    (void *)RaiseW,
-    (void *)LowerW,
-    (void *)OwnWidget,
-    (void *)DisOwnWidget,
-    (void *)RecursiveDeleteWidget,
-    (void *)ExposeWindow2,	/* exported by resize.c */
-    (void *)InstallHookWidget,
-    (void *)RemoveHookWidget,
+    (void   (*)(window, hwattr))SetFillWidget,
+    (widget (*)(window))FocusWidget,
+    (widget (*)(window))TtyKbdFocus,
+    (void   (*)(window, widget))MapWidget,
+    (void   (*)(window))UnMapWidget,
+    (void   (*)(window, screen))MapTopRealWidget,
+    (void   (*)(window))RaiseW,
+    (void   (*)(window))LowerW,
+    (void   (*)(window, msgport))OwnWidget,
+    (void   (*)(window))DisOwnWidget,
+    (void   (*)(window, msgport))RecursiveDeleteWidget,
+    (void   (*)(window, dat, dat, dat, dat, CONST char*, CONST hwfont*, CONST hwattr*))
+      ExposeWindow2,	/* exported by resize.c */
+    (byte   (*)(window, fn_hook, void (**)(widget)))InstallHookWidget,
+    (void   (*)(window, fn_hook, void (**)(widget)))RemoveHookWidget,
     /* window */
     &_FnWidget,
     FakeWriteAscii,
@@ -1409,7 +1410,7 @@ static struct s_fn_window _FnWindow = {
     RowWriteAscii,		/* exported by resize.c */
     RowWriteAscii,
     RowWriteHWFont,
-    (void *)AlwaysFalse,
+    (byte   (*)(window, dat, dat, ldat, CONST hwattr*))AlwaysFalse,
 	
     GotoXYWindow,
     SetTitleWindow,
@@ -1428,7 +1429,7 @@ static struct s_fn_window _FnWindow = {
 /* screen */
 
 static screen CreateScreen(fn_screen Fn_Screen, dat NameLen, CONST char *Name,
-			    dat BgWidth, dat BgHeight, CONST hwattr *Bg) {
+                           dat BgWidth, dat BgHeight, CONST hwattr *Bg) {
     screen S = (screen)0;
     size_t size;
     
@@ -1438,7 +1439,7 @@ static screen CreateScreen(fn_screen Fn_Screen, dat NameLen, CONST char *Name,
 	     ((fn_widget)Fn_Screen, Builtin_MsgPort, TW_MAXDAT, TW_MAXDAT, 0, SCREENFL_USEBG, 0, 0, Bg[0]))) {
 
 	    if (!(S->Name=NULL, Name) || (S->Name=CloneStrL(Name, NameLen))) {
-		if ((S->USE.B.Bg = AllocMem(size))) {
+		if ((S->USE.B.Bg = (hwattr *)AllocMem(size))) {
 
 		    Fn_Screen->Fn_Widget->Used++;
 		    
@@ -1470,7 +1471,7 @@ static void BgImageScreen(screen Screen, dat BgWidth, dat BgHeight, CONST hwattr
     
     if (Screen && S_USE(Screen, USEBG) && Bg &&
 	(size = (size_t)BgWidth * BgHeight * sizeof(hwattr)) &&
-	(Screen->USE.B.Bg = ReAllocMem(Screen->USE.B.Bg, size))) {
+	(Screen->USE.B.Bg = (hwattr *)ReAllocMem(Screen->USE.B.Bg, size))) {
 
 	Screen->USE.B.BgWidth = BgWidth;
 	Screen->USE.B.BgHeight = BgHeight;
@@ -1601,23 +1602,24 @@ static struct s_fn_screen _FnScreen = {
     /* widget */
     &_FnObj,
     DrawSelfScreen,
-    (void *)FindWidgetAt,
-    (void *)FindGadgetByCode,
+    (widget (*)(screen, dat, dat))FindWidgetAt,
+    (gadget (*)(screen, udat))FindGadgetByCode,
     SetXYScreen,
-    (void *)SetFillWidget,
+    (void   (*)(screen, hwattr))SetFillWidget,
     FocusScreen,
-    (void *)NoOp, /* KbdFocusWidget */
-    (void *)NoOp, /* MapWidget */
-    (void *)NoOp, /* UnMapWidget */
-    (void *)NoOp, /* MapTopRealWidget */
-    (void *)RaiseW,
-    (void *)LowerW,
-    (void *)OwnWidget,
-    (void *)DisOwnWidget,
-    (void *)RecursiveDeleteWidget,
-    (void *)ExposeWidget2,	/* exported by resize.c */
-    (void *)InstallHookWidget,
-    (void *)RemoveHookWidget,
+    (widget (*)(screen))NoOp, /* KbdFocusWidget */
+    (void   (*)(screen, widget))NoOp, /* MapWidget */
+    (void   (*)(screen))NoOp, /* UnMapWidget */
+    (void   (*)(screen, screen))NoOp, /* MapTopRealWidget */
+    (void   (*)(screen))RaiseW,
+    (void   (*)(screen))LowerW,
+    (void   (*)(screen, msgport))OwnWidget,
+    (void   (*)(screen))DisOwnWidget,
+    (void   (*)(screen, msgport))RecursiveDeleteWidget,
+    (void   (*)(screen, dat, dat, dat, dat, const char*, const hwfont*, const hwattr*))
+        ExposeWidget2,	/* exported by resize.c */
+    (byte (*)(screen, fn_hook, void (**)(widget)))InstallHookWidget,
+    (void (*)(screen, fn_hook, void (**)(widget)))RemoveHookWidget,
     /* screen */
     &_FnWidget,
     FindMenuScreen,
@@ -1626,7 +1628,7 @@ static struct s_fn_screen _FnScreen = {
     BgImageScreen,
     DrawMenuScreen,
     ActivateMenuScreen,
-    DeActivateMenuScreen
+    DeActivateMenuScreen,
 };
 
 
@@ -1722,12 +1724,12 @@ static struct s_fn_group _FnGroup = {
     InsertGroup,
     RemoveGroup,
     DeleteGroup,
-    (void *)NoOp,
+    (void (*)(group, udat, uldat, uldat))NoOp,
     &_FnObj,
     InsertGadgetGroup,
     RemoveGadgetGroup,
     GetSelectedGadget,
-    SetSelectedGadget
+    SetSelectedGadget,
 };
 
 
@@ -1880,13 +1882,13 @@ static struct s_fn_row _FnRow = {
     InsertRow,
     RemoveRow,
     DeleteRow,
-    (void *)NoOp,
+    (void (*)(row, udat, uldat, uldat))NoOp,
     /* row */
     &_FnObj,
     SetTextRow,
     SetHWFontRow,
-    (void *)RaiseMenuItem,
-    (void *)LowerMenuItem
+    (void (*)(row))RaiseMenuItem,
+    (void (*)(row))LowerMenuItem,
 };
 
 
@@ -2020,15 +2022,15 @@ static struct s_fn_menuitem _FnMenuItem = {
     InsertMenuItem,
     RemoveMenuItem,
     DeleteMenuItem,
-    (void *)NoOp,
+    (void (*)(menuitem, udat, uldat, uldat))NoOp,
     &_FnObj,
     SetTextRow,
-    (void *)SetHWFontRow,
+    (byte (*)(row, ldat, const hwfont*, byte))SetHWFontRow,
     RaiseMenuItem,
     LowerMenuItem,
     &_FnRow,
     Create4MenuMenuItem,
-    Create4MenuCommonMenuItem
+    Create4MenuCommonMenuItem,
 };
 
 /* menu */
@@ -2124,8 +2126,8 @@ static void DeleteMenu(menu Menu) {
 static row SetInfoMenu(menu Menu, byte Flags, ldat Len, CONST char *Text, CONST hwcol *ColText) {
     row Row;
     if ((Row = Do(Create,Row)(FnRow, 0, Flags))) {
-	if ((!Text || (Row->Text=CloneStr2HWFont(Text,Len))) &&
-	    (!ColText || (Row->ColText=CloneMem(ColText, Len*sizeof(hwcol))))) {
+	if ((!Text || (Row->Text = CloneStr2HWFont(Text,Len))) &&
+	    (!ColText || (Row->ColText = (hwcol *)CloneMem(ColText, Len*sizeof(hwcol))))) {
 	    Row->Len = Row->MaxLen = Len;
 	    if (Menu->Info)
 		Delete(Menu->Info);
@@ -2222,14 +2224,14 @@ static struct s_fn_menu _FnMenu = {
     InsertMenu,
     RemoveMenu,
     DeleteMenu,
-    (void *)NoOp,
+    (void (*)(menu, udat, uldat, uldat))NoOp,
     /* menu */
     &_FnObj,
     SetInfoMenu,
     FindItem,
     GetSelectedItem,
     RecursiveGetSelectedItem,
-    SetSelectedItem
+    SetSelectedItem,
 };
 
 
@@ -2320,9 +2322,9 @@ static struct s_fn_msg _FnMsg = {
     InsertMsg,
     RemoveMsg,
     DeleteMsg,
-    (void *)NoOp,
+    (void (*)(msg, udat, uldat, uldat))NoOp,
     /* msg */
-    &_FnObj
+    &_FnObj,
 };
 
 /* msgport */
@@ -2331,7 +2333,7 @@ static msgport CreateMsgPort(fn_msgport Fn_MsgPort, byte NameLen, CONST char *Na
 			      tany PauseSec, tany PauseFraction,
 			      byte WakeUp, void (*Handler)(msgport)) {
     msgport MsgPort = (msgport)0;
-    byte *_Name;
+    char *_Name;
     
     if (Handler && (!Name || (_Name = CloneStrL(Name, NameLen))) &&
 	(MsgPort=(msgport)Fn_MsgPort->Fn_Obj->Create((fn_obj)Fn_MsgPort))) {
@@ -2489,11 +2491,11 @@ static struct s_fn_msgport _FnMsgPort = {
     InsertMsgPort,
     RemoveMsgPort,
     DeleteMsgPort,
-    (void *)NoOp,
+    (void (*)(msgport, udat, uldat, uldat))NoOp,
     /* msgport */
     &_FnObj,
     UseExtensionMsgPort,
-    UnuseExtensionMsgPort
+    UnuseExtensionMsgPort,
 };
     
 /* mutex */
@@ -2599,11 +2601,11 @@ static struct s_fn_mutex _FnMutex = {
     InsertMutex,
     RemoveMutex,
     DeleteMutex,
-    (void *)NoOp,
+    (void (*)(mutex, udat, uldat, uldat))NoOp,
     /* mutex */
     &_FnObj,
     OwnMutex,
-    DisOwnMutex
+    DisOwnMutex,
 };
 
 
@@ -2667,11 +2669,11 @@ static struct s_fn_module _FnModule = {
     InsertModule,
     RemoveModule,
     DeleteModule,
-    (void *)NoOp,
+    (void (*)(module, udat, uldat, uldat))NoOp,
     /* module */
     &_FnObj,
     DlOpen,
-    DlClose
+    DlClose,
 };
 
 
@@ -2705,20 +2707,20 @@ static void DeleteExtension(extension E) {
 
 static struct s_fn_extension _FnExtension = {
     extension_magic, sizeof(struct s_extension), (uldat)1,
-    (void *)CreateModule,
-    (void *)InsertModule,
-    (void *)RemoveModule,
+    (extension (*)(fn_extension, uldat, CONST char*))CreateModule,
+    (void (*)(extension, all, extension, extension))InsertModule,
+    (void (*)(extension))RemoveModule,
     DeleteExtension,
-    (void *)NoOp,
+    (void (*)(extension, udat, uldat, uldat))NoOp,
     /* module */
     &_FnObj,
-    (void *)DlOpen,
-    (void *)DlClose,
+    (byte (*)(extension))DlOpen,
+    (void (*)(extension))DlClose,
     &_FnModule,
 #ifdef CONF_EXT
     QueryExtension, /* exported by extensions/ext_query.c */
 #else
-    (void *)AlwaysNull,
+    (extension (*)(byte, CONST char *))AlwaysNull, /* Query */
 #endif
 };
 
@@ -2815,11 +2817,11 @@ static struct s_fn_display_hw _FnDisplayHW = {
     InsertDisplayHW,
     RemoveDisplayHW,
     DeleteDisplayHW,
-    (void *)NoOp,
+    (void (*)(display_hw, udat, uldat, uldat))NoOp,
     /* display_hw */
     &_FnObj,
     InitDisplayHW,
-    QuitDisplayHW
+    QuitDisplayHW,
 };
 
 
@@ -2838,6 +2840,6 @@ fn Fn = {
     &_FnMsg,
     &_FnModule,
     &_FnExtension,
-    &_FnDisplayHW
+    &_FnDisplayHW,
 };
 

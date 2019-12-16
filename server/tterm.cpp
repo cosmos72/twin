@@ -48,7 +48,7 @@ static window newTermWindow(byte *title) {
     window Window;
 
     Window = Do(Create,Window)
-	(FnWindow, Term_MsgPort, LenStr(title), title, NULL,
+	(FnWindow, Term_MsgPort, strlen(title), title, NULL,
 	 Term_Menu, COL(WHITE,BLACK), LINECURSOR,
 	 WINDOW_WANT_KEYS|WINDOW_DRAG|WINDOW_RESIZE|WINDOW_Y_BAR|WINDOW_CLOSE,
 	 WINDOWFL_CURSOR_ON|WINDOWFL_USECONTENTS,
@@ -226,7 +226,7 @@ static void OverrideMethods(byte enter) {
 }
 
 
-byte InitModule(module Module)
+EXTERN_C byte InitModule(module Module)
 {
     window Window;
     byte *shellpath, *shell;
@@ -265,7 +265,7 @@ byte InitModule(module Module)
     return tfalse;
 }
 
-void QuitModule(module Module) {
+EXTERN_C void QuitModule(module Module) {
     UnRegisterExt(Term,Open,OpenTerm);
     OverrideMethods(tfalse);
     if (Term_MsgPort)

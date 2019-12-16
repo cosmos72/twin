@@ -60,7 +60,7 @@ static byte xterm_InitMouse(byte force) {
 	mouse_end_seq = "\033[?1002l\033[?1000l\033[?1001r";
 	mouse_motion_seq = mouse_start_seq;
     } else {
-        printk("%s", "      xterm_InitMouse() failed: terminal `%."STR(TW_SMALLBUFF)"s' is not supported.\n", term);
+        printk("%s", "      xterm_InitMouse() failed: terminal `%." STR(TW_SMALLBUFF) "s' is not supported.\n", term);
 	return tfalse;
     }
 

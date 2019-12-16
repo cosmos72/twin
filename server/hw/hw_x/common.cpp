@@ -96,7 +96,7 @@ static byte X11_LoadFont(CONST char * fontname, udat fontwidth, udat fontheight)
         xhfont = (xupfont = xsfont->ascent) + xsfont->descent;
         xheight = xhfont * (unsigned)(HW->Y = GetDisplayHeight());
         
-        printk("      selected %ux%u font `%."STR(TW_SMALLBUFF)"s'\n", (unsigned)xwfont, (unsigned)xhfont, fontname);
+        printk("      selected %ux%u font `%." STR(TW_SMALLBUFF) "s'\n", (unsigned)xwfont, (unsigned)xhfont, fontname);
     }
     if (alloc_fontname)
         FreeMem(alloc_fontname);
@@ -121,7 +121,7 @@ static void X11_QuitHW(void) {
     if (HW->keyboard_slot != NOSLOT)
 	UnRegisterRemote(HW->keyboard_slot);
     HW->keyboard_slot = NOSLOT;
-    HW->KeyboardEvent = (void *)NoOp;
+    HW->KeyboardEvent = (void (*)(int, display_hw))NoOp;
     
     HW->QuitHW = NoOp;
 
@@ -137,8 +137,9 @@ static int check_hw_name(char *hw_name) {
     comma = strchr(hw_name, ',');
     at = strchr(hw_name, '@');
     if (comma == NULL) {
-        if (at == NULL)
+        if (at == NULL) {
             return -1;
+        }
         comma = at;
     } else if (at != NULL && at < comma) {
         comma = at;
@@ -156,7 +157,7 @@ static byte X11_InitHW(void) {
     XEvent event;
     Visual *xvisual;
     Colormap colormap;
-    byte *s, *xdisplay_ = NULL, *xdisplay0 = NULL,
+    char *s, *xdisplay_ = NULL, *xdisplay0 = NULL,
         *fontname = NULL, *fontname0 = NULL,
         *charset = NULL, *charset0 = NULL,
         title[X11_TITLE_MAXLEN];
@@ -358,7 +359,7 @@ static byte X11_InitHW(void) {
 	    
 	    HW->mouse_slot = NOSLOT;
 	    HW->keyboard_slot = RegisterRemote(i = XConnectionNumber(xdisplay), (obj)HW,
-					       X11_KeyboardEvent);
+					       (void (*)(int, obj))X11_KeyboardEvent);
 	    if (HW->keyboard_slot == NOSLOT)
 		break;
 	    fcntl(i, F_SETFD, FD_CLOEXEC);
@@ -367,7 +368,8 @@ static byte X11_InitHW(void) {
 	    HW->FlushHW = X11_FlushHW;
 	    
 	    HW->KeyboardEvent = X11_KeyboardEvent;
-	    HW->MouseEvent = (void *)NoOp; /* mouse events handled by X11_KeyboardEvent */
+            /* mouse events handled by X11_KeyboardEvent */
+	    HW->MouseEvent = (void (*)(int, display_hw))NoOp;
 	    
 	    HW->XY[0] = HW->XY[1] = 0;
 	    HW->TT = NOCURSOR;
@@ -395,7 +397,7 @@ static byte X11_InitHW(void) {
 	    
 	    HW->Beep = X11_Beep;
 	    HW->Configure = X11_Configure;
-	    HW->SetPalette = (void *)NoOp;
+	    HW->SetPalette = (void (*)(udat, udat, udat, udat))NoOp;
 	    HW->ResetPalette = NoOp;
 	    
 	    HW->QuitHW = X11_QuitHW;
@@ -431,7 +433,7 @@ static byte X11_InitHW(void) {
 	}
     } while (0); else {
 	if (xdisplay_ || (xdisplay_ = getenv("DISPLAY")))
-	    printk("      X11_InitHW() failed to open display %."STR(TW_SMALLBUFF)"s\n", HW->Name);
+	    printk("      X11_InitHW() failed to open display %." STR(TW_SMALLBUFF) "s\n", HW->Name);
 	else
 	    printk("      X11_InitHW() failed: DISPLAY is not set\n");
     }
@@ -450,11 +452,11 @@ fail:
     return tfalse;
 }
 
-byte InitModule(module Module) {
-    Module->Private = X11_InitHW;
+EXTERN_C byte InitModule(module Module) {
+    Module->Private = (void *)X11_InitHW;
     return ttrue;
 }
 
 /* this MUST be included, or it seems that a bug in dlsym() gets triggered */
-void QuitModule(module Module) {
+EXTERN_C void QuitModule(module Module) {
 }

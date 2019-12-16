@@ -88,7 +88,7 @@ byte *CloneStr(CONST byte *s) {
     uldat len;
     
     if (s) {
-	len = 1 + LenStr(s);
+	len = 1 + strlen(s);
 	if ((q = AllocMem(len)))
 	    CopyMem(s, q, len);
 	return q;

@@ -32,7 +32,7 @@ void ResetPaletteHW(void);
 obj TwinSelectionGetOwner(void);
 void TwinSelectionSetOwner(obj Owner, tany Time, tany Frac);
 #define SEL_CURRENTTIME ((tany)0)
-void TwinSelectionNotify(obj Requestor, uldat ReqPrivate, uldat Magic, CONST byte MIME[MAX_MIMELEN],
+void TwinSelectionNotify(obj Requestor, uldat ReqPrivate, uldat Magic, CONST char MIME[MAX_MIMELEN],
 			    uldat Len, byte CONST * Data);
 void TwinSelectionRequest(obj Requestor, uldat ReqPrivate, obj Owner);
 
@@ -43,7 +43,7 @@ void SelectionImport(void);
 #endif
 byte SelectionStore(uldat Magic, CONST byte MIME[MAX_MIMELEN], uldat Len, CONST byte *Data);
 
-byte KeyboardEventCommon(udat Code, udat ShiftFlags, udat Len, CONST byte *Seq);
+byte KeyboardEventCommon(udat Code, udat ShiftFlags, udat Len, CONST char *Seq);
 byte MouseEventCommon(dat x, dat y, dat dx, dat dy, udat IdButtons);
 
 dat GetDisplayWidth(void);
@@ -57,7 +57,7 @@ byte InitTransUser(void);
 void Quit(int status);
 void GainPrivileges(void);
 
-int printk(CONST byte *format, ...);
+int printk(CONST char *format, ...);
 int flushk(void);
 
 

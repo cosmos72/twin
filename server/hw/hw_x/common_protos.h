@@ -9,4 +9,5 @@ static ldat calcFontScore(udat fontwidth, udat fontheight, ldat width, ldat heig
 static byte X11_LoadFont(CONST char * fontname, udat fontwidth, udat fontheight);
 static void X11_QuitHW(void);
 static byte X11_InitHW(void);
-void QuitModule(module Module);
+EXTERN_C byte InitModule(module Module);
+EXTERN_C void QuitModule(module Module);

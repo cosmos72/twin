@@ -22,7 +22,7 @@
 
 byte DlOpen(module Module) {
     dlhandle Handle = NULL;
-    uldat len, len0 = 1 + LenStr(pkg_libdir) + LenStr(DL_PREFIX) + LenStr(DL_SUFFIX);
+    uldat len, len0 = 1 + strlen(pkg_libdir) + strlen(DL_PREFIX) + strlen(DL_SUFFIX);
     byte *name = NULL;
     byte (*init_func)(module);
     
@@ -133,7 +133,7 @@ module DlLoad(uldat code) {
     module M = (module)0;
     if (code < MAX_So && !(M = So[code])) {
         CONST byte * name = DlCode2Name(code);
-        M = DlLoadAny(name ? LenStr(name) : 0, name);
+        M = DlLoadAny(name ? strlen(name) : 0, name);
         if ((So[code] = M)) {
             if (All->FnHookModule)
                 All->FnHookModule(All->HookModule);

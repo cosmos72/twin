@@ -79,7 +79,7 @@ TW_C_FEATURES
 # CXX flags '-p -pg' are incompatible with -fomit-frame-pointer
 initial_CXXFLAGS="$CXXFLAGS"
 for try_flag in -fomit-frame-pointer -fno-strict-aliasing -pipe -Wall -Wshadow \
-                 -Wno-uninitialized -Wno-pointer-sign -Wno-unused -Wundef -Wstrict-prototypes \
+                 -Wno-uninitialized -Wno-unused -Wundef -Wstrict-prototypes \
                  -Wcast-qual -Wcast-align -Wpointer-arith -Wbad-function-cast
 do
   save_CXXFLAGS="$CXXFLAGS"

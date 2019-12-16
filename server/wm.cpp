@@ -911,7 +911,7 @@ static void ShowResize(window W) {
 	x -= 2, y -= 2;
 	
     sprintf(buf, "%hdx%hd", x, y);
-    Act(SetText,All->BuiltinRow)(All->BuiltinRow, (x = LenStr(buf)), buf, 0);
+    Act(SetText,All->BuiltinRow)(All->BuiltinRow, (x = strlen(buf)), buf, 0);
     Act(DrawMenu,All->FirstScreen)(All->FirstScreen, All->DisplayWidth - 20, All->DisplayWidth - 10);
 }
 
@@ -1874,7 +1874,7 @@ static void OverrideMethods(byte enter) {
 }
 
 
-byte InitModule(module Module)
+EXTERN_C byte InitModule(module Module)
 {
     byte sent = tfalse;
     
@@ -1912,7 +1912,7 @@ byte InitModule(module Module)
     return tfalse;
 }
 
-void QuitModule(module Module) {
+EXTERN_C void QuitModule(module Module) {
     QuitRC();
     OverrideMethods(tfalse);
     UnRegisterExt(WM,MsgPort,WM_MsgPort);
