@@ -625,7 +625,7 @@ static node MakeSendToScreen(str name) {
 
 static node MakeSyntheticKey(ldat shiftflags, str label) {
     ldat key;
-    CONST byte *seq;
+    const byte *seq;
     byte buf[4];
     node n;
     

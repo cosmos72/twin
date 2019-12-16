@@ -54,8 +54,8 @@ typedef struct {
 #define TSelReq		(twdata->TSelReq)
 
 static void TW_SelectionRequest_up(uldat Requestor, uldat ReqPrivate);
-static void TW_SelectionNotify_up(uldat ReqPrivate, uldat Magic, CONST byte MIME[MAX_MIMELEN],
-				  uldat Len, byte CONST * Data);
+static void TW_SelectionNotify_up(uldat ReqPrivate, uldat Magic, const byte MIME[MAX_MIMELEN],
+				  uldat Len, byte const * Data);
 
 static void TW_Beep(void) {
     Tw_WriteAsciiWindow(Td, Twin, 1, "\007");
@@ -369,8 +369,8 @@ static void TW_SelectionRequest_up(uldat Requestor, uldat ReqPrivate) {
 /*
  * notify our Selection to libTw
  */
-static void TW_SelectionNotify_TW(uldat ReqPrivate, uldat Magic, CONST byte MIME[MAX_MIMELEN],
-				  uldat Len, byte CONST * Data) {
+static void TW_SelectionNotify_TW(uldat ReqPrivate, uldat Magic, const byte MIME[MAX_MIMELEN],
+				  uldat Len, byte const * Data) {
 #ifdef DEBUG_HW_TWIN
     printf("notifying selection (%d/%d) to libTw server\n", ReqPrivate, SelCount-1);
 #endif
@@ -384,8 +384,8 @@ static void TW_SelectionNotify_TW(uldat ReqPrivate, uldat Magic, CONST byte MIME
 /*
  * notify the libTw Selection to twin upper layer
  */
-static void TW_SelectionNotify_up(uldat ReqPrivate, uldat Magic, CONST byte MIME[MAX_MIMELEN],
-				  uldat Len, byte CONST * Data) {
+static void TW_SelectionNotify_up(uldat ReqPrivate, uldat Magic, const byte MIME[MAX_MIMELEN],
+				  uldat Len, byte const * Data) {
 #ifdef DEBUG_HW_TWIN
     printf("notifying selection (%d/%d) to twin core\n", ReqPrivate, TSelCount-1);
 #endif

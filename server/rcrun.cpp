@@ -881,7 +881,7 @@ static byte MouseClickReleaseSameCtx(uldat W1, uldat W2, ldat clickCtx, ldat rel
 
 
 /* handle incoming messages */
-byte RC_VMQueue(CONST wm_ctx *C) {
+byte RC_VMQueue(const wm_ctx *C) {
     uldat ClickWinId = All->FirstScreen->ClickWindow
 	? All->FirstScreen->ClickWindow->Id : NOID;
     widget W;

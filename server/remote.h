@@ -18,7 +18,7 @@ uldat	RegisterRemote(int Fd, obj HandlerData, handler_obj HandlerObj);
 void  UnRegisterRemote(uldat Slot);
 byte	RegisterWindowFdIO(window Window, handler_window HandlerWindow);
 void  UnRegisterWindowFdIO(window Window);
-uldat	RemoteWriteQueue(uldat Slot, uldat len, CONST void *data);
+uldat	RemoteWriteQueue(uldat Slot, uldat len, const void *data);
 #define	RemoteWindowWriteQueue(Window, len, data) RemoteWriteQueue((Window)->RemoteData.FdSlot, (len), (data))
 byte	RemoteFlush(uldat Slot);
 #define	RemoteWindowFlush(Window) RemoteFlush((Window)->RemoteData.FdSlot)

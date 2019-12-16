@@ -65,7 +65,7 @@ static window newTermWindow(byte *title) {
     return Window;
 }
 
-static window OpenTerm(CONST byte *arg0, byte * CONST *argv) {
+static window OpenTerm(const byte *arg0, byte * const *argv) {
     window Window;
     byte *title;
     
@@ -96,7 +96,7 @@ static window OpenTerm(CONST byte *arg0, byte * CONST *argv) {
     return NULL;
 }
 
-static void TermWriteHWFontWindow(window W, uldat len, CONST hwfont *hwData) {
+static void TermWriteHWFontWindow(window W, uldat len, const hwfont *hwData) {
     hwfont (*inv_charset)(hwfont) = W->USE.C.TtyData->InvCharset;
     byte *Data, *sData;
     uldat n;

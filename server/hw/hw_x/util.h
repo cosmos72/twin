@@ -188,8 +188,8 @@ static void X11_SelectionExport_X11(void) {
 /*
  * notify our Selection to X11
  */
-static void X11_SelectionNotify_X11(uldat ReqPrivate, uldat Magic, CONST char MIME[MAX_MIMELEN],
-				    uldat Len, CONST byte * Data) {
+static void X11_SelectionNotify_X11(uldat ReqPrivate, uldat Magic, const char MIME[MAX_MIMELEN],
+				    uldat Len, const byte * Data) {
     XEvent ev;
     
     if (XReqCount == 0) {
@@ -230,12 +230,12 @@ static void X11_SelectionNotify_X11(uldat ReqPrivate, uldat Magic, CONST char MI
     } else if (XReq(XReqCount).target == XA_STRING) {
 	uldat l;
 	byte *_Data = NULL, *d;
-	TW_CONST hwfont *s;
+	const hwfont *s;
 	
 	/* X11 selection contains text, not unicode */
 	if (Magic == SEL_HWFONTMAGIC) {
 	    if ((_Data = d = (byte *)AllocMem(Len))) {
-		s = (TW_CONST hwfont *)Data;
+		s = (const hwfont *)Data;
 		for (l = Len; l; l--)
 		    *d++ = Tutf_UTF_32_to_CP437(*s++);
 		Data = _Data;
@@ -414,10 +414,10 @@ static int X11_Die(Display *d) {
 #endif
 
 #if HW_X_DRIVER != HW_XFT
-static Tutf_function X11_UTF_32_to_charset_function(CONST char *charset) {
+static Tutf_function X11_UTF_32_to_charset_function(const char *charset) {
     XFontProp *fp;
     unsigned long prop;
-    CONST char *s, *fontname = NULL;
+    const char *s, *fontname = NULL;
     uldat i;
     
     if (!charset) {

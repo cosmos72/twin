@@ -37,6 +37,6 @@ void ShowWinList(wm_ctx *C);
 void FocusCtx(wm_ctx *C);
 byte ActivateCtx(wm_ctx *C, byte State);
 
-void ForceRelease(CONST wm_ctx *C);
+void ForceRelease(const wm_ctx *C);
 
 #endif /* _TWIN_WM_H */

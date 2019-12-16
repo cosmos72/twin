@@ -25,7 +25,7 @@ static int printk_fd = NOFD;
 
 
 
-void printk_str(int len, CONST char *s) {
+void printk_str(int len, const char *s) {
     int chunk;
 
     if (len > 0) {
@@ -62,7 +62,7 @@ void printk_str(int len, CONST char *s) {
 
 
 
-int printk(CONST char *format, ...) {
+int printk(const char *format, ...) {
     int len = 0;
 #if defined(TW_HAVE_VSNPRINTF) || defined(TW_HAVE_VSPRINTF)
     va_list ap;

@@ -384,9 +384,9 @@ void DrawSelfWidget(draw_ctx *D) {
 	return;
     
     if (w_USE(W, USEEXPOSE)) {
-	CONST byte *Text = NULL;
-	CONST hwfont *HWFont = NULL;
-	CONST hwattr *HWAttr = NULL;
+	const byte *Text = NULL;
+	const hwfont *HWFont = NULL;
+	const hwattr *HWAttr = NULL;
 	ldat Left, Up, _X1, _X2, _Y1, _Y2;
         ldat Pitch, DWidth, i, j, v; /* (ldat) to avoid multiplication overflows */
 	dat X1, X2, Y1, Y2, dX, dY;
@@ -691,8 +691,8 @@ void DrawSelfWindow(draw_ctx *D) {
     }
 	
     {
-	CONST hwattr *Contents, *CurrCont;
-	CONST hwfont *HWFont;
+	const hwattr *Contents, *CurrCont;
+	const hwfont *HWFont;
 	hwcol *ColText;
 	ldat Left, Up, Rgt;
 	ldat DWidth, i, j, u, v; /* (ldat) to avoid multiplication overflows */

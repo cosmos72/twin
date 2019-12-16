@@ -21,7 +21,7 @@
 #endif
 
 extern udat ErrNo;
-extern char CONST * ErrStr;
+extern char const * ErrStr;
 extern uldat unixSlot;
 extern int unixFd;
 
@@ -34,14 +34,14 @@ void SetAlarm(unsigned seconds);
 # define AlarmReceived     (0)
 #endif
 
-void *CloneMem(CONST void *From, uldat Size);
-char *CloneStr(CONST char *From);
-char *CloneStrL(CONST char *From, uldat Size);
+void *CloneMem(const void *From, uldat Size);
+char *CloneStr(const char *From);
+char *CloneStrL(const char *From, uldat Size);
 char **CloneStrList(char **FromList);
-hwfont *CloneStr2HWFont(CONST char *From, uldat Size);
+hwfont *CloneStr2HWFont(const char *From, uldat Size);
 
-TW_CONST char * TmpDir(void);
-udat CopyToSockaddrUn(TW_CONST char * src, struct sockaddr_un * addr, udat pos);
+const char * TmpDir(void);
+udat CopyToSockaddrUn(const char * src, struct sockaddr_un * addr, udat pos);
 
 byte Error(udat Code_Error);
 
@@ -54,16 +54,16 @@ timevalue *IncrTime(timevalue *Time, timevalue *Incr);
 timevalue *DecrTime(timevalue *Time, timevalue *Decr);
 void SortMsgPortByCallTime(msgport Port);
 void SortAllMsgPortsByCallTime(void);
-byte SendControlMsg(msgport MsgPort, udat Code, udat Len, CONST byte *Data);
+byte SendControlMsg(msgport MsgPort, udat Code, udat Len, const byte *Data);
 
-byte Minimum(byte MaxIndex, CONST ldat *Array);
+byte Minimum(byte MaxIndex, const ldat *Array);
 
-uldat ComputeUsableLenArgv(char *CONST *argv);
-void SetArgv0(char *CONST *argv, uldat argv_usable_len, CONST char *src);
+uldat ComputeUsableLenArgv(char *const *argv);
+void SetArgv0(char *const *argv, uldat argv_usable_len, const char *src);
 
 
 #define SelectionAppend(Len, Data) SelectionStore(SEL_APPEND, NULL, Len, Data)
-byte SelectionStore(uldat Magic, CONST char MIME[MAX_MIMELEN], uldat Len, CONST byte *Data);
+byte SelectionStore(uldat Magic, const char MIME[MAX_MIMELEN], uldat Len, const byte *Data);
 byte SetSelectionFromWindow(window Window);
 void doSelectionSetOwner(obj Owner, tany Time, tany Frac);
 #define SEL_CURRENTTIME ((tany)0)
@@ -90,7 +90,7 @@ void RunTwEnvRC(void);
 
 hwattr EncodeToHWAttrExtra(tpos pos, tternary detail, tbool active, tbool pressed);
 
-byte AssignId(CONST fn_obj Fn_Obj, obj Obj);
+byte AssignId(const fn_obj Fn_Obj, obj Obj);
 byte AssignId_all(all Obj);
 void DropId(obj Obj);
 obj  Id2Obj(byte i, uldat Id);

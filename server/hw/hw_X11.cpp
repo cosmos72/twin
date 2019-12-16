@@ -68,7 +68,7 @@ static void X11_SetColors(hwcol col) {
  * return ttrue if each font glyph is either 'narrow' (latin, etc.) or 'wide' (CJK...)
  * with 'wide' characters exactly twice as wide as 'narrow' ones
  */
-static tbool X11_FontIsDualWidth(CONST XFontStruct *info) {
+static tbool X11_FontIsDualWidth(const XFontStruct *info) {
     XCharStruct * p = info->per_char;
     ldat  wide = info->max_bounds.width,
 	narrow = info->min_bounds.width,
@@ -92,7 +92,7 @@ static tbool X11_FontIsDualWidth(CONST XFontStruct *info) {
 }
 
 /* if font is monospaced, return its score. otherwise return MINLDAT */
-static ldat X11_MonospaceFontScore(CONST XFontStruct *info, udat fontwidth, udat fontheight, ldat best_score) {
+static ldat X11_MonospaceFontScore(const XFontStruct *info, udat fontwidth, udat fontheight, ldat best_score) {
     ldat score = TW_MINLDAT,
         width = info->min_bounds.width,
         height = (ldat)info->ascent + info->descent,
@@ -109,7 +109,7 @@ static ldat X11_MonospaceFontScore(CONST XFontStruct *info, udat fontwidth, udat
 /* return name of selected font in allocated (char *) */
 static char * X11_AutodetectFont(udat fontwidth, udat fontheight) {
     struct {
-        CONST char * wildcard;
+        const char * wildcard;
         ldat score_adj;
     } patterns[] = {
         /* { "-gnu-unifont-medium-r-normal-*-%s?-*-*-*-*-*-iso10646-1",  0 }, double-width chars not supported yet */

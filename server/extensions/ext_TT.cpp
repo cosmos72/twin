@@ -157,7 +157,7 @@ static ttbyte IsSafeMethod(ttopaque m) {
 }
 
 
-static tany ext_TT_CallBExtension(extension Extension, topaque len, TT_CONST byte *data, void *return_type) {
+static tany ext_TT_CallBExtension(extension Extension, topaque len, TT_const byte *data, void *return_type) {
     ttarg args[TW_MAX_ARGS_N];
     struct s_tsfield tws[TW_MAX_ARGS_N];
     ttarg arg0[1];

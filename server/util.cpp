@@ -44,7 +44,7 @@
 #include <Tutf/Tutf.h>
 
 udat ErrNo;
-char CONST * ErrStr;
+char const * ErrStr;
 
 #if 0
 uldat MemLeft(void) {
@@ -70,7 +70,7 @@ byte Error(udat Code_Error) {
     return tfalse;
 }
 
-hwfont *CloneStr2HWFont(CONST char *s, uldat len) {
+hwfont *CloneStr2HWFont(const char *s, uldat len) {
     hwfont *temp, *save;
     
     if (s) {
@@ -179,7 +179,7 @@ static dat CmpCallTime(msgport m1, msgport m2) {
     return CmpTime(&m1->CallTime, &m2->CallTime);
 }
 
-byte Minimum(byte MaxIndex, CONST ldat *Array) {
+byte Minimum(byte MaxIndex, const ldat *Array) {
     byte i, MinIndex;
     ldat Temp;
     
@@ -231,7 +231,7 @@ uldat HexStrToNum(byte *StringHex) {
 */
 
 /* adapted from similar code in bdflush */
-uldat ComputeUsableLenArgv(char *CONST *argv) {
+uldat ComputeUsableLenArgv(char *const *argv) {
     char *ptr;
     uldat count;
     
@@ -243,7 +243,7 @@ uldat ComputeUsableLenArgv(char *CONST *argv) {
     return ptr - argv[0];
 }
 
-void SetArgv0(char *CONST *argv, uldat argv_usable_len, CONST char *src) {
+void SetArgv0(char *const *argv, uldat argv_usable_len, const char *src) {
     uldat len = strlen(src);
     
     if (len + 1 < argv_usable_len) {
@@ -319,7 +319,7 @@ void SortAllMsgPortsByCallTime(void) {
 }
 
 
-byte SendControlMsg(msgport MsgPort, udat Code, udat Len, CONST byte *Data) {
+byte SendControlMsg(msgport MsgPort, udat Code, udat Len, const byte *Data) {
     msg Msg;
     event_control *Event;
     
@@ -335,7 +335,7 @@ byte SendControlMsg(msgport MsgPort, udat Code, udat Len, CONST byte *Data) {
     return tfalse;
 }
 
-byte SelectionStore(uldat Magic, CONST char MIME[MAX_MIMELEN], uldat Len, CONST byte *Data) {
+byte SelectionStore(uldat Magic, const char MIME[MAX_MIMELEN], uldat Len, const byte *Data) {
     uldat newLen;
     byte *newData, pad;
     selection *Sel = All->Selection;
@@ -848,14 +848,14 @@ static void TWDisplayIO(int fd, uldat slot) {
 
 static char envTWD[]="TWDISPLAY=\0\0\0\0\0";
 
-TW_CONST char * TmpDir(void) {
-    TW_CONST char * tmp = getenv("TMPDIR");
+const char * TmpDir(void) {
+    const char * tmp = getenv("TMPDIR");
     if (tmp == NULL)
 	tmp = "/tmp";
     return tmp;
 }
 
-udat CopyToSockaddrUn(TW_CONST char * src, struct sockaddr_un * addr, udat pos) {
+udat CopyToSockaddrUn(const char * src, struct sockaddr_un * addr, udat pos) {
     size_t len = strlen(src), max = sizeof(addr->sun_path) - 1; /* for final '\0' */
     if (pos < max) {
 	if (len >= max - pos)
@@ -867,7 +867,7 @@ udat CopyToSockaddrUn(TW_CONST char * src, struct sockaddr_un * addr, udat pos) 
 }
 
 static struct sockaddr_un addr;
-static TW_CONST char * fullTWD = addr.sun_path;
+static const char * fullTWD = addr.sun_path;
 static char twd[12];
 
 /* set TWDISPLAY and create /tmp/.Twin:<x> */
@@ -1107,9 +1107,9 @@ byte SetServerUid(uldat uid, byte privileges) {
  * as "${HOME}/foo", "${PKG_LIBDIR}/system.foo" or plain "foo"
  */
 char *FindFile(char *name, uldat *fsize) {
-    char CONST *prefix[3], *infix[3];
+    char const *prefix[3], *infix[3];
     char *path;
-    char CONST *dir;
+    char const *dir;
     int i, min_i, max_i, len, nlen = strlen(name);
     struct stat buf;
     
@@ -1372,7 +1372,7 @@ INLINE void _DropId(byte i, obj Obj) {
     }
 }
     
-byte AssignId(CONST fn_obj Fn_Obj, obj Obj) {
+byte AssignId(const fn_obj Fn_Obj, obj Obj) {
     byte i;
     if (Obj) switch (Fn_Obj->Magic) {
       case obj_magic:

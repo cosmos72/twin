@@ -43,21 +43,21 @@
 #endif
 
 
-static CONST byte * CONST modules_prefix = PKG_LIBDIR "/" DL_PREFIX;
+static const byte * const modules_prefix = PKG_LIBDIR "/" DL_PREFIX;
 
-static CONST byte *MYname;
+static const byte *MYname;
 
 static dat TryDisplayWidth, TryDisplayHeight;
 static byte ValidVideo;
 
-CONST char *TWDisplay, *origTWDisplay, *origTERM;
+const char *TWDisplay, *origTWDisplay, *origTERM;
 
 char nullMIME[TW_MAX_MIMELEN];
 
 udat ErrNo;
-byte CONST * ErrStr;
+byte const * ErrStr;
 
-byte CONST * HOME;
+byte const * HOME;
 
 #define L 0x55
 #define M 0xAA
@@ -130,12 +130,12 @@ byte Error(udat Code_Error) {
     return tfalse;
 }
 
-int printk(CONST byte *format, ...) {
+int printk(const byte *format, ...) {
     int i = 0;
 #ifdef TW_HAVE_VPRINTF
     va_list ap;
     va_start(ap, format);
-    i = vfprintf(stderr, (CONST char *)format, ap);
+    i = vfprintf(stderr, (const char *)format, ap);
     va_end(ap);
 #endif
     return i;
@@ -339,7 +339,7 @@ static byte module_InitHW(byte *arg, uldat len) {
     return tfalse;
 }
 
-static display_hw CreateDisplayHW(uldat len, CONST byte *name);
+static display_hw CreateDisplayHW(uldat len, const byte *name);
 static byte InitDisplayHW(display_hw);
 static void QuitDisplayHW(display_hw);
 
@@ -361,7 +361,7 @@ static struct s_display_hw _HW = {
 };
 
 
-void warn_NoHW(uldat len, CONST char *arg, uldat tried) {
+void warn_NoHW(uldat len, const char *arg, uldat tried) {
     printk("twdisplay: All display drivers failed");
     if (arg)
         printk(" for `%.*s\'", (int)Min2(TW_SMALLBUFF, len), arg);
@@ -433,7 +433,7 @@ static void QuitDisplayHW(display_hw D_HW) {
 }
 
 
-static display_hw CreateDisplayHW(uldat NameLen, CONST byte *Name) {
+static display_hw CreateDisplayHW(uldat NameLen, const byte *Name) {
     byte *newName = NULL;
     
     if (Name && (newName = CloneStrL(Name, NameLen))) {	
@@ -454,7 +454,7 @@ static display_hw CreateDisplayHW(uldat NameLen, CONST byte *Name) {
     return (display_hw)0;
 }
 
-static byte IsValidHW(uldat len, CONST byte *arg) {
+static byte IsValidHW(uldat len, const byte *arg) {
     uldat i;
     byte b;
     if (len >= 4 && !CmpMem(arg, "-hw=", 4))
@@ -473,7 +473,7 @@ static byte IsValidHW(uldat len, CONST byte *arg) {
     return ttrue;
 }
 
-static display_hw AttachDisplayHW(uldat len, CONST byte *arg, uldat slot, byte flags) {
+static display_hw AttachDisplayHW(uldat len, const byte *arg, uldat slot, byte flags) {
     if ((len && len <= 4) || CmpMem("-hw=", arg, Min2(len,4))) {
 	printk("twdisplay: specified `%.*s\' is not `--hw=<display>\'\n",
 		(int)len, arg);
@@ -833,8 +833,8 @@ void TwinSelectionSetOwner(obj Owner, tany Time, tany Frac) {
 }
 
 /* HW back-end function: notify selection */
-void TwinSelectionNotify(obj Requestor, uldat ReqPrivate, uldat Magic, CONST char MIME[MAX_MIMELEN],
-			    uldat Len, CONST byte *Data) {
+void TwinSelectionNotify(obj Requestor, uldat ReqPrivate, uldat Magic, const char MIME[MAX_MIMELEN],
+			    uldat Len, const byte *Data) {
     if (!MIME)
 	MIME = nullMIME;
 #if 0
@@ -916,7 +916,7 @@ byte MouseEventCommon(dat x, dat y, dat dx, dat dy, udat Buttons) {
     return ret;
 }
 
-byte KeyboardEventCommon(udat Code, udat ShiftFlags, udat Len, CONST char *Seq) {
+byte KeyboardEventCommon(udat Code, udat ShiftFlags, udat Len, const char *Seq) {
     tevent_keyboard Event;
     tmsg Msg;
 
@@ -1084,7 +1084,7 @@ static void Usage(void) {
 	  "\tggi[@<ggi display>]\n", stdout);
 }
 
-static void TryUsage(CONST char *opt) {
+static void TryUsage(const char *opt) {
     if (opt)
 	fprintf(stdout, "twdisplay: unknown option `%."STR(TW_SMALLBUFF)"s'\n", opt);
     fputs("           try `twdisplay --help' for usage summary.\n", stdout);
@@ -1125,7 +1125,7 @@ int main(int argc, char *argv[]) {
     byte flags = TW_ATTACH_HW_REDIRECT, force = 0;
     byte *dpy = NULL, *arg = NULL, *tty = ttyname(0);
     byte *s, *client_dpy = NULL;
-    TW_CONST byte *buff;
+    const byte *buff;
     uldat chunk;
     int Fd;
     byte ret = 0, ourtty = 0;

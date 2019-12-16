@@ -9,8 +9,8 @@
 #ifndef _TWIN_PRINTK_H
 #define _TWIN_PRINTK_H
 
-int printk(CONST char *format, ...);
-void printk_str(int len, CONST char *s);
+int printk(const char *format, ...);
+void printk_str(int len, const char *s);
 int printk_receive_fd(int fd);
 int flushk(void);
 

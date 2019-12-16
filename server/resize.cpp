@@ -250,11 +250,11 @@ byte EnsureLenRow(row Row, ldat Len, byte DefaultCol) {
     return ttrue;
 }
 
-byte RowWriteAscii(window Window, ldat Len, CONST char *Text) {
+byte RowWriteAscii(window Window, ldat Len, const char *Text) {
     row CurrRow;
-    char CONST * _Text;
+    char const * _Text;
     byte ModeInsert;
-    hwfont CONST * to_UTF_32;
+    hwfont const * to_UTF_32;
     ldat i;
     ldat x, y, max, RowLen;
     
@@ -341,9 +341,9 @@ byte RowWriteAscii(window Window, ldat Len, CONST char *Text) {
 }
 
 
-byte RowWriteHWFont(window Window, ldat Len, CONST hwfont *Text) {
+byte RowWriteHWFont(window Window, ldat Len, const hwfont *Text) {
     row CurrRow;
-    CONST hwfont * _Text;
+    const hwfont * _Text;
     byte ModeInsert;
     ldat i;
     ldat x, y, max, RowLen;
@@ -431,7 +431,7 @@ byte RowWriteHWFont(window Window, ldat Len, CONST hwfont *Text) {
 
 	    
 
-void ExposeWidget2(widget W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch, CONST char *Text, CONST hwfont *Font, CONST hwattr *Attr) {
+void ExposeWidget2(widget W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch, const char *Text, const hwfont *Font, const hwattr *Attr) {
     if (w_USE(W, USEEXPOSE)) {
 	if (Text || Font || Attr) {
 	    if (Text) {
@@ -465,7 +465,7 @@ void ExposeWidget2(widget W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch
 }
 
 
-void ExposeWindow2(window W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch, CONST char *Text, CONST hwfont *Font, CONST hwattr *Attr) {
+void ExposeWindow2(window W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch, const char *Text, const hwfont *Font, const hwattr *Attr) {
     ldat CurX, CurY;
     
     if (W_USE(W, USEEXPOSE)) {
@@ -507,11 +507,11 @@ void ExposeWindow2(window W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch
 	return;
     
     if (Text) {
-	void (*WriteString)(window, ldat, CONST char *);
+	void (*WriteString)(window, ldat, const char *);
 	if (W_USE(W, USECONTENTS)) {
 	    WriteString = W->Fn->TtyWriteString;
 	} else
-	    WriteString = (void (*)(window, ldat, CONST char *))W->Fn->RowWriteString;
+	    WriteString = (void (*)(window, ldat, const char *))W->Fn->RowWriteString;
 	
 	CurX = W->CurX;
 	CurY = W->CurY;
@@ -522,11 +522,11 @@ void ExposeWindow2(window W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch
 	Act(GotoXY,W)(W, CurX, CurY);
 	
     } else if (Font) {
-	void (*WriteHWFont)(window, ldat, CONST hwfont *);
+	void (*WriteHWFont)(window, ldat, const hwfont *);
 	if (W_USE(W, USECONTENTS))
 	    WriteHWFont = W->Fn->TtyWriteHWFont;
 	else
-	    WriteHWFont = (void (*)(window, ldat, CONST hwfont *))W->Fn->RowWriteHWFont;
+	    WriteHWFont = (void (*)(window, ldat, const hwfont *))W->Fn->RowWriteHWFont;
 	
 	CurX = W->CurX;
 	CurY = W->CurY;
@@ -537,11 +537,11 @@ void ExposeWindow2(window W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch
 	Act(GotoXY,W)(W, CurX, CurY);
 	
     } else if (Attr) {
-	void (*WriteHWAttr)(window, dat, dat, ldat, CONST hwattr *);
+	void (*WriteHWAttr)(window, dat, dat, ldat, const hwattr *);
 	if (W_USE(W, USECONTENTS))
 	    WriteHWAttr = W->Fn->TtyWriteHWAttr;
 	else
-	    WriteHWAttr = (void (*)(window, dat, dat, ldat, CONST hwattr *))W->Fn->RowWriteHWAttr;
+	    WriteHWAttr = (void (*)(window, dat, dat, ldat, const hwattr *))W->Fn->RowWriteHWAttr;
 			   
 	for (; YWidth; YWidth--, Up++, Attr += Pitch)
 	    WriteHWAttr(W, Left, Up, XWidth, Attr);
@@ -1805,7 +1805,7 @@ void LowerWidget(widget W, byte alsoUnFocus) {
 }
 
 
-void RestackWidgets(widget W, uldat N, CONST widget *arrayW) {
+void RestackWidgets(widget W, uldat N, const widget *arrayW) {
     widget FW, CW;
     byte need_redraw = tfalse;
     
@@ -1836,7 +1836,7 @@ void RestackWidgets(widget W, uldat N, CONST widget *arrayW) {
 /* ---------------- */
 
 
-void RestackRows(obj O, uldat N, CONST row *arrayR) {
+void RestackRows(obj O, uldat N, const row *arrayR) {
     row FR, CR;
     byte need_redraw = tfalse;
     
@@ -1927,12 +1927,12 @@ void UnPressGadget(gadget G, byte maySendMsgIfNotToggle) {
 
 /* Left < 0 means right-align leaving (-Left-1) margin */
 /* Up   < 0 means down-align  leaving (-Up-1)   margin */
-void WriteTextsGadget(gadget G, byte bitmap, dat TW, dat TH, CONST char *Text, dat L, dat U) {
+void WriteTextsGadget(gadget G, byte bitmap, dat TW, dat TH, const char *Text, dat L, dat U) {
     dat GW = G->XWidth, GH = G->YWidth;
     dat TL = 0, TU = 0, W, H;
     dat _W;
     hwfont *GT;
-    CONST char *TT;
+    const char *TT;
     byte i;
     
     if (G->Flags & GADGETFL_BUTTON) {
@@ -1996,12 +1996,12 @@ void WriteTextsGadget(gadget G, byte bitmap, dat TW, dat TH, CONST char *Text, d
 
 /* Left < 0 means right-align leaving (-Left-1) margin */
 /* Up   < 0 means down-align  leaving (-Up-1)   margin */
-void WriteHWFontsGadget(gadget G, byte bitmap, dat TW, dat TH, CONST hwfont *HWFont, dat L, dat U) {
+void WriteHWFontsGadget(gadget G, byte bitmap, dat TW, dat TH, const hwfont *HWFont, dat L, dat U) {
     dat GW = G->XWidth, GH = G->YWidth;
     dat TL = 0, TU = 0, W, H;
     dat _W;
     hwfont *GT;
-    CONST hwfont *TT;
+    const hwfont *TT;
     byte i;
     
     if (G->Flags & GADGETFL_BUTTON) {

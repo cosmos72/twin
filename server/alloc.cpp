@@ -76,28 +76,28 @@ void *ReAllocMem0(void *Mem, size_t ElementSize, size_t OldCount, size_t NewCoun
 }
 
 
-void *CloneMem(CONST void *From, uldat Size) {
+void *CloneMem(const void *From, uldat Size) {
     void *temp;
     if (From && Size && (temp = AllocMem(Size)))
 	return CopyMem(From, temp, Size);
     return NULL;
 }
 
-byte *CloneStr(CONST byte *s) {
-    byte *q;
+char *CloneStr(const char *s) {
+    char *q;
     uldat len;
     
     if (s) {
 	len = 1 + strlen(s);
-	if ((q = AllocMem(len)))
+	if ((q = (char *)AllocMem(len)))
 	    CopyMem(s, q, len);
 	return q;
     }
     return NULL;
 }
 
-byte *CloneStrL(CONST byte *s, uldat len) {
-    byte *q;
+char *CloneStrL(const char *s, uldat len) {
+    char *q;
     
     if (s) {
 	if ((q = AllocMem(len+1))) {
@@ -110,16 +110,16 @@ byte *CloneStrL(CONST byte *s, uldat len) {
     return NULL;
 }
 
-byte **CloneStrList(byte **s) {
+char **CloneStrList(char **s) {
     uldat n = 1;
-    byte **t = s, **v;
+    char **t = s, **v;
     
     if (t) {
 	while (*t) {
 	    t++;
 	    n++;
 	}
-	t = AllocMem(n * sizeof(byte *));
+	t = (char **)AllocMem(n * sizeof(char *));
     }
     
     if ((v = t)) {
@@ -132,6 +132,7 @@ byte **CloneStrList(byte **s) {
 	    /* failed... clean up */
 	    for (; t < v; t++)
 		FreeMem(*t);
+	    FreeMem(t);
 	    t = NULL;
 	} else
 	    *v = NULL;

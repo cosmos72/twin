@@ -89,7 +89,7 @@ static void X11_SetColors(hwcol col) {
     }
 }
 
-static ldat xftCalcFontScore(udat fontwidth, udat fontheight, XftFont *fontp, CONST char * fontname) {
+static ldat xftCalcFontScore(udat fontwidth, udat fontheight, XftFont *fontp, const char * fontname) {
     if (FC_CHARSET_MAP_SIZE >= 256/32) {
 	FcChar32 map[FC_CHARSET_MAP_SIZE] = {}, *ptr = map, mask = (FcChar32)-1;
 	FcChar32 next, first = FcCharSetFirstPage(fontp->charset, map, &next);
@@ -175,7 +175,7 @@ static char * X11_AutodetectFont(udat fontwidth, udat fontheight) {
             }
 
             /* reuse existing t_fontname if possible, otherwise allocate a new one */
-            len = strlen((CONST char *)file) + strlen(":file=") + 1;
+            len = strlen((const char *)file) + strlen(":file=") + 1;
             if (!t_fontname || (len > t_fontname_len)) {
                 if (t_fontname) {
                     FreeMem(t_fontname);
@@ -262,7 +262,7 @@ static void X11_FlavorQuitHW(void) {
 }
 
 /* custom version of X11_UTF_32_to_charset_function for the XFT driver */
-static Tutf_function X11_UTF_32_to_charset_function(CONST char *charset) {
+static Tutf_function X11_UTF_32_to_charset_function(const char *charset) {
     /* this is sufficient for xft fonts which are 16-bit unicode */
     return X11_UTF_32_to_UCS_2;
 }
