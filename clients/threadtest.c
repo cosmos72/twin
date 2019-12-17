@@ -37,7 +37,7 @@ byte InitThrd(void) {
 	(Thrd_Menu=TwCreateMenu(
 	  COL(BLACK,WHITE), COL(BLACK,GREEN), COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
 	  COL(RED,WHITE), COL(RED,GREEN), (byte)0)) &&
-	(TwInfo4Menu(Thrd_Menu, TW_ROW_ACTIVE, 13, " Thread Test ", "ppppppppppppp"),
+	(TwInfo4Menu(Thrd_Menu, TW_ROW_ACTIVE, 13, " Thread Test ", (const hwcol *)"ppppppppppppp"),
 	 TwItem4MenuCommon(Thrd_Menu));
 }
 

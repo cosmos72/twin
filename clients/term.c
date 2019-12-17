@@ -174,9 +174,10 @@ void Resize(uldat Slot, dat X, dat Y) {
 }
 
 
-static byte **TokenizeStringVec(uldat len, byte *s) {
-    byte **cmd = NULL, *buf, c;
+static char **TokenizeStringVec(uldat len, char *s) {
+    char **cmd = NULL, *buf;
     uldat save_len, n = 0;
+    char c;
     
     /* skip initial spaces */
     while (len && ((c = *s) == '\0' || c == ' ')) {
@@ -184,7 +185,7 @@ static byte **TokenizeStringVec(uldat len, byte *s) {
     }
     save_len = len;
     
-    if (len && (buf = TwAllocMem(len + 1))) {
+    if (len && (buf = (char *)TwAllocMem(len + 1))) {
 	TwCopyMem(s, buf, len);
 	buf[len] = '\0';
 	
@@ -220,15 +221,15 @@ static byte **TokenizeStringVec(uldat len, byte *s) {
     return cmd;
 }
 
-static void FreeStringVec(byte **cmd) {
+static void FreeStringVec(char **cmd) {
     TwFreeMem(cmd[0]);
     TwFreeMem(cmd);
 }
 
-static byte **default_args;
-static byte *default_title = "Twin Term";
+static char **default_args;
+static char *default_title = "Twin Term";
 
-static twindow newTermWindow(byte *title) {
+static twindow newTermWindow(char *title) {
     twindow Window = TwCreateWindow
 	(TwLenStr(title), title, NULL,
 	 Term_Menu, COL(WHITE,BLACK), TW_LINECURSOR,
@@ -247,12 +248,12 @@ static twindow newTermWindow(byte *title) {
     return Window;
 }
 
-static byte OpenTerm(TW_CONST byte *arg0, byte * TW_CONST *argv) {
+static byte OpenTerm(TW_CONST char *arg0, char * TW_CONST *argv) {
     twindow Window;
     int Fd;
     pid_t Pid;
     uldat Slot;
-    byte *title;
+    char *title;
     
     /* if {arg0, argv} is {NULL, ...} or {"", ... } then start user's shell */
     if (arg0 && *arg0 && argv && argv[0]) {
@@ -324,7 +325,7 @@ static void HandleSignalChild(void) {
 
 static byte Add_Spawn_Row4Menu(twindow Window) {
     uldat len = strlen(default_title);
-    byte *name, ret;
+    char *name, ret;
     
     if (strcmp(default_title, "Twin Term") &&
 	(name = TwAllocMem(len + 6))) {
@@ -359,7 +360,8 @@ static byte InitTerm(void) {
 	(Term_Menu=TwCreateMenu
 	 (COL(BLACK,WHITE), COL(BLACK,GREEN), COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
 	  COL(RED,WHITE), COL(RED,GREEN), (byte)0)) &&
-	(TwInfo4Menu(Term_Menu, TW_ROW_ACTIVE, 18, " Remote Twin Term ", "ptpppppptpppptpppp"), ttrue) &&
+	(TwInfo4Menu(Term_Menu, TW_ROW_ACTIVE, 18, " Remote Twin Term ",
+                     (const hwcol *)"ptpppppptpppptpppp"), ttrue) &&
 	(Window=TwWin4Menu(Term_Menu)) &&
 	Add_Spawn_Row4Menu(Window) &&
 	TwRow4Menu(Window, COD_QUIT,  tfalse, 6, " Exit ") &&
@@ -450,7 +452,8 @@ static void TwinTermH(void) {
 	    
 	} else if (Msg->Type==TW_MSG_USER_CONTROL) {
 	    if (Event->EventControl.Code == TW_MSG_CONTROL_OPEN) {
-		byte **cmd = TokenizeStringVec(Event->EventControl.Len, Event->EventControl.Data);
+		char **cmd = TokenizeStringVec(Event->EventControl.Len,
+                                               (char *)Event->EventControl.Data);
 		if (cmd) {
 		    OpenTerm(cmd[0], cmd);
 		    FreeStringVec(cmd);
@@ -461,7 +464,7 @@ static void TwinTermH(void) {
 }
 
 static void TwinTermIO(int Slot) {
-    static byte buf[TW_BIGBUFF];
+    static char buf[TW_BIGBUFF];
     ldat got = 0, chunk = 0;
     
     do {
@@ -498,7 +501,7 @@ int main(int argc, char *argv[]) {
     int num_fds;
     uldat Slot, err;
     struct timeval zero = {0, 0}, *pt;
-    byte *t, *name = argv[0], *shell[3];
+    char *t, *name = argv[0], *shell[3];
 
     FD_ZERO(&save_rfds);
 
@@ -517,7 +520,7 @@ int main(int argc, char *argv[]) {
 	    default_title = *++argv;
 	    argc--;
 	} else if (argc > 1 && !strcmp(*argv, "-e")) {
-	    default_args = (byte **)argv;
+	    default_args = argv;
 	    default_args[0] = default_args[1];
 	    break;
 	} else {
