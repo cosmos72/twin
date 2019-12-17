@@ -40,7 +40,7 @@ struct MD5Context {
 };
 
 void MD5Init(struct MD5Context *context);
-void MD5Update(struct MD5Context *context, unsigned char CONST *buf, size_t len);
+void MD5Update(struct MD5Context *context, void CONST *mem, size_t len);
 void MD5Final(unsigned char digest[16], struct MD5Context *context);
 void MD5Transform(md5_uint32 buf[4], md5_uint32 CONST in[16]);
 

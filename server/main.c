@@ -41,11 +41,12 @@
 
 fd_set save_rfds, save_wfds;
 int max_fds;
-byte lenTWDisplay, *TWDisplay, *origTWDisplay, *origTERM, *origHW, *HOME;
-byte **main_argv, **orig_argv;
+byte lenTWDisplay;
+char *TWDisplay, *origTWDisplay, *origTERM, *origHW, *HOME;
+char **main_argv, **orig_argv;
 uldat main_argv_usable_len;
 byte flag_secure, flag_envrc;
-byte *flag_secure_msg = "twin: cannot exec() external programs in secure mode.\n";
+char *flag_secure_msg = "twin: cannot exec() external programs in secure mode.\n";
 
 int (*OverrideSelect)(int n, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *timeout);
 
@@ -154,7 +155,7 @@ static byte Check4SpecialArgs(void) {
 }
 
 static byte DieWMSo(void) {
-    printk("twin: fatal: failed to load the window manager: %."STR(TW_SMALLBUFF)"s\n", ErrStr);
+    printk("twin: fatal: failed to load the window manager: " SS "\n", ErrStr);
     flushk();
     return tfalse;
 }

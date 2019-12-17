@@ -683,13 +683,13 @@ typedef hwfont (*Tutf_function)(hwfont);
 
 
 /* get the charset `id' (opaque) from a charset alias */
-uldat Tutf_charset_id(TUTF_CONST byte * alias);
+uldat Tutf_charset_id(TUTF_CONST char * alias);
 
 /* get the canonical name from the charset `id' */
-TUTF_CONST byte *Tutf_charset_name(uldat id);
+TUTF_CONST char *Tutf_charset_name(uldat id);
 
 /* get the canonical name from a charset alias */
-TUTF_CONST byte *Tutf_charset_alias(TUTF_CONST byte * alias);
+TUTF_CONST char *Tutf_charset_alias(TUTF_CONST char * alias);
 
 
 

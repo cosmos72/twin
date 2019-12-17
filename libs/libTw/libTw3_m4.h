@@ -51,8 +51,8 @@
 
   case order_FindFunction:
     switch (n) {
-      case 2: L = (a[1]._) * sizeof(byte); break;
-      case 4: L = (a[3]._) * sizeof(byte); break;
+      case 2: L = (a[1]._) * sizeof(char); break;
+      case 4: L = (a[3]._) * sizeof(char); break;
     }
     break;
 
@@ -73,13 +73,13 @@
 
   case order_AttachHW:
     switch (n) {
-      case 2: L = (a[1]._) * sizeof(byte); break;
+      case 2: L = (a[1]._) * sizeof(char); break;
     }
     break;
 
   case order_DetachHW:
     switch (n) {
-      case 2: L = (a[1]._) * sizeof(byte); break;
+      case 2: L = (a[1]._) * sizeof(char); break;
     }
     break;
 
@@ -230,12 +230,12 @@
 
   case order_CreateMsgPort:
     switch (n) {
-      case 2: L = (a[1]._) * sizeof(byte); break;
+      case 2: L = (a[1]._) * sizeof(char); break;
     }
     break;
   case order_FindMsgPort:
     switch (n) {
-      case 3: L = (a[2]._) * sizeof(byte); break;
+      case 3: L = (a[2]._) * sizeof(char); break;
     }
     break;
 

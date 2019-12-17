@@ -132,8 +132,8 @@ void RunNoHW(byte print_info) {
 }
 
 
-static byte module_InitHW(TW_CONST byte *arg, uldat len) {
-    TW_CONST byte *name, *tmp;
+static byte module_InitHW(const byte *arg, uldat len) {
+    const byte *name, *tmp;
     byte * alloc_name;
     byte *(*InitD)(void);
     module Module;
@@ -163,9 +163,9 @@ static byte module_InitHW(TW_CONST byte *arg, uldat len) {
 	Module = DlLoadAny(len + 3, alloc_name);
 	
 	if (Module) {
-	    printk("twin: starting display driver module `%."STR(TW_SMALLBUFF)"s'...\n", alloc_name);
+	    printk("twin: starting display driver module `" SS "'...\n", alloc_name);
 	    if ((InitD = Module->Private) && InitD()) {
-		printk("twin: ...module `%."STR(TW_SMALLBUFF)"s' successfully started.\n", alloc_name);
+		printk("twin: ...module `" SS "' successfully started.\n", alloc_name);
 		FreeMem(alloc_name);
 		HW->Module = Module; Module->Used++;
 		return ttrue;
@@ -180,17 +180,17 @@ static byte module_InitHW(TW_CONST byte *arg, uldat len) {
         name = (byte *)"(NULL)";
 
     if (Module) {
-	printk("twin: ...module `%."STR(TW_SMALLBUFF)"s' failed to start.\n", name);
+	printk("twin: ...module `" SS "' failed to start.\n", name);
     } else
-	printk("twin: unable to load display driver module `%."STR(TW_SMALLBUFF)"s' :\n"
-	       "      %."STR(TW_SMALLBUFF)"s\n", name, ErrStr);
+	printk("twin: unable to load display driver module `" SS "' :\n"
+	       "      " SS "\n", name, ErrStr);
     if (alloc_name)
 	FreeMem(alloc_name);
     
     return tfalse;
 }
 
-static byte set_hw_name(display_hw D_HW, TW_CONST byte * name, uldat namelen) {
+static byte set_hw_name(display_hw D_HW, const byte * name, uldat namelen) {
     byte * alloc_name;
     
     if (D_HW && (alloc_name = CloneStrL(name, namelen)) != NULL) {
@@ -202,7 +202,7 @@ static byte set_hw_name(display_hw D_HW, TW_CONST byte * name, uldat namelen) {
     return ttrue;
 }
 
-static void warn_NoHW(TW_CONST byte *arg, uldat len) {
+static void warn_NoHW(const byte *arg, uldat len) {
     printk("twin: all display drivers failed");
     if (arg)
         printk(" for `%.*s\'\n", Min2((int)len,TW_SMALLBUFF), arg);
@@ -294,7 +294,7 @@ void QuitDisplayHW(display_hw D_HW) {
     RestoreHW;
 }
 
-static byte IsValidHW(uldat len, CONST byte *arg) {
+static byte IsValidHW(uldat len, const byte *arg) {
     uldat i;
     byte b;
     if (len >= 4 && !CmpMem(arg, "-hw=", 4))
@@ -313,7 +313,7 @@ static byte IsValidHW(uldat len, CONST byte *arg) {
     return ttrue;
 }
 
-display_hw AttachDisplayHW(uldat len, CONST byte *arg, uldat slot, byte flags) {
+display_hw AttachDisplayHW(uldat len, const byte *arg, uldat slot, byte flags) {
     display_hw D_HW = NULL;
 
     if ((len && len <= 4) || CmpMem("-hw=", arg, Min2(len,4))) {
@@ -361,7 +361,7 @@ display_hw AttachDisplayHW(uldat len, CONST byte *arg, uldat slot, byte flags) {
 }
 
 
-byte DetachDisplayHW(uldat len, CONST byte *arg, byte flags) {
+byte DetachDisplayHW(uldat len, const byte *arg, byte flags) {
     byte done = tfalse;
     display_hw s_HW;
     
@@ -407,7 +407,7 @@ byte InitHW(void) {
 	else if (!strncmp(arg, "-hw=", 4))
 	    hwcount++;
 	else
-	    printk("twin: ignoring unknown option `%."STR(TW_SMALLBUFF)"s'\n", arg);
+	    printk("twin: ignoring unknown option `" SS "'\n", arg);
     }
 
     if (nohw && hwcount > 0) {
@@ -683,8 +683,8 @@ void TwinSelectionSetOwner(obj Owner, tany Time, tany Frac) {
     }
 }
 
-void TwinSelectionNotify(obj Requestor, uldat ReqPrivate, uldat Magic, CONST byte MIME[MAX_MIMELEN],
-			    uldat Len, CONST byte *Data) {
+void TwinSelectionNotify(obj Requestor, uldat ReqPrivate, uldat Magic, const char MIME[MAX_MIMELEN],
+			    uldat Len, const byte *Data) {
     msg NewMsg;
     event_any *Event;
 #if 0    
@@ -1181,7 +1181,7 @@ byte StdAddMouseEvent(udat Code, dat MouseX, dat MouseY) {
     return tfalse;
 }
 
-byte KeyboardEventCommon(udat Code, udat ShiftFlags, udat Len, CONST byte *Seq) {
+byte KeyboardEventCommon(udat Code, udat ShiftFlags, udat Len, const byte *Seq) {
     event_keyboard *Event;
     msg Msg;
 

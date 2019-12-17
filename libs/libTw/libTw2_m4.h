@@ -30,12 +30,12 @@
 
 
 
-static uldat _Tw_FindFunction(tw_d TwD, byte a1, TW_CONST byte *a2, byte a3, TW_CONST byte *a4) {
+static uldat _Tw_FindFunction(tw_d TwD, byte a1, TW_CONST char *a2, byte a3, TW_CONST char *a4) {
     return (uldat)_Tw_EncodeCall(ENCODE_FL_NOLOCK|0, order_FindFunction, TwD 
     , n(a1)
-    , n((a1) * sizeof(byte)), N(a2)
+    , n((a1) * sizeof(char)), N(a2)
     , n(a3)
-    , n((a3) * sizeof(byte)), N(a4));
+    , n((a3) * sizeof(char)), N(a4));
 }
 
 
@@ -71,18 +71,18 @@ void Tw_NeedResizeDisplay(tw_d TwD) {
 
 
 
-void Tw_AttachHW(tw_d TwD, uldat a1, TW_CONST byte *a2, byte a3) {
+void Tw_AttachHW(tw_d TwD, uldat a1, TW_CONST char *a2, byte a3) {
     _Tw_EncodeCall(ENCODE_FL_VOID, order_AttachHW, TwD 
     , n(a1)
-    , n((a1) * sizeof(byte)), N(a2)
+    , n((a1) * sizeof(char)), N(a2)
     , n(a3));
 }
 
 
-byte Tw_DetachHW(tw_d TwD, uldat a1, TW_CONST byte *a2) {
+byte Tw_DetachHW(tw_d TwD, uldat a1, TW_CONST char *a2) {
     return (byte)_Tw_EncodeCall(0, order_DetachHW, TwD 
     , n(a1)
-    , n((a1) * sizeof(byte)), N(a2));
+    , n((a1) * sizeof(char)), N(a2));
 }
 
 
@@ -477,17 +477,17 @@ void Tw_SetInfoMenu(tw_d TwD, tmenu a1, byte a2, ldat a3, TW_CONST byte *a4, TW_
 }
 
 
-tmsgport Tw_CreateMsgPort(tw_d TwD, byte a1, TW_CONST byte *a2) {
+tmsgport Tw_CreateMsgPort(tw_d TwD, byte a1, TW_CONST char *a2) {
     return (tobj)_Tw_EncodeCall(0, order_CreateMsgPort, TwD 
     , n(a1)
-    , n((a1) * sizeof(byte)), N(a2));
+    , n((a1) * sizeof(char)), N(a2));
 }
 
-tmsgport Tw_FindMsgPort(tw_d TwD, tmsgport a1, byte a2, TW_CONST byte *a3) {
+tmsgport Tw_FindMsgPort(tw_d TwD, tmsgport a1, byte a2, TW_CONST char *a3) {
     return (tobj)_Tw_EncodeCall(0, order_FindMsgPort, TwD 
     , n(a1)
     , n(a2)
-    , n((a2) * sizeof(byte)), N(a3));
+    , n((a2) * sizeof(char)), N(a3));
 }
 
 

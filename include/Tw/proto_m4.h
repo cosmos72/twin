@@ -31,7 +31,7 @@
 
 
 /** return server-side id of given libTw function name with given prototype */
-uldat  Tw_FindFunction(tdisplay TwD, byte namelen, TW_CONST byte *name, byte protolen, TW_CONST byte *proto);
+uldat  Tw_FindFunction(tdisplay TwD, byte namelen, TW_CONST char *name, byte protolen, TW_CONST char *proto);
 
 
 /** sync libTw socket: flush output buffer and wait for server replies */
@@ -55,10 +55,10 @@ void  Tw_NeedResizeDisplay(tdisplay TwD);
 
 
 /** tell server to open a new display; used by twattach/twdisplay */
-void  Tw_AttachHW(tdisplay TwD, uldat len, TW_CONST byte *name, byte flags);
+void  Tw_AttachHW(tdisplay TwD, uldat len, TW_CONST char *name, byte flags);
 
 /** tell server to close given display */
-byte  Tw_DetachHW(tdisplay TwD, uldat len, TW_CONST byte *name);
+byte  Tw_DetachHW(tdisplay TwD, uldat len, TW_CONST char *name);
 
 
 /** set server global charset translation */
@@ -138,8 +138,8 @@ uldat  Tw_Create4MenuCommonMenuItem(tdisplay TwD, tmenu M);
 tmenu  Tw_CreateMenu(tdisplay TwD, hwcol colitem, hwcol colselect, hwcol coldisabled, hwcol colselectdisabled, hwcol colshortcut, hwcol colshortcutselect, byte flags);
 void  Tw_SetInfoMenu(tdisplay TwD, tmenu M, byte flags, ldat len, TW_CONST byte *text, TW_CONST hwcol *coltext);
 
-tmsgport  Tw_CreateMsgPort(tdisplay TwD, byte len, TW_CONST byte *name);
-tmsgport  Tw_FindMsgPort(tdisplay TwD, tmsgport prev, byte len, TW_CONST byte *name);
+tmsgport  Tw_CreateMsgPort(tdisplay TwD, byte len, TW_CONST char *name);
+tmsgport  Tw_FindMsgPort(tdisplay TwD, tmsgport prev, byte len, TW_CONST char *name);
 
 void  Tw_BgImageScreen(tdisplay TwD, tscreen S, dat w, dat h, TW_CONST hwattr *textattr);
 

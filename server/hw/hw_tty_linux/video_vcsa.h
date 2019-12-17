@@ -8,7 +8,7 @@ static void vcsa_HideMouse(void);
 
 /* return tfalse if failed */
 static byte vcsa_InitVideo(void) {
-    static byte vcsa_name[] = "/dev/vcsaXX";
+    char vcsa_name[] = "/dev/vcsaXX";
 
     if (!tty_name) {
 	printk("      vcsa_InitVideo() failed: unable to detect tty device\n");
@@ -16,8 +16,8 @@ static byte vcsa_InitVideo(void) {
     }
     
     if (tty_number < 1 || tty_number > 63) {
-	printk("      vcsa_InitVideo() failed: terminal `%."STR(TW_SMALLBUFF)"s'\n"
-			 "      is not a local linux console.\n", tty_name);
+	printk("      vcsa_InitVideo() failed: terminal `" SS "'\n"
+               "      is not a local linux console.\n", tty_name);
 	return tfalse;
     }
 
@@ -29,7 +29,7 @@ static byte vcsa_InitVideo(void) {
     DropPrivileges();
     
     if (VcsaFd < 0) {
-	printk("      vcsa_InitVideo() failed: unable to open `%."STR(TW_SMALLBUFF)"s': %."STR(TW_SMALLBUFF)"s\n",
+	printk("      vcsa_InitVideo() failed: unable to open `" SS "': " SS "\n",
 		vcsa_name, strerror(errno));
 	return tfalse;
     }
@@ -50,8 +50,8 @@ static byte vcsa_InitVideo(void) {
     
     HW->HWSelectionImport  = AlwaysFalse;
     HW->HWSelectionExport  = NoOp;
-    HW->HWSelectionRequest = (void *)NoOp;
-    HW->HWSelectionNotify  = (void *)NoOp;
+    HW->HWSelectionRequest = (void (*)(obj, uldat))NoOp;
+    HW->HWSelectionNotify  = (void (*)(uldat, uldat, const char*, uldat, const byte*))NoOp;
     HW->HWSelectionPrivate = 0;
     
     HW->CanDragArea = linux_CanDragArea;
@@ -194,7 +194,7 @@ static void vcsa_FlushVideo(void) {
 			continue;
 		    }
 		}
-		vcsa_write(VcsaFd, (void *)&Video[prevS], prevE+1-prevS, _prevS);
+		vcsa_write(VcsaFd, &Video[prevS], prevE+1-prevS, _prevS);
 	    }
 	    prevS = start;
 	    prevE = end;
@@ -202,7 +202,7 @@ static void vcsa_FlushVideo(void) {
 	}
     }
     if (prevS != (uldat)-1) {
-	vcsa_write(VcsaFd, (void *)&Video[prevS], prevE+1-prevS, _prevS);
+	vcsa_write(VcsaFd, &Video[prevS], prevE+1-prevS, _prevS);
     }
     
     /* ... and this redraws the mouse */
@@ -240,13 +240,13 @@ static void vcsa_ShowMouse(void) {
 
     h = c | HWATTR_FONTMASK(h);
 
-    vcsa_write(VcsaFd, (void *)&h, 1, _pos);
+    vcsa_write(VcsaFd, &h, 1, _pos);
 }
 
 static void vcsa_HideMouse(void) {
     uldat pos = HW->Last_x + HW->Last_y * (ldat)DisplayWidth;
     uldat _pos = HW->Last_x + HW->Last_y * (ldat)HW->X;
 
-    vcsa_write(VcsaFd, (void *)&Video[pos], 1, _pos);
+    vcsa_write(VcsaFd, &Video[pos], 1, _pos);
 }
 

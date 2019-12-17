@@ -16,6 +16,8 @@
 
 #ifdef CONF_SOCKET_PTHREADS
 
+# include <pthread.h>
+
 # define th_self                 pthread_t
 # define th_self_none            ((th_self)-1)
 # define th_self_get()           pthread_self()
@@ -41,7 +43,7 @@
 
 # else
 
-#  warning no recursive pthreads available, trying emulation
+/* #warning no recursive pthreads available, emulating them */
 
 #define th_r_mutex th_r_mutex
 typedef struct {

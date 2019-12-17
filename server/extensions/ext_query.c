@@ -9,7 +9,7 @@
 #include "ext_query.h"
 
 
-static void warn_NoExtension(topaque len, CONST byte *name, uldat tried) {
+static void warn_NoExtension(topaque len, const char *name, uldat tried) {
     if (!tried)
 	printk("twin: no extension compiled into twin, and all extension modules failed\n"
 	       "      for extension `%.*s'\n", Min2((int)len,TW_SMALLBUFF), name);
@@ -23,13 +23,14 @@ static void warn_NoExtension(topaque len, CONST byte *name, uldat tried) {
     }
 }
 
-static extension LoadExtension(topaque namelen, CONST byte *name) {
+static extension LoadExtension(topaque namelen, const char *name) {
     extension E = (extension)0;
     uldat tried = 0;
     topaque fullnamelen;
-    byte *fullname, success;
+    char *fullname, success;
     
-    if (!namelen || memchr(name, '/', namelen) || !(fullname = AllocMem(namelen + 16)))
+    if (!namelen || memchr(name, '/', namelen) ||
+        !(fullname = (char *)AllocMem(namelen + 16)))
 	return E;
 	
     sprintf(fullname, "extensions/ext_%.*s", (int)namelen, name);
@@ -58,7 +59,7 @@ static extension LoadExtension(topaque namelen, CONST byte *name) {
 }
 
 
-extension QueryExtension(byte len, CONST byte *name) {
+extension QueryExtension(byte len, const char *name) {
     module M;
     topaque namelen = len;
     

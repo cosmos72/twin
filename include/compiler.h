@@ -67,5 +67,13 @@
 # endif
 #endif
 
+#ifndef EXTERN_C
+# ifdef __cplusplus
+#  define EXTERN_C extern "C"
+# else
+#  define EXTERN_C
+# endif
+#endif
+
 #endif /* _TWIN_COMPILER_H */
 

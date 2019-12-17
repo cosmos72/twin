@@ -1112,7 +1112,7 @@ YY_DECL
 
 #line 1114 "rcparse_lex.c"
 
-	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
+	while ( /*constCOND*/1 )		/* loops until end-of-file is reached */
 		{
 		yy_cp = (yy_c_buf_p);
 
@@ -2731,7 +2731,7 @@ int set_yy_file(char *path) {
     if (!(f = fopen(path, "r")))
 	return 1;
 
-    len = LenStr(path) + 1;
+    len = strlen(path) + 1;
     
     read_stack[read_stack_curr++] = YY_CURRENT_BUFFER;
     LINE_NO = 1;

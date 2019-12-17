@@ -11,12 +11,14 @@ INLINE void termcap_MoveToXY(udat x, udat y) {
 }
 
 
-static udat termcap_LookupKey(udat *ShiftFlags, byte *slen, byte *s, byte *retlen, byte **ret) {
+static udat termcap_LookupKey(udat *ShiftFlags, byte *slen, char *s,
+                              byte *retlen, const char **ret) {
     struct linux_keys {
 	udat k;
-	byte l, *s;
+	byte l;
+        const char *s;
     };
-    static struct linux_keys CONST linux_key[] = {
+    static struct linux_keys const linux_key[] = {
 # define IS(k, l, s) { CAT(TW_,k), l, s },
 IS(F1,		4, "\033[[A")
 IS(F2,		4, "\033[[B")
@@ -45,9 +47,9 @@ IS(Right,	3, "\033[C")
 IS(Down,	3, "\033[B")
 #undef IS
     };
-    struct linux_keys CONST *lk;
+    struct linux_keys const *lk;
     
-    byte **key;
+    const char **key;
     byte keylen, len = *slen;
    
     *ret = s;
@@ -103,7 +105,7 @@ IS(Down,	3, "\033[B")
     return TW_Null;
 }
 
-static char *termcap_extract(CONST char *cap, byte **dest) {
+static char *termcap_extract(const char *cap, byte **dest) {
     char buf[20], *d = buf, *s = tgetstr(cap, &d);
 
     if (!s || !*s) {
@@ -135,7 +137,7 @@ static void termcap_cleanup(void) {
 }
 
 static void fixup_colorbug(void) {
-    uldat len = LenStr(tc_attr_off);
+    uldat len = strlen(tc_attr_off);
     byte *s = AllocMem( len + 9);
     
     if (s) {
@@ -147,13 +149,13 @@ static void fixup_colorbug(void) {
 }
 
 static byte termcap_InitVideo(void) {
-    CONST byte *term = tty_TERM;
-    CONST char *tc_name[tc_cap_N + 1] = {
+    const byte *term = tty_TERM;
+    const char *tc_name[tc_cap_N + 1] = {
         "cl", "cm", "ve", "vi", "md", "mb", "me", "ks", "ke", "bl", "as", "ae",
         "k1", "k2", "k3", "k4", "k5", "k6", "k7", "k8", "k9", "k;", "F1", "F2",
         "&7", "kh", "@7", "kD", "kI", "kN", "kP", "kl", "ku", "kr", "kd", NULL
     };
-    CONST char **n;
+    const char **n;
     byte **d;
     char tcbuf[4096];		/* by convention, this is enough */
 
@@ -166,11 +168,11 @@ static byte termcap_InitVideo(void) {
       case 1:
 	break;
       case 0:
-	printk("      termcap_InitVideo() failed: no entry for `%."STR(TW_SMALLBUFF)"s' in the terminal database.\n"
+	printk("      termcap_InitVideo() failed: no entry for `" SS "' in the terminal database.\n"
 	       "      Please set your $TERM environment variable correctly.\n", term);
 	return tfalse;
       default:
-	printk("      termcap_InitVideo() failed: system call error in tgetent(): %."STR(TW_SMALLBUFF)"s\n",
+	printk("      termcap_InitVideo() failed: system call error in tgetent(): " SS "\n",
                strerror(errno));
 	return tfalse;
     }
@@ -197,7 +199,7 @@ static byte termcap_InitVideo(void) {
     
     if (tty_use_utf8 == ttrue+ttrue) {
 	/* cannot really autodetect an utf8-capable terminal... use a whitelist */
-        uldat termlen = LenStr(term);
+        uldat termlen = strlen(term);
 	tty_use_utf8 = ((termlen == 5 && (!CmpMem(term, "xterm", 5) || !CmpMem(term, "linux", 5))) ||
                         (termlen >= 6 && !CmpMem(term, "xterm-", 6)) ||
                         (termlen >= 12 && !CmpMem(term, "rxvt-unicode", 12)));
@@ -215,7 +217,7 @@ static byte termcap_InitVideo(void) {
     if (colorbug)
 	fixup_colorbug();
     
-    fprintf(stdOUT, "%s%s%s", tc_attr_off, (tc_charset_start ? (CONST char *)tc_charset_start : ""), (tty_is_xterm ? "\033[?1h" : ""));
+    fprintf(stdOUT, "%s%s%s", tc_attr_off, (tc_charset_start ? (const char *)tc_charset_start : ""), (tty_is_xterm ? "\033[?1h" : ""));
     
     HW->FlushVideo = termcap_FlushVideo;
     HW->FlushHW = stdout_FlushHW;

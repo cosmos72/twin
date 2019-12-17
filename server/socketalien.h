@@ -42,17 +42,17 @@
 # include <netinet/in.h> /* for htons(), htonl() - alternate location */
 #endif
 
-INLINE void FlipCopyMem(CONST byte *src, byte *dst, uldat len) {
+INLINE void FlipCopyMem(const byte *src, byte *dst, uldat len) {
     switch (len) {
       case 2:
-	*(uint16_t * TW_ATTR_PTR_ALIGNED_1)dst = htons(*(uint16_t CONST * TW_ATTR_PTR_ALIGNED_1)src);
+	*(uint16_t * TW_ATTR_PTR_ALIGNED_1)dst = htons(*(uint16_t const * TW_ATTR_PTR_ALIGNED_1)src);
 	break;
       case 4:
-	*(uint32_t * TW_ATTR_PTR_ALIGNED_1)dst = htonl(*(uint32_t CONST * TW_ATTR_PTR_ALIGNED_1)src);
+	*(uint32_t * TW_ATTR_PTR_ALIGNED_1)dst = htonl(*(uint32_t const * TW_ATTR_PTR_ALIGNED_1)src);
 	break;
       case 8:
-	((uint32_t * TW_ATTR_PTR_ALIGNED_1)dst)[0] = htonl(((uint32_t CONST * TW_ATTR_PTR_ALIGNED_1)src)[1]);
-	((uint32_t * TW_ATTR_PTR_ALIGNED_1)dst)[1] = htonl(((uint32_t CONST * TW_ATTR_PTR_ALIGNED_1)src)[0]);
+	((uint32_t * TW_ATTR_PTR_ALIGNED_1)dst)[0] = htonl(((uint32_t const * TW_ATTR_PTR_ALIGNED_1)src)[1]);
+	((uint32_t * TW_ATTR_PTR_ALIGNED_1)dst)[1] = htonl(((uint32_t const * TW_ATTR_PTR_ALIGNED_1)src)[0]);
 	break;
       default:
 	src += len - 1;
@@ -63,7 +63,7 @@ INLINE void FlipCopyMem(CONST byte *src, byte *dst, uldat len) {
 }
 
 #else
-INLINE void FlipCopyMem(CONST byte *src, byte *dst, uldat len) {
+INLINE void FlipCopyMem(const byte *src, byte *dst, uldat len) {
     src += len - 1;
     while (len--)
 	*dst++ = *src--;
@@ -73,7 +73,7 @@ INLINE void FlipCopyMem(CONST byte *src, byte *dst, uldat len) {
 
 
 /*translate from alien data, copying srclen bytes to dstlen bytes, optionally flipping byte order*/
-static void alienRead(CONST byte *src, uldat srclen, byte *dst, uldat dstlen, byte flip) {
+static void alienRead(const byte *src, uldat srclen, byte *dst, uldat dstlen, byte flip) {
     
 #if TW_IS_LITTLE_ENDIAN
     
@@ -103,7 +103,7 @@ static void alienRead(CONST byte *src, uldat srclen, byte *dst, uldat dstlen, by
 }
 
 /*translate to alien data, copying srclen bytes to dstlen bytes, optionally flipping byte order*/
-static void alienWrite(CONST byte *src, uldat srclen, byte *dst, uldat dstlen, byte flip) {
+static void alienWrite(const byte *src, uldat srclen, byte *dst, uldat dstlen, byte flip) {
     
 #if TW_IS_LITTLE_ENDIAN
     
@@ -133,13 +133,13 @@ static void alienWrite(CONST byte *src, uldat srclen, byte *dst, uldat dstlen, b
 }
 
 /* convert alien type at (*src) to native and put it at (dst) */
-static void alienPop(byte CONST ** src, uldat alien_len, byte *dst, uldat len) {
+static void alienPop(byte const ** src, uldat alien_len, byte *dst, uldat len) {
     alienRead(*src, alien_len, dst, len, AlienXendian(Slot) == MagicAlienXendian);
     *src += alien_len;
 }
 
 /* convert native type at (src) to alien and put it at (*dst) */
-static void alienPush(CONST byte *src, uldat len, byte **dst, uldat alien_len) {
+static void alienPush(const byte *src, uldat len, byte **dst, uldat alien_len) {
     alienWrite(src, len, *dst, alien_len, AlienXendian(Slot) == MagicAlienXendian);
     *dst += alien_len;
 }
@@ -149,7 +149,7 @@ static void alienPush(CONST byte *src, uldat len, byte **dst, uldat alien_len) {
  * translate from alien data, copying len bytes from srcsize chunks to dstsize chunks, optionally flipping byte order.
  * assume dst is large enough to hold translated data.
  */
-INLINE void alienReadVec(CONST byte *src, byte *dst, uldat len, uldat srcsize, uldat dstsize, byte flag) {
+INLINE void alienReadVec(const byte *src, byte *dst, uldat len, uldat srcsize, uldat dstsize, byte flag) {
     /* round to srcsize multiple */
     len = (len / srcsize) * srcsize;
     
@@ -223,7 +223,7 @@ INLINE void alienReadVec(CONST byte *src, byte *dst, uldat len, uldat srcsize, u
  * translate from alien data, copying len bytes from srcsize chunks to dstsize chunks, optionally flipping byte order.
  * allocate a new buffer to hold data.
  */
-static CONST byte *alienAllocReadVec(CONST byte *src, uldat len, uldat srcsize, uldat dstsize, byte flag) {
+static const byte *alienAllocReadVec(const byte *src, uldat len, uldat srcsize, uldat dstsize, byte flag) {
     byte *dst;
     
     if ((dst = AllocMem(len / srcsize * dstsize)))
@@ -237,7 +237,7 @@ static CONST byte *alienAllocReadVec(CONST byte *src, uldat len, uldat srcsize, 
  * translate to alien data, copying len bytes from srcsize chunks to dstsize chunks, optionally flipping byte order.
  * assume dst is large enough to hold translated data.
  */
-static void alienWriteVec(CONST byte *src, byte *dst, uldat len, uldat srcsize, uldat dstsize, byte flag) {
+static void alienWriteVec(const byte *src, byte *dst, uldat len, uldat srcsize, uldat dstsize, byte flag) {
     /* round to srcsize multiple */
     len = (len / srcsize) * srcsize;
 
@@ -263,7 +263,7 @@ static void alienWriteVec(CONST byte *src, byte *dst, uldat len, uldat srcsize, 
     }
 }
 
-static void alienReply(uldat code, uldat alien_len, uldat len, CONST void *data) {
+static void alienReply(uldat code, uldat alien_len, uldat len, const void *data) {
     byte AlienSizeofUldat = SIZEOF(uldat);
     
     if (RemoteWriteQueue(Slot, 3*AlienSizeofUldat + alien_len, NULL)
@@ -325,7 +325,7 @@ static void alienFixDecodeHWAttrV(hwattr * H, uldat Len) {
 }
 
 
-TW_INLINE ldat alienDecodeArg(uldat id, CONST byte * Format, uldat n, tsfield a, uldat mask[1], byte flag[1], ldat fail) {
+TW_INLINE ldat alienDecodeArg(uldat id, const byte * Format, uldat n, tsfield a, uldat mask[1], byte flag[1], ldat fail) {
     void *A;
     void *av;
     topaque nlen;
@@ -496,7 +496,7 @@ TW_INLINE ldat alienDecodeArg(uldat id, CONST byte * Format, uldat n, tsfield a,
 		    A = a[n]_vec;
 		    
 		if (A) {
-		    a[n]_vec = AllocId2ObjVec(flag, c, nlen/sizeof(uldat), (byte CONST *)A);
+		    a[n]_vec = AllocId2ObjVec(flag, c, nlen/sizeof(uldat), (byte const *)A);
 		    FreeMem((void *)A);
 		    if (a[n]_vec) {
 			*mask |= *flag << n;
@@ -520,7 +520,7 @@ static void alienMultiplexB(uldat id) {
     uldat mask = 0; /* at least 32 bits. we need 20... */
     uldat nlen, n = 1;
     ldat fail = 1;
-    CONST byte *Format = sockF[id].Format;
+    const byte *Format = sockF[id].Format;
     uldat a0;
     byte c, self, flag, tmp, retT[2];
     
@@ -758,22 +758,22 @@ static void FlipMoveMem(byte *mem, uldat len, uldat chunk) {
 	return;
       case 2:
 	while (len >= 2) {
-	    *(uint16_t *)mem = htons(*(CONST uint16_t *)mem);
+	    *(uint16_t *)mem = htons(*(const uint16_t *)mem);
 	    mem += 2;
 	    len -= 2;
 	}
 	return;
       case 4:
 	while (len >= 4) {
-	    *(uint32_t *)mem = htonl(*(CONST uint32_t *)mem);
+	    *(uint32_t *)mem = htonl(*(const uint32_t *)mem);
 	    mem += 4;
 	    len -= 4;
 	}
 	return;
       case 8:
 	while (len >= 8) {
-	    t = htonl(((CONST uint32_t *)mem)[0]);
-	    ((uint32_t *)mem)[0] = htonl(((CONST uint32_t *)mem)[1]);
+	    t = htonl(((const uint32_t *)mem)[0]);
+	    ((uint32_t *)mem)[0] = htonl(((const uint32_t *)mem)[1]);
 	    ((uint32_t *)mem)[1] = t;
 	    mem += 8;
 	    len -= 8;
@@ -861,7 +861,7 @@ static void alienSendMsg(msgport MsgPort, msg Msg) {
 		    Pop(Src,hwattr,H);
 		    
 		    h = ((uint16_t)HWCOL(H) << 8) | Tutf_UTF_32_to_CP437(HWFONT(H));
-		    alienPush((CONST byte *)&h, sizeof(hwattr), &t, 2);
+		    alienPush((const byte *)&h, sizeof(hwattr), &t, 2);
 		}
 	    } else {
 		Tot = TwinMagicData[Type];
@@ -971,7 +971,7 @@ static void alienSendMsg(msgport MsgPort, msg Msg) {
 			Pop(Src,hwattr,H);
 			
 			h = ((uint16_t)HWCOL(H) << 8) | Tutf_UTF_32_to_CP437(HWFONT(H));
-			alienPush((CONST byte *)&h, sizeof(hwattr), &t, 2);
+			alienPush((const byte *)&h, sizeof(hwattr), &t, 2);
 		    }
 		} else {
 		    N = (N / sizeof(hwfont)) * SIZEOF(hwfont);
@@ -1045,12 +1045,12 @@ static void alienSendMsg(msgport MsgPort, msg Msg) {
 #define _len .TWS_field_vecL
 #define _type .type
 
-static byte alienDecodeExtension(tany *Len, CONST byte **Data, tany *Args_n, tsfield a) {
+static byte alienDecodeExtension(tany *Len, const byte **Data, tany *Args_n, tsfield a) {
     static byte type_warned = 0;
     topaque n = 0;
     ldat fail = 1;
     tany len, left = *Len;
-    CONST byte *data = *Data;
+    const byte *data = *Data;
     tany args_n = *Args_n;
     udat t;
 
@@ -1095,7 +1095,7 @@ static byte alienDecodeExtension(tany *Len, CONST byte **Data, tany *Args_n, tsf
 		a[n]_len = nlen;
 		
 		if (!nlen || Left(nlen)) {
-		    void CONST *addr;
+		    void const *addr;
 		    left -= nlen;
 		    POPADDR(data,byte,nlen,addr);
 		    a[n]_vec = addr;

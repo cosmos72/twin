@@ -40,7 +40,7 @@ byte InitScroller(void) {
 
 	return ttrue;
     }
-    printk("twin: Scroller: %."STR(TW_SMALLBUFF)"s\n", ErrStr);
+    printk("twin: Scroller: " SS "\n", ErrStr);
     return tfalse;
 }
 

@@ -44,7 +44,7 @@
 #include <Tutf/Tutf.h>
 
 udat ErrNo;
-byte CONST * ErrStr;
+char const * ErrStr;
 
 #if 0
 uldat MemLeft(void) {
@@ -70,13 +70,13 @@ byte Error(udat Code_Error) {
     return tfalse;
 }
 
-hwfont *CloneStr2HWFont(CONST byte *s, uldat len) {
+hwfont *CloneStr2HWFont(const char *s, uldat len) {
     hwfont *temp, *save;
     
     if (s) {
 	if ((temp = save = (hwfont *)AllocMem((len+1) * sizeof(hwfont)))) {
 	    while (len--) {
-		*temp++ = Tutf_CP437_to_UTF_32[*s++];
+		*temp++ = Tutf_CP437_to_UTF_32[(byte)*s++];
 	    }
 	    *temp = '\0';
 	}
@@ -179,21 +179,22 @@ static dat CmpCallTime(msgport m1, msgport m2) {
     return CmpTime(&m1->CallTime, &m2->CallTime);
 }
 
-byte Minimum(byte MaxIndex, CONST uldat *Array) {
+byte Minimum(byte MaxIndex, const ldat *Array) {
     byte i, MinIndex;
-    uldat Temp;
+    ldat Temp;
     
-    Temp=TW_MAXULDAT;
-    MinIndex=(byte)0;
     if (!MaxIndex)
 	return 0xFF;
+
+    Temp=Array[0];
+    MinIndex = 0;
     
-    for(i=0; i<MaxIndex; i++)
+    for(i=1; i<MaxIndex; i++) {
 	if (Array[i]<Temp) {
 	    Temp = Array[i];
 	    MinIndex = i;
 	}
-    
+    }
     return MinIndex;
 }
 
@@ -216,7 +217,7 @@ uldat HexStrToNum(byte *StringHex) {
      byte Len, Error = tfalse;
      uldat Value=(uldat)0;
      
-     Len=(byte)LenStr(StringHex);
+     Len=(byte)strlen(StringHex);
      if (Len>(byte)8)
 	 return (uldat)0;
      
@@ -230,19 +231,19 @@ uldat HexStrToNum(byte *StringHex) {
 */
 
 /* adapted from similar code in bdflush */
-uldat ComputeUsableLenArgv(byte *CONST *argv) {
-    byte *ptr;
+uldat ComputeUsableLenArgv(char *const *argv) {
+    char *ptr;
     uldat count;
     
-    ptr = argv[0] + LenStr(argv[0]);
+    ptr = argv[0] + strlen(argv[0]);
     for (count = 1; argv[count]; count++) {
 	if (argv[count] == ptr + 1)
-	    ptr += LenStr(ptr + 1) + 1;
+	    ptr += strlen(ptr + 1) + 1;
     }
     return ptr - argv[0];
 }
 
-void SetArgv0(byte *CONST *argv, uldat argv_usable_len, CONST byte *src) {
+void SetArgv0(char *const *argv, uldat argv_usable_len, const char *src) {
     uldat len = strlen(src);
     
     if (len + 1 < argv_usable_len) {
@@ -318,7 +319,7 @@ void SortAllMsgPortsByCallTime(void) {
 }
 
 
-byte SendControlMsg(msgport MsgPort, udat Code, udat Len, CONST byte *Data) {
+byte SendControlMsg(msgport MsgPort, udat Code, udat Len, const byte *Data) {
     msg Msg;
     event_control *Event;
     
@@ -334,7 +335,7 @@ byte SendControlMsg(msgport MsgPort, udat Code, udat Len, CONST byte *Data) {
     return tfalse;
 }
 
-byte SelectionStore(uldat Magic, CONST byte MIME[MAX_MIMELEN], uldat Len, CONST byte *Data) {
+byte SelectionStore(uldat Magic, const char MIME[MAX_MIMELEN], uldat Len, const byte *Data) {
     uldat newLen;
     byte *newData, pad;
     selection *Sel = All->Selection;
@@ -522,7 +523,7 @@ byte SetSelectionFromWindow(window Window) {
     return tfalse;
 }
 
-byte CreateXTermMouseEvent(event_mouse *Event, byte buflen, byte *buf) {
+byte CreateXTermMouseEvent(event_mouse *Event, byte buflen, char *buf) {
     window W;
     udat Flags;
     udat Code = Event->Code;
@@ -724,8 +725,8 @@ void FallBackKeyAction(window W, event_keyboard *EventK) {
  * "a b" is the string `a b' NOT the two strings `"a' `b"'
  * (same for single quotes, backslashes, ...)
  */
-byte **TokenizeStringVec(uldat len, byte *s) {
-    byte **cmd = NULL, *buf, c;
+char **TokenizeStringVec(uldat len, char *s) {
+    char **cmd = NULL, *buf, c;
     uldat save_len, n = 0;
     
     /* skip initial spaces */
@@ -748,7 +749,7 @@ byte **TokenizeStringVec(uldat len, byte *s) {
 		}
 	    }
 	}
-	if ((cmd = AllocMem((n + 1) * sizeof(byte *)))) {
+	if ((cmd = AllocMem((n + 1) * sizeof(char *)))) {
 	    n = 0;
 	    len = save_len;
 	    s = buf;
@@ -770,7 +771,7 @@ byte **TokenizeStringVec(uldat len, byte *s) {
     return cmd;
 }
 
-void FreeStringVec(byte **cmd) {
+void FreeStringVec(char **cmd) {
     if (cmd) {
 	FreeMem(cmd[0]);
 	FreeMem(cmd);
@@ -785,8 +786,8 @@ void FreeStringVec(byte **cmd) {
  * "a b" is the string `a b' NOT the two strings `"a' `b"'
  * (same for single quotes, backslashes, ...)
  */
-byte **TokenizeHWFontVec(uldat len, hwfont *s) {
-    byte **cmd = NULL, *buf, *v;
+char **TokenizeHWFontVec(uldat len, hwfont *s) {
+    char **cmd = NULL, *buf, *v;
     hwfont c;
     uldat save_len, n = 0, i;
     
@@ -798,7 +799,7 @@ byte **TokenizeHWFontVec(uldat len, hwfont *s) {
     
     if (len && (buf = AllocMem(len + 1))) {
 	for (i = 0; i < len; i++)
-	    buf[i] = (byte)s[i];
+	    buf[i] = s[i];
 	buf[len] = '\0';
 	
 	/* how many args? */
@@ -811,7 +812,7 @@ byte **TokenizeHWFontVec(uldat len, hwfont *s) {
 		}
 	    }
 	}
-	if ((cmd = AllocMem((n + 1) * sizeof(byte *)))) {
+	if ((cmd = (char **)AllocMem((n + 1) * sizeof(char *)))) {
 	    n = 0;
 	    len = save_len;
 	    v = buf;
@@ -845,17 +846,17 @@ static void TWDisplayIO(int fd, uldat slot) {
     }
 }
 
-static byte envTWD[]="TWDISPLAY=\0\0\0\0\0";
+static char envTWD[]="TWDISPLAY=\0\0\0\0\0";
 
-TW_CONST char * TmpDir(void) {
-    TW_CONST char * tmp = getenv("TMPDIR");
+const char * TmpDir(void) {
+    const char * tmp = getenv("TMPDIR");
     if (tmp == NULL)
 	tmp = "/tmp";
     return tmp;
 }
 
-udat CopyToSockaddrUn(TW_CONST char * src, struct sockaddr_un * addr, udat pos) {
-    size_t len = LenStr(src), max = sizeof(addr->sun_path) - 1; /* for final '\0' */
+udat CopyToSockaddrUn(const char * src, struct sockaddr_un * addr, udat pos) {
+    size_t len = strlen(src), max = sizeof(addr->sun_path) - 1; /* for final '\0' */
     if (pos < max) {
 	if (len >= max - pos)
 	    len = max - pos - 1;
@@ -866,7 +867,7 @@ udat CopyToSockaddrUn(TW_CONST char * src, struct sockaddr_un * addr, udat pos) 
 }
 
 static struct sockaddr_un addr;
-static TW_CONST char * fullTWD = addr.sun_path;
+static const char * fullTWD = addr.sun_path;
 static char twd[12];
 
 /* set TWDISPLAY and create /tmp/.Twin:<x> */
@@ -932,7 +933,7 @@ byte InitTWDisplay(void) {
 			if (fd != NOFD)
 			    close(fd);
 			TWDisplay = twd;
-			lenTWDisplay = LenStr(TWDisplay);
+			lenTWDisplay = strlen(TWDisplay);
 			CopyMem(TWDisplay, envTWD+10, lenTWDisplay);
 #if defined(TW_HAVE_SETENV)
 			setenv("TWDISPLAY",TWDisplay,1);
@@ -941,7 +942,7 @@ byte InitTWDisplay(void) {
 			putenv(envTWD);
 			putenv("TERM=linux");
 #endif
-			if ((arg0 = AllocMem(LenStr(TWDisplay) + 6))) {
+			if ((arg0 = AllocMem(strlen(TWDisplay) + 6))) {
 			    sprintf(arg0, "twin %s", TWDisplay);
 			    SetArgv0(main_argv, main_argv_usable_len, arg0);
 			    FreeMem(arg0);
@@ -960,9 +961,9 @@ byte InitTWDisplay(void) {
     CopyToSockaddrUn(TmpDir(), &addr, 0);
     arg0 = addr.sun_path;
 
-    printk("twin: failed to create any %."STR(TW_SMALLBUFF)"s/.Twin* socket: %."STR(TW_SMALLBUFF)"s\n", addr.sun_path, ErrStr);
-    printk("      possible reasons: either %."STR(TW_SMALLBUFF)"s not writable, or all TWDISPLAY already in use,\n"
-	   "      or too many stale %."STR(TW_SMALLBUFF)"s/.Twin* sockets. Aborting.\n", arg0, arg0);
+    printk("twin: failed to create any " SS "/.Twin* socket: " SS "\n", addr.sun_path, ErrStr);
+    printk("      possible reasons: either " SS " not writable, or all TWDISPLAY already in use,\n"
+	   "      or too many stale " SS "/.Twin* sockets. Aborting.\n", arg0, arg0);
     return tfalse;
 }
 
@@ -1018,7 +1019,7 @@ void GainPrivileges(void) {
 }
 
 static void SetEnvs(struct passwd *p) {
-    byte buf[TW_BIGBUFF];
+    char buf[TW_BIGBUFF];
     
     chdir(HOME = p->pw_dir);
 #if defined(TW_HAVE_SETENV)
@@ -1084,14 +1085,14 @@ byte SetServerUid(uldat uid, byte privileges) {
 		    if (setuid(0) < 0 || setgid(0) < 0 ||
 			chown(fullTWD, 0, 0) < 0) {
 			/* tried to recover, but screwed up uids too badly. */
-			printk("twin: failed switching to uid %u: %."STR(TW_SMALLBUFF)"s\n", uid, strerror(errno));
+			printk("twin: failed switching to uid %u: " SS "\n", uid, strerror(errno));
 			printk("twin: also failed to recover. Quitting NOW!\n");
 			Quit(0);
 		    }
 		    SetEnvs(getpwuid(0));
 		}
 	    }
-	    printk("twin: failed switching to uid %u: %."STR(TW_SMALLBUFF)"s\n", uid, strerror(errno));
+	    printk("twin: failed switching to uid %u: " SS "\n", uid, strerror(errno));
 	}
     } else
 	printk("twin: SetServerUid() can be called only if started by root with \"-secure\".\n");
@@ -1105,10 +1106,10 @@ byte SetServerUid(uldat uid, byte privileges) {
  * this for example will search "foo"
  * as "${HOME}/foo", "${PKG_LIBDIR}/system.foo" or plain "foo"
  */
-byte *FindFile(byte *name, uldat *fsize) {
-    byte CONST *prefix[3], *infix[3];
-    byte *path;
-    byte CONST *dir;
+char *FindFile(char *name, uldat *fsize) {
+    char const *prefix[3], *infix[3];
+    char *path;
+    char const *dir;
     int i, min_i, max_i, len, nlen = strlen(name);
     struct stat buf;
     
@@ -1142,7 +1143,7 @@ byte *FindFile(byte *name, uldat *fsize) {
  * read data from infd and set environment variables accordingly
  */
 static void ReadTwEnvRC(int infd) {
-    byte buff[TW_BIGBUFF], *p = buff, *end, *q, *eq;
+    char buff[TW_BIGBUFF], *p = buff, *end, *q, *eq;
     int got, left = TW_BIGBUFF;
     for (;;) {
 	do {
@@ -1183,7 +1184,7 @@ static void ReadTwEnvRC(int infd) {
  * environment variables (mostly useful for twdm)
  */
 void RunTwEnvRC(void) {
-    byte *path;
+    char *path;
     uldat len;
     int fds[2];
     
@@ -1199,7 +1200,7 @@ void RunTwEnvRC(void) {
 		  case -1: /* error */
 		    close(fds[0]);
 		    close(fds[1]);
-		    printk("twin: RunTwEnvRC(): fork() failed: %."STR(TW_SMALLBUFF)"s\n", strerror(errno));
+		    printk("twin: RunTwEnvRC(): fork() failed: " SS "\n", strerror(errno));
 		    break;
 		  case 0:  /* child */
 		    close(fds[0]);
@@ -1220,7 +1221,7 @@ void RunTwEnvRC(void) {
 		    break;
 		}
 	    } else
-		printk("twin: RunTwEnvRC(): pipe() failed: %."STR(TW_SMALLBUFF)"s\n", strerror(errno));
+		printk("twin: RunTwEnvRC(): pipe() failed: " SS "\n", strerror(errno));
 	} else
 	    printk("twin: RunTwEnvRC(): .twenvrc.sh: File not found\n", strerror(errno));
     } else
@@ -1371,7 +1372,7 @@ INLINE void _DropId(byte i, obj Obj) {
     }
 }
     
-byte AssignId(CONST fn_obj Fn_Obj, obj Obj) {
+byte AssignId(const fn_obj Fn_Obj, obj Obj) {
     byte i;
     if (Obj) switch (Fn_Obj->Magic) {
       case obj_magic:

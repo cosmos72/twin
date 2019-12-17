@@ -338,7 +338,7 @@ typedef struct s_tlistener *tlistener;
 
 
 
-tdisplay Tw_Open(TW_CONST byte *Tw_Display);
+tdisplay Tw_Open(TW_CONST char *Tw_Display);
 void Tw_Close(tdisplay TwD);
 
 

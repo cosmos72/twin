@@ -122,7 +122,7 @@ static struct {
     KeySym xkey;
     Twkey  tkey;
     byte   len;
-    CONST byte *seq;
+    const char *seq;
 } X11_keys[] = {
 
 #define IS(sym,l,s) { XK_##sym, TW_##sym, l, s },
@@ -154,7 +154,7 @@ static byte X11_CheckRemapKeys(void) {
 }
 
 #ifdef DEBUG_HW_X11
-void X11_DEBUG_SHOW_KEY(CONST char * prefix, KeySym sym, udat len, CONST char * seq)
+void X11_DEBUG_SHOW_KEY(const char * prefix, KeySym sym, udat len, const char * seq)
 {
     udat i;
     byte ch;
@@ -264,7 +264,7 @@ static Twkey X11_LookupKey(XEvent *ev, udat *ShiftFlags, udat *len, char *seq) {
 
 static void X11_HandleEvent(XEvent *event) {
     /* this can stay static, X11_HandleEvent() is not reentrant */
-    static byte seq[TW_SMALLBUFF];
+    static char seq[TW_SMALLBUFF];
     dat x, y, dx, dy;
     udat len = sizeof(seq), ShiftFlags;
     Twkey TW_key;

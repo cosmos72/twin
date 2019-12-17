@@ -569,17 +569,17 @@ void Tw_NotifySelection(tdisplay TwD, tobj Requestor, uldat ReqPrivate,
     void TwNeedResizeDisplay(void);
     void Tw_NeedResizeDisplay(tdisplay TwD);
     
-    void TwAttachHW(uldat len, byte *name, byte redirect);
-    void Tw_AttachHW(tdisplay TwD, uldat len, byte *name, byte redirect);
+    void TwAttachHW(uldat len, char *name, byte redirect);
+    void Tw_AttachHW(tdisplay TwD, uldat len, char *name, byte redirect);
     
-    byte *TwAttachGetReply(uldat *len);
-    byte *Tw_AttachGetReply(tdisplay TwD, uldat *len);
+    char *TwAttachGetReply(uldat *len);
+    char *Tw_AttachGetReply(tdisplay TwD, uldat *len);
     
     void TwAttachConfirm(void);
     void Tw_AttachConfirm(tdisplay TwD);
     
-    byte TwDetachHW(uldat len, byte *name);
-    byte Tw_DetachHW(tdisplay TwD, uldat len, byte *name);
+    byte TwDetachHW(uldat len, char *name);
+    byte Tw_DetachHW(tdisplay TwD, uldat len, char *name);
 
 
    /*

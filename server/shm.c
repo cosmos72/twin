@@ -55,7 +55,7 @@ static size_t TSR_L; /* its length */
 #define GL_SIZE ((_GL_SIZE & ~ALIGN) + ALIGN + 1)
 
 
-static size_t full_write(int fd, CONST byte *data, size_t len) {
+static size_t full_write(int fd, const byte *data, size_t len) {
     size_t left = len;
     int r;
     
@@ -214,7 +214,7 @@ void shm_quit(void) {
 byte shm_send(int fd) {
     size_t len = S - M;
 
-    return full_write(fd, (CONST byte *)&len, sizeof(size_t)) == sizeof(size_t);
+    return full_write(fd, (const byte *)&len, sizeof(size_t)) == sizeof(size_t);
 }
 
 byte shm_receive(int fd) {
@@ -407,8 +407,8 @@ void *shm_malloc_or_die(size_t len) {
     exit(1);
 }
 
-byte *shm_strdup_or_die(CONST byte *s) {
-    size_t len = LenStr(s) + 1;
+byte *shm_strdup_or_die(const byte *s) {
+    size_t len = strlen(s) + 1;
     byte *d = shm_malloc_or_die(len);
     CopyMem(s, d, len);
     return d;

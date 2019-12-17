@@ -2,7 +2,7 @@
 
 #define X11_TITLE_MAXLEN 80
 
-static void X11_FillWindowTitle(byte * title, int maxlen) {
+static void X11_FillWindowTitle(char * title, int maxlen) {
     int left = maxlen;
     int chunk = 0;
     
@@ -17,7 +17,7 @@ static void X11_FillWindowTitle(byte * title, int maxlen) {
     
     if (gethostname(title, left) == 0)
     {
-        byte * end = memchr(title, '\0', left);
+        char * end = (char *)memchr(title, '\0', left);
         chunk = (end == NULL) ? 0 : (int)(end - title);
         if (chunk > 0 && chunk <= left)
         {
@@ -188,8 +188,8 @@ static void X11_SelectionExport_X11(void) {
 /*
  * notify our Selection to X11
  */
-static void X11_SelectionNotify_X11(uldat ReqPrivate, uldat Magic, CONST byte MIME[MAX_MIMELEN],
-				    uldat Len, CONST byte * Data) {
+static void X11_SelectionNotify_X11(uldat ReqPrivate, uldat Magic, const char MIME[MAX_MIMELEN],
+				    uldat Len, const byte * Data) {
     XEvent ev;
     
     if (XReqCount == 0) {
@@ -224,18 +224,18 @@ static void X11_SelectionNotify_X11(uldat ReqPrivate, uldat Magic, CONST byte MI
 	target_list[1] = (Atom32) XA_STRING;
 	XChangeProperty (xdisplay, XReq(XReqCount).requestor, XReq(XReqCount).property,
 			 xTARGETS, 8*sizeof(target_list[0]), PropModeReplace,
-			 (char *)target_list,
+			 (const byte *)target_list,
 			 sizeof(target_list)/sizeof(target_list[0]));
 	ev.xselection.property = XReq(XReqCount).property;
     } else if (XReq(XReqCount).target == XA_STRING) {
 	uldat l;
 	byte *_Data = NULL, *d;
-	TW_CONST hwfont *s;
+	const hwfont *s;
 	
 	/* X11 selection contains text, not unicode */
 	if (Magic == SEL_HWFONTMAGIC) {
 	    if ((_Data = d = (byte *)AllocMem(Len))) {
-		s = (TW_CONST hwfont *)Data;
+		s = (const hwfont *)Data;
 		for (l = Len; l; l--)
 		    *d++ = Tutf_UTF_32_to_CP437(*s++);
 		Data = _Data;
@@ -291,7 +291,7 @@ static void X11_SelectionNotify_up(Window win, Atom prop) {
 	    return;
 	}
 	
-	if (buff || (buff = AllocMem(nitems + bytes_after))) {
+	if (buff || (buff = (byte *)AllocMem(nitems + bytes_after))) {
 	    CopyMem(data, buff + nread, nitems);
 	    nread += nitems;
 	}
@@ -414,10 +414,10 @@ static int X11_Die(Display *d) {
 #endif
 
 #if HW_X_DRIVER != HW_XFT
-static Tutf_function X11_UTF_32_to_charset_function(CONST byte *charset) {
+static Tutf_function X11_UTF_32_to_charset_function(const char *charset) {
     XFontProp *fp;
     unsigned long prop;
-    CONST byte *s, *fontname = NULL;
+    const char *s, *fontname = NULL;
     uldat i;
     
     if (!charset) {
@@ -440,12 +440,12 @@ static Tutf_function X11_UTF_32_to_charset_function(CONST byte *charset) {
 	if (!charset) {
 	    if (xsfont->min_byte1 < xsfont->max_byte1) {
 		/* font is more than just 8-bit. For now, assume it's unicode */
-		printk("    X11_InitHW: font `%."STR(TW_SMALLBUFF)"s\' has no known charset encoding,\n"
+		printk("    X11_InitHW: font `" SS "\' has no known charset encoding,\n"
 		       "                assuming Unicode.\n", fontname);
 		return NULL;
 	    }
 	    /* else assume codepage437. gross. */
-	    printk("    X11_InitHW: font `%."STR(TW_SMALLBUFF)"s\' has no known charset encoding,\n"
+	    printk("    X11_InitHW: font `" SS "\' has no known charset encoding,\n"
 		   "                assuming CP437 codepage (\"VGA\").\n", fontname);
 	    return Tutf_UTF_32_to_CP437;
 	}
@@ -459,7 +459,7 @@ static Tutf_function X11_UTF_32_to_charset_function(CONST byte *charset) {
     }
     
     if (i == (uldat)-1) {
-	printk("      X11_InitHW(): libTutf warning: unknown charset `%." STR(TW_SMALLBUFF) "s', assuming `CP437'\n", charset);
+	printk("      X11_InitHW(): libTutf warning: unknown charset `" SS "', assuming `CP437'\n", charset);
 	return Tutf_UTF_32_to_CP437;
     }
     

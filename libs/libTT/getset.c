@@ -12,10 +12,6 @@
  * 
  */
 
-#ifdef CONF_SOCKET_PTHREADS
-# include <pthread.h>
-#endif
-
 #include "mutex.h"
 
 #include "TT.h"
