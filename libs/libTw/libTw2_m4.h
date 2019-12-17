@@ -223,12 +223,12 @@ void Tw_CirculateChildrenWidget(tw_d TwD, twidget a1, byte a2) {
 
 
 
-tgadget Tw_CreateGadget(tw_d TwD, twidget a1, dat a2, dat a3, TW_CONST byte *a4, uldat a5, uldat a6, udat a7, hwcol a8, hwcol a9, hwcol a10, hwcol a11, dat a12, dat a13) {
+tgadget Tw_CreateGadget(tw_d TwD, twidget a1, dat a2, dat a3, TW_CONST char *a4, uldat a5, uldat a6, udat a7, hwcol a8, hwcol a9, hwcol a10, hwcol a11, dat a12, dat a13) {
     return (tobj)_Tw_EncodeCall(0, order_CreateGadget, TwD 
     , n(a1)
     , n(a2)
     , n(a3)
-    , n((a2*a3) * sizeof(byte)), N(a4)
+    , n((a2*a3) * sizeof(char)), N(a4)
     , n(a5)
     , n(a6)
     , n(a7)
@@ -241,12 +241,12 @@ tgadget Tw_CreateGadget(tw_d TwD, twidget a1, dat a2, dat a3, TW_CONST byte *a4,
 }
 
 
-tgadget Tw_CreateButtonGadget(tw_d TwD, twidget a1, dat a2, dat a3, TW_CONST byte *a4, uldat a5, udat a6, hwcol a7, hwcol a8, hwcol a9, dat a10, dat a11) {
+tgadget Tw_CreateButtonGadget(tw_d TwD, twidget a1, dat a2, dat a3, TW_CONST char *a4, uldat a5, udat a6, hwcol a7, hwcol a8, hwcol a9, dat a10, dat a11) {
     return (tobj)_Tw_EncodeCall(0, order_CreateButtonGadget, TwD 
     , n(a1)
     , n(a2)
     , n(a3)
-    , n((a2*a3) * sizeof(byte)), N(a4)
+    , n((a2*a3) * sizeof(char)), N(a4)
     , n(a5)
     , n(a6)
     , n(a7)
@@ -257,13 +257,13 @@ tgadget Tw_CreateButtonGadget(tw_d TwD, twidget a1, dat a2, dat a3, TW_CONST byt
 }
 
 
-void Tw_WriteTextsGadget(tw_d TwD, tgadget a1, byte a2, dat a3, dat a4, TW_CONST byte *a5, dat a6, dat a7) {
+void Tw_WriteTextsGadget(tw_d TwD, tgadget a1, byte a2, dat a3, dat a4, TW_CONST char *a5, dat a6, dat a7) {
     _Tw_EncodeCall(ENCODE_FL_VOID, order_WriteTextsGadget, TwD 
     , n(a1)
     , n(a2)
     , n(a3)
     , n(a4)
-    , n((a2*a3) * sizeof(byte)), N(a5)
+    , n((a2*a3) * sizeof(char)), N(a5)
     , n(a6)
     , n(a7));
 }
@@ -280,10 +280,10 @@ void Tw_WriteHWFontsGadget(tw_d TwD, tgadget a1, byte a2, dat a3, dat a4, TW_CON
 }
 
 
-twindow Tw_CreateWindow(tw_d TwD, dat a1, TW_CONST byte *a2, TW_CONST hwcol *a3, tmenu a4, hwcol a5, uldat a6, uldat a7, uldat a8, dat a9, dat a10, dat a11) {
+twindow Tw_CreateWindow(tw_d TwD, dat a1, TW_CONST char *a2, TW_CONST hwcol *a3, tmenu a4, hwcol a5, uldat a6, uldat a7, uldat a8, dat a9, dat a10, dat a11) {
     return (tobj)_Tw_EncodeCall(0, order_CreateWindow, TwD 
     , n(a1)
-    , n((a1) * sizeof(byte)), N(a2)
+    , n((a1) * sizeof(char)), N(a2)
     , n((a1) * sizeof(hwcol)), N(a3)
     , n(a4)
     , n(a5)
@@ -339,11 +339,11 @@ void Tw_GotoXYWindow(tw_d TwD, twindow a1, ldat a2, ldat a3) {
     , n(a3));
 }
 
-void Tw_SetTitleWindow(tw_d TwD, twindow a1, dat a2, TW_CONST byte *a3) {
+void Tw_SetTitleWindow(tw_d TwD, twindow a1, dat a2, TW_CONST char *a3) {
     _Tw_EncodeCall(ENCODE_FL_VOID, order_SetTitleWindow, TwD 
     , n(a1)
     , n(a2)
-    , n((a2) * sizeof(byte)), N(a3));
+    , n((a2) * sizeof(char)), N(a3));
 }
 
 void Tw_SetColTextWindow(tw_d TwD, twindow a1, hwcol a2) {
@@ -439,14 +439,14 @@ void Tw_CirculateChildrenRow(tw_d TwD, tobj a1, byte a2) {
 }
 
 
-trow Tw_Create4MenuAny(tw_d TwD, tobj a1, twindow a2, udat a3, byte a4, ldat a5, TW_CONST byte *a6) {
+trow Tw_Create4MenuAny(tw_d TwD, tobj a1, twindow a2, udat a3, byte a4, ldat a5, TW_CONST char *a6) {
     return (tobj)_Tw_EncodeCall(0, order_Create4MenuAny, TwD 
     , n(a1)
     , n(a2)
     , n(a3)
     , n(a4)
     , n(a5)
-    , n((a5) * sizeof(byte)), N(a6));
+    , n((a5) * sizeof(char)), N(a6));
 }
 
 
@@ -467,12 +467,12 @@ tmenu Tw_CreateMenu(tw_d TwD, hwcol a1, hwcol a2, hwcol a3, hwcol a4, hwcol a5, 
     , n(a7));
 }
 
-void Tw_SetInfoMenu(tw_d TwD, tmenu a1, byte a2, ldat a3, TW_CONST byte *a4, TW_CONST hwcol *a5) {
+void Tw_SetInfoMenu(tw_d TwD, tmenu a1, byte a2, ldat a3, TW_CONST char *a4, TW_CONST hwcol *a5) {
     _Tw_EncodeCall(ENCODE_FL_VOID, order_SetInfoMenu, TwD 
     , n(a1)
     , n(a2)
     , n(a3)
-    , n((a3) * sizeof(byte)), N(a4)
+    , n((a3) * sizeof(char)), N(a4)
     , n((a3) * sizeof(hwcol)), N(a5));
 }
 
@@ -604,12 +604,12 @@ void Tw_RequestSelection(tw_d TwD, tobj a1, uldat a2) {
     , n(a2));
 }
 
-void Tw_NotifySelection(tw_d TwD, tobj a1, uldat a2, uldat a3, TW_CONST byte *a4, uldat a5, TW_CONST byte *a6) {
+void Tw_NotifySelection(tw_d TwD, tobj a1, uldat a2, uldat a3, TW_CONST char *a4, uldat a5, TW_CONST byte *a6) {
     _Tw_EncodeCall(ENCODE_FL_VOID, order_NotifySelection, TwD 
     , n(a1)
     , n(a2)
     , n(a3)
-    , n((TW_MAX_MIMELEN) * sizeof(byte)), N(a4)
+    , n((TW_MAX_MIMELEN) * sizeof(char)), N(a4)
     , n(a5)
     , n((a5) * sizeof(byte)), N(a6));
 }
@@ -622,10 +622,10 @@ byte Tw_SetServerUid(tw_d TwD, uldat a1, byte a2) {
 }
 
 
-textension Tw_OpenExtension(tw_d TwD, byte a1, TW_CONST byte *a2) {
+textension Tw_OpenExtension(tw_d TwD, byte a1, TW_CONST char *a2) {
     return (tobj)_Tw_EncodeCall(0, order_OpenExtension, TwD 
     , n(a1)
-    , n((a1) * sizeof(byte)), N(a2));
+    , n((a1) * sizeof(char)), N(a2));
 }
 
 tany Tw_CallBExtension(tw_d TwD, textension a1, topaque a2, TW_CONST byte *a3, TW_CONST byte *a4) {

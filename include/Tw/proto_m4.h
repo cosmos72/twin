@@ -97,14 +97,14 @@ void  Tw_RestackChildrenWidget(tdisplay TwD, twidget W, uldat n, TW_CONST twidge
 void  Tw_CirculateChildrenWidget(tdisplay TwD, twidget W, byte up_down);
 
 
-tgadget  Tw_CreateGadget(tdisplay TwD, twidget parent, dat w, dat h, TW_CONST byte *text, uldat attrib, uldat flags, udat code, hwcol coltext, hwcol colselect, hwcol coldisabled, hwcol colselectdisabled, dat x, dat y);
+tgadget  Tw_CreateGadget(tdisplay TwD, twidget parent, dat w, dat h, TW_CONST char *text, uldat attrib, uldat flags, udat code, hwcol coltext, hwcol colselect, hwcol coldisabled, hwcol colselectdisabled, dat x, dat y);
 
-tgadget  Tw_CreateButtonGadget(tdisplay TwD, twidget parent, dat w, dat h, TW_CONST byte *text, uldat flags, udat code, hwcol colbg, hwcol col, hwcol coldisabled, dat x, dat y);
+tgadget  Tw_CreateButtonGadget(tdisplay TwD, twidget parent, dat w, dat h, TW_CONST char *text, uldat flags, udat code, hwcol colbg, hwcol col, hwcol coldisabled, dat x, dat y);
 
-void  Tw_WriteTextsGadget(tdisplay TwD, tgadget G, byte mask, dat w, dat h, TW_CONST byte *text, dat x, dat y);
+void  Tw_WriteTextsGadget(tdisplay TwD, tgadget G, byte mask, dat w, dat h, TW_CONST char *text, dat x, dat y);
 void  Tw_WriteHWFontsGadget(tdisplay TwD, tgadget G, byte mask, dat w, dat h, TW_CONST hwfont *textfont, dat x, dat y);
 
-twindow  Tw_CreateWindow(tdisplay TwD, dat titlelen, TW_CONST byte *title, TW_CONST hwcol *coltitle, tmenu M, hwcol coltext, uldat cursortype, uldat attrib, uldat flags, dat w, dat h, dat hscroll);
+twindow  Tw_CreateWindow(tdisplay TwD, dat titlelen, TW_CONST char *title, TW_CONST hwcol *coltitle, tmenu M, hwcol coltext, uldat cursortype, uldat attrib, uldat flags, dat w, dat h, dat hscroll);
 twindow  Tw_Create4MenuWindow(tdisplay TwD, tmenu M);
 
 void  Tw_WriteAsciiWindow(tdisplay TwD, twindow W, ldat len, TW_CONST char *ascii);
@@ -113,7 +113,7 @@ void  Tw_WriteHWFontWindow(tdisplay TwD, twindow W, ldat len, TW_CONST hwfont *t
 void  Tw_WriteHWAttrWindow(tdisplay TwD, twindow W, dat x, dat y, ldat len, TW_CONST hwattr *textattr);
 
 void  Tw_GotoXYWindow(tdisplay TwD, twindow W, ldat x, ldat y);
-void  Tw_SetTitleWindow(tdisplay TwD, twindow W, dat titlelen, TW_CONST byte *title);
+void  Tw_SetTitleWindow(tdisplay TwD, twindow W, dat titlelen, TW_CONST char *title);
 void  Tw_SetColTextWindow(tdisplay TwD, twindow W, hwcol coltext);
 void  Tw_SetColorsWindow(tdisplay TwD, twindow W, udat mask, hwcol colgadgets, hwcol colarrows, hwcol colbars, hwcol coltabs, hwcol colborder, hwcol coltext, hwcol colselect, hwcol coldisabled, hwcol colselectdisabled);
 void  Tw_ConfigureWindow(tdisplay TwD, twindow W, byte mask, dat x, dat y, dat minw, dat minh, dat maxw, dat maxh);
@@ -131,12 +131,12 @@ void  Tw_LowerRow(tdisplay TwD, trow R);
 void  Tw_RestackChildrenRow(tdisplay TwD, tobj O, uldat n, TW_CONST trow *children); 
 void  Tw_CirculateChildrenRow(tdisplay TwD, tobj O, byte up_down);
 
-trow  Tw_Create4MenuAny(tdisplay TwD, tobj parent, twindow W, udat code, byte flags, ldat len, TW_CONST byte *text);
+trow  Tw_Create4MenuAny(tdisplay TwD, tobj parent, twindow W, udat code, byte flags, ldat len, TW_CONST char *text);
 
 uldat  Tw_Create4MenuCommonMenuItem(tdisplay TwD, tmenu M);
 
 tmenu  Tw_CreateMenu(tdisplay TwD, hwcol colitem, hwcol colselect, hwcol coldisabled, hwcol colselectdisabled, hwcol colshortcut, hwcol colshortcutselect, byte flags);
-void  Tw_SetInfoMenu(tdisplay TwD, tmenu M, byte flags, ldat len, TW_CONST byte *text, TW_CONST hwcol *coltext);
+void  Tw_SetInfoMenu(tdisplay TwD, tmenu M, byte flags, ldat len, TW_CONST char *text, TW_CONST hwcol *coltext);
 
 tmsgport  Tw_CreateMsgPort(tdisplay TwD, byte len, TW_CONST char *name);
 tmsgport  Tw_FindMsgPort(tdisplay TwD, tmsgport prev, byte len, TW_CONST char *name);
@@ -167,11 +167,11 @@ void  Tw_BlindSendToMsgPort(tdisplay TwD, tmsgport P, udat len, TW_CONST byte *d
 tobj  Tw_GetOwnerSelection(tdisplay TwD);
 void  Tw_SetOwnerSelection(tdisplay TwD, tany secnow, tany fracnow);
 void  Tw_RequestSelection(tdisplay TwD, tobj owner, uldat reqprivate);
-void  Tw_NotifySelection(tdisplay TwD, tobj requestor, uldat reqprivate, uldat magic, TW_CONST byte *mine, uldat len, TW_CONST byte *data);
+void  Tw_NotifySelection(tdisplay TwD, tobj requestor, uldat reqprivate, uldat magic, TW_CONST char *mime, uldat len, TW_CONST byte *data);
 
 byte  Tw_SetServerUid(tdisplay TwD, uldat uid, byte privileges);
 
-textension  Tw_OpenExtension(tdisplay TwD, byte namelen, TW_CONST byte *name);
+textension  Tw_OpenExtension(tdisplay TwD, byte namelen, TW_CONST char *name);
 tany  Tw_CallBExtension(tdisplay TwD, textension id, topaque len, TW_CONST byte *data, TW_CONST byte *return_type);
 void  Tw_CloseExtension(tdisplay TwD, textension id);
 

@@ -160,7 +160,8 @@ typedef struct s_tevent_keyboard *tevent_keyboard;
 struct s_tevent_keyboard {
     twidget W;
     udat Code, ShiftFlags, SeqLen;
-    byte pad, AsciiSeq[1];  /* actually (SeqLen+1) bytes, including final \0 */
+    byte pad;
+    char AsciiSeq[1];  /* actually (SeqLen+1) bytes, including final \0 */
 } TW_ATTR_TYPE_PACKED;
 
 typedef struct s_tevent_mouse *tevent_mouse;

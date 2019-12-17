@@ -197,13 +197,14 @@ class TGadget : public TWidget {
      * 
      * Take care.
      */
-    static inline TGadget *CreateButton( const TWidget *parent, dat XWidth, dat YWidth, const char *name,
+    static inline TGadget *CreateButton(
+                   const TWidget *parent, dat XWidth, dat YWidth, const char *name,
 		   udat Code = 0, uldat Flags = 0, hwcol BgCol = COL(BLACK,WHITE),
 		   hwcol Col = COL(BLACK,GREEN), hwcol ColDisabled = COL(HIGH|BLACK,GREEN),
 		   dat Left = 0, dat Up = 0)
     {
 	TGadget *G = new TGadget( );
-	G->Id = TwCreateButtonGadget(parent ? parent->Id : TW_NOID, XWidth, YWidth, (TW_CONST byte *)name,
+	G->Id = TwCreateButtonGadget(parent ? parent->Id : TW_NOID, XWidth, YWidth, name,
 				     Flags, Code, BgCol, Col, ColDisabled, Left, Up);
 	return G;
     }
@@ -260,7 +261,7 @@ class TButton : public TGadget {
 		   hwcol Col = COL(BLACK,GREEN), hwcol ColDisabled = COL(HIGH|BLACK,GREEN),
 		   dat Left = 0, dat Up = 0)
     {
-	Id = TwCreateButtonGadget(parent->Id, XWidth, YWidth, (TW_CONST byte *)name,
+	Id = TwCreateButtonGadget(parent->Id, XWidth, YWidth, name,
 				  Flags, Code, BgCol, Col, ColDisabled,
 				  Left, Up);
     }
@@ -288,11 +289,11 @@ class TWindow : public TWidget {
     }
     inline void writeAscii(const char *text) const
     {
-	TwWriteAsciiWindow(Id, strlen(text), (TW_CONST byte *)text);
+	TwWriteAsciiWindow(Id, strlen(text), text);
     }
     inline void writeAscii(ldat len, const char *text) const
     {
-	TwWriteAsciiWindow(Id, len, (TW_CONST byte *)text);
+	TwWriteAsciiWindow(Id, len, text);
     }
     inline void writeString(const char *text) const
     {
@@ -418,8 +419,8 @@ class TKeyEvent : public s_tevent_keyboard {
     inline udat flags( )	const	{ return ShiftFlags; }
     inline udat seqlen( )	const	{ return SeqLen; }
     inline udat len( )		const	{ return SeqLen; }
-    inline const char *asciiseq( ) const{ return (const char *)AsciiSeq; }
-    inline const char *seq( )	const	{ return (const char *)AsciiSeq; }
+    inline const char *asciiseq( ) const{ return AsciiSeq; }
+    inline const char *seq( )	const	{ return AsciiSeq; }
 };
 
 class TMouseEvent : public s_tevent_mouse {

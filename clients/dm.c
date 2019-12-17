@@ -675,7 +675,7 @@ int main(int argc, char *argv[]) {
 		    /* react as for keypresses */
 		    if (E->Magic == TW_SEL_TEXTMAGIC)
 			WriteKey(E->ReqPrivate, E->ReqPrivate == DM_user ? &user : &pass,
-				 E->Len, E->Data);
+				 E->Len, (char *)E->Data);
 		    else if (E->Magic == TW_SEL_HWFONTMAGIC)
 			WriteHWFontKey(E->ReqPrivate, E->ReqPrivate == DM_user ? &user : &pass,
 				       E->Len / sizeof(hwfont), (hwfont *)E->Data);

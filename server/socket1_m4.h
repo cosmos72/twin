@@ -216,19 +216,19 @@ case order_CirculateChildrenWidget:
 
 case order_CreateGadget:
     if (N >= 13)
-	a[0]_obj = (obj)sockCreateGadget((widget)a[1]_obj, (dat)a[2]_any, (dat)a[3]_any, (const byte *)a[4]_vec, (uldat)a[5]_any, (uldat)a[6]_any, (udat)a[7]_any, (hwcol)a[8]_any, (hwcol)a[9]_any, (hwcol)a[10]_any, (hwcol)a[11]_any, (dat)a[12]_any, (dat)a[13]_any);
+	a[0]_obj = (obj)sockCreateGadget((widget)a[1]_obj, (dat)a[2]_any, (dat)a[3]_any, (const char *)a[4]_vec, (uldat)a[5]_any, (uldat)a[6]_any, (udat)a[7]_any, (hwcol)a[8]_any, (hwcol)a[9]_any, (hwcol)a[10]_any, (hwcol)a[11]_any, (dat)a[12]_any, (dat)a[13]_any);
     break;
 
 
 case order_CreateButtonGadget:
     if (N >= 11)
-	a[0]_obj = (obj)Do(CreateButton,Gadget)(FnGadget, (widget)a[1]_obj, (dat)a[2]_any, (dat)a[3]_any, (const byte *)a[4]_vec, (uldat)a[5]_any, (udat)a[6]_any, (hwcol)a[7]_any, (hwcol)a[8]_any, (hwcol)a[9]_any, (dat)a[10]_any, (dat)a[11]_any);
+	a[0]_obj = (obj)Do(CreateButton,Gadget)(FnGadget, (widget)a[1]_obj, (dat)a[2]_any, (dat)a[3]_any, (const char *)a[4]_vec, (uldat)a[5]_any, (udat)a[6]_any, (hwcol)a[7]_any, (hwcol)a[8]_any, (hwcol)a[9]_any, (dat)a[10]_any, (dat)a[11]_any);
     break;
 
 
 case order_WriteTextsGadget:
     if (N >= 7)
-	Act(WriteTexts,(gadget)a[1]_obj)((gadget)a[1]_obj, (byte)a[2]_any, (dat)a[3]_any, (dat)a[4]_any, (const byte *)a[5]_vec, (dat)a[6]_any, (dat)a[7]_any);
+	Act(WriteTexts,(gadget)a[1]_obj)((gadget)a[1]_obj, (byte)a[2]_any, (dat)a[3]_any, (dat)a[4]_any, (const char *)a[5]_vec, (dat)a[6]_any, (dat)a[7]_any);
     break;
 
 case order_WriteHWFontsGadget:
@@ -239,7 +239,7 @@ case order_WriteHWFontsGadget:
 
 case order_CreateWindow:
     if (N >= 11)
-	a[0]_obj = (obj)sockCreateWindow((dat)a[1]_any, (const byte *)a[2]_vec, (const hwcol *)a[3]_vec, (menu)a[4]_obj, (hwcol)a[5]_any, (uldat)a[6]_any, (uldat)a[7]_any, (uldat)a[8]_any, (dat)a[9]_any, (dat)a[10]_any, (dat)a[11]_any);
+	a[0]_obj = (obj)sockCreateWindow((dat)a[1]_any, (const char *)a[2]_vec, (const hwcol *)a[3]_vec, (menu)a[4]_obj, (hwcol)a[5]_any, (uldat)a[6]_any, (uldat)a[7]_any, (uldat)a[8]_any, (dat)a[9]_any, (dat)a[10]_any, (dat)a[11]_any);
     break;
 
 case order_Create4MenuWindow:
@@ -276,7 +276,7 @@ case order_GotoXYWindow:
 
 case order_SetTitleWindow:
     if (N >= 3)
-	sockSetTitleWindow((window)a[1]_obj, (dat)a[2]_any, (const byte *)a[3]_vec);
+	sockSetTitleWindow((window)a[1]_obj, (dat)a[2]_any, (const char *)a[3]_vec);
     break;
 
 case order_SetColTextWindow:
@@ -350,7 +350,7 @@ case order_CirculateChildrenRow:
 
 case order_Create4MenuAny:
     if (N >= 6)
-	a[0]_obj = (obj)sockCreate4MenuAny((obj)a[1]_obj, (window)a[2]_obj, (udat)a[3]_any, (byte)a[4]_any, (ldat)a[5]_any, (const byte *)a[6]_vec);
+	a[0]_obj = (obj)sockCreate4MenuAny((obj)a[1]_obj, (window)a[2]_obj, (udat)a[3]_any, (byte)a[4]_any, (ldat)a[5]_any, (const char *)a[6]_vec);
     break;
 
 
@@ -367,7 +367,7 @@ case order_CreateMenu:
 
 case order_SetInfoMenu:
     if (N >= 5)
-	Act(SetInfo,(menu)a[1]_obj)((menu)a[1]_obj, (byte)a[2]_any, (ldat)a[3]_any, (const byte *)a[4]_vec, (const hwcol *)a[5]_vec);
+	Act(SetInfo,(menu)a[1]_obj)((menu)a[1]_obj, (byte)a[2]_any, (ldat)a[3]_any, (const char *)a[4]_vec, (const hwcol *)a[5]_vec);
     break;
 
 
@@ -494,7 +494,7 @@ case order_RequestSelection:
 
 case order_NotifySelection:
     if (N >= 6)
-	sockNotifySelection((obj)a[1]_obj, (uldat)a[2]_any, (uldat)a[3]_any, (const byte *)a[4]_vec, (uldat)a[5]_any, (const byte *)a[6]_vec);
+	sockNotifySelection((obj)a[1]_obj, (uldat)a[2]_any, (uldat)a[3]_any, (const char *)a[4]_vec, (uldat)a[5]_any, (const byte *)a[6]_vec);
     break;
 
 
@@ -506,7 +506,7 @@ case order_SetServerUid:
 
 case order_OpenExtension:
     if (N >= 2)
-	a[0]_obj = (obj)sockOpenExtension((byte)a[1]_any, (const byte *)a[2]_vec);
+	a[0]_obj = (obj)sockOpenExtension((byte)a[1]_any, (const char *)a[2]_vec);
     break;
 
 case order_CallBExtension:
