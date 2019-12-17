@@ -76,7 +76,7 @@ hwfont *CloneStr2HWFont(const char *s, uldat len) {
     if (s) {
 	if ((temp = save = (hwfont *)AllocMem((len+1) * sizeof(hwfont)))) {
 	    while (len--) {
-		*temp++ = Tutf_CP437_to_UTF_32[*s++];
+		*temp++ = Tutf_CP437_to_UTF_32[(byte)*s++];
 	    }
 	    *temp = '\0';
 	}
