@@ -169,7 +169,7 @@ static void tty_QuitHW(void);
 
 static void null_InitMouse(void) {
     HW->mouse_slot = NOSLOT; /* no mouse at all :( */
-    
+    HW->ConfigureMouse = (void *)NoOp;
     HW->MouseEvent = (void *)NoOp;
     HW->QuitMouse = NoOp;
     
@@ -573,13 +573,13 @@ static byte tty_InitHW(void) {
 	    HW->QuitMouse();
 	}
 	HW->QuitVideo();
-    } else if (tty_fd >= 0)
-        tty_setioctl(tty_fd, &ttysave);
-    
-    if (tty_fd) {
-	close(tty_fd);
-	fclose(stdOUT);
     }
+    if (tty_fd >= 0)
+        tty_setioctl(tty_fd, &ttysave);
+    if (tty_fd > 0)
+	close(tty_fd);
+    if (stdOUT && stdOUT != stdout)
+	fclose(stdOUT);
     return tfalse;
 }
 

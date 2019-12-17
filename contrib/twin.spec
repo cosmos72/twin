@@ -8,7 +8,7 @@
 Name:		twin
 Version:	0.5.0
 Release:	2
-Vendor:		Massimiliano Ghilardi <max@linuz.sns.it>
+Vendor:		Massimiliano Ghilardi <https://github.com/cosmos72>
 Copyright:	GPL
 Group:		User Interface/Twin
 Packager:	Oron Peled <oron@actcom.co.il>

@@ -50,7 +50,7 @@ static uldat FdListGrow(void) {
 	return NOSLOT;
     }
 
-    for (FdSize = oldsize+1; FdSize<size; FdSize++) {
+    for (FdSize = oldsize; FdSize<size; FdSize++) {
         newFdList[FdSize].Fd = NOFD;
     }
     

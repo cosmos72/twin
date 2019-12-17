@@ -2,7 +2,7 @@
 		            WITH ANSWERS
 			    
                             28 Oct 2002
-                Massimiliano Ghilardi <max@linuz.sns.it>
+                Massimiliano Ghilardi <https://github.com/cosmos72/>
 
 This is the list of Frequently Asked Questions about twin,
 a Textmode WINdow environment
@@ -12,8 +12,8 @@ describing twin, in particular the Tutorial.
 This file, and also a lot of other documents about twin,
 is distributed together with twin sources at:
 
-* http://sourceforge.net/project/twin/
-* http://linuz.sns.it/~max/twin/
+* https://github.com/cosmos72/twin/
+* https://sourceforge.net/projects/twin/
 
 and mirror sites thereof. See Q2.1 `Where can I get the documentation about
 twin ?' for a list of the available documents and more information.

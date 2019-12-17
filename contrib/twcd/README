@@ -1,7 +1,7 @@
 Twin CD
 -------
 This is my attempt at a program for TWIN, a text-mode windowing environment
-available at http://linuz.sns.it/~max/twin/. It's in infancy (my program
+available at https://github.com/cosmos72/twin/. It's in infancy (my program
 and the environment), but it's quite usable (both of them, again).
 
 TWCD has a long way to go before it's as good as something like kscd or tcd,

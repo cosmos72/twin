@@ -182,9 +182,9 @@ int main(int argc, char *argv[]) {
 		    arg = malloc(8 + strlen(s));
 		    sprintf(arg, "-hw=tty%s", s);
 		} else
-		    arg = *argv;
+		    arg = strdup(*argv);
 	    } else if ((*argv)[4])
-		arg = *argv;
+		arg = strdup(*argv);
 	    else {
 		Usage(detach);
 		return 1;
@@ -221,6 +221,7 @@ int main(int argc, char *argv[]) {
 
 	TwAttachHW(arg ? strlen(arg) : 0, arg, flags);
 	TwFlush();
+	free(arg);
 	
 	if (redirect)
 	    fprintf(stderr, "reported messages...\n");
