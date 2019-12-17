@@ -107,8 +107,8 @@ void  Tw_WriteHWFontsGadget(tdisplay TwD, tgadget G, byte mask, dat w, dat h, TW
 twindow  Tw_CreateWindow(tdisplay TwD, dat titlelen, TW_CONST byte *title, TW_CONST hwcol *coltitle, tmenu M, hwcol coltext, uldat cursortype, uldat attrib, uldat flags, dat w, dat h, dat hscroll);
 twindow  Tw_Create4MenuWindow(tdisplay TwD, tmenu M);
 
-void  Tw_WriteAsciiWindow(tdisplay TwD, twindow W, ldat len, TW_CONST byte *ascii);
-void  Tw_WriteStringWindow(tdisplay TwD, twindow W, ldat len, TW_CONST byte *string);
+void  Tw_WriteAsciiWindow(tdisplay TwD, twindow W, ldat len, TW_CONST char *ascii);
+void  Tw_WriteStringWindow(tdisplay TwD, twindow W, ldat len, TW_CONST char *string);
 void  Tw_WriteHWFontWindow(tdisplay TwD, twindow W, ldat len, TW_CONST hwfont *textfont);
 void  Tw_WriteHWAttrWindow(tdisplay TwD, twindow W, dat x, dat y, ldat len, TW_CONST hwattr *textattr);
 

@@ -69,17 +69,17 @@ static tmsgport DM_MsgPort;
 static tmenu DM_Menu;
 static tscreen DM_Screen;
 static twindow DM_Window, DM_user, DM_pass;
-static TW_CONST byte *DM_Display;
+static TW_CONST char *DM_Display;
 static byte DM_Kill, quiet, logged_in;
 
 static TW_VOLATILE pid_t ServerPid = (pid_t)-1, AttachPid = (pid_t)-1;
 
-static byte * TW_CONST * Args;
-static TW_CONST byte *hw_name = "--hw=tty", *title, *TwEnvRC = NULL;
+static char * TW_CONST * Args;
+static TW_CONST char *hw_name = "--hw=tty", *title, *TwEnvRC = NULL;
 static byte use_twdisplay = DM_AUTO, Privileges = TW_PRIV_NONE;
 
 typedef struct s_data {
-    byte txt[30];
+    char txt[30];
     byte len;
     byte x;
 } *data;
@@ -108,7 +108,7 @@ static void ShowVersion(void) {
 }
 
 static void ParseArgs(void) {
-    TW_CONST byte *s;
+    TW_CONST char *s;
     while ((s = *Args)) {
 	if (!strcmp(s, "-h") || !Tw_option_strcmp(s, "-help")) {
 	    Usage();
@@ -169,7 +169,7 @@ static void SetHOME(void) {
 
 static byte InitServer(void) {
     int i, fd[2];
-    static byte buff[80];
+    static char buff[80];
     
     if (pipe(fd) >= 0) switch (fork()) {
       case 0:
@@ -279,7 +279,7 @@ TW_DECL_MAGIC(DM_magic);
 
 static byte InitClient(void) {
     dat X, Y;
-    byte *tbuf;
+    char *tbuf;
     
     if (!TwCheckMagic(DM_magic) || !TwOpen(DM_Display))
 	return tfalse;
@@ -290,7 +290,7 @@ static byte InitClient(void) {
 
     if (!title) {
 	struct utsname buf;
-	if (uname(&buf) >= 0 && (tbuf = TwAllocMem(12+strlen(buf.nodename)))) {
+	if (uname(&buf) >= 0 && (tbuf = (char *)TwAllocMem(12+strlen(buf.nodename)))) {
 	    sprintf(tbuf, "Welcome at %s", buf.nodename);
 	    title = tbuf;
 	} else
@@ -328,7 +328,7 @@ static byte InitClient(void) {
 	(DM_Window, 7, 1, " Clear ", TW_GADGETFL_USETEXT, DM_GADGET_CLEAR,
 	 COL(WHITE,BLUE), COL(HIGH|WHITE,GREEN), COL(HIGH|BLACK,GREEN), 16, 12) &&
 	TwCreateButtonGadget
-	(DM_Window, 7, 1, "Console", TW_GADGETFL_USETEXT, DM_GADGET_CONSOLE,
+	(DM_Window, 7, 1, " Leave ", TW_GADGETFL_USETEXT, DM_GADGET_CONSOLE,
 	 COL(WHITE,BLUE), COL(HIGH|WHITE,GREEN), COL(HIGH|BLACK,GREEN), 27, 12)
 
 	) {
@@ -382,8 +382,8 @@ static void kill_attach(void) {
 
 static void Login(void) {
     struct passwd *p;
-    byte *pw_passwd = NULL, ok = tfalse;
-    char *c;
+    char *pw_passwd = NULL, *c;
+    byte ok = tfalse;
 
 
     if ((p = getpwnam(user.txt))) {
@@ -482,8 +482,9 @@ static void EndKey(twindow W, data u) {
 }
 
 
-static void WriteKey(twindow W, data u, udat len, byte *seq) {
-    byte *_txt, _len, x;
+static void WriteKey(twindow W, data u, udat len, char *seq) {
+    char *_txt;
+    byte _len, x;
 
     _txt = u->txt;
     _len = u->len;
@@ -505,7 +506,7 @@ static void WriteKey(twindow W, data u, udat len, byte *seq) {
 }
 
 static void WriteHWFontKey(twindow W, data u, udat len, hwfont *h_data) {
-    byte *d_data = (byte *)h_data, *s_data = d_data;
+    char *d_data = (char *)h_data, *s_data = d_data;
     udat n = len;
 
     /* hack warning: this assumes `h_data' is writable and correctly aligned */
@@ -626,7 +627,7 @@ int main(int argc, char *argv[]) {
     tmsg Msg;
     uldat err;
 
-    Args = (byte * TW_CONST *)argv + 1;
+    Args = argv + 1;
     
     ParseArgs();
     SetHOME();

@@ -96,13 +96,13 @@ case order_NeedResizeDisplay:
 
 case order_AttachHW:
     if (N >= 3)
-	sockAttachHW((uldat)a[1]_any, (const byte *)a[2]_vec, (byte)a[3]_any);
+	sockAttachHW((uldat)a[1]_any, (const char *)a[2]_vec, (byte)a[3]_any);
     break;
 
 
 case order_DetachHW:
     if (N >= 2)
-	a[0]_any = (tany)sockDetachHW((uldat)a[1]_any, (const byte *)a[2]_vec);
+	a[0]_any = (tany)sockDetachHW((uldat)a[1]_any, (const char *)a[2]_vec);
     break;
 
 
@@ -250,12 +250,12 @@ case order_Create4MenuWindow:
 
 case order_WriteAsciiWindow:
     if (N >= 3)
-	sockWriteAsciiWindow((window)a[1]_obj, (ldat)a[2]_any, (const byte *)a[3]_vec);
+	sockWriteAsciiWindow((window)a[1]_obj, (ldat)a[2]_any, (const char *)a[3]_vec);
     break;
 
 case order_WriteStringWindow:
     if (N >= 3)
-	sockWriteStringWindow((window)a[1]_obj, (ldat)a[2]_any, (const byte *)a[3]_vec);
+	sockWriteStringWindow((window)a[1]_obj, (ldat)a[2]_any, (const char *)a[3]_vec);
     break;
 
 case order_WriteHWFontWindow:
@@ -373,12 +373,12 @@ case order_SetInfoMenu:
 
 case order_CreateMsgPort:
     if (N >= 2)
-	a[0]_obj = (obj)sockCreateMsgPort((byte)a[1]_any, (const byte *)a[2]_vec);
+	a[0]_obj = (obj)sockCreateMsgPort((byte)a[1]_any, (const char *)a[2]_vec);
     break;
 
 case order_FindMsgPort:
     if (N >= 3)
-	a[0]_obj = (obj)sockFindMsgPort((msgport)a[1]_obj, (byte)a[2]_any, (const byte *)a[3]_vec);
+	a[0]_obj = (obj)sockFindMsgPort((msgport)a[1]_obj, (byte)a[2]_any, (const char *)a[3]_vec);
     break;
 
 

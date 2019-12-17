@@ -166,12 +166,12 @@
 
   case order_WriteAsciiWindow:
     switch (n) {
-      case 3: L = (a[2]._) * sizeof(byte); break;
+      case 3: L = (a[2]._) * sizeof(char); break;
     }
     break;
   case order_WriteStringWindow:
     switch (n) {
-      case 3: L = (a[2]._) * sizeof(byte); break;
+      case 3: L = (a[2]._) * sizeof(char); break;
     }
     break;
   case order_WriteHWFontWindow:
