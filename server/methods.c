@@ -1335,8 +1335,8 @@ static row FindRow(window Window, ldat Row) {
     ElNumRows[1] = Window->USE.R.NumRowSplit;
     ElNumRows[2] = (ldat)0;
     ElNumRows[3] = Window->HLogic-(ldat)1;
-    ElDist[0] = (ElNumRows[0] ? Abs(ElNumRows[0]-Row) : TW_MAXULDAT);
-    ElDist[1] = (ElNumRows[1] ? Abs(ElNumRows[1]-Row) : TW_MAXULDAT);
+    ElDist[0] = (ElPossib[0] && ElNumRows[0] ? Abs(ElNumRows[0]-Row) : TW_MAXLDAT);
+    ElDist[1] = (ElPossib[1] && ElNumRows[1] ? Abs(ElNumRows[1]-Row) : TW_MAXLDAT);
     ElDist[2] = Row;
     ElDist[3] = Abs(ElNumRows[3]-Row);
     

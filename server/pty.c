@@ -67,17 +67,17 @@
 static char *ptydev, *ttydev;
 static int ptyfd, ttyfd;
 
-#define SS "" SS ""
+#define SS "%." STR(TW_SMALLBUF) "s"
 
-static void pty_error(const byte *d, const byte *f, const byte *arg) {
-    printk("twin: "SS": "SS"(\""SS"\") failed: "SS"\n",
-	   d ? d : (const byte *)"<NULL>",
-	   f ? f : (const byte *)"<NULL>",
-	   arg ? arg : (const byte *)"<NULL>",
+static void pty_error(const char *d, const char *f, const char *arg) {
+    printk("twin: " SS ": " SS "(\"" SS "\") failed: " SS "\n",
+	   d ? d : "<NULL>",
+	   f ? f : "<NULL>",
+	   arg ? arg : "<NULL>",
 	   strerror(errno));
 }
 
-static void get_pty_error(const byte *f, const byte *arg) {
+static void get_pty_error(const char *f, const char *arg) {
     pty_error("opening pseudo-tty", f, arg);
 }
 

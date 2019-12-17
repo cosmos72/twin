@@ -523,7 +523,7 @@ byte SetSelectionFromWindow(window Window) {
     return tfalse;
 }
 
-byte CreateXTermMouseEvent(event_mouse *Event, byte buflen, byte *buf) {
+byte CreateXTermMouseEvent(event_mouse *Event, byte buflen, char *buf) {
     window W;
     udat Flags;
     udat Code = Event->Code;

@@ -130,12 +130,12 @@ byte Error(udat Code_Error) {
     return tfalse;
 }
 
-int printk(const byte *format, ...) {
+int printk(const char *format, ...) {
     int i = 0;
 #ifdef TW_HAVE_VPRINTF
     va_list ap;
     va_start(ap, format);
-    i = vfprintf(stderr, (const char *)format, ap);
+    i = vfprintf(stderr, format, ap);
     va_end(ap);
 #endif
     return i;
