@@ -48,9 +48,9 @@ void *Tw_ReAllocMem0(void * Mem, size_t ElementSize, size_t OldCount, size_t New
 /** custom malloc()+memcpy() function */
 extern void *Tw_CloneMem(TW_CONST void *, size_t);
 /** custom strdup() function */
-extern byte *Tw_CloneStr(TW_CONST byte *);
+extern char *Tw_CloneStr(TW_CONST char *);
 /** custom byte-to-unicode conversion + strdup() function */
-extern hwfont *Tw_CloneStr2HWFont(TW_CONST byte *, size_t);
+extern hwfont *Tw_CloneStr2HWFont(TW_CONST char *, size_t);
 
 
 #define Tw_LenStr		strlen
@@ -78,7 +78,7 @@ byte Tw_EnableGzip(tdisplay TwD);
 byte Tw_DisableGzip(tdisplay TwD);
 
 /** return server diagnostic after Tw_AttachHW() */
-TW_CONST byte * Tw_AttachGetReply(tdisplay TwD, uldat *len);
+TW_CONST char * Tw_AttachGetReply(tdisplay TwD, uldat *len);
 /** confirm to server it is ok to use newly opened display (used for synchronization) */
 void Tw_AttachConfirm(tdisplay TwD);
 

@@ -48,13 +48,13 @@ static topaque EncodeArraySize(fn_order o, uldat n, tsfield a) {
  * since from client side they are the same.
  */
 TW_INLINE udat EncodeArgs(fn_order o, uldat *Space, va_list va, tsfield a) {
-    TW_CONST byte *Format = Functions[o].format + 1;
+    TW_CONST char *Format = Functions[o].format + 1;
     uldat arglen, space;
     udat N;
     byte c, t, variable_return_type = tfalse;
     
     for (N = space = 0; (c = *Format++); N++, a++) {
-	t = *Format++;
+	t = (byte)*Format++;
 	if (t >= TWS_highest)
 	    /*
 	     * let (tobj) fields decade into (uldat),
@@ -115,12 +115,12 @@ TW_INLINE udat EncodeArgs(fn_order o, uldat *Space, va_list va, tsfield a) {
 	/* fill return type from first arg - which must be 'udat' */
 
 	if (N > 1 && a[-1].type == (TWS_vec|TWS_byte) && a[-1].TWS_field_vecL == 2) {
-	    Format = (TW_CONST byte *)a[-1].TWS_field_vecV;
-	    switch (*Format++) {
+	    Format = (TW_CONST char *)a[-1].TWS_field_vecV;
+	    switch ((byte)*Format++) {
 	      case '_':
 	      case 'x':
 	      case 'v':
-		if ((t = *Format++) < TWS_highest) {
+		if ((t = (byte)*Format++) < TWS_highest) {
 		    a->type = t;
 		    a->hash = Tw_MagicData[t]; /* sizeof(return type) */
 		    break;

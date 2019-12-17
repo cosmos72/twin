@@ -55,7 +55,7 @@
 
 case order_FindFunction:
     if (N >= 4)
-	a[0]_any = (tany)sockFindFunction((byte)a[1]_any, (const byte *)a[2]_vec, (byte)a[3]_any, (const byte *)a[4]_vec);
+	a[0]_any = (tany)sockFindFunction((byte)a[1]_any, (const char *)a[2]_vec, (byte)a[3]_any, (const char *)a[4]_vec);
     break;
 
 

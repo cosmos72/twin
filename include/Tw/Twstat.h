@@ -24,6 +24,7 @@
 
 /* the following are hardcoded in socket.c, libTw.c and libTw ABI, don't change! */
 #define TWS_void    0
+#define TWS_char    1
 #define TWS_byte    1
 #define TWS_num     1
 #define TWS_dat     2
@@ -47,6 +48,7 @@
 /* the following are hardcoded in libTw ABI, don't change! */
 #define TWS_void_CHR    '\xFE' /* '\xFF' would conflict with TWS_obj */
 #define TWS_void_STR    "\xFE"
+#define TWS_char_STR    "\x01"
 #define TWS_byte_STR    "\x01"
 #define TWS_num_STR     "\x01"
 #define TWS_dat_STR     "\x02"

@@ -48,7 +48,7 @@
 
 
 { 0, 0, "FindFunction",
-    "0""_"TWS_uldat_STR"_"TWS_byte_STR"V"TWS_byte_STR"_"TWS_byte_STR"V"TWS_byte_STR },
+    "0""_"TWS_uldat_STR"_"TWS_byte_STR"V"TWS_char_STR"_"TWS_byte_STR"V"TWS_char_STR },
 
 
 { 0, 0, "SyncSocket",

@@ -62,9 +62,6 @@
 #ifdef TW_HAVE_ZLIB_H
 # include <zlib.h>
 #endif
-#ifdef TW_HAVE_PTHREAD_H
-# include <pthread.h>
-#endif
 #ifdef TW_HAVE_SYS_IOCTL_H
 # include <sys/ioctl.h>
 #endif
@@ -119,7 +116,7 @@ typedef tw_errno s_tw_errno_vec;
 typedef struct s_fn_list {
     void *Fn;
     byte len, formatlen;
-    byte *name, *format;
+    char *name, *format;
 } fn_list;
 
 static fn_list Functions[] = {
@@ -287,18 +284,17 @@ void *Tw_CloneMem(TW_CONST void *S, size_t len) {
     void *T;
     if (S && (T = Tw_AllocMem(len)))
 	return Tw_CopyMem(S, T, len);
-  return NULL;
+    return NULL;
 }
 /**
  * creates a copy of a null-terminated string string
  */
-byte *Tw_CloneStr(TW_CONST byte *S) {
-    size_t len;
-    byte *T;
+char *Tw_CloneStr(TW_CONST char *S) {
     if (S) {
-	len = 1 + Tw_LenStr(S);
-	if ((T = Tw_AllocMem(len)))
-	    return Tw_CopyMem(S, T, len);
+	size_t len = 1 + strlen(S);
+	char *T;
+	if ((T = (char *)Tw_AllocMem(len)))
+	     return Tw_CopyMem(S, T, len);
     }
     return NULL;
 }
@@ -953,7 +949,8 @@ uldat Tw_ServerVersion(tw_d TwD) {
 
 
 static byte ProtocolNumbers(tw_d TwD) {
-    byte *servdata, *hostdata = " Twin-" TW_STR(TW_PROTOCOL_VERSION_MAJOR) ".";
+    byte *servdata;
+    TW_CONST char *hostdata = " Twin-" TW_STR(TW_PROTOCOL_VERSION_MAJOR) ".";
     uldat len = 0, chunk, _len = strlen(hostdata);
     
     while (Fd != TW_NOFD && (!len || ((servdata = GetQueue(TwD, QREAD, NULL)), len < *servdata))) {
@@ -1057,7 +1054,8 @@ static byte MagicNumbers(tw_d TwD) {
 
 static byte MagicChallenge(tw_d TwD) {
     struct MD5Context ctx;
-    byte *t, *data, *home;
+    byte *t;
+    char *data, *home;
     uldat len, got, challenge, chunk;
     int fd;
     
@@ -1146,7 +1144,7 @@ static TW_CONST char * tmpdir(void) {
 }
 
 static udat copyToSockaddrUn(TW_CONST char * src, struct sockaddr_un * addr, udat pos) {
-    size_t len = Tw_LenStr(src), max = sizeof(addr->sun_path) - 1; /* for final '\0' */
+    size_t len = strlen(src), max = sizeof(addr->sun_path) - 1; /* for final '\0' */
     if (pos < max) {
 	if (len >= max - pos)
 	    len = max - pos - 1;
@@ -1161,10 +1159,11 @@ static udat copyToSockaddrUn(TW_CONST char * src, struct sockaddr_un * addr, uda
  * opens a connection to server; TwDisplay is the server to contact;
  * if NULL the environment variable $TWDISPLAY is used
  */
-tw_d Tw_Open(TW_CONST byte *TwDisplay) {
+tw_d Tw_Open(TW_CONST char *TwDisplay) {
     tw_d TwD;
     int i, result = -1, fd = TW_NOFD;
-    byte *options, gzip = tfalse, handshake = tfalse;
+    char *options;
+    byte gzip = tfalse, handshake = tfalse;
 
     if (!TwDisplay && (!(TwDisplay = getenv("TWDISPLAY")) || !*TwDisplay)) {
 	CommonErrno = TW_ENO_DISPLAY;
@@ -1201,7 +1200,7 @@ tw_d Tw_Open(TW_CONST byte *TwDisplay) {
 	/* inet socket */
 	struct sockaddr_in addr;
 	struct hostent *host_info;
-	byte *server = Tw_CloneStr(TwDisplay), *p;
+	char *server = Tw_CloneStr(TwDisplay), *p;
 	unsigned short port;
 	
 	if (!server) {
@@ -1372,9 +1371,9 @@ void Tw_Close(tw_d TwD) {
 /**
  * returns one of the messages produced by server after Tw_Attach()
  */
-TW_CONST byte *Tw_AttachGetReply(tw_d TwD, uldat *len) {
+TW_CONST char *Tw_AttachGetReply(tw_d TwD, uldat *len) {
     uldat chunk;
-    byte *answ = (byte *)-1, *nul;
+    char *answ = (char *)-1, *nul;
 #ifdef CONF_SOCKET_GZ
     byte wasGzipFlag;
 #endif
@@ -1388,16 +1387,16 @@ TW_CONST byte *Tw_AttachGetReply(tw_d TwD, uldat *len) {
     
     if (Fd != TW_NOFD) do {
 	
-	answ = GetQueue(TwD, QREAD, &chunk);
+	answ = (char *)GetQueue(TwD, QREAD, &chunk);
 	if (!chunk) {
 	    (void)TryRead(TwD, TIMEOUT_INFINITE);
-	    answ = GetQueue(TwD, QREAD, &chunk);
+	    answ = (char *)GetQueue(TwD, QREAD, &chunk);
 	}
 	if (chunk) {
 	    if ((nul = memchr(answ, '\0', chunk))) {
 		if (nul == answ && nul + 1 < answ + chunk) {
 		    DeQueue(TwD, QREAD, 2);
-		    answ = (byte *)(size_t)nul[1];
+		    answ = (char *)(size_t)nul[1];
 		    break;
 		}
 		chunk = nul - answ;
@@ -1444,7 +1443,7 @@ tw_errno *Tw_ErrnoLocation(tw_d TwD) {
 /**
  * returns a string description of given error
  */
-TW_ATTR_FN_CONST TW_CONST byte *Tw_StrError(TW_CONST tw_d TwD, uldat e) {
+TW_ATTR_FN_CONST TW_CONST char *Tw_StrError(TW_CONST tw_d TwD, uldat e) {
     switch (e) {
       case 0:
 	return "success";
@@ -1506,7 +1505,7 @@ TW_ATTR_FN_CONST TW_CONST byte *Tw_StrError(TW_CONST tw_d TwD, uldat e) {
 /**
  * returns a string description of given error detail
  */
-TW_ATTR_FN_CONST TW_CONST byte *Tw_StrErrorDetail(TW_CONST tw_d TwD, uldat E, uldat S) {
+TW_ATTR_FN_CONST TW_CONST char *Tw_StrErrorDetail(TW_CONST tw_d TwD, uldat E, uldat S) {
     switch (E) {
       case TW_ESERVER_LOST_CONNECT:
 	switch (S) {
@@ -2199,7 +2198,7 @@ static tany _Tw_EncodeCall(byte flags, uldat o, tw_d TwD, ...)
 
 #if defined(CONF__ASM) && defined(TW_HAVE_ASM)
 
-uldat _Tw_FindFunction(tw_d TwD, byte Len, TW_CONST byte *Name, byte ProtoLen, TW_CONST byte *Proto);
+uldat _Tw_FindFunction(tw_d TwD, byte Len, TW_CONST char *Name, byte ProtoLen, TW_CONST char *Proto);
 byte  _Tw_SyncSocket(tw_d TwD);
 
 #else
@@ -2229,7 +2228,7 @@ byte Tw_Sync(tw_d TwD) {
  * returns the server-dependant order number of a function (specified as string),
  * or NOID if server is missing that function
  */
-uldat Tw_FindFunction(tw_d TwD, byte Len, TW_CONST byte *Name, byte FormatLen, TW_CONST byte *Format) {
+uldat Tw_FindFunction(tw_d TwD, byte Len, TW_CONST char *Name, byte FormatLen, TW_CONST char *Format) {
     uldat MyId;
     LOCK; MyId = _Tw_FindFunction(TwD, Len, Name, FormatLen, Format); UNLK;
     return MyId;

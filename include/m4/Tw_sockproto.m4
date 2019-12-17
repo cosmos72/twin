@@ -63,7 +63,7 @@ rem([
 ])
 
 c_doxygen(/** return server-side id of given libTw function name with given prototype */)
-PROTOFindFunction(uldat,_, Find,Function,0, byte,_,namelen, byte,V(A(1)),name, byte,_,protolen, byte,V(A(3)),proto)
+PROTOFindFunction(uldat,_, Find,Function,0, byte,_,namelen, char,V(A(1)),name, byte,_,protolen, char,V(A(3)),proto)
 
 c_doxygen(/** sync libTw socket: flush output buffer and wait for server replies */)
 PROTOSyncSocket(byte,_,  Sync,Socket,0)
@@ -81,9 +81,9 @@ c_doxygen(/** force a server display resize; used by twdisplay */)
 PROTO(void,v, NeedResize,Display,0)
 
 c_doxygen(/** tell server to open a new display; used by twattach/twdisplay */)
-PROTO(void,v, Attach,HW,0, uldat,_,len, byte,V(A(1)),name, byte,_,flags)
+PROTO(void,v, Attach,HW,0, uldat,_,len, char,V(A(1)),name, byte,_,flags)
 c_doxygen(/** tell server to close given display */)
-PROTO(byte,_, Detach,HW,0, uldat,_,len, byte,V(A(1)),name)
+PROTO(byte,_, Detach,HW,0, uldat,_,len, char,V(A(1)),name)
 
 c_doxygen(/** set server global charset translation */)
 PROTO(void,v,  Set,  FontTranslation,0,  byte,V(0x80),trans)
@@ -167,8 +167,8 @@ PROTO(menu,x, Create,Menu,0, hwcol,_,colitem, hwcol,_,colselect, hwcol,_,coldisa
       hwcol,_,colshortcut, hwcol,_,colshortcutselect, byte,_,flags)
 PROTO(void,v, SetInfo,Menu,2, menu,x,M, byte,_,flags, ldat,_,len, byte,V(A(3)),text, hwcol,W(A(3)),coltext)
 
-PROTO(msgport,x,Create,MsgPort,0, byte,_,len, byte,V(A(1)),name)
-PROTO(msgport,x,  Find,MsgPort,0, msgport,x,prev, byte,_,len, byte,V(A(2)),name)
+PROTO(msgport,x,Create,MsgPort,0, byte,_,len, char,V(A(1)),name)
+PROTO(msgport,x,  Find,MsgPort,0, msgport,x,prev, byte,_,len, char,V(A(2)),name)
 
 PROTO(void,v,  BgImage,Screen,2, screen,x,S, dat,_,w, dat,_,h, hwattr,V(A(2)*A(3)),textattr)
 
