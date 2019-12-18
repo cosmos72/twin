@@ -8,7 +8,7 @@
 static void stdin_QuitKeyboard(void);
 static void stdin_KeyboardEvent(int fd, display_hw hw);
 static udat linux_LookupKey(udat *ShiftFlags, byte *slen, char *s,
-                            byte *retlen, char **ret);
+                            byte *retlen, const char **ret);
 static void xterm_MouseEvent(int, display_hw);
 
 static byte stdin_TestTty(void) {
@@ -107,7 +107,7 @@ static void stdin_QuitKeyboard(void) {
 
 /* kludge! this is ok for linux terminals only... */
 static udat linux_LookupKey(udat *ShiftFlags, byte *slen, char *s,
-                            byte *retlen, char **ret) {
+                            byte *retlen, const char **ret) {
     byte used = 0, len = *slen;
 
     *ShiftFlags = 0;
@@ -356,7 +356,7 @@ static void stdin_KeyboardEvent(int fd, display_hw hw) {
 	if (!(chunk = got))
 	    break;
 	
-	Code = LookupKey(&ShiftFlags, &chunk, s, &retlen, &ret);
+	Code = LookupKey(&ShiftFlags, &chunk, s, &retlen, (const char **)&ret);
 	s += chunk, got -= chunk;
 
 	KeyboardEventCommon(Code, ShiftFlags, retlen, ret);

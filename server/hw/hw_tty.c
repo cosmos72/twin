@@ -64,7 +64,7 @@ struct tty_data {
     uldat saveCursorType;
     dat saveX, saveY;
     
-    udat (*LookupKey)(udat *ShiftFlags, byte *slen, char *s, byte *retlen, char **ret);
+    udat (*LookupKey)(udat *ShiftFlags, byte *slen, char *s, byte *retlen, const char **ret);
     
     const char *mouse_start_seq, *mouse_end_seq, *mouse_motion_seq;
 #ifdef CONF_HW_TTY_LINUX
@@ -77,7 +77,7 @@ struct tty_data {
     dat xterm_prev_x, xterm_prev_y;
 
 #ifdef CONF_HW_TTY_TERMCAP
-    const char *tc_cap[tc_cap_N];
+    char *tc_cap[tc_cap_N];
     byte colorbug, wrapglitch;
 #else
     const char *tc_scr_clear;

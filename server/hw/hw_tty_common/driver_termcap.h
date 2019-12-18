@@ -49,7 +49,7 @@ IS(Down,	3, "\033[B")
     };
     struct linux_keys const *lk;
     
-    const char **key;
+    char **key;
     byte keylen, len = *slen;
    
     *ret = s;
@@ -105,7 +105,7 @@ IS(Down,	3, "\033[B")
     return TW_Null;
 }
 
-static char *termcap_extract(const char *cap, byte **dest) {
+static char *termcap_extract(const char *cap, char **dest) {
     char buf[20], *d = buf, *s = tgetstr(cap, &d);
 
     if (!s || !*s) {
@@ -129,17 +129,16 @@ static char *termcap_extract(const char *cap, byte **dest) {
 
 
 static void termcap_cleanup(void) {
-    byte **n;
-    
-    for (n = tc_cap; n < tc_cap + tc_cap_N; n++)
+    char **n;
+    for (n = tc_cap; n < tc_cap + tc_cap_N; n++) {
 	if (*n)
 	    FreeMem(*n);
+    }
 }
 
 static void fixup_colorbug(void) {
     uldat len = strlen(tc_attr_off);
-    byte *s = AllocMem( len + 9);
-    
+    char *s = (char *)AllocMem(len + 9);
     if (s) {
 	CopyMem(tc_attr_off, s, len);
 	CopyMem("\033[37;40m", s + len, 9);
@@ -149,14 +148,14 @@ static void fixup_colorbug(void) {
 }
 
 static byte termcap_InitVideo(void) {
-    const byte *term = tty_TERM;
+    const char *term = tty_TERM;
     const char *tc_name[tc_cap_N + 1] = {
         "cl", "cm", "ve", "vi", "md", "mb", "me", "ks", "ke", "bl", "as", "ae",
         "k1", "k2", "k3", "k4", "k5", "k6", "k7", "k8", "k9", "k;", "F1", "F2",
         "&7", "kh", "@7", "kD", "kI", "kN", "kP", "kl", "ku", "kr", "kd", NULL
     };
     const char **n;
-    byte **d;
+    char **d;
     char tcbuf[4096];		/* by convention, this is enough */
 
     if (!term) {
@@ -265,7 +264,7 @@ static void termcap_QuitVideo(void) {
     termcap_MoveToXY(0, DisplayHeight-1);
     termcap_SetCursorType(LINECURSOR);
     /* reset colors and charset */
-    fprintf(stdOUT, "%s%s", tc_attr_off, tc_charset_end ? tc_charset_end : (byte *)"");
+    fprintf(stdOUT, "%s%s", tc_attr_off, tc_charset_end ? tc_charset_end : "");
     
     /* restore original alt cursor keys, keypad settings */
     HW->Configure(HW_KBDAPPLIC, ttrue, 0);
