@@ -449,7 +449,7 @@ static void sockStat(obj x, udat n, const byte *in);
 
 typedef struct {
     byte Len, FormatLen;
-    const byte *Name, *Format;
+    const char *Name, *Format;
 } sockfn;
 
 static sockfn sockF[] = {

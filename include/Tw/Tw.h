@@ -221,7 +221,7 @@ struct s_tevent_selectionnotify {
     udat Code, pad; /* unused */
     uldat ReqPrivate;
     uldat Magic;
-    byte MIME[TW_MAX_MIMELEN];
+    char MIME[TW_MAX_MIMELEN];
     uldat Len;
     byte Data[sizeof(uldat)]; /* Data[] is Len bytes actually */
 } TW_ATTR_TYPE_PACKED;

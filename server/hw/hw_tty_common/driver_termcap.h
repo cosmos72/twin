@@ -279,15 +279,16 @@ static void termcap_QuitVideo(void) {
 #define termcap_MogrifyInit() fputs(tc_attr_off, stdOUT); _col = COL(WHITE,BLACK)
 #define termcap_MogrifyFinish() do { } while (0)
 
-INLINE byte *termcap_CopyAttr(byte *attr, byte *dest) {
+INLINE char *termcap_CopyAttr(char *attr, char *dest) {
     while ((*dest++ = *attr++))
 	;
     return --dest;
 }
 	
 INLINE void termcap_SetColor(hwcol col) {
-    static byte colbuf[80];
-    byte c, *colp = colbuf;
+    static char colbuf[80];
+    char *colp = colbuf;
+    byte c;
     
     if ((col & COL(HIGH,HIGH)) != (_col & COL(HIGH,HIGH))) {
 	

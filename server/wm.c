@@ -164,7 +164,7 @@ static byte WMFindBorderWindow(window W, dat u, dat v, byte Border, hwattr *PtrA
 	    k = 2*(ldat)u - ( (ldat)XWidth-(ldat)W->NameLen-(ldat)3 );
 	    if (k > 0) k /= 2;
 	    if (k > 0 && k <= W->NameLen) {
-		Font = Tutf_CP437_to_UTF_32[W->Name[--k]];
+		Font = Tutf_CP437_to_UTF_32[(byte)W->Name[--k]];
 		Found = POS_TITLE;
 	    } else if (k == 0 || k == W->NameLen + 1) {
 		Font = ' ';
@@ -233,7 +233,7 @@ static byte WMFindBorderWindow(window W, dat u, dat v, byte Border, hwattr *PtrA
 	    k = 2*(ldat)u - ( (ldat)XWidth-(ldat)W->NameLen-(ldat)3);
 	    if (k > 0) k /= 2;
 	    if (k > 0 && k <= W->NameLen) {
-		Font = Tutf_CP437_to_UTF_32[W->Name[--k]];
+		Font = Tutf_CP437_to_UTF_32[(byte)W->Name[--k]];
 		Found = POS_TITLE;
 	    } else if (k == 0 || k == W->NameLen + 1) {
 		Font = ' ';

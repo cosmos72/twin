@@ -779,7 +779,7 @@ byte FillButton(gadget G, widget Parent, udat Code, dat Left, dat Up,
 	for (i=(dat)0; i<XWidth-(dat)1; i++) {
 	    G->USE.T.Text[0][i+j] = G->USE.T.Text[1][i+j+1] =
 		G->USE.T.Text[2][i+j] = G->USE.T.Text[3][i+j+1] =
-		Tutf_CP437_to_UTF_32[*(T++)];
+		Tutf_CP437_to_UTF_32[(byte)*(T++)];
 	    
 	    G->USE.T.Color[0][i+j] = G->USE.T.Color[1][i+j+1] = Color;
 	    G->USE.T.Color[2][i+j] = G->USE.T.Color[3][i+j+1] = ColorDisabled;
@@ -1794,7 +1794,7 @@ static byte SetTextRow(row Row, ldat Len, const char *Text, byte DefaultCol) {
 	    hwfont *RowText = Row->Text;
 	    ldat i = Len;
 	    while (i-- > 0) {
-		*RowText++ = Tutf_CP437_to_UTF_32[*Text++];
+		*RowText++ = Tutf_CP437_to_UTF_32[(byte)*Text++];
 	    }
 	    if (!(Row->Flags & ROW_DEFCOL) && !DefaultCol)
 		/* will not work correctly if sizeof(hwcol) != 1 */

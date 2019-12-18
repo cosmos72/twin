@@ -11,7 +11,7 @@
 
 
 /* types */
-typedef byte * str;
+typedef char * str;
 typedef struct node * node;
 typedef struct ldat_list ldat_list;
 typedef struct str_list str_list;

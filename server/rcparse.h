@@ -314,8 +314,8 @@ static ldat FreeButtonPos(ldat n, ldat lr) {
 
 static byte ImmButton(ldat n, str shape, ldat lr, ldat flag, ldat pos) {
     if (n >= 0 && n < BUTTON_MAX && strlen(shape) >= 2) {
-	All->ButtonVec[n].shape[0] = Tutf_CP437_to_UTF_32[shape[0]];
-	All->ButtonVec[n].shape[1] = Tutf_CP437_to_UTF_32[shape[1]];
+	All->ButtonVec[n].shape[0] = Tutf_CP437_to_UTF_32[(byte)shape[0]];
+	All->ButtonVec[n].shape[1] = Tutf_CP437_to_UTF_32[(byte)shape[1]];
 	if (lr == FL_RIGHT)
 	    pos = -pos;
 	if (flag == '+' || flag == '-')

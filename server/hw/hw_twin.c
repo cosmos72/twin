@@ -54,7 +54,7 @@ typedef struct {
 #define TSelReq		(twdata->TSelReq)
 
 static void TW_SelectionRequest_up(uldat Requestor, uldat ReqPrivate);
-static void TW_SelectionNotify_up(uldat ReqPrivate, uldat Magic, const byte MIME[MAX_MIMELEN],
+static void TW_SelectionNotify_up(uldat ReqPrivate, uldat Magic, const char MIME[MAX_MIMELEN],
 				  uldat Len, byte const * Data);
 
 static void TW_Beep(void) {
@@ -76,7 +76,7 @@ static void TW_Configure(udat resource, byte todefault, udat value) {
 	if (todefault)
 	    Tw_WriteAsciiWindow(Td, Twin, 5, "\033[10]");
 	else {
-	    byte buf[10];
+	    char buf[10];
 	    sprintf(buf, "\033[10;%.3hd]", value);
 	    Tw_WriteAsciiWindow(Td, Twin, strlen(buf), buf);
 	}
@@ -86,7 +86,7 @@ static void TW_Configure(udat resource, byte todefault, udat value) {
 	if (todefault)
 	    Tw_WriteAsciiWindow(Td, Twin, 5, "\033[11]");
 	else {
-	    byte buf[10];
+	    char buf[10];
 	    sprintf(buf, "\033[11;%.3hd]", value);
 	    Tw_WriteAsciiWindow(Td, Twin, strlen(buf), buf);
 	}
@@ -237,7 +237,7 @@ static void TW_FlushVideo(void) {
     }
     if (!ValidOldVideo || CursorType != HW->TT) {
 	/* Tw_SetCursorWindow(Twin, CursorType); */
-	byte buff[16];
+	char buff[16];
 	sprintf(buff, "\033[?%d;%d;%dc",
 		(int)(CursorType & 0xFF),
 		(int)((CursorType >> 8) & 0xFF),
@@ -384,7 +384,7 @@ static void TW_SelectionNotify_TW(uldat ReqPrivate, uldat Magic, const char MIME
 /*
  * notify the libTw Selection to twin upper layer
  */
-static void TW_SelectionNotify_up(uldat ReqPrivate, uldat Magic, const byte MIME[MAX_MIMELEN],
+static void TW_SelectionNotify_up(uldat ReqPrivate, uldat Magic, const char MIME[MAX_MIMELEN],
 				  uldat Len, byte const * Data) {
 #ifdef DEBUG_HW_TWIN
     printf("notifying selection (%d/%d) to twin core\n", ReqPrivate, TSelCount-1);
@@ -416,8 +416,8 @@ static void TW_QuitHW(void) {
 TW_DECL_MAGIC(hw_twin_magic);
 
 static byte TW_InitHW(void) {
-    byte *arg = HW->Name, *opt = NULL;
-    byte name[] = "twin :??? on twin";
+    char *arg = HW->Name, *opt = NULL;
+    char name[] = "twin :??? on twin";
     uldat len;
     tmenu Tmenu;
     tscreen Tscreen;
@@ -483,7 +483,8 @@ static byte TW_InitHW(void) {
 	  COL(RED,WHITE), COL(RED,GREEN), (byte)0)) &&
 	Tw_Item4MenuCommon(Td, Tmenu)) do {
 	    
-	    Tw_Info4Menu(Td, Tmenu, TW_ROW_ACTIVE, (uldat)14, " Twin on Twin ", "ptppppppptpppp");
+	    Tw_Info4Menu(Td, Tmenu, TW_ROW_ACTIVE, (uldat)14, " Twin on Twin ",
+                         (const hwcol *)"ptppppppptpppp");
 	      
 	    sprintf(name+5, "%s on twin", TWDisplay);
 	    len = strlen(name);
@@ -502,11 +503,11 @@ static byte TW_InitHW(void) {
 			      COL(WHITE,BLACK), COL(WHITE,HIGH|BLACK), COL(HIGH|BLACK,BLACK), COL(BLACK,HIGH|BLACK));
 	    Tw_MapWidget(Td, Twin, Tscreen);
 	    
-	    Tw_Flush(Td);
 	    /*
-	     * NOT Tw_Sync() as it might deadlock when
+	     * NOT Tw_Sync(Td) as it might deadlock when
 	     * twin:x displays on twin:y which displays on twin:x
 	     */
+	    Tw_Flush(Td);
 	    
 	    TSelCount = SelCount = 0;
 	    

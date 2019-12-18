@@ -587,7 +587,7 @@ class TSelectionNotifyEvent : public s_tevent_selectionnotify {
     inline udat code( )		const	{ return Code; }
     inline uldat reqprivate( )	const	{ return ReqPrivate; }
     inline uldat magic( )	const	{ return Magic; }
-    inline const char *mime( )	const	{ return (const char *)MIME; }
+    inline const char *mime( )	const	{ return MIME; }
     inline uldat datalen( )	const	{ return Len; }
     inline uldat len( )		const	{ return Len; }
     inline const char *data( )	const	{ return (const char *)Data; }
@@ -992,7 +992,7 @@ class TW : public TEmpty {
 			uldat Magic, const char MIME[TW_MAX_MIMELEN],
 			uldat Len, const char *Data)
     {
-	TwNotifySelection(Requestor, ReqPrivate, Magic, (TW_CONST byte *)MIME,
+	TwNotifySelection(Requestor, ReqPrivate, Magic, MIME,
 			  Len, (TW_CONST byte *)Data);
     }
     static inline tscreen firstScreen()

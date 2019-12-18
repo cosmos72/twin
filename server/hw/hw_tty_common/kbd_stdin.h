@@ -356,7 +356,7 @@ static void stdin_KeyboardEvent(int fd, display_hw hw) {
 	if (!(chunk = got))
 	    break;
 	
-	Code = LookupKey(&ShiftFlags, &chunk, s, &retlen, (const char **)&ret);
+	Code = LookupKey(&ShiftFlags, &chunk, s, &retlen, (CONST char **)&ret);
 	s += chunk, got -= chunk;
 
 	KeyboardEventCommon(Code, ShiftFlags, retlen, ret);

@@ -25,8 +25,8 @@
 
 static menu Term_Menu;
 
-static byte *default_args[3];
-static byte *default_title = "Twin Term";
+static char *default_args[3];
+static char *default_title = "Twin Term";
 
 static msgport Term_MsgPort;
 
@@ -65,9 +65,9 @@ static window newTermWindow(byte *title) {
     return Window;
 }
 
-static window OpenTerm(const byte *arg0, byte * const *argv) {
+static window OpenTerm(CONST char *arg0, char * CONST *argv) {
     window Window;
-    byte *title;
+    char *title;
     
     /* if {arg0, argv} is {NULL, ...} or {"", ... } then start user's shell */
     if (arg0 && *arg0 && argv && argv[0]) {
@@ -96,7 +96,7 @@ static window OpenTerm(const byte *arg0, byte * const *argv) {
     return NULL;
 }
 
-static void TermWriteHWFontWindow(window W, uldat len, const hwfont *hwData) {
+static void TermWriteHWFontWindow(window W, uldat len, CONST hwfont *hwData) {
     hwfont (*inv_charset)(hwfont) = W->USE.C.TtyData->InvCharset;
     byte *Data, *sData;
     uldat n;
@@ -171,7 +171,7 @@ static void TwinTermH(msgport MsgPort) {
 	} else if (Msg->Type==MSG_USER_CONTROL) {
 	    /* this duplicates the same functionality of builtin.c */
 	    if (Event->EventControl.Code == MSG_CONTROL_OPEN) {
-		byte **cmd = TokenizeStringVec(Event->EventControl.Len, Event->EventControl.Data);
+		char **cmd = TokenizeStringVec(Event->EventControl.Len, Event->EventControl.Data);
 		if (cmd) {
 		    OpenTerm(cmd[0], cmd);
 		    FreeStringVec(cmd);
@@ -184,7 +184,7 @@ static void TwinTermH(msgport MsgPort) {
 }
 
 static void TwinTermIO(int Fd, window Window) {
-    static byte buf[TW_BIGBUFF];
+    static char buf[TW_BIGBUFF];
     uldat got = 0, chunk = 0;
     
     do {

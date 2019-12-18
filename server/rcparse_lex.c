@@ -852,7 +852,7 @@ char *yytext;
 #define MAX_READ_DEPTH 64
 static YY_BUFFER_STATE read_stack[MAX_READ_DEPTH];
 int read_stack_curr = 0;
-byte *file_name[MAX_READ_DEPTH];
+char *file_name[MAX_READ_DEPTH];
 int line_no[MAX_READ_DEPTH];
 
 #define LINE_NO line_no[read_stack_curr-1]
