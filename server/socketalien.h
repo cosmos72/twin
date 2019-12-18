@@ -30,7 +30,7 @@
 #define POP(s,type,lval)		alienPOP(s,type,lval)
 /* wrap alienPUSH() to work with non-lvalue `val' */
 #define PUSH(s,type,val)		do {type tmp = (val); alienPUSH(s,type,tmp); } while(0)
-#define POPADDR(s,type,len,ptr)		PopConstAddr(s,type,len,ptr)
+#define POPADDR(s,type,len,ptr)		PopAddr(s,type,len,ptr)
 
 
 #if TW_IS_LITTLE_ENDIAN && TW_CAN_UNALIGNED != 0 /* little endian, and unaligned access is supported. hton?() functions to speed up translation */
@@ -223,7 +223,7 @@ INLINE void alienReadVec(const byte *src, byte *dst, uldat len, uldat srcsize, u
  * translate from alien data, copying len bytes from srcsize chunks to dstsize chunks, optionally flipping byte order.
  * allocate a new buffer to hold data.
  */
-static const byte *alienAllocReadVec(const byte *src, uldat len, uldat srcsize, uldat dstsize, byte flag) {
+static byte *alienAllocReadVec(const byte *src, uldat len, uldat srcsize, uldat dstsize, byte flag) {
     byte *dst;
     
     if ((dst = AllocMem(len / srcsize * dstsize)))
@@ -481,7 +481,7 @@ TW_INLINE ldat alienDecodeArg(uldat id, const byte * Format, uldat n, tsfield a,
 	    POP(s,topaque,nlen);
 	    nlen *= sizeof(uldat);
 	    if (Left(nlen)) {
-		PopConstAddr(s,byte,nlen,av);
+		PopAddr(s,byte,nlen,av);
 		a[n]_vec = av;
 		a[n]_len = nlen / SIZEOF(uldat) * sizeof(uldat);
 		a[n]_type = vec_|obj_;
@@ -1095,7 +1095,7 @@ static byte alienDecodeExtension(tany *Len, const byte **Data, tany *Args_n, tsf
 		a[n]_len = nlen;
 		
 		if (!nlen || Left(nlen)) {
-		    void const *addr;
+		    void *addr;
 		    left -= nlen;
 		    POPADDR(data,byte,nlen,addr);
 		    a[n]_vec = addr;

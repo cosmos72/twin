@@ -184,7 +184,7 @@ uldat RegisterRemote(int Fd, obj HandlerData, handler_obj HandlerObj) {
     if ((LS.HandlerData = HandlerData))
 	LS.HandlerIO.D = HandlerObj;
     else
-	LS.HandlerIO.S = HandlerObj;
+	LS.HandlerIO.S = (handler_io)HandlerObj;
     LS.MsgPort = (msgport)0;
     LS.WQueue = LS.RQueue = (byte *)0;
     LS.WQlen = LS.WQmax = LS.RQlen = LS.RQmax = (uldat)0;
@@ -194,13 +194,13 @@ uldat RegisterRemote(int Fd, obj HandlerData, handler_obj HandlerObj) {
     return Slot;
 }
 
-uldat RegisterRemoteFd(int Fd, void (*HandlerIO)(int Fd, uldat Slot)) {
-    return RegisterRemote(Fd, NULL, HandlerIO);
+uldat RegisterRemoteFd(int Fd, handler_io HandlerIO) {
+    return RegisterRemote(Fd, NULL, (handler_obj)HandlerIO);
 }
 
-byte RegisterWindowFdIO(window Window, void (*HandlerIO)(int Fd, window Window)) {
+byte RegisterWindowFdIO(window Window, handler_window HandlerWindow) {
     return (Window->RemoteData.FdSlot =
-	    RegisterRemote(Window->RemoteData.Fd, (obj)Window, HandlerIO))
+	    RegisterRemote(Window->RemoteData.Fd, (obj)Window, (handler_obj)HandlerWindow))
 	!= NOSLOT;
 }
 

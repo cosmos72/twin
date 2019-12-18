@@ -655,10 +655,10 @@ TW_DECL_MAGIC(TwinMagicData);
  * *alloced is ttrue if needed to allocate a buffer, tfalse otherwise.
  * if success, return array of obj, else return NULL.
  */
-static const obj *AllocId2ObjVec(byte *alloced, byte c, uldat n, byte *VV) {
+static obj *AllocId2ObjVec(byte *alloced, byte c, uldat n, byte *VV) {
 #if TW_SIZEOF_ULDAT >= TW_SIZEOF_TOPAQUE && TW_CAN_UNALIGNED != 0
     const uldat *L = (const uldat *)VV;
-    const obj *aX;
+    obj *aX;
     obj *X;
     
     aX = X = (obj *)VV;	
@@ -668,7 +668,7 @@ static const obj *AllocId2ObjVec(byte *alloced, byte c, uldat n, byte *VV) {
     return aX;
 #else
     const byte *S;
-    const obj *aX;
+    obj *aX;
     obj *X;
     uldat i;
     
@@ -1449,9 +1449,9 @@ case CAT(TWS_,type): \
 		a[n]_len = nlen;
 		
 		if (nlen <= left) {
-		    void const *addr;
+		    void *addr;
 		    left -= nlen;
-		    PopConstAddr(data,byte,nlen,addr);
+		    PopAddr(data,byte,nlen,addr);
 		    a[n]_vec = addr;
 		    break;
 		}
