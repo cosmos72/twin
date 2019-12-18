@@ -222,7 +222,8 @@ static byte switchto_tty(void)
 }
 
 /* 5. fork() a program in a pseudo-teletype */
-uldat Spawn(twindow Window, pid_t *ppid, dat X, dat Y, TW_CONST byte *arg0, byte * TW_CONST *argv) {
+int Spawn(twindow Window, pid_t *ppid, dat X, dat Y,
+          TW_CONST char *arg0, char * TW_CONST *argv) {
 
     TwGetPrivileges();
     
@@ -244,7 +245,7 @@ uldat Spawn(twindow Window, pid_t *ppid, dat X, dat Y, TW_CONST byte *arg0, byte
 	/* child */
 	if (!switchto_tty())
 	    exit(1);
-	execvp((TW_CONST char *)arg0, (char * TW_CONST *)argv);
+	execvp(arg0, argv);
 	exit(1);
 	break;
       default:

@@ -169,7 +169,7 @@ static void ExecuteGadgetH(event_gadget *EventG) {
 }
 
 static void ExecuteWinRun(void) {
-    byte **argv, *arg0;
+    char **argv, *arg0;
     row Row;
     gadget G;
     
@@ -193,7 +193,7 @@ static void ExecuteWinRun(void) {
 	  case -1: /* error */
 	    break;
 	  case 0:  /* child */
-	    execvp((char *)arg0, (char **)argv);
+	    execvp(arg0, argv);
 	    exit(1);
 	    break;
 	  default: /* parent */
@@ -684,7 +684,7 @@ static void BuiltinH(msgport MsgPort) {
 	    switch (Event->EventControl.Code) {
 	      case MSG_CONTROL_OPEN:
 		{
-		    byte **cmd = TokenizeStringVec(Event->EventControl.Len, Event->EventControl.Data);
+		    char **cmd = TokenizeStringVec(Event->EventControl.Len, Event->EventControl.Data);
 		    if (cmd) {
 			Ext(Term,Open)(cmd[0], cmd);
 			FreeStringVec(cmd);

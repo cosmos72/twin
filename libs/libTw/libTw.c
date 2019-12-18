@@ -2651,7 +2651,7 @@ void Tw_DeleteStat(tw_d TwD, tslist TSL) {
 	    for (i = 0; i < TSL->N; i++) {
 		f = TSL->TSF;
 		if (f->type >= TWS_vec && (f->type & ~TWS_vec) < TWS_last && f->TWS_field_vecV)
-		    Tw_FreeMem(f->TWS_field_vecVV);
+		    Tw_FreeMem(f->TWS_field_vecV);
 	    }
 	}
 	Tw_FreeMem(TSL);
@@ -2775,7 +2775,7 @@ static tslist StatTSL(tw_d TwD, udat flags, byte *data, byte *end) {
 			if (data + TSF[i].TWS_field_vecL <= end) {
 			    if (flags & TWS_CLONE_MEM) {
 				if ((TSF[i].TWS_field_vecV = Tw_AllocMem(TSF[i].TWS_field_vecL)))
-				    PopV(data, TSF[i].TWS_field_vecL, TSF[i].TWS_field_vecVV);
+				    PopV(data, TSF[i].TWS_field_vecL, TSF[i].TWS_field_vecV);
 				else
 				    ok = tfalse;
 			    } else

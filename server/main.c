@@ -250,7 +250,7 @@ int main(int argc, char *argv[]) {
     
     DropPrivileges();
 
-    main_argv_usable_len = ComputeUsableLenArgv(main_argv = (byte **)argv);
+    main_argv_usable_len = ComputeUsableLenArgv(main_argv = argv);
     
     MergeHyphensArgv(argc, argv);
 

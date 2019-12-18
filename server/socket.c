@@ -855,7 +855,7 @@ static void sockMultiplexB(uldat id) {
 	     */
 	    a[n-1]_type = proto_2_TWS(a[n-1]_vec);
 	    if (mask & 1<<(n-1))
-		FreeMem(a[n-1].TWS_field_vecVV);
+		FreeMem(a[n-1].TWS_field_vecV);
 	    
 	    a[n-1]_vec = &a[n-1];
 	    a[n-1]_len = 0;
@@ -866,7 +866,7 @@ static void sockMultiplexB(uldat id) {
     
     for (nlen = 0; mask; mask >>= 1, nlen++) {
 	if (mask & 1)
-	    FreeMem(a[nlen].TWS_field_vecVV);
+	    FreeMem(a[nlen].TWS_field_vecV);
     }
     
     if (flag) {

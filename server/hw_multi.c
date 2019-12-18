@@ -385,8 +385,8 @@ byte DetachDisplayHW(uldat len, const byte *arg, byte flags) {
 
 /* initialize all required HW displays. Since we are at it, also parse command line */
 byte InitHW(void) {
-    byte **arglist = orig_argv;
-    byte *arg;
+    char **arglist = orig_argv;
+    char *arg;
     udat hwcount = 0;
     
     byte ret = tfalse, flags = 0, nohw = tfalse;

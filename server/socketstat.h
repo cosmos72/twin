@@ -586,7 +586,7 @@ static void sockStat(obj x, udat n, const byte *in) {
 		}
 		
 		if (TSF[i].type == (TWS_vec | TWS_tobj) && TSF[i].TWS_field_vecV)
-		    FreeMem(TSF[i].TWS_field_vecVV);
+		    FreeMem(TSF[i].TWS_field_vecV);
 	    }
 	}
 	    

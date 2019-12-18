@@ -8,13 +8,9 @@ typedef union s_tsval {
     obj    o;
 #endif
     struct {
-	TW_CONST void *V;
-	topaque L;
-    } vec;
-    struct {
 	void *V;
 	topaque L;
-    } vecV;
+    } vec;
 } tsval;
 
 typedef struct s_tsfield {

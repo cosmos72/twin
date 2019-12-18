@@ -76,7 +76,7 @@ TW_INLINE udat EncodeArgs(fn_order o, uldat *Space, va_list va, tsfield a) {
 #else
 	    arglen = va_arg(va, tany);
 #endif
-	    if (!(a->TWS_field_vecV = (TW_CONST void *)(topaque)va_arg(va, tany)))
+	    if (!(a->TWS_field_vecV = (void *)(topaque)va_arg(va, tany)))
 		arglen = 0;
 	    a->TWS_field_vecL = arglen;
 	    space += sizeof(topaque) + arglen;
@@ -90,7 +90,7 @@ TW_INLINE udat EncodeArgs(fn_order o, uldat *Space, va_list va, tsfield a) {
 #else
 		a->TWS_field_vecL = va_arg(va, tany);
 #endif
-	    a->TWS_field_vecV = (TW_CONST void *)(topaque)va_arg(va, tany);
+	    a->TWS_field_vecV = (void *)(topaque)va_arg(va, tany);
 	    break;
 	  default:
 	    return (udat)-1;
@@ -235,7 +235,7 @@ static udat ExtensionEncodeArgs(TW_CONST byte *Format, uldat *Space, va_list va,
 		a->type = TWS_vec | TWS_vecW | TWS_byte;
 		space += sizeof(topaque);
 		space += a->TWS_field_vecL = va_arg(va, tany);
-		a->TWS_field_vecV = (TW_CONST void *)(topaque)va_arg(va, tany);
+		a->TWS_field_vecV = (void *)(topaque)va_arg(va, tany);
 	    }
 	} else {
 	    /* parse arg 0 (return value) */

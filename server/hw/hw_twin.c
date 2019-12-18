@@ -166,8 +166,8 @@ static void TW_HandleMsg(tmsg Msg) {
 }
 
 static void TW_KeyboardEvent(int fd, display_hw hw) {
-    byte firstloop = ttrue;
     tmsg Msg;
+    byte firstloop = ttrue;
     SaveHW;
     SetHW(hw);
     
@@ -369,7 +369,7 @@ static void TW_SelectionRequest_up(uldat Requestor, uldat ReqPrivate) {
 /*
  * notify our Selection to libTw
  */
-static void TW_SelectionNotify_TW(uldat ReqPrivate, uldat Magic, const byte MIME[MAX_MIMELEN],
+static void TW_SelectionNotify_TW(uldat ReqPrivate, uldat Magic, const char MIME[MAX_MIMELEN],
 				  uldat Len, byte const * Data) {
 #ifdef DEBUG_HW_TWIN
     printf("notifying selection (%d/%d) to libTw server\n", ReqPrivate, SelCount-1);
@@ -511,7 +511,8 @@ static byte TW_InitHW(void) {
 	    TSelCount = SelCount = 0;
 	    
 	    HW->mouse_slot = NOSLOT;
-	    HW->keyboard_slot = RegisterRemote(Tw_ConnectionFd(Td), (obj)HW, TW_KeyboardEvent);
+	    HW->keyboard_slot = RegisterRemote(Tw_ConnectionFd(Td), (obj)HW,
+                                               (void (*)(int, obj))TW_KeyboardEvent);
 	    if (HW->keyboard_slot == NOSLOT)
 		break;
 

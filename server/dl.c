@@ -132,15 +132,15 @@ static const byte * DlCode2Name(uldat code) {
 module DlLoad(uldat code) {
     module M = (module)0;
     if (code < MAX_So && !(M = So[code])) {
-        const byte * name = DlCode2Name(code);
+        const char * name = DlCode2Name(code);
         M = DlLoadAny(name ? strlen(name) : 0, name);
         if ((So[code] = M)) {
             if (All->FnHookModule)
                 All->FnHookModule(All->HookModule);
         } else {
             printk("failed to load module %s: %s\n",
-                   name ? name : (const byte *)"(NULL)",
-                   ErrStr ? ErrStr : (const byte *)"unknown error");
+                   name ? name : "(NULL)",
+                   ErrStr ? ErrStr : "unknown error");
 	}
     }
     return M;
