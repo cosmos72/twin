@@ -69,6 +69,7 @@ static tmsgport DM_MsgPort;
 static tmenu DM_Menu;
 static tscreen DM_Screen;
 static twindow DM_Window, DM_user, DM_pass;
+static TW_CONST char *DM_Display;
 static byte DM_Kill, quiet, oneshot, logged_in;
 
 static TW_VOLATILE pid_t ServerPid = (pid_t)-1, AttachPid = (pid_t)-1;
