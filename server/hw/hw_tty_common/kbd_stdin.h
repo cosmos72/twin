@@ -7,7 +7,8 @@
 
 static void stdin_QuitKeyboard(void);
 static void stdin_KeyboardEvent(int fd, display_hw hw);
-static udat linux_LookupKey(udat *ShiftFlags, byte *slen, byte *s, byte *retlen, byte **ret);
+static udat linux_LookupKey(udat *ShiftFlags, byte *slen, char *s,
+                            byte *retlen, char **ret);
 static void xterm_MouseEvent(int, display_hw);
 
 static byte stdin_TestTty(void) {
@@ -79,7 +80,8 @@ static byte stdin_InitKeyboard(void) {
 	)
         return tfalse;
    
-    HW->keyboard_slot = RegisterRemote(tty_fd, (obj)HW, stdin_KeyboardEvent);
+    HW->keyboard_slot = RegisterRemote(tty_fd, (obj)HW,
+                                       (void (*)(int, obj))stdin_KeyboardEvent);
     if (HW->keyboard_slot == NOSLOT) {
 	stdin_QuitKeyboard();
 	return tfalse;
@@ -104,7 +106,8 @@ static void stdin_QuitKeyboard(void) {
 
 
 /* kludge! this is ok for linux terminals only... */
-static udat linux_LookupKey(udat *ShiftFlags, byte *slen, byte *s, byte *retlen, byte **ret) {
+static udat linux_LookupKey(udat *ShiftFlags, byte *slen, char *s,
+                            byte *retlen, char **ret) {
     byte used = 0, len = *slen;
 
     *ShiftFlags = 0;
@@ -301,10 +304,10 @@ static udat linux_LookupKey(udat *ShiftFlags, byte *slen, byte *s, byte *retlen,
 
 
 static void stdin_KeyboardEvent(int fd, display_hw hw) {
-    static byte buf[TW_SMALLBUFF];
+    static char buf[TW_SMALLBUFF];
     static fd_set rfds;
     static struct timeval t;
-    byte *s = buf, *ret = buf+sizeof(buf)-1;
+    char *s = buf, *ret = buf+sizeof(buf)-1;
     udat Code, ShiftFlags;
     byte got, chunk, retlen;
     SaveHW;

@@ -360,8 +360,8 @@ static void display_SelectionRequest_display(obj Requestor, uldat ReqPrivate) {
 /*
  * notify our Selection to twdisplay
  */
-static void display_SelectionNotify_display(uldat ReqPrivate, uldat Magic, CONST byte MIME[MAX_MIMELEN],
-					    uldat Len, byte CONST * Data) {
+static void display_SelectionNotify_display(uldat ReqPrivate, uldat Magic, const char MIME[MAX_MIMELEN],
+					    uldat Len, byte const * Data) {
     /*
      * shortcut: since (display) is a msgport, use fail-safe TwinSelectionNotify()
      * to send message to twdisplay.
@@ -391,15 +391,15 @@ static void display_QuitHW(void) {
      * to shutdown its display and quit
      */
     
-    HW->KeyboardEvent = (void *)NoOp;
+    HW->KeyboardEvent = (void (*)(int, display_hw))NoOp;
     HW->QuitHW = NoOp;
 }
 
 static void fix4display(void) {
-    byte *arg, *arg17;
+    char *arg, *arg17;
     
     if (HW->Name && HW->NameLen > 17 && !CmpMem(HW->Name, "-hw=display@(-hw=", 17) &&
-	(arg = memchr(arg17 = HW->Name + 17, ')', HW->NameLen - 17))) {
+	(arg = (char *)memchr(arg17 = HW->Name + 17, ')', HW->NameLen - 17))) {
 
         uldat n = arg - arg17;
         /*
@@ -413,7 +413,7 @@ static void fix4display(void) {
 }
 
 static byte display_InitHW(void) {
-    byte *s, *arg = HW->Name;
+    char *s, *arg = HW->Name;
     msgport Port;
     
     if (arg && HW->NameLen > 4) {
@@ -468,8 +468,10 @@ static byte display_InitHW(void) {
     HW->FlushVideo = display_FlushVideo;
     HW->FlushHW = display_FlushHW;
 
-    HW->KeyboardEvent = (void *)NoOp; /* we must go through display_HelperH */
-    HW->MouseEvent = (void *)NoOp; /* mouse events handled by display_HelperH */
+    /* we must go through display_HelperH */
+    HW->KeyboardEvent = (void (*)(int, display_hw))NoOp;
+    /* mouse events handled by display_HelperH */
+    HW->MouseEvent = (void (*)(int, display_hw))NoOp;
 	    
     HW->XY[0] = HW->XY[1] = 0;
     HW->TT = (uldat)-1; /* force updating cursor */
@@ -549,12 +551,12 @@ static byte display_InitHW(void) {
     return ttrue;
 }
 
-byte InitModule(module Module) {
-    Module->Private = display_InitHW;
+EXTERN_C byte InitModule(module Module) {
+    Module->Private = (void*)display_InitHW;
     return ttrue;
 }
 
 /* this MUST be included, or it seems that a bug in dlsym() gets triggered */
-void QuitModule(module Module) {
+EXTERN_C void QuitModule(module Module) {
 }
 

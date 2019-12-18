@@ -43,21 +43,21 @@
 #endif
 
 
-static CONST byte * CONST modules_prefix = PKG_LIBDIR "/" DL_PREFIX;
+static const byte * const modules_prefix = PKG_LIBDIR "/" DL_PREFIX;
 
-static CONST byte *MYname;
+static const byte *MYname;
 
 static dat TryDisplayWidth, TryDisplayHeight;
 static byte ValidVideo;
 
-CONST byte *TWDisplay, *origTWDisplay, *origTERM;
+const char *TWDisplay, *origTWDisplay, *origTERM;
 
-byte nullMIME[TW_MAX_MIMELEN];
+char nullMIME[TW_MAX_MIMELEN];
 
 udat ErrNo;
-byte CONST * ErrStr;
+byte const * ErrStr;
 
-byte CONST * HOME;
+byte const * HOME;
 
 #define L 0x55
 #define M 0xAA
@@ -130,12 +130,12 @@ byte Error(udat Code_Error) {
     return tfalse;
 }
 
-int printk(CONST byte *format, ...) {
+int printk(const char *format, ...) {
     int i = 0;
 #ifdef TW_HAVE_VPRINTF
     va_list ap;
     va_start(ap, format);
-    i = vfprintf(stderr, (CONST char *)format, ap);
+    i = vfprintf(stderr, format, ap);
     va_end(ap);
 #endif
     return i;
@@ -313,10 +313,10 @@ static byte module_InitHW(byte *arg, uldat len) {
 	Module = DlLoadAny(len + 3, name);
 	
 	if (Module) {
-	    printk("twdisplay: starting display driver module `%."STR(TW_SMALLBUFF)"s'...\n", name);
+	    printk("twdisplay: starting display driver module `" SS "'...\n", name);
 	    
 	    if ((InitD = Module->Private) && InitD()) {
-		printk("twdisplay: ...module `%."STR(TW_SMALLBUFF)"s' successfully started.\n", name);
+		printk("twdisplay: ...module `" SS "' successfully started.\n", name);
 		HW->Module = Module; Module->Used++;
 		
 		FreeMem(name);
@@ -328,10 +328,10 @@ static byte module_InitHW(byte *arg, uldat len) {
 	ErrStr = "Out of memory!";
     
     if (Module) {
-	printk("twdisplay: ...module `%."STR(TW_SMALLBUFF)"s' failed to start.\n", name ? name : (byte *)"(NULL)");
+	printk("twdisplay: ...module `" SS "' failed to start.\n", name ? name : (byte *)"(NULL)");
     } else
-	printk("twdisplay: unable to load display driver module `%."STR(TW_SMALLBUFF)"s' :\n"
-	       "      %."STR(TW_SMALLBUFF)"s\n", name ? name : (byte *)"(NULL)", ErrStr);
+	printk("twdisplay: unable to load display driver module `" SS "' :\n"
+	       "      " SS "\n", name ? name : (byte *)"(NULL)", ErrStr);
 
     if (name)
     	FreeMem(name);
@@ -339,7 +339,7 @@ static byte module_InitHW(byte *arg, uldat len) {
     return tfalse;
 }
 
-static display_hw CreateDisplayHW(uldat len, CONST byte *name);
+static display_hw CreateDisplayHW(uldat len, const byte *name);
 static byte InitDisplayHW(display_hw);
 static void QuitDisplayHW(display_hw);
 
@@ -361,7 +361,7 @@ static struct s_display_hw _HW = {
 };
 
 
-void warn_NoHW(uldat len, CONST char *arg, uldat tried) {
+void warn_NoHW(uldat len, const char *arg, uldat tried) {
     printk("twdisplay: All display drivers failed");
     if (arg)
         printk(" for `%.*s\'", (int)Min2(TW_SMALLBUFF, len), arg);
@@ -398,7 +398,7 @@ static byte InitDisplayHW(display_hw D_HW) {
     else
 	arg = NULL;
 
-#define TRY4(hw) (tried++, module_InitHW(hw, LenStr(hw)))
+#define TRY4(hw) (tried++, module_InitHW(hw, strlen(hw)))
 
     if (!arg || !*arg) {
         success =
@@ -433,7 +433,7 @@ static void QuitDisplayHW(display_hw D_HW) {
 }
 
 
-static display_hw CreateDisplayHW(uldat NameLen, CONST byte *Name) {
+static display_hw CreateDisplayHW(uldat NameLen, const byte *Name) {
     byte *newName = NULL;
     
     if (Name && (newName = CloneStrL(Name, NameLen))) {	
@@ -454,7 +454,7 @@ static display_hw CreateDisplayHW(uldat NameLen, CONST byte *Name) {
     return (display_hw)0;
 }
 
-static byte IsValidHW(uldat len, CONST byte *arg) {
+static byte IsValidHW(uldat len, const byte *arg) {
     uldat i;
     byte b;
     if (len >= 4 && !CmpMem(arg, "-hw=", 4))
@@ -473,7 +473,7 @@ static byte IsValidHW(uldat len, CONST byte *arg) {
     return ttrue;
 }
 
-static display_hw AttachDisplayHW(uldat len, CONST byte *arg, uldat slot, byte flags) {
+static display_hw AttachDisplayHW(uldat len, const byte *arg, uldat slot, byte flags) {
     if ((len && len <= 4) || CmpMem("-hw=", arg, Min2(len,4))) {
 	printk("twdisplay: specified `%.*s\' is not `--hw=<display>\'\n",
 		(int)len, arg);
@@ -833,8 +833,8 @@ void TwinSelectionSetOwner(obj Owner, tany Time, tany Frac) {
 }
 
 /* HW back-end function: notify selection */
-void TwinSelectionNotify(obj Requestor, uldat ReqPrivate, uldat Magic, CONST byte MIME[MAX_MIMELEN],
-			    uldat Len, CONST byte *Data) {
+void TwinSelectionNotify(obj Requestor, uldat ReqPrivate, uldat Magic, const char MIME[MAX_MIMELEN],
+			    uldat Len, const byte *Data) {
     if (!MIME)
 	MIME = nullMIME;
 #if 0
@@ -916,7 +916,7 @@ byte MouseEventCommon(dat x, dat y, dat dx, dat dy, udat Buttons) {
     return ret;
 }
 
-byte KeyboardEventCommon(udat Code, udat ShiftFlags, udat Len, CONST byte *Seq) {
+byte KeyboardEventCommon(udat Code, udat ShiftFlags, udat Len, const char *Seq) {
     tevent_keyboard Event;
     tmsg Msg;
 
@@ -1033,14 +1033,14 @@ static void MainLoop(int Fd) {
     
     if (num_fds < 0 && errno != EINTR) {
 	QuitDisplayHW(HW);
-	printk("twdisplay: select(): %."STR(TW_SMALLBUFF)"s\n", strerror(errno));
+	printk("twdisplay: select(): " SS "\n", strerror(errno));
 	exit(1);
     }
     if (TwInPanic()) {
 	err = TwErrno;
 	detail = TwErrnoDetail;
     	QuitDisplayHW(HW);
-	printk("%."STR(TW_SMALLBUFF)"s: libTw error: %."STR(TW_SMALLBUFF)"s%."STR(TW_SMALLBUFF)"s\n", MYname,
+	printk("" SS ": libTw error: " SS "" SS "\n", MYname,
 		TwStrError(err), TwStrErrorDetail(err, detail));
 	exit(1);
     }
@@ -1048,9 +1048,9 @@ static void MainLoop(int Fd) {
     detail = TwErrnoDetail;
     sys_errno = errno;
     QuitDisplayHW(HW);
-    printk("%."STR(TW_SMALLBUFF)"s: shouldn't happen! Please report:\n"
-	    "\tlibTw TwErrno: %d(%d),\t%."STR(TW_SMALLBUFF)"s%."STR(TW_SMALLBUFF)"s\n"
-	    "\tsystem  errno: %d,\t%."STR(TW_SMALLBUFF)"s\n", MYname,
+    printk("" SS ": shouldn't happen! Please report:\n"
+	    "\tlibTw TwErrno: %d(%d),\t" SS "" SS "\n"
+	    "\tsystem  errno: %d,\t" SS "\n", MYname,
 	    err, detail, TwStrError(err), TwStrErrorDetail(err, detail),
 	    sys_errno, strerror(sys_errno));
     exit(1);
@@ -1084,9 +1084,9 @@ static void Usage(void) {
 	  "\tggi[@<ggi display>]\n", stdout);
 }
 
-static void TryUsage(CONST char *opt) {
+static void TryUsage(const char *opt) {
     if (opt)
-	fprintf(stdout, "twdisplay: unknown option `%."STR(TW_SMALLBUFF)"s'\n", opt);
+	fprintf(stdout, "twdisplay: unknown option `" SS "'\n", opt);
     fputs("           try `twdisplay --help' for usage summary.\n", stdout);
 }
 
@@ -1099,7 +1099,7 @@ static byte VersionsMatch(byte force) {
     uldat cv = TW_PROTOCOL_VERSION, lv = TwLibraryVersion(), sv = TwServerVersion();
 	
     if (lv != sv || lv != cv) {
-	printk("twdisplay: %."STR(TW_SMALLBUFF)"s: socket protocol version mismatch!%."STR(TW_SMALLBUFF)"s\n"
+	printk("twdisplay: " SS ": socket protocol version mismatch!" SS "\n"
 		"           client is %d.%d.%d, library is %d.%d.%d, server is %d.%d.%d\n",
 		(force ? "warning" : "fatal"), (force ? " (ignored)" : ""),
 		TW_VER_MAJOR(cv), TW_VER_MINOR(cv), TW_VER_PATCH(cv),
@@ -1124,11 +1124,11 @@ TW_DECL_MAGIC(display_magic);
 int main(int argc, char *argv[]) {
     byte flags = TW_ATTACH_HW_REDIRECT, force = 0;
     byte *dpy = NULL, *arg = NULL, *tty = ttyname(0);
-    byte ret = 0, ourtty = 0;
-    byte *s;
-    TW_CONST byte *buff;
+    byte *s, *client_dpy = NULL;
+    const byte *buff;
     uldat chunk;
     int Fd;
+    byte ret = 0, ourtty = 0;
     
     MergeHyphensArgv(argc, argv);
     
@@ -1155,7 +1155,7 @@ int main(int argc, char *argv[]) {
 	    dpy = *argv + 6;
 	else if (!strncmp(*argv, "-hw=", 4)) {
 	    if (!strncmp(*argv+4, "display", 7)) {
-		printk("%."STR(TW_SMALLBUFF)"s: argument `--hw=display' is for internal use only.\n", MYname);
+		printk("" SS ": argument `--hw=display' is for internal use only.\n", MYname);
 		TryUsage(NULL);
 		return 1;
 	    }
@@ -1172,18 +1172,18 @@ int main(int argc, char *argv[]) {
 			/*
 			 * using server controlling tty makes no sense for twdisplay
 			 */
-			printk("%."STR(TW_SMALLBUFF)"s: `%."STR(TW_SMALLBUFF)"s' makes sense only with twattach.\n", MYname, *argv);
+			printk("" SS ": `" SS "' makes sense only with twattach.\n", MYname, *argv);
 			return 1;
 		    } else if (tty) {
 			if (!strcmp(buff+1, tty))
 			    /* attach twin to our tty */
 			    ourtty = 1;
 		    } else {
-			printk("%."STR(TW_SMALLBUFF)"s: ttyname() failed: cannot find controlling tty!\n", MYname);
+			printk("" SS ": ttyname() failed: cannot find controlling tty!\n", MYname);
 			return 1;
 		    }
 		} else {
-		    printk("%."STR(TW_SMALLBUFF)"s: malformed display hw `%."STR(TW_SMALLBUFF)"s'\n", MYname, *argv);
+		    printk("" SS ": malformed display hw `" SS "'\n", MYname, *argv);
 		    return 1;
 		}
 
@@ -1199,13 +1199,18 @@ int main(int argc, char *argv[]) {
 		    sprintf(arg, "-hw=tty%s%s%s", (buff ? (byte *)",TERM=" : buff), buff, s);
 		} else
 		    arg = *argv;
-	    } else if ((*argv)[4])
-		arg = *argv;
-	    else {
-		TryUsage(*argv);
-		return 1;
-	    }
-	} else {
+	    } else if ((*argv)[4]) {
+                arg = *argv;
+                if (!strncmp(*argv+4, "twin@", 5)) {
+                    client_dpy = *argv+9;
+                } else if (!strcmp(*argv+4, "twin")) {
+                    client_dpy = "";
+                }
+            } else {
+                TryUsage(*argv);
+                return 1;
+            }
+        } else {
 	    TryUsage(*argv);
 	    return 1;
 	}
@@ -1228,6 +1233,18 @@ int main(int argc, char *argv[]) {
     TWDisplay = dpy ? CloneStr(dpy) : origTWDisplay;
     origTERM = CloneStr(getenv("TERM"));
     HOME = CloneStr(getenv("HOME"));
+
+    if (((ourtty || (client_dpy && !*client_dpy))
+         && origTWDisplay && TWDisplay && !strcmp(origTWDisplay, TWDisplay))
+        || (client_dpy && *client_dpy
+            && TWDisplay && !strcmp(client_dpy, TWDisplay))) {
+
+        if (!force) {
+            printk("twdisplay: refusing to display twin inside itself. Use option `-f' to override.\n");
+            TwClose();
+            return 1;
+        }
+    }
     
     InitSignals();
     InitTtysave();
@@ -1327,12 +1344,12 @@ int main(int argc, char *argv[]) {
 	     */
 	    MainLoop(Fd);
 	else if (ret)
-	    printk("%."STR(TW_SMALLBUFF)"s: twin said we can quit... strange!\n", MYname);
+	    printk("" SS ": twin said we can quit... strange!\n", MYname);
 	
 	Quit(!ret);
     } while (0);
     
-    printk("%."STR(TW_SMALLBUFF)"s: libTw error: %."STR(TW_SMALLBUFF)"s%."STR(TW_SMALLBUFF)"s\n", MYname,
+    printk("" SS ": libTw error: " SS "" SS "\n", MYname,
 	    TwStrError(TwErrno), TwStrErrorDetail(TwErrno, TwErrnoDetail));
     return 1;
 }

@@ -11,9 +11,9 @@ Description:	a Text mode WINdow environment.
 		and supports multiple simultaneous displays.
 		VGA font provided for better look.
 Keywords:	twin wm twindows linux
-Author: 	max@linuz.sns.it (Massimiliano Ghilardi)
-Maintained-by:	max@linuz.sns.it (Massimiliano Ghilardi)
-Primary-site:	http://linuz.sns.it/~max/twin/
+Author: 	Massimiliano Ghilardi <massimiliano.ghilardi+twin@gmail.com>
+Maintained-by:	Massimiliano Ghilardi <massimiliano.ghilardi+twin@gmail.com>
+Primary-site:	https://github.com/cosmos72/twin/
 		1050k twin-0.4.9.tar.gz
 		866   twin-0.4.9.lsm
 Alternate-site: http://prdownloads.sourceforge.net/projects/twin/

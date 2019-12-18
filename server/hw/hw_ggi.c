@@ -547,7 +547,7 @@ static byte GGI_InitHW(void) {
 	
     } while (0); else {
 	if (arg || (arg = getenv("GGI_DISPLAY")))
-	    printk("      GGI_InitHW() failed to open display %."STR(TW_SMALLBUFF)"s\n", arg);
+	    printk("      GGI_InitHW() failed to open display " SS "\n", arg);
 	else
 	    printk("      GGI_InitHW() failed: GGI_DISPLAY is not set\n");
 	
@@ -562,13 +562,13 @@ static byte GGI_InitHW(void) {
 
 
 
-byte InitModule(module Module) {
+EXTERN_C byte InitModule(module Module) {
     Module->Private = GGI_InitHW;
     return ttrue;
 }
 
 /* this MUST be included, or it seems that a bug in dlsym() gets triggered */
-void QuitModule(module Module) {
+EXTERN_C void QuitModule(module Module) {
 }
 
 

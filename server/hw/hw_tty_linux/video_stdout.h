@@ -36,7 +36,7 @@ INLINE void linux_MoveToXY(udat x, udat y) {
 
 /* return tfalse if failed */
 static byte linux_InitVideo(void) {
-    byte *term = tty_TERM;
+    char *term = tty_TERM;
     
     if (!term) {
 	printk("      linux_InitVideo() failed: unknown terminal type.\n");
@@ -44,7 +44,7 @@ static byte linux_InitVideo(void) {
     }
     
     if (strcmp(term, "linux")) {
-	printk("      linux_InitVideo() failed: terminal `%."STR(TW_SMALLBUFF)"s' is not `linux'.\n", term);
+	printk("      linux_InitVideo() failed: terminal `" SS "' is not `linux'.\n", term);
 	return tfalse;
     }
 
@@ -78,8 +78,8 @@ static byte linux_InitVideo(void) {
     
     HW->HWSelectionImport  = AlwaysFalse;
     HW->HWSelectionExport  = NoOp;
-    HW->HWSelectionRequest = (void *)NoOp;
-    HW->HWSelectionNotify  = (void *)NoOp;
+    HW->HWSelectionRequest = (void (*)(obj, uldat))NoOp;
+    HW->HWSelectionNotify  = (void (*)(uldat, uldat, const char*, uldat, const byte*))NoOp;
     HW->HWSelectionPrivate = 0;
 
     HW->CanDragArea = linux_CanDragArea;
@@ -128,8 +128,9 @@ static void linux_QuitVideo(void) {
 # define linux_MogrifyFinish() ((void)0)
 
 INLINE void linux_SetColor(hwcol col) {
-    static byte colbuf[] = "\033[2x;2x;4x;3xm";
-    byte c, *colp = colbuf+2;
+    char colbuf[] = "\033[2x;2x;4x;3xm";
+    char *colp = colbuf+2;
+    byte c;
 
     if ((col & COL(HIGH,0)) != (_col & COL(HIGH,0))) {
 	if (col & COL(HIGH,0)) *colp++ = '1';

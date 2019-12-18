@@ -22,6 +22,7 @@ LTDL_INIT([recursive])
 
 # Checks for programs.
 AC_PROG_CC
+dnl AC_PROG_CXX
 AM_PROG_AS
 AC_PROG_INSTALL
 AC_PROG_LIBTOOL
@@ -47,6 +48,8 @@ if test "$have_x" = yes; then
   AC_SUBST(LIBX11, "-lX11")
 fi
 
+dnl AC_LANG_PUSH([C++])
+
 AC_FUNC_ALLOCA
 AC_HEADER_TIME
 AC_HEADER_SYS_WAIT
@@ -63,6 +66,7 @@ AC_CHECK_HEADERS([ \
 AC_STRUCT_TM
 
 # Checks for typedefs, structures, and compiler characteristics.
+
 AC_C_BIGENDIAN
 AC_C_CONST
 AC_C_INLINE
@@ -71,11 +75,11 @@ TW_C_FEATURES
 
 ################################################################################
 
-# CC flags '-g -O2' are already tested by AC_PROG_CC
-# CC flags '-p -pg' are incompatible with -fomit-frame-pointer
+# C flags '-g -O2' are already tested by AC_PROG_CC
+# C flags '-p -pg' are incompatible with -fomit-frame-pointer
 initial_CFLAGS="$CFLAGS"
 for try_flag in -fomit-frame-pointer -fno-strict-aliasing -pipe -Wall -Wshadow \
-                 -Wno-uninitialized -Wno-pointer-sign -Wno-unused -Wundef -Wstrict-prototypes \
+                 -Wno-uninitialized -Wno-unused -Wundef -Wstrict-prototypes \
                  -Wcast-qual -Wcast-align -Wpointer-arith -Wbad-function-cast
 do
   save_CFLAGS="$CFLAGS"
@@ -97,6 +101,7 @@ do
 done
 custom_CFLAGS="$CFLAGS"
 CFLAGS="$initial_CFLAGS"
+dnl AC_LANG_POP([C++])
 
 ################################################################################
 

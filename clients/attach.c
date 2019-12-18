@@ -106,10 +106,10 @@ TW_DECL_MAGIC(attach_magic);
 
 int main(int argc, char *argv[]) {
     byte detach = 0, redirect, force = 0, flags = TW_ATTACH_HW_REDIRECT;
-    byte *dpy = NULL, *arg = NULL, *tty = ttyname(0);
+    char *dpy = NULL, *arg = NULL, *tty = ttyname(0);
     byte ret = 0, ourtty = 0, servtty = 0;
-    byte *s;
-    TW_CONST byte *buff;
+    char *s;
+    TW_CONST char *buff;
     uldat chunk;
 
     TwMergeHyphensArgv(argc, argv);
@@ -175,16 +175,16 @@ int main(int argc, char *argv[]) {
 		    buff = getenv("TERM");
 		    if (!buff) buff = "";
 		    
-		    arg = malloc(strlen(tty) + 9 + strlen(s) + (buff ? 6 + strlen(buff) : 0));
+		    arg = (char *)malloc(strlen(tty) + 9 + strlen(s) + (*buff ? 6 + strlen(buff) : 0));
 		    
-		    sprintf(arg, "-hw=tty@%s%s%s%s", tty, (buff ? (byte *)",TERM=" : buff), buff, s);
+		    sprintf(arg, "-hw=tty@%s%s%s%s", tty, (*buff ? ",TERM=" : ""), buff, s);
 		} else if (servtty) {
 		    arg = malloc(8 + strlen(s));
 		    sprintf(arg, "-hw=tty%s", s);
 		} else
-		    arg = *argv;
+		    arg = strdup(*argv);
 	    } else if ((*argv)[4])
-		arg = *argv;
+		arg = strdup(*argv);
 	    else {
 		Usage(detach);
 		return 1;
@@ -221,16 +221,17 @@ int main(int argc, char *argv[]) {
 
 	TwAttachHW(arg ? strlen(arg) : 0, arg, flags);
 	TwFlush();
+	free(arg);
 	
 	if (redirect)
 	    fprintf(stderr, "reported messages...\n");
 	
 	for (;;) {
 	    buff = TwAttachGetReply(&chunk);
-	    if (buff <= (byte *)2) {
+	    if (buff <= (char *)2) {
 		ret = (byte)(size_t)buff;
 		break;
-	    } else if (buff == (byte *)-1)
+	    } else if (buff == (char *)-1)
 		/* libTw panic */
 		break;
 

@@ -3,7 +3,7 @@
 #define _TWIN_EXT_QUERY_H
 
 
-extension QueryExtension(byte namelen, CONST byte *name);
+extension QueryExtension(byte namelen, const char *name);
 
 
 

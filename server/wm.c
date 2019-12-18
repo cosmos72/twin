@@ -644,7 +644,7 @@ static byte CheckForwardMsg(wm_ctx *C, msg Msg, byte WasUsed) {
 static ldat DragPosition[2];
 
 
-static void InitCtx(CONST msg Msg, wm_ctx *C) {
+static void InitCtx(const msg Msg, wm_ctx *C) {
 
     C->Code = Msg->Event.EventCommon.Code;
     C->ShiftFlags = Msg->Event.EventKeyboard.ShiftFlags; /* ok for mouse too */
@@ -911,7 +911,7 @@ static void ShowResize(window W) {
 	x -= 2, y -= 2;
 	
     sprintf(buf, "%hdx%hd", x, y);
-    Act(SetText,All->BuiltinRow)(All->BuiltinRow, (x = LenStr(buf)), buf, 0);
+    Act(SetText,All->BuiltinRow)(All->BuiltinRow, (x = strlen(buf)), buf, 0);
     Act(DrawMenu,All->FirstScreen)(All->FirstScreen, All->DisplayWidth - 20, All->DisplayWidth - 10);
 }
 
@@ -1070,7 +1070,7 @@ static void ContinueScroll(wm_ctx *C) {
     }
 }
 
-static void ReleaseDragResizeScroll(CONST wm_ctx *C) {
+static void ReleaseDragResizeScroll(const wm_ctx *C) {
     window FW = All->FirstScreen->ClickWindow;
     udat wasResize;
     
@@ -1229,7 +1229,7 @@ byte ActivateCtx(wm_ctx *C, byte State) {
 }
 
 /* force returning to STATE_DEFAULT. used before RCReload() */
-void ForceRelease(CONST wm_ctx *C) {
+void ForceRelease(const wm_ctx *C) {
     switch (All->State & STATE_ANY) {
       case STATE_RESIZE:
       case STATE_DRAG:
@@ -1874,7 +1874,7 @@ static void OverrideMethods(byte enter) {
 }
 
 
-byte InitModule(module Module)
+EXTERN_C byte InitModule(module Module)
 {
     byte sent = tfalse;
     
@@ -1895,7 +1895,7 @@ byte InitModule(module Module)
 		    return ttrue;
 		} else {
 		    sent = ttrue;
-		    printk("twin: RC: %."STR(TW_SMALLBUFF)"s\n", ErrStr);
+		    printk("twin: RC: " SS "\n", ErrStr);
 		}
 	    }
 	    UnRegisterExt(WM,MsgPort,WM_MsgPort);
@@ -1907,12 +1907,12 @@ byte InitModule(module Module)
     if (WM_MsgPort)
 	Delete(WM_MsgPort);
     if (!sent) {
-	printk("twin: WM: %."STR(TW_SMALLBUFF)"s\n", ErrStr);
+	printk("twin: WM: " SS "\n", ErrStr);
     }
     return tfalse;
 }
 
-void QuitModule(module Module) {
+EXTERN_C void QuitModule(module Module) {
     QuitRC();
     OverrideMethods(tfalse);
     UnRegisterExt(WM,MsgPort,WM_MsgPort);

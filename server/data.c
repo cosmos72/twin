@@ -26,7 +26,7 @@
 # define PKG_LIBDIR "/usr/local/lib/twin"
 #endif
 
-CONST byte * CONST pkg_libdir = PKG_LIBDIR;
+const byte * const pkg_libdir = PKG_LIBDIR;
 
 
 
@@ -110,7 +110,7 @@ static struct s_all _All = {
 	GtransUser
     },
 };
-all CONST All = &_All;
+all const All = &_All;
 
 
 keylist TW_KeyList[] = {

@@ -535,7 +535,7 @@ static byte RCSteps(run *r) {
 	  case STDERR:
 	    argv = n->x.v.argv;
 	    while (*argv)
-		printk("%."STR(TW_SMALLBUFF)"s ", *argv++);
+		printk("" SS " ", *argv++);
 	    printk("\n");
 	    break;
 	  case SYNTHETICKEY:
@@ -806,7 +806,7 @@ static void RCReload(void) {
     /* this would garble -hw=tty display */
     else
 	printk("twin: failed to load the RC parser:\n"
-		"      %."STR(TW_SMALLBUFF)"s\n", ErrStr);
+		"      " SS "\n", ErrStr);
 # endif
     
     success = mod_rcload && mod_rcload();
@@ -881,7 +881,7 @@ static byte MouseClickReleaseSameCtx(uldat W1, uldat W2, ldat clickCtx, ldat rel
 
 
 /* handle incoming messages */
-byte RC_VMQueue(CONST wm_ctx *C) {
+byte RC_VMQueue(const wm_ctx *C) {
     uldat ClickWinId = All->FirstScreen->ClickWindow
 	? All->FirstScreen->ClickWindow->Id : NOID;
     widget W;

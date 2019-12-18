@@ -317,7 +317,7 @@ static void OptionH(msg Msg) {
 void FillButtonWin(void) {
     dat i, j;
     byte b[6] = "      ";
-    CONST byte *s;
+    const byte *s;
     
     DeleteList(ButtonWin->FirstW);
     
@@ -776,13 +776,13 @@ static byte InitScreens(void) {
 	return ttrue;
     }
     Error(NOMEMORY);
-    printk("twin: InitScreens(): %."STR(TW_SMALLBUFF)"s\n", ErrStr);
+    printk("twin: InitScreens(): " SS "\n", ErrStr);
     return tfalse;
 }
 
 byte InitBuiltin(void) {
     window Window;
-    CONST byte *greeting = "\n"
+    const byte *greeting = "\n"
 	"                TWIN              \n"
 	"        Text WINdows manager      \n\n"
 	"     Version " TWIN_VERSION_STR TWIN_VERSION_EXTRA_STR " (Unicode) by   \n\n"
@@ -1005,7 +1005,7 @@ byte InitBuiltin(void) {
 	return ttrue;
     }
     Error(NOMEMORY);
-    printk("twin: InitBuiltin(): %."STR(TW_SMALLBUFF)"s\n", ErrStr);
+    printk("twin: InitBuiltin(): " SS "\n", ErrStr);
     return tfalse;
 }
 

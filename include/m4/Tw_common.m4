@@ -68,9 +68,9 @@ EASY(ReAllocMem0, void *Tw_ReAllocMem0(void * Mem, size_t ElementSize, size_t Ol
 c_doxygen(/** custom malloc()+memcpy() function */)
 EASY(CloneMem, extern void *Tw_CloneMem(TW_CONST void *, size_t);)
 c_doxygen(/** custom strdup() function */)
-EASY(CloneStr, extern byte *Tw_CloneStr(TW_CONST byte *);)
+EASY(CloneStr, extern char *Tw_CloneStr(TW_CONST char *);)
 c_doxygen(/** custom byte-to-unicode conversion + strdup() function */)
-EASY(CloneStr2HWFont, extern hwfont *Tw_CloneStr2HWFont(TW_CONST byte *, size_t);)
+EASY(CloneStr2HWFont, extern hwfont *Tw_CloneStr2HWFont(TW_CONST char *, size_t);)
 
 
 EASY(LenStr, `#define Tw_LenStr		strlen')
@@ -98,7 +98,7 @@ c_doxygen(/** try to disable compression (using zlib); return 1 if success or 0 
 DECL(byte,DisableGzip)
 
 c_doxygen(/** return server diagnostic after Tw_AttachHW() */)
-DECL(TW_CONST byte *,AttachGetReply,uldat *len)
+DECL(TW_CONST char *,AttachGetReply,uldat *len)
 c_doxygen(/** confirm to server it is ok to use newly opened display (used for synchronization) */)
 DECL(void,AttachConfirm)
 
@@ -145,9 +145,9 @@ DECL(uldat,ServerVersion)
 
 DECL(byte,InPanic)
 
-c_doxygen(/** this returns FALSE only after libTw has paniced */)
+c_doxygen(/** this returns tfalse only after libTw has paniced */)
 DECL(byte,Flush)
-c_doxygen(/** this returns FALSE only after libTw has paniced */)
+c_doxygen(/** this returns tfalse only after libTw has paniced */)
 DECL(byte,Sync)
 
 c_doxygen(
@@ -156,8 +156,8 @@ c_doxygen(
  * if not all data could be written, write as much as possible,
  * keep the rest queued, then return.
  * 
- * returns FALSE only after libTw has paniced,
- * returns TRUE+TRUE if not all data could be written.
+ * returns tfalse only after libTw has paniced,
+ * returns ttrue+ttrue if not all data could be written.
  */)
 DECL(byte,TimidFlush)
 
@@ -186,8 +186,8 @@ DECL(tmsg,PeekMsg)
 c_doxygen(
 /**
  * This is the function you must call to get a Msg from the server.
- * If Wait is TRUE  and no Msg is available, it waits until a Msg arrives.
- * If Wait is FALSE and no Msg is available, it tries non-blocking
+ * If Wait is ttrue  and no Msg is available, it waits until a Msg arrives.
+ * If Wait is tfalse and no Msg is available, it tries non-blocking
  *                  to receive more Msgs.
  * 
  * In both cases, if there is at least a Msgs available it is returned

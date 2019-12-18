@@ -54,8 +54,8 @@ typedef struct {
 #define TSelReq		(twdata->TSelReq)
 
 static void TW_SelectionRequest_up(uldat Requestor, uldat ReqPrivate);
-static void TW_SelectionNotify_up(uldat ReqPrivate, uldat Magic, CONST byte MIME[MAX_MIMELEN],
-				  uldat Len, byte CONST * Data);
+static void TW_SelectionNotify_up(uldat ReqPrivate, uldat Magic, const byte MIME[MAX_MIMELEN],
+				  uldat Len, byte const * Data);
 
 static void TW_Beep(void) {
     Tw_WriteAsciiWindow(Td, Twin, 1, "\007");
@@ -369,8 +369,8 @@ static void TW_SelectionRequest_up(uldat Requestor, uldat ReqPrivate) {
 /*
  * notify our Selection to libTw
  */
-static void TW_SelectionNotify_TW(uldat ReqPrivate, uldat Magic, CONST byte MIME[MAX_MIMELEN],
-				  uldat Len, byte CONST * Data) {
+static void TW_SelectionNotify_TW(uldat ReqPrivate, uldat Magic, const byte MIME[MAX_MIMELEN],
+				  uldat Len, byte const * Data) {
 #ifdef DEBUG_HW_TWIN
     printf("notifying selection (%d/%d) to libTw server\n", ReqPrivate, SelCount-1);
 #endif
@@ -384,8 +384,8 @@ static void TW_SelectionNotify_TW(uldat ReqPrivate, uldat Magic, CONST byte MIME
 /*
  * notify the libTw Selection to twin upper layer
  */
-static void TW_SelectionNotify_up(uldat ReqPrivate, uldat Magic, CONST byte MIME[MAX_MIMELEN],
-				  uldat Len, byte CONST * Data) {
+static void TW_SelectionNotify_up(uldat ReqPrivate, uldat Magic, const byte MIME[MAX_MIMELEN],
+				  uldat Len, byte const * Data) {
 #ifdef DEBUG_HW_TWIN
     printf("notifying selection (%d/%d) to twin core\n", ReqPrivate, TSelCount-1);
 #endif
@@ -574,7 +574,7 @@ static byte TW_InitHW(void) {
 	} while (0); else {
 	    /* TwErrno(NULL) is valid... used when Tw_Open fails */
 	    if ((len = Tw_Errno(Td)))
-		printk("      TW_InitHW() failed: %."STR(TW_SMALLBUFF)"s%."STR(TW_SMALLBUFF)"s\n",
+		printk("      TW_InitHW() failed: " SS "" SS "\n",
 			Tw_StrError(Td, len), Tw_StrErrorDetail(Td, len, Tw_ErrnoDetail(Td)));
 	    else
 		printk("      TW_InitHW() failed.\n");
@@ -587,12 +587,12 @@ static byte TW_InitHW(void) {
     return tfalse;
 }
 
-byte InitModule(module Module) {
+EXTERN_C byte InitModule(module Module) {
     Module->Private = TW_InitHW;
     return ttrue;
 }
 
 /* this MUST be defined, or it seems that a bug in dlsym() gets triggered */
-void QuitModule(module Module) {
+EXTERN_C void QuitModule(module Module) {
 }
 

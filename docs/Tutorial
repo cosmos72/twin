@@ -13,7 +13,7 @@
 		  updated to version 0.4.6, 26 Mar 2003
 	      
 
-	     Author: Massimiliano Ghilardi <max@linuz.sns.it>
+	     Author: Massimiliano Ghilardi <https://github.com/cosmos72/>
 
 
 0. Index
@@ -178,9 +178,10 @@
    - various clients (twcat, twterm, ...) in the clients/ subdirectory.
    
    In case you get errors during compilation and you really can't solve
-   the problem by your own, you can e-mail me at <max@linuz.sns.it>
-   sending an _EXACT_ copy of what `make' printed and also specifying
-   your operating system (uname -a), and I'll try to help you.
+   the problem by your own, you can open an issue at
+   <https://github.com/cosmos72/twin> sending an _EXACT_ copy of what
+   `make' printed and also specifying your operating system (uname -a),
+   and I'll try to help you.
 
    If you have a fast computer and some spare time, you could help me a little
    and try to compile every source file under every possible configuration.
@@ -969,5 +970,5 @@
    
    
     Massimiliano Ghilardi
-    <max@linuz.sns.it>
+    <https://github.com/cosmos72/>
 

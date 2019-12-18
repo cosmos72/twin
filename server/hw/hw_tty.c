@@ -54,7 +54,7 @@
 
 struct tty_data {
     int tty_fd, VcsaFd, tty_number;
-    byte *tty_name, *tty_TERM;
+    char *tty_name, *tty_TERM;
     uldat tty_charset;
     Tutf_function tty_UTF_32_to_charset;
     Tutf_array tty_charset_to_UTF_32;
@@ -64,23 +64,23 @@ struct tty_data {
     uldat saveCursorType;
     dat saveX, saveY;
     
-    udat (*LookupKey)(udat *ShiftFlags, byte *slen, byte *s, byte *retlen, byte **ret);
+    udat (*LookupKey)(udat *ShiftFlags, byte *slen, char *s, byte *retlen, char **ret);
     
-    byte *mouse_start_seq, *mouse_end_seq, *mouse_motion_seq;
+    const char *mouse_start_seq, *mouse_end_seq, *mouse_motion_seq;
 #ifdef CONF_HW_TTY_LINUX
     Gpm_Connect GPM_Conn;
     int GPM_fd;
     int GPM_keys;
 #endif
-    byte xterm_mouse_seq[9];
+    char xterm_mouse_seq[9];
     byte xterm_mouse_len;
     dat xterm_prev_x, xterm_prev_y;
 
 #ifdef CONF_HW_TTY_TERMCAP
-    byte *tc_cap[tc_cap_N],
-	colorbug, wrapglitch;
+    const char *tc_cap[tc_cap_N];
+    byte colorbug, wrapglitch;
 #else
-    byte *tc_scr_clear;
+    const char *tc_scr_clear;
 #endif
 };
 
@@ -169,7 +169,7 @@ static void tty_QuitHW(void);
 
 static void null_InitMouse(void) {
     HW->mouse_slot = NOSLOT; /* no mouse at all :( */
-    
+    HW->ConfigureMouse = (void *)NoOp;
     HW->MouseEvent = (void *)NoOp;
     HW->QuitMouse = NoOp;
     
@@ -285,9 +285,9 @@ static void tty_MogrifyUTF8(hwfont h) {
  * as they may be not up to date. Use GetDisplayWidth() / GetDisplayHeight().
  */
 static byte tty_InitHW(void) {
-    byte *arg = HW->Name;
-    byte *s;
-    byte *charset = NULL;
+    char *arg = HW->Name;
+    char *s;
+    char *charset = NULL;
 #define NEVER  0
 #define MAYBE  1
 #define ALWAYS 2
@@ -425,7 +425,7 @@ static byte tty_InitHW(void) {
 	    stdOUT = fdopen(tty_fd, "r+");
 	}
 	if (tty_fd == -1 || !stdOUT) {
-	    printk("      tty_InitHW(): open(\"%."STR(TW_SMALLBUFF)"s\") failed: %."STR(TW_SMALLBUFF)"s\n", tty_name, strerror(errno));
+	    printk("      tty_InitHW(): open(\"" SS "\") failed: " SS "\n", tty_name, strerror(errno));
 	    FreeMem(tty_name);
 	    if (tty_TERM)
 		FreeMem(tty_TERM);
@@ -436,7 +436,7 @@ static byte tty_InitHW(void) {
 	 * open our controlling tty as display
 	 */
 	if (DisplayHWCTTY) {
-	    printk("      tty_InitHW() failed: controlling tty %."STR(TW_SMALLBUFF)"s\n",
+	    printk("      tty_InitHW() failed: controlling tty " SS "\n",
 		    DisplayHWCTTY == HWCTTY_DETACHED
 		    ? "not usable after Detach"
 		    : "is already in use as display");
@@ -471,9 +471,9 @@ static byte tty_InitHW(void) {
     if (charset) {
         /* honor user-specified charset */
 	if ((tty_charset = Tutf_charset_id(charset)) == (uldat)-1)
-	    printk("      tty_InitHW(): libTutf warning: unknown charset `%." STR(TW_SMALLBUFF) "s', assuming `ASCII'\n", charset);
+	    printk("      tty_InitHW(): libTutf warning: unknown charset `" SS "', assuming `ASCII'\n", charset);
 	else if (tty_charset == Tutf_charset_id(T_NAME(UTF_32))) {
-	    printk("      tty_InitHW(): charset `%." STR(TW_SMALLBUFF) "s' is Unicode, assuming terminal supports UTF-8\n", charset);
+	    printk("      tty_InitHW(): charset `" SS "' is Unicode, assuming terminal supports UTF-8\n", charset);
 	    tty_use_utf8 = ttrue;
             tty_charset = (uldat)-1;
 	}
@@ -499,7 +499,7 @@ static byte tty_InitHW(void) {
      */
     
     if (!stdin_TestTty()) {
-	printk("      tty_InitHW() failed: unable to read from the terminal: %."STR(TW_SMALLBUFF)"s\n", ErrStr);
+	printk("      tty_InitHW() failed: unable to read from the terminal: " SS "\n", ErrStr);
     }
     else if (
     
@@ -573,13 +573,13 @@ static byte tty_InitHW(void) {
 	    HW->QuitMouse();
 	}
 	HW->QuitVideo();
-    } else if (tty_fd >= 0)
-        tty_setioctl(tty_fd, &ttysave);
-    
-    if (tty_fd) {
-	close(tty_fd);
-	fclose(stdOUT);
     }
+    if (tty_fd >= 0)
+        tty_setioctl(tty_fd, &ttysave);
+    if (tty_fd > 0)
+	close(tty_fd);
+    if (stdOUT && stdOUT != stdout)
+	fclose(stdOUT);
     return tfalse;
 }
 
@@ -622,12 +622,12 @@ static void tty_QuitHW(void) {
 }
 
 
-byte InitModule(module Module) {
-    Module->Private = tty_InitHW;
+EXTERN_C byte InitModule(module Module) {
+    Module->Private = (void *)tty_InitHW;
     return ttrue;
 }
 
 /* this MUST be included, or it seems that a bug in dlsym() gets triggered */
-void QuitModule(module Module) {
+EXTERN_C void QuitModule(module Module) {
 }
 

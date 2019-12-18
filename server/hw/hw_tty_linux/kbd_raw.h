@@ -22,7 +22,8 @@ static int lrawkbd_mode_save;
 static void lrawkbd_QuitKeyboard(void);
 static void lrawkbd_ConfigureKeyboard(udat resource, byte todefault, udat value);
 
-static udat lrawkbd_LookupKey(udat *ShiftFlags, byte *slen, byte *s, byte *retlen, byte **ret);
+static udat lrawkbd_LookupKey(udat *ShiftFlags, byte *slen, char *s,
+                              byte *retlen, char **ret);
 static void lrawkbd_KeyboardEvent(int fd, display_hw hw);
 
 static byte lrawkbd_GetKeyboard(void);
@@ -54,7 +55,8 @@ static byte lrawkbd_InitKeyboard(void) {
 
     lrawkbd_HW = HW;
     
-    HW->keyboard_slot = RegisterRemote(tty_fd, (obj)HW, lrawkbd_KeyboardEvent);
+    HW->keyboard_slot = RegisterRemote(tty_fd, (obj)HW,
+                                       (void (*)(int, obj))lrawkbd_KeyboardEvent);
     if (HW->keyboard_slot == NOSLOT)
 	return tfalse;
 
@@ -141,7 +143,7 @@ static void dump_bytes(byte * s, uldat len) {
 
 
 static void lrawkbd_KeyboardEvent(int fd, display_hw hw) {
-    byte buf[16], *s, *ret;
+    char buf[16], *s, *ret;
     udat Code, ShiftFlags;
     byte got, chunk, retlen;
     SaveHW;

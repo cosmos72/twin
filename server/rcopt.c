@@ -13,8 +13,8 @@
 #include "twin.h"
 #include "data.h"
 
-static byte strfuzzy_ends_with(CONST char *s1, CONST char *s2) {
-    CONST char * p1 = s1 + strlen(s1), * p2 = s2 + strlen(s2);
+static byte strfuzzy_ends_with(const char *s1, const char *s2) {
+    const char * p1 = s1 + strlen(s1), * p2 = s2 + strlen(s2);
     char c1, c2;
 
     while (p1 != s1 && p2 != s2) {
@@ -44,12 +44,12 @@ byte InitRCOptions(void) {
        if any of these environment variables ends with "UTF-8" or similar
        then initialize tty emulator in UTF-8 mode
      */
-    CONST char * keys[] = {
+    const char * keys[] = {
         "LANG",  "LANGUAGE",
         "LC_ALL",  "LC_CTYPE", "LC_NUMERIC", "LC_TIME", "LC_COLLATE", "LC_MONETARY", "LC_MESSAGES",
         "LC_PAPER", "LC_NAME", "LC_ADDRESS", "LC_TELEPHONE", "LC_MEASUREMENT", "LC_IDENTIFICATION",
     };
-    CONST char * env;
+    const char * env;
     size_t i;
     byte utf8 = tfalse;
     for (i = 0; i < sizeof(keys)/sizeof(keys[0]); i++) {

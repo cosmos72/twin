@@ -67,17 +67,17 @@
 static char *ptydev, *ttydev;
 static int ptyfd, ttyfd;
 
-#define SS "%."STR(TW_SMALLBUFF)"s"
+#define SS "%." STR(TW_SMALLBUF) "s"
 
-static void pty_error(CONST byte *d, CONST byte *f, CONST byte *arg) {
-    printk("twin: "SS": "SS"(\""SS"\") failed: "SS"\n",
-	   d ? d : (CONST byte *)"<NULL>",
-	   f ? f : (CONST byte *)"<NULL>",
-	   arg ? arg : (CONST byte *)"<NULL>",
+static void pty_error(const char *d, const char *f, const char *arg) {
+    printk("twin: " SS ": " SS "(\"" SS "\") failed: " SS "\n",
+	   d ? d : "<NULL>",
+	   f ? f : "<NULL>",
+	   arg ? arg : "<NULL>",
 	   strerror(errno));
 }
 
-static void get_pty_error(CONST byte *f, CONST byte *arg) {
+static void get_pty_error(const char *f, const char *arg) {
     pty_error("opening pseudo-tty", f, arg);
 }
 
@@ -178,7 +178,7 @@ static byte fixup_pty(void) {
 }
 
 
-static void setup_pty_error(CONST byte *f, CONST byte *arg) {
+static void setup_pty_error(const byte *f, const byte *arg) {
     pty_error("setting up slave tty", f, arg);
 }
 
@@ -249,7 +249,7 @@ static byte switchto_tty(void)
 }
 
 /* exported API: fork() a program in a pseudo-teletype */
-byte SpawnInWindow(window Window, CONST byte *arg0, byte * CONST *argv) {
+byte SpawnInWindow(window Window, const byte *arg0, byte * const *argv) {
     pid_t childpid;
     remotedata *data;
 
@@ -281,7 +281,7 @@ byte SpawnInWindow(window Window, CONST byte *arg0, byte * CONST *argv) {
 	    /* child */
 	    /* 4 */
 	    if (switchto_tty())
-		execvp((CONST char *)arg0, (char * CONST *)argv);
+		execvp((const char *)arg0, (char * const *)argv);
 	    exit(1);
 	    break;
 	  default:

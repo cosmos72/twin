@@ -50,7 +50,7 @@ static uldat FdListGrow(void) {
 	return NOSLOT;
     }
 
-    for (FdSize = oldsize+1; FdSize<size; FdSize++) {
+    for (FdSize = oldsize; FdSize<size; FdSize++) {
         newFdList[FdSize].Fd = NOFD;
     }
     
@@ -160,7 +160,7 @@ msgport RemoteGetMsgPort(uldat Slot) {
  * On success, return the slot number.
  * On failure, return NOSLOT (-1).
  */
-uldat RegisterRemote(int Fd, obj HandlerData, void *HandlerIO) {
+uldat RegisterRemote(int Fd, obj HandlerData, handler_obj HandlerObj) {
     uldat Slot, j;
     
     if ((Slot = FdListGet()) == NOSLOT) {
@@ -182,9 +182,9 @@ uldat RegisterRemote(int Fd, obj HandlerData, void *HandlerIO) {
     }
     LS.pairSlot = NOSLOT;
     if ((LS.HandlerData = HandlerData))
-	LS.HandlerIO.D = HandlerIO;
+	LS.HandlerIO.D = HandlerObj;
     else
-	LS.HandlerIO.S = HandlerIO;
+	LS.HandlerIO.S = HandlerObj;
     LS.MsgPort = (msgport)0;
     LS.WQueue = LS.RQueue = (byte *)0;
     LS.WQlen = LS.WQmax = LS.RQlen = LS.RQmax = (uldat)0;
@@ -377,7 +377,7 @@ void RemoteParanoia(void) {
 	if (test < 10) {
 	    /* solved ? */
 	    printk("                    ... problem disappeared after a few tries, was:\n"
-		   "                        errno = %d (%."STR(TW_SMALLBUFF)"s)\n",
+		   "                        errno = %d (" SS ")\n",
 		   strerror(last_errno));
 	    return;
 	}
@@ -438,7 +438,7 @@ void RemoteParanoia(void) {
  *
  * return len if succeeded, 0 if failed.
  */
-uldat RemoteWriteQueue(uldat Slot, uldat len, CONST void *data) {
+uldat RemoteWriteQueue(uldat Slot, uldat len, const void *data) {
     uldat nmax;
     byte *tmp;
     

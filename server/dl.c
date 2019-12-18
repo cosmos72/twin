@@ -22,7 +22,7 @@
 
 byte DlOpen(module Module) {
     dlhandle Handle = NULL;
-    uldat len, len0 = 1 + LenStr(pkg_libdir) + LenStr(DL_PREFIX) + LenStr(DL_SUFFIX);
+    uldat len, len0 = 1 + strlen(pkg_libdir) + strlen(DL_PREFIX) + strlen(DL_SUFFIX);
     byte *name = NULL;
     byte (*init_func)(module);
     
@@ -84,7 +84,7 @@ void DlClose(module Module) {
     }
 }
 
-module DlLoadAny(uldat len, CONST byte *name) {
+module DlLoadAny(uldat len, const byte *name) {
     module Module;
     
     for (Module = All->FirstModule; Module; Module = Module->Next) {
@@ -103,7 +103,7 @@ module DlLoadAny(uldat len, CONST byte *name) {
 
 static module So[MAX_So];
 
-udat DlName2Code(CONST byte *name) {
+udat DlName2Code(const byte *name) {
     if (!CmpStr(name, "wm"))
 	return WMSo;
     if (!CmpStr(name, "term"))
@@ -115,7 +115,7 @@ udat DlName2Code(CONST byte *name) {
     return MainSo;
 }
 
-static CONST byte * DlCode2Name(uldat code) {
+static const byte * DlCode2Name(uldat code) {
     switch (code)
     {
     case WMSo:      return "wm";
@@ -132,15 +132,15 @@ static CONST byte * DlCode2Name(uldat code) {
 module DlLoad(uldat code) {
     module M = (module)0;
     if (code < MAX_So && !(M = So[code])) {
-        CONST byte * name = DlCode2Name(code);
-        M = DlLoadAny(name ? LenStr(name) : 0, name);
+        const byte * name = DlCode2Name(code);
+        M = DlLoadAny(name ? strlen(name) : 0, name);
         if ((So[code] = M)) {
             if (All->FnHookModule)
                 All->FnHookModule(All->HookModule);
         } else {
             printk("failed to load module %s: %s\n",
-                   name ? name : (CONST byte *)"(NULL)",
-                   ErrStr ? ErrStr : (CONST byte *)"unknown error");
+                   name ? name : (const byte *)"(NULL)",
+                   ErrStr ? ErrStr : (const byte *)"unknown error");
 	}
     }
     return M;
@@ -163,7 +163,7 @@ module DlIsLoaded(uldat code) {
     return (module)0;
 }
 
-void *DlSym(module Module, CONST byte *name) {
+void *DlSym(module Module, const byte *name) {
     if (Module && name)
 	return (void *)dlsym((dlhandle)Module->Handle, name);
     

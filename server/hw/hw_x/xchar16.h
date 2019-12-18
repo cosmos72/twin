@@ -3,7 +3,7 @@
 typedef XChar2b XChar16;
 
 INLINE XChar16 RawToXChar16(hwfont raw) {
-    XChar16 p = {raw >> 8, raw & 0xFF};
+    XChar16 p = {(unsigned char)(raw >> 8), (unsigned char)(raw & 0xFF)};
     return p;
 }
 

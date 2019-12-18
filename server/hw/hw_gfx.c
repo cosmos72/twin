@@ -241,8 +241,10 @@ INLINE void X11_Mogrify(dat x, dat y, uldat len) {
 #undef XDRAW_ANY
 
 
-static byte gfx_LoadPixmap(Pixmap *px, byte *name, int nlen, byte strict) {
-    byte *path[3] = { NULL, NULL, NULL }, *prefix[3], *infix[3];
+static byte gfx_LoadPixmap(Pixmap *px, const char *name, int nlen, byte strict) {
+    char *path[3] = { NULL, NULL, NULL };
+    const char *prefix[3];
+    const char *infix[3];
     byte i, ret = tfalse;
     XpmAttributes pxattr;
 
@@ -258,7 +260,7 @@ static byte gfx_LoadPixmap(Pixmap *px, byte *name, int nlen, byte strict) {
     pxattr.depth = xmonochrome ? 1 : DefaultDepth(xdisplay,  DefaultScreen(xdisplay));
 
     for (i = 0; i < 3 && !ret; i++) {
-	if (prefix[i] && (path[i] = AllocMem(strlen(prefix[i]) + strlen(infix[i]) + nlen + 17))) {
+	if (prefix[i] && (path[i] = (char *)AllocMem(strlen(prefix[i]) + strlen(infix[i]) + nlen + 17))) {
 	    if (strict)
 		sprintf(path[i], "%s%s%.*s_%dx%d.xpm", prefix[i], infix[i], nlen, name, xwfont & 0xFFFF, xhfont & 0xFFFF);
 	    else
@@ -273,7 +275,7 @@ static byte gfx_LoadPixmap(Pixmap *px, byte *name, int nlen, byte strict) {
 	if (!path[0] && !path[1] && !path[2])
 	    printk("      gfx_InitHW(): Out of memory!\n");
 	else
-	    printk("      gfx_InitHW(): failed to open `%."STR(TW_SMALLBUFF)"s': %."STR(TW_SMALLBUFF)"s\n",
+	    printk("      gfx_InitHW(): failed to open `" SS "': " SS "\n",
 		   path[0] ? path[0] : path[1] ? path[1] : path[2],
 		   strerror(errno));
     }
@@ -286,7 +288,7 @@ static byte gfx_LoadPixmap(Pixmap *px, byte *name, int nlen, byte strict) {
     return ret;
 }
 
-static byte *GfxFile(byte *arg, byte **ret_file, uldat *ret_len) {
+static char *GfxFile(char *arg, const char **ret_file, uldat *ret_len) {
     *ret_file = arg;
     arg = strchr(arg, ',');
     *ret_len = arg ? arg - *ret_file : strlen(*ret_file);
@@ -304,7 +306,7 @@ static byte *GfxFile(byte *arg, byte **ret_file, uldat *ret_len) {
     return arg;
 }
 
-static void GfxUse(byte *arg, byte *how) {
+static void GfxUse(char *arg, byte *how) {
     if (!strncmp(arg, "none", 4))
 	*how = GFX_USE_NONE;
     else if (!strncmp(arg, "theme", 5))
@@ -316,8 +318,10 @@ static void GfxUse(byte *arg, byte *how) {
 }
 
 typedef struct {
-    byte *dpy, *dpy0, *fontname, *fontname0;
-    byte *charset, *charset0, *file_bg, *file_root, *file_theme;
+    char *dpy, *dpy0, *fontname, *fontname0;
+    char *charset, *charset0;
+    const char *file_bg, *file_root;
+    const char *file_theme;
     uldat file_bg_len, file_root_len, file_theme_len;
     udat fontwidth, fontheight;
     byte drag, noinput;
@@ -325,7 +329,7 @@ typedef struct {
 
 
 static byte gfx_ParseOptions(gfx_options * opt, char * arg) {
-    byte * s;
+    char * s;
     
     /* autodetect */
     xmonochrome = ttrue + ttrue;
@@ -469,7 +473,7 @@ cleanup:
 
 /* return name of selected font in allocated (char *) */
 static char * gfx_AutodetectFont(udat fontwidth, udat fontheight) {
-    CONST char * patterns[] = {
+    const char * patterns[] = {
         /* "-gnu-unifont-medium-r-normal-*-%u-*-*-*-*-*-iso10646-1", double-width chars not supported yet */
         "-misc-console-medium-r-normal-*-%u-*-*-*-*-*-iso10646-1",
         "-misc-fixed-medium-r-normal-*-%u-*-*-*-*-*-iso10646-1",
@@ -482,7 +486,7 @@ static char * gfx_AutodetectFont(udat fontwidth, udat fontheight) {
     enum { max_fonts = 100, n_patterns = sizeof(patterns)/sizeof(patterns[0]) };
     
     XFontStruct *info;
-    char * pattern = AllocMem(LenStr(patterns[0]) + 1 + 3 * sizeof(unsigned));
+    char * pattern = (char *)AllocMem(strlen(patterns[0]) + 1 + 3 * sizeof(unsigned));
     char * selected = NULL;
     char ** names = NULL;
     int i, j, n_fonts;
@@ -516,7 +520,7 @@ static char * gfx_AutodetectFont(udat fontwidth, udat fontheight) {
 }
 
 
-static byte gfx_LoadFont(CONST char * fontname, udat fontwidth, udat fontheight) {
+static byte gfx_LoadFont(const char * fontname, udat fontwidth, udat fontheight) {
     char * alloc_fontname = 0;
     byte loaded = tfalse;
 
@@ -534,7 +538,7 @@ static byte gfx_LoadFont(CONST char * fontname, udat fontwidth, udat fontheight)
         xhfont = (xupfont = xsfont->ascent) + xsfont->descent;
         xheight = xhfont * (unsigned)(HW->Y = GetDisplayHeight());
         
-        printk("      selected %ux%u font `%."STR(TW_SMALLBUFF)"s'\n", (unsigned)xwfont, (unsigned)xhfont, fontname);
+        printk("      selected %ux%u font `" SS "'\n", (unsigned)xwfont, (unsigned)xhfont, fontname);
     }
     if (alloc_fontname)
         FreeMem(alloc_fontname);
@@ -546,7 +550,7 @@ static void gfx_QuitHW(void);
 
 static byte gfx_InitHW(void) {
     gfx_options opt;
-    byte title[X11_TITLE_MAXLEN];
+    char title[X11_TITLE_MAXLEN];
     int i, xscreen;
     unsigned int xdepth;
     
@@ -703,7 +707,7 @@ static byte gfx_InitHW(void) {
 	    
 	    HW->mouse_slot = NOSLOT;
 	    HW->keyboard_slot = RegisterRemote(i = XConnectionNumber(xdisplay), (obj)HW,
-					       X11_KeyboardEvent);
+					       (void (*)(int, obj))X11_KeyboardEvent);
 	    if (HW->keyboard_slot == NOSLOT)
 		break;
 	    fcntl(i, F_SETFD, FD_CLOEXEC);
@@ -712,7 +716,8 @@ static byte gfx_InitHW(void) {
 	    HW->FlushHW = X11_FlushHW;
 	    
 	    HW->KeyboardEvent = X11_KeyboardEvent;
-	    HW->MouseEvent = (void *)NoOp; /* mouse events handled by X11_KeyboardEvent */
+            /* mouse events handled by X11_KeyboardEvent */
+	    HW->MouseEvent = (void (*)(int, display_hw))NoOp;
 	    
 	    HW->XY[0] = HW->XY[1] = 0;
 	    HW->TT = NOCURSOR;
@@ -740,7 +745,7 @@ static byte gfx_InitHW(void) {
 	    
 	    HW->Beep = X11_Beep;
 	    HW->Configure = X11_Configure;
-	    HW->SetPalette = (void *)NoOp;
+	    HW->SetPalette = (void (*)(udat, udat, udat, udat))NoOp;
 	    HW->ResetPalette = NoOp;
 	    
 	    HW->QuitHW = gfx_QuitHW;
@@ -776,7 +781,7 @@ static byte gfx_InitHW(void) {
 	}
     } while (0); else {
 	if (opt.dpy || (opt.dpy = getenv("DISPLAY")))
-	    printk("      gfx_InitHW() failed to open display %."STR(TW_SMALLBUFF)"s\n", HW->Name);
+	    printk("      gfx_InitHW() failed to open display " SS "\n", HW->Name);
 	else
 	    printk("      gfx_InitHW() failed: DISPLAY is not set\n");
     }
@@ -816,7 +821,7 @@ static void gfx_QuitHW(void) {
     if (HW->keyboard_slot != NOSLOT)
 	UnRegisterRemote(HW->keyboard_slot);
     HW->keyboard_slot = NOSLOT;
-    HW->KeyboardEvent = (void *)NoOp;
+    HW->KeyboardEvent = (void (*)(int, display_hw))NoOp;
     
     HW->QuitHW = NoOp;
 
@@ -824,11 +829,11 @@ static void gfx_QuitHW(void) {
     HW->Private = NULL;
 }
 
-byte InitModule(module Module) {
-    Module->Private = gfx_InitHW;
+EXTERN_C byte InitModule(module Module) {
+    Module->Private = (void *)gfx_InitHW;
     return ttrue;
 }
 
 /* this MUST be included, or it seems that a bug in dlsym() gets triggered */
-void QuitModule(module Module) {
+EXTERN_C void QuitModule(module Module) {
 }
