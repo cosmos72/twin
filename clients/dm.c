@@ -69,8 +69,7 @@ static tmsgport DM_MsgPort;
 static tmenu DM_Menu;
 static tscreen DM_Screen;
 static twindow DM_Window, DM_user, DM_pass;
-static TW_CONST char *DM_Display;
-static byte DM_Kill, quiet, logged_in;
+static byte DM_Kill, quiet, oneshot, logged_in;
 
 static TW_VOLATILE pid_t ServerPid = (pid_t)-1, AttachPid = (pid_t)-1;
 
@@ -93,6 +92,7 @@ static void Usage(void) {
 	    " -V, --version           output version information and exit\n"
 	    " -k, --kill              kill twin server upon display detach\n"
 	    " -q, --quiet             quiet; suppress diagnostic messages\n"
+	    " -1, --one-shot          start at most one session, then exit\n"
 	    " --attach                use \"twattach\" to start display\n"
 	    " --display               use \"twdisplay\" to start display\n"
             "                             (default unless --hw=tty)\n"
@@ -120,6 +120,8 @@ static void ParseArgs(void) {
 	    DM_Kill = ttrue;
 	} else if (!strcmp(s, "-q") || !Tw_option_strcmp(s, "-quiet")) {
 	    quiet = ttrue;
+	} else if (!strcmp(s, "-1") || !Tw_option_strcmp(s, "-one-shot")) {
+	    oneshot = ttrue;
 	} else if (!Tw_option_strcmp(s, "-attach")) {
 	    use_twdisplay = DM_ATTACH;
 	} else if (!Tw_option_strcmp(s, "-display")) {
@@ -707,6 +709,9 @@ int main(int argc, char *argv[]) {
 	    select(fd+1, &fset, NULL, NULL, NULL);
 	}
 	Logout();
+	if (oneshot) {
+	    break;
+	}
     }
     
     if ((err = TwErrno))
