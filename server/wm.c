@@ -903,7 +903,7 @@ static void ReleaseMenu(wm_ctx *C) {
 }
 
 static void ShowResize(window W) {
-    static byte buf[40];
+    static char buf[40];
     dat x = W->XWidth;
     dat y = W->YWidth;
     
@@ -911,7 +911,7 @@ static void ShowResize(window W) {
 	x -= 2, y -= 2;
 	
     sprintf(buf, "%hdx%hd", x, y);
-    Act(SetText,All->BuiltinRow)(All->BuiltinRow, (x = strlen(buf)), buf, 0);
+    Act(SetText,All->BuiltinRow)(All->BuiltinRow, strlen(buf), buf, 0);
     Act(DrawMenu,All->FirstScreen)(All->FirstScreen, All->DisplayWidth - 20, All->DisplayWidth - 10);
 }
 
@@ -1785,50 +1785,50 @@ static void WManagerH(msgport MsgPort) {
 
 static dat XWidth, YWidth;
 
-static byte doSmartPlace(widget W, dat *X, udat *Y) {
-    dat WLeft, WRgt, TryX[2];
-    dat WUp, WDwn, TryY[2];
-    byte OK = tfalse;
+static byte doSmartPlace(widget W, dat x[2], dat y[2]) {
+    dat wleft, wright, tryx[2];
+    dat wup, wdown, tryy[2];
+    byte ok = tfalse;
 
-    if (XWidth > X[1] - X[0] + 1 || YWidth > Y[1] - Y[0] + 1)
+    if (XWidth > x[1] - x[0] + 1 || YWidth > y[1] - y[0] + 1)
 	return tfalse;
     
     if (!W)
 	return ttrue;
 	
-    WRgt = (WLeft = W->Left) + W->XWidth;
-    WDwn = (WUp = W->Up) + (IS_WINDOW(W) && (((window)W)->Attrib & WINDOW_ROLLED_UP)
-			    ? 1 : W->YWidth);
+    wright = (wleft = W->Left) + W->XWidth;
+    wdown = (wup = W->Up) + (IS_WINDOW(W) && (((window)W)->Attrib & WINDOW_ROLLED_UP)
+                             ? 1 : W->YWidth);
     W = W->Next;
 	
-    if (X[0] >= WRgt || X[1] < WLeft || Y[0] >= WDwn || Y[1] < WUp)
-	return W ? doSmartPlace(W, X, Y) : ttrue;
+    if (x[0] >= wright || x[1] < wleft || y[0] >= wdown || y[1] < wup)
+	return W ? doSmartPlace(W, x, y) : ttrue;
     
-    if (Y[0] < WUp) {
-	TryX[0] = X[0]; TryX[1] = X[1];
-	TryY[0] = Y[0]; TryY[1] = WUp - 1;
-	OK = doSmartPlace(W, TryX, TryY);
+    if (y[0] < wup) {
+	tryx[0] = x[0]; tryx[1] = x[1];
+	tryy[0] = y[0]; tryy[1] = wup - 1;
+	ok = doSmartPlace(W, tryx, tryy);
     }
-    if (!OK && X[0] < WLeft) {
-	TryX[0] = X[0]; TryX[1] = WLeft - 1;
-	TryY[0] = Y[0]; TryY[1] = Y[1];
-	OK = doSmartPlace(W, TryX, TryY);
+    if (!ok && x[0] < wleft) {
+	tryx[0] = x[0]; tryx[1] = wleft - 1;
+	tryy[0] = y[0]; tryy[1] = y[1];
+	ok = doSmartPlace(W, tryx, tryy);
     }
-    if (!OK && X[1] >= WRgt) {
-	TryX[0] = WRgt; TryX[1] = X[1];
-	TryY[0] = Y[0]; TryY[1] = Y[1];
-	OK = doSmartPlace(W, TryX, TryY);
+    if (!ok && x[1] >= wright) {
+	tryx[0] = wright; tryx[1] = x[1];
+	tryy[0] = y[0]; tryy[1] = y[1];
+	ok = doSmartPlace(W, tryx, tryy);
     }
-    if (!OK && Y[1] >= WDwn) {
-	TryX[0] = X[0]; TryX[1] = X[1];
-	TryY[0] = WDwn; TryY[1] = Y[1];
-	OK = doSmartPlace(W, TryX, TryY);
+    if (!ok && y[1] >= wdown) {
+	tryx[0] = x[0]; tryx[1] = x[1];
+	tryy[0] = wdown; tryy[1] = y[1];
+	ok = doSmartPlace(W, tryx, tryy);
     }
-    if (OK) {
-	X[0] = TryX[0]; X[1] = TryX[1];
-	Y[0] = TryY[0]; Y[1] = TryY[1];
+    if (ok) {
+	x[0] = tryx[0]; x[1] = tryx[1];
+	y[0] = tryy[0]; y[1] = tryy[1];
     }
-    return OK;
+    return ok;
 }
 
 #define MAXLRAND48 0x80000000l

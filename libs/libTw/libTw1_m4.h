@@ -237,7 +237,7 @@
 { Tw_RequestSelection, 16,
 6, "Tw_RequestSelection", "0" "v" TWS_void_STR"x" magic_id_STR(obj)"_" TWS_uldat_STR },
 { Tw_NotifySelection, 15,
-14, "Tw_NotifySelection", "0" "v" TWS_void_STR"x" magic_id_STR(obj)"_" TWS_uldat_STR"_" TWS_uldat_STR"V" TWS_char_STR"_" TWS_uldat_STR"V" TWS_byte_STR },
+14, "Tw_NotifySelection", "0" "v" TWS_void_STR"x" magic_id_STR(obj)"_" TWS_uldat_STR"_" TWS_uldat_STR"V" TWS_char_STR"_" TWS_uldat_STR"V" TWS_char_STR },
 
 { Tw_SetServerUid, 12,
 6, "Tw_SetServerUid", "0" "_" TWS_byte_STR"_" TWS_uldat_STR"_" TWS_byte_STR },

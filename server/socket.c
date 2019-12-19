@@ -70,10 +70,10 @@
 
 #ifdef CONF_SOCKET_ALIEN
 
-static void alienPop(const byte ** src, uldat alien_len, byte *dst, uldat len);
-static void alienPush(const byte *src, uldat len, byte **dst, uldat alien_len);
-# define alienPOP(s,type,lval)		alienPop((const byte **)&(s),AlienSizeof(type,Slot),(byte *)&(lval),sizeof(type))
-# define alienPUSH(s,type,lval)		alienPush((const byte *)&(lval),sizeof(type),&(s),AlienSizeof(type,Slot))
+static void alienPop(CONST byte ** src, uldat alien_len, byte *dst, uldat len);
+static void alienPush(CONST byte *src, uldat len, byte **dst, uldat alien_len);
+# define alienPOP(s,type,lval)		alienPop((CONST byte **)&(s),AlienSizeof(type,Slot),(byte *)&(lval),sizeof(type))
+# define alienPUSH(s,type,lval)		alienPush((CONST byte *)&(lval),sizeof(type),&(s),AlienSizeof(type,Slot))
 
 static void alienSendMsg(msgport MsgPort, msg Msg);
 static void AlienIO(int fd, uldat slot);
@@ -324,17 +324,17 @@ static void sockShutDown(msgport MsgPort) {
 
 /* prototypes of libTw back-end utility functions */
 
-static uldat sockFindFunction(byte Len, const byte *name, byte ProtoLen, const byte *Proto);
+static uldat sockFindFunction(byte Len, CONST char *name, byte ProtoLen, CONST char *Proto);
 static byte sockSyncSocket(void);
 static byte sockServerSizeof(byte Type);
 static byte sockCanCompress(void);
 static byte sockDoCompress(byte on_off);
 
 static void sockNeedResizeDisplay(void);
-static void sockAttachHW(uldat len, const byte *arg, byte flags);
-static byte sockDetachHW(uldat len, const byte *arg);
-static void sockSetFontTranslation(const byte trans[0x80]);
-static void sockSetHWFontTranslation(const hwfont trans[0x80]);
+static void sockAttachHW(uldat len, CONST char *arg, byte flags);
+static byte sockDetachHW(uldat len, CONST char *arg);
+static void sockSetFontTranslation(CONST byte trans[0x80]);
+static void sockSetHWFontTranslation(CONST hwfont trans[0x80]);
 
 static void sockDeleteObj(void *V);
 
@@ -343,7 +343,7 @@ static void sockRecursiveDeleteWidget(widget W);
 static void sockSetXYWidget(widget W, dat x, dat y);
 static void sockResizeWidget(widget W, dat XWidth, dat YWidth);
 #define sockScrollWidget ScrollWidget
-static void sockDrawWidget(widget W, dat XWidth, dat YWidth, dat Left, dat Up, const byte *Text, const hwfont *Font, const hwattr *Attr);
+static void sockDrawWidget(widget W, dat XWidth, dat YWidth, dat Left, dat Up, CONST char *Text, CONST hwfont *Font, CONST hwattr *Attr);
 
 #define sockSetVisibleWidget SetVisibleWidget
 static void sockFocusSubWidget(widget W);
@@ -354,22 +354,23 @@ static void sockCirculateChildrenWidget(widget W, byte up_or_down);
 #define TW_CIRCULATE_LOWER_FIRST 1
 
 static gadget sockCreateGadget
-    (widget Parent, dat XWidth, dat YWidth, const byte *TextNormal, uldat Attrib, uldat Flags, udat Code,
+    (widget Parent, dat XWidth, dat YWidth, CONST char *TextNormal, uldat Attrib, uldat Flags, udat Code,
      hwcol ColText, hwcol ColTextSelect, hwcol ColTextDisabled, hwcol ColTextSelectDisabled,
      dat Left, dat Up);
 
-static window sockCreateWindow(dat TitleLen, const byte *Title, const hwcol *ColTitle, menu Menu,
+static window sockCreateWindow(dat TitleLen, CONST char *Title, CONST hwcol *ColTitle, menu Menu,
 			       hwcol ColText, uldat CursorType, uldat Attrib, uldat Flags,
 			       dat XWidth, dat YWidth, dat ScrollBackLines);
-static void sockWriteAsciiWindow(window Window, ldat Len, const byte *Ascii);
-static void sockWriteStringWindow(window Window, ldat Len, const byte *String);
-static void sockWriteHWFontWindow(window Window, ldat Len, const hwfont *HWFont);
-static void sockWriteHWAttrWindow(window Window, dat x, dat y, ldat Len, const hwattr *Attr);
-static void sockSetTitleWindow(window Window, dat titlelen, const byte *title);
+static void sockWriteAsciiWindow(window Window, ldat Len, CONST char *Ascii);
+static void sockWriteStringWindow(window Window, ldat Len, CONST char *String);
+static void sockWriteHWFontWindow(window Window, ldat Len, CONST hwfont *HWFont);
+static void sockWriteHWAttrWindow(window Window, dat x, dat y, ldat Len, CONST hwattr *Attr);
+static void sockSetTitleWindow(window Window, dat titlelen, CONST char *title);
 
 static row  sockFindRowByCodeWindow(window Window, dat Code);
 
-static menuitem sockCreate4MenuAny(obj Parent, window Window, udat Code, byte Flags, ldat Len, byte const *Name);
+static menuitem sockCreate4MenuAny(obj Parent, window Window, udat Code, byte Flags,
+                                   ldat Len, CONST char *Name);
 
 #define sockRestackChildrenRow RestackRows
 static void sockCirculateChildrenRow(obj O, byte up_or_down);
@@ -380,8 +381,8 @@ static menu sockCreateMenu
     (hwcol ColItem, hwcol ColSelect, hwcol ColDisabled, hwcol ColSelectDisabled,
      hwcol ColShtCut, hwcol ColSelShtCut, byte FlagDefColInfo);
 
-static msgport sockCreateMsgPort(byte NameLen, const byte *Name);
-static msgport sockFindMsgPort(msgport Prev, byte NameLen, const byte *Name);
+static msgport sockCreateMsgPort(byte NameLen, CONST char *Name);
+static msgport sockFindMsgPort(msgport Prev, byte NameLen, CONST char *Name);
 
 static group sockCreateGroup(void);
 
@@ -399,13 +400,14 @@ static mutex sockFirstMutex(msgport MsgPort);
 static menuitem sockFirstMenuItem(menu Menu);
 static gadget sockFirstGadget(group Group);
 
-static byte sockSendToMsgPort(msgport MsgPort, udat Len, const byte *Data);
-static void sockBlindSendToMsgPort(msgport MsgPort, udat Len, const byte *Data);
+static byte sockSendToMsgPort(msgport MsgPort, udat Len, CONST byte *Data);
+static void sockBlindSendToMsgPort(msgport MsgPort, udat Len, CONST byte *Data);
 
 static obj  sockGetOwnerSelection(void);
 static void sockSetOwnerSelection(tany Time, tany Frac);
 static void sockNotifySelection(obj Requestor, uldat ReqPrivate,
-				 uldat Magic, const byte MIME[MAX_MIMELEN], uldat Len, const byte *Data);
+                                uldat Magic, CONST char MIME[MAX_MIMELEN],
+                                uldat Len, CONST char *Data);
 static void sockRequestSelection(obj Owner, uldat ReqPrivate);
 
 #define sockSetServerUid SetServerUid
@@ -414,10 +416,10 @@ static void sockRequestSelection(obj Owner, uldat ReqPrivate);
 
 static all sockGetAll(void);
 
-static byte sockDecodeExtension(topaque *Len, const byte **Data, topaque *Args_n, tsfield args);
+static byte sockDecodeExtension(topaque *Len, CONST byte **Data, topaque *Args_n, tsfield args);
 
-static extension sockOpenExtension(byte namelen, const byte *name);
-static tany sockCallBExtension(extension e, topaque len, const byte *args, const byte *return_type);
+static extension sockOpenExtension(byte namelen, CONST byte *name);
+static tany sockCallBExtension(extension e, topaque len, CONST byte *args, CONST byte *return_type);
 static void sockCloseExtension(extension e);
 
 
@@ -429,7 +431,7 @@ static byte *s, *end;
 static int inetFd = NOFD, Fd;
 static uldat inetSlot = NOSLOT;
 
-static byte sockReply(uldat code, uldat len, const void *data);
+static byte sockReply(uldat code, uldat len, CONST void *data);
 
 static void SocketIO(int fd, uldat slot);
 
@@ -442,14 +444,14 @@ static void SocketIO(int fd, uldat slot);
 #include "socket_id.h"
 
 
-static void sockStat(obj x, udat n, const byte *in);
+static void sockStat(obj x, udat n, CONST byte *in);
 
 
 
 
 typedef struct {
     byte Len, FormatLen;
-    const char *Name, *Format;
+    CONST char *Name, *Format;
 } sockfn;
 
 static sockfn sockF[] = {
@@ -460,7 +462,7 @@ static sockfn sockF[] = {
 
 
 /* convert a 2-byte string "v"TWS_void_STR or "_"* or "V"* into a tsfield->type */
-TW_INLINE udat proto_2_TWS(const byte proto[2]) {
+TW_INLINE udat proto_2_TWS(CONST byte proto[2]) {
     udat tws_type = 0;
     switch (proto[0]) {
       case 'V':
@@ -538,7 +540,7 @@ static void sockMultiplex_S(uldat id, topaque N, tsfield a) {
 #define fullMultiplexS(Id, N, a) do { \
     if ((Id) == order_StatObj) { \
 	if ((N) > 3) { \
-	    sockStat((obj)(a)[1]_obj, (udat)(a)[2]_any, (const byte *)(a)[3]_vec); \
+	    sockStat((obj)(a)[1]_obj, (udat)(a)[2]_any, (CONST byte *)(a)[3]_vec); \
 	} \
     } else { \
 	sockMultiplex_S(Id, N, a); \
@@ -555,7 +557,7 @@ static void sockMultiplexS(uldat id, topaque N, tsfield a) {
 
 
 /* code to return array lengths V(expr) and W(expr) */
-static uldat sockLengths(uldat id, uldat n, const tsfield a) {
+static uldat sockLengths(uldat id, uldat n, CONST tsfield a) {
     uldat L = 0;
 
     switch (id) {
@@ -579,7 +581,7 @@ static uldat sockLengths(uldat id, uldat n, const tsfield a) {
 #if 0 /* currently unused */
 
 TW_INLINE udat MultiplexArgsV2S(uldat id, udat N, va_list va, tsfield a) {
-    const byte *Format = sockF[id].Format;
+    CONST byte *Format = sockF[id].Format;
     udat n;
     byte c, t, size;
 
@@ -601,7 +603,7 @@ TW_INLINE udat MultiplexArgsV2S(uldat id, udat N, va_list va, tsfield a) {
 	  case 'W': case 'Y':
 	    /* FALLTHROUGH */
 	  case 'V': case 'X':
-	    a[n]_vec = (const void *)(topaque)va_arg(va, tany);
+	    a[n]_vec = (CONST void *)(topaque)va_arg(va, tany);
 	    break;
 	  default:
 	    return 0;
@@ -657,7 +659,7 @@ TW_DECL_MAGIC(TwinMagicData);
  */
 static obj *AllocId2ObjVec(byte *alloced, byte c, uldat n, byte *VV) {
 #if TW_SIZEOF_ULDAT >= TW_SIZEOF_TOPAQUE && TW_CAN_UNALIGNED != 0
-    const uldat *L = (const uldat *)VV;
+    CONST uldat *L = (CONST uldat *)VV;
     obj *aX;
     obj *X;
     
@@ -667,13 +669,13 @@ static obj *AllocId2ObjVec(byte *alloced, byte c, uldat n, byte *VV) {
     *alloced = tfalse;
     return aX;
 #else
-    const byte *S;
+    CONST byte *S;
     obj *aX;
     obj *X;
     uldat i;
     
     if ((aX = X = (obj *)AllocMem(n * sizeof(obj)))) {
-	S = (const byte *)VV;
+	S = (CONST byte *)VV;
 	while (n--) {
 	    Pop(S, uldat, i);
 	    *X++ = Id2Obj(c, i);
@@ -685,7 +687,7 @@ static obj *AllocId2ObjVec(byte *alloced, byte c, uldat n, byte *VV) {
 #endif
 }
 
-TW_INLINE ldat sockDecodeArg(uldat id, const byte * Format, uldat n, tsfield a, uldat mask[1], byte flag[1], ldat fail) {
+TW_INLINE ldat sockDecodeArg(uldat id, CONST byte * Format, uldat n, tsfield a, uldat mask[1], byte flag[1], ldat fail) {
     void *av;
     topaque nlen;
     byte c;
@@ -814,7 +816,7 @@ static void sockMultiplexB(uldat id) {
     uldat mask = 0; /* at least 32 bits. we need TW_MAX_ARGS_N... */
     uldat nlen, n = 1;
     ldat fail = 1;
-    const byte *Format = sockF[id].Format;
+    CONST byte *Format = sockF[id].Format;
     uldat a0;
     byte c, self, flag, retT[2];
 
@@ -961,7 +963,7 @@ static void sockMultiplexB(uldat id) {
 
 /* actual libTw back-end utility functions */
 
-static int CmpFormat(const byte *F1, const byte *F2, uldat Len) {
+static int CmpFormat(CONST char *F1, CONST char *F2, uldat Len) {
     for (; Len; F1++, F2++, Len--) {
 	if (Len > 1 && *F1 == *F2 && (*F1 == 'x' || *F1 == 'X' || *F1 == 'Y')) {
 	    /*
@@ -977,7 +979,7 @@ static int CmpFormat(const byte *F1, const byte *F2, uldat Len) {
     return Len ? *F1 - *F2 : 0;
 }
 
-static uldat sockFindFunction(byte Len, const byte *Name, byte FormatLen, const byte *Format) {
+static uldat sockFindFunction(byte Len, CONST char *Name, byte FormatLen, CONST char *Format) {
     sockfn *F = sockF;
     if (Name) {
 	while (F->Name && (F->Len != Len || F->FormatLen - 1 != FormatLen ||
@@ -1007,14 +1009,14 @@ static void sockNeedResizeDisplay(void){
  * this does direct write() on the connecting socket,
  * so it bypasses any compression.
  */
-static void sockAttachHW(uldat len, const byte *arg, byte flags) {
+static void sockAttachHW(uldat len, CONST char *arg, byte flags) {
     display_hw D_HW;
-    byte buf[2] = "\0",
-	verbose = flags & TW_ATTACH_HW_REDIRECT,
-	exclusive = flags & TW_ATTACH_HW_EXCLUSIVE;
-    int realFd;
     fd_set set;
     struct timeval tv = {2,0};
+    int realFd;
+    char buf[2] = "\0";
+    byte verbose = flags & TW_ATTACH_HW_REDIRECT;
+    byte exclusive = flags & TW_ATTACH_HW_EXCLUSIVE;
     
     realFd = LS.Fd >= 0 ? LS.Fd : FdList[LS.pairSlot].Fd;
 
@@ -1056,11 +1058,11 @@ static void sockAttachHW(uldat len, const byte *arg, byte flags) {
 	UnRegisterPrintk();
 }
 
-static byte sockDetachHW(uldat len, const byte *arg) {
+static byte sockDetachHW(uldat len, CONST char *arg) {
     return DetachDisplayHW(len, arg, 0); /* cannot detach exclusive displays !! */
 }
 
-static void sockSetFontTranslation(const byte trans[0x80]) {
+static void sockSetFontTranslation(CONST byte trans[0x80]) {
     if (trans) {
 	int i;
 	hwfont *G = All->Gtranslations[USER_MAP];
@@ -1075,7 +1077,7 @@ static void sockSetFontTranslation(const byte trans[0x80]) {
     }
 }
 
-static void sockSetHWFontTranslation(const hwfont trans[0x80]) {
+static void sockSetHWFontTranslation(CONST hwfont trans[0x80]) {
     if (trans) {
 	int i;
 	hwfont *G = All->Gtranslations[USER_MAP];
@@ -1143,7 +1145,8 @@ static void sockSetXYWidget(widget W, dat x, dat y) {
 	Act(SetXY,W)(W, x, y);
     }
 }
-static void sockDrawWidget(widget W, dat XWidth, dat YWidth, dat Left, dat Up, const byte *Text, const hwfont *Font, const hwattr *Attr) {
+static void sockDrawWidget(widget W, dat XWidth, dat YWidth, dat Left, dat Up,
+                           CONST char *Text, CONST hwfont *Font, CONST hwattr *Attr) {
     if (W) {
 	Act(Expose,W)(W, XWidth, YWidth, Left, Up, XWidth, Text, Font, Attr);
     }
@@ -1218,7 +1221,7 @@ static void sockCirculateChildrenRow(obj O, byte up_or_down) {
 
 
 static gadget sockCreateGadget
-    (widget Parent, dat XWidth, dat YWidth, const byte *TextNormal, uldat Attrib, uldat Flags, udat Code,
+    (widget Parent, dat XWidth, dat YWidth, CONST char *TextNormal, uldat Attrib, uldat Flags, udat Code,
      hwcol ColText, hwcol ColTextSelect, hwcol ColTextDisabled, hwcol ColTextSelectDisabled, dat Left, dat Up)
 {
     msgport Owner;
@@ -1229,7 +1232,7 @@ static gadget sockCreateGadget
     return (gadget)0;
 }
 
-static window sockCreateWindow(dat TitleLen, const byte *Title, const hwcol *ColTitle, menu Menu,
+static window sockCreateWindow(dat TitleLen, CONST char *Title, CONST hwcol *ColTitle, menu Menu,
 			       hwcol ColText, uldat CursorType, uldat Attrib, uldat Flags,
 			       dat XWidth, dat YWidth, dat ScrollBackLines) {
     msgport Owner;
@@ -1240,7 +1243,7 @@ static window sockCreateWindow(dat TitleLen, const byte *Title, const hwcol *Col
     return (window)0;
 }
 
-static void sockWriteAsciiWindow(window Window, ldat Len, const byte *Ascii) {
+static void sockWriteAsciiWindow(window Window, ldat Len, CONST char *Ascii) {
     if (Window) {
 	if ((Window->Flags & WINDOWFL_USEANY) == WINDOWFL_USECONTENTS)
 	    Act(TtyWriteAscii,Window)(Window, Len, Ascii);
@@ -1249,7 +1252,7 @@ static void sockWriteAsciiWindow(window Window, ldat Len, const byte *Ascii) {
     }
 }
 
-static void sockWriteStringWindow(window Window, ldat Len, const byte *String) {
+static void sockWriteStringWindow(window Window, ldat Len, CONST char *String) {
     if (Window) {
 	if ((Window->Flags & WINDOWFL_USEANY) == WINDOWFL_USECONTENTS)
 	    Act(TtyWriteString,Window)(Window, Len, String);
@@ -1258,7 +1261,7 @@ static void sockWriteStringWindow(window Window, ldat Len, const byte *String) {
     }
 }
 
-static void sockWriteHWFontWindow(window Window, ldat Len, const hwfont *HWFont) {
+static void sockWriteHWFontWindow(window Window, ldat Len, CONST hwfont *HWFont) {
     if (Window) {
 	if ((Window->Flags & WINDOWFL_USEANY) == WINDOWFL_USECONTENTS)
 	    Act(TtyWriteHWFont,Window)(Window, Len, HWFont);
@@ -1267,7 +1270,7 @@ static void sockWriteHWFontWindow(window Window, ldat Len, const hwfont *HWFont)
     }
 }
 
-static void sockWriteHWAttrWindow(window Window, dat x, dat y, ldat Len, const hwattr *Attr) {
+static void sockWriteHWAttrWindow(window Window, dat x, dat y, ldat Len, CONST hwattr *Attr) {
     if (Window) {
 	if ((Window->Flags & WINDOWFL_USEANY) == WINDOWFL_USECONTENTS)
 	    Act(TtyWriteHWAttr,Window)(Window, x, y, Len, Attr);
@@ -1276,8 +1279,8 @@ static void sockWriteHWAttrWindow(window Window, dat x, dat y, ldat Len, const h
     }
 }
 
-static void sockSetTitleWindow(window Window, dat titlelen, const byte *title) {
-    byte *_title = NULL;
+static void sockSetTitleWindow(window Window, dat titlelen, CONST char *title) {
+    char *_title = NULL;
     
     if (Window) {
 	if (!titlelen || (_title = CloneMem(title, titlelen + 1)))
@@ -1293,7 +1296,8 @@ static row sockFindRowByCodeWindow(window Window, dat Code) {
 }
 
 
-static menuitem sockCreate4MenuAny(obj Parent, window Window, udat Code, byte Flags, ldat Len, byte const *Name) {
+static menuitem sockCreate4MenuAny(obj Parent, window Window, udat Code, byte Flags,
+                                   ldat Len, CONST char *Name) {
     return Do(Create4Menu,MenuItem)(FnMenuItem, Parent, Window, Code, Flags, Len, Name);
 }
 
@@ -1309,7 +1313,7 @@ static menu sockCreateMenu
 			       
 
 /* last 3 args are currently useless for remote clients */
-static msgport sockCreateMsgPort(byte NameLen, const byte *Name) {
+static msgport sockCreateMsgPort(byte NameLen, CONST char *Name) {
     msgport MsgPort;
     
     if ((MsgPort = Do(Create,MsgPort)(FnMsgPort, NameLen, Name, 0, 0, 0, SocketH))) {
@@ -1318,7 +1322,7 @@ static msgport sockCreateMsgPort(byte NameLen, const byte *Name) {
     }
     return MsgPort;
 }
-static msgport sockFindMsgPort(msgport Prev, byte NameLen, const byte *Name) {
+static msgport sockFindMsgPort(msgport Prev, byte NameLen, CONST char *Name) {
     msgport M;
     if (!(M = Prev))
 	M = All->FirstMsgPort;
@@ -1398,12 +1402,12 @@ static all sockGetAll(void) {
 #define vecW_ TWS_vecW
 
 
-static byte sockDecodeExtension(topaque *Len, const byte **Data, topaque *Args_n, tsfield a) {
+static byte sockDecodeExtension(topaque *Len, CONST byte **Data, topaque *Args_n, tsfield a) {
     static byte type_warned = 0;
     topaque n = 0;
     ldat fail = 1;
     tany len, left = *Len;
-    const byte *data = *Data;
+    CONST byte *data = *Data;
     tany args_n = *Args_n;
     udat t;
 
@@ -1484,7 +1488,7 @@ case CAT(TWS_,type): \
     return fail > 0;
 }
 
-static extension sockOpenExtension(byte namelen, const byte *name) {
+static extension sockOpenExtension(byte namelen, CONST byte *name) {
     /*
      * FIXME: loading an extension from a Slot without msgport
      * results in the extension stay loaded at least until someone uses it
@@ -1499,7 +1503,7 @@ static void sockCloseExtension(extension e) {
 }
 
 
-static tany sockCallBExtension(extension e, topaque len, const byte *data, const byte *return_type) {
+static tany sockCallBExtension(extension e, topaque len, CONST byte *data, CONST byte *return_type) {
     msgport M;
     
     if (e && IS_EXTENSION(e)) {
@@ -1516,15 +1520,15 @@ static tany sockCallBExtension(extension e, topaque len, const byte *data, const
 
 #else /* !CONF_EXT */
 
-static byte sockDecodeExtension(topaque *len, const byte **data, topaque *args_n, tsfield args) {
+static byte sockDecodeExtension(topaque *len, CONST byte **data, topaque *args_n, tsfield args) {
     return tfalse;
 }
-static extension sockOpenExtension(byte namelen, const byte *name) {
+static extension sockOpenExtension(byte namelen, CONST byte *name) {
     return (extension)0;
 }
 static void sockCloseExtension(extension e) {
 }
-static tany sockCallBExtension(extension e, topaque len, const byte *data, const byte *return_type) {
+static tany sockCallBExtension(extension e, topaque len, CONST byte *data, CONST byte *return_type) {
     return (tany)0;
 }
 
@@ -1772,7 +1776,7 @@ static void sockSendMsg(msgport MsgPort, msg Msg) {
 #define tmsgEventOffset(x) ((udat)(size_t)&(((tmsg)0)->Event.x))
 
 /* extract the (tmsg) from Data, turn it into a (msg) and send it to MsgPort */
-static byte sockSendToMsgPort(msgport MsgPort, udat Len, const byte *Data) {
+static byte sockSendToMsgPort(msgport MsgPort, udat Len, CONST byte *Data) {
     tmsg tMsg;
     msgport Sender;
     msg Msg;
@@ -1850,7 +1854,7 @@ static byte sockSendToMsgPort(msgport MsgPort, udat Len, const byte *Data) {
 	     */
 	    tMsg->Len -= AlienSizeof(uldat,Slot);
 	    tMsg->Magic = MSG_MAGIC;
-	    RemoteWriteQueue(dstSlot, Len, (const byte *)tMsg);
+	    RemoteWriteQueue(dstSlot, Len, (CONST byte *)tMsg);
 	    break;
 	}
 	
@@ -2000,7 +2004,7 @@ static byte sockSendToMsgPort(msgport MsgPort, udat Len, const byte *Data) {
 #undef tmsgEventDelta
 #undef tmsgEventOffset
 
-static void sockBlindSendToMsgPort(msgport MsgPort, udat Len, const byte *Data) {
+static void sockBlindSendToMsgPort(msgport MsgPort, udat Len, CONST byte *Data) {
     (void)sockSendToMsgPort(MsgPort, Len, Data);
 }
 
@@ -2013,8 +2017,9 @@ static void sockSetOwnerSelection(tany Time, tany Frac) {
 	TwinSelectionSetOwner((obj)LS.MsgPort, Time, Frac);
 }
 
-static void sockNotifySelection(obj Requestor, uldat ReqPrivate, uldat Magic, const byte MIME[MAX_MIMELEN],
-			    uldat Len, const byte *Data) {
+static void sockNotifySelection(obj Requestor, uldat ReqPrivate,
+                                uldat Magic, CONST char MIME[MAX_MIMELEN],
+                                uldat Len, CONST char *Data) {
     TwinSelectionNotify(Requestor, ReqPrivate, Magic, MIME, Len, Data);
 }
 
@@ -2136,16 +2141,16 @@ static byte sockDoCompress(byte on_off) {
 
 
 static uldat SendTwinProtocol(void) {
-    static byte buf[] = " Twin-" TW_PROTOCOL_VERSION_STR "-" TWIN_VERSION_STR "\n";
+    static char buf[] = " Twin-" TW_PROTOCOL_VERSION_STR "-" TWIN_VERSION_STR "\n";
     buf[0] = strlen(buf);
-    return RemoteWriteQueue(Slot, buf[0], buf);
+    return RemoteWriteQueue(Slot, buf[0], (CONST byte *)buf);
 }
 
-static byte SendTwinMagic(byte *t, byte len) {
-    return RemoteWriteQueue(Slot, len, t) == len;
+static byte SendTwinMagic(byte len, CONST byte *magic) {
+    return RemoteWriteQueue(Slot, len, magic) == len;
 }
     
-static byte sockReply(uldat code, uldat len, const void *data) {
+static byte sockReply(uldat code, uldat len, CONST void *data) {
     uldat buf[3];
     buf[0] = 2*sizeof(uldat) + len;
     buf[1] = RequestN;
@@ -2188,7 +2193,7 @@ static byte SendUldat(uldat data) {
 #define ChallLen	256 /* length of random data */
 #define TotalLen	(AuthLen+ChallLen)
 
-static byte AuthData[TotalLen];
+static char AuthData[TotalLen];
 
 static uldat GetRandomData(void) {
     int ufd, got = -1;
@@ -2225,7 +2230,7 @@ static uldat GetRandomData(void) {
     return len;
 }
 
-static byte CreateAuth(byte *path) {
+static byte CreateAuth(char *path) {
     int fd, got = -1;
     uldat len = 0;
     
@@ -2395,12 +2400,12 @@ static void Wait4AuthIO(int fd, uldat slot) {
     close(fd);
 }
 
-static byte Check4MagicTranslation(uldat slot, byte *magic, byte len) {
+static byte Check4MagicTranslation(uldat slot, CONST byte *magic, byte len) {
 #ifdef CONF_SOCKET_ALIEN
     static byte warn_count = 0;
 #endif
     
-    byte *zero = memchr(magic, '\0', len);
+    CONST byte *zero = (CONST byte *)memchr(magic, '\0', len);
     byte len1 = zero ? (byte)(zero - magic): 0;
     
     if (len1 > TWS_hwcol && len == magic[0] && len == len1+1 + sizeof(uldat) &&
@@ -2442,9 +2447,9 @@ static byte Check4MagicTranslation(uldat slot, byte *magic, byte len) {
 	if (warn_count < 6) {
 	    zero = NULL;
 	    if (AlienMagic(slot)[TWS_hwattr] < sizeof(hwattr))
-		zero = "hwattr";
+		zero = (CONST byte *)"hwattr";
 	    else if (AlienMagic(slot)[TWS_hwfont] < sizeof(hwfont))
-		zero = "hwfont";
+		zero = (CONST byte *)"hwfont";
 	    
 	    if (zero) {
 		if (warn_count == 5)
@@ -2511,13 +2516,13 @@ static void Wait4Magic(int fd, uldat slot, byte isUnix) {
 	     */
 	    CopyMem(TwinMagicData, AlienMagic(Slot), TWS_highest);
 	    AlienXendian(Slot) = MagicNative;
-	    got = SendTwinMagic(TwinMagicData, TwinMagicData[0]);
+	    got = SendTwinMagic(TwinMagicData[0], TwinMagicData);
 	} else {
 	    /*
 	     * we have a translation for client's magic.
 	     * answer its same magic.
 	     */
-	    got = SendTwinMagic(t, max);
+	    got = SendTwinMagic(max, t);
 	}
 	RemoteReadDeQueue(Slot, max);
 	
@@ -2549,7 +2554,7 @@ static void Wait4MagicInetIO(int fd, uldat slot) {
 
 static void unixSocketIO(int fd, uldat slot) {
     struct sockaddr_un un_addr;
-    int len = sizeof(un_addr);
+    socklen_t len = sizeof(un_addr);
     if ((fd = accept(unixFd, (struct sockaddr *)&un_addr, &len)) >= 0) {
 	/* programs on the unix socket are always authorized */
 	if ((Slot = RegisterRemoteFd(fd, Wait4MagicUnixIO)) != NOSLOT) {
@@ -2565,7 +2570,7 @@ static void unixSocketIO(int fd, uldat slot) {
 
 static void inetSocketIO(int fd, uldat slot) {
     struct sockaddr_in in_addr;
-    int len = sizeof(in_addr);
+    socklen_t len = sizeof(in_addr);
     if ((fd = accept(inetFd, (struct sockaddr *)&in_addr, &len)) >= 0) {
 	if ((Slot = RegisterRemoteFd(fd, Wait4MagicInetIO)) != NOSLOT) {
 	    fcntl(fd, F_SETFL, O_NONBLOCK);
@@ -2709,8 +2714,9 @@ static void SocketIO(int fd, uldat slot) {
 
 static void SocketH(msgport MsgPort) {
     msg Msg;
-    byte buf[10], len;
     widget W;
+    char buf[10];
+    byte len;
     
     while ((Msg=MsgPort->FirstMsg)) {
 	Remove(Msg);

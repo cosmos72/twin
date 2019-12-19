@@ -250,7 +250,7 @@
 { 0, 0, "RequestSelection",
     "0""v"TWS_void_STR"x"obj_magic_STR"_"TWS_uldat_STR },
 { 0, 0, "NotifySelection",
-    "0""v"TWS_void_STR"x"obj_magic_STR"_"TWS_uldat_STR"_"TWS_uldat_STR"V"TWS_char_STR"_"TWS_uldat_STR"V"TWS_byte_STR },
+    "0""v"TWS_void_STR"x"obj_magic_STR"_"TWS_uldat_STR"_"TWS_uldat_STR"V"TWS_char_STR"_"TWS_uldat_STR"V"TWS_char_STR },
 
 { 0, 0, "SetServerUid",
     "0""_"TWS_byte_STR"_"TWS_uldat_STR"_"TWS_byte_STR },

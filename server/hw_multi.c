@@ -313,7 +313,7 @@ static byte IsValidHW(uldat len, const byte *arg) {
     return ttrue;
 }
 
-display_hw AttachDisplayHW(uldat len, const byte *arg, uldat slot, byte flags) {
+display_hw AttachDisplayHW(uldat len, const char *arg, uldat slot, byte flags) {
     display_hw D_HW = NULL;
 
     if ((len && len <= 4) || CmpMem("-hw=", arg, Min2(len,4))) {
@@ -361,7 +361,7 @@ display_hw AttachDisplayHW(uldat len, const byte *arg, uldat slot, byte flags) {
 }
 
 
-byte DetachDisplayHW(uldat len, const byte *arg, byte flags) {
+byte DetachDisplayHW(uldat len, const char *arg, byte flags) {
     byte done = tfalse;
     display_hw s_HW;
     
@@ -941,7 +941,7 @@ void FlushHW(void) {
 }
 
 
-void SyntheticKey(widget W, udat Code, udat ShiftFlags, byte Len, byte *Seq) {
+void SyntheticKey(widget W, udat Code, udat ShiftFlags, byte Len, char *Seq) {
     event_keyboard *Event;
     msg Msg;
 

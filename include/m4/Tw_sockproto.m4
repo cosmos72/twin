@@ -197,7 +197,7 @@ PROTO(obj, x, GetOwner,Selection,0)
 PROTO(void,v, SetOwner,Selection,0, tany,_,secnow, tany,_,fracnow)
 PROTO(void,v,  Request,Selection,0, obj,x,owner, uldat,_,reqprivate)
 PROTO(void,v,   Notify,Selection,0, obj,x,requestor, uldat,_,reqprivate, uldat,_,magic,
-      char,V(TW_MAX_MIMELEN),mime, uldat,_,len, byte,V(A(5)),data)
+      char,V(TW_MAX_MIMELEN),mime, uldat,_,len, char,V(A(5)),data)
 
 PROTO(byte,_, SetServer,Uid,0, uldat,_,uid, byte,_,privileges)
 

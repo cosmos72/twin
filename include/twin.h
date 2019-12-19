@@ -1271,7 +1271,7 @@ struct s_display_hw {
     void (*HWSelectionExport)(void);
     void (*HWSelectionRequest)(obj Requestor, uldat ReqPrivate);
     void (*HWSelectionNotify)(uldat ReqPrivate, uldat Magic,
-			      CONST char MIME[MAX_MIMELEN], uldat Len, CONST byte *Data);
+			      CONST char MIME[MAX_MIMELEN], uldat Len, CONST char *Data);
     tany HWSelectionPrivate;
 	
     byte (*CanDragArea)(dat Xstart, dat Ystart, dat Xend, dat Yend, dat DstXstart, dat DstYstart);

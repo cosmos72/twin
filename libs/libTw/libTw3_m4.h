@@ -280,7 +280,7 @@
   case order_NotifySelection:
     switch (n) {
       case 4: L = (TW_MAX_MIMELEN) * sizeof(char); break;
-      case 6: L = (a[5]._) * sizeof(byte); break;
+      case 6: L = (a[5]._) * sizeof(char); break;
     }
     break;
 

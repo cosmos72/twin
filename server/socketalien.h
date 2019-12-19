@@ -520,7 +520,7 @@ static void alienMultiplexB(uldat id) {
     uldat mask = 0; /* at least 32 bits. we need 20... */
     uldat nlen, n = 1;
     ldat fail = 1;
-    const byte *Format = sockF[id].Format;
+    const char *Format = sockF[id].Format;
     uldat a0;
     byte c, self, flag, tmp, retT[2];
     

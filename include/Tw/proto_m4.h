@@ -167,7 +167,7 @@ void  Tw_BlindSendToMsgPort(tdisplay TwD, tmsgport P, udat len, TW_CONST byte *d
 tobj  Tw_GetOwnerSelection(tdisplay TwD);
 void  Tw_SetOwnerSelection(tdisplay TwD, tany secnow, tany fracnow);
 void  Tw_RequestSelection(tdisplay TwD, tobj owner, uldat reqprivate);
-void  Tw_NotifySelection(tdisplay TwD, tobj requestor, uldat reqprivate, uldat magic, TW_CONST char *mime, uldat len, TW_CONST byte *data);
+void  Tw_NotifySelection(tdisplay TwD, tobj requestor, uldat reqprivate, uldat magic, TW_CONST char *mime, uldat len, TW_CONST char *data);
 
 byte  Tw_SetServerUid(tdisplay TwD, uldat uid, byte privileges);
 

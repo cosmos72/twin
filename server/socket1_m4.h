@@ -494,7 +494,7 @@ case order_RequestSelection:
 
 case order_NotifySelection:
     if (N >= 6)
-	sockNotifySelection((obj)a[1]_obj, (uldat)a[2]_any, (uldat)a[3]_any, (const char *)a[4]_vec, (uldat)a[5]_any, (const byte *)a[6]_vec);
+	sockNotifySelection((obj)a[1]_obj, (uldat)a[2]_any, (uldat)a[3]_any, (const char *)a[4]_vec, (uldat)a[5]_any, (const char *)a[6]_vec);
     break;
 
 

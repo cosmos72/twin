@@ -16277,6 +16277,17 @@ _ACEOF
 
 fi
 
+ac_fn_c_check_type "$LINENO" "socklen_t" "ac_cv_type_socklen_t" "$ac_includes_default"
+if test "x$ac_cv_type_socklen_t" = xyes; then :
+
+else
+
+cat >>confdefs.h <<_ACEOF
+#define socklen_t int
+_ACEOF
+
+fi
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for uid_t in sys/types.h" >&5
 $as_echo_n "checking for uid_t in sys/types.h... " >&6; }
 if ${ac_cv_type_uid_t+:} false; then :

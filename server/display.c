@@ -43,21 +43,20 @@
 #endif
 
 
-static const byte * const modules_prefix = PKG_LIBDIR "/" DL_PREFIX;
+static CONST char * CONST modules_prefix = PKG_LIBDIR "/" DL_PREFIX;
 
-static const byte *MYname;
+static CONST char *MYname;
 
 static dat TryDisplayWidth, TryDisplayHeight;
 static byte ValidVideo;
 
-const char *TWDisplay, *origTWDisplay, *origTERM;
+CONST char *TWDisplay, *origTWDisplay, *origTERM;
 
 char nullMIME[TW_MAX_MIMELEN];
 
 udat ErrNo;
-byte const * ErrStr;
-
-byte const * HOME;
+CONST char * ErrStr;
+CONST char * HOME;
 
 #define L 0x55
 #define M 0xAA
@@ -130,7 +129,7 @@ byte Error(udat Code_Error) {
     return tfalse;
 }
 
-int printk(const char *format, ...) {
+int printk(CONST char *format, ...) {
     int i = 0;
 #ifdef TW_HAVE_VPRINTF
     va_list ap;
@@ -245,10 +244,10 @@ static struct s_module _Module = {
 
 
 
-static module DlLoadAny(uldat len, byte *name) {
+static module DlLoadAny(uldat len, char *name) {
     module Module = &_Module;
     byte (*init_func)(module);
-    byte *path;
+    char *path;
 
     if (!dlinit_once()) {
         return (module)0;
@@ -287,9 +286,9 @@ static module DlLoadAny(uldat len, byte *name) {
     return (module)0;
 }
 
-static byte module_InitHW(byte *arg, uldat len) {
-    byte *name, *tmp;
-    byte *(*InitD)(void);
+static byte module_InitHW(char *arg, uldat len) {
+    char *name, *tmp;
+    char *(*InitD)(void);
     module Module = NULL;
 
     if (!arg || len <= 4)
@@ -328,10 +327,10 @@ static byte module_InitHW(byte *arg, uldat len) {
 	ErrStr = "Out of memory!";
     
     if (Module) {
-	printk("twdisplay: ...module `" SS "' failed to start.\n", name ? name : (byte *)"(NULL)");
+	printk("twdisplay: ...module `" SS "' failed to start.\n", name ? name : "(NULL)");
     } else
 	printk("twdisplay: unable to load display driver module `" SS "' :\n"
-	       "      " SS "\n", name ? name : (byte *)"(NULL)", ErrStr);
+	       "      " SS "\n", name ? name : "(NULL)", ErrStr);
 
     if (name)
     	FreeMem(name);
@@ -339,7 +338,7 @@ static byte module_InitHW(byte *arg, uldat len) {
     return tfalse;
 }
 
-static display_hw CreateDisplayHW(uldat len, const byte *name);
+static display_hw CreateDisplayHW(uldat len, CONST char *name);
 static byte InitDisplayHW(display_hw);
 static void QuitDisplayHW(display_hw);
 
@@ -361,7 +360,7 @@ static struct s_display_hw _HW = {
 };
 
 
-void warn_NoHW(uldat len, const char *arg, uldat tried) {
+void warn_NoHW(uldat len, CONST char *arg, uldat tried) {
     printk("twdisplay: All display drivers failed");
     if (arg)
         printk(" for `%.*s\'", (int)Min2(TW_SMALLBUFF, len), arg);
@@ -384,7 +383,7 @@ static void UpdateFlagsHW(void) {
  * and falling back in case some of them fails.
  */
 static byte InitDisplayHW(display_hw D_HW) {
-    byte *arg = D_HW->Name;
+    char *arg = D_HW->Name;
     uldat tried = 0;
     byte success;
 
@@ -433,8 +432,8 @@ static void QuitDisplayHW(display_hw D_HW) {
 }
 
 
-static display_hw CreateDisplayHW(uldat NameLen, const byte *Name) {
-    byte *newName = NULL;
+static display_hw CreateDisplayHW(uldat NameLen, CONST char *Name) {
+    char *newName = NULL;
     
     if (Name && (newName = CloneStrL(Name, NameLen))) {	
 	HW = &_HW;
@@ -454,7 +453,7 @@ static display_hw CreateDisplayHW(uldat NameLen, const byte *Name) {
     return (display_hw)0;
 }
 
-static byte IsValidHW(uldat len, const byte *arg) {
+static byte IsValidHW(uldat len, CONST char *arg) {
     uldat i;
     byte b;
     if (len >= 4 && !CmpMem(arg, "-hw=", 4))
@@ -473,7 +472,7 @@ static byte IsValidHW(uldat len, const byte *arg) {
     return ttrue;
 }
 
-static display_hw AttachDisplayHW(uldat len, const byte *arg, uldat slot, byte flags) {
+static display_hw AttachDisplayHW(uldat len, CONST char *arg, uldat slot, byte flags) {
     if ((len && len <= 4) || CmpMem("-hw=", arg, Min2(len,4))) {
 	printk("twdisplay: specified `%.*s\' is not `--hw=<display>\'\n",
 		(int)len, arg);
@@ -833,8 +832,8 @@ void TwinSelectionSetOwner(obj Owner, tany Time, tany Frac) {
 }
 
 /* HW back-end function: notify selection */
-void TwinSelectionNotify(obj Requestor, uldat ReqPrivate, uldat Magic, const char MIME[MAX_MIMELEN],
-			    uldat Len, const byte *Data) {
+void TwinSelectionNotify(obj Requestor, uldat ReqPrivate, uldat Magic, CONST char MIME[MAX_MIMELEN],
+			    uldat Len, CONST char *Data) {
     if (!MIME)
 	MIME = nullMIME;
 #if 0
@@ -916,7 +915,7 @@ byte MouseEventCommon(dat x, dat y, dat dx, dat dy, udat Buttons) {
     return ret;
 }
 
-byte KeyboardEventCommon(udat Code, udat ShiftFlags, udat Len, const char *Seq) {
+byte KeyboardEventCommon(udat Code, udat ShiftFlags, udat Len, CONST char *Seq) {
     tevent_keyboard Event;
     tmsg Msg;
 
@@ -1084,7 +1083,7 @@ static void Usage(void) {
 	  "\tggi[@<ggi display>]\n", stdout);
 }
 
-static void TryUsage(const char *opt) {
+static void TryUsage(CONST char *opt) {
     if (opt)
 	fprintf(stdout, "twdisplay: unknown option `" SS "'\n", opt);
     fputs("           try `twdisplay --help' for usage summary.\n", stdout);
@@ -1123,9 +1122,9 @@ TW_DECL_MAGIC(display_magic);
 
 int main(int argc, char *argv[]) {
     byte flags = TW_ATTACH_HW_REDIRECT, force = 0;
-    byte *dpy = NULL, *arg = NULL, *tty = ttyname(0);
-    byte *s, *client_dpy = NULL;
-    const byte *buff;
+    char *dpy = NULL, *arg = NULL, *tty = ttyname(0);
+    char *s, *client_dpy = NULL;
+    CONST char *buff;
     uldat chunk;
     int Fd;
     byte ret = 0, ourtty = 0;
@@ -1196,7 +1195,7 @@ int main(int argc, char *argv[]) {
 		    
 		    arg = malloc(strlen(tty) + 9 + strlen(s) + (buff ? 6 + strlen(buff) : 0));
 		    
-		    sprintf(arg, "-hw=tty%s%s%s", (buff ? (byte *)",TERM=" : buff), buff, s);
+		    sprintf(arg, "-hw=tty%s%s%s", (buff ? ",TERM=" : buff), buff, s);
 		} else
 		    arg = *argv;
 	    } else if ((*argv)[4]) {
@@ -1254,7 +1253,7 @@ int main(int argc, char *argv[]) {
 #endif
 
     if (TwCheckMagic(display_magic) && TwOpen(TWDisplay)) do {
-	byte *buf;
+	char *buf;
 	
 	if (!VersionsMatch(force)) {
 	    if (!force) {
@@ -1301,10 +1300,10 @@ int main(int argc, char *argv[]) {
 	
 	for (;;) {
 	    buff = TwAttachGetReply(&chunk);
-	    if (buff <= (byte *)2) {
+	    if (buff <= (char *)2) {
 		ret = (byte)(size_t)buff;
 		break;
-	    } else if (buff == (byte *)-1)
+	    } else if (buff == (char *)-1)
 		/* libTw panic */
 		break;
 

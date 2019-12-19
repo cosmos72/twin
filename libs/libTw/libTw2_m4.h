@@ -604,14 +604,14 @@ void Tw_RequestSelection(tw_d TwD, tobj a1, uldat a2) {
     , n(a2));
 }
 
-void Tw_NotifySelection(tw_d TwD, tobj a1, uldat a2, uldat a3, TW_CONST char *a4, uldat a5, TW_CONST byte *a6) {
+void Tw_NotifySelection(tw_d TwD, tobj a1, uldat a2, uldat a3, TW_CONST char *a4, uldat a5, TW_CONST char *a6) {
     _Tw_EncodeCall(ENCODE_FL_VOID, order_NotifySelection, TwD 
     , n(a1)
     , n(a2)
     , n(a3)
     , n((TW_MAX_MIMELEN) * sizeof(char)), N(a4)
     , n(a5)
-    , n((a5) * sizeof(byte)), N(a6));
+    , n((a5) * sizeof(char)), N(a6));
 }
 
 
