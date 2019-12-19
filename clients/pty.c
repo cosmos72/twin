@@ -58,15 +58,15 @@ static char *ptydev, *ttydev;
 static int ptyfd, ttyfd;
 
 #ifdef CONF_TERM_DEVPTS
-static void pty_error(TW_CONST byte *d, TW_CONST byte *f, TW_CONST byte *arg) {
+static void pty_error(TW_CONST char *d, TW_CONST char *f, TW_CONST char *arg) {
     fprintf(stderr, "twterm: %s: %s(\"%s\") failed: %s\n",
-	    d ? d : (TW_CONST byte *)"<NULL>",
-	    f ? f : (TW_CONST byte *)"<NULL>",
-	    arg ? arg : (TW_CONST byte *)"<NULL>",
+	    d ? d : "<NULL>",
+	    f ? f : "<NULL>",
+	    arg ? arg : "<NULL>",
 	    strerror(errno));
 }
 
-static void get_pty_error(TW_CONST byte *f, TW_CONST byte *arg) {
+static void get_pty_error(TW_CONST char *f, TW_CONST char *arg) {
     pty_error("opening pseudo-tty", f, arg);
 }
 #endif

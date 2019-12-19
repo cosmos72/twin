@@ -370,7 +370,7 @@ void Update(void) {
 	uphours = (updays /= 60) % 24;
 	updays /= 24;
 	
-	sprintf(buf, "%d days %2d:%02d", (int)updays, uphours, upminutes);
+	sprintf(buf, "%lu days %2d:%02d", updays, uphours, upminutes);
 
 	TwGotoXYWindow(SysMon_Win, 8, 4);
 	TwWriteAsciiWindow(SysMon_Win, strlen(buf), buf);

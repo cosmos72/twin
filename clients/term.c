@@ -415,11 +415,11 @@ static void TwinTermH(void) {
 
 	    /* react as for keypresses */
 	    if (Event->EventSelectionNotify.Magic == TW_SEL_HWFONTMAGIC) {
-		byte *Dst = Event->EventSelectionNotify.Data;
+		char *Dst = Event->EventSelectionNotify.Data;
 		hwfont *Src = (hwfont *)Dst;
 		uldat n = Event->EventSelectionNotify.Len / sizeof(hwfont);
 
-		/* FIXME: this is rough */
+		/* FIXME: this is rough. convert to UTF-8 instead */
 		while (n--)
 		    *Dst++ = Tutf_UTF_32_to_CP437(*Src++);
 		
