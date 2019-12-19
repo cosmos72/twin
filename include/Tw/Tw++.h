@@ -590,7 +590,7 @@ class TSelectionNotifyEvent : public s_tevent_selectionnotify {
     inline const char *mime( )	const	{ return MIME; }
     inline uldat datalen( )	const	{ return Len; }
     inline uldat len( )		const	{ return Len; }
-    inline const char *data( )	const	{ return (const char *)Data; }
+    inline const char *data( )	const	{ return Data; }
 };
 typedef TSelectionNotifyEvent TClipboard;
 

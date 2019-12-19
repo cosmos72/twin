@@ -16,7 +16,7 @@
 
 #include "version.h"
 
-byte *argv0;
+char *argv0;
 
 enum {
 #define EL(field) TWS_CAT(lsobj_,field),
@@ -39,12 +39,12 @@ udat field_list[] = {
 
 
 /* these are hardcoded in libTw ABI, so we can hardcode them here too. */
-byte *type_list[TWS_highest+2] = {
-    "void", "byte", "dat", "ldat", "hwcol", "time_t", "frac_t", "hwfont", "hwattr", "tobj", "unknown"
+char *type_list[TWS_highest+2] = {
+    "void", "char", "dat", "ldat", "hwcol", "time_t", "frac_t", "hwfont", "hwattr", "tobj", "unknown"
 };
 
 
-byte *name_list[] = {
+char *name_list[] = {
 #define EL(field) TWS_STR(field),
     TWS_field_list_EL(EL)
     TWS_field_list_List_EL(EL)
@@ -67,7 +67,7 @@ void ShowVersion(void) {
     fputs("twlsobj " TWIN_VERSION_STR "\n", stdout);
 }
 
-static void human_print(TW_CONST byte *data, uldat len, byte may_trim) {
+static void human_print(TW_CONST char *data, uldat len, byte may_trim) {
     putchar(' '); putchar('"');
     if (may_trim && len > 100)
 	len = 100;
@@ -95,7 +95,7 @@ static void human_print(TW_CONST byte *data, uldat len, byte may_trim) {
     printf("\"%s\n", may_trim ? "..." : "");
 }
 
-static void human_print_tobjs(TW_CONST byte *data, uldat len, byte may_trim) {
+static void human_print_tobjs(TW_CONST char *data, uldat len, byte may_trim) {
     putchar(' '); putchar('{');
     if (may_trim && len > 100)
 	len = 100;

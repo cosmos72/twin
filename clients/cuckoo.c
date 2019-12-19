@@ -63,9 +63,9 @@ static void ShowVersion(void) {
     fprintf(stdout, "twcuckoo " TWIN_VERSION_STR "\n");
 }
 
-static uldat ReallocBuff(byte **buff, uldat min_len) {
+static uldat ReallocBuff(char **buff, uldat min_len) {
     uldat len;
-    *buff = TwReAllocMem(*buff, len = (min_len + min_len/4 + 10));
+    *buff = (char *)TwReAllocMem(*buff, len = (min_len + min_len/4 + 10));
     return len;
 }
 
@@ -76,7 +76,7 @@ static void GetNow(void) {
     gettimeofday(&Now, NULL);
 }
     
-static uldat BuiltinTime(byte builtin_egg[10]) {
+static uldat BuiltinTime(char builtin_egg[10]) {
     time_t t;
     struct tm *localt;
     
@@ -92,7 +92,7 @@ static uldat BuiltinTime(byte builtin_egg[10]) {
 
 static twindow wid = TW_NOID;
 static tslist wlist = NULL;
-static TW_CONST byte *wtitle;
+static TW_CONST char *wtitle;
 static uldat wtitle_len;
 
 static volatile int ReceivedFatalSignal = tfalse;
@@ -149,9 +149,9 @@ static void Cleanup(void) {
 }
 
 int main(int argc, char *argv[]) {
-    byte builtin_egg[10];
-    byte **cmd_args = NULL, *name = argv[0], *buff = NULL;
-    TW_CONST byte *egg;
+    char builtin_egg[10];
+    char **cmd_args = NULL, *name = argv[0], *buff = NULL;
+    TW_CONST char *egg;
     uldat egg_len, buff_len = 0, buff_capacity = 0, delay = 1, err;
     tall aid = TW_NOID;
     tsfield wfield;
@@ -179,7 +179,7 @@ int main(int argc, char *argv[]) {
 	} else if (!strncmp(*argv, "-window=", 8)) {
 	    wid = strtol(*argv + 8, NULL, 0);
 	} else if (argc > 1 && !strcmp(*argv, "-e")) {
-	    cmd_args = (byte **)argv;
+	    cmd_args = argv;
 	    cmd_args[0] = cmd_args[1];
 	    break;
 	} else {

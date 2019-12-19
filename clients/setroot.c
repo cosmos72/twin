@@ -17,7 +17,7 @@
 #include <Tw/Tw.h>
 #include <Tw/Twerrno.h>
 
-byte *name;
+char *name;
 
 void usage(void) {
     fprintf(stderr, "Usage: %s [--padx <X>] [--pady <Y>] [--aa <ascii art file>]\n", name);
@@ -37,7 +37,7 @@ int main(int argc, char *argv[]) {
     hwattr *image;
     uldat X, Y, padX = 0, padY = 0, err;
     enum {def, aa, padx, pady} state = def;
-    byte *aafile = NULL;
+    char *aafile = NULL;
     
     name = *argv;
     
@@ -323,7 +323,7 @@ hwattr *load_ascii_art(FILE *aaFILE, uldat *x, uldat *y, uldat padX, uldat padY)
 		State = ESsquare;
 		break;
 	      default:
-		addc(c);
+                  addc((byte)c);
 		break;
 	    }
 	    break;

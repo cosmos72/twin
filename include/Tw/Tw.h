@@ -132,7 +132,7 @@ struct s_tevent_display {
     twidget W; /* not used here */
     udat Code, Len;
     dat X, Y;
-    byte Data[sizeof(uldat)]; /* [len] bytes actually */
+    char Data[sizeof(uldat)]; /* [len] bytes actually */
 } TW_ATTR_TYPE_PACKED;
 #define TW_SIZEOF_TEVENT_DISPLAY (sizeof(struct s_tevent_display) - sizeof(uldat))
 
@@ -223,7 +223,7 @@ struct s_tevent_selectionnotify {
     uldat Magic;
     char MIME[TW_MAX_MIMELEN];
     uldat Len;
-    byte Data[sizeof(uldat)]; /* Data[] is Len bytes actually */
+    char Data[sizeof(uldat)]; /* Data[] is Len bytes actually */
 } TW_ATTR_TYPE_PACKED;
 
 /*SelectionNotify Magic*/
@@ -249,7 +249,7 @@ struct s_tevent_control {
     twidget W;
     udat Code, Len;
     dat X, Y;
-    byte Data[sizeof(uldat)]; /* [Len+1] bytes actually, Data[Len] == '\0' */
+    char Data[sizeof(uldat)]; /* [Len+1] bytes actually, Data[Len] == '\0' */
 } TW_ATTR_TYPE_PACKED;
 
 #define TW_SIZEOF_TEVENT_CONTROL (sizeof(struct s_tevent_control) - sizeof(uldat))

@@ -31,7 +31,8 @@ static byte InitEvent(void) {
 	  COL(BLACK,WHITE), COL(BLACK,GREEN), COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
 	  COL(RED,WHITE), COL(RED,GREEN), (byte)0)) &&
 	TwItem4MenuCommon(Event_Menu) &&
-	(TwInfo4Menu(Event_Menu, TW_ROW_ACTIVE, 14, " Event Tester ", "ptppppptpppppp"),
+	(TwInfo4Menu(Event_Menu, TW_ROW_ACTIVE, 14, " Event Tester ",
+                     (TW_CONST hwcol *)"ptppppptpppppp"),
 	 ttrue) &&
 	(Event_Win=TwCreateWindow
 	 (12, "Event Tester", NULL,
@@ -62,7 +63,7 @@ static byte InitEvent(void) {
 	TwFlush();
 }
 
-void human_print(uldat len, byte *s) {
+void human_print(uldat len, TW_CONST char *s) {
     byte c;
     
     putchar('`');
@@ -73,7 +74,7 @@ void human_print(uldat len, byte *s) {
 	if (c >= ' ' && c <= '~')
 	    putchar(c);
 	else
-	    printf("\\x%02x", (int)c);
+	    printf("\\x%02x", (int)(byte)c);
     }
     
     putchar('\'');
@@ -81,8 +82,8 @@ void human_print(uldat len, byte *s) {
 
 #define IS(name) case TW_##name: return #name
     
-byte *twkeyname(udat Code) {
-    static byte buf[2];
+TW_CONST char *twkeyname(udat Code) {
+    static char buf[2];
     
     switch (Code) {
 	IS(Tab);
@@ -210,7 +211,7 @@ byte *twkeyname(udat Code) {
     return "unknown";
 }
 
-byte *twcontrolname(udat Code) {
+TW_CONST char *twcontrolname(udat Code) {
     switch(Code) {
       case TW_MSG_CONTROL_QUIT:
 	return "quit";
@@ -255,7 +256,7 @@ int main(int argc, char *argv[]) {
 	    human_print(EventN->Len, EventN->Data);
 	    putchar('\n');
 	} else if (Msg->Type==TW_MSG_WIDGET_MOUSE) {
-	    byte *s1, *s2, *s3, *s4, *s5, *s6, *s7, *s8, *s9;
+	    char *s1, *s2, *s3, *s4, *s5, *s6, *s7, *s8, *s9;
 	    tevent_mouse EventM = &Msg->Event.EventMouse;
 	    
 	    Code = EventM->Code;
@@ -345,7 +346,7 @@ int main(int argc, char *argv[]) {
 	} else if (Msg->Type==TW_MSG_USER_CLIENTMSG) {
 	    tevent_clientmsg EventC = &Msg->Event.EventClientMsg;
 	    printf("User Client Message: Code %d, ASCII ", EventC->Code);
-	    human_print(EventC->Len, EventC->Data.b);
+	    human_print(EventC->Len, (TW_CONST char *)EventC->Data.b);
 	    putchar('\n');
 	}
     }

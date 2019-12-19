@@ -37,7 +37,8 @@ static byte InitCat(void) {
 	(Cat_Menu=TwCreateMenu(
 	  COL(BLACK,WHITE), COL(BLACK,GREEN), COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
 	  COL(RED,WHITE), COL(RED,GREEN), (byte)0)) &&
-	(TwInfo4Menu(Cat_Menu, TW_ROW_ACTIVE, 10, " Twin Cat ", "ptpppptpppppp"),
+	(TwInfo4Menu(Cat_Menu, TW_ROW_ACTIVE, 10, " Twin Cat ",
+                     (TW_CONST hwcol *)"ptpppptpppppp"),
 	 (Cat_Win=TwCreateWindow
 	  (8, "Twin Cat", NULL,
 	   Cat_Menu, COL(BLACK,HIGH|BLACK), TW_LINECURSOR,

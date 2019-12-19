@@ -2323,7 +2323,7 @@ void Tw_SetFillWidget(tw_d TwD, twidget a1, hwattr a2) {
  * draws given portion of a widget; usually called after a TW_WIDGET_EXPOSE message
  */
 void Tw_Draw2Widget(tw_d TwD, twidget a1, dat a2, dat a3, dat a4, dat a5, dat pitch,
-		    TW_CONST byte *a6, TW_CONST hwfont *a7, TW_CONST hwattr *a8) {
+		    TW_CONST char *a6, TW_CONST hwfont *a7, TW_CONST hwattr *a8) {
     uldat len6, len7, len8, My;
     LOCK;
     if (Fd != TW_NOFD && (My = id_Tw[order_DrawWidget]) != TW_NOID &&
@@ -2331,16 +2331,16 @@ void Tw_Draw2Widget(tw_d TwD, twidget a1, dat a2, dat a3, dat a4, dat a5, dat pi
 	
 	if (InitRS(TwD)) {
 	    My = (0 + sizeof(uldat) + sizeof(dat) + sizeof(dat) + sizeof(dat) + sizeof(dat)
-		  + (len6 = a6 ? (uldat)a2 * a3 * sizeof(byte)   : 0, sizeof(uldat) + len6)
+		  + (len6 = a6 ? (uldat)a2 * a3 * sizeof(char)   : 0, sizeof(uldat) + len6)
 		  + (len7 = a7 ? (uldat)a2 * a3 * sizeof(hwfont) : 0, sizeof(uldat) + len7)
 		  + (len8 = a8 ? (uldat)a2 * a3 * sizeof(hwattr) : 0, sizeof(uldat) + len8) );
 	    if (WQLeft(My)) {
 		Push(s,uldat,a1); Push(s,dat,a2); Push(s,dat,a3);
 		Push(s,dat,a4);   Push(s,dat,a5); Push(s,uldat,len6);
 		while (len6) {
-		    PushV(s, (uldat)a2*sizeof(byte), a6);
+		    PushV(s, (uldat)a2*sizeof(char), a6);
 		    a6 += pitch;
-		    len6 -= (uldat)a2*sizeof(byte);
+		    len6 -= (uldat)a2*sizeof(char);
 		}
 		Push(s,uldat,len7);
 		while (len7) {
@@ -2371,7 +2371,7 @@ void Tw_Draw2Widget(tw_d TwD, twidget a1, dat a2, dat a3, dat a4, dat a5, dat pi
 /**
  * draws given portion of a widget; usually called after a TW_WIDGET_EXPOSE message
  */
-void Tw_DrawTextWidget(tw_d TwD, twidget W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch, TW_CONST byte *Text) {
+void Tw_DrawTextWidget(tw_d TwD, twidget W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch, TW_CONST char *Text) {
     Tw_Draw2Widget(TwD, W, XWidth, YWidth, Left, Up, Pitch, Text, NULL, NULL);
 }
 
@@ -2442,14 +2442,14 @@ tgadget Tw_G_NextGadget(tw_d TwD, tgadget a1) {
 /**
  * sets given portion of gadget's contents
  */
-void Tw_WriteTextGadget(tw_d TwD, tgadget G, dat Width, dat Height, TW_CONST byte *Text, dat Left, dat Up) {
+void Tw_WriteTextGadget(tw_d TwD, tgadget G, dat Width, dat Height, TW_CONST char *Text, dat Left, dat Up) {
     Tw_WriteTextsGadget(TwD, G, 1, Width, Height, Text, Left, Up);
 }
 
 /**
  * clears whole gadget contents, then sets given portion of gadget's contents
  */
-void Tw_SetTextGadget(tw_d TwD, tgadget G, dat Width, dat Height, TW_CONST byte *Text, dat Left, dat Up) {
+void Tw_SetTextGadget(tw_d TwD, tgadget G, dat Width, dat Height, TW_CONST char *Text, dat Left, dat Up) {
     /* clear the whole gadget */
     Tw_WriteTextsGadget(TwD, G, 1, TW_MAXDAT, TW_MAXDAT, NULL, 0, 0);
     /* write the specified text */
@@ -2459,7 +2459,7 @@ void Tw_SetTextGadget(tw_d TwD, tgadget G, dat Width, dat Height, TW_CONST byte 
 /**
  * clears whole gadget contents, then sets given portion of gadget's contents
  */
-void Tw_SetTextsGadget(tw_d TwD, tgadget G, byte bitmap, dat Width, dat Height, TW_CONST byte *Text, dat Left, dat Up) {
+void Tw_SetTextsGadget(tw_d TwD, tgadget G, byte bitmap, dat Width, dat Height, TW_CONST char *Text, dat Left, dat Up) {
     /* clear the whole gadget */
     Tw_WriteTextsGadget(TwD, G, bitmap, TW_MAXDAT, TW_MAXDAT, NULL, 0, 0);
     /* write the specified text */
@@ -2497,14 +2497,14 @@ void Tw_SetHWFontsGadget(tw_d TwD, tgadget G, byte bitmap, dat Width, dat Height
 /**
  * creates a row for a menu
  */
-trow Tw_Create4MenuRow(tw_d TwD, twindow Window, udat Code, byte Flags, ldat Len, TW_CONST byte *Text) {
+trow Tw_Create4MenuRow(tw_d TwD, twindow Window, udat Code, byte Flags, ldat Len, TW_CONST char *Text) {
     return Tw_Create4MenuAny(TwD, (tobj)Window, (twindow)0, Code, Flags, Len, Text);
 }
 
 /**
  * creates a menuitem for a menu
  */
-tmenuitem Tw_Create4MenuMenuItem(tdisplay TwD, tobj Parent, twindow Window, byte Flags, dat Len, TW_CONST byte *Name) {
+tmenuitem Tw_Create4MenuMenuItem(tdisplay TwD, tobj Parent, twindow Window, byte Flags, dat Len, TW_CONST char *Name) {
     return Tw_Create4MenuAny(TwD, Parent, Window, (udat)0, Flags, Len, Name);
 }
 

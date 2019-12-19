@@ -13,7 +13,7 @@
 #include <Tw/Twerrno.h>
 #include "version.h"
 
-byte *argv0;
+char *argv0;
 
 void Usage(void) {
     fprintf(stderr, "Usage: %s [--msgport=]<MsgPort> [OPTIONS]\n"
@@ -37,7 +37,7 @@ void ShowVersion(void) {
 TW_DECL_MAGIC(sendmsg_magic);
 
 int main(int argc, char *argv[]) {
-    byte *DisplayName = NULL, *MsgPortName = NULL, *CodeName = NULL, *Data = NULL;
+    char *DisplayName = NULL, *MsgPortName = NULL, *CodeName = NULL, *Data = NULL;
     udat Type = TW_MSG_USER_CONTROL, Code = TW_MSG_CONTROL_OPEN, DataLen = 0;
     tmsgport MsgPort;
     tmsg Msg;
@@ -103,10 +103,9 @@ int main(int argc, char *argv[]) {
 	if (MsgPortName) {
 	    if ((MsgPort = TwFindMsgPort(TW_NOID, strlen(MsgPortName), MsgPortName))) {
 		if (Type == TW_MSG_USER_CONTROL) {
-		    tevent_control EventC;
 		    if ((Msg = TwCreateMsg(TW_MSG_USER_CONTROL,
 					   DataLen + TW_SIZEOF_TEVENT_CONTROL))) {
-			EventC = &Msg->Event.EventControl;
+                        tevent_control EventC = &Msg->Event.EventControl;
 			EventC->W = TW_NOID;
 			EventC->Code = Code;
 			EventC->Len = DataLen;
@@ -118,9 +117,9 @@ int main(int argc, char *argv[]) {
 			    return 0;
 		    }
 		} else {
-		    tevent_clientmsg EventC;
 		    if ((Msg = TwCreateMsg(TW_MSG_USER_CLIENTMSG,
 					   DataLen + TW_SIZEOF_TEVENT_CLIENTMSG))) {
+                        tevent_clientmsg EventC = &Msg->Event.EventClientMsg;
 			EventC->W = TW_NOID;
 			EventC->Code = Code;
 			EventC->Len = DataLen;

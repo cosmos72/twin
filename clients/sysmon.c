@@ -36,7 +36,7 @@ char buf[TW_BIGBUFF];
 TW_DECL_MAGIC(sysmon_magic);
 
 byte InitSysMon(int argc, char ** argv) {
-    byte *name;
+    char *name;
     ldat len;
     byte border = 1;
     
@@ -84,7 +84,8 @@ byte InitSysMon(int argc, char ** argv) {
 	(TwSetColorsWindow(SysMon_Win, 0x1FF,
 			   (hwcol)0x3F, (hwcol)0, (hwcol)0, (hwcol)0, (hwcol)0x9F,
 			   (hwcol)0x17, (hwcol)0x3F, (hwcol)0x18, (hwcol)0x08),
-	 TwInfo4Menu(SysMon_Menu, TW_ROW_ACTIVE, 16, " System Monitor ", "pppppppppppppppp"),
+	 TwInfo4Menu(SysMon_Menu, TW_ROW_ACTIVE, 16, " System Monitor ",
+                     (const hwcol *)"pppppppppppppppp"),
 	 TwWriteAsciiWindow(SysMon_Win, 26, "CPU \nDISK\nMEM \nSWAP\nUPTIME"),
 	 TwMapWindow(SysMon_Win, TwFirstScreen()),
 	 ttrue);
@@ -95,7 +96,7 @@ byte InitSysMon(int argc, char ** argv) {
 
 uldat HBar(hwcol Col, uldat len, uldat scale, uldat frac) { 
     static hwcol half;
-    byte *s = buf;
+    char *s = buf;
     
     if (len) {
 	TwSetColTextWindow(SysMon_Win, Col|half);
@@ -162,7 +163,7 @@ void Update(void) {
     static unsigned long SwapUsed, SwapFree, SwapTotal;
     static byte i;
     uldat len, tmp;
-    char *s, *e, *e2;
+    char *s, *e, *e2, *e3;
     
     if ((Fd = open("/proc/stat", O_RDONLY)) != TW_NOFD) {
 	s = buf;
@@ -226,14 +227,23 @@ void Update(void) {
 
 	DiskR[i] = DiskW[i] = 0;
 
-	while ((e = strstr(s, " hd")), (e2 = strstr(s, " sd")), e || e2) {
-            if (e && (!e2 || e < e2))
-                s = e+3;
-            else
-                s = e2+3;
+	while ((e = strstr(s, " hd")),
+               (e2 = strstr(s, " sd")),
+               (e3 = strstr(s, " nvme")),
+               e || e2 || e3) {
+            if (e && (!e2 || e < e2) && (!e3 || e < e3))
+                s = e + 3;
+            else if (e2 && (!e3 || e2 < e3))
+                s = e2 + 3;
+            else {
+                s = e3 + 5;
+                if (s[0] != ' ' && s[1] == 'n') {
+                    s += 2;
+                }
+            }
 	    
 	    if (s[0] != ' ' && s[1] == ' ') {
-		/* match hd? and sd? */
+		/* match hd? sd? nvme?n? */
 		strtoul(s+2, &s, 0);           /* skip  'reads'         */
 		strtoul(s, &s, 0);             /* skip  'read_merges'   */
 		DiskR[i] += strtoul(s, &s, 0); /* parse 'read_sectors'  */

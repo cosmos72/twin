@@ -26,13 +26,13 @@ static tmenu Dialog_Menu;
 static twindow Dialog_Win;
 
 static byte separate_output;
-static byte *title = "twdialog", *backtitle, *text, *input;
+static char *title = "twdialog", *backtitle, *text, *input;
 
 static dat width = 80, height = 25, percent;
 
 typedef struct {
-    byte *tag;
-    byte *item;
+    char *tag;
+    char *item;
     byte status;
 } t_list;
 
@@ -48,7 +48,7 @@ static void AllocList(void) {
     }
 }
 
-static byte OnOff(byte *arg) {
+static byte OnOff(char *arg) {
     return strlen(arg) == 2 && (arg[0] == 'O' || arg[0] == 'o') && (arg[1] == 'N' || arg[1] == 'n');
 }
 
@@ -246,7 +246,8 @@ static byte InitDialog(void) {
 	(Dialog_Menu=TwCreateMenu(
 	  COL(BLACK,WHITE), COL(BLACK,GREEN), COL(HIGH|BLACK,WHITE), COL(HIGH|BLACK,BLACK),
 	  COL(RED,WHITE), COL(RED,GREEN), (byte)0)) &&
-	(TwInfo4Menu(Dialog_Menu, TW_ROW_ACTIVE, 10, " Twin Dialog ", "ptpppptpppppp"), ttrue) &&
+	(TwInfo4Menu(Dialog_Menu, TW_ROW_ACTIVE, 10, " Twin Dialog ",
+                     (const hwcol *)"ptpppptpppppp"), ttrue) &&
 	(Window=TwWin4Menu(Dialog_Menu)) &&
 	TwRow4Menu(Window, COD_QUIT, TW_ROW_INACTIVE, 6, " Quit ") &&
 	TwItem4Menu(Dialog_Menu, Window, ttrue, 6, " File ") &&
