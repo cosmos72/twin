@@ -71,14 +71,14 @@ void *ReAllocMem0(void *Mem, size_t ElementSize, size_t OldCount, size_t NewCoun
   return res;
 }
 
-void *CloneMem(const void *From, uldat Size) {
+void *CloneMem(CONST void *From, uldat Size) {
   void *temp;
   if (From && Size && (temp = AllocMem(Size)))
     return CopyMem(From, temp, Size);
   return NULL;
 }
 
-char *CloneStr(const char *s) {
+char *CloneStr(CONST char *s) {
   char *q;
   uldat len;
 
@@ -91,7 +91,7 @@ char *CloneStr(const char *s) {
   return NULL;
 }
 
-char *CloneStrL(const char *s, uldat len) {
+char *CloneStrL(CONST char *s, uldat len) {
   char *q;
 
   if (s) {

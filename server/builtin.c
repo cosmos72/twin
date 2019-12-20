@@ -316,7 +316,7 @@ static void OptionH(msg Msg) {
 void FillButtonWin(void) {
   dat i, j;
   byte b[6] = "      ";
-  const byte *s;
+  CONST byte *s;
 
   DeleteList(ButtonWin->FirstW);
 
@@ -784,7 +784,7 @@ static byte InitScreens(void) {
 
 byte InitBuiltin(void) {
   window Window;
-  const byte *greeting =
+  CONST byte *greeting =
       "\n"
       "                TWIN              \n"
       "        Text WINdows manager      \n\n"

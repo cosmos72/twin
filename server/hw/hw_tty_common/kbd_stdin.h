@@ -7,7 +7,7 @@
 
 static void stdin_QuitKeyboard(void);
 static void stdin_KeyboardEvent(int fd, display_hw hw);
-static udat linux_LookupKey(udat *ShiftFlags, byte *slen, char *s, byte *retlen, const char **ret);
+static udat linux_LookupKey(udat *ShiftFlags, byte *slen, char *s, byte *retlen, CONST char **ret);
 static void xterm_MouseEvent(int, display_hw);
 
 static byte stdin_TestTty(void) {
@@ -105,7 +105,7 @@ static void stdin_QuitKeyboard(void) {
 }
 
 /* kludge! this is ok for linux terminals only... */
-static udat linux_LookupKey(udat *ShiftFlags, byte *slen, char *s, byte *retlen, const char **ret) {
+static udat linux_LookupKey(udat *ShiftFlags, byte *slen, char *s, byte *retlen, CONST char **ret) {
   byte used = 0, len = *slen;
 
   *ShiftFlags = 0;

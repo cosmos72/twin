@@ -22,10 +22,10 @@ void DlClose(module Module);
 module DlLoad(uldat code);
 void DlUnLoad(uldat code);
 module DlIsLoaded(uldat code);
-udat DlName2Code(const byte *name);
+udat DlName2Code(CONST char *name);
 
-module DlLoadAny(uldat len, const byte *name);
+module DlLoadAny(uldat len, CONST char *name);
 
-void *DlSym(module Module, const byte *name);
+void *DlSym(module Module, CONST char *name);
 
 #endif /* _TWIN_DL_H */

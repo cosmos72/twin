@@ -35,7 +35,7 @@ TUTF_INLINE byte utf32_hash(hwfont h, udat mod_power_of_2) {
   return (h ^ (h >> 6) ^ (h >> 12) ^ (h >> 18)) & (mod_power_of_2 - 1);
 }
 
-TUTF_INLINE hwfont utf32_get(const utf32_hash_entry *e) {
+TUTF_INLINE hwfont utf32_get(TW_CONST utf32_hash_entry *e) {
   return (hwfont)e->utf32[0] | ((hwfont)e->utf32[1] << 8) | ((hwfont)e->utf32[2] << 16);
 }
 

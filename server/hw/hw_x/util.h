@@ -148,7 +148,8 @@ static void X11_DetectSize(dat *x, dat *y) {
   }
 }
 
-static void X11_CheckResize(dat *x, dat *y) { /* always ok */ }
+static void X11_CheckResize(dat *x, dat *y) { /* always ok */
+}
 
 static void X11_Resize(dat x, dat y) {
   if (x != HW->X || y != HW->Y) {
@@ -179,8 +180,8 @@ static void X11_SelectionExport_X11(void) {
 /*
  * notify our Selection to X11
  */
-static void X11_SelectionNotify_X11(uldat ReqPrivate, uldat Magic, const char MIME[MAX_MIMELEN],
-                                    uldat Len, const byte *Data) {
+static void X11_SelectionNotify_X11(uldat ReqPrivate, uldat Magic, CONST char MIME[MAX_MIMELEN],
+                                    uldat Len, CONST byte *Data) {
   XEvent ev;
 
   if (XReqCount == 0) {
@@ -214,18 +215,18 @@ static void X11_SelectionNotify_X11(uldat ReqPrivate, uldat Magic, const char MI
     target_list[0] = (Atom32)xTARGETS;
     target_list[1] = (Atom32)XA_STRING;
     XChangeProperty(xdisplay, XReq(XReqCount).requestor, XReq(XReqCount).property, xTARGETS,
-                    8 * sizeof(target_list[0]), PropModeReplace, (const byte *)target_list,
+                    8 * sizeof(target_list[0]), PropModeReplace, (CONST byte *)target_list,
                     sizeof(target_list) / sizeof(target_list[0]));
     ev.xselection.property = XReq(XReqCount).property;
   } else if (XReq(XReqCount).target == XA_STRING) {
     uldat l;
     byte *_Data = NULL, *d;
-    const hwfont *s;
+    CONST hwfont *s;
 
     /* X11 selection contains text, not unicode */
     if (Magic == SEL_HWFONTMAGIC) {
       if ((_Data = d = (byte *)AllocMem(Len))) {
-        s = (const hwfont *)Data;
+        s = (CONST hwfont *)Data;
         for (l = Len; l; l--)
           *d++ = Tutf_UTF_32_to_CP437(*s++);
         Data = _Data;
@@ -401,10 +402,10 @@ static int X11_Die(Display *d) {
 #endif
 
 #if HW_X_DRIVER != HW_XFT
-static Tutf_function X11_UTF_32_to_charset_function(const char *charset) {
+static Tutf_function X11_UTF_32_to_charset_function(CONST char *charset) {
   XFontProp *fp;
   unsigned long prop;
-  const char *s, *fontname = NULL;
+  CONST char *s, *fontname = NULL;
   uldat i;
 
   if (!charset) {

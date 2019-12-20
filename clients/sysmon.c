@@ -83,7 +83,7 @@ byte InitSysMon(int argc, char **argv) {
          (TwSetColorsWindow(SysMon_Win, 0x1FF, (hwcol)0x3F, (hwcol)0, (hwcol)0, (hwcol)0,
                             (hwcol)0x9F, (hwcol)0x17, (hwcol)0x3F, (hwcol)0x18, (hwcol)0x08),
           TwInfo4Menu(SysMon_Menu, TW_ROW_ACTIVE, 16, " System Monitor ",
-                      (const hwcol *)"pppppppppppppppp"),
+                      (TW_CONST hwcol *)"pppppppppppppppp"),
           TwWriteAsciiWindow(SysMon_Win, 26, "CPU \nDISK\nMEM \nSWAP\nUPTIME"),
           TwMapWindow(SysMon_Win, TwFirstScreen()), ttrue);
 }

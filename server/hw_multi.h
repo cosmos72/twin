@@ -34,8 +34,8 @@ void QuitHW(void);
 byte RestartHW(byte verbose);
 void SuspendHW(byte verbose);
 
-display_hw AttachDisplayHW(uldat len, const char *arg, uldat slot, byte flags);
-byte DetachDisplayHW(uldat len, const char *arg, byte flags);
+display_hw AttachDisplayHW(uldat len, CONST char *arg, uldat slot, byte flags);
+byte DetachDisplayHW(uldat len, CONST char *arg, byte flags);
 
 void FillVideo(dat Xstart, dat Ystart, dat Xend, dat Yend, hwattr Attrib);
 void RefreshVideo(void);

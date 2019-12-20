@@ -9,19 +9,19 @@
 #ifndef _TWIN_DATA_H
 #define _TWIN_DATA_H
 
-extern const byte *const pkg_libdir;
-extern const byte *const pkg_libdir_modules_;
+extern CONST byte *CONST pkg_libdir;
+extern CONST byte *CONST pkg_libdir_modules_;
 
 extern palette Palette[MAXCOL + 1], defaultPalette[MAXCOL + 1];
 
-extern all const All;
+extern all CONST All;
 
 typedef struct keylist keylist;
 struct keylist {
-  const byte *name;
+  CONST byte *name;
   udat key;
   byte len;
-  const byte *seq;
+  CONST byte *seq;
 };
 
 extern keylist TW_KeyList[];

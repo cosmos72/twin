@@ -10,13 +10,13 @@
 #define _TWIN_RESIZE_H
 
 byte EnsureLenRow(row Row, ldat Len, byte DefaultCol);
-byte RowWriteAscii(window Window, ldat Len, const char *Text);
-byte RowWriteHWFont(window Window, ldat Len, const hwfont *Text);
+byte RowWriteAscii(window Window, ldat Len, CONST char *Text);
+byte RowWriteHWFont(window Window, ldat Len, CONST hwfont *Text);
 
-void ExposeWidget2(widget W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch, const char *Text,
-                   const hwfont *Font, const hwattr *Attr);
-void ExposeWindow2(window W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch, const char *Text,
-                   const hwfont *Font, const hwattr *Attr);
+void ExposeWidget2(widget W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch, CONST char *Text,
+                   CONST hwfont *Font, CONST hwattr *Attr);
+void ExposeWindow2(window W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch, CONST char *Text,
+                   CONST hwfont *Font, CONST hwattr *Attr);
 
 extern byte NeedUpdateCursor;
 #define UpdateCursor() (NeedUpdateCursor = ttrue)
@@ -61,16 +61,16 @@ void SetVisibleWidget(widget W, byte on_off);
 
 void RaiseWidget(widget W, byte alsoFocus);
 void LowerWidget(widget W, byte alsoDeFocus);
-void RestackWidgets(widget P, uldat N, const widget *arrayW);
+void RestackWidgets(widget P, uldat N, CONST widget *arrayW);
 
-void RestackRows(obj O, uldat N, const row *arrayR);
+void RestackRows(obj O, uldat N, CONST row *arrayR);
 
 void PressGadget(gadget G);
 void UnPressGadget(gadget G, byte maySendMsgIfNotToggle);
 void SendMsgGadget(gadget G);
-void WriteTextsGadget(gadget G, byte bitmap, dat XWidth, dat YWidth, const char *Text, dat Left,
+void WriteTextsGadget(gadget G, byte bitmap, dat XWidth, dat YWidth, CONST char *Text, dat Left,
                       dat Up);
-void WriteHWFontsGadget(gadget G, byte bitmap, dat XWidth, dat YWidth, const hwfont *Text, dat Left,
+void WriteHWFontsGadget(gadget G, byte bitmap, dat XWidth, dat YWidth, CONST hwfont *Text, dat Left,
                         dat Up);
 
 void SyncMenu(menu Menu);

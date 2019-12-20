@@ -642,7 +642,7 @@ static byte CheckForwardMsg(wm_ctx *C, msg Msg, byte WasUsed) {
 
 static ldat DragPosition[2];
 
-static void InitCtx(const msg Msg, wm_ctx *C) {
+static void InitCtx(CONST msg Msg, wm_ctx *C) {
 
   C->Code = Msg->Event.EventCommon.Code;
   C->ShiftFlags = Msg->Event.EventKeyboard.ShiftFlags; /* ok for mouse too */
@@ -1062,7 +1062,7 @@ static void ContinueScroll(wm_ctx *C) {
   }
 }
 
-static void ReleaseDragResizeScroll(const wm_ctx *C) {
+static void ReleaseDragResizeScroll(CONST wm_ctx *C) {
   window FW = All->FirstScreen->ClickWindow;
   udat wasResize;
 
@@ -1227,7 +1227,7 @@ byte ActivateCtx(wm_ctx *C, byte State) {
 }
 
 /* force returning to STATE_DEFAULT. used before RCReload() */
-void ForceRelease(const wm_ctx *C) {
+void ForceRelease(CONST wm_ctx *C) {
   switch (All->State & STATE_ANY) {
   case STATE_RESIZE:
   case STATE_DRAG:

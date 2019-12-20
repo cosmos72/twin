@@ -477,7 +477,7 @@ static byte sockStatAll(all x, tsfield TSF) {
   return ttrue;
 }
 
-static void sockStat(obj x, udat n, const byte *in) {
+static void sockStat(obj x, udat n, CONST byte *in) {
   udat i, j;
   tsfield TSF;
   uldat len, q;

@@ -439,7 +439,7 @@ void RemoteParanoia(void) {
  *
  * return len if succeeded, 0 if failed.
  */
-uldat RemoteWriteQueue(uldat Slot, uldat len, const void *data) {
+uldat RemoteWriteQueue(uldat Slot, uldat len, CONST void *data) {
   uldat nmax;
   byte *tmp;
 

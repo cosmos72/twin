@@ -23,7 +23,7 @@
 byte DlOpen(module Module) {
   dlhandle Handle = NULL;
   uldat len, len0 = 1 + strlen(pkg_libdir) + strlen(DL_PREFIX) + strlen(DL_SUFFIX);
-  byte *name = NULL;
+  char *name = NULL;
   byte (*init_func)(module);
 
   if (!dlinit_once()) {
@@ -34,7 +34,7 @@ byte DlOpen(module Module) {
     /* dlopen(NULL, ...) returns a handle for the main program */
     if (Module->NameLen) {
       len = len0 + Module->NameLen;
-      if ((name = AllocMem(len + 1)))
+      if ((name = (char *)AllocMem(len + 1)))
         sprintf(name, "%s/%s%.*s%s", pkg_libdir, DL_PREFIX, (int)Module->NameLen, Module->Name,
                 DL_SUFFIX);
       else {
@@ -85,7 +85,7 @@ void DlClose(module Module) {
   }
 }
 
-module DlLoadAny(uldat len, const byte *name) {
+module DlLoadAny(uldat len, CONST char *name) {
   module Module;
 
   for (Module = All->FirstModule; Module; Module = Module->Next) {
@@ -104,7 +104,7 @@ module DlLoadAny(uldat len, const byte *name) {
 
 static module So[MAX_So];
 
-udat DlName2Code(const byte *name) {
+udat DlName2Code(CONST char *name) {
   if (!CmpStr(name, "wm"))
     return WMSo;
   if (!CmpStr(name, "term"))
@@ -116,7 +116,7 @@ udat DlName2Code(const byte *name) {
   return MainSo;
 }
 
-static const byte *DlCode2Name(uldat code) {
+static CONST char *DlCode2Name(uldat code) {
   switch (code) {
   case WMSo:
     return "wm";
@@ -135,7 +135,7 @@ static const byte *DlCode2Name(uldat code) {
 module DlLoad(uldat code) {
   module M = (module)0;
   if (code < MAX_So && !(M = So[code])) {
-    const char *name = DlCode2Name(code);
+    CONST char *name = DlCode2Name(code);
     M = DlLoadAny(name ? strlen(name) : 0, name);
     if ((So[code] = M)) {
       if (All->FnHookModule)
@@ -165,7 +165,7 @@ module DlIsLoaded(uldat code) {
   return (module)0;
 }
 
-void *DlSym(module Module, const byte *name) {
+void *DlSym(module Module, CONST char *name) {
   if (Module && name)
     return (void *)dlsym((dlhandle)Module->Handle, name);
 

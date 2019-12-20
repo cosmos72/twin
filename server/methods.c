@@ -598,7 +598,7 @@ static struct s_fn_widget _FnWidget = {
 /* gadget */
 
 static gadget CreateGadget(fn_gadget Fn_Gadget, msgport Owner, widget Parent, dat XWidth,
-                           dat YWidth, const char *TextNormal, uldat Attrib, uldat Flags, udat Code,
+                           dat YWidth, CONST char *TextNormal, uldat Attrib, uldat Flags, udat Code,
                            hwcol ColText, hwcol ColTextSelect, hwcol ColTextDisabled,
                            hwcol ColTextSelectDisabled, dat Left, dat Up) {
   gadget G = (gadget)0;
@@ -750,10 +750,10 @@ static gadget CreateEmptyButton(fn_gadget Fn_Gadget, msgport Owner, dat XWidth, 
 #undef _LOWER
 }
 
-byte FillButton(gadget G, widget Parent, udat Code, dat Left, dat Up, udat Flags, const char *Text,
+byte FillButton(gadget G, widget Parent, udat Code, dat Left, dat Up, udat Flags, CONST char *Text,
                 hwcol Color, hwcol ColorDisabled) {
   dat i, j, XWidth, YWidth;
-  char const *T;
+  CONST char *T;
 
   if (Code >= COD_RESERVED)
     return tfalse;
@@ -782,7 +782,7 @@ byte FillButton(gadget G, widget Parent, udat Code, dat Left, dat Up, udat Flags
 }
 
 static gadget CreateButton(fn_gadget Fn_Gadget, widget Parent, dat XWidth, dat YWidth,
-                           const char *Text, uldat Flags, udat Code, hwcol BgCol, hwcol Col,
+                           CONST char *Text, uldat Flags, udat Code, hwcol BgCol, hwcol Col,
                            hwcol ColDisabled, dat Left, dat Up) {
   gadget G;
   if (Parent &&
@@ -808,8 +808,8 @@ static struct s_fn_gadget _FnGadget = {
     (void (*)(gadget))UnMapWidget, (void (*)(gadget, screen))MapTopRealWidget,
     (void (*)(gadget))RaiseW, (void (*)(gadget))LowerW, (void (*)(gadget, msgport))OwnWidget,
     (void (*)(gadget))DisOwnWidget, (void (*)(gadget, msgport))RecursiveDeleteWidget,
-    (void (*)(gadget, dat, dat, dat, dat, const char *, const hwfont *,
-              const hwattr *))ExposeWidget2, /* exported by resize.c */
+    (void (*)(gadget, dat, dat, dat, dat, CONST char *, CONST hwfont *,
+              CONST hwattr *))ExposeWidget2, /* exported by resize.c */
     (byte (*)(gadget, fn_hook, void (**)(widget)))InstallHookWidget,
     (void (*)(gadget, fn_hook, void (**)(widget)))RemoveHookWidget,
     /* gadget */
@@ -880,8 +880,8 @@ static byte InitTtyData(window Window, dat ScrollBackLines) {
 
 /* window */
 
-static window CreateWindow(fn_window Fn_Window, msgport Owner, dat TitleLen, const char *Title,
-                           const hwcol *ColTitle, menu Menu, hwcol ColText, uldat CursorType,
+static window CreateWindow(fn_window Fn_Window, msgport Owner, dat TitleLen, CONST char *Title,
+                           CONST hwcol *ColTitle, menu Menu, hwcol ColText, uldat CursorType,
                            uldat Attrib, uldat Flags, dat XWidth, dat YWidth, dat ScrollBackLines) {
 
   window Window = (window)0;
@@ -1274,27 +1274,27 @@ window Create4MenuWindow(fn_window Fn_Window, menu Menu) {
   return Window;
 }
 
-void FakeWriteAscii(window Window, ldat Len, const char *Ascii) {
+void FakeWriteAscii(window Window, ldat Len, CONST char *Ascii) {
   if (DlLoad(TermSo) && Window->Fn->TtyWriteAscii != FakeWriteAscii)
     Act(TtyWriteAscii, Window)(Window, Len, Ascii);
 }
 
-void FakeWriteString(window Window, ldat Len, const char *String) {
+void FakeWriteString(window Window, ldat Len, CONST char *String) {
   if (DlLoad(TermSo) && Window->Fn->TtyWriteString != FakeWriteString)
     Act(TtyWriteString, Window)(Window, Len, String);
 }
 
-void FakeWriteHWFont(window Window, ldat Len, const hwfont *HWFont) {
+void FakeWriteHWFont(window Window, ldat Len, CONST hwfont *HWFont) {
   if (DlLoad(TermSo) && Window->Fn->TtyWriteHWFont != FakeWriteHWFont)
     Act(TtyWriteHWFont, Window)(Window, Len, HWFont);
 }
 
-void FakeWriteHWAttr(window Window, dat x, dat y, ldat Len, const hwattr *Attr) {
+void FakeWriteHWAttr(window Window, dat x, dat y, ldat Len, CONST hwattr *Attr) {
   if (DlLoad(TermSo) && Window->Fn->TtyWriteHWAttr != FakeWriteHWAttr)
     Act(TtyWriteHWAttr, Window)(Window, x, y, Len, Attr);
 }
 
-window FakeOpenTerm(const char *arg0, char *const *argv) {
+window FakeOpenTerm(CONST char *arg0, char *CONST *argv) {
   if (DlLoad(TermSo) && Ext(Term, Open) != FakeOpenTerm)
     return Ext(Term, Open)(arg0, argv);
   return NULL;
@@ -1388,8 +1388,8 @@ static struct s_fn_window _FnWindow = {
     (void (*)(window, msgport))OwnWidget,
     (void (*)(window))DisOwnWidget,
     (void (*)(window, msgport))RecursiveDeleteWidget,
-    (void (*)(window, dat, dat, dat, dat, const char *, const hwfont *,
-              const hwattr *))ExposeWindow2, /* exported by resize.c */
+    (void (*)(window, dat, dat, dat, dat, CONST char *, CONST hwfont *,
+              CONST hwattr *))ExposeWindow2, /* exported by resize.c */
     (byte (*)(window, fn_hook, void (**)(widget)))InstallHookWidget,
     (void (*)(window, fn_hook, void (**)(widget)))RemoveHookWidget,
     /* window */
@@ -1401,7 +1401,7 @@ static struct s_fn_window _FnWindow = {
     RowWriteAscii, /* exported by resize.c */
     RowWriteAscii,
     RowWriteHWFont,
-    (byte(*)(window, dat, dat, ldat, const hwattr *))AlwaysFalse,
+    (byte(*)(window, dat, dat, ldat, CONST hwattr *))AlwaysFalse,
 
     GotoXYWindow,
     SetTitleWindow,
@@ -1416,8 +1416,8 @@ static struct s_fn_window _FnWindow = {
 
 /* screen */
 
-static screen CreateScreen(fn_screen Fn_Screen, dat NameLen, const char *Name, dat BgWidth,
-                           dat BgHeight, const hwattr *Bg) {
+static screen CreateScreen(fn_screen Fn_Screen, dat NameLen, CONST char *Name, dat BgWidth,
+                           dat BgHeight, CONST hwattr *Bg) {
   screen S = (screen)0;
   size_t size;
 
@@ -1451,11 +1451,11 @@ static screen CreateScreen(fn_screen Fn_Screen, dat NameLen, const char *Name, d
   return NULL;
 }
 
-static screen CreateSimpleScreen(fn_screen Fn_Screen, dat NameLen, const char *Name, hwattr Bg) {
+static screen CreateSimpleScreen(fn_screen Fn_Screen, dat NameLen, CONST char *Name, hwattr Bg) {
   return Fn_Screen->Create(Fn_Screen, NameLen, Name, 1, 1, &Bg);
 }
 
-static void BgImageScreen(screen Screen, dat BgWidth, dat BgHeight, const hwattr *Bg) {
+static void BgImageScreen(screen Screen, dat BgWidth, dat BgHeight, CONST hwattr *Bg) {
   size_t size;
 
   if (Screen && S_USE(Screen, USEBG) && Bg &&
@@ -1605,8 +1605,8 @@ static struct s_fn_screen _FnScreen = {
     (void (*)(screen, msgport))OwnWidget,
     (void (*)(screen))DisOwnWidget,
     (void (*)(screen, msgport))RecursiveDeleteWidget,
-    (void (*)(screen, dat, dat, dat, dat, const char *, const hwfont *,
-              const hwattr *))ExposeWidget2, /* exported by resize.c */
+    (void (*)(screen, dat, dat, dat, dat, CONST char *, CONST hwfont *,
+              CONST hwattr *))ExposeWidget2, /* exported by resize.c */
     (byte (*)(screen, fn_hook, void (**)(widget)))InstallHookWidget,
     (void (*)(screen, fn_hook, void (**)(widget)))RemoveHookWidget,
     /* screen */
@@ -1767,7 +1767,7 @@ static void DeleteRow(row Row) {
   }
 }
 
-static byte SetTextRow(row Row, ldat Len, const char *Text, byte DefaultCol) {
+static byte SetTextRow(row Row, ldat Len, CONST char *Text, byte DefaultCol) {
   if (EnsureLenRow(Row, Len, DefaultCol)) {
     if (Len) {
 
@@ -1787,7 +1787,7 @@ static byte SetTextRow(row Row, ldat Len, const char *Text, byte DefaultCol) {
   return tfalse;
 }
 
-static byte SetHWFontRow(row Row, ldat Len, const hwfont *HWFont, byte DefaultCol) {
+static byte SetHWFontRow(row Row, ldat Len, CONST hwfont *HWFont, byte DefaultCol) {
   if (EnsureLenRow(Row, Len, DefaultCol)) {
     if (Len) {
       CopyMem(HWFont, Row->Text, Len * sizeof(hwfont));
@@ -1882,7 +1882,7 @@ byte FindInfo(menu Menu, dat i) {
 /* menuitem */
 
 static menuitem CreateMenuItem(fn_menuitem Fn_MenuItem, obj Parent, window Window, udat Code,
-                               byte Flags, dat Left, ldat Len, dat ShortCut, const char *Name) {
+                               byte Flags, dat Left, ldat Len, dat ShortCut, CONST char *Name) {
   menuitem MenuItem = (menuitem)0;
   hwfont *_Name = NULL;
 
@@ -1964,7 +1964,7 @@ static void DeleteMenuItem(menuitem MenuItem) {
 }
 
 menuitem Create4MenuMenuItem(fn_menuitem Fn_MenuItem, obj Parent, window Window, udat Code,
-                             byte Flags, ldat Len, const char *Name) {
+                             byte Flags, ldat Len, CONST char *Name) {
   dat Left, ShortCut;
 
   if (!Parent)
@@ -2006,7 +2006,7 @@ static struct s_fn_menuitem _FnMenuItem = {
     (void (*)(menuitem, udat, uldat, uldat))NoOp,
     &_FnObj,
     SetTextRow,
-    (byte(*)(row, ldat, const hwfont *, byte))SetHWFontRow,
+    (byte(*)(row, ldat, CONST hwfont *, byte))SetHWFontRow,
     RaiseMenuItem,
     LowerMenuItem,
     &_FnRow,
@@ -2104,7 +2104,7 @@ static void DeleteMenu(menu Menu) {
   }
 }
 
-static row SetInfoMenu(menu Menu, byte Flags, ldat Len, const char *Text, const hwcol *ColText) {
+static row SetInfoMenu(menu Menu, byte Flags, ldat Len, CONST char *Text, CONST hwcol *ColText) {
   row Row;
   if ((Row = Do(Create, Row)(FnRow, 0, Flags))) {
     if ((!Text || (Row->Text = CloneStr2HWFont(Text, Len))) &&
@@ -2340,7 +2340,7 @@ static struct s_fn_msg _FnMsg = {
 
 /* msgport */
 
-static msgport CreateMsgPort(fn_msgport Fn_MsgPort, byte NameLen, const char *Name, tany PauseSec,
+static msgport CreateMsgPort(fn_msgport Fn_MsgPort, byte NameLen, CONST char *Name, tany PauseSec,
                              tany PauseFraction, byte WakeUp, void (*Handler)(msgport)) {
   msgport MsgPort = (msgport)0;
   char *_Name;
@@ -2512,7 +2512,7 @@ static struct s_fn_msgport _FnMsgPort = {
 
 /* mutex */
 
-mutex CreateMutex(fn_mutex Fn_Mutex, msgport Owner, byte NameLen, const char *Name, byte Perm) {
+mutex CreateMutex(fn_mutex Fn_Mutex, msgport Owner, byte NameLen, CONST char *Name, byte Perm) {
   byte Possible = PERM_WRITE;
   mutex CurrMutex, NewMutex = (mutex)0, AlreadyMutex = (mutex)0;
 
@@ -2623,7 +2623,7 @@ static struct s_fn_mutex _FnMutex = {
 
 /* module */
 
-static module CreateModule(fn_module Fn_Module, uldat NameLen, const char *Name) {
+static module CreateModule(fn_module Fn_Module, uldat NameLen, CONST char *Name) {
   module Module = (module)0;
   char *newName = NULL;
 
@@ -2719,7 +2719,7 @@ static void DeleteExtension(extension E) {
 
 static struct s_fn_extension _FnExtension = {
     extension_magic, sizeof(struct s_extension), (uldat)1,
-    (extension(*)(fn_extension, uldat, const char *))CreateModule,
+    (extension(*)(fn_extension, uldat, CONST char *))CreateModule,
     (void (*)(extension, all, extension, extension))InsertModule, (void (*)(extension))RemoveModule,
     DeleteExtension, (void (*)(extension, udat, uldat, uldat))NoOp,
     /* module */
@@ -2727,13 +2727,13 @@ static struct s_fn_extension _FnExtension = {
 #ifdef CONF_EXT
     QueryExtension, /* exported by extensions/ext_query.c */
 #else
-    (extension(*)(byte, const char *))AlwaysNull, /* Query */
+    (extension(*)(byte, CONST char *))AlwaysNull, /* Query */
 #endif
 };
 
 /* display_hw */
 
-static display_hw CreateDisplayHW(fn_display_hw Fn_DisplayHW, uldat NameLen, const char *Name) {
+static display_hw CreateDisplayHW(fn_display_hw Fn_DisplayHW, uldat NameLen, CONST char *Name) {
   display_hw DisplayHW = (display_hw)0;
   char *newName = NULL;
 

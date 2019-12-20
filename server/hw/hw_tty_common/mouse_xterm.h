@@ -13,7 +13,7 @@ static void xterm_ConfigureMouse(udat resource, byte todefault, udat value);
 
 /* return tfalse if failed */
 static byte xterm_InitMouse(byte force) {
-  const char *term = tty_TERM;
+  CONST char *term = tty_TERM;
 
   if (force == ttrue) {
     printk("      xterm_InitMouse(): xterm-style mouse FORCED.\n"
@@ -97,7 +97,7 @@ static void xterm_MouseEvent(int fd, display_hw hw) {
   udat Buttons = 0, Id;
   dat x, y, dx, dy;
   dat prev_x = xterm_prev_x, prev_y = xterm_prev_y;
-  const char *s = xterm_mouse_seq;
+  CONST char *s = xterm_mouse_seq;
   byte len = xterm_mouse_len;
 
   if (s[0] != '\033' || s[1] != '[')

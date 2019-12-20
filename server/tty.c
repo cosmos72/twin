@@ -1510,7 +1510,7 @@ static tbool combine_utf8(hwfont *pc) {
 }
 
 /* this is the main entry point */
-void TtyWriteAscii(window Window, ldat Len, const byte *AsciiSeq) {
+void TtyWriteAscii(window Window, ldat Len, CONST byte *AsciiSeq) {
   hwfont c;
   byte printable, utf8_in_use, disp_ctrl, state_normal;
 
@@ -1584,7 +1584,7 @@ void TtyWriteAscii(window Window, ldat Len, const byte *AsciiSeq) {
 }
 
 /* same as TtyWriteAscii(), but writes hwfont (UCS-2 + colors + graph tiles). */
-void TtyWriteHWFont(window Window, ldat Len, const hwfont *HWFont) {
+void TtyWriteHWFont(window Window, ldat Len, CONST hwfont *HWFont) {
   hwfont c;
   byte ok;
 
@@ -1637,7 +1637,7 @@ void TtyWriteHWFont(window Window, ldat Len, const hwfont *HWFont) {
  * this writes String literally, without interpreting specially any character
  * (not even ESC or \n) and using current translation.
  */
-void TtyWriteString(window Window, ldat Len, const byte *String) {
+void TtyWriteString(window Window, ldat Len, CONST byte *String) {
   hwfont c;
 
   if (!Window || !Len || !String || !W_USE(Window, USECONTENTS) || !Window->USE.C.TtyData)
@@ -1674,7 +1674,7 @@ void TtyWriteString(window Window, ldat Len, const byte *String) {
  * this currently wraps at window width so it can write multiple rows at time.
  * does not move cursor position, nor interacts with wrapglitch.
  */
-void TtyWriteHWAttr(window Window, dat x, dat y, ldat len, const hwattr *text) {
+void TtyWriteHWAttr(window Window, dat x, dat y, ldat len, CONST hwattr *text) {
   ldat left, max, chunk;
   ldat i;
   hwattr *dst;

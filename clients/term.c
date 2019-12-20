@@ -356,7 +356,7 @@ static byte InitTerm(void) {
            TwCreateMenu(COL(BLACK, WHITE), COL(BLACK, GREEN), COL(HIGH | BLACK, WHITE),
                         COL(HIGH | BLACK, BLACK), COL(RED, WHITE), COL(RED, GREEN), (byte)0)) &&
       (TwInfo4Menu(Term_Menu, TW_ROW_ACTIVE, 18, " Remote Twin Term ",
-                   (const hwcol *)"ptpppppptpppptpppp"),
+                   (TW_CONST hwcol *)"ptpppppptpppptpppp"),
        ttrue) &&
       (Window = TwWin4Menu(Term_Menu)) && Add_Spawn_Row4Menu(Window) &&
       TwRow4Menu(Window, COD_QUIT, tfalse, 6, " Exit ") &&

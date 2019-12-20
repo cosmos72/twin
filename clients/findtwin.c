@@ -42,7 +42,7 @@ static void test(TW_CONST char *dpy) {
 #define HX(c) (((c) >= '0' && (c) <= '9') || ((c) >= 'a' && (c) <= 'f'))
 
 static int match_twsocket(TW_CONST struct dirent *d) {
-  const char *s = d->d_name;
+  TW_CONST char *s = d->d_name;
 
   return !strncmp(s, ".Twin:", 6) && HX(s[6]) &&
          (!s[7] || (HX(s[7]) && (!s[8] || (HX(s[8]) && !s[9]))));
@@ -63,7 +63,7 @@ static void unix_socket_test(void) {
 #else
 #define my_sort alphasort
 #endif
-  int my_sort(); // its two arguments may be either (void *) or (const struct dirent *)
+  int my_sort(); // its two arguments may be either (void *) or (TW_CONST struct dirent *)
   struct dirent **namelist;
   char *s;
   int n = scandir(tmpdir(), &namelist, match_twsocket, my_sort);

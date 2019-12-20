@@ -42,9 +42,9 @@
  * Beep
  *
  * Border {Active|Inactive} <wildcard> (
- * "ÉÍ»"
- * "º º"
- * "ÈÍ¼"
+ * "ï¿½Í»"
+ * "ï¿½ ï¿½"
+ * "ï¿½Í¼"
  * )
  *
  * Button <n> <shape> [+|-[<numeric pos>|Left|Right]]
@@ -167,7 +167,7 @@
 ldat GlobalFlags[4];
 ldat GlobalShadows[2];
 
-static void yyerror(const char *s) { printk("twin: %s:%d: %s\n", FILE_NAME, LINE_NO, s); }
+static void yyerror(CONST char *s) { printk("twin: %s:%d: %s\n", FILE_NAME, LINE_NO, s); }
 
 #define NEW() (node) my_malloc(sizeof(struct node))
 
@@ -672,7 +672,7 @@ static node MakeSendToScreen(str name) {
 
 static node MakeSyntheticKey(ldat shiftflags, str label) {
   ldat key;
-  const byte *seq;
+  CONST byte *seq;
   byte buf[4];
   node n;
 

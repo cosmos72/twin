@@ -8,13 +8,13 @@ INLINE void termcap_SetCursorType(uldat type) {
 INLINE void termcap_MoveToXY(udat x, udat y) { fputs(tgoto(tc_cursor_goto, x, y), stdOUT); }
 
 static udat termcap_LookupKey(udat *ShiftFlags, byte *slen, char *s, byte *retlen,
-                              const char **ret) {
+                              CONST char **ret) {
   struct linux_keys {
     udat k;
     byte l;
-    const char *s;
+    CONST char *s;
   };
-  static struct linux_keys const linux_key[] = {
+  static struct linux_keys CONST linux_key[] = {
 #define IS(k, l, s) {CAT(TW_, k), l, s},
       IS(F1, 4, "\033[[A") IS(F2, 4, "\033[[B") IS(F3, 4, "\033[[C") IS(F4, 4, "\033[[D")
           IS(F5, 4, "\033[[E") IS(F6, 5, "\033[17~") IS(F7, 5, "\033[18~") IS(F8, 5, "\033[19~")
@@ -29,7 +29,7 @@ static udat termcap_LookupKey(udat *ShiftFlags, byte *slen, char *s, byte *retle
                                       IS(Down, 3, "\033[B")
 #undef IS
   };
-  struct linux_keys const *lk;
+  struct linux_keys CONST *lk;
 
   char **key;
   byte keylen, len = *slen;
@@ -87,7 +87,7 @@ static udat termcap_LookupKey(udat *ShiftFlags, byte *slen, char *s, byte *retle
   return TW_Null;
 }
 
-static char *termcap_extract(const char *cap, char **dest) {
+static char *termcap_extract(CONST char *cap, char **dest) {
   char buf[20], *d = buf, *s = tgetstr(cap, &d);
 
   if (!s || !*s) {
@@ -128,12 +128,12 @@ static void fixup_colorbug(void) {
 }
 
 static byte termcap_InitVideo(void) {
-  const char *term = tty_TERM;
-  const char *tc_name[tc_cap_N + 1] = {"cl", "cm", "ve", "vi", "md", "mb", "me", "ks", "ke",
+  CONST char *term = tty_TERM;
+  CONST char *tc_name[tc_cap_N + 1] = {"cl", "cm", "ve", "vi", "md", "mb", "me", "ks", "ke",
                                        "bl", "as", "ae", "k1", "k2", "k3", "k4", "k5", "k6",
                                        "k7", "k8", "k9", "k;", "F1", "F2", "&7", "kh", "@7",
                                        "kD", "kI", "kN", "kP", "kl", "ku", "kr", "kd", NULL};
-  const char **n;
+  CONST char **n;
   char **d;
   char tcbuf[4096]; /* by convention, this is enough */
 
@@ -196,7 +196,7 @@ static byte termcap_InitVideo(void) {
   if (colorbug)
     fixup_colorbug();
 
-  fprintf(stdOUT, "%s%s%s", tc_attr_off, (tc_charset_start ? (const char *)tc_charset_start : ""),
+  fprintf(stdOUT, "%s%s%s", tc_attr_off, (tc_charset_start ? (CONST char *)tc_charset_start : ""),
           (tty_is_xterm ? "\033[?1h" : ""));
 
   HW->FlushVideo = termcap_FlushVideo;

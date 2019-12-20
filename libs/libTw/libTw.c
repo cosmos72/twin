@@ -2252,7 +2252,7 @@ TW_INLINE hwattr MaybeConvertHWAttr(tw_d TwD, hwattr attr) {
 #define PushVMaybeConvertHWAttr(TwD, dst, len, vec)                                                \
   ((dst) = VecMaybeConvertHWAttr(TwD, dst, len, vec))
 
-static byte *VecMaybeConvertHWAttr(tw_d TwD, byte *dst, uldat len, const hwattr *attr) {
+static byte *VecMaybeConvertHWAttr(tw_d TwD, byte *dst, uldat len, TW_CONST hwattr *attr) {
   if (ServFlags & ServFlagHWAttr47x) {
     uldat i;
     hwattr h;
