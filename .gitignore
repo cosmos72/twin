@@ -15,6 +15,7 @@ Makefile
 .deps
 .dirstamp
 .libs
+.vscode
 clients/mapscrn/twmapscrn
 clients/tw*
 include/config.h

@@ -323,7 +323,7 @@ static void alienFixDecodeHWAttrV(hwattr *H, uldat Len) {
   }
 }
 
-TW_INLINE ldat alienDecodeArg(uldat id, CONST byte *Format, uldat n, tsfield a, uldat mask[1],
+TW_INLINE ldat alienDecodeArg(uldat id, CONST char *Format, uldat n, tsfield a, uldat mask[1],
                               byte flag[1], ldat fail) {
   void *A;
   void *av;
@@ -331,9 +331,9 @@ TW_INLINE ldat alienDecodeArg(uldat id, CONST byte *Format, uldat n, tsfield a, 
   uldat a0;
   byte c;
 
-  switch ((c = *Format++)) {
+  switch ((c = (byte)*Format++)) {
   case '_':
-    switch ((c = *Format)) {
+    switch ((c = (byte)*Format)) {
 #define CASE_fix(type, fixtype)                                                                    \
   case CAT(TWS_, type):                                                                            \
     /* ensure type size WAS negotiated */                                                          \
@@ -368,7 +368,7 @@ TW_INLINE ldat alienDecodeArg(uldat id, CONST byte *Format, uldat n, tsfield a, 
     /* all kind of pointers */
     if (Left(SIZEOF(uldat))) {
       POP(s, uldat, a0);
-      c = *Format - base_magic_CHR;
+      c = (byte)*Format - base_magic_CHR;
       a[n] _obj = Id2Obj(c, a0);
       a[n] _type = obj_;
       break;
@@ -377,7 +377,7 @@ TW_INLINE ldat alienDecodeArg(uldat id, CONST byte *Format, uldat n, tsfield a, 
     break;
   case 'V':
     nlen = sockLengths(id, n, a);
-    c = *Format;
+    c = (byte)*Format;
     /* ensure type size WAS negotiated */
     if (AlienMagic(Slot)[c]) {
       nlen *= AlienMagic(Slot)[c];
@@ -411,7 +411,7 @@ TW_INLINE ldat alienDecodeArg(uldat id, CONST byte *Format, uldat n, tsfield a, 
     if (SIZEOF(topaque) && Left(SIZEOF(topaque))) {
       POP(s, topaque, nlen);
 
-      c = *Format;
+      c = (byte)*Format;
       /* ensure type size WAS negotiated */
       if (AlienMagic(Slot)[c]) {
         if (!nlen || (Left(nlen) && nlen == sockLengths(id, n, a) * AlienMagic(Slot)[c])) {
@@ -443,7 +443,7 @@ TW_INLINE ldat alienDecodeArg(uldat id, CONST byte *Format, uldat n, tsfield a, 
     break;
   case 'X':
     nlen = sockLengths(id, n, a) * SIZEOF(uldat);
-    c = *Format - base_magic_CHR;
+    c = (byte)*Format - base_magic_CHR;
     if (Left(nlen)) {
       PopAddr(s, byte, nlen, av);
       a[n] _vec = av;
@@ -469,7 +469,7 @@ TW_INLINE ldat alienDecodeArg(uldat id, CONST byte *Format, uldat n, tsfield a, 
     fail = -fail;
     break;
   case 'Y':
-    c = *Format - base_magic_CHR;
+    c = (byte)*Format - base_magic_CHR;
 
     /* ensure 'topaque' size WAS negotiated */
     if (SIZEOF(topaque) && Left(SIZEOF(topaque))) {
@@ -515,9 +515,10 @@ static void alienMultiplexB(uldat id) {
   ldat fail = 1;
   CONST char *Format = sockF[id].Format;
   uldat a0;
-  byte c, self, flag, tmp, retT[2];
+  char retT[2];
+  byte c, self, flag, tmp;
 
-  self = *Format++;
+  self = (byte)*Format++;
   retT[0] = *Format++;
   retT[1] = *Format++;
 
@@ -577,9 +578,9 @@ static void alienMultiplexB(uldat id) {
       TWS_2_proto(a[n - 1] _type, retT);
     }
 
-    switch (retT[0]) {
+    switch ((byte)retT[0]) {
     case '_':
-      switch (retT[1]) {
+      switch ((byte)retT[1]) {
 #define CASE_(type)                                                                                \
   case CAT(TWS_, type):                                                                            \
     /* ensure type size WAS negotiated */                                                          \
@@ -793,7 +794,7 @@ static void FlipMoveMem(byte *mem, uldat len, uldat chunk) {
  */
 static void alienSendMsg(msgport MsgPort, msg Msg) {
   byte *t;
-  byte *Src;
+  char *Src;
   uldat save_Slot = Slot, Len = 0, Tot, N;
   int save_Fd = Fd;
   hwattr H;
@@ -856,7 +857,7 @@ static void alienSendMsg(msgport MsgPort, msg Msg) {
         Tot = TwinMagicData[Type];
         Len = AlienMagic(Slot)[Type];
         while (N--) {
-          alienPush(Src, Tot, &t, Len);
+          alienPush((byte *)Src, Tot, &t, Len);
           Src += Tot;
         }
       }
@@ -969,8 +970,8 @@ static void alienSendMsg(msgport MsgPort, msg Msg) {
           N = (N / sizeof(hwfont)) * SIZEOF(hwfont);
           alienPUSH(t, uldat, N);
           N = Msg->Event.EventSelectionNotify.Len;
-          alienWriteVec(Msg->Event.EventSelectionNotify.Data, t, N, sizeof(hwfont), SIZEOF(hwfont),
-                        AlienXendian(Slot) == MagicAlienXendian);
+          alienWriteVec((CONST byte *)Msg->Event.EventSelectionNotify.Data, t, N, sizeof(hwfont),
+                        SIZEOF(hwfont), AlienXendian(Slot) == MagicAlienXendian);
           t += N;
         }
       } else {

@@ -304,7 +304,8 @@ static void stdin_KeyboardEvent(int fd, display_hw hw) {
   static char buf[TW_SMALLBUFF];
   static fd_set rfds;
   static struct timeval t;
-  char *s = buf, *ret = buf + sizeof(buf) - 1;
+  char *s = buf, *end = buf + sizeof(buf) - 1;
+  CONST char *ret;
   udat Code, ShiftFlags;
   byte got, chunk, retlen;
   SaveHW;
@@ -317,9 +318,9 @@ static void stdin_KeyboardEvent(int fd, display_hw hw) {
   t.tv_usec = 1000;
 
   do {
-    got = read(fd, s, ret - s);
+    got = read(fd, s, end - s);
 
-  } while (got > 0 && (s += got) < ret && select(fd + 1, &rfds, NULL, NULL, &t) == 1);
+  } while (got > 0 && (s += got) < end && select(fd + 1, &rfds, NULL, NULL, &t) == 1);
 
   if (got == (byte)-1 && errno != EINTR && errno != EWOULDBLOCK) {
     /* BIG troubles */
@@ -352,7 +353,8 @@ static void stdin_KeyboardEvent(int fd, display_hw hw) {
     if (!(chunk = got))
       break;
 
-    Code = LookupKey(&ShiftFlags, &chunk, s, &retlen, (CONST char **)&ret);
+    ret = end;
+    Code = LookupKey(&ShiftFlags, &chunk, s, &retlen, &ret);
     s += chunk, got -= chunk;
 
     KeyboardEventCommon(Code, ShiftFlags, retlen, ret);

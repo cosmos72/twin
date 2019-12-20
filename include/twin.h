@@ -971,7 +971,7 @@ struct s_event_display {
   widget W; /* not used here */
   udat Code, Len;
   dat X, Y;
-  byte *Data; /* [Len] bytes actually */
+  void *Data; /* [Len] bytes actually */
 };
 
 #define DPY_DrawHWAttr ((udat)0)

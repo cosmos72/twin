@@ -656,15 +656,15 @@ static obj *AllocId2ObjVec(byte *alloced, byte c, uldat n, byte *VV) {
 #endif
 }
 
-TW_INLINE ldat sockDecodeArg(uldat id, CONST byte *Format, uldat n, tsfield a, uldat mask[1],
+TW_INLINE ldat sockDecodeArg(uldat id, CONST char *Format, uldat n, tsfield a, uldat mask[1],
                              byte flag[1], ldat fail) {
   void *av;
   topaque nlen;
   byte c;
 
-  switch ((c = *Format++)) {
+  switch ((c = (byte)*Format++)) {
   case '_':
-    switch ((c = *Format)) {
+    switch ((c = (byte)*Format)) {
 #define CASE_(type)                                                                                \
   case CAT(TWS_, type):                                                                            \
     /* ensure type size WAS negotiated */                                                          \
@@ -698,7 +698,7 @@ TW_INLINE ldat sockDecodeArg(uldat id, CONST byte *Format, uldat n, tsfield a, u
     if (Left(sizeof(uldat))) {
       uldat a0;
       Pop(s, uldat, a0);
-      c = *Format - base_magic_CHR;
+      c = (byte)*Format - base_magic_CHR;
       a[n] _obj = Id2Obj(c, a0);
       a[n] _type = obj_;
       break;
@@ -707,7 +707,7 @@ TW_INLINE ldat sockDecodeArg(uldat id, CONST byte *Format, uldat n, tsfield a, u
     break;
   case 'V':
     nlen = sockLengths(id, n, a);
-    c = *Format;
+    c = (byte)*Format;
     /* ensure type size WAS negotiated */
     if ((c <= TWS_hwcol || AlienMagic(Slot)[c])) {
       nlen *= AlienMagic(Slot)[c];
@@ -726,7 +726,7 @@ TW_INLINE ldat sockDecodeArg(uldat id, CONST byte *Format, uldat n, tsfield a, u
     if (AlienSizeof(topaque, Slot) && Left(sizeof(topaque))) {
       Pop(s, topaque, nlen);
 
-      c = *Format;
+      c = (byte)*Format;
       /* ensure type size WAS negotiated */
       if ((c <= TWS_hwcol || AlienMagic(Slot)[c])) {
         if (!nlen || (Left(nlen) && nlen == sockLengths(id, n, a) * AlienMagic(Slot)[c])) {
@@ -743,7 +743,7 @@ TW_INLINE ldat sockDecodeArg(uldat id, CONST byte *Format, uldat n, tsfield a, u
   case 'X':
     nlen = sockLengths(id, n, a) * sizeof(uldat);
     if (Left(nlen)) {
-      c = *Format - base_magic_CHR;
+      c = (byte)*Format - base_magic_CHR;
       PopAddr(s, byte, nlen, av);
       if ((a[n] _vec = AllocId2ObjVec(flag, c, nlen / sizeof(uldat), av))) {
         a[n] _len = nlen;
@@ -761,7 +761,7 @@ TW_INLINE ldat sockDecodeArg(uldat id, CONST byte *Format, uldat n, tsfield a, u
 
       nlen *= sizeof(uldat);
       if (Left(nlen)) {
-        c = *Format - base_magic_CHR;
+        c = (byte)*Format - base_magic_CHR;
         PopAddr(s, byte, nlen, av);
         if ((a[n] _vec = AllocId2ObjVec(flag, c, nlen / sizeof(uldat), av))) {
           a[n] _len = nlen;
@@ -790,9 +790,9 @@ static void sockMultiplexB(uldat id) {
   uldat a0;
   byte c, self, flag, retT[2];
 
-  self = *Format++;
-  retT[0] = *Format++;
-  retT[1] = *Format++;
+  self = (byte)*Format++;
+  retT[0] = (byte)*Format++;
+  retT[1] = (byte)*Format++;
 
   while (fail > 0 && *Format) {
     if (n < TW_MAX_ARGS_N) {
@@ -847,7 +847,7 @@ static void sockMultiplexB(uldat id) {
       /* variable return type. get it from last arg */
       /* FIXME: currently, only '_' (scalar) and 'v' (void) return types are supported */
 
-      TWS_2_proto(a[n - 1] _type, retT);
+      TWS_2_proto(a[n - 1] _type, (char *)retT);
     }
 
     switch (retT[0]) {

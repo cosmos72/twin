@@ -169,7 +169,7 @@ INLINE void display_DrawHWAttr(dat x, dat y, udat buflen, hwattr *buf) {
   display_CreateMsg(DPY_DrawHWAttr, buflen * sizeof(hwattr));
   ev->X = x;
   ev->Y = y;
-  ev->Data = (byte *)buf;
+  ev->Data = buf;
   Ext(Socket, SendMsg)(display, Msg);
 }
 
@@ -208,7 +208,7 @@ INLINE void display_MoveToXY(udat x, udat y) {
 
 INLINE void display_SetCursorType(uldat type) {
   display_CreateMsg(DPY_SetCursorType, sizeof(uldat));
-  ev->Data = (byte *)&type;
+  ev->Data = &type;
   Ext(Socket, SendMsg)(display, Msg);
 }
 
@@ -296,7 +296,7 @@ static void display_DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, da
 
   ev->X = Left;
   ev->Y = Up;
-  ev->Data = (byte *)data;
+  ev->Data = data;
 
   Ext(Socket, SendMsg)(display, Msg);
   setFlush();
@@ -311,7 +311,7 @@ static void display_SetPalette(udat N, udat R, udat G, udat B) {
   display_CreateMsg(DPY_SetPalette, 4 * sizeof(dat));
 
   ev->X = N;
-  ev->Data = (byte *)data;
+  ev->Data = data;
 
   Ext(Socket, SendMsg)(display, Msg);
   setFlush();
@@ -517,7 +517,7 @@ static byte display_InitHW(void) {
   HW->merge_Threshold = 0;
 
   display_CreateMsg(DPY_Helper, sizeof(Helper->Id));
-  ev->Data = (byte *)&Helper->Id;
+  ev->Data = &Helper->Id;
   Ext(Socket, SendMsg)(display, Msg);
   /* don't flush now, twdisplay waits for attach messages */
 

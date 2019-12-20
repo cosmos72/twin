@@ -91,7 +91,7 @@ public:
   inline tmenuitem commonItem() const { return TwItem4MenuCommon(Id); }
   inline void setInfo(byte Flags = TW_ROW_ACTIVE, ldat Len = 0, const char *Text = 0,
                       const hwcol *ColText = 0) const {
-    TwSetInfoMenu(Id, Flags, Len, (const byte *)Text, ColText);
+    TwSetInfoMenu(Id, Flags, Len, Text, ColText);
   }
   inline void setInfo(const char *Text, const hwcol *ColText = 0) const {
     setInfo(TW_ROW_ACTIVE, Text ? strlen(Text) : 0, Text, ColText);
@@ -147,10 +147,9 @@ public:
                  hwcol ColTextSelect = COL(HIGH | WHITE, GREEN),
                  hwcol ColTextDisabled = COL(HIGH | BLACK, GREEN),
                  hwcol ColTextSelectDisabled = COL(HIGH | BLACK, GREEN), dat Left = 0, dat Up = 0) {
-    Id =
-        TwCreateGadget(/* TwCreateGadget(...) is a macro... */
-                       parent->Id, XWidth, YWidth, (TW_CONST byte *)TextNormal, Attrib, Flags, Code,
-                       ColText, ColTextSelect, ColTextDisabled, ColTextSelectDisabled, Left, Up);
+    Id = TwCreateGadget(/* TwCreateGadget(...) is a macro... */
+                        parent->Id, XWidth, YWidth, TextNormal, Attrib, Flags, Code, ColText,
+                        ColTextSelect, ColTextDisabled, ColTextSelectDisabled, Left, Up);
   }
   /*
    * args are `udat Code, uldat Flags' to exploit optional paremeters,
@@ -180,29 +179,29 @@ public:
 
   inline void setText(const char *text = 0, dat Left = 0, dat Up = 0) const {
     if (text && text[0])
-      TwSetTextGadget(Id, strlen(text), 1, (TW_CONST byte *)text, Left, Up);
+      TwSetTextGadget(Id, strlen(text), 1, text, Left, Up);
     else
       TwSetTextGadget(Id, TW_MAXDAT, TW_MAXDAT, NULL, 0, 0);
   }
   inline void setTextLines(dat XWidth, dat YWidth, const char *text = 0, dat Left = 0,
                            dat Up = 0) const {
-    TwSetTextGadget(Id, XWidth, YWidth, (TW_CONST byte *)text, Left, Up);
+    TwSetTextGadget(Id, XWidth, YWidth, text, Left, Up);
   }
   inline void setTextsLines(byte bitmap, dat XWidth, dat YWidth, const char *text = 0, dat Left = 0,
                             dat Up = 0) const {
-    TwSetTextsGadget(Id, bitmap, XWidth, YWidth, (TW_CONST byte *)text, Left, Up);
+    TwSetTextsGadget(Id, bitmap, XWidth, YWidth, text, Left, Up);
   }
   inline void writeText(const char *text = 0, dat Left = 0, dat Up = 0) const {
     if (text && text[0])
-      TwWriteTextGadget(Id, strlen(text), 1, (TW_CONST byte *)text, Left, Up);
+      TwWriteTextGadget(Id, strlen(text), 1, text, Left, Up);
   }
   inline void writeTextLines(dat XWidth, dat YWidth, const char *text = 0, dat Left = 0,
                              dat Up = 0) const {
-    TwWriteTextGadget(Id, XWidth, YWidth, (TW_CONST byte *)text, Left, Up);
+    TwWriteTextGadget(Id, XWidth, YWidth, text, Left, Up);
   }
   inline void writeTextsLines(byte bitmap, dat XWidth, dat YWidth, const char *text = 0,
                               dat Left = 0, dat Up = 0) const {
-    TwWriteTextsGadget(Id, bitmap, XWidth, YWidth, (TW_CONST byte *)text, Left, Up);
+    TwWriteTextsGadget(Id, bitmap, XWidth, YWidth, text, Left, Up);
   }
 };
 
@@ -235,8 +234,8 @@ public:
                                 TW_WINDOW_RESIZE,
                  uldat Flags = TW_WINDOWFL_USEROWS, dat XWidth = 0, dat YWidth = 0,
                  dat ScrollBackLines = 0) {
-    Id = TwCreateWindow(strlen(name), (TW_CONST byte *)name, NULL, Menu->Id, ColText, CursorType,
-                        Attrib, Flags, XWidth, YWidth, ScrollBackLines);
+    Id = TwCreateWindow(strlen(name), name, NULL, Menu->Id, ColText, CursorType, Attrib, Flags,
+                        XWidth, YWidth, ScrollBackLines);
   }
   static inline TWindow *create4Menu(const TMenu *Menu) {
     TWindow *W = new TWindow();
@@ -245,12 +244,8 @@ public:
   }
   inline void writeAscii(const char *text) const { TwWriteAsciiWindow(Id, strlen(text), text); }
   inline void writeAscii(ldat len, const char *text) const { TwWriteAsciiWindow(Id, len, text); }
-  inline void writeString(const char *text) const {
-    TwWriteStringWindow(Id, strlen(text), (TW_CONST byte *)text);
-  }
-  inline void writeString(ldat len, const char *text) const {
-    TwWriteStringWindow(Id, len, (TW_CONST byte *)text);
-  }
+  inline void writeString(const char *text) const { TwWriteStringWindow(Id, strlen(text), text); }
+  inline void writeString(ldat len, const char *text) const { TwWriteStringWindow(Id, len, text); }
   inline void writeHWFont(ldat len, const hwfont *text) const {
     TwWriteHWFontWindow(Id, len, text);
   }
@@ -281,14 +276,14 @@ public:
   inline void setSize(dat x, dat y) const { TwResizeWindow(Id, x, y); }
   inline void create4MenuRow(udat Code = 0, byte FlagActive = TW_ROW_ACTIVE,
                              const char *Text = "") const {
-    TwRow4Menu(Id, Code, FlagActive, strlen(Text), (TW_CONST byte *)Text);
+    TwRow4Menu(Id, Code, FlagActive, strlen(Text), Text);
   }
   inline void row4Menu(udat Code = 0, byte FlagActive = TW_ROW_ACTIVE,
                        const char *Text = "") const {
     create4MenuRow(Code, FlagActive, Text);
   }
   inline void create4MenuRow(udat Code, byte FlagActive, ldat TextLen, const char *Text) const {
-    TwRow4Menu(Id, Code, FlagActive, TextLen, (TW_CONST byte *)Text);
+    TwRow4Menu(Id, Code, FlagActive, TextLen, Text);
   }
   inline void row4Menu(udat Code, byte FlagActive, ldat TextLen, const char *Text) const {
     create4MenuRow(Code, FlagActive, TextLen, Text);
@@ -603,10 +598,10 @@ public:
    * void TwBlindSendMsg(tmsgport MsgPort, tmsg Msg);
    */
   static inline tmsgport findMsgPort(const char *Name, tmsgport Prev, byte NameLen) {
-    return TwFindMsgPort(Prev, NameLen, (TW_CONST byte *)Name);
+    return TwFindMsgPort(Prev, NameLen, Name);
   }
   static inline tmsgport findMsgPort(const char *Name, tmsgport Prev = TW_NOID) {
-    return TwFindMsgPort(Prev, strlen(Name), (TW_CONST byte *)Name);
+    return TwFindMsgPort(Prev, strlen(Name), Name);
   }
   static inline tmenu firstMenu(tmsgport MsgPortId) { return TwFirstMenu(MsgPortId); }
   inline tmenu firstMenu() const { return TwFirstMenu(Id); }
@@ -807,8 +802,7 @@ public:
     TwConfigMalloc(my_malloc, my_realloc, my_free);
   }
   static inline uldat FindFunction(const char *name, const char *format) {
-    return TwFindFunction(strlen(name), (TW_CONST byte *)name, strlen(format),
-                          (TW_CONST byte *)format);
+    return TwFindFunction(strlen(name), name, strlen(format), format);
   }
   static inline bool enableGzip() { return TwEnableGzip(); }
   static inline bool disableGzip() { return TwDisableGzip(); }
@@ -816,26 +810,20 @@ public:
    * to register themselves as displays of the server */
   static inline void needResizeDisplay() { TwNeedResizeDisplay(); }
   static inline void attachHW(const char *name, byte flags) {
-    TwAttachHW(strlen(name), (TW_CONST byte *)name, flags);
+    TwAttachHW(strlen(name), name, flags);
   }
   static inline const char *attachGetReply(uldat *len) {
     return (const char *)TwAttachGetReply(len);
   }
   static inline void attachConfirm() { TwAttachConfirm(); }
-  static inline bool detachHW(const char *name) {
-    return TwDetachHW(strlen(name), (TW_CONST byte *)name);
-  }
+  static inline bool detachHW(const char *name) { return TwDetachHW(strlen(name), name); }
   /* ok, back to normal methods */
-  static inline void setFontTranslation(const char trans[0x80]) {
-    TwSetFontTranslation((TW_CONST byte *)trans);
-  }
+  static inline void setFontTranslation(const byte trans[0x80]) { TwSetFontTranslation(trans); }
   inline bool checkMagic() {
     TW_DECL_MAGIC(id);
     return Checked = TwCheckMagic(id);
   }
-  inline bool open(const char *dpy = 0) {
-    return Open = (Checked || checkMagic()) && TwOpen((TW_CONST byte *)dpy);
-  }
+  inline bool open(const char *dpy = 0) { return Open = (Checked || checkMagic()) && TwOpen(dpy); }
   inline void close() {
     TwClose();
     Open = Checked = false;
@@ -861,7 +849,7 @@ public:
   static inline void requestSelection() { TwRequestSelection(TwGetOwnerSelection(), TW_NOID); }
   static inline void notifySelection(tobj Requestor, uldat ReqPrivate, uldat Magic,
                                      const char MIME[TW_MAX_MIMELEN], uldat Len, const char *Data) {
-    TwNotifySelection(Requestor, ReqPrivate, Magic, MIME, Len, (TW_CONST byte *)Data);
+    TwNotifySelection(Requestor, ReqPrivate, Magic, MIME, Len, Data);
   }
   static inline tscreen firstScreen() { return TwFirstScreen(); }
   static inline dat getDisplayWidth() { return TwGetDisplayWidth(); }
@@ -995,7 +983,7 @@ public:
 };
 
 inline TMsgPort::TMsgPort(TW *dpy, const char *name) {
-  Id = TwCreateMsgPort(strlen(name), (TW_CONST byte *)name);
+  Id = TwCreateMsgPort(strlen(name), name);
   dpy->setMsgPort(this);
 }
 
