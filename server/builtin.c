@@ -91,7 +91,7 @@ static gadget ButtonOK_About, ButtonRemove, ButtonThis;
 static void Clock_Update(void) {
   time_t Time = (time_t)All->Now.Seconds;
   struct tm *Date;
-  byte Buffer[30];
+  char Buffer[30];
 
   ClockWin->CurX = ClockWin->CurY = (uldat)0;
   Date = localtime(&Time);
@@ -109,7 +109,7 @@ static void TweakMenuRows(menuitem Item, udat code, byte flag) {
   window Win;
   row Row;
 
-  if ((Win = Item->Window) && (Row = Act(FindRowByCode, Win)(Win, code, (uldat *)0)))
+  if ((Win = Item->Window) && (Row = Act(FindRowByCode, Win)(Win, code, (ldat *)0)))
     Row->Flags = flag;
 }
 
@@ -203,8 +203,9 @@ static void ExecuteWinRun(void) {
 
 void UpdateOptionWin(void) {
   gadget G;
-  byte i, Flags = All->SetUp->Flags;
   udat list[] = {COD_O_Xp_SHADE, COD_O_Xn_SHADE, COD_O_Yp_SHADE, COD_O_Yn_SHADE, 0};
+  byte i, Flags = All->SetUp->Flags;
+  char ch;
 
   for (i = 0; list[i]; i++) {
     if ((G = Act(FindGadgetByCode, OptionWin)(OptionWin, list[i]))) {
@@ -233,12 +234,12 @@ void UpdateOptionWin(void) {
 
   OptionWin->CurX = 25;
   OptionWin->CurY = 1;
-  i = (Flags & SETUP_SHADOWS ? All->SetUp->DeltaXShade : 0) + '0';
-  Act(RowWriteAscii, OptionWin)(OptionWin, 1, &i);
+  ch = (Flags & SETUP_SHADOWS ? All->SetUp->DeltaXShade : 0) + '0';
+  Act(RowWriteAscii, OptionWin)(OptionWin, 1, &ch);
   OptionWin->CurX = 25;
   OptionWin->CurY = 2;
-  i = (Flags & SETUP_SHADOWS ? All->SetUp->DeltaYShade : 0) + '0';
-  Act(RowWriteAscii, OptionWin)(OptionWin, 1, &i);
+  ch = (Flags & SETUP_SHADOWS ? All->SetUp->DeltaYShade : 0) + '0';
+  Act(RowWriteAscii, OptionWin)(OptionWin, 1, &ch);
 }
 
 static void OptionH(msg Msg) {
@@ -315,8 +316,8 @@ static void OptionH(msg Msg) {
 
 void FillButtonWin(void) {
   dat i, j;
-  byte b[6] = "      ";
-  CONST byte *s;
+  char b[6] = "      ";
+  CONST char *s;
 
   DeleteList(ButtonWin->FirstW);
 
@@ -362,7 +363,7 @@ void FillButtonWin(void) {
 
 void UpdateButtonWin(void) {
   dat i, j;
-  byte s[5];
+  char s[5];
   sbyte pos;
 
   for (i = j = 0; j < BUTTON_MAX; j++) {
@@ -784,7 +785,7 @@ static byte InitScreens(void) {
 
 byte InitBuiltin(void) {
   window Window;
-  CONST byte *greeting =
+  CONST char *greeting =
       "\n"
       "                TWIN              \n"
       "        Text WINdows manager      \n\n"
@@ -802,7 +803,7 @@ byte InitBuiltin(void) {
       (Builtin_Menu = Do(Create, Menu)(FnMenu, Builtin_MsgPort, (byte)0x70, (byte)0x20, (byte)0x78,
                                        (byte)0x08, (byte)0x74, (byte)0x24, (byte)0)) &&
       Info4Menu(Builtin_Menu, ROW_ACTIVE, (uldat)42, " Hit PAUSE or Mouse Right Button for Menu ",
-                "tttttttttttttttttttttttttttttttttttttttttt") &&
+                (const hwcol *)"tttttttttttttttttttttttttttttttttttttttttt") &&
 
       (Window = Win4Menu(Builtin_Menu)) &&
       Row4Menu(Window, COD_CLOCK_WIN, ROW_ACTIVE, 9, " Clock   ") &&
@@ -851,11 +852,11 @@ byte InitBuiltin(void) {
 
       Item4MenuCommon(Builtin_Menu) &&
 
-      (AboutWin =
-           Do(Create, Window)(FnWindow, Builtin_MsgPort, 5, "About", "\x7F\x7F\x7F\x7F\x7F",
-                              Builtin_Menu, COL(BLACK, WHITE), NOCURSOR,
-                              WINDOW_AUTO_KEYS | WINDOW_WANT_MOUSE | WINDOW_DRAG | WINDOW_CLOSE,
-                              WINDOWFL_USEROWS | WINDOWFL_ROWS_DEFCOL, 36, 13, 0)) &&
+      (AboutWin = Do(Create, Window)(
+           FnWindow, Builtin_MsgPort, 5, "About", (const hwcol *)"\x7F\x7F\x7F\x7F\x7F",
+           Builtin_Menu, COL(BLACK, WHITE), NOCURSOR,
+           WINDOW_AUTO_KEYS | WINDOW_WANT_MOUSE | WINDOW_DRAG | WINDOW_CLOSE,
+           WINDOWFL_USEROWS | WINDOWFL_ROWS_DEFCOL, 36, 13, 0)) &&
 
       (ClockWin = Do(Create, Window)(FnWindow, Builtin_MsgPort, 5, "Clock", NULL, Builtin_Menu,
                                      COL(YELLOW, BLUE), NOCURSOR, WINDOW_DRAG | WINDOW_CLOSE,

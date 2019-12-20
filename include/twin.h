@@ -1038,7 +1038,7 @@ struct s_event_selectionnotify {
   uldat Magic;
   char MIME[MAX_MIMELEN];
   uldat Len;
-  byte Data[sizeof(uldat)]; /* Data[] is Len bytes actually */
+  char Data[sizeof(uldat)]; /* Data[] is Len bytes actually */
 };
 /*SelectionNotify Magic*/
 #define SEL_APPEND 0x00000000
