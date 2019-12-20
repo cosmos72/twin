@@ -171,7 +171,7 @@ case order_ScrollWidget:
 
 case order_DrawWidget:
     if (N >= 8)
-	sockDrawWidget((widget)a[1]_obj, (dat)a[2]_any, (dat)a[3]_any, (dat)a[4]_any, (dat)a[5]_any, (CONST byte *)a[6]_vec, (CONST hwfont *)a[7]_vec, (CONST hwattr *)a[8]_vec);
+	sockDrawWidget((widget)a[1]_obj, (dat)a[2]_any, (dat)a[3]_any, (dat)a[4]_any, (dat)a[5]_any, (CONST char *)a[6]_vec, (CONST hwfont *)a[7]_vec, (CONST hwattr *)a[8]_vec);
     break;
 
 

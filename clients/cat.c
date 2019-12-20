@@ -68,7 +68,7 @@ int main(int argc, char *argv[]) {
   if (!argv[1] || !*argv[1]) {
     fd = 0;
   } else {
-    if (!TwCmpStr("-", argv[1]))
+    if (!strcmp("-", argv[1]))
       fd = 0;
     else {
       fd = open(argv[1], O_RDONLY);

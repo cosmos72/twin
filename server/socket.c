@@ -416,7 +416,7 @@ static all sockGetAll(void);
 
 static byte sockDecodeExtension(topaque *Len, CONST byte **Data, topaque *Args_n, tsfield args);
 
-static extension sockOpenExtension(byte namelen, CONST byte *name);
+static extension sockOpenExtension(byte namelen, CONST char *name);
 static tany sockCallBExtension(extension e, topaque len, CONST byte *args, CONST byte *return_type);
 static void sockCloseExtension(extension e);
 
@@ -447,7 +447,7 @@ static sockfn sockF[] = {
     {0, 0, "StatObj", "0S0x" obj_magic_STR "_" TWS_udat_STR "V" TWS_udat_STR}, {0, 0, NULL, NULL}};
 
 /* convert a 2-byte string "v"TWS_void_STR or "_"* or "V"* into a tsfield->type */
-TW_INLINE udat proto_2_TWS(CONST byte proto[2]) {
+TW_INLINE udat proto_2_TWS(CONST char proto[2]) {
   udat tws_type = 0;
   switch (proto[0]) {
   case 'V':
@@ -461,7 +461,7 @@ TW_INLINE udat proto_2_TWS(CONST byte proto[2]) {
     /* else FALLTHROUGH */
   case 'v':
     /* turn '\xFE' into TWS_void ('\0') */
-    if (proto[1] == (byte)TWS_void_CHR)
+    if ((byte)proto[1] == (byte)TWS_void_CHR)
       break;
     /* else FALLTHROUGH */
   default:
@@ -472,7 +472,7 @@ TW_INLINE udat proto_2_TWS(CONST byte proto[2]) {
   return tws_type;
 }
 
-TW_INLINE void TWS_2_proto(udat tws_type, byte proto[2]) {
+TW_INLINE void TWS_2_proto(udat tws_type, char proto[2]) {
   if (tws_type & TWS_vec) {
     proto[0] = 'V';
   } else if (tws_type == TWS_void) {
@@ -786,7 +786,7 @@ static void sockMultiplexB(uldat id) {
   uldat mask = 0; /* at least 32 bits. we need TW_MAX_ARGS_N... */
   uldat nlen, n = 1;
   ldat fail = 1;
-  CONST byte *Format = sockF[id].Format;
+  CONST char *Format = sockF[id].Format;
   uldat a0;
   byte c, self, flag, retT[2];
 
@@ -1422,7 +1422,7 @@ static byte sockDecodeExtension(topaque *Len, CONST byte **Data, topaque *Args_n
   return fail > 0;
 }
 
-static extension sockOpenExtension(byte namelen, CONST byte *name) {
+static extension sockOpenExtension(byte namelen, CONST char *name) {
   /*
    * FIXME: loading an extension from a Slot without msgport
    * results in the extension stay loaded at least until someone uses it
@@ -1456,7 +1456,7 @@ static tany sockCallBExtension(extension e, topaque len, CONST byte *data,
 static byte sockDecodeExtension(topaque *len, CONST byte **data, topaque *args_n, tsfield args) {
   return tfalse;
 }
-static extension sockOpenExtension(byte namelen, CONST byte *name) { return (extension)0; }
+static extension sockOpenExtension(byte namelen, CONST char *name) { return (extension)0; }
 static void sockCloseExtension(extension e) {}
 static tany sockCallBExtension(extension e, topaque len, CONST byte *data,
                                CONST byte *return_type) {

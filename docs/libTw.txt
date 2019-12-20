@@ -520,14 +520,10 @@ void Tw_NotifySelection(tdisplay TwD, tobj Requestor, uldat ReqPrivate,
     * a few string/memory related function macros:
     */
    
-   #define TwLenStr(S) strlen(S)
-   #define TwCmpStr(S1, S2) strcmp((S1), (S2))
    #define TwCopyStr(From,To) strcpy((To),(From))
    
    #define TwCopyMem(From, To, Size)	memcpy((To), (From), (size_t)(Size))
    #define TwMoveMem(From, To, Size)	memmove((To), (From), (size_t)(Size))
-   #define TwWriteMem(Mem, Char, Size)	memset((Mem), (int)(Char), (size_t)(Size))
-   #define TwCmpMem(m1, m2, Size)	memcmp((m1), (m2), (size_t)(Size))
    
    /*
     * the "Tw_" versions of the above ones exist, and have exactly the same

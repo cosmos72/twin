@@ -165,14 +165,14 @@ void Tw_ScrollWidget(tw_d TwD, twidget a1, ldat a2, ldat a3) {
     , n(a3));
 }
 
-void Tw_DrawWidget(tw_d TwD, twidget a1, dat a2, dat a3, dat a4, dat a5, TW_CONST byte *a6, TW_CONST hwfont *a7, TW_CONST hwattr *a8) {
+void Tw_DrawWidget(tw_d TwD, twidget a1, dat a2, dat a3, dat a4, dat a5, TW_CONST char *a6, TW_CONST hwfont *a7, TW_CONST hwattr *a8) {
     _Tw_EncodeCall(ENCODE_FL_VOID, order_DrawWidget, TwD 
     , n(a1)
     , n(a2)
     , n(a3)
     , n(a4)
     , n(a5)
-    , n((a2*a3) * sizeof(byte)), N(a6)
+    , n((a2*a3) * sizeof(char)), N(a6)
     , n((a2*a3) * sizeof(hwfont)), N(a7)
     , n((a2*a3) * sizeof(hwattr)), N(a8));
 }

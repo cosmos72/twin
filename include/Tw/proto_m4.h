@@ -84,7 +84,7 @@ void  Tw_UnMapWidget(tdisplay TwD, twidget W);
 void  Tw_SetXYWidget(tdisplay TwD, twidget W, dat x, dat y);
 void  Tw_ResizeWidget(tdisplay TwD, twidget W, dat w, dat h);
 void  Tw_ScrollWidget(tdisplay TwD, twidget W, ldat dxl, ldat dyl);
-void  Tw_DrawWidget(tdisplay TwD, twidget W, dat w, dat h, dat x, dat y, TW_CONST byte *text, TW_CONST hwfont *textfont, TW_CONST hwattr *textattr);
+void  Tw_DrawWidget(tdisplay TwD, twidget W, dat w, dat h, dat x, dat y, TW_CONST char *text, TW_CONST hwfont *textfont, TW_CONST hwattr *textattr);
 
 void  Tw_SetVisibleWidget(tdisplay TwD, twidget W, byte on_off);
 

@@ -51,14 +51,10 @@
 #define TwCloneStr2HWFont		Tw_CloneStr2HWFont
 
 
-#define TwLenStr		Tw_LenStr
-#define TwCmpStr		Tw_CmpStr
 #define TwCopyStr		Tw_CopyStr
 
 #define TwCopyMem		Tw_CopyMem
 #define TwMoveMem		Tw_MoveMem
-#define TwWriteMem		Tw_WriteMem
-#define TwCmpMem		Tw_CmpMem
 
 
 

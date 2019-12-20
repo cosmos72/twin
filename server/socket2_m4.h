@@ -107,7 +107,7 @@
 { 0, 0, "ScrollWidget",
     "0""v"TWS_void_STR"x"widget_magic_STR"_"TWS_ldat_STR"_"TWS_ldat_STR },
 { 0, 0, "DrawWidget",
-    "0""v"TWS_void_STR"x"widget_magic_STR"_"TWS_dat_STR"_"TWS_dat_STR"_"TWS_dat_STR"_"TWS_dat_STR"W"TWS_byte_STR"W"TWS_hwfont_STR"W"TWS_hwattr_STR },
+    "0""v"TWS_void_STR"x"widget_magic_STR"_"TWS_dat_STR"_"TWS_dat_STR"_"TWS_dat_STR"_"TWS_dat_STR"W"TWS_char_STR"W"TWS_hwfont_STR"W"TWS_hwattr_STR },
 
 { 0, 0, "SetVisibleWidget",
     "0""v"TWS_void_STR"x"widget_magic_STR"_"TWS_byte_STR },

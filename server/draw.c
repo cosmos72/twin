@@ -377,7 +377,7 @@ void DrawSelfWidget(draw_ctx *D) {
     return;
 
   if (w_USE(W, USEEXPOSE)) {
-    CONST byte *Text = NULL;
+    CONST char *Text = NULL;
     CONST hwfont *HWFont = NULL;
     CONST hwattr *HWAttr = NULL;
     ldat Left, Up, _X1, _X2, _Y1, _Y2;

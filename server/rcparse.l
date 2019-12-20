@@ -26,9 +26,6 @@ int read_stack_curr = 0;
 char *file_name[MAX_READ_DEPTH];
 int line_no[MAX_READ_DEPTH];
 
-#define LINE_NO line_no[read_stack_curr-1]
-#define FILE_NAME file_name[read_stack_curr-1]
-    
 static int yywrap(void);
 
 static char errbuf[256];

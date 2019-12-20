@@ -672,8 +672,8 @@ static node MakeSendToScreen(str name) {
 
 static node MakeSyntheticKey(ldat shiftflags, str label) {
   ldat key;
-  CONST byte *seq;
-  byte buf[4];
+  CONST char *seq;
+  char buf[4];
   node n;
 
   switch (strlen(label)) {
@@ -1101,7 +1101,7 @@ static void WriteGlobals(void) {
   M = (void **)((str)M + sizeof(GlobalShadows));
 }
 
-static screen FindNameInScreens(uldat len, byte *name, screen S) {
+static screen FindNameInScreens(uldat len, CONST char *name, screen S) {
   while (S) {
     if (len == S->NameLen && !memcmp(name, S->Name, len))
       return S;
@@ -1110,7 +1110,7 @@ static screen FindNameInScreens(uldat len, byte *name, screen S) {
   return NULL;
 }
 
-static node FindNameInList(uldat len, byte *name, node list) {
+static node FindNameInList(uldat len, CONST char *name, node list) {
   while (list) {
     if (list->name && strlen(list->name) == len && !memcmp(name, list->name, len))
       return list;
@@ -1137,7 +1137,7 @@ static byte CreateNeededScreens(node list, screen *res_Screens) {
   hwattr *attr, *r;
   hwcol c;
   uldat w, h, len, _len;
-  byte *n;
+  char *n;
   hwfont f;
 
   while (list) {
@@ -1160,7 +1160,7 @@ static byte CreateNeededScreens(node list, screen *res_Screens) {
           c = list->x.color;
           r = attr + w * h;
           while (len--) {
-            f = Tutf_CP437_to_UTF_32[*n++];
+            f = Tutf_CP437_to_UTF_32[(byte)*n++];
             *r++ = HWATTR(c, f);
           }
           while (_len++ < w)

@@ -261,7 +261,7 @@ void *Tw_AllocMem0(size_t ElementSize, size_t Count) {
   if (Tw_AllocMem == malloc) {
     Mem = calloc(Count, ElementSize);
   } else if ((Mem = Tw_AllocMem(Count * ElementSize)) != NULL) {
-    Tw_WriteMem(Mem, '\0', Count * ElementSize);
+    memset(Mem, '\0', Count * ElementSize);
   }
   return Mem;
 }
@@ -269,7 +269,7 @@ void *Tw_AllocMem0(size_t ElementSize, size_t Count) {
 void *Tw_ReAllocMem0(void *Mem, size_t ElementSize, size_t OldCount, size_t NewCount) {
   void *newMem;
   if ((newMem = Tw_ReAllocMem(Mem, NewCount * ElementSize)) != NULL) {
-    Tw_WriteMem((char *)newMem + OldCount * ElementSize, '\0', (NewCount - OldCount) * ElementSize);
+    memset((char *)newMem + OldCount * ElementSize, '\0', (NewCount - OldCount) * ElementSize);
   }
   return newMem;
 }
@@ -327,7 +327,7 @@ TW_INLINE byte GrowErrnoLocation(tw_d TwD) {
   if ((vec = (s_tw_errno *)Tw_ReAllocMem(rErrno.vec, newmax * sizeof(s_tw_errno)))) {
 
     /* assume (th_self)-1 is _NOT_ a valid thread identifier */
-    Tw_WriteMem(vec + rErrno.max, '\xFF', (newmax - rErrno.max) * sizeof(s_tw_errno));
+    memset(vec + rErrno.max, '\xFF', (newmax - rErrno.max) * sizeof(s_tw_errno));
     rErrno.vec = vec;
     rErrno.max = newmax;
 
@@ -952,7 +952,7 @@ static byte ProtocolNumbers(tw_d TwD) {
   if (Fd != TW_NOFD) {
     servdata = GetQueue(TwD, QREAD, &len);
 
-    if (*servdata >= _len && !TwCmpMem(hostdata + 1, servdata + 1, _len - 1)) {
+    if (*servdata >= _len && !memcmp(hostdata + 1, servdata + 1, _len - 1)) {
       ExtractServProtocol(TwD, servdata + 6, *servdata - 6);
       DeQueue(TwD, QREAD, *servdata);
       return ttrue;
@@ -973,8 +973,8 @@ TW_DECL_MAGIC(Tw_MagicData);
  * unicode clients with non-unicode library and vice-versa
  */
 byte Tw_CheckMagic(TW_CONST byte id[]) {
-  if (Tw_CmpMem(id + 1, Tw_MagicData + 1,
-                (id[0] < Tw_MagicData[0] ? id[0] : Tw_MagicData[0]) - 2 - sizeof(uldat))) {
+  if (memcmp(id + 1, Tw_MagicData + 1,
+             (id[0] < Tw_MagicData[0] ? id[0] : Tw_MagicData[0]) - 2 - sizeof(uldat))) {
     CommonErrno = TW_EBAD_SIZES;
     return tfalse;
   }
@@ -1026,10 +1026,10 @@ static byte MagicNumbers(tw_d TwD) {
          * allow server to send us fewer or more types than we sent,
          * but ensure it agrees on the common ones.
          */
-        !TwCmpMem(Tw_MagicData + 1, hostdata + 1,
-                  Min2(*hostdata, Tw_MagicData[0]) - sizeof(uldat) - 2)) {
-      if (!TwCmpMem(Tw_MagicData + Tw_MagicData[0] - sizeof(uldat),
-                    hostdata + *hostdata - sizeof(uldat), sizeof(uldat))) {
+        !memcmp(Tw_MagicData + 1, hostdata + 1,
+                Min2(*hostdata, Tw_MagicData[0]) - sizeof(uldat) - 2)) {
+      if (!memcmp(Tw_MagicData + Tw_MagicData[0] - sizeof(uldat),
+                  hostdata + *hostdata - sizeof(uldat), sizeof(uldat))) {
         DeQueue(TwD, QREAD, *hostdata);
         return ttrue;
       } else
@@ -1069,7 +1069,7 @@ static byte MagicChallenge(tw_d TwD) {
     return tfalse;
   }
 
-  len = TwLenStr(home);
+  len = strlen(home);
   if (len > hAuthLen - 11)
     len = hAuthLen - 11;
 
@@ -1162,7 +1162,7 @@ tw_d Tw_Open(TW_CONST char *TwDisplay) {
 
   if ((options = strchr(TwDisplay, ','))) {
     *options = '\0';
-    if (!TwCmpMem(options + 1, "gz", 2))
+    if (!memcmp(options + 1, "gz", 2))
       gzip = ttrue;
   }
 
@@ -1178,7 +1178,7 @@ tw_d Tw_Open(TW_CONST char *TwDisplay) {
         CommonErrno = TW_ESYS_NO_SOCKET;
         break;
       }
-      Tw_WriteMem(&addr, 0, sizeof(addr));
+      memset(&addr, 0, sizeof(addr));
       addr.sun_family = AF_UNIX;
 
       len = copyToSockaddrUn(tmpdir(), &addr, 0);
@@ -1211,7 +1211,7 @@ tw_d Tw_Open(TW_CONST char *TwDisplay) {
       *p = '\0';
       port = TW_INET_PORT + strtoul(p + 1, NULL, 16);
 
-      Tw_WriteMem(&addr, 0, sizeof(addr));
+      memset(&addr, 0, sizeof(addr));
       addr.sin_family = AF_INET;
 
       /* check if the server is a numbers-and-dots host like "127.0.0.1" */
@@ -1265,7 +1265,7 @@ tw_d Tw_Open(TW_CONST char *TwDisplay) {
     return (tw_d)0;
   }
 
-  Tw_WriteMem(TwD, '\0', sizeof(struct s_tw_d) - sizeof(v_id_vec));
+  memset(TwD, '\0', sizeof(struct s_tw_d) - sizeof(v_id_vec));
   for (i = 0; i < sizeof(id_Tw) / sizeof(id_Tw[0]); i++)
     /* initialize function ids to 'unknown' */
     id_Tw[i] = TW_BADID;

@@ -104,7 +104,7 @@ PROTO(void,v,      UnMap,Widget,2, widget,x,W)
 PROTO(void,v,      SetXY,Widget,0, widget,x,W, dat,_,x, dat,_,y)
 PROTO(void,v,     Resize,Widget,0, widget,x,W, dat,_,w, dat,_,h)
 PROTO(void,v,     Scroll,Widget,0, widget,x,W, ldat,_,dxl, ldat,_,dyl)
-PROTO(void,v,       Draw,Widget,0, widget,x,W, dat,_,w, dat,_,h, dat,_,x, dat,_,y, byte,W(A(2)*A(3)),text, hwfont,W(A(2)*A(3)),textfont, hwattr,W(A(2)*A(3)),textattr)
+PROTO(void,v,       Draw,Widget,0, widget,x,W, dat,_,w, dat,_,h, dat,_,x, dat,_,y, char,W(A(2)*A(3)),text, hwfont,W(A(2)*A(3)),textfont, hwattr,W(A(2)*A(3)),textattr)
 
 PROTO(void,v, SetVisible,Widget,0, widget,x,W, byte,_,on_off)
 

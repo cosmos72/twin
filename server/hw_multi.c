@@ -125,10 +125,10 @@ void RunNoHW(byte print_info) {
   (void)DlLoad(SocketSo);
 }
 
-static byte module_InitHW(CONST byte *arg, uldat len) {
-  CONST byte *name, *tmp;
-  byte *alloc_name;
-  byte *(*InitD)(void);
+static byte module_InitHW(CONST char *arg, uldat len) {
+  CONST char *name, *tmp;
+  char *alloc_name;
+  byte (*InitD)(void);
   module Module;
 
   if (!arg || !len)
@@ -172,7 +172,7 @@ static byte module_InitHW(CONST byte *arg, uldat len) {
   if (alloc_name)
     name = alloc_name;
   else if (!name)
-    name = (byte *)"(NULL)";
+    name = "(NULL)";
 
   if (Module) {
     printk("twin: ...module `" SS "' failed to start.\n", name);
@@ -186,8 +186,8 @@ static byte module_InitHW(CONST byte *arg, uldat len) {
   return tfalse;
 }
 
-static byte set_hw_name(display_hw D_HW, CONST byte *name, uldat namelen) {
-  byte *alloc_name;
+static byte set_hw_name(display_hw D_HW, CONST char *name, uldat namelen) {
+  char *alloc_name;
 
   if (D_HW && (alloc_name = CloneStrL(name, namelen)) != NULL) {
     if (D_HW->Name)
@@ -198,7 +198,7 @@ static byte set_hw_name(display_hw D_HW, CONST byte *name, uldat namelen) {
   return ttrue;
 }
 
-static void warn_NoHW(CONST byte *arg, uldat len) {
+static void warn_NoHW(CONST char *arg, uldat len) {
   printk("twin: all display drivers failed");
   if (arg)
     printk(" for `%.*s\'\n", Min2((int)len, TW_SMALLBUFF), arg);
@@ -211,7 +211,7 @@ static void warn_NoHW(CONST byte *arg, uldat len) {
  * and falling back in case some of them fails.
  */
 byte InitDisplayHW(display_hw D_HW) {
-  byte *arg = D_HW->Name;
+  char *arg = D_HW->Name;
   uldat arglen = D_HW->NameLen;
   byte success;
 
@@ -223,7 +223,7 @@ byte InitDisplayHW(display_hw D_HW) {
 #define AUTOTRY4(hw, len) (module_InitHW(hw, len) && set_hw_name(D_HW, hw, len))
 
   if (arglen == 0) {
-    success = AUTOTRY4("-hw=gfx", 7) || AUTOTRY4("-hw=X11", 7) || AUTOTRY4("-hw=xft", 7) ||
+    success = AUTOTRY4("-hw=gfx", 7) || AUTOTRY4("-hw=xft", 7) || AUTOTRY4("-hw=X11", 7) ||
               AUTOTRY4("-hw=twin", 8) || AUTOTRY4("-hw=tty", 7) || AUTOTRY4("-hw=ggi", 7);
   } else {
     success = module_InitHW(D_HW->Name, D_HW->NameLen);
@@ -284,7 +284,7 @@ void QuitDisplayHW(display_hw D_HW) {
   RestoreHW;
 }
 
-static byte IsValidHW(uldat len, CONST byte *arg) {
+static byte IsValidHW(uldat len, CONST char *arg) {
   uldat i;
   byte b;
   if (len >= 4 && !memcmp(arg, "-hw=", 4))
@@ -505,7 +505,7 @@ void ResizeDisplayPrefer(display_hw D_HW) {
  * return ttrue if DisplayWidth or DisplayHeight were changed
  */
 byte ResizeDisplay(void) {
-  udat Width, Height;
+  dat Width, Height;
   byte change = tfalse;
 
   if (All->FirstDisplayHW) {

@@ -228,7 +228,7 @@ static char *default_title = "Twin Term";
 
 static twindow newTermWindow(char *title) {
   twindow Window =
-      TwCreateWindow(TwLenStr(title), title, NULL, Term_Menu, COL(WHITE, BLACK), TW_LINECURSOR,
+      TwCreateWindow(strlen(title), title, NULL, Term_Menu, COL(WHITE, BLACK), TW_LINECURSOR,
                      TW_WINDOW_WANT_KEYS | TW_WINDOW_WANT_CHANGES | TW_WINDOW_DRAG |
                          TW_WINDOW_RESIZE | TW_WINDOW_Y_BAR | TW_WINDOW_CLOSE,
                      TW_WINDOWFL_CURSOR_ON | TW_WINDOWFL_USECONTENTS, 80, 25, 200);

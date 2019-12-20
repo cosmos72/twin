@@ -351,13 +351,13 @@ static byte InitClient(void) {
 
 static void ClearKey(void) {
   TwGotoXYWindow(DM_user, 0, 0);
-  TwWriteMem(user.txt, ' ', user.len);
+  memset(user.txt, ' ', user.len);
   TwWriteAsciiWindow(DM_user, user.len, user.txt);
   TwGotoXYWindow(DM_user, user.len = user.x = 0, 0);
   user.txt[0] = '\0';
 
   TwGotoXYWindow(DM_pass, 0, 0);
-  TwWriteMem(pass.txt, ' ', pass.len);
+  memset(pass.txt, ' ', pass.len);
   TwWriteAsciiWindow(DM_pass, pass.len, pass.txt);
   TwGotoXYWindow(DM_pass, pass.len = pass.x = 0, 0);
   pass.txt[0] = '\0';
@@ -493,7 +493,7 @@ static void WriteKey(twindow W, data u, udat len, char *seq) {
     u->x += len;
     u->len = _len;
     if (W == DM_pass)
-      TwWriteMem(seq, '*', len);
+      memset(seq, '*', len);
     TwWriteAsciiWindow(W, len, seq);
   }
 }

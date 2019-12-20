@@ -454,7 +454,7 @@ byte SetSelectionFromWindow(window Window) {
       hw += Window->XstSel;
       while (len--)
         *Data++ = HWFONT(*hw), hw++;
-      ok &= SelectionStore(_SEL_MAGIC, NULL, slen * sizeof(hwfont), (byte *)sData);
+      ok &= SelectionStore(_SEL_MAGIC, NULL, slen * sizeof(hwfont), (CONST char *)sData);
     }
 
     if (hw >= Window->USE.C.TtyData->Split)
@@ -468,7 +468,7 @@ byte SetSelectionFromWindow(window Window) {
       len = slen;
       while (len--)
         *Data++ = HWFONT(*hw), hw++;
-      ok &= SelectionAppend(slen * sizeof(hwfont), (byte *)sData);
+      ok &= SelectionAppend(slen * sizeof(hwfont), (CONST char *)sData);
     }
 
     if (ok && Window->YendSel > Window->YstSel) {
@@ -478,7 +478,7 @@ byte SetSelectionFromWindow(window Window) {
       len = slen = Window->XendSel + 1;
       while (len--)
         *Data++ = HWFONT(*hw), hw++;
-      ok &= SelectionAppend(slen * sizeof(hwfont), (byte *)sData);
+      ok &= SelectionAppend(slen * sizeof(hwfont), (CONST char *)sData);
     }
     if (ok)
       NeedHW |= NEEDSelectionExport;
@@ -498,7 +498,7 @@ byte SetSelectionFromWindow(window Window) {
         slen = Min2(Row->Len, Window->XendSel + 1) - Min2(Row->Len, Window->XstSel);
 
       ok &= SelectionStore(_SEL_MAGIC, NULL, slen * sizeof(hwfont),
-                           (byte *)(Row->Text + Min2(Row->Len, Window->XstSel)));
+                           (CONST char *)(Row->Text + Min2(Row->Len, Window->XstSel)));
     } else
       ok &= SelectionStore(_SEL_MAGIC, NULL, 0, NULL);
 
@@ -507,14 +507,14 @@ byte SetSelectionFromWindow(window Window) {
 
     for (y = Window->YstSel + 1; ok && y < Window->YendSel; y++) {
       if ((Row = Act(FindRow, Window)(Window, y)) && Row->Text)
-        ok &= SelectionAppend(Row->Len * sizeof(hwfont), (byte *)Row->Text);
+        ok &= SelectionAppend(Row->Len * sizeof(hwfont), (CONST char *)Row->Text);
       ok &= _SelAppendNL();
     }
     if (Window->YendSel > Window->YstSel) {
       if (Window->XendSel >= 0 && (Row = Act(FindRow, Window)(Window, Window->YendSel)) &&
           Row->Text)
         ok &= SelectionAppend(Min2(Row->Len, Window->XendSel + 1) * sizeof(hwfont),
-                              (byte *)Row->Text);
+                              (CONST char *)Row->Text);
       if (!Row || !Row->Text || Row->Len <= Window->XendSel)
         ok &= _SelAppendNL();
     }
@@ -852,7 +852,7 @@ uldat unixSlot;
 
 static void TWDisplayIO(int fd, uldat slot) {
   struct sockaddr_un un_addr;
-  int len = sizeof(un_addr);
+  socklen_t len = sizeof(un_addr);
 
   if ((fd = accept(fd, (struct sockaddr *)&un_addr, &len)) >= 0) {
     close(fd);
@@ -885,7 +885,7 @@ static char twd[12];
 
 /* set TWDISPLAY and create /tmp/.Twin:<x> */
 byte InitTWDisplay(void) {
-  byte *arg0;
+  char *arg0;
   int fd = NOFD;
   unsigned short i;
   udat len;
@@ -954,7 +954,7 @@ byte InitTWDisplay(void) {
             putenv(envTWD);
             putenv("TERM=linux");
 #endif
-            if ((arg0 = AllocMem(strlen(TWDisplay) + 6))) {
+            if ((arg0 = (char *)AllocMem(strlen(TWDisplay) + 6))) {
               sprintf(arg0, "twin %s", TWDisplay);
               SetArgv0(main_argv, main_argv_usable_len, arg0);
               FreeMem(arg0);

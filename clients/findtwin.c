@@ -63,7 +63,7 @@ static void unix_socket_test(void) {
 #else
 #define my_sort alphasort
 #endif
-  int my_sort(); // its two arguments may be either (void *) or (TW_CONST struct dirent *)
+  int my_sort(); // its two arguments may be either (void *) or (TW_CONST struct dirent **)
   struct dirent **namelist;
   char *s;
   int n = scandir(tmpdir(), &namelist, match_twsocket, my_sort);

@@ -94,7 +94,7 @@
 { Tw_ScrollWidget, 12,
 8, "Tw_ScrollWidget", "0" "v" TWS_void_STR"x" magic_id_STR(widget)"_" TWS_ldat_STR"_" TWS_ldat_STR },
 { Tw_DrawWidget, 10,
-18, "Tw_DrawWidget", "0" "v" TWS_void_STR"x" magic_id_STR(widget)"_" TWS_dat_STR"_" TWS_dat_STR"_" TWS_dat_STR"_" TWS_dat_STR"W" TWS_byte_STR"W" TWS_hwfont_STR"W" TWS_hwattr_STR },
+18, "Tw_DrawWidget", "0" "v" TWS_void_STR"x" magic_id_STR(widget)"_" TWS_dat_STR"_" TWS_dat_STR"_" TWS_dat_STR"_" TWS_dat_STR"W" TWS_char_STR"W" TWS_hwfont_STR"W" TWS_hwattr_STR },
 
 { Tw_SetVisibleWidget, 16,
 6, "Tw_SetVisibleWidget", "0" "v" TWS_void_STR"x" magic_id_STR(widget)"_" TWS_byte_STR },

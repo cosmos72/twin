@@ -112,7 +112,7 @@
 
   case order_DrawWidget:
     switch (n) {
-      case 6: L = (a[2]._*a[3]._) * sizeof(byte); break;
+      case 6: L = (a[2]._*a[3]._) * sizeof(char); break;
       case 7: L = (a[2]._*a[3]._) * sizeof(hwfont); break;
       case 8: L = (a[2]._*a[3]._) * sizeof(hwattr); break;
     }

@@ -855,9 +855,6 @@ int read_stack_curr = 0;
 char *file_name[MAX_READ_DEPTH];
 int line_no[MAX_READ_DEPTH];
 
-#define LINE_NO line_no[read_stack_curr-1]
-#define FILE_NAME file_name[read_stack_curr-1]
-    
 static int yywrap(void);
 
 static char errbuf[256];
@@ -880,8 +877,8 @@ static char errbuf[256];
 
 #define YY_USE_PROTOS
 
-#line 884 "rcparse_lex.c"
-#line 885 "rcparse_lex.c"
+#line 881 "rcparse_lex.c"
+#line 882 "rcparse_lex.c"
 
 #define INITIAL 0
 
@@ -1098,10 +1095,10 @@ YY_DECL
 		}
 
 	{
-#line 72 "rcparse.l"
+#line 69 "rcparse.l"
 
 
-#line 1105 "rcparse_lex.c"
+#line 1102 "rcparse_lex.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -1160,421 +1157,421 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 74 "rcparse.l"
+#line 71 "rcparse.l"
 return ADDSCREEN;
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 75 "rcparse.l"
+#line 72 "rcparse.l"
 return ADDTOFUNC;
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 76 "rcparse.l"
+#line 73 "rcparse.l"
 return ADDTOMENU;
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 77 "rcparse.l"
+#line 74 "rcparse.l"
 return BACKGROUND;
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 78 "rcparse.l"
+#line 75 "rcparse.l"
 return BORDER;
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 79 "rcparse.l"
+#line 76 "rcparse.l"
 return BUTTON;
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 80 "rcparse.l"
+#line 77 "rcparse.l"
 return DELETEFUNC;
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 81 "rcparse.l"
+#line 78 "rcparse.l"
 return DELETEMENU;
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 82 "rcparse.l"
+#line 79 "rcparse.l"
 return DELETEBUTTON;
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 83 "rcparse.l"
+#line 80 "rcparse.l"
 return DELETESCREEN;
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 84 "rcparse.l"
+#line 81 "rcparse.l"
 return EXEC;
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 85 "rcparse.l"
+#line 82 "rcparse.l"
 return EXECTTY;
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 86 "rcparse.l"
+#line 83 "rcparse.l"
 return GLOBALFLAGS;
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 87 "rcparse.l"
+#line 84 "rcparse.l"
 return INTERACTIVE;
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 88 "rcparse.l"
+#line 85 "rcparse.l"
 return KEY;
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 89 "rcparse.l"
+#line 86 "rcparse.l"
 return MENU;
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 90 "rcparse.l"
+#line 87 "rcparse.l"
 return MOUSE;
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 91 "rcparse.l"
+#line 88 "rcparse.l"
 return MODULE;
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 92 "rcparse.l"
+#line 89 "rcparse.l"
 return MOVE;
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 93 "rcparse.l"
+#line 90 "rcparse.l"
 return MOVESCREEN;
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 94 "rcparse.l"
+#line 91 "rcparse.l"
 return NEXT;
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 95 "rcparse.l"
+#line 92 "rcparse.l"
 return PREV;
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 96 "rcparse.l"
+#line 93 "rcparse.l"
 return READ;
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 97 "rcparse.l"
+#line 94 "rcparse.l"
 return RESTART;
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 98 "rcparse.l"
+#line 95 "rcparse.l"
 return RESIZE;
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 99 "rcparse.l"
+#line 96 "rcparse.l"
 return RESIZESCREEN;
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 100 "rcparse.l"
+#line 97 "rcparse.l"
 return SCREEN;
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 101 "rcparse.l"
+#line 98 "rcparse.l"
 return SCROLL;
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 102 "rcparse.l"
+#line 99 "rcparse.l"
 return SENDTOSCREEN;
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 103 "rcparse.l"
+#line 100 "rcparse.l"
 return STDERR;
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 104 "rcparse.l"
+#line 101 "rcparse.l"
 return SLEEP;
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 105 "rcparse.l"
+#line 102 "rcparse.l"
 return SYNTHETICKEY;
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 106 "rcparse.l"
+#line 103 "rcparse.l"
 return WAIT;
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 107 "rcparse.l"
+#line 104 "rcparse.l"
 return WINDOW;
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 109 "rcparse.l"
+#line 106 "rcparse.l"
 { yylval.val = FOCUS;      return FLAG_FUNC; }
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 110 "rcparse.l"
+#line 107 "rcparse.l"
 { yylval.val = ROLL;       return FLAG_FUNC; }
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 112 "rcparse.l"
+#line 109 "rcparse.l"
 { yylval.val = BEEP;       return EASY_FUNC; }
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 113 "rcparse.l"
+#line 110 "rcparse.l"
 { yylval.val = CENTER;     return EASY_FUNC; }
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 114 "rcparse.l"
+#line 111 "rcparse.l"
 { yylval.val = CLOSE;      return EASY_FUNC; }
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 115 "rcparse.l"
+#line 112 "rcparse.l"
 { yylval.val = FULLSCREEN; return EASY_FUNC; }
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 116 "rcparse.l"
+#line 113 "rcparse.l"
 { yylval.val = KILL;       return EASY_FUNC; }
 	YY_BREAK
 case 42:
 YY_RULE_SETUP
-#line 117 "rcparse.l"
+#line 114 "rcparse.l"
 { yylval.val = LOWER;      return EASY_FUNC; }
 	YY_BREAK
 case 43:
 YY_RULE_SETUP
-#line 118 "rcparse.l"
+#line 115 "rcparse.l"
 { yylval.val = MAXIMIZE;   return EASY_FUNC; }
 	YY_BREAK
 case 44:
 YY_RULE_SETUP
-#line 119 "rcparse.l"
+#line 116 "rcparse.l"
 { yylval.val = NOP;	   return EASY_FUNC; }
 	YY_BREAK
 case 45:
 YY_RULE_SETUP
-#line 120 "rcparse.l"
+#line 117 "rcparse.l"
 { yylval.val = QUIT;       return EASY_FUNC; }
 	YY_BREAK
 case 46:
 YY_RULE_SETUP
-#line 121 "rcparse.l"
+#line 118 "rcparse.l"
 { yylval.val = RAISE;      return EASY_FUNC; }
 	YY_BREAK
 case 47:
 YY_RULE_SETUP
-#line 122 "rcparse.l"
+#line 119 "rcparse.l"
 { yylval.val = RAISELOWER; return EASY_FUNC; }
 	YY_BREAK
 case 48:
 YY_RULE_SETUP
-#line 123 "rcparse.l"
+#line 120 "rcparse.l"
 { yylval.val = REFRESH;    return EASY_FUNC; }
 	YY_BREAK
 case 49:
 YY_RULE_SETUP
-#line 124 "rcparse.l"
+#line 121 "rcparse.l"
 { yylval.val = WINDOWLIST; return EASY_FUNC; }
 	YY_BREAK
 case 50:
 YY_RULE_SETUP
-#line 126 "rcparse.l"
+#line 123 "rcparse.l"
 return FL_ON;
 	YY_BREAK
 case 51:
 YY_RULE_SETUP
-#line 127 "rcparse.l"
+#line 124 "rcparse.l"
 return FL_OFF;
 	YY_BREAK
 case 52:
 YY_RULE_SETUP
-#line 128 "rcparse.l"
+#line 125 "rcparse.l"
 return FL_TOGGLE;
 	YY_BREAK
 case 53:
 YY_RULE_SETUP
-#line 129 "rcparse.l"
+#line 126 "rcparse.l"
 return FL_ACTIVE;
 	YY_BREAK
 case 54:
 YY_RULE_SETUP
-#line 130 "rcparse.l"
+#line 127 "rcparse.l"
 return FL_INACTIVE;
 	YY_BREAK
 case 55:
 YY_RULE_SETUP
-#line 131 "rcparse.l"
+#line 128 "rcparse.l"
 return FL_LEFT;
 	YY_BREAK
 case 56:
 YY_RULE_SETUP
-#line 132 "rcparse.l"
+#line 129 "rcparse.l"
 return FL_RIGHT;
 	YY_BREAK
 case 57:
 YY_RULE_SETUP
-#line 133 "rcparse.l"
+#line 130 "rcparse.l"
 return BUTTON_PASTE;
 	YY_BREAK
 case 58:
 YY_RULE_SETUP
-#line 134 "rcparse.l"
+#line 131 "rcparse.l"
 return BUTTON_SELECTION;
 	YY_BREAK
 case 59:
 YY_RULE_SETUP
-#line 135 "rcparse.l"
+#line 132 "rcparse.l"
 return SHADOWS;
 	YY_BREAK
 case 60:
 YY_RULE_SETUP
-#line 137 "rcparse.l"
+#line 134 "rcparse.l"
 { yylval.val = ALTFONT;      return GLOBAL_FLAG; }
 	YY_BREAK
 case 61:
 YY_RULE_SETUP
-#line 138 "rcparse.l"
+#line 135 "rcparse.l"
 { yylval.val = BLINK;        return GLOBAL_FLAG; }
 	YY_BREAK
 case 62:
 YY_RULE_SETUP
-#line 139 "rcparse.l"
+#line 136 "rcparse.l"
 {
 		  yylval.val = CURSOR_ALWAYS;return GLOBAL_FLAG; }
 	YY_BREAK
 case 63:
 YY_RULE_SETUP
-#line 141 "rcparse.l"
+#line 138 "rcparse.l"
 {
 		  yylval.val = MENU_HIDE;    return GLOBAL_FLAG; }
 	YY_BREAK
 case 64:
 YY_RULE_SETUP
-#line 143 "rcparse.l"
+#line 140 "rcparse.l"
 { yylval.val = MENU_INFO;    return GLOBAL_FLAG; }
 	YY_BREAK
 case 65:
 YY_RULE_SETUP
-#line 144 "rcparse.l"
+#line 141 "rcparse.l"
 { yylval.val = MENU_RELAX;   return GLOBAL_FLAG; }
 	YY_BREAK
 case 66:
 YY_RULE_SETUP
-#line 145 "rcparse.l"
+#line 142 "rcparse.l"
 {
 		  yylval.val = SCREEN_SCROLL;return GLOBAL_FLAG; }
 	YY_BREAK
 case 67:
 YY_RULE_SETUP
-#line 147 "rcparse.l"
+#line 144 "rcparse.l"
 { yylval.val = TERMINALS_UTF8;     return GLOBAL_FLAG; }
 	YY_BREAK
 case 68:
 YY_RULE_SETUP
-#line 148 "rcparse.l"
+#line 145 "rcparse.l"
 { yylval.val = KBD_ALT_FL;   return KBD_FLAG; }
 	YY_BREAK
 case 69:
 YY_RULE_SETUP
-#line 149 "rcparse.l"
+#line 146 "rcparse.l"
 { yylval.val = KBD_CTRL_FL;  return KBD_FLAG; }
 	YY_BREAK
 case 70:
 YY_RULE_SETUP
-#line 150 "rcparse.l"
+#line 147 "rcparse.l"
 { yylval.val = KBD_SHIFT_FL; return KBD_FLAG; }
 	YY_BREAK
 case 71:
 YY_RULE_SETUP
-#line 152 "rcparse.l"
+#line 149 "rcparse.l"
 { yylval.val = BLACK;	return COLOR; }
 	YY_BREAK
 case 72:
 YY_RULE_SETUP
-#line 153 "rcparse.l"
+#line 150 "rcparse.l"
 { yylval.val = BLUE;	return COLOR; }
 	YY_BREAK
 case 73:
 YY_RULE_SETUP
-#line 154 "rcparse.l"
+#line 151 "rcparse.l"
 { yylval.val = GREEN;	return COLOR; }
 	YY_BREAK
 case 74:
 YY_RULE_SETUP
-#line 155 "rcparse.l"
+#line 152 "rcparse.l"
 { yylval.val = CYAN;	return COLOR; }
 	YY_BREAK
 case 75:
 YY_RULE_SETUP
-#line 156 "rcparse.l"
+#line 153 "rcparse.l"
 { yylval.val = RED;	return COLOR; }
 	YY_BREAK
 case 76:
 YY_RULE_SETUP
-#line 157 "rcparse.l"
+#line 154 "rcparse.l"
 { yylval.val = MAGENTA;	return COLOR; }
 	YY_BREAK
 case 77:
 YY_RULE_SETUP
-#line 158 "rcparse.l"
+#line 155 "rcparse.l"
 { yylval.val = YELLOW;	return COLOR; }
 	YY_BREAK
 case 78:
 YY_RULE_SETUP
-#line 159 "rcparse.l"
+#line 156 "rcparse.l"
 { yylval.val = WHITE;	return COLOR; }
 	YY_BREAK
 case 79:
 YY_RULE_SETUP
-#line 160 "rcparse.l"
+#line 157 "rcparse.l"
 return COL_HIGH;
 	YY_BREAK
 case 80:
 /* rule 80 can match eol */
 YY_RULE_SETUP
-#line 162 "rcparse.l"
+#line 159 "rcparse.l"
 { LINE_NO++; return '\n'; }
 	YY_BREAK
 case 81:
 YY_RULE_SETUP
-#line 164 "rcparse.l"
+#line 161 "rcparse.l"
 { return '\n'; }
 	YY_BREAK
 case 82:
 YY_RULE_SETUP
-#line 166 "rcparse.l"
+#line 163 "rcparse.l"
 /* eat comments */
 	YY_BREAK
 case 83:
 YY_RULE_SETUP
-#line 168 "rcparse.l"
+#line 165 "rcparse.l"
 {
 		    yylval._string = my_strdup(yytext);
 		    return STRING;
@@ -1582,7 +1579,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 84:
 YY_RULE_SETUP
-#line 173 "rcparse.l"
+#line 170 "rcparse.l"
 {
 		    yylval.val = strtol(yytext, NULL, 0);
 		    return NUMBER;
@@ -1590,12 +1587,12 @@ YY_RULE_SETUP
 	YY_BREAK
 case 85:
 YY_RULE_SETUP
-#line 178 "rcparse.l"
+#line 175 "rcparse.l"
 return (unsigned char)yytext[0];
 	YY_BREAK
 case 86:
 YY_RULE_SETUP
-#line 180 "rcparse.l"
+#line 177 "rcparse.l"
 {
 		    sprintf(errbuf, "twin: %.200s:%d: invalid identifier `%s'\n",
 			    FILE_NAME, LINE_NO, yytext);
@@ -1605,7 +1602,7 @@ YY_RULE_SETUP
 case 87:
 /* rule 87 can match eol */
 YY_RULE_SETUP
-#line 186 "rcparse.l"
+#line 183 "rcparse.l"
 {
 			int len = strlen(yytext + 1);
 			char c, *p = yytext + 1;
@@ -1665,7 +1662,7 @@ YY_RULE_SETUP
 case 88:
 /* rule 88 can match eol */
 YY_RULE_SETUP
-#line 242 "rcparse.l"
+#line 239 "rcparse.l"
 {
 		    char *buf = AllocMem(256 + strlen(yytext));
 		    if (buf) {
@@ -1678,12 +1675,12 @@ YY_RULE_SETUP
 	YY_BREAK
 case 89:
 YY_RULE_SETUP
-#line 252 "rcparse.l"
+#line 249 "rcparse.l"
 /* eat whitespace */
 	YY_BREAK
 case 90:
 YY_RULE_SETUP
-#line 255 "rcparse.l"
+#line 252 "rcparse.l"
 {
 		    unsigned char ch = yytext[0];
 		    sprintf(errbuf, "twin: %.200s:%d: illegal character 0x%02X",
@@ -1697,10 +1694,10 @@ YY_RULE_SETUP
 	YY_BREAK
 case 91:
 YY_RULE_SETUP
-#line 266 "rcparse.l"
+#line 263 "rcparse.l"
 ECHO;
 	YY_BREAK
-#line 1704 "rcparse_lex.c"
+#line 1701 "rcparse_lex.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -2705,7 +2702,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 266 "rcparse.l"
+#line 263 "rcparse.l"
 
 
 

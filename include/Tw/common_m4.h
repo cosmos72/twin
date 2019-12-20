@@ -53,14 +53,10 @@ extern char *Tw_CloneStr(TW_CONST char *);
 extern hwfont *Tw_CloneStr2HWFont(TW_CONST char *, size_t);
 
 
-#define Tw_LenStr		strlen
-#define Tw_CmpStr		strcmp
 #define Tw_CopyStr(From,To)		strcpy(To, From)
 
 #define Tw_CopyMem(From, To, Size)	memcpy(To, From, Size)
 #define Tw_MoveMem(From, To, Size)	memmove(To, From, Size)
-#define Tw_WriteMem		memset
-#define Tw_CmpMem		memcmp
 
 
 
