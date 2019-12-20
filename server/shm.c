@@ -384,9 +384,9 @@ void *shm_malloc_or_die(size_t len) {
   exit(1);
 }
 
-byte *shm_strdup_or_die(CONST byte *s) {
+char *shm_strdup_or_die(CONST char *s) {
   size_t len = strlen(s) + 1;
-  byte *d = shm_malloc_or_die(len);
+  char *d = (char *)shm_malloc_or_die(len);
   CopyMem(s, d, len);
   return d;
 }

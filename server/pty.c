@@ -171,7 +171,7 @@ static byte fixup_pty(void) {
   return tfalse;
 }
 
-static void setup_pty_error(CONST byte *f, CONST byte *arg) {
+static void setup_pty_error(CONST char *f, CONST char *arg) {
   pty_error("setting up slave tty", f, arg);
 }
 

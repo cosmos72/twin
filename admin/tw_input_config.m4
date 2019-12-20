@@ -93,7 +93,7 @@ enable_hw_tty=yes
 
 dnl the Linux console driver
 AC_ARG_ENABLE(hw-tty-linux,dnl
-[  --enable-hw-tty-linux[=yes|no]         enable the Linux console driver (gpm mouse, /dev/vcsa)],,
+[  --enable-hw-tty-linux[=yes|no]         enable the Linux console driver with gpm mouse],,
 enable_hw_tty_linux=yes
 )dnl
 

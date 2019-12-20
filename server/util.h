@@ -53,7 +53,7 @@ timevalue *IncrTime(timevalue *Time, timevalue *Incr);
 timevalue *DecrTime(timevalue *Time, timevalue *Decr);
 void SortMsgPortByCallTime(msgport Port);
 void SortAllMsgPortsByCallTime(void);
-byte SendControlMsg(msgport MsgPort, udat Code, udat Len, CONST byte *Data);
+byte SendControlMsg(msgport MsgPort, udat Code, udat Len, CONST char *Data);
 
 byte Minimum(byte MaxIndex, CONST ldat *Array);
 

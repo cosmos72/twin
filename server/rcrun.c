@@ -1319,7 +1319,7 @@ byte InitRC(void) {
                            {{UD_ARROW, UD_ARROW}, -2, ttrue, tfalse},
                            {{'>', '<'}, -4, ttrue, tfalse}};
 
-  byte *Seq = "";
+  char *Seq = "";
   /*
    * this is really heavy on the compiler...
    * but it should be able to optimize it

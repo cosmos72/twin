@@ -1547,7 +1547,7 @@ Optional Features:
   --enable-term-devpts=yes|no          enable Unix98 /dev/pts/* pseudo-ttys
   --enable-printk=yes|no               enable logging messages in Messages window
   --enable-hw-tty=yes|no               enable tty drivers
-  --enable-hw-tty-linux=yes|no         enable the Linux console driver (gpm mouse, /dev/vcsa)
+  --enable-hw-tty-linux=yes|no         enable the Linux console driver with gpm mouse
   --enable-hw-tty-lrawkbd=yes|no       enable the Linux console raw keyboard driver
   --enable-hw-tty-twterm=yes|no        enable the twterm terminal driver
   --enable-hw-tty-termcap=yes|no       enable the termcap/ncurses terminal driver

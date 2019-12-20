@@ -393,7 +393,7 @@ INLINE void termcap_SingleMogrify(dat x, dat y, hwattr V) {
 }
 
 /* HideMouse and ShowMouse depend on Video setup, not on Mouse.
- * so we have vcsa_ and termcap_ versions, not GPM_ ones... */
+ * so we have linux_ and termcap_ versions, not GPM_ ones... */
 static void termcap_ShowMouse(void) {
   uldat pos =
       (HW->Last_x = HW->MouseState.x) + (HW->Last_y = HW->MouseState.y) * (ldat)DisplayWidth;

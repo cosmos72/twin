@@ -9,10 +9,9 @@
  * and read mouse state, but draws mouse pointer manually;
  * (as fallback, xterm-style mouse input)
  *
- * output through /dev/vcsaXX;
- * (as fallback, output through stdout)
+ * output through stdout
  *
- * CONF_HW_TTY_LINUX is for linux console support (gpm, /dev/vcsa*), while
+ * CONF_HW_TTY_LINUX is for linux console support (gpm, stdout), while
  * CONF_HW_TTY_TWTERM is for twin terminal (xterm style mouse, stdout)
  */
 
@@ -23,10 +22,6 @@
 #if defined(CONF_HW_TTY_LINUX) || defined(CONF_HW_TTY_TWTERM)
 #include "video_stdout.h"
 #endif /* defined(CONF_HW_TTY_LINUX) || defined(CONF_HW_TTY_TWTERM) */
-
-#ifdef CONF_HW_TTY_LINUX
-#include "video_vcsa.h"
-#endif /* CONF_HW_TTY_LINUX */
 
 #if defined(CONF_HW_TTY_LINUX) && defined(CONF_HW_TTY_LRAWKBD)
 #include "kbd_raw.h"

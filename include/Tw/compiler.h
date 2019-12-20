@@ -5,15 +5,25 @@
 
 /* library stuff. define macros with TW_ prefix */
 
-#define TW__CAT(a, b) a##b
-#define TW__CAT3(a, b, c) a##b##c
-#define TW__CAT4(a, b, c, d) a##b##c##d
-#define TW_CAT(a, b) TW__CAT(a, b)
-#define TW_CAT3(a, b, c) TW__CAT3(a, b, c)
-#define TW_CAT4(a, b, c, d) TW__CAT4(a, b, c, d)
-
+#ifndef TW_STR
 #define TW__STR(s) #s
 #define TW_STR(s) TW__STR(s)
+#endif
+
+#ifndef TW_CAT
+#define TW__CAT(a, b) a##b
+#define TW_CAT(a, b) TW__CAT(a, b)
+#endif
+
+#ifndef TW_CAT3
+#define TW__CAT3(a, b, c) a##b##c
+#define TW_CAT3(a, b, c) TW__CAT3(a, b, c)
+#endif
+
+#ifndef TW_CAT3
+#define TW__CAT4(a, b, c, d) a##b##c##d
+#define TW_CAT4(a, b, c, d) TW__CAT4(a, b, c, d)
+#endif
 
 #ifndef TW_CONST
 #define TW_CONST const

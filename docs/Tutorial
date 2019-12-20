@@ -107,22 +107,18 @@
    system consoles until someone adds to twin the necessary code for them.
    
    Twin can write to textmode terminals in different ways:
-   a: on _local_ Linux console: special devices /dev/vcsa* have the same layout
-      as VGA textmode framebuffer. Using them allows twin to display _any_
-      ASCII char, from 0 to 255.
-   b: on any Linux terminal: even writing on standard output, just like any
+   a: on any Linux terminal: when writing to standard output, just like any
       `normal' textmode program, twin can take advantage of extra features
       of the Linux terminal.
-      This doesn't allow displaying certain special characters, but it should
-      not be a big problem. It is also a little slower than (a) but again,
-      no big problem.
-   c: on any termcap or ncurses compatible terminal: this is the most generic
+      This doesn't allow displaying a few special characters, but it should
+      not be a big problem.
+   b: on any termcap or ncurses compatible terminal: this is the most generic
       driver, and is quite limited. Twin writes on standard output, but due to
       the broad-targeted code cannot take advantage of any extra features of
       the actual terminal it runs on. Yet this allows to display on such a
       large variety of terminals to be actually useful.
    When choosing a method to display on ttys, twin will use (a) if available,
-   else fallback on (b) if available, else fallback on (c).
+   else fallback on (b).
    
    2.1. Emulated terminals
    
@@ -282,7 +278,7 @@
    If you feel slightly offended by reading something so trivial and obvious,
    well, I feel quite stupid too writing it, but I must start from somewhere ;)
    
-   Each word in the menu just appeared is a `menuitem'. The "ð" menuitem lets
+   Each word in the menu just appeared is a `menuitem'. The "â‰¡" menuitem lets
    you pop up some utility windows, including a Clock, the Options window,
    the Buttons window, the Display window and the About window.
    The "File" menuitem lets you Quit twin, Suspend or Detach it, Execute
@@ -558,7 +554,7 @@
 	executed by it (twin and twattach/twdisplay) to /var/log/twdm.log.
    
 	Furthermore, diagnostic messages produced by twin are also collected
-	within twin itself, and can be viewed selecting Menu -> ð -> Messages
+	within twin itself, and can be viewed selecting Menu -> â‰¡ -> Messages
 	from the default menu.
 	
 	
@@ -638,7 +634,7 @@
    3) run `twdetach' (more explanations below for this, but in this case
       it is equivalent to selecting `Detach' from the default menu).
    
-   4) select `Display' from the `ð' entry of the default menu,
+   4) select `Display' from the `â‰¡' entry of the default menu,
       watch the `Display' window pop up, choose a display from the list
       and click on `Remove'.
       
@@ -830,8 +826,7 @@
       
       --hw=twin : ",gz" to enable gzip compression on the connecting socket.
       
-      --hw=tty	: ",stdout" to draw on stdout even if /dev/vcsa* is available.
-		: ",termcap" to use termcap/ncurses interface even if other
+      --hw=tty	: ",termcap" to use termcap/ncurses interface even if other
 			methods are available.
 		: ",colorbug" use with termcap interface, if terminal does not
 			reset colors to white on black using ESC [ m

@@ -1,11 +1,7 @@
 /*
- * As alternate method, we also provide
- * output through stdout.
+ * Video output on Linux terminals through stdout.
  *
- * it is slower (?), but in these days it shouldn't be a problem.
- *
- * this is used both to run inside a twin terminal,
- * and as fallback (if vcsa_InitVideo() fails) to run on a Linux console.
+ * this is used both inside twin terminal and inside Linux console.
  */
 
 static void linux_QuitVideo(void);
@@ -233,7 +229,7 @@ INLINE void linux_SingleMogrify(dat x, dat y, hwattr V) {
 }
 
 /* HideMouse and ShowMouse depend on Video setup, not on Mouse.
- * so we have vcsa_ and linux_ versions, not GPM_ ones... */
+ * so we have linux_ and termcap_ versions, not GPM_ ones... */
 static void linux_ShowMouse(void) {
   uldat pos =
       (HW->Last_x = HW->MouseState.x) + (HW->Last_y = HW->MouseState.y) * (ldat)DisplayWidth;

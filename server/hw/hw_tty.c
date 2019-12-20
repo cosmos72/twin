@@ -223,7 +223,7 @@ static void stdin_Resize(dat x, dat y) {
     fflush(stdOUT);
     /*
      * flush now not to risk arriving late
-     * and clearing the screen AFTER vcsa_FlushVideo()
+     * and clearing the screen AFTER *_FlushVideo()
      */
     NeedRedrawVideo(0, 0, x - 1, y - 1);
   }
@@ -270,12 +270,8 @@ static byte tty_InitHW(void) {
 #define NEVER 0
 #define MAYBE 1
 #define ALWAYS 2
-  /*
-   * writing through /dev/vcsa* is slow (too many sycalls),
-   * enable only if explicitly requested
-   */
-  byte autotry_video = MAYBE, try_vcsa = NEVER, try_stdout = MAYBE, try_termcap = MAYBE,
-       autotry_kbd = MAYBE, try_lrawkbd = MAYBE,
+  byte autotry_video = MAYBE, try_stdout = MAYBE, try_termcap = MAYBE, autotry_kbd = MAYBE,
+       try_lrawkbd = MAYBE,
 
        force_mouse = tfalse, tc_colorbug = tfalse, need_persistent_slot = tfalse, try_ctty = tfalse,
        display_is_ctty = tfalse;
@@ -327,9 +323,6 @@ static byte tty_InitHW(void) {
         if (s)
           *s = ',';
         arg = s;
-      } else if (!strncmp(arg, ",vcsa", 5)) {
-        try_vcsa = !(autotry_video = !strncmp(arg + 5, "=no", 3)) << 1;
-        arg = strchr(arg + 5, ',');
       } else if (!strncmp(arg, ",stdout", 7)) {
         try_stdout = !(autotry_video = !strncmp(arg + 7, "=no", 3)) << 1;
         arg = strchr(arg + 7, ',');
@@ -483,9 +476,6 @@ static byte tty_InitHW(void) {
     printk("      tty_InitHW() failed: unable to read from the terminal: " SS "\n", ErrStr);
   } else if (
 
-#ifdef CONF_HW_TTY_LINUX
-      (TRY_V(vcsa) && vcsa_InitVideo()) ||
-#endif
 #if defined(CONF_HW_TTY_LINUX) || defined(CONF_HW_TTY_TWTERM)
       (TRY_V(stdout) && linux_InitVideo()) ||
 #endif

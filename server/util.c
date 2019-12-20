@@ -317,7 +317,7 @@ void SortAllMsgPortsByCallTime(void) {
   All->LastMsgPort = End;
 }
 
-byte SendControlMsg(msgport MsgPort, udat Code, udat Len, CONST byte *Data) {
+byte SendControlMsg(msgport MsgPort, udat Code, udat Len, CONST char *Data) {
   msg Msg;
   event_control *Event;
 

@@ -15,7 +15,7 @@ INLINE byte Plain_isDirtyVideo(dat X, dat Y) {
 
 /*
  * this is not trivial, as it must consider that areas nearer than
- * merge_Threshold will get merged together (by vcsa_FlushVideo() for example)
+ * merge_Threshold will get merged together (by linux_FlushVideo() for example)
  */
 INLINE byte Threshold_isDirtyVideo(dat X, dat Y) {
   dat s1, s2, e1, e2, delta;

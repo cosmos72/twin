@@ -73,7 +73,7 @@ struct ldat_list {
 #define my_malloc shm_malloc_or_die
 #define my_strdup shm_strdup_or_die
 void *shm_malloc_or_die(size_t size);
-byte *shm_strdup_or_die(CONST byte *s);
+char *shm_strdup_or_die(CONST char *s);
 
 byte shm_init(size_t len);
 byte shm_shrink(void);
