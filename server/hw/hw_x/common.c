@@ -169,7 +169,7 @@ static byte X11_InitHW(void) {
     printk("      X11_InitHW(): Out of memory!\n");
     return tfalse;
   }
-  WriteMem(HW->Private, 0, sizeof(struct x11_data));
+  memset(HW->Private, 0, sizeof(struct x11_data));
 
   /* default: show the whole screen */
   xhw_view = xhw_startx = xhw_starty = xhw_endx = xhw_endy = 0;

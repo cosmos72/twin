@@ -330,7 +330,7 @@ static byte ImmButton(ldat n, str shape, ldat lr, ldat flag, ldat pos) {
 
 static void DeleteNodeName(str name, node *l) {
   for (; *l; l = &((*l)->next)) {
-    if (!CmpStr(name, (*l)->name)) {
+    if (!strcmp(name, (*l)->name)) {
       *l = (*l)->next;
       return;
     }
@@ -507,7 +507,7 @@ static str toString(ldat i) {
 static ldat FindTwKey(str name) {
   uldat i;
   for (i = 0; TW_KeyList[i].name; i++) {
-    if (!CmpStr(name, TW_KeyList[i].name))
+    if (!strcmp(name, TW_KeyList[i].name))
       return (ldat)i;
   }
   return -1;
@@ -1034,7 +1034,7 @@ static void DumpMouseNode(node n) {
     if (n->id & HOLD_N(i))
       *b++ = '1' + i;
   }
-  WriteMem(b, '\0', BUTTON_N_MAX + 1 - (b - buttons));
+  memset(b, '\0', BUTTON_N_MAX + 1 - (b - buttons));
 
   fprintf(stderr, "%s %s %s ", TokenName(MOUSE), buttons, n->name);
   DumpGenericNode(n->body);
@@ -1075,8 +1075,8 @@ static void DumpGlobals(void) {
  * (this happens in the child process)
  */
 static void ClearGlobals(void) {
-  WriteMem(Globals, '\0', GLOBAL_MAX * sizeof(node));
-  WriteMem(All->ButtonVec, '\0', BUTTON_MAX * sizeof(button_vec));
+  memset(Globals, '\0', GLOBAL_MAX * sizeof(node));
+  memset(All->ButtonVec, '\0', BUTTON_MAX * sizeof(button_vec));
   MenuBinds = NULL;
   MenuBindsMax = 0;
 }
@@ -1103,7 +1103,7 @@ static void WriteGlobals(void) {
 
 static screen FindNameInScreens(uldat len, byte *name, screen S) {
   while (S) {
-    if (len == S->NameLen && !CmpMem(name, S->Name, len))
+    if (len == S->NameLen && !memcmp(name, S->Name, len))
       return S;
     S = S->Next;
   }
@@ -1112,7 +1112,7 @@ static screen FindNameInScreens(uldat len, byte *name, screen S) {
 
 static node FindNameInList(uldat len, byte *name, node list) {
   while (list) {
-    if (list->name && strlen(list->name) == len && !CmpMem(name, list->name, len))
+    if (list->name && strlen(list->name) == len && !memcmp(name, list->name, len))
       return list;
     list = list->next;
   }
@@ -1294,7 +1294,7 @@ static byte NewCommonMenu(void **shm_M, menu *res_CommonMenu, node **res_MenuBin
       if (!(Line = (str)AllocMem(maxlen + 1)))
         break;
 
-      WriteMem(Line, 0xC4, maxlen);
+      memset(Line, 0xC4, maxlen);
       Line[maxlen] = '\0'; /* not strictly necessary */
 
       for (N = M->body; N; N = N->next) {

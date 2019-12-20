@@ -181,7 +181,7 @@ static void X11_SelectionExport_X11(void) {
  * notify our Selection to X11
  */
 static void X11_SelectionNotify_X11(uldat ReqPrivate, uldat Magic, CONST char MIME[MAX_MIMELEN],
-                                    uldat Len, CONST byte *Data) {
+                                    uldat Len, CONST char *Data) {
   XEvent ev;
 
   if (XReqCount == 0) {
@@ -223,19 +223,20 @@ static void X11_SelectionNotify_X11(uldat ReqPrivate, uldat Magic, CONST char MI
     byte *_Data = NULL, *d;
     CONST hwfont *s;
 
-    /* X11 selection contains text, not unicode */
+    /* X11 selection contains UTF-16 */
     if (Magic == SEL_HWFONTMAGIC) {
       if ((_Data = d = (byte *)AllocMem(Len))) {
         s = (CONST hwfont *)Data;
+        /* FIXME: this is rough. encode to UTF-8 instead */
         for (l = Len; l; l--)
           *d++ = Tutf_UTF_32_to_CP437(*s++);
-        Data = _Data;
+        Data = (char *)_Data;
         Len /= sizeof(hwfont);
       } else
         Len = 0;
     }
     XChangeProperty(xdisplay, XReq(XReqCount).requestor, XReq(XReqCount).property, XA_STRING, 8,
-                    PropModeReplace, Data, Len);
+                    PropModeReplace, (const byte *)Data, Len);
     ev.xselection.property = XReq(XReqCount).property;
 
     if (Magic == SEL_HWFONTMAGIC && _Data)
@@ -253,7 +254,8 @@ static void X11_SelectionNotify_up(Window win, Atom prop) {
   unsigned long nitems, bytes_after = TW_BIGBUFF;
   Atom actual_type;
   int actual_fmt;
-  byte *data, *buff = NULL;
+  byte *data;
+  char *buff = NULL;
 
   if (xReqCount == 0) {
     printk(THIS ".c: X11_SelectionNotify_up(): unexpected X Selection Notify event!\n");
@@ -280,7 +282,7 @@ static void X11_SelectionNotify_up(Window win, Atom prop) {
       return;
     }
 
-    if (buff || (buff = (byte *)AllocMem(nitems + bytes_after))) {
+    if (buff || (buff = (char *)AllocMem(nitems + bytes_after))) {
       CopyMem(data, buff + nread, nitems);
       nread += nitems;
     }

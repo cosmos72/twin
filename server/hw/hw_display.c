@@ -359,7 +359,7 @@ static void display_SelectionRequest_display(obj Requestor, uldat ReqPrivate) {
  */
 static void display_SelectionNotify_display(uldat ReqPrivate, uldat Magic,
                                             CONST char MIME[MAX_MIMELEN], uldat Len,
-                                            byte CONST *Data) {
+                                            CONST char *Data) {
   /*
    * shortcut: since (display) is a msgport, use fail-safe TwinSelectionNotify()
    * to send message to twdisplay.
@@ -394,7 +394,7 @@ static void display_QuitHW(void) {
 static void fix4display(void) {
   char *arg, *arg17;
 
-  if (HW->Name && HW->NameLen > 17 && !CmpMem(HW->Name, "-hw=display@(-hw=", 17) &&
+  if (HW->Name && HW->NameLen > 17 && !memcmp(HW->Name, "-hw=display@(-hw=", 17) &&
       (arg = (char *)memchr(arg17 = HW->Name + 17, ')', HW->NameLen - 17))) {
 
     uldat n = arg - arg17;

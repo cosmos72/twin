@@ -369,7 +369,7 @@ void *shm_malloc(size_t len) {
 #endif
 #ifndef CONF_WM_RC_SHMMAP
     /* important: memory returned by shm_malloc() must be full of zeros! */
-    WriteMem(ret, '\0', len);
+    memset(ret, '\0', len);
 #endif
     return (void *)ret;
   }

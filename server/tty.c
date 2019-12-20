@@ -686,7 +686,7 @@ INLINE void csi_m(void) {
   update_eff();
 }
 
-static void respond_string(byte *p) {
+static void respond_string(char *p) {
   ldat Len = strlen(p);
 
   /* the remote program may be directly attached to the window */
@@ -713,7 +713,7 @@ static void respond_string(byte *p) {
 }
 
 static void cursor_report(void) {
-  byte buf[40];
+  char buf[40];
   sprintf(buf, "\033[%d;%dR", Y + (*Flags & TTY_RELORIG ? Top + 1 : 1), X + 1);
   respond_string(buf);
 }
@@ -947,7 +947,7 @@ static void reset_tty(byte do_clear) {
 
 static byte grow_newtitle(void) {
   ldat _Max;
-  byte *_Name;
+  char *_Name;
   if (newMax < TW_MAXDAT) {
     _Max = ((ldat)newMax + (newMax >> 1) + 3) | All->SetUp->MinAllocSize;
     if (_Max > TW_MAXDAT)
@@ -971,14 +971,14 @@ static byte insert_newtitle(byte c) {
 
 static void set_newtitle(void) {
   dat _Len;
-  byte *_Name;
+  char *_Name;
 
   /* try to shrink... */
-  if (!(_Name = ReAllocMem(newName, _Len = newLen)))
+  if (!(_Name = (char *)ReAllocMem(newName, _Len = newLen)))
     _Name = newName;
 
   newLen = newMax = 0;
-  newName = (byte *)0;
+  newName = NULL;
 
   Act(SetTitle, Win)(Win, _Len, _Name);
 }
@@ -986,7 +986,7 @@ static void set_newtitle(void) {
 static void clear_newtitle(void) {
   if (newName)
     FreeMem(newName);
-  newName = (byte *)0;
+  newName = NULL;
   newLen = newMax = 0;
 }
 
@@ -1117,7 +1117,7 @@ INLINE void write_ctrl(byte c) {
   case ESnonstd:
     if (c == 'P') { /* Palette escape sequence */
       nPar = 0;
-      WriteMem((byte *)&Par, 0, NPAR * sizeof(ldat));
+      memset((byte *)&Par, 0, NPAR * sizeof(ldat));
       DState = ESpalette;
       return;
     } else if (c == 'R') /* Reset palette */
@@ -1147,7 +1147,7 @@ INLINE void write_ctrl(byte c) {
 
   case ESsquare:
     Par[0] = nPar = 0;
-    /*WriteMem((byte *)&Par, 0, NPAR * sizeof(ldat));*/
+    /*memset((byte *)&Par, 0, NPAR * sizeof(ldat));*/
     DState = ESgetpars;
     if (c == '[') { /* Function key */
       DState = ESfunckey;

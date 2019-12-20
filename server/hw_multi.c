@@ -287,7 +287,7 @@ void QuitDisplayHW(display_hw D_HW) {
 static byte IsValidHW(uldat len, CONST byte *arg) {
   uldat i;
   byte b;
-  if (len >= 4 && !CmpMem(arg, "-hw=", 4))
+  if (len >= 4 && !memcmp(arg, "-hw=", 4))
     arg += 4, len -= 4;
 
   for (i = 0; i < len; i++) {
@@ -307,7 +307,7 @@ static byte IsValidHW(uldat len, CONST byte *arg) {
 display_hw AttachDisplayHW(uldat len, CONST char *arg, uldat slot, byte flags) {
   display_hw D_HW = NULL;
 
-  if ((len && len <= 4) || CmpMem("-hw=", arg, Min2(len, 4))) {
+  if ((len && len <= 4) || memcmp("-hw=", arg, Min2(len, 4))) {
     printk("twin: specified `%.*s\' is not a known option.\n"
            "      try `twin --help' for usage summary.\n",
            Min2((int)len, TW_SMALLBUFF), arg);
@@ -360,7 +360,7 @@ byte DetachDisplayHW(uldat len, CONST char *arg, byte flags) {
 
   if (len) {
     safeforHW(s_HW) {
-      if (HW->NameLen == len && !CmpMem(HW->Name, arg, len)) {
+      if (HW->NameLen == len && !memcmp(HW->Name, arg, len)) {
         Delete(HW);
         done = ttrue;
         break;
@@ -381,7 +381,7 @@ byte InitHW(void) {
 
   byte ret = tfalse, flags = 0, nohw = tfalse;
 
-  WriteMem(ConfigureHWDefault, '\1', HW_CONFIGURE_MAX); /* set everything to default (-1) */
+  memset(ConfigureHWDefault, '\1', HW_CONFIGURE_MAX); /* set everything to default (-1) */
 
   for (arglist = orig_argv; (arg = *arglist); arglist++) {
     if (!strcmp(arg, "-nohw"))
@@ -578,7 +578,7 @@ byte ResizeDisplay(void) {
       printk("twin: out of memory!\n");
       Quit(1);
     }
-    WriteMem(ChangedVideo, 0xff, (ldat)DisplayHeight * sizeof(dat) * 4);
+    memset(ChangedVideo, 0xff, (ldat)DisplayHeight * sizeof(dat) * 4);
   }
   NeedHW &= ~NEEDResizeDisplay;
 
@@ -605,7 +605,7 @@ void SetPaletteHW(udat N, udat R, udat G, udat B) {
     c.Green = G;
     c.Blue = B;
 
-    if (CmpMem(&Palette[N], &c, sizeof(palette))) {
+    if (memcmp(&Palette[N], &c, sizeof(palette))) {
       Palette[N] = c;
       forHW { HW->SetPalette(N, R, G, B); }
     }
@@ -668,7 +668,7 @@ void TwinSelectionSetOwner(obj Owner, tany Time, tany Frac) {
 }
 
 void TwinSelectionNotify(obj Requestor, uldat ReqPrivate, uldat Magic, CONST char MIME[MAX_MIMELEN],
-                         uldat Len, CONST byte *Data) {
+                         uldat Len, CONST char *Data) {
   msg NewMsg;
   event_any *Event;
 #if 0    
@@ -690,7 +690,7 @@ void TwinSelectionNotify(obj Requestor, uldat ReqPrivate, uldat Magic, CONST cha
       if (MIME)
         CopyMem(MIME, Event->EventSelectionNotify.MIME, MAX_MIMELEN);
       else
-        WriteMem(Event->EventSelectionNotify.MIME, '\0', MAX_MIMELEN);
+        memset(Event->EventSelectionNotify.MIME, '\0', MAX_MIMELEN);
       Event->EventSelectionNotify.Len = Len;
       CopyMem(Data, Event->EventSelectionNotify.Data, Len);
       SendMsg((msgport)Requestor, NewMsg);

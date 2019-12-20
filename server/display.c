@@ -145,7 +145,7 @@ uldat RegisterRemote(int Fd, obj HandlerData, void *HandlerIO) {
   if ((Slot = FdListGet()) == NOSLOT)
     return Slot;
 
-  WriteMem(&LS, 0, sizeof(fdlist));
+  memset(&LS, 0, sizeof(fdlist));
 
   LS.Fd = Fd;
   LS.pairSlot = NOSLOT;
@@ -432,7 +432,7 @@ static display_hw CreateDisplayHW(uldat NameLen, CONST char *Name) {
 static byte IsValidHW(uldat len, CONST char *arg) {
   uldat i;
   byte b;
-  if (len >= 4 && !CmpMem(arg, "-hw=", 4))
+  if (len >= 4 && !memcmp(arg, "-hw=", 4))
     arg += 4, len -= 4;
 
   for (i = 0; i < len; i++) {
@@ -450,7 +450,7 @@ static byte IsValidHW(uldat len, CONST char *arg) {
 }
 
 static display_hw AttachDisplayHW(uldat len, CONST char *arg, uldat slot, byte flags) {
-  if ((len && len <= 4) || CmpMem("-hw=", arg, Min2(len, 4))) {
+  if ((len && len <= 4) || memcmp("-hw=", arg, Min2(len, 4))) {
     printk("twdisplay: specified `%.*s\' is not `--hw=<display>\'\n", (int)len, arg);
     return (display_hw)0;
   }
@@ -600,7 +600,7 @@ static byte ReAllocVideo(dat Width, dat Height) {
       Quit(1);
     }
     ValidVideo = tfalse;
-    WriteMem(ChangedVideo, 0xff, (ldat)DisplayHeight * sizeof(dat) * 4);
+    memset(ChangedVideo, 0xff, (ldat)DisplayHeight * sizeof(dat) * 4);
   }
   return change;
 }
@@ -648,7 +648,7 @@ void SetPaletteHW(udat N, udat R, udat G, udat B) {
     c.Red = R;
     c.Green = G;
     c.Blue = B;
-    if (CmpMem(&Palette[N], &c, sizeof(palette))) {
+    if (memcmp(&Palette[N], &c, sizeof(palette))) {
       Palette[N] = c;
       HW->SetPalette(N, R, G, B);
     }

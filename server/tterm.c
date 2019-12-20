@@ -43,7 +43,7 @@ static void termShutDown(widget W) {
   }
 }
 
-static window newTermWindow(byte *title) {
+static window newTermWindow(char *title) {
   window Window;
 
   Window = Do(Create, Window)(
@@ -145,7 +145,7 @@ static void TwinTermH(msgport MsgPort) {
       }
     } else if (Msg->Type == MSG_WIDGET_MOUSE) {
       if (Win) {
-        byte buf[10];
+        char buf[10];
         byte len = CreateXTermMouseEvent(&Event->EventMouse, 10, buf);
 
         /* send mouse movements using xterm mouse protocol */
@@ -225,7 +225,7 @@ static void OverrideMethods(byte enter) {
 
 EXTERN_C byte InitModule(module Module) {
   window Window;
-  byte *shellpath, *shell;
+  char *shellpath, *shell;
 
   if (((shellpath = getenv("SHELL")) || (shellpath = "/bin/sh")) &&
       (default_args[0] = CloneStr(shellpath)) &&
@@ -237,7 +237,8 @@ EXTERN_C byte InitModule(module Module) {
       (Term_Menu = Do(Create, Menu)(FnMenu, Term_MsgPort, COL(BLACK, WHITE), COL(BLACK, GREEN),
                                     COL(HIGH | BLACK, WHITE), COL(HIGH | BLACK, BLACK),
                                     COL(RED, WHITE), COL(RED, GREEN), (byte)0)) &&
-      Info4Menu(Term_Menu, ROW_ACTIVE, (uldat)19, " Builtin Twin Term ", "ptppppppptpppptpppp") &&
+      Info4Menu(Term_Menu, ROW_ACTIVE, (uldat)19, " Builtin Twin Term ",
+                (CONST hwcol *)"ptppppppptpppptpppp") &&
 
       (Window = Win4Menu(Term_Menu)) && Row4Menu(Window, COD_SPAWN, ROW_ACTIVE, 10, " New Term ") &&
       Row4Menu(Window, COD_QUIT, tfalse, 6, " Exit ") &&

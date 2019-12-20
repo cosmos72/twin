@@ -179,7 +179,7 @@ static widget CreateWidget(fn_widget Fn_Widget, msgport Owner, dat XWidth, dat Y
 
     W->USE_Fill = Fill;
     if (w_USE(W, USEEXPOSE))
-      WriteMem(&W->USE.E, '\0', sizeof(W->USE.E));
+      memset(&W->USE.E, '\0', sizeof(W->USE.E));
 
     Act(Own, W)(W, Owner);
   }
@@ -734,7 +734,7 @@ static gadget CreateEmptyButton(fn_gadget Fn_Gadget, msgport Owner, dat XWidth, 
       for (j = (dat)0; j < XWidth; j++)
         G->USE.T.Text[i][k + 1 + j] = i & 1 ? ' ' : _UPPER;
 #if TW_SIZEOF_HWCOL == 1
-      WriteMem((void *)(G->USE.T.Color[i] + k), BgCol, XWidth + 1);
+      memset((void *)(G->USE.T.Color[i] + k), BgCol, XWidth + 1);
 #else
       for (j = (dat)0; j <= XWidth; j++)
         G->USE.T.Color[i][k + j] = BgCol;
@@ -939,7 +939,7 @@ static window CreateWindow(fn_window Fn_Window, msgport Owner, dat TitleLen, CON
     Window->MaxYWidth = TW_MAXDAT;
 
     Window->Charset = Tutf_CP437_to_UTF_32;
-    WriteMem(&Window->USE, '\0', sizeof(Window->USE));
+    memset(&Window->USE, '\0', sizeof(Window->USE));
 
     if (W_USE(Window, USECONTENTS)) {
       if (TW_MAXDAT - ScrollBackLines < YWidth - HasBorder)
@@ -1778,7 +1778,7 @@ static byte SetTextRow(row Row, ldat Len, CONST char *Text, byte DefaultCol) {
       }
       if (!(Row->Flags & ROW_DEFCOL) && !DefaultCol)
         /* will not work correctly if sizeof(hwcol) != 1 */
-        WriteMem(Row->ColText, COL(WHITE, BLACK), Len * sizeof(hwcol));
+        memset(Row->ColText, COL(WHITE, BLACK), Len * sizeof(hwcol));
     }
     Row->Len = Len;
     Row->Gap = Row->LenGap = 0;
@@ -1793,7 +1793,7 @@ static byte SetHWFontRow(row Row, ldat Len, CONST hwfont *HWFont, byte DefaultCo
       CopyMem(HWFont, Row->Text, Len * sizeof(hwfont));
       if (!(Row->Flags & ROW_DEFCOL) && !DefaultCol)
         /* will not work correctly if sizeof(hwcol) != 1 */
-        WriteMem(Row->ColText, COL(WHITE, BLACK), Len * sizeof(hwcol));
+        memset(Row->ColText, COL(WHITE, BLACK), Len * sizeof(hwcol));
     }
     Row->Len = Len;
     Row->Gap = Row->LenGap = 0;
@@ -2521,7 +2521,7 @@ mutex CreateMutex(fn_mutex Fn_Mutex, msgport Owner, byte NameLen, CONST char *Na
 
   CurrMutex = All->FirstMutex;
   while (CurrMutex && Possible) {
-    if (NameLen == CurrMutex->NameLen && !CmpMem(Name, CurrMutex->Name, NameLen)) {
+    if (NameLen == CurrMutex->NameLen && !memcmp(Name, CurrMutex->Name, NameLen)) {
       if (CurrMutex->Owner == Owner) {
         AlreadyMutex = CurrMutex;
         continue;

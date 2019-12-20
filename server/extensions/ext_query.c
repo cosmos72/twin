@@ -63,7 +63,7 @@ extension QueryExtension(byte len, CONST char *name) {
 
   for (M = All->FirstModule; M; M = M->Next) {
     if (IS_EXTENSION(M) && M->NameLen == namelen + 15 && /* "extensions/ext_" */
-        !CmpMem(M->Name, "extensions/ext_", 15) && !CmpMem(M->Name + 15, name, namelen)) {
+        !memcmp(M->Name, "extensions/ext_", 15) && !memcmp(M->Name + 15, name, namelen)) {
 
       return (extension)M;
     }

@@ -569,7 +569,7 @@ static byte gfx_InitHW(void) {
   /* not yet opened */
   xdisplay = (Display *)0;
 
-  WriteMem(&opt, '\0', sizeof(gfx_options));
+  memset(&opt, '\0', sizeof(gfx_options));
   opt.fontwidth = 8;
   opt.fontheight = 16;
   opt.file_theme = "default";

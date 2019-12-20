@@ -61,7 +61,7 @@ uldat ComputeUsableLenArgv(char *CONST *argv);
 void SetArgv0(char *CONST *argv, uldat argv_usable_len, CONST char *src);
 
 #define SelectionAppend(Len, Data) SelectionStore(SEL_APPEND, NULL, Len, Data)
-byte SelectionStore(uldat Magic, CONST char MIME[MAX_MIMELEN], uldat Len, CONST byte *Data);
+byte SelectionStore(uldat Magic, CONST char MIME[MAX_MIMELEN], uldat Len, CONST char *Data);
 byte SetSelectionFromWindow(window Window);
 void doSelectionSetOwner(obj Owner, tany Time, tany Frac);
 #define SEL_CURRENTTIME ((tany)0)

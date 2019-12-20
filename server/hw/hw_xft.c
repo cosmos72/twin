@@ -220,7 +220,7 @@ static int X11_AllocColor(Display *display, Visual *xvisual, Colormap colormap, 
     printk("      X11_AllocColor(): Out of memory!\n");
     return -1;
   }
-  WriteMem(xft_color, 0, sizeof(XftColor));
+  memset(xft_color, 0, sizeof(XftColor));
 
   xrcolor.red = xcolor->red;
   xrcolor.green = xcolor->green;

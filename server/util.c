@@ -247,7 +247,7 @@ void SetArgv0(char *CONST *argv, uldat argv_usable_len, CONST char *src) {
 
   if (len + 1 < argv_usable_len) {
     CopyMem(src, argv[0], len);
-    WriteMem(argv[0] + len, '\0', argv_usable_len - len);
+    memset(argv[0] + len, '\0', argv_usable_len - len);
   } else
     CopyMem(src, argv[0], argv_usable_len);
 }
@@ -333,10 +333,11 @@ byte SendControlMsg(msgport MsgPort, udat Code, udat Len, CONST byte *Data) {
   return tfalse;
 }
 
-byte SelectionStore(uldat Magic, CONST char MIME[MAX_MIMELEN], uldat Len, CONST byte *Data) {
-  uldat newLen;
-  byte *newData, pad;
+byte SelectionStore(uldat Magic, CONST char MIME[MAX_MIMELEN], uldat Len, CONST char *Data) {
+  char *newData;
   selection *Sel = All->Selection;
+  uldat newLen;
+  byte pad;
 
   if (Magic == SEL_APPEND)
     newLen = Sel->Len + Len;
@@ -347,7 +348,7 @@ byte SelectionStore(uldat Magic, CONST char MIME[MAX_MIMELEN], uldat Len, CONST 
     newLen++;
 
   if (Sel->Max < newLen) {
-    if (!(newData = ReAllocMem(Sel->Data, newLen)))
+    if (!(newData = (char *)ReAllocMem(Sel->Data, newLen)))
       return tfalse;
     Sel->Data = newData;
     Sel->Max = newLen;
@@ -359,12 +360,12 @@ byte SelectionStore(uldat Magic, CONST char MIME[MAX_MIMELEN], uldat Len, CONST 
     if (MIME)
       CopyMem(MIME, Sel->MIME, MAX_MIMELEN);
     else
-      WriteMem(Sel->MIME, '\0', MAX_MIMELEN);
+      memset(Sel->MIME, '\0', MAX_MIMELEN);
   }
   if (Data)
     CopyMem(Data, Sel->Data + Sel->Len, Len);
   else
-    WriteMem(Sel->Data + Sel->Len, ' ', Len);
+    memset(Sel->Data + Sel->Len, ' ', Len);
   Sel->Len += Len;
   if (pad) {
 #if TW_IS_LITTLE_ENDIAN
@@ -891,7 +892,7 @@ byte InitTWDisplay(void) {
   byte ok;
 
   HOME = getenv("HOME");
-  WriteMem(&addr, 0, sizeof(addr));
+  memset(&addr, 0, sizeof(addr));
 
   if ((unixFd = socket(AF_UNIX, SOCK_STREAM, 0)) >= 0) {
 

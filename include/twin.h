@@ -944,7 +944,7 @@ struct s_event_control {
   widget W;
   udat Code, Len;
   dat X, Y;
-  byte Data[sizeof(uldat)]; /* [Len] bytes actually */
+  char Data[sizeof(uldat)]; /* [Len] bytes actually */
 };
 
 /* some MSG_CONTROL codes */
@@ -1542,7 +1542,7 @@ struct s_setup {
  * in scroller.c:ScrollerH(),
  * do not change it!
  */
-typedef enum {
+typedef enum e_state {
   STATE_DRAG = 10,
   STATE_RESIZE = 15,
   STATE_SCROLL = 16,
@@ -1575,7 +1575,7 @@ typedef enum {
 
 /* values returned by FnWindow->FindBorder (modeled after STATE_*) */
 
-typedef enum {
+typedef enum e_pos {
   POS_TITLE = 10,
   POS_SIDE_LEFT = 11,
   POS_SIDE_UP = 12,
@@ -1628,9 +1628,9 @@ typedef struct s_selection {
   msgport Owner;
   display_hw OwnerOnce;
   uldat Magic;
-  byte MIME[MAX_MIMELEN];
+  char MIME[MAX_MIMELEN];
   uldat Len, Max;
-  byte *Data;
+  char *Data;
 } selection;
 
 typedef struct s_button_vec {
@@ -1713,14 +1713,8 @@ void *ReAllocMem0(void *Mem, size_t ElementSize, size_t OldCount,
 
 /* INLINE/define stuff: */
 
-#define LenStr(S) strlen(S)
-#define CmpStr(S1, S2) strcmp(S1, S2)
-#define CopyStr(From, To) strcpy(To, From)
-
 #define CopyMem(From, To, Size) memcpy(To, From, Size)
 #define MoveMem(From, To, Size) memmove(To, From, Size)
-#define WriteMem(Mem, Char, Size) memset(Mem, Char, Size)
-#define CmpMem(m1, m2, Size) memcmp(m1, m2, Size)
 
 typedef enum { none, sgidtty, suidroot } e_privilege;
 

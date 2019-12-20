@@ -159,7 +159,7 @@ node LookupNodeName(str name, node head) {
   node l;
   if (name)
     for (l = head; l; l = l->next) {
-      if (!CmpStr(name, l->name))
+      if (!strcmp(name, l->name))
         return l;
     }
   return NULL;
@@ -301,7 +301,7 @@ static run *RCNew(node l) {
   run *r;
 
   if ((r = (run *)AllocMem(sizeof(run)))) {
-    WriteMem(r, 0, sizeof(run));
+    memset(r, 0, sizeof(run));
     r->cycle = 0;
     r->stack[r->depth = 0] = l;
     RCAddFirst(r, Run);
@@ -354,7 +354,7 @@ static window RCFindWindowName(str name) {
     /* search among mapped windows */
     W = (window)S->FirstW;
     while (W) {
-      if (IS_WINDOW(W) && W->NameLen == len && !CmpMem(W->Name, name, len))
+      if (IS_WINDOW(W) && W->NameLen == len && !memcmp(W->Name, name, len))
         return W;
       W = (window)W->Next;
     }
@@ -367,7 +367,7 @@ static screen RCFindScreenName(str name) {
   uldat len = strlen(name);
   screen S = All->FirstScreen;
   while (S) {
-    if (S->NameLen == len && !CmpMem(S->Name, name, len))
+    if (S->NameLen == len && !memcmp(S->Name, name, len))
       break;
   }
   return S;
@@ -882,7 +882,7 @@ static void RCWake4Window(window W) {
 
   if (Name)
     while ((r = *p)) {
-      if (!CmpStr(r->SW.Name, Name)) {
+      if (!strcmp(r->SW.Name, Name)) {
         r->W = W->Id;
         RCRemove(p); /* p does not change but *p is now the next run */
         RCAddFirst(r, Run);
@@ -1333,7 +1333,7 @@ byte InitRC(void) {
   K[0].name = N[COD_COMMON_HOTKEY - COD_COMMON_FIRST].name = Seq;
   K[0].id = N[COD_COMMON_HOTKEY - COD_COMMON_FIRST].x.f.a = HOT_KEY;
 
-  WriteMem(Globals, 0, sizeof(Globals));
+  memset(Globals, 0, sizeof(Globals));
   FuncList = F;
   KeyList = K;
   MouseList = M;
@@ -1342,7 +1342,7 @@ byte InitRC(void) {
   MenuBindsMax = COD_COMMON_LAST - COD_COMMON_FIRST + 1;
   GlobalsAreStatic = ttrue;
 
-  WriteMem(All->ButtonVec, 0, sizeof(All->ButtonVec));
+  memset(All->ButtonVec, 0, sizeof(All->ButtonVec));
   CopyMem(V, All->ButtonVec, sizeof(V));
 
   All->SetUp->ButtonSelection = HOLD_LEFT;

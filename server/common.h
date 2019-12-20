@@ -41,7 +41,7 @@ void SelectionImport(void);
 #ifndef SelectionAppend
 #define SelectionAppend(Len, Data) SelectionStore(SEL_APPEND, NULL, Len, Data)
 #endif
-byte SelectionStore(uldat Magic, CONST char MIME[MAX_MIMELEN], uldat Len, CONST byte *Data);
+byte SelectionStore(uldat Magic, CONST char MIME[MAX_MIMELEN], uldat Len, CONST char *Data);
 
 byte KeyboardEventCommon(udat Code, udat ShiftFlags, udat Len, CONST char *Seq);
 byte MouseEventCommon(dat x, dat y, dat dx, dat dy, udat IdButtons);

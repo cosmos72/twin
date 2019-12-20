@@ -310,10 +310,10 @@ byte RowWriteAscii(window Window, ldat Len, CONST char *Text) {
           CurrRow->Text[i] = (hwfont)' ';
 
       if (!(Window->Flags & WINDOWFL_ROWS_DEFCOL)) {
-        WriteMem(CurrRow->ColText + x, Window->ColText, sizeof(hwcol) * RowLen);
+        memset(CurrRow->ColText + x, Window->ColText, sizeof(hwcol) * RowLen);
         if (CurrRow->Len < x)
-          WriteMem(CurrRow->ColText + CurrRow->Len, Window->ColText,
-                   sizeof(hwcol) * (x - CurrRow->Len));
+          memset(CurrRow->ColText + CurrRow->Len, Window->ColText,
+                 sizeof(hwcol) * (x - CurrRow->Len));
       }
 
       if (CurrRow->Len < x + RowLen)
@@ -396,10 +396,10 @@ byte RowWriteHWFont(window Window, ldat Len, CONST hwfont *Text) {
           CurrRow->Text[i] = (hwfont)' ';
 
       if (!(Window->Flags & WINDOWFL_ROWS_DEFCOL)) {
-        WriteMem(CurrRow->ColText + x, Window->ColText, sizeof(hwcol) * RowLen);
+        memset(CurrRow->ColText + x, Window->ColText, sizeof(hwcol) * RowLen);
         if (CurrRow->Len < x)
-          WriteMem(CurrRow->ColText + CurrRow->Len, Window->ColText,
-                   sizeof(hwcol) * (x - CurrRow->Len));
+          memset(CurrRow->ColText + CurrRow->Len, Window->ColText,
+                 sizeof(hwcol) * (x - CurrRow->Len));
       }
 
       if (CurrRow->Len < x + RowLen)
@@ -453,7 +453,7 @@ void ExposeWidget2(widget W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch
 
     DrawLogicWidget(W, Left, Up, Left + XWidth - 1, Up + YWidth - 1);
 
-    WriteMem(&W->USE.E.E, '\0', sizeof(W->USE.E.E));
+    memset(&W->USE.E.E, '\0', sizeof(W->USE.E.E));
     W->USE.E.Flags = 0;
   }
 }

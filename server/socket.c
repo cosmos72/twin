@@ -951,7 +951,7 @@ static uldat sockFindFunction(byte Len, CONST char *Name, byte FormatLen, CONST 
   sockfn *F = sockF;
   if (Name) {
     while (F->Name && (F->Len != Len || F->FormatLen - 1 != FormatLen ||
-                       CmpMem(F->Name, Name, Len) || CmpFormat(F->Format + 1, Format, FormatLen)))
+                       memcmp(F->Name, Name, Len) || CmpFormat(F->Format + 1, Format, FormatLen)))
       F++;
     if (F->Name)
       return (uldat)(F - sockF);
@@ -1287,7 +1287,7 @@ static msgport sockFindMsgPort(msgport Prev, byte NameLen, CONST char *Name) {
   if (!(M = Prev))
     M = All->FirstMsgPort;
   while (M) {
-    if (M->NameLen == NameLen && !CmpMem(M->Name, Name, NameLen))
+    if (M->NameLen == NameLen && !memcmp(M->Name, Name, NameLen))
       break;
     M = M->Next;
   }
@@ -1777,7 +1777,7 @@ static byte sockSendToMsgPort(msgport MsgPort, udat Len, CONST byte *Data) {
 
       if (MsgPort->Handler == SocketH && MsgPort->RemoteData.Fd != NOFD &&
           (dstSlot = MsgPort->RemoteData.FdSlot) != NOSLOT &&
-          !CmpMem(FdList[dstSlot].AlienMagic, LS.AlienMagic, TWS_highest - 1)) {
+          !memcmp(FdList[dstSlot].AlienMagic, LS.AlienMagic, TWS_highest - 1)) {
         /*
          * shortcut: we have a (tmsg); instead of turning it into a (msg)
          * then have SocketH() call sockSendMsg() to turn it back into a (tmsg),
@@ -2308,7 +2308,7 @@ static void Wait4AuthIO(int fd, uldat slot) {
     return;
   else { /* (got >= digestLen*2) */
     t = RemoteReadGetQueue(Slot, NULL);
-    if (!CmpMem(t, t + digestLen, digestLen)) {
+    if (!memcmp(t, t + digestLen, digestLen)) {
       /* OK! */
       if ((LS.HandlerIO.S = GetHandlerIO())) {
         RemoteReadDeQueue(Slot, digestLen * 2);
@@ -2335,17 +2335,17 @@ static byte Check4MagicTranslation(uldat slot, CONST byte *magic, byte len) {
 
   if (len1 > TWS_hwcol && len == magic[0] && len == len1 + 1 + sizeof(uldat) &&
       /*check negotiated size to match ours*/
-      !CmpMem(magic + 1, TwinMagicData + 1, Min2(len1, TWS_highest) - 1) &&
+      !memcmp(magic + 1, TwinMagicData + 1, Min2(len1, TWS_highest) - 1) &&
       /*pre-0.3.9 compatibility: if hwattr is not negotiated, assume 2 bytes*/
       (len1 > TWS_hwattr || sizeof(hwattr) == 2) &&
       /*check endianity*/
-      !CmpMem(magic + len1 + 1, TwinMagicData + TWS_highest + 1, sizeof(uldat))) {
+      !memcmp(magic + len1 + 1, TwinMagicData + TWS_highest + 1, sizeof(uldat))) {
 
     /* store client magic numbers */
     CopyMem(magic, AlienMagic(slot), Min2(len1, TWS_highest));
     if (len1 < TWS_highest)
       /* version mismatch compatibility: zero out unnegotiated sizes */
-      WriteMem(AlienMagic(slot) + len1, '\0', TWS_highest - len1);
+      memset(AlienMagic(slot) + len1, '\0', TWS_highest - len1);
 
     return MagicNative;
   }
@@ -2363,7 +2363,7 @@ static byte Check4MagicTranslation(uldat slot, CONST byte *magic, byte len) {
     CopyMem(magic, AlienMagic(slot), Min2(len1, TWS_highest));
     if (len1 < TWS_highest)
       /* version mismatch compatibility: zero out unnegotiated sizes */
-      WriteMem(AlienMagic(slot) + len1, '\0', TWS_highest - len1);
+      memset(AlienMagic(slot) + len1, '\0', TWS_highest - len1);
 
     if (warn_count < 6) {
       zero = NULL;
@@ -2393,10 +2393,10 @@ static byte Check4MagicTranslation(uldat slot, CONST byte *magic, byte len) {
      * On big endian machines, (magic+len1+1) is ..."niwT", with
      * (magic[TWS_uldat] - 4) zeroed bytes at start.
      */
-    if (!CmpMem(magic + len1 + 1, "Twin", 4))
+    if (!memcmp(magic + len1 + 1, "Twin", 4))
       /* little endian client. and us? */
       return TW_IS_LITTLE_ENDIAN ? MagicAlien : MagicAlienXendian;
-    if (!CmpMem(magic + len1 + 1 + (magic[TWS_uldat] - 4), "niwT", 4))
+    if (!memcmp(magic + len1 + 1 + (magic[TWS_uldat] - 4), "niwT", 4))
       /* big endian client. and us? */
       return TW_IS_BIG_ENDIAN ? MagicAlien : MagicAlienXendian;
   }
@@ -2667,7 +2667,7 @@ EXTERN_C byte InitModule(module Module) {
     return tfalse;
   }
 
-  WriteMem(&addr, 0, sizeof(addr));
+  memset(&addr, 0, sizeof(addr));
 
   addr.sin_family = AF_INET;
   addr.sin_port = htons(TW_INET_PORT + strtoul(TWDisplay + 1, NULL, 16));

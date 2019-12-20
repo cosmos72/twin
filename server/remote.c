@@ -460,7 +460,7 @@ uldat RemoteWriteQueue(uldat Slot, uldat len, CONST void *data) {
   if (data)
     CopyMem(data, LS.WQueue + LS.WQlen, len);
   else
-    WriteMem(LS.WQueue + LS.WQlen, '\0', len);
+    memset(LS.WQueue + LS.WQlen, '\0', len);
   LS.WQlen += len;
   return len;
 }

@@ -84,7 +84,7 @@ static void alienRead(CONST byte *src, uldat srclen, byte *dst, uldat dstlen, by
     CopyMem(src, dst, Min2(dstlen, srclen));
   /* and set the remaining to zero */
   if (dstlen > srclen)
-    WriteMem(dst + srclen, '\0', dstlen - srclen);
+    memset(dst + srclen, '\0', dstlen - srclen);
 
 #else /* TW_IS_BIG_ENDIAN */
 
@@ -97,7 +97,7 @@ static void alienRead(CONST byte *src, uldat srclen, byte *dst, uldat dstlen, by
     CopyMem(src + srclen - dstlen, dst, dstlen);
   /* set the high bits to zero */
   if (dstlen > srclen)
-    WriteMem(dst, '\0', dstlen - srclen);
+    memset(dst, '\0', dstlen - srclen);
 
 #endif /* TW_IS_LITTLE_ENDIAN */
 }
@@ -114,7 +114,7 @@ static void alienWrite(CONST byte *src, uldat srclen, byte *dst, uldat dstlen, b
     CopyMem(src, dst, Min2(dstlen, srclen));
   /* and set the remaining to zero */
   if (dstlen > srclen)
-    WriteMem(dst + (flip ? 0 : srclen), '\0', dstlen - srclen);
+    memset(dst + (flip ? 0 : srclen), '\0', dstlen - srclen);
 
 #else /* TW_IS_BIG_ENDIAN */
 
@@ -127,13 +127,13 @@ static void alienWrite(CONST byte *src, uldat srclen, byte *dst, uldat dstlen, b
     CopyMem(src + srclen - dstlen, dst, dstlen);
   /* set the high bits to zero */
   if (dstlen > srclen)
-    WriteMem(dst + (flip ? srclen : 0), '\0', dstlen - srclen);
+    memset(dst + (flip ? srclen : 0), '\0', dstlen - srclen);
 
 #endif /* TW_IS_LITTLE_ENDIAN */
 }
 
 /* convert alien type at (*src) to native and put it at (dst) */
-static void alienPop(byte CONST **src, uldat alien_len, byte *dst, uldat len) {
+static void alienPop(CONST byte **src, uldat alien_len, byte *dst, uldat len) {
   alienRead(*src, alien_len, dst, len, AlienXendian(Slot) == MagicAlienXendian);
   *src += alien_len;
 }
@@ -158,7 +158,7 @@ INLINE void alienReadVec(CONST byte *src, byte *dst, uldat len, uldat srcsize, u
 #if TW_IS_LITTLE_ENDIAN
   if (srcsize == 1) {
     while (len--) {
-      WriteMem(dst + 1, '\0', dstsize - 1);
+      memset(dst + 1, '\0', dstsize - 1);
       *dst = *src++;
       dst += dstsize;
     }
@@ -178,7 +178,7 @@ INLINE void alienReadVec(CONST byte *src, byte *dst, uldat len, uldat srcsize, u
 #else  /* TW_IS_BIG_ENDIAN */
   if (srcsize == 1) {
     while (len--) {
-      WriteMem(dst, '\0', dstsize - 1);
+      memset(dst, '\0', dstsize - 1);
       dst[dstsize - 1] = *src++;
       dst += dstsize;
     }

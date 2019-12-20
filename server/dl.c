@@ -89,7 +89,7 @@ module DlLoadAny(uldat len, CONST char *name) {
   module Module;
 
   for (Module = All->FirstModule; Module; Module = Module->Next) {
-    if (len == Module->NameLen && !CmpMem(name, Module->Name, len))
+    if (len == Module->NameLen && !memcmp(name, Module->Name, len))
       /* already loaded! */
       return Module;
   }
@@ -105,13 +105,13 @@ module DlLoadAny(uldat len, CONST char *name) {
 static module So[MAX_So];
 
 udat DlName2Code(CONST char *name) {
-  if (!CmpStr(name, "wm"))
+  if (!strcmp(name, "wm"))
     return WMSo;
-  if (!CmpStr(name, "term"))
+  if (!strcmp(name, "term"))
     return TermSo;
-  if (!CmpStr(name, "socket"))
+  if (!strcmp(name, "socket"))
     return SocketSo;
-  if (!CmpStr(name, "rcparse"))
+  if (!strcmp(name, "rcparse"))
     return RCParseSo;
   return MainSo;
 }

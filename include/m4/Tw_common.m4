@@ -74,13 +74,13 @@ EASY(CloneStr2HWFont, extern hwfont *Tw_CloneStr2HWFont(TW_CONST char *, size_t)
 
 
 EASY(LenStr, `#define Tw_LenStr		strlen')
-EASY(CmpStr, `#define Tw_CmpStr		strcmp')
+EASY(strcmp, `#define Tw_CmpStr		strcmp')
 EASY(CopyStr, `#define Tw_CopyStr(From,To)		strcpy(To, From)')
 
 EASY(CopyMem, `#define Tw_CopyMem(From, To, Size)	memcpy(To, From, Size)')
 EASY(MoveMem, `#define Tw_MoveMem(From, To, Size)	memmove(To, From, Size)')
-EASY(WriteMem, `#define Tw_WriteMem		memset')
-EASY(CmpMem, `#define Tw_CmpMem		memcmp')
+EASY(memset, `#define Tw_WriteMem		memset')
+EASY(memcmp, `#define Tw_CmpMem		memcmp')
 
 
 
