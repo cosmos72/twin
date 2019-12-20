@@ -1,4 +1,4 @@
-/*  
+/*
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,40 +19,40 @@
  *
  * cnt is either 0 or gives the number of available bytes
  */
-unsigned long
-from_utf8(char **inptr, int cnt, int *err) {
-	unsigned char *in;
-	unsigned int uc, uc2;
-	int need, bit, bad = 0;
+unsigned long from_utf8(char **inptr, int cnt, int *err) {
+  unsigned char *in;
+  unsigned int uc, uc2;
+  int need, bit, bad = 0;
 
-	in = (unsigned char *)(* inptr);
-	uc = *in++;
-	need = 0;
-	bit = 0x80;
-	while(uc & bit) {
-		need++;
-		bit >>= 1;
-	}
-	uc &= (bit-1);
-	if (cnt && cnt < need) {
-		*err = UTF8_SHORT;
-		return 0;
-	}
-	if (need == 1)
-		bad = 1;
-	else if (need) while(--need) {
-		uc2 = *in++;
-		if ((uc2 & 0xc0) != 0x80) {
-			bad = 1;
-			break;
-		}
-		uc = ((uc << 6) | (uc2 & 0x3f));
-	}
-	if (bad) {
-		*err = UTF8_BAD;
-		return 0;
-	}
-	*inptr = in;
-	*err = 0;
-	return uc;
+  in = (unsigned char *)(*inptr);
+  uc = *in++;
+  need = 0;
+  bit = 0x80;
+  while (uc & bit) {
+    need++;
+    bit >>= 1;
+  }
+  uc &= (bit - 1);
+  if (cnt && cnt < need) {
+    *err = UTF8_SHORT;
+    return 0;
+  }
+  if (need == 1)
+    bad = 1;
+  else if (need)
+    while (--need) {
+      uc2 = *in++;
+      if ((uc2 & 0xc0) != 0x80) {
+        bad = 1;
+        break;
+      }
+      uc = ((uc << 6) | (uc2 & 0x3f));
+    }
+  if (bad) {
+    *err = UTF8_BAD;
+    return 0;
+  }
+  *inptr = in;
+  *err = 0;
+  return uc;
 }

@@ -1,19 +1,19 @@
 
 /*
  *   libTutf.c -- Unicode <-> charset conversion routines
- * 
+ *
  *  Copyright (C) 2001,2018 by Massimiliano Ghilardi
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
  * License as published by the Free Software Foundation; either
  * version 2 of the License, or (at your option) any later version.
- * 
+ *
  * This library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Library General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Library General Public
  * License along with this library; if not, write to the Free
  * Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
@@ -254,7 +254,7 @@
 #define TEMPLATE NEXTSTEP
 #include "template.c"
 #undef TEMPLATE
-#define TEMPLATE APL_ISO_IR_68 
+#define TEMPLATE APL_ISO_IR_68
 #include "template.c"
 #undef TEMPLATE
 #define TEMPLATE ATARIST
@@ -279,124 +279,137 @@
 #define TEMPLATE VT100GR
 #define TEMPLATE_REDEFINES_ASCII
 #include "template.c"
-#undef  TEMPLATE_REDEFINES_ASCII
+#undef TEMPLATE_REDEFINES_ASCII
 #undef TEMPLATE
 
+#define _NLIST(EL)                                                                                   \
+  EL(T_MAP(ASCII))                                                                                   \
+  EL(T_MAP(ISO8859_1))                                                                               \
+  EL(T_MAP(ISO8859_2))                                                                               \
+  EL(T_MAP(ISO8859_3)) EL(T_MAP(ISO8859_4)) EL(T_MAP(ISO8859_5)) EL(T_MAP(ISO8859_6)) EL(            \
+      T_MAP(ISO8859_7)) EL(T_MAP(ISO8859_8)) EL(T_MAP(ISO8859_9)) EL(T_MAP(ISO8859_10))              \
+      EL(T_MAP(ISO8859_11)) EL(T_MAP(ISO8859_13)) EL(T_MAP(ISO8859_14)) EL(T_MAP(ISO8859_15)) EL(    \
+          T_MAP(ISO8859_16))                                                                         \
+                                                                                                     \
+          EL(T_MAP(CP424)) EL(T_MAP(CP437)) EL(T_MAP(CP737)) EL(T_MAP(CP775)) EL(T_MAP(CP850)) EL(   \
+              T_MAP(CP852)) EL(T_MAP(CP855)) EL(T_MAP(CP856)) EL(T_MAP(CP857)) EL(T_MAP(CP860))      \
+              EL(T_MAP(CP861)) EL(T_MAP(CP862)) EL(T_MAP(CP863)) EL(T_MAP(CP864)) EL(T_MAP(CP865))   \
+                  EL(T_MAP(CP866)) EL(T_MAP(CP869)) EL(T_MAP(CP874)) EL(T_MAP(CP932))                \
+                      EL(T_MAP(CP936)) EL(T_MAP(CP949)) EL(T_MAP(CP950)) EL(T_MAP(CP1006)) EL(       \
+                          T_MAP(CP1250)) EL(T_MAP(CP1251)) EL(T_MAP(CP1252)) EL(T_MAP(CP1253))       \
+                          EL(T_MAP(CP1254)) EL(T_MAP(CP1255)) EL(T_MAP(CP1256)) EL(                  \
+                              T_MAP(CP1257)) EL(T_MAP(CP1258))                                       \
+                                                                                                     \
+                              EL(                                                                    \
+                                  T_MAP(ADOBE_STDENC)) EL(T_MAP(ADOBE_SYMBOL))                       \
+                                                                                                     \
+                                  EL(T_MAP(MAC_ARABIC)) EL(T_MAP(MAC_CELTIC))                        \
+                                      EL(T_MAP(MAC_CENTRALEUROPE)) EL(T_MAP(MAC_CROATIAN)) EL(       \
+                                          T_MAP(MAC_CYRILLIC))                                       \
+                                          EL(T_MAP(MAC_DEVANAGARI)) EL(T_MAP(MAC_DINGBATS)) EL(      \
+                                              T_MAP(MAC_FARSI)) EL(T_MAP(MAC_GAELIC))                \
+                                              EL(T_MAP(MAC_GREEK)) EL(T_MAP(MAC_GUJARATI)) EL(       \
+                                                  T_MAP(MAC_GURMUKHI)) EL(T_MAP(MAC_HEBREW))         \
+                                                  EL(T_MAP(MAC_ICELANDIC)) EL(T_MAP(MAC_INUIT)) EL(  \
+                                                      T_MAP(MAC_ROMAN)) EL(T_MAP(MAC_ROMANIAN))      \
+                                                      EL(T_MAP(MAC_SYMBOL)) EL(                      \
+                                                          T_MAP(MAC_THAI)) EL(T_MAP(MAC_TURKISH))    \
+                                                                                                     \
+                                                          EL(T_MAP(MS_MAC_CYRILLIC)) EL(             \
+                                                              T_MAP(MS_MAC_GREEK))                   \
+                                                              EL(T_MAP(MS_MAC_ICELANDIC)) EL(        \
+                                                                  T_MAP(MS_MAC_LATIN2))              \
+                                                                  EL(T_MAP(MS_MAC_ROMAN)) EL(        \
+                                                                      T_MAP(MS_MAC_TURKISH))         \
+                                                                                                     \
+                                                                      EL(T_MAP(APL_ISO_IR_68)) EL(   \
+                                                                          T_MAP(ATARIST))            \
+                                                                          EL(T_MAP(JISX0201)) EL(    \
+                                                                              T_MAP(HP_ROMAN8))      \
+                                                                              EL(T_MAP(KOI8_R)) EL(  \
+                                                                                  T_MAP(KOI8_U))     \
+                                                                                  EL(T_MAP(          \
+                                                                                      KZ1048))       \
+                                                                                      EL(T_MAP(      \
+                                                                                          NEXTSTEP)) \
+                                                                                          EL(T_MAP(  \
+                                                                                              VT100GR))
 
-
-#define _NLIST(EL) \
-	EL(T_MAP(ASCII)) \
-	EL(T_MAP(ISO8859_1)) EL(T_MAP(ISO8859_2)) EL(T_MAP(ISO8859_3)) \
-	EL(T_MAP(ISO8859_4)) EL(T_MAP(ISO8859_5)) EL(T_MAP(ISO8859_6)) \
-	EL(T_MAP(ISO8859_7)) EL(T_MAP(ISO8859_8)) EL(T_MAP(ISO8859_9)) \
-	EL(T_MAP(ISO8859_10)) EL(T_MAP(ISO8859_11)) EL(T_MAP(ISO8859_13)) \
-	EL(T_MAP(ISO8859_14)) EL(T_MAP(ISO8859_15)) EL(T_MAP(ISO8859_16)) \
-        \
-	EL(T_MAP(CP424))  EL(T_MAP(CP437))  EL(T_MAP(CP737))  EL(T_MAP(CP775)) \
-        EL(T_MAP(CP850))  EL(T_MAP(CP852))  EL(T_MAP(CP855))  EL(T_MAP(CP856)) \
-        EL(T_MAP(CP857))  EL(T_MAP(CP860))  EL(T_MAP(CP861))  EL(T_MAP(CP862)) \
-        EL(T_MAP(CP863))  EL(T_MAP(CP864))  EL(T_MAP(CP865))  EL(T_MAP(CP866)) \
-        EL(T_MAP(CP869))  EL(T_MAP(CP874))  EL(T_MAP(CP932))  EL(T_MAP(CP936)) \
-        EL(T_MAP(CP949))  EL(T_MAP(CP950))  EL(T_MAP(CP1006)) EL(T_MAP(CP1250)) \
-        EL(T_MAP(CP1251)) EL(T_MAP(CP1252)) EL(T_MAP(CP1253)) EL(T_MAP(CP1254)) \
-        EL(T_MAP(CP1255)) EL(T_MAP(CP1256)) EL(T_MAP(CP1257)) EL(T_MAP(CP1258)) \
-        \
-	EL(T_MAP(ADOBE_STDENC)) EL(T_MAP(ADOBE_SYMBOL)) \
-	\
-	EL(T_MAP(MAC_ARABIC))   EL(T_MAP(MAC_CELTIC))    EL(T_MAP(MAC_CENTRALEUROPE)) \
-	EL(T_MAP(MAC_CROATIAN)) EL(T_MAP(MAC_CYRILLIC))  EL(T_MAP(MAC_DEVANAGARI)) \
-	EL(T_MAP(MAC_DINGBATS)) EL(T_MAP(MAC_FARSI))     EL(T_MAP(MAC_GAELIC)) \
-	EL(T_MAP(MAC_GREEK))    EL(T_MAP(MAC_GUJARATI))  EL(T_MAP(MAC_GURMUKHI)) \
-	EL(T_MAP(MAC_HEBREW))   EL(T_MAP(MAC_ICELANDIC)) EL(T_MAP(MAC_INUIT)) \
-	EL(T_MAP(MAC_ROMAN)) 	EL(T_MAP(MAC_ROMANIAN))  EL(T_MAP(MAC_SYMBOL)) \
-	EL(T_MAP(MAC_THAI))     EL(T_MAP(MAC_TURKISH)) \
-	\
-	EL(T_MAP(MS_MAC_CYRILLIC)) EL(T_MAP(MS_MAC_GREEK)) EL(T_MAP(MS_MAC_ICELANDIC)) \
-	EL(T_MAP(MS_MAC_LATIN2))   EL(T_MAP(MS_MAC_ROMAN)) EL(T_MAP(MS_MAC_TURKISH)) \
-	\
-	EL(T_MAP(APL_ISO_IR_68 )) EL(T_MAP(ATARIST)) EL(T_MAP(JISX0201)) \
-	EL(T_MAP(HP_ROMAN8)) EL(T_MAP(KOI8_R)) EL(T_MAP(KOI8_U)) \
-	EL(T_MAP(KZ1048)) EL(T_MAP(NEXTSTEP)) EL(T_MAP(VT100GR))
-
-#define _LIST(EL) \
-	EL(T_MAP(UTF_32)) _NLIST(EL)
+#define _LIST(EL) EL(T_MAP(UTF_32)) _NLIST(EL)
 
 typedef enum {
-#define DECL_TYPE(x) T_CAT(T_ID_,x) ,
-    _LIST(DECL_TYPE)
+#define DECL_TYPE(x) T_CAT(T_ID_, x),
+  _LIST(DECL_TYPE)
 #undef DECL_TYPE
 } id_e;
 
-#define DECL_NAME(ch) static char *T_CAT(names_,ch) [] = { T_CAT((char *)T_NAME_,ch), T_CAT((char *)T_ALIASES_,ch), NULL };
+#define DECL_NAME(ch)                                                                              \
+  static char *T_CAT(names_, ch)[] = {T_CAT((char *)T_NAME_, ch), T_CAT((char *)T_ALIASES_, ch),   \
+                                      NULL};
 _LIST(DECL_NAME)
 #undef DECL_NAME
 
 typedef struct {
-    char * TUTF_CONST * names;
-    Tutf_array array;
-    Tutf_function function;
+  char *TUTF_CONST *names;
+  Tutf_array array;
+  Tutf_function function;
 } Tutf_struct;
 
-#define DECL_CH(ch) { T_CAT(names_,ch), T_CAT3(Tutf_,ch,_to_UTF_32), T_CAT(Tutf_UTF_32_to_,ch) },
+#define DECL_CH(ch) {T_CAT(names_, ch), T_CAT3(Tutf_, ch, _to_UTF_32), T_CAT(Tutf_UTF_32_to_, ch)},
 
-static Tutf_struct Tutf_structs[] = {
-    { T_CAT(names_,UTF_32), NULL, NULL },
-    _NLIST(DECL_CH)
-    { NULL }
-};
+static Tutf_struct Tutf_structs[] = {{T_CAT(names_, UTF_32), NULL, NULL}, _NLIST(DECL_CH){NULL}};
 
 #undef DECL_CH
 
 static int strloosecmp(TUTF_CONST char *s1, TUTF_CONST char *s2) {
-    byte c1, c2;
+  byte c1, c2;
 
-    do {
-	while ((c1 = *s1++) && (c1 == ' ' || c1 == '-' || c1 == '_' || c1 == '.' || c1 == ':'))
-	    ;
-	
-	while ((c2 = *s2++) && (c2 == ' ' || c2 == '-' || c2 == '_' || c2 == '.' || c2 == ':'))
-	    ;
+  do {
+    while ((c1 = *s1++) && (c1 == ' ' || c1 == '-' || c1 == '_' || c1 == '.' || c1 == ':'))
+      ;
 
-        if (c1 >= 'A' && c1 <= 'Z')
-            c1 += 'a'-'A';
+    while ((c2 = *s2++) && (c2 == ' ' || c2 == '-' || c2 == '_' || c2 == '.' || c2 == ':'))
+      ;
 
-        if (c2 >= 'A' && c2 <= 'Z')
-            c2 += 'a'-'A';
+    if (c1 >= 'A' && c1 <= 'Z')
+      c1 += 'a' - 'A';
 
-    } while (c1 == c2 && c1 && c2);
+    if (c2 >= 'A' && c2 <= 'Z')
+      c2 += 'a' - 'A';
 
-    return (int)c1-(int)c2;
+  } while (c1 == c2 && c1 && c2);
+
+  return (int)c1 - (int)c2;
 }
 
-uldat Tutf_charset_id(TUTF_CONST char * alias) {
-    Tutf_struct *CH;
-    char * TUTF_CONST * names;
-    if (alias) for (CH = Tutf_structs; (names = CH->names); CH++) {
-	for (; *names; names++) {
-	    if (!strloosecmp(alias, *names))
-		return (uldat)(CH - Tutf_structs);
-	}
+uldat Tutf_charset_id(TUTF_CONST char *alias) {
+  Tutf_struct *CH;
+  char *TUTF_CONST *names;
+  if (alias)
+    for (CH = Tutf_structs; (names = CH->names); CH++) {
+      for (; *names; names++) {
+        if (!strloosecmp(alias, *names))
+          return (uldat)(CH - Tutf_structs);
+      }
     }
-    return (uldat)-1;
+  return (uldat)-1;
 }
 
 TUTF_CONST char *Tutf_charset_name(uldat id) {
-    return id < sizeof(Tutf_structs)/sizeof(Tutf_structs[0]) ? Tutf_structs[id].names[0] : NULL;
+  return id < sizeof(Tutf_structs) / sizeof(Tutf_structs[0]) ? Tutf_structs[id].names[0] : NULL;
 }
 
-TUTF_CONST char *Tutf_charset_alias(TUTF_CONST char * alias) {
-    uldat id = Tutf_charset_id(alias);
-    return id != (uldat)-1 ? Tutf_structs[id].names[0] : NULL;
+TUTF_CONST char *Tutf_charset_alias(TUTF_CONST char *alias) {
+  uldat id = Tutf_charset_id(alias);
+  return id != (uldat)-1 ? Tutf_structs[id].names[0] : NULL;
 }
-
 
 /* return a function capable to translate from UTF_32 to given charset */
 Tutf_function Tutf_UTF_32_to_charset_function(uldat id) {
-    return id < sizeof(Tutf_structs)/sizeof(Tutf_structs[0]) ? Tutf_structs[id].function : NULL;
+  return id < sizeof(Tutf_structs) / sizeof(Tutf_structs[0]) ? Tutf_structs[id].function : NULL;
 }
 
 /* return the array to translate from given charset to UTF_32 */
 Tutf_array Tutf_charset_to_UTF_32_array(uldat id) {
-    return id < sizeof(Tutf_structs)/sizeof(Tutf_structs[0]) ? Tutf_structs[id].array : NULL;
+  return id < sizeof(Tutf_structs) / sizeof(Tutf_structs[0]) ? Tutf_structs[id].array : NULL;
 }
-

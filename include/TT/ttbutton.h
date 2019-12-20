@@ -1,10 +1,6 @@
 
 
-
-
-
 /* This file was automatically generated from m4/tt.m4hh, do not edit! */
-
 
 /*
  *  ttbutton.h  --  public header for libTT declarations related to "ttbutton"
@@ -18,66 +14,34 @@
  *
  */
 
-
-
 #ifndef _TT_TTBUTTON_H
 #define _TT_TTBUTTON_H
-
-
-
-
-
-
 
 /* object structure */
 #ifndef s_ttbutton
 
-
 /** ttbutton: a normal click-to-activate button */
-        struct s_ttbutton;
-typedef struct s_ttbutton *	ttbutton;
+struct s_ttbutton;
+typedef struct s_ttbutton *ttbutton;
 
 #endif /* s_ttbutton */
 
-
-
 /* global runtime class type; returned by TTCLASSOF(<some object>) */
 /** class of ttbutton */
-extern ttclass	TTClass_ttbutton;
-
-
-
-
+extern ttclass TTClass_ttbutton;
 
 /* ttbutton methods */
 
-/** set whether the ttbutton `o' is pressed or not */    
-void TTSetPressed_ttbutton(ttbutton o,ttbyte pressed);
+/** set whether the ttbutton `o' is pressed or not */
+void TTSetPressed_ttbutton(ttbutton o, ttbyte pressed);
 
 /** get whether the ttbutton `o' is pressed or not */
 ttbyte TTIsPressed_ttbutton(TT_ARG_READ ttbutton o);
 
 /** create a ttbutton with given text */
-ttbutton TTCreate_ttbutton(ttshort w,ttshort h,ttshort pitch,TT_ARG_READ TT_ARG_ARRAY((_P(2),*,_P(3))) ttbyte * text);
-
-
-
-
-
-
-
-
+ttbutton TTCreate_ttbutton(ttshort w, ttshort h, ttshort pitch,
+                           TT_ARG_READ TT_ARG_ARRAY((_P(2), *, _P(3))) ttbyte *text);
 
 /* TTGet*_ttbutton and TTSet*_ttbutton methods */
 
-
-
-
-
-
-
-
-
-
 #endif /* _TT_TTBUTTON_H */
-

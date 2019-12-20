@@ -1,4 +1,4 @@
-/*  
+/*
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,11 +24,11 @@
  * Default keymap, and where the kernel copy of it lives.
  */
 #ifdef __sparc__
-# define DEFMAP "sunkeymap.map"
-# define KERNDIR "/usr/src/linux/drivers/sbus/char"
+#define DEFMAP "sunkeymap.map"
+#define KERNDIR "/usr/src/linux/drivers/sbus/char"
 #else
-# define DEFMAP "defkeymap.map"
-# define KERNDIR "/usr/src/linux/drivers/char"
+#define DEFMAP "defkeymap.map"
+#define KERNDIR "/usr/src/linux/drivers/char"
 #endif
 
 extern FILE *findfile(char *fnam, char **dirpath, char **suffixes);

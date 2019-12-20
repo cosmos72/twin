@@ -1,10 +1,6 @@
 
 
-
-
-
 /* This file was automatically generated from m4/tt.m4hh, do not edit! */
-
 
 /*
  *  ttcheckbutton.h  --  public header for libTT declarations related to "ttcheckbutton"
@@ -18,66 +14,34 @@
  *
  */
 
-
-
 #ifndef _TT_TTCHECKBUTTON_H
 #define _TT_TTCHECKBUTTON_H
-
-
-
-
-
-
 
 /* object structure */
 #ifndef s_ttcheckbutton
 
-
 /** ttcheckbutton: a two-state (on/off) button */
-        struct s_ttcheckbutton;
-typedef struct s_ttcheckbutton *	ttcheckbutton;
+struct s_ttcheckbutton;
+typedef struct s_ttcheckbutton *ttcheckbutton;
 
 #endif /* s_ttcheckbutton */
 
-
-
 /* global runtime class type; returned by TTCLASSOF(<some object>) */
 /** class of ttcheckbutton */
-extern ttclass	TTClass_ttcheckbutton;
-
-
-
-
+extern ttclass TTClass_ttcheckbutton;
 
 /* ttcheckbutton methods */
 
-/** set whether the ttbutton `o' is checked or not */    
-void TTSetChecked_ttcheckbutton(ttcheckbutton o,ttbyte checked);
+/** set whether the ttbutton `o' is checked or not */
+void TTSetChecked_ttcheckbutton(ttcheckbutton o, ttbyte checked);
 
 /** get whether the ttbutton `o' is checked or not */
 ttbyte TTIsChecked_ttcheckbutton(TT_ARG_READ ttcheckbutton o);
 
 /** create a ttcheckbutton with given text */
-ttcheckbutton TTCreate_ttcheckbutton(ttshort w,ttshort h,ttshort pitch,TT_ARG_READ TT_ARG_ARRAY((_P(2),*,_P(3))) ttbyte * text);
-
-
-
-
-
-
-
-
+ttcheckbutton TTCreate_ttcheckbutton(ttshort w, ttshort h, ttshort pitch,
+                                     TT_ARG_READ TT_ARG_ARRAY((_P(2), *, _P(3))) ttbyte *text);
 
 /* TTGet*_ttcheckbutton and TTSet*_ttcheckbutton methods */
 
-
-
-
-
-
-
-
-
-
 #endif /* _TT_TTCHECKBUTTON_H */
-

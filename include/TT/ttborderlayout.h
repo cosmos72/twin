@@ -1,10 +1,6 @@
 
 
-
-
-
 /* This file was automatically generated from m4/tt.m4hh, do not edit! */
-
 
 /*
  *  ttborderlayout.h  --  public header for libTT declarations related to "ttborderlayout"
@@ -18,57 +14,24 @@
  *
  */
 
-
-
 #ifndef _TT_TTBORDERLAYOUT_H
 #define _TT_TTBORDERLAYOUT_H
-
-
-
-
-
-
 
 /* object structure */
 #ifndef s_ttborderlayout
 
-
 /** ttlayout: a border (north+south+west+east+center) layout */
-        struct s_ttborderlayout;
-typedef struct s_ttborderlayout *	ttborderlayout;
+struct s_ttborderlayout;
+typedef struct s_ttborderlayout *ttborderlayout;
 
 #endif /* s_ttborderlayout */
 
-
-
 /* global runtime class type; returned by TTCLASSOF(<some object>) */
 /** class of ttborderlayout */
-extern ttclass	TTClass_ttborderlayout;
-
-
-
-
+extern ttclass TTClass_ttborderlayout;
 
 /* ttborderlayout methods */
 
-
-
-
-
-
-
-
-
 /* TTGet*_ttborderlayout and TTSet*_ttborderlayout methods */
 
-
-
-
-
-
-
-
-
-
 #endif /* _TT_TTBORDERLAYOUT_H */
-

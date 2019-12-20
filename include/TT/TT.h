@@ -16,7 +16,6 @@
 #include <TT/TTtypes.h>
 #include <TT/defines.h>
 
-
 /** check some magic data to ensure client and library have compatible types */
 ttbyte TTCheckMagic(TT_CONST ttbyte id[]);
 
@@ -27,7 +26,7 @@ ttbyte TTInPanic(void);
 ttuint TTLibraryVersion(void);
 
 typedef struct s_ttclasses *ttclasses;
-typedef struct s_tthw * tthw;
+typedef struct s_tthw *tthw;
 /** register a new libTT display target */
 ttbyte TTRegisterTarget(TT_CONST byte *name, ttclasses (*InitHW)(tthw *HW));
 
@@ -40,10 +39,9 @@ ttbyte TTReopen(TT_CONST ttbyte *target);
 /** shutdown libTT; not necessary if you are going to exit() */
 void TTClose(void);
 
-/** quickly shutdown libTT, does not generate `delete' events for objects being deleted; not necessary if you are going to exit() */
+/** quickly shutdown libTT, does not generate `delete' events for objects being deleted; not
+ * necessary if you are going to exit() */
 void TTCloseQuickNDirty(void);
-
-
 
 /** get file descriptor used to communicate with target server */
 int TTConnectionFd(void);
@@ -60,7 +58,8 @@ ttbyte TTSync(void);
 /** enter libTT main loop; it just waits for events and dispatches them */
 ttbyte TTMainLoop(void);
 
-/** run libTT main loop once: wait for events (if `wait' is set) and dispatch available events, then return */
+/** run libTT main loop once: wait for events (if `wait' is set) and dispatch available events, then
+ * return */
 ttbyte TTMainLoopOnce(ttbyte wait);
 
 /** tell libTT main loop to return */
@@ -70,33 +69,30 @@ void TTExitMainLoop(void);
 ttobj TTNew(ttclass Class);
 
 /** delete given object */
-void  TTDel(ttobj o);
+void TTDel(ttobj o);
 
-
-/** get the first existing object of class `Class'; `Class' should be one of the `TTClass_*' classes */
+/** get the first existing object of class `Class'; `Class' should be one of the `TTClass_*' classes
+ */
 ttobj TTGetFirst(ttclass Class);
 
-/** get the last existing object of class `Class'; `Class' should be one of the `TTClass_*' classes */
+/** get the last existing object of class `Class'; `Class' should be one of the `TTClass_*' classes
+ */
 ttobj TTGetLast(ttclass Class);
 
-
 /** get size needed to store object `o' (i.e. sizeof(ttobj), NOT sizeof(*ttobj)) */
-TT_ATTR_FN_CONST ttuint  TTSizeOf(ttobj o);
+TT_ATTR_FN_CONST ttuint TTSizeOf(ttobj o);
 
 /** return the class (runtime type) of `o' (will be one of the `TTClass_*' types) */
 TT_ATTR_FN_CONST ttclass TTClassOf(ttobj o);
 
 /** return TT_TRUE if `o' can be cast to class represented by `Class' */
-TT_ATTR_FN_CONST ttbyte  TTInstanceOf(ttclass Class, ttobj o);
+TT_ATTR_FN_CONST ttbyte TTInstanceOf(ttclass Class, ttobj o);
 
 /** return the name of the class of `o' (i.e "ttbutton", "ttwindow", ...) */
 TT_ATTR_FN_CONST TT_CONST TT_ARG_ARRAY_Z ttbyte *TTClassNameOf(ttobj o);
 
-
-
 /** create a vector with given values */
 ttvector TTCreateL_ttvector(ttopaque value_n, ...);
-
 
 /** get the current mask of blocked events */
 tteventmask TTGetInstalled_tteventmask(void);
@@ -106,7 +102,5 @@ tteventmask TTGetDefault_tteventmask(void);
 void TTSetInstalled_tteventmask(tteventmask installed_event_mask);
 /** set the default mask of blocked events to be used while listeners are being called */
 void TTSetDefault_tteventmask(tteventmask default_event_mask);
-
-
 
 #endif /* _TT_H */

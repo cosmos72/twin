@@ -10,28 +10,27 @@
 #define _TWIN_UTIL_H
 
 #ifndef _TWAUTOCONF_H
-# include "twautoconf.h" /* for TW_HAVE_ALARM */
+#include "twautoconf.h" /* for TW_HAVE_ALARM */
 #endif
 
 #ifdef TW_HAVE_SYS_TIMEB_H
-# include <sys/timeb.h>
+#include <sys/timeb.h>
 #endif
 #ifdef TW_HAVE_SYS_UN_H
-# include <sys/un.h>
+#include <sys/un.h>
 #endif
 
 extern udat ErrNo;
-extern char const * ErrStr;
+extern char const *ErrStr;
 extern uldat unixSlot;
 extern int unixFd;
-
 
 #if defined(TW_HAVE_ALARM) && defined(TW_HAVE_SIGACTION)
 extern volatile int AlarmReceived;
 void SetAlarm(unsigned seconds);
 #else
-# define SetAlarm(seconds) ((void)0)
-# define AlarmReceived     (0)
+#define SetAlarm(seconds) ((void)0)
+#define AlarmReceived (0)
 #endif
 
 void *CloneMem(const void *From, uldat Size);
@@ -40,8 +39,8 @@ char *CloneStrL(const char *From, uldat Size);
 char **CloneStrList(char **FromList);
 hwfont *CloneStr2HWFont(const char *From, uldat Size);
 
-const char * TmpDir(void);
-udat CopyToSockaddrUn(const char * src, struct sockaddr_un * addr, udat pos);
+const char *TmpDir(void);
+udat CopyToSockaddrUn(const char *src, struct sockaddr_un *addr, udat pos);
 
 byte Error(udat Code_Error);
 
@@ -60,7 +59,6 @@ byte Minimum(byte MaxIndex, const ldat *Array);
 
 uldat ComputeUsableLenArgv(char *const *argv);
 void SetArgv0(char *const *argv, uldat argv_usable_len, const char *src);
-
 
 #define SelectionAppend(Len, Data) SelectionStore(SEL_APPEND, NULL, Len, Data)
 byte SelectionStore(uldat Magic, const char MIME[MAX_MIMELEN], uldat Len, const byte *Data);
@@ -93,8 +91,7 @@ hwattr EncodeToHWAttrExtra(tpos pos, tternary detail, tbool active, tbool presse
 byte AssignId(const fn_obj Fn_Obj, obj Obj);
 byte AssignId_all(all Obj);
 void DropId(obj Obj);
-obj  Id2Obj(byte i, uldat Id);
+obj Id2Obj(byte i, uldat Id);
 #define Obj2Id(o) ((o) ? (o)->Id : NOID)
 
 #endif /* _TWIN_UTIL_H */
-

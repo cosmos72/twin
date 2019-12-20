@@ -18,4 +18,3 @@ extern ldat GlobalShadows[2];
 byte rcload(void);
 
 #endif /*  _TWIN_RCPROTO_H */
-

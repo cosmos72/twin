@@ -24,8 +24,8 @@ void TranslateCoordsWidget(widget W1, widget W2, dat *X, dat *Y, byte *Inside);
 
 void DrawDesktop(screen Screen, dat Xstart, dat Ystart, dat Xend, dat Yend, byte Shaded);
 
-void DrawArea2(screen FirstScreen, widget Top, widget OnlyW,
-	       dat X1, dat Y1, dat X2, dat Y2, byte Shaded);
+void DrawArea2(screen FirstScreen, widget Top, widget OnlyW, dat X1, dat Y1, dat X2, dat Y2,
+               byte Shaded);
 #define FULL_SCREEN (screen)0, (widget)0, (widget)0, (dat)0, (dat)0, TW_MAXDAT, TW_MAXDAT, tfalse
 
 /* DrawWidget() assumes W is not obscured */
@@ -36,19 +36,18 @@ void DrawAreaWidget(widget W);
 /* like DrawAreaWindow2, but does not draw the shadow: */
 #define DrawFullWindow2(W) DrawAreaWidget((widget)W)
 
-
 void DrawScreen(screen Screen);
 
 void DrawBorderWindow(window Window, byte Flags);
-#define BORDER_LEFT	(0x1)
-#define BORDER_UP	(0x2)
-#define BORDER_RIGHT	(0x4)
-#define BORDER_DOWN	(0x8)
-#define BORDER_ANY	(0xF)
+#define BORDER_LEFT (0x1)
+#define BORDER_UP (0x2)
+#define BORDER_RIGHT (0x4)
+#define BORDER_DOWN (0x8)
+#define BORDER_ANY (0xF)
 
 void DrawShadeWindow(window Window, dat Xstart, dat Ystart, dat Xend, dat Yend, byte Internal);
 void DrawAreaShadeWindow(screen Screen, window Window, dat Xstart, dat Ystart, dat Xend, dat Yend,
-			 ldat shLeft, ldat shUp, ldat shRgt, ldat shDwn, byte Internal);
+                         ldat shLeft, ldat shUp, ldat shRgt, ldat shDwn, byte Internal);
 /* this also draws the shadow: */
 void DrawAreaWindow2(window Window);
 

@@ -17,10 +17,10 @@
 extern byte StrategyFlag;
 extern tany StrategyDelay;
 /* strategy */
-#define HW_UNSET  0
-#define HW_ACCEL  1
+#define HW_UNSET 0
+#define HW_ACCEL 1
 #define HW_BUFFER 2
-#define HW_DELAY  3
+#define HW_DELAY 3
 
 void StrategyReset(void);
 byte Strategy4Video(dat Xstart, dat Ystart, dat Xend, dat Yend);
@@ -50,4 +50,3 @@ byte StdAddMouseEvent(udat Code, dat MouseX, dat MouseY);
 void SyntheticKey(widget W, udat Code, udat ShiftFlags, byte Len, char *Seq);
 
 #endif /* _TWIN_HW_MULTI_H */
-

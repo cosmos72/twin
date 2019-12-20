@@ -1,10 +1,6 @@
 
 
-
-
-
 /* This file was automatically generated from m4/tt.m4hh, do not edit! */
-
 
 /*
  *  ttobject.h  --  public header for libTT declarations related to "ttobject"
@@ -18,38 +14,23 @@
  *
  */
 
-
-
 #ifndef _TT_TTOBJECT_H
 #define _TT_TTOBJECT_H
-
-
-
-
-
-
 
 /* object structure */
 #ifndef s_ttobject
 
-                            
-        struct s_ttobject;
-typedef struct s_ttobject *	ttobject;
+struct s_ttobject;
+typedef struct s_ttobject *ttobject;
 
 #endif /* s_ttobject */
 
-
-
 /* global runtime class type; returned by TTCLASSOF(<some object>) */
 /** class of ttobject */
-extern ttclass	TTClass_ttobject;
-
-
-
-
+extern ttclass TTClass_ttobject;
 
 /* ttobject methods */
-                
+
 /** increase by 1 the reference count of object `o' */
 void TTRef_ttobject(ttobject o);
 
@@ -57,44 +38,26 @@ void TTRef_ttobject(ttobject o);
 void TTUnref_ttobject(ttobject o);
 
 /** set `user_data' of object `o' */
-ttbyte TTSetUserData_ttobject(ttobject o,ttany user_data);
-
-
-
-
-
-
-
-
+ttbyte TTSetUserData_ttobject(ttobject o, ttany user_data);
 
 /* TTGet*_ttobject and TTSet*_ttobject methods */
-    
+
 /** get `refcount' of ttobject `o' */
-ttopaque 	TTGetRefcount_ttobject(TT_ARG_READ ttobject o);
-    
+ttopaque TTGetRefcount_ttobject(TT_ARG_READ ttobject o);
+
 /** get `oflags' of ttobject `o' */
-ttuint 	TTGetOflags_ttobject(TT_ARG_READ ttobject o);
-            
+ttuint TTGetOflags_ttobject(TT_ARG_READ ttobject o);
+
 /** get `user_data' of ttobject `o' */
-ttany 	TTGetUserData_ttobject(TT_ARG_READ ttobject o);
+ttany TTGetUserData_ttobject(TT_ARG_READ ttobject o);
 
 /** set `user_data' of ttobject `o' */
-ttbyte 	TTSetUserData_ttobject(ttobject o, ttany user_data);
-    
+ttbyte TTSetUserData_ttobject(ttobject o, ttany user_data);
+
 /** get `events_inprogress' of ttobject `o' */
-ttopaque 	TTGetEventsInprogress_ttobject(TT_ARG_READ ttobject o);
-    
+ttopaque TTGetEventsInprogress_ttobject(TT_ARG_READ ttobject o);
+
 /** get `events_informed' of ttobject `o' */
-ttopaque 	TTGetEventsInformed_ttobject(TT_ARG_READ ttobject o);
-
-
-
-
-
-
-
-
-
+ttopaque TTGetEventsInformed_ttobject(TT_ARG_READ ttobject o);
 
 #endif /* _TT_TTOBJECT_H */
-

@@ -10,7 +10,7 @@
 #define _TWIN_PRINTK_H
 
 #ifndef SS
-# define SS "%." STR(TW_SMALLBUFF) "s"
+#define SS "%." STR(TW_SMALLBUFF) "s"
 #endif
 
 int printk(const char *format, ...);
@@ -20,6 +20,5 @@ int flushk(void);
 
 byte RegisterPrintk(int fd);
 void UnRegisterPrintk(void);
-
 
 #endif /* _TWIN_PRINTK_H */

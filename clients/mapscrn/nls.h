@@ -1,4 +1,4 @@
-/*  
+/*
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -8,7 +8,7 @@
  */
 
 #ifndef PACKAGE
-#define PACKAGE	"kbd"
+#define PACKAGE "kbd"
 #endif
 
 #ifndef LOCALEDIR
@@ -16,26 +16,24 @@
 #endif
 
 #ifdef TW_HAVE_LOCALE_H
-# include <locale.h>
+#include <locale.h>
 #endif
 
 #ifdef ENABLE_NLS
-# include <libintl.h>
-# define _(Text) gettext (Text)
-# ifdef gettext_noop
-#  define N_(String) gettext_noop (String)
-# else
-#  define N_(String) (String)
-# endif
+#include <libintl.h>
+#define _(Text) gettext(Text)
+#ifdef gettext_noop
+#define N_(String) gettext_noop(String)
 #else
-# undef bindtextdomain
-# define bindtextdomain(Domain, Directory) /* empty */
-# undef textdomain
-# define textdomain(Domain) /* empty */
-# undef setlocale
-# define setlocale(Category, Locale) /* empty */
-# define _(Text) (Text)
-# define N_(Text) (Text)
+#define N_(String) (String)
 #endif
-
-
+#else
+#undef bindtextdomain
+#define bindtextdomain(Domain, Directory) /* empty */
+#undef textdomain
+#define textdomain(Domain) /* empty */
+#undef setlocale
+#define setlocale(Category, Locale) /* empty */
+#define _(Text) (Text)
+#define N_(Text) (Text)
+#endif

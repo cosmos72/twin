@@ -1,0 +1,6 @@
+Language:       Cpp
+# BasedOnStyle: Google
+ColumnLimit:    100
+Standard:       Cpp11
+SortIncludes:   false
+UseTab:         Never

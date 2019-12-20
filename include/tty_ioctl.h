@@ -9,29 +9,29 @@
 #define _TWIN_TTY_IOCTL_H
 
 #ifndef _TWAUTOCONF_H
-# include "twautoconf.h"
+#include "twautoconf.h"
 #endif
 
 #if defined(TW_HAVE_TERMIOS_H)
-# include <termios.h>
+#include <termios.h>
 #elif defined(TW_HAVE_TERMIO_H)
-# include <termio.h>
+#include <termio.h>
 #endif
 
 #ifdef TW_HAVE_SYS_IOCTL_H
-# include <sys/ioctl.h>
+#include <sys/ioctl.h>
 #endif
 
 #ifdef TCSETS
-# define tty_setioctl(tty_fd, ttyb) ioctl((tty_fd), TCSETS, (ttyb))
-# define tty_getioctl(tty_fd, ttyb) ioctl((tty_fd), TCGETS, (ttyb))
+#define tty_setioctl(tty_fd, ttyb) ioctl((tty_fd), TCSETS, (ttyb))
+#define tty_getioctl(tty_fd, ttyb) ioctl((tty_fd), TCGETS, (ttyb))
 #else
-# ifdef TCSANOW
-#  define tty_setioctl(tty_fd, ttyb) tcsetattr((tty_fd), TCSANOW, (ttyb))
-#  define tty_getioctl(tty_fd, ttyb) tcgetattr((tty_fd), (ttyb))
-# else
-#  error TCSETS and TCSANOW both undefined.
-# endif
+#ifdef TCSANOW
+#define tty_setioctl(tty_fd, ttyb) tcsetattr((tty_fd), TCSANOW, (ttyb))
+#define tty_getioctl(tty_fd, ttyb) tcgetattr((tty_fd), (ttyb))
+#else
+#error TCSETS and TCSANOW both undefined.
+#endif
 #endif
 
 #endif /* _TWIN_TTY_IOCTL_H */

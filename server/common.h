@@ -33,13 +33,13 @@ obj TwinSelectionGetOwner(void);
 void TwinSelectionSetOwner(obj Owner, tany Time, tany Frac);
 #define SEL_CURRENTTIME ((tany)0)
 void TwinSelectionNotify(obj Requestor, uldat ReqPrivate, uldat Magic, CONST char MIME[MAX_MIMELEN],
-			    uldat Len, CONST char * Data);
+                         uldat Len, CONST char *Data);
 void TwinSelectionRequest(obj Requestor, uldat ReqPrivate, obj Owner);
 
 void SelectionExport(void);
 void SelectionImport(void);
 #ifndef SelectionAppend
-# define SelectionAppend(Len, Data) SelectionStore(SEL_APPEND, NULL, Len, Data)
+#define SelectionAppend(Len, Data) SelectionStore(SEL_APPEND, NULL, Len, Data)
 #endif
 byte SelectionStore(uldat Magic, CONST char MIME[MAX_MIMELEN], uldat Len, CONST byte *Data);
 
@@ -58,12 +58,11 @@ void Quit(int status);
 void GainPrivileges(void);
 
 #ifndef SS
-# define SS "%." STR(TW_SMALLBUFF) "s"
+#define SS "%." STR(TW_SMALLBUFF) "s"
 #endif
 
 int printk(CONST char *format, ...);
 int flushk(void);
-
 
 /*
  * this comes either from display.c or from remote.c
@@ -71,4 +70,3 @@ int flushk(void);
 void RemotePidIsDead(pid_t pid);
 
 #endif /* _TWIN_HW_COMMON_H */
-

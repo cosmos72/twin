@@ -3,24 +3,23 @@
 #define _TT_COMPILER_H
 
 /** macro to concatenate args */
-#define TT_CAT(a,b)		TW__CAT(a,b)
-#define TT_CAT3(a,b,c)		TW__CAT3(a,b,c)
-#define TT_CAT4(a,b,c,d)	TW__CAT4(a,b,c,d)
+#define TT_CAT(a, b) TW__CAT(a, b)
+#define TT_CAT3(a, b, c) TW__CAT3(a, b, c)
+#define TT_CAT4(a, b, c, d) TW__CAT4(a, b, c, d)
 /** macro to stringify an arg */
-#define TT_STR(a)		TW__STR(a)
+#define TT_STR(a) TW__STR(a)
 /** `const' if your compiler understands it, else nothing */
-#define TT_CONST		TW_CONST
+#define TT_CONST TW_CONST
 /** `inline' or an appropriate variation if your compiler understands it, else 'static' */
-#define TT_INLINE		TW_INLINE
+#define TT_INLINE TW_INLINE
 /** define if your compiler can inline */
-#define TT_CAN_INLINE		TW_CAN_INLINE
+#define TT_CAN_INLINE TW_CAN_INLINE
 /** `volatile' if your compiler understands it, else nothing */
-#define TT_VOLATILE		TW_VOLATILE
+#define TT_VOLATILE TW_VOLATILE
 /** `__attribute__((const))' if your compiler understands it, else nothing */
-#define TT_ATTR_FN_CONST	TW_ATTR_FN_CONST
+#define TT_ATTR_FN_CONST TW_ATTR_FN_CONST
 /** `__attribute__((packed))' if your compiler understands it, else nothing */
-#define TT_ATTR_TYPE_PACKED	TW_ATTR_TYPE_PACKED
-
+#define TT_ATTR_TYPE_PACKED TW_ATTR_TYPE_PACKED
 
 /*
  * function arguments attributes:
@@ -32,7 +31,7 @@
  * function does not own the object and cannot store object value
  * for later use after function returned.
  */
-#define TT_ARG_READ		TT_CONST
+#define TT_ARG_READ TT_CONST
 /**
  * object can only be written (NOT read or destroyed) by the function until it returns;
  * function does not own the object, but can store object value for later use as long as
@@ -63,4 +62,3 @@
 #define TT_ARG_ARRAY_Z
 
 #endif /* _TT_COMPILER_H */
-

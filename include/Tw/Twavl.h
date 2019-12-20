@@ -15,16 +15,16 @@
 
 #include <Tw/Twtypes.h>
 
-typedef struct s_tavl * tavl;
-typedef struct s_tavl TW_CONST * tavl_c;
+typedef struct s_tavl *tavl;
+typedef struct s_tavl TW_CONST *tavl_c;
 
 typedef int (*tavl_compare)(tavl_c, tavl_c);
 
 struct s_tavl {
-    tavl AVLLeft, AVLRight, AVLParent;
-    uldat AVLkey; /* a quick-compare key (hash). If equal, tavl_compare is used
-		   * to check for actual matching of two tavl nodes */
-    byte AVLHeight;
+  tavl AVLLeft, AVLRight, AVLParent;
+  uldat AVLkey; /* a quick-compare key (hash). If equal, tavl_compare is used
+                 * to check for actual matching of two tavl nodes */
+  byte AVLHeight;
 };
 
 #define AVLHeightOf(L) (L ? L->AVLHeight : 0)
@@ -35,7 +35,4 @@ void AVLInsert(tavl key, tavl base, tavl_compare cmp, tavl *root);
 void AVLRemove(tavl node, tavl_compare cmp, tavl *root);
 void AVLRebalance(tavl base, tavl_compare cmp, tavl *root);
 
-
-
 #endif /* _TW_AVL_H */
-

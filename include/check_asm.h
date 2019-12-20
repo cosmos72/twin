@@ -19,29 +19,27 @@
  * disable i386 gcc assembler code
  * if (tany) does not fit a i386 machine register (4 bytes)
  */
-# ifdef TW_HAVE_ASM
-#  ifdef TW_HAVE_GCC_I386_ASM
-#   if TW_SIZEOF_TANY > 4
-#    undef TW_HAVE_GCC_I386_ASM
-#    undef TW_HAVE_ASM
-#    warning gcc-i386 assembler support disabled because sizeof(tany) > 4
-#   endif
-#  endif
-# endif
-
+#ifdef TW_HAVE_ASM
+#ifdef TW_HAVE_GCC_I386_ASM
+#if TW_SIZEOF_TANY > 4
+#undef TW_HAVE_GCC_I386_ASM
+#undef TW_HAVE_ASM
+#warning gcc-i386 assembler support disabled because sizeof(tany) > 4
+#endif
+#endif
+#endif
 
 /*
  * generically disable assembler code
  * if (tany) does not fit a machine register
  * (assumed to be as wide as (void *))
  */
-# ifdef TW_HAVE_ASM
-#  if TW_SIZEOF_TANY_T > TW_SIZEOF_VOID_P
-#   undef TW_HAVE_ASM
-#   warning assembler support disabled because sizeof(tany) > sizeof(void *)
-#  endif
-# endif
-
+#ifdef TW_HAVE_ASM
+#if TW_SIZEOF_TANY_T > TW_SIZEOF_VOID_P
+#undef TW_HAVE_ASM
+#warning assembler support disabled because sizeof(tany) > sizeof(void *)
+#endif
+#endif
 
 /*
  * generically disable assembler code
@@ -50,13 +48,11 @@
  * (which passes char and short args as int)
  * to pass all function arguments as (tany)
  */
-# ifdef TW_HAVE_ASM
-#  if TW_SIZEOF_TANY != TW_SIZEOF_INT
-#   undef TW_HAVE_ASM
-#   warning assembler support disabled because sizeof(tany) != sizeof(int)
-#  endif
-# endif
-
+#ifdef TW_HAVE_ASM
+#if TW_SIZEOF_TANY != TW_SIZEOF_INT
+#undef TW_HAVE_ASM
+#warning assembler support disabled because sizeof(tany) != sizeof(int)
+#endif
+#endif
 
 #endif /* _TWIN_CONFIG_H */
-

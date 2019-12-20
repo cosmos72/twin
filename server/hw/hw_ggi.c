@@ -39,305 +39,308 @@
  *	-  use ggiFlushRegion() for better X performance.
  */
 
-static int (*gOrigSelect)(int n, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *timeout);
+static int (*gOrigSelect)(int n, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
+                          struct timeval *timeout);
 static display_hw GGI_HW;
 
 struct GGI_data {
-    ggi_visual_t gvis;
-    ggi_mode  gmode;
-    ggi_coord gfont;	/* character size */
+  ggi_visual_t gvis;
+  ggi_mode gmode;
+  ggi_coord gfont; /* character size */
 
-    ggi_pixel gforeground, gbackground, gcol[MAXCOL+1];
+  ggi_pixel gforeground, gbackground, gcol[MAXCOL + 1];
 };
 
 #define GGIdata ((struct GGI_data *)HW->Private)
-#define gvis	(GGIdata->gvis)
-#define gmode	(GGIdata->gmode)
-#define gfont	(GGIdata->gfont)
-#define gforeground	(GGIdata->gforeground)
-#define gbackground	(GGIdata->gbackground)
-#define gcol	(GGIdata->gcol)
+#define gvis (GGIdata->gvis)
+#define gmode (GGIdata->gmode)
+#define gfont (GGIdata->gfont)
+#define gforeground (GGIdata->gforeground)
+#define gbackground (GGIdata->gbackground)
+#define gcol (GGIdata->gcol)
 
-#define WANTED_EVENTS  (emKey | emPointer | emExpose)
-
+#define WANTED_EVENTS (emKey | emPointer | emExpose)
 
 static void GGI_Beep(void) {
-    /* not exactly clean... */
-    putchar('\7');
-    NeedHW |= NEEDFlushStdout;
+  /* not exactly clean... */
+  putchar('\7');
+  NeedHW |= NEEDFlushStdout;
 }
 
 static void GGI_KeyboardEvent(int fd, display_hw hw) {
-    ggi_event ev;
-    struct timeval tv;
-    ldat dx = 0, dy = 0;
-    dat x, y;
-    byte keys;
+  ggi_event ev;
+  struct timeval tv;
+  ldat dx = 0, dy = 0;
+  dat x, y;
+  byte keys;
 
-    SaveHW;
-    SetHW(hw);
-    
-    x = HW->MouseState.x;
-    y = HW->MouseState.y;
-    keys = HW->MouseState.keys;
-    
-    for (;;) {
-	
-	tv.tv_sec = tv.tv_usec = 0;
-	
-	if (ggiEventPoll(gvis, emAll, &tv) <= 0 || ggiEventRead(gvis, &ev, emAll) <= 0)
-	    break;
-	
-	switch (ev.any.type) {
+  SaveHW;
+  SetHW(hw);
 
-	  case evKeyPress:
-	  case evKeyRepeat:
-	    /*handle_keyboard(ev.key.sym, ev.key.modifiers, master_fd);*/
-	    break;
-	    
-	  case evExpose:
-	    /*
-	     min_x = MIN(min_x, ev.expose.x / font.x);
-	     min_y = MIN(min_y, ev.expose.y / font.y);
+  x = HW->MouseState.x;
+  y = HW->MouseState.y;
+  keys = HW->MouseState.keys;
 
-	     max_x = MAX(max_x, (ev.expose.x+ev.expose.w +
-				 font.x - 1) / font.x);
-	     max_y = MAX(max_y, (ev.expose.y+ev.expose.h +
-				 font.y - 1) / font.y);
-	     */
-	    break;
-	    
-	  case evPtrButtonPress:
-	    switch (ev.pbutton.button) {
-	      case GII_PBUTTON_FIRST:
-		keys |= HOLD_LEFT;
-		break;
-	      case GII_PBUTTON_SECOND:
-		keys |= HOLD_RIGHT;
-		break;
-	      case GII_PBUTTON_THIRD:
-		keys |= HOLD_MIDDLE;
-		break;
-	      default:
-		break;
-	    }
-	    break;
-	    
-	  case evPtrButtonRelease:
-	    switch (ev.pbutton.button) {
-	      case GII_PBUTTON_FIRST:
-		keys &= ~HOLD_LEFT;
-		break;
-	      case GII_PBUTTON_SECOND:
-		keys &= ~HOLD_RIGHT;
-		break;
-	      case GII_PBUTTON_THIRD:
-		keys &= ~HOLD_MIDDLE;
-		break;
-	      default:
-		break;
-	    }
-	    break;
-	    
-	  case evPtrRelative:
-	    /*
-	     if (ev.any.type == evPtrRelative) {
-		 x += HW->MouseState.x;
-		 y += HW->MouseState.y;
-	     }
-	     */
-	    break;
-	    
-	  case evPtrAbsolute:
-	    
-	    x = ev.pmove.x / gfont.x;
-	    y = ev.pmove.y / gfont.y;
-	    
-	    x = Max2(x, 0); x = Min2(x, DisplayWidth - 1);
-	    y = Max2(y, 0); y = Min2(y, DisplayHeight - 1);
-	    
-	    dx = ev.pmove.x < gfont.x/2 ? -1 : (ldat)DisplayWidth *gfont.x - ev.pmove.x <= gfont.x/2 ? 1 : 0;
-	    dy = ev.pmove.y < gfont.y/2 ? -1 : (ldat)DisplayHeight*gfont.y - ev.pmove.y <= gfont.y/2 ? 1 : 0;
-	    
-	    break;
-	    
-	  default:
-	    break;
-	}
+  for (;;) {
+
+    tv.tv_sec = tv.tv_usec = 0;
+
+    if (ggiEventPoll(gvis, emAll, &tv) <= 0 || ggiEventRead(gvis, &ev, emAll) <= 0)
+      break;
+
+    switch (ev.any.type) {
+
+    case evKeyPress:
+    case evKeyRepeat:
+      /*handle_keyboard(ev.key.sym, ev.key.modifiers, master_fd);*/
+      break;
+
+    case evExpose:
+      /*
+       min_x = MIN(min_x, ev.expose.x / font.x);
+       min_y = MIN(min_y, ev.expose.y / font.y);
+
+       max_x = MAX(max_x, (ev.expose.x+ev.expose.w +
+                           font.x - 1) / font.x);
+       max_y = MAX(max_y, (ev.expose.y+ev.expose.h +
+                           font.y - 1) / font.y);
+       */
+      break;
+
+    case evPtrButtonPress:
+      switch (ev.pbutton.button) {
+      case GII_PBUTTON_FIRST:
+        keys |= HOLD_LEFT;
+        break;
+      case GII_PBUTTON_SECOND:
+        keys |= HOLD_RIGHT;
+        break;
+      case GII_PBUTTON_THIRD:
+        keys |= HOLD_MIDDLE;
+        break;
+      default:
+        break;
+      }
+      break;
+
+    case evPtrButtonRelease:
+      switch (ev.pbutton.button) {
+      case GII_PBUTTON_FIRST:
+        keys &= ~HOLD_LEFT;
+        break;
+      case GII_PBUTTON_SECOND:
+        keys &= ~HOLD_RIGHT;
+        break;
+      case GII_PBUTTON_THIRD:
+        keys &= ~HOLD_MIDDLE;
+        break;
+      default:
+        break;
+      }
+      break;
+
+    case evPtrRelative:
+      /*
+       if (ev.any.type == evPtrRelative) {
+           x += HW->MouseState.x;
+           y += HW->MouseState.y;
+       }
+       */
+      break;
+
+    case evPtrAbsolute:
+
+      x = ev.pmove.x / gfont.x;
+      y = ev.pmove.y / gfont.y;
+
+      x = Max2(x, 0);
+      x = Min2(x, DisplayWidth - 1);
+      y = Max2(y, 0);
+      y = Min2(y, DisplayHeight - 1);
+
+      dx = ev.pmove.x < gfont.x / 2
+               ? -1
+               : (ldat)DisplayWidth * gfont.x - ev.pmove.x <= gfont.x / 2 ? 1 : 0;
+      dy = ev.pmove.y < gfont.y / 2
+               ? -1
+               : (ldat)DisplayHeight * gfont.y - ev.pmove.y <= gfont.y / 2 ? 1 : 0;
+
+      break;
+
+    default:
+      break;
     }
-    
-    if (keys != HW->MouseState.keys || dx || dy || x != HW->MouseState.x || y != HW->MouseState.y) {
-	MouseEventCommon(x, y, dx, dy, keys);
-	HW->MouseState.keys = keys;
-	HW->MouseState.x = x;
-	HW->MouseState.y = y;
-    }
-    
-    RestoreHW;
+  }
+
+  if (keys != HW->MouseState.keys || dx || dy || x != HW->MouseState.x || y != HW->MouseState.y) {
+    MouseEventCommon(x, y, dx, dy, keys);
+    HW->MouseState.keys = keys;
+    HW->MouseState.x = x;
+    HW->MouseState.y = y;
+  }
+
+  RestoreHW;
 }
 
 /* this can stay static */
 static hwcol _col;
 
-#define GFG(col) \
-    if (gforeground != gcol[COLFG(col)]) \
-	ggiSetGCForeground(gvis, gforeground = gcol[COLFG(col)])
+#define GFG(col)                                                                                   \
+  if (gforeground != gcol[COLFG(col)])                                                             \
+  ggiSetGCForeground(gvis, gforeground = gcol[COLFG(col)])
 
-#define GBG(col) \
-    if (gbackground != gcol[COLBG(col)]) \
-	ggiSetGCBackground(gvis, gbackground = gcol[COLBG(col)])
+#define GBG(col)                                                                                   \
+  if (gbackground != gcol[COLBG(col)])                                                             \
+  ggiSetGCBackground(gvis, gbackground = gcol[COLBG(col)])
 
-#define GDRAW(col, buf, buflen) \
-    GFG(col); \
-    GBG(col); \
-    ggiPuts(gvis, xbegin, ybegin, buf)
-
+#define GDRAW(col, buf, buflen)                                                                    \
+  GFG(col);                                                                                        \
+  GBG(col);                                                                                        \
+  ggiPuts(gvis, xbegin, ybegin, buf)
 
 INLINE void GGI_Mogrify(dat x, dat y, uldat len) {
-    hwattr *V, *oV;
-    hwcol col;
-    udat buflen = 0;
-    byte buf[TW_SMALLBUFF];
-    int xbegin = x * gfont.x, ybegin = y * gfont.y;
-    
-    V = Video + x + y * (ldat)DisplayWidth;
-    oV = OldVideo + x + y * (ldat)DisplayWidth;
-    
-    for (_col = ~HWCOL(*V); len; x++, V++, oV++, len--) {
-	col = HWCOL(*V);
-	if (buflen && (col != _col || (ValidOldVideo && *V == *oV) || buflen == TW_SMALLBUFF-1)) {
-	    buf[buflen] = '\0';
-	    GDRAW(_col, buf, buflen);
-	    buflen = 0;
-	}
-	if (!ValidOldVideo || *V != *oV) {
-	    if (!buflen) {
-		xbegin = x * (ldat)gfont.x;
-		_col = col;
-	    }
-	    buf[buflen++] = HWFONT(*V) ? HWFONT(*V) : ' ';
-	    /* ggiPuts cannot handle '\0' */
-	}
+  hwattr *V, *oV;
+  hwcol col;
+  udat buflen = 0;
+  byte buf[TW_SMALLBUFF];
+  int xbegin = x * gfont.x, ybegin = y * gfont.y;
+
+  V = Video + x + y * (ldat)DisplayWidth;
+  oV = OldVideo + x + y * (ldat)DisplayWidth;
+
+  for (_col = ~HWCOL(*V); len; x++, V++, oV++, len--) {
+    col = HWCOL(*V);
+    if (buflen && (col != _col || (ValidOldVideo && *V == *oV) || buflen == TW_SMALLBUFF - 1)) {
+      buf[buflen] = '\0';
+      GDRAW(_col, buf, buflen);
+      buflen = 0;
     }
-    if (buflen) {
-	buf[buflen] = '\0';
-	GDRAW(_col, buf, buflen);
-	buflen = 0;
+    if (!ValidOldVideo || *V != *oV) {
+      if (!buflen) {
+        xbegin = x * (ldat)gfont.x;
+        _col = col;
+      }
+      buf[buflen++] = HWFONT(*V) ? HWFONT(*V) : ' ';
+      /* ggiPuts cannot handle '\0' */
     }
+  }
+  if (buflen) {
+    buf[buflen] = '\0';
+    GDRAW(_col, buf, buflen);
+    buflen = 0;
+  }
 }
 
 #undef GDRAW
 
 static void GGI_HideCursor(dat x, dat y) {
-    hwattr V = Video[x + y * (ldat)DisplayWidth];
-    hwcol col = HWCOL(V);
-    
-    GFG(col);
-    GBG(col);
-    ggiPutc(gvis, x * gfont.x, y * gfont.y, HWFONT(V));
+  hwattr V = Video[x + y * (ldat)DisplayWidth];
+  hwcol col = HWCOL(V);
+
+  GFG(col);
+  GBG(col);
+  ggiPutc(gvis, x * gfont.x, y * gfont.y, HWFONT(V));
 }
 
 static void GGI_ShowCursor(uldat type, dat x, dat y) {
-    hwattr V = Video[x + y * (ldat)DisplayWidth];
-    hwcol v;
-    udat i;
-    
-    if (type & 0x10) {
-	/* soft cursor */
-	v = (HWCOL(V) | ((type >> 16) & 0xff)) ^ ((type >> 8) & 0xff);
-	if ((type & 0x20) && (HWCOL(V) & COL(0,WHITE)) == (v & COL(0,WHITE)))
-	    v ^= COL(0,WHITE);
-	if ((type & 0x40) && ((COLFG(v) & WHITE) == (COLBG(v) & WHITE)))
-	    v ^= COL(WHITE,0);
-	
-	GFG(COLFG(v));
-	GBG(COLBG(v));
-	ggiPutc(gvis, x * gfont.x, y * gfont.y, HWFONT(V));
-    }
-    if (type & 0xF) {
-	/* VGA hw-like cursor */
-	i = gfont.x * ((type & 0xF)-NOCURSOR) / (SOLIDCURSOR-NOCURSOR);
-	v = HWCOL(V);
-	
-	GFG(v);
-	ggiDrawBox(gvis, x * gfont.x, y * gfont.y + gfont.y - i, gfont.x, i);
-    }
+  hwattr V = Video[x + y * (ldat)DisplayWidth];
+  hwcol v;
+  udat i;
+
+  if (type & 0x10) {
+    /* soft cursor */
+    v = (HWCOL(V) | ((type >> 16) & 0xff)) ^ ((type >> 8) & 0xff);
+    if ((type & 0x20) && (HWCOL(V) & COL(0, WHITE)) == (v & COL(0, WHITE)))
+      v ^= COL(0, WHITE);
+    if ((type & 0x40) && ((COLFG(v) & WHITE) == (COLBG(v) & WHITE)))
+      v ^= COL(WHITE, 0);
+
+    GFG(COLFG(v));
+    GBG(COLBG(v));
+    ggiPutc(gvis, x * gfont.x, y * gfont.y, HWFONT(V));
+  }
+  if (type & 0xF) {
+    /* VGA hw-like cursor */
+    i = gfont.x * ((type & 0xF) - NOCURSOR) / (SOLIDCURSOR - NOCURSOR);
+    v = HWCOL(V);
+
+    GFG(v);
+    ggiDrawBox(gvis, x * gfont.x, y * gfont.y + gfont.y - i, gfont.x, i);
+  }
 }
 
 static void GGI_FlushVideo(void) {
-    uldat i;
-    dat start, end;
-    byte iff;
-    
-    if (ValidOldVideo) {
-       iff = ChangedVideoFlag
-	 && Video[HW->XY[0] + HW->XY[1] * (ldat)DisplayWidth]
-	 != OldVideo[HW->XY[0] + HW->XY[1] * (ldat)DisplayWidth];
-       /* ttrue if and only if the cursor will be erased by burst */
+  uldat i;
+  dat start, end;
+  byte iff;
+
+  if (ValidOldVideo) {
+    iff = ChangedVideoFlag && Video[HW->XY[0] + HW->XY[1] * (ldat)DisplayWidth] !=
+                                  OldVideo[HW->XY[0] + HW->XY[1] * (ldat)DisplayWidth];
+    /* ttrue if and only if the cursor will be erased by burst */
+  }
+
+  /* first burst all changes */
+  if (ChangedVideoFlag) {
+    for (i = 0; i < (ldat)DisplayHeight * 2; i++) {
+      start = ChangedVideo[i >> 1][i & 1][0];
+      end = ChangedVideo[i >> 1][i & 1][1];
+
+      if (start != -1)
+        GGI_Mogrify(start, i >> 1, end - start + 1);
     }
-   
-    /* first burst all changes */
-    if (ChangedVideoFlag) {
-	for (i=0; i<(ldat)DisplayHeight*2; i++) {
-	    start = ChangedVideo[i>>1][i&1][0];
-	    end   = ChangedVideo[i>>1][i&1][1];
-	    
-	    if (start != -1)
-		GGI_Mogrify(start, i>>1, end-start+1);
-	}
-	setFlush();
-    }
-    /* then, we may have to erase the old cursor */
-    if (!ValidOldVideo ||
-	(!iff && HW->TT != NOCURSOR &&
-	 (CursorType != HW->TT || CursorX != HW->XY[0] || CursorY != HW->XY[1]))) {
-	
-	HW->TT = NOCURSOR;
-	GGI_HideCursor(HW->XY[0], HW->XY[1]);
-	setFlush();
-    }
-    /* finally, redraw the cursor if forced to redraw (!ValidOldVideo) or */
-    /* (we want a cursor and (the burst erased the cursor or the cursor changed)) */
-    if (!ValidOldVideo ||
-	(CursorType != NOCURSOR &&
-	 (iff || CursorType != HW->TT || CursorX != HW->XY[0] || CursorY != HW->XY[1]))) {
-	
-	GGI_ShowCursor(HW->TT = CursorType, HW->XY[0] = CursorX, HW->XY[1]= CursorY);
-	setFlush();
-    }
-    
-    HW->FlagsHW &= ~FlHWChangedMouseFlag;
+    setFlush();
+  }
+  /* then, we may have to erase the old cursor */
+  if (!ValidOldVideo || (!iff && HW->TT != NOCURSOR &&
+                         (CursorType != HW->TT || CursorX != HW->XY[0] || CursorY != HW->XY[1]))) {
+
+    HW->TT = NOCURSOR;
+    GGI_HideCursor(HW->XY[0], HW->XY[1]);
+    setFlush();
+  }
+  /* finally, redraw the cursor if forced to redraw (!ValidOldVideo) or */
+  /* (we want a cursor and (the burst erased the cursor or the cursor changed)) */
+  if (!ValidOldVideo ||
+      (CursorType != NOCURSOR &&
+       (iff || CursorType != HW->TT || CursorX != HW->XY[0] || CursorY != HW->XY[1]))) {
+
+    GGI_ShowCursor(HW->TT = CursorType, HW->XY[0] = CursorX, HW->XY[1] = CursorY);
+    setFlush();
+  }
+
+  HW->FlagsHW &= ~FlHWChangedMouseFlag;
 }
 
 static void GGI_FlushHW(void) {
-    ggiFlush(gvis);
-    clrFlush();
+  ggiFlush(gvis);
+  clrFlush();
 }
 
 static void GGI_DetectSize(dat *x, dat *y) {
-    *x = HW->X;
-    *y = HW->Y;
+  *x = HW->X;
+  *y = HW->Y;
 }
 
 static void GGI_CheckResize(dat *x, dat *y) {
-    /* TODO */
-    /* I am lazy, libggi has ggiCheckMode() for this. */
-    *x = Min2(*x, HW->X);
-    *y = Min2(*y, HW->Y);
+  /* TODO */
+  /* I am lazy, libggi has ggiCheckMode() for this. */
+  *x = Min2(*x, HW->X);
+  *y = Min2(*y, HW->Y);
 }
 
 static void GGI_Resize(dat x, dat y) {
-    if (x < HW->usedX || y < HW->usedY) {
-	/* clear screen so that extra area will be padded with blanks */
-	ggiSetGCForeground(gvis, gforeground = gcol[0]);
-	ggiFillscreen(gvis);
-	ggiFlush(gvis);
+  if (x < HW->usedX || y < HW->usedY) {
+    /* clear screen so that extra area will be padded with blanks */
+    ggiSetGCForeground(gvis, gforeground = gcol[0]);
+    ggiFillscreen(gvis);
+    ggiFlush(gvis);
 
-	/* using ggiSetMode() would also probably avoid having to do this */
-	NeedRedrawVideo(0, 0, x - 1, y - 1);
-    }
-    HW->usedX = x;
-    HW->usedX = y;
+    /* using ggiSetMode() would also probably avoid having to do this */
+    NeedRedrawVideo(0, 0, x - 1, y - 1);
+  }
+  HW->usedX = x;
+  HW->usedX = y;
 }
 
 #if 0
@@ -354,224 +357,222 @@ static void GGI_DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat Ds
 }
 #endif
 
+static int GGI_Select(int n, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
+                      struct timeval *timeout) {
+  int ret;
+  ggi_event_mask gmask = WANTED_EVENTS;
+  struct timeval mytm;
+  SaveHW;
+  SetHW(GGI_HW);
 
-static int GGI_Select(int n, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *timeout) {
-    int ret;
-    ggi_event_mask gmask = WANTED_EVENTS;
-    struct timeval mytm;
-    SaveHW;
-    SetHW(GGI_HW);
-    
-    if (!timeout) {
-	mytm.tv_sec = 86400;
-	mytm.tv_usec = 0;
-	timeout = &mytm;
-    }
-    
-    ret = ggiEventSelect(gvis, &gmask, n, readfds, writefds, exceptfds, timeout);
-    GGI_KeyboardEvent(NOFD, HW);
+  if (!timeout) {
+    mytm.tv_sec = 86400;
+    mytm.tv_usec = 0;
+    timeout = &mytm;
+  }
 
-    RestoreHW;
-    return ret;
+  ret = ggiEventSelect(gvis, &gmask, n, readfds, writefds, exceptfds, timeout);
+  GGI_KeyboardEvent(NOFD, HW);
+
+  RestoreHW;
+  return ret;
 }
-	
+
 static void GGI_InitPalette(void) {
-    int i;
-    ggi_color pixel;
-    for (i=0; i <= MAXCOL; i++) {
-	pixel.r = 257 * (udat)Palette[i].Red;
-	pixel.g = 257 * (udat)Palette[i].Green;
-	pixel.b = 257 * (udat)Palette[i].Blue;
-	pixel.a = 0;
-	gcol[i] = ggiMapColor(gvis, &pixel);
-    }
+  int i;
+  ggi_color pixel;
+  for (i = 0; i <= MAXCOL; i++) {
+    pixel.r = 257 * (udat)Palette[i].Red;
+    pixel.g = 257 * (udat)Palette[i].Green;
+    pixel.b = 257 * (udat)Palette[i].Blue;
+    pixel.a = 0;
+    gcol[i] = ggiMapColor(gvis, &pixel);
+  }
 }
 
 static void GGI_QuitHW(void) {
-    HW->keyboard_slot = HW->mouse_slot = NOSLOT;
-    
-    HW->KeyboardEvent = (void *)NoOp;
-    HW->QuitHW = NoOp;
+  HW->keyboard_slot = HW->mouse_slot = NOSLOT;
 
-    if (OverrideSelect == GGI_Select)
-	OverrideSelect = gOrigSelect;
+  HW->KeyboardEvent = (void *)NoOp;
+  HW->QuitHW = NoOp;
 
-    ggiClose(gvis);
-    ggiExit();
-    
-    FreeMem(HW->Private);
-    
-    if (GGI_HW == HW)
-	GGI_HW = NULL;
+  if (OverrideSelect == GGI_Select)
+    OverrideSelect = gOrigSelect;
+
+  ggiClose(gvis);
+  ggiExit();
+
+  FreeMem(HW->Private);
+
+  if (GGI_HW == HW)
+    GGI_HW = NULL;
 }
 
 static byte GGI_InitHW(void) {
-    byte *arg = HW->Name, *opt = NULL;
-    uldat len = HW->NameLen;
-    int i, j;
-    
-    if (GGI_HW) {
-	printk("      GGI_InitHW() failed: libggi already in use.\n");
-	return tfalse;
+  byte *arg = HW->Name, *opt = NULL;
+  uldat len = HW->NameLen;
+  int i, j;
+
+  if (GGI_HW) {
+    printk("      GGI_InitHW() failed: libggi already in use.\n");
+    return tfalse;
+  }
+
+  if (arg && len > 4) {
+
+    arg += 4;
+    if (strncmp(arg, "ggi", 3))
+      return tfalse; /* user said "use <arg> as display, not ggi" */
+    arg += 3;
+
+    if ((opt = strstr(arg, ",noinput"))) {
+      *opt = '\0';
+      HW->FlagsHW |= FlHWNoInput;
     }
 
-    if (arg && len > 4) {
+    if (*arg == '@')
+      arg++;
+    else
+      arg = NULL;
+  } else
+    arg = NULL;
 
-	arg += 4;
-	if (strncmp(arg, "ggi", 3))
-	    return tfalse; /* user said "use <arg> as display, not ggi" */
-	arg += 3;
-	
-	if ((opt = strstr(arg, ",noinput"))) {
-	    *opt = '\0';
-	    HW->FlagsHW |= FlHWNoInput;
-	}
-	
-	if (*arg == '@')
-	    arg++;
-	else
-	    arg = NULL;
-    } else
-	arg = NULL;
+  if (ggiInit() < 0) {
+    if (opt)
+      *opt = ',';
+    return tfalse;
+  }
+  if (!(HW->Private = (struct GGI_data *)AllocMem(sizeof(struct GGI_data)))) {
+    printk("      GGI_InitHW(): Out of memory!\n");
+    return tfalse;
+  }
 
-    if (ggiInit() < 0) {
-	if (opt) *opt = ',';
-	return tfalse;
-    }
-    if (!(HW->Private = (struct GGI_data *)AllocMem(sizeof(struct GGI_data)))) {
-	printk("      GGI_InitHW(): Out of memory!\n");
-	return tfalse;
-    }
+  gvis = arg ? ggiOpen(arg, NULL) : ggiOpen(NULL);
 
-    gvis = arg ? ggiOpen(arg, NULL) : ggiOpen(NULL);
+  if (gvis)
+    do {
 
-    if (gvis) do {
+      ggiParseMode("", &gmode);
+      ggiCheckMode(gvis, &gmode);
 
-	ggiParseMode("", &gmode);
-	ggiCheckMode(gvis, &gmode);
+      if (ggiSetMode(gvis, &gmode) != 0)
+        break;
 
-	if (ggiSetMode(gvis, &gmode) != 0)
-	    break;
+      ggiSetFlags(gvis, GGIFLAG_ASYNC);
 
-	ggiSetFlags(gvis, GGIFLAG_ASYNC);
+      if (GT_SCHEME(gmode.graphtype) == GT_PALETTE)
+        ggiSetColorfulPalette(gvis);
+      GGI_InitPalette();
 
-	if (GT_SCHEME(gmode.graphtype) == GT_PALETTE)
-	    ggiSetColorfulPalette(gvis);
-	GGI_InitPalette();
-
-	ggiGetCharSize(gvis, &i, &j);
-	gfont.x = i;
-	gfont.y = j;
-	HW->X = gmode.virt.x / gfont.x;
-	HW->Y = gmode.virt.y / gfont.y;
-	HW->usedX = GetDisplayWidth();
-	HW->usedY = GetDisplayHeight();
+      ggiGetCharSize(gvis, &i, &j);
+      gfont.x = i;
+      gfont.y = j;
+      HW->X = gmode.virt.x / gfont.x;
+      HW->Y = gmode.virt.y / gfont.y;
+      HW->usedX = GetDisplayWidth();
+      HW->usedY = GetDisplayHeight();
 
 #if 0
 	if (inputs)
 		ggiJoinInputs(gvis, giiOpen(inputs, NULL));
 #endif
-	
-	ggiSetGCForeground(gvis, gforeground = gcol[0]);
-	ggiSetGCBackground(gvis, gbackground = gcol[0]);
-	ggiFillscreen(gvis);
-	
 
-	HW->keyboard_slot = HW->mouse_slot = NOSLOT;
-	    
-	HW->FlushVideo = GGI_FlushVideo;
-	HW->FlushHW = GGI_FlushHW;
+      ggiSetGCForeground(gvis, gforeground = gcol[0]);
+      ggiSetGCBackground(gvis, gbackground = gcol[0]);
+      ggiFillscreen(gvis);
 
-	HW->KeyboardEvent = GGI_KeyboardEvent;
-	HW->MouseEvent = (void *)NoOp; /* mouse events handled by GGI_KeyboardEvent */
+      HW->keyboard_slot = HW->mouse_slot = NOSLOT;
 
-	HW->XY[0] = HW->XY[1] = 0;
-	HW->TT = (uldat)-1; /* force updating the cursor */
-	
-	HW->ShowMouse = NoOp;
-	HW->HideMouse = NoOp;
-	HW->UpdateMouseAndCursor = NoOp;
-	HW->MouseState.x = HW->MouseState.y = HW->MouseState.keys = 0;
-	
-	HW->DetectSize  = GGI_DetectSize;
-	HW->CheckResize = GGI_CheckResize;
-	HW->Resize      = GGI_Resize;
+      HW->FlushVideo = GGI_FlushVideo;
+      HW->FlushHW = GGI_FlushHW;
 
-	HW->HWSelectionImport  = AlwaysFalse;
-	HW->HWSelectionExport  = NoOp;
-	HW->HWSelectionRequest = (void *)NoOp;
-	HW->HWSelectionNotify  = (void *)NoOp;
-	HW->HWSelectionPrivate = NULL;
+      HW->KeyboardEvent = GGI_KeyboardEvent;
+      HW->MouseEvent = (void *)NoOp; /* mouse events handled by GGI_KeyboardEvent */
+
+      HW->XY[0] = HW->XY[1] = 0;
+      HW->TT = (uldat)-1; /* force updating the cursor */
+
+      HW->ShowMouse = NoOp;
+      HW->HideMouse = NoOp;
+      HW->UpdateMouseAndCursor = NoOp;
+      HW->MouseState.x = HW->MouseState.y = HW->MouseState.keys = 0;
+
+      HW->DetectSize = GGI_DetectSize;
+      HW->CheckResize = GGI_CheckResize;
+      HW->Resize = GGI_Resize;
+
+      HW->HWSelectionImport = AlwaysFalse;
+      HW->HWSelectionExport = NoOp;
+      HW->HWSelectionRequest = (void *)NoOp;
+      HW->HWSelectionNotify = (void *)NoOp;
+      HW->HWSelectionPrivate = NULL;
 
 #if 1
-	HW->CanDragArea = NULL;
+      HW->CanDragArea = NULL;
 #else
-	HW->CanDragArea = GGI_CanDragArea;
-	HW->DragArea    = GGI_DragArea;
+      HW->CanDragArea = GGI_CanDragArea;
+      HW->DragArea = GGI_DragArea;
 #endif
-	
-	HW->Beep = GGI_Beep;
-	HW->Configure = (void *)NoOp; /* TODO... */
-	HW->SetPalette = (void *)NoOp;/* TODO... */
-	HW->ResetPalette = NoOp;
 
-	HW->QuitHW = GGI_QuitHW;
-	HW->QuitKeyboard = NoOp;
-	HW->QuitMouse = NoOp;
-	HW->QuitVideo = NoOp;
+      HW->Beep = GGI_Beep;
+      HW->Configure = (void *)NoOp;  /* TODO... */
+      HW->SetPalette = (void *)NoOp; /* TODO... */
+      HW->ResetPalette = NoOp;
 
-	HW->DisplayIsCTTY = tfalse;
-	HW->FlagsHW &= ~FlHWSoftMouse; /* mouse pointer handled by X11 server */
+      HW->QuitHW = GGI_QuitHW;
+      HW->QuitKeyboard = NoOp;
+      HW->QuitMouse = NoOp;
+      HW->QuitVideo = NoOp;
 
-	HW->FlagsHW |= FlHWNeedOldVideo;
-	HW->FlagsHW |= FlHWExpensiveFlushVideo;
-	HW->NeedHW = 0;
-	HW->CanResize = tfalse; /* TODO: a real GGI_Resize() */
-	HW->merge_Threshold = 0;
+      HW->DisplayIsCTTY = tfalse;
+      HW->FlagsHW &= ~FlHWSoftMouse; /* mouse pointer handled by X11 server */
 
-	gOrigSelect = OverrideSelect;
-	OverrideSelect = GGI_Select;
+      HW->FlagsHW |= FlHWNeedOldVideo;
+      HW->FlagsHW |= FlHWExpensiveFlushVideo;
+      HW->NeedHW = 0;
+      HW->CanResize = tfalse; /* TODO: a real GGI_Resize() */
+      HW->merge_Threshold = 0;
 
-	GGI_HW = HW;
-	
-	/*
-	 * we must draw everything on our new shiny window
-	 * without forcing all other displays
-	 * to redraw everything too.
-	 */
-	HW->RedrawVideo = tfalse;
-	NeedRedrawVideo(0, 0, HW->X - 1, HW->Y - 1);
+      gOrigSelect = OverrideSelect;
+      OverrideSelect = GGI_Select;
 
-	if (opt) *opt = ',';
-	return ttrue;
-	
-    } while (0); else {
-	if (arg || (arg = getenv("GGI_DISPLAY")))
-	    printk("      GGI_InitHW() failed to open display " SS "\n", arg);
-	else
-	    printk("      GGI_InitHW() failed: GGI_DISPLAY is not set\n");
-	
-    }
-    if (gvis)
-	ggiClose(gvis);
-    ggiExit();
-    
-    if (opt) *opt = ',';
-    return tfalse;
+      GGI_HW = HW;
+
+      /*
+       * we must draw everything on our new shiny window
+       * without forcing all other displays
+       * to redraw everything too.
+       */
+      HW->RedrawVideo = tfalse;
+      NeedRedrawVideo(0, 0, HW->X - 1, HW->Y - 1);
+
+      if (opt)
+        *opt = ',';
+      return ttrue;
+
+    } while (0);
+  else {
+    if (arg || (arg = getenv("GGI_DISPLAY")))
+      printk("      GGI_InitHW() failed to open display " SS "\n", arg);
+    else
+      printk("      GGI_InitHW() failed: GGI_DISPLAY is not set\n");
+  }
+  if (gvis)
+    ggiClose(gvis);
+  ggiExit();
+
+  if (opt)
+    *opt = ',';
+  return tfalse;
 }
 
-
-
 EXTERN_C byte InitModule(module Module) {
-    Module->Private = GGI_InitHW;
-    return ttrue;
+  Module->Private = GGI_InitHW;
+  return ttrue;
 }
 
 /* this MUST be included, or it seems that a bug in dlsym() gets triggered */
-EXTERN_C void QuitModule(module Module) {
-}
-
-
+EXTERN_C void QuitModule(module Module) {}
 
 #if 0
 static void handle_keyboard(int sym, int modifiers, int out_fd) {

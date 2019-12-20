@@ -109,4 +109,3 @@
 #include <Tutf/vt100gr.h>
 
 #endif /* _TUTF_DEFS_H */
-

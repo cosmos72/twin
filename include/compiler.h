@@ -6,74 +6,66 @@
  *  (at your option) any later version.
  */
 
-
-
 /* server internal stuff. define macros without any prefix */
 
 #ifndef _TWIN_COMPILER_H
 #define _TWIN_COMPILER_H
 
-
-
-
 #if !defined(CAT)
-# define _CAT(a,b) a##b
-# define CAT(a,b) _CAT(a,b)
+#define _CAT(a, b) a##b
+#define CAT(a, b) _CAT(a, b)
 
-# define _CAT3(a,b,c) a##b##c
-# define CAT3(a,b,c) _CAT3(a,b,c)
+#define _CAT3(a, b, c) a##b##c
+#define CAT3(a, b, c) _CAT3(a, b, c)
 
-# define _CAT4(a,b,c,d) a##b##c##d
-# define CAT4(a,b,c,d) _CAT4(a,b,c,d)
+#define _CAT4(a, b, c, d) a##b##c##d
+#define CAT4(a, b, c, d) _CAT4(a, b, c, d)
 
-# define _CAT5(a,b,c,d,e) a##b##c##d##e
-# define CAT5(a,b,c,d,e) _CAT5(a,b,c,d,e)
+#define _CAT5(a, b, c, d, e) a##b##c##d##e
+#define CAT5(a, b, c, d, e) _CAT5(a, b, c, d, e)
 
-# define _CAT6(a,b,c,d,e,f) a##b##c##d##e##f
-# define CAT6(a,b,c,d,e,f) _CAT6(a,b,c,d,e,f)
+#define _CAT6(a, b, c, d, e, f) a##b##c##d##e##f
+#define CAT6(a, b, c, d, e, f) _CAT6(a, b, c, d, e, f)
 
-# define _CAT8(a,b,c,d,e,f,g,h) a##b##c##d##e##f##g##h
-# define CAT8(a,b,c,d,e,f,g,h) _CAT8(a,b,c,d,e,f,g,h)
+#define _CAT8(a, b, c, d, e, f, g, h) a##b##c##d##e##f##g##h
+#define CAT8(a, b, c, d, e, f, g, h) _CAT8(a, b, c, d, e, f, g, h)
 
 #endif
 
 #if !defined(STR)
-# define _STR(s) #s
-# define STR(s) _STR(s)
+#define _STR(s) #s
+#define STR(s) _STR(s)
 #endif
 
-
 #ifndef CONST
-# define CONST const
+#define CONST const
 #endif
 
 #ifndef VOLATILE
-# if defined(HAVE_VOLATILE) || defined(volatile)
-#  define VOLATILE volatile
-# else
-#  define VOLATILE
-# endif
+#if defined(HAVE_VOLATILE) || defined(volatile)
+#define VOLATILE volatile
+#else
+#define VOLATILE
 #endif
-
+#endif
 
 /* inline is NOT a standard C89 feature :( */
 #ifndef INLINE
-# if defined(TW_HAVE_STATIC_INLINE)
-#  define INLINE static inline
-# elif defined(TW_HAVE_INLINE) || defined(inline)
-#  define INLINE inline
-# else
-#  define INLINE static
-# endif
+#if defined(TW_HAVE_STATIC_INLINE)
+#define INLINE static inline
+#elif defined(TW_HAVE_INLINE) || defined(inline)
+#define INLINE inline
+#else
+#define INLINE static
+#endif
 #endif
 
 #ifndef EXTERN_C
-# ifdef __cplusplus
-#  define EXTERN_C extern "C"
-# else
-#  define EXTERN_C
-# endif
+#ifdef __cplusplus
+#define EXTERN_C extern "C"
+#else
+#define EXTERN_C
+#endif
 #endif
 
 #endif /* _TWIN_COMPILER_H */
-

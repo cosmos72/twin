@@ -10,7 +10,6 @@
  * version 2 of the License, or (at your option) any later version.
  */
 
-
 void NormalizeTime(timevalue *Time);
 timevalue *InstantNow(timevalue *Now);
 

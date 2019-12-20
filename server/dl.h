@@ -12,17 +12,17 @@
 byte DlOpen(module Module);
 void DlClose(module Module);
 
-#define MainSo		((uldat)0)
-#define WMSo		((uldat)1)
-#define TermSo		((uldat)2)
-#define SocketSo	((uldat)3)
-#define RCParseSo	((uldat)4)
-#define MAX_So		((uldat)5)
+#define MainSo ((uldat)0)
+#define WMSo ((uldat)1)
+#define TermSo ((uldat)2)
+#define SocketSo ((uldat)3)
+#define RCParseSo ((uldat)4)
+#define MAX_So ((uldat)5)
 
 module DlLoad(uldat code);
-void   DlUnLoad(uldat code);
+void DlUnLoad(uldat code);
 module DlIsLoaded(uldat code);
-udat   DlName2Code(const byte *name);
+udat DlName2Code(const byte *name);
 
 module DlLoadAny(uldat len, const byte *name);
 

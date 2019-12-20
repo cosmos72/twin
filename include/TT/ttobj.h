@@ -1,10 +1,6 @@
 
 
-
-
-
 /* This file was automatically generated from m4/tt.m4hh, do not edit! */
-
 
 /*
  *  ttobj.h  --  public header for libTT declarations related to "ttobj"
@@ -18,66 +14,35 @@
  *
  */
 
-
-
 #ifndef _TT_TTOBJ_H
 #define _TT_TTOBJ_H
-
-
-
-
-
-
 
 /* object structure */
 #ifndef s_ttobj
 
-
-/** ttobj: The base class of all objects */        
-        struct s_ttobj;
-typedef struct s_ttobj *	ttobj;
+/** ttobj: The base class of all objects */
+struct s_ttobj;
+typedef struct s_ttobj *ttobj;
 
 #endif /* s_ttobj */
 
-
-
 /* global runtime class type; returned by TTCLASSOF(<some object>) */
 /** class of ttobj */
-extern ttclass	TTClass_ttobj;
-
-
-
-
+extern ttclass TTClass_ttobj;
 
 /* ttobj methods */
-                    
+
 /** get `which' field value from ttobj `o' */
-ttbyte TTGetField_ttobj(TT_ARG_READ ttobj o,TT_ARG_READ ttfield which,TT_ARG_WRITE TT_ARG_ARRAY((1)) ttarg * value);
+ttbyte TTGetField_ttobj(TT_ARG_READ ttobj o, TT_ARG_READ ttfield which,
+                        TT_ARG_WRITE TT_ARG_ARRAY((1)) ttarg *value);
 
 /** set `which' field to `value' into ttobj `o' */
-ttbyte TTSetField_ttobj(ttobj o,TT_ARG_READ ttfield which,TT_ARG_READ TT_ARG_ARRAY((1)) ttarg * value);
+ttbyte TTSetField_ttobj(ttobj o, TT_ARG_READ ttfield which,
+                        TT_ARG_READ TT_ARG_ARRAY((1)) ttarg *value);
 
 /** change `which' field value into ttobj `o' */
-ttbyte TTChangeField_ttobj(ttobj o,TT_ARG_READ ttfield which,ttany nand_value,ttany xor_value);
-
-
-
-
-
-
-
-
+ttbyte TTChangeField_ttobj(ttobj o, TT_ARG_READ ttfield which, ttany nand_value, ttany xor_value);
 
 /* TTGet*_ttobj and TTSet*_ttobj methods */
-        
-
-
-
-
-
-
-
-
 
 #endif /* _TT_TTOBJ_H */
-

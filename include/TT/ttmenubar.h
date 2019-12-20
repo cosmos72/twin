@@ -1,10 +1,6 @@
 
 
-
-
-
 /* This file was automatically generated from m4/tt.m4hh, do not edit! */
-
 
 /*
  *  ttmenubar.h  --  public header for libTT declarations related to "ttmenubar"
@@ -18,60 +14,27 @@
  *
  */
 
-
-
 #ifndef _TT_TTMENUBAR_H
 #define _TT_TTMENUBAR_H
-
-
-
-
-
-
 
 /* object structure */
 #ifndef s_ttmenubar
 
-
 /** ttmenubar: a complete menu bar */
-        struct s_ttmenubar;
-typedef struct s_ttmenubar *	ttmenubar;
+struct s_ttmenubar;
+typedef struct s_ttmenubar *ttmenubar;
 
 #endif /* s_ttmenubar */
 
-
-
 /* global runtime class type; returned by TTCLASSOF(<some object>) */
 /** class of ttmenubar */
-extern ttclass	TTClass_ttmenubar;
-
-
-
-
+extern ttclass TTClass_ttmenubar;
 
 /* ttmenubar methods */
 
 /** get the default ttmenubar used by ttwidget:s */
 ttmenubar TTGetDefault_ttmenubar(void);
 
-
-
-
-
-
-
-
-
 /* TTGet*_ttmenubar and TTSet*_ttmenubar methods */
 
-
-
-
-
-
-
-
-
-
 #endif /* _TT_TTMENUBAR_H */
-

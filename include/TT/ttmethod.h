@@ -1,10 +1,6 @@
 
 
-
-
-
 /* This file was automatically generated from m4/tt.m4hh, do not edit! */
-
 
 /*
  *  ttmethod.h  --  public header for libTT declarations related to "ttmethod"
@@ -18,27 +14,17 @@
  *
  */
 
-
-
 #ifndef _TT_TTMETHOD_H
 #define _TT_TTMETHOD_H
 
-
-
-
-
-
-
 /* object structure */
 #ifndef s_ttmethod
-
-
 
 /**
  * ttmethod: a reflective class, represents a method in an object.
  * It allows runtime inspecting the name, argument types and return types
  * of a method (i.e. almost any libTT function) and allows calling it.
- * 
+ *
  * There are 5 different ways to invoke a method using ttmethod objects:
  * TTCall{A,L,R,V,Y}_ttmethod().
  * Each one takes the method to call, the number of arguments you are passing to it
@@ -57,84 +43,67 @@
  * 2) variadic functions:
  *    TTCreateL_ttvector(), TTCallL_ttmethod()
  *
- */                    
-        struct s_ttmethod;
-typedef struct s_ttmethod *	ttmethod;
+ */
+struct s_ttmethod;
+typedef struct s_ttmethod *ttmethod;
 
 #endif /* s_ttmethod */
 
-
-
 /* global runtime class type; returned by TTCLASSOF(<some object>) */
 /** class of ttmethod */
-extern ttclass	TTClass_ttmethod;
-
-
-
-
+extern ttclass TTClass_ttmethod;
 
 /* ttmethod methods */
 
 /** get the method with given name */
-TT_ARG_READ ttmethod TTGet_ttmethod(TT_ARG_READ TT_ARG_ARRAY_Z ttbyte * name);
+TT_ARG_READ ttmethod TTGet_ttmethod(TT_ARG_READ TT_ARG_ARRAY_Z ttbyte *name);
 
 /** get the method with given address */
 TT_ARG_READ ttmethod TTGetByAddress_ttmethod(TT_ARG_READ ttfunction_fn address);
 
 /** get the needed array length for the given method arg */
-ttopaque TTGetArraySizeA_ttmethod(TT_ARG_READ ttmethod m,ttopaque arg_array_n,ttopaque args_n,TT_ARG_READ TT_ARG_ARRAY((_P(3))) ttarg * args);
+ttopaque TTGetArraySizeA_ttmethod(TT_ARG_READ ttmethod m, ttopaque arg_array_n, ttopaque args_n,
+                                  TT_ARG_READ TT_ARG_ARRAY((_P(3))) ttarg *args);
 
 /** check whether the given args have correct array lengths for the method */
-ttbyte TTCheckArraySizesA_ttmethod(TT_ARG_READ ttmethod m,ttopaque args_n,TT_ARG_READ TT_ARG_ARRAY((_P(2))) ttarg * args);
+ttbyte TTCheckArraySizesA_ttmethod(TT_ARG_READ ttmethod m, ttopaque args_n,
+                                   TT_ARG_READ TT_ARG_ARRAY((_P(2))) ttarg *args);
 
 /** invoke the method `m' with given args */
-ttbyte TTCallA_ttmethod(TT_ARG_READ ttmethod m,TT_ARG_WRITE TT_ARG_ARRAY((1)) ttarg * return_value,ttopaque args_n,TT_ARG_READ TT_ARG_ARRAY((_P(3))) ttarg * args);
+ttbyte TTCallA_ttmethod(TT_ARG_READ ttmethod m, TT_ARG_WRITE TT_ARG_ARRAY((1)) ttarg *return_value,
+                        ttopaque args_n, TT_ARG_READ TT_ARG_ARRAY((_P(3))) ttarg *args);
 
 /** invoke the method `m' with given args */
-ttbyte TTCallL_ttmethod(TT_ARG_READ ttmethod m,TT_ARG_WRITE TT_ARG_ARRAY((1)) ttarg * return_value,ttopaque args_n,... );
+ttbyte TTCallL_ttmethod(TT_ARG_READ ttmethod m, TT_ARG_WRITE TT_ARG_ARRAY((1)) ttarg *return_value,
+                        ttopaque args_n, ...);
 
 /** invoke the method `m' with given args */
-ttbyte TTCallR_ttmethod(TT_ARG_READ ttmethod m,TT_ARG_WRITE TT_ARG_ARRAY((1)) ttarg * return_value,TT_ARG_READ ttvector args);
+ttbyte TTCallR_ttmethod(TT_ARG_READ ttmethod m, TT_ARG_WRITE TT_ARG_ARRAY((1)) ttarg *return_value,
+                        TT_ARG_READ ttvector args);
 
 /** invoke the method `m' with given args */
-ttbyte TTCallV_ttmethod(TT_ARG_READ ttmethod m,TT_ARG_WRITE TT_ARG_ARRAY((1)) ttarg * return_value,ttopaque args_n,TT_ARG_ARRAY((1)) va_list * args);
+ttbyte TTCallV_ttmethod(TT_ARG_READ ttmethod m, TT_ARG_WRITE TT_ARG_ARRAY((1)) ttarg *return_value,
+                        ttopaque args_n, TT_ARG_ARRAY((1)) va_list *args);
 
 /** invoke the method `m' with given args */
-ttbyte TTCallY_ttmethod(TT_ARG_READ ttmethod m,TT_ARG_WRITE TT_ARG_ARRAY((1)) ttarg * return_value,ttopaque args_n,TT_ARG_READ TT_ARG_ARRAY((_P(3))) ttany * args);
-
-
-
-
-
-
-
-
+ttbyte TTCallY_ttmethod(TT_ARG_READ ttmethod m, TT_ARG_WRITE TT_ARG_ARRAY((1)) ttarg *return_value,
+                        ttopaque args_n, TT_ARG_READ TT_ARG_ARRAY((_P(3))) ttany *args);
 
 /* TTGet*_ttmethod and TTSet*_ttmethod methods */
-    
+
 /** get `name_len' of ttmethod `o' */
-ttopaque 	TTGetNameLen_ttmethod(TT_ARG_READ ttmethod o);
-    
+ttopaque TTGetNameLen_ttmethod(TT_ARG_READ ttmethod o);
+
 /** get `name' of ttmethod `o' */
-TT_ARG_READ TT_ARG_ARRAY((_F(name_len))) ttbyte * 	TTGetName_ttmethod(TT_ARG_READ ttmethod o);
-    
+TT_ARG_READ TT_ARG_ARRAY((_F(name_len))) ttbyte *TTGetName_ttmethod(TT_ARG_READ ttmethod o);
+
 /** get `address' of ttmethod `o' */
-ttfunction_fn 	TTGetAddress_ttmethod(TT_ARG_READ ttmethod o);
-    
+ttfunction_fn TTGetAddress_ttmethod(TT_ARG_READ ttmethod o);
+
 /** get `return_type' of ttmethod `o' */
-ttopaque 	TTGetReturnType_ttmethod(TT_ARG_READ ttmethod o);
-    
+ttopaque TTGetReturnType_ttmethod(TT_ARG_READ ttmethod o);
+
 /** get `parameter_type' of ttmethod `o' */
-ttvector 	TTGetParameterType_ttmethod(TT_ARG_READ ttmethod o);
-
-
-
-
-
-
-
-
-
+ttvector TTGetParameterType_ttmethod(TT_ARG_READ ttmethod o);
 
 #endif /* _TT_TTMETHOD_H */
-

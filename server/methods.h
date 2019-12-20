@@ -10,7 +10,7 @@
 #define _TWIN_METHODS_H
 
 byte FindInfo(menu Menu, dat i);
-window FakeOpenTerm(const char *arg0, char * const * argv);
+window FakeOpenTerm(const char *arg0, char *const *argv);
 widget FakeKbdFocus(widget W);
 void FakeWriteAscii(window Window, ldat Len, const char *Ascii);
 void FakeWriteString(window Window, ldat Len, const char *String);
@@ -19,74 +19,68 @@ void FakeWriteHWAttr(window Window, dat x, dat y, ldat Len, const hwattr *Attr);
 byte FakeFindBorderWindow(window W, dat u, dat v, byte Border, hwattr *PtrAttr);
 
 extern fn Fn;
-#define FnObj		(Fn.f_obj)
-#define FnGroup		(Fn.f_group)
-#define	FnWidget	(Fn.f_widget)
-#define	FnGadget	(Fn.f_gadget)
-#define FnWindow	(Fn.f_window)
-#define	FnScreen	(Fn.f_screen)
-#define	FnRow		(Fn.f_row)
-#define	FnMenuItem	(Fn.f_menuitem)
-#define	FnMenu		(Fn.f_menu)
-#define	FnMsgPort	(Fn.f_msgport)
-#define	FnMutex		(Fn.f_mutex)
-#define	FnMsg		(Fn.f_msg)
-#define	FnModule	(Fn.f_module)
-#define	FnExtension	(Fn.f_extension)
-#define	FnDisplayHW	(Fn.f_display_hw)
+#define FnObj (Fn.f_obj)
+#define FnGroup (Fn.f_group)
+#define FnWidget (Fn.f_widget)
+#define FnGadget (Fn.f_gadget)
+#define FnWindow (Fn.f_window)
+#define FnScreen (Fn.f_screen)
+#define FnRow (Fn.f_row)
+#define FnMenuItem (Fn.f_menuitem)
+#define FnMenu (Fn.f_menu)
+#define FnMsgPort (Fn.f_msgport)
+#define FnMutex (Fn.f_mutex)
+#define FnMsg (Fn.f_msg)
+#define FnModule (Fn.f_module)
+#define FnExtension (Fn.f_extension)
+#define FnDisplayHW (Fn.f_display_hw)
 
-#define Do(Command, ObjName)	(Fn##ObjName->Command)
+#define Do(Command, ObjName) (Fn##ObjName->Command)
 
-#define Act(Command, Obj)	((Obj)->Fn->Command)
+#define Act(Command, Obj) ((Obj)->Fn->Command)
 
-#define Delete(Obj)		Act(Delete, Obj)(Obj)
+#define Delete(Obj) Act(Delete, Obj)(Obj)
 
-#define DeleteList(First)	while (First) Delete(First)
+#define DeleteList(First)                                                                          \
+  while (First)                                                                                    \
+  Delete(First)
 
-#define InsertOnly(ObjName, Obj, Parent) \
-	Act(Insert, (Obj))((Obj), (Parent), NULL, NULL)
+#define InsertOnly(ObjName, Obj, Parent) Act(Insert, (Obj))((Obj), (Parent), NULL, NULL)
 
-#define InsertFirst(ObjName, Obj, Parent) \
-	Act(Insert, (Obj))((Obj), (Parent), NULL, (Parent)->First##ObjName)
+#define InsertFirst(ObjName, Obj, Parent)                                                          \
+  Act(Insert, (Obj))((Obj), (Parent), NULL, (Parent)->First##ObjName)
 
-#define InsertMiddle(ObjName, Obj, Parent, ObjPrev, ObjNext) \
-	Act(Insert, (Obj))((Obj), (Parent), (ObjPrev), (ObjNext))
+#define InsertMiddle(ObjName, Obj, Parent, ObjPrev, ObjNext)                                       \
+  Act(Insert, (Obj))((Obj), (Parent), (ObjPrev), (ObjNext))
 
-#define InsertLast(ObjName, Obj, Parent) \
-	Act(Insert, (Obj))((Obj), (Parent), (Parent)->Last##ObjName, NULL)
+#define InsertLast(ObjName, Obj, Parent)                                                           \
+  Act(Insert, (Obj))((Obj), (Parent), (Parent)->Last##ObjName, NULL)
 
-#define Remove(Obj) \
-	Act(Remove, (Obj))(Obj)
+#define Remove(Obj) Act(Remove, (Obj))(Obj)
 
-#define MoveFirst(ObjName, Parent, Obj) \
-	(Remove(Obj), InsertFirst(ObjName, (Obj), (Parent)))
+#define MoveFirst(ObjName, Parent, Obj) (Remove(Obj), InsertFirst(ObjName, (Obj), (Parent)))
 
-#define MoveLast(ObjName, Parent, Obj) \
-	(Remove(Obj), InsertLast(ObjName, (Obj), (Parent)))
+#define MoveLast(ObjName, Parent, Obj) (Remove(Obj), InsertLast(ObjName, (Obj), (Parent)))
 
-#define SendMsg(MsgPort, WhichMsg) \
-	(InsertLast(Msg, (WhichMsg), (MsgPort)))
+#define SendMsg(MsgPort, WhichMsg) (InsertLast(Msg, (WhichMsg), (MsgPort)))
 
-#define Info4Menu(Menu, Flags, Len, Text, ColText) \
-	Act(SetInfo,(Menu))((Menu), (Flags), (Len), (Text), (ColText))
+#define Info4Menu(Menu, Flags, Len, Text, ColText)                                                 \
+  Act(SetInfo, (Menu))((Menu), (Flags), (Len), (Text), (ColText))
 
-#define Win4Menu(Menu) \
-	Do(Create4Menu,Window)(FnWindow, (Menu))
+#define Win4Menu(Menu) Do(Create4Menu, Window)(FnWindow, (Menu))
 
-#define Row4Menu(Window, Code, Flags, Len, Name) \
-	(row)Do(Create4Menu,MenuItem)(FnMenuItem, (obj)(Window), (window)0, (Code), (Flags), (Len), (Name))
+#define Row4Menu(Window, Code, Flags, Len, Name)                                                   \
+  (row) Do(Create4Menu, MenuItem)(FnMenuItem, (obj)(Window), (window)0, (Code), (Flags), (Len),    \
+                                  (Name))
 
-#define Item4Menu(Menu, Window, Flags, Len, Name) \
-	Do(Create4Menu,MenuItem)(FnMenuItem, (obj)(Menu), (Window), (udat)0, (Flags), (Len), (Name))
+#define Item4Menu(Menu, Window, Flags, Len, Name)                                                  \
+  Do(Create4Menu, MenuItem)(FnMenuItem, (obj)(Menu), (Window), (udat)0, (Flags), (Len), (Name))
 
-#define Item4MenuCommon(Menu) \
-	Do(Create4MenuCommon,MenuItem)(FnMenuItem, (Menu))
+#define Item4MenuCommon(Menu) Do(Create4MenuCommon, MenuItem)(FnMenuItem, (Menu))
 
 void *OverrideMth(void **where, void *OldMethod, void *NewMethod);
 
-#define OverrideMethod(ObjName, Command, ExpectedMethod, NewMethod) \
-          OverrideMth((void **)&(Fn##ObjName->Command), (void *)ExpectedMethod, (void *)NewMethod)
-
+#define OverrideMethod(ObjName, Command, ExpectedMethod, NewMethod)                                \
+  OverrideMth((void **)&(Fn##ObjName->Command), (void *)ExpectedMethod, (void *)NewMethod)
 
 #endif /* _TWIN_METHODS_H */
-

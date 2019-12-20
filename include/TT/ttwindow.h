@@ -1,10 +1,6 @@
 
 
-
-
-
 /* This file was automatically generated from m4/tt.m4hh, do not edit! */
-
 
 /*
  *  ttwindow.h  --  public header for libTT declarations related to "ttwindow"
@@ -18,66 +14,33 @@
  *
  */
 
-
-
 #ifndef _TT_TTWINDOW_H
 #define _TT_TTWINDOW_H
-
-
-
-
-
-
 
 /* object structure */
 #ifndef s_ttwindow
 
-
-/** ttwindow: a full-featured window */        
-        struct s_ttwindow;
-typedef struct s_ttwindow *	ttwindow;
+/** ttwindow: a full-featured window */
+struct s_ttwindow;
+typedef struct s_ttwindow *ttwindow;
 
 #endif /* s_ttwindow */
 
-
-
 /* global runtime class type; returned by TTCLASSOF(<some object>) */
 /** class of ttwindow */
-extern ttclass	TTClass_ttwindow;
-
-
-
-
+extern ttclass TTClass_ttwindow;
 
 /* ttwindow methods */
 
-/** set the title of the ttwindow `o' */    
-ttbyte TTSetTitle_ttwindow(ttwindow o,TT_ARG_READ TT_ARG_ARRAY_Z ttbyte * title);
-
-
-
-
-
-
-
-
+/** set the title of the ttwindow `o' */
+ttbyte TTSetTitle_ttwindow(ttwindow o, TT_ARG_READ TT_ARG_ARRAY_Z ttbyte *title);
 
 /* TTGet*_ttwindow and TTSet*_ttwindow methods */
-    
+
 /** get `title_len' of ttwindow `o' */
-ttopaque 	TTGetTitleLen_ttwindow(TT_ARG_READ ttwindow o);
-    
+ttopaque TTGetTitleLen_ttwindow(TT_ARG_READ ttwindow o);
+
 /** get `title' of ttwindow `o' */
-TT_ARG_ARRAY((_F(title_len))) ttbyte * 	TTGetTitle_ttwindow(TT_ARG_READ ttwindow o);
-
-
-
-
-
-
-
-
-
+TT_ARG_ARRAY((_F(title_len))) ttbyte *TTGetTitle_ttwindow(TT_ARG_READ ttwindow o);
 
 #endif /* _TT_TTWINDOW_H */
-

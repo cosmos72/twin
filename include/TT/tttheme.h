@@ -1,10 +1,6 @@
 
 
-
-
-
 /* This file was automatically generated from m4/tt.m4hh, do not edit! */
-
 
 /*
  *  tttheme.h  --  public header for libTT declarations related to "tttheme"
@@ -18,66 +14,33 @@
  *
  */
 
-
-
 #ifndef _TT_TTTHEME_H
 #define _TT_TTTHEME_H
-
-
-
-
-
-
 
 /* object structure */
 #ifndef s_tttheme
 
-
-/** tttheme: the look-n-feel of the application */                        
-        struct s_tttheme;
-typedef struct s_tttheme *	tttheme;
+/** tttheme: the look-n-feel of the application */
+struct s_tttheme;
+typedef struct s_tttheme *tttheme;
 
 #endif /* s_tttheme */
 
-
-
 /* global runtime class type; returned by TTCLASSOF(<some object>) */
 /** class of tttheme */
-extern ttclass	TTClass_tttheme;
-
-
-
-
+extern ttclass TTClass_tttheme;
 
 /* tttheme methods */
 
 /** get the default tttheme used by ttvisible:s */
 tttheme TTGetDefault_tttheme(void);
 
-
-
-
-
-
-
-
-
 /* TTGet*_tttheme and TTSet*_tttheme methods */
-    
+
 /** get `name_len' of tttheme `o' */
-ttopaque 	TTGetNameLen_tttheme(TT_ARG_READ tttheme o);
-    
+ttopaque TTGetNameLen_tttheme(TT_ARG_READ tttheme o);
+
 /** get `name' of tttheme `o' */
-TT_ARG_ARRAY((_F(name_len))) ttbyte * 	TTGetName_tttheme(TT_ARG_READ tttheme o);
-                
-
-
-
-
-
-
-
-
+TT_ARG_ARRAY((_F(name_len))) ttbyte *TTGetName_tttheme(TT_ARG_READ tttheme o);
 
 #endif /* _TT_TTTHEME_H */
-
