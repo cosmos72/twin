@@ -67,12 +67,12 @@
 
 #ifdef CONF_SOCKET_ALIEN
 
-static void alienPop(CONST byte **src, uldat alien_len, byte *dst, uldat len);
-static void alienPush(CONST byte *src, uldat len, byte **dst, uldat alien_len);
-#define alienPOP(s, type, lval)                                                                    \
-  alienPop((CONST byte **)&(s), AlienSizeof(type, Slot), (byte *)&(lval), sizeof(type))
-#define alienPUSH(s, type, lval)                                                                   \
-  alienPush((CONST byte *)&(lval), sizeof(type), &(s), AlienSizeof(type, Slot))
+static CONST byte *alienPop(CONST byte *src, uldat alien_len, void *dst, uldat len);
+static byte *alienPush(CONST void *src, uldat len, byte *dst, uldat alien_len);
+#define alienPOP(src, type, lval)                                                                  \
+  (src = alienPop(src, AlienSizeof(type, Slot), &(lval), sizeof(type)))
+#define alienPUSH(dst, type, lval)                                                                 \
+  (dst = alienPush(&(lval), sizeof(type), (dst), AlienSizeof(type, Slot)))
 
 static void alienSendMsg(msgport MsgPort, msg Msg);
 static void AlienIO(int fd, uldat slot);
@@ -423,7 +423,7 @@ static void sockCloseExtension(extension e);
 /* Second: socket handling functions */
 
 static uldat MaxFunct, Slot, RequestN;
-static byte *s, *end;
+static CONST byte *s, *end;
 static int inetFd = NOFD, Fd;
 static uldat inetSlot = NOSLOT;
 
@@ -445,6 +445,15 @@ typedef struct {
 static sockfn sockF[] = {
 #include "socket2_m4.h"
     {0, 0, "StatObj", "0S0x" obj_magic_STR "_" TWS_udat_STR "V" TWS_udat_STR}, {0, 0, NULL, NULL}};
+
+/* remove CONST from a pointer and suppress compiler warnings */
+TW_INLINE void *remove_const(CONST void *addr) {
+  union {
+    CONST void *cv;
+    void *v;
+  } u = {addr};
+  return u.v;
+}
 
 /* convert a 2-byte string "v"TWS_void_STR or "_"* or "V"* into a tsfield->type */
 TW_INLINE udat proto_2_TWS(CONST char proto[2]) {
@@ -495,6 +504,7 @@ TW_INLINE void TWS_2_proto(udat tws_type, char proto[2]) {
 #define _obj .TWS_field_obj
 #define _any .TWS_field_scalar
 #define _vec .TWS_field_vecV
+#define _cvec .TWS_field_vecCV
 #define _len .TWS_field_vecL
 
 #define _type .type
@@ -658,7 +668,7 @@ static obj *AllocId2ObjVec(byte *alloced, byte c, uldat n, byte *VV) {
 
 TW_INLINE ldat sockDecodeArg(uldat id, CONST char *Format, uldat n, tsfield a, uldat mask[1],
                              byte flag[1], ldat fail) {
-  void *av;
+  CONST void *av;
   topaque nlen;
   byte c;
 
@@ -712,9 +722,9 @@ TW_INLINE ldat sockDecodeArg(uldat id, CONST char *Format, uldat n, tsfield a, u
     if ((c <= TWS_hwcol || AlienMagic(Slot)[c])) {
       nlen *= AlienMagic(Slot)[c];
       if (Left(nlen)) {
-        PopAddr(s, byte, nlen, av);
+        PopAddr(s, CONST byte, nlen, av);
         a[n] _len = nlen;
-        a[n] _vec = av;
+        a[n] _cvec = av;
         a[n] _type = vec_ | c;
         break;
       }
@@ -730,9 +740,9 @@ TW_INLINE ldat sockDecodeArg(uldat id, CONST char *Format, uldat n, tsfield a, u
       /* ensure type size WAS negotiated */
       if ((c <= TWS_hwcol || AlienMagic(Slot)[c])) {
         if (!nlen || (Left(nlen) && nlen == sockLengths(id, n, a) * AlienMagic(Slot)[c])) {
-          PopAddr(s, byte, nlen, av);
+          PopAddr(s, CONST byte, nlen, av);
           a[n] _len = nlen;
-          a[n] _vec = av;
+          a[n] _cvec = av;
           a[n] _type = vec_ | vecW_ | c;
           break;
         }
@@ -744,8 +754,8 @@ TW_INLINE ldat sockDecodeArg(uldat id, CONST char *Format, uldat n, tsfield a, u
     nlen = sockLengths(id, n, a) * sizeof(uldat);
     if (Left(nlen)) {
       c = (byte)*Format - base_magic_CHR;
-      PopAddr(s, byte, nlen, av);
-      if ((a[n] _vec = AllocId2ObjVec(flag, c, nlen / sizeof(uldat), av))) {
+      PopAddr(s, CONST byte, nlen, av);
+      if ((a[n] _vec = AllocId2ObjVec(flag, c, nlen / sizeof(uldat), (byte *)remove_const(av)))) {
         a[n] _len = nlen;
         a[n] _type = vec_ | obj_;
         *mask |= *flag << n;
@@ -762,8 +772,8 @@ TW_INLINE ldat sockDecodeArg(uldat id, CONST char *Format, uldat n, tsfield a, u
       nlen *= sizeof(uldat);
       if (Left(nlen)) {
         c = (byte)*Format - base_magic_CHR;
-        PopAddr(s, byte, nlen, av);
-        if ((a[n] _vec = AllocId2ObjVec(flag, c, nlen / sizeof(uldat), av))) {
+        PopAddr(s, CONST byte, nlen, av);
+        if ((a[n] _vec = AllocId2ObjVec(flag, c, nlen / sizeof(uldat), (byte *)remove_const(av)))) {
           a[n] _len = nlen;
           a[n] _type = vec_ | obj_;
           *mask |= *flag << n;
@@ -1388,10 +1398,10 @@ static byte sockDecodeExtension(topaque *Len, CONST byte **Data, topaque *Args_n
         a[n] _len = nlen;
 
         if (nlen <= left) {
-          void *addr;
+          CONST void *addr;
           left -= nlen;
-          PopAddr(data, byte, nlen, addr);
-          a[n] _vec = addr;
+          PopAddr(data, CONST byte, nlen, addr);
+          a[n] _cvec = addr;
           break;
         }
       }
@@ -1446,7 +1456,7 @@ static tany sockCallBExtension(extension e, topaque len, CONST byte *data,
       Act(UseExtension, M)(M, e);
 
     /* actually, we receive a (tsfield) instead of return_type and we pass it through */
-    return e->CallB(e, len, data, (void *)return_type);
+    return e->CallB(e, len, data, remove_const(return_type));
   }
   return (tany)0;
 }
@@ -1721,7 +1731,7 @@ static byte sockSendToMsgPort(msgport MsgPort, udat Len, CONST byte *Data) {
 
   /* be careful with alignment! */
 #if TW_CAN_UNALIGNED != 0
-  tMsg = (tmsg)Data;
+  tMsg = (tmsg)remove_const(Data);
 #else
   tMsg = (tmsg)CloneMem(Data, Len);
 #endif /* TW_CAN_UNALIGNED != 0 */
@@ -2544,7 +2554,8 @@ static void sockKillSlot(uldat slot) {
 
 static void SocketIO(int fd, uldat slot) {
   uldat len, Funct;
-  byte *t, *tend;
+  byte *t;
+  CONST byte *tend;
   int tot = 0;
 #ifdef CONF_SOCKET_GZ
   uldat gzSlot;

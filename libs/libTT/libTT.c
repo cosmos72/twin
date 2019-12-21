@@ -148,8 +148,8 @@ static void FreeErrnoLocation(void) {
 #define Errno (GetErrnoLocation()->E)
 #define ErrnoDetail (GetErrnoLocation()->S)
 
-void TTAssertFail(const char *assertion, const char *file, unsigned int line,
-                  const char *function) {
+void TTAssertFail(TT_CONST char *assertion, TT_CONST char *file, unsigned int line,
+                  TT_CONST char *function) {
   fprintf(stderr, "TT-CRITICAL: %s:%u: %s(): assertion `%s' failed\n", file, line, function,
           assertion);
 }

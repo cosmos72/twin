@@ -236,7 +236,7 @@ static void X11_SelectionNotify_X11(uldat ReqPrivate, uldat Magic, CONST char MI
         Len = 0;
     }
     XChangeProperty(xdisplay, XReq(XReqCount).requestor, XReq(XReqCount).property, XA_STRING, 8,
-                    PropModeReplace, (const byte *)Data, Len);
+                    PropModeReplace, (CONST byte *)Data, Len);
     ev.xselection.property = XReq(XReqCount).property;
 
     if (Magic == SEL_HWFONTMAGIC && _Data)

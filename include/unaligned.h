@@ -19,8 +19,6 @@
 #define PushV(s, len, vec) (Tw(CopyMem)(vec, s, len), (s) += (len))
 #define PopV(s, len, vec) (Tw(CopyMem)(s, vec, len), (s) += (len))
 #define PopAddr(s, type, len, ptr) ((ptr) = (len) ? (type *)(s) : (type *)0, (s) += (len))
-#define PopConstAddr(s, type, len, ptr)                                                            \
-  ((ptr) = (len) ? (type TW(CONST) *)(s) : (type TW(CONST) *)0, (s) += (len))
 
 #ifndef TW_CAN_UNALIGNED
 #if defined(__i386__) || defined(__x86_64__) || defined(__ARM_FEATURE_UNALIGNED)

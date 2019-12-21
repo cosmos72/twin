@@ -81,6 +81,7 @@
 
 #define TWS_field_obj val.o
 #define TWS_field_vecV val.vec.V
+#define TWS_field_vecCV val.vec.CV
 #define TWS_field_vecL val.vec.L
 
 #ifdef __cplusplus

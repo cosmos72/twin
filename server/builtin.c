@@ -803,7 +803,7 @@ byte InitBuiltin(void) {
       (Builtin_Menu = Do(Create, Menu)(FnMenu, Builtin_MsgPort, (byte)0x70, (byte)0x20, (byte)0x78,
                                        (byte)0x08, (byte)0x74, (byte)0x24, (byte)0)) &&
       Info4Menu(Builtin_Menu, ROW_ACTIVE, (uldat)42, " Hit PAUSE or Mouse Right Button for Menu ",
-                (const hwcol *)"tttttttttttttttttttttttttttttttttttttttttt") &&
+                (CONST hwcol *)"tttttttttttttttttttttttttttttttttttttttttt") &&
 
       (Window = Win4Menu(Builtin_Menu)) &&
       Row4Menu(Window, COD_CLOCK_WIN, ROW_ACTIVE, 9, " Clock   ") &&
@@ -853,7 +853,7 @@ byte InitBuiltin(void) {
       Item4MenuCommon(Builtin_Menu) &&
 
       (AboutWin = Do(Create, Window)(
-           FnWindow, Builtin_MsgPort, 5, "About", (const hwcol *)"\x7F\x7F\x7F\x7F\x7F",
+           FnWindow, Builtin_MsgPort, 5, "About", (CONST hwcol *)"\x7F\x7F\x7F\x7F\x7F",
            Builtin_Menu, COL(BLACK, WHITE), NOCURSOR,
            WINDOW_AUTO_KEYS | WINDOW_WANT_MOUSE | WINDOW_DRAG | WINDOW_CLOSE,
            WINDOWFL_USEROWS | WINDOWFL_ROWS_DEFCOL, 36, 13, 0)) &&

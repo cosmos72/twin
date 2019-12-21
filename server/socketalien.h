@@ -23,13 +23,13 @@
 #define REPLY(code, type, lval) alienReply(code, SIZEOF(type), sizeof(type), lval)
 
 #define POP(s, type, lval) alienPOP(s, type, lval)
+#define PUSH(s, type, lval) alienPUSH(s, type, lval)
 /* wrap alienPUSH() to work with non-lvalue `val' */
-#define PUSH(s, type, val)                                                                         \
+#define PUSH_(s, type, rval)                                                                       \
   do {                                                                                             \
-    type tmp = (val);                                                                              \
-    alienPUSH(s, type, tmp);                                                                       \
+    type tmp__ = (rval);                                                                           \
+    alienPUSH(s, type, tmp__);                                                                     \
   } while (0)
-#define POPADDR(s, type, len, ptr) PopAddr(s, type, len, ptr)
 
 #if TW_IS_LITTLE_ENDIAN &&                                                                         \
     TW_CAN_UNALIGNED != 0 /* little endian, and unaligned access is supported. hton?() functions   \
@@ -103,7 +103,7 @@ static void alienRead(CONST byte *src, uldat srclen, byte *dst, uldat dstlen, by
 }
 
 /*translate to alien data, copying srclen bytes to dstlen bytes, optionally flipping byte order*/
-static void alienWrite(CONST byte *src, uldat srclen, byte *dst, uldat dstlen, byte flip) {
+static void alienWrite(CONST void *src, uldat srclen, byte *dst, uldat dstlen, byte flip) {
 
 #if TW_IS_LITTLE_ENDIAN
 
@@ -132,16 +132,22 @@ static void alienWrite(CONST byte *src, uldat srclen, byte *dst, uldat dstlen, b
 #endif /* TW_IS_LITTLE_ENDIAN */
 }
 
-/* convert alien type at (*src) to native and put it at (dst) */
-static void alienPop(CONST byte **src, uldat alien_len, byte *dst, uldat len) {
-  alienRead(*src, alien_len, dst, len, AlienXendian(Slot) == MagicAlienXendian);
-  *src += alien_len;
+/**
+ * convert alien type at (*src) to native and write it at (*dst)
+ * return src + alien_len
+ */
+static CONST byte *alienPop(CONST byte *src, uldat alien_len, void *dst, uldat len) {
+  alienRead(src, alien_len, (byte *)dst, len, AlienXendian(Slot) == MagicAlienXendian);
+  return src + alien_len;
 }
 
-/* convert native type at (src) to alien and put it at (*dst) */
-static void alienPush(CONST byte *src, uldat len, byte **dst, uldat alien_len) {
-  alienWrite(src, len, *dst, alien_len, AlienXendian(Slot) == MagicAlienXendian);
-  *dst += alien_len;
+/**
+ * convert native type at (*src) to alien and write it at (*dst).
+ * return dst + alien_len
+ */
+static byte *alienPush(CONST void *src, uldat len, byte *dst, uldat alien_len) {
+  alienWrite((CONST byte *)src, len, dst, alien_len, AlienXendian(Slot) == MagicAlienXendian);
+  return dst + alien_len;
 }
 
 /*
@@ -274,15 +280,15 @@ static void alienReply(uldat code, uldat alien_len, uldat len, CONST void *data)
     T += queued - 3 * AlienSizeofUldat - alien_len;
 
     alien_len += 2 * AlienSizeofUldat;
-    alienPUSH(T, uldat, alien_len);
-    alienPUSH(T, uldat, RequestN);
-    alienPUSH(T, uldat, code);
+    PUSH(T, uldat, alien_len);
+    PUSH(T, uldat, RequestN);
+    PUSH(T, uldat, code);
     alien_len -= 2 * AlienSizeofUldat;
 
     if (alien_len && len && data) {
       T = RemoteWriteGetQueue(Slot, &queued);
       T += queued - alien_len;
-      alienPush(data, len, &T, alien_len);
+      T = alienPush(data, len, T, alien_len);
     }
   }
 }
@@ -326,7 +332,7 @@ static void alienFixDecodeHWAttrV(hwattr *H, uldat Len) {
 TW_INLINE ldat alienDecodeArg(uldat id, CONST char *Format, uldat n, tsfield a, uldat mask[1],
                               byte flag[1], ldat fail) {
   void *A;
-  void *av;
+  CONST void *av;
   topaque nlen;
   uldat a0;
   byte c;
@@ -382,8 +388,8 @@ TW_INLINE ldat alienDecodeArg(uldat id, CONST char *Format, uldat n, tsfield a, 
     if (AlienMagic(Slot)[c]) {
       nlen *= AlienMagic(Slot)[c];
       if (Left(nlen)) {
-        PopAddr(s, byte, nlen, av);
-        a[n] _vec = av;
+        PopAddr(s, CONST byte, nlen, av);
+        a[n] _cvec = av;
         a[n] _len = nlen / AlienMagic(Slot)[c] * TwinMagicData[c];
         a[n] _type = vec_ | c;
 
@@ -415,8 +421,8 @@ TW_INLINE ldat alienDecodeArg(uldat id, CONST char *Format, uldat n, tsfield a, 
       /* ensure type size WAS negotiated */
       if (AlienMagic(Slot)[c]) {
         if (!nlen || (Left(nlen) && nlen == sockLengths(id, n, a) * AlienMagic(Slot)[c])) {
-          PopAddr(s, byte, nlen, av);
-          a[n] _vec = av;
+          PopAddr(s, CONST byte, nlen, av);
+          a[n] _cvec = av;
           a[n] _len = nlen / AlienMagic(Slot)[c] * TwinMagicData[c];
           a[n] _type = vec_ | vecW_ | c;
 
@@ -426,7 +432,7 @@ TW_INLINE ldat alienDecodeArg(uldat id, CONST char *Format, uldat n, tsfield a, 
             a[n] _vec = alienAllocReadVec(av, nlen, AlienMagic(Slot)[c], TwinMagicData[c],
                                           AlienXendian(Slot) == MagicAlienXendian);
 
-            if (a[n] _vec) {
+            if (a[n] _cvec) {
               if (c == TWS_hwattr && SIZEOF(hwattr) == 2)
                 alienTranslateHWAttrV_CP437_to_UTF_32((hwattr *)a[n] _vec, nlen);
               *mask |= 1 << n;
@@ -445,8 +451,8 @@ TW_INLINE ldat alienDecodeArg(uldat id, CONST char *Format, uldat n, tsfield a, 
     nlen = sockLengths(id, n, a) * SIZEOF(uldat);
     c = (byte)*Format - base_magic_CHR;
     if (Left(nlen)) {
-      PopAddr(s, byte, nlen, av);
-      a[n] _vec = av;
+      PopAddr(s, CONST byte, nlen, av);
+      a[n] _cvec = av;
       a[n] _len = nlen / SIZEOF(uldat) * sizeof(uldat);
       a[n] _type = vec_ | obj_;
 
@@ -476,8 +482,8 @@ TW_INLINE ldat alienDecodeArg(uldat id, CONST char *Format, uldat n, tsfield a, 
       POP(s, topaque, nlen);
       nlen *= sizeof(uldat);
       if (Left(nlen)) {
-        PopAddr(s, byte, nlen, av);
-        a[n] _vec = av;
+        PopAddr(s, CONST byte, nlen, av);
+        a[n] _cvec = av;
         a[n] _len = nlen / SIZEOF(uldat) * sizeof(uldat);
         a[n] _type = vec_ | obj_;
 
@@ -651,7 +657,8 @@ static void alienMultiplexB(uldat id) {
 
 static void AlienIO(int fd, uldat slot) {
   uldat len, Funct;
-  byte *t, *tend;
+  byte *t;
+  CONST byte *tend;
   int tot = 0;
 #ifdef CONF_SOCKET_GZ
   uldat gzSlot;
@@ -836,12 +843,12 @@ static void alienSendMsg(msgport MsgPort, msg Msg) {
     if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
       t += Tot - Len;
 
-      PUSH(t, uldat, NOID); /* not used here */
-      alienPUSH(t, udat, Msg->Event.EventDisplay.Code);
+      PUSH_(t, uldat, NOID); /* not used here */
+      PUSH(t, udat, Msg->Event.EventDisplay.Code);
       Len -= SIZEOF(uldat) + 4 * SIZEOF(udat);
-      alienPUSH(t, udat, Len);
-      alienPUSH(t, udat, Msg->Event.EventDisplay.X);
-      alienPUSH(t, udat, Msg->Event.EventDisplay.Y);
+      PUSH(t, udat, Len);
+      PUSH(t, udat, Msg->Event.EventDisplay.X);
+      PUSH(t, udat, Msg->Event.EventDisplay.Y);
 
       if (Type == TWS_byte) {
         PushV(t, N, Src);
@@ -851,13 +858,13 @@ static void alienSendMsg(msgport MsgPort, msg Msg) {
           Pop(Src, hwattr, H);
 
           h = ((uint16_t)HWCOL(H) << 8) | Tutf_UTF_32_to_CP437(HWFONT(H));
-          alienPush((CONST byte *)&h, sizeof(hwattr), &t, 2);
+          t = alienPush(&h, sizeof(hwattr), t, 2);
         }
       } else {
         Tot = TwinMagicData[Type];
         Len = AlienMagic(Slot)[Type];
         while (N--) {
-          alienPush((byte *)Src, Tot, &t, Len);
+          t = alienPush(Src, Tot, t, Len);
           Src += Tot;
         }
       }
@@ -871,11 +878,11 @@ static void alienSendMsg(msgport MsgPort, msg Msg) {
                0, NULL);
     if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
       t += Tot - Len;
-      PUSH(t, uldat, Obj2Id(Msg->Event.EventKeyboard.W));
-      alienPUSH(t, udat, Msg->Event.EventKeyboard.Code);
-      alienPUSH(t, udat, Msg->Event.EventKeyboard.ShiftFlags);
-      alienPUSH(t, udat, Msg->Event.EventKeyboard.SeqLen);
-      alienPUSH(t, byte, Msg->Event.EventKeyboard.pad);
+      PUSH_(t, uldat, Obj2Id(Msg->Event.EventKeyboard.W));
+      PUSH(t, udat, Msg->Event.EventKeyboard.Code);
+      PUSH(t, udat, Msg->Event.EventKeyboard.ShiftFlags);
+      PUSH(t, udat, Msg->Event.EventKeyboard.SeqLen);
+      PUSH(t, byte, Msg->Event.EventKeyboard.pad);
       PushV(t, Msg->Event.EventKeyboard.SeqLen + 1, /* the final '\0' */
             Msg->Event.EventKeyboard.AsciiSeq);
     }
@@ -884,54 +891,54 @@ static void alienSendMsg(msgport MsgPort, msg Msg) {
     alienReply(Msg->Type, Len = SIZEOF(uldat) + 4 * SIZEOF(udat), 0, NULL);
     if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
       t += Tot - Len;
-      PUSH(t, uldat, Obj2Id(Msg->Event.EventMouse.W));
-      alienPUSH(t, udat, Msg->Event.EventMouse.Code);
-      alienPUSH(t, udat, Msg->Event.EventMouse.ShiftFlags);
-      alienPUSH(t, dat, Msg->Event.EventMouse.X);
-      alienPUSH(t, dat, Msg->Event.EventMouse.Y);
+      PUSH_(t, uldat, Obj2Id(Msg->Event.EventMouse.W));
+      PUSH(t, udat, Msg->Event.EventMouse.Code);
+      PUSH(t, udat, Msg->Event.EventMouse.ShiftFlags);
+      PUSH(t, dat, Msg->Event.EventMouse.X);
+      PUSH(t, dat, Msg->Event.EventMouse.Y);
     }
     break;
   case MSG_WIDGET_CHANGE:
     alienReply(Msg->Type, Len = SIZEOF(uldat) + 4 * SIZEOF(dat), 0, NULL);
     if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
       t += Tot - Len;
-      PUSH(t, uldat, Obj2Id(Msg->Event.EventWidget.W));
-      alienPUSH(t, udat, Msg->Event.EventWidget.Code);
-      alienPUSH(t, udat, Msg->Event.EventWidget.Flags);
-      alienPUSH(t, udat, Msg->Event.EventWidget.XWidth);
-      alienPUSH(t, udat, Msg->Event.EventWidget.YWidth);
-      alienPUSH(t, udat, Msg->Event.EventWidget.XWidth);
-      alienPUSH(t, udat, Msg->Event.EventWidget.Y);
+      PUSH_(t, uldat, Obj2Id(Msg->Event.EventWidget.W));
+      PUSH(t, udat, Msg->Event.EventWidget.Code);
+      PUSH(t, udat, Msg->Event.EventWidget.Flags);
+      PUSH(t, udat, Msg->Event.EventWidget.XWidth);
+      PUSH(t, udat, Msg->Event.EventWidget.YWidth);
+      PUSH(t, udat, Msg->Event.EventWidget.XWidth);
+      PUSH(t, udat, Msg->Event.EventWidget.Y);
     }
     break;
   case MSG_WIDGET_GADGET:
     alienReply(Msg->Type, Len = SIZEOF(uldat) + 2 * SIZEOF(dat), 0, NULL);
     if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
       t += Tot - Len;
-      PUSH(t, uldat, Obj2Id(Msg->Event.EventGadget.W));
-      alienPUSH(t, udat, Msg->Event.EventGadget.Code);
-      alienPUSH(t, udat, Msg->Event.EventGadget.Flags);
+      PUSH_(t, uldat, Obj2Id(Msg->Event.EventGadget.W));
+      PUSH(t, udat, Msg->Event.EventGadget.Code);
+      PUSH(t, udat, Msg->Event.EventGadget.Flags);
     }
     break;
   case MSG_MENU_ROW:
     alienReply(Msg->Type, Len = SIZEOF(uldat) + 2 * SIZEOF(dat) + SIZEOF(uldat), 0, NULL);
     if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
       t += Tot - Len;
-      PUSH(t, uldat, Obj2Id(Msg->Event.EventMenu.W));
-      alienPUSH(t, udat, Msg->Event.EventMenu.Code);
-      alienPUSH(t, udat, Msg->Event.EventMenu.pad);
-      PUSH(t, uldat, Obj2Id(Msg->Event.EventMenu.Menu));
+      PUSH_(t, uldat, Obj2Id(Msg->Event.EventMenu.W));
+      PUSH(t, udat, Msg->Event.EventMenu.Code);
+      PUSH(t, udat, Msg->Event.EventMenu.pad);
+      PUSH_(t, uldat, Obj2Id(Msg->Event.EventMenu.Menu));
     }
     break;
   case MSG_SELECTION:
     alienReply(Msg->Type, Len = SIZEOF(uldat) + 4 * SIZEOF(dat), 0, NULL);
     if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
       t += Tot - Len;
-      PUSH(t, uldat, Obj2Id(Msg->Event.EventSelection.W));
-      alienPUSH(t, udat, Msg->Event.EventSelection.Code);
-      alienPUSH(t, udat, Msg->Event.EventSelection.pad);
-      alienPUSH(t, dat, Msg->Event.EventSelection.X);
-      alienPUSH(t, dat, Msg->Event.EventSelection.Y);
+      PUSH_(t, uldat, Obj2Id(Msg->Event.EventSelection.W));
+      PUSH(t, udat, Msg->Event.EventSelection.Code);
+      PUSH(t, udat, Msg->Event.EventSelection.pad);
+      PUSH(t, dat, Msg->Event.EventSelection.X);
+      PUSH(t, dat, Msg->Event.EventSelection.Y);
     }
     break;
   case MSG_SELECTIONNOTIFY:
@@ -942,11 +949,11 @@ static void alienSendMsg(msgport MsgPort, msg Msg) {
 
     if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
       t += Tot - Len;
-      PUSH(t, uldat, Obj2Id(Msg->Event.EventSelectionNotify.W));
-      alienPUSH(t, udat, Msg->Event.EventSelectionNotify.Code);
-      alienPUSH(t, udat, Msg->Event.EventSelectionNotify.pad);
-      alienPUSH(t, uldat, Msg->Event.EventSelectionNotify.ReqPrivate);
-      alienPUSH(t, uldat, Msg->Event.EventSelectionNotify.Magic);
+      PUSH_(t, uldat, Obj2Id(Msg->Event.EventSelectionNotify.W));
+      PUSH(t, udat, Msg->Event.EventSelectionNotify.Code);
+      PUSH(t, udat, Msg->Event.EventSelectionNotify.pad);
+      PUSH(t, uldat, Msg->Event.EventSelectionNotify.ReqPrivate);
+      PUSH(t, uldat, Msg->Event.EventSelectionNotify.Magic);
       PushV(t, MAX_MIMELEN, Msg->Event.EventSelectionNotify.MIME);
 
       /* client may be not unicode aware while we are */
@@ -958,24 +965,24 @@ static void alienSendMsg(msgport MsgPort, msg Msg) {
           Src = Msg->Event.EventSelectionNotify.Data;
 
           N /= sizeof(hwfont);
-          alienPUSH(t, uldat, N);
+          PUSH(t, uldat, N);
 
           while (N--) {
             Pop(Src, hwattr, H);
 
             h = ((uint16_t)HWCOL(H) << 8) | Tutf_UTF_32_to_CP437(HWFONT(H));
-            alienPush((CONST byte *)&h, sizeof(hwattr), &t, 2);
+            t = alienPush(&h, sizeof(hwattr), t, 2);
           }
         } else {
           N = (N / sizeof(hwfont)) * SIZEOF(hwfont);
-          alienPUSH(t, uldat, N);
+          PUSH(t, uldat, N);
           N = Msg->Event.EventSelectionNotify.Len;
           alienWriteVec((CONST byte *)Msg->Event.EventSelectionNotify.Data, t, N, sizeof(hwfont),
                         SIZEOF(hwfont), AlienXendian(Slot) == MagicAlienXendian);
           t += N;
         }
       } else {
-        alienPUSH(t, uldat, Msg->Event.EventSelectionNotify.Len);
+        PUSH(t, uldat, Msg->Event.EventSelectionNotify.Len);
         PushV(t, Msg->Event.EventSelectionNotify.Len, Msg->Event.EventSelectionNotify.Data);
       }
     }
@@ -984,11 +991,11 @@ static void alienSendMsg(msgport MsgPort, msg Msg) {
     alienReply(Msg->Type, Len = SIZEOF(uldat) + 2 * SIZEOF(dat) + 2 * SIZEOF(ldat), 0, NULL);
     if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
       t += Tot - Len;
-      PUSH(t, uldat, Obj2Id(Msg->Event.EventSelectionRequest.W));
-      alienPUSH(t, udat, Msg->Event.EventSelectionRequest.Code);
-      alienPUSH(t, udat, Msg->Event.EventSelectionRequest.pad);
-      PUSH(t, uldat, Obj2Id(Msg->Event.EventSelectionRequest.Requestor));
-      alienPUSH(t, uldat, Msg->Event.EventSelectionRequest.ReqPrivate);
+      PUSH_(t, uldat, Obj2Id(Msg->Event.EventSelectionRequest.W));
+      PUSH(t, udat, Msg->Event.EventSelectionRequest.Code);
+      PUSH(t, udat, Msg->Event.EventSelectionRequest.pad);
+      PUSH_(t, uldat, Obj2Id(Msg->Event.EventSelectionRequest.Requestor));
+      PUSH(t, uldat, Msg->Event.EventSelectionRequest.ReqPrivate);
     }
     break;
 
@@ -998,11 +1005,11 @@ static void alienSendMsg(msgport MsgPort, msg Msg) {
                0, NULL);
     if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
       t += Tot - Len;
-      PUSH(t, uldat, Obj2Id(Msg->Event.EventControl.W));
-      alienPUSH(t, udat, Msg->Event.EventControl.Code);
-      alienPUSH(t, udat, Msg->Event.EventControl.Len);
-      alienPUSH(t, dat, Msg->Event.EventControl.X);
-      alienPUSH(t, dat, Msg->Event.EventControl.Y);
+      PUSH_(t, uldat, Obj2Id(Msg->Event.EventControl.W));
+      PUSH(t, udat, Msg->Event.EventControl.Code);
+      PUSH(t, udat, Msg->Event.EventControl.Len);
+      PUSH(t, dat, Msg->Event.EventControl.X);
+      PUSH(t, dat, Msg->Event.EventControl.Y);
       PushV(t, Msg->Event.EventControl.Len, Msg->Event.EventControl.Data);
     }
     break;
@@ -1014,10 +1021,10 @@ static void alienSendMsg(msgport MsgPort, msg Msg) {
       event_clientmsg *E = &Msg->Event.EventClientMsg;
 
       t += Tot - Len;
-      PUSH(t, uldat, Obj2Id(E->W));
-      alienPUSH(t, udat, E->Code);
-      alienPUSH(t, udat, E->Format);
-      alienPUSH(t, uldat, E->Len);
+      PUSH_(t, uldat, Obj2Id(E->W));
+      PUSH(t, udat, E->Code);
+      PUSH(t, udat, E->Format);
+      PUSH(t, uldat, E->Len);
       if (AlienXendian(Slot) == MagicAlienXendian && E->Format > 1)
         FlipMoveMem(E->Data.b, E->Len, E->Format);
       PushV(t, E->Len, E->Data.b);
@@ -1089,10 +1096,10 @@ static byte alienDecodeExtension(tany *Len, CONST byte **Data, tany *Args_n, tsf
         a[n] _len = nlen;
 
         if (!nlen || Left(nlen)) {
-          void *addr;
+          CONST void *addr;
           left -= nlen;
-          POPADDR(data, byte, nlen, addr);
-          a[n] _vec = addr;
+          PopAddr(data, CONST byte, nlen, addr);
+          a[n] _cvec = addr;
           break;
         }
       }
@@ -1134,5 +1141,4 @@ static byte alienDecodeExtension(tany *Len, CONST byte **Data, tany *Args_n, tsf
 #undef SIZEOF
 #undef REPLY
 #undef POP
-#undef POPADDR
-#undef PUSH
+#undef PUSH_
