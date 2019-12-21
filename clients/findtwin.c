@@ -30,7 +30,7 @@
 
 TW_DECL_MAGIC(findtwin_magic);
 
-static void test(TW_CONST char *dpy) {
+static void try_TwOpen(TW_CONST char *dpy) {
   if (dpy || (dpy = getenv("TWDISPLAY"))) {
     if (TwOpen(dpy)) {
       printf("%s\n", dpy);
@@ -39,13 +39,13 @@ static void test(TW_CONST char *dpy) {
   }
 }
 
-#define HX(c) (((c) >= '0' && (c) <= '9') || ((c) >= 'a' && (c) <= 'f'))
+#define ishex(c) (((c) >= '0' && (c) <= '9') || ((c) >= 'a' && (c) <= 'f'))
 
 static int match_twsocket(TW_CONST struct dirent *d) {
   TW_CONST char *s = d->d_name;
 
-  return !strncmp(s, ".Twin:", 6) && HX(s[6]) &&
-         (!s[7] || (HX(s[7]) && (!s[8] || (HX(s[8]) && !s[9]))));
+  return !strncmp(s, ".Twin:", 6) && ishex(s[6]) &&
+         (!s[7] || (ishex(s[7]) && (!s[8] || (ishex(s[8]) && !s[9]))));
 }
 
 #if defined(TW_HAVE_SCANDIR) && (defined(TW_HAVE_VERSIONSORT) || defined(TW_HAVE_ALPHASORT))
@@ -56,7 +56,7 @@ static TW_CONST char *tmpdir(void) {
   return tmp;
 }
 
-static void unix_socket_test(void) {
+static void search_unix_socket(void) {
 
 #ifdef TW_HAVE_VERSIONSORT
 #define my_sort versionsort
@@ -71,7 +71,7 @@ static void unix_socket_test(void) {
   while (n > 0) {
     s = namelist[0]->d_name;
 
-    test(s + 5);
+    try_TwOpen(s + 5);
 
     namelist++;
     n--;
@@ -84,7 +84,7 @@ int main(int argc, char *argv[]) {
   /* first: if given, check _ONLY_ command-line specified servers */
   if (*++argv) {
     do {
-      test(*argv);
+      try_TwOpen(*argv);
     } while (*++argv);
 
     /* bomb out */
@@ -98,11 +98,11 @@ int main(int argc, char *argv[]) {
   }
 
   /* then, check for environment TWDISPLAY */
-  test(NULL);
+  try_TwOpen(NULL);
 
 #if defined(TW_HAVE_SCANDIR) && defined(TW_HAVE_ALPHASORT)
   /* last resort: exhaustive search in /tmp */
-  unix_socket_test();
+  search_unix_socket();
 #endif
 
   return 1;
