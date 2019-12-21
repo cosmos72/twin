@@ -63,7 +63,7 @@ static udat TabLen(window Window, sbyte isX) {
     NumLogicMax = Max2(Window->WLogic, Window->XLogic + Window->XWidth - 2);
     ret = ((Window->XWidth - 2) * (ldat)XBarSize + NumLogicMax - 1) / NumLogicMax;
   } else {
-    NumLogicMax = Max2(Window->HLogic, Window->YLogic + (uldat)Window->YWidth - 2);
+    NumLogicMax = Max2(Window->HLogic, Window->YLogic + Window->YWidth - 2);
     ret = ((Window->YWidth - 2) * (ldat)YBarSize + NumLogicMax - 1) / NumLogicMax;
   }
   return ret ? ret : 1;

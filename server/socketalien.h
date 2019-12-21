@@ -668,7 +668,7 @@ static void AlienIO(int fd, uldat slot) {
   Fd = fd;
   Slot = slot;
 
-  if (ioctl(Fd, FIONREAD, &tot) != 0 || tot == 0)
+  if (ioctl(Fd, FIONREAD, &tot) != 0 || tot <= 0)
     tot = TW_SMALLBUFF;
   else if (tot > TW_BIGBUFF * TW_BIGBUFF)
     tot = TW_BIGBUFF * TW_BIGBUFF;
@@ -677,8 +677,8 @@ static void AlienIO(int fd, uldat slot) {
     return;
 
   if ((len = read(Fd, t, tot)) && len && len != (uldat)-1) {
-    if (len < tot)
-      RemoteReadShrinkQueue(Slot, tot - len);
+    if (len < (uldat)tot)
+      RemoteReadShrinkQueue(Slot, (uldat)tot - len);
 
       /* ok, now process the data */
 

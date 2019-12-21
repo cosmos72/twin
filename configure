@@ -16060,8 +16060,8 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_c_attribute_aligned_1" >&5
 $as_echo "$ac_cv_c_attribute_aligned_1" >&6; }
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for gcc-compatible i386 assembler" >&5
-$as_echo_n "checking for gcc-compatible i386 assembler... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for gcc-compatible i386 inline assembly" >&5
+$as_echo_n "checking for gcc-compatible i386 inline assembly... " >&6; }
 if ${ac_cv_prog_gcc_i386_asm+:} false; then :
   $as_echo_n "(cached) " >&6
 else
@@ -16218,6 +16218,17 @@ else
 
 cat >>confdefs.h <<_ACEOF
 #define gid_t int
+_ACEOF
+
+fi
+
+ac_fn_c_check_type "$LINENO" "off_t" "ac_cv_type_off_t" "$ac_includes_default"
+if test "x$ac_cv_type_off_t" = xyes; then :
+
+else
+
+cat >>confdefs.h <<_ACEOF
+#define off_t long int
 _ACEOF
 
 fi
@@ -18306,7 +18317,7 @@ if test "$have_x" != yes; then
   enable_hw_x11=no
 fi
 
-if test "x$have_x" != xyes -o "x$ac_cv_header_X11_Xft_Xft_h" != xyes -o "x$ac_cv_header_fontconfig_fontconfig_h" != xyes -o "x$ac_cv_search_XftFontOpen" = xno; then
+if test "$have_x" != yes -o "$ac_cv_header_X11_Xft_Xft_h" != yes -o "$ac_cv_header_fontconfig_fontconfig_h" != yes -o "$ac_cv_search_XftFontOpen" = no; then
   enable_hw_xft=no
 fi
 

@@ -51,7 +51,7 @@ static tmenu Term_Menu;
 static uldat WinN;
 
 fd_set save_rfds;
-uldat max_fds;
+int max_fds;
 int twin_fd;
 
 static void CloseTerm(uldat Slot);

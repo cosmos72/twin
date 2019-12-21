@@ -467,12 +467,12 @@ TW_INLINE udat proto_2_TWS(CONST char proto[2]) {
       tws_type |= proto[1];
       break;
     }
-    /* else FALLTHROUGH */
+    /* FALLTHROUGH */
   case 'v':
     /* turn '\xFE' into TWS_void ('\0') */
     if ((byte)proto[1] == (byte)TWS_void_CHR)
       break;
-    /* else FALLTHROUGH */
+    /* FALLTHROUGH */
   default:
     /* safe assumption */
     tws_type = TWS_tany;
@@ -2433,12 +2433,12 @@ static void Wait4Magic(int fd, uldat slot, byte isUnix) {
   if (got > 0)
     max = t[0];
 
-  if (got < 0)
+  if (got < 0) {
     ;
-  else if (got < max)
+  } else if ((uldat)got < max) {
     /* not yet ready to check */
     return;
-  else { /* (got >= max) */
+  } else { /* (got >= max) */
     /*
      * check whether the client has our same sizes and endianity
      * or one of the available translations is needed.
@@ -2456,7 +2456,7 @@ static void Wait4Magic(int fd, uldat slot, byte isUnix) {
        * we have a translation for client's magic.
        * answer its same magic.
        */
-      got = SendTwinMagic(max, t);
+      got = SendTwinMagic((byte)max, t);
     }
     RemoteReadDeQueue(Slot, max);
 
@@ -2564,7 +2564,7 @@ static void SocketIO(int fd, uldat slot) {
   Fd = fd;
   Slot = slot;
 
-  if (ioctl(Fd, FIONREAD, &tot) != 0 || tot == 0)
+  if (ioctl(Fd, FIONREAD, &tot) != 0 || tot <= 0)
     tot = TW_SMALLBUFF;
   else if (tot > TW_BIGBUFF * TW_BIGBUFF)
     tot = TW_BIGBUFF * TW_BIGBUFF;
@@ -2573,8 +2573,8 @@ static void SocketIO(int fd, uldat slot) {
     return;
 
   if ((len = read(Fd, t, tot)) && len && len != (uldat)-1) {
-    if (len < tot)
-      RemoteReadShrinkQueue(Slot, tot - len);
+    if (len < (uldat)tot)
+      RemoteReadShrinkQueue(Slot, (uldat)tot - len);
 
       /* ok, now process the data */
 

@@ -211,18 +211,28 @@ static void RemoteEvent(int FdCount, fd_set *FdSet) {
 }
 
 static struct s_fn_module _FnModule = {
-    module_magic, (uldat)sizeof(struct s_module), (uldat)1, (void *)NoOp, /* CreateModule */
-    (void *)NoOp,                                                         /* InsertModule */
-    (void *)NoOp,                                                         /* RemoveModule */
-    (void *)NoOp,                                                         /* DeleteModule */
-    NULL,                                                                 /* Fn_Obj */
-    (void *)NoOp,                                                         /* DlOpen	      */
-    (void *)NoOp                                                          /* DlClose      */
+    module_magic, (uldat)sizeof(struct s_module), (uldat)1, /**/
+    (void *)NoOp,                                           /* CreateModule */
+    (void *)NoOp,                                           /* InsertModule */
+    (void *)NoOp,                                           /* RemoveModule */
+    (void *)NoOp,                                           /* DeleteModule */
+    (void *)NoOp,                                           /* ChangeField */
+    NULL,                                                   /* Fn_Obj */
+    (void *)NoOp,                                           /* DlOpen	      */
+    (void *)NoOp,                                           /* DlClose      */
 };
 
 static struct s_module _Module = {
     module_magic,
     &_FnModule,
+    (module)0, /* Prev */
+    (module)0, /* Next */
+    (all)0,    /* All */
+    0,         /* NameLen */
+    0,         /* Used */
+    (char *)0, /* Name */
+    (void *)0, /* Handle */
+    (void *)0, /* Private */
 };
 
 static module DlLoadAny(uldat len, char *name) {
@@ -513,14 +523,14 @@ INLINE void OptimizeChangedVideo(void) {
 #endif
 
 INLINE void SyncOldVideo(void) {
-  uldat start, len;
+  ldat start, len;
   ldat i;
 
   if (ChangedVideoFlag) {
     for (i = 0; i < (ldat)DisplayHeight * 2; i++) {
       start = ChangedVideo[i >> 1][i & 1][0];
 
-      if (start != -1) {
+      if (start >= 0) {
         len = ChangedVideo[i >> 1][i & 1][1] + 1 - start;
         start += (i >> 1) * (ldat)DisplayWidth;
 

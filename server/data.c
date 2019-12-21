@@ -128,7 +128,7 @@ keylist TW_KeyList[] = {
     {NULL, TW_Null, 0, NULL}};
 
 hwfont GadgetResize[2] = {0xCD, 0xBC}, ScrollBarX[3] = {0xB1, 0x11, 0x10},
-       ScrollBarY[3] = {0xB1, 0x1E, 0x1f}, TabX = 0xDB, TabY = 0xDB,
+       ScrollBarY[3] = {0xB1, 0x1E, 0x1F}, TabX = 0xDB, TabY = 0xDB,
        StdBorder[2][9] = {{0xC9, 0xCD, 0xBB, 0xBA, 0x20, 0xBA, 0xC8, 0xCD, 0xBC},
                           {0xDA, 0xC4, 0xBF, 0xB3, 0x20, 0xB3, 0xC0, 0xC4, 0xD9}},
        Screen_Back[2] = {0x12, 0x12};
@@ -144,11 +144,11 @@ byte InitData(void) {
   hwfont *vec[] = {GadgetResize, ScrollBarX,   ScrollBarY,   &TabX,
                    &TabY,        StdBorder[0], StdBorder[1], Screen_Back};
   byte sizes[] = {2, 3, 3, 1, 1, 9, 9, 2};
-  int i, j;
+  uldat i, j;
 
   for (i = 0; i < sizeof(vec) / sizeof(vec[0]); i++) {
     for (j = 0; j < sizes[i]; j++)
-      vec[i][j] = Tutf_CP437_to_UTF_32[vec[i][j]];
+      vec[i][j] = Tutf_CP437_to_UTF_32[(byte)vec[i][j]];
   }
   return AssignId_all(All);
 }

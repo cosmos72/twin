@@ -42,7 +42,7 @@ static void FindFontMenuItem(menu Menu, menuitem MenuItem, dat i, byte Select, h
   hwcol Color;
   byte ShortCutFound;
 
-  if (Menu && MenuItem && i >= MenuItem->Left && i < MenuItem->Left + MenuItem->Len) {
+  if (Menu && MenuItem && i >= MenuItem->Left && i < (ldat)(MenuItem->Left + MenuItem->Len)) {
     ShortCutFound = i == MenuItem->Left + MenuItem->ShortCut;
     if (MenuItem->Flags & ROW_ACTIVE) {
       if (ShortCutFound) {
@@ -67,7 +67,7 @@ static void FindFontInfo(menu Menu, dat i, byte Select, hwattr *PtrAttr) {
   row Info;
   hwcol Color;
 
-  if (Menu && (Info = Menu->Info) && i >= 0 && i < Info->Len) {
+  if (Menu && (Info = Menu->Info) && i >= 0 && (uldat)i < Info->Len) {
     if (Select)
       Color = Info->Flags & ROW_ACTIVE ? Menu->ColSelect : Menu->ColSelectDisabled;
     else if (!(Info->Flags & ROW_ACTIVE))
@@ -810,12 +810,12 @@ void DrawSelfWindow(draw_ctx *D) {
         }
 
         PosInRow = X1 - Left;
-        if (CurrRow && PosInRow >= CurrRow->Gap)
+        if (CurrRow && PosInRow >= 0 && (uldat)PosInRow >= CurrRow->Gap)
           PosInRow += CurrRow->LenGap;
 
         for (i = X1; i <= X2; i++, PosInRow++) {
 
-          Absent = (!CurrRow || PosInRow >= CurrRow->Len);
+          Absent = !CurrRow || (PosInRow >= 0 && (uldat)PosInRow >= CurrRow->Len);
 
           if (CurrRow && IS_MENUITEM(CurrRow) && ((menuitem)CurrRow)->Window && i == Rgt) {
             Font = T_UTF_32_BLACK_RIGHT_POINTING_TRIANGLE;
@@ -1803,7 +1803,7 @@ void DrawMenuScreen(screen Screen, dat Xstart, dat Xend) {
       Font = TWDisplay[3 + lenTWDisplay - (DWidth - i)];
       if (!Font)
         Font = ' ';
-    } else if (DWidth - i > (dat)9 && DWidth - i <= (dat)9 + All->BuiltinRow->Len) {
+    } else if (DWidth - i > 9 && (uldat)(DWidth - i) <= 9 + All->BuiltinRow->Len) {
       Color = State == STATE_SCREEN ? Menu->ColSelect : Menu->ColItem;
       Font = All->BuiltinRow->Text[9 + All->BuiltinRow->Len - (DWidth - i)];
       if (!Font)

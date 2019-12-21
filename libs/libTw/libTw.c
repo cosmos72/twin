@@ -1151,8 +1151,9 @@ static udat copyToSockaddrUn(TW_CONST char *src, struct sockaddr_un *addr, udat 
  */
 tw_d Tw_Open(TW_CONST char *TwDisplay) {
   tw_d TwD;
-  int i, result = -1, fd = TW_NOFD;
   char *options;
+  int result = -1, fd = TW_NOFD;
+  unsigned i;
   byte gzip = tfalse, handshake = tfalse;
 
   if (!TwDisplay && (!(TwDisplay = getenv("TWDISPLAY")) || !*TwDisplay)) {

@@ -13,7 +13,7 @@
 #include <Tw/Tw.h>
 
 void NormalizeTime(timevalue *Time) {
-  if (Time->Fraction >= FullSEC || Time->Fraction < 0) {
+  if (Time->Fraction >= FullSEC) {
     tany delta = Time->Fraction / FullSEC;
     Time->Seconds += delta;
     Time->Fraction -= delta * FullSEC;

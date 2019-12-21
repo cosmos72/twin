@@ -428,8 +428,8 @@ static void UpdateDisplayWin(widget displayWin) {
   }
 }
 
-static void SelectRowWindow(window CurrWin, uldat newCurY) {
-  uldat oldCurY = CurrWin->CurY;
+static void SelectRowWindow(window CurrWin, ldat newCurY) {
+  ldat oldCurY = CurrWin->CurY;
 
   CurrWin->CurY = newCurY;
 
@@ -441,7 +441,7 @@ static void SelectRowWindow(window CurrWin, uldat newCurY) {
 
 static void DisplayGadgetH(msg Msg) {
   display_hw hw;
-  uldat i;
+  ldat i;
 
   switch (Msg->Event.EventGadget.Code) {
   case COD_D_REMOVE:

@@ -589,7 +589,7 @@ INLINE hwfont applyG(hwfont c) {
 }
 
 INLINE void csi_m(void) {
-  dat i;
+  uldat i;
   udat effects = Effects;
   hwcol fg = COLFG(ColText), bg = COLBG(ColText);
 
@@ -732,7 +732,7 @@ INLINE void respond_ID(void) {
 }
 
 static void set_mode(byte on_off) {
-  dat i;
+  uldat i;
 
   for (i = 0; i <= nPar; i++)
 
@@ -1299,7 +1299,7 @@ INLINE void write_ctrl(byte c) {
       if (!nPar || !Par[1])
         Par[1] = SizeY;
       /* Minimum allowed region is 2 lines */
-      if (Par[0] < Par[1] && Par[1] <= SizeY) {
+      if (Par[0] < Par[1] && SizeY >= 0 && Par[1] <= (uldat)SizeY) {
         Top = Par[0] - 1;
         Bottom = Par[1];
         goto_axy(0, 0);

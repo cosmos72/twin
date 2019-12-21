@@ -127,7 +127,7 @@ byte shm_init(size_t len) {
   len = TW_PAGE_ALIGN_UP(len + GL_SIZE);
 
   if ((fd = open(shmfile, O_RDWR | O_CREAT | O_TRUNC | O_EXCL, 0600)) >= 0) {
-    if (((L = len), lseek(fd, L - 1, SEEK_SET) == L - 1) && write(fd, "", 1) == 1) {
+    if (((L = len), lseek(fd, (off_t)L - 1, SEEK_SET) == (off_t)L - 1) && write(fd, "", 1) == 1) {
 
 #ifndef MAP_FILE
 #define MAP_FILE 0
