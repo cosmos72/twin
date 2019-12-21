@@ -18,7 +18,8 @@ extern uldat main_argv_usable_len;
 extern byte flag_envrc, flag_secure;
 extern char *flag_secure_msg;
 
-extern int (*OverrideSelect)(int n, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *timeout);
+extern int (*OverrideSelect)(int n, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
+                             struct timeval *timeout);
 
 void Quit(int status);
 
@@ -27,6 +28,4 @@ byte AlwaysTrue(void);
 byte AlwaysFalse(void);
 void *AlwaysNull(void);
 
-
 #endif /* _TWIN_MAIN_H */
-

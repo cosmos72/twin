@@ -12,17 +12,17 @@
 #include <Tw/autoconf.h>
 
 #ifdef TW_HAVE_DIRENT_H
-# include <dirent.h>
+#include <dirent.h>
 #else
-# ifdef TW_HAVE_SYS_NDIR_H
-#  include <sys/ndir.h>
-# endif
-# ifdef TW_HAVE_SYS_DIR_H
-#  include <sys/dir.h>
-# endif
-# ifdef TW_HAVE_NDIR_H
-#  include <ndir.h>
-# endif
+#ifdef TW_HAVE_SYS_NDIR_H
+#include <sys/ndir.h>
+#endif
+#ifdef TW_HAVE_SYS_DIR_H
+#include <sys/dir.h>
+#endif
+#ifdef TW_HAVE_NDIR_H
+#include <ndir.h>
+#endif
 #endif
 
 #include <Tw/Tw.h>
@@ -30,82 +30,80 @@
 
 TW_DECL_MAGIC(findtwin_magic);
 
-static void test(TW_CONST char *dpy) {
-    if (dpy || (dpy = getenv("TWDISPLAY"))) {
-	if (TwOpen(dpy)) {
-	    printf("%s\n", dpy);
-	    exit(0);
-	}
+static void try_TwOpen(TW_CONST char *dpy) {
+  if (dpy || (dpy = getenv("TWDISPLAY"))) {
+    if (TwOpen(dpy)) {
+      printf("%s\n", dpy);
+      exit(0);
     }
+  }
 }
 
-#define HX(c) (((c) >= '0' && (c) <= '9') || ((c) >= 'a' && (c) <= 'f'))
+#define ishex(c) (((c) >= '0' && (c) <= '9') || ((c) >= 'a' && (c) <= 'f'))
 
 static int match_twsocket(TW_CONST struct dirent *d) {
-    const char *s = d->d_name;
+  TW_CONST char *s = d->d_name;
 
-    return !strncmp(s, ".Twin:", 6) &&
-	HX(s[6]) && (!s[7] ||
-		     (HX(s[7]) && (!s[8] ||
-				   (HX(s[8]) && !s[9]))));
+  return !strncmp(s, ".Twin:", 6) && ishex(s[6]) &&
+         (!s[7] || (ishex(s[7]) && (!s[8] || (ishex(s[8]) && !s[9]))));
 }
 
 #if defined(TW_HAVE_SCANDIR) && (defined(TW_HAVE_VERSIONSORT) || defined(TW_HAVE_ALPHASORT))
-static TW_CONST char * tmpdir(void) {
-    TW_CONST char * tmp = getenv("TMPDIR");
-    if (tmp == NULL)
-	tmp = "/tmp";
-    return tmp;
+static TW_CONST char *tmpdir(void) {
+  TW_CONST char *tmp = getenv("TMPDIR");
+  if (tmp == NULL)
+    tmp = "/tmp";
+  return tmp;
 }
 
-static void unix_socket_test(void) {
-    
-# ifdef TW_HAVE_VERSIONSORT
-#  define my_sort versionsort
-# else
-#  define my_sort alphasort
-# endif
-    int my_sort();
-    struct dirent **namelist;
-    char *s;
-    int n = scandir(tmpdir(), &namelist, match_twsocket, my_sort);
+static void search_unix_socket(void) {
 
-    while (n > 0) {
-	s = namelist[0]->d_name;
+#ifdef TW_HAVE_VERSIONSORT
+#define my_sort versionsort
+#else
+#define my_sort alphasort
+#endif
+  int my_sort(); // its two arguments may be either (void *) or (TW_CONST struct dirent **)
+  struct dirent **namelist;
+  char *s;
+  int n = scandir(tmpdir(), &namelist, match_twsocket, my_sort);
 
-	test(s+5);
+  while (n > 0) {
+    s = namelist[0]->d_name;
 
-	namelist++;
-	n--;
-    }
+    try_TwOpen(s + 5);
+
+    namelist++;
+    n--;
+  }
 }
 #endif
 
 int main(int argc, char *argv[]) {
 
-    /* first: if given, check _ONLY_ command-line specified servers */
-    if (*++argv) {
-	do {
-	    test(*argv);
-	} while (*++argv);
+  /* first: if given, check _ONLY_ command-line specified servers */
+  if (*++argv) {
+    do {
+      try_TwOpen(*argv);
+    } while (*++argv);
 
-	/* bomb out */
-	return 1;
-    }
+    /* bomb out */
+    return 1;
+  }
 
-    if (!TwCheckMagic(findtwin_magic)) {
-	fprintf(stderr, "twfindtwin: %s%s\n", TwStrError(TwErrno), TwStrErrorDetail(TwErrno, TwErrnoDetail));
-	return 1;
-    }
+  if (!TwCheckMagic(findtwin_magic)) {
+    fprintf(stderr, "twfindtwin: %s%s\n", TwStrError(TwErrno),
+            TwStrErrorDetail(TwErrno, TwErrnoDetail));
+    return 1;
+  }
 
-    /* then, check for environment TWDISPLAY */
-    test(NULL);
+  /* then, check for environment TWDISPLAY */
+  try_TwOpen(NULL);
 
 #if defined(TW_HAVE_SCANDIR) && defined(TW_HAVE_ALPHASORT)
-    /* last resort: exhaustive search in /tmp */
-    unix_socket_test();
+  /* last resort: exhaustive search in /tmp */
+  search_unix_socket();
 #endif
 
-    return 1;
+  return 1;
 }
-

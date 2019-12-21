@@ -1,10 +1,6 @@
 
 
-
-
-
 /* This file was automatically generated from m4/tt.m4hh, do not edit! */
-
 
 /*
  *  ttcheckmenuitem.h  --  public header for libTT declarations related to "ttcheckmenuitem"
@@ -18,57 +14,24 @@
  *
  */
 
-
-
 #ifndef _TT_TTCHECKMENUITEM_H
 #define _TT_TTCHECKMENUITEM_H
-
-
-
-
-
-
 
 /* object structure */
 #ifndef s_ttcheckmenuitem
 
-
 /** ttcheckmenuitem: a checkable line in a menu */
-        struct s_ttcheckmenuitem;
-typedef struct s_ttcheckmenuitem *	ttcheckmenuitem;
+struct s_ttcheckmenuitem;
+typedef struct s_ttcheckmenuitem *ttcheckmenuitem;
 
 #endif /* s_ttcheckmenuitem */
 
-
-
 /* global runtime class type; returned by TTCLASSOF(<some object>) */
 /** class of ttcheckmenuitem */
-extern ttclass	TTClass_ttcheckmenuitem;
-
-
-
-
+extern ttclass TTClass_ttcheckmenuitem;
 
 /* ttcheckmenuitem methods */
 
-
-
-
-
-
-
-
-
 /* TTGet*_ttcheckmenuitem and TTSet*_ttcheckmenuitem methods */
 
-
-
-
-
-
-
-
-
-
 #endif /* _TT_TTCHECKMENUITEM_H */
-

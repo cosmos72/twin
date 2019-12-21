@@ -20,7 +20,6 @@
 #include "TTtypes.h"
 #include <TT/TTmem.h>
 
-
 #define TT_DECL_MAGIC(id) TW_DECL_MAGIC(id)
 
 ttbyte TTCheckMagic(TT_CONST ttbyte id[]);
@@ -41,7 +40,7 @@ ttbyte TTMainLoopOnce(ttbyte wait);
 void TTExitMainLoop(void);
 
 tt_obj TTNew(tt_obj Class);
-void  TTDel(tt_obj o);
+void TTDel(tt_obj o);
 
 tt_obj TTGetFirst(tt_obj Class);
 tt_obj TTGetLast(tt_obj Class);

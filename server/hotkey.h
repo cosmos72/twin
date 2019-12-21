@@ -13,4 +13,3 @@
  */
 
 #define HOT_KEY TW_Pause
-

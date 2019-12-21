@@ -12,28 +12,28 @@
 #include <sys/types.h>
 
 #ifdef TW_HAVE_SYS_STAT_H
-# include <sys/stat.h>
+#include <sys/stat.h>
 #endif
 #ifdef TW_HAVE_FCNTL_H
-# include <fcntl.h>
+#include <fcntl.h>
 #endif
 #ifdef TW_HAVE_LIMITS_H
-# include <limits.h>
+#include <limits.h>
 #endif
 #ifdef TW_HAVE_UNISTD_H
-# include <unistd.h>
+#include <unistd.h>
 #endif
 #ifdef TW_HAVE_MACHINE_PARAM_H
-# include <machine/param.h>
+#include <machine/param.h>
 #endif
 #ifdef TW_HAVE_SYS_FILIO_H
-# include <sys/filio.h>
+#include <sys/filio.h>
 #endif
 #ifdef TW_HAVE_SYS_SELECT_H
-# include <sys/select.h>
+#include <sys/select.h>
 #endif
 #ifdef TIME_WITH_SYS_TIME
-# include <sys/time.h>
+#include <sys/time.h>
 #endif
 
 #endif /* _TWIN_OSINCLUDES_H */

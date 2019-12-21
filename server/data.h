@@ -9,37 +9,31 @@
 #ifndef _TWIN_DATA_H
 #define _TWIN_DATA_H
 
-extern const byte * const pkg_libdir;
-extern const byte * const pkg_libdir_modules_;
+extern CONST char *CONST pkg_libdir;
+extern CONST char *CONST pkg_libdir_modules_;
 
-extern palette Palette[MAXCOL+1], defaultPalette[MAXCOL+1];
+extern palette Palette[MAXCOL + 1], defaultPalette[MAXCOL + 1];
 
-extern all const All;
+extern all CONST All;
 
 typedef struct keylist keylist;
 struct keylist {
-    const byte *name;
-    udat key;
-    byte len;
-    const byte *seq;
+  CONST char *name;
+  udat key;
+  byte len;
+  CONST char *seq;
 };
 
 extern keylist TW_KeyList[];
 
 extern gadget GadgetFlag, GadgetSwitch;
 
-extern hwfont GadgetResize[2],
-    ScrollBarX[3],
-    ScrollBarY[3],
-    TabX,
-    TabY,
-    StdBorder[2][9],
+extern hwfont GadgetResize[2], ScrollBarX[3], ScrollBarY[3], TabX, TabY, StdBorder[2][9],
     Screen_Back[2];
 
 extern hwcol DEFAULT_ColGadgets, DEFAULT_ColArrows, DEFAULT_ColBars, DEFAULT_ColTabs,
-	DEFAULT_ColBorder, DEFAULT_ColDisabled, DEFAULT_ColSelectDisabled;
+    DEFAULT_ColBorder, DEFAULT_ColDisabled, DEFAULT_ColSelectDisabled;
 
 byte InitData(void);
-
 
 #endif /* _TWIN_DATA_H */

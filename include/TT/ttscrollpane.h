@@ -1,10 +1,6 @@
 
 
-
-
-
 /* This file was automatically generated from m4/tt.m4hh, do not edit! */
-
 
 /*
  *  ttscrollpane.h  --  public header for libTT declarations related to "ttscrollpane"
@@ -18,82 +14,49 @@
  *
  */
 
-
-
 #ifndef _TT_TTSCROLLPANE_H
 #define _TT_TTSCROLLPANE_H
 
-
-
-
-
-
-
 /* object structure */
 #ifndef s_ttscrollpane
-
 
 /** ttscrollpane: a scrollable widget;
  * it keeps track of its wl and hl
  * from the ttwidgets you put inside it;
  * also used as the scrollpane of a ttscroller.
- */        
-        struct s_ttscrollpane;
-typedef struct s_ttscrollpane *	ttscrollpane;
+ */
+struct s_ttscrollpane;
+typedef struct s_ttscrollpane *ttscrollpane;
 
 #endif /* s_ttscrollpane */
 
-
-
 /* global runtime class type; returned by TTCLASSOF(<some object>) */
 /** class of ttscrollpane */
-extern ttclass	TTClass_ttscrollpane;
-
-
-
-
+extern ttclass TTClass_ttscrollpane;
 
 /* ttscrollpane methods */
 
 /** create a ttscrollpane with given size */
-ttscrollpane TTCreate_ttscrollpane(ttshort w,ttshort h);
+ttscrollpane TTCreate_ttscrollpane(ttshort w, ttshort h);
 
-/** set the x scrollbar the ttscrollpane `o' is connected to */    
-ttbyte TTSetBarX_ttscrollpane(ttscrollpane o,ttscrollbar bar_x);
+/** set the x scrollbar the ttscrollpane `o' is connected to */
+ttbyte TTSetBarX_ttscrollpane(ttscrollpane o, ttscrollbar bar_x);
 
-/** set the y scrollbar the ttscrollpane `o' is connected to */    
-ttbyte TTSetBarY_ttscrollpane(ttscrollpane o,ttscrollbar bar_y);
-
-
-
-
-
-
-
-
+/** set the y scrollbar the ttscrollpane `o' is connected to */
+ttbyte TTSetBarY_ttscrollpane(ttscrollpane o, ttscrollbar bar_y);
 
 /* TTGet*_ttscrollpane and TTSet*_ttscrollpane methods */
-    
+
 /** get `bar_x' of ttscrollpane `o' */
-ttscrollbar 	TTGetBarX_ttscrollpane(TT_ARG_READ ttscrollpane o);
+ttscrollbar TTGetBarX_ttscrollpane(TT_ARG_READ ttscrollpane o);
 
 /** set `bar_x' of ttscrollpane `o' */
-ttbyte 	TTSetBarX_ttscrollpane(ttscrollpane o, ttscrollbar bar_x);
-    
+ttbyte TTSetBarX_ttscrollpane(ttscrollpane o, ttscrollbar bar_x);
+
 /** get `bar_y' of ttscrollpane `o' */
-ttscrollbar 	TTGetBarY_ttscrollpane(TT_ARG_READ ttscrollpane o);
+ttscrollbar TTGetBarY_ttscrollpane(TT_ARG_READ ttscrollpane o);
 
 /** set `bar_y' of ttscrollpane `o' */
-ttbyte 	TTSetBarY_ttscrollpane(ttscrollpane o, ttscrollbar bar_y);
-
-
-
-
-
-
-
-
-
+ttbyte TTSetBarY_ttscrollpane(ttscrollpane o, ttscrollbar bar_y);
 
 #endif /* _TT_TTSCROLLPANE_H */
-

@@ -94,7 +94,7 @@
 { Tw_ScrollWidget, 12,
 8, "Tw_ScrollWidget", "0" "v" TWS_void_STR"x" magic_id_STR(widget)"_" TWS_ldat_STR"_" TWS_ldat_STR },
 { Tw_DrawWidget, 10,
-18, "Tw_DrawWidget", "0" "v" TWS_void_STR"x" magic_id_STR(widget)"_" TWS_dat_STR"_" TWS_dat_STR"_" TWS_dat_STR"_" TWS_dat_STR"W" TWS_byte_STR"W" TWS_hwfont_STR"W" TWS_hwattr_STR },
+18, "Tw_DrawWidget", "0" "v" TWS_void_STR"x" magic_id_STR(widget)"_" TWS_dat_STR"_" TWS_dat_STR"_" TWS_dat_STR"_" TWS_dat_STR"W" TWS_char_STR"W" TWS_hwfont_STR"W" TWS_hwattr_STR },
 
 { Tw_SetVisibleWidget, 16,
 6, "Tw_SetVisibleWidget", "0" "v" TWS_void_STR"x" magic_id_STR(widget)"_" TWS_byte_STR },
@@ -115,25 +115,25 @@
 
 
 { Tw_CreateGadget, 12,
-28, "Tw_CreateGadget", "0" "x" magic_id_STR(gadget)"x" magic_id_STR(widget)"_" TWS_dat_STR"_" TWS_dat_STR"W" TWS_byte_STR"_" TWS_uldat_STR"_" TWS_uldat_STR"_" TWS_udat_STR"_" TWS_hwcol_STR"_" TWS_hwcol_STR"_" TWS_hwcol_STR"_" TWS_hwcol_STR"_" TWS_dat_STR"_" TWS_dat_STR },
+28, "Tw_CreateGadget", "0" "x" magic_id_STR(gadget)"x" magic_id_STR(widget)"_" TWS_dat_STR"_" TWS_dat_STR"W" TWS_char_STR"_" TWS_uldat_STR"_" TWS_uldat_STR"_" TWS_udat_STR"_" TWS_hwcol_STR"_" TWS_hwcol_STR"_" TWS_hwcol_STR"_" TWS_hwcol_STR"_" TWS_dat_STR"_" TWS_dat_STR },
 
 { Tw_CreateButtonGadget, 18,
-24, "Tw_CreateButtonGadget", "1" "x" magic_id_STR(gadget)"x" magic_id_STR(widget)"_" TWS_dat_STR"_" TWS_dat_STR"V" TWS_byte_STR"_" TWS_uldat_STR"_" TWS_udat_STR"_" TWS_hwcol_STR"_" TWS_hwcol_STR"_" TWS_hwcol_STR"_" TWS_dat_STR"_" TWS_dat_STR },
+24, "Tw_CreateButtonGadget", "1" "x" magic_id_STR(gadget)"x" magic_id_STR(widget)"_" TWS_dat_STR"_" TWS_dat_STR"V" TWS_char_STR"_" TWS_uldat_STR"_" TWS_udat_STR"_" TWS_hwcol_STR"_" TWS_hwcol_STR"_" TWS_hwcol_STR"_" TWS_dat_STR"_" TWS_dat_STR },
 
 { Tw_WriteTextsGadget, 16,
-16, "Tw_WriteTextsGadget", "2" "v" TWS_void_STR"x" magic_id_STR(gadget)"_" TWS_byte_STR"_" TWS_dat_STR"_" TWS_dat_STR"W" TWS_byte_STR"_" TWS_dat_STR"_" TWS_dat_STR },
+16, "Tw_WriteTextsGadget", "2" "v" TWS_void_STR"x" magic_id_STR(gadget)"_" TWS_byte_STR"_" TWS_dat_STR"_" TWS_dat_STR"W" TWS_char_STR"_" TWS_dat_STR"_" TWS_dat_STR },
 { Tw_WriteHWFontsGadget, 18,
 16, "Tw_WriteHWFontsGadget", "2" "v" TWS_void_STR"x" magic_id_STR(gadget)"_" TWS_byte_STR"_" TWS_dat_STR"_" TWS_dat_STR"W" TWS_hwfont_STR"_" TWS_dat_STR"_" TWS_dat_STR },
 
 { Tw_CreateWindow, 12,
-24, "Tw_CreateWindow", "0" "x" magic_id_STR(window)"_" TWS_dat_STR"V" TWS_byte_STR"W" TWS_hwcol_STR"x" magic_id_STR(menu)"_" TWS_hwcol_STR"_" TWS_uldat_STR"_" TWS_uldat_STR"_" TWS_uldat_STR"_" TWS_dat_STR"_" TWS_dat_STR"_" TWS_dat_STR },
+24, "Tw_CreateWindow", "0" "x" magic_id_STR(window)"_" TWS_dat_STR"V" TWS_char_STR"W" TWS_hwcol_STR"x" magic_id_STR(menu)"_" TWS_hwcol_STR"_" TWS_uldat_STR"_" TWS_uldat_STR"_" TWS_uldat_STR"_" TWS_dat_STR"_" TWS_dat_STR"_" TWS_dat_STR },
 { Tw_Create4MenuWindow, 17,
 4, "Tw_Create4MenuWindow", "1" "x" magic_id_STR(window)"x" magic_id_STR(menu) },
 
 { Tw_WriteAsciiWindow, 16,
-8, "Tw_WriteAsciiWindow", "0" "v" TWS_void_STR"x" magic_id_STR(window)"_" TWS_ldat_STR"V" TWS_byte_STR },
+8, "Tw_WriteAsciiWindow", "0" "v" TWS_void_STR"x" magic_id_STR(window)"_" TWS_ldat_STR"V" TWS_char_STR },
 { Tw_WriteStringWindow, 17,
-8, "Tw_WriteStringWindow", "0" "v" TWS_void_STR"x" magic_id_STR(window)"_" TWS_ldat_STR"V" TWS_byte_STR },
+8, "Tw_WriteStringWindow", "0" "v" TWS_void_STR"x" magic_id_STR(window)"_" TWS_ldat_STR"V" TWS_char_STR },
 { Tw_WriteHWFontWindow, 17,
 8, "Tw_WriteHWFontWindow", "0" "v" TWS_void_STR"x" magic_id_STR(window)"_" TWS_ldat_STR"V" TWS_hwfont_STR },
 { Tw_WriteHWAttrWindow, 17,
@@ -142,7 +142,7 @@
 { Tw_GotoXYWindow, 12,
 8, "Tw_GotoXYWindow", "2" "v" TWS_void_STR"x" magic_id_STR(window)"_" TWS_ldat_STR"_" TWS_ldat_STR },
 { Tw_SetTitleWindow, 14,
-8, "Tw_SetTitleWindow", "0" "v" TWS_void_STR"x" magic_id_STR(window)"_" TWS_dat_STR"V" TWS_byte_STR },
+8, "Tw_SetTitleWindow", "0" "v" TWS_void_STR"x" magic_id_STR(window)"_" TWS_dat_STR"V" TWS_char_STR },
 { Tw_SetColTextWindow, 16,
 6, "Tw_SetColTextWindow", "2" "v" TWS_void_STR"x" magic_id_STR(window)"_" TWS_hwcol_STR },
 { Tw_SetColorsWindow, 15,
@@ -174,7 +174,7 @@
 6, "Tw_CirculateChildrenRow", "0" "v" TWS_void_STR"x" magic_id_STR(obj)"_" TWS_byte_STR },
 
 { Tw_Create4MenuAny, 14,
-14, "Tw_Create4MenuAny", "0" "x" magic_id_STR(row)"x" magic_id_STR(obj)"x" magic_id_STR(window)"_" TWS_udat_STR"_" TWS_byte_STR"_" TWS_ldat_STR"V" TWS_byte_STR },
+14, "Tw_Create4MenuAny", "0" "x" magic_id_STR(row)"x" magic_id_STR(obj)"x" magic_id_STR(window)"_" TWS_udat_STR"_" TWS_byte_STR"_" TWS_ldat_STR"V" TWS_char_STR },
 
 { Tw_Create4MenuCommonMenuItem, 25,
 4, "Tw_Create4MenuCommonMenuItem", "1" "_" TWS_uldat_STR"x" magic_id_STR(menu) },
@@ -182,7 +182,7 @@
 { Tw_CreateMenu, 10,
 16, "Tw_CreateMenu", "0" "x" magic_id_STR(menu)"_" TWS_hwcol_STR"_" TWS_hwcol_STR"_" TWS_hwcol_STR"_" TWS_hwcol_STR"_" TWS_hwcol_STR"_" TWS_hwcol_STR"_" TWS_byte_STR },
 { Tw_SetInfoMenu, 11,
-12, "Tw_SetInfoMenu", "2" "v" TWS_void_STR"x" magic_id_STR(menu)"_" TWS_byte_STR"_" TWS_ldat_STR"V" TWS_byte_STR"W" TWS_hwcol_STR },
+12, "Tw_SetInfoMenu", "2" "v" TWS_void_STR"x" magic_id_STR(menu)"_" TWS_byte_STR"_" TWS_ldat_STR"V" TWS_char_STR"W" TWS_hwcol_STR },
 
 { Tw_CreateMsgPort, 13,
 6, "Tw_CreateMsgPort", "0" "x" magic_id_STR(msgport)"_" TWS_byte_STR"V" TWS_char_STR },
@@ -237,13 +237,13 @@
 { Tw_RequestSelection, 16,
 6, "Tw_RequestSelection", "0" "v" TWS_void_STR"x" magic_id_STR(obj)"_" TWS_uldat_STR },
 { Tw_NotifySelection, 15,
-14, "Tw_NotifySelection", "0" "v" TWS_void_STR"x" magic_id_STR(obj)"_" TWS_uldat_STR"_" TWS_uldat_STR"V" TWS_byte_STR"_" TWS_uldat_STR"V" TWS_byte_STR },
+14, "Tw_NotifySelection", "0" "v" TWS_void_STR"x" magic_id_STR(obj)"_" TWS_uldat_STR"_" TWS_uldat_STR"V" TWS_char_STR"_" TWS_uldat_STR"V" TWS_char_STR },
 
 { Tw_SetServerUid, 12,
 6, "Tw_SetServerUid", "0" "_" TWS_byte_STR"_" TWS_uldat_STR"_" TWS_byte_STR },
 
 { Tw_OpenExtension, 13,
-6, "Tw_OpenExtension", "0" "x" magic_id_STR(extension)"_" TWS_byte_STR"V" TWS_byte_STR },
+6, "Tw_OpenExtension", "0" "x" magic_id_STR(extension)"_" TWS_byte_STR"V" TWS_char_STR },
 { Tw_CallBExtension, 14,
 10, "Tw_CallBExtension", "0" "O" TWS_tany_STR"x" magic_id_STR(extension)"_" TWS_topaque_STR"V" TWS_byte_STR"V" TWS_byte_STR },
 { Tw_CloseExtension, 14,

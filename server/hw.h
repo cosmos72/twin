@@ -12,12 +12,12 @@
 #define setFlush() (HW->NeedHW |= NEEDFlushHW)
 #define clrFlush() (HW->NeedHW &= ~NEEDFlushHW)
 
-#define HW_KBDAPPLIC		0x0001
-#define HW_ALTCURSKEYS		0x0002
-#define HW_BELLPITCH		0x0003
-#define HW_BELLDURATION		0x0004
-#define HW_MOUSEMOTIONEVENTS	0x0005
-#define HW_CONFIGURE_MAX	0x0006
+#define HW_KBDAPPLIC 0x0001
+#define HW_ALTCURSKEYS 0x0002
+#define HW_BELLPITCH 0x0003
+#define HW_BELLDURATION 0x0004
+#define HW_MOUSEMOTIONEVENTS 0x0005
+#define HW_CONFIGURE_MAX 0x0006
 
 extern display_hw DisplayHWCTTY;
 #define HWCTTY_DETACHED ((display_hw)1)
@@ -33,7 +33,6 @@ byte InitSignals(void);
 void HandleSignals(void);
 void QuitSignals(void);
 byte InitTtysave(void);
-
 
 void DirtyVideo(dat Xstart, dat Ystart, dat Xend, dat Yend);
 void DragArea(dat Xstart, dat Ystart, dat Xend, dat Yend, dat DstXstart, dat DstYstart);

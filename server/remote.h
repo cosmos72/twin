@@ -12,16 +12,17 @@
 typedef void (*handler_io)(int Fd, uldat Slot);
 typedef void (*handler_obj)(int Fd, obj HandlerObj);
 typedef void (*handler_window)(int Fd, window Window);
-    
-uldat	RegisterRemoteFd(int Fd, handler_io HandlerIO);
-uldat	RegisterRemote(int Fd, obj HandlerData, handler_obj HandlerObj);
-void  UnRegisterRemote(uldat Slot);
-byte	RegisterWindowFdIO(window Window, handler_window HandlerWindow);
-void  UnRegisterWindowFdIO(window Window);
-uldat	RemoteWriteQueue(uldat Slot, uldat len, const void *data);
-#define	RemoteWindowWriteQueue(Window, len, data) RemoteWriteQueue((Window)->RemoteData.FdSlot, (len), (data))
-byte	RemoteFlush(uldat Slot);
-#define	RemoteWindowFlush(Window) RemoteFlush((Window)->RemoteData.FdSlot)
+
+uldat RegisterRemoteFd(int Fd, handler_io HandlerIO);
+uldat RegisterRemote(int Fd, obj HandlerData, handler_obj HandlerObj);
+void UnRegisterRemote(uldat Slot);
+byte RegisterWindowFdIO(window Window, handler_window HandlerWindow);
+void UnRegisterWindowFdIO(window Window);
+uldat RemoteWriteQueue(uldat Slot, uldat len, CONST void *data);
+#define RemoteWindowWriteQueue(Window, len, data)                                                  \
+  RemoteWriteQueue((Window)->RemoteData.FdSlot, (len), (data))
+byte RemoteFlush(uldat Slot);
+#define RemoteWindowFlush(Window) RemoteFlush((Window)->RemoteData.FdSlot)
 
 msgport RemoteGetMsgPort(uldat Slot);
 
@@ -44,7 +45,7 @@ void RemoteCouldWrite(uldat Slot);
 
 extern uldat FdWQueued;
 
-void   RegisterMsgPort(msgport MsgPort, uldat Slot);
+void RegisterMsgPort(msgport MsgPort, uldat Slot);
 void UnRegisterMsgPort(msgport MsgPort);
 
 void remoteKillSlot(uldat slot);

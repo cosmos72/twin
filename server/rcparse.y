@@ -335,7 +335,7 @@ static void yyprint(FILE *file, int type, void *value) {
 }
 #endif
 
-static byte rcparse(byte *path) {
+static byte rcparse(char *path) {
     return set_yy_file(path) == 0 && yyparse() == 0;
 }
 

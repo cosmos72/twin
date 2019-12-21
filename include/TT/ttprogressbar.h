@@ -1,10 +1,6 @@
 
 
-
-
-
 /* This file was automatically generated from m4/tt.m4hh, do not edit! */
-
 
 /*
  *  ttprogressbar.h  --  public header for libTT declarations related to "ttprogressbar"
@@ -18,60 +14,27 @@
  *
  */
 
-
-
 #ifndef _TT_TTPROGRESSBAR_H
 #define _TT_TTPROGRESSBAR_H
-
-
-
-
-
-
 
 /* object structure */
 #ifndef s_ttprogressbar
 
-
-/** ttprogressbar: a percentage completion bar */        
-        struct s_ttprogressbar;
-typedef struct s_ttprogressbar *	ttprogressbar;
+/** ttprogressbar: a percentage completion bar */
+struct s_ttprogressbar;
+typedef struct s_ttprogressbar *ttprogressbar;
 
 #endif /* s_ttprogressbar */
 
-
-
 /* global runtime class type; returned by TTCLASSOF(<some object>) */
 /** class of ttprogressbar */
-extern ttclass	TTClass_ttprogressbar;
-
-
-
-
+extern ttclass TTClass_ttprogressbar;
 
 /* ttprogressbar methods */
 
 /** create a ttprogressbar with given fields */
 ttprogressbar TTCreate_ttprogressbar(ttbyte orientation);
 
-
-
-
-
-
-
-
-
 /* TTGet*_ttprogressbar and TTSet*_ttprogressbar methods */
-        
-
-
-
-
-
-
-
-
 
 #endif /* _TT_TTPROGRESSBAR_H */
-

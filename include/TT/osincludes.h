@@ -5,5 +5,3 @@
 #include <stdarg.h>
 
 #endif /* _TT_OSINCLUDES_H */
-
-

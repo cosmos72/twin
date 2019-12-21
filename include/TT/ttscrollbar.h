@@ -1,10 +1,6 @@
 
 
-
-
-
 /* This file was automatically generated from m4/tt.m4hh, do not edit! */
-
 
 /*
  *  ttscrollbar.h  --  public header for libTT declarations related to "ttscrollbar"
@@ -18,36 +14,21 @@
  *
  */
 
-
-
 #ifndef _TT_TTSCROLLBAR_H
 #define _TT_TTSCROLLBAR_H
-
-
-
-
-
-
 
 /* object structure */
 #ifndef s_ttscrollbar
 
-
-/** ttscrollbar: a normal, interactive scroll bar */    
-        struct s_ttscrollbar;
-typedef struct s_ttscrollbar *	ttscrollbar;
+/** ttscrollbar: a normal, interactive scroll bar */
+struct s_ttscrollbar;
+typedef struct s_ttscrollbar *ttscrollbar;
 
 #endif /* s_ttscrollbar */
 
-
-
 /* global runtime class type; returned by TTCLASSOF(<some object>) */
 /** class of ttscrollbar */
-extern ttclass	TTClass_ttscrollbar;
-
-
-
-
+extern ttclass TTClass_ttscrollbar;
 
 /* ttscrollbar methods */
 
@@ -55,26 +36,8 @@ extern ttclass	TTClass_ttscrollbar;
 ttscrollbar TTCreate1_ttscrollbar(ttbyte orientation);
 
 /** create a ttscrollbar with given fields */
-ttscrollbar TTCreate4_ttscrollbar(ttbyte orientation,ttint size,ttint real_size,ttint view_size);
-
-
-
-
-
-
-
-
+ttscrollbar TTCreate4_ttscrollbar(ttbyte orientation, ttint size, ttint real_size, ttint view_size);
 
 /* TTGet*_ttscrollbar and TTSet*_ttscrollbar methods */
-    
-
-
-
-
-
-
-
-
 
 #endif /* _TT_TTSCROLLBAR_H */
-

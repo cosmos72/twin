@@ -16,4 +16,3 @@
 #include <TT/list_m4.h>
 
 #endif /* _TT_TYPES_H */
-

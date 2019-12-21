@@ -1,10 +1,6 @@
 
 
-
-
-
 /* This file was automatically generated from m4/tt.m4hh, do not edit! */
-
 
 /*
  *  ttslider.h  --  public header for libTT declarations related to "ttslider"
@@ -18,87 +14,54 @@
  *
  */
 
-
-
 #ifndef _TT_TTSLIDER_H
 #define _TT_TTSLIDER_H
-
-
-
-
-
-
 
 /* object structure */
 #ifndef s_ttslider
 
-
-/** ttslider: a sliding knob within a bounded interval */            
-        struct s_ttslider;
-typedef struct s_ttslider *	ttslider;
+/** ttslider: a sliding knob within a bounded interval */
+struct s_ttslider;
+typedef struct s_ttslider *ttslider;
 
 #endif /* s_ttslider */
 
-
-
 /* global runtime class type; returned by TTCLASSOF(<some object>) */
 /** class of ttslider */
-extern ttclass	TTClass_ttslider;
-
-
-
-
+extern ttclass TTClass_ttslider;
 
 /* ttslider methods */
 
-/** set the slide minimum of the ttslider `o' */    
-ttbyte TTSetSlideMin_ttslider(ttslider o,ttint slide_min);
+/** set the slide minimum of the ttslider `o' */
+ttbyte TTSetSlideMin_ttslider(ttslider o, ttint slide_min);
 
-/** set the slide maximum of the ttslider `o' */    
-ttbyte TTSetSlideMax_ttslider(ttslider o,ttint slide_max);
+/** set the slide maximum of the ttslider `o' */
+ttbyte TTSetSlideMax_ttslider(ttslider o, ttint slide_max);
 
-/** set the slide position of the ttslider `o' */    
-ttbyte TTSetSlideValue_ttslider(ttslider o,ttint slide_value);
+/** set the slide position of the ttslider `o' */
+ttbyte TTSetSlideValue_ttslider(ttslider o, ttint slide_value);
 
 /** create a ttslider with given fields */
-ttslider TTCreate_ttslider(ttbyte orientation,ttint real_size);
-
-
-
-
-
-
-
-
+ttslider TTCreate_ttslider(ttbyte orientation, ttint real_size);
 
 /* TTGet*_ttslider and TTSet*_ttslider methods */
-    
+
 /** get `slide_min' of ttslider `o' */
-ttint 	TTGetSlideMin_ttslider(TT_ARG_READ ttslider o);
+ttint TTGetSlideMin_ttslider(TT_ARG_READ ttslider o);
 
 /** set `slide_min' of ttslider `o' */
-ttbyte 	TTSetSlideMin_ttslider(ttslider o, ttint slide_min);
-    
+ttbyte TTSetSlideMin_ttslider(ttslider o, ttint slide_min);
+
 /** get `slide_max' of ttslider `o' */
-ttint 	TTGetSlideMax_ttslider(TT_ARG_READ ttslider o);
+ttint TTGetSlideMax_ttslider(TT_ARG_READ ttslider o);
 
 /** set `slide_max' of ttslider `o' */
-ttbyte 	TTSetSlideMax_ttslider(ttslider o, ttint slide_max);
-    
+ttbyte TTSetSlideMax_ttslider(ttslider o, ttint slide_max);
+
 /** get `slide_value' of ttslider `o' */
-ttint 	TTGetSlideValue_ttslider(TT_ARG_READ ttslider o);
+ttint TTGetSlideValue_ttslider(TT_ARG_READ ttslider o);
 
 /** set `slide_value' of ttslider `o' */
-ttbyte 	TTSetSlideValue_ttslider(ttslider o, ttint slide_value);
-
-
-
-
-
-
-
-
-
+ttbyte TTSetSlideValue_ttslider(ttslider o, ttint slide_value);
 
 #endif /* _TT_TTSLIDER_H */
-

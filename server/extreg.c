@@ -18,33 +18,30 @@
 #include "methods.h"
 
 exts Exts = {
-    { NULL },
-    { remoteKillSlot },
-    { (void *)NoOp, AlwaysTrue, (void *)AlwaysFalse, (void *)AlwaysNull, (void *)AlwaysNull },
-    { FakeOpenTerm }
-};
+    {NULL},
+    {remoteKillSlot},
+    {(void *)NoOp, AlwaysTrue, (void *)AlwaysFalse, (void *)AlwaysNull, (void *)AlwaysNull},
+    {FakeOpenTerm}};
 static exts OrigExts = {
-    { NULL },
-    { remoteKillSlot },
-    { (void *)NoOp, AlwaysTrue, (void *)AlwaysFalse, (void *)AlwaysNull, (void *)AlwaysNull },
-    { FakeOpenTerm }
-};
+    {NULL},
+    {remoteKillSlot},
+    {(void *)NoOp, AlwaysTrue, (void *)AlwaysFalse, (void *)AlwaysNull, (void *)AlwaysNull},
+    {FakeOpenTerm}};
 
-#define OrigExt(where) ((void **)( (byte *)&OrigExts + ( (byte *)where - (byte *)&Exts)))
+#define OrigExt(where) ((void **)((byte *)&OrigExts + ((byte *)where - (byte *)&Exts)))
 
 byte Register_Ext(void **where, void *data) {
-    if (*where == *OrigExt(where)) {
-	*where = data;
-	return ttrue;
-    }
-    return tfalse;
+  if (*where == *OrigExt(where)) {
+    *where = data;
+    return ttrue;
+  }
+  return tfalse;
 }
 
 byte UnRegister_Ext(void **where, void *data) {
-    if (*where == data) {
-	*where = *OrigExt(where);
-	return ttrue;
-    }
-    return tfalse;
+  if (*where == data) {
+    *where = *OrigExt(where);
+    return ttrue;
+  }
+  return tfalse;
 }
-

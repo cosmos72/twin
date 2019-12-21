@@ -22,21 +22,21 @@
 #include "compiler.h"   /* for INLINE, CONST */
 
 #ifdef TW_HAVE_STDINT_H
-# include <stdint.h> /* for uint32_t */
+#include <stdint.h> /* for uint32_t */
 #endif
 
 #ifdef TW_HAVE_STDDEF_H
-# include <stddef.h> /* for size_t */
+#include <stddef.h> /* for size_t */
 #endif
 
 typedef uint32_t md5_uint32;
 
-typedef char assert_md5_uint32_is_really_32_bits_wide [sizeof(md5_uint32) == 4 ? 1 : -1];
+typedef char assert_md5_uint32_is_really_32_bits_wide[sizeof(md5_uint32) == 4 ? 1 : -1];
 
 struct MD5Context {
-    md5_uint32 buf[4];
-    md5_uint32 bits[2];
-    md5_uint32 in[16];
+  md5_uint32 buf[4];
+  md5_uint32 bits[2];
+  md5_uint32 in[16];
 };
 
 void MD5Init(struct MD5Context *context);

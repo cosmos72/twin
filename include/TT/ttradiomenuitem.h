@@ -1,10 +1,6 @@
 
 
-
-
-
 /* This file was automatically generated from m4/tt.m4hh, do not edit! */
-
 
 /*
  *  ttradiomenuitem.h  --  public header for libTT declarations related to "ttradiomenuitem"
@@ -18,57 +14,24 @@
  *
  */
 
-
-
 #ifndef _TT_TTRADIOMENUITEM_H
 #define _TT_TTRADIOMENUITEM_H
-
-
-
-
-
-
 
 /* object structure */
 #ifndef s_ttradiomenuitem
 
-
 /** ttradiomenuitem: a radio (mutual-exclusion) line in a menu */
-        struct s_ttradiomenuitem;
-typedef struct s_ttradiomenuitem *	ttradiomenuitem;
+struct s_ttradiomenuitem;
+typedef struct s_ttradiomenuitem *ttradiomenuitem;
 
 #endif /* s_ttradiomenuitem */
 
-
-
 /* global runtime class type; returned by TTCLASSOF(<some object>) */
 /** class of ttradiomenuitem */
-extern ttclass	TTClass_ttradiomenuitem;
-
-
-
-
+extern ttclass TTClass_ttradiomenuitem;
 
 /* ttradiomenuitem methods */
 
-
-
-
-
-
-
-
-
 /* TTGet*_ttradiomenuitem and TTSet*_ttradiomenuitem methods */
 
-
-
-
-
-
-
-
-
-
 #endif /* _TT_TTRADIOMENUITEM_H */
-

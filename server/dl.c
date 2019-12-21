@@ -21,152 +21,153 @@
 #include "dl_helper.h"
 
 byte DlOpen(module Module) {
-    dlhandle Handle = NULL;
-    uldat len, len0 = 1 + strlen(pkg_libdir) + strlen(DL_PREFIX) + strlen(DL_SUFFIX);
-    byte *name = NULL;
-    byte (*init_func)(module);
-    
-    if (!dlinit_once()) {
+  dlhandle Handle = NULL;
+  uldat len, len0 = 1 + strlen(pkg_libdir) + strlen(DL_PREFIX) + strlen(DL_SUFFIX);
+  char *name = NULL;
+  byte (*init_func)(module);
+
+  if (!dlinit_once()) {
+    return tfalse;
+  }
+
+  if (Module && !Module->Handle && (!Module->NameLen || Module->Name)) {
+    /* dlopen(NULL, ...) returns a handle for the main program */
+    if (Module->NameLen) {
+      len = len0 + Module->NameLen;
+      if ((name = (char *)AllocMem(len + 1)))
+        sprintf(name, "%s/%s%.*s%s", pkg_libdir, DL_PREFIX, (int)Module->NameLen, Module->Name,
+                DL_SUFFIX);
+      else {
         return tfalse;
+      }
     }
-        
-    if (Module && !Module->Handle && (!Module->NameLen || Module->Name)) {
-	/* dlopen(NULL, ...) returns a handle for the main program */
-	if (Module->NameLen) {
-	    len = len0 + Module->NameLen;
-	    if ((name = AllocMem(len+1)))
-		sprintf(name, "%s/%s%.*s%s", pkg_libdir, DL_PREFIX, (int)Module->NameLen, Module->Name, DL_SUFFIX);
-	    else {
-		return tfalse;
-	    }
-	}
-	Handle = dlopen(name);
-	if (name)
-	    FreeMem(name);
-    }
-    if (!Handle) {
-	Error(DLERROR);
-	ErrStr = dlerror();
-	return tfalse;
-    }
+    Handle = dlopen(name);
+    if (name)
+      FreeMem(name);
+  }
+  if (!Handle) {
+    Error(DLERROR);
+    ErrStr = dlerror();
+    return tfalse;
+  }
 
-    if (name) {
-	init_func = (byte (*)(module)) dlsym(Handle, "InitModule");
-	if (init_func && init_func(Module)) {
-	    Module->Handle = (void *)Handle;
-	    return ttrue;
-	}
-	dlclose(Handle);
-
-        if (init_func) {
-            if (ErrStr == NULL || *ErrStr == '\0') {
-                Error(DLERROR);
-                ErrStr = "InitModule() failed";
-            }
-        } else {
-            Error(DLERROR);
-            ErrStr = "InitModule() not found in module";
-        }
-	return tfalse;
+  if (name) {
+    init_func = (byte(*)(module))dlsym(Handle, "InitModule");
+    if (init_func && init_func(Module)) {
+      Module->Handle = (void *)Handle;
+      return ttrue;
     }
-    return ttrue;
+    dlclose(Handle);
+
+    if (init_func) {
+      if (ErrStr == NULL || *ErrStr == '\0') {
+        Error(DLERROR);
+        ErrStr = "InitModule() failed";
+      }
+    } else {
+      Error(DLERROR);
+      ErrStr = "InitModule() not found in module";
+    }
+    return tfalse;
+  }
+  return ttrue;
 }
 
 void DlClose(module Module) {
-    if (Module && Module->Handle) {
-	if (Module->NameLen != 0) {
-            void (*quit_func)(module) = (void (*)(module)) dlsym((dlhandle)Module->Handle, "QuitModule");
-	    if (quit_func)
-		quit_func(Module);
-	}
-	dlclose((dlhandle)Module->Handle);
-	Module->Handle = NULL;
+  if (Module && Module->Handle) {
+    if (Module->NameLen != 0) {
+      void (*quit_func)(module) = (void (*)(module))dlsym((dlhandle)Module->Handle, "QuitModule");
+      if (quit_func)
+        quit_func(Module);
     }
+    dlclose((dlhandle)Module->Handle);
+    Module->Handle = NULL;
+  }
 }
 
-module DlLoadAny(uldat len, const byte *name) {
-    module Module;
-    
-    for (Module = All->FirstModule; Module; Module = Module->Next) {
-	if (len == Module->NameLen && !CmpMem(name, Module->Name, len))
-	    /* already loaded! */
-	    return Module;
-    }
-    
-    if ((Module = Do(Create,Module)(FnModule, len, name))) {
-	if (Act(DlOpen,Module)(Module))
-	    return Module;
-	Delete(Module);
-    }
-    return (module)0;
+module DlLoadAny(uldat len, CONST char *name) {
+  module Module;
+
+  for (Module = All->FirstModule; Module; Module = Module->Next) {
+    if (len == Module->NameLen && !memcmp(name, Module->Name, len))
+      /* already loaded! */
+      return Module;
+  }
+
+  if ((Module = Do(Create, Module)(FnModule, len, name))) {
+    if (Act(DlOpen, Module)(Module))
+      return Module;
+    Delete(Module);
+  }
+  return (module)0;
 }
 
 static module So[MAX_So];
 
-udat DlName2Code(const byte *name) {
-    if (!CmpStr(name, "wm"))
-	return WMSo;
-    if (!CmpStr(name, "term"))
-	return TermSo;
-    if (!CmpStr(name, "socket"))
-	return SocketSo;
-    if (!CmpStr(name, "rcparse"))
-	return RCParseSo;
-    return MainSo;
+udat DlName2Code(CONST char *name) {
+  if (!strcmp(name, "wm"))
+    return WMSo;
+  if (!strcmp(name, "term"))
+    return TermSo;
+  if (!strcmp(name, "socket"))
+    return SocketSo;
+  if (!strcmp(name, "rcparse"))
+    return RCParseSo;
+  return MainSo;
 }
 
-static const byte * DlCode2Name(uldat code) {
-    switch (code)
-    {
-    case WMSo:      return "wm";
-    case TermSo:    return "term";
-    case SocketSo:  return "socket";
-    case RCParseSo: return "rcparse";
-    default:
-    case MainSo:    return NULL;
-    }
+static CONST char *DlCode2Name(uldat code) {
+  switch (code) {
+  case WMSo:
+    return "wm";
+  case TermSo:
+    return "term";
+  case SocketSo:
+    return "socket";
+  case RCParseSo:
+    return "rcparse";
+  default:
+  case MainSo:
+    return NULL;
+  }
 }
-
-
 
 module DlLoad(uldat code) {
-    module M = (module)0;
-    if (code < MAX_So && !(M = So[code])) {
-        const byte * name = DlCode2Name(code);
-        M = DlLoadAny(name ? strlen(name) : 0, name);
-        if ((So[code] = M)) {
-            if (All->FnHookModule)
-                All->FnHookModule(All->HookModule);
-        } else {
-            printk("failed to load module %s: %s\n",
-                   name ? name : (const byte *)"(NULL)",
-                   ErrStr ? ErrStr : (const byte *)"unknown error");
-	}
+  module M = (module)0;
+  if (code < MAX_So && !(M = So[code])) {
+    CONST char *name = DlCode2Name(code);
+    M = DlLoadAny(name ? strlen(name) : 0, name);
+    if ((So[code] = M)) {
+      if (All->FnHookModule)
+        All->FnHookModule(All->HookModule);
+    } else {
+      printk("failed to load module %s: %s\n", name ? name : "(NULL)",
+             ErrStr ? ErrStr : "unknown error");
     }
-    return M;
+  }
+  return M;
 }
 
 void DlUnLoad(uldat code) {
-    if (code < MAX_So) {
-	if (So[code]) {
-	    Delete(So[code]);
-	    So[code] = (module)0;
-	    if (All->FnHookModule)
-		All->FnHookModule(All->HookModule);
-	}
+  if (code < MAX_So) {
+    if (So[code]) {
+      Delete(So[code]);
+      So[code] = (module)0;
+      if (All->FnHookModule)
+        All->FnHookModule(All->HookModule);
     }
+  }
 }
 
 module DlIsLoaded(uldat code) {
-    if (code < MAX_So)
-	return So[code];
-    return (module)0;
+  if (code < MAX_So)
+    return So[code];
+  return (module)0;
 }
 
-void *DlSym(module Module, const byte *name) {
-    if (Module && name)
-	return (void *)dlsym((dlhandle)Module->Handle, name);
-    
-    return NULL;
-}
+void *DlSym(module Module, CONST char *name) {
+  if (Module && name)
+    return (void *)dlsym((dlhandle)Module->Handle, name);
 
+  return NULL;
+}

@@ -11,7 +11,7 @@
  * modify it under the terms of the GNU Library General Public
  * License as published by the Free Software Foundation; either
  * version 2 of the License, or (at your option) any later version.
- * 
+ *
  */
 
 #ifndef _TT_TYPES_H
@@ -38,4 +38,3 @@
 #include "decls_m4.h"
 
 #endif /* _TT_TYPES_H */
-

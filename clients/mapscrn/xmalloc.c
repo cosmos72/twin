@@ -1,4 +1,4 @@
-/*  
+/*
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,32 +17,28 @@
 
 extern char *progname;
 
-static void
-nomem(void) {
-	fprintf(stderr, _("%s: out of memory\n"), progname);
-	exit(EX_OSERR);
+static void nomem(void) {
+  fprintf(stderr, _("%s: out of memory\n"), progname);
+  exit(EX_OSERR);
 }
 
-void *
-xmalloc(size_t sz) {
-	void *p = malloc(sz);
-	if (p == NULL)
-		nomem();
-	return p;
+void *xmalloc(size_t sz) {
+  void *p = malloc(sz);
+  if (p == NULL)
+    nomem();
+  return p;
 }
 
-void *
-xrealloc(void *pp, size_t sz) {
-	void *p = realloc(pp, sz);
-	if (p == NULL)
-		nomem();
-	return p;
+void *xrealloc(void *pp, size_t sz) {
+  void *p = realloc(pp, sz);
+  if (p == NULL)
+    nomem();
+  return p;
 }
 
-char *
-xstrdup(char *p) {
-	char *q = strdup(p);
-	if (q == NULL)
-		nomem();
-	return q;
+char *xstrdup(char *p) {
+  char *q = strdup(p);
+  if (q == NULL)
+    nomem();
+  return q;
 }

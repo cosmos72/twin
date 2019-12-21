@@ -112,7 +112,7 @@
 
   case order_DrawWidget:
     switch (n) {
-      case 6: L = (a[2]._*a[3]._) * sizeof(byte); break;
+      case 6: L = (a[2]._*a[3]._) * sizeof(char); break;
       case 7: L = (a[2]._*a[3]._) * sizeof(hwfont); break;
       case 8: L = (a[2]._*a[3]._) * sizeof(hwattr); break;
     }
@@ -135,19 +135,19 @@
 
   case order_CreateGadget:
     switch (n) {
-      case 4: L = (a[2]._*a[3]._) * sizeof(byte); break;
+      case 4: L = (a[2]._*a[3]._) * sizeof(char); break;
     }
     break;
 
   case order_CreateButtonGadget:
     switch (n) {
-      case 4: L = (a[2]._*a[3]._) * sizeof(byte); break;
+      case 4: L = (a[2]._*a[3]._) * sizeof(char); break;
     }
     break;
 
   case order_WriteTextsGadget:
     switch (n) {
-      case 5: L = (a[2]._*a[3]._) * sizeof(byte); break;
+      case 5: L = (a[2]._*a[3]._) * sizeof(char); break;
     }
     break;
   case order_WriteHWFontsGadget:
@@ -158,7 +158,7 @@
 
   case order_CreateWindow:
     switch (n) {
-      case 2: L = (a[1]._) * sizeof(byte); break;
+      case 2: L = (a[1]._) * sizeof(char); break;
       case 3: L = (a[1]._) * sizeof(hwcol); break;
     }
     break;
@@ -166,12 +166,12 @@
 
   case order_WriteAsciiWindow:
     switch (n) {
-      case 3: L = (a[2]._) * sizeof(byte); break;
+      case 3: L = (a[2]._) * sizeof(char); break;
     }
     break;
   case order_WriteStringWindow:
     switch (n) {
-      case 3: L = (a[2]._) * sizeof(byte); break;
+      case 3: L = (a[2]._) * sizeof(char); break;
     }
     break;
   case order_WriteHWFontWindow:
@@ -188,7 +188,7 @@
 
   case order_SetTitleWindow:
     switch (n) {
-      case 3: L = (a[2]._) * sizeof(byte); break;
+      case 3: L = (a[2]._) * sizeof(char); break;
     }
     break;
 
@@ -214,7 +214,7 @@
 
   case order_Create4MenuAny:
     switch (n) {
-      case 6: L = (a[5]._) * sizeof(byte); break;
+      case 6: L = (a[5]._) * sizeof(char); break;
     }
     break;
 
@@ -223,7 +223,7 @@
 
   case order_SetInfoMenu:
     switch (n) {
-      case 4: L = (a[3]._) * sizeof(byte); break;
+      case 4: L = (a[3]._) * sizeof(char); break;
       case 5: L = (a[3]._) * sizeof(hwcol); break;
     }
     break;
@@ -279,8 +279,8 @@
 
   case order_NotifySelection:
     switch (n) {
-      case 4: L = (TW_MAX_MIMELEN) * sizeof(byte); break;
-      case 6: L = (a[5]._) * sizeof(byte); break;
+      case 4: L = (TW_MAX_MIMELEN) * sizeof(char); break;
+      case 6: L = (a[5]._) * sizeof(char); break;
     }
     break;
 
@@ -288,7 +288,7 @@
 
   case order_OpenExtension:
     switch (n) {
-      case 2: L = (a[1]._) * sizeof(byte); break;
+      case 2: L = (a[1]._) * sizeof(char); break;
     }
     break;
   case order_CallBExtension:

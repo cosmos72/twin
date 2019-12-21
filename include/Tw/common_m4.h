@@ -53,14 +53,10 @@ extern char *Tw_CloneStr(TW_CONST char *);
 extern hwfont *Tw_CloneStr2HWFont(TW_CONST char *, size_t);
 
 
-#define Tw_LenStr		strlen
-#define Tw_CmpStr		strcmp
 #define Tw_CopyStr(From,To)		strcpy(To, From)
 
 #define Tw_CopyMem(From, To, Size)	memcpy(To, From, Size)
 #define Tw_MoveMem(From, To, Size)	memmove(To, From, Size)
-#define Tw_WriteMem		memset
-#define Tw_CmpMem		memcmp
 
 
 
@@ -87,9 +83,9 @@ twidget Tw_O_PrevWidget(tdisplay TwD, twidget W);
 twidget Tw_O_NextWidget(tdisplay TwD, twidget W);
 
 void Tw_SetFillWidget(tdisplay TwD, twidget W,hwattr Fill);
-void Tw_Draw2Widget(tdisplay TwD, twidget W,dat XWidth,dat YWidth,dat Left,dat Up,dat Pitch,TW_CONST byte *Text,TW_CONST hwfont *Font,TW_CONST hwattr *Attr);
+void Tw_Draw2Widget(tdisplay TwD, twidget W,dat XWidth,dat YWidth,dat Left,dat Up,dat Pitch,TW_CONST char *Text,TW_CONST hwfont *Font,TW_CONST hwattr *Attr);
 
-void Tw_DrawTextWidget(tdisplay TwD, twidget W,dat XWidth,dat YWidth,dat Left,dat Up,dat Pitch,TW_CONST byte *Text);
+void Tw_DrawTextWidget(tdisplay TwD, twidget W,dat XWidth,dat YWidth,dat Left,dat Up,dat Pitch,TW_CONST char *Text);
 void Tw_DrawHWFontWidget(tdisplay TwD, twidget W,dat XWidth,dat YWidth,dat Left,dat Up,dat Pitch,TW_CONST hwfont *Font);
 void Tw_DrawHWAttrWidget(tdisplay TwD, twidget W,dat XWidth,dat YWidth,dat Left,dat Up,dat Pitch,TW_CONST hwattr *Attr);
 
@@ -98,9 +94,9 @@ void Tw_SetPressedGadget(tdisplay TwD, tgadget Gadget,byte on);
 byte Tw_IsPressedGadget(tdisplay TwD, tgadget Gadget);
 void Tw_SetToggleGadget(tdisplay TwD, tgadget Gadget,byte on);
 byte Tw_IsToggleGadget(tdisplay TwD, tgadget Gadget);
-void Tw_WriteTextGadget(tdisplay TwD, tgadget Gadget,dat XWidth,dat YWidth,TW_CONST byte *Text,dat Left,dat Up);
-void Tw_SetTextGadget(tdisplay TwD, tgadget Gadget,dat XWidth,dat YWidth,TW_CONST byte *Text,dat Left,dat Up);
-void Tw_SetTextsGadget(tdisplay TwD, tgadget Gadget,byte bitmap,dat XWidth,dat YWidth,TW_CONST byte *Text,dat Left,dat Up);
+void Tw_WriteTextGadget(tdisplay TwD, tgadget Gadget,dat XWidth,dat YWidth,TW_CONST char *Text,dat Left,dat Up);
+void Tw_SetTextGadget(tdisplay TwD, tgadget Gadget,dat XWidth,dat YWidth,TW_CONST char *Text,dat Left,dat Up);
+void Tw_SetTextsGadget(tdisplay TwD, tgadget Gadget,byte bitmap,dat XWidth,dat YWidth,TW_CONST char *Text,dat Left,dat Up);
 
 tgroup Tw_GroupGadget(tdisplay TwD, tgadget Gadget);
 tgadget Tw_G_PrevGadget(tdisplay TwD, tgadget Gadget);
@@ -110,8 +106,8 @@ void Tw_WriteHWFontGadget(tdisplay TwD, tgadget Gadget,dat XWidth,dat YWidth,TW_
 void Tw_SetHWFontGadget(tdisplay TwD, tgadget Gadget,dat XWidth,dat YWidth,TW_CONST hwfont * HWFont,dat Left,dat Up);
 void Tw_SetHWFontsGadget(tdisplay TwD, tgadget Gadget,byte bitmap,dat XWidth,dat YWidth,TW_CONST hwfont * HWFont,dat Left,dat Up);
 
-tmenuitem Tw_Create4MenuRow(tdisplay TwD, twindow Window,udat Code,byte Flags,ldat Len,TW_CONST byte *Text);
-tmenuitem Tw_Create4MenuMenuItem(tdisplay TwD, tobj Parent,twindow Window,byte Flags,dat Len,TW_CONST byte *Name);
+tmenuitem Tw_Create4MenuRow(tdisplay TwD, twindow Window,udat Code,byte Flags,ldat Len,TW_CONST char *Text);
+tmenuitem Tw_Create4MenuMenuItem(tdisplay TwD, tobj Parent,twindow Window,byte Flags,dat Len,TW_CONST char *Name);
 
 tmsg Tw_CreateMsg(tdisplay TwD, uldat Type,uldat Len);
 void Tw_DeleteMsg(tdisplay TwD, tmsg Msg);
