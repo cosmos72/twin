@@ -446,15 +446,6 @@ static sockfn sockF[] = {
 #include "socket2_m4.h"
     {0, 0, "StatObj", "0S0x" obj_magic_STR "_" TWS_udat_STR "V" TWS_udat_STR}, {0, 0, NULL, NULL}};
 
-/* remove CONST from a pointer and suppress compiler warnings */
-TW_INLINE void *remove_const(CONST void *addr) {
-  union {
-    CONST void *cv;
-    void *v;
-  } u = {addr};
-  return u.v;
-}
-
 /* convert a 2-byte string "v"TWS_void_STR or "_"* or "V"* into a tsfield->type */
 TW_INLINE udat proto_2_TWS(CONST char proto[2]) {
   udat tws_type = 0;
@@ -755,7 +746,7 @@ TW_INLINE ldat sockDecodeArg(uldat id, CONST char *Format, uldat n, tsfield a, u
     if (Left(nlen)) {
       c = (byte)*Format - base_magic_CHR;
       PopAddr(s, CONST byte, nlen, av);
-      if ((a[n] _vec = AllocId2ObjVec(flag, c, nlen / sizeof(uldat), (byte *)remove_const(av)))) {
+      if ((a[n] _vec = AllocId2ObjVec(flag, c, nlen / sizeof(uldat), (byte *)RemoveConst(av)))) {
         a[n] _len = nlen;
         a[n] _type = vec_ | obj_;
         *mask |= *flag << n;
@@ -773,7 +764,7 @@ TW_INLINE ldat sockDecodeArg(uldat id, CONST char *Format, uldat n, tsfield a, u
       if (Left(nlen)) {
         c = (byte)*Format - base_magic_CHR;
         PopAddr(s, CONST byte, nlen, av);
-        if ((a[n] _vec = AllocId2ObjVec(flag, c, nlen / sizeof(uldat), (byte *)remove_const(av)))) {
+        if ((a[n] _vec = AllocId2ObjVec(flag, c, nlen / sizeof(uldat), (byte *)RemoveConst(av)))) {
           a[n] _len = nlen;
           a[n] _type = vec_ | obj_;
           *mask |= *flag << n;
@@ -1456,7 +1447,7 @@ static tany sockCallBExtension(extension e, topaque len, CONST byte *data,
       Act(UseExtension, M)(M, e);
 
     /* actually, we receive a (tsfield) instead of return_type and we pass it through */
-    return e->CallB(e, len, data, remove_const(return_type));
+    return e->CallB(e, len, data, RemoveConst(return_type));
   }
   return (tany)0;
 }
@@ -1731,7 +1722,7 @@ static byte sockSendToMsgPort(msgport MsgPort, udat Len, CONST byte *Data) {
 
   /* be careful with alignment! */
 #if TW_CAN_UNALIGNED != 0
-  tMsg = (tmsg)remove_const(Data);
+  tMsg = (tmsg)RemoveConst(Data);
 #else
   tMsg = (tmsg)CloneMem(Data, Len);
 #endif /* TW_CAN_UNALIGNED != 0 */

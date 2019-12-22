@@ -85,6 +85,9 @@ byte SetServerUid(uldat uid, byte privileges);
 char *FindFile(CONST char *name, uldat *fsize);
 void RunTwEnvRC(void);
 
+/* remove CONST from a pointer and suppress compiler warnings */
+void *RemoveConst(CONST void *x);
+
 hwattr EncodeToHWAttrExtra(tpos pos, tternary detail, tbool active, tbool pressed);
 
 byte AssignId(CONST fn_obj Fn_Obj, obj Obj);

@@ -1105,11 +1105,12 @@ static void MergeHyphensArgv(int argc, char **argv) {
 TW_DECL_MAGIC(display_magic);
 
 int main(int argc, char *argv[]) {
-  byte flags = TW_ATTACH_HW_REDIRECT, force = 0;
-  char *dpy = NULL, *arg = NULL, *tty = ttyname(0);
-  char *s;
-  CONST char *client_dpy = NULL;
+  CONST char *tty = ttyname(0);
+  CONST char *dpy = NULL, *client_dpy = NULL;
+  CONST char *carg;
+  char *arg = NULL;
   int Fd;
+  byte flags = TW_ATTACH_HW_REDIRECT, force = 0;
   byte ret = 0, ourtty = 0;
 
   MergeHyphensArgv(argc, argv);
@@ -1142,8 +1143,9 @@ int main(int argc, char *argv[]) {
         return 1;
       }
       if (!strncmp(*argv + 4, "tty", 3)) {
+        CONST char *cs = "";
         char *opt = *argv + 7;
-        s = strchr(opt, ',');
+        char *s = strchr(opt, ',');
         if (s)
           *s = '\0';
 
@@ -1170,19 +1172,19 @@ int main(int argc, char *argv[]) {
           return 1;
         }
 
-        if (s)
+        if (s) {
           *s = ',';
-        else
-          s = (char *)"";
+          cs = s;
+        }
 
         if (ourtty) {
           CONST char *term = getenv("TERM");
           if (term && !*term)
             term = NULL;
 
-          arg = (char *)malloc(strlen(tty) + 9 + strlen(s) + (term ? 6 + strlen(term) : 0));
+          arg = (char *)malloc(strlen(tty) + 9 + strlen(cs) + (term ? 6 + strlen(term) : 0));
 
-          sprintf(arg, "-hw=tty%s%s%s", (term ? ",TERM=" : term), term, s);
+          sprintf(arg, "-hw=tty%s%s%s", (term ? ",TERM=" : term), term, cs);
         } else
           arg = *argv;
       } else if ((*argv)[4]) {
@@ -1202,10 +1204,11 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  if (!arg) {
-    /* if user did not specify any `--hw=<dpy>', autoprobe */
-    arg = (char *)"";
-  }
+  if (arg)
+    carg = arg;
+  else
+    /* user did not specify any `--hw=<dpy>', autoprobe */
+    carg = "";
 
 #ifdef CONF__ALLOC
   /* do this as soon as possible */
@@ -1262,7 +1265,7 @@ int main(int argc, char *argv[]) {
       DisplayWidth = TryDisplayWidth = TwGetDisplayWidth();
       DisplayHeight = TryDisplayHeight = TwGetDisplayHeight();
 
-      if (!(HW = AttachDisplayHW(strlen(arg), arg, NOSLOT, 0))) {
+      if (!(HW = AttachDisplayHW(strlen(carg), carg, NOSLOT, 0))) {
         TwClose();
         return 1;
       }

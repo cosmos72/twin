@@ -26,7 +26,6 @@
 static menu Term_Menu;
 
 static char *default_args[3];
-static char *default_title = "Twin Term";
 
 static msgport Term_MsgPort;
 
@@ -43,7 +42,7 @@ static void termShutDown(widget W) {
   }
 }
 
-static window newTermWindow(char *title) {
+static window newTermWindow(CONST char *title) {
   window Window;
 
   Window = Do(Create, Window)(
@@ -64,9 +63,9 @@ static window newTermWindow(char *title) {
   return Window;
 }
 
-static window OpenTerm(CONST char *arg0, char *CONST *argv) {
+static window OpenTerm(CONST char *arg0, CONST char *CONST *argv) {
   window Window;
-  char *title;
+  CONST char *title;
 
   /* if {arg0, argv} is {NULL, ...} or {"", ... } then start user's shell */
   if (arg0 && *arg0 && argv && argv[0]) {
@@ -76,9 +75,9 @@ static window OpenTerm(CONST char *arg0, char *CONST *argv) {
       title = argv[0];
   } else {
     arg0 = default_args[0];
-    argv = default_args + 1;
+    argv = (CONST char *CONST *)default_args + 1;
 
-    title = default_title;
+    title = "Twin Term";
   }
 
   if ((Window = newTermWindow(title))) {
@@ -171,7 +170,7 @@ static void TwinTermH(msgport MsgPort) {
       if (Event->EventControl.Code == MSG_CONTROL_OPEN) {
         char **cmd = TokenizeStringVec(Event->EventControl.Len, Event->EventControl.Data);
         if (cmd) {
-          OpenTerm(cmd[0], cmd);
+          OpenTerm(cmd[0], (CONST char *CONST *)cmd);
           FreeStringVec(cmd);
         } else
           OpenTerm(NULL, NULL);
@@ -225,7 +224,7 @@ static void OverrideMethods(byte enter) {
 
 EXTERN_C byte InitModule(module Module) {
   window Window;
-  char *shellpath, *shell;
+  CONST char *shellpath, *shell;
 
   if (((shellpath = getenv("SHELL")) || (shellpath = "/bin/sh")) &&
       (default_args[0] = CloneStr(shellpath)) &&

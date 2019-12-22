@@ -267,7 +267,8 @@ static byte ImmBackground(str name, hwattr color, node shape) {
 }
 
 static void UnwindBorderShape(node n) {
-  str s = NULL, d = n->data = my_malloc(n->x.ctx = 10);
+  cstr s = NULL;
+  str d = n->data = my_malloc(n->x.ctx = 10);
   node shape = n->body;
 
   while (shape) {
@@ -607,7 +608,7 @@ static node MakeUserFunc(str name) {
 static void MakeArgVecReverse(node n, node l) {
   uldat len = 1;
   node base = NULL, v;
-  str *s;
+  cstr *s;
 
   if (!l)
     return;
@@ -622,10 +623,10 @@ static void MakeArgVecReverse(node n, node l) {
   l = base;
 
   n->x.v.argc = len;
-  n->x.v.argv = s = (str *)my_malloc(len * sizeof(str));
+  n->x.v.argv = s = (cstr *)my_malloc(len * sizeof(str));
 
   while (l) {
-    *s++ = l->name; /* this is my_malloc()ed memory */
+    *s++ = l->name;
     l = l->next;
   }
   *s = NULL;
@@ -1134,11 +1135,11 @@ static void DeleteScreens(screen Screens) {
 static byte CreateNeededScreens(node list, screen *res_Screens) {
   node body;
   screen s, prev = (screen)0, top = (screen)0;
+  cstr n;
   hwattr *attr, *r;
+  hwfont f;
   hwcol c;
   uldat w, h, len, _len;
-  char *n;
-  hwfont f;
 
   while (list) {
     w = h = 0;

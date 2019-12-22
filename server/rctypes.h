@@ -26,7 +26,7 @@ struct node {
       ldat plus_minus, flag, a, b;
     } f;
     struct {
-      str *argv;
+      CONST cstr *argv;
       uldat argc;
     } v;
     hwcol color;

@@ -239,7 +239,7 @@ static byte switchto_tty(void) {
 }
 
 /* exported API: fork() a program in a pseudo-teletype */
-byte SpawnInWindow(window Window, CONST char *arg0, char *CONST *argv) {
+byte SpawnInWindow(window Window, CONST char *arg0, CONST char *CONST *argv) {
   pid_t childpid;
   remotedata *data;
 
@@ -271,7 +271,7 @@ byte SpawnInWindow(window Window, CONST char *arg0, char *CONST *argv) {
       /* child */
       /* 4 */
       if (switchto_tty())
-        execvp(arg0, argv);
+        execvp(arg0, (char *CONST *)RemoveConst(argv));
       exit(1);
       break;
     default:

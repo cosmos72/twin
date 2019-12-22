@@ -245,7 +245,7 @@ static twindow newTermWindow(char *title) {
   return Window;
 }
 
-static byte OpenTerm(TW_CONST char *arg0, char *TW_CONST *argv) {
+static byte OpenTerm(TW_CONST char *arg0, char TW_CONST *TW_CONST *argv) {
   twindow Window;
   int Fd;
   pid_t Pid;

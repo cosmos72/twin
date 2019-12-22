@@ -1228,6 +1228,15 @@ void RunTwEnvRC(void) {
     printk("twin: RunTwEnvRC(): delaying .twenvrc.sh execution until secure mode ends.\n");
 }
 
+/* remove CONST from a pointer and suppress compiler warnings */
+void *RemoveConst(CONST void *x) {
+  union {
+    CONST void *cv;
+    void *v;
+  } u = {x};
+  return u.v;
+}
+
 /*
  * encode POS_* position, position detail, active flag, pressed flag,
  * into 'extra' byte field inside hwattr

@@ -10,6 +10,7 @@
 #include <string.h>
 
 #include "twautoconf.h"
+#include "compiler.h"
 
 #ifdef TW_HAVE_UNISTD_H
 #include <unistd.h>
@@ -20,8 +21,10 @@
 #define BINDIR "/usr/local/bin"
 #endif
 
+static char bindir_twin_server[] = BINDIR "/twin_server";
+
 int main(int argc, char *argv[]) {
-  argv[0] = BINDIR "/twin_server";
+  argv[0] = bindir_twin_server;
   execv(argv[0], argv);
   printf("failed to exec %s: %s\n", argv[0], strerror(errno));
   return 1;

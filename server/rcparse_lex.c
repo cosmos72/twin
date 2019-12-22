@@ -1373,7 +1373,7 @@ YY_RULE_SETUP
 case 44:
 YY_RULE_SETUP
 #line 116 "rcparse.l"
-{ yylval.val = NOP;	   return EASY_FUNC; }
+{ yylval.val = NOP;        return EASY_FUNC; }
 	YY_BREAK
 case 45:
 YY_RULE_SETUP
@@ -1464,13 +1464,13 @@ case 62:
 YY_RULE_SETUP
 #line 136 "rcparse.l"
 {
-		  yylval.val = CURSOR_ALWAYS;return GLOBAL_FLAG; }
+               yylval.val = CURSOR_ALWAYS;return GLOBAL_FLAG; }
 	YY_BREAK
 case 63:
 YY_RULE_SETUP
 #line 138 "rcparse.l"
 {
-		  yylval.val = MENU_HIDE;    return GLOBAL_FLAG; }
+               yylval.val = MENU_HIDE;    return GLOBAL_FLAG; }
 	YY_BREAK
 case 64:
 YY_RULE_SETUP
@@ -1486,12 +1486,12 @@ case 66:
 YY_RULE_SETUP
 #line 142 "rcparse.l"
 {
-		  yylval.val = SCREEN_SCROLL;return GLOBAL_FLAG; }
+               yylval.val = SCREEN_SCROLL;return GLOBAL_FLAG; }
 	YY_BREAK
 case 67:
 YY_RULE_SETUP
 #line 144 "rcparse.l"
-{ yylval.val = TERMINALS_UTF8;     return GLOBAL_FLAG; }
+{ yylval.val = TERMINALS_UTF8; return GLOBAL_FLAG; }
 	YY_BREAK
 case 68:
 YY_RULE_SETUP
@@ -1511,42 +1511,42 @@ YY_RULE_SETUP
 case 71:
 YY_RULE_SETUP
 #line 149 "rcparse.l"
-{ yylval.val = BLACK;	return COLOR; }
+{ yylval.val = BLACK;    return COLOR; }
 	YY_BREAK
 case 72:
 YY_RULE_SETUP
 #line 150 "rcparse.l"
-{ yylval.val = BLUE;	return COLOR; }
+{ yylval.val = BLUE;     return COLOR; }
 	YY_BREAK
 case 73:
 YY_RULE_SETUP
 #line 151 "rcparse.l"
-{ yylval.val = GREEN;	return COLOR; }
+{ yylval.val = GREEN;    return COLOR; }
 	YY_BREAK
 case 74:
 YY_RULE_SETUP
 #line 152 "rcparse.l"
-{ yylval.val = CYAN;	return COLOR; }
+{ yylval.val = CYAN;     return COLOR; }
 	YY_BREAK
 case 75:
 YY_RULE_SETUP
 #line 153 "rcparse.l"
-{ yylval.val = RED;	return COLOR; }
+{ yylval.val = RED;      return COLOR; }
 	YY_BREAK
 case 76:
 YY_RULE_SETUP
 #line 154 "rcparse.l"
-{ yylval.val = MAGENTA;	return COLOR; }
+{ yylval.val = MAGENTA;  return COLOR; }
 	YY_BREAK
 case 77:
 YY_RULE_SETUP
 #line 155 "rcparse.l"
-{ yylval.val = YELLOW;	return COLOR; }
+{ yylval.val = YELLOW;   return COLOR; }
 	YY_BREAK
 case 78:
 YY_RULE_SETUP
 #line 156 "rcparse.l"
-{ yylval.val = WHITE;	return COLOR; }
+{ yylval.val = WHITE;    return COLOR; }
 	YY_BREAK
 case 79:
 YY_RULE_SETUP
@@ -1573,17 +1573,17 @@ case 83:
 YY_RULE_SETUP
 #line 165 "rcparse.l"
 {
-		    yylval._string = my_strdup(yytext);
-		    return STRING;
-		}
+            yylval._string = my_strdup(yytext);
+            return STRING;
+        }
 	YY_BREAK
 case 84:
 YY_RULE_SETUP
 #line 170 "rcparse.l"
 {
-		    yylval.val = strtol(yytext, NULL, 0);
-		    return NUMBER;
-		}
+            yylval.val = strtol(yytext, NULL, 0);
+            return NUMBER;
+        }
 	YY_BREAK
 case 85:
 YY_RULE_SETUP
@@ -1594,110 +1594,111 @@ case 86:
 YY_RULE_SETUP
 #line 177 "rcparse.l"
 {
-		    sprintf(errbuf, "twin: %.200s:%d: invalid identifier `%s'\n",
-			    FILE_NAME, LINE_NO, yytext);
-		    YY_FATAL_ERROR(errbuf);
-		}
+            sprintf(errbuf, "twin: %.200s:%d: invalid identifier `%s'\n",
+                FILE_NAME, LINE_NO, yytext);
+            YY_FATAL_ERROR(errbuf);
+        }
 	YY_BREAK
 case 87:
 /* rule 87 can match eol */
 YY_RULE_SETUP
 #line 183 "rcparse.l"
 {
-			int len = strlen(yytext + 1);
-			char c, *p = yytext + 1;
-			char *res = (char *)my_malloc(len), *s = res;
-			
-			while ((c = *p)) {
-			    if (c != '\\' || !p[1])
-				*s++ = *p++;
-			    else switch(*++p) {
-			      case 'a': *s++ = '\a'; break;
-			      case 'b': *s++ = '\b'; break;
-			      case 'e': *s++ = '\033'; break;
-			      case 'f': *s++ = '\f'; break;
-			      case 'n': *s++ = '\n'; break;
-			      case 'r': *s++ = '\r'; break;
-			      case 't': *s++ = '\t'; break;
-			      case 'v': *s++ = '\v'; break;
-			      case '0': *s++ = '\0'; break;
-			      case 'u':
-				/* FIXME: unicode is ok, but s is a (char *), not (hwfont *) ! */
-				if (IS_HEXDIGIT(p[1]) &&
-				    IS_HEXDIGIT(p[2]) &&
-				    IS_HEXDIGIT(p[3]) &&
-				    IS_HEXDIGIT(p[4])) {
-				    *s++ = (((HEX2INT(p[1]) << 4) | HEX2INT(p[2])) << 8)
-				        | ((HEX2INT(p[3]) << 4) | HEX2INT(p[2]));
-				    p += 5;
-				}
-				break;
-			      case 'x':
-				if (IS_HEXDIGIT(p[1]) &&
-				    IS_HEXDIGIT(p[2])) {
-				    *s++ = (HEX2INT(p[1]) << 4)	| HEX2INT(p[2]);
-				    p += 3;
-				}
-				break;
-			      default:
-				if (IS_OCTDIGIT(p[0]) &&
-				    IS_OCTDIGIT(p[1]) &&
-				    IS_OCTDIGIT(p[2])) {
-				    *s++ = ((p[0] - '0') << 6)
-					| ((p[1] - '0') << 3)
-					|  (p[2] - '0');
-				    p += 3;
-				} else if (*p == '0')
-				    *s++ = '\0', p++;
-				else
-				    *s++ = *p++;
-				break;
-			    }
-			}
-			s[-1] = '\0'; /* overwrite final \" */
-			yylval._string = res;
-			return STRING;
-		}
+            int len = strlen(yytext + 1);
+            char c, *p = yytext + 1;
+            char *res = (char *)my_malloc(len), *s = res;
+            
+            while ((c = *p)) {
+                if (c != '\\' || !p[1])
+                *s++ = *p++;
+                else switch(*++p) {
+                  case 'a': *s++ = '\a'; break;
+                  case 'b': *s++ = '\b'; break;
+                  case 'e': *s++ = '\033'; break;
+                  case 'f': *s++ = '\f'; break;
+                  case 'n': *s++ = '\n'; break;
+                  case 'r': *s++ = '\r'; break;
+                  case 't': *s++ = '\t'; break;
+                  case 'v': *s++ = '\v'; break;
+                  case '0': *s++ = '\0'; break;
+                  case 'u':
+                /* FIXME: unicode is ok, but s is a (char *), not (hwfont *) ! */
+                if (IS_HEXDIGIT(p[1]) &&
+                    IS_HEXDIGIT(p[2]) &&
+                    IS_HEXDIGIT(p[3]) &&
+                    IS_HEXDIGIT(p[4])) {
+                    *s++ = (((HEX2INT(p[1]) << 4) | HEX2INT(p[2])) << 8)
+                        | ((HEX2INT(p[3]) << 4) | HEX2INT(p[2]));
+                    p += 5;
+                }
+                break;
+                  case 'x':
+                if (IS_HEXDIGIT(p[1]) &&
+                    IS_HEXDIGIT(p[2])) {
+                    *s++ = (HEX2INT(p[1]) << 4)    | HEX2INT(p[2]);
+                    p += 3;
+                }
+                break;
+                  default:
+                if (IS_OCTDIGIT(p[0]) &&
+                    IS_OCTDIGIT(p[1]) &&
+                    IS_OCTDIGIT(p[2])) {
+                    *s++ = ((p[0] - '0') << 6)
+                    | ((p[1] - '0') << 3)
+                    |  (p[2] - '0');
+                    p += 3;
+                } else if (*p == '0')
+                    *s++ = '\0', p++;
+                else
+                    *s++ = *p++;
+                break;
+                }
+            }
+            s[-1] = '\0'; /* overwrite final \" */
+            yylval._string = res;
+            return STRING;
+        }
 	YY_BREAK
 case 88:
 /* rule 88 can match eol */
 YY_RULE_SETUP
 #line 239 "rcparse.l"
 {
-		    char *buf = AllocMem(256 + strlen(yytext));
-		    if (buf) {
-			sprintf(buf, "twin: %.200s:%d: unterminated string:\n%s\n",
-				FILE_NAME, LINE_NO, yytext);
-		    } else
-			buf = "twin: unterminated string\n";
-		    YY_FATAL_ERROR(buf);
-		}
+            char *buf = AllocMem(256 + strlen(yytext));
+            if (buf) {
+            sprintf(buf, "twin: %.200s:%d: unterminated string:\n%s\n",
+                FILE_NAME, LINE_NO, yytext);
+                YY_FATAL_ERROR(buf);
+            } else {
+            YY_FATAL_ERROR("twin: unterminated string\n");
+            }
+        }
 	YY_BREAK
 case 89:
 YY_RULE_SETUP
-#line 249 "rcparse.l"
+#line 250 "rcparse.l"
 /* eat whitespace */
 	YY_BREAK
 case 90:
 YY_RULE_SETUP
-#line 252 "rcparse.l"
+#line 253 "rcparse.l"
 {
-		    unsigned char ch = yytext[0];
-		    sprintf(errbuf, "twin: %.200s:%d: illegal character 0x%02X",
-			    FILE_NAME, LINE_NO, ch);
+            unsigned char ch = yytext[0];
+            sprintf(errbuf, "twin: %.200s:%d: illegal character 0x%02X",
+                FILE_NAME, LINE_NO, ch);
                     if (ch >= 32 && ch < 127) {
-			sprintf(errbuf + strlen(errbuf), " `%c'\n", ch);
+            sprintf(errbuf + strlen(errbuf), " `%c'\n", ch);
                     } else
-			strcat(errbuf, "\n");
-		    YY_FATAL_ERROR(errbuf);
-		}
+            strcat(errbuf, "\n");
+            YY_FATAL_ERROR(errbuf);
+        }
 	YY_BREAK
 case 91:
 YY_RULE_SETUP
-#line 263 "rcparse.l"
+#line 264 "rcparse.l"
 ECHO;
 	YY_BREAK
-#line 1701 "rcparse_lex.c"
+#line 1702 "rcparse_lex.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -2702,25 +2703,25 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 263 "rcparse.l"
+#line 264 "rcparse.l"
 
 
 
 int set_yy_file(char *path) {
     uldat len;
     FILE *f;
-	
+    
     if (!path)
-	return 1;
+    return 1;
     
     if (read_stack_curr >= MAX_READ_DEPTH) {
-	fprintf(stderr, "twin: %s:%d: `Read' commands nested too deeply!\n",
-		FILE_NAME, LINE_NO);
-	return 0;
+        fprintf(stderr, "twin: %s:%d: `Read' commands nested too deeply!\n",
+            FILE_NAME, LINE_NO);
+        return 0;
     }
 
     if (!(f = fopen(path, "r")))
-	return 1;
+        return 1;
 
     len = strlen(path) + 1;
     
@@ -2736,10 +2737,10 @@ int set_yy_file(char *path) {
 
 static int yywrap(void) {
     if ( read_stack_curr > 0 ) {
-	fclose(yyin);
-	yy_delete_buffer( YY_CURRENT_BUFFER );
-	yy_switch_to_buffer(read_stack[--read_stack_curr]);
-	BEGIN(INITIAL);
+    fclose(yyin);
+    yy_delete_buffer( YY_CURRENT_BUFFER );
+    yy_switch_to_buffer(read_stack[--read_stack_curr]);
+    BEGIN(INITIAL);
     }
     return read_stack_curr <= 0;
 }

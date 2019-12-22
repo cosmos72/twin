@@ -1294,7 +1294,7 @@ void FakeWriteHWAttr(window Window, dat x, dat y, ldat Len, CONST hwattr *Attr) 
     Act(TtyWriteHWAttr, Window)(Window, x, y, Len, Attr);
 }
 
-window FakeOpenTerm(CONST char *arg0, char *CONST *argv) {
+window FakeOpenTerm(CONST char *arg0, CONST char *CONST *argv) {
   if (DlLoad(TermSo) && Ext(Term, Open) != FakeOpenTerm)
     return Ext(Term, Open)(arg0, argv);
   return NULL;

@@ -183,7 +183,7 @@ static void ExecuteWinRun(void) {
     if ((G = Act(FindGadgetByCode, ExecuteWin)(ExecuteWin, COD_E_TTY)) &&
         G->USE.T.Text[0][1] != ' ') {
       /* run in a tty */
-      Ext(Term, Open)(arg0, argv);
+      Ext(Term, Open)(arg0, (CONST char *CONST *)argv);
     } else if (argv)
       switch (fork()) {
         /* do not run in a tty */
@@ -691,7 +691,7 @@ static void BuiltinH(msgport MsgPort) {
       case MSG_CONTROL_OPEN: {
         char **cmd = TokenizeStringVec(Event->EventControl.Len, Event->EventControl.Data);
         if (cmd) {
-          Ext(Term, Open)(cmd[0], cmd);
+          Ext(Term, Open)(cmd[0], (CONST char *CONST *)cmd);
           FreeStringVec(cmd);
         } else
           Ext(Term, Open)(NULL, NULL);

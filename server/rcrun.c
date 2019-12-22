@@ -419,7 +419,7 @@ static byte RCSteps(run *r) {
   wm_ctx *C;
   node n, f;
   ldat flag;
-  str *argv;
+  CONST cstr *argv;
   byte state, ret;
   int nfd;
 
@@ -451,7 +451,7 @@ static byte RCSteps(run *r) {
               dup2(nfd, 1);
               dup2(nfd, 2);
             }
-            execvp((char *)n->x.v.argv[0], (char **)n->x.v.argv);
+            execvp(n->x.v.argv[0], (char *CONST *)RemoveConst(n->x.v.argv));
             exit(1);
             break;
           default: /* parent */
