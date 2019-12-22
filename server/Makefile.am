@@ -22,7 +22,7 @@ twin_CPPFLAGS         = -I$(top_srcdir)/include $(LTDLINCL) -DBINDIR="\"$(bindir
 
 twdisplay_SOURCES     = alloc.c display.c dl_helper.c missing.c hw.c
 twin_SOURCES          = wrapper.c
-twin_server_SOURCES   = alloc.c builtin.c data.c dl.c dl_helper.c draw.c extensions/ext_query.c extreg.c hw.c hw_multi.c main.c methods.c missing.c printk.c remote.c resize.c scroller.c util.c
+twin_server_SOURCES   = alloc.c builtin.c data.c dl.c dl_helper.c draw.c extensions/ext_query.c extreg.c hw.c hw_multi.c main.c methods.c missing.c printk.c privilege.c remote.c resize.c scroller.c util.c
 
 librcparse_la_SOURCES = rcparse_tab.c rcparse_lex.c
 libterm_la_SOURCES    = pty.c tterm.c tty.c

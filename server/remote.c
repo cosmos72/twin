@@ -187,7 +187,9 @@ uldat RegisterRemote(int Fd, obj HandlerData, handler_obj HandlerObj) {
   LS.MsgPort = (msgport)0;
   LS.WQueue = LS.RQueue = (byte *)0;
   LS.WQlen = LS.WQmax = LS.RQlen = LS.RQmax = (uldat)0;
-  LS.PrivateAfterFlush = LS.PrivateData = LS.PrivateFlush = NULL;
+  LS.PrivateAfterFlush = NULL;
+  LS.PrivateFlush = NULL;
+  LS.PrivateData = NULL;
   LS.extern_couldntwrite = tfalse;
 
   return Slot;

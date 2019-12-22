@@ -212,8 +212,8 @@ static byte termcap_InitVideo(void) {
 
   HW->HWSelectionImport = AlwaysFalse;
   HW->HWSelectionExport = NoOp;
-  HW->HWSelectionRequest = (void *)NoOp;
-  HW->HWSelectionNotify = (void *)NoOp;
+  HW->HWSelectionRequest = (void (*)(obj, uldat))NoOp;
+  HW->HWSelectionNotify = (void (*)(uldat, uldat, CONST char *, uldat, CONST char *))NoOp;
   HW->HWSelectionPrivate = 0;
 
   HW->CanDragArea = termcap_CanDragArea;
@@ -225,8 +225,8 @@ static byte termcap_InitVideo(void) {
   HW->Beep = termcap_Beep;
   HW->Configure = termcap_Configure;
   HW->ConfigureKeyboard = termcap_ConfigureKeyboard;
-  HW->SetPalette = (void *)NoOp;
-  HW->ResetPalette = (void *)NoOp;
+  HW->SetPalette = (void (*)(udat, udat, udat, udat))NoOp;
+  HW->ResetPalette = (void (*)(void))NoOp;
 
   HW->QuitVideo = termcap_QuitVideo;
 

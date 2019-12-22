@@ -2635,7 +2635,8 @@ static module CreateModule(fn_module Fn_Module, uldat NameLen, CONST char *Name)
       Module->NameLen = NameLen;
       Module->Name = newName;
       Module->Used = 0;
-      Module->Handle = Module->Private = NULL;
+      Module->Handle = NULL;
+      Module->Init = NULL;
 
       InsertLast(Module, Module, All);
       return Module;

@@ -194,8 +194,9 @@ am_twin_server_OBJECTS = alloc.$(OBJEXT) builtin.$(OBJEXT) \
 	data.$(OBJEXT) dl.$(OBJEXT) dl_helper.$(OBJEXT) draw.$(OBJEXT) \
 	extensions/ext_query.$(OBJEXT) extreg.$(OBJEXT) hw.$(OBJEXT) \
 	hw_multi.$(OBJEXT) main.$(OBJEXT) methods.$(OBJEXT) \
-	missing.$(OBJEXT) printk.$(OBJEXT) remote.$(OBJEXT) \
-	resize.$(OBJEXT) scroller.$(OBJEXT) util.$(OBJEXT)
+	missing.$(OBJEXT) printk.$(OBJEXT) privilege.$(OBJEXT) \
+	remote.$(OBJEXT) resize.$(OBJEXT) scroller.$(OBJEXT) \
+	util.$(OBJEXT)
 twin_server_OBJECTS = $(am_twin_server_OBJECTS)
 twin_server_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 twin_server_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
@@ -224,14 +225,15 @@ am__depfiles_remade = ./$(DEPDIR)/alloc.Po ./$(DEPDIR)/builtin.Po \
 	./$(DEPDIR)/hw_multi.Po ./$(DEPDIR)/main.Po \
 	./$(DEPDIR)/md5.Plo ./$(DEPDIR)/methods.Po \
 	./$(DEPDIR)/missing.Po ./$(DEPDIR)/printk.Po \
-	./$(DEPDIR)/pty.Plo ./$(DEPDIR)/rcopt.Plo \
-	./$(DEPDIR)/rcparse_lex.Plo ./$(DEPDIR)/rcparse_tab.Plo \
-	./$(DEPDIR)/rcrun.Plo ./$(DEPDIR)/remote.Po \
-	./$(DEPDIR)/resize.Po ./$(DEPDIR)/scroller.Po \
-	./$(DEPDIR)/shm.Plo ./$(DEPDIR)/socket.Plo \
-	./$(DEPDIR)/tterm.Plo ./$(DEPDIR)/tty.Plo \
-	./$(DEPDIR)/twin-wrapper.Po ./$(DEPDIR)/util.Po \
-	./$(DEPDIR)/wm.Plo extensions/$(DEPDIR)/ext_query.Po
+	./$(DEPDIR)/privilege.Po ./$(DEPDIR)/pty.Plo \
+	./$(DEPDIR)/rcopt.Plo ./$(DEPDIR)/rcparse_lex.Plo \
+	./$(DEPDIR)/rcparse_tab.Plo ./$(DEPDIR)/rcrun.Plo \
+	./$(DEPDIR)/remote.Po ./$(DEPDIR)/resize.Po \
+	./$(DEPDIR)/scroller.Po ./$(DEPDIR)/shm.Plo \
+	./$(DEPDIR)/socket.Plo ./$(DEPDIR)/tterm.Plo \
+	./$(DEPDIR)/tty.Plo ./$(DEPDIR)/twin-wrapper.Po \
+	./$(DEPDIR)/util.Po ./$(DEPDIR)/wm.Plo \
+	extensions/$(DEPDIR)/ext_query.Po
 am__mv = mv -f
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
@@ -342,10 +344,6 @@ CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
-CXX = @CXX@
-CXXCPP = @CXXCPP@
-CXXDEPMODE = @CXXDEPMODE@
-CXXFLAGS = @CXXFLAGS@
 CYGPATH_W = @CYGPATH_W@
 DEFS = @DEFS@
 DEPDIR = @DEPDIR@
@@ -444,7 +442,6 @@ abs_top_builddir = @abs_top_builddir@
 abs_top_srcdir = @abs_top_srcdir@
 ac_ct_AR = @ac_ct_AR@
 ac_ct_CC = @ac_ct_CC@
-ac_ct_CXX = @ac_ct_CXX@
 ac_ct_DUMPBIN = @ac_ct_DUMPBIN@
 am__include = @am__include@
 am__leading_dot = @am__leading_dot@
@@ -503,7 +500,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/include $(LTDLINCL) -DPKG_LIBDIR="\"$(pkglibdir)\"
 twin_CPPFLAGS = -I$(top_srcdir)/include $(LTDLINCL) -DBINDIR="\"$(bindir)\""
 twdisplay_SOURCES = alloc.c display.c dl_helper.c missing.c hw.c
 twin_SOURCES = wrapper.c
-twin_server_SOURCES = alloc.c builtin.c data.c dl.c dl_helper.c draw.c extensions/ext_query.c extreg.c hw.c hw_multi.c main.c methods.c missing.c printk.c remote.c resize.c scroller.c util.c 
+twin_server_SOURCES = alloc.c builtin.c data.c dl.c dl_helper.c draw.c extensions/ext_query.c extreg.c hw.c hw_multi.c main.c methods.c missing.c printk.c privilege.c remote.c resize.c scroller.c util.c
 librcparse_la_SOURCES = rcparse_tab.c rcparse_lex.c
 libterm_la_SOURCES = pty.c tterm.c tty.c
 libsocket_la_SOURCES = md5.c socket.c
@@ -725,6 +722,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/methods.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/missing.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/printk.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/privilege.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pty.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rcopt.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rcparse_lex.Plo@am__quote@ # am--include-marker
@@ -1010,6 +1008,7 @@ distclean: distclean-recursive
 	-rm -f ./$(DEPDIR)/methods.Po
 	-rm -f ./$(DEPDIR)/missing.Po
 	-rm -f ./$(DEPDIR)/printk.Po
+	-rm -f ./$(DEPDIR)/privilege.Po
 	-rm -f ./$(DEPDIR)/pty.Plo
 	-rm -f ./$(DEPDIR)/rcopt.Plo
 	-rm -f ./$(DEPDIR)/rcparse_lex.Plo
@@ -1087,6 +1086,7 @@ maintainer-clean: maintainer-clean-recursive
 	-rm -f ./$(DEPDIR)/methods.Po
 	-rm -f ./$(DEPDIR)/missing.Po
 	-rm -f ./$(DEPDIR)/printk.Po
+	-rm -f ./$(DEPDIR)/privilege.Po
 	-rm -f ./$(DEPDIR)/pty.Plo
 	-rm -f ./$(DEPDIR)/rcopt.Plo
 	-rm -f ./$(DEPDIR)/rcparse_lex.Plo

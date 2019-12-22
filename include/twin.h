@@ -84,7 +84,7 @@ typedef struct s_window *window;
 typedef struct s_fn_window *fn_window;
 typedef struct s_screen *screen;
 typedef struct s_fn_screen *fn_screen;
-typedef struct s_group *group;
+typedef struct s_group *group; // FIXME change name: 'group' conflicts with #include <grp.h>
 typedef struct s_fn_group *fn_group;
 typedef struct s_row *row;
 typedef struct s_fn_row *fn_row;
@@ -1111,7 +1111,7 @@ struct s_msgport {
   msg FirstMsg, LastMsg;
   menu FirstMenu, LastMenu;    /* menus created by this MsgPort */
   widget FirstW, LastW;        /* widgets owned by this MsgPort */
-  group FirstGroup, LastGroup; /* groups done by this MsgPort */
+  group FirstGroup, LastGroup; /* groups owned by this MsgPort */
   mutex FirstMutex, LastMutex; /* mutexes owned by this MsgPort */
   uldat CountE, SizeE;         /* number of extensions used by this MsgPort */
   extension *Es;               /* extensions used by this MsgPort */
@@ -1171,7 +1171,8 @@ struct s_module {
   /* module */
   uldat NameLen, Used;
   char *Name;
-  void *Handle, *Private;
+  void *Handle;
+  byte (*Init)(void);
 };
 struct s_fn_module {
   uldat Magic, Size, Used;
@@ -1194,7 +1195,7 @@ struct s_extension {
   /* module */
   uldat NameLen, Used;
   char *Name;
-  void *Handle, *Private;
+  void *Handle, *Init;
   /* extension */
   tany (*CallB)(extension, topaque len, CONST byte *data,
                 void *return_type); /* call extension-specific functions */

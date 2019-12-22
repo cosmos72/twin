@@ -316,7 +316,7 @@ static void OptionH(msg Msg) {
 
 void FillButtonWin(void) {
   dat i, j;
-  char b[6] = "      ";
+  char b[] = "      ";
   CONST char *s;
 
   DeleteList(ButtonWin->FirstW);
@@ -343,10 +343,11 @@ void FillButtonWin(void) {
     Act(TtyWriteAscii, ButtonWin)(ButtonWin, 7, "Button ");
     Act(TtyWriteAscii, ButtonWin)(ButtonWin, 6, s);
     {
-      hwattr h[2];
       hwfont *f = All->ButtonVec[j].shape;
-      h[0] = HWATTR3(ButtonWin->ColGadgets, f[0], EncodeToHWAttrExtra(j, 0, 0, 0));
-      h[1] = HWATTR3(ButtonWin->ColGadgets, f[1], EncodeToHWAttrExtra(j, 1, 0, 0));
+      hwattr h[2] = {
+          HWATTR3(ButtonWin->ColGadgets, f[0], EncodeToHWAttrExtra((tpos)j, tzero, tfalse, tfalse)),
+          HWATTR3(ButtonWin->ColGadgets, f[1], EncodeToHWAttrExtra((tpos)j, tone, tfalse, tfalse)),
+      };
 
       Act(TtyWriteHWAttr, ButtonWin)(ButtonWin, 15, 1 + i * 2, 2, h);
     }

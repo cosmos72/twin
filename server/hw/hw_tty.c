@@ -79,7 +79,7 @@ struct tty_data {
   char *tc_cap[tc_cap_N];
   byte colorbug, wrapglitch;
 #else
-  CONST char *tc_scr_clear;
+  char *tc_scr_clear;
 #endif
 };
 
@@ -163,8 +163,8 @@ static void tty_QuitHW(void);
 
 static void null_InitMouse(void) {
   HW->mouse_slot = NOSLOT; /* no mouse at all :( */
-  HW->ConfigureMouse = (void *)NoOp;
-  HW->MouseEvent = (void *)NoOp;
+  HW->ConfigureMouse = (void (*)(udat, byte, udat))NoOp;
+  HW->MouseEvent = (void (*)(int, display_hw))NoOp;
   HW->QuitMouse = NoOp;
 
   HW->FlagsHW &= ~FlHWSoftMouse;        /* no need to Hide/Show it */
@@ -588,7 +588,7 @@ static void tty_QuitHW(void) {
 }
 
 EXTERN_C byte InitModule(module Module) {
-  Module->Private = (void *)tty_InitHW;
+  Module->Init = tty_InitHW;
   return ttrue;
 }
 

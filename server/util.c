@@ -12,6 +12,12 @@
 
 #include "twin.h"
 
+#ifdef TW_HAVE_PWD_H
+#include <pwd.h>
+#endif
+#ifdef TW_HAVE_UNISTD_H
+#include <unistd.h>
+#endif
 #ifdef TW_HAVE_SIGNAL_H
 #include <signal.h>
 #endif
@@ -21,11 +27,8 @@
 #ifdef TW_HAVE_SYS_STAT_H
 #include <sys/stat.h>
 #endif
-#ifdef TW_HAVE_GRP_H
-#include <grp.h>
-#endif
-#ifdef TW_HAVE_PWD_H
-#include <pwd.h>
+#ifdef TW_HAVE_SYS_TYPES_H
+#include <sys/types.h>
 #endif
 
 #include "data.h"
@@ -36,6 +39,7 @@
 #include "remote.h"
 #include "resize.h"
 #include "printk.h"
+#include "privilege.h"
 #include "util.h"
 
 #include "hw.h"
@@ -748,7 +752,7 @@ char **TokenizeStringVec(uldat len, char *s) {
   }
   save_len = len;
 
-  if (len && (buf = AllocMem(len + 1))) {
+  if (len && (buf = (char *)AllocMem(len + 1))) {
     CopyMem(s, buf, len);
     buf[len] = '\0';
 
@@ -762,7 +766,7 @@ char **TokenizeStringVec(uldat len, char *s) {
         }
       }
     }
-    if ((cmd = AllocMem((n + 1) * sizeof(char *)))) {
+    if ((cmd = (char **)AllocMem((n + 1) * sizeof(char *)))) {
       n = 0;
       len = save_len;
       s = buf;
@@ -810,7 +814,7 @@ char **TokenizeHWFontVec(uldat len, hwfont *s) {
   }
   save_len = len;
 
-  if (len && (buf = AllocMem(len + 1))) {
+  if (len && (buf = (char *)AllocMem(len + 1))) {
     for (i = 0; i < len; i++)
       buf[i] = s[i];
     buf[len] = '\0';
@@ -983,29 +987,14 @@ byte InitTWDisplay(void) {
 /* unlink /tmp/.Twin<TWDISPLAY> */
 void QuitTWDisplay(void) { unlink(fullTWD); }
 
-/* suid/sgid privileges related functions */
-
 static e_privilege Privilege;
+static uid_t Uid, EUid;
 static gid_t tty_grgid;
-uid_t Uid, EUid;
-
-gid_t get_tty_grgid(void) {
-  struct group *gr;
-
-  if (!tty_grgid) {
-    if ((gr = getgrnam("tty")))
-      tty_grgid = gr->gr_gid;
-    else
-      tty_grgid = (gid_t)-1;
-  }
-  return tty_grgid;
-}
 
 byte CheckPrivileges(void) {
   Uid = getuid();
   EUid = geteuid();
-
-  (void)get_tty_grgid();
+  tty_grgid = get_tty_grgid();
 
   if (GainRootPrivileges() >= 0)
     Privilege = suidroot;
@@ -1057,7 +1046,7 @@ byte SetServerUid(uldat uid, byte privileges) {
     if ((WM_MsgPort = Ext(WM, MsgPort))) {
       if ((p = getpwuid(uid)) && p->pw_uid == uid && chown(fullTWD, p->pw_uid, p->pw_gid) >= 0
 #ifdef TW_HAVE_INITGROUPS
-          && initgroups(p->pw_name, p->pw_gid) >= 0
+          && init_groups(p->pw_name, p->pw_gid) >= 0
 #endif
       ) {
 
@@ -1115,7 +1104,7 @@ byte SetServerUid(uldat uid, byte privileges) {
  * this for example will search "foo"
  * as "${HOME}/foo", "${PKG_LIBDIR}/system.foo" or plain "foo"
  */
-char *FindFile(char *name, uldat *fsize) {
+char *FindFile(CONST char *name, uldat *fsize) {
   CONST char *prefix[3], *infix[3];
   char *path;
   CONST char *dir;
@@ -1138,7 +1127,7 @@ char *FindFile(char *name, uldat *fsize) {
     if (!(dir = prefix[i]))
       continue;
     len = strlen(dir) + strlen(infix[i]);
-    if ((path = AllocMem(len + nlen + 2))) {
+    if ((path = (char *)AllocMem(len + nlen + 2))) {
       sprintf(path, "%s%s%s", dir, infix[i], name);
       if (stat(path, &buf) == 0) {
         if (fsize)
@@ -1168,7 +1157,7 @@ static void ReadTwEnvRC(int infd) {
     end = p + got;
     p = buff;
 
-    while ((eq = memchr(p, '=', end - p)) && (q = memchr(eq, '\n', end - eq))) {
+    while ((eq = (char *)memchr(p, '=', end - p)) && (q = (char *)memchr(eq, '\n', end - eq))) {
 
       *q++ = '\0';
 #if defined(TW_HAVE_SETENV)

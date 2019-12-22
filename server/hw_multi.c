@@ -139,8 +139,8 @@ static byte module_InitHW(CONST char *arg, uldat len) {
     len -= 4; /* skip "-hw=" */
   }
 
-  name = memchr(arg, '@', len);
-  tmp = memchr(arg, ',', len);
+  name = (CONST char *)memchr(arg, '@', len);
+  tmp = (CONST char *)memchr(arg, ',', len);
   if (tmp && (!name || tmp < name))
     name = tmp;
   if (name)
@@ -151,14 +151,14 @@ static byte module_InitHW(CONST char *arg, uldat len) {
     arg = "X11";
   }
 
-  if ((alloc_name = AllocMem(len + 4))) {
+  if ((alloc_name = (char *)AllocMem(len + 4))) {
     sprintf(alloc_name, "hw_%.*s", (int)len, arg);
 
     Module = DlLoadAny(len + 3, alloc_name);
 
     if (Module) {
       printk("twin: starting display driver module `" SS "'...\n", alloc_name);
-      if ((InitD = Module->Private) && InitD()) {
+      if ((InitD = Module->Init) && InitD()) {
         printk("twin: ...module `" SS "' successfully started.\n", alloc_name);
         FreeMem(alloc_name);
         HW->Module = Module;

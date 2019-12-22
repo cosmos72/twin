@@ -462,7 +462,7 @@ fail:
 }
 
 EXTERN_C byte InitModule(module Module) {
-  Module->Private = (void *)X11_InitHW;
+  Module->Init = X11_InitHW;
   return ttrue;
 }
 

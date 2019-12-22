@@ -345,10 +345,10 @@ static byte InitTerm(void) {
 
   signal(SIGCHLD, SignalChild);
 
-#if defined(TW_HAVE_PUTENV)
-  putenv("TERM=linux");
-#elif defined(TW_HAVE_SETENV)
+#if defined(TW_HAVE_SETENV)
   setenv("TERM", "linux", 1);
+#elif defined(TW_HAVE_PUTENV)
+  putenv("TERM=linux");
 #endif
 
   if (TwCheckMagic(term_magic) && TwOpen(NULL) && (Term_MsgPort = TwCreateMsgPort(6, "twterm")) &&

@@ -139,7 +139,7 @@ INLINE uldat FdListGet(void) {
   return NOSLOT;
 }
 
-uldat RegisterRemote(int Fd, obj HandlerData, void *HandlerIO) {
+uldat RegisterRemote(int Fd, obj HandlerData, handler_io_d HandlerIO) {
   uldat Slot, j;
 
   if ((Slot = FdListGet()) == NOSLOT)
@@ -152,7 +152,7 @@ uldat RegisterRemote(int Fd, obj HandlerData, void *HandlerIO) {
   if ((LS.HandlerData = HandlerData))
     LS.HandlerIO.D = HandlerIO;
   else
-    LS.HandlerIO.S = HandlerIO;
+    LS.HandlerIO.S = (handler_io_s)HandlerIO;
   LS.extern_couldntwrite = tfalse;
 
   if (FdTop <= Slot)
@@ -170,8 +170,8 @@ uldat RegisterRemote(int Fd, obj HandlerData, void *HandlerIO) {
   return Slot;
 }
 
-void UnRegisterRemote(
-    uldat Slot) { /* not needed, we are going to quit anyway if this gets called */
+void UnRegisterRemote(uldat Slot) {
+  /* not needed, we are going to quit anyway if this gets called */
 }
 
 void RemoteCouldntWrite(uldat Slot) {
@@ -211,28 +211,30 @@ static void RemoteEvent(int FdCount, fd_set *FdSet) {
 }
 
 static struct s_fn_module _FnModule = {
-    module_magic, (uldat)sizeof(struct s_module), (uldat)1, /**/
-    (void *)NoOp,                                           /* CreateModule */
-    (void *)NoOp,                                           /* InsertModule */
-    (void *)NoOp,                                           /* RemoveModule */
-    (void *)NoOp,                                           /* DeleteModule */
-    (void *)NoOp,                                           /* ChangeField */
-    NULL,                                                   /* Fn_Obj */
-    (void *)NoOp,                                           /* DlOpen	      */
-    (void *)NoOp,                                           /* DlClose      */
+    module_magic,
+    (uldat)sizeof(struct s_module),
+    (uldat)1,                                         /**/
+    (module (*)(fn_module, uldat, CONST char *))NoOp, /* CreateModule */
+    (void (*)(module, all, module, module))NoOp,      /* InsertModule */
+    (void (*)(module))NoOp,                           /* RemoveModule */
+    (void (*)(module))NoOp,                           /* DeleteModule */
+    (void (*)(module, udat, uldat, uldat))NoOp,       /* ChangeField  */
+    NULL,                                             /* Fn_Obj */
+    (byte (*)(module))NoOp,                           /* DlOpen	      */
+    (void (*)(module))NoOp,                           /* DlClose      */
 };
 
 static struct s_module _Module = {
     module_magic,
     &_FnModule,
-    (module)0, /* Prev */
-    (module)0, /* Next */
-    (all)0,    /* All */
-    0,         /* NameLen */
-    0,         /* Used */
-    (char *)0, /* Name */
-    (void *)0, /* Handle */
-    (void *)0, /* Private */
+    (module)0,         /* Prev */
+    (module)0,         /* Next */
+    (all)0,            /* All */
+    0,                 /* NameLen */
+    0,                 /* Used */
+    (char *)0,         /* Name */
+    (void *)0,         /* Handle */
+    (byte (*)(void))0, /* Init */
 };
 
 static module DlLoadAny(uldat len, char *name) {
@@ -245,7 +247,7 @@ static module DlLoadAny(uldat len, char *name) {
   }
 
   if ((Module->Name = CloneStrL(name, len)) &&
-      (path = AllocMem(len + strlen(modules_prefix) + strlen(DL_SUFFIX) + 1))) {
+      (path = (char *)AllocMem(len + strlen(modules_prefix) + strlen(DL_SUFFIX) + 1))) {
 
     sprintf(path, "%s%.*s%s", modules_prefix, (int)len, name, DL_SUFFIX);
     Module->Handle = (void *)dlopen(path);
@@ -277,9 +279,9 @@ static module DlLoadAny(uldat len, char *name) {
   return (module)0;
 }
 
-static byte module_InitHW(char *arg, uldat len) {
+static byte module_InitHW(CONST char *arg, uldat len) {
   char *name, *tmp;
-  char *(*InitD)(void);
+  byte (*InitD)(void);
   module Module = NULL;
 
   if (!arg || len <= 4)
@@ -288,8 +290,8 @@ static byte module_InitHW(char *arg, uldat len) {
   arg += 4;
   len -= 4; /* skip "-hw=" */
 
-  name = memchr(arg, '@', len);
-  tmp = memchr(arg, ',', len);
+  name = (char *)memchr(arg, '@', len);
+  tmp = (char *)memchr(arg, ',', len);
   if (tmp && (!name || tmp < name))
     name = tmp;
   if (name)
@@ -298,7 +300,7 @@ static byte module_InitHW(char *arg, uldat len) {
   if (len == 1 && *arg == 'X')
     len = 3, arg = "X11";
 
-  if ((name = AllocMem(len + 4))) {
+  if ((name = (char *)AllocMem(len + 4))) {
     sprintf(name, "hw_%.*s", (int)len, arg);
 
     Module = DlLoadAny(len + 3, name);
@@ -306,7 +308,7 @@ static byte module_InitHW(char *arg, uldat len) {
     if (Module) {
       printk("twdisplay: starting display driver module `" SS "'...\n", name);
 
-      if ((InitD = Module->Private) && InitD()) {
+      if ((InitD = Module->Init) && InitD()) {
         printk("twdisplay: ...module `" SS "' successfully started.\n", name);
         HW->Module = Module;
         Module->Used++;
@@ -336,17 +338,19 @@ static display_hw CreateDisplayHW(uldat len, CONST char *name);
 static byte InitDisplayHW(display_hw);
 static void QuitDisplayHW(display_hw);
 
-static struct s_fn_display_hw _FnDisplayHW = {display_hw_magic,
-                                              (uldat)sizeof(struct s_display_hw),
-                                              (uldat)1,
-                                              (void *)NoOp, /* CreateDisplayHW */
-                                              (void *)NoOp, /* InsertDisplayHW */
-                                              (void *)NoOp, /* RemoveDisplayHW */
-                                              (void *)NoOp, /* DeleteDisplayHW */
-                                              (void *)NoOp, /* ChangeFieldDisplayHW */
-                                              NULL,         /* Fn_Obj */
-                                              InitDisplayHW,
-                                              QuitDisplayHW};
+static struct s_fn_display_hw _FnDisplayHW = {
+    /*-------------------*/
+    display_hw_magic,
+    (uldat)sizeof(struct s_display_hw),
+    (uldat)1,
+    (display_hw(*)(fn_display_hw, uldat, CONST char *))NoOp, /* CreateDisplayHW */
+    (void (*)(display_hw, all, display_hw, display_hw))NoOp, /* InsertDisplayHW */
+    (void (*)(display_hw))NoOp,                              /* RemoveDisplayHW */
+    (void (*)(display_hw))NoOp,                              /* DeleteDisplayHW */
+    (void (*)(display_hw, udat, uldat, uldat))NoOp,          /* ChangeFieldDisplayHW */
+    NULL,                                                    /* Fn_Obj */
+    InitDisplayHW,
+    QuitDisplayHW};
 
 static struct s_display_hw _HW = {
     display_hw_magic,
@@ -1103,9 +1107,8 @@ TW_DECL_MAGIC(display_magic);
 int main(int argc, char *argv[]) {
   byte flags = TW_ATTACH_HW_REDIRECT, force = 0;
   char *dpy = NULL, *arg = NULL, *tty = ttyname(0);
-  char *s, *client_dpy = NULL;
-  CONST char *buff;
-  uldat chunk;
+  char *s;
+  CONST char *client_dpy = NULL;
   int Fd;
   byte ret = 0, ourtty = 0;
 
@@ -1139,23 +1142,23 @@ int main(int argc, char *argv[]) {
         return 1;
       }
       if (!strncmp(*argv + 4, "tty", 3)) {
-        buff = *argv + 7;
-        s = strchr(buff, ',');
+        char *opt = *argv + 7;
+        s = strchr(opt, ',');
         if (s)
           *s = '\0';
 
-        if (!*buff)
+        if (!*opt)
           /* attach twin to our tty */
           ourtty = 1;
-        else if (*buff == '@' && buff[1]) {
-          if (buff[1] == '-') {
+        else if (opt[0] == '@' && opt[1]) {
+          if (opt[1] == '-') {
             /*
              * using server controlling tty makes no sense for twdisplay
              */
             printk("" SS ": `" SS "' makes sense only with twattach.\n", MYname, *argv);
             return 1;
           } else if (tty) {
-            if (!strcmp(buff + 1, tty))
+            if (!strcmp(opt + 1, tty))
               /* attach twin to our tty */
               ourtty = 1;
           } else {
@@ -1170,16 +1173,16 @@ int main(int argc, char *argv[]) {
         if (s)
           *s = ',';
         else
-          s = "";
+          s = (char *)"";
 
         if (ourtty) {
-          buff = getenv("TERM");
-          if (!buff)
-            buff = "";
+          CONST char *term = getenv("TERM");
+          if (term && !*term)
+            term = NULL;
 
-          arg = malloc(strlen(tty) + 9 + strlen(s) + (buff ? 6 + strlen(buff) : 0));
+          arg = (char *)malloc(strlen(tty) + 9 + strlen(s) + (term ? 6 + strlen(term) : 0));
 
-          sprintf(arg, "-hw=tty%s%s%s", (buff ? ",TERM=" : buff), buff, s);
+          sprintf(arg, "-hw=tty%s%s%s", (term ? ",TERM=" : term), term, s);
         } else
           arg = *argv;
       } else if ((*argv)[4]) {
@@ -1201,7 +1204,7 @@ int main(int argc, char *argv[]) {
 
   if (!arg) {
     /* if user did not specify any `--hw=<dpy>', autoprobe */
-    arg = "";
+    arg = (char *)"";
   }
 
 #ifdef CONF__ALLOC
@@ -1247,7 +1250,7 @@ int main(int argc, char *argv[]) {
         }
       }
 
-      if (RegisterRemote(Fd = TwConnectionFd(), NULL, NoOp) == NOSLOT) {
+      if (RegisterRemote(Fd = TwConnectionFd(), NULL, (handler_io_d)NoOp) == NOSLOT) {
         TwClose();
         OutOfMemory();
         return 1;
@@ -1263,7 +1266,7 @@ int main(int argc, char *argv[]) {
         TwClose();
         return 1;
       }
-      if (!(buf = AllocMem(HW->NameLen + 80))) {
+      if (!(buf = (char *)AllocMem(HW->NameLen + 80))) {
         QuitDisplayHW(HW);
         TwClose();
         OutOfMemory();
@@ -1283,15 +1286,16 @@ int main(int argc, char *argv[]) {
         printk("messages reported by twin server...\n");
 
       for (;;) {
-        buff = TwAttachGetReply(&chunk);
-        if (buff <= (char *)2) {
-          ret = (byte)(size_t)buff;
+        uldat len;
+        CONST char *reply = TwAttachGetReply(&len);
+        if (reply <= (char *)2) {
+          ret = (byte)(size_t)reply;
           break;
-        } else if (buff == (char *)-1)
+        } else if (reply == (char *)-1)
           /* libTw panic */
           break;
 
-        printk("  %.*s", (int)chunk, buff);
+        printk("  %.*s", (int)len, reply);
       }
       flushk();
 

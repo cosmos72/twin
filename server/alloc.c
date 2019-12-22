@@ -95,7 +95,7 @@ char *CloneStrL(CONST char *s, uldat len) {
   char *q;
 
   if (s) {
-    if ((q = AllocMem(len + 1))) {
+    if ((q = (char *)AllocMem(len + 1))) {
       if (len)
         CopyMem(s, q, len);
       q[len] = '\0';

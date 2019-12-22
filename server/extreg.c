@@ -17,16 +17,26 @@
 #include "extreg.h"
 #include "methods.h"
 
-exts Exts = {
-    {NULL},
-    {remoteKillSlot},
-    {(void *)NoOp, AlwaysTrue, (void *)AlwaysFalse, (void *)AlwaysNull, (void *)AlwaysNull},
-    {FakeOpenTerm}};
-static exts OrigExts = {
-    {NULL},
-    {remoteKillSlot},
-    {(void *)NoOp, AlwaysTrue, (void *)AlwaysFalse, (void *)AlwaysNull, (void *)AlwaysNull},
-    {FakeOpenTerm}};
+exts Exts = {{NULL},
+             {remoteKillSlot},
+             {
+                 (void (*)(msgport, msg))NoOp,
+                 AlwaysTrue,
+                 (byte(*)(topaque *, CONST byte **, topaque *, tsfield))AlwaysFalse,
+                 (void (*)(uldat, topaque, tsfield))NoOp,
+                 (tany(*)(uldat, ...))AlwaysNull,
+             },
+             {FakeOpenTerm}};
+static exts OrigExts = {{NULL},
+                        {remoteKillSlot},
+                        {
+                            (void (*)(msgport, msg))NoOp,
+                            AlwaysTrue,
+                            (byte(*)(topaque *, CONST byte **, topaque *, tsfield))AlwaysFalse,
+                            (void (*)(uldat, topaque, tsfield))NoOp,
+                            (tany(*)(uldat, ...))AlwaysNull,
+                        },
+                        {FakeOpenTerm}};
 
 #define OrigExt(where) ((void **)((byte *)&OrigExts + ((byte *)where - (byte *)&Exts)))
 

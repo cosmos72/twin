@@ -548,7 +548,7 @@ static byte display_InitHW(void) {
 }
 
 EXTERN_C byte InitModule(module Module) {
-  Module->Private = (void *)display_InitHW;
+  Module->Init = display_InitHW;
   return ttrue;
 }
 

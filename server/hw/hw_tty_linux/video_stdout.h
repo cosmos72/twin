@@ -39,7 +39,10 @@ static byte linux_InitVideo(void) {
     return tfalse;
   }
 
-  tc_scr_clear = "\033[2J";
+  if (!(tc_scr_clear = CloneStr("\033[2J"))) {
+    printk("      linux_InitVideo() failed: out of memory!");
+    return tfalse;
+  }
 
   if (tty_use_utf8 == ttrue + ttrue) {
     if (ttypar[0] == 6 && ttypar[1] != 3 && ttypar[1] != 4) {

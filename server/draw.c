@@ -1790,7 +1790,7 @@ void DrawMenuScreen(screen Screen, dat Xstart, dat Xend) {
   Xend = Min2(Xend, DWidth - 1);
 
   if (!extra)
-    extra = EncodeToHWAttrExtra(POS_MENU, 0, 0, 0);
+    extra = EncodeToHWAttrExtra(POS_MENU, tzero, tfalse, tfalse);
 
   for (i = Xstart; i <= Xend; i++) {
     if (i + 2 >= DWidth) {

@@ -843,7 +843,7 @@ static void gfx_QuitHW(void) {
 }
 
 EXTERN_C byte InitModule(module Module) {
-  Module->Private = (void *)gfx_InitHW;
+  Module->Init = gfx_InitHW;
   return ttrue;
 }
 

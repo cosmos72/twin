@@ -78,12 +78,11 @@ void FreeStringVec(char **argv);
 byte InitTWDisplay(void);
 void QuitTWDisplay(void);
 
-extern uid_t Uid, EUid;
 byte CheckPrivileges(void);
 void GainPrivileges(void);
 byte SetServerUid(uldat uid, byte privileges);
 
-char *FindFile(char *name, uldat *fsize);
+char *FindFile(CONST char *name, uldat *fsize);
 void RunTwEnvRC(void);
 
 hwattr EncodeToHWAttrExtra(tpos pos, tternary detail, tbool active, tbool pressed);

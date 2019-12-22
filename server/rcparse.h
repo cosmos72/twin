@@ -1494,7 +1494,7 @@ static byte rcload(void) {
 }
 
 EXTERN_C byte InitModule(module Module) {
-  Module->Private = (void *)rcload;
+  Module->Init = rcload;
   return ttrue;
 }
 

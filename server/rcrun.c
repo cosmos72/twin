@@ -823,11 +823,11 @@ static byte RCSleep(timevalue *_t) {
  */
 static void RCReload(void) {
   module M;
-  byte (*mod_rcload)(void) = (byte(*)(void))0;
+  byte (*mod_rcload)(void) = NULL;
   byte success;
 
   if ((M = DlLoad(RCParseSo)))
-    mod_rcload = M->Private;
+    mod_rcload = M->Init;
 #if 0
     /* this would garble -hw=tty display */
     else

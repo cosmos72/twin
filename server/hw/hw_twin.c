@@ -403,7 +403,7 @@ static void TW_QuitHW(void) {
   UnRegisterRemote(HW->keyboard_slot);
   HW->keyboard_slot = NOSLOT;
 
-  HW->KeyboardEvent = (void *)NoOp;
+  HW->KeyboardEvent = (void (*)(int, display_hw))NoOp;
 
   HW->QuitHW = NoOp;
 }
@@ -520,7 +520,8 @@ static byte TW_InitHW(void) {
       HW->FlushHW = TW_FlushHW;
 
       HW->KeyboardEvent = TW_KeyboardEvent;
-      HW->MouseEvent = (void *)NoOp; /* mouse events handled by TW_KeyboardEvent */
+      /* mouse events handled by TW_KeyboardEvent */
+      HW->MouseEvent = (void (*)(int, display_hw))NoOp;
 
       HW->XY[0] = HW->XY[1] = 0;
       HW->TT = (uldat)-1; /* force updating cursor */
@@ -544,7 +545,7 @@ static byte TW_InitHW(void) {
 
       HW->Beep = TW_Beep;
       HW->Configure = TW_Configure;
-      HW->SetPalette = (void *)NoOp;
+      HW->SetPalette = (void (*)(udat, udat, udat, udat))NoOp;
       HW->ResetPalette = NoOp;
 
       HW->QuitHW = TW_QuitHW;
@@ -592,7 +593,7 @@ static byte TW_InitHW(void) {
 }
 
 EXTERN_C byte InitModule(module Module) {
-  Module->Private = TW_InitHW;
+  Module->Init = TW_InitHW;
   return ttrue;
 }
 
