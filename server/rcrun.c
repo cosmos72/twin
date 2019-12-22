@@ -53,7 +53,7 @@ struct run {
   uldat cycle;
   union {
     timevalue WakeUp;
-    str Name;
+    cstr Name;
   } SW; /* what we are waiting for: sleep timeout or widget map */
 
   wm_ctx C; /* event that generated the run queue */
@@ -72,16 +72,16 @@ static run *Wait;        /* list of waiting-for-window queues */
 static run *Interactive; /* list of waiting-for-interactive-op queues */
 
 /* shell-like wildcard pattern matching */
-static byte wildcard_match(str p, str q) {
+static byte wildcard_match(cstr p, cstr q) {
   byte c;
 
   if (!q)
     q = "";
 
   for (;;) {
-    switch (c = *p++) {
+    switch (c = (byte)*p++) {
     case '\0':
-      return !*q;
+      return *q == '\0';
       break;
     case '\\':
       if (*q++ != *p++)
@@ -92,9 +92,9 @@ static byte wildcard_match(str p, str q) {
         return tfalse;
       break;
     case '*':
-      c = *p;
+      c = (byte)*p;
       if (c != '\\' && c != '?' && c != '*' && c != '[') {
-        while (*q != c) {
+        while ((byte)*q != c) {
           if (*q++ == '\0')
             return tfalse;
         }
@@ -105,7 +105,7 @@ static byte wildcard_match(str p, str q) {
       } while (*q++ != '\0');
       return tfalse;
     case '[': {
-      str endp;
+      cstr endp;
       byte invert = 0, found = 0;
       byte chr;
 
@@ -128,19 +128,19 @@ static byte wildcard_match(str p, str q) {
       c = *p++;
       do {
         if (c == '\\')
-          c = *p++;
+          c = (byte)*p++;
         if (*p == '-' && p[1] != ']') {
           p++;
           if (*p == '\\')
             p++;
-          if (chr >= c && chr <= *p)
+          if (chr >= c && chr <= (byte)*p)
             found = 1;
           p++;
         } else {
           if (chr == c)
             found = 1;
         }
-      } while ((c = *p++) != ']');
+      } while ((c = (byte)*p++) != ']');
 
       if (found == invert)
         return tfalse;
@@ -148,14 +148,14 @@ static byte wildcard_match(str p, str q) {
     }
     dft:
     default:
-      if (*q++ != c)
+      if ((byte)*q++ != c)
         return tfalse;
       break;
     }
   }
 }
 
-node LookupNodeName(str name, node head) {
+node LookupNodeName(cstr name, node head) {
   node l;
   if (name)
     for (l = head; l; l = l->next) {
@@ -345,7 +345,7 @@ static ldat applyflagy(node n) {
   return y * n->x.f.b;
 }
 
-static window RCFindWindowName(str name) {
+static window RCFindWindowName(cstr name) {
   uldat len = strlen(name);
   window W;
   screen S = All->FirstScreen;
@@ -363,7 +363,7 @@ static window RCFindWindowName(str name) {
   return NULL;
 }
 
-static screen RCFindScreenName(str name) {
+static screen RCFindScreenName(cstr name) {
   uldat len = strlen(name);
   screen S = All->FirstScreen;
   while (S) {
@@ -1319,7 +1319,7 @@ byte InitRC(void) {
                            {{UD_ARROW, UD_ARROW}, -2, ttrue, tfalse},
                            {{'>', '<'}, -4, ttrue, tfalse}};
 
-  char *Seq = "";
+  CONST char *Seq = "";
   /*
    * this is really heavy on the compiler...
    * but it should be able to optimize it

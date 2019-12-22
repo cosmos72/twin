@@ -81,8 +81,8 @@ initial_CFLAGS="$CFLAGS"
 for try_flag in -fomit-frame-pointer -fno-strict-aliasing -pipe -Wall -Wshadow \
                  -Wno-uninitialized -Wno-unused -Wundef -Wstrict-prototypes \
                  -Wcast-qual -Wcast-align -Wpointer-arith -Wbad-function-cast \
-                 -Wwrite-strings -Wsign-compare -Wenum-conversion \
-                 -Wold-style-declaration -Wold-style-definition
+                 -Wwrite-strings -Wold-style-declaration -Wold-style-definition \
+                 # -Wsign-compare
 do
   save_CFLAGS="$CFLAGS"
   CFLAGS="$CFLAGS $try_flag"

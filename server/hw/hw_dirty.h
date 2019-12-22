@@ -42,7 +42,7 @@ INLINE byte Threshold_isDirtyVideo(dat X, dat Y) {
   }
 
   /* check for slots in the previous/next line */
-  if (s1 > X && Y)
+  if (s1 > X && Y != 0)
     delta = -1;
   else if (e1 < X && Y < DisplayHeight - 1)
     delta = 1;

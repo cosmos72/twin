@@ -1348,7 +1348,7 @@ struct s_display_hw {
    * position of last mouse event
    */
 
-  uldat merge_Threshold;
+  dat merge_Threshold;
   /*
    * if sending many small draw commands to the HW is more expensive
    * than sending fewer, bigger ones even considering you will also send

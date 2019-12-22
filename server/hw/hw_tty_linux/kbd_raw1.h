@@ -314,7 +314,7 @@ static char handle_diacr(char ch) {
 
   struct kbdiacr *accent_table;
   char d = diacr;
-  ldat i;
+  unsigned i;
 
   diacr = 0;
 
@@ -589,7 +589,8 @@ static udat do_shift(byte value, byte up_flag) {
  recompute k_down[] and shift_state from key_down[] */
 /* maybe called when keymap is undefined, so that shiftkey release is seen */
 static int compute_shiftstate(void) {
-  ldat i, j, k, sym, val;
+  uldat i, j, k;
+  udat sym, val;
 
   lrawkbd_shiftstate = 0;
   for (i = 0; i < SIZE(k_down); i++)
@@ -896,8 +897,7 @@ static udat handle_keycode(byte keycode, byte up) {
     rep = lrawkbd_test_and_set_bit(keycode, (void *)key_down);
 
   if (!rep || vc_kbd_mode(kbd, VC_REPEAT)) {
-    ldat keysym;
-    ldat type, val;
+    udat keysym, type, val;
 
     /* the XOR below used to be an OR */
     int shift_final = (lrawkbd_shiftstate | lrawkbd_slockstate) ^ lrawkbd_lockstate;

@@ -30,7 +30,7 @@ extern udat MenuBindsMax;
 byte InitRC(void);
 void QuitRC(void);
 
-node LookupNodeName(str name, node head);
+node LookupNodeName(cstr name, node head);
 
 hwfont *RCFindBorderPattern(window W, byte Border);
 

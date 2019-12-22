@@ -47,6 +47,6 @@ void UpdateFlagsHW(void);
 void EnableMouseMotionEvents(byte enable);
 
 byte StdAddMouseEvent(udat Code, dat MouseX, dat MouseY);
-void SyntheticKey(widget W, udat Code, udat ShiftFlags, byte Len, char *Seq);
+void SyntheticKey(widget W, udat Code, udat ShiftFlags, byte Len, CONST char *Seq);
 
 #endif /* _TWIN_HW_MULTI_H */

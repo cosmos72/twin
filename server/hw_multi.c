@@ -922,7 +922,7 @@ void FlushHW(void) {
   ValidOldVideo = ttrue;
 }
 
-void SyntheticKey(widget W, udat Code, udat ShiftFlags, byte Len, char *Seq) {
+void SyntheticKey(widget W, udat Code, udat ShiftFlags, byte Len, CONST char *Seq) {
   event_keyboard *Event;
   msg Msg;
 
