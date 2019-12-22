@@ -1,5 +1,5 @@
 /*
- *  hw_X11.cpp  --  functions to let twin display on X11
+ *  hw_X11.c  --  functions to let twin display on X11
  *
  *  Copyright (C) 1999-2001 by Massimiliano Ghilardi
  *

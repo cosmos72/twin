@@ -1074,7 +1074,7 @@ static byte USEDefaultCommonMenu(void) {
 byte InitRC(void) {
   byte InitRCOptions(void);
 
-  static struct node N[] = {
+  static struct s_node N[] = {
       {INTERACTIVE,
        NULL,
        NULL,
@@ -1167,153 +1167,153 @@ byte InitRC(void) {
           CLOSE,
       } /* COD_COMMON_CLOSE      */
   };
-  static struct node *pN[] = {N,     N + 1, N + 2, N + 3,  N + 4,  N + 5,  N + 6,
-                              N + 7, N + 8, N + 9, N + 10, N + 11, N + 12, N + 13};
+  static struct s_node *pN[] = {N,     N + 1, N + 2, N + 3,  N + 4,  N + 5,  N + 6,
+                                N + 7, N + 8, N + 9, N + 10, N + 11, N + 12, N + 13};
 
   /* now user functions list */
-  static struct node F[] = {/* AddToFunc _UnFocus ( Window 0; Focus Off;) */
-                            {
-                                0,
-                                "_UnFocus",
-                                NULL,
-                                F + 1,
-                            },
-                            {WINDOW,
-                             NULL,
-                             N + 8,
-                             NULL,
-                             NULL,
-                             {{
-                                 0,
-                                 0,
-                             }}}};
+  static struct s_node F[] = {/* AddToFunc _UnFocus ( Window 0; Focus Off;) */
+                              {
+                                  0,
+                                  "_UnFocus",
+                                  NULL,
+                                  F + 1,
+                              },
+                              {WINDOW,
+                               NULL,
+                               N + 8,
+                               NULL,
+                               NULL,
+                               {{
+                                   0,
+                                   0,
+                               }}}};
 
   /* now keyboard binds */
-  static struct node K[] = {/* Key HOT_KEY Interactive Menu */
-                            {
-                                0,
-                                NULL,
-                                NULL,
-                                K + 1,
-                            },
-                            {INTERACTIVE,
-                             NULL,
-                             NULL,
-                             NULL,
-                             NULL,
-                             {
-                                 {
-                                     0,
-                                     MENU,
-                                 },
-                             }}};
+  static struct s_node K[] = {/* Key HOT_KEY Interactive Menu */
+                              {
+                                  0,
+                                  NULL,
+                                  NULL,
+                                  K + 1,
+                              },
+                              {INTERACTIVE,
+                               NULL,
+                               NULL,
+                               NULL,
+                               NULL,
+                               {
+                                   {
+                                       0,
+                                       MENU,
+                                   },
+                               }}};
 
   /* now mouse binds */
-  static struct node M[] = {/* Mouse   1   0  Close */
-                            {HOLD_LEFT | RELEASE_,
-                             "0",
-                             M + 1,
-                             N + 13,
-                             NULL,
-                             {{
-                                 CTX_0,
-                             }}},
-                            /* Mouse  123  1  RaiseLower */
-                            {HOLD_ANY | RELEASE_,
-                             "1",
-                             M + 2,
-                             N + 7,
-                             NULL,
-                             {{
-                                 CTX_1,
-                             }}},
-                            /* Mouse  123  3  Roll Toggle */
-                            {HOLD_ANY | RELEASE_,
-                             "2",
-                             M + 3,
-                             N + 6,
-                             NULL,
-                             {{
-                                 CTX_2,
-                             }}},
-                            /* Mouse  H1   TS Interactive Move */
-                            {HOLD_LEFT | PRESS_,
-                             "TS",
-                             M + 4,
-                             N + 0,
-                             NULL,
-                             {{
-                                 CTX_TITLE | CTX_SIDE,
-                             }}},
-                            /* Mouse  H1   C  Interactive Resize */
-                            {HOLD_LEFT | PRESS_,
-                             "C",
-                             M + 5,
-                             N + 1,
-                             NULL,
-                             {{
-                                 CTX_CORNER,
-                             }}},
-                            /* Mouse  H1   C  Interactive Scroll */
-                            {HOLD_LEFT | PRESS_,
-                             "B",
-                             M + 6,
-                             N + 2,
-                             NULL,
-                             {{
-                                 CTX_BARS,
-                             }}},
-                            /* Mouse  H1   R _UnFocus */
-                            {HOLD_LEFT | PRESS_,
-                             "R",
-                             M + 8,
-                             M + 7,
-                             NULL,
-                             {{
-                                 CTX_ROOT,
-                             }}},
-                            {
-                                USERFUNC,
-                                "_UnFocus",
-                            },
-                            /* Mouse  H2  R  WindowList */
-                            {HOLD_MIDDLE | PRESS_,
-                             "R",
-                             M + 9,
-                             N + 10,
-                             NULL,
-                             {{
-                                 CTX_ROOT,
-                             }}},
-                            /* Mouse  H3  A  Interactive Menu */
-                            {HOLD_RIGHT | PRESS_,
-                             "A",
-                             M + 10,
-                             K + 1,
-                             NULL,
-                             {{
-                                 CTX_ANY,
-                             }}},
-                            /* Mouse  H1  M  Interactive Screen */
-                            {HOLD_LEFT | PRESS_,
-                             "M",
-                             NULL,
-                             M + 11,
-                             NULL,
-                             {{
-                                 CTX_MENU,
-                             }}},
-                            {INTERACTIVE,
-                             NULL,
-                             NULL,
-                             NULL,
-                             NULL,
-                             {
-                                 {
-                                     0,
-                                     SCREEN,
-                                 },
-                             }}};
+  static struct s_node M[] = {/* Mouse   1   0  Close */
+                              {HOLD_LEFT | RELEASE_,
+                               "0",
+                               M + 1,
+                               N + 13,
+                               NULL,
+                               {{
+                                   CTX_0,
+                               }}},
+                              /* Mouse  123  1  RaiseLower */
+                              {HOLD_ANY | RELEASE_,
+                               "1",
+                               M + 2,
+                               N + 7,
+                               NULL,
+                               {{
+                                   CTX_1,
+                               }}},
+                              /* Mouse  123  3  Roll Toggle */
+                              {HOLD_ANY | RELEASE_,
+                               "2",
+                               M + 3,
+                               N + 6,
+                               NULL,
+                               {{
+                                   CTX_2,
+                               }}},
+                              /* Mouse  H1   TS Interactive Move */
+                              {HOLD_LEFT | PRESS_,
+                               "TS",
+                               M + 4,
+                               N + 0,
+                               NULL,
+                               {{
+                                   CTX_TITLE | CTX_SIDE,
+                               }}},
+                              /* Mouse  H1   C  Interactive Resize */
+                              {HOLD_LEFT | PRESS_,
+                               "C",
+                               M + 5,
+                               N + 1,
+                               NULL,
+                               {{
+                                   CTX_CORNER,
+                               }}},
+                              /* Mouse  H1   C  Interactive Scroll */
+                              {HOLD_LEFT | PRESS_,
+                               "B",
+                               M + 6,
+                               N + 2,
+                               NULL,
+                               {{
+                                   CTX_BARS,
+                               }}},
+                              /* Mouse  H1   R _UnFocus */
+                              {HOLD_LEFT | PRESS_,
+                               "R",
+                               M + 8,
+                               M + 7,
+                               NULL,
+                               {{
+                                   CTX_ROOT,
+                               }}},
+                              {
+                                  USERFUNC,
+                                  "_UnFocus",
+                              },
+                              /* Mouse  H2  R  WindowList */
+                              {HOLD_MIDDLE | PRESS_,
+                               "R",
+                               M + 9,
+                               N + 10,
+                               NULL,
+                               {{
+                                   CTX_ROOT,
+                               }}},
+                              /* Mouse  H3  A  Interactive Menu */
+                              {HOLD_RIGHT | PRESS_,
+                               "A",
+                               M + 10,
+                               K + 1,
+                               NULL,
+                               {{
+                                   CTX_ANY,
+                               }}},
+                              /* Mouse  H1  M  Interactive Screen */
+                              {HOLD_LEFT | PRESS_,
+                               "M",
+                               NULL,
+                               M + 11,
+                               NULL,
+                               {{
+                                   CTX_MENU,
+                               }}},
+                              {INTERACTIVE,
+                               NULL,
+                               NULL,
+                               NULL,
+                               NULL,
+                               {
+                                   {
+                                       0,
+                                       SCREEN,
+                                   },
+                               }}};
 #define UD_ARROW T_UTF_32_UP_DOWN_ARROW
   static button_vec V[] = {{{'[', ']'}, 0, ttrue, tfalse},
                            {{UD_ARROW, UD_ARROW}, -2, ttrue, tfalse},

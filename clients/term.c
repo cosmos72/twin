@@ -226,7 +226,7 @@ static void FreeStringVec(char **cmd) {
 static char **default_args;
 static char *default_title = "Twin Term";
 
-static twindow newTermWindow(char *title) {
+static twindow newTermWindow(TW_CONST char *title) {
   twindow Window =
       TwCreateWindow(strlen(title), title, NULL, Term_Menu, COL(WHITE, BLACK), TW_LINECURSOR,
                      TW_WINDOW_WANT_KEYS | TW_WINDOW_WANT_CHANGES | TW_WINDOW_DRAG |
@@ -245,12 +245,12 @@ static twindow newTermWindow(char *title) {
   return Window;
 }
 
-static byte OpenTerm(TW_CONST char *arg0, char TW_CONST *TW_CONST *argv) {
+static byte OpenTerm(TW_CONST char *arg0, TW_CONST char *TW_CONST *argv) {
   twindow Window;
   int Fd;
   pid_t Pid;
   uldat Slot;
-  char *title;
+  TW_CONST char *title;
 
   /* if {arg0, argv} is {NULL, ...} or {"", ... } then start user's shell */
   if (arg0 && *arg0 && argv && argv[0]) {
@@ -260,7 +260,7 @@ static byte OpenTerm(TW_CONST char *arg0, char TW_CONST *TW_CONST *argv) {
       title = argv[0];
   } else {
     arg0 = default_args[0];
-    argv = default_args + 1;
+    argv = (TW_CONST char *TW_CONST *)default_args + 1;
 
     title = default_title;
   }

@@ -827,7 +827,7 @@ static void sockMultiplexB(uldat id) {
        * evil trick: only a[n-1]_vec will be passed to the function,
        * but it points to a[n-1] itself!
        */
-      a[n - 1] _type = proto_2_TWS(a[n - 1] _vec);
+      a[n - 1] _type = proto_2_TWS((CONST char *)(a[n - 1] _vec));
       if (mask & 1 << (n - 1))
         FreeMem(a[n - 1].TWS_field_vecV);
 
@@ -1246,7 +1246,7 @@ static void sockSetTitleWindow(window Window, dat titlelen, CONST char *title) {
   char *_title = NULL;
 
   if (Window) {
-    if (!titlelen || (_title = CloneMem(title, titlelen + 1)))
+    if (!titlelen || (_title = (char *)CloneMem(title, titlelen + 1)))
       Act(SetTitle, Window)(Window, titlelen, _title);
   }
 }
@@ -1309,18 +1309,12 @@ static obj sockParentObj(obj Obj) { return Obj ? (obj)Obj->Parent : Obj; }
 static screen sockFirstScreen(void) { return All->FirstScreen; }
 static widget sockFirstWidget(widget W) { return W ? W->FirstW : W; }
 static msgport sockFirstMsgPort(void) { return All->FirstMsgPort; }
-static menu sockFirstMenu(msgport MsgPort) {
-  return MsgPort ? MsgPort->FirstMenu : (void *)MsgPort;
-}
-static widget sockFirstW(msgport MsgPort) { return MsgPort ? MsgPort->FirstW : (void *)MsgPort; }
-static group sockFirstGroup(msgport MsgPort) {
-  return MsgPort ? MsgPort->FirstGroup : (void *)MsgPort;
-}
-static mutex sockFirstMutex(msgport MsgPort) {
-  return MsgPort ? MsgPort->FirstMutex : (void *)MsgPort;
-}
-static menuitem sockFirstMenuItem(menu Menu) { return Menu ? Menu->FirstI : (void *)Menu; }
-static gadget sockFirstGadget(group Group) { return Group ? Group->FirstG : (void *)Group; }
+static menu sockFirstMenu(msgport MsgPort) { return MsgPort ? MsgPort->FirstMenu : (menu)0; }
+static widget sockFirstW(msgport MsgPort) { return MsgPort ? MsgPort->FirstW : (widget)0; }
+static group sockFirstGroup(msgport MsgPort) { return MsgPort ? MsgPort->FirstGroup : (group)0; }
+static mutex sockFirstMutex(msgport MsgPort) { return MsgPort ? MsgPort->FirstMutex : (mutex)0; }
+static menuitem sockFirstMenuItem(menu Menu) { return Menu ? Menu->FirstI : (menuitem)0; }
+static gadget sockFirstGadget(group Group) { return Group ? Group->FirstG : (gadget)0; }
 
 static all sockGetAll(void) { return All; }
 
@@ -1794,7 +1788,7 @@ static byte sockSendToMsgPort(msgport MsgPort, udat Len, CONST byte *Data) {
 
       if ((Msg = Do(Create, Msg)(FnMsg, tMsg->Type, _Len))) {
 
-        Msg->Event.EventCommon.W = (void *)Id2Obj(widget_magic_id, tMsg->Event.EventCommon.W);
+        Msg->Event.EventCommon.W = (widget)Id2Obj(widget_magic_id, tMsg->Event.EventCommon.W);
 
         switch (tMsg->Type) {
         case TW_MSG_DISPLAY:
@@ -2020,7 +2014,7 @@ static byte sockDoCompress(byte on_off) {
 
   if (on_off) {
     if ((slot = RegisterRemoteFd(specFD, LS.HandlerIO.S)) != NOSLOT &&
-        (z1 = AllocMem(sizeof(*z1))) && (z2 = AllocMem(sizeof(*z2)))) {
+        (z1 = (z_streamp)AllocMem(sizeof(*z1))) && (z2 = (z_streamp)AllocMem(sizeof(*z2)))) {
 
       z1->zalloc = z2->zalloc = sockZAlloc;
       z1->zfree = z2->zfree = sockZFree;

@@ -42,7 +42,9 @@
 #include <netinet/in.h> /* for htons(), htonl() - alternate location */
 #endif
 
-INLINE void FlipCopyMem(CONST byte *src, byte *dst, uldat len) {
+INLINE void FlipCopyMem(CONST void *srcv, void *dstv, uldat len) {
+  CONST byte *src = (CONST byte *)srcv;
+  byte *dst = (byte *)dstv;
   switch (len) {
   case 2:
     *(uint16_t * TW_ATTR_PTR_ALIGNED_1) dst = htons(*(uint16_t CONST * TW_ATTR_PTR_ALIGNED_1) src);
@@ -232,7 +234,7 @@ static byte *alienAllocReadVec(CONST byte *src, uldat len, uldat srcsize, uldat 
                                byte flag) {
   byte *dst;
 
-  if ((dst = AllocMem(len / srcsize * dstsize)))
+  if ((dst = (byte *)AllocMem(len / srcsize * dstsize)))
     alienReadVec(src, dst, len, srcsize, dstsize, flag);
 
   return dst;
@@ -396,8 +398,8 @@ TW_INLINE ldat alienDecodeArg(uldat id, CONST char *Format, uldat n, tsfield a, 
         if (AlienMagic(Slot)[c] != TwinMagicData[c] ||
             (TwinMagicData[c] != 1 && AlienXendian(Slot) == MagicAlienXendian)) {
 
-          a[n] _vec = alienAllocReadVec(av, nlen, AlienMagic(Slot)[c], TwinMagicData[c],
-                                        AlienXendian(Slot) == MagicAlienXendian);
+          a[n] _vec = alienAllocReadVec((CONST byte *)av, nlen, AlienMagic(Slot)[c],
+                                        TwinMagicData[c], AlienXendian(Slot) == MagicAlienXendian);
           if (a[n] _vec) {
             if (c == TWS_hwattr && SIZEOF(hwattr) == 2)
               alienTranslateHWAttrV_CP437_to_UTF_32((hwattr *)a[n] _vec, nlen);
@@ -429,8 +431,9 @@ TW_INLINE ldat alienDecodeArg(uldat id, CONST char *Format, uldat n, tsfield a, 
           if (AlienMagic(Slot)[c] != TwinMagicData[c] ||
               (TwinMagicData[c] != 1 && AlienXendian(Slot) == MagicAlienXendian)) {
 
-            a[n] _vec = alienAllocReadVec(av, nlen, AlienMagic(Slot)[c], TwinMagicData[c],
-                                          AlienXendian(Slot) == MagicAlienXendian);
+            a[n] _vec =
+                alienAllocReadVec((CONST byte *)av, nlen, AlienMagic(Slot)[c], TwinMagicData[c],
+                                  AlienXendian(Slot) == MagicAlienXendian);
 
             if (a[n] _cvec) {
               if (c == TWS_hwattr && SIZEOF(hwattr) == 2)
@@ -458,7 +461,7 @@ TW_INLINE ldat alienDecodeArg(uldat id, CONST char *Format, uldat n, tsfield a, 
 
       if (SIZEOF(uldat) != sizeof(uldat) || AlienXendian(Slot) == MagicAlienXendian) {
 
-        A = a[n] _vec = alienAllocReadVec(av, nlen, SIZEOF(uldat), sizeof(uldat),
+        A = a[n] _vec = alienAllocReadVec((CONST byte *)av, nlen, SIZEOF(uldat), sizeof(uldat),
                                           AlienXendian(Slot) == MagicAlienXendian);
       } else
         A = a[n] _vec;
@@ -489,7 +492,7 @@ TW_INLINE ldat alienDecodeArg(uldat id, CONST char *Format, uldat n, tsfield a, 
 
         if (SIZEOF(uldat) != sizeof(uldat) || AlienXendian(Slot) == MagicAlienXendian) {
 
-          A = a[n] _vec = alienAllocReadVec(av, nlen, SIZEOF(uldat), sizeof(uldat),
+          A = a[n] _vec = alienAllocReadVec((CONST byte *)av, nlen, SIZEOF(uldat), sizeof(uldat),
                                             AlienXendian(Slot) == MagicAlienXendian);
         } else
           A = a[n] _vec;
@@ -560,7 +563,7 @@ static void alienMultiplexB(uldat id) {
        * evil trick: only a[n-1]_vec will be passed to the function,
        * but it points to a[n-1] itself!
        */
-      a[n - 1] _type = proto_2_TWS(a[n - 1] _vec);
+      a[n - 1] _type = proto_2_TWS((CONST char *)(a[n - 1] _vec));
       if (mask & 1 << (n - 1))
         FreeMem(a[n - 1].TWS_field_vecV);
 
@@ -814,7 +817,7 @@ static void alienSendMsg(msgport MsgPort, msg Msg) {
 
   switch (Msg->Type) {
   case MSG_DISPLAY:
-    Src = Msg->Event.EventDisplay.Data;
+    Src = (char *)Msg->Event.EventDisplay.Data;
     N = 1;
 
     switch (Msg->Event.EventDisplay.Code) {

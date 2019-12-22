@@ -169,7 +169,7 @@ ldat GlobalShadows[2];
 
 static void yyerror(CONST char *s) { printk("twin: %s:%d: %s\n", FILE_NAME, LINE_NO, s); }
 
-#define NEW() (node) my_malloc(sizeof(struct node))
+#define NEW() (node) my_malloc(sizeof(struct s_node))
 
 static node ReverseList(node l) {
   node base = NULL, v;
@@ -268,7 +268,7 @@ static byte ImmBackground(str name, hwattr color, node shape) {
 
 static void UnwindBorderShape(node n) {
   cstr s = NULL;
-  str d = n->data = my_malloc(n->x.ctx = 10);
+  str d = n->data = (str)my_malloc(n->x.ctx = 10);
   node shape = n->body;
 
   while (shape) {
@@ -500,7 +500,7 @@ static node LookupBind(ldat label, ldat ctx, node l) {
 }
 
 static str toString(ldat i) {
-  str s = my_malloc(2 + 3 * sizeof(ldat));
+  str s = (str)my_malloc(2 + 3 * sizeof(ldat));
   sprintf(s, "%d", (int)i);
   return s;
 }
@@ -1089,7 +1089,7 @@ static void ClearGlobals(void) {
  */
 static void WriteGlobals(void) {
   node *g = Globals;
-  void **M = shm_getbase();
+  void **M = (void **)shm_getbase();
 
   while (g < Globals + GLOBAL_MAX)
     *M++ = ReverseList(*g++);
@@ -1102,7 +1102,7 @@ static void WriteGlobals(void) {
   M = (void **)((str)M + sizeof(GlobalShadows));
 }
 
-static screen FindNameInScreens(uldat len, CONST char *name, screen S) {
+static screen FindNameInScreens(dat len, CONST char *name, screen S) {
   while (S) {
     if (len == S->NameLen && !memcmp(name, S->Name, len))
       return S;
@@ -1152,7 +1152,7 @@ static byte CreateNeededScreens(node list, screen *res_Screens) {
     if (!w && !h)
       continue;
 
-    if ((attr = AllocMem(w * h * sizeof(hwattr)))) {
+    if ((attr = (hwattr *)AllocMem(w * h * sizeof(hwattr)))) {
       h = 0;
       for (body = list->body; body; body = body->next) {
         if (body->name) {
@@ -1252,7 +1252,7 @@ static byte NewCommonMenu(void **shm_M, menu *res_CommonMenu, node **res_MenuBin
 
   /* extract needed length for new_MenuBinds[] */
   new_MenuBindsMax = 0;
-  new_MenuList = *(shm_M + (&MenuList - Globals));
+  new_MenuList = (node)(*(shm_M + (&MenuList - Globals)));
   for (M = new_MenuList; M; M = M->next) {
     for (N = M->body; N; N = N->next) {
       if (N->body && N->body->id != NOP)
@@ -1269,7 +1269,7 @@ static byte NewCommonMenu(void **shm_M, menu *res_CommonMenu, node **res_MenuBin
     return tfalse;
 
   new_MenuBindsMax = 0;
-  new_MenuList = *(shm_M + (&MenuList - Globals));
+  new_MenuList = (node)(*(shm_M + (&MenuList - Globals)));
 
   if (!(Menu = Do(Create, Menu)(FnMenu, Ext(WM, MsgPort), (hwcol)0, (hwcol)0, (hwcol)0, (hwcol)0,
                                 (hwcol)0, (hwcol)0, ttrue)))
@@ -1335,13 +1335,13 @@ static byte NewCommonMenu(void **shm_M, menu *res_CommonMenu, node **res_MenuBin
  */
 static byte ReadGlobals(void) {
   node *g;
-  void **M = shm_getbase();
+  void **M = (void **)shm_getbase();
   menu new_CommonMenu;
   node *new_MenuBinds = (node *)0;
   uldat new_MenuBindsMax;
   screen new_Screens = (screen)0;
 
-  if (!CreateNeededScreens(M[ScreenIndex], &new_Screens))
+  if (!CreateNeededScreens((node)M[ScreenIndex], &new_Screens))
     return tfalse;
 
   if (!NewCommonMenu(M, &new_CommonMenu, &new_MenuBinds, &new_MenuBindsMax)) {
@@ -1352,7 +1352,7 @@ static byte ReadGlobals(void) {
   /* ok, this is the no-return point. we must succeed now */
 
   UpdateVisibleScreens(new_Screens);
-  DeleteUnneededScreens(M[ScreenIndex]);
+  DeleteUnneededScreens((node)M[ScreenIndex]);
 
   if (!GlobalsAreStatic)
     FreeMem(MenuBinds);
@@ -1366,7 +1366,7 @@ static byte ReadGlobals(void) {
 
   g = Globals;
   while (g < Globals + GLOBAL_MAX)
-    *g++ = *M++;
+    *g++ = (node)*M++;
 
   CopyMem(M, All->ButtonVec, sizeof(All->ButtonVec));
   M = (void **)((str)M + sizeof(All->ButtonVec));

@@ -270,7 +270,7 @@ func		: string		{ $$ = MakeUserFunc($1); }
 		| WINDOW STRING			{ $$ = MakeWindow($2); }
 		;
 
-string_list	:             string { $$ = AddtoStringList(NULL, $1); }
+string_list	:         string { $$ = AddtoStringList((node)0, $1); }
 		| string_list string { $$ = AddtoStringList( $1,  $2); }
 		;
 

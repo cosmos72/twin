@@ -1805,7 +1805,7 @@ yyreduce:
     break;
 
   case 77:
-    { (yyval._node) = AddtoStringList(NULL, (yyvsp[0]._string)); }
+    { (yyval._node) = AddtoStringList((node)0, (yyvsp[0]._string)); }
     break;
 
   case 78:

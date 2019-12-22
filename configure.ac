@@ -79,15 +79,15 @@ TW_C_FEATURES
 # C flags '-p -pg' are incompatible with -fomit-frame-pointer
 initial_CFLAGS="$CFLAGS"
 for try_flag in -fomit-frame-pointer -fno-strict-aliasing -pipe -Wall -Wshadow \
-                 -Wno-uninitialized -Wno-unused -Wundef -Wstrict-prototypes \
-                 -Wcast-qual -Wcast-align -Wpointer-arith -Wbad-function-cast \
-                 -Wwrite-strings -Wold-style-declaration -Wold-style-definition \
+                 -Wno-uninitialized -Wno-unused -Wundef  -Wcast-qual -Wcast-align -Wpointer-arith  \
+                 -Wwrite-strings \
+                 -Wstrict-prototypes -Wbad-function-cast -Wold-style-declaration -Wold-style-definition
                  # -Wsign-compare
 do
   save_CFLAGS="$CFLAGS"
   CFLAGS="$CFLAGS $try_flag"
   try_flag_id="`echo \"$try_flag\" | tr - _`"
-  AC_CACHE_CHECK(for compiler flag $try_flag, ac_cv_cflag$try_flag_id, AC_TRY_COMPILE(
+  AC_CACHE_CHECK(for C compiler flag $try_flag, ac_cv_cflag$try_flag_id, AC_TRY_COMPILE(
   [
     int ret0(void) {
       return 0;

@@ -12,11 +12,11 @@
 /* types */
 typedef char *str;
 typedef CONST char *cstr;
-typedef struct node *node;
+typedef struct s_node *node;
 typedef struct ldat_list ldat_list;
 typedef struct str_list str_list;
 
-struct node {
+struct s_node {
   ldat id;
   cstr name;
   node next, body;
