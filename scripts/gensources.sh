@@ -16,17 +16,17 @@ done
 for i in md5.c missing.c
 do
   echo "$LN -f -n \"server/$i\" \"libs/libTw/$i\""
-  $LN -f -n "server/$i" "libs/libTw/$i"
+  $LN -f -n "server/$i"pp "libs/libTw/$i"
 done
 
 echo "cd server"
 cd server
 
-echo "$FLEX -o rcparse_lex.c rcparse.l"
-$FLEX -o rcparse_lex.c rcparse.l
+echo "$FLEX -o rcparse_lex.cpp rcparse.l"
+$FLEX -o rcparse_lex.cpp rcparse.l
 
-echo "$BISON --no-lines --defines -o rcparse_tab.c rcparse.y"
-$BISON --no-lines --defines -o rcparse_tab.c rcparse.y
+echo "$BISON --no-lines --defines -o rcparse_tab.cpp rcparse.y"
+$BISON --no-lines --defines -o rcparse_tab.cpp rcparse.y
 
 echo "cd .."
 cd ..

@@ -61,7 +61,7 @@ static void X11_XftDrawString16(Display *display, Drawable d, GC gc, int x, int 
 #define XDRAW_ANY(buf, buflen, col, gfx) XDRAW(col, buf, buflen)
 
 #include "hw_x/util.h"
-#include "hw_x/common.c"
+#include "hw_x/common.cpp"
 
 static void X11_XftDrawString16(Display *display, Drawable d, GC gc, int x, int y, XChar16 *string,
                                 int length) {

@@ -91,9 +91,9 @@
 #include "version.h"
 #include "wm.h"
 
-#include "rcrun.h"       /* needs wm.h, rctypes.h */
-#include "rcparse_tab.h" /* needs rcrun.h         */
-#include "rcparse.h"     /* needs rcparse_tab.h   */
+#include "rcrun.h"         /* needs wm.h, rctypes.h */
+#include "rcparse_tab.hpp" /* needs rcrun.h         */
+#include "rcparse.h"       /* needs rcparse_tab.hpp */
 
 
 /* also put here the CONF_* and DEBUG_* used in rcparse.h so that MkDep catches them */
@@ -144,8 +144,8 @@
 
 /* Use api.header.include to #include this header
    instead of duplicating it here.  */
-#ifndef YY_YY_RCPARSE_TAB_H_INCLUDED
-# define YY_YY_RCPARSE_TAB_H_INCLUDED
+#ifndef YY_YY_RCPARSE_TAB_HPP_INCLUDED
+# define YY_YY_RCPARSE_TAB_HPP_INCLUDED
 /* Debug traces.  */
 #ifndef YYDEBUG
 # define YYDEBUG 0
@@ -261,7 +261,7 @@ extern YYSTYPE yylval;
 
 int yyparse (void);
 
-#endif /* !YY_YY_RCPARSE_TAB_H_INCLUDED  */
+#endif /* !YY_YY_RCPARSE_TAB_HPP_INCLUDED  */
 
 
 

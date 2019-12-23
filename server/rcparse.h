@@ -162,7 +162,7 @@
  * WindowList
  */
 
-#include "rcparse_tab.h"
+#include "rcparse_tab.hpp"
 
 ldat GlobalFlags[4];
 ldat GlobalShadows[2];

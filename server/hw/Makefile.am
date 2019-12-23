@@ -27,13 +27,13 @@ libhw_X11_la_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/server $(X11_CPP
 libhw_xft_la_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/server $(X11_CPPFLAGS) $(XFT_CFLAGS)
 libhw_gfx_la_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/server $(X11_CPPFLAGS) -DPKG_DATADIR="\"$(pkgdatadir)\""
 
-libhw_display_la_SOURCES = hw_display.c
-libhw_X11_la_SOURCES  = hw_X11.c
-libhw_xft_la_SOURCES  = hw_xft.c
-libhw_gfx_la_SOURCES  = hw_gfx.c
-libhw_ggi_la_SOURCES  = hw_ggi.c
-libhw_tty_la_SOURCES  = hw_tty.c
-libhw_twin_la_SOURCES = hw_twin.c
+libhw_display_la_SOURCES = hw_display.cpp
+libhw_X11_la_SOURCES  = hw_X11.cpp
+libhw_xft_la_SOURCES  = hw_xft.cpp
+libhw_gfx_la_SOURCES  = hw_gfx.cpp
+libhw_ggi_la_SOURCES  = hw_ggi.cpp
+libhw_tty_la_SOURCES  = hw_tty.cpp
+libhw_twin_la_SOURCES = hw_twin.cpp
 
 AM_LDFLAGS            = -export-dynamic -export-symbols-regex '^(Init|Quit)Module$$' -release $(PACKAGE_VERSION)
 libhw_X11_la_LDFLAGS  = -export-dynamic -export-symbols-regex '^(Init|Quit)Module$$' -release $(PACKAGE_VERSION) $(X11_LDFLAGS)

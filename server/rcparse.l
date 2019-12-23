@@ -14,7 +14,7 @@
 
 #include "twin.h"
 #include "rctypes.h"
-#include "rcparse_tab.h"
+#include "rcparse_tab.hpp"
 
 #define IS_OCTDIGIT(c) ((c) >= '0' && (c) <= '7')
 #define IS_HEXDIGIT(c) (((c) >= '0' && (c) <= '9') || ((c) >= 'A' && (c) <= 'F') || ((c) >= 'a' && (c) <= 'f'))

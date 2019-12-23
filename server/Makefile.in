@@ -151,41 +151,42 @@ AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
-librcparse_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
-	$(librcparse_la_LDFLAGS) $(LDFLAGS) -o $@
+librcparse_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
+	$(AM_CXXFLAGS) $(CXXFLAGS) $(librcparse_la_LDFLAGS) $(LDFLAGS) \
+	-o $@
 @LIBRCPARSE_la_TRUE@am_librcparse_la_rpath = -rpath $(pkglibdir)
 am__DEPENDENCIES_1 =
 libsocket_la_DEPENDENCIES = $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
 am_libsocket_la_OBJECTS = md5.lo socket.lo
 libsocket_la_OBJECTS = $(am_libsocket_la_OBJECTS)
-libsocket_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
-	$(libsocket_la_LDFLAGS) $(LDFLAGS) -o $@
+libsocket_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
+	$(CXXFLAGS) $(libsocket_la_LDFLAGS) $(LDFLAGS) -o $@
 @LIBSOCKET_la_TRUE@am_libsocket_la_rpath = -rpath $(pkglibdir)
 libterm_la_LIBADD =
 am_libterm_la_OBJECTS = pty.lo tterm.lo tty.lo
 libterm_la_OBJECTS = $(am_libterm_la_OBJECTS)
-libterm_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
-	$(libterm_la_LDFLAGS) $(LDFLAGS) -o $@
+libterm_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
+	$(CXXFLAGS) $(libterm_la_LDFLAGS) $(LDFLAGS) -o $@
 @LIBTERM_la_TRUE@am_libterm_la_rpath = -rpath $(pkglibdir)
 libwm_la_LIBADD =
 am_libwm_la_OBJECTS = rcopt.lo rcrun.lo shm.lo wm.lo
 libwm_la_OBJECTS = $(am_libwm_la_OBJECTS)
-libwm_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
-	$(libwm_la_LDFLAGS) $(LDFLAGS) -o $@
+libwm_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
+	$(CXXFLAGS) $(libwm_la_LDFLAGS) $(LDFLAGS) -o $@
 @LIBWM_la_TRUE@am_libwm_la_rpath = -rpath $(pkglibdir)
 am_twdisplay_OBJECTS = alloc.$(OBJEXT) display.$(OBJEXT) \
 	dl_helper.$(OBJEXT) missing.$(OBJEXT) hw.$(OBJEXT)
 twdisplay_OBJECTS = $(am_twdisplay_OBJECTS)
 twdisplay_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
-twdisplay_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
-	$(twdisplay_LDFLAGS) $(LDFLAGS) -o $@
+twdisplay_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
+	$(CXXFLAGS) $(twdisplay_LDFLAGS) $(LDFLAGS) -o $@
 am_twin_OBJECTS = twin-wrapper.$(OBJEXT)
 twin_OBJECTS = $(am_twin_OBJECTS)
 twin_LDADD = $(LDADD)
@@ -199,9 +200,9 @@ am_twin_server_OBJECTS = alloc.$(OBJEXT) builtin.$(OBJEXT) \
 	util.$(OBJEXT)
 twin_server_OBJECTS = $(am_twin_server_OBJECTS)
 twin_server_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
-twin_server_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
-	$(twin_server_LDFLAGS) $(LDFLAGS) -o $@
+twin_server_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
+	$(CXXFLAGS) $(twin_server_LDFLAGS) $(LDFLAGS) -o $@
 SCRIPTS = $(bin_SCRIPTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -253,6 +254,24 @@ AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
+CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
+	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
+LTCXXCOMPILE = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) \
+	$(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
+	$(AM_CXXFLAGS) $(CXXFLAGS)
+AM_V_CXX = $(am__v_CXX_@AM_V@)
+am__v_CXX_ = $(am__v_CXX_@AM_DEFAULT_V@)
+am__v_CXX_0 = @echo "  CXX     " $@;
+am__v_CXX_1 = 
+CXXLD = $(CXX)
+CXXLINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
+	$(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
+AM_V_CXXLD = $(am__v_CXXLD_@AM_V@)
+am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
+am__v_CXXLD_0 = @echo "  CXXLD   " $@;
+am__v_CXXLD_1 = 
 SOURCES = $(librcparse_la_SOURCES) $(libsocket_la_SOURCES) \
 	$(libterm_la_SOURCES) $(libwm_la_SOURCES) $(twdisplay_SOURCES) \
 	$(twin_SOURCES) $(twin_server_SOURCES)
@@ -344,6 +363,10 @@ CCDEPMODE = @CCDEPMODE@
 CFLAGS = @CFLAGS@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
+CXX = @CXX@
+CXXCPP = @CXXCPP@
+CXXDEPMODE = @CXXDEPMODE@
+CXXFLAGS = @CXXFLAGS@
 CYGPATH_W = @CYGPATH_W@
 DEFS = @DEFS@
 DEPDIR = @DEPDIR@
@@ -442,6 +465,7 @@ abs_top_builddir = @abs_top_builddir@
 abs_top_srcdir = @abs_top_srcdir@
 ac_ct_AR = @ac_ct_AR@
 ac_ct_CC = @ac_ct_CC@
+ac_ct_CXX = @ac_ct_CXX@
 ac_ct_DUMPBIN = @ac_ct_DUMPBIN@
 am__include = @am__include@
 am__leading_dot = @am__leading_dot@
@@ -498,13 +522,13 @@ pkglib_LTLIBRARIES = $(am__append_1) $(am__append_2) $(am__append_3) \
 	$(am__append_4)
 AM_CPPFLAGS = -I$(top_srcdir)/include $(LTDLINCL) -DPKG_LIBDIR="\"$(pkglibdir)\""
 twin_CPPFLAGS = -I$(top_srcdir)/include $(LTDLINCL) -DBINDIR="\"$(bindir)\""
-twdisplay_SOURCES = alloc.c display.c dl_helper.c missing.c hw.c
+twdisplay_SOURCES = alloc.cpp display.cpp dl_helper.cpp missing.cpp hw.cpp
 twin_SOURCES = wrapper.c
-twin_server_SOURCES = alloc.c builtin.c data.c dl.c dl_helper.c draw.c extensions/ext_query.c extreg.c hw.c hw_multi.c main.c methods.c missing.c printk.c privilege.c remote.c resize.c scroller.c util.c
-librcparse_la_SOURCES = rcparse_tab.c rcparse_lex.c
-libterm_la_SOURCES = pty.c tterm.c tty.c
-libsocket_la_SOURCES = md5.c socket.c
-libwm_la_SOURCES = rcopt.c rcrun.c shm.c wm.c
+twin_server_SOURCES = alloc.cpp builtin.cpp data.cpp dl.cpp dl_helper.cpp draw.cpp extensions/ext_query.cpp extreg.cpp hw.cpp hw_multi.cpp main.cpp methods.cpp missing.cpp printk.cpp privilege.cpp remote.cpp resize.cpp scroller.cpp util.cpp
+librcparse_la_SOURCES = rcparse_tab.cpp rcparse_lex.cpp
+libterm_la_SOURCES = pty.cpp tterm.cpp tty.cpp
+libsocket_la_SOURCES = md5.cpp socket.cpp
+libwm_la_SOURCES = rcopt.cpp rcrun.cpp shm.cpp wm.cpp
 twdisplay_LDFLAGS = -export-dynamic $(LDFLAGS_BIN_EXPORT_DYNAMIC)
 twin_server_LDFLAGS = -export-dynamic $(LDFLAGS_BIN_EXPORT_DYNAMIC)
 librcparse_la_LDFLAGS = -export-dynamic -export-symbols-regex '^(Init|Quit)Module$$' -release $(PACKAGE_VERSION)
@@ -518,7 +542,7 @@ libsocket_la_LIBADD = $(LIBSOCK) $(LIBZ)
 all: all-recursive
 
 .SUFFIXES:
-.SUFFIXES: .c .lo .o .obj
+.SUFFIXES: .c .cpp .lo .o .obj
 $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
@@ -634,20 +658,20 @@ clean-pkglibLTLIBRARIES:
 	}
 
 librcparse.la: $(librcparse_la_OBJECTS) $(librcparse_la_DEPENDENCIES) $(EXTRA_librcparse_la_DEPENDENCIES) 
-	$(AM_V_CCLD)$(librcparse_la_LINK) $(am_librcparse_la_rpath) $(librcparse_la_OBJECTS) $(librcparse_la_LIBADD) $(LIBS)
+	$(AM_V_CXXLD)$(librcparse_la_LINK) $(am_librcparse_la_rpath) $(librcparse_la_OBJECTS) $(librcparse_la_LIBADD) $(LIBS)
 
 libsocket.la: $(libsocket_la_OBJECTS) $(libsocket_la_DEPENDENCIES) $(EXTRA_libsocket_la_DEPENDENCIES) 
-	$(AM_V_CCLD)$(libsocket_la_LINK) $(am_libsocket_la_rpath) $(libsocket_la_OBJECTS) $(libsocket_la_LIBADD) $(LIBS)
+	$(AM_V_CXXLD)$(libsocket_la_LINK) $(am_libsocket_la_rpath) $(libsocket_la_OBJECTS) $(libsocket_la_LIBADD) $(LIBS)
 
 libterm.la: $(libterm_la_OBJECTS) $(libterm_la_DEPENDENCIES) $(EXTRA_libterm_la_DEPENDENCIES) 
-	$(AM_V_CCLD)$(libterm_la_LINK) $(am_libterm_la_rpath) $(libterm_la_OBJECTS) $(libterm_la_LIBADD) $(LIBS)
+	$(AM_V_CXXLD)$(libterm_la_LINK) $(am_libterm_la_rpath) $(libterm_la_OBJECTS) $(libterm_la_LIBADD) $(LIBS)
 
 libwm.la: $(libwm_la_OBJECTS) $(libwm_la_DEPENDENCIES) $(EXTRA_libwm_la_DEPENDENCIES) 
-	$(AM_V_CCLD)$(libwm_la_LINK) $(am_libwm_la_rpath) $(libwm_la_OBJECTS) $(libwm_la_LIBADD) $(LIBS)
+	$(AM_V_CXXLD)$(libwm_la_LINK) $(am_libwm_la_rpath) $(libwm_la_OBJECTS) $(libwm_la_LIBADD) $(LIBS)
 
 twdisplay$(EXEEXT): $(twdisplay_OBJECTS) $(twdisplay_DEPENDENCIES) $(EXTRA_twdisplay_DEPENDENCIES) 
 	@rm -f twdisplay$(EXEEXT)
-	$(AM_V_CCLD)$(twdisplay_LINK) $(twdisplay_OBJECTS) $(twdisplay_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(twdisplay_LINK) $(twdisplay_OBJECTS) $(twdisplay_LDADD) $(LIBS)
 
 twin$(EXEEXT): $(twin_OBJECTS) $(twin_DEPENDENCIES) $(EXTRA_twin_DEPENDENCIES) 
 	@rm -f twin$(EXEEXT)
@@ -663,7 +687,7 @@ extensions/ext_query.$(OBJEXT): extensions/$(am__dirstamp) \
 
 twin_server$(EXEEXT): $(twin_server_OBJECTS) $(twin_server_DEPENDENCIES) $(EXTRA_twin_server_DEPENDENCIES) 
 	@rm -f twin_server$(EXEEXT)
-	$(AM_V_CCLD)$(twin_server_LINK) $(twin_server_OBJECTS) $(twin_server_LDADD) $(LIBS)
+	$(AM_V_CXXLD)$(twin_server_LINK) $(twin_server_OBJECTS) $(twin_server_LDADD) $(LIBS)
 install-binSCRIPTS: $(bin_SCRIPTS)
 	@$(NORMAL_INSTALL)
 	@list='$(bin_SCRIPTS)'; test -n "$(bindir)" || list=; \
@@ -783,6 +807,30 @@ twin-wrapper.obj: wrapper.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='wrapper.c' object='twin-wrapper.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(twin_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o twin-wrapper.obj `if test -f 'wrapper.c'; then $(CYGPATH_W) 'wrapper.c'; else $(CYGPATH_W) '$(srcdir)/wrapper.c'; fi`
+
+.cpp.o:
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
+@am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
+@am__fastdepCXX_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXXCOMPILE) -c -o $@ $<
+
+.cpp.obj:
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.obj$$||'`;\
+@am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ `$(CYGPATH_W) '$<'` &&\
+@am__fastdepCXX_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXXCOMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
+
+.cpp.lo:
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.lo$$||'`;\
+@am__fastdepCXX_TRUE@	$(LTCXXCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
+@am__fastdepCXX_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LTCXXCOMPILE) -c -o $@ $<
 
 mostlyclean-libtool:
 	-rm -f *.lo

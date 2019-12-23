@@ -1,6 +1,6 @@
-#line 2 "rcparse_lex.c"
+#line 2 "rcparse_lex.cpp"
 
-#line 4 "rcparse_lex.c"
+#line 4 "rcparse_lex.cpp"
 
 #define  YY_INT_ALIGNED short int
 
@@ -843,7 +843,7 @@ char *yytext;
 
 #include "twin.h"
 #include "rctypes.h"
-#include "rcparse_tab.h"
+#include "rcparse_tab.hpp"
 
 #define IS_OCTDIGIT(c) ((c) >= '0' && (c) <= '7')
 #define IS_HEXDIGIT(c) (((c) >= '0' && (c) <= '9') || ((c) >= 'A' && (c) <= 'F') || ((c) >= 'a' && (c) <= 'f'))
@@ -877,8 +877,8 @@ static char errbuf[256];
 
 #define YY_USE_PROTOS
 
-#line 881 "rcparse_lex.c"
-#line 882 "rcparse_lex.c"
+#line 881 "rcparse_lex.cpp"
+#line 882 "rcparse_lex.cpp"
 
 #define INITIAL 0
 
@@ -1098,7 +1098,7 @@ YY_DECL
 #line 69 "rcparse.l"
 
 
-#line 1102 "rcparse_lex.c"
+#line 1102 "rcparse_lex.cpp"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -1698,7 +1698,7 @@ YY_RULE_SETUP
 #line 264 "rcparse.l"
 ECHO;
 	YY_BREAK
-#line 1702 "rcparse_lex.c"
+#line 1702 "rcparse_lex.cpp"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 

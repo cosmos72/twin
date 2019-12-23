@@ -27,7 +27,7 @@
 #include "hw_multi.h"
 
 #include "rctypes.h"
-#include "rcparse_tab.h"
+#include "rcparse_tab.hpp"
 #include "rcrun.h"
 
 #ifdef CONF_WM_RC
