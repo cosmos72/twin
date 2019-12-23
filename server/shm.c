@@ -134,10 +134,10 @@ byte shm_init(size_t len) {
 #endif
 
 #ifdef CONF__ALLOC
-      if ((M = S = (void *)mmap((byte *)AllocStatHighest() + (1l << 24), L, PROT_READ | PROT_WRITE,
+      if ((M = S = (byte *)mmap((byte *)AllocStatHighest() + (1l << 24), L, PROT_READ | PROT_WRITE,
                                 MAP_FILE | MAP_SHARED, fd, 0)) == NOCORE)
 #endif
-        M = S = (void *)mmap(0, L, PROT_READ | PROT_WRITE, MAP_FILE | MAP_SHARED, fd, 0);
+        M = S = (byte *)mmap(0, L, PROT_READ | PROT_WRITE, MAP_FILE | MAP_SHARED, fd, 0);
 
       if (M != NOCORE) {
         S += GL_SIZE; /* reserve the first part for globals */

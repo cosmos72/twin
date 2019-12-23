@@ -79,6 +79,7 @@ static byte WMFindBorderWindow(window W, dat u, dat v, byte Border, hwattr *PtrA
   hwfont *BorderFont, Font;
   ldat k;
   uldat Attrib;
+  hwattr extra_u;
   hwcol Color;
   dat rev_u, rev_v;
   dat XWidth, YWidth;
@@ -86,7 +87,6 @@ static byte WMFindBorderWindow(window W, dat u, dat v, byte Border, hwattr *PtrA
   byte Horiz, Vert;
   byte Close, Resize, NMenuWin, BarX, BarY;
   sbyte Back_Fwd, i;
-  byte extra_u;
 
   if (!W)
     return Found;
@@ -311,7 +311,7 @@ static byte WMFindBorderWindow(window W, dat u, dat v, byte Border, hwattr *PtrA
     FlPressed = ttrue;
   }
 
-  extra_u = EncodeToHWAttrExtra(Found, extra_u, !Border, FlPressed);
+  extra_u = EncodeToHWAttrExtra((tpos)Found, (tternary)extra_u, (tbool)!Border, (tbool)FlPressed);
   *PtrAttr = HWATTR3(Color, Font, extra_u);
 
   return Found;

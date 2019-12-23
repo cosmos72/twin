@@ -396,7 +396,7 @@ static byte InitDisplayHW(display_hw D_HW) {
 #define TRY4(hw) (tried++, module_InitHW(hw, strlen(hw)))
 
   if (!arg || !*arg) {
-    success = TRY4("-hw=gfx") || TRY4("-hw=X11") || TRY4("-hw=twin") ||
+    success = TRY4("-hw=xft") || TRY4("-hw=gfx") || TRY4("-hw=X11") || TRY4("-hw=twin") ||
 #if 0 /* cannot use `--hw=display' inside twdisplay! */
 	TRY4("-hw=display") ||
 #endif

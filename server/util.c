@@ -1403,7 +1403,7 @@ byte AssignId(CONST fn_obj Fn_Obj, obj Obj) {
     case gadget_magic:
     case window_magic:
     case screen_magic:
-    case group_magic:
+    case ggroup_magic:
     case menuitem_magic:
     case menu_magic:
     case msgport_magic:
@@ -1436,7 +1436,7 @@ void DropId(obj Obj) {
     case gadget_magic:
     case window_magic:
     case screen_magic:
-    case group_magic:
+    case ggroup_magic:
     case menuitem_magic:
     case menu_magic:
     case msgport_magic:

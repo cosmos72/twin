@@ -1,0 +1,156 @@
+diff --git a/configure.ac b/configure.ac
+index 7640d31..39d073c 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -3,7 +3,7 @@
+ 
+ AC_PREREQ([2.65])
+ AC_INIT([twin], [0.8.0], [BUG-REPORT-ADDRESS])
+-AC_CONFIG_SRCDIR([server/main.c])
++AC_CONFIG_SRCDIR([server/main.cpp])
+ AC_CONFIG_HEADERS([include/config.h])
+ AC_CONFIG_MACRO_DIR([m4])
+ AC_CONFIG_MACRO_DIRS([m4])
+@@ -22,7 +22,7 @@ LTDL_INIT([recursive])
+ 
+ # Checks for programs.
+ AC_PROG_CC
+-dnl AC_PROG_CXX
++AC_PROG_CXX
+ AM_PROG_AS
+ AC_PROG_INSTALL
+ AC_PROG_LIBTOOL
+@@ -48,7 +48,7 @@ if test "$have_x" = yes; then
+   AC_SUBST(LIBX11, "-lX11")
+ fi
+ 
+-dnl AC_LANG_PUSH([C++])
++AC_LANG_PUSH([C++])
+ 
+ AC_FUNC_ALLOCA
+ AC_HEADER_TIME
+@@ -77,15 +77,15 @@ TW_C_FEATURES
+ 
+ # C flags '-g -O2' are already tested by AC_PROG_CC
+ # C flags '-p -pg' are incompatible with -fomit-frame-pointer
+-initial_CFLAGS="$CFLAGS"
++initial_CXXFLAGS="$CXXFLAGS"
+ for try_flag in -fomit-frame-pointer -fno-strict-aliasing -pipe -Wall -Wshadow \
+                  -Wno-uninitialized -Wno-unused -Wundef  -Wcast-qual -Wcast-align -Wpointer-arith  \
+                  -Wwrite-strings \
+-                 -Wstrict-prototypes -Wbad-function-cast -Wold-style-declaration -Wold-style-definition
++                 # -Wstrict-prototypes -Wbad-function-cast -Wold-style-declaration -Wold-style-definition
+                  # -Wsign-compare
+ do
+-  save_CFLAGS="$CFLAGS"
+-  CFLAGS="$CFLAGS $try_flag"
++  save_CXXFLAGS="$CXXFLAGS"
++  CXXFLAGS="$CXXFLAGS $try_flag"
+   try_flag_id="`echo \"$try_flag\" | tr - _`"
+   AC_CACHE_CHECK(for C compiler flag $try_flag, ac_cv_cflag$try_flag_id, AC_TRY_COMPILE(
+   [
+@@ -98,12 +98,12 @@ do
+     eval "ac_cv_cflag$try_flag_id=yes"
+   ], [
+     eval "ac_cv_cflag$try_flag_id=no"
+-    CFLAGS="$save_CFLAGS"
++    CXXFLAGS="$save_CXXFLAGS"
+   ]))
+ done
+-custom_CFLAGS="$CFLAGS"
+-CFLAGS="$initial_CFLAGS"
+-dnl AC_LANG_POP([C++])
++custom_CXXFLAGS="$CXXFLAGS"
++CXXFLAGS="$initial_CXXFLAGS"
++AC_LANG_POP([C++])
+ 
+ ################################################################################
+ 
+@@ -309,7 +309,7 @@ AM_CONDITIONAL(LIBSOCKET_la,     [test "$enable_socket"     = yes])
+ AM_CONDITIONAL(LIBTERM_la,       [test "$enable_term"       = yes])
+ AM_CONDITIONAL(LIBWM_la,         [test "$enable_wm"         = yes])
+ 
+-CFLAGS="$custom_CFLAGS"
++CXXFLAGS="$custom_CXXFLAGS"
+ 
+ AC_SUBST(LDFLAGS_BIN_EXPORT_DYNAMIC, "$LDFLAGS_BIN_EXPORT_DYNAMIC")
+          
+diff --git a/scripts/gensources.sh b/scripts/gensources.sh
+index 3465d66..ac2315b 100644
+--- a/scripts/gensources.sh
++++ b/scripts/gensources.sh
+@@ -13,7 +13,7 @@ do
+   $M4 -I include < "$i" > "$o"
+ done
+ 
+-for i in md5.c missing.c
++for i in md5.cpp missing.cpp
+ do
+   echo "$LN -f -n \"server/$i\" \"libs/libTw/$i\""
+   $LN -f -n "server/$i" "libs/libTw/$i"
+@@ -22,11 +22,11 @@ done
+ echo "cd server"
+ cd server
+ 
+-echo "$FLEX -o rcparse_lex.c rcparse.l"
+-$FLEX -o rcparse_lex.c rcparse.l
++echo "$FLEX -o rcparse_lex.cpp rcparse.l"
++$FLEX -o rcparse_lex.cpp rcparse.l
+ 
+-echo "$BISON --no-lines --defines -o rcparse_tab.c rcparse.y"
+-$BISON --no-lines --defines -o rcparse_tab.c rcparse.y
++echo "$BISON --no-lines --defines -o rcparse_tab.cpp rcparse.y"
++$BISON --no-lines --defines -o rcparse_tab.cpp rcparse.y
+ 
+ echo "cd .."
+ cd ..
+diff --git a/server/Makefile.am b/server/Makefile.am
+index fbba13e..9674455 100644
+--- a/server/Makefile.am
++++ b/server/Makefile.am
+@@ -20,14 +20,14 @@ endif
+ AM_CPPFLAGS           = -I$(top_srcdir)/include $(LTDLINCL) -DPKG_LIBDIR="\"$(pkglibdir)\""
+ twin_CPPFLAGS         = -I$(top_srcdir)/include $(LTDLINCL) -DBINDIR="\"$(bindir)\""
+ 
+-twdisplay_SOURCES     = alloc.c display.c dl_helper.c missing.c hw.c
++twdisplay_SOURCES     = alloc.cpp display.cpp dl_helper.cpp missing.cpp hw.cpp
+ twin_SOURCES          = wrapper.c
+-twin_server_SOURCES   = alloc.c builtin.c data.c dl.c dl_helper.c draw.c extensions/ext_query.c extreg.c hw.c hw_multi.c main.c methods.c missing.c printk.c privilege.c remote.c resize.c scroller.c util.c
++twin_server_SOURCES   = alloc.cpp builtin.cpp data.cpp dl.cpp dl_helper.cpp draw.cpp extensions/ext_query.cpp extreg.cpp hw.cpp hw_multi.cpp main.cpp methods.cpp missing.cpp printk.cpp privilege.cpp remote.cpp resize.cpp scroller.cpp util.cpp
+ 
+-librcparse_la_SOURCES = rcparse_tab.c rcparse_lex.c
+-libterm_la_SOURCES    = pty.c tterm.c tty.c
+-libsocket_la_SOURCES  = md5.c socket.c
+-libwm_la_SOURCES      = rcopt.c rcrun.c shm.c wm.c
++librcparse_la_SOURCES = rcparse_tab.cpp rcparse_lex.cpp
++libterm_la_SOURCES    = pty.cpp tterm.cpp tty.cpp
++libsocket_la_SOURCES  = md5.cpp socket.cpp
++libwm_la_SOURCES      = rcopt.cpp rcrun.cpp shm.cpp wm.cpp
+ 
+ twdisplay_LDFLAGS     = -export-dynamic $(LDFLAGS_BIN_EXPORT_DYNAMIC)
+ twin_server_LDFLAGS   = -export-dynamic $(LDFLAGS_BIN_EXPORT_DYNAMIC)
+diff --git a/server/hw/Makefile.am b/server/hw/Makefile.am
+index 0a3d0db..b97414d 100644
+--- a/server/hw/Makefile.am
++++ b/server/hw/Makefile.am
+@@ -27,13 +27,13 @@ libhw_X11_la_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/server $(X11_CPP
+ libhw_xft_la_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/server $(X11_CPPFLAGS) $(XFT_CFLAGS)
+ libhw_gfx_la_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/server $(X11_CPPFLAGS) -DPKG_DATADIR="\"$(pkgdatadir)\""
+ 
+-libhw_display_la_SOURCES = hw_display.c
+-libhw_X11_la_SOURCES  = hw_X11.c
+-libhw_xft_la_SOURCES  = hw_xft.c
+-libhw_gfx_la_SOURCES  = hw_gfx.c
+-libhw_ggi_la_SOURCES  = hw_ggi.c
+-libhw_tty_la_SOURCES  = hw_tty.c
+-libhw_twin_la_SOURCES = hw_twin.c
++libhw_display_la_SOURCES = hw_display.cpp
++libhw_X11_la_SOURCES  = hw_X11.cpp
++libhw_xft_la_SOURCES  = hw_xft.cpp
++libhw_gfx_la_SOURCES  = hw_gfx.cpp
++libhw_ggi_la_SOURCES  = hw_ggi.cpp
++libhw_tty_la_SOURCES  = hw_tty.cpp
++libhw_twin_la_SOURCES = hw_twin.cpp
+ 
+ AM_LDFLAGS            = -export-dynamic -export-symbols-regex '^(Init|Quit)Module$$' -release $(PACKAGE_VERSION)
+ libhw_X11_la_LDFLAGS  = -export-dynamic -export-symbols-regex '^(Init|Quit)Module$$' -release $(PACKAGE_VERSION) $(X11_LDFLAGS)

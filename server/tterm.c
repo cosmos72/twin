@@ -99,9 +99,9 @@ static void TermWriteHWFontWindow(window W, uldat len, CONST hwfont *hwData) {
   byte *Data, *sData;
   uldat n;
 
-  if ((Data = sData = AllocMem(n = len))) {
+  if ((Data = sData = (byte *)AllocMem(n = len))) {
     while (n--)
-      *Data++ = inv_charset(*hwData++);
+      *Data++ = (byte)inv_charset(*hwData++);
 
     RemoteWindowWriteQueue(W, len, sData);
     FreeMem(sData);

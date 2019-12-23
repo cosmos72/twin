@@ -15,7 +15,7 @@
 #include "privilege.h"
 
 #ifdef TW_HAVE_GRP_H
-#include <grp.h> // conflicts with 'typedef s_group *group' in twin.h
+#include <grp.h>
 #endif
 
 gid_t get_tty_grgid(void) {

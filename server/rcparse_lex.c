@@ -1664,15 +1664,15 @@ case 88:
 YY_RULE_SETUP
 #line 239 "rcparse.l"
 {
-            char *buf = AllocMem(256 + strlen(yytext));
-            if (buf) {
+        char *buf = (char *)AllocMem(256 + strlen(yytext));
+        if (buf) {
             sprintf(buf, "twin: %.200s:%d: unterminated string:\n%s\n",
                 FILE_NAME, LINE_NO, yytext);
                 YY_FATAL_ERROR(buf);
             } else {
             YY_FATAL_ERROR("twin: unterminated string\n");
-            }
         }
+    }
 	YY_BREAK
 case 89:
 YY_RULE_SETUP
@@ -2707,12 +2707,12 @@ void yyfree (void * ptr )
 
 
 
-int set_yy_file(char *path) {
+int set_yy_file(CONST char *path) {
     uldat len;
     FILE *f;
     
     if (!path)
-    return 1;
+        return 1;
     
     if (read_stack_curr >= MAX_READ_DEPTH) {
         fprintf(stderr, "twin: %s:%d: `Read' commands nested too deeply!\n",
@@ -2727,7 +2727,7 @@ int set_yy_file(char *path) {
     
     read_stack[read_stack_curr++] = YY_CURRENT_BUFFER;
     LINE_NO = 1;
-    FILE_NAME = my_malloc(len);
+    FILE_NAME = (char *)my_malloc(len);
     CopyMem(path, FILE_NAME, len);
 
     yy_switch_to_buffer(yy_create_buffer(yyin = f, YY_BUF_SIZE));

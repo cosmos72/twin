@@ -147,7 +147,7 @@ PROTO(void,v,     SetColors,Window,2, window,x,W, udat,_,mask, hwcol,_,colgadget
 PROTO(void,v,     Configure,Window,2, window,x,W, byte,_,mask, dat,_,x, dat,_,y, dat,_,minw, dat,_,minh, dat,_,maxw, dat,_,maxh)
 PROTO(row,x,  FindRowByCode,Window,0, window,x,W, dat,_,code)
 
-PROTO(group,x,      Create,Group,0)
+PROTO(group,x,     Create,Group,0)
 PROTO(void,v, InsertGadget,Group,2, group,x,g, gadget,x,G)
 PROTO(void,v, RemoveGadget,Group,2, group,x,g, gadget,x,G)
 

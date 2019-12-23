@@ -84,7 +84,7 @@ typedef struct s_window *window;
 typedef struct s_fn_window *fn_window;
 typedef struct s_screen *screen;
 typedef struct s_fn_screen *fn_screen;
-typedef struct s_group *group; // FIXME change name: 'group' conflicts with #include <grp.h>
+typedef struct s_group *ggroup;
 typedef struct s_fn_group *fn_group;
 typedef struct s_row *row;
 typedef struct s_fn_row *fn_row;
@@ -355,8 +355,8 @@ struct s_gadget {
   /* gadget */
   hwcol ColText, ColSelect, ColDisabled, ColSelectDisabled;
   udat Code;
-  gadget G_Prev, G_Next; /* list in the same group */
-  group Group;
+  gadget G_Prev, G_Next; /* list in the same ggroup */
+  ggroup Group;
 };
 
 struct s_fn_gadget {
@@ -425,7 +425,7 @@ struct s_fn_gadget {
 #define GADGETFL_DISABLED 0x0020
 #define GADGETFL_TEXT_DEFCOL 0x0040
 /* this makes the gadget 'checkable' : can be in 'checked' or 'unchecked' state.
- * also necessary to put the gadget in a group */
+ * also necessary to put the gadget in a ggroup */
 #define GADGETFL_TOGGLE 0x0080
 #define GADGETFL_PRESSED 0x0100
 
@@ -724,31 +724,31 @@ struct s_fn_screen {
 #define SCREENFL_BACK_PRESSED 0x0020
 #define SCREENFL_NOTVISIBLE 0x8000
 
-/* group -- gadget group */
+/* ggroup -- gadget group */
 
 struct s_group {
   uldat Id;
   fn_group Fn;
-  group Prev, Next; /* list in the same msgport */
+  ggroup Prev, Next; /* list in the same msgport */
   msgport MsgPort;
-  /* group */
-  gadget FirstG, LastG; /* list in this group */
+  /* ggroup */
+  gadget FirstG, LastG; /* list in this ggroup */
   gadget SelectG;
 };
 
 struct s_fn_group {
   uldat Magic, Size, Used;
-  group (*Create)(fn_group, msgport Parent);
-  void (*Insert)(group, msgport MsgPort, group Prev, group Next);
-  void (*Remove)(group);
-  void (*Delete)(group);
-  void (*ChangeField)(group, udat field, uldat CLEARMask, uldat XORMask);
-  /* group */
+  ggroup (*Create)(fn_group, msgport Parent);
+  void (*Insert)(ggroup, msgport MsgPort, ggroup Prev, ggroup Next);
+  void (*Remove)(ggroup);
+  void (*Delete)(ggroup);
+  void (*ChangeField)(ggroup, udat field, uldat CLEARMask, uldat XORMask);
+  /* ggroup */
   fn_obj Fn_Obj; /* backup of overloaded functions */
-  void (*InsertGadget)(group, gadget);
-  void (*RemoveGadget)(group, gadget);
-  gadget (*GetSelectedGadget)(group);
-  void (*SetSelectedGadget)(group, gadget);
+  void (*InsertGadget)(ggroup, gadget);
+  void (*RemoveGadget)(ggroup, gadget);
+  gadget (*GetSelectedGadget)(ggroup);
+  void (*SetSelectedGadget)(ggroup, gadget);
 };
 
 /* row */
@@ -1109,13 +1109,13 @@ struct s_msgport {
   timevalue CallTime, PauseDuration;
   remotedata RemoteData;
   msg FirstMsg, LastMsg;
-  menu FirstMenu, LastMenu;    /* menus created by this MsgPort */
-  widget FirstW, LastW;        /* widgets owned by this MsgPort */
-  group FirstGroup, LastGroup; /* groups owned by this MsgPort */
-  mutex FirstMutex, LastMutex; /* mutexes owned by this MsgPort */
-  uldat CountE, SizeE;         /* number of extensions used by this MsgPort */
-  extension *Es;               /* extensions used by this MsgPort */
-  display_hw AttachHW;         /* that was attached as told by MsgPort */
+  menu FirstMenu, LastMenu;     /* menus created by this MsgPort */
+  widget FirstW, LastW;         /* widgets owned by this MsgPort */
+  ggroup FirstGroup, LastGroup; /* groups owned by this MsgPort */
+  mutex FirstMutex, LastMutex;  /* mutexes owned by this MsgPort */
+  uldat CountE, SizeE;          /* number of extensions used by this MsgPort */
+  extension *Es;                /* extensions used by this MsgPort */
+  display_hw AttachHW;          /* that was attached as told by MsgPort */
 };
 struct s_fn_msgport {
   uldat Magic, Size, Used;
@@ -1416,7 +1416,7 @@ struct s_fn_display_hw {
 #define gadget_magic_id 2
 #define window_magic_id 3
 #define screen_magic_id 4
-#define group_magic_id 5
+#define ggroup_magic_id 5
 #define row_magic_id 6
 #define menuitem_magic_id 7
 #define menu_magic_id 8
@@ -1440,7 +1440,7 @@ struct s_fn_display_hw {
 #define gadget_magic_STR "\x32"
 #define window_magic_STR "\x33"
 #define screen_magic_STR "\x34"
-#define group_magic_STR "\x35"
+#define ggroup_magic_STR "\x35"
 #define row_magic_STR "\x36"
 #define menuitem_magic_STR "\x37"
 #define menu_magic_STR "\x38"
@@ -1457,7 +1457,7 @@ struct s_fn_display_hw {
 #define gadget_magic ((uldat)0x29867551ul)
 #define window_magic ((uldat)0x31357531ul)
 #define screen_magic ((uldat)0x42659871ul)
-#define group_magic ((uldat)0x5741f326ul)
+#define ggroup_magic ((uldat)0x5741f326ul)
 #define row_magic ((uldat)0x68074ffaul)
 #define menuitem_magic ((uldat)0x7abc8fdeul)
 #define menu_magic ((uldat)0x8bad0bedul)

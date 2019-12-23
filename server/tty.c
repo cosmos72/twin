@@ -952,7 +952,7 @@ static byte grow_newtitle(void) {
     _Max = ((ldat)newMax + (newMax >> 1) + 3) | All->SetUp->MinAllocSize;
     if (_Max > TW_MAXDAT)
       _Max = TW_MAXDAT;
-    if ((_Name = ReAllocMem(newName, _Max))) {
+    if ((_Name = (char *)ReAllocMem(newName, _Max))) {
       newName = _Name;
       newMax = _Max;
       return ttrue;
@@ -1154,7 +1154,7 @@ INLINE void write_ctrl(byte c) {
       return;
     }
     if (c == '?') {
-      DState |= ESques;
+      DState = (ttystate)(DState | ESques);
       return;
     }
     /* FALLTHROUGH */
@@ -1168,7 +1168,7 @@ INLINE void write_ctrl(byte c) {
       Par[nPar] += c - '0';
       return;
     } else
-      DState = ESgotpars | (DState & ESques);
+      DState = (ttystate)(ESgotpars | (DState & ESques));
     /* FALLTHROUGH */
 
   case ESgotpars:
@@ -1492,7 +1492,7 @@ static tbool combine_utf8(hwfont *pc) {
     utf8_count--;
     if (utf8_count == 0)
       *pc = utf8_char;
-    return utf8_count == 0;
+    return (tbool)(utf8_count == 0);
   }
 
   if ((c & 0xe0) == 0xc0) {

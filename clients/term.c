@@ -448,7 +448,7 @@ static void TwinTermH(void) {
       if (Event->EventControl.Code == TW_MSG_CONTROL_OPEN) {
         char **cmd = TokenizeStringVec(Event->EventControl.Len, (char *)Event->EventControl.Data);
         if (cmd) {
-          OpenTerm(cmd[0], cmd);
+          OpenTerm(cmd[0], (TW_CONST char *TW_CONST *)cmd);
           FreeStringVec(cmd);
         }
       }

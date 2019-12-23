@@ -383,7 +383,7 @@ static menu sockCreateMenu(hwcol ColItem, hwcol ColSelect, hwcol ColDisabled,
 static msgport sockCreateMsgPort(byte NameLen, CONST char *Name);
 static msgport sockFindMsgPort(msgport Prev, byte NameLen, CONST char *Name);
 
-static group sockCreateGroup(void);
+static ggroup sockCreateGroup(void);
 
 static obj sockPrevObj(obj Obj);
 static obj sockNextObj(obj Obj);
@@ -394,10 +394,10 @@ static widget sockFirstWidget(widget W);
 static msgport sockFirstMsgPort(void);
 static menu sockFirstMenu(msgport MsgPort);
 static widget sockFirstW(msgport MsgPort);
-static group sockFirstGroup(msgport MsgPort);
+static ggroup sockFirstGroup(msgport MsgPort);
 static mutex sockFirstMutex(msgport MsgPort);
 static menuitem sockFirstMenuItem(menu Menu);
-static gadget sockFirstGadget(group Group);
+static gadget sockFirstGadget(ggroup Group);
 
 static byte sockSendToMsgPort(msgport MsgPort, udat Len, CONST byte *Data);
 static void sockBlindSendToMsgPort(msgport MsgPort, udat Len, CONST byte *Data);
@@ -1295,11 +1295,11 @@ static msgport sockFindMsgPort(msgport Prev, byte NameLen, CONST char *Name) {
   return M;
 }
 
-static group sockCreateGroup(void) {
+static ggroup sockCreateGroup(void) {
   msgport Owner;
   if ((Owner = RemoteGetMsgPort(Slot)))
     return Do(Create, Group)(FnGroup, Owner);
-  return (group)0;
+  return (ggroup)0;
 }
 
 static obj sockPrevObj(obj Obj) { return Obj ? Obj->Prev : Obj; }
@@ -1311,10 +1311,10 @@ static widget sockFirstWidget(widget W) { return W ? W->FirstW : W; }
 static msgport sockFirstMsgPort(void) { return All->FirstMsgPort; }
 static menu sockFirstMenu(msgport MsgPort) { return MsgPort ? MsgPort->FirstMenu : (menu)0; }
 static widget sockFirstW(msgport MsgPort) { return MsgPort ? MsgPort->FirstW : (widget)0; }
-static group sockFirstGroup(msgport MsgPort) { return MsgPort ? MsgPort->FirstGroup : (group)0; }
+static ggroup sockFirstGroup(msgport MsgPort) { return MsgPort ? MsgPort->FirstGroup : (ggroup)0; }
 static mutex sockFirstMutex(msgport MsgPort) { return MsgPort ? MsgPort->FirstMutex : (mutex)0; }
 static menuitem sockFirstMenuItem(menu Menu) { return Menu ? Menu->FirstI : (menuitem)0; }
-static gadget sockFirstGadget(group Group) { return Group ? Group->FirstG : (gadget)0; }
+static gadget sockFirstGadget(ggroup Group) { return Group ? Group->FirstG : (gadget)0; }
 
 static all sockGetAll(void) { return All; }
 

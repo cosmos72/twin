@@ -103,6 +103,6 @@ extern int line_no[];
 #define LINE_NO line_no[read_stack_curr - 1]
 #define FILE_NAME file_name[read_stack_curr - 1]
 
-int set_yy_file(char *path);
+int set_yy_file(CONST char *path);
 
 #endif /* _TWIN_RCTYPES_H */

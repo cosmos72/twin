@@ -29,12 +29,14 @@ define(`tX', X)
 define(`tY', Y)
 define(`tO', _)
 
-define(`ARG', `"$3"ifelse($3, x, TRIM($2)_magic_STR, $3, X, TRIM($2)_magic_STR, $3, Y, TRIM($2)_magic_STR, TWS_`'TRIM($2)_STR)')
+define(`group', ggroup)
+
+define(`ARG', `"$3" ifelse($3, x, TRIM($2)_magic_STR, $3, X, TRIM($2)_magic_STR, $3, Y, TRIM($2)_magic_STR, TWS_`'TRIM($2)_STR)')
 
 define(`PARSE', `ifelse($#, 2, `', `ARG($1,$2,t$3)`'PARSE(incr($1), NSHIFT(4, $@))')')
 
 define(`PROTO', `{ 0, 0, "CHAIN($3, $4)",
-    "$5"ARG(0, $1, $2)`'PARSE(1, NSHIFT(5, $@)) },')
+    "$5" ARG(0, $1, $2)`'PARSE(1, NSHIFT(5, $@)) },')
 
 define(`PROTOSyncSocket', `PROTO($@)')
 define(`PROTOFindFunction', `PROTO($@)')

@@ -617,7 +617,7 @@ static gadget CreateGadget(fn_gadget Fn_Gadget, msgport Owner, widget Parent, da
     G->Code = Code;
 
     G->G_Prev = G->G_Next = (gadget)0;
-    G->Group = (group)0;
+    G->Group = (ggroup)0;
 
     if (G_USE(G, USETEXT)) {
       Size = (ldat)XWidth * YWidth;
@@ -742,7 +742,7 @@ static gadget CreateEmptyButton(fn_gadget Fn_Gadget, msgport Owner, dat XWidth, 
     }
 
     G->G_Prev = G->G_Next = (gadget)0;
-    G->Group = (group)0;
+    G->Group = (ggroup)0;
   }
   return G;
 #undef _FULL
@@ -1620,12 +1620,12 @@ static struct s_fn_screen _FnScreen = {
     DeActivateMenuScreen,
 };
 
-/* group */
+/* ggroup */
 
-static group CreateGroup(fn_group Fn_Group, msgport MsgPort) {
-  group Group = (group)0;
+static ggroup CreateGroup(fn_group Fn_Group, msgport MsgPort) {
+  ggroup Group = (ggroup)0;
 
-  if (MsgPort && (Group = (group)Fn_Group->Fn_Obj->Create((fn_obj)Fn_Group))) {
+  if (MsgPort && (Group = (ggroup)Fn_Group->Fn_Obj->Create((fn_obj)Fn_Group))) {
     Fn_Group->Fn_Obj->Used++;
 
     Group->FirstG = Group->LastG = Group->SelectG = (gadget)0;
@@ -1636,21 +1636,21 @@ static group CreateGroup(fn_group Fn_Group, msgport MsgPort) {
   return Group;
 }
 
-static void InsertGroup(group Group, msgport MsgPort, group Prev, group Next) {
+static void InsertGroup(ggroup Group, msgport MsgPort, ggroup Prev, ggroup Next) {
   if (!Group->MsgPort && MsgPort) {
     InsertGeneric((obj)Group, (obj_parent)&MsgPort->FirstGroup, (obj)Prev, (obj)Next, (ldat *)0);
     Group->MsgPort = MsgPort;
   }
 }
 
-static void RemoveGroup(group Group) {
+static void RemoveGroup(ggroup Group) {
   if (Group->MsgPort) {
     RemoveGeneric((obj)Group, (obj_parent)&Group->MsgPort->FirstGroup, (ldat *)0);
     Group->MsgPort = (msgport)0;
   }
 }
 
-static void DeleteGroup(group Group) {
+static void DeleteGroup(ggroup Group) {
   fn_obj Fn_Obj = Group->Fn->Fn_Obj;
 
   Act(Remove, Group)(Group);
@@ -1662,7 +1662,7 @@ static void DeleteGroup(group Group) {
     FreeMem(Fn_Obj);
 }
 
-static void InsertGadgetGroup(group Group, gadget G) {
+static void InsertGadgetGroup(ggroup Group, gadget G) {
   if (G && !G->Group && !G->G_Prev && !G->G_Next) {
     if ((G->G_Next = Group->FirstG))
       Group->FirstG->G_Prev = G;
@@ -1674,7 +1674,7 @@ static void InsertGadgetGroup(group Group, gadget G) {
   }
 }
 
-static void RemoveGadgetGroup(group Group, gadget G) {
+static void RemoveGadgetGroup(ggroup Group, gadget G) {
   if (G && G->Group == Group) {
     if (G->G_Prev)
       G->G_Prev->G_Next = G->G_Next;
@@ -1687,13 +1687,13 @@ static void RemoveGadgetGroup(group Group, gadget G) {
       Group->LastG = G->G_Prev;
 
     G->G_Prev = G->G_Next = (gadget)0;
-    G->Group = (group)0;
+    G->Group = (ggroup)0;
   }
 }
 
-static gadget GetSelectedGadget(group Group) { return Group->SelectG; }
+static gadget GetSelectedGadget(ggroup Group) { return Group->SelectG; }
 
-static void SetSelectedGadget(group Group, gadget G) {
+static void SetSelectedGadget(ggroup Group, gadget G) {
   if (!G || (G && G->Group == Group)) {
     if (Group->SelectG)
       UnPressGadget(Group->SelectG, ttrue);
@@ -1703,10 +1703,10 @@ static void SetSelectedGadget(group Group, gadget G) {
 }
 
 static struct s_fn_group _FnGroup = {
-    group_magic,       sizeof(struct s_group),
+    ggroup_magic,      sizeof(struct s_group),
     (uldat)1,          CreateGroup,
     InsertGroup,       RemoveGroup,
-    DeleteGroup,       (void (*)(group, udat, uldat, uldat))NoOp,
+    DeleteGroup,       (void (*)(ggroup, udat, uldat, uldat))NoOp,
     &_FnObj,           InsertGadgetGroup,
     RemoveGadgetGroup, GetSelectedGadget,
     SetSelectedGadget,
@@ -2364,7 +2364,7 @@ static msgport CreateMsgPort(fn_msgport Fn_MsgPort, byte NameLen, CONST char *Na
     MsgPort->FirstMsg = MsgPort->LastMsg = (msg)0;
     MsgPort->FirstMenu = MsgPort->LastMenu = (menu)0;
     MsgPort->FirstW = MsgPort->LastW = (widget)0;
-    MsgPort->FirstGroup = MsgPort->LastGroup = (group)0;
+    MsgPort->FirstGroup = MsgPort->LastGroup = (ggroup)0;
     MsgPort->FirstMutex = MsgPort->LastMutex = (mutex)0;
     MsgPort->CountE = MsgPort->SizeE = (uldat)0;
     MsgPort->Es = (extension *)0;

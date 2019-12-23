@@ -1393,7 +1393,7 @@ static byte ReadGlobals(void) {
   return ttrue;
 }
 
-static byte rcparse(str path);
+static byte rcparse(cstr path);
 
 static byte rcload(void) {
   str path;

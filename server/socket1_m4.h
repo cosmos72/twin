@@ -53,6 +53,8 @@
 
 
 
+
+
 case order_FindFunction:
     if (N >= 4)
 	a[0]_any = (tany)sockFindFunction((byte)a[1]_any, (CONST char *)a[2]_vec, (byte)a[3]_any, (CONST char *)a[4]_vec);
@@ -307,23 +309,23 @@ case order_CreateGroup:
 
 case order_InsertGadgetGroup:
     if (N >= 2)
-	Act(InsertGadget,(group)a[1]_obj)((group)a[1]_obj, (gadget)a[2]_obj);
+	Act(InsertGadget,(ggroup)a[1]_obj)((ggroup)a[1]_obj, (gadget)a[2]_obj);
     break;
 
 case order_RemoveGadgetGroup:
     if (N >= 2)
-	Act(RemoveGadget,(group)a[1]_obj)((group)a[1]_obj, (gadget)a[2]_obj);
+	Act(RemoveGadget,(ggroup)a[1]_obj)((ggroup)a[1]_obj, (gadget)a[2]_obj);
     break;
 
 
 case order_GetSelectedGadgetGroup:
     if (N >= 1)
-	a[0]_obj = (obj)Act(GetSelectedGadget,(group)a[1]_obj)((group)a[1]_obj);
+	a[0]_obj = (obj)Act(GetSelectedGadget,(ggroup)a[1]_obj)((ggroup)a[1]_obj);
     break;
 
 case order_SetSelectedGadgetGroup:
     if (N >= 2)
-	Act(SetSelectedGadget,(group)a[1]_obj)((group)a[1]_obj, (gadget)a[2]_obj);
+	Act(SetSelectedGadget,(ggroup)a[1]_obj)((ggroup)a[1]_obj, (gadget)a[2]_obj);
     break;
 
 
@@ -446,7 +448,7 @@ case order_FirstMenuItem:
 
 case order_FirstGadget:
     if (N >= 1)
-	a[0]_obj = (obj)sockFirstGadget((group  )a[1]_obj);
+	a[0]_obj = (obj)sockFirstGadget((ggroup  )a[1]_obj);
     break;
 
 

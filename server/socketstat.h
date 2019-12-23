@@ -7,6 +7,21 @@
  *
  */
 
+/* FIXME: remove these */
+#define TWS_ggroup_Id TWS_group_Id
+#define TWS_ggroup_Prev TWS_group_Prev
+#define TWS_ggroup_Next TWS_group_Next
+#define TWS_ggroup_Parent TWS_group_Parent
+#define TWS_ggroup_Prev_List TWS_group_Prev_List
+#define TWS_ggroup_Next_List TWS_group_Next_List
+#define TWS_ggroup_Parent_List TWS_group_Parent_List
+#define TWS_ggroup_Owner TWS_group_Owner
+#define TWS_ggroup_MsgPort TWS_group_MsgPort
+#define TWS_ggroup_FirstG TWS_group_FirstG
+#define TWS_ggroup_LastG TWS_group_LastG
+#define TWS_ggroup_SelectG TWS_group_SelectG
+#define TWS_ggroup_ChildrenG_List TWS_group_ChildrenG_List
+
 #define TWScase(objtype, field, fieldtype)                                                         \
   case CAT4(TWS_, objtype, _, field):                                                              \
     /* ensure type size WAS negotiated */                                                          \
@@ -317,11 +332,11 @@ static byte sockStatScreen(screen x, tsfield TSF) {
   return ttrue;
 }
 
-static byte sockStatGroup(group x, tsfield TSF) {
+static byte sockStatGroup(ggroup x, tsfield TSF) {
   switch (TSF->hash) {
-    TWScase(group, FirstG, obj);
-    TWScase(group, LastG, obj);
-    TWScase(group, SelectG, obj);
+    TWScase(ggroup, FirstG, obj);
+    TWScase(ggroup, LastG, obj);
+    TWScase(ggroup, SelectG, obj);
   case TWS_group_ChildrenG_List:
     TSF->TWS_field_vecV = sockAllocListDeltaObjs((obj)x->FirstG, &TSF->TWS_field_vecL,
                                                  fieldTypeDelta(gadget, G_Next));
@@ -504,8 +519,8 @@ static void sockStat(obj x, udat n, CONST byte *in) {
         ok = sockStatScreen((screen)x, TSF + i) || sockStatWidget((widget)x, TSF + i) ||
              sockStatObj(x, TSF + i);
         break;
-      case group_magic_id:
-        ok = sockStatGroup((group)x, TSF + i) || sockStatObj(x, TSF + i);
+      case ggroup_magic_id:
+        ok = sockStatGroup((ggroup)x, TSF + i) || sockStatObj(x, TSF + i);
         break;
       case menuitem_magic_id:
         ok = sockStatMenuItem((menuitem)x, TSF + i) || sockStatRow((row)x, TSF + i) ||
