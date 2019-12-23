@@ -182,7 +182,7 @@ static void gfx_DrawColor(myXChar *buf, udat buflen, hwcol col, hwattr gfx, int 
     }                                                                                              \
   } while (0)
 
-INLINE void X11_Mogrify(dat x, dat y, uldat len) {
+INLINE void X11_Mogrify(dat x, dat y, ldat len) {
   hwattr *V, *oV, bufgfx;
   hwcol col, _col;
   udat buflen = 0;
@@ -191,6 +191,9 @@ INLINE void X11_Mogrify(dat x, dat y, uldat len) {
   myXChar buf[TW_SMALLBUFF];
   int xbegin, ybegin;
 
+  if (len <= 0) {
+    return;
+  }
   if (xhw_view) {
     if (x >= xhw_endx || x + len < xhw_startx || y < xhw_starty || y >= xhw_endy)
       return;
@@ -320,13 +323,13 @@ static void GfxUse(char *arg, byte *how) {
     *how = GFX_USE_BG;
 }
 
-typedef struct {
+typedef struct s_gfx_options {
   char *dpy, *dpy0, *fontname, *fontname0;
   char *charset, *charset0;
   CONST char *file_bg, *file_root;
   CONST char *file_theme;
   uldat file_bg_len, file_root_len, file_theme_len;
-  udat fontwidth, fontheight;
+  dat fontwidth, fontheight;
   byte drag, noinput;
 } gfx_options;
 
@@ -385,8 +388,8 @@ static byte gfx_ParseOptions(gfx_options *opt, char *arg) {
             break;
           }
         }
-        opt->fontwidth = Min2(TW_MAXUDAT, n2 > 0 ? n1 : n1 / 2);
-        opt->fontheight = Min2(TW_MAXUDAT, n2 > 0 ? n2 : n1);
+        opt->fontwidth = Min2(TW_MAXDAT, n2 > 0 ? n1 : n1 / 2);
+        opt->fontheight = Min2(TW_MAXDAT, n2 > 0 ? n2 : n1);
       }
       arg = strchr(arg, ',');
     } else if (!strncmp(arg, "charset=", 8)) {
@@ -476,7 +479,7 @@ cleanup:
 }
 
 /* return name of selected font in allocated (char *) */
-static char *gfx_AutodetectFont(udat fontwidth, udat fontheight) {
+static char *gfx_AutodetectFont(dat fontwidth, dat fontheight) {
   CONST char *patterns[] = {
       /* "-gnu-unifont-medium-r-normal-*-%u-*-*-*-*-*-iso10646-1", double-width chars not supported
          yet */
@@ -508,7 +511,7 @@ static char *gfx_AutodetectFont(udat fontwidth, udat fontheight) {
       continue;
 
     for (j = 0; j < n_fonts && !selected; j++) {
-      uldat width = info[j].max_bounds.width;
+      dat width = info[j].max_bounds.width;
 
       if (width == fontwidth && width == info[j].min_bounds.width &&
           fontheight == info[j].ascent + info[j].descent && info[j].direction == FontLeftToRight &&
@@ -522,7 +525,7 @@ static char *gfx_AutodetectFont(udat fontwidth, udat fontheight) {
   return selected;
 }
 
-static byte gfx_LoadFont(CONST char *fontname, udat fontwidth, udat fontheight) {
+static byte gfx_LoadFont(CONST char *fontname, dat fontwidth, dat fontheight) {
   char *alloc_fontname = 0;
   byte loaded = tfalse;
 
@@ -535,11 +538,11 @@ static byte gfx_LoadFont(CONST char *fontname, udat fontwidth, udat fontheight) 
     loaded = ttrue;
 
     xwfont = xsfont->min_bounds.width;
-    xwidth = xwfont * (unsigned)(HW->X = GetDisplayWidth());
+    xwidth = xwfont * (int)(HW->X = GetDisplayWidth());
     xhfont = (xupfont = xsfont->ascent) + xsfont->descent;
-    xheight = xhfont * (unsigned)(HW->Y = GetDisplayHeight());
+    xheight = xhfont * (int)(HW->Y = GetDisplayHeight());
 
-    printk("      selected %ux%u font `" SS "'\n", (unsigned)xwfont, (unsigned)xhfont, fontname);
+    printk("      selected %dx%d font `" SS "'\n", (int)xwfont, (int)xhfont, fontname);
   }
   if (alloc_fontname)
     FreeMem(alloc_fontname);

@@ -106,7 +106,7 @@ static void X11_FlushVideo(void) {
 
   /* first burst all changes */
   if (ChangedVideoFlag) {
-    for (i = 0; i < (ldat)DisplayHeight * 2; i++) {
+    for (i = 0; i < (uldat)DisplayHeight * 2; i++) {
       start = ChangedVideo[i >> 1][i & 1][0];
       end = ChangedVideo[i >> 1][i & 1][1];
 

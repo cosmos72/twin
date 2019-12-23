@@ -3,7 +3,7 @@
  * when #include-ing into hw_xyz.c.
  */
 
-INLINE void X11_Mogrify(dat x, dat y, uldat len);
+INLINE void X11_Mogrify(dat x, dat y, ldat len);
 INLINE ldat diff(ldat x, ldat y);
 static ldat calcFontScore(udat fontwidth, udat fontheight, ldat width, ldat height);
 static byte X11_LoadFont(CONST char *fontname, udat fontwidth, udat fontheight);

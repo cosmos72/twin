@@ -2,7 +2,7 @@
 
 #define NEST 4
 struct x11_data {
-  unsigned int xwidth, xheight;
+  int xwidth, xheight;
   int xwfont, xhfont, xupfont;
 
   /* we support showing only a portion of the whole twin display */

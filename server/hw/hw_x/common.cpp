@@ -3,7 +3,7 @@
 /* this can stay static, X11_FlushHW() is not reentrant */
 static hwcol _col;
 
-INLINE void X11_Mogrify(dat x, dat y, uldat len) {
+INLINE void X11_Mogrify(dat x, dat y, ldat len) {
   hwattr *V, *oV;
   hwcol col;
   udat buflen = 0;
@@ -11,6 +11,9 @@ INLINE void X11_Mogrify(dat x, dat y, uldat len) {
   XChar16 buf[TW_SMALLBUFF];
   int xbegin, ybegin;
 
+  if (len <= 0) {
+    return;
+  }
   if (xhw_view) {
     if (x >= xhw_endx || x + len < xhw_startx || y < xhw_starty || y >= xhw_endy)
       return;
