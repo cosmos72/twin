@@ -5,7 +5,7 @@ index 7640d31..39d073c 100644
 @@ -3,7 +3,7 @@
  
  AC_PREREQ([2.65])
- AC_INIT([twin], [0.8.0], [BUG-REPORT-ADDRESS])
+ AC_INIT([twin], [0.8.1], [BUG-REPORT-ADDRESS])
 -AC_CONFIG_SRCDIR([server/main.c])
 +AC_CONFIG_SRCDIR([server/main.cpp])
  AC_CONFIG_HEADERS([include/config.h])
