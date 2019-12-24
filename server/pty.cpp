@@ -21,8 +21,13 @@
  */
 
 /* tell <stdlib.h> to declare grantpt(), unlockpt(), ptsname() */
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE
+#endif
+
+#ifndef _XOPEN_SOURCE
 #define _XOPEN_SOURCE
+#endif
 
 #include "twautoconf.h" /* for TW_HAVE* macros */
 #include "twconfig.h"   /* for CONF_* macros */

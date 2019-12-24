@@ -280,7 +280,8 @@ static module DlLoadAny(uldat len, char *name) {
 }
 
 static byte module_InitHW(CONST char *arg, uldat len) {
-  char *name, *tmp;
+  CONST char *name, *tmp;
+  char *buf;
   byte (*InitD)(void);
   module Module = NULL;
 
@@ -290,8 +291,8 @@ static byte module_InitHW(CONST char *arg, uldat len) {
   arg += 4;
   len -= 4; /* skip "-hw=" */
 
-  name = (char *)memchr(arg, '@', len);
-  tmp = (char *)memchr(arg, ',', len);
+  name = (CONST char *)memchr(arg, '@', len);
+  tmp = (CONST char *)memchr(arg, ',', len);
   if (tmp && (!name || tmp < name))
     name = tmp;
   if (name)
@@ -300,36 +301,38 @@ static byte module_InitHW(CONST char *arg, uldat len) {
   if (len == 1 && *arg == 'X')
     len = 3, arg = "X11";
 
-  if ((name = (char *)AllocMem(len + 4))) {
-    sprintf(name, "hw_%.*s", (int)len, arg);
+  if ((buf = (char *)AllocMem(len + 4))) {
+    sprintf(buf, "hw_%.*s", (int)len, arg);
 
-    Module = DlLoadAny(len + 3, name);
+    Module = DlLoadAny(len + 3, buf);
 
     if (Module) {
-      printk("twdisplay: starting display driver module `" SS "'...\n", name);
+      printk("twdisplay: starting display driver module `" SS "'...\n", buf);
 
       if ((InitD = Module->Init) && InitD()) {
-        printk("twdisplay: ...module `" SS "' successfully started.\n", name);
+        printk("twdisplay: ...module `" SS "' successfully started.\n", buf);
         HW->Module = Module;
         Module->Used++;
 
-        FreeMem(name);
+        FreeMem(buf);
         return ttrue;
       }
       /*Delete(Module);*/
     }
-  } else
+    name = buf;
+  } else {
     ErrStr = "Out of memory!";
+    name = "(NULL)";
+  }
 
   if (Module) {
-    printk("twdisplay: ...module `" SS "' failed to start.\n", name ? name : "(NULL)");
+    printk("twdisplay: ...module `" SS "' failed to start.\n", name);
   } else
-    printk("twdisplay: unable to load display driver module `" SS "' :\n"
-           "      " SS "\n",
-           name ? name : "(NULL)", ErrStr);
+    printk("twdisplay: unable to load display driver module `" SS "' :\n      " SS "\n", name,
+           ErrStr);
 
-  if (name)
-    FreeMem(name);
+  if (buf)
+    FreeMem(buf);
 
   return tfalse;
 }
