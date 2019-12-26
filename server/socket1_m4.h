@@ -252,22 +252,22 @@ case order_Create4MenuWindow:
 
 case order_WriteAsciiWindow:
     if (N >= 3)
-	sockWriteAsciiWindow((window)a[1]_obj, (ldat)a[2]_any, (CONST char *)a[3]_vec);
+	sockWriteAsciiWindow((window)a[1]_obj, (uldat)a[2]_any, (CONST char *)a[3]_vec);
     break;
 
 case order_WriteStringWindow:
     if (N >= 3)
-	sockWriteStringWindow((window)a[1]_obj, (ldat)a[2]_any, (CONST char *)a[3]_vec);
+	sockWriteStringWindow((window)a[1]_obj, (uldat)a[2]_any, (CONST char *)a[3]_vec);
     break;
 
 case order_WriteHWFontWindow:
     if (N >= 3)
-	sockWriteHWFontWindow((window)a[1]_obj, (ldat)a[2]_any, (CONST hwfont *)a[3]_vec);
+	sockWriteHWFontWindow((window)a[1]_obj, (uldat)a[2]_any, (CONST hwfont *)a[3]_vec);
     break;
 
 case order_WriteHWAttrWindow:
     if (N >= 5)
-	sockWriteHWAttrWindow((window)a[1]_obj, (dat)a[2]_any, (dat)a[3]_any, (ldat)a[4]_any, (CONST hwattr *)a[5]_vec);
+	sockWriteHWAttrWindow((window)a[1]_obj, (dat)a[2]_any, (dat)a[3]_any, (uldat)a[4]_any, (CONST hwattr *)a[5]_vec);
     break;
 
 

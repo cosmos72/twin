@@ -1510,12 +1510,14 @@ static tbool combine_utf8(hwfont *pc) {
 }
 
 /* this is the main entry point */
-void TtyWriteAscii(window Window, ldat Len, CONST byte *AsciiSeq) {
+byte TtyWriteAscii(window Window, uldat Len, CONST byte *AsciiSeq) {
   hwfont c;
   byte printable, utf8_in_use, disp_ctrl, state_normal;
 
-  if (!Window || !Len || !AsciiSeq || !W_USE(Window, USECONTENTS) || !Window->USE.C.TtyData)
-    return;
+  if (!Window || !W_USE(Window, USECONTENTS) || !Window->USE.C.TtyData)
+    return tfalse;
+  if (!Len || !AsciiSeq)
+    return ttrue;
 
   common(Window);
 
@@ -1581,15 +1583,18 @@ void TtyWriteAscii(window Window, ldat Len, CONST byte *AsciiSeq) {
     /* flush_tty(); */
   }
   flush_tty();
+  return ttrue;
 }
 
 /* same as TtyWriteAscii(), but writes hwfont (UCS-2 + colors + graph tiles). */
-void TtyWriteHWFont(window Window, ldat Len, CONST hwfont *HWFont) {
+byte TtyWriteHWFont(window Window, uldat Len, CONST hwfont *HWFont) {
   hwfont c;
   byte ok;
 
-  if (!Window || !Len || !HWFont || !W_USE(Window, USECONTENTS) || !Window->USE.C.TtyData)
-    return;
+  if (!Window || !W_USE(Window, USECONTENTS) || !Window->USE.C.TtyData)
+    return tfalse;
+  if (!Len || !HWFont)
+    return ttrue;
 
   common(Window);
 
@@ -1631,17 +1636,20 @@ void TtyWriteHWFont(window Window, ldat Len, CONST hwfont *HWFont) {
       write_ctrl((byte)c);
   }
   flush_tty();
+  return ttrue;
 }
 
 /*
  * this writes String literally, without interpreting specially any character
  * (not even ESC or \n) and using current translation.
  */
-void TtyWriteString(window Window, ldat Len, CONST byte *String) {
+byte TtyWriteString(window Window, uldat Len, CONST char *String) {
   hwfont c;
 
-  if (!Window || !Len || !String || !W_USE(Window, USECONTENTS) || !Window->USE.C.TtyData)
-    return;
+  if (!Window || !W_USE(Window, USECONTENTS) || !Window->USE.C.TtyData)
+    return tfalse;
+  if (!Len || !String)
+    return ttrue;
 
   common(Window);
 
@@ -1668,19 +1676,22 @@ void TtyWriteString(window Window, ldat Len, CONST byte *String) {
     }
   }
   flush_tty();
+  return ttrue;
 }
 
 /*
  * this currently wraps at window width so it can write multiple rows at time.
  * does not move cursor position, nor interacts with wrapglitch.
  */
-void TtyWriteHWAttr(window Window, dat x, dat y, ldat len, CONST hwattr *text) {
+byte TtyWriteHWAttr(window Window, dat x, dat y, ldat len, CONST hwattr *text) {
   ldat left, max, chunk;
   ldat i;
   hwattr *dst;
 
-  if (!Window || !len || !text || !W_USE(Window, USECONTENTS) || !Window->USE.C.TtyData)
-    return;
+  if (!Window || !W_USE(Window, USECONTENTS) || !Window->USE.C.TtyData)
+    return tfalse;
+  if (!len || !text)
+    return ttrue;
 
   common(Window);
 
@@ -1725,6 +1736,7 @@ void TtyWriteHWAttr(window Window, dat x, dat y, ldat len, CONST hwattr *text) {
     dirty_tty(x, y, x + len - 1, y);
 
   flush_tty();
+  return ttrue;
 }
 
 #if 0

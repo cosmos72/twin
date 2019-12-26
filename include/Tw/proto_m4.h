@@ -107,10 +107,10 @@ void  Tw_WriteHWFontsGadget(tdisplay TwD, tgadget G, byte mask, dat w, dat h, TW
 twindow  Tw_CreateWindow(tdisplay TwD, dat titlelen, TW_CONST char *title, TW_CONST hwcol *coltitle, tmenu M, hwcol coltext, uldat cursortype, uldat attrib, uldat flags, dat w, dat h, dat hscroll);
 twindow  Tw_Create4MenuWindow(tdisplay TwD, tmenu M);
 
-void  Tw_WriteAsciiWindow(tdisplay TwD, twindow W, ldat len, TW_CONST char *ascii);
-void  Tw_WriteStringWindow(tdisplay TwD, twindow W, ldat len, TW_CONST char *string);
-void  Tw_WriteHWFontWindow(tdisplay TwD, twindow W, ldat len, TW_CONST hwfont *textfont);
-void  Tw_WriteHWAttrWindow(tdisplay TwD, twindow W, dat x, dat y, ldat len, TW_CONST hwattr *textattr);
+void  Tw_WriteAsciiWindow(tdisplay TwD, twindow W, uldat len, TW_CONST char *ascii);
+void  Tw_WriteStringWindow(tdisplay TwD, twindow W, uldat len, TW_CONST char *string);
+void  Tw_WriteHWFontWindow(tdisplay TwD, twindow W, uldat len, TW_CONST hwfont *textfont);
+void  Tw_WriteHWAttrWindow(tdisplay TwD, twindow W, dat x, dat y, uldat len, TW_CONST hwattr *textattr);
 
 void  Tw_GotoXYWindow(tdisplay TwD, twindow W, ldat x, ldat y);
 void  Tw_SetTitleWindow(tdisplay TwD, twindow W, dat titlelen, TW_CONST char *title);

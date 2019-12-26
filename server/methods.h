@@ -12,10 +12,10 @@
 byte FindInfo(menu Menu, dat i);
 window FakeOpenTerm(CONST char *arg0, CONST char *CONST *argv);
 widget FakeKbdFocus(widget W);
-void FakeWriteAscii(window Window, ldat Len, CONST char *Ascii);
-void FakeWriteString(window Window, ldat Len, CONST char *String);
-void FakeWriteHWFont(window Window, ldat Len, CONST hwfont *HWFont);
-void FakeWriteHWAttr(window Window, dat x, dat y, ldat Len, CONST hwattr *Attr);
+byte FakeWriteAscii(window Window, uldat Len, CONST char *Ascii);
+byte FakeWriteString(window Window, uldat Len, CONST char *String);
+byte FakeWriteHWFont(window Window, uldat Len, CONST hwfont *HWFont);
+byte FakeWriteHWAttr(window Window, dat x, dat y, uldat Len, CONST hwattr *Attr);
 byte FakeFindBorderWindow(window W, dat u, dat v, byte Border, hwattr *PtrAttr);
 
 extern fn Fn;

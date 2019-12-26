@@ -227,12 +227,12 @@ static row InsertRowsWindow(window Window, ldat NumRows) {
   return CurrRow;
 }
 
-byte EnsureLenRow(row Row, ldat Len, byte DefaultCol) {
+byte EnsureLenRow(row Row, uldat Len, byte DefaultCol) {
   hwfont *tempText;
   hwcol *tempColText;
-  ldat NewLen;
+  uldat NewLen;
 
-  if (Row->MaxLen < Len) {
+  if (Len > Row->MaxLen) {
     NewLen = (Len + (Len >> 1)) | All->SetUp->MinAllocSize;
     if ((tempText = (hwfont *)ReAllocMem(Row->Text, NewLen * sizeof(hwfont)))) {
       if (!(Row->Flags & ROW_DEFCOL) && !DefaultCol) {
@@ -249,13 +249,13 @@ byte EnsureLenRow(row Row, ldat Len, byte DefaultCol) {
   return ttrue;
 }
 
-byte RowWriteAscii(window Window, ldat Len, CONST char *Text) {
+byte RowWriteAscii(window Window, uldat Len, CONST char *Text) {
   row CurrRow;
   CONST char *_Text;
   byte ModeInsert;
   hwfont CONST *to_UTF_32;
-  ldat i;
-  ldat x, y, max, RowLen;
+  ldat x, y, max;
+  uldat i, RowLen;
 
   if (!Window || (Len && !Text) || !W_USE(Window, USEROWS))
     return tfalse;
@@ -280,7 +280,7 @@ byte RowWriteAscii(window Window, ldat Len, CONST char *Text) {
       CurrRow = Act(FindRow, Window)(Window, y);
     }
 
-    RowLen = (ldat)0;
+    RowLen = 0;
     _Text = Text;
     while (RowLen < Len && *_Text != '\n' && *_Text != '\r')
       ++RowLen, ++_Text;
@@ -303,15 +303,15 @@ byte RowWriteAscii(window Window, ldat Len, CONST char *Text) {
 
       to_UTF_32 = Window->Charset;
 
-      for (i = 0; i < RowLen; i++)
+      for (i = (uldat)Max2(0, -x); i < RowLen; i++)
         CurrRow->Text[x + i] = to_UTF_32[(byte)Text[i]];
-      if (CurrRow->Len < x)
-        for (i = CurrRow->Len; i < x; i++)
+      if (x >= 0 && (uldat)x > CurrRow->Len)
+        for (i = CurrRow->Len; i < (uldat)x; i++)
           CurrRow->Text[i] = (hwfont)' ';
 
       if (!(Window->Flags & WINDOWFL_ROWS_DEFCOL)) {
         memset(CurrRow->ColText + x, Window->ColText, sizeof(hwcol) * RowLen);
-        if (CurrRow->Len < x)
+        if (x >= 0 && (uldat)x > CurrRow->Len)
           memset(CurrRow->ColText + CurrRow->Len, Window->ColText,
                  sizeof(hwcol) * (x - CurrRow->Len));
       }
@@ -339,12 +339,12 @@ byte RowWriteAscii(window Window, ldat Len, CONST char *Text) {
   return ttrue;
 }
 
-byte RowWriteHWFont(window Window, ldat Len, CONST hwfont *Text) {
+byte RowWriteHWFont(window Window, uldat Len, CONST hwfont *Text) {
   row CurrRow;
   CONST hwfont *_Text;
   byte ModeInsert;
-  ldat i;
-  ldat x, y, max, RowLen;
+  ldat x, y, max;
+  uldat i, RowLen;
 
   if (!Window || !Len || !W_USE(Window, USEROWS))
     return tfalse;
@@ -390,16 +390,26 @@ byte RowWriteHWFont(window Window, ldat Len, CONST hwfont *Text) {
         Window->USE.R.RowSplit = CurrRow;
       CurrRow->Flags = ROW_ACTIVE;
 
-      CopyMem(Text, CurrRow->Text + x, sizeof(hwfont) * RowLen);
-      if (CurrRow->Len < x)
-        for (i = CurrRow->Len; i < x; i++)
+      if (x >= 0) {
+        CopyMem(Text, CurrRow->Text + x, sizeof(hwfont) * RowLen);
+      } else if ((uldat)-x < RowLen) {
+        CopyMem(Text - x, CurrRow->Text, sizeof(hwfont) * (RowLen + x));
+      }
+      if (x >= 0 && (uldat)x > CurrRow->Len) {
+        for (i = CurrRow->Len; i < (uldat)x; i++)
           CurrRow->Text[i] = (hwfont)' ';
+      }
 
       if (!(Window->Flags & WINDOWFL_ROWS_DEFCOL)) {
-        memset(CurrRow->ColText + x, Window->ColText, sizeof(hwcol) * RowLen);
-        if (CurrRow->Len < x)
+        if (x >= 0) {
+          memset(CurrRow->ColText + x, Window->ColText, sizeof(hwcol) * RowLen);
+        } else if ((uldat)-x < RowLen) {
+          memset(CurrRow->ColText, Window->ColText - x, sizeof(hwcol) * (RowLen + x));
+        }
+        if (x >= 0 && (uldat)x > CurrRow->Len) {
           memset(CurrRow->ColText + CurrRow->Len, Window->ColText,
                  sizeof(hwcol) * (x - CurrRow->Len));
+        }
       }
 
       if (CurrRow->Len < x + RowLen)
@@ -507,44 +517,44 @@ void ExposeWindow2(window W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch
     return;
 
   if (Text) {
-    void (*WriteString)(window, ldat, CONST char *);
+    byte (*WriteString)(window, uldat, CONST char *);
     if (W_USE(W, USECONTENTS)) {
       WriteString = W->Fn->TtyWriteString;
     } else
-      WriteString = (void (*)(window, ldat, CONST char *))W->Fn->RowWriteString;
+      WriteString = W->Fn->RowWriteString;
 
     CurX = W->CurX;
     CurY = W->CurY;
     for (; YWidth; YWidth--, Up++, Text += Pitch) {
       Act(GotoXY, W)(W, Left, Up);
-      WriteString(W, XWidth, Text);
+      WriteString(W, (uldat)XWidth, Text);
     }
     Act(GotoXY, W)(W, CurX, CurY);
 
   } else if (Font) {
-    void (*WriteHWFont)(window, ldat, CONST hwfont *);
+    byte (*WriteHWFont)(window, uldat, CONST hwfont *);
     if (W_USE(W, USECONTENTS))
       WriteHWFont = W->Fn->TtyWriteHWFont;
     else
-      WriteHWFont = (void (*)(window, ldat, CONST hwfont *))W->Fn->RowWriteHWFont;
+      WriteHWFont = W->Fn->RowWriteHWFont;
 
     CurX = W->CurX;
     CurY = W->CurY;
     for (; YWidth; YWidth--, Up++, Font += Pitch) {
       Act(GotoXY, W)(W, Left, Up);
-      WriteHWFont(W, XWidth, Font);
+      WriteHWFont(W, (uldat)XWidth, Font);
     }
     Act(GotoXY, W)(W, CurX, CurY);
 
   } else if (Attr) {
-    void (*WriteHWAttr)(window, dat, dat, ldat, CONST hwattr *);
+    byte (*WriteHWAttr)(window, dat, dat, uldat, CONST hwattr *);
     if (W_USE(W, USECONTENTS))
       WriteHWAttr = W->Fn->TtyWriteHWAttr;
     else
-      WriteHWAttr = (void (*)(window, dat, dat, ldat, CONST hwattr *))W->Fn->RowWriteHWAttr;
+      WriteHWAttr = W->Fn->RowWriteHWAttr;
 
     for (; YWidth; YWidth--, Up++, Attr += Pitch)
-      WriteHWAttr(W, Left, Up, XWidth, Attr);
+      WriteHWAttr(W, Left, Up, (uldat)XWidth, Attr);
   }
 }
 

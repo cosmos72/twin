@@ -391,7 +391,8 @@ byte SelectionStore(uldat Magic, CONST char MIME[MAX_MIMELEN], uldat Len, CONST 
 #endif
 
 byte SetSelectionFromWindow(window Window) {
-  uldat y, slen, len;
+  ldat y;
+  uldat slen, len;
   hwfont *sData, *Data;
   byte ok = ttrue, w_useC = W_USE(Window, USECONTENTS);
 
@@ -499,14 +500,14 @@ byte SetSelectionFromWindow(window Window) {
       if (y < Window->YendSel)
         slen = Row->Len - Window->XstSel;
       else
-        slen = Min2(Row->Len, Window->XendSel + 1) - Min2(Row->Len, Window->XstSel);
+        slen = Min2(Row->Len, (uldat)Window->XendSel + 1) - Min2(Row->Len, (uldat)Window->XstSel);
 
       ok &= SelectionStore(_SEL_MAGIC, NULL, slen * sizeof(hwfont),
-                           (CONST char *)(Row->Text + Min2(Row->Len, Window->XstSel)));
+                           (CONST char *)(Row->Text + Min2(Row->Len, (uldat)Window->XstSel)));
     } else
       ok &= SelectionStore(_SEL_MAGIC, NULL, 0, NULL);
 
-    if (y < Window->YendSel || !Row || !Row->Text || Row->Len <= Window->XendSel)
+    if (y < Window->YendSel || !Row || !Row->Text || Row->Len <= (uldat)Window->XendSel)
       ok &= _SelAppendNL();
 
     for (y = Window->YstSel + 1; ok && y < Window->YendSel; y++) {
@@ -517,9 +518,9 @@ byte SetSelectionFromWindow(window Window) {
     if (Window->YendSel > Window->YstSel) {
       if (Window->XendSel >= 0 && (Row = Act(FindRow, Window)(Window, Window->YendSel)) &&
           Row->Text)
-        ok &= SelectionAppend(Min2(Row->Len, Window->XendSel + 1) * sizeof(hwfont),
+        ok &= SelectionAppend(Min2(Row->Len, (uldat)Window->XendSel + 1) * sizeof(hwfont),
                               (CONST char *)Row->Text);
-      if (!Row || !Row->Text || Row->Len <= Window->XendSel)
+      if (!Row || !Row->Text || Row->Len <= (uldat)Window->XendSel)
         ok &= _SelAppendNL();
     }
     if (ok)

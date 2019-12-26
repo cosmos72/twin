@@ -1274,24 +1274,28 @@ window Create4MenuWindow(fn_window Fn_Window, menu Menu) {
   return Window;
 }
 
-void FakeWriteAscii(window Window, ldat Len, CONST char *Ascii) {
+byte FakeWriteAscii(window Window, uldat Len, CONST char *Ascii) {
   if (DlLoad(TermSo) && Window->Fn->TtyWriteAscii != FakeWriteAscii)
-    Act(TtyWriteAscii, Window)(Window, Len, Ascii);
+    return Act(TtyWriteAscii, Window)(Window, Len, Ascii);
+  return tfalse;
 }
 
-void FakeWriteString(window Window, ldat Len, CONST char *String) {
+byte FakeWriteString(window Window, uldat Len, CONST char *String) {
   if (DlLoad(TermSo) && Window->Fn->TtyWriteString != FakeWriteString)
-    Act(TtyWriteString, Window)(Window, Len, String);
+    return Act(TtyWriteString, Window)(Window, Len, String);
+  return tfalse;
 }
 
-void FakeWriteHWFont(window Window, ldat Len, CONST hwfont *HWFont) {
+byte FakeWriteHWFont(window Window, uldat Len, CONST hwfont *HWFont) {
   if (DlLoad(TermSo) && Window->Fn->TtyWriteHWFont != FakeWriteHWFont)
-    Act(TtyWriteHWFont, Window)(Window, Len, HWFont);
+    return Act(TtyWriteHWFont, Window)(Window, Len, HWFont);
+  return tfalse;
 }
 
-void FakeWriteHWAttr(window Window, dat x, dat y, ldat Len, CONST hwattr *Attr) {
+byte FakeWriteHWAttr(window Window, dat x, dat y, uldat Len, CONST hwattr *Attr) {
   if (DlLoad(TermSo) && Window->Fn->TtyWriteHWAttr != FakeWriteHWAttr)
-    Act(TtyWriteHWAttr, Window)(Window, x, y, Len, Attr);
+    return Act(TtyWriteHWAttr, Window)(Window, x, y, Len, Attr);
+  return tfalse;
 }
 
 window FakeOpenTerm(CONST char *arg0, CONST char *CONST *argv) {
@@ -1401,7 +1405,7 @@ static struct s_fn_window _FnWindow = {
     RowWriteAscii, /* exported by resize.c */
     RowWriteAscii,
     RowWriteHWFont,
-    (byte(*)(window, dat, dat, ldat, CONST hwattr *))AlwaysFalse,
+    (byte(*)(window, dat, dat, uldat, CONST hwattr *))AlwaysFalse,
 
     GotoXYWindow,
     SetTitleWindow,
@@ -1767,7 +1771,7 @@ static void DeleteRow(row Row) {
   }
 }
 
-static byte SetTextRow(row Row, ldat Len, CONST char *Text, byte DefaultCol) {
+static byte SetTextRow(row Row, uldat Len, CONST char *Text, byte DefaultCol) {
   if (EnsureLenRow(Row, Len, DefaultCol)) {
     if (Len) {
 
@@ -1787,7 +1791,7 @@ static byte SetTextRow(row Row, ldat Len, CONST char *Text, byte DefaultCol) {
   return tfalse;
 }
 
-static byte SetHWFontRow(row Row, ldat Len, CONST hwfont *HWFont, byte DefaultCol) {
+static byte SetHWFontRow(row Row, uldat Len, CONST hwfont *HWFont, byte DefaultCol) {
   if (EnsureLenRow(Row, Len, DefaultCol)) {
     if (Len) {
       CopyMem(HWFont, Row->Text, Len * sizeof(hwfont));
@@ -2006,7 +2010,7 @@ static struct s_fn_menuitem _FnMenuItem = {
     (void (*)(menuitem, udat, uldat, uldat))NoOp,
     &_FnObj,
     SetTextRow,
-    (byte(*)(row, ldat, CONST hwfont *, byte))SetHWFontRow,
+    SetHWFontRow,
     RaiseMenuItem,
     LowerMenuItem,
     &_FnRow,
@@ -2125,7 +2129,7 @@ static menuitem FindItem(menu Menu, dat i) {
 
   if (Menu) {
     for (Item = Menu->FirstI; Item; Item = Item->Next) {
-      if (i >= Item->Left && i < Item->Left + Item->Len)
+      if (i >= Item->Left && (uldat)(i - Item->Left) < Item->Len)
         break;
     }
 
@@ -2133,12 +2137,12 @@ static menuitem FindItem(menu Menu, dat i) {
 
       Item = Menu->LastI;
 
-      if (!Item || i >= Item->Left + Item->Len) {
+      if (!Item || (i >= Item->Left && (uldat)(i - Item->Left) >= Item->Len)) {
         /* search in All->CommonMenu */
         if (Item)
-          i -= Item->Left + Item->Len;
+          i -= Item->Left + (dat)Item->Len;
         for (Item = All->CommonMenu->FirstI; Item; Item = Item->Next) {
-          if (i >= Item->Left && i < Item->Left + Item->Len)
+          if (i >= Item->Left && (uldat)(i - Item->Left) < Item->Len)
             break;
         }
       } else

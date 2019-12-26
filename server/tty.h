@@ -9,13 +9,12 @@
 #ifndef _TWIN_TTY_H
 #define _TWIN_TTY_H
 
-void TtyWriteAscii(window Window, ldat Len, CONST byte *AsciiSeq);
-void TtyWriteString(window Window, ldat Len, CONST byte *String);
-void TtyWriteHWFont(window Window, ldat Len, CONST hwfont *HWFont);
+byte TtyWriteAscii(window Window, uldat Len, CONST byte *AsciiSeq);
+byte TtyWriteString(window Window, uldat Len, CONST byte *String);
+byte TtyWriteHWFont(window Window, uldat Len, CONST hwfont *HWFont);
+byte TtyWriteHWAttr(window Window, dat x, dat y, uldat Len, CONST hwattr *Attr);
 
 widget TtyKbdFocus(widget Window);
 void ForceKbdFocus(void);
-
-void TtyWriteHWAttr(window Window, dat x, dat y, ldat Len, CONST hwattr *Attr);
 
 #endif /* _TWIN_TTY_H */

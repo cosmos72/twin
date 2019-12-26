@@ -360,10 +360,10 @@ static gadget sockCreateGadget(widget Parent, dat XWidth, dat YWidth, CONST char
 static window sockCreateWindow(dat TitleLen, CONST char *Title, CONST hwcol *ColTitle, menu Menu,
                                hwcol ColText, uldat CursorType, uldat Attrib, uldat Flags,
                                dat XWidth, dat YWidth, dat ScrollBackLines);
-static void sockWriteAsciiWindow(window Window, ldat Len, CONST char *Ascii);
-static void sockWriteStringWindow(window Window, ldat Len, CONST char *String);
-static void sockWriteHWFontWindow(window Window, ldat Len, CONST hwfont *HWFont);
-static void sockWriteHWAttrWindow(window Window, dat x, dat y, ldat Len, CONST hwattr *Attr);
+static void sockWriteAsciiWindow(window Window, uldat Len, CONST char *Ascii);
+static void sockWriteStringWindow(window Window, uldat Len, CONST char *String);
+static void sockWriteHWFontWindow(window Window, uldat Len, CONST hwfont *HWFont);
+static void sockWriteHWAttrWindow(window Window, dat x, dat y, uldat Len, CONST hwattr *Attr);
 static void sockSetTitleWindow(window Window, dat titlelen, CONST char *title);
 
 static row sockFindRowByCodeWindow(window Window, dat Code);
@@ -1206,7 +1206,7 @@ static window sockCreateWindow(dat TitleLen, CONST char *Title, CONST hwcol *Col
   return (window)0;
 }
 
-static void sockWriteAsciiWindow(window Window, ldat Len, CONST char *Ascii) {
+static void sockWriteAsciiWindow(window Window, uldat Len, CONST char *Ascii) {
   if (Window) {
     if ((Window->Flags & WINDOWFL_USEANY) == WINDOWFL_USECONTENTS)
       Act(TtyWriteAscii, Window)(Window, Len, Ascii);
@@ -1215,7 +1215,7 @@ static void sockWriteAsciiWindow(window Window, ldat Len, CONST char *Ascii) {
   }
 }
 
-static void sockWriteStringWindow(window Window, ldat Len, CONST char *String) {
+static void sockWriteStringWindow(window Window, uldat Len, CONST char *String) {
   if (Window) {
     if ((Window->Flags & WINDOWFL_USEANY) == WINDOWFL_USECONTENTS)
       Act(TtyWriteString, Window)(Window, Len, String);
@@ -1224,7 +1224,7 @@ static void sockWriteStringWindow(window Window, ldat Len, CONST char *String) {
   }
 }
 
-static void sockWriteHWFontWindow(window Window, ldat Len, CONST hwfont *HWFont) {
+static void sockWriteHWFontWindow(window Window, uldat Len, CONST hwfont *HWFont) {
   if (Window) {
     if ((Window->Flags & WINDOWFL_USEANY) == WINDOWFL_USECONTENTS)
       Act(TtyWriteHWFont, Window)(Window, Len, HWFont);
@@ -1233,7 +1233,7 @@ static void sockWriteHWFontWindow(window Window, ldat Len, CONST hwfont *HWFont)
   }
 }
 
-static void sockWriteHWAttrWindow(window Window, dat x, dat y, ldat Len, CONST hwattr *Attr) {
+static void sockWriteHWAttrWindow(window Window, dat x, dat y, uldat Len, CONST hwattr *Attr) {
   if (Window) {
     if ((Window->Flags & WINDOWFL_USEANY) == WINDOWFL_USECONTENTS)
       Act(TtyWriteHWAttr, Window)(Window, x, y, Len, Attr);

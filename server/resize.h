@@ -9,9 +9,9 @@
 #ifndef _TWIN_RESIZE_H
 #define _TWIN_RESIZE_H
 
-byte EnsureLenRow(row Row, ldat Len, byte DefaultCol);
-byte RowWriteAscii(window Window, ldat Len, CONST char *Text);
-byte RowWriteHWFont(window Window, ldat Len, CONST hwfont *Text);
+byte EnsureLenRow(row Row, uldat Len, byte DefaultCol);
+byte RowWriteAscii(window Window, uldat Len, CONST char *Text);
+byte RowWriteHWFont(window Window, uldat Len, CONST hwfont *Text);
 
 void ExposeWidget2(widget W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch, CONST char *Text,
                    CONST hwfont *Font, CONST hwattr *Attr);

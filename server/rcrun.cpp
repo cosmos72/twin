@@ -354,7 +354,7 @@ static window RCFindWindowName(cstr name) {
     /* search among mapped windows */
     W = (window)S->FirstW;
     while (W) {
-      if (IS_WINDOW(W) && W->NameLen == len && !memcmp(W->Name, name, len))
+      if (IS_WINDOW(W) && W->NameLen >= 0 && (udat)W->NameLen == len && !memcmp(W->Name, name, len))
         return W;
       W = (window)W->Next;
     }
@@ -367,7 +367,7 @@ static screen RCFindScreenName(cstr name) {
   uldat len = strlen(name);
   screen S = All->FirstScreen;
   while (S) {
-    if (S->NameLen == len && !memcmp(S->Name, name, len))
+    if (S->NameLen >= 0 && (udat)S->NameLen == len && !memcmp(S->Name, name, len))
       break;
   }
   return S;

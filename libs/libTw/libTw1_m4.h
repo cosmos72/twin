@@ -131,13 +131,13 @@
 4, "Tw_Create4MenuWindow", "1" "x" magic_id_STR(window)"x" magic_id_STR(menu) },
 
 { Tw_WriteAsciiWindow, 16,
-8, "Tw_WriteAsciiWindow", "0" "v" TWS_void_STR"x" magic_id_STR(window)"_" TWS_ldat_STR"V" TWS_char_STR },
+8, "Tw_WriteAsciiWindow", "0" "v" TWS_void_STR"x" magic_id_STR(window)"_" TWS_uldat_STR"V" TWS_char_STR },
 { Tw_WriteStringWindow, 17,
-8, "Tw_WriteStringWindow", "0" "v" TWS_void_STR"x" magic_id_STR(window)"_" TWS_ldat_STR"V" TWS_char_STR },
+8, "Tw_WriteStringWindow", "0" "v" TWS_void_STR"x" magic_id_STR(window)"_" TWS_uldat_STR"V" TWS_char_STR },
 { Tw_WriteHWFontWindow, 17,
-8, "Tw_WriteHWFontWindow", "0" "v" TWS_void_STR"x" magic_id_STR(window)"_" TWS_ldat_STR"V" TWS_hwfont_STR },
+8, "Tw_WriteHWFontWindow", "0" "v" TWS_void_STR"x" magic_id_STR(window)"_" TWS_uldat_STR"V" TWS_hwfont_STR },
 { Tw_WriteHWAttrWindow, 17,
-12, "Tw_WriteHWAttrWindow", "0" "v" TWS_void_STR"x" magic_id_STR(window)"_" TWS_dat_STR"_" TWS_dat_STR"_" TWS_ldat_STR"V" TWS_hwattr_STR },
+12, "Tw_WriteHWAttrWindow", "0" "v" TWS_void_STR"x" magic_id_STR(window)"_" TWS_dat_STR"_" TWS_dat_STR"_" TWS_uldat_STR"V" TWS_hwattr_STR },
 
 { Tw_GotoXYWindow, 12,
 8, "Tw_GotoXYWindow", "2" "v" TWS_void_STR"x" magic_id_STR(window)"_" TWS_ldat_STR"_" TWS_ldat_STR },

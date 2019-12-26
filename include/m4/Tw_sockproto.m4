@@ -133,10 +133,10 @@ PROTO(window,x,     Create,Window,0, dat,_,titlelen, char,V(A(1)),title, hwcol,W
 	hwcol,_,coltext, uldat,_,cursortype, uldat,_,attrib, uldat,_,flags, dat,_,w, dat,_,h, dat,_,hscroll)
 PROTO(window,x, Create4Menu,Window,1, menu,x,M)
 
-PROTO(void,v,  WriteAscii  ,Window,0, window,x,W, ldat,_,len, char,V(A(2)),ascii)
-PROTO(void,v,  WriteString ,Window,0, window,x,W, ldat,_,len, char,V(A(2)),string)
-PROTO(void,v,  WriteHWFont, Window,0, window,x,W, ldat,_,len, hwfont,V(A(2)),textfont)
-PROTO(void,v,  WriteHWAttr ,Window,0, window,x,W,  dat,_,x, dat,_,y, ldat,_,len, hwattr,V(A(4)),textattr)
+PROTO(void,v,  WriteAscii  ,Window,0, window,x,W, uldat,_,len, char,V(A(2)),ascii)
+PROTO(void,v,  WriteString ,Window,0, window,x,W, uldat,_,len, char,V(A(2)),string)
+PROTO(void,v,  WriteHWFont, Window,0, window,x,W, uldat,_,len, hwfont,V(A(2)),textfont)
+PROTO(void,v,  WriteHWAttr ,Window,0, window,x,W,   dat,_,x, dat,_,y, uldat,_,len, hwattr,V(A(4)),textattr)
 
 PROTO(void,v,        GotoXY,Window,2, window,x,W, ldat,_,x, ldat,_,y)
 PROTO(void,v,      SetTitle,Window,0, window,x,W, dat,_,titlelen, char,V(A(2)),title)

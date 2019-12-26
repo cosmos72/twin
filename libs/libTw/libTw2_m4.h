@@ -301,28 +301,28 @@ twindow Tw_Create4MenuWindow(tw_d TwD, tmenu a1) {
 }
 
 
-void Tw_WriteAsciiWindow(tw_d TwD, twindow a1, ldat a2, TW_CONST char *a3) {
+void Tw_WriteAsciiWindow(tw_d TwD, twindow a1, uldat a2, TW_CONST char *a3) {
     _Tw_EncodeCall(ENCODE_FL_VOID, order_WriteAsciiWindow, TwD 
     , n(a1)
     , n(a2)
     , n((a2) * sizeof(char)), N(a3));
 }
 
-void Tw_WriteStringWindow(tw_d TwD, twindow a1, ldat a2, TW_CONST char *a3) {
+void Tw_WriteStringWindow(tw_d TwD, twindow a1, uldat a2, TW_CONST char *a3) {
     _Tw_EncodeCall(ENCODE_FL_VOID, order_WriteStringWindow, TwD 
     , n(a1)
     , n(a2)
     , n((a2) * sizeof(char)), N(a3));
 }
 
-void Tw_WriteHWFontWindow(tw_d TwD, twindow a1, ldat a2, TW_CONST hwfont *a3) {
+void Tw_WriteHWFontWindow(tw_d TwD, twindow a1, uldat a2, TW_CONST hwfont *a3) {
     _Tw_EncodeCall(ENCODE_FL_VOID, order_WriteHWFontWindow, TwD 
     , n(a1)
     , n(a2)
     , n((a2) * sizeof(hwfont)), N(a3));
 }
 
-void Tw_WriteHWAttrWindow(tw_d TwD, twindow a1, dat a2, dat a3, ldat a4, TW_CONST hwattr *a5) {
+void Tw_WriteHWAttrWindow(tw_d TwD, twindow a1, dat a2, dat a3, uldat a4, TW_CONST hwattr *a5) {
     _Tw_EncodeCall(ENCODE_FL_VOID, order_WriteHWAttrWindow, TwD 
     , n(a1)
     , n(a2)

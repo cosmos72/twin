@@ -539,15 +539,15 @@ struct s_fn_window {
   void (*RemoveHook)(window, fn_hook, fn_hook *Where);
   /* window */
   fn_widget Fn_Widget;
-  void (*TtyWriteAscii)(window, ldat Len, CONST char *Ascii);
-  void (*TtyWriteString)(window, ldat Len, CONST char *String);
-  void (*TtyWriteHWFont)(window, ldat Len, CONST hwfont *HWFont);
-  void (*TtyWriteHWAttr)(window, dat x, dat y, ldat Len, CONST hwattr *Attr);
+  byte (*TtyWriteAscii)(window, uldat Len, CONST char *Ascii);
+  byte (*TtyWriteString)(window, uldat Len, CONST char *String);
+  byte (*TtyWriteHWFont)(window, uldat Len, CONST hwfont *HWFont);
+  byte (*TtyWriteHWAttr)(window, dat x, dat y, uldat Len, CONST hwattr *Attr);
 
-  byte (*RowWriteAscii)(window, ldat Len, CONST char *Ascii);
-  byte (*RowWriteString)(window, ldat Len, CONST char *String);
-  byte (*RowWriteHWFont)(window, ldat Len, CONST hwfont *HWFont);
-  byte (*RowWriteHWAttr)(window, dat x, dat y, ldat Len, CONST hwattr *Attr);
+  byte (*RowWriteAscii)(window, uldat Len, CONST char *Ascii);
+  byte (*RowWriteString)(window, uldat Len, CONST char *String);
+  byte (*RowWriteHWFont)(window, uldat Len, CONST hwfont *HWFont);
+  byte (*RowWriteHWAttr)(window, dat x, dat y, uldat Len, CONST hwattr *Attr);
 
   void (*GotoXY)(window, ldat X, ldat Y);
   void (*SetTitle)(window, dat titlelen, char *title);
@@ -776,8 +776,8 @@ struct s_fn_row {
   void (*ChangeField)(row, udat field, uldat CLEARMask, uldat XORMask);
   /* row */
   fn_obj Fn_Obj;
-  byte (*SetText)(row, ldat Len, CONST char *Text, byte DefaultCol);
-  byte (*SetHWFont)(row, ldat Len, CONST hwfont *HWFont, byte DefaultCol);
+  byte (*SetText)(row, uldat Len, CONST char *Text, byte DefaultCol);
+  byte (*SetHWFont)(row, uldat Len, CONST hwfont *HWFont, byte DefaultCol);
   void (*Raise)(row);
   void (*Lower)(row);
 };
@@ -815,8 +815,8 @@ struct s_fn_menuitem {
   void (*ChangeField)(menuitem, udat field, uldat CLEARMask, uldat XORMask);
   /* row */
   fn_obj Fn_Obj;
-  byte (*SetText)(row, ldat Len, CONST char *Text, byte DefaultCol);
-  byte (*SetHWFont)(row, ldat Len, CONST hwfont *HWFont, byte DefaultCol);
+  byte (*SetText)(row, uldat Len, CONST char *Text, byte DefaultCol);
+  byte (*SetHWFont)(row, uldat Len, CONST hwfont *HWFont, byte DefaultCol);
   /* menuitem */
   void (*Raise)(menuitem);
   void (*Lower)(menuitem);
