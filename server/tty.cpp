@@ -718,7 +718,9 @@ static void cursor_report(void) {
   respond_string(buf);
 }
 
-INLINE void status_report(void) { respond_string("\033[0n"); /* Terminal ok */ }
+INLINE void status_report(void) {
+  respond_string("\033[0n"); /* Terminal ok */
+}
 
 /*
  * this is what the terminal answers to a ESC-Z or csi0c query.
@@ -1510,7 +1512,7 @@ static tbool combine_utf8(hwfont *pc) {
 }
 
 /* this is the main entry point */
-byte TtyWriteAscii(window Window, uldat Len, CONST byte *AsciiSeq) {
+byte TtyWriteAscii(window Window, uldat Len, CONST char *AsciiSeq) {
   hwfont c;
   byte printable, utf8_in_use, disp_ctrl, state_normal;
 
@@ -1522,7 +1524,7 @@ byte TtyWriteAscii(window Window, uldat Len, CONST byte *AsciiSeq) {
   common(Window);
 
   while (!(*Flags & TTY_STOPPED) && Len) {
-    c = *AsciiSeq++;
+    c = (byte)*AsciiSeq++;
     Len--;
 
     /* If the original code was a control character we only allow a glyph
@@ -1683,7 +1685,7 @@ byte TtyWriteString(window Window, uldat Len, CONST char *String) {
  * this currently wraps at window width so it can write multiple rows at time.
  * does not move cursor position, nor interacts with wrapglitch.
  */
-byte TtyWriteHWAttr(window Window, dat x, dat y, ldat len, CONST hwattr *text) {
+byte TtyWriteHWAttr(window Window, dat x, dat y, uldat len, CONST hwattr *text) {
   ldat left, max, chunk;
   ldat i;
   hwattr *dst;
@@ -1700,8 +1702,8 @@ byte TtyWriteHWAttr(window Window, dat x, dat y, ldat len, CONST hwattr *text) {
   y = Max2(y, 0);
   y = Min2(y, SizeY - 1);
 
-  if (len > (SizeY - y) * SizeX - x)
-    len = (SizeY - y) * SizeX - x;
+  if (len > (uldat)(SizeY - y) * (uldat)SizeX - (uldat)x)
+    len = (uldat)(SizeY - y) * (uldat)SizeX - (uldat)x;
 
   left = len;
   dst = Start + y * SizeX + x;
@@ -1730,7 +1732,7 @@ byte TtyWriteHWAttr(window Window, dat x, dat y, ldat len, CONST hwattr *text) {
     }
   } while ((left -= chunk) > 0);
 
-  if (len > SizeX - x)
+  if (len > (uldat)(SizeX - x))
     dirty_tty(0, y, SizeX - 1, y + (x + len - 1) / SizeX);
   else
     dirty_tty(x, y, x + len - 1, y);

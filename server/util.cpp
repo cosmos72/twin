@@ -986,7 +986,9 @@ byte InitTWDisplay(void) {
 }
 
 /* unlink /tmp/.Twin<TWDISPLAY> */
-void QuitTWDisplay(void) { unlink(fullTWD); }
+void QuitTWDisplay(void) {
+  unlink(fullTWD);
+}
 
 static e_privilege Privilege;
 static uid_t Uid, EUid;
@@ -1387,7 +1389,7 @@ byte AssignId(CONST fn_obj Fn_Obj, obj Obj) {
   if (Obj)
     switch (Fn_Obj->Magic) {
     case obj_magic:
-      /* 'obj' is just a template type, you can't create one */
+      /* 'obj' is an abstract type, you can't create one */
       break;
     case row_magic:
     case module_magic:
@@ -1395,7 +1397,7 @@ byte AssignId(CONST fn_obj Fn_Obj, obj Obj) {
     case msg_magic:
       /*
        * We don't use Ids for rows and msgs as we expect to create *lots* of them.
-       * It's unsafe to allow modules and display_hw access remotely,
+       * Remote access to module and display_hw is unsafe too,
        * so no Ids for them too.
        */
       Obj->Id = Fn_Obj->Magic;

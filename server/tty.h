@@ -9,8 +9,8 @@
 #ifndef _TWIN_TTY_H
 #define _TWIN_TTY_H
 
-byte TtyWriteAscii(window Window, uldat Len, CONST byte *AsciiSeq);
-byte TtyWriteString(window Window, uldat Len, CONST byte *String);
+byte TtyWriteAscii(window Window, uldat Len, CONST char *AsciiSeq);
+byte TtyWriteString(window Window, uldat Len, CONST char *String);
 byte TtyWriteHWFont(window Window, uldat Len, CONST hwfont *HWFont);
 byte TtyWriteHWAttr(window Window, dat x, dat y, uldat Len, CONST hwattr *Attr);
 
