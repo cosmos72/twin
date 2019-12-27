@@ -2,6 +2,7 @@
 
 #ifdef CONF_EXT
 
+#include "algo.h"
 #include "data.h"
 #include "dl.h"
 #include "methods.h"

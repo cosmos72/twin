@@ -1,5 +1,7 @@
 /* Functions that are common between hw_x11 and hw_xft.  Currently does not cover hw_gfx. */
 
+#include "algo.h"
+
 /* this can stay static, X11_FlushHW() is not reentrant */
 static hwcol _col;
 
@@ -54,7 +56,9 @@ INLINE void X11_Mogrify(dat x, dat y, ldat len) {
   }
 }
 
-INLINE ldat diff(ldat x, ldat y) { return x >= y ? x - y : y - x; }
+INLINE ldat diff(ldat x, ldat y) {
+  return x >= y ? x - y : y - x;
+}
 
 enum { MAX_FONT_SCORE = 100 };
 
@@ -470,4 +474,5 @@ EXTERN_C byte InitModule(module Module) {
 }
 
 /* this MUST be included, or it seems that a bug in dlsym() gets triggered */
-EXTERN_C void QuitModule(module Module) {}
+EXTERN_C void QuitModule(module Module) {
+}

@@ -25,6 +25,7 @@
 #include <Tutf/Tutf.h>
     
 #include "twin.h"
+#include "algo.h"
 #include "methods.h"
 #include "data.h"
 #include "extreg.h"

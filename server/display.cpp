@@ -17,12 +17,8 @@
  * and forward messages and commands between the display driver and twin.
  */
 
-#include <stdio.h>
-#include <stdarg.h>
-#include <string.h>
-#include <signal.h>
-
 #include "twin.h"
+#include "algo.h"
 #include "hw.h"
 #include "hw_private.h"
 #include "common.h"
@@ -34,6 +30,11 @@
 #include <Tw/Twerrno.h>
 #include <Tw/Twstat.h>
 #include <Tw/Twstat_defs.h>
+
+#include <stdio.h>
+#include <stdarg.h>
+#include <string.h>
+#include <signal.h>
 
 #ifndef PKG_LIBDIR
 #warning PKG_LIBDIR is not #defined, assuming "/usr/local/lib/twin"
@@ -93,13 +94,22 @@ int (*OverrideSelect)(int n, fd_set *readfds, fd_set *writefds, fd_set *exceptfd
 
 void Quit(int status);
 
-void NoOp(void) {}
-byte AlwaysFalse(void) { return tfalse; }
-byte AlwaysTrue(void) { return ttrue; }
-void *AlwaysNull(void) { return NULL; }
+void NoOp(void) {
+}
+byte AlwaysFalse(void) {
+  return tfalse;
+}
+byte AlwaysTrue(void) {
+  return ttrue;
+}
+void *AlwaysNull(void) {
+  return NULL;
+}
 
-void GainPrivileges(void) {}
-void RemotePidIsDead(pid_t pid) {}
+void GainPrivileges(void) {
+}
+void RemotePidIsDead(pid_t pid) {
+}
 
 byte Error(udat Code_Error) {
   switch ((ErrNo = Code_Error)) {
@@ -129,9 +139,13 @@ int printk(CONST char *format, ...) {
   return i;
 }
 
-int flushk(void) { return fflush(stderr); }
+int flushk(void) {
+  return fflush(stderr);
+}
 
-static void OutOfMemory(void) { printk("twdisplay: Out of memory!\n"); }
+static void OutOfMemory(void) {
+  printk("twdisplay: Out of memory!\n");
+}
 
 INLINE uldat FdListGet(void) {
   if (FdBottom < FdSize)
@@ -672,7 +686,9 @@ void SetPaletteHW(udat N, udat R, udat G, udat B) {
   }
 }
 
-void ResetPaletteHW(void) { HW->ResetPalette(); }
+void ResetPaletteHW(void) {
+  HW->ResetPalette();
+}
 
 static void HandleMsg(tmsg Msg) {
   tevent_display EventD;
@@ -808,7 +824,9 @@ void SelectionExport(void) {
  * Cheat and cast to to (obj), since the underlying display HW code
  * treats it as opaque. We will cast it back to (uldat) when needed.
  */
-obj TwinSelectionGetOwner(void) { return (obj)(topaque)TwGetOwnerSelection(); }
+obj TwinSelectionGetOwner(void) {
+  return (obj)(topaque)TwGetOwnerSelection();
+}
 
 /* HW back-end function: set selection owner */
 void TwinSelectionSetOwner(obj Owner, tany Time, tany Frac) {
@@ -1046,8 +1064,12 @@ static void MainLoop(int Fd) {
   exit(1);
 }
 
-dat GetDisplayWidth(void) { return DisplayWidth; }
-dat GetDisplayHeight(void) { return DisplayHeight; }
+dat GetDisplayWidth(void) {
+  return DisplayWidth;
+}
+dat GetDisplayHeight(void) {
+  return DisplayHeight;
+}
 
 static void Usage(void) {
   fputs("Usage: twdisplay [OPTIONS]\n"

@@ -23,6 +23,7 @@
 #include "tty_ioctl.h"
 
 #include "twin.h"
+#include "algo.h"
 #include "main.h"
 #include "data.h"
 #include "remote.h"
@@ -593,4 +594,5 @@ EXTERN_C byte InitModule(module Module) {
 }
 
 /* this MUST be included, or it seems that a bug in dlsym() gets triggered */
-EXTERN_C void QuitModule(module Module) {}
+EXTERN_C void QuitModule(module Module) {
+}

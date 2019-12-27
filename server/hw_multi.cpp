@@ -23,6 +23,7 @@
 #endif
 
 #include "twin.h"
+#include "algo.h"
 #include "data.h"
 #include "main.h"
 #include "methods.h"
@@ -437,7 +438,9 @@ byte InitHW(void) {
   return ret;
 }
 
-void QuitHW(void) { DeleteList(All->FirstDisplayHW); }
+void QuitHW(void) {
+  DeleteList(All->FirstDisplayHW);
+}
 
 byte RestartHW(byte verbose) {
   display_hw s_HW;
@@ -587,7 +590,9 @@ byte ResizeDisplay(void) {
   return change;
 }
 
-void BeepHW(void) { NeedHW |= NEEDBeepHW; }
+void BeepHW(void) {
+  NeedHW |= NEEDBeepHW;
+}
 
 /* configure underlying HW */
 void ConfigureHW(udat resource, byte todefault, udat value) {
@@ -595,7 +600,9 @@ void ConfigureHW(udat resource, byte todefault, udat value) {
   if (!(ConfigureHWDefault[resource] = todefault))
     ConfigureHWValue[resource] = value;
 
-  forHW { HW->Configure(resource, todefault, value); }
+  forHW {
+    HW->Configure(resource, todefault, value);
+  }
 }
 
 void SetPaletteHW(udat N, udat R, udat G, udat B) {
@@ -607,13 +614,17 @@ void SetPaletteHW(udat N, udat R, udat G, udat B) {
 
     if (memcmp(&Palette[N], &c, sizeof(palette))) {
       Palette[N] = c;
-      forHW { HW->SetPalette(N, R, G, B); }
+      forHW {
+        HW->SetPalette(N, R, G, B);
+      }
     }
   }
 }
 
 void ResetPaletteHW(void) {
-  forHW { HW->ResetPalette(); }
+  forHW {
+    HW->ResetPalette();
+  }
 }
 
 /* HW back-end function: get selection owner */
@@ -735,7 +746,9 @@ void TwinSelectionRequest(obj Requestor, uldat ReqPrivate, obj Owner) {
 }
 
 void SelectionExport(void) {
-  forHW { HW->HWSelectionExport(); }
+  forHW {
+    HW->HWSelectionExport();
+  }
   NeedHW &= ~NEEDSelectionExport;
 }
 
@@ -1074,10 +1087,14 @@ byte AllHWCanDragAreaNow(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat Ds
 }
 
 void DragAreaHW(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
-  forHW { HW->DragArea(Left, Up, Rgt, Dwn, DstLeft, DstUp); }
+  forHW {
+    HW->DragArea(Left, Up, Rgt, Dwn, DstLeft, DstUp);
+  }
 }
 
-void EnableMouseMotionEvents(byte enable) { ConfigureHW(HW_MOUSEMOTIONEVENTS, tfalse, enable); }
+void EnableMouseMotionEvents(byte enable) {
+  ConfigureHW(HW_MOUSEMOTIONEVENTS, tfalse, enable);
+}
 
 byte MouseEventCommon(dat x, dat y, dat dx, dat dy, udat Buttons) {
   dat prev_x, prev_y;

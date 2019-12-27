@@ -31,6 +31,7 @@
 #include <sys/types.h>
 #endif
 
+#include "algo.h"
 #include "data.h"
 #include "extreg.h"
 #include "methods.h"

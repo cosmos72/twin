@@ -39,6 +39,7 @@
 #endif
 
 #include "twin.h"
+#include "algo.h"
 #include "methods.h"
 #include "data.h"
 #include "draw.h"
@@ -268,7 +269,9 @@ static byte RemoteGzip(uldat Slot) {
   return zret == Z_OK;
 }
 
-static byte RemoteGzipFlush(uldat Slot) { return RemoteGzip(Slot) && RemoteFlush(LS.pairSlot); }
+static byte RemoteGzipFlush(uldat Slot) {
+  return RemoteGzip(Slot) && RemoteFlush(LS.pairSlot);
+}
 
 static byte RemoteGunzip(uldat Slot) {
   uldat slot = LS.pairSlot, delta;
@@ -960,7 +963,9 @@ static uldat sockFindFunction(byte Len, CONST char *Name, byte FormatLen, CONST 
   return NOID;
 }
 
-static byte sockSyncSocket(void) { return ttrue; }
+static byte sockSyncSocket(void) {
+  return ttrue;
+}
 
 static byte sockServerSizeof(byte Type) {
   return TwinMagicData[Type < TWS_highest ? Type : TWS_void];
@@ -1302,21 +1307,47 @@ static ggroup sockCreateGroup(void) {
   return (ggroup)0;
 }
 
-static obj sockPrevObj(obj Obj) { return Obj ? Obj->Prev : Obj; }
-static obj sockNextObj(obj Obj) { return Obj ? Obj->Next : Obj; }
-static obj sockParentObj(obj Obj) { return Obj ? (obj)Obj->Parent : Obj; }
+static obj sockPrevObj(obj Obj) {
+  return Obj ? Obj->Prev : Obj;
+}
+static obj sockNextObj(obj Obj) {
+  return Obj ? Obj->Next : Obj;
+}
+static obj sockParentObj(obj Obj) {
+  return Obj ? (obj)Obj->Parent : Obj;
+}
 
-static screen sockFirstScreen(void) { return All->FirstScreen; }
-static widget sockFirstWidget(widget W) { return W ? W->FirstW : W; }
-static msgport sockFirstMsgPort(void) { return All->FirstMsgPort; }
-static menu sockFirstMenu(msgport MsgPort) { return MsgPort ? MsgPort->FirstMenu : (menu)0; }
-static widget sockFirstW(msgport MsgPort) { return MsgPort ? MsgPort->FirstW : (widget)0; }
-static ggroup sockFirstGroup(msgport MsgPort) { return MsgPort ? MsgPort->FirstGroup : (ggroup)0; }
-static mutex sockFirstMutex(msgport MsgPort) { return MsgPort ? MsgPort->FirstMutex : (mutex)0; }
-static menuitem sockFirstMenuItem(menu Menu) { return Menu ? Menu->FirstI : (menuitem)0; }
-static gadget sockFirstGadget(ggroup Group) { return Group ? Group->FirstG : (gadget)0; }
+static screen sockFirstScreen(void) {
+  return All->FirstScreen;
+}
+static widget sockFirstWidget(widget W) {
+  return W ? W->FirstW : W;
+}
+static msgport sockFirstMsgPort(void) {
+  return All->FirstMsgPort;
+}
+static menu sockFirstMenu(msgport MsgPort) {
+  return MsgPort ? MsgPort->FirstMenu : (menu)0;
+}
+static widget sockFirstW(msgport MsgPort) {
+  return MsgPort ? MsgPort->FirstW : (widget)0;
+}
+static ggroup sockFirstGroup(msgport MsgPort) {
+  return MsgPort ? MsgPort->FirstGroup : (ggroup)0;
+}
+static mutex sockFirstMutex(msgport MsgPort) {
+  return MsgPort ? MsgPort->FirstMutex : (mutex)0;
+}
+static menuitem sockFirstMenuItem(menu Menu) {
+  return Menu ? Menu->FirstI : (menuitem)0;
+}
+static gadget sockFirstGadget(ggroup Group) {
+  return Group ? Group->FirstG : (gadget)0;
+}
 
-static all sockGetAll(void) { return All; }
+static all sockGetAll(void) {
+  return All;
+}
 
 #ifdef CONF_EXT
 
@@ -1451,8 +1482,11 @@ static tany sockCallBExtension(extension e, topaque len, CONST byte *data,
 static byte sockDecodeExtension(topaque *len, CONST byte **data, topaque *args_n, tsfield args) {
   return tfalse;
 }
-static extension sockOpenExtension(byte namelen, CONST char *name) { return (extension)0; }
-static void sockCloseExtension(extension e) {}
+static extension sockOpenExtension(byte namelen, CONST char *name) {
+  return (extension)0;
+}
+static void sockCloseExtension(extension e) {
+}
 static tany sockCallBExtension(extension e, topaque len, CONST byte *data,
                                CONST byte *return_type) {
   return (tany)0;
@@ -1943,7 +1977,9 @@ static void sockBlindSendToMsgPort(msgport MsgPort, udat Len, CONST byte *Data) 
   (void)sockSendToMsgPort(MsgPort, Len, Data);
 }
 
-static obj sockGetOwnerSelection(void) { return TwinSelectionGetOwner(); }
+static obj sockGetOwnerSelection(void) {
+  return TwinSelectionGetOwner();
+}
 
 static void sockSetOwnerSelection(tany Time, tany Frac) {
   if (LS.MsgPort)
@@ -1962,7 +1998,9 @@ static void sockRequestSelection(obj Owner, uldat ReqPrivate) {
 
 #ifdef CONF_SOCKET_GZ
 
-static byte sockCanCompress(void) { return ttrue; }
+static byte sockCanCompress(void) {
+  return ttrue;
+}
 
 static voidpf sockZAlloc(voidpf opaque, uInt items, uInt size) {
   void *ret = AllocMem(items * (size_t)size);
@@ -2055,9 +2093,13 @@ static byte sockDoCompress(byte on_off) {
 
 #else
 
-static byte sockCanCompress(void) { return tfalse; }
+static byte sockCanCompress(void) {
+  return tfalse;
+}
 
-static byte sockDoCompress(byte on_off) { return tfalse; }
+static byte sockDoCompress(byte on_off) {
+  return tfalse;
+}
 
 #endif /* CONF_SOCKET_GZ */
 
@@ -2462,9 +2504,13 @@ static void Wait4Magic(int fd, uldat slot, byte isUnix) {
   close(fd);
 }
 
-static void Wait4MagicUnixIO(int fd, uldat slot) { Wait4Magic(fd, slot, ttrue); }
+static void Wait4MagicUnixIO(int fd, uldat slot) {
+  Wait4Magic(fd, slot, ttrue);
+}
 
-static void Wait4MagicInetIO(int fd, uldat slot) { Wait4Magic(fd, slot, tfalse); }
+static void Wait4MagicInetIO(int fd, uldat slot) {
+  Wait4Magic(fd, slot, tfalse);
+}
 
 static void unixSocketIO(int fd, uldat slot) {
   struct sockaddr_un un_addr;

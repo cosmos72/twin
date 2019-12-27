@@ -16,6 +16,7 @@
  */
 
 #include "twin.h"
+#include "algo.h"
 #include "data.h"
 #include "methods.h"
 #include "draw.h"

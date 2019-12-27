@@ -29,15 +29,6 @@ typedef struct s_obj *obj;
 #include <Tw/missing.h>
 #include <Tw/mouse.h>
 
-#define Abs(x) ((x) > 0 ? (x) : -(x))
-#define Swap(a, b, tmp) ((tmp) = (a), (a) = (b), (b) = (tmp))
-#define Min2(x, y) ((x) < (y) ? (x) : (y))
-#define Max2(x, y) ((x) > (y) ? (x) : (y))
-#define Sign(n) ((n) > 0 ? 1 : (n) < 0 ? -1 : 0)
-
-#define Max3(x, y, z) ((x) > (y) ? Max2(x, z) : Max2(y, z))
-#define Min3(x, y, z) ((x) < (y) ? Min2(x, z) : Min2(y, z))
-
 /***************/
 
 #define NOFD (-1)

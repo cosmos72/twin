@@ -16,6 +16,7 @@
 #include "remote.h"
 #include "methods.h"
 #include "extreg.h"
+#include "algo.h"
 
 #include "hw.h"
 #include "hw_private.h"
@@ -163,7 +164,9 @@ static void display_HandleEvent(display_hw hw) {
   RestoreHW;
 }
 
-static void display_HelperH(msgport Port) { display_HandleEvent(Port->AttachHW); }
+static void display_HelperH(msgport Port) {
+  display_HandleEvent(Port->AttachHW);
+}
 
 INLINE void display_DrawHWAttr(dat x, dat y, udat buflen, hwattr *buf) {
   display_CreateMsg(DPY_DrawHWAttr, buflen * sizeof(hwattr));
@@ -326,7 +329,9 @@ static void display_ResetPalette(void) {
 /*
  * import Selection from twdisplay
  */
-static byte display_SelectionImport_display(void) { return !HW->HWSelectionPrivate; }
+static byte display_SelectionImport_display(void) {
+  return !HW->HWSelectionPrivate;
+}
 
 /*
  * export our Selection to twdisplay
@@ -553,4 +558,5 @@ EXTERN_C byte InitModule(module Module) {
 }
 
 /* this MUST be included, or it seems that a bug in dlsym() gets triggered */
-EXTERN_C void QuitModule(module Module) {}
+EXTERN_C void QuitModule(module Module) {
+}

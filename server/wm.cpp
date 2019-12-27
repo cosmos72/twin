@@ -11,6 +11,7 @@
  */
 
 #include "twin.h"
+#include "algo.h"
 #include "data.h"
 #include "methods.h"
 #include "builtin.h"
@@ -756,7 +757,9 @@ static byte ActivateScreen(wm_ctx *C) {
 }
 
 /* this is mouse-only */
-static void ContinueScreen(wm_ctx *C) { ResizeFirstScreen(C->j - All->FirstScreen->YLimit); }
+static void ContinueScreen(wm_ctx *C) {
+  ResizeFirstScreen(C->j - All->FirstScreen->YLimit);
+}
 
 static void ReleaseScreen(wm_ctx *C) {
   All->State = STATE_DEFAULT;

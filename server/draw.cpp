@@ -11,6 +11,7 @@
  */
 
 #include "twin.h"
+#include "algo.h"
 #include "main.h"
 #include "data.h"
 #include "methods.h"
@@ -23,7 +24,9 @@
 #include <Tutf/Tutf.h>
 #include <Tutf/Tutf_defs.h>
 
-byte InitDraw(void) { return ttrue; }
+byte InitDraw(void) {
+  return ttrue;
+}
 
 INLINE hwcol DoShadowColor(hwcol Color, byte Fg, byte Bg) {
   return (Bg ? (Color & COL(0, MAXCOL)) > COL(0, HIGH | BLACK) ? COL(0, HIGH | BLACK)

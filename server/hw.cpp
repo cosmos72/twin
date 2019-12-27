@@ -47,6 +47,7 @@
 #include "tty_ioctl.h"
 
 #include "hw.h"
+#include "algo.h"
 #include "common.h"
 
 #ifndef VDISABLE

@@ -12,6 +12,7 @@
  */
 
 #include "twin.h"
+#include "algo.h"
 #include "main.h"
 #include "builtin.h"
 #include "methods.h"
@@ -482,9 +483,13 @@ static void UnMapWidget(widget W) {
   }
 }
 
-static void RaiseW(widget W) { RaiseWidget(W, tfalse); }
+static void RaiseW(widget W) {
+  RaiseWidget(W, tfalse);
+}
 
-static void LowerW(widget W) { LowerWidget(W, tfalse); }
+static void LowerW(widget W) {
+  LowerWidget(W, tfalse);
+}
 
 static void SetXYWidget(widget W, dat X, dat Y) {
   widget Prev, Next;
@@ -1131,7 +1136,9 @@ static void SetTitleWindow(window W, dat titlelen, char *title) {
   }
 }
 
-static void SetColTextWindow(window W, hwcol ColText) { W->ColText = ColText; }
+static void SetColTextWindow(window W, hwcol ColText) {
+  W->ColText = ColText;
+}
 
 static void SetColorsWindow(window W, udat Bitmap, hwcol ColGadgets, hwcol ColArrows, hwcol ColBars,
                             hwcol ColTabs, hwcol ColBorder, hwcol ColText, hwcol ColSelect,
@@ -1695,7 +1702,9 @@ static void RemoveGadgetGroup(ggroup Group, gadget G) {
   }
 }
 
-static gadget GetSelectedGadget(ggroup Group) { return Group->SelectG; }
+static gadget GetSelectedGadget(ggroup Group) {
+  return Group->SelectG;
+}
 
 static void SetSelectedGadget(ggroup Group, gadget G) {
   if (!G || (G && G->Group == Group)) {
