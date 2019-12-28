@@ -17,6 +17,7 @@
 #include "builtin.h"
 #include "main.h"
 #include "draw.h"
+#include "obj/id.h" // NOID, Id2Obj()
 #include "resize.h"
 #include "util.h"
 #include "extreg.h"

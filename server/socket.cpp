@@ -40,14 +40,15 @@
 
 #include "twin.h"
 #include "algo.h"
-#include "methods.h"
 #include "data.h"
 #include "draw.h"
-#include "main.h"
-#include "printk.h"
-#include "util.h"
-#include "resize.h"
 #include "extreg.h"
+#include "main.h"
+#include "methods.h"
+#include "obj/id.h" // Obj2Id
+#include "printk.h"
+#include "resize.h"
+#include "util.h"
 
 #include "fdlist.h"
 #include "remote.h"

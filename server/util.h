@@ -90,10 +90,4 @@ void *RemoveConst(CONST void *x);
 
 hwattr EncodeToHWAttrExtra(tpos pos, tternary detail, tbool active, tbool pressed);
 
-byte AssignId(CONST fn_obj Fn_Obj, obj Obj);
-byte AssignId_all(all Obj);
-void DropId(obj Obj);
-obj Id2Obj(byte i, uldat Id);
-#define Obj2Id(o) ((o) ? (o)->Id : NOID)
-
 #endif /* _TWIN_UTIL_H */

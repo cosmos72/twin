@@ -11,9 +11,10 @@
  */
 
 #include "twin.h"
+#include "extreg.h"
 #include "data.h"
 #include "methods.h"
-#include "extreg.h"
+#include "obj/id.h" // Id2Obj()
 
 #include "remote.h"
 #include "pty.h"

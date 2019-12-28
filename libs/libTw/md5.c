@@ -16,7 +16,11 @@
  */
 
 #include "md5.h"
-#include "twin.h" /* for INLINE, TW_IS_LITTLE_ENDIAN, memcpy() */
+#include <Tw/datasizes.h> /* TW_IS_LITTLE_ENDIAN */
+
+#ifdef TW_HAVE_STRING_H
+#include <string.h> /* memcpy() */
+#endif
 
 #if TW_IS_LITTLE_ENDIAN
 #define byteReverse(buf, len) ((void)0)
@@ -28,7 +32,7 @@ void byteReverse(md5_uint32 *buf, unsigned longs);
 /*
  * Note: this code is harmless on little-endian machines.
  */
-INLINE void byteReverse(md5_uint32 *buf, unsigned longs) {
+TW_INLINE void byteReverse(md5_uint32 *buf, unsigned longs) {
   md5_uint32 t;
   do {
 #define BUF(i) ((md5_uint32) * ((unsigned char *)(buf) + (i)))
@@ -60,9 +64,9 @@ void MD5Init(struct MD5Context *ctx) {
  * Update context to reflect the concatenation of another buffer full
  * of bytes.
  */
-void MD5Update(struct MD5Context *ctx, void CONST *mem, size_t len) {
+void MD5Update(struct MD5Context *ctx, void TW_CONST *mem, size_t len) {
   md5_uint32 t;
-  unsigned CONST char *buf = (unsigned CONST char *)mem;
+  unsigned TW_CONST char *buf = (unsigned TW_CONST char *)mem;
 
   /* Update bitcount */
 
@@ -166,7 +170,7 @@ void MD5Final(unsigned char digest[16], struct MD5Context *ctx) {
  * reflect the addition of 16 longwords of new data.  MD5Update blocks
  * the data and converts bytes into longwords for this routine.
  */
-void MD5Transform(md5_uint32 buf[4], md5_uint32 CONST in[16]) {
+void MD5Transform(md5_uint32 buf[4], md5_uint32 TW_CONST in[16]) {
   register md5_uint32 a, b, c, d;
 
   a = buf[0];
@@ -255,14 +259,14 @@ void MD5Transform(md5_uint32 buf[4], md5_uint32 CONST in[16]) {
 #include <stdio.h>
 #include <string.h>
 
-int main(int argc, CONST char *argv[]) {
+int main(int argc, TW_CONST char *argv[]) {
   unsigned char digest[16];
   struct MD5Context ctx;
-  CONST char *str = argc > 1 ? argv[1] : "abc\n";
+  TW_CONST char *str = argc > 1 ? argv[1] : "abc\n";
   unsigned i;
 
   MD5Init(&ctx);
-  MD5Update(&ctx, (unsigned CONST char *)str, strlen(str));
+  MD5Update(&ctx, (unsigned TW_CONST char *)str, strlen(str));
   MD5Final(digest, &ctx);
 
   for (i = 0; i < sizeof(digest); i++) {

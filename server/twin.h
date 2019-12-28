@@ -16,9 +16,9 @@
 #include "twautoconf.h" /* for TW_HAVE_* macros */
 #include "twconfig.h"   /* for CONF_* macros */
 
+#include "obj/fwd.h"
 /* pull in "obj" field in <Tw/stattypes.h> */
 #define obj obj
-typedef struct s_obj *obj;
 
 #include "compiler.h"
 #include "version.h"
@@ -31,6 +31,10 @@ typedef struct s_obj *obj;
 
 /***************/
 
+#include "obj/magic.h"
+#include "obj/obj.h"
+#include "obj/widget.h"
+
 #define NOFD (-1)
 #define specFD                                                                                     \
   (-2) /* use for every FD that needs a special RemoteFlush()                                      \
@@ -40,10 +44,6 @@ typedef struct s_obj *obj;
 #define NOPID ((pid_t)0)
 #endif
 #define NOSLOT TW_MAXULDAT
-
-#define ABS(x) ((x) > 0 ? (x) : -(x))
-
-#define XAND(Bits, Mask) (((Bits) & (Mask)) == (Mask))
 
 typedef struct s_font {
   byte AsciiCode;
@@ -59,48 +59,6 @@ typedef struct s_mouse_state {
   dat delta_x, delta_y;
   byte keys;
 } mouse_state;
-
-typedef struct s_ttydata ttydata;
-typedef struct s_remotedata remotedata;
-typedef struct s_draw_ctx draw_ctx;
-
-/*typedef struct s_obj *obj;*/
-typedef struct s_fn_obj *fn_obj;
-typedef struct s_obj_parent *obj_parent;
-typedef struct s_widget *widget;
-typedef struct s_fn_widget *fn_widget;
-typedef struct s_gadget *gadget;
-typedef struct s_fn_gadget *fn_gadget;
-typedef struct s_window *window;
-typedef struct s_fn_window *fn_window;
-typedef struct s_screen *screen;
-typedef struct s_fn_screen *fn_screen;
-typedef struct s_group *ggroup;
-typedef struct s_fn_group *fn_group;
-typedef struct s_row *row;
-typedef struct s_fn_row *fn_row;
-typedef struct s_menuitem *menuitem;
-typedef struct s_fn_menuitem *fn_menuitem;
-typedef struct s_menu *menu;
-typedef struct s_fn_menu *fn_menu;
-typedef struct s_msg *msg;
-typedef struct s_fn_msg *fn_msg;
-typedef struct s_msgport *msgport;
-typedef struct s_fn_msgport *fn_msgport;
-typedef struct s_mutex *mutex;
-typedef struct s_fn_mutex *fn_mutex;
-typedef struct s_module *module;
-typedef struct s_fn_module *fn_module;
-typedef struct s_extension *extension;
-typedef struct s_fn_extension *fn_extension;
-typedef struct s_display_hw *display_hw;
-typedef struct s_fn_display_hw *fn_display_hw;
-
-typedef struct s_fn fn;
-typedef struct s_setup setup;
-typedef struct s_all *all;
-
-typedef void (*fn_hook)(widget);
 
 /* ttydata->Flags */
 #define TTY_STOPPED ((udat)0x0001)
@@ -190,130 +148,6 @@ struct s_remotedata {
   pid_t ChildPid;
   uldat FdSlot; /* index in the FdList array (remote.c) */
 };
-
-struct s_draw_ctx {
-  draw_ctx *Next;
-  screen Screen;
-  widget TopW;
-  widget W;
-  widget OnlyW;
-  ldat Left, Up, Rgt, Dwn; /* widget corners position on Screen */
-  ldat X1, Y1, X2, Y2;     /* screen area to draw */
-  dat DWidth;
-  dat DHeight;
-  byte NoChildren;
-  byte BorderDone;
-  byte Shaded;
-};
-
-struct s_obj {
-  uldat Id;
-  fn_obj Fn;
-  obj Prev, Next, Parent;
-};
-
-struct s_obj_parent {
-  obj First, Last;
-};
-
-struct s_fn_obj {
-  uldat Magic, Size, Used;
-  obj (*Create)(fn_obj);
-  void (*Insert)(obj Obj, obj, obj Prev, obj Next);
-  void (*Remove)(obj);
-  void (*Delete)(obj);
-  void (*ChangeField)(obj, udat field, uldat CLEARMask, uldat XORMask);
-};
-
-struct s_wE { /* for WIDGET_USEEXPOSE widgets */
-  union {
-    CONST char *Text;
-    CONST hwfont *HWFont;
-    CONST hwattr *HWAttr;
-  } E;
-  dat Flags, Pitch;
-  ldat X1, Y1, X2, Y2;
-};
-
-/* WIDGET_USEEXPOSE  USE.E.Flags: */
-#define WIDGET_USEEXPOSE_TEXT 1
-#define WIDGET_USEEXPOSE_HWFONT 2
-#define WIDGET_USEEXPOSE_HWATTR 4
-
-struct s_widget {
-  uldat Id;
-  fn_widget Fn;
-  widget Prev, Next; /* list in the same parent */
-  widget Parent;     /* where this widget sits */
-  /* widget */
-  widget FirstW, LastW; /* list of children */
-  widget SelectW;       /* selected child */
-  dat Left, Up, XWidth, YWidth;
-  uldat Attrib;
-  uldat Flags;
-  ldat XLogic, YLogic;
-  widget O_Prev, O_Next; /* list with the same msgport (owner) */
-  msgport Owner;
-  fn_hook ShutDownHook; /* hooks for this widget */
-  fn_hook Hook, *WhereHook;
-  fn_hook MapUnMapHook;
-  msg MapQueueMsg;
-  hwattr USE_Fill;
-  union {
-    struct s_wE E;
-  } USE;
-};
-
-struct s_fn_widget {
-  uldat Magic, Size, Used;
-  widget (*Create)(fn_widget, msgport Owner, dat XWidth, dat YWidth, uldat Attrib, uldat Flags,
-                   dat Left, dat Up, hwattr USE_Fill);
-  void (*Insert)(widget, widget Parent, widget Prev, widget Next);
-  void (*Remove)(widget);
-  void (*Delete)(widget);
-  void (*ChangeField)(widget, udat field, uldat CLEARMask, uldat XORMask);
-  /* widget */
-  fn_obj Fn_Obj; /* backup of overloaded functions */
-  void (*DrawSelf)(draw_ctx *D);
-  widget (*FindWidgetAt)(widget Parent, dat X, dat Y);
-  gadget (*FindGadgetByCode)(widget Parent, udat Code);
-  void (*SetXY)(widget, dat X, dat Y);
-  void (*SetFill)(widget, hwattr Fill);
-  widget (*Focus)(widget);
-  widget (*KbdFocus)(widget);
-  void (*Map)(widget, widget Parent);
-  void (*UnMap)(widget);
-  void (*MapTopReal)(widget, screen);
-  void (*Raise)(widget);
-  void (*Lower)(widget);
-  void (*Own)(widget, msgport);
-  void (*DisOwn)(widget);
-  void (*RecursiveDelete)(widget, msgport);
-  void (*Expose)(widget, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch, CONST char *,
-                 CONST hwfont *, CONST hwattr *);
-  byte (*InstallHook)(widget, fn_hook, fn_hook *Where);
-  void (*RemoveHook)(widget, fn_hook, fn_hook *Where);
-};
-
-/* Widget->Attrib */
-/*
- * ask the server to send events even for mouse motion without any pressed button.
- * works only if WIDGET_WANT_MOUSE is set too.
- */
-#define WIDGET_WANT_MOUSE_MOTION 0x0001
-#define WIDGET_WANT_KEYS 0x0002
-#define WIDGET_WANT_MOUSE 0x0004
-#define WIDGET_WANT_CHANGES 0x0008
-#define WIDGET_AUTO_FOCUS 0x0010
-
-/* Widget->Flags */
-#define WIDGETFL_USEEXPOSE 0x02
-#define WIDGETFL_USEFILL 0x03
-#define WIDGETFL_USEANY 0x07 /* mask of all above ones */
-
-#define WIDGETFL_NOTVISIBLE 0x8000
-
-#define w_USE(w, USExxx) (((w)->Flags & WIDGETFL_USEANY) == CAT(WIDGETFL_, USExxx))
 
 struct s_gT { /* for GADGETFL_USETEXT gadgets */
   hwfont *Text[4];
@@ -1393,82 +1227,6 @@ struct s_fn_display_hw {
 #define DLERROR ((udat)3)
 #define SYSCALLERROR ((udat)4)
 #define USERERROR ((udat)5)
-
-/* IDs */
-#define NOID ((uldat)0)
-#define BADID ((uldat)-1)
-
-#define MAXID ((uldat)0x0FFFFFFFul)
-#define magic_mask ((uldat)0xF0000000ul)
-#define magic_shift 28
-
-#define obj_magic_id 0
-#define widget_magic_id 1
-#define gadget_magic_id 2
-#define window_magic_id 3
-#define screen_magic_id 4
-#define ggroup_magic_id 5
-#define row_magic_id 6
-#define menuitem_magic_id 7
-#define menu_magic_id 8
-#define msgport_magic_id 9
-#define msg_magic_id 0xA
-#define mutex_magic_id 0xB
-#define module_magic_id 0xC
-#define extension_magic_id 0xD
-#define display_hw_magic_id 0xE
-#define all_magic_id 0xF
-
-/*
- * These must have consecutive values, but obj_magic_STR can be changed
- * as long as it has the same value as obj_magic_CHR.
- * To avoid troubles with strlen(), you should not use '\0' or "\0"
- * for any of the values below.
- */
-#define base_magic_CHR '\x30'
-#define obj_magic_STR "\x30"
-#define widget_magic_STR "\x31"
-#define gadget_magic_STR "\x32"
-#define window_magic_STR "\x33"
-#define screen_magic_STR "\x34"
-#define ggroup_magic_STR "\x35"
-#define row_magic_STR "\x36"
-#define menuitem_magic_STR "\x37"
-#define menu_magic_STR "\x38"
-#define msgport_magic_STR "\x39"
-#define msg_magic_STR "\x3A"
-#define mutex_magic_STR "\x3B"
-#define module_magic_STR "\x3C"
-#define extension_magic_STR "\x3D"
-#define display_hw_magic_STR "\x3E"
-#define all_magic_STR "\x3F"
-
-#define obj_magic ((uldat)0x0dead0b1ul)
-#define widget_magic ((uldat)0x161d9743ul)
-#define gadget_magic ((uldat)0x29867551ul)
-#define window_magic ((uldat)0x31357531ul)
-#define screen_magic ((uldat)0x42659871ul)
-#define ggroup_magic ((uldat)0x5741f326ul)
-#define row_magic ((uldat)0x68074ffaul)
-#define menuitem_magic ((uldat)0x7abc8fdeul)
-#define menu_magic ((uldat)0x8bad0bedul)
-#define msgport_magic ((uldat)0x90981437ul)
-#define msg_magic ((uldat)0xA3a61ce4ul) /* this gets compiled in libTw ! */
-#define mutex_magic ((uldat)0xB0faded0ul)
-#define module_magic ((uldat)0xCb0f1278ul)
-#define extension_magic ((uldat)0xDe81ec51ul)
-#define display_hw_magic ((uldat)0xEdbcc609ul)
-#define all_magic ((uldat)0xFa11Fa11ul)
-
-#define magic_n 16 /* max top hex digit of the above ones + 1 */
-
-/*
- *   B I G   F A T   WARNING:
- *
- * msg_magic is the magic number for user-created (tmsg) structures,
- * while MSG_MAGIC (defined in sockproto.h) is the serial number reserved by
- * libTw to receive server messages (which are still (tmsg) structures).
- */
 
 #define IS_OBJ(type, O) (((O)->Id >> magic_shift) == type##_magic_id)
 #define IS_WIDGET(O)                                                                               \

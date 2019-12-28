@@ -23,6 +23,7 @@
 #include "common.h"
 #include "hw.h"
 #include "hw_multi.h"
+#include "obj/id.h"
 #include "resize.h"
 #include "printk.h"
 #include "util.h"

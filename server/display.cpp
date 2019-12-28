@@ -24,6 +24,7 @@
 #include "common.h"
 #include "dl_helper.h"
 #include "fdlist.h"
+#include "obj/id.h"
 #include "version.h"
 
 #include <Tw/Tw.h>

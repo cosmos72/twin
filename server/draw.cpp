@@ -1798,8 +1798,10 @@ void DrawMenuScreen(screen Screen, dat Xstart, dat Xend) {
   for (i = Xstart; i <= Xend; i++) {
     if (i + 2 >= DWidth) {
       Color = State == STATE_SCREEN ? Menu->ColSelShtCut : Menu->ColShtCut;
-      if (XAND(Screen->Flags, SCREENFL_BACK_SELECT | SCREENFL_BACK_PRESSED))
+      if ((Screen->Flags & (SCREENFL_BACK_SELECT | SCREENFL_BACK_PRESSED)) ==
+          (SCREENFL_BACK_SELECT | SCREENFL_BACK_PRESSED)) {
         Color = COL(COLBG(Color), COLFG(Color));
+      }
       Font = Screen_Back[2 - (DWidth - i)];
     } else if (DWidth - i <= (dat)3 + lenTWDisplay) {
       Color = State == STATE_SCREEN ? Menu->ColSelShtCut : Menu->ColShtCut;

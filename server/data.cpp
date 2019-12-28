@@ -13,8 +13,9 @@
 
 #include "twin.h"
 #include "methods.h"
-#include "util.h"
+#include "obj/id.h"
 #include "data.h"
+#include "util.h"
 
 #include <Tw/Twkeys.h>
 #include <Tutf/Tutf.h>

@@ -12,9 +12,10 @@
 
 #include "twin.h"
 #include "main.h"
-#include "data.h"
 #include "builtin.h"
+#include "data.h"
 #include "draw.h"
+#include "obj/id.h" // Obj2Id()
 #include "resize.h"
 #include "util.h"
 #include "wm.h"

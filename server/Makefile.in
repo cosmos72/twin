@@ -195,9 +195,9 @@ am_twin_server_OBJECTS = alloc.$(OBJEXT) builtin.$(OBJEXT) \
 	data.$(OBJEXT) dl.$(OBJEXT) dl_helper.$(OBJEXT) draw.$(OBJEXT) \
 	extensions/ext_query.$(OBJEXT) extreg.$(OBJEXT) hw.$(OBJEXT) \
 	hw_multi.$(OBJEXT) main.$(OBJEXT) methods.$(OBJEXT) \
-	missing.$(OBJEXT) printk.$(OBJEXT) privilege.$(OBJEXT) \
-	remote.$(OBJEXT) resize.$(OBJEXT) scroller.$(OBJEXT) \
-	util.$(OBJEXT)
+	missing.$(OBJEXT) obj/id.$(OBJEXT) obj/widget.$(OBJEXT) \
+	printk.$(OBJEXT) privilege.$(OBJEXT) remote.$(OBJEXT) \
+	resize.$(OBJEXT) scroller.$(OBJEXT) util.$(OBJEXT)
 twin_server_OBJECTS = $(am_twin_server_OBJECTS)
 twin_server_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 twin_server_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
@@ -234,7 +234,8 @@ am__depfiles_remade = ./$(DEPDIR)/alloc.Po ./$(DEPDIR)/builtin.Po \
 	./$(DEPDIR)/socket.Plo ./$(DEPDIR)/tterm.Plo \
 	./$(DEPDIR)/tty.Plo ./$(DEPDIR)/twin-wrapper.Po \
 	./$(DEPDIR)/util.Po ./$(DEPDIR)/wm.Plo \
-	extensions/$(DEPDIR)/ext_query.Po
+	extensions/$(DEPDIR)/ext_query.Po obj/$(DEPDIR)/id.Po \
+	obj/$(DEPDIR)/widget.Po
 am__mv = mv -f
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
@@ -524,7 +525,11 @@ AM_CPPFLAGS = -I$(top_srcdir)/include $(LTDLINCL) -DPKG_LIBDIR="\"$(pkglibdir)\"
 twin_CPPFLAGS = -I$(top_srcdir)/include $(LTDLINCL) -DBINDIR="\"$(bindir)\""
 twdisplay_SOURCES = alloc.cpp display.cpp dl_helper.cpp missing.cpp hw.cpp
 twin_SOURCES = wrapper.c
-twin_server_SOURCES = alloc.cpp builtin.cpp data.cpp dl.cpp dl_helper.cpp draw.cpp extensions/ext_query.cpp extreg.cpp hw.cpp hw_multi.cpp main.cpp methods.cpp missing.cpp printk.cpp privilege.cpp remote.cpp resize.cpp scroller.cpp util.cpp
+twin_server_SOURCES = alloc.cpp builtin.cpp data.cpp dl.cpp dl_helper.cpp draw.cpp extensions/ext_query.cpp extreg.cpp \
+                        hw.cpp hw_multi.cpp main.cpp methods.cpp missing.cpp \
+                        obj/id.cpp obj/widget.cpp \
+			printk.cpp privilege.cpp remote.cpp resize.cpp scroller.cpp util.cpp
+
 librcparse_la_SOURCES = rcparse_tab.cpp rcparse_lex.cpp
 libterm_la_SOURCES = pty.cpp tterm.cpp tty.cpp
 libsocket_la_SOURCES = md5.cpp socket.cpp
@@ -684,6 +689,15 @@ extensions/$(DEPDIR)/$(am__dirstamp):
 	@: > extensions/$(DEPDIR)/$(am__dirstamp)
 extensions/ext_query.$(OBJEXT): extensions/$(am__dirstamp) \
 	extensions/$(DEPDIR)/$(am__dirstamp)
+obj/$(am__dirstamp):
+	@$(MKDIR_P) obj
+	@: > obj/$(am__dirstamp)
+obj/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) obj/$(DEPDIR)
+	@: > obj/$(DEPDIR)/$(am__dirstamp)
+obj/id.$(OBJEXT): obj/$(am__dirstamp) obj/$(DEPDIR)/$(am__dirstamp)
+obj/widget.$(OBJEXT): obj/$(am__dirstamp) \
+	obj/$(DEPDIR)/$(am__dirstamp)
 
 twin_server$(EXEEXT): $(twin_server_OBJECTS) $(twin_server_DEPENDENCIES) $(EXTRA_twin_server_DEPENDENCIES) 
 	@rm -f twin_server$(EXEEXT)
@@ -727,6 +741,7 @@ uninstall-binSCRIPTS:
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
 	-rm -f extensions/*.$(OBJEXT)
+	-rm -f obj/*.$(OBJEXT)
 
 distclean-compile:
 	-rm -f *.tab.c
@@ -763,6 +778,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/util.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wm.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@extensions/$(DEPDIR)/ext_query.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@obj/$(DEPDIR)/id.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@obj/$(DEPDIR)/widget.Po@am__quote@ # am--include-marker
 
 $(am__depfiles_remade):
 	@$(MKDIR_P) $(@D)
@@ -1031,6 +1048,8 @@ distclean-generic:
 	-test . = "$(srcdir)" || test -z "$(CONFIG_CLEAN_VPATH_FILES)" || rm -f $(CONFIG_CLEAN_VPATH_FILES)
 	-rm -f extensions/$(DEPDIR)/$(am__dirstamp)
 	-rm -f extensions/$(am__dirstamp)
+	-rm -f obj/$(DEPDIR)/$(am__dirstamp)
+	-rm -f obj/$(am__dirstamp)
 
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
@@ -1073,6 +1092,8 @@ distclean: distclean-recursive
 	-rm -f ./$(DEPDIR)/util.Po
 	-rm -f ./$(DEPDIR)/wm.Plo
 	-rm -f extensions/$(DEPDIR)/ext_query.Po
+	-rm -f obj/$(DEPDIR)/id.Po
+	-rm -f obj/$(DEPDIR)/widget.Po
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags
@@ -1151,6 +1172,8 @@ maintainer-clean: maintainer-clean-recursive
 	-rm -f ./$(DEPDIR)/util.Po
 	-rm -f ./$(DEPDIR)/wm.Plo
 	-rm -f extensions/$(DEPDIR)/ext_query.Po
+	-rm -f obj/$(DEPDIR)/id.Po
+	-rm -f obj/$(DEPDIR)/widget.Po
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 

@@ -16,6 +16,7 @@
 #include "main.h"
 #include "builtin.h"
 #include "methods.h"
+#include "obj/id.h"
 #include "data.h"
 #include "extreg.h"
 

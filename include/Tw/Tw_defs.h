@@ -67,7 +67,7 @@
 
 /**********************************/
 
-#define msg_magic ((uldat)0xA3a61ce4ul)
+#define msg_magic ((uldat)0xA3A61CE4ul)
 
 /* keyboard events ShiftFlags */
 #define TW_KBD_SHIFT_FL 0x1
