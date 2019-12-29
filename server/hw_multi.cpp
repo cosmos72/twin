@@ -161,7 +161,7 @@ static byte module_InitHW(CONST char *arg, uldat len) {
       printk("twin: starting display driver module `" SS "'...\n", alloc_name);
       if ((InitD = Module->Init) && InitD()) {
         printk("twin: ...module `" SS "' successfully started.\n", alloc_name);
-        FreeMem(alloc_name);
+        free(alloc_name);
         HW->Module = Module;
         Module->Used++;
         return ttrue;
@@ -182,7 +182,7 @@ static byte module_InitHW(CONST char *arg, uldat len) {
            "      " SS "\n",
            name, ErrStr);
   if (alloc_name)
-    FreeMem(alloc_name);
+    free(alloc_name);
 
   return tfalse;
 }
@@ -192,7 +192,7 @@ static byte set_hw_name(display_hw D_HW, CONST char *name, uldat namelen) {
 
   if (D_HW && (alloc_name = CloneStrL(name, namelen)) != NULL) {
     if (D_HW->Name)
-      FreeMem(D_HW->Name);
+      free(D_HW->Name);
     D_HW->Name = alloc_name;
     D_HW->NameLen = namelen;
   }
@@ -556,7 +556,7 @@ byte ResizeDisplay(void) {
   change = DisplayWidth != TryDisplayWidth || DisplayHeight != TryDisplayHeight;
 
   if (!NeedOldVideo && OldVideo) {
-    FreeMem(OldVideo);
+    free(OldVideo);
     OldVideo = NULL;
   } else if ((NeedOldVideo && !OldVideo) || change) {
     if (!(OldVideo = (hwattr *)ReAllocMem(OldVideo, (ldat)TryDisplayWidth * TryDisplayHeight *
@@ -607,12 +607,12 @@ void ConfigureHW(udat resource, byte todefault, udat value) {
 
 void SetPaletteHW(udat N, udat R, udat G, udat B) {
   if (N <= MAXCOL) {
-    palette c;
+    rgb c;
     c.Red = R;
     c.Green = G;
     c.Blue = B;
 
-    if (memcmp(&Palette[N], &c, sizeof(palette))) {
+    if (memcmp(&Palette[N], &c, sizeof(rgb))) {
       Palette[N] = c;
       forHW {
         HW->SetPalette(N, R, G, B);

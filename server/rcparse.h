@@ -167,7 +167,9 @@
 ldat GlobalFlags[4];
 ldat GlobalShadows[2];
 
-static void yyerror(CONST char *s) { printk("twin: %s:%d: %s\n", FILE_NAME, LINE_NO, s); }
+static void yyerror(CONST char *s) {
+  printk("twin: %s:%d: %s\n", FILE_NAME, LINE_NO, s);
+}
 
 #define NEW() (node) my_malloc(sizeof(struct s_node))
 
@@ -741,7 +743,9 @@ static node MakeWindow(str name) {
   return n;
 }
 
-static node AddtoStringList(node l, str string) { return AddtoNodeList(l, MakeNode(string)); }
+static node AddtoStringList(node l, str string) {
+  return AddtoNodeList(l, MakeNode(string));
+}
 
 #if defined(DEBUG_YACC) || defined(DEBUG_RC)
 
@@ -1171,7 +1175,7 @@ static byte CreateNeededScreens(node list, screen *res_Screens) {
       }
       s = Do(Create, Screen)(FnScreen, strlen(list->name), list->name, w, h, attr);
 
-      FreeMem(attr);
+      free(attr);
     }
     if (!attr || !s) {
       DeleteScreens(top);
@@ -1203,7 +1207,7 @@ static void UpdateVisibleScreens(screen new_Screens) {
       Orig->USE.B.BgWidth = S->USE.B.BgWidth;
       Orig->USE.B.BgHeight = S->USE.B.BgHeight;
       if (Orig->USE.B.Bg)
-        FreeMem(Orig->USE.B.Bg);
+        free(Orig->USE.B.Bg);
       Orig->USE.B.Bg = S->USE.B.Bg;
       S->USE.B.Bg = NULL;
       Delete(S);
@@ -1310,7 +1314,7 @@ static byte NewCommonMenu(void **shm_M, menu *res_CommonMenu, node **res_MenuBin
         if (!Row)
           break;
       }
-      FreeMem(Line);
+      free(Line);
 
       if (N) /* out of memory! */
         break;
@@ -1324,7 +1328,7 @@ static byte NewCommonMenu(void **shm_M, menu *res_CommonMenu, node **res_MenuBin
   }
 
   /* out of memory! */
-  FreeMem(new_MenuBinds);
+  free(new_MenuBinds);
   Delete(Menu);
   return tfalse;
 }
@@ -1355,7 +1359,7 @@ static byte ReadGlobals(void) {
   DeleteUnneededScreens((node)M[ScreenIndex]);
 
   if (!GlobalsAreStatic)
-    FreeMem(MenuBinds);
+    free(MenuBinds);
   GlobalsAreStatic = tfalse;
 
   if (All->CommonMenu)
@@ -1415,7 +1419,7 @@ static byte rcload(void) {
   len = Max2(len, TW_BIGBUFF) * sizeof(node) / 4;
 
   if (!shm_init(len)) {
-    FreeMem(path);
+    free(path);
     return c;
   }
 
@@ -1472,7 +1476,7 @@ static byte rcload(void) {
         exit(0);
         break;
       default: /* parent */
-        FreeMem(path);
+        free(path);
         close(fdm[1]);
         close(fdl[1]);
         printk_receive_fd(fdl[0]);
@@ -1499,6 +1503,7 @@ EXTERN_C byte InitModule(module Module) {
   return ttrue;
 }
 
-EXTERN_C void QuitModule(module Module) {}
+EXTERN_C void QuitModule(module Module) {
+}
 
 #endif /* _TWIN_RCPARSE_H */

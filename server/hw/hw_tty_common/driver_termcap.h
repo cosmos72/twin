@@ -5,7 +5,9 @@
 INLINE void termcap_SetCursorType(uldat type) {
   fprintf(stdOUT, "%s", (type & 0xFFFFFFl) == NOCURSOR ? tc_cursor_off : tc_cursor_on);
 }
-INLINE void termcap_MoveToXY(udat x, udat y) { fputs(tgoto(tc_cursor_goto, x, y), stdOUT); }
+INLINE void termcap_MoveToXY(udat x, udat y) {
+  fputs(tgoto(tc_cursor_goto, x, y), stdOUT);
+}
 
 static udat termcap_LookupKey(udat *ShiftFlags, byte *slen, char *s, byte *retlen,
                               CONST char **ret) {
@@ -112,7 +114,7 @@ static void termcap_cleanup(void) {
   char **n;
   for (n = tc_cap; n < tc_cap + tc_cap_N; n++) {
     if (*n)
-      FreeMem(*n);
+      free(*n);
   }
 }
 
@@ -122,7 +124,7 @@ static void fixup_colorbug(void) {
   if (s) {
     CopyMem(tc_attr_off, s, len);
     CopyMem("\033[37;40m", s + len, 9);
-    FreeMem(tc_attr_off);
+    free(tc_attr_off);
     tc_attr_off = s;
   }
 }

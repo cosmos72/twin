@@ -21,22 +21,26 @@
 #define WIDGET_USEEXPOSE_HWATTR 4
 
 /* Widget->Attrib */
-/*
- * ask the server to send events even for mouse motion without any pressed button.
- * works only if WIDGET_WANT_MOUSE is set too.
- */
-#define WIDGET_WANT_MOUSE_MOTION 0x0001
-#define WIDGET_WANT_KEYS 0x0002
-#define WIDGET_WANT_MOUSE 0x0004
-#define WIDGET_WANT_CHANGES 0x0008
-#define WIDGET_AUTO_FOCUS 0x0010
+typedef enum e_widget_attr {
+  /*
+   * ask the server to send events even for mouse motion without any pressed button.
+   * works only if WIDGET_WANT_MOUSE is set too.
+   */
+  WIDGET_WANT_MOUSE_MOTION = 0x0001,
+  WIDGET_WANT_KEYS = 0x0002,
+  WIDGET_WANT_MOUSE = 0x0004,
+  WIDGET_WANT_CHANGES = 0x0008,
+  WIDGET_AUTO_FOCUS = 0x0010,
+} widget_attr;
 
 /* Widget->Flags */
-#define WIDGETFL_USEEXPOSE 0x02
-#define WIDGETFL_USEFILL 0x03
-#define WIDGETFL_USEANY 0x07 /* mask of all above ones */
+typedef enum e_widget_flag {
+  WIDGETFL_USEEXPOSE = 0x02,
+  WIDGETFL_USEFILL = 0x03,
+  WIDGETFL_USEANY = 0x07, /* mask of all above ones */
 
-#define WIDGETFL_NOTVISIBLE 0x8000
+  WIDGETFL_NOTVISIBLE = 0x8000,
+} widget_flag;
 
 #define w_USE(w, USExxx) (((w)->Flags & WIDGETFL_USEANY) == CAT(WIDGETFL_, USExxx))
 

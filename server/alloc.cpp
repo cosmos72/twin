@@ -33,7 +33,7 @@ void *ReAllocMem(void *Mem, size_t Size) {
       res = realloc(Mem, Size);
       /* cannot use AllocMem() + CopyMem() here: we don't know Mem current size */
     } else {
-      FreeMem(Mem);
+      free(Mem);
       res = NULL;
     }
   } else
@@ -60,10 +60,10 @@ void *ReAllocMem0(void *Mem, size_t ElementSize, size_t OldCount, size_t NewCoun
       } else if ((res = AllocMem0(ElementSize, NewCount))) {
         size_t MinCount = OldCount < NewCount ? OldCount : NewCount;
         CopyMem(Mem, res, ElementSize * MinCount);
-        FreeMem(Mem);
+        free(Mem);
       }
     } else {
-      FreeMem(Mem);
+      free(Mem);
       res = NULL;
     }
   } else
@@ -126,8 +126,8 @@ char **CloneStrList(char **s) {
     if (*s && n) {
       /* failed... clean up */
       for (; t < v; t++)
-        FreeMem(*t);
-      FreeMem(t);
+        free(*t);
+      free(t);
       t = NULL;
     } else
       *v = NULL;

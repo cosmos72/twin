@@ -168,14 +168,14 @@ static char *X11_AutodetectFont(udat fontwidth, udat fontheight) {
           best_score = score;
           beatable_score = best_score < MAX_FONT_SCORE + score_adj;
 
-          FreeMem(best);
+          free(best);
           best = CloneStr(names[k]);
         }
       }
       XFreeFontInfo(names, info, n_fonts);
     }
   }
-  FreeMem(pattern);
+  free(pattern);
   return best;
 }
 

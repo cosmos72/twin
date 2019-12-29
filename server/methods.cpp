@@ -111,7 +111,7 @@ static obj CreateObj(fn_obj Fn_Obj) {
       Obj->Prev = Obj->Next = (obj)0;
       Obj->Parent = (obj)0;
     } else {
-      FreeMem(Obj);
+      free(Obj);
       Obj = (obj)0;
     }
   }
@@ -142,8 +142,8 @@ static void DeleteObj(obj Obj) {
   /* not a good idea to RemoveObj(Obj) here */
   DropId(Obj);
   if (!--Obj->Fn->Used)
-    FreeMem(Obj->Fn);
-  FreeMem(Obj);
+    free(Obj->Fn);
+  free(Obj);
 }
 
 static struct s_fn_obj _FnObj = {
@@ -216,7 +216,7 @@ static void DeleteWidget(widget W) {
 
   (Fn_Obj->Delete)((obj)W);
   if (!--Fn_Obj->Used)
-    FreeMem(Fn_Obj);
+    free(Fn_Obj);
 }
 
 static void SetFillWidget(widget W, hwattr Fill) {
@@ -652,14 +652,14 @@ static void DeleteGadget(gadget G) {
   if (G_USE(G, USETEXT)) {
     for (i = 0; i < 4; i++) {
       if (G->USE.T.Text[i])
-        FreeMem(G->USE.T.Text[i]);
+        free(G->USE.T.Text[i]);
       if (G->USE.T.Color[i])
-        FreeMem(G->USE.T.Color[i]);
+        free(G->USE.T.Color[i]);
     }
   }
   (Fn_Widget->Delete)((widget)G);
   if (!--Fn_Widget->Used)
-    FreeMem(Fn_Widget);
+    free(Fn_Widget);
 }
 
 static void ChangeFieldGadget(gadget G, udat field, uldat CLEARMask, uldat XORMask) {
@@ -969,9 +969,9 @@ static window CreateWindow(fn_window Fn_Window, msgport Owner, dat TitleLen, CON
     return Window;
   }
   if (_Title)
-    FreeMem(_Title);
+    free(_Title);
   if (_ColTitle)
-    FreeMem(_ColTitle);
+    free(_ColTitle);
   return Window;
 }
 
@@ -980,20 +980,20 @@ static void DeleteWindow(window W) {
 
   Act(UnMap, W)(W);
   if (W->Name)
-    FreeMem(W->Name);
+    free(W->Name);
   if (W->ColName)
-    FreeMem(W->ColName);
+    free(W->ColName);
   if (W_USE(W, USECONTENTS)) {
     if (W->USE.C.TtyData)
-      FreeMem(W->USE.C.TtyData);
+      free(W->USE.C.TtyData);
     if (W->USE.C.Contents)
-      FreeMem(W->USE.C.Contents);
+      free(W->USE.C.Contents);
   } else if (W_USE(W, USEROWS))
     DeleteList(W->USE.R.FirstRow);
 
   (Fn_Widget->Delete)((widget)W);
   if (!--Fn_Widget->Used)
-    FreeMem(Fn_Widget);
+    free(Fn_Widget);
 }
 
 static void ChangeFieldWindow(window W, udat field, uldat CLEARMask, uldat XORMask) {
@@ -1113,7 +1113,7 @@ static void SetTitleWindow(window W, dat titlelen, char *title) {
   widget P;
 
   if (W->Name)
-    FreeMem(W->Name);
+    free(W->Name);
 
   W->NameLen = titlelen;
   W->Name = title;
@@ -1312,7 +1312,7 @@ window FakeOpenTerm(CONST char *arg0, CONST char *CONST *argv) {
   return NULL;
 }
 
-byte FakeFindBorderWindow(window W, dat u, dat v, byte Border, hwattr *PtrAttr) {
+tpos FakeFindBorderWindow(window W, dat u, dat v, byte Border, hwattr *PtrAttr) {
   byte Horiz, Vert;
 
   Horiz = u ? u + 1 == W->XWidth ? (byte)2 : (byte)1 : (byte)0;
@@ -1455,7 +1455,7 @@ static screen CreateScreen(fn_screen Fn_Screen, dat NameLen, CONST char *Name, d
           return S;
         }
         if (S->Name)
-          FreeMem(S->Name);
+          free(S->Name);
       }
       (Fn_Screen->Fn_Widget->Delete)((widget)S);
     }
@@ -1504,13 +1504,13 @@ static void DeleteScreen(screen Screen) {
   Remove(Screen);
 
   if (S_USE(Screen, USEBG) && Screen->USE.B.Bg) {
-    FreeMem(Screen->USE.B.Bg);
+    free(Screen->USE.B.Bg);
     Screen->USE.B.Bg = NULL;
   }
 
   (Fn_Widget->Delete)((widget)Screen);
   if (!--Fn_Widget->Used)
-    FreeMem(Fn_Widget);
+    free(Fn_Widget);
 }
 
 static void ChangeFieldScreen(screen S, udat field, uldat CLEARMask, uldat XORMask) {
@@ -1671,7 +1671,7 @@ static void DeleteGroup(ggroup Group) {
 
   (Fn_Obj->Delete)((obj)Group);
   if (!--Fn_Obj->Used)
-    FreeMem(Fn_Obj);
+    free(Fn_Obj);
 }
 
 static void InsertGadgetGroup(ggroup Group, gadget G) {
@@ -1768,13 +1768,13 @@ static void DeleteRow(row Row) {
 
     Remove(Row);
     if (Row->Text)
-      FreeMem(Row->Text);
+      free(Row->Text);
     if (Row->ColText)
-      FreeMem(Row->ColText);
+      free(Row->ColText);
 
     (Fn_Obj->Delete)((obj)Row);
     if (!--Fn_Obj->Used)
-      FreeMem(Fn_Obj);
+      free(Fn_Obj);
 
     if (W && W->Parent && (W->Flags & WINDOWFL_MENU))
       ResizeRelWindow(W, 0, -1);
@@ -1933,7 +1933,7 @@ static menuitem CreateMenuItem(fn_menuitem Fn_MenuItem, obj Parent, window Windo
     return MenuItem;
   }
   if (_Name)
-    FreeMem(_Name);
+    free(_Name);
   return MenuItem;
 }
 
@@ -1973,7 +1973,7 @@ static void DeleteMenuItem(menuitem MenuItem) {
 
     (Fn_Row->Delete)((row)MenuItem);
     if (!--Fn_Row->Used)
-      FreeMem(Fn_Row);
+      free(Fn_Row);
   }
 }
 
@@ -2114,7 +2114,7 @@ static void DeleteMenu(menu Menu) {
 
     (Fn_Obj->Delete)((obj)Menu);
     if (!--Fn_Obj->Used)
-      FreeMem(Fn_Obj);
+      free(Fn_Obj);
   }
 }
 
@@ -2301,7 +2301,7 @@ static msg CreateMsg(fn_msg Fn_Msg, udat Type, udat EventLen) {
       Msg->Len = EventLen;
       return Msg;
     }
-    FreeMem(Msg);
+    free(Msg);
     Msg = (msg)0;
   }
   return Msg;
@@ -2335,7 +2335,7 @@ static void DeleteMsg(msg Msg) {
 
     (Fn_Obj->Delete)((obj)Msg);
     if (!--Fn_Obj->Used)
-      FreeMem(Fn_Obj);
+      free(Fn_Obj);
   }
 }
 
@@ -2387,7 +2387,7 @@ static msgport CreateMsgPort(fn_msgport Fn_MsgPort, byte NameLen, CONST char *Na
                  WakeUp ? All->FirstMsgPort : (msgport)0);
     SortMsgPortByCallTime(MsgPort);
   } else if (NameLen && _Name)
-    FreeMem(_Name);
+    free(_Name);
   return MsgPort;
 }
 
@@ -2447,11 +2447,11 @@ static void DeleteMsgPort(msgport MsgPort) {
 
     Remove(MsgPort);
     if (MsgPort->Name)
-      FreeMem(MsgPort->Name);
+      free(MsgPort->Name);
 
     (Fn_Obj->Delete)((obj)MsgPort);
     if (!--Fn_Obj->Used)
-      FreeMem(Fn_Obj);
+      free(Fn_Obj);
   }
 }
 
@@ -2583,7 +2583,7 @@ static void DeleteMutex(mutex Mutex) {
   Remove(Mutex);
   (Fn_Obj->Delete)((obj)Mutex);
   if (!--Fn_Obj->Used)
-    FreeMem(Fn_Obj);
+    free(Fn_Obj);
 }
 
 static void OwnMutex(mutex Mutex, msgport Parent) {
@@ -2655,7 +2655,7 @@ static module CreateModule(fn_module Fn_Module, uldat NameLen, CONST char *Name)
       InsertLast(Module, Module, All);
       return Module;
     }
-    FreeMem(newName);
+    free(newName);
   }
   return Module;
 }
@@ -2681,11 +2681,11 @@ static void DeleteModule(module Module) {
     Act(DlClose, Module)(Module);
     Remove(Module);
     if (Module->Name)
-      FreeMem(Module->Name);
+      free(Module->Name);
 
     (Fn_Obj->Delete)((obj)Module);
     if (!--Fn_Obj->Used)
-      FreeMem(Fn_Obj);
+      free(Fn_Obj);
   }
 }
 
@@ -2729,7 +2729,7 @@ static void DeleteExtension(extension E) {
   Fn_Module = E->Fn->Fn_Module;
   (Fn_Module->Delete)((module)E);
   if (!--Fn_Module->Used)
-    FreeMem(Fn_Module);
+    free(Fn_Module);
 }
 
 static struct s_fn_extension _FnExtension = {
@@ -2769,7 +2769,7 @@ static display_hw CreateDisplayHW(fn_display_hw Fn_DisplayHW, uldat NameLen, CON
       InsertLast(DisplayHW, DisplayHW, All);
       return DisplayHW;
     }
-    FreeMem(newName);
+    free(newName);
   }
   return DisplayHW;
 }
@@ -2816,11 +2816,11 @@ static void DeleteDisplayHW(display_hw DisplayHW) {
 
   Remove(DisplayHW);
   if (DisplayHW->NameLen && DisplayHW->Name)
-    FreeMem(DisplayHW->Name);
+    free(DisplayHW->Name);
 
   (Fn_Obj->Delete)((obj)DisplayHW);
   if (!--Fn_Obj->Used)
-    FreeMem(Fn_Obj);
+    free(Fn_Obj);
 
   if (!Quitted) {
     if (!All->FirstDisplayHW || isCTTY)

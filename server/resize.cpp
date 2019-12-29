@@ -161,7 +161,7 @@ byte ResizeWindowContents(window Window) {
         for (left = x - common; left; left--)
           *NewCont++ = h;
       }
-      FreeMem(Window->USE.C.Contents);
+      free(Window->USE.C.Contents);
     }
 
     left = (saveNewCont + x * y) - NewCont;
@@ -170,7 +170,7 @@ byte ResizeWindowContents(window Window) {
   } else {
     x = y = 0;
     if (Window->USE.C.Contents)
-      FreeMem(Window->USE.C.Contents);
+      free(Window->USE.C.Contents);
     saveNewCont = NULL;
   }
 
@@ -2076,82 +2076,3 @@ void SyncMenu(menu Menu) {
     }
   }
 }
-
-#if 0
-void SetNewFont(void) {
-    struct REGPACK regs;
-    byte FontHeight;
-    font *RamFont;
-    dat i;
-    
-    FontHeight=HEIGHT_FONT;
-    if (FontHeight==(byte)8)
-	RamFont=NewFont8;
-    else if (FontHeight==(byte)14)
-	RamFont=NewFont14;
-    else if (FontHeight==(byte)16)
-	RamFont=NewFont16;
-    else
-	return;
-    
-    for (i=(dat)0; i<(dat)256 && RamFont[i].AsciiCode; i++) {
-	regs.r_ax=0x1100;
-	regs.r_bx=(FontHeight<<8) | 0x0000;
-	regs.r_cx=0x0001;
-	regs.r_dx=RamFont[i].AsciiCode;
-	regs.r_es=(dat)FP_SEG((void *)RamFont[i].Bitmap);
-	regs.r_bp=(dat)FP_OFF((void *)RamFont[i].Bitmap);
-	intr(0x10, &regs);
-    }
-    All->SetUp->Flags |= NEW_FONT;
-    
-    /*Alcune schede richiedono anche : */
-    
-    regs.r_ax=0x1110;
-    regs.r_bx=(FontHeight<<8) | 0x0000;
-    regs.r_cx=0x0001;
-    regs.r_dx=RamFont[0].AsciiCode;
-    regs.r_es=(dat)FP_SEG((void *)RamFont[0].Bitmap);
-    regs.r_bp=(dat)FP_OFF((void *)RamFont[0].Bitmap);
-    intr(0x10, &regs);
-}
-
-void GetPalette(void) {
-    struct REGPACK regs;
-    dat i;
-    palette *Palette;
-    
-    Palette=All->Palette;
-    
-    for (i=(dat)0; i<(dat)16; i++) {
-	regs.r_ax=0x1007;
-	regs.r_bx=i;
-	intr(0x10, &regs);
-	
-	regs.r_ax=0x1015;
-	regs.r_bx>>=8;
-	intr(0x10, &regs);
-	Palette[i].Red=regs.r_dx>>8;
-	Palette[i].Green=regs.r_cx>>8;
-	Palette[i].Blue=regs.r_cx & 0xFF;
-    }
-}
-
-void SetPalette(void) {
-    struct REGPACK regs;
-    dat i;
-    
-    regs.r_ax=0x1012;
-    regs.r_bx=0;
-    regs.r_cx=16;
-    regs.r_es=(dat)FP_SEG((void *)All->Palette);
-    regs.r_dx=(dat)FP_OFF((void *)All->Palette);
-    intr(0x10, &regs);
-    
-    for (i=(dat)0; i<(dat)16; i++) {
-	regs.r_ax=0x1000;
-	regs.r_bx=i<<8 | i;
-	intr(0x10, &regs);
-    }
-}
-#endif /* 0 */

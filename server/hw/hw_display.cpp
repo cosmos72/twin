@@ -453,7 +453,7 @@ static byte display_InitHW(void) {
     if (HW->Private) {
       if (Helper)
         Delete(Helper);
-      FreeMem(HW->Private);
+      free(HW->Private);
     }
     printk("      display_InitHW(): Out of memory!\n");
     return tfalse;

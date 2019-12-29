@@ -49,12 +49,12 @@ static selection Selection = {{(tany)0, (tany)0}, (msgport)0, (display_hw)0, SEL
 #define M 0xAA
 #define H 0xFF
 
-palette Palette[MAXCOL + 1] = {
+rgb Palette[MAXCOL + 1] = {
     /* the default colour table, for VGA+ colour systems */
     {0, 0, 0}, {0, 0, M}, {0, M, 0}, {0, M, M}, {M, 0, 0}, {M, 0, M}, {M, M, 0}, {M, M, M},
     {L, L, L}, {L, L, H}, {L, H, L}, {L, H, H}, {H, L, L}, {H, L, H}, {H, H, L}, {H, H, H}};
 
-palette defaultPalette[MAXCOL + 1] = {
+rgb defaultPalette[MAXCOL + 1] = {
     /* the default colour table, for VGA+ colour systems */
     {0, 0, 0}, {0, 0, M}, {0, M, 0}, {0, M, M}, {M, 0, 0}, {M, 0, M}, {M, M, 0}, {M, M, M},
     {L, L, L}, {L, L, H}, {L, H, L}, {L, H, H}, {H, L, L}, {H, L, H}, {H, H, L}, {H, H, H}};

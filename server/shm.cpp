@@ -262,13 +262,13 @@ byte shm_shrink(void) {
 
 void shm_abort(void) {
   if (M)
-    FreeMem(M);
+    free(M);
   M = NULL;
 }
 
 void shm_TSR_abort(void) {
   if (TSR_M)
-    FreeMem(TSR_M);
+    free(TSR_M);
   TSR_M = NULL;
 }
 
@@ -391,6 +391,10 @@ char *shm_strdup_or_die(CONST char *s) {
   return d;
 }
 
-void *shm_getbase(void) { return M + sizeof(size_t); /* skip space for placing shm length */ }
+void *shm_getbase(void) {
+  return M + sizeof(size_t); /* skip space for placing shm length */
+}
 
-void *shm_getend(void) { return S; }
+void *shm_getend(void) {
+  return S;
+}

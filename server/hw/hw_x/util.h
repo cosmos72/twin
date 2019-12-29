@@ -164,7 +164,9 @@ static void X11_Resize(dat x, dat y) {
 /*
  * import X11 Selection
  */
-static byte X11_SelectionImport_X11(void) { return !HW->HWSelectionPrivate; }
+static byte X11_SelectionImport_X11(void) {
+  return !HW->HWSelectionPrivate;
+}
 
 /*
  * export our Selection to X11
@@ -240,7 +242,7 @@ static void X11_SelectionNotify_X11(uldat ReqPrivate, uldat Magic, CONST char MI
     ev.xselection.property = XReq(XReqCount).property;
 
     if (Magic == SEL_HWFONTMAGIC && _Data)
-      FreeMem(_Data);
+      free(_Data);
   }
   XSendEvent(xdisplay, XReq(XReqCount).requestor, False, 0, &ev);
   setFlush();
@@ -278,7 +280,7 @@ static void X11_SelectionNotify_up(Window win, Atom prop) {
 
       XFree(data);
       if (buff)
-        FreeMem(buff);
+        free(buff);
       return;
     }
 
@@ -293,7 +295,7 @@ static void X11_SelectionNotify_up(Window win, Atom prop) {
 
   TwinSelectionNotify(xRequestor(xReqCount), xReqPrivate(xReqCount), SEL_TEXTMAGIC, NULL, nread,
                       buff);
-  FreeMem(buff);
+  free(buff);
 }
 
 /*

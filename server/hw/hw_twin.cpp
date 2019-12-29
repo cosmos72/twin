@@ -294,7 +294,9 @@ static void TW_DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat Dst
 /*
  * import Selection from libTw
  */
-static byte TW_SelectionImport_TW(void) { return !HW->HWSelectionPrivate; }
+static byte TW_SelectionImport_TW(void) {
+  return !HW->HWSelectionPrivate;
+}
 
 /*
  * export our Selection to libTw
@@ -458,7 +460,7 @@ static byte TW_InitHW(void) {
   }
 
 #ifdef CONF__ALLOC
-  Tw_ConfigMalloc(AllocMem, ReAllocMem, FreeMem);
+  Tw_ConfigMalloc(AllocMem, ReAllocMem, free);
 #endif
 
   Td = NULL;
@@ -598,4 +600,5 @@ EXTERN_C byte InitModule(module Module) {
 }
 
 /* this MUST be defined, or it seems that a bug in dlsym() gets triggered */
-EXTERN_C void QuitModule(module Module) {}
+EXTERN_C void QuitModule(module Module) {
+}

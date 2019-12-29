@@ -16,7 +16,7 @@ byte FakeWriteAscii(window Window, uldat Len, CONST char *Ascii);
 byte FakeWriteString(window Window, uldat Len, CONST char *String);
 byte FakeWriteHWFont(window Window, uldat Len, CONST hwfont *HWFont);
 byte FakeWriteHWAttr(window Window, dat x, dat y, uldat Len, CONST hwattr *Attr);
-byte FakeFindBorderWindow(window W, dat u, dat v, byte Border, hwattr *PtrAttr);
+tpos FakeFindBorderWindow(window W, dat u, dat v, byte Border, hwattr *PtrAttr);
 
 extern fn Fn;
 #define FnObj (Fn.f_obj)

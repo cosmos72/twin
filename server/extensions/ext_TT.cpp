@@ -201,13 +201,14 @@ TT_DECL_MAGIC(ext_TT_magic);
 EXTERN_C byte InitModule(extension E) {
   return TTCheckMagic(ext_TT_magic) &&
 #ifdef CONF__ALLOC
-         (TTConfigAllocMem(AllocMem, ReAllocMem, FreeMem), TT_TRUE) &&
+         (TTConfigAllocMem(AllocMem, ReAllocMem, free), TT_TRUE) &&
 #endif
          TTOpen("twin@:2" /* "twin_detunnel" */) && ext_TT_init_data() &&
          (E->CallB = ext_TT_CallBExtension);
 }
 
-TT_INLINE void ext_TT_quit_data(void) {}
+TT_INLINE void ext_TT_quit_data(void) {
+}
 
 EXTERN_C void QuitModule(extension E) {
   ext_TT_quit_data();

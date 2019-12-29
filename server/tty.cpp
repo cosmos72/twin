@@ -988,7 +988,7 @@ static void set_newtitle(void) {
 
 static void clear_newtitle(void) {
   if (newName)
-    FreeMem(newName);
+    free(newName);
   newName = NULL;
   newLen = newMax = 0;
 }
@@ -1121,7 +1121,7 @@ INLINE void write_ctrl(byte c) {
     if (c == 'P') { /* Palette escape sequence */
       nPar = 0;
       memset((byte *)&Par, 0, NPAR * sizeof(ldat));
-      DState = ESpalette;
+      DState = ESrgb;
       return;
     } else if (c == 'R') /* Reset palette */
       ResetPaletteHW();
@@ -1138,7 +1138,7 @@ INLINE void write_ctrl(byte c) {
     }
     break;
 
-  case ESpalette:
+  case ESrgb:
     if ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f')) {
       Par[nPar++] = (c > '9' ? (c & 0xDF) - 'A' + 10 : c - '0');
       if (nPar == 7)
@@ -1786,7 +1786,7 @@ static void clear_buffer_attributes(window Window) {
  */
 void set_palette(window Window) {
     if (vcmode != KD_GRAPHICS)
-	sw->con_set_palette(vc_cons.d, color_table);
+  	sw->con_set_palette(vc_cons.d, color_table);
 }
 
 static int set_get_cmap(unsigned char *arg, int set) {

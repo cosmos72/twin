@@ -61,12 +61,12 @@ CONST char *HOME;
 #define M 0xAA
 #define H 0xFF
 
-palette Palette[MAXCOL + 1] = {
+rgb Palette[MAXCOL + 1] = {
     /* the default colour table, for VGA+ colour systems */
     {0, 0, 0}, {0, 0, M}, {0, M, 0}, {0, M, M}, {M, 0, 0}, {M, 0, M}, {M, M, 0}, {M, M, M},
     {L, L, L}, {L, L, H}, {L, H, L}, {L, H, H}, {H, L, L}, {H, L, H}, {H, H, L}, {H, H, H}};
 
-palette defaultPalette[MAXCOL + 1] = {
+rgb defaultPalette[MAXCOL + 1] = {
     /* the default colour table, for VGA+ colour systems */
     {0, 0, 0}, {0, 0, M}, {0, M, 0}, {0, M, M}, {M, 0, 0}, {M, 0, M}, {M, M, 0}, {M, M, M},
     {L, L, L}, {L, L, H}, {L, H, L}, {L, H, H}, {H, L, L}, {H, L, H}, {H, H, L}, {H, H, H}};
@@ -266,7 +266,7 @@ static module DlLoadAny(uldat len, char *name) {
 
     sprintf(path, "%s%.*s%s", modules_prefix, (int)len, name, DL_SUFFIX);
     Module->Handle = (void *)dlopen(path);
-    FreeMem(path);
+    free(path);
 
     if (Module->Handle) {
       /*
@@ -329,7 +329,7 @@ static byte module_InitHW(CONST char *arg, uldat len) {
         HW->Module = Module;
         Module->Used++;
 
-        FreeMem(buf);
+        free(buf);
         return ttrue;
       }
       /*Delete(Module);*/
@@ -347,7 +347,7 @@ static byte module_InitHW(CONST char *arg, uldat len) {
            ErrStr);
 
   if (buf)
-    FreeMem(buf);
+    free(buf);
 
   return tfalse;
 }
@@ -457,7 +457,7 @@ static display_hw CreateDisplayHW(uldat NameLen, CONST char *Name) {
     return HW;
   }
   if (newName)
-    FreeMem(newName);
+    free(newName);
   return (display_hw)0;
 }
 
@@ -607,7 +607,7 @@ static byte ReAllocVideo(dat Width, dat Height) {
   byte change = DisplayWidth != Width || DisplayHeight != Height;
 
   if (!NeedOldVideo && OldVideo) {
-    FreeMem(OldVideo);
+    free(OldVideo);
     OldVideo = NULL;
   } else if ((NeedOldVideo && !OldVideo) || change) {
     if (!(OldVideo = (hwattr *)ReAllocMem(OldVideo, (ldat)Width * Height * sizeof(hwattr))) &&
@@ -676,11 +676,11 @@ void DragAreaHW(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
 
 void SetPaletteHW(udat N, udat R, udat G, udat B) {
   if (N <= MAXCOL) {
-    palette c;
+    rgb c;
     c.Red = R;
     c.Green = G;
     c.Blue = B;
-    if (memcmp(&Palette[N], &c, sizeof(palette))) {
+    if (memcmp(&Palette[N], &c, sizeof(rgb))) {
       Palette[N] = c;
       HW->SetPalette(N, R, G, B);
     }
@@ -1264,7 +1264,7 @@ int main(int argc, char *argv[]) {
   InitTtysave();
 
 #ifdef CONF__ALLOC
-  TwConfigMalloc(AllocMem, ReAllocMem, FreeMem);
+  TwConfigMalloc(AllocMem, ReAllocMem, free);
 #endif
 
   if (TwCheckMagic(display_magic) && TwOpen(TWDisplay))

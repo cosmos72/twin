@@ -77,7 +77,7 @@ INLINE sbyte IsTabPosition(window Window, udat pos, sbyte isX) {
   return pos >= (start = TabStart(Window, isX)) ? pos - start < TabLen(Window, isX) ? 0 : 1 : -1;
 }
 
-static byte WMFindBorderWindow(window W, dat u, dat v, byte Border, hwattr *PtrAttr) {
+static tpos WMFindBorderWindow(window W, dat u, dat v, byte Border, hwattr *PtrAttr) {
   hwfont *BorderFont, Font;
   ldat k;
   uldat Attrib;
@@ -85,7 +85,8 @@ static byte WMFindBorderWindow(window W, dat u, dat v, byte Border, hwattr *PtrA
   hwcol Color;
   dat rev_u, rev_v;
   dat XWidth, YWidth;
-  byte Found = POS_SIDE_UP, FlDrag, FlResize, FlScroll, FlPressed;
+  tpos Found = POS_SIDE_UP;
+  byte FlDrag, FlResize, FlScroll, FlPressed;
   byte Horiz, Vert;
   byte Close, Resize, NMenuWin, BarX, BarY;
   sbyte Back_Fwd, i;
@@ -156,7 +157,7 @@ static byte WMFindBorderWindow(window W, dat u, dat v, byte Border, hwattr *PtrA
 
       if (i < BUTTON_MAX) {
         Font = All->ButtonVec[i].shape[extra_u = delta_u(All->ButtonVec[i].pos)];
-        Found = i;
+        Found = (tpos)i;
       } else if (W->NameLen) {
 
         k = 2 * (ldat)u - ((ldat)XWidth - (ldat)W->NameLen - (ldat)3);

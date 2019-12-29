@@ -833,7 +833,7 @@ static void sockMultiplexB(uldat id) {
        */
       a[n - 1] _type = proto_2_TWS((CONST char *)(a[n - 1] _vec));
       if (mask & 1 << (n - 1))
-        FreeMem(a[n - 1].TWS_field_vecV);
+        free(a[n - 1].TWS_field_vecV);
 
       a[n - 1] _vec = &a[n - 1];
       a[n - 1] _len = 0;
@@ -844,7 +844,7 @@ static void sockMultiplexB(uldat id) {
 
   for (nlen = 0; mask; mask >>= 1, nlen++) {
     if (mask & 1)
-      FreeMem(a[nlen].TWS_field_vecV);
+      free(a[nlen].TWS_field_vecV);
   }
 
   if (flag) {
@@ -1966,7 +1966,7 @@ static byte sockSendToMsgPort(msgport MsgPort, udat Len, CONST byte *Data) {
   while (0);
 
 #if TW_CAN_UNALIGNED == 0
-  FreeMem(tMsg);
+  free(tMsg);
 #endif
   return ok;
 }
@@ -2010,7 +2010,7 @@ static voidpf sockZAlloc(voidpf opaque, uInt items, uInt size) {
 
 static void sockZFree(voidpf opaque, voidpf address) {
   if (address != Z_NULL)
-    FreeMem((void *)address);
+    free((void *)address);
 }
 
 /* fixup the uncompressed slot for on-the-fly compression */
@@ -2026,8 +2026,8 @@ static void ShutdownGzip(uldat slot) {
   inflateEnd((z_streamp)ls.PrivateData);
   deflateEnd((z_streamp)ls_p.PrivateData);
 
-  FreeMem(ls.PrivateData);
-  FreeMem(ls_p.PrivateData);
+  free(ls.PrivateData);
+  free(ls_p.PrivateData);
 
   ls.Fd = ls_p.Fd;
   ls_p.Fd = specFD;
@@ -2078,9 +2078,9 @@ static byte sockDoCompress(byte on_off) {
       }
     }
     if (z2)
-      FreeMem(z2);
+      free(z2);
     if (z1)
-      FreeMem(z1);
+      free(z1);
     if (slot != NOSLOT)
       UnRegisterRemote(slot);
     return tfalse;

@@ -289,7 +289,7 @@ static byte gfx_LoadPixmap(Pixmap *px, CONST char *name, int nlen, byte strict) 
 
   for (i = 0; i < 3 && !ret; i++) {
     if (path[i])
-      FreeMem(path[i]);
+      free(path[i]);
   }
 
   return ret;
@@ -522,7 +522,7 @@ static char *gfx_AutodetectFont(dat fontwidth, dat fontheight) {
     }
     XFreeFontInfo(names, info, n_fonts);
   }
-  FreeMem(pattern);
+  free(pattern);
   return selected;
 }
 
@@ -546,7 +546,7 @@ static byte gfx_LoadFont(CONST char *fontname, dat fontwidth, dat fontheight) {
     printk("      selected %dx%d font `" SS "'\n", (int)xwfont, (int)xhfont, fontname);
   }
   if (alloc_fontname)
-    FreeMem(alloc_fontname);
+    free(alloc_fontname);
 
   return loaded;
 }
@@ -804,7 +804,7 @@ fail:
   if (xdisplay)
     gfx_QuitHW();
 
-  FreeMem(HW->Private);
+  free(HW->Private);
   HW->Private = NULL;
 
   return tfalse;
@@ -842,7 +842,7 @@ static void gfx_QuitHW(void) {
 
   HW->QuitHW = NoOp;
 
-  FreeMem(HW->Private);
+  free(HW->Private);
   HW->Private = NULL;
 }
 

@@ -402,7 +402,7 @@ static void GGI_QuitHW(void) {
   ggiClose(gvis);
   ggiExit();
 
-  FreeMem(HW->Private);
+  free(HW->Private);
 
   if (GGI_HW == HW)
     GGI_HW = NULL;
@@ -572,7 +572,8 @@ EXTERN_C byte InitModule(module Module) {
 }
 
 /* this MUST be included, or it seems that a bug in dlsym() gets triggered */
-EXTERN_C void QuitModule(module Module) {}
+EXTERN_C void QuitModule(module Module) {
+}
 
 #if 0
 static void handle_keyboard(int sym, int modifiers, int out_fd) {
