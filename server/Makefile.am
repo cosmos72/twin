@@ -24,8 +24,8 @@ twdisplay_SOURCES     = alloc.cpp display.cpp dl_helper.cpp missing.cpp hw.cpp
 twin_SOURCES          = wrapper.c
 twin_server_SOURCES   = alloc.cpp builtin.cpp data.cpp dl.cpp dl_helper.cpp draw.cpp extensions/ext_query.cpp extreg.cpp \
                         hw.cpp hw_multi.cpp main.cpp methods.cpp missing.cpp \
-                        obj/id.cpp obj/widget.cpp \
-			printk.cpp privilege.cpp remote.cpp resize.cpp scroller.cpp util.cpp
+                        obj/id.cpp obj/widget.cpp obj/all.cpp \
+                        printk.cpp privilege.cpp remote.cpp resize.cpp scroller.cpp util.cpp
 
 librcparse_la_SOURCES = rcparse_tab.cpp rcparse_lex.cpp
 libterm_la_SOURCES    = pty.cpp tterm.cpp tty.cpp

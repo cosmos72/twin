@@ -14,7 +14,9 @@
 #define _TWIN_ALL_H
 
 #include "obj/obj.h"
-#include "tty.h" // USER_MAP
+#include "obj/event.h"  /* MAX_MIMELEN */
+#include "obj/window.h" /* BUTTON_MAX */
+#include "tty.h"        /* USER_MAP */
 
 struct s_setup {
   dat MaxMouseSnap;
@@ -79,12 +81,12 @@ typedef struct s_selection {
 } selection;
 
 struct s_all {
-  /* for compatibility with s_obj */
+  /* obj */
   uldat Id;
   fn_obj Fn;
-  obj Prev, Next;
-  obj Parent;
+  obj Prev, Next, Parent;
 
+  /* all */
   screen FirstScreen, LastScreen;
   msgport FirstMsgPort, LastMsgPort, RunMsgPort;
   mutex FirstMutex, LastMutex;
@@ -112,5 +114,7 @@ struct s_all {
 
   trune *Gtranslations[USER_MAP + 1];
 };
+
+extern all CONST All;
 
 #endif /* _TWIN_ALL_H */

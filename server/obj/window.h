@@ -13,7 +13,13 @@
 #ifndef _TWIN_WINDOW_H
 #define _TWIN_WINDOW_H
 
+#include "twautoconf.h"
+
 #include "obj/widget.h"
+
+#ifdef TW_HAVE_SYS_TYPES_H
+#include <sys/types.h> /* pid_t */
+#endif
 
 /* values returned by FnWindow->FindBorder (modeled after STATE_*) */
 typedef enum e_pos {

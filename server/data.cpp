@@ -31,20 +31,6 @@ CONST char *CONST pkg_libdir = PKG_LIBDIR;
 
 /* First, some structures */
 
-static trune GtransUser[0x100];
-
-static setup SetUp = {
-    (dat)1,              /* MaxMouseSnap */
-    (udat)0x7,           /* MinAllocSize */
-    (udat)0,             /* Flags */
-    HOLD_LEFT,           /* SelectionButton */
-    HOLD_MIDDLE,         /* PasteButton */
-    (byte)3,     (byte)2 /* DeltaXShade, DeltaYShade */
-};
-
-static selection Selection = {{(tany)0, (tany)0}, (msgport)0, (display_hw)0, SEL_TEXTMAGIC, "",
-                              (uldat)0,           (uldat)0,   NULL};
-
 #define L 0x55
 #define M 0xAA
 #define H 0xFF
@@ -62,65 +48,6 @@ rgb defaultPalette[MAXCOL + 1] = {
 #undef H
 #undef M
 #undef L
-
-static struct s_all _All = {
-    NOID,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-
-    (screen)0,
-    (screen)0,
-    (msgport)0,
-    (msgport)0,
-    (msgport)0,
-    (mutex)0,
-    (mutex)0,
-    (module)0,
-    (module)0,
-    (fn_hook)0,
-    (widget)0,
-    (display_hw)0,
-    (display_hw)0,
-    (display_hw)0,
-    (display_hw)0,
-    (fn_hook)0,
-    (widget)0,
-
-    1,
-    1, /* DisplayWidth, DisplayHeight */
-    STATE_DEFAULT,
-
-    {(tany)0, (tany)0},
-    &Selection,
-    &SetUp,
-    (void (*)(void))0, /* AtQuit */
-
-    (menu)0,
-    (menu)0,
-    (row)0,
-
-    0, /* MouseMotionN */
-
-    {
-        {
-            {
-                0,
-            },
-        },
-    }, /* ButtonVec[] */
-
-    {/* VT100GR_MAP mapped to Unicode -- get from libTutf */
-     Tutf_VT100GR_to_UTF_32,
-     /* LATIN1_MAP mapped to Unicode -- it's the identity */
-     NULL,
-     /* IBMPC_MAP mapped to Unicode -- get from libTutf */
-     Tutf_CP437_to_UTF_32,
-     /* USER_MAP */
-     GtransUser},
-};
-all CONST All = &_All;
 
 keylist TW_KeyList[] = {
 #define IS(key, len, seq) {#key, TW_##key, len, seq},
