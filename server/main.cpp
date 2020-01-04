@@ -19,6 +19,7 @@
 #include <signal.h>
 
 #include "twin.h"
+#include "alloc.h"
 #include "data.h"
 #include "builtin.h"
 #include "methods.h"
@@ -206,13 +207,20 @@ void Quit(int status) {
   exit(status);
 }
 
-void NoOp(void) {}
+void NoOp(void) {
+}
 
-byte AlwaysTrue(void) { return ttrue; }
+byte AlwaysTrue(void) {
+  return ttrue;
+}
 
-byte AlwaysFalse(void) { return tfalse; }
+byte AlwaysFalse(void) {
+  return tfalse;
+}
 
-void *AlwaysNull(void) { return NULL; }
+void *AlwaysNull(void) {
+  return NULL;
+}
 
 static void MergeHyphensArgv(int argc, char **argv) {
   char *S;

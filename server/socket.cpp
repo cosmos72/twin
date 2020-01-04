@@ -40,6 +40,7 @@
 
 #include "twin.h"
 #include "algo.h"
+#include "alloc.h"
 #include "data.h"
 #include "draw.h"
 #include "extreg.h"

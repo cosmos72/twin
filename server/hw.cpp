@@ -46,9 +46,10 @@
 
 #include "tty_ioctl.h"
 
-#include "hw.h"
+#include "alloc.h"
 #include "algo.h"
 #include "common.h"
+#include "hw.h"
 
 #ifndef VDISABLE
 #ifdef _POSIX_VDISABLE

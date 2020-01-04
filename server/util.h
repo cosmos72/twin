@@ -20,8 +20,6 @@
 #include <sys/un.h>
 #endif
 
-extern udat ErrNo;
-extern CONST char *ErrStr;
 extern uldat unixSlot;
 extern int unixFd;
 
@@ -32,12 +30,6 @@ void SetAlarm(unsigned seconds);
 #define SetAlarm(seconds) ((void)0)
 #define AlarmReceived (0)
 #endif
-
-void *CloneMem(CONST void *From, uldat Size);
-char *CloneStr(CONST char *From);
-char *CloneStrL(CONST char *From, uldat Size);
-char **CloneStrList(char **FromList);
-trune *CloneStr2TRune(CONST char *From, uldat Size);
 
 CONST char *TmpDir(void);
 udat CopyToSockaddrUn(CONST char *src, struct sockaddr_un *addr, udat pos);

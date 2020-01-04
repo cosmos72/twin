@@ -25,6 +25,7 @@
 #endif
 
 #include "twin.h"
+#include "alloc.h"
 #include "main.h"
 #include "data.h"
 #include "printk.h"

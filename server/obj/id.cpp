@@ -13,9 +13,9 @@
 #include "obj/id.h"
 #include "obj/magic.h"
 #include "obj/obj.h"
-#include "algo.h" // Max2
-#include "twin.h" // NOSLOT
-#include "util.h" // Error()
+#include "algo.h"  // Max2
+#include "alloc.h" // Error(), ReAllocMem0()
+#include "twin.h"  // NOSLOT
 
 #include <Tw/Tw_defs.h> // TW_BIGBUFF
 

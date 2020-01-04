@@ -13,6 +13,7 @@
  */
 
 #include "twin.h"
+#include "alloc.h"
 #include "rctypes.h"
 #include "rcparse_tab.hpp"
 

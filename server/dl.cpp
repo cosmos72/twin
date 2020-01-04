@@ -11,6 +11,7 @@
  */
 
 #include "twin.h"
+#include "alloc.h"
 #include "methods.h"
 #include "data.h"
 #include "dl.h"

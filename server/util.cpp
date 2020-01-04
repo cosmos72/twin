@@ -32,6 +32,7 @@
 #endif
 
 #include "algo.h"
+#include "alloc.h"
 #include "data.h"
 #include "extreg.h"
 #include "methods.h"
@@ -47,48 +48,6 @@
 
 #include <Tw/Twkeys.h>
 #include <Tutf/Tutf.h>
-
-udat ErrNo;
-CONST char *ErrStr;
-
-#if 0
-uldat MemLeft(void) {
-    /* TODO? */
-    return 0;
-}
-#endif
-
-byte Error(udat Code_Error) {
-  switch ((ErrNo = Code_Error)) {
-  case NOMEMORY:
-    ErrStr = "Out of memory!";
-    break;
-  case NOTABLES:
-    ErrStr = "Internal tables full!";
-    break;
-  case SYSCALLERROR:
-    ErrStr = strerror(errno);
-    break;
-  default:
-    break;
-  }
-  return tfalse;
-}
-
-trune *CloneStr2TRune(CONST char *s, uldat len) {
-  trune *temp, *save;
-
-  if (s) {
-    if ((temp = save = (trune *)AllocMem((len + 1) * sizeof(trune)))) {
-      while (len--) {
-        *temp++ = Tutf_CP437_to_UTF_32[(byte)*s++];
-      }
-      *temp = '\0';
-    }
-    return save;
-  }
-  return NULL;
-}
 
 void NormalizeTime(timevalue *Time) {
   if (Time->Fraction >= FullSEC || Time->Fraction < 0) {

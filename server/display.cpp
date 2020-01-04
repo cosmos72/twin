@@ -19,6 +19,7 @@
 
 #include "twin.h"
 #include "algo.h"
+#include "alloc.h"
 #include "hw.h"
 #include "hw_private.h"
 #include "common.h"
@@ -53,8 +54,6 @@ CONST char *TWDisplay, *origTWDisplay, *origTERM;
 
 char nullMIME[TW_MAX_MIMELEN];
 
-udat ErrNo;
-CONST char *ErrStr;
 CONST char *HOME;
 
 #define L 0x55
@@ -110,23 +109,6 @@ void *AlwaysNull(void) {
 void GainPrivileges(void) {
 }
 void RemotePidIsDead(pid_t pid) {
-}
-
-byte Error(udat Code_Error) {
-  switch ((ErrNo = Code_Error)) {
-  case NOMEMORY:
-    ErrStr = "Out of memory!";
-    break;
-  case NOTABLES:
-    ErrStr = "Internal tables full!";
-    break;
-  case SYSCALLERROR:
-    ErrStr = strerror(errno);
-    break;
-  default:
-    break;
-  }
-  return tfalse;
 }
 
 int printk(CONST char *format, ...) {

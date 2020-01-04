@@ -18,6 +18,7 @@
 
 #include "twin.h"
 #include "algo.h"
+#include "alloc.h"
 #include "main.h"
 #include "methods.h"
 

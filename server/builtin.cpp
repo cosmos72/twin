@@ -13,6 +13,7 @@
 #include <signal.h>
 
 #include "twin.h"
+#include "alloc.h"
 #include "data.h"
 #include "methods.h"
 #include "main.h"

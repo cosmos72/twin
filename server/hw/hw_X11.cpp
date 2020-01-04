@@ -14,6 +14,7 @@
 #include <Tutf/Tutf_defs.h>
 
 #include "twin.h"
+#include "alloc.h"
 #include "main.h"
 #include "data.h"
 #include "remote.h"

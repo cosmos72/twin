@@ -109,27 +109,10 @@ typedef struct s_rgb {
 
 /**********************************/
 
-/* memory allocation. these function call Error(NOMEMORY) on failure */
-
-void *AllocMem(size_t Size);              /* wrapper for malloc() */
-void *ReAllocMem(void *Mem, size_t Size); /* wrapper for realloc() */
-#define FreeMem free
-
-void *AllocMem0(size_t ElementSize, size_t Count); /* wrapper for calloc() */
-void *ReAllocMem0(void *Mem, size_t ElementSize, size_t OldCount,
-                  size_t NewCount); /* wrapper for realloc() + memset() */
-
-/* INLINE/define stuff: */
-
-#define CopyMem(From, To, Size) memcpy(To, From, Size)
-#define MoveMem(From, To, Size) memmove(To, From, Size)
-
 typedef enum { none, sgidtty, suidroot } e_privilege;
 
 #define DropPrivileges() (setegid(getgid()), seteuid(getuid()))
 #define GainRootPrivileges() seteuid(0)
 #define GainGroupPrivileges(g) setegid(g)
-
-char *CloneStr(CONST char *s);
 
 #endif /* _TWIN_H */

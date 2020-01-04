@@ -12,6 +12,7 @@
 
 #include "twin.h"
 #include "algo.h"
+#include "alloc.h"
 #include "main.h"
 #include "data.h"
 #include "remote.h"

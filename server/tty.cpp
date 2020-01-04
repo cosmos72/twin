@@ -17,6 +17,7 @@
 
 #include "twin.h"
 #include "algo.h"
+#include "alloc.h"
 #include "data.h"
 #include "methods.h"
 #include "draw.h"

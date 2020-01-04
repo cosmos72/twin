@@ -11,11 +11,33 @@
  */
 
 #include "twin.h"
+#include "alloc.h"
 #include "util.h"
+
+#include <Tutf/Tutf.h> // Tutf_CP437_to_UTF_32[]
 
 #ifdef TW_HAVE_SIGNAL_H
 #include <signal.h>
 #endif
+
+udat ErrNo;
+CONST char *ErrStr;
+byte Error(udat Code_Error) {
+  switch ((ErrNo = Code_Error)) {
+  case NOMEMORY:
+    ErrStr = "Out of memory!";
+    break;
+  case NOTABLES:
+    ErrStr = "Internal tables full!";
+    break;
+  case SYSCALLERROR:
+    ErrStr = strerror(errno);
+    break;
+  default:
+    break;
+  }
+  return tfalse;
+}
 
 void *AllocMem(size_t Size) {
   void *res = NULL;
@@ -133,6 +155,21 @@ char **CloneStrList(char **s) {
       *v = NULL;
   }
   return t;
+}
+
+trune *CloneStr2TRune(CONST char *s, uldat len) {
+  trune *temp, *save;
+
+  if (s) {
+    if ((temp = save = (trune *)AllocMem((len + 1) * sizeof(trune)))) {
+      while (len--) {
+        *temp++ = Tutf_CP437_to_UTF_32[(byte)*s++];
+      }
+      *temp = '\0';
+    }
+    return save;
+  }
+  return NULL;
 }
 
 #if defined(TW_HAVE_ALARM) && defined(TW_HAVE_SIGACTION)

@@ -12,6 +12,7 @@
 
 #include "twin.h"
 #include "main.h"
+#include "alloc.h"
 #include "builtin.h"
 #include "data.h"
 #include "draw.h"
