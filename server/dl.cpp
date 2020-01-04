@@ -43,7 +43,7 @@ byte DlOpen(module Module) {
     }
     Handle = dlopen(name);
     if (name)
-      free(name);
+      FreeMem(name);
   }
   if (!Handle) {
     Error(DLERROR);

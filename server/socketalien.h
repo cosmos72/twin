@@ -468,7 +468,7 @@ TW_INLINE ldat alienDecodeArg(uldat id, CONST char *Format, uldat n, tsfield a, 
 
       if (A) {
         a[n] _vec = AllocId2ObjVec(flag, c, nlen / sizeof(uldat), (byte *)A);
-        free((void *)A);
+        FreeMem((void *)A);
         if (a[n] _vec) {
           *mask |= *flag << n;
           break;
@@ -499,7 +499,7 @@ TW_INLINE ldat alienDecodeArg(uldat id, CONST char *Format, uldat n, tsfield a, 
 
         if (A) {
           a[n] _vec = AllocId2ObjVec(flag, c, nlen / sizeof(uldat), (byte *)A);
-          free((void *)A);
+          FreeMem((void *)A);
           if (a[n] _vec) {
             *mask |= *flag << n;
             break;
@@ -565,7 +565,7 @@ static void alienMultiplexB(uldat id) {
        */
       a[n - 1] _type = proto_2_TWS((CONST char *)(a[n - 1] _vec));
       if (mask & 1 << (n - 1))
-        free(a[n - 1].TWS_field_vecV);
+        FreeMem(a[n - 1].TWS_field_vecV);
 
       a[n - 1] _vec = &a[n - 1];
       a[n - 1] _len = 0;
@@ -576,7 +576,7 @@ static void alienMultiplexB(uldat id) {
 
   for (nlen = 0; mask; mask >>= 1, nlen++) {
     if (mask & 1)
-      free(a[nlen].TWS_field_vecV);
+      FreeMem(a[nlen].TWS_field_vecV);
   }
 
   if (flag) {

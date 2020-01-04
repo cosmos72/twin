@@ -402,7 +402,7 @@ static void GGI_QuitHW(void) {
   ggiClose(gvis);
   ggiExit();
 
-  free(HW->Private);
+  FreeMem(HW->Private);
 
   if (GGI_HW == HW)
     GGI_HW = NULL;

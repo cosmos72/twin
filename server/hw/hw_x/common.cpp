@@ -104,7 +104,7 @@ static byte X11_LoadFont(CONST char *fontname, udat fontwidth, udat fontheight) 
     printk("      selected %ux%u font `" SS "'\n", (unsigned)xwfont, (unsigned)xhfont, fontname);
   }
   if (alloc_fontname)
-    free(alloc_fontname);
+    FreeMem(alloc_fontname);
 
   return loaded;
 }
@@ -133,7 +133,7 @@ static void X11_QuitHW(void) {
 
   HW->QuitHW = NoOp;
 
-  free(HW->Private);
+  FreeMem(HW->Private);
   HW->Private = NULL;
 }
 
@@ -462,7 +462,7 @@ fail:
   if (xdisplay)
     X11_QuitHW();
 
-  free(HW->Private);
+  FreeMem(HW->Private);
   HW->Private = NULL;
 
   return tfalse;

@@ -402,9 +402,9 @@ static byte tty_InitHW(void) {
     }
     if (tty_fd == -1 || !stdOUT) {
       printk("      tty_InitHW(): open(\"" SS "\") failed: " SS "\n", tty_name, strerror(errno));
-      free(tty_name);
+      FreeMem(tty_name);
       if (tty_TERM)
-        free(tty_TERM);
+        FreeMem(tty_TERM);
       return tfalse;
     }
   } else {
@@ -452,7 +452,7 @@ static byte tty_InitHW(void) {
       tty_use_utf8 = ttrue;
       tty_charset = (uldat)-1;
     }
-    free(charset);
+    FreeMem(charset);
   }
 
 #define TRY_V(name) (autotry_video + try_##name >= ALWAYS)
@@ -559,9 +559,9 @@ static void tty_QuitHW(void) {
   HW->QuitHW = NoOp;
 
   if (tty_name)
-    free(tty_name);
+    FreeMem(tty_name);
   if (tty_TERM)
-    free(tty_TERM);
+    FreeMem(tty_TERM);
   if (HW->DisplayIsCTTY && DisplayHWCTTY == HW)
     DisplayHWCTTY = NULL;
 
@@ -585,7 +585,7 @@ static void tty_QuitHW(void) {
     } else
       fclose(stdOUT);
   }
-  free(HW->Private);
+  FreeMem(HW->Private);
 }
 
 EXTERN_C byte InitModule(module Module) {

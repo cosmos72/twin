@@ -113,6 +113,7 @@ typedef struct s_rgb {
 
 void *AllocMem(size_t Size);              /* wrapper for malloc() */
 void *ReAllocMem(void *Mem, size_t Size); /* wrapper for realloc() */
+#define FreeMem free
 
 void *AllocMem0(size_t ElementSize, size_t Count); /* wrapper for calloc() */
 void *ReAllocMem0(void *Mem, size_t ElementSize, size_t OldCount,

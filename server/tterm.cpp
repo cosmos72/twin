@@ -105,7 +105,7 @@ static void TermWriteHWFontWindow(window W, uldat len, CONST hwfont *hwData) {
       *Data++ = (byte)inv_charset(*hwData++);
 
     RemoteWindowWriteQueue(W, len, sData);
-    free(sData);
+    FreeMem(sData);
   }
 }
 

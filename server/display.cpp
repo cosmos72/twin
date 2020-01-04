@@ -266,7 +266,7 @@ static module DlLoadAny(uldat len, char *name) {
 
     sprintf(path, "%s%.*s%s", modules_prefix, (int)len, name, DL_SUFFIX);
     Module->Handle = (void *)dlopen(path);
-    free(path);
+    FreeMem(path);
 
     if (Module->Handle) {
       /*
@@ -329,7 +329,7 @@ static byte module_InitHW(CONST char *arg, uldat len) {
         HW->Module = Module;
         Module->Used++;
 
-        free(buf);
+        FreeMem(buf);
         return ttrue;
       }
       /*Delete(Module);*/
@@ -347,7 +347,7 @@ static byte module_InitHW(CONST char *arg, uldat len) {
            ErrStr);
 
   if (buf)
-    free(buf);
+    FreeMem(buf);
 
   return tfalse;
 }
@@ -457,7 +457,7 @@ static display_hw CreateDisplayHW(uldat NameLen, CONST char *Name) {
     return HW;
   }
   if (newName)
-    free(newName);
+    FreeMem(newName);
   return (display_hw)0;
 }
 
@@ -607,7 +607,7 @@ static byte ReAllocVideo(dat Width, dat Height) {
   byte change = DisplayWidth != Width || DisplayHeight != Height;
 
   if (!NeedOldVideo && OldVideo) {
-    free(OldVideo);
+    FreeMem(OldVideo);
     OldVideo = NULL;
   } else if ((NeedOldVideo && !OldVideo) || change) {
     if (!(OldVideo = (hwattr *)ReAllocMem(OldVideo, (ldat)Width * Height * sizeof(hwattr))) &&

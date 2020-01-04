@@ -985,7 +985,7 @@ static void DrawWCtx(draw_ctx *D) {
 
     if (X1 > X2 || Y1 > Y2 || X1 >= DWidth || Y1 >= DHeight || X2 < 0 || Y2 < 0) {
       if (!FirstCycle)
-        free(D);
+        FreeMem(D);
       else
         FirstCycle = tfalse;
       continue;
@@ -1020,7 +1020,7 @@ static void DrawWCtx(draw_ctx *D) {
     }
 
     if (!FirstCycle)
-      free(D);
+      FreeMem(D);
     else
       FirstCycle = tfalse;
 
@@ -1206,7 +1206,7 @@ static void DrawAreaCtx(draw_ctx *D) {
     FirstD = D->Next;
 
     if (!FirstCycle)
-      free(D);
+      FreeMem(D);
     else
       FirstCycle = tfalse;
 
@@ -1324,7 +1324,7 @@ static void DrawAreaCtx(draw_ctx *D) {
                  Min2(X2, shRgt), Min2(Y2, shDwn), tfalse, tfalse, Shaded, &lError);
       if (FD) {
         DrawWCtx(FD);
-        free(FD);
+        FreeMem(FD);
       }
     }
 

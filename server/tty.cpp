@@ -988,7 +988,7 @@ static void set_newtitle(void) {
 
 static void clear_newtitle(void) {
   if (newName)
-    free(newName);
+    FreeMem(newName);
   newName = NULL;
   newLen = newMax = 0;
 }

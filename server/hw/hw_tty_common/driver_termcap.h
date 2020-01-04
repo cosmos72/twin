@@ -114,7 +114,7 @@ static void termcap_cleanup(void) {
   char **n;
   for (n = tc_cap; n < tc_cap + tc_cap_N; n++) {
     if (*n)
-      free(*n);
+      FreeMem(*n);
   }
 }
 
@@ -124,7 +124,7 @@ static void fixup_colorbug(void) {
   if (s) {
     CopyMem(tc_attr_off, s, len);
     CopyMem("\033[37;40m", s + len, 9);
-    free(tc_attr_off);
+    FreeMem(tc_attr_off);
     tc_attr_off = s;
   }
 }

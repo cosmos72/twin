@@ -161,7 +161,7 @@ byte ResizeWindowContents(window Window) {
         for (left = x - common; left; left--)
           *NewCont++ = h;
       }
-      free(Window->USE.C.Contents);
+      FreeMem(Window->USE.C.Contents);
     }
 
     left = (saveNewCont + x * y) - NewCont;
@@ -170,7 +170,7 @@ byte ResizeWindowContents(window Window) {
   } else {
     x = y = 0;
     if (Window->USE.C.Contents)
-      free(Window->USE.C.Contents);
+      FreeMem(Window->USE.C.Contents);
     saveNewCont = NULL;
   }
 

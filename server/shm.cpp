@@ -262,13 +262,13 @@ byte shm_shrink(void) {
 
 void shm_abort(void) {
   if (M)
-    free(M);
+    FreeMem(M);
   M = NULL;
 }
 
 void shm_TSR_abort(void) {
   if (TSR_M)
-    free(TSR_M);
+    FreeMem(TSR_M);
   TSR_M = NULL;
 }
 

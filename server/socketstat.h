@@ -606,11 +606,11 @@ static void sockStat(obj x, udat n, CONST byte *in) {
         }
 
         if (TSF[i].type == (TWS_vec | TWS_tobj) && TSF[i].TWS_field_vecV)
-          free(TSF[i].TWS_field_vecV);
+          FreeMem(TSF[i].TWS_field_vecV);
       }
     }
 
-    free(TSF);
+    FreeMem(TSF);
   }
   if (!ok)
     sockReply(1, 0, NULL);

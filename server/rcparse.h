@@ -1175,7 +1175,7 @@ static byte CreateNeededScreens(node list, screen *res_Screens) {
       }
       s = Do(Create, Screen)(FnScreen, strlen(list->name), list->name, w, h, attr);
 
-      free(attr);
+      FreeMem(attr);
     }
     if (!attr || !s) {
       DeleteScreens(top);
@@ -1207,7 +1207,7 @@ static void UpdateVisibleScreens(screen new_Screens) {
       Orig->USE.B.BgWidth = S->USE.B.BgWidth;
       Orig->USE.B.BgHeight = S->USE.B.BgHeight;
       if (Orig->USE.B.Bg)
-        free(Orig->USE.B.Bg);
+        FreeMem(Orig->USE.B.Bg);
       Orig->USE.B.Bg = S->USE.B.Bg;
       S->USE.B.Bg = NULL;
       Delete(S);
@@ -1314,7 +1314,7 @@ static byte NewCommonMenu(void **shm_M, menu *res_CommonMenu, node **res_MenuBin
         if (!Row)
           break;
       }
-      free(Line);
+      FreeMem(Line);
 
       if (N) /* out of memory! */
         break;
@@ -1328,7 +1328,7 @@ static byte NewCommonMenu(void **shm_M, menu *res_CommonMenu, node **res_MenuBin
   }
 
   /* out of memory! */
-  free(new_MenuBinds);
+  FreeMem(new_MenuBinds);
   Delete(Menu);
   return tfalse;
 }
@@ -1359,7 +1359,7 @@ static byte ReadGlobals(void) {
   DeleteUnneededScreens((node)M[ScreenIndex]);
 
   if (!GlobalsAreStatic)
-    free(MenuBinds);
+    FreeMem(MenuBinds);
   GlobalsAreStatic = tfalse;
 
   if (All->CommonMenu)
@@ -1419,7 +1419,7 @@ static byte rcload(void) {
   len = Max2(len, TW_BIGBUFF) * sizeof(node) / 4;
 
   if (!shm_init(len)) {
-    free(path);
+    FreeMem(path);
     return c;
   }
 
@@ -1476,7 +1476,7 @@ static byte rcload(void) {
         exit(0);
         break;
       default: /* parent */
-        free(path);
+        FreeMem(path);
         close(fdm[1]);
         close(fdl[1]);
         printk_receive_fd(fdl[0]);

@@ -798,7 +798,7 @@ static void lrawkbd_FreeKeymaps(void) {
   ldat table;
   for (table = 0; table < lrawkbd_KEYMAPS_N; table++) {
     if ((keymap = lrawkbd_keymaps[table]) != NULL) {
-      free(keymap);
+      FreeMem(keymap);
       lrawkbd_keymaps[table] = NULL;
     }
   }

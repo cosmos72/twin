@@ -284,7 +284,7 @@ static void RCKillAll(void) {
     run *s = list[i], *r;
     while ((r = s)) {
       s = r->next;
-      free(r);
+      FreeMem(r);
     }
   }
   Run = Sleep = Wait = Interactive = (run *)0;
@@ -294,7 +294,7 @@ INLINE void RCKill(run **p) {
   run *r;
   if ((r = *p)) {
     *p = r->next;
-    free(r);
+    FreeMem(r);
   }
 }
 

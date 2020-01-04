@@ -222,9 +222,9 @@ void UnRegisterRemote(uldat Slot) {
     /* trow away any data still queued :( */
     LS.RQlen = LS.WQlen = 0;
     if (LS.WQueue)
-      free(LS.WQueue);
+      FreeMem(LS.WQueue);
     if (LS.RQueue)
-      free(LS.RQueue);
+      FreeMem(LS.RQueue);
 
     i = LS.Fd;
     LS.Fd = NOFD;

@@ -242,7 +242,7 @@ static void X11_SelectionNotify_X11(uldat ReqPrivate, uldat Magic, CONST char MI
     ev.xselection.property = XReq(XReqCount).property;
 
     if (Magic == SEL_HWFONTMAGIC && _Data)
-      free(_Data);
+      FreeMem(_Data);
   }
   XSendEvent(xdisplay, XReq(XReqCount).requestor, False, 0, &ev);
   setFlush();
@@ -280,7 +280,7 @@ static void X11_SelectionNotify_up(Window win, Atom prop) {
 
       XFree(data);
       if (buff)
-        free(buff);
+        FreeMem(buff);
       return;
     }
 
@@ -295,7 +295,7 @@ static void X11_SelectionNotify_up(Window win, Atom prop) {
 
   TwinSelectionNotify(xRequestor(xReqCount), xReqPrivate(xReqCount), SEL_TEXTMAGIC, NULL, nread,
                       buff);
-  free(buff);
+  FreeMem(buff);
 }
 
 /*

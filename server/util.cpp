@@ -792,8 +792,8 @@ char **TokenizeStringVec(uldat len, char *s) {
 
 void FreeStringVec(char **cmd) {
   if (cmd) {
-    free(cmd[0]);
-    free(cmd);
+    FreeMem(cmd[0]);
+    FreeMem(cmd);
   }
 }
 
@@ -963,7 +963,7 @@ byte InitTWDisplay(void) {
             if ((arg0 = (char *)AllocMem(strlen(TWDisplay) + 6))) {
               sprintf(arg0, "twin %s", TWDisplay);
               SetArgv0(main_argv, main_argv_usable_len, arg0);
-              free(arg0);
+              FreeMem(arg0);
             }
             return ttrue;
           }
@@ -1138,7 +1138,7 @@ char *FindFile(CONST char *name, uldat *fsize) {
           *fsize = buf.st_size;
         return path;
       }
-      free(path);
+      FreeMem(path);
     }
   }
   return NULL;

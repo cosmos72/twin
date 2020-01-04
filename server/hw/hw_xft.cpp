@@ -175,7 +175,7 @@ static char *X11_AutodetectFont(udat fontwidth, udat fontheight) {
       len = strlen((CONST char *)file) + strlen(":file=") + 1;
       if (!t_fontname || (len > t_fontname_len)) {
         if (t_fontname) {
-          free(t_fontname);
+          FreeMem(t_fontname);
         }
         t_fontname = (char *)AllocMem(t_fontname_len = len);
         if (!t_fontname) {
@@ -193,7 +193,7 @@ static char *X11_AutodetectFont(udat fontwidth, udat fontheight) {
         if (!fontname || (score > best_score)) {
           best_score = score;
           if (fontname) {
-            free(fontname);
+            FreeMem(fontname);
           }
           fontname = t_fontname;
           t_fontname = NULL;
@@ -204,7 +204,7 @@ static char *X11_AutodetectFont(udat fontwidth, udat fontheight) {
   }
 
   if (t_fontname) {
-    free(t_fontname);
+    FreeMem(t_fontname);
     t_fontname = NULL;
   }
 
@@ -256,7 +256,7 @@ static void X11_FlavorQuitHW(void) {
     }
     if (xdisplay)
       XftColorFree(xdisplay, xvisual, colormap, xftcolors[i]);
-    free(xftcolors[i]);
+    FreeMem(xftcolors[i]);
     xftcolors[i] = NULL;
   }
 }
