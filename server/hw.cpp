@@ -60,7 +60,7 @@
 
 display_hw HW, DisplayHWCTTY;
 
-hwattr *Video, *OldVideo;
+tcell *Video, *OldVideo;
 
 byte NeedOldVideo, CanDragArea;
 byte ExpensiveFlushVideo, ValidOldVideo, NeedHW;
@@ -390,7 +390,7 @@ void DirtyVideo(dat Xstart, dat Ystart, dat Xend, dat Yend) {
 }
 
 static void Video2OldVideo(dat Xstart, dat Ystart, dat Xend, dat Yend) {
-  hwattr *src, *dst;
+  tcell *src, *dst;
   uldat xc, yc;
 
   if (Xstart > Xend || Xstart >= DisplayWidth || Xend < 0 || Ystart > Yend ||
@@ -402,7 +402,7 @@ static void Video2OldVideo(dat Xstart, dat Ystart, dat Xend, dat Yend) {
   Yend = Min2(Yend, DisplayHeight - 1);
 
   yc = Yend - Ystart + 1;
-  xc = sizeof(hwattr) * (uldat)(Xend - Xstart + 1);
+  xc = sizeof(tcell) * (uldat)(Xend - Xstart + 1);
   src = Video + Xstart + Ystart * (ldat)DisplayWidth;
   dst = OldVideo + Xstart + Ystart * (ldat)DisplayWidth;
 
@@ -417,14 +417,14 @@ static void Video2OldVideo(dat Xstart, dat Ystart, dat Xend, dat Yend) {
 void DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
   dat DstRgt = DstLeft + (Rgt - Left), DstDwn = DstUp + (Dwn - Up);
   ldat len, count;
-  hwattr *src = Video, *dst = Video;
+  tcell *src = Video, *dst = Video;
   byte Accel;
 
   if (QueuedDrawArea2FullScreen)
     return;
 
   count = Dwn - Up + 1;
-  len = (ldat)(Rgt - Left + 1) * sizeof(hwattr);
+  len = (ldat)(Rgt - Left + 1) * sizeof(tcell);
 
   /* if HW can do the scroll, use it instead of redrawing */
 

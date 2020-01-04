@@ -31,11 +31,11 @@
 #define TWS_udat 2
 #define TWS_ldat 3
 #define TWS_uldat 3
-#define TWS_hwcol 4
+#define TWS_tcolor 4
 #define TWS_topaque 5
 #define TWS_tany 6
-#define TWS_hwfont 7
-#define TWS_hwattr 8
+#define TWS_trune 7
+#define TWS_tcell 8
 #define TWS_highest 9
 #define TWS_tobj 0xFF
 #define TWS_obj 0xFF
@@ -55,11 +55,11 @@
 #define TWS_udat_STR "\x02"
 #define TWS_ldat_STR "\x03"
 #define TWS_uldat_STR "\x03"
-#define TWS_hwcol_STR "\x04"
+#define TWS_tcolor_STR "\x04"
 #define TWS_topaque_STR "\x05"
 #define TWS_tany_STR "\x06"
-#define TWS_hwfont_STR "\x07"
-#define TWS_hwattr_STR "\x08"
+#define TWS_trune_STR "\x07"
+#define TWS_tcell_STR "\x08"
 
 #define TWS_array_STR                                                                              \
   "\xFD" /* used by server extensions as a shortcut for (TWS_vec | TWS_vecW | TWS_byte) */
@@ -70,9 +70,9 @@
 #define TWS_field_udat val._
 #define TWS_field_ldat val._
 #define TWS_field_uldat val._
-#define TWS_field_hwcol val._
-#define TWS_field_hwfont val._
-#define TWS_field_hwattr val._
+#define TWS_field_tcolor val._
+#define TWS_field_trune val._
+#define TWS_field_tcell val._
 #define TWS_field_topaque val._
 #define TWS_field_tany val._
 #define TWS_field_tobj val._

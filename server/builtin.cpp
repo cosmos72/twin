@@ -178,7 +178,7 @@ static void ExecuteWinRun(void) {
 
   if ((Row = Act(FindRow, ExecuteWin)(ExecuteWin, ExecuteWin->CurY)) && !Row->LenGap) {
 
-    argv = TokenizeHWFontVec(Row->Len, Row->Text);
+    argv = TokenizeTRuneVec(Row->Len, Row->Text);
     arg0 = argv ? argv[0] : NULL;
 
     if ((G = Act(FindGadgetByCode, ExecuteWin)(ExecuteWin, COD_E_TTY)) &&
@@ -344,13 +344,13 @@ void FillButtonWin(void) {
     Act(TtyWriteAscii, ButtonWin)(ButtonWin, 7, "Button ");
     Act(TtyWriteAscii, ButtonWin)(ButtonWin, 6, s);
     {
-      hwfont *f = All->ButtonVec[j].shape;
-      hwattr h[2] = {
-          HWATTR3(ButtonWin->ColGadgets, f[0], EncodeToHWAttrExtra((tpos)j, tzero, tfalse, tfalse)),
-          HWATTR3(ButtonWin->ColGadgets, f[1], EncodeToHWAttrExtra((tpos)j, tone, tfalse, tfalse)),
+      trune *f = All->ButtonVec[j].shape;
+      tcell h[2] = {
+          TCELL3(ButtonWin->ColGadgets, f[0], EncodeToTCellExtra((tpos)j, tzero, tfalse, tfalse)),
+          TCELL3(ButtonWin->ColGadgets, f[1], EncodeToTCellExtra((tpos)j, tone, tfalse, tfalse)),
       };
 
-      Act(TtyWriteHWAttr, ButtonWin)(ButtonWin, 15, 1 + i * 2, 2, h);
+      Act(TtyWriteTCell, ButtonWin)(ButtonWin, 15, 1 + i * 2, 2, h);
     }
     Do(Create, Gadget)(FnGadget, Builtin_MsgPort, (widget)ButtonWin, 3, 1, "[+]", 0,
                        GADGETFL_TEXT_DEFCOL, 3 | (j << 2), COL(BLACK, WHITE),
@@ -775,7 +775,7 @@ static byte InitScreens(void) {
   screen OneScreen;
 
   if ((OneScreen = Do(CreateSimple, Screen)(FnScreen, 1, "1",
-                                            HWATTR(COL(HIGH | BLACK, BLUE), _MEDIUM_SHADE)))) {
+                                            TCELL(COL(HIGH | BLACK, BLUE), _MEDIUM_SHADE)))) {
 
     InsertLast(Screen, OneScreen, All);
     return ttrue;
@@ -805,7 +805,7 @@ byte InitBuiltin(void) {
       (Builtin_Menu = Do(Create, Menu)(FnMenu, Builtin_MsgPort, (byte)0x70, (byte)0x20, (byte)0x78,
                                        (byte)0x08, (byte)0x74, (byte)0x24, (byte)0)) &&
       Info4Menu(Builtin_Menu, ROW_ACTIVE, (uldat)42, " Hit PAUSE or Mouse Right Button for Menu ",
-                (CONST hwcol *)"tttttttttttttttttttttttttttttttttttttttttt") &&
+                (CONST tcolor *)"tttttttttttttttttttttttttttttttttttttttttt") &&
 
       (Window = Win4Menu(Builtin_Menu)) &&
       Row4Menu(Window, COD_CLOCK_WIN, ROW_ACTIVE, 9, " Clock   ") &&
@@ -855,7 +855,7 @@ byte InitBuiltin(void) {
       Item4MenuCommon(Builtin_Menu) &&
 
       (AboutWin = Do(Create, Window)(
-           FnWindow, Builtin_MsgPort, 5, "About", (CONST hwcol *)"\x7F\x7F\x7F\x7F\x7F",
+           FnWindow, Builtin_MsgPort, 5, "About", (CONST tcolor *)"\x7F\x7F\x7F\x7F\x7F",
            Builtin_Menu, COL(BLACK, WHITE), NOCURSOR,
            WINDOW_AUTO_KEYS | WINDOW_WANT_MOUSE | WINDOW_DRAG | WINDOW_CLOSE,
            WINDOWFL_USEROWS | WINDOWFL_ROWS_DEFCOL, 36, 13, 0)) &&
@@ -966,17 +966,17 @@ byte InitBuiltin(void) {
                          COL(HIGH | BLACK, BLUE), COL(HIGH | BLACK, BLUE), 10, 1)
 
   ) {
-    Act(SetColors, AboutWin)(AboutWin, 0x1FF, (hwcol)0x7A, (hwcol)0, (hwcol)0, (hwcol)0,
-                             (hwcol)0x7F, (hwcol)0x70, (hwcol)0x20, (hwcol)0x78, (hwcol)0x08);
+    Act(SetColors, AboutWin)(AboutWin, 0x1FF, (tcolor)0x7A, (tcolor)0, (tcolor)0, (tcolor)0,
+                             (tcolor)0x7F, (tcolor)0x70, (tcolor)0x20, (tcolor)0x78, (tcolor)0x08);
 
-    Act(SetColors, ClockWin)(ClockWin, 0x1FF, (hwcol)0x3E, (hwcol)0, (hwcol)0, (hwcol)0,
-                             (hwcol)0x9F, (hwcol)0x1E, (hwcol)0x3E, (hwcol)0x18, (hwcol)0x08);
+    Act(SetColors, ClockWin)(ClockWin, 0x1FF, (tcolor)0x3E, (tcolor)0, (tcolor)0, (tcolor)0,
+                             (tcolor)0x9F, (tcolor)0x1E, (tcolor)0x3E, (tcolor)0x18, (tcolor)0x08);
 
-    Act(SetColors, OptionWin)(OptionWin, 0x1FF, (hwcol)0x7A, (hwcol)0, (hwcol)0, (hwcol)0,
-                              (hwcol)0x7F, (hwcol)0x78, (hwcol)0x20, (hwcol)0x78, (hwcol)0x08);
+    Act(SetColors, OptionWin)(OptionWin, 0x1FF, (tcolor)0x7A, (tcolor)0, (tcolor)0, (tcolor)0,
+                              (tcolor)0x7F, (tcolor)0x78, (tcolor)0x20, (tcolor)0x78, (tcolor)0x08);
 
-    Act(SetColors, ButtonWin)(ButtonWin, 0x1FF, (hwcol)0x7A, (hwcol)0, (hwcol)0, (hwcol)0,
-                              (hwcol)0x7F, (hwcol)0x7F, (hwcol)0x20, (hwcol)0x78, (hwcol)0x08);
+    Act(SetColors, ButtonWin)(ButtonWin, 0x1FF, (tcolor)0x7A, (tcolor)0, (tcolor)0, (tcolor)0,
+                              (tcolor)0x7F, (tcolor)0x7F, (tcolor)0x20, (tcolor)0x78, (tcolor)0x08);
 
     Act(SetColors, WinList)(WinList, 0x1FF, COL(HIGH | YELLOW, CYAN),
                             COL(HIGH | GREEN, HIGH | BLUE), COL(WHITE, HIGH | BLUE),
@@ -985,9 +985,9 @@ byte InitBuiltin(void) {
                             COL(HIGH | BLACK, BLACK));
     Act(Configure, WinList)(WinList, 1 << 2 | 1 << 3, 0, 0, 15, 2, 0, 0);
 
-    Act(SetColors, DisplayWin)(DisplayWin, 0x1FF, (hwcol)0x7A, (hwcol)0x7F, (hwcol)0x79,
-                               (hwcol)0xF9, (hwcol)0x7F, (hwcol)0x70, (hwcol)0x20, (hwcol)0x78,
-                               (hwcol)0x08);
+    Act(SetColors, DisplayWin)(DisplayWin, 0x1FF, (tcolor)0x7A, (tcolor)0x7F, (tcolor)0x79,
+                               (tcolor)0xF9, (tcolor)0x7F, (tcolor)0x70, (tcolor)0x20, (tcolor)0x78,
+                               (tcolor)0x08);
 
     Act(SetColors, DisplaySubWin)(DisplaySubWin, 1 << 4, 0, 0, 0, 0, COL(HIGH | BLACK, WHITE), 0, 0,
                                   0, 0);

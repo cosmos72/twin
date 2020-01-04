@@ -14,9 +14,9 @@ window FakeOpenTerm(CONST char *arg0, CONST char *CONST *argv);
 widget FakeKbdFocus(widget W);
 byte FakeWriteAscii(window Window, uldat Len, CONST char *Ascii);
 byte FakeWriteString(window Window, uldat Len, CONST char *String);
-byte FakeWriteHWFont(window Window, uldat Len, CONST hwfont *HWFont);
-byte FakeWriteHWAttr(window Window, dat x, dat y, uldat Len, CONST hwattr *Attr);
-tpos FakeFindBorderWindow(window W, dat u, dat v, byte Border, hwattr *PtrAttr);
+byte FakeWriteTRune(window Window, uldat Len, CONST trune *TRune);
+byte FakeWriteTCell(window Window, dat x, dat y, uldat Len, CONST tcell *Attr);
+tpos FakeFindBorderWindow(window W, dat u, dat v, byte Border, tcell *PtrAttr);
 
 extern fn Fn;
 #define FnObj (Fn.f_obj)

@@ -37,8 +37,8 @@ udat field_list[] = {
 };
 
 /* these are hardcoded in libTw ABI, so we can hardcode them here too. */
-char *type_list[TWS_highest + 2] = {"void",   "char",   "dat",    "ldat", "hwcol",  "time_t",
-                                    "frac_t", "hwfont", "hwattr", "tobj", "unknown"};
+char *type_list[TWS_highest + 2] = {"void",   "char",  "dat",   "ldat", "tcolor", "time_t",
+                                    "frac_t", "trune", "tcell", "tobj", "unknown"};
 
 char *name_list[] = {
 #define EL(field) TWS_STR(field),
@@ -58,7 +58,9 @@ void Usage(void) {
           argv0);
 }
 
-void ShowVersion(void) { fputs("twlsobj " TWIN_VERSION_STR "\n", stdout); }
+void ShowVersion(void) {
+  fputs("twlsobj " TWIN_VERSION_STR "\n", stdout);
+}
 
 static void human_print(TW_CONST char *data, uldat len, byte may_trim) {
   putchar(' ');

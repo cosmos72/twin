@@ -54,7 +54,7 @@ struct s_WR { /* for WINDOWFL_USEROWS windows */
 };
 
 struct s_WC { /* for WINDOWFL_USECONTENTS windows */
-  hwattr *Contents;
+  tcell *Contents;
   ttydata *TtyData;
   ldat HSplit;
 };
@@ -77,7 +77,7 @@ struct s_window {
   fn_hook Hook, *WhereHook;
   fn_hook MapUnMapHook;
   msg MapQueueMsg;
-  hwattr USE_Fill;
+  tcell USE_Fill;
   union {
     struct s_WR R;
     struct s_WC C;
@@ -88,25 +88,25 @@ struct s_window {
   menuitem MenuItem; /* from which the window depends */
   dat NameLen;
   char *Name;
-  hwcol *ColName;
-  hwfont *BorderPattern[2];
+  tcolor *ColName;
+  trune *BorderPattern[2];
   remotedata RemoteData;
   ldat CurX, CurY;
   ldat XstSel, YstSel, XendSel, YendSel;
-  hwcol ColGadgets, ColArrows, ColBars, ColTabs, ColBorder, ColText, ColSelect, ColDisabled,
+  tcolor ColGadgets, ColArrows, ColBars, ColTabs, ColBorder, ColText, ColSelect, ColDisabled,
       ColSelectDisabled;
   uldat State;
   uldat CursorType;
   dat MinXWidth, MinYWidth;
   dat MaxXWidth, MaxYWidth;
-  ldat WLogic, HLogic;   /* window interior logic size */
-  hwfont CONST *Charset; /* the byte -> hwfont translation to use */
+  ldat WLogic, HLogic;  /* window interior logic size */
+  trune CONST *Charset; /* the byte -> trune translation to use */
 };
 
 struct s_fn_window {
   uldat Magic, Size, Used;
-  window (*Create)(fn_window, msgport Owner, dat NameLen, CONST char *Name, CONST hwcol *ColName,
-                   menu Menu, hwcol ColText, uldat CursorType, uldat Attrib, uldat Flags,
+  window (*Create)(fn_window, msgport Owner, dat NameLen, CONST char *Name, CONST tcolor *ColName,
+                   menu Menu, tcolor ColText, uldat CursorType, uldat Attrib, uldat Flags,
                    dat XWidth, dat YWidth, dat ScrollBackLines);
   void (*Insert)(window, widget Parent, widget Prev, widget Next);
   void (*Remove)(window);
@@ -118,7 +118,7 @@ struct s_fn_window {
   widget (*FindWidgetAt)(window Parent, dat X, dat Y);
   gadget (*FindGadgetByCode)(window Parent, udat Code);
   void (*SetXY)(window, dat X, dat Y);
-  void (*SetFill)(window, hwattr Fill);
+  void (*SetFill)(window, tcell Fill);
   widget (*Focus)(window);
   widget (*KbdFocus)(window);
   void (*Map)(window, widget Parent);
@@ -129,32 +129,32 @@ struct s_fn_window {
   void (*Own)(window, msgport);
   void (*DisOwn)(window);
   void (*RecursiveDelete)(window, msgport);
-  void (*Expose)(window, dat XWidth, dat YWidth, dat Left, dat Up, CONST char *, CONST hwfont *,
-                 CONST hwattr *);
+  void (*Expose)(window, dat XWidth, dat YWidth, dat Left, dat Up, CONST char *, CONST trune *,
+                 CONST tcell *);
   byte (*InstallHook)(window, fn_hook, fn_hook *Where);
   void (*RemoveHook)(window, fn_hook, fn_hook *Where);
   /* window */
   fn_widget Fn_Widget;
   byte (*TtyWriteAscii)(window, uldat Len, CONST char *Ascii);
   byte (*TtyWriteString)(window, uldat Len, CONST char *String);
-  byte (*TtyWriteHWFont)(window, uldat Len, CONST hwfont *HWFont);
-  byte (*TtyWriteHWAttr)(window, dat x, dat y, uldat Len, CONST hwattr *Attr);
+  byte (*TtyWriteTRune)(window, uldat Len, CONST trune *TRune);
+  byte (*TtyWriteTCell)(window, dat x, dat y, uldat Len, CONST tcell *Attr);
 
   byte (*RowWriteAscii)(window, uldat Len, CONST char *Ascii);
   byte (*RowWriteString)(window, uldat Len, CONST char *String);
-  byte (*RowWriteHWFont)(window, uldat Len, CONST hwfont *HWFont);
-  byte (*RowWriteHWAttr)(window, dat x, dat y, uldat Len, CONST hwattr *Attr);
+  byte (*RowWriteTRune)(window, uldat Len, CONST trune *TRune);
+  byte (*RowWriteTCell)(window, dat x, dat y, uldat Len, CONST tcell *Attr);
 
   void (*GotoXY)(window, ldat X, ldat Y);
   void (*SetTitle)(window, dat titlelen, char *title);
-  void (*SetColText)(window, hwcol ColText);
-  void (*SetColors)(window, udat Bitmap, hwcol ColGadgets, hwcol ColArrows, hwcol ColBars,
-                    hwcol ColTabs, hwcol ColBorder, hwcol ColText, hwcol ColSelect,
-                    hwcol ColDisabled, hwcol ColSelectDisabled);
+  void (*SetColText)(window, tcolor ColText);
+  void (*SetColors)(window, udat Bitmap, tcolor ColGadgets, tcolor ColArrows, tcolor ColBars,
+                    tcolor ColTabs, tcolor ColBorder, tcolor ColText, tcolor ColSelect,
+                    tcolor ColDisabled, tcolor ColSelectDisabled);
   void (*Configure)(window, byte Bitmap, dat Left, dat Up, dat MinXWidth, dat MinYWidth,
                     dat MaxXWidth, dat MaxYWidth);
   window (*Create4Menu)(fn_window, menu);
-  tpos (*FindBorder)(window, dat u, dat v, byte Border, hwattr *PtrAttr);
+  tpos (*FindBorder)(window, dat u, dat v, byte Border, tcell *PtrAttr);
   row (*FindRow)(window, ldat RowN);
   row (*FindRowByCode)(window, udat Code, ldat *NumRow);
 };

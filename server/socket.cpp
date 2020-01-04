@@ -335,18 +335,18 @@ static void sockNeedResizeDisplay(void);
 static void sockAttachHW(uldat len, CONST char *arg, byte flags);
 static byte sockDetachHW(uldat len, CONST char *arg);
 static void sockSetFontTranslation(CONST byte trans[0x80]);
-static void sockSetHWFontTranslation(CONST hwfont trans[0x80]);
+static void sockSetTRuneTranslation(CONST trune trans[0x80]);
 
 static void sockDeleteObj(void *V);
 
 static widget sockCreateWidget(dat XWidth, dat YWidth, uldat Attrib, uldat Flags, dat Left, dat Up,
-                               hwattr Fill);
+                               tcell Fill);
 static void sockRecursiveDeleteWidget(widget W);
 static void sockSetXYWidget(widget W, dat x, dat y);
 static void sockResizeWidget(widget W, dat XWidth, dat YWidth);
 #define sockScrollWidget ScrollWidget
 static void sockDrawWidget(widget W, dat XWidth, dat YWidth, dat Left, dat Up, CONST char *Text,
-                           CONST hwfont *Font, CONST hwattr *Attr);
+                           CONST trune *Font, CONST tcell *Attr);
 
 #define sockSetVisibleWidget SetVisibleWidget
 static void sockFocusSubWidget(widget W);
@@ -357,17 +357,17 @@ static void sockCirculateChildrenWidget(widget W, byte up_or_down);
 #define TW_CIRCULATE_LOWER_FIRST 1
 
 static gadget sockCreateGadget(widget Parent, dat XWidth, dat YWidth, CONST char *TextNormal,
-                               uldat Attrib, uldat Flags, udat Code, hwcol ColText,
-                               hwcol ColTextSelect, hwcol ColTextDisabled,
-                               hwcol ColTextSelectDisabled, dat Left, dat Up);
+                               uldat Attrib, uldat Flags, udat Code, tcolor ColText,
+                               tcolor ColTextSelect, tcolor ColTextDisabled,
+                               tcolor ColTextSelectDisabled, dat Left, dat Up);
 
-static window sockCreateWindow(dat TitleLen, CONST char *Title, CONST hwcol *ColTitle, menu Menu,
-                               hwcol ColText, uldat CursorType, uldat Attrib, uldat Flags,
+static window sockCreateWindow(dat TitleLen, CONST char *Title, CONST tcolor *ColTitle, menu Menu,
+                               tcolor ColText, uldat CursorType, uldat Attrib, uldat Flags,
                                dat XWidth, dat YWidth, dat ScrollBackLines);
 static void sockWriteAsciiWindow(window Window, uldat Len, CONST char *Ascii);
 static void sockWriteStringWindow(window Window, uldat Len, CONST char *String);
-static void sockWriteHWFontWindow(window Window, uldat Len, CONST hwfont *HWFont);
-static void sockWriteHWAttrWindow(window Window, dat x, dat y, uldat Len, CONST hwattr *Attr);
+static void sockWriteTRuneWindow(window Window, uldat Len, CONST trune *TRune);
+static void sockWriteTCellWindow(window Window, dat x, dat y, uldat Len, CONST tcell *Attr);
 static void sockSetTitleWindow(window Window, dat titlelen, CONST char *title);
 
 static row sockFindRowByCodeWindow(window Window, dat Code);
@@ -380,8 +380,8 @@ static void sockCirculateChildrenRow(obj O, byte up_or_down);
 #define TW_CIRCULATE_RAISE_LAST 0
 #define TW_CIRCULATE_LOWER_FIRST 1
 
-static menu sockCreateMenu(hwcol ColItem, hwcol ColSelect, hwcol ColDisabled,
-                           hwcol ColSelectDisabled, hwcol ColShtCut, hwcol ColSelShtCut,
+static menu sockCreateMenu(tcolor ColItem, tcolor ColSelect, tcolor ColDisabled,
+                           tcolor ColSelectDisabled, tcolor ColShtCut, tcolor ColSelShtCut,
                            byte FlagDefColInfo);
 
 static msgport sockCreateMsgPort(byte NameLen, CONST char *Name);
@@ -683,15 +683,15 @@ TW_INLINE ldat sockDecodeArg(uldat id, CONST char *Format, uldat n, tsfield a, u
     fail = -fail;                                                                                  \
     break
 
-    case TWS_hwcol:
+    case TWS_tcolor:
       /*FALLTHROUGH*/
       CASE_(byte);
       CASE_(dat);
       CASE_(ldat);
       CASE_(topaque);
       CASE_(tany);
-      CASE_(hwfont);
-      CASE_(hwattr);
+      CASE_(trune);
+      CASE_(tcell);
 #undef CASE_
     default:
       fail = -fail;
@@ -714,7 +714,7 @@ TW_INLINE ldat sockDecodeArg(uldat id, CONST char *Format, uldat n, tsfield a, u
     nlen = sockLengths(id, n, a);
     c = (byte)*Format;
     /* ensure type size WAS negotiated */
-    if ((c <= TWS_hwcol || AlienMagic(Slot)[c])) {
+    if ((c <= TWS_tcolor || AlienMagic(Slot)[c])) {
       nlen *= AlienMagic(Slot)[c];
       if (Left(nlen)) {
         PopAddr(s, CONST byte, nlen, av);
@@ -733,7 +733,7 @@ TW_INLINE ldat sockDecodeArg(uldat id, CONST char *Format, uldat n, tsfield a, u
 
       c = (byte)*Format;
       /* ensure type size WAS negotiated */
-      if ((c <= TWS_hwcol || AlienMagic(Slot)[c])) {
+      if ((c <= TWS_tcolor || AlienMagic(Slot)[c])) {
         if (!nlen || (Left(nlen) && nlen == sockLengths(id, n, a) * AlienMagic(Slot)[c])) {
           PopAddr(s, CONST byte, nlen, av);
           a[n] _len = nlen;
@@ -861,7 +861,7 @@ static void sockMultiplexB(uldat id) {
 #define CASE_(type)                                                                                \
   case CAT(TWS_, type):                                                                            \
     /* ensure type size WAS negotiated */                                                          \
-    if (CAT(TWS_, type) <= TWS_hwcol || AlienSizeof(type, Slot)) {                                 \
+    if (CAT(TWS_, type) <= TWS_tcolor || AlienSizeof(type, Slot)) {                                \
       /* move to first bytes on MSB machines */                                                    \
       *(type *)&a[0] _any = (type)a[0] _any;                                                       \
       c = sizeof(type);                                                                            \
@@ -870,15 +870,15 @@ static void sockMultiplexB(uldat id) {
     fail = 0;                                                                                      \
     break
 
-      case TWS_hwcol:
+      case TWS_tcolor:
         /*FALLTHROUGH*/
         CASE_(byte);
         CASE_(dat);
         CASE_(ldat);
         CASE_(topaque);
         CASE_(tany);
-        CASE_(hwfont);
-        CASE_(hwattr);
+        CASE_(trune);
+        CASE_(tcell);
 #undef CASE_
       default:
         c = 0;
@@ -1037,11 +1037,11 @@ static byte sockDetachHW(uldat len, CONST char *arg) {
 static void sockSetFontTranslation(CONST byte trans[0x80]) {
   if (trans) {
     int i;
-    hwfont *G = All->Gtranslations[USER_MAP];
+    trune *G = All->Gtranslations[USER_MAP];
 
     for (i = 0; i < 0x80; i++)
       G[i] = i;
-    if (sizeof(hwfont) == sizeof(byte))
+    if (sizeof(trune) == sizeof(byte))
       CopyMem(trans, G + 0x80, 0x80);
     else
       for (i = 0x0; i < 0x80; i++)
@@ -1049,14 +1049,14 @@ static void sockSetFontTranslation(CONST byte trans[0x80]) {
   }
 }
 
-static void sockSetHWFontTranslation(CONST hwfont trans[0x80]) {
+static void sockSetTRuneTranslation(CONST trune trans[0x80]) {
   if (trans) {
     int i;
-    hwfont *G = All->Gtranslations[USER_MAP];
+    trune *G = All->Gtranslations[USER_MAP];
 
     for (i = 0; i < 0x80; i++)
       G[i] = i;
-    CopyMem(trans, G + 0x80, sizeof(hwfont) * 0x80);
+    CopyMem(trans, G + 0x80, sizeof(trune) * 0x80);
   }
 }
 
@@ -1094,7 +1094,7 @@ static void sockDeleteObj(void *V) {
 }
 
 static widget sockCreateWidget(dat XWidth, dat YWidth, uldat Attrib, uldat Flags, dat Left, dat Up,
-                               hwattr Fill) {
+                               tcell Fill) {
   msgport Owner;
   if ((Owner = RemoteGetMsgPort(Slot)))
     return Do(Create, Widget)(FnWidget, Owner, XWidth, YWidth, Attrib, Flags, Left, Up, Fill);
@@ -1118,7 +1118,7 @@ static void sockSetXYWidget(widget W, dat x, dat y) {
   }
 }
 static void sockDrawWidget(widget W, dat XWidth, dat YWidth, dat Left, dat Up, CONST char *Text,
-                           CONST hwfont *Font, CONST hwattr *Attr) {
+                           CONST trune *Font, CONST tcell *Attr) {
   if (W) {
     Act(Expose, W)(W, XWidth, YWidth, Left, Up, XWidth, Text, Font, Attr);
   }
@@ -1191,9 +1191,9 @@ static void sockCirculateChildrenRow(obj O, byte up_or_down) {
 }
 
 static gadget sockCreateGadget(widget Parent, dat XWidth, dat YWidth, CONST char *TextNormal,
-                               uldat Attrib, uldat Flags, udat Code, hwcol ColText,
-                               hwcol ColTextSelect, hwcol ColTextDisabled,
-                               hwcol ColTextSelectDisabled, dat Left, dat Up) {
+                               uldat Attrib, uldat Flags, udat Code, tcolor ColText,
+                               tcolor ColTextSelect, tcolor ColTextDisabled,
+                               tcolor ColTextSelectDisabled, dat Left, dat Up) {
   msgport Owner;
   if ((Owner = RemoteGetMsgPort(Slot)))
     return Do(Create, Gadget)(FnGadget, Owner, Parent, XWidth, YWidth, TextNormal, Attrib, Flags,
@@ -1202,8 +1202,8 @@ static gadget sockCreateGadget(widget Parent, dat XWidth, dat YWidth, CONST char
   return (gadget)0;
 }
 
-static window sockCreateWindow(dat TitleLen, CONST char *Title, CONST hwcol *ColTitle, menu Menu,
-                               hwcol ColText, uldat CursorType, uldat Attrib, uldat Flags,
+static window sockCreateWindow(dat TitleLen, CONST char *Title, CONST tcolor *ColTitle, menu Menu,
+                               tcolor ColText, uldat CursorType, uldat Attrib, uldat Flags,
                                dat XWidth, dat YWidth, dat ScrollBackLines) {
   msgport Owner;
   if ((Owner = RemoteGetMsgPort(Slot)))
@@ -1230,21 +1230,21 @@ static void sockWriteStringWindow(window Window, uldat Len, CONST char *String) 
   }
 }
 
-static void sockWriteHWFontWindow(window Window, uldat Len, CONST hwfont *HWFont) {
+static void sockWriteTRuneWindow(window Window, uldat Len, CONST trune *TRune) {
   if (Window) {
     if ((Window->Flags & WINDOWFL_USEANY) == WINDOWFL_USECONTENTS)
-      Act(TtyWriteHWFont, Window)(Window, Len, HWFont);
+      Act(TtyWriteTRune, Window)(Window, Len, TRune);
     else if ((Window->Flags & WINDOWFL_USEANY) == WINDOWFL_USEROWS)
-      Act(RowWriteHWFont, Window)(Window, Len, HWFont);
+      Act(RowWriteTRune, Window)(Window, Len, TRune);
   }
 }
 
-static void sockWriteHWAttrWindow(window Window, dat x, dat y, uldat Len, CONST hwattr *Attr) {
+static void sockWriteTCellWindow(window Window, dat x, dat y, uldat Len, CONST tcell *Attr) {
   if (Window) {
     if ((Window->Flags & WINDOWFL_USEANY) == WINDOWFL_USECONTENTS)
-      Act(TtyWriteHWAttr, Window)(Window, x, y, Len, Attr);
+      Act(TtyWriteTCell, Window)(Window, x, y, Len, Attr);
     else if ((Window->Flags & WINDOWFL_USEANY) == WINDOWFL_USEROWS)
-      Act(RowWriteHWAttr, Window)(Window, x, y, Len, Attr);
+      Act(RowWriteTCell, Window)(Window, x, y, Len, Attr);
   }
 }
 
@@ -1269,8 +1269,8 @@ static menuitem sockCreate4MenuAny(obj Parent, window Window, udat Code, byte Fl
   return Do(Create4Menu, MenuItem)(FnMenuItem, Parent, Window, Code, Flags, Len, Name);
 }
 
-static menu sockCreateMenu(hwcol ColItem, hwcol ColSelect, hwcol ColDisabled,
-                           hwcol ColSelectDisabled, hwcol ColShtCut, hwcol ColSelShtCut,
+static menu sockCreateMenu(tcolor ColItem, tcolor ColSelect, tcolor ColDisabled,
+                           tcolor ColSelectDisabled, tcolor ColShtCut, tcolor ColSelShtCut,
                            byte FlagDefColInfo) {
   msgport Owner;
   if ((Owner = RemoteGetMsgPort(Slot)))
@@ -1394,15 +1394,15 @@ static byte sockDecodeExtension(topaque *Len, CONST byte **Data, topaque *Args_n
       fail = -fail;                                                                                \
     break
 
-    case TWS_hwcol:
+    case TWS_tcolor:
       /*FALLTHROUGH*/
       CASE_(byte);
       CASE_(dat);
       CASE_(ldat);
       CASE_(topaque);
       CASE_(tany);
-      CASE_(hwfont);
-      CASE_(hwattr);
+      CASE_(trune);
+      CASE_(tcell);
 #undef CASE_
 
     case TWS_vec | TWS_vecW | TWS_byte:
@@ -2371,11 +2371,11 @@ static byte Check4MagicTranslation(uldat slot, CONST byte *magic, byte len) {
   CONST byte *zero = (CONST byte *)memchr(magic, '\0', len);
   byte len1 = zero ? (byte)(zero - magic) : 0;
 
-  if (len1 > TWS_hwcol && len == magic[0] && len == len1 + 1 + sizeof(uldat) &&
+  if (len1 > TWS_tcolor && len == magic[0] && len == len1 + 1 + sizeof(uldat) &&
       /*check negotiated size to match ours*/
       !memcmp(magic + 1, TwinMagicData + 1, Min2(len1, TWS_highest) - 1) &&
-      /*pre-0.3.9 compatibility: if hwattr is not negotiated, assume 2 bytes*/
-      (len1 > TWS_hwattr || sizeof(hwattr) == 2) &&
+      /*pre-0.3.9 compatibility: if tcell is not negotiated, assume 2 bytes*/
+      (len1 > TWS_tcell || sizeof(tcell) == 2) &&
       /*check endianity*/
       !memcmp(magic + len1 + 1, TwinMagicData + TWS_highest + 1, sizeof(uldat))) {
 
@@ -2390,12 +2390,13 @@ static byte Check4MagicTranslation(uldat slot, CONST byte *magic, byte len) {
 
 #ifdef CONF_SOCKET_ALIEN
 
-  if (len1 > TWS_hwattr && len == magic[0] &&
+  if (len1 > TWS_tcell && len == magic[0] &&
       magic[TWS_byte] == 1 && /* sizeof(byte) MUST be 1, or passing byte[] vectors would fail */
       magic[TWS_udat] >= 2 && magic[TWS_uldat] >= 4 && len - len1 == magic[TWS_uldat] + 1 &&
-      magic[TWS_hwcol] == 1 && /* sizeof(hwcol) MUST be 1, or passing hwcol[] vectors would fail */
-      magic[TWS_topaque] >= 4 && magic[TWS_tany] >= 4 && magic[TWS_hwfont] >= 1 &&
-      magic[TWS_hwattr] >= 2) {
+      magic[TWS_tcolor] ==
+          1 && /* sizeof(tcolor) MUST be 1, or passing tcolor[] vectors would fail */
+      magic[TWS_topaque] >= 4 &&
+      magic[TWS_tany] >= 4 && magic[TWS_trune] >= 1 && magic[TWS_tcell] >= 2) {
 
     /* store client magic numbers */
     CopyMem(magic, AlienMagic(slot), Min2(len1, TWS_highest));
@@ -2405,10 +2406,10 @@ static byte Check4MagicTranslation(uldat slot, CONST byte *magic, byte len) {
 
     if (warn_count < 6) {
       zero = NULL;
-      if (AlienMagic(slot)[TWS_hwattr] < sizeof(hwattr))
-        zero = (CONST byte *)"hwattr";
-      else if (AlienMagic(slot)[TWS_hwfont] < sizeof(hwfont))
-        zero = (CONST byte *)"hwfont";
+      if (AlienMagic(slot)[TWS_tcell] < sizeof(tcell))
+        zero = (CONST byte *)"tcell";
+      else if (AlienMagic(slot)[TWS_trune] < sizeof(trune))
+        zero = (CONST byte *)"trune";
 
       if (zero) {
         if (warn_count == 5)

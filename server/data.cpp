@@ -31,7 +31,7 @@ CONST char *CONST pkg_libdir = PKG_LIBDIR;
 
 /* First, some structures */
 
-static hwfont GtransUser[0x100];
+static trune GtransUser[0x100];
 
 static setup SetUp = {
     (dat)1,              /* MaxMouseSnap */
@@ -128,22 +128,22 @@ keylist TW_KeyList[] = {
 #undef IS
     {NULL, TW_Null, 0, NULL}};
 
-hwfont GadgetResize[2] = {0xCD, 0xBC}, ScrollBarX[3] = {0xB1, 0x11, 0x10},
-       ScrollBarY[3] = {0xB1, 0x1E, 0x1F}, TabX = 0xDB, TabY = 0xDB,
-       StdBorder[2][9] = {{0xC9, 0xCD, 0xBB, 0xBA, 0x20, 0xBA, 0xC8, 0xCD, 0xBC},
-                          {0xDA, 0xC4, 0xBF, 0xB3, 0x20, 0xB3, 0xC0, 0xC4, 0xD9}},
-       Screen_Back[2] = {0x12, 0x12};
+trune GadgetResize[2] = {0xCD, 0xBC}, ScrollBarX[3] = {0xB1, 0x11, 0x10},
+      ScrollBarY[3] = {0xB1, 0x1E, 0x1F}, TabX = 0xDB, TabY = 0xDB,
+      StdBorder[2][9] = {{0xC9, 0xCD, 0xBB, 0xBA, 0x20, 0xBA, 0xC8, 0xCD, 0xBC},
+                         {0xDA, 0xC4, 0xBF, 0xB3, 0x20, 0xB3, 0xC0, 0xC4, 0xD9}},
+      Screen_Back[2] = {0x12, 0x12};
 
-hwcol DEFAULT_ColGadgets = COL(HIGH | YELLOW, CYAN),
-      DEFAULT_ColArrows = COL(HIGH | GREEN, HIGH | BLUE), DEFAULT_ColBars = COL(WHITE, HIGH | BLUE),
-      DEFAULT_ColTabs = COL(HIGH | WHITE, HIGH | BLUE),
-      DEFAULT_ColBorder = COL(HIGH | WHITE, HIGH | BLUE),
-      DEFAULT_ColDisabled = COL(HIGH | BLACK, BLACK),
-      DEFAULT_ColSelectDisabled = COL(BLACK, HIGH | BLACK);
+tcolor DEFAULT_ColGadgets = COL(HIGH | YELLOW, CYAN),
+       DEFAULT_ColArrows = COL(HIGH | GREEN, HIGH | BLUE),
+       DEFAULT_ColBars = COL(WHITE, HIGH | BLUE), DEFAULT_ColTabs = COL(HIGH | WHITE, HIGH | BLUE),
+       DEFAULT_ColBorder = COL(HIGH | WHITE, HIGH | BLUE),
+       DEFAULT_ColDisabled = COL(HIGH | BLACK, BLACK),
+       DEFAULT_ColSelectDisabled = COL(BLACK, HIGH | BLACK);
 
 byte InitData(void) {
-  hwfont *vec[] = {GadgetResize, ScrollBarX,   ScrollBarY,   &TabX,
-                   &TabY,        StdBorder[0], StdBorder[1], Screen_Back};
+  trune *vec[] = {GadgetResize, ScrollBarX,   ScrollBarY,   &TabX,
+                  &TabY,        StdBorder[0], StdBorder[1], Screen_Back};
   byte sizes[] = {2, 3, 3, 1, 1, 9, 9, 2};
   uldat i, j;
 

@@ -143,10 +143,10 @@ static void stdin_CheckResize(dat *x, dat *y);
 static void stdin_Resize(dat x, dat y);
 static void stdout_FlushHW(void);
 
-static void tty_MogrifyUTF8(hwfont h);
+static void tty_MogrifyUTF8(trune h);
 
 /* this can stay static, as it's used only as temporary storage */
-static hwcol _col;
+static tcolor _col;
 
 static void tty_QuitHW(void);
 
@@ -238,7 +238,7 @@ static void stdout_FlushHW(void) {
   clrFlush();
 }
 
-static void tty_MogrifyUTF8(hwfont h) {
+static void tty_MogrifyUTF8(trune h) {
   char buf[5];
 
   if (h <= 0x7FF) {

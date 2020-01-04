@@ -12,7 +12,9 @@
 #include <Tw/Twtypes.h>
 
 #ifndef TW_HAVE_GETENV
-char *Tw_missing_getenv(TW_CONST char *name) { return NULL; }
+char *Tw_missing_getenv(TW_CONST char *name) {
+  return NULL;
+}
 #endif
 
 #ifndef TW_HAVE_MEMCMP
@@ -100,13 +102,13 @@ enum {
   extra_flag = 1 << 23,
 };
 
-hwattr Tw_hwattr3(hwcol col, hwfont font, hwattr extra) {
-  hwattr attr;
+tcell Tw_tcell3(tcolor col, trune font, tcell extra) {
+  tcell attr;
   if (font >= utf21_size)
     font = utf16_replacement_char;
   switch (extra) {
   case 0:
-    return HWATTR(col, font);
+    return TCELL(col, font);
   case menu_bar:
     attr = 1;
     break;
@@ -126,12 +128,12 @@ hwattr Tw_hwattr3(hwcol col, hwfont font, hwattr extra) {
        * not enough bits for full unicode support in this case...
        */
       font = utf16_replacement_char;
-    return HWATTR(col, font) | (extra << 16) | extra_flag;
+    return TCELL(col, font) | (extra << 16) | extra_flag;
   }
-  return HWATTR(col, attr * utf21_size + font);
+  return TCELL(col, attr * utf21_size + font);
 }
 
-hwfont Tw_hwfont(hwattr attr) {
+trune Tw_trune(tcell attr) {
   attr &= 0x00FFFFFF;
   if (attr & extra_flag)
     return attr & 0xFFFF;
@@ -142,7 +144,7 @@ static TW_CONST byte decode_hwextra[5] = {
     0, menu_bar, window_title, window_title_focus, window_title_pressed,
 };
 
-hwattr Tw_hwextra(hwattr attr) {
+tcell Tw_hwextra(tcell attr) {
   byte i;
   attr &= 0x00FFFFFF;
   if (attr & extra_flag)

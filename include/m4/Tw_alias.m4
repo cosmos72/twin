@@ -63,8 +63,8 @@ define(`methodsWidget', `extends(Obj, $2)`'dnl
     field(Draw)`'dnl
     field(Draw2)`'dnl
     field(DrawText)`'dnl
-    field(DrawHWFont)`'dnl
-    field(DrawHWAttr)`'dnl
+    field(DrawTRune)`'dnl
+    field(DrawTCell)`'dnl
     field(Owner)`'dnl
     field(O_Prev)`'dnl
     field(O_Next)`'dnl

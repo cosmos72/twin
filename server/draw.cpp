@@ -28,7 +28,7 @@ byte InitDraw(void) {
   return ttrue;
 }
 
-INLINE hwcol DoShadowColor(hwcol Color, byte Fg, byte Bg) {
+INLINE tcolor DoShadowColor(tcolor Color, byte Fg, byte Bg) {
   return (Bg ? (Color & COL(0, MAXCOL)) > COL(0, HIGH | BLACK) ? COL(0, HIGH | BLACK)
                                                                : COL(0, BLACK)
              : Fg ? Color & COL(0, WHITE) : Color & COL(0, MAXCOL)) |
@@ -41,8 +41,8 @@ INLINE hwcol DoShadowColor(hwcol Color, byte Fg, byte Bg) {
  * warning: DrawMenu() can cheat and give us a user Menu
  * while MenuItem is from All->CommonMenu
  */
-static void FindFontMenuItem(menu Menu, menuitem MenuItem, dat i, byte Select, hwattr *PtrAttr) {
-  hwcol Color;
+static void FindFontMenuItem(menu Menu, menuitem MenuItem, dat i, byte Select, tcell *PtrAttr) {
+  tcolor Color;
   byte ShortCutFound;
 
   if (Menu && MenuItem && i >= MenuItem->Left && i < (ldat)(MenuItem->Left + MenuItem->Len)) {
@@ -62,13 +62,13 @@ static void FindFontMenuItem(menu Menu, menuitem MenuItem, dat i, byte Select, h
     else
       Color = Menu->ColDisabled;
 
-    *PtrAttr = HWATTR(Color, MenuItem->Text[i - MenuItem->Left]);
+    *PtrAttr = TCELL(Color, MenuItem->Text[i - MenuItem->Left]);
   }
 }
 
-static void FindFontInfo(menu Menu, dat i, byte Select, hwattr *PtrAttr) {
+static void FindFontInfo(menu Menu, dat i, byte Select, tcell *PtrAttr) {
   row Info;
-  hwcol Color;
+  tcolor Color;
 
   if (Menu && (Info = Menu->Info) && i >= 0 && (uldat)i < Info->Len) {
     if (Select)
@@ -80,13 +80,13 @@ static void FindFontInfo(menu Menu, dat i, byte Select, hwattr *PtrAttr) {
     else
       Color = Info->ColText[i];
 
-    *PtrAttr = HWATTR(Color, Info->Text[i]);
+    *PtrAttr = TCELL(Color, Info->Text[i]);
   }
 }
 
 void DrawDesktop(screen Screen, dat X1, dat Y1, dat X2, dat Y2, byte Shaded) {
-  hwattr *Attr, attr;
-  hwcol col;
+  tcell *Attr, attr;
+  tcolor col;
   ldat DWidth, DHeight, BgWidth, BgHeight; /* (ldat) to avoid multiplication overflows */
   dat YLimit = -1;
 
@@ -137,9 +137,9 @@ void DrawDesktop(screen Screen, dat X1, dat Y1, dat X2, dat Y2, byte Shaded) {
           if (x >= BgWidth)
             x -= BgWidth;
           attr = Attr[x + y];
-          col = DoShadowColor(HWCOL(attr), Shaded, Shaded);
+          col = DoShadowColor(TCOLOR(attr), Shaded, Shaded);
 
-          Video[X + Y] = HWATTR(col, HWFONTEXTRA(attr));
+          Video[X + Y] = TCELL(col, TRUNEEXTRA(attr));
         }
       } else {
         for (X = X1; X <= X2; X++, x++) {
@@ -157,11 +157,11 @@ void DrawDesktop(screen Screen, dat X1, dat Y1, dat X2, dat Y2, byte Shaded) {
       else
         attr = Screen->USE_Fill;
     } else
-      attr = HWATTR(COL(WHITE, BLACK), ' ');
+      attr = TCELL(COL(WHITE, BLACK), ' ');
 
     if (Shaded) {
-      col = DoShadowColor(HWCOL(attr), Shaded, Shaded);
-      attr = HWATTR(col, HWFONTEXTRA(attr));
+      col = DoShadowColor(TCOLOR(attr), Shaded, Shaded);
+      attr = TCELL(col, TRUNEEXTRA(attr));
     }
     FillVideo(X1, Y1, X2, Y2, attr);
   }
@@ -381,24 +381,24 @@ void DrawSelfWidget(draw_ctx *D) {
 
   if (w_USE(W, USEEXPOSE)) {
     CONST char *Text = NULL;
-    CONST hwfont *HWFont = NULL;
-    CONST hwattr *HWAttr = NULL;
+    CONST trune *TRune = NULL;
+    CONST tcell *TCell = NULL;
     ldat Left, Up, _X1, _X2, _Y1, _Y2;
     ldat Pitch, DWidth, i, j, v; /* (ldat) to avoid multiplication overflows */
     dat X1, X2, Y1, Y2, dX, dY;
-    hwattr h;
-    hwcol Color;
+    tcell h;
+    tcolor Color;
     byte Shaded;
 
     switch (W->USE.E.Flags) {
     case WIDGET_USEEXPOSE_TEXT:
       Text = W->USE.E.E.Text;
       break;
-    case WIDGET_USEEXPOSE_HWFONT:
-      HWFont = W->USE.E.E.HWFont;
+    case WIDGET_USEEXPOSE_TRUNE:
+      TRune = W->USE.E.E.TRune;
       break;
-    case WIDGET_USEEXPOSE_HWATTR:
-      HWAttr = W->USE.E.E.HWAttr;
+    case WIDGET_USEEXPOSE_TCELL:
+      TCell = W->USE.E.E.TCell;
       break;
     default:
       break;
@@ -424,7 +424,7 @@ void DrawSelfWidget(draw_ctx *D) {
 	}
 #endif
 
-    if (Text || HWFont || HWAttr) {
+    if (Text || TRune || TCell) {
       Pitch = W->USE.E.Pitch;
 
       _X1 = Max2(W->USE.E.X1 + Left, X1);
@@ -466,43 +466,43 @@ void DrawSelfWidget(draw_ctx *D) {
       }
 
       if (Text) {
-        Color = HWCOL(W->USE_Fill);
+        Color = TCOLOR(W->USE_Fill);
         if (Shaded)
           Color = DoShadowColor(Color, Shaded, Shaded);
         Text += dY * Pitch;
         for (j = Y1; j <= Y2; j++) {
           Text += dX;
           for (i = X1, v = 0; i <= X2; i++, v++)
-            Video[i + j * (ldat)DWidth] = HWATTR(Color, Text[v]);
+            Video[i + j * (ldat)DWidth] = TCELL(Color, Text[v]);
           Text += Pitch - dX;
         }
-      } else if (HWFont) {
-        Color = HWCOL(W->USE_Fill);
+      } else if (TRune) {
+        Color = TCOLOR(W->USE_Fill);
         if (Shaded)
           Color = DoShadowColor(Color, Shaded, Shaded);
-        HWFont += dY * Pitch;
+        TRune += dY * Pitch;
         for (j = Y1; j <= Y2; j++) {
-          HWFont += dX;
+          TRune += dX;
           for (i = X1, v = 0; i <= X2; i++, v++)
-            Video[i + j * (ldat)DWidth] = HWATTR(Color, HWFont[v]);
-          HWFont += Pitch - dX;
+            Video[i + j * (ldat)DWidth] = TCELL(Color, TRune[v]);
+          TRune += Pitch - dX;
         }
-      } else if (HWAttr && !Shaded) {
-        HWAttr += dX + dY * Pitch;
+      } else if (TCell && !Shaded) {
+        TCell += dX + dY * Pitch;
         for (j = Y1; j <= Y2; j++) {
-          CopyMem(HWAttr, &Video[X1 + j * (ldat)DWidth], (uldat)sizeof(hwattr) * (X2 - X1 + 1));
-          HWAttr += Pitch;
+          CopyMem(TCell, &Video[X1 + j * (ldat)DWidth], (uldat)sizeof(tcell) * (X2 - X1 + 1));
+          TCell += Pitch;
         }
-      } else if (HWAttr) {
+      } else if (TCell) {
         /* Shaded == ttrue */
-        HWAttr += dY * Pitch;
+        TCell += dY * Pitch;
         for (j = Y1; j <= Y2; j++) {
-          HWAttr += dX;
+          TCell += dX;
           for (i = X1, v = 0; i <= X2; i++, v++) {
-            Color = DoShadowColor(HWCOL(HWAttr[v]), Shaded, Shaded);
-            Video[i + j * (ldat)DWidth] = HWATTR(Color, 0) | HWATTR_FONTMASK(HWAttr[v]);
+            Color = DoShadowColor(TCOLOR(TCell[v]), Shaded, Shaded);
+            Video[i + j * (ldat)DWidth] = TCELL(Color, 0) | TCELL_FONTMASK(TCell[v]);
           }
-          HWAttr += Pitch - dX;
+          TCell += Pitch - dX;
         }
       }
     } else {
@@ -541,9 +541,9 @@ void DrawSelfGadget(draw_ctx *D) {
     ldat width, DWidth, Offset; /* (ldat) to avoid multiplication overflows */
     dat i, i_min, i_max, j, j_min, j_max;
     byte Select, Disabled, Absent;
-    hwfont Font, *Text, **GadgetText;
-    hwcol *ColText, **GadgetColor;
-    hwcol Color;
+    trune Font, *Text, **GadgetText;
+    tcolor *ColText, **GadgetColor;
+    tcolor Color;
 
     Select = !!(G->Flags & GADGETFL_PRESSED);
     Disabled = !!(G->Flags & GADGETFL_DISABLED);
@@ -589,7 +589,7 @@ void DrawSelfGadget(draw_ctx *D) {
           Font = Text[i + j * width];
         if (!Absent)
           Color = DoShadowColor(ColText[i + j * width], D->Shaded, D->Shaded);
-        Video[i + j * (ldat)DWidth + Offset] = HWATTR(Color, Font);
+        Video[i + j * (ldat)DWidth + Offset] = TCELL(Color, Font);
       }
     }
     DirtyVideo(D->X1, D->Y1, D->X2, D->Y2);
@@ -600,8 +600,8 @@ static void DrawSelfBorder(window Window, ldat Left, ldat Up, ldat Rgt, ldat Dwn
                            dat X2, dat Y2, byte Border, byte WinActive, byte Shaded) {
 
   ldat i, j, u, v, DWidth = All->DisplayWidth; /* (ldat) to avoid multiplication overflows */
-  hwattr Attr;
-  hwcol Color;
+  tcell Attr;
+  tcolor Color;
 
   if (QueuedDrawArea2FullScreen || (Window->Flags & WIDGETFL_NOTVISIBLE))
     return;
@@ -610,8 +610,8 @@ static void DrawSelfBorder(window Window, ldat Left, ldat Up, ldat Rgt, ldat Dwn
     j = Y1 * (ldat)DWidth;
     for (i = X1, u = i - Left; i <= X2; i++, u++) {
       Act(FindBorder, Window)(Window, u, 0, Border, &Attr);
-      Color = DoShadowColor(HWCOL(Attr), Shaded || !WinActive, Shaded);
-      Video[i + j] = HWATTR(Color, 0) | (Attr & ~HWATTR(TW_MAXWCOL, 0));
+      Color = DoShadowColor(TCOLOR(Attr), Shaded || !WinActive, Shaded);
+      Video[i + j] = TCELL(Color, 0) | (Attr & ~TCELL(TW_MAXWCOL, 0));
     }
     DirtyVideo(X1, Y1, X2, Y1);
     Y1++;
@@ -624,8 +624,8 @@ static void DrawSelfBorder(window Window, ldat Left, ldat Up, ldat Rgt, ldat Dwn
     j = Y2 * (ldat)DWidth;
     for (i = X1, u = i - Left; i <= X2; i++, u++) {
       Act(FindBorder, Window)(Window, u, v, Border, &Attr);
-      Color = DoShadowColor(HWCOL(Attr), Shaded || !WinActive, Shaded);
-      Video[i + j] = HWATTR(Color, 0) | (Attr & ~HWATTR(TW_MAXWCOL, 0));
+      Color = DoShadowColor(TCOLOR(Attr), Shaded || !WinActive, Shaded);
+      Video[i + j] = TCELL(Color, 0) | (Attr & ~TCELL(TW_MAXWCOL, 0));
     }
     DirtyVideo(X1, Y2, X2, Y2);
     Y2--;
@@ -636,8 +636,8 @@ static void DrawSelfBorder(window Window, ldat Left, ldat Up, ldat Rgt, ldat Dwn
   if ((ldat)X1 == Left) {
     for (j = Y1, v = j - Up; j <= Y2; j++, v++) {
       Act(FindBorder, Window)(Window, 0, v, Border, &Attr);
-      Color = DoShadowColor(HWCOL(Attr), Shaded || !WinActive, Shaded);
-      Video[X1 + j * (ldat)DWidth] = HWATTR(Color, 0) | (Attr & ~HWATTR(TW_MAXWCOL, 0));
+      Color = DoShadowColor(TCOLOR(Attr), Shaded || !WinActive, Shaded);
+      Video[X1 + j * (ldat)DWidth] = TCELL(Color, 0) | (Attr & ~TCELL(TW_MAXWCOL, 0));
     }
     DirtyVideo(X1, Y1, X1, Y2);
     X1++;
@@ -649,8 +649,8 @@ static void DrawSelfBorder(window Window, ldat Left, ldat Up, ldat Rgt, ldat Dwn
     u = (ldat)X2 - Left;
     for (j = Y1, v = j - Up; j <= Y2; j++, v++) {
       Act(FindBorder, Window)(Window, u, v, Border, &Attr);
-      Color = DoShadowColor(HWCOL(Attr), Shaded || !WinActive, Shaded);
-      Video[X2 + j * (ldat)DWidth] = HWATTR(Color, 0) | (Attr & ~HWATTR(TW_MAXWCOL, 0));
+      Color = DoShadowColor(TCOLOR(Attr), Shaded || !WinActive, Shaded);
+      Video[X2 + j * (ldat)DWidth] = TCELL(Color, 0) | (Attr & ~TCELL(TW_MAXWCOL, 0));
     }
     DirtyVideo(X2, Y1, X2, Y2);
     X2--;
@@ -671,18 +671,18 @@ void DrawSelfWindow(draw_ctx *D) {
   }
 
   {
-    CONST hwattr *Contents, *CurrCont;
-    CONST hwfont *HWFont;
-    hwcol *ColText;
+    CONST tcell *Contents, *CurrCont;
+    CONST trune *TRune;
+    tcolor *ColText;
     ldat Left, Up, Rgt;
     ldat DWidth, i, j, u, v; /* (ldat) to avoid multiplication overflows */
     ldat Row, PosInRow;
-    hwfont Font;
+    trune Font;
     row CurrRow;
     dat X1, Y1, X2, Y2;
     byte Shaded, Absent;
     byte Select, RowDisabled;
-    hwcol Color;
+    tcolor Color;
 
     X1 = D->X1;
     Y1 = D->Y1;
@@ -703,7 +703,7 @@ void DrawSelfWindow(draw_ctx *D) {
     if (W_USE(W, USECONTENTS) && (Contents = W->USE.C.Contents)) {
       /*
        * For xterm-like windows, Contents is a buffer of (x=WLogic) * (y=HLogic)
-       * hwattr:s, in the same format as Video: HWATTR(Color, Ascii).
+       * tcell:s, in the same format as Video: TCELL(Color, Ascii).
        * Room in excess is used as scrollback.
        *
        * To avoid frequent mem-mem copies, VGA-like splitline method is used:
@@ -716,13 +716,13 @@ void DrawSelfWindow(draw_ctx *D) {
       if (Y2 - Up >= W->HLogic) {
         /* the ->Contents buffer is smaller than the window size... pad with SPACEs */
         dat Ynew = Up + W->HLogic;
-        FillVideo(X1, Ynew, X2, Y2, HWATTR(W->ColText, ' '));
+        FillVideo(X1, Ynew, X2, Y2, TCELL(W->ColText, ' '));
         Y2 = Ynew - 1;
       }
       if (X2 - Left >= W->WLogic) {
         /* the ->Contents buffer is smaller than the window size... pad with SPACEs */
         dat Xnew = Left + W->WLogic;
-        FillVideo(Xnew, Y1, X2, Y2, HWATTR(W->ColText, ' '));
+        FillVideo(Xnew, Y1, X2, Y2, TCELL(W->ColText, ' '));
         X2 = Xnew - 1;
       }
       if (X1 <= X2 && Y1 <= Y2) {
@@ -738,7 +738,7 @@ void DrawSelfWindow(draw_ctx *D) {
             if (!(W->State & WINDOW_DO_SEL) || u < W->YstSel || u > W->YendSel) {
 
               CopyMem(CurrCont + X1 - Left, &Video[X1 + j * (ldat)DWidth],
-                      sizeof(hwattr) * (X2 - X1 + 1));
+                      sizeof(tcell) * (X2 - X1 + 1));
 
             } else {
               for (i = X1, v = X1 - Left; i <= X2; i++, v++) {
@@ -748,9 +748,9 @@ void DrawSelfWindow(draw_ctx *D) {
                 if (Select)
                   Color = W->ColSelect;
                 else
-                  Color = HWCOL(CurrCont[v]);
+                  Color = TCOLOR(CurrCont[v]);
 
-                Video[i + j * (ldat)DWidth] = HWATTR(Color, HWFONTEXTRA(CurrCont[v]));
+                Video[i + j * (ldat)DWidth] = TCELL(Color, TRUNEEXTRA(CurrCont[v]));
               }
             }
             CurrCont += W->WLogic;
@@ -768,10 +768,10 @@ void DrawSelfWindow(draw_ctx *D) {
               if (Select)
                 Color = W->ColSelect;
               else
-                Color = HWCOL(CurrCont[v]);
+                Color = TCOLOR(CurrCont[v]);
               Color = DoShadowColor(Color, Shaded, Shaded);
 
-              Video[i + j * (ldat)DWidth] = HWATTR(Color, HWFONTEXTRA(CurrCont[v]));
+              Video[i + j * (ldat)DWidth] = TCELL(Color, TRUNEEXTRA(CurrCont[v]));
             }
             CurrCont += W->WLogic;
             if (!Row)
@@ -808,7 +808,7 @@ void DrawSelfWindow(draw_ctx *D) {
                       (CurrRow && !(CurrRow->Flags & (ROW_ACTIVE | ROW_IGNORE)));
 
         if (CurrRow) {
-          HWFont = CurrRow->Text;
+          TRune = CurrRow->Text;
           ColText = CurrRow->ColText;
         }
 
@@ -825,7 +825,7 @@ void DrawSelfWindow(draw_ctx *D) {
           } else if (Absent)
             Font = ' ';
           else
-            Font = HWFont[PosInRow];
+            Font = TRune[PosInRow];
 
           if (W->Flags & WINDOWFL_ROWS_SELCURRENT)
             Select = Row == W->CurY;
@@ -847,7 +847,7 @@ void DrawSelfWindow(draw_ctx *D) {
             Color = ColText[PosInRow];
 
           Color = DoShadowColor(Color, Shaded, Shaded);
-          Video[i + j * (ldat)DWidth] = HWATTR(Color, Font);
+          Video[i + j * (ldat)DWidth] = TCELL(Color, Font);
         }
         if (CurrRow) {
           W->USE.R.RowSplit = CurrRow;
@@ -860,7 +860,7 @@ void DrawSelfWindow(draw_ctx *D) {
       /* either an unknown window type or just one of the above, but empty */
       Color = W->ColText;
       Color = DoShadowColor(Color, Shaded, Shaded);
-      FillVideo(X1, Y1, X2, Y2, HWATTR(Color, ' '));
+      FillVideo(X1, Y1, X2, Y2, TCELL(Color, ' '));
     }
   }
 }
@@ -939,10 +939,10 @@ static void DrawWCtx(draw_ctx *D) {
       OnlyChild = NULL;
 
 #ifdef DEBUG_DRAW
-    FillVideo(X1, Y1, X2, Y2, HWATTR(COL(WHITE, YELLOW), ' '));
+    FillVideo(X1, Y1, X2, Y2, TCELL(COL(WHITE, YELLOW), ' '));
     FlushHW();
     usleep(300000);
-    FillVideo(X1, Y1, X2, Y2, HWATTR(COL(WHITE, BLACK), ' '));
+    FillVideo(X1, Y1, X2, Y2, TCELL(COL(WHITE, BLACK), ' '));
 #endif
 
     FirstD = D->Next;
@@ -1757,14 +1757,14 @@ void ReDrawRolledUpAreaWindow(window Window, byte Shaded) {
 }
 
 void DrawMenuScreen(screen Screen, dat Xstart, dat Xend) {
-  static hwattr extra;
+  static tcell extra;
   screen fScreen;
   menu Menu;
   menuitem Item;
   dat DWidth, DHeight, i, j, x;
-  hwattr Attr;
-  hwfont Font;
-  hwcol Color;
+  tcell Attr;
+  trune Font;
+  tcolor Color;
   byte Select, State, MenuInfo;
 
   if (QueuedDrawArea2FullScreen || !Screen || !Screen->All || Xstart > Xend)
@@ -1793,7 +1793,7 @@ void DrawMenuScreen(screen Screen, dat Xstart, dat Xend) {
   Xend = Min2(Xend, DWidth - 1);
 
   if (!extra)
-    extra = EncodeToHWAttrExtra(POS_MENU, tzero, tfalse, tfalse);
+    extra = EncodeToTCellExtra(POS_MENU, tzero, tfalse, tfalse);
 
   for (i = Xstart; i <= Xend; i++) {
     if (i + 2 >= DWidth) {
@@ -1816,8 +1816,8 @@ void DrawMenuScreen(screen Screen, dat Xstart, dat Xend) {
     } else if (MenuInfo && FindInfo(Menu, i)) {
       Select = State == STATE_SCREEN;
       FindFontInfo(Menu, i, Select, &Attr);
-      Font = HWFONT(Attr);
-      Color = HWCOL(Attr);
+      Font = TRUNE(Attr);
+      Color = TCOLOR(Attr);
     } else {
       if (!MenuInfo) {
         Item = Act(FindItem, Menu)(Menu, i);
@@ -1836,8 +1836,8 @@ void DrawMenuScreen(screen Screen, dat Xstart, dat Xend) {
            * steal Item color from Menu.
            */
           FindFontMenuItem(Menu, Item, i - x, Select, &Attr);
-          Font = HWFONT(Attr);
-          Color = HWCOL(Attr);
+          Font = TRUNE(Attr);
+          Color = TCOLOR(Attr);
         }
       }
       if (MenuInfo || !Item) {
@@ -1847,7 +1847,7 @@ void DrawMenuScreen(screen Screen, dat Xstart, dat Xend) {
     }
     if (Screen != All->FirstScreen)
       Color = Menu->ColDisabled;
-    Video[i + j * (ldat)DWidth] = HWATTR3(Color, Font, extra);
+    Video[i + j * (ldat)DWidth] = TCELL3(Color, Font, extra);
   }
   DirtyVideo(Xstart, j, Xend, j);
 }

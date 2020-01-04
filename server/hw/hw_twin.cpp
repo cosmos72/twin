@@ -186,9 +186,9 @@ static void TW_KeyboardEvent(int fd, display_hw hw) {
 }
 
 INLINE void TW_Mogrify(dat x, dat y, uldat len) {
-  hwattr *V, *oV;
+  tcell *V, *oV;
   uldat buflen = 0;
-  hwattr *buf;
+  tcell *buf;
   dat xbegin = x, ybegin = y;
 
   V = Video + x + y * (ldat)DisplayWidth;
@@ -196,7 +196,7 @@ INLINE void TW_Mogrify(dat x, dat y, uldat len) {
 
   for (; len; x++, V++, oV++, len--) {
     if (buflen && ValidOldVideo && *V == *oV) {
-      Tw_WriteHWAttrWindow(Td, Twin, xbegin, ybegin, buflen, buf);
+      Tw_WriteTCellWindow(Td, Twin, xbegin, ybegin, buflen, buf);
       buflen = 0;
     }
     if (!ValidOldVideo || *V != *oV) {
@@ -208,7 +208,7 @@ INLINE void TW_Mogrify(dat x, dat y, uldat len) {
     }
   }
   if (buflen)
-    Tw_WriteHWAttrWindow(Td, Twin, xbegin, ybegin, buflen, buf);
+    Tw_WriteTCellWindow(Td, Twin, xbegin, ybegin, buflen, buf);
 }
 
 static void TW_FlushVideo(void) {
@@ -471,7 +471,7 @@ static byte TW_InitHW(void) {
        * check if the server supports the functions we need and store their IDs
        * to avoid deadlocking later when we call them.
        */
-      Tw_FindLFunction(Td, Tw_MapWidget, Tw_WriteAsciiWindow, Tw_WriteHWAttrWindow, Tw_GotoXYWindow,
+      Tw_FindLFunction(Td, Tw_MapWidget, Tw_WriteAsciiWindow, Tw_WriteTCellWindow, Tw_GotoXYWindow,
                        Tw_ResizeWindow,
                        /* Tw_DragAreaWindow, */ NULL) &&
 
@@ -483,7 +483,7 @@ static byte TW_InitHW(void) {
     do {
 
       Tw_Info4Menu(Td, Tmenu, TW_ROW_ACTIVE, (uldat)14, " Twin on Twin ",
-                   (CONST hwcol *)"ptppppppptpppp");
+                   (CONST tcolor *)"ptppppppptpppp");
 
       sprintf(name + 5, "%s on twin", TWDisplay);
       len = strlen(name);

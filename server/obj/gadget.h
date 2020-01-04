@@ -16,8 +16,8 @@
 #include "obj/widget.h"
 
 struct s_gT { /* for GADGETFL_USETEXT gadgets */
-  hwfont *Text[4];
-  hwcol *Color[4];
+  trune *Text[4];
+  tcolor *Color[4];
 };
 
 struct s_gadget {
@@ -38,13 +38,13 @@ struct s_gadget {
   fn_hook Hook, *WhereHook;
   fn_hook MapUnMapHook;
   msg MapQueueMsg;
-  hwattr USE_Fill;
+  tcell USE_Fill;
   union {
     struct s_gT T;
     struct s_wE E;
   } USE;
   /* gadget */
-  hwcol ColText, ColSelect, ColDisabled, ColSelectDisabled;
+  tcolor ColText, ColSelect, ColDisabled, ColSelectDisabled;
   udat Code;
   gadget G_Prev, G_Next; /* list in the same ggroup */
   ggroup Group;
@@ -53,8 +53,8 @@ struct s_gadget {
 struct s_fn_gadget {
   uldat Magic, Size, Used;
   gadget (*Create)(fn_gadget, msgport Owner, widget Parent, dat XWidth, dat YWidth,
-                   CONST char *TextNormal, uldat Attrib, uldat Flags, udat Code, hwcol ColText,
-                   hwcol ColTextSelect, hwcol ColTextDisabled, hwcol ColTextSelectDisabled,
+                   CONST char *TextNormal, uldat Attrib, uldat Flags, udat Code, tcolor ColText,
+                   tcolor ColTextSelect, tcolor ColTextDisabled, tcolor ColTextSelectDisabled,
                    dat Left, dat Up);
   void (*Insert)(gadget, widget Parent, widget Prev, widget Next);
   void (*Remove)(gadget);
@@ -66,7 +66,7 @@ struct s_fn_gadget {
   widget (*FindWidgetAt)(gadget Parent, dat X, dat Y);
   gadget (*FindGadgetByCode)(gadget Parent, udat Code);
   void (*SetXY)(gadget, dat X, dat Y);
-  void (*SetFill)(widget, hwattr Fill);
+  void (*SetFill)(widget, tcell Fill);
   widget (*Focus)(gadget);
   widget (*KbdFocus)(gadget);
   void (*Map)(gadget, widget Parent);
@@ -77,23 +77,23 @@ struct s_fn_gadget {
   void (*Own)(gadget, msgport);
   void (*DisOwn)(gadget);
   void (*RecursiveDelete)(gadget, msgport);
-  void (*Expose)(gadget, dat XWidth, dat YWidth, dat Left, dat Up, CONST char *, CONST hwfont *,
-                 CONST hwattr *);
+  void (*Expose)(gadget, dat XWidth, dat YWidth, dat Left, dat Up, CONST char *, CONST trune *,
+                 CONST tcell *);
   byte (*InstallHook)(gadget, fn_hook, fn_hook *Where);
   void (*RemoveHook)(gadget, fn_hook, fn_hook *Where);
   /* gadget */
   fn_widget Fn_Widget;
   gadget (*CreateEmptyButton)(fn_gadget Fn_Gadget, msgport Owner, dat XWidth, dat YWidth,
-                              hwcol BgCol);
+                              tcolor BgCol);
   byte (*FillButton)(gadget Gadget, widget Parent, udat Code, dat Left, dat Up, udat Flags,
-                     CONST char *Text, hwcol Color, hwcol ColorDisabled);
+                     CONST char *Text, tcolor Color, tcolor ColorDisabled);
   gadget (*CreateButton)(fn_gadget Fn_Gadget, widget Parent, dat XWidth, dat YWidth,
-                         CONST char *Text, uldat Flags, udat Code, hwcol BgCol, hwcol Col,
-                         hwcol ColDisabled, dat Left, dat Up);
+                         CONST char *Text, uldat Flags, udat Code, tcolor BgCol, tcolor Col,
+                         tcolor ColDisabled, dat Left, dat Up);
   void (*WriteTexts)(gadget Gadget, byte bitmap, dat XWidth, dat YWidth, CONST char *Text, dat Left,
                      dat Up);
-  void (*WriteHWFonts)(gadget Gadget, byte bitmap, dat XWidth, dat YWidth, CONST hwfont *HWFont,
-                       dat Left, dat Up);
+  void (*WriteTRunes)(gadget Gadget, byte bitmap, dat XWidth, dat YWidth, CONST trune *TRune,
+                      dat Left, dat Up);
 };
 
 /* Gadget->Attrib */

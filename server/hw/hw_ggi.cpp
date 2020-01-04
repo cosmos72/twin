@@ -183,7 +183,7 @@ static void GGI_KeyboardEvent(int fd, display_hw hw) {
 }
 
 /* this can stay static */
-static hwcol _col;
+static tcolor _col;
 
 #define GFG(col)                                                                                   \
   if (gforeground != gcol[COLFG(col)])                                                             \
@@ -199,8 +199,8 @@ static hwcol _col;
   ggiPuts(gvis, xbegin, ybegin, buf)
 
 INLINE void GGI_Mogrify(dat x, dat y, uldat len) {
-  hwattr *V, *oV;
-  hwcol col;
+  tcell *V, *oV;
+  tcolor col;
   udat buflen = 0;
   byte buf[TW_SMALLBUFF];
   int xbegin = x * gfont.x, ybegin = y * gfont.y;
@@ -208,8 +208,8 @@ INLINE void GGI_Mogrify(dat x, dat y, uldat len) {
   V = Video + x + y * (ldat)DisplayWidth;
   oV = OldVideo + x + y * (ldat)DisplayWidth;
 
-  for (_col = ~HWCOL(*V); len; x++, V++, oV++, len--) {
-    col = HWCOL(*V);
+  for (_col = ~TCOLOR(*V); len; x++, V++, oV++, len--) {
+    col = TCOLOR(*V);
     if (buflen && (col != _col || (ValidOldVideo && *V == *oV) || buflen == TW_SMALLBUFF - 1)) {
       buf[buflen] = '\0';
       GDRAW(_col, buf, buflen);
@@ -220,7 +220,7 @@ INLINE void GGI_Mogrify(dat x, dat y, uldat len) {
         xbegin = x * (ldat)gfont.x;
         _col = col;
       }
-      buf[buflen++] = HWFONT(*V) ? HWFONT(*V) : ' ';
+      buf[buflen++] = TRUNE(*V) ? TRUNE(*V) : ' ';
       /* ggiPuts cannot handle '\0' */
     }
   }
@@ -234,35 +234,35 @@ INLINE void GGI_Mogrify(dat x, dat y, uldat len) {
 #undef GDRAW
 
 static void GGI_HideCursor(dat x, dat y) {
-  hwattr V = Video[x + y * (ldat)DisplayWidth];
-  hwcol col = HWCOL(V);
+  tcell V = Video[x + y * (ldat)DisplayWidth];
+  tcolor col = TCOLOR(V);
 
   GFG(col);
   GBG(col);
-  ggiPutc(gvis, x * gfont.x, y * gfont.y, HWFONT(V));
+  ggiPutc(gvis, x * gfont.x, y * gfont.y, TRUNE(V));
 }
 
 static void GGI_ShowCursor(uldat type, dat x, dat y) {
-  hwattr V = Video[x + y * (ldat)DisplayWidth];
-  hwcol v;
+  tcell V = Video[x + y * (ldat)DisplayWidth];
+  tcolor v;
   udat i;
 
   if (type & 0x10) {
     /* soft cursor */
-    v = (HWCOL(V) | ((type >> 16) & 0xff)) ^ ((type >> 8) & 0xff);
-    if ((type & 0x20) && (HWCOL(V) & COL(0, WHITE)) == (v & COL(0, WHITE)))
+    v = (TCOLOR(V) | ((type >> 16) & 0xff)) ^ ((type >> 8) & 0xff);
+    if ((type & 0x20) && (TCOLOR(V) & COL(0, WHITE)) == (v & COL(0, WHITE)))
       v ^= COL(0, WHITE);
     if ((type & 0x40) && ((COLFG(v) & WHITE) == (COLBG(v) & WHITE)))
       v ^= COL(WHITE, 0);
 
     GFG(COLFG(v));
     GBG(COLBG(v));
-    ggiPutc(gvis, x * gfont.x, y * gfont.y, HWFONT(V));
+    ggiPutc(gvis, x * gfont.x, y * gfont.y, TRUNE(V));
   }
   if (type & 0xF) {
     /* VGA hw-like cursor */
     i = gfont.x * ((type & 0xF) - NOCURSOR) / (SOLIDCURSOR - NOCURSOR);
-    v = HWCOL(V);
+    v = TCOLOR(V);
 
     GFG(v);
     ggiDrawBox(gvis, x * gfont.x, y * gfont.y + gfont.y - i, gfont.x, i);

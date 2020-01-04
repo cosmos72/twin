@@ -271,7 +271,7 @@ INLINE char *termcap_CopyAttr(char *attr, char *dest) {
   return --dest;
 }
 
-INLINE void termcap_SetColor(hwcol col) {
+INLINE void termcap_SetColor(tcolor col) {
   static char colbuf[80];
   char *colp = colbuf;
   byte c;
@@ -320,9 +320,9 @@ INLINE void termcap_SetColor(hwcol col) {
 
 INLINE void termcap_Mogrify(dat x, dat y, uldat len) {
   uldat delta = x + y * (uldat)DisplayWidth;
-  hwattr *V, *oV;
-  hwcol col;
-  hwfont c, _c;
+  tcell *V, *oV;
+  tcolor col;
+  trune c, _c;
   byte sending = tfalse;
 
   if (!wrapglitch && delta + len >= (uldat)DisplayWidth * DisplayHeight)
@@ -336,12 +336,12 @@ INLINE void termcap_Mogrify(dat x, dat y, uldat len) {
       if (!sending)
         sending = ttrue, termcap_MoveToXY(x, y);
 
-      col = HWCOL(*V);
+      col = TCOLOR(*V);
 
       if (col != _col)
         termcap_SetColor(col);
 
-      c = _c = HWFONT(*V);
+      c = _c = TRUNE(*V);
       if (c >= 128) {
         if (tty_use_utf8) {
           /* use utf-8 to output this non-ASCII char */
@@ -363,8 +363,8 @@ INLINE void termcap_Mogrify(dat x, dat y, uldat len) {
   }
 }
 
-INLINE void termcap_SingleMogrify(dat x, dat y, hwattr V) {
-  hwfont c, _c;
+INLINE void termcap_SingleMogrify(dat x, dat y, tcell V) {
+  trune c, _c;
 
   if (!wrapglitch && x == DisplayWidth - 1 && y == DisplayHeight - 1)
     /* wrapglitch is required to write to last screen position without scrolling */
@@ -372,10 +372,10 @@ INLINE void termcap_SingleMogrify(dat x, dat y, hwattr V) {
 
   termcap_MoveToXY(x, y);
 
-  if (HWCOL(V) != _col)
-    termcap_SetColor(HWCOL(V));
+  if (TCOLOR(V) != _col)
+    termcap_SetColor(TCOLOR(V));
 
-  c = _c = HWFONT(V);
+  c = _c = TRUNE(V);
   if (c >= 128) {
     if (tty_use_utf8) {
       /* use utf-8 to output this non-ASCII char */
@@ -399,9 +399,9 @@ INLINE void termcap_SingleMogrify(dat x, dat y, hwattr V) {
 static void termcap_ShowMouse(void) {
   uldat pos =
       (HW->Last_x = HW->MouseState.x) + (HW->Last_y = HW->MouseState.y) * (ldat)DisplayWidth;
-  hwattr h = Video[pos], c = HWATTR_COLMASK(~h) ^ HWATTR(COL(HIGH, HIGH), 0);
+  tcell h = Video[pos], c = TCELL_COLMASK(~h) ^ TCELL(COL(HIGH, HIGH), 0);
 
-  termcap_SingleMogrify(HW->MouseState.x, HW->MouseState.y, c | HWATTR_FONTMASK(h));
+  termcap_SingleMogrify(HW->MouseState.x, HW->MouseState.y, c | TCELL_FONTMASK(h));
 
   /* force updating the cursor */
   HW->XY[0] = HW->XY[1] = -1;
@@ -518,7 +518,7 @@ static void termcap_FlushVideo(void) {
   dat i, j;
   dat start, end;
   byte FlippedVideo = tfalse, FlippedOldVideo = tfalse;
-  hwattr savedOldVideo;
+  tcell savedOldVideo;
 
   if (!ChangedVideoFlag) {
     HW->UpdateMouseAndCursor();

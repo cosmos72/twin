@@ -25,7 +25,7 @@
 #define TWScase(objtype, field, fieldtype)                                                         \
   case CAT4(TWS_, objtype, _, field):                                                              \
     /* ensure type size WAS negotiated */                                                          \
-    if (CAT(TWS_, fieldtype) <= TWS_hwcol || CAT(TWS_, fieldtype) >= TWS_highest ||                \
+    if (CAT(TWS_, fieldtype) <= TWS_tcolor || CAT(TWS_, fieldtype) >= TWS_highest ||               \
         AlienSizeof(fieldtype, Slot)) {                                                            \
       TSF->CAT(TWS_field_, fieldtype) = (fieldtype)x->field;                                       \
       TSF->type = CAT(TWS_, fieldtype);                                                            \
@@ -36,7 +36,7 @@
 #define TWScaseUSE(objtype, use, field, fieldtype)                                                 \
   case CAT6(TWS_, objtype, _USE_, use, _, field):                                                  \
     /* ensure type size WAS negotiated */                                                          \
-    if (CAT(TWS_, fieldtype) <= TWS_hwcol || CAT(TWS_, fieldtype) >= TWS_highest ||                \
+    if (CAT(TWS_, fieldtype) <= TWS_tcolor || CAT(TWS_, fieldtype) >= TWS_highest ||               \
         AlienSizeof(fieldtype, Slot)) {                                                            \
       TSF->CAT(TWS_field_, fieldtype) = (fieldtype)x->USE.use.field;                               \
       TSF->type = CAT(TWS_, fieldtype);                                                            \
@@ -47,7 +47,7 @@
 #define TWScaseA(objtype, field, n, fieldtype)                                                     \
   case CAT5(TWS_, objtype, _, field, V, n):                                                        \
     /* ensure type size WAS negotiated */                                                          \
-    if (CAT(TWS_, fieldtype) <= TWS_hwcol || CAT(TWS_, fieldtype) >= TWS_highest ||                \
+    if (CAT(TWS_, fieldtype) <= TWS_tcolor || CAT(TWS_, fieldtype) >= TWS_highest ||               \
         AlienSizeof(fieldtype, Slot)) {                                                            \
       TSF->CAT(TWS_field_, fieldtype) = (fieldtype)x->field[n];                                    \
       TSF->type = CAT(TWS_, fieldtype);                                                            \
@@ -58,7 +58,7 @@
 #define TWScaseAUSE(objtype, use, field, n, fieldtype)                                             \
   case CAT8(TWS_, objtype, _USE_, use, _, field, V, n):                                            \
     /* ensure type size WAS negotiated */                                                          \
-    if (CAT(TWS_, fieldtype) <= TWS_hwcol || CAT(TWS_, fieldtype) >= TWS_highest ||                \
+    if (CAT(TWS_, fieldtype) <= TWS_tcolor || CAT(TWS_, fieldtype) >= TWS_highest ||               \
         AlienSizeof(fieldtype, Slot)) {                                                            \
       TSF->CAT(TWS_field_, fieldtype) = (fieldtype)x->USE.use.field[n];                            \
       TSF->type = CAT(TWS_, fieldtype);                                                            \
@@ -169,7 +169,7 @@ static byte sockStatWidget(widget x, tsfield TSF) {
     TWScase(widget, O_Prev, obj);
     TWScase(widget, O_Next, obj);
     TWScase(widget, Owner, obj);
-    TWScase(widget, USE_Fill, hwattr);
+    TWScase(widget, USE_Fill, tcell);
   case TWS_widget_ChildrenW_List:
     TSF->TWS_field_vecV = sockAllocListNextObjs((obj)x->FirstW, &TSF->TWS_field_vecL);
     TSF->type = TWS_vec | TWS_tobj;
@@ -199,10 +199,10 @@ static byte sockStatWidget(widget x, tsfield TSF) {
 
 static byte sockStatGadget(gadget x, tsfield TSF) {
   switch (TSF->hash) {
-    TWScase(gadget, ColText, hwcol);
-    TWScase(gadget, ColSelect, hwcol);
-    TWScase(gadget, ColDisabled, hwcol);
-    TWScase(gadget, ColSelectDisabled, hwcol);
+    TWScase(gadget, ColText, tcolor);
+    TWScase(gadget, ColSelect, tcolor);
+    TWScase(gadget, ColDisabled, tcolor);
+    TWScase(gadget, ColSelectDisabled, tcolor);
     TWScase(gadget, Code, udat);
     TWScase(gadget, Flags, udat);
     TWScase(gadget, G_Prev, obj);
@@ -221,14 +221,14 @@ static byte sockStatGadget(gadget x, tsfield TSF) {
   default:
     if (G_USE((gadget)x, USETEXT)) {
       switch (TSF->hash) {
-        TWScaseAvecUSE(gadget, T, Text, 0, hwfont, x->XWidth * x->YWidth);
-        TWScaseAvecUSE(gadget, T, Text, 1, hwfont, x->XWidth * x->YWidth);
-        TWScaseAvecUSE(gadget, T, Text, 2, hwfont, x->XWidth * x->YWidth);
-        TWScaseAvecUSE(gadget, T, Text, 3, hwfont, x->XWidth * x->YWidth);
-        TWScaseAvecUSE(gadget, T, Color, 0, hwcol, x->XWidth * x->YWidth);
-        TWScaseAvecUSE(gadget, T, Color, 1, hwcol, x->XWidth * x->YWidth);
-        TWScaseAvecUSE(gadget, T, Color, 2, hwcol, x->XWidth * x->YWidth);
-        TWScaseAvecUSE(gadget, T, Color, 3, hwcol, x->XWidth * x->YWidth);
+        TWScaseAvecUSE(gadget, T, Text, 0, trune, x->XWidth * x->YWidth);
+        TWScaseAvecUSE(gadget, T, Text, 1, trune, x->XWidth * x->YWidth);
+        TWScaseAvecUSE(gadget, T, Text, 2, trune, x->XWidth * x->YWidth);
+        TWScaseAvecUSE(gadget, T, Text, 3, trune, x->XWidth * x->YWidth);
+        TWScaseAvecUSE(gadget, T, Color, 0, tcolor, x->XWidth * x->YWidth);
+        TWScaseAvecUSE(gadget, T, Color, 1, tcolor, x->XWidth * x->YWidth);
+        TWScaseAvecUSE(gadget, T, Color, 2, tcolor, x->XWidth * x->YWidth);
+        TWScaseAvecUSE(gadget, T, Color, 3, tcolor, x->XWidth * x->YWidth);
       default:
         return tfalse;
       }
@@ -251,9 +251,9 @@ static byte sockStatWindow(window x, tsfield TSF) {
     TWScase(window, Menu, obj);
     TWScase(window, NameLen, dat);
     TWScasevec(window, Name, byte, x->NameLen);
-    TWScasevec(window, ColName, hwcol, x->NameLen);
-    TWScaseAvec(window, BorderPattern, 0, hwfont, 9);
-    TWScaseAvec(window, BorderPattern, 1, hwfont, 9);
+    TWScasevec(window, ColName, tcolor, x->NameLen);
+    TWScaseAvec(window, BorderPattern, 0, trune, 9);
+    TWScaseAvec(window, BorderPattern, 1, trune, 9);
     TWScase(window, CurX, ldat);
     TWScase(window, CurY, ldat);
     TWScase(window, XstSel, ldat);
@@ -262,15 +262,15 @@ static byte sockStatWindow(window x, tsfield TSF) {
     TWScase(window, YendSel, ldat);
     TWScase(window, MenuItem, obj);
 
-    TWScase(window, ColGadgets, hwcol);
-    TWScase(window, ColArrows, hwcol);
-    TWScase(window, ColBars, hwcol);
-    TWScase(window, ColTabs, hwcol);
-    TWScase(window, ColBorder, hwcol);
-    TWScase(window, ColText, hwcol);
-    TWScase(window, ColSelect, hwcol);
-    TWScase(window, ColDisabled, hwcol);
-    TWScase(window, ColSelectDisabled, hwcol);
+    TWScase(window, ColGadgets, tcolor);
+    TWScase(window, ColArrows, tcolor);
+    TWScase(window, ColBars, tcolor);
+    TWScase(window, ColTabs, tcolor);
+    TWScase(window, ColBorder, tcolor);
+    TWScase(window, ColText, tcolor);
+    TWScase(window, ColSelect, tcolor);
+    TWScase(window, ColDisabled, tcolor);
+    TWScase(window, ColSelectDisabled, tcolor);
     TWScase(window, State, uldat);
     TWScase(window, CursorType, uldat);
     TWScase(window, MinXWidth, dat);
@@ -282,7 +282,7 @@ static byte sockStatWindow(window x, tsfield TSF) {
   default:
     if (W_USE((window)x, USECONTENTS)) {
       switch (TSF->hash) {
-        TWScasevecUSE(window, C, Contents, hwattr, x->WLogic * x->HLogic);
+        TWScasevecUSE(window, C, Contents, tcell, x->WLogic * x->HLogic);
         TWScaseUSE(window, C, HSplit, ldat);
       default:
         return tfalse;
@@ -321,7 +321,7 @@ static byte sockStatScreen(screen x, tsfield TSF) {
       switch (TSF->hash) {
         TWScaseUSE(screen, B, BgWidth, dat);
         TWScaseUSE(screen, B, BgHeight, dat);
-        TWScasevecUSE(screen, B, Bg, hwattr, x->USE.B.BgWidth * x->USE.B.BgHeight);
+        TWScasevecUSE(screen, B, Bg, tcell, x->USE.B.BgWidth * x->USE.B.BgHeight);
       default:
         return tfalse;
       }
@@ -353,8 +353,8 @@ static byte sockStatRow(row x, tsfield TSF) {
     TWScase(row, Code, udat);
     TWScase(row, Flags, byte);
     TWScase(row, Len, uldat);
-    TWScasevec(row, Text, hwfont, x->Len);
-    TWScasevec(row, ColText, hwcol, x->Len);
+    TWScasevec(row, Text, trune, x->Len);
+    TWScasevec(row, ColText, tcolor, x->Len);
   default:
     return tfalse;
   }
@@ -380,12 +380,12 @@ static byte sockStatMenuItem(menuitem x, tsfield TSF) {
 
 static byte sockStatMenu(menu x, tsfield TSF) {
   switch (TSF->hash) {
-    TWScase(menu, ColItem, hwcol);
-    TWScase(menu, ColSelect, hwcol);
-    TWScase(menu, ColDisabled, hwcol);
-    TWScase(menu, ColSelectDisabled, hwcol);
-    TWScase(menu, ColShtCut, hwcol);
-    TWScase(menu, ColSelShtCut, hwcol);
+    TWScase(menu, ColItem, tcolor);
+    TWScase(menu, ColSelect, tcolor);
+    TWScase(menu, ColDisabled, tcolor);
+    TWScase(menu, ColSelectDisabled, tcolor);
+    TWScase(menu, ColShtCut, tcolor);
+    TWScase(menu, ColSelShtCut, tcolor);
     TWScase(menu, CommonItems, byte);
     TWScase(menu, FlagDefColInfo, byte);
     TWScase(menu, FirstI, obj);
@@ -591,11 +591,11 @@ static void sockStat(obj x, udat n, CONST byte *in) {
           Pushcase(byte);
           Pushcase(udat);
           Pushcase(uldat);
-          Pushcase(hwcol);
+          Pushcase(tcolor);
           Pushcase(topaque);
           Pushcase(tany);
-          Pushcase(hwfont);
-          Pushcase(hwattr);
+          Pushcase(trune);
+          Pushcase(tcell);
           Pushcase(tobj);
 #undef Pushcase
         default:

@@ -62,7 +62,7 @@ typedef enum e_state {
 } tstate;
 
 typedef struct s_button_vec {
-  hwfont shape[2];
+  trune shape[2];
   sbyte pos;
   byte exists;
   byte changed;
@@ -110,7 +110,7 @@ struct s_all {
 
   button_vec ButtonVec[BUTTON_MAX + 1]; /* +1 for window corner */
 
-  hwfont *Gtranslations[USER_MAP + 1];
+  trune *Gtranslations[USER_MAP + 1];
 };
 
 #endif /* _TWIN_ALL_H */

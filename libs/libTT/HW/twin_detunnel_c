@@ -35,13 +35,13 @@ DECL_BEFORE
 static tany twin_detunnel_TwStat(tobj Id, udat h) {
     return (tany)0;
 }
-static void twin_detunnel_TwDraw2Widget(twidget W,dat XWidth,dat YWidth,dat Left,dat Up,dat Pitch,TW_CONST byte *Text,TW_CONST hwfont *Font,TW_CONST hwattr *Attr) {
+static void twin_detunnel_TwDraw2Widget(twidget W,dat XWidth,dat YWidth,dat Left,dat Up,dat Pitch,TW_CONST byte *Text,TW_CONST trune *Font,TW_CONST tcell *Attr) {
 }
-static void twin_detunnel_TwSetFillWidget(twidget W,hwattr Fill) {
+static void twin_detunnel_TwSetFillWidget(twidget W,tcell Fill) {
 }
-static void twin_detunnel_TwDrawHWFontWidget(twidget W,dat XWidth,dat YWidth,dat Left,dat Up,dat Pitch,TW_CONST hwfont *Font) {
+static void twin_detunnel_TwDrawTRuneWidget(twidget W,dat XWidth,dat YWidth,dat Left,dat Up,dat Pitch,TW_CONST trune *Font) {
 }
-static void twin_detunnel_TwDrawHWAttrWidget(twidget W,dat XWidth,dat YWidth,dat Left,dat Up,dat Pitch,TW_CONST hwattr *Attr) {
+static void twin_detunnel_TwDrawTCellWidget(twidget W,dat XWidth,dat YWidth,dat Left,dat Up,dat Pitch,TW_CONST tcell *Attr) {
 }
 static tlistener twin_detunnel_TwAddMouseListener(twidget W,udat Code,udat ShiftFlags,tfn_listener Listener,void *Arg) {
     return (tlistener)0;

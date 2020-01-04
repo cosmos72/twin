@@ -84,17 +84,17 @@ struct s_ttydata {
   dat Top, Bottom;  /* Y scrolling region. default 0...SizeY-1 */
   dat X, Y;         /* Cursor position in visible buffer */
   dat saveX, saveY;
-  hwattr *Start, *Split; /* Start and Split of visible buffer */
-                         /* AfterSplit is just Window->Contents */
-  hwattr *Pos;           /* Pointer to cursor position in buffer */
-  hwcol Color, DefColor, saveColor, Underline, HalfInten;
+  tcell *Start, *Split; /* Start and Split of visible buffer */
+                        /* AfterSplit is just Window->Contents */
+  tcell *Pos;           /* Pointer to cursor position in buffer */
+  tcolor Color, DefColor, saveColor, Underline, HalfInten;
   uldat TabStop[5];
   uldat nPar, Par[NPAR];
 
   byte currG, G, G0, G1, saveG, saveG0, saveG1;
   byte utf8, utf8_count;
-  hwfont utf8_char;
-  hwfont (*InvCharset)(hwfont); /* pointer to hwfont -> byte translation function */
+  trune utf8_char;
+  trune (*InvCharset)(trune); /* pointer to trune -> byte translation function */
 
   dat newLen, newMax;
   char *newName; /* buffer for xterm set window title escape seq */
@@ -102,8 +102,8 @@ struct s_ttydata {
 
 byte TtyWriteAscii(window Window, uldat Len, CONST char *AsciiSeq);
 byte TtyWriteString(window Window, uldat Len, CONST char *String);
-byte TtyWriteHWFont(window Window, uldat Len, CONST hwfont *HWFont);
-byte TtyWriteHWAttr(window Window, dat x, dat y, uldat Len, CONST hwattr *Attr);
+byte TtyWriteTRune(window Window, uldat Len, CONST trune *TRune);
+byte TtyWriteTCell(window Window, dat x, dat y, uldat Len, CONST tcell *Attr);
 
 widget TtyKbdFocus(widget Window);
 void ForceKbdFocus(void);

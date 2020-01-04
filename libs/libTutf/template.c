@@ -11,13 +11,13 @@
 
 #define T_TEMPLATE T_MAP(TEMPLATE)
 
-hwfont T_CAT3(Tutf_, T_TEMPLATE, _to_UTF_32)[0x100] = {
+trune T_CAT3(Tutf_, T_TEMPLATE, _to_UTF_32)[0x100] = {
 #define EL(x) T_UTF(UTF_32, x),
     T_LIST(T_TEMPLATE, EL)
 #undef EL
 };
 
-hwfont T_CAT(Tutf_UTF_32_to_, T_TEMPLATE)(hwfont c) {
+trune T_CAT(Tutf_UTF_32_to_, T_TEMPLATE)(trune c) {
 #define EL(x) +1
   enum {
     n = T_NLIST(T_TEMPLATE, EL) + 0, /* +0 in case T_NLIST() expands to nothing */

@@ -191,7 +191,7 @@ static void flush_tty(void) {
 /* Note: inverting the screen twice should revert to the original state */
 
 static void invert_screen(void) {
-  hwattr a, *p = Start;
+  tcell a, *p = Start;
   ldat count;
 
   dirty_tty(0, 0, SizeX - 1, SizeY - 1);
@@ -199,14 +199,14 @@ static void invert_screen(void) {
 
   while (count--) {
     a = *p;
-    *p++ = (a & ~HWATTR(TW_MAXWCOL, 0)) | HWATTR(COL(COLBG(HWCOL(a)), COLFG(HWCOL(a))), 0);
+    *p++ = (a & ~TCELL(TW_MAXWCOL, 0)) | TCELL(COL(COLBG(TCOLOR(a)), COLFG(TCOLOR(a))), 0);
     if (p == Split)
       p = Base;
   }
 }
 
 static void insert_char(ldat nr) {
-  hwattr *p, *q = Pos;
+  tcell *p, *q = Pos;
 
   p = q + SizeX - X - nr;
 
@@ -216,14 +216,14 @@ static void insert_char(ldat nr) {
     p[nr] = *p;
 
   while (nr--)
-    *q++ = HWATTR(ColText, ' ');
+    *q++ = TCELL(ColText, ' ');
 
   *Flags &= ~TTY_NEEDWRAP;
 }
 
 INLINE void delete_char(ldat nr) {
   dat i;
-  hwattr *p = Pos;
+  tcell *p = Pos;
 
   i = SizeX - X - nr;
 
@@ -234,7 +234,7 @@ INLINE void delete_char(ldat nr) {
     p++;
   }
   while (nr--)
-    *p++ = HWATTR(ColText, ' ');
+    *p++ = TCELL(ColText, ' ');
 
   *Flags &= ~TTY_NEEDWRAP;
 }
@@ -283,7 +283,7 @@ INLINE void goto_axy(ldat new_x, ldat new_y) {
 }
 
 /* WARNING: fwd_copy() doesn't call dirty_tty(), you must call it manually! */
-static void fwd_copy(hwattr *s, hwattr *d, ldat len) {
+static void fwd_copy(tcell *s, tcell *d, ldat len) {
   ldat l;
 
   while (s >= Split)
@@ -294,7 +294,7 @@ static void fwd_copy(hwattr *s, hwattr *d, ldat len) {
   while (len > 0) {
     l = Min2(len, Split - s);
     l = Min2(l, Split - d);
-    MoveMem(s, d, l * sizeof(hwattr)); // s and d can overlap!
+    MoveMem(s, d, l * sizeof(tcell)); // s and d can overlap!
     s += l;
     d += l;
     len -= l;
@@ -306,7 +306,7 @@ static void fwd_copy(hwattr *s, hwattr *d, ldat len) {
 }
 
 /* WARNING: rev_copy() doesn't call dirty_tty(), you must call it manually! */
-static void rev_copy(hwattr *s, hwattr *d, ldat len) {
+static void rev_copy(tcell *s, tcell *d, ldat len) {
   ldat l;
 
   s += len;
@@ -322,7 +322,7 @@ static void rev_copy(hwattr *s, hwattr *d, ldat len) {
     s -= l;
     d -= l;
     len -= l;
-    MoveMem(s, d, l * sizeof(hwattr));
+    MoveMem(s, d, l * sizeof(tcell));
     if (s == Base)
       s = Split;
     if (d == Base)
@@ -331,7 +331,7 @@ static void rev_copy(hwattr *s, hwattr *d, ldat len) {
 }
 
 /* WARNING: fill() doesn't call dirty_tty(), you must call it manually! */
-static void fill(hwattr *s, hwattr c, ldat len) {
+static void fill(tcell *s, tcell c, ldat len) {
   ldat l;
 
   while (s >= Split)
@@ -348,7 +348,7 @@ static void fill(hwattr *s, hwattr c, ldat len) {
 }
 
 static void scrollup(dat t, dat b, dat nr) {
-  hwattr *d, *s;
+  tcell *d, *s;
   byte accel = tfalse;
 
   if (t + nr >= b)
@@ -388,14 +388,14 @@ static void scrollup(dat t, dat b, dat nr) {
   }
 
   /* clear the last nr lines */
-  fill(d + (b - t - nr) * SizeX, HWATTR(ColText, ' '), nr * SizeX);
+  fill(d + (b - t - nr) * SizeX, TCELL(ColText, ' '), nr * SizeX);
 
   if (accel)
     ScrollFirstWindowArea(0, t, SizeX - 1, b - 1, 0, -nr);
 }
 
 static void scrolldown(dat t, dat b, dat nr) {
-  hwattr *s;
+  tcell *s;
   ldat step;
   byte accel = tfalse;
 
@@ -415,7 +415,7 @@ static void scrolldown(dat t, dat b, dat nr) {
   step = SizeX * nr;
 
   rev_copy(s, s + step, (b - t - nr) * SizeX);
-  fill(s, HWATTR(ColText, ' '), step);
+  fill(s, TCELL(ColText, ' '), step);
 
   if (accel)
     ScrollFirstWindowArea(0, t, SizeX - 1, b - 1, 0, nr);
@@ -470,7 +470,7 @@ INLINE void del(void) { /* ignored */
 
 static void csi_J(int vpar) {
   ldat count;
-  hwattr *start;
+  tcell *start;
 
   switch (vpar) {
   case 0: /* erase from cursor to end of display */
@@ -491,14 +491,14 @@ static void csi_J(int vpar) {
   default:
     return;
   }
-  fill(start, HWATTR(ColText, ' '), count);
+  fill(start, TCELL(ColText, ' '), count);
 
   *Flags &= ~TTY_NEEDWRAP;
 }
 
 static void csi_K(int vpar) {
   dat count;
-  hwattr *start;
+  tcell *start;
 
   switch (vpar) {
   case 0: /* erase from cursor to end of line */
@@ -520,14 +520,14 @@ static void csi_K(int vpar) {
     return;
   }
   while (count--)
-    *start++ = HWATTR(ColText, ' ');
+    *start++ = TCELL(ColText, ' ');
 
   *Flags &= ~TTY_NEEDWRAP;
 }
 
 static void csi_X(int vpar) /* erase the following vpar positions */
 {                           /* not vt100? */
-  hwattr *start = Pos;
+  tcell *start = Pos;
 
   if (!vpar)
     vpar++;
@@ -536,21 +536,21 @@ static void csi_X(int vpar) /* erase the following vpar positions */
   dirty_tty(X, Y, X + vpar - 1, Y);
 
   while (vpar--)
-    *start++ = HWATTR(ColText, ' ');
+    *start++ = TCELL(ColText, ' ');
 
   *Flags &= ~TTY_NEEDWRAP;
 }
 
 static void update_eff(void) {
   udat effects = Effects;
-  hwcol fg = COLFG(ColText), bg = COLBG(ColText);
+  tcolor fg = COLFG(ColText), bg = COLBG(ColText);
 
   if (effects & EFF_UNDERLINE)
     fg = COLFG(Underline);
   else if (effects & EFF_HALFINTENS)
     fg = COLFG(HalfInten);
   if (!!(effects & EFF_REVERSE) != !!(*Flags & TTY_INVERTSCR)) {
-    hwcol tmp = COL(bg & ~HIGH, fg & ~HIGH) | COL(fg & HIGH, bg & HIGH);
+    tcolor tmp = COL(bg & ~HIGH, fg & ~HIGH) | COL(fg & HIGH, bg & HIGH);
     fg = COLFG(tmp);
     bg = COLBG(tmp);
   }
@@ -583,7 +583,7 @@ static void update_eff(void) {
     }                                                                                              \
   while (0)
 
-INLINE hwfont applyG(hwfont c) {
+INLINE trune applyG(trune c) {
   if (c < 0x100)
     c = Charset[c];
   return c;
@@ -592,7 +592,7 @@ INLINE hwfont applyG(hwfont c) {
 INLINE void csi_m(void) {
   uldat i;
   udat effects = Effects;
-  hwcol fg = COLFG(ColText), bg = COLBG(ColText);
+  tcolor fg = COLFG(ColText), bg = COLBG(ColText);
 
   for (i = 0; i <= nPar; i++)
     switch (Par[i]) {
@@ -1344,7 +1344,7 @@ INLINE void write_ctrl(byte c) {
     if (c == '8') {
       /* DEC screen alignment test */
       dirty_tty(0, 0, SizeX - 1, SizeY - 1);
-      fill(Start, HWATTR(ColText, 'E'), (ldat)SizeX * SizeY);
+      fill(Start, TCELL(ColText, 'E'), (ldat)SizeX * SizeY);
     }
     break;
 
@@ -1487,8 +1487,8 @@ static void common(window Window) {
  * combine (*pc) with partial utf-8 char stored in utf8_char.
  * return ttrue if the utf-8 char is complete, and can be displayed.
  */
-static tbool combine_utf8(hwfont *pc) {
-  hwfont c = *pc;
+static tbool combine_utf8(trune *pc) {
+  trune c = *pc;
 
   if (utf8_count > 0 && (c & 0xc0) == 0x80) {
     utf8_char = (utf8_char << 6) | (c & 0x3f);
@@ -1514,7 +1514,7 @@ static tbool combine_utf8(hwfont *pc) {
 
 /* this is the main entry point */
 byte TtyWriteAscii(window Window, uldat Len, CONST char *AsciiSeq) {
-  hwfont c;
+  trune c;
   byte printable, utf8_in_use, disp_ctrl, state_normal;
 
   if (!Window || !W_USE(Window, USECONTENTS) || !Window->USE.C.TtyData)
@@ -1571,7 +1571,7 @@ byte TtyWriteAscii(window Window, uldat Len, CONST char *AsciiSeq) {
         insert_char(1);
 
       dirty_tty(X, Y, X, Y);
-      *Pos = HWATTR(Color, c);
+      *Pos = TCELL(Color, c);
 
       if (X == SizeX - 1) {
         if (*Flags & TTY_AUTOWRAP)
@@ -1589,20 +1589,20 @@ byte TtyWriteAscii(window Window, uldat Len, CONST char *AsciiSeq) {
   return ttrue;
 }
 
-/* same as TtyWriteAscii(), but writes hwfont (UCS-2 + colors + graph tiles). */
-byte TtyWriteHWFont(window Window, uldat Len, CONST hwfont *HWFont) {
-  hwfont c;
+/* same as TtyWriteAscii(), but writes trune (UCS-2 + colors + graph tiles). */
+byte TtyWriteTRune(window Window, uldat Len, CONST trune *TRune) {
+  trune c;
   byte ok;
 
   if (!Window || !W_USE(Window, USECONTENTS) || !Window->USE.C.TtyData)
     return tfalse;
-  if (!Len || !HWFont)
+  if (!Len || !TRune)
     return ttrue;
 
   common(Window);
 
   while (!(*Flags & TTY_STOPPED) && Len) {
-    c = *HWFont++;
+    c = *TRune++;
     Len--;
 
     /* If the original code is 8-bit, behave as TtyWriteAscii() with LATIN1_MAP*/
@@ -1626,7 +1626,7 @@ byte TtyWriteHWFont(window Window, uldat Len, CONST hwfont *HWFont) {
         insert_char(1);
 
       dirty_tty(X, Y, X, Y);
-      *Pos = HWATTR(Color, c);
+      *Pos = TCELL(Color, c);
 
       if (X == SizeX - 1) {
         if (*Flags & TTY_AUTOWRAP)
@@ -1647,7 +1647,7 @@ byte TtyWriteHWFont(window Window, uldat Len, CONST hwfont *HWFont) {
  * (not even ESC or \n) and using current translation.
  */
 byte TtyWriteString(window Window, uldat Len, CONST char *String) {
-  hwfont c;
+  trune c;
 
   if (!Window || !W_USE(Window, USECONTENTS) || !Window->USE.C.TtyData)
     return tfalse;
@@ -1668,7 +1668,7 @@ byte TtyWriteString(window Window, uldat Len, CONST char *String) {
     }
 
     dirty_tty(X, Y, X, Y);
-    *Pos = HWATTR(Color, c);
+    *Pos = TCELL(Color, c);
 
     if (X == SizeX - 1) {
       if (*Flags & TTY_AUTOWRAP)
@@ -1686,10 +1686,10 @@ byte TtyWriteString(window Window, uldat Len, CONST char *String) {
  * this currently wraps at window width so it can write multiple rows at time.
  * does not move cursor position, nor interacts with wrapglitch.
  */
-byte TtyWriteHWAttr(window Window, dat x, dat y, uldat len, CONST hwattr *text) {
+byte TtyWriteTCell(window Window, dat x, dat y, uldat len, CONST tcell *text) {
   ldat left, max, chunk;
   ldat i;
-  hwattr *dst;
+  tcell *dst;
 
   if (!Window || !W_USE(Window, USECONTENTS) || !Window->USE.C.TtyData)
     return tfalse;

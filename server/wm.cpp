@@ -77,12 +77,12 @@ INLINE sbyte IsTabPosition(window Window, udat pos, sbyte isX) {
   return pos >= (start = TabStart(Window, isX)) ? pos - start < TabLen(Window, isX) ? 0 : 1 : -1;
 }
 
-static tpos WMFindBorderWindow(window W, dat u, dat v, byte Border, hwattr *PtrAttr) {
-  hwfont *BorderFont, Font;
+static tpos WMFindBorderWindow(window W, dat u, dat v, byte Border, tcell *PtrAttr) {
+  trune *BorderFont, Font;
   ldat k;
   uldat Attrib;
-  hwattr extra_u;
-  hwcol Color;
+  tcell extra_u;
+  tcolor Color;
   dat rev_u, rev_v;
   dat XWidth, YWidth;
   tpos Found = POS_SIDE_UP;
@@ -314,8 +314,8 @@ static tpos WMFindBorderWindow(window W, dat u, dat v, byte Border, hwattr *PtrA
     FlPressed = ttrue;
   }
 
-  extra_u = EncodeToHWAttrExtra((tpos)Found, (tternary)extra_u, (tbool)!Border, (tbool)FlPressed);
-  *PtrAttr = HWATTR3(Color, Font, extra_u);
+  extra_u = EncodeToTCellExtra((tpos)Found, (tternary)extra_u, (tbool)!Border, (tbool)FlPressed);
+  *PtrAttr = TCELL3(Color, Font, extra_u);
 
   return Found;
 }

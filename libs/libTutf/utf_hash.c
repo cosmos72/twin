@@ -6,9 +6,9 @@ typedef struct {
 } utf32_hash_entry;
 
 typedef struct {
-  TUTF_CONST hwfont *charset; /* charset -> utf32 conversion */
+  TUTF_CONST trune *charset; /* charset -> utf32 conversion */
   utf32_hash_entry *base;
-  hwfont cache_utf32;
+  trune cache_utf32;
   udat n_power_of_2;
   byte cache_ch;
   byte index[1 /* actually n_power_of_2 */];
@@ -31,21 +31,21 @@ typedef struct {
                                                                           ? 128                    \
                                                                           : (n) <= 256 ? 256 : -1)
 
-TUTF_INLINE byte utf32_hash(hwfont h, udat mod_power_of_2) {
+TUTF_INLINE byte utf32_hash(trune h, udat mod_power_of_2) {
   return (h ^ (h >> 6) ^ (h >> 12) ^ (h >> 18)) & (mod_power_of_2 - 1);
 }
 
-TUTF_INLINE hwfont utf32_get(TW_CONST utf32_hash_entry *e) {
-  return (hwfont)e->utf32[0] | ((hwfont)e->utf32[1] << 8) | ((hwfont)e->utf32[2] << 16);
+TUTF_INLINE trune utf32_get(TW_CONST utf32_hash_entry *e) {
+  return (trune)e->utf32[0] | ((trune)e->utf32[1] << 8) | ((trune)e->utf32[2] << 16);
 }
 
-TUTF_INLINE void utf32_set(utf32_hash_entry *e, hwfont utf32) {
+TUTF_INLINE void utf32_set(utf32_hash_entry *e, trune utf32) {
   e->utf32[0] = utf32 & 0xFF;
   e->utf32[1] = (utf32 >> 8) & 0xFF;
   e->utf32[2] = (utf32 >> 16) & 0xFF;
 }
 
-static void utf32_hash_insert_at(utf32_hash_table *table, byte offset, hwfont utf32, byte ch) {
+static void utf32_hash_insert_at(utf32_hash_table *table, byte offset, trune utf32, byte ch) {
   if (table != NULL) {
     utf32_hash_entry *e = table->base + offset;
     byte hashkey = utf32_hash(utf32, table->n_power_of_2);
@@ -64,7 +64,7 @@ TUTF_INLINE void *align_address(void *address) {
   return (void *)(((size_t)address + alignment_mask) & ~(size_t)alignment_mask);
 }
 
-static utf32_hash_table *utf32_hash_create(TUTF_CONST hwfont charset[0x100], udat n,
+static utf32_hash_table *utf32_hash_create(TUTF_CONST trune charset[0x100], udat n,
                                            udat n_power_of_2) {
   utf32_hash_table *table =
       calloc(1, (sizeof(utf32_hash_table) +
@@ -72,7 +72,7 @@ static utf32_hash_table *utf32_hash_create(TUTF_CONST hwfont charset[0x100], uda
                  + (n_power_of_2 - 1) + alignment_mask) &
                     ~(size_t)alignment_mask);
   if (table != NULL) {
-    hwfont utf32;
+    trune utf32;
     dat i;
     byte offset = 0;
 
@@ -92,7 +92,7 @@ static utf32_hash_table *utf32_hash_create(TUTF_CONST hwfont charset[0x100], uda
   return table;
 }
 
-static hwfont utf32_hash_search(utf32_hash_table *table, hwfont utf32, byte ascii_is_preserved) {
+static trune utf32_hash_search(utf32_hash_table *table, trune utf32, byte ascii_is_preserved) {
   if (table != NULL) {
     TUTF_CONST utf32_hash_entry *base, *e;
     byte ch, key0_visited;

@@ -75,11 +75,11 @@ byte Error(udat Code_Error) {
   return tfalse;
 }
 
-hwfont *CloneStr2HWFont(CONST char *s, uldat len) {
-  hwfont *temp, *save;
+trune *CloneStr2TRune(CONST char *s, uldat len) {
+  trune *temp, *save;
 
   if (s) {
-    if ((temp = save = (hwfont *)AllocMem((len + 1) * sizeof(hwfont)))) {
+    if ((temp = save = (trune *)AllocMem((len + 1) * sizeof(trune)))) {
       while (len--) {
         *temp++ = Tutf_CP437_to_UTF_32[(byte)*s++];
       }
@@ -349,7 +349,7 @@ byte SelectionStore(uldat Magic, CONST char MIME[MAX_MIMELEN], uldat Len, CONST 
   else
     newLen = Len;
 
-  if ((pad = (Sel->Magic == SEL_HWFONTMAGIC && (newLen & 1))))
+  if ((pad = (Sel->Magic == SEL_TRUNEMAGIC && (newLen & 1))))
     newLen++;
 
   if (Sel->Max < newLen) {
@@ -384,7 +384,7 @@ byte SelectionStore(uldat Magic, CONST char MIME[MAX_MIMELEN], uldat Len, CONST 
   return ttrue;
 }
 
-#define _SEL_MAGIC SEL_HWFONTMAGIC
+#define _SEL_MAGIC SEL_TRUNEMAGIC
 #if TW_IS_LITTLE_ENDIAN
 #define _SelAppendNL() SelectionAppend(2, "\n\0");
 #else
@@ -394,7 +394,7 @@ byte SelectionStore(uldat Magic, CONST char MIME[MAX_MIMELEN], uldat Len, CONST 
 byte SetSelectionFromWindow(window Window) {
   ldat y;
   uldat slen, len;
-  hwfont *sData, *Data;
+  trune *sData, *Data;
   byte ok = ttrue, w_useC = W_USE(Window, USECONTENTS);
 
   if (!(Window->State & WINDOW_DO_SEL))
@@ -425,7 +425,7 @@ byte SetSelectionFromWindow(window Window) {
   }
 
   if (w_useC) {
-    hwattr *hw;
+    tcell *hw;
 
     /* normalize negative coords */
     if (Window->XendSel < 0) {
@@ -442,7 +442,7 @@ byte SetSelectionFromWindow(window Window) {
       Window->XendSel = Window->WLogic - 1;
     }
 
-    if (!(sData = (hwfont *)AllocMem(sizeof(hwfont) * (slen = Window->WLogic))))
+    if (!(sData = (trune *)AllocMem(sizeof(trune) * (slen = Window->WLogic))))
       return tfalse;
 
     hw = Window->USE.C.Contents + (Window->YstSel + Window->USE.C.HSplit) * slen;
@@ -459,8 +459,8 @@ byte SetSelectionFromWindow(window Window) {
       len = slen;
       hw += Window->XstSel;
       while (len--)
-        *Data++ = HWFONT(*hw), hw++;
-      ok &= SelectionStore(_SEL_MAGIC, NULL, slen * sizeof(hwfont), (CONST char *)sData);
+        *Data++ = TRUNE(*hw), hw++;
+      ok &= SelectionStore(_SEL_MAGIC, NULL, slen * sizeof(trune), (CONST char *)sData);
     }
 
     if (hw >= Window->USE.C.TtyData->Split)
@@ -473,8 +473,8 @@ byte SetSelectionFromWindow(window Window) {
       Data = sData;
       len = slen;
       while (len--)
-        *Data++ = HWFONT(*hw), hw++;
-      ok &= SelectionAppend(slen * sizeof(hwfont), (CONST char *)sData);
+        *Data++ = TRUNE(*hw), hw++;
+      ok &= SelectionAppend(slen * sizeof(trune), (CONST char *)sData);
     }
 
     if (ok && Window->YendSel > Window->YstSel) {
@@ -483,8 +483,8 @@ byte SetSelectionFromWindow(window Window) {
       Data = sData;
       len = slen = Window->XendSel + 1;
       while (len--)
-        *Data++ = HWFONT(*hw), hw++;
-      ok &= SelectionAppend(slen * sizeof(hwfont), (CONST char *)sData);
+        *Data++ = TRUNE(*hw), hw++;
+      ok &= SelectionAppend(slen * sizeof(trune), (CONST char *)sData);
     }
     if (ok)
       NeedHW |= NEEDSelectionExport;
@@ -503,7 +503,7 @@ byte SetSelectionFromWindow(window Window) {
       else
         slen = Min2(Row->Len, (uldat)Window->XendSel + 1) - Min2(Row->Len, (uldat)Window->XstSel);
 
-      ok &= SelectionStore(_SEL_MAGIC, NULL, slen * sizeof(hwfont),
+      ok &= SelectionStore(_SEL_MAGIC, NULL, slen * sizeof(trune),
                            (CONST char *)(Row->Text + Min2(Row->Len, (uldat)Window->XstSel)));
     } else
       ok &= SelectionStore(_SEL_MAGIC, NULL, 0, NULL);
@@ -513,13 +513,13 @@ byte SetSelectionFromWindow(window Window) {
 
     for (y = Window->YstSel + 1; ok && y < Window->YendSel; y++) {
       if ((Row = Act(FindRow, Window)(Window, y)) && Row->Text)
-        ok &= SelectionAppend(Row->Len * sizeof(hwfont), (CONST char *)Row->Text);
+        ok &= SelectionAppend(Row->Len * sizeof(trune), (CONST char *)Row->Text);
       ok &= _SelAppendNL();
     }
     if (Window->YendSel > Window->YstSel) {
       if (Window->XendSel >= 0 && (Row = Act(FindRow, Window)(Window, Window->YendSel)) &&
           Row->Text)
-        ok &= SelectionAppend(Min2(Row->Len, (uldat)Window->XendSel + 1) * sizeof(hwfont),
+        ok &= SelectionAppend(Min2(Row->Len, (uldat)Window->XendSel + 1) * sizeof(trune),
                               (CONST char *)Row->Text);
       if (!Row || !Row->Text || Row->Len <= (uldat)Window->XendSel)
         ok &= _SelAppendNL();
@@ -805,9 +805,9 @@ void FreeStringVec(char **cmd) {
  * "a b" is the string `a b' NOT the two strings `"a' `b"'
  * (same for single quotes, backslashes, ...)
  */
-char **TokenizeHWFontVec(uldat len, hwfont *s) {
+char **TokenizeTRuneVec(uldat len, trune *s) {
   char **cmd = NULL, *buf, *v;
-  hwfont c;
+  trune c;
   uldat save_len, n = 0, i;
 
   /* skip initial spaces */
@@ -1243,7 +1243,7 @@ void *RemoveConst(CONST void *x) {
 
 /*
  * encode POS_* position, position detail, active flag, pressed flag,
- * into 'extra' byte field inside hwattr
+ * into 'extra' byte field inside tcell
  *
  * not all bits are preserved... this is just
  * a fair effort that covers most cases
@@ -1251,7 +1251,7 @@ void *RemoveConst(CONST void *x) {
  * this is used to decide which pseudo-graphic cell to load
  * from hw_gfx_themes/<*>.xpm theme files.
  */
-hwattr EncodeToHWAttrExtra(tpos pos, tternary detail, tbool active, tbool pressed) {
+tcell EncodeToTCellExtra(tpos pos, tternary detail, tbool active, tbool pressed) {
   enum { pitch = 15 };
   byte o12 = active ? pressed ? 2 : 1 : 0;
   byte sides = (4 + o12) * pitch;

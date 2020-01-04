@@ -17,7 +17,7 @@
 
 struct s_sB { /* for SCREENFL_USEBG screens */
   dat BgWidth, BgHeight;
-  hwattr *Bg;
+  tcell *Bg;
 };
 
 struct s_screen {
@@ -38,7 +38,7 @@ struct s_screen {
   fn_hook Hook, *WhereHook;
   fn_hook MapUnMapHook;
   msg MapQueueMsg;
-  hwattr USE_Fill;
+  tcell USE_Fill;
   union {
     struct s_sB B;
     struct s_wE E;
@@ -54,7 +54,7 @@ struct s_screen {
 struct s_fn_screen {
   uldat Magic, Size, Used;
   screen (*Create)(fn_screen, dat NameLen, CONST char *Name, dat BgWidth, dat BgHeight,
-                   CONST hwattr *Bg);
+                   CONST tcell *Bg);
   void (*Insert)(screen, all, screen Prev, screen Next);
   void (*Remove)(screen);
   void (*Delete)(screen);
@@ -65,7 +65,7 @@ struct s_fn_screen {
   widget (*FindWidgetAt)(screen Parent, dat X, dat Y);
   gadget (*FindGadgetByCode)(screen Parent, udat Code);
   void (*SetXY)(screen, dat X, dat Y);
-  void (*SetFill)(screen, hwattr Fill);
+  void (*SetFill)(screen, tcell Fill);
   widget (*Focus)(screen);
   widget (*KbdFocus)(screen);
   void (*Map)(screen, widget Parent);
@@ -76,16 +76,16 @@ struct s_fn_screen {
   void (*Own)(screen, msgport);
   void (*DisOwn)(screen);
   void (*RecursiveDelete)(screen, msgport);
-  void (*Expose)(screen, dat XWidth, dat YWidth, dat Left, dat Up, CONST char *, CONST hwfont *,
-                 CONST hwattr *);
+  void (*Expose)(screen, dat XWidth, dat YWidth, dat Left, dat Up, CONST char *, CONST trune *,
+                 CONST tcell *);
   byte (*InstallHook)(screen, fn_hook, fn_hook *Where);
   void (*RemoveHook)(screen, fn_hook, fn_hook *Where);
   /* screen */
   fn_widget Fn_Widget;
   menu (*FindMenu)(screen);
   screen (*Find)(dat j);
-  screen (*CreateSimple)(fn_screen, dat NameLen, CONST char *Name, hwattr Bg);
-  void (*BgImage)(screen, dat BgWidth, dat BgHeight, CONST hwattr *Bg);
+  screen (*CreateSimple)(fn_screen, dat NameLen, CONST char *Name, tcell Bg);
+  void (*BgImage)(screen, dat BgWidth, dat BgHeight, CONST tcell *Bg);
   void (*DrawMenu)(screen, dat Xstart, dat Xend);
   void (*ActivateMenu)(screen, menuitem, byte ByMouse);
   void (*DeActivateMenu)(screen);

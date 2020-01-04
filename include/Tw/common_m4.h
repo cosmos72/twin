@@ -50,7 +50,7 @@ extern void *Tw_CloneMem(TW_CONST void *, size_t);
 /** custom strdup() function */
 extern char *Tw_CloneStr(TW_CONST char *);
 /** custom byte-to-unicode conversion + strdup() function */
-extern hwfont *Tw_CloneStr2HWFont(TW_CONST char *, size_t);
+extern trune *Tw_CloneStr2TRune(TW_CONST char *, size_t);
 
 
 #define Tw_CopyStr(From,To)		strcpy(To, From)
@@ -82,12 +82,12 @@ tmsgport Tw_OwnerWidget(tdisplay TwD, twidget W);
 twidget Tw_O_PrevWidget(tdisplay TwD, twidget W);
 twidget Tw_O_NextWidget(tdisplay TwD, twidget W);
 
-void Tw_SetFillWidget(tdisplay TwD, twidget W,hwattr Fill);
-void Tw_Draw2Widget(tdisplay TwD, twidget W,dat XWidth,dat YWidth,dat Left,dat Up,dat Pitch,TW_CONST char *Text,TW_CONST hwfont *Font,TW_CONST hwattr *Attr);
+void Tw_SetFillWidget(tdisplay TwD, twidget W,tcell Fill);
+void Tw_Draw2Widget(tdisplay TwD, twidget W,dat XWidth,dat YWidth,dat Left,dat Up,dat Pitch,TW_CONST char *Text,TW_CONST trune *Font,TW_CONST tcell *Attr);
 
 void Tw_DrawTextWidget(tdisplay TwD, twidget W,dat XWidth,dat YWidth,dat Left,dat Up,dat Pitch,TW_CONST char *Text);
-void Tw_DrawHWFontWidget(tdisplay TwD, twidget W,dat XWidth,dat YWidth,dat Left,dat Up,dat Pitch,TW_CONST hwfont *Font);
-void Tw_DrawHWAttrWidget(tdisplay TwD, twidget W,dat XWidth,dat YWidth,dat Left,dat Up,dat Pitch,TW_CONST hwattr *Attr);
+void Tw_DrawTRuneWidget(tdisplay TwD, twidget W,dat XWidth,dat YWidth,dat Left,dat Up,dat Pitch,TW_CONST trune *Font);
+void Tw_DrawTCellWidget(tdisplay TwD, twidget W,dat XWidth,dat YWidth,dat Left,dat Up,dat Pitch,TW_CONST tcell *Attr);
 
 
 void Tw_SetPressedGadget(tdisplay TwD, tgadget Gadget,byte on);
@@ -102,9 +102,9 @@ tgroup Tw_GroupGadget(tdisplay TwD, tgadget Gadget);
 tgadget Tw_G_PrevGadget(tdisplay TwD, tgadget Gadget);
 tgadget Tw_G_NextGadget(tdisplay TwD, tgadget Gadget);
 
-void Tw_WriteHWFontGadget(tdisplay TwD, tgadget Gadget,dat XWidth,dat YWidth,TW_CONST hwfont * HWFont,dat Left,dat Up);
-void Tw_SetHWFontGadget(tdisplay TwD, tgadget Gadget,dat XWidth,dat YWidth,TW_CONST hwfont * HWFont,dat Left,dat Up);
-void Tw_SetHWFontsGadget(tdisplay TwD, tgadget Gadget,byte bitmap,dat XWidth,dat YWidth,TW_CONST hwfont * HWFont,dat Left,dat Up);
+void Tw_WriteTRuneGadget(tdisplay TwD, tgadget Gadget,dat XWidth,dat YWidth,TW_CONST trune * TRune,dat Left,dat Up);
+void Tw_SetTRuneGadget(tdisplay TwD, tgadget Gadget,dat XWidth,dat YWidth,TW_CONST trune * TRune,dat Left,dat Up);
+void Tw_SetTRunesGadget(tdisplay TwD, tgadget Gadget,byte bitmap,dat XWidth,dat YWidth,TW_CONST trune * TRune,dat Left,dat Up);
 
 tmenuitem Tw_Create4MenuRow(tdisplay TwD, twindow Window,udat Code,byte Flags,ldat Len,TW_CONST char *Text);
 tmenuitem Tw_Create4MenuMenuItem(tdisplay TwD, tobj Parent,twindow Window,byte Flags,dat Len,TW_CONST char *Name);

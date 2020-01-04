@@ -22,4 +22,4 @@ static byte X11_CanDragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat
 static void X11_DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp);
 static int X11_Die(Display *d);
 static Tutf_function X11_UTF_32_to_charset_function(CONST char *charset);
-static hwfont X11_UTF_32_to_UCS_2(hwfont c);
+static trune X11_UTF_32_to_UCS_2(trune c);

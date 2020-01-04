@@ -199,7 +199,7 @@ Bold|High    return COL_HIGH;
                   case 'v': *s++ = '\v'; break;
                   case '0': *s++ = '\0'; break;
                   case 'u':
-                /* FIXME: unicode is ok, but s is a (char *), not (hwfont *) ! */
+                /* FIXME: unicode is ok, but s is a (char *), not (trune *) ! */
                 if (IS_HEXDIGIT(p[1]) &&
                     IS_HEXDIGIT(p[2]) &&
                     IS_HEXDIGIT(p[3]) &&

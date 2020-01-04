@@ -246,7 +246,7 @@ static node RCFindMouseBind(ldat code, ldat ctx) {
   return NULL;
 }
 
-hwfont *RCFindBorderPattern(window W, byte Border) {
+trune *RCFindBorderPattern(window W, byte Border) {
   node l;
 
   if (!W)
@@ -256,7 +256,7 @@ hwfont *RCFindBorderPattern(window W, byte Border) {
     if ((l->x.f.flag == FL_INACTIVE) == Border && wildcard_match(l->name, W->Name))
       break;
   }
-  return W->BorderPattern[Border] = l ? (hwfont *)l->data : NULL;
+  return W->BorderPattern[Border] = l ? (trune *)l->data : NULL;
 }
 
 INLINE void RCRemove(run **p) {
@@ -1027,8 +1027,8 @@ static byte USEDefaultCommonMenu(void) {
   window W;
   row Row;
 
-  if (!(Menu = Do(Create, Menu)(FnMenu, Ext(WM, MsgPort), (hwcol)0, (hwcol)0, (hwcol)0, (hwcol)0,
-                                (hwcol)0, (hwcol)0, ttrue)))
+  if (!(Menu = Do(Create, Menu)(FnMenu, Ext(WM, MsgPort), (tcolor)0, (tcolor)0, (tcolor)0,
+                                (tcolor)0, (tcolor)0, (tcolor)0, ttrue)))
     return tfalse;
 
   if ((W = Win4Menu(Menu)) && (Item = Item4Menu(Menu, W, ttrue, 8, " Window ")) &&

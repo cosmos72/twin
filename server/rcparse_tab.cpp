@@ -1670,7 +1670,7 @@ yyreduce:
     break;
 
   case 43:
-    { (yyval.val) = (hwcol) (yyvsp[0].val); }
+    { (yyval.val) = (tcolor) (yyvsp[0].val); }
     break;
 
   case 44:
@@ -1686,7 +1686,7 @@ yyreduce:
     break;
 
   case 47:
-    { (yyval.val) = (hwcol)0; }
+    { (yyval.val) = (tcolor)0; }
     break;
 
   case 48:

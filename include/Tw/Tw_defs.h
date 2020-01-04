@@ -38,16 +38,16 @@
 #define TW_MAX_ARGS_N 20
 
 /* Macros for HW VGA (not ANSI!) colors */
-#define BLACK ((hwcol)0)
-#define BLUE ((hwcol)1)
-#define GREEN ((hwcol)2)
+#define BLACK ((tcolor)0)
+#define BLUE ((tcolor)1)
+#define GREEN ((tcolor)2)
 #define CYAN (BLUE | GREEN)
-#define RED ((hwcol)4)
+#define RED ((tcolor)4)
 #define MAGENTA (BLUE | RED)
 #define YELLOW (GREEN | RED)
 #define WHITE (BLUE | GREEN | RED)
-#define HIGH ((hwcol)8)
-#define MAXCOL ((hwcol)0xF)
+#define HIGH ((tcolor)8)
+#define MAXCOL ((tcolor)0xF)
 
 #define ANSI2VGA(col) (((col)&0x1 ? RED : 0) | ((col)&0x2 ? GREEN : 0) | ((col)&0x4 ? BLUE : 0))
 #define VGA2ANSI(col) ANSI2VGA(col)

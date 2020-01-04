@@ -3,13 +3,13 @@
 #include "algo.h"
 
 /* this can stay static, X11_FlushHW() is not reentrant */
-static hwcol _col;
+static tcolor _col;
 
 INLINE void X11_Mogrify(dat x, dat y, ldat len) {
-  hwattr *V, *oV;
-  hwcol col;
+  tcell *V, *oV;
+  tcolor col;
   udat buflen = 0;
-  hwfont f;
+  trune f;
   XChar16 buf[TW_SMALLBUFF];
   int xbegin, ybegin;
 
@@ -35,8 +35,8 @@ INLINE void X11_Mogrify(dat x, dat y, ldat len) {
   V = Video + x + y * (ldat)DisplayWidth;
   oV = OldVideo + x + y * (ldat)DisplayWidth;
 
-  for (_col = ~HWCOL(*V); len; x++, V++, oV++, len--) {
-    col = HWCOL(*V);
+  for (_col = ~TCOLOR(*V); len; x++, V++, oV++, len--) {
+    col = TCOLOR(*V);
     if (buflen && (col != _col || (ValidOldVideo && *V == *oV) || buflen == TW_SMALLBUFF)) {
       XDRAW(_col, buf, buflen);
       buflen = 0;
@@ -46,7 +46,7 @@ INLINE void X11_Mogrify(dat x, dat y, ldat len) {
         xbegin = (x - xhw_startx) * (ldat)xwfont;
         _col = col;
       }
-      f = xUTF_32_to_charset(HWFONT(*V));
+      f = xUTF_32_to_charset(TRUNE(*V));
       buf[buflen++] = RawToXChar16(f);
     }
   }

@@ -40,12 +40,12 @@ static void X11_HideCursor(dat x, dat y) {
   int xbegin = (x - xhw_startx) * xwfont,
       ybegin = (y - xhw_starty) * xhfont; /* needed by XDRAW_ANY */
 
-  hwattr V = (x >= 0 && x < DisplayWidth && y >= 0 && y < DisplayHeight)
-                 ? Video[x + y * (ldat)DisplayWidth]
-                 : HWATTR(COL(HIGH | WHITE, BLACK), ' ');
-  hwcol col = HWCOL(V);
-  hwattr extra = HWEXTRA(V);
-  hwfont f = xUTF_32_to_charset(HWFONT(V));
+  tcell V = (x >= 0 && x < DisplayWidth && y >= 0 && y < DisplayHeight)
+                ? Video[x + y * (ldat)DisplayWidth]
+                : TCELL(COL(HIGH | WHITE, BLACK), ' ');
+  tcolor col = TCOLOR(V);
+  tcell extra = HWEXTRA(V);
+  trune f = xUTF_32_to_charset(TRUNE(V));
 
   XChar16 c = RawToXChar16(f);
 
@@ -53,37 +53,37 @@ static void X11_HideCursor(dat x, dat y) {
 }
 
 static void X11_ShowCursor(uldat type, dat x, dat y) {
-  hwattr V = (x >= 0 && x < DisplayWidth && y >= 0 && y < DisplayHeight)
-                 ? Video[x + y * (ldat)DisplayWidth]
-                 : HWATTR(COL(HIGH | WHITE, BLACK), ' ');
+  tcell V = (x >= 0 && x < DisplayWidth && y >= 0 && y < DisplayHeight)
+                ? Video[x + y * (ldat)DisplayWidth]
+                : TCELL(COL(HIGH | WHITE, BLACK), ' ');
 
   ldat xbegin = (x - xhw_startx) * xwfont;
   ldat ybegin = (y - xhw_starty) * xhfont;
 
   if (type & 0x10) {
     /* soft cursor */
-    hwcol v = (HWCOL(V) | ((type >> 16) & 0xff)) ^ ((type >> 8) & 0xff);
-    hwfont f;
+    tcolor v = (TCOLOR(V) | ((type >> 16) & 0xff)) ^ ((type >> 8) & 0xff);
+    trune f;
     XChar16 c;
-    if ((type & 0x20) && (HWCOL(V) & COL(0, WHITE)) == (v & COL(0, WHITE)))
+    if ((type & 0x20) && (TCOLOR(V) & COL(0, WHITE)) == (v & COL(0, WHITE)))
       v ^= COL(0, WHITE);
     if ((type & 0x40) && ((COLFG(v) & WHITE) == (COLBG(v) & WHITE)))
       v ^= COL(WHITE, 0);
-    f = xUTF_32_to_charset(HWFONT(V));
+    f = xUTF_32_to_charset(TRUNE(V));
     c = RawToXChar16(f);
     XDRAW_ANY(&c, 1, v, HWEXTRA(V));
   } else if (type & 0xF) {
     /* VGA hw-like cursor */
 
     /* doesn't work as expected on paletted visuals... */
-    unsigned long fg = xcol[COLFG(HWCOL(V)) ^ COLBG(HWCOL(V))];
+    unsigned long fg = xcol[COLFG(TCOLOR(V)) ^ COLBG(TCOLOR(V))];
 
     udat i = xhfont * ((type & 0xF) - NOCURSOR) / (SOLIDCURSOR - NOCURSOR);
 
     if (xsgc.foreground != fg) {
       XSetForeground(xdisplay, xgc, xsgc.foreground = fg);
 #if HW_X_DRIVER == HW_XFT
-      xforeground = xftcolors[COLFG(HWCOL(V)) ^ COLBG(HWCOL(V))];
+      xforeground = xftcolors[COLFG(TCOLOR(V)) ^ COLBG(TCOLOR(V))];
 #endif
     }
 
@@ -223,17 +223,17 @@ static void X11_SelectionNotify_X11(uldat ReqPrivate, uldat Magic, CONST char MI
   } else if (XReq(XReqCount).target == XA_STRING) {
     uldat l;
     byte *_Data = NULL, *d;
-    CONST hwfont *s;
+    CONST trune *s;
 
     /* X11 selection contains UTF-16 */
-    if (Magic == SEL_HWFONTMAGIC) {
+    if (Magic == SEL_TRUNEMAGIC) {
       if ((_Data = d = (byte *)AllocMem(Len))) {
-        s = (CONST hwfont *)Data;
+        s = (CONST trune *)Data;
         /* FIXME: this is rough. encode to UTF-8 instead */
         for (l = Len; l; l--)
           *d++ = Tutf_UTF_32_to_CP437(*s++);
         Data = (char *)_Data;
-        Len /= sizeof(hwfont);
+        Len /= sizeof(trune);
       } else
         Len = 0;
     }
@@ -241,7 +241,7 @@ static void X11_SelectionNotify_X11(uldat ReqPrivate, uldat Magic, CONST char MI
                     PropModeReplace, (CONST byte *)Data, Len);
     ev.xselection.property = XReq(XReqCount).property;
 
-    if (Magic == SEL_HWFONTMAGIC && _Data)
+    if (Magic == SEL_TRUNEMAGIC && _Data)
       FreeMem(_Data);
   }
   XSendEvent(xdisplay, XReq(XReqCount).requestor, False, 0, &ev);
@@ -462,7 +462,7 @@ static Tutf_function X11_UTF_32_to_charset_function(CONST char *charset) {
 }
 #endif
 
-static hwfont X11_UTF_32_to_UCS_2(hwfont c) {
+static trune X11_UTF_32_to_UCS_2(trune c) {
   if ((c & 0x1FFE00) == 0xF000)
     /* private use codepoints. for compatibility, treat as "direct-to-font" zone */
     c &= 0x01FF;

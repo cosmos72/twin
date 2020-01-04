@@ -559,8 +559,8 @@ byte ResizeDisplay(void) {
     FreeMem(OldVideo);
     OldVideo = NULL;
   } else if ((NeedOldVideo && !OldVideo) || change) {
-    if (!(OldVideo = (hwattr *)ReAllocMem(OldVideo, (ldat)TryDisplayWidth * TryDisplayHeight *
-                                                        sizeof(hwattr)))) {
+    if (!(OldVideo = (tcell *)ReAllocMem(OldVideo, (ldat)TryDisplayWidth * TryDisplayHeight *
+                                                       sizeof(tcell)))) {
       printk("twin: out of memory!\n");
       Quit(1);
     }
@@ -571,8 +571,7 @@ byte ResizeDisplay(void) {
     All->DisplayWidth = DisplayWidth = TryDisplayWidth;
     All->DisplayHeight = DisplayHeight = TryDisplayHeight;
 
-    if (!(Video =
-              (hwattr *)ReAllocMem(Video, (ldat)DisplayWidth * DisplayHeight * sizeof(hwattr))) ||
+    if (!(Video = (tcell *)ReAllocMem(Video, (ldat)DisplayWidth * DisplayHeight * sizeof(tcell))) ||
         !(ChangedVideo =
               (dat(*)[2][2])ReAllocMem(ChangedVideo, (ldat)DisplayHeight * sizeof(dat) * 4)) ||
         !(saveChangedVideo =
@@ -764,7 +763,7 @@ void SelectionImport(void) {
 INLINE void DiscardBlinkVideo(void) {
   ldat i;
   uldat start, len;
-  hwattr *V;
+  tcell *V;
 
   for (i = 0; i < (ldat)DisplayHeight * 2; i++) {
     start = (uldat)ChangedVideo[i >> 1][i & 1][0];
@@ -774,7 +773,7 @@ INLINE void DiscardBlinkVideo(void) {
       start += (i >> 1) * (ldat)DisplayWidth;
 
       for (V = &Video[start]; len; V++, len--)
-        *V &= ~HWATTR(COL(0, HIGH), (byte)0);
+        *V &= ~TCELL(COL(0, HIGH), (byte)0);
     }
   }
 }
@@ -839,7 +838,7 @@ INLINE void SyncOldVideo(void) {
 
       ChangedVideo[i >> 1][i & 1][0] = -1;
 
-      CopyMem(Video + start, OldVideo + start, len * sizeof(hwattr));
+      CopyMem(Video + start, OldVideo + start, len * sizeof(tcell));
     }
   }
 }
@@ -952,8 +951,8 @@ void SyntheticKey(widget W, udat Code, udat ShiftFlags, byte Len, CONST char *Se
   }
 }
 
-void FillVideo(dat Xstart, dat Ystart, dat Xend, dat Yend, hwattr Attrib) {
-  hwattr *pos;
+void FillVideo(dat Xstart, dat Ystart, dat Xend, dat Yend, tcell Attrib) {
+  tcell *pos;
   udat _xc, xc, yc, delta;
 
   if (Xstart > Xend || Xstart >= DisplayWidth || Xend < 0 || Ystart > Yend ||
@@ -978,8 +977,8 @@ void FillVideo(dat Xstart, dat Ystart, dat Xend, dat Yend, hwattr Attrib) {
   }
 }
 
-void FillOldVideo(dat Xstart, dat Ystart, dat Xend, dat Yend, hwattr Attrib) {
-  hwattr *pos;
+void FillOldVideo(dat Xstart, dat Ystart, dat Xend, dat Yend, tcell Attrib) {
+  tcell *pos;
   udat _xc, xc, yc, delta;
 
   if (Xstart > Xend || Xstart >= DisplayWidth || Xend < 0 || Ystart > Yend ||
@@ -1207,19 +1206,19 @@ byte InitTransUser(void) {
 
   if (ioctl(0, SCRNMAP_IOCTL, map) == 0) {
 
-    if (sizeof(SCRNMAP_T) == sizeof(hwfont))
-      CopyMem(map + 0x80, All->Gtranslations[USER_MAP] + 0x80, sizeof(hwfont) * 0x80);
+    if (sizeof(SCRNMAP_T) == sizeof(trune))
+      CopyMem(map + 0x80, All->Gtranslations[USER_MAP] + 0x80, sizeof(trune) * 0x80);
     else
       for (c = 0x80; c < 0x100; c++)
-        All->Gtranslations[USER_MAP][c] = (hwfont)map[c];
+        All->Gtranslations[USER_MAP][c] = (trune)map[c];
   } else
 #endif
   {
     /* if nothing better is available, initialize to direct-to-font translation */
     for (c = 0x80; c < 0x100; c++)
-      All->Gtranslations[USER_MAP][c] = (hwfont)c | 0xf000;
+      All->Gtranslations[USER_MAP][c] = (trune)c | 0xf000;
   }
   for (c = 0; c < 0x80; c++)
-    All->Gtranslations[USER_MAP][c] = (hwfont)c;
+    All->Gtranslations[USER_MAP][c] = (trune)c;
   return ttrue;
 }

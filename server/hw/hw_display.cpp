@@ -168,8 +168,8 @@ static void display_HelperH(msgport Port) {
   display_HandleEvent(Port->AttachHW);
 }
 
-INLINE void display_DrawHWAttr(dat x, dat y, udat buflen, hwattr *buf) {
-  display_CreateMsg(DPY_DrawHWAttr, buflen * sizeof(hwattr));
+INLINE void display_DrawTCell(dat x, dat y, udat buflen, tcell *buf) {
+  display_CreateMsg(DPY_DrawTCell, buflen * sizeof(tcell));
   ev->X = x;
   ev->Y = y;
   ev->Data = buf;
@@ -177,9 +177,9 @@ INLINE void display_DrawHWAttr(dat x, dat y, udat buflen, hwattr *buf) {
 }
 
 INLINE void display_Mogrify(dat x, dat y, uldat len) {
-  hwattr *V, *oV;
+  tcell *V, *oV;
   uldat buflen = 0;
-  hwattr *buf;
+  tcell *buf;
   dat xbegin = x, ybegin = y;
 
   V = Video + x + y * (ldat)DisplayWidth;
@@ -187,7 +187,7 @@ INLINE void display_Mogrify(dat x, dat y, uldat len) {
 
   for (; len; x++, V++, oV++, len--) {
     if (buflen && ValidOldVideo && *V == *oV) {
-      display_DrawHWAttr(xbegin, ybegin, buflen, buf);
+      display_DrawTCell(xbegin, ybegin, buflen, buf);
       buflen = 0;
     }
     if (!ValidOldVideo || *V != *oV) {
@@ -199,7 +199,7 @@ INLINE void display_Mogrify(dat x, dat y, uldat len) {
     }
   }
   if (buflen)
-    display_DrawHWAttr(xbegin, ybegin, buflen, buf);
+    display_DrawTCell(xbegin, ybegin, buflen, buf);
 }
 
 INLINE void display_MoveToXY(udat x, udat y) {

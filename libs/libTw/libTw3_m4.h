@@ -90,9 +90,9 @@
     }
     break;
 
-  case order_SetHWFontTranslation:
+  case order_SetTRuneTranslation:
     switch (n) {
-      case 1: L = (0x80) * sizeof(hwfont); break;
+      case 1: L = (0x80) * sizeof(trune); break;
     }
     break;
 
@@ -113,8 +113,8 @@
   case order_DrawWidget:
     switch (n) {
       case 6: L = (a[2]._*a[3]._) * sizeof(char); break;
-      case 7: L = (a[2]._*a[3]._) * sizeof(hwfont); break;
-      case 8: L = (a[2]._*a[3]._) * sizeof(hwattr); break;
+      case 7: L = (a[2]._*a[3]._) * sizeof(trune); break;
+      case 8: L = (a[2]._*a[3]._) * sizeof(tcell); break;
     }
     break;
 
@@ -150,16 +150,16 @@
       case 5: L = (a[2]._*a[3]._) * sizeof(char); break;
     }
     break;
-  case order_WriteHWFontsGadget:
+  case order_WriteTRunesGadget:
     switch (n) {
-      case 5: L = (a[2]._*a[3]._) * sizeof(hwfont); break;
+      case 5: L = (a[2]._*a[3]._) * sizeof(trune); break;
     }
     break;
 
   case order_CreateWindow:
     switch (n) {
       case 2: L = (a[1]._) * sizeof(char); break;
-      case 3: L = (a[1]._) * sizeof(hwcol); break;
+      case 3: L = (a[1]._) * sizeof(tcolor); break;
     }
     break;
 
@@ -174,14 +174,14 @@
       case 3: L = (a[2]._) * sizeof(char); break;
     }
     break;
-  case order_WriteHWFontWindow:
+  case order_WriteTRuneWindow:
     switch (n) {
-      case 3: L = (a[2]._) * sizeof(hwfont); break;
+      case 3: L = (a[2]._) * sizeof(trune); break;
     }
     break;
-  case order_WriteHWAttrWindow:
+  case order_WriteTCellWindow:
     switch (n) {
-      case 5: L = (a[4]._) * sizeof(hwattr); break;
+      case 5: L = (a[4]._) * sizeof(tcell); break;
     }
     break;
 
@@ -224,7 +224,7 @@
   case order_SetInfoMenu:
     switch (n) {
       case 4: L = (a[3]._) * sizeof(char); break;
-      case 5: L = (a[3]._) * sizeof(hwcol); break;
+      case 5: L = (a[3]._) * sizeof(tcolor); break;
     }
     break;
 
@@ -241,7 +241,7 @@
 
   case order_BgImageScreen:
     switch (n) {
-      case 4: L = (a[2]._*a[3]._) * sizeof(hwattr); break;
+      case 4: L = (a[2]._*a[3]._) * sizeof(tcell); break;
     }
     break;
 

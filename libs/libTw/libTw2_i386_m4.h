@@ -151,13 +151,13 @@ Tw_SetFontTranslation:
 
 
 	.align 4
-.globl Tw_SetHWFontTranslation
-	.type	 Tw_SetHWFontTranslation,@function
-Tw_SetHWFontTranslation:
+.globl Tw_SetTRuneTranslation
+	.type	 Tw_SetTRuneTranslation,@function
+Tw_SetTRuneTranslation:
 	pushl $9
 	jmp _Tw_i386_call_2
-.L_SetHWFontTranslation:
-	.size	 Tw_SetHWFontTranslation,.L_SetHWFontTranslation-Tw_SetHWFontTranslation
+.L_SetTRuneTranslation:
+	.size	 Tw_SetTRuneTranslation,.L_SetTRuneTranslation-Tw_SetTRuneTranslation
 
 
 
@@ -374,13 +374,13 @@ Tw_WriteTextsGadget:
 
 
 	.align 4
-.globl Tw_WriteHWFontsGadget
-	.type	 Tw_WriteHWFontsGadget,@function
-Tw_WriteHWFontsGadget:
+.globl Tw_WriteTRunesGadget
+	.type	 Tw_WriteTRunesGadget,@function
+Tw_WriteTRunesGadget:
 	pushl $30
 	jmp _Tw_i386_call_2
-.L_WriteHWFontsGadget:
-	.size	 Tw_WriteHWFontsGadget,.L_WriteHWFontsGadget-Tw_WriteHWFontsGadget
+.L_WriteTRunesGadget:
+	.size	 Tw_WriteTRunesGadget,.L_WriteTRunesGadget-Tw_WriteTRunesGadget
 
 
 
@@ -426,23 +426,23 @@ Tw_WriteStringWindow:
 
 
 	.align 4
-.globl Tw_WriteHWFontWindow
-	.type	 Tw_WriteHWFontWindow,@function
-Tw_WriteHWFontWindow:
+.globl Tw_WriteTRuneWindow
+	.type	 Tw_WriteTRuneWindow,@function
+Tw_WriteTRuneWindow:
 	pushl $35
 	jmp _Tw_i386_call_2
-.L_WriteHWFontWindow:
-	.size	 Tw_WriteHWFontWindow,.L_WriteHWFontWindow-Tw_WriteHWFontWindow
+.L_WriteTRuneWindow:
+	.size	 Tw_WriteTRuneWindow,.L_WriteTRuneWindow-Tw_WriteTRuneWindow
 
 
 	.align 4
-.globl Tw_WriteHWAttrWindow
-	.type	 Tw_WriteHWAttrWindow,@function
-Tw_WriteHWAttrWindow:
+.globl Tw_WriteTCellWindow
+	.type	 Tw_WriteTCellWindow,@function
+Tw_WriteTCellWindow:
 	pushl $36
 	jmp _Tw_i386_call_2
-.L_WriteHWAttrWindow:
-	.size	 Tw_WriteHWAttrWindow,.L_WriteHWAttrWindow-Tw_WriteHWAttrWindow
+.L_WriteTCellWindow:
+	.size	 Tw_WriteTCellWindow,.L_WriteTCellWindow-Tw_WriteTCellWindow
 
 
 

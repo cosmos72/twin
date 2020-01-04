@@ -21,7 +21,7 @@ struct s_menu {
   menu Prev, Next; /* in the same msgport */
   msgport MsgPort;
   /* menu */
-  hwcol ColItem, ColSelect, ColDisabled, ColSelectDisabled, ColShtCut, ColSelShtCut;
+  tcolor ColItem, ColSelect, ColDisabled, ColSelectDisabled, ColShtCut, ColSelShtCut;
   byte CommonItems;
   byte FlagDefColInfo;
   row Info;
@@ -29,15 +29,16 @@ struct s_menu {
 };
 struct s_fn_menu {
   uldat Magic, Size, Used;
-  menu (*Create)(fn_menu, msgport MsgPort, hwcol ColItem, hwcol ColSelect, hwcol ColDisabled,
-                 hwcol ColSelectDisabled, hwcol ColShtCut, hwcol ColSelShtCut, byte FlagDefColInfo);
+  menu (*Create)(fn_menu, msgport MsgPort, tcolor ColItem, tcolor ColSelect, tcolor ColDisabled,
+                 tcolor ColSelectDisabled, tcolor ColShtCut, tcolor ColSelShtCut,
+                 byte FlagDefColInfo);
   void (*Insert)(menu, msgport, menu Prev, menu Next);
   void (*Remove)(menu);
   void (*Delete)(menu);
   void (*ChangeField)(menu, udat field, uldat CLEARMask, uldat XORMask);
   /* menu */
   fn_obj Fn_Obj;
-  row (*SetInfo)(menu, byte Flags, ldat Len, CONST char *Text, CONST hwcol *ColText);
+  row (*SetInfo)(menu, byte Flags, ldat Len, CONST char *Text, CONST tcolor *ColText);
   menuitem (*FindItem)(menu, dat i);
   menuitem (*GetSelectedItem)(menu);
   menuitem (*RecursiveGetSelectedItem)(menu, dat *depth);

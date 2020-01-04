@@ -83,8 +83,8 @@ TT_INLINE void X11_Mogrify(Window w, ttshort x, ttshort y, ttattr *Text, ttattr 
     V = Text;
     oV = OldText;
     
-    for (_col = ~HWCOL(*V); len; x++, V++, oV++, len--) {
-	col = HWCOL(*V);
+    for (_col = ~TCOLOR(*V); len; x++, V++, oV++, len--) {
+	col = TCOLOR(*V);
 	if (buflen && (col != _col || (ValidOldText && *V == *oV) || buflen == TT_SMALLBUFF)) {
 	    XDRAW(_col, buf, buflen);
 	    buflen = 0;
@@ -94,7 +94,7 @@ TT_INLINE void X11_Mogrify(Window w, ttshort x, ttshort y, ttattr *Text, ttattr 
 		xbegin = x * xwfont;
 		_col = col;
 	    }
-	    f = xUTF_16_to_charset(HWFONT(*V));
+	    f = xUTF_16_to_charset(TRUNE(*V));
 	    buf[buflen  ].byte1 = f >> 8;
 	    buf[buflen++].byte2 = f & 0xFF;
 	}

@@ -9,15 +9,15 @@
  *
  */
 
-hwfont Tutf_ISO8859_1_to_UTF_32[0x100] = {
+trune Tutf_ISO8859_1_to_UTF_32[0x100] = {
 #define EL(x) T_UTF(UTF_32, x),
     T_LIST(ISO8859_1, EL)
 #undef EL
 };
 
 /* ISO8859_1 maps exactly to the first 256 elements of UTF-32... no need for a lookup table */
-hwfont Tutf_UTF_32_to_ISO8859_1(hwfont utf32) {
-  static hwfont cache_utf32;
+trune Tutf_UTF_32_to_ISO8859_1(trune utf32) {
+  static trune cache_utf32;
   static byte cache_ch;
 
   if (utf32 == cache_utf32)

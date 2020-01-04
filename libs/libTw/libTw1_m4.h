@@ -67,8 +67,8 @@
 { Tw_SetFontTranslation, 18,
 4, "Tw_SetFontTranslation", "0" "v" TWS_void_STR"V" TWS_byte_STR },
 
-{ Tw_SetHWFontTranslation, 20,
-4, "Tw_SetHWFontTranslation", "0" "v" TWS_void_STR"V" TWS_hwfont_STR },
+{ Tw_SetTRuneTranslation, 19,
+4, "Tw_SetTRuneTranslation", "0" "v" TWS_void_STR"V" TWS_trune_STR },
 
 
 { Tw_DeleteObj, 9,
@@ -79,7 +79,7 @@
 
 
 { Tw_CreateWidget, 12,
-16, "Tw_CreateWidget", "0" "x" magic_id_STR(widget)"_" TWS_dat_STR"_" TWS_dat_STR"_" TWS_uldat_STR"_" TWS_uldat_STR"_" TWS_dat_STR"_" TWS_dat_STR"_" TWS_hwattr_STR },
+16, "Tw_CreateWidget", "0" "x" magic_id_STR(widget)"_" TWS_dat_STR"_" TWS_dat_STR"_" TWS_uldat_STR"_" TWS_uldat_STR"_" TWS_dat_STR"_" TWS_dat_STR"_" TWS_tcell_STR },
 
 { Tw_RecursiveDeleteWidget, 21,
 4, "Tw_RecursiveDeleteWidget", "0" "v" TWS_void_STR"x" magic_id_STR(widget) },
@@ -94,7 +94,7 @@
 { Tw_ScrollWidget, 12,
 8, "Tw_ScrollWidget", "0" "v" TWS_void_STR"x" magic_id_STR(widget)"_" TWS_ldat_STR"_" TWS_ldat_STR },
 { Tw_DrawWidget, 10,
-18, "Tw_DrawWidget", "0" "v" TWS_void_STR"x" magic_id_STR(widget)"_" TWS_dat_STR"_" TWS_dat_STR"_" TWS_dat_STR"_" TWS_dat_STR"W" TWS_char_STR"W" TWS_hwfont_STR"W" TWS_hwattr_STR },
+18, "Tw_DrawWidget", "0" "v" TWS_void_STR"x" magic_id_STR(widget)"_" TWS_dat_STR"_" TWS_dat_STR"_" TWS_dat_STR"_" TWS_dat_STR"W" TWS_char_STR"W" TWS_trune_STR"W" TWS_tcell_STR },
 
 { Tw_SetVisibleWidget, 16,
 6, "Tw_SetVisibleWidget", "0" "v" TWS_void_STR"x" magic_id_STR(widget)"_" TWS_byte_STR },
@@ -115,18 +115,18 @@
 
 
 { Tw_CreateGadget, 12,
-28, "Tw_CreateGadget", "0" "x" magic_id_STR(gadget)"x" magic_id_STR(widget)"_" TWS_dat_STR"_" TWS_dat_STR"W" TWS_char_STR"_" TWS_uldat_STR"_" TWS_uldat_STR"_" TWS_udat_STR"_" TWS_hwcol_STR"_" TWS_hwcol_STR"_" TWS_hwcol_STR"_" TWS_hwcol_STR"_" TWS_dat_STR"_" TWS_dat_STR },
+28, "Tw_CreateGadget", "0" "x" magic_id_STR(gadget)"x" magic_id_STR(widget)"_" TWS_dat_STR"_" TWS_dat_STR"W" TWS_char_STR"_" TWS_uldat_STR"_" TWS_uldat_STR"_" TWS_udat_STR"_" TWS_tcolor_STR"_" TWS_tcolor_STR"_" TWS_tcolor_STR"_" TWS_tcolor_STR"_" TWS_dat_STR"_" TWS_dat_STR },
 
 { Tw_CreateButtonGadget, 18,
-24, "Tw_CreateButtonGadget", "1" "x" magic_id_STR(gadget)"x" magic_id_STR(widget)"_" TWS_dat_STR"_" TWS_dat_STR"V" TWS_char_STR"_" TWS_uldat_STR"_" TWS_udat_STR"_" TWS_hwcol_STR"_" TWS_hwcol_STR"_" TWS_hwcol_STR"_" TWS_dat_STR"_" TWS_dat_STR },
+24, "Tw_CreateButtonGadget", "1" "x" magic_id_STR(gadget)"x" magic_id_STR(widget)"_" TWS_dat_STR"_" TWS_dat_STR"V" TWS_char_STR"_" TWS_uldat_STR"_" TWS_udat_STR"_" TWS_tcolor_STR"_" TWS_tcolor_STR"_" TWS_tcolor_STR"_" TWS_dat_STR"_" TWS_dat_STR },
 
 { Tw_WriteTextsGadget, 16,
 16, "Tw_WriteTextsGadget", "2" "v" TWS_void_STR"x" magic_id_STR(gadget)"_" TWS_byte_STR"_" TWS_dat_STR"_" TWS_dat_STR"W" TWS_char_STR"_" TWS_dat_STR"_" TWS_dat_STR },
-{ Tw_WriteHWFontsGadget, 18,
-16, "Tw_WriteHWFontsGadget", "2" "v" TWS_void_STR"x" magic_id_STR(gadget)"_" TWS_byte_STR"_" TWS_dat_STR"_" TWS_dat_STR"W" TWS_hwfont_STR"_" TWS_dat_STR"_" TWS_dat_STR },
+{ Tw_WriteTRunesGadget, 17,
+16, "Tw_WriteTRunesGadget", "2" "v" TWS_void_STR"x" magic_id_STR(gadget)"_" TWS_byte_STR"_" TWS_dat_STR"_" TWS_dat_STR"W" TWS_trune_STR"_" TWS_dat_STR"_" TWS_dat_STR },
 
 { Tw_CreateWindow, 12,
-24, "Tw_CreateWindow", "0" "x" magic_id_STR(window)"_" TWS_dat_STR"V" TWS_char_STR"W" TWS_hwcol_STR"x" magic_id_STR(menu)"_" TWS_hwcol_STR"_" TWS_uldat_STR"_" TWS_uldat_STR"_" TWS_uldat_STR"_" TWS_dat_STR"_" TWS_dat_STR"_" TWS_dat_STR },
+24, "Tw_CreateWindow", "0" "x" magic_id_STR(window)"_" TWS_dat_STR"V" TWS_char_STR"W" TWS_tcolor_STR"x" magic_id_STR(menu)"_" TWS_tcolor_STR"_" TWS_uldat_STR"_" TWS_uldat_STR"_" TWS_uldat_STR"_" TWS_dat_STR"_" TWS_dat_STR"_" TWS_dat_STR },
 { Tw_Create4MenuWindow, 17,
 4, "Tw_Create4MenuWindow", "1" "x" magic_id_STR(window)"x" magic_id_STR(menu) },
 
@@ -134,19 +134,19 @@
 8, "Tw_WriteAsciiWindow", "0" "v" TWS_void_STR"x" magic_id_STR(window)"_" TWS_uldat_STR"V" TWS_char_STR },
 { Tw_WriteStringWindow, 17,
 8, "Tw_WriteStringWindow", "0" "v" TWS_void_STR"x" magic_id_STR(window)"_" TWS_uldat_STR"V" TWS_char_STR },
-{ Tw_WriteHWFontWindow, 17,
-8, "Tw_WriteHWFontWindow", "0" "v" TWS_void_STR"x" magic_id_STR(window)"_" TWS_uldat_STR"V" TWS_hwfont_STR },
-{ Tw_WriteHWAttrWindow, 17,
-12, "Tw_WriteHWAttrWindow", "0" "v" TWS_void_STR"x" magic_id_STR(window)"_" TWS_dat_STR"_" TWS_dat_STR"_" TWS_uldat_STR"V" TWS_hwattr_STR },
+{ Tw_WriteTRuneWindow, 16,
+8, "Tw_WriteTRuneWindow", "0" "v" TWS_void_STR"x" magic_id_STR(window)"_" TWS_uldat_STR"V" TWS_trune_STR },
+{ Tw_WriteTCellWindow, 16,
+12, "Tw_WriteTCellWindow", "0" "v" TWS_void_STR"x" magic_id_STR(window)"_" TWS_dat_STR"_" TWS_dat_STR"_" TWS_uldat_STR"V" TWS_tcell_STR },
 
 { Tw_GotoXYWindow, 12,
 8, "Tw_GotoXYWindow", "2" "v" TWS_void_STR"x" magic_id_STR(window)"_" TWS_ldat_STR"_" TWS_ldat_STR },
 { Tw_SetTitleWindow, 14,
 8, "Tw_SetTitleWindow", "0" "v" TWS_void_STR"x" magic_id_STR(window)"_" TWS_dat_STR"V" TWS_char_STR },
 { Tw_SetColTextWindow, 16,
-6, "Tw_SetColTextWindow", "2" "v" TWS_void_STR"x" magic_id_STR(window)"_" TWS_hwcol_STR },
+6, "Tw_SetColTextWindow", "2" "v" TWS_void_STR"x" magic_id_STR(window)"_" TWS_tcolor_STR },
 { Tw_SetColorsWindow, 15,
-24, "Tw_SetColorsWindow", "2" "v" TWS_void_STR"x" magic_id_STR(window)"_" TWS_udat_STR"_" TWS_hwcol_STR"_" TWS_hwcol_STR"_" TWS_hwcol_STR"_" TWS_hwcol_STR"_" TWS_hwcol_STR"_" TWS_hwcol_STR"_" TWS_hwcol_STR"_" TWS_hwcol_STR"_" TWS_hwcol_STR },
+24, "Tw_SetColorsWindow", "2" "v" TWS_void_STR"x" magic_id_STR(window)"_" TWS_udat_STR"_" TWS_tcolor_STR"_" TWS_tcolor_STR"_" TWS_tcolor_STR"_" TWS_tcolor_STR"_" TWS_tcolor_STR"_" TWS_tcolor_STR"_" TWS_tcolor_STR"_" TWS_tcolor_STR"_" TWS_tcolor_STR },
 { Tw_ConfigureWindow, 15,
 18, "Tw_ConfigureWindow", "2" "v" TWS_void_STR"x" magic_id_STR(window)"_" TWS_byte_STR"_" TWS_dat_STR"_" TWS_dat_STR"_" TWS_dat_STR"_" TWS_dat_STR"_" TWS_dat_STR"_" TWS_dat_STR },
 { Tw_FindRowByCodeWindow, 19,
@@ -180,9 +180,9 @@
 4, "Tw_Create4MenuCommonMenuItem", "1" "_" TWS_uldat_STR"x" magic_id_STR(menu) },
 
 { Tw_CreateMenu, 10,
-16, "Tw_CreateMenu", "0" "x" magic_id_STR(menu)"_" TWS_hwcol_STR"_" TWS_hwcol_STR"_" TWS_hwcol_STR"_" TWS_hwcol_STR"_" TWS_hwcol_STR"_" TWS_hwcol_STR"_" TWS_byte_STR },
+16, "Tw_CreateMenu", "0" "x" magic_id_STR(menu)"_" TWS_tcolor_STR"_" TWS_tcolor_STR"_" TWS_tcolor_STR"_" TWS_tcolor_STR"_" TWS_tcolor_STR"_" TWS_tcolor_STR"_" TWS_byte_STR },
 { Tw_SetInfoMenu, 11,
-12, "Tw_SetInfoMenu", "2" "v" TWS_void_STR"x" magic_id_STR(menu)"_" TWS_byte_STR"_" TWS_ldat_STR"V" TWS_char_STR"W" TWS_hwcol_STR },
+12, "Tw_SetInfoMenu", "2" "v" TWS_void_STR"x" magic_id_STR(menu)"_" TWS_byte_STR"_" TWS_ldat_STR"V" TWS_char_STR"W" TWS_tcolor_STR },
 
 { Tw_CreateMsgPort, 13,
 6, "Tw_CreateMsgPort", "0" "x" magic_id_STR(msgport)"_" TWS_byte_STR"V" TWS_char_STR },
@@ -190,7 +190,7 @@
 8, "Tw_FindMsgPort", "0" "x" magic_id_STR(msgport)"x" magic_id_STR(msgport)"_" TWS_byte_STR"V" TWS_char_STR },
 
 { Tw_BgImageScreen, 13,
-10, "Tw_BgImageScreen", "2" "v" TWS_void_STR"x" magic_id_STR(screen)"_" TWS_dat_STR"_" TWS_dat_STR"V" TWS_hwattr_STR },
+10, "Tw_BgImageScreen", "2" "v" TWS_void_STR"x" magic_id_STR(screen)"_" TWS_dat_STR"_" TWS_dat_STR"V" TWS_tcell_STR },
 
 { Tw_PrevObj, 7,
 4, "Tw_PrevObj", "0" "x" magic_id_STR(obj)"x" magic_id_STR(obj) },

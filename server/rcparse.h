@@ -254,7 +254,7 @@ static byte MergeFunc(str name, node l) {
   return ttrue;
 }
 
-static byte ImmBackground(str name, hwattr color, node shape) {
+static byte ImmBackground(str name, tcell color, node shape) {
   node n;
 
   /* automagically create screen "1" if needed */
@@ -903,7 +903,7 @@ static str TokenName(ldat id) {
 
 #ifdef DEBUG_RC
 
-static str ColorName(hwcol col) {
+static str ColorName(tcolor col) {
   switch (col) {
   case BLACK:
     return "Black";
@@ -929,8 +929,8 @@ static str ColorName(hwcol col) {
   return "(unknown)";
 }
 
-static void DumpColorName(hwcol col) {
-  hwcol fg = COLFG(col), bg = COLBG(col);
+static void DumpColorName(tcolor col) {
+  tcolor fg = COLFG(col), bg = COLBG(col);
 
   if (fg & HIGH)
     fprintf(stderr, "%s ", ColorName(HIGH));
@@ -1140,9 +1140,9 @@ static byte CreateNeededScreens(node list, screen *res_Screens) {
   node body;
   screen s, prev = (screen)0, top = (screen)0;
   cstr n;
-  hwattr *attr, *r;
-  hwfont f;
-  hwcol c;
+  tcell *attr, *r;
+  trune f;
+  tcolor c;
   uldat w, h, len, _len;
 
   while (list) {
@@ -1156,7 +1156,7 @@ static byte CreateNeededScreens(node list, screen *res_Screens) {
     if (!w && !h)
       continue;
 
-    if ((attr = (hwattr *)AllocMem(w * h * sizeof(hwattr)))) {
+    if ((attr = (tcell *)AllocMem(w * h * sizeof(tcell)))) {
       h = 0;
       for (body = list->body; body; body = body->next) {
         if (body->name) {
@@ -1166,10 +1166,10 @@ static byte CreateNeededScreens(node list, screen *res_Screens) {
           r = attr + w * h;
           while (len--) {
             f = Tutf_CP437_to_UTF_32[(byte)*n++];
-            *r++ = HWATTR(c, f);
+            *r++ = TCELL(c, f);
           }
           while (_len++ < w)
-            *r++ = HWATTR(c, ' ');
+            *r++ = TCELL(c, ' ');
         }
         h++;
       }
@@ -1275,8 +1275,8 @@ static byte NewCommonMenu(void **shm_M, menu *res_CommonMenu, node **res_MenuBin
   new_MenuBindsMax = 0;
   new_MenuList = (node)(*(shm_M + (&MenuList - Globals)));
 
-  if (!(Menu = Do(Create, Menu)(FnMenu, Ext(WM, MsgPort), (hwcol)0, (hwcol)0, (hwcol)0, (hwcol)0,
-                                (hwcol)0, (hwcol)0, ttrue)))
+  if (!(Menu = Do(Create, Menu)(FnMenu, Ext(WM, MsgPort), (tcolor)0, (tcolor)0, (tcolor)0,
+                                (tcolor)0, (tcolor)0, (tcolor)0, ttrue)))
     return tfalse;
 
   /* ok, now create the CommonMenu. Fill new_MenuBinds[] as we proceed */

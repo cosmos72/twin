@@ -2,6 +2,10 @@
 
 typedef FcChar16 XChar16;
 
-INLINE XChar16 RawToXChar16(hwfont raw) { return (XChar16)raw; }
+INLINE XChar16 RawToXChar16(trune raw) {
+  return (XChar16)raw;
+}
 
-INLINE hwfont XChar16ToRaw(XChar16 p) { return (hwfont)p; }
+INLINE trune XChar16ToRaw(XChar16 p) {
+  return (trune)p;
+}

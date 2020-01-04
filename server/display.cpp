@@ -558,7 +558,7 @@ INLINE void SyncOldVideo(void) {
 
         ChangedVideo[i >> 1][i & 1][0] = -1;
 
-        CopyMem(Video + start, OldVideo + start, len * sizeof(hwattr));
+        CopyMem(Video + start, OldVideo + start, len * sizeof(tcell));
       }
     }
   }
@@ -610,7 +610,7 @@ static byte ReAllocVideo(dat Width, dat Height) {
     FreeMem(OldVideo);
     OldVideo = NULL;
   } else if ((NeedOldVideo && !OldVideo) || change) {
-    if (!(OldVideo = (hwattr *)ReAllocMem(OldVideo, (ldat)Width * Height * sizeof(hwattr))) &&
+    if (!(OldVideo = (tcell *)ReAllocMem(OldVideo, (ldat)Width * Height * sizeof(tcell))) &&
         Width && Height) {
       OutOfMemory();
       Quit(1);
@@ -623,7 +623,7 @@ static byte ReAllocVideo(dat Width, dat Height) {
     DisplayHeight = Height;
 
     if ((!(Video =
-               (hwattr *)ReAllocMem(Video, (ldat)DisplayWidth * DisplayHeight * sizeof(hwattr))) ||
+               (tcell *)ReAllocMem(Video, (ldat)DisplayWidth * DisplayHeight * sizeof(tcell))) ||
          !(ChangedVideo =
                (dat(*)[2][2])ReAllocMem(ChangedVideo, (ldat)DisplayHeight * sizeof(dat) * 4))) &&
         DisplayWidth && DisplayHeight) {
@@ -727,8 +727,8 @@ static void HandleMsg(tmsg Msg) {
   case TW_MSG_DISPLAY:
     EventD = &Msg->Event.EventDisplay;
     switch (EventD->Code) {
-    case TW_DPY_DrawHWAttr:
-      if (EventD->Len /= sizeof(hwattr)) {
+    case TW_DPY_DrawTCell:
+      if (EventD->Len /= sizeof(tcell)) {
         if (EventD->X + EventD->Len > DisplayWidth || EventD->Y >= DisplayHeight) {
           /*
            * in a perfect world this should not happen,
@@ -743,7 +743,7 @@ static void HandleMsg(tmsg Msg) {
         }
         DirtyVideo(EventD->X, EventD->Y, EventD->X + EventD->Len - 1, EventD->Y);
         CopyMem(EventD->Data, &Video[EventD->X + EventD->Y * (ldat)DisplayWidth],
-                (uldat)EventD->Len * sizeof(hwattr));
+                (uldat)EventD->Len * sizeof(tcell));
       }
       break;
     case TW_DPY_FlushHW:

@@ -58,15 +58,21 @@
 static s_ttclasses twin_detunnel_TTClasses;
 
 /* FIXME finish these ! */
-static tany twin_detunnel_TwStat(tobj Id, udat h) { return (tany)0; }
+static tany twin_detunnel_TwStat(tobj Id, udat h) {
+  return (tany)0;
+}
 static void twin_detunnel_TwDraw2Widget(twidget W, dat XWidth, dat YWidth, dat Left, dat Up,
-                                        dat Pitch, TW_CONST byte *Text, TW_CONST hwfont *Font,
-                                        TW_CONST hwattr *Attr) {}
-static void twin_detunnel_TwSetFillWidget(twidget W, hwattr Fill) {}
-static void twin_detunnel_TwDrawHWFontWidget(twidget W, dat XWidth, dat YWidth, dat Left, dat Up,
-                                             dat Pitch, TW_CONST hwfont *Font) {}
-static void twin_detunnel_TwDrawHWAttrWidget(twidget W, dat XWidth, dat YWidth, dat Left, dat Up,
-                                             dat Pitch, TW_CONST hwattr *Attr) {}
+                                        dat Pitch, TW_CONST byte *Text, TW_CONST trune *Font,
+                                        TW_CONST tcell *Attr) {
+}
+static void twin_detunnel_TwSetFillWidget(twidget W, tcell Fill) {
+}
+static void twin_detunnel_TwDrawTRuneWidget(twidget W, dat XWidth, dat YWidth, dat Left, dat Up,
+                                            dat Pitch, TW_CONST trune *Font) {
+}
+static void twin_detunnel_TwDrawTCellWidget(twidget W, dat XWidth, dat YWidth, dat Left, dat Up,
+                                            dat Pitch, TW_CONST tcell *Attr) {
+}
 static tlistener twin_detunnel_TwAddMouseListener(twidget W, udat Code, udat ShiftFlags,
                                                   tfn_listener Listener, void *Arg) {
   return (tlistener)0;
@@ -159,7 +165,7 @@ static ttshort twin_detunnel_GetH_ttnative(ttnative o) {
 
 /* ttwidget */
 static void twin_detunnel_BuiltinRepaint_ttwidget(ttwidget o, dat x, dat y, dat w, dat h) {
-  TD(DrawHWAttrWidget)(o->native, w, h, x, y, w, NULL);
+  TD(DrawTCellWidget)(o->native, w, h, x, y, w, NULL);
 }
 static void twin_detunnel_ExposeCallback_ttwidget(tevent_any e, void *id) {
   ttwidget o = ID2(ttwidget, (opaque)id);
@@ -198,10 +204,10 @@ static ttcallback twin_detunnel_AddCommonCallbacks_ttwidget(ttwidget o) {
 }
 static ttwidget twin_detunnel_Build_ttwidget(ttwidget o) {
   tttheme t = myTheme(o);
-  hwfont f = t->fill;
-  hwcol c = o->col;
+  trune f = t->fill;
+  tcolor c = o->col;
   if (TW_NOID != (o->native = Multiplex(order_CreateWidget, o->w, o->h, 0, TW_WIDGETFL_USEFILL, 0,
-                                        TW_MAXDAT, HWATTR(c, f)))) {
+                                        TW_MAXDAT, TCELL(c, f)))) {
     twin_detunnel_AtBuild_ttvisible((ttvisible)o);
     return o;
   }
@@ -263,7 +269,7 @@ static void twin_detunnel_Draw_ttwidget(ttwidget o, ttshort x, ttshort y, ttshor
 static ttlabel twin_detunnel_Build_ttlabel(ttlabel o) {
   if (TW_NOID !=
       (o->native = Multiplex(order_CreateWidget, o->text_len, 1, 0, TW_WIDGETFL_USEEXPOSE, 0,
-                             TW_MAXDAT, HWATTR(o->col, myTheme(o)->fill)))) {
+                             TW_MAXDAT, TCELL(o->col, myTheme(o)->fill)))) {
     if (twin_detunnel_AddCommonCallbacks_ttwidget((ttwidget)o)) {
       twin_detunnel_AtBuild_ttvisible((ttvisible)o);
       return o;
@@ -278,16 +284,16 @@ static void twin_detunnel_Invalidate_ttwidget(ttwidget o) {
 
   t = myTheme(o);
 
-  TD(SetFillWidget)(o->native, HWATTR(o->col, t->fill));
+  TD(SetFillWidget)(o->native, TCELL(o->col, t->fill));
 }
 
 static void twin_detunnel_BuiltinRepaint_ttlabel(ttlabel o, dat x, dat y, dat w, dat h) {
   if (y == 0) {
     if (x < o->text_len)
-      TD(DrawHWFontWidget)
-      (o->native, TT_MIN2(w, o->text_len - x), 1, x, 0, o->text_len, o->text + x);
+      TD(DrawTRuneWidget)
+    (o->native, TT_MIN2(w, o->text_len - x), 1, x, 0, o->text_len, o->text + x);
     if (x + w > o->text_len)
-      TD(DrawHWFontWidget)(o->native, o->text_len - x - w, 1, o->text_len, 0, 0, NULL);
+      TD(DrawTRuneWidget)(o->native, o->text_len - x - w, 1, o->text_len, 0, 0, NULL);
   }
 }
 
@@ -326,8 +332,8 @@ static void twin_detunnel_BuiltinRepaint_ttanybutton(ttanybutton o, dat x, dat y
       w = tw - x;
 
     if (h > 0 && w > 0 && y < th && x < tw)
-      TD(DrawHWAttrWidget)
-      (o->native, TT_MIN2(w, tw - x), TT_MIN2(h, th - y), x, y, tw, t + x + (y * tw));
+      TD(DrawTCellWidget)
+    (o->native, TT_MIN2(w, tw - x), TT_MIN2(h, th - y), x, y, tw, t + x + (y * tw));
   } else if (o->text && o->Class == TClass_ttanybutton) {
     if (h + y > o->text_height)
       h = o->text_height - y;
@@ -335,11 +341,11 @@ static void twin_detunnel_BuiltinRepaint_ttanybutton(ttanybutton o, dat x, dat y
       w = o->text_width - x;
 
     if (h > 0 && w > 0 && y < o->text_height && x < o->text_width)
-      TD(DrawHWAttrWidget)
+      TD(DrawTCellWidget)
     (o->native, TT_MIN2(w, o->text_width - x), TT_MIN2(h, o->text_height - y), x, y, o->text_width,
      o->text + x + (y * o->text_width));
   } else
-    TD(DrawHWAttrWidget)(o->native, w, h, x, y, w, NULL);
+    TD(DrawTCellWidget)(o->native, w, h, x, y, w, NULL);
 }
 static void twin_detunnel_MouseCallback_ttanybutton(tevent_any e, tobj id) {
   ttanybutton o = ID2(ttanybutton, id);
@@ -590,7 +596,7 @@ static ttbyte twin_detunnel_SetTitle_ttframe(ttframe o, TT_ARG_READ ttbyte *titl
 }
 
 static void twin_detunnel_BuiltinRepaint_ttframe(ttframe o, dat x, dat y, dat w, dat h) {
-  TD(DrawHWAttrWidget)(o->native, w, h, x, y, w, NULL);
+  TD(DrawTCellWidget)(o->native, w, h, x, y, w, NULL);
 }
 
 /* ttscroller */
@@ -702,9 +708,15 @@ static ttapplication twin_detunnel_Build_ttapplication(ttapplication o) {
   return NULL;
 }
 
-static ttbyte twin_detunnel_Sync(void) { return TT_TRUE; }
-static ttbyte twin_detunnel_Flush(void) { return TT_TRUE; }
-static ttbyte twin_detunnel_TimidFlush(void) { return TT_TRUE; }
+static ttbyte twin_detunnel_Sync(void) {
+  return TT_TRUE;
+}
+static ttbyte twin_detunnel_Flush(void) {
+  return TT_TRUE;
+}
+static ttbyte twin_detunnel_TimidFlush(void) {
+  return TT_TRUE;
+}
 static ttbyte twin_detunnel_MainLoopOnce(ttbyte wait) {
   tmsg Msg;
 
@@ -722,11 +734,21 @@ static void twin_detunnel_DeleteCallback(ttcallback o) {
   if (o->native != (opaque)TW_NOID)
     TwDeleteListener((tlistener)(opaque)o->native);
 }
-static void twin_detunnel_Close(void) { TwClose(); }
-static int twin_detunnel_ConnectionFd(void) { return TwConnectionFd(); }
-static ttuint twin_detunnel_GetErrno(void) { return TwErrno; }
-static ttuint twin_detunnel_GetErrnoDetail(void) { return TwErrnoDetail; }
-static TT_CONST ttbyte *twin_detunnel_StrError(ttuint E) { return TwStrError(E); }
+static void twin_detunnel_Close(void) {
+  TwClose();
+}
+static int twin_detunnel_ConnectionFd(void) {
+  return TwConnectionFd();
+}
+static ttuint twin_detunnel_GetErrno(void) {
+  return TwErrno;
+}
+static ttuint twin_detunnel_GetErrnoDetail(void) {
+  return TwErrnoDetail;
+}
+static TT_CONST ttbyte *twin_detunnel_StrError(ttuint E) {
+  return TwStrError(E);
+}
 static TT_CONST ttbyte *twin_detunnel_StrErrorDetail(ttuint E, ttuint S) {
   return TwStrErrorDetail(E, S);
 }

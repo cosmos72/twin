@@ -43,7 +43,7 @@
 #define TwDetachHW(a1, a2)		Tw_DetachHW(Tw_DefaultD, a1, a2)
 
 #define TwSetFontTranslation(a1)		Tw_SetFontTranslation(Tw_DefaultD, a1)
-#define TwSetHWFontTranslation(a1)		Tw_SetHWFontTranslation(Tw_DefaultD, a1)
+#define TwSetTRuneTranslation(a1)		Tw_SetTRuneTranslation(Tw_DefaultD, a1)
 
 #define TwDeleteObj(a1)		Tw_DeleteObj(Tw_DefaultD, a1)
 #define TwChangeField(a1, a2, a3, a4)		Tw_ChangeField(Tw_DefaultD, a1, a2, a3, a4)
@@ -74,15 +74,15 @@
 #define TwCreateButtonGadget(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11)		Tw_CreateButtonGadget(Tw_DefaultD, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11)
 
 #define TwWriteTextsGadget(a1, a2, a3, a4, a5, a6, a7)		Tw_WriteTextsGadget(Tw_DefaultD, a1, a2, a3, a4, a5, a6, a7)
-#define TwWriteHWFontsGadget(a1, a2, a3, a4, a5, a6, a7)		Tw_WriteHWFontsGadget(Tw_DefaultD, a1, a2, a3, a4, a5, a6, a7)
+#define TwWriteTRunesGadget(a1, a2, a3, a4, a5, a6, a7)		Tw_WriteTRunesGadget(Tw_DefaultD, a1, a2, a3, a4, a5, a6, a7)
 
 #define TwCreateWindow(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11)		Tw_CreateWindow(Tw_DefaultD, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11)
 #define TwCreate4MenuWindow(a1)		Tw_Create4MenuWindow(Tw_DefaultD, a1)
 
 #define TwWriteAsciiWindow(a1, a2, a3)		Tw_WriteAsciiWindow(Tw_DefaultD, a1, a2, a3)
 #define TwWriteStringWindow(a1, a2, a3)		Tw_WriteStringWindow(Tw_DefaultD, a1, a2, a3)
-#define TwWriteHWFontWindow(a1, a2, a3)		Tw_WriteHWFontWindow(Tw_DefaultD, a1, a2, a3)
-#define TwWriteHWAttrWindow(a1, a2, a3, a4, a5)		Tw_WriteHWAttrWindow(Tw_DefaultD, a1, a2, a3, a4, a5)
+#define TwWriteTRuneWindow(a1, a2, a3)		Tw_WriteTRuneWindow(Tw_DefaultD, a1, a2, a3)
+#define TwWriteTCellWindow(a1, a2, a3, a4, a5)		Tw_WriteTCellWindow(Tw_DefaultD, a1, a2, a3, a4, a5)
 
 #define TwGotoXYWindow(a1, a2, a3)		Tw_GotoXYWindow(Tw_DefaultD, a1, a2, a3)
 #define TwSetTitleWindow(a1, a2, a3)		Tw_SetTitleWindow(Tw_DefaultD, a1, a2, a3)

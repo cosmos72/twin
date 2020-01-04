@@ -225,13 +225,13 @@ _textbody_list	:                textbody { $$ = AddtoNodeList(NULL, $1); }
 textbody	: string nl   { $$ = MakeNode($1); }
 		;
 
-color		: NUMBER		      { $$ = (hwcol) $1; }
+color		: NUMBER		      { $$ = (tcolor) $1; }
 		| high COLOR		      { $$ = COL($1|$2, BLACK); }
 		| high COLOR FL_ON high COLOR { $$ = COL($1|$2, $4|$5); }
 		|            FL_ON high COLOR { $$ = COL(WHITE, $2|$3); }
 		;
 
-high		: /* nothing */ { $$ = (hwcol)0; }
+high		: /* nothing */ { $$ = (tcolor)0; }
 		| COL_HIGH	{ $$ = HIGH; }
 		;
 

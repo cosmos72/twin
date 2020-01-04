@@ -35,7 +35,7 @@ void  DEF(Tw_Create4MenuRow)(addr, addr, int, int, int, string);
 addr  DEF(Tw_CreateWindow)(addr, int, string2, string2, addr, int, uint, uint, uint, int, int, int);
 addr  DEF(Tw_Create4MenuWindow)(addr, addr);
 void  DEF(Tw_WriteAsciiWindow)(addr, addr, uint, string3);
-void  DEF(Tw_WriteHWAttrWindow)(addr, addr, int, int, uint, string);
+void  DEF(Tw_WriteTCellWindow)(addr, addr, int, int, uint, string);
 void  DEF(Tw_WriteRowWindow)(addr, addr, uint, string3);
 void  DEF(Tw_ConfigureWindow)(addr, addr, octal, int, int, int, int, int, int);
 void  DEF(Tw_SetColorsWindow)(addr, addr, octal, int, int, int, int, int, int, int, int, int);

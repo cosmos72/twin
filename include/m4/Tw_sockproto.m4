@@ -88,7 +88,7 @@ PROTO(byte,_, Detach,HW,0, uldat,_,len, char,V(A(1)),name)
 c_doxygen(/** set server global charset translation */)
 PROTO(void,v,  Set,  FontTranslation,0,  byte,V(0x80),trans)
 c_doxygen(/** set server global charset translation */)
-PROTO(void,v,  Set,HWFontTranslation,0,hwfont,V(0x80),trans)
+PROTO(void,v,  Set,TRuneTranslation,0,trune,V(0x80),trans)
 
 c_doxygen(/** delete given object */)
 PROTO(void,v,     Delete,Obj,0, obj,x,O)
@@ -96,7 +96,7 @@ c_doxygen(/** change given field of object; new_value = (old_value & ~clearmask)
 PROTO(void,v,ChangeField,Obj,2, obj,x,O, udat,_,field, uldat,_,clearmask, uldat,_,xormask)
 
 
-PROTO(widget,x,   Create,Widget,0, dat,_,w, dat,_,h, uldat,_,attrib, uldat,_,flags, dat,_,x, dat,_,y, hwattr,_,fill)
+PROTO(widget,x,   Create,Widget,0, dat,_,w, dat,_,h, uldat,_,attrib, uldat,_,flags, dat,_,x, dat,_,y, tcell,_,fill)
 c_doxygen(/** delete given widget and all its children */)
 PROTO(void,v,RecursiveDelete,Widget,0, widget,x,W)
 PROTO(void,v,        Map,Widget,2, widget,x,W, widget,x,parent)
@@ -104,7 +104,7 @@ PROTO(void,v,      UnMap,Widget,2, widget,x,W)
 PROTO(void,v,      SetXY,Widget,0, widget,x,W, dat,_,x, dat,_,y)
 PROTO(void,v,     Resize,Widget,0, widget,x,W, dat,_,w, dat,_,h)
 PROTO(void,v,     Scroll,Widget,0, widget,x,W, ldat,_,dxl, ldat,_,dyl)
-PROTO(void,v,       Draw,Widget,0, widget,x,W, dat,_,w, dat,_,h, dat,_,x, dat,_,y, char,W(A(2)*A(3)),text, hwfont,W(A(2)*A(3)),textfont, hwattr,W(A(2)*A(3)),textattr)
+PROTO(void,v,       Draw,Widget,0, widget,x,W, dat,_,w, dat,_,h, dat,_,x, dat,_,y, char,W(A(2)*A(3)),text, trune,W(A(2)*A(3)),textfont, tcell,W(A(2)*A(3)),textattr)
 
 PROTO(void,v, SetVisible,Widget,0, widget,x,W, byte,_,on_off)
 
@@ -120,30 +120,30 @@ PROTO(void,v,CirculateChildren,Widget,0, widget,x,W, byte,_,up_down)
 PROTO(gadget,x, Create,Gadget,0,
 	widget,x,parent, dat,_,w, dat,_,h, char,W(A(2)*A(3)),text,
 	uldat,_,attrib, uldat,_,flags, udat,_,code,
-	hwcol,_,coltext, hwcol,_,colselect, hwcol,_,coldisabled, hwcol,_,colselectdisabled,
+	tcolor,_,coltext, tcolor,_,colselect, tcolor,_,coldisabled, tcolor,_,colselectdisabled,
 	dat,_,x, dat,_,y)
 
 PROTO(gadget,x, CreateButton,Gadget,1, widget,x,parent, dat,_,w, dat,_,h, char,V(A(2)*A(3)),text,
-	uldat,_,flags, udat,_,code, hwcol,_,colbg, hwcol,_,col, hwcol,_,coldisabled, dat,_,x, dat,_,y)
+	uldat,_,flags, udat,_,code, tcolor,_,colbg, tcolor,_,col, tcolor,_,coldisabled, dat,_,x, dat,_,y)
 
 PROTO(void,v, WriteTexts,Gadget,2, gadget,x,G, byte,_,mask, dat,_,w, dat,_,h, char,W(A(2)*A(3)),text, dat,_,x, dat,_,y)
-PROTO(void,v, WriteHWFonts,Gadget,2, gadget,x,G, byte,_,mask, dat,_,w, dat,_,h, hwfont,W(A(2)*A(3)),textfont, dat,_,x, dat,_,y)
+PROTO(void,v, WriteTRunes,Gadget,2, gadget,x,G, byte,_,mask, dat,_,w, dat,_,h, trune,W(A(2)*A(3)),textfont, dat,_,x, dat,_,y)
 
-PROTO(window,x,     Create,Window,0, dat,_,titlelen, char,V(A(1)),title, hwcol,W(A(1)),coltitle, menu,x,M,
-	hwcol,_,coltext, uldat,_,cursortype, uldat,_,attrib, uldat,_,flags, dat,_,w, dat,_,h, dat,_,hscroll)
+PROTO(window,x,     Create,Window,0, dat,_,titlelen, char,V(A(1)),title, tcolor,W(A(1)),coltitle, menu,x,M,
+	tcolor,_,coltext, uldat,_,cursortype, uldat,_,attrib, uldat,_,flags, dat,_,w, dat,_,h, dat,_,hscroll)
 PROTO(window,x, Create4Menu,Window,1, menu,x,M)
 
 PROTO(void,v,  WriteAscii  ,Window,0, window,x,W, uldat,_,len, char,V(A(2)),ascii)
 PROTO(void,v,  WriteString ,Window,0, window,x,W, uldat,_,len, char,V(A(2)),string)
-PROTO(void,v,  WriteHWFont, Window,0, window,x,W, uldat,_,len, hwfont,V(A(2)),textfont)
-PROTO(void,v,  WriteHWAttr ,Window,0, window,x,W,   dat,_,x, dat,_,y, uldat,_,len, hwattr,V(A(4)),textattr)
+PROTO(void,v,  WriteTRune, Window,0, window,x,W, uldat,_,len, trune,V(A(2)),textfont)
+PROTO(void,v,  WriteTCell ,Window,0, window,x,W,   dat,_,x, dat,_,y, uldat,_,len, tcell,V(A(4)),textattr)
 
 PROTO(void,v,        GotoXY,Window,2, window,x,W, ldat,_,x, ldat,_,y)
 PROTO(void,v,      SetTitle,Window,0, window,x,W, dat,_,titlelen, char,V(A(2)),title)
-PROTO(void,v,    SetColText,Window,2, window,x,W, hwcol,_,coltext)
-PROTO(void,v,     SetColors,Window,2, window,x,W, udat,_,mask, hwcol,_,colgadgets, hwcol,_,colarrows,
-	hwcol,_,colbars, hwcol,_,coltabs, hwcol,_,colborder, hwcol,_,coltext, hwcol,_,colselect,
-	hwcol,_,coldisabled, hwcol,_,colselectdisabled)
+PROTO(void,v,    SetColText,Window,2, window,x,W, tcolor,_,coltext)
+PROTO(void,v,     SetColors,Window,2, window,x,W, udat,_,mask, tcolor,_,colgadgets, tcolor,_,colarrows,
+	tcolor,_,colbars, tcolor,_,coltabs, tcolor,_,colborder, tcolor,_,coltext, tcolor,_,colselect,
+	tcolor,_,coldisabled, tcolor,_,colselectdisabled)
 PROTO(void,v,     Configure,Window,2, window,x,W, byte,_,mask, dat,_,x, dat,_,y, dat,_,minw, dat,_,minh, dat,_,maxw, dat,_,maxh)
 PROTO(row,x,  FindRowByCode,Window,0, window,x,W, dat,_,code)
 
@@ -163,14 +163,14 @@ PROTO(row,x,         Create4Menu,Any,0,       obj,x,parent, window,x,W, udat,_,c
 
 PROTO(uldat,_, Create4MenuCommon,MenuItem,1, menu,x,M)
 
-PROTO(menu,x, Create,Menu,0, hwcol,_,colitem, hwcol,_,colselect, hwcol,_,coldisabled, hwcol,_,colselectdisabled,
-      hwcol,_,colshortcut, hwcol,_,colshortcutselect, byte,_,flags)
-PROTO(void,v, SetInfo,Menu,2, menu,x,M, byte,_,flags, ldat,_,len, char,V(A(3)),text, hwcol,W(A(3)),coltext)
+PROTO(menu,x, Create,Menu,0, tcolor,_,colitem, tcolor,_,colselect, tcolor,_,coldisabled, tcolor,_,colselectdisabled,
+      tcolor,_,colshortcut, tcolor,_,colshortcutselect, byte,_,flags)
+PROTO(void,v, SetInfo,Menu,2, menu,x,M, byte,_,flags, ldat,_,len, char,V(A(3)),text, tcolor,W(A(3)),coltext)
 
 PROTO(msgport,x,Create,MsgPort,0, byte,_,len, char,V(A(1)),name)
 PROTO(msgport,x,  Find,MsgPort,0, msgport,x,prev, byte,_,len, char,V(A(2)),name)
 
-PROTO(void,v,  BgImage,Screen,2, screen,x,S, dat,_,w, dat,_,h, hwattr,V(A(2)*A(3)),textattr)
+PROTO(void,v,  BgImage,Screen,2, screen,x,S, dat,_,w, dat,_,h, tcell,V(A(2)*A(3)),textattr)
 
 PROTO(obj,x,      Prev,Obj,0, obj,x,O)
 PROTO(obj,x,      Next,Obj,0, obj,x,O)

@@ -17,8 +17,8 @@
 
 /* WIDGET_USEEXPOSE  USE.E.Flags: */
 #define WIDGET_USEEXPOSE_TEXT 1
-#define WIDGET_USEEXPOSE_HWFONT 2
-#define WIDGET_USEEXPOSE_HWATTR 4
+#define WIDGET_USEEXPOSE_TRUNE 2
+#define WIDGET_USEEXPOSE_TCELL 4
 
 /* Widget->Attrib */
 typedef enum e_widget_attr {
@@ -47,8 +47,8 @@ typedef enum e_widget_flag {
 struct s_wE { /* for WIDGET_USEEXPOSE widgets */
   union {
     CONST char *Text;
-    CONST hwfont *HWFont;
-    CONST hwattr *HWAttr;
+    CONST trune *TRune;
+    CONST tcell *TCell;
   } E;
   dat Flags, Pitch;
   ldat X1, Y1, X2, Y2;
@@ -87,7 +87,7 @@ struct s_widget {
   fn_hook Hook, *WhereHook;
   fn_hook MapUnMapHook;
   msg MapQueueMsg;
-  hwattr USE_Fill;
+  tcell USE_Fill;
   union {
     struct s_wE E;
   } USE;
@@ -96,7 +96,7 @@ struct s_widget {
 struct s_fn_widget {
   uldat Magic, Size, Used;
   widget (*Create)(fn_widget, msgport Owner, dat XWidth, dat YWidth, uldat Attrib, uldat Flags,
-                   dat Left, dat Up, hwattr USE_Fill);
+                   dat Left, dat Up, tcell USE_Fill);
   void (*Insert)(widget, widget Parent, widget Prev, widget Next);
   void (*Remove)(widget);
   void (*Delete)(widget);
@@ -107,7 +107,7 @@ struct s_fn_widget {
   widget (*FindWidgetAt)(widget Parent, dat X, dat Y);
   gadget (*FindGadgetByCode)(widget Parent, udat Code);
   void (*SetXY)(widget, dat X, dat Y);
-  void (*SetFill)(widget, hwattr Fill);
+  void (*SetFill)(widget, tcell Fill);
   widget (*Focus)(widget);
   widget (*KbdFocus)(widget);
   void (*Map)(widget, widget Parent);
@@ -119,7 +119,7 @@ struct s_fn_widget {
   void (*DisOwn)(widget);
   void (*RecursiveDelete)(widget, msgport);
   void (*Expose)(widget, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch, CONST char *,
-                 CONST hwfont *, CONST hwattr *);
+                 CONST trune *, CONST tcell *);
   byte (*InstallHook)(widget, fn_hook, fn_hook *Where);
   void (*RemoveHook)(widget, fn_hook, fn_hook *Where);
 };

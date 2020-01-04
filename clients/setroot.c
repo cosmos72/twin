@@ -28,12 +28,12 @@ void panic(void) {
   exit(1);
 }
 
-hwattr *load_ascii_art(FILE *aaFILE, uldat *x, uldat *y, uldat padX, uldat padY);
+tcell *load_ascii_art(FILE *aaFILE, uldat *x, uldat *y, uldat padX, uldat padY);
 
 TW_DECL_MAGIC(setroot_magic);
 
 int main(int argc, char *argv[]) {
-  hwattr *image;
+  tcell *image;
   uldat X, Y, padX = 0, padY = 0, err;
   enum { def, aa, padx, pady } state = def;
   char *aafile = NULL;
@@ -106,8 +106,8 @@ int main(int argc, char *argv[]) {
 #define Underline COL(HIGH | WHITE, BLACK)
 #define HalfInten COL(HIGH | BLACK, BLACK)
 
-static hwattr *image;
-static hwcol ColText = DefColor, Color = DefColor;
+static tcell *image;
+static tcolor ColText = DefColor, Color = DefColor;
 static uldat X, Y, Xmax, Ymax, Xreal, Yreal, max;
 static enum { ESnormal, ESesc, ESsquare, ESgetpars, ESgotpars } State = ESnormal;
 #define NPAR 16
@@ -122,14 +122,14 @@ udat Effects;
 
 TW_INLINE void update_eff(void) {
   udat effects = Effects;
-  hwcol fg = COLFG(ColText), bg = COLBG(ColText);
+  tcolor fg = COLFG(ColText), bg = COLBG(ColText);
 
   if (effects & EFF_UNDERLINE)
     fg = COLFG(Underline);
   else if (effects & EFF_HALFINTENS)
     fg = COLFG(HalfInten);
   if (effects & EFF_REVERSE) {
-    hwcol tmp = COL(bg & ~HIGH, fg & ~HIGH) | COL(fg & HIGH, bg & HIGH);
+    tcolor tmp = COL(bg & ~HIGH, fg & ~HIGH) | COL(fg & HIGH, bg & HIGH);
     fg = COLFG(tmp);
     bg = COLBG(tmp);
   }
@@ -143,7 +143,7 @@ TW_INLINE void update_eff(void) {
 TW_INLINE void csi_m(void) {
   udat i;
   udat effects = Effects;
-  hwcol fg = COLFG(ColText), bg = COLBG(ColText);
+  tcolor fg = COLFG(ColText), bg = COLBG(ColText);
 
   for (i = 0; i <= nPar; i++)
     switch (Par[i]) {
@@ -215,7 +215,7 @@ TW_INLINE void csi_m(void) {
   update_eff();
 }
 
-TW_INLINE void Fill(hwattr *t, hwattr h, uldat count) {
+TW_INLINE void Fill(tcell *t, tcell h, uldat count) {
   while (count--)
     *t++ = h;
 }
@@ -230,15 +230,15 @@ TW_INLINE void Xgrow(void) {
     return;
   }
 
-  if (!(image = TwReAllocMem(image, n * sizeof(hwattr))))
+  if (!(image = TwReAllocMem(image, n * sizeof(tcell))))
     panic();
 
   max = n;
   n = Ymax;
 
   while (n--) {
-    TwMoveMem(image + n * Xmax, image + n * newXmax, Xmax * sizeof(hwattr));
-    Fill(image + n * newXmax + Xmax, HWATTR(Color, ' '), newXmax - Xmax);
+    TwMoveMem(image + n * Xmax, image + n * newXmax, Xmax * sizeof(tcell));
+    Fill(image + n * newXmax + Xmax, TCELL(Color, ' '), newXmax - Xmax);
   }
   Xmax = newXmax;
 }
@@ -253,10 +253,10 @@ TW_INLINE void Ygrow(void) {
     return;
   }
 
-  if (!(image = TwReAllocMem(image, n * sizeof(hwattr))))
+  if (!(image = TwReAllocMem(image, n * sizeof(tcell))))
     panic();
 
-  Fill(image + max, HWATTR(Color, ' '), n - max);
+  Fill(image + max, TCELL(Color, ' '), n - max);
 
   max = n;
   Ymax = newYmax;
@@ -272,7 +272,7 @@ void addc(byte c) {
   if (Yreal <= Y)
     Yreal = Y + 1;
 
-  image[X + Y * Xmax] = HWATTR(Color, c);
+  image[X + Y * Xmax] = TCELL(Color, c);
   X++;
 }
 
@@ -282,15 +282,15 @@ void finalize(void) {
   if (!image || !Xreal || !Yreal)
     return;
   for (i = 1; i < Yreal; i++)
-    TwMoveMem(image + i * Xmax, image + i * Xreal, Xreal * sizeof(hwattr));
+    TwMoveMem(image + i * Xmax, image + i * Xreal, Xreal * sizeof(tcell));
 }
 
 #define goto_xy(x, y) (X = (x), Y = (y))
 
-hwattr *load_ascii_art(FILE *aaFILE, uldat *x, uldat *y, uldat padX, uldat padY) {
+tcell *load_ascii_art(FILE *aaFILE, uldat *x, uldat *y, uldat padX, uldat padY) {
   int c;
 
-  if (!(image = TwAllocMem(max * sizeof(hwattr))))
+  if (!(image = TwAllocMem(max * sizeof(tcell))))
     panic();
 
   while ((c = fgetc(aaFILE)) != EOF) {
@@ -321,7 +321,7 @@ hwattr *load_ascii_art(FILE *aaFILE, uldat *x, uldat *y, uldat padX, uldat padY)
         break;
       case 127:
         if (X < Xmax && Y < Ymax)
-          image[X + Y * Xmax] = HWATTR(Color, ' ');
+          image[X + Y * Xmax] = TCELL(Color, ' ');
         if (X)
           X--;
         break;

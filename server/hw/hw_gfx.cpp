@@ -79,11 +79,11 @@
     (FN)(xdisplay, xwindow, xgc, xbegin, ybegin + xupfont, buf, buflen);                           \
   } while (0)
 
-INLINE void X11_DrawImageString(myXChar *buf, uldat buflen, hwcol col, int xbegin, int ybegin) {
+INLINE void X11_DrawImageString(myXChar *buf, uldat buflen, tcolor col, int xbegin, int ybegin) {
   XDRAW_FN(myXDrawImageString, col, buf, buflen);
 }
 
-INLINE void X11_DrawString(myXChar *buf, uldat buflen, hwcol col, int xbegin, int ybegin) {
+INLINE void X11_DrawString(myXChar *buf, uldat buflen, tcolor col, int xbegin, int ybegin) {
   XDRAW_FN(myXDrawString, col, buf, buflen);
 }
 
@@ -112,7 +112,7 @@ INLINE void X11_DrawString(myXChar *buf, uldat buflen, hwcol col, int xbegin, in
 #define IS_GFX_MENU(gfx) ((gfx) == GFX_MENU)
 #define IS_GFX_ROOT(gfx) ((gfx) == GFX_ROOT)
 
-INLINE void gfx_Draw1Mono(myXChar *f, hwcol col, hwattr gfx, int xbegin, int ybegin) {
+INLINE void gfx_Draw1Mono(myXChar *f, tcolor col, tcell gfx, int xbegin, int ybegin) {
   int i = (gfx % pitch) * (ldat)xwfont;
   int j = (gfx / pitch) * (ldat)xhfont;
   unsigned long mask = 0;
@@ -133,23 +133,23 @@ INLINE void gfx_Draw1Mono(myXChar *f, hwcol col, hwattr gfx, int xbegin, int ybe
   }
 }
 
-static void gfx_DrawMono(myXChar *buf, udat buflen, hwcol col, hwattr gfx, int xbegin, int ybegin) {
+static void gfx_DrawMono(myXChar *buf, udat buflen, tcolor col, tcell gfx, int xbegin, int ybegin) {
   for (; buflen; buf++, buflen--, xbegin += xwfont) {
     gfx_Draw1Mono(buf, col, gfx, xbegin, ybegin);
   }
 }
 
-INLINE void X11_DrawRoot(myXChar *f, udat flen, hwcol col, int xbegin, int ybegin) {
+INLINE void X11_DrawRoot(myXChar *f, udat flen, tcolor col, int xbegin, int ybegin) {
   XFillRectangle(xdisplay, xwindow, xrootgc, xbegin, ybegin, xwfont * (uldat)flen, xhfont);
   XDRAW_S(f, flen, col);
 }
 
-INLINE void X11_DrawBg(myXChar *f, udat flen, hwcol col, int xbegin, int ybegin) {
+INLINE void X11_DrawBg(myXChar *f, udat flen, tcolor col, int xbegin, int ybegin) {
   XFillRectangle(xdisplay, xwindow, xbggc, xbegin, ybegin, xwfont * (uldat)flen, xhfont);
   XDRAW_S(f, flen, col);
 }
 
-INLINE void gfx_Draw1Color(myXChar *f, hwcol col, hwattr gfx, int xbegin, int ybegin) {
+INLINE void gfx_Draw1Color(myXChar *f, tcolor col, tcell gfx, int xbegin, int ybegin) {
   int i = (gfx % pitch) * (ldat)xwfont;
   int j = (gfx / pitch) * (ldat)xhfont;
 
@@ -160,7 +160,7 @@ INLINE void gfx_Draw1Color(myXChar *f, hwcol col, hwattr gfx, int xbegin, int yb
   }
 }
 
-static void gfx_DrawColor(myXChar *buf, udat buflen, hwcol col, hwattr gfx, int xbegin,
+static void gfx_DrawColor(myXChar *buf, udat buflen, tcolor col, tcell gfx, int xbegin,
                           int ybegin) {
   for (; buflen; buf++, buflen--, xbegin += xwfont) {
     gfx_Draw1Color(buf, col, gfx, xbegin, ybegin);
@@ -184,11 +184,11 @@ static void gfx_DrawColor(myXChar *buf, udat buflen, hwcol col, hwattr gfx, int 
   } while (0)
 
 INLINE void X11_Mogrify(dat x, dat y, ldat len) {
-  hwattr *V, *oV, bufgfx;
-  hwcol col, _col;
+  tcell *V, *oV, bufgfx;
+  tcolor col, _col;
   udat buflen = 0;
-  hwattr gfx;
-  hwfont f;
+  tcell gfx;
+  trune f;
   myXChar buf[TW_SMALLBUFF];
   int xbegin, ybegin;
 
@@ -214,8 +214,8 @@ INLINE void X11_Mogrify(dat x, dat y, ldat len) {
   V = Video + x + y * (ldat)DisplayWidth;
   oV = OldVideo + x + y * (ldat)DisplayWidth;
 
-  for (_col = ~HWCOL(*V); len; x++, V++, oV++, len--) {
-    col = HWCOL(*V);
+  for (_col = ~TCOLOR(*V); len; x++, V++, oV++, len--) {
+    col = TCOLOR(*V);
     gfx = HWEXTRA(*V);
     if (buflen &&
         (col != _col || gfx != bufgfx || (ValidOldVideo && *V == *oV) || buflen == TW_SMALLBUFF)) {
@@ -228,7 +228,7 @@ INLINE void X11_Mogrify(dat x, dat y, ldat len) {
         _col = col;
         bufgfx = gfx;
       }
-      f = xUTF_32_to_charset(HWFONT(*V));
+      f = xUTF_32_to_charset(TRUNE(*V));
       buf[buflen].byte1 = f >> 8;
       buf[buflen++].byte2 = f & 0xFF;
     }

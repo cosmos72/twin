@@ -27,8 +27,8 @@ struct s_row {
   byte Flags;
   uldat Len, MaxLen;
   uldat Gap, LenGap;
-  hwfont *Text;
-  hwcol *ColText;
+  trune *Text;
+  tcolor *ColText;
 };
 
 struct s_fn_row {
@@ -41,7 +41,7 @@ struct s_fn_row {
   /* row */
   fn_obj Fn_Obj;
   byte (*SetText)(row, uldat Len, CONST char *Text, byte DefaultCol);
-  byte (*SetHWFont)(row, uldat Len, CONST hwfont *HWFont, byte DefaultCol);
+  byte (*SetTRune)(row, uldat Len, CONST trune *TRune, byte DefaultCol);
   void (*Raise)(row);
   void (*Lower)(row);
 };

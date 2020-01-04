@@ -57,7 +57,7 @@
 #include "hw_x/common.cpp"
 
 /* manage foreground/background colors */
-static void X11_SetColors(hwcol col) {
+static void X11_SetColors(tcolor col) {
   if (xsgc.foreground != xcol[COLFG(col)])
     XSetForeground(xdisplay, xgc, xsgc.foreground = xcol[COLFG(col)]);
   if (xsgc.background != xcol[COLBG(col)])

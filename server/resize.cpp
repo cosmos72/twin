@@ -119,7 +119,7 @@ byte CheckResizeWindowContents(window Window) {
 }
 
 byte ResizeWindowContents(window Window) {
-  hwattr *NewCont, *saveNewCont, *OldCont, *max, h;
+  tcell *NewCont, *saveNewCont, *OldCont, *max, h;
   ldat count, common, left;
   ttydata *Data = Window->USE.C.TtyData;
   dat x = Window->XWidth, y = Window->YWidth + Data->ScrollBack;
@@ -127,11 +127,11 @@ byte ResizeWindowContents(window Window) {
   if (!(Window->Flags & WINDOWFL_BORDERLESS))
     x -= 2, y -= 2;
 
-  h = HWATTR(Window->ColText, ' ');
+  h = TCELL(Window->ColText, ' ');
 
   /* safety check: */
   if (x > 0 && y > 0) {
-    if (!(saveNewCont = NewCont = (hwattr *)AllocMem(x * y * sizeof(hwattr))))
+    if (!(saveNewCont = NewCont = (tcell *)AllocMem(x * y * sizeof(tcell))))
       return tfalse;
 
     /*
@@ -153,7 +153,7 @@ byte ResizeWindowContents(window Window) {
       }
 
       while (count--) {
-        CopyMem(OldCont, NewCont, common * sizeof(hwattr));
+        CopyMem(OldCont, NewCont, common * sizeof(tcell));
 
         if ((OldCont += Window->WLogic) >= max)
           OldCont = Window->USE.C.Contents;
@@ -229,15 +229,15 @@ static row InsertRowsWindow(window Window, ldat NumRows) {
 }
 
 byte EnsureLenRow(row Row, uldat Len, byte DefaultCol) {
-  hwfont *tempText;
-  hwcol *tempColText;
+  trune *tempText;
+  tcolor *tempColText;
   uldat NewLen;
 
   if (Len > Row->MaxLen) {
     NewLen = (Len + (Len >> 1)) | All->SetUp->MinAllocSize;
-    if ((tempText = (hwfont *)ReAllocMem(Row->Text, NewLen * sizeof(hwfont)))) {
+    if ((tempText = (trune *)ReAllocMem(Row->Text, NewLen * sizeof(trune)))) {
       if (!(Row->Flags & ROW_DEFCOL) && !DefaultCol) {
-        if ((tempColText = (hwcol *)ReAllocMem(Row->ColText, NewLen * sizeof(hwcol))))
+        if ((tempColText = (tcolor *)ReAllocMem(Row->ColText, NewLen * sizeof(tcolor))))
           Row->ColText = tempColText;
         else
           return tfalse;
@@ -254,7 +254,7 @@ byte RowWriteAscii(window Window, uldat Len, CONST char *Text) {
   row CurrRow;
   CONST char *_Text;
   byte ModeInsert;
-  hwfont CONST *to_UTF_32;
+  trune CONST *to_UTF_32;
   ldat x, y, max;
   uldat i, RowLen;
 
@@ -308,13 +308,13 @@ byte RowWriteAscii(window Window, uldat Len, CONST char *Text) {
         CurrRow->Text[x + i] = to_UTF_32[(byte)Text[i]];
       if (x >= 0 && (uldat)x > CurrRow->Len)
         for (i = CurrRow->Len; i < (uldat)x; i++)
-          CurrRow->Text[i] = (hwfont)' ';
+          CurrRow->Text[i] = (trune)' ';
 
       if (!(Window->Flags & WINDOWFL_ROWS_DEFCOL)) {
-        memset(CurrRow->ColText + x, Window->ColText, sizeof(hwcol) * RowLen);
+        memset(CurrRow->ColText + x, Window->ColText, sizeof(tcolor) * RowLen);
         if (x >= 0 && (uldat)x > CurrRow->Len)
           memset(CurrRow->ColText + CurrRow->Len, Window->ColText,
-                 sizeof(hwcol) * (x - CurrRow->Len));
+                 sizeof(tcolor) * (x - CurrRow->Len));
       }
 
       if (CurrRow->Len < x + RowLen)
@@ -340,9 +340,9 @@ byte RowWriteAscii(window Window, uldat Len, CONST char *Text) {
   return ttrue;
 }
 
-byte RowWriteHWFont(window Window, uldat Len, CONST hwfont *Text) {
+byte RowWriteTRune(window Window, uldat Len, CONST trune *Text) {
   row CurrRow;
-  CONST hwfont *_Text;
+  CONST trune *_Text;
   byte ModeInsert;
   ldat x, y, max;
   uldat i, RowLen;
@@ -392,24 +392,24 @@ byte RowWriteHWFont(window Window, uldat Len, CONST hwfont *Text) {
       CurrRow->Flags = ROW_ACTIVE;
 
       if (x >= 0) {
-        CopyMem(Text, CurrRow->Text + x, sizeof(hwfont) * RowLen);
+        CopyMem(Text, CurrRow->Text + x, sizeof(trune) * RowLen);
       } else if ((uldat)-x < RowLen) {
-        CopyMem(Text - x, CurrRow->Text, sizeof(hwfont) * (RowLen + x));
+        CopyMem(Text - x, CurrRow->Text, sizeof(trune) * (RowLen + x));
       }
       if (x >= 0 && (uldat)x > CurrRow->Len) {
         for (i = CurrRow->Len; i < (uldat)x; i++)
-          CurrRow->Text[i] = (hwfont)' ';
+          CurrRow->Text[i] = (trune)' ';
       }
 
       if (!(Window->Flags & WINDOWFL_ROWS_DEFCOL)) {
         if (x >= 0) {
-          memset(CurrRow->ColText + x, Window->ColText, sizeof(hwcol) * RowLen);
+          memset(CurrRow->ColText + x, Window->ColText, sizeof(tcolor) * RowLen);
         } else if ((uldat)-x < RowLen) {
-          memset(CurrRow->ColText, Window->ColText - x, sizeof(hwcol) * (RowLen + x));
+          memset(CurrRow->ColText, Window->ColText - x, sizeof(tcolor) * (RowLen + x));
         }
         if (x >= 0 && (uldat)x > CurrRow->Len) {
           memset(CurrRow->ColText + CurrRow->Len, Window->ColText,
-                 sizeof(hwcol) * (x - CurrRow->Len));
+                 sizeof(tcolor) * (x - CurrRow->Len));
         }
       }
 
@@ -437,18 +437,18 @@ byte RowWriteHWFont(window Window, uldat Len, CONST hwfont *Text) {
 }
 
 void ExposeWidget2(widget W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch, CONST char *Text,
-                   CONST hwfont *Font, CONST hwattr *Attr) {
+                   CONST trune *Font, CONST tcell *Attr) {
   if (w_USE(W, USEEXPOSE)) {
     if (Text || Font || Attr) {
       if (Text) {
         W->USE.E.E.Text = Text;
         W->USE.E.Flags = WIDGET_USEEXPOSE_TEXT;
       } else if (Font) {
-        W->USE.E.E.HWFont = Font;
-        W->USE.E.Flags = WIDGET_USEEXPOSE_HWFONT;
+        W->USE.E.E.TRune = Font;
+        W->USE.E.Flags = WIDGET_USEEXPOSE_TRUNE;
       } else {
-        W->USE.E.E.HWAttr = Attr;
-        W->USE.E.Flags = WIDGET_USEEXPOSE_HWATTR;
+        W->USE.E.E.TCell = Attr;
+        W->USE.E.Flags = WIDGET_USEEXPOSE_TCELL;
       }
       W->USE.E.X1 = Left;
       W->USE.E.X2 = Left + XWidth - 1;
@@ -470,7 +470,7 @@ void ExposeWidget2(widget W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch
 }
 
 void ExposeWindow2(window W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch, CONST char *Text,
-                   CONST hwfont *Font, CONST hwattr *Attr) {
+                   CONST trune *Font, CONST tcell *Attr) {
   ldat CurX, CurY;
 
   if (W_USE(W, USEEXPOSE)) {
@@ -533,29 +533,29 @@ void ExposeWindow2(window W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch
     Act(GotoXY, W)(W, CurX, CurY);
 
   } else if (Font) {
-    byte (*WriteHWFont)(window, uldat, CONST hwfont *);
+    byte (*WriteTRune)(window, uldat, CONST trune *);
     if (W_USE(W, USECONTENTS))
-      WriteHWFont = W->Fn->TtyWriteHWFont;
+      WriteTRune = W->Fn->TtyWriteTRune;
     else
-      WriteHWFont = W->Fn->RowWriteHWFont;
+      WriteTRune = W->Fn->RowWriteTRune;
 
     CurX = W->CurX;
     CurY = W->CurY;
     for (; YWidth; YWidth--, Up++, Font += Pitch) {
       Act(GotoXY, W)(W, Left, Up);
-      WriteHWFont(W, (uldat)XWidth, Font);
+      WriteTRune(W, (uldat)XWidth, Font);
     }
     Act(GotoXY, W)(W, CurX, CurY);
 
   } else if (Attr) {
-    byte (*WriteHWAttr)(window, dat, dat, uldat, CONST hwattr *);
+    byte (*WriteTCell)(window, dat, dat, uldat, CONST tcell *);
     if (W_USE(W, USECONTENTS))
-      WriteHWAttr = W->Fn->TtyWriteHWAttr;
+      WriteTCell = W->Fn->TtyWriteTCell;
     else
-      WriteHWAttr = W->Fn->RowWriteHWAttr;
+      WriteTCell = W->Fn->RowWriteTCell;
 
     for (; YWidth; YWidth--, Up++, Attr += Pitch)
-      WriteHWAttr(W, Left, Up, (uldat)XWidth, Attr);
+      WriteTCell(W, Left, Up, (uldat)XWidth, Attr);
   }
 }
 
@@ -1924,7 +1924,7 @@ void WriteTextsGadget(gadget G, byte bitmap, dat TW, dat TH, CONST char *Text, d
   dat GW = G->XWidth, GH = G->YWidth;
   dat TL = 0, TU = 0, W, H;
   dat _W;
-  hwfont *GT;
+  trune *GT;
   CONST char *TT;
   byte i;
 
@@ -1990,12 +1990,12 @@ void WriteTextsGadget(gadget G, byte bitmap, dat TW, dat TH, CONST char *Text, d
 
 /* Left < 0 means right-align leaving (-Left-1) margin */
 /* Up   < 0 means down-align  leaving (-Up-1)   margin */
-void WriteHWFontsGadget(gadget G, byte bitmap, dat TW, dat TH, CONST hwfont *HWFont, dat L, dat U) {
+void WriteTRunesGadget(gadget G, byte bitmap, dat TW, dat TH, CONST trune *TRune, dat L, dat U) {
   dat GW = G->XWidth, GH = G->YWidth;
   dat TL = 0, TU = 0, W, H;
   dat _W;
-  hwfont *GT;
-  CONST hwfont *TT;
+  trune *GT;
+  CONST trune *TT;
   byte i;
 
   if (G->Flags & GADGETFL_BUTTON) {
@@ -2032,8 +2032,8 @@ void WriteHWFontsGadget(gadget G, byte bitmap, dat TW, dat TH, CONST hwfont *HWF
     for (i = 0; i < 4; i++, bitmap >>= 1) {
       if ((bitmap & 1) && G->USE.T.Text[i]) {
         GT = G->USE.T.Text[i] + L + U * GW;
-        if (HWFont) {
-          TT = HWFont + TL + TU * TW;
+        if (TRune) {
+          TT = TRune + TL + TU * TW;
           /* update the specified part, do not touch the rest */
           while (H-- > 0) {
             _W = W;

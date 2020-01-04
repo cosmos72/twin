@@ -95,8 +95,8 @@ static window OpenTerm(CONST char *arg0, CONST char *CONST *argv) {
   return NULL;
 }
 
-static void TermWriteHWFontWindow(window W, uldat len, CONST hwfont *hwData) {
-  hwfont (*inv_charset)(hwfont) = W->USE.C.TtyData->InvCharset;
+static void TermWriteTRuneWindow(window W, uldat len, CONST trune *hwData) {
+  trune (*inv_charset)(trune) = W->USE.C.TtyData->InvCharset;
   byte *Data, *sData;
   uldat n;
 
@@ -136,9 +136,9 @@ static void TwinTermH(msgport MsgPort) {
     } else if (Msg->Type == MSG_SELECTIONNOTIFY) {
 
       if ((Win = (window)Id2Obj(window_magic_id, Event->EventSelectionNotify.ReqPrivate))) {
-        if (Event->EventSelectionNotify.Magic == SEL_HWFONTMAGIC)
-          TermWriteHWFontWindow(Win, Event->EventSelectionNotify.Len / sizeof(hwfont),
-                                (hwfont *)Event->EventSelectionNotify.Data);
+        if (Event->EventSelectionNotify.Magic == SEL_TRUNEMAGIC)
+          TermWriteTRuneWindow(Win, Event->EventSelectionNotify.Len / sizeof(trune),
+                               (trune *)Event->EventSelectionNotify.Data);
         else
           (void)RemoteWindowWriteQueue(Win, Event->EventSelectionNotify.Len,
                                        Event->EventSelectionNotify.Data);
@@ -209,12 +209,12 @@ static void OverrideMethods(byte enter) {
     OverrideMethod(Window, KbdFocus, FakeKbdFocus, TtyKbdFocus);
     OverrideMethod(Window, TtyWriteAscii, FakeWriteAscii, TtyWriteAscii);
     OverrideMethod(Window, TtyWriteString, FakeWriteString, TtyWriteString);
-    OverrideMethod(Window, TtyWriteHWFont, FakeWriteHWFont, TtyWriteHWFont);
-    OverrideMethod(Window, TtyWriteHWAttr, FakeWriteHWAttr, TtyWriteHWAttr);
+    OverrideMethod(Window, TtyWriteTRune, FakeWriteTRune, TtyWriteTRune);
+    OverrideMethod(Window, TtyWriteTCell, FakeWriteTCell, TtyWriteTCell);
     ForceKbdFocus();
   } else {
-    OverrideMethod(Window, TtyWriteHWAttr, TtyWriteHWAttr, FakeWriteHWAttr);
-    OverrideMethod(Window, TtyWriteHWFont, TtyWriteHWFont, FakeWriteHWFont);
+    OverrideMethod(Window, TtyWriteTCell, TtyWriteTCell, FakeWriteTCell);
+    OverrideMethod(Window, TtyWriteTRune, TtyWriteTRune, FakeWriteTRune);
     OverrideMethod(Window, TtyWriteString, TtyWriteString, FakeWriteString);
     OverrideMethod(Window, TtyWriteAscii, TtyWriteAscii, FakeWriteAscii);
     OverrideMethod(Window, KbdFocus, TtyKbdFocus, FakeKbdFocus);
@@ -238,7 +238,7 @@ EXTERN_C byte InitModule(module Module) {
                                     COL(HIGH | BLACK, WHITE), COL(HIGH | BLACK, BLACK),
                                     COL(RED, WHITE), COL(RED, GREEN), (byte)0)) &&
       Info4Menu(Term_Menu, ROW_ACTIVE, (uldat)19, " Builtin Twin Term ",
-                (CONST hwcol *)"ptppppppptpppptpppp") &&
+                (CONST tcolor *)"ptppppppptpppptpppp") &&
 
       (Window = Win4Menu(Term_Menu)) && Row4Menu(Window, COD_SPAWN, ROW_ACTIVE, 10, " New Term ") &&
       Row4Menu(Window, COD_QUIT, tfalse, 6, " Exit ") &&

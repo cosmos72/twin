@@ -77,7 +77,7 @@ static void X11_XftDrawString16(Display *display, Drawable d, GC gc, int x, int 
 }
 
 /* manage foreground/background colors */
-static void X11_SetColors(hwcol col) {
+static void X11_SetColors(tcolor col) {
   if (xsgc.foreground != xcol[COLFG(col)]) {
     XSetForeground(xdisplay, xgc, xsgc.foreground = xcol[COLFG(col)]);
     xforeground = xftcolors[COLFG(col)];

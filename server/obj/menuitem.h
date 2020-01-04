@@ -25,8 +25,8 @@ struct s_menuitem {
   byte Flags;
   uldat Len, MaxLen;
   uldat Gap, LenGap;
-  hwfont *Text;
-  hwcol *ColText;
+  trune *Text;
+  tcolor *ColText;
   /* menuitem */
   window Window;
   dat Left, ShortCut;
@@ -44,7 +44,7 @@ struct s_fn_menuitem {
   /* row */
   fn_obj Fn_Obj;
   byte (*SetText)(row, uldat Len, CONST char *Text, byte DefaultCol);
-  byte (*SetHWFont)(row, uldat Len, CONST hwfont *HWFont, byte DefaultCol);
+  byte (*SetTRune)(row, uldat Len, CONST trune *TRune, byte DefaultCol);
   /* menuitem */
   void (*Raise)(menuitem);
   void (*Lower)(menuitem);

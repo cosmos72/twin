@@ -156,7 +156,7 @@ static struct s_fn_obj _FnObj = {
 /* widget */
 
 static widget CreateWidget(fn_widget Fn_Widget, msgport Owner, dat XWidth, dat YWidth, uldat Attrib,
-                           uldat Flags, dat Left, dat Up, hwattr Fill) {
+                           uldat Flags, dat Left, dat Up, tcell Fill) {
   widget W = (widget)0;
 
   if (Owner && (W = (widget)Fn_Widget->Fn_Obj->Create((fn_obj)Fn_Widget))) {
@@ -219,7 +219,7 @@ static void DeleteWidget(widget W) {
     FreeMem(Fn_Obj);
 }
 
-static void SetFillWidget(widget W, hwattr Fill) {
+static void SetFillWidget(widget W, tcell Fill) {
   if (W->USE_Fill != Fill) {
     W->USE_Fill = Fill;
     if (W->Parent)
@@ -238,7 +238,7 @@ static void ChangeFieldWidget(widget W, udat field, uldat CLEARMask, uldat XORMa
     case TWS_widget_Height:
       break;
     case TWS_widget_USE_Fill:
-      i = (hwattr)((W->USE_Fill & ~CLEARMask) ^ XORMask);
+      i = (tcell)((W->USE_Fill & ~CLEARMask) ^ XORMask);
       SetFillWidget(W, i);
       break;
     case TWS_widget_XLogic:
@@ -605,14 +605,14 @@ static struct s_fn_widget _FnWidget = {
 
 static gadget CreateGadget(fn_gadget Fn_Gadget, msgport Owner, widget Parent, dat XWidth,
                            dat YWidth, CONST char *TextNormal, uldat Attrib, uldat Flags, udat Code,
-                           hwcol ColText, hwcol ColTextSelect, hwcol ColTextDisabled,
-                           hwcol ColTextSelectDisabled, dat Left, dat Up) {
+                           tcolor ColText, tcolor ColTextSelect, tcolor ColTextDisabled,
+                           tcolor ColTextSelectDisabled, dat Left, dat Up) {
   gadget G = (gadget)0;
   ldat Size;
 
   if (Owner && Code < COD_RESERVED && XWidth > 0 && YWidth > 0 &&
       (G = (gadget)Fn_Gadget->Fn_Widget->Create((fn_widget)Fn_Gadget, Owner, XWidth, YWidth, Attrib,
-                                                Flags, Left, Up, HWATTR(ColText, ' ')))) {
+                                                Flags, Left, Up, TCELL(ColText, ' ')))) {
 
     Fn_Gadget->Fn_Widget->Used++;
 
@@ -628,7 +628,7 @@ static gadget CreateGadget(fn_gadget Fn_Gadget, msgport Owner, widget Parent, da
     if (G_USE(G, USETEXT)) {
       Size = (ldat)XWidth * YWidth;
       if (TextNormal)
-        G->USE.T.Text[0] = CloneStr2HWFont(TextNormal, Size);
+        G->USE.T.Text[0] = CloneStr2TRune(TextNormal, Size);
       else
         G->USE.T.Text[0] = NULL;
 
@@ -700,7 +700,7 @@ static void ChangeFieldGadget(gadget G, udat field, uldat CLEARMask, uldat XORMa
 }
 
 static gadget CreateEmptyButton(fn_gadget Fn_Gadget, msgport Owner, dat XWidth, dat YWidth,
-                                hwcol BgCol) {
+                                tcolor BgCol) {
   gadget G;
   ldat Size;
   byte i;
@@ -711,7 +711,7 @@ static gadget CreateEmptyButton(fn_gadget Fn_Gadget, msgport Owner, dat XWidth, 
 
   if ((G = (gadget)Fn_Gadget->Fn_Widget->Create((fn_widget)Fn_Gadget, Owner, ++XWidth, ++YWidth, 0,
                                                 GADGETFL_USETEXT | GADGETFL_BUTTON, 0, 0,
-                                                (hwattr)0))) {
+                                                (tcell)0))) {
 
     Size = (ldat)XWidth * YWidth;
 
@@ -719,8 +719,8 @@ static gadget CreateEmptyButton(fn_gadget Fn_Gadget, msgport Owner, dat XWidth, 
       G->USE.T.Text[i] = NULL, G->USE.T.Color[i] = NULL;
 
     for (i = 0; i < 4; i++)
-      if (!(G->USE.T.Text[i] = (hwfont *)AllocMem(Size * sizeof(hwfont))) ||
-          !(G->USE.T.Color[i] = (hwcol *)AllocMem(Size * sizeof(hwcol)))) {
+      if (!(G->USE.T.Text[i] = (trune *)AllocMem(Size * sizeof(trune))) ||
+          !(G->USE.T.Color[i] = (tcolor *)AllocMem(Size * sizeof(tcolor)))) {
 
         Act(Delete, G)(G);
         return (gadget)0;
@@ -739,7 +739,7 @@ static gadget CreateEmptyButton(fn_gadget Fn_Gadget, msgport Owner, dat XWidth, 
       G->USE.T.Text[i][k] = ' ';
       for (j = (dat)0; j < XWidth; j++)
         G->USE.T.Text[i][k + 1 + j] = i & 1 ? ' ' : _UPPER;
-#if TW_SIZEOF_HWCOL == 1
+#if TW_SIZEOF_TCOLOR == 1
       memset((void *)(G->USE.T.Color[i] + k), BgCol, XWidth + 1);
 #else
       for (j = (dat)0; j <= XWidth; j++)
@@ -757,7 +757,7 @@ static gadget CreateEmptyButton(fn_gadget Fn_Gadget, msgport Owner, dat XWidth, 
 }
 
 byte FillButton(gadget G, widget Parent, udat Code, dat Left, dat Up, udat Flags, CONST char *Text,
-                hwcol Color, hwcol ColorDisabled) {
+                tcolor Color, tcolor ColorDisabled) {
   dat i, j, XWidth, YWidth;
   CONST char *T;
 
@@ -788,8 +788,8 @@ byte FillButton(gadget G, widget Parent, udat Code, dat Left, dat Up, udat Flags
 }
 
 static gadget CreateButton(fn_gadget Fn_Gadget, widget Parent, dat XWidth, dat YWidth,
-                           CONST char *Text, uldat Flags, udat Code, hwcol BgCol, hwcol Col,
-                           hwcol ColDisabled, dat Left, dat Up) {
+                           CONST char *Text, uldat Flags, udat Code, tcolor BgCol, tcolor Col,
+                           tcolor ColDisabled, dat Left, dat Up) {
   gadget G;
   if (Parent &&
       (G = Fn_Gadget->CreateEmptyButton(Fn_Gadget, Parent->Owner, XWidth, YWidth, BgCol))) {
@@ -809,19 +809,19 @@ static struct s_fn_gadget _FnGadget = {
     &_FnObj, DrawSelfGadget,                    /* exported by draw.c */
     (widget (*)(gadget, dat, dat))FindWidgetAt, /* exported by draw.c */
     (gadget (*)(gadget, udat))FindGadgetByCode, (void (*)(gadget, dat, dat))SetXYWidget,
-    (void (*)(widget, hwattr))SetFillWidget, (widget(*)(gadget))FocusWidget,
+    (void (*)(widget, tcell))SetFillWidget, (widget(*)(gadget))FocusWidget,
     (widget(*)(gadget))TtyKbdFocus, (void (*)(gadget, widget))MapWidget,
     (void (*)(gadget))UnMapWidget, (void (*)(gadget, screen))MapTopRealWidget,
     (void (*)(gadget))RaiseW, (void (*)(gadget))LowerW, (void (*)(gadget, msgport))OwnWidget,
     (void (*)(gadget))DisOwnWidget, (void (*)(gadget, msgport))RecursiveDeleteWidget,
-    (void (*)(gadget, dat, dat, dat, dat, CONST char *, CONST hwfont *,
-              CONST hwattr *))ExposeWidget2, /* exported by resize.c */
+    (void (*)(gadget, dat, dat, dat, dat, CONST char *, CONST trune *,
+              CONST tcell *))ExposeWidget2, /* exported by resize.c */
     (byte (*)(gadget, fn_hook, void (**)(widget)))InstallHookWidget,
     (void (*)(gadget, fn_hook, void (**)(widget)))RemoveHookWidget,
     /* gadget */
     &_FnWidget, CreateEmptyButton, FillButton, CreateButton,
-    WriteTextsGadget,   /* exported by resize.c */
-    WriteHWFontsGadget, /* exported by resize.c */
+    WriteTextsGadget,  /* exported by resize.c */
+    WriteTRunesGadget, /* exported by resize.c */
 };
 
 /* ttydata */
@@ -829,15 +829,15 @@ static struct s_fn_gadget _FnGadget = {
 static byte InitTtyData(window Window, dat ScrollBackLines) {
   ttydata *Data = Window->USE.C.TtyData;
   ldat count = Window->WLogic * Window->HLogic;
-  hwattr *p = Window->USE.C.Contents, h;
+  tcell *p = Window->USE.C.Contents, h;
 
   if (!Data && !(Window->USE.C.TtyData = Data = (ttydata *)AllocMem(sizeof(ttydata))))
     return tfalse;
 
-  if (!p && !(Window->USE.C.Contents = p = (hwattr *)AllocMem(count * sizeof(hwattr))))
+  if (!p && !(Window->USE.C.Contents = p = (tcell *)AllocMem(count * sizeof(tcell))))
     return tfalse;
 
-  h = HWATTR(COL(WHITE, BLACK), ' ');
+  h = TCELL(COL(WHITE, BLACK), ' ');
   while (count--)
     *p++ = h;
 
@@ -887,12 +887,12 @@ static byte InitTtyData(window Window, dat ScrollBackLines) {
 /* window */
 
 static window CreateWindow(fn_window Fn_Window, msgport Owner, dat TitleLen, CONST char *Title,
-                           CONST hwcol *ColTitle, menu Menu, hwcol ColText, uldat CursorType,
+                           CONST tcolor *ColTitle, menu Menu, tcolor ColText, uldat CursorType,
                            uldat Attrib, uldat Flags, dat XWidth, dat YWidth, dat ScrollBackLines) {
 
   window Window = (window)0;
   char *_Title = NULL;
-  hwcol *_ColTitle = NULL;
+  tcolor *_ColTitle = NULL;
   byte HasBorder = 2 * !(Flags & WINDOWFL_BORDERLESS);
 
   /* overflow safety */
@@ -904,16 +904,17 @@ static window CreateWindow(fn_window Fn_Window, msgport Owner, dat TitleLen, CON
   }
 
   if ((!Title || (_Title = CloneStrL(Title, TitleLen))) &&
-      (!ColTitle || (_ColTitle = (hwcol *)CloneMem(ColTitle, TitleLen * sizeof(hwcol)))) && Owner &&
+      (!ColTitle || (_ColTitle = (tcolor *)CloneMem(ColTitle, TitleLen * sizeof(tcolor)))) &&
+      Owner &&
       (Window =
            (window)Fn_Window->Fn_Widget->Create((fn_widget)Fn_Window, Owner, XWidth, YWidth, Attrib,
-                                                Flags, 0, TW_MAXDAT, HWATTR(ColText, ' ')))) {
+                                                Flags, 0, TW_MAXDAT, TCELL(ColText, ' ')))) {
     Window->Menu = Menu;
     Window->MenuItem = (menuitem)0;
     Window->NameLen = TitleLen;
     Window->Name = _Title;
     Window->ColName = _ColTitle;
-    Window->BorderPattern[0] = Window->BorderPattern[1] = (hwfont *)0;
+    Window->BorderPattern[0] = Window->BorderPattern[1] = (trune *)0;
     Window->RemoteData.Fd = NOFD;
     Window->RemoteData.ChildPid = NOPID;
     Window->RemoteData.FdSlot = NOSLOT;
@@ -1018,7 +1019,7 @@ static void ChangeFieldWindow(window W, udat field, uldat CLEARMask, uldat XORMa
     case TWS_window_ColSelect:
     case TWS_window_ColDisabled:
     case TWS_window_ColSelectDisabled: {
-      hwcol *C = NULL;
+      tcolor *C = NULL;
       switch (field) {
       case TWS_window_ColGadgets:
         C = &W->ColGadgets;
@@ -1137,13 +1138,13 @@ static void SetTitleWindow(window W, dat titlelen, char *title) {
   }
 }
 
-static void SetColTextWindow(window W, hwcol ColText) {
+static void SetColTextWindow(window W, tcolor ColText) {
   W->ColText = ColText;
 }
 
-static void SetColorsWindow(window W, udat Bitmap, hwcol ColGadgets, hwcol ColArrows, hwcol ColBars,
-                            hwcol ColTabs, hwcol ColBorder, hwcol ColText, hwcol ColSelect,
-                            hwcol ColDisabled, hwcol ColSelectDisabled) {
+static void SetColorsWindow(window W, udat Bitmap, tcolor ColGadgets, tcolor ColArrows,
+                            tcolor ColBars, tcolor ColTabs, tcolor ColBorder, tcolor ColText,
+                            tcolor ColSelect, tcolor ColDisabled, tcolor ColSelectDisabled) {
   if (Bitmap & 1)
     W->ColGadgets = ColGadgets;
   if (Bitmap & 2)
@@ -1268,7 +1269,7 @@ static void GotoXYWindow(window Window, ldat X, ldat Y) {
 
 window Create4MenuWindow(fn_window Fn_Window, menu Menu) {
   window Window = (window)0;
-  if (Menu && (Window = Fn_Window->Create(Fn_Window, Menu->MsgPort, 0, NULL, (hwcol *)0, Menu,
+  if (Menu && (Window = Fn_Window->Create(Fn_Window, Menu->MsgPort, 0, NULL, (tcolor *)0, Menu,
                                           COL(BLACK, WHITE), NOCURSOR, WINDOW_AUTO_KEYS,
                                           WINDOWFL_MENU | WINDOWFL_USEROWS | WINDOWFL_ROWS_DEFCOL |
                                               WINDOWFL_ROWS_SELCURRENT,
@@ -1294,15 +1295,15 @@ byte FakeWriteString(window Window, uldat Len, CONST char *String) {
   return tfalse;
 }
 
-byte FakeWriteHWFont(window Window, uldat Len, CONST hwfont *HWFont) {
-  if (DlLoad(TermSo) && Window->Fn->TtyWriteHWFont != FakeWriteHWFont)
-    return Act(TtyWriteHWFont, Window)(Window, Len, HWFont);
+byte FakeWriteTRune(window Window, uldat Len, CONST trune *TRune) {
+  if (DlLoad(TermSo) && Window->Fn->TtyWriteTRune != FakeWriteTRune)
+    return Act(TtyWriteTRune, Window)(Window, Len, TRune);
   return tfalse;
 }
 
-byte FakeWriteHWAttr(window Window, dat x, dat y, uldat Len, CONST hwattr *Attr) {
-  if (DlLoad(TermSo) && Window->Fn->TtyWriteHWAttr != FakeWriteHWAttr)
-    return Act(TtyWriteHWAttr, Window)(Window, x, y, Len, Attr);
+byte FakeWriteTCell(window Window, dat x, dat y, uldat Len, CONST tcell *Attr) {
+  if (DlLoad(TermSo) && Window->Fn->TtyWriteTCell != FakeWriteTCell)
+    return Act(TtyWriteTCell, Window)(Window, x, y, Len, Attr);
   return tfalse;
 }
 
@@ -1312,14 +1313,14 @@ window FakeOpenTerm(CONST char *arg0, CONST char *CONST *argv) {
   return NULL;
 }
 
-tpos FakeFindBorderWindow(window W, dat u, dat v, byte Border, hwattr *PtrAttr) {
+tpos FakeFindBorderWindow(window W, dat u, dat v, byte Border, tcell *PtrAttr) {
   byte Horiz, Vert;
 
   Horiz = u ? u + 1 == W->XWidth ? (byte)2 : (byte)1 : (byte)0;
   Vert = v ? v + 1 == W->YWidth ? (byte)2 : (byte)1 : (byte)0;
 
   if (*PtrAttr)
-    *PtrAttr = HWATTR(W->ColBorder, StdBorder[Border][Vert * 3 + Horiz]);
+    *PtrAttr = TCELL(W->ColBorder, StdBorder[Border][Vert * 3 + Horiz]);
 
   return v ? POS_ROOT : POS_TITLE;
 }
@@ -1389,7 +1390,7 @@ static struct s_fn_window _FnWindow = {
     (widget(*)(window, dat, dat))FindWidgetAt,
     (gadget(*)(window, udat))FindGadgetByCode,
     SetXYWindow,
-    (void (*)(window, hwattr))SetFillWidget,
+    (void (*)(window, tcell))SetFillWidget,
     (widget(*)(window))FocusWidget,
     (widget(*)(window))TtyKbdFocus,
     (void (*)(window, widget))MapWidget,
@@ -1400,20 +1401,20 @@ static struct s_fn_window _FnWindow = {
     (void (*)(window, msgport))OwnWidget,
     (void (*)(window))DisOwnWidget,
     (void (*)(window, msgport))RecursiveDeleteWidget,
-    (void (*)(window, dat, dat, dat, dat, CONST char *, CONST hwfont *,
-              CONST hwattr *))ExposeWindow2, /* exported by resize.c */
+    (void (*)(window, dat, dat, dat, dat, CONST char *, CONST trune *,
+              CONST tcell *))ExposeWindow2, /* exported by resize.c */
     (byte (*)(window, fn_hook, void (**)(widget)))InstallHookWidget,
     (void (*)(window, fn_hook, void (**)(widget)))RemoveHookWidget,
     /* window */
     &_FnWidget,
     FakeWriteAscii,
     FakeWriteString,
-    FakeWriteHWFont,
-    FakeWriteHWAttr,
+    FakeWriteTRune,
+    FakeWriteTCell,
     RowWriteAscii, /* exported by resize.c */
     RowWriteAscii,
-    RowWriteHWFont,
-    (byte(*)(window, dat, dat, uldat, CONST hwattr *))AlwaysFalse,
+    RowWriteTRune,
+    (byte(*)(window, dat, dat, uldat, CONST tcell *))AlwaysFalse,
 
     GotoXYWindow,
     SetTitleWindow,
@@ -1429,17 +1430,17 @@ static struct s_fn_window _FnWindow = {
 /* screen */
 
 static screen CreateScreen(fn_screen Fn_Screen, dat NameLen, CONST char *Name, dat BgWidth,
-                           dat BgHeight, CONST hwattr *Bg) {
+                           dat BgHeight, CONST tcell *Bg) {
   screen S = (screen)0;
   size_t size;
 
-  if ((size = (size_t)BgWidth * BgHeight * sizeof(hwattr))) {
+  if ((size = (size_t)BgWidth * BgHeight * sizeof(tcell))) {
 
     if ((S = (screen)Fn_Screen->Fn_Widget->Create((fn_widget)Fn_Screen, Builtin_MsgPort, TW_MAXDAT,
                                                   TW_MAXDAT, 0, SCREENFL_USEBG, 0, 0, Bg[0]))) {
 
       if (!(S->Name = NULL, Name) || (S->Name = CloneStrL(Name, NameLen))) {
-        if ((S->USE.B.Bg = (hwattr *)AllocMem(size))) {
+        if ((S->USE.B.Bg = (tcell *)AllocMem(size))) {
 
           Fn_Screen->Fn_Widget->Used++;
 
@@ -1463,16 +1464,15 @@ static screen CreateScreen(fn_screen Fn_Screen, dat NameLen, CONST char *Name, d
   return NULL;
 }
 
-static screen CreateSimpleScreen(fn_screen Fn_Screen, dat NameLen, CONST char *Name, hwattr Bg) {
+static screen CreateSimpleScreen(fn_screen Fn_Screen, dat NameLen, CONST char *Name, tcell Bg) {
   return Fn_Screen->Create(Fn_Screen, NameLen, Name, 1, 1, &Bg);
 }
 
-static void BgImageScreen(screen Screen, dat BgWidth, dat BgHeight, CONST hwattr *Bg) {
+static void BgImageScreen(screen Screen, dat BgWidth, dat BgHeight, CONST tcell *Bg) {
   size_t size;
 
-  if (Screen && S_USE(Screen, USEBG) && Bg &&
-      (size = (size_t)BgWidth * BgHeight * sizeof(hwattr)) &&
-      (Screen->USE.B.Bg = (hwattr *)ReAllocMem(Screen->USE.B.Bg, size))) {
+  if (Screen && S_USE(Screen, USEBG) && Bg && (size = (size_t)BgWidth * BgHeight * sizeof(tcell)) &&
+      (Screen->USE.B.Bg = (tcell *)ReAllocMem(Screen->USE.B.Bg, size))) {
 
     Screen->USE.B.BgWidth = BgWidth;
     Screen->USE.B.BgHeight = BgHeight;
@@ -1606,7 +1606,7 @@ static struct s_fn_screen _FnScreen = {
     (widget(*)(screen, dat, dat))FindWidgetAt,
     (gadget(*)(screen, udat))FindGadgetByCode,
     SetXYScreen,
-    (void (*)(screen, hwattr))SetFillWidget,
+    (void (*)(screen, tcell))SetFillWidget,
     FocusScreen,
     (widget(*)(screen))NoOp,        /* KbdFocusWidget */
     (void (*)(screen, widget))NoOp, /* MapWidget */
@@ -1617,8 +1617,8 @@ static struct s_fn_screen _FnScreen = {
     (void (*)(screen, msgport))OwnWidget,
     (void (*)(screen))DisOwnWidget,
     (void (*)(screen, msgport))RecursiveDeleteWidget,
-    (void (*)(screen, dat, dat, dat, dat, CONST char *, CONST hwfont *,
-              CONST hwattr *))ExposeWidget2, /* exported by resize.c */
+    (void (*)(screen, dat, dat, dat, dat, CONST char *, CONST trune *,
+              CONST tcell *))ExposeWidget2, /* exported by resize.c */
     (byte (*)(screen, fn_hook, void (**)(widget)))InstallHookWidget,
     (void (*)(screen, fn_hook, void (**)(widget)))RemoveHookWidget,
     /* screen */
@@ -1785,14 +1785,14 @@ static byte SetTextRow(row Row, uldat Len, CONST char *Text, byte DefaultCol) {
   if (EnsureLenRow(Row, Len, DefaultCol)) {
     if (Len) {
 
-      hwfont *RowText = Row->Text;
+      trune *RowText = Row->Text;
       ldat i = Len;
       while (i-- > 0) {
         *RowText++ = Tutf_CP437_to_UTF_32[(byte)*Text++];
       }
       if (!(Row->Flags & ROW_DEFCOL) && !DefaultCol)
-        /* will not work correctly if sizeof(hwcol) != 1 */
-        memset(Row->ColText, COL(WHITE, BLACK), Len * sizeof(hwcol));
+        /* will not work correctly if sizeof(tcolor) != 1 */
+        memset(Row->ColText, COL(WHITE, BLACK), Len * sizeof(tcolor));
     }
     Row->Len = Len;
     Row->Gap = Row->LenGap = 0;
@@ -1801,13 +1801,13 @@ static byte SetTextRow(row Row, uldat Len, CONST char *Text, byte DefaultCol) {
   return tfalse;
 }
 
-static byte SetHWFontRow(row Row, uldat Len, CONST hwfont *HWFont, byte DefaultCol) {
+static byte SetTRuneRow(row Row, uldat Len, CONST trune *TRune, byte DefaultCol) {
   if (EnsureLenRow(Row, Len, DefaultCol)) {
     if (Len) {
-      CopyMem(HWFont, Row->Text, Len * sizeof(hwfont));
+      CopyMem(TRune, Row->Text, Len * sizeof(trune));
       if (!(Row->Flags & ROW_DEFCOL) && !DefaultCol)
-        /* will not work correctly if sizeof(hwcol) != 1 */
-        memset(Row->ColText, COL(WHITE, BLACK), Len * sizeof(hwcol));
+        /* will not work correctly if sizeof(tcolor) != 1 */
+        memset(Row->ColText, COL(WHITE, BLACK), Len * sizeof(tcolor));
     }
     Row->Len = Len;
     Row->Gap = Row->LenGap = 0;
@@ -1880,7 +1880,7 @@ static struct s_fn_row _FnRow = {
     /* row */
     &_FnObj,
     SetTextRow,
-    SetHWFontRow,
+    SetTRuneRow,
     (void (*)(row))RaiseMenuItem,
     (void (*)(row))LowerMenuItem,
 };
@@ -1898,10 +1898,10 @@ byte FindInfo(menu Menu, dat i) {
 static menuitem CreateMenuItem(fn_menuitem Fn_MenuItem, obj Parent, window Window, udat Code,
                                byte Flags, dat Left, ldat Len, dat ShortCut, CONST char *Name) {
   menuitem MenuItem = (menuitem)0;
-  hwfont *_Name = NULL;
+  trune *_Name = NULL;
 
   if (Parent && (IS_MENU(Parent) || (IS_WINDOW(Parent) && W_USE((window)Parent, USEROWS))) &&
-      (!Window || IS_WINDOW(Window)) && Name && (_Name = CloneStr2HWFont(Name, Len)) &&
+      (!Window || IS_WINDOW(Window)) && Name && (_Name = CloneStr2TRune(Name, Len)) &&
       (MenuItem = (menuitem)Fn_MenuItem->Fn_Row->Create((fn_row)Fn_MenuItem, Code, Flags))) {
 
     Fn_MenuItem->Fn_Row->Used++;
@@ -2020,7 +2020,7 @@ static struct s_fn_menuitem _FnMenuItem = {
     (void (*)(menuitem, udat, uldat, uldat))NoOp,
     &_FnObj,
     SetTextRow,
-    SetHWFontRow,
+    SetTRuneRow,
     RaiseMenuItem,
     LowerMenuItem,
     &_FnRow,
@@ -2030,9 +2030,9 @@ static struct s_fn_menuitem _FnMenuItem = {
 
 /* menu */
 
-static menu CreateMenu(fn_menu Fn_Menu, msgport MsgPort, hwcol ColItem, hwcol ColSelect,
-                       hwcol ColDisabled, hwcol ColSelectDisabled, hwcol ColShtCut,
-                       hwcol ColSelShtCut, byte FlagDefColInfo) {
+static menu CreateMenu(fn_menu Fn_Menu, msgport MsgPort, tcolor ColItem, tcolor ColSelect,
+                       tcolor ColDisabled, tcolor ColSelectDisabled, tcolor ColShtCut,
+                       tcolor ColSelShtCut, byte FlagDefColInfo) {
   menu Menu = (menu)0;
 
   if (MsgPort && (Menu = (menu)Fn_Menu->Fn_Obj->Create((fn_obj)Fn_Menu))) {
@@ -2118,11 +2118,11 @@ static void DeleteMenu(menu Menu) {
   }
 }
 
-static row SetInfoMenu(menu Menu, byte Flags, ldat Len, CONST char *Text, CONST hwcol *ColText) {
+static row SetInfoMenu(menu Menu, byte Flags, ldat Len, CONST char *Text, CONST tcolor *ColText) {
   row Row;
   if ((Row = Do(Create, Row)(FnRow, 0, Flags))) {
-    if ((!Text || (Row->Text = CloneStr2HWFont(Text, Len))) &&
-        (!ColText || (Row->ColText = (hwcol *)CloneMem(ColText, Len * sizeof(hwcol))))) {
+    if ((!Text || (Row->Text = CloneStr2TRune(Text, Len))) &&
+        (!ColText || (Row->ColText = (tcolor *)CloneMem(ColText, Len * sizeof(tcolor))))) {
       Row->Len = Row->MaxLen = Len;
       if (Menu->Info)
         Delete(Menu->Info);
