@@ -127,11 +127,10 @@ static ldat xftCalcFontScore(udat fontwidth, udat fontheight, XftFont *fontp,
                              (ldat)fontp->ascent + fontp->descent);
   /* slightly prefer fonts with "DejaVu" "Sans" and "Mono" in their name */
   if (!strstr(fontname, "DejaVu") && !strstr(fontname, "dejavu"))
-    score -= 5;
-  if (!strstr(fontname, "Sans") && !strstr(fontname, "sans"))
-    score--;
-  if (!strstr(fontname, "Mono") && !strstr(fontname, "mono"))
     score -= 2;
+  if (!strstr(fontname, "Sans") && !strstr(fontname, "sans")
+      && !strstr(fontname, "Mono") && !strstr(fontname, "mono"))
+    score--;
   return score;
 }
 
