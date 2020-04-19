@@ -77,7 +77,7 @@ static ldat calcFontScore(udat fontwidth, udat fontheight, ldat width, ldat heig
 }
 
 static byte X11_LoadFont(CONST char *fontname, udat fontwidth, udat fontheight) {
-  char *alloc_fontname = 0;
+  char *alloc_fontname = NULL;
   byte loaded = tfalse;
 
   if (!fontname)
@@ -104,7 +104,7 @@ static byte X11_LoadFont(CONST char *fontname, udat fontwidth, udat fontheight) 
     printk("      selected %ux%u font `" SS "'\n", (unsigned)xwfont, (unsigned)xhfont, fontname);
   }
   if (alloc_fontname)
-    FreeMem(alloc_fontname);
+    free(alloc_fontname); /* allocated by FcNameUnparse() */
 
   return loaded;
 }

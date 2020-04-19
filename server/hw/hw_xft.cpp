@@ -128,8 +128,8 @@ static ldat xftCalcFontScore(udat fontwidth, udat fontheight, XftFont *fontp,
   /* slightly prefer fonts with "DejaVu" "Sans" and "Mono" in their name */
   if (!strstr(fontname, "DejaVu") && !strstr(fontname, "dejavu"))
     score -= 2;
-  if (!strstr(fontname, "Sans") && !strstr(fontname, "sans")
-      && !strstr(fontname, "Mono") && !strstr(fontname, "mono"))
+  if (!strstr(fontname, "Sans") && !strstr(fontname, "sans") && !strstr(fontname, "Mono") &&
+      !strstr(fontname, "mono"))
     score--;
   return score;
 }
@@ -139,8 +139,8 @@ static char *X11_AutodetectFont(udat fontwidth, udat fontheight) {
   FcFontSet *fontset;
   XftFont *fontp;
   char *fontname = NULL;
-  char *t_fontname = NULL;
-  int t_fontname_len = -1;
+  FcPattern *t_pattern = NULL;
+  FcPattern *best_pattern = NULL;
   ldat score, best_score = TW_MINLDAT;
   int xscreen = DefaultScreen(xdisplay);
 
@@ -171,43 +171,30 @@ static char *X11_AutodetectFont(udat fontwidth, udat fontheight) {
         continue;
       }
 
-      /* reuse existing t_fontname if possible, otherwise allocate a new one */
-      len = strlen((CONST char *)file) + strlen(":file=") + 1;
-      if (!t_fontname || (len > t_fontname_len)) {
-        if (t_fontname) {
-          FreeMem(t_fontname);
-        }
-        t_fontname = (char *)AllocMem(t_fontname_len = len);
-        if (!t_fontname) {
-          printk("      X11_AutodetectFont(): Out of memory!\n");
-          break;
-        }
-      }
-      sprintf(t_fontname, ":file=%s", file);
+      t_pattern = FcPatternCreate();
+      FcPatternAddInteger(t_pattern, XFT_PIXEL_SIZE, fontheight * 5 / 6);
+      FcPatternAddString(t_pattern, XFT_FILE, file);
 
-      fontp = XftFontOpenName(xdisplay, xscreen, t_fontname);
+      fontp = XftFontOpenPattern(xdisplay, t_pattern);
       if (fontp) {
-        score = xftCalcFontScore(fontwidth, fontheight, fontp, t_fontname);
-        XftFontClose(xdisplay, fontp);
+        score = xftCalcFontScore(fontwidth, fontheight, fontp, (const char *)file);
 
-        if (!fontname || (score > best_score)) {
+        if (best_pattern == NULL || score > best_score) {
           best_score = score;
-          if (fontname) {
-            FreeMem(fontname);
+          if (best_pattern) {
+            FcPatternDestroy(best_pattern);
           }
-          fontname = t_fontname;
-          t_fontname = NULL;
+          best_pattern = FcPatternDuplicate(t_pattern);
         }
+        /* XftFontClose() also destroys the XftPattern passed to XftFontOpenPattern() */
+        XftFontClose(xdisplay, fontp);
       }
     }
     FcFontSetDestroy(fontset);
   }
 
-  if (t_fontname) {
-    FreeMem(t_fontname);
-    t_fontname = NULL;
-  }
-
+  fontname = (char *)FcNameUnparse(best_pattern);
+  FcPatternDestroy(best_pattern);
   return fontname;
 }
 
