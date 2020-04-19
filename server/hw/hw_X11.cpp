@@ -107,7 +107,7 @@ static ldat X11_MonospaceFontScore(CONST XFontStruct *info, udat fontwidth, udat
 }
 
 /* return name of selected font in allocated (char *) */
-static char *X11_AutodetectFont(udat fontwidth, udat fontheight) {
+static char *X11_AutodetectFont(const char *family, udat fontwidth, udat fontheight) {
   struct {
     CONST char *wildcard;
     ldat score_adj;
@@ -127,12 +127,17 @@ static char *X11_AutodetectFont(udat fontwidth, udat fontheight) {
   XFontStruct *info;
   int i, j, k, n_fonts;
 
-  char *pattern = (char *)AllocMem(strlen(patterns[0].wildcard) + 1 + 3 * sizeof(unsigned));
+  char *pattern = NULL;
   char digits[1 + 3 * sizeof(unsigned)];
   char **names = NULL;
   char *best = NULL;
   ldat score, best_score = TW_MINLDAT;
   byte beatable_score = ttrue, look_up = fontheight >= 10 && (fontheight % 10) >= 5;
+
+  if (family) {
+    return strdup(family);
+  }
+  pattern = (char *)AllocMem(strlen(patterns[0].wildcard) + 1 + 3 * sizeof(unsigned));
   if (!pattern)
     return NULL;
 

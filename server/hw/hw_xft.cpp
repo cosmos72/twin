@@ -135,7 +135,7 @@ static ldat xftCalcFontScore(udat fontwidth, udat fontheight, XftFont *fontp,
 }
 
 /* return name of selected font in allocated (char *) */
-static char *X11_AutodetectFont(udat fontwidth, udat fontheight) {
+static char *X11_AutodetectFont(const char *family, udat fontwidth, udat fontheight) {
   FcFontSet *fontset;
   XftFont *fontp;
   char *fontname = NULL;
@@ -152,9 +152,17 @@ static char *X11_AutodetectFont(udat fontwidth, udat fontheight) {
    *    medium weight (75 <= weight <= 100)
    *    highest font score (closest to fontwidth X fontheight)
    */
-  fontset = XftListFonts(xdisplay, DefaultScreen(xdisplay), XFT_OUTLINE, XftTypeBool, FcTrue,
-                         XFT_SCALABLE, XftTypeBool, FcTrue, XFT_SPACING, XftTypeInteger, 100,
-                         XFT_SLANT, XftTypeInteger, 0, (char *)0, XFT_WEIGHT, XFT_FILE, (char *)0);
+  if (family) {
+    fontset = XftListFonts(xdisplay, DefaultScreen(xdisplay), XFT_FAMILY, XftTypeString, family,
+                           XFT_OUTLINE, XftTypeBool, FcTrue, XFT_SCALABLE, XftTypeBool, FcTrue,
+                           XFT_SPACING, XftTypeInteger, 100, XFT_SLANT, XftTypeInteger, 0,
+                           (char *)0, XFT_WEIGHT, XFT_FILE, (char *)0);
+  } else {
+    fontset =
+        XftListFonts(xdisplay, DefaultScreen(xdisplay), XFT_OUTLINE, XftTypeBool, FcTrue,
+                     XFT_SCALABLE, XftTypeBool, FcTrue, XFT_SPACING, XftTypeInteger, 100, XFT_SLANT,
+                     XftTypeInteger, 0, (char *)0, XFT_WEIGHT, XFT_FILE, (char *)0);
+  }
   if (fontset) {
     for (int i = 0; i < fontset->nfont; i++) {
       int weight;
@@ -193,8 +201,12 @@ static char *X11_AutodetectFont(udat fontwidth, udat fontheight) {
     FcFontSetDestroy(fontset);
   }
 
-  fontname = (char *)FcNameUnparse(best_pattern);
-  FcPatternDestroy(best_pattern);
+  if (best_pattern) {
+    fontname = (char *)FcNameUnparse(best_pattern);
+    FcPatternDestroy(best_pattern);
+  } else {
+    fontname = strdup("");
+  }
   return fontname;
 }
 

@@ -80,10 +80,9 @@ static byte X11_LoadFont(CONST char *fontname, udat fontwidth, udat fontheight) 
   char *alloc_fontname = NULL;
   byte loaded = tfalse;
 
-  if (!fontname)
-    fontname = alloc_fontname = X11_AutodetectFont(fontwidth, fontheight);
-
+  fontname = alloc_fontname = X11_AutodetectFont(fontname, fontwidth, fontheight);
 #if HW_X_DRIVER == HW_X11
+
   if ((fontname && (xsfont = XLoadQueryFont(xdisplay, fontname))) ||
       (xsfont = XLoadQueryFont(xdisplay, fontname = "fixed")))
 #elif HW_X_DRIVER == HW_XFT
