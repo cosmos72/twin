@@ -7,7 +7,7 @@ static void X11_SetColors(hwcol col);
  * Auto-detect the best font available, returning the name of the selected font in
  * allocated (char *).  Returns NULL if not usable font was found.
  */
-static char *X11_AutodetectFont(udat fontwidth, udat fontheight);
+static char *X11_AutodetectFont(const char *family, udat fontwidth, udat fontheight);
 
 /*
  * Cause the X11 server to allocate the given color and store it in 'pixel'.  Return 1 on

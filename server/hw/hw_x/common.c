@@ -70,13 +70,12 @@ static ldat calcFontScore(udat fontwidth, udat fontheight, ldat width, ldat heig
 }
 
 static byte X11_LoadFont(CONST char *fontname, udat fontwidth, udat fontheight) {
-  char *alloc_fontname = 0;
+  char *alloc_fontname = NULL;
   byte loaded = tfalse;
 
-  if (!fontname)
-    fontname = alloc_fontname = X11_AutodetectFont(fontwidth, fontheight);
-
+  fontname = alloc_fontname = X11_AutodetectFont(fontname, fontwidth, fontheight);
 #if HW_X_DRIVER == HW_X11
+
   if ((fontname && (xsfont = XLoadQueryFont(xdisplay, fontname))) ||
       (xsfont = XLoadQueryFont(xdisplay, fontname = "fixed")))
 #elif HW_X_DRIVER == HW_XFT
@@ -97,7 +96,7 @@ static byte X11_LoadFont(CONST char *fontname, udat fontwidth, udat fontheight) 
     printk("      selected %ux%u font `" SS "'\n", (unsigned)xwfont, (unsigned)xhfont, fontname);
   }
   if (alloc_fontname)
-    FreeMem(alloc_fontname);
+    free(alloc_fontname); /* allocated by FcNameUnparse() */
 
   return loaded;
 }
@@ -137,15 +136,12 @@ static int check_hw_name(char *hw_name) {
   }
   comma = strchr(hw_name, ',');
   at = strchr(hw_name, '@');
-  if (comma == NULL) {
-    if (at == NULL) {
-      return -1;
-    }
-    comma = at;
-  } else if (at != NULL && at < comma) {
-    comma = at;
+  if (at == NULL) {
+    at = comma;
+  } else if (comma != NULL && comma < at) {
+    at = comma;
   }
-  return comma - hw_name - 1;
+  return at ? at - hw_name : -1;
 }
 
 static byte X11_InitHW(void) {
@@ -161,7 +157,7 @@ static byte X11_InitHW(void) {
   char *s, *xdisplay_ = NULL, *xdisplay0 = NULL, *fontname = NULL, *fontname0 = NULL,
            *charset = NULL, *charset0 = NULL, title[X11_TITLE_MAXLEN];
   int i, nskip;
-  udat fontwidth = 8, fontheight = 16;
+  udat fontwidth = 10, fontheight = 20;
   byte drag = tfalse, noinput = tfalse;
   unsigned long xcreategc_mask = GCForeground | GCBackground | GCGraphicsExposures;
 
@@ -177,7 +173,7 @@ static byte X11_InitHW(void) {
   /* not yet opened */
   xdisplay = NULL;
 
-  if (arg && *arg && ((nskip = check_hw_name(arg)) > 0)) {
+  if (arg && *arg && ((nskip = check_hw_name(arg)) >= 0)) {
     arg += nskip;
 
     if (*arg == '@') {
@@ -201,12 +197,18 @@ static byte X11_InitHW(void) {
           *(fontname0 = s++) = '\0';
         arg = s;
       } else if (!strncmp(arg, "fontsize=", 9)) {
+        /* parse fontsize */
         int n1 = atoi(arg += 9), n2 = 0;
         byte ch;
         if (n1 > 0) {
           while ((ch = (byte) * ++arg) && ch != ',') {
+            /* skip fontsize digits */
             if (ch == 'x') {
+              /* parse fontheight */
               n2 = atoi(arg + 1);
+              while ((ch = (byte) * ++arg) && ch != ',') {
+                /* skip fontheight digits */
+              }
               break;
             }
           }

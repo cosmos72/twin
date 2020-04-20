@@ -169,7 +169,7 @@
    
    Watch the compilation proceed, and, if everything goes fine,
    you get what follows:
-   - `twin_real', the main program, in the server/ subdirectory;
+   - `twin_server', the main program, in the server/ subdirectory;
    - various libraries (libT*), in libs/libT*/ subdirectories;
    - various clients (twcat, twterm, ...) in the clients/ subdirectory.
    
@@ -234,7 +234,7 @@
    you compiled twin, then run:
    
      cd server/
-     ./twin_real
+     ./twin_server
 
    If you want, you can specify the display to use
    instead of letting twin autoprobe; the syntax is:
