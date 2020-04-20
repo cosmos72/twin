@@ -136,13 +136,9 @@ static ldat xftCalcFontScore(udat fontwidth, udat fontheight, XftFont *fontp,
 
 /* return name of selected font in allocated (char *) */
 static char *X11_AutodetectFont(const char *family, udat fontwidth, udat fontheight) {
-  FcFontSet *fontset;
-  XftFont *fontp;
   char *fontname = NULL;
-  FcPattern *t_pattern = NULL;
   FcPattern *best_pattern = NULL;
-  ldat score, best_score = TW_MINLDAT;
-  int xscreen = DefaultScreen(xdisplay);
+  ldat best_score = TW_MINLDAT;
 
   /*
    * find a usable font as follows
@@ -152,22 +148,17 @@ static char *X11_AutodetectFont(const char *family, udat fontwidth, udat fonthei
    *    medium weight (75 <= weight <= 100)
    *    highest font score (closest to fontwidth X fontheight)
    */
-  if (family) {
-    fontset = XftListFonts(xdisplay, DefaultScreen(xdisplay), XFT_FAMILY, XftTypeString, family,
-                           XFT_OUTLINE, XftTypeBool, FcTrue, XFT_SCALABLE, XftTypeBool, FcTrue,
-                           XFT_SPACING, XftTypeInteger, 100, XFT_SLANT, XftTypeInteger, 0,
-                           (char *)0, XFT_WEIGHT, XFT_FILE, (char *)0);
-  } else {
-    fontset =
-        XftListFonts(xdisplay, DefaultScreen(xdisplay), XFT_OUTLINE, XftTypeBool, FcTrue,
-                     XFT_SCALABLE, XftTypeBool, FcTrue, XFT_SPACING, XftTypeInteger, 100, XFT_SLANT,
-                     XftTypeInteger, 0, (char *)0, XFT_WEIGHT, XFT_FILE, (char *)0);
-  }
+  FcFontSet *fontset =
+      XftListFonts(xdisplay, DefaultScreen(xdisplay), XFT_OUTLINE, XftTypeBool, FcTrue,
+                   XFT_SCALABLE, XftTypeBool, FcTrue, XFT_SPACING, XftTypeInteger, 100, XFT_SLANT,
+                   XftTypeInteger, 0, (char *)0, XFT_WEIGHT, XFT_FAMILY, XFT_FILE, (char *)0);
   if (fontset) {
     for (int i = 0; i < fontset->nfont; i++) {
-      int weight;
-      int len;
+      XftFont *fontp;
       FcChar8 *file;
+      FcChar8 *t_family;
+      FcPattern *t_pattern;
+      int weight;
 
       if (FcPatternGetInteger(fontset->fonts[i], XFT_WEIGHT, 0, &weight) != FcResultMatch) {
         continue;
@@ -178,6 +169,12 @@ static char *X11_AutodetectFont(const char *family, udat fontwidth, udat fonthei
       if (FcPatternGetString(fontset->fonts[i], XFT_FILE, 0, &file) != FcResultMatch) {
         continue;
       }
+      if (family &&
+          FcPatternGetString(fontset->fonts[i], XFT_FAMILY, 0, &t_family) == FcResultMatch) {
+        if (!strstr((const char *)t_family, family)) {
+          continue;
+        }
+      }
 
       t_pattern = FcPatternCreate();
       FcPatternAddInteger(t_pattern, XFT_PIXEL_SIZE, fontheight * 5 / 6);
@@ -185,7 +182,7 @@ static char *X11_AutodetectFont(const char *family, udat fontwidth, udat fonthei
 
       fontp = XftFontOpenPattern(xdisplay, t_pattern);
       if (fontp) {
-        score = xftCalcFontScore(fontwidth, fontheight, fontp, (const char *)file);
+        ldat score = xftCalcFontScore(fontwidth, fontheight, fontp, (const char *)file);
 
         if (best_pattern == NULL || score > best_score) {
           best_score = score;
@@ -205,7 +202,7 @@ static char *X11_AutodetectFont(const char *family, udat fontwidth, udat fonthei
     fontname = (char *)FcNameUnparse(best_pattern);
     FcPatternDestroy(best_pattern);
   } else {
-    fontname = strdup("");
+    fontname = strdup("Mono");
   }
   return fontname;
 }
