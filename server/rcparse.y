@@ -39,8 +39,8 @@
 #include "wm.h"
 
 #include "rcrun.h"         /* needs wm.h, rctypes.h */
-#include "rcparse_tab.hpp" /* needs rcrun.h         */
-#include "rcparse.h"       /* needs rcparse_tab.hpp */
+#include "rcparse_tab.h"   /* needs rcrun.h         */
+#include "rcparse.h"       /* needs rcparse_tab.h   */
 
 
 /* also put here the CONF_* and DEBUG_* used in rcparse.h so that MkDep catches them */
