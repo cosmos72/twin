@@ -295,11 +295,11 @@ static void alienReply(uldat code, uldat alien_len, uldat len, CONST void *data)
   }
 }
 
-static void alienTranslateHWAttrV_CP437_to_UTF_32(hwattr *H, uldat Len) {
-  hwfont f;
+static void alienTranslateTCellV_CP437_to_UTF_32(tcell *H, uldat Len) {
+  trune f;
   while (Len--) {
-    f = Tutf_CP437_to_UTF_32[HWFONT(*H) & 0xFF];
-    *H = HWATTR_COLMASK(*H) | HWATTR(0, f);
+    f = Tutf_CP437_to_UTF_32[TRUNE(*H) & 0xFF];
+    *H = TCELL_COLMASK(*H) | TCELL(0, f);
     H++;
   }
 }
@@ -308,25 +308,25 @@ static void alienTranslateHWAttrV_CP437_to_UTF_32(hwattr *H, uldat Len) {
 
 /*
  * twin < 0.8.0 used a different encoding {utf16_lo, color, utf16_hi, extra}
- * for hwattr. detected by SIZEOF(hwfont) == 2 && SIZEOF(hwattr) == 4
+ * for tcell. detected by SIZEOF(trune) == 2 && SIZEOF(tcell) == 4
  */
-TW_INLINE hwattr alienFixDecodeHWAttr(hwattr attr) {
-  hwfont f = (attr & 0xFF) | ((attr >> 8) & 0xFF00);
-  hwcol col = (attr >> 8) & 0xFF;
-  hwattr extra = (attr >> 24) & 0x7F;
-  attr = HWATTR3(col, f, extra);
+TW_INLINE tcell alienFixDecodeTCell(tcell attr) {
+  trune f = (attr & 0xFF) | ((attr >> 8) & 0xFF00);
+  tcolor col = (attr >> 8) & 0xFF;
+  tcell extra = (attr >> 24) & 0x7F;
+  attr = TCELL3(col, f, extra);
   return attr;
 }
 
-TW_INLINE hwattr alienMaybeFixDecodeHWAttr(hwattr attr) {
-  if (SIZEOF(hwfont) == 2 && SIZEOF(hwattr) == 4)
-    attr = alienFixDecodeHWAttr(attr);
+TW_INLINE tcell alienMaybeFixDecodeTCell(tcell attr) {
+  if (SIZEOF(trune) == 2 && SIZEOF(tcell) == 4)
+    attr = alienFixDecodeTCell(attr);
   return attr;
 }
 
-static void alienFixDecodeHWAttrV(hwattr *H, uldat Len) {
+static void alienFixDecodeTCellV(tcell *H, uldat Len) {
   while (Len--) {
-    *H = alienFixDecodeHWAttr(*H);
+    *H = alienFixDecodeTCell(*H);
     H++;
   }
 }
@@ -354,18 +354,18 @@ TW_INLINE ldat alienDecodeArg(uldat id, CONST char *Format, uldat n, tsfield a, 
       fail = -fail;                                                                                \
     break;
 #define CASE_(type) CASE_fix(type, alienFixIdentity)
-#define CASE_hwattr() CASE_fix(hwattr, alienMaybeFixDecodeHWAttr)
+#define CASE_tcell() CASE_fix(tcell, alienMaybeFixDecodeTCell)
 
-    case TWS_hwcol:
+    case TWS_tcolor:
       /*FALLTHROUGH*/
       CASE_(byte);
       CASE_(dat);
       CASE_(ldat);
       CASE_(topaque);
       CASE_(tany);
-      CASE_(hwfont);
-      CASE_hwattr();
-#undef CASE_hwattr
+      CASE_(trune);
+      CASE_tcell();
+#undef CASE_tcell
 #undef CASE_fix
 #undef CASE_
     default:
@@ -401,14 +401,14 @@ TW_INLINE ldat alienDecodeArg(uldat id, CONST char *Format, uldat n, tsfield a, 
           a[n] _vec = alienAllocReadVec((CONST byte *)av, nlen, AlienMagic(Slot)[c],
                                         TwinMagicData[c], AlienXendian(Slot) == MagicAlienXendian);
           if (a[n] _vec) {
-            if (c == TWS_hwattr && SIZEOF(hwattr) == 2)
-              alienTranslateHWAttrV_CP437_to_UTF_32((hwattr *)a[n] _vec, nlen);
+            if (c == TWS_tcell && SIZEOF(tcell) == 2)
+              alienTranslateTCellV_CP437_to_UTF_32((tcell *)a[n] _vec, nlen);
             *mask |= 1 << n;
           } else
             fail = -fail;
         }
-        if (c == TWS_hwattr && SIZEOF(hwfont) == 2 && SIZEOF(hwattr) == 4 && a[n] _vec)
-          alienFixDecodeHWAttrV((hwattr *)a[n] _vec, nlen / TW_SIZEOF_HWATTR);
+        if (c == TWS_tcell && SIZEOF(trune) == 2 && SIZEOF(tcell) == 4 && a[n] _vec)
+          alienFixDecodeTCellV((tcell *)a[n] _vec, nlen / TW_SIZEOF_TCELL);
         break;
       }
     }
@@ -436,14 +436,14 @@ TW_INLINE ldat alienDecodeArg(uldat id, CONST char *Format, uldat n, tsfield a, 
                                   AlienXendian(Slot) == MagicAlienXendian);
 
             if (a[n] _cvec) {
-              if (c == TWS_hwattr && SIZEOF(hwattr) == 2)
-                alienTranslateHWAttrV_CP437_to_UTF_32((hwattr *)a[n] _vec, nlen);
+              if (c == TWS_tcell && SIZEOF(tcell) == 2)
+                alienTranslateTCellV_CP437_to_UTF_32((tcell *)a[n] _vec, nlen);
               *mask |= 1 << n;
             } else
               fail = -fail;
           }
-          if (c == TWS_hwattr && SIZEOF(hwfont) == 2 && SIZEOF(hwattr) == 4 && a[n] _vec)
-            alienFixDecodeHWAttrV((hwattr *)a[n] _vec, nlen / TW_SIZEOF_HWATTR);
+          if (c == TWS_tcell && SIZEOF(trune) == 2 && SIZEOF(tcell) == 4 && a[n] _vec)
+            alienFixDecodeTCellV((tcell *)a[n] _vec, nlen / TW_SIZEOF_TCELL);
           break;
         }
       }
@@ -593,7 +593,7 @@ static void alienMultiplexB(uldat id) {
 #define CASE_(type)                                                                                \
   case CAT(TWS_, type):                                                                            \
     /* ensure type size WAS negotiated */                                                          \
-    if (CAT(TWS_, type) <= TWS_hwcol || SIZEOF(type)) {                                            \
+    if (CAT(TWS_, type) <= TWS_tcolor || SIZEOF(type)) {                                           \
       /* move to first bytes on MSB machines */                                                    \
       *(type *)&a[0] _any = (type)a[0] _any;                                                       \
       c = SIZEOF(type);                                                                            \
@@ -603,15 +603,15 @@ static void alienMultiplexB(uldat id) {
     fail = 0;                                                                                      \
     break
 
-      case TWS_hwcol:
+      case TWS_tcolor:
         /*FALLTHROUGH*/
         CASE_(byte);
         CASE_(dat);
         CASE_(ldat);
         CASE_(topaque);
         CASE_(tany);
-        CASE_(hwfont);
-        CASE_(hwattr);
+        CASE_(trune);
+        CASE_(tcell);
 #undef CASE_
       default:
         c = self = 0;
@@ -807,7 +807,7 @@ static void alienSendMsg(msgport MsgPort, msg Msg) {
   char *Src;
   uldat save_Slot = Slot, Len = 0, Tot, N;
   int save_Fd = Fd;
-  hwattr H;
+  tcell H;
   uint16_t h;
   byte Type;
 
@@ -821,9 +821,9 @@ static void alienSendMsg(msgport MsgPort, msg Msg) {
     N = 1;
 
     switch (Msg->Event.EventDisplay.Code) {
-    case DPY_DrawHWAttr:
-      Type = TWS_hwattr;
-      N = Msg->Event.EventDisplay.Len / sizeof(hwattr);
+    case DPY_DrawTCell:
+      Type = TWS_tcell;
+      N = Msg->Event.EventDisplay.Len / sizeof(tcell);
       break;
     case DPY_Helper:
     case DPY_SetCursorType:
@@ -855,13 +855,13 @@ static void alienSendMsg(msgport MsgPort, msg Msg) {
 
       if (Type == TWS_byte) {
         PushV(t, N, Src);
-      } else if (Type == TWS_hwattr && AlienMagic(Slot)[Type] == 2) {
+      } else if (Type == TWS_tcell && AlienMagic(Slot)[Type] == 2) {
         /* on the fly conversion from Unicode to CP437 */
         while (N--) {
-          Pop(Src, hwattr, H);
+          Pop(Src, tcell, H);
 
-          h = ((uint16_t)HWCOL(H) << 8) | Tutf_UTF_32_to_CP437(HWFONT(H));
-          t = alienPush(&h, sizeof(hwattr), t, 2);
+          h = ((uint16_t)TCOLOR(H) << 8) | Tutf_UTF_32_to_CP437(TRUNE(H));
+          t = alienPush(&h, sizeof(tcell), t, 2);
         }
       } else {
         Tot = TwinMagicData[Type];
@@ -946,8 +946,8 @@ static void alienSendMsg(msgport MsgPort, msg Msg) {
     break;
   case MSG_SELECTIONNOTIFY:
     N = Msg->Event.EventSelectionNotify.Len;
-    if (Msg->Event.EventSelectionNotify.Magic == SEL_HWFONTMAGIC)
-      N = (N / sizeof(hwfont)) * SIZEOF(hwfont);
+    if (Msg->Event.EventSelectionNotify.Magic == SEL_TRUNEMAGIC)
+      N = (N / sizeof(trune)) * SIZEOF(trune);
     alienReply(Msg->Type, Len = 4 * SIZEOF(uldat) + 2 * SIZEOF(dat) + MAX_MIMELEN + N, 0, NULL);
 
     if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
@@ -960,28 +960,28 @@ static void alienSendMsg(msgport MsgPort, msg Msg) {
       PushV(t, MAX_MIMELEN, Msg->Event.EventSelectionNotify.MIME);
 
       /* client may be not unicode aware while we are */
-      if (Msg->Event.EventSelectionNotify.Magic == SEL_HWFONTMAGIC) {
+      if (Msg->Event.EventSelectionNotify.Magic == SEL_TRUNEMAGIC) {
         N = Msg->Event.EventSelectionNotify.Len;
 
-        if (SIZEOF(hwfont) == 1) {
+        if (SIZEOF(trune) == 1) {
           /* on the fly conversion from Unicode to CP437 */
           Src = Msg->Event.EventSelectionNotify.Data;
 
-          N /= sizeof(hwfont);
+          N /= sizeof(trune);
           PUSH(t, uldat, N);
 
           while (N--) {
-            Pop(Src, hwattr, H);
+            Pop(Src, tcell, H);
 
-            h = ((uint16_t)HWCOL(H) << 8) | Tutf_UTF_32_to_CP437(HWFONT(H));
-            t = alienPush(&h, sizeof(hwattr), t, 2);
+            h = ((uint16_t)TCOLOR(H) << 8) | Tutf_UTF_32_to_CP437(TRUNE(H));
+            t = alienPush(&h, sizeof(tcell), t, 2);
           }
         } else {
-          N = (N / sizeof(hwfont)) * SIZEOF(hwfont);
+          N = (N / sizeof(trune)) * SIZEOF(trune);
           PUSH(t, uldat, N);
           N = Msg->Event.EventSelectionNotify.Len;
-          alienWriteVec((CONST byte *)Msg->Event.EventSelectionNotify.Data, t, N, sizeof(hwfont),
-                        SIZEOF(hwfont), AlienXendian(Slot) == MagicAlienXendian);
+          alienWriteVec((CONST byte *)Msg->Event.EventSelectionNotify.Data, t, N, sizeof(trune),
+                        SIZEOF(trune), AlienXendian(Slot) == MagicAlienXendian);
           t += N;
         }
       } else {
@@ -1074,18 +1074,18 @@ static byte alienDecodeExtension(tany *Len, CONST byte **Data, tany *Args_n, tsf
       fail = -fail;                                                                                \
     break
 #define CASE_(type) CASE_fix(type, alienFixIdentity)
-#define CASE_hwattr() CASE_fix(hwattr, alienMaybeFixDecodeHWAttr)
+#define CASE_tcell() CASE_fix(tcell, alienMaybeFixDecodeTCell)
 
-    case TWS_hwcol:
+    case TWS_tcolor:
       /*FALLTHROUGH*/
       CASE_(byte);
       CASE_(dat);
       CASE_(ldat);
       CASE_(topaque);
       CASE_(tany);
-      CASE_(hwfont);
-      CASE_hwattr();
-#undef CASE_hwattr
+      CASE_(trune);
+      CASE_tcell();
+#undef CASE_tcell
 #undef CASE_fix
 #undef CASE_
 

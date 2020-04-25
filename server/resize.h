@@ -9,14 +9,14 @@
 #ifndef _TWIN_RESIZE_H
 #define _TWIN_RESIZE_H
 
-byte EnsureLenRow(row Row, ldat Len, byte DefaultCol);
-byte RowWriteAscii(window Window, ldat Len, CONST char *Text);
-byte RowWriteHWFont(window Window, ldat Len, CONST hwfont *Text);
+byte EnsureLenRow(row Row, uldat Len, byte DefaultCol);
+byte RowWriteAscii(window Window, uldat Len, CONST char *Text);
+byte RowWriteTRune(window Window, uldat Len, CONST trune *Text);
 
 void ExposeWidget2(widget W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch, CONST char *Text,
-                   CONST hwfont *Font, CONST hwattr *Attr);
+                   CONST trune *Font, CONST tcell *Attr);
 void ExposeWindow2(window W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch, CONST char *Text,
-                   CONST hwfont *Font, CONST hwattr *Attr);
+                   CONST trune *Font, CONST tcell *Attr);
 
 extern byte NeedUpdateCursor;
 #define UpdateCursor() (NeedUpdateCursor = ttrue)
@@ -70,8 +70,8 @@ void UnPressGadget(gadget G, byte maySendMsgIfNotToggle);
 void SendMsgGadget(gadget G);
 void WriteTextsGadget(gadget G, byte bitmap, dat XWidth, dat YWidth, CONST char *Text, dat Left,
                       dat Up);
-void WriteHWFontsGadget(gadget G, byte bitmap, dat XWidth, dat YWidth, CONST hwfont *Text, dat Left,
-                        dat Up);
+void WriteTRunesGadget(gadget G, byte bitmap, dat XWidth, dat YWidth, CONST trune *Text, dat Left,
+                       dat Up);
 
 void SyncMenu(menu Menu);
 

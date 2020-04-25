@@ -20,8 +20,6 @@
 #include <sys/un.h>
 #endif
 
-extern udat ErrNo;
-extern CONST char *ErrStr;
 extern uldat unixSlot;
 extern int unixFd;
 
@@ -32,12 +30,6 @@ void SetAlarm(unsigned seconds);
 #define SetAlarm(seconds) ((void)0)
 #define AlarmReceived (0)
 #endif
-
-void *CloneMem(CONST void *From, uldat Size);
-char *CloneStr(CONST char *From);
-char *CloneStrL(CONST char *From, uldat Size);
-char **CloneStrList(char **FromList);
-hwfont *CloneStr2HWFont(CONST char *From, uldat Size);
 
 CONST char *TmpDir(void);
 udat CopyToSockaddrUn(CONST char *src, struct sockaddr_un *addr, udat pos);
@@ -72,7 +64,7 @@ void ResetBorderPattern(void);
 void FallBackKeyAction(window W, event_keyboard *EventK);
 
 char **TokenizeStringVec(uldat len, char *text);
-char **TokenizeHWFontVec(uldat len, hwfont *text);
+char **TokenizeTRuneVec(uldat len, trune *text);
 void FreeStringVec(char **argv);
 
 byte InitTWDisplay(void);
@@ -88,12 +80,6 @@ void RunTwEnvRC(void);
 /* remove CONST from a pointer and suppress compiler warnings */
 void *RemoveConst(CONST void *x);
 
-hwattr EncodeToHWAttrExtra(tpos pos, tternary detail, tbool active, tbool pressed);
-
-byte AssignId(CONST fn_obj Fn_Obj, obj Obj);
-byte AssignId_all(all Obj);
-void DropId(obj Obj);
-obj Id2Obj(byte i, uldat Id);
-#define Obj2Id(o) ((o) ? (o)->Id : NOID)
+tcell EncodeToTCellExtra(tpos pos, tternary detail, tbool active, tbool pressed);
 
 #endif /* _TWIN_UTIL_H */

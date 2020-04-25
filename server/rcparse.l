@@ -13,8 +13,9 @@
  */
 
 #include "twin.h"
+#include "alloc.h"
 #include "rctypes.h"
-#include "rcparse_tab.h"
+#include "rcparse_tab.hpp"
 
 #define IS_OCTDIGIT(c) ((c) >= '0' && (c) <= '7')
 #define IS_HEXDIGIT(c) (((c) >= '0' && (c) <= '9') || ((c) >= 'A' && (c) <= 'F') || ((c) >= 'a' && (c) <= 'f'))
@@ -199,7 +200,7 @@ Bold|High    return COL_HIGH;
                   case 'v': *s++ = '\v'; break;
                   case '0': *s++ = '\0'; break;
                   case 'u':
-                /* FIXME: unicode is ok, but s is a (char *), not (hwfont *) ! */
+                /* FIXME: unicode is ok, but s is a (char *), not (trune *) ! */
                 if (IS_HEXDIGIT(p[1]) &&
                     IS_HEXDIGIT(p[2]) &&
                     IS_HEXDIGIT(p[3]) &&

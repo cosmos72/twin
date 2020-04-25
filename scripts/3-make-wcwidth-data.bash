@@ -17,7 +17,7 @@ cat <<EOF
 #ifndef _TUTF_WCWIDTH_DATA_H
 #define _TUTF_WCWIDTH_DATA_H
 
-static const hwfont wide[][2] = {
+static const trune wide[][2] = {
 EOF
 
 cat txt/EastAsianWidth.txt | grep '^[0-9A-F]' | cut -d' ' -f1 | grep -v ';N' | sed -e 's/\.\./ /' -e 's/;/ /'  | \

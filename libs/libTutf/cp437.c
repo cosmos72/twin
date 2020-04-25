@@ -9,13 +9,13 @@
  *
  */
 
-hwfont Tutf_CP437_to_UTF_32[0x100] = {
+trune Tutf_CP437_to_UTF_32[0x100] = {
 #define EL(x) T_UTF(UTF_32, x),
     T_LIST(CP437, EL)
 #undef EL
 };
 
-hwfont Tutf_UTF_32_to_CP437(hwfont c) {
+trune Tutf_UTF_32_to_CP437(trune c) {
 #define EL(x) +1
   enum {
     n = T_NLIST(CP437, EL) +

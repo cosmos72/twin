@@ -356,7 +356,7 @@ static byte InitTerm(void) {
            TwCreateMenu(COL(BLACK, WHITE), COL(BLACK, GREEN), COL(HIGH | BLACK, WHITE),
                         COL(HIGH | BLACK, BLACK), COL(RED, WHITE), COL(RED, GREEN), (byte)0)) &&
       (TwInfo4Menu(Term_Menu, TW_ROW_ACTIVE, 18, " Remote Twin Term ",
-                   (TW_CONST hwcol *)"ptpppppptpppptpppp"),
+                   (TW_CONST tcolor *)"ptpppppptpppptpppp"),
        ttrue) &&
       (Window = TwWin4Menu(Term_Menu)) && Add_Spawn_Row4Menu(Window) &&
       TwRow4Menu(Window, COD_QUIT, tfalse, 6, " Exit ") &&
@@ -407,17 +407,17 @@ static void TwinTermH(void) {
       Fd = Fd_Slot(Slot);
 
       /* react as for keypresses */
-      if (Event->EventSelectionNotify.Magic == TW_SEL_HWFONTMAGIC) {
+      if (Event->EventSelectionNotify.Magic == TW_SEL_TRUNEMAGIC) {
         char *Dst = Event->EventSelectionNotify.Data;
-        hwfont *Src = (hwfont *)Dst;
-        uldat n = Event->EventSelectionNotify.Len / sizeof(hwfont);
+        trune *Src = (trune *)Dst;
+        uldat n = Event->EventSelectionNotify.Len / sizeof(trune);
 
         /* FIXME: this is rough. convert to UTF-8 instead */
         while (n--)
           *Dst++ = Tutf_UTF_32_to_CP437(*Src++);
 
         write(Fd, Event->EventSelectionNotify.Data,
-              Event->EventSelectionNotify.Len / sizeof(hwfont));
+              Event->EventSelectionNotify.Len / sizeof(trune));
       } else
         write(Fd, Event->EventSelectionNotify.Data, Event->EventSelectionNotify.Len);
 
@@ -487,7 +487,9 @@ static void Usage(char *name) {
           name);
 }
 
-static void ShowVersion(void) { fputs("twterm " TWIN_VERSION_STR "\n", stdout); }
+static void ShowVersion(void) {
+  fputs("twterm " TWIN_VERSION_STR "\n", stdout);
+}
 
 int main(int argc, char *argv[]) {
   fd_set fds;

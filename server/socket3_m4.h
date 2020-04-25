@@ -90,7 +90,7 @@
     }
     break;
 
-  case order_SetHWFontTranslation:
+  case order_SetTRuneTranslation:
     switch (n) {
       case 1: L = 0x80; break;
     }
@@ -150,7 +150,7 @@
       case 5: L = a[2]_any*a[3]_any; break;
     }
     break;
-  case order_WriteHWFontsGadget:
+  case order_WriteTRunesGadget:
     switch (n) {
       case 5: L = a[2]_any*a[3]_any; break;
     }
@@ -174,12 +174,12 @@
       case 3: L = a[2]_any; break;
     }
     break;
-  case order_WriteHWFontWindow:
+  case order_WriteTRuneWindow:
     switch (n) {
       case 3: L = a[2]_any; break;
     }
     break;
-  case order_WriteHWAttrWindow:
+  case order_WriteTCellWindow:
     switch (n) {
       case 5: L = a[4]_any; break;
     }

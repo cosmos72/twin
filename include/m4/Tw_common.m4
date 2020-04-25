@@ -70,7 +70,7 @@ EASY(CloneMem, extern void *Tw_CloneMem(TW_CONST void *, size_t);)
 c_doxygen(/** custom strdup() function */)
 EASY(CloneStr, extern char *Tw_CloneStr(TW_CONST char *);)
 c_doxygen(/** custom byte-to-unicode conversion + strdup() function */)
-EASY(CloneStr2HWFont, extern hwfont *Tw_CloneStr2HWFont(TW_CONST char *, size_t);)
+EASY(CloneStr2TRune, extern trune *Tw_CloneStr2TRune(TW_CONST char *, size_t);)
 
 
 EASY(CopyStr, `#define Tw_CopyStr(From,To)		strcpy(To, From)')
@@ -102,12 +102,12 @@ DECL(tmsgport,OwnerWidget,   twidget W)
 DECL(twidget, O_PrevWidget,  twidget W)
 DECL(twidget, O_NextWidget,  twidget W)
 
-DECL(void,SetFillWidget,twidget W, hwattr Fill)
-DECL(void,Draw2Widget,  twidget W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch, TW_CONST char *Text, TW_CONST hwfont *Font, TW_CONST hwattr *Attr)
+DECL(void,SetFillWidget,twidget W, tcell Fill)
+DECL(void,Draw2Widget,  twidget W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch, TW_CONST char *Text, TW_CONST trune *Font, TW_CONST tcell *Attr)
 
 DECL(void,DrawTextWidget,  twidget W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch, TW_CONST char *Text)
-DECL(void,DrawHWFontWidget,twidget W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch, TW_CONST hwfont *Font)
-DECL(void,DrawHWAttrWidget,twidget W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch, TW_CONST hwattr *Attr)
+DECL(void,DrawTRuneWidget,twidget W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch, TW_CONST trune *Font)
+DECL(void,DrawTCellWidget,twidget W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch, TW_CONST tcell *Attr)
 
 
 DECL(void,SetPressedGadget, tgadget Gadget, byte on)
@@ -122,9 +122,9 @@ DECL(tgroup, GroupGadget,    tgadget Gadget)
 DECL(tgadget,G_PrevGadget,   tgadget Gadget)
 DECL(tgadget,G_NextGadget,   tgadget Gadget)
 
-DECL(void,WriteHWFontGadget, tgadget Gadget,              dat XWidth, dat YWidth, TW_CONST hwfont * HWFont, dat Left, dat Up)
-DECL(void,SetHWFontGadget,   tgadget Gadget,              dat XWidth, dat YWidth, TW_CONST hwfont * HWFont, dat Left, dat Up)
-DECL(void,SetHWFontsGadget,  tgadget Gadget, byte bitmap, dat XWidth, dat YWidth, TW_CONST hwfont * HWFont, dat Left, dat Up)
+DECL(void,WriteTRuneGadget, tgadget Gadget,              dat XWidth, dat YWidth, TW_CONST trune * TRune, dat Left, dat Up)
+DECL(void,SetTRuneGadget,   tgadget Gadget,              dat XWidth, dat YWidth, TW_CONST trune * TRune, dat Left, dat Up)
+DECL(void,SetTRunesGadget,  tgadget Gadget, byte bitmap, dat XWidth, dat YWidth, TW_CONST trune * TRune, dat Left, dat Up)
 
 DECL(tmenuitem,Create4MenuRow, twindow Window, udat Code, byte Flags, ldat Len, TW_CONST char *Text)
 DECL(tmenuitem,Create4MenuMenuItem, tobj Parent, twindow Window, byte Flags, dat Len, TW_CONST char *Name)

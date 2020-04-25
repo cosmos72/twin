@@ -103,7 +103,9 @@ static CONST char *get_kbsentry(byte keysym);
 static udat do_spec(byte value, byte up_flag);
 static udat do_cur(byte value, byte up_flag);
 
-static void put_queue(char ch) { queue[queue_len++] = ch; }
+static void put_queue(char ch) {
+  queue[queue_len++] = ch;
+}
 
 static void puts_queue(CONST char *cp) {
   while (*cp) {
@@ -119,7 +121,8 @@ static void applkey(char key, byte mode) {
   puts_queue(buf);
 }
 
-static void noop_fn(void) {}
+static void noop_fn(void) {
+}
 
 static void enter(void) {
   if (diacr) {
@@ -278,7 +281,9 @@ static void scroll_back(void) { /* FIXME: finish this! */
 static void boot_it(void) { /* HW->NeedHW |= NEEDPanicHW, NeedHW |= NEEDPanicHW; */
 }
 
-static void compose(void) { dead_key_next = 1; }
+static void compose(void) {
+  dead_key_next = 1;
+}
 
 static void spawn_console(void) { /* no way to reproduce this from user level */
 }
@@ -292,9 +297,13 @@ static void SAK(void) {
    */
 }
 
-static udat do_ignore(byte value, byte up_flag) { return TW_Null; }
+static udat do_ignore(byte value, byte up_flag) {
+  return TW_Null;
+}
 
-static void do_null(void) { compute_shiftstate(); }
+static void do_null(void) {
+  compute_shiftstate();
+}
 
 static udat do_lowercase(byte value, byte up_flag) {
   printk("twin: hw/linux/kbd_low.h: do_lowercase() called - kernel bug!\n");

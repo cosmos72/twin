@@ -113,9 +113,9 @@ ttattr *TTCloneFontL2Attr(TT_CONST ttfont *f, ttopaque len, ttcol c);
 
 #define TTCloneAttr(a, len) TTCloneMem((a), (len)*TT_SIZEOF_ttattr)
 
-#define TTAttr(col, font) HWATTR(col, font)
-#define TTGetCol_ttattr(attr) HWCOL(attr)
-#define TTGetFont_ttattr(attr) HWFONT(attr)
+#define TTAttr(col, font) TCELL(col, font)
+#define TTGetCol_ttattr(attr) TCOLOR(attr)
+#define TTGetFont_ttattr(attr) TRUNE(attr)
 
 #define TTCol(fg, bg) COL(fg, bg)
 #define TTGetFg_ttcol(col) COLFG(col)

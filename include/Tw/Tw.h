@@ -120,7 +120,7 @@ struct s_tevent_display {
 #define TW_SIZEOF_TEVENT_DISPLAY (sizeof(struct s_tevent_display) - sizeof(uldat))
 
 /* Code */
-#define TW_DPY_DrawHWAttr ((udat)0)
+#define TW_DPY_DrawTCell ((udat)0)
 #define TW_DPY_FlushHW ((udat)1)
 #define TW_DPY_KeyboardEvent ((udat)2)
 #define TW_DPY_MouseEvent ((udat)3)
@@ -211,7 +211,7 @@ struct s_tevent_selectionnotify {
 
 /*SelectionNotify Magic*/
 #define TW_SEL_TEXTMAGIC ((uldat)0x54657874)
-#define TW_SEL_HWFONTMAGIC ((uldat)0x4877666E) /* it's unicode */
+#define TW_SEL_TRUNEMAGIC ((uldat)0x4877666E) /* it's unicode */
 #define TW_SEL_FILEMAGIC ((uldat)0x46696c65)
 #define TW_SEL_URLMAGIC ((uldat)0xAB1691BA)
 #define TW_SEL_DATAMAGIC ((uldat)0xDA1AA1AD) /* check MIME if you get this */

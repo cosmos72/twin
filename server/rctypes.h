@@ -29,7 +29,7 @@ struct s_node {
       CONST cstr *argv;
       uldat argc;
     } v;
-    hwcol color;
+    tcolor color;
     ldat ctx;
     node func;
   } x;

@@ -23,7 +23,9 @@ INLINE void linux_SetCursorType(uldat type) {
   fprintf(stdOUT, "\033[?%d;%d;%dc", (int)(type & 0xFF), (int)((type >> 8) & 0xFF),
           (int)((type >> 16) & 0xFF));
 }
-INLINE void linux_MoveToXY(udat x, udat y) { fprintf(stdOUT, "\033[%d;%dH", y + 1, x + 1); }
+INLINE void linux_MoveToXY(udat x, udat y) {
+  fprintf(stdOUT, "\033[%d;%dH", y + 1, x + 1);
+}
 
 /* return tfalse if failed */
 static byte linux_InitVideo(void) {
@@ -120,7 +122,7 @@ static void linux_QuitVideo(void) {
 
 #define linux_MogrifyFinish() ((void)0)
 
-INLINE void linux_SetColor(hwcol col) {
+INLINE void linux_SetColor(tcolor col) {
   char colbuf[] = "\033[2x;2x;4x;3xm";
   char *colp = colbuf + 2;
   byte c;
@@ -162,9 +164,9 @@ INLINE void linux_SetColor(hwcol col) {
 }
 
 INLINE void linux_Mogrify(dat x, dat y, uldat len) {
-  hwattr *V, *oV;
-  hwcol col;
-  hwfont c, _c;
+  tcell *V, *oV;
+  tcolor col;
+  trune c, _c;
   byte sending = tfalse;
 
   V = Video + x + y * (ldat)DisplayWidth;
@@ -175,12 +177,12 @@ INLINE void linux_Mogrify(dat x, dat y, uldat len) {
       if (!sending)
         sending = ttrue, linux_MoveToXY(x, y);
 
-      col = HWCOL(*V);
+      col = TCOLOR(*V);
 
       if (col != _col)
         linux_SetColor(col);
 
-      c = _c = HWFONT(*V);
+      c = _c = TRUNE(*V);
       if (c >= 128) {
         if (tty_use_utf8) {
           /* use utf-8 to output this non-ASCII char. */
@@ -203,15 +205,15 @@ INLINE void linux_Mogrify(dat x, dat y, uldat len) {
   }
 }
 
-INLINE void linux_SingleMogrify(dat x, dat y, hwattr V) {
-  hwfont c, _c;
+INLINE void linux_SingleMogrify(dat x, dat y, tcell V) {
+  trune c, _c;
 
   linux_MoveToXY(x, y);
 
-  if (HWCOL(V) != _col)
-    linux_SetColor(HWCOL(V));
+  if (TCOLOR(V) != _col)
+    linux_SetColor(TCOLOR(V));
 
-  c = _c = HWFONT(V);
+  c = _c = TRUNE(V);
   if (c >= 128) {
     if (tty_use_utf8) {
       /* use utf-8 to output this non-ASCII char. */
@@ -236,10 +238,10 @@ INLINE void linux_SingleMogrify(dat x, dat y, hwattr V) {
 static void linux_ShowMouse(void) {
   uldat pos =
       (HW->Last_x = HW->MouseState.x) + (HW->Last_y = HW->MouseState.y) * (ldat)DisplayWidth;
-  hwattr h = Video[pos];
-  hwcol c = ~HWCOL(h) ^ COL(HIGH, HIGH);
+  tcell h = Video[pos];
+  tcolor c = ~TCOLOR(h) ^ COL(HIGH, HIGH);
 
-  linux_SingleMogrify(HW->MouseState.x, HW->MouseState.y, HWATTR(c, HWFONTEXTRA(h)));
+  linux_SingleMogrify(HW->MouseState.x, HW->MouseState.y, TCELL(c, TRUNEEXTRA(h)));
 
   /* store current cursor state for correct updating */
   HW->XY[1] = HW->MouseState.y;
@@ -289,7 +291,7 @@ static void linux_UpdateMouseAndCursor(void) {
 static void linux_FlushVideo(void) {
   dat i, j, start, end, XY[2];
   byte FlippedVideo = tfalse, FlippedOldVideo = tfalse;
-  hwattr savedOldVideo;
+  tcell savedOldVideo;
 
   if (!ChangedVideoFlag) {
     HW->UpdateMouseAndCursor();

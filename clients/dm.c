@@ -104,7 +104,9 @@ static void Usage(void) {
                   " --hw=<arg>              set display hw to use (default: --hw=tty)\n");
 }
 
-static void ShowVersion(void) { fprintf(stdout, "twdm " TWIN_VERSION_STR "\n"); }
+static void ShowVersion(void) {
+  fprintf(stdout, "twdm " TWIN_VERSION_STR "\n");
+}
 
 static void ParseArgs(void) {
   TW_CONST char *s;
@@ -498,7 +500,7 @@ static void WriteKey(twindow W, data u, udat len, char *seq) {
   }
 }
 
-static void WriteHWFontKey(twindow W, data u, udat len, hwfont *h_data) {
+static void WriteTRuneKey(twindow W, data u, udat len, trune *h_data) {
   char *d_data = (char *)h_data, *s_data = d_data;
   udat n = len;
 
@@ -675,9 +677,9 @@ int main(int argc, char *argv[]) {
           if (E->Magic == TW_SEL_TEXTMAGIC)
             WriteKey(E->ReqPrivate, E->ReqPrivate == DM_user ? &user : &pass, E->Len,
                      (char *)E->Data);
-          else if (E->Magic == TW_SEL_HWFONTMAGIC)
-            WriteHWFontKey(E->ReqPrivate, E->ReqPrivate == DM_user ? &user : &pass,
-                           E->Len / sizeof(hwfont), (hwfont *)E->Data);
+          else if (E->Magic == TW_SEL_TRUNEMAGIC)
+            WriteTRuneKey(E->ReqPrivate, E->ReqPrivate == DM_user ? &user : &pass,
+                          E->Len / sizeof(trune), (trune *)E->Data);
         } break;
         default:
           break;

@@ -9,8 +9,8 @@
  *
  */
 
-#define t(c) HWATTR(f, c)
-#define s(c) HWATTR(b, c)
+#define t(c) TCELL(f, c)
+#define s(c) TCELL(b, c)
 
 /***********************************/
 
@@ -356,7 +356,7 @@ static s_tttheme s_DummyTheme, s_RealDummyTheme = {
 
                                    (ttopaque)0,
                                    NULL,
-                                   HWFONT(' '),
+                                   TRUNE(' '),
                                    {
                                        COL(BLACK, WHITE),
                                        COL(HIGH | BLACK, BLACK),

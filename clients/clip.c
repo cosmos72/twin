@@ -27,7 +27,7 @@ static byte InitClip(void) {
               TwCreateMenu(COL(BLACK, WHITE), COL(BLACK, GREEN), COL(HIGH | BLACK, WHITE),
                            COL(HIGH | BLACK, BLACK), COL(RED, WHITE), COL(RED, GREEN), (byte)0)) &&
          (TwInfo4Menu(Clip_Menu, TW_ROW_ACTIVE, 16, " Twin Clipboard ",
-                      (TW_CONST hwcol *)"ptpppptppppppppp"),
+                      (TW_CONST tcolor *)"ptpppptppppppppp"),
           (Clip_Win =
                TwCreateWindow(14, "Twin Clipboard", NULL, Clip_Menu,
                               COL(HIGH | WHITE, HIGH | BLACK), TW_LINECURSOR,

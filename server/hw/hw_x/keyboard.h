@@ -376,7 +376,7 @@ static void X11_HandleEvent(XEvent *event) {
       break;
     case ClientMessage:
       if (event->xclient.message_type == xWM_PROTOCOLS && event->xclient.format == 32 &&
-          event->xclient.data.l[0] == xWM_DELETE_WINDOW) {
+          (Atom)event->xclient.data.l[0] == xWM_DELETE_WINDOW) {
 
         /* going to close this display */
         HW->NeedHW |= NEEDPanicHW, NeedHW |= NEEDPanicHW;

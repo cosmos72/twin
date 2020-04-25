@@ -59,7 +59,8 @@ class TEmpty {};
 
 class TObj : public TEmpty {
 protected:
-  inline TObj() {}
+  inline TObj() {
+  }
   inline ~TObj() {
     if (Id != TW_NOID)
       TwDeleteObj(Id);
@@ -67,61 +68,106 @@ protected:
 
 public:
   tobj Id;
-  inline tobj id() const { return Id; }
-  inline tobj Prev() const { return TwPrevObj(Id); }
-  inline tobj Next() const { return TwNextObj(Id); }
-  inline tobj Parent() const { return TwParentObj(Id); }
-  static inline tobj Prev(tobj myId) { return TwPrevObj(myId); }
-  static inline tobj Next(tobj myId) { return TwNextObj(myId); }
-  static inline tobj Parent(tobj myId) { return TwParentObj(myId); }
+  inline tobj id() const {
+    return Id;
+  }
+  inline tobj Prev() const {
+    return TwPrevObj(Id);
+  }
+  inline tobj Next() const {
+    return TwNextObj(Id);
+  }
+  inline tobj Parent() const {
+    return TwParentObj(Id);
+  }
+  static inline tobj Prev(tobj myId) {
+    return TwPrevObj(myId);
+  }
+  static inline tobj Next(tobj myId) {
+    return TwNextObj(myId);
+  }
+  static inline tobj Parent(tobj myId) {
+    return TwParentObj(myId);
+  }
 };
 
 class TMenu : public TObj {
 public:
-  inline ~TMenu() {}
+  inline ~TMenu() {
+  }
 
-  inline TMenu(hwcol ColItem = COL(BLACK, WHITE), hwcol ColSelect = COL(BLACK, GREEN),
-               hwcol ColDisabled = COL(HIGH | BLACK, WHITE),
-               hwcol ColSelectDisabled = COL(HIGH | BLACK, BLACK),
-               hwcol ColShtCut = COL(RED, WHITE), hwcol ColSelShtCut = COL(RED, GREEN),
+  inline TMenu(tcolor ColItem = COL(BLACK, WHITE), tcolor ColSelect = COL(BLACK, GREEN),
+               tcolor ColDisabled = COL(HIGH | BLACK, WHITE),
+               tcolor ColSelectDisabled = COL(HIGH | BLACK, BLACK),
+               tcolor ColShtCut = COL(RED, WHITE), tcolor ColSelShtCut = COL(RED, GREEN),
                byte FlagDefColInfo = 0) {
     Id = TwCreateMenu(ColItem, ColSelect, ColDisabled, ColSelectDisabled, ColShtCut, ColSelShtCut,
                       FlagDefColInfo);
   }
-  inline tmenuitem commonItem() const { return TwItem4MenuCommon(Id); }
+  inline tmenuitem commonItem() const {
+    return TwItem4MenuCommon(Id);
+  }
   inline void setInfo(byte Flags = TW_ROW_ACTIVE, ldat Len = 0, const char *Text = 0,
-                      const hwcol *ColText = 0) const {
+                      const tcolor *ColText = 0) const {
     TwSetInfoMenu(Id, Flags, Len, Text, ColText);
   }
-  inline void setInfo(const char *Text, const hwcol *ColText = 0) const {
+  inline void setInfo(const char *Text, const tcolor *ColText = 0) const {
     setInfo(TW_ROW_ACTIVE, Text ? strlen(Text) : 0, Text, ColText);
   }
-  static inline tmenuitem firstMenuItem(tmenu myId) { return TwFirstMenuItem(myId); }
-  inline tmenuitem firstMenuItem() const { return TwFirstMenuItem(Id); }
+  static inline tmenuitem firstMenuItem(tmenu myId) {
+    return TwFirstMenuItem(myId);
+  }
+  inline tmenuitem firstMenuItem() const {
+    return TwFirstMenuItem(Id);
+  }
 };
 
 class TWidget : public TObj {
 protected:
-  inline TWidget() {}
+  inline TWidget() {
+  }
 
 public:
-  inline ~TWidget() {}
+  inline ~TWidget() {
+  }
 
   inline TWidget(dat XWidth, dat YWidth, uldat Attrib = 0, uldat Flags = 0, dat Left = 0,
-                 dat Up = 0, hwattr Fill = HWATTR(COL(BLACK, WHITE), ' ')) {
+                 dat Up = 0, tcell Fill = TCELL(COL(BLACK, WHITE), ' ')) {
     Id = TwCreateWidget(XWidth, YWidth, Attrib, Flags, Left, Up, Fill);
   }
-  static inline void map(twidget myId, twidget parentId) { TwMapWidget(myId, parentId); }
-  inline void map(twidget parentId) const { TwMapWidget(Id, parentId); }
-  inline void map(const TWidget *parent) const { TwMapWidget(Id, parent->Id); }
-  static inline void unMap(twidget myId) { TwUnMapWidget(myId); }
-  inline void unMap() const { TwUnMapWidget(Id); }
-  inline void setXY(dat X, dat Y) const { TwSetXYWidget(Id, X, Y); }
-  static inline tmsgport owner(twidget myId) { return TwOwnerWidget(myId); }
-  inline tmsgport owner() const { return TwOwnerWidget(Id); }
-  inline twidget findWidgetAt(dat x, dat y) const { return TwFindWidgetAtWidget(Id, x, y); }
-  static inline twidget firstWidget(twidget parentId) { return TwFirstWidget(parentId); }
-  inline twidget firstWidget() const { return TwFirstWidget(Id); }
+  static inline void map(twidget myId, twidget parentId) {
+    TwMapWidget(myId, parentId);
+  }
+  inline void map(twidget parentId) const {
+    TwMapWidget(Id, parentId);
+  }
+  inline void map(const TWidget *parent) const {
+    TwMapWidget(Id, parent->Id);
+  }
+  static inline void unMap(twidget myId) {
+    TwUnMapWidget(myId);
+  }
+  inline void unMap() const {
+    TwUnMapWidget(Id);
+  }
+  inline void setXY(dat X, dat Y) const {
+    TwSetXYWidget(Id, X, Y);
+  }
+  static inline tmsgport owner(twidget myId) {
+    return TwOwnerWidget(myId);
+  }
+  inline tmsgport owner() const {
+    return TwOwnerWidget(Id);
+  }
+  inline twidget findWidgetAt(dat x, dat y) const {
+    return TwFindWidgetAtWidget(Id, x, y);
+  }
+  static inline twidget firstWidget(twidget parentId) {
+    return TwFirstWidget(parentId);
+  }
+  inline twidget firstWidget() const {
+    return TwFirstWidget(Id);
+  }
   inline void recursiveDelete() {
     TwRecursiveDeleteWidget(Id);
     Id = TW_NOID;
@@ -130,10 +176,12 @@ public:
 
 class TGadget : public TWidget {
 protected:
-  inline TGadget() {}
+  inline TGadget() {
+  }
 
 public:
-  inline ~TGadget() {}
+  inline ~TGadget() {
+  }
 
   /*
    * args are `udat Code, udat Flags, uldat Attrib' to exploit optional paremeters,
@@ -143,10 +191,11 @@ public:
    */
   inline TGadget(const TWidget *parent, dat XWidth, dat YWidth, const char *TextNormal,
                  udat Code = 0, uldat Flags = TW_GADGETFL_USETEXT | TW_GADGETFL_TEXT_DEFCOL,
-                 uldat Attrib = 0, hwcol ColText = COL(BLACK, GREEN),
-                 hwcol ColTextSelect = COL(HIGH | WHITE, GREEN),
-                 hwcol ColTextDisabled = COL(HIGH | BLACK, GREEN),
-                 hwcol ColTextSelectDisabled = COL(HIGH | BLACK, GREEN), dat Left = 0, dat Up = 0) {
+                 uldat Attrib = 0, tcolor ColText = COL(BLACK, GREEN),
+                 tcolor ColTextSelect = COL(HIGH | WHITE, GREEN),
+                 tcolor ColTextDisabled = COL(HIGH | BLACK, GREEN),
+                 tcolor ColTextSelectDisabled = COL(HIGH | BLACK, GREEN), dat Left = 0,
+                 dat Up = 0) {
     Id = TwCreateGadget(/* TwCreateGadget(...) is a macro... */
                         parent->Id, XWidth, YWidth, TextNormal, Attrib, Flags, Code, ColText,
                         ColTextSelect, ColTextDisabled, ColTextSelectDisabled, Left, Up);
@@ -159,23 +208,43 @@ public:
    */
   static inline TGadget *
   CreateButton(const TWidget *parent, dat XWidth, dat YWidth, const char *name, udat Code = 0,
-               uldat Flags = 0, hwcol BgCol = COL(BLACK, WHITE), hwcol Col = COL(BLACK, GREEN),
-               hwcol ColDisabled = COL(HIGH | BLACK, GREEN), dat Left = 0, dat Up = 0) {
+               uldat Flags = 0, tcolor BgCol = COL(BLACK, WHITE), tcolor Col = COL(BLACK, GREEN),
+               tcolor ColDisabled = COL(HIGH | BLACK, GREEN), dat Left = 0, dat Up = 0) {
     TGadget *G = new TGadget();
     G->Id = TwCreateButtonGadget(parent ? parent->Id : TW_NOID, XWidth, YWidth, name, Flags, Code,
                                  BgCol, Col, ColDisabled, Left, Up);
     return G;
   }
-  inline bool isPressed() const { return TwIsPressedGadget(Id); }
-  inline bool isChecked() const { return TwIsPressedGadget(Id); }
-  inline bool isOn() const { return TwIsPressedGadget(Id); }
-  inline void setPressed(bool on) const { TwSetPressedGadget(Id, (byte)on); }
-  inline void setChecked(bool on) const { TwSetPressedGadget(Id, (byte)on); }
-  inline void setOn(bool on) const { TwSetPressedGadget(Id, (byte)on); }
-  inline bool isToggle() const { return TwIsToggleGadget(Id); }
-  inline bool isToggleButton() const { return TwIsToggleGadget(Id); }
-  inline void setToggle(bool on) const { TwSetToggleGadget(Id, (byte)on); }
-  inline void setToggleButton(bool on) const { TwSetToggleGadget(Id, (byte)on); }
+  inline bool isPressed() const {
+    return TwIsPressedGadget(Id);
+  }
+  inline bool isChecked() const {
+    return TwIsPressedGadget(Id);
+  }
+  inline bool isOn() const {
+    return TwIsPressedGadget(Id);
+  }
+  inline void setPressed(bool on) const {
+    TwSetPressedGadget(Id, (byte)on);
+  }
+  inline void setChecked(bool on) const {
+    TwSetPressedGadget(Id, (byte)on);
+  }
+  inline void setOn(bool on) const {
+    TwSetPressedGadget(Id, (byte)on);
+  }
+  inline bool isToggle() const {
+    return TwIsToggleGadget(Id);
+  }
+  inline bool isToggleButton() const {
+    return TwIsToggleGadget(Id);
+  }
+  inline void setToggle(bool on) const {
+    TwSetToggleGadget(Id, (byte)on);
+  }
+  inline void setToggleButton(bool on) const {
+    TwSetToggleGadget(Id, (byte)on);
+  }
 
   inline void setText(const char *text = 0, dat Left = 0, dat Up = 0) const {
     if (text && text[0])
@@ -208,14 +277,16 @@ public:
 /* a handy alias for TGadget::CreateButton(...) */
 class TButton : public TGadget {
 protected:
-  inline TButton() {}
+  inline TButton() {
+  }
 
 public:
-  inline ~TButton() {}
+  inline ~TButton() {
+  }
 
   inline TButton(const TWidget *parent, dat XWidth, dat YWidth, const char *name, udat Code = 0,
-                 uldat Flags = 0, hwcol BgCol = COL(BLACK, WHITE), hwcol Col = COL(BLACK, GREEN),
-                 hwcol ColDisabled = COL(HIGH | BLACK, GREEN), dat Left = 0, dat Up = 0) {
+                 uldat Flags = 0, tcolor BgCol = COL(BLACK, WHITE), tcolor Col = COL(BLACK, GREEN),
+                 tcolor ColDisabled = COL(HIGH | BLACK, GREEN), dat Left = 0, dat Up = 0) {
     Id = TwCreateButtonGadget(parent->Id, XWidth, YWidth, name, Flags, Code, BgCol, Col,
                               ColDisabled, Left, Up);
   }
@@ -223,12 +294,14 @@ public:
 
 class TWindow : public TWidget {
 protected:
-  inline TWindow() {}
+  inline TWindow() {
+  }
 
 public:
-  inline ~TWindow() {}
+  inline ~TWindow() {
+  }
 
-  inline TWindow(const TMenu *Menu, const char *name = "", hwcol ColText = COL(BLACK, WHITE),
+  inline TWindow(const TMenu *Menu, const char *name = "", tcolor ColText = COL(BLACK, WHITE),
                  uldat CursorType = TW_NOCURSOR,
                  uldat Attrib = TW_WINDOW_WANT_KEYS | TW_WINDOW_CLOSE | TW_WINDOW_DRAG |
                                 TW_WINDOW_RESIZE,
@@ -242,30 +315,46 @@ public:
     W->Id = TwCreate4MenuWindow(Menu->Id);
     return W;
   }
-  inline void writeAscii(const char *text) const { TwWriteAsciiWindow(Id, strlen(text), text); }
-  inline void writeAscii(ldat len, const char *text) const { TwWriteAsciiWindow(Id, len, text); }
-  inline void writeString(const char *text) const { TwWriteStringWindow(Id, strlen(text), text); }
-  inline void writeString(ldat len, const char *text) const { TwWriteStringWindow(Id, len, text); }
-  inline void writeHWFont(ldat len, const hwfont *text) const {
-    TwWriteHWFontWindow(Id, len, text);
+  inline void writeAscii(const char *text) const {
+    TwWriteAsciiWindow(Id, strlen(text), text);
   }
-  inline void writeHWAttr(ldat len, dat x, dat y, ldat Len, const hwattr *Attr) const {
-    TwWriteHWAttrWindow(Id, x, y, Len, Attr);
+  inline void writeAscii(ldat len, const char *text) const {
+    TwWriteAsciiWindow(Id, len, text);
+  }
+  inline void writeString(const char *text) const {
+    TwWriteStringWindow(Id, strlen(text), text);
+  }
+  inline void writeString(ldat len, const char *text) const {
+    TwWriteStringWindow(Id, len, text);
+  }
+  inline void writeTRune(ldat len, const trune *text) const {
+    TwWriteTRuneWindow(Id, len, text);
+  }
+  inline void writeTCell(ldat len, dat x, dat y, ldat Len, const tcell *Attr) const {
+    TwWriteTCellWindow(Id, x, y, Len, Attr);
   }
   /* backward compatibility. will be removed */
-  inline void writeRow(const char *text) const { writeAscii(text); }
+  inline void writeRow(const char *text) const {
+    writeAscii(text);
+  }
   /* backward compatibility. will be removed */
-  inline void writeRow(ldat len, const char *text) const { writeAscii(len, text); }
-  inline void gotoXY(ldat x, ldat y) const { TwGotoXYWindow(Id, x, y); }
-  inline void setColText(hwcol C) const { TwSetColTextWindow(Id, C); }
-  inline void setColors(udat Bitmap, hwcol ColGadgets = COL(HIGH | YELLOW, CYAN),
-                        hwcol ColArrows = COL(HIGH | GREEN, HIGH | BLUE),
-                        hwcol ColBars = COL(WHITE, HIGH | BLUE),
-                        hwcol ColTabs = COL(HIGH | WHITE, HIGH | BLUE),
-                        hwcol ColBorder = COL(HIGH | WHITE, HIGH | BLUE),
-                        hwcol ColText = COL(BLACK, WHITE), hwcol ColSelect = COL(WHITE, BLACK),
-                        hwcol ColDisabled = COL(HIGH | BLACK, BLACK),
-                        hwcol ColSelectDisabled = COL(BLACK, HIGH | BLACK)) const {
+  inline void writeRow(ldat len, const char *text) const {
+    writeAscii(len, text);
+  }
+  inline void gotoXY(ldat x, ldat y) const {
+    TwGotoXYWindow(Id, x, y);
+  }
+  inline void setColText(tcolor C) const {
+    TwSetColTextWindow(Id, C);
+  }
+  inline void setColors(udat Bitmap, tcolor ColGadgets = COL(HIGH | YELLOW, CYAN),
+                        tcolor ColArrows = COL(HIGH | GREEN, HIGH | BLUE),
+                        tcolor ColBars = COL(WHITE, HIGH | BLUE),
+                        tcolor ColTabs = COL(HIGH | WHITE, HIGH | BLUE),
+                        tcolor ColBorder = COL(HIGH | WHITE, HIGH | BLUE),
+                        tcolor ColText = COL(BLACK, WHITE), tcolor ColSelect = COL(WHITE, BLACK),
+                        tcolor ColDisabled = COL(HIGH | BLACK, BLACK),
+                        tcolor ColSelectDisabled = COL(BLACK, HIGH | BLACK)) const {
     TwSetColorsWindow(Id, Bitmap, ColGadgets, ColArrows, ColBars, ColTabs, ColBorder, ColText,
                       ColSelect, ColDisabled, ColSelectDisabled);
   }
@@ -273,7 +362,9 @@ public:
                         dat MaxXWidth = TW_MAXDAT, dat MaxYWidth = TW_MAXDAT) const {
     TwConfigureWindow(Id, Bitmap, Left, Up, MinXWidth, MinYWidth, MaxXWidth, MaxYWidth);
   }
-  inline void setSize(dat x, dat y) const { TwResizeWindow(Id, x, y); }
+  inline void setSize(dat x, dat y) const {
+    TwResizeWindow(Id, x, y);
+  }
   inline void create4MenuRow(udat Code = 0, byte FlagActive = TW_ROW_ACTIVE,
                              const char *Text = "") const {
     TwRow4Menu(Id, Code, FlagActive, strlen(Text), Text);
@@ -292,243 +383,413 @@ public:
 
 class TGroup : public TObj {
 public:
-  inline ~TGroup() {}
+  inline ~TGroup() {
+  }
 
   inline TGroup() {
     if (Id == TW_NOID)
       Id = TwCreateGroup();
   }
-  inline void insertGadget(const TGadget *G) const { TwInsertGadgetGroup(Id, G->Id); }
-  inline void removeGadget(const TGadget *G) const { TwRemoveGadgetGroup(Id, G->Id); }
-  inline tgadget getSelectedGadget() const { return TwGetSelectedGadgetGroup(Id); }
-  inline void setSelectedGadget(const TGadget *G) const { TwSetSelectedGadgetGroup(Id, G->Id); }
+  inline void insertGadget(const TGadget *G) const {
+    TwInsertGadgetGroup(Id, G->Id);
+  }
+  inline void removeGadget(const TGadget *G) const {
+    TwRemoveGadgetGroup(Id, G->Id);
+  }
+  inline tgadget getSelectedGadget() const {
+    return TwGetSelectedGadgetGroup(Id);
+  }
+  inline void setSelectedGadget(const TGadget *G) const {
+    TwSetSelectedGadgetGroup(Id, G->Id);
+  }
 };
 
 class TColor : public TEmpty {
 public:
-  hwcol C;
-  inline TColor(hwcol c = 0) { C = c; }
-  inline ~TColor() {}
-  inline hwcol col() const { return C; }
+  tcolor C;
+  inline TColor(tcolor c = 0) {
+    C = c;
+  }
+  inline ~TColor() {
+  }
+  inline tcolor col() const {
+    return C;
+  }
 };
 
 class TKeyEvent : public s_tevent_keyboard {
 protected:
-  inline TKeyEvent() {}
+  inline TKeyEvent() {
+  }
 
 public:
-  inline ~TKeyEvent() {}
+  inline ~TKeyEvent() {
+  }
 
   inline TKeyEvent(const TWidget *widget, udat code, udat shiftflags) {
     W = widget->Id;
     Code = code;
     ShiftFlags = shiftflags;
   }
-  inline twidget widget() const { return W; }
-  inline udat code() const { return Code; }
-  inline udat key() const { return Code; }
-  inline udat shiftflags() const { return ShiftFlags; }
-  inline udat flags() const { return ShiftFlags; }
-  inline udat seqlen() const { return SeqLen; }
-  inline udat len() const { return SeqLen; }
-  inline const char *asciiseq() const { return AsciiSeq; }
-  inline const char *seq() const { return AsciiSeq; }
+  inline twidget widget() const {
+    return W;
+  }
+  inline udat code() const {
+    return Code;
+  }
+  inline udat key() const {
+    return Code;
+  }
+  inline udat shiftflags() const {
+    return ShiftFlags;
+  }
+  inline udat flags() const {
+    return ShiftFlags;
+  }
+  inline udat seqlen() const {
+    return SeqLen;
+  }
+  inline udat len() const {
+    return SeqLen;
+  }
+  inline const char *asciiseq() const {
+    return AsciiSeq;
+  }
+  inline const char *seq() const {
+    return AsciiSeq;
+  }
 };
 
 class TMouseEvent : public s_tevent_mouse {
 protected:
-  inline TMouseEvent() {}
+  inline TMouseEvent() {
+  }
 
 public:
-  inline ~TMouseEvent() {}
+  inline ~TMouseEvent() {
+  }
 
   inline TMouseEvent(const TWidget *widget, udat code, udat shiftflags) {
     W = widget->Id;
     Code = code;
     ShiftFlags = shiftflags;
   }
-  inline twidget widget() const { return W; }
-  inline udat code() const { return Code; }
-  inline udat mouse() const { return Code; }
-  inline udat shiftflags() const { return ShiftFlags; }
-  inline udat flags() const { return ShiftFlags; }
-  inline dat getX() const { return X; }
-  inline dat getY() const { return Y; }
+  inline twidget widget() const {
+    return W;
+  }
+  inline udat code() const {
+    return Code;
+  }
+  inline udat mouse() const {
+    return Code;
+  }
+  inline udat shiftflags() const {
+    return ShiftFlags;
+  }
+  inline udat flags() const {
+    return ShiftFlags;
+  }
+  inline dat getX() const {
+    return X;
+  }
+  inline dat getY() const {
+    return Y;
+  }
 };
 
 class TControlEvent : public s_tevent_control {
 protected:
-  inline TControlEvent() {}
+  inline TControlEvent() {
+  }
 
 public:
-  inline ~TControlEvent() {}
+  inline ~TControlEvent() {
+  }
 
   inline TControlEvent(const TWidget *widget, udat code) {
     W = widget->Id;
     Code = code;
   }
-  inline twidget widget() const { return W; }
-  inline udat code() const { return Code; }
-  inline udat control() const { return Code; }
-  inline udat len() const { return Len; }
-  inline dat getX() const { return X; }
-  inline dat getY() const { return Y; }
-  inline const char *data() const { return (const char *)Data; }
+  inline twidget widget() const {
+    return W;
+  }
+  inline udat code() const {
+    return Code;
+  }
+  inline udat control() const {
+    return Code;
+  }
+  inline udat len() const {
+    return Len;
+  }
+  inline dat getX() const {
+    return X;
+  }
+  inline dat getY() const {
+    return Y;
+  }
+  inline const char *data() const {
+    return (const char *)Data;
+  }
 };
 
 class TClientMsgEvent : public s_tevent_clientmsg {
 protected:
-  inline TClientMsgEvent() {}
+  inline TClientMsgEvent() {
+  }
 
 public:
-  inline ~TClientMsgEvent() {}
+  inline ~TClientMsgEvent() {
+  }
 
   inline TClientMsgEvent(const TWidget *widget, udat code) {
     W = widget->Id;
     Code = code;
   }
-  inline twidget widget() const { return W; }
-  inline udat code() const { return Code; }
-  inline udat clientmsg() const { return Code; }
-  inline udat len() const { return Len; }
-  inline const char *data() const { return (const char *)Data.b; }
+  inline twidget widget() const {
+    return W;
+  }
+  inline udat code() const {
+    return Code;
+  }
+  inline udat clientmsg() const {
+    return Code;
+  }
+  inline udat len() const {
+    return Len;
+  }
+  inline const char *data() const {
+    return (const char *)Data.b;
+  }
 };
 
 class TDisplayEvent : public s_tevent_display {
 protected:
-  inline TDisplayEvent() {}
+  inline TDisplayEvent() {
+  }
 
 public:
-  inline ~TDisplayEvent() {}
+  inline ~TDisplayEvent() {
+  }
 
   inline TDisplayEvent(udat code) {
     W = TW_NOID;
     Code = code;
   }
-  inline twidget widget() const { return W; }
-  inline udat code() const { return Code; }
-  inline udat display() const { return Code; }
-  inline udat len() const { return Len; }
-  inline dat getX() const { return X; }
-  inline dat getY() const { return Y; }
-  inline const char *data() const { return (const char *)Data; }
+  inline twidget widget() const {
+    return W;
+  }
+  inline udat code() const {
+    return Code;
+  }
+  inline udat display() const {
+    return Code;
+  }
+  inline udat len() const {
+    return Len;
+  }
+  inline dat getX() const {
+    return X;
+  }
+  inline dat getY() const {
+    return Y;
+  }
+  inline const char *data() const {
+    return (const char *)Data;
+  }
 };
 
 class TWidgetEvent : public s_tevent_widget {
 protected:
-  inline TWidgetEvent() {}
+  inline TWidgetEvent() {
+  }
 
 public:
-  inline ~TWidgetEvent() {}
+  inline ~TWidgetEvent() {
+  }
 
   inline TWidgetEvent(const TWidget *widget, udat code) {
     W = widget->Id;
     Code = code;
   }
-  inline twidget widget() const { return W; }
-  inline udat code() const { return Code; }
-  inline dat getXWidth() const { return XWidth; }
-  inline dat getYWidth() const { return YWidth; }
-  inline dat getX() const { return X; }
-  inline dat getY() const { return Y; }
+  inline twidget widget() const {
+    return W;
+  }
+  inline udat code() const {
+    return Code;
+  }
+  inline dat getXWidth() const {
+    return XWidth;
+  }
+  inline dat getYWidth() const {
+    return YWidth;
+  }
+  inline dat getX() const {
+    return X;
+  }
+  inline dat getY() const {
+    return Y;
+  }
 };
 
 class TGadgetEvent : public s_tevent_gadget {
 protected:
-  inline TGadgetEvent() {}
+  inline TGadgetEvent() {
+  }
 
 public:
-  inline ~TGadgetEvent() {}
+  inline ~TGadgetEvent() {
+  }
 
   inline TGadgetEvent(const TWidget *widget, udat code) {
     W = widget->Id;
     Code = code;
   }
-  inline twidget widget() const { return W; }
-  inline udat code() const { return Code; }
-  inline udat gadget() const { return Code; }
-  inline udat flags() const { return Flags; }
+  inline twidget widget() const {
+    return W;
+  }
+  inline udat code() const {
+    return Code;
+  }
+  inline udat gadget() const {
+    return Code;
+  }
+  inline udat flags() const {
+    return Flags;
+  }
 };
 typedef TGadgetEvent TCloseEvent;
 
 class TMenuEvent : public s_tevent_menu {
 protected:
-  inline TMenuEvent() {}
+  inline TMenuEvent() {
+  }
 
 public:
-  inline ~TMenuEvent() {}
+  inline ~TMenuEvent() {
+  }
 
   inline TMenuEvent(const TWidget *widget, const TMenu *M, udat code) {
     W = widget->Id;
     Menu = M->Id;
     Code = code;
   }
-  inline twidget widget() const { return W; }
-  inline udat code() const { return Code; }
-  inline tmenu menu() const { return Menu; }
+  inline twidget widget() const {
+    return W;
+  }
+  inline udat code() const {
+    return Code;
+  }
+  inline tmenu menu() const {
+    return Menu;
+  }
 };
 
 class TSelectionEvent : public s_tevent_selection {
 protected:
-  inline TSelectionEvent() {}
+  inline TSelectionEvent() {
+  }
 
 public:
-  inline ~TSelectionEvent() {}
+  inline ~TSelectionEvent() {
+  }
 
   inline TSelectionEvent(const TWidget *widget) {
     W = widget->Id;
     Code = 0;
   }
-  inline twidget widget() const { return W; }
-  inline udat code() const { return Code; }
-  inline udat selection() const { return Code; }
-  inline dat getX() const { return X; }
-  inline dat getY() const { return Y; }
+  inline twidget widget() const {
+    return W;
+  }
+  inline udat code() const {
+    return Code;
+  }
+  inline udat selection() const {
+    return Code;
+  }
+  inline dat getX() const {
+    return X;
+  }
+  inline dat getY() const {
+    return Y;
+  }
 };
 
 class TSelectionNotifyEvent : public s_tevent_selectionnotify {
 public:
-  inline ~TSelectionNotifyEvent() {}
+  inline ~TSelectionNotifyEvent() {
+  }
 
   inline TSelectionNotifyEvent() {
     W = TW_NOID;
     Code = 0;
   }
-  inline twidget widget() const { return W; }
-  inline udat code() const { return Code; }
-  inline uldat reqprivate() const { return ReqPrivate; }
-  inline uldat magic() const { return Magic; }
-  inline const char *mime() const { return MIME; }
-  inline uldat datalen() const { return Len; }
-  inline uldat len() const { return Len; }
-  inline const char *data() const { return Data; }
+  inline twidget widget() const {
+    return W;
+  }
+  inline udat code() const {
+    return Code;
+  }
+  inline uldat reqprivate() const {
+    return ReqPrivate;
+  }
+  inline uldat magic() const {
+    return Magic;
+  }
+  inline const char *mime() const {
+    return MIME;
+  }
+  inline uldat datalen() const {
+    return Len;
+  }
+  inline uldat len() const {
+    return Len;
+  }
+  inline const char *data() const {
+    return Data;
+  }
 };
 typedef TSelectionNotifyEvent TClipboard;
 
 class TSelectionRequestEvent : public s_tevent_selectionrequest {
 public:
-  inline ~TSelectionRequestEvent() {}
+  inline ~TSelectionRequestEvent() {
+  }
 
   inline TSelectionRequestEvent() {
     W = TW_NOID;
     Code = 0;
   }
-  inline twidget widget() const { return W; }
-  inline udat code() const { return Code; }
-  inline tmsgport requestor() const { return Requestor; }
-  inline uldat reqprivate() const { return ReqPrivate; }
+  inline twidget widget() const {
+    return W;
+  }
+  inline udat code() const {
+    return Code;
+  }
+  inline tmsgport requestor() const {
+    return Requestor;
+  }
+  inline uldat reqprivate() const {
+    return ReqPrivate;
+  }
 };
 
 class TEvent : public s_tevent_common {
   /* C++ cannot use a union (s_tevent_any) as base for a class :( */
 protected:
-  inline TEvent() {}
+  inline TEvent() {
+  }
 
 public:
-  inline ~TEvent() {}
+  inline ~TEvent() {
+  }
 
-  inline TKeyEvent *keyEvent() const { return (TKeyEvent *)&((tevent_any)this)->EventKeyboard; }
-  inline TMouseEvent *mouseEvent() const { return (TMouseEvent *)&((tevent_any)this)->EventMouse; }
+  inline TKeyEvent *keyEvent() const {
+    return (TKeyEvent *)&((tevent_any)this)->EventKeyboard;
+  }
+  inline TMouseEvent *mouseEvent() const {
+    return (TMouseEvent *)&((tevent_any)this)->EventMouse;
+  }
   inline TControlEvent *controlEvent() const {
     return (TControlEvent *)&((tevent_any)this)->EventControl;
   }
@@ -544,7 +805,9 @@ public:
   inline TGadgetEvent *gadgetEvent() const {
     return (TGadgetEvent *)&((tevent_any)this)->EventGadget;
   }
-  inline TMenuEvent *menuEvent() const { return (TMenuEvent *)&((tevent_any)this)->EventMenu; }
+  inline TMenuEvent *menuEvent() const {
+    return (TMenuEvent *)&((tevent_any)this)->EventMenu;
+  }
   inline TSelectionEvent *selectionEvent() const {
     return (TSelectionEvent *)&((tevent_any)this)->EventSelection;
   }
@@ -561,8 +824,10 @@ public:
 
 class TMsg : public s_tmsg {
 protected:
-  inline TMsg() {}
-  inline ~TMsg() {}
+  inline TMsg() {
+  }
+  inline ~TMsg() {
+  }
 
 public:
   static TMsg *create(uldat Type, uldat Len, TEvent *E = 0) {
@@ -575,19 +840,31 @@ public:
    * you should call TMsg::free( ) ONLY on messages created
    * with `TMsg::create(...)' or with `TW::cloneReadMsg(bool)' !!!
    */
-  inline void free() { TwDeleteMsg((tmsg)this); }
-  inline uldat len() const { return Len; }
-  inline uldat magic() const { return Magic; }
-  inline uldat type() const { return Type; }
-  inline TEvent *event() const { return (TEvent *)&Event; }
+  inline void free() {
+    TwDeleteMsg((tmsg)this);
+  }
+  inline uldat len() const {
+    return Len;
+  }
+  inline uldat magic() const {
+    return Magic;
+  }
+  inline uldat type() const {
+    return Type;
+  }
+  inline TEvent *event() const {
+    return (TEvent *)&Event;
+  }
 };
 
 class TMsgPort : public TObj {
 protected:
-  inline TMsgPort() {}
+  inline TMsgPort() {
+  }
 
 public:
-  inline ~TMsgPort() {}
+  inline ~TMsgPort() {
+  }
 
   inline TMsgPort(TW *dpy, const char *name);
   /* forward */
@@ -603,16 +880,22 @@ public:
   static inline tmsgport findMsgPort(const char *Name, tmsgport Prev = TW_NOID) {
     return TwFindMsgPort(Prev, strlen(Name), Name);
   }
-  static inline tmenu firstMenu(tmsgport MsgPortId) { return TwFirstMenu(MsgPortId); }
-  inline tmenu firstMenu() const { return TwFirstMenu(Id); }
+  static inline tmenu firstMenu(tmsgport MsgPortId) {
+    return TwFirstMenu(MsgPortId);
+  }
+  inline tmenu firstMenu() const {
+    return TwFirstMenu(Id);
+  }
 };
 
 class TDialog : public TWindow {
 protected:
-  inline TDialog() {}
+  inline TDialog() {
+  }
 
 public:
-  inline ~TDialog() {}
+  inline ~TDialog() {
+  }
 
   static inline uldat message(const char *title, const char *text, const char *button1,
                               const char *button2 = 0, const char *button3 = 0,
@@ -631,7 +914,8 @@ class TListener {
   friend class TW;
 
 protected:
-  inline TListener() {}
+  inline TListener() {
+  }
   tlistener T;
   TEvent *Event;
 
@@ -654,7 +938,9 @@ public:
     TwSetTEListener(T, type, (tevent_any)(Event = event));
     return add();
   }
-  inline void remove() const { TwRemoveListener(T); }
+  inline void remove() const {
+    TwRemoveListener(T);
+  }
 };
 
 class TListenerNonStatic : public TListener {
@@ -665,7 +951,8 @@ protected:
   TMtdListener MtdListener;
   void *MtdArg;
 
-  inline TListenerNonStatic() {}
+  inline TListenerNonStatic() {
+  }
 
   /*
    * the only way I know to call a non-static C++ method from C
@@ -683,7 +970,8 @@ protected:
   }
 
 public:
-  inline ~TListenerNonStatic() {}
+  inline ~TListenerNonStatic() {
+  }
 
   /*
    * here we must "cheat" :
@@ -729,13 +1017,15 @@ public:
  */
 class TDefaultListener {
 protected:
-  inline TDefaultListener() {}
+  inline TDefaultListener() {
+  }
 
 public:
   TFnDefaultListener Listener;
   void *Arg;
 
-  inline ~TDefaultListener() {}
+  inline ~TDefaultListener() {
+  }
 
   inline TDefaultListener(TFnDefaultListener listener, void *arg = 0) {
     Listener = listener;
@@ -751,7 +1041,8 @@ protected:
   TEmpty *MtdThis;
   void *MtdArg;
 
-  inline TDefaultListenerNonStatic() {}
+  inline TDefaultListenerNonStatic() {
+  }
 
   static void wrapper(TMsg *M, void *arg) {
     TDefaultListenerNonStatic *This = (TDefaultListenerNonStatic *)arg;
@@ -763,7 +1054,8 @@ protected:
   }
 
 public:
-  inline ~TDefaultListenerNonStatic() {}
+  inline ~TDefaultListenerNonStatic() {
+  }
 
   inline TDefaultListenerNonStatic(TEmpty *This, TMtdDefaultListener listener, void *arg = 0)
       : TDefaultListener(wrapper, (void *)this) {
@@ -796,7 +1088,9 @@ public:
     MsgPort = (TMsgPort *)0;
     Checked = Open = false;
   }
-  inline ~TW() { close(); }
+  inline ~TW() {
+    close();
+  }
   static inline void configMalloc(void *(*my_malloc)(size_t), void *(*my_realloc)(void *, size_t),
                                   void (*my_free)(void *)) {
     TwConfigMalloc(my_malloc, my_realloc, my_free);
@@ -804,37 +1098,59 @@ public:
   static inline uldat FindFunction(const char *name, const char *format) {
     return TwFindFunction(strlen(name), name, strlen(format), format);
   }
-  static inline bool enableGzip() { return TwEnableGzip(); }
-  static inline bool disableGzip() { return TwDisableGzip(); }
+  static inline bool enableGzip() {
+    return TwEnableGzip();
+  }
+  static inline bool disableGzip() {
+    return TwDisableGzip();
+  }
   /* the following methods are used by clients that want
    * to register themselves as displays of the server */
-  static inline void needResizeDisplay() { TwNeedResizeDisplay(); }
+  static inline void needResizeDisplay() {
+    TwNeedResizeDisplay();
+  }
   static inline void attachHW(const char *name, byte flags) {
     TwAttachHW(strlen(name), name, flags);
   }
   static inline const char *attachGetReply(uldat *len) {
     return (const char *)TwAttachGetReply(len);
   }
-  static inline void attachConfirm() { TwAttachConfirm(); }
-  static inline bool detachHW(const char *name) { return TwDetachHW(strlen(name), name); }
+  static inline void attachConfirm() {
+    TwAttachConfirm();
+  }
+  static inline bool detachHW(const char *name) {
+    return TwDetachHW(strlen(name), name);
+  }
   /* ok, back to normal methods */
-  static inline void setFontTranslation(const byte trans[0x80]) { TwSetFontTranslation(trans); }
+  static inline void setFontTranslation(const byte trans[0x80]) {
+    TwSetFontTranslation(trans);
+  }
   inline bool checkMagic() {
     TW_DECL_MAGIC(id);
     return Checked = TwCheckMagic(id);
   }
-  inline bool open(const char *dpy = 0) { return Open = (Checked || checkMagic()) && TwOpen(dpy); }
+  inline bool open(const char *dpy = 0) {
+    return Open = (Checked || checkMagic()) && TwOpen(dpy);
+  }
   inline void close() {
     TwClose();
     Open = Checked = false;
   }
-  inline TMsgPort *getMsgPort() const { return MsgPort; }
-  inline void setMsgPort(TMsgPort *P) { MsgPort = P; }
-  inline bool isOpen() const { return Open; }
+  inline TMsgPort *getMsgPort() const {
+    return MsgPort;
+  }
+  inline void setMsgPort(TMsgPort *P) {
+    MsgPort = P;
+  }
+  inline bool isOpen() const {
+    return Open;
+  }
   static inline void beep() {
     // TwBeep();
   }
-  static inline tobj getOwnerSelection() { return TwGetOwnerSelection(); }
+  static inline tobj getOwnerSelection() {
+    return TwGetOwnerSelection();
+  }
   static inline void exportSelection(tany Time = TW_SEL_CURRENTTIME,
                                      tany Frac = TW_SEL_CURRENTTIME) {
     TwSetOwnerSelection(Time, Frac);
@@ -846,25 +1162,55 @@ public:
   static inline void requestSelection(tobj Owner, uldat ReqPrivate = TW_NOID) {
     TwRequestSelection(Owner, ReqPrivate);
   }
-  static inline void requestSelection() { TwRequestSelection(TwGetOwnerSelection(), TW_NOID); }
+  static inline void requestSelection() {
+    TwRequestSelection(TwGetOwnerSelection(), TW_NOID);
+  }
   static inline void notifySelection(tobj Requestor, uldat ReqPrivate, uldat Magic,
                                      const char MIME[TW_MAX_MIMELEN], uldat Len, const char *Data) {
     TwNotifySelection(Requestor, ReqPrivate, Magic, MIME, Len, Data);
   }
-  static inline tscreen firstScreen() { return TwFirstScreen(); }
-  static inline dat getDisplayWidth() { return TwGetDisplayWidth(); }
-  static inline dat getDisplayHeight() { return TwGetDisplayHeight(); }
-  static inline int connectionFd() { return TwConnectionFd(); }
-  static inline uldat libraryVersion() { return TwLibraryVersion(); }
-  static inline uldat serverVersion() { return TwServerVersion(); }
-  static inline bool inPanic() { return TwInPanic(); }
-  static inline bool flush() { return TwFlush(); }
-  static inline byte timidFlush() { return TwTimidFlush(); }
-  static inline bool sync() { return TwSync(); }
-  static inline TMsg *pendingMsg() { return (TMsg *)TwPendingMsg(); }
-  static inline TMsg *peekMsg() { return (TMsg *)TwPeekMsg(); }
-  static inline TMsg *readMsg(bool Wait) { return (TMsg *)TwReadMsg(Wait); }
-  static inline TMsg *cloneReadMsg(bool Wait) { return (TMsg *)TwCloneReadMsg(Wait); }
+  static inline tscreen firstScreen() {
+    return TwFirstScreen();
+  }
+  static inline dat getDisplayWidth() {
+    return TwGetDisplayWidth();
+  }
+  static inline dat getDisplayHeight() {
+    return TwGetDisplayHeight();
+  }
+  static inline int connectionFd() {
+    return TwConnectionFd();
+  }
+  static inline uldat libraryVersion() {
+    return TwLibraryVersion();
+  }
+  static inline uldat serverVersion() {
+    return TwServerVersion();
+  }
+  static inline bool inPanic() {
+    return TwInPanic();
+  }
+  static inline bool flush() {
+    return TwFlush();
+  }
+  static inline byte timidFlush() {
+    return TwTimidFlush();
+  }
+  static inline bool sync() {
+    return TwSync();
+  }
+  static inline TMsg *pendingMsg() {
+    return (TMsg *)TwPendingMsg();
+  }
+  static inline TMsg *peekMsg() {
+    return (TMsg *)TwPeekMsg();
+  }
+  static inline TMsg *readMsg(bool Wait) {
+    return (TMsg *)TwReadMsg(Wait);
+  }
+  static inline TMsg *cloneReadMsg(bool Wait) {
+    return (TMsg *)TwCloneReadMsg(Wait);
+  }
   static inline TListener *addListener(TKeyEvent *E, TListener *L) {
     return addListener((TEvent *)E, TW_MSG_WIDGET_KEY, L);
   }
@@ -942,8 +1288,12 @@ public:
                                        void *arg = 0) {
     return addListener(E, new TListener(listener, arg));
   }
-  static inline void removeListener(TListener *L) { L->remove(); }
-  static inline void deleteListener(TListener *L) { delete L; }
+  static inline void removeListener(TListener *L) {
+    L->remove();
+  }
+  static inline void deleteListener(TListener *L) {
+    delete L;
+  }
 
 private:
   static inline TListener *addListener(TEvent *E, uldat type, TListener *L) {
@@ -967,11 +1317,21 @@ public:
   static inline void setDefaultListener(TFnDefaultListener listener, void *arg = 0) {
     TwSetDefaultListener((tfn_default_listener)listener, arg);
   }
-  static inline byte mainLoop() { return TwMainLoop(); }
-  static inline byte exec() { return TwMainLoop(); }
-  static inline uldat error() { return TwErrno; }
-  static inline uldat errorDetail() { return TwErrnoDetail; }
-  static inline const char *strError(uldat e) { return (const char *)TwStrError(e); }
+  static inline byte mainLoop() {
+    return TwMainLoop();
+  }
+  static inline byte exec() {
+    return TwMainLoop();
+  }
+  static inline uldat error() {
+    return TwErrno;
+  }
+  static inline uldat errorDetail() {
+    return TwErrnoDetail;
+  }
+  static inline const char *strError(uldat e) {
+    return (const char *)TwStrError(e);
+  }
   static inline const char *strErrorDetail(uldat e, uldat d) {
     return (const char *)TwStrErrorDetail(e, d);
   }

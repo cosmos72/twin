@@ -9,13 +9,13 @@
  *
  */
 
-hwfont T_CAT3(Tutf_, T_MAP(ASCII), _to_UTF_32)[0x100] = {
+trune T_CAT3(Tutf_, T_MAP(ASCII), _to_UTF_32)[0x100] = {
 #define EL(x) T_UTF(UTF_32, x),
     T_LIST(ASCII, EL)
 #undef EL
 };
 
-hwfont T_CAT(Tutf_CP437_to_, T_MAP(ASCII))[0x100] = {
+trune T_CAT(Tutf_CP437_to_, T_MAP(ASCII))[0x100] = {
     ' ', 'O', 'O', 'v',  '@', 'g', '!', '.',  '.', 'o', 'o', 't', 'g', 'f', 'f', '*', '>', '<', '|',
     '!', 'q', 'S', '_',  '|', '^', 'v', '>',  '<', 'L', '-', '^', 'v',
 
@@ -34,7 +34,7 @@ hwfont T_CAT(Tutf_CP437_to_, T_MAP(ASCII))[0x100] = {
     '"', 'a', 'B', 'c',  'p', 'S', 's', 'm',  't', 'P', 'H', 'W', 'd', '&', 'p', 'e', 'n', '=', '+',
     '>', '<', 'T', 'J',  '/', '=', 'o', '.',  '.', 'V', 'n', '2', '*', ' '};
 
-hwfont T_CAT(Tutf_UTF_32_to_, T_MAP(ASCII))(hwfont c) {
+trune T_CAT(Tutf_UTF_32_to_, T_MAP(ASCII))(trune c) {
   if (c < 0x20 /*' '*/ || c > 0x7E /*'~'*/) {
     /* not plain 7-bit ASCII, try to approximate */
     c = T_CAT(Tutf_CP437_to_, T_MAP(ASCII))[Tutf_UTF_32_to_CP437(c)];

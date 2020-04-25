@@ -72,18 +72,18 @@ generates events (user input) is decided by the application.
 
    To represent colors, there are some dedicated types and defines:
 
-   hwfont;
-   hwcol;
-   hwattr;
+   trune;
+   tcolor;
+   tcell;
 
    Don't assume you know the sizes of these types, always use
    sizeof(<type>) if you need it.
    
-   hwfont can hold a single character. This means it surely can contain
+   trune can hold a single character. This means it surely can contain
    an ASCII character, but depending on libTw configuration, it may even
    contain a UNICODE character.
    
-   hwcol can hold a single foreground color + background color combination
+   tcolor can hold a single foreground color + background color combination
    This is loosely based on VGA colors, with 8 different colors
 
    BLACK, BLUE, GREEN, CYAN, RED, MAGENTA, YELLOW, WHITE
@@ -94,32 +94,32 @@ generates events (user input) is decided by the application.
    
    ANSI2VGA(col) and VGA2ANSI(col)
 
-   To compose and decompose a hwcol from fg/bg pair, you have the macros
+   To compose and decompose a tcolor from fg/bg pair, you have the macros
    
-   FG(fg), BG(bg) and COL(fg,bg) to compose a hwcol
+   FG(fg), BG(bg) and COL(fg,bg) to compose a tcolor
       COL(fg,bg) is simply FG(fg)|BG(bg)
    COLBG(col) and COLFG(col) to decompose it
 
-   To compose and decompose a hwattr from hwcol/hwfont pair, you have the macros
+   To compose and decompose a tcell from tcolor/trune pair, you have the macros
 
-   HWATTR(col,font) to compose and HWCOL(attr), HWFONT(attr) to decompose.
+   TCELL(col,font) to compose and TCOLOR(attr), TRUNE(attr) to decompose.
    
    Examples:
-   a blue `f' on white background is HWATTR( COL(BLUE,WHITE), 'f')
+   a blue `f' on white background is TCELL( COL(BLUE,WHITE), 'f')
    a cyan foreground on red background is COL(CYAN,RED)
    and so on...
 
    WARNING:
-      HWFONT(), HWCOL() and HWATTR() are macros that can evaluate their
+      TRUNE(), TCOLOR() and TCELL() are macros that can evaluate their
       arguments more than once. Don't use arguments that have side effects
       (like increments) inside them.
       For example, this causes unpredictable results because of the `h++'
-      increment inside the HWATTR() macro:
+      increment inside the TCELL() macro:
       
-      hwattr a[2];
-      hwfont buf[2], *h = buf;
-      a[0] = HWATTR(COL(WHITE,BLACK), *h++);
-      a[1] = HWATTR(COL(WHITE,BLACK), *h++);
+      tcell a[2];
+      trune buf[2], *h = buf;
+      a[0] = TCELL(COL(WHITE,BLACK), *h++);
+      a[1] = TCELL(COL(WHITE,BLACK), *h++);
      
 
    (types for time intervals: TODO)
@@ -368,20 +368,20 @@ void	Tw_DeleteMsgPort(tdisplay TwD, tmsgport MsgPort);
 
 
 tgadget Tw_CreateGadget(tdisplay TwD, twidget Parent, dat Left, dat Up,
-		       hwcol ColText, hwcol ColTextSelect, hwcol ColTextDisabled, hwcol ColTextSelectDisabled,
+		       tcolor ColText, tcolor ColTextSelect, tcolor ColTextDisabled, tcolor ColTextSelectDisabled,
 		       uldat Attrib, uldat Flags, dat XWidth, dat YWidth);
 void	Tw_DeleteGadget(tdisplay TwD, tgadget Gadget);
 tgadget Tw_SearchGadget(tdisplay TwD, twindow Window, dat i, dat j);
 tgadget Tw_CreateButtonGadget(tdisplay TwD, twindow Window,
 twindow Tw_CreateButtonGadget(tdisplay TwD, twidget Parent, dat XWidth, dat YWidth, TW_CONST byte *Title,
-			      uldat Flags, udat Code, hwcol BgCol, hwcol Col, hwcol ColDisabled,
+			      uldat Flags, udat Code, tcolor BgCol, tcolor Col, tcolor ColDisabled,
 			      dat Left, dat Up);
 
 void	Tw_Create4MenuRow(tdisplay TwD, twindow Window, udat Code, byte FlagActive, uldat TextLen, byte *Text);
 #define Tw_Row4Menu Tw_Create4MenuRow
 
-twindow Tw_CreateWindow(tdisplay TwD, dat NameLen, TW_CONST byte *Name, TW_CONST hwcol *ColName, tmenu Menu,
-		       hwcol ColText, uldat cursorType, uldat Attrib, uldat Flags,
+twindow Tw_CreateWindow(tdisplay TwD, dat NameLen, TW_CONST byte *Name, TW_CONST tcolor *ColName, tmenu Menu,
+		       tcolor ColText, uldat cursorType, uldat Attrib, uldat Flags,
 		       dat XWidth, dat YWidth, dat ScrollBackLines);
 void	Tw_DeleteWindow(tdisplay TwD, twindow Window);
 twindow Tw_Create4MenuWindow(tdisplay TwD, tmenu Menu);
@@ -391,11 +391,11 @@ void	Tw_UnMapWindow(tdisplay TwD, twindow Window);
 void	Tw_WriteAsciiWindow(tdisplay TwD, twindow Window, uldat AsciiLen, TW_CONST byte *AsciiSeq);
 void	Tw_WriteTextWindow(tdisplay TwD, twindow Window, ldat AsciiLen, TW_CONST byte *Text);
 void	Tw_WriteUnicodeWindow(tdisplay TwD, twindow Window, ldat AsciiLen, TW_CONST udat *UnicodeSeq);
-void    Tw_WriteHWAttrWindow(tdisplay TwD, twindow Window, udat x, udat y, uldat Len, TW_CONST hwattr *Attr);
+void    Tw_WriteTCellWindow(tdisplay TwD, twindow Window, udat x, udat y, uldat Len, TW_CONST tcell *Attr);
 void	Tw_WriteRowWindow(tdisplay TwD, twindow Window, uldat Len, byte *Text);
-void	Tw_SetColTextWindow(tdisplay TwD, twindow Window, hwcol ColText);
-void	Tw_SetColorsWindow(tdisplay TwD, twindow Window, udat Bitmap, hwcol ColGadgets, hwcol ColArrows, hwcol ColBars, hwcol ColTabs,
-			  hwcol ColBorder, hwcol ColText, hwcol ColSelect, hwcol ColDisabled, hwcol ColSelectDisabled);
+void	Tw_SetColTextWindow(tdisplay TwD, twindow Window, tcolor ColText);
+void	Tw_SetColorsWindow(tdisplay TwD, twindow Window, udat Bitmap, tcolor ColGadgets, tcolor ColArrows, tcolor ColBars, tcolor ColTabs,
+			  tcolor ColBorder, tcolor ColText, tcolor ColSelect, tcolor ColDisabled, tcolor ColSelectDisabled);
 void	Tw_ConfigureWindow(tdisplay TwD, twindow Window, byte Bitmap, dat Left, udat Up, udat MinXWidth, udat MinYWidth, udat MaxXWidth, udat MaxYWidth);
 void	Tw_ResizeWindow(tdisplay TwD, twindow Window, udat XWidth, udat YWidth);
 void	Tw_GotoXYWindow(tdisplay TwD, twindow Window, uldat X, uldat Y);
@@ -407,15 +407,15 @@ tmenuitem Tw_Create4MenuCommonMenuItem(tdisplay TwD, tmenu Menu);
 #define   Tw_Item4MenuCommon Tw_Create4MenuCommonMenuItem
 void	Tw_DeleteMenuItem(tdisplay TwD, tmenuitem MenuItem);
 
-tmenu	Tw_CreateMenu(tdisplay TwD, tmsgport MsgPort, hwcol ColItem, hwcol ColSelect, hwcol ColDisabled,
-		     hwcol ColSelectDisabled, hwcol ColShtCut, hwcol ColSelShtCut, byte FlagDefColInfo);
+tmenu	Tw_CreateMenu(tdisplay TwD, tmsgport MsgPort, tcolor ColItem, tcolor ColSelect, tcolor ColDisabled,
+		     tcolor ColSelectDisabled, tcolor ColShtCut, tcolor ColSelShtCut, byte FlagDefColInfo);
 #define Tw_Grab	Tw_CreateMutex
-void	Tw_SetInfoMenu(tdisplay TwD, tmenu Menu, byte Flags, uldat Len, byte *Text, hwcol *ColText);
+void	Tw_SetInfoMenu(tdisplay TwD, tmenu Menu, byte Flags, uldat Len, byte *Text, tcolor *ColText);
 #define Tw_Info4Menu Tw_SetInfoMenu
 void	Tw_DeleteMenu(tdisplay TwD, tmenu Menu);
 
 
-void	Tw_BgImageScreen(tdisplay TwD, tscreen Screen, udat BgWidth, udat BgHeight, hwattr *BgImage);
+void	Tw_BgImageScreen(tdisplay TwD, tscreen Screen, udat BgWidth, udat BgHeight, tcell *BgImage);
 
 tscreen	Tw_FirstScreen(tdisplay TwD);
 twindow	Tw_FirstWindow(tdisplay TwD, tscreen Screen);

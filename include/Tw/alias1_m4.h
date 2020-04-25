@@ -60,8 +60,8 @@
 #define TwDrawGadget			TwDrawWidget    
 #define TwDraw2Gadget			TwDraw2Widget    
 #define TwDrawTextGadget			TwDrawTextWidget    
-#define TwDrawHWFontGadget			TwDrawHWFontWidget    
-#define TwDrawHWAttrGadget			TwDrawHWAttrWidget    
+#define TwDrawTRuneGadget			TwDrawTRuneWidget    
+#define TwDrawTCellGadget			TwDrawTCellWidget    
 #define TwOwnerGadget			TwOwnerWidget    
 #define TwO_PrevGadget			TwO_PrevWidget    
 #define TwO_NextGadget			TwO_NextWidget    
@@ -82,8 +82,8 @@
 #define TwDrawWindow			TwDrawWidget    
 #define TwDraw2Window			TwDraw2Widget    
 #define TwDrawTextWindow			TwDrawTextWidget    
-#define TwDrawHWFontWindow			TwDrawHWFontWidget    
-#define TwDrawHWAttrWindow			TwDrawHWAttrWidget    
+#define TwDrawTRuneWindow			TwDrawTRuneWidget    
+#define TwDrawTCellWindow			TwDrawTCellWidget    
 #define TwOwnerWindow			TwOwnerWidget    
 #define TwO_PrevWindow			TwO_PrevWidget    
 #define TwO_NextWindow			TwO_NextWidget    
@@ -105,8 +105,8 @@
 #define TwDrawScreen			TwDrawWidget    
 #define TwDraw2Screen			TwDraw2Widget    
 #define TwDrawTextScreen			TwDrawTextWidget    
-#define TwDrawHWFontScreen			TwDrawHWFontWidget    
-#define TwDrawHWAttrScreen			TwDrawHWAttrWidget    
+#define TwDrawTRuneScreen			TwDrawTRuneWidget    
+#define TwDrawTCellScreen			TwDrawTCellWidget    
 #define TwOwnerScreen			TwOwnerWidget    
 #define TwO_PrevScreen			TwO_PrevWidget    
 #define TwO_NextScreen			TwO_NextWidget    

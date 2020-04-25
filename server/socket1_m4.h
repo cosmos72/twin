@@ -115,9 +115,9 @@ case order_SetFontTranslation:
     break;
 
 
-case order_SetHWFontTranslation:
+case order_SetTRuneTranslation:
     if (N >= 1)
-	sockSetHWFontTranslation((CONST hwfont *)a[1]_vec);
+	sockSetTRuneTranslation((CONST trune *)a[1]_vec);
     break;
 
 
@@ -137,7 +137,7 @@ case order_ChangeFieldObj:
 
 case order_CreateWidget:
     if (N >= 7)
-	a[0]_obj = (obj)sockCreateWidget((dat)a[1]_any, (dat)a[2]_any, (uldat)a[3]_any, (uldat)a[4]_any, (dat)a[5]_any, (dat)a[6]_any, (hwattr)a[7]_any);
+	a[0]_obj = (obj)sockCreateWidget((dat)a[1]_any, (dat)a[2]_any, (uldat)a[3]_any, (uldat)a[4]_any, (dat)a[5]_any, (dat)a[6]_any, (tcell)a[7]_any);
     break;
 
 
@@ -173,7 +173,7 @@ case order_ScrollWidget:
 
 case order_DrawWidget:
     if (N >= 8)
-	sockDrawWidget((widget)a[1]_obj, (dat)a[2]_any, (dat)a[3]_any, (dat)a[4]_any, (dat)a[5]_any, (CONST char *)a[6]_vec, (CONST hwfont *)a[7]_vec, (CONST hwattr *)a[8]_vec);
+	sockDrawWidget((widget)a[1]_obj, (dat)a[2]_any, (dat)a[3]_any, (dat)a[4]_any, (dat)a[5]_any, (CONST char *)a[6]_vec, (CONST trune *)a[7]_vec, (CONST tcell *)a[8]_vec);
     break;
 
 
@@ -218,13 +218,13 @@ case order_CirculateChildrenWidget:
 
 case order_CreateGadget:
     if (N >= 13)
-	a[0]_obj = (obj)sockCreateGadget((widget)a[1]_obj, (dat)a[2]_any, (dat)a[3]_any, (CONST char *)a[4]_vec, (uldat)a[5]_any, (uldat)a[6]_any, (udat)a[7]_any, (hwcol)a[8]_any, (hwcol)a[9]_any, (hwcol)a[10]_any, (hwcol)a[11]_any, (dat)a[12]_any, (dat)a[13]_any);
+	a[0]_obj = (obj)sockCreateGadget((widget)a[1]_obj, (dat)a[2]_any, (dat)a[3]_any, (CONST char *)a[4]_vec, (uldat)a[5]_any, (uldat)a[6]_any, (udat)a[7]_any, (tcolor)a[8]_any, (tcolor)a[9]_any, (tcolor)a[10]_any, (tcolor)a[11]_any, (dat)a[12]_any, (dat)a[13]_any);
     break;
 
 
 case order_CreateButtonGadget:
     if (N >= 11)
-	a[0]_obj = (obj)Do(CreateButton,Gadget)(FnGadget, (widget)a[1]_obj, (dat)a[2]_any, (dat)a[3]_any, (CONST char *)a[4]_vec, (uldat)a[5]_any, (udat)a[6]_any, (hwcol)a[7]_any, (hwcol)a[8]_any, (hwcol)a[9]_any, (dat)a[10]_any, (dat)a[11]_any);
+	a[0]_obj = (obj)Do(CreateButton,Gadget)(FnGadget, (widget)a[1]_obj, (dat)a[2]_any, (dat)a[3]_any, (CONST char *)a[4]_vec, (uldat)a[5]_any, (udat)a[6]_any, (tcolor)a[7]_any, (tcolor)a[8]_any, (tcolor)a[9]_any, (dat)a[10]_any, (dat)a[11]_any);
     break;
 
 
@@ -233,15 +233,15 @@ case order_WriteTextsGadget:
 	Act(WriteTexts,(gadget)a[1]_obj)((gadget)a[1]_obj, (byte)a[2]_any, (dat)a[3]_any, (dat)a[4]_any, (CONST char *)a[5]_vec, (dat)a[6]_any, (dat)a[7]_any);
     break;
 
-case order_WriteHWFontsGadget:
+case order_WriteTRunesGadget:
     if (N >= 7)
-	Act(WriteHWFonts,(gadget)a[1]_obj)((gadget)a[1]_obj, (byte)a[2]_any, (dat)a[3]_any, (dat)a[4]_any, (CONST hwfont *)a[5]_vec, (dat)a[6]_any, (dat)a[7]_any);
+	Act(WriteTRunes,(gadget)a[1]_obj)((gadget)a[1]_obj, (byte)a[2]_any, (dat)a[3]_any, (dat)a[4]_any, (CONST trune *)a[5]_vec, (dat)a[6]_any, (dat)a[7]_any);
     break;
 
 
 case order_CreateWindow:
     if (N >= 11)
-	a[0]_obj = (obj)sockCreateWindow((dat)a[1]_any, (CONST char *)a[2]_vec, (CONST hwcol *)a[3]_vec, (menu)a[4]_obj, (hwcol)a[5]_any, (uldat)a[6]_any, (uldat)a[7]_any, (uldat)a[8]_any, (dat)a[9]_any, (dat)a[10]_any, (dat)a[11]_any);
+	a[0]_obj = (obj)sockCreateWindow((dat)a[1]_any, (CONST char *)a[2]_vec, (CONST tcolor *)a[3]_vec, (menu)a[4]_obj, (tcolor)a[5]_any, (uldat)a[6]_any, (uldat)a[7]_any, (uldat)a[8]_any, (dat)a[9]_any, (dat)a[10]_any, (dat)a[11]_any);
     break;
 
 case order_Create4MenuWindow:
@@ -252,22 +252,22 @@ case order_Create4MenuWindow:
 
 case order_WriteAsciiWindow:
     if (N >= 3)
-	sockWriteAsciiWindow((window)a[1]_obj, (ldat)a[2]_any, (CONST char *)a[3]_vec);
+	sockWriteAsciiWindow((window)a[1]_obj, (uldat)a[2]_any, (CONST char *)a[3]_vec);
     break;
 
 case order_WriteStringWindow:
     if (N >= 3)
-	sockWriteStringWindow((window)a[1]_obj, (ldat)a[2]_any, (CONST char *)a[3]_vec);
+	sockWriteStringWindow((window)a[1]_obj, (uldat)a[2]_any, (CONST char *)a[3]_vec);
     break;
 
-case order_WriteHWFontWindow:
+case order_WriteTRuneWindow:
     if (N >= 3)
-	sockWriteHWFontWindow((window)a[1]_obj, (ldat)a[2]_any, (CONST hwfont *)a[3]_vec);
+	sockWriteTRuneWindow((window)a[1]_obj, (uldat)a[2]_any, (CONST trune *)a[3]_vec);
     break;
 
-case order_WriteHWAttrWindow:
+case order_WriteTCellWindow:
     if (N >= 5)
-	sockWriteHWAttrWindow((window)a[1]_obj, (dat)a[2]_any, (dat)a[3]_any, (ldat)a[4]_any, (CONST hwattr *)a[5]_vec);
+	sockWriteTCellWindow((window)a[1]_obj, (dat)a[2]_any, (dat)a[3]_any, (uldat)a[4]_any, (CONST tcell *)a[5]_vec);
     break;
 
 
@@ -283,12 +283,12 @@ case order_SetTitleWindow:
 
 case order_SetColTextWindow:
     if (N >= 2)
-	Act(SetColText,(window)a[1]_obj)((window)a[1]_obj, (hwcol)a[2]_any);
+	Act(SetColText,(window)a[1]_obj)((window)a[1]_obj, (tcolor)a[2]_any);
     break;
 
 case order_SetColorsWindow:
     if (N >= 11)
-	Act(SetColors,(window)a[1]_obj)((window)a[1]_obj, (udat)a[2]_any, (hwcol)a[3]_any, (hwcol)a[4]_any, (hwcol)a[5]_any, (hwcol)a[6]_any, (hwcol)a[7]_any, (hwcol)a[8]_any, (hwcol)a[9]_any, (hwcol)a[10]_any, (hwcol)a[11]_any);
+	Act(SetColors,(window)a[1]_obj)((window)a[1]_obj, (udat)a[2]_any, (tcolor)a[3]_any, (tcolor)a[4]_any, (tcolor)a[5]_any, (tcolor)a[6]_any, (tcolor)a[7]_any, (tcolor)a[8]_any, (tcolor)a[9]_any, (tcolor)a[10]_any, (tcolor)a[11]_any);
     break;
 
 case order_ConfigureWindow:
@@ -364,12 +364,12 @@ case order_Create4MenuCommonMenuItem:
 
 case order_CreateMenu:
     if (N >= 7)
-	a[0]_obj = (obj)sockCreateMenu((hwcol)a[1]_any, (hwcol)a[2]_any, (hwcol)a[3]_any, (hwcol)a[4]_any, (hwcol)a[5]_any, (hwcol)a[6]_any, (byte)a[7]_any);
+	a[0]_obj = (obj)sockCreateMenu((tcolor)a[1]_any, (tcolor)a[2]_any, (tcolor)a[3]_any, (tcolor)a[4]_any, (tcolor)a[5]_any, (tcolor)a[6]_any, (byte)a[7]_any);
     break;
 
 case order_SetInfoMenu:
     if (N >= 5)
-	Act(SetInfo,(menu)a[1]_obj)((menu)a[1]_obj, (byte)a[2]_any, (ldat)a[3]_any, (CONST char *)a[4]_vec, (CONST hwcol *)a[5]_vec);
+	Act(SetInfo,(menu)a[1]_obj)((menu)a[1]_obj, (byte)a[2]_any, (ldat)a[3]_any, (CONST char *)a[4]_vec, (CONST tcolor *)a[5]_vec);
     break;
 
 
@@ -386,7 +386,7 @@ case order_FindMsgPort:
 
 case order_BgImageScreen:
     if (N >= 4)
-	Act(BgImage,(screen)a[1]_obj)((screen)a[1]_obj, (dat)a[2]_any, (dat)a[3]_any, (CONST hwattr *)a[4]_vec);
+	Act(BgImage,(screen)a[1]_obj)((screen)a[1]_obj, (dat)a[2]_any, (dat)a[3]_any, (CONST tcell *)a[4]_vec);
     break;
 
 

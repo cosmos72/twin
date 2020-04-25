@@ -98,7 +98,9 @@ static void twin_AtBuild_ttvisible(ttvisible o) {
 }
 
 /* ttnative */
-static ttnative twin_GetRoot_ttnative(void) { return Create_ttnative(TwFirstScreen()); }
+static ttnative twin_GetRoot_ttnative(void) {
+  return Create_ttnative(TwFirstScreen());
+}
 static void twin_Break_ttnative(ttnative o) {
   o->native = TW_NOID;
   TClass_default(ttnative)->Break(o);
@@ -118,7 +120,7 @@ static ttshort twin_GetH_ttnative(ttnative o) {
 
 /* ttwidget */
 static void twin_BuiltinRepaint_ttwidget(ttwidget o, dat x, dat y, dat w, dat h) {
-  TwDrawHWAttrWidget(o->native, w, h, x, y, w, NULL);
+  TwDrawTCellWidget(o->native, w, h, x, y, w, NULL);
 }
 static void twin_ExposeCallback_ttwidget(tevent_any e, void *id) {
   ttwidget o = ID2(ttwidget, (opaque)id);
@@ -155,10 +157,10 @@ static ttcallback twin_AddCommonCallbacks_ttwidget(ttwidget o) {
 }
 static ttwidget twin_Build_ttwidget(ttwidget o) {
   tttheme t = myTheme(o);
-  hwfont f = t->fill;
-  hwcol c = o->col;
-  if (TW_NOID != (o->native = TwCreateWidget(o->w, o->h, 0, TW_WIDGETFL_USEFILL, 0, TW_MAXDAT,
-                                             HWATTR(c, f)))) {
+  trune f = t->fill;
+  tcolor c = o->col;
+  if (TW_NOID !=
+      (o->native = TwCreateWidget(o->w, o->h, 0, TW_WIDGETFL_USEFILL, 0, TW_MAXDAT, TCELL(c, f)))) {
     twin_AtBuild_ttvisible((ttvisible)o);
     return o;
   }
@@ -219,7 +221,7 @@ static void twin_Draw_ttwidget(ttwidget o, ttshort x, ttshort y, ttshort w, ttsh
 /* ttlabel */
 static ttlabel twin_Build_ttlabel(ttlabel o) {
   if (TW_NOID != (o->native = TwCreateWidget(o->text_len, 1, 0, TW_WIDGETFL_USEEXPOSE, 0, TW_MAXDAT,
-                                             HWATTR(o->col, myTheme(o)->fill)))) {
+                                             TCELL(o->col, myTheme(o)->fill)))) {
     if (twin_AddCommonCallbacks_ttwidget((ttwidget)o)) {
       twin_AtBuild_ttvisible((ttvisible)o);
       return o;
@@ -234,15 +236,15 @@ static void twin_Invalidate_ttwidget(ttwidget o) {
 
   t = myTheme(o);
 
-  TwSetFillWidget(o->native, HWATTR(o->col, t->fill));
+  TwSetFillWidget(o->native, TCELL(o->col, t->fill));
 }
 
 static void twin_BuiltinRepaint_ttlabel(ttlabel o, dat x, dat y, dat w, dat h) {
   if (y == 0) {
     if (x < o->text_len)
-      TwDrawHWFontWidget(o->native, TT_MIN2(w, o->text_len - x), 1, x, 0, o->text_len, o->text + x);
+      TwDrawTRuneWidget(o->native, TT_MIN2(w, o->text_len - x), 1, x, 0, o->text_len, o->text + x);
     if (x + w > o->text_len)
-      TwDrawHWFontWidget(o->native, o->text_len - x - w, 1, o->text_len, 0, 0, NULL);
+      TwDrawTRuneWidget(o->native, o->text_len - x - w, 1, o->text_len, 0, 0, NULL);
   }
 }
 
@@ -281,8 +283,8 @@ static void twin_BuiltinRepaint_ttanybutton(ttanybutton o, dat x, dat y, dat w, 
       w = tw - x;
 
     if (h > 0 && w > 0 && y < th && x < tw)
-      TwDrawHWAttrWidget(o->native, TT_MIN2(w, tw - x), TT_MIN2(h, th - y), x, y, tw,
-                         t + x + (y * tw));
+      TwDrawTCellWidget(o->native, TT_MIN2(w, tw - x), TT_MIN2(h, th - y), x, y, tw,
+                        t + x + (y * tw));
   } else if (o->text && o->Class == TClass_ttanybutton) {
     if (h + y > o->text_height)
       h = o->text_height - y;
@@ -290,10 +292,10 @@ static void twin_BuiltinRepaint_ttanybutton(ttanybutton o, dat x, dat y, dat w, 
       w = o->text_width - x;
 
     if (h > 0 && w > 0 && y < o->text_height && x < o->text_width)
-      TwDrawHWAttrWidget(o->native, TT_MIN2(w, o->text_width - x), TT_MIN2(h, o->text_height - y),
-                         x, y, o->text_width, o->text + x + (y * o->text_width));
+      TwDrawTCellWidget(o->native, TT_MIN2(w, o->text_width - x), TT_MIN2(h, o->text_height - y), x,
+                        y, o->text_width, o->text + x + (y * o->text_width));
   } else
-    TwDrawHWAttrWidget(o->native, w, h, x, y, w, NULL);
+    TwDrawTCellWidget(o->native, w, h, x, y, w, NULL);
 }
 static void twin_MouseCallback_ttanybutton(tevent_any e, tobj id) {
   ttanybutton o = ID2(ttanybutton, id);
@@ -541,7 +543,7 @@ static ttbyte twin_SetTitle_ttframe(ttframe o, TT_ARG_READ ttbyte *title) {
 }
 
 static void twin_BuiltinRepaint_ttframe(ttframe o, dat x, dat y, dat w, dat h) {
-  TwDrawHWAttrWidget(o->native, w, h, x, y, w, NULL);
+  TwDrawTCellWidget(o->native, w, h, x, y, w, NULL);
 }
 
 /* ttscroller */
@@ -652,9 +654,15 @@ static ttapplication twin_Build_ttapplication(ttapplication o) {
   return NULL;
 }
 
-static ttbyte twin_Sync(void) { return TwSync(); }
-static ttbyte twin_Flush(void) { return TwFlush(); }
-static ttbyte twin_TimidFlush(void) { return TwTimidFlush(); }
+static ttbyte twin_Sync(void) {
+  return TwSync();
+}
+static ttbyte twin_Flush(void) {
+  return TwFlush();
+}
+static ttbyte twin_TimidFlush(void) {
+  return TwTimidFlush();
+}
 static ttbyte twin_MainLoopOnce(ttbyte wait) {
   tmsg Msg;
 
@@ -672,12 +680,24 @@ static void twin_DeleteCallback(ttcallback o) {
   if (o->native != (opaque)TW_NOID)
     TwDeleteListener((tlistener)(opaque)o->native);
 }
-static void twin_Close(void) { TwClose(); }
-static int twin_ConnectionFd(void) { return TwConnectionFd(); }
-static ttuint twin_GetErrno(void) { return TwErrno; }
-static ttuint twin_GetErrnoDetail(void) { return TwErrnoDetail; }
-static TT_CONST ttbyte *twin_StrError(ttuint E) { return TwStrError(E); }
-static TT_CONST ttbyte *twin_StrErrorDetail(ttuint E, ttuint S) { return TwStrErrorDetail(E, S); }
+static void twin_Close(void) {
+  TwClose();
+}
+static int twin_ConnectionFd(void) {
+  return TwConnectionFd();
+}
+static ttuint twin_GetErrno(void) {
+  return TwErrno;
+}
+static ttuint twin_GetErrnoDetail(void) {
+  return TwErrnoDetail;
+}
+static TT_CONST ttbyte *twin_StrError(ttuint E) {
+  return TwStrError(E);
+}
+static TT_CONST ttbyte *twin_StrErrorDetail(ttuint E, ttuint S) {
+  return TwStrErrorDetail(E, S);
+}
 
 TW_DECL_MAGIC(TT_Tw_magic);
 

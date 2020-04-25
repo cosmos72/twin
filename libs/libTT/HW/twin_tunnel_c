@@ -196,9 +196,9 @@ static udat TTType2TWS(ttopaque type) {
 	C(ttbyte,   byte);
 	C(ttshort,  dat);
 	C(ttint,    ldat);
-	C(ttcol,    hwcol);
-	C(ttfont,   hwfont);
-	C(ttattr,   hwattr);
+	C(ttcol,    tcolor);
+	C(ttfont,   trune);
+	C(ttattr,   tcell);
 	C(ttopaque, topaque);
 	C(ttany,    tany);
 #undef C

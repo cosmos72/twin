@@ -29,17 +29,22 @@ typedef uldat tobj;
 typedef size_t topaque;
 typedef size_t tany;
 
-/* hw* datatypes */
+/* tcolor, trune, tcell */
 
 #ifdef TW_HAVE_STDINT_H
-typedef uint8_t hwcol;
-typedef uint32_t hwfont;
-typedef uint32_t hwattr;
+typedef uint8_t tcolor;
+typedef uint32_t trune;
+typedef uint32_t tcell;
 #else
-typedef byte hwcol;
-typedef uldat hwfont;
-typedef uldat hwattr;
+typedef byte tcolor;
+typedef uldat trune;
+typedef uldat tcell;
 #endif
+
+/* hw* datatypes, for backward compatibility */
+typedef tcolor hwcol;
+typedef trune hwfont;
+typedef tcell hwattr;
 
 typedef enum { tfalse, ttrue } tbool;
 typedef enum { tzero, tone, ttwo } tternary;
@@ -53,29 +58,29 @@ typedef enum { tzero, tone, ttwo } tternary;
 
 #define TW_DECL_MAGIC(id)                                                                          \
   static byte id[10 + sizeof(uldat)] = {                                                           \
-      10 + sizeof(uldat), sizeof(byte), sizeof(udat),   sizeof(uldat),  sizeof(hwcol),             \
-      sizeof(topaque),    sizeof(tany), sizeof(hwfont), sizeof(hwattr), 0}
+      10 + sizeof(uldat), sizeof(byte), sizeof(udat),  sizeof(uldat), sizeof(tcolor),              \
+      sizeof(topaque),    sizeof(tany), sizeof(trune), sizeof(tcell), 0}
 
-/* hwattr bytes are { 'utf21_low', 'utf21_mid', 'utf21_high', 'color' } */
+/* tcell bytes are { 'utf21_low', 'utf21_mid', 'utf21_high', 'color' } */
 
-/* hwattr <-> hwcol+hwfont conversion */
-#define HWATTR(col, font) ((hwattr)(font) | ((hwattr)(byte)(col) << 24))
-#define HWATTR_COLMASK(attr) ((attr)&0xFF000000)
-#define HWATTR_FONTMASK(attr) ((attr)&0x00FFFFFF)
-#define HWCOL(attr) ((hwcol)((attr) >> 24))
-#define HWFONTEXTRA(attr) ((attr)&0x00FFFFFF)
+/* tcell <-> tcolor+trune conversion */
+#define TCELL(col, font) ((tcell)(font) | ((tcell)(byte)(col) << 24))
+#define TCELL_COLMASK(attr) ((attr)&0xFF000000)
+#define TCELL_FONTMASK(attr) ((attr)&0x00FFFFFF)
+#define TCOLOR(attr) ((tcolor)((attr) >> 24))
+#define TRUNEEXTRA(attr) ((attr)&0x00FFFFFF)
 
-#define HWATTR3(col, font, extra) Tw_hwattr3(col, font, extra)
-#define HWFONT(attr) Tw_hwfont(attr)
+#define TCELL3(col, font, extra) Tw_tcell3(col, font, extra)
+#define TRUNE(attr) Tw_trune(attr)
 #define HWEXTRA(attr) Tw_hwextra(attr)
 
-hwattr Tw_hwattr3(hwcol col, hwfont font, hwattr extra);
+tcell Tw_tcell3(tcolor col, trune font, tcell extra);
 
-hwfont Tw_hwfont(hwattr attr);
+trune Tw_trune(tcell attr);
 
-hwattr Tw_hwextra(hwattr attr);
+tcell Tw_hwextra(tcell attr);
 
-extern hwfont Tw_hwfont_infer_from_extra[0x100];
+extern trune Tw_trune_infer_from_extra[0x100];
 
 /*
  * Notes about the timevalue struct:

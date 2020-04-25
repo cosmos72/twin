@@ -73,7 +73,9 @@ static ttobject twin_tunnel_Build_ttobject(ttobject o) {
   return OverwriteIdFromNative(o);
 }
 
-static void twin_tunnel_Break_ttobject(ttobject o) { TunnelCall(ttmethod_Del, o->native); }
+static void twin_tunnel_Break_ttobject(ttobject o) {
+  TunnelCall(ttmethod_Del, o->native);
+}
 
 /* ttnative hand-made methods */
 
@@ -385,9 +387,15 @@ static ttbyte twin_tunnel_SetMenubar_ttframe(ttframe o, TT_ARG_READ ttmenubar m)
 
 /* ttapplication */
 
-static ttbyte twin_tunnel_Sync(void) { return TwSync(); }
-static ttbyte twin_tunnel_Flush(void) { return TwFlush(); }
-static ttbyte twin_tunnel_TimidFlush(void) { return TwTimidFlush(); }
+static ttbyte twin_tunnel_Sync(void) {
+  return TwSync();
+}
+static ttbyte twin_tunnel_Flush(void) {
+  return TwFlush();
+}
+static ttbyte twin_tunnel_TimidFlush(void) {
+  return TwTimidFlush();
+}
 static ttbyte twin_tunnel_MainLoopOnce(ttbyte wait) {
   tmsg Msg;
 
@@ -405,11 +413,21 @@ static void twin_tunnel_DeleteCallback(ttcallback o) {
   if (o->native != (opaque)TW_NOID)
     TwDeleteListener((tlistener)(opaque)o->native);
 }
-static void twin_tunnel_Close(void) { TwClose(); }
-static int twin_tunnel_ConnectionFd(void) { return TwConnectionFd(); }
-static ttuint twin_tunnel_GetErrno(void) { return TwErrno; }
-static ttuint twin_tunnel_GetErrnoDetail(void) { return TwErrnoDetail; }
-static TT_CONST ttbyte *twin_tunnel_StrError(ttuint E) { return TwStrError(E); }
+static void twin_tunnel_Close(void) {
+  TwClose();
+}
+static int twin_tunnel_ConnectionFd(void) {
+  return TwConnectionFd();
+}
+static ttuint twin_tunnel_GetErrno(void) {
+  return TwErrno;
+}
+static ttuint twin_tunnel_GetErrnoDetail(void) {
+  return TwErrnoDetail;
+}
+static TT_CONST ttbyte *twin_tunnel_StrError(ttuint E) {
+  return TwStrError(E);
+}
 static TT_CONST ttbyte *twin_tunnel_StrErrorDetail(ttuint E, ttuint S) {
   return TwStrErrorDetail(E, S);
 }
@@ -466,9 +484,9 @@ static udat TTType2TWS(ttopaque type) {
     C(ttbyte, byte);
     C(ttshort, dat);
     C(ttint, ldat);
-    C(ttcol, hwcol);
-    C(ttfont, hwfont);
-    C(ttattr, hwattr);
+    C(ttcol, tcolor);
+    C(ttfont, trune);
+    C(ttattr, tcell);
     C(ttopaque, topaque);
     C(ttany, tany);
 #undef C

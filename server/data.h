@@ -12,9 +12,7 @@
 extern CONST char *CONST pkg_libdir;
 extern CONST char *CONST pkg_libdir_modules_;
 
-extern palette Palette[MAXCOL + 1], defaultPalette[MAXCOL + 1];
-
-extern all CONST All;
+extern rgb Palette[MAXCOL + 1], defaultPalette[MAXCOL + 1];
 
 typedef struct keylist keylist;
 struct keylist {
@@ -28,10 +26,10 @@ extern keylist TW_KeyList[];
 
 extern gadget GadgetFlag, GadgetSwitch;
 
-extern hwfont GadgetResize[2], ScrollBarX[3], ScrollBarY[3], TabX, TabY, StdBorder[2][9],
+extern trune GadgetResize[2], ScrollBarX[3], ScrollBarY[3], TabX, TabY, StdBorder[2][9],
     Screen_Back[2];
 
-extern hwcol DEFAULT_ColGadgets, DEFAULT_ColArrows, DEFAULT_ColBars, DEFAULT_ColTabs,
+extern tcolor DEFAULT_ColGadgets, DEFAULT_ColArrows, DEFAULT_ColBars, DEFAULT_ColTabs,
     DEFAULT_ColBorder, DEFAULT_ColDisabled, DEFAULT_ColSelectDisabled;
 
 byte InitData(void);

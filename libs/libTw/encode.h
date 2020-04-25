@@ -154,11 +154,11 @@ static byte *PushArg(byte *buf, tsfield a) {
 	/* FALLTHROUGH */
 #endif
     ENC_CASE(uldat);
-    ENC_CASE(hwcol);
+    ENC_CASE(tcolor);
     ENC_CASE(topaque);
     ENC_CASE(tany);
-    ENC_CASE(hwfont);
-    ENC_CASE(hwattr);
+    ENC_CASE(trune);
+    ENC_CASE(tcell);
 #undef ENC_CASE
   default:
     if (a->type & TWS_vec) {
@@ -188,11 +188,11 @@ static void DecodeReply(byte *buf, tsfield a) {
 	/* FALLTHROUGH */
 #endif
     DEC_CASE(uldat);
-    DEC_CASE(hwcol);
+    DEC_CASE(tcolor);
     DEC_CASE(topaque);
     DEC_CASE(tany);
-    DEC_CASE(hwfont);
-    DEC_CASE(hwattr);
+    DEC_CASE(trune);
+    DEC_CASE(tcell);
   default:
     break;
   }

@@ -70,7 +70,7 @@ static ttshort DEF(GetH_ttnative)(ttnative o) {
 
 /* ttwidget */
 static void DEF(BuiltinRepaint_ttwidget)(ttwidget o, dat x, dat y, dat w, dat h) {
-    CALL(DrawHWAttrWidget, o->native, w, h, x, y, w, NULL);
+    CALL(DrawTCellWidget, o->native, w, h, x, y, w, NULL);
 }
 static void target()_ExposeCallback_ttwidget(tevent_any e, void *id) {
     ttwidget o = ID2(ttwidget,(opaque)id);
@@ -109,9 +109,9 @@ static ttcallback target()_AddCommonCallbacks_ttwidget(ttwidget o) {
 }
 static BUILD(ttwidget) {
     tttheme t = myTheme(o);
-    hwfont f = t->fill;
-    hwcol c = o->col;
-    if (TW_NOID != (o->native = CALL(CreateWidget, o->w, o->h, 0, TW_WIDGETFL_USEFILL, 0, MAXDAT, HWATTR(c, f)))) {
+    trune f = t->fill;
+    tcolor c = o->col;
+    if (TW_NOID != (o->native = CALL(CreateWidget, o->w, o->h, 0, TW_WIDGETFL_USEFILL, 0, MAXDAT, TCELL(c, f)))) {
 	target()_AtBuild_ttvisible((ttvisible)o);
 	return o;
     }
@@ -171,7 +171,7 @@ static void DEF(Draw_ttwidget)(ttwidget o, ttshort x, ttshort y, ttshort w, ttsh
 
 /* ttlabel */
 static BUILD(ttlabel) {
-    if (TW_NOID != (o->native = CALL(CreateWidget, o->text_len, 1, 0, TW_WIDGETFL_USEEXPOSE, 0, MAXDAT, HWATTR(o->col, myTheme(o)->fill)))) {
+    if (TW_NOID != (o->native = CALL(CreateWidget, o->text_len, 1, 0, TW_WIDGETFL_USEEXPOSE, 0, MAXDAT, TCELL(o->col, myTheme(o)->fill)))) {
 	if (target()_AddCommonCallbacks_ttwidget((ttwidget)o)) {
 	    target()_AtBuild_ttvisible((ttvisible)o);
 	    return o;
@@ -186,15 +186,15 @@ static void DEF(Invalidate_ttwidget)(ttwidget o) {
     
     t = myTheme(o);
     
-    CALL(SetFillWidget, o->native, HWATTR(o->col, t->fill));
+    CALL(SetFillWidget, o->native, TCELL(o->col, t->fill));
 }
 
 static void DEF(BuiltinRepaint_ttlabel)(ttlabel o, dat x, dat y, dat w, dat h) {
     if (y == 0) {
 	if (x < o->text_len)
-	    CALL(DrawHWFontWidget, o->native, TT_MIN2(w,o->text_len-x), 1, x, 0, o->text_len, o->text+x);
+	    CALL(DrawTRuneWidget, o->native, TT_MIN2(w,o->text_len-x), 1, x, 0, o->text_len, o->text+x);
 	if (x+w > o->text_len)
-	    CALL(DrawHWFontWidget, o->native, o->text_len-x-w, 1, o->text_len, 0, 0, NULL);
+	    CALL(DrawTRuneWidget, o->native, o->text_len-x-w, 1, o->text_len, 0, 0, NULL);
     }
 }
 
@@ -237,7 +237,7 @@ static void DEF(BuiltinRepaint_ttanybutton)(ttanybutton o, dat x, dat y, dat w, 
 	    w = tw - x;
 
 	if (h > 0 && w > 0 && y < th && x < tw)
-	    CALL(DrawHWAttrWidget, o->native, TT_MIN2(w,tw-x), TT_MIN2(h, th-y),
+	    CALL(DrawTCellWidget, o->native, TT_MIN2(w,tw-x), TT_MIN2(h, th-y),
 				 x, y, tw, t + x + (y * tw));
     } else if (o->text && o->Class == TClass_ttanybutton) {
 	if (h+y > o->text_height)
@@ -246,10 +246,10 @@ static void DEF(BuiltinRepaint_ttanybutton)(ttanybutton o, dat x, dat y, dat w, 
 	    w = o->text_width - x;
 
 	if (h > 0 && w > 0 && y < o->text_height && x < o->text_width)
-	    CALL(DrawHWAttrWidget, o->native, TT_MIN2(w,o->text_width-x), TT_MIN2(h, o->text_height-y),
+	    CALL(DrawTCellWidget, o->native, TT_MIN2(w,o->text_width-x), TT_MIN2(h, o->text_height-y),
 				 x, y, o->text_width, o->text + x + (y * o->text_width));
     } else
-	CALL(DrawHWAttrWidget, o->native, w, h, x, y, w, NULL);
+	CALL(DrawTCellWidget, o->native, w, h, x, y, w, NULL);
 }
 static void target()_MouseCallback_ttanybutton(tevent_any e, tobj id) {
     ttanybutton o = ID2(ttanybutton,id);
@@ -507,7 +507,7 @@ static ttbyte DEF(SetTitle_ttframe)(ttframe o, TT_ARG_READ ttbyte *title) {
 }
 
 static void DEF(BuiltinRepaint_ttframe)(ttframe o, dat x, dat y, dat w, dat h) {
-    CALL(DrawHWAttrWidget, o->native, w, h, x, y, w, NULL);    
+    CALL(DrawTCellWidget, o->native, w, h, x, y, w, NULL);    
 }
 
 

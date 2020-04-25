@@ -125,8 +125,8 @@ TT_INLINE void X11_Mogrify(Window w, ttshort x, ttshort y, ttattr *Text, ttattr 
   V = Text;
   oV = OldText;
 
-  for (_col = ~HWCOL(*V); len; x++, V++, oV++, len--) {
-    col = HWCOL(*V);
+  for (_col = ~TCOLOR(*V); len; x++, V++, oV++, len--) {
+    col = TCOLOR(*V);
     if (buflen && (col != _col || (ValidOldText && *V == *oV) || buflen == TT_SMALLBUFF)) {
       XDRAW(_col, buf, buflen);
       buflen = 0;
@@ -136,7 +136,7 @@ TT_INLINE void X11_Mogrify(Window w, ttshort x, ttshort y, ttattr *Text, ttattr 
         xbegin = x * xwfont;
         _col = col;
       }
-      f = xUTF_16_to_charset(HWFONT(*V));
+      f = xUTF_16_to_charset(TRUNE(*V));
       buf[buflen].byte1 = f >> 8;
       buf[buflen++].byte2 = f & 0xFF;
     }
@@ -160,7 +160,9 @@ static void X11_Break_ttobject(ttobject o) {
 }
 
 /* ttnative */
-static ttnative X11_GetRoot_ttnative(void) { return Create_ttnative(root); }
+static ttnative X11_GetRoot_ttnative(void) {
+  return Create_ttnative(root);
+}
 static void X11_Break_ttnative(ttnative o) {
   o->native = TT_NOID;
   TClass_default(ttnative)->Break(o);
@@ -225,9 +227,15 @@ static ttbyte X11_FireEvent(XEvent *ev) {
   return ttrue;
 }
 
-static ttbyte X11_Sync(void) { return XSync(dpy, False); }
-static ttbyte X11_Flush(void) { return XFlush(dpy); }
-static ttbyte X11_TimidFlush(void) { return XFlush(dpy); }
+static ttbyte X11_Sync(void) {
+  return XSync(dpy, False);
+}
+static ttbyte X11_Flush(void) {
+  return XFlush(dpy);
+}
+static ttbyte X11_TimidFlush(void) {
+  return XFlush(dpy);
+}
 #if 0
 static ttbyte X11_MainLoop(void) {
     XEvent ev;
@@ -256,19 +264,28 @@ static ttbyte X11_MainLoopOnce(ttbyte wait) {
 
   return 1;
 }
-static void X11_DeleteCallback(ttcallback o) {}
+static void X11_DeleteCallback(ttcallback o) {
+}
 static void X11_Close(void) {
   XCloseDisplay(dpy);
   dpy = NULL;
 }
-static int X11_ConnectionFd(void) { return XConnectionNumber(dpy); }
-static ttuint X11_GetErrno(void) { return 0; }
-static ttuint X11_GetErrnoDetail(void) { return 0; }
+static int X11_ConnectionFd(void) {
+  return XConnectionNumber(dpy);
+}
+static ttuint X11_GetErrno(void) {
+  return 0;
+}
+static ttuint X11_GetErrnoDetail(void) {
+  return 0;
+}
 static TT_CONST ttbyte *X11_StrError(ttuint E) {
   switch (E) {}
   return "";
 }
-static TT_CONST ttbyte *X11_StrErrorDetail(ttuint E, ttuint S) { return ""; }
+static TT_CONST ttbyte *X11_StrErrorDetail(ttuint E, ttuint S) {
+  return "";
+}
 
 static Tutf_function X11_UTF_16_to_charset_function(TT_CONST ttbyte *charset) {
   XFontProp *fp;

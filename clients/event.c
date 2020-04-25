@@ -30,7 +30,7 @@ static byte InitEvent(void) {
                            COL(HIGH | BLACK, BLACK), COL(RED, WHITE), COL(RED, GREEN), (byte)0)) &&
          TwItem4MenuCommon(Event_Menu) &&
          (TwInfo4Menu(Event_Menu, TW_ROW_ACTIVE, 14, " Event Tester ",
-                      (TW_CONST hwcol *)"ptppppptpppppp"),
+                      (TW_CONST tcolor *)"ptppppptpppppp"),
           ttrue) &&
          (Event_Win =
               TwCreateWindow(12, "Event Tester", NULL, Event_Menu, COL(WHITE, BLACK), TW_NOCURSOR,

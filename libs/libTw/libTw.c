@@ -223,9 +223,9 @@ typedef struct s_tw_d {
 #define UNLK th_r_mutex_unlock(mutex)
 
 enum {
-  ServFlagHWFont2 = 1,   /* server hwfont is two bytes, i.e. limited to 64k Unicode characters */
-  ServFlagHWAttr47x = 2, /* server hwattr has <= 4.7.x encoding {unicode64k_lo, color,
-                            unicode64k_hi, extra}. implies ServFlagHWFont2 */
+  ServFlagTRune2 = 1,   /* server trune is two bytes, i.e. limited to 64k Unicode characters */
+  ServFlagTCell47x = 2, /* server tcell has <= 4.7.x encoding {unicode64k_lo, color,
+                            unicode64k_hi, extra}. implies ServFlagTRune2 */
 };
 
 static s_tw_errno rCommonErrno;
@@ -641,11 +641,15 @@ static void Panic(tw_d TwD) {
  * returns ttrue if a fatal error occurred, tfalse otherwise;
  * after a fatal error, the only useful thing to do is Tw_Close()
  */
-byte Tw_InPanic(tw_d TwD) { return TwD && PanicFlag; }
+byte Tw_InPanic(tw_d TwD) {
+  return TwD && PanicFlag;
+}
 
 /* cancel the last request packet */
 /* you can (must) call Fail() ONLY after a failed WQLeft() */
-static void Fail(tw_d TwD) { DeQueue(TwD, QWRITE, s - (byte *)r); }
+static void Fail(tw_d TwD) {
+  DeQueue(TwD, QWRITE, s - (byte *)r);
+}
 
 static byte Flush(tw_d TwD, byte Wait) {
   fd_set fset;
@@ -918,15 +922,17 @@ static void ExtractServProtocol(tw_d TwD, byte *servdata, uldat len) {
       break;
   }
   if (ServProtocol[0] < 4 || (ServProtocol[0] == 4 && ServProtocol[1] <= 7)) {
-    /* server protocol is <= 4.7.x : has two-byte hwfont and old hwattr enconding */
-    ServFlags |= ServFlagHWFont2 | ServFlagHWAttr47x;
+    /* server protocol is <= 4.7.x : has two-byte trune and old tcell enconding */
+    ServFlags |= ServFlagTRune2 | ServFlagTCell47x;
   }
 }
 
 /**
  * returns library protocol version
  */
-uldat Tw_LibraryVersion(tw_d TwD) { return TW_PROTOCOL_VERSION; }
+uldat Tw_LibraryVersion(tw_d TwD) {
+  return TW_PROTOCOL_VERSION;
+}
 
 /**
  * returns server protocol version
@@ -1021,7 +1027,7 @@ static byte MagicNumbers(tw_d TwD) {
   if (Fd != TW_NOFD) {
     hostdata = GetQueue(TwD, QREAD, &len);
 
-    if (*hostdata > TWS_hwcol + sizeof(uldat) + 1 &&
+    if (*hostdata > TWS_tcolor + sizeof(uldat) + 1 &&
         /*
          * allow server to send us fewer or more types than we sent,
          * but ensure it agrees on the common ones.
@@ -2050,7 +2056,9 @@ byte Tw_MainLoop(tw_d TwD) {
   return ret;
 }
 
-void Tw_ExitMainLoop(tw_d TwD) { TwD->ExitMainLoop = ttrue; }
+void Tw_ExitMainLoop(tw_d TwD) {
+  TwD->ExitMainLoop = ttrue;
+}
 
 static void FailedCall(tw_d TwD, uldat err, uldat order) {
   s_tw_errno *vec = GetErrnoLocation(TwD);
@@ -2234,33 +2242,33 @@ static uldat FindFunctionId(tw_d TwD, uldat order) {
   return Fd != TW_NOFD ? My : TW_NOID;
 }
 
-/* convert hwattr to protocol <= 4.7.x i.e. {unicode64k_lo, color, unicode64k_hi, extra} */
-static hwattr ConvertHWAttrTo47x(hwattr attr) {
-  hwattr extra = HWEXTRA(attr);
-  hwfont f = HWFONT(attr);
-  hwcol col = HWCOL(attr);
+/* convert tcell to protocol <= 4.7.x i.e. {unicode64k_lo, color, unicode64k_hi, extra} */
+static tcell ConvertTCellTo47x(tcell attr) {
+  tcell extra = HWEXTRA(attr);
+  trune f = TRUNE(attr);
+  tcolor col = TCOLOR(attr);
   if (f > 0xFFFF) /* maximum supported by protocol <= 4.7.x is 64k */
     f = 0xFFFD;   /* use replacement char instead */
-  return (f & 0xFF) | ((hwattr)col << 8) | (((hwattr)f & 0xFF00) << 8) | (extra << 24);
+  return (f & 0xFF) | ((tcell)col << 8) | (((tcell)f & 0xFF00) << 8) | (extra << 24);
 }
 
-TW_INLINE hwattr MaybeConvertHWAttr(tw_d TwD, hwattr attr) {
-  if (ServFlags & ServFlagHWAttr47x)
-    attr = ConvertHWAttrTo47x(attr);
+TW_INLINE tcell MaybeConvertTCell(tw_d TwD, tcell attr) {
+  if (ServFlags & ServFlagTCell47x)
+    attr = ConvertTCellTo47x(attr);
   return attr;
 }
 
-#define PushVMaybeConvertHWAttr(TwD, dst, len, vec)                                                \
-  ((dst) = VecMaybeConvertHWAttr(TwD, dst, len, vec))
+#define PushVMaybeConvertTCell(TwD, dst, len, vec)                                                 \
+  ((dst) = VecMaybeConvertTCell(TwD, dst, len, vec))
 
-static byte *VecMaybeConvertHWAttr(tw_d TwD, byte *dst, uldat len, TW_CONST hwattr *attr) {
-  if (ServFlags & ServFlagHWAttr47x) {
+static byte *VecMaybeConvertTCell(tw_d TwD, byte *dst, uldat len, TW_CONST tcell *attr) {
+  if (ServFlags & ServFlagTCell47x) {
     uldat i;
-    hwattr h;
-    len /= sizeof(hwattr);
+    tcell h;
+    len /= sizeof(tcell);
     for (i = 0; i < len; i++) {
-      h = ConvertHWAttrTo47x(attr[i]);
-      Push(dst, hwattr, h);
+      h = ConvertTCellTo47x(attr[i]);
+      Push(dst, tcell, h);
     }
   } else {
     PushV(dst, len, attr);
@@ -2271,38 +2279,46 @@ static byte *VecMaybeConvertHWAttr(tw_d TwD, byte *dst, uldat len, TW_CONST hwat
 /**
  * sends all buffered data to connection and waits for server to process it
  */
-byte Tw_SyncSocket(tw_d TwD) { return Tw_Sync(TwD); }
+byte Tw_SyncSocket(tw_d TwD) {
+  return Tw_Sync(TwD);
+}
 
 /* handy special cases (also for compatibility) */
 
 /**
  * return the owner of this gadget
  */
-tmsgport Tw_OwnerWidget(tw_d TwD, twidget a1) { return Tw_Stat(TwD, a1, TWS_widget_Owner); }
+tmsgport Tw_OwnerWidget(tw_d TwD, twidget a1) {
+  return Tw_Stat(TwD, a1, TWS_widget_Owner);
+}
 
 /**
  * return prev widget with same owner
  */
-tgadget Tw_O_PrevWidget(tw_d TwD, twidget a1) { return Tw_Stat(TwD, a1, TWS_widget_O_Prev); }
+tgadget Tw_O_PrevWidget(tw_d TwD, twidget a1) {
+  return Tw_Stat(TwD, a1, TWS_widget_O_Prev);
+}
 
 /**
  * return next widget with same owner
  */
-tgadget Tw_O_NextWidget(tw_d TwD, twidget a1) { return Tw_Stat(TwD, a1, TWS_widget_O_Next); }
+tgadget Tw_O_NextWidget(tw_d TwD, twidget a1) {
+  return Tw_Stat(TwD, a1, TWS_widget_O_Next);
+}
 
 /**
  * change the fill patter of given widget
  */
-void Tw_SetFillWidget(tw_d TwD, twidget a1, hwattr a2) {
-  a2 = MaybeConvertHWAttr(TwD, a2);
-  Tw_ChangeField(TwD, a1, TWS_widget_Fill, ~(hwattr)0, a2);
+void Tw_SetFillWidget(tw_d TwD, twidget a1, tcell a2) {
+  a2 = MaybeConvertTCell(TwD, a2);
+  Tw_ChangeField(TwD, a1, TWS_widget_Fill, ~(tcell)0, a2);
 }
 
 /**
  * draws given portion of a widget; usually called after a TW_WIDGET_EXPOSE message
  */
 void Tw_Draw2Widget(tw_d TwD, twidget a1, dat a2, dat a3, dat a4, dat a5, dat pitch,
-                    TW_CONST char *a6, TW_CONST hwfont *a7, TW_CONST hwattr *a8) {
+                    TW_CONST char *a6, TW_CONST trune *a7, TW_CONST tcell *a8) {
   uldat len6, len7, len8, My;
   LOCK;
   if (Fd != TW_NOFD && (My = id_Tw[order_DrawWidget]) != TW_NOID &&
@@ -2311,8 +2327,8 @@ void Tw_Draw2Widget(tw_d TwD, twidget a1, dat a2, dat a3, dat a4, dat a5, dat pi
     if (InitRS(TwD)) {
       My = (0 + sizeof(uldat) + sizeof(dat) + sizeof(dat) + sizeof(dat) + sizeof(dat) +
             (len6 = a6 ? (uldat)a2 * a3 * sizeof(char) : 0, sizeof(uldat) + len6) +
-            (len7 = a7 ? (uldat)a2 * a3 * sizeof(hwfont) : 0, sizeof(uldat) + len7) +
-            (len8 = a8 ? (uldat)a2 * a3 * sizeof(hwattr) : 0, sizeof(uldat) + len8));
+            (len7 = a7 ? (uldat)a2 * a3 * sizeof(trune) : 0, sizeof(uldat) + len7) +
+            (len8 = a8 ? (uldat)a2 * a3 * sizeof(tcell) : 0, sizeof(uldat) + len8));
       if (WQLeft(My)) {
         Push(s, uldat, a1);
         Push(s, dat, a2);
@@ -2327,15 +2343,15 @@ void Tw_Draw2Widget(tw_d TwD, twidget a1, dat a2, dat a3, dat a4, dat a5, dat pi
         }
         Push(s, uldat, len7);
         while (len7) {
-          PushV(s, (uldat)a2 * sizeof(hwfont), a7);
+          PushV(s, (uldat)a2 * sizeof(trune), a7);
           a7 += pitch;
-          len7 -= (uldat)a2 * sizeof(hwfont);
+          len7 -= (uldat)a2 * sizeof(trune);
         }
         Push(s, uldat, len8);
         while (len8) {
-          PushVMaybeConvertHWAttr(TwD, s, (uldat)a2 * sizeof(hwattr), a8);
+          PushVMaybeConvertTCell(TwD, s, (uldat)a2 * sizeof(tcell), a8);
           a8 += pitch;
-          len8 -= (uldat)a2 * sizeof(hwattr);
+          len8 -= (uldat)a2 * sizeof(tcell);
         }
         Send(TwD, (My = NextSerial(TwD)), id_Tw[order_DrawWidget]);
         UNLK;
@@ -2362,16 +2378,16 @@ void Tw_DrawTextWidget(tw_d TwD, twidget W, dat XWidth, dat YWidth, dat Left, da
 /**
  * draws given portion of a widget; usually called after a TW_WIDGET_EXPOSE message
  */
-void Tw_DrawHWFontWidget(tw_d TwD, twidget W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch,
-                         TW_CONST hwfont *Font) {
+void Tw_DrawTRuneWidget(tw_d TwD, twidget W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch,
+                        TW_CONST trune *Font) {
   Tw_Draw2Widget(TwD, W, XWidth, YWidth, Left, Up, Pitch, NULL, Font, NULL);
 }
 
 /**
  * draws given portion of a widget; usually called after a TW_WIDGET_EXPOSE message
  */
-void Tw_DrawHWAttrWidget(tw_d TwD, twidget W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch,
-                         TW_CONST hwattr *Attr) {
+void Tw_DrawTCellWidget(tw_d TwD, twidget W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch,
+                        TW_CONST tcell *Attr) {
   Tw_Draw2Widget(TwD, W, XWidth, YWidth, Left, Up, Pitch, NULL, NULL, Attr);
 }
 
@@ -2406,17 +2422,23 @@ byte Tw_IsToggleGadget(tw_d TwD, tgadget a1) {
 /**
  * return the group of this gadget
  */
-tgroup Tw_GroupGadget(tw_d TwD, tgadget a1) { return Tw_Stat(TwD, a1, TWS_gadget_Group); }
+tgroup Tw_GroupGadget(tw_d TwD, tgadget a1) {
+  return Tw_Stat(TwD, a1, TWS_gadget_Group);
+}
 
 /**
  * return prev gadget in same group
  */
-tgadget Tw_G_PrevGadget(tw_d TwD, tgadget a1) { return Tw_Stat(TwD, a1, TWS_gadget_G_Prev); }
+tgadget Tw_G_PrevGadget(tw_d TwD, tgadget a1) {
+  return Tw_Stat(TwD, a1, TWS_gadget_G_Prev);
+}
 
 /**
  * return next gadget in same group
  */
-tgadget Tw_G_NextGadget(tw_d TwD, tgadget a1) { return Tw_Stat(TwD, a1, TWS_gadget_G_Next); }
+tgadget Tw_G_NextGadget(tw_d TwD, tgadget a1) {
+  return Tw_Stat(TwD, a1, TWS_gadget_G_Next);
+}
 
 /**
  * sets given portion of gadget's contents
@@ -2451,31 +2473,31 @@ void Tw_SetTextsGadget(tw_d TwD, tgadget G, byte bitmap, dat Width, dat Height, 
 /**
  * sets given portion of gadget's contents
  */
-void Tw_WriteHWFontGadget(tw_d TwD, tgadget G, dat Width, dat Height, TW_CONST hwfont *HWFont,
-                          dat Left, dat Up) {
-  Tw_WriteHWFontsGadget(TwD, G, 1, Width, Height, HWFont, Left, Up);
+void Tw_WriteTRuneGadget(tw_d TwD, tgadget G, dat Width, dat Height, TW_CONST trune *TRune,
+                         dat Left, dat Up) {
+  Tw_WriteTRunesGadget(TwD, G, 1, Width, Height, TRune, Left, Up);
 }
 
 /**
  * clears whole gadget contents, then sets given portion of gadget's contents
  */
-void Tw_SetHWFontGadget(tw_d TwD, tgadget G, dat Width, dat Height, TW_CONST hwfont *HWFont,
-                        dat Left, dat Up) {
+void Tw_SetTRuneGadget(tw_d TwD, tgadget G, dat Width, dat Height, TW_CONST trune *TRune, dat Left,
+                       dat Up) {
   /* clear the whole gadget */
-  Tw_WriteHWFontsGadget(TwD, G, 1, TW_MAXDAT, TW_MAXDAT, NULL, 0, 0);
+  Tw_WriteTRunesGadget(TwD, G, 1, TW_MAXDAT, TW_MAXDAT, NULL, 0, 0);
   /* write the specified text */
-  Tw_WriteHWFontsGadget(TwD, G, 1, Width, Height, HWFont, Left, Up);
+  Tw_WriteTRunesGadget(TwD, G, 1, Width, Height, TRune, Left, Up);
 }
 
 /**
  * clears whole gadget contents, then sets given portion of gadget's contents
  */
-void Tw_SetHWFontsGadget(tw_d TwD, tgadget G, byte bitmap, dat Width, dat Height,
-                         TW_CONST hwfont *HWFont, dat Left, dat Up) {
+void Tw_SetTRunesGadget(tw_d TwD, tgadget G, byte bitmap, dat Width, dat Height,
+                        TW_CONST trune *TRune, dat Left, dat Up) {
   /* clear the whole gadget */
-  Tw_WriteHWFontsGadget(TwD, G, bitmap, TW_MAXDAT, TW_MAXDAT, NULL, 0, 0);
+  Tw_WriteTRunesGadget(TwD, G, bitmap, TW_MAXDAT, TW_MAXDAT, NULL, 0, 0);
   /* write the specified text */
-  Tw_WriteHWFontsGadget(TwD, G, bitmap, Width, Height, HWFont, Left, Up);
+  Tw_WriteTRunesGadget(TwD, G, bitmap, Width, Height, TRune, Left, Up);
 }
 
 /**
@@ -2629,7 +2651,9 @@ void Tw_DeleteStat(tw_d TwD, tslist TSL) {
   }
 }
 
-static int CompareTSF(TW_CONST tsfield f1, TW_CONST tsfield f2) { return (int)f1->hash - f2->hash; }
+static int CompareTSF(TW_CONST tsfield f1, TW_CONST tsfield f2) {
+  return (int)f1->hash - f2->hash;
+}
 
 /**
  * searches for a specific field in object information
@@ -2684,11 +2708,11 @@ static tslist StatScalar(tslist f, byte *data, byte *end) {
       Popcase(byte);
       Popcase(dat);
       Popcase(ldat);
-      Popcase(hwcol);
+      Popcase(tcolor);
       Popcase(topaque);
       Popcase(tany);
-      Popcase(hwfont);
-      Popcase(hwattr);
+      Popcase(trune);
+      Popcase(tcell);
       Popcase(tobj);
 #undef Popcase
     default:
@@ -2730,11 +2754,11 @@ static tslist StatTSL(tw_d TwD, udat flags, byte *data, byte *end) {
         Popcase(byte);
         Popcase(dat);
         Popcase(ldat);
-        Popcase(hwcol);
+        Popcase(tcolor);
         Popcase(topaque);
         Popcase(tany);
-        Popcase(hwfont);
-        Popcase(hwattr);
+        Popcase(trune);
+        Popcase(tcell);
         Popcase(tobj);
 #undef Popcase
       default:
@@ -3144,9 +3168,13 @@ byte Tw_DisableGzip(tw_d TwD) {
 
 #else /* !CONF_SOCKET_GZ */
 
-byte Tw_EnableGzip(tw_d TwD) { return tfalse; }
+byte Tw_EnableGzip(tw_d TwD) {
+  return tfalse;
+}
 
-byte Tw_DisableGzip(tw_d TwD) { return tfalse; }
+byte Tw_DisableGzip(tw_d TwD) {
+  return tfalse;
+}
 
 #endif /* CONF_SOCKET_GZ */
 

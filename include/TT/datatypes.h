@@ -18,11 +18,11 @@ typedef ldat ttint;
 typedef uldat ttuint;
 
 /** type >= 1-byte, unsigned, used to hold colors */
-typedef hwcol ttcol;
+typedef tcolor ttcol;
 /** type >= 1-byte, unsigned, used to hold characters (possibly including unicode) */
-typedef hwfont ttfont;
+typedef trune ttfont;
 /** type >= 2-bytes, unsigned, used to hold characters+colors */
-typedef hwattr ttattr;
+typedef tcell ttattr;
 
 /** type == sizeof(void *), unsigned, used to hold pointers and (size_t) integers */
 typedef topaque ttopaque;

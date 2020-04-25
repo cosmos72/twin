@@ -60,7 +60,7 @@ EL(DetachHW)
 
 EL(SetFontTranslation)
 
-EL(SetHWFontTranslation)
+EL(SetTRuneTranslation)
 
 
 EL(DeleteObj)
@@ -94,15 +94,15 @@ EL(CreateGadget)
 EL(CreateButtonGadget)
 
 EL(WriteTextsGadget)
-EL(WriteHWFontsGadget)
+EL(WriteTRunesGadget)
 
 EL(CreateWindow)
 EL(Create4MenuWindow)
 
 EL(WriteAsciiWindow)
 EL(WriteStringWindow)
-EL(WriteHWFontWindow)
-EL(WriteHWAttrWindow)
+EL(WriteTRuneWindow)
+EL(WriteTCellWindow)
 
 EL(GotoXYWindow)
 EL(SetTitleWindow)

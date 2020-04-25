@@ -20,9 +20,9 @@ typedef udat ttushort;
 typedef ldat ttint;
 typedef uldat ttuint;
 
-typedef hwcol ttcol;
-typedef hwfont ttfont;
-typedef hwattr ttattr;
+typedef tcolor ttcol;
+typedef trune ttfont;
+typedef tcell ttattr;
 
 typedef topaque ttopaque;
 typedef topaque opaque;

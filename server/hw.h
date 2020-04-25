@@ -22,7 +22,7 @@
 extern display_hw DisplayHWCTTY;
 #define HWCTTY_DETACHED ((display_hw)1)
 
-extern hwattr *Video, *OldVideo;
+extern tcell *Video, *OldVideo;
 extern byte NeedOldVideo, ValidOldVideo;
 extern byte ExpensiveFlushVideo, NeedHW;
 extern byte CanDragArea, ChangedVideoFlagAgain;

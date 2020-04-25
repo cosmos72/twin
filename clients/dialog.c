@@ -82,7 +82,9 @@ static byte InitButtons(char *bt1, char *bt2) {
                                        width / 2 + strlen(bt2) / 2, height - 2));
 }
 
-static byte InitGadgets(byte radio) { return tfalse; }
+static byte InitGadgets(byte radio) {
+  return tfalse;
+}
 
 static int CountNewLines(char *s) {
   int ret = 0;
@@ -105,17 +107,29 @@ static byte ShowText(void) {
   return ttrue;
 }
 
-static byte ShowFile(void) { return tfalse; }
+static byte ShowFile(void) {
+  return tfalse;
+}
 
-static byte InitYesNoBox(void) { return ShowText() && InitButtons(" Yes ", " No "); }
+static byte InitYesNoBox(void) {
+  return ShowText() && InitButtons(" Yes ", " No ");
+}
 
-static byte InitMsgBox(void) { return ShowText() && InitButtons(" OK ", NULL); }
+static byte InitMsgBox(void) {
+  return ShowText() && InitButtons(" OK ", NULL);
+}
 
-static byte InitInfoBox(void) { return ShowText(); }
+static byte InitInfoBox(void) {
+  return ShowText();
+}
 
-static byte InitInputBox(void) { return tfalse; }
+static byte InitInputBox(void) {
+  return tfalse;
+}
 
-static byte InitTextBox(void) { return ShowFile() && InitButtons(" EXIT ", NULL); }
+static byte InitTextBox(void) {
+  return ShowFile() && InitButtons(" EXIT ", NULL);
+}
 
 static byte InitMenuBox(void) {
   int i, y;
@@ -132,11 +146,17 @@ static byte InitMenuBox(void) {
   return tfalse;
 }
 
-static byte InitCheckBox(void) { return ShowText() && InitGadgets(ttrue); }
+static byte InitCheckBox(void) {
+  return ShowText() && InitGadgets(ttrue);
+}
 
-static byte InitRadioBox(void) { return ShowText() && InitGadgets(tfalse); }
+static byte InitRadioBox(void) {
+  return ShowText() && InitGadgets(tfalse);
+}
 
-static byte InitGaugeBox(void) { return ShowText(); }
+static byte InitGaugeBox(void) {
+  return ShowText();
+}
 
 static byte ParseArgs(int argc, char *argv[]) {
   int eaten;
@@ -254,7 +274,7 @@ static byte InitDialog(void) {
               TwCreateMenu(COL(BLACK, WHITE), COL(BLACK, GREEN), COL(HIGH | BLACK, WHITE),
                            COL(HIGH | BLACK, BLACK), COL(RED, WHITE), COL(RED, GREEN), (byte)0)) &&
          (TwInfo4Menu(Dialog_Menu, TW_ROW_ACTIVE, 10, " Twin Dialog ",
-                      (TW_CONST hwcol *)"ptpppptpppppp"),
+                      (TW_CONST tcolor *)"ptpppptpppppp"),
           ttrue) &&
          (Window = TwWin4Menu(Dialog_Menu)) &&
          TwRow4Menu(Window, COD_QUIT, TW_ROW_INACTIVE, 6, " Quit ") &&

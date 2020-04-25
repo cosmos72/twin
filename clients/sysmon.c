@@ -80,18 +80,18 @@ byte InitSysMon(int argc, char **argv) {
                              TW_WINDOW_DRAG | TW_WINDOW_CLOSE,
                              (border ? 0 : TW_WINDOWFL_BORDERLESS), numeric ? 29 : 24, 5, 0)) &&
 
-         (TwSetColorsWindow(SysMon_Win, 0x1FF, (hwcol)0x3F, (hwcol)0, (hwcol)0, (hwcol)0,
-                            (hwcol)0x9F, (hwcol)0x17, (hwcol)0x3F, (hwcol)0x18, (hwcol)0x08),
+         (TwSetColorsWindow(SysMon_Win, 0x1FF, (tcolor)0x3F, (tcolor)0, (tcolor)0, (tcolor)0,
+                            (tcolor)0x9F, (tcolor)0x17, (tcolor)0x3F, (tcolor)0x18, (tcolor)0x08),
           TwInfo4Menu(SysMon_Menu, TW_ROW_ACTIVE, 16, " System Monitor ",
-                      (TW_CONST hwcol *)"pppppppppppppppp"),
+                      (TW_CONST tcolor *)"pppppppppppppppp"),
           TwWriteAsciiWindow(SysMon_Win, 26, "CPU \nDISK\nMEM \nSWAP\nUPTIME"),
           TwMapWindow(SysMon_Win, TwFirstScreen()), ttrue);
 }
 
 #define WIDTH 40
 
-uldat HBar(hwcol Col, uldat len, uldat scale, uldat frac) {
-  static hwcol half;
+uldat HBar(tcolor Col, uldat len, uldat scale, uldat frac) {
+  static tcolor half;
   char *s = buf;
 
   if (len) {
@@ -114,7 +114,7 @@ uldat HBar(hwcol Col, uldat len, uldat scale, uldat frac) {
   return frac;
 }
 
-void PrintPercent(hwcol Col, uldat percent) {
+void PrintPercent(tcolor Col, uldat percent) {
 
   if (percent > 100)
     percent = 100;
@@ -124,7 +124,7 @@ void PrintPercent(hwcol Col, uldat percent) {
   TwWriteAsciiWindow(SysMon_Win, 5, buf);
 }
 
-void PrintAbsoluteK(hwcol Col, unsigned long nK) {
+void PrintAbsoluteK(tcolor Col, unsigned long nK) {
   unsigned long G = nK >> 20;
   unsigned long M = (nK >> 10) & 0x3FF;
   unsigned long k = nK & 0x3FF;

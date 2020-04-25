@@ -48,7 +48,7 @@
 
 #define TwCloneStr		Tw_CloneStr
 
-#define TwCloneStr2HWFont		Tw_CloneStr2HWFont
+#define TwCloneStr2TRune		Tw_CloneStr2TRune
 
 
 #define TwCopyStr		Tw_CopyStr
@@ -84,8 +84,8 @@
 #define TwDraw2Widget(a1, a2, a3, a4, a5, a6, a7, a8, a9)	Tw_Draw2Widget(Tw_DefaultD, a1, a2, a3, a4, a5, a6, a7, a8, a9)
 
 #define TwDrawTextWidget(a1, a2, a3, a4, a5, a6, a7)	Tw_DrawTextWidget(Tw_DefaultD, a1, a2, a3, a4, a5, a6, a7)
-#define TwDrawHWFontWidget(a1, a2, a3, a4, a5, a6, a7)	Tw_DrawHWFontWidget(Tw_DefaultD, a1, a2, a3, a4, a5, a6, a7)
-#define TwDrawHWAttrWidget(a1, a2, a3, a4, a5, a6, a7)	Tw_DrawHWAttrWidget(Tw_DefaultD, a1, a2, a3, a4, a5, a6, a7)
+#define TwDrawTRuneWidget(a1, a2, a3, a4, a5, a6, a7)	Tw_DrawTRuneWidget(Tw_DefaultD, a1, a2, a3, a4, a5, a6, a7)
+#define TwDrawTCellWidget(a1, a2, a3, a4, a5, a6, a7)	Tw_DrawTCellWidget(Tw_DefaultD, a1, a2, a3, a4, a5, a6, a7)
 
 
 #define TwSetPressedGadget(a1, a2)	Tw_SetPressedGadget(Tw_DefaultD, a1, a2)
@@ -100,9 +100,9 @@
 #define TwG_PrevGadget(a1)	Tw_G_PrevGadget(Tw_DefaultD, a1)
 #define TwG_NextGadget(a1)	Tw_G_NextGadget(Tw_DefaultD, a1)
 
-#define TwWriteHWFontGadget(a1, a2, a3, a4, a5, a6)	Tw_WriteHWFontGadget(Tw_DefaultD, a1, a2, a3, a4, a5, a6)
-#define TwSetHWFontGadget(a1, a2, a3, a4, a5, a6)	Tw_SetHWFontGadget(Tw_DefaultD, a1, a2, a3, a4, a5, a6)
-#define TwSetHWFontsGadget(a1, a2, a3, a4, a5, a6, a7)	Tw_SetHWFontsGadget(Tw_DefaultD, a1, a2, a3, a4, a5, a6, a7)
+#define TwWriteTRuneGadget(a1, a2, a3, a4, a5, a6)	Tw_WriteTRuneGadget(Tw_DefaultD, a1, a2, a3, a4, a5, a6)
+#define TwSetTRuneGadget(a1, a2, a3, a4, a5, a6)	Tw_SetTRuneGadget(Tw_DefaultD, a1, a2, a3, a4, a5, a6)
+#define TwSetTRunesGadget(a1, a2, a3, a4, a5, a6, a7)	Tw_SetTRunesGadget(Tw_DefaultD, a1, a2, a3, a4, a5, a6, a7)
 
 #define TwCreate4MenuRow(a1, a2, a3, a4, a5)	Tw_Create4MenuRow(Tw_DefaultD, a1, a2, a3, a4, a5)
 #define TwCreate4MenuMenuItem(a1, a2, a3, a4, a5)	Tw_Create4MenuMenuItem(Tw_DefaultD, a1, a2, a3, a4, a5)

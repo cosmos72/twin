@@ -37,7 +37,7 @@ byte InitThrd(void) {
               TwCreateMenu(COL(BLACK, WHITE), COL(BLACK, GREEN), COL(HIGH | BLACK, WHITE),
                            COL(HIGH | BLACK, BLACK), COL(RED, WHITE), COL(RED, GREEN), (byte)0)) &&
          (TwInfo4Menu(Thrd_Menu, TW_ROW_ACTIVE, 13, " Thread Test ",
-                      (TW_CONST hwcol *)"ppppppppppppp"),
+                      (TW_CONST tcolor *)"ppppppppppppp"),
           TwItem4MenuCommon(Thrd_Menu));
 }
 
@@ -62,7 +62,7 @@ void mainloop(twindow *Win) {
   tevent_any Event;
   /*struct timeval p = {0, 0};*/
   fd_set readfds;
-  hwattr x;
+  tcell x;
   int y;
 
   FD_ZERO(&readfds);
@@ -71,7 +71,7 @@ void mainloop(twindow *Win) {
   if (!(*Win = TwCreateWindow(11, Win == &Thrd_Win1 ? "threadtest1" : "threadtest2", NULL,
                               Thrd_Menu, COL(HIGH | YELLOW, BLUE), TW_NOCURSOR,
                               TW_WINDOW_DRAG | TW_WINDOW_CLOSE | TW_WINDOW_RESIZE,
-                              TW_WINDOWFL_USECONTENTS, 31 + sizeof(long) / sizeof(hwattr), 16, 0)))
+                              TW_WINDOWFL_USECONTENTS, 31 + sizeof(long) / sizeof(tcell), 16, 0)))
     Quit();
 
   TwMapWindow(*Win, TwFirstScreen());
@@ -79,8 +79,7 @@ void mainloop(twindow *Win) {
   for (;;) {
     for (y = 256; y; y--) {
       x = lrand48();
-      TwWriteHWAttrWindow(*Win, lrand48() >> 26, lrand48() >> 27, sizeof(long) / sizeof(hwattr),
-                          &x);
+      TwWriteTCellWindow(*Win, lrand48() >> 26, lrand48() >> 27, sizeof(long) / sizeof(tcell), &x);
     }
 
     /* bail out if something goes *really* wrong */

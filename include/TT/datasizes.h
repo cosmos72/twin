@@ -9,9 +9,9 @@
 #define TT_SIZEOF_ttushort TW_SIZEOF_UDAT
 #define TT_SIZEOF_ttint TW_SIZEOF_ULDAT
 #define TT_SIZEOF_ttuint TW_SIZEOF_ULDAT
-#define TT_SIZEOF_ttcol TW_SIZEOF_HWCOL
-#define TT_SIZEOF_ttfont TW_SIZEOF_HWFONT
-#define TT_SIZEOF_ttattr TW_SIZEOF_HWATTR
+#define TT_SIZEOF_ttcol TW_SIZEOF_TCOLOR
+#define TT_SIZEOF_ttfont TW_SIZEOF_TRUNE
+#define TT_SIZEOF_ttattr TW_SIZEOF_TCELL
 #define TT_SIZEOF_ttopaque TW_SIZEOF_TOPAQUE
 #define TT_SIZEOF_ttany TW_SIZEOF_TANY
 #define TT_SIZEOF_tttype TW_SIZEOF_TOPAQUE
@@ -22,9 +22,9 @@
 #define TT_MAX_ttushort TW_MAXUDAT
 #define TT_MAX_ttint TW_MAXLDAT
 #define TT_MAX_ttuint TW_MAXULDAT
-#define TT_MAX_ttcol TW_MAXHWCOL
-#define TT_MAX_ttfont TW_MAXHWFONT
-#define TT_MAX_ttattr TW_MAXHWATTR
+#define TT_MAX_ttcol TW_MAXTCOLOR
+#define TT_MAX_ttfont TW_MAXTRUNE
+#define TT_MAX_ttattr TW_MAXTCELL
 #define TT_MAX_ttopaque TW_MAXTOPAQUE
 #define TT_MAX_ttany TW_MAXTANY
 #define TT_MAX_tttype TW_MAXTOPAQUE

@@ -93,9 +93,9 @@ void Tw_SetFontTranslation(tw_d TwD, TW_CONST byte *a1) {
 }
 
 
-void Tw_SetHWFontTranslation(tw_d TwD, TW_CONST hwfont *a1) {
-    _Tw_EncodeCall(ENCODE_FL_VOID, order_SetHWFontTranslation, TwD 
-    , n((0x80) * sizeof(hwfont)), N(a1));
+void Tw_SetTRuneTranslation(tw_d TwD, TW_CONST trune *a1) {
+    _Tw_EncodeCall(ENCODE_FL_VOID, order_SetTRuneTranslation, TwD 
+    , n((0x80) * sizeof(trune)), N(a1));
 }
 
 
@@ -116,7 +116,7 @@ void Tw_ChangeFieldObj(tw_d TwD, tobj a1, udat a2, uldat a3, uldat a4) {
 
 
 
-twidget Tw_CreateWidget(tw_d TwD, dat a1, dat a2, uldat a3, uldat a4, dat a5, dat a6, hwattr a7) {
+twidget Tw_CreateWidget(tw_d TwD, dat a1, dat a2, uldat a3, uldat a4, dat a5, dat a6, tcell a7) {
     return (tobj)_Tw_EncodeCall(0, order_CreateWidget, TwD 
     , n(a1)
     , n(a2)
@@ -165,7 +165,7 @@ void Tw_ScrollWidget(tw_d TwD, twidget a1, ldat a2, ldat a3) {
     , n(a3));
 }
 
-void Tw_DrawWidget(tw_d TwD, twidget a1, dat a2, dat a3, dat a4, dat a5, TW_CONST char *a6, TW_CONST hwfont *a7, TW_CONST hwattr *a8) {
+void Tw_DrawWidget(tw_d TwD, twidget a1, dat a2, dat a3, dat a4, dat a5, TW_CONST char *a6, TW_CONST trune *a7, TW_CONST tcell *a8) {
     _Tw_EncodeCall(ENCODE_FL_VOID, order_DrawWidget, TwD 
     , n(a1)
     , n(a2)
@@ -173,8 +173,8 @@ void Tw_DrawWidget(tw_d TwD, twidget a1, dat a2, dat a3, dat a4, dat a5, TW_CONS
     , n(a4)
     , n(a5)
     , n((a2*a3) * sizeof(char)), N(a6)
-    , n((a2*a3) * sizeof(hwfont)), N(a7)
-    , n((a2*a3) * sizeof(hwattr)), N(a8));
+    , n((a2*a3) * sizeof(trune)), N(a7)
+    , n((a2*a3) * sizeof(tcell)), N(a8));
 }
 
 
@@ -223,7 +223,7 @@ void Tw_CirculateChildrenWidget(tw_d TwD, twidget a1, byte a2) {
 
 
 
-tgadget Tw_CreateGadget(tw_d TwD, twidget a1, dat a2, dat a3, TW_CONST char *a4, uldat a5, uldat a6, udat a7, hwcol a8, hwcol a9, hwcol a10, hwcol a11, dat a12, dat a13) {
+tgadget Tw_CreateGadget(tw_d TwD, twidget a1, dat a2, dat a3, TW_CONST char *a4, uldat a5, uldat a6, udat a7, tcolor a8, tcolor a9, tcolor a10, tcolor a11, dat a12, dat a13) {
     return (tobj)_Tw_EncodeCall(0, order_CreateGadget, TwD 
     , n(a1)
     , n(a2)
@@ -241,7 +241,7 @@ tgadget Tw_CreateGadget(tw_d TwD, twidget a1, dat a2, dat a3, TW_CONST char *a4,
 }
 
 
-tgadget Tw_CreateButtonGadget(tw_d TwD, twidget a1, dat a2, dat a3, TW_CONST char *a4, uldat a5, udat a6, hwcol a7, hwcol a8, hwcol a9, dat a10, dat a11) {
+tgadget Tw_CreateButtonGadget(tw_d TwD, twidget a1, dat a2, dat a3, TW_CONST char *a4, uldat a5, udat a6, tcolor a7, tcolor a8, tcolor a9, dat a10, dat a11) {
     return (tobj)_Tw_EncodeCall(0, order_CreateButtonGadget, TwD 
     , n(a1)
     , n(a2)
@@ -268,23 +268,23 @@ void Tw_WriteTextsGadget(tw_d TwD, tgadget a1, byte a2, dat a3, dat a4, TW_CONST
     , n(a7));
 }
 
-void Tw_WriteHWFontsGadget(tw_d TwD, tgadget a1, byte a2, dat a3, dat a4, TW_CONST hwfont *a5, dat a6, dat a7) {
-    _Tw_EncodeCall(ENCODE_FL_VOID, order_WriteHWFontsGadget, TwD 
+void Tw_WriteTRunesGadget(tw_d TwD, tgadget a1, byte a2, dat a3, dat a4, TW_CONST trune *a5, dat a6, dat a7) {
+    _Tw_EncodeCall(ENCODE_FL_VOID, order_WriteTRunesGadget, TwD 
     , n(a1)
     , n(a2)
     , n(a3)
     , n(a4)
-    , n((a2*a3) * sizeof(hwfont)), N(a5)
+    , n((a2*a3) * sizeof(trune)), N(a5)
     , n(a6)
     , n(a7));
 }
 
 
-twindow Tw_CreateWindow(tw_d TwD, dat a1, TW_CONST char *a2, TW_CONST hwcol *a3, tmenu a4, hwcol a5, uldat a6, uldat a7, uldat a8, dat a9, dat a10, dat a11) {
+twindow Tw_CreateWindow(tw_d TwD, dat a1, TW_CONST char *a2, TW_CONST tcolor *a3, tmenu a4, tcolor a5, uldat a6, uldat a7, uldat a8, dat a9, dat a10, dat a11) {
     return (tobj)_Tw_EncodeCall(0, order_CreateWindow, TwD 
     , n(a1)
     , n((a1) * sizeof(char)), N(a2)
-    , n((a1) * sizeof(hwcol)), N(a3)
+    , n((a1) * sizeof(tcolor)), N(a3)
     , n(a4)
     , n(a5)
     , n(a6)
@@ -301,34 +301,34 @@ twindow Tw_Create4MenuWindow(tw_d TwD, tmenu a1) {
 }
 
 
-void Tw_WriteAsciiWindow(tw_d TwD, twindow a1, ldat a2, TW_CONST char *a3) {
+void Tw_WriteAsciiWindow(tw_d TwD, twindow a1, uldat a2, TW_CONST char *a3) {
     _Tw_EncodeCall(ENCODE_FL_VOID, order_WriteAsciiWindow, TwD 
     , n(a1)
     , n(a2)
     , n((a2) * sizeof(char)), N(a3));
 }
 
-void Tw_WriteStringWindow(tw_d TwD, twindow a1, ldat a2, TW_CONST char *a3) {
+void Tw_WriteStringWindow(tw_d TwD, twindow a1, uldat a2, TW_CONST char *a3) {
     _Tw_EncodeCall(ENCODE_FL_VOID, order_WriteStringWindow, TwD 
     , n(a1)
     , n(a2)
     , n((a2) * sizeof(char)), N(a3));
 }
 
-void Tw_WriteHWFontWindow(tw_d TwD, twindow a1, ldat a2, TW_CONST hwfont *a3) {
-    _Tw_EncodeCall(ENCODE_FL_VOID, order_WriteHWFontWindow, TwD 
+void Tw_WriteTRuneWindow(tw_d TwD, twindow a1, uldat a2, TW_CONST trune *a3) {
+    _Tw_EncodeCall(ENCODE_FL_VOID, order_WriteTRuneWindow, TwD 
     , n(a1)
     , n(a2)
-    , n((a2) * sizeof(hwfont)), N(a3));
+    , n((a2) * sizeof(trune)), N(a3));
 }
 
-void Tw_WriteHWAttrWindow(tw_d TwD, twindow a1, dat a2, dat a3, ldat a4, TW_CONST hwattr *a5) {
-    _Tw_EncodeCall(ENCODE_FL_VOID, order_WriteHWAttrWindow, TwD 
+void Tw_WriteTCellWindow(tw_d TwD, twindow a1, dat a2, dat a3, uldat a4, TW_CONST tcell *a5) {
+    _Tw_EncodeCall(ENCODE_FL_VOID, order_WriteTCellWindow, TwD 
     , n(a1)
     , n(a2)
     , n(a3)
     , n(a4)
-    , n((a4) * sizeof(hwattr)), N(a5));
+    , n((a4) * sizeof(tcell)), N(a5));
 }
 
 
@@ -346,13 +346,13 @@ void Tw_SetTitleWindow(tw_d TwD, twindow a1, dat a2, TW_CONST char *a3) {
     , n((a2) * sizeof(char)), N(a3));
 }
 
-void Tw_SetColTextWindow(tw_d TwD, twindow a1, hwcol a2) {
+void Tw_SetColTextWindow(tw_d TwD, twindow a1, tcolor a2) {
     _Tw_EncodeCall(ENCODE_FL_VOID, order_SetColTextWindow, TwD 
     , n(a1)
     , n(a2));
 }
 
-void Tw_SetColorsWindow(tw_d TwD, twindow a1, udat a2, hwcol a3, hwcol a4, hwcol a5, hwcol a6, hwcol a7, hwcol a8, hwcol a9, hwcol a10, hwcol a11) {
+void Tw_SetColorsWindow(tw_d TwD, twindow a1, udat a2, tcolor a3, tcolor a4, tcolor a5, tcolor a6, tcolor a7, tcolor a8, tcolor a9, tcolor a10, tcolor a11) {
     _Tw_EncodeCall(ENCODE_FL_VOID, order_SetColorsWindow, TwD 
     , n(a1)
     , n(a2)
@@ -456,7 +456,7 @@ uldat Tw_Create4MenuCommonMenuItem(tw_d TwD, tmenu a1) {
 }
 
 
-tmenu Tw_CreateMenu(tw_d TwD, hwcol a1, hwcol a2, hwcol a3, hwcol a4, hwcol a5, hwcol a6, byte a7) {
+tmenu Tw_CreateMenu(tw_d TwD, tcolor a1, tcolor a2, tcolor a3, tcolor a4, tcolor a5, tcolor a6, byte a7) {
     return (tobj)_Tw_EncodeCall(0, order_CreateMenu, TwD 
     , n(a1)
     , n(a2)
@@ -467,13 +467,13 @@ tmenu Tw_CreateMenu(tw_d TwD, hwcol a1, hwcol a2, hwcol a3, hwcol a4, hwcol a5, 
     , n(a7));
 }
 
-void Tw_SetInfoMenu(tw_d TwD, tmenu a1, byte a2, ldat a3, TW_CONST char *a4, TW_CONST hwcol *a5) {
+void Tw_SetInfoMenu(tw_d TwD, tmenu a1, byte a2, ldat a3, TW_CONST char *a4, TW_CONST tcolor *a5) {
     _Tw_EncodeCall(ENCODE_FL_VOID, order_SetInfoMenu, TwD 
     , n(a1)
     , n(a2)
     , n(a3)
     , n((a3) * sizeof(char)), N(a4)
-    , n((a3) * sizeof(hwcol)), N(a5));
+    , n((a3) * sizeof(tcolor)), N(a5));
 }
 
 
@@ -491,12 +491,12 @@ tmsgport Tw_FindMsgPort(tw_d TwD, tmsgport a1, byte a2, TW_CONST char *a3) {
 }
 
 
-void Tw_BgImageScreen(tw_d TwD, tscreen a1, dat a2, dat a3, TW_CONST hwattr *a4) {
+void Tw_BgImageScreen(tw_d TwD, tscreen a1, dat a2, dat a3, TW_CONST tcell *a4) {
     _Tw_EncodeCall(ENCODE_FL_VOID, order_BgImageScreen, TwD 
     , n(a1)
     , n(a2)
     , n(a3)
-    , n((a2*a3) * sizeof(hwattr)), N(a4));
+    , n((a2*a3) * sizeof(tcell)), N(a4));
 }
 
 

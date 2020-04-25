@@ -1,7 +1,7 @@
 /* Function prototypes for functions that each X11-based hw_xyz.c must implement. */
 
 /* Prepare to print text using the foreground/background colors defined by 'col'. */
-static void X11_SetColors(hwcol col);
+static void X11_SetColors(tcolor col);
 
 /*
  * Auto-detect the best font available, returning the name of the selected font in
