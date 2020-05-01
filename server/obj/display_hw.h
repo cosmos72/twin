@@ -19,7 +19,6 @@
 
 struct s_fn_display_hw {
   uldat Magic, Size;
-  display_hw (*Create)(fn_display_hw, uldat namelen, const char *name);
   void (*Insert)(display_hw, all, display_hw Prev, display_hw Next);
   void (*Remove)(display_hw);
   void (*Delete)(display_hw);

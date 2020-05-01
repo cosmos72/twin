@@ -71,8 +71,6 @@ struct s_draw_ctx {
 
 struct s_fn_widget {
   uldat Magic, Size;
-  widget (*Create)(fn_widget, msgport owner, dat xwidth, dat ywidth, uldat attrib, uldat flags,
-                   dat left, dat up, tcell use_fill);
   void (*Insert)(widget self, widget parent, widget Prev, widget Next);
   void (*Remove)(widget self);
   void (*Delete)(widget self);

@@ -211,14 +211,13 @@ static void RemoteEvent(int FdCount, fd_set *FdSet) {
 static struct s_fn_module _FnModule = {
     module_magic,
     (uldat)sizeof(struct s_module),
-    (module(*)(fn_module, uldat, const char *))NoOp, /* CreateModule */
-    (void (*)(module, all, module, module))NoOp,     /* InsertModule */
-    (void (*)(module))NoOp,                          /* RemoveModule */
-    (void (*)(module))NoOp,                          /* DeleteModule */
-    (void (*)(module, udat, uldat, uldat))NoOp,      /* ChangeField  */
-    NULL,                                            /* Fn_Obj */
-    (byte (*)(module))NoOp,                          /* DlOpen	      */
-    (void (*)(module))NoOp,                          /* DlClose      */
+    (void (*)(module, all, module, module))NoOp, /* InsertModule */
+    (void (*)(module))NoOp,                      /* RemoveModule */
+    (void (*)(module))NoOp,                      /* DeleteModule */
+    (void (*)(module, udat, uldat, uldat))NoOp,  /* ChangeField  */
+    NULL,                                        /* Fn_Obj */
+    (byte (*)(module))NoOp,                      /* DlOpen	      */
+    (void (*)(module))NoOp,                      /* DlClose      */
 };
 
 static struct s_module _Module = {
@@ -342,7 +341,6 @@ static struct s_fn_display_hw _FnDisplayHW = {
     /*-------------------*/
     display_hw_magic,
     (uldat)sizeof(struct s_display_hw),
-    (display_hw(*)(fn_display_hw, uldat, const char *))NoOp, /* CreateDisplayHW */
     (void (*)(display_hw, all, display_hw, display_hw))NoOp, /* InsertDisplayHW */
     (void (*)(display_hw))NoOp,                              /* RemoveDisplayHW */
     (void (*)(display_hw))NoOp,                              /* DeleteDisplayHW */

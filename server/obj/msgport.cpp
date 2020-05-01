@@ -25,7 +25,7 @@ msgport s_msgport::Create(fn_msgport Fn, byte NameLen, const char *Name, tany Pa
   char *_Name;
 
   if (Handler && (!Name || (_Name = CloneStrL(Name, NameLen))) &&
-      (p = (msgport)Fn->Fn_Obj->Create((fn_obj)Fn))) {
+      (p = (msgport)s_obj::Create((fn_obj)Fn))) {
 
     p->WakeUp = WakeUp;
     p->NameLen = NameLen;

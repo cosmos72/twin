@@ -18,7 +18,7 @@ menu s_menu::Create(fn_menu Fn, msgport port, tcolor colitem, tcolor colselect, 
                     tcolor colselectdisabled, tcolor colshtcut, tcolor colselshtcut,
                     byte flagdefcolinfo) {
   menu Menu = NULL;
-  if (port && (Menu = (menu)Fn->Fn_Obj->Create((fn_obj)Fn))) {
+  if (port && (Menu = (menu)s_obj::Create((fn_obj)Fn))) {
     Menu->ColItem = colitem;
     Menu->ColSelect = colselect;
     Menu->ColDisabled = coldisabled;

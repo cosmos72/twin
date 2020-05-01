@@ -13,11 +13,10 @@
 #ifndef _TWIN_MUTEX_H
 #define _TWIN_MUTEX_H
 
-#include "obj/fwd.h"
+#include "obj/obj.h"
 
 struct s_fn_mutex {
   uldat Magic, Size;
-  mutex (*Create)(fn_mutex, msgport Owner, byte NameLen, const char *Name, byte Perm);
   void (*Insert)(mutex, all, mutex Prev, mutex Next);
   void (*Remove)(mutex);
   void (*Delete)(mutex);
@@ -46,6 +45,7 @@ struct s_mutex {
   uldat Size() const {
     return Fn->Size;
   }
+  static mutex Create(fn_mutex Fn, msgport owner, byte namelen, const char *name, byte perm);
   void Remove() {
     Fn->Remove(this);
   }

@@ -41,8 +41,8 @@ window s_window::Create(fn_window Fn, msgport Owner, dat TitleLen, const char *T
   if ((!Title || (_Title = CloneStrL(Title, TitleLen))) &&
       (!ColTitle || (_ColTitle = (tcolor *)CloneMem(ColTitle, TitleLen * sizeof(tcolor)))) &&
       Owner &&
-      (w = (window)Fn->Fn_Widget->Create((fn_widget)Fn, Owner, XWidth, YWidth, Attrib, Flags, 0,
-                                         TW_MAXDAT, TCELL(ColText, ' ')))) {
+      (w = (window)s_widget::Create((fn_widget)Fn, Owner, XWidth, YWidth, Attrib, Flags, 0,
+                                    TW_MAXDAT, TCELL(ColText, ' ')))) {
     w->Menu = Menu;
     w->MenuItem = (menuitem)0;
     w->NameLen = TitleLen;

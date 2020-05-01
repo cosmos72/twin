@@ -22,8 +22,8 @@ gadget s_gadget::Create(fn_gadget Fn, msgport Owner, widget Parent, dat XWidth, 
   ldat Size;
 
   if (Owner && Code < COD_RESERVED && XWidth > 0 && YWidth > 0 &&
-      (G = (gadget)Fn->Fn_Widget->Create((fn_widget)Fn, Owner, XWidth, YWidth, Attrib, Flags, Left,
-                                         Up, TCELL(ColText, ' ')))) {
+      (G = (gadget)s_widget::Create((fn_widget)Fn, Owner, XWidth, YWidth, Attrib, Flags, Left, Up,
+                                    TCELL(ColText, ' ')))) {
 
     G->ColText = ColText;
     G->ColSelect = ColTextSelect;

@@ -22,10 +22,6 @@ struct s_gT { /* for GADGETFL_USETEXT gadgets */
 
 struct s_fn_gadget {
   uldat Magic, Size;
-  gadget (*Create)(fn_gadget, msgport Owner, widget Parent, dat XWidth, dat YWidth,
-                   const char *TextNormal, uldat Attrib, uldat Flags, udat Code, tcolor ColText,
-                   tcolor ColTextSelect, tcolor ColTextDisabled, tcolor ColTextSelectDisabled,
-                   dat Left, dat Up);
   void (*Insert)(gadget, widget Parent, widget Prev, widget Next);
   void (*Remove)(gadget);
   void (*Delete)(gadget);

@@ -21,7 +21,7 @@ display_hw s_display_hw::Create(fn_display_hw Fn, uldat namelen, const char *nam
   char *newName = NULL;
 
   if (name && (newName = CloneStrL(name, namelen))) {
-    if ((d = (display_hw)Fn->Fn_Obj->Create((fn_obj)Fn))) {
+    if ((d = (display_hw)s_obj::Create((fn_obj)Fn))) {
 
       d->NameLen = namelen;
       d->Name = newName;

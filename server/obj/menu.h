@@ -17,9 +17,6 @@
 
 struct s_fn_menu {
   uldat Magic, Size;
-  menu (*Create)(fn_menu, msgport MsgPort, tcolor ColItem, tcolor ColSelect, tcolor ColDisabled,
-                 tcolor ColSelectDisabled, tcolor ColShtCut, tcolor ColSelShtCut,
-                 byte FlagDefColInfo);
   void (*Insert)(menu, msgport, menu Prev, menu Next);
   void (*Remove)(menu);
   void (*Delete)(menu);

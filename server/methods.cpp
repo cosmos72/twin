@@ -130,13 +130,9 @@ static void DeleteObj(obj Obj) {
 }
 
 static struct s_fn_obj _FnObj = {
-    obj_magic,
-    sizeof(struct s_obj),
-    s_obj::Create,
-    InsertObj,
-    RemoveObj,
-    DeleteObj,
-    (void (*)(obj, udat, uldat, uldat))NoOp,
+    obj_magic, sizeof(struct s_obj),
+    InsertObj, RemoveObj,
+    DeleteObj, (void (*)(obj, udat, uldat, uldat))NoOp,
 };
 
 /* widget */
@@ -262,7 +258,7 @@ static void MapWidget(widget W, widget Parent) {
 
   if (W && !W->Parent && !W->MapQueueMsg && Parent) {
     if (IS_SCREEN(Parent)) {
-      if (Ext(WM, MsgPort) && (Msg = Do(Create, msg)(Fn_msg, msg_map, 0))) {
+      if (Ext(WM, MsgPort) && (Msg = New(msg)(Fn_msg, msg_map, 0))) {
         Msg->Event.EventMap.W = W;
         Msg->Event.EventMap.Code = 0;
         Msg->Event.EventMap.Screen = (screen)Parent;
@@ -525,7 +521,6 @@ static void RemoveHookWidget(widget W, fn_hook Hook, fn_hook *WhereHook) {
 static struct s_fn_widget _FnWidget = {
     widget_magic,
     sizeof(struct s_widget),
-    s_widget::Create,
     InsertWidget,
     RemoveWidget,
     DeleteWidget,
@@ -615,9 +610,8 @@ static gadget CreateEmptyButton(fn_gadget Fn_Gadget, msgport Owner, dat XWidth, 
 #define _LOWER T_UTF_32_LOWER_HALF_BLOCK
 #define _UPPER T_UTF_32_UPPER_HALF_BLOCK
 
-  if ((G = (gadget)Fn_Gadget->Fn_Widget->Create((fn_widget)Fn_Gadget, Owner, ++XWidth, ++YWidth, 0,
-                                                GADGETFL_USETEXT | GADGETFL_BUTTON, 0, 0,
-                                                (tcell)0))) {
+  if ((G = (gadget)New(widget)((fn_widget)Fn_Gadget, Owner, ++XWidth, ++YWidth, 0,
+                               GADGETFL_USETEXT | GADGETFL_BUTTON, 0, 0, (tcell)0))) {
 
     Size = (ldat)XWidth * YWidth;
 
@@ -706,9 +700,10 @@ static gadget CreateButton(fn_gadget Fn_Gadget, widget Parent, dat XWidth, dat Y
 }
 
 static struct s_fn_gadget _FnGadget = {
-    gadget_magic, sizeof(struct s_gadget), s_gadget::Create,
-    (void (*)(gadget, widget, widget, widget))InsertWidget, (void (*)(gadget))RemoveWidget,
-    DeleteGadget, ChangeFieldGadget,
+    gadget_magic,                                           //
+    sizeof(struct s_gadget),                                //
+    (void (*)(gadget, widget, widget, widget))InsertWidget, //
+    (void (*)(gadget))RemoveWidget, DeleteGadget, ChangeFieldGadget,
     /* widget */
     &_FnObj, DrawSelfGadget,                    /* exported by draw.c */
     (widget (*)(gadget, dat, dat))FindWidgetAt, /* exported by draw.c */
@@ -1019,11 +1014,11 @@ static void GotoXYWindow(window Window, ldat X, ldat Y) {
 
 window Create4MenuWindow(fn_window Fn_Window, menu Menu) {
   window Window = (window)0;
-  if (Menu && (Window = Fn_Window->Create(Fn_Window, Menu->MsgPort, 0, NULL, (tcolor *)0, Menu,
-                                          TCOL(tblack, twhite), NOCURSOR, WINDOW_AUTO_KEYS,
-                                          WINDOWFL_MENU | WINDOWFL_USEROWS | WINDOWFL_ROWS_DEFCOL |
-                                              WINDOWFL_ROWS_SELCURRENT,
-                                          MIN_XWIN, MIN_YWIN, 0))) {
+  if (Menu && (Window = New(window)(Fn_Window, Menu->MsgPort, 0, NULL, (tcolor *)0, Menu,
+                                    TCOL(tblack, twhite), NOCURSOR, WINDOW_AUTO_KEYS,
+                                    WINDOWFL_MENU | WINDOWFL_USEROWS | WINDOWFL_ROWS_DEFCOL |
+                                        WINDOWFL_ROWS_SELCURRENT,
+                                    MIN_XWIN, MIN_YWIN, 0))) {
 
     Act(SetColors, Window)(Window, 0x1FF, TCOL(0, 0), TCOL(0, 0), TCOL(0, 0), TCOL(0, 0),
                            TCOL(thigh | twhite, twhite), TCOL(tblack, twhite), TCOL(tblack, tgreen),
@@ -1128,7 +1123,6 @@ static row FindRowByCode(window Window, udat Code, ldat *NumRow) {
 static struct s_fn_window _FnWindow = {
     window_magic,
     sizeof(struct s_window),
-    s_window::Create,
     (void (*)(window, widget, widget, widget))InsertWidget,
     (void (*)(window))RemoveWidget,
     DeleteWindow,
@@ -1179,7 +1173,7 @@ static struct s_fn_window _FnWindow = {
 /* screen */
 
 static screen CreateSimpleScreen(fn_screen Fn_Screen, dat NameLen, const char *Name, tcell Bg) {
-  return Fn_Screen->Create(Fn_Screen, NameLen, Name, 1, 1, &Bg);
+  return New(screen)(Fn_Screen, NameLen, Name, 1, 1, &Bg);
 }
 
 static void BgImageScreen(screen Screen, dat BgWidth, dat BgHeight, const tcell *Bg) {
@@ -1304,7 +1298,6 @@ static void DeActivateMenuScreen(screen Screen) {
 static struct s_fn_screen _FnScreen = {
     screen_magic,
     sizeof(struct s_screen),
-    s_screen::Create,
     InsertScreen,
     RemoveScreen,
     DeleteScreen,
@@ -1408,17 +1401,11 @@ static void SetSelectedGadget(ggroup Group, gadget G) {
 }
 
 static struct s_fn_group _FnGroup = {
-    ggroup_magic,
-    sizeof(struct s_group),
-    s_group::Create,
-    InsertGroup,
-    RemoveGroup,
-    DeleteGroup,
-    (void (*)(ggroup, udat, uldat, uldat))NoOp,
-    &_FnObj,
-    InsertGadgetGroup,
-    RemoveGadgetGroup,
-    GetSelectedGadget,
+    ggroup_magic,      sizeof(struct s_group),
+    InsertGroup,       RemoveGroup,
+    DeleteGroup,       (void (*)(ggroup, udat, uldat, uldat))NoOp,
+    &_FnObj,           InsertGadgetGroup,
+    RemoveGadgetGroup, GetSelectedGadget,
     SetSelectedGadget,
 };
 
@@ -1548,7 +1535,6 @@ static void LowerMenuItem(menuitem M) {
 static struct s_fn_row _FnRow = {
     row_magic,
     sizeof(struct s_row),
-    s_row::Create,
     InsertRow,
     RemoveRow,
     DeleteRow,
@@ -1570,46 +1556,6 @@ byte FindInfo(menu Menu, dat i) {
 }
 
 /* menuitem */
-
-static menuitem CreateMenuItem(fn_menuitem Fn_MenuItem, obj Parent, window Window, udat Code,
-                               byte Flags, dat Left, ldat Len, dat ShortCut, const char *Name) {
-  menuitem MenuItem = (menuitem)0;
-  trune *_Name = NULL;
-
-  if (Parent && (IS_MENU(Parent) || (IS_WINDOW(Parent) && W_USE((window)Parent, USEROWS))) &&
-      (!Window || IS_WINDOW(Window)) && Name && (_Name = CloneStr2TRune(Name, Len)) &&
-      (MenuItem = (menuitem)Fn_MenuItem->Fn_Row->Create((fn_row)Fn_MenuItem, Code, Flags))) {
-
-    MenuItem->Len = Len;
-    MenuItem->Text = _Name;
-    MenuItem->Window = Window;
-    MenuItem->Left = Left;
-    MenuItem->ShortCut = ShortCut;
-    MenuItem->WCurY = TW_MAXLDAT;
-
-    if (Window)
-      Window->MenuItem = MenuItem;
-
-    if (IS_WINDOW(Parent)) {
-      Window = (window)Parent;
-
-      if ((ldat)Window->XWidth < (Len = Max2((ldat)10, Len + (ldat)2)))
-        Window->XWidth = Len;
-
-      if ((ldat)Window->YWidth < (Len = Min2(TW_MAXDAT, Window->HLogic + (ldat)3)))
-        Window->YWidth = Len;
-
-      Act(Insert, MenuItem)(MenuItem, (obj)Window, (menuitem)Window->USE.R.LastRow, NULL);
-    } else {
-      Act(Insert, MenuItem)(MenuItem, Parent, ((menu)Parent)->LastI, NULL);
-      SyncMenu((menu)Parent);
-    }
-    return MenuItem;
-  }
-  if (_Name)
-    FreeMem(_Name);
-  return MenuItem;
-}
 
 static void InsertMenuItem(menuitem MenuItem, obj Parent, menuitem Prev, menuitem Next) {
   if (!MenuItem->Parent && Parent) {
@@ -1667,7 +1613,7 @@ menuitem Create4MenuMenuItem(fn_menuitem Fn_MenuItem, obj Parent, window Window,
   if (Window)
     Window->Left = Left;
 
-  return (Fn_MenuItem->Create)(Fn_MenuItem, Parent, Window, Code, Flags, Left, Len, ShortCut, Name);
+  return New(menuitem)(Fn_MenuItem, Parent, Window, Code, Flags, Left, Len, ShortCut, Name);
 }
 
 /* this returns non-zero for compatibility */
@@ -1683,7 +1629,6 @@ static uldat Create4MenuCommonMenuItem(fn_menuitem Fn_MenuItem, menu Menu) {
 static struct s_fn_menuitem _FnMenuItem = {
     menuitem_magic,
     sizeof(struct s_menuitem),
-    CreateMenuItem,
     InsertMenuItem,
     RemoveMenuItem,
     DeleteMenuItem,
@@ -1764,7 +1709,7 @@ static void DeleteMenu(menu Menu) {
 
 static row SetInfoMenu(menu Menu, byte Flags, ldat Len, const char *Text, const tcolor *ColText) {
   row Row;
-  if ((Row = Do(Create, row)(Fn_row, 0, Flags))) {
+  if ((Row = New(row)(Fn_row, 0, Flags))) {
     if ((!Text || (Row->Text = CloneStr2TRune(Text, Len))) &&
         (!ColText || (Row->ColText = (tcolor *)CloneMem(ColText, Len * sizeof(tcolor))))) {
       Row->Len = Row->MaxLen = Len;
@@ -1861,7 +1806,6 @@ static void SetSelectedItem(menu Menu, menuitem Item) {
 static struct s_fn_menu _FnMenu = {
     menu_magic,
     sizeof(struct s_menu),
-    s_menu::Create,
     InsertMenu,
     RemoveMenu,
     DeleteMenu,
@@ -1906,7 +1850,6 @@ static void DeleteMsg(msg Msg) {
 static struct s_fn_msg _FnMsg = {
     msg_magic,
     sizeof(struct s_msg),
-    s_msg::Create,
     InsertMsg,
     RemoveMsg,
     DeleteMsg,
@@ -2034,7 +1977,6 @@ static void UnuseExtensionMsgPort(msgport M, extension E) {
 static struct s_fn_msgport _FnMsgPort = {
     msgport_magic,
     sizeof(struct s_msgport),
-    s_msgport::Create,
     InsertMsgPort,
     RemoveMsgPort,
     DeleteMsgPort,
@@ -2046,40 +1988,6 @@ static struct s_fn_msgport _FnMsgPort = {
 };
 
 /* mutex */
-
-mutex CreateMutex(fn_mutex Fn_Mutex, msgport Owner, byte NameLen, const char *Name, byte Perm) {
-  byte Possible = PERM_WRITE;
-  mutex CurrMutex, NewMutex = (mutex)0, AlreadyMutex = (mutex)0;
-
-  if (!Perm || !Owner)
-    return NewMutex;
-
-  CurrMutex = All->FirstMutex;
-  while (CurrMutex && Possible) {
-    if (NameLen == CurrMutex->NameLen && !memcmp(Name, CurrMutex->Name, NameLen)) {
-      if (CurrMutex->Owner == Owner) {
-        AlreadyMutex = CurrMutex;
-        continue;
-      }
-      Possible &= CurrMutex->Perm & PERM_WRITE ? PERM_NONE
-                                               : CurrMutex->Perm & PERM_READ ? PERM_READ : (byte)~0;
-    }
-    CurrMutex = CurrMutex->Next;
-  }
-
-  if (Possible >= Perm) {
-    if (AlreadyMutex) {
-      AlreadyMutex->Perm = Perm;
-      NewMutex = AlreadyMutex;
-    } else if ((NewMutex = (mutex)Fn_Mutex->Fn_Obj->Create((fn_obj)Fn_Mutex))) {
-      NewMutex->Perm = Perm;
-      InsertLast(Mutex, NewMutex, All);
-      NewMutex->Owner = (msgport)0;
-      Act(Own, NewMutex)(NewMutex, Owner);
-    }
-  }
-  return NewMutex;
-}
 
 static void InsertMutex(mutex Mutex, all Parent, mutex Prev, mutex Next) {
   if (!Mutex->All && Parent) {
@@ -2138,7 +2046,6 @@ static void DisOwnMutex(mutex Mutex) {
 static struct s_fn_mutex _FnMutex = {
     mutex_magic,
     sizeof(struct s_mutex),
-    CreateMutex,
     InsertMutex,
     RemoveMutex,
     DeleteMutex,
@@ -2180,7 +2087,6 @@ static void DeleteModule(module Module) {
 static struct s_fn_module _FnModule = {
     module_magic,
     sizeof(struct s_module),
-    s_module::Create,
     InsertModule,
     RemoveModule,
     DeleteModule,
@@ -2218,9 +2124,9 @@ static void DeleteExtension(extension E) {
 
 static struct s_fn_extension _FnExtension = {
     extension_magic, sizeof(struct s_extension),
-    (extension(*)(fn_extension, uldat, const char *))s_module::Create,
-    (void (*)(extension, all, extension, extension))InsertModule, (void (*)(extension))RemoveModule,
-    DeleteExtension, (void (*)(extension, udat, uldat, uldat))NoOp,
+    (void (*)(extension, all, extension, extension))InsertModule, //
+    (void (*)(extension))RemoveModule, DeleteExtension,
+    (void (*)(extension, udat, uldat, uldat))NoOp,
     /* module */
     &_FnObj, (byte(*)(extension))DlOpen, (void (*)(extension))DlClose, &_FnModule,
 #ifdef CONF_EXT
@@ -2289,7 +2195,6 @@ static void DeleteDisplayHW(display_hw DisplayHW) {
 static struct s_fn_display_hw _FnDisplayHW = {
     display_hw_magic,
     sizeof(struct s_display_hw),
-    s_display_hw::Create,
     InsertDisplayHW,
     RemoveDisplayHW,
     DeleteDisplayHW,

@@ -67,9 +67,6 @@ struct s_WC { /* for WINDOWFL_USECONTENTS windows */
 
 struct s_fn_window {
   uldat Magic, Size;
-  window (*Create)(fn_window, msgport Owner, dat NameLen, const char *Name, const tcolor *ColName,
-                   menu Menu, tcolor ColText, uldat CursorType, uldat Attrib, uldat Flags,
-                   dat XWidth, dat YWidth, dat ScrollBackLines);
   void (*Insert)(window, widget Parent, widget Prev, widget Next);
   void (*Remove)(window);
   void (*Delete)(window);

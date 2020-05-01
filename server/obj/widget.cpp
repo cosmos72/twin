@@ -17,7 +17,7 @@ widget s_widget::Create(fn_widget Fn, msgport Owner, dat XWidth, dat YWidth, uld
                         uldat Flags, dat Left, dat Up, tcell Fill) {
   widget W = (widget)0;
 
-  if (Owner && (W = (widget)Fn->Fn_Obj->Create((fn_obj)Fn))) {
+  if (Owner && (W = (widget)s_obj::Create((fn_obj)Fn))) {
     W->FirstW = W->LastW = W->SelectW = NULL;
     W->Left = Left;
     W->Up = Up;

@@ -20,7 +20,6 @@
 
 struct s_fn_msg {
   uldat Magic, Size;
-  msg (*Create)(fn_msg, udat Type, udat EventLen);
   void (*Insert)(msg, msgport, msg Prev, msg Next);
   void (*Remove)(msg);
   void (*Delete)(msg);

@@ -15,7 +15,7 @@
 
 row s_row::Create(fn_row Fn, udat code, byte flags) {
   row Row = NULL;
-  if (code < COD_RESERVED && (Row = (row)Fn->Fn_Obj->Create((fn_obj)Fn))) {
+  if (code < COD_RESERVED && (Row = (row)s_obj::Create((fn_obj)Fn))) {
     Row->Code = code;
     Row->Flags = flags;
     Row->Gap = Row->LenGap = Row->Len = Row->MaxLen = 0;

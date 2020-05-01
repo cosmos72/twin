@@ -799,7 +799,7 @@ byte InitBuiltin(void) {
 
   if ((Builtin_MsgPort = New(msgport)(Fn_msgport, 4, "twin", 0, 0, 0, BuiltinH)) &&
 
-      InitScreens() && /* Do(Create,Screen)() requires Builtin_MsgPort ! */
+      InitScreens() && /* New(Screen)() requires Builtin_MsgPort ! */
 
       (All->BuiltinRow = New(row)(Fn_row, 0, ROW_ACTIVE | ROW_DEFCOL)) &&
 

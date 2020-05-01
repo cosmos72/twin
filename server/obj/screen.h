@@ -22,8 +22,6 @@ struct s_sB { /* for SCREENFL_USEBG screens */
 
 struct s_fn_screen {
   uldat Magic, Size;
-  screen (*Create)(fn_screen, dat NameLen, const char *Name, dat BgWidth, dat BgHeight,
-                   const tcell *Bg);
   void (*Insert)(screen, all, screen Prev, screen Next);
   void (*Remove)(screen);
   void (*Delete)(screen);

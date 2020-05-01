@@ -17,8 +17,6 @@
 
 struct s_fn_menuitem {
   uldat Magic, Size;
-  menuitem (*Create)(fn_menuitem, obj Parent, window Window, udat Code, byte Flags, dat Left,
-                     ldat Len, dat ShortCut, const char *Name);
   void (*Insert)(menuitem, obj, menuitem Prev, menuitem Next);
   void (*Remove)(menuitem);
   void (*Delete)(menuitem);
@@ -60,6 +58,11 @@ struct s_menuitem {
   }
   uldat Size() const {
     return Fn->Size;
+  }
+  static menuitem Create(fn_menuitem Fn, obj Parent, window Window, udat Code, byte Flags, dat Left,
+                         ldat Len, dat ShortCut, const char *Name);
+  void Insert(obj parent, menuitem prev, menuitem next) {
+    Fn->Insert(this, parent, prev, next);
   }
   void Remove() {
     Fn->Remove(this);

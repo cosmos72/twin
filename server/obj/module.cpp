@@ -20,7 +20,7 @@ module s_module::Create(fn_module Fn, uldat namelen, const char *name) {
   char *newName = NULL;
 
   if (name && (newName = CloneStrL(name, namelen))) {
-    if ((Module = (module)Fn->Fn_Obj->Create((fn_obj)Fn))) {
+    if ((Module = (module)s_obj::Create((fn_obj)Fn))) {
 
       Module->NameLen = namelen;
       Module->Name = newName;

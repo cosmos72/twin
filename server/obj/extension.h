@@ -17,7 +17,6 @@
 
 struct s_fn_extension {
   uldat Magic, Size;
-  extension (*Create)(fn_extension, uldat NameLen, const char *Name);
   void (*Insert)(extension, all, extension Prev, extension Next);
   void (*Remove)(extension);
   void (*Delete)(extension);
@@ -49,6 +48,7 @@ struct s_extension {
   uldat Magic() const {
     return Fn->Magic;
   }
+  static extension Create(fn_extension Fn, uldat namelen, const char *name);
   uldat Size() const {
     return Fn->Size;
   }

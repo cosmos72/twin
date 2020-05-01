@@ -23,8 +23,8 @@ screen s_screen::Create(fn_screen Fn, dat NameLen, const char *Name, dat BgWidth
 
   if ((size = (size_t)BgWidth * BgHeight * sizeof(tcell))) {
 
-    if ((S = (screen)Fn->Fn_Widget->Create((fn_widget)Fn, Builtin_MsgPort, TW_MAXDAT, TW_MAXDAT, 0,
-                                           SCREENFL_USEBG, 0, 0, Bg[0]))) {
+    if ((S = (screen)s_widget::Create((fn_widget)Fn, Builtin_MsgPort, TW_MAXDAT, TW_MAXDAT, 0,
+                                      SCREENFL_USEBG, 0, 0, Bg[0]))) {
 
       if (!(S->Name = NULL, Name) || (S->Name = CloneStrL(Name, NameLen))) {
         if ((S->USE.B.Bg = (tcell *)AllocMem(size))) {

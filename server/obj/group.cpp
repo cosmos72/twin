@@ -17,7 +17,7 @@
 ggroup s_group::Create(fn_group Fn, msgport MsgPort) {
   ggroup g = NULL;
 
-  if (MsgPort && (g = (ggroup)Fn->Fn_Obj->Create((fn_obj)Fn))) {
+  if (MsgPort && (g = (ggroup)s_obj::Create((fn_obj)Fn))) {
 
     g->FirstG = g->LastG = g->SelectG = NULL;
     g->MsgPort = NULL;

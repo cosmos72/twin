@@ -20,7 +20,6 @@
 
 struct s_fn_module {
   uldat Magic, Size;
-  module (*Create)(fn_module, uldat NameLen, const char *Name);
   void (*Insert)(module, all, module Prev, module Next);
   void (*Remove)(module);
   void (*Delete)(module);
