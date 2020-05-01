@@ -196,10 +196,10 @@ am_twin_server_OBJECTS = alloc.$(OBJEXT) builtin.$(OBJEXT) \
 	extensions/ext_query.$(OBJEXT) extreg.$(OBJEXT) hw.$(OBJEXT) \
 	hw_multi.$(OBJEXT) main.$(OBJEXT) methods.$(OBJEXT) \
 	missing.$(OBJEXT) obj/all.$(OBJEXT) obj/gadget.$(OBJEXT) \
-	obj/id.$(OBJEXT) obj/obj.$(OBJEXT) obj/widget.$(OBJEXT) \
-	obj/window.$(OBJEXT) printk.$(OBJEXT) privilege.$(OBJEXT) \
-	remote.$(OBJEXT) resize.$(OBJEXT) scroller.$(OBJEXT) \
-	util.$(OBJEXT)
+	obj/id.$(OBJEXT) obj/obj.$(OBJEXT) obj/screen.$(OBJEXT) \
+	obj/widget.$(OBJEXT) obj/window.$(OBJEXT) printk.$(OBJEXT) \
+	privilege.$(OBJEXT) remote.$(OBJEXT) resize.$(OBJEXT) \
+	scroller.$(OBJEXT) util.$(OBJEXT)
 twin_server_OBJECTS = $(am_twin_server_OBJECTS)
 twin_server_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 twin_server_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
@@ -238,8 +238,8 @@ am__depfiles_remade = ./$(DEPDIR)/alloc.Po ./$(DEPDIR)/builtin.Po \
 	./$(DEPDIR)/util.Po ./$(DEPDIR)/wm.Plo \
 	extensions/$(DEPDIR)/ext_query.Po obj/$(DEPDIR)/all.Po \
 	obj/$(DEPDIR)/gadget.Po obj/$(DEPDIR)/id.Po \
-	obj/$(DEPDIR)/obj.Po obj/$(DEPDIR)/widget.Po \
-	obj/$(DEPDIR)/window.Po
+	obj/$(DEPDIR)/obj.Po obj/$(DEPDIR)/screen.Po \
+	obj/$(DEPDIR)/widget.Po obj/$(DEPDIR)/window.Po
 am__mv = mv -f
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
@@ -531,7 +531,7 @@ twdisplay_SOURCES = alloc.cpp display.cpp dl_helper.cpp missing.cpp hw.cpp
 twin_SOURCES = wrapper.c
 twin_server_SOURCES = alloc.cpp builtin.cpp data.cpp dl.cpp dl_helper.cpp draw.cpp extensions/ext_query.cpp extreg.cpp \
                         hw.cpp hw_multi.cpp main.cpp methods.cpp missing.cpp \
-                        obj/all.cpp obj/gadget.cpp obj/id.cpp obj/obj.cpp obj/widget.cpp obj/window.cpp \
+                        obj/all.cpp obj/gadget.cpp obj/id.cpp obj/obj.cpp obj/screen.cpp obj/widget.cpp obj/window.cpp \
                         printk.cpp privilege.cpp remote.cpp resize.cpp scroller.cpp util.cpp
 
 librcparse_la_SOURCES = rcparse_tab.cpp rcparse_lex.cpp
@@ -704,6 +704,8 @@ obj/gadget.$(OBJEXT): obj/$(am__dirstamp) \
 	obj/$(DEPDIR)/$(am__dirstamp)
 obj/id.$(OBJEXT): obj/$(am__dirstamp) obj/$(DEPDIR)/$(am__dirstamp)
 obj/obj.$(OBJEXT): obj/$(am__dirstamp) obj/$(DEPDIR)/$(am__dirstamp)
+obj/screen.$(OBJEXT): obj/$(am__dirstamp) \
+	obj/$(DEPDIR)/$(am__dirstamp)
 obj/widget.$(OBJEXT): obj/$(am__dirstamp) \
 	obj/$(DEPDIR)/$(am__dirstamp)
 obj/window.$(OBJEXT): obj/$(am__dirstamp) \
@@ -792,6 +794,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@obj/$(DEPDIR)/gadget.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@obj/$(DEPDIR)/id.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@obj/$(DEPDIR)/obj.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@obj/$(DEPDIR)/screen.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@obj/$(DEPDIR)/widget.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@obj/$(DEPDIR)/window.Po@am__quote@ # am--include-marker
 
@@ -1110,6 +1113,7 @@ distclean: distclean-recursive
 	-rm -f obj/$(DEPDIR)/gadget.Po
 	-rm -f obj/$(DEPDIR)/id.Po
 	-rm -f obj/$(DEPDIR)/obj.Po
+	-rm -f obj/$(DEPDIR)/screen.Po
 	-rm -f obj/$(DEPDIR)/widget.Po
 	-rm -f obj/$(DEPDIR)/window.Po
 	-rm -f Makefile
@@ -1194,6 +1198,7 @@ maintainer-clean: maintainer-clean-recursive
 	-rm -f obj/$(DEPDIR)/gadget.Po
 	-rm -f obj/$(DEPDIR)/id.Po
 	-rm -f obj/$(DEPDIR)/obj.Po
+	-rm -f obj/$(DEPDIR)/screen.Po
 	-rm -f obj/$(DEPDIR)/widget.Po
 	-rm -f obj/$(DEPDIR)/window.Po
 	-rm -f Makefile

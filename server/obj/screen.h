@@ -98,6 +98,8 @@ struct s_screen {
   uldat Size() const {
     return Fn->Size;
   }
+  static screen Create(fn_screen Fn, dat NameLen, const char *Name, dat BgWidth, dat BgHeight,
+                       const tcell *Bg);
   void Remove() {
     Fn->Remove(this);
   }

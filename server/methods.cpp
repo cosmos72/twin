@@ -1178,39 +1178,6 @@ static struct s_fn_window _FnWindow = {
 
 /* screen */
 
-static screen CreateScreen(fn_screen Fn_Screen, dat NameLen, const char *Name, dat BgWidth,
-                           dat BgHeight, const tcell *Bg) {
-  screen S = (screen)0;
-  size_t size;
-
-  if ((size = (size_t)BgWidth * BgHeight * sizeof(tcell))) {
-
-    if ((S = (screen)Fn_Screen->Fn_Widget->Create((fn_widget)Fn_Screen, Builtin_MsgPort, TW_MAXDAT,
-                                                  TW_MAXDAT, 0, SCREENFL_USEBG, 0, 0, Bg[0]))) {
-
-      if (!(S->Name = NULL, Name) || (S->Name = CloneStrL(Name, NameLen))) {
-        if ((S->USE.B.Bg = (tcell *)AllocMem(size))) {
-
-          S->NameLen = NameLen;
-          S->MenuWindow = S->ClickWindow = NULL;
-          S->HookW = NULL;
-          S->FnHookW = NULL;
-          S->USE.B.BgWidth = BgWidth;
-          S->USE.B.BgHeight = BgHeight;
-          CopyMem(Bg, S->USE.B.Bg, size);
-          S->All = (all)0;
-
-          return S;
-        }
-        if (S->Name)
-          FreeMem(S->Name);
-      }
-      Fn_Screen->Fn_Widget->Delete((widget)S);
-    }
-  }
-  return NULL;
-}
-
 static screen CreateSimpleScreen(fn_screen Fn_Screen, dat NameLen, const char *Name, tcell Bg) {
   return Fn_Screen->Create(Fn_Screen, NameLen, Name, 1, 1, &Bg);
 }
@@ -1337,7 +1304,7 @@ static void DeActivateMenuScreen(screen Screen) {
 static struct s_fn_screen _FnScreen = {
     screen_magic,
     sizeof(struct s_screen),
-    CreateScreen,
+    s_screen::Create,
     InsertScreen,
     RemoveScreen,
     DeleteScreen,
