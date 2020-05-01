@@ -312,7 +312,7 @@ static void MapWidget(widget W, widget Parent) {
 
   if (W && !W->Parent && !W->MapQueueMsg && Parent) {
     if (IS_SCREEN(Parent)) {
-      if (Ext(WM, MsgPort) && (Msg = Do(Create, Msg)(FnMsg, MSG_MAP, 0))) {
+      if (Ext(WM, MsgPort) && (Msg = Do(Create, Msg)(FnMsg, msg_map, 0))) {
         Msg->Event.EventMap.W = W;
         Msg->Event.EventMap.Code = 0;
         Msg->Event.EventMap.Screen = (screen)Parent;
@@ -442,8 +442,8 @@ static void UnMapWidget(widget W) {
           /*
            * in case the user was dragging this window...
            */
-          if ((All->State & STATE_ANY) < STATE_MENU)
-            All->State &= ~STATE_ANY;
+          if ((All->State & state_any) < state_menu)
+            All->State &= ~state_any;
 
           if (Next) {
             (void)Act(KbdFocus, Next)(Next);
@@ -1578,7 +1578,7 @@ static widget FocusScreen(screen tScreen) {
 
 static void ActivateMenuScreen(screen Screen, menuitem Item, byte ByMouse) {
 
-  if ((All->State & STATE_ANY) != STATE_DEFAULT)
+  if ((All->State & state_any) != state_default)
     return;
 
   if (Screen && Screen != All->FirstScreen)
@@ -1588,7 +1588,7 @@ static void ActivateMenuScreen(screen Screen, menuitem Item, byte ByMouse) {
 }
 
 static void DeActivateMenuScreen(screen Screen) {
-  if (Screen == All->FirstScreen && (All->State & STATE_ANY) == STATE_MENU)
+  if (Screen == All->FirstScreen && (All->State & state_any) == state_menu)
     CloseMenu();
 }
 
@@ -2241,47 +2241,47 @@ static msg CreateMsg(fn_msg Fn_Msg, udat Type, udat EventLen) {
   msg Msg;
 
   switch (Type) {
-  case MSG_MAP:
+  case msg_map:
     EventLen += sizeof(event_map);
     break;
-  case MSG_DISPLAY:
+  case msg_display:
     EventLen += sizeof(event_display);
     break;
-  case MSG_KEY:
-  case MSG_WIDGET_KEY:
+  case msg_key:
+  case msg_widget_key:
     EventLen += sizeof(event_keyboard);
     break;
-  case MSG_WIDGET_MOUSE:
-  case MSG_MOUSE:
+  case msg_widget_mouse:
+  case msg_mouse:
     EventLen += sizeof(event_mouse);
     break;
-  case MSG_WIDGET_CHANGE:
+  case msg_widget_change:
     EventLen += sizeof(event_widget);
     break;
-  case MSG_WIDGET_GADGET:
+  case msg_widget_gadget:
     EventLen += sizeof(event_gadget);
     break;
-  case MSG_MENU_ROW:
+  case msg_menu_row:
     EventLen += sizeof(event_menu);
     break;
-  case MSG_SELECTION:
+  case msg_selection:
     EventLen += sizeof(event_selection);
     break;
-  case MSG_SELECTIONNOTIFY:
+  case msg_selection_notify:
     EventLen += sizeof(event_selectionnotify) - sizeof(uldat);
     break;
-  case MSG_SELECTIONREQUEST:
+  case msg_selection_request:
     EventLen += sizeof(event_selectionrequest);
     break;
-  case MSG_CONTROL:
-  case MSG_USER_CONTROL:
+  case msg_control:
+  case msg_user_control:
     EventLen += sizeof(event_control) - sizeof(uldat);
     break;
-  case MSG_USER_CLIENTMSG:
+  case msg_user_clientmsg:
     EventLen += sizeof(event_clientmsg) - sizeof(uldat);
     break;
 
-  case MSG_SELECTIONCLEAR:
+  case msg_selection_clear:
     EventLen += sizeof(event_common);
     break;
   default:

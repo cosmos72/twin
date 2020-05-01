@@ -639,7 +639,7 @@ static byte ResizeDisplay(void) {
   TryDisplayWidth = TryDisplayHeight = 0;
 
   if (change && (Tmsg = TwCreateMsg(TW_MSG_DISPLAY, TW_SIZEOF_TEVENT_DISPLAY))) {
-    Tmsg->Event.EventDisplay.Code = TW_DPY_Resize;
+    Tmsg->Event.EventDisplay.Code = TW_EV_DPY_Resize;
     Tmsg->Event.EventDisplay.Len = 0;
     Tmsg->Event.EventDisplay.X = DisplayWidth;
     Tmsg->Event.EventDisplay.Y = DisplayHeight;
@@ -709,7 +709,7 @@ static void HandleMsg(tmsg Msg) {
   case TW_MSG_DISPLAY:
     EventD = &Msg->Event.EventDisplay;
     switch (EventD->Code) {
-    case TW_DPY_DrawTCell:
+    case TW_EV_DPY_DrawTCell:
       if (EventD->Len /= sizeof(tcell)) {
         if (EventD->X + EventD->Len > DisplayWidth || EventD->Y >= DisplayHeight) {
           /*
@@ -728,18 +728,18 @@ static void HandleMsg(tmsg Msg) {
                 (uldat)EventD->Len * sizeof(tcell));
       }
       break;
-    case TW_DPY_FlushHW:
+    case TW_EV_DPY_FlushHW:
       ValidVideo = ttrue;
       FlushHW();
       break;
-    case TW_DPY_SetCursorType:
+    case TW_EV_DPY_SetCursorType:
       if (EventD->Len == sizeof(uldat))
         SetCursorType(*(uldat *)EventD->Data);
       break;
-    case TW_DPY_MoveToXY:
+    case TW_EV_DPY_MoveToXY:
       MoveToXY(EventD->X, EventD->Y);
       break;
-    case TW_DPY_Resize:
+    case TW_EV_DPY_Resize:
       /*
        * twin told us the new display size.
        * don't detect/check anything, just apply it
@@ -750,36 +750,36 @@ static void HandleMsg(tmsg Msg) {
         ReAllocVideo(EventD->X, EventD->Y);
       }
       break;
-    case TW_DPY_SelectionExport:
+    case TW_EV_DPY_SelectionExport:
       NeedHW |= NEEDSelectionExport;
       break;
-    case TW_DPY_DragArea:
+    case TW_EV_DPY_DragArea:
 #define c ((udat *)EventD->Data)
       if (EventD->Len == 4 * sizeof(udat))
         DragArea(EventD->X, EventD->Y, c[0], c[1], c[2], c[3]);
 #undef c
       break;
-    case TW_DPY_Beep:
+    case TW_EV_DPY_Beep:
       HW->Beep();
       break;
-    case TW_DPY_Configure:
+    case TW_EV_DPY_Configure:
       if (EventD->X == HW_MOUSEMOTIONEVENTS)
         MouseMotionN = EventD->Y > 0;
       HW->Configure(EventD->X, EventD->Y == -1, EventD->Y);
       break;
-    case TW_DPY_SetPalette:
+    case TW_EV_DPY_SetPalette:
 #define c ((udat *)EventD->Data)
       if (EventD->Len == 3 * sizeof(udat))
         HW->SetPalette(EventD->X, c[0], c[1], c[2]);
 #undef c
       break;
-    case TW_DPY_ResetPalette:
+    case TW_EV_DPY_ResetPalette:
       HW->ResetPalette();
       break;
-    case TW_DPY_Helper:
+    case TW_EV_DPY_Helper:
       THelper = *(uldat *)EventD->Data;
       break;
-    case TW_DPY_Quit:
+    case TW_EV_DPY_Quit:
       Quit(0);
       break;
     default:

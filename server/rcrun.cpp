@@ -464,7 +464,7 @@ static byte RCSteps(run *r) {
       case EXECTTY:
         /*
          * luckily, this does not immediately Map() the window...
-         * it goes in a MSG_MAP queued in the WM_MsgPort,
+         * it goes in a msg_map queued in the WM_MsgPort,
          * so we have the time to reach the corresponding WAIT here
          */
         Ext(Term, Open)(n->x.v.argv[0], n->x.v.argv);
@@ -478,19 +478,19 @@ static byte RCSteps(run *r) {
         ret = tfalse;
         switch (n->x.f.flag) {
         case MENU:
-          ret = ActivateCtx(C, STATE_MENU);
+          ret = ActivateCtx(C, state_menu);
           break;
         case SCROLL:
-          ret = ActivateCtx(C, STATE_SCROLL);
+          ret = ActivateCtx(C, state_scroll);
           break;
         case MOVE:
-          ret = ActivateCtx(C, STATE_DRAG);
+          ret = ActivateCtx(C, state_drag);
           break;
         case RESIZE:
-          ret = ActivateCtx(C, STATE_RESIZE);
+          ret = ActivateCtx(C, state_resize);
           break;
         case SCREEN:
-          ret = ActivateCtx(C, STATE_SCREEN);
+          ret = ActivateCtx(C, state_screen);
           break;
         default:
           state = Serr;
@@ -501,7 +501,7 @@ static byte RCSteps(run *r) {
         break;
       case MENU:
         /* this is just like INTERACTIVE MENU ... but does not wait! */
-        ActivateCtx(C, STATE_MENU);
+        ActivateCtx(C, state_menu);
         break;
       case MODULE:
         if (n->x.f.a == -1)
@@ -852,7 +852,7 @@ static void RCReload(void) {
 
     FillButtonWin();
     UpdateOptionWin();
-    HideMenu(!!(All->SetUp->Flags & SETUP_MENU_HIDE));
+    HideMenu(!!(All->SetUp->Flags & setup_menu_hide));
   }
 }
 
@@ -868,7 +868,7 @@ static void RCWake(void) {
       p = &r->next;
   }
 
-  if ((All->State & STATE_ANY) == STATE_DEFAULT && Interactive) {
+  if ((All->State & state_any) == state_default && Interactive) {
     p = &Interactive;
     while ((r = *p)) {
       RCRemove(p); /* p does not change but *p is now the next run */
@@ -917,12 +917,12 @@ byte RC_VMQueue(CONST wm_ctx *C) {
   extern byte ClickWindowPos;
 
   switch (C->Type) {
-  case MSG_KEY:
-  case MSG_MOUSE:
+  case msg_key:
+  case msg_mouse:
 
     n = (node)0;
 
-    if (C->Type == MSG_MOUSE) {
+    if (C->Type == msg_mouse) {
 
       ctx = Pos2Ctx(C->Pos);
 
@@ -952,15 +952,15 @@ byte RC_VMQueue(CONST wm_ctx *C) {
       RCRun();
     }
     break;
-  case MSG_MAP:
+  case msg_map:
     used = ttrue, RCWake4Window((window)C->W);
     break;
-  case MSG_CONTROL:
+  case msg_control:
     if (C->Code == MSG_CONTROL_OPEN) {
       used = ttrue;
-      if (All->State != STATE_DEFAULT)
+      if (All->State != state_default)
         /*
-         * return to STATE_DEFAULT, and rely on RCReload()
+         * return to state_default, and rely on RCReload()
          * to set QueuedDrawArea2FullScreen = ttrue
          */
         ForceRelease(C);
@@ -968,7 +968,7 @@ byte RC_VMQueue(CONST wm_ctx *C) {
       RCReload();
     }
     break;
-  case MSG_MENU_ROW:
+  case msg_menu_row:
     if (C->Code >= COD_RESERVED && C->Code < MenuBindsMax + COD_RESERVED) {
       n = MenuBinds[C->Code - COD_RESERVED];
       if (n && (r = RCNew(n))) {
@@ -1357,7 +1357,7 @@ byte InitRC(void) {
     InitRCOptions();
     UpdateOptionWin();
     FillButtonWin();
-    HideMenu(!!(All->SetUp->Flags & SETUP_MENU_HIDE));
+    HideMenu(!!(All->SetUp->Flags & setup_menu_hide));
     Act(DrawMenu, All->FirstScreen)(All->FirstScreen, 0, TW_MAXDAT);
 
     return ttrue;

@@ -1525,7 +1525,7 @@ static void sockSendMsg(msgport MsgPort, msg Msg) {
   Slot = MsgPort->RemoteData.FdSlot;
 
   switch (Msg->Type) {
-  case MSG_DISPLAY:
+  case msg_display:
     Easy = tfalse;
     sockReply(Msg->Type, Len = sizeof(twindow) + 4 * sizeof(udat) + Msg->Event.EventDisplay.Len,
               NULL);
@@ -1545,7 +1545,7 @@ static void sockSendMsg(msgport MsgPort, msg Msg) {
       PushV(t, Msg->Event.EventDisplay.Len, Msg->Event.EventDisplay.Data);
     }
     break;
-  case MSG_WIDGET_KEY:
+  case msg_widget_key:
     if (Easy && sizeof(event_keyboard) == sizeof(window) + 3 * sizeof(dat) + 2 * sizeof(byte))
       break;
     else
@@ -1565,7 +1565,7 @@ static void sockSendMsg(msgport MsgPort, msg Msg) {
             Msg->Event.EventKeyboard.AsciiSeq);
     }
     break;
-  case MSG_WIDGET_MOUSE:
+  case msg_widget_mouse:
     if (Easy && sizeof(event_mouse) == sizeof(window) + 4 * sizeof(dat))
       break;
     else
@@ -1580,7 +1580,7 @@ static void sockSendMsg(msgport MsgPort, msg Msg) {
       Push(t, dat, Msg->Event.EventMouse.Y);
     }
     break;
-  case MSG_WIDGET_CHANGE:
+  case msg_widget_change:
     if (Easy && sizeof(event_widget) == sizeof(widget) + 6 * sizeof(dat))
       break;
     else
@@ -1597,7 +1597,7 @@ static void sockSendMsg(msgport MsgPort, msg Msg) {
       Push(t, udat, Msg->Event.EventWidget.Y);
     }
     break;
-  case MSG_WIDGET_GADGET:
+  case msg_widget_gadget:
     if (Easy && sizeof(event_gadget) == sizeof(window) + 2 * sizeof(dat))
       break;
     else
@@ -1610,7 +1610,7 @@ static void sockSendMsg(msgport MsgPort, msg Msg) {
       Push(t, udat, Msg->Event.EventGadget.Flags);
     }
     break;
-  case MSG_MENU_ROW:
+  case msg_menu_row:
     if (Easy &&
         sizeof(event_menu) == sizeof(window) + 2 * sizeof(udat) + sizeof(menu) + sizeof(row))
       break;
@@ -1627,7 +1627,7 @@ static void sockSendMsg(msgport MsgPort, msg Msg) {
       Push(t, trow, Obj2Id(Msg->Event.EventMenu.Row));
     }
     break;
-  case MSG_SELECTION:
+  case msg_selection:
     if (Easy && sizeof(event_selection) == sizeof(window) + 4 * sizeof(dat))
       break;
     else
@@ -1642,7 +1642,7 @@ static void sockSendMsg(msgport MsgPort, msg Msg) {
       Push(t, dat, Msg->Event.EventSelection.Y);
     }
     break;
-  case MSG_SELECTIONNOTIFY:
+  case msg_selection_notify:
     if (Easy && sizeof(event_selectionnotify) == sizeof(window) + 2 * sizeof(dat) +
                                                      3 * sizeof(ldat) + MAX_MIMELEN + sizeof(uldat))
       break;
@@ -1664,7 +1664,7 @@ static void sockSendMsg(msgport MsgPort, msg Msg) {
       PushV(t, Msg->Event.EventSelectionNotify.Len, Msg->Event.EventSelectionNotify.Data);
     }
     break;
-  case MSG_SELECTIONREQUEST:
+  case msg_selection_request:
     if (Easy && sizeof(event_selectionrequest) ==
                     sizeof(window) + 2 * sizeof(dat) + sizeof(obj) + sizeof(ldat))
       break;
@@ -1682,7 +1682,7 @@ static void sockSendMsg(msgport MsgPort, msg Msg) {
     }
     break;
 
-  case MSG_USER_CONTROL:
+  case msg_user_control:
     if (Easy && sizeof(event_control) == sizeof(window) + 4 * sizeof(dat) + sizeof(uldat))
       break;
     else
@@ -1700,7 +1700,7 @@ static void sockSendMsg(msgport MsgPort, msg Msg) {
     }
     break;
 
-  case MSG_USER_CLIENTMSG:
+  case msg_user_clientmsg:
     if (Easy && sizeof(event_clientmsg) == sizeof(window) + 2 * sizeof(dat) + 2 * sizeof(uldat))
       break;
     else
@@ -1723,10 +1723,10 @@ static void sockSendMsg(msgport MsgPort, msg Msg) {
 #if TW_SIZEOF_TOPAQUE == TW_SIZEOF_ULDAT
   if (Easy) {
     Msg->Event.EventCommon.W = (void *)Obj2Id(Msg->Event.EventCommon.W);
-    if (Msg->Type == MSG_MENU_ROW) {
+    if (Msg->Type == msg_menu_row) {
       Msg->Event.EventMenu.Menu = (void *)Obj2Id(Msg->Event.EventMenu.Menu);
       Msg->Event.EventMenu.Row = (void *)Obj2Id(Msg->Event.EventMenu.Row);
-    } else if (Msg->Type == MSG_SELECTIONREQUEST)
+    } else if (Msg->Type == msg_selection_request)
       Msg->Event.EventSelectionRequest.Requestor =
           (void *)Obj2Id(Msg->Event.EventSelectionRequest.Requestor);
     sockReply(Msg->Type, Msg->Len, &Msg->Event);
@@ -2680,7 +2680,7 @@ static void SocketH(msgport MsgPort) {
   while ((Msg = MsgPort->FirstMsg)) {
     Remove(Msg);
 
-    if (Msg->Type == MSG_WIDGET_MOUSE && (W = Msg->Event.EventMouse.W) && IS_WINDOW(W) &&
+    if (Msg->Type == msg_widget_mouse && (W = Msg->Event.EventMouse.W) && IS_WINDOW(W) &&
         (W->Flags & WINDOWFL_USECONTENTS) && ((window)W)->USE.C.TtyData &&
         ((window)W)->USE.C.TtyData->Flags & (TTY_REPORTMOUSE | TTY_REPORTMOUSE2)) {
 

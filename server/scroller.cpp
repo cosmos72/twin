@@ -97,20 +97,20 @@ static void ScrollerH(msgport MsgPort) {
   } else
     FlagWinScroll = tfalse;
 
-  FlagDeskScroll = (All->SetUp->Flags & SETUP_SCREEN_SCROLL)
+  FlagDeskScroll = (All->SetUp->Flags & setup_screen_scroll)
                    /* only a single button must be held */
                    && (Mouse->keys == HOLD_CODE(HOLD_N(Mouse->keys)));
 
-  State = All->State & STATE_ANY;
+  State = All->State & state_any;
 
-  if (State != STATE_DEFAULT && State != STATE_SCROLL && State != STATE_DRAG &&
-      State != STATE_RESIZE) {
+  if (State != state_default && State != state_scroll && State != state_drag &&
+      State != state_resize) {
 
     ScrollerDeactivate();
     return;
   }
 
-  if (State != STATE_DEFAULT && FlagWinScroll) {
+  if (State != state_default && FlagWinScroll) {
     if ((WinScrolled = ExecScrollFocusWindow()))
       ScrollerAutoRepeat();
   }

@@ -120,23 +120,25 @@ struct s_tevent_display {
 #define TW_SIZEOF_TEVENT_DISPLAY (sizeof(struct s_tevent_display) - sizeof(uldat))
 
 /* Code */
-#define TW_DPY_DrawTCell ((udat)0)
-#define TW_DPY_FlushHW ((udat)1)
-#define TW_DPY_KeyboardEvent ((udat)2)
-#define TW_DPY_MouseEvent ((udat)3)
-#define TW_DPY_SetCursorType ((udat)4)
-#define TW_DPY_MoveToXY ((udat)5)
-#define TW_DPY_Resize ((udat)6)
+enum e_tevent_display_code {
+  TW_EV_DPY_DrawTCell = 0,
+  TW_EV_DPY_FlushHW = 1,
+  TW_EV_DPY_KeyboardEvent = 2,
+  TW_EV_DPY_MouseEvent = 3,
+  TW_EV_DPY_SetCursorType = 4,
+  TW_EV_DPY_MoveToXY = 5,
+  TW_EV_DPY_Resize = 6,
 
-#define TW_DPY_SelectionExport ((udat)8)
-#define TW_DPY_DragArea ((udat)9)
-#define TW_DPY_Beep ((udat)10)
-#define TW_DPY_Configure ((udat)11)
-#define TW_DPY_SetPalette ((udat)12)
-#define TW_DPY_ResetPalette ((udat)13)
-#define TW_DPY_Helper ((udat)14)
-#define TW_DPY_RedrawVideo ((udat)15)
-#define TW_DPY_Quit ((udat)16)
+  TW_EV_DPY_SelectionExport = 8,
+  TW_EV_DPY_DragArea = 9,
+  TW_EV_DPY_Beep = 10,
+  TW_EV_DPY_Configure = 11,
+  TW_EV_DPY_SetPalette = 12,
+  TW_EV_DPY_ResetPalette = 13,
+  TW_EV_DPY_Helper = 14,
+  TW_EV_DPY_RedrawVideo = 15,
+  TW_EV_DPY_Quit = 16,
+};
 
 typedef struct s_tevent_keyboard *tevent_keyboard;
 /** type for keypress events */

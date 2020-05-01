@@ -647,7 +647,7 @@ obj TwinSelectionGetOwner(void) {
 static void SelectionClear(msgport Owner) {
   msg Msg;
 
-  if ((Msg = Do(Create, Msg)(FnMsg, MSG_SELECTIONCLEAR, 0)))
+  if ((Msg = Do(Create, Msg)(FnMsg, msg_selection_clear, 0)))
     SendMsg(Owner, Msg);
 }
 
@@ -691,7 +691,7 @@ void TwinSelectionNotify(obj Requestor, uldat ReqPrivate, uldat Magic, CONST cha
     if (!Data)
       Len = 0;
 
-    if ((NewMsg = Do(Create, Msg)(FnMsg, MSG_SELECTIONNOTIFY, Len))) {
+    if ((NewMsg = Do(Create, Msg)(FnMsg, msg_selection_notify, Len))) {
       Event = &NewMsg->Event;
       Event->EventSelectionNotify.W = NULL;
       Event->EventSelectionNotify.Code = 0;
@@ -723,7 +723,7 @@ void TwinSelectionRequest(obj Requestor, uldat ReqPrivate, obj Owner) {
     if (Owner->Id >> magic_shift == msgport_magic >> magic_shift) {
       msg NewMsg;
       event_any *Event;
-      if ((NewMsg = Do(Create, Msg)(FnMsg, MSG_SELECTIONREQUEST, 0))) {
+      if ((NewMsg = Do(Create, Msg)(FnMsg, msg_selection_request, 0))) {
 
         Event = &NewMsg->Event;
         Event->EventSelectionRequest.W = NULL;
@@ -879,7 +879,7 @@ void FlushHW(void) {
   if (NeedUpdateCursor)
     FlushCursor();
 
-  if (!(All->SetUp->Flags & SETUP_BLINK))
+  if (!(All->SetUp->Flags & setup_blink))
     DiscardBlinkVideo();
 
   if (NeedOldVideo && ValidOldVideo)
@@ -939,7 +939,7 @@ void SyntheticKey(widget W, udat Code, udat ShiftFlags, byte Len, CONST char *Se
   event_keyboard *Event;
   msg Msg;
 
-  if (W && Len && Seq && (Msg = Do(Create, Msg)(FnMsg, MSG_WIDGET_KEY, Len))) {
+  if (W && Len && Seq && (Msg = Do(Create, Msg)(FnMsg, msg_widget_key, Len))) {
 
     Event = &Msg->Event.EventKeyboard;
     Event->W = W;
@@ -1153,13 +1153,13 @@ byte StdAddMouseEvent(udat Code, dat MouseX, dat MouseY) {
     return ttrue;
 
   if ((Code & MOUSE_ACTION_ANY) == MOVE_MOUSE && (Msg = Ext(WM, MsgPort)->LastMsg) &&
-      Msg->Type == MSG_MOUSE && (Event = &Msg->Event.EventMouse) && Event->Code == Code) {
+      Msg->Type == msg_mouse && (Event = &Msg->Event.EventMouse) && Event->Code == Code) {
     /* merge the two events */
     Event->X = MouseX;
     Event->Y = MouseY;
     return ttrue;
   }
-  if ((Msg = Do(Create, Msg)(FnMsg, MSG_MOUSE, 0))) {
+  if ((Msg = Do(Create, Msg)(FnMsg, msg_mouse, 0))) {
     Event = &Msg->Event.EventMouse;
     Event->Code = Code;
     Event->ShiftFlags = (udat)0;
@@ -1178,7 +1178,7 @@ byte KeyboardEventCommon(udat Code, udat ShiftFlags, udat Len, CONST char *Seq) 
   if (HW->FlagsHW & FlHWNoInput)
     return ttrue;
 
-  if ((Msg = Do(Create, Msg)(FnMsg, MSG_KEY, Len))) {
+  if ((Msg = Do(Create, Msg)(FnMsg, msg_key, Len))) {
     Event = &Msg->Event.EventKeyboard;
 
     Event->Code = Code;

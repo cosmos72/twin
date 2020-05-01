@@ -60,27 +60,27 @@ byte InitRCOptions(void) {
     }
   }
 
-  All->SetUp->Flags = (utf8 ? SETUP_TERMINALS_UTF8 : 0)
+  All->SetUp->Flags = (utf8 ? setup_terminals_utf8 : 0)
 #ifdef CONF_OPT_SHADOWS
-                      | SETUP_SHADOWS
+                      | setup_shadows
 #endif
 #ifdef CONF_OPT_BLINK
-                      | SETUP_BLINK
+                      | setup_blink
 #endif
 #ifdef CONF_OPT_CURSOR_ALWAYS
-                      | SETUP_CURSOR_ALWAYS
+                      | setup_cursor_always
 #endif
 #ifdef CONF_OPT_MENU_HIDE
-                      | SETUP_MENU_HIDE
+                      | setup_menu_hide
 #endif
 #ifdef CONF_OPT_MENU_RELAX
-                      | SETUP_MENU_RELAX
+                      | setup_menu_relax
 #endif
 #ifdef CONF_OPT_MENU_INFO
-                      | SETUP_MENU_INFO
+                      | setup_menu_info
 #endif
 #ifdef CONF_OPT_SCREEN_SCROLL
-                      | SETUP_SCREEN_SCROLL
+                      | setup_screen_scroll
 #endif
       ;
 

@@ -63,7 +63,7 @@ void FlushCursor(void) {
     Window = FindCursorWindow();
 
     if (Window &&
-        ((Window->Flags & WINDOWFL_CURSOR_ON) || (All->SetUp->Flags & SETUP_CURSOR_ALWAYS))) {
+        ((Window->Flags & WINDOWFL_CURSOR_ON) || (All->SetUp->Flags & setup_cursor_always))) {
 
       W = (widget)Window;
 
@@ -86,7 +86,7 @@ void FlushCursor(void) {
                )) {
 
         MoveToXY((dat)D.X1, (dat)D.Y1);
-        if ((type = Window->CursorType) == NOCURSOR && All->SetUp->Flags & SETUP_CURSOR_ALWAYS)
+        if ((type = Window->CursorType) == NOCURSOR && All->SetUp->Flags & setup_cursor_always)
           type = LINECURSOR;
       }
     }
@@ -786,7 +786,7 @@ void DragFirstWindow(dat i, dat j) {
   DWidth = All->DisplayWidth;
   DHeight = All->DisplayHeight;
   SetUp = All->SetUp;
-  Shade = !!(SetUp->Flags & SETUP_SHADOWS);
+  Shade = !!(SetUp->Flags & setup_shadows);
 
   Left = (ldat)Window->Left - Screen->XLogic;
   Rgt = Left + (ldat)Window->XWidth - (ldat)1;
@@ -910,7 +910,7 @@ void DragWindow(window Window, dat i, dat j) {
   DWidth = All->DisplayWidth;
   DHeight = All->DisplayHeight;
   SetUp = All->SetUp;
-  Shade = !!(SetUp->Flags & SETUP_SHADOWS);
+  Shade = !!(SetUp->Flags & setup_shadows);
   DeltaXShade = Shade ? SetUp->DeltaXShade : (byte)0;
   DeltaYShade = Shade ? SetUp->DeltaYShade : (byte)0;
   YLimit = Screen->YLimit;
@@ -984,7 +984,7 @@ void ResizeRelFirstWindow(dat i, dat j) {
   DWidth = All->DisplayWidth;
   DHeight = All->DisplayHeight;
   SetUp = All->SetUp;
-  Shade = !!(SetUp->Flags & SETUP_SHADOWS);
+  Shade = !!(SetUp->Flags & setup_shadows);
   DeltaXShade = Shade ? SetUp->DeltaXShade : (byte)0;
   DeltaYShade = Shade ? SetUp->DeltaYShade : (byte)0;
   HasBorder = !(Window->Flags & WINDOWFL_BORDERLESS);
@@ -1093,7 +1093,7 @@ void ResizeRelFirstWindow(dat i, dat j) {
     /* resize contents? for Interactive Resize, let the WM resize it
      * when Interactive Resize finishes. otherwise, do it now */
     if (W_USE(Window, USECONTENTS) && Window->USE.C.Contents &&
-        (Window != Screen->ClickWindow || (All->State & STATE_ANY) != STATE_RESIZE))
+        (Window != Screen->ClickWindow || (All->State & state_any) != state_resize))
 
       CheckResizeWindowContents(Window);
   }
@@ -1127,7 +1127,7 @@ void ResizeRelWindow(window Window, dat i, dat j) {
 
   if (visible && (Parent = Window->Parent) && IS_SCREEN(Parent)) {
     SetUp = All->SetUp;
-    Shade = !!(SetUp->Flags & SETUP_SHADOWS);
+    Shade = !!(SetUp->Flags & setup_shadows);
     DeltaXShade = Shade ? SetUp->DeltaXShade : (byte)0;
     DeltaYShade = Shade ? SetUp->DeltaYShade : (byte)0;
     YLimit = Parent->Up;
@@ -1173,7 +1173,7 @@ void ResizeRelWindow(window Window, dat i, dat j) {
     /* resize contents? for Interactive Resize, let the WM resize it
      * when Interactive Resize finishes. otherwise, do it now */
     if (W_USE(Window, USECONTENTS) && Window->USE.C.Contents &&
-        (Window != All->FirstScreen->ClickWindow || (All->State & STATE_ANY) != STATE_RESIZE))
+        (Window != All->FirstScreen->ClickWindow || (All->State & state_any) != state_resize))
 
       CheckResizeWindowContents(Window);
   }
@@ -1419,7 +1419,7 @@ byte ExecScrollFocusWindow(void) {
   dat XWidth, YWidth;
   dat DeltaX, DeltaY;
 
-  if ((All->State & STATE_ANY) != STATE_SCROLL)
+  if ((All->State & state_any) != state_scroll)
     return tfalse;
 
   if (!(Screen = All->FirstScreen) || !(Window = (window)Screen->FocusW) || !IS_WINDOW(Window))
@@ -1574,11 +1574,11 @@ static void OpenMenu(menuitem Item, byte ByMouse) {
   widget W = S->FocusW;
   menu M = Act(FindMenu, S)(S);
 
-  if ((All->State & STATE_ANY) == STATE_DEFAULT) {
+  if ((All->State & state_any) == state_default) {
 
-    All->State = STATE_MENU | (ByMouse ? STATE_FL_BYMOUSE : 0);
+    All->State = state_menu | (ByMouse ? state_fl_bymouse : 0);
 
-    if (All->SetUp->Flags & SETUP_MENU_HIDE)
+    if (All->SetUp->Flags & setup_menu_hide)
       HideMenu(tfalse);
 
     if (!S->MenuWindow && W) {
@@ -1675,8 +1675,8 @@ void CloseMenu(void) {
       Act(UnMap, W)(W);
     }
   }
-  All->State = STATE_DEFAULT;
-  if (All->SetUp->Flags & SETUP_MENU_HIDE)
+  All->State = state_default;
+  if (All->SetUp->Flags & setup_menu_hide)
     HideMenu(ttrue);
   else
     Act(DrawMenu, S)(S, 0, TW_MAXDAT);
@@ -1693,7 +1693,7 @@ void SetMenuState(menuitem Item, byte ByMouse) {
   dat Odepth = 0;
 
   if (M && (Item || ByMouse)) {
-    if ((All->State & STATE_ANY) != STATE_DEFAULT)
+    if ((All->State & state_any) != state_default)
       OldItem = Act(RecursiveGetSelectedItem, M)(M, &Odepth);
     if (!OldItem)
       OpenMenu(Item, ByMouse);
@@ -1869,7 +1869,7 @@ void SendMsgGadget(gadget G) {
   msg Msg;
   event_gadget *Event;
   if (G->Code && !(G->Flags & GADGETFL_DISABLED)) {
-    if ((Msg = Do(Create, Msg)(FnMsg, MSG_WIDGET_GADGET, 0))) {
+    if ((Msg = Do(Create, Msg)(FnMsg, msg_widget_gadget, 0))) {
       Event = &Msg->Event.EventGadget;
       Event->W = G->Parent;
       Event->Code = G->Code;

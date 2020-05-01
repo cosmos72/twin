@@ -418,7 +418,7 @@ void DrawSelfWidget(draw_ctx *D) {
 	 * this would suppress EXPOSE messages during resize (good)
 	 * but also clears the whole widget during non-top resize (bad)
 	 */
-	if ((All->State & STATE_ANY) == STATE_RESIZE && (widget)All->FirstScreen->ClickWindow == W) {
+	if ((All->State & state_any) == state_resize && (widget)All->FirstScreen->ClickWindow == W) {
 	    /* user is interactively resizing this window... pad with spaces */
 	    FillVideo(X1, Y1, X2, Y2, W->USE_Fill);
 	    return;
@@ -511,7 +511,7 @@ void DrawSelfWidget(draw_ctx *D) {
       msg Msg;
       event_widget *EventW;
 
-      if ((Msg = Do(Create, Msg)(FnMsg, MSG_WIDGET_CHANGE, 0))) {
+      if ((Msg = Do(Create, Msg)(FnMsg, msg_widget_change, 0))) {
         EventW = &Msg->Event.EventWidget;
         EventW->W = W;
         EventW->Code = MSG_WIDGET_EXPOSE;
@@ -1267,7 +1267,7 @@ static void DrawAreaCtx(draw_ctx *D) {
       }
     }
 
-    Shade = (SetUp->Flags & SETUP_SHADOWS) && !Shaded;
+    Shade = (SetUp->Flags & setup_shadows) && !Shaded;
     DeltaXShade = Shade ? SetUp->DeltaXShade : (byte)0;
     DeltaYShade = Shade ? SetUp->DeltaYShade : (byte)0;
 
@@ -1575,7 +1575,7 @@ void DrawAreaShadeWindow(screen Screen, window Window, dat X1, dat Y1, dat X2, d
 
   SetUp = All->SetUp;
   if (QueuedDrawArea2FullScreen || !Window || (Window->Flags & WINDOWFL_NOTVISIBLE) || !Screen ||
-      X1 > X2 || Y1 > Y2 || !(SetUp->Flags & SETUP_SHADOWS))
+      X1 > X2 || Y1 > Y2 || !(SetUp->Flags & setup_shadows))
     return;
 
   DeltaXShade = SetUp->DeltaXShade;
@@ -1661,7 +1661,7 @@ void DrawAreaWindow2(window W) {
       D.W = D.TopW = NULL;
       DrawAreaCtx(&D);
     }
-    if (All->SetUp->Flags & SETUP_SHADOWS) {
+    if (All->SetUp->Flags & setup_shadows) {
       if (!Dvalid)
         InitDrawCtx((widget)W, 0, 0, TW_MAXDAT, TW_MAXDAT, tfalse, &D);
       DrawAreaShadeWindow((screen)W->Parent, W, 0, 0, TW_MAXDAT, TW_MAXDAT, D.Left, D.Up, D.Rgt,
@@ -1731,7 +1731,7 @@ void ReDrawRolledUpAreaWindow(window Window, byte Shaded) {
 
   Screen = (screen)Window->Parent;
 
-  Shade = All->SetUp->Flags & SETUP_SHADOWS;
+  Shade = All->SetUp->Flags & setup_shadows;
   DeltaXShade = Shade ? All->SetUp->DeltaXShade : (byte)0;
   DeltaYShade = Shade ? All->SetUp->DeltaYShade : (byte)0;
 
@@ -1785,10 +1785,10 @@ void DrawMenuScreen(screen Screen, dat Xstart, dat Xend) {
   if (fScreen != Screen)
     return;
 
-  State = All->State & STATE_ANY;
+  State = All->State & state_any;
   Menu = Act(FindMenu, Screen)(Screen);
 
-  MenuInfo = State != STATE_MENU && (All->SetUp->Flags & SETUP_MENU_INFO);
+  MenuInfo = State != state_menu && (All->SetUp->Flags & setup_menu_info);
 
   Xstart = Max2(Xstart, 0);
   Xend = Min2(Xend, DWidth - 1);
@@ -1798,24 +1798,24 @@ void DrawMenuScreen(screen Screen, dat Xstart, dat Xend) {
 
   for (i = Xstart; i <= Xend; i++) {
     if (i + 2 >= DWidth) {
-      Color = State == STATE_SCREEN ? Menu->ColSelShtCut : Menu->ColShtCut;
+      Color = State == state_screen ? Menu->ColSelShtCut : Menu->ColShtCut;
       if ((Screen->Flags & (SCREENFL_BACK_SELECT | SCREENFL_BACK_PRESSED)) ==
           (SCREENFL_BACK_SELECT | SCREENFL_BACK_PRESSED)) {
         Color = TCOL(TCOLBG(Color), TCOLFG(Color));
       }
       Font = Screen_Back[2 - (DWidth - i)];
     } else if (DWidth - i <= (dat)3 + lenTWDisplay) {
-      Color = State == STATE_SCREEN ? Menu->ColSelShtCut : Menu->ColShtCut;
+      Color = State == state_screen ? Menu->ColSelShtCut : Menu->ColShtCut;
       Font = TWDisplay[3 + lenTWDisplay - (DWidth - i)];
       if (!Font)
         Font = ' ';
     } else if (DWidth - i > 9 && (uldat)(DWidth - i) <= 9 + All->BuiltinRow->Len) {
-      Color = State == STATE_SCREEN ? Menu->ColSelect : Menu->ColItem;
+      Color = State == state_screen ? Menu->ColSelect : Menu->ColItem;
       Font = All->BuiltinRow->Text[9 + All->BuiltinRow->Len - (DWidth - i)];
       if (!Font)
         Font = ' ';
     } else if (MenuInfo && FindInfo(Menu, i)) {
-      Select = State == STATE_SCREEN;
+      Select = State == state_screen;
       FindFontInfo(Menu, i, Select, &Attr);
       Font = TRUNE(Attr);
       Color = TCOLOR(Attr);
@@ -1830,8 +1830,8 @@ void DrawMenuScreen(screen Screen, dat Xstart, dat Xend) {
           else
             x = 0;
 
-          Select = State == STATE_SCREEN ||
-                   (State == STATE_MENU && ((menu)Item->Parent)->SelectI == Item);
+          Select = State == state_screen ||
+                   (State == state_menu && ((menu)Item->Parent)->SelectI == Item);
           /*
            * CHEAT: Item may be in CommonMenu, not in Menu...
            * steal Item color from Menu.
@@ -1842,7 +1842,7 @@ void DrawMenuScreen(screen Screen, dat Xstart, dat Xend) {
         }
       }
       if (MenuInfo || !Item) {
-        Color = State == STATE_SCREEN ? Menu->ColSelect : Menu->ColItem;
+        Color = State == state_screen ? Menu->ColSelect : Menu->ColItem;
         Font = ' ';
       }
     }

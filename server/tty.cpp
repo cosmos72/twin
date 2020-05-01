@@ -697,7 +697,7 @@ static void respond_string(CONST char *p) {
     /* or we may need to send a Msg to Win->Owner */
     msg Msg;
     event_keyboard *Event;
-    if ((Msg = Do(Create, Msg)(FnMsg, MSG_WIDGET_KEY, Len))) {
+    if ((Msg = Do(Create, Msg)(FnMsg, msg_widget_key, Len))) {
       /* this is the same code as in KeyboardEvent() in hw.c */
       Event = &Msg->Event.EventKeyboard;
       Event->W = (widget)Win;

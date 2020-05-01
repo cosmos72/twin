@@ -55,7 +55,7 @@ static struct s_all _All = {
     /*HookDisplayHW*/ NULL,
     /*DisplayWidth*/ 1,
     /*DisplayHeight*/ 1,
-    /*State*/ STATE_DEFAULT,
+    /*State*/ state_default,
     /*Now*/ {(tany)0, (tany)0},
     /*Selection*/ &_Selection,
     /*SetUp*/ &_SetUp,

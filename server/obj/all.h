@@ -25,18 +25,23 @@ struct s_setup {
   byte ButtonSelection, ButtonPaste;
   byte DeltaXShade, DeltaYShade;
 };
-/* All->Setup->Flags */
-#define SETUP_SHADOWS 0x01
-#define SETUP_BLINK 0x02
-#define SETUP_CURSOR_ALWAYS 0x04
-#define SETUP_MENU_HIDE 0x08
-#define SETUP_MENU_INFO 0x10
-#define SETUP_MENU_RELAX 0x20
-#define SETUP_SCREEN_SCROLL 0x40
-#define SETUP_TERMINALS_UTF8 0x80
 
-#define MAX_XSHADE 9
-#define MAX_YSHADE 9
+/* All->Setup->Flags */
+enum e_setup_flag {
+  setup_shadows = 0x01,
+  setup_blink = 0x02,
+  setup_cursor_always = 0x04,
+  setup_menu_hide = 0x08,
+  setup_menu_info = 0x10,
+  setup_menu_relax = 0x20,
+  setup_screen_scroll = 0x40,
+  setup_terminals_utf8 = 0x80,
+};
+
+enum {
+  max_xshade = 9,
+  max_yshade = 9,
+};
 
 /*
  * values of All->State.
@@ -45,23 +50,23 @@ struct s_setup {
  * in scroller.c:ScrollerH(),
  * do not change it!
  */
-typedef enum e_state {
-  STATE_DRAG = 10,
-  STATE_RESIZE = 15,
-  STATE_SCROLL = 16,
-  STATE_GADGET = 26,
-  STATE_MENU = 27,
-  STATE_SCREEN = 28,
-  STATE_BUTTON_SCREEN = 29,
-  STATE_ROOT = 30,
-  STATE_DEFAULT = 31,
+enum e_all_state {
+  state_drag = 10,
+  state_resize = 15,
+  state_scroll = 16,
+  state_gadget = 26,
+  state_menu = 27,
+  state_screen = 28,
+  state_button_screen = 29,
+  state_root = 30,
+  state_default = 31,
 
   /* mask for all the above */
-  STATE_ANY = 0x1F,
+  state_any = 0x1F,
 
   /* further All->State flags */
-  STATE_FL_BYMOUSE = 0x40,
-} tstate;
+  state_fl_bymouse = 0x40,
+};
 
 typedef struct s_button_vec {
   trune shape[2];

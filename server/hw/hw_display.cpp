@@ -42,13 +42,13 @@ INLINE void display_CreateMsg(udat Code, udat Len) {
 }
 
 static void display_Beep(void) {
-  display_CreateMsg(DPY_Beep, 0);
+  display_CreateMsg(ev_dpy_Beep, 0);
   Ext(Socket, SendMsg)(display, Msg);
   setFlush();
 }
 
 static void display_Configure(udat resource, byte todefault, udat value) {
-  display_CreateMsg(DPY_Configure, 0);
+  display_CreateMsg(ev_dpy_Configure, 0);
 
   ev->X = resource;
   if (todefault)
@@ -75,11 +75,11 @@ static void display_HandleEvent(display_hw hw) {
     Event = &hMsg->Event;
 
     switch (hMsg->Type) {
-    case MSG_WIDGET_KEY:
+    case msg_widget_key:
       KeyboardEventCommon(Event->EventKeyboard.Code, Event->EventKeyboard.ShiftFlags,
                           Event->EventKeyboard.SeqLen, Event->EventKeyboard.AsciiSeq);
       break;
-    case MSG_WIDGET_MOUSE:
+    case msg_widget_mouse:
       x = Event->EventMouse.X;
       y = Event->EventMouse.Y;
       dx = x == 0 ? -1 : x == DisplayWidth - 1 ? 1 : 0;
@@ -89,12 +89,12 @@ static void display_HandleEvent(display_hw hw) {
 
       MouseEventCommon(x, y, dx, dy, keys);
       break;
-    case MSG_WIDGET_GADGET:
+    case msg_widget_gadget:
       if (!Event->EventGadget.Code)
         /* 0 == Close Code */
         HW->NeedHW |= NEEDPanicHW, NeedHW |= NEEDPanicHW;
       break;
-    case MSG_SELECTIONCLEAR:
+    case msg_selection_clear:
       /* selection now owned by some other client on the same display HW as twdisplay */
       HW->HWSelectionPrivate = (tany)0;
       /*
@@ -103,7 +103,7 @@ static void display_HandleEvent(display_hw hw) {
        */
       TwinSelectionSetOwner((obj)HW, SEL_CURRENTTIME, SEL_CURRENTTIME);
       break;
-    case MSG_SELECTIONREQUEST:
+    case msg_selection_request:
       /*
        * should never happen, twdisplay uses libTw calls to manage Selection Requests
        */
@@ -115,7 +115,7 @@ static void display_HandleEvent(display_hw hw) {
 				 TwinSelectionGetOwner());
 #endif
       break;
-    case MSG_SELECTIONNOTIFY:
+    case msg_selection_notify:
       /*
        * should never happen, twdisplay uses libTw calls to manage Selection Notifies
        */
@@ -129,23 +129,23 @@ static void display_HandleEvent(display_hw hw) {
 #endif
       break;
 
-    case MSG_DISPLAY:
+    case msg_display:
       switch (Event->EventDisplay.Code) {
-      case DPY_RedrawVideo:
+      case ev_dpy_RedrawVideo:
         /*
          * Not needed, twdisplay keeps its own copy of Video[]
-         * and never generates DPY_RedrawVideo events
+         * and never generates ev_dpy_RedrawVideo events
          */
-        printk("\ntwin: display_HandleEvent(): unexpected Display.(DPY_RedrawVideo) Message from "
+        printk("\ntwin: display_HandleEvent(): unexpected Display.(ev_dpy_RedrawVideo) Message from "
                "twdisplay!\n");
 #if 0
 		if (Event->EventDisplay.Len == sizeof(dat) * 2)
 		    NeedRedrawVideo(Event->EventDisplay.X, Event->EventDisplay.Y,
-				    ((udat *)Event->EventDisplay.Data)[0], 
+				    ((udat *)Event->EventDisplay.Data)[0],
 				    ((udat *)Event->EventDisplay.Data)[1]);
 		break;
 #endif
-      case DPY_Resize:
+      case ev_dpy_Resize:
         if (HW->X != Event->EventDisplay.X || HW->Y != Event->EventDisplay.Y) {
 
           HW->X = Event->EventDisplay.X;
@@ -170,7 +170,7 @@ static void display_HelperH(msgport Port) {
 }
 
 INLINE void display_DrawTCell(dat x, dat y, udat buflen, tcell *buf) {
-  display_CreateMsg(DPY_DrawTCell, buflen * sizeof(tcell));
+  display_CreateMsg(ev_dpy_DrawTCell, buflen * sizeof(tcell));
   ev->X = x;
   ev->Y = y;
   ev->Data = buf;
@@ -204,14 +204,14 @@ INLINE void display_Mogrify(dat x, dat y, uldat len) {
 }
 
 INLINE void display_MoveToXY(udat x, udat y) {
-  display_CreateMsg(DPY_MoveToXY, 0);
+  display_CreateMsg(ev_dpy_MoveToXY, 0);
   ev->X = x;
   ev->Y = y;
   Ext(Socket, SendMsg)(display, Msg);
 }
 
 INLINE void display_SetCursorType(uldat type) {
-  display_CreateMsg(DPY_SetCursorType, sizeof(uldat));
+  display_CreateMsg(ev_dpy_SetCursorType, sizeof(uldat));
   ev->Data = &type;
   Ext(Socket, SendMsg)(display, Msg);
 }
@@ -246,7 +246,7 @@ static void display_FlushVideo(void) {
 }
 
 static void display_FlushHW(void) {
-  display_CreateMsg(DPY_FlushHW, 0);
+  display_CreateMsg(ev_dpy_FlushHW, 0);
   Ext(Socket, SendMsg)(display, Msg);
   if (RemoteFlush(HW->AttachSlot))
     clrFlush();
@@ -270,7 +270,7 @@ static void display_Resize(dat x, dat y) {
    * x == HW->X && y == HW->Y as twdisplay might be using a smaller area
    */
   if (!HW->CanResize || x != HW->X || y != HW->Y) {
-    display_CreateMsg(DPY_Resize, 0);
+    display_CreateMsg(ev_dpy_Resize, 0);
     ev->X = x;
     ev->Y = y;
 
@@ -296,7 +296,7 @@ static void display_DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, da
   data[2] = DstLeft;
   data[3] = DstUp;
 
-  display_CreateMsg(DPY_DragArea, 4 * sizeof(dat));
+  display_CreateMsg(ev_dpy_DragArea, 4 * sizeof(dat));
 
   ev->X = Left;
   ev->Y = Up;
@@ -312,7 +312,7 @@ static void display_SetPalette(udat N, udat R, udat G, udat B) {
   data[1] = G;
   data[2] = B;
 
-  display_CreateMsg(DPY_SetPalette, 4 * sizeof(dat));
+  display_CreateMsg(ev_dpy_SetPalette, 4 * sizeof(dat));
 
   ev->X = N;
   ev->Data = data;
@@ -322,7 +322,7 @@ static void display_SetPalette(udat N, udat R, udat G, udat B) {
 }
 
 static void display_ResetPalette(void) {
-  display_CreateMsg(DPY_ResetPalette, 0);
+  display_CreateMsg(ev_dpy_ResetPalette, 0);
   Ext(Socket, SendMsg)(display, Msg);
   setFlush();
 }
@@ -340,7 +340,7 @@ static byte display_SelectionImport_display(void) {
 static void display_SelectionExport_display(void) {
   if (!HW->HWSelectionPrivate) {
     HW->HWSelectionPrivate = (tany)display;
-    display_CreateMsg(DPY_SelectionExport, 0);
+    display_CreateMsg(ev_dpy_SelectionExport, 0);
     Ext(Socket, SendMsg)(display, Msg);
     setFlush();
   }
@@ -375,7 +375,7 @@ static void display_SelectionNotify_display(uldat ReqPrivate, uldat Magic,
 
 static void display_QuitHW(void) {
   /* tell twdisplay to cleanly quit */
-  display_CreateMsg(DPY_Quit, 4 * sizeof(dat));
+  display_CreateMsg(ev_dpy_Quit, 4 * sizeof(dat));
   Ext(Socket, SendMsg)(display, Msg);
   RemoteFlush(HW->AttachSlot);
 
@@ -449,7 +449,7 @@ static byte display_InitHW(void) {
   if (!(HW->Private = (struct display_data *)AllocMem(sizeof(struct display_data))) ||
       !(Helper =
             Do(Create, MsgPort)(FnMsgPort, 16, "twdisplay Helper", 0, 0, 0, display_HelperH)) ||
-      (!Msg && !(Msg = Do(Create, Msg)(FnMsg, MSG_DISPLAY, sizeof(event_display))))) {
+      (!Msg && !(Msg = Do(Create, Msg)(FnMsg, msg_display, sizeof(event_display))))) {
 
     if (HW->Private) {
       if (Helper)
@@ -522,7 +522,7 @@ static byte display_InitHW(void) {
   HW->CanResize = arg && strstr(arg, ",resize");
   HW->merge_Threshold = 0;
 
-  display_CreateMsg(DPY_Helper, sizeof(Helper->Id));
+  display_CreateMsg(ev_dpy_Helper, sizeof(Helper->Id));
   ev->Data = &Helper->Id;
   Ext(Socket, SendMsg)(display, Msg);
   /* don't flush now, twdisplay waits for attach messages */

@@ -124,17 +124,17 @@ static void TwinTermH(msgport MsgPort) {
     if (Win && !IS_WINDOW(Win))
       Win = NULL;
 
-    if (Msg->Type == MSG_WIDGET_KEY) {
+    if (Msg->Type == msg_widget_key) {
       Code = Event->EventKeyboard.Code;
       /* send keypresses */
       if (Win)
         (void)RemoteWindowWriteQueue(Win, Event->EventKeyboard.SeqLen,
                                      Event->EventKeyboard.AsciiSeq);
-    } else if (Msg->Type == MSG_SELECTION) {
+    } else if (Msg->Type == msg_selection) {
 
       TwinSelectionRequest((obj)Term_MsgPort, Win->Id, TwinSelectionGetOwner());
 
-    } else if (Msg->Type == MSG_SELECTIONNOTIFY) {
+    } else if (Msg->Type == msg_selection_notify) {
 
       if ((Win = (window)Id2Obj(window_magic_id, Event->EventSelectionNotify.ReqPrivate))) {
         if (Event->EventSelectionNotify.Magic == SEL_TRUNEMAGIC)
@@ -144,7 +144,7 @@ static void TwinTermH(msgport MsgPort) {
           (void)RemoteWindowWriteQueue(Win, Event->EventSelectionNotify.Len,
                                        Event->EventSelectionNotify.Data);
       }
-    } else if (Msg->Type == MSG_WIDGET_MOUSE) {
+    } else if (Msg->Type == msg_widget_mouse) {
       if (Win) {
         char buf[10];
         byte len = CreateXTermMouseEvent(&Event->EventMouse, 10, buf);
@@ -153,10 +153,10 @@ static void TwinTermH(msgport MsgPort) {
         if (len)
           (void)RemoteWindowWriteQueue(Win, len, buf);
       }
-    } else if (Msg->Type == MSG_WIDGET_GADGET) {
+    } else if (Msg->Type == msg_widget_gadget) {
       if (Win && Event->EventGadget.Code == 0 /* Close Code */)
         Delete(Win);
-    } else if (Msg->Type == MSG_MENU_ROW) {
+    } else if (Msg->Type == msg_menu_row) {
       if (Event->EventMenu.Menu == Term_Menu) {
         Code = Event->EventMenu.Code;
         switch (Code) {
@@ -167,7 +167,7 @@ static void TwinTermH(msgport MsgPort) {
           break;
         }
       }
-    } else if (Msg->Type == MSG_USER_CONTROL) {
+    } else if (Msg->Type == msg_user_control) {
       /* this duplicates the same functionality of builtin.c */
       if (Event->EventControl.Code == MSG_CONTROL_OPEN) {
         char **cmd = TokenizeStringVec(Event->EventControl.Len, Event->EventControl.Data);

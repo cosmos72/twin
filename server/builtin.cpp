@@ -211,36 +211,36 @@ void UpdateOptionWin(void) {
 
   for (i = 0; list[i]; i++) {
     if ((G = Act(FindGadgetByCode, OptionWin)(OptionWin, list[i]))) {
-      if (Flags & SETUP_SHADOWS)
+      if (Flags & setup_shadows)
         G->Flags &= ~GADGETFL_DISABLED;
       else
         G->Flags |= GADGETFL_DISABLED;
     }
   }
   if ((G = Act(FindGadgetByCode, OptionWin)(OptionWin, COD_O_SHADOWS)))
-    G->USE.T.Text[0][1] = Flags & SETUP_SHADOWS ? _CHECK : ' ';
+    G->USE.T.Text[0][1] = Flags & setup_shadows ? _CHECK : ' ';
   if ((G = Act(FindGadgetByCode, OptionWin)(OptionWin, COD_O_BLINK)))
-    G->USE.T.Text[0][1] = Flags & SETUP_BLINK ? _CHECK : ' ';
+    G->USE.T.Text[0][1] = Flags & setup_blink ? _CHECK : ' ';
   if ((G = Act(FindGadgetByCode, OptionWin)(OptionWin, COD_O_CURSOR_ALWAYS)))
-    G->USE.T.Text[0][1] = Flags & SETUP_CURSOR_ALWAYS ? _CHECK : ' ';
+    G->USE.T.Text[0][1] = Flags & setup_cursor_always ? _CHECK : ' ';
   if ((G = Act(FindGadgetByCode, OptionWin)(OptionWin, COD_O_MENU_HIDE)))
-    G->USE.T.Text[0][1] = Flags & SETUP_MENU_HIDE ? _CHECK : ' ';
+    G->USE.T.Text[0][1] = Flags & setup_menu_hide ? _CHECK : ' ';
   if ((G = Act(FindGadgetByCode, OptionWin)(OptionWin, COD_O_MENU_INFO)))
-    G->USE.T.Text[0][1] = Flags & SETUP_MENU_INFO ? _CHECK : ' ';
+    G->USE.T.Text[0][1] = Flags & setup_menu_info ? _CHECK : ' ';
   if ((G = Act(FindGadgetByCode, OptionWin)(OptionWin, COD_O_MENU_RELAX)))
-    G->USE.T.Text[0][1] = Flags & SETUP_MENU_RELAX ? _CHECK : ' ';
+    G->USE.T.Text[0][1] = Flags & setup_menu_relax ? _CHECK : ' ';
   if ((G = Act(FindGadgetByCode, OptionWin)(OptionWin, COD_O_SCREEN_SCROLL)))
-    G->USE.T.Text[0][1] = Flags & SETUP_SCREEN_SCROLL ? _CHECK : ' ';
+    G->USE.T.Text[0][1] = Flags & setup_screen_scroll ? _CHECK : ' ';
   if ((G = Act(FindGadgetByCode, OptionWin)(OptionWin, COD_O_TERMINALS_UTF8)))
-    G->USE.T.Text[0][1] = Flags & SETUP_TERMINALS_UTF8 ? _CHECK : ' ';
+    G->USE.T.Text[0][1] = Flags & setup_terminals_utf8 ? _CHECK : ' ';
 
   OptionWin->CurX = 25;
   OptionWin->CurY = 1;
-  ch = (Flags & SETUP_SHADOWS ? All->SetUp->DeltaXShade : 0) + '0';
+  ch = (Flags & setup_shadows ? All->SetUp->DeltaXShade : 0) + '0';
   Act(RowWriteAscii, OptionWin)(OptionWin, 1, &ch);
   OptionWin->CurX = 25;
   OptionWin->CurY = 2;
-  ch = (Flags & SETUP_SHADOWS ? All->SetUp->DeltaYShade : 0) + '0';
+  ch = (Flags & setup_shadows ? All->SetUp->DeltaYShade : 0) + '0';
   Act(RowWriteAscii, OptionWin)(OptionWin, 1, &ch);
 }
 
@@ -251,10 +251,10 @@ static void OptionH(msg Msg) {
 
   switch (Msg->Event.EventGadget.Code) {
   case COD_O_SHADOWS:
-    Flags ^= SETUP_SHADOWS;
+    Flags ^= setup_shadows;
     break;
   case COD_O_Xp_SHADE:
-    if (XShade < MAX_XSHADE)
+    if (XShade < max_xshade)
       XShade++;
     break;
   case COD_O_Xn_SHADE:
@@ -262,7 +262,7 @@ static void OptionH(msg Msg) {
       XShade--;
     break;
   case COD_O_Yp_SHADE:
-    if (YShade < MAX_YSHADE)
+    if (YShade < max_yshade)
       YShade++;
     break;
   case COD_O_Yn_SHADE:
@@ -270,29 +270,29 @@ static void OptionH(msg Msg) {
       YShade--;
     break;
   case COD_O_BLINK:
-    Flags ^= SETUP_BLINK;
+    Flags ^= setup_blink;
     break;
   case COD_O_CURSOR_ALWAYS:
-    Flags ^= SETUP_CURSOR_ALWAYS;
+    Flags ^= setup_cursor_always;
     redraw = tfalse;
     break;
   case COD_O_MENU_HIDE:
-    Flags ^= SETUP_MENU_HIDE;
-    HideMenu(!!(Flags & SETUP_MENU_HIDE));
+    Flags ^= setup_menu_hide;
+    HideMenu(!!(Flags & setup_menu_hide));
     redraw = tfalse;
     break;
   case COD_O_MENU_INFO:
-    Flags ^= SETUP_MENU_INFO;
+    Flags ^= setup_menu_info;
     break;
   case COD_O_MENU_RELAX:
-    Flags ^= SETUP_MENU_RELAX;
+    Flags ^= setup_menu_relax;
     break;
   case COD_O_SCREEN_SCROLL:
-    Flags ^= SETUP_SCREEN_SCROLL;
+    Flags ^= setup_screen_scroll;
     redraw = tfalse;
     break;
   case COD_O_TERMINALS_UTF8:
-    Flags ^= SETUP_TERMINALS_UTF8;
+    Flags ^= setup_terminals_utf8;
     redraw = tfalse;
     break;
   default:
@@ -485,7 +485,7 @@ static void BuiltinH(msgport MsgPort) {
     Event = &Msg->Event;
 
     switch (Msg->Type) {
-    case MSG_WIDGET_GADGET:
+    case msg_widget_gadget:
       tempWin = (window)Event->EventGadget.W;
       Code = Event->EventGadget.Code;
       /*0 == Code Chiusura */
@@ -507,7 +507,7 @@ static void BuiltinH(msgport MsgPort) {
         ExecuteGadgetH(&Event->EventGadget);
       break;
 
-    case MSG_MENU_ROW:
+    case msg_menu_row:
       if (Event->EventMenu.Menu == Builtin_Menu) {
         Code = Event->EventMenu.Code;
         switch (Code) {
@@ -603,7 +603,7 @@ static void BuiltinH(msgport MsgPort) {
       }
       break;
 
-    case MSG_WIDGET_KEY:
+    case msg_widget_key:
       tempWin = (window)Msg->Event.EventCommon.W;
       if (tempWin == WinList) {
         switch (Msg->Event.EventKeyboard.Code) {
@@ -647,7 +647,7 @@ static void BuiltinH(msgport MsgPort) {
       }
       break;
 
-    case MSG_WIDGET_MOUSE:
+    case msg_widget_mouse:
       tempWin = (window)Msg->Event.EventCommon.W;
 
       if (tempWin == WinList || tempWin == DisplayWin) {
@@ -668,13 +668,13 @@ static void BuiltinH(msgport MsgPort) {
       }
       break;
 
-    case MSG_SELECTION:
+    case msg_selection:
       /* user wants to paste. ask for selection contents */
       if (Msg->Event.EventSelection.W == (widget)ExecuteWin)
         TwinSelectionRequest((obj)Builtin_MsgPort, ExecuteWin->Id, TwinSelectionGetOwner());
       break;
 
-    case MSG_SELECTIONNOTIFY:
+    case msg_selection_notify:
       tempWin = (window)Id2Obj(window_magic_id, Msg->Event.EventSelectionNotify.ReqPrivate);
       if (tempWin && tempWin == ExecuteWin) {
         switch (Msg->Event.EventSelectionNotify.Magic) {
@@ -688,7 +688,7 @@ static void BuiltinH(msgport MsgPort) {
       }
       break;
 
-    case MSG_USER_CONTROL:
+    case msg_user_control:
       switch (Event->EventControl.Code) {
       case MSG_CONTROL_OPEN: {
         char **cmd = TokenizeStringVec(Event->EventControl.Len, Event->EventControl.Data);

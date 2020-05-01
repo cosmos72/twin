@@ -816,21 +816,21 @@ static void alienSendMsg(msgport MsgPort, msg Msg) {
   Slot = MsgPort->RemoteData.FdSlot;
 
   switch (Msg->Type) {
-  case MSG_DISPLAY:
+  case msg_display:
     Src = (char *)Msg->Event.EventDisplay.Data;
     N = 1;
 
     switch (Msg->Event.EventDisplay.Code) {
-    case DPY_DrawTCell:
+    case ev_dpy_DrawTCell:
       Type = TWS_tcell;
       N = Msg->Event.EventDisplay.Len / sizeof(tcell);
       break;
-    case DPY_Helper:
-    case DPY_SetCursorType:
+    case ev_dpy_Helper:
+    case ev_dpy_SetCursorType:
       Type = TWS_uldat;
       break;
-    case DPY_DragArea:
-    case DPY_SetPalette:
+    case ev_dpy_DragArea:
+    case ev_dpy_SetPalette:
       Type = TWS_dat;
       N = 4;
       break;
@@ -874,7 +874,7 @@ static void alienSendMsg(msgport MsgPort, msg Msg) {
     }
 
     break;
-  case MSG_WIDGET_KEY:
+  case msg_widget_key:
     alienReply(Msg->Type,
                Len = SIZEOF(uldat) + 3 * SIZEOF(udat) + 2 * SIZEOF(byte) +
                      Msg->Event.EventKeyboard.SeqLen,
@@ -890,7 +890,7 @@ static void alienSendMsg(msgport MsgPort, msg Msg) {
             Msg->Event.EventKeyboard.AsciiSeq);
     }
     break;
-  case MSG_WIDGET_MOUSE:
+  case msg_widget_mouse:
     alienReply(Msg->Type, Len = SIZEOF(uldat) + 4 * SIZEOF(udat), 0, NULL);
     if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
       t += Tot - Len;
@@ -901,7 +901,7 @@ static void alienSendMsg(msgport MsgPort, msg Msg) {
       PUSH(t, dat, Msg->Event.EventMouse.Y);
     }
     break;
-  case MSG_WIDGET_CHANGE:
+  case msg_widget_change:
     alienReply(Msg->Type, Len = SIZEOF(uldat) + 4 * SIZEOF(dat), 0, NULL);
     if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
       t += Tot - Len;
@@ -914,7 +914,7 @@ static void alienSendMsg(msgport MsgPort, msg Msg) {
       PUSH(t, udat, Msg->Event.EventWidget.Y);
     }
     break;
-  case MSG_WIDGET_GADGET:
+  case msg_widget_gadget:
     alienReply(Msg->Type, Len = SIZEOF(uldat) + 2 * SIZEOF(dat), 0, NULL);
     if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
       t += Tot - Len;
@@ -923,7 +923,7 @@ static void alienSendMsg(msgport MsgPort, msg Msg) {
       PUSH(t, udat, Msg->Event.EventGadget.Flags);
     }
     break;
-  case MSG_MENU_ROW:
+  case msg_menu_row:
     alienReply(Msg->Type, Len = SIZEOF(uldat) + 2 * SIZEOF(dat) + SIZEOF(uldat), 0, NULL);
     if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
       t += Tot - Len;
@@ -933,7 +933,7 @@ static void alienSendMsg(msgport MsgPort, msg Msg) {
       PUSH_(t, uldat, Obj2Id(Msg->Event.EventMenu.Menu));
     }
     break;
-  case MSG_SELECTION:
+  case msg_selection:
     alienReply(Msg->Type, Len = SIZEOF(uldat) + 4 * SIZEOF(dat), 0, NULL);
     if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
       t += Tot - Len;
@@ -944,7 +944,7 @@ static void alienSendMsg(msgport MsgPort, msg Msg) {
       PUSH(t, dat, Msg->Event.EventSelection.Y);
     }
     break;
-  case MSG_SELECTIONNOTIFY:
+  case msg_selection_notify:
     N = Msg->Event.EventSelectionNotify.Len;
     if (Msg->Event.EventSelectionNotify.Magic == SEL_TRUNEMAGIC)
       N = (N / sizeof(trune)) * SIZEOF(trune);
@@ -990,7 +990,7 @@ static void alienSendMsg(msgport MsgPort, msg Msg) {
       }
     }
     break;
-  case MSG_SELECTIONREQUEST:
+  case msg_selection_request:
     alienReply(Msg->Type, Len = SIZEOF(uldat) + 2 * SIZEOF(dat) + 2 * SIZEOF(ldat), 0, NULL);
     if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
       t += Tot - Len;
@@ -1002,7 +1002,7 @@ static void alienSendMsg(msgport MsgPort, msg Msg) {
     }
     break;
 
-  case MSG_USER_CONTROL:
+  case msg_user_control:
     alienReply(Msg->Type,
                Len = SIZEOF(uldat) + 4 * SIZEOF(dat) + SIZEOF(byte) + Msg->Event.EventControl.Len,
                0, NULL);
@@ -1017,7 +1017,7 @@ static void alienSendMsg(msgport MsgPort, msg Msg) {
     }
     break;
 
-  case MSG_USER_CLIENTMSG:
+  case msg_user_clientmsg:
     alienReply(Msg->Type, Len = 2 * SIZEOF(uldat) + 2 * SIZEOF(dat) + Msg->Event.EventClientMsg.Len,
                0, NULL);
     if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {

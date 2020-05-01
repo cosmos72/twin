@@ -369,28 +369,28 @@ static byte ImmGlobalFlags(node l) {
     case ALTFONT: /*ignored for compatibility*/
       return ttrue;
     case BLINK:
-      i = SETUP_BLINK;
+      i = setup_blink;
       break;
     case CURSOR_ALWAYS:
-      i = SETUP_CURSOR_ALWAYS;
+      i = setup_cursor_always;
       break;
     case SCREEN_SCROLL:
-      i = SETUP_SCREEN_SCROLL;
+      i = setup_screen_scroll;
       break;
     case MENU_HIDE:
-      i = SETUP_MENU_HIDE;
+      i = setup_menu_hide;
       break;
     case MENU_INFO:
-      i = SETUP_MENU_INFO;
+      i = setup_menu_info;
       break;
     case MENU_RELAX:
-      i = SETUP_MENU_RELAX;
+      i = setup_menu_relax;
       break;
     case SHADOWS:
-      i = SETUP_SHADOWS;
+      i = setup_shadows;
       break;
     case TERMINALS_UTF8:
-      i = SETUP_TERMINALS_UTF8;
+      i = setup_terminals_utf8;
       break;
     case BUTTON_PASTE:
       i = 0;
