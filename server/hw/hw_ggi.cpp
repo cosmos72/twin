@@ -48,7 +48,7 @@ struct GGI_data {
   ggi_mode gmode;
   ggi_coord gfont; /* character size */
 
-  ggi_pixel gforeground, gbackground, gcol[MAXCOL + 1];
+  ggi_pixel gforeground, gbackground, gcol[tmaxcol + 1];
 };
 
 #define GGIdata ((struct GGI_data *)HW->Private)
@@ -186,12 +186,12 @@ static void GGI_KeyboardEvent(int fd, display_hw hw) {
 static tcolor _col;
 
 #define GFG(col)                                                                                   \
-  if (gforeground != gcol[COLFG(col)])                                                             \
-  ggiSetGCForeground(gvis, gforeground = gcol[COLFG(col)])
+  if (gforeground != gcol[TCOLFG(col)])                                                             \
+  ggiSetGCForeground(gvis, gforeground = gcol[TCOLFG(col)])
 
 #define GBG(col)                                                                                   \
-  if (gbackground != gcol[COLBG(col)])                                                             \
-  ggiSetGCBackground(gvis, gbackground = gcol[COLBG(col)])
+  if (gbackground != gcol[TCOLBG(col)])                                                            \
+  ggiSetGCBackground(gvis, gbackground = gcol[TCOLBG(col)])
 
 #define GDRAW(col, buf, buflen)                                                                    \
   GFG(col);                                                                                        \
@@ -250,13 +250,13 @@ static void GGI_ShowCursor(uldat type, dat x, dat y) {
   if (type & 0x10) {
     /* soft cursor */
     v = (TCOLOR(V) | ((type >> 16) & 0xff)) ^ ((type >> 8) & 0xff);
-    if ((type & 0x20) && (TCOLOR(V) & COL(0, WHITE)) == (v & COL(0, WHITE)))
-      v ^= COL(0, WHITE);
-    if ((type & 0x40) && ((COLFG(v) & WHITE) == (COLBG(v) & WHITE)))
-      v ^= COL(WHITE, 0);
+    if ((type & 0x20) && (TCOLOR(V) & TCOL(0, twhite)) == (v & TCOL(0, twhite)))
+      v ^= TCOL(0, twhite);
+    if ((type & 0x40) && ((TCOLFG(v) & twhite) == (TCOLBG(v) & twhite)))
+      v ^= TCOL(twhite, 0);
 
-    GFG(COLFG(v));
-    GBG(COLBG(v));
+    GFG(TCOLFG(v));
+    GBG(TCOLBG(v));
     ggiPutc(gvis, x * gfont.x, y * gfont.y, TRUNE(V));
   }
   if (type & 0xF) {
@@ -381,7 +381,7 @@ static int GGI_Select(int n, fd_set *readfds, fd_set *writefds, fd_set *exceptfd
 static void GGI_InitPalette(void) {
   int i;
   ggi_color pixel;
-  for (i = 0; i <= MAXCOL; i++) {
+  for (i = 0; i <= tmaxcol; i++) {
     pixel.r = 257 * (udat)Palette[i].Red;
     pixel.g = 257 * (udat)Palette[i].Green;
     pixel.b = 257 * (udat)Palette[i].Blue;
@@ -578,9 +578,9 @@ EXTERN_C void QuitModule(module Module) {
 #if 0
 static void handle_keyboard(int sym, int modifiers, int out_fd) {
 	int shift = modifiers & (1 << GII_KM_SHIFT);
-	
+
 	if (GII_KTYP(sym) == GII_KT_LATIN1) {
-		send_char(out_fd, GII_KVAL(sym)); 
+		send_char(out_fd, GII_KVAL(sym));
 		return;
 	}
 

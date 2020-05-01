@@ -118,7 +118,7 @@ static void linux_QuitVideo(void) {
  */
 #define linux_MogrifyInit()                                                                        \
   (fputs(tty_use_utf8 ? "\033[3l\033%G\033[m" : "\033%@\033[3h\033[m", stdOUT),                    \
-   _col = COL(WHITE, BLACK))
+   _col = TCOL(twhite, tblack))
 
 #define linux_MogrifyFinish() ((void)0)
 
@@ -127,30 +127,30 @@ INLINE void linux_SetColor(tcolor col) {
   char *colp = colbuf + 2;
   byte c;
 
-  if ((col & COL(HIGH, 0)) != (_col & COL(HIGH, 0))) {
-    if (col & COL(HIGH, 0))
+  if ((col & TCOL(thigh, 0)) != (_col & TCOL(thigh, 0))) {
+    if (col & TCOL(thigh, 0))
       *colp++ = '1';
     /* '22m' is normal intensity. we used '21m', which is actually 'doubly underlined' */
     else
       *colp++ = '2', *colp++ = '2';
     *colp++ = ';';
   }
-  if ((col & COL(0, HIGH)) != (_col & COL(0, HIGH))) {
-    if (_col & COL(0, HIGH))
+  if ((col & TCOL(0, thigh)) != (_col & TCOL(0, thigh))) {
+    if (_col & TCOL(0, thigh))
       *colp++ = '2';
     *colp++ = '5';
     *colp++ = ';';
   }
-  if ((col & COL(0, WHITE)) != (_col & COL(0, WHITE))) {
-    c = COLBG(col) & ~HIGH;
+  if ((col & TCOL(0, twhite)) != (_col & TCOL(0, twhite))) {
+    c = TCOLBG(col) & ~thigh;
     *colp++ = '4';
-    *colp++ = VGA2ANSI(c) + '0';
+    *colp++ = TVGA2ANSI(c) + '0';
     *colp++ = ';';
   }
-  if ((col & COL(WHITE, 0)) != (_col & COL(WHITE, 0))) {
-    c = COLFG(col) & ~HIGH;
+  if ((col & TCOL(twhite, 0)) != (_col & TCOL(twhite, 0))) {
+    c = TCOLFG(col) & ~thigh;
     *colp++ = '3';
-    *colp++ = VGA2ANSI(c) + '0';
+    *colp++ = TVGA2ANSI(c) + '0';
     *colp++ = ';';
   }
   _col = col;
@@ -239,7 +239,7 @@ static void linux_ShowMouse(void) {
   uldat pos =
       (HW->Last_x = HW->MouseState.x) + (HW->Last_y = HW->MouseState.y) * (ldat)DisplayWidth;
   tcell h = Video[pos];
-  tcolor c = ~TCOLOR(h) ^ COL(HIGH, HIGH);
+  tcolor c = ~TCOLOR(h) ^ TCOL(thigh, thigh);
 
   linux_SingleMogrify(HW->MouseState.x, HW->MouseState.y, TCELL(c, TRUNEEXTRA(h)));
 

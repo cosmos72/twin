@@ -279,7 +279,7 @@ static tpos WMFindBorderWindow(window W, dat u, dat v, byte Border, tcell *PtrAt
     case POS_BUTTON_RESIZE:
       Color = W->ColGadgets;
       if (FlResize) {
-        Color = COL(COLBG(Color), COLFG(Color));
+        Color = TCOL(TCOLBG(Color), TCOLFG(Color));
         FlPressed = ttrue;
       }
       break;
@@ -301,17 +301,17 @@ static tpos WMFindBorderWindow(window W, dat u, dat v, byte Border, tcell *PtrAt
       break;
     default:
       Color = Found < BUTTON_MAX
-                  ? (FlDrag ? COL(COLBG(W->ColGadgets), COLFG(W->ColGadgets)) : W->ColGadgets)
+                  ? (FlDrag ? TCOL(TCOLBG(W->ColGadgets), TCOLFG(W->ColGadgets)) : W->ColGadgets)
                   : W->ColBorder;
       break;
     }
   if (FlScroll && Found >= POS_X_BAR_BACK && Found <= POS_Y_ARROW_FWD) {
-    Color ^= COL(HIGH, HIGH);
+    Color ^= TCOL(thigh, thigh);
     FlPressed = ttrue;
   } else if (Found < BUTTON_MAX && (W->State & WINDOW_GADGET_PRESSED) &&
              (W->State & (BUTTON_FIRST_SELECT << Found))) {
 
-    Color = COL(COLBG(Color), COLFG(Color));
+    Color = TCOL(TCOLBG(Color), TCOLFG(Color));
     FlPressed = ttrue;
   }
 
@@ -784,9 +784,9 @@ static byte ActivateScreenButton(wm_ctx *C) {
 /* this is mouse-only */
 static void ContinueScreenButton(wm_ctx *C) {
     udat temp = C->Screen->State;
-    
+
     DetailCtx(C);
-    
+
     if (C->Pos == POS_BUTTON_SCREEN)
 	C->Screen->State |= GADGET_PRESSED;
     else
@@ -1111,18 +1111,18 @@ static void ContinueButton(wm_ctx *C) {
     window FW = All->FirstScreen->ClickWindow;
     uldat ltemp;
     byte found = tfalse;
-    
+
     if (!FW)
 	return;
-    
+
     if (FW == C->W && (ltemp = FW->State) & BUTTON_ANY_SELECT) {
 	DetailCtx(C);
 	if (C->Pos < BUTTON_MAX &&
 	    (ltemp & BUTTON_ANY_SELECT) == (BUTTON_FIRST_SELECT << C->Pos))
-		
+
 	    found = ttrue;
     }
-    
+
     if (found)
 	FW->State |= GADGET_PRESSED;
     else
@@ -1939,7 +1939,7 @@ EXTERN_C byte InitModule(module Module) {
           return ttrue;
         } else {
           sent = ttrue;
-          printk("twin: RC: " SS "\n", ErrStr);
+          printk("twin: RC: " SS "\n", Errstr);
         }
       }
       UnRegisterExt(WM, MsgPort, WM_MsgPort);
@@ -1951,7 +1951,7 @@ EXTERN_C byte InitModule(module Module) {
   if (WM_MsgPort)
     Delete(WM_MsgPort);
   if (!sent) {
-    printk("twin: WM: " SS "\n", ErrStr);
+    printk("twin: WM: " SS "\n", Errstr);
   }
   return tfalse;
 }

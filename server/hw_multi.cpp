@@ -181,7 +181,7 @@ static byte module_InitHW(CONST char *arg, uldat len) {
   } else
     printk("twin: unable to load display driver module `" SS "' :\n"
            "      " SS "\n",
-           name, ErrStr);
+           name, Errstr);
   if (alloc_name)
     FreeMem(alloc_name);
 
@@ -606,7 +606,7 @@ void ConfigureHW(udat resource, byte todefault, udat value) {
 }
 
 void SetPaletteHW(udat N, udat R, udat G, udat B) {
-  if (N <= MAXCOL) {
+  if (N <= tmaxcol) {
     rgb c;
     c.Red = R;
     c.Green = G;
@@ -682,7 +682,7 @@ void TwinSelectionNotify(obj Requestor, uldat ReqPrivate, uldat Magic, CONST cha
                          uldat Len, CONST char *Data) {
   msg NewMsg;
   event_any *Event;
-#if 0    
+#if 0
     printk("twin: Selection Notify to 0x%08x\n", Requestor ? Requestor->Id : NOID);
 #endif
   if (!Requestor) {
@@ -774,7 +774,7 @@ INLINE void DiscardBlinkVideo(void) {
       start += (i >> 1) * (ldat)DisplayWidth;
 
       for (V = &Video[start]; len; V++, len--)
-        *V &= ~TCELL(COL(0, HIGH), (byte)0);
+        *V &= ~TCELL(TCOL(0, thigh), (byte)0);
     }
   }
 }

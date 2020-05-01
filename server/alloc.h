@@ -14,9 +14,9 @@
 
 #include <Tw/datatypes.h>
 
-extern udat ErrNo;
-extern CONST char *ErrStr;
-byte Error(udat ErrNo);
+extern udat Errno;
+extern CONST char *Errstr;
+byte Error(udat Errno);
 
 /* memory allocation. these function call Error(NOMEMORY) on failure */
 

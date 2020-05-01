@@ -2067,7 +2067,7 @@ static void FailedCall(tw_d TwD, uldat err, uldat order) {
 }
 
 TW_INLINE uldat NextSerial(tw_d TwD) {
-  if (++RequestN == msg_magic)
+  if (++RequestN == tmsg_magic)
     ++RequestN;
   return RequestN;
 }
@@ -2896,7 +2896,7 @@ tmsg Tw_CreateMsg(tw_d TwD, uldat Type, uldat EventLen) {
 
   if ((Msg = (tmsg)Tw_AllocMem(EventLen += Delta))) {
     Msg->Len = EventLen;
-    Msg->Magic = msg_magic;
+    Msg->Magic = tmsg_magic;
     Msg->Type = Type;
   }
   return Msg;
@@ -2908,7 +2908,7 @@ tmsg Tw_CreateMsg(tw_d TwD, uldat Type, uldat EventLen) {
  * Tw_SendMsg() or Tw_BlindSendMsg()
  */
 void Tw_DeleteMsg(tw_d TwD, tmsg Msg) {
-  if (Msg && Msg->Magic == msg_magic)
+  if (Msg && Msg->Magic == tmsg_magic)
     Tw_FreeMem(Msg);
 }
 
@@ -2917,7 +2917,7 @@ void Tw_DeleteMsg(tw_d TwD, tmsg Msg) {
  */
 byte Tw_SendMsg(tw_d TwD, tmsgport MsgPort, tmsg Msg) {
   byte ret = tfalse;
-  if (Msg && Msg->Magic == msg_magic) {
+  if (Msg && Msg->Magic == tmsg_magic) {
     ret = Tw_SendToMsgPort(TwD, MsgPort, Msg->Len, (void *)Msg);
     Tw_FreeMem(Msg);
   }
@@ -2928,7 +2928,7 @@ byte Tw_SendMsg(tw_d TwD, tmsgport MsgPort, tmsg Msg) {
  * sends message to given client, without blocking
  */
 void Tw_BlindSendMsg(tw_d TwD, tmsgport MsgPort, tmsg Msg) {
-  if (Msg && Msg->Magic == msg_magic) {
+  if (Msg && Msg->Magic == tmsg_magic) {
     Tw_BlindSendToMsgPort(TwD, MsgPort, Msg->Len, (void *)Msg);
     Tw_FreeMem(Msg);
   }

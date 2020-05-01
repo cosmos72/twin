@@ -66,7 +66,7 @@ INLINE byte Threshold_isDirtyVideo(dat X, dat Y) {
 
 /* VideoFlip is quite OS and driver independent ;) */
 INLINE void VideoFlip(udat x, udat y) {
-  Video[x + y * (ldat)DisplayWidth] ^= TCELL(COL(WHITE, WHITE), 0);
+  Video[x + y * (ldat)DisplayWidth] ^= TCELL(TCOL(twhite, twhite), 0);
 }
 
 #endif /* _TWIN_HW_DIRTY_H */

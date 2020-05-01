@@ -938,7 +938,7 @@ byte InitTWDisplay(void) {
   CopyToSockaddrUn(TmpDir(), &addr, 0);
   arg0 = addr.sun_path;
 
-  printk("twin: failed to create any " SS "/.Twin* socket: " SS "\n", addr.sun_path, ErrStr);
+  printk("twin: failed to create any " SS "/.Twin* socket: " SS "\n", addr.sun_path, Errstr);
   printk("      possible reasons: either " SS " not writable, or all TWDISPLAY already in use,\n"
          "      or too many stale " SS "/.Twin* sockets. Aborting.\n",
          arg0, arg0);

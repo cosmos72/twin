@@ -48,7 +48,7 @@ byte DlOpen(module Module) {
   }
   if (!Handle) {
     Error(DLERROR);
-    ErrStr = dlerror();
+    Errstr = dlerror();
     return tfalse;
   }
 
@@ -61,13 +61,13 @@ byte DlOpen(module Module) {
     dlclose(Handle);
 
     if (init_func) {
-      if (ErrStr == NULL || *ErrStr == '\0') {
+      if (Errstr == NULL || *Errstr == '\0') {
         Error(DLERROR);
-        ErrStr = "InitModule() failed";
+        Errstr = "InitModule() failed";
       }
     } else {
       Error(DLERROR);
-      ErrStr = "InitModule() not found in module";
+      Errstr = "InitModule() not found in module";
     }
     return tfalse;
   }
@@ -143,7 +143,7 @@ module DlLoad(uldat code) {
         All->FnHookModule(All->HookModule);
     } else {
       printk("failed to load module %s: %s\n", name ? name : "(NULL)",
-             ErrStr ? ErrStr : "unknown error");
+             Errstr ? Errstr : "unknown error");
     }
   }
   return M;

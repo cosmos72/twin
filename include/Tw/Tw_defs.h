@@ -13,17 +13,22 @@
 #ifndef _TW_DEFS_H
 #define _TW_DEFS_H
 
-/* "Twin" in native byte-order */
-#define TWIN_MAGIC ((uldat)0x6E697754ul)
-/* "Go!!" in native byte-order */
-#define TW_GO_MAGIC ((uldat)0x21216F47ul)
-/* "Wait" in native byte-order */
-#define TW_WAIT_MAGIC ((uldat)0x74696157ul)
-/* "Stop" in native byte-order */
-#define TW_STOP_MAGIC ((uldat)0x706F7453ul)
+enum tw_magic {
+  /* "Twin" in native byte-order */
+  TWIN_MAGIC = 0x6E697754ul,
+  /* "Go!!" in native byte-order */
+  TW_GO_MAGIC = 0x21216F47ul,
+  /* "Wait" in native byte-order */
+  TW_WAIT_MAGIC = 0x74696157ul,
+  /* "Stop" in native byte-order */
+  TW_STOP_MAGIC = 0x706F7453ul,
+};
 
-#define TW_INET_PORT 7754
+enum {
+  TW_INET_PORT = 7754,
+};
 
+/* these must be #defines, they are stringified with # preprocessor macro */
 #define TW_SMALLBUFF 256
 #define TW_BIGBUFF 4096
 
@@ -37,135 +42,159 @@
 /* maximum number of arguments of a libTw function */
 #define TW_MAX_ARGS_N 20
 
-/* Macros for HW VGA (not ANSI!) colors */
-#define BLACK ((tcolor)0)
-#define BLUE ((tcolor)1)
-#define GREEN ((tcolor)2)
-#define CYAN (BLUE | GREEN)
-#define RED ((tcolor)4)
-#define MAGENTA (BLUE | RED)
-#define YELLOW (GREEN | RED)
-#define WHITE (BLUE | GREEN | RED)
-#define HIGH ((tcolor)8)
-#define MAXCOL ((tcolor)0xF)
+/* enum for VGA (not ANSI!) colors */
+enum tcolor_e {
+  tblack = 0,
+  tblue = 1,
+  tgreen = 2,
+  tcyan = tblue | tgreen,
+  tred = 4,
+  tmagenta = tblue | tred,
+  tyellow = tgreen | tred,
+  twhite = tblue | tgreen | tred,
+  thigh = 8,
+  tmaxcol = 0xF,
+};
 
-#define ANSI2VGA(col) (((col)&0x1 ? RED : 0) | ((col)&0x2 ? GREEN : 0) | ((col)&0x4 ? BLUE : 0))
-#define VGA2ANSI(col) ANSI2VGA(col)
+#define TANSI2VGA(col) (((col)&0x1 ? tred : 0) | ((col)&0x2 ? tgreen : 0) | ((col)&0x4 ? tblue : 0))
+#define TVGA2ANSI(col) TANSI2VGA(col)
 
 /* foreground / background colors handling */
 /*
  * NOTE: draw.c:DoShadowColor() assumes that
- * COL(fg1, bg1) | COL(fg2, bg2) == COL(fg1|fg2, bg1|bg2)
+ * TCOL(fg1, bg1) | TCOL(fg2, bg2) == TCOL(fg1|fg2, bg1|bg2)
  * and
- * COL(fg1, bg1) & COL(fg2, bg2) == COL(fg1&fg2, bg1&bg2)
+ * TCOL(fg1, bg1) & TCOL(fg2, bg2) == TCOL(fg1&fg2, bg1&bg2)
  */
-#define FG(col) (col)
-#define BG(col) ((col) << 4)
-#define COL(fg, bg) (FG(fg) | BG(bg))
-#define COLBG(col) ((col) >> 4)
-#define COLFG(col) ((col)&0x0F)
+#define TFG(col) (col)
+#define TBG(col) ((col) << 4)
+#define TCOL(fg, bg) (TFG(fg) | TBG(bg))
+#define TCOLBG(col) ((col) >> 4)
+#define TCOLFG(col) ((col)&0x0F)
 
 /**********************************/
 
-#define msg_magic ((uldat)0xA3A61CE4ul)
+enum {
+  tmsg_magic = 0xA3A61CE4ul, /* this must match msg_magic in server/obj/magic.h */
+};
 
 /* keyboard events ShiftFlags */
-#define TW_KBD_SHIFT_FL 0x1
-#define TW_KBD_CTRL_FL 0x2
-#define TW_KBD_ALT_FL 0x4
-#define TW_KBD_CAPS_LOCK 0x8
-#define TW_KBD_NUM_LOCK 0x10
+enum tw_kbd_shift_flag {
+  TW_KBD_SHIFT_FL = 0x1,
+  TW_KBD_CTRL_FL = 0x2,
+  TW_KBD_ALT_FL = 0x4,
+  TW_KBD_CAPS_LOCK = 0x8,
+  TW_KBD_NUM_LOCK = 0x10,
+};
 
 /* Widget->Attrib */
 /*
  * ask the server to send events even for mouse motion without any pressed button.
  * works only if WIDGET_WANT_MOUSE is set too.
  */
-#define TW_WIDGET_WANT_MOUSE_MOTION 0x0001
-#define TW_WIDGET_WANT_KEYS 0x0002
-#define TW_WIDGET_WANT_MOUSE 0x0004
-#define TW_WIDGET_WANT_CHANGES 0x0008
-#define TW_WIDGET_AUTO_FOCUS 0x0010
+enum tw_widget_attrib {
+  TW_WIDGET_WANT_MOUSE_MOTION = 0x0001,
+  TW_WIDGET_WANT_KEYS = 0x0002,
+  TW_WIDGET_WANT_MOUSE = 0x0004,
+  TW_WIDGET_WANT_CHANGES = 0x0008,
+  TW_WIDGET_AUTO_FOCUS = 0x0010,
+};
 
 /* Widget->Flags */
-#define TW_WIDGETFL_USEEXPOSE 0x02
-#define TW_WIDGETFL_USEFILL 0x03
-#define TW_WIDGETFL_USEANY 0x07 /* mask of all above ones */
+enum tw_widget_flag {
+  TW_WIDGETFL_USEEXPOSE = 0x02,
+  TW_WIDGETFL_USEFILL = 0x03,
+  TW_WIDGETFL_USEANY = 0x07, /* mask of all above ones */
 
-#define TW_WIDGETFL_NOTVISIBLE 0x8000
+  TW_WIDGETFL_NOTVISIBLE = 0x8000,
+};
 
 /* Gadget->Attrib */
-#define TW_GADGET_WANT_MOUSE_MOTION TW_WIDGET_WANT_MOUSE_MOTION /* 0x0001 */
-#define TW_GADGET_WANT_KEYS TW_WIDGET_WANT_KEYS                 /* 0x0002 */
-#define TW_GADGET_WANT_MOUSE TW_WIDGET_WANT_MOUSE               /* 0x0004 */
-#define TW_GADGET_WANT_CHANGES TW_WIDGET_WANT_CHANGES           /* 0x0008 */
-#define TW_GADGET_AUTO_FOCUS TW_WIDGET_AUTO_FOCUS               /* 0x0010 */
+enum tw_gadget_attrib {
+  TW_GADGET_WANT_MOUSE_MOTION = TW_WIDGET_WANT_MOUSE_MOTION, /* 0x0001 */
+  TW_GADGET_WANT_KEYS = TW_WIDGET_WANT_KEYS,                 /* 0x0002 */
+  TW_GADGET_WANT_MOUSE = TW_WIDGET_WANT_MOUSE,               /* 0x0004 */
+  TW_GADGET_WANT_CHANGES = TW_WIDGET_WANT_CHANGES,           /* 0x0008 */
+  TW_GADGET_AUTO_FOCUS = TW_WIDGET_AUTO_FOCUS,               /* 0x0010 */
+};
 
 /* Gadget->Flags */
-#define TW_GADGETFL_USETEXT 0x00                    /* it's the default */
-#define TW_GADGETFL_USEEXPOSE TW_WIDGETFL_USEEXPOSE /* 0x02 */
-#define TW_GADGETFL_USEFILL TW_WIDGETFL_USEFILL     /* 0x03 */
-#define TW_GADGETFL_USEANY TW_WIDGETFL_USEANY       /* 0x07 */
+enum tw_gadget_flag {
+  TW_GADGETFL_USETEXT = 0x00,                    /* it's the default */
+  TW_GADGETFL_USEEXPOSE = TW_WIDGETFL_USEEXPOSE, /* 0x02 */
+  TW_GADGETFL_USEFILL = TW_WIDGETFL_USEFILL,     /* 0x03 */
+  TW_GADGETFL_USEANY = TW_WIDGETFL_USEANY,       /* 0x07 */
 
-#define TW_GADGETFL_DISABLED 0x0020
-#define TW_GADGETFL_TEXT_DEFCOL 0x0040
-/* this makes the gadget 'checkable' : can be in 'checked' or 'unchecked' state.
- * also necessary to put the gadget in a group */
-#define TW_GADGETFL_TOGGLE 0x0080
-#define TW_GADGETFL_PRESSED 0x0100
+  TW_GADGETFL_DISABLED = 0x0020,
+  TW_GADGETFL_TEXT_DEFCOL = 0x0040,
+  /* this makes the gadget 'checkable' : can be in 'checked' or 'unchecked' state.
+   * also necessary to put the gadget in a group */
+  TW_GADGETFL_TOGGLE = 0x0080,
+  TW_GADGETFL_PRESSED = 0x0100,
 
-#define TW_GADGETFL_NOTVISIBLE TW_WIDGETFL_NOTVISIBLE
+  TW_GADGETFL_NOTVISIBLE = TW_WIDGETFL_NOTVISIBLE,
+};
 
 /* Window->Attrib */
-#define TW_WINDOW_WANT_MOUSE_MOTION TW_WIDGET_WANT_MOUSE_MOTION /* 0x0001 */
-#define TW_WINDOW_WANT_KEYS TW_WIDGET_WANT_KEYS                 /* 0x0002 */
-#define TW_WINDOW_WANT_MOUSE TW_WIDGET_WANT_MOUSE               /* 0x0004 */
-#define TW_WINDOW_WANT_CHANGES TW_WIDGET_WANT_CHANGES           /* 0x0008 */
-#define TW_WINDOW_AUTO_FOCUS TW_WIDGET_AUTO_FOCUS               /* 0x0010 */
-#define TW_WINDOW_DRAG 0x0100
-#define TW_WINDOW_RESIZE 0x0200
-#define TW_WINDOW_CLOSE 0x0400
-#define TW_WINDOW_ROLLED_UP 0x0800
-#define TW_WINDOW_X_BAR 0x1000
-#define TW_WINDOW_Y_BAR 0x2000
-#define TW_WINDOW_AUTO_KEYS 0x4000
+enum tw_window_attrib {
+  TW_WINDOW_WANT_MOUSE_MOTION = TW_WIDGET_WANT_MOUSE_MOTION, /* 0x0001 */
+  TW_WINDOW_WANT_KEYS = TW_WIDGET_WANT_KEYS,                 /* 0x0002 */
+  TW_WINDOW_WANT_MOUSE = TW_WIDGET_WANT_MOUSE,               /* 0x0004 */
+  TW_WINDOW_WANT_CHANGES = TW_WIDGET_WANT_CHANGES,           /* 0x0008 */
+  TW_WINDOW_AUTO_FOCUS = TW_WIDGET_AUTO_FOCUS,               /* 0x0010 */
+  TW_WINDOW_DRAG = 0x0100,
+  TW_WINDOW_RESIZE = 0x0200,
+  TW_WINDOW_CLOSE = 0x0400,
+  TW_WINDOW_ROLLED_UP = 0x0800,
+  TW_WINDOW_X_BAR = 0x1000,
+  TW_WINDOW_Y_BAR = 0x2000,
+  TW_WINDOW_AUTO_KEYS = 0x4000,
+};
 
 /* Window->Flags */
-#define TW_WINDOWFL_USEROWS 0x00 /* it's the default */
-#define TW_WINDOWFL_USECONTENTS 0x01
-#define TW_WINDOWFL_USEEXPOSE TW_WIDGETFL_USEEXPOSE /* 0x02 */
-#define TW_WINDOWFL_USEFILL TW_WIDGETFL_USEFILL     /* 0x03 */
-#define TW_WINDOWFL_USEANY TW_WIDGETFL_USEANY       /* 0x07 */
+enum tw_window_flag {
+  TW_WINDOWFL_USEROWS = 0x00, /* it's the default */
+  TW_WINDOWFL_USECONTENTS = 0x01,
+  TW_WINDOWFL_USEEXPOSE = TW_WIDGETFL_USEEXPOSE, /* 0x02 */
+  TW_WINDOWFL_USEFILL = TW_WIDGETFL_USEFILL,     /* 0x03 */
+  TW_WINDOWFL_USEANY = TW_WIDGETFL_USEANY,       /* 0x07 */
 
-#define TW_WINDOWFL_CURSOR_ON 0x10
-#define TW_WINDOWFL_MENU 0x20
-#define TW_WINDOWFL_DISABLED 0x40
-#define TW_WINDOWFL_BORDERLESS 0x80
-#define TW_WINDOWFL_ROWS_INSERT 0x0100
-#define TW_WINDOWFL_ROWS_DEFCOL 0x0200
-#define TW_WINDOWFL_ROWS_SELCURRENT 0x0400
+  TW_WINDOWFL_CURSOR_ON = 0x10,
+  TW_WINDOWFL_MENU = 0x20,
+  TW_WINDOWFL_DISABLED = 0x40,
+  TW_WINDOWFL_BORDERLESS = 0x80,
+  TW_WINDOWFL_ROWS_INSERT = 0x0100,
+  TW_WINDOWFL_ROWS_DEFCOL = 0x0200,
+  TW_WINDOWFL_ROWS_SELCURRENT = 0x0400,
 
-#define TW_WINDOWFL_NOTVISIBLE TW_WIDGETFL_NOTVISIBLE
+  TW_WINDOWFL_NOTVISIBLE = TW_WIDGETFL_NOTVISIBLE,
+};
 
 /* Screen->Flags */
-#define TW_SCREENFL_USEBG 0x00                      /* it's the default */
-#define TW_SCREENFL_USEEXPOSE TW_WIDGETFL_USEEXPOSE /* 0x02 */
-#define TW_SCREENFL_USEFILL TW_WIDGETFL_USEFILL     /* 0x03 */
-#define TW_SCREENFL_USEANY TW_WIDGETFL_USEANY       /* 0x07 */
+enum tw_screen_flag {
+  TW_SCREENFL_USEBG = 0x00,                      /* it's the default */
+  TW_SCREENFL_USEEXPOSE = TW_WIDGETFL_USEEXPOSE, /* 0x02 */
+  TW_SCREENFL_USEFILL = TW_WIDGETFL_USEFILL,     /* 0x03 */
+  TW_SCREENFL_USEANY = TW_WIDGETFL_USEANY,       /* 0x07 */
 
-#define TW_SCREENFL_NOTVISIBLE TW_WIDGETFL_NOTVISIBLE
+  TW_SCREENFL_NOTVISIBLE = TW_WIDGETFL_NOTVISIBLE,
+};
 
 /* Window->CursorType : */
 /* These come from linux/drivers/char/console.c */
-#define TW_DEFAULTCURSOR 0
-#define TW_NOCURSOR 1
-#define TW_LINECURSOR 2
-#define TW_SOLIDCURSOR 8
+enum tw_window_cursor {
+  TW_DEFAULTCURSOR = 0,
+  TW_NOCURSOR = 1,
+  TW_LINECURSOR = 2,
+  TW_SOLIDCURSOR = 8,
+};
 
 /* Row->Flags : */
-#define TW_ROW_INACTIVE ((byte)0x00)
-#define TW_ROW_ACTIVE ((byte)0x01)
-#define TW_ROW_IGNORE ((byte)0x02)
-#define TW_ROW_DEFCOL ((byte)0x04)
+enum tw_row_flag {
+  TW_ROW_INACTIVE = 0x00,
+  TW_ROW_ACTIVE = 0x01,
+  TW_ROW_IGNORE = 0x02,
+  TW_ROW_DEFCOL = 0x04,
+};
 
 #endif /* _TW_DEFS_H */

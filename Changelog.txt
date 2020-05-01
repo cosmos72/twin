@@ -2,7 +2,7 @@ From 0.6.2.1 to 0.6.2.2: (Massimiliano Ghilardi, 02 July 2016)
 	* Removed support for non-Unicode builds. From now on, twin
           can ONLY be compiled in Unicode-aware mode (currently uses
           UCS-2).
-          
+
 From 0.6.2 to 0.6.2.1: (Massimiliano Ghilardi, 08 Nov 2014)
 	* Fixed scroll glitch in twterm, affecting architectures
           with strongly pipelined memcpy() - for example amd64.
@@ -46,7 +46,7 @@ From 0.5.1 to 0.6.0: (Massimiliano Ghilardi, 01 Dec 2007)
 	  on a different X11 server (in this example on :0 :1 :2 :3 servers).
 	* Updated twsysmon to linux kernel 2.6 style disk activity report
 	  (using /proc/diskstats) and cpu activity report (added new states
-	  'irq' as MAGENTA and 'wait' as HIGH|BLUE)
+	  'irq' as tmagenta and 'wait' as thigh|tblue)
 
 From 0.5.0 to 0.5.1: (Massimiliano Ghilardi, 29 May 2003)
 	* Added raw keyboard support for --hw=tty on Linux console.
@@ -268,7 +268,7 @@ From 0.4.2 to 0.4.3: (Massimiliano Ghilardi, 09 Jun 2002)
 	  and moved OS-specific settings from makerules.in -> makeosvalues
 	  to configure -> makeautoconf.
 	* Changed twdm install path from ${exec_prefix}/bin to ${exec_prefix}/sbin
-	  
+
 From 0.4.1 to 0.4.2: (Massimiliano Ghilardi, 26 May 2002)
 	* Finished nested menus support.
 	* Continued libTT: it now begins being usable, even if not 100% complete yet.
@@ -310,7 +310,7 @@ From 0.4.1 to 0.4.2: (Massimiliano Ghilardi, 26 May 2002)
 	  Glitch warning: altering a menu the user is interacting with may
 	  cause some visual incoherencies like misplaced menu windows,
 	  which go away when you close the misplaced window.
-	  
+
 From 0.4.0 to 0.4.1: (Massimiliano Ghilardi, 30 Dec 2001)
 	* Fixed window smart placement if screen is scrolled and not at (0,0).
 	* Fixed math overflow causing `twcat' window not to show up.
@@ -359,12 +359,12 @@ From 0.4.0 to 0.4.1: (Massimiliano Ghilardi, 30 Dec 2001)
 	  i.e. when user logs in, so that *his* ~/.twenvrc.sh is executed.
 	  A possible use of twdm with this option is placing a line like this
 	  in /etc/inittab (supposing twdm is installed in /usr/local/bin) :
-	  
+
 	  1:2345:respawn:/usr/local/bin/twdm -envrc -quiet -hw=tty@/dev/tty1,ctty,TERM=linux
-	  
+
 	  with it, users will log in with twdm instead of the usual getty
 	  (which must be removed from /etc/inittab)
-	  
+
 From 0.3.10 to 0.4.0: (Massimiliano Ghilardi, 31 Aug 2001)
 	* Added some more options to twdm, also twdm now sets $HOME to `/root'
 	  if it exists and $HOME is either `/' or unset.
@@ -385,7 +385,7 @@ From 0.3.10 to 0.4.0: (Massimiliano Ghilardi, 31 Aug 2001)
 	* Finally enabled `AddScreen' and `Background' commands in .twinrc .
 	  Also removed second virtual screen, since you can now create it
 	  with the above commands.
-	  
+
 From 0.3.9 to 0.3.10: (Massimiliano Ghilardi, 31 Jul 2001)
 	* Added `twdm' client. You can now use `twdm' as login manager instead
 	  of the obsolete `getty', `login' or the bloated `xdm', `kdm', ... !
@@ -408,7 +408,7 @@ From 0.3.9 to 0.3.10: (Massimiliano Ghilardi, 31 Jul 2001)
 	* Added support for nested menus (can be created, but are not
 	  correctly rendered yet).
 	* Fixed setting tty speed, was forced to 0 baud.
-	
+
 From 0.3.8 to 0.3.9: (Massimiliano Ghilardi, 25 Jun 2001)
 	* Added Unicode support.
 	* New libTutf library to convert between Unicode and other charsets.
@@ -463,7 +463,7 @@ From 0.3.8 to 0.3.9: (Massimiliano Ghilardi, 25 Jun 2001)
 	  windows contained or `mapped' inside other windows).
 	* Added support for placing cursor in a sub-window.
 	* Documented 0.3.8 last minute fix in Changelog (read below).
-	
+
 From 0.3.7 to 0.3.8: (Massimiliano Ghilardi, 08 Mar 2001)
 	* Last minute fix: added InitAlloc() call to twdisplay.
 	* Added printing of window size on menu during Interactive Resize.
@@ -496,7 +496,7 @@ From 0.3.7 to 0.3.8: (Massimiliano Ghilardi, 08 Mar 2001)
 	  installation.
 	* Applied twin-devfs, twin-ncurses and twin-optflags patches from
 	  PLD team (www.pld.org.pl).
-	  
+
 From 0.3.6 to 0.3.7: (Massimiliano Ghilardi, 19 Feb 2001)
 	* Changed the terminal emulator to close window on shell logout
 	  even if there are background processes running (they keep running
@@ -563,7 +563,7 @@ From 0.3.6 to 0.3.7: (Massimiliano Ghilardi, 19 Feb 2001)
 	  TwErrno, TwStrError() and related stuff like TW_E* error codes.
 	* Added libTw prototypes to use with Linux ltrace(1) in
 	  docs/ltrace.conf
-	
+
 From 0.3.5 to 0.3.6: (Massimiliano Ghilardi, 14 Jan 2001)
 	* Added limited ShiftFlags reporting on keyboard events.
 	* Added ShiftFlags support to Key bindings in ~/.twinrc and
@@ -574,7 +574,7 @@ From 0.3.5 to 0.3.6: (Massimiliano Ghilardi, 14 Jan 2001)
 	* Added option ",slow" to all display drivers.
 	* Added support for xterm's change window title escape sequence.
 	* Added support for nested windows. For example, the "Remove" and
-	  "This" buttons in Menu -> ð -> Display window now are actually
+	  "This" buttons in Menu -> ï¿½ -> Display window now are actually
 	  inside a sub-window. This was a much bigger work than what
 	  it may seem.
 	* Updated twterm and twin server to correctly allow choosing which
@@ -616,7 +616,7 @@ From 0.3.5 to 0.3.6: (Massimiliano Ghilardi, 14 Jan 2001)
 	  `make torture.<file1>.c torture.<file2>c ...'
 	  Example: `cd server; make torture.wm.c torture.methods.c'
 	* Fixed another pair of compile bugs found with `make Torture'.
-	
+
 From 0.3.4 to 0.3.5: (Massimiliano Ghilardi, 20 Dec 2000)
 	* Compatibility break: fixed heavily sick mouse event protocol
 	  (it swapped middle/right buttons in Drag and Release, both
@@ -661,8 +661,8 @@ From 0.3.4 to 0.3.5: (Massimiliano Ghilardi, 20 Dec 2000)
 	* Added stricter compile checks using `const' attribute.
 	* Updated the README and started writing other documentation
 	  in docs/ subdirectory (still incomplete).
-	* Renamed Menu -> ð -> Borders window as Menu -> ð -> Buttons.
-	
+	* Renamed Menu -> ï¿½ -> Borders window as Menu -> ï¿½ -> Buttons.
+
 From 0.3.3 to 0.3.4: (Massimiliano Ghilardi, 11 Sep 2000)
         * FreeBSD support added by Andreas Schweitzer. Thanks!
 	* Fixed SEGFAULT when doing cut-n-paste on -hw=tty,stdout.
@@ -677,9 +677,9 @@ From 0.3.3 to 0.3.4: (Massimiliano Ghilardi, 11 Sep 2000)
 	  to its titlebar and restore it to normal size.
 	* Support for "floating" shadows added (i.e. so displaced to be
 	  separated from the window).
-	* Menu -> ð -> Borders window added to tweak window borders look.
+	* Menu -> ï¿½ -> Borders window added to tweak window borders look.
 	  Currently allows to move buttons.
-	
+
 From 0.3.2 to 0.3.3: (Massimiliano Ghilardi, 12 Jul 2000)
 	* Ported to AIX 3.2. I only had to fix minor problems
 	  like #includes and a few functions not available on it.
@@ -700,7 +700,7 @@ From 0.3.2 to 0.3.3: (Massimiliano Ghilardi, 12 Jul 2000)
 	* Optimized custom malloc/free with memory blocks > PAGE_SIZE.
 	* Added mouse support and `This' button to Display Window.
 	* X11 keyboard support cleanups.
-	
+
 From 0.3.1 to 0.3.2: (Massimiliano Ghilardi, 08 Jun 2000)
 	* Fixed internal FdWQueued bookkeeping.
 	* Fixed mouse redrawing problems with `-hw=tty'.
@@ -709,7 +709,7 @@ From 0.3.1 to 0.3.2: (Massimiliano Ghilardi, 08 Jun 2000)
 	* Fixed a few SEGFAULTs on exit.
 	* Fixed a buffer overrun in twterm
 	  which sometimes made it completely non-working.
-	* Fixed 1x1 display detection after Menu -> ð -> Detach
+	* Fixed 1x1 display detection after Menu -> ï¿½ -> Detach
 	* New option `,noinput' common to all display HW : starts the display
 	  as view-only, ignoring all mouse/keyboard input coming from it.
         * Added `make menuconfig': it uses "dialog" as user interface.
@@ -722,7 +722,7 @@ From 0.3.1 to 0.3.2: (Massimiliano Ghilardi, 08 Jun 2000)
 	  Selection support on hw_tty and hw_ggi is still missing
 	  since underlying HW does not have an usable Selection mechanism.
 	  People, the code I had to write for cut-and-paste is a nightmare!
-	
+
 From 0.3.0 to 0.3.1: (Massimiliano Ghilardi, 16 May 2000)
 	* Updated README for the changes in twattach and for
 	  multiple display support.
@@ -748,13 +748,13 @@ From 0.3.0 to 0.3.1: (Massimiliano Ghilardi, 16 May 2000)
 	  Actually a pair of small things are still missing in twdisplay:
 	  cut-and-paste compatibility with the real display (X11, etc..)
 	  and palette changing support, but it is equally *VERY* usable.
-	  
+
 	  	Please take a few minutes to carefully (re)read
 	  	section 8. Attach/Detach of the README
 	  	as twdisplay adds noticeable power
 	  	to twin's attach/detach capabilities!
-	  
-	
+
+
 From 0.2.8 to 0.3.0: (Massimiliano Ghilardi, 10 May 2000)
 	* Added VNC-style multiple simultaneous displays support
 	  and updated twattach to manage them. Now you can have
@@ -780,8 +780,8 @@ From 0.2.8 to 0.3.0: (Massimiliano Ghilardi, 10 May 2000)
 	* Modified libTw to allow multi-head,
 	  and bumped version number to libTw.so.2.
 	  Clients will need to be recompiled to use the new library.
-	* Added Menu -> ð -> Display to list / detach displays.
-	* Added Menu -> ð -> Refresh.
+	* Added Menu -> ï¿½ -> Display to list / detach displays.
+	* Added Menu -> ï¿½ -> Refresh.
 	* Continued libggi display.
 	  Still INCOMPLETE (keyboard doesn't work), but I feel more and more
 	  unsatisfied by libggi and lost enthusiasm about it.
@@ -789,11 +789,11 @@ From 0.2.8 to 0.3.0: (Massimiliano Ghilardi, 10 May 2000)
 	* Added option `-hw=tty@-' to twattach:
 	  tells twin to attach to its own controlling tty.
 	  (`-hw=tty' instead uses the controlling tty of twattach)
-	  
+
 From 0.2.7 to 0.2.8: (Massimiliano Ghilardi, 02 May 2000)
 	* Added options `stdout' and `TERM=<terminal>' to display `-hw=tty'
 	  The first is to force twin to use stdout as display method on
-	  Linux console even if vcsa is available.	  
+	  Linux console even if vcsa is available.
 	  The second option makes possible for twattach to specify
 	  the terminal type.
 	  Usage: `-hw=tty[@device],TERM=<term>' or `-hw=tty[@device],stdout'
@@ -835,7 +835,7 @@ From 0.2.6 to 0.2.7: (Massimiliano Ghilardi, 17 Apr 2000)
 	  On other displays, it is just not supported yet :(
 	* Fixed a memory leak in twsysmon.
 	* Fixed a SEGFAULT when moving windows out-of-screen.
-	
+
 From 0.2.5 to 0.2.6: (Massimiliano Ghilardi, 04 Apr 2000)
 	* Fixed random SEGFAULT on Menu -> Window -> Send HotKey
 	* Fixed an insidious bug:
@@ -857,14 +857,14 @@ From 0.2.5 to 0.2.6: (Massimiliano Ghilardi, 04 Apr 2000)
 	  Unluckily, this change makes version 0.2.6 of twin and twattach
 	  incompatible with older versions. Always use twin and twattach
 	  of the same version and you will be fine.
-	* Added Menu -> ð -> Option window to change runtime options:
+	* Added Menu -> ï¿½ -> Option window to change runtime options:
 	  shadows displacement, cursor visibility, tty blink/high background,
 	  auto-hide menu, custom font (the latter requires running on
 	  a Linux console and loading the VGA font file fonts/vgafont.raw)
-	  
+
 	  Side effect: When the Menu is auto-hidden, Menu -> Window -> <ZOOM>
 	  gives a real fullscreen window.
-	
+
 From 0.2.4 to 0.2.5: (Massimiliano Ghilardi, 27 Mar 2000)
 	* Made display size persistant (if HW allows twin to choose size).
 	* Fixed `twattach -hw=tty' to correctly react to window size change,
@@ -897,15 +897,14 @@ From 0.2.2 to 0.2.3: (Massimiliano Ghilardi, 14 Mar 2000)
 	* Twin can now runtime attach/detach to any supported display;
 	  look README, section "8) Attach/Detach" for details.
 	* Added twin_wrapper to have twin append its TWDISPLAY on command line.
-	
+
 From 0.2.1 to 0.2.2: (Massimiliano Ghilardi, 06 Mar 2000)
 	* Fixed a SEGFAULT when switching to X11 display method
 	  after a Suspend.
 	* Added gzip (compressed) socket support.
-	
+
 From 0.2 to 0.2.1: (Massimiliano Ghilardi, 22 Feb 2000)
 	* Optimized main loop by reordering MsgPort checks;
 	  Result: removed two extra loops across the whole main loop
 	  for each external event (keyboard,mouse,clients) received.
 	* Tweaked socket protocol to decrease bandwidth usage.
-	

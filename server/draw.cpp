@@ -30,12 +30,12 @@ byte InitDraw(void) {
 }
 
 INLINE tcolor DoShadowColor(tcolor Color, byte Fg, byte Bg) {
-  return (Bg ? (Color & COL(0, MAXCOL)) > COL(0, HIGH | BLACK) ? COL(0, HIGH | BLACK)
-                                                               : COL(0, BLACK)
-             : Fg ? Color & COL(0, WHITE) : Color & COL(0, MAXCOL)) |
-         (Fg ? (Color & COL(MAXCOL, 0)) > COL(HIGH | BLACK, 0) ? COL(WHITE, 0)
-                                                               : COL(HIGH | BLACK, 0)
-             : Color & COL(MAXCOL, 0));
+  return (Bg ? (Color & TCOL(0, tmaxcol)) > TCOL(0, thigh | tblack) ? TCOL(0, thigh | tblack)
+                                                                    : TCOL(0, tblack)
+             : Fg ? Color & TCOL(0, twhite) : Color & TCOL(0, tmaxcol)) |
+         (Fg ? (Color & TCOL(tmaxcol, 0)) > TCOL(thigh | tblack, 0) ? TCOL(twhite, 0)
+                                                                    : TCOL(thigh | tblack, 0)
+             : Color & TCOL(tmaxcol, 0));
 }
 
 /*
@@ -158,7 +158,7 @@ void DrawDesktop(screen Screen, dat X1, dat Y1, dat X2, dat Y2, byte Shaded) {
       else
         attr = Screen->USE_Fill;
     } else
-      attr = TCELL(COL(WHITE, BLACK), ' ');
+      attr = TCELL(TCOL(twhite, tblack), ' ');
 
     if (Shaded) {
       col = DoShadowColor(TCOLOR(attr), Shaded, Shaded);
@@ -940,10 +940,10 @@ static void DrawWCtx(draw_ctx *D) {
       OnlyChild = NULL;
 
 #ifdef DEBUG_DRAW
-    FillVideo(X1, Y1, X2, Y2, TCELL(COL(WHITE, YELLOW), ' '));
+    FillVideo(X1, Y1, X2, Y2, TCELL(TCOL(twhite, tyellow), ' '));
     FlushHW();
     usleep(300000);
-    FillVideo(X1, Y1, X2, Y2, TCELL(COL(WHITE, BLACK), ' '));
+    FillVideo(X1, Y1, X2, Y2, TCELL(TCOL(twhite, tblack), ' '));
 #endif
 
     FirstD = D->Next;
@@ -1801,7 +1801,7 @@ void DrawMenuScreen(screen Screen, dat Xstart, dat Xend) {
       Color = State == STATE_SCREEN ? Menu->ColSelShtCut : Menu->ColShtCut;
       if ((Screen->Flags & (SCREENFL_BACK_SELECT | SCREENFL_BACK_PRESSED)) ==
           (SCREENFL_BACK_SELECT | SCREENFL_BACK_PRESSED)) {
-        Color = COL(COLBG(Color), COLFG(Color));
+        Color = TCOL(TCOLBG(Color), TCOLFG(Color));
       }
       Font = Screen_Back[2 - (DWidth - i)];
     } else if (DWidth - i <= (dat)3 + lenTWDisplay) {

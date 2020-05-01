@@ -94,16 +94,16 @@ extern uldat FdSize, FdTop, FdBottom, FdWQueued;
 #if 0  /* currently unused */
 static uldat RemoteReadAddQueue(uldat Slot, uldat len, byte *data) {
     uldat nmax;
-    
+
     if (len == 0 || Slot >= FdTop || LS.Fd == NOFD)
 	return 0;
-    
+
     /* append to queue */
     if (LS.RQstart + LS.RQlen + len > LS.RQmax) {
 	if (LS.RQstart)
 	    MoveMem(LS.RQueue + LS.RQstart, LS.RQueue, LS.RQlen),
 	    LS.RQstart = 0;
-	
+
 	if (LS.RQlen + len > LS.RQmax) {
 	    LS.RQueue = (byte *)ReAllocMem(LS.RQueue, nmax = (LS.RQmax+len+40)*5/4);
 	    if (!LS.RQueue)
@@ -111,7 +111,7 @@ static uldat RemoteReadAddQueue(uldat Slot, uldat len, byte *data) {
 	    LS.RQmax = nmax;
 	}
     }
-    
+
     CopyMem(data, LS.RQueue + LS.RQstart + LS.RQlen, len);
     LS.RQlen += len;
     return len;
@@ -567,7 +567,7 @@ TW_INLINE udat MultiplexArgsV2S(uldat id, udat N, va_list va, tsfield a) {
 
     /* skip return value */
     Format += 2;
-    
+
     for (n = 1; n < N && (c = *Format++); n++) {
 	t = *Format++;
 	if (t >= TWS_highest)
@@ -605,7 +605,7 @@ static tany sockMultiplexL(uldat id, ...) {
 
     if (id == FIND_MAGIC)
 	id = 0;
-    
+
     if (id < MaxFunct) {
 	va_start(va, id);
 	N = MultiplexArgsV2S(id, TW_MAXUDAT, va, a);
@@ -2708,7 +2708,7 @@ EXTERN_C byte InitModule(module Module) {
   };
 
   if (!sockInitAuth()) {
-    printk("twin: failed to create ~/.TwinAuth: " SS "\n", ErrStr);
+    printk("twin: failed to create ~/.TwinAuth: " SS "\n", Errstr);
     return tfalse;
   }
 
@@ -2754,7 +2754,7 @@ EXTERN_C byte InitModule(module Module) {
 
     return ttrue;
   }
-  printk("twin: failed to create sockets: " SS "\n", ErrStr);
+  printk("twin: failed to create sockets: " SS "\n", Errstr);
   return tfalse;
 }
 

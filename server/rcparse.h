@@ -751,12 +751,12 @@ static node AddtoStringList(node l, str string) {
 
 static str TokenName(ldat id) {
   switch (id) {
-  case BLACK:
-    return "BLACK";
-  case BLUE:
-    return "BLUE";
-  case GREEN:
-    return "GREEN";
+  case tblack:
+    return "tblack";
+  case tblue:
+    return "tblue";
+  case tgreen:
+    return "tgreen";
 
   case '+':
     return "+";
@@ -905,23 +905,23 @@ static str TokenName(ldat id) {
 
 static str ColorName(tcolor col) {
   switch (col) {
-  case BLACK:
+  case tblack:
     return "Black";
-  case BLUE:
+  case tblue:
     return "Blue";
-  case GREEN:
+  case tgreen:
     return "Green";
-  case CYAN:
+  case tcyan:
     return "Cyan";
-  case RED:
+  case tred:
     return "Red";
-  case MAGENTA:
+  case tmagenta:
     return "Magenta";
-  case YELLOW:
+  case tyellow:
     return "Yellow";
-  case WHITE:
+  case twhite:
     return "White";
-  case HIGH:
+  case thigh:
     return "High";
   default:
     break;
@@ -930,14 +930,14 @@ static str ColorName(tcolor col) {
 }
 
 static void DumpColorName(tcolor col) {
-  tcolor fg = COLFG(col), bg = COLBG(col);
+  tcolor fg = TCOLFG(col), bg = TCOLBG(col);
 
-  if (fg & HIGH)
-    fprintf(stderr, "%s ", ColorName(HIGH));
-  fprintf(stderr, "%s %s ", ColorName(fg & ~HIGH), TokenName(FL_ON));
-  if (bg & HIGH)
-    fprintf(stderr, "%s ", ColorName(HIGH));
-  fprintf(stderr, "%s ", ColorName(bg & ~HIGH));
+  if (fg & thigh)
+    fprintf(stderr, "%s ", ColorName(thigh));
+  fprintf(stderr, "%s %s ", ColorName(fg & ~thigh), TokenName(FL_ON));
+  if (bg & thigh)
+    fprintf(stderr, "%s ", ColorName(thigh));
+  fprintf(stderr, "%s ", ColorName(bg & ~thigh));
 }
 
 static void DumpNameList(node l, byte nl) {

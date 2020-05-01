@@ -42,7 +42,7 @@ static void X11_HideCursor(dat x, dat y) {
 
   tcell V = (x >= 0 && x < DisplayWidth && y >= 0 && y < DisplayHeight)
                 ? Video[x + y * (ldat)DisplayWidth]
-                : TCELL(COL(HIGH | WHITE, BLACK), ' ');
+                : TCELL(TCOL(thigh | twhite, tblack), ' ');
   tcolor col = TCOLOR(V);
   tcell extra = HWEXTRA(V);
   trune f = xUTF_32_to_charset(TRUNE(V));
@@ -55,7 +55,7 @@ static void X11_HideCursor(dat x, dat y) {
 static void X11_ShowCursor(uldat type, dat x, dat y) {
   tcell V = (x >= 0 && x < DisplayWidth && y >= 0 && y < DisplayHeight)
                 ? Video[x + y * (ldat)DisplayWidth]
-                : TCELL(COL(HIGH | WHITE, BLACK), ' ');
+                : TCELL(TCOL(thigh | twhite, tblack), ' ');
 
   ldat xbegin = (x - xhw_startx) * xwfont;
   ldat ybegin = (y - xhw_starty) * xhfont;
@@ -65,10 +65,10 @@ static void X11_ShowCursor(uldat type, dat x, dat y) {
     tcolor v = (TCOLOR(V) | ((type >> 16) & 0xff)) ^ ((type >> 8) & 0xff);
     trune f;
     XChar16 c;
-    if ((type & 0x20) && (TCOLOR(V) & COL(0, WHITE)) == (v & COL(0, WHITE)))
-      v ^= COL(0, WHITE);
-    if ((type & 0x40) && ((COLFG(v) & WHITE) == (COLBG(v) & WHITE)))
-      v ^= COL(WHITE, 0);
+    if ((type & 0x20) && (TCOLOR(V) & TCOL(0, twhite)) == (v & TCOL(0, twhite)))
+      v ^= TCOL(0, twhite);
+    if ((type & 0x40) && ((TCOLFG(v) & twhite) == (TCOLBG(v) & twhite)))
+      v ^= TCOL(twhite, 0);
     f = xUTF_32_to_charset(TRUNE(V));
     c = RawToXChar16(f);
     XDRAW_ANY(&c, 1, v, HWEXTRA(V));
@@ -76,14 +76,14 @@ static void X11_ShowCursor(uldat type, dat x, dat y) {
     /* VGA hw-like cursor */
 
     /* doesn't work as expected on paletted visuals... */
-    unsigned long fg = xcol[COLFG(TCOLOR(V)) ^ COLBG(TCOLOR(V))];
+    unsigned long fg = xcol[TCOLFG(TCOLOR(V)) ^ TCOLBG(TCOLOR(V))];
 
     udat i = xhfont * ((type & 0xF) - NOCURSOR) / (SOLIDCURSOR - NOCURSOR);
 
     if (xsgc.foreground != fg) {
       XSetForeground(xdisplay, xgc, xsgc.foreground = fg);
 #if HW_X_DRIVER == HW_XFT
-      xforeground = xftcolors[COLFG(TCOLOR(V)) ^ COLBG(TCOLOR(V))];
+      xforeground = xftcolors[TCOLFG(TCOLOR(V)) ^ TCOLBG(TCOLOR(V))];
 #endif
     }
 
@@ -383,16 +383,16 @@ static int X11_Die(Display *d) {
      * this is not exactly trivial:
      * find our HW, shut it down
      * and quit if it was the last HW.
-     * 
+     *
      * don't rely on HW->Private only, as non-X11 displays
      * may use it differently and have by chance the same value for it.
      */
     forallHW {
 	if (HW->QuitHW == X11_QuitHW && HW->Private
 	    && d == xdisplay) { /* expands to HW->Private->xdisplay */
-	    
+
 	    HW->NeedHW |= NEEDPanicHW, NeedHW |= NEEDPanicHW;
-	    
+
 	    break;
 	}
     }

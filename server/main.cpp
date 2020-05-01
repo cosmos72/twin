@@ -156,7 +156,7 @@ static byte Check4SpecialArgs(void) {
 }
 
 static byte DieWMSo(void) {
-  printk("twin: fatal: failed to load the window manager: " SS "\n", ErrStr);
+  printk("twin: fatal: failed to load the window manager: " SS "\n", Errstr);
   flushk();
   return tfalse;
 }

@@ -267,7 +267,7 @@ static byte X11_InitHW(void) {
       xvisual = DefaultVisual(xdisplay, xscreen);
       colormap = DefaultColormap(xdisplay, xscreen);
 
-      for (i = 0; i <= MAXCOL; i++) {
+      for (i = 0; i <= tmaxcol; i++) {
         xcolor.red = 257 * (udat)Palette[i].Red;
         xcolor.green = 257 * (udat)Palette[i].Green;
         xcolor.blue = 257 * (udat)Palette[i].Blue;
@@ -276,7 +276,7 @@ static byte X11_InitHW(void) {
           break;
         }
       }
-      if (i <= MAXCOL)
+      if (i <= tmaxcol)
         break;
 
       xattr.background_pixel = xcol[0];

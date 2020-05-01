@@ -53,31 +53,30 @@
 #include "obj/all.h"
 #include "obj/fn.h"
 
-#define NOFD (-1)
-/* use for every FD that needs a special RemoteFlush()
- * instead of a plain write() and set PrivateFlush as needed */
-#define specFD (-2)
+enum s_fd {
+  NOFD = -1,
+  /* use for every FD that needs a special RemoteFlush()
+   * instead of a plain write() and set PrivateFlush as needed */
+  specFD = -2,
+};
 
 #ifndef NOPID /* some OSes (Solaris for one) already define NOPID */
 #define NOPID ((pid_t)0)
 #endif
 #define NOSLOT TW_MAXULDAT
 
-typedef struct s_font {
-  byte AsciiCode;
-  char *Bitmap;
-} font;
-
 typedef struct s_rgb {
   byte Red, Green, Blue;
 } rgb;
 
 /* errors */
-#define NOMEMORY ((udat)1)
-#define NOTABLES ((udat)2)
-#define DLERROR ((udat)3)
-#define SYSCALLERROR ((udat)4)
-#define USERERROR ((udat)5)
+enum e_error {
+  NOMEMORY = 1,
+  NOTABLES = 2,
+  DLERROR = 3,
+  SYSCALLERROR = 4,
+  USERERROR = 5,
+};
 
 #define IS_OBJ(type, O) (((O)->Id >> magic_shift) == type##_magic_id)
 #define IS_WIDGET(O)                                                                               \

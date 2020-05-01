@@ -35,12 +35,12 @@ CONST char *CONST pkg_libdir = PKG_LIBDIR;
 #define M 0xAA
 #define H 0xFF
 
-rgb Palette[MAXCOL + 1] = {
+rgb Palette[tmaxcol + 1] = {
     /* the default colour table, for VGA+ colour systems */
     {0, 0, 0}, {0, 0, M}, {0, M, 0}, {0, M, M}, {M, 0, 0}, {M, 0, M}, {M, M, 0}, {M, M, M},
     {L, L, L}, {L, L, H}, {L, H, L}, {L, H, H}, {H, L, L}, {H, L, H}, {H, H, L}, {H, H, H}};
 
-rgb defaultPalette[MAXCOL + 1] = {
+rgb defaultPalette[tmaxcol + 1] = {
     /* the default colour table, for VGA+ colour systems */
     {0, 0, 0}, {0, 0, M}, {0, M, 0}, {0, M, M}, {M, 0, 0}, {M, 0, M}, {M, M, 0}, {M, M, M},
     {L, L, L}, {L, L, H}, {L, H, L}, {L, H, H}, {H, L, L}, {H, L, H}, {H, H, L}, {H, H, H}};
@@ -55,18 +55,22 @@ keylist TW_KeyList[] = {
 #undef IS
     {NULL, TW_Null, 0, NULL}};
 
-trune GadgetResize[2] = {0xCD, 0xBC}, ScrollBarX[3] = {0xB1, 0x11, 0x10},
-      ScrollBarY[3] = {0xB1, 0x1E, 0x1F}, TabX = 0xDB, TabY = 0xDB,
-      StdBorder[2][9] = {{0xC9, 0xCD, 0xBB, 0xBA, 0x20, 0xBA, 0xC8, 0xCD, 0xBC},
-                         {0xDA, 0xC4, 0xBF, 0xB3, 0x20, 0xB3, 0xC0, 0xC4, 0xD9}},
-      Screen_Back[2] = {0x12, 0x12};
+trune GadgetResize[2] = {0xCD, 0xBC};
+trune ScrollBarX[3] = {0xB1, 0x11, 0x10};
+trune ScrollBarY[3] = {0xB1, 0x1E, 0x1F};
+trune TabX = 0xDB;
+trune TabY = 0xDB;
+trune StdBorder[2][9] = {{0xC9, 0xCD, 0xBB, 0xBA, 0x20, 0xBA, 0xC8, 0xCD, 0xBC},
+                         {0xDA, 0xC4, 0xBF, 0xB3, 0x20, 0xB3, 0xC0, 0xC4, 0xD9}};
+trune Screen_Back[2] = {0x12, 0x12};
 
-tcolor DEFAULT_ColGadgets = COL(HIGH | YELLOW, CYAN),
-       DEFAULT_ColArrows = COL(HIGH | GREEN, HIGH | BLUE),
-       DEFAULT_ColBars = COL(WHITE, HIGH | BLUE), DEFAULT_ColTabs = COL(HIGH | WHITE, HIGH | BLUE),
-       DEFAULT_ColBorder = COL(HIGH | WHITE, HIGH | BLUE),
-       DEFAULT_ColDisabled = COL(HIGH | BLACK, BLACK),
-       DEFAULT_ColSelectDisabled = COL(BLACK, HIGH | BLACK);
+tcolor DEFAULT_ColGadgets = TCOL(thigh | tyellow, tcyan),
+       DEFAULT_ColArrows = TCOL(thigh | tgreen, thigh | tblue),
+       DEFAULT_ColBars = TCOL(twhite, thigh | tblue),
+       DEFAULT_ColTabs = TCOL(thigh | twhite, thigh | tblue),
+       DEFAULT_ColBorder = TCOL(thigh | twhite, thigh | tblue),
+       DEFAULT_ColDisabled = TCOL(thigh | tblack, tblack),
+       DEFAULT_ColSelectDisabled = TCOL(tblack, thigh | tblack);
 
 byte InitData(void) {
   trune *vec[] = {GadgetResize, ScrollBarX,   ScrollBarY,   &TabX,

@@ -21,7 +21,7 @@ byte dlinit_once(void) {
     int err = dlinit();
     if (err != 0) {
       Error(DLERROR);
-      ErrStr = dlerror();
+      Errstr = dlerror();
       initialized = init_error;
     } else {
       initialized = init_ok;

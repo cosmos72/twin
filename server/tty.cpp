@@ -200,7 +200,7 @@ static void invert_screen(void) {
 
   while (count--) {
     a = *p;
-    *p++ = (a & ~TCELL(TW_MAXWCOL, 0)) | TCELL(COL(COLBG(TCOLOR(a)), COLFG(TCOLOR(a))), 0);
+    *p++ = (a & ~TCELL(TW_MAXWCOL, 0)) | TCELL(TCOL(TCOLBG(TCOLOR(a)), TCOLFG(TCOLOR(a))), 0);
     if (p == Split)
       p = Base;
   }
@@ -544,22 +544,22 @@ static void csi_X(int vpar) /* erase the following vpar positions */
 
 static void update_eff(void) {
   udat effects = Effects;
-  tcolor fg = COLFG(ColText), bg = COLBG(ColText);
+  tcolor fg = TCOLFG(ColText), bg = TCOLBG(ColText);
 
   if (effects & EFF_UNDERLINE)
-    fg = COLFG(Underline);
+    fg = TCOLFG(Underline);
   else if (effects & EFF_HALFINTENS)
-    fg = COLFG(HalfInten);
+    fg = TCOLFG(HalfInten);
   if (!!(effects & EFF_REVERSE) != !!(*Flags & TTY_INVERTSCR)) {
-    tcolor tmp = COL(bg & ~HIGH, fg & ~HIGH) | COL(fg & HIGH, bg & HIGH);
-    fg = COLFG(tmp);
-    bg = COLBG(tmp);
+    tcolor tmp = TCOL(bg & ~thigh, fg & ~thigh) | TCOL(fg & thigh, bg & thigh);
+    fg = TCOLFG(tmp);
+    bg = TCOLBG(tmp);
   }
   if (effects & EFF_INTENSITY)
-    fg ^= HIGH;
+    fg ^= thigh;
   if (effects & EFF_BLINK)
-    bg ^= HIGH;
-  Color = COL(fg, bg);
+    bg ^= thigh;
+  Color = TCOL(fg, bg);
 }
 
 #define setCharset(g)                                                                              \
@@ -593,14 +593,14 @@ INLINE trune applyG(trune c) {
 INLINE void csi_m(void) {
   uldat i;
   udat effects = Effects;
-  tcolor fg = COLFG(ColText), bg = COLBG(ColText);
+  tcolor fg = TCOLFG(ColText), bg = TCOLBG(ColText);
 
   for (i = 0; i <= nPar; i++)
     switch (Par[i]) {
     case 0:
       /* all attributes off */
-      fg = COLFG(DefColor);
-      bg = COLBG(DefColor);
+      fg = TCOLFG(DefColor);
+      bg = TCOLBG(DefColor);
       effects = 0;
       break;
     case 1:
@@ -661,7 +661,7 @@ INLINE void csi_m(void) {
               * with white underscore
               * (Linux - use default foreground).
               */
-      fg = COLFG(DefColor);
+      fg = TCOLFG(DefColor);
       effects |= EFF_UNDERLINE;
       break;
     case 39: /* ANSI X3.64-1979 (SCO-ish?)
@@ -669,21 +669,21 @@ INLINE void csi_m(void) {
               * Reset colour to default? It did this
               * before...
               */
-      fg = COLFG(DefColor);
+      fg = TCOLFG(DefColor);
       effects &= ~EFF_UNDERLINE;
       break;
     case 49: /* restore default bg */
-      bg = COLBG(DefColor);
+      bg = TCOLBG(DefColor);
       break;
     default:
       if (Par[i] >= 30 && Par[i] <= 37)
-        Par[i] -= 30, fg = ANSI2VGA(Par[i]);
+        Par[i] -= 30, fg = TANSI2VGA(Par[i]);
       else if (Par[i] >= 40 && Par[i] <= 47)
-        Par[i] -= 40, bg = ANSI2VGA(Par[i]);
+        Par[i] -= 40, bg = TANSI2VGA(Par[i]);
       break;
     }
   Effects = effects;
-  ColText = COL(fg, bg);
+  ColText = TCOL(fg, bg);
 
   update_eff();
 }
@@ -810,15 +810,15 @@ static void setterm_command(void) {
   switch (Par[0]) {
 
   case 1: /* set fg color for underline mode */
-    if (Par[1] <= MAXCOL) {
-      Underline = COL(ANSI2VGA(Par[1]), 0);
+    if (Par[1] <= tmaxcol) {
+      Underline = TCOL(TANSI2VGA(Par[1]), 0);
       if (Effects & EFF_UNDERLINE)
         update_eff();
     }
     break;
   case 2: /* set color for half intensity mode */
-    if (Par[1] <= MAXCOL) {
-      HalfInten = COL(ANSI2VGA(Par[1]), 0);
+    if (Par[1] <= tmaxcol) {
+      HalfInten = TCOL(TANSI2VGA(Par[1]), 0);
       if (Effects & EFF_HALFINTENS)
         update_eff();
     }
@@ -916,9 +916,9 @@ static void reset_tty(byte do_clear) {
   Top = 0;
   Bottom = SizeY;
 
-  ColText = Color = DefColor = COL(WHITE, BLACK);
-  Underline = COL(HIGH | WHITE, BLACK);
-  HalfInten = COL(HIGH | BLACK, BLACK);
+  ColText = Color = DefColor = TCOL(twhite, tblack);
+  Underline = TCOL(thigh | twhite, tblack);
+  HalfInten = TCOL(thigh | tblack, tblack);
 
   Win->Flags |= WINDOWFL_CURSOR_ON;
   Win->CursorType = LINECURSOR;
@@ -1776,7 +1776,7 @@ static void clear_buffer_attributes(window Window) {
     unsigned short *p = (unsigned short *) origin;
     int count = screenbuf_size/2;
     int mask = hi_font_mask | 0xff;
-    
+
     for (; count > 0; count--, p++) {
 	scr_writew((scr_readw(p)&mask) | (video_erase_char&~mask), p);
     }
@@ -1792,7 +1792,7 @@ void set_palette(window Window) {
 
 static int set_get_cmap(unsigned char *arg, int set) {
     int i, j, k;
-    
+
     for (i = 0; i < 16; i++)
 	if (set) {
 	    get_user(default_red[i], arg++);

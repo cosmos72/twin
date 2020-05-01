@@ -4,17 +4,17 @@
 
 	FIXME merge tttype into ttclass (compare with java)
 	      TClass_void ... TClass_ttarg should be real libTT objects
-	      
+
 	FIXME test array length calculations in server/extensions/libTT.c,
 		    libs/libTT/HW/twin_*tunnel_c, libs/libTT/method.c.
 	      test ttfield/ttmethod attributes encoding,
 	      finish (?) attributes decoding
-	      
+
 
         finish twin_tunnel and twin_detunnel libTT tunneling drivers:
 	       fixme ttclass args are passed through tunneling as pointers, not by id.
 	       write twin_detunnel methods
-	       
+
         FIXME test null_CacheThemeShape_ttprogressbar() and
 	      test drawing widgets with non-zero xl,yl
 
@@ -24,18 +24,18 @@
 2. libTT, part 2
 
 	write garbage collector
-	
+
 	write fake_field(,,r) for o->FN (= Class), o->AVL.AVL* (= AVL*)
-	
+
         write ttscrollpane scrollbar policy: always/auto
-	
+
         write ttfn_*->FN_super field and recode TTGetSuper_ttfn()
-	
+
         write utility to prepend/append components to parents
-	
+
 	write more widgets: menus, tttabpanel
 	      (see Java JTabbedPane and other Java swing components)
-	
+
 	problem how to draw a ttscrollframe (ttframe plus scrollbars)?
 	      libTw twindow scrollbars are not powerful enough, they
 	      miss "change event" support.
@@ -44,9 +44,9 @@
 
 	add menu options to builtin terminal emulator and to twterm (requires
 	      sending some kind of events) to set some of the following options:
-	      
+
 	      (ONLY the most useful ones among):
-	      
+
 	      utf-8 (unicode) mode
 	      charset encoding (latin1, cp437, user, graph),
 	      numeric/application keypad,
@@ -63,7 +63,7 @@
 	      color palette.
 
 
-	add boldfont= to X11 and gfx drivers, to be used instead of HIGH
+	add boldfont= to X11 and gfx drivers, to be used instead of thigh
 	      foreground.
 
 	write -hw=fbdev driver.
@@ -131,4 +131,3 @@
    finish libGGI keyboard support
 
    Flame libgpm people for /tmp/gpm* sockets, gpm_tried, syslogging, ncurses
-

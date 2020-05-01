@@ -60,12 +60,12 @@ CONST char *HOME;
 #define M 0xAA
 #define H 0xFF
 
-rgb Palette[MAXCOL + 1] = {
+rgb Palette[tmaxcol + 1] = {
     /* the default colour table, for VGA+ colour systems */
     {0, 0, 0}, {0, 0, M}, {0, M, 0}, {0, M, M}, {M, 0, 0}, {M, 0, M}, {M, M, 0}, {M, M, M},
     {L, L, L}, {L, L, H}, {L, H, L}, {L, H, H}, {H, L, L}, {H, L, H}, {H, H, L}, {H, H, H}};
 
-rgb defaultPalette[MAXCOL + 1] = {
+rgb defaultPalette[tmaxcol + 1] = {
     /* the default colour table, for VGA+ colour systems */
     {0, 0, 0}, {0, 0, M}, {0, M, 0}, {0, M, M}, {M, 0, 0}, {M, 0, M}, {M, M, 0}, {M, M, M},
     {L, L, L}, {L, L, H}, {L, H, L}, {L, H, H}, {H, L, L}, {H, L, H}, {H, H, L}, {H, H, H}};
@@ -258,20 +258,20 @@ static module DlLoadAny(uldat len, char *name) {
       if ((init_func = (byte(*)(module))dlsym((dlhandle)Module->Handle, "InitModule"))) {
         if (init_func(Module)) {
           return Module;
-        } else if (ErrStr == NULL || *ErrStr == '\0') {
+        } else if (Errstr == NULL || *Errstr == '\0') {
           Error(DLERROR);
-          ErrStr = "InitModule() failed";
+          Errstr = "InitModule() failed";
         }
       } else {
         Error(DLERROR);
-        ErrStr = "InitModule() not found in module";
+        Errstr = "InitModule() not found in module";
       }
     } else {
       Error(DLERROR);
-      ErrStr = dlerror();
+      Errstr = dlerror();
     }
   } else {
-    ErrStr = "Out of memory!";
+    Errstr = "Out of memory!";
   }
   return (module)0;
 }
@@ -318,7 +318,7 @@ static byte module_InitHW(CONST char *arg, uldat len) {
     }
     name = buf;
   } else {
-    ErrStr = "Out of memory!";
+    Errstr = "Out of memory!";
     name = "(NULL)";
   }
 
@@ -326,7 +326,7 @@ static byte module_InitHW(CONST char *arg, uldat len) {
     printk("twdisplay: ...module `" SS "' failed to start.\n", name);
   } else
     printk("twdisplay: unable to load display driver module `" SS "' :\n      " SS "\n", name,
-           ErrStr);
+           Errstr);
 
   if (buf)
     FreeMem(buf);
@@ -482,17 +482,17 @@ static display_hw AttachDisplayHW(uldat len, CONST char *arg, uldat slot, byte f
 INLINE void OptimizeChangedVideo(void) {
     uldat _start, start, _end, end;
     ldat i;
-    
+
     for (i=0; i<(ldat)DisplayHeight*2; i++) {
 	start = (uldat)ChangedVideo[i>>1][!(i&1)][0];
-	    
+
 	if (start != (uldat)-1) {
-	    
+
 	    start += (i>>1) * (ldat)DisplayWidth;
 	    _start = start;
 
 	    _end = end = (uldat)ChangedVideo[i>>1][!(i&1)][1] + (i>>1) * (ldat)DisplayWidth;
-		
+
 	    while (start <= end && Video[start] == OldVideo[start])
 		start++;
 	    while (start <= end && Video[end] == OldVideo[end])
@@ -657,7 +657,7 @@ void DragAreaHW(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
 }
 
 void SetPaletteHW(udat N, udat R, udat G, udat B) {
-  if (N <= MAXCOL) {
+  if (N <= tmaxcol) {
     rgb c;
     c.Red = R;
     c.Green = G;

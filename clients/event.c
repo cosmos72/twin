@@ -25,28 +25,28 @@ TW_DECL_MAGIC(event_magic);
 static byte InitEvent(void) {
   return TwCheckMagic(event_magic) && TwOpen(NULL) &&
          (Event_MsgPort = TwCreateMsgPort(7, "twevent")) &&
-         (Event_Menu =
-              TwCreateMenu(COL(BLACK, WHITE), COL(BLACK, GREEN), COL(HIGH | BLACK, WHITE),
-                           COL(HIGH | BLACK, BLACK), COL(RED, WHITE), COL(RED, GREEN), (byte)0)) &&
+         (Event_Menu = TwCreateMenu(TCOL(tblack, twhite), TCOL(tblack, tgreen),
+                                    TCOL(thigh | tblack, twhite), TCOL(thigh | tblack, tblack),
+                                    TCOL(tred, twhite), TCOL(tred, tgreen), (byte)0)) &&
          TwItem4MenuCommon(Event_Menu) &&
          (TwInfo4Menu(Event_Menu, TW_ROW_ACTIVE, 14, " Event Tester ",
                       (TW_CONST tcolor *)"ptppppptpppppp"),
           ttrue) &&
          (Event_Win =
-              TwCreateWindow(12, "Event Tester", NULL, Event_Menu, COL(WHITE, BLACK), TW_NOCURSOR,
+              TwCreateWindow(12, "Event Tester", NULL, Event_Menu, TCOL(twhite, tblack), TW_NOCURSOR,
                              TW_WINDOW_WANT_KEYS | TW_WINDOW_WANT_MOUSE | TW_WINDOW_WANT_CHANGES |
                                  TW_WINDOW_DRAG | TW_WINDOW_RESIZE | TW_WINDOW_CLOSE,
                              TW_WINDOWFL_USEEXPOSE, 18, 8, 0)) &&
-         (TwSetColorsWindow(Event_Win, 0x1FF, COL(HIGH | YELLOW, CYAN),
-                            COL(HIGH | GREEN, HIGH | BLUE), COL(WHITE, HIGH | BLUE),
-                            COL(HIGH | WHITE, HIGH | BLUE), COL(HIGH | WHITE, HIGH | BLUE),
-                            COL(WHITE, BLACK), COL(WHITE, HIGH | BLACK), COL(HIGH | BLACK, BLACK),
-                            COL(BLACK, HIGH | BLACK)),
+         (TwSetColorsWindow(Event_Win, 0x1FF, TCOL(thigh | tyellow, tcyan),
+                            TCOL(thigh | tgreen, thigh | tblue), TCOL(twhite, thigh | tblue),
+                            TCOL(thigh | twhite, thigh | tblue), TCOL(thigh | twhite, thigh | tblue),
+                            TCOL(twhite, tblack), TCOL(twhite, thigh | tblack),
+                            TCOL(thigh | tblack, tblack), TCOL(tblack, thigh | tblack)),
           TwConfigureWindow(Event_Win, 0xF << 2, 0, 0, 10, 5, 30, 15),
           TwMapWindow(Event_Win, TwFirstScreen()), ttrue) &&
 
          (Event_SubWin = TwCreateWindow(
-              9, "SubWindow", NULL, Event_Menu, COL(WHITE, BLUE), TW_NOCURSOR,
+              9, "SubWindow", NULL, Event_Menu, TCOL(twhite, tblue), TW_NOCURSOR,
               TW_WINDOW_WANT_KEYS | TW_WINDOW_WANT_MOUSE | TW_WINDOW_WANT_MOUSE_MOTION |
                   TW_WINDOW_AUTO_FOCUS | TW_WINDOW_WANT_CHANGES,
               TW_WINDOWFL_BORDERLESS, 7, 3, 0)) &&

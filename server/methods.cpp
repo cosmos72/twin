@@ -730,7 +730,7 @@ static gadget CreateEmptyButton(fn_gadget Fn_Gadget, msgport Owner, dat XWidth, 
     Fn_Gadget->Fn_Widget->Used++;
 
     Size = (ldat)--XWidth * --YWidth;
-    BgCol &= COL(0, MAXCOL);
+    BgCol &= TCOL(0, tmaxcol);
 
     for (i = 0; i < 4; i++) {
       for (j = k = (dat)0; j < YWidth; j++, k += XWidth + 1) {
@@ -838,7 +838,7 @@ static byte InitTtyData(window Window, dat ScrollBackLines) {
   if (!p && !(Window->USE.C.Contents = p = (tcell *)AllocMem(count * sizeof(tcell))))
     return tfalse;
 
-  h = TCELL(COL(WHITE, BLACK), ' ');
+  h = TCELL(TCOL(twhite, tblack), ' ');
   while (count--)
     *p++ = h;
 
@@ -865,9 +865,9 @@ static byte InitTtyData(window Window, dat ScrollBackLines) {
 #if 0
     Window->Flags |= WINDOWFL_CURSOR_ON;
 #endif
-  Window->ColText = Data->Color = Data->DefColor = Data->saveColor = COL(WHITE, BLACK);
-  Data->Underline = COL(HIGH | WHITE, BLACK);
-  Data->HalfInten = COL(HIGH | BLACK, BLACK);
+  Window->ColText = Data->Color = Data->DefColor = Data->saveColor = TCOL(twhite, tblack);
+  Data->Underline = TCOL(thigh | twhite, tblack);
+  Data->HalfInten = TCOL(thigh | tblack, tblack);
   Data->TabStop[0] = 0x01010100;
   Data->TabStop[1] = Data->TabStop[2] = Data->TabStop[3] = Data->TabStop[4] = 0x01010101;
   Data->nPar = 0;
@@ -927,7 +927,7 @@ static window CreateWindow(fn_window Fn_Window, msgport Owner, dat TitleLen, CON
     Window->ColTabs = DEFAULT_ColTabs;
     Window->ColBorder = DEFAULT_ColBorder;
     Window->ColText = ColText;
-    Window->ColSelect = COL(COLBG(ColText), COLFG(ColText));
+    Window->ColSelect = TCOL(TCOLBG(ColText), TCOLFG(ColText));
     Window->ColDisabled = DEFAULT_ColDisabled;
     Window->ColSelectDisabled = DEFAULT_ColSelectDisabled;
     /* sanity: */
@@ -1271,14 +1271,14 @@ static void GotoXYWindow(window Window, ldat X, ldat Y) {
 window Create4MenuWindow(fn_window Fn_Window, menu Menu) {
   window Window = (window)0;
   if (Menu && (Window = Fn_Window->Create(Fn_Window, Menu->MsgPort, 0, NULL, (tcolor *)0, Menu,
-                                          COL(BLACK, WHITE), NOCURSOR, WINDOW_AUTO_KEYS,
+                                          TCOL(tblack, twhite), NOCURSOR, WINDOW_AUTO_KEYS,
                                           WINDOWFL_MENU | WINDOWFL_USEROWS | WINDOWFL_ROWS_DEFCOL |
                                               WINDOWFL_ROWS_SELCURRENT,
                                           MIN_XWIN, MIN_YWIN, 0))) {
 
-    Act(SetColors, Window)(Window, 0x1FF, COL(0, 0), COL(0, 0), COL(0, 0), COL(0, 0),
-                           COL(HIGH | WHITE, WHITE), COL(BLACK, WHITE), COL(BLACK, GREEN),
-                           COL(HIGH | BLACK, WHITE), COL(HIGH | BLACK, BLACK));
+    Act(SetColors, Window)(Window, 0x1FF, TCOL(0, 0), TCOL(0, 0), TCOL(0, 0), TCOL(0, 0),
+                           TCOL(thigh | twhite, twhite), TCOL(tblack, twhite), TCOL(tblack, tgreen),
+                           TCOL(thigh | tblack, twhite), TCOL(thigh | tblack, tblack));
     Act(Configure, Window)(Window, 0x3F, 0, 1, MIN_XWIN, MIN_YWIN, TW_MAXDAT, TW_MAXDAT);
   }
   return Window;
@@ -1793,7 +1793,7 @@ static byte SetTextRow(row Row, uldat Len, CONST char *Text, byte DefaultCol) {
       }
       if (!(Row->Flags & ROW_DEFCOL) && !DefaultCol)
         /* will not work correctly if sizeof(tcolor) != 1 */
-        memset(Row->ColText, COL(WHITE, BLACK), Len * sizeof(tcolor));
+        memset(Row->ColText, TCOL(twhite, tblack), Len * sizeof(tcolor));
     }
     Row->Len = Len;
     Row->Gap = Row->LenGap = 0;
@@ -1808,7 +1808,7 @@ static byte SetTRuneRow(row Row, uldat Len, CONST trune *TRune, byte DefaultCol)
       CopyMem(TRune, Row->Text, Len * sizeof(trune));
       if (!(Row->Flags & ROW_DEFCOL) && !DefaultCol)
         /* will not work correctly if sizeof(tcolor) != 1 */
-        memset(Row->ColText, COL(WHITE, BLACK), Len * sizeof(tcolor));
+        memset(Row->ColText, TCOL(twhite, tblack), Len * sizeof(tcolor));
     }
     Row->Len = Len;
     Row->Gap = Row->LenGap = 0;

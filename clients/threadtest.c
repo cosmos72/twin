@@ -33,9 +33,9 @@ TW_DECL_MAGIC(threadtest_magic);
 byte InitThrd(void) {
   return TwCheckMagic(threadtest_magic) && TwOpen(NULL) &&
          (Thrd_MsgPort = TwCreateMsgPort(10, "threadtest")) &&
-         (Thrd_Menu =
-              TwCreateMenu(COL(BLACK, WHITE), COL(BLACK, GREEN), COL(HIGH | BLACK, WHITE),
-                           COL(HIGH | BLACK, BLACK), COL(RED, WHITE), COL(RED, GREEN), (byte)0)) &&
+         (Thrd_Menu = TwCreateMenu(TCOL(tblack, twhite), TCOL(tblack, tgreen),
+                                   TCOL(thigh | tblack, twhite), TCOL(thigh | tblack, tblack),
+                                   TCOL(tred, twhite), TCOL(tred, tgreen), (byte)0)) &&
          (TwInfo4Menu(Thrd_Menu, TW_ROW_ACTIVE, 13, " Thread Test ",
                       (TW_CONST tcolor *)"ppppppppppppp"),
           TwItem4MenuCommon(Thrd_Menu));
@@ -69,7 +69,7 @@ void mainloop(twindow *Win) {
   srand48(++seed);
 
   if (!(*Win = TwCreateWindow(11, Win == &Thrd_Win1 ? "threadtest1" : "threadtest2", NULL,
-                              Thrd_Menu, COL(HIGH | YELLOW, BLUE), TW_NOCURSOR,
+                              Thrd_Menu, TCOL(thigh | tyellow, tblue), TW_NOCURSOR,
                               TW_WINDOW_DRAG | TW_WINDOW_CLOSE | TW_WINDOW_RESIZE,
                               TW_WINDOWFL_USECONTENTS, 31 + sizeof(long) / sizeof(tcell), 16, 0)))
     Quit();

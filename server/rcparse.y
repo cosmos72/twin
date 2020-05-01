@@ -23,7 +23,7 @@
 
 #include <Tw/Twkeys.h>
 #include <Tutf/Tutf.h>
-    
+
 #include "twin.h"
 #include "algo.h"
 #include "alloc.h"
@@ -94,10 +94,10 @@
 %token '(' ')' ADDSCREEN ADDTOMENU ADDTOFUNC
 %token BACKGROUND BORDER BUTTON
 %token DELETEFUNC DELETEMENU DELETEBUTTON DELETESCREEN
-%token READ 
+%token READ
 
 /* tokens valid as first function token */
-%token EXEC EXECTTY GLOBALFLAGS INTERACTIVE KEY 
+%token EXEC EXECTTY GLOBALFLAGS INTERACTIVE KEY
 %token MENU MODULE MOUSE MOVE MOVESCREEN NEXT NOP PREV
 %token RESTART RESIZE RESIZESCREEN
 %token SCREEN SCROLL SENDTOSCREEN SLEEP STDERR
@@ -114,7 +114,7 @@
 
 %token USERFUNC
 /* end of tokens valid as first function token */
-    
+
 %token '+' '-' FL_ON FL_OFF FL_TOGGLE FL_ACTIVE FL_INACTIVE FL_LEFT FL_RIGHT
 
 %token <val> GLOBAL_FLAG
@@ -127,7 +127,7 @@
 
 %token <val> KBD_FLAG
 /* one of KBD_*_FL in twin.h */
-    
+
 /* atoms: */
 %token <val>    NUMBER
 %token <_string> STRING
@@ -142,7 +142,7 @@
 %type <imm>	    nl opt_nl immediate_line
 %type <_node>       func line
 %type <_node>       global_flag funcbody menubody textbody
-%type <_node>       string_list line_list global_list 
+%type <_node>       string_list line_list global_list
 %type <_node>       funcbody_list _funcbody_list
 %type <_node>       menubody_list _menubody_list
 %type <_node>       textbody_list _textbody_list
@@ -227,13 +227,13 @@ textbody	: string nl   { $$ = MakeNode($1); }
 		;
 
 color		: NUMBER		      { $$ = (tcolor) $1; }
-		| high COLOR		      { $$ = COL($1|$2, BLACK); }
-		| high COLOR FL_ON high COLOR { $$ = COL($1|$2, $4|$5); }
-		|            FL_ON high COLOR { $$ = COL(WHITE, $2|$3); }
+		| high COLOR		      { $$ = TCOL($1|$2, tblack); }
+		| high COLOR FL_ON high COLOR { $$ = TCOL($1|$2, $4|$5); }
+		|            FL_ON high COLOR { $$ = TCOL(twhite, $2|$3); }
 		;
 
 high		: /* nothing */ { $$ = (tcolor)0; }
-		| COL_HIGH	{ $$ = HIGH; }
+		| COL_HIGH	{ $$ = thigh; }
 		;
 
 global_list	:             global_flag { $$ = AddtoNodeList(NULL, $1); }
@@ -300,7 +300,7 @@ opt_flag	: /* nothing */ { $$ = 0; }
 flag		: '+'		{ $$ = '+'; }
 		| '-'		{ $$ = '-'; }
 		;
-		
+
 opt_flag_kbd	: /* nothing */ { $$ = 0; }
 		| flag_kbd
 		;
@@ -322,7 +322,7 @@ flag_active	: FL_ACTIVE	{ $$ = FL_ACTIVE; }
 flag_lr		: FL_LEFT	{ $$ = FL_LEFT; }
 		| FL_RIGHT	{ $$ = FL_RIGHT; }
 		;
-		
+
 %%
 
 #ifdef DEBUG_YACC
@@ -340,4 +340,3 @@ static void yyprint(FILE *file, int type, void *value) {
 static byte rcparse(CONST char *path) {
     return set_yy_file(path) == 0 && yyparse() == 0;
 }
-

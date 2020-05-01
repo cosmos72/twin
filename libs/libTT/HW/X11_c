@@ -6,16 +6,16 @@
  * modify it under the terms of the GNU Library General Public
  * License as published by the Free Software Foundation; either
  * version 2 of the License, or (at your option) any later version.
- * 
+ *
  */
 
 /*
  *                 WARNING!
- * 
+ *
  * this file is `X11_c' and is preprocessed by m4 to produce `X11_m4.c'
- * 
+ *
  * It must be a valid m4 file, and must produce a valid C include file.
- * 
+ *
  */
 
 
@@ -29,7 +29,7 @@ DECL_BEFORE
 /*
  * We need to write down only overloaded methods.
  */
- 
+
 #define XNUMCOL 16
 
 static Display *dpy;
@@ -66,10 +66,10 @@ static ttcol _col;
 
 
 # define XDRAW(col, buf, buflen) \
-    if (xsgc.foreground != xcol[COLFG(col)]) \
-	XSetForeground(dpy, xgc, xsgc.foreground = xcol[COLFG(col)]); \
-    if (xsgc.background != xcol[COLBG(col)]) \
-	XSetBackground(dpy, xgc, xsgc.background = xcol[COLBG(col)]); \
+    if (xsgc.foreground != xcol[TCOLFG(col)]) \
+	XSetForeground(dpy, xgc, xsgc.foreground = xcol[TCOLFG(col)]); \
+    if (xsgc.background != xcol[TCOLBG(col)]) \
+	XSetBackground(dpy, xgc, xsgc.background = xcol[TCOLBG(col)]); \
     XDrawImageString16(dpy, w, xgc, xbegin, ybegin + xupfont, buf, buflen)
 
 TT_INLINE void X11_Mogrify(Window w, ttshort x, ttshort y, ttattr *Text, ttattr *OldText, ttuint len, ttbyte ValidOldText) {
@@ -79,10 +79,10 @@ TT_INLINE void X11_Mogrify(Window w, ttshort x, ttshort y, ttattr *Text, ttattr 
     ttfont f;
     XChar2b buf[TT_SMALLBUFF];
     int xbegin = x * xwfont, ybegin = y * xhfont;
-    
+
     V = Text;
     oV = OldText;
-    
+
     for (_col = ~TCOLOR(*V); len; x++, V++, oV++, len--) {
 	col = TCOLOR(*V);
 	if (buflen && (col != _col || (ValidOldText && *V == *oV) || buflen == TT_SMALLBUFF)) {
@@ -136,7 +136,7 @@ static BUILD(ttwidget) {
     if ((o->native = (opaque)XCreateSimpleWindow
 	 (dpy, root, o->x * xwfont, o->y * xhfont,
 	  o->w * xwfont, o->h * xhfont, 0, 0, xcol[o->col]))) {
-	
+
 	return o;
     }
     return NULL;
@@ -146,7 +146,7 @@ static void DEF(AddTo_ttwidget)(ttwidget o, ttvisible parent, ttany constraints)
 	FNDEFAULT(ttwidget)->AddTo(o, parent, constraints);
 
 	XReparentWindow(dpy, (Window)o->native, (Window)parent->native, o->x * xwfont, o->y * xhfont);
-	
+
 	if (o->vflags & ttvisible_vflags_visible)
 	    XMapWindow(dpy, (Window)o->native);
     }
@@ -163,7 +163,7 @@ static void DEF(SetVisible_ttwidget)(ttwidget o, ttbyte on_off) {
 static void DEF(Remove_ttwidget)(ttwidget o) {
     if (o->parent) {
 	FNDEFAULT(ttwidget)->Remove(o);
-	
+
 	XUnmapWindow(dpy, (Window)o->native);
     }
 }
@@ -173,9 +173,9 @@ static void DEF(Remove_ttwidget)(ttwidget o) {
 static BUILD(ttframe) {
     /* ttframe are non-visible when created */
     o->vflags &= ~ttvisible_vflags_visible;
-    
+
     if (FNDEFAULT(ttframe)->Build(o)) {
-	
+
 	XChangeProperty(dpy, (Window)o->native, xWM_PROTOCOLS,
 			XA_ATOM, 32, PropModeReplace,
 			(unsigned char *) &xWM_DELETE_WINDOW, 1);
@@ -216,7 +216,7 @@ static ttbyte HWDEF(MainLoop)(void) {
 	if (!X11_FireEvent(&ev))
 	    break;
     }
-    
+
     exitmainloop = FALSE;
     return 1;
 }
@@ -271,13 +271,13 @@ static Tutf_function X11_UTF_16_to_charset_function(TT_CONST ttbyte *charset) {
     Atom fontatom;
     TT_CONST ttbyte *s, *fontname = NULL;
     ttuint i;
-    
+
     if (!charset) {
 	/* attempt to autodetect encoding. */
 	fp = xsfont->properties;
 	fontatom = XInternAtom (dpy, "FONT", False);
 	i = xsfont->n_properties;
-	
+
 	while (i--) {
 	    if (fp->name == fontatom) {
 		fontname = XGetAtomName(dpy, fp->card32);
@@ -297,7 +297,7 @@ static Tutf_function X11_UTF_16_to_charset_function(TT_CONST ttbyte *charset) {
 	    if (!i)
 		charset = s + 2; /* skip current char and '-' */
 	}
-	    
+
 	if (!charset) {
 	    if (xsfont->min_byte1 < xsfont->max_byte1) {
 		/* font is more than just 8-bit. For now, assume it's unicode */
@@ -315,21 +315,21 @@ static Tutf_function X11_UTF_16_to_charset_function(TT_CONST ttbyte *charset) {
 	    return Tutf_UTF_16_to_CP437;
 	}
     }
-    
+
     i = Tutf_charset_id(charset);
     s = Tutf_charset_name(i);
     if (s && !strcmp(s, T_NAME_UTF_16)) {
 	/* this is an Unicode font. good. */
 	return NULL;
     }
-    
+
     if (i == (ttuint)-1) {
 	/*
 	printk("      X11_InitHW(): libTutf warning: unknown charset `%."TTSB"s', assuming `CP437'\n", charset);
 	 */
 	return Tutf_UTF_16_to_CP437;
     }
-    
+
     return Tutf_UTF_16_to_charset_function(i);
 }
 
@@ -348,7 +348,7 @@ ttclasses _TT_X11_InitHW(tthw *HW)
     XColor xcolor;
     ttuint i;
     TT_CONST ttbyte *fontname = NULL, *charset = NULL;
-    
+
     /*
      * (*HW) must be set even if initialization fails,
      * to report error messages.
@@ -360,13 +360,13 @@ ttclasses _TT_X11_InitHW(tthw *HW)
 	screen = DefaultScreen(dpy);
 	depth = DefaultDepth(dpy, screen);
 	colormap = DefaultColormap(dpy, screen);
-	
+
 	for (i = 0; i < XNUMCOL; i++) {
 	    xcolor.red   = 0x5555 * ((i & 4 ? 2 : 0) | (i & 8 ? 1 : 0));
 	    xcolor.green = 0x5555 * ((i & 2 ? 2 : 0) | (i & 8 ? 1 : 0));
 	    xcolor.blue  = 0x5555 * ((i & 1 ? 2 : 0) | (i & 8 ? 1 : 0));
 	    if (!XAllocColor(dpy, colormap, &xcolor)) {
-		
+
 		break;
 	    }
 	    xcol[i] = xcolor.pixel;
@@ -377,15 +377,15 @@ ttclasses _TT_X11_InitHW(tthw *HW)
 	if (((fontname && (xsfont = XLoadQueryFont(dpy, fontname))) ||
 	     (xsfont = XLoadQueryFont(dpy, "vga")) ||
 	     (xsfont = XLoadQueryFont(dpy, "fixed")))) {
-	    
-	    
+
+
 	    xwfont = xsfont->min_bounds.width;
 	    xhfont = (xupfont = xsfont->ascent) + xsfont->descent;
 
 	    xsgc.foreground = xsgc.background = xcol[0];
 	    xsgc.graphics_exposures = False;
 	    xsgc.font = xsfont->fid;
-	    
+
 	    if ((xgc = XCreateGC(dpy, root, GCFont|GCForeground|GCBackground|
 				 GCGraphicsExposures, &xsgc))) {
 
@@ -396,21 +396,21 @@ ttclasses _TT_X11_InitHW(tthw *HW)
 		xWM_PROTOCOLS = XInternAtom(dpy, "WM_PROTOCOLS", False);
 		xWM_DELETE_WINDOW = XInternAtom(dpy, "WM_DELETE_WINDOW", False);
 		xTARGETS = XInternAtom(dpy, "TARGETS", False);
-		
+
 		xhints.flags = PResizeInc;
 		xhints.width_inc  = xwfont;
 		xhints.height_inc = xhfont;
-		
+
 		if (!(xUTF_16_to_charset = X11_UTF_16_to_charset_function(charset)))
 		    xUTF_16_to_charset = X11_UTF_16_to_UTF_16;
 		return &X11_TTClasses;
 	    }
 	}
     } while (0);
-    
+
     if (dpy)
 	X11_Close();
-    
+
     /*FAIL(, ); */
 
     return (ttclasses)0;
@@ -418,4 +418,3 @@ ttclasses _TT_X11_InitHW(tthw *HW)
 
 
 DECL_AFTER
-

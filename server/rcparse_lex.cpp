@@ -868,7 +868,7 @@ static char errbuf[256];
 # define YY_DECL int yylex(YYSTYPE *_yylval, void *yylloc)
 # define yylval (*_yylval)
 #endif
-    
+
 #define YY_SKIP_YYWRAP
 #define YY_NO_SCAN_BYTES
 #define YY_NO_SCAN_STRING
@@ -1512,42 +1512,42 @@ YY_RULE_SETUP
 case 71:
 YY_RULE_SETUP
 #line 150 "rcparse.l"
-{ yylval.val = BLACK;    return COLOR; }
+{ yylval.val = tblack;    return COLOR; }
 	YY_BREAK
 case 72:
 YY_RULE_SETUP
 #line 151 "rcparse.l"
-{ yylval.val = BLUE;     return COLOR; }
+{ yylval.val = tblue;     return COLOR; }
 	YY_BREAK
 case 73:
 YY_RULE_SETUP
 #line 152 "rcparse.l"
-{ yylval.val = GREEN;    return COLOR; }
+{ yylval.val = tgreen;    return COLOR; }
 	YY_BREAK
 case 74:
 YY_RULE_SETUP
 #line 153 "rcparse.l"
-{ yylval.val = CYAN;     return COLOR; }
+{ yylval.val = tcyan;     return COLOR; }
 	YY_BREAK
 case 75:
 YY_RULE_SETUP
 #line 154 "rcparse.l"
-{ yylval.val = RED;      return COLOR; }
+{ yylval.val = tred;      return COLOR; }
 	YY_BREAK
 case 76:
 YY_RULE_SETUP
 #line 155 "rcparse.l"
-{ yylval.val = MAGENTA;  return COLOR; }
+{ yylval.val = tmagenta;  return COLOR; }
 	YY_BREAK
 case 77:
 YY_RULE_SETUP
 #line 156 "rcparse.l"
-{ yylval.val = YELLOW;   return COLOR; }
+{ yylval.val = tyellow;   return COLOR; }
 	YY_BREAK
 case 78:
 YY_RULE_SETUP
 #line 157 "rcparse.l"
-{ yylval.val = WHITE;    return COLOR; }
+{ yylval.val = twhite;    return COLOR; }
 	YY_BREAK
 case 79:
 YY_RULE_SETUP
@@ -1608,7 +1608,7 @@ YY_RULE_SETUP
             int len = strlen(yytext + 1);
             char c, *p = yytext + 1;
             char *res = (char *)my_malloc(len), *s = res;
-            
+
             while ((c = *p)) {
                 if (c != '\\' || !p[1])
                 *s++ = *p++;
@@ -2711,10 +2711,10 @@ void yyfree (void * ptr )
 int set_yy_file(CONST char *path) {
     uldat len;
     FILE *f;
-    
+
     if (!path)
         return 1;
-    
+
     if (read_stack_curr >= MAX_READ_DEPTH) {
         fprintf(stderr, "twin: %s:%d: `Read' commands nested too deeply!\n",
             FILE_NAME, LINE_NO);
@@ -2725,7 +2725,7 @@ int set_yy_file(CONST char *path) {
         return 1;
 
     len = strlen(path) + 1;
-    
+
     read_stack[read_stack_curr++] = YY_CURRENT_BUFFER;
     LINE_NO = 1;
     FILE_NAME = (char *)my_malloc(len);
@@ -2745,5 +2745,4 @@ static int yywrap(void) {
     }
     return read_stack_curr <= 0;
 }
-
 

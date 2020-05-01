@@ -71,10 +71,10 @@
 #define XDRAW_FN(FN, col, buf, buflen)                                                             \
   do {                                                                                             \
     unsigned long __mask = 0;                                                                      \
-    if (xsgc.foreground != xcol[COLFG(col)])                                                       \
-      xsgc.foreground = xcol[COLFG(col)], __mask |= GCForeground;                                  \
-    if (xsgc.background != xcol[COLBG(col)])                                                       \
-      xsgc.background = xcol[COLBG(col)], __mask |= GCBackground;                                  \
+    if (xsgc.foreground != xcol[TCOLFG(col)])                                                      \
+      xsgc.foreground = xcol[TCOLFG(col)], __mask |= GCForeground;                                 \
+    if (xsgc.background != xcol[TCOLBG(col)])                                                      \
+      xsgc.background = xcol[TCOLBG(col)], __mask |= GCBackground;                                 \
     if (__mask)                                                                                    \
       XChangeGC(xdisplay, xgc, __mask, &xsgc);                                                     \
     (FN)(xdisplay, xwindow, xgc, xbegin, ybegin + xupfont, buf, buflen);                           \
@@ -117,10 +117,10 @@ INLINE void gfx_Draw1Mono(myXChar *f, tcolor col, tcell gfx, int xbegin, int ybe
   int i = (gfx % pitch) * (ldat)xwfont;
   int j = (gfx / pitch) * (ldat)xhfont;
   unsigned long mask = 0;
-  if (xthemesgc.foreground != xcol[COLFG(col)])
-    xthemesgc.foreground = xcol[COLFG(col)], mask |= GCForeground;
-  if (xthemesgc.background != xcol[COLBG(col)])
-    xthemesgc.background = xcol[COLBG(col)], mask |= GCBackground;
+  if (xthemesgc.foreground != xcol[TCOLFG(col)])
+    xthemesgc.foreground = xcol[TCOLFG(col)], mask |= GCForeground;
+  if (xthemesgc.background != xcol[TCOLBG(col)])
+    xthemesgc.background = xcol[TCOLBG(col)], mask |= GCBackground;
   if (xthemesgc.ts_x_origin != xbegin - i)
     xthemesgc.ts_x_origin = xbegin - i, mask |= GCTileStipXOrigin;
   if (xthemesgc.ts_y_origin != ybegin - j)
@@ -170,7 +170,7 @@ static void gfx_DrawColor(myXChar *buf, udat buflen, tcolor col, tcell gfx, int 
 
 #define XDRAW_ANY(buf, buflen, col, gfx)                                                           \
   do {                                                                                             \
-    if (!gfx || (IS_GFX_INSIDE(gfx) && (xbg_flag == GFX_USE_NONE || COLBG(col) != BLACK)) ||       \
+    if (!gfx || (IS_GFX_INSIDE(gfx) && (xbg_flag == GFX_USE_NONE || TCOLBG(col) != tblack)) ||     \
         (IS_GFX_ROOT(gfx) && xroot_flag == GFX_USE_NONE)) {                                        \
       XDRAW_I(buf, buflen, col);                                                                   \
     } else if ((IS_GFX_INSIDE(gfx) && xbg_flag == GFX_USE_ROOT) ||                                 \
@@ -594,7 +594,7 @@ static byte gfx_InitHW(void) {
       xscreen = DefaultScreen(xdisplay);
       xdepth = DefaultDepth(xdisplay, xscreen);
 
-      for (i = 0; i <= MAXCOL; i++) {
+      for (i = 0; i <= tmaxcol; i++) {
         xcolor.red = 257 * (udat)Palette[i].Red;
         xcolor.green = 257 * (udat)Palette[i].Green;
         xcolor.blue = 257 * (udat)Palette[i].Blue;
@@ -604,7 +604,7 @@ static byte gfx_InitHW(void) {
         }
         xcol[i] = xcolor.pixel;
       }
-      if (i <= MAXCOL)
+      if (i <= tmaxcol)
         break;
 
       xattr.background_pixel = xcol[0];

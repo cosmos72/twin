@@ -107,10 +107,10 @@ static ttfont X11_UTF_16_to_UTF_16(ttfont c) {
 static ttcol _col;
 
 #define XDRAW(col, buf, buflen)                                                                    \
-  if (xsgc.foreground != xcol[COLFG(col)])                                                         \
-    XSetForeground(dpy, xgc, xsgc.foreground = xcol[COLFG(col)]);                                  \
-  if (xsgc.background != xcol[COLBG(col)])                                                         \
-    XSetBackground(dpy, xgc, xsgc.background = xcol[COLBG(col)]);                                  \
+  if (xsgc.foreground != xcol[TCOLFG(col)])                                                         \
+    XSetForeground(dpy, xgc, xsgc.foreground = xcol[TCOLFG(col)]);                                  \
+  if (xsgc.background != xcol[TCOLBG(col)])                                                        \
+    XSetBackground(dpy, xgc, xsgc.background = xcol[TCOLBG(col)]);                                 \
   XDrawImageString16(dpy, w, xgc, xbegin, ybegin + xupfont, buf, buflen)
 
 TT_INLINE void X11_Mogrify(Window w, ttshort x, ttshort y, ttattr *Text, ttattr *OldText,
@@ -244,7 +244,7 @@ static ttbyte X11_MainLoop(void) {
 	if (!X11_FireEvent(&ev))
 	    break;
     }
-    
+
     exitmainloop = tfalse;
     return 1;
 }

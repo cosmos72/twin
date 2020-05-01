@@ -27,7 +27,7 @@ struct x11_data {
   XftDraw *xftdraw;
   XftColor *foreground; // current foreground color
   XftColor *background; // current background color
-  XftColor *xftcolors[MAXCOL + 1];
+  XftColor *xftcolors[tmaxcol + 1];
 #endif
 #ifdef TW_FEATURE_X11_XIM_XIC /* autodetected */
   XIM xim;
@@ -40,7 +40,7 @@ struct x11_data {
   uldat xReqCount;
   uldat XReqCount;
   XSelectionRequestEvent XReq[NEST];
-  unsigned long xcol[MAXCOL + 1];
+  unsigned long xcol[tmaxcol + 1];
   Atom xWM_PROTOCOLS, xWM_DELETE_WINDOW, xTARGETS;
 };
 

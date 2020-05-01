@@ -260,7 +260,7 @@ static void termcap_QuitVideo(void) {
 
 #define termcap_MogrifyInit()                                                                      \
   fputs(tc_attr_off, stdOUT);                                                                      \
-  _col = COL(WHITE, BLACK)
+  _col = TCOL(twhite, tblack)
 #define termcap_MogrifyFinish()                                                                    \
   do {                                                                                             \
   } while (0)
@@ -276,36 +276,36 @@ INLINE void termcap_SetColor(tcolor col) {
   char *colp = colbuf;
   byte c;
 
-  if ((col & COL(HIGH, HIGH)) != (_col & COL(HIGH, HIGH))) {
+  if ((col & TCOL(thigh, thigh)) != (_col & TCOL(thigh, thigh))) {
 
-    if (((_col & COL(0, HIGH)) && !(col & COL(0, HIGH))) ||
-        ((_col & COL(HIGH, 0)) && !(col & COL(HIGH, 0)))) {
+    if (((_col & TCOL(0, thigh)) && !(col & TCOL(0, thigh))) ||
+        ((_col & TCOL(thigh, 0)) && !(col & TCOL(thigh, 0)))) {
 
       /* cannot turn off blinking or standout, reset everything */
       colp = termcap_CopyAttr(tc_attr_off, colp);
-      _col = COL(WHITE, BLACK);
+      _col = TCOL(twhite, tblack);
     }
-    if ((col & COL(HIGH, 0)) && !(_col & COL(HIGH, 0)))
+    if ((col & TCOL(thigh, 0)) && !(_col & TCOL(thigh, 0)))
       colp = termcap_CopyAttr(tc_bold_on, colp);
-    if ((col & COL(0, HIGH)) && !(_col & COL(0, HIGH)))
+    if ((col & TCOL(0, thigh)) && !(_col & TCOL(0, thigh)))
       colp = termcap_CopyAttr(tc_blink_on, colp);
   }
 
-  if ((col & COL(WHITE, WHITE)) != (_col & COL(WHITE, WHITE))) {
+  if ((col & TCOL(twhite, twhite)) != (_col & TCOL(twhite, twhite))) {
     *colp++ = '\033';
     *colp++ = '[';
 
-    if ((col & COL(WHITE, 0)) != (_col & COL(WHITE, 0))) {
+    if ((col & TCOL(twhite, 0)) != (_col & TCOL(twhite, 0))) {
       *colp++ = '3';
-      c = COLFG(col) & ~HIGH;
-      *colp++ = VGA2ANSI(c) + '0';
+      c = TCOLFG(col) & ~thigh;
+      *colp++ = TVGA2ANSI(c) + '0';
       *colp++ = ';';
     }
 
-    if ((col & COL(0, WHITE)) != (_col & COL(0, WHITE))) {
+    if ((col & TCOL(0, twhite)) != (_col & TCOL(0, twhite))) {
       *colp++ = '4';
-      c = COLBG(col) & ~HIGH;
-      *colp++ = VGA2ANSI(c) + '0';
+      c = TCOLBG(col) & ~thigh;
+      *colp++ = TVGA2ANSI(c) + '0';
       *colp++ = 'm';
     } else if (colp[-1] == ';') {
       colp[-1] = 'm';
@@ -399,7 +399,7 @@ INLINE void termcap_SingleMogrify(dat x, dat y, tcell V) {
 static void termcap_ShowMouse(void) {
   uldat pos =
       (HW->Last_x = HW->MouseState.x) + (HW->Last_y = HW->MouseState.y) * (ldat)DisplayWidth;
-  tcell h = Video[pos], c = TCELL_COLMASK(~h) ^ TCELL(COL(HIGH, HIGH), 0);
+  tcell h = Video[pos], c = TCELL_COLMASK(~h) ^ TCELL(TCOL(thigh, thigh), 0);
 
   termcap_SingleMogrify(HW->MouseState.x, HW->MouseState.y, c | TCELL_FONTMASK(h));
 

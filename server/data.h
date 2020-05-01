@@ -12,7 +12,7 @@
 extern CONST char *CONST pkg_libdir;
 extern CONST char *CONST pkg_libdir_modules_;
 
-extern rgb Palette[MAXCOL + 1], defaultPalette[MAXCOL + 1];
+extern rgb Palette[tmaxcol + 1], defaultPalette[tmaxcol + 1];
 
 typedef struct keylist keylist;
 struct keylist {

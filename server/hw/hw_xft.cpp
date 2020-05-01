@@ -79,14 +79,14 @@ static void X11_XftDrawString16(Display *display, Drawable d, GC gc, int x, int 
 
 /* manage foreground/background colors */
 static void X11_SetColors(tcolor col) {
-  if (xsgc.foreground != xcol[COLFG(col)]) {
-    XSetForeground(xdisplay, xgc, xsgc.foreground = xcol[COLFG(col)]);
-    xforeground = xftcolors[COLFG(col)];
+  if (xsgc.foreground != xcol[TCOLFG(col)]) {
+    XSetForeground(xdisplay, xgc, xsgc.foreground = xcol[TCOLFG(col)]);
+    xforeground = xftcolors[TCOLFG(col)];
   }
 
-  if (xsgc.background != xcol[COLBG(col)]) {
-    XSetBackground(xdisplay, xgc, xsgc.background = xcol[COLBG(col)]);
-    xbackground = xftcolors[COLBG(col)];
+  if (xsgc.background != xcol[TCOLBG(col)]) {
+    XSetBackground(xdisplay, xgc, xsgc.background = xcol[TCOLBG(col)]);
+    xbackground = xftcolors[TCOLBG(col)];
   }
 }
 
@@ -246,7 +246,7 @@ static void X11_FlavorQuitHW(void) {
   }
   if (xftdraw)
     XftDrawDestroy(xftdraw);
-  for (int i = 0; i < MAXCOL; i++) {
+  for (int i = 0; i < tmaxcol; i++) {
     if (xftcolors[i] == NULL) {
       break;
     }

@@ -354,13 +354,13 @@ void FillButtonWin(void) {
       Act(TtyWriteTCell, ButtonWin)(ButtonWin, 15, 1 + i * 2, 2, h);
     }
     Do(Create, Gadget)(FnGadget, Builtin_MsgPort, (widget)ButtonWin, 3, 1, "[+]", 0,
-                       GADGETFL_TEXT_DEFCOL, 3 | (j << 2), COL(BLACK, WHITE),
-                       COL(HIGH | WHITE, GREEN), COL(HIGH | BLACK, WHITE), COL(HIGH | BLACK, BLACK),
-                       22, 1 + i * 2);
+                       GADGETFL_TEXT_DEFCOL, 3 | (j << 2), TCOL(tblack, twhite),
+                       TCOL(thigh | twhite, tgreen), TCOL(thigh | tblack, twhite),
+                       TCOL(thigh | tblack, tblack), 22, 1 + i * 2);
     Do(Create, Gadget)(FnGadget, Builtin_MsgPort, (widget)ButtonWin, 3, 1, "[-]", 0,
-                       GADGETFL_TEXT_DEFCOL, 2 | (j << 2), COL(BLACK, WHITE),
-                       COL(HIGH | WHITE, GREEN), COL(HIGH | BLACK, WHITE), COL(HIGH | BLACK, BLACK),
-                       19, 1 + i * 2);
+                       GADGETFL_TEXT_DEFCOL, 2 | (j << 2), TCOL(tblack, twhite),
+                       TCOL(thigh | twhite, tgreen), TCOL(thigh | tblack, twhite),
+                       TCOL(thigh | tblack, tblack), 19, 1 + i * 2);
   }
 }
 
@@ -760,13 +760,14 @@ void FullUpdateWinList(widget listWin) {
 #ifdef CONF_PRINTK
 static byte InitMessagesWin(void) {
   MessagesWin = Do(Create, Window)(
-      FnWindow, Builtin_MsgPort, 8, "Messages", NULL, Builtin_Menu, COL(WHITE, BLACK), LINECURSOR,
-      WINDOW_DRAG | WINDOW_RESIZE | WINDOW_X_BAR | WINDOW_Y_BAR | WINDOW_CLOSE, WINDOWFL_CURSOR_ON,
-      60, 20, 200);
+      FnWindow, Builtin_MsgPort, 8, "Messages", NULL, Builtin_Menu, TCOL(twhite, tblack),
+      LINECURSOR, WINDOW_DRAG | WINDOW_RESIZE | WINDOW_X_BAR | WINDOW_Y_BAR | WINDOW_CLOSE,
+      WINDOWFL_CURSOR_ON, 60, 20, 200);
   if (MessagesWin) {
-    Act(SetColors, MessagesWin)(MessagesWin, 0x1F1, COL(HIGH | GREEN, WHITE), 0, 0, 0,
-                                COL(HIGH | WHITE, WHITE), COL(BLACK, WHITE), COL(BLACK, GREEN),
-                                COL(HIGH | BLACK, WHITE), COL(HIGH | BLACK, BLACK));
+    Act(SetColors, MessagesWin)(MessagesWin, 0x1F1, TCOL(thigh | tgreen, twhite), 0, 0, 0,
+                                TCOL(thigh | twhite, twhite), TCOL(tblack, twhite),
+                                TCOL(tblack, tgreen), TCOL(thigh | tblack, twhite),
+                                TCOL(thigh | tblack, tblack));
   }
   return !!MessagesWin;
 }
@@ -776,13 +777,13 @@ static byte InitScreens(void) {
   screen OneScreen;
 
   if ((OneScreen = Do(CreateSimple, Screen)(FnScreen, 1, "1",
-                                            TCELL(COL(HIGH | BLACK, BLUE), _MEDIUM_SHADE)))) {
+                                            TCELL(TCOL(thigh | tblack, tblue), _MEDIUM_SHADE)))) {
 
     InsertLast(Screen, OneScreen, All);
     return ttrue;
   }
   Error(NOMEMORY);
-  printk("twin: InitScreens(): " SS "\n", ErrStr);
+  printk("twin: InitScreens(): " SS "\n", Errstr);
   return tfalse;
 }
 
@@ -857,45 +858,47 @@ byte InitBuiltin(void) {
 
       (AboutWin = Do(Create, Window)(
            FnWindow, Builtin_MsgPort, 5, "About", (CONST tcolor *)"\x7F\x7F\x7F\x7F\x7F",
-           Builtin_Menu, COL(BLACK, WHITE), NOCURSOR,
+           Builtin_Menu, TCOL(tblack, twhite), NOCURSOR,
            WINDOW_AUTO_KEYS | WINDOW_WANT_MOUSE | WINDOW_DRAG | WINDOW_CLOSE,
            WINDOWFL_USEROWS | WINDOWFL_ROWS_DEFCOL, 36, 13, 0)) &&
 
       (ClockWin = Do(Create, Window)(FnWindow, Builtin_MsgPort, 5, "Clock", NULL, Builtin_Menu,
-                                     COL(YELLOW, BLUE), NOCURSOR, WINDOW_DRAG | WINDOW_CLOSE,
+                                     TCOL(tyellow, tblue), NOCURSOR, WINDOW_DRAG | WINDOW_CLOSE,
                                      WINDOWFL_USEROWS | WINDOWFL_ROWS_DEFCOL, 10, 2, 0)) &&
 
-      (OptionWin = Do(Create, Window)(
-           FnWindow, Builtin_MsgPort, 7, "Options", NULL, Builtin_Menu, COL(HIGH | BLACK, BLACK),
-           NOCURSOR, WINDOW_AUTO_KEYS | WINDOW_WANT_MOUSE | WINDOW_DRAG | WINDOW_CLOSE,
-           WINDOWFL_USEROWS | WINDOWFL_ROWS_DEFCOL, 40, 18, 0)) &&
+      (OptionWin =
+           Do(Create, Window)(FnWindow, Builtin_MsgPort, 7, "Options", NULL, Builtin_Menu,
+                              TCOL(thigh | tblack, tblack), NOCURSOR,
+                              WINDOW_AUTO_KEYS | WINDOW_WANT_MOUSE | WINDOW_DRAG | WINDOW_CLOSE,
+                              WINDOWFL_USEROWS | WINDOWFL_ROWS_DEFCOL, 40, 18, 0)) &&
 
-      (ButtonWin = Do(Create, Window)(
-           FnWindow, Builtin_MsgPort, 7, "Buttons", NULL, Builtin_Menu, COL(HIGH | WHITE, WHITE),
-           NOCURSOR, WINDOW_AUTO_KEYS | WINDOW_WANT_MOUSE | WINDOW_DRAG | WINDOW_CLOSE,
-           WINDOWFL_USECONTENTS, 37, 19, 0)) &&
+      (ButtonWin =
+           Do(Create, Window)(FnWindow, Builtin_MsgPort, 7, "Buttons", NULL, Builtin_Menu,
+                              TCOL(thigh | twhite, twhite), NOCURSOR,
+                              WINDOW_AUTO_KEYS | WINDOW_WANT_MOUSE | WINDOW_DRAG | WINDOW_CLOSE,
+                              WINDOWFL_USECONTENTS, 37, 19, 0)) &&
 
       (DisplayWin = Do(Create, Window)(
-           FnWindow, Builtin_MsgPort, 7, "Display", NULL, Builtin_Menu, COL(HIGH | BLACK, WHITE),
-           NOCURSOR,
+           FnWindow, Builtin_MsgPort, 7, "Display", NULL, Builtin_Menu,
+           TCOL(thigh | tblack, twhite), NOCURSOR,
            WINDOW_WANT_MOUSE | WINDOW_AUTO_KEYS | WINDOW_DRAG | WINDOW_RESIZE | WINDOW_CLOSE |
                WINDOW_X_BAR | WINDOW_Y_BAR,
            WINDOWFL_USEROWS | WINDOWFL_ROWS_SELCURRENT | WINDOWFL_ROWS_DEFCOL, 31, 10, 0)) &&
 
       (DisplaySubWin =
            Do(Create, Window)(FnWindow, Builtin_MsgPort, 0, NULL, NULL, Builtin_Menu,
-                              COL(HIGH | BLACK, WHITE), NOCURSOR, WINDOW_AUTO_KEYS,
+                              TCOL(thigh | tblack, twhite), NOCURSOR, WINDOW_AUTO_KEYS,
                               WINDOWFL_USEROWS | WINDOWFL_ROWS_DEFCOL, 10, TW_MAXDAT, 0)) &&
 
       (WinList = Do(Create, Window)(
-           FnWindow, Builtin_MsgPort, 11, "Window List", NULL, Builtin_Menu, COL(WHITE, BLUE),
+           FnWindow, Builtin_MsgPort, 11, "Window List", NULL, Builtin_Menu, TCOL(twhite, tblue),
            NOCURSOR,
            WINDOW_WANT_KEYS | WINDOW_WANT_MOUSE | WINDOW_DRAG | WINDOW_CLOSE /*|WINDOW_RESIZE*/ |
                WINDOW_X_BAR | WINDOW_Y_BAR,
            WINDOWFL_USEROWS | WINDOWFL_ROWS_SELCURRENT | WINDOWFL_ROWS_DEFCOL, 14, 2, 0)) &&
 
       (ExecuteWin = Do(Create, Window)(
-           FnWindow, Builtin_MsgPort, 10, "Execute...", NULL, Builtin_Menu, COL(WHITE, BLUE),
+           FnWindow, Builtin_MsgPort, 10, "Execute...", NULL, Builtin_Menu, TCOL(twhite, tblue),
            LINECURSOR, WINDOW_WANT_KEYS | WINDOW_CLOSE | WINDOW_DRAG | WINDOW_X_BAR,
            WINDOWFL_USEROWS | WINDOWFL_ROWS_DEFCOL | WINDOWFL_CURSOR_ON, 38, 2, 0)) &&
 
@@ -905,66 +908,66 @@ byte InitBuiltin(void) {
       Act(RowWriteAscii, AboutWin)(AboutWin, grlen, greeting) &&
 
       (ButtonOK_About =
-           Do(CreateEmptyButton, Gadget)(FnGadget, Builtin_MsgPort, 8, 1, COL(BLACK, WHITE))) &&
+           Do(CreateEmptyButton, Gadget)(FnGadget, Builtin_MsgPort, 8, 1, TCOL(tblack, twhite))) &&
 
       (ButtonRemove =
-           Do(CreateEmptyButton, Gadget)(FnGadget, Builtin_MsgPort, 8, 1, COL(BLACK, WHITE))) &&
+           Do(CreateEmptyButton, Gadget)(FnGadget, Builtin_MsgPort, 8, 1, TCOL(tblack, twhite))) &&
       (ButtonThis =
-           Do(CreateEmptyButton, Gadget)(FnGadget, Builtin_MsgPort, 8, 1, COL(BLACK, WHITE))) &&
+           Do(CreateEmptyButton, Gadget)(FnGadget, Builtin_MsgPort, 8, 1, TCOL(tblack, twhite))) &&
 
       Do(Create, Gadget)(FnGadget, Builtin_MsgPort, (widget)OptionWin, 27, 1,
                          "[ ] Enable Screen Scrolling", 0, GADGETFL_TEXT_DEFCOL,
-                         COD_O_SCREEN_SCROLL, COL(BLACK, WHITE), COL(HIGH | WHITE, GREEN),
-                         COL(HIGH | BLACK, WHITE), COL(HIGH | BLACK, BLACK), 2, 16) &&
+                         COD_O_SCREEN_SCROLL, TCOL(tblack, twhite), TCOL(thigh | twhite, tgreen),
+                         TCOL(thigh | tblack, twhite), TCOL(thigh | tblack, tblack), 2, 16) &&
       Do(Create, Gadget)(FnGadget, Builtin_MsgPort, (widget)OptionWin, 23, 1,
                          "[ ] Menu Relaxed Arrows", 0, GADGETFL_TEXT_DEFCOL, COD_O_MENU_RELAX,
-                         COL(BLACK, WHITE), COL(HIGH | WHITE, GREEN), COL(HIGH | BLACK, WHITE),
-                         COL(HIGH | BLACK, BLACK), 2, 14) &&
+                         TCOL(tblack, twhite), TCOL(thigh | twhite, tgreen),
+                         TCOL(thigh | tblack, twhite), TCOL(thigh | tblack, tblack), 2, 14) &&
       Do(Create, Gadget)(FnGadget, Builtin_MsgPort, (widget)OptionWin, 25, 1,
                          "[ ] Menu Information Line", 0, GADGETFL_TEXT_DEFCOL, COD_O_MENU_INFO,
-                         COL(BLACK, WHITE), COL(HIGH | WHITE, GREEN), COL(HIGH | BLACK, WHITE),
-                         COL(HIGH | BLACK, BLACK), 2, 12) &&
+                         TCOL(tblack, twhite), TCOL(thigh | twhite, tgreen),
+                         TCOL(thigh | tblack, twhite), TCOL(thigh | tblack, tblack), 2, 12) &&
       Do(Create, Gadget)(FnGadget, Builtin_MsgPort, (widget)OptionWin, 15, 1, "[ ] Hidden Menu", 0,
-                         GADGETFL_TEXT_DEFCOL, COD_O_MENU_HIDE, COL(BLACK, WHITE),
-                         COL(HIGH | WHITE, GREEN), COL(HIGH | BLACK, WHITE),
-                         COL(HIGH | BLACK, BLACK), 2, 10) &&
+                         GADGETFL_TEXT_DEFCOL, COD_O_MENU_HIDE, TCOL(tblack, twhite),
+                         TCOL(thigh | twhite, tgreen), TCOL(thigh | tblack, twhite),
+                         TCOL(thigh | tblack, tblack), 2, 10) &&
       Do(Create, Gadget)(FnGadget, Builtin_MsgPort, (widget)OptionWin, 32, 1,
                          "[ ] Enable Blink/High Background", 0, GADGETFL_TEXT_DEFCOL, COD_O_BLINK,
-                         COL(BLACK, WHITE), COL(HIGH | WHITE, GREEN), COL(HIGH | BLACK, WHITE),
-                         COL(HIGH | BLACK, BLACK), 2, 8) &&
+                         TCOL(tblack, twhite), TCOL(thigh | twhite, tgreen),
+                         TCOL(thigh | tblack, twhite), TCOL(thigh | tblack, tblack), 2, 8) &&
       Do(Create, Gadget)(FnGadget, Builtin_MsgPort, (widget)OptionWin, 22, 1,
                          "[ ] Always Show Cursor", 0, GADGETFL_TEXT_DEFCOL, COD_O_CURSOR_ALWAYS,
-                         COL(BLACK, WHITE), COL(HIGH | WHITE, GREEN), COL(HIGH | BLACK, WHITE),
-                         COL(HIGH | BLACK, BLACK), 2, 6) &&
+                         TCOL(tblack, twhite), TCOL(thigh | twhite, tgreen),
+                         TCOL(thigh | tblack, twhite), TCOL(thigh | tblack, tblack), 2, 6) &&
       Do(Create, Gadget)(FnGadget, Builtin_MsgPort, (widget)OptionWin, 37, 1,
                          "[ ] New terminals start in UTF-8 mode", 0, GADGETFL_TEXT_DEFCOL,
-                         COD_O_TERMINALS_UTF8, COL(BLACK, WHITE), COL(HIGH | WHITE, GREEN),
-                         COL(HIGH | BLACK, WHITE), COL(HIGH | BLACK, BLACK), 2, 4) &&
+                         COD_O_TERMINALS_UTF8, TCOL(tblack, twhite), TCOL(thigh | twhite, tgreen),
+                         TCOL(thigh | tblack, twhite), TCOL(thigh | tblack, tblack), 2, 4) &&
       Do(Create, Gadget)(FnGadget, Builtin_MsgPort, (widget)OptionWin, 3, 1, "[+]", 0,
-                         GADGETFL_TEXT_DEFCOL, COD_O_Yp_SHADE, COL(BLACK, WHITE),
-                         COL(HIGH | WHITE, GREEN), COL(HIGH | BLACK, WHITE),
-                         COL(HIGH | BLACK, BLACK), 21, 2) &&
+                         GADGETFL_TEXT_DEFCOL, COD_O_Yp_SHADE, TCOL(tblack, twhite),
+                         TCOL(thigh | twhite, tgreen), TCOL(thigh | tblack, twhite),
+                         TCOL(thigh | tblack, tblack), 21, 2) &&
       Do(Create, Gadget)(FnGadget, Builtin_MsgPort, (widget)OptionWin, 3, 1, "[-]", 0,
-                         GADGETFL_TEXT_DEFCOL, COD_O_Yn_SHADE, COL(BLACK, WHITE),
-                         COL(HIGH | WHITE, GREEN), COL(HIGH | BLACK, WHITE),
-                         COL(HIGH | BLACK, BLACK), 18, 2) &&
+                         GADGETFL_TEXT_DEFCOL, COD_O_Yn_SHADE, TCOL(tblack, twhite),
+                         TCOL(thigh | twhite, tgreen), TCOL(thigh | tblack, twhite),
+                         TCOL(thigh | tblack, tblack), 18, 2) &&
       Do(Create, Gadget)(FnGadget, Builtin_MsgPort, (widget)OptionWin, 3, 1, "[+]", 0,
-                         GADGETFL_TEXT_DEFCOL, COD_O_Xp_SHADE, COL(BLACK, WHITE),
-                         COL(HIGH | WHITE, GREEN), COL(HIGH | BLACK, WHITE),
-                         COL(HIGH | BLACK, BLACK), 21, 1) &&
+                         GADGETFL_TEXT_DEFCOL, COD_O_Xp_SHADE, TCOL(tblack, twhite),
+                         TCOL(thigh | twhite, tgreen), TCOL(thigh | tblack, twhite),
+                         TCOL(thigh | tblack, tblack), 21, 1) &&
       Do(Create, Gadget)(FnGadget, Builtin_MsgPort, (widget)OptionWin, 3, 1, "[-]", 0,
-                         GADGETFL_TEXT_DEFCOL, COD_O_Xn_SHADE, COL(BLACK, WHITE),
-                         COL(HIGH | WHITE, GREEN), COL(HIGH | BLACK, WHITE),
-                         COL(HIGH | BLACK, BLACK), 18, 1) &&
+                         GADGETFL_TEXT_DEFCOL, COD_O_Xn_SHADE, TCOL(tblack, twhite),
+                         TCOL(thigh | twhite, tgreen), TCOL(thigh | tblack, twhite),
+                         TCOL(thigh | tblack, tblack), 18, 1) &&
       Do(Create, Gadget)(FnGadget, Builtin_MsgPort, (widget)OptionWin, 11, 1, "[ ] Shadows", 0,
-                         GADGETFL_TEXT_DEFCOL, COD_O_SHADOWS, COL(BLACK, WHITE),
-                         COL(HIGH | WHITE, GREEN), COL(HIGH | BLACK, WHITE),
-                         COL(HIGH | BLACK, BLACK), 2, 1) &&
+                         GADGETFL_TEXT_DEFCOL, COD_O_SHADOWS, TCOL(tblack, twhite),
+                         TCOL(thigh | twhite, tgreen), TCOL(thigh | tblack, twhite),
+                         TCOL(thigh | tblack, tblack), 2, 1) &&
 
       Do(Create, Gadget)(FnGadget, Builtin_MsgPort, (widget)ExecuteWin, 19, 1,
                          "[ ] Run in Terminal", 0, GADGETFL_TEXT_DEFCOL, COD_E_TTY,
-                         COL(HIGH | YELLOW, BLUE), COL(HIGH | WHITE, GREEN),
-                         COL(HIGH | BLACK, BLUE), COL(HIGH | BLACK, BLUE), 10, 1)
+                         TCOL(thigh | tyellow, tblue), TCOL(thigh | twhite, tgreen),
+                         TCOL(thigh | tblack, tblue), TCOL(thigh | tblack, tblue), 10, 1)
 
   ) {
     Act(SetColors, AboutWin)(AboutWin, 0x1FF, (tcolor)0x7A, (tcolor)0, (tcolor)0, (tcolor)0,
@@ -979,19 +982,34 @@ byte InitBuiltin(void) {
     Act(SetColors, ButtonWin)(ButtonWin, 0x1FF, (tcolor)0x7A, (tcolor)0, (tcolor)0, (tcolor)0,
                               (tcolor)0x7F, (tcolor)0x7F, (tcolor)0x20, (tcolor)0x78, (tcolor)0x08);
 
-    Act(SetColors, WinList)(WinList, 0x1FF, COL(HIGH | YELLOW, CYAN),
-                            COL(HIGH | GREEN, HIGH | BLUE), COL(WHITE, HIGH | BLUE),
-                            COL(HIGH | WHITE, HIGH | BLUE), COL(HIGH | WHITE, HIGH | BLUE),
-                            COL(WHITE, BLUE), COL(HIGH | BLUE, WHITE), COL(HIGH | BLACK, BLUE),
-                            COL(HIGH | BLACK, BLACK));
+    Act(SetColors, WinList)(
+        WinList, 0x1FF, TCOL(thigh | tyellow, tcyan), TCOL(thigh | tgreen, thigh | tblue),
+        TCOL(twhite, thigh | tblue), TCOL(thigh | twhite, thigh | tblue),
+        TCOL(thigh | twhite, thigh | tblue), TCOL(twhite, tblue), TCOL(thigh | tblue, twhite),
+        TCOL(thigh | tblack, tblue), TCOL(thigh | tblack, tblack));
     Act(Configure, WinList)(WinList, 1 << 2 | 1 << 3, 0, 0, 15, 2, 0, 0);
 
     Act(SetColors, DisplayWin)(DisplayWin, 0x1FF, (tcolor)0x7A, (tcolor)0x7F, (tcolor)0x79,
                                (tcolor)0xF9, (tcolor)0x7F, (tcolor)0x70, (tcolor)0x20, (tcolor)0x78,
                                (tcolor)0x08);
 
-    Act(SetColors, DisplaySubWin)(DisplaySubWin, 1 << 4, 0, 0, 0, 0, COL(HIGH | BLACK, WHITE), 0, 0,
-                                  0, 0);
+    Act(SetColors, DisplaySubWin)(DisplaySubWin, 1 << 4, 0, 0, 0, 0, TCOL(thigh | tblack, twhite),
+                                  0, 0, 0, 0);
+
+    Act(SetColors, DisplaySubWin)(DisplaySubWin, 1 << 4, 0, 0, 0, 0, TCOL(thigh | tblack, twhite),
+                                  0, 0, 0, 0);
+
+    Act(SetColors, DisplaySubWin)(DisplaySubWin, 1 << 4, 0, 0, 0, 0, TCOL(thigh | tblack, twhite),
+                                  0, 0, 0, 0);
+
+    Act(SetColors, DisplaySubWin)(DisplaySubWin, 1 << 4, 0, 0, 0, 0, TCOL(thigh | tblack, twhite),
+                                  0, 0, 0, 0);
+
+    Act(SetColors, DisplaySubWin)(DisplaySubWin, 1 << 4, 0, 0, 0, 0, TCOL(thigh | tblack, twhite),
+                                  0, 0, 0, 0);
+
+    Act(SetColors, DisplaySubWin)(DisplaySubWin, 1 << 4, 0, 0, 0, 0, TCOL(thigh | tblack, twhite),
+                                  0, 0, 0, 0);
 
     Act(Configure, DisplaySubWin)(DisplaySubWin, 1 << 0 | 1 << 1, -1, -1, 0, 0, 0, 0);
     Act(Map, DisplaySubWin)(DisplaySubWin, (widget)DisplayWin);
@@ -1019,6 +1037,6 @@ byte InitBuiltin(void) {
     return ttrue;
   }
   Error(NOMEMORY);
-  printk("twin: InitBuiltin(): " SS "\n", ErrStr);
+  printk("twin: InitBuiltin(): " SS "\n", Errstr);
   return tfalse;
 }

@@ -477,9 +477,9 @@ static byte TW_InitHW(void) {
                        /* Tw_DragAreaWindow, */ NULL) &&
 
       (Tscreen = Tw_FirstScreen(Td)) && (Tmsgport = Tw_CreateMsgPort(Td, 12, "Twin on Twin")) &&
-      (Tmenu =
-           Tw_CreateMenu(Td, COL(BLACK, WHITE), COL(BLACK, GREEN), COL(HIGH | BLACK, WHITE),
-                         COL(HIGH | BLACK, BLACK), COL(RED, WHITE), COL(RED, GREEN), (byte)0)) &&
+      (Tmenu = Tw_CreateMenu(Td, TCOL(tblack, twhite), TCOL(tblack, tgreen),
+                             TCOL(thigh | tblack, twhite), TCOL(thigh | tblack, tblack),
+                             TCOL(tred, twhite), TCOL(tred, tgreen), (byte)0)) &&
       Tw_Item4MenuCommon(Td, Tmenu))
     do {
 
@@ -489,20 +489,21 @@ static byte TW_InitHW(void) {
       sprintf(name + 5, "%s on twin", TWDisplay);
       len = strlen(name);
 
-      Twin = Tw_CreateWindow(Td, strlen(name), name, NULL, Tmenu, COL(WHITE, BLACK), TW_LINECURSOR,
-                             TW_WINDOW_WANT_KEYS | TW_WINDOW_WANT_MOUSE | TW_WINDOW_WANT_CHANGES |
-                                 TW_WINDOW_DRAG | TW_WINDOW_RESIZE | TW_WINDOW_CLOSE,
-                             TW_WINDOWFL_USECONTENTS | TW_WINDOWFL_CURSOR_ON,
-                             (HW->X = GetDisplayWidth()), (HW->Y = GetDisplayHeight()), (uldat)0);
+      Twin =
+          Tw_CreateWindow(Td, strlen(name), name, NULL, Tmenu, TCOL(twhite, tblack), TW_LINECURSOR,
+                          TW_WINDOW_WANT_KEYS | TW_WINDOW_WANT_MOUSE | TW_WINDOW_WANT_CHANGES |
+                              TW_WINDOW_DRAG | TW_WINDOW_RESIZE | TW_WINDOW_CLOSE,
+                          TW_WINDOWFL_USECONTENTS | TW_WINDOWFL_CURSOR_ON,
+                          (HW->X = GetDisplayWidth()), (HW->Y = GetDisplayHeight()), (uldat)0);
 
       if (!Twin)
         break;
 
-      Tw_SetColorsWindow(Td, Twin, 0x1FF, COL(HIGH | YELLOW, CYAN), COL(HIGH | GREEN, HIGH | BLUE),
-                         COL(WHITE, HIGH | BLUE), COL(HIGH | WHITE, HIGH | BLUE),
-                         COL(HIGH | WHITE, HIGH | BLUE), COL(WHITE, BLACK),
-                         COL(WHITE, HIGH | BLACK), COL(HIGH | BLACK, BLACK),
-                         COL(BLACK, HIGH | BLACK));
+      Tw_SetColorsWindow(Td, Twin, 0x1FF, TCOL(thigh | tyellow, tcyan),
+                         TCOL(thigh | tgreen, thigh | tblue), TCOL(twhite, thigh | tblue),
+                         TCOL(thigh | twhite, thigh | tblue), TCOL(thigh | twhite, thigh | tblue),
+                         TCOL(twhite, tblack), TCOL(twhite, thigh | tblack),
+                         TCOL(thigh | tblack, tblack), TCOL(tblack, thigh | tblack));
       Tw_MapWidget(Td, Twin, Tscreen);
 
       /*

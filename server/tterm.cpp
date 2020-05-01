@@ -48,17 +48,17 @@ static window newTermWindow(CONST char *title) {
   window Window;
 
   Window = Do(Create, Window)(
-      FnWindow, Term_MsgPort, strlen(title), title, NULL, Term_Menu, COL(WHITE, BLACK), LINECURSOR,
-      WINDOW_WANT_KEYS | WINDOW_DRAG | WINDOW_RESIZE | WINDOW_Y_BAR | WINDOW_CLOSE,
+      FnWindow, Term_MsgPort, strlen(title), title, NULL, Term_Menu, TCOL(twhite, tblack),
+      LINECURSOR, WINDOW_WANT_KEYS | WINDOW_DRAG | WINDOW_RESIZE | WINDOW_Y_BAR | WINDOW_CLOSE,
       WINDOWFL_CURSOR_ON | WINDOWFL_USECONTENTS,
       /*width*/ 80, /*height*/ 25, /*scrollbacklines*/ 1000);
 
   if (Window) {
-    Act(SetColors, Window)(Window, 0x1FF, COL(HIGH | YELLOW, CYAN), COL(HIGH | GREEN, HIGH | BLUE),
-                           COL(WHITE, HIGH | BLUE), COL(HIGH | WHITE, HIGH | BLUE),
-                           COL(HIGH | WHITE, HIGH | BLUE), COL(WHITE, BLACK),
-                           COL(HIGH | BLACK, HIGH | WHITE), COL(HIGH | BLACK, BLACK),
-                           COL(BLACK, HIGH | BLACK));
+    Act(SetColors, Window)(Window, 0x1FF, TCOL(thigh | tyellow, tcyan),
+                           TCOL(thigh | tgreen, thigh | tblue), TCOL(twhite, thigh | tblue),
+                           TCOL(thigh | twhite, thigh | tblue), TCOL(thigh | twhite, thigh | tblue),
+                           TCOL(twhite, tblack), TCOL(thigh | tblack, thigh | twhite),
+                           TCOL(thigh | tblack, tblack), TCOL(tblack, thigh | tblack));
 
     Act(Configure, Window)(Window, (1 << 2) | (1 << 3), 0, 0, 7, 3, 0, 0);
   }
@@ -235,9 +235,10 @@ EXTERN_C byte InitModule(module Module) {
 
       (Term_MsgPort = Do(Create, MsgPort)(FnMsgPort, 14, "builtin twterm", (uldat)0, (udat)0,
                                           (byte)0, TwinTermH)) &&
-      (Term_Menu = Do(Create, Menu)(FnMenu, Term_MsgPort, COL(BLACK, WHITE), COL(BLACK, GREEN),
-                                    COL(HIGH | BLACK, WHITE), COL(HIGH | BLACK, BLACK),
-                                    COL(RED, WHITE), COL(RED, GREEN), (byte)0)) &&
+      (Term_Menu =
+           Do(Create, Menu)(FnMenu, Term_MsgPort, TCOL(tblack, twhite), TCOL(tblack, tgreen),
+                            TCOL(thigh | tblack, twhite), TCOL(thigh | tblack, tblack),
+                            TCOL(tred, twhite), TCOL(tred, tgreen), (byte)0)) &&
       Info4Menu(Term_Menu, ROW_ACTIVE, (uldat)19, " Builtin Twin Term ",
                 (CONST tcolor *)"ptppppppptpppptpppp") &&
 
@@ -255,7 +256,7 @@ EXTERN_C byte InitModule(module Module) {
     return ttrue;
   }
   if (shellpath)
-    printk("twin: InitTerm(): " SS "\n", ErrStr);
+    printk("twin: InitTerm(): " SS "\n", Errstr);
   else
     printk("twin: environment variable $SHELL not set!\n");
   return tfalse;

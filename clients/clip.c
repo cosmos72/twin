@@ -23,24 +23,25 @@ static byte InitClip(void) {
 
   return TwCheckMagic(clip_magic) && TwOpen(NULL) &&
          (Clip_MsgPort = TwCreateMsgPort(11, "twclipboard")) &&
-         (Clip_Menu =
-              TwCreateMenu(COL(BLACK, WHITE), COL(BLACK, GREEN), COL(HIGH | BLACK, WHITE),
-                           COL(HIGH | BLACK, BLACK), COL(RED, WHITE), COL(RED, GREEN), (byte)0)) &&
+         (Clip_Menu = TwCreateMenu(TCOL(tblack, twhite), TCOL(tblack, tgreen),
+                                   TCOL(thigh | tblack, twhite), TCOL(thigh | tblack, tblack),
+                                   TCOL(tred, twhite), TCOL(tred, tgreen), (byte)0)) &&
          (TwInfo4Menu(Clip_Menu, TW_ROW_ACTIVE, 16, " Twin Clipboard ",
                       (TW_CONST tcolor *)"ptpppptppppppppp"),
           (Clip_Win =
                TwCreateWindow(14, "Twin Clipboard", NULL, Clip_Menu,
-                              COL(HIGH | WHITE, HIGH | BLACK), TW_LINECURSOR,
+                              TCOL(thigh | twhite, thigh | tblack), TW_LINECURSOR,
                               TW_WINDOW_WANT_KEYS | TW_WINDOW_DRAG | TW_WINDOW_RESIZE |
                                   TW_WINDOW_X_BAR | TW_WINDOW_Y_BAR | TW_WINDOW_CLOSE,
                               TW_WINDOWFL_CURSOR_ON | TW_WINDOWFL_ROWS_DEFCOL, 38, 18, 0))) &&
          (Window = TwWin4Menu(Clip_Menu)) &&
          TwRow4Menu(Window, COD_QUIT, TW_ROW_INACTIVE, 17, " Quit      Alt-X ") &&
          TwItem4Menu(Clip_Menu, Window, ttrue, 6, " File ") &&
-         (TwSetColorsWindow(Clip_Win, 0x1FF, COL(HIGH | GREEN, WHITE), COL(CYAN, BLUE),
-                            COL(HIGH | BLUE, BLACK), COL(HIGH | WHITE, HIGH | BLUE),
-                            COL(HIGH | WHITE, HIGH | BLUE), COL(HIGH | WHITE, HIGH | BLACK),
-                            COL(HIGH | BLACK, WHITE), COL(BLACK, HIGH | BLACK), COL(BLACK, WHITE)),
+         (TwSetColorsWindow(Clip_Win, 0x1FF, TCOL(thigh | tgreen, twhite), TCOL(tcyan, tblue),
+                            TCOL(thigh | tblue, tblack), TCOL(thigh | twhite, thigh | tblue),
+                            TCOL(thigh | twhite, thigh | tblue),
+                            TCOL(thigh | twhite, thigh | tblack), TCOL(thigh | tblack, twhite),
+                            TCOL(tblack, thigh | tblack), TCOL(tblack, twhite)),
           TwConfigureWindow(Clip_Win, 0xF << 2, 0, 0, 7, 3, TW_MAXDAT, TW_MAXDAT),
           (Window = TwWin4Menu(Clip_Menu))) &&
          TwItem4Menu(Clip_Menu, Window, tfalse, 6, " Clip ") &&

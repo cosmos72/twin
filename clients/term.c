@@ -228,17 +228,17 @@ static char *default_title = "Twin Term";
 
 static twindow newTermWindow(TW_CONST char *title) {
   twindow Window =
-      TwCreateWindow(strlen(title), title, NULL, Term_Menu, COL(WHITE, BLACK), TW_LINECURSOR,
+      TwCreateWindow(strlen(title), title, NULL, Term_Menu, TCOL(twhite, tblack), TW_LINECURSOR,
                      TW_WINDOW_WANT_KEYS | TW_WINDOW_WANT_CHANGES | TW_WINDOW_DRAG |
                          TW_WINDOW_RESIZE | TW_WINDOW_Y_BAR | TW_WINDOW_CLOSE,
                      TW_WINDOWFL_CURSOR_ON | TW_WINDOWFL_USECONTENTS, 80, 25, 200);
 
   if (Window != TW_NOID) {
-    TwSetColorsWindow(Window, 0x1FF, COL(HIGH | YELLOW, CYAN), COL(HIGH | GREEN, HIGH | BLUE),
-                      COL(WHITE, HIGH | BLUE), COL(HIGH | WHITE, HIGH | BLUE),
-                      COL(HIGH | WHITE, HIGH | BLUE), COL(WHITE, BLACK),
-                      COL(HIGH | BLACK, HIGH | WHITE), COL(HIGH | BLACK, BLACK),
-                      COL(BLACK, HIGH | BLACK));
+    TwSetColorsWindow(Window, 0x1FF, TCOL(thigh | tyellow, tcyan),
+                      TCOL(thigh | tgreen, thigh | tblue), TCOL(twhite, thigh | tblue),
+                      TCOL(thigh | twhite, thigh | tblue), TCOL(thigh | twhite, thigh | tblue),
+                      TCOL(twhite, tblack), TCOL(thigh | tblack, thigh | twhite),
+                      TCOL(thigh | tblack, tblack), TCOL(tblack, thigh | tblack));
 
     TwConfigureWindow(Window, (1 << 2) | (1 << 3), 0, 0, 5, 1, 0, 0);
   }
@@ -352,9 +352,9 @@ static byte InitTerm(void) {
 #endif
 
   if (TwCheckMagic(term_magic) && TwOpen(NULL) && (Term_MsgPort = TwCreateMsgPort(6, "twterm")) &&
-      (Term_Menu =
-           TwCreateMenu(COL(BLACK, WHITE), COL(BLACK, GREEN), COL(HIGH | BLACK, WHITE),
-                        COL(HIGH | BLACK, BLACK), COL(RED, WHITE), COL(RED, GREEN), (byte)0)) &&
+      (Term_Menu = TwCreateMenu(TCOL(tblack, twhite), TCOL(tblack, tgreen),
+                                TCOL(thigh | tblack, twhite), TCOL(thigh | tblack, tblack),
+                                TCOL(tred, twhite), TCOL(tred, tgreen), (byte)0)) &&
       (TwInfo4Menu(Term_Menu, TW_ROW_ACTIVE, 18, " Remote Twin Term ",
                    (TW_CONST tcolor *)"ptpppppptpppptpppp"),
        ttrue) &&
