@@ -136,7 +136,7 @@ static void display_HandleEvent(display_hw hw) {
          * Not needed, twdisplay keeps its own copy of Video[]
          * and never generates ev_dpy_RedrawVideo events
          */
-        printk("\ntwin: display_HandleEvent(): unexpected Display.(ev_dpy_RedrawVideo) Message from "
+        printk("\ntwin: display_HandleEvent(): unexpected Display.RedrawVideo Message from "
                "twdisplay!\n");
 #if 0
 		if (Event->EventDisplay.Len == sizeof(dat) * 2)
@@ -448,8 +448,8 @@ static byte display_InitHW(void) {
 
   if (!(HW->Private = (struct display_data *)AllocMem(sizeof(struct display_data))) ||
       !(Helper =
-            Do(Create, MsgPort)(FnMsgPort, 16, "twdisplay Helper", 0, 0, 0, display_HelperH)) ||
-      (!Msg && !(Msg = Do(Create, Msg)(FnMsg, msg_display, sizeof(event_display))))) {
+            Do(Create, msgport)(Fn_msgport, 16, "twdisplay Helper", 0, 0, 0, display_HelperH)) ||
+      (!Msg && !(Msg = Do(Create, msg)(Fn_msg, msg_display, sizeof(event_display))))) {
 
     if (HW->Private) {
       if (Helper)

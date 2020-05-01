@@ -220,7 +220,7 @@ static row InsertRowsWindow(window Window, ldat NumRows) {
   row CurrRow;
 
   while (NumRows--) {
-    if ((CurrRow = Do(Create, Row)(FnRow, 0, ROW_ACTIVE))) {
+    if ((CurrRow = Do(Create, row)(Fn_row, 0, ROW_ACTIVE))) {
       Act(Insert, CurrRow)(CurrRow, Window, Window->USE.R.LastRow, NULL);
     } else
       break;
@@ -1611,9 +1611,9 @@ static menuitem CloseMenuItem(menu M, menuitem Item, byte ByMouse) {
     if (Item) {
       W = (window)Item->Parent;
       if (W && IS_WINDOW(W))
-        Act(Focus, W)(W);
+        W->Focus();
       else
-        Act(Focus, P)(P);
+        P->Focus();
     }
     return Item;
   } else {
@@ -1666,7 +1666,7 @@ void CloseMenu(void) {
       Act(KbdFocus, W)(W);
       S->MenuWindow = (window)0;
     } else
-      Do(KbdFocus, Window)((window)0);
+      Do(KbdFocus, window)((window)0);
 
     /* close whole currently open menu tree */
     Item = Act(GetSelectedItem, M)(M);
@@ -1796,7 +1796,7 @@ void LowerWidget(widget W, byte alsoUnFocus) {
         if (_W && IS_WINDOW(_W) && _W != W)
           Act(Focus, _W)(_W);
         else
-          Do(Focus, Window)((window)0);
+          Do(Focus, window)((window)0);
       } else
         UpdateCursor();
     }
@@ -1869,7 +1869,7 @@ void SendMsgGadget(gadget G) {
   msg Msg;
   event_gadget *Event;
   if (G->Code && !(G->Flags & GADGETFL_DISABLED)) {
-    if ((Msg = Do(Create, Msg)(FnMsg, msg_widget_gadget, 0))) {
+    if ((Msg = Do(Create, msg)(Fn_msg, msg_widget_gadget, 0))) {
       Event = &Msg->Event.EventGadget;
       Event->W = G->Parent;
       Event->Code = G->Code;

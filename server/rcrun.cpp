@@ -1028,7 +1028,7 @@ static byte USEDefaultCommonMenu(void) {
   window W;
   row Row;
 
-  if (!(Menu = Do(Create, Menu)(FnMenu, Ext(WM, MsgPort), (tcolor)0, (tcolor)0, (tcolor)0,
+  if (!(Menu = Do(Create, menu)(Fn_menu, Ext(WM, MsgPort), (tcolor)0, (tcolor)0, (tcolor)0,
                                 (tcolor)0, (tcolor)0, (tcolor)0, ttrue)))
     return tfalse;
 

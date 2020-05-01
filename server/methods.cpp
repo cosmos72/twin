@@ -256,7 +256,7 @@ widget FocusWidget(widget W) {
   if (W)
     oldW = Act(KbdFocus, W)(W);
   else
-    oldW = Do(KbdFocus, Widget)(W);
+    oldW = Do(KbdFocus, widget)(W);
 
   if (W != oldW && (!W || W->Parent == (widget)All->FirstScreen)) {
     if (W && IS_WINDOW(W))
@@ -312,7 +312,7 @@ static void MapWidget(widget W, widget Parent) {
 
   if (W && !W->Parent && !W->MapQueueMsg && Parent) {
     if (IS_SCREEN(Parent)) {
-      if (Ext(WM, MsgPort) && (Msg = Do(Create, Msg)(FnMsg, msg_map, 0))) {
+      if (Ext(WM, MsgPort) && (Msg = Do(Create, msg)(Fn_msg, msg_map, 0))) {
         Msg->Event.EventMap.W = W;
         Msg->Event.EventMap.Code = 0;
         Msg->Event.EventMap.Screen = (screen)Parent;
@@ -449,7 +449,7 @@ static void UnMapWidget(widget W) {
             (void)Act(KbdFocus, Next)(Next);
             DrawBorderWindow(Next, BORDER_ANY);
           } else
-            Do(KbdFocus, Window)((window)0);
+            Do(KbdFocus, window)((window)0);
           if (!(W->Flags & WINDOWFL_MENU))
             Act(DrawMenu, Screen)(Screen, 0, TW_MAXDAT);
           UpdateCursor();
@@ -2121,7 +2121,7 @@ static void DeleteMenu(menu Menu) {
 
 static row SetInfoMenu(menu Menu, byte Flags, ldat Len, const char *Text, const tcolor *ColText) {
   row Row;
-  if ((Row = Do(Create, Row)(FnRow, 0, Flags))) {
+  if ((Row = Do(Create, row)(Fn_row, 0, Flags))) {
     if ((!Text || (Row->Text = CloneStr2TRune(Text, Len))) &&
         (!ColText || (Row->ColText = (tcolor *)CloneMem(ColText, Len * sizeof(tcolor))))) {
       Row->Len = Row->MaxLen = Len;

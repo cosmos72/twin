@@ -15,6 +15,6 @@
 
 widget s_widget::Create(msgport owner, dat xwidth, dat ywidth, uldat attrib, uldat flags, dat left,
                         dat up, tcell use_fill) {
-  return FnStruct.Widget->Create(FnStruct.Widget, owner, xwidth, ywidth, attrib, flags, left, up,
+  return FnStruct.widget->Create(FnStruct.widget, owner, xwidth, ywidth, attrib, flags, left, up,
                                  use_fill);
 }

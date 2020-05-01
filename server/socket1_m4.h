@@ -224,7 +224,7 @@ case order_CreateGadget:
 
 case order_CreateButtonGadget:
     if (N >= 11)
-	a[0]_obj = (obj)Do(CreateButton,Gadget)(FnGadget, (widget)a[1]_obj, (dat)a[2]_any, (dat)a[3]_any, (const char *)a[4]_vec, (uldat)a[5]_any, (udat)a[6]_any, (tcolor)a[7]_any, (tcolor)a[8]_any, (tcolor)a[9]_any, (dat)a[10]_any, (dat)a[11]_any);
+	a[0]_obj = (obj)Do(CreateButton,gadget)(FnGadget, (widget)a[1]_obj, (dat)a[2]_any, (dat)a[3]_any, (const char *)a[4]_vec, (uldat)a[5]_any, (udat)a[6]_any, (tcolor)a[7]_any, (tcolor)a[8]_any, (tcolor)a[9]_any, (dat)a[10]_any, (dat)a[11]_any);
     break;
 
 
@@ -246,7 +246,7 @@ case order_CreateWindow:
 
 case order_Create4MenuWindow:
     if (N >= 1)
-	a[0]_obj = (obj)Do(Create4Menu,Window)(FnWindow, (menu)a[1]_obj);
+	a[0]_obj = (obj)Do(Create4Menu,window)(FnWindow, (menu)a[1]_obj);
     break;
 
 
@@ -343,7 +343,7 @@ case order_RestackChildrenRow:
     if (N >= 3)
 	sockRestackChildrenRow((obj)a[1]_obj, (uldat)a[2]_any, (const row *)a[3]_vec);
     break;
-
+ 
 case order_CirculateChildrenRow:
     if (N >= 2)
 	sockCirculateChildrenRow((obj)a[1]_obj, (byte)a[2]_any);
@@ -358,7 +358,7 @@ case order_Create4MenuAny:
 
 case order_Create4MenuCommonMenuItem:
     if (N >= 1)
-	a[0]_any = (tany)Do(Create4MenuCommon,MenuItem)(FnMenuItem, (menu)a[1]_obj);
+	a[0]_any = (tany)Do(Create4MenuCommon,menuitem)(FnMenuItem, (menu)a[1]_obj);
     break;
 
 
@@ -520,3 +520,6 @@ case order_CloseExtension:
     if (N >= 1)
 	sockCloseExtension((extension)a[1]_obj);
     break;
+
+
+

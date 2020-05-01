@@ -14,5 +14,5 @@
 #include "obj/fn.h" // FnStruct
 
 obj s_obj::Create() {
-  return FnStruct.Obj->Create(FnStruct.Obj);
+  return FnStruct.obj->Create(FnStruct.obj);
 }

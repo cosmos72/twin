@@ -47,8 +47,8 @@ static void termShutDown(widget W) {
 static window newTermWindow(const char *title) {
   window Window;
 
-  Window = Do(Create, Window)(
-      FnWindow, Term_MsgPort, strlen(title), title, NULL, Term_Menu, TCOL(twhite, tblack),
+  Window = Do(Create, window)(
+      Fn_window, Term_MsgPort, strlen(title), title, NULL, Term_Menu, TCOL(twhite, tblack),
       LINECURSOR, WINDOW_WANT_KEYS | WINDOW_DRAG | WINDOW_RESIZE | WINDOW_Y_BAR | WINDOW_CLOSE,
       WINDOWFL_CURSOR_ON | WINDOWFL_USECONTENTS,
       /*width*/ 80, /*height*/ 25, /*scrollbacklines*/ 1000);
@@ -205,22 +205,22 @@ static void TwinTermIO(int Fd, window Window) {
 
 static void OverrideMethods(byte enter) {
   if (enter) {
-    OverrideMethod(Widget, KbdFocus, FakeKbdFocus, TtyKbdFocus);
-    OverrideMethod(Gadget, KbdFocus, FakeKbdFocus, TtyKbdFocus);
-    OverrideMethod(Window, KbdFocus, FakeKbdFocus, TtyKbdFocus);
-    OverrideMethod(Window, TtyWriteAscii, FakeWriteAscii, TtyWriteAscii);
-    OverrideMethod(Window, TtyWriteString, FakeWriteString, TtyWriteString);
-    OverrideMethod(Window, TtyWriteTRune, FakeWriteTRune, TtyWriteTRune);
-    OverrideMethod(Window, TtyWriteTCell, FakeWriteTCell, TtyWriteTCell);
+    OverrideMethod(widget, KbdFocus, FakeKbdFocus, TtyKbdFocus);
+    OverrideMethod(gadget, KbdFocus, FakeKbdFocus, TtyKbdFocus);
+    OverrideMethod(window, KbdFocus, FakeKbdFocus, TtyKbdFocus);
+    OverrideMethod(window, TtyWriteAscii, FakeWriteAscii, TtyWriteAscii);
+    OverrideMethod(window, TtyWriteString, FakeWriteString, TtyWriteString);
+    OverrideMethod(window, TtyWriteTRune, FakeWriteTRune, TtyWriteTRune);
+    OverrideMethod(window, TtyWriteTCell, FakeWriteTCell, TtyWriteTCell);
     ForceKbdFocus();
   } else {
-    OverrideMethod(Window, TtyWriteTCell, TtyWriteTCell, FakeWriteTCell);
-    OverrideMethod(Window, TtyWriteTRune, TtyWriteTRune, FakeWriteTRune);
-    OverrideMethod(Window, TtyWriteString, TtyWriteString, FakeWriteString);
-    OverrideMethod(Window, TtyWriteAscii, TtyWriteAscii, FakeWriteAscii);
-    OverrideMethod(Window, KbdFocus, TtyKbdFocus, FakeKbdFocus);
-    OverrideMethod(Gadget, KbdFocus, TtyKbdFocus, FakeKbdFocus);
-    OverrideMethod(Widget, KbdFocus, TtyKbdFocus, FakeKbdFocus);
+    OverrideMethod(window, TtyWriteTCell, TtyWriteTCell, FakeWriteTCell);
+    OverrideMethod(window, TtyWriteTRune, TtyWriteTRune, FakeWriteTRune);
+    OverrideMethod(window, TtyWriteString, TtyWriteString, FakeWriteString);
+    OverrideMethod(window, TtyWriteAscii, TtyWriteAscii, FakeWriteAscii);
+    OverrideMethod(window, KbdFocus, TtyKbdFocus, FakeKbdFocus);
+    OverrideMethod(gadget, KbdFocus, TtyKbdFocus, FakeKbdFocus);
+    OverrideMethod(widget, KbdFocus, TtyKbdFocus, FakeKbdFocus);
   }
 }
 
@@ -233,10 +233,10 @@ EXTERN_C byte InitModule(module Module) {
       (default_args[1] =
            (shell = strrchr(shellpath, '/')) ? CloneStr(shell) : CloneStr(shellpath)) &&
 
-      (Term_MsgPort = Do(Create, MsgPort)(FnMsgPort, 14, "builtin twterm", (uldat)0, (udat)0,
+      (Term_MsgPort = Do(Create, msgport)(Fn_msgport, 14, "builtin twterm", (uldat)0, (udat)0,
                                           (byte)0, TwinTermH)) &&
       (Term_Menu =
-           Do(Create, Menu)(FnMenu, Term_MsgPort, TCOL(tblack, twhite), TCOL(tblack, tgreen),
+           Do(Create, menu)(Fn_menu, Term_MsgPort, TCOL(tblack, twhite), TCOL(tblack, tgreen),
                             TCOL(thigh | tblack, twhite), TCOL(thigh | tblack, tblack),
                             TCOL(tred, twhite), TCOL(tred, tgreen), (byte)0)) &&
       Info4Menu(Term_Menu, ROW_ACTIVE, (uldat)19, " Builtin Twin Term ",

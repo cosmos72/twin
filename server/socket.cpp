@@ -1098,7 +1098,7 @@ static widget sockCreateWidget(dat XWidth, dat YWidth, uldat Attrib, uldat Flags
                                tcell Fill) {
   msgport Owner;
   if ((Owner = RemoteGetMsgPort(Slot)))
-    return Do(Create, Widget)(FnWidget, Owner, XWidth, YWidth, Attrib, Flags, Left, Up, Fill);
+    return Do(Create, widget)(Fn_widget, Owner, XWidth, YWidth, Attrib, Flags, Left, Up, Fill);
   return (widget)0;
 }
 static void sockRecursiveDeleteWidget(widget W) {
@@ -1197,7 +1197,7 @@ static gadget sockCreateGadget(widget Parent, dat XWidth, dat YWidth, const char
                                tcolor ColTextSelectDisabled, dat Left, dat Up) {
   msgport Owner;
   if ((Owner = RemoteGetMsgPort(Slot)))
-    return Do(Create, Gadget)(FnGadget, Owner, Parent, XWidth, YWidth, TextNormal, Attrib, Flags,
+    return Do(Create, gadget)(Fn_gadget, Owner, Parent, XWidth, YWidth, TextNormal, Attrib, Flags,
                               Code, ColText, ColTextSelect, ColTextDisabled, ColTextSelectDisabled,
                               Left, Up);
   return (gadget)0;
@@ -1208,8 +1208,8 @@ static window sockCreateWindow(dat TitleLen, const char *Title, const tcolor *Co
                                dat XWidth, dat YWidth, dat ScrollBackLines) {
   msgport Owner;
   if ((Owner = RemoteGetMsgPort(Slot)))
-    return Do(Create, Window)(FnWindow, Owner, TitleLen, Title, ColTitle, Menu, ColText, CursorType,
-                              Attrib, Flags, XWidth, YWidth, ScrollBackLines);
+    return Do(Create, window)(Fn_window, Owner, TitleLen, Title, ColTitle, Menu, ColText,
+                              CursorType, Attrib, Flags, XWidth, YWidth, ScrollBackLines);
   return (window)0;
 }
 
@@ -1267,7 +1267,7 @@ static row sockFindRowByCodeWindow(window Window, dat Code) {
 
 static menuitem sockCreate4MenuAny(obj Parent, window Window, udat Code, byte Flags, ldat Len,
                                    const char *Name) {
-  return Do(Create4Menu, MenuItem)(FnMenuItem, Parent, Window, Code, Flags, Len, Name);
+  return Do(Create4Menu, menuitem)(Fn_menuitem, Parent, Window, Code, Flags, Len, Name);
 }
 
 static menu sockCreateMenu(tcolor ColItem, tcolor ColSelect, tcolor ColDisabled,
@@ -1275,7 +1275,7 @@ static menu sockCreateMenu(tcolor ColItem, tcolor ColSelect, tcolor ColDisabled,
                            byte FlagDefColInfo) {
   msgport Owner;
   if ((Owner = RemoteGetMsgPort(Slot)))
-    return Do(Create, Menu)(FnMenu, Owner, ColItem, ColSelect, ColDisabled, ColSelectDisabled,
+    return Do(Create, menu)(Fn_menu, Owner, ColItem, ColSelect, ColDisabled, ColSelectDisabled,
                             ColShtCut, ColSelShtCut, FlagDefColInfo);
   return (menu)0;
 }
@@ -1284,7 +1284,7 @@ static menu sockCreateMenu(tcolor ColItem, tcolor ColSelect, tcolor ColDisabled,
 static msgport sockCreateMsgPort(byte NameLen, const char *Name) {
   msgport MsgPort;
 
-  if ((MsgPort = Do(Create, MsgPort)(FnMsgPort, NameLen, Name, 0, 0, 0, SocketH))) {
+  if ((MsgPort = Do(Create, msgport)(Fn_msgport, NameLen, Name, 0, 0, 0, SocketH))) {
     RegisterMsgPort(MsgPort, Slot);
     MsgPort->ShutDownHook = sockShutDown;
   }
@@ -1305,7 +1305,7 @@ static msgport sockFindMsgPort(msgport Prev, byte NameLen, const char *Name) {
 static ggroup sockCreateGroup(void) {
   msgport Owner;
   if ((Owner = RemoteGetMsgPort(Slot)))
-    return Do(Create, Group)(FnGroup, Owner);
+    return Do(Create, group)(Fn_group, Owner);
   return (ggroup)0;
 }
 
@@ -1455,7 +1455,7 @@ static extension sockOpenExtension(byte namelen, const char *name) {
    * FIXME: loading an extension from a Slot without msgport
    * results in the extension stay loaded at least until someone uses it
    */
-  return Do(Query, Extension)(namelen, name);
+  return Do(Query, extension)(namelen, name);
 }
 static void sockCloseExtension(extension e) {
   msgport Owner;
@@ -1822,7 +1822,7 @@ static byte sockSendToMsgPort(msgport MsgPort, udat Len, const byte *Data) {
         break;
       }
 
-      if ((Msg = Do(Create, Msg)(FnMsg, tMsg->Type, _Len))) {
+      if ((Msg = Do(Create, msg)(Fn_msg, tMsg->Type, _Len))) {
 
         Msg->Event.EventCommon.W = (widget)Id2Obj(widget_magic_id, tMsg->Event.EventCommon.W);
 

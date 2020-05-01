@@ -36,9 +36,9 @@ static extension LoadExtension(topaque namelen, const char *name) {
   sprintf(fullname, "extensions/ext_%.*s", (int)namelen, name);
   fullnamelen = 15 + namelen;
 
-  if ((E = FnExtension->Create(FnExtension, fullnamelen, fullname))) {
+  if ((E = Fn_extension->Create(Fn_extension, fullnamelen, fullname))) {
 
-    FnExtension->Fn_Module->Used++;
+    Fn_extension->Fn_Module->Used++;
 
     E->CallB = NULL;
     E->Quit = NULL;

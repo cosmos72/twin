@@ -17,38 +17,38 @@
 
 /* in the same order as the #defines above ! */
 struct s_fn_struct {
-  fn_obj Obj;
-  fn_widget Widget;
-  fn_gadget Gadget;
-  fn_window Window;
-  fn_screen Screen;
-  fn_group Group;
-  fn_row Row;
-  fn_menuitem Menuitem;
-  fn_menu Menu;
-  fn_msgport Msgport;
-  fn_mutex Mutex;
-  fn_msg Msg;
-  fn_module Module;
-  fn_extension Extension;
-  fn_display_hw DisplayHW;
-  fn_obj All;
+  fn_obj obj;
+  fn_widget widget;
+  fn_gadget gadget;
+  fn_window window;
+  fn_screen screen;
+  fn_group group;
+  fn_row row;
+  fn_menuitem menuitem;
+  fn_menu menu;
+  fn_msgport msgport;
+  fn_mutex mutex;
+  fn_msg msg;
+  fn_module module;
+  fn_extension extension;
+  fn_display_hw display_hw;
+  fn_obj all;
 };
 
 extern fn_struct FnStruct;
-#define FnWidget (FnStruct.Widget)
-#define FnGadget (FnStruct.Gadget)
-#define FnWindow (FnStruct.Window)
-#define FnScreen (FnStruct.Screen)
-#define FnGroup (FnStruct.Group)
-#define FnRow (FnStruct.Row)
-#define FnMenuItem (FnStruct.Menuitem)
-#define FnMenu (FnStruct.Menu)
-#define FnMsgPort (FnStruct.Msgport)
-#define FnMutex (FnStruct.Mutex)
-#define FnMsg (FnStruct.Msg)
-#define FnModule (FnStruct.Module)
-#define FnExtension (FnStruct.Extension)
-#define FnDisplayHW (FnStruct.DisplayHW)
+#define Fn_widget (FnStruct.widget)
+#define Fn_gadget (FnStruct.gadget)
+#define Fn_window (FnStruct.window)
+#define Fn_screen (FnStruct.screen)
+#define Fn_group (FnStruct.group)
+#define Fn_row (FnStruct.row)
+#define Fn_menuitem (FnStruct.menuitem)
+#define Fn_menu (FnStruct.menu)
+#define Fn_msgport (FnStruct.msgport)
+#define Fn_mutex (FnStruct.mutex)
+#define Fn_msg (FnStruct.msg)
+#define Fn_module (FnStruct.module)
+#define Fn_extension (FnStruct.extension)
+#define Fn_display_hw (FnStruct.display_hw)
 
 #endif /* _TWIN_FN_H */
