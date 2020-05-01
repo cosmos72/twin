@@ -13,6 +13,7 @@
 #define _TWIN_ALLOC_H
 
 #include <Tw/datatypes.h>
+#include <stdlib.h>
 
 extern udat Errno;
 extern const char *Errstr;

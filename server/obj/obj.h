@@ -47,7 +47,7 @@ struct s_obj {
   uldat Size() const {
     return Fn->Size;
   }
-  static obj Create();
+  static obj Create(fn_obj);
   void Insert(obj parent, obj prev, obj next) {
     Fn->Insert(this, parent, prev, next);
   }

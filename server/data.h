@@ -9,18 +9,24 @@
 #ifndef _TWIN_DATA_H
 #define _TWIN_DATA_H
 
+#include <Tw/datatypes.h> // byte, udat, tcolor, trune
+#include <Tw/Tw_defs.h>   // tmaxcol
+
+typedef struct s_rgb {
+  byte Red, Green, Blue;
+} rgb;
+
 extern const char *const pkg_libdir;
 extern const char *const pkg_libdir_modules_;
 
 extern rgb Palette[tmaxcol + 1], defaultPalette[tmaxcol + 1];
 
-typedef struct keylist keylist;
-struct keylist {
+typedef struct s_keylist {
   const char *name;
   udat key;
   byte len;
   const char *seq;
-};
+} keylist;
 
 extern keylist TW_KeyList[];
 

@@ -20,6 +20,7 @@
 #include "twin.h"
 #include "algo.h"
 #include "alloc.h"
+#include "data.h"
 #include "hw.h"
 #include "hw_private.h"
 #include "common.h"

@@ -130,8 +130,8 @@ struct s_widget {
   uldat Size() const {
     return Fn->Size;
   }
-  static widget Create(msgport Owner, dat XWidth, dat YWidth, uldat Attrib, uldat Flags, dat Left,
-                       dat Up, tcell USE_Fill);
+  static widget Create(fn_widget Fn, msgport Owner, dat XWidth, dat YWidth, uldat Attrib,
+                       uldat Flags, dat Left, dat Up, tcell USE_Fill);
   void Insert(widget parent, widget prev, widget next) {
     Fn->Insert(this, parent, prev, next);
   }

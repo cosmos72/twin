@@ -11,8 +11,22 @@
  */
 
 #include "obj/obj.h"
-#include "obj/fn.h" // FnStruct
 
-obj s_obj::Create() {
-  return FnStruct.obj->Create(FnStruct.obj);
+#include "alloc.h" // AllocMem0(), FreeMem()
+#include "id.h"    // AssignId()
+
+obj s_obj::Create(fn_obj Fn) {
+  obj o;
+
+  if ((o = (obj)AllocMem0(Fn->Size, 1))) {
+    if (AssignId(Fn, o)) {
+      o->Fn = Fn;
+      o->Prev = o->Next = NULL;
+      o->Parent = NULL;
+    } else {
+      FreeMem(o);
+      o = NULL;
+    }
+  }
+  return o;
 }

@@ -36,7 +36,7 @@ struct s_fn_gadget {
   widget (*FindWidgetAt)(gadget Parent, dat X, dat Y);
   gadget (*FindGadgetByCode)(gadget Parent, udat Code);
   void (*SetXY)(gadget, dat X, dat Y);
-  void (*SetFill)(widget, tcell Fill);
+  void (*SetFill)(gadget, tcell Fill);
   widget (*Focus)(gadget);
   widget (*KbdFocus)(gadget);
   void (*Map)(gadget, widget Parent);
@@ -102,11 +102,72 @@ struct s_gadget {
   uldat Size() const {
     return Fn->Size;
   }
+  static gadget Create(fn_gadget Fn, msgport Owner, widget Parent, dat XWidth, dat YWidth,
+                       const char *TextNormal, uldat Attrib, uldat Flags, udat Code, tcolor ColText,
+                       tcolor ColTextSelect, tcolor ColTextDisabled, tcolor ColTextSelectDisabled,
+                       dat Left, dat Up);
   void Remove() {
     Fn->Remove(this);
   }
   void Delete() {
     Fn->Delete(this);
+  }
+
+  /* widget */
+  void DrawSelf(draw_ctx *D) {
+    Fn->DrawSelf(D);
+  }
+  widget FindWidgetAt(dat x, dat y) {
+    return Fn->FindWidgetAt(this, x, y);
+  }
+  gadget FindGadgetByCode(udat code) {
+    return Fn->FindGadgetByCode(this, code);
+  }
+  void SetXY(dat x, dat y) {
+    Fn->SetXY(this, x, y);
+  }
+  void SetFill(tcell fill) {
+    Fn->SetFill(this, fill);
+  }
+  widget Focus() {
+    return Fn->Focus(this);
+  }
+  widget KbdFocus() {
+    return Fn->KbdFocus(this);
+  }
+  void Map(widget parent) {
+    Fn->Map(this, parent);
+  }
+  void UnMap() {
+    Fn->UnMap(this);
+  }
+  void MapTopReal(screen scr) {
+    Fn->MapTopReal(this, scr);
+  }
+  void Raise() {
+    Fn->Raise(this);
+  }
+  void Lower() {
+    Fn->Lower(this);
+  }
+  void Own(msgport port) {
+    Fn->Own(this, port);
+  }
+  void DisOwn() {
+    Fn->DisOwn(this);
+  }
+  void RecursiveDelete(msgport port) {
+    Fn->RecursiveDelete(this, port);
+  }
+  void Expose(dat xwidth, dat ywidth, dat left, dat up, const char *ascii, const trune *runes,
+              const tcell *cells) {
+    Fn->Expose(this, xwidth, ywidth, left, up, ascii, runes, cells);
+  }
+  byte InstallHook(fn_hook hook, fn_hook *where) {
+    return Fn->InstallHook(this, hook, where);
+  }
+  void RemoveHook(fn_hook hook, fn_hook *where) {
+    Fn->RemoveHook(this, hook, where);
   }
 };
 

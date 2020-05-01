@@ -103,22 +103,6 @@ INLINE void RemoveGeneric(obj Obj, obj_parent Parent, ldat *ObjCount) {
 
 /* obj */
 
-static obj CreateObj(fn_obj Fn_Obj) {
-  obj Obj;
-
-  if ((Obj = (obj)AllocMem0(Fn_Obj->Size, 1))) {
-    if (AssignId(Fn_Obj, Obj)) {
-      Obj->Fn = Fn_Obj;
-      Obj->Prev = Obj->Next = (obj)0;
-      Obj->Parent = (obj)0;
-    } else {
-      FreeMem(Obj);
-      Obj = (obj)0;
-    }
-  }
-  return Obj;
-}
-
 static void InsertObj(obj Obj, obj Parent, obj Prev, obj Next) {
   printk("twin: internal error: pure virtual function InsertObj() called!\n");
 #if 0
@@ -148,7 +132,7 @@ static void DeleteObj(obj Obj) {
 static struct s_fn_obj _FnObj = {
     obj_magic,
     sizeof(struct s_obj),
-    CreateObj,
+    s_obj::Create,
     InsertObj,
     RemoveObj,
     DeleteObj,
@@ -156,37 +140,6 @@ static struct s_fn_obj _FnObj = {
 };
 
 /* widget */
-
-static widget CreateWidget(fn_widget Fn_Widget, msgport Owner, dat XWidth, dat YWidth, uldat Attrib,
-                           uldat Flags, dat Left, dat Up, tcell Fill) {
-  widget W = (widget)0;
-
-  if (Owner && (W = (widget)Fn_Widget->Fn_Obj->Create((fn_obj)Fn_Widget))) {
-    W->FirstW = W->LastW = W->SelectW = (widget)0;
-    W->Left = Left;
-    W->Up = Up;
-    W->XWidth = XWidth;
-    W->YWidth = YWidth;
-    W->Attrib = Attrib;
-    W->Flags = Flags;
-    W->XLogic = W->YLogic = 0;
-    W->O_Prev = W->O_Next = (widget)0;
-    W->Owner = (msgport)0;
-
-    W->ShutDownHook = (fn_hook)0;
-    W->Hook = (fn_hook)0;
-    W->WhereHook = (fn_hook *)0;
-    W->MapUnMapHook = (fn_hook)0;
-    W->MapQueueMsg = (msg)0;
-
-    W->USE_Fill = Fill;
-    if (w_USE(W, USEEXPOSE))
-      memset(&W->USE.E, '\0', sizeof(W->USE.E));
-
-    Act(Own, W)(W, Owner);
-  }
-  return W;
-}
 
 static void InsertWidget(widget W, widget Parent, widget Prev, widget Next) {
   if (Parent)
@@ -572,7 +525,7 @@ static void RemoveHookWidget(widget W, fn_hook Hook, fn_hook *WhereHook) {
 static struct s_fn_widget _FnWidget = {
     widget_magic,
     sizeof(struct s_widget),
-    CreateWidget,
+    s_widget::Create,
     InsertWidget,
     RemoveWidget,
     DeleteWidget,
@@ -599,45 +552,6 @@ static struct s_fn_widget _FnWidget = {
 };
 
 /* gadget */
-
-static gadget CreateGadget(fn_gadget Fn_Gadget, msgport Owner, widget Parent, dat XWidth,
-                           dat YWidth, const char *TextNormal, uldat Attrib, uldat Flags, udat Code,
-                           tcolor ColText, tcolor ColTextSelect, tcolor ColTextDisabled,
-                           tcolor ColTextSelectDisabled, dat Left, dat Up) {
-  gadget G = (gadget)0;
-  ldat Size;
-
-  if (Owner && Code < COD_RESERVED && XWidth > 0 && YWidth > 0 &&
-      (G = (gadget)Fn_Gadget->Fn_Widget->Create((fn_widget)Fn_Gadget, Owner, XWidth, YWidth, Attrib,
-                                                Flags, Left, Up, TCELL(ColText, ' ')))) {
-
-    G->ColText = ColText;
-    G->ColSelect = ColTextSelect;
-    G->ColDisabled = ColTextDisabled;
-    G->ColSelectDisabled = ColTextSelectDisabled;
-    G->Code = Code;
-
-    G->G_Prev = G->G_Next = (gadget)0;
-    G->Group = (ggroup)0;
-
-    if (G_USE(G, USETEXT)) {
-      Size = (ldat)XWidth * YWidth;
-      if (TextNormal)
-        G->USE.T.Text[0] = CloneStr2TRune(TextNormal, Size);
-      else
-        G->USE.T.Text[0] = NULL;
-
-      G->USE.T.Text[1] = G->USE.T.Text[2] = G->USE.T.Text[3] = NULL;
-      G->USE.T.Color[0] = G->USE.T.Color[1] = G->USE.T.Color[2] = G->USE.T.Color[3] = NULL;
-    }
-
-    /* G->Flags |= GADGETFL_TEXT_DEFCOL; */
-
-    if (Parent)
-      Act(Map, G)(G, Parent);
-  }
-  return G;
-}
 
 static void DeleteGadget(gadget G) {
   byte i;
@@ -792,14 +706,14 @@ static gadget CreateButton(fn_gadget Fn_Gadget, widget Parent, dat XWidth, dat Y
 }
 
 static struct s_fn_gadget _FnGadget = {
-    gadget_magic, sizeof(struct s_gadget), CreateGadget,
+    gadget_magic, sizeof(struct s_gadget), s_gadget::Create,
     (void (*)(gadget, widget, widget, widget))InsertWidget, (void (*)(gadget))RemoveWidget,
     DeleteGadget, ChangeFieldGadget,
     /* widget */
     &_FnObj, DrawSelfGadget,                    /* exported by draw.c */
     (widget (*)(gadget, dat, dat))FindWidgetAt, /* exported by draw.c */
     (gadget (*)(gadget, udat))FindGadgetByCode, (void (*)(gadget, dat, dat))SetXYWidget,
-    (void (*)(widget, tcell))SetFillWidget, (widget(*)(gadget))FocusWidget,
+    (void (*)(gadget, tcell))SetFillWidget, (widget(*)(gadget))FocusWidget,
     (widget(*)(gadget))TtyKbdFocus, (void (*)(gadget, widget))MapWidget,
     (void (*)(gadget))UnMapWidget, (void (*)(gadget, screen))MapTopRealWidget,
     (void (*)(gadget))RaiseW, (void (*)(gadget))LowerW, (void (*)(gadget, msgport))OwnWidget,
@@ -814,155 +728,7 @@ static struct s_fn_gadget _FnGadget = {
     WriteTRunesGadget, /* exported by resize.c */
 };
 
-/* ttydata */
-
-static byte InitTtyData(window Window, dat ScrollBackLines) {
-  ttydata *Data = Window->USE.C.TtyData;
-  ldat count = Window->WLogic * Window->HLogic;
-  tcell *p = Window->USE.C.Contents, h;
-
-  if (!Data && !(Window->USE.C.TtyData = Data = (ttydata *)AllocMem(sizeof(ttydata))))
-    return tfalse;
-
-  if (!p && !(Window->USE.C.Contents = p = (tcell *)AllocMem(count * sizeof(tcell))))
-    return tfalse;
-
-  h = TCELL(TCOL(twhite, tblack), ' ');
-  while (count--)
-    *p++ = h;
-
-  /*
-   * this is a superset of reset_tty(),
-   * but we don't want to call it from here
-   */
-  Data->State = ESnormal;
-  Data->Flags = TTY_AUTOWRAP;
-  Data->Effects = 0;
-  Window->YLogic = Window->CurY = Data->ScrollBack = ScrollBackLines;
-  Window->USE.C.HSplit = 0;
-  Data->SizeX = Window->WLogic;
-  Data->SizeY = Window->HLogic - ScrollBackLines;
-  Data->Top = 0;
-  Data->Bottom = Data->SizeY;
-  Data->saveX = Data->X = Window->CurX = 0;
-  Data->saveY = Data->Y = 0;
-  Data->Pos = Data->Start = Window->USE.C.Contents + Data->ScrollBack * Window->WLogic;
-  Data->Split = Window->USE.C.Contents + Window->WLogic * Window->HLogic;
-
-  Window->CursorType = LINECURSOR;
-  /* respect the WINDOWFL_CURSOR_ON set by the client and don't force it on */
-#if 0
-    Window->Flags |= WINDOWFL_CURSOR_ON;
-#endif
-  Window->ColText = Data->Color = Data->DefColor = Data->saveColor = TCOL(twhite, tblack);
-  Data->Underline = TCOL(thigh | twhite, tblack);
-  Data->HalfInten = TCOL(thigh | tblack, tblack);
-  Data->TabStop[0] = 0x01010100;
-  Data->TabStop[1] = Data->TabStop[2] = Data->TabStop[3] = Data->TabStop[4] = 0x01010101;
-  Data->nPar = 0;
-
-  Data->G = Data->saveG = 0;
-  /* default to latin1 charset */
-  Data->currG = Data->G0 = Data->saveG0 = LATIN1_MAP;
-  Data->G1 = Data->saveG1 = VT100GR_MAP;
-
-  Data->utf8 = Data->utf8_count = Data->utf8_char = 0;
-  Data->InvCharset = Tutf_UTF_32_to_ISO_8859_1;
-  Data->newLen = Data->newMax = 0;
-  Data->newName = NULL;
-
-  return ttrue;
-}
-
 /* window */
-
-static window CreateWindow(fn_window Fn_Window, msgport Owner, dat TitleLen, const char *Title,
-                           const tcolor *ColTitle, menu Menu, tcolor ColText, uldat CursorType,
-                           uldat Attrib, uldat Flags, dat XWidth, dat YWidth, dat ScrollBackLines) {
-
-  window Window = (window)0;
-  char *_Title = NULL;
-  tcolor *_ColTitle = NULL;
-  byte HasBorder = 2 * !(Flags & WINDOWFL_BORDERLESS);
-
-  /* overflow safety */
-  if (HasBorder) {
-    if ((dat)(XWidth + HasBorder) > 0)
-      XWidth += HasBorder;
-    if ((dat)(YWidth + HasBorder) > 0)
-      YWidth += HasBorder;
-  }
-
-  if ((!Title || (_Title = CloneStrL(Title, TitleLen))) &&
-      (!ColTitle || (_ColTitle = (tcolor *)CloneMem(ColTitle, TitleLen * sizeof(tcolor)))) &&
-      Owner &&
-      (Window =
-           (window)Fn_Window->Fn_Widget->Create((fn_widget)Fn_Window, Owner, XWidth, YWidth, Attrib,
-                                                Flags, 0, TW_MAXDAT, TCELL(ColText, ' ')))) {
-    Window->Menu = Menu;
-    Window->MenuItem = (menuitem)0;
-    Window->NameLen = TitleLen;
-    Window->Name = _Title;
-    Window->ColName = _ColTitle;
-    Window->BorderPattern[0] = Window->BorderPattern[1] = (trune *)0;
-    Window->RemoteData.Fd = NOFD;
-    Window->RemoteData.ChildPid = NOPID;
-    Window->RemoteData.FdSlot = NOSLOT;
-    Window->CurX = Window->CurY = 0;
-    Window->XstSel = Window->YstSel = Window->XendSel = Window->YendSel = 0;
-    Window->ColGadgets = DEFAULT_ColGadgets;
-    Window->ColArrows = DEFAULT_ColArrows;
-    Window->ColBars = DEFAULT_ColBars;
-    Window->ColTabs = DEFAULT_ColTabs;
-    Window->ColBorder = DEFAULT_ColBorder;
-    Window->ColText = ColText;
-    Window->ColSelect = TCOL(TCOLBG(ColText), TCOLFG(ColText));
-    Window->ColDisabled = DEFAULT_ColDisabled;
-    Window->ColSelectDisabled = DEFAULT_ColSelectDisabled;
-    /* sanity: */
-    if (Window->Flags & WINDOWFL_BORDERLESS)
-      Window->Attrib &= ~WINDOW_ROLLED_UP;
-    if (Window->Attrib & WINDOW_WANT_KEYS)
-      Window->Attrib &= ~WINDOW_AUTO_KEYS;
-
-    Window->State = (uldat)0;
-    Window->CursorType = CursorType;
-
-    Window->MinXWidth = MIN_XWIN;
-    Window->MinYWidth = MIN_YWIN;
-    Window->XWidth = XWidth = Max2(MIN_XWIN, XWidth);
-    Window->YWidth = YWidth = Max2(MIN_YWIN, YWidth);
-    Window->MaxXWidth = TW_MAXDAT;
-    Window->MaxYWidth = TW_MAXDAT;
-
-    Window->Charset = Tutf_CP437_to_UTF_32;
-    memset(&Window->USE, '\0', sizeof(Window->USE));
-
-    if (W_USE(Window, USECONTENTS)) {
-      if (TW_MAXDAT - ScrollBackLines < YWidth - HasBorder)
-        ScrollBackLines = TW_MAXDAT - YWidth + HasBorder;
-      Window->CurY = Window->YLogic = ScrollBackLines;
-      Window->WLogic = XWidth - HasBorder;
-      Window->HLogic = ScrollBackLines + YWidth - HasBorder;
-      if (!InitTtyData(Window, ScrollBackLines)) {
-        Act(Delete, Window)(Window);
-        Window = (window)0;
-      }
-    } else if (W_USE(Window, USEROWS)) {
-      Window->WLogic = 1024; /* just an arbitrary value... */
-      Window->HLogic = 0;    /* no rows */
-    } else {
-      Window->WLogic = XWidth - HasBorder;
-      Window->HLogic = ScrollBackLines + YWidth - HasBorder;
-    }
-    return Window;
-  }
-  if (_Title)
-    FreeMem(_Title);
-  if (_ColTitle)
-    FreeMem(_ColTitle);
-  return Window;
-}
 
 static void DeleteWindow(window W) {
   Act(UnMap, W)(W);
@@ -1362,7 +1128,7 @@ static row FindRowByCode(window Window, udat Code, ldat *NumRow) {
 static struct s_fn_window _FnWindow = {
     window_magic,
     sizeof(struct s_window),
-    CreateWindow,
+    s_window::Create,
     (void (*)(window, widget, widget, widget))InsertWidget,
     (void (*)(window))RemoveWidget,
     DeleteWindow,

@@ -65,10 +65,6 @@ enum s_fd {
 #endif
 #define NOSLOT TW_MAXULDAT
 
-typedef struct s_rgb {
-  byte Red, Green, Blue;
-} rgb;
-
 /* errors */
 enum e_error {
   NOMEMORY = 1,

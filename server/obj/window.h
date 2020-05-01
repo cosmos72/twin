@@ -171,7 +171,7 @@ struct s_window {
   uldat Size() const {
     return Fn->Size;
   }
-  static window Create(fn_window, msgport Owner, dat NameLen, const char *Name,
+  static window Create(fn_window Fn, msgport Owner, dat NameLen, const char *Name,
                        const tcolor *ColName, menu Menu, tcolor ColText, uldat CursorType,
                        uldat Attrib, uldat Flags, dat XWidth, dat YWidth, dat ScrollBackLines);
   static window Create4Menu(menu);
