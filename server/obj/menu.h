@@ -28,7 +28,7 @@ struct s_menu {
   menuitem FirstI, LastI, SelectI;
 };
 struct s_fn_menu {
-  uldat Magic, Size, Used;
+  uldat Magic, Size;
   menu (*Create)(fn_menu, msgport MsgPort, tcolor ColItem, tcolor ColSelect, tcolor ColDisabled,
                  tcolor ColSelectDisabled, tcolor ColShtCut, tcolor ColSelShtCut,
                  byte FlagDefColInfo);

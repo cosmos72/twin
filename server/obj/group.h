@@ -28,7 +28,7 @@ struct s_group {
 };
 
 struct s_fn_group {
-  uldat Magic, Size, Used;
+  uldat Magic, Size;
   ggroup (*Create)(fn_group, msgport Parent);
   void (*Insert)(ggroup, msgport MsgPort, ggroup Prev, ggroup Next);
   void (*Remove)(ggroup);

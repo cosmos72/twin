@@ -24,7 +24,7 @@ typedef struct s_fn_obj *fn_obj;
 typedef struct s_obj_parent *obj_parent;
 
 struct s_fn_obj {
-  uldat Magic, Size, Used;
+  uldat Magic, Size;
   obj (*Create)(fn_obj);
   void (*Insert)(obj self, obj parent, obj prev, obj next);
   void (*Remove)(obj self);
@@ -46,9 +46,6 @@ struct s_obj {
   }
   uldat Size() const {
     return Fn->Size;
-  }
-  uldat Used() const {
-    return Fn->Used;
   }
   static obj Create();
   void Insert(obj parent, obj prev, obj next) {

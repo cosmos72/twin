@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.65])
-AC_INIT([twin], [0.8.1], [BUG-REPORT-ADDRESS])
+AC_INIT([twin], [0.8.2], [BUG-REPORT-ADDRESS])
 AC_CONFIG_SRCDIR([server/main.cpp])
 AC_CONFIG_HEADERS([include/config.h])
 AC_CONFIG_MACRO_DIR([m4])
@@ -61,7 +61,7 @@ AC_CHECK_HEADERS([ \
        sys/dir.h sys/filio.h sys/ioctl.h sys/mman.h sys/ndir.h sys/param.h sys/resource.h \
        sys/select.h sys/socket.h sys/stat.h sys/timeb.h sys/ttydefaults.h sys/un.h sys/utsname.h \
        termcap.h termio.h termios.h unistd.h zlib.h])
-       
+
 
 AC_STRUCT_TM
 
@@ -135,7 +135,7 @@ if echo "$ac_cv_host" | $GREP darwin >/dev/null 2>&1 ; then
   LDFLAGS_BIN_EXPORT_DYNAMIC="$LDFLAGS"
   LDFLAGS="$initial_LDFLAGS"
 fi
-    
+
 ################################################################################
 
 AC_CHECK_TYPE(gid_t,int)
@@ -215,7 +215,7 @@ if test "$have_x" = yes; then
   AC_CHECK_HEADERS([X11/Xft/Xft.h])                   dnl needs XFT_CFLAGS
   AC_CHECK_HEADERS([fontconfig/fontconfig.h])         dnl needs XFT_CFLAGS
   AC_SEARCH_LIBS(XftFontOpen, Xft)                    dnl needs XFT_LIBS
-  
+
   CPPFLAGS="$save_CPPFLAGS"
   LDFLAGS="$save_LDFLAGS"
 fi
@@ -233,7 +233,7 @@ AC_DEFINE_UNQUOTED(ATTR_FN_CONST,      [`echo $ac_cv_c_attribute_const     | $SE
 AC_DEFINE_UNQUOTED(ATTR_TYPE_PACKED,   [`echo $ac_cv_c_attribute_packed    | $SED -e 's/^no$//g'`], [Define to compiler's variant of __attribute__((packed)),     or to empty if not supported.])
 AC_DEFINE_UNQUOTED(ATTR_PTR_ALIGNED_1, [`echo $ac_cv_c_attribute_aligned_1 | $SED -e 's/^no$//g'`], [Define to compiler's variant of __attribute__((aligned(1))), or to empty if not supported.])
 
-  
+
 if test "$ac_cv_search_crypt" != "no" -o "$ac_cv_func_crypt" != "no"; then
   AC_DEFINE(HAVE_CRYPT, 1, [Define to 1 if you have the `crypt'  function.])
 fi
@@ -312,7 +312,7 @@ AM_CONDITIONAL(LIBWM_la,         [test "$enable_wm"         = yes])
 CXXFLAGS="$custom_CXXFLAGS"
 
 AC_SUBST(LDFLAGS_BIN_EXPORT_DYNAMIC, "$LDFLAGS_BIN_EXPORT_DYNAMIC")
-         
+
 AC_CONFIG_FILES([
       Makefile clients/Makefile clients/mapscrn/Makefile contrib/Makefile contrib/twcd/Makefile \
       docs/Makefile include/Makefile include/Tutf/Makefile include/Tw/Makefile \
@@ -332,4 +332,3 @@ tw_cfg()
 }
 
 TW_OUTPUT
-

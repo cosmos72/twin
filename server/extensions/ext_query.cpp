@@ -38,8 +38,6 @@ static extension LoadExtension(topaque namelen, const char *name) {
 
   if ((E = Fn_extension->Create(Fn_extension, fullnamelen, fullname))) {
 
-    Fn_extension->Fn_Module->Used++;
-
     E->CallB = NULL;
     E->Quit = NULL;
 

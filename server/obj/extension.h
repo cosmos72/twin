@@ -31,7 +31,7 @@ struct s_extension {
 };
 
 struct s_fn_extension {
-  uldat Magic, Size, Used;
+  uldat Magic, Size;
   extension (*Create)(fn_extension, uldat NameLen, const char *Name);
   void (*Insert)(extension, all, extension Prev, extension Next);
   void (*Remove)(extension);

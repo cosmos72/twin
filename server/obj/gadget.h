@@ -51,7 +51,7 @@ struct s_gadget {
 };
 
 struct s_fn_gadget {
-  uldat Magic, Size, Used;
+  uldat Magic, Size;
   gadget (*Create)(fn_gadget, msgport Owner, widget Parent, dat XWidth, dat YWidth,
                    const char *TextNormal, uldat Attrib, uldat Flags, udat Code, tcolor ColText,
                    tcolor ColTextSelect, tcolor ColTextDisabled, tcolor ColTextSelectDisabled,

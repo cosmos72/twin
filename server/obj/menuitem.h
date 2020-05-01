@@ -34,7 +34,7 @@ struct s_menuitem {
 };
 
 struct s_fn_menuitem {
-  uldat Magic, Size, Used;
+  uldat Magic, Size;
   menuitem (*Create)(fn_menuitem, obj Parent, window Window, udat Code, byte Flags, dat Left,
                      ldat Len, dat ShortCut, const char *Name);
   void (*Insert)(menuitem, obj, menuitem Prev, menuitem Next);

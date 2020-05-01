@@ -66,7 +66,7 @@ struct s_WC { /* for WINDOWFL_USECONTENTS windows */
 };
 
 struct s_fn_window {
-  uldat Magic, Size, Used;
+  uldat Magic, Size;
   window (*Create)(fn_window, msgport Owner, dat NameLen, const char *Name, const tcolor *ColName,
                    menu Menu, tcolor ColText, uldat CursorType, uldat Attrib, uldat Flags,
                    dat XWidth, dat YWidth, dat ScrollBackLines);
@@ -170,9 +170,6 @@ struct s_window {
   }
   uldat Size() const {
     return Fn->Size;
-  }
-  uldat Used() const {
-    return Fn->Used;
   }
   static window Create(fn_window, msgport Owner, dat NameLen, const char *Name,
                        const tcolor *ColName, menu Menu, tcolor ColText, uldat CursorType,

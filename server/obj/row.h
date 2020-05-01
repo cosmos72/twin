@@ -32,7 +32,7 @@ struct s_row {
 };
 
 struct s_fn_row {
-  uldat Magic, Size, Used;
+  uldat Magic, Size;
   row (*Create)(fn_row, udat Code, byte Flags);
   void (*Insert)(row, window, row Prev, row Next);
   void (*Remove)(row);
