@@ -14,6 +14,9 @@
 #define _TWIN_MSG_H
 
 #include "obj/event.h"
+#include "obj/fwd.h"
+#include "printk.h"
+#include <Tw/datatypes.h>
 
 struct s_fn_msg {
   uldat Magic, Size;
@@ -42,6 +45,10 @@ struct s_msg {
   }
   uldat Size() const {
     return Fn->Size;
+  }
+  static msg Create(fn_msg Fn, udat type, udat eventlen);
+  void Insert(msgport port, msg prev, msg next) {
+    Fn->Insert(this, port, prev, next);
   }
   void Remove() {
     Fn->Remove(this);

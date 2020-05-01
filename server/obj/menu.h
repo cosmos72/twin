@@ -52,6 +52,9 @@ struct s_menu {
   uldat Size() const {
     return Fn->Size;
   }
+  static menu Create(fn_menu Fn, msgport port, tcolor colitem, tcolor colselect, tcolor coldisabled,
+                     tcolor colselectdisabled, tcolor colshtcut, tcolor colselshtcut,
+                     byte flagdefcolinfo);
   void Remove() {
     Fn->Remove(this);
   }

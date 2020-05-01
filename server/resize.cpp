@@ -220,7 +220,7 @@ static row InsertRowsWindow(window Window, ldat NumRows) {
   row CurrRow;
 
   while (NumRows--) {
-    if ((CurrRow = Do(Create, row)(Fn_row, 0, ROW_ACTIVE))) {
+    if ((CurrRow = New(row)(Fn_row, 0, ROW_ACTIVE))) {
       Act(Insert, CurrRow)(CurrRow, Window, Window->USE.R.LastRow, NULL);
     } else
       break;
@@ -1869,7 +1869,7 @@ void SendMsgGadget(gadget G) {
   msg Msg;
   event_gadget *Event;
   if (G->Code && !(G->Flags & GADGETFL_DISABLED)) {
-    if ((Msg = Do(Create, msg)(Fn_msg, msg_widget_gadget, 0))) {
+    if ((Msg = New(msg)(Fn_msg, msg_widget_gadget, 0))) {
       Event = &Msg->Event.EventGadget;
       Event->W = G->Parent;
       Event->Code = G->Code;

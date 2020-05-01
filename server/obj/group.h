@@ -13,13 +13,14 @@
 #ifndef _TWIN_GROUP_H
 #define _TWIN_GROUP_H
 
-#include "obj/gadget.h"
+#include "obj/fwd.h"
+#include <Tw/datatypes.h>
 
 /* ggroup -- gadget group */
 
 struct s_fn_group {
   uldat Magic, Size;
-  ggroup (*Create)(fn_group, msgport Parent);
+  ggroup (*Create)(fn_group Fn, msgport Parent);
   void (*Insert)(ggroup, msgport MsgPort, ggroup Prev, ggroup Next);
   void (*Remove)(ggroup);
   void (*Delete)(ggroup);
@@ -48,6 +49,7 @@ struct s_group {
   uldat Size() const {
     return Fn->Size;
   }
+  static ggroup Create(fn_group Fn, msgport Parent);
   void Remove() {
     Fn->Remove(this);
   }

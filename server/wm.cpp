@@ -337,7 +337,7 @@ void Check4Resize(window W) {
       (!W_USE(W, USECONTENTS) || W->XWidth != W->USE.C.TtyData->SizeX + HasBorder ||
        W->YWidth != W->USE.C.TtyData->SizeY + HasBorder)) {
 
-    if ((Msg = Do(Create, msg)(Fn_msg, msg_widget_change, 0))) {
+    if ((Msg = New(msg)(Fn_msg, msg_widget_change, 0))) {
       Event = &Msg->Event;
       Event->EventWidget.W = (widget)W;
       Event->EventWidget.Code = MSG_WIDGET_RESIZE;
@@ -355,7 +355,7 @@ void AskCloseWidget(widget W) {
 
   if (W && (!IS_WINDOW(W) || (W->Attrib & WINDOW_CLOSE))) {
 
-    if ((Msg = Do(Create, msg)(Fn_msg, msg_widget_gadget, 0))) {
+    if ((Msg = New(msg)(Fn_msg, msg_widget_gadget, 0))) {
       Msg->Event.EventGadget.W = W;
       Msg->Event.EventGadget.Code = (udat)0; /* COD_CLOSE */
       SendMsg(W->Owner, Msg);
@@ -431,7 +431,7 @@ static void CleanupLastW(widget LastW, udat LastKeys, byte LastInside) {
 
   if (LastW) {
     if (LastInside) {
-      if ((NewMsg = Do(Create, msg)(Fn_msg, msg_widget_mouse, 0))) {
+      if ((NewMsg = New(msg)(Fn_msg, msg_widget_mouse, 0))) {
         Event = &NewMsg->Event;
         Event->EventMouse.W = LastW;
         Event->EventMouse.ShiftFlags = (udat)0;
@@ -442,7 +442,7 @@ static void CleanupLastW(widget LastW, udat LastKeys, byte LastInside) {
       }
     }
     while (LastKeys & HOLD_ANY) {
-      if ((NewMsg = Do(Create, msg)(Fn_msg, msg_widget_mouse, 0))) {
+      if ((NewMsg = New(msg)(Fn_msg, msg_widget_mouse, 0))) {
         Event = &NewMsg->Event;
         Event->EventMouse.W = LastW;
         Event->EventMouse.ShiftFlags = (udat)0;
@@ -481,7 +481,7 @@ static void HandleHilightAndSelection(widget W, udat Code, dat X, dat Y, byte In
       /* store selection owner */
       SelectionImport();
 
-      if ((NewMsg = Do(Create, msg)(Fn_msg, msg_selection, 0))) {
+      if ((NewMsg = New(msg)(Fn_msg, msg_selection, 0))) {
         event_any *Event = &NewMsg->Event;
         Event->EventSelection.W = W;
         Event->EventSelection.Code = 0;
@@ -885,7 +885,7 @@ static void ReleaseMenu(wm_ctx *C) {
     Fill4RC_VM(C, (widget)MW, msg_menu_row, POS_MENU, Row->Code);
     (void)RC_VMQueue(C);
   } else if (Code) {
-    if ((Msg = Do(Create, msg)(Fn_msg, msg_menu_row, 0))) {
+    if ((Msg = New(msg)(Fn_msg, msg_menu_row, 0))) {
       Event = &Msg->Event.EventMenu;
       Event->W = MW;
       Event->Code = Code;
@@ -1923,13 +1923,13 @@ EXTERN_C byte InitModule(module Module) {
   byte sent = tfalse;
 
   srand48(time(NULL));
-  if ((WM_MsgPort = Do(Create, msgport)(Fn_msgport, 2, "WM", 0, 0, 0, WManagerH)) &&
+  if ((WM_MsgPort = New(msgport)(Fn_msgport, 2, "WM", 0, 0, 0, WManagerH)) &&
       /* this will later be sent to rcrun.c, it forces loading .twinrc */
       SendControlMsg(WM_MsgPort, MSG_CONTROL_OPEN, 0, NULL)) {
 
     if (RegisterExt(WM, MsgPort, WM_MsgPort)) {
 
-      if ((MapQueue = Do(Create, msgport)(Fn_msgport, 11, "WM MapQueue", 0, 0, 0,
+      if ((MapQueue = New(msgport)(Fn_msgport, 11, "WM MapQueue", 0, 0, 0,
                                           (void (*)(msgport))NoOp))) {
 
         MapQueue->Remove();

@@ -285,7 +285,7 @@ byte SendControlMsg(msgport MsgPort, udat Code, udat Len, const char *Data) {
   msg Msg;
   event_control *Event;
 
-  if (MsgPort && (Msg = Do(Create, msg)(Fn_msg, msg_control, Len))) {
+  if (MsgPort && (Msg = New(msg)(Fn_msg, msg_control, Len))) {
     Event = &Msg->Event.EventControl;
     Event->Code = Code;
     Event->Len = Len;

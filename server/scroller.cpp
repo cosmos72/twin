@@ -34,10 +34,10 @@ static void ScrollerH(msgport MsgPort);
 msg Do_Scroll, Dont_Scroll;
 
 byte InitScroller(void) {
-  if ((Scroller_MsgPort = Do(Create, msgport)(Fn_msgport, 16, "builtin scroller", (tany)0,
+  if ((Scroller_MsgPort = New(msgport)(Fn_msgport, 16, "builtin scroller", (tany)0,
                                               401 MilliSECs, (byte)0, ScrollerH)) &&
-      (Do_Scroll = Do(Create, msg)(Fn_msg, 0, 0)) &&
-      (Dont_Scroll = Do(Create, msg)(Fn_msg, 0, 0))) {
+      (Do_Scroll = New(msg)(Fn_msg, 0, 0)) &&
+      (Dont_Scroll = New(msg)(Fn_msg, 0, 0))) {
 
     return ttrue;
   }

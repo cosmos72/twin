@@ -1343,19 +1343,6 @@ static struct s_fn_screen _FnScreen = {
 
 /* ggroup */
 
-static ggroup CreateGroup(fn_group Fn_Group, msgport MsgPort) {
-  ggroup Group = (ggroup)0;
-
-  if (MsgPort && (Group = (ggroup)Fn_Group->Fn_Obj->Create((fn_obj)Fn_Group))) {
-
-    Group->FirstG = Group->LastG = Group->SelectG = (gadget)0;
-    Group->MsgPort = (msgport)0;
-
-    InsertLast(Group, Group, MsgPort);
-  }
-  return Group;
-}
-
 static void InsertGroup(ggroup Group, msgport MsgPort, ggroup Prev, ggroup Next) {
   if (!Group->MsgPort && MsgPort) {
     InsertGeneric((obj)Group, (obj_parent)&MsgPort->FirstGroup, (obj)Prev, (obj)Next, (ldat *)0);
@@ -1423,7 +1410,7 @@ static void SetSelectedGadget(ggroup Group, gadget G) {
 static struct s_fn_group _FnGroup = {
     ggroup_magic,
     sizeof(struct s_group),
-    CreateGroup,
+    s_group::Create,
     InsertGroup,
     RemoveGroup,
     DeleteGroup,
@@ -1436,20 +1423,6 @@ static struct s_fn_group _FnGroup = {
 };
 
 /* row */
-
-static row CreateRow(fn_row Fn_Row, udat Code, byte Flags) {
-  row Row = (row)0;
-
-  if (Code < COD_RESERVED && (Row = (row)Fn_Row->Fn_Obj->Create((fn_obj)Fn_Row))) {
-
-    Row->Code = Code;
-    Row->Flags = Flags;
-    Row->Gap = Row->LenGap = Row->Len = Row->MaxLen = 0;
-    Row->Text = NULL;
-    Row->ColText = NULL;
-  }
-  return Row;
-}
 
 static void InsertRow(row Row, window Parent, row Prev, row Next) {
   if (!Row->Window && Parent && W_USE(Parent, USEROWS)) {
@@ -1575,7 +1548,7 @@ static void LowerMenuItem(menuitem M) {
 static struct s_fn_row _FnRow = {
     row_magic,
     sizeof(struct s_row),
-    CreateRow,
+    s_row::Create,
     InsertRow,
     RemoveRow,
     DeleteRow,
@@ -1726,27 +1699,6 @@ static struct s_fn_menuitem _FnMenuItem = {
 };
 
 /* menu */
-
-static menu CreateMenu(fn_menu Fn_Menu, msgport MsgPort, tcolor ColItem, tcolor ColSelect,
-                       tcolor ColDisabled, tcolor ColSelectDisabled, tcolor ColShtCut,
-                       tcolor ColSelShtCut, byte FlagDefColInfo) {
-  menu Menu = (menu)0;
-
-  if (MsgPort && (Menu = (menu)Fn_Menu->Fn_Obj->Create((fn_obj)Fn_Menu))) {
-    Menu->ColItem = ColItem;
-    Menu->ColSelect = ColSelect;
-    Menu->ColDisabled = ColDisabled;
-    Menu->ColSelectDisabled = ColSelectDisabled;
-    Menu->ColShtCut = ColShtCut;
-    Menu->ColSelShtCut = ColSelShtCut;
-    Menu->FirstI = Menu->LastI = Menu->SelectI = (menuitem)0;
-    Menu->CommonItems = tfalse;
-    Menu->FlagDefColInfo = FlagDefColInfo;
-    Menu->Info = (row)0;
-    InsertLast(Menu, Menu, MsgPort);
-  }
-  return Menu;
-}
 
 static void InsertMenu(menu Menu, msgport MsgPort, menu Prev, menu Next) {
   if (!Menu->MsgPort && MsgPort) {
@@ -1909,7 +1861,7 @@ static void SetSelectedItem(menu Menu, menuitem Item) {
 static struct s_fn_menu _FnMenu = {
     menu_magic,
     sizeof(struct s_menu),
-    CreateMenu,
+    s_menu::Create,
     InsertMenu,
     RemoveMenu,
     DeleteMenu,
@@ -1924,78 +1876,6 @@ static struct s_fn_menu _FnMenu = {
 };
 
 /* msg */
-
-#define Delta ((size_t) & (((msg)0)->Event))
-
-static msg CreateMsg(fn_msg Fn_Msg, udat Type, udat EventLen) {
-  msg Msg;
-
-  switch (Type) {
-  case msg_map:
-    EventLen += sizeof(event_map);
-    break;
-  case msg_display:
-    EventLen += sizeof(event_display);
-    break;
-  case msg_key:
-  case msg_widget_key:
-    EventLen += sizeof(event_keyboard);
-    break;
-  case msg_widget_mouse:
-  case msg_mouse:
-    EventLen += sizeof(event_mouse);
-    break;
-  case msg_widget_change:
-    EventLen += sizeof(event_widget);
-    break;
-  case msg_widget_gadget:
-    EventLen += sizeof(event_gadget);
-    break;
-  case msg_menu_row:
-    EventLen += sizeof(event_menu);
-    break;
-  case msg_selection:
-    EventLen += sizeof(event_selection);
-    break;
-  case msg_selection_notify:
-    EventLen += sizeof(event_selectionnotify) - sizeof(uldat);
-    break;
-  case msg_selection_request:
-    EventLen += sizeof(event_selectionrequest);
-    break;
-  case msg_control:
-  case msg_user_control:
-    EventLen += sizeof(event_control) - sizeof(uldat);
-    break;
-  case msg_user_clientmsg:
-    EventLen += sizeof(event_clientmsg) - sizeof(uldat);
-    break;
-
-  case msg_selection_clear:
-    EventLen += sizeof(event_common);
-    break;
-  default:
-    printk("twin: CreateMsg(): internal error: unknown Msg->Type 0x%04x(%d)\n", (int)Type,
-           (int)Type);
-    return (msg)0;
-  }
-
-  if ((Msg = (msg)AllocMem(EventLen + Delta))) {
-    if (AssignId((fn_obj)Fn_Msg, (obj)Msg)) {
-      Msg->Fn = Fn_Msg;
-      Msg->Prev = Msg->Next = (msg)0;
-      Msg->MsgPort = (msgport)0;
-      Msg->Type = Type;
-      Msg->Len = EventLen;
-      return Msg;
-    }
-    FreeMem(Msg);
-    Msg = (msg)0;
-  }
-  return Msg;
-}
-
-#undef Delta
 
 static void InsertMsg(msg Msg, msgport Parent, msg Prev, msg Next) {
   if (!Msg->MsgPort && Parent) {
@@ -2026,7 +1906,7 @@ static void DeleteMsg(msg Msg) {
 static struct s_fn_msg _FnMsg = {
     msg_magic,
     sizeof(struct s_msg),
-    CreateMsg,
+    s_msg::Create,
     InsertMsg,
     RemoveMsg,
     DeleteMsg,
@@ -2036,41 +1916,6 @@ static struct s_fn_msg _FnMsg = {
 };
 
 /* msgport */
-
-static msgport CreateMsgPort(fn_msgport Fn_MsgPort, byte NameLen, const char *Name, tany PauseSec,
-                             tany PauseFraction, byte WakeUp, void (*Handler)(msgport)) {
-  msgport MsgPort = (msgport)0;
-  char *_Name;
-
-  if (Handler && (!Name || (_Name = CloneStrL(Name, NameLen))) &&
-      (MsgPort = (msgport)Fn_MsgPort->Fn_Obj->Create((fn_obj)Fn_MsgPort))) {
-
-    MsgPort->WakeUp = WakeUp;
-    MsgPort->NameLen = NameLen;
-    MsgPort->Name = _Name;
-    MsgPort->Handler = Handler;
-    MsgPort->ShutDownHook = (void (*)(msgport))0;
-    MsgPort->PauseDuration.Seconds = PauseSec;
-    MsgPort->PauseDuration.Fraction = PauseFraction;
-    (void)SumTime(&MsgPort->CallTime, &All->Now, &MsgPort->PauseDuration);
-    MsgPort->RemoteData.Fd = NOFD;
-    MsgPort->RemoteData.ChildPid = NOPID;
-    MsgPort->RemoteData.FdSlot = NOSLOT;
-    MsgPort->FirstMsg = MsgPort->LastMsg = (msg)0;
-    MsgPort->FirstMenu = MsgPort->LastMenu = (menu)0;
-    MsgPort->FirstW = MsgPort->LastW = (widget)0;
-    MsgPort->FirstGroup = MsgPort->LastGroup = (ggroup)0;
-    MsgPort->FirstMutex = MsgPort->LastMutex = (mutex)0;
-    MsgPort->CountE = MsgPort->SizeE = (uldat)0;
-    MsgPort->Es = (extension *)0;
-    MsgPort->AttachHW = (display_hw)0;
-    InsertMiddle(MsgPort, MsgPort, All, WakeUp ? (msgport)0 : All->LastMsgPort,
-                 WakeUp ? All->FirstMsgPort : (msgport)0);
-    SortMsgPortByCallTime(MsgPort);
-  } else if (NameLen && _Name)
-    FreeMem(_Name);
-  return MsgPort;
-}
 
 static void InsertMsgPort(msgport MsgPort, all Parent, msgport Prev, msgport Next) {
   if (!MsgPort->All && Parent) {
@@ -2189,7 +2034,7 @@ static void UnuseExtensionMsgPort(msgport M, extension E) {
 static struct s_fn_msgport _FnMsgPort = {
     msgport_magic,
     sizeof(struct s_msgport),
-    CreateMsgPort,
+    s_msgport::Create,
     InsertMsgPort,
     RemoveMsgPort,
     DeleteMsgPort,
@@ -2306,27 +2151,6 @@ static struct s_fn_mutex _FnMutex = {
 
 /* module */
 
-static module CreateModule(fn_module Fn_Module, uldat NameLen, const char *Name) {
-  module Module = (module)0;
-  char *newName = NULL;
-
-  if (Name && (newName = CloneStrL(Name, NameLen))) {
-    if ((Module = (module)Fn_Module->Fn_Obj->Create((fn_obj)Fn_Module))) {
-
-      Module->NameLen = NameLen;
-      Module->Name = newName;
-      Module->Used = 0;
-      Module->Handle = NULL;
-      Module->Init = NULL;
-
-      InsertLast(Module, Module, All);
-      return Module;
-    }
-    FreeMem(newName);
-  }
-  return Module;
-}
-
 static void InsertModule(module Module, all Parent, module Prev, module Next) {
   if (!Module->All && Parent) {
     InsertGeneric((obj)Module, (obj_parent)&Parent->FirstModule, (obj)Prev, (obj)Next, (ldat *)0);
@@ -2356,7 +2180,7 @@ static void DeleteModule(module Module) {
 static struct s_fn_module _FnModule = {
     module_magic,
     sizeof(struct s_module),
-    CreateModule,
+    s_module::Create,
     InsertModule,
     RemoveModule,
     DeleteModule,
@@ -2394,7 +2218,7 @@ static void DeleteExtension(extension E) {
 
 static struct s_fn_extension _FnExtension = {
     extension_magic, sizeof(struct s_extension),
-    (extension(*)(fn_extension, uldat, const char *))CreateModule,
+    (extension(*)(fn_extension, uldat, const char *))s_module::Create,
     (void (*)(extension, all, extension, extension))InsertModule, (void (*)(extension))RemoveModule,
     DeleteExtension, (void (*)(extension, udat, uldat, uldat))NoOp,
     /* module */
@@ -2407,30 +2231,6 @@ static struct s_fn_extension _FnExtension = {
 };
 
 /* display_hw */
-
-static display_hw CreateDisplayHW(fn_display_hw Fn_DisplayHW, uldat NameLen, const char *Name) {
-  display_hw DisplayHW = (display_hw)0;
-  char *newName = NULL;
-
-  if (Name && (newName = CloneStrL(Name, NameLen))) {
-    if ((DisplayHW = (display_hw)Fn_DisplayHW->Fn_Obj->Create((fn_obj)Fn_DisplayHW))) {
-
-      DisplayHW->NameLen = NameLen;
-      DisplayHW->Name = newName;
-      DisplayHW->Module = NULL;
-      DisplayHW->Quitted = ttrue;
-      DisplayHW->AttachSlot = NOSLOT;
-      /*
-       * ->Quitted will be set to tfalse only
-       * after DisplayHW->InitHW() has succeeded
-       */
-      InsertLast(DisplayHW, DisplayHW, All);
-      return DisplayHW;
-    }
-    FreeMem(newName);
-  }
-  return DisplayHW;
-}
 
 static void InsertDisplayHW(display_hw DisplayHW, all Parent, display_hw Prev, display_hw Next) {
   if (!DisplayHW->All && Parent) {
@@ -2489,7 +2289,7 @@ static void DeleteDisplayHW(display_hw DisplayHW) {
 static struct s_fn_display_hw _FnDisplayHW = {
     display_hw_magic,
     sizeof(struct s_display_hw),
-    CreateDisplayHW,
+    s_display_hw::Create,
     InsertDisplayHW,
     RemoveDisplayHW,
     DeleteDisplayHW,

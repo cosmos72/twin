@@ -14,6 +14,7 @@
 #define _TWIN_MODULE_H
 
 #include "obj/fwd.h"
+#include <Tw/datatypes.h>
 
 /* module */
 
@@ -40,6 +41,7 @@ struct s_module {
   char *Name;
   void *Handle;
   byte (*Init)(void);
+
   /* obj */
   uldat Magic() const {
     return Fn->Magic;
@@ -47,6 +49,7 @@ struct s_module {
   uldat Size() const {
     return Fn->Size;
   }
+  static module Create(fn_module Fn, uldat namelen, const char *name);
   void Remove() {
     Fn->Remove(this);
   }

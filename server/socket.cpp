@@ -1098,7 +1098,7 @@ static widget sockCreateWidget(dat XWidth, dat YWidth, uldat Attrib, uldat Flags
                                tcell Fill) {
   msgport Owner;
   if ((Owner = RemoteGetMsgPort(Slot)))
-    return Do(Create, widget)(Fn_widget, Owner, XWidth, YWidth, Attrib, Flags, Left, Up, Fill);
+    return New(widget)(Fn_widget, Owner, XWidth, YWidth, Attrib, Flags, Left, Up, Fill);
   return (widget)0;
 }
 static void sockRecursiveDeleteWidget(widget W) {
@@ -1197,7 +1197,7 @@ static gadget sockCreateGadget(widget Parent, dat XWidth, dat YWidth, const char
                                tcolor ColTextSelectDisabled, dat Left, dat Up) {
   msgport Owner;
   if ((Owner = RemoteGetMsgPort(Slot)))
-    return Do(Create, gadget)(Fn_gadget, Owner, Parent, XWidth, YWidth, TextNormal, Attrib, Flags,
+    return New(gadget)(Fn_gadget, Owner, Parent, XWidth, YWidth, TextNormal, Attrib, Flags,
                               Code, ColText, ColTextSelect, ColTextDisabled, ColTextSelectDisabled,
                               Left, Up);
   return (gadget)0;
@@ -1208,7 +1208,7 @@ static window sockCreateWindow(dat TitleLen, const char *Title, const tcolor *Co
                                dat XWidth, dat YWidth, dat ScrollBackLines) {
   msgport Owner;
   if ((Owner = RemoteGetMsgPort(Slot)))
-    return Do(Create, window)(Fn_window, Owner, TitleLen, Title, ColTitle, Menu, ColText,
+    return New(window)(Fn_window, Owner, TitleLen, Title, ColTitle, Menu, ColText,
                               CursorType, Attrib, Flags, XWidth, YWidth, ScrollBackLines);
   return (window)0;
 }
@@ -1275,7 +1275,7 @@ static menu sockCreateMenu(tcolor ColItem, tcolor ColSelect, tcolor ColDisabled,
                            byte FlagDefColInfo) {
   msgport Owner;
   if ((Owner = RemoteGetMsgPort(Slot)))
-    return Do(Create, menu)(Fn_menu, Owner, ColItem, ColSelect, ColDisabled, ColSelectDisabled,
+    return New(menu)(Fn_menu, Owner, ColItem, ColSelect, ColDisabled, ColSelectDisabled,
                             ColShtCut, ColSelShtCut, FlagDefColInfo);
   return (menu)0;
 }
@@ -1284,7 +1284,7 @@ static menu sockCreateMenu(tcolor ColItem, tcolor ColSelect, tcolor ColDisabled,
 static msgport sockCreateMsgPort(byte NameLen, const char *Name) {
   msgport MsgPort;
 
-  if ((MsgPort = Do(Create, msgport)(Fn_msgport, NameLen, Name, 0, 0, 0, SocketH))) {
+  if ((MsgPort = New(msgport)(Fn_msgport, NameLen, Name, 0, 0, 0, SocketH))) {
     RegisterMsgPort(MsgPort, Slot);
     MsgPort->ShutDownHook = sockShutDown;
   }
@@ -1305,7 +1305,7 @@ static msgport sockFindMsgPort(msgport Prev, byte NameLen, const char *Name) {
 static ggroup sockCreateGroup(void) {
   msgport Owner;
   if ((Owner = RemoteGetMsgPort(Slot)))
-    return Do(Create, group)(Fn_group, Owner);
+    return New(group)(Fn_group, Owner);
   return (ggroup)0;
 }
 
@@ -1822,7 +1822,7 @@ static byte sockSendToMsgPort(msgport MsgPort, udat Len, const byte *Data) {
         break;
       }
 
-      if ((Msg = Do(Create, msg)(Fn_msg, tMsg->Type, _Len))) {
+      if ((Msg = New(msg)(Fn_msg, tMsg->Type, _Len))) {
 
         Msg->Event.EventCommon.W = (widget)Id2Obj(widget_magic_id, tMsg->Event.EventCommon.W);
 

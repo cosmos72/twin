@@ -14,10 +14,12 @@
 #define _TWIN_DISPLAY_HW_H
 
 #include "obj/fwd.h"
+#include "obj/event.h" // MAX_MIMELEN
+#include <Tw/datatypes.h>
 
 struct s_fn_display_hw {
   uldat Magic, Size;
-  display_hw (*Create)(fn_display_hw, uldat NameLen, const char *Name);
+  display_hw (*Create)(fn_display_hw, uldat namelen, const char *name);
   void (*Insert)(display_hw, all, display_hw Prev, display_hw Next);
   void (*Remove)(display_hw);
   void (*Delete)(display_hw);
@@ -189,6 +191,7 @@ struct s_display_hw {
   uldat Size() const {
     return Fn->Size;
   }
+  static display_hw Create(fn_display_hw, uldat namelen, const char *name);
   void Remove() {
     Fn->Remove(this);
   }

@@ -511,7 +511,7 @@ void DrawSelfWidget(draw_ctx *D) {
       msg Msg;
       event_widget *EventW;
 
-      if ((Msg = Do(Create, msg)(Fn_msg, msg_widget_change, 0))) {
+      if ((Msg = New(msg)(Fn_msg, msg_widget_change, 0))) {
         EventW = &Msg->Event.EventWidget;
         EventW->W = W;
         EventW->Code = MSG_WIDGET_EXPOSE;

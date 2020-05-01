@@ -52,6 +52,7 @@ struct s_row {
   uldat Size() const {
     return Fn->Size;
   }
+  static row Create(fn_row Fn, udat code, byte flags);
   void Remove() {
     Fn->Remove(this);
   }

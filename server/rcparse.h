@@ -1173,7 +1173,7 @@ static byte CreateNeededScreens(node list, screen *res_Screens) {
         }
         h++;
       }
-      s = Do(Create, screen)(Fn_screen, strlen(list->name), list->name, w, h, attr);
+      s = New(screen)(Fn_screen, strlen(list->name), list->name, w, h, attr);
 
       FreeMem(attr);
     }
@@ -1275,7 +1275,7 @@ static byte NewCommonMenu(void **shm_M, menu *res_CommonMenu, node **res_MenuBin
   new_MenuBindsMax = 0;
   new_MenuList = (node)(*(shm_M + (&MenuList - Globals)));
 
-  if (!(Menu = Do(Create, menu)(Fn_menu, Ext(WM, MsgPort), (tcolor)0, (tcolor)0, (tcolor)0,
+  if (!(Menu = New(menu)(Fn_menu, Ext(WM, MsgPort), (tcolor)0, (tcolor)0, (tcolor)0,
                                 (tcolor)0, (tcolor)0, (tcolor)0, ttrue)))
     return tfalse;
 

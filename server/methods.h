@@ -10,6 +10,7 @@
 #define _TWIN_METHODS_H
 
 #include "obj/fn.h"
+#include "obj/window.h" // tpos
 
 byte FindInfo(menu Menu, dat i);
 window FakeOpenTerm(const char *arg0, const char *const *argv);
@@ -21,6 +22,8 @@ byte FakeWriteTCell(window Window, dat x, dat y, uldat Len, const tcell *Attr);
 tpos FakeFindBorderWindow(window W, dat u, dat v, byte Border, tcell *PtrAttr);
 
 #define Do(Command, obj_type) (Fn_##obj_type->Command)
+
+#define New(obj_type) s_##obj_type::Create
 
 #define Act(Command, Obj) ((Obj)->Fn->Command)
 

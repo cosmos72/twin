@@ -14,6 +14,7 @@
 #define _TWIN_EVENT_H
 
 #include "obj/fwd.h"
+#include <Tw/datatypes.h>
 
 enum e_msg {
   msg_key = 0,

@@ -14,6 +14,8 @@
 #define _TWIN_MSGPORT_H
 
 #include "obj/fwd.h"
+#include "obj/window.h" // struct s_remotedata
+#include <Tw/datatypes.h>
 
 struct s_fn_msgport {
   uldat Magic, Size;
@@ -58,6 +60,8 @@ struct s_msgport {
   uldat Size() const {
     return Fn->Size;
   }
+  static msgport Create(fn_msgport Fn, byte NameLen, const char *Name, tany PauseSec,
+                        tany PauseFraction, byte WakeUp, void (*Handler)(msgport));
   void Remove() {
     Fn->Remove(this);
   }

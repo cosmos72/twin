@@ -450,8 +450,8 @@ static byte display_InitHW(void) {
 
   if (!(HW->Private = (struct display_data *)AllocMem(sizeof(struct display_data))) ||
       !(Helper =
-            Do(Create, msgport)(Fn_msgport, 16, "twdisplay Helper", 0, 0, 0, display_HelperH)) ||
-      (!Msg && !(Msg = Do(Create, msg)(Fn_msg, msg_display, sizeof(event_display))))) {
+            New(msgport)(Fn_msgport, 16, "twdisplay Helper", 0, 0, 0, display_HelperH)) ||
+      (!Msg && !(Msg = New(msg)(Fn_msg, msg_display, sizeof(event_display))))) {
 
     if (HW->Private) {
       if (Helper) {
