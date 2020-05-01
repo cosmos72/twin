@@ -118,7 +118,7 @@ INLINE void _DropId(byte i, obj Obj) {
   }
 }
 
-byte AssignId(CONST fn_obj Fn_Obj, obj Obj) {
+byte AssignId(const fn_obj Fn_Obj, obj Obj) {
   byte i;
   if (Obj)
     switch (Fn_Obj->Magic) {

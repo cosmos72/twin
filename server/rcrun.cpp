@@ -421,7 +421,7 @@ static byte RCSteps(run *r) {
   wm_ctx *C;
   node n, f;
   ldat flag;
-  CONST cstr *argv;
+  const cstr *argv;
   byte state, ret;
   int nfd;
 
@@ -453,7 +453,7 @@ static byte RCSteps(run *r) {
               dup2(nfd, 1);
               dup2(nfd, 2);
             }
-            execvp(n->x.v.argv[0], (char *CONST *)RemoveConst(n->x.v.argv));
+            execvp(n->x.v.argv[0], (char *const *)RemoveConst(n->x.v.argv));
             exit(1);
             break;
           default: /* parent */
@@ -905,7 +905,7 @@ static byte MouseClickReleaseSameCtx(uldat W1, uldat W2, ldat clickCtx, ldat rel
 }
 
 /* handle incoming messages */
-byte RC_VMQueue(CONST wm_ctx *C) {
+byte RC_VMQueue(const wm_ctx *C) {
   uldat ClickWinId = All->FirstScreen->ClickWindow ? All->FirstScreen->ClickWindow->Id : NOID;
   widget W;
   ldat ctx;
@@ -1321,7 +1321,7 @@ byte InitRC(void) {
                            {{UD_ARROW, UD_ARROW}, -2, ttrue, tfalse},
                            {{'>', '<'}, -4, ttrue, tfalse}};
 
-  CONST char *Seq = "";
+  const char *Seq = "";
   /*
    * this is really heavy on the compiler...
    * but it should be able to optimize it

@@ -185,7 +185,7 @@ static void ExecuteWinRun(void) {
     if ((G = Act(FindGadgetByCode, ExecuteWin)(ExecuteWin, COD_E_TTY)) &&
         G->USE.T.Text[0][1] != ' ') {
       /* run in a tty */
-      Ext(Term, Open)(arg0, (CONST char *CONST *)argv);
+      Ext(Term, Open)(arg0, (const char *const *)argv);
     } else if (argv)
       switch (fork()) {
         /* do not run in a tty */
@@ -319,7 +319,7 @@ static void OptionH(msg Msg) {
 void FillButtonWin(void) {
   dat i, j;
   char b[] = "      ";
-  CONST char *s;
+  const char *s;
 
   DeleteList(ButtonWin->FirstW);
 
@@ -693,7 +693,7 @@ static void BuiltinH(msgport MsgPort) {
       case MSG_CONTROL_OPEN: {
         char **cmd = TokenizeStringVec(Event->EventControl.Len, Event->EventControl.Data);
         if (cmd) {
-          Ext(Term, Open)(cmd[0], (CONST char *CONST *)cmd);
+          Ext(Term, Open)(cmd[0], (const char *const *)cmd);
           FreeStringVec(cmd);
         } else
           Ext(Term, Open)(NULL, NULL);
@@ -789,7 +789,7 @@ static byte InitScreens(void) {
 
 byte InitBuiltin(void) {
   window Window;
-  CONST char *greeting =
+  const char *greeting =
       "\n"
       "                TWIN              \n"
       "        Text WINdows manager      \n\n"
@@ -807,7 +807,7 @@ byte InitBuiltin(void) {
       (Builtin_Menu = Do(Create, Menu)(FnMenu, Builtin_MsgPort, (byte)0x70, (byte)0x20, (byte)0x78,
                                        (byte)0x08, (byte)0x74, (byte)0x24, (byte)0)) &&
       Info4Menu(Builtin_Menu, ROW_ACTIVE, (uldat)42, " Hit PAUSE or Mouse Right Button for Menu ",
-                (CONST tcolor *)"tttttttttttttttttttttttttttttttttttttttttt") &&
+                (const tcolor *)"tttttttttttttttttttttttttttttttttttttttttt") &&
 
       (Window = Win4Menu(Builtin_Menu)) &&
       Row4Menu(Window, COD_CLOCK_WIN, ROW_ACTIVE, 9, " Clock   ") &&
@@ -857,7 +857,7 @@ byte InitBuiltin(void) {
       Item4MenuCommon(Builtin_Menu) &&
 
       (AboutWin = Do(Create, Window)(
-           FnWindow, Builtin_MsgPort, 5, "About", (CONST tcolor *)"\x7F\x7F\x7F\x7F\x7F",
+           FnWindow, Builtin_MsgPort, 5, "About", (const tcolor *)"\x7F\x7F\x7F\x7F\x7F",
            Builtin_Menu, TCOL(tblack, twhite), NOCURSOR,
            WINDOW_AUTO_KEYS | WINDOW_WANT_MOUSE | WINDOW_DRAG | WINDOW_CLOSE,
            WINDOWFL_USEROWS | WINDOWFL_ROWS_DEFCOL, 36, 13, 0)) &&

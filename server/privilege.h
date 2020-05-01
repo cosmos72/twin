@@ -20,6 +20,6 @@
 #endif
 
 gid_t get_tty_grgid(void);
-int init_groups(CONST char *user_name, gid_t group_id);
+int init_groups(const char *user_name, gid_t group_id);
 
 #endif /* _TWIN_PRIVILEGE_H */

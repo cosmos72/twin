@@ -23,23 +23,46 @@ typedef struct s_obj *obj;
 typedef struct s_fn_obj *fn_obj;
 typedef struct s_obj_parent *obj_parent;
 
-struct s_obj {
-  uldat Id;
-  fn_obj Fn;
-  obj Prev, Next, Parent;
+struct s_fn_obj {
+  uldat Magic, Size, Used;
+  obj (*Create)(fn_obj);
+  void (*Insert)(obj self, obj parent, obj prev, obj next);
+  void (*Remove)(obj self);
+  void (*Delete)(obj self);
+  void (*ChangeField)(obj self, udat field, uldat clear_mask, uldat xor_mask);
 };
 
 struct s_obj_parent {
   obj First, Last;
 };
 
-struct s_fn_obj {
-  uldat Magic, Size, Used;
-  obj (*Create)(fn_obj);
-  void (*Insert)(obj Obj, obj, obj Prev, obj Next);
-  void (*Remove)(obj);
-  void (*Delete)(obj);
-  void (*ChangeField)(obj, udat field, uldat CLEARMask, uldat XORMask);
+struct s_obj {
+  uldat Id;
+  fn_obj Fn;
+  obj Prev, Next, Parent;
+
+  uldat Magic() const {
+    return Fn->Magic;
+  }
+  uldat Size() const {
+    return Fn->Size;
+  }
+  uldat Used() const {
+    return Fn->Used;
+  }
+  static obj Create();
+  void Insert(obj parent, obj prev, obj next) {
+    Fn->Insert(this, parent, prev, next);
+  }
+  void Remove() {
+    Fn->Remove(this);
+  }
+  void Delete() {
+    Fn->Delete(this);
+  }
+  void ChangeField(udat field, uldat clear_mask, uldat xor_mask) {
+    Fn->ChangeField(this, field, clear_mask, xor_mask);
+  }
 };
 
 #endif /* _TWIN_OBJ_H */

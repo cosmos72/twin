@@ -76,7 +76,7 @@ static ldat calcFontScore(udat fontwidth, udat fontheight, ldat width, ldat heig
   return score;
 }
 
-static byte X11_LoadFont(CONST char *fontname, udat fontwidth, udat fontheight) {
+static byte X11_LoadFont(const char *fontname, udat fontwidth, udat fontheight) {
   char *alloc_fontname = NULL;
   byte loaded = tfalse;
 

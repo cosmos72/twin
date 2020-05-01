@@ -688,7 +688,7 @@ INLINE void csi_m(void) {
   update_eff();
 }
 
-static void respond_string(CONST char *p) {
+static void respond_string(const char *p) {
   ldat Len = strlen(p);
 
   /* the remote program may be directly attached to the window */
@@ -1514,7 +1514,7 @@ static tbool combine_utf8(trune *pc) {
 }
 
 /* this is the main entry point */
-byte TtyWriteAscii(window Window, uldat Len, CONST char *AsciiSeq) {
+byte TtyWriteAscii(window Window, uldat Len, const char *AsciiSeq) {
   trune c;
   byte printable, utf8_in_use, disp_ctrl, state_normal;
 
@@ -1591,7 +1591,7 @@ byte TtyWriteAscii(window Window, uldat Len, CONST char *AsciiSeq) {
 }
 
 /* same as TtyWriteAscii(), but writes trune (UCS-2 + colors + graph tiles). */
-byte TtyWriteTRune(window Window, uldat Len, CONST trune *TRune) {
+byte TtyWriteTRune(window Window, uldat Len, const trune *TRune) {
   trune c;
   byte ok;
 
@@ -1647,7 +1647,7 @@ byte TtyWriteTRune(window Window, uldat Len, CONST trune *TRune) {
  * this writes String literally, without interpreting specially any character
  * (not even ESC or \n) and using current translation.
  */
-byte TtyWriteString(window Window, uldat Len, CONST char *String) {
+byte TtyWriteString(window Window, uldat Len, const char *String) {
   trune c;
 
   if (!Window || !W_USE(Window, USECONTENTS) || !Window->USE.C.TtyData)
@@ -1687,7 +1687,7 @@ byte TtyWriteString(window Window, uldat Len, CONST char *String) {
  * this currently wraps at window width so it can write multiple rows at time.
  * does not move cursor position, nor interacts with wrapglitch.
  */
-byte TtyWriteTCell(window Window, dat x, dat y, uldat len, CONST tcell *text) {
+byte TtyWriteTCell(window Window, dat x, dat y, uldat len, const tcell *text) {
   ldat left, max, chunk;
   ldat i;
   tcell *dst;

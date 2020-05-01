@@ -76,7 +76,7 @@ static byte linux_InitVideo(void) {
   HW->HWSelectionImport = AlwaysFalse;
   HW->HWSelectionExport = NoOp;
   HW->HWSelectionRequest = (void (*)(obj, uldat))NoOp;
-  HW->HWSelectionNotify = (void (*)(uldat, uldat, CONST char *, uldat, CONST char *))NoOp;
+  HW->HWSelectionNotify = (void (*)(uldat, uldat, const char *, uldat, const char *))NoOp;
   HW->HWSelectionPrivate = 0;
 
   HW->CanDragArea = linux_CanDragArea;

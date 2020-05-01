@@ -167,7 +167,7 @@
 ldat GlobalFlags[4];
 ldat GlobalShadows[2];
 
-static void yyerror(CONST char *s) {
+static void yyerror(const char *s) {
   printk("twin: %s:%d: %s\n", FILE_NAME, LINE_NO, s);
 }
 
@@ -675,7 +675,7 @@ static node MakeSendToScreen(str name) {
 
 static node MakeSyntheticKey(ldat shiftflags, str label) {
   ldat key;
-  CONST char *seq;
+  const char *seq;
   char buf[4];
   node n;
 
@@ -1106,7 +1106,7 @@ static void WriteGlobals(void) {
   M = (void **)((str)M + sizeof(GlobalShadows));
 }
 
-static screen FindNameInScreens(dat len, CONST char *name, screen S) {
+static screen FindNameInScreens(dat len, const char *name, screen S) {
   while (S) {
     if (len == S->NameLen && !memcmp(name, S->Name, len))
       return S;
@@ -1115,7 +1115,7 @@ static screen FindNameInScreens(dat len, CONST char *name, screen S) {
   return NULL;
 }
 
-static node FindNameInList(uldat len, CONST char *name, node list) {
+static node FindNameInList(uldat len, const char *name, node list) {
   while (list) {
     if (list->name && strlen(list->name) == len && !memcmp(name, list->name, len))
       return list;

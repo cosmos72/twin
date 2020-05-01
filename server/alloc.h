@@ -15,7 +15,7 @@
 #include <Tw/datatypes.h>
 
 extern udat Errno;
-extern CONST char *Errstr;
+extern const char *Errstr;
 byte Error(udat Errno);
 
 /* memory allocation. these function call Error(NOMEMORY) on failure */
@@ -33,10 +33,10 @@ void *ReAllocMem0(void *Mem, size_t ElementSize, size_t OldCount,
 #define CopyMem(From, To, Size) memcpy(To, From, Size)
 #define MoveMem(From, To, Size) memmove(To, From, Size)
 
-void *CloneMem(CONST void *From, uldat Size);
-char *CloneStr(CONST char *s);
-char *CloneStrL(CONST char *s, uldat len);
+void *CloneMem(const void *From, uldat Size);
+char *CloneStr(const char *s);
+char *CloneStrL(const char *s, uldat len);
 char **CloneStrList(char **s);
-trune *CloneStr2TRune(CONST char *s, uldat len);
+trune *CloneStr2TRune(const char *s, uldat len);
 
 #endif /* _TWIN_ALLOC_H */

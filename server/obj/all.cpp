@@ -36,6 +36,7 @@ static struct s_all _All = {
     NULL,
     NULL,
     NULL,
+    /*s_all*/
     /*FirstScreen*/ NULL,
     /*LastScreen*/ NULL,
     /*FirstMsgPort*/ NULL,
@@ -75,4 +76,4 @@ static struct s_all _All = {
     /*USER_MAP*/ GtransUser,
 };
 
-all CONST All = &_All;
+all const All = &_All;

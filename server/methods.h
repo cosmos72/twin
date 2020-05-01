@@ -9,31 +9,16 @@
 #ifndef _TWIN_METHODS_H
 #define _TWIN_METHODS_H
 
-byte FindInfo(menu Menu, dat i);
-window FakeOpenTerm(CONST char *arg0, CONST char *CONST *argv);
-widget FakeKbdFocus(widget W);
-byte FakeWriteAscii(window Window, uldat Len, CONST char *Ascii);
-byte FakeWriteString(window Window, uldat Len, CONST char *String);
-byte FakeWriteTRune(window Window, uldat Len, CONST trune *TRune);
-byte FakeWriteTCell(window Window, dat x, dat y, uldat Len, CONST tcell *Attr);
-tpos FakeFindBorderWindow(window W, dat u, dat v, byte Border, tcell *PtrAttr);
+#include "obj/fn.h"
 
-extern fn Fn;
-#define FnObj (Fn.f_obj)
-#define FnGroup (Fn.f_group)
-#define FnWidget (Fn.f_widget)
-#define FnGadget (Fn.f_gadget)
-#define FnWindow (Fn.f_window)
-#define FnScreen (Fn.f_screen)
-#define FnRow (Fn.f_row)
-#define FnMenuItem (Fn.f_menuitem)
-#define FnMenu (Fn.f_menu)
-#define FnMsgPort (Fn.f_msgport)
-#define FnMutex (Fn.f_mutex)
-#define FnMsg (Fn.f_msg)
-#define FnModule (Fn.f_module)
-#define FnExtension (Fn.f_extension)
-#define FnDisplayHW (Fn.f_display_hw)
+byte FindInfo(menu Menu, dat i);
+window FakeOpenTerm(const char *arg0, const char *const *argv);
+widget FakeKbdFocus(widget W);
+byte FakeWriteAscii(window Window, uldat Len, const char *Ascii);
+byte FakeWriteString(window Window, uldat Len, const char *String);
+byte FakeWriteTRune(window Window, uldat Len, const trune *TRune);
+byte FakeWriteTCell(window Window, dat x, dat y, uldat Len, const tcell *Attr);
+tpos FakeFindBorderWindow(window W, dat u, dat v, byte Border, tcell *PtrAttr);
 
 #define Do(Command, ObjName) (Fn##ObjName->Command)
 

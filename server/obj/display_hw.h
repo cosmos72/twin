@@ -56,8 +56,8 @@ struct s_display_hw {
   byte (*HWSelectionImport)(void);
   void (*HWSelectionExport)(void);
   void (*HWSelectionRequest)(obj Requestor, uldat ReqPrivate);
-  void (*HWSelectionNotify)(uldat ReqPrivate, uldat Magic, CONST char MIME[MAX_MIMELEN], uldat Len,
-                            CONST char *Data);
+  void (*HWSelectionNotify)(uldat ReqPrivate, uldat Magic, const char MIME[MAX_MIMELEN], uldat Len,
+                            const char *Data);
   tany HWSelectionPrivate;
 
   byte (*CanDragArea)(dat Xstart, dat Ystart, dat Xend, dat Yend, dat DstXstart, dat DstYstart);
@@ -172,7 +172,7 @@ struct s_display_hw {
 
 struct s_fn_display_hw {
   uldat Magic, Size, Used;
-  display_hw (*Create)(fn_display_hw, uldat NameLen, CONST char *Name);
+  display_hw (*Create)(fn_display_hw, uldat NameLen, const char *Name);
   void (*Insert)(display_hw, all, display_hw Prev, display_hw Next);
   void (*Remove)(display_hw);
   void (*Delete)(display_hw);

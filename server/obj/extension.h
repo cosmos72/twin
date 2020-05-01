@@ -25,14 +25,14 @@ struct s_extension {
   char *Name;
   void *Handle, *Init;
   /* extension */
-  tany (*CallB)(extension, topaque len, CONST byte *data,
+  tany (*CallB)(extension, topaque len, const byte *data,
                 void *return_type); /* call extension-specific functions */
   void (*Quit)(extension);          /* how to quit this extension if it is not dlopen()ed */
 };
 
 struct s_fn_extension {
   uldat Magic, Size, Used;
-  extension (*Create)(fn_extension, uldat NameLen, CONST char *Name);
+  extension (*Create)(fn_extension, uldat NameLen, const char *Name);
   void (*Insert)(extension, all, extension Prev, extension Next);
   void (*Remove)(extension);
   void (*Delete)(extension);
@@ -43,7 +43,7 @@ struct s_fn_extension {
   void (*DlClose)(extension);
   /* extension */
   fn_module Fn_Module;
-  extension (*Query)(byte namelen, CONST char *name);
+  extension (*Query)(byte namelen, const char *name);
 };
 
 #endif /* _TWIN_EXTENSION_H */

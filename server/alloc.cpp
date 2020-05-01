@@ -21,7 +21,7 @@
 #endif
 
 udat Errno;
-CONST char *Errstr;
+const char *Errstr;
 byte Error(udat err_code) {
   switch ((Errno = err_code)) {
   case NOMEMORY:
@@ -93,14 +93,14 @@ void *ReAllocMem0(void *Mem, size_t ElementSize, size_t OldCount, size_t NewCoun
   return res;
 }
 
-void *CloneMem(CONST void *From, uldat Size) {
+void *CloneMem(const void *From, uldat Size) {
   void *temp;
   if (From && Size && (temp = AllocMem(Size)))
     return CopyMem(From, temp, Size);
   return NULL;
 }
 
-char *CloneStr(CONST char *s) {
+char *CloneStr(const char *s) {
   char *q;
   uldat len;
 
@@ -113,7 +113,7 @@ char *CloneStr(CONST char *s) {
   return NULL;
 }
 
-char *CloneStrL(CONST char *s, uldat len) {
+char *CloneStrL(const char *s, uldat len) {
   char *q;
 
   if (s) {
@@ -157,7 +157,7 @@ char **CloneStrList(char **s) {
   return t;
 }
 
-trune *CloneStr2TRune(CONST char *s, uldat len) {
+trune *CloneStr2TRune(const char *s, uldat len) {
   trune *temp, *save;
 
   if (s) {

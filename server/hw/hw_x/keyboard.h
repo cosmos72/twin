@@ -120,7 +120,7 @@ static struct {
   KeySym xkey;
   Twkey tkey;
   byte len;
-  CONST char *seq;
+  const char *seq;
 } X11_keys[] = {
 
 #define IS(sym, l, s) {XK_##sym, TW_##sym, l, s},
@@ -152,7 +152,7 @@ static byte X11_CheckRemapKeys(void) {
 }
 
 #ifdef DEBUG_HW_X11
-void X11_DEBUG_SHOW_KEY(CONST char *prefix, KeySym sym, udat len, CONST char *seq) {
+void X11_DEBUG_SHOW_KEY(const char *prefix, KeySym sym, udat len, const char *seq) {
   udat i;
   byte ch;
   printf("X11_LookupKey(): %s xkeysym=%d[%s] string=[", prefix, (int)sym, XKeysymToString(sym));

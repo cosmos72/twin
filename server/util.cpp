@@ -142,7 +142,7 @@ static dat CmpCallTime(msgport m1, msgport m2) {
   return CmpTime(&m1->CallTime, &m2->CallTime);
 }
 
-byte Minimum(byte MaxIndex, CONST ldat *Array) {
+byte Minimum(byte MaxIndex, const ldat *Array) {
   byte i, MinIndex;
   ldat Temp;
 
@@ -194,7 +194,7 @@ uldat HexStrToNum(byte *StringHex) {
 */
 
 /* adapted from similar code in bdflush */
-uldat ComputeUsableLenArgv(char *CONST *argv) {
+uldat ComputeUsableLenArgv(char *const *argv) {
   char *ptr;
   uldat count;
 
@@ -206,7 +206,7 @@ uldat ComputeUsableLenArgv(char *CONST *argv) {
   return ptr - argv[0];
 }
 
-void SetArgv0(char *CONST *argv, uldat argv_usable_len, CONST char *src) {
+void SetArgv0(char *const *argv, uldat argv_usable_len, const char *src) {
   uldat len = strlen(src);
 
   if (len + 1 < argv_usable_len) {
@@ -281,7 +281,7 @@ void SortAllMsgPortsByCallTime(void) {
   All->LastMsgPort = End;
 }
 
-byte SendControlMsg(msgport MsgPort, udat Code, udat Len, CONST char *Data) {
+byte SendControlMsg(msgport MsgPort, udat Code, udat Len, const char *Data) {
   msg Msg;
   event_control *Event;
 
@@ -297,7 +297,7 @@ byte SendControlMsg(msgport MsgPort, udat Code, udat Len, CONST char *Data) {
   return tfalse;
 }
 
-byte SelectionStore(uldat Magic, CONST char MIME[MAX_MIMELEN], uldat Len, CONST char *Data) {
+byte SelectionStore(uldat Magic, const char MIME[MAX_MIMELEN], uldat Len, const char *Data) {
   char *newData;
   selection *Sel = All->Selection;
   uldat newLen;
@@ -419,7 +419,7 @@ byte SetSelectionFromWindow(window Window) {
       hw += Window->XstSel;
       while (len--)
         *Data++ = TRUNE(*hw), hw++;
-      ok &= SelectionStore(_SEL_MAGIC, NULL, slen * sizeof(trune), (CONST char *)sData);
+      ok &= SelectionStore(_SEL_MAGIC, NULL, slen * sizeof(trune), (const char *)sData);
     }
 
     if (hw >= Window->USE.C.TtyData->Split)
@@ -433,7 +433,7 @@ byte SetSelectionFromWindow(window Window) {
       len = slen;
       while (len--)
         *Data++ = TRUNE(*hw), hw++;
-      ok &= SelectionAppend(slen * sizeof(trune), (CONST char *)sData);
+      ok &= SelectionAppend(slen * sizeof(trune), (const char *)sData);
     }
 
     if (ok && Window->YendSel > Window->YstSel) {
@@ -443,7 +443,7 @@ byte SetSelectionFromWindow(window Window) {
       len = slen = Window->XendSel + 1;
       while (len--)
         *Data++ = TRUNE(*hw), hw++;
-      ok &= SelectionAppend(slen * sizeof(trune), (CONST char *)sData);
+      ok &= SelectionAppend(slen * sizeof(trune), (const char *)sData);
     }
     if (ok)
       NeedHW |= NEEDSelectionExport;
@@ -463,7 +463,7 @@ byte SetSelectionFromWindow(window Window) {
         slen = Min2(Row->Len, (uldat)Window->XendSel + 1) - Min2(Row->Len, (uldat)Window->XstSel);
 
       ok &= SelectionStore(_SEL_MAGIC, NULL, slen * sizeof(trune),
-                           (CONST char *)(Row->Text + Min2(Row->Len, (uldat)Window->XstSel)));
+                           (const char *)(Row->Text + Min2(Row->Len, (uldat)Window->XstSel)));
     } else
       ok &= SelectionStore(_SEL_MAGIC, NULL, 0, NULL);
 
@@ -472,14 +472,14 @@ byte SetSelectionFromWindow(window Window) {
 
     for (y = Window->YstSel + 1; ok && y < Window->YendSel; y++) {
       if ((Row = Act(FindRow, Window)(Window, y)) && Row->Text)
-        ok &= SelectionAppend(Row->Len * sizeof(trune), (CONST char *)Row->Text);
+        ok &= SelectionAppend(Row->Len * sizeof(trune), (const char *)Row->Text);
       ok &= _SelAppendNL();
     }
     if (Window->YendSel > Window->YstSel) {
       if (Window->XendSel >= 0 && (Row = Act(FindRow, Window)(Window, Window->YendSel)) &&
           Row->Text)
         ok &= SelectionAppend(Min2(Row->Len, (uldat)Window->XendSel + 1) * sizeof(trune),
-                              (CONST char *)Row->Text);
+                              (const char *)Row->Text);
       if (!Row || !Row->Text || Row->Len <= (uldat)Window->XendSel)
         ok &= _SelAppendNL();
     }
@@ -826,14 +826,14 @@ static void TWDisplayIO(int fd, uldat slot) {
 
 static char envTWD[] = "TWDISPLAY=\0\0\0\0\0";
 
-CONST char *TmpDir(void) {
-  CONST char *tmp = getenv("TMPDIR");
+const char *TmpDir(void) {
+  const char *tmp = getenv("TMPDIR");
   if (tmp == NULL)
     tmp = "/tmp";
   return tmp;
 }
 
-udat CopyToSockaddrUn(CONST char *src, struct sockaddr_un *addr, udat pos) {
+udat CopyToSockaddrUn(const char *src, struct sockaddr_un *addr, udat pos) {
   size_t len = strlen(src), max = sizeof(addr->sun_path) - 1; /* for final '\0' */
   if (pos < max) {
     if (len >= max - pos)
@@ -845,7 +845,7 @@ udat CopyToSockaddrUn(CONST char *src, struct sockaddr_un *addr, udat pos) {
 }
 
 static struct sockaddr_un addr;
-static CONST char *fullTWD = addr.sun_path;
+static const char *fullTWD = addr.sun_path;
 static char twd[12];
 
 /* set TWDISPLAY and create /tmp/.Twin:<x> */
@@ -1067,10 +1067,10 @@ byte SetServerUid(uldat uid, byte privileges) {
  * this for example will search "foo"
  * as "${HOME}/foo", "${PKG_LIBDIR}/system.foo" or plain "foo"
  */
-char *FindFile(CONST char *name, uldat *fsize) {
-  CONST char *prefix[3], *infix[3];
+char *FindFile(const char *name, uldat *fsize) {
+  const char *prefix[3], *infix[3];
   char *path;
-  CONST char *dir;
+  const char *dir;
   int i, min_i, max_i, len, nlen = strlen(name);
   struct stat buf;
 
@@ -1191,10 +1191,10 @@ void RunTwEnvRC(void) {
     printk("twin: RunTwEnvRC(): delaying .twenvrc.sh execution until secure mode ends.\n");
 }
 
-/* remove CONST from a pointer and suppress compiler warnings */
-void *RemoveConst(CONST void *x) {
+/* remove const from a pointer and suppress compiler warnings */
+void *RemoveConst(const void *x) {
   union {
-    CONST void *cv;
+    const void *cv;
     void *v;
   } u = {x};
   return u.v;

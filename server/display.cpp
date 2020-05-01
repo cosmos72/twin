@@ -43,18 +43,18 @@
 #define PKG_LIBDIR "/usr/local/lib/twin"
 #endif
 
-static CONST char *CONST modules_prefix = PKG_LIBDIR "/" DL_PREFIX;
+static const char *const modules_prefix = PKG_LIBDIR "/" DL_PREFIX;
 
-static CONST char *MYname;
+static const char *MYname;
 
 static dat TryDisplayWidth, TryDisplayHeight;
 static byte ValidVideo;
 
-CONST char *TWDisplay, *origTWDisplay, *origTERM;
+const char *TWDisplay, *origTWDisplay, *origTERM;
 
 char nullMIME[TW_MAX_MIMELEN];
 
-CONST char *HOME;
+const char *HOME;
 
 #define L 0x55
 #define M 0xAA
@@ -111,7 +111,7 @@ void GainPrivileges(void) {
 void RemotePidIsDead(pid_t pid) {
 }
 
-int printk(CONST char *format, ...) {
+int printk(const char *format, ...) {
   int i = 0;
 #ifdef TW_HAVE_VPRINTF
   va_list ap;
@@ -211,7 +211,7 @@ static struct s_fn_module _FnModule = {
     module_magic,
     (uldat)sizeof(struct s_module),
     (uldat)1,                                         /**/
-    (module (*)(fn_module, uldat, CONST char *))NoOp, /* CreateModule */
+    (module (*)(fn_module, uldat, const char *))NoOp, /* CreateModule */
     (void (*)(module, all, module, module))NoOp,      /* InsertModule */
     (void (*)(module))NoOp,                           /* RemoveModule */
     (void (*)(module))NoOp,                           /* DeleteModule */
@@ -276,8 +276,8 @@ static module DlLoadAny(uldat len, char *name) {
   return (module)0;
 }
 
-static byte module_InitHW(CONST char *arg, uldat len) {
-  CONST char *name, *tmp;
+static byte module_InitHW(const char *arg, uldat len) {
+  const char *name, *tmp;
   char *buf;
   byte (*InitD)(void);
   module Module = NULL;
@@ -288,8 +288,8 @@ static byte module_InitHW(CONST char *arg, uldat len) {
   arg += 4;
   len -= 4; /* skip "-hw=" */
 
-  name = (CONST char *)memchr(arg, '@', len);
-  tmp = (CONST char *)memchr(arg, ',', len);
+  name = (const char *)memchr(arg, '@', len);
+  tmp = (const char *)memchr(arg, ',', len);
   if (tmp && (!name || tmp < name))
     name = tmp;
   if (name)
@@ -334,7 +334,7 @@ static byte module_InitHW(CONST char *arg, uldat len) {
   return tfalse;
 }
 
-static display_hw CreateDisplayHW(uldat len, CONST char *name);
+static display_hw CreateDisplayHW(uldat len, const char *name);
 static byte InitDisplayHW(display_hw);
 static void QuitDisplayHW(display_hw);
 
@@ -343,7 +343,7 @@ static struct s_fn_display_hw _FnDisplayHW = {
     display_hw_magic,
     (uldat)sizeof(struct s_display_hw),
     (uldat)1,
-    (display_hw(*)(fn_display_hw, uldat, CONST char *))NoOp, /* CreateDisplayHW */
+    (display_hw(*)(fn_display_hw, uldat, const char *))NoOp, /* CreateDisplayHW */
     (void (*)(display_hw, all, display_hw, display_hw))NoOp, /* InsertDisplayHW */
     (void (*)(display_hw))NoOp,                              /* RemoveDisplayHW */
     (void (*)(display_hw))NoOp,                              /* DeleteDisplayHW */
@@ -357,7 +357,7 @@ static struct s_display_hw _HW = {
     &_FnDisplayHW,
 };
 
-void warn_NoHW(uldat len, CONST char *arg, uldat tried) {
+void warn_NoHW(uldat len, const char *arg, uldat tried) {
   printk("twdisplay: All display drivers failed");
   if (arg)
     printk(" for `%.*s\'", (int)Min2(TW_SMALLBUFF, len), arg);
@@ -422,7 +422,7 @@ static void QuitDisplayHW(display_hw D_HW) {
     HW = D_HW, D_HW->QuitHW();
 }
 
-static display_hw CreateDisplayHW(uldat NameLen, CONST char *Name) {
+static display_hw CreateDisplayHW(uldat NameLen, const char *Name) {
   char *newName = NULL;
 
   if (Name && (newName = CloneStrL(Name, NameLen))) {
@@ -443,7 +443,7 @@ static display_hw CreateDisplayHW(uldat NameLen, CONST char *Name) {
   return (display_hw)0;
 }
 
-static byte IsValidHW(uldat len, CONST char *arg) {
+static byte IsValidHW(uldat len, const char *arg) {
   uldat i;
   byte b;
   if (len >= 4 && !memcmp(arg, "-hw=", 4))
@@ -463,7 +463,7 @@ static byte IsValidHW(uldat len, CONST char *arg) {
   return ttrue;
 }
 
-static display_hw AttachDisplayHW(uldat len, CONST char *arg, uldat slot, byte flags) {
+static display_hw AttachDisplayHW(uldat len, const char *arg, uldat slot, byte flags) {
   if ((len && len <= 4) || memcmp("-hw=", arg, Min2(len, 4))) {
     printk("twdisplay: specified `%.*s\' is not `--hw=<display>\'\n", (int)len, arg);
     return (display_hw)0;
@@ -821,8 +821,8 @@ void TwinSelectionSetOwner(obj Owner, tany Time, tany Frac) {
 }
 
 /* HW back-end function: notify selection */
-void TwinSelectionNotify(obj Requestor, uldat ReqPrivate, uldat Magic, CONST char MIME[MAX_MIMELEN],
-                         uldat Len, CONST char *Data) {
+void TwinSelectionNotify(obj Requestor, uldat ReqPrivate, uldat Magic, const char MIME[MAX_MIMELEN],
+                         uldat Len, const char *Data) {
   if (!MIME)
     MIME = nullMIME;
 #if 0
@@ -907,7 +907,7 @@ byte MouseEventCommon(dat x, dat y, dat dx, dat dy, udat Buttons) {
   return ret;
 }
 
-byte KeyboardEventCommon(udat Code, udat ShiftFlags, udat Len, CONST char *Seq) {
+byte KeyboardEventCommon(udat Code, udat ShiftFlags, udat Len, const char *Seq) {
   tevent_keyboard Event;
   tmsg Msg;
 
@@ -1076,7 +1076,7 @@ static void Usage(void) {
         stdout);
 }
 
-static void TryUsage(CONST char *opt) {
+static void TryUsage(const char *opt) {
   if (opt)
     fprintf(stdout, "twdisplay: unknown option `" SS "'\n", opt);
   fputs("           try `twdisplay --help' for usage summary.\n", stdout);
@@ -1113,9 +1113,9 @@ static void MergeHyphensArgv(int argc, char **argv) {
 TW_DECL_MAGIC(display_magic);
 
 int main(int argc, char *argv[]) {
-  CONST char *tty = ttyname(0);
-  CONST char *dpy = NULL, *client_dpy = NULL;
-  CONST char *carg;
+  const char *tty = ttyname(0);
+  const char *dpy = NULL, *client_dpy = NULL;
+  const char *carg;
   char *arg = NULL;
   int Fd;
   byte flags = TW_ATTACH_HW_REDIRECT, force = 0;
@@ -1151,7 +1151,7 @@ int main(int argc, char *argv[]) {
         return 1;
       }
       if (!strncmp(*argv + 4, "tty", 3)) {
-        CONST char *cs = "";
+        const char *cs = "";
         char *opt = *argv + 7;
         char *s = strchr(opt, ',');
         if (s)
@@ -1186,7 +1186,7 @@ int main(int argc, char *argv[]) {
         }
 
         if (ourtty) {
-          CONST char *term = getenv("TERM");
+          const char *term = getenv("TERM");
           if (term && !*term)
             term = NULL;
 
@@ -1298,7 +1298,7 @@ int main(int argc, char *argv[]) {
 
       for (;;) {
         uldat len;
-        CONST char *reply = TwAttachGetReply(&len);
+        const char *reply = TwAttachGetReply(&len);
         if (reply <= (char *)2) {
           ret = (byte)(size_t)reply;
           break;

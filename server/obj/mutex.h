@@ -28,7 +28,7 @@ struct s_mutex {
 };
 struct s_fn_mutex {
   uldat Magic, Size, Used;
-  mutex (*Create)(fn_mutex, msgport Owner, byte NameLen, CONST char *Name, byte Perm);
+  mutex (*Create)(fn_mutex, msgport Owner, byte NameLen, const char *Name, byte Perm);
   void (*Insert)(mutex, all, mutex Prev, mutex Next);
   void (*Remove)(mutex);
   void (*Delete)(mutex);

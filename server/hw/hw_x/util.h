@@ -182,8 +182,8 @@ static void X11_SelectionExport_X11(void) {
 /*
  * notify our Selection to X11
  */
-static void X11_SelectionNotify_X11(uldat ReqPrivate, uldat Magic, CONST char MIME[MAX_MIMELEN],
-                                    uldat Len, CONST char *Data) {
+static void X11_SelectionNotify_X11(uldat ReqPrivate, uldat Magic, const char MIME[MAX_MIMELEN],
+                                    uldat Len, const char *Data) {
   XEvent ev;
 
   if (XReqCount == 0) {
@@ -217,18 +217,18 @@ static void X11_SelectionNotify_X11(uldat ReqPrivate, uldat Magic, CONST char MI
     target_list[0] = (Atom32)xTARGETS;
     target_list[1] = (Atom32)XA_STRING;
     XChangeProperty(xdisplay, XReq(XReqCount).requestor, XReq(XReqCount).property, xTARGETS,
-                    8 * sizeof(target_list[0]), PropModeReplace, (CONST byte *)target_list,
+                    8 * sizeof(target_list[0]), PropModeReplace, (const byte *)target_list,
                     sizeof(target_list) / sizeof(target_list[0]));
     ev.xselection.property = XReq(XReqCount).property;
   } else if (XReq(XReqCount).target == XA_STRING) {
     uldat l;
     byte *_Data = NULL, *d;
-    CONST trune *s;
+    const trune *s;
 
     /* X11 selection contains UTF-16 */
     if (Magic == SEL_TRUNEMAGIC) {
       if ((_Data = d = (byte *)AllocMem(Len))) {
-        s = (CONST trune *)Data;
+        s = (const trune *)Data;
         /* FIXME: this is rough. encode to UTF-8 instead */
         for (l = Len; l; l--)
           *d++ = Tutf_UTF_32_to_CP437(*s++);
@@ -238,7 +238,7 @@ static void X11_SelectionNotify_X11(uldat ReqPrivate, uldat Magic, CONST char MI
         Len = 0;
     }
     XChangeProperty(xdisplay, XReq(XReqCount).requestor, XReq(XReqCount).property, XA_STRING, 8,
-                    PropModeReplace, (CONST byte *)Data, Len);
+                    PropModeReplace, (const byte *)Data, Len);
     ev.xselection.property = XReq(XReqCount).property;
 
     if (Magic == SEL_TRUNEMAGIC && _Data)
@@ -406,10 +406,10 @@ static int X11_Die(Display *d) {
 #endif
 
 #if HW_X_DRIVER != HW_XFT
-static Tutf_function X11_UTF_32_to_charset_function(CONST char *charset) {
+static Tutf_function X11_UTF_32_to_charset_function(const char *charset) {
   XFontProp *fp;
   unsigned long prop;
-  CONST char *s, *fontname = NULL;
+  const char *s, *fontname = NULL;
   uldat i;
 
   if (!charset) {

@@ -40,7 +40,7 @@ struct s_msgport {
 
 struct s_fn_msgport {
   uldat Magic, Size, Used;
-  msgport (*Create)(fn_msgport, byte NameLen, CONST char *Name, tany PauseSec, tany PauseFraction,
+  msgport (*Create)(fn_msgport, byte NameLen, const char *Name, tany PauseSec, tany PauseFraction,
                     byte WakeUp, void (*Handler)(msgport));
   void (*Insert)(msgport, all, msgport Prev, msgport Next);
   void (*Remove)(msgport);

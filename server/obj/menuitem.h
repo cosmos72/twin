@@ -36,21 +36,21 @@ struct s_menuitem {
 struct s_fn_menuitem {
   uldat Magic, Size, Used;
   menuitem (*Create)(fn_menuitem, obj Parent, window Window, udat Code, byte Flags, dat Left,
-                     ldat Len, dat ShortCut, CONST char *Name);
+                     ldat Len, dat ShortCut, const char *Name);
   void (*Insert)(menuitem, obj, menuitem Prev, menuitem Next);
   void (*Remove)(menuitem);
   void (*Delete)(menuitem);
   void (*ChangeField)(menuitem, udat field, uldat CLEARMask, uldat XORMask);
   /* row */
   fn_obj Fn_Obj;
-  byte (*SetText)(row, uldat Len, CONST char *Text, byte DefaultCol);
-  byte (*SetTRune)(row, uldat Len, CONST trune *TRune, byte DefaultCol);
+  byte (*SetText)(row, uldat Len, const char *Text, byte DefaultCol);
+  byte (*SetTRune)(row, uldat Len, const trune *TRune, byte DefaultCol);
   /* menuitem */
   void (*Raise)(menuitem);
   void (*Lower)(menuitem);
   fn_row Fn_Row;
   menuitem (*Create4Menu)(fn_menuitem, obj Parent, window Window, udat Code, byte Flags, ldat Len,
-                          CONST char *Name);
+                          const char *Name);
   uldat (*Create4MenuCommon)(fn_menuitem, menu);
   /* for compatibility this must return a non-zero value. */
 };

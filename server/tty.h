@@ -100,10 +100,10 @@ struct s_ttydata {
   char *newName; /* buffer for xterm set window title escape seq */
 };
 
-byte TtyWriteAscii(window Window, uldat Len, CONST char *AsciiSeq);
-byte TtyWriteString(window Window, uldat Len, CONST char *String);
-byte TtyWriteTRune(window Window, uldat Len, CONST trune *TRune);
-byte TtyWriteTCell(window Window, dat x, dat y, uldat Len, CONST tcell *Attr);
+byte TtyWriteAscii(window Window, uldat Len, const char *AsciiSeq);
+byte TtyWriteString(window Window, uldat Len, const char *String);
+byte TtyWriteTRune(window Window, uldat Len, const trune *TRune);
+byte TtyWriteTCell(window Window, dat x, dat y, uldat Len, const tcell *Attr);
 
 widget TtyKbdFocus(widget Window);
 void ForceKbdFocus(void);

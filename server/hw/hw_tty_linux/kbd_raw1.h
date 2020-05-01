@@ -98,7 +98,7 @@ static int compute_shiftstate(void);
 static udat get_shiftstate_tw(void);
 static void set_lights(int lights);
 static udat get_kbentry(byte keycode, byte table);
-static CONST char *get_kbsentry(byte keysym);
+static const char *get_kbsentry(byte keysym);
 
 static udat do_spec(byte value, byte up_flag);
 static udat do_cur(byte value, byte up_flag);
@@ -107,7 +107,7 @@ static void put_queue(char ch) {
   queue[queue_len++] = ch;
 }
 
-static void puts_queue(CONST char *cp) {
+static void puts_queue(const char *cp) {
   while (*cp) {
     queue[queue_len++] = *cp++;
   }
@@ -472,8 +472,8 @@ static udat map_PAD[] = {
 enum { map_PAD_len = sizeof(map_PAD) / sizeof(map_PAD[0]) };
 
 static udat do_pad(byte value, byte up_flag) {
-  static CONST char *CONST pad_chars = "0123456789+-*/\015,.?()";
-  static CONST char *CONST app_map = "pqrstuvwxylSRQMnnmPQ";
+  static const char *const pad_chars = "0123456789+-*/\015,.?()";
+  static const char *const app_map = "pqrstuvwxylSRQMnnmPQ";
 
   if (up_flag)
     return TW_Null; /* no action, if this is a key release */
@@ -535,7 +535,7 @@ static udat map_CUR[] = {
 enum { map_CUR_len = sizeof(map_CUR) / sizeof(map_CUR[0]) };
 
 static udat do_cur(byte value, byte up_flag) {
-  static CONST char *CONST cur_chars = "BDCA";
+  static const char *const cur_chars = "BDCA";
   if (up_flag || value >= map_CUR_len)
     return TW_Null;
 
@@ -760,7 +760,7 @@ static k_hand key_handler[] = {
     do_meta,  do_ascii, do_lock, do_lowercase, do_slock, do_dead2, do_ignore, do_ignore};
 
 /* maximum values each key_handler can handle */
-static CONST byte key_handler_maxval[] = {255,
+static const byte key_handler_maxval[] = {255,
                                           255,
                                           SIZE(map_SPEC) - 1,
                                           SIZE(map_PAD) - 1,
@@ -861,7 +861,7 @@ static udat get_kbentry(byte keycode, byte table) {
   return K_NOSUCHMAP;
 }
 
-static CONST char *get_kbsentry(byte keysym) {
+static const char *get_kbsentry(byte keysym) {
   static struct kbsentry ks;
   /*
    struct kbsentry {
@@ -875,7 +875,7 @@ static CONST char *get_kbsentry(byte keysym) {
 
   ioctl(tty_fd, KDGKBSENT, &ks);
 
-  return (CONST char *)ks.kb_string;
+  return (const char *)ks.kb_string;
 }
 
 #ifdef DEBUG_HW_TTY_LRAWKBD

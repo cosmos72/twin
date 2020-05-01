@@ -53,7 +53,7 @@ struct s_gadget {
 struct s_fn_gadget {
   uldat Magic, Size, Used;
   gadget (*Create)(fn_gadget, msgport Owner, widget Parent, dat XWidth, dat YWidth,
-                   CONST char *TextNormal, uldat Attrib, uldat Flags, udat Code, tcolor ColText,
+                   const char *TextNormal, uldat Attrib, uldat Flags, udat Code, tcolor ColText,
                    tcolor ColTextSelect, tcolor ColTextDisabled, tcolor ColTextSelectDisabled,
                    dat Left, dat Up);
   void (*Insert)(gadget, widget Parent, widget Prev, widget Next);
@@ -77,8 +77,8 @@ struct s_fn_gadget {
   void (*Own)(gadget, msgport);
   void (*DisOwn)(gadget);
   void (*RecursiveDelete)(gadget, msgport);
-  void (*Expose)(gadget, dat XWidth, dat YWidth, dat Left, dat Up, CONST char *, CONST trune *,
-                 CONST tcell *);
+  void (*Expose)(gadget, dat XWidth, dat YWidth, dat Left, dat Up, const char *, const trune *,
+                 const tcell *);
   byte (*InstallHook)(gadget, fn_hook, fn_hook *Where);
   void (*RemoveHook)(gadget, fn_hook, fn_hook *Where);
   /* gadget */
@@ -86,13 +86,13 @@ struct s_fn_gadget {
   gadget (*CreateEmptyButton)(fn_gadget Fn_Gadget, msgport Owner, dat XWidth, dat YWidth,
                               tcolor BgCol);
   byte (*FillButton)(gadget Gadget, widget Parent, udat Code, dat Left, dat Up, udat Flags,
-                     CONST char *Text, tcolor Color, tcolor ColorDisabled);
+                     const char *Text, tcolor Color, tcolor ColorDisabled);
   gadget (*CreateButton)(fn_gadget Fn_Gadget, widget Parent, dat XWidth, dat YWidth,
-                         CONST char *Text, uldat Flags, udat Code, tcolor BgCol, tcolor Col,
+                         const char *Text, uldat Flags, udat Code, tcolor BgCol, tcolor Col,
                          tcolor ColDisabled, dat Left, dat Up);
-  void (*WriteTexts)(gadget Gadget, byte bitmap, dat XWidth, dat YWidth, CONST char *Text, dat Left,
+  void (*WriteTexts)(gadget Gadget, byte bitmap, dat XWidth, dat YWidth, const char *Text, dat Left,
                      dat Up);
-  void (*WriteTRunes)(gadget Gadget, byte bitmap, dat XWidth, dat YWidth, CONST trune *TRune,
+  void (*WriteTRunes)(gadget Gadget, byte bitmap, dat XWidth, dat YWidth, const trune *TRune,
                       dat Left, dat Up);
 };
 

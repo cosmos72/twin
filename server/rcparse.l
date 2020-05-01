@@ -265,7 +265,7 @@ Bold|High    return COL_HIGH;
 %%
 
 
-int set_yy_file(CONST char *path) {
+int set_yy_file(const char *path) {
     uldat len;
     FILE *f;
 

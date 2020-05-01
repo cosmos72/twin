@@ -34,8 +34,8 @@ void QuitHW(void);
 byte RestartHW(byte verbose);
 void SuspendHW(byte verbose);
 
-display_hw AttachDisplayHW(uldat len, CONST char *arg, uldat slot, byte flags);
-byte DetachDisplayHW(uldat len, CONST char *arg, byte flags);
+display_hw AttachDisplayHW(uldat len, const char *arg, uldat slot, byte flags);
+byte DetachDisplayHW(uldat len, const char *arg, byte flags);
 
 void FillVideo(dat Xstart, dat Ystart, dat Xend, dat Yend, tcell Attrib);
 void RefreshVideo(void);
@@ -47,6 +47,6 @@ void UpdateFlagsHW(void);
 void EnableMouseMotionEvents(byte enable);
 
 byte StdAddMouseEvent(udat Code, dat MouseX, dat MouseY);
-void SyntheticKey(widget W, udat Code, udat ShiftFlags, byte Len, CONST char *Seq);
+void SyntheticKey(widget W, udat Code, udat ShiftFlags, byte Len, const char *Seq);
 
 #endif /* _TWIN_HW_MULTI_H */

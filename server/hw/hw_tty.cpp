@@ -65,9 +65,9 @@ struct tty_data {
   uldat saveCursorType;
   dat saveX, saveY;
 
-  udat (*LookupKey)(udat *ShiftFlags, byte *slen, char *s, byte *retlen, CONST char **ret);
+  udat (*LookupKey)(udat *ShiftFlags, byte *slen, char *s, byte *retlen, const char **ret);
 
-  CONST char *mouse_start_seq, *mouse_end_seq, *mouse_motion_seq;
+  const char *mouse_start_seq, *mouse_end_seq, *mouse_motion_seq;
 #ifdef CONF_HW_TTY_LINUX
   Gpm_Connect GPM_Conn;
   int GPM_fd;

@@ -10,7 +10,7 @@
 #include "printk.h"
 #include "ext_query.h"
 
-static void warn_NoExtension(topaque len, CONST char *name, uldat tried) {
+static void warn_NoExtension(topaque len, const char *name, uldat tried) {
   if (!tried)
     printk("twin: no extension compiled into twin, and all extension modules failed\n"
            "      for extension `%.*s'\n",
@@ -24,7 +24,7 @@ static void warn_NoExtension(topaque len, CONST char *name, uldat tried) {
   }
 }
 
-static extension LoadExtension(topaque namelen, CONST char *name) {
+static extension LoadExtension(topaque namelen, const char *name) {
   extension E = (extension)0;
   uldat tried = 0;
   topaque fullnamelen;
@@ -59,7 +59,7 @@ static extension LoadExtension(topaque namelen, CONST char *name) {
   return E;
 }
 
-extension QueryExtension(byte len, CONST char *name) {
+extension QueryExtension(byte len, const char *name) {
   module M;
   topaque namelen = len;
 

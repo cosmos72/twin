@@ -127,8 +127,8 @@ void RunNoHW(byte print_info) {
   (void)DlLoad(SocketSo);
 }
 
-static byte module_InitHW(CONST char *arg, uldat len) {
-  CONST char *name, *tmp;
+static byte module_InitHW(const char *arg, uldat len) {
+  const char *name, *tmp;
   char *alloc_name;
   byte (*InitD)(void);
   module Module;
@@ -141,8 +141,8 @@ static byte module_InitHW(CONST char *arg, uldat len) {
     len -= 4; /* skip "-hw=" */
   }
 
-  name = (CONST char *)memchr(arg, '@', len);
-  tmp = (CONST char *)memchr(arg, ',', len);
+  name = (const char *)memchr(arg, '@', len);
+  tmp = (const char *)memchr(arg, ',', len);
   if (tmp && (!name || tmp < name))
     name = tmp;
   if (name)
@@ -188,7 +188,7 @@ static byte module_InitHW(CONST char *arg, uldat len) {
   return tfalse;
 }
 
-static byte set_hw_name(display_hw D_HW, CONST char *name, uldat namelen) {
+static byte set_hw_name(display_hw D_HW, const char *name, uldat namelen) {
   char *alloc_name;
 
   if (D_HW && (alloc_name = CloneStrL(name, namelen)) != NULL) {
@@ -200,7 +200,7 @@ static byte set_hw_name(display_hw D_HW, CONST char *name, uldat namelen) {
   return ttrue;
 }
 
-static void warn_NoHW(CONST char *arg, uldat len) {
+static void warn_NoHW(const char *arg, uldat len) {
   printk("twin: all display drivers failed");
   if (arg)
     printk(" for `%.*s\'\n", Min2((int)len, TW_SMALLBUFF), arg);
@@ -286,7 +286,7 @@ void QuitDisplayHW(display_hw D_HW) {
   RestoreHW;
 }
 
-static byte IsValidHW(uldat len, CONST char *arg) {
+static byte IsValidHW(uldat len, const char *arg) {
   uldat i;
   byte b;
   if (len >= 4 && !memcmp(arg, "-hw=", 4))
@@ -306,7 +306,7 @@ static byte IsValidHW(uldat len, CONST char *arg) {
   return ttrue;
 }
 
-display_hw AttachDisplayHW(uldat len, CONST char *arg, uldat slot, byte flags) {
+display_hw AttachDisplayHW(uldat len, const char *arg, uldat slot, byte flags) {
   display_hw D_HW = NULL;
 
   if ((len && len <= 4) || memcmp("-hw=", arg, Min2(len, 4))) {
@@ -353,7 +353,7 @@ display_hw AttachDisplayHW(uldat len, CONST char *arg, uldat slot, byte flags) {
   return D_HW;
 }
 
-byte DetachDisplayHW(uldat len, CONST char *arg, byte flags) {
+byte DetachDisplayHW(uldat len, const char *arg, byte flags) {
   byte done = tfalse;
   display_hw s_HW;
 
@@ -678,8 +678,8 @@ void TwinSelectionSetOwner(obj Owner, tany Time, tany Frac) {
   }
 }
 
-void TwinSelectionNotify(obj Requestor, uldat ReqPrivate, uldat Magic, CONST char MIME[MAX_MIMELEN],
-                         uldat Len, CONST char *Data) {
+void TwinSelectionNotify(obj Requestor, uldat ReqPrivate, uldat Magic, const char MIME[MAX_MIMELEN],
+                         uldat Len, const char *Data) {
   msg NewMsg;
   event_any *Event;
 #if 0
@@ -935,7 +935,7 @@ void FlushHW(void) {
   ValidOldVideo = ttrue;
 }
 
-void SyntheticKey(widget W, udat Code, udat ShiftFlags, byte Len, CONST char *Seq) {
+void SyntheticKey(widget W, udat Code, udat ShiftFlags, byte Len, const char *Seq) {
   event_keyboard *Event;
   msg Msg;
 
@@ -1171,7 +1171,7 @@ byte StdAddMouseEvent(udat Code, dat MouseX, dat MouseY) {
   return tfalse;
 }
 
-byte KeyboardEventCommon(udat Code, udat ShiftFlags, udat Len, CONST char *Seq) {
+byte KeyboardEventCommon(udat Code, udat ShiftFlags, udat Len, const char *Seq) {
   event_keyboard *Event;
   msg Msg;
 

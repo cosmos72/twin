@@ -38,7 +38,7 @@ struct s_fn_menu {
   void (*ChangeField)(menu, udat field, uldat CLEARMask, uldat XORMask);
   /* menu */
   fn_obj Fn_Obj;
-  row (*SetInfo)(menu, byte Flags, ldat Len, CONST char *Text, CONST tcolor *ColText);
+  row (*SetInfo)(menu, byte Flags, ldat Len, const char *Text, const tcolor *ColText);
   menuitem (*FindItem)(menu, dat i);
   menuitem (*GetSelectedItem)(menu);
   menuitem (*RecursiveGetSelectedItem)(menu, dat *depth);

@@ -53,8 +53,8 @@ struct s_screen {
 };
 struct s_fn_screen {
   uldat Magic, Size, Used;
-  screen (*Create)(fn_screen, dat NameLen, CONST char *Name, dat BgWidth, dat BgHeight,
-                   CONST tcell *Bg);
+  screen (*Create)(fn_screen, dat NameLen, const char *Name, dat BgWidth, dat BgHeight,
+                   const tcell *Bg);
   void (*Insert)(screen, all, screen Prev, screen Next);
   void (*Remove)(screen);
   void (*Delete)(screen);
@@ -76,16 +76,16 @@ struct s_fn_screen {
   void (*Own)(screen, msgport);
   void (*DisOwn)(screen);
   void (*RecursiveDelete)(screen, msgport);
-  void (*Expose)(screen, dat XWidth, dat YWidth, dat Left, dat Up, CONST char *, CONST trune *,
-                 CONST tcell *);
+  void (*Expose)(screen, dat XWidth, dat YWidth, dat Left, dat Up, const char *, const trune *,
+                 const tcell *);
   byte (*InstallHook)(screen, fn_hook, fn_hook *Where);
   void (*RemoveHook)(screen, fn_hook, fn_hook *Where);
   /* screen */
   fn_widget Fn_Widget;
   menu (*FindMenu)(screen);
   screen (*Find)(dat j);
-  screen (*CreateSimple)(fn_screen, dat NameLen, CONST char *Name, tcell Bg);
-  void (*BgImage)(screen, dat BgWidth, dat BgHeight, CONST tcell *Bg);
+  screen (*CreateSimple)(fn_screen, dat NameLen, const char *Name, tcell Bg);
+  void (*BgImage)(screen, dat BgWidth, dat BgHeight, const tcell *Bg);
   void (*DrawMenu)(screen, dat Xstart, dat Xend);
   void (*ActivateMenu)(screen, menuitem, byte ByMouse);
   void (*DeActivateMenu)(screen);

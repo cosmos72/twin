@@ -30,7 +30,7 @@ struct s_module {
 };
 struct s_fn_module {
   uldat Magic, Size, Used;
-  module (*Create)(fn_module, uldat NameLen, CONST char *Name);
+  module (*Create)(fn_module, uldat NameLen, const char *Name);
   void (*Insert)(module, all, module Prev, module Next);
   void (*Remove)(module);
   void (*Delete)(module);

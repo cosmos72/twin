@@ -44,7 +44,7 @@ static void termShutDown(widget W) {
   }
 }
 
-static window newTermWindow(CONST char *title) {
+static window newTermWindow(const char *title) {
   window Window;
 
   Window = Do(Create, Window)(
@@ -65,9 +65,9 @@ static window newTermWindow(CONST char *title) {
   return Window;
 }
 
-static window OpenTerm(CONST char *arg0, CONST char *CONST *argv) {
+static window OpenTerm(const char *arg0, const char *const *argv) {
   window Window;
-  CONST char *title;
+  const char *title;
 
   /* if {arg0, argv} is {NULL, ...} or {"", ... } then start user's shell */
   if (arg0 && *arg0 && argv && argv[0]) {
@@ -77,7 +77,7 @@ static window OpenTerm(CONST char *arg0, CONST char *CONST *argv) {
       title = argv[0];
   } else {
     arg0 = default_args[0];
-    argv = (CONST char *CONST *)default_args + 1;
+    argv = (const char *const *)default_args + 1;
 
     title = "Twin Term";
   }
@@ -96,7 +96,7 @@ static window OpenTerm(CONST char *arg0, CONST char *CONST *argv) {
   return NULL;
 }
 
-static void TermWriteTRuneWindow(window W, uldat len, CONST trune *hwData) {
+static void TermWriteTRuneWindow(window W, uldat len, const trune *hwData) {
   trune (*inv_charset)(trune) = W->USE.C.TtyData->InvCharset;
   byte *Data, *sData;
   uldat n;
@@ -172,7 +172,7 @@ static void TwinTermH(msgport MsgPort) {
       if (Event->EventControl.Code == MSG_CONTROL_OPEN) {
         char **cmd = TokenizeStringVec(Event->EventControl.Len, Event->EventControl.Data);
         if (cmd) {
-          OpenTerm(cmd[0], (CONST char *CONST *)cmd);
+          OpenTerm(cmd[0], (const char *const *)cmd);
           FreeStringVec(cmd);
         } else
           OpenTerm(NULL, NULL);
@@ -226,7 +226,7 @@ static void OverrideMethods(byte enter) {
 
 EXTERN_C byte InitModule(module Module) {
   window Window;
-  CONST char *shellpath, *shell;
+  const char *shellpath, *shell;
 
   if (((shellpath = getenv("SHELL")) || (shellpath = "/bin/sh")) &&
       (default_args[0] = CloneStr(shellpath)) &&
@@ -240,7 +240,7 @@ EXTERN_C byte InitModule(module Module) {
                             TCOL(thigh | tblack, twhite), TCOL(thigh | tblack, tblack),
                             TCOL(tred, twhite), TCOL(tred, tgreen), (byte)0)) &&
       Info4Menu(Term_Menu, ROW_ACTIVE, (uldat)19, " Builtin Twin Term ",
-                (CONST tcolor *)"ptppppppptpppptpppp") &&
+                (const tcolor *)"ptppppppptpppptpppp") &&
 
       (Window = Win4Menu(Term_Menu)) && Row4Menu(Window, COD_SPAWN, ROW_ACTIVE, 10, " New Term ") &&
       Row4Menu(Window, COD_QUIT, tfalse, 6, " Exit ") &&

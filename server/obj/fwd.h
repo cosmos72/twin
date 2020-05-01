@@ -50,7 +50,7 @@ typedef struct s_fn_module *fn_module;
 typedef struct s_fn_extension *fn_extension;
 typedef struct s_fn_display_hw *fn_display_hw;
 
-typedef struct s_fn fn;
+typedef struct s_fn_struct fn_struct;
 typedef struct s_setup setup;
 typedef struct s_all *all;
 

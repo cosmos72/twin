@@ -11,7 +11,7 @@
 
 /* types */
 typedef char *str;
-typedef CONST char *cstr;
+typedef const char *cstr;
 typedef struct s_node *node;
 typedef struct ldat_list ldat_list;
 typedef struct str_list str_list;
@@ -26,7 +26,7 @@ struct s_node {
       ldat plus_minus, flag, a, b;
     } f;
     struct {
-      CONST cstr *argv;
+      const cstr *argv;
       uldat argc;
     } v;
     tcolor color;
@@ -74,7 +74,7 @@ struct ldat_list {
 #define my_malloc shm_malloc_or_die
 #define my_strdup shm_strdup_or_die
 void *shm_malloc_or_die(size_t size);
-char *shm_strdup_or_die(CONST char *s);
+char *shm_strdup_or_die(const char *s);
 
 byte shm_init(size_t len);
 byte shm_shrink(void);
@@ -103,6 +103,6 @@ extern int line_no[];
 #define LINE_NO line_no[read_stack_curr - 1]
 #define FILE_NAME file_name[read_stack_curr - 1]
 
-int set_yy_file(CONST char *path);
+int set_yy_file(const char *path);
 
 #endif /* _TWIN_RCTYPES_H */

@@ -46,9 +46,9 @@ typedef enum e_widget_flag {
 
 struct s_wE { /* for WIDGET_USEEXPOSE widgets */
   union {
-    CONST char *Text;
-    CONST trune *TRune;
-    CONST tcell *TCell;
+    const char *Text;
+    const trune *TRune;
+    const tcell *TCell;
   } E;
   dat Flags, Pitch;
   ldat X1, Y1, X2, Y2;
@@ -67,6 +67,37 @@ struct s_draw_ctx {
   byte NoChildren;
   byte BorderDone;
   byte Shaded;
+};
+
+struct s_fn_widget {
+  uldat Magic, Size, Used;
+  widget (*Create)(fn_widget, msgport owner, dat xwidth, dat ywidth, uldat attrib, uldat flags,
+                   dat left, dat up, tcell use_fill);
+  void (*Insert)(widget self, widget parent, widget Prev, widget Next);
+  void (*Remove)(widget self);
+  void (*Delete)(widget self);
+  void (*ChangeField)(widget self, udat field, uldat CLEARMask, uldat XORMask);
+  /* widget */
+  fn_obj Fn_Obj; /* backup of overloaded functions */
+  void (*DrawSelf)(draw_ctx *d);
+  widget (*FindWidgetAt)(widget self, dat x, dat y);
+  gadget (*FindGadgetByCode)(widget self, udat code);
+  void (*SetXY)(widget self, dat x, dat y);
+  void (*SetFill)(widget self, tcell fill);
+  widget (*Focus)(widget self);
+  widget (*KbdFocus)(widget self);
+  void (*Map)(widget self, widget parent);
+  void (*UnMap)(widget self);
+  void (*MapTopReal)(widget self, screen scr);
+  void (*Raise)(widget self);
+  void (*Lower)(widget self);
+  void (*Own)(widget self, msgport port);
+  void (*DisOwn)(widget self);
+  void (*RecursiveDelete)(widget self, msgport port);
+  void (*Expose)(widget self, dat xwidth, dat ywidth, dat left, dat up, dat pitch, const char *,
+                 const trune *, const tcell *);
+  byte (*InstallHook)(widget, fn_hook, fn_hook *where);
+  void (*RemoveHook)(widget, fn_hook, fn_hook *where);
 };
 
 struct s_widget {
@@ -91,37 +122,87 @@ struct s_widget {
   union {
     struct s_wE E;
   } USE;
-};
 
-struct s_fn_widget {
-  uldat Magic, Size, Used;
-  widget (*Create)(fn_widget, msgport Owner, dat XWidth, dat YWidth, uldat Attrib, uldat Flags,
-                   dat Left, dat Up, tcell USE_Fill);
-  void (*Insert)(widget, widget Parent, widget Prev, widget Next);
-  void (*Remove)(widget);
-  void (*Delete)(widget);
-  void (*ChangeField)(widget, udat field, uldat CLEARMask, uldat XORMask);
+  /* obj */
+  uldat Magic() const {
+    return Fn->Magic;
+  }
+  uldat Size() const {
+    return Fn->Size;
+  }
+  uldat Used() const {
+    return Fn->Used;
+  }
+  static widget Create(msgport Owner, dat XWidth, dat YWidth, uldat Attrib, uldat Flags, dat Left,
+                       dat Up, tcell USE_Fill);
+  void Insert(widget parent, widget prev, widget next) {
+    Fn->Insert(this, parent, prev, next);
+  }
+  void Remove() {
+    Fn->Remove(this);
+  }
+  void Delete() {
+    Fn->Delete(this);
+  }
+  void ChangeField(udat field, uldat clear_mask, uldat xor_mask) {
+    Fn->ChangeField(this, field, clear_mask, xor_mask);
+  }
   /* widget */
-  fn_obj Fn_Obj; /* backup of overloaded functions */
-  void (*DrawSelf)(draw_ctx *D);
-  widget (*FindWidgetAt)(widget Parent, dat X, dat Y);
-  gadget (*FindGadgetByCode)(widget Parent, udat Code);
-  void (*SetXY)(widget, dat X, dat Y);
-  void (*SetFill)(widget, tcell Fill);
-  widget (*Focus)(widget);
-  widget (*KbdFocus)(widget);
-  void (*Map)(widget, widget Parent);
-  void (*UnMap)(widget);
-  void (*MapTopReal)(widget, screen);
-  void (*Raise)(widget);
-  void (*Lower)(widget);
-  void (*Own)(widget, msgport);
-  void (*DisOwn)(widget);
-  void (*RecursiveDelete)(widget, msgport);
-  void (*Expose)(widget, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch, CONST char *,
-                 CONST trune *, CONST tcell *);
-  byte (*InstallHook)(widget, fn_hook, fn_hook *Where);
-  void (*RemoveHook)(widget, fn_hook, fn_hook *Where);
+  void DrawSelf(draw_ctx *D) {
+    Fn->DrawSelf(D);
+  }
+  widget FindWidgetAt(dat x, dat y) {
+    return Fn->FindWidgetAt(this, x, y);
+  }
+  gadget FindGadgetByCode(udat code) {
+    return Fn->FindGadgetByCode(this, code);
+  }
+  void SetXY(dat x, dat y) {
+    Fn->SetXY(this, x, y);
+  }
+  void SetFill(tcell fill) {
+    Fn->SetFill(this, fill);
+  }
+  widget Focus() {
+    return Fn->Focus(this);
+  }
+  widget KbdFocus() {
+    return Fn->KbdFocus(this);
+  }
+  void Map(widget parent) {
+    Fn->Map(this, parent);
+  }
+  void UnMap() {
+    Fn->UnMap(this);
+  }
+  void MapTopReal(screen scr) {
+    Fn->MapTopReal(this, scr);
+  }
+  void Raise() {
+    Fn->Raise(this);
+  }
+  void Lower() {
+    Fn->Lower(this);
+  }
+  void Own(msgport port) {
+    Fn->Own(this, port);
+  }
+  void DisOwn() {
+    Fn->DisOwn(this);
+  }
+  void RecursiveDelete(msgport port) {
+    Fn->RecursiveDelete(this, port);
+  }
+  void Expose(dat xwidth, dat ywidth, dat left, dat up, dat pitch, const char *ascii,
+              const trune *runes, const tcell *cells) {
+    Fn->Expose(this, xwidth, ywidth, left, up, pitch, ascii, runes, cells);
+  }
+  byte InstallHook(fn_hook hook, fn_hook *where) {
+    return Fn->InstallHook(this, hook, where);
+  }
+  void RemoveHook(fn_hook hook, fn_hook *where) {
+    Fn->RemoveHook(this, hook, where);
+  }
 };
 
 #endif /* _TWIN_WIDGET_H */

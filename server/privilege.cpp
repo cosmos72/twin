@@ -26,4 +26,4 @@ gid_t get_tty_grgid(void) {
     return (gid_t)-1;
 }
 
-int init_groups(CONST char *user_name, gid_t group_id) { return initgroups(user_name, group_id); }
+int init_groups(const char *user_name, gid_t group_id) { return initgroups(user_name, group_id); }

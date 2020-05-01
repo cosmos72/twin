@@ -25,7 +25,7 @@
 
 #define MAXID ((uldat)0x0FFFFFFFul)
 
-byte AssignId(CONST fn_obj Fn_Obj, obj Obj);
+byte AssignId(const fn_obj Fn_Obj, obj Obj);
 byte AssignId_all(all Obj);
 void DropId(obj Obj);
 obj Id2Obj(byte i, uldat Id);

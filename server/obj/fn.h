@@ -16,23 +16,39 @@
 #include "obj/fwd.h"
 
 /* in the same order as the #defines above ! */
-struct s_fn {
-  fn_obj f_obj;
-  fn_widget f_widget;
-  fn_gadget f_gadget;
-  fn_window f_window;
-  fn_screen f_screen;
-  fn_group f_group;
-  fn_row f_row;
-  fn_menuitem f_menuitem;
-  fn_menu f_menu;
-  fn_msgport f_msgport;
-  fn_mutex f_mutex;
-  fn_msg f_msg;
-  fn_module f_module;
-  fn_extension f_extension;
-  fn_display_hw f_display_hw;
-  fn_obj f_all;
+struct s_fn_struct {
+  fn_obj Obj;
+  fn_widget Widget;
+  fn_gadget Gadget;
+  fn_window Window;
+  fn_screen Screen;
+  fn_group Group;
+  fn_row Row;
+  fn_menuitem Menuitem;
+  fn_menu Menu;
+  fn_msgport Msgport;
+  fn_mutex Mutex;
+  fn_msg Msg;
+  fn_module Module;
+  fn_extension Extension;
+  fn_display_hw DisplayHW;
+  fn_obj All;
 };
+
+extern fn_struct FnStruct;
+#define FnWidget (FnStruct.Widget)
+#define FnGadget (FnStruct.Gadget)
+#define FnWindow (FnStruct.Window)
+#define FnScreen (FnStruct.Screen)
+#define FnGroup (FnStruct.Group)
+#define FnRow (FnStruct.Row)
+#define FnMenuItem (FnStruct.Menuitem)
+#define FnMenu (FnStruct.Menu)
+#define FnMsgPort (FnStruct.Msgport)
+#define FnMutex (FnStruct.Mutex)
+#define FnMsg (FnStruct.Msg)
+#define FnModule (FnStruct.Module)
+#define FnExtension (FnStruct.Extension)
+#define FnDisplayHW (FnStruct.DisplayHW)
 
 #endif /* _TWIN_FN_H */

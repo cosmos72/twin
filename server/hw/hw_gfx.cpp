@@ -245,10 +245,10 @@ INLINE void X11_Mogrify(dat x, dat y, ldat len) {
 
 #undef XDRAW_ANY
 
-static byte gfx_LoadPixmap(Pixmap *px, CONST char *name, int nlen, byte strict) {
+static byte gfx_LoadPixmap(Pixmap *px, const char *name, int nlen, byte strict) {
   char *path[3] = {NULL, NULL, NULL};
-  CONST char *prefix[3];
-  CONST char *infix[3];
+  const char *prefix[3];
+  const char *infix[3];
   byte i, ret = tfalse;
   XpmAttributes pxattr;
 
@@ -296,7 +296,7 @@ static byte gfx_LoadPixmap(Pixmap *px, CONST char *name, int nlen, byte strict) 
   return ret;
 }
 
-static char *GfxFile(char *arg, CONST char **ret_file, uldat *ret_len) {
+static char *GfxFile(char *arg, const char **ret_file, uldat *ret_len) {
   *ret_file = arg;
   arg = strchr(arg, ',');
   *ret_len = arg ? arg - *ret_file : strlen(*ret_file);
@@ -328,8 +328,8 @@ static void GfxUse(char *arg, byte *how) {
 typedef struct s_gfx_options {
   char *dpy, *dpy0, *fontname, *fontname0;
   char *charset, *charset0;
-  CONST char *file_bg, *file_root;
-  CONST char *file_theme;
+  const char *file_bg, *file_root;
+  const char *file_theme;
   uldat file_bg_len, file_root_len, file_theme_len;
   dat fontwidth, fontheight;
   byte drag, noinput;
@@ -482,7 +482,7 @@ cleanup:
 
 /* return name of selected font in allocated (char *) */
 static char *gfx_AutodetectFont(dat fontwidth, dat fontheight) {
-  CONST char *patterns[] = {
+  const char *patterns[] = {
       /* "-gnu-unifont-medium-r-normal-*-%u-*-*-*-*-*-iso10646-1", double-width chars not supported
          yet */
       "-misc-console-medium-r-normal-*-%u-*-*-*-*-*-iso10646-1",
@@ -527,7 +527,7 @@ static char *gfx_AutodetectFont(dat fontwidth, dat fontheight) {
   return selected;
 }
 
-static byte gfx_LoadFont(CONST char *fontname, dat fontwidth, dat fontheight) {
+static byte gfx_LoadFont(const char *fontname, dat fontwidth, dat fontheight) {
   char *alloc_fontname = 0;
   byte loaded = tfalse;
 

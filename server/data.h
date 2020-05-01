@@ -9,17 +9,17 @@
 #ifndef _TWIN_DATA_H
 #define _TWIN_DATA_H
 
-extern CONST char *CONST pkg_libdir;
-extern CONST char *CONST pkg_libdir_modules_;
+extern const char *const pkg_libdir;
+extern const char *const pkg_libdir_modules_;
 
 extern rgb Palette[tmaxcol + 1], defaultPalette[tmaxcol + 1];
 
 typedef struct keylist keylist;
 struct keylist {
-  CONST char *name;
+  const char *name;
   udat key;
   byte len;
-  CONST char *seq;
+  const char *seq;
 };
 
 extern keylist TW_KeyList[];

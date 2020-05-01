@@ -22,12 +22,12 @@ struct exts {
   struct {
     void (*SendMsg)(msgport MsgPort, msg Msg);
     byte (*InitAuth)(void);
-    byte (*DecodeExtension)(topaque *len, CONST byte **data, topaque *args_n, tsfield args);
+    byte (*DecodeExtension)(topaque *len, const byte **data, topaque *args_n, tsfield args);
     void (*MultiplexS)(uldat order, topaque args_n, tsfield args);
     tany (*MultiplexL)(uldat order, ...);
   } Socket;
   struct {
-    window (*Open)(CONST char *arg0, CONST char *CONST *argv);
+    window (*Open)(const char *arg0, const char *const *argv);
   } Term;
 };
 

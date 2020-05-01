@@ -13,8 +13,8 @@
 #define SS "%." STR(TW_SMALLBUFF) "s"
 #endif
 
-int printk(CONST char *format, ...);
-void printk_str(int len, CONST char *s);
+int printk(const char *format, ...);
+void printk_str(int len, const char *s);
 int printk_receive_fd(int fd);
 int flushk(void);
 

@@ -40,8 +40,8 @@ struct s_fn_row {
   void (*ChangeField)(row, udat field, uldat CLEARMask, uldat XORMask);
   /* row */
   fn_obj Fn_Obj;
-  byte (*SetText)(row, uldat Len, CONST char *Text, byte DefaultCol);
-  byte (*SetTRune)(row, uldat Len, CONST trune *TRune, byte DefaultCol);
+  byte (*SetText)(row, uldat Len, const char *Text, byte DefaultCol);
+  byte (*SetTRune)(row, uldat Len, const trune *TRune, byte DefaultCol);
   void (*Raise)(row);
   void (*Lower)(row);
 };

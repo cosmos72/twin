@@ -1,5 +1,5 @@
 /*
- *  fn.h  --  declare server class s_fn
+ *  all.h  --  declare server class s_all
  *
  *  Copyright (C) 1993-2019 by Massimiliano Ghilardi
  *
@@ -120,6 +120,6 @@ struct s_all {
   trune *Gtranslations[USER_MAP + 1];
 };
 
-extern all CONST All;
+extern all const All;
 
 #endif /* _TWIN_ALL_H */

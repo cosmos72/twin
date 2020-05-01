@@ -106,12 +106,12 @@ struct s_window {
   dat MinXWidth, MinYWidth;
   dat MaxXWidth, MaxYWidth;
   ldat WLogic, HLogic;  /* window interior logic size */
-  trune CONST *Charset; /* the byte -> trune translation to use */
+  trune const *Charset; /* the byte -> trune translation to use */
 };
 
 struct s_fn_window {
   uldat Magic, Size, Used;
-  window (*Create)(fn_window, msgport Owner, dat NameLen, CONST char *Name, CONST tcolor *ColName,
+  window (*Create)(fn_window, msgport Owner, dat NameLen, const char *Name, const tcolor *ColName,
                    menu Menu, tcolor ColText, uldat CursorType, uldat Attrib, uldat Flags,
                    dat XWidth, dat YWidth, dat ScrollBackLines);
   void (*Insert)(window, widget Parent, widget Prev, widget Next);
@@ -135,21 +135,21 @@ struct s_fn_window {
   void (*Own)(window, msgport);
   void (*DisOwn)(window);
   void (*RecursiveDelete)(window, msgport);
-  void (*Expose)(window, dat XWidth, dat YWidth, dat Left, dat Up, CONST char *, CONST trune *,
-                 CONST tcell *);
+  void (*Expose)(window, dat XWidth, dat YWidth, dat Left, dat Up, const char *, const trune *,
+                 const tcell *);
   byte (*InstallHook)(window, fn_hook, fn_hook *Where);
   void (*RemoveHook)(window, fn_hook, fn_hook *Where);
   /* window */
   fn_widget Fn_Widget;
-  byte (*TtyWriteAscii)(window, uldat Len, CONST char *Ascii);
-  byte (*TtyWriteString)(window, uldat Len, CONST char *String);
-  byte (*TtyWriteTRune)(window, uldat Len, CONST trune *TRune);
-  byte (*TtyWriteTCell)(window, dat x, dat y, uldat Len, CONST tcell *Attr);
+  byte (*TtyWriteAscii)(window, uldat Len, const char *Ascii);
+  byte (*TtyWriteString)(window, uldat Len, const char *String);
+  byte (*TtyWriteTRune)(window, uldat Len, const trune *TRune);
+  byte (*TtyWriteTCell)(window, dat x, dat y, uldat Len, const tcell *Attr);
 
-  byte (*RowWriteAscii)(window, uldat Len, CONST char *Ascii);
-  byte (*RowWriteString)(window, uldat Len, CONST char *String);
-  byte (*RowWriteTRune)(window, uldat Len, CONST trune *TRune);
-  byte (*RowWriteTCell)(window, dat x, dat y, uldat Len, CONST tcell *Attr);
+  byte (*RowWriteAscii)(window, uldat Len, const char *Ascii);
+  byte (*RowWriteString)(window, uldat Len, const char *String);
+  byte (*RowWriteTRune)(window, uldat Len, const trune *TRune);
+  byte (*RowWriteTCell)(window, dat x, dat y, uldat Len, const tcell *Attr);
 
   void (*GotoXY)(window, ldat X, ldat Y);
   void (*SetTitle)(window, dat titlelen, char *title);

@@ -72,12 +72,12 @@
 static char *ptydev, *ttydev;
 static int ptyfd, ttyfd;
 
-static void pty_error(CONST char *d, CONST char *f, CONST char *arg) {
+static void pty_error(const char *d, const char *f, const char *arg) {
   printk("twin: " SS ": " SS "(\"" SS "\") failed: " SS "\n", d ? d : "<NULL>", f ? f : "<NULL>",
          arg ? arg : "<NULL>", strerror(errno));
 }
 
-static void get_pty_error(CONST char *f, CONST char *arg) {
+static void get_pty_error(const char *f, const char *arg) {
   pty_error("opening pseudo-tty", f, arg);
 }
 
@@ -176,7 +176,7 @@ static byte fixup_pty(void) {
   return tfalse;
 }
 
-static void setup_pty_error(CONST char *f, CONST char *arg) {
+static void setup_pty_error(const char *f, const char *arg) {
   pty_error("setting up slave tty", f, arg);
 }
 
@@ -244,7 +244,7 @@ static byte switchto_tty(void) {
 }
 
 /* exported API: fork() a program in a pseudo-teletype */
-byte SpawnInWindow(window Window, CONST char *arg0, CONST char *CONST *argv) {
+byte SpawnInWindow(window Window, const char *arg0, const char *const *argv) {
   pid_t childpid;
   remotedata *data;
 
@@ -276,7 +276,7 @@ byte SpawnInWindow(window Window, CONST char *arg0, CONST char *CONST *argv) {
       /* child */
       /* 4 */
       if (switchto_tty())
-        execvp(arg0, (char *CONST *)RemoveConst(argv));
+        execvp(arg0, (char *const *)RemoveConst(argv));
       exit(1);
       break;
     default:

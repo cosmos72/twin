@@ -381,9 +381,9 @@ void DrawSelfWidget(draw_ctx *D) {
     return;
 
   if (w_USE(W, USEEXPOSE)) {
-    CONST char *Text = NULL;
-    CONST trune *TRune = NULL;
-    CONST tcell *TCell = NULL;
+    const char *Text = NULL;
+    const trune *TRune = NULL;
+    const tcell *TCell = NULL;
     ldat Left, Up, _X1, _X2, _Y1, _Y2;
     ldat Pitch, DWidth, i, j, v; /* (ldat) to avoid multiplication overflows */
     dat X1, X2, Y1, Y2, dX, dY;
@@ -672,8 +672,8 @@ void DrawSelfWindow(draw_ctx *D) {
   }
 
   {
-    CONST tcell *Contents, *CurrCont;
-    CONST trune *TRune;
+    const tcell *Contents, *CurrCont;
+    const trune *TRune;
     tcolor *ColText;
     ldat Left, Up, Rgt;
     ldat DWidth, i, j, u, v; /* (ldat) to avoid multiplication overflows */

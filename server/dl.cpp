@@ -86,7 +86,7 @@ void DlClose(module Module) {
   }
 }
 
-module DlLoadAny(uldat len, CONST char *name) {
+module DlLoadAny(uldat len, const char *name) {
   module Module;
 
   for (Module = All->FirstModule; Module; Module = Module->Next) {
@@ -105,7 +105,7 @@ module DlLoadAny(uldat len, CONST char *name) {
 
 static module So[MAX_So];
 
-udat DlName2Code(CONST char *name) {
+udat DlName2Code(const char *name) {
   if (!strcmp(name, "wm"))
     return WMSo;
   if (!strcmp(name, "term"))
@@ -117,7 +117,7 @@ udat DlName2Code(CONST char *name) {
   return MainSo;
 }
 
-static CONST char *DlCode2Name(uldat code) {
+static const char *DlCode2Name(uldat code) {
   switch (code) {
   case WMSo:
     return "wm";
@@ -136,7 +136,7 @@ static CONST char *DlCode2Name(uldat code) {
 module DlLoad(uldat code) {
   module M = (module)0;
   if (code < MAX_So && !(M = So[code])) {
-    CONST char *name = DlCode2Name(code);
+    const char *name = DlCode2Name(code);
     M = DlLoadAny(name ? strlen(name) : 0, name);
     if ((So[code] = M)) {
       if (All->FnHookModule)
@@ -166,7 +166,7 @@ module DlIsLoaded(uldat code) {
   return (module)0;
 }
 
-void *DlSym(module Module, CONST char *name) {
+void *DlSym(module Module, const char *name) {
   if (Module && name)
     return (void *)dlsym((dlhandle)Module->Handle, name);
 
