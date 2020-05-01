@@ -20,36 +20,6 @@ struct s_gT { /* for GADGETFL_USETEXT gadgets */
   tcolor *Color[4];
 };
 
-struct s_gadget {
-  uldat Id;
-  fn_gadget Fn;
-  widget Prev, Next;
-  widget Parent;
-  /* widget */
-  widget FirstW, LastW; /* list of children */
-  widget SelectW;       /* selected child */
-  dat Left, Up, XWidth, YWidth;
-  uldat Attrib;
-  uldat Flags;
-  ldat XLogic, YLogic;
-  widget O_Prev, O_Next; /* list in the same msgport (owner) */
-  msgport Owner;
-  fn_hook ShutDownHook; /* hooks for this widget */
-  fn_hook Hook, *WhereHook;
-  fn_hook MapUnMapHook;
-  msg MapQueueMsg;
-  tcell USE_Fill;
-  union {
-    struct s_gT T;
-    struct s_wE E;
-  } USE;
-  /* gadget */
-  tcolor ColText, ColSelect, ColDisabled, ColSelectDisabled;
-  udat Code;
-  gadget G_Prev, G_Next; /* list in the same ggroup */
-  ggroup Group;
-};
-
 struct s_fn_gadget {
   uldat Magic, Size;
   gadget (*Create)(fn_gadget, msgport Owner, widget Parent, dat XWidth, dat YWidth,
@@ -94,6 +64,50 @@ struct s_fn_gadget {
                      dat Up);
   void (*WriteTRunes)(gadget Gadget, byte bitmap, dat XWidth, dat YWidth, const trune *TRune,
                       dat Left, dat Up);
+};
+
+struct s_gadget {
+  uldat Id;
+  fn_gadget Fn;
+  widget Prev, Next;
+  widget Parent;
+  /* widget */
+  widget FirstW, LastW; /* list of children */
+  widget SelectW;       /* selected child */
+  dat Left, Up, XWidth, YWidth;
+  uldat Attrib;
+  uldat Flags;
+  ldat XLogic, YLogic;
+  widget O_Prev, O_Next; /* list in the same msgport (owner) */
+  msgport Owner;
+  fn_hook ShutDownHook; /* hooks for this widget */
+  fn_hook Hook, *WhereHook;
+  fn_hook MapUnMapHook;
+  msg MapQueueMsg;
+  tcell USE_Fill;
+  union {
+    struct s_gT T;
+    struct s_wE E;
+  } USE;
+  /* gadget */
+  tcolor ColText, ColSelect, ColDisabled, ColSelectDisabled;
+  udat Code;
+  gadget G_Prev, G_Next; /* list in the same ggroup */
+  ggroup Group;
+
+  /* obj */
+  uldat Magic() const {
+    return Fn->Magic;
+  }
+  uldat Size() const {
+    return Fn->Size;
+  }
+  void Remove() {
+    Fn->Remove(this);
+  }
+  void Delete() {
+    Fn->Delete(this);
+  }
 };
 
 /* Gadget->Attrib */

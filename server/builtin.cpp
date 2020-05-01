@@ -449,10 +449,11 @@ static void DisplayGadgetH(msg Msg) {
   switch (Msg->Event.EventGadget.Code) {
   case COD_D_REMOVE:
     if ((i = DisplayWin->CurY) < DisplayWin->HLogic) {
-      for (hw = All->FirstDisplayHW; hw && i; hw = hw->Next, i--)
-        ;
-      if (hw && !i)
-        Delete(hw);
+      for (hw = All->FirstDisplayHW; hw && i; hw = hw->Next, i--) {
+      }
+      if (hw && !i) {
+        hw->Delete();
+      }
     }
     break;
   case COD_D_THIS:
@@ -481,7 +482,7 @@ static void BuiltinH(msgport MsgPort) {
   Screen = All->FirstScreen;
 
   while ((Msg = Builtin_MsgPort->FirstMsg)) {
-    Remove(Msg);
+    Msg->Remove();
     Event = &Msg->Event;
 
     switch (Msg->Type) {
@@ -583,11 +584,11 @@ static void BuiltinH(msgport MsgPort) {
           break;
 
         case COD_TERM_OFF:
-          DlUnLoad(TermSo);
+          DlUnload(TermSo);
           break;
 
         case COD_SOCKET_OFF:
-          DlUnLoad(SocketSo);
+          DlUnload(SocketSo);
           if (All->FirstDisplayHW)
             break;
           /* hmm... better to fire it up again */
@@ -710,7 +711,7 @@ static void BuiltinH(msgport MsgPort) {
     default:
       break;
     }
-    Delete(Msg);
+    Msg->Delete();
   }
   if (Builtin_MsgPort->WakeUp)
     Clock_Update();

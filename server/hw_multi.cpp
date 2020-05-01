@@ -167,7 +167,7 @@ static byte module_InitHW(const char *arg, uldat len) {
         Module->Used++;
         return ttrue;
       }
-      Delete(Module);
+      Module->Delete();
     }
   }
 
@@ -278,7 +278,7 @@ void QuitDisplayHW(display_hw D_HW) {
 
     if (D_HW->Module) {
       D_HW->Module->Used--;
-      Delete(D_HW->Module);
+      D_HW->Module->Delete();
       D_HW->Module = (module)0;
     }
     UpdateFlagsHW(); /* this garbles HW... not a problem here */
@@ -333,8 +333,9 @@ display_hw AttachDisplayHW(uldat len, const char *arg, uldat slot, byte flags) {
 
         for (s_HW = All->FirstDisplayHW; s_HW; s_HW = n_HW) {
           n_HW = s_HW->Next;
-          if (s_HW != D_HW)
-            Delete(s_HW);
+          if (s_HW != D_HW) {
+            s_HW->Delete();
+          }
         }
       }
 
@@ -347,7 +348,7 @@ display_hw AttachDisplayHW(uldat len, const char *arg, uldat slot, byte flags) {
     D_HW->Quitted = ttrue;
     D_HW->AttachSlot = NOSLOT;
     D_HW->QuitHW = NoOp;
-    Delete(D_HW);
+    D_HW->Delete();
     D_HW = NULL;
   }
   return D_HW;
@@ -363,7 +364,7 @@ byte DetachDisplayHW(uldat len, const char *arg, byte flags) {
   if (len) {
     safeforHW(s_HW) {
       if (HW->NameLen == len && !memcmp(HW->Name, arg, len)) {
-        Delete(HW);
+        HW->Delete();
         done = ttrue;
         break;
       }
@@ -452,7 +453,7 @@ byte RestartHW(byte verbose) {
       if (Act(Init, HW)(HW))
         ret = ttrue;
       else
-        Delete(HW);
+        HW->Delete();
     }
     if (ret) {
       ResizeDisplay();
@@ -474,7 +475,7 @@ void SuspendHW(byte verbose) {
   safeforHW(s_HW) {
     if (HW->AttachSlot != NOSLOT && HW->NeedHW & NEEDPersistentSlot)
       /* we will not be able to restart it */
-      Delete(HW);
+      HW->Delete();
     else
       Act(Quit, HW)(HW);
   }
@@ -491,7 +492,7 @@ void PanicHW(void) {
   if (NeedHW & NEEDPanicHW) {
     safeforHW(s_HW) {
       if (HW->NeedHW & NEEDPanicHW)
-        Delete(HW);
+        HW->Delete();
     }
     NeedHW &= ~NEEDPanicHW;
   }

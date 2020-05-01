@@ -1819,7 +1819,7 @@ void RestackWidgets(widget W, uldat N, const widget *arrayW) {
       if ((CW = *arrayW) && CW->Parent == W && !(CW->Flags & WINDOWFL_MENU)) {
         if (FW && CW != FW->Next) {
           /* restack after arrayW[0] */
-          Remove(CW);
+          CW->Remove();
           Act(Insert, CW)(CW, W, FW, FW->Next);
           need_redraw = ttrue;
         }
@@ -1846,7 +1846,7 @@ void RestackRows(obj O, uldat N, const row *arrayR) {
       if ((CR = *arrayR) && (obj)CR->Window == O) {
         if (FR && CR != FR->Next) {
           /* restack after arrayR[0] */
-          Remove(CR);
+          CR->Remove();
           Act(Insert, CR)(CR, (window)O, FR, FR->Next);
           need_redraw = ttrue;
         }

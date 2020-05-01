@@ -1668,7 +1668,7 @@ static void WManagerH(msgport MsgPort) {
 
   while ((Msg = WM_MsgPort->FirstMsg)) {
 
-    Remove(Msg);
+    Msg->Remove();
 
     if (Msg->Type == msg_map) {
       SendMsg(MapQueue, Msg);
@@ -1686,7 +1686,7 @@ static void WManagerH(msgport MsgPort) {
           (void)RC_VMQueue(C);
         }
       }
-      Delete(Msg);
+      Msg->Delete();
       continue;
     }
 
@@ -1781,11 +1781,11 @@ static void WManagerH(msgport MsgPort) {
     if (C->ByMouse || (All->State == state_default && !used)) {
 
       if (CheckForwardMsg(C, Msg, used))
-        /* don't Delete(Msg) ! */
+        /* don't Msg->Delete() ! */
         continue;
     }
 
-    Delete(Msg);
+    Msg->Delete();
   }
 
   if (All->State == state_default) {
@@ -1800,7 +1800,7 @@ static void WManagerH(msgport MsgPort) {
       Fill4RC_VM(C, C->W, msg_map, POS_ROOT, 0);
       (void)RC_VMQueue(C);
 
-      Delete(Msg);
+      Msg->Delete();
     }
   }
 
@@ -1932,7 +1932,7 @@ EXTERN_C byte InitModule(module Module) {
       if ((MapQueue = Do(Create, msgport)(Fn_msgport, 11, "WM MapQueue", 0, 0, 0,
                                           (void (*)(msgport))NoOp))) {
 
-        Remove(MapQueue);
+        MapQueue->Remove();
 
         if (InitRC()) {
           OverrideMethods(ttrue);
@@ -1948,8 +1948,9 @@ EXTERN_C byte InitModule(module Module) {
       printk("twin: WM: RegisterExt(WM,MsgPort) failed! Another WM is running?\n");
     }
   }
-  if (WM_MsgPort)
-    Delete(WM_MsgPort);
+  if (WM_MsgPort) {
+    WM_MsgPort->Delete();
+  }
   if (!sent) {
     printk("twin: WM: " SS "\n", Errstr);
   }
@@ -1960,6 +1961,6 @@ EXTERN_C void QuitModule(module Module) {
   QuitRC();
   OverrideMethods(tfalse);
   UnRegisterExt(WM, MsgPort, WM_MsgPort);
-  Delete(WM_MsgPort);
-  Delete(MapQueue);
+  WM_MsgPort->Delete();
+  MapQueue->Delete();
 }

@@ -17,20 +17,6 @@
 
 /* row */
 
-struct s_row {
-  uldat Id;
-  fn_row Fn;
-  row Prev, Next;
-  window Window;
-  /* row */
-  udat Code;
-  byte Flags;
-  uldat Len, MaxLen;
-  uldat Gap, LenGap;
-  trune *Text;
-  tcolor *ColText;
-};
-
 struct s_fn_row {
   uldat Magic, Size;
   row (*Create)(fn_row, udat Code, byte Flags);
@@ -44,6 +30,34 @@ struct s_fn_row {
   byte (*SetTRune)(row, uldat Len, const trune *TRune, byte DefaultCol);
   void (*Raise)(row);
   void (*Lower)(row);
+};
+
+struct s_row {
+  uldat Id;
+  fn_row Fn;
+  row Prev, Next;
+  window Window;
+  /* row */
+  udat Code;
+  byte Flags;
+  uldat Len, MaxLen;
+  uldat Gap, LenGap;
+  trune *Text;
+  tcolor *ColText;
+
+  /* obj */
+  uldat Magic() const {
+    return Fn->Magic;
+  }
+  uldat Size() const {
+    return Fn->Size;
+  }
+  void Remove() {
+    Fn->Remove(this);
+  }
+  void Delete() {
+    Fn->Delete(this);
+  }
 };
 
 /*Flags : */

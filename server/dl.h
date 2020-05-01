@@ -20,7 +20,7 @@ void DlClose(module Module);
 #define MAX_So ((uldat)5)
 
 module DlLoad(uldat code);
-void DlUnLoad(uldat code);
+void DlUnload(uldat code);
 module DlIsLoaded(uldat code);
 udat DlName2Code(const char *name);
 

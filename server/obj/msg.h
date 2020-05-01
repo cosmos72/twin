@@ -15,16 +15,6 @@
 
 #include "obj/event.h"
 
-struct s_msg {
-  uldat Id;
-  fn_msg Fn;
-  msg Prev, Next;
-  msgport MsgPort;
-  /* msg */
-  udat Type; /* See note above */
-  udat Len;  /* length of Event */
-  event_any Event;
-};
 struct s_fn_msg {
   uldat Magic, Size;
   msg (*Create)(fn_msg, udat Type, udat EventLen);
@@ -34,6 +24,31 @@ struct s_fn_msg {
   void (*ChangeField)(msg, udat field, uldat CLEARMask, uldat XORMask);
   /* msg */
   fn_obj Fn_Obj;
+};
+
+struct s_msg {
+  uldat Id;
+  fn_msg Fn;
+  msg Prev, Next;
+  msgport MsgPort;
+  /* msg */
+  udat Type; /* See note above */
+  udat Len;  /* length of Event */
+  event_any Event;
+
+  /* obj */
+  uldat Magic() const {
+    return Fn->Magic;
+  }
+  uldat Size() const {
+    return Fn->Size;
+  }
+  void Remove() {
+    Fn->Remove(this);
+  }
+  void Delete() {
+    Fn->Delete(this);
+  }
 };
 
 #endif /* _TWIN_MSG_H */

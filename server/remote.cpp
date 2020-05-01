@@ -274,10 +274,10 @@ void remoteKillSlot(uldat slot) {
       if ((D_HW = MsgPort->AttachHW)) {
         /* avoid KillSlot <-> DeleteDisplayHW infinite recursion */
         MsgPort->AttachHW = (display_hw)0;
-        Delete(D_HW);
+        D_HW->Delete();
       }
 
-      Delete(MsgPort); /* and all its children ! */
+      MsgPort->Delete(); /* and all its children ! */
     }
 
     if (FdList[slot].Fd >= 0)

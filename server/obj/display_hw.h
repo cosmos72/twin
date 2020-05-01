@@ -15,6 +15,19 @@
 
 #include "obj/fwd.h"
 
+struct s_fn_display_hw {
+  uldat Magic, Size;
+  display_hw (*Create)(fn_display_hw, uldat NameLen, const char *Name);
+  void (*Insert)(display_hw, all, display_hw Prev, display_hw Next);
+  void (*Remove)(display_hw);
+  void (*Delete)(display_hw);
+  void (*ChangeField)(display_hw, udat field, uldat CLEARMask, uldat XORMask);
+  /* display_hw */
+  fn_obj Fn_Obj;
+  byte (*Init)(display_hw);
+  void (*Quit)(display_hw);
+};
+
 typedef struct s_mouse_state {
   dat x, y;
   dat delta_x, delta_y;
@@ -168,19 +181,20 @@ struct s_display_hw {
 
   dat XY[2]; /* hw-dependent cursor position */
   uldat TT;  /* hw-dependent cursor type */
-};
 
-struct s_fn_display_hw {
-  uldat Magic, Size;
-  display_hw (*Create)(fn_display_hw, uldat NameLen, const char *Name);
-  void (*Insert)(display_hw, all, display_hw Prev, display_hw Next);
-  void (*Remove)(display_hw);
-  void (*Delete)(display_hw);
-  void (*ChangeField)(display_hw, udat field, uldat CLEARMask, uldat XORMask);
-  /* display_hw */
-  fn_obj Fn_Obj;
-  byte (*Init)(display_hw);
-  void (*Quit)(display_hw);
+  /* obj */
+  uldat Magic() const {
+    return Fn->Magic;
+  }
+  uldat Size() const {
+    return Fn->Size;
+  }
+  void Remove() {
+    Fn->Remove(this);
+  }
+  void Delete() {
+    Fn->Delete(this);
+  }
 };
 
 /* DisplayHW->FlagsHW */

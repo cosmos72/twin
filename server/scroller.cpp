@@ -71,11 +71,11 @@ static void ScrollerH(msgport MsgPort) {
   window FocusWindow;
 
   while ((Msg = Scroller_MsgPort->FirstMsg)) {
-    Remove(Msg);
+    Msg->Remove();
     if (Msg == Do_Scroll || Msg == Dont_Scroll)
       saveMsg = Msg;
     else
-      Delete(Msg);
+      Msg->Delete();
   }
 
   if (saveMsg == Dont_Scroll || !All->MouseHW) {

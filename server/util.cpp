@@ -223,7 +223,7 @@ void SetArgv0(char *const *argv, uldat argv_usable_len, const char *src) {
 void SortMsgPortByCallTime(msgport Port) {
   msgport other;
   if ((other = Port->Next) && CmpCallTime(Port, other) > 0) {
-    Remove(Port);
+    Port->Remove();
     do {
       other = other->Next;
     } while (other && CmpCallTime(Port, other) > 0);
@@ -232,7 +232,7 @@ void SortMsgPortByCallTime(msgport Port) {
     else
       InsertLast(MsgPort, Port, All);
   } else if ((other = Port->Prev) && CmpCallTime(Port, other) < 0) {
-    Remove(Port);
+    Port->Remove();
     do {
       other = other->Prev;
     } while (other && CmpCallTime(Port, other) < 0);
@@ -264,7 +264,7 @@ void SortAllMsgPortsByCallTime(void) {
       /* careful, we are mucking the list under our feet */
       Port = Port->Next;
 
-    Remove(Max);
+    Max->Remove();
     /*
      * HACK : we create a parentless list
      * backward, from End adding ->Prev until Start

@@ -32,7 +32,7 @@ void printk_str(int len, const char *s) {
     if (MessagesWin) {
       if (MessagesWin->HLogic > TW_SMALLBUFF) {
         while (MessagesWin->HLogic > TW_SMALLBUFF) {
-          Delete(MessagesWin->USE.R.FirstRow);
+          MessagesWin->USE.R.FirstRow->Delete();
           MessagesWin->CurY--;
         }
         if (MessagesWin->Parent)
@@ -82,7 +82,9 @@ int printk(const char *format, ...) {
   return len;
 }
 
-int flushk(void) { return printk_fd == NOFD ? fflush(stderr) : ttrue; }
+int flushk(void) {
+  return printk_fd == NOFD ? fflush(stderr) : ttrue;
+}
 
 int printk_receive_fd(int fd) {
   int got = 0, len;
@@ -108,4 +110,6 @@ byte RegisterPrintk(int fd) {
   return tfalse;
 }
 
-void UnRegisterPrintk(void) { printk_fd = NOFD; }
+void UnRegisterPrintk(void) {
+  printk_fd = NOFD;
+}

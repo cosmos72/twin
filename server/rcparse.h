@@ -1124,12 +1124,12 @@ static node FindNameInList(uldat len, const char *name, node list) {
   return NULL;
 }
 
-static void DeleteScreens(screen Screens) {
-  screen Next;
-  while (Screens) {
-    Next = Screens->Next;
-    Delete(Screens);
-    Screens = Next;
+static void DeleteScreens(screen first) {
+  screen s = first, next;
+  while (s) {
+    next = s->Next;
+    s->Delete();
+    s = next;
   }
 }
 
@@ -1210,7 +1210,7 @@ static void UpdateVisibleScreens(screen new_Screens) {
         FreeMem(Orig->USE.B.Bg);
       Orig->USE.B.Bg = S->USE.B.Bg;
       S->USE.B.Bg = NULL;
-      Delete(S);
+      S->Delete();
     } else
       InsertLast(Screen, S, All);
 
@@ -1225,9 +1225,9 @@ static void DeleteUnneededScreens(node list) {
   screen S, Next;
   for (S = All->FirstScreen; S; S = Next) {
     Next = S->Next;
-    if ((S->NameLen != 1 || S->Name[0] != '1') && !FindNameInList(S->NameLen, S->Name, list))
-
-      Delete(S);
+    if ((S->NameLen != 1 || S->Name[0] != '1') && !FindNameInList(S->NameLen, S->Name, list)) {
+      S->Delete();
+    }
   }
 }
 
@@ -1329,7 +1329,7 @@ static byte NewCommonMenu(void **shm_M, menu *res_CommonMenu, node **res_MenuBin
 
   /* out of memory! */
   FreeMem(new_MenuBinds);
-  Delete(Menu);
+  Menu->Delete();
   return tfalse;
 }
 
@@ -1362,8 +1362,9 @@ static byte ReadGlobals(void) {
     FreeMem(MenuBinds);
   GlobalsAreStatic = tfalse;
 
-  if (All->CommonMenu)
-    Delete(All->CommonMenu);
+  if (All->CommonMenu) {
+    All->CommonMenu->Delete();
+  }
   All->CommonMenu = new_CommonMenu;
   MenuBinds = new_MenuBinds;
   MenuBindsMax = new_MenuBindsMax;

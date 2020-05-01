@@ -98,9 +98,9 @@ module DlLoadAny(uldat len, const char *name) {
   if ((Module = Do(Create, module)(Fn_module, len, name))) {
     if (Act(DlOpen, Module)(Module))
       return Module;
-    Delete(Module);
+    Module->Delete();
   }
-  return (module)0;
+  return NULL;
 }
 
 static module So[MAX_So];
@@ -149,11 +149,11 @@ module DlLoad(uldat code) {
   return M;
 }
 
-void DlUnLoad(uldat code) {
+void DlUnload(uldat code) {
   if (code < MAX_So) {
     if (So[code]) {
-      Delete(So[code]);
-      So[code] = (module)0;
+      So[code]->Delete();
+      So[code] = NULL;
       if (All->FnHookModule)
         All->FnHookModule(All->HookModule);
     }

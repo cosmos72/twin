@@ -15,24 +15,6 @@
 
 #include "obj/row.h"
 
-struct s_menuitem {
-  uldat Id;
-  fn_menuitem Fn;
-  menuitem Prev, Next;
-  obj Parent;
-  /* row */
-  udat Code;
-  byte Flags;
-  uldat Len, MaxLen;
-  uldat Gap, LenGap;
-  trune *Text;
-  tcolor *ColText;
-  /* menuitem */
-  window Window;
-  dat Left, ShortCut;
-  ldat WCurY;
-};
-
 struct s_fn_menuitem {
   uldat Magic, Size;
   menuitem (*Create)(fn_menuitem, obj Parent, window Window, udat Code, byte Flags, dat Left,
@@ -53,6 +35,38 @@ struct s_fn_menuitem {
                           const char *Name);
   uldat (*Create4MenuCommon)(fn_menuitem, menu);
   /* for compatibility this must return a non-zero value. */
+};
+
+struct s_menuitem {
+  uldat Id;
+  fn_menuitem Fn;
+  menuitem Prev, Next;
+  obj Parent;
+  /* row */
+  udat Code;
+  byte Flags;
+  uldat Len, MaxLen;
+  uldat Gap, LenGap;
+  trune *Text;
+  tcolor *ColText;
+  /* menuitem */
+  window Window;
+  dat Left, ShortCut;
+  ldat WCurY;
+
+  /* obj */
+  uldat Magic() const {
+    return Fn->Magic;
+  }
+  uldat Size() const {
+    return Fn->Size;
+  }
+  void Remove() {
+    Fn->Remove(this);
+  }
+  void Delete() {
+    Fn->Delete(this);
+  }
 };
 
 /* Some common menuitem codes: */

@@ -15,6 +15,20 @@
 
 #include "obj/fwd.h"
 
+struct s_fn_msgport {
+  uldat Magic, Size;
+  msgport (*Create)(fn_msgport, byte NameLen, const char *Name, tany PauseSec, tany PauseFraction,
+                    byte WakeUp, void (*Handler)(msgport));
+  void (*Insert)(msgport, all, msgport Prev, msgport Next);
+  void (*Remove)(msgport);
+  void (*Delete)(msgport);
+  void (*ChangeField)(msgport, udat field, uldat CLEARMask, uldat XORMask);
+  /* msgport */
+  fn_obj Fn_Obj;
+  void (*UseExtension)(msgport, extension);
+  void (*UnuseExtension)(msgport, extension);
+};
+
 struct s_msgport {
   uldat Id;
   fn_msgport Fn;
@@ -36,21 +50,22 @@ struct s_msgport {
   uldat CountE, SizeE;          /* number of extensions used by this MsgPort */
   extension *Es;                /* extensions used by this MsgPort */
   display_hw AttachHW;          /* that was attached as told by MsgPort */
+
+  /* obj */
+  uldat Magic() const {
+    return Fn->Magic;
+  }
+  uldat Size() const {
+    return Fn->Size;
+  }
+  void Remove() {
+    Fn->Remove(this);
+  }
+  void Delete() {
+    Fn->Delete(this);
+  }
 };
 
-struct s_fn_msgport {
-  uldat Magic, Size;
-  msgport (*Create)(fn_msgport, byte NameLen, const char *Name, tany PauseSec, tany PauseFraction,
-                    byte WakeUp, void (*Handler)(msgport));
-  void (*Insert)(msgport, all, msgport Prev, msgport Next);
-  void (*Remove)(msgport);
-  void (*Delete)(msgport);
-  void (*ChangeField)(msgport, udat field, uldat CLEARMask, uldat XORMask);
-  /* msgport */
-  fn_obj Fn_Obj;
-  void (*UseExtension)(msgport, extension);
-  void (*UnuseExtension)(msgport, extension);
-};
 /* MsgPort->WakeUp: */
 #define TIMER_ALWAYS ((byte)1)
 #define TIMER_ONCE ((byte)2)

@@ -15,18 +15,6 @@
 
 #include "obj/obj.h"
 
-struct s_menu {
-  uldat Id;
-  fn_menu Fn;
-  menu Prev, Next; /* in the same msgport */
-  msgport MsgPort;
-  /* menu */
-  tcolor ColItem, ColSelect, ColDisabled, ColSelectDisabled, ColShtCut, ColSelShtCut;
-  byte CommonItems;
-  byte FlagDefColInfo;
-  row Info;
-  menuitem FirstI, LastI, SelectI;
-};
 struct s_fn_menu {
   uldat Magic, Size;
   menu (*Create)(fn_menu, msgport MsgPort, tcolor ColItem, tcolor ColSelect, tcolor ColDisabled,
@@ -43,6 +31,33 @@ struct s_fn_menu {
   menuitem (*GetSelectedItem)(menu);
   menuitem (*RecursiveGetSelectedItem)(menu, dat *depth);
   void (*SetSelectedItem)(menu, menuitem);
+};
+
+struct s_menu {
+  uldat Id;
+  fn_menu Fn;
+  menu Prev, Next; /* in the same msgport */
+  msgport MsgPort;
+  /* menu */
+  tcolor ColItem, ColSelect, ColDisabled, ColSelectDisabled, ColShtCut, ColSelShtCut;
+  byte CommonItems;
+  byte FlagDefColInfo;
+  row Info;
+  menuitem FirstI, LastI, SelectI;
+
+  /* obj */
+  uldat Magic() const {
+    return Fn->Magic;
+  }
+  uldat Size() const {
+    return Fn->Size;
+  }
+  void Remove() {
+    Fn->Remove(this);
+  }
+  void Delete() {
+    Fn->Delete(this);
+  }
 };
 
 #endif /* _TWIN_MENU_H */

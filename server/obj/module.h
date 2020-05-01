@@ -17,17 +17,6 @@
 
 /* module */
 
-struct s_module {
-  uldat Id;
-  fn_module Fn;
-  module Prev, Next; /* in the same All */
-  all All;
-  /* module */
-  uldat NameLen, Used;
-  char *Name;
-  void *Handle;
-  byte (*Init)(void);
-};
 struct s_fn_module {
   uldat Magic, Size;
   module (*Create)(fn_module, uldat NameLen, const char *Name);
@@ -39,6 +28,31 @@ struct s_fn_module {
   fn_obj Fn_Obj;
   byte (*DlOpen)(module);
   void (*DlClose)(module);
+};
+
+struct s_module {
+  uldat Id;
+  fn_module Fn;
+  module Prev, Next; /* in the same All */
+  all All;
+  /* module */
+  uldat NameLen, Used;
+  char *Name;
+  void *Handle;
+  byte (*Init)(void);
+  /* obj */
+  uldat Magic() const {
+    return Fn->Magic;
+  }
+  uldat Size() const {
+    return Fn->Size;
+  }
+  void Remove() {
+    Fn->Remove(this);
+  }
+  void Delete() {
+    Fn->Delete(this);
+  }
 };
 
 #endif /* _TWIN_MODULE_H */

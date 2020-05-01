@@ -86,12 +86,12 @@ static window OpenTerm(const char *arg0, const char *const *argv) {
     if (SpawnInWindow(Window, arg0, argv)) {
       if (RegisterWindowFdIO(Window, TwinTermIO)) {
         Window->ShutDownHook = termShutDown;
-        Act(Map, Window)(Window, (widget)All->FirstScreen);
+        Window->Map((widget)All->FirstScreen);
         return Window;
       }
       close(Window->RemoteData.Fd);
     }
-    Delete(Window);
+    Window->Delete();
   }
   return NULL;
 }
@@ -117,7 +117,7 @@ static void TwinTermH(msgport MsgPort) {
   window Win;
 
   while ((Msg = Term_MsgPort->FirstMsg)) {
-    Remove(Msg);
+    Msg->Remove();
 
     Event = &Msg->Event;
     Win = (window)Event->EventSelection.W;
@@ -154,8 +154,9 @@ static void TwinTermH(msgport MsgPort) {
           (void)RemoteWindowWriteQueue(Win, len, buf);
       }
     } else if (Msg->Type == msg_widget_gadget) {
-      if (Win && Event->EventGadget.Code == 0 /* Close Code */)
-        Delete(Win);
+      if (Win && Event->EventGadget.Code == 0 /* Close Code */) {
+        Win->Delete();
+      }
     } else if (Msg->Type == msg_menu_row) {
       if (Event->EventMenu.Menu == Term_Menu) {
         Code = Event->EventMenu.Code;
@@ -178,7 +179,7 @@ static void TwinTermH(msgport MsgPort) {
           OpenTerm(NULL, NULL);
       }
     }
-    Delete(Msg);
+    Msg->Delete();
   }
 }
 
@@ -194,11 +195,12 @@ static void TwinTermIO(int Fd, window Window) {
     chunk = read(Fd, buf + got, TW_BIGBUFF - 1 - got);
   } while (chunk && chunk != (uldat)-1 && (got += chunk) < TW_BIGBUFF - 1);
 
-  if (got)
-    Act(TtyWriteAscii, Window)(Window, got, buf);
-  else if (chunk == (uldat)-1 && errno != EINTR && errno != EWOULDBLOCK)
+  if (got) {
+    Window->TtyWriteAscii(got, buf);
+  } else if (chunk == (uldat)-1 && errno != EINTR && errno != EWOULDBLOCK) {
     /* something bad happened to our child :( */
-    Delete(Window);
+    Window->Delete();
+  }
 }
 
 #include "tty.h"
@@ -265,6 +267,7 @@ EXTERN_C byte InitModule(module Module) {
 EXTERN_C void QuitModule(module Module) {
   UnRegisterExt(Term, Open, OpenTerm);
   OverrideMethods(tfalse);
-  if (Term_MsgPort)
-    Delete(Term_MsgPort);
+  if (Term_MsgPort) {
+    Term_MsgPort->Delete();
+  }
 }

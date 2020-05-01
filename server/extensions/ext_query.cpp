@@ -50,8 +50,8 @@ static extension LoadExtension(topaque namelen, const char *name) {
 #undef TRY4
 
     if (!success) {
-      Delete(E);
-      E = (extension)0;
+      E->Delete();
+      E = NULL;
     }
   }
   return E;

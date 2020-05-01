@@ -509,7 +509,7 @@ static byte RCSteps(run *r) {
         if (n->x.f.flag == FL_ON)
           DlLoad(n->x.f.a);
         else
-          DlUnLoad(n->x.f.a);
+          DlUnload(n->x.f.a);
         break;
       case MOVE:
         if (W && IS_WINDOW(W))
@@ -840,7 +840,7 @@ static void RCReload(void) {
   success = mod_rcload && mod_rcload();
 
   if (M)
-    DlUnLoad(RCParseSo);
+    DlUnload(RCParseSo);
 
   if (success) {
     QueuedDrawArea2FullScreen = ttrue;
@@ -1062,14 +1062,15 @@ static byte USEDefaultCommonMenu(void) {
 
     Item->Left = 0; /* remove padding */
 
-    if (All->CommonMenu)
-      Delete(All->CommonMenu);
+    if (All->CommonMenu) {
+      All->CommonMenu->Delete();
+    }
     All->CommonMenu = Menu;
     return ttrue;
   }
 
   /* out of memory */
-  Delete(Menu);
+  Menu->Delete();
   return tfalse;
 }
 

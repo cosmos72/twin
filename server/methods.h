@@ -24,12 +24,10 @@ tpos FakeFindBorderWindow(window W, dat u, dat v, byte Border, tcell *PtrAttr);
 
 #define Act(Command, Obj) ((Obj)->Fn->Command)
 
-#define Delete(Obj) Act(Delete, Obj)(Obj)
-
 #define DeleteList(First)                                                                          \
   do {                                                                                             \
     while (First) {                                                                                \
-      Delete(First);                                                                               \
+      First->Delete();                                                                             \
     }                                                                                              \
   } while (0)
 
@@ -44,11 +42,9 @@ tpos FakeFindBorderWindow(window W, dat u, dat v, byte Border, tcell *PtrAttr);
 #define InsertLast(ObjName, Obj, Parent)                                                           \
   Act(Insert, (Obj))((Obj), (Parent), (Parent)->Last##ObjName, NULL)
 
-#define Remove(Obj) Act(Remove, (Obj))(Obj)
+#define MoveFirst(ObjName, Parent, Obj) ((Obj)->Remove(), InsertFirst(ObjName, (Obj), (Parent)))
 
-#define MoveFirst(ObjName, Parent, Obj) (Remove(Obj), InsertFirst(ObjName, (Obj), (Parent)))
-
-#define MoveLast(ObjName, Parent, Obj) (Remove(Obj), InsertLast(ObjName, (Obj), (Parent)))
+#define MoveLast(ObjName, Parent, Obj) ((Obj)->Remove(), InsertLast(ObjName, (Obj), (Parent)))
 
 #define SendMsg(MsgPort, WhichMsg) (InsertLast(Msg, (WhichMsg), (MsgPort)))
 

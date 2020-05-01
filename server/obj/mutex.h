@@ -15,17 +15,6 @@
 
 #include "obj/fwd.h"
 
-struct s_mutex {
-  uldat Id;
-  fn_mutex Fn;
-  mutex Prev, Next; /* in the same All */
-  all All;
-  /* mutex */
-  mutex O_Prev, O_Next; /* owned by the same MsgPort */
-  msgport Owner;
-  byte Perm, NameLen;
-  char *Name;
-};
 struct s_fn_mutex {
   uldat Magic, Size;
   mutex (*Create)(fn_mutex, msgport Owner, byte NameLen, const char *Name, byte Perm);
@@ -38,6 +27,33 @@ struct s_fn_mutex {
   void (*Own)(mutex, msgport);
   void (*DisOwn)(mutex);
 };
+
+struct s_mutex {
+  uldat Id;
+  fn_mutex Fn;
+  mutex Prev, Next; /* in the same All */
+  all All;
+  /* mutex */
+  mutex O_Prev, O_Next; /* owned by the same MsgPort */
+  msgport Owner;
+  byte Perm, NameLen;
+  char *Name;
+
+  /* obj */
+  uldat Magic() const {
+    return Fn->Magic;
+  }
+  uldat Size() const {
+    return Fn->Size;
+  }
+  void Remove() {
+    Fn->Remove(this);
+  }
+  void Delete() {
+    Fn->Delete(this);
+  }
+};
+
 #define PERM_NONE ((byte)0)
 #define PERM_READ ((byte)1)
 #define PERM_WRITE ((byte)2)

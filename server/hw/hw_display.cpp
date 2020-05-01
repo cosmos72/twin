@@ -71,7 +71,7 @@ static void display_HandleEvent(display_hw hw) {
 
   while ((hMsg = Helper->FirstMsg)) {
 
-    Remove(hMsg);
+    hMsg->Remove();
     Event = &hMsg->Event;
 
     switch (hMsg->Type) {
@@ -160,7 +160,7 @@ static void display_HandleEvent(display_hw hw) {
     default:
       break;
     }
-    Delete(hMsg);
+    hMsg->Delete();
   }
   RestoreHW;
 }
@@ -382,10 +382,12 @@ static void display_QuitHW(void) {
   /* then cleanup */
 
   Helper->AttachHW = (display_hw)0; /* to avoid infinite loop */
-  Delete(Helper);
+  Helper->Delete();
 
-  if (!--Used && Msg)
-    Delete(Msg), Msg = (msg)0;
+  if (!--Used && Msg) {
+    Msg->Delete();
+    Msg = NULL;
+  }
 
   /*
    * the rest is done by Act(Quit,HW)(HW) by the upper layers,
@@ -452,8 +454,9 @@ static byte display_InitHW(void) {
       (!Msg && !(Msg = Do(Create, msg)(Fn_msg, msg_display, sizeof(event_display))))) {
 
     if (HW->Private) {
-      if (Helper)
-        Delete(Helper);
+      if (Helper) {
+        Helper->Delete();
+      }
       FreeMem(HW->Private);
     }
     printk("      display_InitHW(): Out of memory!\n");

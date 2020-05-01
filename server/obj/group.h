@@ -17,16 +17,6 @@
 
 /* ggroup -- gadget group */
 
-struct s_group {
-  uldat Id;
-  fn_group Fn;
-  ggroup Prev, Next; /* list in the same msgport */
-  msgport MsgPort;
-  /* ggroup */
-  gadget FirstG, LastG; /* list in this ggroup */
-  gadget SelectG;
-};
-
 struct s_fn_group {
   uldat Magic, Size;
   ggroup (*Create)(fn_group, msgport Parent);
@@ -40,6 +30,30 @@ struct s_fn_group {
   void (*RemoveGadget)(ggroup, gadget);
   gadget (*GetSelectedGadget)(ggroup);
   void (*SetSelectedGadget)(ggroup, gadget);
+};
+
+struct s_group {
+  uldat Id;
+  fn_group Fn;
+  ggroup Prev, Next; /* list in the same msgport */
+  msgport MsgPort;
+  /* ggroup */
+  gadget FirstG, LastG; /* list in this ggroup */
+  gadget SelectG;
+
+  /* obj */
+  uldat Magic() const {
+    return Fn->Magic;
+  }
+  uldat Size() const {
+    return Fn->Size;
+  }
+  void Remove() {
+    Fn->Remove(this);
+  }
+  void Delete() {
+    Fn->Delete(this);
+  }
 };
 
 #endif /* _TWIN_GROUP_H */

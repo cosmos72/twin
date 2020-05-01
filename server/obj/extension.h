@@ -15,21 +15,6 @@
 
 #include "obj/module.h"
 
-struct s_extension {
-  uldat Id;
-  fn_extension Fn;
-  extension Prev, Next; /* in the same All */
-  all All;
-  /* module */
-  uldat NameLen, Used;
-  char *Name;
-  void *Handle, *Init;
-  /* extension */
-  tany (*CallB)(extension, topaque len, const byte *data,
-                void *return_type); /* call extension-specific functions */
-  void (*Quit)(extension);          /* how to quit this extension if it is not dlopen()ed */
-};
-
 struct s_fn_extension {
   uldat Magic, Size;
   extension (*Create)(fn_extension, uldat NameLen, const char *Name);
@@ -44,6 +29,35 @@ struct s_fn_extension {
   /* extension */
   fn_module Fn_Module;
   extension (*Query)(byte namelen, const char *name);
+};
+
+struct s_extension {
+  uldat Id;
+  fn_extension Fn;
+  extension Prev, Next; /* in the same All */
+  all All;
+  /* module */
+  uldat NameLen, Used;
+  char *Name;
+  void *Handle, *Init;
+  /* extension */
+  tany (*CallB)(extension, topaque len, const byte *data,
+                void *return_type); /* call extension-specific functions */
+  void (*Quit)(extension);          /* how to quit this extension if it is not dlopen()ed */
+
+  /* obj */
+  uldat Magic() const {
+    return Fn->Magic;
+  }
+  uldat Size() const {
+    return Fn->Size;
+  }
+  void Remove() {
+    Fn->Remove(this);
+  }
+  void Delete() {
+    Fn->Delete(this);
+  }
 };
 
 #endif /* _TWIN_EXTENSION_H */

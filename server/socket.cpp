@@ -1091,7 +1091,7 @@ static void sockDeleteObj(void *V) {
   msgport MsgPort = RemoteGetMsgPort(Slot);
 
   if (MsgPort && MsgPort == sockGetMsgPortObj(O))
-    Delete(O);
+    O->Delete();
 }
 
 static widget sockCreateWidget(dat XWidth, dat YWidth, uldat Attrib, uldat Flags, dat Left, dat Up,
@@ -1961,7 +1961,7 @@ static byte sockSendToMsgPort(msgport MsgPort, udat Len, const byte *Data) {
         if (ok)
           SendMsg(MsgPort, Msg);
         else
-          Delete(Msg);
+          Msg->Delete();
       }
     }
   while (0);
@@ -2574,10 +2574,10 @@ static void sockKillSlot(uldat slot) {
       if ((D_HW = MsgPort->AttachHW)) {
         /* avoid KillSlot <-> DeleteDisplayHW infinite recursion */
         D_HW->AttachSlot = NOSLOT;
-        Delete(D_HW);
+        D_HW->Delete();
       }
 
-      Delete(MsgPort); /* and all its children ! */
+      MsgPort->Delete(); /* and all its children ! */
     }
 
     if (ls.Fd >= 0)
@@ -2678,7 +2678,7 @@ static void SocketH(msgport MsgPort) {
   byte len;
 
   while ((Msg = MsgPort->FirstMsg)) {
-    Remove(Msg);
+    Msg->Remove();
 
     if (Msg->Type == msg_widget_mouse && (W = Msg->Event.EventMouse.W) && IS_WINDOW(W) &&
         (W->Flags & WINDOWFL_USECONTENTS) && ((window)W)->USE.C.TtyData &&
@@ -2694,7 +2694,7 @@ static void SocketH(msgport MsgPort) {
     } else
       sockSendMsg(MsgPort, Msg);
 
-    Delete(Msg);
+    Msg->Delete();
   }
 }
 

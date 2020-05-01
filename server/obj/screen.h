@@ -20,37 +20,6 @@ struct s_sB { /* for SCREENFL_USEBG screens */
   tcell *Bg;
 };
 
-struct s_screen {
-  uldat Id;
-  fn_screen Fn;
-  screen Prev, Next;  /* list in the same All */
-  widget dummyParent; /* NULL */
-  /* widget */
-  widget FirstW, LastW; /* list of children */
-  widget FocusW;        /* same as SelectW : focused child */
-  dat dummyLeft, YLimit, dummyXWidth, dummyYWidth;
-  uldat Attrib;
-  uldat Flags;
-  ldat XLogic, YLogic;
-  widget O_Prev, O_Next; /* list with the same msgport (owner) */
-  msgport Owner;
-  fn_hook ShutDownHook; /* hooks for this widget */
-  fn_hook Hook, *WhereHook;
-  fn_hook MapUnMapHook;
-  msg MapQueueMsg;
-  tcell USE_Fill;
-  union {
-    struct s_sB B;
-    struct s_wE E;
-  } USE;
-  /* screen */
-  dat NameLen;
-  char *Name;
-  window MenuWindow, ClickWindow;
-  all All;
-  fn_hook FnHookW; /* allow hooks on children Map()/UnMap() inside this widget */
-  widget HookW;
-};
 struct s_fn_screen {
   uldat Magic, Size;
   screen (*Create)(fn_screen, dat NameLen, const char *Name, dat BgWidth, dat BgHeight,
@@ -89,6 +58,52 @@ struct s_fn_screen {
   void (*DrawMenu)(screen, dat Xstart, dat Xend);
   void (*ActivateMenu)(screen, menuitem, byte ByMouse);
   void (*DeActivateMenu)(screen);
+};
+
+struct s_screen {
+  uldat Id;
+  fn_screen Fn;
+  screen Prev, Next;  /* list in the same All */
+  widget dummyParent; /* NULL */
+  /* widget */
+  widget FirstW, LastW; /* list of children */
+  widget FocusW;        /* same as SelectW : focused child */
+  dat dummyLeft, YLimit, dummyXWidth, dummyYWidth;
+  uldat Attrib;
+  uldat Flags;
+  ldat XLogic, YLogic;
+  widget O_Prev, O_Next; /* list with the same msgport (owner) */
+  msgport Owner;
+  fn_hook ShutDownHook; /* hooks for this widget */
+  fn_hook Hook, *WhereHook;
+  fn_hook MapUnMapHook;
+  msg MapQueueMsg;
+  tcell USE_Fill;
+  union {
+    struct s_sB B;
+    struct s_wE E;
+  } USE;
+  /* screen */
+  dat NameLen;
+  char *Name;
+  window MenuWindow, ClickWindow;
+  all All;
+  fn_hook FnHookW; /* allow hooks on children Map()/UnMap() inside this widget */
+  widget HookW;
+
+  /* obj */
+  uldat Magic() const {
+    return Fn->Magic;
+  }
+  uldat Size() const {
+    return Fn->Size;
+  }
+  void Remove() {
+    Fn->Remove(this);
+  }
+  void Delete() {
+    Fn->Delete(this);
+  }
 };
 
 /* Screen->Attrib */

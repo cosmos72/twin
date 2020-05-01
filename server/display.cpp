@@ -313,7 +313,7 @@ static byte module_InitHW(const char *arg, uldat len) {
         FreeMem(buf);
         return ttrue;
       }
-      /*Delete(Module);*/
+      /*Module->Delete();*/
     }
     name = buf;
   } else {
