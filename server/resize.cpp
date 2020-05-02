@@ -198,7 +198,7 @@ byte ResizeWindowContents(window Window) {
   Data->saveY = Data->Y = Window->CurY - Data->ScrollBack;
   Data->Pos = Window->USE.C.Contents + Window->CurY * x + Window->CurX;
 
-  if (!(Window->Attrib & WINDOW_WANT_CHANGES) && Window->USE.C.TtyData &&
+  if (!(Window->Attr & WINDOW_WANT_CHANGES) && Window->USE.C.TtyData &&
       Window->RemoteData.FdSlot != NOSLOT)
     /* the MsgPort will not be informed of the resize...
      * we must send SIGWINCH manually */
@@ -220,7 +220,7 @@ static row InsertRowsWindow(window Window, ldat NumRows) {
   row CurrRow;
 
   while (NumRows--) {
-    if ((CurrRow = New(row)(Fn_row, 0, ROW_ACTIVE))) {
+    if ((CurrRow = New(row)(0, ROW_ACTIVE))) {
       Act(Insert, CurrRow)(CurrRow, Window, Window->USE.R.LastRow, NULL);
     } else
       break;
@@ -730,7 +730,7 @@ void CenterWindow(window Window) {
   DragFirstScreen(DeltaX, DeltaY);
 }
 
-INLINE void DrawDeltaShadeFirstWindow(dat i, dat j) {
+inline void DrawDeltaShadeFirstWindow(dat i, dat j) {
   ldat _Left, _Up, _Rgt, _Dwn;
   ldat Left_, Up_, Rgt_, Dwn_;
   screen Screen;
@@ -749,7 +749,7 @@ INLINE void DrawDeltaShadeFirstWindow(dat i, dat j) {
   _Rgt = Rgt_ - i;
   Up_ = (ldat)Window->Up - Screen->YLogic + (ldat)YLimit;
   _Up = Up_ - j;
-  Dwn_ = Up_ + (Window->Attrib & WINDOW_ROLLED_UP ? (ldat)0 : (ldat)Window->YWidth - (ldat)1);
+  Dwn_ = Up_ + (Window->Attr & WINDOW_ROLLED_UP ? (ldat)0 : (ldat)Window->YWidth - (ldat)1);
   _Dwn = Dwn_ - j;
 
   DrawAreaShadeWindow(Screen, Window, 0, 0, TW_MAXDAT, TW_MAXDAT, _Left, _Up, _Rgt, _Dwn, tfalse);
@@ -769,7 +769,7 @@ void DragFirstWindow(dat i, dat j) {
   byte Shade;
 
   Screen = All->FirstScreen;
-  if (!(Window = (window)Screen->FirstW) || !IS_WINDOW(Window) || !(Window->Attrib & WINDOW_DRAG))
+  if (!(Window = (window)Screen->FirstW) || !IS_WINDOW(Window) || !(Window->Attr & WINDOW_DRAG))
     return;
 
   YLimit = Screen->YLimit;
@@ -791,7 +791,7 @@ void DragFirstWindow(dat i, dat j) {
   Left = (ldat)Window->Left - Screen->XLogic;
   Rgt = Left + (ldat)Window->XWidth - (ldat)1;
   Up = (ldat)Window->Up - Screen->YLogic + (ldat)YLimit;
-  Dwn = Up + (Window->Attrib & WINDOW_ROLLED_UP ? (ldat)0 : (ldat)Window->YWidth - (ldat)1);
+  Dwn = Up + (Window->Attr & WINDOW_ROLLED_UP ? (ldat)0 : (ldat)Window->YWidth - (ldat)1);
 
   /* calculate the visible part of the window for direct DragArea() */
 
@@ -896,7 +896,7 @@ void DragWindow(window Window, dat i, dat j) {
   dat DWidth, DHeight;
   byte Shade, DeltaXShade, DeltaYShade;
 
-  if (!Window || !(Window->Attrib & WINDOW_DRAG))
+  if (!Window || !(Window->Attr & WINDOW_DRAG))
     return;
 
   if (Window == (window)All->FirstScreen->FirstW) {
@@ -918,7 +918,7 @@ void DragWindow(window Window, dat i, dat j) {
   Up = (ldat)Window->Up - Screen->YLogic + (ldat)YLimit;
   Left = (ldat)Window->Left - Screen->XLogic;
   Rgt = Left + (ldat)Window->XWidth - (ldat)1;
-  Dwn = Up + (Window->Attrib & WINDOW_ROLLED_UP ? (ldat)0 : (ldat)Window->YWidth - (ldat)1);
+  Dwn = Up + (Window->Attr & WINDOW_ROLLED_UP ? (ldat)0 : (ldat)Window->YWidth - (ldat)1);
 
   if (i < (dat)0) {
     if (Window->Left < TW_MINDAT - i)
@@ -978,7 +978,7 @@ void ResizeRelFirstWindow(dat i, dat j) {
 
   Screen = All->FirstScreen;
   if (!(Window = (window)Screen->FirstW) || !IS_WINDOW(Window) ||
-      (!i && !j)) /* || !(Window->Attrib & WINDOW_RESIZE)) */
+      (!i && !j)) /* || !(Window->Attr & WINDOW_RESIZE)) */
     return;
 
   DWidth = All->DisplayWidth;
@@ -1108,7 +1108,7 @@ void ResizeRelWindow(window Window, dat i, dat j) {
   dat MinXWidth, MinYWidth, MaxXWidth, MaxYWidth;
   byte Shade, DeltaXShade, DeltaYShade, visible;
 
-  if (!Window || (!i && !j)) /* || !(Window->Attrib & WINDOW_RESIZE) */
+  if (!Window || (!i && !j)) /* || !(Window->Attr & WINDOW_RESIZE) */
     return;
 
   visible = !(Window->Flags & WIDGETFL_NOTVISIBLE);
@@ -1196,7 +1196,7 @@ void ScrollFirstWindowArea(dat X1, dat Y1, dat X2, dat Y2, ldat DeltaX, ldat Del
   Screen = All->FirstScreen;
   Window = (window)Screen->FirstW;
 
-  if (!Window || !IS_WINDOW(Window) || (Window->Attrib & WINDOW_ROLLED_UP))
+  if (!Window || !IS_WINDOW(Window) || (Window->Attr & WINDOW_ROLLED_UP))
     return;
 
   XWidth = Window->XWidth;
@@ -1323,10 +1323,10 @@ void ScrollWindow(window Window, ldat DeltaX, ldat DeltaY) {
   if (!Window || !IS_WINDOW(Window) || (!DeltaX && !DeltaY))
     return;
 
-  if (!(Window->Attrib & WINDOW_X_BAR))
+  if (!(Window->Attr & WINDOW_X_BAR))
     DeltaX = 0;
 
-  if (!(Window->Attrib & WINDOW_Y_BAR))
+  if (!(Window->Attr & WINDOW_Y_BAR))
     DeltaY = 0;
 
   if (!DeltaX && !DeltaY)
@@ -1415,7 +1415,7 @@ byte ExecScrollFocusWindow(void) {
   screen Screen;
   dat DWidth, DHeight;
   window Window;
-  uldat Attrib, State, Scroll;
+  uldat Attr, State, Scroll;
   dat XWidth, YWidth;
   dat DeltaX, DeltaY;
 
@@ -1425,13 +1425,13 @@ byte ExecScrollFocusWindow(void) {
   if (!(Screen = All->FirstScreen) || !(Window = (window)Screen->FocusW) || !IS_WINDOW(Window))
     return tfalse;
 
-  Attrib = Window->Attrib;
+  Attr = Window->Attr;
   State = Window->State;
   DeltaX = DeltaY = (sbyte)0;
 
-  if (Attrib & WINDOW_X_BAR && State & X_BAR_SELECT)
+  if (Attr & WINDOW_X_BAR && State & X_BAR_SELECT)
     DeltaX = 1;
-  else if (Attrib & WINDOW_Y_BAR && State & Y_BAR_SELECT)
+  else if (Attr & WINDOW_Y_BAR && State & Y_BAR_SELECT)
     DeltaY = 1;
   else
     return tfalse;
@@ -1724,11 +1724,11 @@ void RollUpWindow(window W, byte on_off) {
      * without a top border you cannot collapse them
      * to their top border :/
      */
-    if (on_off && !(W->Attrib & WINDOW_ROLLED_UP)) {
-      W->Attrib |= WINDOW_ROLLED_UP;
+    if (on_off && !(W->Attr & WINDOW_ROLLED_UP)) {
+      W->Attr |= WINDOW_ROLLED_UP;
       ReDrawRolledUpAreaWindow(W, tfalse);
-    } else if (!on_off && (W->Attrib & WINDOW_ROLLED_UP)) {
-      W->Attrib &= ~WINDOW_ROLLED_UP;
+    } else if (!on_off && (W->Attr & WINDOW_ROLLED_UP)) {
+      W->Attr &= ~WINDOW_ROLLED_UP;
       DrawAreaWindow2(W);
     }
     if (W->Parent == (widget)All->FirstScreen)
@@ -1869,7 +1869,7 @@ void SendMsgGadget(gadget G) {
   msg Msg;
   event_gadget *Event;
   if (G->Code && !(G->Flags & GADGETFL_DISABLED)) {
-    if ((Msg = New(msg)(Fn_msg, msg_widget_gadget, 0))) {
+    if ((Msg = New(msg)(msg_widget_gadget, 0))) {
       Event = &Msg->Event.EventGadget;
       Event->W = G->Parent;
       Event->Code = G->Code;

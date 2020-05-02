@@ -12,105 +12,118 @@
 
 #include "obj/window.h"
 #include "algo.h"  // Max2()
-#include "alloc.h" // CloneStrL()
+#include "alloc.h" // AllocMem0(), CloneStrL()
 #include "data.h"  // DEFAULT_Col*
+#include "fn.h"    // Fn_window
+#include "id.h"    // AssignId()
 #include "twin.h"  // NOFD, NOPID, NOSLOT
 
 #include <string.h>    // memset()
 #include <Tutf/Tutf.h> // Tutf_CP437_to_UTF_32[]
 
-static byte InitTtyData(window w, dat ScrollBackLines);
+static byte InitTtyData(window w, dat scrollbacklines);
 
-window s_window::Create(fn_window Fn, msgport Owner, dat TitleLen, const char *Title,
-                        const tcolor *ColTitle, menu Menu, tcolor ColText, uldat CursorType,
-                        uldat Attrib, uldat Flags, dat XWidth, dat YWidth, dat ScrollBackLines) {
+window s_window::Create(msgport owner, dat titlelen, const char *title, const tcolor *coltitle,
+                        menu m, tcolor coltext, uldat cursortype, uldat attr, uldat flags,
+                        dat xwidth, dat ywidth, dat scrollbacklines) {
 
   window w = NULL;
-  char *_Title = NULL;
-  tcolor *_ColTitle = NULL;
-  byte HasBorder = 2 * !(Flags & WINDOWFL_BORDERLESS);
-
-  /* overflow safety */
-  if (HasBorder) {
-    if ((dat)(XWidth + HasBorder) > 0)
-      XWidth += HasBorder;
-    if ((dat)(YWidth + HasBorder) > 0)
-      YWidth += HasBorder;
-  }
-
-  if ((!Title || (_Title = CloneStrL(Title, TitleLen))) &&
-      (!ColTitle || (_ColTitle = (tcolor *)CloneMem(ColTitle, TitleLen * sizeof(tcolor)))) &&
-      Owner &&
-      (w = (window)s_widget::Create((fn_widget)Fn, Owner, XWidth, YWidth, Attrib, Flags, 0,
-                                    TW_MAXDAT, TCELL(ColText, ' ')))) {
-    w->Menu = Menu;
-    w->MenuItem = (menuitem)0;
-    w->NameLen = TitleLen;
-    w->Name = _Title;
-    w->ColName = _ColTitle;
-    w->BorderPattern[0] = w->BorderPattern[1] = (trune *)0;
-    w->RemoteData.Fd = NOFD;
-    w->RemoteData.ChildPid = NOPID;
-    w->RemoteData.FdSlot = NOSLOT;
-    w->CurX = w->CurY = 0;
-    w->XstSel = w->YstSel = w->XendSel = w->YendSel = 0;
-    w->ColGadgets = DEFAULT_ColGadgets;
-    w->ColArrows = DEFAULT_ColArrows;
-    w->ColBars = DEFAULT_ColBars;
-    w->ColTabs = DEFAULT_ColTabs;
-    w->ColBorder = DEFAULT_ColBorder;
-    w->ColText = ColText;
-    w->ColSelect = TCOL(TCOLBG(ColText), TCOLFG(ColText));
-    w->ColDisabled = DEFAULT_ColDisabled;
-    w->ColSelectDisabled = DEFAULT_ColSelectDisabled;
-    /* sanity: */
-    if (w->Flags & WINDOWFL_BORDERLESS)
-      w->Attrib &= ~WINDOW_ROLLED_UP;
-    if (w->Attrib & WINDOW_WANT_KEYS)
-      w->Attrib &= ~WINDOW_AUTO_KEYS;
-
-    w->State = (uldat)0;
-    w->CursorType = CursorType;
-
-    w->MinXWidth = MIN_XWIN;
-    w->MinYWidth = MIN_YWIN;
-    w->XWidth = XWidth = Max2(MIN_XWIN, XWidth);
-    w->YWidth = YWidth = Max2(MIN_YWIN, YWidth);
-    w->MaxXWidth = TW_MAXDAT;
-    w->MaxYWidth = TW_MAXDAT;
-
-    w->Charset = Tutf_CP437_to_UTF_32;
-    memset(&w->USE, '\0', sizeof(w->USE));
-
-    if (W_USE(w, USECONTENTS)) {
-      if (TW_MAXDAT - ScrollBackLines < YWidth - HasBorder)
-        ScrollBackLines = TW_MAXDAT - YWidth + HasBorder;
-      w->CurY = w->YLogic = ScrollBackLines;
-      w->WLogic = XWidth - HasBorder;
-      w->HLogic = ScrollBackLines + YWidth - HasBorder;
-      if (!InitTtyData(w, ScrollBackLines)) {
+  if (owner) {
+    w = (window)AllocMem0(sizeof(s_window), 1);
+    if (w) {
+      w->Fn = Fn_window;
+      if (!w->Init(owner, titlelen, title, coltitle, m, coltext, cursortype, attr, flags, xwidth,
+                   ywidth, scrollbacklines)) {
         w->Delete();
         w = NULL;
       }
-    } else if (W_USE(w, USEROWS)) {
-      w->WLogic = 1024; /* just an arbitrary value... */
-      w->HLogic = 0;    /* no rows */
-    } else {
-      w->WLogic = XWidth - HasBorder;
-      w->HLogic = ScrollBackLines + YWidth - HasBorder;
     }
-    return w;
   }
-  if (_Title)
-    FreeMem(_Title);
-  if (_ColTitle)
-    FreeMem(_ColTitle);
   return w;
+}
+
+window s_window::Init(msgport owner, dat titlelen, const char *title, const tcolor *coltitle,
+                      menu m, tcolor coltext, uldat cursortype, uldat attr, uldat flags, dat xwidth,
+                      dat ywidth, dat scrollbacklines) {
+
+  byte hasborder = 2 * !(flags & WINDOWFL_BORDERLESS);
+  /* overflow safety */
+  if (hasborder) {
+    if ((dat)(xwidth + hasborder) > 0)
+      xwidth += hasborder;
+    if ((dat)(ywidth + hasborder) > 0)
+      ywidth += hasborder;
+  }
+  if (!((widget)this)
+           ->Init(owner, xwidth, ywidth, attr, flags, 0, TW_MAXDAT, TCELL(coltext, ' '))) {
+    return NULL;
+  }
+  if (title && !(Name = CloneStrL(title, titlelen))) {
+    return NULL;
+  }
+  if (coltitle && !(ColName = (tcolor *)CloneMem(coltitle, titlelen * sizeof(tcolor)))) {
+    return NULL;
+  }
+
+  Menu = m;
+  // MenuItem = NULL;
+  NameLen = titlelen;
+  //  BorderPattern[0] = BorderPattern[1] = NULL;
+  RemoteData.Fd = NOFD;
+  RemoteData.ChildPid = NOPID;
+  RemoteData.FdSlot = NOSLOT;
+  // CurX = CurY = 0;
+  // XstSel = YstSel = XendSel = YendSel = 0;
+  ColGadgets = DEFAULT_ColGadgets;
+  ColArrows = DEFAULT_ColArrows;
+  ColBars = DEFAULT_ColBars;
+  ColTabs = DEFAULT_ColTabs;
+  ColBorder = DEFAULT_ColBorder;
+  ColText = ColText;
+  ColSelect = TCOL(TCOLBG(ColText), TCOLFG(ColText));
+  ColDisabled = DEFAULT_ColDisabled;
+  ColSelectDisabled = DEFAULT_ColSelectDisabled;
+  /* sanity: */
+  if (Flags & WINDOWFL_BORDERLESS)
+    Attr &= ~WINDOW_ROLLED_UP;
+  if (Attr & WINDOW_WANT_KEYS)
+    Attr &= ~WINDOW_AUTO_KEYS;
+
+  // State = (uldat)0;
+  CursorType = cursortype;
+
+  MinXWidth = MIN_XWIN;
+  MinYWidth = MIN_YWIN;
+  XWidth = xwidth = Max2(MIN_XWIN, xwidth);
+  YWidth = ywidth = Max2(MIN_YWIN, ywidth);
+  MaxXWidth = TW_MAXDAT;
+  MaxYWidth = TW_MAXDAT;
+
+  Charset = Tutf_CP437_to_UTF_32;
+  // memset(&USE, '\0', sizeof(USE));
+
+  if (W_USE(this, USECONTENTS)) {
+    if (TW_MAXDAT - scrollbacklines < ywidth - hasborder)
+      scrollbacklines = TW_MAXDAT - YWidth + hasborder;
+    CurY = YLogic = scrollbacklines;
+    WLogic = xwidth - hasborder;
+    HLogic = scrollbacklines + ywidth - hasborder;
+    if (!InitTtyData(this, scrollbacklines)) {
+      return NULL;
+    }
+  } else if (W_USE(this, USEROWS)) {
+    WLogic = 1024; /* just an arbitrary value... */
+    HLogic = 0;    /* no rows */
+  } else {
+    WLogic = xwidth - hasborder;
+    HLogic = scrollbacklines + ywidth - hasborder;
+  }
+  return this;
 }
 
 /* ttydata */
 
-static byte InitTtyData(window w, dat ScrollBackLines) {
+static byte InitTtyData(window w, dat scrollbacklines) {
   ttydata *Data = w->USE.C.TtyData;
   ldat count = w->WLogic * w->HLogic;
   tcell *p = w->USE.C.Contents, h;
@@ -132,10 +145,10 @@ static byte InitTtyData(window w, dat ScrollBackLines) {
   Data->State = ESnormal;
   Data->Flags = TTY_AUTOWRAP;
   Data->Effects = 0;
-  w->YLogic = w->CurY = Data->ScrollBack = ScrollBackLines;
+  w->YLogic = w->CurY = Data->ScrollBack = scrollbacklines;
   w->USE.C.HSplit = 0;
   Data->SizeX = w->WLogic;
-  Data->SizeY = w->HLogic - ScrollBackLines;
+  Data->SizeY = w->HLogic - scrollbacklines;
   Data->Top = 0;
   Data->Bottom = Data->SizeY;
   Data->saveX = Data->X = w->CurX = 0;

@@ -36,6 +36,7 @@ struct s_fn_struct {
 };
 
 extern fn_struct FnStruct;
+#define Fn_obj (FnStruct.obj)
 #define Fn_widget (FnStruct.widget)
 #define Fn_gadget (FnStruct.gadget)
 #define Fn_window (FnStruct.window)

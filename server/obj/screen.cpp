@@ -10,41 +10,48 @@
  *
  */
 
-#include "obj/screen.h"
-#include "alloc.h"   // CloneStrL(), CopyMem(), FreeMem()
+#include "alloc.h"   // AllocMem0(), AllocMem(), CloneStrL(), CopyMem()
 #include "builtin.h" // Builtin_MsgPort
+#include "fn.h"      // Fn_screen
+#include "obj/screen.h"
 
 #include <Tw/datasizes.h> // TW_MAXDAT
 
-screen s_screen::Create(fn_screen Fn, dat NameLen, const char *Name, dat BgWidth, dat BgHeight,
-                        const tcell *Bg) {
-  screen S = (screen)0;
-  size_t size;
-
-  if ((size = (size_t)BgWidth * BgHeight * sizeof(tcell))) {
-
-    if ((S = (screen)s_widget::Create((fn_widget)Fn, Builtin_MsgPort, TW_MAXDAT, TW_MAXDAT, 0,
-                                      SCREENFL_USEBG, 0, 0, Bg[0]))) {
-
-      if (!(S->Name = NULL, Name) || (S->Name = CloneStrL(Name, NameLen))) {
-        if ((S->USE.B.Bg = (tcell *)AllocMem(size))) {
-
-          S->NameLen = NameLen;
-          S->MenuWindow = S->ClickWindow = NULL;
-          S->HookW = NULL;
-          S->FnHookW = NULL;
-          S->USE.B.BgWidth = BgWidth;
-          S->USE.B.BgHeight = BgHeight;
-          CopyMem(Bg, S->USE.B.Bg, size);
-          S->All = NULL;
-
-          return S;
-        }
-        if (S->Name)
-          FreeMem(S->Name);
+screen s_screen::Create(dat namelen, const char *name, dat bgwidth, dat bgheight, const tcell *bg) {
+  screen S = NULL;
+  if (bgwidth && bgheight) {
+    S = (screen)AllocMem0(sizeof(s_screen), 1);
+    if (S) {
+      S->Fn = Fn_screen;
+      if (!S->Init(namelen, name, bgwidth, bgheight, bg)) {
+        S->Delete();
+        S = NULL;
       }
-      Fn->Fn_Widget->Delete((widget)S);
     }
   }
-  return NULL;
+  return S;
+}
+
+screen s_screen::Init(dat namelen, const char *name, dat bgwidth, dat bgheight, const tcell *bg) {
+  size_t size = (size_t)bgwidth * bgheight * sizeof(tcell);
+
+  if (!size || !((widget)this)
+                    ->Init(Builtin_MsgPort, TW_MAXDAT, TW_MAXDAT, 0, SCREENFL_USEBG, 0, 0, bg[0])) {
+    return NULL;
+  }
+  if (name && !(this->Name = CloneStrL(name, namelen))) {
+    return NULL;
+  }
+  if (!(this->USE.B.Bg = (tcell *)AllocMem(size))) {
+    return NULL;
+  }
+  this->NameLen = namelen;
+  // this->MenuWindow = this->ClickWindow = NULL;
+  // this->HookW = NULL;
+  // this->FnHookW = NULL;
+  this->USE.B.BgWidth = bgwidth;
+  this->USE.B.BgHeight = bgheight;
+  CopyMem(bg, this->USE.B.Bg, size);
+  this->All = NULL;
+  return this;
 }

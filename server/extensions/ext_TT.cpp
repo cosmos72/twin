@@ -49,7 +49,7 @@ static ttopaque method_unsafe_array[method_unsafe_n];
 
 static ttopaque method_first, method_last;
 
-TT_INLINE ttbyte ext_TT_init_data(void) {
+TT_inline ttbyte ext_TT_init_data(void) {
   ttopaque n;
 
   if ((method_first = (ttopaque)TTGetFirst(TTClass_ttmethod)) &&
@@ -91,7 +91,7 @@ static udat TTType2TWS(ttopaque type) {
 /*
  * Fill tws and args with method arguments types, encoding as needed
  */
-TT_INLINE ttbyte FillTypes(ttopaque m, ttopaque *args_n, tsfield tws, ttarg *args) {
+TT_inline ttbyte FillTypes(ttopaque m, ttopaque *args_n, tsfield tws, ttarg *args) {
   ttvector v;
   ttopaque n;
   ttany *proto;
@@ -109,7 +109,7 @@ TT_INLINE ttbyte FillTypes(ttopaque m, ttopaque *args_n, tsfield tws, ttarg *arg
   return TT_FALSE;
 }
 
-TT_INLINE void CopyArgsTWS2TT(ttopaque args_n, tsfield tws, ttarg *args) {
+TT_inline void CopyArgsTWS2TT(ttopaque args_n, tsfield tws, ttarg *args) {
   while (args_n--) {
     if (tws->type != (TWS_vec | TWS_vecW | TWS_byte))
       args->value = tws->TWS_field_scalar;
@@ -122,7 +122,7 @@ TT_INLINE void CopyArgsTWS2TT(ttopaque args_n, tsfield tws, ttarg *args) {
   }
 }
 
-TT_INLINE void CopyArgsTT2TWS(ttopaque args_n, ttarg *args, tsfield tws) {
+TT_inline void CopyArgsTT2TWS(ttopaque args_n, ttarg *args, tsfield tws) {
   while (args_n--) {
     if (!TTIsArrayType_ttclass(args->type))
       tws->TWS_field_scalar = args->value;
@@ -207,7 +207,7 @@ EXTERN_C byte InitModule(extension E) {
          (E->CallB = ext_TT_CallBExtension);
 }
 
-TT_INLINE void ext_TT_quit_data(void) {
+TT_inline void ext_TT_quit_data(void) {
 }
 
 EXTERN_C void QuitModule(extension E) {

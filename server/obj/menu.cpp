@@ -10,26 +10,47 @@
  *
  */
 
+#include "alloc.h"   // AllocMem0()
+#include "fn.h"      // Fn_menu
+#include "id.h"      // AssignId()
+#include "methods.h" // InsertLast()
 #include "obj/menu.h"
 #include "obj/msgport.h"
-#include "methods.h" // InsertLast()
 
-menu s_menu::Create(fn_menu Fn, msgport port, tcolor colitem, tcolor colselect, tcolor coldisabled,
+menu s_menu::Create(msgport owner, tcolor colitem, tcolor colselect, tcolor coldisabled,
                     tcolor colselectdisabled, tcolor colshtcut, tcolor colselshtcut,
                     byte flagdefcolinfo) {
-  menu Menu = NULL;
-  if (port && (Menu = (menu)s_obj::Create((fn_obj)Fn))) {
-    Menu->ColItem = colitem;
-    Menu->ColSelect = colselect;
-    Menu->ColDisabled = coldisabled;
-    Menu->ColSelectDisabled = colselectdisabled;
-    Menu->ColShtCut = colshtcut;
-    Menu->ColSelShtCut = colselshtcut;
-    Menu->FirstI = Menu->LastI = Menu->SelectI = NULL;
-    Menu->CommonItems = tfalse;
-    Menu->FlagDefColInfo = flagdefcolinfo;
-    Menu->Info = NULL;
-    InsertLast(Menu, Menu, port);
+  menu m = NULL;
+  if (owner) {
+    m = (menu)AllocMem0(sizeof(s_menu), 1);
+    if (m) {
+      m->Fn = Fn_menu;
+      if (!m->Init(owner, colitem, colselect, coldisabled, colselectdisabled, colshtcut,
+                   colselshtcut, flagdefcolinfo)) {
+        m->Delete();
+        m = NULL;
+      }
+    }
   }
-  return Menu;
+  return m;
+}
+
+menu s_menu::Init(msgport owner, tcolor colitem, tcolor colselect, tcolor coldisabled,
+                  tcolor colselectdisabled, tcolor colshtcut, tcolor colselshtcut,
+                  byte flagdefcolinfo) {
+  if (!owner || !((obj)this)->Init()) {
+    return NULL;
+  }
+  this->ColItem = colitem;
+  this->ColSelect = colselect;
+  this->ColDisabled = coldisabled;
+  this->ColSelectDisabled = colselectdisabled;
+  this->ColShtCut = colshtcut;
+  this->ColSelShtCut = colselshtcut;
+  // this->FirstI = this->LastI = this->SelectI = NULL;
+  this->CommonItems = tfalse;
+  this->FlagDefColInfo = flagdefcolinfo;
+  // this->Info = NULL;
+  InsertLast(Menu, this, owner);
+  return this;
 }

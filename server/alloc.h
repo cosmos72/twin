@@ -30,7 +30,7 @@ void *AllocMem0(size_t ElementSize, size_t Count); /* wrapper for calloc() */
 void *ReAllocMem0(void *Mem, size_t ElementSize, size_t OldCount,
                   size_t NewCount); /* wrapper for realloc() + memset() */
 
-/* INLINE/define stuff: */
+/* inline/define stuff: */
 
 #define CopyMem(From, To, Size) memcpy(To, From, Size)
 #define MoveMem(From, To, Size) memmove(To, From, Size)

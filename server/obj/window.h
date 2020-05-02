@@ -66,7 +66,7 @@ struct s_WC { /* for WINDOWFL_USECONTENTS windows */
 };
 
 struct s_fn_window {
-  uldat Magic, Size;
+  uldat Magic;
   void (*Insert)(window, widget Parent, widget Prev, widget Next);
   void (*Remove)(window);
   void (*Delete)(window);
@@ -112,7 +112,7 @@ struct s_fn_window {
                     tcolor ColDisabled, tcolor ColSelectDisabled);
   void (*Configure)(window, byte Bitmap, dat Left, dat Up, dat MinXWidth, dat MinYWidth,
                     dat MaxXWidth, dat MaxYWidth);
-  window (*Create4Menu)(fn_window, menu);
+  window (*Create4Menu)(menu);
   tpos (*FindBorder)(window, dat u, dat v, byte Border, tcell *PtrAttr);
   row (*FindRow)(window, ldat RowN);
   row (*FindRowByCode)(window, udat Code, ldat *NumRow);
@@ -127,7 +127,7 @@ struct s_window {
   widget FirstW, LastW; /* list of children */
   widget SelectW;       /* selected child */
   dat Left, Up, XWidth, YWidth;
-  uldat Attrib;
+  uldat Attr;
   uldat Flags;
   ldat XLogic, YLogic;
   widget O_Prev, O_Next; /* list with the same msgport (owner) */
@@ -162,17 +162,16 @@ struct s_window {
   trune const *Charset; /* the byte -> trune translation to use */
 
   /* obj */
+  static window Create(msgport owner, dat titlelen, const char *title, const tcolor *coltitle,
+                       menu menu, tcolor coltext, uldat cursortype, uldat attr, uldat flags,
+                       dat xwidth, dat ywidth, dat scrollbacklines);
+  static window Create4Menu(menu);
+  window Init(msgport owner, dat titlelen, const char *title, const tcolor *coltitle, menu menu,
+              tcolor coltext, uldat cursortype, uldat attr, uldat flags, dat xwidth, dat ywidth,
+              dat scrollbacklines);
   uldat Magic() const {
     return Fn->Magic;
   }
-  uldat Size() const {
-    return Fn->Size;
-  }
-  static window Create(fn_window Fn, msgport Owner, dat NameLen, const char *Name,
-                       const tcolor *ColName, menu Menu, tcolor ColText, uldat CursorType,
-                       uldat Attrib, uldat Flags, dat XWidth, dat YWidth, dat ScrollBackLines);
-  static window Create4Menu(menu);
-
   void Insert(widget parent, widget prev, widget next) {
     Fn->Insert(this, parent, prev, next);
   }
@@ -298,7 +297,7 @@ struct s_window {
   }
 };
 
-/* Window->Attrib */
+/* Window->Attr */
 typedef enum e_window_attr {
   WINDOW_WANT_MOUSE_MOTION = WIDGET_WANT_MOUSE_MOTION, /* 0x0001 */
   WINDOW_WANT_KEYS = WIDGET_WANT_KEYS,                 /* 0x0002 */

@@ -160,7 +160,7 @@ static byte sockStatWidget(widget x, tsfield TSF) {
     TWScase(widget, SelectW, obj);
     TWScase(widget, Left, dat);
     TWScase(widget, Up, dat);
-    TWScase(widget, Attrib, uldat);
+    TWScase(widget, Attr, uldat);
     TWScase(widget, Flags, uldat);
     TWScase(widget, XWidth, dat);
     TWScase(widget, YWidth, dat);

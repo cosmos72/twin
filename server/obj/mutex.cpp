@@ -10,41 +10,56 @@
  *
  */
 
-#include "obj/mutex.h"
+#include "alloc.h"   // AllocMem0()
 #include "obj/all.h" // extern All
+#include "obj/mutex.h"
 #include "methods.h" // Act(), InsertLast()
 #include <string.h>  // memcmp()
 
-mutex s_mutex::Create(fn_mutex Fn, msgport Owner, byte NameLen, const char *Name, byte Perm) {
-  byte Possible = PERM_WRITE;
-  mutex CurrMutex, NewMutex = (mutex)0, AlreadyMutex = (mutex)0;
+mutex s_mutex::Create(msgport owner, byte namelen, const char *name, byte perm) {
+  byte mask = PERM_WRITE;
+  mutex curr, x = NULL, old = NULL;
 
-  if (!Perm || !Owner)
-    return NewMutex;
+  if (!perm || !owner)
+    return x;
 
-  CurrMutex = ::All->FirstMutex;
-  while (CurrMutex && Possible) {
-    if (NameLen == CurrMutex->NameLen && !memcmp(Name, CurrMutex->Name, NameLen)) {
-      if (CurrMutex->Owner == Owner) {
-        AlreadyMutex = CurrMutex;
+  curr = ::All->FirstMutex;
+  while (curr && mask) {
+    if (namelen == curr->NameLen && !memcmp(name, curr->Name, namelen)) {
+      if (curr->Owner == owner) {
+        old = curr;
         continue;
       }
-      Possible &= CurrMutex->Perm & PERM_WRITE ? PERM_NONE
-                                               : CurrMutex->Perm & PERM_READ ? PERM_READ : (byte)~0;
+      mask &= curr->Perm & PERM_WRITE ? PERM_NONE : curr->Perm & PERM_READ ? PERM_READ : ~(byte)0;
     }
-    CurrMutex = CurrMutex->Next;
+    curr = curr->Next;
   }
 
-  if (Possible >= Perm) {
-    if (AlreadyMutex) {
-      AlreadyMutex->Perm = Perm;
-      NewMutex = AlreadyMutex;
-    } else if ((NewMutex = (mutex)s_obj::Create((fn_obj)Fn))) {
-      NewMutex->Perm = Perm;
-      InsertLast(Mutex, NewMutex, ::All);
-      NewMutex->Owner = (msgport)0;
-      Act(Own, NewMutex)(NewMutex, Owner);
+  if (mask >= perm) {
+    if (old) {
+      old->Perm = perm;
+      x = old;
+    } else {
+      x = (mutex)AllocMem0(sizeof(s_mutex), 1);
+      if (x) {
+        x->Fn = Fn_mutex;
+        if (!x->Init(owner, namelen, name, perm)) {
+          x->Delete();
+          x = NULL;
+        }
+      }
     }
   }
-  return NewMutex;
+  return x;
+}
+
+mutex s_mutex::Init(msgport owner, byte namelen, const char *name, byte perm) {
+  if (!((obj)this)->Init()) {
+    return NULL;
+  }
+  this->Perm = perm;
+  InsertLast(Mutex, this, ::All);
+  // this->Owner = NULL;
+  this->Own(owner);
+  return this;
 }

@@ -16,7 +16,7 @@
 #include "obj/obj.h"
 
 struct s_fn_menu {
-  uldat Magic, Size;
+  uldat Magic;
   void (*Insert)(menu, msgport, menu Prev, menu Next);
   void (*Remove)(menu);
   void (*Delete)(menu);
@@ -42,16 +42,16 @@ struct s_menu {
   row Info;
   menuitem FirstI, LastI, SelectI;
 
+  static menu Create(msgport port, tcolor colitem, tcolor colselect, tcolor coldisabled,
+                     tcolor colselectdisabled, tcolor colshtcut, tcolor colselshtcut,
+                     byte flagdefcolinfo);
+  menu Init(msgport port, tcolor colitem, tcolor colselect, tcolor coldisabled,
+            tcolor colselectdisabled, tcolor colshtcut, tcolor colselshtcut, byte flagdefcolinfo);
+
   /* obj */
   uldat Magic() const {
     return Fn->Magic;
   }
-  uldat Size() const {
-    return Fn->Size;
-  }
-  static menu Create(fn_menu Fn, msgport port, tcolor colitem, tcolor colselect, tcolor coldisabled,
-                     tcolor colselectdisabled, tcolor colshtcut, tcolor colselshtcut,
-                     byte flagdefcolinfo);
   void Remove() {
     Fn->Remove(this);
   }

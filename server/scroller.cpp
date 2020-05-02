@@ -34,10 +34,9 @@ static void ScrollerH(msgport MsgPort);
 msg Do_Scroll, Dont_Scroll;
 
 byte InitScroller(void) {
-  if ((Scroller_MsgPort = New(msgport)(Fn_msgport, 16, "builtin scroller", (tany)0,
-                                              401 MilliSECs, (byte)0, ScrollerH)) &&
-      (Do_Scroll = New(msg)(Fn_msg, 0, 0)) &&
-      (Dont_Scroll = New(msg)(Fn_msg, 0, 0))) {
+  if ((Scroller_MsgPort =
+           New(msgport)(16, "builtin scroller", (tany)0, 401 MilliSECs, (byte)0, ScrollerH)) &&
+      (Do_Scroll = New(msg)(0, 0)) && (Dont_Scroll = New(msg)(0, 0))) {
 
     return ttrue;
   }
@@ -45,26 +44,26 @@ byte InitScroller(void) {
   return tfalse;
 }
 
-INLINE void ScrollerDeactivate(void) {
+inline void ScrollerDeactivate(void) {
   Scroller_MsgPort->PauseDuration.Fraction = 333 MilliSECs + 1;
   Scroller_MsgPort->WakeUp = 0;
 }
 
-INLINE void ScrollerAutoRepeat(void) {
+inline void ScrollerAutoRepeat(void) {
   if (Scroller_MsgPort->PauseDuration.Fraction > 333 MilliSECs)
     Scroller_MsgPort->PauseDuration.Fraction = 333 MilliSECs;
   else
     Scroller_MsgPort->PauseDuration.Fraction = 30 MilliSECs;
 }
 
-INLINE void ScrollerDelayRepeat(void) {
+inline void ScrollerDelayRepeat(void) {
   Scroller_MsgPort->PauseDuration.Fraction = 333 MilliSECs + 1;
 }
 
 static void ScrollerH(msgport MsgPort) {
   msg Msg, saveMsg;
   mouse_state *Mouse;
-  uldat Attrib, WState;
+  uldat Attr, WState;
   dat Limit;
   dat Mouse_delta_x, Mouse_delta_y;
   byte State, FlagDeskScroll, FlagWinScroll, WinScrolled = tfalse;
@@ -90,10 +89,10 @@ static void ScrollerH(msgport MsgPort) {
     FocusWindow = (window)0;
 
   if (FocusWindow) {
-    Attrib = FocusWindow->Attrib;
+    Attr = FocusWindow->Attr;
     WState = FocusWindow->State;
-    FlagWinScroll = (((Attrib & WINDOW_X_BAR) && (WState | X_BAR_SELECT)) ||
-                     ((Attrib & WINDOW_Y_BAR) && (WState | Y_BAR_SELECT))) &&
+    FlagWinScroll = (((Attr & WINDOW_X_BAR) && (WState | X_BAR_SELECT)) ||
+                     ((Attr & WINDOW_Y_BAR) && (WState | Y_BAR_SELECT))) &&
                     !(WState & TAB_SELECT);
   } else
     FlagWinScroll = tfalse;

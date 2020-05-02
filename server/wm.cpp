@@ -73,7 +73,7 @@ static udat TabLen(window Window, sbyte isX) {
 }
 
 /* this returns -1 before the tab, 0 on the tab, 1 after */
-INLINE sbyte IsTabPosition(window Window, udat pos, sbyte isX) {
+inline sbyte IsTabPosition(window Window, udat pos, sbyte isX) {
   udat start;
   return pos >= (start = TabStart(Window, isX)) ? pos - start < TabLen(Window, isX) ? 0 : 1 : -1;
 }
@@ -81,7 +81,7 @@ INLINE sbyte IsTabPosition(window Window, udat pos, sbyte isX) {
 static tpos WMFindBorderWindow(window W, dat u, dat v, byte Border, tcell *PtrAttr) {
   trune *BorderFont, Font;
   ldat k;
-  uldat Attrib;
+  uldat Attr;
   tcell extra_u;
   tcolor Color;
   dat rev_u, rev_v;
@@ -124,11 +124,11 @@ static tpos WMFindBorderWindow(window W, dat u, dat v, byte Border, tcell *PtrAt
     }
   }
 
-  Attrib = W->Attrib;
-  Close = !!(Attrib & WINDOW_CLOSE);
-  Resize = !!(Attrib & WINDOW_RESIZE);
-  BarX = !!(Attrib & WINDOW_X_BAR);
-  BarY = !!(Attrib & WINDOW_Y_BAR);
+  Attr = W->Attr;
+  Close = !!(Attr & WINDOW_CLOSE);
+  Resize = !!(Attr & WINDOW_RESIZE);
+  BarX = !!(Attr & WINDOW_X_BAR);
+  BarY = !!(Attr & WINDOW_Y_BAR);
   NMenuWin = !(W->Flags & WINDOWFL_MENU);
 
   Horiz = extra_u = u ? rev_u ? (byte)1 : (byte)2 : (byte)0;
@@ -333,11 +333,11 @@ void Check4Resize(window W) {
 
   HasBorder = !(W->Flags & WINDOWFL_BORDERLESS) * 2;
 
-  if (W->Attrib & WINDOW_WANT_CHANGES &&
+  if (W->Attr & WINDOW_WANT_CHANGES &&
       (!W_USE(W, USECONTENTS) || W->XWidth != W->USE.C.TtyData->SizeX + HasBorder ||
        W->YWidth != W->USE.C.TtyData->SizeY + HasBorder)) {
 
-    if ((Msg = New(msg)(Fn_msg, msg_widget_change, 0))) {
+    if ((Msg = New(msg)(msg_widget_change, 0))) {
       Event = &Msg->Event;
       Event->EventWidget.W = (widget)W;
       Event->EventWidget.Code = MSG_WIDGET_RESIZE;
@@ -353,9 +353,9 @@ void Check4Resize(window W) {
 void AskCloseWidget(widget W) {
   msg Msg;
 
-  if (W && (!IS_WINDOW(W) || (W->Attrib & WINDOW_CLOSE))) {
+  if (W && (!IS_WINDOW(W) || (W->Attr & WINDOW_CLOSE))) {
 
-    if ((Msg = New(msg)(Fn_msg, msg_widget_gadget, 0))) {
+    if ((Msg = New(msg)(msg_widget_gadget, 0))) {
       Msg->Event.EventGadget.W = W;
       Msg->Event.EventGadget.Code = (udat)0; /* COD_CLOSE */
       SendMsg(W->Owner, Msg);
@@ -366,7 +366,7 @@ void AskCloseWidget(widget W) {
 void MaximizeWindow(window W, byte full_screen) {
   screen Screen;
 
-  if (W && IS_WINDOW(W) && (W->Attrib & WINDOW_RESIZE) && (Screen = (screen)W->Parent) &&
+  if (W && IS_WINDOW(W) && (W->Attr & WINDOW_RESIZE) && (Screen = (screen)W->Parent) &&
       IS_SCREEN(Screen)) {
 
     if (full_screen) {
@@ -431,7 +431,7 @@ static void CleanupLastW(widget LastW, udat LastKeys, byte LastInside) {
 
   if (LastW) {
     if (LastInside) {
-      if ((NewMsg = New(msg)(Fn_msg, msg_widget_mouse, 0))) {
+      if ((NewMsg = New(msg)(msg_widget_mouse, 0))) {
         Event = &NewMsg->Event;
         Event->EventMouse.W = LastW;
         Event->EventMouse.ShiftFlags = (udat)0;
@@ -442,7 +442,7 @@ static void CleanupLastW(widget LastW, udat LastKeys, byte LastInside) {
       }
     }
     while (LastKeys & HOLD_ANY) {
-      if ((NewMsg = New(msg)(Fn_msg, msg_widget_mouse, 0))) {
+      if ((NewMsg = New(msg)(msg_widget_mouse, 0))) {
         Event = &NewMsg->Event;
         Event->EventMouse.W = LastW;
         Event->EventMouse.ShiftFlags = (udat)0;
@@ -481,7 +481,7 @@ static void HandleHilightAndSelection(widget W, udat Code, dat X, dat Y, byte In
       /* store selection owner */
       SelectionImport();
 
-      if ((NewMsg = New(msg)(Fn_msg, msg_selection, 0))) {
+      if ((NewMsg = New(msg)(msg_selection, 0))) {
         event_any *Event = &NewMsg->Event;
         Event->EventSelection.W = W;
         Event->EventSelection.Code = 0;
@@ -535,16 +535,16 @@ static byte CheckForwardMsg(wm_ctx *C, msg Msg, byte WasUsed) {
     if (!WasUsed && All->State == state_default) {
 
       /* back up to first parent that WANT_KEYS or has AUTO_KEYS */
-      while (W && !(W->Attrib & WIDGET_WANT_KEYS ||
-                    (IS_WINDOW(W) && ((window)W)->Attrib & WINDOW_AUTO_KEYS)))
+      while (W && !(W->Attr & WIDGET_WANT_KEYS ||
+                    (IS_WINDOW(W) && ((window)W)->Attr & WINDOW_AUTO_KEYS)))
         W = W->Parent;
       if (W) {
-        if (W->Attrib & WIDGET_WANT_KEYS) {
+        if (W->Attr & WIDGET_WANT_KEYS) {
           Msg->Type = msg_widget_key;
           Event->EventKeyboard.W = (widget)W;
           SendMsg(W->Owner, Msg);
           return ttrue;
-        } else if (IS_WINDOW(W) && ((window)W)->Attrib & WINDOW_AUTO_KEYS)
+        } else if (IS_WINDOW(W) && ((window)W)->Attr & WINDOW_AUTO_KEYS)
           FallBackKeyAction((window)W, &Event->EventKeyboard);
       }
     }
@@ -606,7 +606,7 @@ static byte CheckForwardMsg(wm_ctx *C, msg Msg, byte WasUsed) {
 
   /* manage window hilight and Selection */
   if (IS_WINDOW(W) && Inside && Code && !LastKeys && (All->State & state_any) == state_default &&
-      !(W->Attrib & WIDGET_WANT_MOUSE)) {
+      !(W->Attr & WIDGET_WANT_MOUSE)) {
 
     HandleHilightAndSelection(W, Code, X, Y, Inside);
 
@@ -618,8 +618,8 @@ static byte CheckForwardMsg(wm_ctx *C, msg Msg, byte WasUsed) {
 
   /* forward the message */
   if (Inside || LastKeys || LastInside) {
-    if (Code == MOVE_MOUSE ? (Inside || LastInside) && (W->Attrib & WIDGET_WANT_MOUSE_MOTION)
-                           : (Inside || LastKeys) && (W->Attrib & WIDGET_WANT_MOUSE)) {
+    if (Code == MOVE_MOUSE ? (Inside || LastInside) && (W->Attr & WIDGET_WANT_MOUSE_MOTION)
+                           : (Inside || LastKeys) && (W->Attr & WIDGET_WANT_MOUSE)) {
 
       if (Code == MOVE_MOUSE && !Inside)
         X = Y = TW_MINDAT;
@@ -630,8 +630,8 @@ static byte CheckForwardMsg(wm_ctx *C, msg Msg, byte WasUsed) {
       Event->EventMouse.Y = Y;
       SendMsg(W->Owner, Msg);
 
-      LastInside = (W->Attrib & WIDGET_WANT_MOUSE_MOTION) ? Inside : 0;
-      LastKeys = (W->Attrib & WIDGET_WANT_MOUSE) ? Code & HOLD_ANY : 0;
+      LastInside = (W->Attr & WIDGET_WANT_MOUSE_MOTION) ? Inside : 0;
+      LastKeys = (W->Attr & WIDGET_WANT_MOUSE) ? Code & HOLD_ANY : 0;
       if (isPRESS(Code))
         LastKeys |= HOLD_CODE(PRESS_N(Code));
 
@@ -690,7 +690,7 @@ static void DetailCtx(wm_ctx *C) {
       C->Up = (ldat)C->W->Up - C->Screen->YLogic + (ldat)C->Screen->YLimit;
       C->Left = (ldat)C->W->Left - C->Screen->XLogic;
       C->Rgt = C->Left + (ldat)C->W->XWidth - 1;
-      C->Dwn = C->Up + (C->W->Attrib & WINDOW_ROLLED_UP ? 0 : (ldat)C->W->YWidth - (ldat)1);
+      C->Dwn = C->Up + (C->W->Attr & WINDOW_ROLLED_UP ? 0 : (ldat)C->W->YWidth - (ldat)1);
 
       if (C->i >= C->Left + HasBorder && C->i <= C->Rgt - HasBorder && C->j >= C->Up + HasBorder &&
           C->j <= C->Dwn - HasBorder) {
@@ -728,7 +728,7 @@ static void DetailCtx(wm_ctx *C) {
   }
 }
 
-INLINE void Fill4RC_VM(wm_ctx *C, widget W, udat Type, byte Pos, udat Code) {
+inline void Fill4RC_VM(wm_ctx *C, widget W, udat Type, byte Pos, udat Code) {
   C->W = W;
   C->Type = Type;
   C->Pos = Pos;
@@ -885,7 +885,7 @@ static void ReleaseMenu(wm_ctx *C) {
     Fill4RC_VM(C, (widget)MW, msg_menu_row, POS_MENU, Row->Code);
     (void)RC_VMQueue(C);
   } else if (Code) {
-    if ((Msg = New(msg)(Fn_msg, msg_menu_row, 0))) {
+    if ((Msg = New(msg)(msg_menu_row, 0))) {
       Event = &Msg->Event.EventMenu;
       Event->W = MW;
       Event->Code = Code;
@@ -918,7 +918,7 @@ static void HideResize(void) {
 }
 
 static byte ActivateDrag(wm_ctx *C) {
-  if (C->Screen == All->FirstScreen && C->W && IS_WINDOW(C->W) && C->W->Attrib & WINDOW_DRAG) {
+  if (C->Screen == All->FirstScreen && C->W && IS_WINDOW(C->W) && C->W->Attr & WINDOW_DRAG) {
 
     All->FirstScreen->ClickWindow = (window)C->W;
     All->State = state_drag;
@@ -936,7 +936,7 @@ static byte ActivateDrag(wm_ctx *C) {
 }
 
 static byte ActivateResize(wm_ctx *C) {
-  if (C->Screen == All->FirstScreen && C->W && IS_WINDOW(C->W) && C->W->Attrib & WINDOW_RESIZE) {
+  if (C->Screen == All->FirstScreen && C->W && IS_WINDOW(C->W) && C->W->Attr & WINDOW_RESIZE) {
 
     All->FirstScreen->ClickWindow = (window)C->W;
     All->State = state_resize;
@@ -958,7 +958,7 @@ static byte ActivateScroll(wm_ctx *C) {
   window W = (window)C->W;
 
   if (C->Screen == All->FirstScreen && W && IS_WINDOW(W) &&
-      C->W->Attrib & (WINDOW_X_BAR | WINDOW_Y_BAR)) {
+      C->W->Attr & (WINDOW_X_BAR | WINDOW_Y_BAR)) {
 
     /*
      * paranoia: SneakSetupMouse() mail call us even for a mouse event
@@ -1491,11 +1491,11 @@ static byte ActivateKeyState(wm_ctx *C, byte State) {
   case state_resize:
     if (Key == TW_Escape || Key == TW_Return)
       used = ttrue, ReleaseDragResizeScroll(C);
-    else if (State == state_resize && (W->Attrib & WINDOW_RESIZE)) {
+    else if (State == state_resize && (W->Attr & WINDOW_RESIZE)) {
       used = ttrue;
       ResizeRelWindow(W, XDelta, YDelta);
       ShowResize(W);
-    } else if (State == state_drag && (W->Attrib & WINDOW_DRAG))
+    } else if (State == state_drag && (W->Attr & WINDOW_DRAG))
       used = ttrue, DragWindow(W, XDelta, YDelta);
     break;
   case state_scroll:
@@ -1504,7 +1504,7 @@ static byte ActivateKeyState(wm_ctx *C, byte State) {
       used = ttrue;
       break;
     }
-    if (W->Attrib & (WINDOW_X_BAR | WINDOW_Y_BAR)) {
+    if (W->Attr & (WINDOW_X_BAR | WINDOW_Y_BAR)) {
 
       switch (Key) {
       case TW_Insert:
@@ -1522,9 +1522,9 @@ static byte ActivateKeyState(wm_ctx *C, byte State) {
       default:
         break;
       }
-      if (!(W->Attrib & WINDOW_X_BAR))
+      if (!(W->Attr & WINDOW_X_BAR))
         XDelta = 0;
-      if (!(W->Attrib & WINDOW_Y_BAR))
+      if (!(W->Attr & WINDOW_Y_BAR))
         YDelta = 0;
 
       if (XDelta || YDelta)
@@ -1633,7 +1633,7 @@ static void TryAutoFocus(wm_ctx *C) {
      * must have AUTO_FOCUS to be autofocused...
      * and focusing top-level widgets is handled elsewhere
      */
-    if (!(DeepW->Attrib & WIDGET_AUTO_FOCUS) || (W == DeepW && W->Parent->SelectW != W))
+    if (!(DeepW->Attr & WIDGET_AUTO_FOCUS) || (W == DeepW && W->Parent->SelectW != W))
       return;
 
     FocusW = DeepW;
@@ -1642,7 +1642,7 @@ static void TryAutoFocus(wm_ctx *C) {
     while (DeepW != W) {
       if (!(DeepW = DeepW->Parent))
         return;
-      if (!(DeepW->Attrib & WIDGET_AUTO_FOCUS))
+      if (!(DeepW->Attr & WIDGET_AUTO_FOCUS))
         break;
     }
     /* climb through all already focused widgets */
@@ -1834,8 +1834,7 @@ static byte doSmartPlace(widget W, dat x[2], dat y[2]) {
     return ttrue;
 
   wright = (wleft = W->Left) + W->XWidth;
-  wdown =
-      (wup = W->Up) + (IS_WINDOW(W) && (((window)W)->Attrib & WINDOW_ROLLED_UP) ? 1 : W->YWidth);
+  wdown = (wup = W->Up) + (IS_WINDOW(W) && (((window)W)->Attr & WINDOW_ROLLED_UP) ? 1 : W->YWidth);
   W = W->Next;
 
   if (x[0] >= wright || x[1] < wleft || y[0] >= wdown || y[1] < wup)
@@ -1892,7 +1891,7 @@ static void SmartPlace(widget W, screen Screen) {
     Y[1] = (Y[0] = Screen->YLogic + 1) + All->DisplayHeight - Screen->YLimit - 2;
 
     XWidth = W->XWidth;
-    YWidth = IS_WINDOW(W) && W->Attrib & WINDOW_ROLLED_UP ? 1 : W->YWidth;
+    YWidth = IS_WINDOW(W) && W->Attr & WINDOW_ROLLED_UP ? 1 : W->YWidth;
 
     if (!doSmartPlace(Screen->FirstW, X, Y)) {
       /* can't be smart... be random */
@@ -1923,14 +1922,13 @@ EXTERN_C byte InitModule(module Module) {
   byte sent = tfalse;
 
   srand48(time(NULL));
-  if ((WM_MsgPort = New(msgport)(Fn_msgport, 2, "WM", 0, 0, 0, WManagerH)) &&
+  if ((WM_MsgPort = New(msgport)(2, "WM", 0, 0, 0, WManagerH)) &&
       /* this will later be sent to rcrun.c, it forces loading .twinrc */
       SendControlMsg(WM_MsgPort, MSG_CONTROL_OPEN, 0, NULL)) {
 
     if (RegisterExt(WM, MsgPort, WM_MsgPort)) {
 
-      if ((MapQueue = New(msgport)(Fn_msgport, 11, "WM MapQueue", 0, 0, 0,
-                                          (void (*)(msgport))NoOp))) {
+      if ((MapQueue = New(msgport)(11, "WM MapQueue", 0, 0, 0, (void (*)(msgport))NoOp))) {
 
         MapQueue->Remove();
 

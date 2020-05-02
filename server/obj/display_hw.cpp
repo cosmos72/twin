@@ -12,30 +12,40 @@
 
 #include "obj/display_hw.h"
 #include "obj/all.h" // extern All
-#include "alloc.h"   // CloneStrL()
+#include "alloc.h"   // AllocMem0(), CloneStrL()
 #include "methods.h" // InsertLast()
 #include "twin.h"    // NOSLOT
 
-display_hw s_display_hw::Create(fn_display_hw Fn, uldat namelen, const char *name) {
+display_hw s_display_hw::Create(uldat namelen, const char *name) {
   display_hw d = NULL;
-  char *newName = NULL;
-
-  if (name && (newName = CloneStrL(name, namelen))) {
-    if ((d = (display_hw)s_obj::Create((fn_obj)Fn))) {
-
-      d->NameLen = namelen;
-      d->Name = newName;
-      d->Module = NULL;
-      d->Quitted = ttrue;
-      d->AttachSlot = NOSLOT;
-      /*
-       * ->Quitted will be set to tfalse only
-       * after d->InitHW() has succeeded
-       */
-      InsertLast(DisplayHW, d, ::All);
-      return d;
+  if (name) {
+    d = (display_hw)AllocMem0(sizeof(s_display_hw), 1);
+    if (d) {
+      d->Fn = Fn_display_hw;
+      if (!d->Init(namelen, name)) {
+        d->Delete();
+        d = NULL;
+      }
     }
-    FreeMem(newName);
   }
   return d;
+}
+
+display_hw s_display_hw::Init(uldat namelen, const char *name) {
+  if (!name || !((obj)this)->Init()) {
+    return NULL;
+  }
+  if (!(this->Name = CloneStrL(name, namelen))) {
+    return NULL;
+  }
+  this->NameLen = namelen;
+  this->Module = NULL;
+  this->Quitted = ttrue;
+  this->AttachSlot = NOSLOT;
+  /*
+   * ->Quitted will be set to tfalse only
+   * after this->InitHW() has succeeded
+   */
+  InsertLast(DisplayHW, this, ::All);
+  return this;
 }

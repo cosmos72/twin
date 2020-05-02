@@ -12,21 +12,25 @@
 
 #include "obj/obj.h"
 
-#include "alloc.h" // AllocMem0(), FreeMem()
+#include "alloc.h" // AllocMem0()
+#include "fn.h"    // Fn_obj
 #include "id.h"    // AssignId()
 
-obj s_obj::Create(fn_obj Fn) {
-  obj o;
-
-  if ((o = (obj)AllocMem0(Fn->Size, 1))) {
-    if (AssignId(Fn, o)) {
-      o->Fn = Fn;
-      o->Prev = o->Next = NULL;
-      o->Parent = NULL;
-    } else {
-      FreeMem(o);
+obj s_obj::Create() {
+  obj o = (obj)AllocMem0(sizeof(s_obj), 1);
+  if (o) {
+    o->Fn = Fn_obj;
+    if (!o->Init()) {
+      o->Delete();
       o = NULL;
     }
   }
   return o;
+}
+
+obj s_obj::Init() {
+  if (AssignId(Fn, this)) {
+    return this;
+  }
+  return NULL;
 }

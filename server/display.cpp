@@ -131,7 +131,7 @@ static void OutOfMemory(void) {
   printk("twdisplay: Out of memory!\n");
 }
 
-INLINE uldat FdListGet(void) {
+inline uldat FdListGet(void) {
   if (FdBottom < FdSize)
     return FdBottom;
   return NOSLOT;
@@ -210,7 +210,6 @@ static void RemoteEvent(int FdCount, fd_set *FdSet) {
 
 static struct s_fn_module _FnModule = {
     module_magic,
-    (uldat)sizeof(struct s_module),
     (void (*)(module, all, module, module))NoOp, /* InsertModule */
     (void (*)(module))NoOp,                      /* RemoveModule */
     (void (*)(module))NoOp,                      /* DeleteModule */
@@ -230,7 +229,7 @@ static struct s_module _Module = {
     0,                 /* Used */
     (char *)0,         /* Name */
     (void *)0,         /* Handle */
-    (byte (*)(void))0, /* Init */
+    (byte (*)(void))0, /* DoInit */
 };
 
 static module DlLoadAny(uldat len, char *name) {
@@ -305,7 +304,7 @@ static byte module_InitHW(const char *arg, uldat len) {
     if (Module) {
       printk("twdisplay: starting display driver module `" SS "'...\n", buf);
 
-      if ((InitD = Module->Init) && InitD()) {
+      if ((InitD = Module->DoInit) && InitD()) {
         printk("twdisplay: ...module `" SS "' successfully started.\n", buf);
         HW->Module = Module;
         Module->Used++;
@@ -340,7 +339,6 @@ static void QuitDisplayHW(display_hw);
 static struct s_fn_display_hw _FnDisplayHW = {
     /*-------------------*/
     display_hw_magic,
-    (uldat)sizeof(struct s_display_hw),
     (void (*)(display_hw, all, display_hw, display_hw))NoOp, /* InsertDisplayHW */
     (void (*)(display_hw))NoOp,                              /* RemoveDisplayHW */
     (void (*)(display_hw))NoOp,                              /* DeleteDisplayHW */
@@ -476,7 +474,7 @@ static display_hw AttachDisplayHW(uldat len, const char *arg, uldat slot, byte f
 
 #if 0
 /* not needed, server-side hw_display already does optimization for us */
-INLINE void OptimizeChangedVideo(void) {
+inline void OptimizeChangedVideo(void) {
     uldat _start, start, _end, end;
     ldat i;
 
@@ -523,7 +521,7 @@ INLINE void OptimizeChangedVideo(void) {
   } while (0)
 #endif
 
-INLINE void SyncOldVideo(void) {
+inline void SyncOldVideo(void) {
   ldat start, len;
   ldat i;
 

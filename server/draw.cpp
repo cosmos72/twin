@@ -29,7 +29,7 @@ byte InitDraw(void) {
   return ttrue;
 }
 
-INLINE tcolor DoShadowColor(tcolor Color, byte Fg, byte Bg) {
+inline tcolor DoShadowColor(tcolor Color, byte Fg, byte Bg) {
   return (Bg ? (Color & TCOL(0, tmaxcol)) > TCOL(0, thigh | tblack) ? TCOL(0, thigh | tblack)
                                                                     : TCOL(0, tblack)
              : Fg ? Color & TCOL(0, twhite) : Color & TCOL(0, tmaxcol)) |
@@ -193,7 +193,7 @@ byte InitDrawCtx(widget W, dat X1, dat Y1, dat X2, dat Y2, byte Shaded, draw_ctx
   D->X2 = X2;
 
   D->Up = 0;
-  if (IS_WINDOW(W) && (((window)W)->Attrib & WINDOW_ROLLED_UP))
+  if (IS_WINDOW(W) && (((window)W)->Attr & WINDOW_ROLLED_UP))
     D->Dwn = 0;
   else
     D->Dwn = W->YWidth - 1;
@@ -207,7 +207,7 @@ byte InitDrawCtx(widget W, dat X1, dat Y1, dat X2, dat Y2, byte Shaded, draw_ctx
 
     HasTopBar = HasBorder = 0;
 
-    if (!IS_WINDOW(W) || !(((window)W)->Attrib & WINDOW_ROLLED_UP))
+    if (!IS_WINDOW(W) || !(((window)W)->Attr & WINDOW_ROLLED_UP))
       height = W->YWidth;
     else
       height = 1;
@@ -343,7 +343,7 @@ widget FindWidgetAt(widget Parent, dat X, dat Y) {
     i = X + Parent->XLogic;
     j = Y + Parent->YLogic;
 
-    if (!IS_WINDOW(W) || !(((window)W)->Attrib & WINDOW_ROLLED_UP))
+    if (!IS_WINDOW(W) || !(((window)W)->Attr & WINDOW_ROLLED_UP))
       height = W->YWidth;
     else
       height = 1;
@@ -511,7 +511,7 @@ void DrawSelfWidget(draw_ctx *D) {
       msg Msg;
       event_widget *EventW;
 
-      if ((Msg = New(msg)(Fn_msg, msg_widget_change, 0))) {
+      if ((Msg = New(msg)(msg_widget_change, 0))) {
         EventW = &Msg->Event.EventWidget;
         EventW->W = W;
         EventW->Code = MSG_WIDGET_EXPOSE;
@@ -1280,8 +1280,8 @@ static void DrawAreaCtx(draw_ctx *D) {
       shLeft = (ldat)W->Left + (ldat)FirstScreen->dummyLeft - FirstScreen->XLogic;
       shUp = (ldat)W->Up + (ldat)YLimit - FirstScreen->YLogic;
       shRgt = shLeft + (ldat)W->XWidth - 1;
-      shDwn = shUp +
-              (IS_WINDOW(W) && (((window)W)->Attrib & WINDOW_ROLLED_UP) ? 0 : (ldat)W->YWidth - 1);
+      shDwn =
+          shUp + (IS_WINDOW(W) && (((window)W)->Attr & WINDOW_ROLLED_UP) ? 0 : (ldat)W->YWidth - 1);
 
       if (Shade && IS_WINDOW(W)) {
         /* only windows have shadows */
@@ -1538,7 +1538,7 @@ void DrawBorderWindow(window Window, byte Flags) {
   shUp = (ldat)Window->Up - Screen->YLogic + (ldat)YLimit;
   shLeft = (ldat)Window->Left - Screen->XLogic;
   shRgt = shLeft + (ldat)Window->XWidth - (ldat)1;
-  shDwn = shUp + (Window->Attrib & WINDOW_ROLLED_UP ? 0 : (ldat)Window->YWidth - (ldat)1);
+  shDwn = shUp + (Window->Attr & WINDOW_ROLLED_UP ? 0 : (ldat)Window->YWidth - (ldat)1);
 
   if (shLeft >= (ldat)DWidth || shUp >= (ldat)DHeight || shRgt < (ldat)0 || shDwn <= (ldat)YLimit)
     return;
@@ -1642,7 +1642,7 @@ void DrawShadeWindow(window Window, dat X1, dat Y1, dat X2, dat Y2, byte Interna
     shUp = (ldat)Window->Up - Screen->YLogic + (ldat)YLimit;
     shLeft = (ldat)Window->Left - Screen->XLogic;
     shRgt = shLeft + (ldat)Window->XWidth - (ldat)1;
-    shDwn = shUp + (Window->Attrib & WINDOW_ROLLED_UP ? 0 : (ldat)Window->YWidth - 1);
+    shDwn = shUp + (Window->Attr & WINDOW_ROLLED_UP ? 0 : (ldat)Window->YWidth - 1);
 
     DrawAreaShadeWindow(Screen, Window, X1, Y1, X2, Y2, shLeft, shUp, shRgt, shDwn, Internal);
   }
@@ -1692,7 +1692,7 @@ void DrawLogicWidget(widget W, ldat X1, ldat Y1, ldat X2, ldat Y2) {
   byte HasBorder;
 
   if (!QueuedDrawArea2FullScreen && W && !(W->Flags & WIDGETFL_NOTVISIBLE) &&
-      (!IS_WINDOW(W) || !(((window)W)->Attrib & WINDOW_ROLLED_UP)) && X2 >= X1 && Y2 >= Y1) {
+      (!IS_WINDOW(W) || !(((window)W)->Attr & WINDOW_ROLLED_UP)) && X2 >= X1 && Y2 >= Y1) {
     XL = W->XLogic;
     YL = W->YLogic;
 
@@ -1742,7 +1742,7 @@ void ReDrawRolledUpAreaWindow(window Window, byte Shaded) {
   shLeft = (ldat)Window->Left - Screen->XLogic;
   shRgt = shLeft + (ldat)Window->XWidth - (ldat)1;
   shDwn = shUp + (ldat)Window->YWidth - (ldat)1;
-  /*shDwn=shUp+(Window->Attrib & WINDOW_ROLLED_UP ? 0 : (ldat)Window->YWidth-(ldat)1);*/
+  /*shDwn=shUp+(Window->Attr & WINDOW_ROLLED_UP ? 0 : (ldat)Window->YWidth-(ldat)1);*/
 
   if (shLeft >= (ldat)DWidth || shUp >= (ldat)DHeight || shRgt < -(ldat)DeltaXShade ||
       shDwn < (ldat)YLimit - (ldat)DeltaYShade)

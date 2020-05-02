@@ -16,7 +16,7 @@
 #include "obj/row.h"
 
 struct s_fn_menuitem {
-  uldat Magic, Size;
+  uldat Magic;
   void (*Insert)(menuitem, obj, menuitem Prev, menuitem Next);
   void (*Remove)(menuitem);
   void (*Delete)(menuitem);
@@ -29,9 +29,9 @@ struct s_fn_menuitem {
   void (*Raise)(menuitem);
   void (*Lower)(menuitem);
   fn_row Fn_Row;
-  menuitem (*Create4Menu)(fn_menuitem, obj Parent, window Window, udat Code, byte Flags, ldat Len,
+  menuitem (*Create4Menu)(obj Parent, window Window, udat Code, byte Flags, ldat Len,
                           const char *Name);
-  uldat (*Create4MenuCommon)(fn_menuitem, menu);
+  uldat (*Create4MenuCommon)(menu);
   /* for compatibility this must return a non-zero value. */
 };
 
@@ -52,15 +52,15 @@ struct s_menuitem {
   dat Left, ShortCut;
   ldat WCurY;
 
+  static menuitem Create(obj Parent, window Window, udat Code, byte Flags, dat Left, ldat Len,
+                         dat ShortCut, const char *Name);
+  menuitem Init(obj Parent, window Window, udat Code, byte Flags, dat Left, ldat Len, dat ShortCut,
+                const char *Name);
+
   /* obj */
   uldat Magic() const {
     return Fn->Magic;
   }
-  uldat Size() const {
-    return Fn->Size;
-  }
-  static menuitem Create(fn_menuitem Fn, obj Parent, window Window, udat Code, byte Flags, dat Left,
-                         ldat Len, dat ShortCut, const char *Name);
   void Insert(obj parent, menuitem prev, menuitem next) {
     Fn->Insert(this, parent, prev, next);
   }

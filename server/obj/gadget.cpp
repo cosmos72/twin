@@ -11,44 +11,67 @@
  */
 
 #include "obj/gadget.h"
-#include "alloc.h"    // CloneStr2TRune
+#include "alloc.h"    // AllocMem0(), CloneStr2TRune()
+#include "fn.h"       // Fn_gadget
+#include "id.h"       // AssignId()
 #include "menuitem.h" // COD_RESERVED
 
-gadget s_gadget::Create(fn_gadget Fn, msgport Owner, widget Parent, dat XWidth, dat YWidth,
-                        const char *TextNormal, uldat Attrib, uldat Flags, udat Code,
-                        tcolor ColText, tcolor ColTextSelect, tcolor ColTextDisabled,
-                        tcolor ColTextSelectDisabled, dat Left, dat Up) {
-  gadget G = NULL;
+gadget s_gadget::Create(msgport owner, widget parent, dat xwidth, dat ywidth,
+                        const char *textnormal, uldat attr, uldat flags, udat code, tcolor coltext,
+                        tcolor coltextselect, tcolor coltextdisabled, tcolor coltextselectdisabled,
+                        dat left, dat up) {
+  gadget g = NULL;
+  if (owner) {
+    g = (gadget)AllocMem0(sizeof(s_gadget), 1);
+    if (g) {
+      g->Fn = Fn_gadget;
+      if (!g->Init(owner, parent, xwidth, ywidth, textnormal, attr, flags, code, coltext,
+                   coltextselect, coltextdisabled, coltextselectdisabled, left, up)) {
+        g->Delete();
+        g = NULL;
+      }
+    }
+  }
+  return g;
+}
+
+gadget s_gadget::Init(msgport owner, widget parent, dat xwidth, dat ywidth, const char *textnormal,
+                      uldat attr, uldat flags, udat code, tcolor coltext, tcolor coltextselect,
+                      tcolor coltextdisabled, tcolor coltextselectdisabled, dat left, dat up) {
   ldat Size;
 
-  if (Owner && Code < COD_RESERVED && XWidth > 0 && YWidth > 0 &&
-      (G = (gadget)s_widget::Create((fn_widget)Fn, Owner, XWidth, YWidth, Attrib, Flags, Left, Up,
-                                    TCELL(ColText, ' ')))) {
-
-    G->ColText = ColText;
-    G->ColSelect = ColTextSelect;
-    G->ColDisabled = ColTextDisabled;
-    G->ColSelectDisabled = ColTextSelectDisabled;
-    G->Code = Code;
-
-    G->G_Prev = G->G_Next = NULL;
-    G->Group = (ggroup)0;
-
-    if (G_USE(G, USETEXT)) {
-      Size = (ldat)XWidth * YWidth;
-      if (TextNormal)
-        G->USE.T.Text[0] = CloneStr2TRune(TextNormal, Size);
-      else
-        G->USE.T.Text[0] = NULL;
-
-      G->USE.T.Text[1] = G->USE.T.Text[2] = G->USE.T.Text[3] = NULL;
-      G->USE.T.Color[0] = G->USE.T.Color[1] = G->USE.T.Color[2] = G->USE.T.Color[3] = NULL;
-    }
-
-    /* G->Flags |= GADGETFL_TEXT_DEFCOL; */
-
-    if (Parent)
-      G->Map(Parent);
+  if (!((widget)this)->Init(owner, xwidth, ywidth, attr, flags, left, up, TCELL(coltext, ' '))) {
+    return NULL;
   }
-  return G;
+  if (code >= COD_RESERVED || xwidth <= 0 || ywidth <= 0) {
+    return NULL;
+  }
+
+  this->ColText = coltext;
+  this->ColSelect = coltextselect;
+  this->ColDisabled = coltextdisabled;
+  this->ColSelectDisabled = coltextselectdisabled;
+  this->Code = code;
+
+  // this->G_Prev = this->G_Next = NULL;
+  // this->Group = NULL;
+
+  if (G_USE(this, USETEXT)) {
+    Size = (ldat)xwidth * ywidth;
+    if (textnormal)
+      this->USE.T.Text[0] = CloneStr2TRune(textnormal, Size);
+    else {
+      // this->USE.T.Text[0] = NULL;
+    }
+    // this->USE.T.Text[1] = this->USE.T.Text[2] = this->USE.T.Text[3] = NULL;
+    // this->USE.T.Color[0] = this->USE.T.Color[1] = NULL;
+    // this->USE.T.Color[2] = this->USE.T.Color[3] = NULL;
+  }
+
+  /* G->flags |= GADGETFL_TEXT_DEFCOL; */
+
+  if (parent) {
+    this->Map(parent);
+  }
+  return this;
 }

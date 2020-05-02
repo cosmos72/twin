@@ -260,7 +260,7 @@ trune *RCFindBorderPattern(window W, byte Border) {
   return W->BorderPattern[Border] = l ? (trune *)l->data : NULL;
 }
 
-INLINE void RCRemove(run **p) {
+inline void RCRemove(run **p) {
   run *r = *p;
   *p = r->next;
   r->next = NULL;
@@ -291,7 +291,7 @@ static void RCKillAll(void) {
   Run = Sleep = Wait = Interactive = (run *)0;
 }
 
-INLINE void RCKill(run **p) {
+inline void RCKill(run **p) {
   run *r;
   if ((r = *p)) {
     *p = r->next;
@@ -375,7 +375,7 @@ static screen RCFindScreenName(cstr name) {
   return S;
 }
 
-INLINE widget RCCheck4WidgetId(run *r) {
+inline widget RCCheck4WidgetId(run *r) {
   widget W;
   if (!(W = (widget)Id2Obj(widget_magic_id, r->W)) || !W->Parent || !IS_SCREEN(W->Parent))
 
@@ -391,7 +391,7 @@ INLINE widget RCCheck4WidgetId(run *r) {
 #define Sinter 5
 #define Serr 6
 
-INLINE widget ForwardWindow(widget W) {
+inline widget ForwardWindow(widget W) {
   while (W) {
     if (IS_WINDOW(W))
       return W;
@@ -400,7 +400,7 @@ INLINE widget ForwardWindow(widget W) {
   return W;
 }
 
-INLINE widget BackwardWindow(widget W) {
+inline widget BackwardWindow(widget W) {
   while (W) {
     if (IS_WINDOW(W))
       return W;
@@ -409,7 +409,7 @@ INLINE widget BackwardWindow(widget W) {
   return W;
 }
 
-INLINE screen ScreenOf(widget W) {
+inline screen ScreenOf(widget W) {
   widget P;
   return W && (P = W->Parent) && IS_SCREEN(P) ? (screen)P : (screen)0;
 }
@@ -712,7 +712,7 @@ static byte RCSteps(run *r) {
         if (W && IS_WINDOW(W)) {
           flag = n->x.f.flag;
           if (flag == FL_TOGGLE)
-            flag = W->Attrib & WINDOW_ROLLED_UP ? FL_OFF : FL_ON;
+            flag = W->Attr & WINDOW_ROLLED_UP ? FL_OFF : FL_ON;
           RollUpWindow((window)W, flag == FL_ON);
         }
         break;
@@ -829,7 +829,7 @@ static void RCReload(void) {
   byte success;
 
   if ((M = DlLoad(RCParseSo)))
-    mod_rcload = M->Init;
+    mod_rcload = M->DoInit;
 #if 0
     /* this would garble -hw=tty display */
     else
@@ -1028,8 +1028,8 @@ static byte USEDefaultCommonMenu(void) {
   window W;
   row Row;
 
-  if (!(Menu = New(menu)(Fn_menu, Ext(WM, MsgPort), (tcolor)0, (tcolor)0, (tcolor)0,
-                                (tcolor)0, (tcolor)0, (tcolor)0, ttrue)))
+  if (!(Menu = New(menu)(Ext(WM, MsgPort), (tcolor)0, (tcolor)0, (tcolor)0, (tcolor)0, (tcolor)0,
+                         (tcolor)0, ttrue)))
     return tfalse;
 
   if ((W = Win4Menu(Menu)) && (Item = Item4Menu(Menu, W, ttrue, 8, " Window ")) &&

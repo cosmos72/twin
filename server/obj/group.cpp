@@ -10,19 +10,35 @@
  *
  */
 
+#include "alloc.h"   // AllocMem0()
+#include "fn.h"      // Fn_group
+#include "id.h"      // AssignId()
+#include "methods.h" // InsertLast()
 #include "obj/group.h"
 #include "obj/msgport.h"
-#include "methods.h" // InsertLast()
 
-ggroup s_group::Create(fn_group Fn, msgport MsgPort) {
+ggroup s_group::Create(msgport owner) {
   ggroup g = NULL;
-
-  if (MsgPort && (g = (ggroup)s_obj::Create((fn_obj)Fn))) {
-
-    g->FirstG = g->LastG = g->SelectG = NULL;
-    g->MsgPort = NULL;
-
-    InsertLast(Group, g, MsgPort);
+  if (owner) {
+    g = (ggroup)AllocMem0(sizeof(s_group), 1);
+    if (g) {
+      g->Fn = Fn_group;
+      if (!g->Init(owner)) {
+        g->Delete();
+        g = NULL;
+      }
+    }
   }
   return g;
+}
+
+ggroup s_group::Init(msgport owner) {
+  if (!owner || !((obj)this)->Init()) {
+    return NULL;
+  }
+  // this->FirstG = this->LastG = this->SelectG = NULL;
+  // this->MsgPort = NULL;
+
+  InsertLast(Group, this, owner);
+  return this;
 }

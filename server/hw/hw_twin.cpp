@@ -95,7 +95,7 @@ static void TW_Configure(udat resource, byte todefault, udat value) {
   case HW_MOUSEMOTIONEVENTS:
     if (todefault)
       value = 0;
-    Tw_ChangeField(Td, Twin, TWS_window_Attrib, TW_WINDOW_WANT_MOUSE_MOTION,
+    Tw_ChangeField(Td, Twin, TWS_window_Attr, TW_WINDOW_WANT_MOUSE_MOTION,
                    value ? TW_WINDOW_WANT_MOUSE_MOTION : 0);
     setFlush();
     break;
@@ -186,7 +186,7 @@ static void TW_KeyboardEvent(int fd, display_hw hw) {
   RestoreHW;
 }
 
-INLINE void TW_Mogrify(dat x, dat y, uldat len) {
+inline void TW_Mogrify(dat x, dat y, uldat len) {
   tcell *V, *oV;
   uldat buflen = 0;
   tcell *buf;
@@ -597,7 +597,7 @@ static byte TW_InitHW(void) {
 }
 
 EXTERN_C byte InitModule(module Module) {
-  Module->Init = TW_InitHW;
+  Module->DoInit = TW_InitHW;
   return ttrue;
 }
 

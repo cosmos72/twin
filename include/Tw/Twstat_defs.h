@@ -42,7 +42,7 @@
 #define TWS_widget_XWidth TWS_widget_Width
 #define TWS_widget_Height 0x0106
 #define TWS_widget_YWidth TWS_widget_Height
-#define TWS_widget_Attrib 0x0107
+#define TWS_widget_Attr 0x0107
 #define TWS_widget_Flags 0x0108
 #define TWS_widget_XLogic 0x0109
 #define TWS_widget_YLogic 0x010A
@@ -75,7 +75,7 @@
 #define TWS_gadget_XWidth TWS_widget_XWidth
 #define TWS_gadget_Height TWS_widget_Height
 #define TWS_gadget_YWidth TWS_widget_YWidth
-#define TWS_gadget_Attrib TWS_widget_Attrib
+#define TWS_gadget_Attr TWS_widget_Attr
 #define TWS_gadget_Flags TWS_widget_Flags
 #define TWS_gadget_XLogic TWS_widget_XLogic
 #define TWS_gadget_YLogic TWS_widget_YLogic
@@ -128,7 +128,7 @@
 #define TWS_window_XWidth TWS_widget_XWidth
 #define TWS_window_Height TWS_widget_Height
 #define TWS_window_YWidth TWS_widget_YWidth
-#define TWS_window_Attrib TWS_widget_Attrib
+#define TWS_window_Attr TWS_widget_Attr
 #define TWS_window_Flags TWS_widget_Flags
 #define TWS_window_XLogic TWS_widget_XLogic
 #define TWS_window_YLogic TWS_widget_YLogic
@@ -196,7 +196,7 @@
 #define TWS_screen_XWidth TWS_widget_XWidth
 #define TWS_screen_Height TWS_widget_Height
 #define TWS_screen_YWidth TWS_widget_YWidth
-#define TWS_screen_Attrib TWS_widget_Attrib
+#define TWS_screen_Attr TWS_widget_Attr
 #define TWS_screen_Flags TWS_widget_Flags
 #define TWS_screen_XLogic TWS_widget_XLogic
 #define TWS_screen_YLogic TWS_widget_YLogic
@@ -354,7 +354,7 @@
   EL(widget_Up)                                                                                    \
   EL(widget_Width)                                                                                 \
   EL(widget_Height)                                                                                \
-  EL(widget_Attrib)                                                                                \
+  EL(widget_Attr)                                                                                  \
   EL(widget_Flags)                                                                                 \
   EL(widget_XLogic)                                                                                \
   EL(widget_YLogic)                                                                                \

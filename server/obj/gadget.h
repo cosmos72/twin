@@ -21,7 +21,7 @@ struct s_gT { /* for GADGETFL_USETEXT gadgets */
 };
 
 struct s_fn_gadget {
-  uldat Magic, Size;
+  uldat Magic;
   void (*Insert)(gadget, widget Parent, widget Prev, widget Next);
   void (*Remove)(gadget);
   void (*Delete)(gadget);
@@ -49,13 +49,11 @@ struct s_fn_gadget {
   void (*RemoveHook)(gadget, fn_hook, fn_hook *Where);
   /* gadget */
   fn_widget Fn_Widget;
-  gadget (*CreateEmptyButton)(fn_gadget Fn_Gadget, msgport Owner, dat XWidth, dat YWidth,
-                              tcolor BgCol);
+  gadget (*CreateEmptyButton)(msgport Owner, dat XWidth, dat YWidth, tcolor BgCol);
   byte (*FillButton)(gadget Gadget, widget Parent, udat Code, dat Left, dat Up, udat Flags,
                      const char *Text, tcolor Color, tcolor ColorDisabled);
-  gadget (*CreateButton)(fn_gadget Fn_Gadget, widget Parent, dat XWidth, dat YWidth,
-                         const char *Text, uldat Flags, udat Code, tcolor BgCol, tcolor Col,
-                         tcolor ColDisabled, dat Left, dat Up);
+  gadget (*CreateButton)(widget Parent, dat XWidth, dat YWidth, const char *Text, uldat Flags,
+                         udat Code, tcolor BgCol, tcolor Col, tcolor ColDisabled, dat Left, dat Up);
   void (*WriteTexts)(gadget Gadget, byte bitmap, dat XWidth, dat YWidth, const char *Text, dat Left,
                      dat Up);
   void (*WriteTRunes)(gadget Gadget, byte bitmap, dat XWidth, dat YWidth, const trune *TRune,
@@ -71,7 +69,7 @@ struct s_gadget {
   widget FirstW, LastW; /* list of children */
   widget SelectW;       /* selected child */
   dat Left, Up, XWidth, YWidth;
-  uldat Attrib;
+  uldat Attr;
   uldat Flags;
   ldat XLogic, YLogic;
   widget O_Prev, O_Next; /* list in the same msgport (owner) */
@@ -91,17 +89,17 @@ struct s_gadget {
   gadget G_Prev, G_Next; /* list in the same ggroup */
   ggroup Group;
 
+  static gadget Create(msgport Owner, widget Parent, dat XWidth, dat YWidth, const char *TextNormal,
+                       uldat Attr, uldat Flags, udat Code, tcolor ColText, tcolor ColTextSelect,
+                       tcolor ColTextDisabled, tcolor ColTextSelectDisabled, dat Left, dat Up);
+  gadget Init(msgport Owner, widget Parent, dat XWidth, dat YWidth, const char *TextNormal,
+              uldat Attr, uldat Flags, udat Code, tcolor ColText, tcolor ColTextSelect,
+              tcolor ColTextDisabled, tcolor ColTextSelectDisabled, dat Left, dat Up);
+
   /* obj */
   uldat Magic() const {
     return Fn->Magic;
   }
-  uldat Size() const {
-    return Fn->Size;
-  }
-  static gadget Create(fn_gadget Fn, msgport Owner, widget Parent, dat XWidth, dat YWidth,
-                       const char *TextNormal, uldat Attrib, uldat Flags, udat Code, tcolor ColText,
-                       tcolor ColTextSelect, tcolor ColTextDisabled, tcolor ColTextSelectDisabled,
-                       dat Left, dat Up);
   void Remove() {
     Fn->Remove(this);
   }
@@ -167,7 +165,7 @@ struct s_gadget {
   }
 };
 
-/* Gadget->Attrib */
+/* Gadget->Attr */
 typedef enum e_gadget_attr {
   GADGET_WANT_MOUSE_MOTION = WIDGET_WANT_MOUSE_MOTION, /* 0x0001 */
   GADGET_WANT_KEYS = WIDGET_WANT_KEYS,                 /* 0x0002 */

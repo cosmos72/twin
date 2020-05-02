@@ -20,7 +20,7 @@
 #define WIDGET_USEEXPOSE_TRUNE 2
 #define WIDGET_USEEXPOSE_TCELL 4
 
-/* Widget->Attrib */
+/* Widget->Attr */
 typedef enum e_widget_attr {
   /*
    * ask the server to send events even for mouse motion without any pressed button.
@@ -70,7 +70,7 @@ struct s_draw_ctx {
 };
 
 struct s_fn_widget {
-  uldat Magic, Size;
+  uldat Magic;
   void (*Insert)(widget self, widget parent, widget Prev, widget Next);
   void (*Remove)(widget self);
   void (*Delete)(widget self);
@@ -107,7 +107,7 @@ struct s_widget {
   widget FirstW, LastW; /* list of children */
   widget SelectW;       /* selected child */
   dat Left, Up, XWidth, YWidth;
-  uldat Attrib;
+  uldat Attr;
   uldat Flags;
   ldat XLogic, YLogic;
   widget O_Prev, O_Next; /* list with the same msgport (owner) */
@@ -125,11 +125,10 @@ struct s_widget {
   uldat Magic() const {
     return Fn->Magic;
   }
-  uldat Size() const {
-    return Fn->Size;
-  }
-  static widget Create(fn_widget Fn, msgport Owner, dat XWidth, dat YWidth, uldat Attrib,
-                       uldat Flags, dat Left, dat Up, tcell USE_Fill);
+  static widget Create(msgport Owner, dat XWidth, dat YWidth, uldat Attr, uldat Flags, dat Left,
+                       dat Up, tcell USE_Fill);
+  widget Init(msgport Owner, dat XWidth, dat YWidth, uldat Attr, uldat Flags, dat Left, dat Up,
+              tcell USE_Fill);
   void Insert(widget parent, widget prev, widget next) {
     Fn->Insert(this, parent, prev, next);
   }

@@ -3,8 +3,8 @@
  * when #include-ing into hw_xyz.c.
  */
 
-INLINE void X11_Mogrify(dat x, dat y, ldat len);
-INLINE ldat diff(ldat x, ldat y);
+inline void X11_Mogrify(dat x, dat y, ldat len);
+inline ldat diff(ldat x, ldat y);
 static ldat calcFontScore(udat fontwidth, udat fontheight, ldat width, ldat height);
 static byte X11_LoadFont(const char *fontname, udat fontwidth, udat fontheight);
 static void X11_QuitHW(void);

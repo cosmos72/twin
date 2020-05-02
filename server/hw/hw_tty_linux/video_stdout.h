@@ -19,11 +19,11 @@ static void linux_UpdateMouseAndCursor(void);
 static byte linux_CanDragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp);
 static void linux_DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp);
 
-INLINE void linux_SetCursorType(uldat type) {
+inline void linux_SetCursorType(uldat type) {
   fprintf(stdOUT, "\033[?%d;%d;%dc", (int)(type & 0xFF), (int)((type >> 8) & 0xFF),
           (int)((type >> 16) & 0xFF));
 }
-INLINE void linux_MoveToXY(udat x, udat y) {
+inline void linux_MoveToXY(udat x, udat y) {
   fprintf(stdOUT, "\033[%d;%dH", y + 1, x + 1);
 }
 
@@ -122,7 +122,7 @@ static void linux_QuitVideo(void) {
 
 #define linux_MogrifyFinish() ((void)0)
 
-INLINE void linux_SetColor(tcolor col) {
+inline void linux_SetColor(tcolor col) {
   char colbuf[] = "\033[2x;2x;4x;3xm";
   char *colp = colbuf + 2;
   byte c;
@@ -163,7 +163,7 @@ INLINE void linux_SetColor(tcolor col) {
   fputs(colbuf, stdOUT);
 }
 
-INLINE void linux_Mogrify(dat x, dat y, uldat len) {
+inline void linux_Mogrify(dat x, dat y, uldat len) {
   tcell *V, *oV;
   tcolor col;
   trune c, _c;
@@ -205,7 +205,7 @@ INLINE void linux_Mogrify(dat x, dat y, uldat len) {
   }
 }
 
-INLINE void linux_SingleMogrify(dat x, dat y, tcell V) {
+inline void linux_SingleMogrify(dat x, dat y, tcell V) {
   trune c, _c;
 
   linux_MoveToXY(x, y);

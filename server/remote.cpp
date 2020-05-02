@@ -60,7 +60,7 @@ static uldat FdListGrow(void) {
   return oldsize;
 }
 
-INLINE void FdListShrink(void) {
+inline void FdListShrink(void) {
   fdlist *newFdList;
   uldat size = Max2(TW_SMALLBUFF, FdTop << 1);
 
@@ -70,7 +70,7 @@ INLINE void FdListShrink(void) {
   }
 }
 
-INLINE uldat FdListGet(void) {
+inline uldat FdListGet(void) {
   if (FdBottom < FdSize)
     return FdBottom;
   return FdListGrow();

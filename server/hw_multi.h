@@ -37,7 +37,7 @@ void SuspendHW(byte verbose);
 display_hw AttachDisplayHW(uldat len, const char *arg, uldat slot, byte flags);
 byte DetachDisplayHW(uldat len, const char *arg, byte flags);
 
-void FillVideo(dat Xstart, dat Ystart, dat Xend, dat Yend, tcell Attrib);
+void FillVideo(dat Xstart, dat Ystart, dat Xend, dat Yend, tcell Attr);
 void RefreshVideo(void);
 byte ResizeDisplay(void);
 

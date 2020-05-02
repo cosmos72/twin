@@ -178,7 +178,7 @@ generates events (user input) is decided by the application.
    /* Row Flags : */
    TW_ROW_INACTIVE, TW_ROW_ACTIVE, TW_ROW_IGNORE
 
-   /* Window Attrib : */
+   /* Window Attr : */
    TW_WINDOW_WANT_KEYS, TW_WINDOW_WANT_MOUSE, TW_WINDOW_WANT_MOUSE_MOTION
    TW_WINDOW_WANT_CHANGES, TW_WINDOW_DRAG, TW_WINDOW_RESIZE, TW_WINDOW_CLOSE
    TW_WINDOW_ROLLED_UP, TW_WINDOW_X_BAR, TW_WINDOW_Y_BAR
@@ -369,7 +369,7 @@ void	Tw_DeleteMsgPort(tdisplay TwD, tmsgport MsgPort);
 
 tgadget Tw_CreateGadget(tdisplay TwD, twidget Parent, dat Left, dat Up,
 		       tcolor ColText, tcolor ColTextSelect, tcolor ColTextDisabled, tcolor ColTextSelectDisabled,
-		       uldat Attrib, uldat Flags, dat XWidth, dat YWidth);
+		       uldat Attr, uldat Flags, dat XWidth, dat YWidth);
 void	Tw_DeleteGadget(tdisplay TwD, tgadget Gadget);
 tgadget Tw_SearchGadget(tdisplay TwD, twindow Window, dat i, dat j);
 tgadget Tw_CreateButtonGadget(tdisplay TwD, twindow Window,
@@ -381,7 +381,7 @@ void	Tw_Create4MenuRow(tdisplay TwD, twindow Window, udat Code, byte FlagActive,
 #define Tw_Row4Menu Tw_Create4MenuRow
 
 twindow Tw_CreateWindow(tdisplay TwD, dat NameLen, TW_CONST byte *Name, TW_CONST tcolor *ColName, tmenu Menu,
-		       tcolor ColText, uldat cursorType, uldat Attrib, uldat Flags,
+		       tcolor ColText, uldat cursorType, uldat Attr, uldat Flags,
 		       dat XWidth, dat YWidth, dat ScrollBackLines);
 void	Tw_DeleteWindow(tdisplay TwD, twindow Window);
 twindow Tw_Create4MenuWindow(tdisplay TwD, tmenu Menu);

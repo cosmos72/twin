@@ -2,7 +2,7 @@
 #ifndef _TWIN_HW_DIRTY_H
 #define _TWIN_HW_DIRTY_H
 
-INLINE byte Plain_isDirtyVideo(dat X, dat Y) {
+inline byte Plain_isDirtyVideo(dat X, dat Y) {
   dat s;
   s = ChangedVideo[Y][0][0];
   if (s == -1 || s > X || ChangedVideo[Y][0][1] < X) {
@@ -17,7 +17,7 @@ INLINE byte Plain_isDirtyVideo(dat X, dat Y) {
  * this is not trivial, as it must consider that areas nearer than
  * merge_Threshold will get merged together (by linux_FlushVideo() for example)
  */
-INLINE byte Threshold_isDirtyVideo(dat X, dat Y) {
+inline byte Threshold_isDirtyVideo(dat X, dat Y) {
   dat s1, s2, e1, e2, delta;
 
   if ((s1 = ChangedVideo[Y][0][0]) == -1)
@@ -65,7 +65,7 @@ INLINE byte Threshold_isDirtyVideo(dat X, dat Y) {
 }
 
 /* VideoFlip is quite OS and driver independent ;) */
-INLINE void VideoFlip(udat x, udat y) {
+inline void VideoFlip(udat x, udat y) {
   Video[x + y * (ldat)DisplayWidth] ^= TCELL(TCOL(twhite, twhite), 0);
 }
 

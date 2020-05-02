@@ -224,7 +224,7 @@ case order_CreateGadget:
 
 case order_CreateButtonGadget:
     if (N >= 11)
-	a[0]_obj = (obj)Do(CreateButton,gadget)(Fn_gadget, (widget)a[1]_obj, (dat)a[2]_any, (dat)a[3]_any, (const char *)a[4]_vec, (uldat)a[5]_any, (udat)a[6]_any, (tcolor)a[7]_any, (tcolor)a[8]_any, (tcolor)a[9]_any, (dat)a[10]_any, (dat)a[11]_any);
+	a[0]_obj = (obj)Do(CreateButton,gadget)((widget)a[1]_obj, (dat)a[2]_any, (dat)a[3]_any, (const char *)a[4]_vec, (uldat)a[5]_any, (udat)a[6]_any, (tcolor)a[7]_any, (tcolor)a[8]_any, (tcolor)a[9]_any, (dat)a[10]_any, (dat)a[11]_any);
     break;
 
 
@@ -246,7 +246,7 @@ case order_CreateWindow:
 
 case order_Create4MenuWindow:
     if (N >= 1)
-	a[0]_obj = (obj)Do(Create4Menu,window)(Fn_window, (menu)a[1]_obj);
+	a[0]_obj = (obj)Do(Create4Menu,window)((menu)a[1]_obj);
     break;
 
 
@@ -358,7 +358,7 @@ case order_Create4MenuAny:
 
 case order_Create4MenuCommonMenuItem:
     if (N >= 1)
-	a[0]_any = (tany)Do(Create4MenuCommon,menuitem)(Fn_menuitem, (menu)a[1]_obj);
+	a[0]_any = (tany)Do(Create4MenuCommon,menuitem)((menu)a[1]_obj);
     break;
 
 

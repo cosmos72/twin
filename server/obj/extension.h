@@ -16,7 +16,7 @@
 #include "obj/module.h"
 
 struct s_fn_extension {
-  uldat Magic, Size;
+  uldat Magic;
   void (*Insert)(extension, all, extension Prev, extension Next);
   void (*Remove)(extension);
   void (*Delete)(extension);
@@ -38,19 +38,18 @@ struct s_extension {
   /* module */
   uldat NameLen, Used;
   char *Name;
-  void *Handle, *Init;
+  void *Handle, *DoInit;
   /* extension */
   tany (*CallB)(extension, topaque len, const byte *data,
                 void *return_type); /* call extension-specific functions */
   void (*Quit)(extension);          /* how to quit this extension if it is not dlopen()ed */
 
+  static extension Create(uldat namelen, const char *name);
+  extension Init(uldat namelen, const char *name);
+
   /* obj */
   uldat Magic() const {
     return Fn->Magic;
-  }
-  static extension Create(fn_extension Fn, uldat namelen, const char *name);
-  uldat Size() const {
-    return Fn->Size;
   }
   void Remove() {
     Fn->Remove(this);

@@ -160,7 +160,7 @@ static byte module_InitHW(const char *arg, uldat len) {
 
     if (Module) {
       printk("twin: starting display driver module `" SS "'...\n", alloc_name);
-      if ((InitD = Module->Init) && InitD()) {
+      if ((InitD = Module->DoInit) && InitD()) {
         printk("twin: ...module `" SS "' successfully started.\n", alloc_name);
         FreeMem(alloc_name);
         HW->Module = Module;
@@ -321,9 +321,9 @@ display_hw AttachDisplayHW(uldat len, const char *arg, uldat slot, byte flags) {
     return D_HW;
   }
 
-  if (IsValidHW(len, arg) && (D_HW = New(display_hw)(Fn_display_hw, len, arg))) {
+  if (IsValidHW(len, arg) && (D_HW = New(display_hw)(len, arg))) {
     D_HW->AttachSlot = slot;
-    if (Act(Init, D_HW)(D_HW)) {
+    if (Act(DoInit, D_HW)(D_HW)) {
 
       if (flags & TW_ATTACH_HW_EXCLUSIVE) {
         /* started exclusive display, kill all others */
@@ -450,7 +450,7 @@ byte RestartHW(byte verbose) {
 
   if (All->FirstDisplayHW) {
     safeforHW(s_HW) {
-      if (Act(Init, HW)(HW))
+      if (Act(DoInit, HW)(HW))
         ret = ttrue;
       else
         HW->Delete();
@@ -477,7 +477,7 @@ void SuspendHW(byte verbose) {
       /* we will not be able to restart it */
       HW->Delete();
     else
-      Act(Quit, HW)(HW);
+      Act(DoQuit, HW)(HW);
   }
   if (verbose && !All->FirstDisplayHW) {
     printk("twin: SuspendHW(): All display drivers had to be removed\n"
@@ -648,7 +648,7 @@ obj TwinSelectionGetOwner(void) {
 static void SelectionClear(msgport Owner) {
   msg Msg;
 
-  if ((Msg = New(msg)(Fn_msg, msg_selection_clear, 0)))
+  if ((Msg = New(msg)(msg_selection_clear, 0)))
     SendMsg(Owner, Msg);
 }
 
@@ -692,7 +692,7 @@ void TwinSelectionNotify(obj Requestor, uldat ReqPrivate, uldat Magic, const cha
     if (!Data)
       Len = 0;
 
-    if ((NewMsg = New(msg)(Fn_msg, msg_selection_notify, Len))) {
+    if ((NewMsg = New(msg)(msg_selection_notify, Len))) {
       Event = &NewMsg->Event;
       Event->EventSelectionNotify.W = NULL;
       Event->EventSelectionNotify.Code = 0;
@@ -724,7 +724,7 @@ void TwinSelectionRequest(obj Requestor, uldat ReqPrivate, obj Owner) {
     if (Owner->Id >> magic_shift == msgport_magic >> magic_shift) {
       msg NewMsg;
       event_any *Event;
-      if ((NewMsg = New(msg)(Fn_msg, msg_selection_request, 0))) {
+      if ((NewMsg = New(msg)(msg_selection_request, 0))) {
 
         Event = &NewMsg->Event;
         Event->EventSelectionRequest.W = NULL;
@@ -762,7 +762,7 @@ void SelectionImport(void) {
   }
 }
 
-INLINE void DiscardBlinkVideo(void) {
+inline void DiscardBlinkVideo(void) {
   ldat i;
   uldat start, len;
   tcell *V;
@@ -780,7 +780,7 @@ INLINE void DiscardBlinkVideo(void) {
   }
 }
 
-INLINE void OptimizeChangedVideo(void) {
+inline void OptimizeChangedVideo(void) {
   uldat _start, start, _end, end;
   ldat i;
 
@@ -827,7 +827,7 @@ INLINE void OptimizeChangedVideo(void) {
   }
 }
 
-INLINE void SyncOldVideo(void) {
+inline void SyncOldVideo(void) {
   ldat start, len;
   ldat i;
 
@@ -940,7 +940,7 @@ void SyntheticKey(widget W, udat Code, udat ShiftFlags, byte Len, const char *Se
   event_keyboard *Event;
   msg Msg;
 
-  if (W && Len && Seq && (Msg = New(msg)(Fn_msg, msg_widget_key, Len))) {
+  if (W && Len && Seq && (Msg = New(msg)(msg_widget_key, Len))) {
 
     Event = &Msg->Event.EventKeyboard;
     Event->W = W;
@@ -953,7 +953,7 @@ void SyntheticKey(widget W, udat Code, udat ShiftFlags, byte Len, const char *Se
   }
 }
 
-void FillVideo(dat Xstart, dat Ystart, dat Xend, dat Yend, tcell Attrib) {
+void FillVideo(dat Xstart, dat Ystart, dat Xend, dat Yend, tcell Attr) {
   tcell *pos;
   udat _xc, xc, yc, delta;
 
@@ -974,12 +974,12 @@ void FillVideo(dat Xstart, dat Ystart, dat Xend, dat Yend, tcell Attrib) {
   while (yc--) {
     xc = _xc;
     while (xc--)
-      *pos++ = Attrib;
+      *pos++ = Attr;
     pos += delta;
   }
 }
 
-void FillOldVideo(dat Xstart, dat Ystart, dat Xend, dat Yend, tcell Attrib) {
+void FillOldVideo(dat Xstart, dat Ystart, dat Xend, dat Yend, tcell Attr) {
   tcell *pos;
   udat _xc, xc, yc, delta;
 
@@ -999,7 +999,7 @@ void FillOldVideo(dat Xstart, dat Ystart, dat Xend, dat Yend, tcell Attrib) {
   while (yc--) {
     xc = _xc;
     while (xc--)
-      *pos++ = Attrib;
+      *pos++ = Attr;
     pos += delta;
   }
 }
@@ -1011,7 +1011,7 @@ void RefreshVideo(void) {
    * and also updates the cursor */
 }
 
-INLINE uldat Plain_countDirtyVideo(dat X1, dat Y1, dat X2, dat Y2) {
+inline uldat Plain_countDirtyVideo(dat X1, dat Y1, dat X2, dat Y2) {
   uldat t = 0;
   dat a, b;
 
@@ -1160,7 +1160,7 @@ byte StdAddMouseEvent(udat Code, dat MouseX, dat MouseY) {
     Event->Y = MouseY;
     return ttrue;
   }
-  if ((Msg = New(msg)(Fn_msg, msg_mouse, 0))) {
+  if ((Msg = New(msg)(msg_mouse, 0))) {
     Event = &Msg->Event.EventMouse;
     Event->Code = Code;
     Event->ShiftFlags = (udat)0;
@@ -1179,7 +1179,7 @@ byte KeyboardEventCommon(udat Code, udat ShiftFlags, udat Len, const char *Seq) 
   if (HW->FlagsHW & FlHWNoInput)
     return ttrue;
 
-  if ((Msg = New(msg)(Fn_msg, msg_key, Len))) {
+  if ((Msg = New(msg)(msg_key, Len))) {
     Event = &Msg->Event.EventKeyboard;
 
     Event->Code = Code;

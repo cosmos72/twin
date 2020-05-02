@@ -42,21 +42,21 @@
 #include <netinet/in.h> /* for htons(), htonl() - alternate location */
 #endif
 
-INLINE void FlipCopyMem(const void *srcv, void *dstv, uldat len) {
+inline void FlipCopyMem(const void *srcv, void *dstv, uldat len) {
   const byte *src = (const byte *)srcv;
   byte *dst = (byte *)dstv;
   switch (len) {
   case 2:
-    *(uint16_t * TW_ATTR_PTR_ALIGNED_1) dst = htons(*(uint16_t const * TW_ATTR_PTR_ALIGNED_1) src);
+    *(uint16_t * TW_ATTR_PTR_ALIGNED_1) dst = htons(*(uint16_t const *TW_ATTR_PTR_ALIGNED_1)src);
     break;
   case 4:
-    *(uint32_t * TW_ATTR_PTR_ALIGNED_1) dst = htonl(*(uint32_t const * TW_ATTR_PTR_ALIGNED_1) src);
+    *(uint32_t * TW_ATTR_PTR_ALIGNED_1) dst = htonl(*(uint32_t const *TW_ATTR_PTR_ALIGNED_1)src);
     break;
   case 8:
     ((uint32_t * TW_ATTR_PTR_ALIGNED_1) dst)[0] =
-        htonl(((uint32_t const * TW_ATTR_PTR_ALIGNED_1) src)[1]);
+        htonl(((uint32_t const *TW_ATTR_PTR_ALIGNED_1)src)[1]);
     ((uint32_t * TW_ATTR_PTR_ALIGNED_1) dst)[1] =
-        htonl(((uint32_t const * TW_ATTR_PTR_ALIGNED_1) src)[0]);
+        htonl(((uint32_t const *TW_ATTR_PTR_ALIGNED_1)src)[0]);
     break;
   default:
     src += len - 1;
@@ -67,7 +67,7 @@ INLINE void FlipCopyMem(const void *srcv, void *dstv, uldat len) {
 }
 
 #else
-INLINE void FlipCopyMem(const byte *src, byte *dst, uldat len) {
+inline void FlipCopyMem(const byte *src, byte *dst, uldat len) {
   src += len - 1;
   while (len--)
     *dst++ = *src--;
@@ -156,7 +156,7 @@ static byte *alienPush(const void *src, uldat len, byte *dst, uldat alien_len) {
  * translate from alien data, copying len bytes from srcsize chunks to dstsize chunks, optionally
  * flipping byte order. assume dst is large enough to hold translated data.
  */
-INLINE void alienReadVec(const byte *src, byte *dst, uldat len, uldat srcsize, uldat dstsize,
+inline void alienReadVec(const byte *src, byte *dst, uldat len, uldat srcsize, uldat dstsize,
                          byte flag) {
   /* round to srcsize multiple */
   len = (len / srcsize) * srcsize;
@@ -310,7 +310,7 @@ static void alienTranslateTCellV_CP437_to_UTF_32(tcell *H, uldat Len) {
  * twin < 0.8.0 used a different encoding {utf16_lo, color, utf16_hi, extra}
  * for tcell. detected by SIZEOF(trune) == 2 && SIZEOF(tcell) == 4
  */
-TW_INLINE tcell alienFixDecodeTCell(tcell attr) {
+inline tcell alienFixDecodeTCell(tcell attr) {
   trune f = (attr & 0xFF) | ((attr >> 8) & 0xFF00);
   tcolor col = (attr >> 8) & 0xFF;
   tcell extra = (attr >> 24) & 0x7F;
@@ -318,7 +318,7 @@ TW_INLINE tcell alienFixDecodeTCell(tcell attr) {
   return attr;
 }
 
-TW_INLINE tcell alienMaybeFixDecodeTCell(tcell attr) {
+inline tcell alienMaybeFixDecodeTCell(tcell attr) {
   if (SIZEOF(trune) == 2 && SIZEOF(tcell) == 4)
     attr = alienFixDecodeTCell(attr);
   return attr;
@@ -331,8 +331,8 @@ static void alienFixDecodeTCellV(tcell *H, uldat Len) {
   }
 }
 
-TW_INLINE ldat alienDecodeArg(uldat id, const char *Format, uldat n, tsfield a, uldat mask[1],
-                              byte flag[1], ldat fail) {
+inline ldat alienDecodeArg(uldat id, const char *Format, uldat n, tsfield a, uldat mask[1],
+                           byte flag[1], ldat fail) {
   void *A;
   const void *av;
   topaque nlen;

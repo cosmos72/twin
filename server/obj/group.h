@@ -19,7 +19,7 @@
 /* ggroup -- gadget group */
 
 struct s_fn_group {
-  uldat Magic, Size;
+  uldat Magic;
   void (*Insert)(ggroup, msgport MsgPort, ggroup Prev, ggroup Next);
   void (*Remove)(ggroup);
   void (*Delete)(ggroup);
@@ -41,14 +41,13 @@ struct s_group {
   gadget FirstG, LastG; /* list in this ggroup */
   gadget SelectG;
 
+  static ggroup Create(msgport Parent);
+  ggroup Init(msgport Parent);
+
   /* obj */
   uldat Magic() const {
     return Fn->Magic;
   }
-  uldat Size() const {
-    return Fn->Size;
-  }
-  static ggroup Create(fn_group Fn, msgport Parent);
   void Remove() {
     Fn->Remove(this);
   }

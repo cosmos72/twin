@@ -54,16 +54,15 @@ tpos FakeFindBorderWindow(window W, dat u, dat v, byte Border, tcell *PtrAttr);
 #define Info4Menu(Menu, Flags, Len, Text, ColText)                                                 \
   Act(SetInfo, (Menu))((Menu), (Flags), (Len), (Text), (ColText))
 
-#define Win4Menu(Menu) Do(Create4Menu, window)(Fn_window, (Menu))
+#define Win4Menu(Menu) Do(Create4Menu, window)(Menu)
 
 #define Row4Menu(Window, Code, Flags, Len, Name)                                                   \
-  (row) Do(Create4Menu, menuitem)(Fn_menuitem, (obj)(Window), (window)0, (Code), (Flags), (Len),   \
-                                  (Name))
+  (row) Do(Create4Menu, menuitem)((obj)(Window), (window)0, (Code), (Flags), (Len), (Name))
 
 #define Item4Menu(Menu, Window, Flags, Len, Name)                                                  \
-  Do(Create4Menu, menuitem)(Fn_menuitem, (obj)(Menu), (Window), (udat)0, (Flags), (Len), (Name))
+  Do(Create4Menu, menuitem)((obj)(Menu), (Window), (udat)0, (Flags), (Len), (Name))
 
-#define Item4MenuCommon(Menu) Do(Create4MenuCommon, menuitem)(Fn_menuitem, (Menu))
+#define Item4MenuCommon(Menu) Do(Create4MenuCommon, menuitem)(Menu)
 
 void *OverrideMth(void **where, void *OldMethod, void *NewMethod);
 

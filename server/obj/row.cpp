@@ -10,17 +10,35 @@
  *
  */
 
+#include "alloc.h"        // AllocMem0()
+#include "fn.h"           // Fn_row
+#include "id.h"           // AssignId()
 #include "obj/menuitem.h" // COD_RESERVED
 #include "obj/row.h"
 
-row s_row::Create(fn_row Fn, udat code, byte flags) {
-  row Row = NULL;
-  if (code < COD_RESERVED && (Row = (row)s_obj::Create((fn_obj)Fn))) {
-    Row->Code = code;
-    Row->Flags = flags;
-    Row->Gap = Row->LenGap = Row->Len = Row->MaxLen = 0;
-    Row->Text = NULL;
-    Row->ColText = NULL;
+row s_row::Create(udat code, byte flags) {
+  row r = NULL;
+  if (code < COD_RESERVED) {
+    r = (row)AllocMem0(sizeof(s_row), 1);
+    if (r) {
+      r->Fn = Fn_row;
+      if (!r->Init(code, flags)) {
+        r->Delete();
+        r = NULL;
+      }
+    }
   }
-  return Row;
+  return r;
+}
+
+row s_row::Init(udat code, byte flags) {
+  if (code < COD_RESERVED && ((obj)this)->Init()) {
+    this->Code = code;
+    this->Flags = flags;
+    // this->Gap = this->LenGap = this->Len = this->MaxLen = 0;
+    // this->Text = NULL;
+    // this->ColText = NULL;
+    return this;
+  }
+  return NULL;
 }

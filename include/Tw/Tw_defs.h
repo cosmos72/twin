@@ -87,7 +87,7 @@ enum tw_kbd_shift_flag {
   TW_KBD_NUM_LOCK = 0x10,
 };
 
-/* Widget->Attrib */
+/* Widget->Attr */
 /*
  * ask the server to send events even for mouse motion without any pressed button.
  * works only if WIDGET_WANT_MOUSE is set too.
@@ -109,7 +109,7 @@ enum tw_widget_flag {
   TW_WIDGETFL_NOTVISIBLE = 0x8000,
 };
 
-/* Gadget->Attrib */
+/* Gadget->Attr */
 enum tw_gadget_attrib {
   TW_GADGET_WANT_MOUSE_MOTION = TW_WIDGET_WANT_MOUSE_MOTION, /* 0x0001 */
   TW_GADGET_WANT_KEYS = TW_WIDGET_WANT_KEYS,                 /* 0x0002 */
@@ -135,7 +135,7 @@ enum tw_gadget_flag {
   TW_GADGETFL_NOTVISIBLE = TW_WIDGETFL_NOTVISIBLE,
 };
 
-/* Window->Attrib */
+/* Window->Attr */
 enum tw_window_attrib {
   TW_WINDOW_WANT_MOUSE_MOTION = TW_WIDGET_WANT_MOUSE_MOTION, /* 0x0001 */
   TW_WINDOW_WANT_KEYS = TW_WIDGET_WANT_KEYS,                 /* 0x0002 */

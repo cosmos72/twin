@@ -186,7 +186,7 @@ static void GGI_KeyboardEvent(int fd, display_hw hw) {
 static tcolor _col;
 
 #define GFG(col)                                                                                   \
-  if (gforeground != gcol[TCOLFG(col)])                                                             \
+  if (gforeground != gcol[TCOLFG(col)])                                                            \
   ggiSetGCForeground(gvis, gforeground = gcol[TCOLFG(col)])
 
 #define GBG(col)                                                                                   \
@@ -198,7 +198,7 @@ static tcolor _col;
   GBG(col);                                                                                        \
   ggiPuts(gvis, xbegin, ybegin, buf)
 
-INLINE void GGI_Mogrify(dat x, dat y, uldat len) {
+inline void GGI_Mogrify(dat x, dat y, uldat len) {
   tcell *V, *oV;
   tcolor col;
   udat buflen = 0;

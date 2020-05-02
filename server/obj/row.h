@@ -18,7 +18,7 @@
 /* row */
 
 struct s_fn_row {
-  uldat Magic, Size;
+  uldat Magic;
   void (*Insert)(row, window, row Prev, row Next);
   void (*Remove)(row);
   void (*Delete)(row);
@@ -44,14 +44,13 @@ struct s_row {
   trune *Text;
   tcolor *ColText;
 
+  static row Create(udat code, byte flags);
+  row Init(udat code, byte flags);
+
   /* obj */
   uldat Magic() const {
     return Fn->Magic;
   }
-  uldat Size() const {
-    return Fn->Size;
-  }
-  static row Create(fn_row Fn, udat code, byte flags);
   void Remove() {
     Fn->Remove(this);
   }

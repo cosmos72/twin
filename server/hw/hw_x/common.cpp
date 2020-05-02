@@ -5,7 +5,7 @@
 /* this can stay static, X11_FlushHW() is not reentrant */
 static tcolor _col;
 
-INLINE void X11_Mogrify(dat x, dat y, ldat len) {
+inline void X11_Mogrify(dat x, dat y, ldat len) {
   tcell *V, *oV;
   tcolor col;
   udat buflen = 0;
@@ -56,7 +56,7 @@ INLINE void X11_Mogrify(dat x, dat y, ldat len) {
   }
 }
 
-INLINE ldat diff(ldat x, ldat y) {
+inline ldat diff(ldat x, ldat y) {
   return x >= y ? x - y : y - x;
 }
 
@@ -471,7 +471,7 @@ fail:
 }
 
 EXTERN_C byte InitModule(module Module) {
-  Module->Init = X11_InitHW;
+  Module->DoInit = X11_InitHW;
   return ttrue;
 }
 

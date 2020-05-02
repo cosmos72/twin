@@ -2,10 +2,10 @@
 
 #ifdef CONF_HW_TTY_TERMCAP
 
-INLINE void termcap_SetCursorType(uldat type) {
+inline void termcap_SetCursorType(uldat type) {
   fprintf(stdOUT, "%s", (type & 0xFFFFFFl) == NOCURSOR ? tc_cursor_off : tc_cursor_on);
 }
-INLINE void termcap_MoveToXY(udat x, udat y) {
+inline void termcap_MoveToXY(udat x, udat y) {
   fputs(tgoto(tc_cursor_goto, x, y), stdOUT);
 }
 
@@ -265,13 +265,13 @@ static void termcap_QuitVideo(void) {
   do {                                                                                             \
   } while (0)
 
-INLINE char *termcap_CopyAttr(char *attr, char *dest) {
+inline char *termcap_CopyAttr(char *attr, char *dest) {
   while ((*dest++ = *attr++))
     ;
   return --dest;
 }
 
-INLINE void termcap_SetColor(tcolor col) {
+inline void termcap_SetColor(tcolor col) {
   static char colbuf[80];
   char *colp = colbuf;
   byte c;
@@ -318,7 +318,7 @@ INLINE void termcap_SetColor(tcolor col) {
   fputs(colbuf, stdOUT);
 }
 
-INLINE void termcap_Mogrify(dat x, dat y, uldat len) {
+inline void termcap_Mogrify(dat x, dat y, uldat len) {
   uldat delta = x + y * (uldat)DisplayWidth;
   tcell *V, *oV;
   tcolor col;
@@ -363,7 +363,7 @@ INLINE void termcap_Mogrify(dat x, dat y, uldat len) {
   }
 }
 
-INLINE void termcap_SingleMogrify(dat x, dat y, tcell V) {
+inline void termcap_SingleMogrify(dat x, dat y, tcell V) {
   trune c, _c;
 
   if (!wrapglitch && x == DisplayWidth - 1 && y == DisplayHeight - 1)

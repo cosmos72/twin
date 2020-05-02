@@ -16,7 +16,7 @@
 #include "obj/obj.h"
 
 struct s_fn_mutex {
-  uldat Magic, Size;
+  uldat Magic;
   void (*Insert)(mutex, all, mutex Prev, mutex Next);
   void (*Remove)(mutex);
   void (*Delete)(mutex);
@@ -38,19 +38,25 @@ struct s_mutex {
   byte Perm, NameLen;
   char *Name;
 
+  static mutex Create(msgport owner, byte namelen, const char *name, byte perm);
+  mutex Init(msgport owner, byte namelen, const char *name, byte perm);
+
   /* obj */
   uldat Magic() const {
     return Fn->Magic;
   }
-  uldat Size() const {
-    return Fn->Size;
-  }
-  static mutex Create(fn_mutex Fn, msgport owner, byte namelen, const char *name, byte perm);
   void Remove() {
     Fn->Remove(this);
   }
   void Delete() {
     Fn->Delete(this);
+  }
+  /* mutex */
+  void Own(msgport owner) {
+    Fn->Own(this, owner);
+  }
+  void DisOwn() {
+    Fn->DisOwn(this);
   }
 };
 

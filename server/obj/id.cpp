@@ -24,7 +24,7 @@
 static obj *IdList[magic_n];
 static uldat IdSize[magic_n], IdTop[magic_n], IdBottom[magic_n];
 
-INLINE uldat IdListGrow(byte i) {
+inline uldat IdListGrow(byte i) {
   uldat oldsize, size;
   obj *newIdList;
 
@@ -45,7 +45,7 @@ INLINE uldat IdListGrow(byte i) {
   return oldsize;
 }
 
-INLINE void IdListShrink(byte i) {
+inline void IdListShrink(byte i) {
   obj *newIdList;
   uldat size = Max2(TW_BIGBUFF, IdTop[i] << 1);
 
@@ -56,7 +56,7 @@ INLINE void IdListShrink(byte i) {
   }
 }
 
-INLINE uldat IdListGet(byte i) {
+inline uldat IdListGet(byte i) {
   if (IdBottom[i] == IdSize[i])
     return IdListGrow(i);
 
@@ -83,7 +83,7 @@ obj Id2Obj(byte i, uldat Id) {
   return (obj)0;
 }
 
-INLINE byte _AssignId(byte i, obj Obj) {
+inline byte _AssignId(byte i, obj Obj) {
   uldat Id, j;
   if ((Id = IdListGet(i)) != NOSLOT) {
     Obj->Id = Id | ((uldat)i << magic_shift);
@@ -100,7 +100,7 @@ INLINE byte _AssignId(byte i, obj Obj) {
   return tfalse;
 }
 
-INLINE void _DropId(byte i, obj Obj) {
+inline void _DropId(byte i, obj Obj) {
   uldat Id = Obj->Id & MAXID, j;
 
   if (Id < IdTop[i] && IdList[i][Id] == Obj /* paranoia */) {

@@ -18,7 +18,7 @@
 #include <Tw/datatypes.h>
 
 struct s_fn_msgport {
-  uldat Magic, Size;
+  uldat Magic;
   void (*Insert)(msgport, all, msgport Prev, msgport Next);
   void (*Remove)(msgport);
   void (*Delete)(msgport);
@@ -51,15 +51,15 @@ struct s_msgport {
   extension *Es;                /* extensions used by this MsgPort */
   display_hw AttachHW;          /* that was attached as told by MsgPort */
 
+  static msgport Create(byte NameLen, const char *Name, tany PauseSec, tany PauseFraction,
+                        byte WakeUp, void (*Handler)(msgport));
+  msgport Init(byte NameLen, const char *Name, tany PauseSec, tany PauseFraction, byte WakeUp,
+               void (*Handler)(msgport));
+
   /* obj */
   uldat Magic() const {
     return Fn->Magic;
   }
-  uldat Size() const {
-    return Fn->Size;
-  }
-  static msgport Create(fn_msgport Fn, byte NameLen, const char *Name, tany PauseSec,
-                        tany PauseFraction, byte WakeUp, void (*Handler)(msgport));
   void Remove() {
     Fn->Remove(this);
   }

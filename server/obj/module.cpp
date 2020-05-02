@@ -15,23 +15,32 @@
 #include "alloc.h"   // CloneStrL()
 #include "methods.h" // InsertLast()
 
-module s_module::Create(fn_module Fn, uldat namelen, const char *name) {
-  module Module = NULL;
-  char *newName = NULL;
-
-  if (name && (newName = CloneStrL(name, namelen))) {
-    if ((Module = (module)s_obj::Create((fn_obj)Fn))) {
-
-      Module->NameLen = namelen;
-      Module->Name = newName;
-      Module->Used = 0;
-      Module->Handle = NULL;
-      Module->Init = NULL;
-
-      InsertLast(Module, Module, ::All);
-      return Module;
+module s_module::Create(uldat namelen, const char *name) {
+  module m = NULL;
+  if (name) {
+    m = (module)AllocMem0(sizeof(s_module), 1);
+    if (m) {
+      m->Fn = Fn_module;
+      if (!m->Init(namelen, name)) {
+        m->Delete();
+        m = NULL;
+      }
     }
-    FreeMem(newName);
   }
-  return Module;
+  return m;
+}
+
+module s_module::Init(uldat namelen, const char *name) {
+  if (!name || !((obj)this)->Init()) {
+    return NULL;
+  }
+  if (!(this->Name = CloneStrL(name, namelen))) {
+    return NULL;
+  }
+  this->NameLen = namelen;
+  this->Used = 0;
+  // this->Handle = NULL;
+  // this->DoInit = NULL;
+  InsertLast(Module, this, ::All);
+  return this;
 }

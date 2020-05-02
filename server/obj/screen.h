@@ -21,7 +21,7 @@ struct s_sB { /* for SCREENFL_USEBG screens */
 };
 
 struct s_fn_screen {
-  uldat Magic, Size;
+  uldat Magic;
   void (*Insert)(screen, all, screen Prev, screen Next);
   void (*Remove)(screen);
   void (*Delete)(screen);
@@ -51,7 +51,7 @@ struct s_fn_screen {
   fn_widget Fn_Widget;
   menu (*FindMenu)(screen);
   screen (*Find)(dat j);
-  screen (*CreateSimple)(fn_screen, dat NameLen, const char *Name, tcell Bg);
+  screen (*CreateSimple)(dat NameLen, const char *Name, tcell Bg);
   void (*BgImage)(screen, dat BgWidth, dat BgHeight, const tcell *Bg);
   void (*DrawMenu)(screen, dat Xstart, dat Xend);
   void (*ActivateMenu)(screen, menuitem, byte ByMouse);
@@ -67,7 +67,7 @@ struct s_screen {
   widget FirstW, LastW; /* list of children */
   widget FocusW;        /* same as SelectW : focused child */
   dat dummyLeft, YLimit, dummyXWidth, dummyYWidth;
-  uldat Attrib;
+  uldat Attr;
   uldat Flags;
   ldat XLogic, YLogic;
   widget O_Prev, O_Next; /* list with the same msgport (owner) */
@@ -89,15 +89,13 @@ struct s_screen {
   fn_hook FnHookW; /* allow hooks on children Map()/UnMap() inside this widget */
   widget HookW;
 
+  static screen Create(dat NameLen, const char *Name, dat BgWidth, dat BgHeight, const tcell *Bg);
+  screen Init(dat NameLen, const char *Name, dat BgWidth, dat BgHeight, const tcell *Bg);
+
   /* obj */
   uldat Magic() const {
     return Fn->Magic;
   }
-  uldat Size() const {
-    return Fn->Size;
-  }
-  static screen Create(fn_screen Fn, dat NameLen, const char *Name, dat BgWidth, dat BgHeight,
-                       const tcell *Bg);
   void Remove() {
     Fn->Remove(this);
   }
@@ -106,7 +104,7 @@ struct s_screen {
   }
 };
 
-/* Screen->Attrib */
+/* Screen->Attr */
 /* not used */
 
 /* Screen->Flags */

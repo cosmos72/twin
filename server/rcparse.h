@@ -184,13 +184,13 @@ static node ReverseList(node l) {
   return base;
 }
 
-INLINE node MakeNode(str name) {
+inline node MakeNode(str name) {
   node n = NEW();
   n->name = name; /* this is my_malloc()ed memory (done by rcparse.l) */
   return n;
 }
 
-INLINE node MakeBuiltinFunc(ldat id) {
+inline node MakeBuiltinFunc(ldat id) {
   node n = NEW();
   n->id = id;
   return n;
@@ -201,7 +201,7 @@ INLINE node MakeBuiltinFunc(ldat id) {
  * do nothing in that case
  * (it's a way to eat empty lines, they are coded as NULL nodes)
  */
-INLINE node AddtoNodeList(node l, node n) {
+inline node AddtoNodeList(node l, node n) {
   if (n) {
     n->next = l;
     return n;
@@ -1173,7 +1173,7 @@ static byte CreateNeededScreens(node list, screen *res_Screens) {
         }
         h++;
       }
-      s = New(screen)(Fn_screen, strlen(list->name), list->name, w, h, attr);
+      s = New(screen)(strlen(list->name), list->name, w, h, attr);
 
       FreeMem(attr);
     }
@@ -1275,8 +1275,8 @@ static byte NewCommonMenu(void **shm_M, menu *res_CommonMenu, node **res_MenuBin
   new_MenuBindsMax = 0;
   new_MenuList = (node)(*(shm_M + (&MenuList - Globals)));
 
-  if (!(Menu = New(menu)(Fn_menu, Ext(WM, MsgPort), (tcolor)0, (tcolor)0, (tcolor)0,
-                                (tcolor)0, (tcolor)0, (tcolor)0, ttrue)))
+  if (!(Menu = New(menu)(Ext(WM, MsgPort), (tcolor)0, (tcolor)0, (tcolor)0, (tcolor)0, (tcolor)0,
+                         (tcolor)0, ttrue)))
     return tfalse;
 
   /* ok, now create the CommonMenu. Fill new_MenuBinds[] as we proceed */
@@ -1500,7 +1500,7 @@ static byte rcload(void) {
 }
 
 EXTERN_C byte InitModule(module Module) {
-  Module->Init = rcload;
+  Module->DoInit = rcload;
   return ttrue;
 }
 

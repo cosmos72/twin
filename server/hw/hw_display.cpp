@@ -36,7 +36,7 @@ static msg Msg;
 static event_display *ev;
 static uldat Used;
 
-INLINE void display_CreateMsg(udat Code, udat Len) {
+inline void display_CreateMsg(udat Code, udat Len) {
   Msg->Event.EventDisplay.Code = Code;
   Msg->Event.EventDisplay.Len = Len;
 }
@@ -169,7 +169,7 @@ static void display_HelperH(msgport Port) {
   display_HandleEvent(Port->AttachHW);
 }
 
-INLINE void display_DrawTCell(dat x, dat y, udat buflen, tcell *buf) {
+inline void display_DrawTCell(dat x, dat y, udat buflen, tcell *buf) {
   display_CreateMsg(ev_dpy_DrawTCell, buflen * sizeof(tcell));
   ev->X = x;
   ev->Y = y;
@@ -177,7 +177,7 @@ INLINE void display_DrawTCell(dat x, dat y, udat buflen, tcell *buf) {
   Ext(Socket, SendMsg)(display, Msg);
 }
 
-INLINE void display_Mogrify(dat x, dat y, uldat len) {
+inline void display_Mogrify(dat x, dat y, uldat len) {
   tcell *V, *oV;
   uldat buflen = 0;
   tcell *buf;
@@ -203,14 +203,14 @@ INLINE void display_Mogrify(dat x, dat y, uldat len) {
     display_DrawTCell(xbegin, ybegin, buflen, buf);
 }
 
-INLINE void display_MoveToXY(udat x, udat y) {
+inline void display_MoveToXY(udat x, udat y) {
   display_CreateMsg(ev_dpy_MoveToXY, 0);
   ev->X = x;
   ev->Y = y;
   Ext(Socket, SendMsg)(display, Msg);
 }
 
-INLINE void display_SetCursorType(uldat type) {
+inline void display_SetCursorType(uldat type) {
   display_CreateMsg(ev_dpy_SetCursorType, sizeof(uldat));
   ev->Data = &type;
   Ext(Socket, SendMsg)(display, Msg);
@@ -390,7 +390,7 @@ static void display_QuitHW(void) {
   }
 
   /*
-   * the rest is done by Act(Quit,HW)(HW) by the upper layers,
+   * the rest is done by Act(DoQuit,HW)(HW) by the upper layers,
    * including KillSlot(HW->AttachSlot) which forces twdisplay
    * to shutdown its display and quit
    */
@@ -449,9 +449,8 @@ static byte display_InitHW(void) {
   }
 
   if (!(HW->Private = (struct display_data *)AllocMem(sizeof(struct display_data))) ||
-      !(Helper =
-            New(msgport)(Fn_msgport, 16, "twdisplay Helper", 0, 0, 0, display_HelperH)) ||
-      (!Msg && !(Msg = New(msg)(Fn_msg, msg_display, sizeof(event_display))))) {
+      !(Helper = New(msgport)(16, "twdisplay Helper", 0, 0, 0, display_HelperH)) ||
+      (!Msg && !(Msg = New(msg)(msg_display, sizeof(event_display))))) {
 
     if (HW->Private) {
       if (Helper) {
@@ -557,7 +556,7 @@ static byte display_InitHW(void) {
 }
 
 EXTERN_C byte InitModule(module Module) {
-  Module->Init = display_InitHW;
+  Module->DoInit = display_InitHW;
   return ttrue;
 }
 

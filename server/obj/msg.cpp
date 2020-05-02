@@ -10,15 +10,15 @@
  *
  */
 
-#include "obj/msg.h"
-
 #include "alloc.h"  // AllocMem()
+#include "fn.h"     // Fn_msg
 #include "obj/id.h" // AssignId()
+#include "obj/msg.h"
 
 #define Delta ((size_t) & (((msg)0)->Event))
 
-msg s_msg::Create(fn_msg Fn, udat type, udat eventlen) {
-  msg Msg;
+msg s_msg::Create(udat type, udat eventlen) {
+  msg m;
 
   switch (type) {
   case msg_map:
@@ -70,19 +70,25 @@ msg s_msg::Create(fn_msg Fn, udat type, udat eventlen) {
     return NULL;
   }
 
-  if ((Msg = (msg)AllocMem(eventlen + Delta))) {
-    if (AssignId((fn_obj)Fn, (obj)Msg)) {
-      Msg->Fn = Fn;
-      Msg->Prev = Msg->Next = NULL;
-      Msg->MsgPort = NULL;
-      Msg->Type = type;
-      Msg->Len = eventlen;
-      return Msg;
+  if ((m = (msg)AllocMem0(eventlen + Delta, 1))) {
+    m->Fn = Fn_msg;
+    if (!m->Init(type, eventlen)) {
+      m->Delete();
+      m = NULL;
     }
-    FreeMem(Msg);
-    Msg = NULL;
   }
-  return Msg;
+  return m;
 }
 
 #undef Delta
+
+msg s_msg::Init(udat type, udat eventlen) {
+  if (AssignId((fn_obj)Fn, (obj)this)) {
+    // this->Prev = this->Next = NULL;
+    // this->MsgPort = NULL;
+    this->Type = type;
+    this->Len = eventlen;
+    return this;
+  }
+  return NULL;
+}

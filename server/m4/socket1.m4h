@@ -39,7 +39,7 @@ define(`ARG', `ifelse($1, 1, `', ``, '')`'ifelse($3, V, `(const $2 *)a[$1]_vec',
 
 define(`PARSE', `ifelse($#, 2, `', `ARG($1,$2,t$3)`'PARSE(incr($1), NSHIFT(4, $@))')')
 
-define(`CALL', `ifelse($4, 0, sock`'$2`'$3($6), $4, 1, Do($2,translit($3, `A-Z', `a-z'))(Fn_`'translit($3, `A-Z', `a-z'), $6), Act($2,($5)a[1]_obj)($6));')
+define(`CALL', `ifelse($4, 0, sock`'$2`'$3($6), $4, 1, Do($2,translit($3, `A-Z', `a-z'))($6), Act($2,($5)a[1]_obj)($6));')
 
 define(`PROTO', `case order_`'TRIM($3)`'TRIM($4):
     if (N >= eval(($# - 5) / 3))

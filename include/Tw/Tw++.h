@@ -131,9 +131,9 @@ public:
   inline ~TWidget() {
   }
 
-  inline TWidget(dat XWidth, dat YWidth, uldat Attrib = 0, uldat Flags = 0, dat Left = 0,
-                 dat Up = 0, tcell Fill = TCELL(TCOL(tblack, twhite), ' ')) {
-    Id = TwCreateWidget(XWidth, YWidth, Attrib, Flags, Left, Up, Fill);
+  inline TWidget(dat XWidth, dat YWidth, uldat Attr = 0, uldat Flags = 0, dat Left = 0, dat Up = 0,
+                 tcell Fill = TCELL(TCOL(tblack, twhite), ' ')) {
+    Id = TwCreateWidget(XWidth, YWidth, Attr, Flags, Left, Up, Fill);
   }
   static inline void map(twidget myId, twidget parentId) {
     TwMapWidget(myId, parentId);
@@ -184,20 +184,20 @@ public:
   }
 
   /*
-   * args are `udat Code, udat Flags, uldat Attrib' to exploit optional paremeters,
-   * while in Tw.h they are `uldat Attrib, uldat Flags, udat Code'.
+   * args are `udat Code, udat Flags, uldat Attr' to exploit optional paremeters,
+   * while in Tw.h they are `uldat Attr, uldat Flags, udat Code'.
    *
    * Take care.
    */
   inline TGadget(const TWidget *parent, dat XWidth, dat YWidth, const char *TextNormal,
                  udat Code = 0, uldat Flags = TW_GADGETFL_USETEXT | TW_GADGETFL_TEXT_DEFCOL,
-                 uldat Attrib = 0, tcolor ColText = TCOL(tblack, tgreen),
+                 uldat Attr = 0, tcolor ColText = TCOL(tblack, tgreen),
                  tcolor ColTextSelect = TCOL(thigh | twhite, tgreen),
                  tcolor ColTextDisabled = TCOL(thigh | tblack, tgreen),
                  tcolor ColTextSelectDisabled = TCOL(thigh | tblack, tgreen), dat Left = 0,
                  dat Up = 0) {
     Id = TwCreateGadget(/* TwCreateGadget(...) is a macro... */
-                        parent->Id, XWidth, YWidth, TextNormal, Attrib, Flags, Code, ColText,
+                        parent->Id, XWidth, YWidth, TextNormal, Attr, Flags, Code, ColText,
                         ColTextSelect, ColTextDisabled, ColTextSelectDisabled, Left, Up);
   }
   /*
@@ -306,11 +306,11 @@ public:
 
   inline TWindow(const TMenu *Menu, const char *name = "", tcolor ColText = TCOL(tblack, twhite),
                  uldat CursorType = TW_NOCURSOR,
-                 uldat Attrib = TW_WINDOW_WANT_KEYS | TW_WINDOW_CLOSE | TW_WINDOW_DRAG |
-                                TW_WINDOW_RESIZE,
+                 uldat Attr = TW_WINDOW_WANT_KEYS | TW_WINDOW_CLOSE | TW_WINDOW_DRAG |
+                              TW_WINDOW_RESIZE,
                  uldat Flags = TW_WINDOWFL_USEROWS, dat XWidth = 0, dat YWidth = 0,
                  dat ScrollBackLines = 0) {
-    Id = TwCreateWindow(strlen(name), name, NULL, Menu->Id, ColText, CursorType, Attrib, Flags,
+    Id = TwCreateWindow(strlen(name), name, NULL, Menu->Id, ColText, CursorType, Attr, Flags,
                         XWidth, YWidth, ScrollBackLines);
   }
   static inline TWindow *create4Menu(const TMenu *Menu) {

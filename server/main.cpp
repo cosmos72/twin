@@ -53,7 +53,7 @@ int (*OverrideSelect)(int n, fd_set *readfds, fd_set *writefds, fd_set *exceptfd
 
 static timevalue *Now;
 
-INLINE struct timeval *CalcSleepTime(struct timeval *sleeptime, msgport Port, timevalue *now) {
+inline struct timeval *CalcSleepTime(struct timeval *sleeptime, msgport Port, timevalue *now) {
   byte got = 0;
   timevalue *call = &Port->CallTime;
 

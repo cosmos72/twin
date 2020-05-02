@@ -10,49 +10,65 @@
  *
  */
 
+#include "algo.h"  // Max2()
+#include "alloc.h" // AllocMem0(), CloneStr2TRune()
+#include "fn.h"    // Fn_menuitem
+#include "id.h"    // AssignId()
 #include "obj/menuitem.h"
-#include "algo.h"         // Max2()
-#include "alloc.h"        // FreeMem(), CloneStr2TRune()
-#include "resize.h"       // SyncMenu()
-#include "twin.h"         // IS_WINDOW()
+#include "resize.h" // SyncMenu()
+#include "twin.h"   // IS_WINDOW()
+
 #include <Tw/datasizes.h> // TW_MAXLDAT
 
-menuitem s_menuitem::Create(fn_menuitem Fn, obj Parent, window Window, udat Code, byte Flags,
-                            dat Left, ldat Len, dat ShortCut, const char *Name) {
-  menuitem MenuItem = (menuitem)0;
-  trune *_Name = NULL;
+menuitem s_menuitem::Create(obj parent, window w, udat code, byte flags, dat left, ldat len,
+                            dat shortcut, const char *name) {
+  menuitem item = NULL;
+  if (parent && (IS_MENU(parent) || (IS_WINDOW(parent) && W_USE((window)parent, USEROWS))) &&
+      (!w || IS_WINDOW(w)) && name) {
 
-  if (Parent && (IS_MENU(Parent) || (IS_WINDOW(Parent) && W_USE((window)Parent, USEROWS))) &&
-      (!Window || IS_WINDOW(Window)) && Name && (_Name = CloneStr2TRune(Name, Len)) &&
-      (MenuItem = (menuitem)s_row::Create((fn_row)Fn, Code, Flags))) {
-
-    MenuItem->Len = Len;
-    MenuItem->Text = _Name;
-    MenuItem->Window = Window;
-    MenuItem->Left = Left;
-    MenuItem->ShortCut = ShortCut;
-    MenuItem->WCurY = TW_MAXLDAT;
-
-    if (Window)
-      Window->MenuItem = MenuItem;
-
-    if (IS_WINDOW(Parent)) {
-      Window = (window)Parent;
-
-      if ((ldat)Window->XWidth < (Len = Max2((ldat)10, Len + (ldat)2)))
-        Window->XWidth = Len;
-
-      if ((ldat)Window->YWidth < (Len = Min2(TW_MAXDAT, Window->HLogic + (ldat)3)))
-        Window->YWidth = Len;
-
-      MenuItem->Insert((obj)Window, (menuitem)Window->USE.R.LastRow, NULL);
-    } else {
-      MenuItem->Insert(Parent, ((menu)Parent)->LastI, NULL);
-      SyncMenu((menu)Parent);
+    item = (menuitem)AllocMem0(sizeof(s_menuitem), 1);
+    if (item) {
+      item->Fn = Fn_menuitem;
+      if (!item->Init(parent, w, code, flags, left, len, shortcut, name)) {
+        item->Delete();
+        item = NULL;
+      }
     }
-    return MenuItem;
   }
-  if (_Name)
-    FreeMem(_Name);
-  return MenuItem;
+  return item;
+}
+
+menuitem s_menuitem::Init(obj parent, window w, udat code, byte flags, dat left, ldat len,
+                          dat shortcut, const char *name) {
+
+  if (parent && (IS_MENU(parent) || (IS_WINDOW(parent) && W_USE((window)parent, USEROWS))) &&
+      (!w || IS_WINDOW(w)) && name && (this->Text = CloneStr2TRune(name, len)) &&
+      ((row)this)->Init(code, flags)) {
+
+    this->Len = len;
+    this->Window = w;
+    this->Left = left;
+    this->ShortCut = shortcut;
+    this->WCurY = TW_MAXLDAT;
+
+    if (w)
+      w->MenuItem = this;
+
+    if (IS_WINDOW(parent)) {
+      w = (window)parent;
+
+      if ((ldat)w->XWidth < (len = Max2((ldat)10, len + (ldat)2)))
+        w->XWidth = len;
+
+      if ((ldat)w->YWidth < (len = Min2(TW_MAXDAT, w->HLogic + (ldat)3)))
+        w->YWidth = len;
+
+      this->Insert((obj)w, (menuitem)w->USE.R.LastRow, NULL);
+    } else {
+      this->Insert(parent, ((menu)parent)->LastI, NULL);
+      SyncMenu((menu)parent);
+    }
+    return this;
+  }
+  return NULL;
 }

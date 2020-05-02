@@ -222,7 +222,7 @@ static void insert_char(ldat nr) {
   *Flags &= ~TTY_NEEDWRAP;
 }
 
-INLINE void delete_char(ldat nr) {
+inline void delete_char(ldat nr) {
   dat i;
   tcell *p = Pos;
 
@@ -279,7 +279,7 @@ static void goto_xy(ldat new_x, ldat new_y) {
 }
 
 /* for absolute user moves, when TTY_RELORIG (decom) is set */
-INLINE void goto_axy(ldat new_x, ldat new_y) {
+inline void goto_axy(ldat new_x, ldat new_y) {
   goto_xy(new_x, *Flags & TTY_RELORIG ? (Top + new_y) : new_y);
 }
 
@@ -422,7 +422,7 @@ static void scrolldown(dat t, dat b, dat nr) {
     ScrollFirstWindowArea(0, t, SizeX - 1, b - 1, 0, nr);
 }
 
-INLINE void lf(void) {
+inline void lf(void) {
   /* don't scroll if above bottom of scrolling region, or
    * if below scrolling region
    */
@@ -452,13 +452,13 @@ static void ri(void) {
   *Flags &= ~TTY_NEEDWRAP;
 }
 
-INLINE void cr(void) {
+inline void cr(void) {
   Pos -= X;
   X = 0;
   *Flags &= ~TTY_NEEDWRAP;
 }
 
-INLINE void bs(void) {
+inline void bs(void) {
   if (X) {
     X--;
     Pos--;
@@ -466,7 +466,7 @@ INLINE void bs(void) {
   }
 }
 
-INLINE void del(void) { /* ignored */
+inline void del(void) { /* ignored */
 }
 
 static void csi_J(int vpar) {
@@ -584,13 +584,13 @@ static void update_eff(void) {
     }                                                                                              \
   while (0)
 
-INLINE trune applyG(trune c) {
+inline trune applyG(trune c) {
   if (c < 0x100)
     c = Charset[c];
   return c;
 }
 
-INLINE void csi_m(void) {
+inline void csi_m(void) {
   uldat i;
   udat effects = Effects;
   tcolor fg = TCOLFG(ColText), bg = TCOLBG(ColText);
@@ -697,7 +697,7 @@ static void respond_string(const char *p) {
     /* or we may need to send a Msg to Win->Owner */
     msg Msg;
     event_keyboard *Event;
-    if ((Msg = New(msg)(Fn_msg, msg_widget_key, Len))) {
+    if ((Msg = New(msg)(msg_widget_key, Len))) {
       /* this is the same code as in KeyboardEvent() in hw.c */
       Event = &Msg->Event.EventKeyboard;
       Event->W = (widget)Win;
@@ -720,14 +720,14 @@ static void cursor_report(void) {
   respond_string(buf);
 }
 
-INLINE void status_report(void) {
+inline void status_report(void) {
   respond_string("\033[0n"); /* Terminal ok */
 }
 
 /*
  * this is what the terminal answers to a ESC-Z or csi0c query.
  */
-INLINE void respond_ID(void) {
+inline void respond_ID(void) {
   /* VT102ID (returned by linux console) is "\033[?6c" */
   /* twin <= 0.3.8  reports "\033[?6;3c" to indicate xterm-style mouse features */
   /* twin <= 0.3.10 reports "\033[?6;4c", can also report mouse motion with no buttons pressed */
@@ -768,7 +768,7 @@ static void set_mode(byte on_off) {
       case 9: /* new style */
         CHANGE_BIT(TTY_REPORTMOUSE, on_off);
         CHANGE_BIT(TTY_REPORTMOUSE2, tfalse);
-        Act(ChangeField, Win)(Win, TWS_window_Attrib, WINDOW_WANT_MOUSE_MOTION | WINDOW_WANT_MOUSE,
+        Act(ChangeField, Win)(Win, TWS_window_Attr, WINDOW_WANT_MOUSE_MOTION | WINDOW_WANT_MOUSE,
                               on_off ? WINDOW_WANT_MOUSE : 0);
         break;
       case 25: /* Cursor on/off */
@@ -779,13 +779,13 @@ static void set_mode(byte on_off) {
       case 999: /* new style, report also motions */
         CHANGE_BIT(TTY_REPORTMOUSE, on_off);
         CHANGE_BIT(TTY_REPORTMOUSE2, on_off);
-        Act(ChangeField, Win)(Win, TWS_window_Attrib, WINDOW_WANT_MOUSE | WINDOW_WANT_MOUSE_MOTION,
+        Act(ChangeField, Win)(Win, TWS_window_Attr, WINDOW_WANT_MOUSE | WINDOW_WANT_MOUSE_MOTION,
                               on_off ? WINDOW_WANT_MOUSE | WINDOW_WANT_MOUSE_MOTION : 0);
         break;
       case 1000: /* classic xterm style */
         CHANGE_BIT(TTY_REPORTMOUSE, tfalse);
         CHANGE_BIT(TTY_REPORTMOUSE2, on_off);
-        Act(ChangeField, Win)(Win, TWS_window_Attrib, WINDOW_WANT_MOUSE | WINDOW_WANT_MOUSE_MOTION,
+        Act(ChangeField, Win)(Win, TWS_window_Attr, WINDOW_WANT_MOUSE | WINDOW_WANT_MOUSE_MOTION,
                               on_off ? WINDOW_WANT_MOUSE | WINDOW_WANT_MOUSE_MOTION : 0);
         break;
 
@@ -843,17 +843,17 @@ static void setterm_command(void) {
   }
 }
 
-INLINE void insert_line(ldat nr) {
+inline void insert_line(ldat nr) {
   scrolldown(Y, Bottom, nr);
   *Flags &= ~TTY_NEEDWRAP;
 }
 
-INLINE void delete_line(ldat nr) {
+inline void delete_line(ldat nr) {
   scrollup(Y, Bottom, nr);
   *Flags &= ~TTY_NEEDWRAP;
 }
 
-INLINE void csi_at(ldat nr) {
+inline void csi_at(ldat nr) {
   if (nr > (ldat)SizeX - X)
     nr = (ldat)SizeX - X;
   else if (!nr)
@@ -861,7 +861,7 @@ INLINE void csi_at(ldat nr) {
   insert_char(nr);
 }
 
-INLINE void csi_L(ldat nr) {
+inline void csi_L(ldat nr) {
   if (nr > (ldat)SizeY - Y)
     nr = (ldat)SizeY - Y;
   else if (!nr)
@@ -869,7 +869,7 @@ INLINE void csi_L(ldat nr) {
   insert_line(nr);
 }
 
-INLINE void csi_P(ldat nr) {
+inline void csi_P(ldat nr) {
   if (nr > (ldat)SizeX - X)
     nr = (ldat)SizeX - X;
   else if (!nr)
@@ -877,7 +877,7 @@ INLINE void csi_P(ldat nr) {
   delete_char(nr);
 }
 
-INLINE void csi_M(ldat nr) {
+inline void csi_M(ldat nr) {
   if (nr > (ldat)SizeY - Y)
     nr = (ldat)SizeY - Y;
   else if (!nr)
@@ -885,7 +885,7 @@ INLINE void csi_M(ldat nr) {
   delete_line(nr);
 }
 
-INLINE void save_current(void) {
+inline void save_current(void) {
   saveX = X;
   saveY = Y;
   saveColor = ColText;
@@ -894,7 +894,7 @@ INLINE void save_current(void) {
   saveG1 = G1;
 }
 
-INLINE void restore_current(void) {
+inline void restore_current(void) {
   goto_xy(saveX, saveY);
   ColText = saveColor;
   update_eff();
@@ -994,7 +994,7 @@ static void clear_newtitle(void) {
   newLen = newMax = 0;
 }
 
-INLINE void write_ctrl(byte c) {
+inline void write_ctrl(byte c) {
   /*
    *  Control characters can be used in the _middle_
    *  of an escape sequence.

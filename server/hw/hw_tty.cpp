@@ -590,7 +590,7 @@ static void tty_QuitHW(void) {
 }
 
 EXTERN_C byte InitModule(module Module) {
-  Module->Init = tty_InitHW;
+  Module->DoInit = tty_InitHW;
   return ttrue;
 }
 

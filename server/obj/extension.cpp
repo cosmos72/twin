@@ -10,8 +10,22 @@
  *
  */
 
+#include "alloc.h"
+#include "fn.h"
 #include "obj/extension.h"
 
-extension s_extension::Create(fn_extension Fn, uldat namelen, const char *name) {
-  return (extension)s_module::Create((fn_module)Fn, namelen, name);
+extension s_extension::Create(uldat namelen, const char *name) {
+  extension e = (extension)AllocMem0(sizeof(s_extension), 1);
+  if (e) {
+    e->Fn = Fn_extension;
+    if (!e->Init(namelen, name)) {
+      e->Delete();
+      e = NULL;
+    }
+  }
+  return e;
+}
+
+extension s_extension::Init(uldat namelen, const char *name) {
+  return (extension)((module)this)->Init(namelen, name);
 }

@@ -340,7 +340,7 @@ static void sockSetTRuneTranslation(const trune trans[0x80]);
 
 static void sockDeleteObj(void *V);
 
-static widget sockCreateWidget(dat XWidth, dat YWidth, uldat Attrib, uldat Flags, dat Left, dat Up,
+static widget sockCreateWidget(dat XWidth, dat YWidth, uldat Attr, uldat Flags, dat Left, dat Up,
                                tcell Fill);
 static void sockRecursiveDeleteWidget(widget W);
 static void sockSetXYWidget(widget W, dat x, dat y);
@@ -358,12 +358,12 @@ static void sockCirculateChildrenWidget(widget W, byte up_or_down);
 #define TW_CIRCULATE_LOWER_FIRST 1
 
 static gadget sockCreateGadget(widget Parent, dat XWidth, dat YWidth, const char *TextNormal,
-                               uldat Attrib, uldat Flags, udat Code, tcolor ColText,
+                               uldat Attr, uldat Flags, udat Code, tcolor ColText,
                                tcolor ColTextSelect, tcolor ColTextDisabled,
                                tcolor ColTextSelectDisabled, dat Left, dat Up);
 
 static window sockCreateWindow(dat TitleLen, const char *Title, const tcolor *ColTitle, menu Menu,
-                               tcolor ColText, uldat CursorType, uldat Attrib, uldat Flags,
+                               tcolor ColText, uldat CursorType, uldat Attr, uldat Flags,
                                dat XWidth, dat YWidth, dat ScrollBackLines);
 static void sockWriteAsciiWindow(window Window, uldat Len, const char *Ascii);
 static void sockWriteStringWindow(window Window, uldat Len, const char *String);
@@ -452,7 +452,7 @@ static sockfn sockF[] = {
     {0, 0, "StatObj", "0S0x" obj_magic_STR "_" TWS_udat_STR "V" TWS_udat_STR}, {0, 0, NULL, NULL}};
 
 /* convert a 2-byte string "v"TWS_void_STR or "_"* or "V"* into a tsfield->type */
-TW_INLINE udat proto_2_TWS(const char proto[2]) {
+inline udat proto_2_TWS(const char proto[2]) {
   udat tws_type = 0;
   switch (proto[0]) {
   case 'V':
@@ -477,7 +477,7 @@ TW_INLINE udat proto_2_TWS(const char proto[2]) {
   return tws_type;
 }
 
-TW_INLINE void TWS_2_proto(udat tws_type, char proto[2]) {
+inline void TWS_2_proto(udat tws_type, char proto[2]) {
   if (tws_type & TWS_vec) {
     proto[0] = 'V';
   } else if (tws_type == TWS_void) {
@@ -560,7 +560,7 @@ static uldat sockLengths(uldat id, uldat n, const tsfield a) {
 
 #if 0 /* currently unused */
 
-TW_INLINE udat MultiplexArgsV2S(uldat id, udat N, va_list va, tsfield a) {
+inline udat MultiplexArgsV2S(uldat id, udat N, va_list va, tsfield a) {
     const byte *Format = sockF[id].Format;
     udat n;
     byte c, t, size;
@@ -662,8 +662,8 @@ static obj *AllocId2ObjVec(byte *alloced, byte c, uldat n, byte *VV) {
 #endif
 }
 
-TW_INLINE ldat sockDecodeArg(uldat id, const char *Format, uldat n, tsfield a, uldat mask[1],
-                             byte flag[1], ldat fail) {
+inline ldat sockDecodeArg(uldat id, const char *Format, uldat n, tsfield a, uldat mask[1],
+                          byte flag[1], ldat fail) {
   const void *av;
   topaque nlen;
   byte c;
@@ -1094,11 +1094,11 @@ static void sockDeleteObj(void *V) {
     O->Delete();
 }
 
-static widget sockCreateWidget(dat XWidth, dat YWidth, uldat Attrib, uldat Flags, dat Left, dat Up,
+static widget sockCreateWidget(dat XWidth, dat YWidth, uldat Attr, uldat Flags, dat Left, dat Up,
                                tcell Fill) {
   msgport Owner;
   if ((Owner = RemoteGetMsgPort(Slot)))
-    return New(widget)(Fn_widget, Owner, XWidth, YWidth, Attrib, Flags, Left, Up, Fill);
+    return New(widget)(Owner, XWidth, YWidth, Attr, Flags, Left, Up, Fill);
   return (widget)0;
 }
 static void sockRecursiveDeleteWidget(widget W) {
@@ -1192,24 +1192,23 @@ static void sockCirculateChildrenRow(obj O, byte up_or_down) {
 }
 
 static gadget sockCreateGadget(widget Parent, dat XWidth, dat YWidth, const char *TextNormal,
-                               uldat Attrib, uldat Flags, udat Code, tcolor ColText,
+                               uldat Attr, uldat Flags, udat Code, tcolor ColText,
                                tcolor ColTextSelect, tcolor ColTextDisabled,
                                tcolor ColTextSelectDisabled, dat Left, dat Up) {
   msgport Owner;
   if ((Owner = RemoteGetMsgPort(Slot)))
-    return New(gadget)(Fn_gadget, Owner, Parent, XWidth, YWidth, TextNormal, Attrib, Flags,
-                              Code, ColText, ColTextSelect, ColTextDisabled, ColTextSelectDisabled,
-                              Left, Up);
+    return New(gadget)(Owner, Parent, XWidth, YWidth, TextNormal, Attr, Flags, Code, ColText,
+                       ColTextSelect, ColTextDisabled, ColTextSelectDisabled, Left, Up);
   return (gadget)0;
 }
 
 static window sockCreateWindow(dat TitleLen, const char *Title, const tcolor *ColTitle, menu Menu,
-                               tcolor ColText, uldat CursorType, uldat Attrib, uldat Flags,
+                               tcolor ColText, uldat CursorType, uldat Attr, uldat Flags,
                                dat XWidth, dat YWidth, dat ScrollBackLines) {
   msgport Owner;
   if ((Owner = RemoteGetMsgPort(Slot)))
-    return New(window)(Fn_window, Owner, TitleLen, Title, ColTitle, Menu, ColText,
-                              CursorType, Attrib, Flags, XWidth, YWidth, ScrollBackLines);
+    return New(window)(Owner, TitleLen, Title, ColTitle, Menu, ColText, CursorType, Attr, Flags,
+                       XWidth, YWidth, ScrollBackLines);
   return (window)0;
 }
 
@@ -1267,7 +1266,7 @@ static row sockFindRowByCodeWindow(window Window, dat Code) {
 
 static menuitem sockCreate4MenuAny(obj Parent, window Window, udat Code, byte Flags, ldat Len,
                                    const char *Name) {
-  return Do(Create4Menu, menuitem)(Fn_menuitem, Parent, Window, Code, Flags, Len, Name);
+  return Do(Create4Menu, menuitem)(Parent, Window, Code, Flags, Len, Name);
 }
 
 static menu sockCreateMenu(tcolor ColItem, tcolor ColSelect, tcolor ColDisabled,
@@ -1275,8 +1274,8 @@ static menu sockCreateMenu(tcolor ColItem, tcolor ColSelect, tcolor ColDisabled,
                            byte FlagDefColInfo) {
   msgport Owner;
   if ((Owner = RemoteGetMsgPort(Slot)))
-    return New(menu)(Fn_menu, Owner, ColItem, ColSelect, ColDisabled, ColSelectDisabled,
-                            ColShtCut, ColSelShtCut, FlagDefColInfo);
+    return New(menu)(Owner, ColItem, ColSelect, ColDisabled, ColSelectDisabled, ColShtCut,
+                     ColSelShtCut, FlagDefColInfo);
   return (menu)0;
 }
 
@@ -1284,7 +1283,7 @@ static menu sockCreateMenu(tcolor ColItem, tcolor ColSelect, tcolor ColDisabled,
 static msgport sockCreateMsgPort(byte NameLen, const char *Name) {
   msgport MsgPort;
 
-  if ((MsgPort = New(msgport)(Fn_msgport, NameLen, Name, 0, 0, 0, SocketH))) {
+  if ((MsgPort = New(msgport)(NameLen, Name, 0, 0, 0, SocketH))) {
     RegisterMsgPort(MsgPort, Slot);
     MsgPort->ShutDownHook = sockShutDown;
   }
@@ -1305,7 +1304,7 @@ static msgport sockFindMsgPort(msgport Prev, byte NameLen, const char *Name) {
 static ggroup sockCreateGroup(void) {
   msgport Owner;
   if ((Owner = RemoteGetMsgPort(Slot)))
-    return New(group)(Fn_group, Owner);
+    return New(group)(Owner);
   return (ggroup)0;
 }
 
@@ -1822,7 +1821,7 @@ static byte sockSendToMsgPort(msgport MsgPort, udat Len, const byte *Data) {
         break;
       }
 
-      if ((Msg = New(msg)(Fn_msg, tMsg->Type, _Len))) {
+      if ((Msg = New(msg)(tMsg->Type, _Len))) {
 
         Msg->Event.EventCommon.W = (widget)Id2Obj(widget_magic_id, tMsg->Event.EventCommon.W);
 

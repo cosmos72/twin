@@ -19,7 +19,7 @@
 /* module */
 
 struct s_fn_module {
-  uldat Magic, Size;
+  uldat Magic;
   void (*Insert)(module, all, module Prev, module Next);
   void (*Remove)(module);
   void (*Delete)(module);
@@ -39,16 +39,15 @@ struct s_module {
   uldat NameLen, Used;
   char *Name;
   void *Handle;
-  byte (*Init)(void);
+  byte (*DoInit)(void);
+
+  static module Create(uldat namelen, const char *name);
+  module Init(uldat namelen, const char *name);
 
   /* obj */
   uldat Magic() const {
     return Fn->Magic;
   }
-  uldat Size() const {
-    return Fn->Size;
-  }
-  static module Create(fn_module Fn, uldat namelen, const char *name);
   void Remove() {
     Fn->Remove(this);
   }

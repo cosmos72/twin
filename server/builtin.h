@@ -9,6 +9,9 @@
 #ifndef _TWIN_BUILTIN_H
 #define _TWIN_BUILTIN_H
 
+#include "obj/fwd.h"
+#include <Tw/datatypes.h>
+
 byte InitBuiltin(void);
 void FillButtonWin(void);
 void UpdateOptionWin(void);

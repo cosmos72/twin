@@ -430,7 +430,7 @@ From 0.3.8 to 0.3.9: (Massimiliano Ghilardi, 25 Jun 2001)
 	  Also added `twlsobj' client to demonstrate Tw_*Stat() usage.
 	* Added mouse motion reporting (with no buttons pressed).
 	  To enable it from a libTw client, set the TW_WINDOW_WANT_MOUSE_MOTION
-	  flag in twidget->Attrib.
+	  flag in twidget->Attr.
 	  To enable it from within a terminal, send "\033[?999h",
 	  to disable send "\033[?999l" (or "\033[?9h" to return to `normal'
 	  mouse reporting).
