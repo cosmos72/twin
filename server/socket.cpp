@@ -390,9 +390,9 @@ static msgport sockFindMsgPort(msgport Prev, byte NameLen, const char *Name);
 
 static ggroup sockCreateGroup(void);
 
-static obj sockPrevObj(obj Obj);
-static obj sockNextObj(obj Obj);
-static obj sockParentObj(obj Obj);
+static obj sockPrevObj(obj o);
+static obj sockNextObj(obj o);
+static obj sockParentObj(obj o);
 
 static screen sockFirstScreen(void);
 static widget sockFirstWidget(widget W);
@@ -1061,29 +1061,30 @@ static void sockSetTRuneTranslation(const trune trans[0x80]) {
   }
 }
 
-static msgport sockGetMsgPortObj(obj P) {
-  while (P) {
-    if (IS_MSGPORT(P)) {
-      return (msgport)P;
+static msgport sockGetMsgPortObj(obj p) {
+  obj_entry e = (obj_entry)p;
+  while (e) {
+    if (IS_MSGPORT(e)) {
+      return (msgport)e;
     }
-    switch (P->Id >> magic_shift) {
+    switch (e->Id >> magic_shift) {
     case row_magic_id:
     case menuitem_magic_id:
     case menu_magic_id:
-      P = (obj)P->Parent;
+      e = (obj_entry)e->Parent;
       break;
     case mutex_magic_id:
-      P = (obj)((mutex)P)->Owner;
+      e = (obj_entry)((mutex)e)->Owner;
       break;
     default:
-      if (IS_WIDGET(P))
-        P = (obj)((widget)P)->Owner;
+      if (IS_WIDGET(e))
+        e = (obj_entry)((widget)e)->Owner;
       else
-        P = (obj)0;
+        e = NULL;
       break;
     }
   }
-  return (msgport)P;
+  return (msgport)e;
 }
 
 static void sockDeleteObj(void *V) {
@@ -1308,14 +1309,17 @@ static ggroup sockCreateGroup(void) {
   return (ggroup)0;
 }
 
-static obj sockPrevObj(obj Obj) {
-  return Obj ? Obj->Prev : Obj;
+static obj sockPrevObj(obj o) {
+  obj_entry e = (obj_entry)o;
+  return (obj)(e ? e->Prev : e);
 }
-static obj sockNextObj(obj Obj) {
-  return Obj ? Obj->Next : Obj;
+static obj sockNextObj(obj o) {
+  obj_entry e = (obj_entry)o;
+  return (obj)(e ? e->Next : e);
 }
-static obj sockParentObj(obj Obj) {
-  return Obj ? (obj)Obj->Parent : Obj;
+static obj sockParentObj(obj o) {
+  obj_entry e = (obj_entry)o;
+  return (obj)(e ? e->Parent : e);
 }
 
 static screen sockFirstScreen(void) {

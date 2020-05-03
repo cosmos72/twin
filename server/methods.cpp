@@ -60,7 +60,8 @@ inline void DeletePartialList(obj Obj) {
 }
 #endif
 
-inline void InsertGeneric(obj Obj, obj_parent Parent, obj Prev, obj Next, ldat *ObjCount) {
+inline void InsertGeneric(obj_entry Obj, obj_list Parent, obj_entry Prev, obj_entry Next,
+                          ldat *ObjCount) {
   if (Obj->Prev || Obj->Next)
     return;
 
@@ -83,7 +84,7 @@ inline void InsertGeneric(obj Obj, obj_parent Parent, obj Prev, obj Next, ldat *
     (*ObjCount)++;
 }
 
-inline void RemoveGeneric(obj Obj, obj_parent Parent, ldat *ObjCount) {
+inline void RemoveGeneric(obj_entry Obj, obj_list Parent, ldat *ObjCount) {
   if (Obj->Prev)
     Obj->Prev->Next = Obj->Next;
   else if (Parent->First == Obj)
@@ -94,7 +95,7 @@ inline void RemoveGeneric(obj Obj, obj_parent Parent, ldat *ObjCount) {
   else if (Parent->Last == Obj)
     Parent->Last = Obj->Prev;
 
-  Obj->Prev = Obj->Next = (obj)0;
+  Obj->Prev = Obj->Next = NULL;
   if (ObjCount)
     (*ObjCount)--;
 }
@@ -105,22 +106,10 @@ inline void RemoveGeneric(obj Obj, obj_parent Parent, ldat *ObjCount) {
 
 static void InsertObj(obj Obj, obj Parent, obj Prev, obj Next) {
   printk("twin: internal error: pure virtual function InsertObj() called!\n");
-#if 0
-    if (!Obj->Parent && Parent) {
-	InsertGeneric(Obj, Parent, Prev, Next, (ldat *)0);
-	Obj->Parent = (obj)Parent;
-    }
-#endif
 }
 
 static void RemoveObj(obj Obj) {
   printk("twin: internal error: pure virtual function RemoveObj() called!\n");
-#if 0
-    if (Obj->Parent) {
-	RemoveGeneric(Obj, (obj_parent)Obj->Parent, (ldat *)0);
-	Obj->Parent = (obj)0;
-    }
-#endif
 }
 
 static void DeleteObj(obj Obj) {
@@ -136,32 +125,36 @@ static struct s_fn_obj _FnObj = {
 /* widget */
 
 static void InsertWidget(widget W, widget Parent, widget Prev, widget Next) {
-  if (Parent)
+  if (Parent) {
     /*
      * don't check W->Parent here, as Raise() and Lower() call
      * RemoveWidget() then InsertWidget() but RemoveWidget() does not reset W->Parent
      */
-    InsertGeneric((obj)W, (obj_parent)&Parent->FirstW, (obj)Prev, (obj)Next, (ldat *)0);
+    InsertGeneric((obj_entry)W, (obj_list)&Parent->FirstW, (obj_entry)Prev, (obj_entry)Next, NULL);
+  }
 }
 
 static void RemoveWidget(widget W) {
-  if (W->Parent)
-    RemoveGeneric((obj)W, (obj_parent)&W->Parent->FirstW, (ldat *)0);
+  if (W->Parent) {
+    RemoveGeneric((obj_entry)W, (obj_list)&W->Parent->FirstW, NULL);
+  }
 }
 
 static void DeleteWidget(widget W) {
   fn_obj Fn_Obj = W->Fn->Fn_Obj;
 
-  Act(UnMap, W)(W);
-  if (W->Hook)
-    Act(RemoveHook, W)(W, W->Hook, W->WhereHook);
-  if (W->ShutDownHook)
+  W->UnMap();
+  if (W->Hook) {
+    W->RemoveHook(W->Hook, W->WhereHook);
+  }
+  if (W->ShutDownHook) {
     W->ShutDownHook(W);
-  Act(DisOwn, W)(W);
-  while (W->FirstW)
-    Act(UnMap, W->FirstW)(W->FirstW);
-
-  Fn_Obj->Delete((obj)W);
+  }
+  W->DisOwn();
+  while (W->FirstW) {
+    W->FirstW->UnMap();
+  }
+  DeleteObj((obj)W);
 }
 
 static void SetFillWidget(widget W, tcell Fill) {
@@ -541,7 +534,7 @@ static void DeleteGadget(gadget G) {
         FreeMem(G->USE.T.Color[i]);
     }
   }
-  G->Fn->Fn_Widget->Delete((widget)G);
+  DeleteWidget((widget)G);
 }
 
 static void ChangeFieldGadget(gadget G, udat field, uldat CLEARMask, uldat XORMask) {
@@ -719,10 +712,10 @@ static void DeleteWindow(window W) {
       FreeMem(W->USE.C.TtyData);
     if (W->USE.C.Contents)
       FreeMem(W->USE.C.Contents);
-  } else if (W_USE(W, USEROWS))
+  } else if (W_USE(W, USEROWS)) {
     DeleteList(W->USE.R.FirstRow);
-
-  W->Fn->Fn_Widget->Delete((widget)W);
+  }
+  DeleteWidget((widget)W);
 }
 
 static void ChangeFieldWindow(window W, udat field, uldat CLEARMask, uldat XORMask) {
@@ -1173,14 +1166,15 @@ static void BgImageScreen(screen Screen, dat BgWidth, dat BgHeight, const tcell 
 
 static void InsertScreen(screen Screen, all Parent, screen Prev, screen Next) {
   if (!Screen->All && Parent) {
-    InsertGeneric((obj)Screen, (obj_parent)&Parent->FirstScreen, (obj)Prev, (obj)Next, (ldat *)0);
+    InsertGeneric((obj_entry)Screen, (obj_list)&Parent->FirstScreen, (obj_entry)Prev,
+                  (obj_entry)Next, NULL);
     Screen->All = Parent;
   }
 }
 
 static void RemoveScreen(screen Screen) {
   if (Screen->All) {
-    RemoveGeneric((obj)Screen, (obj_parent)&Screen->All->FirstScreen, (ldat *)0);
+    RemoveGeneric((obj_entry)Screen, (obj_list)&Screen->All->FirstScreen, NULL);
     Screen->All = (all)0;
   }
 }
@@ -1195,8 +1189,7 @@ static void DeleteScreen(screen Screen) {
     FreeMem(Screen->USE.B.Bg);
     Screen->USE.B.Bg = NULL;
   }
-
-  Screen->Fn->Fn_Widget->Delete((widget)Screen);
+  DeleteWidget((widget)Screen);
 }
 
 static void ChangeFieldScreen(screen S, udat field, uldat CLEARMask, uldat XORMask) {
@@ -1319,14 +1312,15 @@ static struct s_fn_screen _FnScreen = {
 
 static void InsertGroup(ggroup Group, msgport MsgPort, ggroup Prev, ggroup Next) {
   if (!Group->MsgPort && MsgPort) {
-    InsertGeneric((obj)Group, (obj_parent)&MsgPort->FirstGroup, (obj)Prev, (obj)Next, (ldat *)0);
+    InsertGeneric((obj_entry)Group, (obj_list)&MsgPort->FirstGroup, (obj_entry)Prev,
+                  (obj_entry)Next, NULL);
     Group->MsgPort = MsgPort;
   }
 }
 
 static void RemoveGroup(ggroup Group) {
   if (Group->MsgPort) {
-    RemoveGeneric((obj)Group, (obj_parent)&Group->MsgPort->FirstGroup, (ldat *)0);
+    RemoveGeneric((obj_entry)Group, (obj_list)&Group->MsgPort->FirstGroup, NULL);
     Group->MsgPort = NULL;
   }
 }
@@ -1336,7 +1330,7 @@ static void DeleteGroup(ggroup Group) {
   while (Group->FirstG)
     Act(RemoveGadget, Group)(Group, Group->FirstG);
 
-  Group->Fn->Fn_Obj->Delete((obj)Group);
+  DeleteObj((obj)Group);
 }
 
 static void InsertGadgetGroup(ggroup Group, gadget G) {
@@ -1398,8 +1392,8 @@ static struct s_fn_group _FnGroup = {
 
 static void InsertRow(row Row, window Parent, row Prev, row Next) {
   if (!Row->Window && Parent && W_USE(Parent, USEROWS)) {
-    InsertGeneric((obj)Row, (obj_parent)&Parent->USE.R.FirstRow, (obj)Prev, (obj)Next,
-                  &Parent->HLogic);
+    InsertGeneric((obj_entry)Row, (obj_list)&Parent->USE.R.FirstRow, (obj_entry)Prev,
+                  (obj_entry)Next, &Parent->HLogic);
     Row->Window = Parent;
     Parent->USE.R.NumRowOne = Parent->USE.R.NumRowSplit = (ldat)0;
   }
@@ -1408,8 +1402,8 @@ static void InsertRow(row Row, window Parent, row Prev, row Next) {
 static void RemoveRow(row Row) {
   if (Row->Window && W_USE(Row->Window, USEROWS)) {
     Row->Window->USE.R.NumRowOne = Row->Window->USE.R.NumRowSplit = (ldat)0;
-    RemoveGeneric((obj)Row, (obj_parent)&Row->Window->USE.R.FirstRow, &Row->Window->HLogic);
-    Row->Window = (window)0;
+    RemoveGeneric((obj_entry)Row, (obj_list)&Row->Window->USE.R.FirstRow, &Row->Window->HLogic);
+    Row->Window = NULL;
   }
 }
 
@@ -1423,7 +1417,7 @@ static void DeleteRow(row Row) {
     if (Row->ColText)
       FreeMem(Row->ColText);
 
-    Row->Fn->Fn_Obj->Delete((obj)Row);
+    DeleteObj((obj)Row);
 
     if (W && W->Parent && (W->Flags & WINDOWFL_MENU))
       ResizeRelWindow(W, 0, -1);
@@ -1508,11 +1502,11 @@ static void LowerMenuItem(menuitem M) {
       return;
 
     Act(Remove, M)(M);
-    Act(Insert, M)(M, Parent, Prev, (menuitem)0);
+    Act(Insert, M)(M, Parent, Prev, NULL);
 
     if (IS_MENU(Parent))
       SyncMenu((menu)Parent);
-    else if (Parent->Parent)
+    else if (((obj_entry)Parent)->Parent)
       DrawAreaWidget((widget)Parent);
   }
 }
@@ -1544,11 +1538,11 @@ byte FindInfo(menu Menu, dat i) {
 static void InsertMenuItem(menuitem MenuItem, obj Parent, menuitem Prev, menuitem Next) {
   if (!MenuItem->Parent && Parent) {
     if (IS_MENU(Parent)) {
-      InsertGeneric((obj)MenuItem, (obj_parent) & ((menu)Parent)->FirstI, (obj)Prev, (obj)Next,
-                    (ldat *)0);
+      InsertGeneric((obj_entry)MenuItem, (obj_list) & ((menu)Parent)->FirstI, (obj_entry)Prev,
+                    (obj_entry)Next, NULL);
       MenuItem->Parent = Parent;
     } else if (IS_WINDOW(Parent)) {
-      (MenuItem->Fn->Fn_Row->Insert)((row)MenuItem, (window)Parent, (row)Prev, (row)Next);
+      InsertRow((row)MenuItem, (window)Parent, (row)Prev, (row)Next);
     }
   }
 }
@@ -1556,10 +1550,11 @@ static void InsertMenuItem(menuitem MenuItem, obj Parent, menuitem Prev, menuite
 static void RemoveMenuItem(menuitem MenuItem) {
   if (MenuItem->Parent) {
     if (IS_MENU(MenuItem->Parent)) {
-      RemoveGeneric((obj)MenuItem, (obj_parent) & ((menu)MenuItem->Parent)->FirstI, (ldat *)0);
+      RemoveGeneric((obj_entry)MenuItem, (obj_list) & ((menu)MenuItem->Parent)->FirstI, NULL);
       MenuItem->Parent = (obj)0;
-    } else
-      (MenuItem->Fn->Fn_Row->Remove)((row)MenuItem);
+    } else {
+      RemoveRow((row)MenuItem);
+    }
   }
 }
 
@@ -1574,7 +1569,7 @@ static void DeleteMenuItem(menuitem MenuItem) {
     if (MenuItem->Window)
       MenuItem->Window->Delete();
 
-    MenuItem->Fn->Fn_Row->Delete((row)MenuItem);
+    DeleteRow((row)MenuItem);
   }
 }
 
@@ -1630,14 +1625,15 @@ static struct s_fn_menuitem _FnMenuItem = {
 
 static void InsertMenu(menu Menu, msgport MsgPort, menu Prev, menu Next) {
   if (!Menu->MsgPort && MsgPort) {
-    InsertGeneric((obj)Menu, (obj_parent)&MsgPort->FirstMenu, (obj)Prev, (obj)Next, (ldat *)0);
+    InsertGeneric((obj_entry)Menu, (obj_list)&MsgPort->FirstMenu, (obj_entry)Prev, (obj_entry)Next,
+                  NULL);
     Menu->MsgPort = MsgPort;
   }
 }
 
 static void RemoveMenu(menu Menu) {
   if (Menu->MsgPort) {
-    RemoveGeneric((obj)Menu, (obj_parent)&Menu->MsgPort->FirstMenu, (ldat *)0);
+    RemoveGeneric((obj_entry)Menu, (obj_list)&Menu->MsgPort->FirstMenu, NULL);
     Menu->MsgPort = (msgport)0;
   }
 }
@@ -1686,7 +1682,7 @@ static void DeleteMenu(menu Menu) {
     if (Menu->Info)
       Menu->Info->Delete();
 
-    Menu->Fn->Fn_Obj->Delete((obj)Menu);
+    DeleteObj((obj)Menu);
   }
 }
 
@@ -1810,22 +1806,23 @@ static void InsertMsg(msg Msg, msgport Parent, msg Prev, msg Next) {
     if (!Parent->FirstMsg && Parent->All)
       MoveFirst(MsgPort, All, Parent);
 
-    InsertGeneric((obj)Msg, (obj_parent)&Parent->FirstMsg, (obj)Prev, (obj)Next, (ldat *)0);
+    InsertGeneric((obj_entry)Msg, (obj_list)&Parent->FirstMsg, (obj_entry)Prev, (obj_entry)Next,
+                  NULL);
     Msg->MsgPort = Parent;
   }
 }
 
 static void RemoveMsg(msg Msg) {
   if (Msg->MsgPort) {
-    RemoveGeneric((obj)Msg, (obj_parent)&Msg->MsgPort->FirstMsg, (ldat *)0);
-    Msg->MsgPort = (msgport)0;
+    RemoveGeneric((obj_entry)Msg, (obj_list)&Msg->MsgPort->FirstMsg, NULL);
+    Msg->MsgPort = NULL;
   }
 }
 
 static void DeleteMsg(msg Msg) {
   if (Msg) {
     Msg->Remove();
-    Msg->Fn->Fn_Obj->Delete((obj)Msg);
+    DeleteObj((obj)Msg);
   }
 }
 
@@ -1843,7 +1840,8 @@ static struct s_fn_msg _FnMsg = {
 
 static void InsertMsgPort(msgport MsgPort, all Parent, msgport Prev, msgport Next) {
   if (!MsgPort->All && Parent) {
-    InsertGeneric((obj)MsgPort, (obj_parent)&Parent->FirstMsgPort, (obj)Prev, (obj)Next, (ldat *)0);
+    InsertGeneric((obj_entry)MsgPort, (obj_list)&Parent->FirstMsgPort, (obj_entry)Prev,
+                  (obj_entry)Next, NULL);
     MsgPort->All = Parent;
   }
 }
@@ -1852,13 +1850,13 @@ static void RemoveMsgPort(msgport MsgPort) {
   if (MsgPort->All) {
     if (All->RunMsgPort == MsgPort)
       All->RunMsgPort = MsgPort->Next;
-    RemoveGeneric((obj)MsgPort, (obj_parent)&MsgPort->All->FirstMsgPort, (ldat *)0);
+    RemoveGeneric((obj_entry)MsgPort, (obj_list)&MsgPort->All->FirstMsgPort, NULL);
     MsgPort->All = (all)0;
   }
 }
 
 static void DeleteMsgPort(msgport MsgPort) {
-  uldat count = 30;
+  uldat count = 20;
   widget W;
   extension *Es;
 
@@ -1897,7 +1895,7 @@ static void DeleteMsgPort(msgport MsgPort) {
     if (MsgPort->Name)
       FreeMem(MsgPort->Name);
 
-    MsgPort->Fn->Fn_Obj->Delete((obj)MsgPort);
+    DeleteObj((obj)MsgPort);
   }
 }
 
@@ -1971,14 +1969,15 @@ static struct s_fn_msgport _FnMsgPort = {
 
 static void InsertMutex(mutex Mutex, all Parent, mutex Prev, mutex Next) {
   if (!Mutex->All && Parent) {
-    InsertGeneric((obj)Mutex, (obj_parent)&Mutex->All->FirstMutex, (obj)Prev, (obj)Next, (ldat *)0);
+    InsertGeneric((obj_entry)Mutex, (obj_list)&Mutex->All->FirstMutex, (obj_entry)Prev,
+                  (obj_entry)Next, NULL);
     Mutex->All = Parent;
   }
 }
 
 static void RemoveMutex(mutex Mutex) {
   if (Mutex->All) {
-    RemoveGeneric((obj)Mutex, (obj_parent)&Mutex->All->FirstMutex, (ldat *)0);
+    RemoveGeneric((obj_entry)Mutex, (obj_list)&Mutex->All->FirstMutex, NULL);
     Mutex->All = (all)0;
   }
 }
@@ -1986,7 +1985,7 @@ static void RemoveMutex(mutex Mutex) {
 static void DeleteMutex(mutex Mutex) {
   Act(DisOwn, Mutex)(Mutex);
   Mutex->Remove();
-  Mutex->Fn->Fn_Obj->Delete((obj)Mutex);
+  DeleteObj((obj)Mutex);
 }
 
 static void OwnMutex(mutex Mutex, msgport Parent) {
@@ -2039,14 +2038,15 @@ static struct s_fn_mutex _FnMutex = {
 
 static void InsertModule(module Module, all Parent, module Prev, module Next) {
   if (!Module->All && Parent) {
-    InsertGeneric((obj)Module, (obj_parent)&Parent->FirstModule, (obj)Prev, (obj)Next, (ldat *)0);
+    InsertGeneric((obj_entry)Module, (obj_list)&Parent->FirstModule, (obj_entry)Prev,
+                  (obj_entry)Next, NULL);
     Module->All = Parent;
   }
 }
 
 static void RemoveModule(module Module) {
   if (Module->All) {
-    RemoveGeneric((obj)Module, (obj_parent)&Module->All->FirstModule, (ldat *)0);
+    RemoveGeneric((obj_entry)Module, (obj_list)&Module->All->FirstModule, NULL);
     Module->All = (all)0;
   }
 }
@@ -2059,7 +2059,7 @@ static void DeleteModule(module Module) {
     if (Module->Name)
       FreeMem(Module->Name);
 
-    Module->Fn->Fn_Obj->Delete((obj)Module);
+    DeleteObj((obj)Module);
   }
 }
 
@@ -2097,7 +2097,7 @@ static void DeleteExtension(extension E) {
   if (E->Quit)
     E->Quit(E);
 
-  E->Fn->Fn_Module->Delete((module)E);
+  DeleteModule((module)E);
 }
 
 static struct s_fn_extension _FnExtension = {
@@ -2118,8 +2118,8 @@ static struct s_fn_extension _FnExtension = {
 
 static void InsertDisplayHW(display_hw DisplayHW, all Parent, display_hw Prev, display_hw Next) {
   if (!DisplayHW->All && Parent) {
-    InsertGeneric((obj)DisplayHW, (obj_parent)&Parent->FirstDisplayHW, (obj)Prev, (obj)Next,
-                  (ldat *)0);
+    InsertGeneric((obj_entry)DisplayHW, (obj_list)&Parent->FirstDisplayHW, (obj_entry)Prev,
+                  (obj_entry)Next, NULL);
     DisplayHW->All = Parent;
 #if 0
 	/*
@@ -2134,7 +2134,7 @@ static void InsertDisplayHW(display_hw DisplayHW, all Parent, display_hw Prev, d
 
 static void RemoveDisplayHW(display_hw DisplayHW) {
   if (DisplayHW->All) {
-    RemoveGeneric((obj)DisplayHW, (obj_parent)&DisplayHW->All->FirstDisplayHW, (ldat *)0);
+    RemoveGeneric((obj_entry)DisplayHW, (obj_list)&DisplayHW->All->FirstDisplayHW, NULL);
     DisplayHW->All = (all)0;
 
     if (All->FnHookDisplayHW)
@@ -2159,7 +2159,7 @@ static void DeleteDisplayHW(display_hw DisplayHW) {
   if (DisplayHW->NameLen && DisplayHW->Name)
     FreeMem(DisplayHW->Name);
 
-  DisplayHW->Fn->Fn_Obj->Delete((obj)DisplayHW);
+  DeleteObj((obj)DisplayHW);
 
   if (!Quitted) {
     if (!All->FirstDisplayHW || isCTTY)

@@ -14,7 +14,8 @@
 #define _TWIN_FWD_H
 
 typedef struct s_draw_ctx draw_ctx;
-typedef struct s_obj_parent *obj_parent;
+typedef struct s_obj_list *obj_list;
+typedef struct s_obj_entry *obj_entry;
 typedef struct s_ttydata ttydata;
 typedef struct s_remotedata remotedata;
 

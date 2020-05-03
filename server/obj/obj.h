@@ -21,7 +21,8 @@
 
 typedef struct s_obj *obj;
 typedef struct s_fn_obj *fn_obj;
-typedef struct s_obj_parent *obj_parent;
+typedef struct s_obj_entry *obj_entry;
+typedef struct s_obj_list *obj_list;
 
 struct s_fn_obj {
   uldat Magic;
@@ -31,20 +32,25 @@ struct s_fn_obj {
   void (*ChangeField)(obj self, udat field, uldat clear_mask, uldat xor_mask);
 };
 
-struct s_obj_parent {
-  obj First, Last;
+struct s_obj_entry {
+  uldat Id;
+  fn_obj Fn;
+  obj_entry Prev, Next, Parent;
+};
+
+struct s_obj_list {
+  obj_entry First, Last;
 };
 
 struct s_obj {
   uldat Id;
   fn_obj Fn;
-  obj Prev, Next, Parent;
 
+  static obj Create();
+  obj Init();
   uldat Magic() const {
     return Fn->Magic;
   }
-  static obj Create();
-  obj Init();
   void Insert(obj parent, obj prev, obj next) {
     Fn->Insert(this, parent, prev, next);
   }

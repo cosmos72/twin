@@ -94,12 +94,12 @@
     TSF->type = TWS_vec | CAT(TWS_, _type);                                                        \
     break
 
-#define fieldDelta(field) ((udat)(size_t) & (((obj)0)->field))
+#define fieldDelta(field) ((udat)(size_t) & (((obj_entry)0)->field))
 #define fieldTypeDelta(type, field) ((udat)(size_t) & (((type)0)->field))
 
-#define sockAllocListPrevObjs(F, len) sockAllocListDeltaObjs((F), (len), fieldDelta(Prev))
-#define sockAllocListNextObjs(F, len) sockAllocListDeltaObjs((F), (len), fieldDelta(Next))
-#define sockAllocListParentObjs(F, len) sockAllocListDeltaObjs((F), (len), fieldDelta(Parent))
+#define sockAllocListPrevObjs(F, len) sockAllocListDeltaObjs((obj)(F), (len), fieldDelta(Prev))
+#define sockAllocListNextObjs(F, len) sockAllocListDeltaObjs((obj)(F), (len), fieldDelta(Next))
+#define sockAllocListParentObjs(F, len) sockAllocListDeltaObjs((obj)(F), (len), fieldDelta(Parent))
 
 static tobj *sockAllocListDeltaObjs(obj F, topaque *len, udat fdelta) {
   topaque L = 0;
@@ -120,18 +120,19 @@ static tobj *sockAllocListDeltaObjs(obj F, topaque *len, udat fdelta) {
   return _LW;
 }
 
-static byte sockStatObj(obj x, tsfield TSF) {
+static byte sockStatObj(obj o, tsfield TSF) {
+  obj_entry x = (obj_entry)o;
   switch (TSF->hash) {
   case TWS_obj_Id:
     break;
   case TWS_obj_Prev:
-    x = (obj)x->Prev;
+    x = x->Prev;
     break;
   case TWS_obj_Next:
-    x = (obj)x->Next;
+    x = x->Next;
     break;
   case TWS_obj_Parent:
-    x = (obj)x->Parent;
+    x = x->Parent;
     break;
   case TWS_obj_Prev_List:
     TSF->TWS_field_vecV = sockAllocListPrevObjs(x->Prev, &TSF->TWS_field_vecL);
@@ -148,7 +149,7 @@ static byte sockStatObj(obj x, tsfield TSF) {
   default:
     return tfalse;
   }
-  TSF->TWS_field_obj = x;
+  TSF->TWS_field_obj = (obj)x;
   TSF->type = TWS_obj;
   return ttrue;
 }
