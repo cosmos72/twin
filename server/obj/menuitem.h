@@ -35,8 +35,7 @@ struct s_fn_menuitem {
   /* for compatibility this must return a non-zero value. */
 };
 
-struct s_menuitem {
-  uldat Id;
+struct s_menuitem : public s_obj {
   fn_menuitem Fn;
   menuitem Prev, Next;
   obj Parent;

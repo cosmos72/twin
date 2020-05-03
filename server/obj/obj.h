@@ -48,16 +48,17 @@ struct s_obj {
 
   static obj Create();
   obj Init();
+  s_obj();
 
+#if 0
   uldat Magic() const {
     return ((const s_obj_entry *)this)->Fn->Magic;
   }
-#if 0
   void Insert(obj parent, obj prev, obj next) {
-    Fn->Insert(this, parent, prev, next);
+    ((obj_entry)this)->Fn->Insert(this, parent, prev, next);
   }
   void Remove() {
-    Fn->Remove(this);
+    ((obj_entry)this)->Fn->Remove(this);
   }
 #endif // 0
   void Delete() {

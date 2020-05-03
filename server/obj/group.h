@@ -32,8 +32,7 @@ struct s_fn_group {
   void (*SetSelectedGadget)(ggroup, gadget);
 };
 
-struct s_group {
-  uldat Id;
+struct s_group : public s_obj {
   fn_group Fn;
   ggroup Prev, Next; /* list in the same msgport */
   msgport MsgPort;

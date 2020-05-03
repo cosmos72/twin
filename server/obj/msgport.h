@@ -29,8 +29,7 @@ struct s_fn_msgport {
   void (*UnuseExtension)(msgport, extension);
 };
 
-struct s_msgport {
-  uldat Id;
+struct s_msgport : public s_obj {
   fn_msgport Fn;
   msgport Prev, Next; /* list in the same All */
   all All;

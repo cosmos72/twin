@@ -98,8 +98,7 @@ struct s_fn_widget {
   void (*RemoveHook)(widget, fn_hook, fn_hook *where);
 };
 
-struct s_widget {
-  uldat Id;
+struct s_widget : public s_obj {
   fn_widget Fn;
   widget Prev, Next; /* list in the same parent */
   widget Parent;     /* where this widget sits */

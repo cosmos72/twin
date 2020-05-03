@@ -60,8 +60,7 @@ struct s_fn_gadget {
                       dat Up);
 };
 
-struct s_gadget {
-  uldat Id;
+struct s_gadget : public s_obj {
   fn_gadget Fn;
   widget Prev, Next;
   widget Parent;

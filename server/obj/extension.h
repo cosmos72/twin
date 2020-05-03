@@ -30,8 +30,7 @@ struct s_fn_extension {
   extension (*Query)(byte namelen, const char *name);
 };
 
-struct s_extension {
-  uldat Id;
+struct s_extension : public s_obj {
   fn_extension Fn;
   extension Prev, Next; /* in the same All */
   all All;

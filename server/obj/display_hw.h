@@ -15,6 +15,7 @@
 
 #include "obj/fwd.h"
 #include "obj/event.h" // MAX_MIMELEN
+#include "obj/obj.h"
 #include <Tw/datatypes.h>
 
 struct s_fn_display_hw {
@@ -35,8 +36,7 @@ typedef struct s_mouse_state {
   byte keys;
 } mouse_state;
 
-struct s_display_hw {
-  uldat Id;
+struct s_display_hw : public s_obj {
   fn_display_hw Fn;
   display_hw Prev, Next; /* in the same All */
   all All;
@@ -185,6 +185,7 @@ struct s_display_hw {
 
   static display_hw Create(uldat namelen, const char *name);
   display_hw Init(uldat namelen, const char *name);
+  s_display_hw();
 
   /* obj */
   uldat Magic() const {

@@ -35,3 +35,6 @@ obj s_obj::Init() {
   }
   return NULL;
 }
+
+s_obj::s_obj() {
+}

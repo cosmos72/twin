@@ -27,8 +27,7 @@ struct s_fn_mutex {
   void (*DisOwn)(mutex);
 };
 
-struct s_mutex {
-  uldat Id;
+struct s_mutex : public s_obj {
   fn_mutex Fn;
   mutex Prev, Next; /* in the same All */
   all All;

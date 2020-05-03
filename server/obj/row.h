@@ -31,8 +31,7 @@ struct s_fn_row {
   void (*Lower)(row);
 };
 
-struct s_row {
-  uldat Id;
+struct s_row : public s_obj {
   fn_row Fn;
   row Prev, Next;
   window Window;

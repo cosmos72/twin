@@ -14,6 +14,7 @@
 #define _TWIN_MODULE_H
 
 #include "obj/fwd.h"
+#include "obj/obj.h"
 #include <Tw/datatypes.h>
 
 /* module */
@@ -30,8 +31,7 @@ struct s_fn_module {
   void (*DlClose)(module);
 };
 
-struct s_module {
-  uldat Id;
+struct s_module : public s_obj {
   fn_module Fn;
   module Prev, Next; /* in the same All */
   all All;
@@ -43,6 +43,7 @@ struct s_module {
 
   static module Create(uldat namelen, const char *name);
   module Init(uldat namelen, const char *name);
+  s_module();
 
   /* obj */
   uldat Magic() const {

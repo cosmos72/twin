@@ -118,8 +118,7 @@ struct s_fn_window {
   row (*FindRowByCode)(window, udat Code, ldat *NumRow);
 };
 
-struct s_window {
-  uldat Id;
+struct s_window : public s_obj {
   fn_window Fn;
   widget Prev, Next; /* list in the same parent */
   widget Parent;     /* where this window sits */

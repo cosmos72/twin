@@ -208,6 +208,10 @@ static void RemoteEvent(int FdCount, fd_set *FdSet) {
   }
 }
 
+s_obj::s_obj() {
+  Id = 0;
+}
+
 static struct s_fn_module _FnModule = {
     module_magic,
     (void (*)(module, all, module, module))NoOp, /* InsertModule */
@@ -219,18 +223,13 @@ static struct s_fn_module _FnModule = {
     (void (*)(module))NoOp,                      /* DlClose      */
 };
 
-static struct s_module _Module = {
-    module_magic,
-    &_FnModule,
-    (module)0,         /* Prev */
-    (module)0,         /* Next */
-    (all)0,            /* All */
-    0,                 /* NameLen */
-    0,                 /* Used */
-    (char *)0,         /* Name */
-    (void *)0,         /* Handle */
-    (byte (*)(void))0, /* DoInit */
-};
+s_module::s_module() {
+  /* obj */
+  Id = module_magic;
+  Fn = &_FnModule;
+}
+
+static s_module _Module;
 
 static module DlLoadAny(uldat len, char *name) {
   module Module = &_Module;
@@ -345,12 +344,16 @@ static struct s_fn_display_hw _FnDisplayHW = {
     (void (*)(display_hw, udat, uldat, uldat))NoOp,          /* ChangeFieldDisplayHW */
     NULL,                                                    /* Fn_Obj */
     InitDisplayHW,
-    QuitDisplayHW};
-
-static struct s_display_hw _HW = {
-    display_hw_magic,
-    &_FnDisplayHW,
+    QuitDisplayHW,
 };
+
+s_display_hw::s_display_hw() {
+  /* obj */
+  Id = display_hw_magic;
+  Fn = &_FnDisplayHW;
+}
+
+static s_display_hw _HW;
 
 void warn_NoHW(uldat len, const char *arg, uldat tried) {
   printk("twdisplay: All display drivers failed");

@@ -58,8 +58,7 @@ struct s_fn_screen {
   void (*DeActivateMenu)(screen);
 };
 
-struct s_screen {
-  uldat Id;
+struct s_screen : public s_obj {
   fn_screen Fn;
   screen Prev, Next;  /* list in the same All */
   widget dummyParent; /* NULL */

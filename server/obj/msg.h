@@ -15,6 +15,7 @@
 
 #include "obj/event.h"
 #include "obj/fwd.h"
+#include "obj/obj.h"
 #include "printk.h"
 #include <Tw/datatypes.h>
 
@@ -28,8 +29,7 @@ struct s_fn_msg {
   fn_obj Fn_Obj;
 };
 
-struct s_msg {
-  uldat Id;
+struct s_msg : public s_obj {
   fn_msg Fn;
   msg Prev, Next;
   msgport MsgPort;

@@ -85,9 +85,7 @@ typedef struct s_selection {
   char *Data;
 } selection;
 
-struct s_all {
-  /* obj */
-  uldat Id;
+struct s_all : public s_obj {
   fn_obj Fn;
   obj Prev, Next, Parent;
 
@@ -118,6 +116,8 @@ struct s_all {
   button_vec ButtonVec[BUTTON_MAX + 1]; /* +1 for window corner */
 
   trune *Gtranslations[USER_MAP + 1];
+
+  s_all();
 };
 
 extern all const All;

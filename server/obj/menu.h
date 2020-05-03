@@ -30,8 +30,7 @@ struct s_fn_menu {
   void (*SetSelectedItem)(menu, menuitem);
 };
 
-struct s_menu {
-  uldat Id;
+struct s_menu : public s_obj {
   fn_menu Fn;
   menu Prev, Next; /* in the same msgport */
   msgport MsgPort;
