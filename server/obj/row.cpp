@@ -16,11 +16,14 @@
 #include "obj/menuitem.h" // COD_RESERVED
 #include "obj/row.h"
 
+#include <new>
+
 row s_row::Create(udat code, byte flags) {
   row r = NULL;
   if (code < COD_RESERVED) {
-    r = (row)AllocMem0(sizeof(s_row), 1);
-    if (r) {
+    void *addr = AllocMem0(sizeof(s_row), 1);
+    if (addr) {
+      r = new (addr) s_row();
       r->Fn = Fn_row;
       if (!r->Init(code, flags)) {
         r->Delete();

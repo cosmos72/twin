@@ -18,6 +18,7 @@
 #include "id.h"    // AssignId()
 #include "twin.h"  // NOFD, NOPID, NOSLOT
 
+#include <new>
 #include <string.h>    // memset()
 #include <Tutf/Tutf.h> // Tutf_CP437_to_UTF_32[]
 
@@ -29,8 +30,9 @@ window s_window::Create(msgport owner, dat titlelen, const char *title, const tc
 
   window w = NULL;
   if (owner) {
-    w = (window)AllocMem0(sizeof(s_window), 1);
-    if (w) {
+    void *addr = AllocMem0(sizeof(s_window), 1);
+    if (addr) {
+      w = new (addr) s_window();
       w->Fn = Fn_window;
       if (!w->Init(owner, titlelen, title, coltitle, m, coltext, cursortype, attr, flags, xwidth,
                    ywidth, scrollbacklines)) {

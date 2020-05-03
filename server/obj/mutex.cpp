@@ -14,7 +14,9 @@
 #include "obj/all.h" // extern All
 #include "obj/mutex.h"
 #include "methods.h" // Act(), InsertLast()
-#include <string.h>  // memcmp()
+
+#include <new>
+#include <string.h> // memcmp()
 
 mutex s_mutex::Create(msgport owner, byte namelen, const char *name, byte perm) {
   byte mask = PERM_WRITE;
@@ -40,8 +42,9 @@ mutex s_mutex::Create(msgport owner, byte namelen, const char *name, byte perm) 
       old->Perm = perm;
       x = old;
     } else {
-      x = (mutex)AllocMem0(sizeof(s_mutex), 1);
-      if (x) {
+      void *addr = AllocMem0(sizeof(s_mutex), 1);
+      if (addr) {
+        x = new (addr) s_mutex();
         x->Fn = Fn_mutex;
         if (!x->Init(owner, namelen, name, perm)) {
           x->Delete();

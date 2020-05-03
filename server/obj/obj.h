@@ -32,18 +32,6 @@ struct s_fn_obj {
   void (*ChangeField)(obj self, udat field, uldat clear_mask, uldat xor_mask);
 };
 
-struct s_obj_entry {
-  uldat Id;
-  fn_obj Fn;
-  obj_entry Prev, Next, Parent;
-
-  virtual ~s_obj_entry(); // force adding vtable, because s_obj has it
-};
-
-struct s_obj_list {
-  obj_entry First, Last;
-};
-
 struct s_obj {
   uldat Id;
   //  fn_obj Fn;
@@ -64,12 +52,19 @@ struct s_obj {
     ((obj_entry)this)->Fn->Remove(this);
   }
 #endif // 0
-  void Delete() {
-    ((obj_entry)this)->Fn->Delete(this);
-  }
-  void ChangeField(udat field, uldat clear_mask, uldat xor_mask) {
-    ((obj_entry)this)->Fn->ChangeField(this, field, clear_mask, xor_mask);
-  }
+  void Delete();
+  void ChangeField(udat field, uldat clear_mask, uldat xor_mask);
+};
+
+struct s_obj_entry : public s_obj {
+  fn_obj Fn;
+  obj_entry Prev, Next, Parent;
+
+  virtual ~s_obj_entry();
+};
+
+struct s_obj_list {
+  obj_entry First, Last;
 };
 
 #endif /* _TWIN_OBJ_H */

@@ -10,17 +10,20 @@
  *
  */
 
-#include "obj/display_hw.h"
 #include "obj/all.h" // extern All
+#include "obj/display_hw.h"
 #include "alloc.h"   // AllocMem0(), CloneStrL()
 #include "methods.h" // InsertLast()
 #include "twin.h"    // NOSLOT
 
+#include <new>
+
 display_hw s_display_hw::Create(uldat namelen, const char *name) {
   display_hw d = NULL;
   if (name) {
-    d = (display_hw)AllocMem0(sizeof(s_display_hw), 1);
-    if (d) {
+    void *addr = AllocMem0(sizeof(s_display_hw), 1);
+    if (addr) {
+      d = new (addr) s_display_hw();
       d->Fn = Fn_display_hw;
       if (!d->Init(namelen, name)) {
         d->Delete();

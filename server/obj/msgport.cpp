@@ -18,12 +18,15 @@
 #include "util.h"    // SumTime()
 #include "twin.h"    // NOFD, NOPID, NOSLOT
 
+#include <new>
+
 msgport s_msgport::Create(byte namelen, const char *name, tany pausesec, tany pausefraction,
                           byte wakeup, void (*handler)(msgport)) {
   msgport p = NULL;
   if (name) {
-    p = (msgport)AllocMem0(sizeof(s_msgport), 1);
-    if (p) {
+    void *addr = AllocMem0(sizeof(s_msgport), 1);
+    if (addr) {
+      p = new (addr) s_msgport();
       p->Fn = Fn_msgport;
       if (!p->Init(namelen, name, pausesec, pausefraction, wakeup, handler)) {
         p->Delete();

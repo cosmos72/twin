@@ -17,11 +17,14 @@
 #include "obj/group.h"
 #include "obj/msgport.h"
 
+#include <new>
+
 ggroup s_group::Create(msgport owner) {
   ggroup g = NULL;
   if (owner) {
-    g = (ggroup)AllocMem0(sizeof(s_group), 1);
-    if (g) {
+    void *addr = AllocMem0(sizeof(s_group), 1);
+    if (addr) {
+      g = new (addr) s_group();
       g->Fn = Fn_group;
       if (!g->Init(owner)) {
         g->Delete();

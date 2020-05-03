@@ -15,11 +15,14 @@
 #include "alloc.h"   // CloneStrL()
 #include "methods.h" // InsertLast()
 
+#include <new>
+
 module s_module::Create(uldat namelen, const char *name) {
   module m = NULL;
   if (name) {
-    m = (module)AllocMem0(sizeof(s_module), 1);
-    if (m) {
+    void *addr = AllocMem0(sizeof(s_module), 1);
+    if (addr) {
+      m = new (addr) s_module();
       m->Fn = Fn_module;
       if (!m->Init(namelen, name)) {
         m->Delete();

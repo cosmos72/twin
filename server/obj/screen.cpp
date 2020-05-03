@@ -15,13 +15,15 @@
 #include "fn.h"      // Fn_screen
 #include "obj/screen.h"
 
+#include <new>
 #include <Tw/datasizes.h> // TW_MAXDAT
 
 screen s_screen::Create(dat namelen, const char *name, dat bgwidth, dat bgheight, const tcell *bg) {
   screen S = NULL;
   if (bgwidth && bgheight) {
-    S = (screen)AllocMem0(sizeof(s_screen), 1);
-    if (S) {
+    void *addr = AllocMem0(sizeof(s_screen), 1);
+    if (addr) {
+      S = new (addr) s_screen();
       S->Fn = Fn_screen;
       if (!S->Init(namelen, name, bgwidth, bgheight, bg)) {
         S->Delete();

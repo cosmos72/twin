@@ -10,16 +10,19 @@
  *
  */
 
-#include "obj/obj.h"
-
 #include "alloc.h" // AllocMem0()
 #include "fn.h"    // Fn_obj
 #include "id.h"    // AssignId()
+#include "obj/obj.h"
+
+#include <new>
 
 obj s_obj::Create() {
-  obj o = (obj)AllocMem0(sizeof(s_obj), 1);
-  obj_entry e = (obj_entry)o;
-  if (e) {
+  obj o = NULL;
+  void *addr = AllocMem0(sizeof(s_obj), 1);
+  if (addr) {
+    o = new (addr) s_obj();
+    obj_entry e = (obj_entry)o;
     e->Fn = Fn_obj;
     if (!o->Init()) {
       Fn_obj->Delete(o);
@@ -40,6 +43,13 @@ s_obj::s_obj() {
 }
 
 s_obj::~s_obj() {
+}
+
+void s_obj::Delete() {
+  ((obj_entry)this)->Fn->Delete(this);
+}
+void s_obj::ChangeField(udat field, uldat clear_mask, uldat xor_mask) {
+  ((obj_entry)this)->Fn->ChangeField(this, field, clear_mask, xor_mask);
 }
 
 s_obj_entry::~s_obj_entry() {

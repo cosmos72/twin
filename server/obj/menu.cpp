@@ -17,13 +17,16 @@
 #include "obj/menu.h"
 #include "obj/msgport.h"
 
+#include <new>
+
 menu s_menu::Create(msgport owner, tcolor colitem, tcolor colselect, tcolor coldisabled,
                     tcolor colselectdisabled, tcolor colshtcut, tcolor colselshtcut,
                     byte flagdefcolinfo) {
   menu m = NULL;
   if (owner) {
-    m = (menu)AllocMem0(sizeof(s_menu), 1);
-    if (m) {
+    void *addr = AllocMem0(sizeof(s_menu), 1);
+    if (addr) {
+      m = new (addr) s_menu();
       m->Fn = Fn_menu;
       if (!m->Init(owner, colitem, colselect, coldisabled, colselectdisabled, colshtcut,
                    colselshtcut, flagdefcolinfo)) {

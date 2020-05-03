@@ -10,20 +10,24 @@
  *
  */
 
-#include "obj/gadget.h"
 #include "alloc.h"    // AllocMem0(), CloneStr2TRune()
 #include "fn.h"       // Fn_gadget
 #include "id.h"       // AssignId()
 #include "menuitem.h" // COD_RESERVED
+#include "obj/gadget.h"
+
+#include <new>
 
 gadget s_gadget::Create(msgport owner, widget parent, dat xwidth, dat ywidth,
                         const char *textnormal, uldat attr, uldat flags, udat code, tcolor coltext,
                         tcolor coltextselect, tcolor coltextdisabled, tcolor coltextselectdisabled,
                         dat left, dat up) {
   gadget g = NULL;
+
   if (owner) {
-    g = (gadget)AllocMem0(sizeof(s_gadget), 1);
-    if (g) {
+    void *addr = AllocMem0(sizeof(s_gadget), 1);
+    if (addr) {
+      g = new (addr) s_gadget();
       g->Fn = Fn_gadget;
       if (!g->Init(owner, parent, xwidth, ywidth, textnormal, attr, flags, code, coltext,
                    coltextselect, coltextdisabled, coltextselectdisabled, left, up)) {
@@ -40,10 +44,10 @@ gadget s_gadget::Init(msgport owner, widget parent, dat xwidth, dat ywidth, cons
                       tcolor coltextdisabled, tcolor coltextselectdisabled, dat left, dat up) {
   ldat Size;
 
-  if (!((widget)this)->Init(owner, xwidth, ywidth, attr, flags, left, up, TCELL(coltext, ' '))) {
+  if (code >= COD_RESERVED || xwidth <= 0 || ywidth <= 0) {
     return NULL;
   }
-  if (code >= COD_RESERVED || xwidth <= 0 || ywidth <= 0) {
+  if (!((widget)this)->Init(owner, xwidth, ywidth, attr, flags, left, up, TCELL(coltext, ' '))) {
     return NULL;
   }
 

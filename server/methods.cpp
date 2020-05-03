@@ -29,6 +29,7 @@
 #include "hw.h"
 #include "hw_multi.h"
 
+#include <new>
 #include <Tw/Tw.h>
 #include <Tw/Twstat.h>
 #include <Tw/Twstat_defs.h>
@@ -575,15 +576,16 @@ static void ChangeFieldGadget(gadget G, udat field, uldat CLEARMask, uldat XORMa
 }
 
 static gadget CreateEmptyButton(msgport Owner, dat XWidth, dat YWidth, tcolor BgCol) {
-  gadget G;
+  gadget G = NULL;
   ldat Size;
   byte i;
   dat j, k;
 #define _FULL T_UTF_32_FULL_BLOCK
 #define _LOWER T_UTF_32_LOWER_HALF_BLOCK
 #define _UPPER T_UTF_32_UPPER_HALF_BLOCK
-  G = (gadget)AllocMem0(sizeof(s_gadget), 1);
-  if (G) {
+  void *addr = AllocMem0(sizeof(s_gadget), 1);
+  if (addr) {
+    G = new (addr) s_gadget();
     G->Fn = Fn_gadget;
     if (!((widget)G)->Init(Owner, ++XWidth, ++YWidth, 0, GADGETFL_USETEXT | GADGETFL_BUTTON, 0, 0,
                            (tcell)0)) {

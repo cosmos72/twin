@@ -15,14 +15,16 @@
 #include "fn.h"    // Fn_widget
 #include "id.h"    // AssignId()
 
+#include <new>
 #include <string.h> // memset()
 
 widget s_widget::Create(msgport owner, dat xwidth, dat ywidth, uldat attr, uldat flags, dat left,
                         dat up, tcell fill) {
   widget w = NULL;
   if (owner) {
-    w = (widget)AllocMem0(sizeof(s_widget), 1);
-    if (w) {
+    void *addr = AllocMem0(sizeof(s_widget), 1);
+    if (addr) {
+      w = new (addr) s_widget();
       w->Fn = Fn_widget;
       if (!w->Init(owner, xwidth, ywidth, attr, flags, left, up, fill)) {
         w->Delete();

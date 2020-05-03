@@ -14,9 +14,13 @@
 #include "fn.h"
 #include "obj/extension.h"
 
+#include <new>
+
 extension s_extension::Create(uldat namelen, const char *name) {
-  extension e = (extension)AllocMem0(sizeof(s_extension), 1);
-  if (e) {
+  extension e = NULL;
+  void *addr = AllocMem0(sizeof(s_extension), 1);
+  if (addr) {
+    e = new (addr) s_extension();
     e->Fn = Fn_extension;
     if (!e->Init(namelen, name)) {
       e->Delete();

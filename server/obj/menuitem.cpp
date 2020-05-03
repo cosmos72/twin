@@ -18,6 +18,7 @@
 #include "resize.h" // SyncMenu()
 #include "twin.h"   // IS_WINDOW()
 
+#include <new>
 #include <Tw/datasizes.h> // TW_MAXLDAT
 
 menuitem s_menuitem::Create(obj parent, window w, udat code, byte flags, dat left, ldat len,
@@ -26,8 +27,9 @@ menuitem s_menuitem::Create(obj parent, window w, udat code, byte flags, dat lef
   if (parent && (IS_MENU(parent) || (IS_WINDOW(parent) && W_USE((window)parent, USEROWS))) &&
       (!w || IS_WINDOW(w)) && name) {
 
-    item = (menuitem)AllocMem0(sizeof(s_menuitem), 1);
-    if (item) {
+    void *addr = AllocMem0(sizeof(s_menuitem), 1);
+    if (addr) {
+      item = new (addr) s_menuitem();
       item->Fn = Fn_menuitem;
       if (!item->Init(parent, w, code, flags, left, len, shortcut, name)) {
         item->Delete();
