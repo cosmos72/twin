@@ -36,6 +36,8 @@ struct s_obj_entry {
   uldat Id;
   fn_obj Fn;
   obj_entry Prev, Next, Parent;
+
+  virtual ~s_obj_entry(); // force adding vtable, because s_obj has it
 };
 
 struct s_obj_list {
@@ -49,6 +51,7 @@ struct s_obj {
   static obj Create();
   obj Init();
   s_obj();
+  virtual ~s_obj();
 
 #if 0
   uldat Magic() const {

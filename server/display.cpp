@@ -212,6 +212,9 @@ s_obj::s_obj() {
   Id = 0;
 }
 
+s_obj::~s_obj() {
+}
+
 static struct s_fn_module _FnModule = {
     module_magic,
     (void (*)(module, all, module, module))NoOp, /* InsertModule */

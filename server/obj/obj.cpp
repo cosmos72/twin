@@ -38,3 +38,9 @@ obj s_obj::Init() {
 
 s_obj::s_obj() {
 }
+
+s_obj::~s_obj() {
+}
+
+s_obj_entry::~s_obj_entry() {
+}
