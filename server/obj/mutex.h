@@ -45,6 +45,9 @@ struct s_mutex {
   uldat Magic() const {
     return Fn->Magic;
   }
+  void Insert(all a, mutex prev, mutex next) {
+    Fn->Insert(this, a, prev, next);
+  }
   void Remove() {
     Fn->Remove(this);
   }

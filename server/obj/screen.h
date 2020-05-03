@@ -96,11 +96,92 @@ struct s_screen {
   uldat Magic() const {
     return Fn->Magic;
   }
+  void Insert(all a, screen prev, screen next) {
+    Fn->Insert(this, a, prev, next);
+  }
   void Remove() {
     Fn->Remove(this);
   }
   void Delete() {
     Fn->Delete(this);
+  }
+  /* widget */
+  void DrawSelf(draw_ctx *D) {
+    Fn->DrawSelf(D);
+  }
+  widget FindWidgetAt(dat x, dat y) {
+    return Fn->FindWidgetAt(this, x, y);
+  }
+  gadget FindGadgetByCode(udat code) {
+    return Fn->FindGadgetByCode(this, code);
+  }
+  void SetXY(dat x, dat y) {
+    Fn->SetXY(this, x, y);
+  }
+  void SetFill(tcell fill) {
+    Fn->SetFill(this, fill);
+  }
+  widget Focus() {
+    return Fn->Focus(this);
+  }
+  widget KbdFocus() {
+    return Fn->KbdFocus(this);
+  }
+  void Map(widget parent) {
+    Fn->Map(this, parent);
+  }
+  void UnMap() {
+    Fn->UnMap(this);
+  }
+  void MapTopReal(screen scr) {
+    Fn->MapTopReal(this, scr);
+  }
+  void Raise() {
+    Fn->Raise(this);
+  }
+  void Lower() {
+    Fn->Lower(this);
+  }
+  void Own(msgport port) {
+    Fn->Own(this, port);
+  }
+  void DisOwn() {
+    Fn->DisOwn(this);
+  }
+  void RecursiveDelete(msgport port) {
+    Fn->RecursiveDelete(this, port);
+  }
+  void Expose(dat xwidth, dat ywidth, dat left, dat up, const char *ascii, const trune *runes,
+              const tcell *cells) {
+    Fn->Expose(this, xwidth, ywidth, left, up, ascii, runes, cells);
+  }
+  byte InstallHook(fn_hook hook, fn_hook *where) {
+    return Fn->InstallHook(this, hook, where);
+  }
+  void RemoveHook(fn_hook hook, fn_hook *where) {
+    Fn->RemoveHook(this, hook, where);
+  }
+  /* screen */
+  menu FindMenu() {
+    return Fn->FindMenu(this);
+  }
+  screen Find(dat j) {
+    return Fn->Find(j);
+  }
+  screen CreateSimple(dat namelen, const char *name, tcell bg) {
+    return Fn->CreateSimple(namelen, name, bg);
+  }
+  void BgImage(dat bgwidth, dat bgheight, const tcell *bg) {
+    Fn->BgImage(this, bgwidth, bgheight, bg);
+  }
+  void DrawMenu(dat xstart, dat xend) {
+    Fn->DrawMenu(this, xstart, xend);
+  }
+  void ActivateMenu(menuitem item, byte bymouse) {
+    Fn->ActivateMenu(this, item, bymouse);
+  }
+  void DeActivateMenu() {
+    Fn->DeActivateMenu(this);
   }
 };
 

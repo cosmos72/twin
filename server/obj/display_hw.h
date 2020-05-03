@@ -190,11 +190,21 @@ struct s_display_hw {
   uldat Magic() const {
     return Fn->Magic;
   }
+  void Insert(all a, display_hw prev, display_hw next) {
+    Fn->Insert(this, a, prev, next);
+  }
   void Remove() {
     Fn->Remove(this);
   }
   void Delete() {
     Fn->Delete(this);
+  }
+  /* display_hw */
+  byte DoInit() {
+    return Fn->DoInit(this);
+  }
+  void DoQuit() {
+    Fn->DoQuit(this);
   }
 };
 

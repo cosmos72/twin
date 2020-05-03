@@ -83,11 +83,11 @@ obj Id2Obj(byte i, uldat Id) {
   return (obj)0;
 }
 
-inline byte _AssignId(byte i, obj Obj) {
+inline byte _AssignId(byte i, obj o) {
   uldat Id, j;
   if ((Id = IdListGet(i)) != NOSLOT) {
-    Obj->Id = Id | ((uldat)i << magic_shift);
-    IdList[i][Id] = Obj;
+    o->Id = Id | ((uldat)i << magic_shift);
+    IdList[i][Id] = o;
     if (IdTop[i] <= Id)
       IdTop[i] = Id + 1;
     for (j = IdBottom[i] + 1; j < IdTop[i]; j++)
@@ -100,11 +100,11 @@ inline byte _AssignId(byte i, obj Obj) {
   return tfalse;
 }
 
-inline void _DropId(byte i, obj Obj) {
-  uldat Id = Obj->Id & MAXID, j;
+inline void _DropId(byte i, obj o) {
+  uldat Id = o->Id & MAXID, j;
 
-  if (Id < IdTop[i] && IdList[i][Id] == Obj /* paranoia */) {
-    Obj->Id = NOID;
+  if (Id < IdTop[i] && IdList[i][Id] == o /* paranoia */) {
+    o->Id = NOID;
     IdList[i][Id] = (obj)0;
     if (IdBottom[i] > Id)
       IdBottom[i] = Id;
@@ -118,9 +118,9 @@ inline void _DropId(byte i, obj Obj) {
   }
 }
 
-byte AssignId(const fn_obj Fn_Obj, obj Obj) {
+byte AssignId(const fn_obj Fn_Obj, obj o) {
   byte i;
-  if (Obj)
+  if (o)
     switch (Fn_Obj->Magic) {
     case obj_magic:
       /* 'obj' is an abstract type, you can't create one */
@@ -134,7 +134,7 @@ byte AssignId(const fn_obj Fn_Obj, obj Obj) {
        * Remote access to module and display_hw is unsafe too,
        * so no Ids for them too.
        */
-      Obj->Id = Fn_Obj->Magic;
+      o->Id = Fn_Obj->Magic;
       return ttrue;
     case widget_magic:
     case gadget_magic:
@@ -147,17 +147,18 @@ byte AssignId(const fn_obj Fn_Obj, obj Obj) {
     case mutex_magic:
     case extension_magic:
       i = Fn_Obj->Magic >> magic_shift;
-      return _AssignId(i, Obj);
+      return _AssignId(i, o);
     default:
       break;
     }
   return tfalse;
 }
 
-void DropId(obj Obj) {
+void DropId(obj o) {
+  obj_entry e = (obj_entry)o;
   byte i = 0;
-  if (Obj && Obj->Fn)
-    switch (Obj->Fn->Magic) {
+  if (o && e->Fn)
+    switch (e->Fn->Magic) {
     case obj_magic:
       /* 'obj' is just a template type, you can't create one */
       break;
@@ -167,7 +168,7 @@ void DropId(obj Obj) {
     case msg_magic:
       /* we don't use Ids for rows and msgs as we expect to create *lots* of them */
       /* it's unsafe to allow modules access remotely, so no Ids for them too */
-      Obj->Id = NOID;
+      o->Id = NOID;
       break;
     case widget_magic:
     case gadget_magic:
@@ -178,9 +179,9 @@ void DropId(obj Obj) {
     case menu_magic:
     case msgport_magic:
     case mutex_magic:
-      i = Obj->Fn->Magic >> magic_shift;
-      if (i == (Obj->Id >> magic_shift))
-        _DropId(i, Obj);
+      i = e->Fn->Magic >> magic_shift;
+      if (i == (o->Id >> magic_shift))
+        _DropId(i, o);
       break;
     default:
       break;
@@ -189,13 +190,13 @@ void DropId(obj Obj) {
 
 static obj IdList_all[1];
 
-byte AssignId_all(all Obj) {
+byte AssignId_all(all a) {
   byte i = all_magic_id;
 
   if (!IdList[i]) {
     IdList[i] = IdList_all;
     IdSize[i] = 1;
-    return _AssignId(i, (obj)Obj);
+    return _AssignId(i, (obj)a);
   }
   return tfalse;
 }

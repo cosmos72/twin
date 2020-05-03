@@ -25,7 +25,8 @@ tpos FakeFindBorderWindow(window W, dat u, dat v, byte Border, tcell *PtrAttr);
 
 #define New(obj_type) s_##obj_type::Create
 
-#define Act(Command, Obj) ((Obj)->Fn->Command)
+#define SKIP_FIRST_ARG(arg, ...) (__VA_ARGS__)
+#define Act(Command, Obj) (Obj)->Command SKIP_FIRST_ARG
 
 #define DeleteList(First)                                                                          \
   do {                                                                                             \

@@ -57,6 +57,17 @@ struct s_extension {
   void Delete() {
     Fn->Delete(this);
   }
+  /* module */
+  byte DlOpen() {
+    return Fn->DlOpen(this);
+  }
+  void DlClose() {
+    Fn->DlClose(this);
+  }
+  /* extension */
+  extension Query(byte namelen, const char *name) {
+    return Fn->Query(namelen, name);
+  }
 };
 
 #endif /* _TWIN_EXTENSION_H */

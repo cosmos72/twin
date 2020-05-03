@@ -44,24 +44,27 @@ struct s_obj_list {
 
 struct s_obj {
   uldat Id;
-  fn_obj Fn;
+  //  fn_obj Fn;
 
   static obj Create();
   obj Init();
+
   uldat Magic() const {
-    return Fn->Magic;
+    return ((const s_obj_entry *)this)->Fn->Magic;
   }
+#if 0
   void Insert(obj parent, obj prev, obj next) {
     Fn->Insert(this, parent, prev, next);
   }
   void Remove() {
     Fn->Remove(this);
   }
+#endif // 0
   void Delete() {
-    Fn->Delete(this);
+    ((obj_entry)this)->Fn->Delete(this);
   }
   void ChangeField(udat field, uldat clear_mask, uldat xor_mask) {
-    Fn->ChangeField(this, field, clear_mask, xor_mask);
+    ((obj_entry)this)->Fn->ChangeField(this, field, clear_mask, xor_mask);
   }
 };
 

@@ -43,21 +43,21 @@ struct s_fn_gadget {
   void (*Own)(gadget, msgport);
   void (*DisOwn)(gadget);
   void (*RecursiveDelete)(gadget, msgport);
-  void (*Expose)(gadget, dat XWidth, dat YWidth, dat Left, dat Up, const char *, const trune *,
+  void (*Expose)(gadget, dat xwidth, dat ywidth, dat Left, dat Up, const char *, const trune *,
                  const tcell *);
   byte (*InstallHook)(gadget, fn_hook, fn_hook *Where);
   void (*RemoveHook)(gadget, fn_hook, fn_hook *Where);
   /* gadget */
   fn_widget Fn_Widget;
-  gadget (*CreateEmptyButton)(msgport Owner, dat XWidth, dat YWidth, tcolor BgCol);
-  byte (*FillButton)(gadget Gadget, widget Parent, udat Code, dat Left, dat Up, udat Flags,
+  gadget (*CreateEmptyButton)(msgport owner, dat xwidth, dat ywidth, tcolor BgCol);
+  byte (*FillButton)(gadget g, widget Parent, udat Code, dat Left, dat Up, udat Flags,
                      const char *Text, tcolor Color, tcolor ColorDisabled);
-  gadget (*CreateButton)(widget Parent, dat XWidth, dat YWidth, const char *Text, uldat Flags,
+  gadget (*CreateButton)(widget Parent, dat xwidth, dat ywidth, const char *Text, uldat Flags,
                          udat Code, tcolor BgCol, tcolor Col, tcolor ColDisabled, dat Left, dat Up);
-  void (*WriteTexts)(gadget Gadget, byte bitmap, dat XWidth, dat YWidth, const char *Text, dat Left,
+  void (*WriteTexts)(gadget g, byte bitmap, dat xwidth, dat ywidth, const char *Text, dat Left,
                      dat Up);
-  void (*WriteTRunes)(gadget Gadget, byte bitmap, dat XWidth, dat YWidth, const trune *TRune,
-                      dat Left, dat Up);
+  void (*WriteTRunes)(gadget g, byte bitmap, dat xwidth, dat ywidth, const trune *TRune, dat Left,
+                      dat Up);
 };
 
 struct s_gadget {
@@ -89,10 +89,10 @@ struct s_gadget {
   gadget G_Prev, G_Next; /* list in the same ggroup */
   ggroup Group;
 
-  static gadget Create(msgport Owner, widget Parent, dat XWidth, dat YWidth, const char *TextNormal,
+  static gadget Create(msgport owner, widget Parent, dat xwidth, dat ywidth, const char *TextNormal,
                        uldat Attr, uldat Flags, udat Code, tcolor ColText, tcolor ColTextSelect,
                        tcolor ColTextDisabled, tcolor ColTextSelectDisabled, dat Left, dat Up);
-  gadget Init(msgport Owner, widget Parent, dat XWidth, dat YWidth, const char *TextNormal,
+  gadget Init(msgport owner, widget Parent, dat xwidth, dat ywidth, const char *TextNormal,
               uldat Attr, uldat Flags, udat Code, tcolor ColText, tcolor ColTextSelect,
               tcolor ColTextDisabled, tcolor ColTextSelectDisabled, dat Left, dat Up);
 
@@ -162,6 +162,25 @@ struct s_gadget {
   }
   void RemoveHook(fn_hook hook, fn_hook *where) {
     Fn->RemoveHook(this, hook, where);
+  }
+  /* gadget */
+  byte FillButton(widget parent, udat code, dat left, dat up, udat flags, const char *text,
+                  tcolor color, tcolor colordisabled) {
+    return Fn->FillButton(this, parent, code, left, up, flags, text, color, colordisabled);
+  }
+  gadget CreateEmptyButton(msgport owner, dat xwidth, dat ywidth, tcolor bgcol) {
+    return Fn->CreateEmptyButton(owner, xwidth, ywidth, bgcol);
+  }
+  gadget CreateButton(widget parent, dat xwidth, dat ywidth, const char *text, uldat flags,
+                      udat code, tcolor bgcol, tcolor col, tcolor coldisabled, dat left, dat up) {
+    return Fn->CreateButton(parent, xwidth, ywidth, text, flags, code, bgcol, col, coldisabled,
+                            left, up);
+  }
+  void WriteTexts(byte bitmap, dat xwidth, dat ywidth, const char *text, dat left, dat up) {
+    Fn->WriteTexts(this, bitmap, xwidth, ywidth, text, left, up);
+  }
+  void WriteTRunes(byte bitmap, dat xwidth, dat ywidth, const trune *runes, dat left, dat up) {
+    Fn->WriteTRunes(this, bitmap, xwidth, ywidth, runes, left, up);
   }
 };
 

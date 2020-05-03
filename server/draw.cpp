@@ -1017,7 +1017,7 @@ static void DrawWCtx(draw_ctx *D) {
 
     if (!ChildFound) {
       /* no children... draw this widget */
-      Act(DrawSelf, W)(D);
+      Act(DrawSelf, W)(W, D);
     }
 
     if (!FirstCycle)

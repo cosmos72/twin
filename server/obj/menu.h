@@ -52,11 +52,30 @@ struct s_menu {
   uldat Magic() const {
     return Fn->Magic;
   }
+  void Insert(msgport owner, menu prev, menu next) {
+    Fn->Insert(this, owner, prev, next);
+  }
   void Remove() {
     Fn->Remove(this);
   }
   void Delete() {
     Fn->Delete(this);
+  }
+  /* menu */
+  row SetInfo(byte flags, ldat len, const char *text, const tcolor *coltext) {
+    return Fn->SetInfo(this, flags, len, text, coltext);
+  }
+  menuitem FindItem(dat i) {
+    return Fn->FindItem(this, i);
+  }
+  menuitem GetSelectedItem() {
+    return Fn->GetSelectedItem(this);
+  }
+  menuitem RecursiveGetSelectedItem(dat *depth) {
+    return Fn->RecursiveGetSelectedItem(this, depth);
+  }
+  void SetSelectedItem(menuitem item) {
+    Fn->SetSelectedItem(this, item);
   }
 };
 

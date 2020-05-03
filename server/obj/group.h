@@ -48,11 +48,27 @@ struct s_group {
   uldat Magic() const {
     return Fn->Magic;
   }
+  void Insert(msgport owner, ggroup prev, ggroup next) {
+    Fn->Insert(this, owner, prev, next);
+  }
   void Remove() {
     Fn->Remove(this);
   }
   void Delete() {
     Fn->Delete(this);
+  }
+  /* group */
+  void InsertGadget(gadget g) {
+    Fn->InsertGadget(this, g);
+  }
+  void RemoveGadget(gadget g) {
+    Fn->RemoveGadget(this, g);
+  }
+  gadget GetSelectedGadget() {
+    return Fn->GetSelectedGadget(this);
+  }
+  void SetSelectedGadget(gadget g) {
+    Fn->SetSelectedGadget(this, g);
   }
 };
 

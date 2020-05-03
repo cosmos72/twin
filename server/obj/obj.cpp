@@ -18,10 +18,11 @@
 
 obj s_obj::Create() {
   obj o = (obj)AllocMem0(sizeof(s_obj), 1);
-  if (o) {
-    o->Fn = Fn_obj;
+  obj_entry e = (obj_entry)o;
+  if (e) {
+    e->Fn = Fn_obj;
     if (!o->Init()) {
-      o->Delete();
+      Fn_obj->Delete(o);
       o = NULL;
     }
   }
@@ -29,7 +30,7 @@ obj s_obj::Create() {
 }
 
 obj s_obj::Init() {
-  if (AssignId(Fn, this)) {
+  if (AssignId(((obj_entry)this)->Fn, this)) {
     return this;
   }
   return NULL;

@@ -101,7 +101,7 @@ static void Clock_Update(void) {
   sprintf((char *)Buffer, "%02hu/%02hu/%04hu\n %02hu:%02hu:%02hu", (udat)Date->tm_mday,
           (udat)Date->tm_mon + 1, (udat)Date->tm_year + 1900, (udat)Date->tm_hour,
           (udat)Date->tm_min, (udat)Date->tm_sec);
-  Act(RowWriteAscii, ClockWin)(ClockWin, strlen(Buffer), Buffer);
+  ClockWin->RowWriteAscii(strlen(Buffer), Buffer);
 
   Builtin_MsgPort->PauseDuration.Fraction = 1 FullSECs - All->Now.Fraction;
   Builtin_MsgPort->PauseDuration.Seconds = 0;
@@ -111,7 +111,7 @@ static void TweakMenuRows(menuitem Item, udat code, byte flag) {
   window Win;
   row Row;
 
-  if ((Win = Item->Window) && (Row = Act(FindRowByCode, Win)(Win, code, (ldat *)0)))
+  if ((Win = Item->Window) && (Row = Win->FindRowByCode(code, (ldat *)0)))
     Row->Flags = flag;
 }
 
@@ -154,7 +154,7 @@ static void SelectWinList(void) {
 static void ExecuteGadgetH(event_gadget *EventG) {
   gadget G;
 
-  if (EventG->Code == COD_E_TTY && (G = Act(FindGadgetByCode, ExecuteWin)(ExecuteWin, COD_E_TTY))) {
+  if (EventG->Code == COD_E_TTY && (G = ExecuteWin->FindGadgetByCode(COD_E_TTY))) {
 
     if (G->USE.T.Text[0][1] == ' ')
       G->USE.T.Text[0][1] = _CHECK;
@@ -170,20 +170,19 @@ static void ExecuteWinRun(void) {
   row Row;
   gadget G;
 
-  Act(UnMap, ExecuteWin)(ExecuteWin);
+  ExecuteWin->UnMap();
 
   if (flag_secure) {
     printk(flag_secure_msg);
     return;
   }
 
-  if ((Row = Act(FindRow, ExecuteWin)(ExecuteWin, ExecuteWin->CurY)) && !Row->LenGap) {
+  if ((Row = ExecuteWin->FindRow(ExecuteWin->CurY)) && !Row->LenGap) {
 
     argv = TokenizeTRuneVec(Row->Len, Row->Text);
     arg0 = argv ? argv[0] : NULL;
 
-    if ((G = Act(FindGadgetByCode, ExecuteWin)(ExecuteWin, COD_E_TTY)) &&
-        G->USE.T.Text[0][1] != ' ') {
+    if ((G = ExecuteWin->FindGadgetByCode(COD_E_TTY)) && G->USE.T.Text[0][1] != ' ') {
       /* run in a tty */
       Ext(Term, Open)(arg0, (const char *const *)argv);
     } else if (argv)
@@ -210,38 +209,38 @@ void UpdateOptionWin(void) {
   char ch;
 
   for (i = 0; list[i]; i++) {
-    if ((G = Act(FindGadgetByCode, OptionWin)(OptionWin, list[i]))) {
+    if ((G = OptionWin->FindGadgetByCode(list[i]))) {
       if (Flags & setup_shadows)
         G->Flags &= ~GADGETFL_DISABLED;
       else
         G->Flags |= GADGETFL_DISABLED;
     }
   }
-  if ((G = Act(FindGadgetByCode, OptionWin)(OptionWin, COD_O_SHADOWS)))
+  if ((G = OptionWin->FindGadgetByCode(COD_O_SHADOWS)))
     G->USE.T.Text[0][1] = Flags & setup_shadows ? _CHECK : ' ';
-  if ((G = Act(FindGadgetByCode, OptionWin)(OptionWin, COD_O_BLINK)))
+  if ((G = OptionWin->FindGadgetByCode(COD_O_BLINK)))
     G->USE.T.Text[0][1] = Flags & setup_blink ? _CHECK : ' ';
-  if ((G = Act(FindGadgetByCode, OptionWin)(OptionWin, COD_O_CURSOR_ALWAYS)))
+  if ((G = OptionWin->FindGadgetByCode(COD_O_CURSOR_ALWAYS)))
     G->USE.T.Text[0][1] = Flags & setup_cursor_always ? _CHECK : ' ';
-  if ((G = Act(FindGadgetByCode, OptionWin)(OptionWin, COD_O_MENU_HIDE)))
+  if ((G = OptionWin->FindGadgetByCode(COD_O_MENU_HIDE)))
     G->USE.T.Text[0][1] = Flags & setup_menu_hide ? _CHECK : ' ';
-  if ((G = Act(FindGadgetByCode, OptionWin)(OptionWin, COD_O_MENU_INFO)))
+  if ((G = OptionWin->FindGadgetByCode(COD_O_MENU_INFO)))
     G->USE.T.Text[0][1] = Flags & setup_menu_info ? _CHECK : ' ';
-  if ((G = Act(FindGadgetByCode, OptionWin)(OptionWin, COD_O_MENU_RELAX)))
+  if ((G = OptionWin->FindGadgetByCode(COD_O_MENU_RELAX)))
     G->USE.T.Text[0][1] = Flags & setup_menu_relax ? _CHECK : ' ';
-  if ((G = Act(FindGadgetByCode, OptionWin)(OptionWin, COD_O_SCREEN_SCROLL)))
+  if ((G = OptionWin->FindGadgetByCode(COD_O_SCREEN_SCROLL)))
     G->USE.T.Text[0][1] = Flags & setup_screen_scroll ? _CHECK : ' ';
-  if ((G = Act(FindGadgetByCode, OptionWin)(OptionWin, COD_O_TERMINALS_UTF8)))
+  if ((G = OptionWin->FindGadgetByCode(COD_O_TERMINALS_UTF8)))
     G->USE.T.Text[0][1] = Flags & setup_terminals_utf8 ? _CHECK : ' ';
 
   OptionWin->CurX = 25;
   OptionWin->CurY = 1;
   ch = (Flags & setup_shadows ? All->SetUp->DeltaXShade : 0) + '0';
-  Act(RowWriteAscii, OptionWin)(OptionWin, 1, &ch);
+  OptionWin->RowWriteAscii(1, &ch);
   OptionWin->CurX = 25;
   OptionWin->CurY = 2;
   ch = (Flags & setup_shadows ? All->SetUp->DeltaYShade : 0) + '0';
-  Act(RowWriteAscii, OptionWin)(OptionWin, 1, &ch);
+  OptionWin->RowWriteAscii(1, &ch);
 }
 
 static void OptionH(msg Msg) {
@@ -330,20 +329,20 @@ void FillButtonWin(void) {
   ResizeRelWindow(ButtonWin, 0, (dat)(3 + i * 2) - (dat)ButtonWin->YWidth);
 
   /* clear the window: */
-  Act(TtyWriteAscii, ButtonWin)(ButtonWin, 4, "\033[2J");
+  ButtonWin->TtyWriteAscii(4, "\033[2J");
 
   for (j = BUTTON_MAX - 1; j >= 0; j--) {
     if (!All->ButtonVec[j].exists)
       continue;
     i--;
 
-    Act(GotoXY, ButtonWin)(ButtonWin, 2, 1 + i * 2);
+    ButtonWin->GotoXY(2, 1 + i * 2);
     if (j)
       b[2] = j + '0', s = b;
     else
       s = "Close ";
-    Act(TtyWriteAscii, ButtonWin)(ButtonWin, 7, "Button ");
-    Act(TtyWriteAscii, ButtonWin)(ButtonWin, 6, s);
+    ButtonWin->TtyWriteAscii(7, "Button ");
+    ButtonWin->TtyWriteAscii(6, s);
     {
       trune *f = All->ButtonVec[j].shape;
       tcell h[2] = {
@@ -351,7 +350,7 @@ void FillButtonWin(void) {
           TCELL3(ButtonWin->ColGadgets, f[1], EncodeToTCellExtra((tpos)j, tone, tfalse, tfalse)),
       };
 
-      Act(TtyWriteTCell, ButtonWin)(ButtonWin, 15, 1 + i * 2, 2, h);
+      ButtonWin->TtyWriteTCell(15, 1 + i * 2, 2, h);
     }
     New(gadget)(Builtin_MsgPort, (widget)ButtonWin, 3, 1, "[+]", 0, GADGETFL_TEXT_DEFCOL,
                 3 | (j << 2), TCOL(tblack, twhite), TCOL(thigh | twhite, tgreen),
@@ -376,20 +375,20 @@ void UpdateButtonWin(void) {
       continue;
     i--;
 
-    Act(GotoXY, ButtonWin)(ButtonWin, 26, 1 + i * 2);
+    ButtonWin->GotoXY(26, 1 + i * 2);
 
     pos = All->ButtonVec[j].pos;
     if (pos >= 0) {
-      Act(TtyWriteAscii, OptionWin)(ButtonWin, 5, "Left ");
+      ButtonWin->TtyWriteAscii(5, "Left ");
     } else if (pos == -1)
-      Act(TtyWriteAscii, OptionWin)(ButtonWin, 9, "Disabled ");
+      ButtonWin->TtyWriteAscii(9, "Disabled ");
     else {
-      Act(TtyWriteAscii, OptionWin)(ButtonWin, 5, "Right");
+      ButtonWin->TtyWriteAscii(5, "Right");
       pos = -pos - 2;
     }
     if (pos >= 0) {
       sprintf(s, " %3d", pos);
-      Act(TtyWriteAscii, OptionWin)(ButtonWin, strlen(s), s);
+      ButtonWin->TtyWriteAscii(strlen(s), s);
     }
   }
 }
@@ -418,11 +417,11 @@ static void UpdateDisplayWin(widget displayWin) {
     DeleteList(DisplayWin->USE.R.FirstRow);
 
     for (hw = All->FirstDisplayHW; hw; hw = hw->Next) {
-      Act(GotoXY, DisplayWin)(DisplayWin, x, y++);
+      DisplayWin->GotoXY(x, y++);
       if (!hw->NameLen)
-        Act(RowWriteAscii, DisplayWin)(DisplayWin, 9, "(no name)");
+        DisplayWin->RowWriteAscii(9, "(no name)");
       else
-        Act(RowWriteAscii, DisplayWin)(DisplayWin, hw->NameLen, hw->Name);
+        DisplayWin->RowWriteAscii(hw->NameLen, hw->Name);
     }
     if (DisplayWin->Parent)
       DrawFullWindow2(DisplayWin);
@@ -490,7 +489,7 @@ static void BuiltinH(msgport MsgPort) {
       /*0 == Code Chiusura */
       if (!Code || Code == COD_CANCEL || Code == COD_OK) {
 
-        Act(UnMap, tempWin)(tempWin);
+        tempWin->UnMap();
         /* no window needs Delete() here */
 
         if (tempWin == ClockWin)
@@ -547,8 +546,8 @@ static void BuiltinH(msgport MsgPort) {
             break;
           }
           if (NewWindow->Parent)
-            Act(UnMap, NewWindow)(NewWindow);
-          Act(Map, NewWindow)(NewWindow, (widget)Screen);
+            NewWindow->UnMap();
+          NewWindow->Map((widget)Screen);
           break;
 
         case COD_QUIT:
@@ -607,7 +606,7 @@ static void BuiltinH(msgport MsgPort) {
       if (tempWin == WinList) {
         switch (Msg->Event.EventKeyboard.Code) {
         case TW_Escape:
-          Act(UnMap, WinList)(WinList);
+          WinList->UnMap();
           break;
         case TW_Return:
           SelectWinList();
@@ -619,13 +618,13 @@ static void BuiltinH(msgport MsgPort) {
       } else if (tempWin == ExecuteWin) {
         switch ((Code = Msg->Event.EventKeyboard.Code)) {
         case TW_Escape:
-          Act(UnMap, ExecuteWin)(ExecuteWin);
+          ExecuteWin->UnMap();
           break;
         case TW_BackSpace:
           if (ExecuteWin->CurX) {
             ExecuteWin->CurX--;
             UpdateCursor();
-            if ((Row = Act(FindRow, ExecuteWin)(ExecuteWin, ExecuteWin->CurY)) && Row->Len) {
+            if ((Row = ExecuteWin->FindRow(ExecuteWin->CurY)) && Row->Len) {
               Row->Len--;
               DrawLogicWidget((widget)ExecuteWin, Row->Len, ExecuteWin->CurY, Row->Len + 1,
                               ExecuteWin->CurY);
@@ -639,8 +638,8 @@ static void BuiltinH(msgport MsgPort) {
                 Code == 13 /* CTRL+M */)))
             ExecuteWinRun();
           else if (Msg->Event.EventKeyboard.SeqLen)
-            Act(RowWriteAscii, ExecuteWin)(ExecuteWin, Msg->Event.EventKeyboard.SeqLen,
-                                           Msg->Event.EventKeyboard.AsciiSeq);
+            ExecuteWin->RowWriteAscii(Msg->Event.EventKeyboard.SeqLen,
+                                      Msg->Event.EventKeyboard.AsciiSeq);
           break;
         }
       }
@@ -678,8 +677,8 @@ static void BuiltinH(msgport MsgPort) {
       if (tempWin && tempWin == ExecuteWin) {
         switch (Msg->Event.EventSelectionNotify.Magic) {
         case SEL_TEXTMAGIC:
-          Act(RowWriteAscii, tempWin)(tempWin, Msg->Event.EventSelectionNotify.Len,
-                                      Msg->Event.EventSelectionNotify.Data);
+          tempWin->RowWriteAscii(Msg->Event.EventSelectionNotify.Len,
+                                 Msg->Event.EventSelectionNotify.Data);
           break;
         default:
           break;
@@ -720,9 +719,9 @@ void FullUpdateWinList(widget listWin);
 void InstallRemoveWinListHook(widget listWin) {
   if (listWin == (widget)WinList) {
     if (WinList->Parent && IS_SCREEN(WinList->Parent))
-      Act(InstallHook, WinList)(WinList, FullUpdateWinList, &((screen)WinList->Parent)->FnHookW);
+      WinList->InstallHook(FullUpdateWinList, &((screen)WinList->Parent)->FnHookW);
     else
-      Act(RemoveHook, WinList)(WinList, FullUpdateWinList, WinList->WhereHook);
+      WinList->RemoveHook(FullUpdateWinList, WinList->WhereHook);
   }
 }
 
@@ -763,10 +762,9 @@ static byte InitMessagesWin(void) {
       WINDOW_DRAG | WINDOW_RESIZE | WINDOW_X_BAR | WINDOW_Y_BAR | WINDOW_CLOSE, WINDOWFL_CURSOR_ON,
       60, 20, 200);
   if (MessagesWin) {
-    Act(SetColors, MessagesWin)(MessagesWin, 0x1F1, TCOL(thigh | tgreen, twhite), 0, 0, 0,
-                                TCOL(thigh | twhite, twhite), TCOL(tblack, twhite),
-                                TCOL(tblack, tgreen), TCOL(thigh | tblack, twhite),
-                                TCOL(thigh | tblack, tblack));
+    MessagesWin->SetColors(0x1F1, TCOL(thigh | tgreen, twhite), 0, 0, 0,
+                           TCOL(thigh | twhite, twhite), TCOL(tblack, twhite), TCOL(tblack, tgreen),
+                           TCOL(thigh | tblack, twhite), TCOL(thigh | tblack, tblack));
   }
   return !!MessagesWin;
 }
@@ -842,7 +840,7 @@ byte InitBuiltin(void) {
       Item4Menu(Builtin_Menu, Window, ttrue, 6, " Edit ") &&
 
       (Window = Win4Menu(Builtin_Menu)) &&
-      (Act(InstallHook, Window)(Window, UpdateMenuRows, &All->FnHookModule), ttrue) &&
+      (Window->InstallHook(UpdateMenuRows, &All->FnHookModule), ttrue) &&
 
       Row4Menu(Window, COD_TERM_ON, ROW_ACTIVE, 20, " Run Twin Term      ") &&
       Row4Menu(Window, COD_TERM_OFF, ROW_INACTIVE, 20, " Stop Twin Term     ") &&

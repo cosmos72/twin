@@ -60,11 +60,21 @@ struct s_msgport {
   uldat Magic() const {
     return Fn->Magic;
   }
+  void Insert(all a, msgport prev, msgport next) {
+    Fn->Insert(this, a, prev, next);
+  }
   void Remove() {
     Fn->Remove(this);
   }
   void Delete() {
     Fn->Delete(this);
+  }
+  /* msgport */
+  void UseExtension(extension ext) {
+    Fn->UseExtension(this, ext);
+  }
+  void UnuseExtension(extension ext) {
+    Fn->UnuseExtension(this, ext);
   }
 };
 

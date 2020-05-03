@@ -48,11 +48,21 @@ struct s_module {
   uldat Magic() const {
     return Fn->Magic;
   }
+  void Insert(all a, module prev, module next) {
+    Fn->Insert(this, a, prev, next);
+  }
   void Remove() {
     Fn->Remove(this);
   }
   void Delete() {
     Fn->Delete(this);
+  }
+  /* module */
+  byte DlOpen() {
+    return Fn->DlOpen(this);
+  }
+  void DlClose() {
+    Fn->DlClose(this);
   }
 };
 

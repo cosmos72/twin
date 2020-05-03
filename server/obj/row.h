@@ -19,14 +19,14 @@
 
 struct s_fn_row {
   uldat Magic;
-  void (*Insert)(row, window, row Prev, row Next);
+  void (*Insert)(row, window, row prev, row next);
   void (*Remove)(row);
   void (*Delete)(row);
-  void (*ChangeField)(row, udat field, uldat CLEARMask, uldat XORMask);
+  void (*ChangeField)(row, udat field, uldat clearmask, uldat xormask);
   /* row */
   fn_obj Fn_Obj;
-  byte (*SetText)(row, uldat Len, const char *Text, byte DefaultCol);
-  byte (*SetTRune)(row, uldat Len, const trune *TRune, byte DefaultCol);
+  byte (*SetText)(row, uldat len, const char *text, byte defaultcol);
+  byte (*SetTRune)(row, uldat len, const trune *runes, byte defaultcol);
   void (*Raise)(row);
   void (*Lower)(row);
 };
@@ -51,11 +51,27 @@ struct s_row {
   uldat Magic() const {
     return Fn->Magic;
   }
+  void Insert(window w, row prev, row next) {
+    Fn->Insert(this, w, prev, next);
+  }
   void Remove() {
     Fn->Remove(this);
   }
   void Delete() {
     Fn->Delete(this);
+  }
+  /* row */
+  byte SetText(uldat len, const char *text, byte defaultcol) {
+    return Fn->SetText(this, len, text, defaultcol);
+  }
+  byte SetTRune(uldat len, const trune *runes, byte defaultcol) {
+    return Fn->SetTRune(this, len, runes, defaultcol);
+  }
+  void Raise() {
+    Fn->Raise(this);
+  }
+  void Lower() {
+    Fn->Lower(this);
   }
 };
 
