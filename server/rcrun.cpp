@@ -684,7 +684,11 @@ static byte RCSteps(run *r) {
           if (flag == FL_ON && S != All->FirstScreen)
             Act(Focus, S)(S);
 
-          Act(Focus, W)(flag == FL_ON ? W : (widget)0);
+          if (flag == FL_ON) {
+            W->Focus();
+          } else {
+            Fn_window->Focus(NULL);
+          }
         }
         break;
       case MAXIMIZE:
