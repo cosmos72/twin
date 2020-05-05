@@ -1664,9 +1664,9 @@ void CloseMenu(void) {
   if (M) {
     if ((W = S->MenuWindow)) {
       Act(KbdFocus, W)(W);
-      S->MenuWindow = (window)0;
+      S->MenuWindow = NULL;
     } else
-      Do(KbdFocus, window)((window)0);
+      Do(KbdFocus, window)(NULL);
 
     /* close whole currently open menu tree */
     Item = Act(GetSelectedItem, M)(M);
@@ -1794,9 +1794,9 @@ void LowerWidget(widget W, byte alsoUnFocus) {
       if (alsoUnFocus) {
         _W = Screen->FirstW;
         if (_W && IS_WINDOW(_W) && _W != W)
-          Act(Focus, _W)(_W);
+          _W->Focus();
         else
-          Do(Focus, window)((window)0);
+          Do(Focus, window)(NULL);
       } else
         UpdateCursor();
     }

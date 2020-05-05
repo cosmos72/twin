@@ -194,7 +194,7 @@ widget FocusWidget(widget W) {
   if (W)
     oldW = W->KbdFocus();
   else
-    oldW = Do(KbdFocus, widget)(W);
+    oldW = Do(KbdFocus, widget)(NULL);
 
   if (W != oldW && (!W || W->Parent == (widget)All->FirstScreen)) {
     if (W && IS_WINDOW(W))
