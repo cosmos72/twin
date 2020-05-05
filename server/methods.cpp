@@ -192,7 +192,7 @@ static void ChangeFieldWidget(widget W, udat field, uldat CLEARMask, uldat XORMa
 widget FocusWidget(widget W) {
   widget oldW;
   if (W)
-    oldW = Act(KbdFocus, W)(W);
+    oldW = W->KbdFocus();
   else
     oldW = Do(KbdFocus, widget)(W);
 
@@ -204,7 +204,7 @@ widget FocusWidget(widget W) {
     if ((W && IS_WINDOW(W)) || (oldW && IS_WINDOW(oldW))) {
       UpdateCursor();
       if (!W || !IS_WINDOW(W) || !(((window)W)->Flags & WINDOWFL_MENU))
-        Act(DrawMenu, All->FirstScreen)(All->FirstScreen, 0, TW_MAXDAT);
+        All->FirstScreen->DrawMenu(0, TW_MAXDAT);
     }
   }
   return oldW;
@@ -257,7 +257,7 @@ static void MapWidget(widget W, widget Parent) {
         W->MapQueueMsg = Msg;
         SendMsg(Ext(WM, MsgPort), Msg);
       } else
-        Act(MapTopReal, W)(W, (screen)Parent);
+        W->MapTopReal((screen)Parent);
     } else if (IS_WIDGET(Parent)) {
       if (W->Up == TW_MAXDAT) {
         W->Left = Parent->XLogic;
@@ -306,7 +306,7 @@ static void MapTopRealWidget(widget W, screen Screen) {
       IncMouseMotionN();
 
     if (Screen == All->FirstScreen) {
-      OldW = Act(KbdFocus, W)(W);
+      OldW = W->KbdFocus();
       if (OldW && IS_WINDOW(OldW))
         DrawBorderWindow((window)OldW, BORDER_ANY);
       UpdateCursor();
@@ -316,7 +316,7 @@ static void MapTopRealWidget(widget W, screen Screen) {
     else
       DrawAreaWidget(W);
     if (!(W->Flags & WINDOWFL_MENU))
-      Act(DrawMenu, Screen)(Screen, 0, TW_MAXDAT);
+      Screen->DrawMenu(0, TW_MAXDAT);
 
     if (W->MapUnMapHook)
       W->MapUnMapHook(W);
@@ -384,12 +384,12 @@ static void UnMapWidget(widget W) {
             All->State &= ~state_any;
 
           if (Next) {
-            (void)Act(KbdFocus, Next)(Next);
+            (void)Next->KbdFocus();
             DrawBorderWindow(Next, BORDER_ANY);
           } else
-            Do(KbdFocus, window)((window)0);
+            Do(KbdFocus, window)(NULL);
           if (!(W->Flags & WINDOWFL_MENU))
-            Act(DrawMenu, Screen)(Screen, 0, TW_MAXDAT);
+            Screen->DrawMenu(0, TW_MAXDAT);
           UpdateCursor();
         } else
           Screen->FocusW = (widget)Next;
@@ -481,7 +481,7 @@ static void DisOwnWidget(widget W) {
 
 static void RecursiveDeleteWidget(widget W, msgport maybeOwner) {
   while (W->FirstW)
-    Act(RecursiveDelete, W->FirstW)(W->FirstW, maybeOwner);
+    W->FirstW->RecursiveDelete(maybeOwner);
 
   if (W->Owner == maybeOwner)
     W->Delete();
@@ -526,7 +526,7 @@ static struct s_fn_widget _FnWidget = {
 static void DeleteGadget(gadget G) {
   byte i;
 
-  Act(UnMap, G)(G);
+  G->UnMap();
   if (G_USE(G, USETEXT)) {
     for (i = 0; i < 4; i++) {
       if (G->USE.T.Text[i])
@@ -602,8 +602,8 @@ static gadget CreateEmptyButton(msgport Owner, dat XWidth, dat YWidth, tcolor Bg
       if (!(G->USE.T.Text[i] = (trune *)AllocMem(Size * sizeof(trune))) ||
           !(G->USE.T.Color[i] = (tcolor *)AllocMem(Size * sizeof(tcolor)))) {
 
-        Act(Delete, G)(G);
-        return (gadget)0;
+        G->Delete();
+        return NULL;
       }
 
     Size = (ldat)--XWidth * --YWidth;
@@ -660,7 +660,7 @@ byte FillButton(gadget G, widget Parent, udat Code, dat Left, dat Up, udat Flags
     }
   }
   if (Parent)
-    Act(Map, G)(G, Parent);
+    G->Map(Parent);
 
   return ttrue;
 }
@@ -670,10 +670,10 @@ static gadget CreateButton(widget Parent, dat XWidth, dat YWidth, const char *Te
                            dat Up) {
   gadget G;
   if (Parent && (G = CreateEmptyButton(Parent->Owner, XWidth, YWidth, BgCol))) {
-    if (Act(FillButton, G)(G, Parent, Code, Left, Up, Flags, Text, Col, ColDisabled))
+    if (G->FillButton(Parent, Code, Left, Up, Flags, Text, Col, ColDisabled))
       return G;
-    Act(Delete, G)(G);
-    G = (gadget)0;
+    G->Delete();
+    G = NULL;
   }
   return G;
 }
@@ -704,7 +704,7 @@ static struct s_fn_gadget _FnGadget = {
 /* window */
 
 static void DeleteWindow(window W) {
-  Act(UnMap, W)(W);
+  W->UnMap();
   if (W->Name)
     FreeMem(W->Name);
   if (W->ColName)
@@ -998,35 +998,35 @@ window Create4MenuWindow(menu Menu) {
                                         WINDOWFL_ROWS_SELCURRENT,
                                     MIN_XWIN, MIN_YWIN, 0))) {
 
-    Act(SetColors, Window)(Window, 0x1FF, TCOL(0, 0), TCOL(0, 0), TCOL(0, 0), TCOL(0, 0),
-                           TCOL(thigh | twhite, twhite), TCOL(tblack, twhite), TCOL(tblack, tgreen),
-                           TCOL(thigh | tblack, twhite), TCOL(thigh | tblack, tblack));
-    Act(Configure, Window)(Window, 0x3F, 0, 1, MIN_XWIN, MIN_YWIN, TW_MAXDAT, TW_MAXDAT);
+    Window->SetColors(0x1FF, TCOL(0, 0), TCOL(0, 0), TCOL(0, 0), TCOL(0, 0),
+                      TCOL(thigh | twhite, twhite), TCOL(tblack, twhite), TCOL(tblack, tgreen),
+                      TCOL(thigh | tblack, twhite), TCOL(thigh | tblack, tblack));
+    Window->Configure(0x3F, 0, 1, MIN_XWIN, MIN_YWIN, TW_MAXDAT, TW_MAXDAT);
   }
   return Window;
 }
 
 byte FakeWriteAscii(window Window, uldat Len, const char *Ascii) {
   if (DlLoad(TermSo) && Window->Fn->TtyWriteAscii != FakeWriteAscii)
-    return Act(TtyWriteAscii, Window)(Window, Len, Ascii);
+    return Window->TtyWriteAscii(Len, Ascii);
   return tfalse;
 }
 
 byte FakeWriteString(window Window, uldat Len, const char *String) {
   if (DlLoad(TermSo) && Window->Fn->TtyWriteString != FakeWriteString)
-    return Act(TtyWriteString, Window)(Window, Len, String);
+    return Window->TtyWriteString(Len, String);
   return tfalse;
 }
 
 byte FakeWriteTRune(window Window, uldat Len, const trune *TRune) {
   if (DlLoad(TermSo) && Window->Fn->TtyWriteTRune != FakeWriteTRune)
-    return Act(TtyWriteTRune, Window)(Window, Len, TRune);
+    return Window->TtyWriteTRune(Len, TRune);
   return tfalse;
 }
 
 byte FakeWriteTCell(window Window, dat x, dat y, uldat Len, const tcell *Attr) {
   if (DlLoad(TermSo) && Window->Fn->TtyWriteTCell != FakeWriteTCell)
-    return Act(TtyWriteTCell, Window)(Window, x, y, Len, Attr);
+    return Window->TtyWriteTCell(x, y, Len, Attr);
   return tfalse;
 }
 
@@ -1183,7 +1183,7 @@ static void RemoveScreen(screen Screen) {
 
 static void DeleteScreen(screen Screen) {
   while (Screen->FirstW)
-    Act(UnMap, Screen->FirstW)(Screen->FirstW);
+    Screen->FirstW->UnMap();
 
   Screen->Remove();
 
@@ -1262,7 +1262,7 @@ static void ActivateMenuScreen(screen Screen, menuitem Item, byte ByMouse) {
     return;
 
   if (Screen && Screen != All->FirstScreen)
-    Act(Focus, Screen)(Screen);
+    Screen->Focus();
 
   SetMenuState(Item, ByMouse);
 }
@@ -1330,7 +1330,7 @@ static void RemoveGroup(ggroup Group) {
 static void DeleteGroup(ggroup Group) {
   Group->Remove();
   while (Group->FirstG)
-    Act(RemoveGadget, Group)(Group, Group->FirstG);
+    Group->RemoveGadget(Group->FirstG);
 
   DeleteObj((obj)Group);
 }
@@ -1477,8 +1477,8 @@ static void RaiseMenuItem(menuitem M) {
     else
       return;
 
-    Act(Remove, M)(M);
-    Act(Insert, M)(M, Parent, (menuitem)0, Next);
+    M->Remove();
+    M->Insert(Parent, (menuitem)0, Next);
 
     if (IS_MENU(Parent))
       SyncMenu((menu)Parent);
@@ -1503,8 +1503,8 @@ static void LowerMenuItem(menuitem M) {
     else
       return;
 
-    Act(Remove, M)(M);
-    Act(Insert, M)(M, Parent, Prev, NULL);
+    M->Remove();
+    M->Insert(Parent, Prev, NULL);
 
     if (IS_MENU(Parent))
       SyncMenu((menu)Parent);
@@ -1674,8 +1674,8 @@ static void DeleteMenu(menu Menu) {
       WNext = W->O_Next;
       if (IS_WINDOW(W) && ((window)W)->Menu == Menu) {
         if (W->Parent && IS_SCREEN(W->Parent)) {
-          Act(UnMap, W)(W);
-          ((window)W)->Menu = (menu)0;
+          W->UnMap();
+          ((window)W)->Menu = NULL;
         }
       }
     }
@@ -1743,7 +1743,7 @@ static menuitem GetSelectedItem(menu Menu) {
 }
 
 static menuitem RecursiveGetSelectedItem(menu Menu, dat *depth) {
-  menuitem _I = Act(GetSelectedItem, Menu)(Menu), I = (menuitem)0;
+  menuitem I = NULL, _I = Menu->GetSelectedItem();
   window W = (window)0, FW = (window)All->FirstScreen->FocusW;
   dat d = -1;
 
@@ -1753,7 +1753,7 @@ static menuitem RecursiveGetSelectedItem(menu Menu, dat *depth) {
     if (W == FW)
       break;
     if ((W = I->Window) && W->Parent)
-      _I = (menuitem)Act(FindRow, W)(W, W->CurY);
+      _I = (menuitem)W->FindRow(W->CurY);
     else
       break;
   }
@@ -1780,7 +1780,7 @@ static void SetSelectedItem(menu Menu, menuitem Item) {
         All->CommonMenu->SelectI = Item;
     }
 
-    Act(DrawMenu, All->FirstScreen)(All->FirstScreen, 0, TW_MAXDAT);
+    All->FirstScreen->DrawMenu(0, TW_MAXDAT);
   }
 }
 
@@ -1891,7 +1891,7 @@ static void DeleteMsgPort(msgport MsgPort) {
     DeleteList(MsgPort->FirstMutex);
 
     for (count = MsgPort->CountE, Es = MsgPort->Es; count; count--, Es++)
-      Act(UnuseExtension, MsgPort)(MsgPort, *Es);
+      MsgPort->UnuseExtension(*Es);
 
     MsgPort->Remove();
     if (MsgPort->Name)
@@ -1985,7 +1985,7 @@ static void RemoveMutex(mutex Mutex) {
 }
 
 static void DeleteMutex(mutex Mutex) {
-  Act(DisOwn, Mutex)(Mutex);
+  Mutex->DisOwn();
   Mutex->Remove();
   DeleteObj((obj)Mutex);
 }
@@ -2056,7 +2056,7 @@ static void RemoveModule(module Module) {
 static void DeleteModule(module Module) {
   if (!Module->Used) {
 
-    Act(DlClose, Module)(Module);
+    Module->DlClose();
     Module->Remove();
     if (Module->Name)
       FreeMem(Module->Name);
@@ -2089,7 +2089,7 @@ static void DeleteExtension(extension E) {
   for (M = All->FirstMsgPort; M; M = M->Next) {
     for (i = M->CountE, Es = M->Es; i; i--, Es++) {
       if (E == *Es) {
-        Act(UnuseExtension, M)(M, E);
+        M->UnuseExtension(E);
         break;
       }
     }
@@ -2149,7 +2149,7 @@ static void DeleteDisplayHW(display_hw DisplayHW) {
   byte Quitted = DisplayHW->Quitted;
 
   if (!Quitted)
-    Act(DoQuit, DisplayHW)(DisplayHW);
+    DisplayHW->DoQuit();
 
   /* avoid getting stale pointers */
   if (All->MouseHW == DisplayHW)

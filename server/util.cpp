@@ -454,7 +454,7 @@ byte SetSelectionFromWindow(window Window) {
 
     /* Gap not supported! */
     y = Window->YstSel;
-    Row = Act(FindRow, Window)(Window, y);
+    Row = Window->FindRow(y);
 
     if (Row && Row->Text) {
       if (y < Window->YendSel)
@@ -471,13 +471,12 @@ byte SetSelectionFromWindow(window Window) {
       ok &= _SelAppendNL();
 
     for (y = Window->YstSel + 1; ok && y < Window->YendSel; y++) {
-      if ((Row = Act(FindRow, Window)(Window, y)) && Row->Text)
+      if ((Row = Window->FindRow(y)) && Row->Text)
         ok &= SelectionAppend(Row->Len * sizeof(trune), (const char *)Row->Text);
       ok &= _SelAppendNL();
     }
     if (Window->YendSel > Window->YstSel) {
-      if (Window->XendSel >= 0 && (Row = Act(FindRow, Window)(Window, Window->YendSel)) &&
-          Row->Text)
+      if (Window->XendSel >= 0 && (Row = Window->FindRow(Window->YendSel)) && Row->Text)
         ok &= SelectionAppend(Min2(Row->Len, (uldat)Window->XendSel + 1) * sizeof(trune),
                               (const char *)Row->Text);
       if (!Row || !Row->Text || Row->Len <= (uldat)Window->XendSel)

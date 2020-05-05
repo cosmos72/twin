@@ -35,25 +35,22 @@ tpos FakeFindBorderWindow(window W, dat u, dat v, byte Border, tcell *PtrAttr);
     }                                                                                              \
   } while (0)
 
-#define InsertOnly(ObjName, Obj, Parent) Act(Insert, (Obj))((Obj), (Parent), NULL, NULL)
+#define InsertOnly(ObjName, Obj, Parent) (Obj)->Insert((Parent), NULL, NULL)
 
-#define InsertFirst(ObjName, Obj, Parent)                                                          \
-  Act(Insert, (Obj))((Obj), (Parent), NULL, (Parent)->First##ObjName)
+#define InsertFirst(ObjName, Obj, Parent) (Obj)->Insert((Parent), NULL, (Parent)->First##ObjName)
 
 #define InsertMiddle(ObjName, Obj, Parent, ObjPrev, ObjNext)                                       \
-  Act(Insert, (Obj))((Obj), (Parent), (ObjPrev), (ObjNext))
+  (Obj)->Insert((Parent), (ObjPrev), (ObjNext))
 
-#define InsertLast(ObjName, Obj, Parent)                                                           \
-  Act(Insert, (Obj))((Obj), (Parent), (Parent)->Last##ObjName, NULL)
+#define InsertLast(ObjName, Obj, Parent) (Obj)->Insert((Parent), (Parent)->Last##ObjName, NULL)
 
-#define MoveFirst(ObjName, Parent, Obj) ((Obj)->Remove(), InsertFirst(ObjName, (Obj), (Parent)))
+#define MoveFirst(ObjName, Parent, Obj) ((Obj)->Remove(), InsertFirst(ObjName, Obj, Parent))
 
-#define MoveLast(ObjName, Parent, Obj) ((Obj)->Remove(), InsertLast(ObjName, (Obj), (Parent)))
+#define MoveLast(ObjName, Parent, Obj) ((Obj)->Remove(), InsertLast(ObjName, Obj, Parent))
 
-#define SendMsg(MsgPort, WhichMsg) (InsertLast(Msg, (WhichMsg), (MsgPort)))
+#define SendMsg(MsgPort, WhichMsg) (InsertLast(Msg, WhichMsg, (MsgPort)))
 
-#define Info4Menu(Menu, Flags, Len, Text, ColText)                                                 \
-  Act(SetInfo, (Menu))((Menu), (Flags), (Len), (Text), (ColText))
+#define Info4Menu(Menu, Flags, Len, Text, ColText) (Menu)->SetInfo(Flags, Len, Text, ColText)
 
 #define Win4Menu(Menu) Do(Create4Menu, window)(Menu)
 

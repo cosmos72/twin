@@ -185,7 +185,7 @@ static void flush_tty(void) {
   if (*Flags & TTY_NEEDREFOCUS) {
     *Flags &= ~TTY_NEEDREFOCUS;
     if (Win == (window)All->FirstScreen->FocusW)
-      Act(KbdFocus, Win)(Win);
+      Win->KbdFocus();
   }
 }
 
@@ -768,25 +768,24 @@ static void set_mode(byte on_off) {
       case 9: /* new style */
         CHANGE_BIT(TTY_REPORTMOUSE, on_off);
         CHANGE_BIT(TTY_REPORTMOUSE2, tfalse);
-        Act(ChangeField, Win)(Win, TWS_window_Attr, WINDOW_WANT_MOUSE_MOTION | WINDOW_WANT_MOUSE,
-                              on_off ? WINDOW_WANT_MOUSE : 0);
+        Win->ChangeField(TWS_window_Attr, WINDOW_WANT_MOUSE_MOTION | WINDOW_WANT_MOUSE,
+                         on_off ? WINDOW_WANT_MOUSE : 0);
         break;
       case 25: /* Cursor on/off */
-        Act(ChangeField, Win)(Win, TWS_window_Flags, WINDOWFL_CURSOR_ON,
-                              on_off ? WINDOWFL_CURSOR_ON : 0);
+        Win->ChangeField(TWS_window_Flags, WINDOWFL_CURSOR_ON, on_off ? WINDOWFL_CURSOR_ON : 0);
         *Flags |= TTY_UPDATECURSOR;
         break;
       case 999: /* new style, report also motions */
         CHANGE_BIT(TTY_REPORTMOUSE, on_off);
         CHANGE_BIT(TTY_REPORTMOUSE2, on_off);
-        Act(ChangeField, Win)(Win, TWS_window_Attr, WINDOW_WANT_MOUSE | WINDOW_WANT_MOUSE_MOTION,
-                              on_off ? WINDOW_WANT_MOUSE | WINDOW_WANT_MOUSE_MOTION : 0);
+        Win->ChangeField(TWS_window_Attr, WINDOW_WANT_MOUSE | WINDOW_WANT_MOUSE_MOTION,
+                         on_off ? WINDOW_WANT_MOUSE | WINDOW_WANT_MOUSE_MOTION : 0);
         break;
       case 1000: /* classic xterm style */
         CHANGE_BIT(TTY_REPORTMOUSE, tfalse);
         CHANGE_BIT(TTY_REPORTMOUSE2, on_off);
-        Act(ChangeField, Win)(Win, TWS_window_Attr, WINDOW_WANT_MOUSE | WINDOW_WANT_MOUSE_MOTION,
-                              on_off ? WINDOW_WANT_MOUSE | WINDOW_WANT_MOUSE_MOTION : 0);
+        Win->ChangeField(TWS_window_Attr, WINDOW_WANT_MOUSE | WINDOW_WANT_MOUSE_MOTION,
+                         on_off ? WINDOW_WANT_MOUSE | WINDOW_WANT_MOUSE_MOTION : 0);
         break;
 
         /* ANSI modes set/reset */
@@ -984,7 +983,7 @@ static void set_newtitle(void) {
   newLen = newMax = 0;
   newName = NULL;
 
-  Act(SetTitle, Win)(Win, _Len, _Name);
+  Win->SetTitle(_Len, _Name);
 }
 
 static void clear_newtitle(void) {

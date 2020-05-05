@@ -517,7 +517,7 @@ static byte RCSteps(run *r) {
         break;
       case MOVESCREEN:
         if (S && S != All->FirstScreen)
-          Act(Focus, S)(S);
+          S->Focus();
         DragFirstScreen(applyflagx(n), applyflagy(n));
         break;
       case NOP:
@@ -539,7 +539,7 @@ static byte RCSteps(run *r) {
         break;
       case RESIZESCREEN:
         if (S && S != All->FirstScreen)
-          Act(Focus, S)(S);
+          S->Focus();
         ResizeFirstScreen(applyflagx(n));
         break;
       case SCROLL:
@@ -550,8 +550,8 @@ static byte RCSteps(run *r) {
         if (W && IS_WINDOW(W) && S && n->name) {
           screen Screen = RCFindScreenName(n->name);
           if (S != Screen) {
-            Act(UnMap, W)(W);
-            Act(Map, W)(W, (widget)Screen);
+            W->UnMap();
+            W->Map((widget)Screen);
           }
         }
         break;
@@ -682,12 +682,12 @@ static byte RCSteps(run *r) {
             flag = (S->FocusW == (widget)W) ? FL_OFF : FL_ON;
 
           if (flag == FL_ON && S != All->FirstScreen)
-            Act(Focus, S)(S);
+            S->Focus();
 
           if (flag == FL_ON) {
             W->Focus();
           } else {
-            Fn_window->Focus(NULL);
+            Do(Focus, window)(NULL);
           }
         }
         break;
@@ -1363,7 +1363,7 @@ byte InitRC(void) {
     UpdateOptionWin();
     FillButtonWin();
     HideMenu(!!(All->SetUp->Flags & setup_menu_hide));
-    Act(DrawMenu, All->FirstScreen)(All->FirstScreen, 0, TW_MAXDAT);
+    All->FirstScreen->DrawMenu(0, TW_MAXDAT);
 
     return ttrue;
   }

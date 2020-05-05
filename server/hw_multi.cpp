@@ -323,7 +323,7 @@ display_hw AttachDisplayHW(uldat len, const char *arg, uldat slot, byte flags) {
 
   if (IsValidHW(len, arg) && (D_HW = New(display_hw)(len, arg))) {
     D_HW->AttachSlot = slot;
-    if (Act(DoInit, D_HW)(D_HW)) {
+    if (D_HW->DoInit()) {
 
       if (flags & TW_ATTACH_HW_EXCLUSIVE) {
         /* started exclusive display, kill all others */
@@ -450,7 +450,7 @@ byte RestartHW(byte verbose) {
 
   if (All->FirstDisplayHW) {
     safeforHW(s_HW) {
-      if (Act(DoInit, HW)(HW))
+      if (HW->DoInit())
         ret = ttrue;
       else
         HW->Delete();
@@ -477,7 +477,7 @@ void SuspendHW(byte verbose) {
       /* we will not be able to restart it */
       HW->Delete();
     else
-      Act(DoQuit, HW)(HW);
+      HW->DoQuit();
   }
   if (verbose && !All->FirstDisplayHW) {
     printk("twin: SuspendHW(): All display drivers had to be removed\n"

@@ -363,7 +363,7 @@ widget RecursiveFindWidgetAt(widget Parent, dat X, dat Y) {
     HasBorder = IS_WINDOW(Parent) && !(((window)Parent)->Flags & WINDOWFL_BORDERLESS);
 
     if (X >= HasBorder && Y >= HasBorder && X < Parent->XWidth - HasBorder &&
-        Y < Parent->YWidth - HasBorder && (W = Act(FindWidgetAt, Parent)(Parent, X, Y))) {
+        Y < Parent->YWidth - HasBorder && (W = Parent->FindWidgetAt(X, Y))) {
 
       X += Parent->XLogic - W->Left - HasBorder;
       Y += Parent->YLogic - W->Up - HasBorder;
@@ -610,7 +610,7 @@ static void DrawSelfBorder(window Window, ldat Left, ldat Up, ldat Rgt, ldat Dwn
   if ((ldat)Y1 == Up) {
     j = Y1 * (ldat)DWidth;
     for (i = X1, u = i - Left; i <= X2; i++, u++) {
-      Act(FindBorder, Window)(Window, u, 0, Border, &Attr);
+      Window->FindBorder(u, 0, Border, &Attr);
       Color = DoShadowColor(TCOLOR(Attr), Shaded || !WinActive, Shaded);
       Video[i + j] = TCELL(Color, 0) | (Attr & ~TCELL(TW_MAXWCOL, 0));
     }
@@ -624,7 +624,7 @@ static void DrawSelfBorder(window Window, ldat Left, ldat Up, ldat Rgt, ldat Dwn
     v = (ldat)Y2 - Up;
     j = Y2 * (ldat)DWidth;
     for (i = X1, u = i - Left; i <= X2; i++, u++) {
-      Act(FindBorder, Window)(Window, u, v, Border, &Attr);
+      Window->FindBorder(u, v, Border, &Attr);
       Color = DoShadowColor(TCOLOR(Attr), Shaded || !WinActive, Shaded);
       Video[i + j] = TCELL(Color, 0) | (Attr & ~TCELL(TW_MAXWCOL, 0));
     }
@@ -636,7 +636,7 @@ static void DrawSelfBorder(window Window, ldat Left, ldat Up, ldat Rgt, ldat Dwn
 
   if ((ldat)X1 == Left) {
     for (j = Y1, v = j - Up; j <= Y2; j++, v++) {
-      Act(FindBorder, Window)(Window, 0, v, Border, &Attr);
+      Window->FindBorder(0, v, Border, &Attr);
       Color = DoShadowColor(TCOLOR(Attr), Shaded || !WinActive, Shaded);
       Video[X1 + j * (ldat)DWidth] = TCELL(Color, 0) | (Attr & ~TCELL(TW_MAXWCOL, 0));
     }
@@ -649,7 +649,7 @@ static void DrawSelfBorder(window Window, ldat Left, ldat Up, ldat Rgt, ldat Dwn
   if ((ldat)X2 == Rgt) {
     u = (ldat)X2 - Left;
     for (j = Y1, v = j - Up; j <= Y2; j++, v++) {
-      Act(FindBorder, Window)(Window, u, v, Border, &Attr);
+      Window->FindBorder(u, v, Border, &Attr);
       Color = DoShadowColor(TCOLOR(Attr), Shaded || !WinActive, Shaded);
       Video[X2 + j * (ldat)DWidth] = TCELL(Color, 0) | (Attr & ~TCELL(TW_MAXWCOL, 0));
     }
@@ -801,7 +801,7 @@ void DrawSelfWindow(draw_ctx *D) {
       else if (Row + (ldat)1 == W->HLogic)
         CurrRow = W->USE.R.LastRow;
       else
-        CurrRow = Act(FindRow, W)(W, Row);
+        CurrRow = W->FindRow(Row);
 
       for (j = Y1; j <= Y2; j++, Row++) {
 
@@ -1017,7 +1017,7 @@ static void DrawWCtx(draw_ctx *D) {
 
     if (!ChildFound) {
       /* no children... draw this widget */
-      Act(DrawSelf, W)(W, D);
+      W->DrawSelf(D);
     }
 
     if (!FirstCycle)
@@ -1261,7 +1261,7 @@ static void DrawAreaCtx(draw_ctx *D) {
     if (!W) {
       W = FirstScreen->FirstW;
       if (Y1 == YLimit && !OnlyW) {
-        Act(DrawMenu, FirstScreen)(FirstScreen, X1, X2);
+        FirstScreen->DrawMenu(X1, X2);
         if (++Y1 > Y2)
           continue;
       }
@@ -1786,7 +1786,7 @@ void DrawMenuScreen(screen Screen, dat Xstart, dat Xend) {
     return;
 
   State = All->State & state_any;
-  Menu = Act(FindMenu, Screen)(Screen);
+  Menu = Screen->FindMenu();
 
   MenuInfo = State != state_menu && (All->SetUp->Flags & setup_menu_info);
 
@@ -1821,7 +1821,7 @@ void DrawMenuScreen(screen Screen, dat Xstart, dat Xend) {
       Color = TCOLOR(Attr);
     } else {
       if (!MenuInfo) {
-        Item = Act(FindItem, Menu)(Menu, i);
+        Item = Menu->FindItem(i);
 
         if (Item) {
           /* check if Item is from All->CommonMenu */

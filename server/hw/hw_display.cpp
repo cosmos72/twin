@@ -390,7 +390,7 @@ static void display_QuitHW(void) {
   }
 
   /*
-   * the rest is done by Act(DoQuit,HW)(HW) by the upper layers,
+   * the rest is done by HW->DoQuit(HW) by the upper layers,
    * including KillSlot(HW->AttachSlot) which forces twdisplay
    * to shutdown its display and quit
    */

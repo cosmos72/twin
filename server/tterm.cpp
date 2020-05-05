@@ -54,13 +54,13 @@ static window newTermWindow(const char *title) {
                        /*width*/ 80, /*height*/ 25, /*scrollbacklines*/ 1000);
 
   if (Window) {
-    Act(SetColors, Window)(Window, 0x1FF, TCOL(thigh | tyellow, tcyan),
-                           TCOL(thigh | tgreen, thigh | tblue), TCOL(twhite, thigh | tblue),
-                           TCOL(thigh | twhite, thigh | tblue), TCOL(thigh | twhite, thigh | tblue),
-                           TCOL(twhite, tblack), TCOL(thigh | tblack, thigh | twhite),
-                           TCOL(thigh | tblack, tblack), TCOL(tblack, thigh | tblack));
+    Window->SetColors(0x1FF, TCOL(thigh | tyellow, tcyan), TCOL(thigh | tgreen, thigh | tblue),
+                      TCOL(twhite, thigh | tblue), TCOL(thigh | twhite, thigh | tblue),
+                      TCOL(thigh | twhite, thigh | tblue), TCOL(twhite, tblack),
+                      TCOL(thigh | tblack, thigh | twhite), TCOL(thigh | tblack, tblack),
+                      TCOL(tblack, thigh | tblack));
 
-    Act(Configure, Window)(Window, (1 << 2) | (1 << 3), 0, 0, 7, 3, 0, 0);
+    Window->Configure((1 << 2) | (1 << 3), 0, 0, 7, 3, 0, 0);
   }
   return Window;
 }

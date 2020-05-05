@@ -96,7 +96,7 @@ module DlLoadAny(uldat len, const char *name) {
   }
 
   if ((Module = New(module)(len, name))) {
-    if (Act(DlOpen, Module)(Module))
+    if (Module->DlOpen())
       return Module;
     Module->Delete();
   }
