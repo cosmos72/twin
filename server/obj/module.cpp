@@ -47,8 +47,3 @@ module s_module::Init(uldat namelen, const char *name) {
   InsertLast(Module, this, ::All);
   return this;
 }
-
-s_module::s_module() {
-  /* obj */
-  Fn = Fn_module;
-}

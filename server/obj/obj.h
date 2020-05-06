@@ -33,13 +33,18 @@ struct s_fn_obj {
 };
 
 struct s_obj {
+protected:
+  s_obj() {
+  }
+  virtual ~s_obj() {
+  }
+
+public:
   uldat Id;
   //  fn_obj Fn;
 
   static obj Create();
   obj Init();
-  s_obj();
-  virtual ~s_obj();
 
 #if 0
   uldat Magic() const {
@@ -59,8 +64,6 @@ struct s_obj {
 struct s_obj_entry : public s_obj {
   fn_obj Fn;
   obj_entry Prev, Next, Parent;
-
-  virtual ~s_obj_entry();
 };
 
 struct s_obj_list {

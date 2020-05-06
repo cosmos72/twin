@@ -52,7 +52,3 @@ display_hw s_display_hw::Init(uldat namelen, const char *name) {
   InsertLast(DisplayHW, this, ::All);
   return this;
 }
-
-s_display_hw::s_display_hw() {
-  Fn = Fn_display_hw;
-}

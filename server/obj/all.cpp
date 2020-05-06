@@ -29,7 +29,7 @@ static setup _SetUp = {
 static selection _Selection = {{(tany)0, (tany)0}, (msgport)0, (display_hw)0, SEL_TEXTMAGIC, "",
                                (uldat)0,           (uldat)0,   NULL};
 
-s_all::s_all() {
+all s_all::Init() {
   State = state_default;
   Selection = &_Selection;
   SetUp = &_SetUp;
@@ -37,8 +37,9 @@ s_all::s_all() {
   Gtranslations[LATIN1_MAP] = NULL; /* it's the identity */
   Gtranslations[IBMPC_MAP] = Tutf_CP437_to_UTF_32;
   Gtranslations[USER_MAP] = GtransUser;
+  return this;
 };
 
 static struct s_all _All;
 
-all const All = &_All;
+all const All = _All.Init();

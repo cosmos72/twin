@@ -185,7 +185,6 @@ struct s_display_hw : public s_obj {
 
   static display_hw Create(uldat namelen, const char *name);
   display_hw Init(uldat namelen, const char *name);
-  s_display_hw();
 
   /* obj */
   uldat Magic() const {

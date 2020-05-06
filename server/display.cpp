@@ -208,13 +208,6 @@ static void RemoteEvent(int FdCount, fd_set *FdSet) {
   }
 }
 
-s_obj::s_obj() {
-  Id = 0;
-}
-
-s_obj::~s_obj() {
-}
-
 static struct s_fn_module _FnModule = {
     module_magic,
     (void (*)(module, all, module, module))NoOp, /* InsertModule */
@@ -226,38 +219,42 @@ static struct s_fn_module _FnModule = {
     (void (*)(module))NoOp,                      /* DlClose      */
 };
 
-s_module::s_module() {
-  /* obj */
-  Id = module_magic;
-  Fn = &_FnModule;
+obj s_obj::Init() {
+  return this;
+}
+
+module s_module::Init(uldat /*namelen*/, const char * /*name*/) {
+  s_obj::Init();
+  return this;
 }
 
 static s_module _Module;
+static module const GModule = (_Module.Fn = &_FnModule, _Module.Init(0, NULL));
 
 static module DlLoadAny(uldat len, char *name) {
-  module Module = &_Module;
   byte (*init_func)(module);
+  module m = GModule;
   char *path;
 
   if (!dlinit_once()) {
     return (module)0;
   }
 
-  if ((Module->Name = CloneStrL(name, len)) &&
+  if ((m->Name = CloneStrL(name, len)) &&
       (path = (char *)AllocMem(len + strlen(modules_prefix) + strlen(DL_SUFFIX) + 1))) {
 
     sprintf(path, "%s%.*s%s", modules_prefix, (int)len, name, DL_SUFFIX);
-    Module->Handle = (void *)dlopen(path);
+    m->Handle = (void *)dlopen(path);
     FreeMem(path);
 
-    if (Module->Handle) {
+    if (m->Handle) {
       /*
        * Module MUST have a InitModule function, as it needs to set
        * Module->Private to its xxx_InitHW() startup code.
        */
-      if ((init_func = (byte(*)(module))dlsym((dlhandle)Module->Handle, "InitModule"))) {
-        if (init_func(Module)) {
-          return Module;
+      if ((init_func = (byte(*)(module))dlsym((dlhandle)m->Handle, "InitModule"))) {
+        if (init_func(m)) {
+          return m;
         } else if (Errstr == NULL || *Errstr == '\0') {
           Error(DLERROR);
           Errstr = "InitModule() failed";
@@ -273,14 +270,14 @@ static module DlLoadAny(uldat len, char *name) {
   } else {
     Errstr = "Out of memory!";
   }
-  return (module)0;
+  return NULL;
 }
 
 static byte module_InitHW(const char *arg, uldat len) {
   const char *name, *tmp;
   char *buf;
   byte (*InitD)(void);
-  module Module = NULL;
+  module m = NULL;
 
   if (!arg || len <= 4)
     return tfalse;
@@ -301,20 +298,20 @@ static byte module_InitHW(const char *arg, uldat len) {
   if ((buf = (char *)AllocMem(len + 4))) {
     sprintf(buf, "hw_%.*s", (int)len, arg);
 
-    Module = DlLoadAny(len + 3, buf);
+    m = DlLoadAny(len + 3, buf);
 
-    if (Module) {
+    if (m) {
       printk("twdisplay: starting display driver module `" SS "'...\n", buf);
 
-      if ((InitD = Module->DoInit) && InitD()) {
+      if ((InitD = m->DoInit) && InitD()) {
         printk("twdisplay: ...module `" SS "' successfully started.\n", buf);
-        HW->Module = Module;
-        Module->Used++;
+        HW->Module = m;
+        m->Used++;
 
         FreeMem(buf);
         return ttrue;
       }
-      /*Module->Delete();*/
+      /*m->Delete();*/
     }
     name = buf;
   } else {
@@ -322,7 +319,7 @@ static byte module_InitHW(const char *arg, uldat len) {
     name = "(NULL)";
   }
 
-  if (Module) {
+  if (m) {
     printk("twdisplay: ...module `" SS "' failed to start.\n", name);
   } else
     printk("twdisplay: unable to load display driver module `" SS "' :\n      " SS "\n", name,
@@ -350,10 +347,22 @@ static struct s_fn_display_hw _FnDisplayHW = {
     QuitDisplayHW,
 };
 
-s_display_hw::s_display_hw() {
-  /* obj */
-  Id = display_hw_magic;
-  Fn = &_FnDisplayHW;
+display_hw s_display_hw::Init(uldat namelen, const char *name) {
+  if (!name || !s_obj::Init()) {
+    return NULL;
+  }
+  if (!(this->Name = CloneStrL(name, namelen))) {
+    return NULL;
+  }
+  this->NameLen = namelen;
+  this->Module = NULL;
+  /*
+   * ->Quitted will be set to tfalse only
+   * after DisplayHW->InitHW() has succeeded.
+   */
+  this->Quitted = ttrue;
+  this->AttachSlot = NOSLOT;
+  return this;
 }
 
 static s_display_hw _HW;
@@ -423,25 +432,8 @@ static void QuitDisplayHW(display_hw D_HW) {
     HW = D_HW, D_HW->QuitHW();
 }
 
-static display_hw CreateDisplayHW(uldat NameLen, const char *Name) {
-  char *newName = NULL;
-
-  if (Name && (newName = CloneStrL(Name, NameLen))) {
-    HW = &_HW;
-    HW->NameLen = NameLen;
-    HW->Name = newName;
-    HW->Module = NULL;
-    HW->Quitted = ttrue;
-    HW->AttachSlot = NOSLOT;
-    /*
-     * ->Quitted will be set to tfalse only
-     * after DisplayHW->InitHW() has succeeded.
-     */
-    return HW;
-  }
-  if (newName)
-    FreeMem(newName);
-  return (display_hw)0;
+static display_hw CreateDisplayHW(uldat namelen, const char *name) {
+  return HW = _HW.Init(namelen, name);
 }
 
 static byte IsValidHW(uldat len, const char *arg) {
@@ -475,7 +467,7 @@ static display_hw AttachDisplayHW(uldat len, const char *arg, uldat slot, byte f
     if (InitDisplayHW(HW))
       return HW;
   }
-  return (display_hw)0;
+  return NULL;
 }
 
 #if 0

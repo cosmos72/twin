@@ -25,7 +25,7 @@ obj s_obj::Create() {
     obj_entry e = (obj_entry)o;
     e->Fn = Fn_obj;
     if (!o->Init()) {
-      Fn_obj->Delete(o);
+      o->Delete();
       o = NULL;
     }
   }
@@ -39,18 +39,9 @@ obj s_obj::Init() {
   return NULL;
 }
 
-s_obj::s_obj() {
-}
-
-s_obj::~s_obj() {
-}
-
 void s_obj::Delete() {
   ((obj_entry)this)->Fn->Delete(this);
 }
 void s_obj::ChangeField(udat field, uldat clear_mask, uldat xor_mask) {
   ((obj_entry)this)->Fn->ChangeField(this, field, clear_mask, xor_mask);
-}
-
-s_obj_entry::~s_obj_entry() {
 }

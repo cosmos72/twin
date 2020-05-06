@@ -117,7 +117,7 @@ struct s_all : public s_obj {
 
   trune *Gtranslations[USER_MAP + 1];
 
-  s_all();
+  all Init();
 };
 
 extern all const All;

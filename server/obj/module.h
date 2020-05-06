@@ -43,7 +43,6 @@ struct s_module : public s_obj {
 
   static module Create(uldat namelen, const char *name);
   module Init(uldat namelen, const char *name);
-  s_module();
 
   /* obj */
   uldat Magic() const {
