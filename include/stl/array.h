@@ -10,7 +10,7 @@
 #define _TWIN_STL_ARRAY_H
 
 #include "stl/span.h"
-#include "stl/alloc.h"
+#include "stl/mem.h"
 
 #include <string.h> // memcpy(), memset()
 
@@ -18,15 +18,18 @@ template <class T> class Array : private Span<T> {
 private:
   typedef Span<T> Base;
 
+  // do not implement. reason: any allocation failure would not be visible
+  Array<T> &operator=(const Array<T> &other);
+
 protected:
   STL_USING Base::data_;
   STL_USING Base::size_;
   size_t cap_;
 
   bool init(size_t n) {
-    data_ = reinterpret_cast<T *>(AllocMem0(sizeof(T) * n));
+    data_ = mem::alloc<T>(n);
     if (n && !data_) {
-      // AllocMem0() failed
+      // mem::alloc() failed
       data_ = (T *)(size_t)-1;
       cap_ = size_ = 0;
       return false;
@@ -37,7 +40,7 @@ protected:
 
   void destroy() {
     if (data_ != (T *)(size_t)-1) {
-      FreeMem(data());
+      mem::free(data());
     }
   }
 
@@ -79,10 +82,6 @@ public:
   }
   ~Array() {
     destroy();
-  }
-
-  Array<T> &operator=(const Array<T> &other) {
-    copy(other.data(), other.size());
   }
 
   bool fail() const {
@@ -132,7 +131,7 @@ public:
   bool reserve(size_t newcap) {
     if (newcap > cap_) {
       T *olddata = fail() ? (T *)0 : data();
-      T *newdata = reinterpret_cast<T *>(ReAllocMem(olddata, newcap * sizeof(T)));
+      T *newdata = mem::realloc(olddata, cap_, newcap);
       if (!newdata) {
         if (cap_ == 0) {
           data_ = (T *)(size_t)-1;
