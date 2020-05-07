@@ -27,7 +27,7 @@ menuitem s_menuitem::Create(obj parent, window w, udat code, byte flags, dat lef
   if (parent && (IS_MENU(parent) || (IS_WINDOW(parent) && W_USE((window)parent, USEROWS))) &&
       (!w || IS_WINDOW(w)) && name) {
 
-    void *addr = AllocMem0(sizeof(s_menuitem), 1);
+    void *addr = AllocMem0(sizeof(s_menuitem));
     if (addr) {
       item = new (addr) s_menuitem();
       item->Fn = Fn_menuitem;

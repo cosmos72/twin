@@ -95,12 +95,12 @@ struct s_fn_window {
   /* window */
   fn_widget Fn_Widget;
   byte (*TtyWriteAscii)(window, uldat Len, const char *Ascii);
-  byte (*TtyWriteString)(window, uldat Len, const char *String);
+  byte (*TtyWriteString)(window, uldat Len, const char *string);
   byte (*TtyWriteTRune)(window, uldat Len, const trune *TRune);
   byte (*TtyWriteTCell)(window, dat x, dat y, uldat Len, const tcell *Attr);
 
   byte (*RowWriteAscii)(window, uldat Len, const char *Ascii);
-  byte (*RowWriteString)(window, uldat Len, const char *String);
+  byte (*RowWriteString)(window, uldat Len, const char *string);
   byte (*RowWriteTRune)(window, uldat Len, const trune *TRune);
   byte (*RowWriteTCell)(window, dat x, dat y, uldat Len, const tcell *Attr);
 

@@ -16,7 +16,7 @@ byte FindInfo(menu Menu, dat i);
 window FakeOpenTerm(const char *arg0, const char *const *argv);
 widget FakeKbdFocus(widget W);
 byte FakeWriteAscii(window Window, uldat Len, const char *Ascii);
-byte FakeWriteString(window Window, uldat Len, const char *String);
+byte FakeWriteString(window Window, uldat Len, const char *string);
 byte FakeWriteTRune(window Window, uldat Len, const trune *TRune);
 byte FakeWriteTCell(window Window, dat x, dat y, uldat Len, const tcell *Attr);
 tpos FakeFindBorderWindow(window W, dat u, dat v, byte Border, tcell *PtrAttr);

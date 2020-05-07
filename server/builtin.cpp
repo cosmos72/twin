@@ -785,7 +785,7 @@ static byte InitScreens(void) {
 }
 
 byte InitBuiltin(void) {
-  window Window;
+  window W;
   const char *greeting =
       "\n"
       "                TWIN              \n"
@@ -806,50 +806,46 @@ byte InitBuiltin(void) {
       Info4Menu(Builtin_Menu, ROW_ACTIVE, (uldat)42, " Hit PAUSE or Mouse Right Button for Menu ",
                 (const tcolor *)"tttttttttttttttttttttttttttttttttttttttttt") &&
 
-      (Window = Win4Menu(Builtin_Menu)) &&
-      Row4Menu(Window, COD_CLOCK_WIN, ROW_ACTIVE, 9, " Clock   ") &&
-      Row4Menu(Window, COD_OPTION_WIN, ROW_ACTIVE, 9, " Options ") &&
-      Row4Menu(Window, COD_BUTTONS_WIN, ROW_ACTIVE, 9, " Buttons ") &&
-      Row4Menu(Window, COD_DISPLAY_WIN, ROW_ACTIVE, 9, " Display ") &&
+      (W = Win4Menu(Builtin_Menu)) && Row4Menu(W, COD_CLOCK_WIN, ROW_ACTIVE, 9, " Clock   ") &&
+      Row4Menu(W, COD_OPTION_WIN, ROW_ACTIVE, 9, " Options ") &&
+      Row4Menu(W, COD_BUTTONS_WIN, ROW_ACTIVE, 9, " Buttons ") &&
+      Row4Menu(W, COD_DISPLAY_WIN, ROW_ACTIVE, 9, " Display ") &&
 #ifdef CONF_PRINTK
-      Row4Menu(Window, COD_MESSAGES_WIN, ROW_ACTIVE, 10, " Messages ") &&
+      Row4Menu(W, COD_MESSAGES_WIN, ROW_ACTIVE, 10, " Messages ") &&
 #endif
-      Row4Menu(Window, COD_ABOUT_WIN, ROW_ACTIVE, 9, " About   ") &&
-      Item4Menu(Builtin_Menu, Window, ttrue, 3, " \xF0 ") &&
+      Row4Menu(W, COD_ABOUT_WIN, ROW_ACTIVE, 9, " About   ") &&
+      Item4Menu(Builtin_Menu, W, ttrue, 3, " \xF0 ") &&
 
-      (Window = Win4Menu(Builtin_Menu)) &&
-      Row4Menu(Window, COD_SPAWN, ROW_ACTIVE, 10, " New Term ") &&
-      Row4Menu(Window, COD_EXECUTE, ROW_ACTIVE, 10, " Execute  ") &&
-      Row4Menu(Window, COD_RELOAD_RC, ROW_ACTIVE, 11, " Reload RC ") &&
-      Row4Menu(Window, (udat)0, ROW_IGNORE, 11, "\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4") &&
-      Row4Menu(Window, COD_DETACH, ROW_ACTIVE, 10, " Detach   ") &&
-      Row4Menu(Window, COD_SUSPEND, ROW_ACTIVE, 10, " Suspend  ") &&
-      Row4Menu(Window, COD_QUIT, ROW_ACTIVE, 10, " Quit     ") &&
-      (Builtin_File = Item4Menu(Builtin_Menu, Window, ttrue, 6, " File ")) &&
+      (W = Win4Menu(Builtin_Menu)) && Row4Menu(W, COD_SPAWN, ROW_ACTIVE, 10, " New Term ") &&
+      Row4Menu(W, COD_EXECUTE, ROW_ACTIVE, 10, " Execute  ") &&
+      Row4Menu(W, COD_RELOAD_RC, ROW_ACTIVE, 11, " Reload RC ") &&
+      Row4Menu(W, (udat)0, ROW_IGNORE, 11, "\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4") &&
+      Row4Menu(W, COD_DETACH, ROW_ACTIVE, 10, " Detach   ") &&
+      Row4Menu(W, COD_SUSPEND, ROW_ACTIVE, 10, " Suspend  ") &&
+      Row4Menu(W, COD_QUIT, ROW_ACTIVE, 10, " Quit     ") &&
+      (Builtin_File = Item4Menu(Builtin_Menu, W, ttrue, 6, " File ")) &&
 
-      (Window = Win4Menu(Builtin_Menu)) &&
-      Row4Menu(Window, (udat)0, ROW_INACTIVE, 11, " Undo      ") &&
-      Row4Menu(Window, (udat)0, ROW_INACTIVE, 11, " Redo      ") &&
-      Row4Menu(Window, (udat)0, ROW_IGNORE, 11, "\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4") &&
-      Row4Menu(Window, (udat)0, ROW_INACTIVE, 11, " Cut       ") &&
-      Row4Menu(Window, (udat)0, ROW_INACTIVE, 11, " Copy      ") &&
-      Row4Menu(Window, (udat)0, ROW_INACTIVE, 11, " Paste     ") &&
-      Row4Menu(Window, (udat)0, ROW_INACTIVE, 11, " Clear     ") &&
-      Row4Menu(Window, (udat)0, ROW_IGNORE, 11, "\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4") &&
-      Row4Menu(Window, (udat)0, ROW_INACTIVE, 11, " Clipboard ") &&
-      Item4Menu(Builtin_Menu, Window, ttrue, 6, " Edit ") &&
+      (W = Win4Menu(Builtin_Menu)) && Row4Menu(W, (udat)0, ROW_INACTIVE, 11, " Undo      ") &&
+      Row4Menu(W, (udat)0, ROW_INACTIVE, 11, " Redo      ") &&
+      Row4Menu(W, (udat)0, ROW_IGNORE, 11, "\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4") &&
+      Row4Menu(W, (udat)0, ROW_INACTIVE, 11, " Cut       ") &&
+      Row4Menu(W, (udat)0, ROW_INACTIVE, 11, " Copy      ") &&
+      Row4Menu(W, (udat)0, ROW_INACTIVE, 11, " Paste     ") &&
+      Row4Menu(W, (udat)0, ROW_INACTIVE, 11, " Clear     ") &&
+      Row4Menu(W, (udat)0, ROW_IGNORE, 11, "\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4") &&
+      Row4Menu(W, (udat)0, ROW_INACTIVE, 11, " Clipboard ") &&
+      Item4Menu(Builtin_Menu, W, ttrue, 6, " Edit ") &&
 
-      (Window = Win4Menu(Builtin_Menu)) &&
-      (Window->InstallHook(UpdateMenuRows, &All->FnHookModule), ttrue) &&
+      (W = Win4Menu(Builtin_Menu)) && (W->InstallHook(UpdateMenuRows, &All->FnHookModule), ttrue) &&
 
-      Row4Menu(Window, COD_TERM_ON, ROW_ACTIVE, 20, " Run Twin Term      ") &&
-      Row4Menu(Window, COD_TERM_OFF, ROW_INACTIVE, 20, " Stop Twin Term     ") &&
+      Row4Menu(W, COD_TERM_ON, ROW_ACTIVE, 20, " Run Twin Term      ") &&
+      Row4Menu(W, COD_TERM_OFF, ROW_INACTIVE, 20, " Stop Twin Term     ") &&
       Row4Menu(
-          Window, (udat)0, ROW_IGNORE, 20,
+          W, (udat)0, ROW_IGNORE, 20,
           "\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4") &&
-      Row4Menu(Window, COD_SOCKET_ON, ROW_ACTIVE, 20, " Run Socket Server  ") &&
-      Row4Menu(Window, COD_SOCKET_OFF, ROW_INACTIVE, 20, " Stop Socket Server ") &&
-      (Builtin_Modules = Item4Menu(Builtin_Menu, Window, ttrue, 9, " Modules ")) &&
+      Row4Menu(W, COD_SOCKET_ON, ROW_ACTIVE, 20, " Run Socket Server  ") &&
+      Row4Menu(W, COD_SOCKET_OFF, ROW_INACTIVE, 20, " Stop Socket Server ") &&
+      (Builtin_Modules = Item4Menu(Builtin_Menu, W, ttrue, 9, " Modules ")) &&
 
       Item4MenuCommon(Builtin_Menu) &&
 

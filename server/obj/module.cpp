@@ -20,7 +20,7 @@
 module s_module::Create(uldat namelen, const char *name) {
   module m = NULL;
   if (name) {
-    void *addr = AllocMem0(sizeof(s_module), 1);
+    void *addr = AllocMem0(sizeof(s_module));
     if (addr) {
       m = new (addr) s_module();
       m->Fn = Fn_module;

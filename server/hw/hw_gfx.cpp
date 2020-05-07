@@ -566,7 +566,7 @@ static byte gfx_InitHW(void) {
   XEvent event;
   XGCValues xs_gc;
 
-  if (!(HW->Private = (struct x11_data *)AllocMem0(sizeof(struct x11_data), 1))) {
+  if (!(HW->Private = (struct x11_data *)AllocMem0(sizeof(struct x11_data)))) {
     printk("      gfx_InitHW(): Out of memory!\n");
     return tfalse;
   }

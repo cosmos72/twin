@@ -24,7 +24,7 @@ menu s_menu::Create(msgport owner, tcolor colitem, tcolor colselect, tcolor cold
                     byte flagdefcolinfo) {
   menu m = NULL;
   if (owner) {
-    void *addr = AllocMem0(sizeof(s_menu), 1);
+    void *addr = AllocMem0(sizeof(s_menu));
     if (addr) {
       m = new (addr) s_menu();
       m->Fn = Fn_menu;

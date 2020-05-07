@@ -30,7 +30,7 @@
 
 
 #define TwConfigMalloc		Tw_ConfigMalloc
-		     
+
 
 #define TwAllocMem		Tw_AllocMem
 
@@ -172,6 +172,5 @@
 #define TwCallAExtension(a1, a2, a3, a4)	Tw_CallAExtension(Tw_DefaultD, a1, a2, a3, a4)
 
 #define TwCallVExtension(a1, a2, a3, a4)	Tw_CallVExtension(Tw_DefaultD, a1, a2, a3, a4)
-
 
 

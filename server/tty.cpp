@@ -1643,21 +1643,21 @@ byte TtyWriteTRune(window Window, uldat Len, const trune *TRune) {
 }
 
 /*
- * this writes String literally, without interpreting specially any character
+ * this writes string literally, without interpreting specially any character
  * (not even ESC or \n) and using current translation.
  */
-byte TtyWriteString(window Window, uldat Len, const char *String) {
+byte TtyWriteString(window Window, uldat Len, const char *string) {
   trune c;
 
   if (!Window || !W_USE(Window, USECONTENTS) || !Window->USE.C.TtyData)
     return tfalse;
-  if (!Len || !String)
+  if (!Len || !string)
     return ttrue;
 
   common(Window);
 
   while (!(*Flags & TTY_STOPPED) && Len) {
-    c = applyG(*String++);
+    c = applyG(*string++);
 
     Len--;
 

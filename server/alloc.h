@@ -12,8 +12,9 @@
 #ifndef _TWIN_ALLOC_H
 #define _TWIN_ALLOC_H
 
+#include "stl/alloc.h"
+
 #include <Tw/datatypes.h>
-#include <stdlib.h> // free()
 #include <string.h> // memcpy(), memmove()
 
 extern udat Errno;
@@ -22,20 +23,19 @@ byte Error(udat Errno);
 
 /* memory allocation. these function call Error(NOMEMORY) on failure */
 
-void *AllocMem(size_t Size);              /* wrapper for malloc() */
-void *ReAllocMem(void *Mem, size_t Size); /* wrapper for realloc() */
-#define FreeMem free
+void *AllocMem(size_t len);               /* wrapper for malloc()  */
+void *ReAllocMem(void *addr, size_t len); /* wrapper for realloc() */
+void FreeMem(void *addr);                 /* wrapper for free()    */
 
-void *AllocMem0(size_t ElementSize, size_t Count); /* wrapper for calloc() */
-void *ReAllocMem0(void *Mem, size_t ElementSize, size_t OldCount,
-                  size_t NewCount); /* wrapper for realloc() + memset() */
+void *AllocMem0(size_t len);                                  /* wrapper for calloc() */
+void *ReAllocMem0(void *mem, size_t old_len, size_t new_len); /* wrapper for realloc() + memset() */
 
 /* inline/define stuff: */
 
-#define CopyMem(From, To, Size) memcpy(To, From, Size)
-#define MoveMem(From, To, Size) memmove(To, From, Size)
+#define CopyMem(From, To, len) memcpy(To, From, len)
+#define MoveMem(From, To, len) memmove(To, From, len)
 
-void *CloneMem(const void *From, uldat Size);
+void *CloneMem(const void *From, uldat len);
 char *CloneStr(const char *s);
 char *CloneStrL(const char *s, uldat len);
 char **CloneStrList(char **s);

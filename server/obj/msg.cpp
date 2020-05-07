@@ -70,7 +70,7 @@ msg s_msg::Create(udat type, udat eventlen) {
     return NULL;
   }
 
-  if ((m = (msg)AllocMem0(eventlen + Delta, 1))) {
+  if ((m = (msg)AllocMem0(eventlen + Delta))) {
     m->Fn = Fn_msg;
     if (!m->Init(type, eventlen)) {
       m->Delete();

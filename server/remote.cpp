@@ -47,7 +47,9 @@ static uldat FdListGrow(void) {
   if ((size = oldsize < TW_SMALLBUFF / 3 ? TW_SMALLBUFF / 2 : oldsize + (oldsize >> 1)) < oldsize)
     size = TW_MAXULDAT;
 
-  if (!(newFdList = (fdlist *)ReAllocMem0(FdList, sizeof(fdlist), oldsize, size))) {
+  if (!(newFdList = (fdlist *)ReAllocMem0(FdList,                   //
+                                          sizeof(fdlist) * oldsize, //
+                                          sizeof(fdlist) * size))) {
     return NOSLOT;
   }
 
@@ -64,7 +66,9 @@ inline void FdListShrink(void) {
   fdlist *newFdList;
   uldat size = Max2(TW_SMALLBUFF, FdTop << 1);
 
-  if (size < FdSize && (newFdList = (fdlist *)ReAllocMem0(FdList, sizeof(fdlist), FdSize, size))) {
+  if (size < FdSize && (newFdList = (fdlist *)ReAllocMem0(FdList,                  //
+                                                          sizeof(fdlist) * FdSize, //
+                                                          sizeof(fdlist) * size))) {
     FdList = newFdList;
     FdSize = size;
   }

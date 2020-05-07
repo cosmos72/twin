@@ -30,7 +30,7 @@ window s_window::Create(msgport owner, dat titlelen, const char *title, const tc
 
   window w = NULL;
   if (owner) {
-    void *addr = AllocMem0(sizeof(s_window), 1);
+    void *addr = AllocMem0(sizeof(s_window));
     if (addr) {
       w = new (addr) s_window();
       w->Fn = Fn_window;

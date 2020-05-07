@@ -21,7 +21,7 @@
 row s_row::Create(udat code, byte flags) {
   row r = NULL;
   if (code < COD_RESERVED) {
-    void *addr = AllocMem0(sizeof(s_row), 1);
+    void *addr = AllocMem0(sizeof(s_row));
     if (addr) {
       r = new (addr) s_row();
       r->Fn = Fn_row;

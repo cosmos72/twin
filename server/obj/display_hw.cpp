@@ -21,7 +21,7 @@
 display_hw s_display_hw::Create(uldat namelen, const char *name) {
   display_hw d = NULL;
   if (name) {
-    void *addr = AllocMem0(sizeof(s_display_hw), 1);
+    void *addr = AllocMem0(sizeof(s_display_hw));
     if (addr) {
       d = new (addr) s_display_hw();
       d->Fn = Fn_display_hw;

@@ -22,7 +22,7 @@ widget s_widget::Create(msgport owner, dat xwidth, dat ywidth, uldat attr, uldat
                         dat up, tcell fill) {
   widget w = NULL;
   if (owner) {
-    void *addr = AllocMem0(sizeof(s_widget), 1);
+    void *addr = AllocMem0(sizeof(s_widget));
     if (addr) {
       w = new (addr) s_widget();
       w->Fn = Fn_widget;

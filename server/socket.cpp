@@ -366,7 +366,7 @@ static window sockCreateWindow(dat TitleLen, const char *Title, const tcolor *Co
                                tcolor ColText, uldat CursorType, uldat Attr, uldat Flags,
                                dat XWidth, dat YWidth, dat ScrollBackLines);
 static void sockWriteAsciiWindow(window Window, uldat Len, const char *Ascii);
-static void sockWriteStringWindow(window Window, uldat Len, const char *String);
+static void sockWriteStringWindow(window Window, uldat Len, const char *string);
 static void sockWriteTRuneWindow(window Window, uldat Len, const trune *TRune);
 static void sockWriteTCellWindow(window Window, dat x, dat y, uldat Len, const tcell *Attr);
 static void sockSetTitleWindow(window Window, dat titlelen, const char *title);
@@ -1222,12 +1222,12 @@ static void sockWriteAsciiWindow(window Window, uldat Len, const char *Ascii) {
   }
 }
 
-static void sockWriteStringWindow(window Window, uldat Len, const char *String) {
+static void sockWriteStringWindow(window Window, uldat Len, const char *string) {
   if (Window) {
     if ((Window->Flags & WINDOWFL_USEANY) == WINDOWFL_USECONTENTS)
-      Act(TtyWriteString, Window)(Window, Len, String);
+      Act(TtyWriteString, Window)(Window, Len, string);
     else if ((Window->Flags & WINDOWFL_USEANY) == WINDOWFL_USEROWS)
-      Act(RowWriteString, Window)(Window, Len, String);
+      Act(RowWriteString, Window)(Window, Len, string);
   }
 }
 

@@ -42,7 +42,7 @@ mutex s_mutex::Create(msgport owner, byte namelen, const char *name, byte perm) 
       old->Perm = perm;
       x = old;
     } else {
-      void *addr = AllocMem0(sizeof(s_mutex), 1);
+      void *addr = AllocMem0(sizeof(s_mutex));
       if (addr) {
         x = new (addr) s_mutex();
         x->Fn = Fn_mutex;

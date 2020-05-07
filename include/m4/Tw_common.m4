@@ -52,7 +52,7 @@ c_doxygen(/** change Tw_AllocMem(), Tw_ReAllocMem(), Tw_FreeMem() function point
 EASY(ConfigMalloc, void Tw_ConfigMalloc(void *(*my_malloc)(size_t),
 		     void *(*my_realloc)(void *, size_t),
 		     void  (*my_free)(void *));)
-		     
+
 c_doxygen(/** pointer to custom malloc() function; use Tw_ConfigMalloc() to change it */)
 EASY(AllocMem, extern void *(*Tw_AllocMem)(size_t);)
 c_doxygen(/** pointer to custom realloc() function; use Tw_ConfigMalloc() to change it */)
@@ -61,9 +61,9 @@ c_doxygen(/** pointer to custom free() function; use Tw_ConfigMalloc() to change
 EASY(FreeMem, extern void  (*Tw_FreeMem)(void *);)
 
 c_doxygen(/** equivalent to calloc() */)
-EASY(AllocMem0, void *Tw_AllocMem0(size_t ElementSize, size_t Count);)
+EASY(AllocMem0, void *Tw_AllocMem0(size_t Size);)
 c_doxygen(/** equivalent to realloc()+memset() */)
-EASY(ReAllocMem0, void *Tw_ReAllocMem0(void * Mem, size_t ElementSize, size_t OldCount, size_t NewCount);)
+EASY(ReAllocMem0, void *Tw_ReAllocMem0(void * Mem, size_t OldSize, size_t NewSize);)
 
 c_doxygen(/** custom malloc()+memcpy() function */)
 EASY(CloneMem, extern void *Tw_CloneMem(TW_CONST void *, size_t);)
@@ -151,7 +151,7 @@ c_doxygen(
  * try to write to the underlying socket.
  * if not all data could be written, write as much as possible,
  * keep the rest queued, then return.
- * 
+ *
  * returns tfalse only after libTw has paniced,
  * returns ttrue+ttrue if not all data could be written.
  */)
@@ -185,7 +185,7 @@ c_doxygen(
  * If Wait is ttrue  and no Msg is available, it waits until a Msg arrives.
  * If Wait is tfalse and no Msg is available, it tries non-blocking
  *                  to receive more Msgs.
- * 
+ *
  * In both cases, if there is at least a Msgs available it is returned
  * without waiting.
  */)
@@ -232,4 +232,3 @@ DECL(void,ExitMainLoop)
 DECL(tany, CallAExtension, textension eid, TW_CONST byte *proto, topaque args_n, TW_CONST tany *args)
 c_doxygen(/** see Tw_CallLExtension() for the rules about how to pass arguments to this function */)
 DECL(tany, CallVExtension, textension eid, TW_CONST byte *proto, topaque args_n, va_list vargs)
-

@@ -318,7 +318,7 @@ AC_CONFIG_FILES([
       docs/Makefile include/Makefile include/Tutf/Makefile include/Tw/Makefile \
       include/version.h include/Tutf/version.h include/Tw/version.h \
       libs/Makefile libs/libTutf/Makefile libs/libTw/Makefile libs/libltdl/Makefile \
-      server/Makefile server/hw/Makefile themes/Makefile themes/hw_gfx/Makefile])
+      server/Makefile server/hw/Makefile test/Makefile themes/Makefile themes/hw_gfx/Makefile])
 
 AC_OUTPUT
 

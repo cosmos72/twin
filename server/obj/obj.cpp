@@ -19,7 +19,7 @@
 
 obj s_obj::Create() {
   obj o = NULL;
-  void *addr = AllocMem0(sizeof(s_obj), 1);
+  void *addr = AllocMem0(sizeof(s_obj));
   if (addr) {
     o = new (addr) s_obj();
     obj_entry e = (obj_entry)o;

@@ -39,64 +39,66 @@ byte Error(udat err_code) {
   return tfalse;
 }
 
-void *AllocMem(size_t Size) {
-  void *res = NULL;
-  if (Size) {
-    if (!(res = malloc(Size)))
-      Error(NOMEMORY);
-  }
-  return res;
+void *AllocMem(size_t len) {
+  void *ret = NULL;
+  if (len && !(ret = malloc(len)))
+    Error(NOMEMORY);
+  return ret;
 }
 
-void *ReAllocMem(void *Mem, size_t Size) {
-  void *res;
-  if (Mem) {
-    if (Size) {
-      res = realloc(Mem, Size);
-      /* cannot use AllocMem() + CopyMem() here: we don't know Mem current size */
+void *ReAllocMem(void *mem, size_t len) {
+  void *ret;
+  if (mem) {
+    if (len) {
+      ret = realloc(mem, len);
+      /* cannot use AllocMem() + CopyMem() here: we don't know mem current size */
     } else {
-      FreeMem(Mem);
-      res = NULL;
+      FreeMem(mem);
+      ret = NULL;
     }
   } else
-    res = AllocMem(Size);
-  return res;
+    ret = AllocMem(len);
+  return ret;
 }
 
-void *AllocMem0(size_t ElementSize, size_t Count) {
-  void *res = NULL;
-  if (ElementSize || Count) {
-    if (!(res = calloc(Count, ElementSize)))
-      Error(NOMEMORY);
+void FreeMem(void *mem) {
+  if (mem) {
+    free(mem);
   }
-  return res;
 }
 
-void *ReAllocMem0(void *Mem, size_t ElementSize, size_t OldCount, size_t NewCount) {
-  void *res;
-  if (Mem) {
-    if (ElementSize && NewCount) {
-      if ((res = realloc(Mem, ElementSize * NewCount))) {
-        if (NewCount > OldCount)
-          memset((byte *)res + ElementSize * OldCount, '\0', ElementSize * (NewCount - OldCount));
-      } else if ((res = AllocMem0(ElementSize, NewCount))) {
-        size_t MinCount = OldCount < NewCount ? OldCount : NewCount;
-        CopyMem(Mem, res, ElementSize * MinCount);
-        FreeMem(Mem);
+void *AllocMem0(size_t len) {
+  void *ret = NULL;
+  if (len && !(ret = calloc(1, len)))
+    Error(NOMEMORY);
+  return ret;
+}
+
+void *ReAllocMem0(void *mem, size_t old_len, size_t new_len) {
+  void *ret;
+  if (mem) {
+    if (new_len) {
+      if ((ret = realloc(mem, new_len))) {
+        if (new_len > old_len)
+          memset((byte *)ret + old_len, '\0', new_len - old_len);
+      } else if ((ret = AllocMem0(new_len))) {
+        size_t min_len = old_len < new_len ? old_len : new_len;
+        CopyMem(mem, ret, min_len);
+        FreeMem(mem);
       }
     } else {
-      FreeMem(Mem);
-      res = NULL;
+      FreeMem(mem);
+      ret = NULL;
     }
   } else
-    res = AllocMem0(ElementSize, NewCount);
-  return res;
+    ret = AllocMem0(new_len);
+  return ret;
 }
 
-void *CloneMem(const void *From, uldat Size) {
+void *CloneMem(const void *From, uldat len) {
   void *temp;
-  if (From && Size && (temp = AllocMem(Size)))
-    return CopyMem(From, temp, Size);
+  if (From && len && (temp = AllocMem(len)))
+    return CopyMem(From, temp, len);
   return NULL;
 }
 

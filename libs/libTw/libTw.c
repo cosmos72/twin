@@ -256,20 +256,22 @@ void *(*Tw_AllocMem)(size_t) = malloc;
 void *(*Tw_ReAllocMem)(void *, size_t) = realloc;
 void (*Tw_FreeMem)(void *) = free;
 
-void *Tw_AllocMem0(size_t ElementSize, size_t Count) {
-  void *Mem;
+void *Tw_AllocMem0(size_t len) {
+  void *mem;
   if (Tw_AllocMem == malloc) {
-    Mem = calloc(Count, ElementSize);
-  } else if ((Mem = Tw_AllocMem(Count * ElementSize)) != NULL) {
-    memset(Mem, '\0', Count * ElementSize);
+    mem = calloc(1, len);
+  } else if ((mem = Tw_AllocMem(len)) != NULL) {
+    memset(mem, '\0', len);
   }
-  return Mem;
+  return mem;
 }
 
-void *Tw_ReAllocMem0(void *Mem, size_t ElementSize, size_t OldCount, size_t NewCount) {
+void *Tw_ReAllocMem0(void *mem, size_t old_len, size_t new_len) {
   void *newMem;
-  if ((newMem = Tw_ReAllocMem(Mem, NewCount * ElementSize)) != NULL) {
-    memset((char *)newMem + OldCount * ElementSize, '\0', (NewCount - OldCount) * ElementSize);
+  if ((newMem = Tw_ReAllocMem(mem, old_len * new_len)) != NULL) {
+    if (new_len > old_len) {
+      memset((char *)newMem + new_len, '\0', new_len - old_len);
+    }
   }
   return newMem;
 }

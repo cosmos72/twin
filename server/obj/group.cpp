@@ -22,7 +22,7 @@
 ggroup s_group::Create(msgport owner) {
   ggroup g = NULL;
   if (owner) {
-    void *addr = AllocMem0(sizeof(s_group), 1);
+    void *addr = AllocMem0(sizeof(s_group));
     if (addr) {
       g = new (addr) s_group();
       g->Fn = Fn_group;

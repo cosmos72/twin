@@ -36,7 +36,7 @@ inline uldat IdListGrow(byte i) {
   if (size > MAXID)
     size = MAXID;
 
-  if (!(newIdList = (obj *)ReAllocMem0(IdList[i], sizeof(obj), oldsize, size)))
+  if (!(newIdList = (obj *)ReAllocMem0(IdList[i], sizeof(obj) * oldsize, sizeof(obj) * size)))
     return NOSLOT;
 
   IdList[i] = newIdList;
@@ -50,7 +50,7 @@ inline void IdListShrink(byte i) {
   uldat size = Max2(TW_BIGBUFF, IdTop[i] << 1);
 
   if (size < IdSize[i] &&
-      (newIdList = (obj *)ReAllocMem0(IdList[i], sizeof(obj), IdSize[i], size))) {
+      (newIdList = (obj *)ReAllocMem0(IdList[i], sizeof(obj) * IdSize[i], sizeof(obj) * size))) {
     IdList[i] = newIdList;
     IdSize[i] = size;
   }

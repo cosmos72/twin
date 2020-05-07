@@ -101,7 +101,7 @@ struct s_ttydata {
 };
 
 byte TtyWriteAscii(window Window, uldat Len, const char *AsciiSeq);
-byte TtyWriteString(window Window, uldat Len, const char *String);
+byte TtyWriteString(window Window, uldat Len, const char *string);
 byte TtyWriteTRune(window Window, uldat Len, const trune *TRune);
 byte TtyWriteTCell(window Window, dat x, dat y, uldat Len, const tcell *Attr);
 

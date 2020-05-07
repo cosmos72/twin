@@ -7,15 +7,15 @@
 *.so.?
 *.so.?.?.?
 *.cache
-autom4te.cache
-libtool
-config.log
-config.status
-Makefile
 .deps
 .dirstamp
 .libs
 .vscode
+autom4te.cache
+config.log
+config.status
+libtool
+Makefile
 clients/mapscrn/twmapscrn
 clients/tw*
 include/config.h
@@ -32,3 +32,4 @@ server/twin
 server/twin_server
 scripts/include
 scripts/txt
+test/stl_test

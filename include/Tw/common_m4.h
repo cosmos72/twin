@@ -32,7 +32,7 @@ void Tw_MergeHyphensArgv(int argc, char **argv);
 void Tw_ConfigMalloc(void *(*my_malloc)(size_t),
 		     void *(*my_realloc)(void *, size_t),
 		     void  (*my_free)(void *));
-		     
+
 /** pointer to custom malloc() function; use Tw_ConfigMalloc() to change it */
 extern void *(*Tw_AllocMem)(size_t);
 /** pointer to custom realloc() function; use Tw_ConfigMalloc() to change it */
@@ -41,9 +41,9 @@ extern void *(*Tw_ReAllocMem)(void *, size_t);
 extern void  (*Tw_FreeMem)(void *);
 
 /** equivalent to calloc() */
-void *Tw_AllocMem0(size_t ElementSize, size_t Count);
+void *Tw_AllocMem0(size_t Size);
 /** equivalent to realloc()+memset() */
-void *Tw_ReAllocMem0(void * Mem, size_t ElementSize, size_t OldCount, size_t NewCount);
+void *Tw_ReAllocMem0(void * Mem, size_t OldSize, size_t NewSize);
 
 /** custom malloc()+memcpy() function */
 extern void *Tw_CloneMem(TW_CONST void *, size_t);
@@ -129,7 +129,7 @@ byte Tw_Sync(tdisplay TwD);
 /**
  * try to write to the underlying socket.
  * if not all data could be written,write as much as possible,* keep the rest queued,then return.
- * 
+ *
  * returns tfalse only after libTw has paniced,* returns ttrue+ttrue if not all data could be written.
  */
 byte Tw_TimidFlush(tdisplay TwD);
@@ -155,7 +155,7 @@ tmsg Tw_PeekMsg(tdisplay TwD);
  * If Wait is ttrue  and no Msg is available,it waits until a Msg arrives.
  * If Wait is tfalse and no Msg is available,it tries non-blocking
  *                  to receive more Msgs.
- * 
+ *
  * In both cases,if there is at least a Msgs available it is returned
  * without waiting.
  */
@@ -201,6 +201,5 @@ void Tw_ExitMainLoop(tdisplay TwD);
 tany Tw_CallAExtension(tdisplay TwD, textension eid,TW_CONST byte *proto,topaque args_n,TW_CONST tany *args);
 /** see Tw_CallLExtension() for the rules about how to pass arguments to this function */
 tany Tw_CallVExtension(tdisplay TwD, textension eid,TW_CONST byte *proto,topaque args_n,va_list vargs);
-
 
 

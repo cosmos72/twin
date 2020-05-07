@@ -21,7 +21,7 @@
 screen s_screen::Create(dat namelen, const char *name, dat bgwidth, dat bgheight, const tcell *bg) {
   screen S = NULL;
   if (bgwidth && bgheight) {
-    void *addr = AllocMem0(sizeof(s_screen), 1);
+    void *addr = AllocMem0(sizeof(s_screen));
     if (addr) {
       S = new (addr) s_screen();
       S->Fn = Fn_screen;

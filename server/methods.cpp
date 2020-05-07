@@ -583,7 +583,7 @@ static gadget CreateEmptyButton(msgport Owner, dat XWidth, dat YWidth, tcolor Bg
 #define _FULL T_UTF_32_FULL_BLOCK
 #define _LOWER T_UTF_32_LOWER_HALF_BLOCK
 #define _UPPER T_UTF_32_UPPER_HALF_BLOCK
-  void *addr = AllocMem0(sizeof(s_gadget), 1);
+  void *addr = AllocMem0(sizeof(s_gadget));
   if (addr) {
     G = new (addr) s_gadget();
     G->Fn = Fn_gadget;
@@ -1012,9 +1012,9 @@ byte FakeWriteAscii(window Window, uldat Len, const char *Ascii) {
   return tfalse;
 }
 
-byte FakeWriteString(window Window, uldat Len, const char *String) {
+byte FakeWriteString(window Window, uldat Len, const char *string) {
   if (DlLoad(TermSo) && Window->Fn->TtyWriteString != FakeWriteString)
-    return Window->TtyWriteString(Len, String);
+    return Window->TtyWriteString(Len, string);
   return tfalse;
 }
 
@@ -1911,7 +1911,9 @@ static byte GrowExtensionMsgPort(msgport M) {
   if (size > MAXID)
     size = MAXID;
 
-  if (!(newEs = (extension *)ReAllocMem0(M->Es, sizeof(extension), oldsize, size)))
+  if (!(newEs = (extension *)ReAllocMem0(M->Es,                       //
+                                         sizeof(extension) * oldsize, //
+                                         sizeof(extension) * size)))
     return tfalse;
 
   M->Es = newEs;

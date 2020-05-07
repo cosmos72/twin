@@ -24,7 +24,7 @@ msgport s_msgport::Create(byte namelen, const char *name, tany pausesec, tany pa
                           byte wakeup, void (*handler)(msgport)) {
   msgport p = NULL;
   if (name) {
-    void *addr = AllocMem0(sizeof(s_msgport), 1);
+    void *addr = AllocMem0(sizeof(s_msgport));
     if (addr) {
       p = new (addr) s_msgport();
       p->Fn = Fn_msgport;

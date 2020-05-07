@@ -278,7 +278,7 @@ static byte tty_InitHW(void) {
        force_mouse = tfalse, tc_colorbug = tfalse, need_persistent_slot = tfalse, try_ctty = tfalse,
        display_is_ctty = tfalse;
 
-  if (!(HW->Private = (struct tty_data *)AllocMem0(sizeof(struct tty_data), 1))) {
+  if (!(HW->Private = (struct tty_data *)AllocMem0(sizeof(struct tty_data)))) {
     printk("      tty_InitHW(): Out of memory!\n");
     return tfalse;
   }

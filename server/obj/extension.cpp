@@ -18,7 +18,7 @@
 
 extension s_extension::Create(uldat namelen, const char *name) {
   extension e = NULL;
-  void *addr = AllocMem0(sizeof(s_extension), 1);
+  void *addr = AllocMem0(sizeof(s_extension));
   if (addr) {
     e = new (addr) s_extension();
     e->Fn = Fn_extension;

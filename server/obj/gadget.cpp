@@ -25,7 +25,7 @@ gadget s_gadget::Create(msgport owner, widget parent, dat xwidth, dat ywidth,
   gadget g = NULL;
 
   if (owner) {
-    void *addr = AllocMem0(sizeof(s_gadget), 1);
+    void *addr = AllocMem0(sizeof(s_gadget));
     if (addr) {
       g = new (addr) s_gadget();
       g->Fn = Fn_gadget;
