@@ -5,9 +5,6 @@ sbin_PROGRAMS = twdm
 
 AM_CPPFLAGS = -I$(top_srcdir)/include
 
-LIBTUTF = $(top_builddir)/libs/libTutf/libTutf.la
-LIBTW = $(top_builddir)/libs/libTw/libTw.la
-
 twattach_SOURCES     = attach.c
 twcat_SOURCES        = cat.c
 twclip_SOURCES       = clip.c
@@ -45,4 +42,3 @@ twthreadtest_LDADD = $(LIBTW) $(LIBPTHREAD)
 install-exec-hook:
 	rm -f            $(DESTDIR)$(bindir)/twdetach
 	$(LN_S) twattach $(DESTDIR)$(bindir)/twdetach
-

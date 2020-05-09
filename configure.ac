@@ -291,6 +291,7 @@ AC_SUBST(LIBXFT,      "`echo \"$ac_cv_search_XftFontOpen\"    | $SED -e 's/^none
 if test "$enable_socket_gz" = yes; then
   AC_SUBST(LIBZ,      "`echo \"$ac_cv_search_deflate\"        | $SED -e 's/^none required$//g' -e 's/^no$//g'`")
 fi
+AC_SUBST(LIBSTL,     '$(top_builddir)/libs/libTutf/libstl.a')
 AC_SUBST(LIBTUTF,    '$(top_builddir)/libs/libTutf/libTutf.la')
 AC_SUBST(LIBTW,      '$(top_builddir)/libs/libTw/libTw.la')
 AC_SUBST(SUBDIR_LIBTT,                                    ) dnl libTT is disabled
@@ -317,8 +318,9 @@ AC_CONFIG_FILES([
       Makefile clients/Makefile clients/mapscrn/Makefile contrib/Makefile contrib/twcd/Makefile \
       docs/Makefile include/Makefile include/Tutf/Makefile include/Tw/Makefile \
       include/version.h include/Tutf/version.h include/Tw/version.h \
-      libs/Makefile libs/libTutf/Makefile libs/libTw/Makefile libs/libltdl/Makefile \
-      server/Makefile server/hw/Makefile test/Makefile themes/Makefile themes/hw_gfx/Makefile])
+      libs/Makefile libs/libltdl/Makefile libs/libstl/Makefile \
+      libs/libTutf/Makefile libs/libTw/Makefile server/Makefile server/hw/Makefile \
+      test/Makefile themes/Makefile themes/hw_gfx/Makefile])
 
 AC_OUTPUT
 

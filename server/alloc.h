@@ -13,31 +13,10 @@
 #define _TWIN_ALLOC_H
 
 #include "stl/alloc.h"
+#include "stl/err.h"
 
 #include <Tw/datatypes.h>
 #include <string.h> // memcpy(), memmove()
-
-/* errors */
-typedef enum e_errnum : byte {
-  SUCCESS = 0,
-  NOMEMORY = 1,
-  NOTABLES = 2,
-  DLERROR = 3,
-  SYSERROR = 4,
-} errnum;
-
-extern errnum Err;
-extern const char *Errstr;
-byte Error(errnum err);
-
-/* memory allocation. these function call Error(NOMEMORY) on failure */
-
-void *AllocMem(size_t len);               /* wrapper for malloc()  */
-void *ReAllocMem(void *addr, size_t len); /* wrapper for realloc() */
-void FreeMem(void *addr);                 /* wrapper for free()    */
-
-void *AllocMem0(size_t len);                                  /* wrapper for calloc() */
-void *ReAllocMem0(void *mem, size_t old_len, size_t new_len); /* wrapper for realloc() + memset() */
 
 /* inline/define stuff: */
 

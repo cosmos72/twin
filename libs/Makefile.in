@@ -243,6 +243,7 @@ LIBOBJS = @LIBOBJS@
 LIBPTHREAD = @LIBPTHREAD@
 LIBS = @LIBS@
 LIBSOCK = @LIBSOCK@
+LIBSTL = @LIBSTL@
 LIBTERMCAP = @LIBTERMCAP@
 LIBTOOL = @LIBTOOL@
 LIBTUTF = @LIBTUTF@
@@ -357,7 +358,7 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-SUBDIRS = $(SUBDIR_LIBLTDL) libTutf libTw $(SUBDIR_LIBTT)
+SUBDIRS = $(SUBDIR_LIBLTDL) libstl libTutf libTw $(SUBDIR_LIBTT)
 all: all-recursive
 
 .SUFFIXES:
