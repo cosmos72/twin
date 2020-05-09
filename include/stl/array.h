@@ -44,12 +44,8 @@ protected:
     }
   }
 
-  bool reallocate(size_t n) {
-    if (cap_ < n && !reserve(n >= cap_ * 2 ? n : cap_ * 2)) {
-      return false;
-    }
-    size_ = n;
-    return true;
+  bool ensure_capacity(size_t n) {
+    return cap_ >= n || reserve(n >= cap_ * 2 ? n : cap_ * 2);
   }
 
 public:
@@ -69,16 +65,16 @@ public:
     init(n);
   }
   Array(const T *mem, size_t n) : Base() {
-    copy(mem, n);
+    dup(mem, n);
   }
   explicit Array(const View<T> &other) : Base() {
-    copy(other.data(), other.size());
+    dup(other.data(), other.size());
   }
   explicit Array(const Span<T> &other) : Base() {
-    copy(other.data(), other.size());
+    dup(other.data(), other.size());
   }
   Array(const Array<T> &other) : Base() {
-    copy(other.data(), other.size());
+    dup(other.data(), other.size());
   }
   ~Array() {
     destroy();
@@ -96,21 +92,22 @@ public:
   STL_USING Base::begin;
   STL_USING Base::end;
 
-  bool copy(const T *mem, size_t n) {
-    if (!reallocate(n)) {
+  bool dup(const T *mem, size_t n) {
+    if (!ensure_capacity(n)) {
       return false;
     }
     memcpy(data(), mem, n * sizeof(T));
+    size_ = n;
     return true;
   }
-  bool copy(const View<T> &other) {
-    return copy(other.data(), other.size());
+  bool dup(const View<T> &other) {
+    return dup(other.data(), other.size());
   }
-  bool copy(const Span<T> &other) {
-    return copy(other.data(), other.size());
+  bool dup(const Span<T> &other) {
+    return dup(other.data(), other.size());
   }
-  bool copy(const Array<T> &other) {
-    return copy(other.data(), other.size());
+  bool dup(const Array<T> &other) {
+    return dup(other.data(), other.size());
   }
 
   void clear() {
@@ -118,7 +115,7 @@ public:
   }
 
   bool resize(size_t n) {
-    if (!reallocate(n)) {
+    if (!ensure_capacity(n)) {
       return false;
     }
     if (n > size_) {

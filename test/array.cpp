@@ -81,7 +81,7 @@ template <class T> void test_array() {
   assert(a.size() == 0);
   assert(a.data() == NULL);
 
-  assert(a.copy(data, n));
+  assert(a.dup(data, n));
   assert(a.size() == n);
   assert(a.data() != data);
 
