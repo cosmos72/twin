@@ -42,7 +42,7 @@ static byte stdin_TestTty(void) {
              (errno == EWOULDBLOCK || errno == EINTR));
     SetAlarm(0);
     if (i <= 0) {
-      Error(SYSCALLERROR);
+      Error(SYSERROR);
       if (alarmReceived)
         Errstr = "read() from tty timed out";
       else if (i == 0)

@@ -20,17 +20,18 @@
 #include <signal.h>
 #endif
 
-udat Errno;
+errnum Err;
 const char *Errstr;
-byte Error(udat err_code) {
-  switch ((Errno = err_code)) {
+
+byte Error(errnum err) {
+  switch ((Err = err)) {
   case NOMEMORY:
     Errstr = "Out of memory!";
     break;
   case NOTABLES:
     Errstr = "Internal tables full!";
     break;
-  case SYSCALLERROR:
+  case SYSERROR:
     Errstr = strerror(errno);
     break;
   default:

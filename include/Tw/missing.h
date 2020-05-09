@@ -25,11 +25,11 @@ char *Tw_missing_strdup(TW(CONST) char *s, void *(*missing_malloc)(size_t size))
 #endif
 
 #ifndef TW_HAVE_STRERROR
-#define strerror(errnum) ""
+#define strerror(err) ""
 #endif
 
 #ifndef TW_HAVE_HSTRERROR
-#define hstrerror(herrnum) ""
+#define hstrerror(herr) ""
 #endif
 
 #ifndef TW_HAVE_STRSPN

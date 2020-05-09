@@ -34,8 +34,6 @@ void SetAlarm(unsigned seconds);
 const char *TmpDir(void);
 udat CopyToSockaddrUn(const char *src, struct sockaddr_un *addr, udat pos);
 
-byte Error(udat Code_Error);
-
 void NormalizeTime(timevalue *Time);
 timevalue *InstantNow(timevalue *Now);
 dat CmpTime(timevalue *T1, timevalue *T2);

@@ -2219,7 +2219,7 @@ static byte CreateAuth(char *path) {
     close(fd);
   }
 
-  return len == AuthLen ? ttrue : Error(SYSCALLERROR);
+  return len == AuthLen ? ttrue : Error(SYSERROR);
 }
 
 static byte sockInitAuth(void) {
@@ -2244,7 +2244,7 @@ static byte sockInitAuth(void) {
         got = 0;
       else {
         close(fd);
-        return Error(SYSCALLERROR);
+        return Error(SYSERROR);
       }
     }
   }
@@ -2730,7 +2730,7 @@ EXTERN_C byte InitModule(module Module) {
     else
       close(inetFd);
   } else {
-    Error(SYSCALLERROR);
+    Error(SYSERROR);
     if (inetFd >= 0)
       close(inetFd);
   }

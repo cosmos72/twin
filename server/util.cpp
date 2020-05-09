@@ -871,7 +871,7 @@ byte InitTWDisplay(void) {
 
       ok = bind(unixFd, (struct sockaddr *)&addr, sizeof(addr)) >= 0;
       if (!ok) {
-        Error(SYSCALLERROR);
+        Error(SYSERROR);
         /* maybe /tmp/.Twin:<x> is already in use... */
         if (fd >= 0 || (fd = socket(AF_UNIX, SOCK_STREAM, 0)) >= 0) {
           if (connect(fd, (struct sockaddr *)&addr, sizeof(addr)) >= 0) {
@@ -926,7 +926,7 @@ byte InitTWDisplay(void) {
             return ttrue;
           }
         } else
-          Error(SYSCALLERROR);
+          Error(SYSERROR);
         close(unixFd);
       }
     }

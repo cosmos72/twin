@@ -873,7 +873,7 @@ void DrawSelfScreen(draw_ctx *D) {
 
 static void _DrawWCtx_(draw_ctx **FirstD, widget W, widget ChildNext, widget OnlyChild, ldat Left,
                        ldat Up, ldat Rgt, ldat Dwn, dat X1, dat Y1, dat X2, dat Y2, byte NoChildren,
-                       byte BorderDone, byte Shaded, byte *lError) {
+                       byte BorderDone, byte Shaded, errnum *lError) {
   draw_ctx *D;
   if (!QueuedDrawArea2FullScreen) {
     if ((D = (draw_ctx *)AllocMem(sizeof(draw_ctx)))) {
@@ -899,7 +899,7 @@ static void _DrawWCtx_(draw_ctx **FirstD, widget W, widget ChildNext, widget Onl
       *FirstD = D;
     } else {
       DrawDesktop((screen)0, X1, Y1, X2, Y2, Shaded);
-      *lError = ttrue;
+      *lError = NOMEMORY;
     }
   }
 }
@@ -908,13 +908,14 @@ static void DrawWCtx(draw_ctx *D) {
   draw_ctx *FirstD = D;
   widget w;
   widget OnlyChild, ChildNext;
+  window Window;
   ldat Left, Up, Rgt, Dwn;
   dat X1, Y1, X2, Y2;
-  window Window;
-  byte Shaded, Border, WinActive, NoChildren;
-  byte ChildFound = tfalse, lError = tfalse, FirstCycle = ttrue;
-  dat DWidth, DHeight;
   ldat cL, cU, cR, cD;
+  dat DWidth, DHeight;
+  errnum lError = SUCCESS;
+  byte Shaded, Border, WinActive, NoChildren;
+  byte ChildFound = tfalse, FirstCycle = ttrue;
 
   if (QueuedDrawArea2FullScreen)
     return;
@@ -1097,7 +1098,7 @@ void DrawAreaWidget(widget W) {
 }
 
 static void _DrawAreaCtx_(draw_ctx **FirstD, screen Screen, widget W, widget OnlyW, dat X1, dat Y1,
-                          dat X2, dat Y2, byte Shaded, byte *lError) {
+                          dat X2, dat Y2, byte Shaded, errnum *lError) {
   draw_ctx *D;
   if (!QueuedDrawArea2FullScreen) {
     if ((D = (draw_ctx *)AllocMem(sizeof(draw_ctx)))) {
@@ -1117,7 +1118,7 @@ static void _DrawAreaCtx_(draw_ctx **FirstD, screen Screen, widget W, widget Onl
 
     } else {
       DrawDesktop((screen)0, X1, Y1, X2, Y2, Shaded);
-      *lError = ttrue;
+      *lError = NOMEMORY;
     }
   }
 }
@@ -1172,12 +1173,10 @@ byte ContainsCursor(widget W) {
 
 static void DrawAreaCtx(draw_ctx *D) {
   draw_ctx *FirstD = D;
-  ldat DWidth, DHeight, YLimit;
   screen FirstScreen, Screen;
   widget W, OnlyW, TopOnlyW, NextW;
   setup *SetUp;
-  byte WidgetFound, Shade, lError = tfalse, FirstCycle = ttrue;
-  byte DeltaXShade, DeltaYShade;
+  ldat DWidth, DHeight, YLimit;
   ldat shLeft = 0, shUp = 0, shRgt = 0, shDwn = 0;
   /* position of Horizontal Shadow */
   ldat HS_X1, HS_X2, HS_Y1, S_Y2;
@@ -1185,6 +1184,9 @@ static void DrawAreaCtx(draw_ctx *D) {
   ldat VS_X1, VS_X2, VS_Y1;
   dat Left, Up, Rgt, Dwn;
   dat X1, Y1, X2, Y2;
+  errnum lError = SUCCESS;
+  byte WidgetFound, Shade, FirstCycle = ttrue;
+  byte DeltaXShade, DeltaYShade;
   byte Shaded;
 
   if (QueuedDrawArea2FullScreen)

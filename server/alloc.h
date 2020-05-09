@@ -17,9 +17,18 @@
 #include <Tw/datatypes.h>
 #include <string.h> // memcpy(), memmove()
 
-extern udat Errno;
+/* errors */
+typedef enum e_errnum : byte {
+  SUCCESS = 0,
+  NOMEMORY = 1,
+  NOTABLES = 2,
+  DLERROR = 3,
+  SYSERROR = 4,
+} errnum;
+
+extern errnum Err;
 extern const char *Errstr;
-byte Error(udat Errno);
+byte Error(errnum err);
 
 /* memory allocation. these function call Error(NOMEMORY) on failure */
 
@@ -32,8 +41,8 @@ void *ReAllocMem0(void *mem, size_t old_len, size_t new_len); /* wrapper for rea
 
 /* inline/define stuff: */
 
-#define CopyMem(From, To, len) memcpy(To, From, len)
-#define MoveMem(From, To, len) memmove(To, From, len)
+#define CopyMem(from, to, len) memcpy(to, from, len)
+#define MoveMem(from, to, len) memmove(to, from, len)
 
 void *CloneMem(const void *From, uldat len);
 char *CloneStr(const char *s);

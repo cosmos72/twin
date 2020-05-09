@@ -65,15 +65,6 @@ enum s_fd {
 #endif
 #define NOSLOT TW_MAXULDAT
 
-/* errors */
-enum e_error {
-  NOMEMORY = 1,
-  NOTABLES = 2,
-  DLERROR = 3,
-  SYSCALLERROR = 4,
-  USERERROR = 5,
-};
-
 #define IS_OBJ(type, O) (((O)->Id >> magic_shift) == type##_magic_id)
 #define IS_WIDGET(O)                                                                               \
   (IS_OBJ(widget, O) || IS_OBJ(gadget, O) || IS_OBJ(window, O) || IS_OBJ(screen, O))
