@@ -11,13 +11,13 @@
 
 #include "stl/view.h"
 
-template <class T> class Span : private View<T> {
+template <class T> class Span : protected View<T> {
 private:
   typedef View<T> Base;
 
 protected:
-  STL_USING Base::data_;
-  STL_USING Base::size_;
+  using Base::data_;
+  using Base::size_;
 
 public:
   typedef size_t size_type;
@@ -49,15 +49,15 @@ public:
     return *this;
   }
 
-  STL_USING Base::capacity;
-  STL_USING Base::size;
+  using Base::capacity;
+  using Base::size;
 
-  STL_USING Base::data;
+  using Base::data;
   T *data() {
     return const_cast<T *>(data_);
   }
 
-  STL_USING Base::operator[];
+  using Base::operator[];
   T &operator[](size_t index) {
     assert(index < size_);
     return data()[index];
@@ -73,12 +73,12 @@ public:
   }
   void ref(Array<T> &other);
 
-  STL_USING Base::begin;
+  using Base::begin;
   T *begin() {
     return data();
   }
 
-  STL_USING Base::end;
+  using Base::end;
   T *end() {
     assert(data_ || !size_);
     return data() + size_;

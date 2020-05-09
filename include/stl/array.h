@@ -12,33 +12,18 @@
 #include "stl/span.h"
 #include "stl/mem.h"
 
-#include <string.h> // memcpy(), memset()
+#include <string.h> // memset()
 
-template <class T> class Array : private Span<T> {
+template <class T> class Array : protected Span<T> {
 private:
   typedef Span<T> Base;
 
   // do not implement. reason: any allocation failure would not be visible
   Array<T> &operator=(const Array<T> &other); // = delete;
 
-  // used by swap() method
-  // unsafe, may cause double-free.
-  void ref(Array<T> &other) {
-    data_ = other.data_;
-    size_ = other.size_;
-    cap_ = other.cap_;
-  }
-
-  // used by swap() method
-  // unsafe, may cause leaks.
-  void unref() {
-    data_ = NULL;
-    cap_ = size_ = 0;
-  }
-
 protected:
-  STL_USING Base::data_;
-  STL_USING Base::size_;
+  using Base::data_;
+  using Base::size_;
   size_t cap_;
 
   bool init(size_t n) {
@@ -106,11 +91,11 @@ public:
   size_t capacity() const {
     return cap_;
   }
-  STL_USING Base::size;
-  STL_USING Base::data;
-  STL_USING Base::operator[];
-  STL_USING Base::begin;
-  STL_USING Base::end;
+  using Base::data;
+  using Base::size;
+  using Base::operator[];
+  using Base::begin;
+  using Base::end;
 
   bool dup(const T *addr, size_t n) {
     if (!ensure_capacity(n)) {
@@ -162,11 +147,14 @@ public:
   }
 
   void swap(Array &other) {
-    Array temp;
-    temp.ref(*this);
-    ref(other);
-    other.ref(temp);
-    temp.unref();
+    struct Ref {
+      const T *data_;
+      size_t size_, cap_;
+    };
+    Ref temp;
+    mem::rawcopy(*this, temp);
+    mem::rawcopy(other, *this);
+    mem::rawcopy(temp, other);
   }
 };
 

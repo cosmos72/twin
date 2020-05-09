@@ -160,6 +160,10 @@ void test_string() {
   assert(a.size() == n);
 }
 
+void swap_string(String &left, String &right) {
+  left.swap(right);
+}
+
 template <class T> void test_T() {
   test_view<T>();
   test_span<T>();

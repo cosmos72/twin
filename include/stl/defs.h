@@ -11,10 +11,8 @@
 
 #if defined(__cplusplus) && __cplusplus >= 201103L
 #define STL_CXX11
-#define STL_USING using
 #else
 #undef STL_CXX11
-#define STL_USING
 #endif
 
 #endif /* _TWIN_STL_DEFS_H */
