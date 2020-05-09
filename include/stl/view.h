@@ -15,8 +15,6 @@
 #include <assert.h>
 
 template <class T> class View {
-private:
-  template <class U> friend class Array;
 
 protected:
   const T *data_;
@@ -35,19 +33,30 @@ public:
 
   View() : data_(NULL), size_(0) {
   }
-
+  template <size_t N> View(const T (&addr)[N]) : data_(addr), size_(N) {
+  }
   View(const T *addr, size_t n) : data_(addr), size_(n) {
+  }
+
+  View(const Span<T> &other) {
+    ref(other);
+  }
+  View(const Array<T> &other) {
+    ref(other);
   }
 
   // View(const View&) = default;
   // ~View() = default;
   // operator=(const View&) = default;
 
-  explicit View(const Span<T> &other) {
+  View &operator=(const Span<T> &other) {
     ref(other);
+    return *this;
   }
-  explicit View(const Array<T> &other) {
+
+  View &operator=(const Array<T> &other) {
     ref(other);
+    return *this;
   }
 
   size_t capacity() const {
@@ -86,6 +95,18 @@ public:
     assert(data_ || !size_);
     return data_ + size_;
   }
+
+  void swap(View &other) {
+    View temp = *this;
+    *this = other;
+    other = temp;
+  }
 };
+
+typedef View<char> CharView;
+
+template <class T> void swap(View<T> &left, View<T> &right) {
+  left.swap(right);
+}
 
 #endif /* _TWIN_STL_VIEW_H */

@@ -19,7 +19,22 @@ private:
   typedef Span<T> Base;
 
   // do not implement. reason: any allocation failure would not be visible
-  Array<T> &operator=(const Array<T> &other);
+  Array<T> &operator=(const Array<T> &other); // = delete;
+
+  // used by swap() method
+  // unsafe, may cause double-free.
+  void ref(Array<T> &other) {
+    data_ = other.data_;
+    size_ = other.size_;
+    cap_ = other.cap_;
+  }
+
+  // used by swap() method
+  // unsafe, may cause leaks.
+  void unref() {
+    data_ = NULL;
+    cap_ = size_ = 0;
+  }
 
 protected:
   STL_USING Base::data_;
@@ -61,19 +76,24 @@ public:
 
   Array() : Base(), cap_(0) {
   }
-  explicit Array(size_t n) : Base() {
+  Array(const T *addr, size_t n) : Base(), cap_(0) {
+    dup(addr, n);
+  }
+  // all one-argument constructors are explicit because they allocate,
+  // thus they mail fail => we require users to explicitly invoke them.
+  explicit Array(size_t n) : Base(), cap_(0) {
     init(n);
   }
-  Array(const T *mem, size_t n) : Base() {
-    dup(mem, n);
+  template <size_t N> explicit Array(const T (&addr)[N]) : Base(), cap_(0) {
+    dup(addr, N);
   }
-  explicit Array(const View<T> &other) : Base() {
+  explicit Array(const View<T> &other) : Base(), cap_(0) {
     dup(other.data(), other.size());
   }
-  explicit Array(const Span<T> &other) : Base() {
+  explicit Array(const Span<T> &other) : Base(), cap_(0) {
     dup(other.data(), other.size());
   }
-  Array(const Array<T> &other) : Base() {
+  explicit Array(const Array &other) : Base(), cap_(0) {
     dup(other.data(), other.size());
   }
   ~Array() {
@@ -92,11 +112,11 @@ public:
   STL_USING Base::begin;
   STL_USING Base::end;
 
-  bool dup(const T *mem, size_t n) {
+  bool dup(const T *addr, size_t n) {
     if (!ensure_capacity(n)) {
       return false;
     }
-    memcpy(data(), mem, n * sizeof(T));
+    memcpy(data(), addr, n * sizeof(T));
     size_ = n;
     return true;
   }
@@ -106,7 +126,7 @@ public:
   bool dup(const Span<T> &other) {
     return dup(other.data(), other.size());
   }
-  bool dup(const Array<T> &other) {
+  bool dup(const Array &other) {
     return dup(other.data(), other.size());
   }
 
@@ -140,7 +160,17 @@ public:
     }
     return true;
   }
+
+  void swap(Array &other) {
+    Array temp;
+    temp.ref(*this);
+    ref(other);
+    other.ref(temp);
+    temp.unref();
+  }
 };
+
+typedef Array<char> CharArray;
 
 template <class T> void View<T>::ref(const Array<T> &other) {
   data_ = other.data();
@@ -149,6 +179,10 @@ template <class T> void View<T>::ref(const Array<T> &other) {
 template <class T> void Span<T>::ref(Array<T> &other) {
   data_ = other.data();
   size_ = other.size();
+}
+
+template <class T> void swap(Array<T> &left, Array<T> &right) {
+  left.swap(right);
 }
 
 #endif /* _TWIN_STL_ARRAY_H */

@@ -32,15 +32,21 @@ public:
 
   Span() : Base() {
   }
-
+  template <size_t N> Span(T (&addr)[N]) : Base(addr, N) {
+  }
   Span(T *addr, size_t n) : Base(addr, n) {
+  }
+
+  Span(Array<T> &other) : Base(other) {
   }
 
   // Span(const Span&) = default;
   // ~Span() = default;
   // operator=(const Span&) = default;
 
-  explicit Span(Array<T> &other) : Base(other) {
+  Span &operator=(Array<T> &other) {
+    ref(other);
+    return *this;
   }
 
   STL_USING Base::capacity;
@@ -77,11 +83,23 @@ public:
     assert(data_ || !size_);
     return data() + size_;
   }
+
+  void swap(Span &other) {
+    Span temp = *this;
+    *this = other;
+    other = temp;
+  }
 };
+
+typedef Span<char> CharSpan;
 
 template <class T> void View<T>::ref(const Span<T> &other) {
   data_ = other.data();
   size_ = other.size();
+}
+
+template <class T> void swap(Span<T> &left, Span<T> &right) {
+  left.swap(right);
 }
 
 #endif /* _TWIN_STL_SPAN_H */
