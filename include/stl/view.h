@@ -10,6 +10,7 @@
 #define _TWIN_STL_VIEW_H
 
 #include "stl/fwd.h"
+#include "stl/mem.h"
 
 #include <stddef.h> // size_t
 #include <assert.h>
@@ -33,7 +34,7 @@ public:
 
   View() : data_(NULL), size_(0) {
   }
-  template <size_t N> View(const T (&addr)[N]) : data_(addr), size_(N) {
+  template <size_t N> View(const T (&addr)[N]) : data_(addr), size_(N - 1) {
   }
   View(const T *addr, size_t n) : data_(addr), size_(n) {
   }
@@ -76,6 +77,10 @@ public:
     return data_[index];
   }
 
+  template <class VEC> bool operator==(const VEC &other) {
+    return mem::equalvec(*this, other);
+  }
+
   void ref(const T *addr, size_t n) {
     data_ = addr;
     size_ = n;
@@ -102,8 +107,6 @@ public:
     other = temp;
   }
 };
-
-typedef View<char> CharView;
 
 template <class T> void swap(View<T> &left, View<T> &right) {
   left.swap(right);

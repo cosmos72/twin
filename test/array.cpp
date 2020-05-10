@@ -144,15 +144,15 @@ void test_string() {
   assert(st.data());
   assert(st.data() != data);
 
-  CharView w = st;
+  View<char> w = st;
   assert(w.size() == n);
   assert(w.data() == st.data());
 
-  CharSpan s = st;
+  Span<char> s = st;
   assert(s.size() == n);
   assert(s.data() == st.data());
 
-  CharArray a;
+  Array<char> a;
   st.swap(a);
   assert(st.data() == NULL);
   assert(st.size() == 0);

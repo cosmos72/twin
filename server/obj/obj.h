@@ -16,6 +16,7 @@
 #include "twautoconf.h" /* for TW_HAVE_* macros */
 #include "compiler.h"
 #include "obj/fwd.h"
+#include "obj/id.h"
 
 #include <Tw/datatypes.h>
 
@@ -60,6 +61,10 @@ public:
   void Delete();
   void ChangeField(udat field, uldat clear_mask, uldat xor_mask);
 };
+
+inline uldat Obj2Id(obj o) {
+  return o ? o->Id : NOID;
+}
 
 struct s_obj_entry : public s_obj {
   fn_obj Fn;

@@ -24,7 +24,7 @@ inline ldat Max2(ldat x, ldat y) {
   return x > y ? x : y;
 }
 inline ldat Max3(ldat x, ldat y, ldat z) {
-  return x > y ? Max2(x, z) : Max2(y, z);
+  return Max2(Max2(x, y), z);
 }
 
 #endif /* _TWIN_ALGO_H */

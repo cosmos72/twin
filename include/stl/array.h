@@ -70,7 +70,7 @@ public:
     init(n);
   }
   template <size_t N> explicit Array(const T (&addr)[N]) : Base(), cap_(0) {
-    dup(addr, N);
+    dup(addr, N - 1);
   }
   explicit Array(const View<T> &other) : Base(), cap_(0) {
     dup(other.data(), other.size());
@@ -85,6 +85,13 @@ public:
     destroy();
   }
 
+  template <class VEC> bool operator==(const VEC &other) {
+    return mem::equalvec(*this, other);
+  }
+
+  operator bool() const {
+    return data_ != (T *)(size_t)-1;
+  }
   bool fail() const {
     return data_ == (T *)(size_t)-1;
   }
@@ -157,8 +164,6 @@ public:
     mem::rawcopy(temp, other);
   }
 };
-
-typedef Array<char> CharArray;
 
 template <class T> void View<T>::ref(const Array<T> &other) {
   data_ = other.data();

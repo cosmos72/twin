@@ -11,7 +11,7 @@
 
 #include "stl/alloc.h"
 
-#include <string.h> // memcpy()
+#include <string.h> // memcmp(), memcpy()
 
 namespace mem {
 
@@ -39,6 +39,22 @@ template <class T1, class T2> void rawcopy(const T1 &src, T2 &dst) {
   typedef char sizeof_T1_equals_sizeof_T2[sizeof(T1) == sizeof(T2) ? sizeof(T2) : -1];
   memcpy(static_cast<void *>(&dst), static_cast<const void *>(&src),
          sizeof(sizeof_T1_equals_sizeof_T2) / sizeof(char));
+}
+
+template <class T1, class T2>
+inline bool equalvec(const T1 *left, size_t left_n, const T2 *right, size_t right_n) {
+  typedef char sizeof_T1_equals_sizeof_T2[sizeof(T1) == sizeof(T2) ? sizeof(T2) : -1];
+
+  const void *left_v = static_cast<const void *>(left);
+  const void *right_v = static_cast<const void *>(right);
+
+  return sizeof(T1) == sizeof(T2) && left_n == right_n &&
+         (left_v == right_v ||
+          !memcmp(left_v, right_v, right_n * sizeof(sizeof_T1_equals_sizeof_T2) / sizeof(char)));
+}
+
+template <class Vec1, class Vec2> inline bool equalvec(const Vec1 &left, const Vec2 &right) {
+  return equalvec(left.data(), left.size(), right.data(), right.size());
 }
 
 } // namespace mem

@@ -32,7 +32,7 @@ public:
 
   Span() : Base() {
   }
-  template <size_t N> Span(T (&addr)[N]) : Base(addr, N) {
+  template <size_t N> Span(T (&addr)[N]) : Base(addr, N - 1) {
   }
   Span(T *addr, size_t n) : Base(addr, n) {
   }
@@ -47,6 +47,10 @@ public:
   Span &operator=(Array<T> &other) {
     ref(other);
     return *this;
+  }
+
+  template <class VEC> bool operator==(const VEC &other) {
+    return mem::equalvec(*this, other);
   }
 
   using Base::capacity;
@@ -90,8 +94,6 @@ public:
     other = temp;
   }
 };
-
-typedef Span<char> CharSpan;
 
 template <class T> void View<T>::ref(const Span<T> &other) {
   data_ = other.data();
