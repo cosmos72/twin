@@ -7,6 +7,7 @@
  *
  */
 #include "stl/string.h"
+#include "test_any.h"
 
 template <class T> void test_view() {
   enum { n = 3 };
@@ -168,6 +169,7 @@ template <class T> void test_T() {
   test_view<T>();
   test_span<T>();
   test_array<T>();
+  test_any<T>();
 }
 
 int main() {

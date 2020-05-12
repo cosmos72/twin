@@ -11,6 +11,7 @@
 
 #include "stl/view.h"
 
+/** read-write span of T[] */
 template <class T> class Span : protected View<T> {
 private:
   typedef View<T> Base;

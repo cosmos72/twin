@@ -15,6 +15,7 @@
 #include <stddef.h> // size_t
 #include <assert.h>
 
+/** read-only view of T[] */
 template <class T> class View {
 
 protected:
