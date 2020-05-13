@@ -17,7 +17,7 @@ typedef union s_tsval {
 } tsval;
 
 typedef struct s_tsfield {
-  udat hash;
+  udat label;
   udat type;
   tsval val;
 } * tsfield;

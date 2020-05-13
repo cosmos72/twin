@@ -122,7 +122,7 @@ static tobj *sockAllocListDeltaObjs(obj F, topaque *len, udat fdelta) {
 
 static byte sockStatObj(obj o, tsfield TSF) {
   obj_entry x = (obj_entry)o;
-  switch (TSF->hash) {
+  switch (TSF->label) {
   case TWS_obj_Id:
     break;
   case TWS_obj_Prev:
@@ -155,7 +155,7 @@ static byte sockStatObj(obj o, tsfield TSF) {
 }
 
 static byte sockStatWidget(widget x, tsfield TSF) {
-  switch (TSF->hash) {
+  switch (TSF->label) {
     TWScase(widget, FirstW, obj);
     TWScase(widget, LastW, obj);
     TWScase(widget, SelectW, obj);
@@ -190,16 +190,16 @@ static byte sockStatWidget(widget x, tsfield TSF) {
   }
   /* correct for screen scrolling */
   if (x->Parent && IS_SCREEN(x->Parent)) {
-    if (TSF->hash == TWS_widget_Left)
+    if (TSF->label == TWS_widget_Left)
       TSF->TWS_field_scalar -= x->Parent->XLogic;
-    else if (TSF->hash == TWS_widget_Up)
+    else if (TSF->label == TWS_widget_Up)
       TSF->TWS_field_scalar -= x->Parent->YLogic;
   }
   return ttrue;
 }
 
 static byte sockStatGadget(gadget x, tsfield TSF) {
-  switch (TSF->hash) {
+  switch (TSF->label) {
     TWScase(gadget, ColText, tcolor);
     TWScase(gadget, ColSelect, tcolor);
     TWScase(gadget, ColDisabled, tcolor);
@@ -221,7 +221,7 @@ static byte sockStatGadget(gadget x, tsfield TSF) {
     break;
   default:
     if (G_USE((gadget)x, USETEXT)) {
-      switch (TSF->hash) {
+      switch (TSF->label) {
         TWScaseAvecUSE(gadget, T, Text, 0, trune, x->XWidth * x->YWidth);
         TWScaseAvecUSE(gadget, T, Text, 1, trune, x->XWidth * x->YWidth);
         TWScaseAvecUSE(gadget, T, Text, 2, trune, x->XWidth * x->YWidth);
@@ -241,7 +241,7 @@ static byte sockStatGadget(gadget x, tsfield TSF) {
 }
 
 static byte sockStatWindow(window x, tsfield TSF) {
-  switch (TSF->hash) {
+  switch (TSF->label) {
   case TWS_widget_Left:
   case TWS_widget_Up:
   case TWS_widget_XWidth:
@@ -282,14 +282,14 @@ static byte sockStatWindow(window x, tsfield TSF) {
     TWScase(window, HLogic, ldat);
   default:
     if (W_USE((window)x, USECONTENTS)) {
-      switch (TSF->hash) {
+      switch (TSF->label) {
         TWScasevecUSE(window, C, Contents, tcell, x->WLogic * x->HLogic);
         TWScaseUSE(window, C, HSplit, ldat);
       default:
         return tfalse;
       }
     } else if (W_USE((window)x, USEROWS)) {
-      switch (TSF->hash) {
+      switch (TSF->label) {
         TWScaseUSE(window, R, FirstRow, obj);
         TWScaseUSE(window, R, LastRow, obj);
       case TWS_window_USE_R_ChildrenRow_List:
@@ -305,21 +305,21 @@ static byte sockStatWindow(window x, tsfield TSF) {
   }
   /* correct for window borders */
   if (!(x->Flags & WINDOWFL_BORDERLESS)) {
-    if (TSF->hash == TWS_widget_Left || TSF->hash == TWS_widget_Up)
+    if (TSF->label == TWS_widget_Left || TSF->label == TWS_widget_Up)
       TSF->TWS_field_scalar++;
-    else if (TSF->hash == TWS_widget_XWidth || TSF->hash == TWS_widget_YWidth)
+    else if (TSF->label == TWS_widget_XWidth || TSF->label == TWS_widget_YWidth)
       TSF->TWS_field_scalar -= 2;
   }
   return ttrue;
 }
 
 static byte sockStatScreen(screen x, tsfield TSF) {
-  switch (TSF->hash) {
+  switch (TSF->label) {
     TWScase(screen, NameLen, dat);
     TWScasevec(screen, Name, byte, x->NameLen);
   default:
     if (S_USE((gadget)x, USEBG)) {
-      switch (TSF->hash) {
+      switch (TSF->label) {
         TWScaseUSE(screen, B, BgWidth, dat);
         TWScaseUSE(screen, B, BgHeight, dat);
         TWScasevecUSE(screen, B, Bg, tcell, x->USE.B.BgWidth * x->USE.B.BgHeight);
@@ -334,7 +334,7 @@ static byte sockStatScreen(screen x, tsfield TSF) {
 }
 
 static byte sockStatGroup(ggroup x, tsfield TSF) {
-  switch (TSF->hash) {
+  switch (TSF->label) {
     TWScase(ggroup, FirstG, obj);
     TWScase(ggroup, LastG, obj);
     TWScase(ggroup, SelectG, obj);
@@ -350,7 +350,7 @@ static byte sockStatGroup(ggroup x, tsfield TSF) {
 }
 
 static byte sockStatRow(row x, tsfield TSF) {
-  switch (TSF->hash) {
+  switch (TSF->label) {
     TWScase(row, Code, udat);
     TWScase(row, Flags, byte);
     TWScase(row, Len, uldat);
@@ -363,7 +363,7 @@ static byte sockStatRow(row x, tsfield TSF) {
 }
 
 static byte sockStatMenuItem(menuitem x, tsfield TSF) {
-  switch (TSF->hash) {
+  switch (TSF->label) {
     /* missing: */
 #if 0
         TWS_menuitem_FlagActive;/*TWS_row_Flags*/
@@ -380,7 +380,7 @@ static byte sockStatMenuItem(menuitem x, tsfield TSF) {
 }
 
 static byte sockStatMenu(menu x, tsfield TSF) {
-  switch (TSF->hash) {
+  switch (TSF->label) {
     TWScase(menu, ColItem, tcolor);
     TWScase(menu, ColSelect, tcolor);
     TWScase(menu, ColDisabled, tcolor);
@@ -403,7 +403,7 @@ static byte sockStatMenu(menu x, tsfield TSF) {
 }
 
 static byte sockStatMsgPort(msgport x, tsfield TSF) {
-  switch (TSF->hash) {
+  switch (TSF->label) {
     TWScase(msgport, WakeUp, byte);
     TWScase(msgport, NameLen, byte);
     TWScasevec(msgport, Name, byte, x->NameLen);
@@ -440,7 +440,7 @@ static byte sockStatMsgPort(msgport x, tsfield TSF) {
 }
 
 static byte sockStatMutex(mutex x, tsfield TSF) {
-  switch (TSF->hash) {
+  switch (TSF->label) {
     TWScase(mutex, O_Prev, obj);
     TWScase(mutex, O_Next, obj);
     TWScase(mutex, Owner, obj);
@@ -464,7 +464,7 @@ static byte sockStatMutex(mutex x, tsfield TSF) {
 }
 
 static byte sockStatAll(all x, tsfield TSF) {
-  switch (TSF->hash) {
+  switch (TSF->label) {
     TWScase(all, FirstScreen, obj);
     TWScase(all, LastScreen, obj);
     TWScase(all, FirstMsgPort, obj);
@@ -503,7 +503,7 @@ static void sockStat(obj x, udat n, const byte *in) {
 
   if (ok) {
     for (i = j = 0; j < n; j++) {
-      Pop(in, udat, TSF[i].hash);
+      Pop(in, udat, TSF[i].label);
       switch (x->Id >> magic_shift) {
       case widget_magic_id:
         ok = sockStatWidget((widget)x, TSF + i) || sockStatObj(x, TSF + i);
@@ -572,7 +572,7 @@ static void sockStat(obj x, udat n, const byte *in) {
       Push(data, udat, i); /* pad */
 
       for (; i < j; i++) {
-        Push(data, udat, TSF[i].hash);
+        Push(data, udat, TSF[i].label);
         Push(data, udat, TSF[i].type);
 
         switch (TSF[i].type) {

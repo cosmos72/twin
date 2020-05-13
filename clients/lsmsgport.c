@@ -41,7 +41,7 @@ int main(int argc, char *argv[]) {
   if (reply && reply->N >= 1) {
     tsfield f = reply->TSF;
 
-    if (f->hash == TWS_all_ChildrenMsgPort_List && f->type == (TWS_vec | TWS_obj)) {
+    if (f->label == TWS_all_ChildrenMsgPort_List && f->type == (TWS_vec | TWS_obj)) {
       uldat n = f->TWS_field_vecL / sizeof(tobj);
       TW_CONST tobj *data = (TW_CONST tobj *)f->TWS_field_vecV;
       int fl;
@@ -54,7 +54,7 @@ int main(int argc, char *argv[]) {
         reply2 = Tw_StatL(td, (*data), 1, TWS_msgport_Name);
         if (reply2 && reply2->N >= 1) {
           f = reply2->TSF;
-          if (f && f->type == (TWS_vec | TWS_byte) && f->hash == TWS_msgport_Name) {
+          if (f && f->type == (TWS_vec | TWS_byte) && f->label == TWS_msgport_Name) {
             TW_CONST byte *Name = (TW_CONST byte *)f->TWS_field_vecV;
             uldat NameLen = f->TWS_field_vecL;
             fl = ttrue;

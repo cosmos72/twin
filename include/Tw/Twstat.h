@@ -100,7 +100,7 @@ tslist Tw_CloneStatL(tdisplay TwD, tobj Id, udat hN, ...);
 tslist Tw_CloneStatA(tdisplay TwD, tobj Id, udat hN, TW_CONST udat *h);
 tslist Tw_CloneStatV(tdisplay TwD, tobj Id, udat hN, va_list h);
 void Tw_DeleteStat(tdisplay TwD, tslist TSL);
-tsfield Tw_FindStat(tdisplay TwD, tslist TSL, udat hash);
+tsfield Tw_FindStat(tdisplay TwD, tslist TSL, udat label);
 void Tw_ChangeField(tdisplay TwD, tobj Obj, udat field, uldat CLEARMask, uldat XORMask);
 
 #define TwStat(Id, h) Tw_Stat(Tw_DefaultD, Id, h)
@@ -122,7 +122,7 @@ tslist TwCloneStatL(tobj Id, udat hN, ...);
 #define TwCloneStatA(Id, hN, h) Tw_CloneStatA(Tw_DefaultD, Id, hN, h)
 #define TwCloneStatV(Id, hN, h) Tw_CloneStatV(Tw_DefaultD, Id, hN, h)
 #define TwDeleteStat(TSL) Tw_DeleteStat(Tw_DefaultD, TSL)
-#define TwFindStat(TSL, hash) Tw_FindStat(Tw_DefaultD, TSL, hash)
+#define TwFindStat(TSL, label) Tw_FindStat(Tw_DefaultD, TSL, label)
 
 #ifdef __cplusplus
 }

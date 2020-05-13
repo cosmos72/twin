@@ -2166,7 +2166,7 @@ static tany _Tw_EncodeCall(byte flags, uldat o, tw_d TwD, ...)
         Send(TwD, (My = NextSerial(TwD)), id_Tw[o]);
         if (flags & ENCODE_FL_RETURN) {
           if ((MyReply = (void *)Wait4Reply(TwD, My)) && (INIT_MyReply MyCode == OK_MAGIC)) {
-            if (MyLen == 2 * sizeof(uldat) + a[0].hash)
+            if (MyLen == 2 * sizeof(uldat) + a[0].label)
               DecodeReply((byte *)MyData, a);
             else
               FailedCall(TwD, TW_ESERVER_BAD_PROTOCOL, o);
@@ -2654,16 +2654,16 @@ void Tw_DeleteStat(tw_d TwD, tslist TSL) {
 }
 
 static int CompareTSF(TW_CONST tsfield f1, TW_CONST tsfield f2) {
-  return (int)f1->hash - f2->hash;
+  return (int)f1->label - f2->label;
 }
 
 /**
  * searches for a specific field in object information
  */
-tsfield Tw_FindStat(tw_d TwD, tslist TSL, udat hash) {
+tsfield Tw_FindStat(tw_d TwD, tslist TSL, udat label) {
   struct s_tsfield f;
 
-  f.hash = hash;
+  f.label = label;
 
   return (tsfield)bsearch(&f, TSL->TSF, TSL->N, sizeof(struct s_tsfield),
                           (int (*)(TW_CONST void *, TW_CONST void *))CompareTSF);
@@ -2671,15 +2671,15 @@ tsfield Tw_FindStat(tw_d TwD, tslist TSL, udat hash) {
 
 static void SortTSL(tslist TSL) {
   tsfield f, end;
-  udat hash;
+  udat label;
 
   if (!(TSL->flags & TWS_SORTED)) {
     TSL->flags |= TWS_SORTED;
-    for (hash = 0, f = TSL->TSF, end = f + TSL->N; f < end; f++) {
-      if (hash > f->hash)
+    for (label = 0, f = TSL->TSF, end = f + TSL->N; f < end; f++) {
+      if (label > f->label)
         /* not sorted */
         break;
-      hash = f->hash;
+      label = f->label;
     }
     if (f < end)
       qsort(TSL->TSF, TSL->N, sizeof(struct s_tsfield),
@@ -2694,7 +2694,7 @@ static tslist StatScalar(tslist f, byte *data, byte *end) {
   Pop(data, udat, Type); /* pad */
 
   if (N == 1 && data + 2 * sizeof(udat) <= end) {
-    Pop(data, udat, Type); /* hash */
+    Pop(data, udat, Type); /* label */
     Pop(data, udat, Type);
     switch (Type) {
 #define Popcase(type)                                                                              \
@@ -2739,7 +2739,7 @@ static tslist StatTSL(tw_d TwD, udat flags, byte *data, byte *end) {
     TSL->flags = flags;
     TSF = TSL->TSF;
     for (i = 0; i < N && ok && data + 2 * sizeof(udat) <= end; i++) {
-      Pop(data, udat, TSF[i].hash);
+      Pop(data, udat, TSF[i].label);
       Pop(data, udat, TSF[i].type);
       switch (TSF[i].type) {
 #define Popcase(type)                                                                              \

@@ -103,7 +103,7 @@ TW_INLINE udat EncodeArgs(fn_order o, uldat *Space, va_list va, tsfield a) {
       case 'x':
       case 'v':
         a->type = t;
-        a->hash = Tw_MagicData[t]; /* sizeof(return type) */
+        a->label = Tw_MagicData[t]; /* sizeof(return type) */
         break;
       case 'O':
         /* will be filled by last arg */
@@ -124,7 +124,7 @@ TW_INLINE udat EncodeArgs(fn_order o, uldat *Space, va_list va, tsfield a) {
       case 'v':
         if ((t = (byte)*Format++) < TWS_highest) {
           a->type = t;
-          a->hash = Tw_MagicData[t]; /* sizeof(return type) */
+          a->label = Tw_MagicData[t]; /* sizeof(return type) */
           break;
         }
         return (udat)-1;

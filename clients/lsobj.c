@@ -159,7 +159,7 @@ int main(int argc, char *argv[]) {
       if (TSL) {
         for (id = 0, TSF = TSL->TSF; id < TSL->N; id++, TSF++) {
           for (index_list = 0; index_list < max_list; index_list++) {
-            if (field_list[index_list] == TSF->hash)
+            if (field_list[index_list] == TSF->label)
               break;
           }
           if (index_list < max_list) {
