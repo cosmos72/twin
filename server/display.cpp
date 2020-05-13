@@ -215,7 +215,7 @@ static struct s_fn_module _FnModule = {
     (void (*)(module))NoOp,                      /* DeleteModule */
     (void (*)(module, udat, uldat, uldat))NoOp,  /* ChangeField  */
     NULL,                                        /* Fn_Obj */
-    (byte (*)(module))NoOp,                      /* DlOpen	      */
+    (byte (*)(module))NoOp,                      /* DlOpen              */
     (void (*)(module))NoOp,                      /* DlClose      */
 };
 
@@ -408,7 +408,7 @@ static byte InitDisplayHW(display_hw D_HW) {
   if (!arg || !*arg) {
     success = TRY4("-hw=xft") || TRY4("-hw=gfx") || TRY4("-hw=X11") || TRY4("-hw=twin") ||
 #if 0 /* cannot use `--hw=display' inside twdisplay! */
-	TRY4("-hw=display") ||
+        TRY4("-hw=display") ||
 #endif
               TRY4("-hw=tty") || TRY4("-hw=ggi");
   } else {
@@ -477,40 +477,40 @@ inline void OptimizeChangedVideo(void) {
     ldat i;
 
     for (i=0; i<(ldat)DisplayHeight*2; i++) {
-	start = (uldat)ChangedVideo[i>>1][!(i&1)][0];
+        start = (uldat)ChangedVideo[i>>1][!(i&1)][0];
 
-	if (start != (uldat)-1) {
+        if (start != (uldat)-1) {
 
-	    start += (i>>1) * (ldat)DisplayWidth;
-	    _start = start;
+            start += (i>>1) * (ldat)DisplayWidth;
+            _start = start;
 
-	    _end = end = (uldat)ChangedVideo[i>>1][!(i&1)][1] + (i>>1) * (ldat)DisplayWidth;
+            _end = end = (uldat)ChangedVideo[i>>1][!(i&1)][1] + (i>>1) * (ldat)DisplayWidth;
 
-	    while (start <= end && Video[start] == OldVideo[start])
-		start++;
-	    while (start <= end && Video[end] == OldVideo[end])
-		end--;
+            while (start <= end && Video[start] == OldVideo[start])
+                start++;
+            while (start <= end && Video[end] == OldVideo[end])
+                end--;
 
-	    if (start > end) {
-		if (i&1) {
-		    /*
-		     * this is the first area, to make it empty
-		     * copy the second on this.
-		     */
-		    if (ChangedVideo[i>>1][1][0] != -1) {
-			ChangedVideo[i>>1][0][0] = ChangedVideo[i>>1][1][0];
-			ChangedVideo[i>>1][0][1] = ChangedVideo[i>>1][1][1];
-			ChangedVideo[i>>1][1][0] = -1;
-		    } else
-			ChangedVideo[i>>1][0][0] = -1;
-		} else
-		    ChangedVideo[i>>1][1][0] = -1;
-		continue;
-	    } else if (start > _start || end < _end) {
-		ChangedVideo[i>>1][!(i&1)][0] += start - _start;
-		ChangedVideo[i>>1][!(i&1)][1] -= _end - end;
-	    }
-	}
+            if (start > end) {
+                if (i&1) {
+                    /*
+                     * this is the first area, to make it empty
+                     * copy the second on this.
+                     */
+                    if (ChangedVideo[i>>1][1][0] != -1) {
+                        ChangedVideo[i>>1][0][0] = ChangedVideo[i>>1][1][0];
+                        ChangedVideo[i>>1][0][1] = ChangedVideo[i>>1][1][1];
+                        ChangedVideo[i>>1][1][0] = -1;
+                    } else
+                        ChangedVideo[i>>1][0][0] = -1;
+                } else
+                    ChangedVideo[i>>1][1][0] = -1;
+                continue;
+            } else if (start > _start || end < _end) {
+                ChangedVideo[i>>1][!(i&1)][0] += start - _start;
+                ChangedVideo[i>>1][!(i&1)][1] -= _end - end;
+            }
+        }
     }
 }
 #else
@@ -676,7 +676,7 @@ static void HandleMsg(tmsg Msg) {
     break;
   case TW_MSG_SELECTIONREQUEST:
 #if 0
-	printk("twdisplay: Selection Request from 0x%08x, owner is underlying HW\n", Msg->Event.EventSelectionRequest.Requestor);
+        printk("twdisplay: Selection Request from 0x%08x, owner is underlying HW\n", Msg->Event.EventSelectionRequest.Requestor);
 #endif
     /* request selection from underlying HW */
 
@@ -691,7 +691,7 @@ static void HandleMsg(tmsg Msg) {
     break;
   case TW_MSG_SELECTIONNOTIFY:
 #if 0
-	printk("twdisplay: Selection Notify to underlying HW\n");
+        printk("twdisplay: Selection Notify to underlying HW\n");
 #endif
     /* notify selection to underlying HW */
     HW->HWSelectionNotify(Msg->Event.EventSelectionNotify.ReqPrivate,

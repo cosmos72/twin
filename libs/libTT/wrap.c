@@ -146,17 +146,17 @@ static ttany Combine_ttany(ttany m1, ttany m2, ttany top_bit, ttuint truth_table
     /* compact, slow version */
     ttany i, ret = 0;
     ttuint truth;
-    
+
     for (i = top_bit; i; i >>= 1) {
-	truth = truth_table;
-	
-	if (m1 & i)
-	    truth >>= 1;
-	if (m2 & i)
-	    truth >>= 2;
-	
-	if (truth & 1)
-	    ret |= i;
+        truth = truth_table;
+
+        if (m1 & i)
+            truth >>= 1;
+        if (m2 & i)
+            truth >>= 2;
+
+        if (truth & 1)
+            ret |= i;
     }
     return ret;
 #else
@@ -1076,11 +1076,11 @@ TT_INLINE ttbyte SetPosition_ttanyscroll(ttanyscroll o, ttint position) {
 TT_INLINE ttbyte SetState_ttanyscroll(ttanyscroll o, ttuint state) {
     ttbyte ret = TT_FALSE;
     if (CAN_SET(o, ttanyscroll)) {
-	if (state != o->state) {
-	    FIRE_EVENT(ret = o->Class->SetState(o, state), o,
-		       ttanyscroll_state, state, o->state);
-	} else
-	    ret = TT_TRUE;
+        if (state != o->state) {
+            FIRE_EVENT(ret = o->Class->SetState(o, state), o,
+                       ttanyscroll_state, state, o->state);
+        } else
+            ret = TT_TRUE;
     }
     return ret;
 }

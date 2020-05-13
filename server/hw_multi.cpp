@@ -718,7 +718,7 @@ void TwinSelectionNotify(obj Requestor, uldat ReqPrivate, uldat Magic, const cha
 void TwinSelectionRequest(obj Requestor, uldat ReqPrivate, obj Owner) {
 #if 0
     printk("twin: Selection Request from 0x%08x, owner is 0x%08x\n",
-	    Requestor ? Requestor->Id : NOID, Owner ? Owner->Id : NOID);
+            Requestor ? Requestor->Id : NOID, Owner ? Owner->Id : NOID);
 #endif
   if (Owner) {
     if (Owner->Id >> magic_shift == msgport_magic >> magic_shift) {

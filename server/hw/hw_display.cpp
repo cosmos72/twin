@@ -110,9 +110,9 @@ static void display_HandleEvent(display_hw hw) {
       printk(
           "\ntwin: display_HandleEvent(): unexpected SelectionRequest Message from twdisplay!\n");
 #if 0
-	    TwinSelectionRequest(Event->EventSelectionRequest.Requestor,
-				 Event->EventSelectionRequest.ReqPrivate,
-				 TwinSelectionGetOwner());
+            TwinSelectionRequest(Event->EventSelectionRequest.Requestor,
+                                 Event->EventSelectionRequest.ReqPrivate,
+                                 TwinSelectionGetOwner());
 #endif
       break;
     case msg_selection_notify:
@@ -121,11 +121,11 @@ static void display_HandleEvent(display_hw hw) {
        */
       printk("\ntwin: display_HandleEvent(): unexpected SelectionNotify Message from twdisplay!\n");
 #if 0
-	    TwinSelectionNotify(dRequestor, dReqPrivate,
-				Event->EventSelectionNotify.Magic,
-				Event->EventSelectionNotify.MIME,
-				Event->EventSelectionNotify.Len,
-				Event->EventSelectionNotify.Data);
+            TwinSelectionNotify(dRequestor, dReqPrivate,
+                                Event->EventSelectionNotify.Magic,
+                                Event->EventSelectionNotify.MIME,
+                                Event->EventSelectionNotify.Len,
+                                Event->EventSelectionNotify.Data);
 #endif
       break;
 
@@ -139,11 +139,11 @@ static void display_HandleEvent(display_hw hw) {
         printk("\ntwin: display_HandleEvent(): unexpected Display.RedrawVideo Message from "
                "twdisplay!\n");
 #if 0
-		if (Event->EventDisplay.Len == sizeof(dat) * 2)
-		    NeedRedrawVideo(Event->EventDisplay.X, Event->EventDisplay.Y,
-				    ((udat *)Event->EventDisplay.Data)[0],
-				    ((udat *)Event->EventDisplay.Data)[1]);
-		break;
+                if (Event->EventDisplay.Len == sizeof(dat) * 2)
+                    NeedRedrawVideo(Event->EventDisplay.X, Event->EventDisplay.Y,
+                                    ((udat *)Event->EventDisplay.Data)[0],
+                                    ((udat *)Event->EventDisplay.Data)[1]);
+                break;
 #endif
       case ev_dpy_Resize:
         if (HW->X != Event->EventDisplay.X || HW->Y != Event->EventDisplay.Y) {

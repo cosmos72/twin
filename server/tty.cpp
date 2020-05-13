@@ -1291,9 +1291,9 @@ inline void write_ctrl(byte c) {
     case 'q': /* DECLL - but only 3 leds */
               /* map 0,1,2,3 to 0,1,2,4 */
 #if 0
-	    if (Par[0] < 4)
-		setledstate(kbd_table,
-			    (Par[0] < 3) ? Par[0] : 4);
+            if (Par[0] < 4)
+                setledstate(kbd_table,
+                            (Par[0] < 3) ? Par[0] : 4);
 #endif
       break;
     case 'r':
@@ -1749,10 +1749,10 @@ byte TtyWriteTCell(window Window, dat x, dat y, uldat len, const tcell *text) {
 static void con_stop(struct tty_struct *tty) {
     int console_num;
     if (!tty)
-	return;
+        return;
     console_num = MINOR(tty->device) - (tty->driver.minor_start);
     if (!vc_cons_allocated(console_num))
-	return;
+        return;
     set_vc_kbd_led(kbd_table + console_num, VC_SCROLLOCK);
     set_leds();
 }
@@ -1763,10 +1763,10 @@ static void con_stop(struct tty_struct *tty) {
 static void con_start(struct tty_struct *tty) {
     int console_num;
     if (!tty)
-	return;
+        return;
     console_num = MINOR(tty->device) - (tty->driver.minor_start);
     if (!vc_cons_allocated(console_num))
-	return;
+        return;
     clr_vc_kbd_led(kbd_table + console_num, VC_SCROLLOCK);
     set_leds();
 }
@@ -1777,41 +1777,41 @@ static void clear_buffer_attributes(window Window) {
     int mask = hi_font_mask | 0xff;
 
     for (; count > 0; count--, p++) {
-	scr_writew((scr_readw(p)&mask) | (video_erase_char&~mask), p);
+        scr_writew((scr_readw(p)&mask) | (video_erase_char&~mask), p);
     }
 }
 
 /*
- *	Palettes
+ *        Palettes
  */
 void set_palette(window Window) {
     if (vcmode != KD_GRAPHICS)
-  	sw->con_set_palette(vc_cons.d, color_table);
+          sw->con_set_palette(vc_cons.d, color_table);
 }
 
 static int set_get_cmap(unsigned char *arg, int set) {
     int i, j, k;
 
     for (i = 0; i < 16; i++)
-	if (set) {
-	    get_user(default_red[i], arg++);
-	    get_user(default_grn[i], arg++);
-	    get_user(default_blu[i], arg++);
-	} else {
-	    put_user(default_red[i], arg++);
-	    put_user(default_grn[i], arg++);
-	    put_user(default_blu[i], arg++);
-	}
+        if (set) {
+            get_user(default_red[i], arg++);
+            get_user(default_grn[i], arg++);
+            get_user(default_blu[i], arg++);
+        } else {
+            put_user(default_red[i], arg++);
+            put_user(default_grn[i], arg++);
+            put_user(default_blu[i], arg++);
+        }
     if (set) {
-	for (i = 0; i < MAX_NR_CONSOLES; i++)
-	    if (vc_cons_allocated(i)) {
-		for (j = k = 0; j < 16; j++) {
-		    vc_cons[i].d->vc_palette[k++] = default_red[j];
-		    vc_cons[i].d->vc_palette[k++] = default_grn[j];
-		    vc_cons[i].d->vc_palette[k++] = default_blu[j];
-		}
-		set_palette(i);
-	    }
+        for (i = 0; i < MAX_NR_CONSOLES; i++)
+            if (vc_cons_allocated(i)) {
+                for (j = k = 0; j < 16; j++) {
+                    vc_cons[i].d->vc_palette[k++] = default_red[j];
+                    vc_cons[i].d->vc_palette[k++] = default_grn[j];
+                    vc_cons[i].d->vc_palette[k++] = default_blu[j];
+                }
+                set_palette(i);
+            }
     }
     return 0;
 }
@@ -1832,9 +1832,9 @@ int con_get_cmap(unsigned char *arg) {
 void reset_palette(window Window) {
     int j, k;
     for (j=k=0; j<16; j++) {
-	palette[k++] = default_red[j];
-	palette[k++] = default_grn[j];
-	palette[k++] = default_blu[j];
+        palette[k++] = default_red[j];
+        palette[k++] = default_grn[j];
+        palette[k++] = default_blu[j];
     }
     set_palette(currcons);
 }

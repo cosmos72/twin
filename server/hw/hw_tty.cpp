@@ -1,6 +1,6 @@
 /*
  *  hw_tty.c  --  functions to let twin display on linux console
- *		  and inside a twin terminal
+ *                  and inside a twin terminal
  *
  *  Copyright (C) 1999-2001 by Massimiliano Ghilardi
  *

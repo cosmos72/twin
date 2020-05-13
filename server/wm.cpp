@@ -788,11 +788,11 @@ static void ContinueScreenButton(wm_ctx *C) {
     DetailCtx(C);
 
     if (C->Pos == POS_BUTTON_SCREEN)
-	C->Screen->State |= GADGET_PRESSED;
+        C->Screen->State |= GADGET_PRESSED;
     else
-	C->Screen->State &= ~GADGET_PRESSED;
+        C->Screen->State &= ~GADGET_PRESSED;
     if (temp != C->Screen->State)
-	Act(DrawMenu,C->Screen)(C->Screen, All->DisplayWidth-(dat)2, All->DisplayWidth-(dat)1);
+        Act(DrawMenu,C->Screen)(C->Screen, All->DisplayWidth-(dat)2, All->DisplayWidth-(dat)1);
 }
 #endif
 
@@ -1113,22 +1113,22 @@ static void ContinueButton(wm_ctx *C) {
     byte found = tfalse;
 
     if (!FW)
-	return;
+        return;
 
     if (FW == C->W && (ltemp = FW->State) & BUTTON_ANY_SELECT) {
-	DetailCtx(C);
-	if (C->Pos < BUTTON_MAX &&
-	    (ltemp & BUTTON_ANY_SELECT) == (BUTTON_FIRST_SELECT << C->Pos))
+        DetailCtx(C);
+        if (C->Pos < BUTTON_MAX &&
+            (ltemp & BUTTON_ANY_SELECT) == (BUTTON_FIRST_SELECT << C->Pos))
 
-	    found = ttrue;
+            found = ttrue;
     }
 
     if (found)
-	FW->State |= GADGET_PRESSED;
+        FW->State |= GADGET_PRESSED;
     else
-	FW->State &= ~GADGET_PRESSED;
+        FW->State &= ~GADGET_PRESSED;
     if (ltemp != FW->State)
-	DrawBorderWindow(FW, BORDER_UP);
+        DrawBorderWindow(FW, BORDER_UP);
 }
 #endif
 

@@ -35,10 +35,10 @@ ttbyte TTCallY_ttmethod(tt_obj id, TT_ARG_WRITE TT_ARG_ARRAY((1)) ttarg *return_
     function = m->address;
 
 #if 0 && defined(TW_HAVE_GCC_I386_ASM)
-	{
-	    ttany _TT_CallY_ttmethod(ttfunction_fn function, ttopaque nargs, TT_ARG_READ TT_ARG_ARRAY((_P(2))) args);
-	    ret = _TT_CallY_ttmethod(function, nargs, a);
-	}
+        {
+            ttany _TT_CallY_ttmethod(ttfunction_fn function, ttopaque nargs, TT_ARG_READ TT_ARG_ARRAY((_P(2))) args);
+            ret = _TT_CallY_ttmethod(function, nargs, a);
+        }
 #else
     switch (m_nargs) {
     case 0:

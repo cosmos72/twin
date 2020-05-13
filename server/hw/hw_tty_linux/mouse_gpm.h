@@ -138,11 +138,11 @@ static void GPM_MouseEvent(int fd, display_hw hw) {
     }
 
 #if 0
-	All->FullShiftFlags =
-	    (GPM_EV.modifiers & 1 ? FULL_LEFT_SHIFT_PRESSED : 0)
-	    | (GPM_EV.modifiers & 2 ? FULL_RIGHT_ALT_PRESSED  : 0)
-	    | (GPM_EV.modifiers & 4 ? FULL_LEFT_CTRL_PRESSED  : 0)
-	    | (GPM_EV.modifiers & 8 ? FULL_LEFT_ALT_PRESSED   : 0);
+        All->FullShiftFlags =
+            (GPM_EV.modifiers & 1 ? FULL_LEFT_SHIFT_PRESSED : 0)
+            | (GPM_EV.modifiers & 2 ? FULL_RIGHT_ALT_PRESSED  : 0)
+            | (GPM_EV.modifiers & 4 ? FULL_LEFT_CTRL_PRESSED  : 0)
+            | (GPM_EV.modifiers & 8 ? FULL_LEFT_ALT_PRESSED   : 0);
 #endif
 
     /*

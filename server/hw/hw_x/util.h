@@ -192,7 +192,7 @@ static void X11_SelectionNotify_X11(uldat ReqPrivate, uldat Magic, const char MI
   }
 #if 0
     else {
-	printk(THIS ".c: X11_SelectionNotify_X11(): %d nested Twin Selection Notify events\n", XReqCount);
+        printk(THIS ".c: X11_SelectionNotify_X11(): %d nested Twin Selection Notify events\n", XReqCount);
     }
 #endif
 
@@ -265,7 +265,7 @@ static void X11_SelectionNotify_up(Window win, Atom prop) {
   }
 #if 0
     else {
-	printk(THIS ".c: X11_SelectionNotify_up(): %d nested X Selection Notify event\n", xReqCount);
+        printk(THIS ".c: X11_SelectionNotify_up(): %d nested X Selection Notify event\n", xReqCount);
     }
 #endif
   if (prop == None)
@@ -310,9 +310,9 @@ static void X11_SelectionRequest_X11(obj Requestor, uldat ReqPrivate) {
       return;
     }
 #if 0
-	else {
-	    printk(THIS ".c: X11_SelectionRequest_X11(): %d nested Twin Selection Request events\n", xReqCount+1);
-	}
+        else {
+            printk(THIS ".c: X11_SelectionRequest_X11(): %d nested Twin Selection Request events\n", xReqCount+1);
+        }
 #endif
     xRequestor(xReqCount) = Requestor;
     xReqPrivate(xReqCount) = ReqPrivate;
@@ -340,7 +340,7 @@ static void X11_SelectionRequest_up(XSelectionRequestEvent *req) {
   }
 #if 0
     else {
-	printk(THIS ".c: X11_SelectionRequest_up(): %d nested X Selection Request events\n", XReqCount+1);
+        printk(THIS ".c: X11_SelectionRequest_up(): %d nested X Selection Request events\n", XReqCount+1);
     }
 #endif
   CopyMem(req, &XReq(XReqCount), sizeof(XSelectionRequestEvent));
@@ -388,13 +388,13 @@ static int X11_Die(Display *d) {
      * may use it differently and have by chance the same value for it.
      */
     forallHW {
-	if (HW->QuitHW == X11_QuitHW && HW->Private
-	    && d == xdisplay) { /* expands to HW->Private->xdisplay */
+        if (HW->QuitHW == X11_QuitHW && HW->Private
+            && d == xdisplay) { /* expands to HW->Private->xdisplay */
 
-	    HW->NeedHW |= NEEDPanicHW, NeedHW |= NEEDPanicHW;
+            HW->NeedHW |= NEEDPanicHW, NeedHW |= NEEDPanicHW;
 
-	    break;
-	}
+            break;
+        }
     }
     return 0;
 }

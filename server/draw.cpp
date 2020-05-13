@@ -414,15 +414,15 @@ void DrawSelfWidget(draw_ctx *D) {
     DWidth = D->DWidth;
 
 #if 0
-	/*
-	 * this would suppress EXPOSE messages during resize (good)
-	 * but also clears the whole widget during non-top resize (bad)
-	 */
-	if ((All->State & state_any) == state_resize && (widget)All->FirstScreen->ClickWindow == W) {
-	    /* user is interactively resizing this window... pad with spaces */
-	    FillVideo(X1, Y1, X2, Y2, W->USE_Fill);
-	    return;
-	}
+        /*
+         * this would suppress EXPOSE messages during resize (good)
+         * but also clears the whole widget during non-top resize (bad)
+         */
+        if ((All->State & state_any) == state_resize && (widget)All->FirstScreen->ClickWindow == W) {
+            /* user is interactively resizing this window... pad with spaces */
+            FillVideo(X1, Y1, X2, Y2, W->USE_Fill);
+            return;
+        }
 #endif
 
     if (Text || TRune || TCell) {
@@ -1462,12 +1462,12 @@ static void DrawAreaCtx(draw_ctx *D) {
            * the shadow is like
            *
            *  +--+BBB        +--+BBBBB
-           *  |  |BBB	       |  |BBBBB
-           *  +--+BBB	       +--+BBBBB
-           *  AAACCCC	  or   AAAAACCCC
-           *  AAA+--+	       AAAAA+--+
-           *  AAA|  |	       AAAAA|  |
-           *  AAA+--+	       AAAAA+--+
+           *  |  |BBB               |  |BBBBB
+           *  +--+BBB               +--+BBBBB
+           *  AAACCCC          or   AAAAACCCC
+           *  AAA+--+               AAAAA+--+
+           *  AAA|  |               AAAAA|  |
+           *  AAA+--+               AAAAA+--+
            *
            * and we now draw C
            */

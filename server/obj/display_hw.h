@@ -110,16 +110,16 @@ struct s_display_hw : public s_obj {
   /*
    * various display HW flags:
    *
-   * FlHWSoftMouse		: set if display HW has to manually hide/show the mouse pointer
-   * FlHWChangedMouseFlag	: set after a mouse event that requires redrawing mouse pointer
-   * FlHWNeedOldVideo		: set if FlushVideo() is a bit expensive, and it's better to cache
-   *				  the actual display contents in OldVideo[] and send only
-   *				  what effectively changed, instead of all the dirty areas.
-   * FlHWExpensiveFlushVideo	: set if FlushVideo() is SO expensive that it's better to sleep
-   *				  a little before flushing, hoping to receive more data
-   *				  in the meantime, in order to merge the flush operations.
-   * FlHWNoInput		: set if the display HW should be used as view-only,
-   * 				  ignoring all input from it.
+   * FlHWSoftMouse                : set if display HW has to manually hide/show the mouse pointer
+   * FlHWChangedMouseFlag        : set after a mouse event that requires redrawing mouse pointer
+   * FlHWNeedOldVideo                : set if FlushVideo() is a bit expensive, and it's better to cache
+   *                                  the actual display contents in OldVideo[] and send only
+   *                                  what effectively changed, instead of all the dirty areas.
+   * FlHWExpensiveFlushVideo        : set if FlushVideo() is SO expensive that it's better to sleep
+   *                                  a little before flushing, hoping to receive more data
+   *                                  in the meantime, in order to merge the flush operations.
+   * FlHWNoInput                : set if the display HW should be used as view-only,
+   *                                   ignoring all input from it.
    */
 
   byte NeedHW;

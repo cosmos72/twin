@@ -241,8 +241,8 @@ static ttbyte X11_MainLoop(void) {
     XEvent ev;
 
     while (!exitmainloop && XNextEvent(dpy, &ev)) {
-	if (!X11_FireEvent(&ev))
-	    break;
+        if (!X11_FireEvent(&ev))
+            break;
     }
 
     exitmainloop = tfalse;

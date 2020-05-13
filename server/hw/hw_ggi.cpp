@@ -36,7 +36,7 @@
 
 /*
  * TODO
- *	-  use ggiFlushRegion() for better X performance.
+ *        -  use ggiFlushRegion() for better X performance.
  */
 
 static int (*gOrigSelect)(int n, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
@@ -350,9 +350,9 @@ static byte GGI_CanDragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat
 
 static void GGI_DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
     ggiCopyBox(gvis,
-	       (ldat)Left*gfont.x, (ldat)Up*gfont.y,
-	       (ldat)(Rgt-Left+1)*gfont.x, (ldat)(Dwn-Up+1)*gfont.y,
-	       (ldat)DstLeft*gfont.x, (ldat)DstUp*gfont.y);
+               (ldat)Left*gfont.x, (ldat)Up*gfont.y,
+               (ldat)(Rgt-Left+1)*gfont.x, (ldat)(Dwn-Up+1)*gfont.y,
+               (ldat)DstLeft*gfont.x, (ldat)DstUp*gfont.y);
     setFlush();
 }
 #endif
@@ -473,8 +473,8 @@ static byte GGI_InitHW(void) {
       HW->usedY = GetDisplayHeight();
 
 #if 0
-	if (inputs)
-		ggiJoinInputs(gvis, giiOpen(inputs, NULL));
+        if (inputs)
+                ggiJoinInputs(gvis, giiOpen(inputs, NULL));
 #endif
 
       ggiSetGCForeground(gvis, gforeground = gcol[0]);
@@ -577,56 +577,56 @@ EXTERN_C void QuitModule(module Module) {
 
 #if 0
 static void handle_keyboard(int sym, int modifiers, int out_fd) {
-	int shift = modifiers & (1 << GII_KM_SHIFT);
+        int shift = modifiers & (1 << GII_KM_SHIFT);
 
-	if (GII_KTYP(sym) == GII_KT_LATIN1) {
-		send_char(out_fd, GII_KVAL(sym));
-		return;
-	}
+        if (GII_KTYP(sym) == GII_KT_LATIN1) {
+                send_char(out_fd, GII_KVAL(sym));
+                return;
+        }
 
-	if (shift) switch (sym) {
+        if (shift) switch (sym) {
 
-		case GIIK_PageUp:   sym = GIIK_ScrollBack; break;
-		case GIIK_PageDown: sym = GIIK_ScrollForw; break;
+                case GIIK_PageUp:   sym = GIIK_ScrollBack; break;
+                case GIIK_PageDown: sym = GIIK_ScrollForw; break;
 
-		case GIIK_F1: sym = GIIK_F11; break;
-		case GIIK_F2: sym = GIIK_F12; break;
-	}
+                case GIIK_F1: sym = GIIK_F11; break;
+                case GIIK_F2: sym = GIIK_F12; break;
+        }
 
-	switch (sym) {
+        switch (sym) {
 
-		/* keys we pass on */
+                /* keys we pass on */
 
-		case GIIK_Enter: send_char(out_fd, '\n'); return;
-		case GIIK_Up:    send_str(out_fd, "\033[A"); return;
-		case GIIK_Down:  send_str(out_fd, "\033[B"); return;
-		case GIIK_Right: send_str(out_fd, "\033[C"); return;
-		case GIIK_Left:  send_str(out_fd, "\033[D"); return;
+                case GIIK_Enter: send_char(out_fd, '\n'); return;
+                case GIIK_Up:    send_str(out_fd, "\033[A"); return;
+                case GIIK_Down:  send_str(out_fd, "\033[B"); return;
+                case GIIK_Right: send_str(out_fd, "\033[C"); return;
+                case GIIK_Left:  send_str(out_fd, "\033[D"); return;
 
-		case GIIK_Home:     send_str(out_fd, "\033[1~"); return;
-		case GIIK_End:      send_str(out_fd, "\033[4~"); return;
-		case GIIK_Insert:   send_str(out_fd, "\033[2~"); return;
-/* ???		case GIIK_Remove:   send_str(out_fd, "\033[3~"); return; */
-		case GIIK_PageUp:   send_str(out_fd, "\033[5~"); return;
-		case GIIK_PageDown: send_str(out_fd, "\033[6~"); return;
+                case GIIK_Home:     send_str(out_fd, "\033[1~"); return;
+                case GIIK_End:      send_str(out_fd, "\033[4~"); return;
+                case GIIK_Insert:   send_str(out_fd, "\033[2~"); return;
+/* ???                case GIIK_Remove:   send_str(out_fd, "\033[3~"); return; */
+                case GIIK_PageUp:   send_str(out_fd, "\033[5~"); return;
+                case GIIK_PageDown: send_str(out_fd, "\033[6~"); return;
 
-		case GIIK_F1:  send_str(out_fd, "\033[[A"); return;
-		case GIIK_F2:  send_str(out_fd, "\033[[B"); return;
-		case GIIK_F3:  send_str(out_fd, "\033[[C"); return;
-		case GIIK_F4:  send_str(out_fd, "\033[[D"); return;
-		case GIIK_F5:  send_str(out_fd, "\033[[E"); return;
-		case GIIK_F6:  send_str(out_fd, "\033[17~"); return;
-		case GIIK_F7:  send_str(out_fd, "\033[18~"); return;
-		case GIIK_F8:  send_str(out_fd, "\033[19~"); return;
-		case GIIK_F9:  send_str(out_fd, "\033[20~"); return;
-		case GIIK_F10: send_str(out_fd, "\033[21~"); return;
+                case GIIK_F1:  send_str(out_fd, "\033[[A"); return;
+                case GIIK_F2:  send_str(out_fd, "\033[[B"); return;
+                case GIIK_F3:  send_str(out_fd, "\033[[C"); return;
+                case GIIK_F4:  send_str(out_fd, "\033[[D"); return;
+                case GIIK_F5:  send_str(out_fd, "\033[[E"); return;
+                case GIIK_F6:  send_str(out_fd, "\033[17~"); return;
+                case GIIK_F7:  send_str(out_fd, "\033[18~"); return;
+                case GIIK_F8:  send_str(out_fd, "\033[19~"); return;
+                case GIIK_F9:  send_str(out_fd, "\033[20~"); return;
+                case GIIK_F10: send_str(out_fd, "\033[21~"); return;
 
-		/* keys we greedily keep to ourselves */
+                /* keys we greedily keep to ourselves */
 
-		case GIIK_F11: quit=1; return;
+                case GIIK_F11: quit=1; return;
 
-		case GIIK_ScrollForw: move_window( sb_step); return;
-		case GIIK_ScrollBack: move_window(-sb_step); return;
-	}
+                case GIIK_ScrollForw: move_window( sb_step); return;
+                case GIIK_ScrollBack: move_window(-sb_step); return;
+        }
 }
 #endif

@@ -187,7 +187,7 @@ uldat HexStrToNum(byte *StringHex) {
      do {
          Len--;
          Value |= (uldat)HexDigitToNum(StringHex[Len], &Error) << (Len << 2);
-     }	while (!Error && Len>(byte)0);
+     }        while (!Error && Len>(byte)0);
 
     return Error ? (uldat)0 : Value;
 }

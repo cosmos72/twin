@@ -353,9 +353,9 @@ typedef enum e_window_state {
   BUTTON_ANY_SELECT = 0xFFC00000u,
 } window_state;
 
-/*#define BUTTON_FIRST		0 */
-/*#define BUTTON_CLOSE		0 */
-/*#define BUTTON_LAST		9 */
+/*#define BUTTON_FIRST                0 */
+/*#define BUTTON_CLOSE                0 */
+/*#define BUTTON_LAST                9 */
 
 #define BUTTON_MAX 10
 

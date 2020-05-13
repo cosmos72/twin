@@ -19,11 +19,11 @@
 
 
 
-#define OK_MAGIC	((uldat)0x3E4B4F3Cul)
-#define FAIL_MAGIC	((uldat)0xFFFFFFFFul)
+#define OK_MAGIC        ((uldat)0x3E4B4F3Cul)
+#define FAIL_MAGIC        ((uldat)0xFFFFFFFFul)
 
-#define FIND_MAGIC		((uldat)0x646E6946ul) /* i.e. "Find" */
-#define MSG_MAGIC		((uldat)0x2167734dul) /* i.e. "Msg!" */
+#define FIND_MAGIC                ((uldat)0x646E6946ul) /* i.e. "Find" */
+#define MSG_MAGIC                ((uldat)0x2167734dul) /* i.e. "Msg!" */
 
 
 
@@ -120,7 +120,7 @@ EL(SetSelectedGadgetGroup)
 
 EL(RaiseRow)
 EL(LowerRow)
-EL(RestackChildrenRow) 
+EL(RestackChildrenRow)
 EL(CirculateChildrenRow)
 
 EL(Create4MenuAny)
@@ -166,6 +166,3 @@ EL(SetServerUid)
 EL(OpenExtension)
 EL(CallBExtension)
 EL(CloseExtension)
-
-
-

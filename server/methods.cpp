@@ -2126,12 +2126,12 @@ static void InsertDisplayHW(display_hw DisplayHW, all Parent, display_hw Prev, d
                   (obj_entry)Next, NULL);
     DisplayHW->All = Parent;
 #if 0
-	/*
-	 * here we would call uninitialized DisplayHW routines like MoveToXY,
-	 * put this after DisplayHW->InitHW()
-	 */
-	if (All->FnHookDisplayHW)
-	    All->FnHookDisplayHW(All->HookDisplayHW);
+        /*
+         * here we would call uninitialized DisplayHW routines like MoveToXY,
+         * put this after DisplayHW->InitHW()
+         */
+        if (All->FnHookDisplayHW)
+            All->FnHookDisplayHW(All->HookDisplayHW);
 #endif
   }
 }

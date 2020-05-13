@@ -837,8 +837,8 @@ static void RCReload(void) {
 #if 0
     /* this would garble -hw=tty display */
     else
-	printk("twin: failed to load the RC parser:\n"
-		"      " SS "\n", Errstr);
+        printk("twin: failed to load the RC parser:\n"
+                "      " SS "\n", Errstr);
 #endif
 
   success = mod_rcload && mod_rcload();

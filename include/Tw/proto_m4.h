@@ -6,7 +6,7 @@
 
 /*
  *  proto_m4.h  --  check libTw functions prototypes from Tw_sockproto.m4h
- *		    against twin.h or against Tw/Tw.h include files.
+ *                    against twin.h or against Tw/Tw.h include files.
  *
  *  Copyright (C) 2001,2002 by Massimiliano Ghilardi
  *
@@ -128,7 +128,7 @@ void  Tw_SetSelectedGadgetGroup(tdisplay TwD, tgroup g, tgadget G);
 
 void  Tw_RaiseRow(tdisplay TwD, trow R);
 void  Tw_LowerRow(tdisplay TwD, trow R);
-void  Tw_RestackChildrenRow(tdisplay TwD, tobj O, uldat n, TW_CONST trow *children); 
+void  Tw_RestackChildrenRow(tdisplay TwD, tobj O, uldat n, TW_CONST trow *children);
 void  Tw_CirculateChildrenRow(tdisplay TwD, tobj O, byte up_down);
 
 trow  Tw_Create4MenuAny(tdisplay TwD, tobj parent, twindow W, udat code, byte flags, ldat len, TW_CONST char *text);
@@ -174,6 +174,3 @@ byte  Tw_SetServerUid(tdisplay TwD, uldat uid, byte privileges);
 textension  Tw_OpenExtension(tdisplay TwD, byte namelen, TW_CONST char *name);
 tany  Tw_CallBExtension(tdisplay TwD, textension id, topaque len, TW_CONST byte *data, TW_CONST byte *return_type);
 void  Tw_CloseExtension(tdisplay TwD, textension id);
-
-
-

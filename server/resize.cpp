@@ -287,8 +287,8 @@ byte RowWriteAscii(window Window, uldat Len, const char *Text) {
     while (RowLen < Len && *_Text != '\n' && *_Text != '\r')
       ++RowLen, ++_Text;
 
-    /*	WINDOWFL_INSERT non implementato */
-    /*  Gap non implementato				 */
+    /*        WINDOWFL_INSERT non implementato */
+    /*  Gap non implementato                                 */
 
     if (RowLen) {
       if (ModeInsert || (CurrRow && CurrRow->LenGap))
@@ -376,8 +376,8 @@ byte RowWriteTRune(window Window, uldat Len, const trune *Text) {
     while (RowLen < Len && *_Text != '\n' && *_Text != '\r')
       ++RowLen, ++_Text;
 
-    /*	WINDOWFL_INSERT non implementato */
-    /*  Gap non implementato				 */
+    /*        WINDOWFL_INSERT non implementato */
+    /*  Gap non implementato                                 */
 
     if (RowLen) {
       if (ModeInsert || (CurrRow && CurrRow->LenGap))

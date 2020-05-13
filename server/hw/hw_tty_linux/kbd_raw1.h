@@ -192,9 +192,9 @@ static udat get_console_bitmap(void) {
   struct vt_stat vs;
 #if 0
     struct vt_stat {
-	udat v_active;	/* active vt */
-	udat v_signal;	/* signal to send */
-	udat v_state;		/* vt bitmask */
+        udat v_active;        /* active vt */
+        udat v_signal;        /* signal to send */
+        udat v_state;                /* vt bitmask */
     };
 #endif
 
@@ -782,9 +782,9 @@ static void set_lights(int lights) {
 #if 0
     /* this is an identity */
     lights =
-	(lights & 1<<VC_SCROLLOCK ? LED_SCR : 0) |
-	(lights & 1<<VC_NUMLOCK   ? LED_NUM : 0) |
-	(lights & 1<<VC_CAPSLOCK  ? LED_CAP : 0);
+        (lights & 1<<VC_SCROLLOCK ? LED_SCR : 0) |
+        (lights & 1<<VC_NUMLOCK   ? LED_NUM : 0) |
+        (lights & 1<<VC_CAPSLOCK  ? LED_CAP : 0);
 #endif
   ioctl(tty_fd, KDSETLED, lights);
 }

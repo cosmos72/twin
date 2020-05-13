@@ -149,9 +149,9 @@ static byte *PushArg(byte *buf, tsfield a) {
     ENC_CASE(byte);
     ENC_CASE(udat);
 #if 0
-	/* we never meet this here, as EncodeArgs() above turns (tobj) into (uldat) */
+        /* we never meet this here, as EncodeArgs() above turns (tobj) into (uldat) */
       case TWS_tobj:
-	/* FALLTHROUGH */
+        /* FALLTHROUGH */
 #endif
     ENC_CASE(uldat);
     ENC_CASE(tcolor);
@@ -183,9 +183,9 @@ static void DecodeReply(byte *buf, tsfield a) {
     DEC_CASE(byte);
     DEC_CASE(udat);
 #if 0
-	/* we never meet this here, as EncodeArgs() above turns (tobj) into (uldat) */
+        /* we never meet this here, as EncodeArgs() above turns (tobj) into (uldat) */
       case TWS_tobj:
-	/* FALLTHROUGH */
+        /* FALLTHROUGH */
 #endif
     DEC_CASE(uldat);
     DEC_CASE(tcolor);

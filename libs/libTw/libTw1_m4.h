@@ -12,12 +12,12 @@
  * modify it under the terms of the GNU Library General Public
  * License as published by the Free Software Foundation; either
  * version 2 of the License, or (at your option) any later version.
- * 
+ *
  */
 
 /* To avoid troubles with strlen(), you should not use '\0' or "\0" */
 /* Also, using TWS_obj is really a good idea */
-#define magic_id_STR(x)	"\xFF"
+#define magic_id_STR(x)        "\xFF"
 
 
 
@@ -169,7 +169,7 @@
 { Tw_LowerRow, 8,
 4, "Tw_LowerRow", "2" "v" TWS_void_STR"x" magic_id_STR(row) },
 { Tw_RestackChildrenRow, 18,
-8, "Tw_RestackChildrenRow", "0" "v" TWS_void_STR"x" magic_id_STR(obj)"_" TWS_uldat_STR"X" magic_id_STR(row) }, 
+8, "Tw_RestackChildrenRow", "0" "v" TWS_void_STR"x" magic_id_STR(obj)"_" TWS_uldat_STR"X" magic_id_STR(row) },
 { Tw_CirculateChildrenRow, 20,
 6, "Tw_CirculateChildrenRow", "0" "v" TWS_void_STR"x" magic_id_STR(obj)"_" TWS_byte_STR },
 
@@ -248,6 +248,3 @@
 10, "Tw_CallBExtension", "0" "O" TWS_tany_STR"x" magic_id_STR(extension)"_" TWS_topaque_STR"V" TWS_byte_STR"V" TWS_byte_STR },
 { Tw_CloseExtension, 14,
 4, "Tw_CloseExtension", "0" "v" TWS_void_STR"x" magic_id_STR(extension) },
-
-
-
