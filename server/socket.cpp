@@ -96,20 +96,20 @@ static uldat RemoteReadAddQueue(uldat Slot, uldat len, byte *data) {
     uldat nmax;
 
     if (len == 0 || Slot >= FdTop || LS.Fd == NOFD)
-	return 0;
+        return 0;
 
     /* append to queue */
     if (LS.RQstart + LS.RQlen + len > LS.RQmax) {
-	if (LS.RQstart)
-	    MoveMem(LS.RQueue + LS.RQstart, LS.RQueue, LS.RQlen),
-	    LS.RQstart = 0;
+        if (LS.RQstart)
+            MoveMem(LS.RQueue + LS.RQstart, LS.RQueue, LS.RQlen),
+            LS.RQstart = 0;
 
-	if (LS.RQlen + len > LS.RQmax) {
-	    LS.RQueue = (byte *)ReAllocMem(LS.RQueue, nmax = (LS.RQmax+len+40)*5/4);
-	    if (!LS.RQueue)
-		return (LS.RQmax = LS.RQlen = 0);
-	    LS.RQmax = nmax;
-	}
+        if (LS.RQlen + len > LS.RQmax) {
+            LS.RQueue = (byte *)ReAllocMem(LS.RQueue, nmax = (LS.RQmax+len+40)*5/4);
+            if (!LS.RQueue)
+                return (LS.RQmax = LS.RQlen = 0);
+            LS.RQmax = nmax;
+        }
     }
 
     CopyMem(data, LS.RQueue + LS.RQstart + LS.RQlen, len);
@@ -146,9 +146,9 @@ static byte *RemoteReadGrowQueue(uldat Slot, uldat len) {
 
 static uldat RemoteReadShrinkQueue(uldat Slot, uldat len) {
   if (len && Slot < FdTop && LS.Fd != NOFD) {
-    if (len < LS.RQlen)
+    if (len < LS.RQlen) {
       LS.RQlen -= len;
-    else {
+    } else {
       len = LS.RQlen;
       LS.RQstart = LS.RQlen = 0;
     }
@@ -173,8 +173,9 @@ static uldat RemoteReadDeQueue(uldat Slot, uldat len) {
 
 static byte *RemoteReadGetQueue(uldat Slot, uldat *len) {
   if (Slot >= FdTop || LS.Fd == NOFD || !LS.RQlen) {
-    if (len)
+    if (len) {
       *len = 0;
+    }
     return NULL;
   }
   if (len)
@@ -198,13 +199,15 @@ static byte *RemoteWriteGetQueue(uldat Slot, uldat *len) {
 static byte *RemoteReadFillQueue(uldat Slot, uldat *len) {
   uldat delta;
   if (Slot >= FdTop || LS.Fd == NOFD) {
-    if (len)
+    if (len) {
       *len = 0;
+    }
     return NULL;
   }
   delta = LS.RQmax - LS.RQstart - LS.RQlen; /* still available */
-  if (len)
+  if (len) {
     *len = delta;
+  }
   LS.RQlen += delta;                   /* alloc them */
   return LS.RQueue + LS.RQmax - delta; /* return the address of first one */
 }
@@ -212,13 +215,15 @@ static byte *RemoteReadFillQueue(uldat Slot, uldat *len) {
 static byte *RemoteWriteFillQueue(uldat Slot, uldat *len) {
   uldat delta;
   if (Slot >= FdTop || LS.Fd == NOFD) {
-    if (len)
+    if (len) {
       *len = 0;
+    }
     return NULL;
   }
-  delta = LS.WQmax - LS.WQlen; /* yet available */
-  if (len)
+  delta = LS.WQmax - LS.WQlen; /* still available */
+  if (len) {
     *len = delta;
+  }
   if (!LS.WQlen && LS.WQmax) {
     LS.WQlen = LS.WQmax; /* alloc them */
     FdWQueued++;
@@ -249,8 +254,10 @@ static byte RemoteGzip(uldat Slot) {
             FdWQueued--;
           z->next_out = RemoteWriteFillQueue(slot, &delta);
           z->avail_out = delta;
-        } else /* out of memory ! */
+        } else {
+          /* out of memory ! */
           break;
+        }
       }
 
       zret = deflate(z, Z_SYNC_FLUSH);
@@ -261,13 +268,13 @@ static byte RemoteGzip(uldat Slot) {
     }
   }
   /* update the uncompressed queue */
-  if (z->avail_in)
+  if (z->avail_in) {
     CopyMem(LS.WQueue + LS.WQlen - z->avail_in, LS.WQueue, z->avail_in);
-
+  }
   slot = LS.WQlen;
-  if (!(LS.WQlen = z->avail_in) && slot)
+  if (!(LS.WQlen = z->avail_in) && slot) {
     FdWQueued--;
-
+  }
   return zret == Z_OK;
 }
 
@@ -296,8 +303,9 @@ static byte RemoteGunzip(uldat Slot) {
           ls.RQlen -= delta;
           z->next_out = RemoteReadFillQueue(slot, &delta);
           z->avail_out = delta;
-        } else /* out of memory ! */
+        } else { /* out of memory ! */
           break;
+        }
       }
 
       zret = inflate(z, Z_SYNC_FLUSH);
@@ -307,8 +315,9 @@ static byte RemoteGunzip(uldat Slot) {
     }
   }
   /* update the compressed queue */
-  if (z->avail_in)
+  if (z->avail_in) {
     LS.RQstart += LS.RQlen - z->avail_in;
+  }
   LS.RQlen = z->avail_in;
   return zret == Z_OK;
 }
@@ -320,8 +329,9 @@ static void ShutdownGzip(uldat Slot);
 static void SocketH(msgport MsgPort);
 
 static void sockShutDown(msgport MsgPort) {
-  if (MsgPort->RemoteData.FdSlot < FdTop)
+  if (MsgPort->RemoteData.FdSlot < FdTop) {
     UnRegisterMsgPort(MsgPort);
+  }
 }
 
 /* prototypes of libTw back-end utility functions */
@@ -569,52 +579,27 @@ inline udat MultiplexArgsV2S(uldat id, udat N, va_list va, tsfield a) {
     Format += 2;
 
     for (n = 1; n < N && (c = *Format++); n++) {
-	t = *Format++;
-	if (t >= TWS_highest)
-	    /*
-	     * let (tobj) fields decade into (uldat),
-	     * since in this case they are not real pointers.
-	     */
-	    t = TWS_uldat;
-	switch (c) {
-	  case '_': case 'x':
-	    a[n]_any = va_arg(va, tany);
-	    break;
-	  case 'W': case 'Y':
-	    /* FALLTHROUGH */
-	  case 'V': case 'X':
-	    a[n]_vec = (const void *)(topaque)va_arg(va, tany);
-	    break;
-	  default:
-	    return 0;
-	}
+        t = *Format++;
+        if (t >= TWS_highest)
+            /*
+             * let (tobj) fields decade into (uldat),
+             * since in this case they are not real pointers.
+             */
+            t = TWS_uldat;
+        switch (c) {
+          case '_': case 'x':
+            a[n]_any = va_arg(va, tany);
+            break;
+          case 'W': case 'Y':
+            /* FALLTHROUGH */
+          case 'V': case 'X':
+            a[n]_vec = (const void *)(topaque)va_arg(va, tany);
+            break;
+          default:
+            return 0;
+        }
     }
     return n;
-}
-
-
-/*
- * same as sockMultiplexA: call the appropriate sock* function.
- * but now the args are passed with a variadic prototype, not in a tsfield array.
- * *ALL* arguments should be cast to (tany) before passing them!!!
- */
-static tany sockMultiplexL(uldat id, ...) {
-    struct s_tsfield a[TW_MAX_ARGS_N];
-    va_list va;
-    udat N;
-
-    if (id == FIND_MAGIC)
-	id = 0;
-
-    if (id < MaxFunct) {
-	va_start(va, id);
-	N = MultiplexArgsV2S(id, TW_MAXUDAT, va, a);
-	va_end(va);
-
-	sockMultiplexS(id, N, a);
-	return a[0]_any;
-    }
-    return 0;
 }
 
 #endif /* 0 */ /* currently unused */
@@ -1897,21 +1882,21 @@ static byte sockSendToMsgPort(msgport MsgPort, udat Len, const byte *Data) {
 
 /* TODO: is this needed? */
 #if 0
-	      case TW_MSG_WIDGET_CHANGE:
-		Push(t, udat,    Msg->Event.EventWidget.Code);
-		Push(t, udat,    Msg->Event.EventWidget.XWidth);
-		Push(t, udat,    Msg->Event.EventWidget.YWidth);
-		break;
-	      case TW_MSG_WIDGET_GADGET:
-		Push(t, udat,    Msg->Event.EventGadget.Code);
-		Push(t, udat,    Msg->Event.EventGadget.pad);
-		break;
-	      case TW_MSG_MENU_ROW:
-		Push(t, udat,    Msg->Event.EventMenu.Code);
-		Push(t, udat,    Msg->Event.EventMenu.pad);
-		Push(t, tmenu,   Obj2Id(Msg->Event.EventMenu.Menu));
-		Push(t, trow,    Obj2Id(Msg->Event.EventMenu.Row));
-		break;
+              case TW_MSG_WIDGET_CHANGE:
+                Push(t, udat,    Msg->Event.EventWidget.Code);
+                Push(t, udat,    Msg->Event.EventWidget.XWidth);
+                Push(t, udat,    Msg->Event.EventWidget.YWidth);
+                break;
+              case TW_MSG_WIDGET_GADGET:
+                Push(t, udat,    Msg->Event.EventGadget.Code);
+                Push(t, udat,    Msg->Event.EventGadget.pad);
+                break;
+              case TW_MSG_MENU_ROW:
+                Push(t, udat,    Msg->Event.EventMenu.Code);
+                Push(t, udat,    Msg->Event.EventMenu.pad);
+                Push(t, tmenu,   Obj2Id(Msg->Event.EventMenu.Menu));
+                Push(t, trow,    Obj2Id(Msg->Event.EventMenu.Row));
+                break;
 #endif
         case TW_MSG_USER_CONTROL:
           if (sizeof(struct s_event_control) == sizeof(window) + 4 * sizeof(dat) + sizeof(uldat) &&

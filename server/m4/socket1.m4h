@@ -43,7 +43,7 @@ define(`CALL', `ifelse($4, 0, sock`'$2`'$3($6), $4, 1, Do($2,translit($3, `A-Z',
 
 define(`PROTO', `case order_`'TRIM($3)`'TRIM($4):
     if (N >= eval(($# - 5) / 3))
-	DECL0($1, t$2)`'CALL($1,TRIM($3),TRIM($4),$5,$6,PARSE(1, NSHIFT(5, $@)))
+        DECL0($1, t$2)`'CALL($1,TRIM($3),TRIM($4),$5,$6,PARSE(1, NSHIFT(5, $@)))
     break;
 ')
 

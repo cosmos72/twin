@@ -14,6 +14,9 @@
 
 #include <string.h> // memset()
 
+// dynamically resizeable array of arbitrary type T, with two constraints:
+// 1. T must have trivial copy constructor and destructor
+// 2. zero-initializing T must be equivalent to T default constructor
 template <class T> class Array : protected Span<T> {
 private:
   typedef Span<T> Base;

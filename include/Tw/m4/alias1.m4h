@@ -14,12 +14,11 @@ define(`el', `set($1,$1)`'methods$1($1, $1)')
 define(`extends', `push($1,$2)`'methods$1($1, $2)`'pop()')
 
 define(`field', `ifelse(this, base, `', `
-`#'define Tw$1`'this			Tw$1`'base')')
+`#'define Tw$1`'this                        Tw$1`'base')')
 
 define(`alias', `
-`#'define Tw$1			Tw$2`'this')
+`#'define Tw$1                        Tw$2`'this')
 
 divert
 
 Twlist()
-

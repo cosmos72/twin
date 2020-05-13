@@ -57,469 +57,466 @@
 
 case order_FindFunction:
     if (N >= 4)
-	a[0]_any = (tany)sockFindFunction((byte)a[1]_any, (const char *)a[2]_vec, (byte)a[3]_any, (const char *)a[4]_vec);
+        a[0]_any = (tany)sockFindFunction((byte)a[1]_any, (const char *)a[2]_vec, (byte)a[3]_any, (const char *)a[4]_vec);
     break;
 
 
 
 case order_SyncSocket:
     if (N >= 0)
-	a[0]_any = (tany)sockSyncSocket();
+        a[0]_any = (tany)sockSyncSocket();
     break;
 
 
 
 case order_ServerSizeof:
     if (N >= 1)
-	a[0]_any = (tany)sockServerSizeof((byte)a[1]_any);
+        a[0]_any = (tany)sockServerSizeof((byte)a[1]_any);
     break;
 
 
 
 case order_CanCompress:
     if (N >= 0)
-	a[0]_any = (tany)sockCanCompress();
+        a[0]_any = (tany)sockCanCompress();
     break;
 
 
 case order_DoCompress:
     if (N >= 1)
-	a[0]_any = (tany)sockDoCompress((byte)a[1]_any);
+        a[0]_any = (tany)sockDoCompress((byte)a[1]_any);
     break;
 
 
 
 case order_NeedResizeDisplay:
     if (N >= 0)
-	sockNeedResizeDisplay();
+        sockNeedResizeDisplay();
     break;
 
 
 
 case order_AttachHW:
     if (N >= 3)
-	sockAttachHW((uldat)a[1]_any, (const char *)a[2]_vec, (byte)a[3]_any);
+        sockAttachHW((uldat)a[1]_any, (const char *)a[2]_vec, (byte)a[3]_any);
     break;
 
 
 case order_DetachHW:
     if (N >= 2)
-	a[0]_any = (tany)sockDetachHW((uldat)a[1]_any, (const char *)a[2]_vec);
+        a[0]_any = (tany)sockDetachHW((uldat)a[1]_any, (const char *)a[2]_vec);
     break;
 
 
 
 case order_SetFontTranslation:
     if (N >= 1)
-	sockSetFontTranslation((const byte *)a[1]_vec);
+        sockSetFontTranslation((const byte *)a[1]_vec);
     break;
 
 
 case order_SetTRuneTranslation:
     if (N >= 1)
-	sockSetTRuneTranslation((const trune *)a[1]_vec);
+        sockSetTRuneTranslation((const trune *)a[1]_vec);
     break;
 
 
 
 case order_DeleteObj:
     if (N >= 1)
-	sockDeleteObj((obj)a[1]_obj);
+        sockDeleteObj((obj)a[1]_obj);
     break;
 
 
 case order_ChangeFieldObj:
     if (N >= 4)
-	Act(ChangeField,(obj)a[1]_obj)((obj)a[1]_obj, (udat)a[2]_any, (uldat)a[3]_any, (uldat)a[4]_any);
+        Act(ChangeField,(obj)a[1]_obj)((obj)a[1]_obj, (udat)a[2]_any, (uldat)a[3]_any, (uldat)a[4]_any);
     break;
 
 
 
 case order_CreateWidget:
     if (N >= 7)
-	a[0]_obj = (obj)sockCreateWidget((dat)a[1]_any, (dat)a[2]_any, (uldat)a[3]_any, (uldat)a[4]_any, (dat)a[5]_any, (dat)a[6]_any, (tcell)a[7]_any);
+        a[0]_obj = (obj)sockCreateWidget((dat)a[1]_any, (dat)a[2]_any, (uldat)a[3]_any, (uldat)a[4]_any, (dat)a[5]_any, (dat)a[6]_any, (tcell)a[7]_any);
     break;
 
 
 case order_RecursiveDeleteWidget:
     if (N >= 1)
-	sockRecursiveDeleteWidget((widget)a[1]_obj);
+        sockRecursiveDeleteWidget((widget)a[1]_obj);
     break;
 
 case order_MapWidget:
     if (N >= 2)
-	Act(Map,(widget)a[1]_obj)((widget)a[1]_obj, (widget)a[2]_obj);
+        Act(Map,(widget)a[1]_obj)((widget)a[1]_obj, (widget)a[2]_obj);
     break;
 
 case order_UnMapWidget:
     if (N >= 1)
-	Act(UnMap,(widget)a[1]_obj)((widget)a[1]_obj);
+        Act(UnMap,(widget)a[1]_obj)((widget)a[1]_obj);
     break;
 
 case order_SetXYWidget:
     if (N >= 3)
-	sockSetXYWidget((widget)a[1]_obj, (dat)a[2]_any, (dat)a[3]_any);
+        sockSetXYWidget((widget)a[1]_obj, (dat)a[2]_any, (dat)a[3]_any);
     break;
 
 case order_ResizeWidget:
     if (N >= 3)
-	sockResizeWidget((widget)a[1]_obj, (dat)a[2]_any, (dat)a[3]_any);
+        sockResizeWidget((widget)a[1]_obj, (dat)a[2]_any, (dat)a[3]_any);
     break;
 
 case order_ScrollWidget:
     if (N >= 3)
-	sockScrollWidget((widget)a[1]_obj, (ldat)a[2]_any, (ldat)a[3]_any);
+        sockScrollWidget((widget)a[1]_obj, (ldat)a[2]_any, (ldat)a[3]_any);
     break;
 
 case order_DrawWidget:
     if (N >= 8)
-	sockDrawWidget((widget)a[1]_obj, (dat)a[2]_any, (dat)a[3]_any, (dat)a[4]_any, (dat)a[5]_any, (const char *)a[6]_vec, (const trune *)a[7]_vec, (const tcell *)a[8]_vec);
+        sockDrawWidget((widget)a[1]_obj, (dat)a[2]_any, (dat)a[3]_any, (dat)a[4]_any, (dat)a[5]_any, (const char *)a[6]_vec, (const trune *)a[7]_vec, (const tcell *)a[8]_vec);
     break;
 
 
 case order_SetVisibleWidget:
     if (N >= 2)
-	sockSetVisibleWidget((widget)a[1]_obj, (byte)a[2]_any);
+        sockSetVisibleWidget((widget)a[1]_obj, (byte)a[2]_any);
     break;
 
 
 case order_FocusSubWidget:
     if (N >= 1)
-	sockFocusSubWidget((widget)a[1]_obj);
+        sockFocusSubWidget((widget)a[1]_obj);
     break;
 
 case order_FindWidgetAtWidget:
     if (N >= 3)
-	a[0]_obj = (obj)Act(FindWidgetAt,(widget)a[1]_obj)((widget)a[1]_obj, (dat)a[2]_any, (dat)a[3]_any);
+        a[0]_obj = (obj)Act(FindWidgetAt,(widget)a[1]_obj)((widget)a[1]_obj, (dat)a[2]_any, (dat)a[3]_any);
     break;
 
 
 case order_RaiseWidget:
     if (N >= 1)
-	Act(Raise,(widget)a[1]_obj)((widget)a[1]_obj);
+        Act(Raise,(widget)a[1]_obj)((widget)a[1]_obj);
     break;
 
 case order_LowerWidget:
     if (N >= 1)
-	Act(Lower,(widget)a[1]_obj)((widget)a[1]_obj);
+        Act(Lower,(widget)a[1]_obj)((widget)a[1]_obj);
     break;
 
 case order_RestackChildrenWidget:
     if (N >= 3)
-	sockRestackChildrenWidget((widget)a[1]_obj, (uldat)a[2]_any, (const widget *)a[3]_vec);
+        sockRestackChildrenWidget((widget)a[1]_obj, (uldat)a[2]_any, (const widget *)a[3]_vec);
     break;
 
 case order_CirculateChildrenWidget:
     if (N >= 2)
-	sockCirculateChildrenWidget((widget)a[1]_obj, (byte)a[2]_any);
+        sockCirculateChildrenWidget((widget)a[1]_obj, (byte)a[2]_any);
     break;
 
 
 
 case order_CreateGadget:
     if (N >= 13)
-	a[0]_obj = (obj)sockCreateGadget((widget)a[1]_obj, (dat)a[2]_any, (dat)a[3]_any, (const char *)a[4]_vec, (uldat)a[5]_any, (uldat)a[6]_any, (udat)a[7]_any, (tcolor)a[8]_any, (tcolor)a[9]_any, (tcolor)a[10]_any, (tcolor)a[11]_any, (dat)a[12]_any, (dat)a[13]_any);
+        a[0]_obj = (obj)sockCreateGadget((widget)a[1]_obj, (dat)a[2]_any, (dat)a[3]_any, (const char *)a[4]_vec, (uldat)a[5]_any, (uldat)a[6]_any, (udat)a[7]_any, (tcolor)a[8]_any, (tcolor)a[9]_any, (tcolor)a[10]_any, (tcolor)a[11]_any, (dat)a[12]_any, (dat)a[13]_any);
     break;
 
 
 case order_CreateButtonGadget:
     if (N >= 11)
-	a[0]_obj = (obj)Do(CreateButton,gadget)((widget)a[1]_obj, (dat)a[2]_any, (dat)a[3]_any, (const char *)a[4]_vec, (uldat)a[5]_any, (udat)a[6]_any, (tcolor)a[7]_any, (tcolor)a[8]_any, (tcolor)a[9]_any, (dat)a[10]_any, (dat)a[11]_any);
+        a[0]_obj = (obj)Do(CreateButton,gadget)((widget)a[1]_obj, (dat)a[2]_any, (dat)a[3]_any, (const char *)a[4]_vec, (uldat)a[5]_any, (udat)a[6]_any, (tcolor)a[7]_any, (tcolor)a[8]_any, (tcolor)a[9]_any, (dat)a[10]_any, (dat)a[11]_any);
     break;
 
 
 case order_WriteTextsGadget:
     if (N >= 7)
-	Act(WriteTexts,(gadget)a[1]_obj)((gadget)a[1]_obj, (byte)a[2]_any, (dat)a[3]_any, (dat)a[4]_any, (const char *)a[5]_vec, (dat)a[6]_any, (dat)a[7]_any);
+        Act(WriteTexts,(gadget)a[1]_obj)((gadget)a[1]_obj, (byte)a[2]_any, (dat)a[3]_any, (dat)a[4]_any, (const char *)a[5]_vec, (dat)a[6]_any, (dat)a[7]_any);
     break;
 
 case order_WriteTRunesGadget:
     if (N >= 7)
-	Act(WriteTRunes,(gadget)a[1]_obj)((gadget)a[1]_obj, (byte)a[2]_any, (dat)a[3]_any, (dat)a[4]_any, (const trune *)a[5]_vec, (dat)a[6]_any, (dat)a[7]_any);
+        Act(WriteTRunes,(gadget)a[1]_obj)((gadget)a[1]_obj, (byte)a[2]_any, (dat)a[3]_any, (dat)a[4]_any, (const trune *)a[5]_vec, (dat)a[6]_any, (dat)a[7]_any);
     break;
 
 
 case order_CreateWindow:
     if (N >= 11)
-	a[0]_obj = (obj)sockCreateWindow((dat)a[1]_any, (const char *)a[2]_vec, (const tcolor *)a[3]_vec, (menu)a[4]_obj, (tcolor)a[5]_any, (uldat)a[6]_any, (uldat)a[7]_any, (uldat)a[8]_any, (dat)a[9]_any, (dat)a[10]_any, (dat)a[11]_any);
+        a[0]_obj = (obj)sockCreateWindow((dat)a[1]_any, (const char *)a[2]_vec, (const tcolor *)a[3]_vec, (menu)a[4]_obj, (tcolor)a[5]_any, (uldat)a[6]_any, (uldat)a[7]_any, (uldat)a[8]_any, (dat)a[9]_any, (dat)a[10]_any, (dat)a[11]_any);
     break;
 
 case order_Create4MenuWindow:
     if (N >= 1)
-	a[0]_obj = (obj)Do(Create4Menu,window)((menu)a[1]_obj);
+        a[0]_obj = (obj)Do(Create4Menu,window)((menu)a[1]_obj);
     break;
 
 
 case order_WriteAsciiWindow:
     if (N >= 3)
-	sockWriteAsciiWindow((window)a[1]_obj, (uldat)a[2]_any, (const char *)a[3]_vec);
+        sockWriteAsciiWindow((window)a[1]_obj, (uldat)a[2]_any, (const char *)a[3]_vec);
     break;
 
 case order_WriteStringWindow:
     if (N >= 3)
-	sockWriteStringWindow((window)a[1]_obj, (uldat)a[2]_any, (const char *)a[3]_vec);
+        sockWriteStringWindow((window)a[1]_obj, (uldat)a[2]_any, (const char *)a[3]_vec);
     break;
 
 case order_WriteTRuneWindow:
     if (N >= 3)
-	sockWriteTRuneWindow((window)a[1]_obj, (uldat)a[2]_any, (const trune *)a[3]_vec);
+        sockWriteTRuneWindow((window)a[1]_obj, (uldat)a[2]_any, (const trune *)a[3]_vec);
     break;
 
 case order_WriteTCellWindow:
     if (N >= 5)
-	sockWriteTCellWindow((window)a[1]_obj, (dat)a[2]_any, (dat)a[3]_any, (uldat)a[4]_any, (const tcell *)a[5]_vec);
+        sockWriteTCellWindow((window)a[1]_obj, (dat)a[2]_any, (dat)a[3]_any, (uldat)a[4]_any, (const tcell *)a[5]_vec);
     break;
 
 
 case order_GotoXYWindow:
     if (N >= 3)
-	Act(GotoXY,(window)a[1]_obj)((window)a[1]_obj, (ldat)a[2]_any, (ldat)a[3]_any);
+        Act(GotoXY,(window)a[1]_obj)((window)a[1]_obj, (ldat)a[2]_any, (ldat)a[3]_any);
     break;
 
 case order_SetTitleWindow:
     if (N >= 3)
-	sockSetTitleWindow((window)a[1]_obj, (dat)a[2]_any, (const char *)a[3]_vec);
+        sockSetTitleWindow((window)a[1]_obj, (dat)a[2]_any, (const char *)a[3]_vec);
     break;
 
 case order_SetColTextWindow:
     if (N >= 2)
-	Act(SetColText,(window)a[1]_obj)((window)a[1]_obj, (tcolor)a[2]_any);
+        Act(SetColText,(window)a[1]_obj)((window)a[1]_obj, (tcolor)a[2]_any);
     break;
 
 case order_SetColorsWindow:
     if (N >= 11)
-	Act(SetColors,(window)a[1]_obj)((window)a[1]_obj, (udat)a[2]_any, (tcolor)a[3]_any, (tcolor)a[4]_any, (tcolor)a[5]_any, (tcolor)a[6]_any, (tcolor)a[7]_any, (tcolor)a[8]_any, (tcolor)a[9]_any, (tcolor)a[10]_any, (tcolor)a[11]_any);
+        Act(SetColors,(window)a[1]_obj)((window)a[1]_obj, (udat)a[2]_any, (tcolor)a[3]_any, (tcolor)a[4]_any, (tcolor)a[5]_any, (tcolor)a[6]_any, (tcolor)a[7]_any, (tcolor)a[8]_any, (tcolor)a[9]_any, (tcolor)a[10]_any, (tcolor)a[11]_any);
     break;
 
 case order_ConfigureWindow:
     if (N >= 8)
-	Act(Configure,(window)a[1]_obj)((window)a[1]_obj, (byte)a[2]_any, (dat)a[3]_any, (dat)a[4]_any, (dat)a[5]_any, (dat)a[6]_any, (dat)a[7]_any, (dat)a[8]_any);
+        Act(Configure,(window)a[1]_obj)((window)a[1]_obj, (byte)a[2]_any, (dat)a[3]_any, (dat)a[4]_any, (dat)a[5]_any, (dat)a[6]_any, (dat)a[7]_any, (dat)a[8]_any);
     break;
 
 case order_FindRowByCodeWindow:
     if (N >= 2)
-	a[0]_obj = (obj)sockFindRowByCodeWindow((window)a[1]_obj, (dat)a[2]_any);
+        a[0]_obj = (obj)sockFindRowByCodeWindow((window)a[1]_obj, (dat)a[2]_any);
     break;
 
 
 case order_CreateGroup:
     if (N >= 0)
-	a[0]_obj = (obj)sockCreateGroup();
+        a[0]_obj = (obj)sockCreateGroup();
     break;
 
 case order_InsertGadgetGroup:
     if (N >= 2)
-	Act(InsertGadget,(ggroup)a[1]_obj)((ggroup)a[1]_obj, (gadget)a[2]_obj);
+        Act(InsertGadget,(ggroup)a[1]_obj)((ggroup)a[1]_obj, (gadget)a[2]_obj);
     break;
 
 case order_RemoveGadgetGroup:
     if (N >= 2)
-	Act(RemoveGadget,(ggroup)a[1]_obj)((ggroup)a[1]_obj, (gadget)a[2]_obj);
+        Act(RemoveGadget,(ggroup)a[1]_obj)((ggroup)a[1]_obj, (gadget)a[2]_obj);
     break;
 
 
 case order_GetSelectedGadgetGroup:
     if (N >= 1)
-	a[0]_obj = (obj)Act(GetSelectedGadget,(ggroup)a[1]_obj)((ggroup)a[1]_obj);
+        a[0]_obj = (obj)Act(GetSelectedGadget,(ggroup)a[1]_obj)((ggroup)a[1]_obj);
     break;
 
 case order_SetSelectedGadgetGroup:
     if (N >= 2)
-	Act(SetSelectedGadget,(ggroup)a[1]_obj)((ggroup)a[1]_obj, (gadget)a[2]_obj);
+        Act(SetSelectedGadget,(ggroup)a[1]_obj)((ggroup)a[1]_obj, (gadget)a[2]_obj);
     break;
 
 
 case order_RaiseRow:
     if (N >= 1)
-	Act(Raise,(row)a[1]_obj)((row)a[1]_obj);
+        Act(Raise,(row)a[1]_obj)((row)a[1]_obj);
     break;
 
 case order_LowerRow:
     if (N >= 1)
-	Act(Lower,(row)a[1]_obj)((row)a[1]_obj);
+        Act(Lower,(row)a[1]_obj)((row)a[1]_obj);
     break;
 
 case order_RestackChildrenRow:
     if (N >= 3)
-	sockRestackChildrenRow((obj)a[1]_obj, (uldat)a[2]_any, (const row *)a[3]_vec);
+        sockRestackChildrenRow((obj)a[1]_obj, (uldat)a[2]_any, (const row *)a[3]_vec);
     break;
- 
+
 case order_CirculateChildrenRow:
     if (N >= 2)
-	sockCirculateChildrenRow((obj)a[1]_obj, (byte)a[2]_any);
+        sockCirculateChildrenRow((obj)a[1]_obj, (byte)a[2]_any);
     break;
 
 
 case order_Create4MenuAny:
     if (N >= 6)
-	a[0]_obj = (obj)sockCreate4MenuAny((obj)a[1]_obj, (window)a[2]_obj, (udat)a[3]_any, (byte)a[4]_any, (ldat)a[5]_any, (const char *)a[6]_vec);
+        a[0]_obj = (obj)sockCreate4MenuAny((obj)a[1]_obj, (window)a[2]_obj, (udat)a[3]_any, (byte)a[4]_any, (ldat)a[5]_any, (const char *)a[6]_vec);
     break;
 
 
 case order_Create4MenuCommonMenuItem:
     if (N >= 1)
-	a[0]_any = (tany)Do(Create4MenuCommon,menuitem)((menu)a[1]_obj);
+        a[0]_any = (tany)Do(Create4MenuCommon,menuitem)((menu)a[1]_obj);
     break;
 
 
 case order_CreateMenu:
     if (N >= 7)
-	a[0]_obj = (obj)sockCreateMenu((tcolor)a[1]_any, (tcolor)a[2]_any, (tcolor)a[3]_any, (tcolor)a[4]_any, (tcolor)a[5]_any, (tcolor)a[6]_any, (byte)a[7]_any);
+        a[0]_obj = (obj)sockCreateMenu((tcolor)a[1]_any, (tcolor)a[2]_any, (tcolor)a[3]_any, (tcolor)a[4]_any, (tcolor)a[5]_any, (tcolor)a[6]_any, (byte)a[7]_any);
     break;
 
 case order_SetInfoMenu:
     if (N >= 5)
-	Act(SetInfo,(menu)a[1]_obj)((menu)a[1]_obj, (byte)a[2]_any, (ldat)a[3]_any, (const char *)a[4]_vec, (const tcolor *)a[5]_vec);
+        Act(SetInfo,(menu)a[1]_obj)((menu)a[1]_obj, (byte)a[2]_any, (ldat)a[3]_any, (const char *)a[4]_vec, (const tcolor *)a[5]_vec);
     break;
 
 
 case order_CreateMsgPort:
     if (N >= 2)
-	a[0]_obj = (obj)sockCreateMsgPort((byte)a[1]_any, (const char *)a[2]_vec);
+        a[0]_obj = (obj)sockCreateMsgPort((byte)a[1]_any, (const char *)a[2]_vec);
     break;
 
 case order_FindMsgPort:
     if (N >= 3)
-	a[0]_obj = (obj)sockFindMsgPort((msgport)a[1]_obj, (byte)a[2]_any, (const char *)a[3]_vec);
+        a[0]_obj = (obj)sockFindMsgPort((msgport)a[1]_obj, (byte)a[2]_any, (const char *)a[3]_vec);
     break;
 
 
 case order_BgImageScreen:
     if (N >= 4)
-	Act(BgImage,(screen)a[1]_obj)((screen)a[1]_obj, (dat)a[2]_any, (dat)a[3]_any, (const tcell *)a[4]_vec);
+        Act(BgImage,(screen)a[1]_obj)((screen)a[1]_obj, (dat)a[2]_any, (dat)a[3]_any, (const tcell *)a[4]_vec);
     break;
 
 
 case order_PrevObj:
     if (N >= 1)
-	a[0]_obj = (obj)sockPrevObj((obj)a[1]_obj);
+        a[0]_obj = (obj)sockPrevObj((obj)a[1]_obj);
     break;
 
 case order_NextObj:
     if (N >= 1)
-	a[0]_obj = (obj)sockNextObj((obj)a[1]_obj);
+        a[0]_obj = (obj)sockNextObj((obj)a[1]_obj);
     break;
 
 case order_ParentObj:
     if (N >= 1)
-	a[0]_obj = (obj)sockParentObj((obj)a[1]_obj);
+        a[0]_obj = (obj)sockParentObj((obj)a[1]_obj);
     break;
 
 
 case order_FirstScreen:
     if (N >= 0)
-	a[0]_obj = (obj)sockFirstScreen();
+        a[0]_obj = (obj)sockFirstScreen();
     break;
 
 case order_FirstWidget:
     if (N >= 1)
-	a[0]_obj = (obj)sockFirstWidget((widget )a[1]_obj);
+        a[0]_obj = (obj)sockFirstWidget((widget )a[1]_obj);
     break;
 
 case order_FirstMsgPort:
     if (N >= 0)
-	a[0]_obj = (obj)sockFirstMsgPort();
+        a[0]_obj = (obj)sockFirstMsgPort();
     break;
 
 case order_FirstMenu:
     if (N >= 1)
-	a[0]_obj = (obj)sockFirstMenu((msgport)a[1]_obj);
+        a[0]_obj = (obj)sockFirstMenu((msgport)a[1]_obj);
     break;
 
 case order_FirstW:
     if (N >= 1)
-	a[0]_obj = (obj)sockFirstW((msgport)a[1]_obj);
+        a[0]_obj = (obj)sockFirstW((msgport)a[1]_obj);
     break;
 
 case order_FirstGroup:
     if (N >= 1)
-	a[0]_obj = (obj)sockFirstGroup((msgport)a[1]_obj);
+        a[0]_obj = (obj)sockFirstGroup((msgport)a[1]_obj);
     break;
 
 case order_FirstMutex:
     if (N >= 1)
-	a[0]_obj = (obj)sockFirstMutex((msgport)a[1]_obj);
+        a[0]_obj = (obj)sockFirstMutex((msgport)a[1]_obj);
     break;
 
 case order_FirstMenuItem:
     if (N >= 1)
-	a[0]_obj = (obj)sockFirstMenuItem((menu   )a[1]_obj);
+        a[0]_obj = (obj)sockFirstMenuItem((menu   )a[1]_obj);
     break;
 
 case order_FirstGadget:
     if (N >= 1)
-	a[0]_obj = (obj)sockFirstGadget((ggroup  )a[1]_obj);
+        a[0]_obj = (obj)sockFirstGadget((ggroup  )a[1]_obj);
     break;
 
 
 case order_GetDisplayWidth:
     if (N >= 0)
-	a[0]_any = (tany)sockGetDisplayWidth();
+        a[0]_any = (tany)sockGetDisplayWidth();
     break;
 
 case order_GetDisplayHeight:
     if (N >= 0)
-	a[0]_any = (tany)sockGetDisplayHeight();
+        a[0]_any = (tany)sockGetDisplayHeight();
     break;
 
 case order_GetAll:
     if (N >= 0)
-	a[0]_obj = (obj)sockGetAll();
+        a[0]_obj = (obj)sockGetAll();
     break;
 
 
 case order_SendToMsgPort:
     if (N >= 3)
-	a[0]_any = (tany)sockSendToMsgPort((msgport)a[1]_obj, (udat)a[2]_any, (const byte *)a[3]_vec);
+        a[0]_any = (tany)sockSendToMsgPort((msgport)a[1]_obj, (udat)a[2]_any, (const byte *)a[3]_vec);
     break;
 
 case order_BlindSendToMsgPort:
     if (N >= 3)
-	sockBlindSendToMsgPort((msgport)a[1]_obj, (udat)a[2]_any, (const byte *)a[3]_vec);
+        sockBlindSendToMsgPort((msgport)a[1]_obj, (udat)a[2]_any, (const byte *)a[3]_vec);
     break;
 
 
 case order_GetOwnerSelection:
     if (N >= 0)
-	a[0]_obj = (obj)sockGetOwnerSelection();
+        a[0]_obj = (obj)sockGetOwnerSelection();
     break;
 
 case order_SetOwnerSelection:
     if (N >= 2)
-	sockSetOwnerSelection((tany)a[1]_any, (tany)a[2]_any);
+        sockSetOwnerSelection((tany)a[1]_any, (tany)a[2]_any);
     break;
 
 case order_RequestSelection:
     if (N >= 2)
-	sockRequestSelection((obj)a[1]_obj, (uldat)a[2]_any);
+        sockRequestSelection((obj)a[1]_obj, (uldat)a[2]_any);
     break;
 
 case order_NotifySelection:
     if (N >= 6)
-	sockNotifySelection((obj)a[1]_obj, (uldat)a[2]_any, (uldat)a[3]_any, (const char *)a[4]_vec, (uldat)a[5]_any, (const char *)a[6]_vec);
+        sockNotifySelection((obj)a[1]_obj, (uldat)a[2]_any, (uldat)a[3]_any, (const char *)a[4]_vec, (uldat)a[5]_any, (const char *)a[6]_vec);
     break;
 
 
 case order_SetServerUid:
     if (N >= 2)
-	a[0]_any = (tany)sockSetServerUid((uldat)a[1]_any, (byte)a[2]_any);
+        a[0]_any = (tany)sockSetServerUid((uldat)a[1]_any, (byte)a[2]_any);
     break;
 
 
 case order_OpenExtension:
     if (N >= 2)
-	a[0]_obj = (obj)sockOpenExtension((byte)a[1]_any, (const char *)a[2]_vec);
+        a[0]_obj = (obj)sockOpenExtension((byte)a[1]_any, (const char *)a[2]_vec);
     break;
 
 case order_CallBExtension:
     if (N >= 4)
-	a[0]_any = (tany)sockCallBExtension((extension)a[1]_obj, (topaque)a[2]_any, (const byte *)a[3]_vec, (const byte *)a[4]_vec);
+        a[0]_any = (tany)sockCallBExtension((extension)a[1]_obj, (topaque)a[2]_any, (const byte *)a[3]_vec, (const byte *)a[4]_vec);
     break;
 
 case order_CloseExtension:
     if (N >= 1)
-	sockCloseExtension((extension)a[1]_obj);
+        sockCloseExtension((extension)a[1]_obj);
     break;
-
-
-

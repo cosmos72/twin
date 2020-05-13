@@ -39,7 +39,7 @@ define(`_ARGS', `ifelse($1, $2, `', `, ARG($1)`'_ARGS(incr($1), $2)')')
 define(`ARGS', `ifelse($1, 0, `', $1, 1, `ARG(1)', `ARG(1)`'_ARGS(2, incr($1))')')
 
 
-define(`PROTO', ``#'define NAME1($3,$4)(ARGS(eval(($#-5)/3)))		NAME($3,$4)(PREFIX($#)`'ARGS(eval(($#-5)/3)))')
+define(`PROTO', ``#'define NAME1($3,$4)(ARGS(eval(($#-5)/3)))                NAME($3,$4)(PREFIX($#)`'ARGS(eval(($#-5)/3)))')
 define(`PROTOFindFunction', defn(`PROTO'))
 define(`PROTOSyncSocket', defn(`PROTO'))
 
@@ -53,4 +53,3 @@ define(`c_doxygen', `dnl')
 divert
 
 include(`m4/Tw_sockproto.m4')
-

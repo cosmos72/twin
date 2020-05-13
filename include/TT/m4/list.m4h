@@ -48,16 +48,15 @@ TTtypealiaslist()
 
 define(`el', `
 /** type of `$1' */
-extern ttclass	TTClass_$1;')
+extern ttclass        TTClass_$1;')
 TTtypelist()
 undefine(`el')
 
 /** aliases */
 define(`el', `
-`#'define TTClass_$1	TTClass_$2')
+`#'define TTClass_$1        TTClass_$2')
 TTtypealiaslist()
 undefine(`el')
 
 
 #endif /* _TT_LIST_M4_H */
-

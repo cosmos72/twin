@@ -48,10 +48,7 @@ public:
     set<T>(value);
   }
 
-  Any(const Any &other) {
-    copy(other);
-  }
-
+  // Any(const Any &other) = default;
   // ~Any() = default;
 
   Any &operator=(const Any &other) {

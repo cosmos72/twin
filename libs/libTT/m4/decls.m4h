@@ -14,7 +14,7 @@ dnl Tell the user about this.
  * modify it under the terms of the GNU Library General Public
  * License as published by the Free Software Foundation; either
  * version 2 of the License, or (at your option) any later version.
- * 
+ *
  */
 
 /*
@@ -30,11 +30,11 @@ include(`m4/TTclasses.m4')
 
 /* many useful macros */
 
-#define TT_OFFSETOF(type,field)	((size_t)&((type)0)->field)
+#define TT_OFFSETOF(type,field)        ((size_t)&((type)0)->field)
 
 dnl /* #defines for objects hierarchy */
 dnl define(`extends',`
-dnl `#'define super_$2	$1')
+dnl `#'define super_$2        $1')
 dnl define(`field')
 dnl define(`el',`TTdef_$1($1)')
 dnl TTlist()
@@ -46,14 +46,14 @@ dnl define(`extends')
 
 /* forward declarations for objects structures */
 define(`el',`
-typedef struct s_$1 *	$1;')
+typedef struct s_$1 *        $1;')
 TTlist()
 undefine(`el')
 
 
 /* forward declarations for methods structures */
 define(`el',`
-typedef struct s_ttclass_$1 *	ttclass_$1;')
+typedef struct s_ttclass_$1 *        ttclass_$1;')
 TTlist()
 undefine(`el')
 
@@ -82,7 +82,7 @@ define(`extends')
 define(`extends',`TTdef_ttclass_$1($2)
     /* `extends' ttclass_$1 */
 ')
-define(`protected',`c_arg_decl($4,$5,`	$6')`'ifelse($3, -1, `', ` (*$1)	(ifelse($3, 0, void, `c_args_decl(NSHIFT(6,$@))'))');
+define(`protected',`c_arg_decl($4,$5,`        $6')`'ifelse($3, -1, `', ` (*$1)        (ifelse($3, 0, void, `c_args_decl(NSHIFT(6,$@))'))');
 ')
 define(`public',`protected($@)')
 define(`public_set',`protected($@)')
@@ -108,7 +108,7 @@ typedef struct s_tthw {
 
     void (*Close)(void);
     int (*ConnectionFd)(void);
-    
+
     ttuint (*GetErrno)(void);
     ttuint (*GetErrnoDetail)(void);
     TT_CONST byte *(*StrError)(ttuint E);
@@ -117,7 +117,7 @@ typedef struct s_tthw {
 } s_tthw;
 
 define(`el',`
-    s_ttclass_$1	class_$1;')
+    s_ttclass_$1        class_$1;')
 typedef struct s_ttclasses *ttclasses;
 typedef struct s_ttclasses {
 TTlist()
@@ -134,19 +134,19 @@ TTlist()
 
 /* client-visible global types */
 TTtypelist()
-#define TTClass_ttsbyte	TTClass_ttbyte
-#define TTClass_ttushort	TTClass_ttshort
-#define TTClass_ttuint	TTClass_ttint
+#define TTClass_ttsbyte        TTClass_ttbyte
+#define TTClass_ttushort        TTClass_ttshort
+#define TTClass_ttuint        TTClass_ttint
 
 undefine(`el')
 
 /* #defines for global methods structures */
-#define TClasses	(TTD.Classes)
+#define TClasses        (TTD.Classes)
 
-#define THW	(TTD.Class.HW)
+#define THW        (TTD.Class.HW)
 
 define(`el',`
-`#'define TClass_$1	(&TTD.Class.class_$1)')
+`#'define TClass_$1        (&TTD.Class.class_$1)')
 TTlist()
 undefine(`el')
 
@@ -154,7 +154,7 @@ undefine(`el')
 
 
 define(`el',`
-`#'define TClass_default_$1	(&TTD.Class_default.class_$1)')
+`#'define TClass_default_$1        (&TTD.Class_default.class_$1)')
 TTlist()
 undefine(`el')
 #define TClass_default(type) TT_CAT(TClass_default_,type)
@@ -197,7 +197,7 @@ define(`extends')
 /* prototypes for TTGet*_* and TTSet*_* methods */
 
 define(`getset_method', `
-c_arg_decl_decay(_R_ifaddress($5,$6)`'$5,$6)	TT`'Toupper2($1,$2)_`'this`'(c_args_decl_decay(NSHIFT(7,$@)));')
+c_arg_decl_decay(_R_ifaddress($5,$6)`'$5,$6)        TT`'Toupper2($1,$2)_`'this`'(c_args_decl_decay(NSHIFT(7,$@)));')
 
 
 define(`el', `
@@ -215,4 +215,3 @@ undefine(`el')
 
 
 #endif /* _TT_DECLSM4_H */
-

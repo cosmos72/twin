@@ -366,9 +366,9 @@ static byte sockStatMenuItem(menuitem x, tsfield TSF) {
   switch (TSF->hash) {
     /* missing: */
 #if 0
-	TWS_menuitem_FlagActive;/*TWS_row_Flags*/
-	TWS_menuitem_NameLen;	/*TWS_row_Len*/
-	TWS_menuitem_Name;	/*TWS_row_Text*/
+        TWS_menuitem_FlagActive;/*TWS_row_Flags*/
+        TWS_menuitem_NameLen;        /*TWS_row_Len*/
+        TWS_menuitem_Name;        /*TWS_row_Text*/
 #endif
     TWScase(menuitem, Window, obj);
     TWScase(menuitem, Left, dat);

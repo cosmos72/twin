@@ -14,7 +14,7 @@ dnl Tell the user about this.
  * modify it under the terms of the GNU Library General Public
  * License as published by the Free Software Foundation; either
  * version 2 of the License, or (at your option) any later version.
- * 
+ *
  */
 
 /*
@@ -30,13 +30,12 @@ define(`c_args_call', `ifelse($3, `', `', $6, `', `c_arg_call($@)', `c_arg_call(
 define(`extends')
 define(`final_var', `final($@)')
 define(`final',`ifelse(substr(`$1', 0, 6), `Create', `
-`#'define $1_$2		TTD.CREATE.$1_$2')')
+`#'define $1_$2                TTD.CREATE.$1_$2')')
 define(`protected',`ifelse(substr(`$1', 0, 6), `Create', `
-`#'define $1_$2		TClass_$2->$1')')
+`#'define $1_$2                TClass_$2->$1')')
 define(`el',`TTdef_ttclass_$1($1)')
 TTlist()
 undefine(`el')
 define(`protected')
 define(`final')
 define(`extends')
-

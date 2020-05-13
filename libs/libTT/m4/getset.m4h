@@ -14,7 +14,7 @@ dnl Tell the user about this.
  * modify it under the terms of the GNU Library General Public
  * License as published by the Free Software Foundation; either
  * version 2 of the License, or (at your option) any later version.
- * 
+ *
  */
 
 /*
@@ -36,7 +36,7 @@ divert
 
 define(`body_fn_get', `this a0;
     if ((a0 = ID2(this, o)))
-	return tt_obj_obj2id_ifnotvoid_ifdecay($6, a0->$2);
+        return tt_obj_obj2id_ifnotvoid_ifdecay($6, a0->$2);
     return c_arg_ret_decay($1)0;
 ')
 
@@ -81,22 +81,22 @@ define(`el', `
 `'define(`mtd_GetField_$1')`'dnl
 'static ttbyte getset_GetField_$1(TT_ARG_READ $1 o, ttopaque which, ttany *value) {
     if (which && which < this()_field_last && o && TTAssert(IS($1,o))) {
-	if (which >= this()_field_first) {
-	    switch (which) {
+        if (which >= this()_field_first) {
+            switch (which) {
 `'define(`getset_method', `ifelse($'`1, get, `
-	      case this()_'$'`2`:
-		*value = (ttany)opaque_ifaddress('$'`5`,'$'`6`)obj2id_ifnotvoid_ifdecay('$'`6`, o->'$'`2`);
-		break;`'dnl
+              case this()_'$'`2`:
+                *value = (ttany)opaque_ifaddress('$'`5`,'$'`6`)obj2id_ifnotvoid_ifdecay('$'`6`, o->'$'`2`);
+                break;`'dnl
 ', `')')`'dnl
 `'define(`field', `get_field($'`@)')`'dnl
 `'TTdef_$1($1,$1)
-	      default:
-		return TT_FALSE;
-	    }
-	    return TT_TRUE;
-	}
-	ifelse($1, ttobj, `', `else
-	    return getset_GetField_`'getset_super_mtd(GetField,m4_super_$1)((TT_ARG_READ getset_super_mtd(GetField,m4_super_$1))o, which, value);')
+              default:
+                return TT_FALSE;
+            }
+            return TT_TRUE;
+        }
+        ifelse($1, ttobj, `', `else
+            return getset_GetField_`'getset_super_mtd(GetField,m4_super_$1)((TT_ARG_READ getset_super_mtd(GetField,m4_super_$1))o, which, value);')
     }
     return TT_FALSE;
 })`'dnl
@@ -113,20 +113,20 @@ typedef ttbyte (*get_fn)(TT_ARG_READ ttobj, ttuint, ttany *);
 
 static ttbyte getset_GetField(TT_ARG_READ ttobj o, tt_obj which, ttany *value) {
     static get_fn fn [] = {
-	(get_fn)0,
+        (get_fn)0,
 define(`el', `
-	(get_fn)getset_GetField_`'getset_super_mtd(GetField,$1),')
+        (get_fn)getset_GetField_`'getset_super_mtd(GetField,$1),')
 TTlist()
 undefine(`el')
     };
     ttuint i;
     ttany dummy;
-    
+
     if (!value)
-	value = &dummy;
+        value = &dummy;
 
     if (o && (i = o->id >> TT_MAGIC_SHIFT) && i < sizeof(fn)/sizeof(fn[0]) && ID2(ttfield,which))
-	return fn[i](o, (ttuint)((ttopaque)which & TT_MAGIC_MASK), value);
+        return fn[i](o, (ttuint)((ttopaque)which & TT_MAGIC_MASK), value);
 
     return TT_FALSE;
 }
@@ -142,19 +142,19 @@ define(`el', `
 `'define(`mtd_SetField_$1')`'dnl
 'static ttbyte getset_SetField_$1($1 o, ttopaque which, ttany value) {
     if (which && which < this()_field_last && o && TTAssert(IS($1,o))) {
-	if (which >= this()_field_first) switch (which) {
+        if (which >= this()_field_first) switch (which) {
 `'define(`getset_method', `ifelse($'`1, set, `
-	  case this()_'$'`2`:
+          case this()_'$'`2`:
 `'ifelse('$'`11`, `', `', `
 `#'error internal error: unsupported attributes' '$'`11` in TTSet`'Toupper('$'`2`)_`'this`'())`'dnl
-	    return TTSet`'Toupper('$'`2`)_`'this`'((tt_obj)o->id, c_arg_val_decay('$'`11`, '$'`12`)value);', `')')`'dnl
+            return TTSet`'Toupper('$'`2`)_`'this`'((tt_obj)o->id, c_arg_val_decay('$'`11`, '$'`12`)value);', `')')`'dnl
 `'define(`field', `set_field($'`@)')`'dnl
 `'TTdef_$1($1,$1)
-	  default:
-	    return TT_FALSE;
-	}
-	ifelse($1, ttobj, `', `else
-	    return getset_SetField_`'getset_super_mtd(SetField,m4_super_$1)((getset_super_mtd(SetField,m4_super_$1))o, which, value);')
+          default:
+            return TT_FALSE;
+        }
+        ifelse($1, ttobj, `', `else
+            return getset_SetField_`'getset_super_mtd(SetField,m4_super_$1)((getset_super_mtd(SetField,m4_super_$1))o, which, value);')
     }
     return TT_FALSE;
 })`'dnl
@@ -171,21 +171,18 @@ typedef ttbyte (*set_fn)(TT_ARG_READ ttobj, ttuint, ttany);
 
 static ttbyte getset_SetField(TT_ARG_READ ttobj o, tt_obj which, TT_ARG_READ TT_ARG_ARRAY((1)) ttarg *value) {
     static set_fn fn [] = {
-	(set_fn)0,
+        (set_fn)0,
 define(`el', `
-	(set_fn)getset_SetField_`'getset_super_mtd(SetField,$1),')
+        (set_fn)getset_SetField_`'getset_super_mtd(SetField,$1),')
 TTlist()
 undefine(`el')
     };
     ttuint i;
-    
-    if (o && (i = o->id >> TT_MAGIC_SHIFT) && i < sizeof(fn)/sizeof(fn[0]) &&
-	IS(ttobject,o) && !(((ttobject)o)->oflags & ttobject_oflags_const) && ID2(ttfield,which)) {
 
-	return fn[i](o, (ttuint)((ttopaque)which & TT_MAGIC_MASK), value->value);
+    if (o && (i = o->id >> TT_MAGIC_SHIFT) && i < sizeof(fn)/sizeof(fn[0]) &&
+        IS(ttobject,o) && !(((ttobject)o)->oflags & ttobject_oflags_const) && ID2(ttfield,which)) {
+
+        return fn[i](o, (ttuint)((ttopaque)which & TT_MAGIC_MASK), value->value);
     }
     return TT_FALSE;
 }
-
-
-
