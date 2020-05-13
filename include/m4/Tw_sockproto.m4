@@ -28,7 +28,7 @@ define(`rem')
 rem([
 
  format of this file: each non-empty line is of the form
- 
+
  `PROTO'(<rettype>,<retflag>, <action>,<object>,<self>, <arg1type>,<arg1flag>,<arg1name> ...)
 
  the number of arguments the function wants must be deduced
@@ -51,14 +51,14 @@ rem([
 
  Function calls wait until server has processed the command and returned the result
  if their return value is not void.
- 
+
  <action> : the function name (Create, Map, Delete, ...)
  <object> : the object it acts upon (Gadget, Window, ...)
- 
+
  <self> : 0 if the server implementation does not need the Fn##object method pointer
 	: 1 if the function in the server needs the Fn##object method pointer
 	: 2 if the Fn##object method pointer is extracted from the first argument
-	
+
 
 ])
 
@@ -156,7 +156,7 @@ PROTO(void,v,   SetSelectedGadget,Group,2, group,x,g, gadget,x,G)
 
 PROTO(void,v,            Raise,Row,2, row,x,R)
 PROTO(void,v,            Lower,Row,2, row,x,R)
-PROTO(void,v,  RestackChildren,Row,0, obj,x,O, uldat,_,n, row,X(A(2)),children) 
+PROTO(void,v,  RestackChildren,Row,0, obj,x,O, uldat,_,n, row,X(A(2)),children)
 PROTO(void,v,CirculateChildren,Row,0, obj,x,O, byte,_,up_down)
 
 PROTO(row,x,         Create4Menu,Any,0,       obj,x,parent, window,x,W, udat,_,code, byte,_,flags, ldat,_,len, char,V(A(5)),text)
@@ -200,8 +200,3 @@ PROTO(void,v,   Notify,Selection,0, obj,x,requestor, uldat,_,reqprivate, uldat,_
       char,V(TW_MAX_MIMELEN),mime, uldat,_,len, char,V(A(5)),data)
 
 PROTO(byte,_, SetServer,Uid,0, uldat,_,uid, byte,_,privileges)
-
-PROTO(extension,x, Open,Extension,0, byte,_,namelen, char,V(A(1)),name)
-PROTO(tany,O,     CallB,Extension,0, extension,x,id, topaque,_,len, byte,V(A(2)),data, byte,V(2),return_type)
-PROTO(void,v,     Close,Extension,0, extension,x,id)
-

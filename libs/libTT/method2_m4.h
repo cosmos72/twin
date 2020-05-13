@@ -96,9 +96,9 @@ ttbyte TTCallY_ttmethod(tt_obj id, TT_ARG_WRITE TT_ARG_ARRAY((1)) ttarg * return
 
 
 
-
+ 
         /* ttobj methods */
-
+                        
       case ttmethod_GetField_ttobj:
         a0 = TTGetField_ttobj((tt_obj)(opaque)a[0], (tt_obj)(opaque)a[1], (TT_ARG_WRITE TT_ARG_ARRAY((1)) ttarg *)(opaque)a[2]);
         break;
@@ -108,9 +108,9 @@ ttbyte TTCallY_ttmethod(tt_obj id, TT_ARG_WRITE TT_ARG_ARRAY((1)) ttarg * return
       case ttmethod_ChangeField_ttobj:
         a0 = TTChangeField_ttobj((tt_obj)(opaque)a[0], (tt_obj)(opaque)a[1], (ttany)a[2], (ttany)a[3]);
         break;
-
+ 
         /* ttclass methods */
-
+    
       case ttmethod_GetName_ttclass:
         a0 = (opaque)TTGetName_ttclass((tt_obj)(opaque)a[0]);
         break;
@@ -132,9 +132,9 @@ ttbyte TTCallY_ttmethod(tt_obj id, TT_ARG_WRITE TT_ARG_ARRAY((1)) ttarg * return
       case ttmethod_IsPrimitiveType_ttclass:
         a0 = TTIsPrimitiveType_ttclass((ttopaque)a[0]);
         break;
-
+ 
         /* ttobject methods */
-
+                    
       case ttmethod_Ref_ttobject:
         TTRef_ttobject((tt_obj)(opaque)a[0]);
         break;
@@ -144,12 +144,12 @@ ttbyte TTCallY_ttmethod(tt_obj id, TT_ARG_WRITE TT_ARG_ARRAY((1)) ttarg * return
       case ttmethod_SetUserData_ttobject:
         a0 = TTSetUserData_ttobject((tt_obj)(opaque)a[0], (ttany)a[1]);
         break;
-
+ 
         /* ttvector methods */
-
+        
       case ttmethod_GetAt_ttvector:
         a0 = TTGetAt_ttvector((tt_obj)(opaque)a[0], (ttopaque)a[1]);
-        break;
+        break;    
       case ttmethod_SetAt_ttvector:
         a0 = TTSetAt_ttvector((tt_obj)(opaque)a[0], (ttopaque)a[1], (ttany)a[2]);
         break;
@@ -182,22 +182,22 @@ ttbyte TTCallY_ttmethod(tt_obj id, TT_ARG_WRITE TT_ARG_ARRAY((1)) ttarg * return
         break;
       case ttmethod_AddV_ttvector:
         a0 = TTAddV_ttvector((tt_obj)(opaque)a[0], (ttopaque)a[1], (ttopaque)a[2], (TT_ARG_ARRAY((1)) va_list *)(opaque)a[3]);
-        break;
+        break;    
       case ttmethod_AddY_ttvector:
         a0 = TTAddY_ttvector((tt_obj)(opaque)a[0], (ttopaque)a[1], (ttopaque)a[2], (TT_ARG_READ TT_ARG_ARRAY((_P(2))) ttany *)(opaque)a[3]);
-        break;
+        break;    
       case ttmethod_ContainsValue_ttvector:
         a0 = TTContainsValue_ttvector((tt_obj)(opaque)a[0], (ttopaque)a[1], (ttany)a[2]);
         break;
       case ttmethod_RemoveAt_ttvector:
         a0 = TTRemoveAt_ttvector((tt_obj)(opaque)a[0], (ttopaque)a[1]);
-        break;
+        break;    
       case ttmethod_RemoveRange_ttvector:
         a0 = TTRemoveRange_ttvector((tt_obj)(opaque)a[0], (ttopaque)a[1], (ttopaque)a[2]);
         break;
-
+ 
         /* ttfield methods */
-
+    
       case ttmethod_Get_ttfield:
         a0 = (opaque)TTGet_ttfield((TT_ARG_READ TT_ARG_ARRAY_Z ttbyte *)(opaque)a[0]);
         break;
@@ -219,9 +219,9 @@ ttbyte TTCallY_ttmethod(tt_obj id, TT_ARG_WRITE TT_ARG_ARRAY((1)) ttarg * return
       case ttmethod_GetEvcode_ttfield:
         a0 = TTGetEvcode_ttfield((TT_ARG_READ TT_ARG_ARRAY_Z ttbyte *)(opaque)a[0]);
         break;
-
+ 
         /* ttmethod methods */
-
+    
       case ttmethod_Get_ttmethod:
         a0 = (opaque)TTGet_ttmethod((TT_ARG_READ TT_ARG_ARRAY_Z ttbyte *)(opaque)a[0]);
         break;
@@ -246,18 +246,18 @@ ttbyte TTCallY_ttmethod(tt_obj id, TT_ARG_WRITE TT_ARG_ARRAY((1)) ttarg * return
       case ttmethod_CallY_ttmethod:
         a0 = TTCallY_ttmethod((tt_obj)(opaque)a[0], (TT_ARG_WRITE TT_ARG_ARRAY((1)) ttarg *)(opaque)a[1], (ttopaque)a[2], (TT_ARG_READ TT_ARG_ARRAY((_P(3))) ttany *)(opaque)a[3]);
         break;
-
+ 
         /* ttevent methods */
-
+    
       case ttmethod_Create_ttevent:
         a0 = (opaque)TTCreate_ttevent((ttuint)a[0], (ttuint)a[1], (ttuint)a[2]);
         break;
       case ttmethod_Fire_ttevent:
         TTFire_ttevent((tt_obj)(opaque)a[0], (tt_obj)(opaque)a[1]);
         break;
-
+ 
         /* tteventbig methods */
-
+    
       case ttmethod_Create8_tteventbig:
         a0 = (opaque)TTCreate8_tteventbig((ttuint)a[0], (ttuint)a[1], (ttuint)a[2], (ttshort)a[3], (ttshort)a[4], (ttshort)a[5], (ttshort)a[6], (ttany)a[7], (ttany)a[8], (ttopaque)a[9], (TT_ARG_READ TT_ARG_ARRAY((_P(10))) ttbyte *)(opaque)a[10]);
         break;
@@ -267,9 +267,9 @@ ttbyte TTCallY_ttmethod(tt_obj id, TT_ARG_WRITE TT_ARG_ARRAY((1)) ttarg * return
       case ttmethod_Create4s4_tteventbig:
         a0 = (opaque)TTCreate4s4_tteventbig((ttuint)a[0], (ttuint)a[1], (ttuint)a[2], (ttany)a[3], (ttany)a[4], (ttopaque)a[5], (TT_ARG_READ TT_ARG_ARRAY((_P(6))) ttbyte *)(opaque)a[6]);
         break;
-
+ 
         /* ttbitmask methods */
-
+    
       case ttmethod_Create_ttbitmask:
         a0 = (opaque)TTCreate_ttbitmask((ttany)a[0]);
         break;
@@ -324,9 +324,9 @@ ttbyte TTCallY_ttmethod(tt_obj id, TT_ARG_WRITE TT_ARG_ARRAY((1)) ttarg * return
       case ttmethod_CombineB_ttbitmask:
         a0 = TTCombineB_ttbitmask((tt_obj)(opaque)a[0], (tt_obj)(opaque)a[1], (ttuint)a[2]);
         break;
-
+ 
         /* tteventmask methods */
-
+    
       case ttmethod_CreateB_tteventmask:
         a0 = (opaque)TTCreateB_tteventmask((tt_obj)(opaque)a[0], (tt_obj)(opaque)a[1], (tt_obj)(opaque)a[2]);
         break;
@@ -345,12 +345,12 @@ ttbyte TTCallY_ttmethod(tt_obj id, TT_ARG_WRITE TT_ARG_ARRAY((1)) ttarg * return
       case ttmethod_SetTruthTable_tteventmask:
         a0 = TTSetTruthTable_tteventmask((tt_obj)(opaque)a[0], (ttuint)a[1]);
         break;
-
+ 
         /* ttcallback methods */
-
-
+        
+ 
         /* ttlistener methods */
-
+    
       case ttmethod_Create_ttlistener:
         a0 = (opaque)TTCreate_ttlistener((tt_obj)(opaque)a[0], (ttuint)a[1], (ttuint)a[2], (TT_ARG_READ ttlistener_fn)(opaque)a[3], (ttany)a[4]);
         break;
@@ -383,10 +383,10 @@ ttbyte TTCallY_ttmethod(tt_obj id, TT_ARG_WRITE TT_ARG_ARRAY((1)) ttarg * return
         break;
       case ttmethod_CreateExpose_ttlistener:
         a0 = (opaque)TTCreateExpose_ttlistener((tt_obj)(opaque)a[0], (ttuint)a[1], (TT_ARG_READ ttlistener_fn)(opaque)a[2]);
-        break;
+        break;    
       case ttmethod_AddTo_ttlistener:
         TTAddTo_ttlistener((tt_obj)(opaque)a[0], (tt_obj)(opaque)a[1]);
-        break;
+        break;    
       case ttmethod_Remove_ttlistener:
         TTRemove_ttlistener((tt_obj)(opaque)a[0]);
         break;
@@ -396,9 +396,9 @@ ttbyte TTCallY_ttmethod(tt_obj id, TT_ARG_WRITE TT_ARG_ARRAY((1)) ttarg * return
       case ttmethod_SetEventMask_ttlistener:
         a0 = TTSetEventMask_ttlistener((tt_obj)(opaque)a[0], (tt_obj)(opaque)a[1]);
         break;
-
+ 
         /* tttimer methods */
-
+    
       case ttmethod_CreateR_tttimer:
         a0 = (opaque)TTCreateR_tttimer((tt_obj)(opaque)a[0], (ttuint)a[1], (TT_ARG_READ ttlistener_fn)(opaque)a[2], (ttopaque)a[3], (ttopaque)a[4], (tt_obj)(opaque)a[5], (ttany)a[6], (ttany)a[7]);
         break;
@@ -407,16 +407,16 @@ ttbyte TTCallY_ttmethod(tt_obj id, TT_ARG_WRITE TT_ARG_ARRAY((1)) ttarg * return
         break;
       case ttmethod_SetDelay_tttimer:
         TTSetDelay_tttimer((tt_obj)(opaque)a[0], (ttany)a[1], (ttany)a[2]);
-        break;
+        break;    
       case ttmethod_SetEnabled_tttimer:
         TTSetEnabled_tttimer((tt_obj)(opaque)a[0], (ttbyte)a[1]);
-        break;
+        break;    
       case ttmethod_IsEnabled_tttimer:
         a0 = TTIsEnabled_tttimer((tt_obj)(opaque)a[0]);
         break;
-
+ 
         /* ttcomponent methods */
-
+    
       case ttmethod_AddListener_ttcomponent:
         TTAddListener_ttcomponent((tt_obj)(opaque)a[0], (tt_obj)(opaque)a[1]);
         break;
@@ -435,36 +435,36 @@ ttbyte TTCallY_ttmethod(tt_obj id, TT_ARG_WRITE TT_ARG_ARRAY((1)) ttarg * return
       case ttmethod_GetData_ttcomponent:
         a0 = (opaque)TTGetData_ttcomponent((tt_obj)(opaque)a[0], (TT_ARG_READ TT_ARG_ARRAY_Z ttbyte *)(opaque)a[1]);
         break;
-
+ 
         /* ttdata methods */
-
+            
       case ttmethod_SetData_ttdata:
         a0 = TTSetData_ttdata((tt_obj)(opaque)a[0], (ttany)a[1]);
         break;
-
+ 
         /* ttvisible methods */
-
+        
       case ttmethod_AddTo_ttvisible:
         TTAddTo_ttvisible((tt_obj)(opaque)a[0], (tt_obj)(opaque)a[1], (ttany)a[2]);
-        break;
+        break;    
       case ttmethod_Validate_ttvisible:
         TTValidate_ttvisible((tt_obj)(opaque)a[0]);
-        break;
+        break;    
       case ttmethod_Remove_ttvisible:
         TTRemove_ttvisible((tt_obj)(opaque)a[0]);
-        break;
+        break;    
       case ttmethod_Invalidate_ttvisible:
         TTInvalidate_ttvisible((tt_obj)(opaque)a[0]);
-        break;
+        break;    
       case ttmethod_SetVisible_ttvisible:
         TTSetVisible_ttvisible((tt_obj)(opaque)a[0], (ttbyte)a[1]);
-        break;
+        break;    
       case ttmethod_SetTheme_ttvisible:
         a0 = TTSetTheme_ttvisible((tt_obj)(opaque)a[0], (tt_obj)(opaque)a[1]);
-        break;
+        break;    
       case ttmethod_Draw_ttvisible:
         TTDraw_ttvisible((tt_obj)(opaque)a[0], (ttshort)a[1], (ttshort)a[2], (ttshort)a[3], (ttshort)a[4], (ttshort)a[5], (TT_ARG_READ TT_ARG_ARRAY((_P(5),*,_P(6))) ttbyte *)(opaque)a[6], (TT_ARG_READ TT_ARG_ARRAY((_P(5),*,_P(6))) ttfont *)(opaque)a[7], (TT_ARG_READ TT_ARG_ARRAY((_P(5),*,_P(6))) ttattr *)(opaque)a[8]);
-        break;
+        break;    
       case ttmethod_BuiltinRepaint_ttvisible:
         TTBuiltinRepaint_ttvisible((tt_obj)(opaque)a[0], (ttshort)a[1], (ttshort)a[2], (ttshort)a[3], (ttshort)a[4]);
         break;
@@ -478,57 +478,57 @@ ttbyte TTCallY_ttmethod(tt_obj id, TT_ARG_WRITE TT_ARG_ARRAY((1)) ttarg * return
       case ttmethod_Add_ttvisible:
         TTAdd_ttvisible((tt_obj)(opaque)a[0], (tt_obj)(opaque)a[1], (ttany)a[2]);
         break;
-
+ 
         /* ttlayout methods */
-
-
+            
+ 
         /* ttboxlayout methods */
-
+    
       case ttmethod_Create_ttboxlayout:
         a0 = (opaque)TTCreate_ttboxlayout((ttany)a[0]);
         break;
-
+ 
         /* ttborderlayout methods */
-
-
+    
+ 
         /* ttnative methods */
-
+        
       case ttmethod_GetRoot_ttnative:
         a0 = (opaque)TTGetRoot_ttnative();
-        break;
+        break;    
       case ttmethod_GetW_ttnative:
         a0 = TTGetW_ttnative((tt_obj)(opaque)a[0]);
-        break;
+        break;    
       case ttmethod_GetH_ttnative:
         a0 = TTGetH_ttnative((tt_obj)(opaque)a[0]);
         break;
       case ttmethod_Create_ttnative:
         a0 = (opaque)TTCreate_ttnative((ttany)a[0]);
         break;
-
+ 
         /* ttwidget methods */
-
+        
       case ttmethod_SetLayout_ttwidget:
         TTSetLayout_ttwidget((tt_obj)(opaque)a[0], (tt_obj)(opaque)a[1]);
-        break;
+        break;    
       case ttmethod_SetXY_ttwidget:
         a0 = TTSetXY_ttwidget((tt_obj)(opaque)a[0], (ttshort)a[1], (ttshort)a[2]);
-        break;
+        break;    
       case ttmethod_SetWH_ttwidget:
         a0 = TTSetWH_ttwidget((tt_obj)(opaque)a[0], (ttshort)a[1], (ttshort)a[2]);
-        break;
+        break;    
       case ttmethod_SetXl_ttwidget:
         a0 = TTSetXl_ttwidget((tt_obj)(opaque)a[0], (ttint)a[1]);
-        break;
+        break;    
       case ttmethod_SetYl_ttwidget:
         a0 = TTSetYl_ttwidget((tt_obj)(opaque)a[0], (ttint)a[1]);
-        break;
+        break;    
       case ttmethod_SetWl_ttwidget:
         a0 = TTSetWl_ttwidget((tt_obj)(opaque)a[0], (ttint)a[1]);
-        break;
+        break;    
       case ttmethod_SetHl_ttwidget:
         a0 = TTSetHl_ttwidget((tt_obj)(opaque)a[0], (ttint)a[1]);
-        break;
+        break;    
       case ttmethod_SetTooltip_ttwidget:
         a0 = TTSetTooltip_ttwidget((tt_obj)(opaque)a[0], (tt_obj)(opaque)a[1]);
         break;
@@ -553,9 +553,9 @@ ttbyte TTCallY_ttmethod(tt_obj id, TT_ARG_WRITE TT_ARG_ARRAY((1)) ttarg * return
       case ttmethod_SetH_ttwidget:
         a0 = TTSetH_ttwidget((tt_obj)(opaque)a[0], (ttshort)a[1]);
         break;
-
+ 
         /* ttlabel methods */
-
+        
       case ttmethod_SetFontD_ttlabel:
         TTSetFontD_ttlabel((tt_obj)(opaque)a[0], (ttopaque)a[1], (TT_ARG_DIE TT_ARG_ARRAY((_P(2))) ttfont *)(opaque)a[2]);
         break;
@@ -568,27 +568,27 @@ ttbyte TTCallY_ttmethod(tt_obj id, TT_ARG_WRITE TT_ARG_ARRAY((1)) ttarg * return
       case ttmethod_Create_ttlabel:
         a0 = (opaque)TTCreate_ttlabel((TT_ARG_READ TT_ARG_ARRAY_Z ttbyte *)(opaque)a[0]);
         break;
-
+ 
         /* tttooltip methods */
-
+        
       case ttmethod_SetWidget_tttooltip:
         a0 = TTSetWidget_tttooltip((tt_obj)(opaque)a[0], (tt_obj)(opaque)a[1]);
         break;
-
+ 
         /* ttbuttongroup methods */
-
+        
       case ttmethod_Add_ttbuttongroup:
         TTAdd_ttbuttongroup((tt_obj)(opaque)a[0], (tt_obj)(opaque)a[1]);
-        break;
+        break;    
       case ttmethod_Remove_ttbuttongroup:
         TTRemove_ttbuttongroup((tt_obj)(opaque)a[0], (tt_obj)(opaque)a[1]);
-        break;
+        break;    
       case ttmethod_SetChecked_ttbuttongroup:
         TTSetChecked_ttbuttongroup((tt_obj)(opaque)a[0], (tt_obj)(opaque)a[1]);
         break;
-
+ 
         /* ttanybutton methods */
-
+            
       case ttmethod_SetAttrD_ttanybutton:
         TTSetAttrD_ttanybutton((tt_obj)(opaque)a[0], (ttshort)a[1], (ttshort)a[2], (ttshort)a[3], (TT_ARG_DIE TT_ARG_ARRAY((_P(3),*,_P(4))) ttattr *)(opaque)a[4]);
         break;
@@ -604,9 +604,9 @@ ttbyte TTCallY_ttmethod(tt_obj id, TT_ARG_WRITE TT_ARG_ARRAY((1)) ttarg * return
       case ttmethod_Create_ttanybutton:
         a0 = (opaque)TTCreate_ttanybutton((ttshort)a[0], (ttshort)a[1], (ttshort)a[2], (TT_ARG_READ TT_ARG_ARRAY((_P(2),*,_P(3))) ttbyte *)(opaque)a[3]);
         break;
-
+ 
         /* ttbutton methods */
-
+        
       case ttmethod_SetPressed_ttbutton:
         TTSetPressed_ttbutton((tt_obj)(opaque)a[0], (ttbyte)a[1]);
         break;
@@ -616,9 +616,9 @@ ttbyte TTCallY_ttmethod(tt_obj id, TT_ARG_WRITE TT_ARG_ARRAY((1)) ttarg * return
       case ttmethod_Create_ttbutton:
         a0 = (opaque)TTCreate_ttbutton((ttshort)a[0], (ttshort)a[1], (ttshort)a[2], (TT_ARG_READ TT_ARG_ARRAY((_P(2),*,_P(3))) ttbyte *)(opaque)a[3]);
         break;
-
+ 
         /* ttcheckbutton methods */
-
+        
       case ttmethod_SetChecked_ttcheckbutton:
         TTSetChecked_ttcheckbutton((tt_obj)(opaque)a[0], (ttbyte)a[1]);
         break;
@@ -628,9 +628,9 @@ ttbyte TTCallY_ttmethod(tt_obj id, TT_ARG_WRITE TT_ARG_ARRAY((1)) ttarg * return
       case ttmethod_Create_ttcheckbutton:
         a0 = (opaque)TTCreate_ttcheckbutton((ttshort)a[0], (ttshort)a[1], (ttshort)a[2], (TT_ARG_READ TT_ARG_ARRAY((_P(2),*,_P(3))) ttbyte *)(opaque)a[3]);
         break;
-
+ 
         /* ttradiobutton methods */
-
+    
       case ttmethod_AddToGroup_ttradiobutton:
         TTAddToGroup_ttradiobutton((tt_obj)(opaque)a[0], (tt_obj)(opaque)a[1]);
         break;
@@ -640,123 +640,123 @@ ttbyte TTCallY_ttmethod(tt_obj id, TT_ARG_WRITE TT_ARG_ARRAY((1)) ttarg * return
       case ttmethod_Create_ttradiobutton:
         a0 = (opaque)TTCreate_ttradiobutton((ttshort)a[0], (ttshort)a[1], (ttshort)a[2], (TT_ARG_READ TT_ARG_ARRAY((_P(2),*,_P(3))) ttbyte *)(opaque)a[3]);
         break;
-
+ 
         /* ttanyscroll methods */
-
+                
       case ttmethod_SetOrientation_ttanyscroll:
         a0 = TTSetOrientation_ttanyscroll((tt_obj)(opaque)a[0], (ttbyte)a[1]);
-        break;
+        break;    
       case ttmethod_SetSize_ttanyscroll:
         a0 = TTSetSize_ttanyscroll((tt_obj)(opaque)a[0], (ttint)a[1]);
-        break;
+        break;    
       case ttmethod_SetRealSize_ttanyscroll:
         a0 = TTSetRealSize_ttanyscroll((tt_obj)(opaque)a[0], (ttint)a[1]);
-        break;
+        break;    
       case ttmethod_SetViewSize_ttanyscroll:
         a0 = TTSetViewSize_ttanyscroll((tt_obj)(opaque)a[0], (ttint)a[1]);
-        break;
+        break;    
       case ttmethod_SetPosition_ttanyscroll:
         a0 = TTSetPosition_ttanyscroll((tt_obj)(opaque)a[0], (ttint)a[1]);
         break;
-
+ 
         /* ttscrollbar methods */
-
+    
       case ttmethod_Create1_ttscrollbar:
         a0 = (opaque)TTCreate1_ttscrollbar((ttbyte)a[0]);
         break;
       case ttmethod_Create4_ttscrollbar:
         a0 = (opaque)TTCreate4_ttscrollbar((ttbyte)a[0], (ttint)a[1], (ttint)a[2], (ttint)a[3]);
         break;
-
+ 
         /* ttslider methods */
-
+        
       case ttmethod_SetSlideMin_ttslider:
         a0 = TTSetSlideMin_ttslider((tt_obj)(opaque)a[0], (ttint)a[1]);
-        break;
+        break;    
       case ttmethod_SetSlideMax_ttslider:
         a0 = TTSetSlideMax_ttslider((tt_obj)(opaque)a[0], (ttint)a[1]);
-        break;
+        break;    
       case ttmethod_SetSlideValue_ttslider:
         a0 = TTSetSlideValue_ttslider((tt_obj)(opaque)a[0], (ttint)a[1]);
         break;
       case ttmethod_Create_ttslider:
         a0 = (opaque)TTCreate_ttslider((ttbyte)a[0], (ttint)a[1]);
         break;
-
+ 
         /* ttprogressbar methods */
-
+    
       case ttmethod_Create_ttprogressbar:
         a0 = (opaque)TTCreate_ttprogressbar((ttbyte)a[0]);
         break;
-
+ 
         /* ttscrollpane methods */
-
+    
       case ttmethod_Create_ttscrollpane:
         a0 = (opaque)TTCreate_ttscrollpane((ttshort)a[0], (ttshort)a[1]);
-        break;
+        break;    
       case ttmethod_SetBarX_ttscrollpane:
         a0 = TTSetBarX_ttscrollpane((tt_obj)(opaque)a[0], (tt_obj)(opaque)a[1]);
-        break;
+        break;    
       case ttmethod_SetBarY_ttscrollpane:
         a0 = TTSetBarY_ttscrollpane((tt_obj)(opaque)a[0], (tt_obj)(opaque)a[1]);
         break;
-
+ 
         /* ttwindow methods */
-
+        
       case ttmethod_SetTitle_ttwindow:
         a0 = TTSetTitle_ttwindow((tt_obj)(opaque)a[0], (TT_ARG_READ TT_ARG_ARRAY_Z ttbyte *)(opaque)a[1]);
         break;
-
+ 
         /* ttframe methods */
-
+        
       case ttmethod_SetMenubar_ttframe:
         a0 = TTSetMenubar_ttframe((tt_obj)(opaque)a[0], (tt_obj)(opaque)a[1]);
         break;
       case ttmethod_Create_ttframe:
         a0 = (opaque)TTCreate_ttframe((TT_ARG_READ TT_ARG_ARRAY_Z ttbyte *)(opaque)a[0]);
         break;
-
+ 
         /* ttscroller methods */
-
+    
       case ttmethod_Create_ttscroller:
         a0 = (opaque)TTCreate_ttscroller((ttshort)a[0], (ttshort)a[1]);
         break;
-
+ 
         /* ttmenuitem methods */
-
-
+    
+ 
         /* ttcheckmenuitem methods */
-
-
+    
+ 
         /* ttradiomenuitem methods */
-
-
+    
+ 
         /* ttmenu methods */
-
-
+    
+ 
         /* ttmenubar methods */
-
+    
       case ttmethod_GetDefault_ttmenubar:
         a0 = (opaque)TTGetDefault_ttmenubar();
         break;
-
+ 
         /* ttanytext methods */
-
-
+    
+ 
         /* tttextfield methods */
-
-
+    
+ 
         /* tttextarea methods */
-
-
+    
+ 
         /* tttheme methods */
-
+    
       case ttmethod_GetDefault_tttheme:
         a0 = (opaque)TTGetDefault_tttheme();
         break;
-
+ 
         /* ttapplication methods */
-
+    
       case ttmethod_Create_ttapplication:
         a0 = (opaque)TTCreate_ttapplication((TT_ARG_READ TT_ARG_ARRAY_Z ttbyte *)(opaque)a[0]);
         break;

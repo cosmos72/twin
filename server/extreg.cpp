@@ -22,9 +22,7 @@ exts Exts = {{NULL},
              {
                  (void (*)(msgport, msg))NoOp,
                  AlwaysTrue,
-                 (byte(*)(topaque *, const byte **, topaque *, tsfield))AlwaysFalse,
-                 (void (*)(uldat, topaque, tsfield))NoOp,
-                 (tany(*)(uldat, ...))AlwaysNull,
+                 (void (*)(uldat, Span<s_tsfield>))NoOp,
              },
              {FakeOpenTerm}};
 static exts OrigExts = {{NULL},
@@ -32,9 +30,7 @@ static exts OrigExts = {{NULL},
                         {
                             (void (*)(msgport, msg))NoOp,
                             AlwaysTrue,
-                            (byte(*)(topaque *, const byte **, topaque *, tsfield))AlwaysFalse,
-                            (void (*)(uldat, topaque, tsfield))NoOp,
-                            (tany(*)(uldat, ...))AlwaysNull,
+                            (void (*)(uldat, Span<s_tsfield>))NoOp,
                         },
                         {FakeOpenTerm}};
 

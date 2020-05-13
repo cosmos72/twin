@@ -171,6 +171,3 @@ void  Tw_NotifySelection(tdisplay TwD, tobj requestor, uldat reqprivate, uldat m
 
 byte  Tw_SetServerUid(tdisplay TwD, uldat uid, byte privileges);
 
-textension  Tw_OpenExtension(tdisplay TwD, byte namelen, TW_CONST char *name);
-tany  Tw_CallBExtension(tdisplay TwD, textension id, topaque len, TW_CONST byte *data, TW_CONST byte *return_type);
-void  Tw_CloseExtension(tdisplay TwD, textension id);

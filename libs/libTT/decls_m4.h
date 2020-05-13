@@ -62,104 +62,104 @@
 
 /* forward declarations for objects structures */
 
-
-typedef struct s_ttobj *        ttobj;
-typedef struct s_ttclass *        ttclass;
-typedef struct s_ttobject *        ttobject;
-typedef struct s_ttvector *        ttvector;
-typedef struct s_ttfield *        ttfield;
-typedef struct s_ttmethod *        ttmethod;
-typedef struct s_ttevent *        ttevent;
-typedef struct s_tteventbig *        tteventbig;
-typedef struct s_ttbitmask *        ttbitmask;
-typedef struct s_tteventmask *        tteventmask;
-typedef struct s_ttcallback *        ttcallback;
-typedef struct s_ttlistener *        ttlistener;
-typedef struct s_tttimer *        tttimer;
-typedef struct s_ttcomponent *        ttcomponent;
-typedef struct s_ttdata *        ttdata;
-typedef struct s_ttvisible *        ttvisible;
-typedef struct s_ttlayout *        ttlayout;
-typedef struct s_ttboxlayout *        ttboxlayout;
-typedef struct s_ttborderlayout *        ttborderlayout;
-typedef struct s_ttnative *        ttnative;
-typedef struct s_ttwidget *        ttwidget;
-typedef struct s_ttlabel *        ttlabel;
-typedef struct s_tttooltip *        tttooltip;
-typedef struct s_ttbuttongroup *        ttbuttongroup;
-typedef struct s_ttanybutton *        ttanybutton;
-typedef struct s_ttbutton *        ttbutton;
-typedef struct s_ttcheckbutton *        ttcheckbutton;
-typedef struct s_ttradiobutton *        ttradiobutton;
-typedef struct s_ttanyscroll *        ttanyscroll;
-typedef struct s_ttscrollbar *        ttscrollbar;
-typedef struct s_ttslider *        ttslider;
-typedef struct s_ttprogressbar *        ttprogressbar;
-typedef struct s_ttscrollpane *        ttscrollpane;
-typedef struct s_ttwindow *        ttwindow;
-typedef struct s_ttframe *        ttframe;
-typedef struct s_ttscroller *        ttscroller;
-typedef struct s_ttmenuitem *        ttmenuitem;
-typedef struct s_ttcheckmenuitem *        ttcheckmenuitem;
-typedef struct s_ttradiomenuitem *        ttradiomenuitem;
-typedef struct s_ttmenu *        ttmenu;
-typedef struct s_ttmenubar *        ttmenubar;
-typedef struct s_ttanytext *        ttanytext;
-typedef struct s_tttextfield *        tttextfield;
-typedef struct s_tttextarea *        tttextarea;
-typedef struct s_tttheme *        tttheme;
+ 
+typedef struct s_ttobj *        ttobj; 
+typedef struct s_ttclass *        ttclass; 
+typedef struct s_ttobject *        ttobject; 
+typedef struct s_ttvector *        ttvector; 
+typedef struct s_ttfield *        ttfield; 
+typedef struct s_ttmethod *        ttmethod; 
+typedef struct s_ttevent *        ttevent; 
+typedef struct s_tteventbig *        tteventbig; 
+typedef struct s_ttbitmask *        ttbitmask; 
+typedef struct s_tteventmask *        tteventmask; 
+typedef struct s_ttcallback *        ttcallback; 
+typedef struct s_ttlistener *        ttlistener; 
+typedef struct s_tttimer *        tttimer; 
+typedef struct s_ttcomponent *        ttcomponent; 
+typedef struct s_ttdata *        ttdata; 
+typedef struct s_ttvisible *        ttvisible; 
+typedef struct s_ttlayout *        ttlayout; 
+typedef struct s_ttboxlayout *        ttboxlayout; 
+typedef struct s_ttborderlayout *        ttborderlayout; 
+typedef struct s_ttnative *        ttnative; 
+typedef struct s_ttwidget *        ttwidget; 
+typedef struct s_ttlabel *        ttlabel; 
+typedef struct s_tttooltip *        tttooltip; 
+typedef struct s_ttbuttongroup *        ttbuttongroup; 
+typedef struct s_ttanybutton *        ttanybutton; 
+typedef struct s_ttbutton *        ttbutton; 
+typedef struct s_ttcheckbutton *        ttcheckbutton; 
+typedef struct s_ttradiobutton *        ttradiobutton; 
+typedef struct s_ttanyscroll *        ttanyscroll; 
+typedef struct s_ttscrollbar *        ttscrollbar; 
+typedef struct s_ttslider *        ttslider; 
+typedef struct s_ttprogressbar *        ttprogressbar; 
+typedef struct s_ttscrollpane *        ttscrollpane; 
+typedef struct s_ttwindow *        ttwindow; 
+typedef struct s_ttframe *        ttframe; 
+typedef struct s_ttscroller *        ttscroller; 
+typedef struct s_ttmenuitem *        ttmenuitem; 
+typedef struct s_ttcheckmenuitem *        ttcheckmenuitem; 
+typedef struct s_ttradiomenuitem *        ttradiomenuitem; 
+typedef struct s_ttmenu *        ttmenu; 
+typedef struct s_ttmenubar *        ttmenubar; 
+typedef struct s_ttanytext *        ttanytext; 
+typedef struct s_tttextfield *        tttextfield; 
+typedef struct s_tttextarea *        tttextarea; 
+typedef struct s_tttheme *        tttheme; 
 typedef struct s_ttapplication *        ttapplication;
 
 
 
 /* forward declarations for methods structures */
 
-
-typedef struct s_ttclass_ttobj *        ttclass_ttobj;
-typedef struct s_ttclass_ttclass *        ttclass_ttclass;
-typedef struct s_ttclass_ttobject *        ttclass_ttobject;
-typedef struct s_ttclass_ttvector *        ttclass_ttvector;
-typedef struct s_ttclass_ttfield *        ttclass_ttfield;
-typedef struct s_ttclass_ttmethod *        ttclass_ttmethod;
-typedef struct s_ttclass_ttevent *        ttclass_ttevent;
-typedef struct s_ttclass_tteventbig *        ttclass_tteventbig;
-typedef struct s_ttclass_ttbitmask *        ttclass_ttbitmask;
-typedef struct s_ttclass_tteventmask *        ttclass_tteventmask;
-typedef struct s_ttclass_ttcallback *        ttclass_ttcallback;
-typedef struct s_ttclass_ttlistener *        ttclass_ttlistener;
-typedef struct s_ttclass_tttimer *        ttclass_tttimer;
-typedef struct s_ttclass_ttcomponent *        ttclass_ttcomponent;
-typedef struct s_ttclass_ttdata *        ttclass_ttdata;
-typedef struct s_ttclass_ttvisible *        ttclass_ttvisible;
-typedef struct s_ttclass_ttlayout *        ttclass_ttlayout;
-typedef struct s_ttclass_ttboxlayout *        ttclass_ttboxlayout;
-typedef struct s_ttclass_ttborderlayout *        ttclass_ttborderlayout;
-typedef struct s_ttclass_ttnative *        ttclass_ttnative;
-typedef struct s_ttclass_ttwidget *        ttclass_ttwidget;
-typedef struct s_ttclass_ttlabel *        ttclass_ttlabel;
-typedef struct s_ttclass_tttooltip *        ttclass_tttooltip;
-typedef struct s_ttclass_ttbuttongroup *        ttclass_ttbuttongroup;
-typedef struct s_ttclass_ttanybutton *        ttclass_ttanybutton;
-typedef struct s_ttclass_ttbutton *        ttclass_ttbutton;
-typedef struct s_ttclass_ttcheckbutton *        ttclass_ttcheckbutton;
-typedef struct s_ttclass_ttradiobutton *        ttclass_ttradiobutton;
-typedef struct s_ttclass_ttanyscroll *        ttclass_ttanyscroll;
-typedef struct s_ttclass_ttscrollbar *        ttclass_ttscrollbar;
-typedef struct s_ttclass_ttslider *        ttclass_ttslider;
-typedef struct s_ttclass_ttprogressbar *        ttclass_ttprogressbar;
-typedef struct s_ttclass_ttscrollpane *        ttclass_ttscrollpane;
-typedef struct s_ttclass_ttwindow *        ttclass_ttwindow;
-typedef struct s_ttclass_ttframe *        ttclass_ttframe;
-typedef struct s_ttclass_ttscroller *        ttclass_ttscroller;
-typedef struct s_ttclass_ttmenuitem *        ttclass_ttmenuitem;
-typedef struct s_ttclass_ttcheckmenuitem *        ttclass_ttcheckmenuitem;
-typedef struct s_ttclass_ttradiomenuitem *        ttclass_ttradiomenuitem;
-typedef struct s_ttclass_ttmenu *        ttclass_ttmenu;
-typedef struct s_ttclass_ttmenubar *        ttclass_ttmenubar;
-typedef struct s_ttclass_ttanytext *        ttclass_ttanytext;
-typedef struct s_ttclass_tttextfield *        ttclass_tttextfield;
-typedef struct s_ttclass_tttextarea *        ttclass_tttextarea;
-typedef struct s_ttclass_tttheme *        ttclass_tttheme;
+ 
+typedef struct s_ttclass_ttobj *        ttclass_ttobj; 
+typedef struct s_ttclass_ttclass *        ttclass_ttclass; 
+typedef struct s_ttclass_ttobject *        ttclass_ttobject; 
+typedef struct s_ttclass_ttvector *        ttclass_ttvector; 
+typedef struct s_ttclass_ttfield *        ttclass_ttfield; 
+typedef struct s_ttclass_ttmethod *        ttclass_ttmethod; 
+typedef struct s_ttclass_ttevent *        ttclass_ttevent; 
+typedef struct s_ttclass_tteventbig *        ttclass_tteventbig; 
+typedef struct s_ttclass_ttbitmask *        ttclass_ttbitmask; 
+typedef struct s_ttclass_tteventmask *        ttclass_tteventmask; 
+typedef struct s_ttclass_ttcallback *        ttclass_ttcallback; 
+typedef struct s_ttclass_ttlistener *        ttclass_ttlistener; 
+typedef struct s_ttclass_tttimer *        ttclass_tttimer; 
+typedef struct s_ttclass_ttcomponent *        ttclass_ttcomponent; 
+typedef struct s_ttclass_ttdata *        ttclass_ttdata; 
+typedef struct s_ttclass_ttvisible *        ttclass_ttvisible; 
+typedef struct s_ttclass_ttlayout *        ttclass_ttlayout; 
+typedef struct s_ttclass_ttboxlayout *        ttclass_ttboxlayout; 
+typedef struct s_ttclass_ttborderlayout *        ttclass_ttborderlayout; 
+typedef struct s_ttclass_ttnative *        ttclass_ttnative; 
+typedef struct s_ttclass_ttwidget *        ttclass_ttwidget; 
+typedef struct s_ttclass_ttlabel *        ttclass_ttlabel; 
+typedef struct s_ttclass_tttooltip *        ttclass_tttooltip; 
+typedef struct s_ttclass_ttbuttongroup *        ttclass_ttbuttongroup; 
+typedef struct s_ttclass_ttanybutton *        ttclass_ttanybutton; 
+typedef struct s_ttclass_ttbutton *        ttclass_ttbutton; 
+typedef struct s_ttclass_ttcheckbutton *        ttclass_ttcheckbutton; 
+typedef struct s_ttclass_ttradiobutton *        ttclass_ttradiobutton; 
+typedef struct s_ttclass_ttanyscroll *        ttclass_ttanyscroll; 
+typedef struct s_ttclass_ttscrollbar *        ttclass_ttscrollbar; 
+typedef struct s_ttclass_ttslider *        ttclass_ttslider; 
+typedef struct s_ttclass_ttprogressbar *        ttclass_ttprogressbar; 
+typedef struct s_ttclass_ttscrollpane *        ttclass_ttscrollpane; 
+typedef struct s_ttclass_ttwindow *        ttclass_ttwindow; 
+typedef struct s_ttclass_ttframe *        ttclass_ttframe; 
+typedef struct s_ttclass_ttscroller *        ttclass_ttscroller; 
+typedef struct s_ttclass_ttmenuitem *        ttclass_ttmenuitem; 
+typedef struct s_ttclass_ttcheckmenuitem *        ttclass_ttcheckmenuitem; 
+typedef struct s_ttclass_ttradiomenuitem *        ttclass_ttradiomenuitem; 
+typedef struct s_ttclass_ttmenu *        ttclass_ttmenu; 
+typedef struct s_ttclass_ttmenubar *        ttclass_ttmenubar; 
+typedef struct s_ttclass_ttanytext *        ttclass_ttanytext; 
+typedef struct s_ttclass_tttextfield *        ttclass_tttextfield; 
+typedef struct s_ttclass_tttextarea *        ttclass_tttextarea; 
+typedef struct s_ttclass_tttheme *        ttclass_tttheme; 
 typedef struct s_ttclass_ttapplication *        ttclass_ttapplication;
 
 
@@ -172,12 +172,12 @@ typedef struct s_ttclass_ttapplication *        ttclass_ttapplication;
 
 
 
-
+ 
 typedef struct s_ttobj {
     ttclass_ttobj Class;
     ttopaque id;
 } s_ttobj;
-
+ 
 typedef struct s_ttclass {
     ttclass_ttclass Class;
     ttopaque id;
@@ -186,7 +186,7 @@ typedef struct s_ttclass {
     ttuint magic;
     ttuint size;
 } s_ttclass;
-
+ 
 typedef struct s_ttobject {
     ttclass_ttobject Class;
     ttopaque id;
@@ -199,7 +199,7 @@ typedef struct s_ttobject {
     ttopaque events_inprogress;
     ttopaque events_informed;
 } s_ttobject;
-
+ 
 typedef struct s_ttvector {
     ttclass_ttvector Class;
     ttopaque id;
@@ -216,7 +216,7 @@ typedef struct s_ttvector {
     ttopaque array_n;
     TT_ARG_ARRAY((_F(array_n))) ttany * array;
 } s_ttvector;
-
+ 
 typedef struct s_ttfield {
     ttclass_ttfield Class;
     ttopaque id;
@@ -225,7 +225,7 @@ typedef struct s_ttfield {
     TT_ARG_READ TT_ARG_ARRAY_Z ttbyte * name;
     ttopaque type;
 } s_ttfield;
-
+ 
 typedef struct s_ttmethod {
     ttclass_ttmethod Class;
     ttopaque id;
@@ -236,7 +236,7 @@ typedef struct s_ttmethod {
     ttopaque return_type;
     ttvector parameter_type;
 } s_ttmethod;
-
+ 
 typedef struct s_ttevent {
     ttclass_ttevent Class;
     ttopaque id;
@@ -256,7 +256,7 @@ typedef struct s_ttevent {
     ttevent prev;
     ttevent next;
 } s_ttevent;
-
+ 
 typedef struct s_tteventbig {
     ttclass_tteventbig Class;
     ttopaque id;
@@ -285,7 +285,7 @@ typedef struct s_tteventbig {
     ttopaque data_len;
     TT_ARG_READ TT_ARG_ARRAY((_F(data_len))) ttbyte * data;
 } s_tteventbig;
-
+ 
 typedef struct s_ttbitmask {
     ttclass_ttbitmask Class;
     ttopaque id;
@@ -303,7 +303,7 @@ typedef struct s_ttbitmask {
     ttopaque mask_n;
     TT_ARG_ARRAY((_F(mask_n))) ttany * mask;
 } s_ttbitmask;
-
+ 
 typedef struct s_tteventmask {
     ttclass_tteventmask Class;
     ttopaque id;
@@ -321,7 +321,7 @@ typedef struct s_tteventmask {
     ttbitmask component_mask;
     ttuint truth_table;
 } s_tteventmask;
-
+ 
 typedef struct s_ttcallback {
     ttclass_ttcallback Class;
     ttopaque id;
@@ -339,7 +339,7 @@ typedef struct s_ttcallback {
     ttcallback prev;
     ttcallback next;
 } s_ttcallback;
-
+ 
 typedef struct s_ttlistener {
     ttclass_ttlistener Class;
     ttopaque id;
@@ -367,7 +367,7 @@ typedef struct s_ttlistener {
     ttlistener inprogress_prev;
     ttlistener inprogress_next;
 } s_ttlistener;
-
+ 
 typedef struct s_tttimer {
     ttclass_tttimer Class;
     ttopaque id;
@@ -400,7 +400,7 @@ typedef struct s_tttimer {
     tttimer timer_prev;
     tttimer timer_next;
 } s_tttimer;
-
+ 
 typedef struct s_ttcomponent {
     ttclass_ttcomponent Class;
     ttopaque id;
@@ -418,7 +418,7 @@ typedef struct s_ttcomponent {
     tttimer timers;
     ttdata datas;
 } s_ttcomponent;
-
+ 
 typedef struct s_ttdata {
     ttclass_ttdata Class;
     ttopaque id;
@@ -442,7 +442,7 @@ typedef struct s_ttdata {
     TT_ARG_ARRAY((_F(key_len))) ttbyte * key;
     ttany data;
 } s_ttdata;
-
+ 
 typedef struct s_ttvisible {
     ttclass_ttvisible Class;
     ttopaque id;
@@ -470,7 +470,7 @@ typedef struct s_ttvisible {
     tttheme theme;
     ttvisible_repaint_fn repaint;
 } s_ttvisible;
-
+ 
 typedef struct s_ttlayout {
     ttclass_ttlayout Class;
     ttopaque id;
@@ -490,7 +490,7 @@ typedef struct s_ttlayout {
     /* extends ttcomponent */
     ttwidget widget;
 } s_ttlayout;
-
+ 
 typedef struct s_ttboxlayout {
     ttclass_ttboxlayout Class;
     ttopaque id;
@@ -512,7 +512,7 @@ typedef struct s_ttboxlayout {
     /* extends ttlayout */
     ttuint orientation;
 } s_ttboxlayout;
-
+ 
 typedef struct s_ttborderlayout {
     ttclass_ttborderlayout Class;
     ttopaque id;
@@ -533,7 +533,7 @@ typedef struct s_ttborderlayout {
     ttwidget widget;
     /* extends ttlayout */
 } s_ttborderlayout;
-
+ 
 typedef struct s_ttnative {
     ttclass_ttnative Class;
     ttopaque id;
@@ -562,7 +562,7 @@ typedef struct s_ttnative {
     ttvisible_repaint_fn repaint;
     /* extends ttvisible */
 } s_ttnative;
-
+ 
 typedef struct s_ttwidget {
     ttclass_ttwidget Class;
     ttopaque id;
@@ -602,7 +602,7 @@ typedef struct s_ttwidget {
     ttcol col;
     tttooltip tooltip;
 } s_ttwidget;
-
+ 
 typedef struct s_ttlabel {
     ttclass_ttlabel Class;
     ttopaque id;
@@ -645,7 +645,7 @@ typedef struct s_ttlabel {
     ttopaque text_len;
     TT_ARG_ARRAY((_F(text_len))) ttfont * text;
 } s_ttlabel;
-
+ 
 typedef struct s_tttooltip {
     ttclass_tttooltip Class;
     ttopaque id;
@@ -691,7 +691,7 @@ typedef struct s_tttooltip {
     ttopaque widget_id;
     ttwidget widget;
 } s_tttooltip;
-
+ 
 typedef struct s_ttbuttongroup {
     ttclass_ttbuttongroup Class;
     ttopaque id;
@@ -713,7 +713,7 @@ typedef struct s_ttbuttongroup {
     ttradiobutton group_last;
     ttradiobutton checked;
 } s_ttbuttongroup;
-
+ 
 typedef struct s_ttanybutton {
     ttclass_ttanybutton Class;
     ttopaque id;
@@ -758,7 +758,7 @@ typedef struct s_ttanybutton {
     TT_ARG_ARRAY((_F(text_width),*,_F(text_height))) ttattr * text;
     struct s_ttshape theme_shape[ttderived_ttanybutton_shape_max];
 } s_ttanybutton;
-
+ 
 typedef struct s_ttbutton {
     ttclass_ttbutton Class;
     ttopaque id;
@@ -804,7 +804,7 @@ typedef struct s_ttbutton {
     struct s_ttshape theme_shape[ttderived_ttanybutton_shape_max];
     /* extends ttanybutton */
 } s_ttbutton;
-
+ 
 typedef struct s_ttcheckbutton {
     ttclass_ttcheckbutton Class;
     ttopaque id;
@@ -851,7 +851,7 @@ typedef struct s_ttcheckbutton {
     /* extends ttanybutton */
     /* extends ttbutton */
 } s_ttcheckbutton;
-
+ 
 typedef struct s_ttradiobutton {
     ttclass_ttradiobutton Class;
     ttopaque id;
@@ -902,7 +902,7 @@ typedef struct s_ttradiobutton {
     ttradiobutton group_prev;
     ttradiobutton group_next;
 } s_ttradiobutton;
-
+ 
 typedef struct s_ttanyscroll {
     ttclass_ttanyscroll Class;
     ttopaque id;
@@ -956,7 +956,7 @@ typedef struct s_ttanyscroll {
     ttint real_position;
     ttuint state;
 } s_ttanyscroll;
-
+ 
 typedef struct s_ttscrollbar {
     ttclass_ttscrollbar Class;
     ttopaque id;
@@ -1012,7 +1012,7 @@ typedef struct s_ttscrollbar {
     /* extends ttanyscroll */
     ttscrollpane scrollpane;
 } s_ttscrollbar;
-
+ 
 typedef struct s_ttslider {
     ttclass_ttslider Class;
     ttopaque id;
@@ -1070,7 +1070,7 @@ typedef struct s_ttslider {
     ttint slide_max;
     ttint slide_value;
 } s_ttslider;
-
+ 
 typedef struct s_ttprogressbar {
     ttclass_ttprogressbar Class;
     ttopaque id;
@@ -1127,7 +1127,7 @@ typedef struct s_ttprogressbar {
     ttint real_position_frac_above;
     ttint real_position_frac_below;
 } s_ttprogressbar;
-
+ 
 typedef struct s_ttscrollpane {
     ttclass_ttscrollpane Class;
     ttopaque id;
@@ -1170,7 +1170,7 @@ typedef struct s_ttscrollpane {
     ttscrollbar bar_x;
     ttscrollbar bar_y;
 } s_ttscrollpane;
-
+ 
 typedef struct s_ttwindow {
     ttclass_ttwindow Class;
     ttopaque id;
@@ -1213,7 +1213,7 @@ typedef struct s_ttwindow {
     ttopaque title_len;
     TT_ARG_ARRAY((_F(title_len))) ttbyte * title;
 } s_ttwindow;
-
+ 
 typedef struct s_ttframe {
     ttclass_ttframe Class;
     ttopaque id;
@@ -1258,7 +1258,7 @@ typedef struct s_ttframe {
     /* extends ttwindow */
     ttmenubar menubar;
 } s_ttframe;
-
+ 
 typedef struct s_ttscroller {
     ttclass_ttscroller Class;
     ttopaque id;
@@ -1303,7 +1303,7 @@ typedef struct s_ttscroller {
     /* extends ttwindow */
     ttscrollpane scrollpane;
 } s_ttscroller;
-
+ 
 typedef struct s_ttmenuitem {
     ttclass_ttmenuitem Class;
     ttopaque id;
@@ -1334,7 +1334,7 @@ typedef struct s_ttmenuitem {
     ttopaque name_len;
     TT_ARG_ARRAY((_F(name_len))) ttbyte * name;
 } s_ttmenuitem;
-
+ 
 typedef struct s_ttcheckmenuitem {
     ttclass_ttcheckmenuitem Class;
     ttopaque id;
@@ -1366,7 +1366,7 @@ typedef struct s_ttcheckmenuitem {
     TT_ARG_ARRAY((_F(name_len))) ttbyte * name;
     /* extends ttmenuitem */
 } s_ttcheckmenuitem;
-
+ 
 typedef struct s_ttradiomenuitem {
     ttclass_ttradiomenuitem Class;
     ttopaque id;
@@ -1399,7 +1399,7 @@ typedef struct s_ttradiomenuitem {
     /* extends ttmenuitem */
     /* extends ttcheckmenuitem */
 } s_ttradiomenuitem;
-
+ 
 typedef struct s_ttmenu {
     ttclass_ttmenu Class;
     ttopaque id;
@@ -1432,7 +1432,7 @@ typedef struct s_ttmenu {
     /* extends ttmenuitem */
     ttmenubar menubar;
 } s_ttmenu;
-
+ 
 typedef struct s_ttmenubar {
     ttclass_ttmenubar Class;
     ttopaque id;
@@ -1461,7 +1461,7 @@ typedef struct s_ttmenubar {
     ttvisible_repaint_fn repaint;
     /* extends ttvisible */
 } s_ttmenubar;
-
+ 
 typedef struct s_ttanytext {
     ttclass_ttanytext Class;
     ttopaque id;
@@ -1507,7 +1507,7 @@ typedef struct s_ttanytext {
     ttopaque text_len;
     TT_ARG_ARRAY((_F(text_len))) ttattr * text;
 } s_ttanytext;
-
+ 
 typedef struct s_tttextfield {
     ttclass_tttextfield Class;
     ttopaque id;
@@ -1554,7 +1554,7 @@ typedef struct s_tttextfield {
     TT_ARG_ARRAY((_F(text_len))) ttattr * text;
     /* extends ttanytext */
 } s_tttextfield;
-
+ 
 typedef struct s_tttextarea {
     ttclass_tttextarea Class;
     ttopaque id;
@@ -1602,7 +1602,7 @@ typedef struct s_tttextarea {
     /* extends ttanytext */
     /* extends tttextfield */
 } s_tttextarea;
-
+ 
 typedef struct s_tttheme {
     ttclass_tttheme Class;
     ttopaque id;
@@ -1627,7 +1627,7 @@ typedef struct s_tttheme {
     TT_ARG_ARRAY((_F(tttheme_val_max))) ttint val[tttheme_val_max];
     TT_ARG_ARRAY((_F(tttheme_shape_max)*2)) struct s_ttshape shape[tttheme_shape_max][2];
 } s_tttheme;
-
+ 
 typedef struct s_ttapplication {
     ttclass_ttapplication Class;
     ttopaque id;
@@ -1660,7 +1660,7 @@ typedef struct s_ttapplication {
 
 
 
-
+ 
 typedef struct s_ttclass_ttobj {
     ttclass_ttclass         Class;
     ttopaque         id;
@@ -1669,7 +1669,7 @@ typedef struct s_ttclass_ttobj {
     ttuint         size;
 
 } s_ttclass_ttobj;
-
+ 
 typedef struct s_ttclass_ttclass {
     ttclass_ttclass         Class;
     ttopaque         id;
@@ -1680,7 +1680,7 @@ typedef struct s_ttclass_ttclass {
     /* extends ttclass_ttobj */
 
 } s_ttclass_ttclass;
-
+ 
 typedef struct s_ttclass_ttobject {
     ttclass_ttclass         Class;
     ttopaque         id;
@@ -1695,7 +1695,7 @@ typedef struct s_ttclass_ttobject {
     void          (*Del)        (TT_ARG_DIE ttobject o);
 
 } s_ttclass_ttobject;
-
+ 
 typedef struct s_ttclass_ttvector {
     ttclass_ttclass         Class;
     ttopaque         id;
@@ -1717,7 +1717,7 @@ typedef struct s_ttclass_ttvector {
     ttbyte          (*RemoveRange)        (ttvector o, ttopaque pos_start, ttopaque pos_n);
 
 } s_ttclass_ttvector;
-
+ 
 typedef struct s_ttclass_ttfield {
     ttclass_ttclass         Class;
     ttopaque         id;
@@ -1728,7 +1728,7 @@ typedef struct s_ttclass_ttfield {
     /* extends ttclass_ttobj */
 
 } s_ttclass_ttfield;
-
+ 
 typedef struct s_ttclass_ttmethod {
     ttclass_ttclass         Class;
     ttopaque         id;
@@ -1739,7 +1739,7 @@ typedef struct s_ttclass_ttmethod {
     /* extends ttclass_ttobj */
 
 } s_ttclass_ttmethod;
-
+ 
 typedef struct s_ttclass_ttevent {
     ttclass_ttclass         Class;
     ttopaque         id;
@@ -1756,7 +1756,7 @@ typedef struct s_ttclass_ttevent {
     /* extends ttclass_ttobject */
 
 } s_ttclass_ttevent;
-
+ 
 typedef struct s_ttclass_tteventbig {
     ttclass_ttclass         Class;
     ttopaque         id;
@@ -1775,7 +1775,7 @@ typedef struct s_ttclass_tteventbig {
     /* extends ttclass_ttevent */
 
 } s_ttclass_tteventbig;
-
+ 
 typedef struct s_ttclass_ttbitmask {
     ttclass_ttclass         Class;
     ttopaque         id;
@@ -1792,7 +1792,7 @@ typedef struct s_ttclass_ttbitmask {
     /* extends ttclass_ttobject */
 
 } s_ttclass_ttbitmask;
-
+ 
 typedef struct s_ttclass_tteventmask {
     ttclass_ttclass         Class;
     ttopaque         id;
@@ -1809,7 +1809,7 @@ typedef struct s_ttclass_tteventmask {
     /* extends ttclass_ttobject */
 
 } s_ttclass_tteventmask;
-
+ 
 typedef struct s_ttclass_ttcallback {
     ttclass_ttclass         Class;
     ttopaque         id;
@@ -1827,7 +1827,7 @@ typedef struct s_ttclass_ttcallback {
     ttcallback          (*Create)        (ttcomponent o);
 
 } s_ttclass_ttcallback;
-
+ 
 typedef struct s_ttclass_ttlistener {
     ttclass_ttclass         Class;
     ttopaque         id;
@@ -1849,7 +1849,7 @@ typedef struct s_ttclass_ttlistener {
     void          (*Remove)        (ttlistener o);
 
 } s_ttclass_ttlistener;
-
+ 
 typedef struct s_ttclass_tttimer {
     ttclass_ttclass         Class;
     ttopaque         id;
@@ -1875,7 +1875,7 @@ typedef struct s_ttclass_tttimer {
     ttbyte          (*IsEnabled)        (TT_ARG_READ tttimer o);
 
 } s_ttclass_tttimer;
-
+ 
 typedef struct s_ttclass_ttcomponent {
     ttclass_ttclass         Class;
     ttopaque         id;
@@ -1892,7 +1892,7 @@ typedef struct s_ttclass_ttcomponent {
     /* extends ttclass_ttobject */
 
 } s_ttclass_ttcomponent;
-
+ 
 typedef struct s_ttclass_ttdata {
     ttclass_ttclass         Class;
     ttopaque         id;
@@ -1913,7 +1913,7 @@ typedef struct s_ttclass_ttdata {
     void          (*Remove)        (ttdata data);
 
 } s_ttclass_ttdata;
-
+ 
 typedef struct s_ttclass_ttvisible {
     ttclass_ttclass         Class;
     ttopaque         id;
@@ -1941,7 +1941,7 @@ typedef struct s_ttclass_ttvisible {
 
 
 } s_ttclass_ttvisible;
-
+ 
 typedef struct s_ttclass_ttlayout {
     ttclass_ttclass         Class;
     ttopaque         id;
@@ -1962,7 +1962,7 @@ typedef struct s_ttclass_ttlayout {
     void          (*DoLayout)        (ttlayout o);
 
 } s_ttclass_ttlayout;
-
+ 
 typedef struct s_ttclass_ttboxlayout {
     ttclass_ttclass         Class;
     ttopaque         id;
@@ -1985,7 +1985,7 @@ typedef struct s_ttclass_ttboxlayout {
     /* extends ttclass_ttlayout */
 
 } s_ttclass_ttboxlayout;
-
+ 
 typedef struct s_ttclass_ttborderlayout {
     ttclass_ttclass         Class;
     ttopaque         id;
@@ -2008,7 +2008,7 @@ typedef struct s_ttclass_ttborderlayout {
     /* extends ttclass_ttlayout */
 
 } s_ttclass_ttborderlayout;
-
+ 
 typedef struct s_ttclass_ttnative {
     ttclass_ttclass         Class;
     ttopaque         id;
@@ -2041,7 +2041,7 @@ typedef struct s_ttclass_ttnative {
     ttshort          (*GetH)        (TT_ARG_READ ttnative o);
 
 } s_ttclass_ttnative;
-
+ 
 typedef struct s_ttclass_ttwidget {
     ttclass_ttclass         Class;
     ttopaque         id;
@@ -2079,7 +2079,7 @@ typedef struct s_ttclass_ttwidget {
     ttbyte          (*SetTooltip)        (ttwidget o, TT_ARG_DIE tttooltip t);
 
 } s_ttclass_ttwidget;
-
+ 
 typedef struct s_ttclass_ttlabel {
     ttclass_ttclass         Class;
     ttopaque         id;
@@ -2120,7 +2120,7 @@ typedef struct s_ttclass_ttlabel {
     void          (*SetFontD)        (ttlabel o, ttopaque text_len, TT_ARG_DIE TT_ARG_ARRAY((_P(2))) ttfont * text);
 
 } s_ttclass_ttlabel;
-
+ 
 typedef struct s_ttclass_tttooltip {
     ttclass_ttclass         Class;
     ttopaque         id;
@@ -2164,7 +2164,7 @@ typedef struct s_ttclass_tttooltip {
     ttbyte          (*SetWidget)        (TT_ARG_DIE tttooltip o, ttwidget w);
 
 } s_ttclass_tttooltip;
-
+ 
 typedef struct s_ttclass_ttbuttongroup {
     ttclass_ttclass         Class;
     ttopaque         id;
@@ -2186,7 +2186,7 @@ typedef struct s_ttclass_ttbuttongroup {
     void          (*SetChecked)        (ttbuttongroup o, ttradiobutton r);
 
 } s_ttclass_ttbuttongroup;
-
+ 
 typedef struct s_ttclass_ttanybutton {
     ttclass_ttclass         Class;
     ttopaque         id;
@@ -2228,7 +2228,7 @@ typedef struct s_ttclass_ttanybutton {
     void          (*SetAttrD)        (ttanybutton o, ttshort w, ttshort h, ttshort pitch, TT_ARG_DIE TT_ARG_ARRAY((_P(3),*,_P(4))) ttattr * text);
 
 } s_ttclass_ttanybutton;
-
+ 
 typedef struct s_ttclass_ttbutton {
     ttclass_ttclass         Class;
     ttopaque         id;
@@ -2273,7 +2273,7 @@ typedef struct s_ttclass_ttbutton {
     void          (*SetPressed)        (ttbutton o, ttbyte pressed);
 
 } s_ttclass_ttbutton;
-
+ 
 typedef struct s_ttclass_ttcheckbutton {
     ttclass_ttclass         Class;
     ttopaque         id;
@@ -2321,7 +2321,7 @@ typedef struct s_ttclass_ttcheckbutton {
     void          (*SetChecked)        (ttcheckbutton o, ttbyte checked);
 
 } s_ttclass_ttcheckbutton;
-
+ 
 typedef struct s_ttclass_ttradiobutton {
     ttclass_ttclass         Class;
     ttopaque         id;
@@ -2371,7 +2371,7 @@ typedef struct s_ttclass_ttradiobutton {
     /* extends ttclass_ttcheckbutton */
 
 } s_ttclass_ttradiobutton;
-
+ 
 typedef struct s_ttclass_ttanyscroll {
     ttclass_ttclass         Class;
     ttopaque         id;
@@ -2422,7 +2422,7 @@ typedef struct s_ttclass_ttanyscroll {
     ttbyte          (*SetPosition)        (ttanyscroll o, ttint position);
 
 } s_ttclass_ttanyscroll;
-
+ 
 typedef struct s_ttclass_ttscrollbar {
     ttclass_ttclass         Class;
     ttopaque         id;
@@ -2475,7 +2475,7 @@ typedef struct s_ttclass_ttscrollbar {
     /* extends ttclass_ttanyscroll */
 
 } s_ttclass_ttscrollbar;
-
+ 
 typedef struct s_ttclass_ttslider {
     ttclass_ttclass         Class;
     ttopaque         id;
@@ -2531,7 +2531,7 @@ typedef struct s_ttclass_ttslider {
     ttbyte          (*SetSlideValue)        (ttslider o, ttint slide_value);
 
 } s_ttclass_ttslider;
-
+ 
 typedef struct s_ttclass_ttprogressbar {
     ttclass_ttclass         Class;
     ttopaque         id;
@@ -2584,7 +2584,7 @@ typedef struct s_ttclass_ttprogressbar {
     /* extends ttclass_ttanyscroll */
 
 } s_ttclass_ttprogressbar;
-
+ 
 typedef struct s_ttclass_ttscrollpane {
     ttclass_ttclass         Class;
     ttopaque         id;
@@ -2626,7 +2626,7 @@ typedef struct s_ttclass_ttscrollpane {
     ttbyte          (*SetBarY)        (ttscrollpane o, ttscrollbar bar_y);
 
 } s_ttclass_ttscrollpane;
-
+ 
 typedef struct s_ttclass_ttwindow {
     ttclass_ttclass         Class;
     ttopaque         id;
@@ -2667,7 +2667,7 @@ typedef struct s_ttclass_ttwindow {
     ttbyte          (*SetTitle)        (ttwindow o, TT_ARG_READ TT_ARG_ARRAY_Z ttbyte * title);
 
 } s_ttclass_ttwindow;
-
+ 
 typedef struct s_ttclass_ttframe {
     ttclass_ttclass         Class;
     ttopaque         id;
@@ -2711,7 +2711,7 @@ typedef struct s_ttclass_ttframe {
     ttbyte          (*SetMenubar)        (ttframe o, TT_ARG_READ ttmenubar m);
 
 } s_ttclass_ttframe;
-
+ 
 typedef struct s_ttclass_ttscroller {
     ttclass_ttclass         Class;
     ttopaque         id;
@@ -2754,7 +2754,7 @@ typedef struct s_ttclass_ttscroller {
     /* extends ttclass_ttwindow */
 
 } s_ttclass_ttscroller;
-
+ 
 typedef struct s_ttclass_ttmenuitem {
     ttclass_ttclass         Class;
     ttopaque         id;
@@ -2784,7 +2784,7 @@ typedef struct s_ttclass_ttmenuitem {
     /* extends ttclass_ttvisible */
 
 } s_ttclass_ttmenuitem;
-
+ 
 typedef struct s_ttclass_ttcheckmenuitem {
     ttclass_ttclass         Class;
     ttopaque         id;
@@ -2816,7 +2816,7 @@ typedef struct s_ttclass_ttcheckmenuitem {
     /* extends ttclass_ttmenuitem */
 
 } s_ttclass_ttcheckmenuitem;
-
+ 
 typedef struct s_ttclass_ttradiomenuitem {
     ttclass_ttclass         Class;
     ttopaque         id;
@@ -2850,7 +2850,7 @@ typedef struct s_ttclass_ttradiomenuitem {
     /* extends ttclass_ttcheckmenuitem */
 
 } s_ttclass_ttradiomenuitem;
-
+ 
 typedef struct s_ttclass_ttmenu {
     ttclass_ttclass         Class;
     ttopaque         id;
@@ -2882,7 +2882,7 @@ typedef struct s_ttclass_ttmenu {
     /* extends ttclass_ttmenuitem */
 
 } s_ttclass_ttmenu;
-
+ 
 typedef struct s_ttclass_ttmenubar {
     ttclass_ttclass         Class;
     ttopaque         id;
@@ -2912,7 +2912,7 @@ typedef struct s_ttclass_ttmenubar {
     /* extends ttclass_ttvisible */
 
 } s_ttclass_ttmenubar;
-
+ 
 typedef struct s_ttclass_ttanytext {
     ttclass_ttclass         Class;
     ttopaque         id;
@@ -2955,7 +2955,7 @@ typedef struct s_ttclass_ttanytext {
     /* extends ttclass_ttwindow */
 
 } s_ttclass_ttanytext;
-
+ 
 typedef struct s_ttclass_tttextfield {
     ttclass_ttclass         Class;
     ttopaque         id;
@@ -3000,7 +3000,7 @@ typedef struct s_ttclass_tttextfield {
     /* extends ttclass_ttanytext */
 
 } s_ttclass_tttextfield;
-
+ 
 typedef struct s_ttclass_tttextarea {
     ttclass_ttclass         Class;
     ttopaque         id;
@@ -3047,7 +3047,7 @@ typedef struct s_ttclass_tttextarea {
     /* extends ttclass_tttextfield */
 
 } s_ttclass_tttextarea;
-
+ 
 typedef struct s_ttclass_tttheme {
     ttclass_ttclass         Class;
     ttopaque         id;
@@ -3066,7 +3066,7 @@ typedef struct s_ttclass_tttheme {
     /* extends ttclass_ttcomponent */
 
 } s_ttclass_tttheme;
-
+ 
 typedef struct s_ttclass_ttapplication {
     ttclass_ttclass         Class;
     ttopaque         id;
@@ -3113,52 +3113,52 @@ typedef struct s_tthw {
 
 typedef struct s_ttclasses *ttclasses;
 typedef struct s_ttclasses {
-
-    s_ttclass_ttobj        class_ttobj;
-    s_ttclass_ttclass        class_ttclass;
-    s_ttclass_ttobject        class_ttobject;
-    s_ttclass_ttvector        class_ttvector;
-    s_ttclass_ttfield        class_ttfield;
-    s_ttclass_ttmethod        class_ttmethod;
-    s_ttclass_ttevent        class_ttevent;
-    s_ttclass_tteventbig        class_tteventbig;
-    s_ttclass_ttbitmask        class_ttbitmask;
-    s_ttclass_tteventmask        class_tteventmask;
-    s_ttclass_ttcallback        class_ttcallback;
-    s_ttclass_ttlistener        class_ttlistener;
-    s_ttclass_tttimer        class_tttimer;
-    s_ttclass_ttcomponent        class_ttcomponent;
-    s_ttclass_ttdata        class_ttdata;
-    s_ttclass_ttvisible        class_ttvisible;
-    s_ttclass_ttlayout        class_ttlayout;
-    s_ttclass_ttboxlayout        class_ttboxlayout;
-    s_ttclass_ttborderlayout        class_ttborderlayout;
-    s_ttclass_ttnative        class_ttnative;
-    s_ttclass_ttwidget        class_ttwidget;
-    s_ttclass_ttlabel        class_ttlabel;
-    s_ttclass_tttooltip        class_tttooltip;
-    s_ttclass_ttbuttongroup        class_ttbuttongroup;
-    s_ttclass_ttanybutton        class_ttanybutton;
-    s_ttclass_ttbutton        class_ttbutton;
-    s_ttclass_ttcheckbutton        class_ttcheckbutton;
-    s_ttclass_ttradiobutton        class_ttradiobutton;
-    s_ttclass_ttanyscroll        class_ttanyscroll;
-    s_ttclass_ttscrollbar        class_ttscrollbar;
-    s_ttclass_ttslider        class_ttslider;
-    s_ttclass_ttprogressbar        class_ttprogressbar;
-    s_ttclass_ttscrollpane        class_ttscrollpane;
-    s_ttclass_ttwindow        class_ttwindow;
-    s_ttclass_ttframe        class_ttframe;
-    s_ttclass_ttscroller        class_ttscroller;
-    s_ttclass_ttmenuitem        class_ttmenuitem;
-    s_ttclass_ttcheckmenuitem        class_ttcheckmenuitem;
-    s_ttclass_ttradiomenuitem        class_ttradiomenuitem;
-    s_ttclass_ttmenu        class_ttmenu;
-    s_ttclass_ttmenubar        class_ttmenubar;
-    s_ttclass_ttanytext        class_ttanytext;
-    s_ttclass_tttextfield        class_tttextfield;
-    s_ttclass_tttextarea        class_tttextarea;
-    s_ttclass_tttheme        class_tttheme;
+ 
+    s_ttclass_ttobj        class_ttobj; 
+    s_ttclass_ttclass        class_ttclass; 
+    s_ttclass_ttobject        class_ttobject; 
+    s_ttclass_ttvector        class_ttvector; 
+    s_ttclass_ttfield        class_ttfield; 
+    s_ttclass_ttmethod        class_ttmethod; 
+    s_ttclass_ttevent        class_ttevent; 
+    s_ttclass_tteventbig        class_tteventbig; 
+    s_ttclass_ttbitmask        class_ttbitmask; 
+    s_ttclass_tteventmask        class_tteventmask; 
+    s_ttclass_ttcallback        class_ttcallback; 
+    s_ttclass_ttlistener        class_ttlistener; 
+    s_ttclass_tttimer        class_tttimer; 
+    s_ttclass_ttcomponent        class_ttcomponent; 
+    s_ttclass_ttdata        class_ttdata; 
+    s_ttclass_ttvisible        class_ttvisible; 
+    s_ttclass_ttlayout        class_ttlayout; 
+    s_ttclass_ttboxlayout        class_ttboxlayout; 
+    s_ttclass_ttborderlayout        class_ttborderlayout; 
+    s_ttclass_ttnative        class_ttnative; 
+    s_ttclass_ttwidget        class_ttwidget; 
+    s_ttclass_ttlabel        class_ttlabel; 
+    s_ttclass_tttooltip        class_tttooltip; 
+    s_ttclass_ttbuttongroup        class_ttbuttongroup; 
+    s_ttclass_ttanybutton        class_ttanybutton; 
+    s_ttclass_ttbutton        class_ttbutton; 
+    s_ttclass_ttcheckbutton        class_ttcheckbutton; 
+    s_ttclass_ttradiobutton        class_ttradiobutton; 
+    s_ttclass_ttanyscroll        class_ttanyscroll; 
+    s_ttclass_ttscrollbar        class_ttscrollbar; 
+    s_ttclass_ttslider        class_ttslider; 
+    s_ttclass_ttprogressbar        class_ttprogressbar; 
+    s_ttclass_ttscrollpane        class_ttscrollpane; 
+    s_ttclass_ttwindow        class_ttwindow; 
+    s_ttclass_ttframe        class_ttframe; 
+    s_ttclass_ttscroller        class_ttscroller; 
+    s_ttclass_ttmenuitem        class_ttmenuitem; 
+    s_ttclass_ttcheckmenuitem        class_ttcheckmenuitem; 
+    s_ttclass_ttradiomenuitem        class_ttradiomenuitem; 
+    s_ttclass_ttmenu        class_ttmenu; 
+    s_ttclass_ttmenubar        class_ttmenubar; 
+    s_ttclass_ttanytext        class_ttanytext; 
+    s_ttclass_tttextfield        class_tttextfield; 
+    s_ttclass_tttextarea        class_tttextarea; 
+    s_ttclass_tttheme        class_tttheme; 
     s_ttclass_ttapplication        class_ttapplication;
     s_tthw HW;
 } s_ttclasses;
@@ -3168,67 +3168,67 @@ typedef struct s_ttclasses {
 
 
 /* client-visible global methods structures */
-
-extern tt_obj TTClass_ttobj;
-extern tt_obj TTClass_ttclass;
-extern tt_obj TTClass_ttobject;
-extern tt_obj TTClass_ttvector;
-extern tt_obj TTClass_ttfield;
-extern tt_obj TTClass_ttmethod;
-extern tt_obj TTClass_ttevent;
-extern tt_obj TTClass_tteventbig;
-extern tt_obj TTClass_ttbitmask;
-extern tt_obj TTClass_tteventmask;
-extern tt_obj TTClass_ttcallback;
-extern tt_obj TTClass_ttlistener;
-extern tt_obj TTClass_tttimer;
-extern tt_obj TTClass_ttcomponent;
-extern tt_obj TTClass_ttdata;
-extern tt_obj TTClass_ttvisible;
-extern tt_obj TTClass_ttlayout;
-extern tt_obj TTClass_ttboxlayout;
-extern tt_obj TTClass_ttborderlayout;
-extern tt_obj TTClass_ttnative;
-extern tt_obj TTClass_ttwidget;
-extern tt_obj TTClass_ttlabel;
-extern tt_obj TTClass_tttooltip;
-extern tt_obj TTClass_ttbuttongroup;
-extern tt_obj TTClass_ttanybutton;
-extern tt_obj TTClass_ttbutton;
-extern tt_obj TTClass_ttcheckbutton;
-extern tt_obj TTClass_ttradiobutton;
-extern tt_obj TTClass_ttanyscroll;
-extern tt_obj TTClass_ttscrollbar;
-extern tt_obj TTClass_ttslider;
-extern tt_obj TTClass_ttprogressbar;
-extern tt_obj TTClass_ttscrollpane;
-extern tt_obj TTClass_ttwindow;
-extern tt_obj TTClass_ttframe;
-extern tt_obj TTClass_ttscroller;
-extern tt_obj TTClass_ttmenuitem;
-extern tt_obj TTClass_ttcheckmenuitem;
-extern tt_obj TTClass_ttradiomenuitem;
-extern tt_obj TTClass_ttmenu;
-extern tt_obj TTClass_ttmenubar;
-extern tt_obj TTClass_ttanytext;
-extern tt_obj TTClass_tttextfield;
-extern tt_obj TTClass_tttextarea;
-extern tt_obj TTClass_tttheme;
+ 
+extern tt_obj TTClass_ttobj; 
+extern tt_obj TTClass_ttclass; 
+extern tt_obj TTClass_ttobject; 
+extern tt_obj TTClass_ttvector; 
+extern tt_obj TTClass_ttfield; 
+extern tt_obj TTClass_ttmethod; 
+extern tt_obj TTClass_ttevent; 
+extern tt_obj TTClass_tteventbig; 
+extern tt_obj TTClass_ttbitmask; 
+extern tt_obj TTClass_tteventmask; 
+extern tt_obj TTClass_ttcallback; 
+extern tt_obj TTClass_ttlistener; 
+extern tt_obj TTClass_tttimer; 
+extern tt_obj TTClass_ttcomponent; 
+extern tt_obj TTClass_ttdata; 
+extern tt_obj TTClass_ttvisible; 
+extern tt_obj TTClass_ttlayout; 
+extern tt_obj TTClass_ttboxlayout; 
+extern tt_obj TTClass_ttborderlayout; 
+extern tt_obj TTClass_ttnative; 
+extern tt_obj TTClass_ttwidget; 
+extern tt_obj TTClass_ttlabel; 
+extern tt_obj TTClass_tttooltip; 
+extern tt_obj TTClass_ttbuttongroup; 
+extern tt_obj TTClass_ttanybutton; 
+extern tt_obj TTClass_ttbutton; 
+extern tt_obj TTClass_ttcheckbutton; 
+extern tt_obj TTClass_ttradiobutton; 
+extern tt_obj TTClass_ttanyscroll; 
+extern tt_obj TTClass_ttscrollbar; 
+extern tt_obj TTClass_ttslider; 
+extern tt_obj TTClass_ttprogressbar; 
+extern tt_obj TTClass_ttscrollpane; 
+extern tt_obj TTClass_ttwindow; 
+extern tt_obj TTClass_ttframe; 
+extern tt_obj TTClass_ttscroller; 
+extern tt_obj TTClass_ttmenuitem; 
+extern tt_obj TTClass_ttcheckmenuitem; 
+extern tt_obj TTClass_ttradiomenuitem; 
+extern tt_obj TTClass_ttmenu; 
+extern tt_obj TTClass_ttmenubar; 
+extern tt_obj TTClass_ttanytext; 
+extern tt_obj TTClass_tttextfield; 
+extern tt_obj TTClass_tttextarea; 
+extern tt_obj TTClass_tttheme; 
 extern tt_obj TTClass_ttapplication;
 
 /* client-visible global types */
 
-extern tt_obj TTClass_void;
-extern tt_obj TTClass_ttbyte;
-extern tt_obj TTClass_ttshort;
-extern tt_obj TTClass_ttint;
-extern tt_obj TTClass_ttcol;
-extern tt_obj TTClass_ttfont;
-extern tt_obj TTClass_ttattr;
-extern tt_obj TTClass_ttopaque;
-extern tt_obj TTClass_ttany;
-extern tt_obj TTClass_ttfunction_fn;
-extern tt_obj TTClass_va_list;
+extern tt_obj TTClass_void; 
+extern tt_obj TTClass_ttbyte; 
+extern tt_obj TTClass_ttshort; 
+extern tt_obj TTClass_ttint; 
+extern tt_obj TTClass_ttcol; 
+extern tt_obj TTClass_ttfont; 
+extern tt_obj TTClass_ttattr; 
+extern tt_obj TTClass_ttopaque; 
+extern tt_obj TTClass_ttany; 
+extern tt_obj TTClass_ttfunction_fn; 
+extern tt_obj TTClass_va_list; 
 extern tt_obj TTClass_ttarg;
 #define TTClass_ttsbyte        TTClass_ttbyte
 #define TTClass_ttushort        TTClass_ttshort
@@ -3242,52 +3242,52 @@ extern tt_obj TTClass_ttarg;
 #define THW        (TTD.Class.HW)
 
 
-
-#define TClass_ttobj        (&TTD.Class.class_ttobj)
-#define TClass_ttclass        (&TTD.Class.class_ttclass)
-#define TClass_ttobject        (&TTD.Class.class_ttobject)
-#define TClass_ttvector        (&TTD.Class.class_ttvector)
-#define TClass_ttfield        (&TTD.Class.class_ttfield)
-#define TClass_ttmethod        (&TTD.Class.class_ttmethod)
-#define TClass_ttevent        (&TTD.Class.class_ttevent)
-#define TClass_tteventbig        (&TTD.Class.class_tteventbig)
-#define TClass_ttbitmask        (&TTD.Class.class_ttbitmask)
-#define TClass_tteventmask        (&TTD.Class.class_tteventmask)
-#define TClass_ttcallback        (&TTD.Class.class_ttcallback)
-#define TClass_ttlistener        (&TTD.Class.class_ttlistener)
-#define TClass_tttimer        (&TTD.Class.class_tttimer)
-#define TClass_ttcomponent        (&TTD.Class.class_ttcomponent)
-#define TClass_ttdata        (&TTD.Class.class_ttdata)
-#define TClass_ttvisible        (&TTD.Class.class_ttvisible)
-#define TClass_ttlayout        (&TTD.Class.class_ttlayout)
-#define TClass_ttboxlayout        (&TTD.Class.class_ttboxlayout)
-#define TClass_ttborderlayout        (&TTD.Class.class_ttborderlayout)
-#define TClass_ttnative        (&TTD.Class.class_ttnative)
-#define TClass_ttwidget        (&TTD.Class.class_ttwidget)
-#define TClass_ttlabel        (&TTD.Class.class_ttlabel)
-#define TClass_tttooltip        (&TTD.Class.class_tttooltip)
-#define TClass_ttbuttongroup        (&TTD.Class.class_ttbuttongroup)
-#define TClass_ttanybutton        (&TTD.Class.class_ttanybutton)
-#define TClass_ttbutton        (&TTD.Class.class_ttbutton)
-#define TClass_ttcheckbutton        (&TTD.Class.class_ttcheckbutton)
-#define TClass_ttradiobutton        (&TTD.Class.class_ttradiobutton)
-#define TClass_ttanyscroll        (&TTD.Class.class_ttanyscroll)
-#define TClass_ttscrollbar        (&TTD.Class.class_ttscrollbar)
-#define TClass_ttslider        (&TTD.Class.class_ttslider)
-#define TClass_ttprogressbar        (&TTD.Class.class_ttprogressbar)
-#define TClass_ttscrollpane        (&TTD.Class.class_ttscrollpane)
-#define TClass_ttwindow        (&TTD.Class.class_ttwindow)
-#define TClass_ttframe        (&TTD.Class.class_ttframe)
-#define TClass_ttscroller        (&TTD.Class.class_ttscroller)
-#define TClass_ttmenuitem        (&TTD.Class.class_ttmenuitem)
-#define TClass_ttcheckmenuitem        (&TTD.Class.class_ttcheckmenuitem)
-#define TClass_ttradiomenuitem        (&TTD.Class.class_ttradiomenuitem)
-#define TClass_ttmenu        (&TTD.Class.class_ttmenu)
-#define TClass_ttmenubar        (&TTD.Class.class_ttmenubar)
-#define TClass_ttanytext        (&TTD.Class.class_ttanytext)
-#define TClass_tttextfield        (&TTD.Class.class_tttextfield)
-#define TClass_tttextarea        (&TTD.Class.class_tttextarea)
-#define TClass_tttheme        (&TTD.Class.class_tttheme)
+ 
+#define TClass_ttobj        (&TTD.Class.class_ttobj) 
+#define TClass_ttclass        (&TTD.Class.class_ttclass) 
+#define TClass_ttobject        (&TTD.Class.class_ttobject) 
+#define TClass_ttvector        (&TTD.Class.class_ttvector) 
+#define TClass_ttfield        (&TTD.Class.class_ttfield) 
+#define TClass_ttmethod        (&TTD.Class.class_ttmethod) 
+#define TClass_ttevent        (&TTD.Class.class_ttevent) 
+#define TClass_tteventbig        (&TTD.Class.class_tteventbig) 
+#define TClass_ttbitmask        (&TTD.Class.class_ttbitmask) 
+#define TClass_tteventmask        (&TTD.Class.class_tteventmask) 
+#define TClass_ttcallback        (&TTD.Class.class_ttcallback) 
+#define TClass_ttlistener        (&TTD.Class.class_ttlistener) 
+#define TClass_tttimer        (&TTD.Class.class_tttimer) 
+#define TClass_ttcomponent        (&TTD.Class.class_ttcomponent) 
+#define TClass_ttdata        (&TTD.Class.class_ttdata) 
+#define TClass_ttvisible        (&TTD.Class.class_ttvisible) 
+#define TClass_ttlayout        (&TTD.Class.class_ttlayout) 
+#define TClass_ttboxlayout        (&TTD.Class.class_ttboxlayout) 
+#define TClass_ttborderlayout        (&TTD.Class.class_ttborderlayout) 
+#define TClass_ttnative        (&TTD.Class.class_ttnative) 
+#define TClass_ttwidget        (&TTD.Class.class_ttwidget) 
+#define TClass_ttlabel        (&TTD.Class.class_ttlabel) 
+#define TClass_tttooltip        (&TTD.Class.class_tttooltip) 
+#define TClass_ttbuttongroup        (&TTD.Class.class_ttbuttongroup) 
+#define TClass_ttanybutton        (&TTD.Class.class_ttanybutton) 
+#define TClass_ttbutton        (&TTD.Class.class_ttbutton) 
+#define TClass_ttcheckbutton        (&TTD.Class.class_ttcheckbutton) 
+#define TClass_ttradiobutton        (&TTD.Class.class_ttradiobutton) 
+#define TClass_ttanyscroll        (&TTD.Class.class_ttanyscroll) 
+#define TClass_ttscrollbar        (&TTD.Class.class_ttscrollbar) 
+#define TClass_ttslider        (&TTD.Class.class_ttslider) 
+#define TClass_ttprogressbar        (&TTD.Class.class_ttprogressbar) 
+#define TClass_ttscrollpane        (&TTD.Class.class_ttscrollpane) 
+#define TClass_ttwindow        (&TTD.Class.class_ttwindow) 
+#define TClass_ttframe        (&TTD.Class.class_ttframe) 
+#define TClass_ttscroller        (&TTD.Class.class_ttscroller) 
+#define TClass_ttmenuitem        (&TTD.Class.class_ttmenuitem) 
+#define TClass_ttcheckmenuitem        (&TTD.Class.class_ttcheckmenuitem) 
+#define TClass_ttradiomenuitem        (&TTD.Class.class_ttradiomenuitem) 
+#define TClass_ttmenu        (&TTD.Class.class_ttmenu) 
+#define TClass_ttmenubar        (&TTD.Class.class_ttmenubar) 
+#define TClass_ttanytext        (&TTD.Class.class_ttanytext) 
+#define TClass_tttextfield        (&TTD.Class.class_tttextfield) 
+#define TClass_tttextarea        (&TTD.Class.class_tttextarea) 
+#define TClass_tttheme        (&TTD.Class.class_tttheme) 
 #define TClass_ttapplication        (&TTD.Class.class_ttapplication)
 
 
@@ -3295,52 +3295,52 @@ extern tt_obj TTClass_ttarg;
 
 
 
-
-#define TClass_default_ttobj        (&TTD.Class_default.class_ttobj)
-#define TClass_default_ttclass        (&TTD.Class_default.class_ttclass)
-#define TClass_default_ttobject        (&TTD.Class_default.class_ttobject)
-#define TClass_default_ttvector        (&TTD.Class_default.class_ttvector)
-#define TClass_default_ttfield        (&TTD.Class_default.class_ttfield)
-#define TClass_default_ttmethod        (&TTD.Class_default.class_ttmethod)
-#define TClass_default_ttevent        (&TTD.Class_default.class_ttevent)
-#define TClass_default_tteventbig        (&TTD.Class_default.class_tteventbig)
-#define TClass_default_ttbitmask        (&TTD.Class_default.class_ttbitmask)
-#define TClass_default_tteventmask        (&TTD.Class_default.class_tteventmask)
-#define TClass_default_ttcallback        (&TTD.Class_default.class_ttcallback)
-#define TClass_default_ttlistener        (&TTD.Class_default.class_ttlistener)
-#define TClass_default_tttimer        (&TTD.Class_default.class_tttimer)
-#define TClass_default_ttcomponent        (&TTD.Class_default.class_ttcomponent)
-#define TClass_default_ttdata        (&TTD.Class_default.class_ttdata)
-#define TClass_default_ttvisible        (&TTD.Class_default.class_ttvisible)
-#define TClass_default_ttlayout        (&TTD.Class_default.class_ttlayout)
-#define TClass_default_ttboxlayout        (&TTD.Class_default.class_ttboxlayout)
-#define TClass_default_ttborderlayout        (&TTD.Class_default.class_ttborderlayout)
-#define TClass_default_ttnative        (&TTD.Class_default.class_ttnative)
-#define TClass_default_ttwidget        (&TTD.Class_default.class_ttwidget)
-#define TClass_default_ttlabel        (&TTD.Class_default.class_ttlabel)
-#define TClass_default_tttooltip        (&TTD.Class_default.class_tttooltip)
-#define TClass_default_ttbuttongroup        (&TTD.Class_default.class_ttbuttongroup)
-#define TClass_default_ttanybutton        (&TTD.Class_default.class_ttanybutton)
-#define TClass_default_ttbutton        (&TTD.Class_default.class_ttbutton)
-#define TClass_default_ttcheckbutton        (&TTD.Class_default.class_ttcheckbutton)
-#define TClass_default_ttradiobutton        (&TTD.Class_default.class_ttradiobutton)
-#define TClass_default_ttanyscroll        (&TTD.Class_default.class_ttanyscroll)
-#define TClass_default_ttscrollbar        (&TTD.Class_default.class_ttscrollbar)
-#define TClass_default_ttslider        (&TTD.Class_default.class_ttslider)
-#define TClass_default_ttprogressbar        (&TTD.Class_default.class_ttprogressbar)
-#define TClass_default_ttscrollpane        (&TTD.Class_default.class_ttscrollpane)
-#define TClass_default_ttwindow        (&TTD.Class_default.class_ttwindow)
-#define TClass_default_ttframe        (&TTD.Class_default.class_ttframe)
-#define TClass_default_ttscroller        (&TTD.Class_default.class_ttscroller)
-#define TClass_default_ttmenuitem        (&TTD.Class_default.class_ttmenuitem)
-#define TClass_default_ttcheckmenuitem        (&TTD.Class_default.class_ttcheckmenuitem)
-#define TClass_default_ttradiomenuitem        (&TTD.Class_default.class_ttradiomenuitem)
-#define TClass_default_ttmenu        (&TTD.Class_default.class_ttmenu)
-#define TClass_default_ttmenubar        (&TTD.Class_default.class_ttmenubar)
-#define TClass_default_ttanytext        (&TTD.Class_default.class_ttanytext)
-#define TClass_default_tttextfield        (&TTD.Class_default.class_tttextfield)
-#define TClass_default_tttextarea        (&TTD.Class_default.class_tttextarea)
-#define TClass_default_tttheme        (&TTD.Class_default.class_tttheme)
+ 
+#define TClass_default_ttobj        (&TTD.Class_default.class_ttobj) 
+#define TClass_default_ttclass        (&TTD.Class_default.class_ttclass) 
+#define TClass_default_ttobject        (&TTD.Class_default.class_ttobject) 
+#define TClass_default_ttvector        (&TTD.Class_default.class_ttvector) 
+#define TClass_default_ttfield        (&TTD.Class_default.class_ttfield) 
+#define TClass_default_ttmethod        (&TTD.Class_default.class_ttmethod) 
+#define TClass_default_ttevent        (&TTD.Class_default.class_ttevent) 
+#define TClass_default_tteventbig        (&TTD.Class_default.class_tteventbig) 
+#define TClass_default_ttbitmask        (&TTD.Class_default.class_ttbitmask) 
+#define TClass_default_tteventmask        (&TTD.Class_default.class_tteventmask) 
+#define TClass_default_ttcallback        (&TTD.Class_default.class_ttcallback) 
+#define TClass_default_ttlistener        (&TTD.Class_default.class_ttlistener) 
+#define TClass_default_tttimer        (&TTD.Class_default.class_tttimer) 
+#define TClass_default_ttcomponent        (&TTD.Class_default.class_ttcomponent) 
+#define TClass_default_ttdata        (&TTD.Class_default.class_ttdata) 
+#define TClass_default_ttvisible        (&TTD.Class_default.class_ttvisible) 
+#define TClass_default_ttlayout        (&TTD.Class_default.class_ttlayout) 
+#define TClass_default_ttboxlayout        (&TTD.Class_default.class_ttboxlayout) 
+#define TClass_default_ttborderlayout        (&TTD.Class_default.class_ttborderlayout) 
+#define TClass_default_ttnative        (&TTD.Class_default.class_ttnative) 
+#define TClass_default_ttwidget        (&TTD.Class_default.class_ttwidget) 
+#define TClass_default_ttlabel        (&TTD.Class_default.class_ttlabel) 
+#define TClass_default_tttooltip        (&TTD.Class_default.class_tttooltip) 
+#define TClass_default_ttbuttongroup        (&TTD.Class_default.class_ttbuttongroup) 
+#define TClass_default_ttanybutton        (&TTD.Class_default.class_ttanybutton) 
+#define TClass_default_ttbutton        (&TTD.Class_default.class_ttbutton) 
+#define TClass_default_ttcheckbutton        (&TTD.Class_default.class_ttcheckbutton) 
+#define TClass_default_ttradiobutton        (&TTD.Class_default.class_ttradiobutton) 
+#define TClass_default_ttanyscroll        (&TTD.Class_default.class_ttanyscroll) 
+#define TClass_default_ttscrollbar        (&TTD.Class_default.class_ttscrollbar) 
+#define TClass_default_ttslider        (&TTD.Class_default.class_ttslider) 
+#define TClass_default_ttprogressbar        (&TTD.Class_default.class_ttprogressbar) 
+#define TClass_default_ttscrollpane        (&TTD.Class_default.class_ttscrollpane) 
+#define TClass_default_ttwindow        (&TTD.Class_default.class_ttwindow) 
+#define TClass_default_ttframe        (&TTD.Class_default.class_ttframe) 
+#define TClass_default_ttscroller        (&TTD.Class_default.class_ttscroller) 
+#define TClass_default_ttmenuitem        (&TTD.Class_default.class_ttmenuitem) 
+#define TClass_default_ttcheckmenuitem        (&TTD.Class_default.class_ttcheckmenuitem) 
+#define TClass_default_ttradiomenuitem        (&TTD.Class_default.class_ttradiomenuitem) 
+#define TClass_default_ttmenu        (&TTD.Class_default.class_ttmenu) 
+#define TClass_default_ttmenubar        (&TTD.Class_default.class_ttmenubar) 
+#define TClass_default_ttanytext        (&TTD.Class_default.class_ttanytext) 
+#define TClass_default_tttextfield        (&TTD.Class_default.class_tttextfield) 
+#define TClass_default_tttextarea        (&TTD.Class_default.class_tttextarea) 
+#define TClass_default_tttheme        (&TTD.Class_default.class_tttheme) 
 #define TClass_default_ttapplication        (&TTD.Class_default.class_ttapplication)
 
 #define TClass_default(type) TT_CAT(TClass_default_,type)
@@ -3352,16 +3352,16 @@ extern tt_obj TTClass_ttarg;
 /* prototypes for public, public_set, final and final_var methods */
 
 
-
+ 
 /* ttobj methods */
-
+                    
 ttbyte  TTGetField_ttobj(TT_ARG_READ tt_obj o, TT_ARG_READ tt_obj which, TT_ARG_WRITE TT_ARG_ARRAY((1)) ttarg * value);
 
 ttbyte  TTSetField_ttobj(tt_obj o, TT_ARG_READ tt_obj which, TT_ARG_READ TT_ARG_ARRAY((1)) ttarg * value);
 
 ttbyte  TTChangeField_ttobj(tt_obj o, TT_ARG_READ tt_obj which, ttany nand_value, ttany xor_value);
 
-
+ 
 /* ttclass methods */
 
 TT_ARG_READ TT_ARG_ARRAY_Z ttbyte *  TTGetName_ttclass(TT_ARG_READ tt_obj o);
@@ -3378,20 +3378,20 @@ ttbyte  TTIsArrayType_ttclass(ttopaque type);
 
 ttbyte  TTIsPrimitiveType_ttclass(ttopaque type);
 
-
+ 
 /* ttobject methods */
-
+                
 void  TTRef_ttobject(tt_obj o);
 
 void  TTUnref_ttobject(tt_obj o);
 
 ttbyte  TTSetUserData_ttobject(tt_obj o, ttany user_data);
 
-
+ 
 /* ttvector methods */
-
+    
 ttany  TTGetAt_ttvector(TT_ARG_READ tt_obj o, ttopaque pos);
-
+    
 ttbyte  TTSetAt_ttvector(tt_obj o, ttopaque pos, ttany value);
 
 tt_obj  TTCreate1_ttvector(ttany value);
@@ -3417,16 +3417,16 @@ ttbyte  TTAddL_ttvector(tt_obj o, ttopaque pos, ttopaque value_n, ... );
 ttbyte  TTAddR_ttvector(tt_obj o, ttopaque pos, TT_ARG_READ tt_obj v);
 
 ttbyte  TTAddV_ttvector(tt_obj o, ttopaque pos, ttopaque value_n, TT_ARG_ARRAY((1)) va_list * values);
-
+    
 ttbyte  TTAddY_ttvector(tt_obj o, ttopaque pos, ttopaque value_n, TT_ARG_READ TT_ARG_ARRAY((_P(2))) ttany * values);
-
+    
 ttopaque  TTContainsValue_ttvector(TT_ARG_READ tt_obj o, ttopaque pos_start, ttany value);
 
 ttbyte  TTRemoveAt_ttvector(tt_obj o, ttopaque pos);
-
+    
 ttbyte  TTRemoveRange_ttvector(tt_obj o, ttopaque pos_start, ttopaque pos_n);
 
-
+ 
 /* ttfield methods */
 
 TT_ARG_READ tt_obj  TTGet_ttfield(TT_ARG_READ TT_ARG_ARRAY_Z ttbyte * name);
@@ -3443,7 +3443,7 @@ TT_ARG_READ tt_obj  TTFromEvcode_ttfield(ttopaque i);
 
 ttopaque  TTGetEvcode_ttfield(TT_ARG_READ TT_ARG_ARRAY_Z ttbyte * name);
 
-
+ 
 /* ttmethod methods */
 
 TT_ARG_READ tt_obj  TTGet_ttmethod(TT_ARG_READ TT_ARG_ARRAY_Z ttbyte * name);
@@ -3464,14 +3464,14 @@ ttbyte  TTCallV_ttmethod(TT_ARG_READ tt_obj m, TT_ARG_WRITE TT_ARG_ARRAY((1)) tt
 
 ttbyte  TTCallY_ttmethod(TT_ARG_READ tt_obj m, TT_ARG_WRITE TT_ARG_ARRAY((1)) ttarg * return_value, ttopaque args_n, TT_ARG_READ TT_ARG_ARRAY((_P(3))) ttany * args);
 
-
+ 
 /* ttevent methods */
 
 tt_obj  TTCreate_ttevent(ttuint evtype, ttuint evcode, ttuint evflags);
 
 void  TTFire_ttevent(TT_ARG_DIE tt_obj ev, TT_ARG_READ tt_obj o);
 
-
+ 
 /* tteventbig methods */
 
 tt_obj  TTCreate8_tteventbig(ttuint evtype, ttuint evcode, ttuint evflags, ttshort x, ttshort y, ttshort w, ttshort h, ttany value, ttany old_value, ttopaque data_len, TT_ARG_READ TT_ARG_ARRAY((_P(10))) ttbyte * data);
@@ -3480,7 +3480,7 @@ tt_obj  TTCreate4_tteventbig(ttuint evtype, ttuint evcode, ttuint evflags, ttsho
 
 tt_obj  TTCreate4s4_tteventbig(ttuint evtype, ttuint evcode, ttuint evflags, ttany value, ttany old_value, ttopaque data_len, TT_ARG_READ TT_ARG_ARRAY((_P(6))) ttbyte * data);
 
-
+ 
 /* ttbitmask methods */
 
 tt_obj  TTCreate_ttbitmask(ttany value);
@@ -3519,7 +3519,7 @@ ttbyte  TTCombineR_ttbitmask(tt_obj o, TT_ARG_READ tt_obj value, ttuint truth_ta
 
 ttbyte  TTCombineB_ttbitmask(tt_obj o, TT_ARG_READ tt_obj value, ttuint truth_table);
 
-
+ 
 /* tteventmask methods */
 
 tt_obj  TTCreateB_tteventmask(TT_ARG_DIE tt_obj evtype_mask, TT_ARG_DIE tt_obj evcode_mask, TT_ARG_DIE tt_obj component_mask);
@@ -3534,10 +3534,10 @@ ttbyte  TTSetComponentMask_tteventmask(tt_obj o, TT_ARG_DIE tt_obj component_mas
 
 ttbyte  TTSetTruthTable_tteventmask(tt_obj o, ttuint truth_table);
 
-
+ 
 /* ttcallback methods */
-
-
+    
+ 
 /* ttlistener methods */
 
 tt_obj  TTCreate_ttlistener(tt_obj o, ttuint evtype, ttuint lflags, TT_ARG_READ ttlistener_fn function, ttany arg);
@@ -3561,16 +3561,16 @@ tt_obj  TTCreateChange_ttlistener(tt_obj o, ttuint evcode, ttuint lflags, TT_ARG
 tt_obj  TTCreateKeyData_ttlistener(tt_obj o, TT_ARG_READ TT_ARG_ARRAY_Z ttbyte * key, ttuint lflags, TT_ARG_READ ttlistener_fn function);
 
 tt_obj  TTCreateExpose_ttlistener(tt_obj o, ttuint lflags, TT_ARG_READ ttlistener_fn function);
-
+    
 void  TTAddTo_ttlistener(tt_obj o, tt_obj c);
-
+    
 void  TTRemove_ttlistener(tt_obj o);
 
 ttbyte  TTSetArgsR_ttlistener(tt_obj o, TT_ARG_DIE tt_obj args);
 
 ttbyte  TTSetEventMask_ttlistener(tt_obj o, TT_ARG_DIE tt_obj event_mask);
 
-
+ 
 /* tttimer methods */
 
 tt_obj  TTCreateR_tttimer(tt_obj r, ttuint lflags, TT_ARG_READ ttlistener_fn function, ttopaque arg_component_n, ttopaque arg_timer_n, TT_ARG_DIE tt_obj args, ttany delay_t, ttany delay_f);
@@ -3578,12 +3578,12 @@ tt_obj  TTCreateR_tttimer(tt_obj r, ttuint lflags, TT_ARG_READ ttlistener_fn fun
 tt_obj  TTCreate_tttimer(tt_obj r, ttuint lflags, TT_ARG_READ ttlistener_fn function, ttany arg, ttany delay_t, ttany delay_f);
 
 void  TTSetDelay_tttimer(tt_obj o, ttany delay_t, ttany delay_s);
-
+    
 void  TTSetEnabled_tttimer(tt_obj o, ttbyte enabled);
-
+    
 ttbyte  TTIsEnabled_tttimer(TT_ARG_READ tt_obj o);
 
-
+ 
 /* ttcomponent methods */
 
 void  TTAddListener_ttcomponent(tt_obj o, tt_obj l);
@@ -3598,28 +3598,28 @@ void  TTUnsetKeyData_ttcomponent(tt_obj o, TT_ARG_READ TT_ARG_ARRAY_Z ttbyte * k
 
 tt_obj  TTGetData_ttcomponent(TT_ARG_READ tt_obj o, TT_ARG_READ TT_ARG_ARRAY_Z ttbyte * key);
 
-
+ 
 /* ttdata methods */
-
+        
 ttbyte  TTSetData_ttdata(tt_obj o, ttany data);
 
-
+ 
 /* ttvisible methods */
-
+    
 void  TTAddTo_ttvisible(tt_obj o, tt_obj parent, ttany constraint);
-
+    
 void  TTValidate_ttvisible(tt_obj o);
-
+    
 void  TTRemove_ttvisible(tt_obj o);
-
+    
 void  TTInvalidate_ttvisible(tt_obj o);
-
+    
 void  TTSetVisible_ttvisible(tt_obj o, ttbyte visible);
-
+    
 ttbyte  TTSetTheme_ttvisible(tt_obj o, TT_ARG_READ tt_obj theme);
-
+    
 void  TTDraw_ttvisible(tt_obj o, ttshort x, ttshort y, ttshort w, ttshort h, ttshort pitch, TT_ARG_READ TT_ARG_ARRAY((_P(5),*,_P(6))) ttbyte * asciidata, TT_ARG_READ TT_ARG_ARRAY((_P(5),*,_P(6))) ttfont * fontdata, TT_ARG_READ TT_ARG_ARRAY((_P(5),*,_P(6))) ttattr * attrdata);
-
+    
 void  TTBuiltinRepaint_ttvisible(tt_obj o, ttshort x, ttshort y, ttshort w, ttshort h);
 
 
@@ -3629,45 +3629,45 @@ void  TTExpose_ttvisible(tt_obj o, ttshort x, ttshort y, ttshort w, ttshort h);
 
 void  TTAdd_ttvisible(tt_obj o, tt_obj child, ttany constraint);
 
-
+ 
 /* ttlayout methods */
-
-
+        
+ 
 /* ttboxlayout methods */
 
 tt_obj  TTCreate_ttboxlayout(ttany orientation);
 
-
+ 
 /* ttborderlayout methods */
 
-
+ 
 /* ttnative methods */
-
+    
 tt_obj  TTGetRoot_ttnative(void);
-
+    
 ttshort  TTGetW_ttnative(TT_ARG_READ tt_obj o);
-
+    
 ttshort  TTGetH_ttnative(TT_ARG_READ tt_obj o);
 
 tt_obj  TTCreate_ttnative(ttany native_value);
 
-
+ 
 /* ttwidget methods */
-
+    
 void  TTSetLayout_ttwidget(tt_obj o, tt_obj l);
-
+    
 ttbyte  TTSetXY_ttwidget(tt_obj o, ttshort x, ttshort y);
-
+    
 ttbyte  TTSetWH_ttwidget(tt_obj o, ttshort w, ttshort h);
-
+    
 ttbyte  TTSetXl_ttwidget(tt_obj o, ttint xl);
-
+    
 ttbyte  TTSetYl_ttwidget(tt_obj o, ttint yl);
-
+    
 ttbyte  TTSetWl_ttwidget(tt_obj o, ttint wl);
-
+    
 ttbyte  TTSetHl_ttwidget(tt_obj o, ttint hl);
-
+    
 ttbyte  TTSetTooltip_ttwidget(tt_obj o, TT_ARG_DIE tt_obj t);
 
 ttbyte  TTSetXlYl_ttwidget(tt_obj o, ttuint mask, ttint xl, ttint yl);
@@ -3684,9 +3684,9 @@ ttbyte  TTSetW_ttwidget(tt_obj o, ttshort w);
 
 ttbyte  TTSetH_ttwidget(tt_obj o, ttshort h);
 
-
+ 
 /* ttlabel methods */
-
+    
 void  TTSetFontD_ttlabel(tt_obj o, ttopaque text_len, TT_ARG_DIE TT_ARG_ARRAY((_P(2))) ttfont * text);
 
 ttbyte  TTSetFont_ttlabel(tt_obj o, TT_ARG_READ TT_ARG_ARRAY_Z ttfont * text);
@@ -3695,23 +3695,23 @@ ttbyte  TTSetText_ttlabel(tt_obj o, TT_ARG_READ TT_ARG_ARRAY_Z ttbyte * text);
 
 tt_obj  TTCreate_ttlabel(TT_ARG_READ TT_ARG_ARRAY_Z ttbyte * text);
 
-
+ 
 /* tttooltip methods */
-
+    
 ttbyte  TTSetWidget_tttooltip(TT_ARG_DIE tt_obj o, tt_obj w);
 
-
+ 
 /* ttbuttongroup methods */
-
+    
 void  TTAdd_ttbuttongroup(tt_obj o, tt_obj r);
-
+    
 void  TTRemove_ttbuttongroup(tt_obj o, tt_obj r);
-
+    
 void  TTSetChecked_ttbuttongroup(tt_obj o, tt_obj r);
 
-
+ 
 /* ttanybutton methods */
-
+        
 void  TTSetAttrD_ttanybutton(tt_obj o, ttshort w, ttshort h, ttshort pitch, TT_ARG_DIE TT_ARG_ARRAY((_P(3),*,_P(4))) ttattr * text);
 
 ttbyte  TTSetAttr_ttanybutton(tt_obj o, ttshort w, ttshort h, ttshort pitch, TT_ARG_READ TT_ARG_ARRAY((_P(3),*,_P(4))) ttattr * text);
@@ -3722,25 +3722,25 @@ ttbyte  TTSetText_ttanybutton(tt_obj o, ttshort w, ttshort h, ttshort pitch, TT_
 
 tt_obj  TTCreate_ttanybutton(ttshort w, ttshort h, ttshort pitch, TT_ARG_READ TT_ARG_ARRAY((_P(2),*,_P(3))) ttbyte * text);
 
-
+ 
 /* ttbutton methods */
-
+    
 void  TTSetPressed_ttbutton(tt_obj o, ttbyte pressed);
 
 ttbyte  TTIsPressed_ttbutton(TT_ARG_READ tt_obj o);
 
 tt_obj  TTCreate_ttbutton(ttshort w, ttshort h, ttshort pitch, TT_ARG_READ TT_ARG_ARRAY((_P(2),*,_P(3))) ttbyte * text);
 
-
+ 
 /* ttcheckbutton methods */
-
+    
 void  TTSetChecked_ttcheckbutton(tt_obj o, ttbyte checked);
 
 ttbyte  TTIsChecked_ttcheckbutton(TT_ARG_READ tt_obj o);
 
 tt_obj  TTCreate_ttcheckbutton(ttshort w, ttshort h, ttshort pitch, TT_ARG_READ TT_ARG_ARRAY((_P(2),*,_P(3))) ttbyte * text);
 
-
+ 
 /* ttradiobutton methods */
 
 void  TTAddToGroup_ttradiobutton(tt_obj o, tt_obj g);
@@ -3749,100 +3749,100 @@ void  TTRemoveFromGroup_ttradiobutton(tt_obj o);
 
 tt_obj  TTCreate_ttradiobutton(ttshort w, ttshort h, ttshort pitch, TT_ARG_READ TT_ARG_ARRAY((_P(2),*,_P(3))) ttbyte * text);
 
-
+ 
 /* ttanyscroll methods */
-
+            
 ttbyte  TTSetOrientation_ttanyscroll(tt_obj o, ttbyte orientation);
-
+    
 ttbyte  TTSetSize_ttanyscroll(tt_obj o, ttint size);
-
+    
 ttbyte  TTSetRealSize_ttanyscroll(tt_obj o, ttint real_size);
-
+    
 ttbyte  TTSetViewSize_ttanyscroll(tt_obj o, ttint view_size);
-
+    
 ttbyte  TTSetPosition_ttanyscroll(tt_obj o, ttint position);
 
-
+ 
 /* ttscrollbar methods */
 
 tt_obj  TTCreate1_ttscrollbar(ttbyte orientation);
 
 tt_obj  TTCreate4_ttscrollbar(ttbyte orientation, ttint size, ttint real_size, ttint view_size);
 
-
+ 
 /* ttslider methods */
-
+    
 ttbyte  TTSetSlideMin_ttslider(tt_obj o, ttint slide_min);
-
+    
 ttbyte  TTSetSlideMax_ttslider(tt_obj o, ttint slide_max);
-
+    
 ttbyte  TTSetSlideValue_ttslider(tt_obj o, ttint slide_value);
 
 tt_obj  TTCreate_ttslider(ttbyte orientation, ttint real_size);
 
-
+ 
 /* ttprogressbar methods */
 
 tt_obj  TTCreate_ttprogressbar(ttbyte orientation);
 
-
+ 
 /* ttscrollpane methods */
 
 tt_obj  TTCreate_ttscrollpane(ttshort w, ttshort h);
-
+    
 ttbyte  TTSetBarX_ttscrollpane(tt_obj o, tt_obj bar_x);
-
+    
 ttbyte  TTSetBarY_ttscrollpane(tt_obj o, tt_obj bar_y);
 
-
+ 
 /* ttwindow methods */
-
+    
 ttbyte  TTSetTitle_ttwindow(tt_obj o, TT_ARG_READ TT_ARG_ARRAY_Z ttbyte * title);
 
-
+ 
 /* ttframe methods */
-
+    
 ttbyte  TTSetMenubar_ttframe(tt_obj o, TT_ARG_READ tt_obj m);
 
 tt_obj  TTCreate_ttframe(TT_ARG_READ TT_ARG_ARRAY_Z ttbyte * title);
 
-
+ 
 /* ttscroller methods */
 
 tt_obj  TTCreate_ttscroller(ttshort w, ttshort h);
 
-
+ 
 /* ttmenuitem methods */
 
-
+ 
 /* ttcheckmenuitem methods */
 
-
+ 
 /* ttradiomenuitem methods */
 
-
+ 
 /* ttmenu methods */
 
-
+ 
 /* ttmenubar methods */
 
 tt_obj  TTGetDefault_ttmenubar(void);
 
-
+ 
 /* ttanytext methods */
 
-
+ 
 /* tttextfield methods */
 
-
+ 
 /* tttextarea methods */
 
-
+ 
 /* tttheme methods */
 
 tt_obj  TTGetDefault_tttheme(void);
 
-
+ 
 /* ttapplication methods */
 
 tt_obj  TTCreate_ttapplication(TT_ARG_READ TT_ARG_ARRAY_Z ttbyte * name);
@@ -3864,242 +3864,242 @@ tt_obj  TTGet_ttapplication(void);
 
 
 
+ 
 
+/* prototypes for TTGet*_ttobj and TTSet*_ttobj methods */         
 
-/* prototypes for TTGet*_ttobj and TTSet*_ttobj methods */
+/* prototypes for TTGet*_ttclass and TTSet*_ttclass methods */             
 
-/* prototypes for TTGet*_ttclass and TTSet*_ttclass methods */
-
-/* prototypes for TTGet*_ttobject and TTSet*_ttobject methods */
-ttopaque         TTGetRefcount_ttobject(TT_ARG_READ tt_obj o);
-ttuint         TTGetOflags_ttobject(TT_ARG_READ tt_obj o);
+/* prototypes for TTGet*_ttobject and TTSet*_ttobject methods */    
+ttopaque         TTGetRefcount_ttobject(TT_ARG_READ tt_obj o);    
+ttuint         TTGetOflags_ttobject(TT_ARG_READ tt_obj o);            
 ttany         TTGetUserData_ttobject(TT_ARG_READ tt_obj o);
-ttbyte         TTSetUserData_ttobject(tt_obj o, ttany user_data);
-ttopaque         TTGetEventsInprogress_ttobject(TT_ARG_READ tt_obj o);
-ttopaque         TTGetEventsInformed_ttobject(TT_ARG_READ tt_obj o);
+ttbyte         TTSetUserData_ttobject(tt_obj o, ttany user_data);    
+ttopaque         TTGetEventsInprogress_ttobject(TT_ARG_READ tt_obj o);    
+ttopaque         TTGetEventsInformed_ttobject(TT_ARG_READ tt_obj o); 
 
-/* prototypes for TTGet*_ttvector and TTSet*_ttvector methods */
-ttopaque         TTGetArraySize_ttvector(TT_ARG_READ tt_obj o);
-ttopaque         TTGetArrayN_ttvector(TT_ARG_READ tt_obj o);
-TT_ARG_ARRAY((_F(array_n))) ttany *         TTGetArray_ttvector(TT_ARG_READ tt_obj o);
+/* prototypes for TTGet*_ttvector and TTSet*_ttvector methods */    
+ttopaque         TTGetArraySize_ttvector(TT_ARG_READ tt_obj o);    
+ttopaque         TTGetArrayN_ttvector(TT_ARG_READ tt_obj o);    
+TT_ARG_ARRAY((_F(array_n))) ttany *         TTGetArray_ttvector(TT_ARG_READ tt_obj o); 
 
-/* prototypes for TTGet*_ttfield and TTSet*_ttfield methods */
-ttopaque         TTGetNameLen_ttfield(TT_ARG_READ tt_obj o);
-TT_ARG_READ TT_ARG_ARRAY_Z ttbyte *         TTGetName_ttfield(TT_ARG_READ tt_obj o);
-ttopaque         TTGetType_ttfield(TT_ARG_READ tt_obj o);
+/* prototypes for TTGet*_ttfield and TTSet*_ttfield methods */    
+ttopaque         TTGetNameLen_ttfield(TT_ARG_READ tt_obj o);    
+TT_ARG_READ TT_ARG_ARRAY_Z ttbyte *         TTGetName_ttfield(TT_ARG_READ tt_obj o);    
+ttopaque         TTGetType_ttfield(TT_ARG_READ tt_obj o); 
 
-/* prototypes for TTGet*_ttmethod and TTSet*_ttmethod methods */
-ttopaque         TTGetNameLen_ttmethod(TT_ARG_READ tt_obj o);
-TT_ARG_READ TT_ARG_ARRAY((_F(name_len))) ttbyte *         TTGetName_ttmethod(TT_ARG_READ tt_obj o);
-ttfunction_fn         TTGetAddress_ttmethod(TT_ARG_READ tt_obj o);
-ttopaque         TTGetReturnType_ttmethod(TT_ARG_READ tt_obj o);
-tt_obj         TTGetParameterType_ttmethod(TT_ARG_READ tt_obj o);
+/* prototypes for TTGet*_ttmethod and TTSet*_ttmethod methods */    
+ttopaque         TTGetNameLen_ttmethod(TT_ARG_READ tt_obj o);    
+TT_ARG_READ TT_ARG_ARRAY((_F(name_len))) ttbyte *         TTGetName_ttmethod(TT_ARG_READ tt_obj o);    
+ttfunction_fn         TTGetAddress_ttmethod(TT_ARG_READ tt_obj o);    
+ttopaque         TTGetReturnType_ttmethod(TT_ARG_READ tt_obj o);    
+tt_obj         TTGetParameterType_ttmethod(TT_ARG_READ tt_obj o); 
 
-/* prototypes for TTGet*_ttevent and TTSet*_ttevent methods */
-tt_obj         TTGetComponent_ttevent(TT_ARG_READ tt_obj o);
-ttuint         TTGetEvtype_ttevent(TT_ARG_READ tt_obj o);
-ttuint         TTGetEvcode_ttevent(TT_ARG_READ tt_obj o);
-ttuint         TTGetEvflags_ttevent(TT_ARG_READ tt_obj o);
-tt_obj         TTGetPrev_ttevent(TT_ARG_READ tt_obj o);
-tt_obj         TTGetNext_ttevent(TT_ARG_READ tt_obj o);
+/* prototypes for TTGet*_ttevent and TTSet*_ttevent methods */    
+tt_obj         TTGetComponent_ttevent(TT_ARG_READ tt_obj o);    
+ttuint         TTGetEvtype_ttevent(TT_ARG_READ tt_obj o);    
+ttuint         TTGetEvcode_ttevent(TT_ARG_READ tt_obj o);    
+ttuint         TTGetEvflags_ttevent(TT_ARG_READ tt_obj o);    
+tt_obj         TTGetPrev_ttevent(TT_ARG_READ tt_obj o);    
+tt_obj         TTGetNext_ttevent(TT_ARG_READ tt_obj o); 
 
-/* prototypes for TTGet*_tteventbig and TTSet*_tteventbig methods */
-ttshort         TTGetX_tteventbig(TT_ARG_READ tt_obj o);
-ttshort         TTGetY_tteventbig(TT_ARG_READ tt_obj o);
-ttshort         TTGetW_tteventbig(TT_ARG_READ tt_obj o);
-ttshort         TTGetH_tteventbig(TT_ARG_READ tt_obj o);
-ttany         TTGetValue_tteventbig(TT_ARG_READ tt_obj o);
-ttany         TTGetOldValue_tteventbig(TT_ARG_READ tt_obj o);
-ttopaque         TTGetDataLen_tteventbig(TT_ARG_READ tt_obj o);
-TT_ARG_READ TT_ARG_ARRAY((_F(data_len))) ttbyte *         TTGetData_tteventbig(TT_ARG_READ tt_obj o);
+/* prototypes for TTGet*_tteventbig and TTSet*_tteventbig methods */    
+ttshort         TTGetX_tteventbig(TT_ARG_READ tt_obj o);    
+ttshort         TTGetY_tteventbig(TT_ARG_READ tt_obj o);    
+ttshort         TTGetW_tteventbig(TT_ARG_READ tt_obj o);    
+ttshort         TTGetH_tteventbig(TT_ARG_READ tt_obj o);    
+ttany         TTGetValue_tteventbig(TT_ARG_READ tt_obj o);    
+ttany         TTGetOldValue_tteventbig(TT_ARG_READ tt_obj o);    
+ttopaque         TTGetDataLen_tteventbig(TT_ARG_READ tt_obj o);    
+TT_ARG_READ TT_ARG_ARRAY((_F(data_len))) ttbyte *         TTGetData_tteventbig(TT_ARG_READ tt_obj o); 
 
-/* prototypes for TTGet*_ttbitmask and TTSet*_ttbitmask methods */
+/* prototypes for TTGet*_ttbitmask and TTSet*_ttbitmask methods */                 
 
-/* prototypes for TTGet*_tteventmask and TTSet*_tteventmask methods */
+/* prototypes for TTGet*_tteventmask and TTSet*_tteventmask methods */    
 tt_obj         TTGetEvtypeMask_tteventmask(TT_ARG_READ tt_obj o);
-ttbyte         TTSetEvtypeMask_tteventmask(tt_obj o, tt_obj evtype_mask);
+ttbyte         TTSetEvtypeMask_tteventmask(tt_obj o, tt_obj evtype_mask);    
 tt_obj         TTGetEvcodeMask_tteventmask(TT_ARG_READ tt_obj o);
-ttbyte         TTSetEvcodeMask_tteventmask(tt_obj o, tt_obj evcode_mask);
+ttbyte         TTSetEvcodeMask_tteventmask(tt_obj o, tt_obj evcode_mask);    
 tt_obj         TTGetComponentMask_tteventmask(TT_ARG_READ tt_obj o);
-ttbyte         TTSetComponentMask_tteventmask(tt_obj o, tt_obj component_mask);
+ttbyte         TTSetComponentMask_tteventmask(tt_obj o, tt_obj component_mask);    
 ttuint         TTGetTruthTable_tteventmask(TT_ARG_READ tt_obj o);
-ttbyte         TTSetTruthTable_tteventmask(tt_obj o, ttuint truth_table);
+ttbyte         TTSetTruthTable_tteventmask(tt_obj o, ttuint truth_table); 
 
-/* prototypes for TTGet*_ttcallback and TTSet*_ttcallback methods */
-ttuint         TTGetLflags_ttcallback(TT_ARG_READ tt_obj o);
-tt_obj         TTGetComponent_ttcallback(TT_ARG_READ tt_obj o);
-tt_obj         TTGetPrev_ttcallback(TT_ARG_READ tt_obj o);
-tt_obj         TTGetNext_ttcallback(TT_ARG_READ tt_obj o);
+/* prototypes for TTGet*_ttcallback and TTSet*_ttcallback methods */    
+ttuint         TTGetLflags_ttcallback(TT_ARG_READ tt_obj o);    
+tt_obj         TTGetComponent_ttcallback(TT_ARG_READ tt_obj o);    
+tt_obj         TTGetPrev_ttcallback(TT_ARG_READ tt_obj o);    
+tt_obj         TTGetNext_ttcallback(TT_ARG_READ tt_obj o); 
 
-/* prototypes for TTGet*_ttlistener and TTSet*_ttlistener methods */
-tt_obj         TTGetEvent_ttlistener(TT_ARG_READ tt_obj o);
-ttlistener_fn         TTGetFunction_ttlistener(TT_ARG_READ tt_obj o);
-ttopaque         TTGetArgComponentN_ttlistener(TT_ARG_READ tt_obj o);
-ttopaque         TTGetArgEventN_ttlistener(TT_ARG_READ tt_obj o);
-tt_obj         TTGetArgs_ttlistener(TT_ARG_READ tt_obj o);
+/* prototypes for TTGet*_ttlistener and TTSet*_ttlistener methods */        
+tt_obj         TTGetEvent_ttlistener(TT_ARG_READ tt_obj o);    
+ttlistener_fn         TTGetFunction_ttlistener(TT_ARG_READ tt_obj o);    
+ttopaque         TTGetArgComponentN_ttlistener(TT_ARG_READ tt_obj o);    
+ttopaque         TTGetArgEventN_ttlistener(TT_ARG_READ tt_obj o);    
+tt_obj         TTGetArgs_ttlistener(TT_ARG_READ tt_obj o);    
 tt_obj         TTGetEventMask_ttlistener(TT_ARG_READ tt_obj o);
-ttbyte         TTSetEventMask_ttlistener(tt_obj o, tt_obj event_mask);
+ttbyte         TTSetEventMask_ttlistener(tt_obj o, tt_obj event_mask);         
 
-/* prototypes for TTGet*_tttimer and TTSet*_tttimer methods */
-ttany         TTGetDelayT_tttimer(TT_ARG_READ tt_obj o);
-ttany         TTGetDelayF_tttimer(TT_ARG_READ tt_obj o);
-tt_obj         TTGetTimerPrev_tttimer(TT_ARG_READ tt_obj o);
-tt_obj         TTGetTimerNext_tttimer(TT_ARG_READ tt_obj o);
+/* prototypes for TTGet*_tttimer and TTSet*_tttimer methods */    
+ttany         TTGetDelayT_tttimer(TT_ARG_READ tt_obj o);    
+ttany         TTGetDelayF_tttimer(TT_ARG_READ tt_obj o);    
+tt_obj         TTGetTimerPrev_tttimer(TT_ARG_READ tt_obj o);    
+tt_obj         TTGetTimerNext_tttimer(TT_ARG_READ tt_obj o); 
 
-/* prototypes for TTGet*_ttcomponent and TTSet*_ttcomponent methods */
-tt_obj         TTGetCallbacks_ttcomponent(TT_ARG_READ tt_obj o);
-tt_obj         TTGetListeners_ttcomponent(TT_ARG_READ tt_obj o);
-tt_obj         TTGetTimers_ttcomponent(TT_ARG_READ tt_obj o);
-tt_obj         TTGetDatas_ttcomponent(TT_ARG_READ tt_obj o);
+/* prototypes for TTGet*_ttcomponent and TTSet*_ttcomponent methods */    
+tt_obj         TTGetCallbacks_ttcomponent(TT_ARG_READ tt_obj o);    
+tt_obj         TTGetListeners_ttcomponent(TT_ARG_READ tt_obj o);    
+tt_obj         TTGetTimers_ttcomponent(TT_ARG_READ tt_obj o);    
+tt_obj         TTGetDatas_ttcomponent(TT_ARG_READ tt_obj o); 
 
-/* prototypes for TTGet*_ttdata and TTSet*_ttdata methods */
-tt_obj         TTGetComponent_ttdata(TT_ARG_READ tt_obj o);
-ttopaque         TTGetKeyLen_ttdata(TT_ARG_READ tt_obj o);
-TT_ARG_ARRAY((_F(key_len))) ttbyte *         TTGetKey_ttdata(TT_ARG_READ tt_obj o);
+/* prototypes for TTGet*_ttdata and TTSet*_ttdata methods */        
+tt_obj         TTGetComponent_ttdata(TT_ARG_READ tt_obj o);    
+ttopaque         TTGetKeyLen_ttdata(TT_ARG_READ tt_obj o);    
+TT_ARG_ARRAY((_F(key_len))) ttbyte *         TTGetKey_ttdata(TT_ARG_READ tt_obj o);    
 ttany         TTGetData_ttdata(TT_ARG_READ tt_obj o);
-ttbyte         TTSetData_ttdata(tt_obj o, ttany data);
+ttbyte         TTSetData_ttdata(tt_obj o, ttany data); 
 
-/* prototypes for TTGet*_ttvisible and TTSet*_ttvisible methods */
-ttuint         TTGetVflags_ttvisible(TT_ARG_READ tt_obj o);
-tt_obj         TTGetPrev_ttvisible(TT_ARG_READ tt_obj o);
-tt_obj         TTGetNext_ttvisible(TT_ARG_READ tt_obj o);
-tt_obj         TTGetParent_ttvisible(TT_ARG_READ tt_obj o);
-tt_obj         TTGetChildFirst_ttvisible(TT_ARG_READ tt_obj o);
-tt_obj         TTGetChildLast_ttvisible(TT_ARG_READ tt_obj o);
-ttany         TTGetConstraint_ttvisible(TT_ARG_READ tt_obj o);
+/* prototypes for TTGet*_ttvisible and TTSet*_ttvisible methods */    
+ttuint         TTGetVflags_ttvisible(TT_ARG_READ tt_obj o);    
+tt_obj         TTGetPrev_ttvisible(TT_ARG_READ tt_obj o);    
+tt_obj         TTGetNext_ttvisible(TT_ARG_READ tt_obj o);    
+tt_obj         TTGetParent_ttvisible(TT_ARG_READ tt_obj o);    
+tt_obj         TTGetChildFirst_ttvisible(TT_ARG_READ tt_obj o);    
+tt_obj         TTGetChildLast_ttvisible(TT_ARG_READ tt_obj o);    
+ttany         TTGetConstraint_ttvisible(TT_ARG_READ tt_obj o);    
 tt_obj         TTGetTheme_ttvisible(TT_ARG_READ tt_obj o);
-ttbyte         TTSetTheme_ttvisible(tt_obj o, tt_obj theme);
+ttbyte         TTSetTheme_ttvisible(tt_obj o, tt_obj theme);    
 ttvisible_repaint_fn         TTGetRepaint_ttvisible(TT_ARG_READ tt_obj o);
-ttbyte         TTSetRepaint_ttvisible(tt_obj o, ttvisible_repaint_fn repaint);
+ttbyte         TTSetRepaint_ttvisible(tt_obj o, ttvisible_repaint_fn repaint); 
 
-/* prototypes for TTGet*_ttlayout and TTSet*_ttlayout methods */
-tt_obj         TTGetWidget_ttlayout(TT_ARG_READ tt_obj o);
+/* prototypes for TTGet*_ttlayout and TTSet*_ttlayout methods */    
+tt_obj         TTGetWidget_ttlayout(TT_ARG_READ tt_obj o); 
 
-/* prototypes for TTGet*_ttboxlayout and TTSet*_ttboxlayout methods */
-ttuint         TTGetOrientation_ttboxlayout(TT_ARG_READ tt_obj o);
+/* prototypes for TTGet*_ttboxlayout and TTSet*_ttboxlayout methods */    
+ttuint         TTGetOrientation_ttboxlayout(TT_ARG_READ tt_obj o); 
 
-/* prototypes for TTGet*_ttborderlayout and TTSet*_ttborderlayout methods */
+/* prototypes for TTGet*_ttborderlayout and TTSet*_ttborderlayout methods */ 
 
-/* prototypes for TTGet*_ttnative and TTSet*_ttnative methods */
+/* prototypes for TTGet*_ttnative and TTSet*_ttnative methods */ 
 
-/* prototypes for TTGet*_ttwidget and TTSet*_ttwidget methods */
+/* prototypes for TTGet*_ttwidget and TTSet*_ttwidget methods */    
 ttshort         TTGetX_ttwidget(TT_ARG_READ tt_obj o);
-ttbyte         TTSetX_ttwidget(tt_obj o, ttshort x);
+ttbyte         TTSetX_ttwidget(tt_obj o, ttshort x);    
 ttshort         TTGetY_ttwidget(TT_ARG_READ tt_obj o);
-ttbyte         TTSetY_ttwidget(tt_obj o, ttshort y);
+ttbyte         TTSetY_ttwidget(tt_obj o, ttshort y);    
 ttshort         TTGetW_ttwidget(TT_ARG_READ tt_obj o);
-ttbyte         TTSetW_ttwidget(tt_obj o, ttshort w);
+ttbyte         TTSetW_ttwidget(tt_obj o, ttshort w);    
 ttshort         TTGetH_ttwidget(TT_ARG_READ tt_obj o);
-ttbyte         TTSetH_ttwidget(tt_obj o, ttshort h);
-tt_obj         TTGetLayout_ttwidget(TT_ARG_READ tt_obj o);
+ttbyte         TTSetH_ttwidget(tt_obj o, ttshort h);    
+tt_obj         TTGetLayout_ttwidget(TT_ARG_READ tt_obj o);    
 ttint         TTGetXl_ttwidget(TT_ARG_READ tt_obj o);
-ttbyte         TTSetXl_ttwidget(tt_obj o, ttint xl);
+ttbyte         TTSetXl_ttwidget(tt_obj o, ttint xl);    
 ttint         TTGetYl_ttwidget(TT_ARG_READ tt_obj o);
-ttbyte         TTSetYl_ttwidget(tt_obj o, ttint yl);
+ttbyte         TTSetYl_ttwidget(tt_obj o, ttint yl);    
 ttint         TTGetWl_ttwidget(TT_ARG_READ tt_obj o);
-ttbyte         TTSetWl_ttwidget(tt_obj o, ttint wl);
+ttbyte         TTSetWl_ttwidget(tt_obj o, ttint wl);    
 ttint         TTGetHl_ttwidget(TT_ARG_READ tt_obj o);
-ttbyte         TTSetHl_ttwidget(tt_obj o, ttint hl);
-ttcol         TTGetCol_ttwidget(TT_ARG_READ tt_obj o);
+ttbyte         TTSetHl_ttwidget(tt_obj o, ttint hl);    
+ttcol         TTGetCol_ttwidget(TT_ARG_READ tt_obj o);    
 tt_obj         TTGetTooltip_ttwidget(TT_ARG_READ tt_obj o);
-ttbyte         TTSetTooltip_ttwidget(tt_obj o, tt_obj tooltip);
+ttbyte         TTSetTooltip_ttwidget(tt_obj o, tt_obj tooltip); 
 
-/* prototypes for TTGet*_ttlabel and TTSet*_ttlabel methods */
-ttopaque         TTGetTextLen_ttlabel(TT_ARG_READ tt_obj o);
-TT_ARG_ARRAY((_F(text_len))) ttfont *         TTGetText_ttlabel(TT_ARG_READ tt_obj o);
+/* prototypes for TTGet*_ttlabel and TTSet*_ttlabel methods */    
+ttopaque         TTGetTextLen_ttlabel(TT_ARG_READ tt_obj o);    
+TT_ARG_ARRAY((_F(text_len))) ttfont *         TTGetText_ttlabel(TT_ARG_READ tt_obj o); 
 
-/* prototypes for TTGet*_tttooltip and TTSet*_tttooltip methods */
-tt_obj         TTGetWidget_tttooltip(TT_ARG_READ tt_obj o);
+/* prototypes for TTGet*_tttooltip and TTSet*_tttooltip methods */        
+tt_obj         TTGetWidget_tttooltip(TT_ARG_READ tt_obj o); 
 
-/* prototypes for TTGet*_ttbuttongroup and TTSet*_ttbuttongroup methods */
-tt_obj         TTGetGroupFirst_ttbuttongroup(TT_ARG_READ tt_obj o);
-tt_obj         TTGetGroupLast_ttbuttongroup(TT_ARG_READ tt_obj o);
-tt_obj         TTGetChecked_ttbuttongroup(TT_ARG_READ tt_obj o);
+/* prototypes for TTGet*_ttbuttongroup and TTSet*_ttbuttongroup methods */    
+tt_obj         TTGetGroupFirst_ttbuttongroup(TT_ARG_READ tt_obj o);    
+tt_obj         TTGetGroupLast_ttbuttongroup(TT_ARG_READ tt_obj o);    
+tt_obj         TTGetChecked_ttbuttongroup(TT_ARG_READ tt_obj o); 
 
-/* prototypes for TTGet*_ttanybutton and TTSet*_ttanybutton methods */
-ttshort         TTGetTextWidth_ttanybutton(TT_ARG_READ tt_obj o);
-ttshort         TTGetTextHeight_ttanybutton(TT_ARG_READ tt_obj o);
-TT_ARG_ARRAY((_F(text_width),*,_F(text_height))) ttattr *         TTGetText_ttanybutton(TT_ARG_READ tt_obj o);
+/* prototypes for TTGet*_ttanybutton and TTSet*_ttanybutton methods */    
+ttshort         TTGetTextWidth_ttanybutton(TT_ARG_READ tt_obj o);    
+ttshort         TTGetTextHeight_ttanybutton(TT_ARG_READ tt_obj o);    
+TT_ARG_ARRAY((_F(text_width),*,_F(text_height))) ttattr *         TTGetText_ttanybutton(TT_ARG_READ tt_obj o);     
 
-/* prototypes for TTGet*_ttbutton and TTSet*_ttbutton methods */
+/* prototypes for TTGet*_ttbutton and TTSet*_ttbutton methods */ 
 
-/* prototypes for TTGet*_ttcheckbutton and TTSet*_ttcheckbutton methods */
+/* prototypes for TTGet*_ttcheckbutton and TTSet*_ttcheckbutton methods */ 
 
-/* prototypes for TTGet*_ttradiobutton and TTSet*_ttradiobutton methods */
-tt_obj         TTGetGroup_ttradiobutton(TT_ARG_READ tt_obj o);
-tt_obj         TTGetGroupPrev_ttradiobutton(TT_ARG_READ tt_obj o);
-tt_obj         TTGetGroupNext_ttradiobutton(TT_ARG_READ tt_obj o);
+/* prototypes for TTGet*_ttradiobutton and TTSet*_ttradiobutton methods */    
+tt_obj         TTGetGroup_ttradiobutton(TT_ARG_READ tt_obj o);    
+tt_obj         TTGetGroupPrev_ttradiobutton(TT_ARG_READ tt_obj o);    
+tt_obj         TTGetGroupNext_ttradiobutton(TT_ARG_READ tt_obj o); 
 
-/* prototypes for TTGet*_ttanyscroll and TTSet*_ttanyscroll methods */
+/* prototypes for TTGet*_ttanyscroll and TTSet*_ttanyscroll methods */    
 ttbyte         TTGetOrientation_ttanyscroll(TT_ARG_READ tt_obj o);
-ttbyte         TTSetOrientation_ttanyscroll(tt_obj o, ttbyte orientation);
+ttbyte         TTSetOrientation_ttanyscroll(tt_obj o, ttbyte orientation);    
 ttint         TTGetSize_ttanyscroll(TT_ARG_READ tt_obj o);
-ttbyte         TTSetSize_ttanyscroll(tt_obj o, ttint size);
+ttbyte         TTSetSize_ttanyscroll(tt_obj o, ttint size);    
 ttint         TTGetRealSize_ttanyscroll(TT_ARG_READ tt_obj o);
-ttbyte         TTSetRealSize_ttanyscroll(tt_obj o, ttint real_size);
+ttbyte         TTSetRealSize_ttanyscroll(tt_obj o, ttint real_size);    
 ttint         TTGetViewSize_ttanyscroll(TT_ARG_READ tt_obj o);
-ttbyte         TTSetViewSize_ttanyscroll(tt_obj o, ttint view_size);
+ttbyte         TTSetViewSize_ttanyscroll(tt_obj o, ttint view_size);        
 ttint         TTGetPosition_ttanyscroll(TT_ARG_READ tt_obj o);
-ttbyte         TTSetPosition_ttanyscroll(tt_obj o, ttint position);
-ttint         TTGetRealPosition_ttanyscroll(TT_ARG_READ tt_obj o);
-ttuint         TTGetState_ttanyscroll(TT_ARG_READ tt_obj o);
+ttbyte         TTSetPosition_ttanyscroll(tt_obj o, ttint position);    
+ttint         TTGetRealPosition_ttanyscroll(TT_ARG_READ tt_obj o);    
+ttuint         TTGetState_ttanyscroll(TT_ARG_READ tt_obj o); 
 
-/* prototypes for TTGet*_ttscrollbar and TTSet*_ttscrollbar methods */
+/* prototypes for TTGet*_ttscrollbar and TTSet*_ttscrollbar methods */     
 
-/* prototypes for TTGet*_ttslider and TTSet*_ttslider methods */
+/* prototypes for TTGet*_ttslider and TTSet*_ttslider methods */    
 ttint         TTGetSlideMin_ttslider(TT_ARG_READ tt_obj o);
-ttbyte         TTSetSlideMin_ttslider(tt_obj o, ttint slide_min);
+ttbyte         TTSetSlideMin_ttslider(tt_obj o, ttint slide_min);    
 ttint         TTGetSlideMax_ttslider(TT_ARG_READ tt_obj o);
-ttbyte         TTSetSlideMax_ttslider(tt_obj o, ttint slide_max);
+ttbyte         TTSetSlideMax_ttslider(tt_obj o, ttint slide_max);    
 ttint         TTGetSlideValue_ttslider(TT_ARG_READ tt_obj o);
-ttbyte         TTSetSlideValue_ttslider(tt_obj o, ttint slide_value);
+ttbyte         TTSetSlideValue_ttslider(tt_obj o, ttint slide_value); 
 
-/* prototypes for TTGet*_ttprogressbar and TTSet*_ttprogressbar methods */
+/* prototypes for TTGet*_ttprogressbar and TTSet*_ttprogressbar methods */         
 
-/* prototypes for TTGet*_ttscrollpane and TTSet*_ttscrollpane methods */
+/* prototypes for TTGet*_ttscrollpane and TTSet*_ttscrollpane methods */    
 tt_obj         TTGetBarX_ttscrollpane(TT_ARG_READ tt_obj o);
-ttbyte         TTSetBarX_ttscrollpane(tt_obj o, tt_obj bar_x);
+ttbyte         TTSetBarX_ttscrollpane(tt_obj o, tt_obj bar_x);    
 tt_obj         TTGetBarY_ttscrollpane(TT_ARG_READ tt_obj o);
-ttbyte         TTSetBarY_ttscrollpane(tt_obj o, tt_obj bar_y);
+ttbyte         TTSetBarY_ttscrollpane(tt_obj o, tt_obj bar_y); 
 
-/* prototypes for TTGet*_ttwindow and TTSet*_ttwindow methods */
-ttopaque         TTGetTitleLen_ttwindow(TT_ARG_READ tt_obj o);
-TT_ARG_ARRAY((_F(title_len))) ttbyte *         TTGetTitle_ttwindow(TT_ARG_READ tt_obj o);
+/* prototypes for TTGet*_ttwindow and TTSet*_ttwindow methods */    
+ttopaque         TTGetTitleLen_ttwindow(TT_ARG_READ tt_obj o);    
+TT_ARG_ARRAY((_F(title_len))) ttbyte *         TTGetTitle_ttwindow(TT_ARG_READ tt_obj o); 
 
-/* prototypes for TTGet*_ttframe and TTSet*_ttframe methods */
+/* prototypes for TTGet*_ttframe and TTSet*_ttframe methods */    
 tt_obj         TTGetMenubar_ttframe(TT_ARG_READ tt_obj o);
-ttbyte         TTSetMenubar_ttframe(tt_obj o, tt_obj menubar);
+ttbyte         TTSetMenubar_ttframe(tt_obj o, tt_obj menubar); 
 
-/* prototypes for TTGet*_ttscroller and TTSet*_ttscroller methods */
-tt_obj         TTGetScrollpane_ttscroller(TT_ARG_READ tt_obj o);
+/* prototypes for TTGet*_ttscroller and TTSet*_ttscroller methods */    
+tt_obj         TTGetScrollpane_ttscroller(TT_ARG_READ tt_obj o); 
 
-/* prototypes for TTGet*_ttmenuitem and TTSet*_ttmenuitem methods */
-ttopaque         TTGetNameLen_ttmenuitem(TT_ARG_READ tt_obj o);
-TT_ARG_ARRAY((_F(name_len))) ttbyte *         TTGetName_ttmenuitem(TT_ARG_READ tt_obj o);
+/* prototypes for TTGet*_ttmenuitem and TTSet*_ttmenuitem methods */    
+ttopaque         TTGetNameLen_ttmenuitem(TT_ARG_READ tt_obj o);    
+TT_ARG_ARRAY((_F(name_len))) ttbyte *         TTGetName_ttmenuitem(TT_ARG_READ tt_obj o); 
 
-/* prototypes for TTGet*_ttcheckmenuitem and TTSet*_ttcheckmenuitem methods */
+/* prototypes for TTGet*_ttcheckmenuitem and TTSet*_ttcheckmenuitem methods */ 
 
-/* prototypes for TTGet*_ttradiomenuitem and TTSet*_ttradiomenuitem methods */
+/* prototypes for TTGet*_ttradiomenuitem and TTSet*_ttradiomenuitem methods */ 
 
-/* prototypes for TTGet*_ttmenu and TTSet*_ttmenu methods */
-tt_obj         TTGetMenubar_ttmenu(TT_ARG_READ tt_obj o);
+/* prototypes for TTGet*_ttmenu and TTSet*_ttmenu methods */    
+tt_obj         TTGetMenubar_ttmenu(TT_ARG_READ tt_obj o); 
 
-/* prototypes for TTGet*_ttmenubar and TTSet*_ttmenubar methods */
+/* prototypes for TTGet*_ttmenubar and TTSet*_ttmenubar methods */ 
 
-/* prototypes for TTGet*_ttanytext and TTSet*_ttanytext methods */
-ttopaque         TTGetTextLen_ttanytext(TT_ARG_READ tt_obj o);
-TT_ARG_ARRAY((_F(text_len))) ttattr *         TTGetText_ttanytext(TT_ARG_READ tt_obj o);
+/* prototypes for TTGet*_ttanytext and TTSet*_ttanytext methods */    
+ttopaque         TTGetTextLen_ttanytext(TT_ARG_READ tt_obj o);    
+TT_ARG_ARRAY((_F(text_len))) ttattr *         TTGetText_ttanytext(TT_ARG_READ tt_obj o); 
 
-/* prototypes for TTGet*_tttextfield and TTSet*_tttextfield methods */
+/* prototypes for TTGet*_tttextfield and TTSet*_tttextfield methods */ 
 
-/* prototypes for TTGet*_tttextarea and TTSet*_tttextarea methods */
+/* prototypes for TTGet*_tttextarea and TTSet*_tttextarea methods */ 
 
-/* prototypes for TTGet*_tttheme and TTSet*_tttheme methods */
-ttopaque         TTGetNameLen_tttheme(TT_ARG_READ tt_obj o);
-TT_ARG_ARRAY((_F(name_len))) ttbyte *         TTGetName_tttheme(TT_ARG_READ tt_obj o);
+/* prototypes for TTGet*_tttheme and TTSet*_tttheme methods */    
+ttopaque         TTGetNameLen_tttheme(TT_ARG_READ tt_obj o);    
+TT_ARG_ARRAY((_F(name_len))) ttbyte *         TTGetName_tttheme(TT_ARG_READ tt_obj o);                 
 
-/* prototypes for TTGet*_ttapplication and TTSet*_ttapplication methods */
-ttopaque         TTGetNameLen_ttapplication(TT_ARG_READ tt_obj o);
+/* prototypes for TTGet*_ttapplication and TTSet*_ttapplication methods */    
+ttopaque         TTGetNameLen_ttapplication(TT_ARG_READ tt_obj o);    
 TT_ARG_ARRAY((_F(name_len))) ttbyte *         TTGetName_ttapplication(TT_ARG_READ tt_obj o);
 
 

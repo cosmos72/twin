@@ -1,5 +1,7 @@
 
 
+
+
 /* This file was automatically generated with m4 from m4/libTw2_i386.m4, do not edit! */
 
 /*
@@ -17,6 +19,8 @@
  */
 
 /* clang-format off */
+
+
 
 
         .align 4
@@ -494,6 +498,31 @@ Tw_ConfigureWindow:
         .size         Tw_ConfigureWindow,.L_ConfigureWindow-Tw_ConfigureWindow
 
 
+  
+        .align 4
+        .type         _Tw_i386_call_2,@function
+_Tw_i386_call_2:
+        pushl $2
+        call _Tw_EncodeCall
+        popl %ecx
+        popl %ecx
+        ret
+.L_i386_call_2:
+        .size         _Tw_i386_call_2,.L_i386_call_2-_Tw_i386_call_2
+
+  
+        .align 4
+        .type         _Tw_i386_call_0,@function
+_Tw_i386_call_0:
+        pushl $0
+        call _Tw_EncodeCall
+        popl %ecx
+        popl %ecx
+        ret
+.L_i386_call_0:
+        .size         _Tw_i386_call_0,.L_i386_call_0-_Tw_i386_call_0
+
+
         .align 4
 .globl Tw_FindRowByCodeWindow
         .type         Tw_FindRowByCodeWindow,@function
@@ -513,31 +542,6 @@ Tw_CreateGroup:
         jmp _Tw_i386_call_0
 .L_CreateGroup:
         .size         Tw_CreateGroup,.L_CreateGroup-Tw_CreateGroup
-
-
-
-        .align 4
-        .type         _Tw_i386_call_2,@function
-_Tw_i386_call_2:
-        pushl $2
-        call _Tw_EncodeCall
-        popl %ecx
-        popl %ecx
-        ret
-.L_i386_call_2:
-        .size         _Tw_i386_call_2,.L_i386_call_2-_Tw_i386_call_2
-
-
-        .align 4
-        .type         _Tw_i386_call_0,@function
-_Tw_i386_call_0:
-        pushl $0
-        call _Tw_EncodeCall
-        popl %ecx
-        popl %ecx
-        ret
-.L_i386_call_0:
-        .size         _Tw_i386_call_0,.L_i386_call_0-_Tw_i386_call_0
 
 
         .align 4
@@ -924,38 +928,6 @@ Tw_SetServerUid:
 
 
 
-        .align 4
-.globl Tw_OpenExtension
-        .type         Tw_OpenExtension,@function
-Tw_OpenExtension:
-        pushl $81
-        jmp _Tw_i386_call_0
-.L_OpenExtension:
-        .size         Tw_OpenExtension,.L_OpenExtension-Tw_OpenExtension
-
-
-        .align 4
-.globl Tw_CallBExtension
-        .type         Tw_CallBExtension,@function
-Tw_CallBExtension:
-        pushl $82
-        jmp _Tw_i386_call_0
-.L_CallBExtension:
-        .size         Tw_CallBExtension,.L_CallBExtension-Tw_CallBExtension
-
-
-        .align 4
-.globl Tw_CloseExtension
-        .type         Tw_CloseExtension,@function
-Tw_CloseExtension:
-        pushl $83
-        jmp _Tw_i386_call_2
-.L_CloseExtension:
-        .size         Tw_CloseExtension,.L_CloseExtension-Tw_CloseExtension
-
-
-
-
 
         .align 4
         .type         _Tw_i386_call_3,@function
@@ -967,3 +939,4 @@ _Tw_i386_call_3:
         ret
 .L_i386_call_3:
         .size         _Tw_i386_call_3,.L_i386_call_3-_Tw_i386_call_3
+

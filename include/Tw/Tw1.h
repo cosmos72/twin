@@ -24,10 +24,8 @@ extern tdisplay Tw_DefaultD;
 #ifdef __GNUC__
 /* GCC has variable-arguments macros (they are ugly and tricky, but work) */
 #define TwFindLFunction(Function...) Tw_FindLFunction(Tw_DefaultD, ##Function)
-#define TwCallLExtension(id, proto, args_n...) Tw_CallLExtension(Tw_DefaultD, id, proto, ##args_n)
 #else
 byte TwFindLFunction(void *Function, ...);
-tany TwCallLExtension(textension id, TW_CONST byte *proto, topaque args_n, ...);
 #endif
 
 #include <Tw/common1_m4.h>

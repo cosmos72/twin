@@ -143,6 +143,3 @@
 
 #define TwSetServerUid(a1, a2)                Tw_SetServerUid(Tw_DefaultD, a1, a2)
 
-#define TwOpenExtension(a1, a2)                Tw_OpenExtension(Tw_DefaultD, a1, a2)
-#define TwCallBExtension(a1, a2, a3, a4)                Tw_CallBExtension(Tw_DefaultD, a1, a2, a3, a4)
-#define TwCloseExtension(a1)                Tw_CloseExtension(Tw_DefaultD, a1)

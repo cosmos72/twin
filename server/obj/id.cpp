@@ -145,7 +145,6 @@ byte AssignId(const fn_obj Fn_Obj, obj o) {
     case menu_magic:
     case msgport_magic:
     case mutex_magic:
-    case extension_magic:
       i = Fn_Obj->Magic >> magic_shift;
       return _AssignId(i, o);
     default:

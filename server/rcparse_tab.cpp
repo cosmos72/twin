@@ -254,11 +254,11 @@ extern int yydebug;
 union YYSTYPE
 {
 
-    ldat         val;
-    ldat_list        *val_list;
+    ldat	 val;
+    ldat_list	*val_list;
     str          _string;
     byte         imm;
-    node         _node;
+    node	 _node;
 
 
 };
@@ -2231,12 +2231,12 @@ yyreturn:
 #ifdef DEBUG_YACC
 static void yyprint(FILE *file, int type, void *value) {
     if (type == NUMBER)
-        fprintf (file, " %d", ((YYSTYPE *)value)->val);
+	fprintf (file, " %d", ((YYSTYPE *)value)->val);
     else if (type == STRING)
-        fprintf (file, " \"%s\"", ((YYSTYPE *)value)->_string);
+	fprintf (file, " \"%s\"", ((YYSTYPE *)value)->_string);
     else if (type == GLOBAL_FLAG || type == FLAG_FUNC ||
-        type == EASY_FUNC || type == COLOR)
-        fprintf (file, " %s", TokenName(((YYSTYPE *)value)->val));
+	type == EASY_FUNC || type == COLOR)
+	fprintf (file, " %s", TokenName(((YYSTYPE *)value)->val));
 }
 #endif
 

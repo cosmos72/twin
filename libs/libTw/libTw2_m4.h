@@ -431,7 +431,7 @@ void Tw_RestackChildrenRow(tw_d TwD, tobj a1, uldat a2, TW_CONST trow *a3) {
     , n(a2)
     , n((a2) * sizeof(tobj)), N(a3));
 }
- 
+
 void Tw_CirculateChildrenRow(tw_d TwD, tobj a1, byte a2) {
     _Tw_EncodeCall(ENCODE_FL_VOID, order_CirculateChildrenRow, TwD 
     , n(a1)
@@ -620,27 +620,6 @@ byte Tw_SetServerUid(tw_d TwD, uldat a1, byte a2) {
     , n(a1)
     , n(a2));
 }
-
-
-textension Tw_OpenExtension(tw_d TwD, byte a1, TW_CONST char *a2) {
-    return (tobj)_Tw_EncodeCall(0, order_OpenExtension, TwD 
-    , n(a1)
-    , n((a1) * sizeof(char)), N(a2));
-}
-
-tany Tw_CallBExtension(tw_d TwD, textension a1, topaque a2, TW_CONST byte *a3, TW_CONST byte *a4) {
-    return (tany)_Tw_EncodeCall(0, order_CallBExtension, TwD 
-    , n(a1)
-    , n(a2)
-    , n((a2) * sizeof(byte)), N(a3)
-    , n((2) * sizeof(byte)), N(a4));
-}
-
-void Tw_CloseExtension(tw_d TwD, textension a1) {
-    _Tw_EncodeCall(ENCODE_FL_VOID, order_CloseExtension, TwD 
-    , n(a1));
-}
-
 
 
 

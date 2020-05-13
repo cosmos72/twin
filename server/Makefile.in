@@ -193,17 +193,16 @@ twin_LDADD = $(LDADD)
 am__dirstamp = $(am__leading_dot)dirstamp
 am_twin_server_OBJECTS = alloc.$(OBJEXT) builtin.$(OBJEXT) \
 	data.$(OBJEXT) dl.$(OBJEXT) dl_helper.$(OBJEXT) draw.$(OBJEXT) \
-	extensions/ext_query.$(OBJEXT) extreg.$(OBJEXT) hw.$(OBJEXT) \
-	hw_multi.$(OBJEXT) main.$(OBJEXT) methods.$(OBJEXT) \
-	missing.$(OBJEXT) obj/all.$(OBJEXT) obj/display_hw.$(OBJEXT) \
-	obj/extension.$(OBJEXT) obj/gadget.$(OBJEXT) \
-	obj/group.$(OBJEXT) obj/id.$(OBJEXT) obj/menu.$(OBJEXT) \
-	obj/menuitem.$(OBJEXT) obj/module.$(OBJEXT) obj/msg.$(OBJEXT) \
-	obj/msgport.$(OBJEXT) obj/mutex.$(OBJEXT) obj/obj.$(OBJEXT) \
-	obj/row.$(OBJEXT) obj/screen.$(OBJEXT) obj/widget.$(OBJEXT) \
-	obj/window.$(OBJEXT) printk.$(OBJEXT) privilege.$(OBJEXT) \
-	remote.$(OBJEXT) resize.$(OBJEXT) scroller.$(OBJEXT) \
-	util.$(OBJEXT)
+	extreg.$(OBJEXT) hw.$(OBJEXT) hw_multi.$(OBJEXT) \
+	main.$(OBJEXT) methods.$(OBJEXT) missing.$(OBJEXT) \
+	obj/all.$(OBJEXT) obj/display_hw.$(OBJEXT) \
+	obj/gadget.$(OBJEXT) obj/group.$(OBJEXT) obj/id.$(OBJEXT) \
+	obj/menu.$(OBJEXT) obj/menuitem.$(OBJEXT) obj/module.$(OBJEXT) \
+	obj/msg.$(OBJEXT) obj/msgport.$(OBJEXT) obj/mutex.$(OBJEXT) \
+	obj/obj.$(OBJEXT) obj/row.$(OBJEXT) obj/screen.$(OBJEXT) \
+	obj/widget.$(OBJEXT) obj/window.$(OBJEXT) printk.$(OBJEXT) \
+	privilege.$(OBJEXT) remote.$(OBJEXT) resize.$(OBJEXT) \
+	scroller.$(OBJEXT) util.$(OBJEXT)
 twin_server_OBJECTS = $(am_twin_server_OBJECTS)
 twin_server_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(LIBSTL)
@@ -240,16 +239,15 @@ am__depfiles_remade = ./$(DEPDIR)/alloc.Po ./$(DEPDIR)/builtin.Po \
 	./$(DEPDIR)/scroller.Po ./$(DEPDIR)/shm.Plo \
 	./$(DEPDIR)/socket.Plo ./$(DEPDIR)/tterm.Plo \
 	./$(DEPDIR)/tty.Plo ./$(DEPDIR)/twin-wrapper.Po \
-	./$(DEPDIR)/util.Po ./$(DEPDIR)/wm.Plo \
-	extensions/$(DEPDIR)/ext_query.Po obj/$(DEPDIR)/all.Po \
-	obj/$(DEPDIR)/display_hw.Po obj/$(DEPDIR)/extension.Po \
-	obj/$(DEPDIR)/gadget.Po obj/$(DEPDIR)/group.Po \
-	obj/$(DEPDIR)/id.Po obj/$(DEPDIR)/menu.Po \
-	obj/$(DEPDIR)/menuitem.Po obj/$(DEPDIR)/module.Po \
-	obj/$(DEPDIR)/msg.Po obj/$(DEPDIR)/msgport.Po \
-	obj/$(DEPDIR)/mutex.Po obj/$(DEPDIR)/obj.Po \
-	obj/$(DEPDIR)/row.Po obj/$(DEPDIR)/screen.Po \
-	obj/$(DEPDIR)/widget.Po obj/$(DEPDIR)/window.Po
+	./$(DEPDIR)/util.Po ./$(DEPDIR)/wm.Plo obj/$(DEPDIR)/all.Po \
+	obj/$(DEPDIR)/display_hw.Po obj/$(DEPDIR)/gadget.Po \
+	obj/$(DEPDIR)/group.Po obj/$(DEPDIR)/id.Po \
+	obj/$(DEPDIR)/menu.Po obj/$(DEPDIR)/menuitem.Po \
+	obj/$(DEPDIR)/module.Po obj/$(DEPDIR)/msg.Po \
+	obj/$(DEPDIR)/msgport.Po obj/$(DEPDIR)/mutex.Po \
+	obj/$(DEPDIR)/obj.Po obj/$(DEPDIR)/row.Po \
+	obj/$(DEPDIR)/screen.Po obj/$(DEPDIR)/widget.Po \
+	obj/$(DEPDIR)/window.Po
 am__mv = mv -f
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
@@ -540,9 +538,9 @@ AM_CPPFLAGS = -I$(top_srcdir)/include $(LTDLINCL) -DPKG_LIBDIR="\"$(pkglibdir)\"
 twin_CPPFLAGS = -I$(top_srcdir)/include $(LTDLINCL) -DBINDIR="\"$(bindir)\""
 twdisplay_SOURCES = alloc.cpp display.cpp dl_helper.cpp missing.cpp hw.cpp
 twin_SOURCES = wrapper.c
-twin_server_SOURCES = alloc.cpp builtin.cpp data.cpp dl.cpp dl_helper.cpp draw.cpp extensions/ext_query.cpp \
+twin_server_SOURCES = alloc.cpp builtin.cpp data.cpp dl.cpp dl_helper.cpp draw.cpp \
                         extreg.cpp hw.cpp hw_multi.cpp main.cpp methods.cpp missing.cpp \
-                        obj/all.cpp obj/display_hw.cpp obj/extension.cpp obj/gadget.cpp obj/group.cpp \
+                        obj/all.cpp obj/display_hw.cpp obj/gadget.cpp obj/group.cpp \
                         obj/id.cpp obj/menu.cpp obj/menuitem.cpp obj/module.cpp obj/msg.cpp obj/msgport.cpp \
                         obj/mutex.cpp obj/obj.cpp obj/row.cpp obj/screen.cpp obj/widget.cpp obj/window.cpp \
                         printk.cpp privilege.cpp remote.cpp resize.cpp scroller.cpp util.cpp
@@ -698,14 +696,6 @@ twdisplay$(EXEEXT): $(twdisplay_OBJECTS) $(twdisplay_DEPENDENCIES) $(EXTRA_twdis
 twin$(EXEEXT): $(twin_OBJECTS) $(twin_DEPENDENCIES) $(EXTRA_twin_DEPENDENCIES) 
 	@rm -f twin$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(twin_OBJECTS) $(twin_LDADD) $(LIBS)
-extensions/$(am__dirstamp):
-	@$(MKDIR_P) extensions
-	@: > extensions/$(am__dirstamp)
-extensions/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) extensions/$(DEPDIR)
-	@: > extensions/$(DEPDIR)/$(am__dirstamp)
-extensions/ext_query.$(OBJEXT): extensions/$(am__dirstamp) \
-	extensions/$(DEPDIR)/$(am__dirstamp)
 obj/$(am__dirstamp):
 	@$(MKDIR_P) obj
 	@: > obj/$(am__dirstamp)
@@ -714,8 +704,6 @@ obj/$(DEPDIR)/$(am__dirstamp):
 	@: > obj/$(DEPDIR)/$(am__dirstamp)
 obj/all.$(OBJEXT): obj/$(am__dirstamp) obj/$(DEPDIR)/$(am__dirstamp)
 obj/display_hw.$(OBJEXT): obj/$(am__dirstamp) \
-	obj/$(DEPDIR)/$(am__dirstamp)
-obj/extension.$(OBJEXT): obj/$(am__dirstamp) \
 	obj/$(DEPDIR)/$(am__dirstamp)
 obj/gadget.$(OBJEXT): obj/$(am__dirstamp) \
 	obj/$(DEPDIR)/$(am__dirstamp)
@@ -780,7 +768,6 @@ uninstall-binSCRIPTS:
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
-	-rm -f extensions/*.$(OBJEXT)
 	-rm -f obj/*.$(OBJEXT)
 
 distclean-compile:
@@ -817,10 +804,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/twin-wrapper.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/util.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wm.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@extensions/$(DEPDIR)/ext_query.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@obj/$(DEPDIR)/all.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@obj/$(DEPDIR)/display_hw.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@obj/$(DEPDIR)/extension.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@obj/$(DEPDIR)/gadget.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@obj/$(DEPDIR)/group.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@obj/$(DEPDIR)/id.Po@am__quote@ # am--include-marker
@@ -1101,8 +1086,6 @@ clean-generic:
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
 	-test . = "$(srcdir)" || test -z "$(CONFIG_CLEAN_VPATH_FILES)" || rm -f $(CONFIG_CLEAN_VPATH_FILES)
-	-rm -f extensions/$(DEPDIR)/$(am__dirstamp)
-	-rm -f extensions/$(am__dirstamp)
 	-rm -f obj/$(DEPDIR)/$(am__dirstamp)
 	-rm -f obj/$(am__dirstamp)
 
@@ -1146,10 +1129,8 @@ distclean: distclean-recursive
 	-rm -f ./$(DEPDIR)/twin-wrapper.Po
 	-rm -f ./$(DEPDIR)/util.Po
 	-rm -f ./$(DEPDIR)/wm.Plo
-	-rm -f extensions/$(DEPDIR)/ext_query.Po
 	-rm -f obj/$(DEPDIR)/all.Po
 	-rm -f obj/$(DEPDIR)/display_hw.Po
-	-rm -f obj/$(DEPDIR)/extension.Po
 	-rm -f obj/$(DEPDIR)/gadget.Po
 	-rm -f obj/$(DEPDIR)/group.Po
 	-rm -f obj/$(DEPDIR)/id.Po
@@ -1241,10 +1222,8 @@ maintainer-clean: maintainer-clean-recursive
 	-rm -f ./$(DEPDIR)/twin-wrapper.Po
 	-rm -f ./$(DEPDIR)/util.Po
 	-rm -f ./$(DEPDIR)/wm.Plo
-	-rm -f extensions/$(DEPDIR)/ext_query.Po
 	-rm -f obj/$(DEPDIR)/all.Po
 	-rm -f obj/$(DEPDIR)/display_hw.Po
-	-rm -f obj/$(DEPDIR)/extension.Po
 	-rm -f obj/$(DEPDIR)/gadget.Po
 	-rm -f obj/$(DEPDIR)/group.Po
 	-rm -f obj/$(DEPDIR)/id.Po

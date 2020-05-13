@@ -384,7 +384,7 @@ inline ldat alienDecodeArg(uldat id, const char *Format, uldat n, tsfield a, uld
     fail = -fail;
     break;
   case 'V':
-    nlen = sockLengths(id, n, a);
+    nlen = sockLengths(id, View<s_tsfield>(a, n));
     c = (byte)*Format;
     /* ensure type size WAS negotiated */
     if (AlienMagic(Slot)[c]) {
@@ -422,7 +422,8 @@ inline ldat alienDecodeArg(uldat id, const char *Format, uldat n, tsfield a, uld
       c = (byte)*Format;
       /* ensure type size WAS negotiated */
       if (AlienMagic(Slot)[c]) {
-        if (!nlen || (Left(nlen) && nlen == sockLengths(id, n, a) * AlienMagic(Slot)[c])) {
+        if (!nlen ||
+            (Left(nlen) && nlen == sockLengths(id, View<s_tsfield>(a, n)) * AlienMagic(Slot)[c])) {
           PopAddr(s, const byte, nlen, av);
           a[n] _cvec = av;
           a[n] _len = nlen / AlienMagic(Slot)[c] * TwinMagicData[c];
@@ -451,7 +452,7 @@ inline ldat alienDecodeArg(uldat id, const char *Format, uldat n, tsfield a, uld
     fail = -fail;
     break;
   case 'X':
-    nlen = sockLengths(id, n, a) * SIZEOF(uldat);
+    nlen = sockLengths(id, View<s_tsfield>(a, n)) * SIZEOF(uldat);
     c = (byte)*Format - base_magic_CHR;
     if (Left(nlen)) {
       PopAddr(s, const byte, nlen, av);
@@ -571,7 +572,7 @@ static void alienMultiplexB(uldat id) {
       a[n - 1] _len = 0;
     }
 
-    fullMultiplexS(id, n, a);
+    fullMultiplexS(id, Span<s_tsfield>(a, n));
   }
 
   for (nlen = 0; mask; mask >>= 1, nlen++) {
@@ -1040,106 +1041,6 @@ static void alienSendMsg(msgport MsgPort, msg Msg) {
   Slot = save_Slot;
   Fd = save_Fd;
 }
-
-#ifdef CONF_EXT
-
-#define _obj .TWS_field_obj
-#define _any .TWS_field_scalar
-#define _vec .TWS_field_vecV
-#define _len .TWS_field_vecL
-#define _type .type
-
-static byte alienDecodeExtension(tany *Len, const byte **Data, tany *Args_n, tsfield a) {
-  static byte type_warned = 0;
-  topaque n = 0;
-  ldat fail = 1;
-  tany len, left = *Len;
-  const byte *data = *Data;
-  tany args_n = *Args_n;
-  udat t;
-
-  while (fail > 0 && n < args_n) {
-    switch ((t = a[n] _type)) {
-
-#define CASE_fix(type, fixtype)                                                                    \
-  case CAT(TWS_, type):                                                                            \
-    /* ensure type size WAS negotiated */                                                          \
-    if ((len = AlienSizeof(type, Slot)) && left >= len) {                                          \
-      type an;                                                                                     \
-                                                                                                   \
-      left -= len;                                                                                 \
-      POP(data, type, an);                                                                         \
-      a[n] _any = (tany)fixtype(an);                                                               \
-    } else                                                                                         \
-      fail = -fail;                                                                                \
-    break
-#define CASE_(type) CASE_fix(type, alienFixIdentity)
-#define CASE_tcell() CASE_fix(tcell, alienMaybeFixDecodeTCell)
-
-    case TWS_tcolor:
-      /*FALLTHROUGH*/
-      CASE_(byte);
-      CASE_(dat);
-      CASE_(ldat);
-      CASE_(topaque);
-      CASE_(tany);
-      CASE_(trune);
-      CASE_tcell();
-#undef CASE_tcell
-#undef CASE_fix
-#undef CASE_
-
-    case TWS_vec | TWS_vecW | TWS_byte:
-      /* ensure (topaque) size WAS negotiated */
-      if ((len = AlienSizeof(topaque, Slot)) && left >= len) {
-        topaque nlen;
-
-        left -= len;
-        POP(data, topaque, nlen);
-        a[n] _len = nlen;
-
-        if (!nlen || Left(nlen)) {
-          const void *addr;
-          left -= nlen;
-          PopAddr(data, const byte, nlen, addr);
-          a[n] _cvec = addr;
-          break;
-        }
-      }
-      fail = -fail;
-      break;
-    default:
-      if (type_warned < 5) {
-        type_warned = 5;
-        printk("twin: sockDecodeExtension(): got a call with unknown type 0x%02X' !\n", (int)t);
-      }
-      fail = -fail;
-      break;
-    }
-
-    if (fail <= 0)
-      break;
-
-    fail++;
-    n++;
-  }
-
-  if (fail > 0) {
-    *Len -= data - *Data;
-    *Data = data;
-    *Args_n = n;
-  }
-
-  return fail > 0;
-}
-
-#undef _obj
-#undef _any
-#undef _vec
-#undef _len
-#undef _type
-
-#endif /* CONF_EXT */
 
 #undef SIZEOF
 #undef REPLY

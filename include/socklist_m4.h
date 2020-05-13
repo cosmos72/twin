@@ -163,6 +163,3 @@ EL(NotifySelection)
 
 EL(SetServerUid)
 
-EL(OpenExtension)
-EL(CallBExtension)
-EL(CloseExtension)

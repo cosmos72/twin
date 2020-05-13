@@ -54,15 +54,15 @@
 /* public, public_set and final methods */
 
 
-
+ 
 /* ttobj methods */
-
-
+                    
+ 
 /* ttclass methods */
 
-
+ 
 /* ttobject methods */
-
+                
 void TTRef_ttobject(tt_obj o) {
     ttobject a1;
     LOCK;
@@ -88,9 +88,9 @@ ttbyte TTSetUserData_ttobject(tt_obj o, ttany user_data) {
     UNLK;
     return a0;
 }
-
+ 
 /* ttvector methods */
-
+    
 ttany TTGetAt_ttvector(TT_ARG_READ tt_obj o, ttopaque pos) {
     ttvector a1;
     ttany a0 = (ttany)0;
@@ -99,7 +99,7 @@ ttany TTGetAt_ttvector(TT_ARG_READ tt_obj o, ttopaque pos) {
         a0 = a1->Class->GetAt(a1, pos);
     UNLK;
     return a0;
-}
+}    
 ttbyte TTSetAt_ttvector(tt_obj o, ttopaque pos, ttany value) {
     ttvector a1;
     ttbyte a0 = (ttbyte)0;
@@ -190,7 +190,7 @@ ttbyte TTAddV_ttvector(tt_obj o, ttopaque pos, ttopaque value_n, TT_ARG_ARRAY((1
         a0 = AddV_ttvector(a1, pos, value_n, values);
     UNLK;
     return a0;
-}
+}    
 ttbyte TTAddY_ttvector(tt_obj o, ttopaque pos, ttopaque value_n, TT_ARG_READ TT_ARG_ARRAY((_P(2))) ttany * values) {
     ttvector a1;
     ttbyte a0 = (ttbyte)0;
@@ -199,7 +199,7 @@ ttbyte TTAddY_ttvector(tt_obj o, ttopaque pos, ttopaque value_n, TT_ARG_READ TT_
         a0 = a1->Class->AddY(a1, pos, value_n, values);
     UNLK;
     return a0;
-}
+}    
 ttopaque TTContainsValue_ttvector(TT_ARG_READ tt_obj o, ttopaque pos_start, ttany value) {
     ttvector a1;
     ttopaque a0 = (ttopaque)0;
@@ -217,7 +217,7 @@ ttbyte TTRemoveAt_ttvector(tt_obj o, ttopaque pos) {
         a0 = RemoveAt_ttvector(a1, pos);
     UNLK;
     return a0;
-}
+}    
 ttbyte TTRemoveRange_ttvector(tt_obj o, ttopaque pos_start, ttopaque pos_n) {
     ttvector a1;
     ttbyte a0 = (ttbyte)0;
@@ -227,13 +227,13 @@ ttbyte TTRemoveRange_ttvector(tt_obj o, ttopaque pos_start, ttopaque pos_n) {
     UNLK;
     return a0;
 }
-
+ 
 /* ttfield methods */
 
-
+ 
 /* ttmethod methods */
 
-
+ 
 /* ttevent methods */
 
 tt_obj TTCreate_ttevent(ttuint evtype, ttuint evcode, ttuint evflags) {
@@ -251,7 +251,7 @@ void TTFire_ttevent(TT_ARG_DIE tt_obj ev, TT_ARG_READ tt_obj o) {
     UNLK;
     return ;
 }
-
+ 
 /* tteventbig methods */
 
 tt_obj TTCreate8_tteventbig(ttuint evtype, ttuint evcode, ttuint evflags, ttshort x, ttshort y, ttshort w, ttshort h, ttany value, ttany old_value, ttopaque data_len, TT_ARG_READ TT_ARG_ARRAY((_P(10))) ttbyte * data) {
@@ -275,7 +275,7 @@ tt_obj TTCreate4s4_tteventbig(ttuint evtype, ttuint evcode, ttuint evflags, ttan
     UNLK;
     return a0;
 }
-
+ 
 /* ttbitmask methods */
 
 tt_obj TTCreate_ttbitmask(ttany value) {
@@ -434,7 +434,7 @@ ttbyte TTCombineB_ttbitmask(tt_obj o, TT_ARG_READ tt_obj value, ttuint truth_tab
     UNLK;
     return a0;
 }
-
+ 
 /* tteventmask methods */
 
 tt_obj TTCreateB_tteventmask(TT_ARG_DIE tt_obj evtype_mask, TT_ARG_DIE tt_obj evcode_mask, TT_ARG_DIE tt_obj component_mask) {
@@ -491,10 +491,10 @@ ttbyte TTSetTruthTable_tteventmask(tt_obj o, ttuint truth_table) {
     UNLK;
     return a0;
 }
-
+ 
 /* ttcallback methods */
-
-
+    
+ 
 /* ttlistener methods */
 
 tt_obj TTCreate_ttlistener(tt_obj o, ttuint evtype, ttuint lflags, TT_ARG_READ ttlistener_fn function, ttany arg) {
@@ -595,7 +595,7 @@ tt_obj TTCreateExpose_ttlistener(tt_obj o, ttuint lflags, TT_ARG_READ ttlistener
         a0 = (tt_obj)OBJ2ID(CreateExpose_ttlistener(a1, lflags, function));
     UNLK;
     return a0;
-}
+}    
 void TTAddTo_ttlistener(tt_obj o, tt_obj c) {
     ttlistener a1;
     LOCK;
@@ -603,7 +603,7 @@ void TTAddTo_ttlistener(tt_obj o, tt_obj c) {
         a1->Class->AddTo(a1, ID2(ttcomponent,c));
     UNLK;
     return ;
-}
+}    
 void TTRemove_ttlistener(tt_obj o) {
     ttlistener a1;
     LOCK;
@@ -630,7 +630,7 @@ ttbyte TTSetEventMask_ttlistener(tt_obj o, TT_ARG_DIE tt_obj event_mask) {
     UNLK;
     return a0;
 }
-
+ 
 /* tttimer methods */
 
 tt_obj TTCreateR_tttimer(tt_obj r, ttuint lflags, TT_ARG_READ ttlistener_fn function, ttopaque arg_component_n, ttopaque arg_timer_n, TT_ARG_DIE tt_obj args, ttany delay_t, ttany delay_f) {
@@ -658,7 +658,7 @@ void TTSetDelay_tttimer(tt_obj o, ttany delay_t, ttany delay_s) {
         SetDelay_tttimer(a1, delay_t, delay_s);
     UNLK;
     return ;
-}
+}    
 void TTSetEnabled_tttimer(tt_obj o, ttbyte enabled) {
     tttimer a1;
     LOCK;
@@ -666,7 +666,7 @@ void TTSetEnabled_tttimer(tt_obj o, ttbyte enabled) {
         a1->Class->SetEnabled(a1, enabled);
     UNLK;
     return ;
-}
+}    
 ttbyte TTIsEnabled_tttimer(TT_ARG_READ tt_obj o) {
     tttimer a1;
     ttbyte a0 = (ttbyte)0;
@@ -676,7 +676,7 @@ ttbyte TTIsEnabled_tttimer(TT_ARG_READ tt_obj o) {
     UNLK;
     return a0;
 }
-
+ 
 /* ttcomponent methods */
 
 void TTAddListener_ttcomponent(tt_obj o, tt_obj l) {
@@ -730,9 +730,9 @@ tt_obj TTGetData_ttcomponent(TT_ARG_READ tt_obj o, TT_ARG_READ TT_ARG_ARRAY_Z tt
     UNLK;
     return a0;
 }
-
+ 
 /* ttdata methods */
-
+        
 ttbyte TTSetData_ttdata(tt_obj o, ttany data) {
     ttdata a1;
     ttbyte a0 = (ttbyte)0;
@@ -742,9 +742,9 @@ ttbyte TTSetData_ttdata(tt_obj o, ttany data) {
     UNLK;
     return a0;
 }
-
+ 
 /* ttvisible methods */
-
+    
 void TTAddTo_ttvisible(tt_obj o, tt_obj parent, ttany constraint) {
     ttvisible a1;
     LOCK;
@@ -752,7 +752,7 @@ void TTAddTo_ttvisible(tt_obj o, tt_obj parent, ttany constraint) {
         AddTo_ttvisible(a1, ID2(ttvisible,parent), constraint);
     UNLK;
     return ;
-}
+}    
 void TTValidate_ttvisible(tt_obj o) {
     ttvisible a1;
     LOCK;
@@ -760,7 +760,7 @@ void TTValidate_ttvisible(tt_obj o) {
         a1->Class->Validate(a1);
     UNLK;
     return ;
-}
+}    
 void TTRemove_ttvisible(tt_obj o) {
     ttvisible a1;
     LOCK;
@@ -768,7 +768,7 @@ void TTRemove_ttvisible(tt_obj o) {
         Remove_ttvisible(a1);
     UNLK;
     return ;
-}
+}    
 void TTInvalidate_ttvisible(tt_obj o) {
     ttvisible a1;
     LOCK;
@@ -776,7 +776,7 @@ void TTInvalidate_ttvisible(tt_obj o) {
         a1->Class->Invalidate(a1);
     UNLK;
     return ;
-}
+}    
 void TTSetVisible_ttvisible(tt_obj o, ttbyte visible) {
     ttvisible a1;
     LOCK;
@@ -784,7 +784,7 @@ void TTSetVisible_ttvisible(tt_obj o, ttbyte visible) {
         SetVisible_ttvisible(a1, visible);
     UNLK;
     return ;
-}
+}    
 ttbyte TTSetTheme_ttvisible(tt_obj o, TT_ARG_READ tt_obj theme) {
     ttvisible a1;
     ttbyte a0 = (ttbyte)0;
@@ -793,7 +793,7 @@ ttbyte TTSetTheme_ttvisible(tt_obj o, TT_ARG_READ tt_obj theme) {
         a0 = SetTheme_ttvisible(a1, ID2(tttheme,theme));
     UNLK;
     return a0;
-}
+}    
 void TTDraw_ttvisible(tt_obj o, ttshort x, ttshort y, ttshort w, ttshort h, ttshort pitch, TT_ARG_READ TT_ARG_ARRAY((_P(5),*,_P(6))) ttbyte * asciidata, TT_ARG_READ TT_ARG_ARRAY((_P(5),*,_P(6))) ttfont * fontdata, TT_ARG_READ TT_ARG_ARRAY((_P(5),*,_P(6))) ttattr * attrdata) {
     ttvisible a1;
     LOCK;
@@ -801,7 +801,7 @@ void TTDraw_ttvisible(tt_obj o, ttshort x, ttshort y, ttshort w, ttshort h, ttsh
         a1->Class->Draw(a1, x, y, w, h, pitch, asciidata, fontdata, attrdata);
     UNLK;
     return ;
-}
+}    
 void TTBuiltinRepaint_ttvisible(tt_obj o, ttshort x, ttshort y, ttshort w, ttshort h) {
     ttvisible a1;
     LOCK;
@@ -836,10 +836,10 @@ void TTAdd_ttvisible(tt_obj o, tt_obj child, ttany constraint) {
     UNLK;
     return ;
 }
-
+ 
 /* ttlayout methods */
-
-
+        
+ 
 /* ttboxlayout methods */
 
 tt_obj TTCreate_ttboxlayout(ttany orientation) {
@@ -849,19 +849,19 @@ tt_obj TTCreate_ttboxlayout(ttany orientation) {
     UNLK;
     return a0;
 }
-
+ 
 /* ttborderlayout methods */
 
-
+ 
 /* ttnative methods */
-
+    
 tt_obj TTGetRoot_ttnative(void) {
     tt_obj a0 = (tt_obj)(opaque)0;
     LOCK;
     a0 = (tt_obj)OBJ2ID(TClass_ttnative->GetRoot());
     UNLK;
     return a0;
-}
+}    
 ttshort TTGetW_ttnative(TT_ARG_READ tt_obj o) {
     ttnative a1;
     ttshort a0 = (ttshort)0;
@@ -870,7 +870,7 @@ ttshort TTGetW_ttnative(TT_ARG_READ tt_obj o) {
         a0 = a1->Class->GetW(a1);
     UNLK;
     return a0;
-}
+}    
 ttshort TTGetH_ttnative(TT_ARG_READ tt_obj o) {
     ttnative a1;
     ttshort a0 = (ttshort)0;
@@ -887,9 +887,9 @@ tt_obj TTCreate_ttnative(ttany native_value) {
     UNLK;
     return a0;
 }
-
+ 
 /* ttwidget methods */
-
+    
 void TTSetLayout_ttwidget(tt_obj o, tt_obj l) {
     ttwidget a1;
     LOCK;
@@ -897,7 +897,7 @@ void TTSetLayout_ttwidget(tt_obj o, tt_obj l) {
         SetLayout_ttwidget(a1, ID2(ttlayout,l));
     UNLK;
     return ;
-}
+}    
 ttbyte TTSetXY_ttwidget(tt_obj o, ttshort x, ttshort y) {
     ttwidget a1;
     ttbyte a0 = (ttbyte)0;
@@ -906,7 +906,7 @@ ttbyte TTSetXY_ttwidget(tt_obj o, ttshort x, ttshort y) {
         a0 = SetXY_ttwidget(a1, x, y);
     UNLK;
     return a0;
-}
+}    
 ttbyte TTSetWH_ttwidget(tt_obj o, ttshort w, ttshort h) {
     ttwidget a1;
     ttbyte a0 = (ttbyte)0;
@@ -915,7 +915,7 @@ ttbyte TTSetWH_ttwidget(tt_obj o, ttshort w, ttshort h) {
         a0 = SetWH_ttwidget(a1, w, h);
     UNLK;
     return a0;
-}
+}    
 ttbyte TTSetXl_ttwidget(tt_obj o, ttint xl) {
     ttwidget a1;
     ttbyte a0 = (ttbyte)0;
@@ -924,7 +924,7 @@ ttbyte TTSetXl_ttwidget(tt_obj o, ttint xl) {
         a0 = SetXl_ttwidget(a1, xl);
     UNLK;
     return a0;
-}
+}    
 ttbyte TTSetYl_ttwidget(tt_obj o, ttint yl) {
     ttwidget a1;
     ttbyte a0 = (ttbyte)0;
@@ -933,7 +933,7 @@ ttbyte TTSetYl_ttwidget(tt_obj o, ttint yl) {
         a0 = SetYl_ttwidget(a1, yl);
     UNLK;
     return a0;
-}
+}    
 ttbyte TTSetWl_ttwidget(tt_obj o, ttint wl) {
     ttwidget a1;
     ttbyte a0 = (ttbyte)0;
@@ -942,7 +942,7 @@ ttbyte TTSetWl_ttwidget(tt_obj o, ttint wl) {
         a0 = SetWl_ttwidget(a1, wl);
     UNLK;
     return a0;
-}
+}    
 ttbyte TTSetHl_ttwidget(tt_obj o, ttint hl) {
     ttwidget a1;
     ttbyte a0 = (ttbyte)0;
@@ -951,7 +951,7 @@ ttbyte TTSetHl_ttwidget(tt_obj o, ttint hl) {
         a0 = SetHl_ttwidget(a1, hl);
     UNLK;
     return a0;
-}
+}    
 ttbyte TTSetTooltip_ttwidget(tt_obj o, TT_ARG_DIE tt_obj t) {
     ttwidget a1;
     ttbyte a0 = (ttbyte)0;
@@ -1024,9 +1024,9 @@ ttbyte TTSetH_ttwidget(tt_obj o, ttshort h) {
     UNLK;
     return a0;
 }
-
+ 
 /* ttlabel methods */
-
+    
 void TTSetFontD_ttlabel(tt_obj o, ttopaque text_len, TT_ARG_DIE TT_ARG_ARRAY((_P(2))) ttfont * text) {
     ttlabel a1;
     LOCK;
@@ -1060,9 +1060,9 @@ tt_obj TTCreate_ttlabel(TT_ARG_READ TT_ARG_ARRAY_Z ttbyte * text) {
     UNLK;
     return a0;
 }
-
+ 
 /* tttooltip methods */
-
+    
 ttbyte TTSetWidget_tttooltip(TT_ARG_DIE tt_obj o, tt_obj w) {
     tttooltip a1;
     ttbyte a0 = (ttbyte)0;
@@ -1072,9 +1072,9 @@ ttbyte TTSetWidget_tttooltip(TT_ARG_DIE tt_obj o, tt_obj w) {
     UNLK;
     return a0;
 }
-
+ 
 /* ttbuttongroup methods */
-
+    
 void TTAdd_ttbuttongroup(tt_obj o, tt_obj r) {
     ttbuttongroup a1;
     LOCK;
@@ -1082,7 +1082,7 @@ void TTAdd_ttbuttongroup(tt_obj o, tt_obj r) {
         Add_ttbuttongroup(a1, ID2(ttradiobutton,r));
     UNLK;
     return ;
-}
+}    
 void TTRemove_ttbuttongroup(tt_obj o, tt_obj r) {
     ttbuttongroup a1;
     LOCK;
@@ -1090,7 +1090,7 @@ void TTRemove_ttbuttongroup(tt_obj o, tt_obj r) {
         Remove_ttbuttongroup(a1, ID2(ttradiobutton,r));
     UNLK;
     return ;
-}
+}    
 void TTSetChecked_ttbuttongroup(tt_obj o, tt_obj r) {
     ttbuttongroup a1;
     LOCK;
@@ -1099,9 +1099,9 @@ void TTSetChecked_ttbuttongroup(tt_obj o, tt_obj r) {
     UNLK;
     return ;
 }
-
+ 
 /* ttanybutton methods */
-
+        
 void TTSetAttrD_ttanybutton(tt_obj o, ttshort w, ttshort h, ttshort pitch, TT_ARG_DIE TT_ARG_ARRAY((_P(3),*,_P(4))) ttattr * text) {
     ttanybutton a1;
     LOCK;
@@ -1144,9 +1144,9 @@ tt_obj TTCreate_ttanybutton(ttshort w, ttshort h, ttshort pitch, TT_ARG_READ TT_
     UNLK;
     return a0;
 }
-
+ 
 /* ttbutton methods */
-
+    
 void TTSetPressed_ttbutton(tt_obj o, ttbyte pressed) {
     ttbutton a1;
     LOCK;
@@ -1171,9 +1171,9 @@ tt_obj TTCreate_ttbutton(ttshort w, ttshort h, ttshort pitch, TT_ARG_READ TT_ARG
     UNLK;
     return a0;
 }
-
+ 
 /* ttcheckbutton methods */
-
+    
 void TTSetChecked_ttcheckbutton(tt_obj o, ttbyte checked) {
     ttcheckbutton a1;
     LOCK;
@@ -1198,7 +1198,7 @@ tt_obj TTCreate_ttcheckbutton(ttshort w, ttshort h, ttshort pitch, TT_ARG_READ T
     UNLK;
     return a0;
 }
-
+ 
 /* ttradiobutton methods */
 
 void TTAddToGroup_ttradiobutton(tt_obj o, tt_obj g) {
@@ -1224,9 +1224,9 @@ tt_obj TTCreate_ttradiobutton(ttshort w, ttshort h, ttshort pitch, TT_ARG_READ T
     UNLK;
     return a0;
 }
-
+ 
 /* ttanyscroll methods */
-
+            
 ttbyte TTSetOrientation_ttanyscroll(tt_obj o, ttbyte orientation) {
     ttanyscroll a1;
     ttbyte a0 = (ttbyte)0;
@@ -1235,7 +1235,7 @@ ttbyte TTSetOrientation_ttanyscroll(tt_obj o, ttbyte orientation) {
         a0 = SetOrientation_ttanyscroll(a1, orientation);
     UNLK;
     return a0;
-}
+}    
 ttbyte TTSetSize_ttanyscroll(tt_obj o, ttint size) {
     ttanyscroll a1;
     ttbyte a0 = (ttbyte)0;
@@ -1244,7 +1244,7 @@ ttbyte TTSetSize_ttanyscroll(tt_obj o, ttint size) {
         a0 = SetSize_ttanyscroll(a1, size);
     UNLK;
     return a0;
-}
+}    
 ttbyte TTSetRealSize_ttanyscroll(tt_obj o, ttint real_size) {
     ttanyscroll a1;
     ttbyte a0 = (ttbyte)0;
@@ -1253,7 +1253,7 @@ ttbyte TTSetRealSize_ttanyscroll(tt_obj o, ttint real_size) {
         a0 = SetRealSize_ttanyscroll(a1, real_size);
     UNLK;
     return a0;
-}
+}    
 ttbyte TTSetViewSize_ttanyscroll(tt_obj o, ttint view_size) {
     ttanyscroll a1;
     ttbyte a0 = (ttbyte)0;
@@ -1262,7 +1262,7 @@ ttbyte TTSetViewSize_ttanyscroll(tt_obj o, ttint view_size) {
         a0 = SetViewSize_ttanyscroll(a1, view_size);
     UNLK;
     return a0;
-}
+}    
 ttbyte TTSetPosition_ttanyscroll(tt_obj o, ttint position) {
     ttanyscroll a1;
     ttbyte a0 = (ttbyte)0;
@@ -1272,7 +1272,7 @@ ttbyte TTSetPosition_ttanyscroll(tt_obj o, ttint position) {
     UNLK;
     return a0;
 }
-
+ 
 /* ttscrollbar methods */
 
 tt_obj TTCreate1_ttscrollbar(ttbyte orientation) {
@@ -1289,9 +1289,9 @@ tt_obj TTCreate4_ttscrollbar(ttbyte orientation, ttint size, ttint real_size, tt
     UNLK;
     return a0;
 }
-
+ 
 /* ttslider methods */
-
+    
 ttbyte TTSetSlideMin_ttslider(tt_obj o, ttint slide_min) {
     ttslider a1;
     ttbyte a0 = (ttbyte)0;
@@ -1300,7 +1300,7 @@ ttbyte TTSetSlideMin_ttslider(tt_obj o, ttint slide_min) {
         a0 = SetSlideMin_ttslider(a1, slide_min);
     UNLK;
     return a0;
-}
+}    
 ttbyte TTSetSlideMax_ttslider(tt_obj o, ttint slide_max) {
     ttslider a1;
     ttbyte a0 = (ttbyte)0;
@@ -1309,7 +1309,7 @@ ttbyte TTSetSlideMax_ttslider(tt_obj o, ttint slide_max) {
         a0 = SetSlideMax_ttslider(a1, slide_max);
     UNLK;
     return a0;
-}
+}    
 ttbyte TTSetSlideValue_ttslider(tt_obj o, ttint slide_value) {
     ttslider a1;
     ttbyte a0 = (ttbyte)0;
@@ -1326,7 +1326,7 @@ tt_obj TTCreate_ttslider(ttbyte orientation, ttint real_size) {
     UNLK;
     return a0;
 }
-
+ 
 /* ttprogressbar methods */
 
 tt_obj TTCreate_ttprogressbar(ttbyte orientation) {
@@ -1336,7 +1336,7 @@ tt_obj TTCreate_ttprogressbar(ttbyte orientation) {
     UNLK;
     return a0;
 }
-
+ 
 /* ttscrollpane methods */
 
 tt_obj TTCreate_ttscrollpane(ttshort w, ttshort h) {
@@ -1345,7 +1345,7 @@ tt_obj TTCreate_ttscrollpane(ttshort w, ttshort h) {
     a0 = (tt_obj)OBJ2ID(Create_ttscrollpane(w, h));
     UNLK;
     return a0;
-}
+}    
 ttbyte TTSetBarX_ttscrollpane(tt_obj o, tt_obj bar_x) {
     ttscrollpane a1;
     ttbyte a0 = (ttbyte)0;
@@ -1354,7 +1354,7 @@ ttbyte TTSetBarX_ttscrollpane(tt_obj o, tt_obj bar_x) {
         a0 = SetBarX_ttscrollpane(a1, ID2(ttscrollbar,bar_x));
     UNLK;
     return a0;
-}
+}    
 ttbyte TTSetBarY_ttscrollpane(tt_obj o, tt_obj bar_y) {
     ttscrollpane a1;
     ttbyte a0 = (ttbyte)0;
@@ -1364,9 +1364,9 @@ ttbyte TTSetBarY_ttscrollpane(tt_obj o, tt_obj bar_y) {
     UNLK;
     return a0;
 }
-
+ 
 /* ttwindow methods */
-
+    
 ttbyte TTSetTitle_ttwindow(tt_obj o, TT_ARG_READ TT_ARG_ARRAY_Z ttbyte * title) {
     ttwindow a1;
     ttbyte a0 = (ttbyte)0;
@@ -1376,9 +1376,9 @@ ttbyte TTSetTitle_ttwindow(tt_obj o, TT_ARG_READ TT_ARG_ARRAY_Z ttbyte * title) 
     UNLK;
     return a0;
 }
-
+ 
 /* ttframe methods */
-
+    
 ttbyte TTSetMenubar_ttframe(tt_obj o, TT_ARG_READ tt_obj m) {
     ttframe a1;
     ttbyte a0 = (ttbyte)0;
@@ -1395,7 +1395,7 @@ tt_obj TTCreate_ttframe(TT_ARG_READ TT_ARG_ARRAY_Z ttbyte * title) {
     UNLK;
     return a0;
 }
-
+ 
 /* ttscroller methods */
 
 tt_obj TTCreate_ttscroller(ttshort w, ttshort h) {
@@ -1405,19 +1405,19 @@ tt_obj TTCreate_ttscroller(ttshort w, ttshort h) {
     UNLK;
     return a0;
 }
-
+ 
 /* ttmenuitem methods */
 
-
+ 
 /* ttcheckmenuitem methods */
 
-
+ 
 /* ttradiomenuitem methods */
 
-
+ 
 /* ttmenu methods */
 
-
+ 
 /* ttmenubar methods */
 
 tt_obj TTGetDefault_ttmenubar(void) {
@@ -1427,16 +1427,16 @@ tt_obj TTGetDefault_ttmenubar(void) {
     UNLK;
     return a0;
 }
-
+ 
 /* ttanytext methods */
 
-
+ 
 /* tttextfield methods */
 
-
+ 
 /* tttextarea methods */
 
-
+ 
 /* tttheme methods */
 
 tt_obj TTGetDefault_tttheme(void) {
@@ -1446,7 +1446,7 @@ tt_obj TTGetDefault_tttheme(void) {
     UNLK;
     return a0;
 }
-
+ 
 /* ttapplication methods */
 
 tt_obj TTCreate_ttapplication(TT_ARG_READ TT_ARG_ARRAY_Z ttbyte * name) {
@@ -1463,3 +1463,9 @@ tt_obj TTGet_ttapplication(void) {
     UNLK;
     return a0;
 }
+
+
+
+
+
+

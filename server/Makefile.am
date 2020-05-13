@@ -24,9 +24,9 @@ twin_CPPFLAGS         = -I$(top_srcdir)/include $(LTDLINCL) -DBINDIR="\"$(bindir
 
 twdisplay_SOURCES     = alloc.cpp display.cpp dl_helper.cpp missing.cpp hw.cpp
 twin_SOURCES          = wrapper.c
-twin_server_SOURCES   = alloc.cpp builtin.cpp data.cpp dl.cpp dl_helper.cpp draw.cpp extensions/ext_query.cpp \
+twin_server_SOURCES   = alloc.cpp builtin.cpp data.cpp dl.cpp dl_helper.cpp draw.cpp \
                         extreg.cpp hw.cpp hw_multi.cpp main.cpp methods.cpp missing.cpp \
-                        obj/all.cpp obj/display_hw.cpp obj/extension.cpp obj/gadget.cpp obj/group.cpp \
+                        obj/all.cpp obj/display_hw.cpp obj/gadget.cpp obj/group.cpp \
                         obj/id.cpp obj/menu.cpp obj/menuitem.cpp obj/module.cpp obj/msg.cpp obj/msgport.cpp \
                         obj/mutex.cpp obj/obj.cpp obj/row.cpp obj/screen.cpp obj/widget.cpp obj/window.cpp \
                         printk.cpp privilege.cpp remote.cpp resize.cpp scroller.cpp util.cpp

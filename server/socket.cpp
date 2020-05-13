@@ -60,6 +60,8 @@
 #include "unaligned.h"
 #include "version.h"
 
+#include "stl/span.h"
+
 #include <Tw/Tw.h>
 #include <Tw/Twkeys.h>
 #include <Tw/Twstat.h>
@@ -429,12 +431,6 @@ static void sockRequestSelection(obj Owner, uldat ReqPrivate);
 
 static all sockGetAll(void);
 
-static byte sockDecodeExtension(topaque *Len, const byte **Data, topaque *Args_n, tsfield args);
-
-static extension sockOpenExtension(byte namelen, const char *name);
-static tany sockCallBExtension(extension e, topaque len, const byte *args, const byte *return_type);
-static void sockCloseExtension(extension e);
-
 /* Second: socket handling functions */
 
 static uldat MaxFunct, Slot, RequestN;
@@ -521,7 +517,7 @@ inline void TWS_2_proto(udat tws_type, char proto[2]) {
 #define vecW_ TWS_vecW
 
 /* here a[0] is the first arg, N is the number of args */
-static void sockMultiplex_S(uldat id, topaque N, tsfield a) {
+static void sockMultiplex_S(uldat id, Span<s_tsfield> a) {
   switch (id) {
 #include "socket1_m4.h"
   default:
@@ -530,27 +526,28 @@ static void sockMultiplex_S(uldat id, topaque N, tsfield a) {
 }
 
 /* here a[1] is the first arg, a[0] is the return value, N is the number of args + 1 */
-#define fullMultiplexS(Id, N, a)                                                                   \
+#define fullMultiplexS(Id, a)                                                                      \
   do {                                                                                             \
     if ((Id) == order_StatObj) {                                                                   \
-      if ((N) > 3) {                                                                               \
+      if ((a).size() > 3) {                                                                        \
         sockStat((obj)(a)[1] _obj, (udat)(a)[2] _any, (const byte *)(a)[3] _vec);                  \
       }                                                                                            \
     } else {                                                                                       \
-      sockMultiplex_S(Id, N, a);                                                                   \
+      sockMultiplex_S(Id, a);                                                                      \
     }                                                                                              \
   } while (0)
 
-/* here a[0] is the first arg, N is the number of args */
-static void sockMultiplexS(uldat id, topaque N, tsfield a) {
-  sockMultiplex_S(id, N, a);
+/* here a[0] is the first arg, a.size is the number of args */
+static void sockMultiplexS(uldat id, Span<s_tsfield> a) {
+  sockMultiplex_S(id, a);
   if (id < MaxFunct)
     a[0] _type = proto_2_TWS(sockF[id].Format);
 }
 
 /* code to return array lengths V(expr) and W(expr) */
-static uldat sockLengths(uldat id, uldat n, const tsfield a) {
+static uldat sockLengths(uldat id, View<s_tsfield> a) {
   uldat L = 0;
+  uldat n = a.size();
 
   switch (id) {
 
@@ -567,42 +564,6 @@ static uldat sockLengths(uldat id, uldat n, const tsfield a) {
   }
   return L;
 }
-
-#if 0 /* currently unused */
-
-inline udat MultiplexArgsV2S(uldat id, udat N, va_list va, tsfield a) {
-    const byte *Format = sockF[id].Format;
-    udat n;
-    byte c, t, size;
-
-    /* skip return value */
-    Format += 2;
-
-    for (n = 1; n < N && (c = *Format++); n++) {
-        t = *Format++;
-        if (t >= TWS_highest)
-            /*
-             * let (tobj) fields decade into (uldat),
-             * since in this case they are not real pointers.
-             */
-            t = TWS_uldat;
-        switch (c) {
-          case '_': case 'x':
-            a[n]_any = va_arg(va, tany);
-            break;
-          case 'W': case 'Y':
-            /* FALLTHROUGH */
-          case 'V': case 'X':
-            a[n]_vec = (const void *)(topaque)va_arg(va, tany);
-            break;
-          default:
-            return 0;
-        }
-    }
-    return n;
-}
-
-#endif /* 0 */ /* currently unused */
 
 TW_DECL_MAGIC(TwinMagicData);
 
@@ -697,7 +658,7 @@ inline ldat sockDecodeArg(uldat id, const char *Format, uldat n, tsfield a, ulda
     fail = -fail;
     break;
   case 'V':
-    nlen = sockLengths(id, n, a);
+    nlen = sockLengths(id, View<s_tsfield>(a, n));
     c = (byte)*Format;
     /* ensure type size WAS negotiated */
     if ((c <= TWS_tcolor || AlienMagic(Slot)[c])) {
@@ -720,7 +681,8 @@ inline ldat sockDecodeArg(uldat id, const char *Format, uldat n, tsfield a, ulda
       c = (byte)*Format;
       /* ensure type size WAS negotiated */
       if ((c <= TWS_tcolor || AlienMagic(Slot)[c])) {
-        if (!nlen || (Left(nlen) && nlen == sockLengths(id, n, a) * AlienMagic(Slot)[c])) {
+        if (!nlen ||
+            (Left(nlen) && nlen == sockLengths(id, View<s_tsfield>(a, n)) * AlienMagic(Slot)[c])) {
           PopAddr(s, const byte, nlen, av);
           a[n] _len = nlen;
           a[n] _cvec = av;
@@ -732,7 +694,7 @@ inline ldat sockDecodeArg(uldat id, const char *Format, uldat n, tsfield a, ulda
     fail = -fail;
     break;
   case 'X':
-    nlen = sockLengths(id, n, a) * sizeof(uldat);
+    nlen = sockLengths(id, View<s_tsfield>(a, n)) * sizeof(uldat);
     if (Left(nlen)) {
       c = (byte)*Format - base_magic_CHR;
       PopAddr(s, const byte, nlen, av);
@@ -825,7 +787,7 @@ static void sockMultiplexB(uldat id) {
       a[n - 1] _len = 0;
     }
 
-    fullMultiplexS(id, n, a);
+    fullMultiplexS(id, Span<s_tsfield>(a, n));
   }
 
   for (nlen = 0; mask; mask >>= 1, nlen++) {
@@ -1338,151 +1300,6 @@ static gadget sockFirstGadget(ggroup Group) {
 static all sockGetAll(void) {
   return All;
 }
-
-#ifdef CONF_EXT
-
-#define _obj .TWS_field_obj
-#define _any .TWS_field_scalar
-#define _vec .TWS_field_vecV
-#define _len .TWS_field_vecL
-
-#define _type .type
-
-#define void_ TWS_void
-#define obj_ TWS_obj
-#define vec_ TWS_vec
-#define vecW_ TWS_vecW
-
-static byte sockDecodeExtension(topaque *Len, const byte **Data, topaque *Args_n, tsfield a) {
-  static byte type_warned = 0;
-  topaque n = 0;
-  ldat fail = 1;
-  tany len, left = *Len;
-  const byte *data = *Data;
-  tany args_n = *Args_n;
-  udat t;
-
-#ifdef CONF_SOCKET_ALIEN
-  if (AlienXendian(Slot) != MagicNative)
-    return alienDecodeExtension(Len, Data, Args_n, a);
-#endif
-
-  while (fail > 0 && n < args_n) {
-    switch ((t = a[n] _type)) {
-
-#define CASE_(type)                                                                                \
-  case CAT(TWS_, type):                                                                            \
-    /* ensure type size WAS negotiated */                                                          \
-    if ((len = AlienSizeof(type, Slot)) && left >= len) {                                          \
-      type an;                                                                                     \
-                                                                                                   \
-      left -= len;                                                                                 \
-      Pop(data, type, an);                                                                         \
-      a[n] _any = (tany)an;                                                                        \
-    } else                                                                                         \
-      fail = -fail;                                                                                \
-    break
-
-    case TWS_tcolor:
-      /*FALLTHROUGH*/
-      CASE_(byte);
-      CASE_(dat);
-      CASE_(ldat);
-      CASE_(topaque);
-      CASE_(tany);
-      CASE_(trune);
-      CASE_(tcell);
-#undef CASE_
-
-    case TWS_vec | TWS_vecW | TWS_byte:
-      /* ensure (topaque) size WAS negotiated */
-      if ((len = AlienSizeof(topaque, Slot)) && left >= len) {
-        topaque nlen;
-
-        left -= len;
-        Pop(data, topaque, nlen);
-        a[n] _len = nlen;
-
-        if (nlen <= left) {
-          const void *addr;
-          left -= nlen;
-          PopAddr(data, const byte, nlen, addr);
-          a[n] _cvec = addr;
-          break;
-        }
-      }
-      fail = -fail;
-      break;
-    default:
-      if (type_warned < 5) {
-        type_warned = 5;
-        printk("twin: sockDecodeExtension(): got a call with unknown type 0x%02X' !\n", (int)t);
-      }
-      fail = -fail;
-      break;
-    }
-
-    if (fail <= 0)
-      break;
-
-    fail++;
-    n++;
-  }
-
-  if (fail > 0) {
-    *Len -= data - *Data;
-    *Data = data;
-    *Args_n = n;
-  }
-
-  return fail > 0;
-}
-
-static extension sockOpenExtension(byte namelen, const char *name) {
-  /*
-   * FIXME: loading an extension from a Slot without msgport
-   * results in the extension stay loaded at least until someone uses it
-   */
-  return Do(Query, extension)(namelen, name);
-}
-static void sockCloseExtension(extension e) {
-  msgport Owner;
-
-  if ((Owner = RemoteGetMsgPort(Slot)) && e && IS_EXTENSION(e))
-    Act(UnuseExtension, Owner)(Owner, e);
-}
-
-static tany sockCallBExtension(extension e, topaque len, const byte *data,
-                               const byte *return_type) {
-  msgport M;
-
-  if (e && IS_EXTENSION(e)) {
-    /* ensure we are registered as using the extension */
-    if ((M = RemoteGetMsgPort(Slot)))
-      Act(UseExtension, M)(M, e);
-
-    /* actually, we receive a (tsfield) instead of return_type and we pass it through */
-    return e->CallB(e, len, data, RemoveConst(return_type));
-  }
-  return (tany)0;
-}
-
-#else /* !CONF_EXT */
-
-static byte sockDecodeExtension(topaque *len, const byte **data, topaque *args_n, tsfield args) {
-  return tfalse;
-}
-static extension sockOpenExtension(byte namelen, const char *name) {
-  return (extension)0;
-}
-static void sockCloseExtension(extension e) {
-}
-static tany sockCallBExtension(extension e, topaque len, const byte *data,
-                               const byte *return_type) {
-  return (tany)0;
-}
-
-#endif /* CONF_EXT */
 
 /*
  * turn the (msg) into a (tmsg) and write it on the MsgPort file descriptor.
@@ -2729,7 +2546,6 @@ EXTERN_C byte InitModule(module Module) {
     RegisterExt(Remote, KillSlot, sockKillSlot);
     RegisterExt(Socket, SendMsg, sockSendMsg);
     RegisterExt(Socket, InitAuth, sockInitAuth);
-    RegisterExt(Socket, DecodeExtension, sockDecodeExtension);
     RegisterExt(Socket, MultiplexS, sockMultiplexS);
 
     m = TWIN_MAGIC;
@@ -2767,6 +2583,5 @@ EXTERN_C void QuitModule(module Module) {
   UnRegisterExt(Remote, KillSlot, sockKillSlot);
   UnRegisterExt(Socket, SendMsg, sockSendMsg);
   UnRegisterExt(Socket, InitAuth, sockInitAuth);
-  UnRegisterExt(Socket, DecodeExtension, sockDecodeExtension);
   UnRegisterExt(Socket, MultiplexS, sockMultiplexS);
 }

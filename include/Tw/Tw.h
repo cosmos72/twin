@@ -96,8 +96,6 @@ typedef tobj tmenu;
 typedef tobj tmsgport;
 /** type for server-side mutexes (used for inter-client synchronization) */
 typedef tobj tmutex;
-/** type for server extensions */
-typedef tobj textension;
 /** type for server topmost object */
 typedef tobj tall;
 
@@ -346,15 +344,6 @@ void Tw_Close(tdisplay TwD);
 
 /** return 1 if server supports all given libTw functions */
 byte Tw_FindLFunction(tdisplay TwD, ...);
-/**
- * call given server extension (opened with Tw_OpenExtension()).
- * Caller must cast all optional args to (ttany),
- * including strings and arrays.
- *
- * The same cast rules apply to arguments implicitly passed to
- * Tw_CallVExtension().
- */
-tany Tw_CallLExtension(tdisplay TwD, textension id, TW_CONST byte *proto, topaque args_n, ...);
 
 #include <Tw/common_m4.h>
 #include <Tw/proto_m4.h>

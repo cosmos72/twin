@@ -30,7 +30,6 @@ struct s_fn_struct {
   fn_mutex mutex;
   fn_msg msg;
   fn_module module;
-  fn_extension extension;
   fn_display_hw display_hw;
   fn_obj all;
 };
@@ -49,7 +48,6 @@ extern fn_struct FnStruct;
 #define Fn_mutex (FnStruct.mutex)
 #define Fn_msg (FnStruct.msg)
 #define Fn_module (FnStruct.module)
-#define Fn_extension (FnStruct.extension)
 #define Fn_display_hw (FnStruct.display_hw)
 
 #endif /* _TWIN_FN_H */

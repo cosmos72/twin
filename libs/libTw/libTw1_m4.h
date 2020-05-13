@@ -242,9 +242,3 @@
 { Tw_SetServerUid, 12,
 6, "Tw_SetServerUid", "0" "_" TWS_byte_STR"_" TWS_uldat_STR"_" TWS_byte_STR },
 
-{ Tw_OpenExtension, 13,
-6, "Tw_OpenExtension", "0" "x" magic_id_STR(extension)"_" TWS_byte_STR"V" TWS_char_STR },
-{ Tw_CallBExtension, 14,
-10, "Tw_CallBExtension", "0" "O" TWS_tany_STR"x" magic_id_STR(extension)"_" TWS_topaque_STR"V" TWS_byte_STR"V" TWS_byte_STR },
-{ Tw_CloseExtension, 14,
-4, "Tw_CloseExtension", "0" "v" TWS_void_STR"x" magic_id_STR(extension) },

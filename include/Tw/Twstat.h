@@ -103,9 +103,6 @@ void Tw_DeleteStat(tdisplay TwD, tslist TSL);
 tsfield Tw_FindStat(tdisplay TwD, tslist TSL, udat hash);
 void Tw_ChangeField(tdisplay TwD, tobj Obj, udat field, uldat CLEARMask, uldat XORMask);
 
-/* WARNING: here targs[0] is the return value, ! */
-tany Tw_CallTExtension(tdisplay TwD, textension eid, topaque args_n, tsfield targs);
-
 #define TwStat(Id, h) Tw_Stat(Tw_DefaultD, Id, h)
 
 /* GCC has variable-arguments macros (they are ugly and tricky, but work) */
@@ -126,9 +123,6 @@ tslist TwCloneStatL(tobj Id, udat hN, ...);
 #define TwCloneStatV(Id, hN, h) Tw_CloneStatV(Tw_DefaultD, Id, hN, h)
 #define TwDeleteStat(TSL) Tw_DeleteStat(Tw_DefaultD, TSL)
 #define TwFindStat(TSL, hash) Tw_FindStat(Tw_DefaultD, TSL, hash)
-
-/* WARNING: here targs[0] is the return value ! */
-#define TwCallTExtension(eid, args_n, targs) Tw_CallTExtension(Tw_DefaultD, eid, args_n, targs)
 
 #ifdef __cplusplus
 }

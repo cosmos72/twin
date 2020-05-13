@@ -32,7 +32,6 @@ typedef struct s_msg *msg;
 typedef struct s_msgport *msgport;
 typedef struct s_mutex *mutex;
 typedef struct s_module *module;
-typedef struct s_extension *extension;
 typedef struct s_display_hw *display_hw;
 
 typedef struct s_fn_obj *fn_obj;
@@ -48,7 +47,6 @@ typedef struct s_fn_msg *fn_msg;
 typedef struct s_fn_msgport *fn_msgport;
 typedef struct s_fn_mutex *fn_mutex;
 typedef struct s_fn_module *fn_module;
-typedef struct s_fn_extension *fn_extension;
 typedef struct s_fn_display_hw *fn_display_hw;
 
 typedef struct s_fn_struct fn_struct;

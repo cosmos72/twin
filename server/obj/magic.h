@@ -30,7 +30,6 @@ enum e_magic_id {
   msg_magic_id = 0xA,
   mutex_magic_id = 0xB,
   module_magic_id = 0xC,
-  extension_magic_id = 0xD,
   display_hw_magic_id = 0xE,
   all_magic_id = 0xF,
 };
@@ -55,7 +54,6 @@ enum e_magic_id {
 #define msg_magic_STR "\x3A"
 #define mutex_magic_STR "\x3B"
 #define module_magic_STR "\x3C"
-#define extension_magic_STR "\x3D"
 #define display_hw_magic_STR "\x3E"
 #define all_magic_STR "\x3F"
 
@@ -80,7 +78,6 @@ enum e_magic {
   msg_magic = 0xA3A61CE4ul, /* this must match tmsg_magic in include/Tw/Tw_defs.h */
   mutex_magic = 0xB0FADED0ul,
   module_magic = 0xCB0F1278ul,
-  extension_magic = 0xDE81EC51ul,
   display_hw_magic = 0xEDBCC609ul,
   all_magic = 0xFA11FA11ul,
 };

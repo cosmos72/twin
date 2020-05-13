@@ -9,7 +9,6 @@ CONF_WM_MENU="Window Manager"
 CONF_TERM_MENU="Terminal emulator"
 CONF_PRINTK_MENU="Messages logging"
 CONF_HW_MENU="Display hardware support"
-CONF_EXT_MENU="Server extensions"
 CONF_OPT_MENU="Runtime options"
 
 CONF__SHLIBS_HELP="Enable shared libraries"
@@ -44,8 +43,6 @@ CONF_HW_X11_HELP="HW support: X11"
 CONF_HW_TWIN_HELP="HW support: twin, native"
 CONF_HW_DISPLAY_HELP="HW support: twdisplay client as display"
 CONF_HW_GGI_HELP="HW support: libggi"
-CONF_EXT_HELP="Server extensions"
-CONF_EXT_TT_HELP="Server extension: Text Toolkit library (libTT)"
 CONF_OPT_SHADOWS_HELP="Runtime option: enable shadows"
 CONF_OPT_BLINK_HELP="Runtime option: enable blink/high background"
 CONF_OPT_CURSOR_ALWAYS_HELP="Runtime option: force always visible cursor"
@@ -99,10 +96,6 @@ menu CONF_HW
   yesmodno_truedep CONF_HW_TWIN CONF_SOCKET
   yesmodno_truedep CONF_HW_DISPLAY CONF_SOCKET
   yesmodno CONF_HW_GGI
-endmenu
-menu CONF_EXT
-  yesno CONF_EXT
-  yesmodno_truedep CONF_EXT_TT CONF_TT
 endmenu
 menu CONF_OPT
   msg "Warning: settings in ~/.twinrc or in system.twinrc"

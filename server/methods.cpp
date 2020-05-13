@@ -36,10 +36,6 @@
 #include <Tutf/Tutf.h>
 #include <Tutf/Tutf_defs.h>
 
-#ifdef CONF_EXT
-#include "extensions/ext_query.h"
-#endif
-
 /* some object-oriented ones not included in fn_obj */
 
 void *OverrideMth(void **where, void *OrigMth, void *NewMth) {
@@ -1860,7 +1856,6 @@ static void RemoveMsgPort(msgport MsgPort) {
 static void DeleteMsgPort(msgport MsgPort) {
   uldat count = 20;
   widget W;
-  extension *Es;
 
   if (MsgPort) {
     /*
@@ -1890,71 +1885,12 @@ static void DeleteMsgPort(msgport MsgPort) {
     DeleteList(MsgPort->FirstGroup);
     DeleteList(MsgPort->FirstMutex);
 
-    for (count = MsgPort->CountE, Es = MsgPort->Es; count; count--, Es++)
-      MsgPort->UnuseExtension(*Es);
-
     MsgPort->Remove();
     if (MsgPort->Name)
       FreeMem(MsgPort->Name);
 
     DeleteObj((obj)MsgPort);
   }
-}
-
-static byte GrowExtensionMsgPort(msgport M) {
-  uldat oldsize, size;
-  extension *newEs;
-
-  oldsize = M->SizeE;
-
-  size = oldsize < 2 ? 4 : oldsize + (oldsize >> 1);
-  if (size > MAXID)
-    size = MAXID;
-
-  if (!(newEs = (extension *)ReAllocMem0(M->Es,                       //
-                                         sizeof(extension) * oldsize, //
-                                         sizeof(extension) * size)))
-    return tfalse;
-
-  M->Es = newEs;
-  return ttrue;
-}
-
-static void UseExtensionMsgPort(msgport M, extension E) {
-  uldat count;
-  extension *Es;
-
-  if (M && E) {
-
-    for (count = M->CountE, Es = M->Es; count; count--, Es++) {
-      if (*Es == E)
-        /* already in use */
-        return;
-    }
-
-    if (M->CountE >= M->SizeE && !GrowExtensionMsgPort(M))
-      return;
-
-    M->Es[M->CountE++] = E;
-    E->Used++;
-  }
-}
-
-static void UnuseExtensionMsgPort(msgport M, extension E) {
-  uldat count;
-  extension *Es;
-
-  if (M && E)
-    for (count = M->CountE, Es = M->Es; count; count--, Es++) {
-      if (*Es == E) {
-        if (count > 1)
-          *Es = Es[count - 1];
-        M->CountE--;
-
-        if (!--E->Used)
-          E->Delete();
-      }
-    }
 }
 
 static struct s_fn_msgport _FnMsgPort = {
@@ -1965,8 +1901,6 @@ static struct s_fn_msgport _FnMsgPort = {
     (void (*)(msgport, udat, uldat, uldat))NoOp,
     /* msgport */
     &_FnObj,
-    UseExtensionMsgPort,
-    UnuseExtensionMsgPort,
 };
 
 /* mutex */
@@ -2079,45 +2013,6 @@ static struct s_fn_module _FnModule = {
     DlClose,
 };
 
-/* extension */
-
-static void DeleteExtension(extension E) {
-  fn_module Fn_Module;
-  msgport M;
-  extension *Es;
-  uldat i;
-
-  /* search for MsgPorts using this extension */
-  for (M = All->FirstMsgPort; M; M = M->Next) {
-    for (i = M->CountE, Es = M->Es; i; i--, Es++) {
-      if (E == *Es) {
-        M->UnuseExtension(E);
-        break;
-      }
-    }
-  }
-
-  /* used if the extension is NOT DlOpen()ed */
-  if (E->Quit)
-    E->Quit(E);
-
-  DeleteModule((module)E);
-}
-
-static struct s_fn_extension _FnExtension = {
-    extension_magic,                                              //
-    (void (*)(extension, all, extension, extension))InsertModule, //
-    (void (*)(extension))RemoveModule, DeleteExtension,
-    (void (*)(extension, udat, uldat, uldat))NoOp,
-    /* module */
-    &_FnObj, (byte(*)(extension))DlOpen, (void (*)(extension))DlClose, &_FnModule,
-#ifdef CONF_EXT
-    QueryExtension, /* exported by extensions/ext_query.c */
-#else
-    (extension(*)(byte, const char *))AlwaysNull, /* Query */
-#endif
-};
-
 /* display_hw */
 
 static void InsertDisplayHW(display_hw DisplayHW, all Parent, display_hw Prev, display_hw Next) {
@@ -2187,7 +2082,6 @@ static struct s_fn_display_hw _FnDisplayHW = {
 };
 
 fn_struct FnStruct = {
-    &_FnObj,   &_FnWidget, &_FnGadget,   &_FnWindow,    &_FnScreen,
-    &_FnGroup, &_FnRow,    &_FnMenuItem, &_FnMenu,      &_FnMsgPort,
-    &_FnMutex, &_FnMsg,    &_FnModule,   &_FnExtension, &_FnDisplayHW,
+    &_FnObj,      &_FnWidget, &_FnGadget,  &_FnWindow, &_FnScreen, &_FnGroup,  &_FnRow,
+    &_FnMenuItem, &_FnMenu,   &_FnMsgPort, &_FnMutex,  &_FnMsg,    &_FnModule, &_FnDisplayHW,
 };

@@ -209,7 +209,7 @@
     switch (n) {
       case 3: L = a[2]_any; break;
     }
-    break; 
+    break;
 
 
   case order_Create4MenuAny:
@@ -281,20 +281,6 @@
     switch (n) {
       case 4: L = TW_MAX_MIMELEN; break;
       case 6: L = a[5]_any; break;
-    }
-    break;
-
-
-
-  case order_OpenExtension:
-    switch (n) {
-      case 2: L = a[1]_any; break;
-    }
-    break;
-  case order_CallBExtension:
-    switch (n) {
-      case 3: L = a[2]_any; break;
-      case 4: L = 2; break;
     }
     break;
 

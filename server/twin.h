@@ -48,7 +48,6 @@
 #include "obj/msgport.h"
 #include "obj/mutex.h"
 #include "obj/module.h"
-#include "obj/extension.h"
 #include "obj/display_hw.h"
 #include "obj/all.h"
 #include "obj/fn.h"
@@ -77,8 +76,7 @@ enum s_fd {
 #define IS_MSGPORT(O) IS_OBJ(msgport, O)
 #define IS_MUTEX(O) IS_OBJ(mutex, O)
 #define IS_MSG(O) IS_OBJ(msg, O)
-#define IS_MODULE(O) (IS_OBJ(module, O) || IS_OBJ(extension, O))
-#define IS_EXTENSION(O) IS_OBJ(extension, O)
+#define IS_MODULE(O) IS_OBJ(module, O)
 #define IS_DISPLAY_HW(O) IS_OBJ(display_hw, O)
 #define IS_ALL(O) IS_OBJ(all, O)
 

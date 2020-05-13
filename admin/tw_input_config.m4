@@ -151,12 +151,6 @@ AC_ARG_ENABLE(hw-ggi,dnl
 enable_hw_ggi=yes
 )dnl
 
-dnl server extensions
-AC_ARG_ENABLE(ext,dnl
-[  --enable-ext[=yes|no]                  enable server extensions ],,
-enable_ext=yes
-)dnl
-
 enable_opt_shadows=yes
 enable_opt_blink=no
 enable_opt_cursor_always=no

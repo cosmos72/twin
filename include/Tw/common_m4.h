@@ -30,8 +30,8 @@ void Tw_MergeHyphensArgv(int argc, char **argv);
 
 /** change Tw_AllocMem(),Tw_ReAllocMem(),Tw_FreeMem() function pointers */
 void Tw_ConfigMalloc(void *(*my_malloc)(size_t),
-                     void *(*my_realloc)(void *, size_t),
-                     void  (*my_free)(void *));
+		     void *(*my_realloc)(void *, size_t),
+		     void  (*my_free)(void *));
 
 /** pointer to custom malloc() function; use Tw_ConfigMalloc() to change it */
 extern void *(*Tw_AllocMem)(size_t);
@@ -53,10 +53,10 @@ extern char *Tw_CloneStr(TW_CONST char *);
 extern trune *Tw_CloneStr2TRune(TW_CONST char *, size_t);
 
 
-#define Tw_CopyStr(From,To)                strcpy(To, From)
+#define Tw_CopyStr(From,To)		strcpy(To, From)
 
-#define Tw_CopyMem(From, To, Size)        memcpy(To, From, Size)
-#define Tw_MoveMem(From, To, Size)        memmove(To, From, Size)
+#define Tw_CopyMem(From, To, Size)	memcpy(To, From, Size)
+#define Tw_MoveMem(From, To, Size)	memmove(To, From, Size)
 
 
 
@@ -198,6 +198,3 @@ byte Tw_MainLoop(tdisplay TwD);
 void Tw_ExitMainLoop(tdisplay TwD);
 
 
-tany Tw_CallAExtension(tdisplay TwD, textension eid,TW_CONST byte *proto,topaque args_n,TW_CONST tany *args);
-/** see Tw_CallLExtension() for the rules about how to pass arguments to this function */
-tany Tw_CallVExtension(tdisplay TwD, textension eid,TW_CONST byte *proto,topaque args_n,va_list vargs);

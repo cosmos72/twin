@@ -227,8 +227,3 @@ DECL(void,SetDefaultListener, tfn_default_listener listener, void *arg)
 DECL(byte,DispatchMsg, tmsg Msg)
 DECL(byte,MainLoop)
 DECL(void,ExitMainLoop)
-
-
-DECL(tany, CallAExtension, textension eid, TW_CONST byte *proto, topaque args_n, TW_CONST tany *args)
-c_doxygen(/** see Tw_CallLExtension() for the rules about how to pass arguments to this function */)
-DECL(tany, CallVExtension, textension eid, TW_CONST byte *proto, topaque args_n, va_list vargs)

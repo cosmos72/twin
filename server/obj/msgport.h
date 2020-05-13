@@ -25,8 +25,6 @@ struct s_fn_msgport {
   void (*ChangeField)(msgport, udat field, uldat CLEARMask, uldat XORMask);
   /* msgport */
   fn_obj Fn_Obj;
-  void (*UseExtension)(msgport, extension);
-  void (*UnuseExtension)(msgport, extension);
 };
 
 struct s_msgport : public s_obj {
@@ -46,8 +44,6 @@ struct s_msgport : public s_obj {
   widget FirstW, LastW;         /* widgets owned by this MsgPort */
   ggroup FirstGroup, LastGroup; /* groups owned by this MsgPort */
   mutex FirstMutex, LastMutex;  /* mutexes owned by this MsgPort */
-  uldat CountE, SizeE;          /* number of extensions used by this MsgPort */
-  extension *Es;                /* extensions used by this MsgPort */
   display_hw AttachHW;          /* that was attached as told by MsgPort */
 
   static msgport Create(byte NameLen, const char *Name, tany PauseSec, tany PauseFraction,
@@ -69,12 +65,6 @@ struct s_msgport : public s_obj {
     Fn->Delete(this);
   }
   /* msgport */
-  void UseExtension(extension ext) {
-    Fn->UseExtension(this, ext);
-  }
-  void UnuseExtension(extension ext) {
-    Fn->UnuseExtension(this, ext);
-  }
 };
 
 /* MsgPort->WakeUp: */
