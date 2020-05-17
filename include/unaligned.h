@@ -8,23 +8,35 @@
 #ifndef _TWIN_UNALIGNED_H
 #define _TWIN_UNALIGNED_H
 
-#include <Tw/prefix.h>
+#include <string.h> // memcpy()
 
-#ifdef _TW_H
-#include <Tw/compiler.h>
-#else
-#include <compiler.h>
-#endif
-
-#define PushV(s, len, vec) (Tw(CopyMem)(vec, s, len), (s) += (len))
-#define PopV(s, len, vec) (Tw(CopyMem)(s, vec, len), (s) += (len))
+#define PopV(s, len, vec) (memcpy(vec, s, len), (s) += (len))
 #define PopAddr(s, type, len, ptr) ((ptr) = (len) ? (type *)(s) : (type *)0, (s) += (len))
+#define PushV(s, len, vec) (memcpy(s, vec, len), (s) += (len))
 
+#ifdef __cplusplus
+template <class T> inline byte *Pop(const byte *src, T &val) {
+  memcpy(&val, src, sizeof(T));
+  return const_cast<byte *>(src) + sizeof(T);
+}
+template <class T> inline char *Pop(const char *src, T &val) {
+  memcpy(&val, src, sizeof(T));
+  return const_cast<char *>(src) + sizeof(T);
+}
+template <class T> inline byte *Push(byte *dst, T val) {
+  memcpy(dst, &val, sizeof(T));
+  return dst + sizeof(T);
+}
+#define Pop(s, type, lval) ((s) = Pop<type>(s, lval))
+#define Push(s, type, val) ((s) = Push<type>(s, val))
+
+#else /* not C++ */
+#define Pop(s, type, lval) PopV(s, sizeof(type), &(lval))
 #define Push(s, type, val)                                                                         \
   do {                                                                                             \
     type __tmp = (val);                                                                            \
     PushV(s, sizeof(type), &__tmp);                                                                \
   } while (0)
-#define Pop(s, type, lval) PopV(s, sizeof(type), &(lval))
+#endif
 
 #endif /* _TWIN_UNALIGNED_H */
