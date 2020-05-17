@@ -70,25 +70,25 @@ static uldat FdSize, FdTop, FdBottom;
 /* functions */
 
 static uldat FdListGrow(void) {
-  uldat oldsize, size;
+  uldat old_n, new_n;
   fdlist *newFdList;
 
-  if ((oldsize = FdSize) == TW_MAXULDAT)
+  if ((old_n = FdSize) == TW_MAXULDAT)
     return TW_NOSLOT;
 
-  if ((size = oldsize < 64 ? 96 : oldsize + (oldsize >> 1)) < oldsize)
-    size = TW_MAXULDAT;
+  if ((new_n = old_n < 64 ? 96 : old_n + (old_n >> 1)) < old_n)
+    new_n = TW_MAXULDAT;
 
   if (!(newFdList =
-            (fdlist *)TwReAllocMem0(FdList, sizeof(fdlist) * oldsize, sizeof(fdlist) * size)))
+            (fdlist *)TwReAllocMem0(FdList, sizeof(fdlist) * old_n, sizeof(fdlist) * new_n)))
     return TW_NOSLOT;
 
-  for (FdSize = oldsize + 1; FdSize < size; FdSize++)
+  for (FdSize = old_n + 1; FdSize < new_n; FdSize++)
     newFdList[FdSize].Fd = TW_NOFD;
 
   FdList = newFdList;
 
-  return oldsize;
+  return old_n;
 }
 
 TW_INLINE uldat FdListGet(void) {

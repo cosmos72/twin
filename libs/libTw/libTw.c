@@ -268,9 +268,9 @@ void *Tw_AllocMem0(size_t len) {
 
 void *Tw_ReAllocMem0(void *mem, size_t old_len, size_t new_len) {
   void *newMem;
-  if ((newMem = Tw_ReAllocMem(mem, old_len * new_len)) != NULL) {
+  if ((newMem = Tw_ReAllocMem(mem, new_len)) != NULL) {
     if (new_len > old_len) {
-      memset((char *)newMem + new_len, '\0', new_len - old_len);
+      memset((char *)newMem + old_len, '\0', new_len - old_len);
     }
   }
   return newMem;
@@ -279,10 +279,10 @@ void *Tw_ReAllocMem0(void *mem, size_t old_len, size_t new_len) {
 /**
  * creates a copy of a chunk of memory
  */
-void *Tw_CloneMem(TW_CONST void *S, size_t len) {
-  void *T;
-  if (S && (T = Tw_AllocMem(len)))
-    return Tw_CopyMem(S, T, len);
+void *Tw_CloneMem(TW_CONST void *src, size_t len) {
+  void *dst;
+  if (src && (dst = Tw_AllocMem(len)))
+    return Tw_CopyMem(src, dst, len);
   return NULL;
 }
 /**
