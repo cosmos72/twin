@@ -58,20 +58,4 @@ AC_CACHE_CHECK(for gcc-compatible 'attribute((aligned(1)))', ac_cv_c_attribute_a
   ac_cv_c_attribute_aligned_1='__attribute__((aligned(1)))',
   ac_cv_c_attribute_aligned_1=no))
 
-AC_CACHE_CHECK(for gcc-compatible i386 inline assembly, ac_cv_prog_gcc_i386_asm, AC_TRY_COMPILE( [
-], [
-#ifdef __i386__
-#undef asm
-  asm ("\n\tmovl %eax,%eax"
-       "\n\tpushl %ecx"
-       "\n\tpushl [$]1"
-       "\n\tpopl %ecx"
-       "\n\tpopl %ecx");
-#else
-  choke me
-#endif
-],
-  ac_cv_prog_gcc_i386_asm=yes,
-  ac_cv_prog_gcc_i386_asm=no))
-
 ])

@@ -138,8 +138,6 @@ static void RemoveWidget(widget W) {
 }
 
 static void DeleteWidget(widget W) {
-  fn_obj Fn_Obj = W->Fn->Fn_Obj;
-
   W->UnMap();
   if (W->Hook) {
     W->RemoveHook(W->Hook, W->WhereHook);

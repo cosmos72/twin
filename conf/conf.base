@@ -14,7 +14,6 @@ CONF_OPT_MENU="Runtime options"
 CONF__SHLIBS_HELP="Enable shared libraries"
 CONF__MODULES_HELP="Enable shared modules"
 CONF__ALLOC_HELP="Use custom mmap() based malloc/free"
-CONF__ASM_HELP="Use hand-optimized assembler code if available"
 CONF_SOCKET_HELP="Support remote socket connections (libTw)"
 CONF_SOCKET_GZ_HELP=" -> Sockets: support gzip compression"
 CONF_SOCKET_PTHREADS_HELP=" -> Sockets: thread-safe libs (requires libpthread)"
@@ -55,7 +54,6 @@ menu CONF__
   yesno CONF__SHLIBS
   yesno CONF__MODULES
   yesno CONF__ALLOC
-  yesno CONF__ASM
 endmenu
 menu CONF_SOCKET
   yesmodno CONF_SOCKET

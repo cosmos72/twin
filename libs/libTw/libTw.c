@@ -87,8 +87,6 @@ TH_R_MUTEX_HELPER_DEFS(static);
 /* remove the `Obj' suffix from Tw_ChangeFieldObj() */
 #define Tw_ChangeFieldObj Tw_ChangeField
 
-#include "check_asm.h"
-
 #define Min2(a, b) ((a) < (b) ? (a) : (b))
 
 #ifdef CONF_SOCKET_PTHREADS
@@ -2100,26 +2098,7 @@ static uldat FindFunctionId(tw_d TwD, uldat order);
 #define ENCODE_FL_VOID 2
 #define ENCODE_FL_RETURN 2
 
-#if defined(CONF__ASM) && defined(TW_HAVE_ASM)
-
-#ifdef TW_HAVE_GCC_I386_ASM
-/*
- * and let _Tw_EncodeCall be visible from libTw2_i386.S:
- * it implements hand-optimized assembler version of Tw_* functions
- * that use different arguments, since they play tricks with the stack
- * (thus the saved_eip parameter) and using them, array sizes
- * are not placed as arguments before the array,
- * so must be calculated separately (done in EncodeArraySize())
- */
-tany _Tw_EncodeCall(uldat flags, uldat o, void *saved_eip, tw_d TwD, ...)
-#else /* !TW_HAVE_GCC_I386_ASM */
-#error CONF__ASM is enabled but no known assemler is supported (only gcc-i386 currently)
-#endif /* TW_HAVE_GCC_I386_ASM */
-
-#else  /* !(defined(CONF__ASM) && defined(TW_HAVE_ASM)) */
-static tany _Tw_EncodeCall(byte flags, uldat o, tw_d TwD, ...)
-#endif /* defined(CONF__ASM) && defined(TW_HAVE_ASM) */
-{
+static tany _Tw_EncodeCall(byte flags, uldat o, tw_d TwD, ...) {
   struct s_tsfield a[TW_MAX_ARGS_N];
   tsfield b;
   va_list va;
@@ -2174,17 +2153,7 @@ static tany _Tw_EncodeCall(byte flags, uldat o, tw_d TwD, ...)
   return a->TWS_field_scalar;
 }
 
-#if defined(CONF__ASM) && defined(TW_HAVE_ASM)
-
-uldat _Tw_FindFunction(tw_d TwD, byte Len, TW_CONST char *Name, byte ProtoLen,
-                       TW_CONST char *Proto);
-byte _Tw_SyncSocket(tw_d TwD);
-
-#else
-
 #include "libTw2_m4.h"
-
-#endif /* defined(CONF__ASM) && defined(TW_HAVE_ASM) */
 
 static byte Sync(tw_d TwD) {
   uldat left;

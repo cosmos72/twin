@@ -27,7 +27,6 @@ m4_define([TW_OUTPUT], [[
   echo                              >> include/twconfig.h
 
   tw_cfg CONF__ALLOC            "$enable__alloc"
-  tw_cfg CONF__ASM              "$enable__asm"
   tw_cfg CONF__DLOPEN           "$enable__dlopen"
   tw_cfg CONF_SOCKET            "$enable_socket"
   tw_cfg CONF_SOCKET_GZ         "$enable_socket_gz"

@@ -14,33 +14,6 @@
  * that will be written in the socket connection to the server.
  */
 
-#if defined(CONF__ASM) && defined(TW_HAVE_ASM)
-#define _ TWS_field_scalar
-/*
- * arguments of EncodeCall and EncodeArgs are different if using
- * asm functions Tw_* : array sizes are not placed as arguments
- * before the array, so must be calculated separately.
- */
-static topaque EncodeArraySize(fn_order o, uldat n, tsfield a) {
-  topaque L = 0;
-  switch (o) {
-
-#include "libTw3_m4.h"
-
-  case order_StatObj:
-    switch (n) {
-    case 3:
-      L = a[2]._;
-      break;
-    }
-  default:
-    break;
-  }
-  return L;
-}
-#undef _
-#endif /* defined(CONF__ASM) && defined(TW_HAVE_ASM) */
-
 /*
  * read (va_list va) and fill (tsfield a)
  *
@@ -72,11 +45,7 @@ TW_INLINE udat EncodeArgs(fn_order o, uldat *Space, va_list va, tsfield a) {
       case 'W':
       case 'Y':
         a->type = TWS_vec | TWS_vecW | t;
-#if defined(CONF__ASM) && defined(TW_HAVE_ASM)
-        arglen = EncodeArraySize(o, N, a - N);
-#else
         arglen = va_arg(va, tany);
-#endif
         if (!(a->TWS_field_vecV = (void *)(topaque)va_arg(va, tany)))
           arglen = 0;
         a->TWS_field_vecL = arglen;
@@ -85,12 +54,7 @@ TW_INLINE udat EncodeArgs(fn_order o, uldat *Space, va_list va, tsfield a) {
       case 'V':
       case 'X':
         a->type = TWS_vec | t;
-        space +=
-#if defined(CONF__ASM) && defined(TW_HAVE_ASM)
-            a->TWS_field_vecL = EncodeArraySize(o, N, a - N);
-#else
-            a->TWS_field_vecL = va_arg(va, tany);
-#endif
+        space += a->TWS_field_vecL = va_arg(va, tany);
         a->TWS_field_vecV = (void *)(topaque)va_arg(va, tany);
         break;
       default:

@@ -23,9 +23,6 @@ if test "$enable__shlibs" = y; then
 fi
 
 echo_cc_feat=
-if test "$enable__asm" = y; then
-  echo_cc_feat="$echo_cc_feat $enable__asm_style"
-fi
 if test "$enable__long_long" = y; then
   echo_cc_feat="$echo_cc_feat long-long"
 fi
@@ -149,4 +146,3 @@ Configuration:
 to show/change other configuration settings, you can run one of:
 './configure <options>', 'scripts/Configure.sh <options>',
 'make menuconfig' or 'make config'"
-

@@ -7,12 +7,6 @@ dnl enable__alloc=yes
 dnl )dnl
 enable__alloc=no
 
-dnl hand-optimized assembler (if available for your platform)
-AC_ARG_ENABLE(-asm,dnl
-[  --enable--asm[=yes|no]                 enable hand-optimized assembler if supported ],,
-enable__asm=yes
-)dnl
-
 dnl dlopen() and friends
 AC_ARG_ENABLE(-dlopen,dnl
 [  --enable--dlopen[=yes|no]              use dlopen() to load modules instead of libtool lt_dlopen()],,

@@ -7,10 +7,6 @@ if test "$ac_cv_func_mmap_fixed_mapped" = no; then
   enable_wm_rc_shmmap=no
 fi
 
-if test "$ac_cv_prog_gcc_i386_asm" = no; then
-  enable__asm=no
-fi
-
 if test "$ac_cv_header_dlfcn_h" = no -o "$ac_cv_search_dlopen" = no; then
   enable__dlopen=no
 fi

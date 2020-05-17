@@ -845,7 +845,6 @@ ac_user_opts='
 enable_option_checking
 enable_silent_rules
 enable_maintainer_mode
-enable__asm
 enable__dlopen
 enable_socket
 enable_socket_gz
@@ -1544,7 +1543,6 @@ Optional Features:
   --enable-maintainer-mode
                           enable make rules and dependencies not useful (and
                           sometimes confusing) to the casual installer
-  --enable--asm=yes|no                 enable hand-optimized assembler if supported
   --enable--dlopen=yes|no              use dlopen() to load modules instead of libtool lt_dlopen()
   --enable-socket=yes|no               enable remote socket connections (libTw)
   --enable-socket-gz=yes|no            enable gzip compression on sockets
@@ -3892,14 +3890,6 @@ fi
 
 
 enable__alloc=no
-
-# Check whether --enable--asm was given.
-if test "${enable__asm+set}" = set; then :
-  enableval=$enable__asm;
-else
-  enable__asm=yes
-
-fi
 
 # Check whether --enable--dlopen was given.
 if test "${enable__dlopen+set}" = set; then :
@@ -20162,44 +20152,6 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_c_attribute_aligned_1" >&5
 $as_echo "$ac_cv_c_attribute_aligned_1" >&6; }
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for gcc-compatible i386 inline assembly" >&5
-$as_echo_n "checking for gcc-compatible i386 inline assembly... " >&6; }
-if ${ac_cv_prog_gcc_i386_asm+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-
-int
-main ()
-{
-
-#ifdef __i386__
-#undef asm
-  asm ("\n\tmovl %eax,%eax"
-       "\n\tpushl %ecx"
-       "\n\tpushl $1"
-       "\n\tpopl %ecx"
-       "\n\tpopl %ecx");
-#else
-  choke me
-#endif
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_cxx_try_compile "$LINENO"; then :
-  ac_cv_prog_gcc_i386_asm=yes
-else
-  ac_cv_prog_gcc_i386_asm=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_prog_gcc_i386_asm" >&5
-$as_echo "$ac_cv_prog_gcc_i386_asm" >&6; }
-
 
 
 ################################################################################
@@ -22368,10 +22320,6 @@ enable__alloc=no
 if test "$ac_cv_func_mmap_fixed_mapped" = no; then
   enable__alloc=no
   enable_wm_rc_shmmap=no
-fi
-
-if test "$ac_cv_prog_gcc_i386_asm" = no; then
-  enable__asm=no
 fi
 
 if test "$ac_cv_header_dlfcn_h" = no -o "$ac_cv_search_dlopen" = no; then
@@ -25275,7 +25223,6 @@ tw_cfg()
   echo                              >> include/twconfig.h
 
   tw_cfg CONF__ALLOC            "$enable__alloc"
-  tw_cfg CONF__ASM              "$enable__asm"
   tw_cfg CONF__DLOPEN           "$enable__dlopen"
   tw_cfg CONF_SOCKET            "$enable_socket"
   tw_cfg CONF_SOCKET_GZ         "$enable_socket_gz"

@@ -224,6 +224,7 @@ obj s_obj::Init() {
 }
 
 module s_module::Init(uldat /*namelen*/, const char * /*name*/) {
+  Fn = &_FnModule;
   s_obj::Init();
   return this;
 }
@@ -348,6 +349,7 @@ static struct s_fn_display_hw _FnDisplayHW = {
 };
 
 display_hw s_display_hw::Init(uldat namelen, const char *name) {
+  Fn = &_FnDisplayHW;
   if (!name || !s_obj::Init()) {
     return NULL;
   }
