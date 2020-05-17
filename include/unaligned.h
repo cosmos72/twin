@@ -20,29 +20,11 @@
 #define PopV(s, len, vec) (Tw(CopyMem)(s, vec, len), (s) += (len))
 #define PopAddr(s, type, len, ptr) ((ptr) = (len) ? (type *)(s) : (type *)0, (s) += (len))
 
-#ifndef TW_CAN_UNALIGNED
-#if defined(__i386__) || defined(__x86_64__) || defined(__ARM_FEATURE_UNALIGNED)
-#define TW_CAN_UNALIGNED 1
-#else /* !__i386__ */
-#define TW_CAN_UNALIGNED 0
-#endif /* __i386__ */
-#endif /* TW_CAN_UNALIGNED */
-
-#if TW_CAN_UNALIGNED == 1
-
-#define Push(s, type, val) (*(type * TW_ATTR_PTR_ALIGNED_1)(s) = (val), (s) += sizeof(type))
-#define Pop(s, type, lval)                                                                         \
-  ((lval) = *(type TW(CONST) * TW_ATTR_PTR_ALIGNED_1)(s), (s) += sizeof(type))
-
-#else /* TW_CAN_UNALIGNED == 0 */
-
 #define Push(s, type, val)                                                                         \
   do {                                                                                             \
     type __tmp = (val);                                                                            \
     PushV(s, sizeof(type), &__tmp);                                                                \
   } while (0)
 #define Pop(s, type, lval) PopV(s, sizeof(type), &(lval))
-
-#endif /* TW_CAN_UNALIGNED == 1 */
 
 #endif /* _TWIN_UNALIGNED_H */

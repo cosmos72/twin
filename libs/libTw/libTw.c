@@ -2076,16 +2076,10 @@ TW_INLINE uldat NextSerial(tw_d TwD) {
 
 TW_INLINE void Send(tw_d TwD, uldat Serial, uldat idFN) {
   /* be careful with aligmnent!! */
-#if TW_CAN_UNALIGNED != 0
-  r[0] = s - (byte *)(r + 1);
-  r[1] = Serial;
-  r[2] = idFN;
-#else
   byte *R = (byte *)r;
   Push(R, uldat, s - (byte *)(r + 1));
   Push(R, uldat, Serial);
   Push(R, uldat, idFN);
-#endif
 }
 
 /***********/
@@ -2094,24 +2088,12 @@ TW_INLINE void Send(tw_d TwD, uldat Serial, uldat idFN) {
 
 static uldat FindFunctionId(tw_d TwD, uldat order);
 
-#if TW_CAN_UNALIGNED != 0
-typedef struct s_reply *reply;
-struct s_reply {
-  uldat Len, Serial, Code, Data;
-};
-#define MyLen MyReply->Len
-#define MyCode MyReply->Code
-#define MyData (&MyReply->Data)
-#define DECL_MyReply reply MyReply;
-#define INIT_MyReply
-#else
 #define DECL_MyReply                                                                               \
   byte *MyReply, *MyData;                                                                          \
   uldat MyLen, MyCode;
 #define INIT_MyReply                                                                               \
   (Pop(MyReply, uldat, MyLen), /*skip Serial:*/ Pop(MyReply, uldat, MyCode),                       \
    Pop(MyReply, uldat, MyCode), MyData = MyReply, MyReply -= 3 * sizeof(uldat)),
-#endif
 
 #define ENCODE_FL_NOLOCK 1
 #define ENCODE_FL_LOCK 1

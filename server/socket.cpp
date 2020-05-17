@@ -579,17 +579,6 @@ TW_DECL_MAGIC(TwinMagicData);
  * if success, return array of obj, else return NULL.
  */
 static obj *AllocId2ObjVec(byte *alloced, byte c, uldat n, byte *VV) {
-#if TW_SIZEOF_ULDAT >= TW_SIZEOF_TOPAQUE && TW_CAN_UNALIGNED != 0
-  const uldat *L = (const uldat *)VV;
-  obj *aX;
-  obj *X;
-
-  aX = X = (obj *)VV;
-  while (n--)
-    *X++ = Id2Obj(c, *L++);
-  *alloced = tfalse;
-  return aX;
-#else
   const byte *S;
   obj *aX;
   obj *X;
@@ -605,7 +594,6 @@ static obj *AllocId2ObjVec(byte *alloced, byte c, uldat n, byte *VV) {
   } else
     *alloced = tfalse;
   return aX;
-#endif
 }
 
 inline ldat sockDecodeArg(uldat id, const char *Format, uldat n, tsfield a, uldat mask[1],
@@ -1556,11 +1544,7 @@ static byte sockSendToMsgPort(msgport MsgPort, udat Len, const byte *Data) {
   /* FIXME: must code alienSendToMsgPort() and call it if AlienMagic(Slot) != MagicNative */
 
   /* be careful with alignment! */
-#if TW_CAN_UNALIGNED != 0
-  tMsg = (tmsg)RemoveConst(Data);
-#else
   tMsg = (tmsg)CloneMem(Data, Len);
-#endif /* TW_CAN_UNALIGNED != 0 */
 
   do
     if (MsgPort && Len && tMsg && Len >= tmsgEventDelta && Len == tMsg->Len &&
@@ -1771,9 +1755,7 @@ static byte sockSendToMsgPort(msgport MsgPort, udat Len, const byte *Data) {
     }
   while (0);
 
-#if TW_CAN_UNALIGNED == 0
   FreeMem(tMsg);
-#endif
   return ok;
 }
 

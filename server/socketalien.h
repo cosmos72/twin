@@ -30,49 +30,12 @@
     type tmp__ = (rval);                                                                           \
     alienPUSH(s, type, tmp__);                                                                     \
   } while (0)
-
-#if TW_IS_LITTLE_ENDIAN &&                                                                         \
-    TW_CAN_UNALIGNED != 0 /* little endian, and unaligned access is supported. hton?() functions   \
-                             to speed up translation */
-
-#ifdef TW_HAVE_ARPA_INET_H
-#include <arpa/inet.h> /* for htons(), htonl() */
-#endif
-#ifdef TW_HAVE_NETINET_IN_H
-#include <netinet/in.h> /* for htons(), htonl() - alternate location */
-#endif
-
 inline void FlipCopyMem(const void *srcv, void *dstv, uldat len) {
-  const byte *src = (const byte *)srcv;
+  const byte *src = (const byte *)srcv + len - 1;
   byte *dst = (byte *)dstv;
-  switch (len) {
-  case 2:
-    *(uint16_t * TW_ATTR_PTR_ALIGNED_1) dst = htons(*(uint16_t const *TW_ATTR_PTR_ALIGNED_1)src);
-    break;
-  case 4:
-    *(uint32_t * TW_ATTR_PTR_ALIGNED_1) dst = htonl(*(uint32_t const *TW_ATTR_PTR_ALIGNED_1)src);
-    break;
-  case 8:
-    ((uint32_t * TW_ATTR_PTR_ALIGNED_1) dst)[0] =
-        htonl(((uint32_t const *TW_ATTR_PTR_ALIGNED_1)src)[1]);
-    ((uint32_t * TW_ATTR_PTR_ALIGNED_1) dst)[1] =
-        htonl(((uint32_t const *TW_ATTR_PTR_ALIGNED_1)src)[0]);
-    break;
-  default:
-    src += len - 1;
-    while (len--)
-      *dst++ = *src--;
-    break;
-  }
-}
-
-#else
-inline void FlipCopyMem(const byte *src, byte *dst, uldat len) {
-  src += len - 1;
   while (len--)
     *dst++ = *src--;
 }
-#endif /* TW_IS_LITTLE_ENDIAN */
 
 /*translate from alien data, copying srclen bytes to dstlen bytes, optionally flipping byte order*/
 static void alienRead(const byte *src, uldat srclen, byte *dst, uldat dstlen, byte flip) {
