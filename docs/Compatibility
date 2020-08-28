@@ -1,6 +1,6 @@
 
 			     Compatibility problems
-		    
+		
 
 This file describes known compatibility problems when mixing
 twin server, library and client of different versions.
@@ -43,7 +43,7 @@ Here is the correspondence:
 As a general rule of thumb, you would better use libraries
 and servers released together to avoid most problems
 (clients are more version-mismatch tolerant with respect to libraries
-than the server, expecially when clients are older than libraries).
+than the server, especially when clients are older than libraries).
 
 * Using libTw >= 4.0.0 with twin <  0.5.0
      or libTw <  4.0.0 with twin >= 0.5.0 :
