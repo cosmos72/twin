@@ -10,8 +10,8 @@
  *
  */
 
-#ifndef _TWIN_GROUP_H
-#define _TWIN_GROUP_H
+#ifndef TWIN_GROUP_H
+#define TWIN_GROUP_H
 
 #include "obj/fwd.h"
 #include <Tw/datatypes.h>
@@ -71,4 +71,4 @@ struct s_group : public s_obj {
   }
 };
 
-#endif /* _TWIN_GROUP_H */
+#endif /* TWIN_GROUP_H */

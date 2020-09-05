@@ -1,6 +1,6 @@
 
-#ifndef _TT_VERSION_H
-#define _TT_VERSION_H
+#ifndef TT_VERSION_H
+#define TT_VERSION_H
 
 /** library major version */
 #define TT_PROTOCOL_VERSION_MAJOR 0
@@ -25,4 +25,4 @@
 /** build full version number from major,minor,patch */
 #define TT_VER_BUILD(M, m, p) (((M) << 16) | ((m) << 8) | (p))
 
-#endif /* _TT_VERSION_H */
+#endif /* TT_VERSION_H */

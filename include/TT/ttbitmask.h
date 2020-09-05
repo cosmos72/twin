@@ -14,8 +14,8 @@
  *
  */
 
-#ifndef _TT_TTBITMASK_H
-#define _TT_TTBITMASK_H
+#ifndef TT_TTBITMASK_H
+#define TT_TTBITMASK_H
 
 /* object structure */
 #ifndef s_ttbitmask
@@ -91,4 +91,4 @@ ttbyte TTCombineB_ttbitmask(ttbitmask o, TT_ARG_READ ttbitmask value, ttuint tru
 
 /* TTGet*_ttbitmask and TTSet*_ttbitmask methods */
 
-#endif /* _TT_TTBITMASK_H */
+#endif /* TT_TTBITMASK_H */

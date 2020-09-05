@@ -6,8 +6,8 @@
  * (at your option) any later version.
  *
  */
-#ifndef _TWIN_PRINTK_H
-#define _TWIN_PRINTK_H
+#ifndef TWIN_PRINTK_H
+#define TWIN_PRINTK_H
 
 #ifndef SS
 #define SS "%." STR(TW_SMALLBUFF) "s"
@@ -21,4 +21,4 @@ int flushk(void);
 byte RegisterPrintk(int fd);
 void UnRegisterPrintk(void);
 
-#endif /* _TWIN_PRINTK_H */
+#endif /* TWIN_PRINTK_H */

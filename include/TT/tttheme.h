@@ -14,8 +14,8 @@
  *
  */
 
-#ifndef _TT_TTTHEME_H
-#define _TT_TTTHEME_H
+#ifndef TT_TTTHEME_H
+#define TT_TTTHEME_H
 
 /* object structure */
 #ifndef s_tttheme
@@ -43,4 +43,4 @@ ttopaque TTGetNameLen_tttheme(TT_ARG_READ tttheme o);
 /** get `name' of tttheme `o' */
 TT_ARG_ARRAY((_F(name_len))) ttbyte *TTGetName_tttheme(TT_ARG_READ tttheme o);
 
-#endif /* _TT_TTTHEME_H */
+#endif /* TT_TTTHEME_H */

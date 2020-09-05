@@ -14,8 +14,8 @@
  *
  */
 
-#ifndef _TT_TTMENU_H
-#define _TT_TTMENU_H
+#ifndef TT_TTMENU_H
+#define TT_TTMENU_H
 
 /* object structure */
 #ifndef s_ttmenu
@@ -37,4 +37,4 @@ extern ttclass TTClass_ttmenu;
 /** get `menubar' of ttmenu `o' */
 ttmenubar TTGetMenubar_ttmenu(TT_ARG_READ ttmenu o);
 
-#endif /* _TT_TTMENU_H */
+#endif /* TT_TTMENU_H */

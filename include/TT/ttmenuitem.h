@@ -14,8 +14,8 @@
  *
  */
 
-#ifndef _TT_TTMENUITEM_H
-#define _TT_TTMENUITEM_H
+#ifndef TT_TTMENUITEM_H
+#define TT_TTMENUITEM_H
 
 /* object structure */
 #ifndef s_ttmenuitem
@@ -40,4 +40,4 @@ ttopaque TTGetNameLen_ttmenuitem(TT_ARG_READ ttmenuitem o);
 /** get `name' of ttmenuitem `o' */
 TT_ARG_ARRAY((_F(name_len))) ttbyte *TTGetName_ttmenuitem(TT_ARG_READ ttmenuitem o);
 
-#endif /* _TT_TTMENUITEM_H */
+#endif /* TT_TTMENUITEM_H */

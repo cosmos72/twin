@@ -1,6 +1,6 @@
 
-#ifndef _TWIN_HW_TTY_TERMCAP_H
-#define _TWIN_HW_TTY_TERMCAP_H
+#ifndef TWIN_HW_TTY_TERMCAP_H
+#define TWIN_HW_TTY_TERMCAP_H
 
 /* this is the usual mess of ad-hoc includes and defines... */
 
@@ -120,4 +120,4 @@ enum {
   tc_cap_N = tc_key_last
 };
 
-#endif /* _TWIN_HW_TTY_TERMCAP_H */
+#endif /* TWIN_HW_TTY_TERMCAP_H */

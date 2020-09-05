@@ -7,8 +7,8 @@
  * PLEASE DO NOT EDIT!
  */
 
-#ifndef _TUTF_APL_ISO_IR_68_H
-#define _TUTF_APL_ISO_IR_68_H
+#ifndef TUTF_APL_ISO_IR_68_H
+#define TUTF_APL_ISO_IR_68_H
 
 #define T_APL_ISO_IR_68_UNDEFINED_0000 0x0000
 #define T_APL_ISO_IR_68_UNDEFINED_0001 0x0001
@@ -447,4 +447,4 @@
   EL(_LEFT_TACK)                                                                                   \
   EL(_DOLLAR_SIGN)
 
-#endif /* _TUTF_APL_ISO_IR_68_H */
+#endif /* TUTF_APL_ISO_IR_68_H */

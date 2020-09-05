@@ -14,8 +14,8 @@
  *
  */
 
-#ifndef _TT_TTTEXTFIELD_H
-#define _TT_TTTEXTFIELD_H
+#ifndef TT_TTTEXTFIELD_H
+#define TT_TTTEXTFIELD_H
 
 /* object structure */
 #ifndef s_tttextfield
@@ -34,4 +34,4 @@ extern ttclass TTClass_tttextfield;
 
 /* TTGet*_tttextfield and TTSet*_tttextfield methods */
 
-#endif /* _TT_TTTEXTFIELD_H */
+#endif /* TT_TTTEXTFIELD_H */

@@ -14,8 +14,8 @@
  *
  */
 
-#ifndef _TT_TTSCROLLBAR_H
-#define _TT_TTSCROLLBAR_H
+#ifndef TT_TTSCROLLBAR_H
+#define TT_TTSCROLLBAR_H
 
 /* object structure */
 #ifndef s_ttscrollbar
@@ -40,4 +40,4 @@ ttscrollbar TTCreate4_ttscrollbar(ttbyte orientation, ttint size, ttint real_siz
 
 /* TTGet*_ttscrollbar and TTSet*_ttscrollbar methods */
 
-#endif /* _TT_TTSCROLLBAR_H */
+#endif /* TT_TTSCROLLBAR_H */

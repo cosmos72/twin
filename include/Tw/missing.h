@@ -1,6 +1,6 @@
 
-#ifndef _TW_MISSING_H
-#define _TW_MISSING_H
+#ifndef TW_MISSING_H
+#define TW_MISSING_H
 
 #include <Tw/prefix.h>
 #include <Tw/autoconf.h>
@@ -56,4 +56,4 @@ int Tw_option_strncmp(TW_CONST char *s1, TW_CONST char *s2, size_t n);
 
 #include <Tw/unprefix.h>
 
-#endif /* _TW_MISSING_H */
+#endif /* TW_MISSING_H */

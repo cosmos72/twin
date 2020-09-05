@@ -48,12 +48,12 @@ static byte *E;  /* 1 + the last available address */
 static byte *TSR_M;  /* the _previous_ memory pool */
 static size_t TSR_L; /* its length */
 
-#define ALIGN 15
+#define TW_ALIGN 15
 
 /* look at WriteGlobals() to find the reason of this size */
 #define _GL_SIZE                                                                                   \
   (sizeof(Globals) + sizeof(All->ButtonVec) + sizeof(GlobalFlags) + sizeof(GlobalShadows))
-#define GL_SIZE ((_GL_SIZE & ~ALIGN) + ALIGN + 1)
+#define GL_SIZE ((_GL_SIZE & ~TW_ALIGN) + TW_ALIGN + 1)
 
 static size_t full_write(int fd, const byte *data, size_t len) {
   size_t left = len;
@@ -352,7 +352,7 @@ void *shm_malloc(size_t len) {
   /* else if allocating a multiple of  4 bytes, align return value at  4 bytes */
   /* else if allocating a multiple of  2 bytes, align return value at  2 bytes */
   /* else don't align return value */
-  if ((delta = ffs(len & ALIGN)) > 1)
+  if ((delta = ffs(len & TW_ALIGN)) > 1)
     delta = (2 << (delta - 2)) - 1;
   else
     delta = 0;

@@ -1,7 +1,7 @@
 
-#ifndef _TT_OSINCLUDES_H
-#define _TT_OSINCLUDES_H
+#ifndef TT_OSINCLUDES_H
+#define TT_OSINCLUDES_H
 
 #include <stdarg.h>
 
-#endif /* _TT_OSINCLUDES_H */
+#endif /* TT_OSINCLUDES_H */

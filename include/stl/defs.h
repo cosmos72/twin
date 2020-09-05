@@ -6,8 +6,8 @@
  * (at your option) any later version.
  *
  */
-#ifndef _TWIN_STL_DEFS_H
-#define _TWIN_STL_DEFS_H
+#ifndef TWIN_STL_DEFS_H
+#define TWIN_STL_DEFS_H
 
 #if defined(__cplusplus) && __cplusplus >= 201103L
 #define STL_CXX11
@@ -15,4 +15,4 @@
 #undef STL_CXX11
 #endif
 
-#endif /* _TWIN_STL_DEFS_H */
+#endif /* TWIN_STL_DEFS_H */

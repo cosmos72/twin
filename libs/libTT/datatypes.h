@@ -9,8 +9,8 @@
  *
  */
 
-#ifndef _TT_DATATYPES_H
-#define _TT_DATATYPES_H
+#ifndef TT_DATATYPES_H
+#define TT_DATATYPES_H
 
 /* typedefs for objects and method structures */
 typedef byte ttbyte;
@@ -56,4 +56,4 @@ typedef tavl ttavl;
 typedef tavl_c ttavl_c;
 typedef tavl_compare ttavl_compare;
 
-#endif /* _TT_DATATYPES_H */
+#endif /* TT_DATATYPES_H */

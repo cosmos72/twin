@@ -6,8 +6,8 @@
  * (at your option) any later version.
  *
  */
-#ifndef _TWIN_DRAW_H
-#define _TWIN_DRAW_H
+#ifndef TWIN_DRAW_H
+#define TWIN_DRAW_H
 
 byte InitDraw(void);
 
@@ -69,4 +69,4 @@ window FindCursorWindow(void);
 byte ContainsCursor(widget W);
 widget RecursiveFindWidgetAt(widget Parent, dat X, dat Y);
 
-#endif /* _TWIN_DRAW_H */
+#endif /* TWIN_DRAW_H */

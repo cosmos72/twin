@@ -9,7 +9,7 @@
  *  (at your option) any later version.
  */
 
-#ifndef _TWFIXCONFIG_H
-#define _TWFIXCONFIG_H
+#ifndef TWFIXCONFIG_H
+#define TWFIXCONFIG_H
 
-#endif /* _TWFIXCONFIG_H */
+#endif /* TWFIXCONFIG_H */

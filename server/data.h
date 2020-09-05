@@ -6,8 +6,8 @@
  * (at your option) any later version.
  *
  */
-#ifndef _TWIN_DATA_H
-#define _TWIN_DATA_H
+#ifndef TWIN_DATA_H
+#define TWIN_DATA_H
 
 #include <Tw/datatypes.h> // byte, udat, tcolor, trune
 #include <Tw/Tw_defs.h>   // tmaxcol
@@ -40,4 +40,4 @@ extern tcolor DEFAULT_ColGadgets, DEFAULT_ColArrows, DEFAULT_ColBars, DEFAULT_Co
 
 byte InitData(void);
 
-#endif /* _TWIN_DATA_H */
+#endif /* TWIN_DATA_H */

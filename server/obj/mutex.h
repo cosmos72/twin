@@ -10,8 +10,8 @@
  *
  */
 
-#ifndef _TWIN_MUTEX_H
-#define _TWIN_MUTEX_H
+#ifndef TWIN_MUTEX_H
+#define TWIN_MUTEX_H
 
 #include "obj/obj.h"
 
@@ -66,4 +66,4 @@ struct s_mutex : public s_obj {
 #define PERM_READ ((byte)1)
 #define PERM_WRITE ((byte)2)
 
-#endif /* _TWIN_MUTEX_H */
+#endif /* TWIN_MUTEX_H */

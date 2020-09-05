@@ -1,5 +1,5 @@
-#ifndef _TW_TYPES_H
-#define _TW_TYPES_H
+#ifndef TW_TYPES_H
+#define TW_TYPES_H
 
 #include <Tw/autoconf.h>
 #include <Tw/osincludes.h>
@@ -10,4 +10,4 @@
 #include <Tw/pagesize.h>
 #include <Tw/version.h>
 
-#endif /* _TW_TYPES_H */
+#endif /* TW_TYPES_H */

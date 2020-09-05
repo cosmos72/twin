@@ -1,7 +1,7 @@
 
 
-#ifndef _TW_COMPILER_H
-#define _TW_COMPILER_H
+#ifndef TW_COMPILER_H
+#define TW_COMPILER_H
 
 /* library stuff. define macros with TW_ prefix */
 
@@ -48,4 +48,4 @@
 #endif
 #endif
 
-#endif /* _TW_COMPILER_H */
+#endif /* TW_COMPILER_H */

@@ -7,8 +7,8 @@
  * PLEASE DO NOT EDIT!
  */
 
-#ifndef _TUTF_ISO8859_8_H
-#define _TUTF_ISO8859_8_H
+#ifndef TUTF_ISO8859_8_H
+#define TUTF_ISO8859_8_H
 
 #define T_ISO8859_8_CTRL_NULL 0x0000
 #define T_ISO8859_8_CTRL_START_OF_HEADING 0x0001
@@ -525,4 +525,4 @@
   EL(_LEFT_TO_RIGHT_MARK)                                                                          \
   EL(_RIGHT_TO_LEFT_MARK)
 
-#endif /* _TUTF_ISO8859_8_H */
+#endif /* TUTF_ISO8859_8_H */

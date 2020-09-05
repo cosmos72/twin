@@ -6,8 +6,8 @@
  * (at your option) any later version.
  *
  */
-#ifndef _TWIN_RCTYPES_H
-#define _TWIN_RCTYPES_H
+#ifndef TWIN_RCTYPES_H
+#define TWIN_RCTYPES_H
 
 /* types */
 typedef char *str;
@@ -105,4 +105,4 @@ extern int line_no[];
 
 int set_yy_file(const char *path);
 
-#endif /* _TWIN_RCTYPES_H */
+#endif /* TWIN_RCTYPES_H */

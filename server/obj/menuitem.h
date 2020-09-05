@@ -10,8 +10,8 @@
  *
  */
 
-#ifndef _TWIN_MENUITEM_H
-#define _TWIN_MENUITEM_H
+#ifndef TWIN_MENUITEM_H
+#define TWIN_MENUITEM_H
 
 #include "obj/row.h"
 
@@ -82,4 +82,4 @@ struct s_menuitem : public s_obj {
 /* don't use codes above or equal to this one! */
 #define COD_RESERVED 0xF800
 
-#endif /* _TWIN_MENUITEM_H */
+#endif /* TWIN_MENUITEM_H */

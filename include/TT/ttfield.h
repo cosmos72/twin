@@ -14,8 +14,8 @@
  *
  */
 
-#ifndef _TT_TTFIELD_H
-#define _TT_TTFIELD_H
+#ifndef TT_TTFIELD_H
+#define TT_TTFIELD_H
 
 /* object structure */
 #ifndef s_ttfield
@@ -66,4 +66,4 @@ TT_ARG_READ TT_ARG_ARRAY_Z ttbyte *TTGetName_ttfield(TT_ARG_READ ttfield o);
 /** get `type' of ttfield `o' */
 ttopaque TTGetType_ttfield(TT_ARG_READ ttfield o);
 
-#endif /* _TT_TTFIELD_H */
+#endif /* TT_TTFIELD_H */

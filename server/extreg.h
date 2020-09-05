@@ -7,8 +7,8 @@
  *
  */
 
-#ifndef _TWIN_EXTREG_H
-#define _TWIN_EXTREG_H
+#ifndef TWIN_EXTREG_H
+#define TWIN_EXTREG_H
 
 #include "stl/span.h"
 
@@ -41,4 +41,4 @@ byte UnRegister_Ext(void **where, void *data);
 
 #define Ext(kind, member) (Exts.kind.member)
 
-#endif /* _TWIN_EXTREG_H */
+#endif /* TWIN_EXTREG_H */

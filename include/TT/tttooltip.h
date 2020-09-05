@@ -14,8 +14,8 @@
  *
  */
 
-#ifndef _TT_TTTOOLTIP_H
-#define _TT_TTTOOLTIP_H
+#ifndef TT_TTTOOLTIP_H
+#define TT_TTTOOLTIP_H
 
 /* object structure */
 #ifndef s_tttooltip
@@ -40,4 +40,4 @@ ttbyte TTSetWidget_tttooltip(TT_ARG_DIE tttooltip o, ttwidget w);
 /** get `widget' of tttooltip `o' */
 ttwidget TTGetWidget_tttooltip(TT_ARG_READ tttooltip o);
 
-#endif /* _TT_TTTOOLTIP_H */
+#endif /* TT_TTTOOLTIP_H */

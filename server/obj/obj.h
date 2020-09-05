@@ -10,8 +10,8 @@
  *
  */
 
-#ifndef _TWIN_OBJ_H
-#define _TWIN_OBJ_H
+#ifndef TWIN_OBJ_H
+#define TWIN_OBJ_H
 
 #include "twautoconf.h" /* for TW_HAVE_* macros */
 #include "compiler.h"
@@ -75,4 +75,4 @@ struct s_obj_list {
   obj_entry First, Last;
 };
 
-#endif /* _TWIN_OBJ_H */
+#endif /* TWIN_OBJ_H */

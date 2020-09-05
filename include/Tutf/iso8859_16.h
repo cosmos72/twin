@@ -7,8 +7,8 @@
  * PLEASE DO NOT EDIT!
  */
 
-#ifndef _TUTF_ISO8859_16_H
-#define _TUTF_ISO8859_16_H
+#ifndef TUTF_ISO8859_16_H
+#define TUTF_ISO8859_16_H
 
 #define T_ISO8859_16_CTRL_NULL 0x0000
 #define T_ISO8859_16_CTRL_START_OF_HEADING 0x0001
@@ -569,4 +569,4 @@
   EL(_LATIN_SMALL_LETTER_E_WITH_OGONEK)                                                            \
   EL(_LATIN_SMALL_LETTER_T_WITH_COMMA_BELOW)
 
-#endif /* _TUTF_ISO8859_16_H */
+#endif /* TUTF_ISO8859_16_H */

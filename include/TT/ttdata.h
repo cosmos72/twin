@@ -14,8 +14,8 @@
  *
  */
 
-#ifndef _TT_TTDATA_H
-#define _TT_TTDATA_H
+#ifndef TT_TTDATA_H
+#define TT_TTDATA_H
 
 /* object structure */
 #ifndef s_ttdata
@@ -57,4 +57,4 @@ ttany TTGetData_ttdata(TT_ARG_READ ttdata o);
 /** set `data' of ttdata `o' */
 ttbyte TTSetData_ttdata(ttdata o, ttany data);
 
-#endif /* _TT_TTDATA_H */
+#endif /* TT_TTDATA_H */

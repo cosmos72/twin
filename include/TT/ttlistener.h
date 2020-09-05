@@ -14,8 +14,8 @@
  *
  */
 
-#ifndef _TT_TTLISTENER_H
-#define _TT_TTLISTENER_H
+#ifndef TT_TTLISTENER_H
+#define TT_TTLISTENER_H
 
 /* object structure */
 #ifndef s_ttlistener
@@ -112,4 +112,4 @@ tteventmask TTGetEventMask_ttlistener(TT_ARG_READ ttlistener o);
 /** set `event_mask' of ttlistener `o' */
 ttbyte TTSetEventMask_ttlistener(ttlistener o, tteventmask event_mask);
 
-#endif /* _TT_TTLISTENER_H */
+#endif /* TT_TTLISTENER_H */

@@ -10,8 +10,8 @@
  *
  */
 
-#ifndef _TWIN_H
-#define _TWIN_H
+#ifndef TWIN_H
+#define TWIN_H
 
 #include "twautoconf.h" /* for TW_HAVE_* macros */
 #include "twconfig.h"   /* for CONF_* macros */
@@ -99,4 +99,4 @@ typedef enum { none, sgidtty, suidroot } e_privilege;
 #define GainRootPrivileges() seteuid(0)
 #define GainGroupPrivileges(g) setegid(g)
 
-#endif /* _TWIN_H */
+#endif /* TWIN_H */

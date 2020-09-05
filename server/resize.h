@@ -6,8 +6,8 @@
  * (at your option) any later version.
  *
  */
-#ifndef _TWIN_RESIZE_H
-#define _TWIN_RESIZE_H
+#ifndef TWIN_RESIZE_H
+#define TWIN_RESIZE_H
 
 byte EnsureLenRow(row Row, uldat Len, byte DefaultCol);
 byte RowWriteAscii(window Window, uldat Len, const char *Text);
@@ -75,4 +75,4 @@ void WriteTRunesGadget(gadget G, byte bitmap, dat XWidth, dat YWidth, const trun
 
 void SyncMenu(menu Menu);
 
-#endif /* _TWIN_RESIZE_H */
+#endif /* TWIN_RESIZE_H */

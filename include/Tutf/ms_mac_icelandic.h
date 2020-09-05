@@ -7,8 +7,8 @@
  * PLEASE DO NOT EDIT!
  */
 
-#ifndef _TUTF_MS_MAC_ICELANDIC_H
-#define _TUTF_MS_MAC_ICELANDIC_H
+#ifndef TUTF_MS_MAC_ICELANDIC_H
+#define TUTF_MS_MAC_ICELANDIC_H
 
 #define T_MS_MAC_ICELANDIC_CTRL_NULL 0x0000
 #define T_MS_MAC_ICELANDIC_CTRL_START_OF_HEADING 0x0001
@@ -651,4 +651,4 @@
   EL(_OGONEK)                                                                                      \
   EL(_CARON)
 
-#endif /* _TUTF_MS_MAC_ICELANDIC_H */
+#endif /* TUTF_MS_MAC_ICELANDIC_H */

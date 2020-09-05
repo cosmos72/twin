@@ -7,8 +7,8 @@
  *
  */
 
-#ifndef _TWIN_SOCKET_ID_H
-#define _TWIN_SOCKET_ID_H
+#ifndef TWIN_SOCKET_ID_H
+#define TWIN_SOCKET_ID_H
 
 enum sockid {
 #define EL(name) CAT(order_, name),
@@ -17,4 +17,4 @@ enum sockid {
   order_StatObj
 };
 
-#endif /* _TWIN_SOCKET_ID_H */
+#endif /* TWIN_SOCKET_ID_H */

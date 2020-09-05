@@ -14,8 +14,8 @@
  *
  */
 
-#ifndef _TT_TYPES_H
-#define _TT_TYPES_H
+#ifndef TT_TYPES_H
+#define TT_TYPES_H
 
 #include <Tw/Tw_defs.h>
 #include <Tw/Twtypes.h>
@@ -37,4 +37,4 @@
 #include "tree_m4.h"
 #include "decls_m4.h"
 
-#endif /* _TT_TYPES_H */
+#endif /* TT_TYPES_H */

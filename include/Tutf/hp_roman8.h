@@ -5,8 +5,8 @@
  * Do not edit!
  */
 
-#ifndef _TUTF_HP_ROMAN8_H
-#define _TUTF_HP_ROMAN8_H
+#ifndef TUTF_HP_ROMAN8_H
+#define TUTF_HP_ROMAN8_H
 
 #define T_HP_ROMAN8_CTRL_NULL 0x0000
 #define T_HP_ROMAN8_CTRL_START_OF_HEADING 0x0001
@@ -622,4 +622,4 @@
   EL(_PLUS_MINUS_SIGN)                                                                             \
   EL(_UNDEFINED_00FF)
 
-#endif /* _TUTF_HP_ROMAN8_H */
+#endif /* TUTF_HP_ROMAN8_H */

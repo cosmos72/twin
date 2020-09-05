@@ -1,6 +1,6 @@
 
-#ifndef _TT_FLAGS_H
-#define _TT_FLAGS_H
+#ifndef TT_FLAGS_H
+#define TT_FLAGS_H
 
 /** ttevent value of `evtype' field indicating `del' (delete) event */
 #define ttevent_evtype_del 0
@@ -199,4 +199,4 @@
 /** ttscrollbar `forward arrow pressed' state */
 #define ttscrollbar_state_arrow_fwd 4
 
-#endif /* _TT_FLAGS_H */
+#endif /* TT_FLAGS_H */

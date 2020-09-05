@@ -1,6 +1,6 @@
 
-#ifndef _TWIN_HW_DIRTY_H
-#define _TWIN_HW_DIRTY_H
+#ifndef TWIN_HW_DIRTY_H
+#define TWIN_HW_DIRTY_H
 
 inline byte Plain_isDirtyVideo(dat X, dat Y) {
   dat s;
@@ -69,4 +69,4 @@ inline void VideoFlip(udat x, udat y) {
   Video[x + y * (ldat)DisplayWidth] ^= TCELL(TCOL(twhite, twhite), 0);
 }
 
-#endif /* _TWIN_HW_DIRTY_H */
+#endif /* TWIN_HW_DIRTY_H */

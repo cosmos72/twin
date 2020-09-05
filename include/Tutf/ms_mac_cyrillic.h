@@ -7,8 +7,8 @@
  * PLEASE DO NOT EDIT!
  */
 
-#ifndef _TUTF_MS_MAC_CYRILLIC_H
-#define _TUTF_MS_MAC_CYRILLIC_H
+#ifndef TUTF_MS_MAC_CYRILLIC_H
+#define TUTF_MS_MAC_CYRILLIC_H
 
 #define T_MS_MAC_CYRILLIC_CTRL_NULL 0x0000
 #define T_MS_MAC_CYRILLIC_CTRL_START_OF_HEADING 0x0001
@@ -652,4 +652,4 @@
   EL(_CYRILLIC_SMALL_LETTER_YU)                                                                    \
   EL(_CURRENCY_SIGN)
 
-#endif /* _TUTF_MS_MAC_CYRILLIC_H */
+#endif /* TUTF_MS_MAC_CYRILLIC_H */

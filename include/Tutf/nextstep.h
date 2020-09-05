@@ -7,8 +7,8 @@
  * PLEASE DO NOT EDIT!
  */
 
-#ifndef _TUTF_NEXTSTEP_H
-#define _TUTF_NEXTSTEP_H
+#ifndef TUTF_NEXTSTEP_H
+#define TUTF_NEXTSTEP_H
 
 #define T_NEXTSTEP_CTRL_NULL 0x0000
 #define T_NEXTSTEP_CTRL_START_OF_HEADING 0x0001
@@ -644,4 +644,4 @@
   EL(_LATIN_SMALL_LETTER_THORN)                                                                    \
   EL(_LATIN_SMALL_LETTER_Y_WITH_DIAERESIS)
 
-#endif /* _TUTF_NEXTSTEP_H */
+#endif /* TUTF_NEXTSTEP_H */

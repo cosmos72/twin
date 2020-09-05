@@ -6,8 +6,8 @@
  * (at your option) any later version.
  *
  */
-#ifndef _TWIN_MAIN_H
-#define _TWIN_MAIN_H
+#ifndef TWIN_MAIN_H
+#define TWIN_MAIN_H
 
 extern fd_set save_rfds, save_wfds;
 extern int max_fds;
@@ -28,4 +28,4 @@ byte AlwaysTrue(void);
 byte AlwaysFalse(void);
 void *AlwaysNull(void);
 
-#endif /* _TWIN_MAIN_H */
+#endif /* TWIN_MAIN_H */

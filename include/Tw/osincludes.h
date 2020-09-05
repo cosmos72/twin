@@ -1,5 +1,5 @@
-#ifndef _TW_OSINCLUDES_H
-#define _TW_OSINCLUDES_H
+#ifndef TW_OSINCLUDES_H
+#define TW_OSINCLUDES_H
 
 #include <errno.h>
 
@@ -40,4 +40,4 @@
 #include <sys/time.h>
 #endif
 
-#endif /* _TW_OSINCLUDES_H */
+#endif /* TW_OSINCLUDES_H */

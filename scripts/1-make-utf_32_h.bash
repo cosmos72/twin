@@ -7,17 +7,17 @@ exec >include/utf_32.h
 cat <<EOF
 /*
  *  utf_32.h  --  include for UTF-32 (Unicode) characters database
- * 
+ *
  *  PLEASE DO NOT EDIT!
  *
  *  This file was automatically generated from http://unicode.org/Public/UNIDATA/UnicodeData.txt
  *  using the script twin/scripts/1-make-utf_32_h.bash
- * 
+ *
  *  All changes to this file will be lost when the script is re-executed.
  */
 
-#ifndef _TUTF_UTF_32_H
-#define _TUTF_UTF_32_H
+#ifndef TUTF_UTF_32_H
+#define TUTF_UTF_32_H
 
 
 /* auxiliary definitions */
@@ -38,4 +38,4 @@ done
 
 echo ""
 echo ""
-echo "#endif /* _TUTF_UTF_32_H */"
+echo "#endif /* TUTF_UTF_32_H */"

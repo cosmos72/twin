@@ -1,5 +1,5 @@
-#ifndef _TWIN_STL_TYPES_H
-#define _TWIN_STL_TYPES_H
+#ifndef TWIN_STL_TYPES_H
+#define TWIN_STL_TYPES_H
 
 #include <Tw/datatypes.h>
 #include "stl/string.h"
@@ -19,4 +19,4 @@ typedef Array<tcolor> ColorArray;
 typedef Array<trune> RuneArray;
 typedef Array<tcell> CellArray;
 
-#endif /* _TWIN_STL_TYPES_H */
+#endif /* TWIN_STL_TYPES_H */

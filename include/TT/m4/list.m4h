@@ -20,8 +20,8 @@ dnl Tell the user about this.
  *
  */
 
-#ifndef _TT_LIST_M4_H
-#define _TT_LIST_M4_H
+#ifndef TT_LIST_M4_H
+#define TT_LIST_M4_H
 
 define(`c_doxygen', `
 
@@ -59,4 +59,4 @@ TTtypealiaslist()
 undefine(`el')
 
 
-#endif /* _TT_LIST_M4_H */
+#endif /* TT_LIST_M4_H */

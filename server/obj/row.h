@@ -10,8 +10,8 @@
  *
  */
 
-#ifndef _TWIN_ROW_H
-#define _TWIN_ROW_H
+#ifndef TWIN_ROW_H
+#define TWIN_ROW_H
 
 #include "obj/obj.h"
 
@@ -80,4 +80,4 @@ struct s_row : public s_obj {
 #define ROW_IGNORE ((byte)0x02)
 #define ROW_DEFCOL ((byte)0x04)
 
-#endif /* _TWIN_ROW_H */
+#endif /* TWIN_ROW_H */

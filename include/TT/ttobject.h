@@ -14,8 +14,8 @@
  *
  */
 
-#ifndef _TT_TTOBJECT_H
-#define _TT_TTOBJECT_H
+#ifndef TT_TTOBJECT_H
+#define TT_TTOBJECT_H
 
 /* object structure */
 #ifndef s_ttobject
@@ -60,4 +60,4 @@ ttopaque TTGetEventsInprogress_ttobject(TT_ARG_READ ttobject o);
 /** get `events_informed' of ttobject `o' */
 ttopaque TTGetEventsInformed_ttobject(TT_ARG_READ ttobject o);
 
-#endif /* _TT_TTOBJECT_H */
+#endif /* TT_TTOBJECT_H */

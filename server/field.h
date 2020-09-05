@@ -6,8 +6,8 @@
  * (at your option) any later version.
  *
  */
-#ifndef _TWIN_FIELD_H
-#define _TWIN_FIELD_H
+#ifndef TWIN_FIELD_H
+#define TWIN_FIELD_H
 
 #include "stl/any.h"
 #include "stl_types.h"
@@ -72,4 +72,4 @@ public:
   }
 };
 
-#endif /* _TWIN_FIELD_H */
+#endif /* TWIN_FIELD_H */

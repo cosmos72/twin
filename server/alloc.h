@@ -9,8 +9,8 @@
  *  (at your option) any later version.
  *
  */
-#ifndef _TWIN_ALLOC_H
-#define _TWIN_ALLOC_H
+#ifndef TWIN_ALLOC_H
+#define TWIN_ALLOC_H
 
 #include "stl/alloc.h"
 #include "stl/err.h"
@@ -29,4 +29,4 @@ char *CloneStrL(const char *s, uldat len);
 char **CloneStrList(char **s);
 trune *CloneStr2TRune(const char *s, uldat len);
 
-#endif /* _TWIN_ALLOC_H */
+#endif /* TWIN_ALLOC_H */

@@ -20,10 +20,10 @@ dnl Tell the user about this.
  *
  */
 
-#ifndef _TT_ALL_M4_H
-#define _TT_ALL_M4_H
+#ifndef TT_ALL_M4_H
+#define TT_ALL_M4_H
 
-#ifndef _TT_TT_H
+#ifndef TT_TT_H
 #error "Never include <TT/all_m4.h> directly; include <TT/tt.h> instead."
 #endif
 
@@ -52,4 +52,4 @@ undefine(`el')
 
 
 
-#endif /* _TT_ALL_M4_H */
+#endif /* TT_ALL_M4_H */

@@ -10,8 +10,8 @@
  *
  */
 
-#ifndef _TWIN_WINDOW_H
-#define _TWIN_WINDOW_H
+#ifndef TWIN_WINDOW_H
+#define TWIN_WINDOW_H
 
 #include "twautoconf.h"
 
@@ -371,4 +371,4 @@ typedef enum e_window_cursor_type {
 #define MIN_XWIN 5
 #define MIN_YWIN 2
 
-#endif /* _TWIN_WINDOW_H */
+#endif /* TWIN_WINDOW_H */

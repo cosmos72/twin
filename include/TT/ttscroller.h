@@ -14,8 +14,8 @@
  *
  */
 
-#ifndef _TT_TTSCROLLER_H
-#define _TT_TTSCROLLER_H
+#ifndef TT_TTSCROLLER_H
+#define TT_TTSCROLLER_H
 
 /* object structure */
 #ifndef s_ttscroller
@@ -42,4 +42,4 @@ ttscroller TTCreate_ttscroller(ttshort w, ttshort h);
 /** get `scrollpane' of ttscroller `o' */
 ttscrollpane TTGetScrollpane_ttscroller(TT_ARG_READ ttscroller o);
 
-#endif /* _TT_TTSCROLLER_H */
+#endif /* TT_TTSCROLLER_H */

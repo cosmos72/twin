@@ -7,8 +7,8 @@
  * PLEASE DO NOT EDIT!
  */
 
-#ifndef _TUTF_CP1257_H
-#define _TUTF_CP1257_H
+#ifndef TUTF_CP1257_H
+#define TUTF_CP1257_H
 
 #define T_CP1257_CTRL_NULL 0x0000
 #define T_CP1257_CTRL_START_OF_HEADING 0x0001
@@ -616,4 +616,4 @@
   EL(_LATIN_SMALL_LETTER_Z_WITH_CARON)                                                             \
   EL(_DOT_ABOVE)
 
-#endif /* _TUTF_CP1257_H */
+#endif /* TUTF_CP1257_H */

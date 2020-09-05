@@ -10,8 +10,8 @@
  *
  */
 
-#ifndef _TWIN_FWD_H
-#define _TWIN_FWD_H
+#ifndef TWIN_FWD_H
+#define TWIN_FWD_H
 
 typedef struct s_draw_ctx draw_ctx;
 typedef struct s_obj_list *obj_list;
@@ -55,4 +55,4 @@ typedef struct s_all *all;
 
 typedef void (*fn_hook)(widget);
 
-#endif /* _TWIN_FWD_H */
+#endif /* TWIN_FWD_H */

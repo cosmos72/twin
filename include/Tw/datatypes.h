@@ -1,7 +1,7 @@
-#ifndef _TW_DATATYPES_H
-#define _TW_DATATYPES_H
+#ifndef TW_DATATYPES_H
+#define TW_DATATYPES_H
 
-#ifndef _TW_TWAUTOCONF_H
+#ifndef TWTWAUTOCONF_H
 #include <Tw/autoconf.h>
 #endif
 
@@ -122,4 +122,4 @@ typedef struct s_timevalue {
 #define MilliSECs *MilliSEC
 #define FullSECs *FullSEC
 
-#endif /* _TW_DATATYPES_H */
+#endif /* TW_DATATYPES_H */

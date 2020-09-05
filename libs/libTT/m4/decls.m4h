@@ -23,8 +23,8 @@ dnl Tell the user about this.
  *  Note: you cannot include both this file and <TT/decls_m4.h>, as they conflict!
  */
 
-#ifndef _TT_DECLSM4_H
-#define _TT_DECLSM4_H
+#ifndef TT_DECLSM4_H
+#define TT_DECLSM4_H
 
 include(`m4/TTclasses.m4')
 
@@ -214,4 +214,4 @@ undefine(`el')
 
 
 
-#endif /* _TT_DECLSM4_H */
+#endif /* TT_DECLSM4_H */

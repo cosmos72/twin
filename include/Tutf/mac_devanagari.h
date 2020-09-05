@@ -7,8 +7,8 @@
  * PLEASE DO NOT EDIT!
  */
 
-#ifndef _TUTF_MAC_DEVANAGARI_H
-#define _TUTF_MAC_DEVANAGARI_H
+#ifndef TUTF_MAC_DEVANAGARI_H
+#define TUTF_MAC_DEVANAGARI_H
 
 #define T_MAC_DEVANAGARI_CTRL_NULL 0x0000
 #define T_MAC_DEVANAGARI_CTRL_START_OF_HEADING 0x0001
@@ -595,4 +595,4 @@
   EL(_DEVANAGARI_DIGIT_EIGHT)                                                                      \
   EL(_DEVANAGARI_DIGIT_NINE)
 
-#endif /* _TUTF_MAC_DEVANAGARI_H */
+#endif /* TUTF_MAC_DEVANAGARI_H */

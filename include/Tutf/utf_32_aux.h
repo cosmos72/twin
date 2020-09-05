@@ -2,8 +2,8 @@
  * auxiliary definitions for <Tutf/utf_16.h>
  */
 
-#ifndef _TUTF_UTF_32_AUX_H
-#define _TUTF_UTF_32_AUX_H
+#ifndef TUTF_UTF_32_AUX_H
+#define TUTF_UTF_32_AUX_H
 
 #define T_UTF_32_UNDEFINED_0000 0x0000
 #define T_UTF_32_UNDEFINED_0001 0x0001
@@ -288,4 +288,4 @@
 #define T_UTF_32_CJK_Ideograph_Extension_B_First 0x20000
 #define T_UTF_32_CJK_Ideograph_Extension_B_Last 0x2A6D6
 
-#endif /* _TUTF_UTF_32_AUX_H */
+#endif /* TUTF_UTF_32_AUX_H */

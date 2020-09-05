@@ -10,8 +10,8 @@
  *
  */
 
-#ifndef _TWIN_EVENT_H
-#define _TWIN_EVENT_H
+#ifndef TWIN_EVENT_H
+#define TWIN_EVENT_H
 
 #include "obj/fwd.h"
 #include <Tw/datatypes.h>
@@ -231,4 +231,4 @@ union event_any {
   event_selectionrequest EventSelectionRequest;
 };
 
-#endif /* _TWIN_EVENT_H */
+#endif /* TWIN_EVENT_H */

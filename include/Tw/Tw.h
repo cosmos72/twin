@@ -61,8 +61,8 @@
  * pending data will *NOT* be sent to the server.
  */
 
-#ifndef _TW_H
-#define _TW_H
+#ifndef TW_H
+#define TW_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -355,4 +355,4 @@ byte Tw_FindLFunction(tdisplay TwD, ...);
 }
 #endif
 
-#endif /* _TW_H */
+#endif /* TW_H */

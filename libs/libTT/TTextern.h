@@ -9,8 +9,8 @@
  *
  */
 
-#ifndef _TT_EXTERN_H
-#define _TT_EXTERN_H
+#ifndef TT_EXTERN_H
+#define TT_EXTERN_H
 
 #ifdef CONF_SOCKET_PTHREADS
 #include <pthread.h>
@@ -157,4 +157,4 @@ extern s_tt_d TTD;
 #define FAIL(E, S) FAIL_TT(TT_MAX_ERROR + (E), (S))
 #define FAIL_PRINT(E, S, name) (FAIL((E), (S)), _TTPrintInitError(name), tfalse)
 
-#endif /* _TT_EXTERN_H */
+#endif /* TT_EXTERN_H */

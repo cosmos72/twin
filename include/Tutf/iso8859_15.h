@@ -7,8 +7,8 @@
  * PLEASE DO NOT EDIT!
  */
 
-#ifndef _TUTF_ISO8859_15_H
-#define _TUTF_ISO8859_15_H
+#ifndef TUTF_ISO8859_15_H
+#define TUTF_ISO8859_15_H
 
 #define T_ISO8859_15_CTRL_NULL 0x0000
 #define T_ISO8859_15_CTRL_START_OF_HEADING 0x0001
@@ -537,4 +537,4 @@
   EL(_LATIN_SMALL_LIGATURE_OE)                                                                     \
   EL(_LATIN_CAPITAL_LETTER_Y_WITH_DIAERESIS)
 
-#endif /* _TUTF_ISO8859_15_H */
+#endif /* TUTF_ISO8859_15_H */

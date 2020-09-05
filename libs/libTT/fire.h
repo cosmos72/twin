@@ -9,8 +9,8 @@
  *
  */
 
-#ifndef _TT_FIRE_H
-#define _TT_FIRE_H
+#ifndef TT_FIRE_H
+#define TT_FIRE_H
 
 #define FIRE_EVENT_O(call, o, which, value, old_value)                                             \
   FIRE_EVENT(call, o, which, OBJ2ID(value), OBJ2ID(old_value))
@@ -30,4 +30,4 @@
                     (ttopaque)(len));                                                              \
   } while (0)
 
-#endif /* _TT_FIRE_H */
+#endif /* TT_FIRE_H */

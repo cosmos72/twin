@@ -1,6 +1,6 @@
 
-#ifndef _TT_DATASIZES_H
-#define _TT_DATASIZES_H
+#ifndef TT_DATASIZES_H
+#define TT_DATASIZES_H
 
 #define TT_SIZEOF_void 0
 #define TT_SIZEOF_ttchar TW_SIZEOF_BYTE
@@ -46,4 +46,4 @@
 #define TT_IS_LITTLE_ENDIAN TW_IS_LITTLE_ENDIAN
 #define TT_IS_BIG_ENDIAN TW_IS_BIG_ENDIAN
 
-#endif /* _TW_DATASIZES_H */
+#endif /* TT_DATASIZES_H */

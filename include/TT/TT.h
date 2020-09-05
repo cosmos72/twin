@@ -10,8 +10,8 @@
  *
  */
 
-#ifndef _TT_H
-#define _TT_H
+#ifndef TT_H
+#define TT_H
 
 #include <TT/TTtypes.h>
 #include <TT/defines.h>
@@ -103,4 +103,4 @@ void TTSetInstalled_tteventmask(tteventmask installed_event_mask);
 /** set the default mask of blocked events to be used while listeners are being called */
 void TTSetDefault_tteventmask(tteventmask default_event_mask);
 
-#endif /* _TT_H */
+#endif /* TT_H */

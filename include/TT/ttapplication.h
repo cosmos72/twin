@@ -14,8 +14,8 @@
  *
  */
 
-#ifndef _TT_TTAPPLICATION_H
-#define _TT_TTAPPLICATION_H
+#ifndef TT_TTAPPLICATION_H
+#define TT_TTAPPLICATION_H
 
 /* object structure */
 #ifndef s_ttapplication
@@ -46,4 +46,4 @@ ttopaque TTGetNameLen_ttapplication(TT_ARG_READ ttapplication o);
 /** get `name' of ttapplication `o' */
 TT_ARG_ARRAY((_F(name_len))) ttbyte *TTGetName_ttapplication(TT_ARG_READ ttapplication o);
 
-#endif /* _TT_TTAPPLICATION_H */
+#endif /* TT_TTAPPLICATION_H */

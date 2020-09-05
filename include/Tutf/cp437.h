@@ -2,8 +2,8 @@
  *  ibm437.h  --  include for ibm437 (codepage 437) characters database
  */
 
-#ifndef _TUTF_CP437_H
-#define _TUTF_CP437_H
+#ifndef TUTF_CP437_H
+#define TUTF_CP437_H
 
 #define T_CP437_CTRL_NULL 0x0000
 #define T_CP437_WHITE_SMILING_FACE 0x0001
@@ -684,4 +684,4 @@
   EL(_BLACK_SQUARE)                                                                                \
   EL(_NO_BREAK_SPACE)
 
-#endif /* _TUTF_CP437_H */
+#endif /* TUTF_CP437_H */

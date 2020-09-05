@@ -7,8 +7,8 @@
  * PLEASE DO NOT EDIT!
  */
 
-#ifndef _TUTF_MS_MAC_LATIN2_H
-#define _TUTF_MS_MAC_LATIN2_H
+#ifndef TUTF_MS_MAC_LATIN2_H
+#define TUTF_MS_MAC_LATIN2_H
 
 #define T_MS_MAC_LATIN2_CTRL_NULL 0x0000
 #define T_MS_MAC_LATIN2_CTRL_START_OF_HEADING 0x0001
@@ -655,4 +655,4 @@
   EL(_LATIN_CAPITAL_LETTER_G_WITH_CEDILLA)                                                         \
   EL(_CARON)
 
-#endif /* _TUTF_MS_MAC_LATIN2_H */
+#endif /* TUTF_MS_MAC_LATIN2_H */

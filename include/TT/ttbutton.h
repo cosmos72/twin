@@ -14,8 +14,8 @@
  *
  */
 
-#ifndef _TT_TTBUTTON_H
-#define _TT_TTBUTTON_H
+#ifndef TT_TTBUTTON_H
+#define TT_TTBUTTON_H
 
 /* object structure */
 #ifndef s_ttbutton
@@ -44,4 +44,4 @@ ttbutton TTCreate_ttbutton(ttshort w, ttshort h, ttshort pitch,
 
 /* TTGet*_ttbutton and TTSet*_ttbutton methods */
 
-#endif /* _TT_TTBUTTON_H */
+#endif /* TT_TTBUTTON_H */

@@ -9,8 +9,8 @@
  *
  */
 
-#ifndef _TT_CREATE_H
-#define _TT_CREATE_H
+#ifndef TT_CREATE_H
+#define TT_CREATE_H
 
 /* ttvector */
 static ttvector Create1_ttvector(ttany value) {
@@ -650,4 +650,4 @@ TT_INLINE ttapplication Create_ttapplication(TT_CONST ttbyte *name) {
   return TTD.Application;
 }
 
-#endif /* _TT_CREATE_H */
+#endif /* TT_CREATE_H */

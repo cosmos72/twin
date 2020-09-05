@@ -10,8 +10,8 @@
  *
  */
 
-#ifndef _TW_STAT_DEFS_H
-#define _TW_STAT_DEFS_H
+#ifndef TW_STAT_DEFS_H
+#define TW_STAT_DEFS_H
 
 #define TWS__None 0x0000
 
@@ -500,4 +500,4 @@
   EL(all_ChildrenMsgPort_List)                                                                     \
   EL(all_ChildrenMutex_List)
 
-#endif /* _TW_STAT_DEFS_H */
+#endif /* TW_STAT_DEFS_H */

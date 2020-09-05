@@ -6,8 +6,8 @@
  * (at your option) any later version.
  *
  */
-#ifndef _TWIN_STL_SPAN_H
-#define _TWIN_STL_SPAN_H
+#ifndef TWIN_STL_SPAN_H
+#define TWIN_STL_SPAN_H
 
 #include "stl/view.h"
 
@@ -105,4 +105,4 @@ template <class T> void swap(Span<T> &left, Span<T> &right) {
   left.swap(right);
 }
 
-#endif /* _TWIN_STL_SPAN_H */
+#endif /* TWIN_STL_SPAN_H */

@@ -6,10 +6,10 @@
  * (at your option) any later version.
  *
  */
-#ifndef _TWIN_UTIL_H
-#define _TWIN_UTIL_H
+#ifndef TWIN_UTIL_H
+#define TWIN_UTIL_H
 
-#ifndef _TWAUTOCONF_H
+#ifndef TWAUTOCONF_H
 #include "twautoconf.h" /* for TW_HAVE_ALARM */
 #endif
 
@@ -80,4 +80,4 @@ void *RemoveConst(const void *x);
 
 tcell EncodeToTCellExtra(tpos pos, tternary detail, tbool active, tbool pressed);
 
-#endif /* _TWIN_UTIL_H */
+#endif /* TWIN_UTIL_H */

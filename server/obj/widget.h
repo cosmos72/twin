@@ -10,8 +10,8 @@
  *
  */
 
-#ifndef _TWIN_WIDGET_H
-#define _TWIN_WIDGET_H
+#ifndef TWIN_WIDGET_H
+#define TWIN_WIDGET_H
 
 #include "obj/obj.h"
 
@@ -198,4 +198,4 @@ struct s_widget : public s_obj {
   }
 };
 
-#endif /* _TWIN_WIDGET_H */
+#endif /* TWIN_WIDGET_H */

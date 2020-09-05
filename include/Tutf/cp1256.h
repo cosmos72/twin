@@ -7,8 +7,8 @@
  * PLEASE DO NOT EDIT!
  */
 
-#ifndef _TUTF_CP1256_H
-#define _TUTF_CP1256_H
+#ifndef TUTF_CP1256_H
+#define TUTF_CP1256_H
 
 #define T_CP1256_CTRL_NULL 0x0000
 #define T_CP1256_CTRL_START_OF_HEADING 0x0001
@@ -614,4 +614,4 @@
   EL(_RIGHT_TO_LEFT_MARK)                                                                          \
   EL(_ARABIC_LETTER_YEH_BARREE)
 
-#endif /* _TUTF_CP1256_H */
+#endif /* TUTF_CP1256_H */

@@ -9,8 +9,8 @@
  *  (at your option) any later version.
  *
  */
-#ifndef _TWIN_STL_ERR_H
-#define _TWIN_STL_ERR_H
+#ifndef TWIN_STL_ERR_H
+#define TWIN_STL_ERR_H
 
 typedef enum e_errnum : unsigned char {
   SUCCESS = 0,
@@ -24,4 +24,4 @@ extern errnum Err;
 extern const char *Errstr;
 bool Error(errnum err); // always returns false
 
-#endif /* _TWIN_STL_ERR_H */
+#endif /* TWIN_STL_ERR_H */

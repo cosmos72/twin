@@ -6,8 +6,8 @@
  * (at your option) any later version.
  *
  */
-#ifndef _TWIN_TTY_H
-#define _TWIN_TTY_H
+#ifndef TWIN_TTY_H
+#define TWIN_TTY_H
 
 #include <Tw/datatypes.h>
 
@@ -108,4 +108,4 @@ byte TtyWriteTCell(window Window, dat x, dat y, uldat Len, const tcell *Attr);
 widget TtyKbdFocus(widget Window);
 void ForceKbdFocus(void);
 
-#endif /* _TWIN_TTY_H */
+#endif /* TWIN_TTY_H */

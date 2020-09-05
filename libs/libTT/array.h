@@ -8,8 +8,8 @@
  * version 2 of the License, or (at your option) any later version.
  *
  */
-#ifndef _TT_ARRAY_H
-#define _TT_ARRAY_H
+#ifndef TT_ARRAY_H
+#define TT_ARRAY_H
 
 /* useful defines to encode type attributes */
 
@@ -83,4 +83,4 @@
 #error internal error: ttclass_type_full_usedbits + order_ttclass_usedbits overflows TT_MAGIC_SHIFT !
 #endif
 
-#endif /* _TT_ARRAY_H */
+#endif /* TT_ARRAY_H */

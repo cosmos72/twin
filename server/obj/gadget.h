@@ -10,8 +10,8 @@
  *
  */
 
-#ifndef _TWIN_GADGET_H
-#define _TWIN_GADGET_H
+#ifndef TWIN_GADGET_H
+#define TWIN_GADGET_H
 
 #include "obj/widget.h"
 
@@ -231,4 +231,4 @@ typedef enum e_gadget_flag {
  *
  */
 
-#endif /* _TWIN_GADGET_H */
+#endif /* TWIN_GADGET_H */

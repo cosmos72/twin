@@ -6,8 +6,8 @@
  * (at your option) any later version.
  *
  */
-#ifndef _TWIN_DL_H
-#define _TWIN_DL_H
+#ifndef TWIN_DL_H
+#define TWIN_DL_H
 
 byte DlOpen(module Module);
 void DlClose(module Module);
@@ -28,4 +28,4 @@ module DlLoadAny(uldat len, const char *name);
 
 void *DlSym(module Module, const char *name);
 
-#endif /* _TWIN_DL_H */
+#endif /* TWIN_DL_H */

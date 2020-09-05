@@ -6,8 +6,8 @@
  * (at your option) any later version.
  *
  */
-#ifndef _TWIN_STL_VIEW_H
-#define _TWIN_STL_VIEW_H
+#ifndef TWIN_STL_VIEW_H
+#define TWIN_STL_VIEW_H
 
 #include "stl/fwd.h"
 #include "stl/mem.h"
@@ -113,4 +113,4 @@ template <class T> void swap(View<T> &left, View<T> &right) {
   left.swap(right);
 }
 
-#endif /* _TWIN_STL_VIEW_H */
+#endif /* TWIN_STL_VIEW_H */

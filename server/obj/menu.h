@@ -10,8 +10,8 @@
  *
  */
 
-#ifndef _TWIN_MENU_H
-#define _TWIN_MENU_H
+#ifndef TWIN_MENU_H
+#define TWIN_MENU_H
 
 #include "obj/obj.h"
 
@@ -78,4 +78,4 @@ struct s_menu : public s_obj {
   }
 };
 
-#endif /* _TWIN_MENU_H */
+#endif /* TWIN_MENU_H */

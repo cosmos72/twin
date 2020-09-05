@@ -14,8 +14,8 @@
  *
  */
 
-#ifndef _TT_TTEVENTMASK_H
-#define _TT_TTEVENTMASK_H
+#ifndef TT_TTEVENTMASK_H
+#define TT_TTEVENTMASK_H
 
 /* object structure */
 #ifndef s_tteventmask
@@ -81,4 +81,4 @@ ttuint TTGetTruthTable_tteventmask(TT_ARG_READ tteventmask o);
 /** set `truth_table' of tteventmask `o' */
 ttbyte TTSetTruthTable_tteventmask(tteventmask o, ttuint truth_table);
 
-#endif /* _TT_TTEVENTMASK_H */
+#endif /* TT_TTEVENTMASK_H */

@@ -6,11 +6,11 @@
  * (at your option) any later version.
  *
  */
-#ifndef _TWIN_PTY_H
-#define _TWIN_PTY_H
+#ifndef TWIN_PTY_H
+#define TWIN_PTY_H
 
 byte SpawnInWindow(window Window, const char *arg0, const char *const *argv);
 
 gid_t get_tty_grgid(void);
 
-#endif /* _TWIN_PTY_H */
+#endif /* TWIN_PTY_H */

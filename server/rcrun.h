@@ -6,8 +6,8 @@
  * (at your option) any later version.
  *
  */
-#ifndef _TWIN_RCRUN_H
-#define _TWIN_RCRUN_H
+#ifndef TWIN_RCRUN_H
+#define TWIN_RCRUN_H
 
 #define GLOBAL_MAX 7
 extern node Globals[GLOBAL_MAX];
@@ -37,4 +37,4 @@ trune *RCFindBorderPattern(window W, byte Border);
 byte RC_VM(timevalue *t);
 byte RC_VMQueue(const wm_ctx *C);
 
-#endif /* _TWIN_RCRUN_H */
+#endif /* TWIN_RCRUN_H */

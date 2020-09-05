@@ -6,8 +6,8 @@
  * (at your option) any later version.
  *
  */
-#ifndef _TWIN_STL_STRING_H
-#define _TWIN_STL_STRING_H
+#ifndef TWIN_STL_STRING_H
+#define TWIN_STL_STRING_H
 
 #include "stl/array.h"
 
@@ -46,4 +46,4 @@ inline void swap(String &left, String &right) {
   left.swap(right);
 }
 
-#endif /* _TWIN_STL_STRING_H */
+#endif /* TWIN_STL_STRING_H */

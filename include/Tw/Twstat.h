@@ -10,8 +10,8 @@
  *
  */
 
-#ifndef _TW_STAT_H
-#define _TW_STAT_H
+#ifndef TW_STAT_H
+#define TW_STAT_H
 
 #include <stdarg.h>
 #include <Tw/Twtypes.h>
@@ -128,4 +128,4 @@ tslist TwCloneStatL(tobj Id, udat hN, ...);
 }
 #endif
 
-#endif /* _TW_STAT_H */
+#endif /* TW_STAT_H */

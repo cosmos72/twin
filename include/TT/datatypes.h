@@ -1,6 +1,6 @@
 
-#ifndef _TT_DATATYPES_H
-#define _TT_DATATYPES_H
+#ifndef TT_DATATYPES_H
+#define TT_DATATYPES_H
 
 /* typedefs for objects and method structures */
 
@@ -41,4 +41,4 @@ struct s_ttarg {
 /** alias for function pointers (void (*)(void)) */
 typedef void (*ttfunction_fn)(void);
 
-#endif /* _TT_DATATYPES_H */
+#endif /* TT_DATATYPES_H */

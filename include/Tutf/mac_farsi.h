@@ -7,8 +7,8 @@
  * PLEASE DO NOT EDIT!
  */
 
-#ifndef _TUTF_MAC_FARSI_H
-#define _TUTF_MAC_FARSI_H
+#ifndef TUTF_MAC_FARSI_H
+#define TUTF_MAC_FARSI_H
 
 #define T_MAC_FARSI_CTRL_NULL 0x0000
 #define T_MAC_FARSI_CTRL_START_OF_HEADING 0x0001
@@ -657,4 +657,4 @@
   EL(_ARABIC_LETTER_JEH)                                                                           \
   EL(_ARABIC_LETTER_YEH_BARREE)
 
-#endif /* _TUTF_MAC_FARSI_H */
+#endif /* TUTF_MAC_FARSI_H */

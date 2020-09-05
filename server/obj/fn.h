@@ -10,8 +10,8 @@
  *
  */
 
-#ifndef _TWIN_FN_H
-#define _TWIN_FN_H
+#ifndef TWIN_FN_H
+#define TWIN_FN_H
 
 #include "obj/fwd.h"
 
@@ -50,4 +50,4 @@ extern fn_struct FnStruct;
 #define Fn_module (FnStruct.module)
 #define Fn_display_hw (FnStruct.display_hw)
 
-#endif /* _TWIN_FN_H */
+#endif /* TWIN_FN_H */

@@ -6,8 +6,8 @@
  * (at your option) any later version.
  *
  */
-#ifndef _TWIN_STL_TYPE_H
-#define _TWIN_STL_TYPE_H
+#ifndef TWIN_STL_TYPE_H
+#define TWIN_STL_TYPE_H
 
 #include <stddef.h> // size_t
 #include <new>      // placement new
@@ -93,4 +93,4 @@ public:
   }
 };
 
-#endif /* _TWIN_STL_TYPE_H */
+#endif /* TWIN_STL_TYPE_H */

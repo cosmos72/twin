@@ -14,8 +14,8 @@
  *
  */
 
-#ifndef _TT_TTTIMER_H
-#define _TT_TTTIMER_H
+#ifndef TT_TTTIMER_H
+#define TT_TTTIMER_H
 
 /* object structure */
 #ifndef s_tttimer
@@ -64,4 +64,4 @@ tttimer TTGetTimerPrev_tttimer(TT_ARG_READ tttimer o);
 /** get `timer_next' of tttimer `o' */
 tttimer TTGetTimerNext_tttimer(TT_ARG_READ tttimer o);
 
-#endif /* _TT_TTTIMER_H */
+#endif /* TT_TTTIMER_H */

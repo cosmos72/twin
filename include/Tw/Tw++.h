@@ -26,16 +26,16 @@
  * connection that was used to create it.
  */
 
-#ifndef _TW_PLUS_PLUS_H
-#define _TW_PLUS_PLUS_H
+#ifndef TW_PLUS_PLUS_H
+#define TW_PLUS_PLUS_H
 
 #include <stdio.h>
 #include <string.h>
 
-#ifndef _TW_H
+#ifndef TW_H
 #include <Tw/Tw.h>
 #endif
-#ifndef _TW_ERRNO_H
+#ifndef TW_ERRNO_H
 #include <Tw/Twerrno.h>
 #endif
 
@@ -1351,4 +1351,4 @@ inline TMsgPort::TMsgPort(TW *dpy, const char *name) {
   dpy->setMsgPort(this);
 }
 
-#endif /* _TW_PLUS_PLUS_H */
+#endif /* TW_PLUS_PLUS_H */

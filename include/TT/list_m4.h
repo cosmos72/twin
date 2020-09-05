@@ -1,10 +1,6 @@
 
 
-
-
-
 /* This file was automatically generated from m4/decls.m4, do not edit! */
-
 
 /*
  *  list_m4.h  --  defines for listing all libTT object types
@@ -18,10 +14,8 @@
  *
  */
 
-#ifndef _TT_LIST_M4_H
-#define _TT_LIST_M4_H
-
-
+#ifndef TT_LIST_M4_H
+#define TT_LIST_M4_H
 
 /*  Copyright (C) 2002 by Massimiliano Ghilardi
  *
@@ -31,22 +25,6 @@
  *  version 2 of the License, or (at your option) any later version.
  *
  */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 /*
  *  m4/TTclasses.m4h  --  header for libTT objects inheritance
@@ -61,10 +39,6 @@
  *
  */
 
-
-
-
-
 /*  Copyright (C) 2002 by Massimiliano Ghilardi
  *
  *  This library is free software; you can redistribute it and/or
@@ -74,58 +48,61 @@
  *
  */
 
+#define TT_LIST(el)                                                                                \
+  el(ttobj) el(ttclass) el(ttobject) el(ttvector) el(ttfield) el(ttmethod) el(ttevent)             \
+      el(tteventbig) el(ttbitmask) el(tteventmask) el(ttcallback) el(ttlistener) el(tttimer)       \
+          el(ttcomponent) el(ttdata) el(ttvisible) el(ttlayout) el(ttboxlayout) el(ttborderlayout) \
+              el(ttnative) el(ttwidget) el(ttlabel) el(tttooltip) el(ttbuttongroup)                \
+                  el(ttanybutton) el(ttbutton) el(ttcheckbutton) el(ttradiobutton) el(ttanyscroll) \
+                      el(ttscrollbar) el(ttslider) el(ttprogressbar) el(ttscrollpane) el(ttwindow) \
+                          el(ttframe) el(ttscroller) el(ttmenuitem) el(ttcheckmenuitem)            \
+                              el(ttradiomenuitem) el(ttmenu) el(ttmenubar) el(ttanytext)           \
+                                  el(tttextfield) el(tttextarea) el(tttheme) el(ttapplication)
 
+#define TT_NLIST(el)                                                                               \
+  el(ttclass) el(ttobject) el(ttvector) el(ttfield) el(ttmethod) el(ttevent) el(tteventbig)        \
+      el(ttbitmask) el(tteventmask) el(ttcallback) el(ttlistener) el(tttimer) el(ttcomponent)      \
+          el(ttdata) el(ttvisible) el(ttlayout) el(ttboxlayout) el(ttborderlayout) el(ttnative)    \
+              el(ttwidget) el(ttlabel) el(tttooltip) el(ttbuttongroup) el(ttanybutton)             \
+                  el(ttbutton) el(ttcheckbutton) el(ttradiobutton) el(ttanyscroll) el(ttscrollbar) \
+                      el(ttslider) el(ttprogressbar) el(ttscrollpane) el(ttwindow) el(ttframe)     \
+                          el(ttscroller) el(ttmenuitem) el(ttcheckmenuitem) el(ttradiomenuitem)    \
+                              el(ttmenu) el(ttmenubar) el(ttanytext) el(tttextfield)               \
+                                  el(tttextarea) el(tttheme) el(ttapplication)
 
+#define TT_TYPELIST(el)                                                                            \
+  el(void) el(ttbyte) el(ttshort) el(ttint) el(ttcol) el(ttfont) el(ttattr) el(ttopaque) el(ttany) \
+      el(ttfunction_fn) el(va_list) el(ttarg)
 
-
-#define TT_LIST(el) \
- el(ttobj) el(ttclass) el(ttobject) el(ttvector) el(ttfield) el(ttmethod) el(ttevent) el(tteventbig) el(ttbitmask) el(tteventmask) el(ttcallback) el(ttlistener) el(tttimer) el(ttcomponent) el(ttdata) el(ttvisible) el(ttlayout) el(ttboxlayout) el(ttborderlayout) el(ttnative) el(ttwidget) el(ttlabel) el(tttooltip) el(ttbuttongroup) el(ttanybutton) el(ttbutton) el(ttcheckbutton) el(ttradiobutton) el(ttanyscroll) el(ttscrollbar) el(ttslider) el(ttprogressbar) el(ttscrollpane) el(ttwindow) el(ttframe) el(ttscroller) el(ttmenuitem) el(ttcheckmenuitem) el(ttradiomenuitem) el(ttmenu) el(ttmenubar) el(ttanytext) el(tttextfield) el(tttextarea) el(tttheme) el(ttapplication)
-
-#define TT_NLIST(el) \
- el(ttclass) el(ttobject) el(ttvector) el(ttfield) el(ttmethod) el(ttevent) el(tteventbig) el(ttbitmask) el(tteventmask) el(ttcallback) el(ttlistener) el(tttimer) el(ttcomponent) el(ttdata) el(ttvisible) el(ttlayout) el(ttboxlayout) el(ttborderlayout) el(ttnative) el(ttwidget) el(ttlabel) el(tttooltip) el(ttbuttongroup) el(ttanybutton) el(ttbutton) el(ttcheckbutton) el(ttradiobutton) el(ttanyscroll) el(ttscrollbar) el(ttslider) el(ttprogressbar) el(ttscrollpane) el(ttwindow) el(ttframe) el(ttscroller) el(ttmenuitem) el(ttcheckmenuitem) el(ttradiomenuitem) el(ttmenu) el(ttmenubar) el(ttanytext) el(tttextfield) el(tttextarea) el(tttheme) el(ttapplication)
-
-#define TT_TYPELIST(el) \
-el(void) el(ttbyte) el(ttshort) el(ttint) el(ttcol) el(ttfont) el(ttattr) el(ttopaque) el(ttany) el(ttfunction_fn) el(va_list) el(ttarg)
-
-#define TT_TYPEALIASLIST(el) \
-el(ttsbyte,ttbyte) el(ttushort,ttshort) el(ttuint,ttint)
-
-
-
+#define TT_TYPEALIASLIST(el) el(ttsbyte, ttbyte) el(ttushort, ttshort) el(ttuint, ttint)
 
 /** type of void */
-extern ttclass        TTClass_void; 
+extern ttclass TTClass_void;
 /** type of ttbyte */
-extern ttclass        TTClass_ttbyte; 
+extern ttclass TTClass_ttbyte;
 /** type of ttshort */
-extern ttclass        TTClass_ttshort; 
+extern ttclass TTClass_ttshort;
 /** type of ttint */
-extern ttclass        TTClass_ttint; 
+extern ttclass TTClass_ttint;
 /** type of ttcol */
-extern ttclass        TTClass_ttcol; 
+extern ttclass TTClass_ttcol;
 /** type of ttfont */
-extern ttclass        TTClass_ttfont; 
+extern ttclass TTClass_ttfont;
 /** type of ttattr */
-extern ttclass        TTClass_ttattr; 
+extern ttclass TTClass_ttattr;
 /** type of ttopaque */
-extern ttclass        TTClass_ttopaque; 
+extern ttclass TTClass_ttopaque;
 /** type of ttany */
-extern ttclass        TTClass_ttany; 
+extern ttclass TTClass_ttany;
 /** type of ttfunction_fn */
-extern ttclass        TTClass_ttfunction_fn; 
+extern ttclass TTClass_ttfunction_fn;
 /** type of va_list */
-extern ttclass        TTClass_va_list; 
+extern ttclass TTClass_va_list;
 /** type of ttarg */
-extern ttclass        TTClass_ttarg;
-
+extern ttclass TTClass_ttarg;
 
 /** aliases */
 
-
-#define TTClass_ttsbyte        TTClass_ttbyte 
-#define TTClass_ttushort        TTClass_ttshort 
-#define TTClass_ttuint        TTClass_ttint
-
-
-
-#endif /* _TT_LIST_M4_H */
+#define TTClass_ttsbyte TTClass_ttbyte
+#define TTClass_ttushort TTClass_ttshort
+#define TTClass_ttuint TTClass_ttint

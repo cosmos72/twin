@@ -14,8 +14,8 @@
  *
  */
 
-#ifndef _TT_TTCALLBACK_H
-#define _TT_TTCALLBACK_H
+#ifndef TT_TTCALLBACK_H
+#define TT_TTCALLBACK_H
 
 /* object structure */
 #ifndef s_ttcallback
@@ -46,4 +46,4 @@ ttcallback TTGetPrev_ttcallback(TT_ARG_READ ttcallback o);
 /** get `next' of ttcallback `o' */
 ttcallback TTGetNext_ttcallback(TT_ARG_READ ttcallback o);
 
-#endif /* _TT_TTCALLBACK_H */
+#endif /* TT_TTCALLBACK_H */

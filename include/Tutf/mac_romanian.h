@@ -7,8 +7,8 @@
  * PLEASE DO NOT EDIT!
  */
 
-#ifndef _TUTF_MAC_ROMANIAN_H
-#define _TUTF_MAC_ROMANIAN_H
+#ifndef TUTF_MAC_ROMANIAN_H
+#define TUTF_MAC_ROMANIAN_H
 
 #define T_MAC_ROMANIAN_CTRL_NULL 0x0000
 #define T_MAC_ROMANIAN_CTRL_START_OF_HEADING 0x0001
@@ -652,4 +652,4 @@
   EL(_OGONEK)                                                                                      \
   EL(_CARON)
 
-#endif /* _TUTF_MAC_ROMANIAN_H */
+#endif /* TUTF_MAC_ROMANIAN_H */

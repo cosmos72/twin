@@ -18,8 +18,8 @@ dnl Tell the user about this.
  *  tree_m4.h  --  internal header for libTT objects hierarchy tree
  */
 
-#ifndef _TT_TREEM4_H
-#define _TT_TREEM4_H
+#ifndef TT_TREEM4_H
+#define TT_TREEM4_H
 
 
 
@@ -454,4 +454,4 @@ undefine(`el')
 
 
 
-#endif /* _TT_TREEM4_H */
+#endif /* TT_TREEM4_H */

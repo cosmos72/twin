@@ -10,8 +10,8 @@
  *
  */
 
-#ifndef _TWIN_MODULE_H
-#define _TWIN_MODULE_H
+#ifndef TWIN_MODULE_H
+#define TWIN_MODULE_H
 
 #include "obj/fwd.h"
 #include "obj/obj.h"
@@ -66,4 +66,4 @@ struct s_module : public s_obj {
   }
 };
 
-#endif /* _TWIN_MODULE_H */
+#endif /* TWIN_MODULE_H */

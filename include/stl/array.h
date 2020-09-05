@@ -6,8 +6,8 @@
  * (at your option) any later version.
  *
  */
-#ifndef _TWIN_STL_ARRAY_H
-#define _TWIN_STL_ARRAY_H
+#ifndef TWIN_STL_ARRAY_H
+#define TWIN_STL_ARRAY_H
 
 #include "stl/span.h"
 #include "stl/mem.h"
@@ -181,4 +181,4 @@ template <class T> void swap(Array<T> &left, Array<T> &right) {
   left.swap(right);
 }
 
-#endif /* _TWIN_STL_ARRAY_H */
+#endif /* TWIN_STL_ARRAY_H */

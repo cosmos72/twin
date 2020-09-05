@@ -7,8 +7,8 @@
  * PLEASE DO NOT EDIT!
  */
 
-#ifndef _TUTF_ISO8859_5_H
-#define _TUTF_ISO8859_5_H
+#ifndef TUTF_ISO8859_5_H
+#define TUTF_ISO8859_5_H
 
 #define T_ISO8859_5_CTRL_NULL 0x0000
 #define T_ISO8859_5_CTRL_START_OF_HEADING 0x0001
@@ -623,4 +623,4 @@
   EL(_CYRILLIC_SMALL_LETTER_SHORT_U)                                                               \
   EL(_CYRILLIC_SMALL_LETTER_DZHE)
 
-#endif /* _TUTF_ISO8859_5_H */
+#endif /* TUTF_ISO8859_5_H */

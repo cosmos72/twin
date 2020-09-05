@@ -6,8 +6,8 @@
  * (at your option) any later version.
  *
  */
-#ifndef _TWIN_METHODS_H
-#define _TWIN_METHODS_H
+#ifndef TWIN_METHODS_H
+#define TWIN_METHODS_H
 
 #include "obj/fn.h"
 #include "obj/window.h" // tpos
@@ -67,4 +67,4 @@ void *OverrideMth(void **where, void *OldMethod, void *NewMethod);
 #define OverrideMethod(obj_type, Command, ExpectedMethod, NewMethod)                               \
   OverrideMth((void **)&(Fn_##obj_type->Command), (void *)ExpectedMethod, (void *)NewMethod)
 
-#endif /* _TWIN_METHODS_H */
+#endif /* TWIN_METHODS_H */

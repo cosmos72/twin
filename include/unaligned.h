@@ -5,8 +5,8 @@
  *  the Free Software Foundation; either version 2 of the License, or
  *  (at your option) any later version.
  */
-#ifndef _TWIN_UNALIGNED_H
-#define _TWIN_UNALIGNED_H
+#ifndef TWIN_UNALIGNED_H
+#define TWIN_UNALIGNED_H
 
 #include <string.h> // memcpy()
 
@@ -39,4 +39,4 @@ template <class T> inline byte *Push(byte *dst, T val) {
   } while (0)
 #endif
 
-#endif /* _TWIN_UNALIGNED_H */
+#endif /* TWIN_UNALIGNED_H */

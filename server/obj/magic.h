@@ -10,8 +10,8 @@
  *
  */
 
-#ifndef _TWIN_MAGIC_H
-#define _TWIN_MAGIC_H
+#ifndef TWIN_MAGIC_H
+#define TWIN_MAGIC_H
 
 #define magic_mask ((uldat)0xF0000000ul)
 #define magic_shift 28
@@ -86,4 +86,4 @@ enum {
   magic_n = 16, /* max top hex digit of the above ones + 1 */
 };
 
-#endif /* _TWIN_MAGIC_H */
+#endif /* TWIN_MAGIC_H */

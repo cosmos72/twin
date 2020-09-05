@@ -7,8 +7,8 @@
  * PLEASE DO NOT EDIT!
  */
 
-#ifndef _TUTF_ISO8859_6_H
-#define _TUTF_ISO8859_6_H
+#ifndef TUTF_ISO8859_6_H
+#define TUTF_ISO8859_6_H
 
 #define T_ISO8859_6_CTRL_NULL 0x0000
 #define T_ISO8859_6_CTRL_START_OF_HEADING 0x0001
@@ -532,4 +532,4 @@
   EL(_ARABIC_SHADDA)                                                                               \
   EL(_ARABIC_SUKUN)
 
-#endif /* _TUTF_ISO8859_6_H */
+#endif /* TUTF_ISO8859_6_H */

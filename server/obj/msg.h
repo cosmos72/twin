@@ -10,8 +10,8 @@
  *
  */
 
-#ifndef _TWIN_MSG_H
-#define _TWIN_MSG_H
+#ifndef TWIN_MSG_H
+#define TWIN_MSG_H
 
 #include "obj/event.h"
 #include "obj/fwd.h"
@@ -56,4 +56,4 @@ struct s_msg : public s_obj {
   }
 };
 
-#endif /* _TWIN_MSG_H */
+#endif /* TWIN_MSG_H */

@@ -10,8 +10,8 @@
  *
  */
 
-#ifndef _TWIN_SCREEN_H
-#define _TWIN_SCREEN_H
+#ifndef TWIN_SCREEN_H
+#define TWIN_SCREEN_H
 
 #include "obj/widget.h"
 
@@ -199,4 +199,4 @@ struct s_screen : public s_obj {
 #define SCREENFL_BACK_PRESSED 0x0020
 #define SCREENFL_NOTVISIBLE 0x8000
 
-#endif /* _TWIN_SCREEN_H */
+#endif /* TWIN_SCREEN_H */

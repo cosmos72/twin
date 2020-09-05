@@ -10,8 +10,8 @@
  *
  */
 
-#ifndef _TW1_H
-#define _TW1_H
+#ifndef TW1_H
+#define TW1_H
 
 /*
  * libTw.so.1 --- single head compatibility. these are too handy to drop them.
@@ -32,4 +32,4 @@ byte TwFindLFunction(void *Function, ...);
 #include <Tw/proto1_m4.h>
 #include <Tw/alias1_m4.h>
 
-#endif /* _TW1_H */
+#endif /* TW1_H */

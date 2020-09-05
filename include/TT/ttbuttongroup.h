@@ -14,8 +14,8 @@
  *
  */
 
-#ifndef _TT_TTBUTTONGROUP_H
-#define _TT_TTBUTTONGROUP_H
+#ifndef TT_TTBUTTONGROUP_H
+#define TT_TTBUTTONGROUP_H
 
 /* object structure */
 #ifndef s_ttbuttongroup
@@ -52,4 +52,4 @@ ttradiobutton TTGetGroupLast_ttbuttongroup(TT_ARG_READ ttbuttongroup o);
 /** get `checked' of ttbuttongroup `o' */
 ttradiobutton TTGetChecked_ttbuttongroup(TT_ARG_READ ttbuttongroup o);
 
-#endif /* _TT_TTBUTTONGROUP_H */
+#endif /* TT_TTBUTTONGROUP_H */

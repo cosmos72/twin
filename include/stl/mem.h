@@ -6,8 +6,8 @@
  * (at your option) any later version.
  *
  */
-#ifndef _TWIN_STL_MEM_H
-#define _TWIN_STL_MEM_H
+#ifndef TWIN_STL_MEM_H
+#define TWIN_STL_MEM_H
 
 #include "stl/alloc.h"
 
@@ -59,4 +59,4 @@ template <class Vec1, class Vec2> inline bool equalvec(const Vec1 &left, const V
 
 } // namespace mem
 
-#endif /* _TWIN_STL_ALLOC_H */
+#endif /* TWIN_STL_ALLOC_H */

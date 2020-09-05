@@ -6,8 +6,8 @@
  * (at your option) any later version.
  *
  */
-#ifndef _TWIN_HW_MULTI_H
-#define _TWIN_HW_MULTI_H
+#ifndef TWIN_HW_MULTI_H
+#define TWIN_HW_MULTI_H
 
 /*
  * this file exports functions and variables defined in hw_multi.c
@@ -49,4 +49,4 @@ void EnableMouseMotionEvents(byte enable);
 byte StdAddMouseEvent(udat Code, dat MouseX, dat MouseY);
 void SyntheticKey(widget W, udat Code, udat ShiftFlags, byte Len, const char *Seq);
 
-#endif /* _TWIN_HW_MULTI_H */
+#endif /* TWIN_HW_MULTI_H */

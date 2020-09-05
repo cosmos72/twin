@@ -82,8 +82,8 @@ def() {
 }
 
 echo
-echo "#ifndef _TUTF_${CHARSET}_H"
-echo "#define _TUTF_${CHARSET}_H"
+echo "#ifndef TUTF_${CHARSET}_H"
+echo "#define TUTF_${CHARSET}_H"
 echo
 
 while read hex_index hex_value comments; do
@@ -91,11 +91,11 @@ while read hex_index hex_value comments; do
     # skip empty lines and comments
     continue
   fi
-  
+
   parse_hex "$hex_index"
   # echo "parse_hex($hex_index) -> $result # $hex_value $comments"
   hex_index="$result"
-  
+
   if [ "$hex_index" = "" ]; then
     continue
   fi
@@ -104,7 +104,7 @@ while read hex_index hex_value comments; do
     # this is a byte-to-utf32 mapping... cannot define mappings from (> 0xFF)
     continue
   fi
-  
+
   parse_hex "$hex_value"
   hex_value="$result"
   if [ "$hex_value" != "" ]; then
@@ -136,7 +136,7 @@ to_name() {
 index=0
 while [ "$index" -le 255 ]; do
   hex_index="`printf 0x%04X \"$index\"`"
-  
+
   to_name "$index" "$hex_index"
   name="$result"
   if [ "$name" != "" ]; then
@@ -144,7 +144,7 @@ while [ "$index" -le 255 ]; do
   fi
   : $(( index = index + 1 ))
 done
-  
+
 echo
 echo "/* list of all characters */"
 echo -n "#define T_LIST_${CHARSET}(EL)"
@@ -153,7 +153,7 @@ index=0
 while [ "$index" -le 255 ]; do
   hex_index="`printf 0x%04X \"$index\"`"
   value="${ch[index]}"
-  
+
   if [ "$value" != "" ]; then
     to_name "$index" "$hex_index"
     name="$result"
@@ -174,7 +174,7 @@ index=0
 while [ "$index" -le 255 ]; do
   hex_index="`printf 0x%04X \"$index\"`"
   value="${ch[index]}"
-  
+
   if [ "$value" != "" -a "$value" != "$index" ]; then
     to_name "$index" "$hex_index"
     name="$result"
@@ -189,4 +189,4 @@ echo
 
 echo
 echo
-echo "#endif /* _TUTF_${CHARSET}_H */"
+echo "#endif /* TUTF_${CHARSET}_H */"

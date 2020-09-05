@@ -10,8 +10,8 @@
  *
  */
 
-#ifndef _TW_ERRNO_H
-#define _TW_ERRNO_H
+#ifndef TW_ERRNO_H
+#define TW_ERRNO_H
 
 #include <Tw/Twtypes.h>
 
@@ -71,4 +71,4 @@ TW_ATTR_FN_CONST TW_CONST char *Tw_StrErrorDetail(TW_CONST tdisplay TwD, uldat e
 }
 #endif
 
-#endif /* _TW_ERRNO_H */
+#endif /* TW_ERRNO_H */

@@ -6,8 +6,8 @@
  * (at your option) any later version.
  *
  */
-#ifndef _TWIN_ALGO_H
-#define _TWIN_ALGO_H
+#ifndef TWIN_ALGO_H
+#define TWIN_ALGO_H
 
 #include <Tw/datatypes.h>
 
@@ -27,4 +27,4 @@ inline ldat Max3(ldat x, ldat y, ldat z) {
   return Max2(Max2(x, y), z);
 }
 
-#endif /* _TWIN_ALGO_H */
+#endif /* TWIN_ALGO_H */

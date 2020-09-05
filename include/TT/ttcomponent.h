@@ -14,8 +14,8 @@
  *
  */
 
-#ifndef _TT_TTCOMPONENT_H
-#define _TT_TTCOMPONENT_H
+#ifndef TT_TTCOMPONENT_H
+#define TT_TTCOMPONENT_H
 
 /* object structure */
 #ifndef s_ttcomponent
@@ -64,4 +64,4 @@ tttimer TTGetTimers_ttcomponent(TT_ARG_READ ttcomponent o);
 /** get `datas' of ttcomponent `o' */
 ttdata TTGetDatas_ttcomponent(TT_ARG_READ ttcomponent o);
 
-#endif /* _TT_TTCOMPONENT_H */
+#endif /* TT_TTCOMPONENT_H */

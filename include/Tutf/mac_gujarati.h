@@ -7,8 +7,8 @@
  * PLEASE DO NOT EDIT!
  */
 
-#ifndef _TUTF_MAC_GUJARATI_H
-#define _TUTF_MAC_GUJARATI_H
+#ifndef TUTF_MAC_GUJARATI_H
+#define TUTF_MAC_GUJARATI_H
 
 #define T_MAC_GUJARATI_CTRL_NULL 0x0000
 #define T_MAC_GUJARATI_CTRL_START_OF_HEADING 0x0001
@@ -577,4 +577,4 @@
   EL(_GUJARATI_DIGIT_EIGHT)                                                                        \
   EL(_GUJARATI_DIGIT_NINE)
 
-#endif /* _TUTF_MAC_GUJARATI_H */
+#endif /* TUTF_MAC_GUJARATI_H */

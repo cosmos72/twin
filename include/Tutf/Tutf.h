@@ -12,8 +12,8 @@
  *
  */
 
-#ifndef _TUTF_H
-#define _TUTF_H
+#ifndef TUTF_H
+#define TUTF_H
 
 #include <Tutf/Tutftypes.h>
 
@@ -839,4 +839,4 @@ extern trune Tutf_CP437_to_ANSI_X3_4[0x100];
 }
 #endif
 
-#endif /* _TUTF_H */
+#endif /* TUTF_H */

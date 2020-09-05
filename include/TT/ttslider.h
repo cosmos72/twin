@@ -14,8 +14,8 @@
  *
  */
 
-#ifndef _TT_TTSLIDER_H
-#define _TT_TTSLIDER_H
+#ifndef TT_TTSLIDER_H
+#define TT_TTSLIDER_H
 
 /* object structure */
 #ifndef s_ttslider
@@ -64,4 +64,4 @@ ttint TTGetSlideValue_ttslider(TT_ARG_READ ttslider o);
 /** set `slide_value' of ttslider `o' */
 ttbyte TTSetSlideValue_ttslider(ttslider o, ttint slide_value);
 
-#endif /* _TT_TTSLIDER_H */
+#endif /* TT_TTSLIDER_H */

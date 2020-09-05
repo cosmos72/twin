@@ -14,8 +14,8 @@
  *
  */
 
-#ifndef _TT_TTANYBUTTON_H
-#define _TT_TTANYBUTTON_H
+#ifndef TT_TTANYBUTTON_H
+#define TT_TTANYBUTTON_H
 
 /* object structure */
 #ifndef s_ttanybutton
@@ -64,4 +64,4 @@ ttshort TTGetTextHeight_ttanybutton(TT_ARG_READ ttanybutton o);
 TT_ARG_ARRAY((_F(text_width), *, _F(text_height)))
 ttattr *TTGetText_ttanybutton(TT_ARG_READ ttanybutton o);
 
-#endif /* _TT_TTANYBUTTON_H */
+#endif /* TT_TTANYBUTTON_H */

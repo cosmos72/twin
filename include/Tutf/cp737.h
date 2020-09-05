@@ -7,8 +7,8 @@
  * PLEASE DO NOT EDIT!
  */
 
-#ifndef _TUTF_CP737_H
-#define _TUTF_CP737_H
+#ifndef TUTF_CP737_H
+#define TUTF_CP737_H
 
 #define T_CP737_CTRL_NULL 0x0000
 #define T_CP737_CTRL_START_OF_HEADING 0x0001
@@ -657,4 +657,4 @@
   EL(_BLACK_SQUARE)                                                                                \
   EL(_NO_BREAK_SPACE)
 
-#endif /* _TUTF_CP737_H */
+#endif /* TUTF_CP737_H */

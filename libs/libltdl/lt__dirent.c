@@ -58,7 +58,7 @@ opendir (const char *path)
   entry = (DIR *) malloc (sizeof(DIR));
   if (entry != (DIR *) 0)
     {
-      entry->firsttime = ttrue;
+      entry->firsttime = TRUE;
       entry->hSearch = FindFirstFile (file_spec, &entry->Win32FindData);
 
       if (entry->hSearch == INVALID_HANDLE_VALUE)
@@ -94,7 +94,7 @@ readdir (DIR *entry)
         return (struct dirent *) 0;
     }
 
-  entry->firsttime = tfalse;
+  entry->firsttime = FALSE;
   if (lt_strlcpy (entry->file_info.d_name, entry->Win32FindData.cFileName,
 	sizeof entry->file_info.d_name) >= sizeof entry->file_info.d_name)
     return (struct dirent *) 0;

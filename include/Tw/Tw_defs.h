@@ -10,8 +10,8 @@
  *
  */
 
-#ifndef _TW_DEFS_H
-#define _TW_DEFS_H
+#ifndef TW_DEFS_H
+#define TW_DEFS_H
 
 enum tw_magic {
   /* "Twin" in native byte-order */
@@ -197,4 +197,4 @@ enum tw_row_flag {
   TW_ROW_DEFCOL = 0x04,
 };
 
-#endif /* _TW_DEFS_H */
+#endif /* TW_DEFS_H */

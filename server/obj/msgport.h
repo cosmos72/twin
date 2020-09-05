@@ -10,8 +10,8 @@
  *
  */
 
-#ifndef _TWIN_MSGPORT_H
-#define _TWIN_MSGPORT_H
+#ifndef TWIN_MSGPORT_H
+#define TWIN_MSGPORT_H
 
 #include "obj/fwd.h"
 #include "obj/window.h" // struct s_remotedata
@@ -71,4 +71,4 @@ struct s_msgport : public s_obj {
 #define TIMER_ALWAYS ((byte)1)
 #define TIMER_ONCE ((byte)2)
 
-#endif /* _TWIN_MSGPORT_H */
+#endif /* TWIN_MSGPORT_H */

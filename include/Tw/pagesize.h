@@ -1,7 +1,7 @@
-#ifndef _TW_PAGESIZE_H
-#define _TW_PAGESIZE_H
+#ifndef TW_PAGESIZE_H
+#define TW_PAGESIZE_H
 
-#ifndef _TW_TWAUTOCONF_H
+#ifndef TWTWAUTOCONF_H
 #include <Tw/autoconf.h>
 #endif
 
@@ -51,4 +51,4 @@
 #endif /* no _SC_PAGESIZE */
 #endif /* no TW_HAVE_GETPAGESIZE */
 
-#endif /* _TW_PAGESIZE_H */
+#endif /* TW_PAGESIZE_H */

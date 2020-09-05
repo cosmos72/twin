@@ -6,8 +6,8 @@
  * (at your option) any later version.
  *
  */
-#ifndef _TWIN_COMMON_H
-#define _TWIN_COMMON_H
+#ifndef TWIN_COMMON_H
+#define TWIN_COMMON_H
 
 /*
  * this file exports functions and variables common to both
@@ -69,4 +69,4 @@ int flushk(void);
  */
 void RemotePidIsDead(pid_t pid);
 
-#endif /* _TWIN_HW_COMMON_H */
+#endif /* TWIN_HW_COMMON_H */

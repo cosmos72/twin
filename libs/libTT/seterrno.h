@@ -9,8 +9,8 @@
  *
  */
 
-#ifndef _TT_SETERRNO_H
-#define _TT_SETERRNO_H
+#ifndef TT_SETERRNO_H
+#define TT_SETERRNO_H
 
 /* error handling */
 TT_INLINE void SetErrno(ttuint E, ttuint S) {
@@ -19,4 +19,4 @@ TT_INLINE void SetErrno(ttuint E, ttuint S) {
   L->S = S;
 }
 
-#endif /* _TT_SETERRNO_H */
+#endif /* TT_SETERRNO_H */

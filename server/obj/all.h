@@ -10,8 +10,8 @@
  *
  */
 
-#ifndef _TWIN_ALL_H
-#define _TWIN_ALL_H
+#ifndef TWIN_ALL_H
+#define TWIN_ALL_H
 
 #include "obj/obj.h"
 #include "obj/event.h"  /* MAX_MIMELEN */
@@ -122,4 +122,4 @@ struct s_all : public s_obj {
 
 extern all const All;
 
-#endif /* _TWIN_ALL_H */
+#endif /* TWIN_ALL_H */

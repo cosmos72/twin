@@ -7,8 +7,8 @@
  * PLEASE DO NOT EDIT!
  */
 
-#ifndef _TUTF_ISO8859_7_H
-#define _TUTF_ISO8859_7_H
+#ifndef TUTF_ISO8859_7_H
+#define TUTF_ISO8859_7_H
 
 #define T_ISO8859_7_CTRL_NULL 0x0000
 #define T_ISO8859_7_CTRL_START_OF_HEADING 0x0001
@@ -603,4 +603,4 @@
   EL(_GREEK_SMALL_LETTER_UPSILON_WITH_TONOS)                                                       \
   EL(_GREEK_SMALL_LETTER_OMEGA_WITH_TONOS)
 
-#endif /* _TUTF_ISO8859_7_H */
+#endif /* TUTF_ISO8859_7_H */

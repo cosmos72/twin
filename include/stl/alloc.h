@@ -6,8 +6,8 @@
  * (at your option) any later version.
  *
  */
-#ifndef _TWIN_STL_ALLOC_H
-#define _TWIN_STL_ALLOC_H
+#ifndef TWIN_STL_ALLOC_H
+#define TWIN_STL_ALLOC_H
 
 #include <stddef.h> // size_t
 
@@ -18,4 +18,4 @@ void FreeMem(void *addr);                 /* wrapper for free()    */
 void *AllocMem0(size_t len);                                  /* wrapper for calloc() */
 void *ReAllocMem0(void *mem, size_t old_len, size_t new_len); /* wrapper for realloc() + memset() */
 
-#endif /* _TWIN_STL_ALLOC_H */
+#endif /* TWIN_STL_ALLOC_H */

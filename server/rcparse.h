@@ -10,8 +10,8 @@
  *
  */
 
-#ifndef _TWIN_RCPARSE_H
-#define _TWIN_RCPARSE_H
+#ifndef TWIN_RCPARSE_H
+#define TWIN_RCPARSE_H
 
 /*
  * ~/.twinrc syntax :
@@ -1507,4 +1507,4 @@ EXTERN_C byte InitModule(module Module) {
 EXTERN_C void QuitModule(module Module) {
 }
 
-#endif /* _TWIN_RCPARSE_H */
+#endif /* TWIN_RCPARSE_H */

@@ -14,8 +14,8 @@
  *
  */
 
-#ifndef _TT_TTNATIVE_H
-#define _TT_TTNATIVE_H
+#ifndef TT_TTNATIVE_H
+#define TT_TTNATIVE_H
 
 /* object structure */
 #ifndef s_ttnative
@@ -46,4 +46,4 @@ ttnative TTCreate_ttnative(ttany native_value);
 
 /* TTGet*_ttnative and TTSet*_ttnative methods */
 
-#endif /* _TT_TTNATIVE_H */
+#endif /* TT_TTNATIVE_H */

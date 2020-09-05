@@ -9,8 +9,8 @@
  *
  */
 
-#ifndef _TT_ASSERT_H
-#define _TT_ASSERT_H
+#ifndef TT_ASSERT_H
+#define TT_ASSERT_H
 
 /* this prints an "assertion failed" message. */
 void TTAssertFail(TT_CONST char *assertion, TT_CONST char *file, unsigned int line,
@@ -53,4 +53,4 @@ void TTAssertFail(TT_CONST char *assertion, TT_CONST char *file, unsigned int li
 
 #endif
 
-#endif /* _TT_ASSERT_H */
+#endif /* TT_ASSERT_H */

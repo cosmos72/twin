@@ -6,8 +6,8 @@
  * (at your option) any later version.
  *
  */
-#ifndef _TWIN_STL_ANY_H
-#define _TWIN_STL_ANY_H
+#ifndef TWIN_STL_ANY_H
+#define TWIN_STL_ANY_H
 
 #include <stddef.h> // size_t
 #include <string.h> // memcpy
@@ -103,4 +103,4 @@ private:
   }
 };
 
-#endif /* _TWIN_STL_ANY_H */
+#endif /* TWIN_STL_ANY_H */

@@ -1,5 +1,5 @@
-#ifndef _TW_UTIL_H
-#define _TW_UTIL_H
+#ifndef TW_UTIL_H
+#define TW_UTIL_H
 
 /*
  *  Copyright (C) 2016 by Massimiliano Ghilardi
@@ -18,4 +18,4 @@ timevalue *DecrTime(timevalue *Time, TW_CONST timevalue *Decr);
 
 dat CmpTime(TW_CONST timevalue *T1, TW_CONST timevalue *T2);
 
-#endif /* _TW_UTIL_H */
+#endif /* TW_UTIL_H */

@@ -10,8 +10,8 @@
  *
  */
 
-#ifndef _TWIN_ID_H
-#define _TWIN_ID_H
+#ifndef TWIN_ID_H
+#define TWIN_ID_H
 
 #include "obj/fwd.h"
 
@@ -29,4 +29,4 @@ byte AssignId_all(all Obj);
 void DropId(obj Obj);
 obj Id2Obj(byte i, uldat Id);
 
-#endif /* _TWIN_ID_H */
+#endif /* TWIN_ID_H */

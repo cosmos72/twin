@@ -10,8 +10,8 @@
  *
  */
 
-#ifndef _TWIN_DISPLAY_HW_H
-#define _TWIN_DISPLAY_HW_H
+#ifndef TWIN_DISPLAY_HW_H
+#define TWIN_DISPLAY_HW_H
 
 #include "obj/fwd.h"
 #include "obj/event.h" // MAX_MIMELEN
@@ -96,77 +96,54 @@ struct s_display_hw : public s_obj {
   void (*QuitMouse)(void);
   void (*QuitVideo)(void);
 
-  byte DisplayIsCTTY;
-  /*
-   * set to ttrue if display is the controlling terminal
-   */
+  byte DisplayIsCTTY; /* set to ttrue if display is the controlling terminal */
+  byte Quitted;       /* used internally: set to ttrue before InitHW() and after QuitHW() */
 
-  byte Quitted;
-  /*
-   * used internally... is set to ttrue before InitHW() and after QuitHW()
-   */
-
-  byte FlagsHW;
   /*
    * various display HW flags:
    *
-   * FlHWSoftMouse                : set if display HW has to manually hide/show the mouse pointer
-   * FlHWChangedMouseFlag        : set after a mouse event that requires redrawing mouse pointer
-   * FlHWNeedOldVideo                : set if FlushVideo() is a bit expensive, and it's better to cache
-   *                                  the actual display contents in OldVideo[] and send only
-   *                                  what effectively changed, instead of all the dirty areas.
-   * FlHWExpensiveFlushVideo        : set if FlushVideo() is SO expensive that it's better to sleep
-   *                                  a little before flushing, hoping to receive more data
-   *                                  in the meantime, in order to merge the flush operations.
-   * FlHWNoInput                : set if the display HW should be used as view-only,
-   *                                   ignoring all input from it.
+   * FlHWSoftMouse         : set if display HW has to manually hide/show the mouse pointer
+   * FlHWChangedMouseFlag  : set after a mouse event that requires redrawing mouse pointer
+   * FlHWNeedOldVideo      : set if FlushVideo() is a bit expensive, and it's better to cache the
+   *                         actual display contents in OldVideo[] and send only what effectively
+   *                         changed, instead of all the dirty areas.
+   * FlHWExpensiveFlushVideo : set if FlushVideo() is SO expensive that it's better to sleep
+   *                         a little before flushing, hoping to receive more data in the meantime,
+   *                         in order to merge the flush operations.
+   * FlHWNoInput           : set if the display HW should be used as view-only, ignoring all input
+   *                         from it.
    */
+  byte FlagsHW;
 
-  byte NeedHW;
-  /*
-   * various runtime flags
-   */
+  byte NeedHW; /* various runtime flags */
 
-  byte CanResize;
   /*
    * set to ttrue if the display can actually resize itself (example: X11)
    * set to tfalse if it can only live with the externally set size (example: ttys)
    */
+  byte CanResize;
 
-  byte RedrawVideo;
   /*
    * set to ttrue if the display was corrupted by some external event
    * example: hw_X11.c sets this when its window gets Expose events
    */
-  dat RedrawLeft, RedrawUp, RedrawRight, RedrawDown;
+  byte RedrawVideo;
+
   /*
-   * the corrupted area that needs to be redrawn.
+   * the dirty area that needs to be redrawn.
    *
    * the upper layer (i.e. hw.c) automagically updates
    * ChangedVideoFlag and ChangedVideo[] to include this area
    * for your display.
    */
-
+  dat RedrawLeft, RedrawUp, RedrawRight, RedrawDown;
   uldat keyboard_slot, mouse_slot;
-
   mouse_state MouseState;
 
-  dat X, Y;
-  /*
-   * real display size, in character cells.
-   */
+  dat X, Y;           /* real display size, in character cells. */
+  dat usedX, usedY;   /* used display size (i.e. ScreenWidth, ScreenHeight) */
+  dat Last_x, Last_y; /* position of last mouse event */
 
-  dat usedX, usedY;
-  /*
-   * used display size (i.e. ScreenWidth, ScreenHeight)
-   */
-
-  dat Last_x, Last_y;
-  /*
-   * position of last mouse event
-   */
-
-  dat merge_Threshold;
   /*
    * if sending many small draw commands to the HW is more expensive
    * than sending fewer, bigger ones even considering you will also send
@@ -177,6 +154,7 @@ struct s_display_hw : public s_obj {
    *
    * Otherwise, set this to zero.
    */
+  dat merge_Threshold;
 
   uldat AttachSlot; /* slot of client that told us to attach to this display */
 
@@ -225,4 +203,4 @@ struct s_display_hw : public s_obj {
 #define NEEDFromPreviousFlushHW ((byte)0x40)
 #define NEEDBeepHW ((byte)0x80)
 
-#endif /* _TWIN_DISPLAY_HW_H */
+#endif /* TWIN_DISPLAY_HW_H */

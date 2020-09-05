@@ -1,6 +1,6 @@
 
-#ifndef _TT_COMPILER_H
-#define _TT_COMPILER_H
+#ifndef TT_COMPILER_H
+#define TT_COMPILER_H
 
 /** macro to concatenate args */
 #define TT_CAT(a, b) TW__CAT(a, b)
@@ -61,4 +61,4 @@
  */
 #define TT_ARG_ARRAY_Z
 
-#endif /* _TT_COMPILER_H */
+#endif /* TT_COMPILER_H */

@@ -10,8 +10,8 @@
  *
  */
 
-#ifndef _TW_KEYS_H
-#define _TW_KEYS_H
+#ifndef TW_KEYS_H
+#define TW_KEYS_H
 
 enum Twkey_e {
 
@@ -261,4 +261,4 @@ enum Twkey_e {
 
 typedef enum Twkey_e Twkey;
 
-#endif /* _TW_KEYS_H */
+#endif /* TW_KEYS_H */

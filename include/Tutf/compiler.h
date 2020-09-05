@@ -1,6 +1,6 @@
 
-#ifndef _TUTF_COMPILER_H
-#define _TUTF_COMPILER_H
+#ifndef TUTF_COMPILER_H
+#define TUTF_COMPILER_H
 
 /* library stuff. define macros with TUTF_ prefix */
 
@@ -21,4 +21,4 @@
 #define TUTF_ATTR_FN_CONST TW_ATTR_FN_CONST
 #define TUTF_ATTR_TYPE_PACKED TW_ATTR_TYPE_PACKED
 
-#endif /* _TUTF_COMPILER_H */
+#endif /* TUTF_COMPILER_H */

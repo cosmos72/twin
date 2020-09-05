@@ -13,8 +13,8 @@
  *
  */
 
-#ifndef _TT_H
-#define _TT_H
+#ifndef TT_H
+#define TT_H
 
 /* include our internal copy of TTtypes.h instead of the public one */
 #include "TTtypes.h"
@@ -56,4 +56,4 @@ tt_obj TTGetDefault_tteventmask(void);
 void TTSetInstalled_tteventmask(tt_obj installed_event_mask);
 void TTSetDefault_tteventmask(tt_obj default_event_mask);
 
-#endif /* _TT_H */
+#endif /* TT_H */

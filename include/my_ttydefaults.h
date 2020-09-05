@@ -37,8 +37,8 @@
 /*
  * System wide defaults for terminal state.  Linux version.
  */
-#ifndef _TWIN_MY_TTYDEFAULTS_H
-#define _TWIN_MY_TTYDEFAULTS_H
+#ifndef TWIN_MY_TTYDEFAULTS_H
+#define TWIN_MY_TTYDEFAULTS_H
 
 /*
  * Defaults on "first" open.
@@ -87,7 +87,7 @@
 #define CFLUSH CDISCARD
 
 /* PROTECTED INCLUSION ENDS HERE */
-#endif /* !_TWIN_MY_TTYDEFAULTS_H */
+#endif /* !TWIN_MY_TTYDEFAULTS_H */
 
 /*
  * #define TTYDEFCHARS to include an array of default control characters.

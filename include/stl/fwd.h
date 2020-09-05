@@ -6,8 +6,8 @@
  * (at your option) any later version.
  *
  */
-#ifndef _TWIN_STL_FWD_H
-#define _TWIN_STL_FWD_H
+#ifndef TWIN_STL_FWD_H
+#define TWIN_STL_FWD_H
 
 #include "stl/defs.h"
 
@@ -16,4 +16,4 @@ template <class T> class Span;
 class String;
 template <class T> class View;
 
-#endif /* _TWIN_STL_FWD_H */
+#endif /* TWIN_STL_FWD_H */
