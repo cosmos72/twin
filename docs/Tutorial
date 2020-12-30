@@ -473,7 +473,7 @@
    replace the whole line with the one below -- of course you must replace
    TERM=<...> with the actual terminal type of your workstation console)
 
-   1:2345:respawn:/usr/local/bin/twdm --quiet --hw=tty@/dev/tty1,TERM=Linux
+   1:2345:respawn:/usr/local/bin/twdm --quiet --hw=tty@/dev/tty1,TERM=linux
 
    In order to correctly setup $PATH and other environment variables,
    you can add `-envrc' option to twdm (tested only on Linux with bash).
@@ -482,7 +482,7 @@
 
    The `twterm' client and the builtin terminal emulator deserve a few extra
    explanations. They implement a Linux terminal, so applications running
-   inside them will see TERM=Linux, but also support two different mouse
+   inside them will see TERM=linux, but also support two different mouse
    reporting protocols: the first is the classical xterm-style reporting
    (enabled with ESC [?1000h and disabled with ESC [?1000l ) which is only
    capable to report mouse buttons hit/release and the window position where

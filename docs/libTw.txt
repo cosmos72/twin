@@ -454,10 +454,10 @@ void Tw_BlindSendMsg(tdisplay TwD, tmsgport MsgPort, tmsg Msg);
  *
  *
  * Now the other half of the story: What The Selection Owner Must Do.
- * (this is handled automagically by twin server if the client chosen
+ * (this is handled automagically by twin server if the client chooses
  * not to receive mouse events)
  *
- * If the user just hilighted some data in a window of client <b>,
+ * If the user just highlighted some data in a window of client <b>,
  * client <b> will want to become the Selection owner, so that other
  * clients may receive that data too. For this, client <b> must call
  *
