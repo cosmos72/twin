@@ -1,4 +1,4 @@
-/* Functions that are common between hw_x11 and hw_xft.  Currently does not cover hw_gfx. */
+/* Functions that are common between hw_x11 and hw_xft. */
 
 #include "algo.h"
 

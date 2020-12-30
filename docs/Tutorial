@@ -243,11 +243,10 @@
 
    where <display> is one of:
 
-        X[@<XDISPLAY>]     or    X11[@<XDISPLAY>]
-	gfx[@<XDISPLAY>]
+   X[@<XDISPLAY>]     or    X11[@<XDISPLAY>]
+	xft[@<XDISPLAY>]
 	twin[@<TWDISPLAY>]
 	tty[@<tty device>]
-	ggi[@<libggi target>]
 
    for an explanation of the available display methods and their options,
    see paragraph 8. below about `twattach' and `twdisplay': they have
@@ -751,9 +750,6 @@
       The final ",gz" means that the connection between `twdisplay'
       and the second `twin' will be compressed.
 
-      $ twattach --twin@<some twin display> --hw=ggi
-      tell twin to fire up libggi and display on it.
-
 
 
     The most general syntax of twattach is:
@@ -780,10 +776,9 @@
     known displays are:
 
       --hw=X[@<XDISPLAY>]     or    --hw=X11[@<XDISPLAY>]
-      --hw=gfx[@<XDISPLAY>]
+      --hw=xft[@<XDISPLAY>]
       --hw=twin[@<TWDISPLAY>]
       --hw=tty[@<tty device>]
-      --hw=ggi[@<libggi target>]
 
     and known display options are:
 
@@ -793,9 +788,9 @@
 		   : ",slow" to tell twin the display is slow and output
 			to it should be buffered and chunked together as much
 			as possible (this is on by default for -hw=X , -hw=X11
-			and -hw=gfx)
+			and -hw=xft)
 
-      --hw=X  or --hw=X11 or --hw=gfx :
+      --hw=X  or --hw=X11 or --hw=xft :
                 : ",font=<fontname>" to choose your favourite X11 font
 		        (default: vga).
 		: ",charset=<name>" to inform the driver about the codepage
@@ -804,25 +799,6 @@
 			This is off by default as on many X servers XCopyArea
 			is actually slower than a normal redraw.
 			Your mileage may vary.
-
-      --hw=gfx  : ",mono" to load themes and images as monochrome
-                  ",color" to load themes and images as colorful (default)
-                  ",theme=<name>" to set the theme pixmap
-                  ",root=<name>"  to set the screen root pixmap
-                  ",bg=<name>"    to set the windows background pixmap
-                  ",root-as-{none|theme|root|bg}"
-                        to specify how to draw screen root:
-                        no pixmap (none), get from theme (theme),
-                        use root pixmap (root), use bg pixmap (bg)
-                  ",root-as-{none|theme|root|bg}"
-                        to specify how to draw screen root:
-                        no pixmap (none), get from theme (theme),
-                        use root pixmap (root), use bg pixmap (bg)
-                  ",bg-as-{none|theme|root|bg}"
-                        to specify how to draw windows background:
-                        no pixmap (none), get from theme (theme),
-                        use root pixmap (root), use bg pixmap (bg)
-
 
       --hw=twin : ",gz" to enable gzip compression on the connecting socket.
 
@@ -840,10 +816,6 @@
 		        controlling tty (mostly useful from twdm)
 		: ",utf8" to tell twin that the tty understands utf8 encoding
 		        to display Unicode.
-
-      --hw=ggi	: no options, use the zillion of libggi environment variables
-		  to control libggi behaviour.
-
 
 
     A common situation is the following:

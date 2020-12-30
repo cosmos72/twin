@@ -225,8 +225,8 @@ byte InitDisplayHW(display_hw D_HW) {
 #define AUTOTRY4(hw, len) (module_InitHW(hw, len) && set_hw_name(D_HW, hw, len))
 
   if (arglen == 0) {
-    success = AUTOTRY4("-hw=xft", 7) || AUTOTRY4("-hw=gfx", 7) || AUTOTRY4("-hw=X11", 7) ||
-              AUTOTRY4("-hw=twin", 8) || AUTOTRY4("-hw=tty", 7) || AUTOTRY4("-hw=ggi", 7);
+    success = AUTOTRY4("-hw=xft", 7) || AUTOTRY4("-hw=X11", 7) || AUTOTRY4("-hw=twin", 8) ||
+              AUTOTRY4("-hw=tty", 7);
   } else {
     success = module_InitHW(D_HW->Name, D_HW->NameLen);
   }

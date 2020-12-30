@@ -2196,35 +2196,34 @@ static uldat FindFunctionId(tw_d TwD, uldat order) {
 }
 
 /* convert tcell to protocol <= 4.7.x i.e. {unicode64k_lo, color, unicode64k_hi, extra} */
-static tcell ConvertTCellTo47x(tcell attr) {
-  tcell extra = HWEXTRA(attr);
-  trune f = TRUNE(attr);
-  tcolor col = TCOLOR(attr);
+static tcell ConvertTCellTo47x(tcell cell) {
+  trune f = TRUNE(cell);
+  tcolor col = TCOLOR(cell);
   if (f > 0xFFFF) /* maximum supported by protocol <= 4.7.x is 64k */
     f = 0xFFFD;   /* use replacement char instead */
-  return (f & 0xFF) | ((tcell)col << 8) | (((tcell)f & 0xFF00) << 8) | (extra << 24);
+  return (f & 0xFF) | ((tcell)col << 8) | (((tcell)f & 0xFF00) << 8);
 }
 
-TW_INLINE tcell MaybeConvertTCell(tw_d TwD, tcell attr) {
+TW_INLINE tcell MaybeConvertTCell(tw_d TwD, tcell cell) {
   if (ServFlags & ServFlagTCell47x)
-    attr = ConvertTCellTo47x(attr);
-  return attr;
+    cell = ConvertTCellTo47x(cell);
+  return cell;
 }
 
 #define PushVMaybeConvertTCell(TwD, dst, len, vec)                                                 \
   ((dst) = VecMaybeConvertTCell(TwD, dst, len, vec))
 
-static byte *VecMaybeConvertTCell(tw_d TwD, byte *dst, uldat len, TW_CONST tcell *attr) {
+static byte *VecMaybeConvertTCell(tw_d TwD, byte *dst, uldat len, TW_CONST tcell *cell) {
   if (ServFlags & ServFlagTCell47x) {
     uldat i;
     tcell h;
     len /= sizeof(tcell);
     for (i = 0; i < len; i++) {
-      h = ConvertTCellTo47x(attr[i]);
+      h = ConvertTCellTo47x(cell[i]);
       Push(dst, tcell, h);
     }
   } else {
-    PushV(dst, len, attr);
+    PushV(dst, len, cell);
   }
   return dst;
 }

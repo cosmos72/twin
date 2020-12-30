@@ -1,6 +1,6 @@
                      TWIN FREQUENTLY ASKED QUESTIONS
 		            WITH ANSWERS
-			    
+
                             28 Oct 2002
                 Massimiliano Ghilardi <https://github.com/cosmos72/>
 
@@ -196,7 +196,7 @@ with some extra features:
 
 a) It manages multiple windows on a single screen,
    just like X11 servers except that twin uses text-mode.
-   
+
 b) It has X11-style networked server capabilities:
    programs started remotely can connect to twin using sockets,
    just like X11 clients (xterm, fvwm2, gimp, kde, netscape, ...) connect
@@ -213,10 +213,10 @@ e) It and can attach/detach displays on-the-fly and supports
    multiple simultaneous displays. You can find a very similar
    feature in VNC (Virtual Network Computer, a virtual X11 server).
 
-   
+
 Twin is distributed under the GNU General Public License - see
 Q1.6 `Is twin PD ?  Copyrighted ?' for more details.
-   
+
 -------------------------------------------------------------------------------
 
 Question 1.2.  Does it run on my computer ?
@@ -239,15 +239,15 @@ twin server must draw on a display using one of its display drivers.
 At the time this document is being written, twin supports at least the
 following drivers:
 
-X [X11] : lets twin display on X11 servers (plain driver).
-gfx     : lets twin display on X11 servers (enhanced driver).
+X [X11] : lets twin display on X11 servers.
+xft     : lets twin display on X11 servers using truetype (antialiased) fonts.
 twin    : lets twin display on another twin server or on itself.
 tty     : lets twin display on text terminals, including at least:
 	Linux console (mouse support requires gpm and libgpm)
 	twterm, twin's own terminal emulator (with mouse)
 	any termcap/ncurses compatible terminal (with mouse if they support
 		either xterm or twterm mouse reporting protocols)
-ggi     : lets twin use libggi as display (UNFINISHED)
+
 
 -------------------------------------------------------------------------------
 
@@ -261,12 +261,12 @@ c) various more-or-less useful utilities, including at least:
    twcat, twclip, twlsobj, twevent, twfindtwin,
    twmapscrn, twsendmsg, twsetroot, twthreadtest.
 d) some more complex clients, including at least:
-   twsysmon - a system resources monitor (works on Linux only) 
+   twsysmon - a system resources monitor (works on Linux only)
    twterm   - a terminal emulator (Linux console emulator, actually)
    twdm     - a login manager, modeled after xdm/kdm.
 
 To obtain more information about these clients, see the Tutorial.
-   
+
 Various libraries come with twin too:
 
 e) libTutf  - a tiny unicode translation library
@@ -383,4 +383,3 @@ contributors, not to restrict you as educators and learners.
 Ian Jackson asserts the right to be identified as the author of this work,
 and claims the moral rights of paternity and integrity, in accordance with
 the Copyright, Designs and Patents Act, 1988.
-

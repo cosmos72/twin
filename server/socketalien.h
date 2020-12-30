@@ -273,18 +273,16 @@ static void alienTranslateTCellV_CP437_to_UTF_32(tcell *H, uldat Len) {
  * twin < 0.8.0 used a different encoding {utf16_lo, color, utf16_hi, extra}
  * for tcell. detected by SIZEOF(trune) == 2 && SIZEOF(tcell) == 4
  */
-inline tcell alienFixDecodeTCell(tcell attr) {
-  trune f = (attr & 0xFF) | ((attr >> 8) & 0xFF00);
-  tcolor col = (attr >> 8) & 0xFF;
-  tcell extra = (attr >> 24) & 0x7F;
-  attr = TCELL3(col, f, extra);
-  return attr;
+inline tcell alienFixDecodeTCell(tcell cell) {
+  trune rune = (cell & 0xFF) | ((cell >> 8) & 0xFF00);
+  tcolor col = (cell >> 8) & 0xFF;
+  return TCELL(col, rune);
 }
 
-inline tcell alienMaybeFixDecodeTCell(tcell attr) {
+inline tcell alienMaybeFixDecodeTCell(tcell cell) {
   if (SIZEOF(trune) == 2 && SIZEOF(tcell) == 4)
-    attr = alienFixDecodeTCell(attr);
-  return attr;
+    cell = alienFixDecodeTCell(cell);
+  return cell;
 }
 
 static void alienFixDecodeTCellV(tcell *H, uldat Len) {

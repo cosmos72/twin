@@ -15,7 +15,7 @@ On Thu, 17 Oct 2002, Adam Olsen wrote:
 >* mousewheel for scrolling
 
 This comes up often, so I will probably put it in a FAQ:
-When displaying on X (either -hw=X or -hw=gfx) it is actually possible
+When displaying on X (either -hw=X or -hw=xft) it is actually possible
 to receive shift-pageup keys and to react to them, but all other display
 drivers (Linux console driver for first) are unable to distinguish shift-pageup
 from plain pageup, since it uses ascii-keyboard mode like almost all tty
@@ -103,5 +103,3 @@ Good luck and keep sending ideas and comments :-)
 | I have yet to meet a person who had a bad experience of Linux. |
 | Most have never had an experience.                             |
  ----------------------------------------------------------------
-
-

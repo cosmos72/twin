@@ -78,6 +78,4 @@ void RunTwEnvRC(void);
 /* remove const from a pointer and suppress compiler warnings */
 void *RemoveConst(const void *x);
 
-tcell EncodeToTCellExtra(tpos pos, tternary detail, tbool active, tbool pressed);
-
 #endif /* TWIN_UTIL_H */

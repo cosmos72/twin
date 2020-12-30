@@ -130,11 +130,10 @@ static void Usage(void) {
         " --hw=<display>[,options] start with the given display (multiple --hw=... allowed)\n"
         "                          (default: autoprobe all displays until one succeeds)\n"
         "Currently known display drivers: \n"
-        "\tgfx[@<XDISPLAY>]\n"
+        "\txft[@<XDISPLAY>]\n"
         "\tX[@<XDISPLAY>]\n"
         "\ttwin[@<TWDISPLAY>]\n"
-        "\ttty[@<tty device>]\n"
-        "\tggi[@<ggi display>]\n",
+        "\ttty[@<tty device>]\n",
         stdout);
 }
 

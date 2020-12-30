@@ -121,12 +121,6 @@ AC_ARG_ENABLE(hw-xft,dnl
 enable_hw_xft=yes
 )dnl
 
-dnl the gfx driver
-AC_ARG_ENABLE(hw-gfx,dnl
-[  --enable-hw-gfx[=yes|no]               enable the gfx (enhanced X11) driver ],,
-enable_hw_gfx=yes
-)dnl
-
 dnl the twin driver
 AC_ARG_ENABLE(hw-twin,dnl
 [  --enable-hw-twin[=yes|no]              enable the twin nested driver ],,
@@ -137,12 +131,6 @@ dnl the twdisplay driver
 AC_ARG_ENABLE(hw-display,dnl
 [  --enable-hw-display[=yes|no]           enable the twdisplay client driver ],,
 enable_hw_display=yes
-)dnl
-
-dnl the ggi driver
-AC_ARG_ENABLE(hw-ggi,dnl
-[  --enable-hw-ggi[=yes|no]               enable the ggi driver (UNFINISHED) ],,
-enable_hw_ggi=yes
 )dnl
 
 enable_opt_shadows=yes

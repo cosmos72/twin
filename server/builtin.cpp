@@ -346,8 +346,8 @@ void FillButtonWin(void) {
     {
       trune *f = All->ButtonVec[j].shape;
       tcell h[2] = {
-          TCELL3(ButtonWin->ColGadgets, f[0], EncodeToTCellExtra((tpos)j, tzero, tfalse, tfalse)),
-          TCELL3(ButtonWin->ColGadgets, f[1], EncodeToTCellExtra((tpos)j, tone, tfalse, tfalse)),
+          TCELL(ButtonWin->ColGadgets, f[0]),
+          TCELL(ButtonWin->ColGadgets, f[1]),
       };
 
       ButtonWin->TtyWriteTCell(15, 1 + i * 2, 2, h);

@@ -63,7 +63,7 @@
 	      color palette.
 
 
-	add boldfont= to X11 and gfx drivers, to be used instead of thigh
+	add boldfont= to X11 and xft drivers, to be used instead of thigh
 	      foreground.
 
 	write -hw=fbdev driver.
@@ -128,6 +128,5 @@
    keyboard shortcuts and hotkeys for screen scroll
 
    cleanup overflows with shadows at window [xy]width = almost max, move arithmetic to [ul]dat
-   finish libGGI keyboard support
 
    Flame libgpm people for /tmp/gpm* sockets, gpm_tried, syslogging, ncurses

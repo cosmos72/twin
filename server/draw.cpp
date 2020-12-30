@@ -1758,7 +1758,6 @@ void ReDrawRolledUpAreaWindow(window W, byte Shaded) {
 }
 
 void DrawMenuScreen(screen Screen, dat Xstart, dat Xend) {
-  static tcell extra;
   screen fScreen;
   menu Menu;
   menuitem Item;
@@ -1792,9 +1791,6 @@ void DrawMenuScreen(screen Screen, dat Xstart, dat Xend) {
 
   Xstart = Max2(Xstart, 0);
   Xend = Min2(Xend, DWidth - 1);
-
-  if (!extra)
-    extra = EncodeToTCellExtra(POS_MENU, tzero, tfalse, tfalse);
 
   for (i = Xstart; i <= Xend; i++) {
     if (i + 2 >= DWidth) {
@@ -1848,7 +1844,7 @@ void DrawMenuScreen(screen Screen, dat Xstart, dat Xend) {
     }
     if (Screen != All->FirstScreen)
       Color = Menu->ColDisabled;
-    Video[i + j * (ldat)DWidth] = TCELL3(Color, Font, extra);
+    Video[i + j * (ldat)DWidth] = TCELL(Color, Font);
   }
   DirtyVideo(Xstart, j, Xend, j);
 }

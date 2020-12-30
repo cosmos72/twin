@@ -52,7 +52,7 @@
     myXDrawImageString(xdisplay, xwindow, xgc, xbegin, ybegin + xupfont, buf, buflen);             \
   } while (0)
 
-#define XDRAW_ANY(buf, buflen, col, gfx) XDRAW(col, buf, buflen)
+#define XDRAW_ANY(buf, buflen, col, _) XDRAW(col, buf, buflen)
 
 #include "hw_x/util.h"
 #include "hw_x/common.cpp"

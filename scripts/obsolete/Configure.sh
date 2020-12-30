@@ -14,7 +14,7 @@ do
   -*=*) ac_optarg=`echo "$ac_option" | sed 's/[-_a-zA-Z0-9]*=//'` ;;
   *) ac_optarg= ;;
   esac
-  
+
   case "$ac_option" in
 
   -help | --help | --hel | --he )
@@ -68,7 +68,6 @@ EOF
   --enable-hw-x11[=yes|no|mod]           enable the X11 driver
   --enable-hw-twin[=yes|no|mod]          enable the twin native driver
   --enable-hw-display[=yes|no|mod]       enable the twdisplay client driver
-  --enable-hw-ggi[=yes|no|mod]           enable the ggi driver
 EOF
     cat << EOF
   --enable-ext[=yes|no]                  enable server extensions
@@ -84,24 +83,24 @@ EOF
   --enable-opt-edgescroll[=yes|no]       enable screen scrolling
 EOF
     exit 0 ;;
-    
+
   -disable-* | --disable-* )
     ;;
-  
+
   -enable-* | --enable-* )
     ;;
-    
+
   --show | --sho | --sh )
     ;;
-  
+
   -top-srcdir=* | --top-srcdir=* )
     T="$ac_optarg"
     ;;
-   
+
   -top-builddir=* | --top-builddir=* )
     B="$ac_optarg"
     ;;
-    
+
   *)
     echo "scripts/Configure.sh: unknown option $ac_option" 1>&2
     echo "       try 'scripts/Configure.sh --help' for usage summary" 2>&1
@@ -156,9 +155,9 @@ do
   -*=*) ac_optarg=`echo "$ac_option" | sed 's/[-_a-zA-Z0-9]*=//'` ;;
   *) ac_optarg= ;;
   esac
-  
+
   case "$ac_option" in
-  
+
   -disable-* | --disable-*)
     ac_feature=`echo $ac_option|sed -e 's/-*disable-//'`
     # Reject names that are not valid shell variable names.
@@ -171,7 +170,7 @@ do
 
   --show | --sho | --sh )
     ac_opt_show=yes ;;
-    
+
   -enable-* | --enable-*)
     ac_feature=`echo $ac_option | sed -e 's/-*enable-//' -e 's/=.*//'`
     # Reject names that are not valid shell variable names.
@@ -244,4 +243,3 @@ if test -z "$ac_opt_show"; then
   echo "# scripts/Configure.sh: conf/conf.auto successfully updated." 1>&2
   echo "#" 1>&2
 fi
-

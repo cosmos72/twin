@@ -20,7 +20,7 @@
 #
 
 # file syntax:
-# 
+#
 # a hash sign '#' at the beginning of a line means the line
 # is a comment (you are already reading such a comment!)
 #
@@ -122,17 +122,17 @@ AddToFunc _Next ( Lower; Window 1; Focus; )
 # the borders defined by Alternate Font
 #
 # Border "*" Active (
-#    "ÉÍ»"
-#    "º º"
-#    "ÈÍ¼"
+#    "ï¿½Í»"
+#    "ï¿½ ï¿½"
+#    "ï¿½Í¼"
 # )
 #
 # menu windows are always considered Inactive
 #
 # Border "*" Inactive (
-#   "ÚÄ¿"
-#   "³ ³"
-#   "ÀÄÙ"
+#   "ï¿½Ä¿"
+#   "ï¿½ ï¿½"
+#   "ï¿½ï¿½ï¿½"
 # )
 #
 # note: since twin 0.8.0, all windows must have the same borders.
@@ -142,10 +142,10 @@ AddToFunc _Next ( Lower; Window 1; Focus; )
 #
 # create the buttons on window top border.
 # allowed buttons range from 0 to 9.
-# 
+#
 # syntax:
 # Button <number> "shape" {Left|Right} [[+|-]<position>]
-# 
+#
 # creates button <number> with given "shape", either on Left or Right
 # of window title. Optionally, you can control where exactly to place it:
 #
@@ -253,7 +253,7 @@ Key Alt "Tab" _Next
 #
 # Other nifty ideas.
 # These will work only on display drivers that support abstract keys.
-# Currently requires one of: `tty' with Linux raw keyboard, `gfx' or `X11'.
+# Currently requires one of: `tty' with Linux raw keyboard, `xft' or `X11'.
 #
 
 #
@@ -339,7 +339,7 @@ Mouse H1   C  Interactive Resize
 Mouse H1  B  Interactive Scroll
 
 # mouse left on root unfocuses currently focused window
-# 
+#
 # you can create functions as complex as you like and use them
 # just like built-in functions...
 AddToFunc _UnFocus ( Window 0; Focus Off; )
@@ -392,10 +392,10 @@ ExecTty "" ; Wait "Twin Term" ; Maximize
 
 #
 # list of all RC commands available for ~/.twinrc
-# 
+#
 # AddScreen <screen name>
 # # create a new virtual screen
-# 
+#
 # AddToMenu <name> (
 #   "entry" <function>
 #   ...
@@ -410,124 +410,124 @@ ExecTty "" ; Wait "Twin Term" ; Maximize
 #
 # Background <screen> <color> (
 #   "string"
-#   ... 
+#   ...
 # )
 # # set screen background
-# 
+#
 # Beep
-# 
+#
 # Border "*" {Active|Inactive} (
-#   "ÉÍ»"
-#   "º º"
-#   "ÈÍ¼"
+#   "ï¿½Í»"
+#   "ï¿½ ï¿½"
+#   "ï¿½Í¼"
 # )
 #
 # Button <n> "<shape>" [+|-[<numeric pos>|Left|Right]]
-# 
+#
 # Center
 # # center window
-# 
+#
 # Close
 # # politely ask the client to close the window
-# 
+#
 # DeleteFunc <name>
-# 
+#
 # DeleteMenu <name>
-# 
+#
 # DeleteButton <number>
-# 
+#
 # DeleteScreen <screen>
-# 
+#
 # Exec <shell command>
-# 
+#
 # ExecTty <shell command>
-# 
+#
 # Focus [On|Off|Toggle]
-# 
+#
 # GlobalFlags [+|-][AltFont] [+|-][AlwaysCursor] [+|-][Blink] [+|-][EdgeScroll] [+|-][HideMenu] [+|-][MenuInfo] [+|-][MenuRelax] [+|-][Shadows <x> <y>]
-# 
+#
 # Interactive <kind>
 # # choose one of: Scroll, Move, Resize, Screen, Menu
-# 
+#
 # Key <flags> <keyname> <context> <function>
 # # <flags> is optional and can be one or more of
 # # Shift Ctrl Alt
-# 
+#
 # Kill
 # # brutally kill the client's connection
-# 
+#
 # Lower
-# 
+#
 # Maximize
-# 
+#
 # FullScreen
-# 
+#
 # Menu
 # # pop-up the menu of the currently focused window
-# 
+#
 # Mouse <button> <where> <function>
-# 
+#
 # Module <name> [On|Off]
 # load/unload given module
 #
 # Move [+|-]<x> [+|-]<y>
 # # move window
-# 
+#
 # MoveScreen [+|-]<x> [+|-]<y>
 # # move screen
-# 
+#
 # Next
 # # same as Window +1
-# 
+#
 # Nop
 # # do-nothing; used in a menu inserts a linebreak
-# 
+#
 # Prev
 # # same as Window -1
-# 
+#
 # Quit
 # # unconditionally quit twin!
-# 
+#
 # Read <file>
 # # open another file and parse it, then continue with current file
 # # (like #include in C files)
-# 
+#
 # Refresh
 # # redraw all displays
-# 
+#
 # Restart ""|<window manager name>
 # # restart the WM or load another window manager
-# 
+#
 # Resize [+|-]<x> [+|-]<y>
 # # resize window
-# 
+#
 # ResizeScreen [+|-]<x> [+|-]<y>
-# 
+#
 # Raise
-# 
+#
 # RaiseLower
 # # raise-and-focus or lower-and-unfocus
-# 
+#
 # Roll [On|Off|Toggle]
-# 
+#
 # Scroll [+|-]<x> [+|-]<y>
 # # scrolls window contents
-# 
+#
 # SendToScreen <screen>
 # # sends window to given screen
-# 
+#
 # Sleep <n>
 # # sleeps <n> milliseconds
 #
 # Stderr <string> ...
 # # send message to stderr
-# 
+#
 # SyntheticKey <flags> <key>
 # # send the specified key event to window
 #
 # Wait <window name>
 # # wait for specified window to be mapped
-# 
+#
 # Window {[+|-]<n>|<window name>}
 # # sets default window to operate on
 # # Window <n> :
@@ -538,6 +538,6 @@ ExecTty "" ; Wait "Twin Term" ; Maximize
 # # n = 0 : no-op
 # # n < 0 : -1 : Prev Window, -2 Prev Prev, etc.
 # # n > 0 : +1 : Next Window, +2 Next Next, etc.
-# 
+#
 # WindowList
 #

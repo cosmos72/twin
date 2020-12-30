@@ -89,68 +89,15 @@ int Tw_option_strncmp(TW_CONST char *s1, TW_CONST char *s2, size_t n) {
 }
 
 enum {
-  pitch = 15,
-  menu_bar = 1,
-  window_title = 4 * pitch + 4,         /* == 64 */
-  window_title_focus = 5 * pitch + 4,   /* == 79 */
-  window_title_pressed = 6 * pitch + 4, /* == 94 */
-};
-enum {
   utf16_replacement_char = 0xFFFD,
   utf16_size = 0x10000,
   utf21_size = 0x110000,
-  extra_flag = 1 << 23,
 };
 
-tcell Tw_tcell3(tcolor col, trune ch, tcell extra) {
-  tcell attr;
-  if (ch >= utf21_size) {
-    ch = utf16_replacement_char;
+trune Tw_trune(tcell cell) {
+  cell &= 0x001FFFFF;
+  if (cell >= utf21_size) {
+    return cell %= utf21_size;
   }
-  switch (extra) {
-  case 0:
-    return TCELL(col, ch);
-  case menu_bar:
-    attr = 1;
-    break;
-  case window_title:
-    attr = 2;
-    break;
-  case window_title_focus:
-    attr = 3;
-    break;
-  case window_title_pressed:
-    attr = 4;
-    break;
-  default:
-    /*
-     * window borders support only the first 64k unicode characters:
-     * not enough bits for full unicode support in this case...
-     */
-    if (ch >= utf16_size) {
-      ch = utf16_replacement_char;
-    }
-    return TCELL(col, ch) | (extra << 16) | extra_flag;
-  }
-  return TCELL(col, attr * utf21_size + ch);
-}
-
-trune Tw_trune(tcell attr) {
-  attr &= 0x00FFFFFF;
-  if (attr & extra_flag)
-    return attr & 0xFFFF;
-  return attr % utf21_size;
-}
-
-static TW_CONST byte decode_hwextra[5] = {
-    0, menu_bar, window_title, window_title_focus, window_title_pressed,
-};
-
-tcell Tw_hwextra(tcell attr) {
-  byte i;
-  attr &= 0x00FFFFFF;
-  if (attr & extra_flag)
-    return (attr >> 16) & 0x7F;
-  i = attr / utf21_size;
-  return decode_hwextra[i];
+  return cell;
 }

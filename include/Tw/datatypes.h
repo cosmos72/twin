@@ -70,17 +70,9 @@ typedef enum { tzero, tone, ttwo } tternary;
 #define TCOLOR(attr) ((tcolor)((attr) >> 24))
 #define TRUNEEXTRA(attr) ((attr)&0x00FFFFFF)
 
-#define TCELL3(col, font, extra) Tw_tcell3(col, font, extra)
 #define TRUNE(attr) Tw_trune(attr)
-#define HWEXTRA(attr) Tw_hwextra(attr)
-
-tcell Tw_tcell3(tcolor col, trune font, tcell extra);
 
 trune Tw_trune(tcell attr);
-
-tcell Tw_hwextra(tcell attr);
-
-extern trune Tw_trune_infer_from_extra[0x100];
 
 /*
  * Notes about the timevalue struct:

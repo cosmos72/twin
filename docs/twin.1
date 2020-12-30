@@ -9,47 +9,46 @@ you should look at this file if you need further info.
 .SH "DESCRIPTION"
 Twin creates, draws and manages windows inside a text display.
 It implements in text mode the same concepts that X11 does in graphics:
-.PP 
+.PP
 a. draw on some kind of screen (tipically a computer monitor).
-.PP 
+.PP
 b. allow multiple windows to coexist on the same screen, and draw independently on each of them.
-.PP 
+.PP
 c. talk to external programs (even on other machines) so that the programs receive keystrokes, mouse movements, etc. and can send back drawing commands.
-.PP 
+.PP
 Twin runs on the linux console, inside itself, in a twin terminal and on X11: it creates a window and draws in it, does not run inside an xterm or similar. It can also run on generic text terminals (ttys) using the termcap/ncurses driver, but it will work far from optimal.
 .SH "OPTIONS"
-.TP 
+.TP
 \fB\-h\fR, \fB\-\-help\fR
 display this help and exit
-.TP 
+.TP
 \fB\-V\fR, \fB\-\-version\fR
 output version information and exit
-.TP 
+.TP
 \fB\-x\fR, \fB\-\-excl\fR
 start display as exclusive
-.TP 
+.TP
 \fB\-\-nohw\fR
 start in background without display
-.TP 
+.TP
 \fB\-\-hw=<display>[,options]\fR
 start with the given display (multiple \-hw=... allowed)
-.TP 
+.TP
 Currently known display methods:
  X[@<XDISPLAY>]
- gfx[@<XDISPLAY>]
+ xft[@<XDISPLAY>]
  twin[@<TWDISPLAY>]
  tty[@<tty device>]
- ggi[@<ggi display>]
 .SH "FILES"
-\fI~/.twinrc\fP configuration file for the Twin user interface 
-.br .br 
+\fI~/.twinrc\fP configuration file for the Twin user interface
+.br .br
 \fI~/.TwinAuth\fP holds some magic data that clients use to answer the challenge received from twin. See Security section.
 .SH "ENVIRONMENT VARIABLES"
-.TP 
+.TP
 \fBTWDISPLAY\fP
 Specifies the Twin server to be used.
 Twin can create a window on another twin server and use it as display.
-.TP 
+.TP
 \fBDISPLAY\fP
 Specifies the X11 server to be used.
 Twin can create a window on an X11 server and use it as display.
@@ -67,13 +66,12 @@ and the clients you start. On the other hand, the connection between twin and cl
 so it is easy to find out what you type and what you see in the client windows by spying the network as above.
 .SH "EXAMPLES"
 run a twin server, and let it try to autodetect the type of display (X11, tty or twin):
-.LP 
+.LP
 .B twin
-.PP 
+.PP
 run a twin server, specifying to create an X11 window to use as display:
-.LP 
+.LP
 .B twin \-\-hw=X
 .SH "AUTHORS"
 Massimiliano Ghilardi <paperinik@users.sourceforge.net>
 .SH "SEE ALSO"
-

@@ -315,8 +315,7 @@ static tpos WMFindBorderWindow(window W, dat u, dat v, byte Border, tcell *PtrAt
     FlPressed = ttrue;
   }
 
-  extra_u = EncodeToTCellExtra((tpos)Found, (tternary)extra_u, (tbool)!Border, (tbool)FlPressed);
-  *PtrAttr = TCELL3(Color, Font, extra_u);
+  *PtrAttr = TCELL(Color, Font);
 
   return Found;
 }

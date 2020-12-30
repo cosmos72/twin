@@ -1,5 +1,5 @@
 /*
- * hw_X11_gfx_common.h  --  common functions between hw_X11 and hw_gfx
+ * keyboard.h
  *
  *  Copyright (C) 2007 by Massimiliano Ghilardi
  *

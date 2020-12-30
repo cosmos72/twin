@@ -185,7 +185,6 @@ AC_SEARCH_LIBS(dlopen,         dl)
 AC_SEARCH_LIBS(socket,         [socket wsock32])
 AC_SEARCH_LIBS(connect,        [socket wsock32])
 AC_SEARCH_LIBS(gethostbyname,  [nsl    wsock32])
-AC_SEARCH_LIBS(ggiOpen,        ggi)
 AC_SEARCH_LIBS(Gpm_Open,       gpm)
 
 AC_CHECK_MEMBER([Gpm_Event.wdy],,, [[#include <gpm.h>]])
@@ -200,9 +199,6 @@ if test "$have_x" = yes; then
   save_LDFLAGS="$LDFLAGS"
   CPPFLAGS="$CPPFLAGS $X11_CPPFLAGS"
   LDFLAGS="$LDFLAGS $X11_LDFLAGS"
-
-  AC_CHECK_HEADERS([X11/xpm.h])                       dnl needs X11_CPPFLAGS
-  AC_SEARCH_LIBS(XpmReadFileToPixmap, Xpm)            dnl needs X11_LDFLAGS
 
   if test x"$PKG_CONFIG" != x; then
     PKG_CHECK_MODULES([XFT], [xft freetype2], , [XFT_CFLAGS="-I/usr/include/freetype2"])
@@ -246,9 +242,6 @@ fi
 if test "$ac_cv_search_gethostbyname" != "no"; then
   AC_DEFINE(HAVE_GETHOSTBYNAME, 1, [Define to 1 if you have the `gethostbyname'  function.])
 fi
-if test "$ac_cv_search_ggiOpen" != "no"; then
-  AC_DEFINE(HAVE_GGIOPEN, 1, [Define to 1 if you have the `ggiOpen'  function.])
-fi
 if test "$ac_cv_search_Gpm_Open" != "no"; then
   AC_DEFINE(HAVE_GPM_OPEN, 1, [Define to 1 if you have the `Gpm_Open'  function.])
 fi
@@ -281,12 +274,10 @@ else
 fi
 
 AC_SUBST(LIBCRYPT,    "`echo \"$ac_cv_search_crypt\"          | $SED -e 's/^none required$//g' -e 's/^no$//g'`")
-AC_SUBST(LIBGGI,      "`echo \"$ac_cv_search_ggiOpen\"        | $SED -e 's/^none required$//g' -e 's/^no$//g'`")
 AC_SUBST(LIBGPM,      "`echo \"$ac_cv_search_Gpm_Open\"       | $SED -e 's/^none required$//g' -e 's/^no$//g'`")
 AC_SUBST(LIBSOCK,     "`echo \"$ac_cv_search_gethostbyname\"  | $SED -e 's/^none required$//g' -e 's/^no$//g'` `echo \"$ac_cv_search_socket\" | $SED -e 's/^none required$//g' -e 's/^no$//g'` `echo \"$ac_cv_search_connect\"  | $SED -e 's/^none required$//g' -e 's/^no$//g'`")
 AC_SUBST(LIBPTHREAD,  "`echo \"$ac_cv_search_pthread_create\" | $SED -e 's/^none required$//g' -e 's/^no$//g'`")
 AC_SUBST(LIBTERMCAP,  "`echo \"$ac_cv_search_tgetent\"        | $SED -e 's/^none required$//g' -e 's/^no$//g'`")
-AC_SUBST(LIBXPM,      "`echo \"$ac_cv_search_XpmReadFileToPixmap\"  | $SED -e 's/^none required$//g' -e 's/^no$//g'`")
 AC_SUBST(LIBXFT,      "`echo \"$ac_cv_search_XftFontOpen\"    | $SED -e 's/^none required$//g' -e 's/^no$//g'`")
 if test "$enable_socket_gz" = yes; then
   AC_SUBST(LIBZ,      "`echo \"$ac_cv_search_deflate\"        | $SED -e 's/^none required$//g' -e 's/^no$//g'`")
@@ -299,8 +290,6 @@ AC_SUBST(SUBDIR_LIBTT,                                    ) dnl libTT is disable
 LIBS=
 
 AM_CONDITIONAL(LIBHW_DISPLAY_la, [test "$enable_hw_display" = yes])
-AM_CONDITIONAL(LIBHW_GFX_la,     [test "$enable_hw_gfx"     = yes])
-AM_CONDITIONAL(LIBHW_GGI_la,     [test "$enable_hw_ggi"     = yes])
 AM_CONDITIONAL(LIBHW_TTY_la,     [test "$enable_hw_tty"     = yes])
 AM_CONDITIONAL(LIBHW_TWIN_la,    [test "$enable_hw_twin"    = yes])
 AM_CONDITIONAL(LIBHW_X11_la,     [test "$enable_hw_x11"     = yes])
@@ -320,7 +309,7 @@ AC_CONFIG_FILES([
       include/version.h include/Tutf/version.h include/Tw/version.h \
       libs/Makefile libs/libltdl/Makefile libs/libstl/Makefile \
       libs/libTutf/Makefile libs/libTw/Makefile server/Makefile server/hw/Makefile \
-      test/Makefile themes/Makefile themes/hw_gfx/Makefile])
+      test/Makefile])
 
 AC_OUTPUT
 

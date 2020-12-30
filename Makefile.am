@@ -1,11 +1,11 @@
-SUBDIRS = docs include libs clients test themes server
+SUBDIRS = docs include libs clients test server
 
 ACLOCAL_AMFLAGS = -I m4
 
 pkglibexecdir = $(pkglibdir)
 
 pkgdata_DATA       = BUGS COPYING COPYING.LIB Changelog.txt INSTALL README README.porting twin-current.lsm
-pkglibexec_SCRIPTS = system.twenvrc.sh system.twinrc 
+pkglibexec_SCRIPTS = system.twenvrc.sh system.twinrc
 
 install-exec-hook:
 	@if echo "$(host_triplet)" | $(GREP) linux >/dev/null 2>&1 ; then \

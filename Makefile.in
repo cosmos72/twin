@@ -201,8 +201,8 @@ am__DIST_COMMON = $(srcdir)/Makefile.in $(top_srcdir)/admin/compile \
 	$(top_srcdir)/admin/config.sub $(top_srcdir)/admin/install-sh \
 	$(top_srcdir)/admin/ltmain.sh $(top_srcdir)/admin/missing \
 	COPYING COPYING.LIB INSTALL README admin/compile \
-	admin/config.guess admin/config.sub admin/install-sh \
-	admin/ltmain.sh admin/missing
+	admin/config.guess admin/config.sub admin/depcomp \
+	admin/install-sh admin/ltmain.sh admin/missing
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 distdir = $(PACKAGE)-$(VERSION)
 top_distdir = $(distdir)
@@ -295,7 +295,6 @@ LIBADD_DLOPEN = @LIBADD_DLOPEN@
 LIBADD_SHL_LOAD = @LIBADD_SHL_LOAD@
 LIBCRYPT = @LIBCRYPT@
 LIBDL = @LIBDL@
-LIBGGI = @LIBGGI@
 LIBGPM = @LIBGPM@
 LIBLTDL = @LIBLTDL@
 LIBOBJS = @LIBOBJS@
@@ -309,7 +308,6 @@ LIBTUTF = @LIBTUTF@
 LIBTW = @LIBTW@
 LIBX11 = @LIBX11@
 LIBXFT = @LIBXFT@
-LIBXPM = @LIBXPM@
 LIBZ = @LIBZ@
 LIPO = @LIPO@
 LN_S = @LN_S@
@@ -417,10 +415,10 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-SUBDIRS = docs include libs clients test themes server
+SUBDIRS = docs include libs clients test server
 ACLOCAL_AMFLAGS = -I m4
 pkgdata_DATA = BUGS COPYING COPYING.LIB Changelog.txt INSTALL README README.porting twin-current.lsm
-pkglibexec_SCRIPTS = system.twenvrc.sh system.twinrc 
+pkglibexec_SCRIPTS = system.twenvrc.sh system.twinrc
 all: all-recursive
 
 .SUFFIXES:

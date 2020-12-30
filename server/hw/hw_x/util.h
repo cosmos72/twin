@@ -1,4 +1,4 @@
-/* Functions that are common between hw_x11, hw_xft, and hw_gfx. */
+/* Functions that are common between hw_x11 and hw_xft */
 
 #define X11_TITLE_MAXLEN 80
 
@@ -44,7 +44,7 @@ static void X11_HideCursor(dat x, dat y) {
                 ? Video[x + y * (ldat)DisplayWidth]
                 : TCELL(TCOL(thigh | twhite, tblack), ' ');
   tcolor col = TCOLOR(V);
-  tcell extra = HWEXTRA(V);
+  tcell extra = 0;
   trune f = xUTF_32_to_charset(TRUNE(V));
 
   XChar16 c = RawToXChar16(f);
@@ -71,7 +71,7 @@ static void X11_ShowCursor(uldat type, dat x, dat y) {
       v ^= TCOL(twhite, 0);
     f = xUTF_32_to_charset(TRUNE(V));
     c = RawToXChar16(f);
-    XDRAW_ANY(&c, 1, v, HWEXTRA(V));
+    XDRAW_ANY(&c, 1, v, 0);
   } else if (type & 0xF) {
     /* VGA hw-like cursor */
 

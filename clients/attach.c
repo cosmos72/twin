@@ -39,8 +39,7 @@ static void Usage(byte detach) {
           "Currently known display drivers: \n"
           "\tX[@<XDISPLAY>]\n"
           "\ttwin[@<TWDISPLAY>]\n"
-          "\ttty[@<tty device>]\n"
-          "\tggi[@<ggi display>]\n",
+          "\ttty[@<tty device>]\n",
           MYname, detach ? "" : "--hw=<display> [...]", detach ? "" : " (default)",
           detach ? " (default)" : "");
 }

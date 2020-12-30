@@ -64,7 +64,7 @@ else
 fi
 
 echo_hw=
-for i in gfx x11 twin display tty ggi; do
+for i in x11 xft twin display tty; do
   eval "echo_val=\${enable_hw_$i}"
   if test "$echo_val" = y; then
     echo_hw="$echo_hw $i"

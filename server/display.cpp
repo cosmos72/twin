@@ -408,11 +408,11 @@ static byte InitDisplayHW(display_hw D_HW) {
 #define TRY4(hw) (tried++, module_InitHW(hw, strlen(hw)))
 
   if (!arg || !*arg) {
-    success = TRY4("-hw=xft") || TRY4("-hw=gfx") || TRY4("-hw=X11") || TRY4("-hw=twin") ||
+    success = TRY4("-hw=xft") || TRY4("-hw=X11") || TRY4("-hw=twin") ||
 #if 0 /* cannot use `--hw=display' inside twdisplay! */
         TRY4("-hw=display") ||
 #endif
-              TRY4("-hw=tty") || TRY4("-hw=ggi");
+              TRY4("-hw=tty");
   } else {
     success = module_InitHW(D_HW->Name, D_HW->NameLen);
   }
@@ -1063,11 +1063,10 @@ static void Usage(void) {
         " --hw=<display>[,options] start the given display (only one --hw=... allowed)\n"
         "                          (default: autoprobe all displays until one succeeds)\n"
         "Currently known display drivers: \n"
-        "\tgfx[@<XDISPLAY>]\n"
+        "\txft[@<XDISPLAY>]\n"
         "\tX[@<XDISPLAY>]\n"
         "\ttwin[@<TWDISPLAY>]\n"
-        "\ttty[@<tty device>]\n"
-        "\tggi[@<ggi display>]\n",
+        "\ttty[@<tty device>]\n",
         stdout);
 }
 
