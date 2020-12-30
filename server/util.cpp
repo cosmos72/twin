@@ -350,17 +350,17 @@ byte SelectionStore(uldat Magic, const char MIME[MAX_MIMELEN], uldat Len, const 
 #define _SelAppendNL() SelectionAppend(2, "\0\n");
 #endif
 
-byte SetSelectionFromWindow(window Window) {
+byte SetSelectionFromWindow(window w) {
   ldat y;
   uldat slen, len;
   trune *sData, *Data;
-  byte ok = ttrue, w_useC = W_USE(Window, USECONTENTS);
+  byte ok = ttrue, w_useC = W_USE(w, USECONTENTS);
 
-  if (!(Window->State & WINDOW_DO_SEL))
+  if (!(w->State & WINDOW_DO_SEL))
     return ok;
 
-  if (!(Window->State & WINDOW_ANYSEL) || Window->YstSel > Window->YendSel ||
-      (Window->YstSel == Window->YendSel && Window->XstSel > Window->XendSel)) {
+  if (!(w->State & WINDOW_ANYSEL) || w->YstSel > w->YendSel ||
+      (w->YstSel == w->YendSel && w->XstSel > w->XendSel)) {
 
     ok &= SelectionStore(_SEL_MAGIC, NULL, 0, NULL);
     if (ok)
@@ -369,66 +369,66 @@ byte SetSelectionFromWindow(window Window) {
   }
 
   /* normalize negative coords */
-  if (Window->XstSel < 0)
-    Window->XstSel = 0;
-  else if (w_useC && Window->XstSel >= Window->WLogic) {
-    Window->XstSel = 0;
-    Window->YstSel++;
+  if (w->XstSel < 0)
+    w->XstSel = 0;
+  else if (w_useC && w->XstSel >= w->WLogic) {
+    w->XstSel = 0;
+    w->YstSel++;
   }
-  if (Window->YstSel < Window->YLogic) {
-    Window->YstSel = Window->YLogic;
-    Window->XstSel = 0;
-  } else if (Window->YstSel >= Window->HLogic) {
-    Window->YstSel = Window->HLogic - 1;
-    Window->XstSel = w_useC ? Window->WLogic - 1 : TW_MAXLDAT;
+  if (w->YstSel < w->YLogic) {
+    w->YstSel = w->YLogic;
+    w->XstSel = 0;
+  } else if (w->YstSel >= w->HLogic) {
+    w->YstSel = w->HLogic - 1;
+    w->XstSel = w_useC ? w->WLogic - 1 : TW_MAXLDAT;
   }
 
   if (w_useC) {
     tcell *hw;
 
     /* normalize negative coords */
-    if (Window->XendSel < 0) {
-      Window->XendSel = Window->WLogic - 1;
-      Window->YendSel--;
-    } else if (Window->XendSel >= Window->WLogic)
-      Window->XendSel = Window->WLogic - 1;
+    if (w->XendSel < 0) {
+      w->XendSel = w->WLogic - 1;
+      w->YendSel--;
+    } else if (w->XendSel >= w->WLogic)
+      w->XendSel = w->WLogic - 1;
 
-    if (Window->YendSel < Window->YLogic) {
-      Window->YendSel = Window->YLogic;
-      Window->XendSel = 0;
-    } else if (Window->YendSel >= Window->HLogic) {
-      Window->YendSel = Window->HLogic - 1;
-      Window->XendSel = Window->WLogic - 1;
+    if (w->YendSel < w->YLogic) {
+      w->YendSel = w->YLogic;
+      w->XendSel = 0;
+    } else if (w->YendSel >= w->HLogic) {
+      w->YendSel = w->HLogic - 1;
+      w->XendSel = w->WLogic - 1;
     }
 
-    if (!(sData = (trune *)AllocMem(sizeof(trune) * (slen = Window->WLogic))))
+    if (!(sData = (trune *)AllocMem(sizeof(trune) * (slen = w->WLogic))))
       return tfalse;
 
-    hw = Window->USE.C.Contents + (Window->YstSel + Window->USE.C.HSplit) * slen;
-    while (hw >= Window->USE.C.TtyData->Split)
-      hw -= Window->USE.C.TtyData->Split - Window->USE.C.Contents;
+    hw = w->USE.C.Contents + (w->YstSel + w->USE.C.HSplit) * slen;
+    while (hw >= w->USE.C.TtyData->Split)
+      hw -= w->USE.C.TtyData->Split - w->USE.C.Contents;
 
     {
-      y = Window->YstSel;
-      if (y < Window->YendSel)
-        slen -= Window->XstSel;
+      y = w->YstSel;
+      if (y < w->YendSel)
+        slen -= w->XstSel;
       else
-        slen = Window->XendSel - Window->XstSel + 1;
+        slen = w->XendSel - w->XstSel + 1;
       Data = sData;
       len = slen;
-      hw += Window->XstSel;
+      hw += w->XstSel;
       while (len--)
         *Data++ = TRUNE(*hw), hw++;
       ok &= SelectionStore(_SEL_MAGIC, NULL, slen * sizeof(trune), (const char *)sData);
     }
 
-    if (hw >= Window->USE.C.TtyData->Split)
-      hw -= Window->USE.C.TtyData->Split - Window->USE.C.Contents;
+    if (hw >= w->USE.C.TtyData->Split)
+      hw -= w->USE.C.TtyData->Split - w->USE.C.Contents;
 
-    slen = Window->WLogic;
-    for (y = Window->YstSel + 1; ok && y < Window->YendSel; y++) {
-      if (hw >= Window->USE.C.TtyData->Split)
-        hw -= Window->USE.C.TtyData->Split - Window->USE.C.Contents;
+    slen = w->WLogic;
+    for (y = w->YstSel + 1; ok && y < w->YendSel; y++) {
+      if (hw >= w->USE.C.TtyData->Split)
+        hw -= w->USE.C.TtyData->Split - w->USE.C.Contents;
       Data = sData;
       len = slen;
       while (len--)
@@ -436,11 +436,11 @@ byte SetSelectionFromWindow(window Window) {
       ok &= SelectionAppend(slen * sizeof(trune), (const char *)sData);
     }
 
-    if (ok && Window->YendSel > Window->YstSel) {
-      if (hw >= Window->USE.C.TtyData->Split)
-        hw -= Window->USE.C.TtyData->Split - Window->USE.C.Contents;
+    if (ok && w->YendSel > w->YstSel) {
+      if (hw >= w->USE.C.TtyData->Split)
+        hw -= w->USE.C.TtyData->Split - w->USE.C.Contents;
       Data = sData;
-      len = slen = Window->XendSel + 1;
+      len = slen = w->XendSel + 1;
       while (len--)
         *Data++ = TRUNE(*hw), hw++;
       ok &= SelectionAppend(slen * sizeof(trune), (const char *)sData);
@@ -449,37 +449,37 @@ byte SetSelectionFromWindow(window Window) {
       NeedHW |= NEEDSelectionExport;
     return ok;
   }
-  if (W_USE(Window, USEROWS)) {
+  if (W_USE(w, USEROWS)) {
     row Row;
 
     /* Gap not supported! */
-    y = Window->YstSel;
-    Row = Window->FindRow(y);
+    y = w->YstSel;
+    Row = w->FindRow(y);
 
     if (Row && Row->Text) {
-      if (y < Window->YendSel)
-        slen = Row->Len - Window->XstSel;
+      if (y < w->YendSel)
+        slen = Row->Len - w->XstSel;
       else
-        slen = Min2(Row->Len, (uldat)Window->XendSel + 1) - Min2(Row->Len, (uldat)Window->XstSel);
+        slen = Min2(Row->Len, (uldat)w->XendSel + 1) - Min2(Row->Len, (uldat)w->XstSel);
 
       ok &= SelectionStore(_SEL_MAGIC, NULL, slen * sizeof(trune),
-                           (const char *)(Row->Text + Min2(Row->Len, (uldat)Window->XstSel)));
+                           (const char *)(Row->Text + Min2(Row->Len, (uldat)w->XstSel)));
     } else
       ok &= SelectionStore(_SEL_MAGIC, NULL, 0, NULL);
 
-    if (y < Window->YendSel || !Row || !Row->Text || Row->Len <= (uldat)Window->XendSel)
+    if (y < w->YendSel || !Row || !Row->Text || Row->Len <= (uldat)w->XendSel)
       ok &= _SelAppendNL();
 
-    for (y = Window->YstSel + 1; ok && y < Window->YendSel; y++) {
-      if ((Row = Window->FindRow(y)) && Row->Text)
+    for (y = w->YstSel + 1; ok && y < w->YendSel; y++) {
+      if ((Row = w->FindRow(y)) && Row->Text)
         ok &= SelectionAppend(Row->Len * sizeof(trune), (const char *)Row->Text);
       ok &= _SelAppendNL();
     }
-    if (Window->YendSel > Window->YstSel) {
-      if (Window->XendSel >= 0 && (Row = Window->FindRow(Window->YendSel)) && Row->Text)
-        ok &= SelectionAppend(Min2(Row->Len, (uldat)Window->XendSel + 1) * sizeof(trune),
+    if (w->YendSel > w->YstSel) {
+      if (w->XendSel >= 0 && (Row = w->FindRow(w->YendSel)) && Row->Text)
+        ok &= SelectionAppend(Min2(Row->Len, (uldat)w->XendSel + 1) * sizeof(trune),
                               (const char *)Row->Text);
-      if (!Row || !Row->Text || Row->Len <= (uldat)Window->XendSel)
+      if (!Row || !Row->Text || Row->Len <= (uldat)w->XendSel)
         ok &= _SelAppendNL();
     }
     if (ok)
@@ -490,16 +490,16 @@ byte SetSelectionFromWindow(window Window) {
 }
 
 byte CreateXTermMouseEvent(event_mouse *Event, byte buflen, char *buf) {
-  window W;
+  window w;
   udat Flags;
   udat Code = Event->Code;
   dat x = Event->X, y = Event->Y;
   byte len = 0;
 
-  if (!(W = (window)Event->W) || !IS_WINDOW(W) || !W_USE(W, USECONTENTS) || !W->USE.C.TtyData)
+  if (!(w = (window)Event->W) || !IS_WINDOW(w) || !W_USE(w, USECONTENTS) || !w->USE.C.TtyData)
     return len;
 
-  Flags = W->USE.C.TtyData->Flags;
+  Flags = w->USE.C.TtyData->Flags;
 
   if (Flags & TTY_REPORTMOUSE) {
     /* new-style reporting */
@@ -570,12 +570,12 @@ byte CreateXTermMouseEvent(event_mouse *Event, byte buflen, char *buf) {
 
 void ResetBorderPattern(void) {
   msgport MsgP;
-  widget W;
+  widget w;
 
   for (MsgP = All->FirstMsgPort; MsgP; MsgP = MsgP->Next) {
-    for (W = MsgP->FirstW; W; W = W->O_Next) {
-      if (IS_WINDOW(W))
-        ((window)W)->BorderPattern[0] = ((window)W)->BorderPattern[1] = NULL;
+    for (w = MsgP->FirstW; w; w = w->O_Next) {
+      if (IS_WINDOW(w))
+        ((window)w)->BorderPattern[0] = ((window)w)->BorderPattern[1] = NULL;
     }
   }
 }
@@ -599,15 +599,15 @@ static gadget _NextGadget(gadget G) {
 }
 
 /* handle common keyboard actions like cursor moving and button navigation */
-void FallBackKeyAction(window W, event_keyboard *EventK) {
+void FallBackKeyAction(window w, event_keyboard *EventK) {
   ldat NumRow, OldNumRow;
   gadget G, H;
 
-  if ((G = (gadget)W->SelectW) && IS_GADGET(G))
+  if ((G = (gadget)w->SelectW) && IS_GADGET(G))
     switch (EventK->Code) {
     case TW_Escape:
       UnPressGadget(G, tfalse);
-      W->SelectW = (widget)0;
+      w->SelectW = (widget)0;
       break;
     case TW_Return:
       UnPressGadget(G, ttrue);
@@ -618,7 +618,7 @@ void FallBackKeyAction(window W, event_keyboard *EventK) {
       if ((H = _PrevGadget(G))) {
         if (!(G->Flags & GADGETFL_TOGGLE))
           UnPressGadget(G, tfalse);
-        W->SelectW = (widget)H;
+        w->SelectW = (widget)H;
         PressGadget(H);
       }
       break;
@@ -628,64 +628,64 @@ void FallBackKeyAction(window W, event_keyboard *EventK) {
       if ((H = _NextGadget(G))) {
         if (!(G->Flags & GADGETFL_TOGGLE))
           UnPressGadget(G, tfalse);
-        W->SelectW = (widget)H;
+        w->SelectW = (widget)H;
         PressGadget(H);
       }
       break;
     default:
       break;
     }
-  else if ((G = (gadget)W->FirstW) && IS_GADGET(G)) {
+  else if ((G = (gadget)w->FirstW) && IS_GADGET(G)) {
     PressGadget(G);
-    W->SelectW = (widget)G;
+    w->SelectW = (widget)G;
   } else
     switch (EventK->Code) {
     case TW_Up:
-      if (!W->HLogic)
+      if (!w->HLogic)
         break;
-      OldNumRow = W->CurY;
+      OldNumRow = w->CurY;
       if (OldNumRow < TW_MAXLDAT) {
         if (!OldNumRow)
-          NumRow = W->HLogic - (ldat)1;
+          NumRow = w->HLogic - (ldat)1;
         else
           NumRow = OldNumRow - (ldat)1;
-        W->CurY = NumRow;
-        if (W->Flags & WINDOWFL_ROWS_SELCURRENT)
-          DrawLogicWidget((widget)W, (ldat)0, OldNumRow, (ldat)TW_MAXDAT - (ldat)2, OldNumRow);
+        w->CurY = NumRow;
+        if (w->Flags & WINDOWFL_ROWS_SELCURRENT)
+          DrawLogicWidget((widget)w, (ldat)0, OldNumRow, (ldat)TW_MAXDAT - (ldat)2, OldNumRow);
       } else
-        W->CurY = NumRow = W->HLogic - (ldat)1;
-      if (W->Flags & WINDOWFL_ROWS_SELCURRENT)
-        DrawLogicWidget((widget)W, (ldat)0, NumRow, (ldat)TW_MAXDAT - (ldat)2, NumRow);
+        w->CurY = NumRow = w->HLogic - (ldat)1;
+      if (w->Flags & WINDOWFL_ROWS_SELCURRENT)
+        DrawLogicWidget((widget)w, (ldat)0, NumRow, (ldat)TW_MAXDAT - (ldat)2, NumRow);
       UpdateCursor();
       break;
     case TW_Down:
-      if (!W->HLogic)
+      if (!w->HLogic)
         break;
-      OldNumRow = W->CurY;
+      OldNumRow = w->CurY;
       if (OldNumRow < TW_MAXLDAT) {
-        if (OldNumRow >= W->HLogic - (ldat)1)
+        if (OldNumRow >= w->HLogic - (ldat)1)
           NumRow = (ldat)0;
         else
           NumRow = OldNumRow + (ldat)1;
-        W->CurY = NumRow;
-        if (W->Flags & WINDOWFL_ROWS_SELCURRENT)
-          DrawLogicWidget((widget)W, (ldat)0, OldNumRow, (ldat)TW_MAXDAT - (ldat)2, OldNumRow);
+        w->CurY = NumRow;
+        if (w->Flags & WINDOWFL_ROWS_SELCURRENT)
+          DrawLogicWidget((widget)w, (ldat)0, OldNumRow, (ldat)TW_MAXDAT - (ldat)2, OldNumRow);
       } else
-        W->CurY = NumRow = (ldat)0;
-      if (W->Flags & WINDOWFL_ROWS_SELCURRENT)
-        DrawLogicWidget((widget)W, (ldat)0, NumRow, (ldat)TW_MAXDAT - (ldat)2, NumRow);
+        w->CurY = NumRow = (ldat)0;
+      if (w->Flags & WINDOWFL_ROWS_SELCURRENT)
+        DrawLogicWidget((widget)w, (ldat)0, NumRow, (ldat)TW_MAXDAT - (ldat)2, NumRow);
       UpdateCursor();
       break;
     case TW_Left:
-      if (W->CurX > 0) {
-        W->CurX--;
+      if (w->CurX > 0) {
+        w->CurX--;
         UpdateCursor();
       }
       break;
     case TW_Right:
-      if ((W_USE(W, USECONTENTS) && W->CurX < W->XWidth - 3) ||
-          (W_USE(W, USEROWS) && W->CurX < TW_MAXLDAT - 1)) {
-        W->CurX++;
+      if ((W_USE(w, USECONTENTS) && w->CurX < w->XWidth - 3) ||
+          (W_USE(w, USEROWS) && w->CurX < TW_MAXLDAT - 1)) {
+        w->CurX++;
         UpdateCursor();
       }
       break;
