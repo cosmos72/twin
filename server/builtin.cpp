@@ -973,23 +973,8 @@ byte InitBuiltin(void) {
                                (tcolor)0xF9, (tcolor)0x7F, (tcolor)0x70, (tcolor)0x20, (tcolor)0x78,
                                (tcolor)0x08);
 
-    Act(SetColors, DisplaySubWin)(DisplaySubWin, 1 << 4, 0, 0, 0, 0, TCOL(thigh | tblack, twhite),
-                                  0, 0, 0, 0);
-
-    Act(SetColors, DisplaySubWin)(DisplaySubWin, 1 << 4, 0, 0, 0, 0, TCOL(thigh | tblack, twhite),
-                                  0, 0, 0, 0);
-
-    Act(SetColors, DisplaySubWin)(DisplaySubWin, 1 << 4, 0, 0, 0, 0, TCOL(thigh | tblack, twhite),
-                                  0, 0, 0, 0);
-
-    Act(SetColors, DisplaySubWin)(DisplaySubWin, 1 << 4, 0, 0, 0, 0, TCOL(thigh | tblack, twhite),
-                                  0, 0, 0, 0);
-
-    Act(SetColors, DisplaySubWin)(DisplaySubWin, 1 << 4, 0, 0, 0, 0, TCOL(thigh | tblack, twhite),
-                                  0, 0, 0, 0);
-
-    Act(SetColors, DisplaySubWin)(DisplaySubWin, 1 << 4, 0, 0, 0, 0, TCOL(thigh | tblack, twhite),
-                                  0, 0, 0, 0);
+    Act(SetColors, DisplaySubWin)(DisplaySubWin, 0x30, 0, 0, 0, 0, TCOL(thigh | tblack, twhite),
+                                  TCOL(thigh | tblack, twhite), 0, 0, 0);
 
     Act(Configure, DisplaySubWin)(DisplaySubWin, 1 << 0 | 1 << 1, -1, -1, 0, 0, 0, 0);
     Act(Map, DisplaySubWin)(DisplaySubWin, (widget)DisplayWin);
