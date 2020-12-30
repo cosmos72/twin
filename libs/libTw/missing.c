@@ -102,13 +102,14 @@ enum {
   extra_flag = 1 << 23,
 };
 
-tcell Tw_tcell3(tcolor col, trune font, tcell extra) {
+tcell Tw_tcell3(tcolor col, trune ch, tcell extra) {
   tcell attr;
-  if (font >= utf21_size)
-    font = utf16_replacement_char;
+  if (ch >= utf21_size) {
+    ch = utf16_replacement_char;
+  }
   switch (extra) {
   case 0:
-    return TCELL(col, font);
+    return TCELL(col, ch);
   case menu_bar:
     attr = 1;
     break;
@@ -122,15 +123,16 @@ tcell Tw_tcell3(tcolor col, trune font, tcell extra) {
     attr = 4;
     break;
   default:
-    if (font >= utf16_size)
-      /*
-       * window borders support only the first 64k unicode characters:
-       * not enough bits for full unicode support in this case...
-       */
-      font = utf16_replacement_char;
-    return TCELL(col, font) | (extra << 16) | extra_flag;
+    /*
+     * window borders support only the first 64k unicode characters:
+     * not enough bits for full unicode support in this case...
+     */
+    if (ch >= utf16_size) {
+      ch = utf16_replacement_char;
+    }
+    return TCELL(col, ch) | (extra << 16) | extra_flag;
   }
-  return TCELL(col, attr * utf21_size + font);
+  return TCELL(col, attr * utf21_size + ch);
 }
 
 trune Tw_trune(tcell attr) {

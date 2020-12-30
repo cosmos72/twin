@@ -52,7 +52,7 @@ w   +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
   6 |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |
     +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
 
-0,0 : (currently unused)
+0,0 : not used, should be transparent
 1,0 : menu tile
 2,0 : button 0,    normal, left  half
 3,0 : button 0,    normal, right half

@@ -417,8 +417,9 @@ byte SetSelectionFromWindow(window w) {
       Data = sData;
       len = slen;
       hw += w->XstSel;
-      while (len--)
+      while (len--) {
         *Data++ = TRUNE(*hw), hw++;
+      }
       ok &= SelectionStore(_SEL_MAGIC, NULL, slen * sizeof(trune), (const char *)sData);
     }
 
@@ -431,8 +432,9 @@ byte SetSelectionFromWindow(window w) {
         hw -= w->USE.C.TtyData->Split - w->USE.C.Contents;
       Data = sData;
       len = slen;
-      while (len--)
+      while (len--) {
         *Data++ = TRUNE(*hw), hw++;
+      }
       ok &= SelectionAppend(slen * sizeof(trune), (const char *)sData);
     }
 
@@ -441,8 +443,9 @@ byte SetSelectionFromWindow(window w) {
         hw -= w->USE.C.TtyData->Split - w->USE.C.Contents;
       Data = sData;
       len = slen = w->XendSel + 1;
-      while (len--)
+      while (len--) {
         *Data++ = TRUNE(*hw), hw++;
+      }
       ok &= SelectionAppend(slen * sizeof(trune), (const char *)sData);
     }
     if (ok)
