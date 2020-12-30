@@ -7,7 +7,7 @@ X11 server and twin server comes out so often, we could say libTw is the
 equivalent of libX11.
 
 One thing that has been asked many times is porting applications from ncurses
-to libTw. Unlickily, things are not so straightforward as the two libraries
+to libTw. Unluckily, things are not so straightforward as the two libraries
 have quite different approaches: libTw is a network transparent, multi window,
 multi headed, event driven, mouse aware library, while ncurses is full-screen,
 single-headed library without mouse support and without events.
@@ -23,7 +23,7 @@ generates events (user input) is decided by the application.
 
 
 				   the libTw API
-				   
+				
 
 1. Types and defines
 
@@ -78,24 +78,24 @@ generates events (user input) is decided by the application.
 
    Don't assume you know the sizes of these types, always use
    sizeof(<type>) if you need it.
-   
+
    trune can hold a single character. This means it surely can contain
    an ASCII character, but depending on libTw configuration, it may even
    contain a UNICODE character.
-   
+
    tcolor can hold a single foreground color + background color combination
    This is loosely based on VGA colors, with 8 different colors
 
    BLACK, BLUE, GREEN, CYAN, RED, MAGENTA, YELLOW, WHITE
-   
+
    and a special HIGH flag. The maximum possible color value is MAXCOL.
 
    to convert between this representation and ANSI colors, there are two macros:
-   
+
    ANSI2VGA(col) and VGA2ANSI(col)
 
    To compose and decompose a tcolor from fg/bg pair, you have the macros
-   
+
    FG(fg), BG(bg) and COL(fg,bg) to compose a tcolor
       COL(fg,bg) is simply FG(fg)|BG(bg)
    COLBG(col) and COLFG(col) to decompose it
@@ -103,7 +103,7 @@ generates events (user input) is decided by the application.
    To compose and decompose a tcell from tcolor/trune pair, you have the macros
 
    TCELL(col,font) to compose and TCOLOR(attr), TRUNE(attr) to decompose.
-   
+
    Examples:
    a blue `f' on white background is TCELL( COL(BLUE,WHITE), 'f')
    a cyan foreground on red background is COL(CYAN,RED)
@@ -115,12 +115,12 @@ generates events (user input) is decided by the application.
       (like increments) inside them.
       For example, this causes unpredictable results because of the `h++'
       increment inside the TCELL() macro:
-      
+
       tcell a[2];
       trune buf[2], *h = buf;
       a[0] = TCELL(COL(WHITE,BLACK), *h++);
       a[1] = TCELL(COL(WHITE,BLACK), *h++);
-     
+
 
    (types for time intervals: TODO)
 
@@ -140,7 +140,7 @@ generates events (user input) is decided by the application.
    DRAG_MOUSE
 
    MOTION_MOUSE
-   
+
    #define ANY_ACTION_MOUSE	(PRESS_ANY | RELEASE_ANY | DRAG_MOUSE)
 
    isPRESS(code), isDRAG(code), isRELEASE(code), isMOTION(code)
@@ -149,7 +149,7 @@ generates events (user input) is decided by the application.
 
 
    Finally, the types for the various libTw objects:
-   
+
    tobj (generic), twidget (generic), tgadget, trow, twindow,
    tmenuitem, tmenu, tscreen, tmsgport
 
@@ -161,7 +161,7 @@ generates events (user input) is decided by the application.
    tevent_any
 
    tmsg
-   
+
    /* Msg ->Type : */
    TW_MSG_DISPLAY, TW_MSG_WINDOW_KEY, TW_MSG_WINDOW_MOUSE,
    TW_MSG_WINDOW_CHANGE, TW_MSG_WINDOW_GADGET, TW_MSG_MENU_ROW	
@@ -202,33 +202,33 @@ generates events (user input) is decided by the application.
    When no connections are open, you can call
 
    byte Tw_CheckMagic(byte Magic[]);
-   
+
    to ensure sizeof() of the various types are the same in the client
    and in the library, and you can call
-   
+
    void Tw_ConfigMalloc(void *(*my_malloc)(size_t),
    			void *(*my_realloc)(void *, size_t),
 			void  (*my_free)(void *));
-		     
+		
    to set the functions
-   
+
    extern void *(*Tw_AllocMem)(size_t);
    extern void *(*Tw_ReAllocMem)(void *, size_t);
    extern void  (*Tw_FreeMem)(void *);
    extern byte *(*Tw_CloneStr)(byte *);
- 
+
    to your custom malloc/free routines.
 
    To open a connection to a twin server, call (Tw_Display is optional)
    byte TwOpen(byte *Tw_Display);
      or
    tdisplay Tw_Open(byte *Tw_Display);
-   
+
    To close,
    void TwClose(void);
      or
    void Tw_Close(tdisplay TwD);
-   
+
    The file descriptor of a connection is returned by
    int  TwConnectionFd(void);
      or
@@ -250,7 +250,7 @@ generates events (user input) is decided by the application.
     */
    byte    TwFlush(void);
    byte    Tw_Flush(tdisplay TwD);
-   
+
    /* flush output buffer and wait for all replies from server */
    byte    TwSync(void);
    byte    Tw_Sync(tdisplay TwD);
@@ -258,18 +258,18 @@ generates events (user input) is decided by the application.
    /* did the library panic on that display? */
    byte    TwInPanic(void);
    byte    Tw_InPanic(tdisplay TwD);
-   
+
   /*
    * after a panic (i.e. a fatal error), the only useful thing
    * you can do is to Tw_Close() the display and, if you need,
    * to Tw_Open() again.
    */
-   
+
   /*
    * try to write to the underlying socket.
    * if not all data could be written immediately, write as much as possible,
    * keep the rest queued, then return.
-   * 
+   *
    * returns FALSE only after libTw has paniced,
    * returns TRUE if all data was written.
    * returns TRUE+TRUE if not all data could be written.
@@ -284,7 +284,7 @@ generates events (user input) is decided by the application.
    * If Wait is FALSE and no Msg is available, it flushes output queue
    *    non-blocking (with Tw_TimidFlush()), then it tries non-blocking
    *    to receive more Msgs.
-   * 
+   *
    * In both cases, if there are already received Msgs they are returned
    * without waiting.
    */
@@ -298,14 +298,14 @@ generates events (user input) is decided by the application.
    */
    tmsg TwCloneReadMsg(byte Wait);
    tmsg Tw_CloneReadMsg(tdisplay TwD, byte Wait);
-   
+
   /*
    * This is the function you must call to check if there are pending Msgs.
    * There may be messages to process even if there's nothig to read on
    * (Fd = Tw_ConnectionFd()) as messages can be received also during any
    * blocking function call like Tw_Sync(), Tw_CreateWindow(), etc.
    * Look at the twterm sources for an example.
-   * 
+   *
    * This returns the first pending Msg, or (tmsg)0 if none is available
    * and none can be received non-blocking.
    */
@@ -314,7 +314,7 @@ generates events (user input) is decided by the application.
 
   /*
    *   <*>  B I G    W A R N I N G  <*>
-   * 
+   *
    * Tw_PeekMsg() and Tw_ReadMsg() return a (tmsg) pointer to data
    * in a static buffer. The pointer becomes invalid after a call
    * to any function of Tw/Tw.h with non-void return value,
@@ -323,7 +323,7 @@ generates events (user input) is decided by the application.
    * in particular any of the following:
    * (but calling one of these with an argument pointing to data
    * inside a tmsg is allowed)
-   * 
+   *
    * Tw_Sync();
    * Tw_PeekMsg();
    * Tw_ReadMsg();
@@ -337,15 +337,15 @@ generates events (user input) is decided by the application.
    * Tw_FirstScreen();
    * Tw_FirstMsgPort();
    * [...]
-   * 
+   *
    * If you are using threads, or just have a doubt that your code might
    * reference the message returned Tw_PeekMsg() or Tw_ReadMsg()
    * after a call to one of the above functions, use Tw_CloneReadMsg() :
    * it's just like Tw_ReadMsg(), except that it returns a Tw_AllocMem() copy
    * of the message, that you can use as long as you wish. Just remember to
    * Tw_DeleteMsg() it when done!
-   * 
-   * 
+   *
+   *
    * Other important notes:
    * 1. Only ONE MsgPort can exists at max on each connection.
    * 2. Tw_DeleteMsgPort() calls Tw_DeleteMenu() on all menus created by the client
@@ -355,11 +355,11 @@ generates events (user input) is decided by the application.
    *    of that widget, does NOT call Tw_DeleteWidget[/Gadget/Window]() recursively on them!
    *    If you wish to delete a widget and all sub-widgets inside it,
    *    use Tw_RecursiveDeleteWidget[/Gadget/Window]()
-   * 
+   *
    * also, if you exit() from your program without calling Tw_Flush(), Tw_Sync() or Tw_Close(),
    * pending data will *NOT* be sent to the server.
    */
-   
+
 tmsgport Tw_CreateMsgPort(tdisplay TwD, byte NameLen, byte *ProgramName, time_t PauseSec, frac_t PauseFraction, byte WakeUp);
 /* WakeUp: */
 #define TW_TIMER_ALWAYS	((byte)1)
@@ -439,59 +439,59 @@ void Tw_BlindSendMsg(tdisplay TwD, tmsgport MsgPort, tmsg Msg);
 
 /*
  * Selection handling. This is very similar to X11:
- * 
+ *
  * if client <a> wants to know the contents of selection to paste it,
  * it must find who is the Selection owner (say <b>) and ask him:
- * 
+ *
  * Tw_RequestSelection(TwD, Tw_GetOwnerSelection(TwD), ReqPrivate);
- * 
+ *
  * ReqPrivate is some opaque data that client <a> may specify,
  * and it will be sent back later literally.
- * 
+ *
  * after a while, a TW_MSG_SELECTIONNOTIFY will arrive with all the
  * precious Selection data and also with ReqPrivate.
- * 
- * 
- * 
+ *
+ *
+ *
  * Now the other half of the story: What The Selection Owner Must Do.
- * (this is handled automagically by twin server if the client choosed
+ * (this is handled automagically by twin server if the client chosen
  * not to receive mouse events)
- * 
+ *
  * If the user just hilighted some data in a window of client <b>,
  * client <b> will want to become the Selection owner, so that other
  * clients may receive that data too. For this, client <b> must call
- * 
+ *
  * Tw_SetOwnerSelection(TwD, myMsgPort, TW_SEL_CURRENTTIME, TW_SEL_CURRENTTIME);
- * 
+ *
  * where myMsgPort is actually client <b> MsgPort. From now on, and until
  * client <b> receives a TW_MSG_SELECTIONCLEAR event, client <b> must
  * send its precious Selection to whoever asks for it: every time client <b>
  * receives a TW_MSG_SELECTIONREQUEST event from libTw, it must call
- * 
+ *
  * Tw_NotifySelection(TwD, Requestor, ReqPrivate, Magic, MIME, Len, Data);
- * 
+ *
  * where Requestor and ReqPrivate come from the TW_MSG_SELECTIONREQUEST event,
  * and the rest is the Selection data: its Magic type (usually TW_SEL_TEXTMAGIC),
  * its MIME type ("text/plain", or whatever looks appropriate),
  * its Len in bytes and finally, Data: a pointer to the actual data.
- * 
- * 
+ *
+ *
  * There is a last thing: how can client <a> know that the user
  * wants to paste the selection in one of its windows ?
  * If the client keeps track of mouse movement and buttons, it can figure
  * out by its own. Otherwise, twin automagically solves the problem sending
  * a TW_MSG_SELECTION to the client when it should paste the selection
  * in a window. Client should then call the first function said above,
- * 
+ *
  * Tw_RequestSelection(TwD, Tw_GetOwnerSelection(TwD), ReqPrivate);
- * 
+ *
  * and start the chain of communications just explained.
  * Once client <a> got the Selection, it must paste it in the window
  * in whatever way is appropriate for that window.
- * 
+ *
  * P.S. hint: a possible use for ReqPrivate is to store the window
  *            that client <a> must paste into.
- * 
+ *
  * Finally, the function prototypes:
  */
 tobj Tw_GetOwnerSelection(tdisplay TwD);
@@ -519,26 +519,26 @@ void Tw_NotifySelection(tdisplay TwD, tobj Requestor, uldat ReqPrivate,
    /*
     * a few string/memory related function macros:
     */
-   
+
    #define TwCopyStr(From,To) strcpy((To),(From))
-   
+
    #define TwCopyMem(From, To, Size)	memcpy((To), (From), (size_t)(Size))
    #define TwMoveMem(From, To, Size)	memmove((To), (From), (size_t)(Size))
-   
+
    /*
     * the "Tw_" versions of the above ones exist, and have exactly the same
     * definition (no tdisplay argument here)
     */
-   
-   
-   
+
+
+
    /*
     * Check if the server supports a function given its name
     * (without the Tw/Tw_ prefix)
     */
    uldat TwFindFunction(byte Len, byte *Name);
    uldat Tw_FindFunction(tdisplay TwD, byte Len, byte *Name);
-   
+
    /*
     * Check if the server supports a list of functions given its pointers
     * (you must use the ones with Tw_ prefix as the other are macros)
@@ -564,16 +564,16 @@ void Tw_NotifySelection(tdisplay TwD, tobj Requestor, uldat ReqPrivate,
     */
     void TwNeedResizeDisplay(void);
     void Tw_NeedResizeDisplay(tdisplay TwD);
-    
+
     void TwAttachHW(uldat len, char *name, byte redirect);
     void Tw_AttachHW(tdisplay TwD, uldat len, char *name, byte redirect);
-    
+
     char *TwAttachGetReply(uldat *len);
     char *Tw_AttachGetReply(tdisplay TwD, uldat *len);
-    
+
     void TwAttachConfirm(void);
     void Tw_AttachConfirm(tdisplay TwD);
-    
+
     byte TwDetachHW(uldat len, char *name);
     byte Tw_DetachHW(tdisplay TwD, uldat len, char *name);
 

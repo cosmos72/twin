@@ -1,6 +1,6 @@
                      TWIN FREQUENTLY ASKED QUESTIONS
 		            WITH ANSWERS
-			    
+			
                             28 Oct 2002
                 Massimiliano Ghilardi <https://github.com/cosmos72/>
 
@@ -196,7 +196,7 @@ with some extra features:
 
 a) It manages multiple windows on a single screen,
    just like X11 servers except that twin uses text-mode.
-   
+
 b) It has X11-style networked server capabilities:
    programs started remotely can connect to twin using sockets,
    just like X11 clients (xterm, fvwm2, gimp, kde, netscape, ...) connect
@@ -213,10 +213,10 @@ e) It and can attach/detach displays on-the-fly and supports
    multiple simultaneous displays. You can find a very similar
    feature in VNC (Virtual Network Computer, a virtual X11 server).
 
-   
+
 Twin is distributed under the GNU General Public License - see
 Q1.6 `Is twin PD ?  Copyrighted ?' for more details.
-   
+
 -------------------------------------------------------------------------------
 
 Question 1.2.  Does it run on my computer ?
@@ -261,12 +261,12 @@ c) various more-or-less useful utilities, including at least:
    twcat, twclip, twlsobj, twevent, twfindtwin,
    twmapscrn, twsendmsg, twsetroot, twthreadtest.
 d) some more complex clients, including at least:
-   twsysmon - a system resources monitor (works on Linux only) 
+   twsysmon - a system resources monitor (works on Linux only)
    twterm   - a terminal emulator (Linux console emulator, actually)
    twdm     - a login manager, modeled after xdm/kdm.
 
 To obtain more information about these clients, see the Tutorial.
-   
+
 Various libraries come with twin too:
 
 e) libTutf  - a tiny unicode translation library
