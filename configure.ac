@@ -254,9 +254,6 @@ fi
 if test "$ac_cv_search_tgetent" != "no"; then
   AC_DEFINE(HAVE_TGETENT, 1, [Define to 1 if you have the `tgetent'  function.])
 fi
-if test "$ac_cv_search_XpmReadFileToPixmap" != "no"; then
-  AC_DEFINE(HAVE_XPMREADFILETOPIXMAP, 1, [Define to 1 if you have the `XpmReadFileToPixmap'  function.])
-fi
 
 TW_FIX_CONFIG
 

@@ -78,6 +78,10 @@ public:
     return data_[index];
   }
 
+  explicit operator bool() const {
+    return data_ != nullptr;
+  }
+
   template <class VEC> bool operator==(const VEC &other) {
     return mem::equalvec(*this, other);
   }

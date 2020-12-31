@@ -183,7 +183,7 @@ static void X11_SelectionExport_X11(void) {
  * notify our Selection to X11
  */
 static void X11_SelectionNotify_X11(uldat ReqPrivate, uldat Magic, const char MIME[MAX_MIMELEN],
-                                    uldat Len, const char *Data) {
+                                    View<char> data) {
   XEvent ev;
 
   if (XReqCount == 0) {
@@ -204,6 +204,9 @@ static void X11_SelectionNotify_X11(uldat ReqPrivate, uldat Magic, const char MI
   ev.xselection.selection = XReq(XReqCount).selection;
   ev.xselection.target = XReq(XReqCount).target;
   ev.xselection.time = XReq(XReqCount).time;
+
+  const char *Data = data.data();
+  uldat Len = data.size();
 
   if (XReq(XReqCount).target == xTARGETS) {
     /*
@@ -293,8 +296,8 @@ static void X11_SelectionNotify_up(Window win, Atom prop) {
       return;
   } while (bytes_after > 0);
 
-  TwinSelectionNotify(xRequestor(xReqCount), xReqPrivate(xReqCount), SEL_TEXTMAGIC, NULL, nread,
-                      buff);
+  TwinSelectionNotify(xRequestor(xReqCount), xReqPrivate(xReqCount), SEL_TEXTMAGIC, NULL,
+                      View<char>(buff, nread));
   FreeMem(buff);
 }
 

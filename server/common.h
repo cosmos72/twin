@@ -9,6 +9,8 @@
 #ifndef TWIN_COMMON_H
 #define TWIN_COMMON_H
 
+#include "stl/view.h"
+
 /*
  * this file exports functions and variables common to both
  * display.c and the whole twin sources, in particular hw_multi.c
@@ -33,15 +35,15 @@ obj TwinSelectionGetOwner(void);
 void TwinSelectionSetOwner(obj Owner, tany Time, tany Frac);
 #define SEL_CURRENTTIME ((tany)0)
 void TwinSelectionNotify(obj Requestor, uldat ReqPrivate, uldat Magic, const char MIME[MAX_MIMELEN],
-                         uldat Len, const char *Data);
+                         View<char> Data);
 void TwinSelectionRequest(obj Requestor, uldat ReqPrivate, obj Owner);
 
 void SelectionExport(void);
 void SelectionImport(void);
 #ifndef SelectionAppend
-#define SelectionAppend(Len, Data) SelectionStore(SEL_APPEND, NULL, Len, Data)
+#define SelectionAppend(Data) SelectionStore(SEL_APPEND, NULL, Data)
 #endif
-byte SelectionStore(uldat Magic, const char MIME[MAX_MIMELEN], uldat Len, const char *Data);
+byte SelectionStore(uldat Magic, const char MIME[MAX_MIMELEN], View<char> Data);
 
 byte KeyboardEventCommon(udat Code, udat ShiftFlags, udat Len, const char *Seq);
 byte MouseEventCommon(dat x, dat y, dat dx, dat dy, udat IdButtons);

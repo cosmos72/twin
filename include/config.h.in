@@ -480,9 +480,6 @@
 /* Define to 1 if you have the <X11/Xft/Xft.h> header file. */
 #undef HAVE_X11_XFT_XFT_H
 
-/* Define to 1 if you have the `XpmReadFileToPixmap' function. */
-#undef HAVE_XPMREADFILETOPIXMAP
-
 /* Define to 1 if you have the <zlib.h> header file. */
 #undef HAVE_ZLIB_H
 

@@ -54,6 +54,7 @@ public:
     return mem::equalvec(*this, other);
   }
 
+  using Base::operator bool;
   using Base::capacity;
   using Base::size;
 

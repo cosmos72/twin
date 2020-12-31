@@ -16,6 +16,7 @@
 #include "obj/fwd.h"
 #include "obj/event.h" // MAX_MIMELEN
 #include "obj/obj.h"
+#include "stl/view.h"
 #include <Tw/datatypes.h>
 
 struct s_fn_display_hw {
@@ -70,8 +71,8 @@ struct s_display_hw : public s_obj {
   byte (*HWSelectionImport)(void);
   void (*HWSelectionExport)(void);
   void (*HWSelectionRequest)(obj Requestor, uldat ReqPrivate);
-  void (*HWSelectionNotify)(uldat ReqPrivate, uldat Magic, const char MIME[MAX_MIMELEN], uldat Len,
-                            const char *Data);
+  void (*HWSelectionNotify)(uldat ReqPrivate, uldat Magic, const char MIME[MAX_MIMELEN],
+                            View<char> Data);
   tany HWSelectionPrivate;
 
   byte (*CanDragArea)(dat Xstart, dat Ystart, dat Xend, dat Yend, dat DstXstart, dat DstYstart);

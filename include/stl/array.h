@@ -12,7 +12,7 @@
 #include "stl/span.h"
 #include "stl/mem.h"
 
-#include <string.h> // memset()
+#include <cstring> // memset()
 
 // dynamically resizeable array of arbitrary type T, with two constraints:
 // 1. T must have trivial copy constructor and destructor
@@ -33,7 +33,7 @@ protected:
     data_ = mem::alloc<T>(n);
     if (n && !data_) {
       // mem::alloc() failed
-      data_ = (T *)(size_t)-1;
+      data_ = nullptr;
       cap_ = size_ = 0;
       return false;
     }
@@ -42,7 +42,7 @@ protected:
   }
 
   void destroy() {
-    if (data_ != (T *)(size_t)-1) {
+    if (data_ != nullptr) {
       mem::free(data());
     }
   }
@@ -92,11 +92,8 @@ public:
     return mem::equalvec(*this, other);
   }
 
-  operator bool() const {
-    return data_ != (T *)(size_t)-1;
-  }
   bool fail() const {
-    return data_ == (T *)(size_t)-1;
+    return data_ == nullptr;
   }
   size_t capacity() const {
     return cap_;
@@ -104,6 +101,7 @@ public:
   using Base::data;
   using Base::size;
   using Base::operator[];
+  using Base::operator bool;
   using Base::begin;
   using Base::end;
 
@@ -146,7 +144,7 @@ public:
       T *newdata = mem::realloc(olddata, cap_, newcap);
       if (!newdata) {
         if (cap_ == 0) {
-          data_ = (T *)(size_t)-1;
+          data_ = nullptr;
         }
         return false;
       }

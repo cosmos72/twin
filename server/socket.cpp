@@ -1777,7 +1777,7 @@ static void sockSetOwnerSelection(tany Time, tany Frac) {
 
 static void sockNotifySelection(obj Requestor, uldat ReqPrivate, uldat Magic,
                                 const char MIME[MAX_MIMELEN], uldat Len, const char *Data) {
-  TwinSelectionNotify(Requestor, ReqPrivate, Magic, MIME, Len, Data);
+  TwinSelectionNotify(Requestor, ReqPrivate, Magic, MIME, View<char>(Data, Len));
 }
 
 static void sockRequestSelection(obj Owner, uldat ReqPrivate) {

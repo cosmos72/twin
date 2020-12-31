@@ -43,7 +43,7 @@
 #include "printk.h"
 #include "privilege.h"
 #include "util.h"
-
+#include "stl/array.h"
 #include "hw.h"
 
 #include <Tw/Twkeys.h>
@@ -297,47 +297,48 @@ byte SendControlMsg(msgport MsgPort, udat Code, udat Len, const char *Data) {
   return tfalse;
 }
 
-byte SelectionStore(uldat Magic, const char MIME[MAX_MIMELEN], uldat Len, const char *Data) {
-  char *newData;
+byte SelectionStore(uldat Magic, const char MIME[MAX_MIMELEN], View<char> Data) {
   selection *Sel = All->Selection;
-  uldat newLen;
+  const char *src = Data.data();
+  const size_t srclen = Data.size();
+  size_t dstlen = Sel->Data.size();
+  size_t newlen;
   byte pad;
 
   if (Magic == SEL_APPEND)
-    newLen = Sel->Len + Len;
+    newlen = dstlen + srclen;
   else
-    newLen = Len;
+    newlen = srclen;
 
-  if ((pad = (Sel->Magic == SEL_TRUNEMAGIC && (newLen & 1))))
-    newLen++;
+  if ((pad = (Sel->Magic == SEL_TRUNEMAGIC && (newlen & 1))))
+    newlen++;
 
-  if (Sel->Max < newLen) {
-    if (!(newData = (char *)ReAllocMem(Sel->Data, newLen)))
-      return tfalse;
-    Sel->Data = newData;
-    Sel->Max = newLen;
+  if (!Sel->Data.resize(newlen)) {
+    return tfalse;
   }
+
   if (Magic != SEL_APPEND) {
     Sel->Owner = NULL;
-    Sel->Len = 0;
     Sel->Magic = Magic;
+    dstlen = 0;
     if (MIME)
       CopyMem(MIME, Sel->MIME, MAX_MIMELEN);
     else
       memset(Sel->MIME, '\0', MAX_MIMELEN);
   }
   if (Data)
-    CopyMem(Data, Sel->Data + Sel->Len, Len);
+    CopyMem(src, &Sel->Data[dstlen], srclen);
   else
-    memset(Sel->Data + Sel->Len, ' ', Len);
-  Sel->Len += Len;
+    memset(&Sel->Data[dstlen], ' ', srclen);
+  dstlen += srclen;
+
   if (pad) {
 #if TW_IS_LITTLE_ENDIAN
-    Sel->Data[Sel->Len++] = '\0';
+    Sel->Data[dstlen++] = '\0';
 #else
-    Sel->Data[Sel->Len] = Sel->Data[Sel->Len - 1];
-    Sel->Data[Sel->Len - 1] = '\0';
-    Sel->Len++;
+    Sel->Data[dstlen] = Sel->Data[dstlen - 1];
+    Sel->Data[dstlen - 1] = '\0';
+    dstlen++;
 #endif
   }
   return ttrue;
@@ -345,15 +346,15 @@ byte SelectionStore(uldat Magic, const char MIME[MAX_MIMELEN], uldat Len, const 
 
 #define _SEL_MAGIC SEL_TRUNEMAGIC
 #if TW_IS_LITTLE_ENDIAN
-#define _SelAppendNL() SelectionAppend(2, "\n\0");
+#define _SelAppendNL() SelectionAppend(View<char>("\n\0", 2));
 #else
-#define _SelAppendNL() SelectionAppend(2, "\0\n");
+#define _SelAppendNL() SelectionAppend(View<char>("\0\n", 2));
 #endif
 
 byte SetSelectionFromWindow(window w) {
   ldat y;
   uldat slen, len;
-  trune *sData, *Data;
+  trune *Data;
   byte ok = ttrue, w_useC = W_USE(w, USECONTENTS);
 
   if (!(w->State & WINDOW_DO_SEL))
@@ -362,7 +363,7 @@ byte SetSelectionFromWindow(window w) {
   if (!(w->State & WINDOW_ANYSEL) || w->YstSel > w->YendSel ||
       (w->YstSel == w->YendSel && w->XstSel > w->XendSel)) {
 
-    ok &= SelectionStore(_SEL_MAGIC, NULL, 0, NULL);
+    ok &= SelectionStore(_SEL_MAGIC, NULL, View<char>());
     if (ok)
       NeedHW |= NEEDSelectionExport;
     return ok;
@@ -401,8 +402,10 @@ byte SetSelectionFromWindow(window w) {
       w->XendSel = w->WLogic - 1;
     }
 
-    if (!(sData = (trune *)AllocMem(sizeof(trune) * (slen = w->WLogic))))
+    Array<trune> buf(slen = w->WLogic);
+    if (!buf) {
       return tfalse;
+    }
 
     hw = w->USE.C.Contents + (w->YstSel + w->USE.C.HSplit) * slen;
     while (hw >= w->USE.C.TtyData->Split)
@@ -414,13 +417,13 @@ byte SetSelectionFromWindow(window w) {
         slen -= w->XstSel;
       else
         slen = w->XendSel - w->XstSel + 1;
-      Data = sData;
-      len = slen;
+      Data = buf.data();
       hw += w->XstSel;
-      while (len--) {
-        *Data++ = TRUNE(*hw), hw++;
+      for (len = slen; len--; hw++) {
+        *Data++ = TRUNE(*hw);
       }
-      ok &= SelectionStore(_SEL_MAGIC, NULL, slen * sizeof(trune), (const char *)sData);
+      ok &= SelectionStore(_SEL_MAGIC, NULL,
+                           View<char>((const char *)buf.data(), slen * sizeof(trune)));
     }
 
     if (hw >= w->USE.C.TtyData->Split)
@@ -430,23 +433,21 @@ byte SetSelectionFromWindow(window w) {
     for (y = w->YstSel + 1; ok && y < w->YendSel; y++) {
       if (hw >= w->USE.C.TtyData->Split)
         hw -= w->USE.C.TtyData->Split - w->USE.C.Contents;
-      Data = sData;
-      len = slen;
-      while (len--) {
-        *Data++ = TRUNE(*hw), hw++;
+      Data = buf.data();
+      for (len = slen; len--; hw++) {
+        *Data++ = TRUNE(*hw);
       }
-      ok &= SelectionAppend(slen * sizeof(trune), (const char *)sData);
+      ok &= SelectionAppend(View<char>((const char *)buf.data(), slen * sizeof(trune)));
     }
 
     if (ok && w->YendSel > w->YstSel) {
       if (hw >= w->USE.C.TtyData->Split)
         hw -= w->USE.C.TtyData->Split - w->USE.C.Contents;
-      Data = sData;
-      len = slen = w->XendSel + 1;
-      while (len--) {
-        *Data++ = TRUNE(*hw), hw++;
+      Data = buf.data();
+      for (len = slen = w->XendSel + 1; len--; hw++) {
+        *Data++ = TRUNE(*hw);
       }
-      ok &= SelectionAppend(slen * sizeof(trune), (const char *)sData);
+      ok &= SelectionAppend(View<char>((const char *)buf.data(), slen * sizeof(trune)));
     }
     if (ok)
       NeedHW |= NEEDSelectionExport;
@@ -465,23 +466,24 @@ byte SetSelectionFromWindow(window w) {
       else
         slen = Min2(Row->Len, (uldat)w->XendSel + 1) - Min2(Row->Len, (uldat)w->XstSel);
 
-      ok &= SelectionStore(_SEL_MAGIC, NULL, slen * sizeof(trune),
-                           (const char *)(Row->Text + Min2(Row->Len, (uldat)w->XstSel)));
+      ok &= SelectionStore(_SEL_MAGIC, NULL,
+                           View<char>((const char *)(Row->Text + Min2(Row->Len, (uldat)w->XstSel)),
+                                      slen * sizeof(trune)));
     } else
-      ok &= SelectionStore(_SEL_MAGIC, NULL, 0, NULL);
+      ok &= SelectionStore(_SEL_MAGIC, NULL, View<char>());
 
     if (y < w->YendSel || !Row || !Row->Text || Row->Len <= (uldat)w->XendSel)
       ok &= _SelAppendNL();
 
     for (y = w->YstSel + 1; ok && y < w->YendSel; y++) {
       if ((Row = w->FindRow(y)) && Row->Text)
-        ok &= SelectionAppend(Row->Len * sizeof(trune), (const char *)Row->Text);
+        ok &= SelectionAppend(View<char>((const char *)Row->Text, Row->Len * sizeof(trune)));
       ok &= _SelAppendNL();
     }
     if (w->YendSel > w->YstSel) {
       if (w->XendSel >= 0 && (Row = w->FindRow(w->YendSel)) && Row->Text)
-        ok &= SelectionAppend(Min2(Row->Len, (uldat)w->XendSel + 1) * sizeof(trune),
-                              (const char *)Row->Text);
+        ok &= SelectionAppend(View<char>((const char *)Row->Text,
+                                         Min2(Row->Len, (uldat)w->XendSel + 1) * sizeof(trune)));
       if (!Row || !Row->Text || Row->Len <= (uldat)w->XendSel)
         ok &= _SelAppendNL();
     }

@@ -680,19 +680,19 @@ void TwinSelectionSetOwner(obj Owner, tany Time, tany Frac) {
 }
 
 void TwinSelectionNotify(obj Requestor, uldat ReqPrivate, uldat Magic, const char MIME[MAX_MIMELEN],
-                         uldat Len, const char *Data) {
+                         View<char> Data) {
   msg NewMsg;
   event_any *Event;
 #if 0
     printk("twin: Selection Notify to 0x%08x\n", Requestor ? Requestor->Id : NOID);
 #endif
   if (!Requestor) {
-    (void)SelectionStore(Magic, MIME, Len, Data);
+    (void)SelectionStore(Magic, MIME, Data);
   } else if (Requestor->Id >> magic_shift == msgport_magic >> magic_shift) {
-    if (!Data)
-      Len = 0;
 
-    if ((NewMsg = New(msg)(msg_selection_notify, Len))) {
+    const size_t len = Data.size();
+
+    if ((NewMsg = New(msg)(msg_selection_notify, len))) {
       Event = &NewMsg->Event;
       Event->EventSelectionNotify.W = NULL;
       Event->EventSelectionNotify.Code = 0;
@@ -703,14 +703,14 @@ void TwinSelectionNotify(obj Requestor, uldat ReqPrivate, uldat Magic, const cha
         CopyMem(MIME, Event->EventSelectionNotify.MIME, MAX_MIMELEN);
       else
         memset(Event->EventSelectionNotify.MIME, '\0', MAX_MIMELEN);
-      Event->EventSelectionNotify.Len = Len;
-      CopyMem(Data, Event->EventSelectionNotify.Data, Len);
+      Event->EventSelectionNotify.Len = len;
+      CopyMem(Data.data(), Event->EventSelectionNotify.Data, len);
       SendMsg((msgport)Requestor, NewMsg);
     }
   } else if (Requestor->Id >> magic_shift == display_hw_magic >> magic_shift) {
     SaveHW;
     SetHW((display_hw)Requestor);
-    HW->HWSelectionNotify(ReqPrivate, Magic, MIME, Len, Data);
+    HW->HWSelectionNotify(ReqPrivate, Magic, MIME, Data);
     RestoreHW;
   }
 }
@@ -742,7 +742,7 @@ void TwinSelectionRequest(obj Requestor, uldat ReqPrivate, obj Owner) {
     }
   } else {
     selection *Sel = All->Selection;
-    TwinSelectionNotify(Requestor, ReqPrivate, Sel->Magic, Sel->MIME, Sel->Len, Sel->Data);
+    TwinSelectionNotify(Requestor, ReqPrivate, Sel->Magic, Sel->MIME, Sel->Data);
   }
 }
 

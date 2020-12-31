@@ -17,6 +17,7 @@
 #include "obj/event.h"  /* MAX_MIMELEN */
 #include "obj/window.h" /* BUTTON_MAX */
 #include "tty.h"        /* USER_MAP */
+#include "stl/array.h"  /* Array<T> */
 
 struct s_setup {
   dat MaxMouseSnap;
@@ -81,8 +82,7 @@ typedef struct s_selection {
   display_hw OwnerOnce;
   uldat Magic;
   char MIME[MAX_MIMELEN];
-  uldat Len, Max;
-  char *Data;
+  Array<char> Data;
 } selection;
 
 struct s_all : public s_obj {

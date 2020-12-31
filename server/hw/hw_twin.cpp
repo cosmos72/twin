@@ -20,6 +20,7 @@
 #include "hw_private.h"
 #include "hw_dirty.h"
 #include "common.h"
+#include "stl/view.h"
 
 #include <Tw/Tw.h>
 #include <Tw/Twerrno.h>
@@ -55,7 +56,7 @@ typedef struct {
 
 static void TW_SelectionRequest_up(uldat Requestor, uldat ReqPrivate);
 static void TW_SelectionNotify_up(uldat ReqPrivate, uldat Magic, const char MIME[MAX_MIMELEN],
-                                  uldat Len, const char *Data);
+                                  View<char> Data);
 
 static void TW_Beep(void) {
   Tw_WriteAsciiWindow(Td, Twin, 1, "\007");
@@ -121,9 +122,10 @@ static void TW_HandleMsg(tmsg Msg) {
                            Event->EventSelectionRequest.ReqPrivate);
     return;
   case TW_MSG_SELECTIONNOTIFY:
-    TW_SelectionNotify_up(Event->EventSelectionNotify.ReqPrivate, Event->EventSelectionNotify.Magic,
-                          Event->EventSelectionNotify.MIME, Event->EventSelectionNotify.Len,
-                          Event->EventSelectionNotify.Data);
+    TW_SelectionNotify_up(
+        Event->EventSelectionNotify.ReqPrivate, Event->EventSelectionNotify.Magic,
+        Event->EventSelectionNotify.MIME,
+        View<char>(Event->EventSelectionNotify.Data, Event->EventSelectionNotify.Len));
     return;
   default:
     break;
@@ -367,14 +369,14 @@ static void TW_SelectionRequest_up(uldat Requestor, uldat ReqPrivate) {
  * notify our Selection to libTw
  */
 static void TW_SelectionNotify_TW(uldat ReqPrivate, uldat Magic, const char MIME[MAX_MIMELEN],
-                                  uldat Len, const char *Data) {
+                                  View<char> Data) {
 #ifdef DEBUG_HW_TWIN
   printf("notifying selection (%d/%d) to libTw server\n", ReqPrivate, SelCount - 1);
 #endif
   if (ReqPrivate + 1 == SelCount) {
     SelCount--;
     Tw_NotifySelection(Td, SelReq[SelCount].Requestor, SelReq[SelCount].ReqPrivate, Magic, MIME,
-                       Len, Data);
+                       Data.size(), Data.data());
     setFlush();
   }
 }
@@ -383,14 +385,14 @@ static void TW_SelectionNotify_TW(uldat ReqPrivate, uldat Magic, const char MIME
  * notify the libTw Selection to twin upper layer
  */
 static void TW_SelectionNotify_up(uldat ReqPrivate, uldat Magic, const char MIME[MAX_MIMELEN],
-                                  uldat Len, const char *Data) {
+                                  View<char> Data) {
 #ifdef DEBUG_HW_TWIN
   printf("notifying selection (%d/%d) to twin core\n", ReqPrivate, TSelCount - 1);
 #endif
   if (ReqPrivate + 1 == TSelCount) {
     TSelCount--;
     TwinSelectionNotify((obj)(topaque)TSelReq[TSelCount].Requestor, TSelReq[TSelCount].ReqPrivate,
-                        Magic, MIME, Len, Data);
+                        Magic, MIME, Data);
   }
 }
 

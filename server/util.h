@@ -20,6 +20,8 @@
 #include <sys/un.h>
 #endif
 
+#include "stl/view.h"
+
 extern uldat unixSlot;
 extern int unixFd;
 
@@ -50,8 +52,8 @@ byte Minimum(byte MaxIndex, const ldat *Array);
 uldat ComputeUsableLenArgv(char *const *argv);
 void SetArgv0(char *const *argv, uldat argv_usable_len, const char *src);
 
-#define SelectionAppend(Len, Data) SelectionStore(SEL_APPEND, NULL, Len, Data)
-byte SelectionStore(uldat Magic, const char MIME[MAX_MIMELEN], uldat Len, const char *Data);
+#define SelectionAppend(Data) SelectionStore(SEL_APPEND, NULL, Data)
+byte SelectionStore(uldat Magic, const char MIME[MAX_MIMELEN], View<char> Data);
 byte SetSelectionFromWindow(window Window);
 void doSelectionSetOwner(obj Owner, tany Time, tany Frac);
 #define SEL_CURRENTTIME ((tany)0)

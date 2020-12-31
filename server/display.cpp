@@ -696,10 +696,10 @@ static void HandleMsg(tmsg Msg) {
         printk("twdisplay: Selection Notify to underlying HW\n");
 #endif
     /* notify selection to underlying HW */
-    HW->HWSelectionNotify(Msg->Event.EventSelectionNotify.ReqPrivate,
-                          Msg->Event.EventSelectionNotify.Magic,
-                          Msg->Event.EventSelectionNotify.MIME, Msg->Event.EventSelectionNotify.Len,
-                          Msg->Event.EventSelectionNotify.Data);
+    HW->HWSelectionNotify(
+        Msg->Event.EventSelectionNotify.ReqPrivate, Msg->Event.EventSelectionNotify.Magic,
+        Msg->Event.EventSelectionNotify.MIME,
+        View<char>(Msg->Event.EventSelectionNotify.Data, Msg->Event.EventSelectionNotify.Len));
     break;
   case TW_MSG_DISPLAY:
     EventD = &Msg->Event.EventDisplay;
@@ -817,14 +817,15 @@ void TwinSelectionSetOwner(obj Owner, tany Time, tany Frac) {
 
 /* HW back-end function: notify selection */
 void TwinSelectionNotify(obj Requestor, uldat ReqPrivate, uldat Magic, const char MIME[MAX_MIMELEN],
-                         uldat Len, const char *Data) {
-  if (!MIME)
+                         View<char> Data) {
+  if (!MIME) {
     MIME = nullMIME;
+  }
 #if 0
     printk("twdisplay: Selection Notify to 0x%08x\n", (uldat)Requestor);
 #endif
   /* cast back Requestor from fake (obj) to its original (uldat) */
-  TwNotifySelection((topaque)Requestor, ReqPrivate, Magic, MIME, Len, Data);
+  TwNotifySelection((topaque)Requestor, ReqPrivate, Magic, MIME, Data.size(), Data.data());
 }
 
 /* HW back-end function: request selection */

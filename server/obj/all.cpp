@@ -26,8 +26,8 @@ static setup _SetUp = {
     (byte)3,     (byte)2 /* DeltaXShade, DeltaYShade */
 };
 
-static selection _Selection = {{(tany)0, (tany)0}, (msgport)0, (display_hw)0, SEL_TEXTMAGIC, "",
-                               (uldat)0,           (uldat)0,   NULL};
+static selection _Selection = {{(tany)0, (tany)0}, (msgport)0, (display_hw)0,
+                               SEL_TEXTMAGIC,      "",         {}};
 
 all s_all::Init() {
   State = state_default;

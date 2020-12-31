@@ -3,6 +3,8 @@
  * when #include-ing into hw_xyz.c.
  */
 
+#include "stl/view.h"
+
 static void X11_FillWindowTitle(char *title, int maxlen);
 static void X11_HideCursor(dat x, dat y);
 static void X11_ShowCursor(uldat type, dat x, dat y);
@@ -14,7 +16,7 @@ static void X11_Resize(dat x, dat y);
 static byte X11_SelectionImport_X11(void);
 static void X11_SelectionExport_X11(void);
 static void X11_SelectionNotify_X11(uldat ReqPrivate, uldat Magic, const char MIME[MAX_MIMELEN],
-                                    uldat Len, const char *Data);
+                                    View<char> Data);
 static void X11_SelectionNotify_up(Window win, Atom prop);
 static void X11_SelectionRequest_X11(obj Requestor, uldat ReqPrivate);
 static void X11_SelectionRequest_up(XSelectionRequestEvent *req);
