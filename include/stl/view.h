@@ -82,7 +82,7 @@ public:
     return data_ != nullptr;
   }
 
-  template <class VEC> bool operator==(const VEC &other) {
+  template <class VEC> bool operator==(const VEC &other) const {
     return mem::equalvec(*this, other);
   }
 
@@ -104,6 +104,12 @@ public:
   const T *end() const {
     assert(data_ || !size_);
     return data_ + size_;
+  }
+
+  View view(size_t start, size_t end) const {
+    assert(start <= end);
+    assert(end <= size_);
+    return View(data_ + start, end - start);
   }
 
   void swap(View &other) {

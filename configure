@@ -21926,73 +21926,6 @@ if test "$have_x" = yes; then
   CPPFLAGS="$CPPFLAGS $X11_CPPFLAGS"
   LDFLAGS="$LDFLAGS $X11_LDFLAGS"
 
-  for ac_header in X11/xpm.h
-do :
-  ac_fn_c_check_header_mongrel "$LINENO" "X11/xpm.h" "ac_cv_header_X11_xpm_h" "$ac_includes_default"
-if test "x$ac_cv_header_X11_xpm_h" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_X11_XPM_H 1
-_ACEOF
-
-fi
-
-done
-                         { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing XpmReadFileToPixmap" >&5
-$as_echo_n "checking for library containing XpmReadFileToPixmap... " >&6; }
-if ${ac_cv_search_XpmReadFileToPixmap+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_func_search_save_LIBS=$LIBS
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char XpmReadFileToPixmap ();
-int
-main ()
-{
-return XpmReadFileToPixmap ();
-  ;
-  return 0;
-}
-_ACEOF
-for ac_lib in '' Xpm; do
-  if test -z "$ac_lib"; then
-    ac_res="none required"
-  else
-    ac_res=-l$ac_lib
-    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
-  fi
-  if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_search_XpmReadFileToPixmap=$ac_res
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext
-  if ${ac_cv_search_XpmReadFileToPixmap+:} false; then :
-  break
-fi
-done
-if ${ac_cv_search_XpmReadFileToPixmap+:} false; then :
-
-else
-  ac_cv_search_XpmReadFileToPixmap=no
-fi
-rm conftest.$ac_ext
-LIBS=$ac_func_search_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_XpmReadFileToPixmap" >&5
-$as_echo "$ac_cv_search_XpmReadFileToPixmap" >&6; }
-ac_res=$ac_cv_search_XpmReadFileToPixmap
-if test "$ac_res" != no; then :
-  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
-
-fi
-
   if test x"$PKG_CONFIG" != x; then
 
 pkg_failed=no
@@ -22221,11 +22154,6 @@ fi
 if test "$ac_cv_search_tgetent" != "no"; then
 
 $as_echo "#define HAVE_TGETENT 1" >>confdefs.h
-
-fi
-if test "$ac_cv_search_XpmReadFileToPixmap" != "no"; then
-
-$as_echo "#define HAVE_XPMREADFILETOPIXMAP 1" >>confdefs.h
 
 fi
 

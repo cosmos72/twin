@@ -57,6 +57,17 @@ template <class Vec1, class Vec2> inline bool equalvec(const Vec1 &left, const V
   return equalvec(left.data(), left.size(), right.data(), right.size());
 }
 
+template <class T1, class T2>
+void copyvec(const T1 *src, size_t src_n, const T2 *dst, size_t dst_n) {
+  typedef char sizeof_T1_equals_sizeof_T2[sizeof(T1) == sizeof(T2) ? sizeof(T2) : -1];
+  memmove(static_cast<void *>(dst), static_cast<const void *>(src),
+          dst_n * sizeof(sizeof_T1_equals_sizeof_T2) / sizeof(char));
+}
+
+template <class Vec1, class Vec2> inline bool copyvec(const Vec1 &src, Vec2 &dst) {
+  return copyvec(src.data(), src.size(), dst.data(), dst.size());
+}
+
 } // namespace mem
 
 #endif /* TWIN_STL_ALLOC_H */

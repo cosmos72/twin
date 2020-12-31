@@ -200,9 +200,9 @@ am_twin_server_OBJECTS = alloc.$(OBJEXT) builtin.$(OBJEXT) \
 	obj/menu.$(OBJEXT) obj/menuitem.$(OBJEXT) obj/module.$(OBJEXT) \
 	obj/msg.$(OBJEXT) obj/msgport.$(OBJEXT) obj/mutex.$(OBJEXT) \
 	obj/obj.$(OBJEXT) obj/row.$(OBJEXT) obj/screen.$(OBJEXT) \
-	obj/widget.$(OBJEXT) obj/window.$(OBJEXT) printk.$(OBJEXT) \
-	privilege.$(OBJEXT) remote.$(OBJEXT) resize.$(OBJEXT) \
-	scroller.$(OBJEXT) util.$(OBJEXT)
+	obj/widget.$(OBJEXT) obj/window.$(OBJEXT) stl/utf8.$(OBJEXT) \
+	printk.$(OBJEXT) privilege.$(OBJEXT) remote.$(OBJEXT) \
+	resize.$(OBJEXT) scroller.$(OBJEXT) util.$(OBJEXT)
 twin_server_OBJECTS = $(am_twin_server_OBJECTS)
 twin_server_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(LIBSTL)
@@ -247,7 +247,7 @@ am__depfiles_remade = ./$(DEPDIR)/alloc.Po ./$(DEPDIR)/builtin.Po \
 	obj/$(DEPDIR)/msgport.Po obj/$(DEPDIR)/mutex.Po \
 	obj/$(DEPDIR)/obj.Po obj/$(DEPDIR)/row.Po \
 	obj/$(DEPDIR)/screen.Po obj/$(DEPDIR)/widget.Po \
-	obj/$(DEPDIR)/window.Po
+	obj/$(DEPDIR)/window.Po stl/$(DEPDIR)/utf8.Po
 am__mv = mv -f
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
@@ -541,6 +541,7 @@ twin_server_SOURCES = alloc.cpp builtin.cpp data.cpp dl.cpp dl_helper.cpp draw.c
                         obj/all.cpp obj/display_hw.cpp obj/gadget.cpp obj/group.cpp \
                         obj/id.cpp obj/menu.cpp obj/menuitem.cpp obj/module.cpp obj/msg.cpp obj/msgport.cpp \
                         obj/mutex.cpp obj/obj.cpp obj/row.cpp obj/screen.cpp obj/widget.cpp obj/window.cpp \
+			stl/utf8.cpp \
                         printk.cpp privilege.cpp remote.cpp resize.cpp scroller.cpp util.cpp
 
 librcparse_la_SOURCES = rcparse_tab.cpp rcparse_lex.cpp
@@ -724,6 +725,13 @@ obj/widget.$(OBJEXT): obj/$(am__dirstamp) \
 	obj/$(DEPDIR)/$(am__dirstamp)
 obj/window.$(OBJEXT): obj/$(am__dirstamp) \
 	obj/$(DEPDIR)/$(am__dirstamp)
+stl/$(am__dirstamp):
+	@$(MKDIR_P) stl
+	@: > stl/$(am__dirstamp)
+stl/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) stl/$(DEPDIR)
+	@: > stl/$(DEPDIR)/$(am__dirstamp)
+stl/utf8.$(OBJEXT): stl/$(am__dirstamp) stl/$(DEPDIR)/$(am__dirstamp)
 
 twin_server$(EXEEXT): $(twin_server_OBJECTS) $(twin_server_DEPENDENCIES) $(EXTRA_twin_server_DEPENDENCIES) 
 	@rm -f twin_server$(EXEEXT)
@@ -767,6 +775,7 @@ uninstall-binSCRIPTS:
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
 	-rm -f obj/*.$(OBJEXT)
+	-rm -f stl/*.$(OBJEXT)
 
 distclean-compile:
 	-rm -f *.tab.c
@@ -818,6 +827,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@obj/$(DEPDIR)/screen.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@obj/$(DEPDIR)/widget.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@obj/$(DEPDIR)/window.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@stl/$(DEPDIR)/utf8.Po@am__quote@ # am--include-marker
 
 $(am__depfiles_remade):
 	@$(MKDIR_P) $(@D)
@@ -1086,6 +1096,8 @@ distclean-generic:
 	-test . = "$(srcdir)" || test -z "$(CONFIG_CLEAN_VPATH_FILES)" || rm -f $(CONFIG_CLEAN_VPATH_FILES)
 	-rm -f obj/$(DEPDIR)/$(am__dirstamp)
 	-rm -f obj/$(am__dirstamp)
+	-rm -f stl/$(DEPDIR)/$(am__dirstamp)
+	-rm -f stl/$(am__dirstamp)
 
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
@@ -1143,6 +1155,7 @@ distclean: distclean-recursive
 	-rm -f obj/$(DEPDIR)/screen.Po
 	-rm -f obj/$(DEPDIR)/widget.Po
 	-rm -f obj/$(DEPDIR)/window.Po
+	-rm -f stl/$(DEPDIR)/utf8.Po
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags
@@ -1236,6 +1249,7 @@ maintainer-clean: maintainer-clean-recursive
 	-rm -f obj/$(DEPDIR)/screen.Po
 	-rm -f obj/$(DEPDIR)/widget.Po
 	-rm -f obj/$(DEPDIR)/window.Po
+	-rm -f stl/$(DEPDIR)/utf8.Po
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 

@@ -9,7 +9,7 @@
 #ifndef TWIN_STL_ALLOC_H
 #define TWIN_STL_ALLOC_H
 
-#include <stddef.h> // size_t
+#include <cstddef> // size_t
 
 void *AllocMem(size_t len);               /* wrapper for malloc() */
 void *ReAllocMem(void *addr, size_t len); /* wrapper for realloc() */

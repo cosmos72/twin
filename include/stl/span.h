@@ -50,10 +50,7 @@ public:
     return *this;
   }
 
-  template <class VEC> bool operator==(const VEC &other) {
-    return mem::equalvec(*this, other);
-  }
-
+  using Base::operator==;
   using Base::operator bool;
   using Base::capacity;
   using Base::size;
@@ -88,6 +85,19 @@ public:
   T *end() {
     assert(data_ || !size_);
     return data() + size_;
+  }
+
+  using Base::view;
+
+  Span<T> span(size_t start, size_t end) {
+    assert(start <= end);
+    assert(end <= size());
+    return Span<T>(data() + start, end - start);
+  }
+
+  void copy(View<T> src) {
+    assert(src.size() == size());
+    mem::copyvec(src, *this);
   }
 
   void swap(Span &other) {

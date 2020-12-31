@@ -15,6 +15,10 @@
 
 #include <Tw/compiler.h> // for TW_INLINE
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* common datatypes */
 typedef signed char sbyte;
 typedef unsigned char byte;
@@ -113,5 +117,9 @@ typedef struct s_timevalue {
 #define MicroSECs *MicroSEC
 #define MilliSECs *MilliSEC
 #define FullSECs *FullSEC
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* TW_DATATYPES_H */

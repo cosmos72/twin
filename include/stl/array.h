@@ -51,6 +51,17 @@ protected:
     return cap_ >= n || reserve(n >= cap_ * 2 ? n : cap_ * 2);
   }
 
+  bool resize0(size_t n, bool zerofill) {
+    if (!ensure_capacity(n)) {
+      return false;
+    }
+    if (n > size_) {
+      memset(data() + size_, '\0', (n - size_) * sizeof(T));
+    }
+    size_ = n;
+    return true;
+  }
+
 public:
   typedef size_t size_type;
   typedef ptrdiff_t difference_type;
@@ -102,8 +113,12 @@ public:
   using Base::size;
   using Base::operator[];
   using Base::operator bool;
+  using Base::operator==;
   using Base::begin;
+  using Base::copy;
   using Base::end;
+  using Base::span;
+  using Base::view;
 
   bool dup(const T *addr, size_t n) {
     if (!ensure_capacity(n)) {
@@ -128,14 +143,7 @@ public:
   }
 
   bool resize(size_t n) {
-    if (!ensure_capacity(n)) {
-      return false;
-    }
-    if (n > size_) {
-      memset(data() + size_, '\0', (n - size_) * sizeof(T));
-    }
-    size_ = n;
-    return true;
+    return resize0(n, true);
   }
 
   bool reserve(size_t newcap) {
@@ -151,6 +159,16 @@ public:
       data_ = newdata;
       cap_ = newcap;
     }
+    return true;
+  }
+
+  bool append(View<T> src) {
+    const size_t oldn = size_;
+    const size_t srcn = src.size();
+    if (!resize0(oldn + srcn, false)) {
+      return false;
+    }
+    span(oldn, size()).copy(src);
     return true;
   }
 
