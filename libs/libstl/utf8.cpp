@@ -11,7 +11,7 @@
 
 utf8::utf8(trune rune) {
   // encode replacement character 0xFFFD
-  const u4 replacement = { { 0xED, 0xBF, 0xBF, 0 } };
+  const u4 replacement = { "\xED\xBF\xBF" };
   u4 x = { };
   if (rune <= 0x7F) {
     x.b[0] = (char)rune;

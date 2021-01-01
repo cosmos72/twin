@@ -848,8 +848,8 @@ udat CopyToSockaddrUn(const char *src, struct sockaddr_un *addr, udat pos) {
   return pos;
 }
 
-static struct sockaddr_un addr;
-static const char *fullTWD = addr.sun_path;
+static struct sockaddr_un addr_unix;
+static const char *fullTWD = addr_unix.sun_path;
 static char twd[12];
 
 /* set TWDISPLAY and create /tmp/.Twin:<x> */
@@ -861,25 +861,25 @@ byte InitTWDisplay(void) {
   byte ok;
 
   HOME = getenv("HOME");
-  memset(&addr, 0, sizeof(addr));
+  memset(&addr_unix, 0, sizeof(addr_unix));
 
   if ((unixFd = socket(AF_UNIX, SOCK_STREAM, 0)) >= 0) {
 
-    addr.sun_family = AF_UNIX;
+    addr_unix.sun_family = AF_UNIX;
 
     for (i = 0; i < 0x1000; i++) {
       sprintf(twd, ":%hx", i);
 
-      len = CopyToSockaddrUn(TmpDir(), &addr, 0);
-      len = CopyToSockaddrUn("/.Twin", &addr, len);
-      len = CopyToSockaddrUn(twd, &addr, len);
+      len = CopyToSockaddrUn(TmpDir(), &addr_unix, 0);
+      len = CopyToSockaddrUn("/.Twin", &addr_unix, len);
+      len = CopyToSockaddrUn(twd, &addr_unix, len);
 
-      ok = bind(unixFd, (struct sockaddr *)&addr, sizeof(addr)) >= 0;
+      ok = bind(unixFd, (struct sockaddr *)&addr_unix, sizeof(addr_unix)) >= 0;
       if (!ok) {
         Error(SYSERROR);
         /* maybe /tmp/.Twin:<x> is already in use... */
         if (fd >= 0 || (fd = socket(AF_UNIX, SOCK_STREAM, 0)) >= 0) {
-          if (connect(fd, (struct sockaddr *)&addr, sizeof(addr)) >= 0) {
+          if (connect(fd, (struct sockaddr *)&addr_unix, sizeof(addr_unix)) >= 0) {
             /*
              * server is alive, try to grab another TWDISPLAY.
              * also, we must junk `fd' since SOCK_STREAM sockets
@@ -901,7 +901,7 @@ byte InitTWDisplay(void) {
              * with older ones, but having two different servers
              * installed on one system should be rare enough.
              */
-            ok = bind(unixFd, (struct sockaddr *)&addr, sizeof(addr)) >= 0;
+            ok = bind(unixFd, (struct sockaddr *)&addr_unix, sizeof(addr_unix)) >= 0;
           }
         }
       }
@@ -939,10 +939,10 @@ byte InitTWDisplay(void) {
   if (fd != NOFD)
     close(fd);
 
-  CopyToSockaddrUn(TmpDir(), &addr, 0);
-  arg0 = addr.sun_path;
+  CopyToSockaddrUn(TmpDir(), &addr_unix, 0);
+  arg0 = addr_unix.sun_path;
 
-  printk("twin: failed to create any " SS "/.Twin* socket: " SS "\n", addr.sun_path, Errstr);
+  printk("twin: failed to create any " SS "/.Twin* socket: " SS "\n", addr_unix.sun_path, Errstr);
   printk("      possible reasons: either " SS " not writable, or all TWDISPLAY already in use,\n"
          "      or too many stale " SS "/.Twin* sockets. Aborting.\n",
          arg0, arg0);
