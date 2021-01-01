@@ -18,7 +18,7 @@ private:
      char b[4];
      uint32_t val;
   } u;
-   
+
 public:
   explicit utf8(trune rune);
 
