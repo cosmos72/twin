@@ -14,8 +14,11 @@
 
 class utf8 {
 private:
-  uint32_t val_;
-
+  union u4 {
+     char b[4];
+     uint32_t val;
+  } u;
+   
 public:
   explicit utf8(trune rune);
 
@@ -24,11 +27,7 @@ public:
   size_t size() const;
 
   const char *data() const {
-#if TW_IS_LITTLE_ENDIAN
-    return reinterpret_cast<const char *>(&val_);
-#else
-    return reinterpret_cast<const char *>(&val_) + 4 - size();
-#endif
+    return u.b;
   }
 };
 
