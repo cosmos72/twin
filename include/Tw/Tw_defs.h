@@ -1,5 +1,5 @@
 /*
- *  Tw_defs.h  --  #defines for libTw macros
+ *  Tw_defs.h  --  #defines for libtw macros
  *
  *  Copyright (C) 1999-2002 by Massimiliano Ghilardi
  *
@@ -39,7 +39,7 @@ enum {
 #define TW_ARG_IFNOTVOID_void(value)
 #define TW_ARG_IFNOTVOID_int(value) (value)
 
-/* maximum number of arguments of a libTw function */
+/* maximum number of arguments of a libtw function */
 #define TW_MAX_ARGS_N 20
 
 /* enum for VGA (not ANSI!) colors */

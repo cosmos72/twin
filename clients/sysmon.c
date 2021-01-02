@@ -389,7 +389,7 @@ void Update(void) {
 #define Quit()                                                                                     \
   do {                                                                                             \
     if ((err = TwErrno)) {                                                                         \
-      printf("%s: libTw error: %s%s\n", argv[0], TwStrError(err),                                  \
+      printf("%s: libtw error: %s%s\n", argv[0], TwStrError(err),                                  \
              TwStrErrorDetail(err, TwErrnoDetail));                                                \
       TwClose();                                                                                   \
       exit(1);                                                                                     \

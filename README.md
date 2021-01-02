@@ -33,7 +33,7 @@ Documentation
 	License: twin server and clients are GPL'ed software.
 
 [COPYING.LIB](COPYING.LIB)
-	Library license: the libraries libTutf, libTw, libTT
+	Library license: the libraries libTutf, libtw, libTT
 	are LGPL'ed software.
 
 [INSTALL](INSTALL)
@@ -54,10 +54,10 @@ The following documentation is useful mostly to developers:
 [README.porting](README.porting)
 	Tips and warnings to compile twin on unsupported OSes.
 
-[libTw.txt](docs/libTw.txt)
+[libtw.txt](docs/libtw.txt)
 	reference API for programmers who want to write twin clients (INCOMPLETE).
 
-[libTw++.txt](docs/libTw++.txt)
+[libtw++.txt](docs/libtw++.txt)
 	reference API for programmers who want to write	twin C++ clients (INCOMPLETE).
 
 --------------------------------------------------------------

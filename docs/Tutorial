@@ -196,7 +196,7 @@
    the various parts of twin will be placed as follows:
    `twin' and the other programs (twterm, etc.) will go in $prefix/bin,
    modules will go in $prefix/lib/twin/modules,
-   libTw.so* will go in $prefix/lib.
+   libtw.so* will go in $prefix/lib.
 
    Once twin compiled fine, to actually install it,
    type the following command as root:
@@ -211,7 +211,7 @@
 
    WARNING (2):
    on most systems, after the installation it is necessary to run `ldconfig'
-   or `ldconfig <some parameter>' as root before programs can find libTw.so*
+   or `ldconfig <some parameter>' as root before programs can find libtw.so*
    shared libraries.
 
    WARNING (3):
@@ -384,7 +384,7 @@
    loaded the Socket Server module) you can run an external program
    by typing its name, just as you do with X11 clients.
    If twin is not installed yet, you will need to set LD_LIBRARY_PATH to the
-   directory where libTw.so.2 is: something like
+   directory where libtw.so.2 is: something like
 	export LD_LIBRARY_PATH=<twin-top-dir>/lib
    should work.
    Also, if you don't start external programs from within a twin terminal
@@ -423,7 +423,7 @@
 		    load the current consolemap translation, so using twmapscrn
 		    is often not necessary.
 
-	twsendmsg - utility to send messages to running libTw clients. Options:
+	twsendmsg - utility to send messages to running libtw clients. Options:
 	    -h, --help           display this help and exit
 	    -V, --version        output version information and exit
 	    --control            send a msg_user_control message (default)
@@ -443,7 +443,7 @@
 				if it contains spaces or other special chars)
 	    -e <command>	run <command> instead of user's shell
 				(must be last option)
-	twthreadtest - a stupid demo to test libTw with threads.
+	twthreadtest - a stupid demo to test libtw with threads.
 
 	twdm      - a login manager, modeled after xdm/kdm. Known options:
 	    -h, --help               display this help and exit
@@ -585,7 +585,7 @@
 
 7. Transparent Compression
 
-   Twin and libTw transparently support gzip compressed sockets
+   Twin and libtw transparently support gzip compressed sockets
    by using the library `zlib'. If the connection between twin
    and the remote programs you want to run is slow,
    you may benefit from compression.
@@ -600,7 +600,7 @@
    checking for deflate in -lz... yes
    [...]
 
-   finally compile twin and libTw.
+   finally compile twin and libtw.
 
    To actually use compression, append ",gz"
    to your $TWDISPLAY like in these examples:

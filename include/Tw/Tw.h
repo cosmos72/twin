@@ -1,5 +1,5 @@
 /*
- *  Tw.h  --  main include for all libTw data types, functions and macros
+ *  Tw.h  --  main include for all libtw data types, functions and macros
  *
  *  Copyright (C) 1999-2001 by Massimiliano Ghilardi
  *
@@ -306,9 +306,9 @@ struct s_tmsg {
 /** type containing information about server connection (it's an opaque pointer) */
 typedef struct s_tw_d *tdisplay;
 
-/** type of function pointers passed to libTw as listeners (i.e. tmsg handlers) */
+/** type of function pointers passed to libtw as listeners (i.e. tmsg handlers) */
 typedef void (*tfn_listener)(tevent_any, void *);
-/** type of function pointer passed to libTw as default listener (i.e. tmsg handler) */
+/** type of function pointer passed to libtw as default listener (i.e. tmsg handler) */
 typedef void (*tfn_default_listener)(tmsg, void *);
 
 /** type containing information about a listener (it's an opaque pointer) */
@@ -342,7 +342,7 @@ void Tw_Close(tdisplay TwD);
 #define TW_PRIV_SGIDTTY 1
 #define TW_PRIV_SUIDROOT 2
 
-/** return 1 if server supports all given libTw functions */
+/** return 1 if server supports all given libtw functions */
 byte Tw_FindLFunction(tdisplay TwD, ...);
 
 #include <Tw/common_m4.h>

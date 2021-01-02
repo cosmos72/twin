@@ -18,7 +18,7 @@
         FIXME test null_CacheThemeShape_ttprogressbar() and
 	      test drawing widgets with non-zero xl,yl
 
-	DONE  tweak libTw to send CallBExtension return value through socket
+	DONE  tweak libtw to send CallBExtension return value through socket
 		     ONLY when needed
 
 2. libTT, part 2
@@ -37,7 +37,7 @@
 	      (see Java JTabbedPane and other Java swing components)
 
 	problem how to draw a ttscrollframe (ttframe plus scrollbars)?
-	      libTw twindow scrollbars are not powerful enough, they
+	      libtw twindow scrollbars are not powerful enough, they
 	      miss "change event" support.
 
 3. clients
@@ -78,36 +78,36 @@
 
 				LONG TERM TODOS
 
-1.writing (and documenting) a gtk-like toolkit on top of libTw.
+1.writing (and documenting) a gtk-like toolkit on top of libtw.
 
   DIFFICULTY: don't ask
   STATUS: assigned (I am currently doing this myself)
   NOTES: need theme file parser, finish object methods, TTReopen()
 
-3.finish writing 'twdialog' (libTw equivalent of 'dialog'). Does not
-  require a lot of Unix knowledge, but libTw API has almost no documentation
+3.finish writing 'twdialog' (libtw equivalent of 'dialog'). Does not
+  require a lot of Unix knowledge, but libtw API has almost no documentation
   yet.
 
   DIFFICULTY: intermediate (no docs)
   STATUS: available
 
-4.writing a libTw screensaver. Quite easy, as really few libTw functions
+4.writing a libtw screensaver. Quite easy, as really few libtw functions
   are needed (create a fullscreen window, write in it, quit on keypress);
 
   DIFFICULTY: beginner
   STATUS: available
 
-5.writing whatever libTw client comes to anyone's mind.
+5.writing whatever libtw client comes to anyone's mind.
   (more a hope than a TODO);
 
   DIFFICULTY: ymmv (Your Mileage May Vary)
   STATUS: available
 
-6.writing down libTw API documentation. Would be *VERY* useful too, but it's
+6.writing down libtw API documentation. Would be *VERY* useful too, but it's
   not a trivial task as in many cases one would need to figure out by himself
   (of course can ask me if he doesn't understand something) what the various
   functions do. Suggested format for documentation: doxygen javadoc-style
-  comments (i.e. /** comment */ ) inserted in twin/libs/libTw/libTw.c and in
+  comments (i.e. /** comment */ ) inserted in twin/libs/libtw/libtw.c and in
   include/m4/sockproto.m4h;
 
   DIFFICULTY: intermediate (many things are obscure)

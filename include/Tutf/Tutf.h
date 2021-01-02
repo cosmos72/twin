@@ -1,7 +1,7 @@
 /*
  *  Tutf.h  --  include for ASCII/VGA/UTF/UNICODE pseudographics characters database
  *
- *  This library requires libTw headers too (NOT libTw shared library, just the headers)
+ *  This library requires libtw headers too (NOT libtw shared library, just the headers)
  *
  *  Copyright (C) 2001 by Massimiliano Ghilardi
  *

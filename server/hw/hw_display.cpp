@@ -105,7 +105,7 @@ static void display_HandleEvent(display_hw hw) {
       break;
     case msg_selection_request:
       /*
-       * should never happen, twdisplay uses libTw calls to manage Selection Requests
+       * should never happen, twdisplay uses libtw calls to manage Selection Requests
        */
       printk(
           "\ntwin: display_HandleEvent(): unexpected SelectionRequest Message from twdisplay!\n");
@@ -117,14 +117,14 @@ static void display_HandleEvent(display_hw hw) {
       break;
     case msg_selection_notify:
       /*
-       * should never happen, twdisplay uses libTw calls to manage Selection Notifies
+       * should never happen, twdisplay uses libtw calls to manage Selection Notifies
        */
       printk("\ntwin: display_HandleEvent(): unexpected SelectionNotify Message from twdisplay!\n");
 #if 0
       TwinSelectionNotify(
           dRequestor, dReqPrivate, Event->EventSelectionNotify.Magic,
           Event->EventSelectionNotify.MIME,
-          View<char>(Event->EventSelectionNotify.Data, Event->EventSelectionNotify.Len));
+          Chars(Event->EventSelectionNotify.Data, Event->EventSelectionNotify.Len));
 #endif
       break;
 
@@ -363,7 +363,7 @@ static void display_SelectionRequest_display(obj Requestor, uldat ReqPrivate) {
  * notify our Selection to twdisplay
  */
 static void display_SelectionNotify_display(uldat ReqPrivate, uldat Magic,
-                                            const char MIME[MAX_MIMELEN], View<char> Data) {
+                                            const char MIME[MAX_MIMELEN], Chars Data) {
   /*
    * shortcut: since (display) is a msgport, use fail-safe TwinSelectionNotify()
    * to send message to twdisplay.

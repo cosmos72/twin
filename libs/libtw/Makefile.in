@@ -88,7 +88,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-subdir = libs/libTw
+subdir = libs/libtw
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/libtool.m4 \
 	$(top_srcdir)/m4/ltargz.m4 $(top_srcdir)/m4/ltdl.m4 \
@@ -136,16 +136,16 @@ am__uninstall_files_from_dir = { \
 am__installdirs = "$(DESTDIR)$(libdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 am__DEPENDENCIES_1 =
-libTw_la_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
-am_libTw_la_OBJECTS = avl.lo libTw.lo md5.lo missing.lo util.lo
-libTw_la_OBJECTS = $(am_libTw_la_OBJECTS)
+libtw_la_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+am_libtw_la_OBJECTS = avl.lo libtw.lo md5.lo missing.lo util.lo
+libtw_la_OBJECTS = $(am_libtw_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
-libTw_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+libtw_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
-	$(libTw_la_LDFLAGS) $(LDFLAGS) -o $@
+	$(libtw_la_LDFLAGS) $(LDFLAGS) -o $@
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -161,7 +161,7 @@ am__v_at_1 =
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)/include
 depcomp = $(SHELL) $(top_srcdir)/admin/depcomp
 am__maybe_remake_depfiles = depfiles
-am__depfiles_remade = ./$(DEPDIR)/avl.Plo ./$(DEPDIR)/libTw.Plo \
+am__depfiles_remade = ./$(DEPDIR)/avl.Plo ./$(DEPDIR)/libtw.Plo \
 	./$(DEPDIR)/md5.Plo ./$(DEPDIR)/missing.Plo \
 	./$(DEPDIR)/util.Plo
 am__mv = mv -f
@@ -183,8 +183,8 @@ AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
-SOURCES = $(libTw_la_SOURCES)
-DIST_SOURCES = $(libTw_la_SOURCES)
+SOURCES = $(libtw_la_SOURCES)
+DIST_SOURCES = $(libtw_la_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -380,10 +380,10 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-lib_LTLIBRARIES = libTw.la
-libTw_la_SOURCES = avl.c libTw.c md5.c missing.c util.c
-libTw_la_LDFLAGS = -version-info 5:0:0 -no-undefined
-libTw_la_LIBADD = $(LIBSOCK) $(LIBZ)
+lib_LTLIBRARIES = libtw.la
+libtw_la_SOURCES = avl.c libtw.c md5.c missing.c util.c
+libtw_la_LDFLAGS = -version-info 5:0:0 -no-undefined
+libtw_la_LIBADD = $(LIBSOCK) $(LIBZ)
 AM_CPPFLAGS = -I$(top_srcdir)/include
 all: all-am
 
@@ -398,9 +398,9 @@ $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__confi
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign libs/libTw/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign libs/libtw/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign libs/libTw/Makefile
+	  $(AUTOMAKE) --foreign libs/libtw/Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
 	  *config.status*) \
@@ -454,8 +454,8 @@ clean-libLTLIBRARIES:
 	  rm -f $${locs}; \
 	}
 
-libTw.la: $(libTw_la_OBJECTS) $(libTw_la_DEPENDENCIES) $(EXTRA_libTw_la_DEPENDENCIES) 
-	$(AM_V_CCLD)$(libTw_la_LINK) -rpath $(libdir) $(libTw_la_OBJECTS) $(libTw_la_LIBADD) $(LIBS)
+libtw.la: $(libtw_la_OBJECTS) $(libtw_la_DEPENDENCIES) $(EXTRA_libtw_la_DEPENDENCIES) 
+	$(AM_V_CCLD)$(libtw_la_LINK) -rpath $(libdir) $(libtw_la_OBJECTS) $(libtw_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -464,7 +464,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/avl.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libTw.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtw.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/md5.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/missing.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/util.Plo@am__quote@ # am--include-marker
@@ -634,7 +634,7 @@ clean-am: clean-generic clean-libLTLIBRARIES clean-libtool \
 
 distclean: distclean-am
 		-rm -f ./$(DEPDIR)/avl.Plo
-	-rm -f ./$(DEPDIR)/libTw.Plo
+	-rm -f ./$(DEPDIR)/libtw.Plo
 	-rm -f ./$(DEPDIR)/md5.Plo
 	-rm -f ./$(DEPDIR)/missing.Plo
 	-rm -f ./$(DEPDIR)/util.Plo
@@ -684,7 +684,7 @@ installcheck-am:
 
 maintainer-clean: maintainer-clean-am
 		-rm -f ./$(DEPDIR)/avl.Plo
-	-rm -f ./$(DEPDIR)/libTw.Plo
+	-rm -f ./$(DEPDIR)/libtw.Plo
 	-rm -f ./$(DEPDIR)/md5.Plo
 	-rm -f ./$(DEPDIR)/missing.Plo
 	-rm -f ./$(DEPDIR)/util.Plo

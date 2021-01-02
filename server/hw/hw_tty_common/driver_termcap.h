@@ -215,7 +215,7 @@ static byte termcap_InitVideo(void) {
   HW->HWSelectionImport = AlwaysFalse;
   HW->HWSelectionExport = NoOp;
   HW->HWSelectionRequest = (void (*)(obj, uldat))NoOp;
-  HW->HWSelectionNotify = (void (*)(uldat, uldat, const char *, View<char>))NoOp;
+  HW->HWSelectionNotify = (void (*)(uldat, uldat, const char *, Chars))NoOp;
   HW->HWSelectionPrivate = 0;
 
   HW->CanDragArea = termcap_CanDragArea;

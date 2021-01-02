@@ -1,14 +1,14 @@
 
-				libTw 2.0.0 tutorial
+				libtw 2.0.0 tutorial
 
 
-libTw is the library that talks to `twin' server. Since the parallel between
-X11 server and twin server comes out so often, we could say libTw is the
+libtw is the library that talks to `twin' server. Since the parallel between
+X11 server and twin server comes out so often, we could say libtw is the
 equivalent of libX11.
 
 One thing that has been asked many times is porting applications from ncurses
-to libTw. Unlickily, things are not so straightforward as the two libraries
-have quite different approaches: libTw is a network transparent, multi window,
+to libtw. Unlickily, things are not so straightforward as the two libraries
+have quite different approaches: libtw is a network transparent, multi window,
 multi headed, event driven, mouse aware library, while ncurses is full-screen,
 single-headed library without mouse support and without events.
 If all you want is to have a ncurses program run inside a SINGLE twin window,
@@ -16,22 +16,22 @@ you could just let it run unmodified inside twterm, or, if you like hacking
 programs, you could substitute printf(), write(), etc. calls to standard output
 with TwWriteAsciiWindow() and read() from standard input with TwReadMsg().
 Yet, what you will get will still be a program displaying in a single window:
-converting an application that uses ncurses windows to use multiple libTw
-windows is usually much more difficult as with libTw any open window can
+converting an application that uses ncurses windows to use multiple libtw
+windows is usually much more difficult as with libtw any open window can
 generate events at any time, while with ncurses the "focused" window that
 generates events (user input) is decided by the application.
 
 
-				   the libTw API
+				   the libtw API
 
 
 1. Types and defines
 
-   To access libTw functions, you need to
+   To access libtw functions, you need to
 
    #include <Tw/Tw.h>
 
-   This include file defines various data types used by all libTw functions.
+   This include file defines various data types used by all libtw functions.
    The types, together with their usual definition, are:
 
    typedef   signed char	 num;
@@ -43,7 +43,7 @@ generates events (user input) is decided by the application.
 
    Anyway, except for `num' and `byte' (which are always 1 byte long)
    you must NEVER assume to know a type's size as it may change between
-   releases of libTw. You should instead use either sizeof(<type>)
+   releases of libtw. You should instead use either sizeof(<type>)
    or the defines
 
    MINDAT
@@ -64,7 +64,7 @@ generates events (user input) is decided by the application.
 
    FALSE, TRUE : the obvious meaning
 
-   TW_INET_PORT: the base TCP port used by libTw/twin server (7754)
+   TW_INET_PORT: the base TCP port used by libtw/twin server (7754)
 
    TW_SMALLBUFF   : the size for a small data buffer
    TW_BIGBUFF     : the size for a bigger data buffer
@@ -80,7 +80,7 @@ generates events (user input) is decided by the application.
    sizeof(<type>) if you need it.
 
    trune can hold a single character. This means it surely can contain
-   an ASCII character, but depending on libTw configuration, it may even
+   an ASCII character, but depending on libtw configuration, it may even
    contain a UNICODE character.
 
    tcolor can hold a single foreground color + background color combination
@@ -148,7 +148,7 @@ generates events (user input) is decided by the application.
 
 
 
-   Finally, the types for the various libTw objects:
+   Finally, the types for the various libtw objects:
 
    tobj (generic), twidget (generic), tgadget, trow, twindow,
    tmenuitem, tmenu, tscreen, tmsgport
@@ -243,7 +243,7 @@ generates events (user input) is decided by the application.
    example, TwConnectionFd is defined as
    #define TwConnectionFd()	Tw_ConnectionFd(Tw_DefaultD)
 
-   /* the following four functions return FALSE only after libTw has paniced */
+   /* the following four functions return FALSE only after libtw has paniced */
    /* flush output buffer.
     * if not all data can be written immediately, block, then write data when
     * output becomes possible again. return only after all data has been written
@@ -270,7 +270,7 @@ generates events (user input) is decided by the application.
    * if not all data could be written immediately, write as much as possible,
    * keep the rest queued, then return.
    *
-   * returns FALSE only after libTw has paniced,
+   * returns FALSE only after libtw has paniced,
    * returns TRUE if all data was written.
    * returns TRUE+TRUE if not all data could be written.
    */
@@ -466,7 +466,7 @@ void Tw_BlindSendMsg(tdisplay TwD, tmsgport MsgPort, tmsg Msg);
  * where myMsgPort is actually client <b> MsgPort. From now on, and until
  * client <b> receives a TW_MSG_SELECTIONCLEAR event, client <b> must
  * send its precious Selection to whoever asks for it: every time client <b>
- * receives a TW_MSG_SELECTIONREQUEST event from libTw, it must call
+ * receives a TW_MSG_SELECTIONREQUEST event from libtw, it must call
  *
  * Tw_NotifySelection(TwD, Requestor, ReqPrivate, Magic, MIME, Len, Data);
  *

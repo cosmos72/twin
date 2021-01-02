@@ -281,7 +281,7 @@ if test "$enable_socket_gz" = yes; then
 fi
 AC_SUBST(LIBSTL,     '$(top_builddir)/libs/libTutf/libstl.a')
 AC_SUBST(LIBTUTF,    '$(top_builddir)/libs/libTutf/libTutf.la')
-AC_SUBST(LIBTW,      '$(top_builddir)/libs/libTw/libTw.la')
+AC_SUBST(LIBTW,      '$(top_builddir)/libs/libtw/libtw.la')
 AC_SUBST(SUBDIR_LIBTT,                                    ) dnl libTT is disabled
 
 LIBS=
@@ -305,7 +305,7 @@ AC_CONFIG_FILES([
       docs/Makefile include/Makefile include/Tutf/Makefile include/Tw/Makefile \
       include/version.h include/Tutf/version.h include/Tw/version.h \
       libs/Makefile libs/libltdl/Makefile libs/libstl/Makefile \
-      libs/libTutf/Makefile libs/libTw/Makefile server/Makefile server/hw/Makefile \
+      libs/libTutf/Makefile libs/libtw/Makefile server/Makefile server/hw/Makefile \
       test/Makefile])
 
 AC_OUTPUT

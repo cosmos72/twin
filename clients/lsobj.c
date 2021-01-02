@@ -36,7 +36,7 @@ udat field_list[] = {
 #undef EL
 };
 
-/* these are hardcoded in libTw ABI, so we can hardcode them here too. */
+/* these are hardcoded in libtw ABI, so we can hardcode them here too. */
 char *type_list[TWS_highest + 2] = {"void",   "char",  "dat",   "ldat", "tcolor", "time_t",
                                     "frac_t", "trune", "tcell", "tobj", "unknown"};
 
@@ -222,7 +222,7 @@ int main(int argc, char *argv[]) {
     } while (0);
 
   if ((err = TwErrno)) {
-    fprintf(stderr, "%s: libTw error: %s%s\n", argv0, TwStrError(err),
+    fprintf(stderr, "%s: libtw error: %s%s\n", argv0, TwStrError(err),
             TwStrErrorDetail(err, TwErrnoDetail));
     return 1;
   }

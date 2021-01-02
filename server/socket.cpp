@@ -1,5 +1,5 @@
 /*
- *  socket.c  --  remote libTw server implementation: supports unix and inet sockets
+ *  socket.c  --  remote libtw server implementation: supports unix and inet sockets
  *
  *  Copyright (C) 1999-2001 by Massimiliano Ghilardi
  *
@@ -336,7 +336,7 @@ static void sockShutDown(msgport MsgPort) {
   }
 }
 
-/* prototypes of libTw back-end utility functions */
+/* prototypes of libtw back-end utility functions */
 
 static uldat sockFindFunction(byte Len, const char *name, byte ProtoLen, const char *Proto);
 static byte sockSyncSocket(void);
@@ -870,13 +870,13 @@ static void sockMultiplexB(uldat id) {
 
 /***********/
 
-/* actual libTw back-end utility functions */
+/* actual libtw back-end utility functions */
 
 static int CmpFormat(const char *F1, const char *F2, uldat Len) {
   for (; Len; F1++, F2++, Len--) {
     if (Len > 1 && *F1 == *F2 && (*F1 == 'x' || *F1 == 'X' || *F1 == 'Y')) {
       /*
-       * pointer. must allow any, since libTw
+       * pointer. must allow any, since libtw
        * generically asks for 'tobj', not specific ones
        */
       F1++, F2++, Len--;
@@ -1777,7 +1777,7 @@ static void sockSetOwnerSelection(tany Time, tany Frac) {
 
 static void sockNotifySelection(obj Requestor, uldat ReqPrivate, uldat Magic,
                                 const char MIME[MAX_MIMELEN], uldat Len, const char *Data) {
-  TwinSelectionNotify(Requestor, ReqPrivate, Magic, MIME, View<char>(Data, Len));
+  TwinSelectionNotify(Requestor, ReqPrivate, Magic, MIME, Chars(Data, Len));
 }
 
 static void sockRequestSelection(obj Owner, uldat ReqPrivate) {

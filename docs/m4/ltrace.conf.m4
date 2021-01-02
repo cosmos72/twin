@@ -4,7 +4,7 @@
 
 define(`DEF', `define(DEF_$1)$@')
 
-include(`m4/ltrace.conf.libTw.in')
+include(`m4/ltrace.conf.libtw.in')
 
 divert(-1)
 
@@ -146,5 +146,3 @@ TTlist()
 define(`extends')
 define(`field')
 undefine(`el')
-
-

@@ -15,7 +15,7 @@ enable__dlopen=yes
 
 dnl socket server
 AC_ARG_ENABLE(socket,dnl
-[  --enable-socket[=yes|no]               enable remote socket connections (libTw) ],,
+[  --enable-socket[=yes|no]               enable remote socket connections (libtw) ],,
 enable_socket=yes
 )dnl
 
@@ -25,7 +25,7 @@ AC_ARG_ENABLE(socket_gz,dnl
 enable_socket_gz=yes
 )dnl
 
-dnl thread safe libTw
+dnl thread safe libtw
 AC_ARG_ENABLE(socket_pthreads,dnl
 [  --enable-socket-pthreads[=yes|no]      enable thread safe libraries (requires pthread) ],,
 enable_socket_pthreads=yes

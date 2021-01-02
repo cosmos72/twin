@@ -1,5 +1,5 @@
 /*
- *  Tw++.h  --  C++ wrapper for all libTw data types, functions and macros
+ *  Tw++.h  --  C++ wrapper for all libtw data types, functions and macros
  *
  *  Copyright (C) 2001 by Massimiliano Ghilardi
  *
@@ -11,12 +11,12 @@
  */
 
 /*
- * This include is a C++ front-end to raw libTw functionalities.
- * It does not add any new feature to libTw (with an exception: non-static
- * method listeners) but just wraps raw libTw types and function calls inside
+ * This include is a C++ front-end to raw libtw functionalities.
+ * It does not add any new feature to libtw (with an exception: non-static
+ * method listeners) but just wraps raw libtw types and function calls inside
  * C++ objects and methods.
  *
- * Tw/Tw++.h currently has a limitation: libTw can handle multiple simultaneous
+ * Tw/Tw++.h currently has a limitation: libtw can handle multiple simultaneous
  * connections to multiple twin servers (it's multi-headed), while the objects
  * and methods declared in this file allow only a single connection to a single
  * twin server (single-headed). This should not be a problem for most
@@ -1341,7 +1341,7 @@ public:
   }
   static inline void dumpError(const char *argv0) {
     uldat e = error();
-    fprintf(stderr, "%s: libTw error: %s%s\n", argv0, strError(e),
+    fprintf(stderr, "%s: libtw error: %s%s\n", argv0, strError(e),
             strErrorDetail(e, errorDetail()));
   }
 };

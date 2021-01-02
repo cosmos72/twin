@@ -15,8 +15,8 @@ done
 
 for i in md5.c missing.c
 do
-  echo "$LN -f -n \"server/$i\"pp \"libs/libTw/$i\""
-  $LN -f -n "server/$i"pp "libs/libTw/$i"
+  echo "$LN -f -n \"server/$i\"pp \"libs/libtw/$i\""
+  $LN -f -n "server/$i"pp "libs/libtw/$i"
 done
 
 echo "cd server"

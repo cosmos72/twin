@@ -48,7 +48,11 @@ protected:
   }
 
   bool ensure_capacity(size_t n) {
-    return cap_ >= n || reserve(n >= cap_ * 2 ? n : cap_ * 2);
+    if (cap_ >= n) {
+      return true;
+    }
+    const size_t cap2 = cap_ >= 10 ? cap_ * 2 : 10;
+    return reserve(n >= cap2 ? n : cap2);
   }
 
   bool resize0(size_t n, bool zerofill) {

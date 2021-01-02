@@ -1,5 +1,5 @@
 /*
- *  threadtest.c  --  test libTw thread-safety
+ *  threadtest.c  --  test libtw thread-safety
  *  Copyright (C) 1993-1999  Massimiliano Ghilardi
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -45,7 +45,7 @@ static void Quit(void) {
   uldat err, detail;
   if ((err = TwErrno)) {
     detail = TwErrnoDetail;
-    fprintf(stderr, "threadtest: libTw error: %s%s\n", TwStrError(err),
+    fprintf(stderr, "threadtest: libtw error: %s%s\n", TwStrError(err),
             TwStrErrorDetail(err, detail));
     TwClose();
     exit(1);

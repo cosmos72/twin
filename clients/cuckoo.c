@@ -41,7 +41,7 @@
 TW_DECL_MAGIC(magic);
 
 static void Error(char *name, uldat err) {
-  fprintf(stderr, "%s: libTw error: %s%s\n", name, TwStrError(err),
+  fprintf(stderr, "%s: libtw error: %s%s\n", name, TwStrError(err),
           TwStrErrorDetail(err, TwErrnoDetail));
 }
 

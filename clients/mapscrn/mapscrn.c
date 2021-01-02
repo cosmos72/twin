@@ -90,13 +90,13 @@ int main(int argc, char *argv[]) {
   }
 
   if (!TwOpen(NULL)) {
-    fprintf(stderr, _("mapscrn: libTw error: %s\n"), TwStrError(TwErrno));
+    fprintf(stderr, _("mapscrn: libtw error: %s\n"), TwStrError(TwErrno));
     exit(1);
   }
   loadnewmap(fd, argv[1]);
 
   if (TwErrno) {
-    fprintf(stderr, _("mapscrn: libTw error: %s\n"), TwStrError(TwErrno));
+    fprintf(stderr, _("mapscrn: libtw error: %s\n"), TwStrError(TwErrno));
   }
   TwClose();
 

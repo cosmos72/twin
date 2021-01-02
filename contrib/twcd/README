@@ -13,7 +13,7 @@ Compiling
 The latest version can be downloaded from
 http://sacredchao.net/piman/software.html
 
-TWCD requires libTw, from TWIN, and the cdaudio library (available with
+TWCD requires libtw, from TWIN, and the cdaudio library (available with
 most distributions, or from freshmeat.net.)
 
 Buttons

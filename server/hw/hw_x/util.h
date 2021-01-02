@@ -183,7 +183,7 @@ static void X11_SelectionExport_X11(void) {
  * notify our Selection to X11
  */
 static void X11_SelectionNotify_X11(uldat ReqPrivate, uldat Magic, const char MIME[MAX_MIMELEN],
-                                    View<char> data) {
+                                    Chars data) {
   XEvent ev;
 
   if (XReqCount == 0) {
@@ -297,7 +297,7 @@ static void X11_SelectionNotify_up(Window win, Atom prop) {
   } while (bytes_after > 0);
 
   TwinSelectionNotify(xRequestor(xReqCount), xReqPrivate(xReqCount), SEL_TEXTMAGIC, NULL,
-                      View<char>(buff, nread));
+                      Chars(buff, nread));
   FreeMem(buff);
 }
 

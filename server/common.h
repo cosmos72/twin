@@ -35,7 +35,7 @@ obj TwinSelectionGetOwner(void);
 void TwinSelectionSetOwner(obj Owner, tany Time, tany Frac);
 #define SEL_CURRENTTIME ((tany)0)
 void TwinSelectionNotify(obj Requestor, uldat ReqPrivate, uldat Magic, const char MIME[MAX_MIMELEN],
-                         View<char> Data);
+                         Chars Data);
 void TwinSelectionRequest(obj Requestor, uldat ReqPrivate, obj Owner);
 
 void SelectionExport(void);
@@ -43,7 +43,7 @@ void SelectionImport(void);
 #ifndef SelectionAppend
 #define SelectionAppend(Data) SelectionStore(SEL_APPEND, NULL, Data)
 #endif
-byte SelectionStore(uldat Magic, const char MIME[MAX_MIMELEN], View<char> Data);
+byte SelectionStore(uldat Magic, const char MIME[MAX_MIMELEN], Chars Data);
 
 byte KeyboardEventCommon(udat Code, udat ShiftFlags, udat Len, const char *Seq);
 byte MouseEventCommon(dat x, dat y, dat dx, dat dy, udat IdButtons);

@@ -73,7 +73,7 @@ enum e_magic {
    *
    * msg_magic is the magic number for user-created (tmsg) structures,
    * while MSG_MAGIC (defined in socklist_m4.h) is the serial number reserved by
-   * libTw to receive server messages (which are still (tmsg) structures).
+   * libtw to receive server messages (which are still (tmsg) structures).
    */
   msg_magic = 0xA3A61CE4ul, /* this must match tmsg_magic in include/Tw/Tw_defs.h */
   mutex_magic = 0xB0FADED0ul,

@@ -288,8 +288,8 @@ static void CloseTerm(uldat Slot) {
 }
 
 /*
- * it is not safe to call libTw functions from within signal handlers
- * (expecially if you compiled libTw as thread-safe) so
+ * it is not safe to call libtw functions from within signal handlers
+ * (expecially if you compiled libtw as thread-safe) so
  * just set a flag in the handler and react to it syncronously
  */
 static volatile byte ReceivedSignalChild;
@@ -369,7 +369,7 @@ static byte InitTerm(void) {
   TwClose();
 
   if ((err = TwErrno))
-    fprintf(stderr, "twterm: libTw error: %s%s\n", TwStrError(err),
+    fprintf(stderr, "twterm: libtw error: %s%s\n", TwStrError(err),
             TwStrErrorDetail(err, TwErrnoDetail));
 
   return tfalse;
@@ -593,7 +593,7 @@ int main(int argc, char *argv[]) {
     }
   }
   if ((err = TwErrno)) {
-    fprintf(stderr, "twterm: libTw error: %s%s\n", TwStrError(err),
+    fprintf(stderr, "twterm: libtw error: %s%s\n", TwStrError(err),
             TwStrErrorDetail(err, TwErrnoDetail));
     return 1;
   }

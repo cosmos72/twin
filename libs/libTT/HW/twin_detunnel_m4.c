@@ -353,7 +353,7 @@ static void twin_detunnel_MouseCallback_ttanybutton(tevent_any e, tobj id) {
   ttuint evcode;
   udat code;
   /*
-   * libTw and libTT have the different encoding for mouse event codes,
+   * libtw and libTT have the different encoding for mouse event codes,
    * but shiftflags are the same
    */
   if (o) {
@@ -554,7 +554,7 @@ static ttframe twin_detunnel_Build_ttframe(ttframe o) {
   return NULL;
 }
 /*
- * HACK WARNING: libTw does not support non-visible
+ * HACK WARNING: libtw does not support non-visible
  * top-level widgets, so we emulate them with TwUnmapWidget().
  * This is why we override AddTo_ttframe() and SetVisible_ttframe()
  */

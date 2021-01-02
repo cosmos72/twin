@@ -1,5 +1,5 @@
 /*
- *  Twerrno.h  --  error handling stuff for libTw
+ *  Twerrno.h  --  error handling stuff for libtw
  *
  *  Copyright (C) 1999-2000 by Massimiliano Ghilardi
  *

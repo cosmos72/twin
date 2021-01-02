@@ -297,7 +297,7 @@ byte SendControlMsg(msgport MsgPort, udat Code, udat Len, const char *Data) {
   return tfalse;
 }
 
-byte SelectionStore(uldat Magic, const char MIME[MAX_MIMELEN], View<char> Data) {
+byte SelectionStore(uldat Magic, const char MIME[MAX_MIMELEN], Chars Data) {
   selection *Sel = All->Selection;
   const char *src = Data.data();
   const size_t srclen = Data.size();
@@ -346,9 +346,9 @@ byte SelectionStore(uldat Magic, const char MIME[MAX_MIMELEN], View<char> Data) 
 
 #define _SEL_MAGIC SEL_TRUNEMAGIC
 #if TW_IS_LITTLE_ENDIAN
-#define _SelAppendNL() SelectionAppend(View<char>("\n\0", 2));
+#define _SelAppendNL() SelectionAppend(Chars("\n\0", 2));
 #else
-#define _SelAppendNL() SelectionAppend(View<char>("\0\n", 2));
+#define _SelAppendNL() SelectionAppend(Chars("\0\n", 2));
 #endif
 
 byte SetSelectionFromWindow(window w) {
@@ -363,7 +363,7 @@ byte SetSelectionFromWindow(window w) {
   if (!(w->State & WINDOW_ANYSEL) || w->YstSel > w->YendSel ||
       (w->YstSel == w->YendSel && w->XstSel > w->XendSel)) {
 
-    ok &= SelectionStore(_SEL_MAGIC, NULL, View<char>());
+    ok &= SelectionStore(_SEL_MAGIC, NULL, Chars());
     if (ok)
       NeedHW |= NEEDSelectionExport;
     return ok;
@@ -422,8 +422,7 @@ byte SetSelectionFromWindow(window w) {
       for (len = slen; len--; hw++) {
         *Data++ = TRUNE(*hw);
       }
-      ok &= SelectionStore(_SEL_MAGIC, NULL,
-                           View<char>((const char *)buf.data(), slen * sizeof(trune)));
+      ok &= SelectionStore(_SEL_MAGIC, NULL, Chars((const char *)buf.data(), slen * sizeof(trune)));
     }
 
     if (hw >= w->USE.C.TtyData->Split)
@@ -437,7 +436,7 @@ byte SetSelectionFromWindow(window w) {
       for (len = slen; len--; hw++) {
         *Data++ = TRUNE(*hw);
       }
-      ok &= SelectionAppend(View<char>((const char *)buf.data(), slen * sizeof(trune)));
+      ok &= SelectionAppend(Chars((const char *)buf.data(), slen * sizeof(trune)));
     }
 
     if (ok && w->YendSel > w->YstSel) {
@@ -447,7 +446,7 @@ byte SetSelectionFromWindow(window w) {
       for (len = slen = w->XendSel + 1; len--; hw++) {
         *Data++ = TRUNE(*hw);
       }
-      ok &= SelectionAppend(View<char>((const char *)buf.data(), slen * sizeof(trune)));
+      ok &= SelectionAppend(Chars((const char *)buf.data(), slen * sizeof(trune)));
     }
     if (ok)
       NeedHW |= NEEDSelectionExport;
@@ -467,23 +466,23 @@ byte SetSelectionFromWindow(window w) {
         slen = Min2(Row->Len, (uldat)w->XendSel + 1) - Min2(Row->Len, (uldat)w->XstSel);
 
       ok &= SelectionStore(_SEL_MAGIC, NULL,
-                           View<char>((const char *)(Row->Text + Min2(Row->Len, (uldat)w->XstSel)),
-                                      slen * sizeof(trune)));
+                           Chars((const char *)(Row->Text + Min2(Row->Len, (uldat)w->XstSel)),
+                                 slen * sizeof(trune)));
     } else
-      ok &= SelectionStore(_SEL_MAGIC, NULL, View<char>());
+      ok &= SelectionStore(_SEL_MAGIC, NULL, Chars());
 
     if (y < w->YendSel || !Row || !Row->Text || Row->Len <= (uldat)w->XendSel)
       ok &= _SelAppendNL();
 
     for (y = w->YstSel + 1; ok && y < w->YendSel; y++) {
       if ((Row = w->FindRow(y)) && Row->Text)
-        ok &= SelectionAppend(View<char>((const char *)Row->Text, Row->Len * sizeof(trune)));
+        ok &= SelectionAppend(Chars((const char *)Row->Text, Row->Len * sizeof(trune)));
       ok &= _SelAppendNL();
     }
     if (w->YendSel > w->YstSel) {
       if (w->XendSel >= 0 && (Row = w->FindRow(w->YendSel)) && Row->Text)
-        ok &= SelectionAppend(View<char>((const char *)Row->Text,
-                                         Min2(Row->Len, (uldat)w->XendSel + 1) * sizeof(trune)));
+        ok &= SelectionAppend(
+            Chars((const char *)Row->Text, Min2(Row->Len, (uldat)w->XendSel + 1) * sizeof(trune)));
       if (!Row || !Row->Text || Row->Len <= (uldat)w->XendSel)
         ok &= _SelAppendNL();
     }

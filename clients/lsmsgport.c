@@ -16,7 +16,7 @@
 int errmsg(tdisplay td) {
   int err;
   if ((err = Tw_Errno(td))) {
-    fprintf(stderr, "twlsmsgport: libTw error: %s%s\n", Tw_StrError(td, err),
+    fprintf(stderr, "twlsmsgport: libtw error: %s%s\n", Tw_StrError(td, err),
             Tw_StrErrorDetail(td, err, Tw_ErrnoDetail(td)));
   }
   return !!err;

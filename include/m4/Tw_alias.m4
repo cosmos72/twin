@@ -8,7 +8,7 @@ dnl Tell the user about this.
 /* This file was automatically generated with `m4' from `m4/Tw_alias.m4', do not edit! */
 
 /*
- *  alias_m4.h  --  handy aliases for libTw function prototypes
+ *  alias_m4.h  --  handy aliases for libtw function prototypes
  *
  *  Copyright (C) 2002 by Massimiliano Ghilardi
  *
@@ -103,4 +103,3 @@ define(`alias')
 
 
 divert
-

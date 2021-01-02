@@ -169,7 +169,7 @@ void X11_DEBUG_SHOW_KEY(const char *prefix, KeySym sym, udat len, const char *se
 #define X11_DEBUG_SHOW_KEY(prefix, sym, len, seq) ((void)0)
 #endif
 
-/* convert an X11 KeySym into a libTw key code and ASCII sequence */
+/* convert an X11 KeySym into a libtw key code and ASCII sequence */
 
 static Twkey X11_LookupKey(XEvent *ev, udat *ShiftFlags, udat *len, char *seq) {
   static Twkey lastTW = TW_Null;

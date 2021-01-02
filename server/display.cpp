@@ -13,7 +13,7 @@
 /*
  * this is basically a chopped down version of twin server,
  * with the minimum required features to startup a display driver,
- * plus libTw code to talk to twin, register on it as a special display,
+ * plus libtw code to talk to twin, register on it as a special display,
  * and forward messages and commands between the display driver and twin.
  */
 
@@ -684,7 +684,7 @@ static void HandleMsg(tmsg Msg) {
 
     /*
      * Just like in TwinSelectionGetOwner() : normally Requestor
-     * is a meaningful pointer; here it is just a libTw Id.
+     * is a meaningful pointer; here it is just a libtw Id.
      * Cast it to (obj) as expected by HW displays...
      * we will cast it back when needed
      */
@@ -699,7 +699,7 @@ static void HandleMsg(tmsg Msg) {
     HW->HWSelectionNotify(
         Msg->Event.EventSelectionNotify.ReqPrivate, Msg->Event.EventSelectionNotify.Magic,
         Msg->Event.EventSelectionNotify.MIME,
-        View<char>(Msg->Event.EventSelectionNotify.Data, Msg->Event.EventSelectionNotify.Len));
+        Chars(Msg->Event.EventSelectionNotify.Data, Msg->Event.EventSelectionNotify.Len));
     break;
   case TW_MSG_DISPLAY:
     EventD = &Msg->Event.EventDisplay;
@@ -798,7 +798,7 @@ void SelectionExport(void) {
 
 /*
  * In the same function in twin server, this returns a meaningful pointer.
- * Here, it returns just an Id coming from libTw.
+ * Here, it returns just an Id coming from libtw.
  * Cheat and cast to to (obj), since the underlying display HW code
  * treats it as opaque. We will cast it back to (uldat) when needed.
  */
@@ -817,7 +817,7 @@ void TwinSelectionSetOwner(obj Owner, tany Time, tany Frac) {
 
 /* HW back-end function: notify selection */
 void TwinSelectionNotify(obj Requestor, uldat ReqPrivate, uldat Magic, const char MIME[MAX_MIMELEN],
-                         View<char> Data) {
+                         Chars Data) {
   if (!MIME) {
     MIME = nullMIME;
   }
@@ -1027,7 +1027,7 @@ static void MainLoop(int Fd) {
     err = TwErrno;
     detail = TwErrnoDetail;
     QuitDisplayHW(HW);
-    printk("" SS ": libTw error: " SS "" SS "\n", MYname, TwStrError(err),
+    printk("" SS ": libtw error: " SS "" SS "\n", MYname, TwStrError(err),
            TwStrErrorDetail(err, detail));
     exit(1);
   }
@@ -1036,7 +1036,7 @@ static void MainLoop(int Fd) {
   sys_errno = errno;
   QuitDisplayHW(HW);
   printk("" SS ": shouldn't happen! Please report:\n"
-         "\tlibTw TwErrno: %d(%d),\t" SS "" SS "\n"
+         "\tlibtw TwErrno: %d(%d),\t" SS "" SS "\n"
          "\tsystem  errno: %d,\t" SS "\n",
          MYname, err, detail, TwStrError(err), TwStrErrorDetail(err, detail), sys_errno,
          strerror(sys_errno));
@@ -1298,7 +1298,7 @@ int main(int argc, char *argv[]) {
           ret = (byte)(size_t)reply;
           break;
         } else if (reply == (char *)-1)
-          /* libTw panic */
+          /* libtw panic */
           break;
 
         printk("  %.*s", (int)len, reply);
@@ -1341,7 +1341,7 @@ int main(int argc, char *argv[]) {
       Quit(!ret);
     } while (0);
 
-  printk("" SS ": libTw error: " SS "" SS "\n", MYname, TwStrError(TwErrno),
+  printk("" SS ": libtw error: " SS "" SS "\n", MYname, TwStrError(TwErrno),
          TwStrErrorDetail(TwErrno, TwErrnoDetail));
   return 1;
 }

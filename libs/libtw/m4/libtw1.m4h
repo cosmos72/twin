@@ -2,9 +2,9 @@
 
 
 
-dnl This file is `m4/libTw1.m4' : m4 macros to autogenerate libTw1_m4.h
+dnl This file is `m4/libtw1.m4' : m4 macros to autogenerate libtw1_m4.h
 dnl Tell the user about this.
-/* This file was automatically generated from `m4/libTw1.m4', do not edit! */
+/* This file was automatically generated from `m4/libtw1.m4', do not edit! */
 
 /*
  *

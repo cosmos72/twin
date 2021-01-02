@@ -270,7 +270,7 @@ To obtain more information about these clients, see the Tutorial.
 Various libraries come with twin too:
 
 e) libTutf  - a tiny unicode translation library
-f) libTw    - a library to talk to twin servers
+f) libtw    - a library to talk to twin servers
 g) libTT    - a text toolkit library
 
 

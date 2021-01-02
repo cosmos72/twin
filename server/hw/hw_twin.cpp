@@ -42,7 +42,7 @@ typedef struct {
   byte SelCount;
   byte TSelCount;
   sel_req SelReq[TSELMAX];  /* buffers to hold selection request data while waiting from twin */
-  sel_req TSelReq[TSELMAX]; /* buffers to hold selection request data while waiting from libTw */
+  sel_req TSelReq[TSELMAX]; /* buffers to hold selection request data while waiting from libtw */
 } tw_data;
 
 #define twdata ((tw_data *)HW->Private)
@@ -56,7 +56,7 @@ typedef struct {
 
 static void TW_SelectionRequest_up(uldat Requestor, uldat ReqPrivate);
 static void TW_SelectionNotify_up(uldat ReqPrivate, uldat Magic, const char MIME[MAX_MIMELEN],
-                                  View<char> Data);
+                                  Chars Data);
 
 static void TW_Beep(void) {
   Tw_WriteAsciiWindow(Td, Twin, 1, "\007");
@@ -114,7 +114,7 @@ static void TW_HandleMsg(tmsg Msg) {
 
   switch (Msg->Type) {
   case TW_MSG_SELECTIONCLEAR:
-    HW->HWSelectionPrivate = 0; /* selection now owned by some other libTw client */
+    HW->HWSelectionPrivate = 0; /* selection now owned by some other libtw client */
     TwinSelectionSetOwner((obj)HW, SEL_CURRENTTIME, SEL_CURRENTTIME);
     return;
   case TW_MSG_SELECTIONREQUEST:
@@ -122,10 +122,9 @@ static void TW_HandleMsg(tmsg Msg) {
                            Event->EventSelectionRequest.ReqPrivate);
     return;
   case TW_MSG_SELECTIONNOTIFY:
-    TW_SelectionNotify_up(
-        Event->EventSelectionNotify.ReqPrivate, Event->EventSelectionNotify.Magic,
-        Event->EventSelectionNotify.MIME,
-        View<char>(Event->EventSelectionNotify.Data, Event->EventSelectionNotify.Len));
+    TW_SelectionNotify_up(Event->EventSelectionNotify.ReqPrivate, Event->EventSelectionNotify.Magic,
+                          Event->EventSelectionNotify.MIME,
+                          Chars(Event->EventSelectionNotify.Data, Event->EventSelectionNotify.Len));
     return;
   default:
     break;
@@ -295,19 +294,19 @@ static void TW_DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat Dst
 #endif
 
 /*
- * import Selection from libTw
+ * import Selection from libtw
  */
 static byte TW_SelectionImport_TW(void) {
   return !HW->HWSelectionPrivate;
 }
 
 /*
- * export our Selection to libTw
+ * export our Selection to libtw
  */
 static void TW_SelectionExport_TW(void) {
   if (!HW->HWSelectionPrivate) {
 #ifdef DEBUG_HW_TWIN
-    printf("exporting selection to libTw server\n");
+    printf("exporting selection to libtw server\n");
 #endif
     HW->HWSelectionPrivate = Tmsgport;
     Tw_SetOwnerSelection(Td, SEL_CURRENTTIME, SEL_CURRENTTIME);
@@ -316,16 +315,16 @@ static void TW_SelectionExport_TW(void) {
 }
 
 /*
- * request Selection from libTw
+ * request Selection from libtw
  */
 static void TW_SelectionRequest_TW(obj Requestor, uldat ReqPrivate) {
   if (!HW->HWSelectionPrivate) {
     if (TSelCount < TSELMAX) {
 #ifdef DEBUG_HW_TWIN
-      printf("requesting selection (%d) from libTw server\n", TSelCount);
+      printf("requesting selection (%d) from libtw server\n", TSelCount);
 #endif
       /*
-       * we exploit the ReqPrivate field of libTw Selection Request/Notify
+       * we exploit the ReqPrivate field of libtw Selection Request/Notify
        */
       TSelReq[TSelCount].Requestor = (topaque)Requestor;
       TSelReq[TSelCount].ReqPrivate = ReqPrivate;
@@ -351,7 +350,7 @@ static void TW_SelectionRequest_up(uldat Requestor, uldat ReqPrivate) {
     printf("requesting selection (%d) from twin core\n", SelCount);
 #endif
     /*
-     * we exploit the ReqPrivate field of libTw Selection Request/Notify
+     * we exploit the ReqPrivate field of libtw Selection Request/Notify
      */
     SelReq[SelCount].Requestor = Requestor;
     SelReq[SelCount].ReqPrivate = ReqPrivate;
@@ -361,17 +360,17 @@ static void TW_SelectionRequest_up(uldat Requestor, uldat ReqPrivate) {
   } else {
     SelCount = 0;
     printk(
-        "hw_twin.c: TW_SelectionRequest_up(): too many nested libTw Selection Request events!\n");
+        "hw_twin.c: TW_SelectionRequest_up(): too many nested libtw Selection Request events!\n");
   }
 }
 
 /*
- * notify our Selection to libTw
+ * notify our Selection to libtw
  */
 static void TW_SelectionNotify_TW(uldat ReqPrivate, uldat Magic, const char MIME[MAX_MIMELEN],
-                                  View<char> Data) {
+                                  Chars Data) {
 #ifdef DEBUG_HW_TWIN
-  printf("notifying selection (%d/%d) to libTw server\n", ReqPrivate, SelCount - 1);
+  printf("notifying selection (%d/%d) to libtw server\n", ReqPrivate, SelCount - 1);
 #endif
   if (ReqPrivate + 1 == SelCount) {
     SelCount--;
@@ -382,10 +381,10 @@ static void TW_SelectionNotify_TW(uldat ReqPrivate, uldat Magic, const char MIME
 }
 
 /*
- * notify the libTw Selection to twin upper layer
+ * notify the libtw Selection to twin upper layer
  */
 static void TW_SelectionNotify_up(uldat ReqPrivate, uldat Magic, const char MIME[MAX_MIMELEN],
-                                  View<char> Data) {
+                                  Chars Data) {
 #ifdef DEBUG_HW_TWIN
   printf("notifying selection (%d/%d) to twin core\n", ReqPrivate, TSelCount - 1);
 #endif
@@ -425,7 +424,7 @@ static byte TW_InitHW(void) {
   if (arg && HW->NameLen > 4) {
     arg += 4;
     if (strncmp(arg, "twin", 4))
-      return tfalse; /* user said "use <arg> as display, not libTw" */
+      return tfalse; /* user said "use <arg> as display, not libtw" */
 
     arg += 4;
 

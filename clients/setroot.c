@@ -96,7 +96,7 @@ int main(int argc, char *argv[]) {
     TwClose();
   }
   if ((err = TwErrno))
-    fprintf(stderr, "%s: libTw error: %s%s\n", name, TwStrError(err),
+    fprintf(stderr, "%s: libtw error: %s%s\n", name, TwStrError(err),
             TwStrErrorDetail(err, TwErrnoDetail));
 
   return 1;

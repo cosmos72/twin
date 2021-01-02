@@ -7,7 +7,7 @@ dnl Tell the user about this.
 /* This file was automatically generated with `m4' from `m4/proto.m4', do not edit! */
 
 /*
- *  proto1_m4.h  -- single-head compatibility defines for libTw functions prototypes
+ *  proto1_m4.h  -- single-head compatibility defines for libtw functions prototypes
  *
  *  Copyright (C) 2002 by Massimiliano Ghilardi
  *

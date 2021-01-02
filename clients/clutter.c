@@ -66,7 +66,7 @@ int main(int argc, char *argv[]) {
 
   if (!InitClutter()) {
     err = TwErrno;
-    fprintf(stderr, "%s: libTw error: %s%s\n", argv[0], TwStrError(err),
+    fprintf(stderr, "%s: libtw error: %s%s\n", argv[0], TwStrError(err),
             TwStrErrorDetail(err, TwErrnoDetail));
     return 1;
   }
@@ -81,7 +81,7 @@ int main(int argc, char *argv[]) {
     }
   }
   if ((err = TwErrno)) {
-    fprintf(stderr, "%s: libTw error: %s%s\n", argv[0], TwStrError(err),
+    fprintf(stderr, "%s: libtw error: %s%s\n", argv[0], TwStrError(err),
             TwStrErrorDetail(err, TwErrnoDetail));
     return 1;
   }

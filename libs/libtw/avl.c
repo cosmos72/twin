@@ -23,7 +23,7 @@
  * from O(n) to O(log n), where n is the number of nodes. n is typically zero,
  * but may reach a few thousands if clients use listeners heavily.
  * Written by Bruno Haible <haible@ma2s2.mathematik.uni-karlsruhe.de> for the
- * linux kernel mm subsystem, then adapted to libTw by Massimiliano Ghilardi.
+ * linux kernel mm subsystem, then adapted to libtw by Massimiliano Ghilardi.
  */
 
 tavl AVLFind(tavl_c key, tavl base, tavl_compare cmp) {

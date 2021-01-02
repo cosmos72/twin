@@ -1,5 +1,5 @@
 /*
- *  libTw.c  --  implementation of libTw functions
+ *  libtw.c  --  implementation of libtw functions
  *
  *  Copyright (C) 1999-2001 by Massimiliano Ghilardi
  *
@@ -104,7 +104,7 @@ typedef struct s_tw_errno_vec {
 
 #else
 
-/* use libTwerrno.h types */
+/* use libtwerrno.h types */
 typedef tw_errno s_tw_errno;
 typedef tw_errno s_tw_errno_vec;
 
@@ -118,7 +118,7 @@ typedef struct s_fn_list {
 
 static fn_list Functions[] = {
 
-#include "libTw1_m4.h"
+#include "libtw1_m4.h"
 
     {Tw_Stat, 7, 8, "Tw_StatObj", "0S0x" magic_id_STR(obj) "_" TWS_udat_STR "V" TWS_udat_STR},
 
@@ -1428,7 +1428,7 @@ void Tw_AttachConfirm(tw_d TwD) {
 
 /* this requires LOCK not to be held */
 /**
- * returns a pointer to last error information (libTw equivaled of errno_location())
+ * returns a pointer to last error information (libtw equivaled of errno_location())
  */
 tw_errno *Tw_ErrnoLocation(tw_d TwD) {
   s_tw_errno *t;
@@ -1453,7 +1453,7 @@ TW_ATTR_FN_CONST TW_CONST char *Tw_StrError(TW_CONST tw_d TwD, uldat e) {
   case TW_ESERVER_BAD_SIZES:
     return "server has different data sizes, impossible to connect";
   case TW_EBAD_SIZES:
-    return "compiled data sizes are incompatible with libTw now in use!";
+    return "compiled data sizes are incompatible with libtw now in use!";
   case TW_EBAD_STRUCTS:
     return "internal error: structs are not packed! Please contact the author.";
   case TW_ENO_DISPLAY:
@@ -1569,7 +1569,7 @@ int Tw_ConnectionFd(tw_d TwD) {
  * TwCreate4MenuMenuItem();
  * TwCreateMsgPort();
  *
- * and in general any Tw() function of libTw.h returning non-void
+ * and in general any Tw() function of libtw.h returning non-void
  * so that it sends something to the server and waits for the server
  * to send back the return value.
  */
@@ -2153,7 +2153,7 @@ static tany _Tw_EncodeCall(byte flags, uldat o, tw_d TwD, ...) {
   return a->TWS_field_scalar;
 }
 
-#include "libTw2_m4.h"
+#include "libtw2_m4.h"
 
 static byte Sync(tw_d TwD) {
   uldat left;

@@ -6,15 +6,15 @@
  * modify it under the terms of the GNU Library General Public
  * License as published by the Free Software Foundation; either
  * version 2 of the License, or (at your option) any later version.
- * 
+ *
  */
 
 
 
 
-dnl This file is `m4/libTw3.m4' : m4 macros to autogenerate libTw3_m4.h
+dnl This file is `m4/libtw3.m4' : m4 macros to autogenerate libtw3_m4.h
 dnl Tell the user about this.
-/* This file was automatically generated from `m4/libTw3.m4', do not edit! */
+/* This file was automatically generated from `m4/libtw3.m4', do not edit! */
 
 define(`TRIM', `translit(`$1', ` ')')
 
@@ -45,4 +45,3 @@ define(`PROTOSyncSocket', `PROTO($@)')
 define(`PROTOFindFunction', `PROTO($@)')
 
 include(`m4/Tw_sockproto.m4')
-

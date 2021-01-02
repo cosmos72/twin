@@ -1,5 +1,5 @@
 /*
- *  Twkeys.h  --  keycode enum for libTw keyboard events
+ *  Twkeys.h  --  keycode enum for libtw keyboard events
  *
  *  Copyright (C) 2000,2016 by Massimiliano Ghilardi
  *

@@ -12,17 +12,17 @@ if test "$ac_cv_header_dlfcn_h" = no -o "$ac_cv_search_dlopen" = no; then
 fi
 
 if test "$ac_cv_search_socket" = no; then
-  AC_MSG_WARN(missing socket(): disabling socket connections (libTw)!)
+  AC_MSG_WARN(missing socket(): disabling socket connections (libtw)!)
   enable_socket=no
 fi
 
 if test "$ac_cv_search_connect" = no; then
-  AC_MSG_WARN(missing connect(): disabling socket connections (libTw)!)
+  AC_MSG_WARN(missing connect(): disabling socket connections (libtw)!)
   enable_socket=no
 fi
 
 if test "$ac_cv_search_gethostbyname" = no; then
-  AC_MSG_WARN(missing gethostbyname(): libTw will only accept numerical IP addresses!)
+  AC_MSG_WARN(missing gethostbyname(): libtw will only accept numerical IP addresses!)
 fi
 
 if test "$ac_cv_search_pthread_create" = no -o "$ac_cv_header_pthread_h" = no; then

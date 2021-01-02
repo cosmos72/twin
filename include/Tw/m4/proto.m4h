@@ -7,7 +7,7 @@ dnl Tell the user about this.
 /* This file was automatically generated with `m4' from `m4/proto.m4', do not edit! */
 
 /*
- *  proto_m4.h  --  check libTw functions prototypes from Tw_sockproto.m4h
+ *  proto_m4.h  --  check libtw functions prototypes from Tw_sockproto.m4h
  *                    against twin.h or against Tw/Tw.h include files.
  *
  *  Copyright (C) 2001,2002 by Massimiliano Ghilardi

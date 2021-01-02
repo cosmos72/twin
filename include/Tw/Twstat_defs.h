@@ -1,5 +1,5 @@
 /*
- *  Twstat.h  --  functions to get informations about libTw objects.
+ *  Twstat.h  --  functions to get informations about libtw objects.
  *
  *  Copyright (C) 2001 by Massimiliano Ghilardi
  *

@@ -145,7 +145,7 @@ void test_string() {
   assert(st.data());
   assert(st.data() != data);
 
-  View<char> w = st;
+  Chars w = st;
   assert(w.size() == n);
   assert(w.data() == st.data());
 

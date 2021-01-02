@@ -225,7 +225,7 @@ GlobalFlags ButtonPaste 2
 # so Shift is almost useless and not all keys combined with Ctrl and Alt
 # make sense (i.e. they must produce a unique, identificable ASCII sequence)
 #
-# <name> is the name of the key as in libTwkeys.h, without the TW_ prefix.
+# <name> is the name of the key as in libtwkeys.h, without the TW_ prefix.
 # To be safe, <name> should be quoted. some examples:
 #   "Tab"   "Return"  "Escape"  "BackSpace"
 #   "Left"  "Up"      "Right"   "Down"

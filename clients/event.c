@@ -1,5 +1,5 @@
 /*
- *  event.c  --  print libTw events in human readable form
+ *  event.c  --  print libtw events in human readable form
  *
  *  Copyright (C) 2000 by Massimiliano Ghilardi
  *
@@ -32,16 +32,17 @@ static byte InitEvent(void) {
          (TwInfo4Menu(Event_Menu, TW_ROW_ACTIVE, 14, " Event Tester ",
                       (TW_CONST tcolor *)"ptppppptpppppp"),
           ttrue) &&
-         (Event_Win =
-              TwCreateWindow(12, "Event Tester", NULL, Event_Menu, TCOL(twhite, tblack), TW_NOCURSOR,
-                             TW_WINDOW_WANT_KEYS | TW_WINDOW_WANT_MOUSE | TW_WINDOW_WANT_CHANGES |
-                                 TW_WINDOW_DRAG | TW_WINDOW_RESIZE | TW_WINDOW_CLOSE,
-                             TW_WINDOWFL_USEEXPOSE, 18, 8, 0)) &&
+         (Event_Win = TwCreateWindow(
+              12, "Event Tester", NULL, Event_Menu, TCOL(twhite, tblack), TW_NOCURSOR,
+              TW_WINDOW_WANT_KEYS | TW_WINDOW_WANT_MOUSE | TW_WINDOW_WANT_CHANGES | TW_WINDOW_DRAG |
+                  TW_WINDOW_RESIZE | TW_WINDOW_CLOSE,
+              TW_WINDOWFL_USEEXPOSE, 18, 8, 0)) &&
          (TwSetColorsWindow(Event_Win, 0x1FF, TCOL(thigh | tyellow, tcyan),
                             TCOL(thigh | tgreen, thigh | tblue), TCOL(twhite, thigh | tblue),
-                            TCOL(thigh | twhite, thigh | tblue), TCOL(thigh | twhite, thigh | tblue),
-                            TCOL(twhite, tblack), TCOL(twhite, thigh | tblack),
-                            TCOL(thigh | tblack, tblack), TCOL(tblack, thigh | tblack)),
+                            TCOL(thigh | twhite, thigh | tblue),
+                            TCOL(thigh | twhite, thigh | tblue), TCOL(twhite, tblack),
+                            TCOL(twhite, thigh | tblack), TCOL(thigh | tblack, tblack),
+                            TCOL(tblack, thigh | tblack)),
           TwConfigureWindow(Event_Win, 0xF << 2, 0, 0, 10, 5, 30, 15),
           TwMapWindow(Event_Win, TwFirstScreen()), ttrue) &&
 
@@ -369,7 +370,7 @@ int main(int argc, char *argv[]) {
     }
 
   if ((err = TwErrno))
-    printf("%s: libTw error: %s%s\n", argv[0], TwStrError(err),
+    printf("%s: libtw error: %s%s\n", argv[0], TwStrError(err),
            TwStrErrorDetail(err, TwErrnoDetail));
 
   TwClose();

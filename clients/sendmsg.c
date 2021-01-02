@@ -143,7 +143,7 @@ int main(int argc, char *argv[]) {
     } while (0);
 
   err = TwErrno;
-  fprintf(stderr, "%s: libTw error: %s%s\n", argv0, TwStrError(err),
+  fprintf(stderr, "%s: libtw error: %s%s\n", argv0, TwStrError(err),
           TwStrErrorDetail(err, TwErrnoDetail));
   return 1;
 }

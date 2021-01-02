@@ -1,5 +1,5 @@
 /*
- *  Tw1.h  --  single-head compatibility defines and prototypes for libTw
+ *  Tw1.h  --  single-head compatibility defines and prototypes for libtw
  *
  *  Copyright (C) 2001-2002 by Massimiliano Ghilardi
  *
@@ -14,7 +14,7 @@
 #define TW1_H
 
 /*
- * libTw.so.1 --- single head compatibility. these are too handy to drop them.
+ * libtw.so.1 --- single head compatibility. these are too handy to drop them.
  */
 extern tdisplay Tw_DefaultD;
 

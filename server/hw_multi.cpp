@@ -632,7 +632,7 @@ void ResetPaletteHW(void) {
 obj TwinSelectionGetOwner(void) {
   /*
    * this looks odd... but it's correct:
-   * only libTw clients can persistently own the Selection;
+   * only libtw clients can persistently own the Selection;
    * a display HW can own the Selection only if you did a mouse click
    * on its display, and even in this case it will own the Selection
    * only for a single request.
@@ -680,7 +680,7 @@ void TwinSelectionSetOwner(obj Owner, tany Time, tany Frac) {
 }
 
 void TwinSelectionNotify(obj Requestor, uldat ReqPrivate, uldat Magic, const char MIME[MAX_MIMELEN],
-                         View<char> Data) {
+                         Chars Data) {
   msg NewMsg;
   event_any *Event;
 #if 0

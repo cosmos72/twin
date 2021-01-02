@@ -68,8 +68,6 @@ byte InitTWCD(void) {
                    TwMapWindow(TWCD_Win, TwFirstScreen());
                    TwFlush();
 
-                 
-
                    return ttrue;
 }
 
@@ -101,7 +99,7 @@ int main(int argc, char **argv) {
          "COPYING file included "
          "with the distribution for the\nfull license, or visit http://www.gnu.org\n\n");
   if (!InitTWCD()) {
-    fprintf(stderr, "%s: libTw error: %s%s\n", argv[0], TwStrError(TwErrno),
+    fprintf(stderr, "%s: libtw error: %s%s\n", argv[0], TwStrError(TwErrno),
             TwStrErrorDetail(TwErrno, TwErrnoDetail));
     return 1;
   }
@@ -182,7 +180,7 @@ int main(int argc, char **argv) {
   }
 
   if (TwErrno)
-    printf("%s: libTw error: %s%s\n", argv[0], TwStrError(TwErrno),
+    printf("%s: libtw error: %s%s\n", argv[0], TwStrError(TwErrno),
            TwStrErrorDetail(TwErrno, TwErrnoDetail));
 
   if (!TwInPanic()) {

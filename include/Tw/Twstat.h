@@ -1,5 +1,5 @@
 /*
- *  Twstat.h  --  functions to get informations about libTw objects.
+ *  Twstat.h  --  functions to get informations about libtw objects.
  *
  *  Copyright (C) 2001 by Massimiliano Ghilardi
  *
@@ -22,7 +22,7 @@
 #define TWS__STR(a) #a
 #define TWS_STR(a) TWS__STR(a)
 
-/* the following are hardcoded in socket.c, libTw.c and libTw ABI, don't change! */
+/* the following are hardcoded in socket.c, libtw.c and libtw ABI, don't change! */
 #define TWS_void 0
 #define TWS_char 1
 #define TWS_byte 1
@@ -45,7 +45,7 @@
 
 #define TWS_array 0xFD /* shortcut for TWS_vec|TWS_vecW|TWS_byte in (byte *) format strings */
 
-/* the following are hardcoded in libTw ABI, don't change! */
+/* the following are hardcoded in libtw ABI, don't change! */
 #define TWS_void_CHR '\xFE' /* '\xFF' would conflict with TWS_obj */
 #define TWS_void_STR "\xFE"
 #define TWS_char_STR "\x01"

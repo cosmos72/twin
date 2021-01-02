@@ -11,6 +11,10 @@
 
 #include "stl/vector.h"
 
+typedef View<char> Chars;
+typedef Span<char> CharSpan;
+typedef Vector<char> CharVec;
+
 class String : public Vector<char> {
 private:
   typedef char T;
@@ -39,6 +43,14 @@ public:
   explicit String(const String &other) : Base(other) {
   }
   // ~String() = default;
+
+  bool operator+=(char ch) {
+    return append(View<char>(&ch, 1));
+  }
+
+  bool operator+=(View<char> other) {
+    return append(other);
+  }
 };
 
 inline void swap(String &left, String &right) {

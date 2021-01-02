@@ -10,7 +10,7 @@
  */
 
 /*
- * encoding functions to serialize libTw call args in a buffer
+ * encoding functions to serialize libtw call args in a buffer
  * that will be written in the socket connection to the server.
  */
 

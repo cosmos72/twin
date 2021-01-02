@@ -37,14 +37,14 @@ Options: [defaults in brackets after descriptions]
   --enable--alloc[=yes|no]               enable custom malloc/free routines
   --enable--long-long[=yes|no]           enable C type 'long long' if supported
   --enable--asm[=yes|no]                 enable hand-optimized assembler if available
-  --enable-socket[=yes|no]               enable remote socket connections (libTw)
+  --enable-socket[=yes|no]               enable remote socket connections (libtw)
   --enable-socket-gz[=yes|no]            enable gzip compression on sockets
-  --enable-socket-pthreads[=yes|no]      enable thread safe libTw (requires pthread)
+  --enable-socket-pthreads[=yes|no]      enable thread safe libtw (requires pthread)
   --enable-socket-alien[=yes|no]         enable support for non-native architectures
 EOF
     cat << EOF
   --enable-tt[=yes|no]                   enable Text Toolkit library (libTT)
-  --enable-tt-hw-twin[=yes|no|mod]       enable libTT to use twin (libTw) as display driver
+  --enable-tt-hw-twin[=yes|no|mod]       enable libTT to use twin (libtw) as display driver
   --enable-tt-hw-twin-tunnel[=yes|mod|no]   enable libTT to use twin + server side libTT
   --enable-tt-hw-twin-detunnel[=yes|mod|no] enable libTT on twin server side
   --enable-tt-hw-gtk[=yes|no|mod]        enable libTT to use gtk as display driver

@@ -8,7 +8,7 @@ dnl Tell the user about this.
 /* This file was automatically generated with `m4' from `m4/Tw_common.m4', do not edit! */
 
 /*
- *  common_m4.h  --  common libTw function prototypes
+ *  common_m4.h  --  common libtw function prototypes
  *
  *  Copyright (C) 2002 by Massimiliano Ghilardi
  *
@@ -141,9 +141,9 @@ DECL(uldat,ServerVersion)
 
 DECL(byte,InPanic)
 
-c_doxygen(/** this returns tfalse only after libTw has paniced */)
+c_doxygen(/** this returns tfalse only after libtw has paniced */)
 DECL(byte,Flush)
-c_doxygen(/** this returns tfalse only after libTw has paniced */)
+c_doxygen(/** this returns tfalse only after libtw has paniced */)
 DECL(byte,Sync)
 
 c_doxygen(
@@ -152,7 +152,7 @@ c_doxygen(
  * if not all data could be written, write as much as possible,
  * keep the rest queued, then return.
  *
- * returns tfalse only after libTw has paniced,
+ * returns tfalse only after libtw has paniced,
  * returns ttrue+ttrue if not all data could be written.
  */)
 DECL(byte,TimidFlush)
@@ -161,7 +161,7 @@ c_doxygen(
 /**
  * This is the function you must call to check if there are pending Msgs,
  * i.e. already received from the socket.
- * Since Msgs can be received even during libTw calls, you cannot rely only
+ * Since Msgs can be received even during libtw calls, you cannot rely only
  * on select(Tw_ConnectionFd()) to detect incoming messages, as they could
  * be already queued in the library. So you must call either Tw_PendingMsg()
  * or Tw_PeekMsg() below to check for messages.
