@@ -33,6 +33,7 @@
 
 #include "algo.h"
 #include "alloc.h"
+#include "common.h"
 #include "data.h"
 #include "extreg.h"
 #include "methods.h"

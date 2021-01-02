@@ -13,6 +13,8 @@ dnl Tell the user about this.
  *  version 2 of the License, or (at your option) any later version.
  *
  */
+
+/* clang-format off */
 define(`TRIM', `translit(`$1', ` ')')
 
 

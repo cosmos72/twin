@@ -35,10 +35,10 @@ template <class T> inline T *realloc0(T *addr, size_t old_n, size_t new_n) {
   return reinterpret_cast<T *>(ReAllocMem0(addr, old_n * sizeof(T), new_n * sizeof(T)));
 }
 
-template <class T1, class T2> void rawcopy(const T1 &src, T2 &dst) {
-  typedef char sizeof_T1_equals_sizeof_T2[sizeof(T1) == sizeof(T2) ? sizeof(T2) : -1];
-  memcpy(static_cast<void *>(&dst), static_cast<const void *>(&src),
-         sizeof(sizeof_T1_equals_sizeof_T2) / sizeof(char));
+template <class T> void rawswap(T &a, T &b) {
+  const T temp(a);
+  a = b;
+  b = temp;
 }
 
 template <class T1, class T2>

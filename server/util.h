@@ -52,8 +52,6 @@ byte Minimum(byte MaxIndex, const ldat *Array);
 uldat ComputeUsableLenArgv(char *const *argv);
 void SetArgv0(char *const *argv, uldat argv_usable_len, const char *src);
 
-#define SelectionAppend(Data) SelectionStore(SEL_APPEND, NULL, Data)
-byte SelectionStore(uldat Magic, const char MIME[MAX_MIMELEN], Chars Data);
 byte SetSelectionFromWindow(window Window);
 void doSelectionSetOwner(obj Owner, tany Time, tany Frac);
 #define SEL_CURRENTTIME ((tany)0)

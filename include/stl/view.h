@@ -10,6 +10,7 @@
 #define TWIN_STL_VIEW_H
 
 #include "stl/fwd.h"
+#include "stl/defs.h" // STL_CXX11_EXPLICIT
 #include "stl/mem.h"
 
 #include <stddef.h> // size_t
@@ -78,8 +79,8 @@ public:
     return data_[index];
   }
 
-  explicit operator bool() const {
-    return data_ != nullptr;
+  STL_CXX11_EXPLICIT operator bool() const {
+    return data_ != NULL;
   }
 
   template <class VEC> bool operator==(const VEC &other) const {
@@ -122,5 +123,7 @@ public:
 template <class T> void swap(View<T> &left, View<T> &right) {
   left.swap(right);
 }
+
+typedef View<char> Chars;
 
 #endif /* TWIN_STL_VIEW_H */

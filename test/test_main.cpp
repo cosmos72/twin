@@ -10,5 +10,6 @@
 
 int main() {
   test_stl_vector();
+  test_stl_utf8();
   return 0;
 }

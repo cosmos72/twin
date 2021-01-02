@@ -7,10 +7,9 @@
  *
  */
 
-
-
-
 /* This file was automatically generated from m4/socket3.m4, do not edit! */
+
+/* clang-format off */
 
 
 
@@ -283,7 +282,6 @@
       case 6: L = a[5]_any; break;
     }
     break;
-
 
 
 

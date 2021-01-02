@@ -1,4 +1,4 @@
-/* A Bison parser, made by GNU Bison 3.5.3.  */
+/* A Bison parser, made by GNU Bison 3.7.4.  */
 
 /* Bison interface for Yacc-like parsers in C
 
@@ -31,8 +31,9 @@
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
-/* Undocumented macros, especially those whose name start with YY_,
-   are private implementation details.  Do not rely on them.  */
+/* DO NOT RELY ON FEATURES THAT ARE NOT DOCUMENTED in the manual,
+   especially those whose name start with YY_ or yy_.  They are
+   private implementation details that can be changed or removed.  */
 
 #ifndef YY_YY_RCPARSE_TAB_HPP_INCLUDED
 # define YY_YY_RCPARSE_TAB_HPP_INCLUDED
@@ -44,88 +45,93 @@
 extern int yydebug;
 #endif
 
-/* Token type.  */
+/* Token kinds.  */
 #ifndef YYTOKENTYPE
 # define YYTOKENTYPE
   enum yytokentype
   {
-    ADDSCREEN = 258,
-    ADDTOMENU = 259,
-    ADDTOFUNC = 260,
-    BACKGROUND = 261,
-    BORDER = 262,
-    BUTTON = 263,
-    DELETEFUNC = 264,
-    DELETEMENU = 265,
-    DELETEBUTTON = 266,
-    DELETESCREEN = 267,
-    READ = 268,
-    EXEC = 269,
-    EXECTTY = 270,
-    GLOBALFLAGS = 271,
-    INTERACTIVE = 272,
-    KEY = 273,
-    MENU = 274,
-    MODULE = 275,
-    MOUSE = 276,
-    MOVE = 277,
-    MOVESCREEN = 278,
-    NEXT = 279,
-    NOP = 280,
-    PREV = 281,
-    RESTART = 282,
-    RESIZE = 283,
-    RESIZESCREEN = 284,
-    SCREEN = 285,
-    SCROLL = 286,
-    SENDTOSCREEN = 287,
-    SLEEP = 288,
-    STDERR = 289,
-    SYNTHETICKEY = 290,
-    WAIT = 291,
-    WINDOW = 292,
-    EASY_FUNC = 293,
-    BEEP = 294,
-    CENTER = 295,
-    CLOSE = 296,
-    KILL = 297,
-    QUIT = 298,
-    REFRESH = 299,
-    WINDOWLIST = 300,
-    FLAG_FUNC = 301,
-    FOCUS = 302,
-    MAXIMIZE = 303,
-    FULLSCREEN = 304,
-    LOWER = 305,
-    RAISE = 306,
-    RAISELOWER = 307,
-    ROLL = 308,
-    USERFUNC = 309,
-    FL_ON = 310,
-    FL_OFF = 311,
-    FL_TOGGLE = 312,
-    FL_ACTIVE = 313,
-    FL_INACTIVE = 314,
-    FL_LEFT = 315,
-    FL_RIGHT = 316,
-    GLOBAL_FLAG = 317,
-    ALTFONT = 318,
-    CURSOR_ALWAYS = 319,
-    BLINK = 320,
-    MENU_HIDE = 321,
-    MENU_INFO = 322,
-    MENU_RELAX = 323,
-    SCREEN_SCROLL = 324,
-    TERMINALS_UTF8 = 325,
-    SHADOWS = 326,
-    BUTTON_PASTE = 327,
-    BUTTON_SELECTION = 328,
-    COLOR = 329,
-    COL_HIGH = 330,
-    KBD_FLAG = 331,
-    NUMBER = 332,
-    STRING = 333
+    YYEMPTY = -2,
+    YYEOF = 0,                     /* "end of file"  */
+    YYerror = 256,                 /* error  */
+    YYUNDEF = 257,                 /* "invalid token"  */
+    ADDSCREEN = 258,               /* ADDSCREEN  */
+    ADDTOMENU = 259,               /* ADDTOMENU  */
+    ADDTOFUNC = 260,               /* ADDTOFUNC  */
+    BACKGROUND = 261,              /* BACKGROUND  */
+    BORDER = 262,                  /* BORDER  */
+    BUTTON = 263,                  /* BUTTON  */
+    DELETEFUNC = 264,              /* DELETEFUNC  */
+    DELETEMENU = 265,              /* DELETEMENU  */
+    DELETEBUTTON = 266,            /* DELETEBUTTON  */
+    DELETESCREEN = 267,            /* DELETESCREEN  */
+    READ = 268,                    /* READ  */
+    EXEC = 269,                    /* EXEC  */
+    EXECTTY = 270,                 /* EXECTTY  */
+    GLOBALFLAGS = 271,             /* GLOBALFLAGS  */
+    INTERACTIVE = 272,             /* INTERACTIVE  */
+    KEY = 273,                     /* KEY  */
+    MENU = 274,                    /* MENU  */
+    MODULE = 275,                  /* MODULE  */
+    MOUSE = 276,                   /* MOUSE  */
+    MOVE = 277,                    /* MOVE  */
+    MOVESCREEN = 278,              /* MOVESCREEN  */
+    NEXT = 279,                    /* NEXT  */
+    NOP = 280,                     /* NOP  */
+    PREV = 281,                    /* PREV  */
+    RESTART = 282,                 /* RESTART  */
+    RESIZE = 283,                  /* RESIZE  */
+    RESIZESCREEN = 284,            /* RESIZESCREEN  */
+    SCREEN = 285,                  /* SCREEN  */
+    SCROLL = 286,                  /* SCROLL  */
+    SENDTOSCREEN = 287,            /* SENDTOSCREEN  */
+    SLEEP = 288,                   /* SLEEP  */
+    STDERR = 289,                  /* STDERR  */
+    SYNTHETICKEY = 290,            /* SYNTHETICKEY  */
+    WAIT = 291,                    /* WAIT  */
+    WINDOW = 292,                  /* WINDOW  */
+    EASY_FUNC = 293,               /* EASY_FUNC  */
+    BEEP = 294,                    /* BEEP  */
+    CENTER = 295,                  /* CENTER  */
+    CLOSE = 296,                   /* CLOSE  */
+    KILL = 297,                    /* KILL  */
+    QUIT = 298,                    /* QUIT  */
+    REFRESH = 299,                 /* REFRESH  */
+    WINDOWLIST = 300,              /* WINDOWLIST  */
+    FLAG_FUNC = 301,               /* FLAG_FUNC  */
+    FOCUS = 302,                   /* FOCUS  */
+    MAXIMIZE = 303,                /* MAXIMIZE  */
+    FULLSCREEN = 304,              /* FULLSCREEN  */
+    LOWER = 305,                   /* LOWER  */
+    RAISE = 306,                   /* RAISE  */
+    RAISELOWER = 307,              /* RAISELOWER  */
+    ROLL = 308,                    /* ROLL  */
+    USERFUNC = 309,                /* USERFUNC  */
+    FL_ON = 310,                   /* FL_ON  */
+    FL_OFF = 311,                  /* FL_OFF  */
+    FL_TOGGLE = 312,               /* FL_TOGGLE  */
+    FL_ACTIVE = 313,               /* FL_ACTIVE  */
+    FL_INACTIVE = 314,             /* FL_INACTIVE  */
+    FL_LEFT = 315,                 /* FL_LEFT  */
+    FL_RIGHT = 316,                /* FL_RIGHT  */
+    GLOBAL_FLAG = 317,             /* GLOBAL_FLAG  */
+    ALTFONT = 318,                 /* ALTFONT  */
+    CURSOR_ALWAYS = 319,           /* CURSOR_ALWAYS  */
+    BLINK = 320,                   /* BLINK  */
+    MENU_HIDE = 321,               /* MENU_HIDE  */
+    MENU_INFO = 322,               /* MENU_INFO  */
+    MENU_RELAX = 323,              /* MENU_RELAX  */
+    SCREEN_SCROLL = 324,           /* SCREEN_SCROLL  */
+    TERMINALS_UTF8 = 325,          /* TERMINALS_UTF8  */
+    SHADOWS = 326,                 /* SHADOWS  */
+    BUTTON_PASTE = 327,            /* BUTTON_PASTE  */
+    BUTTON_SELECTION = 328,        /* BUTTON_SELECTION  */
+    COLOR = 329,                   /* COLOR  */
+    COL_HIGH = 330,                /* COL_HIGH  */
+    KBD_FLAG = 331,                /* KBD_FLAG  */
+    NUMBER = 332,                  /* NUMBER  */
+    STRING = 333                   /* STRING  */
   };
+  typedef enum yytokentype yytoken_kind_t;
 #endif
 
 /* Value type.  */

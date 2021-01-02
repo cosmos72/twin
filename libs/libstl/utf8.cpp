@@ -7,23 +7,30 @@
  *
  */
 #include "stl/utf8.h"
+#include "stl/view.h"
+#include "twautoconf.h" /* for TW_HAVE* macros */
 
-Utf8::Utf8(trune rune) {
-  // encode replacement character 0xFFFD
-  const u32 replacement = {"\xED\xBF\xBF"};
-  u32 x = {};
+#ifdef TW_HAVE_ARPA_INET_H
+#include <arpa/inet.h> // htonl()
+#endif
+
+// convert Unicode codepoint 'rune' from UTF-32 to UTF-8
+Utf8::seq Utf8::to_utf8(trune rune) {
+  // replacement character is \uFFFD
+  const seq replacement = {"\xEF\xBF\xBD"};
+  seq x = {};
   if (rune <= 0x7F) {
     x.b[0] = (char)rune;
   } else if (rune <= 0x07FF) {
     x.b[0] = 0xC0 | (rune >> 6);
     x.b[1] = 0x80 | (rune & 0x3F);
   } else if (rune <= 0xFFFF) {
-    if (rune < 0xD800 || rune > 0xDFFF) {
+    if (rune == 0xFFFE || rune == 0xFFFF || (rune >= 0xD800 && rune <= 0xDFFF)) {
+      x.val = replacement.val;
+    } else {
       x.b[0] = 0xE0 | (rune >> 12);
       x.b[1] = 0x80 | ((rune >> 6) & 0x3F);
       x.b[2] = 0x80 | (rune & 0x3F);
-    } else {
-      x.val = replacement.val;
     }
   } else if (rune <= 0x10FFFF) {
     x.b[0] = 0xF0 | (rune >> 18);
@@ -33,13 +40,11 @@ Utf8::Utf8(trune rune) {
   } else {
     x.val = replacement.val;
   }
-  u.val = x.val;
+  return x;
 }
 
-trune Utf8::rune() const {
+trune Utf8::to_rune(seq x) {
   trune rune;
-  u32 x;
-  x.val = u.val;
   if (x.b[1] == 0) {
     rune = x.b[0];
   } else if (x.b[2] == 0) {
@@ -53,10 +58,8 @@ trune Utf8::rune() const {
   return rune;
 }
 
-size_t Utf8::size() const {
+size_t Utf8::to_size(seq x) {
   size_t n;
-  u32 x;
-  x.val = u.val;
   if (x.b[1] == 0) {
     n = 1;
   } else if (x.b[2] == 0) {
@@ -67,4 +70,65 @@ size_t Utf8::size() const {
     n = 4;
   }
   return n;
+}
+
+View<char> Utf8::chars() const {
+  return View<char>(u.b, to_size(u));
+}
+
+// parse UTF-8 sequence from chars
+bool Utf8::parse(View<char> chars, View<char> *remaining) {
+  const char *src = chars.data();
+  const size_t srcn = chars.size();
+  // replacement character is \uFFFD
+  const seq replacement = {"\xEF\xBF\xBD"};
+  seq x = {};
+  uint8_t len = 0;
+  bool ok = true;
+  do {
+    if (srcn == 0) {
+      ok = false;
+      break;
+    }
+    // copy first byte
+    char ch = x.b[0] = src[0];
+    if ((ch & 0xC0) == 0xC0) {
+      const uint8_t max = srcn <= 4 ? srcn : 4;
+      // copy up to three continuation bytes
+      for (len = 1; len < max; len++) {
+        if (((ch = src[len]) & 0xC0) != 0x80) {
+          break;
+        }
+        x.b[len] = ch;
+      }
+    }
+    ok = valid(x);
+  } while (false);
+
+  if (remaining) {
+    *remaining = chars.view(len, srcn);
+  }
+  u.val = ok ? x.val : replacement.val;
+  return ok;
+}
+
+bool Utf8::valid(seq x) {
+  /*
+   * the simplest and safest way to validate an UTF8 sequence
+   * is converting it to UTF-32 and back to UTF-8,
+   * then compare the two UTF-8 sequences.
+   *
+   * It catches:
+   * 1. overlong UTF8 sequences
+   * 2. UTF8 sequences that decode to invalid codepoints [0xDC00,0xDFFF]
+   * 3. UTF8 sequences that decode to invalid codepoints [0xFFFE,0xFFFF]
+   * 4. UTF8 sequences that decode to invalid codepoints > 0x10FFFF
+   */
+  const trune rune = to_rune(x);
+  const seq y = to_utf8(rune);
+  return x.val == y.val;
+}
+
+bool Utf8::operator<(const Utf8 &other) const {
+  return htonl(u.val) < htonl(other.u.val);
 }

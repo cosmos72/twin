@@ -7,10 +7,9 @@
  *
  */
 
-
-
-
 /* This file was automatically generated from m4/socket2.m4, do not edit! */
+
+/* clang-format off */
 
 
 
@@ -256,5 +255,4 @@
 
 { 0, 0, "SetServerUid",
     "0" "_" TWS_byte_STR"_" TWS_uldat_STR"_" TWS_byte_STR },
-
 

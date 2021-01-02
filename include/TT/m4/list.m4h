@@ -23,6 +23,8 @@ dnl Tell the user about this.
 #ifndef TT_LIST_M4_H
 #define TT_LIST_M4_H
 
+/* clang-format off */
+
 define(`c_doxygen', `
 
 $@')`'dnl

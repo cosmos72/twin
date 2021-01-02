@@ -23,6 +23,8 @@ dnl Tell the user about this.
 #ifndef TT_ALL_M4_H
 #define TT_ALL_M4_H
 
+/* clang-format off */
+
 #ifndef TT_TT_H
 #error "Never include <TT/all_m4.h> directly; include <TT/tt.h> instead."
 #endif

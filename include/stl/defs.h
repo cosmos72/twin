@@ -11,8 +11,10 @@
 
 #if defined(__cplusplus) && __cplusplus >= 201103L
 #define STL_CXX11
+#define STL_CXX11_EXPLICIT explicit
 #else
 #undef STL_CXX11
+#define STL_CXX11_EXPLICIT
 #endif
 
 #endif /* TWIN_STL_DEFS_H */

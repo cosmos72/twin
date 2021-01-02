@@ -10,10 +10,7 @@
 #define TWIN_STL_STRING_H
 
 #include "stl/vector.h"
-
-typedef View<char> Chars;
-typedef Span<char> CharSpan;
-typedef Vector<char> CharVec;
+#include "stl/utf8.h"
 
 class String : public Vector<char> {
 private:
@@ -40,16 +37,20 @@ public:
   }
   explicit String(const Vector<T> &other) : Base(other) {
   }
-  explicit String(const String &other) : Base(other) {
+  String(const String &other) : Base(other) {
   }
   // ~String() = default;
 
   bool operator+=(char ch) {
-    return append(View<char>(&ch, 1));
+    return append(Chars(&ch, 1));
   }
 
-  bool operator+=(View<char> other) {
+  bool operator+=(Chars other) {
     return append(other);
+  }
+
+  bool operator+=(Utf8 seq) {
+    return append(Chars(seq.data(), seq.size()));
   }
 };
 

@@ -9,12 +9,11 @@
  *
  */
 
-
-
-
 dnl This file is `m4/libtw3.m4' : m4 macros to autogenerate libtw3_m4.h
 dnl Tell the user about this.
 /* This file was automatically generated from `m4/libtw3.m4', do not edit! */
+
+/* clang-format off */
 
 define(`TRIM', `translit(`$1', ` ')')
 

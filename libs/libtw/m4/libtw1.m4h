@@ -17,6 +17,8 @@ dnl Tell the user about this.
  *
  */
 
+/* clang-format off */
+
 /* To avoid troubles with strlen(), you should not use '\0' or "\0" */
 /* Also, using TWS_obj is really a good idea */
 #define magic_id_STR(x)        "\xFF"

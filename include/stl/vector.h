@@ -33,7 +33,7 @@ protected:
     data_ = mem::alloc<T>(n);
     if (n && !data_) {
       // mem::alloc() failed
-      data_ = nullptr;
+      data_ = NULL;
       cap_ = size_ = 0;
       return false;
     }
@@ -42,7 +42,7 @@ protected:
   }
 
   void destroy() {
-    if (data_ != nullptr) {
+    if (data_ != NULL) {
       mem::free(data());
     }
   }
@@ -108,7 +108,7 @@ public:
   }
 
   bool fail() const {
-    return data_ == nullptr;
+    return data_ == NULL;
   }
   size_t capacity() const {
     return cap_;
@@ -156,7 +156,7 @@ public:
       T *newdata = mem::realloc(olddata, cap_, newcap);
       if (!newdata) {
         if (cap_ == 0) {
-          data_ = nullptr;
+          data_ = NULL;
         }
         return false;
       }
@@ -177,14 +177,9 @@ public:
   }
 
   void swap(Vector &other) {
-    struct Ref {
-      const T *data_;
-      size_t size_, cap_;
-    };
-    Ref temp;
-    mem::rawcopy(*this, temp);
-    mem::rawcopy(other, *this);
-    mem::rawcopy(temp, other);
+    mem::rawswap(data_, other.data_);
+    mem::rawswap(size_, other.size_);
+    mem::rawswap(cap_, other.cap_);
   }
 };
 
@@ -201,5 +196,7 @@ template <class T> void Span<T>::ref(Vector<T> &other) {
 template <class T> void swap(Vector<T> &left, Vector<T> &right) {
   left.swap(right);
 }
+
+typedef Vector<char> CharVec;
 
 #endif /* TWIN_STL_VECTOR_H */

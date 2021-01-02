@@ -8,9 +8,9 @@
  */
 
 
-
-
 /* This file was automatically generated from m4/socket1.m4, do not edit! */
+
+/* clang-format off */
 
 
 

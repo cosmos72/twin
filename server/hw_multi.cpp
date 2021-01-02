@@ -25,6 +25,7 @@
 #include "twin.h"
 #include "alloc.h"
 #include "algo.h"
+#include "common.h"
 #include "data.h"
 #include "main.h"
 #include "methods.h"

@@ -116,4 +116,6 @@ template <class T> void swap(Span<T> &left, Span<T> &right) {
   left.swap(right);
 }
 
+typedef Span<char> CharSpan;
+
 #endif /* TWIN_STL_SPAN_H */

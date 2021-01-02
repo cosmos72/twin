@@ -12,7 +12,7 @@
 #ifndef TWIN_STL_ERR_H
 #define TWIN_STL_ERR_H
 
-typedef enum e_errnum : unsigned char {
+typedef enum errnum_e {
   SUCCESS = 0,
   NOMEMORY = 1,
   NOTABLES = 2,

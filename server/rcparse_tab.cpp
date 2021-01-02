@@ -1,4 +1,4 @@
-/* A Bison parser, made by GNU Bison 3.5.3.  */
+/* A Bison parser, made by GNU Bison 3.7.4.  */
 
 /* Bison implementation for Yacc-like parsers in C
 
@@ -34,6 +34,10 @@
 /* C LALR(1) parser skeleton written by Richard Stallman, by
    simplifying the original so-called "semantic" parser.  */
 
+/* DO NOT RELY ON FEATURES THAT ARE NOT DOCUMENTED in the manual,
+   especially those whose name start with YY_ or yy_.  They are
+   private implementation details that can be changed or removed.  */
+
 /* All symbols defined below should begin with yy or YY, to avoid
    infringing on user name space.  This should be done even for local
    variables, as they might otherwise be expanded by user macros.
@@ -41,14 +45,11 @@
    define necessary library symbols; they are noted "INFRINGES ON
    USER NAME SPACE" below.  */
 
-/* Undocumented macros, especially those whose name start with YY_,
-   are private implementation details.  Do not rely on them.  */
+/* Identify Bison output, and Bison version.  */
+#define YYBISON 30704
 
-/* Identify Bison output.  */
-#define YYBISON 1
-
-/* Bison version.  */
-#define YYBISON_VERSION "3.5.3"
+/* Bison version string.  */
+#define YYBISON_VERSION "3.7.4"
 
 /* Skeleton name.  */
 #define YYSKELETON_NAME "yacc.c"
@@ -145,134 +146,130 @@
 #  endif
 # endif
 
-/* Enabling verbose error messages.  */
-#ifdef YYERROR_VERBOSE
-# undef YYERROR_VERBOSE
-# define YYERROR_VERBOSE 1
-#else
-# define YYERROR_VERBOSE 0
-#endif
-
-/* Use api.header.include to #include this header
-   instead of duplicating it here.  */
-#ifndef YY_YY_RCPARSE_TAB_HPP_INCLUDED
-# define YY_YY_RCPARSE_TAB_HPP_INCLUDED
-/* Debug traces.  */
-#ifndef YYDEBUG
-# define YYDEBUG 0
-#endif
-#if YYDEBUG
-extern int yydebug;
-#endif
-
-/* Token type.  */
-#ifndef YYTOKENTYPE
-# define YYTOKENTYPE
-  enum yytokentype
-  {
-    ADDSCREEN = 258,
-    ADDTOMENU = 259,
-    ADDTOFUNC = 260,
-    BACKGROUND = 261,
-    BORDER = 262,
-    BUTTON = 263,
-    DELETEFUNC = 264,
-    DELETEMENU = 265,
-    DELETEBUTTON = 266,
-    DELETESCREEN = 267,
-    READ = 268,
-    EXEC = 269,
-    EXECTTY = 270,
-    GLOBALFLAGS = 271,
-    INTERACTIVE = 272,
-    KEY = 273,
-    MENU = 274,
-    MODULE = 275,
-    MOUSE = 276,
-    MOVE = 277,
-    MOVESCREEN = 278,
-    NEXT = 279,
-    NOP = 280,
-    PREV = 281,
-    RESTART = 282,
-    RESIZE = 283,
-    RESIZESCREEN = 284,
-    SCREEN = 285,
-    SCROLL = 286,
-    SENDTOSCREEN = 287,
-    SLEEP = 288,
-    STDERR = 289,
-    SYNTHETICKEY = 290,
-    WAIT = 291,
-    WINDOW = 292,
-    EASY_FUNC = 293,
-    BEEP = 294,
-    CENTER = 295,
-    CLOSE = 296,
-    KILL = 297,
-    QUIT = 298,
-    REFRESH = 299,
-    WINDOWLIST = 300,
-    FLAG_FUNC = 301,
-    FOCUS = 302,
-    MAXIMIZE = 303,
-    FULLSCREEN = 304,
-    LOWER = 305,
-    RAISE = 306,
-    RAISELOWER = 307,
-    ROLL = 308,
-    USERFUNC = 309,
-    FL_ON = 310,
-    FL_OFF = 311,
-    FL_TOGGLE = 312,
-    FL_ACTIVE = 313,
-    FL_INACTIVE = 314,
-    FL_LEFT = 315,
-    FL_RIGHT = 316,
-    GLOBAL_FLAG = 317,
-    ALTFONT = 318,
-    CURSOR_ALWAYS = 319,
-    BLINK = 320,
-    MENU_HIDE = 321,
-    MENU_INFO = 322,
-    MENU_RELAX = 323,
-    SCREEN_SCROLL = 324,
-    TERMINALS_UTF8 = 325,
-    SHADOWS = 326,
-    BUTTON_PASTE = 327,
-    BUTTON_SELECTION = 328,
-    COLOR = 329,
-    COL_HIGH = 330,
-    KBD_FLAG = 331,
-    NUMBER = 332,
-    STRING = 333
-  };
-#endif
-
-/* Value type.  */
-#if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
-union YYSTYPE
+#include "rcparse_tab.hpp"
+/* Symbol kind.  */
+enum yysymbol_kind_t
 {
-
-    ldat	 val;
-    ldat_list	*val_list;
-    str          _string;
-    byte         imm;
-    node	 _node;
-
-
+  YYSYMBOL_YYEMPTY = -2,
+  YYSYMBOL_YYEOF = 0,                      /* "end of file"  */
+  YYSYMBOL_YYerror = 1,                    /* error  */
+  YYSYMBOL_YYUNDEF = 2,                    /* "invalid token"  */
+  YYSYMBOL_3_ = 3,                         /* '('  */
+  YYSYMBOL_4_ = 4,                         /* ')'  */
+  YYSYMBOL_ADDSCREEN = 5,                  /* ADDSCREEN  */
+  YYSYMBOL_ADDTOMENU = 6,                  /* ADDTOMENU  */
+  YYSYMBOL_ADDTOFUNC = 7,                  /* ADDTOFUNC  */
+  YYSYMBOL_BACKGROUND = 8,                 /* BACKGROUND  */
+  YYSYMBOL_BORDER = 9,                     /* BORDER  */
+  YYSYMBOL_BUTTON = 10,                    /* BUTTON  */
+  YYSYMBOL_DELETEFUNC = 11,                /* DELETEFUNC  */
+  YYSYMBOL_DELETEMENU = 12,                /* DELETEMENU  */
+  YYSYMBOL_DELETEBUTTON = 13,              /* DELETEBUTTON  */
+  YYSYMBOL_DELETESCREEN = 14,              /* DELETESCREEN  */
+  YYSYMBOL_READ = 15,                      /* READ  */
+  YYSYMBOL_EXEC = 16,                      /* EXEC  */
+  YYSYMBOL_EXECTTY = 17,                   /* EXECTTY  */
+  YYSYMBOL_GLOBALFLAGS = 18,               /* GLOBALFLAGS  */
+  YYSYMBOL_INTERACTIVE = 19,               /* INTERACTIVE  */
+  YYSYMBOL_KEY = 20,                       /* KEY  */
+  YYSYMBOL_MENU = 21,                      /* MENU  */
+  YYSYMBOL_MODULE = 22,                    /* MODULE  */
+  YYSYMBOL_MOUSE = 23,                     /* MOUSE  */
+  YYSYMBOL_MOVE = 24,                      /* MOVE  */
+  YYSYMBOL_MOVESCREEN = 25,                /* MOVESCREEN  */
+  YYSYMBOL_NEXT = 26,                      /* NEXT  */
+  YYSYMBOL_NOP = 27,                       /* NOP  */
+  YYSYMBOL_PREV = 28,                      /* PREV  */
+  YYSYMBOL_RESTART = 29,                   /* RESTART  */
+  YYSYMBOL_RESIZE = 30,                    /* RESIZE  */
+  YYSYMBOL_RESIZESCREEN = 31,              /* RESIZESCREEN  */
+  YYSYMBOL_SCREEN = 32,                    /* SCREEN  */
+  YYSYMBOL_SCROLL = 33,                    /* SCROLL  */
+  YYSYMBOL_SENDTOSCREEN = 34,              /* SENDTOSCREEN  */
+  YYSYMBOL_SLEEP = 35,                     /* SLEEP  */
+  YYSYMBOL_STDERR = 36,                    /* STDERR  */
+  YYSYMBOL_SYNTHETICKEY = 37,              /* SYNTHETICKEY  */
+  YYSYMBOL_WAIT = 38,                      /* WAIT  */
+  YYSYMBOL_WINDOW = 39,                    /* WINDOW  */
+  YYSYMBOL_40_n_ = 40,                     /* '\n'  */
+  YYSYMBOL_EASY_FUNC = 41,                 /* EASY_FUNC  */
+  YYSYMBOL_BEEP = 42,                      /* BEEP  */
+  YYSYMBOL_CENTER = 43,                    /* CENTER  */
+  YYSYMBOL_CLOSE = 44,                     /* CLOSE  */
+  YYSYMBOL_KILL = 45,                      /* KILL  */
+  YYSYMBOL_QUIT = 46,                      /* QUIT  */
+  YYSYMBOL_REFRESH = 47,                   /* REFRESH  */
+  YYSYMBOL_WINDOWLIST = 48,                /* WINDOWLIST  */
+  YYSYMBOL_FLAG_FUNC = 49,                 /* FLAG_FUNC  */
+  YYSYMBOL_FOCUS = 50,                     /* FOCUS  */
+  YYSYMBOL_MAXIMIZE = 51,                  /* MAXIMIZE  */
+  YYSYMBOL_FULLSCREEN = 52,                /* FULLSCREEN  */
+  YYSYMBOL_LOWER = 53,                     /* LOWER  */
+  YYSYMBOL_RAISE = 54,                     /* RAISE  */
+  YYSYMBOL_RAISELOWER = 55,                /* RAISELOWER  */
+  YYSYMBOL_ROLL = 56,                      /* ROLL  */
+  YYSYMBOL_USERFUNC = 57,                  /* USERFUNC  */
+  YYSYMBOL_58_ = 58,                       /* '+'  */
+  YYSYMBOL_59_ = 59,                       /* '-'  */
+  YYSYMBOL_FL_ON = 60,                     /* FL_ON  */
+  YYSYMBOL_FL_OFF = 61,                    /* FL_OFF  */
+  YYSYMBOL_FL_TOGGLE = 62,                 /* FL_TOGGLE  */
+  YYSYMBOL_FL_ACTIVE = 63,                 /* FL_ACTIVE  */
+  YYSYMBOL_FL_INACTIVE = 64,               /* FL_INACTIVE  */
+  YYSYMBOL_FL_LEFT = 65,                   /* FL_LEFT  */
+  YYSYMBOL_FL_RIGHT = 66,                  /* FL_RIGHT  */
+  YYSYMBOL_GLOBAL_FLAG = 67,               /* GLOBAL_FLAG  */
+  YYSYMBOL_ALTFONT = 68,                   /* ALTFONT  */
+  YYSYMBOL_CURSOR_ALWAYS = 69,             /* CURSOR_ALWAYS  */
+  YYSYMBOL_BLINK = 70,                     /* BLINK  */
+  YYSYMBOL_MENU_HIDE = 71,                 /* MENU_HIDE  */
+  YYSYMBOL_MENU_INFO = 72,                 /* MENU_INFO  */
+  YYSYMBOL_MENU_RELAX = 73,                /* MENU_RELAX  */
+  YYSYMBOL_SCREEN_SCROLL = 74,             /* SCREEN_SCROLL  */
+  YYSYMBOL_TERMINALS_UTF8 = 75,            /* TERMINALS_UTF8  */
+  YYSYMBOL_SHADOWS = 76,                   /* SHADOWS  */
+  YYSYMBOL_BUTTON_PASTE = 77,              /* BUTTON_PASTE  */
+  YYSYMBOL_BUTTON_SELECTION = 78,          /* BUTTON_SELECTION  */
+  YYSYMBOL_COLOR = 79,                     /* COLOR  */
+  YYSYMBOL_COL_HIGH = 80,                  /* COL_HIGH  */
+  YYSYMBOL_KBD_FLAG = 81,                  /* KBD_FLAG  */
+  YYSYMBOL_NUMBER = 82,                    /* NUMBER  */
+  YYSYMBOL_STRING = 83,                    /* STRING  */
+  YYSYMBOL_YYACCEPT = 84,                  /* $accept  */
+  YYSYMBOL_rcfile = 85,                    /* rcfile  */
+  YYSYMBOL_line_list = 86,                 /* line_list  */
+  YYSYMBOL_line = 87,                      /* line  */
+  YYSYMBOL_nl = 88,                        /* nl  */
+  YYSYMBOL_opt_nl = 89,                    /* opt_nl  */
+  YYSYMBOL_immediate_line = 90,            /* immediate_line  */
+  YYSYMBOL_funcbody_list = 91,             /* funcbody_list  */
+  YYSYMBOL__funcbody_list = 92,            /* _funcbody_list  */
+  YYSYMBOL_funcbody = 93,                  /* funcbody  */
+  YYSYMBOL_menubody_list = 94,             /* menubody_list  */
+  YYSYMBOL__menubody_list = 95,            /* _menubody_list  */
+  YYSYMBOL_menubody = 96,                  /* menubody  */
+  YYSYMBOL_textbody_list = 97,             /* textbody_list  */
+  YYSYMBOL__textbody_list = 98,            /* _textbody_list  */
+  YYSYMBOL_textbody = 99,                  /* textbody  */
+  YYSYMBOL_color = 100,                    /* color  */
+  YYSYMBOL_high = 101,                     /* high  */
+  YYSYMBOL_global_list = 102,              /* global_list  */
+  YYSYMBOL_global_flag = 103,              /* global_flag  */
+  YYSYMBOL_func = 104,                     /* func  */
+  YYSYMBOL_string_list = 105,              /* string_list  */
+  YYSYMBOL_string = 106,                   /* string  */
+  YYSYMBOL_interactive_mode = 107,         /* interactive_mode  */
+  YYSYMBOL_move_or_resize = 108,           /* move_or_resize  */
+  YYSYMBOL_opt_flag = 109,                 /* opt_flag  */
+  YYSYMBOL_flag = 110,                     /* flag  */
+  YYSYMBOL_opt_flag_kbd = 111,             /* opt_flag_kbd  */
+  YYSYMBOL_flag_kbd = 112,                 /* flag_kbd  */
+  YYSYMBOL_opt_flag_toggle = 113,          /* opt_flag_toggle  */
+  YYSYMBOL_flag_active = 114,              /* flag_active  */
+  YYSYMBOL_flag_lr = 115                   /* flag_lr  */
 };
-typedef union YYSTYPE YYSTYPE;
-# define YYSTYPE_IS_TRIVIAL 1
-# define YYSTYPE_IS_DECLARED 1
-#endif
+typedef enum yysymbol_kind_t yysymbol_kind_t;
 
-
-extern YYSTYPE yylval;
-
-int yyparse (void);
-
-#endif /* !YY_YY_RCPARSE_TAB_HPP_INCLUDED  */
 
 
 
@@ -372,6 +369,7 @@ typedef int yytype_uint16;
 
 #define YYSIZEOF(X) YY_CAST (YYPTRDIFF_T, sizeof (X))
 
+
 /* Stored state numbers (used for stacks). */
 typedef yytype_uint8 yy_state_t;
 
@@ -389,6 +387,7 @@ typedef int yy_state_fast_t;
 #  define YY_(Msgid) Msgid
 # endif
 #endif
+
 
 #ifndef YY_ATTRIBUTE_PURE
 # if defined __GNUC__ && 2 < __GNUC__ + (96 <= __GNUC_MINOR__)
@@ -447,7 +446,7 @@ typedef int yy_state_fast_t;
 
 #define YY_ASSERT(E) ((void) (0 && (E)))
 
-#if ! defined yyoverflow || YYERROR_VERBOSE
+#if !defined yyoverflow
 
 /* The parser invokes alloca or malloc; define the necessary symbols.  */
 
@@ -512,8 +511,7 @@ void free (void *); /* INFRINGES ON USER NAME SPACE */
 #   endif
 #  endif
 # endif
-#endif /* ! defined yyoverflow || YYERROR_VERBOSE */
-
+#endif /* !defined yyoverflow */
 
 #if (! defined yyoverflow \
      && (! defined __cplusplus \
@@ -589,14 +587,16 @@ union yyalloc
 /* YYNSTATES -- Number of states.  */
 #define YYNSTATES  174
 
-#define YYUNDEFTOK  2
+/* YYMAXUTOK -- Last valid token kind.  */
 #define YYMAXUTOK   333
 
 
 /* YYTRANSLATE(TOKEN-NUM) -- Symbol number corresponding to TOKEN-NUM
    as returned by yylex, with out-of-bounds checking.  */
-#define YYTRANSLATE(YYX)                                                \
-  (0 <= (YYX) && (YYX) <= YYMAXUTOK ? yytranslate[YYX] : YYUNDEFTOK)
+#define YYTRANSLATE(YYX)                                \
+  (0 <= (YYX) && (YYX) <= YYMAXUTOK                     \
+   ? YY_CAST (yysymbol_kind_t, yytranslate[YYX])        \
+   : YYSYMBOL_YYUNDEF)
 
 /* YYTRANSLATE[TOKEN-NUM] -- Symbol number corresponding to TOKEN-NUM
    as returned by yylex.  */
@@ -656,36 +656,49 @@ static const yytype_int16 yyrline[] =
 };
 #endif
 
-#if YYDEBUG || YYERROR_VERBOSE || 0
+/** Accessing symbol of state STATE.  */
+#define YY_ACCESSING_SYMBOL(State) YY_CAST (yysymbol_kind_t, yystos[State])
+
+#if YYDEBUG || 0
+/* The user-facing name of the symbol whose (internal) number is
+   YYSYMBOL.  No bounds checking.  */
+static const char *yysymbol_name (yysymbol_kind_t yysymbol) YY_ATTRIBUTE_UNUSED;
+
 /* YYTNAME[SYMBOL-NUM] -- String name of the symbol SYMBOL-NUM.
    First, the terminals, then, starting at YYNTOKENS, nonterminals.  */
 static const char *const yytname[] =
 {
-  "$end", "error", "$undefined", "'('", "')'", "ADDSCREEN", "ADDTOMENU",
-  "ADDTOFUNC", "BACKGROUND", "BORDER", "BUTTON", "DELETEFUNC",
-  "DELETEMENU", "DELETEBUTTON", "DELETESCREEN", "READ", "EXEC", "EXECTTY",
-  "GLOBALFLAGS", "INTERACTIVE", "KEY", "MENU", "MODULE", "MOUSE", "MOVE",
-  "MOVESCREEN", "NEXT", "NOP", "PREV", "RESTART", "RESIZE", "RESIZESCREEN",
-  "SCREEN", "SCROLL", "SENDTOSCREEN", "SLEEP", "STDERR", "SYNTHETICKEY",
-  "WAIT", "WINDOW", "'\\n'", "EASY_FUNC", "BEEP", "CENTER", "CLOSE",
-  "KILL", "QUIT", "REFRESH", "WINDOWLIST", "FLAG_FUNC", "FOCUS",
-  "MAXIMIZE", "FULLSCREEN", "LOWER", "RAISE", "RAISELOWER", "ROLL",
-  "USERFUNC", "'+'", "'-'", "FL_ON", "FL_OFF", "FL_TOGGLE", "FL_ACTIVE",
-  "FL_INACTIVE", "FL_LEFT", "FL_RIGHT", "GLOBAL_FLAG", "ALTFONT",
-  "CURSOR_ALWAYS", "BLINK", "MENU_HIDE", "MENU_INFO", "MENU_RELAX",
-  "SCREEN_SCROLL", "TERMINALS_UTF8", "SHADOWS", "BUTTON_PASTE",
-  "BUTTON_SELECTION", "COLOR", "COL_HIGH", "KBD_FLAG", "NUMBER", "STRING",
-  "$accept", "rcfile", "line_list", "line", "nl", "opt_nl",
-  "immediate_line", "funcbody_list", "_funcbody_list", "funcbody",
-  "menubody_list", "_menubody_list", "menubody", "textbody_list",
-  "_textbody_list", "textbody", "color", "high", "global_list",
-  "global_flag", "func", "string_list", "string", "interactive_mode",
-  "move_or_resize", "opt_flag", "flag", "opt_flag_kbd", "flag_kbd",
-  "opt_flag_toggle", "flag_active", "flag_lr", YY_NULLPTR
+  "\"end of file\"", "error", "\"invalid token\"", "'('", "')'",
+  "ADDSCREEN", "ADDTOMENU", "ADDTOFUNC", "BACKGROUND", "BORDER", "BUTTON",
+  "DELETEFUNC", "DELETEMENU", "DELETEBUTTON", "DELETESCREEN", "READ",
+  "EXEC", "EXECTTY", "GLOBALFLAGS", "INTERACTIVE", "KEY", "MENU", "MODULE",
+  "MOUSE", "MOVE", "MOVESCREEN", "NEXT", "NOP", "PREV", "RESTART",
+  "RESIZE", "RESIZESCREEN", "SCREEN", "SCROLL", "SENDTOSCREEN", "SLEEP",
+  "STDERR", "SYNTHETICKEY", "WAIT", "WINDOW", "'\\n'", "EASY_FUNC", "BEEP",
+  "CENTER", "CLOSE", "KILL", "QUIT", "REFRESH", "WINDOWLIST", "FLAG_FUNC",
+  "FOCUS", "MAXIMIZE", "FULLSCREEN", "LOWER", "RAISE", "RAISELOWER",
+  "ROLL", "USERFUNC", "'+'", "'-'", "FL_ON", "FL_OFF", "FL_TOGGLE",
+  "FL_ACTIVE", "FL_INACTIVE", "FL_LEFT", "FL_RIGHT", "GLOBAL_FLAG",
+  "ALTFONT", "CURSOR_ALWAYS", "BLINK", "MENU_HIDE", "MENU_INFO",
+  "MENU_RELAX", "SCREEN_SCROLL", "TERMINALS_UTF8", "SHADOWS",
+  "BUTTON_PASTE", "BUTTON_SELECTION", "COLOR", "COL_HIGH", "KBD_FLAG",
+  "NUMBER", "STRING", "$accept", "rcfile", "line_list", "line", "nl",
+  "opt_nl", "immediate_line", "funcbody_list", "_funcbody_list",
+  "funcbody", "menubody_list", "_menubody_list", "menubody",
+  "textbody_list", "_textbody_list", "textbody", "color", "high",
+  "global_list", "global_flag", "func", "string_list", "string",
+  "interactive_mode", "move_or_resize", "opt_flag", "flag", "opt_flag_kbd",
+  "flag_kbd", "opt_flag_toggle", "flag_active", "flag_lr", YY_NULLPTR
 };
+
+static const char *
+yysymbol_name (yysymbol_kind_t yysymbol)
+{
+  return yytname[yysymbol];
+}
 #endif
 
-# ifdef YYPRINT
+#ifdef YYPRINT
 /* YYTOKNUM[NUM] -- (External) token number corresponding to the
    (internal) symbol number NUM (which must be that of a token).  */
 static const yytype_int16 yytoknum[] =
@@ -700,7 +713,7 @@ static const yytype_int16 yytoknum[] =
      320,   321,   322,   323,   324,   325,   326,   327,   328,   329,
      330,   331,   332,   333
 };
-# endif
+#endif
 
 #define YYPACT_NINF (-119)
 
@@ -903,10 +916,10 @@ static const yytype_int8 yyr2[] =
 };
 
 
+enum { YYENOMEM = -2 };
+
 #define yyerrok         (yyerrstatus = 0)
 #define yyclearin       (yychar = YYEMPTY)
-#define YYEMPTY         (-2)
-#define YYEOF           0
 
 #define YYACCEPT        goto yyacceptlab
 #define YYABORT         goto yyabortlab
@@ -932,10 +945,9 @@ static const yytype_int8 yyr2[] =
       }                                                           \
   while (0)
 
-/* Error token number */
-#define YYTERROR        1
-#define YYERRCODE       256
-
+/* Backward compatibility with an undocumented macro.
+   Use YYerror or YYUNDEF. */
+#define YYERRCODE YYUNDEF
 
 
 /* Enable debugging if requested.  */
@@ -953,18 +965,18 @@ do {                                            \
 } while (0)
 
 /* This macro is provided for backward compatibility. */
-#ifndef YY_LOCATION_PRINT
-# define YY_LOCATION_PRINT(File, Loc) ((void) 0)
-#endif
+# ifndef YY_LOCATION_PRINT
+#  define YY_LOCATION_PRINT(File, Loc) ((void) 0)
+# endif
 
 
-# define YY_SYMBOL_PRINT(Title, Type, Value, Location)                    \
+# define YY_SYMBOL_PRINT(Title, Kind, Value, Location)                    \
 do {                                                                      \
   if (yydebug)                                                            \
     {                                                                     \
       YYFPRINTF (stderr, "%s ", Title);                                   \
       yy_symbol_print (stderr,                                            \
-                  Type, Value); \
+                  Kind, Value); \
       YYFPRINTF (stderr, "\n");                                           \
     }                                                                     \
 } while (0)
@@ -975,18 +987,19 @@ do {                                                                      \
 `-----------------------------------*/
 
 static void
-yy_symbol_value_print (FILE *yyo, int yytype, YYSTYPE const * const yyvaluep)
+yy_symbol_value_print (FILE *yyo,
+                       yysymbol_kind_t yykind, YYSTYPE const * const yyvaluep)
 {
   FILE *yyoutput = yyo;
   YYUSE (yyoutput);
   if (!yyvaluep)
     return;
 # ifdef YYPRINT
-  if (yytype < YYNTOKENS)
-    YYPRINT (yyo, yytoknum[yytype], *yyvaluep);
+  if (yykind < YYNTOKENS)
+    YYPRINT (yyo, yytoknum[yykind], *yyvaluep);
 # endif
   YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN
-  YYUSE (yytype);
+  YYUSE (yykind);
   YY_IGNORE_MAYBE_UNINITIALIZED_END
 }
 
@@ -996,12 +1009,13 @@ yy_symbol_value_print (FILE *yyo, int yytype, YYSTYPE const * const yyvaluep)
 `---------------------------*/
 
 static void
-yy_symbol_print (FILE *yyo, int yytype, YYSTYPE const * const yyvaluep)
+yy_symbol_print (FILE *yyo,
+                 yysymbol_kind_t yykind, YYSTYPE const * const yyvaluep)
 {
   YYFPRINTF (yyo, "%s %s (",
-             yytype < YYNTOKENS ? "token" : "nterm", yytname[yytype]);
+             yykind < YYNTOKENS ? "token" : "nterm", yysymbol_name (yykind));
 
-  yy_symbol_value_print (yyo, yytype, yyvaluep);
+  yy_symbol_value_print (yyo, yykind, yyvaluep);
   YYFPRINTF (yyo, ")");
 }
 
@@ -1034,7 +1048,8 @@ do {                                                            \
 `------------------------------------------------*/
 
 static void
-yy_reduce_print (yy_state_t *yyssp, YYSTYPE *yyvsp, int yyrule)
+yy_reduce_print (yy_state_t *yyssp, YYSTYPE *yyvsp,
+                 int yyrule)
 {
   int yylno = yyrline[yyrule];
   int yynrhs = yyr2[yyrule];
@@ -1046,9 +1061,8 @@ yy_reduce_print (yy_state_t *yyssp, YYSTYPE *yyvsp, int yyrule)
     {
       YYFPRINTF (stderr, "   $%d = ", yyi + 1);
       yy_symbol_print (stderr,
-                       yystos[+yyssp[yyi + 1 - yynrhs]],
-                       &yyvsp[(yyi + 1) - (yynrhs)]
-                                              );
+                       YY_ACCESSING_SYMBOL (+yyssp[yyi + 1 - yynrhs]),
+                       &yyvsp[(yyi + 1) - (yynrhs)]);
       YYFPRINTF (stderr, "\n");
     }
 }
@@ -1063,8 +1077,8 @@ do {                                    \
    multiple parsers can coexist.  */
 int yydebug;
 #else /* !YYDEBUG */
-# define YYDPRINTF(Args)
-# define YY_SYMBOL_PRINT(Title, Type, Value, Location)
+# define YYDPRINTF(Args) ((void) 0)
+# define YY_SYMBOL_PRINT(Title, Kind, Value, Location)
 # define YY_STACK_PRINT(Bottom, Top)
 # define YY_REDUCE_PRINT(Rule)
 #endif /* !YYDEBUG */
@@ -1087,265 +1101,38 @@ int yydebug;
 #endif
 
 
-#if YYERROR_VERBOSE
 
-# ifndef yystrlen
-#  if defined __GLIBC__ && defined _STRING_H
-#   define yystrlen(S) (YY_CAST (YYPTRDIFF_T, strlen (S)))
-#  else
-/* Return the length of YYSTR.  */
-static YYPTRDIFF_T
-yystrlen (const char *yystr)
-{
-  YYPTRDIFF_T yylen;
-  for (yylen = 0; yystr[yylen]; yylen++)
-    continue;
-  return yylen;
-}
-#  endif
-# endif
 
-# ifndef yystpcpy
-#  if defined __GLIBC__ && defined _STRING_H && defined _GNU_SOURCE
-#   define yystpcpy stpcpy
-#  else
-/* Copy YYSRC to YYDEST, returning the address of the terminating '\0' in
-   YYDEST.  */
-static char *
-yystpcpy (char *yydest, const char *yysrc)
-{
-  char *yyd = yydest;
-  const char *yys = yysrc;
 
-  while ((*yyd++ = *yys++) != '\0')
-    continue;
-
-  return yyd - 1;
-}
-#  endif
-# endif
-
-# ifndef yytnamerr
-/* Copy to YYRES the contents of YYSTR after stripping away unnecessary
-   quotes and backslashes, so that it's suitable for yyerror.  The
-   heuristic is that double-quoting is unnecessary unless the string
-   contains an apostrophe, a comma, or backslash (other than
-   backslash-backslash).  YYSTR is taken from yytname.  If YYRES is
-   null, do not copy; instead, return the length of what the result
-   would have been.  */
-static YYPTRDIFF_T
-yytnamerr (char *yyres, const char *yystr)
-{
-  if (*yystr == '"')
-    {
-      YYPTRDIFF_T yyn = 0;
-      char const *yyp = yystr;
-
-      for (;;)
-        switch (*++yyp)
-          {
-          case '\'':
-          case ',':
-            goto do_not_strip_quotes;
-
-          case '\\':
-            if (*++yyp != '\\')
-              goto do_not_strip_quotes;
-            else
-              goto append;
-
-          append:
-          default:
-            if (yyres)
-              yyres[yyn] = *yyp;
-            yyn++;
-            break;
-
-          case '"':
-            if (yyres)
-              yyres[yyn] = '\0';
-            return yyn;
-          }
-    do_not_strip_quotes: ;
-    }
-
-  if (yyres)
-    return yystpcpy (yyres, yystr) - yyres;
-  else
-    return yystrlen (yystr);
-}
-# endif
-
-/* Copy into *YYMSG, which is of size *YYMSG_ALLOC, an error message
-   about the unexpected token YYTOKEN for the state stack whose top is
-   YYSSP.
-
-   Return 0 if *YYMSG was successfully written.  Return 1 if *YYMSG is
-   not large enough to hold the message.  In that case, also set
-   *YYMSG_ALLOC to the required number of bytes.  Return 2 if the
-   required number of bytes is too large to store.  */
-static int
-yysyntax_error (YYPTRDIFF_T *yymsg_alloc, char **yymsg,
-                yy_state_t *yyssp, int yytoken)
-{
-  enum { YYERROR_VERBOSE_ARGS_MAXIMUM = 5 };
-  /* Internationalized format string. */
-  const char *yyformat = YY_NULLPTR;
-  /* Arguments of yyformat: reported tokens (one for the "unexpected",
-     one per "expected"). */
-  char const *yyarg[YYERROR_VERBOSE_ARGS_MAXIMUM];
-  /* Actual size of YYARG. */
-  int yycount = 0;
-  /* Cumulated lengths of YYARG.  */
-  YYPTRDIFF_T yysize = 0;
-
-  /* There are many possibilities here to consider:
-     - If this state is a consistent state with a default action, then
-       the only way this function was invoked is if the default action
-       is an error action.  In that case, don't check for expected
-       tokens because there are none.
-     - The only way there can be no lookahead present (in yychar) is if
-       this state is a consistent state with a default action.  Thus,
-       detecting the absence of a lookahead is sufficient to determine
-       that there is no unexpected or expected token to report.  In that
-       case, just report a simple "syntax error".
-     - Don't assume there isn't a lookahead just because this state is a
-       consistent state with a default action.  There might have been a
-       previous inconsistent state, consistent state with a non-default
-       action, or user semantic action that manipulated yychar.
-     - Of course, the expected token list depends on states to have
-       correct lookahead information, and it depends on the parser not
-       to perform extra reductions after fetching a lookahead from the
-       scanner and before detecting a syntax error.  Thus, state merging
-       (from LALR or IELR) and default reductions corrupt the expected
-       token list.  However, the list is correct for canonical LR with
-       one exception: it will still contain any token that will not be
-       accepted due to an error action in a later state.
-  */
-  if (yytoken != YYEMPTY)
-    {
-      int yyn = yypact[+*yyssp];
-      YYPTRDIFF_T yysize0 = yytnamerr (YY_NULLPTR, yytname[yytoken]);
-      yysize = yysize0;
-      yyarg[yycount++] = yytname[yytoken];
-      if (!yypact_value_is_default (yyn))
-        {
-          /* Start YYX at -YYN if negative to avoid negative indexes in
-             YYCHECK.  In other words, skip the first -YYN actions for
-             this state because they are default actions.  */
-          int yyxbegin = yyn < 0 ? -yyn : 0;
-          /* Stay within bounds of both yycheck and yytname.  */
-          int yychecklim = YYLAST - yyn + 1;
-          int yyxend = yychecklim < YYNTOKENS ? yychecklim : YYNTOKENS;
-          int yyx;
-
-          for (yyx = yyxbegin; yyx < yyxend; ++yyx)
-            if (yycheck[yyx + yyn] == yyx && yyx != YYTERROR
-                && !yytable_value_is_error (yytable[yyx + yyn]))
-              {
-                if (yycount == YYERROR_VERBOSE_ARGS_MAXIMUM)
-                  {
-                    yycount = 1;
-                    yysize = yysize0;
-                    break;
-                  }
-                yyarg[yycount++] = yytname[yyx];
-                {
-                  YYPTRDIFF_T yysize1
-                    = yysize + yytnamerr (YY_NULLPTR, yytname[yyx]);
-                  if (yysize <= yysize1 && yysize1 <= YYSTACK_ALLOC_MAXIMUM)
-                    yysize = yysize1;
-                  else
-                    return 2;
-                }
-              }
-        }
-    }
-
-  switch (yycount)
-    {
-# define YYCASE_(N, S)                      \
-      case N:                               \
-        yyformat = S;                       \
-      break
-    default: /* Avoid compiler warnings. */
-      YYCASE_(0, YY_("syntax error"));
-      YYCASE_(1, YY_("syntax error, unexpected %s"));
-      YYCASE_(2, YY_("syntax error, unexpected %s, expecting %s"));
-      YYCASE_(3, YY_("syntax error, unexpected %s, expecting %s or %s"));
-      YYCASE_(4, YY_("syntax error, unexpected %s, expecting %s or %s or %s"));
-      YYCASE_(5, YY_("syntax error, unexpected %s, expecting %s or %s or %s or %s"));
-# undef YYCASE_
-    }
-
-  {
-    /* Don't count the "%s"s in the final size, but reserve room for
-       the terminator.  */
-    YYPTRDIFF_T yysize1 = yysize + (yystrlen (yyformat) - 2 * yycount) + 1;
-    if (yysize <= yysize1 && yysize1 <= YYSTACK_ALLOC_MAXIMUM)
-      yysize = yysize1;
-    else
-      return 2;
-  }
-
-  if (*yymsg_alloc < yysize)
-    {
-      *yymsg_alloc = 2 * yysize;
-      if (! (yysize <= *yymsg_alloc
-             && *yymsg_alloc <= YYSTACK_ALLOC_MAXIMUM))
-        *yymsg_alloc = YYSTACK_ALLOC_MAXIMUM;
-      return 1;
-    }
-
-  /* Avoid sprintf, as that infringes on the user's name space.
-     Don't have undefined behavior even if the translation
-     produced a string with the wrong number of "%s"s.  */
-  {
-    char *yyp = *yymsg;
-    int yyi = 0;
-    while ((*yyp = *yyformat) != '\0')
-      if (*yyp == '%' && yyformat[1] == 's' && yyi < yycount)
-        {
-          yyp += yytnamerr (yyp, yyarg[yyi++]);
-          yyformat += 2;
-        }
-      else
-        {
-          ++yyp;
-          ++yyformat;
-        }
-  }
-  return 0;
-}
-#endif /* YYERROR_VERBOSE */
 
 /*-----------------------------------------------.
 | Release the memory associated to this symbol.  |
 `-----------------------------------------------*/
 
 static void
-yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep)
+yydestruct (const char *yymsg,
+            yysymbol_kind_t yykind, YYSTYPE *yyvaluep)
 {
   YYUSE (yyvaluep);
   if (!yymsg)
     yymsg = "Deleting";
-  YY_SYMBOL_PRINT (yymsg, yytype, yyvaluep, yylocationp);
+  YY_SYMBOL_PRINT (yymsg, yykind, yyvaluep, yylocationp);
 
   YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN
-  YYUSE (yytype);
+  YYUSE (yykind);
   YY_IGNORE_MAYBE_UNINITIALIZED_END
 }
 
 
-
-
-/* The lookahead symbol.  */
+/* Lookahead token kind.  */
 int yychar;
 
 /* The semantic value of the lookahead symbol.  */
 YYSTYPE yylval;
 /* Number of syntax errors so far.  */
 int yynerrs;
+
+
 
 
 /*----------.
@@ -1355,43 +1142,36 @@ int yynerrs;
 int
 yyparse (void)
 {
-    yy_state_fast_t yystate;
+    yy_state_fast_t yystate = 0;
     /* Number of tokens to shift before error messages enabled.  */
-    int yyerrstatus;
+    int yyerrstatus = 0;
 
-    /* The stacks and their tools:
-       'yyss': related to states.
-       'yyvs': related to semantic values.
-
-       Refer to the stacks through separate pointers, to allow yyoverflow
+    /* Refer to the stacks through separate pointers, to allow yyoverflow
        to reallocate them elsewhere.  */
 
-    /* The state stack.  */
+    /* Their size.  */
+    YYPTRDIFF_T yystacksize = YYINITDEPTH;
+
+    /* The state stack: array, bottom, top.  */
     yy_state_t yyssa[YYINITDEPTH];
-    yy_state_t *yyss;
-    yy_state_t *yyssp;
+    yy_state_t *yyss = yyssa;
+    yy_state_t *yyssp = yyss;
 
-    /* The semantic value stack.  */
+    /* The semantic value stack: array, bottom, top.  */
     YYSTYPE yyvsa[YYINITDEPTH];
-    YYSTYPE *yyvs;
-    YYSTYPE *yyvsp;
-
-    YYPTRDIFF_T yystacksize;
+    YYSTYPE *yyvs = yyvsa;
+    YYSTYPE *yyvsp = yyvs;
 
   int yyn;
+  /* The return value of yyparse.  */
   int yyresult;
-  /* Lookahead token as an internal (translated) token number.  */
-  int yytoken = 0;
+  /* Lookahead symbol kind.  */
+  yysymbol_kind_t yytoken = YYSYMBOL_YYEMPTY;
   /* The variables used to return semantic value and location from the
      action routines.  */
   YYSTYPE yyval;
 
-#if YYERROR_VERBOSE
-  /* Buffer for error messages, and its allocated size.  */
-  char yymsgbuf[128];
-  char *yymsg = yymsgbuf;
-  YYPTRDIFF_T yymsg_alloc = sizeof yymsgbuf;
-#endif
+
 
 #define YYPOPSTACK(N)   (yyvsp -= (N), yyssp -= (N))
 
@@ -1399,15 +1179,8 @@ yyparse (void)
      Keep to zero when no symbol should be popped.  */
   int yylen = 0;
 
-  yyssp = yyss = yyssa;
-  yyvsp = yyvs = yyvsa;
-  yystacksize = YYINITDEPTH;
-
   YYDPRINTF ((stderr, "Starting parse\n"));
 
-  yystate = 0;
-  yyerrstatus = 0;
-  yynerrs = 0;
   yychar = YYEMPTY; /* Cause a token to be read.  */
   goto yysetstate;
 
@@ -1430,6 +1203,7 @@ yysetstate:
   YY_IGNORE_USELESS_CAST_BEGIN
   *yyssp = YY_CAST (yy_state_t, yystate);
   YY_IGNORE_USELESS_CAST_END
+  YY_STACK_PRINT (yyss, yyssp);
 
   if (yyss + yystacksize - 1 <= yyssp)
 #if !defined yyoverflow && !defined YYSTACK_RELOCATE
@@ -1475,7 +1249,7 @@ yysetstate:
           goto yyexhaustedlab;
         YYSTACK_RELOCATE (yyss_alloc, yyss);
         YYSTACK_RELOCATE (yyvs_alloc, yyvs);
-# undef YYSTACK_RELOCATE
+#  undef YYSTACK_RELOCATE
         if (yyss1 != yyssa)
           YYSTACK_FREE (yyss1);
       }
@@ -1514,17 +1288,28 @@ yybackup:
 
   /* Not known => get a lookahead token if don't already have one.  */
 
-  /* YYCHAR is either YYEMPTY or YYEOF or a valid lookahead symbol.  */
+  /* YYCHAR is either empty, or end-of-input, or a valid lookahead.  */
   if (yychar == YYEMPTY)
     {
-      YYDPRINTF ((stderr, "Reading a token: "));
+      YYDPRINTF ((stderr, "Reading a token\n"));
       yychar = yylex ();
     }
 
   if (yychar <= YYEOF)
     {
-      yychar = yytoken = YYEOF;
+      yychar = YYEOF;
+      yytoken = YYSYMBOL_YYEOF;
       YYDPRINTF ((stderr, "Now at end of input.\n"));
+    }
+  else if (yychar == YYerror)
+    {
+      /* The scanner already issued an error message, process directly
+         to error recovery.  But do not keep the error token as
+         lookahead, it is too special and may lead us to an endless
+         loop in error recovery. */
+      yychar = YYUNDEF;
+      yytoken = YYSYMBOL_YYerror;
+      goto yyerrlab1;
     }
   else
     {
@@ -1594,403 +1379,403 @@ yyreduce:
   YY_REDUCE_PRINT (yyn);
   switch (yyn)
     {
-  case 2:
+  case 2: /* rcfile: line_list  */
                                 { CallList = (yyvsp[0]._node); }
     break;
 
-  case 3:
+  case 3: /* line_list: line  */
                                  { (yyval._node) = AddtoNodeList(NULL, (yyvsp[0]._node)); }
     break;
 
-  case 4:
+  case 4: /* line_list: line_list line  */
                                  { (yyval._node) = AddtoNodeList( (yyvsp[-1]._node) , (yyvsp[0]._node)); }
     break;
 
-  case 5:
+  case 5: /* line: immediate_line '\n'  */
                                       { (yyval._node) = NULL; }
     break;
 
-  case 6:
+  case 6: /* line: func '\n'  */
                                       { (yyval._node) = (yyvsp[-1]._node); }
     break;
 
-  case 7:
+  case 7: /* line: READ string '\n'  */
                                       { set_yy_file(FindFile((yyvsp[-1]._string), NULL)); (yyval._node) = NULL; }
     break;
 
-  case 8:
+  case 8: /* line: '\n'  */
                                       { (yyval._node) = NULL; }
     break;
 
-  case 9:
+  case 9: /* nl: '\n'  */
                           {}
     break;
 
-  case 10:
+  case 10: /* nl: nl '\n'  */
                           {}
     break;
 
-  case 11:
+  case 11: /* opt_nl: %empty  */
                                 {}
     break;
 
-  case 12:
+  case 12: /* opt_nl: nl  */
                                 {}
     break;
 
-  case 13:
+  case 13: /* immediate_line: ADDSCREEN string  */
                                                   { (yyval.imm) = ImmAddScreen((yyvsp[0]._string)); }
     break;
 
-  case 14:
+  case 14: /* immediate_line: ADDTOMENU string  */
                                                   { (yyval.imm) = MergeMenu((yyvsp[0]._string), NULL); }
     break;
 
-  case 15:
+  case 15: /* immediate_line: ADDTOMENU string menubody_list  */
                                                   { (yyval.imm) = MergeMenu((yyvsp[-1]._string),  (yyvsp[0]._node) ); }
     break;
 
-  case 16:
+  case 16: /* immediate_line: ADDTOFUNC string  */
                                                   { (yyval.imm) = MergeFunc((yyvsp[0]._string), NULL); }
     break;
 
-  case 17:
+  case 17: /* immediate_line: ADDTOFUNC string funcbody_list  */
                                                   { (yyval.imm) = MergeFunc((yyvsp[-1]._string),  (yyvsp[0]._node) ); }
     break;
 
-  case 18:
+  case 18: /* immediate_line: BACKGROUND string color  */
                                                         { (yyval.imm) = ImmBackground((yyvsp[-1]._string), (yyvsp[0].val), NULL); }
     break;
 
-  case 19:
+  case 19: /* immediate_line: BACKGROUND string color textbody_list  */
                                                         { (yyval.imm) = ImmBackground((yyvsp[-2]._string), (yyvsp[-1].val),  (yyvsp[0]._node) ); }
     break;
 
-  case 20:
+  case 20: /* immediate_line: BORDER string flag_active  */
                                                               { (yyval.imm) = ImmBorder((yyvsp[-1]._string), (yyvsp[0].val), NULL); }
     break;
 
-  case 21:
+  case 21: /* immediate_line: BORDER string flag_active textbody_list  */
                                                               { (yyval.imm) = ImmBorder((yyvsp[-2]._string), (yyvsp[-1].val),  (yyvsp[0]._node) ); }
     break;
 
-  case 22:
+  case 22: /* immediate_line: BUTTON NUMBER string flag_lr  */
                                                                    { (yyval.imm) = ImmButton((yyvsp[-2].val), (yyvsp[-1]._string), (yyvsp[0].val), '+', 0); }
     break;
 
-  case 23:
+  case 23: /* immediate_line: BUTTON NUMBER string flag_lr opt_flag NUMBER  */
                                                                    { (yyval.imm) = ImmButton((yyvsp[-4].val), (yyvsp[-3]._string), (yyvsp[-2].val), (yyvsp[-1].val), (yyvsp[0].val)); }
     break;
 
-  case 24:
+  case 24: /* immediate_line: DELETEFUNC string  */
                                        { (yyval.imm) = ImmDeleteFunc((yyvsp[0]._string)); }
     break;
 
-  case 25:
+  case 25: /* immediate_line: DELETEMENU string  */
                                        { (yyval.imm) = ImmDeleteMenu((yyvsp[0]._string)); }
     break;
 
-  case 26:
+  case 26: /* immediate_line: DELETEBUTTON NUMBER  */
                                        { (yyval.imm) = ImmDeleteButton((yyvsp[0].val)); }
     break;
 
-  case 27:
+  case 27: /* immediate_line: DELETESCREEN string  */
                                        { (yyval.imm) = ImmDeleteScreen((yyvsp[0]._string)); }
     break;
 
-  case 28:
+  case 28: /* immediate_line: GLOBALFLAGS global_list  */
                                             { (yyval.imm) = ImmGlobalFlags((yyvsp[0]._node)); }
     break;
 
-  case 29:
+  case 29: /* immediate_line: KEY opt_flag_kbd string func  */
                                                  { (yyval.imm) = BindKey  ((yyvsp[-2].val), (yyvsp[-1]._string), (yyvsp[0]._node)); }
     break;
 
-  case 30:
+  case 30: /* immediate_line: MOUSE string string func  */
                                                  { (yyval.imm) = BindMouse((yyvsp[-2]._string), (yyvsp[-1]._string), (yyvsp[0]._node)); }
     break;
 
-  case 31:
+  case 31: /* funcbody_list: '(' opt_nl _funcbody_list ')'  */
                                                 { (yyval._node) = (yyvsp[-1]._node); }
     break;
 
-  case 32:
+  case 32: /* _funcbody_list: funcbody  */
                                           { (yyval._node) = AddtoNodeList(NULL, (yyvsp[0]._node)); }
     break;
 
-  case 33:
+  case 33: /* _funcbody_list: _funcbody_list funcbody  */
                                           { (yyval._node) = AddtoNodeList( (yyvsp[-1]._node) , (yyvsp[0]._node)); }
     break;
 
-  case 34:
+  case 34: /* funcbody: func nl  */
                           { (yyval._node) = (yyvsp[-1]._node); }
     break;
 
-  case 35:
+  case 35: /* menubody_list: '(' opt_nl _menubody_list ')'  */
                                                 { (yyval._node) = (yyvsp[-1]._node); }
     break;
 
-  case 36:
+  case 36: /* _menubody_list: menubody  */
                                           { (yyval._node) = AddtoNodeList(NULL, (yyvsp[0]._node)); }
     break;
 
-  case 37:
+  case 37: /* _menubody_list: _menubody_list menubody  */
                                           { (yyval._node) = AddtoNodeList( (yyvsp[-1]._node) , (yyvsp[0]._node)); }
     break;
 
-  case 38:
+  case 38: /* menubody: string func nl  */
                                  { (yyval._node) = MakeNodeBody((yyvsp[-2]._string), (yyvsp[-1]._node), NULL); }
     break;
 
-  case 39:
+  case 39: /* textbody_list: '(' opt_nl _textbody_list ')'  */
                                                 { (yyval._node) = (yyvsp[-1]._node); }
     break;
 
-  case 40:
+  case 40: /* _textbody_list: textbody  */
                                           { (yyval._node) = AddtoNodeList(NULL, (yyvsp[0]._node)); }
     break;
 
-  case 41:
+  case 41: /* _textbody_list: _textbody_list textbody  */
                                           { (yyval._node) = AddtoNodeList( (yyvsp[-1]._node) , (yyvsp[0]._node)); }
     break;
 
-  case 42:
+  case 42: /* textbody: string nl  */
                               { (yyval._node) = MakeNode((yyvsp[-1]._string)); }
     break;
 
-  case 43:
+  case 43: /* color: NUMBER  */
                                               { (yyval.val) = (tcolor) (yyvsp[0].val); }
     break;
 
-  case 44:
+  case 44: /* color: high COLOR  */
                                               { (yyval.val) = TCOL((yyvsp[-1].val)|(yyvsp[0].val), tblack); }
     break;
 
-  case 45:
+  case 45: /* color: high COLOR FL_ON high COLOR  */
                                               { (yyval.val) = TCOL((yyvsp[-4].val)|(yyvsp[-3].val), (yyvsp[-1].val)|(yyvsp[0].val)); }
     break;
 
-  case 46:
+  case 46: /* color: FL_ON high COLOR  */
                                               { (yyval.val) = TCOL(twhite, (yyvsp[-1].val)|(yyvsp[0].val)); }
     break;
 
-  case 47:
+  case 47: /* high: %empty  */
                                 { (yyval.val) = (tcolor)0; }
     break;
 
-  case 48:
+  case 48: /* high: COL_HIGH  */
                                 { (yyval.val) = thigh; }
     break;
 
-  case 49:
+  case 49: /* global_list: global_flag  */
                                           { (yyval._node) = AddtoNodeList(NULL, (yyvsp[0]._node)); }
     break;
 
-  case 50:
+  case 50: /* global_list: global_list global_flag  */
                                           { (yyval._node) = AddtoNodeList( (yyvsp[-1]._node) , (yyvsp[0]._node)); }
     break;
 
-  case 51:
+  case 51: /* global_flag: GLOBAL_FLAG  */
                                    { (yyval._node) = MakeFlagNode((yyvsp[0].val),  0); }
     break;
 
-  case 52:
+  case 52: /* global_flag: flag GLOBAL_FLAG  */
                                    { (yyval._node) = MakeFlagNode((yyvsp[0].val), (yyvsp[-1].val)); }
     break;
 
-  case 53:
+  case 53: /* global_flag: SHADOWS NUMBER NUMBER  */
                                              { (yyval._node) = MakeShadowsNode((yyvsp[-1].val), (yyvsp[0].val)); }
     break;
 
-  case 54:
+  case 54: /* global_flag: flag SHADOWS  */
                                    { (yyval._node) = MakeFlagNode(SHADOWS, (yyvsp[-1].val)); }
     break;
 
-  case 55:
+  case 55: /* global_flag: BUTTON_PASTE NUMBER  */
                                           { (yyval._node) = MakeFlagNode(BUTTON_PASTE, (yyvsp[0].val)); }
     break;
 
-  case 56:
+  case 56: /* global_flag: BUTTON_SELECTION NUMBER  */
                                           { (yyval._node) = MakeFlagNode(BUTTON_SELECTION, (yyvsp[0].val)); }
     break;
 
-  case 57:
+  case 57: /* func: string  */
                                         { (yyval._node) = MakeUserFunc((yyvsp[0]._string)); }
     break;
 
-  case 58:
+  case 58: /* func: EASY_FUNC  */
                                         { (yyval._node) = MakeBuiltinFunc((yyvsp[0].val)); }
     break;
 
-  case 59:
+  case 59: /* func: EXEC string_list  */
                                         { (yyval._node) = MakeExec((yyvsp[0]._node)); }
     break;
 
-  case 60:
+  case 60: /* func: EXECTTY string_list  */
                                         { (yyval._node) = MakeExecTty((yyvsp[0]._node)); }
     break;
 
-  case 61:
+  case 61: /* func: FLAG_FUNC opt_flag_toggle  */
                                             { (yyval._node) = MakeFlagNode((yyvsp[-1].val), (yyvsp[0].val)); }
     break;
 
-  case 62:
+  case 62: /* func: INTERACTIVE interactive_mode  */
                                         { (yyval._node) = MakeFlagNode(INTERACTIVE, (yyvsp[0].val)); }
     break;
 
-  case 63:
+  case 63: /* func: MODULE string opt_flag_toggle  */
                                                 { (yyval._node) = MakeModuleNode((yyvsp[-1]._string), (yyvsp[0].val)); }
     break;
 
-  case 64:
+  case 64: /* func: MENU  */
                                         { (yyval._node) = MakeBuiltinFunc(MENU); }
     break;
 
-  case 65:
+  case 65: /* func: move_or_resize opt_flag NUMBER opt_flag NUMBER  */
                                         { (yyval._node) = MakeMoveResizeScroll((yyvsp[-4].val), (yyvsp[-3].val), (yyvsp[-2].val), (yyvsp[-1].val), (yyvsp[0].val)); }
     break;
 
-  case 66:
+  case 66: /* func: NEXT  */
                                         { (yyval._node) = MakeWindowNumber('+', 1); }
     break;
 
-  case 67:
+  case 67: /* func: RESTART string  */
                                         { (yyval._node) = MakeRestartWM((yyvsp[0]._string)); }
     break;
 
-  case 68:
+  case 68: /* func: PREV  */
                                         { (yyval._node) = MakeWindowNumber('-', 1); }
     break;
 
-  case 69:
+  case 69: /* func: SCROLL opt_flag NUMBER opt_flag NUMBER  */
                                                          { (yyval._node) = MakeMoveResizeScroll(SCROLL, (yyvsp[-3].val), (yyvsp[-2].val), (yyvsp[-1].val), (yyvsp[0].val)); }
     break;
 
-  case 70:
+  case 70: /* func: SENDTOSCREEN string  */
                                         { (yyval._node) = MakeSendToScreen((yyvsp[0]._string)); }
     break;
 
-  case 71:
+  case 71: /* func: SLEEP NUMBER  */
                                         { (yyval._node) = MakeSleep((yyvsp[0].val)); }
     break;
 
-  case 72:
+  case 72: /* func: STDERR string_list  */
                                         { (yyval._node) = MakeStderr((yyvsp[0]._node)); }
     break;
 
-  case 73:
+  case 73: /* func: SYNTHETICKEY opt_flag_kbd string  */
                                                     { (yyval._node) = MakeSyntheticKey((yyvsp[-1].val), (yyvsp[0]._string)); }
     break;
 
-  case 74:
+  case 74: /* func: WAIT string  */
                                         { (yyval._node) = MakeWait((yyvsp[0]._string)); }
     break;
 
-  case 75:
+  case 75: /* func: WINDOW opt_flag NUMBER  */
                                                 { (yyval._node) = MakeWindowNumber((yyvsp[-1].val), (yyvsp[0].val)); }
     break;
 
-  case 76:
+  case 76: /* func: WINDOW STRING  */
                                                 { (yyval._node) = MakeWindow((yyvsp[0]._string)); }
     break;
 
-  case 77:
+  case 77: /* string_list: string  */
                                  { (yyval._node) = AddtoStringList((node)0, (yyvsp[0]._string)); }
     break;
 
-  case 78:
+  case 78: /* string_list: string_list string  */
                                      { (yyval._node) = AddtoStringList( (yyvsp[-1]._node),  (yyvsp[0]._string)); }
     break;
 
-  case 80:
+  case 80: /* string: NUMBER  */
                          { (yyval._string) = toString((yyvsp[0].val)); }
     break;
 
-  case 81:
+  case 81: /* interactive_mode: SCROLL  */
                          { (yyval.val) = SCROLL; }
     break;
 
-  case 82:
+  case 82: /* interactive_mode: MENU  */
                          { (yyval.val) = MENU; }
     break;
 
-  case 83:
+  case 83: /* interactive_mode: MOVE  */
                          { (yyval.val) = MOVE; }
     break;
 
-  case 84:
+  case 84: /* interactive_mode: RESIZE  */
                          { (yyval.val) = RESIZE; }
     break;
 
-  case 85:
+  case 85: /* interactive_mode: SCREEN  */
                          { (yyval.val) = SCREEN; }
     break;
 
-  case 86:
+  case 86: /* move_or_resize: MOVE  */
                                 { (yyval.val) = MOVE; }
     break;
 
-  case 87:
+  case 87: /* move_or_resize: MOVESCREEN  */
                                 { (yyval.val) = MOVESCREEN; }
     break;
 
-  case 88:
+  case 88: /* move_or_resize: RESIZE  */
                                 { (yyval.val) = RESIZE; }
     break;
 
-  case 89:
+  case 89: /* move_or_resize: RESIZESCREEN  */
                                 { (yyval.val) = RESIZESCREEN; }
     break;
 
-  case 90:
+  case 90: /* opt_flag: %empty  */
                                 { (yyval.val) = 0; }
     break;
 
-  case 92:
+  case 92: /* flag: '+'  */
                                 { (yyval.val) = '+'; }
     break;
 
-  case 93:
+  case 93: /* flag: '-'  */
                                 { (yyval.val) = '-'; }
     break;
 
-  case 94:
+  case 94: /* opt_flag_kbd: %empty  */
                                 { (yyval.val) = 0; }
     break;
 
-  case 97:
+  case 97: /* flag_kbd: KBD_FLAG flag  */
                                 { (yyval.val) = (yyvsp[-1].val) | (yyvsp[0].val); }
     break;
 
-  case 98:
+  case 98: /* opt_flag_toggle: %empty  */
                                 { (yyval.val) = FL_ON; }
     break;
 
-  case 99:
+  case 99: /* opt_flag_toggle: FL_ON  */
                                 { (yyval.val) = FL_ON; }
     break;
 
-  case 100:
+  case 100: /* opt_flag_toggle: FL_OFF  */
                                 { (yyval.val) = FL_OFF; }
     break;
 
-  case 101:
+  case 101: /* opt_flag_toggle: FL_TOGGLE  */
                                 { (yyval.val) = FL_TOGGLE; }
     break;
 
-  case 102:
+  case 102: /* flag_active: FL_ACTIVE  */
                                 { (yyval.val) = FL_ACTIVE; }
     break;
 
-  case 103:
+  case 103: /* flag_active: FL_INACTIVE  */
                                 { (yyval.val) = FL_INACTIVE; }
     break;
 
-  case 104:
+  case 104: /* flag_lr: FL_LEFT  */
                                 { (yyval.val) = FL_LEFT; }
     break;
 
-  case 105:
+  case 105: /* flag_lr: FL_RIGHT  */
                                 { (yyval.val) = FL_RIGHT; }
     break;
 
@@ -2009,11 +1794,10 @@ yyreduce:
      case of YYERROR or YYBACKUP, subsequent parser actions might lead
      to an incorrect destructor call or verbose syntax error message
      before the lookahead is translated.  */
-  YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
+  YY_SYMBOL_PRINT ("-> $$ =", YY_CAST (yysymbol_kind_t, yyr1[yyn]), &yyval, &yyloc);
 
   YYPOPSTACK (yylen);
   yylen = 0;
-  YY_STACK_PRINT (yyss, yyssp);
 
   *++yyvsp = yyval;
 
@@ -2037,49 +1821,13 @@ yyreduce:
 yyerrlab:
   /* Make sure we have latest lookahead translation.  See comments at
      user semantic actions for why this is necessary.  */
-  yytoken = yychar == YYEMPTY ? YYEMPTY : YYTRANSLATE (yychar);
-
+  yytoken = yychar == YYEMPTY ? YYSYMBOL_YYEMPTY : YYTRANSLATE (yychar);
   /* If not already recovering from an error, report this error.  */
   if (!yyerrstatus)
     {
       ++yynerrs;
-#if ! YYERROR_VERBOSE
       yyerror (YY_("syntax error"));
-#else
-# define YYSYNTAX_ERROR yysyntax_error (&yymsg_alloc, &yymsg, \
-                                        yyssp, yytoken)
-      {
-        char const *yymsgp = YY_("syntax error");
-        int yysyntax_error_status;
-        yysyntax_error_status = YYSYNTAX_ERROR;
-        if (yysyntax_error_status == 0)
-          yymsgp = yymsg;
-        else if (yysyntax_error_status == 1)
-          {
-            if (yymsg != yymsgbuf)
-              YYSTACK_FREE (yymsg);
-            yymsg = YY_CAST (char *, YYSTACK_ALLOC (YY_CAST (YYSIZE_T, yymsg_alloc)));
-            if (!yymsg)
-              {
-                yymsg = yymsgbuf;
-                yymsg_alloc = sizeof yymsgbuf;
-                yysyntax_error_status = 2;
-              }
-            else
-              {
-                yysyntax_error_status = YYSYNTAX_ERROR;
-                yymsgp = yymsg;
-              }
-          }
-        yyerror (yymsgp);
-        if (yysyntax_error_status == 2)
-          goto yyexhaustedlab;
-      }
-# undef YYSYNTAX_ERROR
-#endif
     }
-
-
 
   if (yyerrstatus == 3)
     {
@@ -2129,13 +1877,14 @@ yyerrorlab:
 yyerrlab1:
   yyerrstatus = 3;      /* Each real token shifted decrements this.  */
 
+  /* Pop stack until we find a state that shifts the error token.  */
   for (;;)
     {
       yyn = yypact[yystate];
       if (!yypact_value_is_default (yyn))
         {
-          yyn += YYTERROR;
-          if (0 <= yyn && yyn <= YYLAST && yycheck[yyn] == YYTERROR)
+          yyn += YYSYMBOL_YYerror;
+          if (0 <= yyn && yyn <= YYLAST && yycheck[yyn] == YYSYMBOL_YYerror)
             {
               yyn = yytable[yyn];
               if (0 < yyn)
@@ -2149,7 +1898,7 @@ yyerrlab1:
 
 
       yydestruct ("Error: popping",
-                  yystos[yystate], yyvsp);
+                  YY_ACCESSING_SYMBOL (yystate), yyvsp);
       YYPOPSTACK (1);
       yystate = *yyssp;
       YY_STACK_PRINT (yyss, yyssp);
@@ -2161,7 +1910,7 @@ yyerrlab1:
 
 
   /* Shift the error token.  */
-  YY_SYMBOL_PRINT ("Shifting", yystos[yyn], yyvsp, yylsp);
+  YY_SYMBOL_PRINT ("Shifting", YY_ACCESSING_SYMBOL (yyn), yyvsp, yylsp);
 
   yystate = yyn;
   goto yynewstate;
@@ -2183,20 +1932,20 @@ yyabortlab:
   goto yyreturn;
 
 
-#if !defined yyoverflow || YYERROR_VERBOSE
+#if !defined yyoverflow
 /*-------------------------------------------------.
 | yyexhaustedlab -- memory exhaustion comes here.  |
 `-------------------------------------------------*/
 yyexhaustedlab:
   yyerror (YY_("memory exhausted"));
   yyresult = 2;
-  /* Fall through.  */
+  goto yyreturn;
 #endif
 
 
-/*-----------------------------------------------------.
-| yyreturn -- parsing is finished, return the result.  |
-`-----------------------------------------------------*/
+/*-------------------------------------------------------.
+| yyreturn -- parsing is finished, clean up and return.  |
+`-------------------------------------------------------*/
 yyreturn:
   if (yychar != YYEMPTY)
     {
@@ -2213,19 +1962,17 @@ yyreturn:
   while (yyssp != yyss)
     {
       yydestruct ("Cleanup: popping",
-                  yystos[+*yyssp], yyvsp);
+                  YY_ACCESSING_SYMBOL (+*yyssp), yyvsp);
       YYPOPSTACK (1);
     }
 #ifndef yyoverflow
   if (yyss != yyssa)
     YYSTACK_FREE (yyss);
 #endif
-#if YYERROR_VERBOSE
-  if (yymsg != yymsgbuf)
-    YYSTACK_FREE (yymsg);
-#endif
+
   return yyresult;
 }
+
 
 
 #ifdef DEBUG_YACC
