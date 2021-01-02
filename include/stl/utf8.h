@@ -26,6 +26,7 @@ private:
   static trune to_rune(seq x);
   static size_t to_size(seq x);
   static seq to_utf8(trune rune);
+  static bool less(seq x, seq y);
 
   explicit Utf8(seq x) {
     u.val = x.val;
@@ -74,7 +75,10 @@ public:
     return u.val == other.u.val;
   }
 
-  bool operator<(const Utf8 &other) const;
+  bool operator<(const Utf8 &other) const {
+     return less(u, other.u);
+  }
+
 };
 
 #endif /* TWIN_STL_UTF8_H */

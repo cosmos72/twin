@@ -129,6 +129,6 @@ bool Utf8::valid(seq x) {
   return x.val == y.val;
 }
 
-bool Utf8::operator<(const Utf8 &other) const {
-  return htonl(u.val) < htonl(other.u.val);
+bool Utf8::less(seq x, seq y) {
+  return htonl(x.val) < htonl(y.val);
 }
