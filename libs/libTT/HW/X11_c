@@ -325,7 +325,7 @@ static Tutf_function X11_UTF_16_to_charset_function(TT_CONST ttbyte *charset) {
 
     if (i == (ttuint)-1) {
 	/*
-	printk("      X11_InitHW(): libTutf warning: unknown charset `%."TTSB"s', assuming `CP437'\n", charset);
+	printk("      X11_InitHW(): libtutf warning: unknown charset `%."TTSB"s', assuming `CP437'\n", charset);
 	 */
 	return Tutf_UTF_16_to_CP437;
     }

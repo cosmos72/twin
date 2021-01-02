@@ -97,7 +97,7 @@ fi
 
 echo_libs=
 if test "$enable__unicode" != n; then
-  echo_libs="$echo_libs $echo_op""libTutf""$echo_cl"
+  echo_libs="$echo_libs $echo_op""libtutf""$echo_cl"
 fi
 if test "$enable_socket" != n; then
   echo_libs="$echo_libs $echo_op""libtw""$echo_cl"

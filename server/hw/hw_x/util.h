@@ -456,7 +456,7 @@ static Tutf_function X11_UTF_32_to_charset_function(const char *charset) {
   }
 
   if (i == (uldat)-1) {
-    printk("      X11_InitHW(): libTutf warning: unknown charset `" SS "', assuming `CP437'\n",
+    printk("      X11_InitHW(): libtutf warning: unknown charset `" SS "', assuming `CP437'\n",
            charset);
     return Tutf_UTF_32_to_CP437;
   }

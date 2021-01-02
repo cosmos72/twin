@@ -107,8 +107,8 @@ static ttfont X11_UTF_16_to_UTF_16(ttfont c) {
 static ttcol _col;
 
 #define XDRAW(col, buf, buflen)                                                                    \
-  if (xsgc.foreground != xcol[TCOLFG(col)])                                                         \
-    XSetForeground(dpy, xgc, xsgc.foreground = xcol[TCOLFG(col)]);                                  \
+  if (xsgc.foreground != xcol[TCOLFG(col)])                                                        \
+    XSetForeground(dpy, xgc, xsgc.foreground = xcol[TCOLFG(col)]);                                 \
   if (xsgc.background != xcol[TCOLBG(col)])                                                        \
     XSetBackground(dpy, xgc, xsgc.background = xcol[TCOLBG(col)]);                                 \
   XDrawImageString16(dpy, w, xgc, xbegin, ybegin + xupfont, buf, buflen)
@@ -346,7 +346,7 @@ static Tutf_function X11_UTF_16_to_charset_function(TT_CONST ttbyte *charset) {
 
   if (i == (ttuint)-1) {
     /*
-    printk("      X11_InitHW(): libTutf warning: unknown charset %."TTSB"s, assuming CP437\n",
+    printk("      X11_InitHW(): libtutf warning: unknown charset %."TTSB"s, assuming CP437\n",
     charset);
      */
     return Tutf_UTF_16_to_CP437;

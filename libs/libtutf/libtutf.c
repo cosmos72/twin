@@ -1,6 +1,6 @@
 
 /*
- *   libTutf.c -- Unicode <-> charset conversion routines
+ *   libtutf.c -- Unicode <-> charset conversion routines
  *
  *  Copyright (C) 2001,2018 by Massimiliano Ghilardi
  *
@@ -282,58 +282,56 @@
 #undef TEMPLATE_REDEFINES_ASCII
 #undef TEMPLATE
 
-#define _NLIST(EL)                                                                                   \
-  EL(T_MAP(ASCII))                                                                                   \
-  EL(T_MAP(ISO8859_1))                                                                               \
-  EL(T_MAP(ISO8859_2))                                                                               \
-  EL(T_MAP(ISO8859_3)) EL(T_MAP(ISO8859_4)) EL(T_MAP(ISO8859_5)) EL(T_MAP(ISO8859_6)) EL(            \
-      T_MAP(ISO8859_7)) EL(T_MAP(ISO8859_8)) EL(T_MAP(ISO8859_9)) EL(T_MAP(ISO8859_10))              \
-      EL(T_MAP(ISO8859_11)) EL(T_MAP(ISO8859_13)) EL(T_MAP(ISO8859_14)) EL(T_MAP(ISO8859_15)) EL(    \
-          T_MAP(ISO8859_16))                                                                         \
-                                                                                                     \
-          EL(T_MAP(CP424)) EL(T_MAP(CP437)) EL(T_MAP(CP737)) EL(T_MAP(CP775)) EL(T_MAP(CP850)) EL(   \
-              T_MAP(CP852)) EL(T_MAP(CP855)) EL(T_MAP(CP856)) EL(T_MAP(CP857)) EL(T_MAP(CP860))      \
-              EL(T_MAP(CP861)) EL(T_MAP(CP862)) EL(T_MAP(CP863)) EL(T_MAP(CP864)) EL(T_MAP(CP865))   \
-                  EL(T_MAP(CP866)) EL(T_MAP(CP869)) EL(T_MAP(CP874)) EL(T_MAP(CP932))                \
-                      EL(T_MAP(CP936)) EL(T_MAP(CP949)) EL(T_MAP(CP950)) EL(T_MAP(CP1006)) EL(       \
-                          T_MAP(CP1250)) EL(T_MAP(CP1251)) EL(T_MAP(CP1252)) EL(T_MAP(CP1253))       \
-                          EL(T_MAP(CP1254)) EL(T_MAP(CP1255)) EL(T_MAP(CP1256)) EL(                  \
-                              T_MAP(CP1257)) EL(T_MAP(CP1258))                                       \
-                                                                                                     \
-                              EL(                                                                    \
-                                  T_MAP(ADOBE_STDENC)) EL(T_MAP(ADOBE_SYMBOL))                       \
-                                                                                                     \
-                                  EL(T_MAP(MAC_ARABIC)) EL(T_MAP(MAC_CELTIC))                        \
-                                      EL(T_MAP(MAC_CENTRALEUROPE)) EL(T_MAP(MAC_CROATIAN)) EL(       \
-                                          T_MAP(MAC_CYRILLIC))                                       \
-                                          EL(T_MAP(MAC_DEVANAGARI)) EL(T_MAP(MAC_DINGBATS)) EL(      \
-                                              T_MAP(MAC_FARSI)) EL(T_MAP(MAC_GAELIC))                \
-                                              EL(T_MAP(MAC_GREEK)) EL(T_MAP(MAC_GUJARATI)) EL(       \
-                                                  T_MAP(MAC_GURMUKHI)) EL(T_MAP(MAC_HEBREW))         \
-                                                  EL(T_MAP(MAC_ICELANDIC)) EL(T_MAP(MAC_INUIT)) EL(  \
-                                                      T_MAP(MAC_ROMAN)) EL(T_MAP(MAC_ROMANIAN))      \
-                                                      EL(T_MAP(MAC_SYMBOL)) EL(                      \
-                                                          T_MAP(MAC_THAI)) EL(T_MAP(MAC_TURKISH))    \
-                                                                                                     \
-                                                          EL(T_MAP(MS_MAC_CYRILLIC)) EL(             \
-                                                              T_MAP(MS_MAC_GREEK))                   \
-                                                              EL(T_MAP(MS_MAC_ICELANDIC)) EL(        \
-                                                                  T_MAP(MS_MAC_LATIN2))              \
-                                                                  EL(T_MAP(MS_MAC_ROMAN)) EL(        \
-                                                                      T_MAP(MS_MAC_TURKISH))         \
-                                                                                                     \
-                                                                      EL(T_MAP(APL_ISO_IR_68)) EL(   \
-                                                                          T_MAP(ATARIST))            \
-                                                                          EL(T_MAP(JISX0201)) EL(    \
-                                                                              T_MAP(HP_ROMAN8))      \
-                                                                              EL(T_MAP(KOI8_R)) EL(  \
-                                                                                  T_MAP(KOI8_U))     \
-                                                                                  EL(T_MAP(          \
-                                                                                      KZ1048))       \
-                                                                                      EL(T_MAP(      \
-                                                                                          NEXTSTEP)) \
-                                                                                          EL(T_MAP(  \
-                                                                                              VT100GR))
+#define _NLIST(EL)                                                                                  \
+  EL(T_MAP(ASCII))                                                                                  \
+  EL(T_MAP(ISO8859_1))                                                                              \
+  EL(T_MAP(ISO8859_2))                                                                              \
+  EL(T_MAP(ISO8859_3))                                                                              \
+  EL(T_MAP(ISO8859_4)) EL(T_MAP(ISO8859_5)) EL(T_MAP(ISO8859_6)) EL(T_MAP(ISO8859_7))               \
+      EL(T_MAP(ISO8859_8)) EL(T_MAP(ISO8859_9)) EL(T_MAP(ISO8859_10)) EL(T_MAP(ISO8859_11)) EL(     \
+          T_MAP(ISO8859_13)) EL(T_MAP(ISO8859_14)) EL(T_MAP(ISO8859_15)) EL(T_MAP(ISO8859_16))      \
+                                                                                                    \
+          EL(T_MAP(CP424)) EL(T_MAP(CP437)) EL(T_MAP(CP737)) EL(T_MAP(CP775)) EL(T_MAP(CP850)) EL(  \
+              T_MAP(CP852)) EL(T_MAP(CP855)) EL(T_MAP(CP856)) EL(T_MAP(CP857)) EL(T_MAP(CP860))     \
+              EL(T_MAP(CP861)) EL(T_MAP(CP862)) EL(T_MAP(CP863)) EL(T_MAP(CP864)) EL(               \
+                  T_MAP(CP865)) EL(T_MAP(CP866)) EL(T_MAP(CP869)) EL(T_MAP(CP874))                  \
+                  EL(T_MAP(CP932)) EL(T_MAP(CP936)) EL(T_MAP(CP949)) EL(T_MAP(CP950)) EL(           \
+                      T_MAP(CP1006)) EL(T_MAP(CP1250)) EL(T_MAP(CP1251)) EL(T_MAP(CP1252))          \
+                      EL(T_MAP(CP1253)) EL(T_MAP(CP1254)) EL(T_MAP(CP1255)) EL(T_MAP(CP1256)) EL(   \
+                          T_MAP(CP1257)) EL(T_MAP(CP1258))                                          \
+                                                                                                    \
+                          EL(                                                                       \
+                              T_MAP(ADOBE_STDENC)) EL(T_MAP(ADOBE_SYMBOL))                          \
+                                                                                                    \
+                              EL(T_MAP(MAC_ARABIC)) EL(T_MAP(MAC_CELTIC))                           \
+                                  EL(T_MAP(MAC_CENTRALEUROPE)) EL(T_MAP(MAC_CROATIAN)) EL(          \
+                                      T_MAP(MAC_CYRILLIC))                                          \
+                                      EL(T_MAP(MAC_DEVANAGARI)) EL(T_MAP(MAC_DINGBATS)) EL(         \
+                                          T_MAP(MAC_FARSI)) EL(T_MAP(MAC_GAELIC))                   \
+                                          EL(T_MAP(MAC_GREEK)) EL(T_MAP(MAC_GUJARATI)) EL(          \
+                                              T_MAP(MAC_GURMUKHI)) EL(T_MAP(MAC_HEBREW))            \
+                                              EL(T_MAP(MAC_ICELANDIC)) EL(T_MAP(MAC_INUIT)) EL(     \
+                                                  T_MAP(MAC_ROMAN)) EL(T_MAP(MAC_ROMANIAN))         \
+                                                  EL(T_MAP(MAC_SYMBOL)) EL(T_MAP(MAC_THAI)) EL(     \
+                                                      T_MAP(MAC_TURKISH))                           \
+                                                                                                    \
+                                                      EL(T_MAP(MS_MAC_CYRILLIC)) EL(                \
+                                                          T_MAP(MS_MAC_GREEK))                      \
+                                                          EL(T_MAP(MS_MAC_ICELANDIC)) EL(           \
+                                                              T_MAP(MS_MAC_LATIN2))                 \
+                                                              EL(T_MAP(MS_MAC_ROMAN)) EL(           \
+                                                                  T_MAP(MS_MAC_TURKISH))            \
+                                                                                                    \
+                                                                  EL(T_MAP(APL_ISO_IR_68)) EL(      \
+                                                                      T_MAP(ATARIST))               \
+                                                                      EL(T_MAP(JISX0201)) EL(       \
+                                                                          T_MAP(HP_ROMAN8))         \
+                                                                          EL(T_MAP(KOI8_R)) EL(     \
+                                                                              T_MAP(KOI8_U))        \
+                                                                              EL(T_MAP(KZ1048)) EL( \
+                                                                                  T_MAP(NEXTSTEP))  \
+                                                                                  EL(T_MAP(         \
+                                                                                      VT100GR))
 
 #define _LIST(EL) EL(T_MAP(UTF_32)) _NLIST(EL)
 

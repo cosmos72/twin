@@ -445,7 +445,7 @@ static byte tty_InitHW(void) {
   if (charset) {
     /* honor user-specified charset */
     if ((tty_charset = Tutf_charset_id(charset)) == (uldat)-1)
-      printk("      tty_InitHW(): libTutf warning: unknown charset `" SS "', assuming `ASCII'\n",
+      printk("      tty_InitHW(): libtutf warning: unknown charset `" SS "', assuming `ASCII'\n",
              charset);
     else if (tty_charset == Tutf_charset_id(T_NAME(UTF_32))) {
       printk("      tty_InitHW(): charset `" SS "' is Unicode, assuming terminal supports UTF-8\n",

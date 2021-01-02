@@ -88,7 +88,7 @@ ldconfig
 %doc docs/Compatibility docs/libTT-design.txt docs/Philosophy
 %doc COPYING COPYING.LIB Changelog.txt README BUGS INSTALL README.porting
 %doc twin-current.lsm
-%{_libdir}/libTutf.so.*
+%{_libdir}/libtutf.so.*
 %{_libdir}/libtw.so.*
 %{_libdir}/twin
 %{_datadir}/twin
@@ -103,8 +103,8 @@ ldconfig
 %defattr(-, root, root)
 %{_includedir}/Tutf
 %{_includedir}/Tw
-%{_libdir}/libTutf.a
-%{_libdir}/libTutf.so
+%{_libdir}/libtutf.a
+%{_libdir}/libtutf.so
 %{_libdir}/libtw.a
 %{_libdir}/libtw.so
 

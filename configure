@@ -22255,9 +22255,9 @@ if test "$enable_socket_gz" = yes; then
   LIBZ="`echo \"$ac_cv_search_deflate\"        | $SED -e 's/^none required$//g' -e 's/^no$//g'`"
 
 fi
-LIBSTL='$(top_builddir)/libs/libTutf/libstl.a'
+LIBSTL='$(top_builddir)/libs/libtutf/libstl.a'
 
-LIBTUTF='$(top_builddir)/libs/libTutf/libTutf.la'
+LIBTUTF='$(top_builddir)/libs/libtutf/libtutf.la'
 
 LIBTW='$(top_builddir)/libs/libtw/libtw.la'
 
@@ -22342,7 +22342,7 @@ CXXFLAGS="$custom_CXXFLAGS"
 LDFLAGS_BIN_EXPORT_DYNAMIC="$LDFLAGS_BIN_EXPORT_DYNAMIC"
 
 
-ac_config_files="$ac_config_files Makefile clients/Makefile clients/mapscrn/Makefile contrib/Makefile contrib/twcd/Makefile docs/Makefile include/Makefile include/Tutf/Makefile include/Tw/Makefile include/version.h include/Tutf/version.h include/Tw/version.h libs/Makefile libs/libltdl/Makefile libs/libstl/Makefile libs/libTutf/Makefile libs/libtw/Makefile server/Makefile server/hw/Makefile test/Makefile"
+ac_config_files="$ac_config_files Makefile clients/Makefile clients/mapscrn/Makefile contrib/Makefile contrib/twcd/Makefile docs/Makefile include/Makefile include/Tutf/Makefile include/Tw/Makefile include/version.h include/Tutf/version.h include/Tw/version.h libs/Makefile libs/libltdl/Makefile libs/libstl/Makefile libs/libtutf/Makefile libs/libtw/Makefile server/Makefile server/hw/Makefile test/Makefile"
 
 
 cat >confcache <<\_ACEOF
@@ -23547,7 +23547,7 @@ do
     "libs/Makefile") CONFIG_FILES="$CONFIG_FILES libs/Makefile" ;;
     "libs/libltdl/Makefile") CONFIG_FILES="$CONFIG_FILES libs/libltdl/Makefile" ;;
     "libs/libstl/Makefile") CONFIG_FILES="$CONFIG_FILES libs/libstl/Makefile" ;;
-    "libs/libTutf/Makefile") CONFIG_FILES="$CONFIG_FILES libs/libTutf/Makefile" ;;
+    "libs/libtutf/Makefile") CONFIG_FILES="$CONFIG_FILES libs/libtutf/Makefile" ;;
     "libs/libtw/Makefile") CONFIG_FILES="$CONFIG_FILES libs/libtw/Makefile" ;;
     "server/Makefile") CONFIG_FILES="$CONFIG_FILES server/Makefile" ;;
     "server/hw/Makefile") CONFIG_FILES="$CONFIG_FILES server/hw/Makefile" ;;

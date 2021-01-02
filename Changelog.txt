@@ -128,7 +128,7 @@ From 0.4.5 to 0.4.6: (Massimiliano Ghilardi, 26 Mar 2003)
 	* Updated scripts and binaries to invoke programs with
 	  double hyphens long options like `--help'
 	* Added utf8 support to Linux console HW driver
-	* Added more charsets to libTutf.
+	* Added more charsets to libtutf.
 
 
 From 0.4.4 to 0.4.5: (Massimiliano Ghilardi, 25 Oct 2002)
@@ -188,7 +188,7 @@ From 0.4.3 to 0.4.4: (Massimiliano Ghilardi, 06 Jul 2002)
 	  (if your system has vsnprintf(), everything is already safe
 	  and this is not necessary).
 	* Added lt_dlopen() support for runtime module loading (unfinished).
-	* Added more charsets to libTutf.
+	* Added more charsets to libtutf.
 	* Added `-twin@<dpy>' option to twsendmsg.
 	* Added more options to `-hw=tty': `,mouse={xterm|twterm}' and `,utf8'.
 	  Also renamed option `,xterm' to `,mouse=xterm'
@@ -375,7 +375,7 @@ From 0.3.10 to 0.4.0: (Massimiliano Ghilardi, 31 Aug 2001)
 	* Fixed server-side bug causing missing fields on twlsobj for non-i386
 	  architectures.
 	* Fixed broken user charset translation (ESC(K ) in terminals
-	  and a few related bugs in libTutf translation routines.
+	  and a few related bugs in libtutf translation routines.
 	  This should fix problems with cyrillic and other charsets.
 	* Added utf-8 support to tty emulator and to tty display driver
 	  to properly handle unicode.
@@ -411,7 +411,7 @@ From 0.3.9 to 0.3.10: (Massimiliano Ghilardi, 31 Jul 2001)
 
 From 0.3.8 to 0.3.9: (Massimiliano Ghilardi, 25 Jun 2001)
 	* Added Unicode support.
-	* New libTutf library to convert between Unicode and other charsets.
+	* New libtutf library to convert between Unicode and other charsets.
 	* Added `charset=' option to -hw=X11 and -hw=tty.
 	* Bumped libtw major version to 3 due to the following changes:
 	  * Added prototype checking to Tw_FindFunction.

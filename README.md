@@ -33,7 +33,7 @@ Documentation
 	License: twin server and clients are GPL'ed software.
 
 [COPYING.LIB](COPYING.LIB)
-	Library license: the libraries libTutf, libtw, libTT
+	Library license: the libraries libtutf, libtw, libTT
 	are LGPL'ed software.
 
 [INSTALL](INSTALL)

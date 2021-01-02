@@ -88,7 +88,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-subdir = libs/libTutf
+subdir = libs/libtutf
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/libtool.m4 \
 	$(top_srcdir)/m4/ltargz.m4 $(top_srcdir)/m4/ltdl.m4 \
@@ -135,16 +135,16 @@ am__uninstall_files_from_dir = { \
   }
 am__installdirs = "$(DESTDIR)$(libdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
-libTutf_la_LIBADD =
-am_libTutf_la_OBJECTS = libTutf.lo
-libTutf_la_OBJECTS = $(am_libTutf_la_OBJECTS)
+libtutf_la_LIBADD =
+am_libtutf_la_OBJECTS = libtutf.lo
+libtutf_la_OBJECTS = $(am_libtutf_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
-libTutf_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+libtutf_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
-	$(libTutf_la_LDFLAGS) $(LDFLAGS) -o $@
+	$(libtutf_la_LDFLAGS) $(LDFLAGS) -o $@
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -160,7 +160,7 @@ am__v_at_1 =
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)/include
 depcomp = $(SHELL) $(top_srcdir)/admin/depcomp
 am__maybe_remake_depfiles = depfiles
-am__depfiles_remade = ./$(DEPDIR)/libTutf.Plo
+am__depfiles_remade = ./$(DEPDIR)/libtutf.Plo
 am__mv = mv -f
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
@@ -180,8 +180,8 @@ AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
-SOURCES = $(libTutf_la_SOURCES)
-DIST_SOURCES = $(libTutf_la_SOURCES)
+SOURCES = $(libtutf_la_SOURCES)
+DIST_SOURCES = $(libtutf_la_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -377,9 +377,9 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-lib_LTLIBRARIES = libTutf.la
-libTutf_la_SOURCES = libTutf.c
-libTutf_la_LDFLAGS = -version-info 1:0:0 -no-undefined
+lib_LTLIBRARIES = libtutf.la
+libtutf_la_SOURCES = libtutf.c
+libtutf_la_LDFLAGS = -version-info 1:0:0 -no-undefined
 AM_CPPFLAGS = -I$(top_srcdir)/include
 all: all-am
 
@@ -394,9 +394,9 @@ $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__confi
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign libs/libTutf/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign libs/libtutf/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign libs/libTutf/Makefile
+	  $(AUTOMAKE) --foreign libs/libtutf/Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
 	  *config.status*) \
@@ -450,8 +450,8 @@ clean-libLTLIBRARIES:
 	  rm -f $${locs}; \
 	}
 
-libTutf.la: $(libTutf_la_OBJECTS) $(libTutf_la_DEPENDENCIES) $(EXTRA_libTutf_la_DEPENDENCIES) 
-	$(AM_V_CCLD)$(libTutf_la_LINK) -rpath $(libdir) $(libTutf_la_OBJECTS) $(libTutf_la_LIBADD) $(LIBS)
+libtutf.la: $(libtutf_la_OBJECTS) $(libtutf_la_DEPENDENCIES) $(EXTRA_libtutf_la_DEPENDENCIES) 
+	$(AM_V_CCLD)$(libtutf_la_LINK) -rpath $(libdir) $(libtutf_la_OBJECTS) $(libtutf_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -459,7 +459,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libTutf.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libtutf.Plo@am__quote@ # am--include-marker
 
 $(am__depfiles_remade):
 	@$(MKDIR_P) $(@D)
@@ -625,7 +625,7 @@ clean-am: clean-generic clean-libLTLIBRARIES clean-libtool \
 	mostlyclean-am
 
 distclean: distclean-am
-		-rm -f ./$(DEPDIR)/libTutf.Plo
+		-rm -f ./$(DEPDIR)/libtutf.Plo
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags
@@ -671,7 +671,7 @@ install-ps-am:
 installcheck-am:
 
 maintainer-clean: maintainer-clean-am
-		-rm -f ./$(DEPDIR)/libTutf.Plo
+		-rm -f ./$(DEPDIR)/libtutf.Plo
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 
