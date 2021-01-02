@@ -88,7 +88,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-noinst_PROGRAMS = stl_test$(EXEEXT)
+noinst_PROGRAMS = twtest$(EXEEXT)
 subdir = test
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/libtool.m4 \
@@ -108,9 +108,9 @@ CONFIG_HEADER = $(top_builddir)/include/config.h
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 PROGRAMS = $(noinst_PROGRAMS)
-am_stl_test_OBJECTS = test_array.$(OBJEXT)
-stl_test_OBJECTS = $(am_stl_test_OBJECTS)
-stl_test_DEPENDENCIES = $(LIBSTL)
+am_twtest_OBJECTS = test_stl_vector.$(OBJEXT) test_main.$(OBJEXT)
+twtest_OBJECTS = $(am_twtest_OBJECTS)
+twtest_DEPENDENCIES = $(LIBSTL)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
@@ -130,7 +130,8 @@ am__v_at_1 =
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)/include
 depcomp = $(SHELL) $(top_srcdir)/admin/depcomp
 am__maybe_remake_depfiles = depfiles
-am__depfiles_remade = ./$(DEPDIR)/test_array.Po
+am__depfiles_remade = ./$(DEPDIR)/test_main.Po \
+	./$(DEPDIR)/test_stl_vector.Po
 am__mv = mv -f
 CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
@@ -150,8 +151,8 @@ AM_V_CXXLD = $(am__v_CXXLD_@AM_V@)
 am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
 am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
-SOURCES = $(stl_test_SOURCES)
-DIST_SOURCES = $(stl_test_SOURCES)
+SOURCES = $(twtest_SOURCES)
+DIST_SOURCES = $(twtest_SOURCES)
 RECURSIVE_TARGETS = all-recursive check-recursive cscopelist-recursive \
 	ctags-recursive dvi-recursive html-recursive info-recursive \
 	install-data-recursive install-dvi-recursive \
@@ -391,8 +392,8 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 SUBDIRS = 
 AM_CPPFLAGS = -I$(top_srcdir)/include
-stl_test_SOURCES = test_array.cpp
-stl_test_LDADD = $(LIBSTL)
+twtest_SOURCES = test_stl_vector.cpp test_main.cpp
+twtest_LDADD = $(LIBSTL)
 all: all-recursive
 
 .SUFFIXES:
@@ -436,9 +437,9 @@ clean-noinstPROGRAMS:
 	echo " rm -f" $$list; \
 	rm -f $$list
 
-stl_test$(EXEEXT): $(stl_test_OBJECTS) $(stl_test_DEPENDENCIES) $(EXTRA_stl_test_DEPENDENCIES) 
-	@rm -f stl_test$(EXEEXT)
-	$(AM_V_CXXLD)$(CXXLINK) $(stl_test_OBJECTS) $(stl_test_LDADD) $(LIBS)
+twtest$(EXEEXT): $(twtest_OBJECTS) $(twtest_DEPENDENCIES) $(EXTRA_twtest_DEPENDENCIES) 
+	@rm -f twtest$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(twtest_OBJECTS) $(twtest_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -446,7 +447,8 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_array.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_main.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_stl_vector.Po@am__quote@ # am--include-marker
 
 $(am__depfiles_remade):
 	@$(MKDIR_P) $(@D)
@@ -682,7 +684,8 @@ clean-am: clean-generic clean-libtool clean-noinstPROGRAMS \
 	mostlyclean-am
 
 distclean: distclean-recursive
-		-rm -f ./$(DEPDIR)/test_array.Po
+		-rm -f ./$(DEPDIR)/test_main.Po
+	-rm -f ./$(DEPDIR)/test_stl_vector.Po
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags
@@ -728,7 +731,8 @@ install-ps-am:
 installcheck-am:
 
 maintainer-clean: maintainer-clean-recursive
-		-rm -f ./$(DEPDIR)/test_array.Po
+		-rm -f ./$(DEPDIR)/test_main.Po
+	-rm -f ./$(DEPDIR)/test_stl_vector.Po
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 

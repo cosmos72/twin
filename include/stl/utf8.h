@@ -12,15 +12,15 @@
 #include <Tw/datatypes.h> /* trune */
 #include <Tw/datasizes.h> /* TW_IS_LITTLE_ENDIAN */
 
-class utf8 {
+class Utf8 {
 private:
-  union u4 {
-     char b[4];
-     uint32_t val;
+  union u32 {
+    char b[4];
+    uint32_t val;
   } u;
 
 public:
-  explicit utf8(trune rune);
+  explicit Utf8(trune rune);
 
   trune rune() const;
 

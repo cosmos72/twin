@@ -38,14 +38,14 @@ public:
   Span(T *addr, size_t n) : Base(addr, n) {
   }
 
-  Span(Array<T> &other) : Base(other) {
+  Span(Vector<T> &other) : Base(other) {
   }
 
   // Span(const Span&) = default;
   // ~Span() = default;
   // operator=(const Span&) = default;
 
-  Span &operator=(Array<T> &other) {
+  Span &operator=(Vector<T> &other) {
     ref(other);
     return *this;
   }
@@ -74,7 +74,7 @@ public:
     data_ = other.data_;
     size_ = other.size_;
   }
-  void ref(Array<T> &other);
+  void ref(Vector<T> &other);
 
   using Base::begin;
   T *begin() {

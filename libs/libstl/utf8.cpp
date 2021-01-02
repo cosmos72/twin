@@ -8,11 +8,10 @@
  */
 #include "stl/utf8.h"
 
-
-utf8::utf8(trune rune) {
+Utf8::Utf8(trune rune) {
   // encode replacement character 0xFFFD
-  const u4 replacement = { "\xED\xBF\xBF" };
-  u4 x = { };
+  const u32 replacement = {"\xED\xBF\xBF"};
+  u32 x = {};
   if (rune <= 0x7F) {
     x.b[0] = (char)rune;
   } else if (rune <= 0x07FF) {
@@ -37,31 +36,26 @@ utf8::utf8(trune rune) {
   u.val = x.val;
 }
 
-trune utf8::rune() const {
+trune Utf8::rune() const {
   trune rune;
-  u4 x;
+  u32 x;
   x.val = u.val;
   if (x.b[1] == 0) {
     rune = x.b[0];
   } else if (x.b[2] == 0) {
-    rune = ((trune)(x.b[0] & 0x1F) << 6) |
-       (x.b[1] & 0x3F);
+    rune = ((trune)(x.b[0] & 0x1F) << 6) | (x.b[1] & 0x3F);
   } else if (x.b[3] == 0) {
-    rune = ((trune)(x.b[0] & 0xF) << 12) |
-       ((trune)(x.b[1] & 0x3F) << 6) |
-       (x.b[2] & 0x3F);
+    rune = ((trune)(x.b[0] & 0xF) << 12) | ((trune)(x.b[1] & 0x3F) << 6) | (x.b[2] & 0x3F);
   } else {
-    rune = ((trune)(x.b[0] & 0x7) << 18) |
-       ((trune)(x.b[1] & 0x3F) << 12) |
-       ((trune)(x.b[2] & 0x3F) << 6) |
-       (x.b[3] & 0x3F);
+    rune = ((trune)(x.b[0] & 0x7) << 18) | ((trune)(x.b[1] & 0x3F) << 12) |
+           ((trune)(x.b[2] & 0x3F) << 6) | (x.b[3] & 0x3F);
   }
   return rune;
 }
 
-size_t utf8::size() const {
+size_t Utf8::size() const {
   size_t n;
-  u4 x;
+  u32 x;
   x.val = u.val;
   if (x.b[1] == 0) {
     n = 1;

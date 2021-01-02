@@ -9,12 +9,12 @@
 #ifndef TWIN_STL_STRING_H
 #define TWIN_STL_STRING_H
 
-#include "stl/array.h"
+#include "stl/vector.h"
 
-class String : public Array<char> {
+class String : public Vector<char> {
 private:
   typedef char T;
-  typedef Array<T> Base;
+  typedef Vector<T> Base;
 
   // do not implement. reason: any allocation failure would not be visible
   String &operator=(const String &other); // = delete;
@@ -34,7 +34,7 @@ public:
   }
   explicit String(const Span<T> &other) : Base(other) {
   }
-  explicit String(const Array<T> &other) : Base(other) {
+  explicit String(const Vector<T> &other) : Base(other) {
   }
   explicit String(const String &other) : Base(other) {
   }
@@ -42,7 +42,7 @@ public:
 };
 
 inline void swap(String &left, String &right) {
-  // invoke Array<char>::swap()
+  // invoke Vector<char>::swap()
   left.swap(right);
 }
 

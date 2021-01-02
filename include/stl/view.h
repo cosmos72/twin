@@ -43,7 +43,7 @@ public:
   View(const Span<T> &other) {
     ref(other);
   }
-  View(const Array<T> &other) {
+  View(const Vector<T> &other) {
     ref(other);
   }
 
@@ -56,7 +56,7 @@ public:
     return *this;
   }
 
-  View &operator=(const Array<T> &other) {
+  View &operator=(const Vector<T> &other) {
     ref(other);
     return *this;
   }
@@ -95,7 +95,7 @@ public:
     size_ = other.size_;
   }
   void ref(const Span<T> &other);
-  void ref(const Array<T> &other);
+  void ref(const Vector<T> &other);
 
   const T *begin() const {
     return data_;

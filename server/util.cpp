@@ -43,7 +43,7 @@
 #include "printk.h"
 #include "privilege.h"
 #include "util.h"
-#include "stl/array.h"
+#include "stl/vector.h"
 #include "hw.h"
 
 #include <Tw/Twkeys.h>
@@ -402,7 +402,7 @@ byte SetSelectionFromWindow(window w) {
       w->XendSel = w->WLogic - 1;
     }
 
-    Array<trune> buf(slen = w->WLogic);
+    Vector<trune> buf(slen = w->WLogic);
     if (!buf) {
       return tfalse;
     }

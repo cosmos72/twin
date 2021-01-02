@@ -6,14 +6,5 @@
  * (at your option) any later version.
  *
  */
-#ifndef TWIN_STL_FWD_H
-#define TWIN_STL_FWD_H
-
-#include "stl/defs.h"
-
-template <class T> class Span;
-class String;
-template <class T> class Vector;
-template <class T> class View;
-
-#endif /* TWIN_STL_FWD_H */
+void test_stl_vector();
+void test_stl_utf8();

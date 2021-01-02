@@ -7,7 +7,7 @@
  *
  */
 #include "stl/string.h"
-#include "test_any.h"
+#include "test_stl_any.h"
 
 template <class T> void test_view() {
   enum { n = 3 };
@@ -86,10 +86,10 @@ template <class T> void test_span() {
   assert(s2.data() == data);
 }
 
-template <class T> void test_array() {
+template <class T> void test_vector() {
   enum { n = 3 };
   T data[n] = {1, 2, 3};
-  Array<T> a;
+  Vector<T> a;
   Span<T> s;
   View<T> w;
 
@@ -127,7 +127,7 @@ template <class T> void test_array() {
   assert(a.data());
   assert(a.size() == large);
 
-  Array<T> a2;
+  Vector<T> a2;
   a.swap(a2);
   assert(a.data() == NULL);
   assert(a.size() == 0);
@@ -153,7 +153,7 @@ void test_string() {
   assert(s.size() == n);
   assert(s.data() == st.data());
 
-  Array<char> a;
+  Vector<char> a;
   st.swap(a);
   assert(st.data() == NULL);
   assert(st.size() == 0);
@@ -168,11 +168,11 @@ void swap_string(String &left, String &right) {
 template <class T> void test_T() {
   test_view<T>();
   test_span<T>();
-  test_array<T>();
+  test_vector<T>();
   test_any<T>();
 }
 
-int main() {
+void test_stl_vector() {
   test_T<signed char>();
   test_T<unsigned char>();
   test_T<short>();
@@ -180,5 +180,4 @@ int main() {
   test_T<long>();
   test_T<float>();
   test_string();
-  return 0;
 }

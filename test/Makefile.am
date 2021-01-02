@@ -3,7 +3,7 @@ AM_CPPFLAGS           = -I$(top_srcdir)/include
 
 LIBSTL = $(top_builddir)/libs/libstl/libstl.a
 
-noinst_PROGRAMS       = stl_test
+noinst_PROGRAMS       = twtest
 
-stl_test_SOURCES      = test_array.cpp
-stl_test_LDADD        = $(LIBSTL)
+twtest_SOURCES      = test_stl_vector.cpp test_main.cpp
+twtest_LDADD        = $(LIBSTL)

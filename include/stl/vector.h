@@ -6,23 +6,23 @@
  * (at your option) any later version.
  *
  */
-#ifndef TWIN_STL_ARRAY_H
-#define TWIN_STL_ARRAY_H
+#ifndef TWIN_STL_VECTOR_H
+#define TWIN_STL_VECTOR_H
 
 #include "stl/span.h"
 #include "stl/mem.h"
 
 #include <cstring> // memset()
 
-// dynamically resizeable array of arbitrary type T, with two constraints:
-// 1. T must have trivial copy constructor and destructor
+// dynamically resizeable vector of arbitrary type T, with two constraints:
+// 1. T must have trivial copy constructor, destructor and assignment operator
 // 2. zero-initializing T must be equivalent to T default constructor
-template <class T> class Array : protected Span<T> {
+template <class T> class Vector : protected Span<T> {
 private:
   typedef Span<T> Base;
 
   // do not implement. reason: any allocation failure would not be visible
-  Array<T> &operator=(const Array<T> &other); // = delete;
+  Vector<T> &operator=(const Vector<T> &other); // = delete;
 
 protected:
   using Base::data_;
@@ -73,29 +73,29 @@ public:
   typedef const T *const_pointer;
   typedef const T *const_iterator;
 
-  Array() : Base(), cap_(0) {
+  Vector() : Base(), cap_(0) {
   }
-  Array(const T *addr, size_t n) : Base(), cap_(0) {
+  Vector(const T *addr, size_t n) : Base(), cap_(0) {
     dup(addr, n);
   }
   // all one-argument constructors are explicit because they allocate,
   // thus they mail fail => we require users to explicitly invoke them.
-  explicit Array(size_t n) : Base(), cap_(0) {
+  explicit Vector(size_t n) : Base(), cap_(0) {
     init(n);
   }
-  template <size_t N> explicit Array(const T (&addr)[N]) : Base(), cap_(0) {
+  template <size_t N> explicit Vector(const T (&addr)[N]) : Base(), cap_(0) {
     dup(addr, N - 1);
   }
-  explicit Array(const View<T> &other) : Base(), cap_(0) {
+  explicit Vector(const View<T> &other) : Base(), cap_(0) {
     dup(other.data(), other.size());
   }
-  explicit Array(const Span<T> &other) : Base(), cap_(0) {
+  explicit Vector(const Span<T> &other) : Base(), cap_(0) {
     dup(other.data(), other.size());
   }
-  explicit Array(const Array &other) : Base(), cap_(0) {
+  explicit Vector(const Vector &other) : Base(), cap_(0) {
     dup(other.data(), other.size());
   }
-  ~Array() {
+  ~Vector() {
     destroy();
   }
 
@@ -134,7 +134,7 @@ public:
   bool dup(const Span<T> &other) {
     return dup(other.data(), other.size());
   }
-  bool dup(const Array &other) {
+  bool dup(const Vector &other) {
     return dup(other.data(), other.size());
   }
 
@@ -172,7 +172,7 @@ public:
     return true;
   }
 
-  void swap(Array &other) {
+  void swap(Vector &other) {
     struct Ref {
       const T *data_;
       size_t size_, cap_;
@@ -184,17 +184,18 @@ public:
   }
 };
 
-template <class T> void View<T>::ref(const Array<T> &other) {
-  data_ = other.data();
-  size_ = other.size();
-}
-template <class T> void Span<T>::ref(Array<T> &other) {
+template <class T> void View<T>::ref(const Vector<T> &other) {
   data_ = other.data();
   size_ = other.size();
 }
 
-template <class T> void swap(Array<T> &left, Array<T> &right) {
+template <class T> void Span<T>::ref(Vector<T> &other) {
+  data_ = other.data();
+  size_ = other.size();
+}
+
+template <class T> void swap(Vector<T> &left, Vector<T> &right) {
   left.swap(right);
 }
 
-#endif /* TWIN_STL_ARRAY_H */
+#endif /* TWIN_STL_VECTOR_H */
