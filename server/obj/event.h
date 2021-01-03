@@ -199,8 +199,7 @@ struct s_event_selectionnotify {
 };
 /*SelectionNotify Magic*/
 #define SEL_APPEND 0x00000000
-#define SEL_TEXTMAGIC 0x54657874
-#define SEL_TRUNEMAGIC 0x4877666E /* it's unicode */
+#define SEL_UTF8MAGIC 0x55746638 /* UTF-8 */
 #define SEL_FILEMAGIC 0x46696c65
 #define SEL_URLMAGIC 0xAB1691BA
 #define SEL_DATAMAGIC 0xDA1AA1AD /* check MIME if you get this */

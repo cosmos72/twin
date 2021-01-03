@@ -14,7 +14,7 @@ single-headed library without mouse support and without events.
 If all you want is to have a ncurses program run inside a SINGLE twin window,
 you could just let it run unmodified inside twterm, or, if you like hacking
 programs, you could substitute printf(), write(), etc. calls to standard output
-with TwWriteAsciiWindow() and read() from standard input with TwReadMsg().
+with TwWriteCharsetWindow() and read() from standard input with TwReadMsg().
 Yet, what you will get will still be a program displaying in a single window:
 converting an application that uses ncurses windows to use multiple libtw
 windows is usually much more difficult as with libtw any open window can
@@ -388,10 +388,9 @@ twindow Tw_Create4MenuWindow(tdisplay TwD, tmenu Menu);
 #define Tw_Win4Menu Tw_Create4MenuWindow
 void	Tw_MapWindow(tdisplay TwD, twindow Window, tscreen Screen);
 void	Tw_UnMapWindow(tdisplay TwD, twindow Window);
-void	Tw_WriteAsciiWindow(tdisplay TwD, twindow Window, uldat AsciiLen, TW_CONST byte *AsciiSeq);
-void	Tw_WriteTextWindow(tdisplay TwD, twindow Window, ldat AsciiLen, TW_CONST byte *Text);
-void	Tw_WriteUnicodeWindow(tdisplay TwD, twindow Window, ldat AsciiLen, TW_CONST udat *UnicodeSeq);
-void    Tw_WriteTCellWindow(tdisplay TwD, twindow Window, udat x, udat y, uldat Len, TW_CONST tcell *Attr);
+void	Tw_WriteCharsetWindow(tdisplay TwD, twindow Window, uldat AsciiLen, TW_CONST char *charset_bytes);
+void	Tw_WriteUtf8Window(tdisplay TwD, twindow Window, ldat AsciiLen, TW_CONST char *utf8_bytes);
+void  Tw_WriteTCellWindow(tdisplay TwD, twindow Window, udat x, udat y, uldat Len, TW_CONST tcell *cells);
 void	Tw_WriteRowWindow(tdisplay TwD, twindow Window, uldat Len, byte *Text);
 void	Tw_SetColTextWindow(tdisplay TwD, twindow Window, tcolor ColText);
 void	Tw_SetColorsWindow(tdisplay TwD, twindow Window, udat Bitmap, tcolor ColGadgets, tcolor ColArrows, tcolor ColBars, tcolor ColTabs,
@@ -471,7 +470,7 @@ void Tw_BlindSendMsg(tdisplay TwD, tmsgport MsgPort, tmsg Msg);
  * Tw_NotifySelection(TwD, Requestor, ReqPrivate, Magic, MIME, Len, Data);
  *
  * where Requestor and ReqPrivate come from the TW_MSG_SELECTIONREQUEST event,
- * and the rest is the Selection data: its Magic type (usually TW_SEL_TEXTMAGIC),
+ * and the rest is the Selection data: its Magic type (usually TW_SEL_UTF8MAGIC),
  * its MIME type ("text/plain", or whatever looks appropriate),
  * its Len in bytes and finally, Data: a pointer to the actual data.
  *

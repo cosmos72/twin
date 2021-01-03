@@ -2,9 +2,9 @@
 
 
 
-dnl This file is `m4/proto.m4' : m4 macros to autogenerate proto_m4.h
+dnl This file is `m4/proto.m4h' : m4 macros to autogenerate proto_m4.h
 dnl Tell the user about this.
-/* This file was automatically generated with `m4' from `m4/proto.m4', do not edit! */
+/* This file was automatically generated with `m4' from `m4/proto.m4h', do not edit! */
 
 /*
  *  proto_m4.h  --  check libtw functions prototypes from Tw_sockproto.m4h

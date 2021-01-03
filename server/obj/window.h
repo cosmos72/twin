@@ -94,15 +94,15 @@ struct s_fn_window {
   void (*RemoveHook)(window, fn_hook, fn_hook *Where);
   /* window */
   fn_widget Fn_Widget;
-  byte (*TtyWriteAscii)(window, uldat Len, const char *Ascii);
-  byte (*TtyWriteString)(window, uldat Len, const char *string);
-  byte (*TtyWriteTRune)(window, uldat Len, const trune *TRune);
-  byte (*TtyWriteTCell)(window, dat x, dat y, uldat Len, const tcell *Attr);
+  byte (*TtyWriteCharset)(window, uldat Len, const char *charset_bytes);
+  byte (*TtyWriteUtf8)(window, uldat Len, const char *utf8_bytes);
+  byte (*TtyWriteTRune)(window, uldat Len, const trune *runes);
+  byte (*TtyWriteTCell)(window, dat x, dat y, uldat Len, const tcell *cells);
 
-  byte (*RowWriteAscii)(window, uldat Len, const char *Ascii);
-  byte (*RowWriteString)(window, uldat Len, const char *string);
-  byte (*RowWriteTRune)(window, uldat Len, const trune *TRune);
-  byte (*RowWriteTCell)(window, dat x, dat y, uldat Len, const tcell *Attr);
+  byte (*RowWriteCharset)(window, uldat Len, const char *charset_bytes);
+  byte (*RowWriteUtf8)(window, uldat Len, const char *utf8_bytes);
+  byte (*RowWriteTRune)(window, uldat Len, const trune *runes);
+  byte (*RowWriteTCell)(window, dat x, dat y, uldat Len, const tcell *cells);
 
   void (*GotoXY)(window, ldat X, ldat Y);
   void (*SetTitle)(window, dat titlelen, char *title);
@@ -240,24 +240,24 @@ struct s_window : public s_obj {
     Fn->RemoveHook(this, hook, where);
   }
   /* window */
-  byte TtyWriteAscii(uldat len, const char *ascii) {
-    return Fn->TtyWriteAscii(this, len, ascii);
+  byte TtyWriteCharset(uldat len, const char *charset_bytes) {
+    return Fn->TtyWriteCharset(this, len, charset_bytes);
   }
-  byte TtyWriteString(uldat len, const char *string) {
-    return Fn->TtyWriteString(this, len, string);
+  byte TtyWriteUtf8(uldat len, const char *utf8_bytes) {
+    return Fn->TtyWriteUtf8(this, len, utf8_bytes);
   }
   byte TtyWriteTRune(uldat len, const trune *runes) {
     return Fn->TtyWriteTRune(this, len, runes);
   }
-  byte TtyWriteTCell(dat x, dat y, uldat len, const tcell *attr) {
-    return Fn->TtyWriteTCell(this, x, y, len, attr);
+  byte TtyWriteTCell(dat x, dat y, uldat len, const tcell *cells) {
+    return Fn->TtyWriteTCell(this, x, y, len, cells);
   }
 
-  byte RowWriteAscii(uldat len, const char *ascii) {
-    return Fn->RowWriteAscii(this, len, ascii);
+  byte RowWriteCharset(uldat len, const char *charset_bytes) {
+    return Fn->RowWriteCharset(this, len, charset_bytes);
   }
-  byte RowWriteString(uldat len, const char *string) {
-    return Fn->RowWriteString(this, len, string);
+  byte RowWriteUtf8(uldat len, const char *utf8_bytes) {
+    return Fn->RowWriteUtf8(this, len, utf8_bytes);
   }
   byte RowWriteTRune(uldat len, const trune *runes) {
     return Fn->RowWriteTRune(this, len, runes);

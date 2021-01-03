@@ -318,31 +318,20 @@ public:
     W->Id = TwCreate4MenuWindow(Menu->Id);
     return W;
   }
-  inline void writeAscii(const char *text) const {
-    TwWriteAsciiWindow(Id, strlen(text), text);
+  inline void writeCharset(const char *charset_bytes) const {
+    TwWriteCharsetWindow(Id, strlen(charset_bytes), charset_bytes);
   }
-  inline void writeAscii(ldat len, const char *text) const {
-    TwWriteAsciiWindow(Id, len, text);
+  inline void writeCharset(ldat len, const char *charset_bytes) const {
+    TwWriteCharsetWindow(Id, len, charset_bytes);
   }
-  inline void writeString(const char *text) const {
-    TwWriteStringWindow(Id, strlen(text), text);
+  inline void writeUtf8(const char *utf8_bytes) const {
+    TwWriteTRuneWindow(Id, strlen(utf8_bytes), utf8_bytes);
   }
-  inline void writeString(ldat len, const char *text) const {
-    TwWriteStringWindow(Id, len, text);
-  }
-  inline void writeTRune(ldat len, const trune *text) const {
-    TwWriteTRuneWindow(Id, len, text);
+  inline void writeUtf8(ldat len, const char *utf8_bytes) const {
+    TwWriteTRuneWindow(Id, len, utf8_bytes);
   }
   inline void writeTCell(ldat len, dat x, dat y, ldat Len, const tcell *Attr) const {
     TwWriteTCellWindow(Id, x, y, Len, Attr);
-  }
-  /* backward compatibility. will be removed */
-  inline void writeRow(const char *text) const {
-    writeAscii(text);
-  }
-  /* backward compatibility. will be removed */
-  inline void writeRow(ldat len, const char *text) const {
-    writeAscii(len, text);
   }
   inline void gotoXY(ldat x, ldat y) const {
     TwGotoXYWindow(Id, x, y);

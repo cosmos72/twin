@@ -2,7 +2,7 @@
 
 
 
-/* This file was automatically generated with m4 from m4/proto.m4, do not edit! */
+/* This file was automatically generated with m4 from m4/proto.m4h, do not edit! */
 
 /*
  *  proto_m4.h  --  check libtw functions prototypes from Tw_sockproto.m4h
@@ -102,15 +102,15 @@ tgadget  Tw_CreateGadget(tdisplay TwD, twidget parent, dat w, dat h, TW_CONST ch
 tgadget  Tw_CreateButtonGadget(tdisplay TwD, twidget parent, dat w, dat h, TW_CONST char *text, uldat flags, udat code, tcolor colbg, tcolor col, tcolor coldisabled, dat x, dat y);
 
 void  Tw_WriteTextsGadget(tdisplay TwD, tgadget G, byte mask, dat w, dat h, TW_CONST char *text, dat x, dat y);
-void  Tw_WriteTRunesGadget(tdisplay TwD, tgadget G, byte mask, dat w, dat h, TW_CONST trune *textfont, dat x, dat y);
+void  Tw_WriteTRunesGadget(tdisplay TwD, tgadget G, byte mask, dat w, dat h, TW_CONST trune *runes, dat x, dat y);
 
 twindow  Tw_CreateWindow(tdisplay TwD, dat titlelen, TW_CONST char *title, TW_CONST tcolor *coltitle, tmenu M, tcolor coltext, uldat cursortype, uldat attrib, uldat flags, dat w, dat h, dat hscroll);
 twindow  Tw_Create4MenuWindow(tdisplay TwD, tmenu M);
 
-void  Tw_WriteAsciiWindow(tdisplay TwD, twindow W, uldat len, TW_CONST char *ascii);
-void  Tw_WriteStringWindow(tdisplay TwD, twindow W, uldat len, TW_CONST char *string);
-void  Tw_WriteTRuneWindow(tdisplay TwD, twindow W, uldat len, TW_CONST trune *textfont);
-void  Tw_WriteTCellWindow(tdisplay TwD, twindow W, dat x, dat y, uldat len, TW_CONST tcell *textattr);
+void  Tw_WriteCharsetWindow(tdisplay TwD, twindow W, uldat len, TW_CONST char *charset_bytes);
+void  Tw_WriteUtf8Window(tdisplay TwD, twindow W, uldat len, TW_CONST char *utf8_bytes);
+void  Tw_WriteTRuneWindow(tdisplay TwD, twindow W, uldat len, TW_CONST trune *runes);
+void  Tw_WriteTCellWindow(tdisplay TwD, twindow W, dat x, dat y, uldat len, TW_CONST tcell *cells);
 
 void  Tw_GotoXYWindow(tdisplay TwD, twindow W, ldat x, ldat y);
 void  Tw_SetTitleWindow(tdisplay TwD, twindow W, dat titlelen, TW_CONST char *title);

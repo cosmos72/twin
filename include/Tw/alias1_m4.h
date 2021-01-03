@@ -96,7 +96,8 @@
 #define TwScrollWindow                        TwScrollWidget    
 #define TwSetXYWindow                        TwSetXYWidget    
 #define TwUnMapWindow                        TwUnMapWidget    
-#define TwWin4Menu                        TwCreate4MenuWindow 
+#define TwWin4Menu                        TwCreate4MenuWindow    
+#define TwWriteAsciiWindow                        TwWriteCharsetWindow 
     
 #define TwDeleteScreen                        TwDeleteObj    
 #define TwCirculateChildrenScreen                        TwCirculateChildrenWidget    

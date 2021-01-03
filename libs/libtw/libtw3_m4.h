@@ -163,12 +163,12 @@
     break;
 
 
-  case order_WriteAsciiWindow:
+  case order_WriteCharsetWindow:
     switch (n) {
       case 3: L = (a[2]._) * sizeof(char); break;
     }
     break;
-  case order_WriteStringWindow:
+  case order_WriteUtf8Window:
     switch (n) {
       case 3: L = (a[2]._) * sizeof(char); break;
     }

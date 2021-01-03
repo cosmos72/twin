@@ -358,8 +358,8 @@ static void sockRecursiveDeleteWidget(widget W);
 static void sockSetXYWidget(widget W, dat x, dat y);
 static void sockResizeWidget(widget W, dat XWidth, dat YWidth);
 #define sockScrollWidget ScrollWidget
-static void sockDrawWidget(widget W, dat XWidth, dat YWidth, dat Left, dat Up, const char *Text,
-                           const trune *Font, const tcell *Attr);
+static void sockDrawWidget(widget W, dat XWidth, dat YWidth, dat Left, dat Up,
+                           const char *utf8_bytes, const trune *runes, const tcell *cells);
 
 #define sockSetVisibleWidget SetVisibleWidget
 static void sockFocusSubWidget(widget W);
@@ -377,10 +377,10 @@ static gadget sockCreateGadget(widget Parent, dat XWidth, dat YWidth, const char
 static window sockCreateWindow(dat TitleLen, const char *Title, const tcolor *ColTitle, menu Menu,
                                tcolor ColText, uldat CursorType, uldat Attr, uldat Flags,
                                dat XWidth, dat YWidth, dat ScrollBackLines);
-static void sockWriteAsciiWindow(window Window, uldat Len, const char *Ascii);
-static void sockWriteStringWindow(window Window, uldat Len, const char *string);
-static void sockWriteTRuneWindow(window Window, uldat Len, const trune *TRune);
-static void sockWriteTCellWindow(window Window, dat x, dat y, uldat Len, const tcell *Attr);
+static void sockWriteCharsetWindow(window Window, uldat Len, const char *charset_bytes);
+static void sockWriteUtf8Window(window Window, uldat Len, const char *utf8_bytes);
+static void sockWriteTRuneWindow(window Window, uldat Len, const trune *runes);
+static void sockWriteTCellWindow(window Window, dat x, dat y, uldat Len, const tcell *cells);
 static void sockSetTitleWindow(window Window, dat titlelen, const char *title);
 
 static row sockFindRowByCodeWindow(window Window, dat Code);
@@ -1148,39 +1148,39 @@ static window sockCreateWindow(dat TitleLen, const char *Title, const tcolor *Co
   return (window)0;
 }
 
-static void sockWriteAsciiWindow(window Window, uldat Len, const char *Ascii) {
+static void sockWriteCharsetWindow(window Window, uldat Len, const char *charset_bytes) {
   if (Window) {
     if ((Window->Flags & WINDOWFL_USEANY) == WINDOWFL_USECONTENTS)
-      Act(TtyWriteAscii, Window)(Window, Len, Ascii);
+      Act(TtyWriteCharset, Window)(Window, Len, charset_bytes);
     else if ((Window->Flags & WINDOWFL_USEANY) == WINDOWFL_USEROWS)
-      Act(RowWriteAscii, Window)(Window, Len, Ascii);
+      Act(RowWriteCharset, Window)(Window, Len, charset_bytes);
   }
 }
 
-static void sockWriteStringWindow(window Window, uldat Len, const char *string) {
+static void sockWriteUtf8Window(window Window, uldat Len, const char *utf8_bytes) {
   if (Window) {
     if ((Window->Flags & WINDOWFL_USEANY) == WINDOWFL_USECONTENTS)
-      Act(TtyWriteString, Window)(Window, Len, string);
+      Act(TtyWriteUtf8, Window)(Window, Len, utf8_bytes);
     else if ((Window->Flags & WINDOWFL_USEANY) == WINDOWFL_USEROWS)
-      Act(RowWriteString, Window)(Window, Len, string);
+      Act(RowWriteUtf8, Window)(Window, Len, utf8_bytes);
   }
 }
 
-static void sockWriteTRuneWindow(window Window, uldat Len, const trune *TRune) {
+static void sockWriteTRuneWindow(window Window, uldat Len, const trune *runes) {
   if (Window) {
     if ((Window->Flags & WINDOWFL_USEANY) == WINDOWFL_USECONTENTS)
-      Act(TtyWriteTRune, Window)(Window, Len, TRune);
+      Act(TtyWriteTRune, Window)(Window, Len, runes);
     else if ((Window->Flags & WINDOWFL_USEANY) == WINDOWFL_USEROWS)
-      Act(RowWriteTRune, Window)(Window, Len, TRune);
+      Act(RowWriteTRune, Window)(Window, Len, runes);
   }
 }
 
-static void sockWriteTCellWindow(window Window, dat x, dat y, uldat Len, const tcell *Attr) {
+static void sockWriteTCellWindow(window Window, dat x, dat y, uldat Len, const tcell *cells) {
   if (Window) {
     if ((Window->Flags & WINDOWFL_USEANY) == WINDOWFL_USECONTENTS)
-      Act(TtyWriteTCell, Window)(Window, x, y, Len, Attr);
+      Act(TtyWriteTCell, Window)(Window, x, y, Len, cells);
     else if ((Window->Flags & WINDOWFL_USEANY) == WINDOWFL_USEROWS)
-      Act(RowWriteTCell, Window)(Window, x, y, Len, Attr);
+      Act(RowWriteTCell, Window)(Window, x, y, Len, cells);
   }
 }
 

@@ -79,8 +79,8 @@
 #define TwCreateWindow(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11)                Tw_CreateWindow(Tw_DefaultD, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11)
 #define TwCreate4MenuWindow(a1)                Tw_Create4MenuWindow(Tw_DefaultD, a1)
 
-#define TwWriteAsciiWindow(a1, a2, a3)                Tw_WriteAsciiWindow(Tw_DefaultD, a1, a2, a3)
-#define TwWriteStringWindow(a1, a2, a3)                Tw_WriteStringWindow(Tw_DefaultD, a1, a2, a3)
+#define TwWriteCharsetWindow(a1, a2, a3)                Tw_WriteCharsetWindow(Tw_DefaultD, a1, a2, a3)
+#define TwWriteUtf8Window(a1, a2, a3)                Tw_WriteUtf8Window(Tw_DefaultD, a1, a2, a3)
 #define TwWriteTRuneWindow(a1, a2, a3)                Tw_WriteTRuneWindow(Tw_DefaultD, a1, a2, a3)
 #define TwWriteTCellWindow(a1, a2, a3, a4, a5)                Tw_WriteTCellWindow(Tw_DefaultD, a1, a2, a3, a4, a5)
 

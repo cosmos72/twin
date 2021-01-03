@@ -304,15 +304,11 @@ byte SelectionStore(uldat Magic, const char MIME[MAX_MIMELEN], Chars Data) {
   const size_t srclen = Data.size();
   size_t dstlen = Sel->Data.size();
   size_t newlen;
-  byte pad;
 
   if (Magic == SEL_APPEND)
     newlen = dstlen + srclen;
   else
     newlen = srclen;
-
-  if ((pad = (Sel->Magic == SEL_TRUNEMAGIC && (newlen & 1))))
-    newlen++;
 
   if (!Sel->Data.resize(newlen)) {
     return tfalse;
@@ -332,34 +328,21 @@ byte SelectionStore(uldat Magic, const char MIME[MAX_MIMELEN], Chars Data) {
   else
     memset(&Sel->Data[dstlen], ' ', srclen);
   dstlen += srclen;
-
-  if (pad) {
-#if TW_IS_LITTLE_ENDIAN
-    Sel->Data[dstlen++] = '\0';
-#else
-    Sel->Data[dstlen] = Sel->Data[dstlen - 1];
-    Sel->Data[dstlen - 1] = '\0';
-    dstlen++;
-#endif
-  }
   return ttrue;
 }
 
-#define _SEL_MAGIC SEL_TRUNEMAGIC
-#if TW_IS_LITTLE_ENDIAN
-#define _SelAppendNL() SelectionAppend(Chars("\n\0", 2));
-#else
-#define _SelAppendNL() SelectionAppend(Chars("\0\n", 2));
-#endif
+#define _SEL_MAGIC SEL_UTF8MAGIC
+#define _SelAppendNL() SelectionAppend(Chars("\n", 1));
 
 byte SetSelectionFromWindow(window w) {
+  String buf;
   ldat y;
-  uldat slen, len;
-  trune *Data;
+  uldat slen, i;
   byte ok = ttrue, w_useC = W_USE(w, USECONTENTS);
 
-  if (!(w->State & WINDOW_DO_SEL))
+  if (!(w->State & WINDOW_DO_SEL)) {
     return ok;
+  }
 
   if (!(w->State & WINDOW_ANYSEL) || w->YstSel > w->YendSel ||
       (w->YstSel == w->YendSel && w->XstSel > w->XendSel)) {
@@ -371,9 +354,9 @@ byte SetSelectionFromWindow(window w) {
   }
 
   /* normalize negative coords */
-  if (w->XstSel < 0)
+  if (w->XstSel < 0) {
     w->XstSel = 0;
-  else if (w_useC && w->XstSel >= w->WLogic) {
+  } else if (w_useC && w->XstSel >= w->WLogic) {
     w->XstSel = 0;
     w->YstSel++;
   }
@@ -386,7 +369,7 @@ byte SetSelectionFromWindow(window w) {
   }
 
   if (w_useC) {
-    tcell *hw;
+    const tcell *cells;
 
     /* normalize negative coords */
     if (w->XendSel < 0) {
@@ -403,14 +386,15 @@ byte SetSelectionFromWindow(window w) {
       w->XendSel = w->WLogic - 1;
     }
 
-    Vector<trune> buf(slen = w->WLogic);
-    if (!buf) {
+    slen = w->WLogic;
+    if (!buf.reserve(slen + (slen >> 1))) {
       return tfalse;
     }
 
-    hw = w->USE.C.Contents + (w->YstSel + w->USE.C.HSplit) * slen;
-    while (hw >= w->USE.C.TtyData->Split)
-      hw -= w->USE.C.TtyData->Split - w->USE.C.Contents;
+    cells = w->USE.C.Contents + (w->YstSel + w->USE.C.HSplit) * slen;
+    while (cells >= w->USE.C.TtyData->Split) {
+      cells -= w->USE.C.TtyData->Split - w->USE.C.Contents;
+    }
 
     {
       y = w->YstSel;
@@ -418,80 +402,91 @@ byte SetSelectionFromWindow(window w) {
         slen -= w->XstSel;
       else
         slen = w->XendSel - w->XstSel + 1;
-      Data = buf.data();
-      hw += w->XstSel;
-      for (len = slen; len--; hw++) {
-        *Data++ = TRUNE(*hw);
+      cells += w->XstSel;
+      for (i = slen; ok && i--; cells++) {
+        ok &= buf.append(Utf8(TRUNE(*cells)));
       }
-      ok &= SelectionStore(_SEL_MAGIC, NULL, Chars((const char *)buf.data(), slen * sizeof(trune)));
+      ok &= SelectionStore(_SEL_MAGIC, NULL, buf);
     }
 
-    if (hw >= w->USE.C.TtyData->Split)
-      hw -= w->USE.C.TtyData->Split - w->USE.C.Contents;
+    if (cells >= w->USE.C.TtyData->Split)
+      cells -= w->USE.C.TtyData->Split - w->USE.C.Contents;
 
     slen = w->WLogic;
     for (y = w->YstSel + 1; ok && y < w->YendSel; y++) {
-      if (hw >= w->USE.C.TtyData->Split)
-        hw -= w->USE.C.TtyData->Split - w->USE.C.Contents;
-      Data = buf.data();
-      for (len = slen; len--; hw++) {
-        *Data++ = TRUNE(*hw);
+      if (cells >= w->USE.C.TtyData->Split)
+        cells -= w->USE.C.TtyData->Split - w->USE.C.Contents;
+      buf.clear();
+      for (i = slen; ok && i--; cells++) {
+        ok &= buf.append(Utf8(TRUNE(*cells)));
       }
-      ok &= SelectionAppend(Chars((const char *)buf.data(), slen * sizeof(trune)));
+      ok = ok && SelectionAppend(buf);
     }
 
     if (ok && w->YendSel > w->YstSel) {
-      if (hw >= w->USE.C.TtyData->Split)
-        hw -= w->USE.C.TtyData->Split - w->USE.C.Contents;
-      Data = buf.data();
-      for (len = slen = w->XendSel + 1; len--; hw++) {
-        *Data++ = TRUNE(*hw);
+      if (cells >= w->USE.C.TtyData->Split)
+        cells -= w->USE.C.TtyData->Split - w->USE.C.Contents;
+      buf.clear();
+      for (i = slen = w->XendSel + 1; ok && i--; cells++) {
+        ok &= buf.append(Utf8(TRUNE(*cells)));
       }
-      ok &= SelectionAppend(Chars((const char *)buf.data(), slen * sizeof(trune)));
+      ok = ok && SelectionAppend(buf);
     }
     if (ok)
       NeedHW |= NEEDSelectionExport;
     return ok;
+
+  } else if (!W_USE(w, USEROWS)) {
+    return tfalse;
   }
-  if (W_USE(w, USEROWS)) {
-    row Row;
 
-    /* Gap not supported! */
-    y = w->YstSel;
-    Row = w->FindRow(y);
+  row r;
 
-    if (Row && Row->Text) {
-      if (y < w->YendSel)
-        slen = Row->Len - w->XstSel;
-      else
-        slen = Min2(Row->Len, (uldat)w->XendSel + 1) - Min2(Row->Len, (uldat)w->XstSel);
+  /* Gap not supported! */
+  y = w->YstSel;
+  r = w->FindRow(y);
 
-      ok &= SelectionStore(_SEL_MAGIC, NULL,
-                           Chars((const char *)(Row->Text + Min2(Row->Len, (uldat)w->XstSel)),
-                                 slen * sizeof(trune)));
-    } else
-      ok &= SelectionStore(_SEL_MAGIC, NULL, Chars());
+  if (r && r->Text) {
+    if (y < w->YendSel) {
+      slen = r->Len - w->XstSel;
+    } else {
+      slen = Min2(r->Len, (uldat)w->XendSel + 1) - Min2(r->Len, (uldat)w->XstSel);
+    }
 
-    if (y < w->YendSel || !Row || !Row->Text || Row->Len <= (uldat)w->XendSel)
-      ok &= _SelAppendNL();
+    ok &= buf.reserve(slen + (slen >> 1));
+    const trune *runes = r->Text + Min2(r->Len, (uldat)w->XstSel);
+    ok = ok && buf.append_runes(TRunes(runes, slen));
+    ok &= SelectionStore(_SEL_MAGIC, NULL, buf);
+  } else {
+    ok &= SelectionStore(_SEL_MAGIC, NULL, Chars());
+  }
 
-    for (y = w->YstSel + 1; ok && y < w->YendSel; y++) {
-      if ((Row = w->FindRow(y)) && Row->Text)
-        ok &= SelectionAppend(Chars((const char *)Row->Text, Row->Len * sizeof(trune)));
+  if (y < w->YendSel || !r || !r->Text || r->Len <= (uldat)w->XendSel)
+    ok &= _SelAppendNL();
+
+  for (y = w->YstSel + 1; ok && y < w->YendSel; y++) {
+    if ((r = w->FindRow(y)) && r->Text) {
+      buf.clear();
+      ok = ok && buf.append_runes(TRunes(r->Text, r->Len));
+      ok &= SelectionAppend(buf);
+    }
+    ok &= _SelAppendNL();
+  }
+  if (w->YendSel > w->YstSel) {
+    if (w->XendSel >= 0 && (r = w->FindRow(w->YendSel)) && r->Text) {
+      slen = Min2(r->Len, (uldat)w->XendSel + 1);
+      buf.clear();
+      ok = ok && buf.append_runes(TRunes(r->Text, slen));
+      ok = ok && SelectionAppend(buf);
+    }
+    if (!r || !r->Text || r->Len <= (uldat)w->XendSel) {
       ok &= _SelAppendNL();
     }
-    if (w->YendSel > w->YstSel) {
-      if (w->XendSel >= 0 && (Row = w->FindRow(w->YendSel)) && Row->Text)
-        ok &= SelectionAppend(
-            Chars((const char *)Row->Text, Min2(Row->Len, (uldat)w->XendSel + 1) * sizeof(trune)));
-      if (!Row || !Row->Text || Row->Len <= (uldat)w->XendSel)
-        ok &= _SelAppendNL();
-    }
-    if (ok)
-      NeedHW |= NEEDSelectionExport;
-    return ok;
   }
-  return tfalse;
+  if (ok) {
+    NeedHW |= NEEDSelectionExport;
+  }
+  return ok;
 }
 
 byte CreateXTermMouseEvent(event_mouse *Event, byte buflen, char *buf) {

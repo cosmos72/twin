@@ -64,7 +64,7 @@ byte InitTWCD(void) {
                      return tfalse;
 
                    TwGotoXYWindow(TWCD_Win, 0, 2);
-                   TwWriteAsciiWindow(TWCD_Win, 17, "<< [] || -> >> /\\");
+                   TwWriteCharsetWindow(TWCD_Win, 17, "<< [] || -> >> /\\");
                    TwMapWindow(TWCD_Win, TwFirstScreen());
                    TwFlush();
 
@@ -73,9 +73,9 @@ byte InitTWCD(void) {
 
 void writeTrack(char *title) {
   TwGotoXYWindow(TWCD_Win, 0, 0);
-  TwWriteAsciiWindow(TWCD_Win, 20, "                    ");
+  TwWriteCharsetWindow(TWCD_Win, 20, "                    ");
   TwGotoXYWindow(TWCD_Win, 0, 0);
-  TwWriteAsciiWindow(TWCD_Win, strlen(title), title);
+  TwWriteCharsetWindow(TWCD_Win, strlen(title), title);
 }
 
 void changeTrack(void) {

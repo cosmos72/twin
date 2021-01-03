@@ -101,7 +101,7 @@ static void Clock_Update(void) {
   sprintf((char *)Buffer, "%02hu/%02hu/%04hu\n %02hu:%02hu:%02hu", (udat)Date->tm_mday,
           (udat)Date->tm_mon + 1, (udat)Date->tm_year + 1900, (udat)Date->tm_hour,
           (udat)Date->tm_min, (udat)Date->tm_sec);
-  ClockWin->RowWriteAscii(strlen(Buffer), Buffer);
+  ClockWin->RowWriteCharset(strlen(Buffer), Buffer);
 
   Builtin_MsgPort->PauseDuration.Fraction = 1 FullSECs - All->Now.Fraction;
   Builtin_MsgPort->PauseDuration.Seconds = 0;
@@ -236,11 +236,11 @@ void UpdateOptionWin(void) {
   OptionWin->CurX = 25;
   OptionWin->CurY = 1;
   ch = (Flags & setup_shadows ? All->SetUp->DeltaXShade : 0) + '0';
-  OptionWin->RowWriteAscii(1, &ch);
+  OptionWin->RowWriteCharset(1, &ch);
   OptionWin->CurX = 25;
   OptionWin->CurY = 2;
   ch = (Flags & setup_shadows ? All->SetUp->DeltaYShade : 0) + '0';
-  OptionWin->RowWriteAscii(1, &ch);
+  OptionWin->RowWriteCharset(1, &ch);
 }
 
 static void OptionH(msg Msg) {
@@ -329,7 +329,7 @@ void FillButtonWin(void) {
   ResizeRelWindow(ButtonWin, 0, (dat)(3 + i * 2) - (dat)ButtonWin->YWidth);
 
   /* clear the window: */
-  ButtonWin->TtyWriteAscii(4, "\033[2J");
+  ButtonWin->TtyWriteCharset(4, "\033[2J");
 
   for (j = BUTTON_MAX - 1; j >= 0; j--) {
     if (!All->ButtonVec[j].exists)
@@ -341,8 +341,8 @@ void FillButtonWin(void) {
       b[2] = j + '0', s = b;
     else
       s = "Close ";
-    ButtonWin->TtyWriteAscii(7, "Button ");
-    ButtonWin->TtyWriteAscii(6, s);
+    ButtonWin->TtyWriteCharset(7, "Button ");
+    ButtonWin->TtyWriteCharset(6, s);
     {
       trune *f = All->ButtonVec[j].shape;
       tcell h[2] = {
@@ -379,16 +379,16 @@ void UpdateButtonWin(void) {
 
     pos = All->ButtonVec[j].pos;
     if (pos >= 0) {
-      ButtonWin->TtyWriteAscii(5, "Left ");
+      ButtonWin->TtyWriteCharset(5, "Left ");
     } else if (pos == -1)
-      ButtonWin->TtyWriteAscii(9, "Disabled ");
+      ButtonWin->TtyWriteCharset(9, "Disabled ");
     else {
-      ButtonWin->TtyWriteAscii(5, "Right");
+      ButtonWin->TtyWriteCharset(5, "Right");
       pos = -pos - 2;
     }
     if (pos >= 0) {
       sprintf(s, " %3d", pos);
-      ButtonWin->TtyWriteAscii(strlen(s), s);
+      ButtonWin->TtyWriteCharset(strlen(s), s);
     }
   }
 }
@@ -419,9 +419,9 @@ static void UpdateDisplayWin(widget displayWin) {
     for (hw = All->FirstDisplayHW; hw; hw = hw->Next) {
       DisplayWin->GotoXY(x, y++);
       if (!hw->NameLen)
-        DisplayWin->RowWriteAscii(9, "(no name)");
+        DisplayWin->RowWriteCharset(9, "(no name)");
       else
-        DisplayWin->RowWriteAscii(hw->NameLen, hw->Name);
+        DisplayWin->RowWriteCharset(hw->NameLen, hw->Name);
     }
     if (DisplayWin->Parent)
       DrawFullWindow2(DisplayWin);
@@ -638,8 +638,8 @@ static void BuiltinH(msgport MsgPort) {
                 Code == 13 /* CTRL+M */)))
             ExecuteWinRun();
           else if (Msg->Event.EventKeyboard.SeqLen)
-            ExecuteWin->RowWriteAscii(Msg->Event.EventKeyboard.SeqLen,
-                                      Msg->Event.EventKeyboard.AsciiSeq);
+            ExecuteWin->RowWriteCharset(Msg->Event.EventKeyboard.SeqLen,
+                                        Msg->Event.EventKeyboard.AsciiSeq);
           break;
         }
       }
@@ -676,9 +676,9 @@ static void BuiltinH(msgport MsgPort) {
       tempWin = (window)Id2Obj(window_magic_id, Msg->Event.EventSelectionNotify.ReqPrivate);
       if (tempWin && tempWin == ExecuteWin) {
         switch (Msg->Event.EventSelectionNotify.Magic) {
-        case SEL_TEXTMAGIC:
-          tempWin->RowWriteAscii(Msg->Event.EventSelectionNotify.Len,
-                                 Msg->Event.EventSelectionNotify.Data);
+        case SEL_UTF8MAGIC:
+          tempWin->RowWriteUtf8(Msg->Event.EventSelectionNotify.Len,
+                                Msg->Event.EventSelectionNotify.Data);
           break;
         default:
           break;
@@ -893,7 +893,7 @@ byte InitBuiltin(void) {
 #ifdef CONF_PRINTK
       InitMessagesWin() &&
 #endif
-      Act(RowWriteAscii, AboutWin)(AboutWin, grlen, greeting) &&
+      Act(RowWriteCharset, AboutWin)(AboutWin, grlen, greeting) &&
 
       (ButtonOK_About =
            Do(CreateEmptyButton, gadget)(Builtin_MsgPort, 8, 1, TCOL(tblack, twhite))) &&
@@ -992,10 +992,10 @@ byte InitBuiltin(void) {
 
     OptionWin->CurX = 25;
     OptionWin->CurY = 1;
-    Act(RowWriteAscii, OptionWin)(OptionWin, 10, "  X Shadow");
+    Act(RowWriteCharset, OptionWin)(OptionWin, 10, "  X Shadow");
     OptionWin->CurX = 25;
     OptionWin->CurY = 2;
-    Act(RowWriteAscii, OptionWin)(OptionWin, 10, "  Y Shadow");
+    Act(RowWriteCharset, OptionWin)(OptionWin, 10, "  Y Shadow");
 
     All->BuiltinMenu = Builtin_Menu;
 

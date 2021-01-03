@@ -101,8 +101,8 @@ EL(WriteTRunesGadget)
 EL(CreateWindow)
 EL(Create4MenuWindow)
 
-EL(WriteAsciiWindow)
-EL(WriteStringWindow)
+EL(WriteCharsetWindow)
+EL(WriteUtf8Window)
 EL(WriteTRuneWindow)
 EL(WriteTCellWindow)
 

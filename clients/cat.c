@@ -89,7 +89,7 @@ int main(int argc, char *argv[]) {
   }
 
   while ((got = read(fd, buf, 4096)) > 0) {
-    TwWriteAsciiWindow(Cat_Win, got, buf);
+    TwWriteCharsetWindow(Cat_Win, got, buf);
     TwFlush();
   }
   while ((Msg = TwReadMsg(ttrue))) {

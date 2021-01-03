@@ -96,20 +96,6 @@ static window OpenTerm(const char *arg0, const char *const *argv) {
   return NULL;
 }
 
-static void TermWriteTRuneWindow(window W, uldat len, const trune *hwData) {
-  trune (*inv_charset)(trune) = W->USE.C.TtyData->InvCharset;
-  byte *Data, *sData;
-  uldat n;
-
-  if ((Data = sData = (byte *)AllocMem(n = len))) {
-    while (n--)
-      *Data++ = (byte)inv_charset(*hwData++);
-
-    RemoteWindowWriteQueue(W, len, sData);
-    FreeMem(sData);
-  }
-}
-
 static void TwinTermH(msgport MsgPort) {
   msg Msg;
   event_any *Event;
@@ -137,12 +123,8 @@ static void TwinTermH(msgport MsgPort) {
     } else if (Msg->Type == msg_selection_notify) {
 
       if ((Win = (window)Id2Obj(window_magic_id, Event->EventSelectionNotify.ReqPrivate))) {
-        if (Event->EventSelectionNotify.Magic == SEL_TRUNEMAGIC)
-          TermWriteTRuneWindow(Win, Event->EventSelectionNotify.Len / sizeof(trune),
-                               (trune *)Event->EventSelectionNotify.Data);
-        else
-          (void)RemoteWindowWriteQueue(Win, Event->EventSelectionNotify.Len,
-                                       Event->EventSelectionNotify.Data);
+        (void)RemoteWindowWriteQueue(Win, Event->EventSelectionNotify.Len,
+                                     Event->EventSelectionNotify.Data);
       }
     } else if (Msg->Type == msg_widget_mouse) {
       if (Win) {
@@ -196,7 +178,7 @@ static void TwinTermIO(int Fd, window Window) {
   } while (chunk && chunk != (uldat)-1 && (got += chunk) < TW_BIGBUFF - 1);
 
   if (got) {
-    Window->TtyWriteAscii(got, buf);
+    Window->TtyWriteCharset(got, buf);
   } else if (chunk == (uldat)-1 && errno != EINTR && errno != EWOULDBLOCK) {
     /* something bad happened to our child :( */
     Window->Delete();
@@ -210,16 +192,16 @@ static void OverrideMethods(byte enter) {
     OverrideMethod(widget, KbdFocus, FakeKbdFocus, TtyKbdFocus);
     OverrideMethod(gadget, KbdFocus, FakeKbdFocus, TtyKbdFocus);
     OverrideMethod(window, KbdFocus, FakeKbdFocus, TtyKbdFocus);
-    OverrideMethod(window, TtyWriteAscii, FakeWriteAscii, TtyWriteAscii);
-    OverrideMethod(window, TtyWriteString, FakeWriteString, TtyWriteString);
+    OverrideMethod(window, TtyWriteCharset, FakeWriteCharset, TtyWriteCharset);
+    OverrideMethod(window, TtyWriteUtf8, FakeWriteUtf8, TtyWriteUtf8);
     OverrideMethod(window, TtyWriteTRune, FakeWriteTRune, TtyWriteTRune);
     OverrideMethod(window, TtyWriteTCell, FakeWriteTCell, TtyWriteTCell);
     ForceKbdFocus();
   } else {
     OverrideMethod(window, TtyWriteTCell, TtyWriteTCell, FakeWriteTCell);
     OverrideMethod(window, TtyWriteTRune, TtyWriteTRune, FakeWriteTRune);
-    OverrideMethod(window, TtyWriteString, TtyWriteString, FakeWriteString);
-    OverrideMethod(window, TtyWriteAscii, TtyWriteAscii, FakeWriteAscii);
+    OverrideMethod(window, TtyWriteUtf8, TtyWriteUtf8, FakeWriteUtf8);
+    OverrideMethod(window, TtyWriteCharset, TtyWriteCharset, FakeWriteCharset);
     OverrideMethod(window, KbdFocus, TtyKbdFocus, FakeKbdFocus);
     OverrideMethod(gadget, KbdFocus, TtyKbdFocus, FakeKbdFocus);
     OverrideMethod(widget, KbdFocus, TtyKbdFocus, FakeKbdFocus);

@@ -27,7 +27,7 @@ static setup _SetUp = {
 };
 
 static selection _Selection = {{(tany)0, (tany)0}, (msgport)0, (display_hw)0,
-                               SEL_TEXTMAGIC,      String(),   ""};
+                               SEL_UTF8MAGIC,      String(),   ""};
 
 all s_all::Init() {
   State = state_default;
