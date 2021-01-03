@@ -4,16 +4,16 @@
 #include <Tw/datatypes.h>
 #include "stl/string.h"
 
-typedef View<tcolor> Colors;
-typedef View<trune> Runes;
-typedef View<tcell> Cells;
+typedef View<tcolor> TColors;
+typedef View<trune> TRunes;
+typedef View<tcell> TCells;
 
-typedef Span<tcolor> ColorSpan;
-typedef Span<trune> RuneSpan;
-typedef Span<tcell> CellSpan;
+typedef Span<tcolor> TColorSpan;
+typedef Span<trune> TRuneSpan;
+typedef Span<tcell> TCellSpan;
 
-typedef Vector<tcolor> ColorVec;
-typedef Vector<trune> RuneVec;
-typedef Vector<tcell> CellVec;
+typedef Vector<tcolor> TColorVec;
+typedef Vector<trune> TRuneVec;
+typedef Vector<tcell> TCellVec;
 
 #endif /* TWIN_STL_TYPES_H */

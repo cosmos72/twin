@@ -36,8 +36,9 @@
 #include "printk.h"
 #include "resize.h"
 #include "util.h"
-
 #include "hw.h"
+#include "stl/utf8.h"
+#include "stl/vector.h"
 
 #include <Tw/Tw.h>
 #include <Tw/Twstat.h>
@@ -251,7 +252,7 @@ byte EnsureLenRow(row Row, uldat Len, byte DefaultCol) {
   return ttrue;
 }
 
-byte RowWriteAscii(window Window, uldat Len, const char *Text) {
+byte RowWriteCharset(window Window, uldat Len, const char *charset_bytes) {
   row CurrRow;
   const char *_Text;
   byte ModeInsert;
@@ -259,7 +260,7 @@ byte RowWriteAscii(window Window, uldat Len, const char *Text) {
   ldat x, y, max;
   uldat i, RowLen;
 
-  if (!Window || (Len && !Text) || !W_USE(Window, USEROWS))
+  if (!Window || (Len && !charset_bytes) || !W_USE(Window, USEROWS))
     return tfalse;
 
   x = Window->CurX;
@@ -272,7 +273,7 @@ byte RowWriteAscii(window Window, uldat Len, const char *Text) {
     ClearHilight(Window);
 
   while (Len) {
-    if (max <= y || (max == y + 1 && (*Text == '\n' || *Text == '\r'))) {
+    if (max <= y || (max == y + 1 && (*charset_bytes == '\n' || *charset_bytes == '\r'))) {
       if (InsertRowsWindow(Window, Max2(y + 1 - max, 1))) {
         max = Window->HLogic;
         CurrRow = Window->USE.R.LastRow;
@@ -283,7 +284,7 @@ byte RowWriteAscii(window Window, uldat Len, const char *Text) {
     }
 
     RowLen = 0;
-    _Text = Text;
+    _Text = charset_bytes;
     while (RowLen < Len && *_Text != '\n' && *_Text != '\r')
       ++RowLen, ++_Text;
 
@@ -306,7 +307,7 @@ byte RowWriteAscii(window Window, uldat Len, const char *Text) {
       to_UTF_32 = Window->Charset;
 
       for (i = (uldat)Max2(0, -x); i < RowLen; i++)
-        CurrRow->Text[x + i] = to_UTF_32[(byte)Text[i]];
+        CurrRow->Text[x + i] = to_UTF_32[(byte)charset_bytes[i]];
       if (x >= 0 && (uldat)x > CurrRow->Len)
         for (i = CurrRow->Len; i < (uldat)x; i++)
           CurrRow->Text[i] = (trune)' ';
@@ -323,14 +324,14 @@ byte RowWriteAscii(window Window, uldat Len, const char *Text) {
 
       DrawLogicWidget((widget)Window, x, y, x + RowLen - (ldat)1, y);
 
-      Text += RowLen;
+      charset_bytes += RowLen;
       Len -= RowLen;
     }
 
-    if (Len && (*Text == '\n' || *Text == '\r')) {
+    if (Len && (*charset_bytes == '\n' || *charset_bytes == '\r')) {
       Window->CurX = x = (ldat)0;
       Window->CurY = ++y;
-      Text++, Len--;
+      charset_bytes++, Len--;
     } else
       Window->CurX = x += RowLen;
   }
@@ -341,7 +342,23 @@ byte RowWriteAscii(window Window, uldat Len, const char *Text) {
   return ttrue;
 }
 
-byte RowWriteTRune(window Window, uldat Len, const trune *Text) {
+byte RowWriteUtf8(window w, uldat len, const char *utf8_bytes) {
+  View<char> chars(utf8_bytes, len);
+  Vector<trune> runes;
+  Utf8 seq;
+
+  runes.reserve(len);
+  while (chars) {
+    seq.parse(chars, &chars);
+    runes.append(seq.rune());
+  }
+  if (!runes) {
+    return tfalse;
+  }
+  return RowWriteTRune(w, runes.size(), runes.data());
+}
+
+byte RowWriteTRune(window Window, uldat Len, const trune *runes) {
   row CurrRow;
   const trune *_Text;
   byte ModeInsert;
@@ -361,7 +378,7 @@ byte RowWriteTRune(window Window, uldat Len, const trune *Text) {
     ClearHilight(Window);
 
   while (Len) {
-    if (max <= y || (max == y + 1 && (*Text == '\n' || *Text == '\r'))) {
+    if (max <= y || (max == y + 1 && (*runes == '\n' || *runes == '\r'))) {
       if (InsertRowsWindow(Window, Max2(y + 1 - max, 1))) {
         max = Window->HLogic;
         CurrRow = Window->USE.R.LastRow;
@@ -372,7 +389,7 @@ byte RowWriteTRune(window Window, uldat Len, const trune *Text) {
     }
 
     RowLen = (ldat)0;
-    _Text = Text;
+    _Text = runes;
     while (RowLen < Len && *_Text != '\n' && *_Text != '\r')
       ++RowLen, ++_Text;
 
@@ -393,9 +410,9 @@ byte RowWriteTRune(window Window, uldat Len, const trune *Text) {
       CurrRow->Flags = ROW_ACTIVE;
 
       if (x >= 0) {
-        CopyMem(Text, CurrRow->Text + x, sizeof(trune) * RowLen);
+        CopyMem(runes, CurrRow->Text + x, sizeof(trune) * RowLen);
       } else if ((uldat)-x < RowLen) {
-        CopyMem(Text - x, CurrRow->Text, sizeof(trune) * (RowLen + x));
+        CopyMem(runes - x, CurrRow->Text, sizeof(trune) * (RowLen + x));
       }
       if (x >= 0 && (uldat)x > CurrRow->Len) {
         for (i = CurrRow->Len; i < (uldat)x; i++)
@@ -419,14 +436,14 @@ byte RowWriteTRune(window Window, uldat Len, const trune *Text) {
 
       DrawLogicWidget((widget)Window, x, y, x + RowLen - (ldat)1, y);
 
-      Text += RowLen;
+      runes += RowLen;
       Len -= RowLen;
     }
 
-    if (Len && (*Text == '\n' || *Text == '\r')) {
+    if (Len && (*runes == '\n' || *runes == '\r')) {
       Window->CurX = x = (ldat)0;
       Window->CurY = ++y;
-      Text++, Len--;
+      runes++, Len--;
     } else
       Window->CurX = x += RowLen;
   }
@@ -437,18 +454,18 @@ byte RowWriteTRune(window Window, uldat Len, const trune *Text) {
   return ttrue;
 }
 
-void ExposeWidget2(widget W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch, const char *Text,
-                   const trune *Font, const tcell *Attr) {
+void ExposeWidget2(widget W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch,
+                   const char *utf8_bytes, const trune *runes, const tcell *cells) {
   if (w_USE(W, USEEXPOSE)) {
-    if (Text || Font || Attr) {
-      if (Text) {
-        W->USE.E.E.Text = Text;
+    if (utf8_bytes || runes || cells) {
+      if (utf8_bytes) {
+        W->USE.E.E.Text = utf8_bytes;
         W->USE.E.Flags = WIDGET_USEEXPOSE_TEXT;
-      } else if (Font) {
-        W->USE.E.E.TRune = Font;
+      } else if (runes) {
+        W->USE.E.E.TRune = runes;
         W->USE.E.Flags = WIDGET_USEEXPOSE_TRUNE;
       } else {
-        W->USE.E.E.TCell = Attr;
+        W->USE.E.E.TCell = cells;
         W->USE.E.Flags = WIDGET_USEEXPOSE_TCELL;
       }
       W->USE.E.X1 = Left;
@@ -470,12 +487,12 @@ void ExposeWidget2(widget W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch
   }
 }
 
-void ExposeWindow2(window W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch, const char *Text,
-                   const trune *Font, const tcell *Attr) {
+void ExposeWindow2(window W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch,
+                   const char *utf8_bytes, const trune *runes, const tcell *cells) {
   ldat CurX, CurY;
 
   if (W_USE(W, USEEXPOSE)) {
-    ExposeWidget2((widget)W, XWidth, YWidth, Left, Up, Pitch, Text, Font, Attr);
+    ExposeWidget2((widget)W, XWidth, YWidth, Left, Up, Pitch, utf8_bytes, runes, cells);
     return;
   }
 
@@ -485,22 +502,22 @@ void ExposeWindow2(window W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch
   /* handle negative (Left,Up) by clipping */
   if (Left < 0) {
     XWidth += Left;
-    if (Text)
-      Text -= Left;
-    if (Font)
-      Font -= Left;
-    if (Attr)
-      Attr -= Left;
+    if (utf8_bytes)
+      utf8_bytes -= Left;
+    if (runes)
+      runes -= Left;
+    if (cells)
+      cells -= Left;
     Left = 0;
   }
   if (Up < 0) {
     YWidth += Up;
-    if (Text)
-      Text -= (ldat)Up * Pitch;
-    if (Font)
-      Font -= (ldat)Up * Pitch;
-    if (Attr)
-      Attr -= (ldat)Up * Pitch;
+    if (utf8_bytes)
+      utf8_bytes -= (ldat)Up * Pitch;
+    if (runes)
+      runes -= (ldat)Up * Pitch;
+    if (cells)
+      cells -= (ldat)Up * Pitch;
     Up = 0;
   }
 
@@ -518,22 +535,22 @@ void ExposeWindow2(window W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch
   if (XWidth <= 0 || YWidth <= 0)
     return;
 
-  if (Text) {
-    byte (*WriteString)(window, uldat, const char *);
+  if (utf8_bytes) {
+    byte (*WriteUtf8)(window, uldat, const char *);
     if (W_USE(W, USECONTENTS)) {
-      WriteString = W->Fn->TtyWriteString;
+      WriteUtf8 = W->Fn->TtyWriteUtf8;
     } else
-      WriteString = W->Fn->RowWriteString;
+      WriteUtf8 = W->Fn->RowWriteUtf8;
 
     CurX = W->CurX;
     CurY = W->CurY;
-    for (; YWidth; YWidth--, Up++, Text += Pitch) {
+    for (; YWidth; YWidth--, Up++, utf8_bytes += Pitch) {
       Act(GotoXY, W)(W, Left, Up);
-      WriteString(W, (uldat)XWidth, Text);
+      WriteUtf8(W, (uldat)XWidth, utf8_bytes);
     }
     Act(GotoXY, W)(W, CurX, CurY);
 
-  } else if (Font) {
+  } else if (runes) {
     byte (*WriteTRune)(window, uldat, const trune *);
     if (W_USE(W, USECONTENTS))
       WriteTRune = W->Fn->TtyWriteTRune;
@@ -542,21 +559,21 @@ void ExposeWindow2(window W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch
 
     CurX = W->CurX;
     CurY = W->CurY;
-    for (; YWidth; YWidth--, Up++, Font += Pitch) {
+    for (; YWidth; YWidth--, Up++, runes += Pitch) {
       Act(GotoXY, W)(W, Left, Up);
-      WriteTRune(W, (uldat)XWidth, Font);
+      WriteTRune(W, (uldat)XWidth, runes);
     }
     Act(GotoXY, W)(W, CurX, CurY);
 
-  } else if (Attr) {
+  } else if (cells) {
     byte (*WriteTCell)(window, dat, dat, uldat, const tcell *);
     if (W_USE(W, USECONTENTS))
       WriteTCell = W->Fn->TtyWriteTCell;
     else
       WriteTCell = W->Fn->RowWriteTCell;
 
-    for (; YWidth; YWidth--, Up++, Attr += Pitch)
-      WriteTCell(W, Left, Up, (uldat)XWidth, Attr);
+    for (; YWidth; YWidth--, Up++, cells += Pitch)
+      WriteTCell(W, Left, Up, (uldat)XWidth, cells);
   }
 }
 
@@ -1921,7 +1938,8 @@ void UnPressGadget(gadget G, byte maySendMsgIfNotToggle) {
 
 /* Left < 0 means right-align leaving (-Left-1) margin */
 /* Up   < 0 means down-align  leaving (-Up-1)   margin */
-void WriteTextsGadget(gadget G, byte bitmap, dat TW, dat TH, const char *Text, dat L, dat U) {
+void WriteTextsGadget(gadget G, byte bitmap, dat TW, dat TH, const char *charset_bytes, dat L,
+                      dat U) {
   dat GW = G->XWidth, GH = G->YWidth;
   dat TL = 0, TU = 0, W, H;
   dat _W;
@@ -1963,8 +1981,8 @@ void WriteTextsGadget(gadget G, byte bitmap, dat TW, dat TH, const char *Text, d
     for (i = 0; i < 4; i++, bitmap >>= 1) {
       if ((bitmap & 1) && G->USE.T.Text[i]) {
         GT = G->USE.T.Text[i] + L + U * GW;
-        if (Text) {
-          TT = Text + TL + TU * TW;
+        if (charset_bytes) {
+          TT = charset_bytes + TL + TU * TW;
           /* update the specified part, do not touch the rest */
           while (H-- > 0) {
             _W = W;

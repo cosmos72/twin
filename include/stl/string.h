@@ -41,8 +41,16 @@ public:
   }
   // ~String() = default;
 
+  using Base::append;
+
+  bool append(Utf8 seq) {
+    return append(Chars(seq.data(), seq.size()));
+  }
+  // convert UTF-32 runes to UTF-8 and append them to this string
+  bool append_runes(View<trune> runes);
+
   bool operator+=(char ch) {
-    return append(Chars(&ch, 1));
+    return append(ch);
   }
 
   bool operator+=(Chars other) {
@@ -50,7 +58,7 @@ public:
   }
 
   bool operator+=(Utf8 seq) {
-    return append(Chars(seq.data(), seq.size()));
+    return append(seq);
   }
 };
 

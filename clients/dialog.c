@@ -102,7 +102,7 @@ static byte ShowText(void) {
     int len = strlen(text);
     if (!memchr(text, '\n', len))
       TwGotoXYWindow(Dialog_Win, (width - len) / 2, 0);
-    TwWriteAsciiWindow(Dialog_Win, len, text);
+    TwWriteCharsetWindow(Dialog_Win, len, text);
   }
   return ttrue;
 }
@@ -137,9 +137,9 @@ static byte InitMenuBox(void) {
     y = CountNewLines(text) + 2;
     for (i = 0; i < listN; i++) {
       TwGotoXYWindow(Dialog_Win, 3, i + y);
-      TwWriteAsciiWindow(Dialog_Win, strlen(list[i].tag), list[i].tag);
+      TwWriteCharsetWindow(Dialog_Win, strlen(list[i].tag), list[i].tag);
       TwGotoXYWindow(Dialog_Win, 10, i + y);
-      TwWriteAsciiWindow(Dialog_Win, strlen(list[i].item), list[i].item);
+      TwWriteCharsetWindow(Dialog_Win, strlen(list[i].item), list[i].item);
     }
     return InitButtons("  OK  ", "Cancel");
   }

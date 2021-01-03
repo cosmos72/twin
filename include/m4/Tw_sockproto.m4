@@ -127,16 +127,16 @@ PROTO(gadget,x, CreateButton,Gadget,1, widget,x,parent, dat,_,w, dat,_,h, char,V
 	uldat,_,flags, udat,_,code, tcolor,_,colbg, tcolor,_,col, tcolor,_,coldisabled, dat,_,x, dat,_,y)
 
 PROTO(void,v, WriteTexts,Gadget,2, gadget,x,G, byte,_,mask, dat,_,w, dat,_,h, char,W(A(2)*A(3)),text, dat,_,x, dat,_,y)
-PROTO(void,v, WriteTRunes,Gadget,2, gadget,x,G, byte,_,mask, dat,_,w, dat,_,h, trune,W(A(2)*A(3)),textfont, dat,_,x, dat,_,y)
+PROTO(void,v, WriteTRunes,Gadget,2, gadget,x,G, byte,_,mask, dat,_,w, dat,_,h, trune,W(A(2)*A(3)),runes, dat,_,x, dat,_,y)
 
 PROTO(window,x,     Create,Window,0, dat,_,titlelen, char,V(A(1)),title, tcolor,W(A(1)),coltitle, menu,x,M,
 	tcolor,_,coltext, uldat,_,cursortype, uldat,_,attrib, uldat,_,flags, dat,_,w, dat,_,h, dat,_,hscroll)
 PROTO(window,x, Create4Menu,Window,1, menu,x,M)
 
-PROTO(void,v,  WriteAscii  ,Window,0, window,x,W, uldat,_,len, char,V(A(2)),ascii)
-PROTO(void,v,  WriteString ,Window,0, window,x,W, uldat,_,len, char,V(A(2)),string)
-PROTO(void,v,  WriteTRune, Window,0, window,x,W, uldat,_,len, trune,V(A(2)),textfont)
-PROTO(void,v,  WriteTCell ,Window,0, window,x,W,   dat,_,x, dat,_,y, uldat,_,len, tcell,V(A(4)),textattr)
+PROTO(void,v,  WriteCharset,Window,0, window,x,W, uldat,_,len, char,V(A(2)),charset_bytes)
+PROTO(void,v,  WriteUtf8   ,Window,0, window,x,W, uldat,_,len, char,V(A(2)),utf8_bytes)
+PROTO(void,v,  WriteTRune  ,Window,0, window,x,W, uldat,_,len,trune,V(A(2)),runes)
+PROTO(void,v,  WriteTCell  ,Window,0, window,x,W,   dat,_,x, dat,_,y, uldat,_,len, tcell,V(A(4)),cells)
 
 PROTO(void,v,        GotoXY,Window,2, window,x,W, ldat,_,x, ldat,_,y)
 PROTO(void,v,      SetTitle,Window,0, window,x,W, dat,_,titlelen, char,V(A(2)),title)

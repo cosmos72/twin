@@ -38,7 +38,7 @@ void printk_str(int len, const char *s) {
         if (MessagesWin->Parent)
           DrawFullWindow2(MessagesWin);
       }
-      MessagesWin->RowWriteAscii(len, s);
+      MessagesWin->RowWriteCharset(len, s);
     }
 #endif /* CONF_PRINTK */
 

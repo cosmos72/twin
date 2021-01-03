@@ -9,14 +9,15 @@
 #ifndef TWIN_RESIZE_H
 #define TWIN_RESIZE_H
 
-byte EnsureLenRow(row Row, uldat Len, byte DefaultCol);
-byte RowWriteAscii(window Window, uldat Len, const char *Text);
-byte RowWriteTRune(window Window, uldat Len, const trune *Text);
+byte EnsureLenRow(row r, uldat len, byte default_color);
+byte RowWriteCharset(window w, uldat Len, const char *charset_bytes);
+byte RowWriteUtf8(window w, uldat len, const char *utf8_bytes);
+byte RowWriteTRune(window w, uldat len, const trune *runes);
 
-void ExposeWidget2(widget W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch, const char *Text,
-                   const trune *Font, const tcell *Attr);
-void ExposeWindow2(window W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch, const char *Text,
-                   const trune *Font, const tcell *Attr);
+void ExposeWidget2(widget W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch,
+                   const char *utf8_bytes, const trune *runes, const tcell *cells);
+void ExposeWindow2(window W, dat XWidth, dat YWidth, dat Left, dat Up, dat Pitch,
+                   const char *utf8_bytes, const trune *runes, const tcell *cells);
 
 extern byte NeedUpdateCursor;
 #define UpdateCursor() (NeedUpdateCursor = ttrue)

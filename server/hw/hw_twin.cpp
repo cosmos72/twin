@@ -59,37 +59,37 @@ static void TW_SelectionNotify_up(uldat ReqPrivate, uldat Magic, const char MIME
                                   Chars Data);
 
 static void TW_Beep(void) {
-  Tw_WriteAsciiWindow(Td, Twin, 1, "\007");
+  Tw_WriteCharsetWindow(Td, Twin, 1, "\007");
   setFlush();
 }
 
 static void TW_Configure(udat resource, byte todefault, udat value) {
   switch (resource) {
   case HW_KBDAPPLIC:
-    Tw_WriteAsciiWindow(Td, Twin, 2, todefault || !value ? "\033>" : "\033=");
+    Tw_WriteCharsetWindow(Td, Twin, 2, todefault || !value ? "\033>" : "\033=");
     setFlush();
     break;
   case HW_ALTCURSKEYS:
-    Tw_WriteAsciiWindow(Td, Twin, 5, todefault || !value ? "\033[?1l" : "\033[?1h");
+    Tw_WriteCharsetWindow(Td, Twin, 5, todefault || !value ? "\033[?1l" : "\033[?1h");
     setFlush();
     break;
   case HW_BELLPITCH:
     if (todefault)
-      Tw_WriteAsciiWindow(Td, Twin, 5, "\033[10]");
+      Tw_WriteCharsetWindow(Td, Twin, 5, "\033[10]");
     else {
       char buf[10];
       sprintf(buf, "\033[10;%.3hd]", value);
-      Tw_WriteAsciiWindow(Td, Twin, strlen(buf), buf);
+      Tw_WriteCharsetWindow(Td, Twin, strlen(buf), buf);
     }
     setFlush();
     break;
   case HW_BELLDURATION:
     if (todefault)
-      Tw_WriteAsciiWindow(Td, Twin, 5, "\033[11]");
+      Tw_WriteCharsetWindow(Td, Twin, 5, "\033[11]");
     else {
       char buf[10];
       sprintf(buf, "\033[11;%.3hd]", value);
-      Tw_WriteAsciiWindow(Td, Twin, strlen(buf), buf);
+      Tw_WriteCharsetWindow(Td, Twin, strlen(buf), buf);
     }
     setFlush();
     break;
@@ -240,7 +240,7 @@ static void TW_FlushVideo(void) {
     char buff[16];
     sprintf(buff, "\033[?%d;%d;%dc", (int)(CursorType & 0xFF), (int)((CursorType >> 8) & 0xFF),
             (int)((CursorType >> 16) & 0xFF));
-    Tw_WriteAsciiWindow(Td, Twin, strlen(buff), buff);
+    Tw_WriteCharsetWindow(Td, Twin, strlen(buff), buff);
     HW->TT = CursorType;
     setFlush();
   }
@@ -473,8 +473,8 @@ static byte TW_InitHW(void) {
        * check if the server supports the functions we need and store their IDs
        * to avoid deadlocking later when we call them.
        */
-      Tw_FindLFunction(Td, Tw_MapWidget, Tw_WriteAsciiWindow, Tw_WriteTCellWindow, Tw_GotoXYWindow,
-                       Tw_ResizeWindow,
+      Tw_FindLFunction(Td, Tw_MapWidget, Tw_WriteCharsetWindow, Tw_WriteTCellWindow,
+                       Tw_GotoXYWindow, Tw_ResizeWindow,
                        /* Tw_DragAreaWindow, */ NULL) &&
 
       (Tscreen = Tw_FirstScreen(Td)) && (Tmsgport = Tw_CreateMsgPort(Td, 12, "Twin on Twin")) &&

@@ -90,6 +90,7 @@ define(`methodsGadget', `extends(Widget, $2)`'dnl
 Twappend(Window)
 define(`methodsWindow', `extends(Widget, $2)`'dnl
     alias(Win4Menu, Create4Menu)`'dnl
+    alias(WriteAscii$2, WriteCharset)`'dnl
 ')
 
 Twappend(Screen)

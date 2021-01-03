@@ -689,26 +689,26 @@ inline void csi_m(void) {
 }
 
 static void respond_string(const char *p) {
-  ldat Len = strlen(p);
+  ldat len = strlen(p);
 
   /* the remote program may be directly attached to the window */
-  if (!RemoteWindowWriteQueue(Win, Len, p)) {
+  if (!RemoteWindowWriteQueue(Win, len, p)) {
 
     /* or we may need to send a Msg to Win->Owner */
     msg Msg;
     event_keyboard *Event;
-    if ((Msg = New(msg)(msg_widget_key, Len))) {
+    if ((Msg = New(msg)(msg_widget_key, len))) {
       /* this is the same code as in KeyboardEvent() in hw.c */
       Event = &Msg->Event.EventKeyboard;
       Event->W = (widget)Win;
-      if (Len == 1 && (p[0] == ENTER || p[0] == ESCAPE))
+      if (len == 1 && (p[0] == ENTER || p[0] == ESCAPE))
         Event->Code = p[0];
       else
         Event->Code = 1;
       Event->ShiftFlags = (udat)0;
-      Event->SeqLen = Len;
-      CopyMem(p, Event->AsciiSeq, Len);
-      Event->AsciiSeq[Len] = '\0'; /* terminate string with \0 */
+      Event->SeqLen = len;
+      CopyMem(p, Event->AsciiSeq, len);
+      Event->AsciiSeq[len] = '\0'; /* terminate string with \0 */
       SendMsg(Win->Owner, Msg);
     }
   }
@@ -993,7 +993,7 @@ static void clear_newtitle(void) {
   newLen = newMax = 0;
 }
 
-inline void write_ctrl(byte c) {
+static inline void write_ctrl(byte c) {
   /*
    *  Control characters can be used in the _middle_
    *  of an escape sequence.
@@ -1460,8 +1460,8 @@ void ForceKbdFocus(void) {
 }
 
 /* initialize global static data */
-static void common(window Window) {
-  Win = Window;
+static void common(window w) {
+  Win = w;
   Data = Win->USE.C.TtyData;
   Flags = &Data->Flags;
 
@@ -1475,7 +1475,7 @@ static void common(window Window) {
     else {
       dirty_tty(0, 0, SizeX - 1, SizeY - 1);
       Win->YLogic = ScrollBack;
-      DrawBorderWindow(Window, BORDER_RIGHT);
+      DrawBorderWindow(w, BORDER_RIGHT);
     }
   }
   /* clear any selection */
@@ -1513,20 +1513,20 @@ static tbool combine_utf8(trune *pc) {
 }
 
 /* this is the main entry point */
-byte TtyWriteAscii(window Window, uldat Len, const char *AsciiSeq) {
+byte TtyWriteCharsetOrUtf8(window w, uldat len, const char *chars, bool force_utf8) {
   trune c;
   byte printable, utf8_in_use, disp_ctrl, state_normal;
 
-  if (!Window || !W_USE(Window, USECONTENTS) || !Window->USE.C.TtyData)
+  if (!w || !W_USE(w, USECONTENTS) || !w->USE.C.TtyData)
     return tfalse;
-  if (!Len || !AsciiSeq)
+  if (!len || !chars)
     return ttrue;
 
-  common(Window);
+  common(w);
 
-  while (!(*Flags & TTY_STOPPED) && Len) {
-    c = (byte)*AsciiSeq++;
-    Len--;
+  while (!(*Flags & TTY_STOPPED) && len) {
+    c = (byte)*chars++;
+    len--;
 
     /* If the original code was a control character we only allow a glyph
      * to be displayed if the code is not normally used (such as for cursor movement)
@@ -1539,7 +1539,7 @@ byte TtyWriteAscii(window Window, uldat Len, const char *AsciiSeq) {
       disp_ctrl = *Flags & TTY_DISPCTRL;
       utf8_in_use = utf8 && !disp_ctrl;
 
-      if (utf8_in_use) {
+      if (force_utf8 || utf8_in_use) {
         if (c & 0x80) {
           if (!combine_utf8(&c))
             continue;
@@ -1589,27 +1589,35 @@ byte TtyWriteAscii(window Window, uldat Len, const char *AsciiSeq) {
   return ttrue;
 }
 
-/* same as TtyWriteAscii(), but writes trune (UCS-2 + colors + graph tiles). */
-byte TtyWriteTRune(window Window, uldat Len, const trune *TRune) {
+byte TtyWriteCharset(window w, uldat len, const char *charset_bytes) {
+  return TtyWriteCharsetOrUtf8(w, len, charset_bytes, false);
+}
+
+byte TtyWriteUtf8(window w, uldat len, const char *utf8_bytes) {
+  return TtyWriteCharsetOrUtf8(w, len, utf8_bytes, true);
+}
+
+/* similar to TtyWriteUtf8(), but writes UTF-32 */
+byte TtyWriteTRune(window w, uldat len, const trune *runes) {
   trune c;
   byte ok;
 
-  if (!Window || !W_USE(Window, USECONTENTS) || !Window->USE.C.TtyData)
+  if (!w || !W_USE(w, USECONTENTS) || !w->USE.C.TtyData)
     return tfalse;
-  if (!Len || !TRune)
+  if (!len || !runes)
     return ttrue;
 
-  common(Window);
+  common(w);
 
-  while (!(*Flags & TTY_STOPPED) && Len) {
-    c = *TRune++;
-    Len--;
+  while (!(*Flags & TTY_STOPPED) && len) {
+    c = *runes++;
+    len--;
 
-    /* If the original code is 8-bit, behave as TtyWriteAscii() with LATIN1_MAP*/
     if (c < 0x100) {
       if (*Flags & TTY_SETMETA)
         c |= 0x80;
 
+      /* If the original code < 32, interpret as control character */
       ok = (c >= 32 || !(((*Flags & TTY_DISPCTRL ? CTRL_ALWAYS : CTRL_ACTION) >> c) & 1)) &&
            (c != 127 || (*Flags & TTY_DISPCTRL)) && (c != 128 + 27);
     } else
@@ -1643,60 +1651,20 @@ byte TtyWriteTRune(window Window, uldat Len, const trune *TRune) {
 }
 
 /*
- * this writes string literally, without interpreting specially any character
- * (not even ESC or \n) and using current translation.
- */
-byte TtyWriteString(window Window, uldat Len, const char *string) {
-  trune c;
-
-  if (!Window || !W_USE(Window, USECONTENTS) || !Window->USE.C.TtyData)
-    return tfalse;
-  if (!Len || !string)
-    return ttrue;
-
-  common(Window);
-
-  while (!(*Flags & TTY_STOPPED) && Len) {
-    c = applyG(*string++);
-
-    Len--;
-
-    /* Now try to find out how to display it */
-    if (*Flags & TTY_NEEDWRAP) {
-      cr();
-      lf();
-    }
-
-    dirty_tty(X, Y, X, Y);
-    *Pos = TCELL(Color, c);
-
-    if (X == SizeX - 1) {
-      if (*Flags & TTY_AUTOWRAP)
-        *Flags |= TTY_NEEDWRAP;
-    } else {
-      X++;
-      Pos++;
-    }
-  }
-  flush_tty();
-  return ttrue;
-}
-
-/*
  * this currently wraps at window width so it can write multiple rows at time.
  * does not move cursor position, nor interacts with wrapglitch.
  */
-byte TtyWriteTCell(window Window, dat x, dat y, uldat len, const tcell *text) {
+byte TtyWriteTCell(window w, dat x, dat y, uldat len, const tcell *text) {
   ldat left, max, chunk;
   ldat i;
   tcell *dst;
 
-  if (!Window || !W_USE(Window, USECONTENTS) || !Window->USE.C.TtyData)
+  if (!w || !W_USE(w, USECONTENTS) || !w->USE.C.TtyData)
     return tfalse;
   if (!len || !text)
     return ttrue;
 
-  common(Window);
+  common(w);
 
   x = Max2(x, 0);
   x = Min2(x, SizeX - 1);
@@ -1716,7 +1684,7 @@ byte TtyWriteTCell(window Window, dat x, dat y, uldat len, const tcell *text) {
     else {
       dirty_tty(0, 0, SizeX - 1, SizeY - 1);
       Win->YLogic = ScrollBack;
-      DrawBorderWindow(Window, BORDER_RIGHT);
+      DrawBorderWindow(w, BORDER_RIGHT);
     }
   }
   /* clear any selection */
@@ -1771,7 +1739,7 @@ static void con_start(struct tty_struct *tty) {
     set_leds();
 }
 
-static void clear_buffer_attributes(window Window) {
+static void clear_buffer_attributes(window w) {
     unsigned short *p = (unsigned short *) origin;
     int count = screenbuf_size/2;
     int mask = hi_font_mask | 0xff;
@@ -1784,7 +1752,7 @@ static void clear_buffer_attributes(window Window) {
 /*
  *        Palettes
  */
-void set_palette(window Window) {
+void set_palette(window w) {
     if (vcmode != KD_GRAPHICS)
           sw->con_set_palette(vc_cons.d, color_table);
 }
@@ -1829,7 +1797,7 @@ int con_get_cmap(unsigned char *arg) {
     return set_get_cmap (arg,0);
 }
 
-void reset_palette(window Window) {
+void reset_palette(window w) {
     int j, k;
     for (j=k=0; j<16; j++) {
         palette[k++] = default_red[j];

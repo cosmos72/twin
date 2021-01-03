@@ -408,19 +408,7 @@ static void TwinTermH(void) {
       Fd = Fd_Slot(Slot);
 
       /* react as for keypresses */
-      if (Event->EventSelectionNotify.Magic == TW_SEL_TRUNEMAGIC) {
-        char *Dst = Event->EventSelectionNotify.Data;
-        trune *Src = (trune *)Dst;
-        uldat n = Event->EventSelectionNotify.Len / sizeof(trune);
-
-        /* FIXME: this is rough. convert to UTF-8 instead */
-        while (n--)
-          *Dst++ = Tutf_UTF_32_to_CP437(*Src++);
-
-        write(Fd, Event->EventSelectionNotify.Data,
-              Event->EventSelectionNotify.Len / sizeof(trune));
-      } else
-        write(Fd, Event->EventSelectionNotify.Data, Event->EventSelectionNotify.Len);
+      write(Fd, Event->EventSelectionNotify.Data, Event->EventSelectionNotify.Len);
 
     } else if (Msg->Type == TW_MSG_WIDGET_MOUSE) {
       fprintf(stderr, "twterm: unexpected Mouse event message!\n");
@@ -470,7 +458,7 @@ static void TwinTermIO(int Slot) {
   } while (chunk > 0 && (got += chunk) < TW_BIGBUFF - 1);
 
   if (got)
-    TwWriteAsciiWindow(LS.Window, got, buf);
+    TwWriteCharsetWindow(LS.Window, got, buf);
   else if (chunk == -1 && errno != EINTR && errno != EWOULDBLOCK)
     /* something bad happened to our child :( */
     CloseTerm(Slot);

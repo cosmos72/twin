@@ -71,7 +71,7 @@ int main(int argc, char *argv[]) {
       if (Msg->Type == TW_MSG_WIDGET_KEY) {
 
         tevent_keyboard EventK = &Msg->Event.EventKeyboard;
-        (void)TwWriteAsciiWindow(EventK->W, EventK->SeqLen, EventK->AsciiSeq);
+        (void)TwWriteCharsetWindow(EventK->W, EventK->SeqLen, EventK->AsciiSeq);
 
       } else if (Msg->Type == TW_MSG_SELECTION) {
         /*
@@ -84,8 +84,8 @@ int main(int argc, char *argv[]) {
       } else if (Msg->Type == TW_MSG_SELECTIONNOTIFY) {
 
         tevent_selectionnotify EventN = &Msg->Event.EventSelectionNotify;
-        if (EventN->Magic == TW_SEL_TEXTMAGIC)
-          (void)TwWriteAsciiWindow(EventN->ReqPrivate, EventN->Len, EventN->Data);
+        if (EventN->Magic == TW_SEL_UTF8MAGIC)
+          (void)TwWriteUtf8Window(EventN->ReqPrivate, EventN->Len, EventN->Data);
 
       } else if (Msg->Type == TW_MSG_SELECTIONCLEAR) {
         ;

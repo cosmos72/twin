@@ -210,8 +210,7 @@ struct s_tevent_selectionnotify {
 } TW_ATTR_TYPE_PACKED;
 
 /*SelectionNotify Magic*/
-#define TW_SEL_TEXTMAGIC ((uldat)0x54657874)
-#define TW_SEL_TRUNEMAGIC ((uldat)0x4877666E) /* it's unicode */
+#define TW_SEL_UTF8MAGIC ((uldat)0x55746638) /* UTF-8 */
 #define TW_SEL_FILEMAGIC ((uldat)0x46696c65)
 #define TW_SEL_URLMAGIC ((uldat)0xAB1691BA)
 #define TW_SEL_DATAMAGIC ((uldat)0xDA1AA1AD) /* check MIME if you get this */

@@ -908,8 +908,6 @@ static void alienSendMsg(msgport MsgPort, msg Msg) {
     break;
   case msg_selection_notify:
     N = Msg->Event.EventSelectionNotify.Len;
-    if (Msg->Event.EventSelectionNotify.Magic == SEL_TRUNEMAGIC)
-      N = (N / sizeof(trune)) * SIZEOF(trune);
     alienReply(Msg->Type, Len = 4 * SIZEOF(uldat) + 2 * SIZEOF(dat) + MAX_MIMELEN + N, 0, NULL);
 
     if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
@@ -920,36 +918,8 @@ static void alienSendMsg(msgport MsgPort, msg Msg) {
       PUSH(t, uldat, Msg->Event.EventSelectionNotify.ReqPrivate);
       PUSH(t, uldat, Msg->Event.EventSelectionNotify.Magic);
       PushV(t, MAX_MIMELEN, Msg->Event.EventSelectionNotify.MIME);
-
-      /* client may be not unicode aware while we are */
-      if (Msg->Event.EventSelectionNotify.Magic == SEL_TRUNEMAGIC) {
-        N = Msg->Event.EventSelectionNotify.Len;
-
-        if (SIZEOF(trune) == 1) {
-          /* on the fly conversion from Unicode to CP437 */
-          Src = Msg->Event.EventSelectionNotify.Data;
-
-          N /= sizeof(trune);
-          PUSH(t, uldat, N);
-
-          while (N--) {
-            Pop(Src, tcell, H);
-
-            h = ((uint16_t)TCOLOR(H) << 8) | Tutf_UTF_32_to_CP437(TRUNE(H));
-            t = alienPush(&h, sizeof(tcell), t, 2);
-          }
-        } else {
-          N = (N / sizeof(trune)) * SIZEOF(trune);
-          PUSH(t, uldat, N);
-          N = Msg->Event.EventSelectionNotify.Len;
-          alienWriteVec((const byte *)Msg->Event.EventSelectionNotify.Data, t, N, sizeof(trune),
-                        SIZEOF(trune), AlienXendian(Slot) == MagicAlienXendian);
-          t += N;
-        }
-      } else {
-        PUSH(t, uldat, Msg->Event.EventSelectionNotify.Len);
-        PushV(t, Msg->Event.EventSelectionNotify.Len, Msg->Event.EventSelectionNotify.Data);
-      }
+      PUSH(t, uldat, Msg->Event.EventSelectionNotify.Len);
+      PushV(t, Msg->Event.EventSelectionNotify.Len, Msg->Event.EventSelectionNotify.Data);
     }
     break;
   case msg_selection_request:

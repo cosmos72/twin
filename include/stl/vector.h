@@ -166,6 +166,10 @@ public:
     return true;
   }
 
+  bool append(const T &src) {
+    return append(View<T>(&src, 1));
+  }
+
   bool append(View<T> src) {
     const size_t oldn = size_;
     const size_t srcn = src.size();

@@ -144,9 +144,9 @@
 { 0, 0, "Create4MenuWindow",
     "1" "x" window_magic_STR"x" menu_magic_STR },
 
-{ 0, 0, "WriteAsciiWindow",
+{ 0, 0, "WriteCharsetWindow",
     "0" "v" TWS_void_STR"x" window_magic_STR"_" TWS_uldat_STR"V" TWS_char_STR },
-{ 0, 0, "WriteStringWindow",
+{ 0, 0, "WriteUtf8Window",
     "0" "v" TWS_void_STR"x" window_magic_STR"_" TWS_uldat_STR"V" TWS_char_STR },
 { 0, 0, "WriteTRuneWindow",
     "0" "v" TWS_void_STR"x" window_magic_STR"_" TWS_uldat_STR"V" TWS_trune_STR },

@@ -333,7 +333,7 @@ static byte InitClient(void) {
   ) {
     TwSetColTextWindow(DM_Window, TCOL(thigh | tred, tblue));
     TwGotoXYWindow(DM_Window, 7, 8);
-    TwWriteAsciiWindow(DM_Window, 26, "L O G I N   F A I L E D  !");
+    TwWriteCharsetWindow(DM_Window, 26, "L O G I N   F A I L E D  !");
 
     TwSetXYWindow(DM_Window, (X - 40) / 2, (Y - 15) / 2);
     TwSetXYWindow(DM_user, 4, 2);
@@ -353,13 +353,13 @@ static byte InitClient(void) {
 static void ClearKey(void) {
   TwGotoXYWindow(DM_user, 0, 0);
   memset(user.txt, ' ', user.len);
-  TwWriteAsciiWindow(DM_user, user.len, user.txt);
+  TwWriteCharsetWindow(DM_user, user.len, user.txt);
   TwGotoXYWindow(DM_user, user.len = user.x = 0, 0);
   user.txt[0] = '\0';
 
   TwGotoXYWindow(DM_pass, 0, 0);
   memset(pass.txt, ' ', pass.len);
-  TwWriteAsciiWindow(DM_pass, pass.len, pass.txt);
+  TwWriteCharsetWindow(DM_pass, pass.len, pass.txt);
   TwGotoXYWindow(DM_pass, pass.len = pass.x = 0, 0);
   pass.txt[0] = '\0';
 }
@@ -441,10 +441,10 @@ static void DelKey(twindow W, data u) {
 
     if (W == DM_user) {
       TwGotoXYWindow(W, 0, 0);
-      TwWriteAsciiWindow(W, u->len, u->txt);
+      TwWriteCharsetWindow(W, u->len, u->txt);
     } else
       TwGotoXYWindow(W, u->len, 0);
-    TwWriteAsciiWindow(W, 1, " ");
+    TwWriteCharsetWindow(W, 1, " ");
     TwGotoXYWindow(W, u->x, 0);
   }
 }
@@ -476,7 +476,7 @@ static void EndKey(twindow W, data u) {
     TwGotoXYWindow(W, u->x = u->len, 0);
 }
 
-static void WriteKey(twindow W, data u, udat len, char *seq) {
+static void WriteUtf8Key(twindow W, data u, udat len, char *seq) {
   char *_txt;
   byte _len, x;
 
@@ -495,18 +495,8 @@ static void WriteKey(twindow W, data u, udat len, char *seq) {
     u->len = _len;
     if (W == DM_pass)
       memset(seq, '*', len);
-    TwWriteAsciiWindow(W, len, seq);
+    TwWriteUtf8Window(W, len, seq);
   }
-}
-
-static void WriteTRuneKey(twindow W, data u, udat len, trune *h_data) {
-  char *d_data = (char *)h_data, *s_data = d_data;
-  udat n = len;
-
-  /* hack warning: this assumes `h_data' is writable and correctly aligned */
-  while (n--)
-    *d_data++ = Tutf_UTF_32_to_CP437(*h_data++);
-  WriteKey(W, u, len, s_data);
 }
 
 static void HandleKey(tevent_keyboard E) {
@@ -556,7 +546,7 @@ static void HandleKey(tevent_keyboard E) {
     break;
   default:
     if (E->Code >= 32 && E->Code < 256 && E->SeqLen)
-      WriteKey(E->W, u, E->SeqLen, E->AsciiSeq);
+      WriteUtf8Key(E->W, u, E->SeqLen, E->AsciiSeq);
     break;
   }
 }
@@ -673,12 +663,10 @@ int main(int argc, char *argv[]) {
           tevent_selectionnotify E = &Msg->Event.EventSelectionNotify;
 
           /* react as for keypresses */
-          if (E->Magic == TW_SEL_TEXTMAGIC)
-            WriteKey(E->ReqPrivate, E->ReqPrivate == DM_user ? &user : &pass, E->Len,
-                     (char *)E->Data);
-          else if (E->Magic == TW_SEL_TRUNEMAGIC)
-            WriteTRuneKey(E->ReqPrivate, E->ReqPrivate == DM_user ? &user : &pass,
-                          E->Len / sizeof(trune), (trune *)E->Data);
+          if (E->Magic == TW_SEL_UTF8MAGIC) {
+            WriteUtf8Key(E->ReqPrivate, E->ReqPrivate == DM_user ? &user : &pass, E->Len,
+                         (char *)E->Data);
+          }
         } break;
         default:
           break;

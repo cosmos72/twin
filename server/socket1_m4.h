@@ -250,14 +250,14 @@ case order_Create4MenuWindow:
     break;
 
 
-case order_WriteAsciiWindow:
+case order_WriteCharsetWindow:
     if (a.size() >= 3)
-        sockWriteAsciiWindow((window)a[1]_obj, (uldat)a[2]_any, (const char *)a[3]_vec);
+        sockWriteCharsetWindow((window)a[1]_obj, (uldat)a[2]_any, (const char *)a[3]_vec);
     break;
 
-case order_WriteStringWindow:
+case order_WriteUtf8Window:
     if (a.size() >= 3)
-        sockWriteStringWindow((window)a[1]_obj, (uldat)a[2]_any, (const char *)a[3]_vec);
+        sockWriteUtf8Window((window)a[1]_obj, (uldat)a[2]_any, (const char *)a[3]_vec);
     break;
 
 case order_WriteTRuneWindow:

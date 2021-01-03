@@ -89,15 +89,13 @@ int Tw_option_strncmp(TW_CONST char *s1, TW_CONST char *s2, size_t n) {
 }
 
 enum {
-  utf16_replacement_char = 0xFFFD,
-  utf16_size = 0x10000,
   utf21_size = 0x110000,
 };
 
 trune Tw_trune(tcell cell) {
   cell &= 0x001FFFFF;
   if (cell >= utf21_size) {
-    return cell %= utf21_size;
+    cell -= utf21_size;
   }
   return cell;
 }

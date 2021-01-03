@@ -1000,27 +1000,27 @@ window Create4MenuWindow(menu Menu) {
   return Window;
 }
 
-byte FakeWriteAscii(window Window, uldat Len, const char *Ascii) {
-  if (DlLoad(TermSo) && Window->Fn->TtyWriteAscii != FakeWriteAscii)
-    return Window->TtyWriteAscii(Len, Ascii);
+byte FakeWriteCharset(window Window, uldat Len, const char *charset_bytes) {
+  if (DlLoad(TermSo) && Window->Fn->TtyWriteCharset != FakeWriteCharset)
+    return Window->TtyWriteCharset(Len, charset_bytes);
   return tfalse;
 }
 
-byte FakeWriteString(window Window, uldat Len, const char *string) {
-  if (DlLoad(TermSo) && Window->Fn->TtyWriteString != FakeWriteString)
-    return Window->TtyWriteString(Len, string);
+byte FakeWriteUtf8(window Window, uldat Len, const char *utf8_bytes) {
+  if (DlLoad(TermSo) && Window->Fn->TtyWriteUtf8 != FakeWriteUtf8)
+    return Window->TtyWriteUtf8(Len, utf8_bytes);
   return tfalse;
 }
 
-byte FakeWriteTRune(window Window, uldat Len, const trune *TRune) {
+byte FakeWriteTRune(window Window, uldat Len, const trune *runes) {
   if (DlLoad(TermSo) && Window->Fn->TtyWriteTRune != FakeWriteTRune)
-    return Window->TtyWriteTRune(Len, TRune);
+    return Window->TtyWriteTRune(Len, runes);
   return tfalse;
 }
 
-byte FakeWriteTCell(window Window, dat x, dat y, uldat Len, const tcell *Attr) {
+byte FakeWriteTCell(window Window, dat x, dat y, uldat Len, const tcell *cells) {
   if (DlLoad(TermSo) && Window->Fn->TtyWriteTCell != FakeWriteTCell)
-    return Window->TtyWriteTCell(x, y, Len, Attr);
+    return Window->TtyWriteTCell(x, y, Len, cells);
   return tfalse;
 }
 
@@ -1121,12 +1121,12 @@ static struct s_fn_window _FnWindow = {
     (void (*)(window, fn_hook, void (**)(widget)))RemoveHookWidget,
     /* window */
     &_FnWidget,
-    FakeWriteAscii,
-    FakeWriteString,
+    FakeWriteCharset,
+    FakeWriteUtf8,
     FakeWriteTRune,
     FakeWriteTCell,
-    RowWriteAscii, /* exported by resize.c */
-    RowWriteAscii,
+    RowWriteCharset, /* exported by resize.c */
+    RowWriteUtf8,
     RowWriteTRune,
     (byte(*)(window, dat, dat, uldat, const tcell *))AlwaysFalse,
 

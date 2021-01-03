@@ -84,7 +84,7 @@ byte InitSysMon(int argc, char **argv) {
                             (tcolor)0x9F, (tcolor)0x17, (tcolor)0x3F, (tcolor)0x18, (tcolor)0x08),
           TwInfo4Menu(SysMon_Menu, TW_ROW_ACTIVE, 16, " System Monitor ",
                       (TW_CONST tcolor *)"pppppppppppppppp"),
-          TwWriteAsciiWindow(SysMon_Win, 26, "CPU \nDISK\nMEM \nSWAP\nUPTIME"),
+          TwWriteCharsetWindow(SysMon_Win, 26, "CPU \nDISK\nMEM \nSWAP\nUPTIME"),
           TwMapWindow(SysMon_Win, TwFirstScreen()), ttrue);
 }
 
@@ -106,7 +106,7 @@ uldat HBar(tcolor Col, uldat len, uldat scale, uldat frac) {
       frac = 0;
     memset(s, '\xDB', len / scale / 2);
 
-    TwWriteAsciiWindow(SysMon_Win, len / scale / 2 + !!frac, buf);
+    TwWriteCharsetWindow(SysMon_Win, len / scale / 2 + !!frac, buf);
 
     half = TCOL(0, TCOLFG(Col));
     frac = len % (scale * 2);
@@ -121,7 +121,7 @@ void PrintPercent(tcolor Col, uldat percent) {
   sprintf(buf, " %3d%%", percent);
 
   TwSetColTextWindow(SysMon_Win, Col);
-  TwWriteAsciiWindow(SysMon_Win, 5, buf);
+  TwWriteCharsetWindow(SysMon_Win, 5, buf);
 }
 
 void PrintAbsoluteK(tcolor Col, unsigned long nK) {
@@ -146,7 +146,7 @@ void PrintAbsoluteK(tcolor Col, unsigned long nK) {
     sprintf(buf, "    0");
 
   TwSetColTextWindow(SysMon_Win, Col);
-  TwWriteAsciiWindow(SysMon_Win, 5, buf);
+  TwWriteCharsetWindow(SysMon_Win, 5, buf);
 }
 
 void Update(void) {
@@ -367,7 +367,7 @@ void Update(void) {
     sprintf(buf, "%lu days %2d:%02d", updays, uphours, upminutes);
 
     TwGotoXYWindow(SysMon_Win, 8, 4);
-    TwWriteAsciiWindow(SysMon_Win, strlen(buf), buf);
+    TwWriteCharsetWindow(SysMon_Win, strlen(buf), buf);
 
     close(Fd);
   }

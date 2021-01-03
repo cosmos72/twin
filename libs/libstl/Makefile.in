@@ -114,7 +114,8 @@ am__v_AR_0 = @echo "  AR      " $@;
 am__v_AR_1 = 
 libstl_a_AR = $(AR) $(ARFLAGS)
 libstl_a_LIBADD =
-am_libstl_a_OBJECTS = alloc.$(OBJEXT) err.$(OBJEXT) utf8.$(OBJEXT)
+am_libstl_a_OBJECTS = alloc.$(OBJEXT) err.$(OBJEXT) string.$(OBJEXT) \
+	utf8.$(OBJEXT)
 libstl_a_OBJECTS = $(am_libstl_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -132,7 +133,7 @@ DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)/include
 depcomp = $(SHELL) $(top_srcdir)/admin/depcomp
 am__maybe_remake_depfiles = depfiles
 am__depfiles_remade = ./$(DEPDIR)/alloc.Po ./$(DEPDIR)/err.Po \
-	./$(DEPDIR)/utf8.Po
+	./$(DEPDIR)/string.Po ./$(DEPDIR)/utf8.Po
 am__mv = mv -f
 CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
@@ -354,7 +355,7 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 noinst_LIBRARIES = libstl.a
-libstl_a_SOURCES = alloc.cpp err.cpp utf8.cpp
+libstl_a_SOURCES = alloc.cpp err.cpp string.cpp utf8.cpp
 AM_CPPFLAGS = -I$(top_srcdir)/include
 all: all-am
 
@@ -406,6 +407,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/alloc.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/err.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/string.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/utf8.Po@am__quote@ # am--include-marker
 
 $(am__depfiles_remade):
@@ -571,6 +573,7 @@ clean-am: clean-generic clean-libtool clean-noinstLIBRARIES \
 distclean: distclean-am
 		-rm -f ./$(DEPDIR)/alloc.Po
 	-rm -f ./$(DEPDIR)/err.Po
+	-rm -f ./$(DEPDIR)/string.Po
 	-rm -f ./$(DEPDIR)/utf8.Po
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
@@ -619,6 +622,7 @@ installcheck-am:
 maintainer-clean: maintainer-clean-am
 		-rm -f ./$(DEPDIR)/alloc.Po
 	-rm -f ./$(DEPDIR)/err.Po
+	-rm -f ./$(DEPDIR)/string.Po
 	-rm -f ./$(DEPDIR)/utf8.Po
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic

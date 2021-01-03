@@ -223,29 +223,13 @@ static void X11_SelectionNotify_X11(uldat ReqPrivate, uldat Magic, const char MI
                     8 * sizeof(target_list[0]), PropModeReplace, (const byte *)target_list,
                     sizeof(target_list) / sizeof(target_list[0]));
     ev.xselection.property = XReq(XReqCount).property;
+
   } else if (XReq(XReqCount).target == XA_STRING) {
-    uldat l;
-    byte *_Data = NULL, *d;
-    const trune *s;
 
     /* X11 selection contains UTF-16 */
-    if (Magic == SEL_TRUNEMAGIC) {
-      if ((_Data = d = (byte *)AllocMem(Len))) {
-        s = (const trune *)Data;
-        /* FIXME: this is rough. encode to UTF-8 instead */
-        for (l = Len; l; l--)
-          *d++ = Tutf_UTF_32_to_CP437(*s++);
-        Data = (char *)_Data;
-        Len /= sizeof(trune);
-      } else
-        Len = 0;
-    }
     XChangeProperty(xdisplay, XReq(XReqCount).requestor, XReq(XReqCount).property, XA_STRING, 8,
                     PropModeReplace, (const byte *)Data, Len);
     ev.xselection.property = XReq(XReqCount).property;
-
-    if (Magic == SEL_TRUNEMAGIC && _Data)
-      FreeMem(_Data);
   }
   XSendEvent(xdisplay, XReq(XReqCount).requestor, False, 0, &ev);
   setFlush();
@@ -296,7 +280,7 @@ static void X11_SelectionNotify_up(Window win, Atom prop) {
       return;
   } while (bytes_after > 0);
 
-  TwinSelectionNotify(xRequestor(xReqCount), xReqPrivate(xReqCount), SEL_TEXTMAGIC, NULL,
+  TwinSelectionNotify(xRequestor(xReqCount), xReqPrivate(xReqCount), SEL_UTF8MAGIC, NULL,
                       Chars(buff, nread));
   FreeMem(buff);
 }
