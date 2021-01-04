@@ -92,10 +92,11 @@ bool Utf8::parse(View<char> chars, View<char> *remaining) {
     }
     // copy first byte
     char ch = x.b[0] = src[0];
+    len = 1;
     if ((ch & 0xC0) == 0xC0) {
       const uint8_t max = srcn <= 4 ? srcn : 4;
       // copy up to three continuation bytes
-      for (len = 1; len < max; len++) {
+      for (; len < max; len++) {
         if (((ch = src[len]) & 0xC0) != 0x80) {
           break;
         }

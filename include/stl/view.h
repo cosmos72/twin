@@ -80,7 +80,11 @@ public:
   }
 
   STL_CXX11_EXPLICIT operator bool() const {
-    return data_ != NULL;
+    return size_ != 0;
+  }
+
+  bool empty() const {
+    return size_ != 0;
   }
 
   template <class VEC> bool operator==(const VEC &other) const {

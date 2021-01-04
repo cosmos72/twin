@@ -251,6 +251,9 @@ enum Twkey_e {
   TW_DongSign = 0x17B,
   TW_EuroSign = 0x17C,
 
+  /* some other key, not among the ones above */
+  TW_Other = 0x1FD,
+
   /* a dummy value for xterm-style mouse reporting ASCII sequences */
   TW_XTermMouse = 0x1FE,
 

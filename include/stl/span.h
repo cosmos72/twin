@@ -50,17 +50,21 @@ public:
     return *this;
   }
 
-  using Base::operator==;
-  using Base::operator bool;
+  using Base::begin;
   using Base::capacity;
-  using Base::size;
-
   using Base::data;
+  using Base::empty;
+  using Base::end;
+  using Base::operator==;
+  using Base::operator[];
+  using Base::operator bool;
+  using Base::size;
+  using Base::view;
+
   T *data() {
     return const_cast<T *>(data_);
   }
 
-  using Base::operator[];
   T &operator[](size_t index) {
     assert(index < size_);
     return data()[index];
@@ -76,18 +80,14 @@ public:
   }
   void ref(Vector<T> &other);
 
-  using Base::begin;
   T *begin() {
     return data();
   }
 
-  using Base::end;
   T *end() {
     assert(data_ || !size_);
     return data() + size_;
   }
-
-  using Base::view;
 
   Span<T> span(size_t start, size_t end) {
     assert(start <= end);

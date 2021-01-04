@@ -229,7 +229,7 @@ static void X11_SelectionNotify_X11(uldat ReqPrivate, uldat Magic, const char MI
     Utf8 seq;
     String buff;
     buff.reserve(data.size());
-    while (data) {
+    while (!data.empty()) {
       seq.parse(data, &data);
       trune rune = seq.rune();
       if (rune > 0xFF) {
@@ -301,6 +301,9 @@ static void X11_SelectionNotify_up(Window win, Atom prop) {
   if (data) {
     XFree(data);
   }
+  /* Signal the selection owner that we have successfully read the data. */
+  XDeleteProperty(xdisplay, win, prop);
+
   if (buff) {
     TwinSelectionNotify(xRequestor(xReqCount), xReqPrivate(xReqCount), SEL_UTF8MAGIC, NULL, buff);
   }

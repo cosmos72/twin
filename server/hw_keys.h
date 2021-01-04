@@ -150,3 +150,5 @@ IS(Hyper_L, 0, "")
 IS(Hyper_R, 0, "")
 
 IS(Delete, 4, "\x1B[3~")
+
+// IS(EuroSign, 3, "\xE2\x82AC")

@@ -194,24 +194,26 @@ static Twkey X11_LookupKey(XEvent *ev, udat *ShiftFlags, udat *len, char *seq) {
 #else
     *len = XmbLookupString(xic, kev, seq, _len, &sym, &status_return);
 #endif
-    if (XFilterEvent(ev, None))
+    if (XFilterEvent(ev, None)) {
       return TW_Null;
-
+    }
     if (status_return != XLookupBoth && status_return != XLookupChars &&
-        status_return != XLookupKeySym)
+        status_return != XLookupKeySym) {
       sym = XK_VoidSymbol;
+    }
   }
 #endif
-  if (sym == XK_VoidSymbol || sym == 0)
+  if (sym == XK_VoidSymbol || sym == 0) {
     *len = XLookupString(kev, seq, _len, &sym, &xcompose);
-
+  }
   X11_DEBUG_SHOW_KEY("", sym, *len, seq);
 
   if (sym == XK_BackSpace && (kev->state & (ControlMask | Mod1Mask)) != 0) {
-    if (kev->state & ControlMask)
+    if (kev->state & ControlMask) {
       *len = 1, *seq = '\x1F';
-    else
+    } else {
       *len = 2, seq[0] = '\x1B', seq[1] = '\x7F';
+    }
     return TW_BackSpace;
   }
 
@@ -257,7 +259,7 @@ static Twkey X11_LookupKey(XEvent *ev, udat *ShiftFlags, udat *len, char *seq) {
       X11_DEBUG_SHOW_KEY("replaced(2)", sym, *len, seq);
     }
   }
-  return lastTW;
+  return lastTW == TW_Null && *len == 0 ? TW_Other : lastTW;
 }
 
 static void X11_HandleEvent(XEvent *event) {

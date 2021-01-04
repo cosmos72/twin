@@ -113,14 +113,15 @@ public:
   size_t capacity() const {
     return cap_;
   }
+  using Base::begin;
+  using Base::copy;
   using Base::data;
-  using Base::size;
+  using Base::empty;
+  using Base::end;
   using Base::operator[];
   using Base::operator bool;
   using Base::operator==;
-  using Base::begin;
-  using Base::copy;
-  using Base::end;
+  using Base::size;
   using Base::span;
   using Base::view;
 
