@@ -185,6 +185,7 @@ static void X11_SelectionExport_X11(void) {
 static void X11_SelectionNotify_X11(uldat ReqPrivate, uldat Magic, const char MIME[MAX_MIMELEN],
                                     Chars data) {
   XEvent ev;
+  Atom target;
 
   if (XReqCount == 0) {
     printk(THIS ".c: X11_SelectionNotify_X11(): unexpected Twin Selection Notify event!\n");
@@ -197,18 +198,17 @@ static void X11_SelectionNotify_X11(uldat ReqPrivate, uldat Magic, const char MI
 #endif
 
   XReqCount--;
+  XSelectionRequestEvent &req = XReq(XReqCount);
+
   ev.xselection.type = SelectionNotify;
   ev.xselection.property = None;
-  ev.xselection.display = XReq(XReqCount).display;
-  ev.xselection.requestor = XReq(XReqCount).requestor;
-  ev.xselection.selection = XReq(XReqCount).selection;
-  ev.xselection.target = XReq(XReqCount).target;
-  ev.xselection.time = XReq(XReqCount).time;
+  ev.xselection.display = req.display;
+  ev.xselection.requestor = req.requestor;
+  ev.xselection.selection = req.selection;
+  ev.xselection.target = target = req.target;
+  ev.xselection.time = req.time;
 
-  const char *Data = data.data();
-  uldat Len = data.size();
-
-  if (XReq(XReqCount).target == xTARGETS) {
+  if (target == xTARGETS) {
     /*
      * On some systems, the Atom typedef is 64 bits wide.
      * We need to have a typedef that is exactly 32 bits wide,
@@ -218,20 +218,39 @@ static void X11_SelectionNotify_X11(uldat ReqPrivate, uldat Magic, const char MI
     Atom32 target_list[2];
 
     target_list[0] = (Atom32)xTARGETS;
-    target_list[1] = (Atom32)XA_STRING;
-    XChangeProperty(xdisplay, XReq(XReqCount).requestor, XReq(XReqCount).property, xTARGETS,
-                    8 * sizeof(target_list[0]), PropModeReplace, (const byte *)target_list,
+    target_list[1] = (Atom32)xUTF8_STRING;
+    XChangeProperty(xdisplay, req.requestor, req.property, xTARGETS, 8 * sizeof(target_list[0]),
+                    PropModeReplace, (const byte *)target_list,
                     sizeof(target_list) / sizeof(target_list[0]));
-    ev.xselection.property = XReq(XReqCount).property;
 
-  } else if (XReq(XReqCount).target == XA_STRING) {
+  } else if (target == XA_STRING) {
 
-    /* X11 selection contains ISO8859-1 */
-    XChangeProperty(xdisplay, XReq(XReqCount).requestor, XReq(XReqCount).property, XA_STRING, 8,
-                    PropModeReplace, (const byte *)Data, Len);
-    ev.xselection.property = XReq(XReqCount).property;
+    /* notify X11 selection as ISO8859-1 */
+    Utf8 seq;
+    String buff;
+    buff.reserve(data.size());
+    while (data) {
+      seq.parse(data, &data);
+      trune rune = seq.rune();
+      if (rune > 0xFF) {
+        // not representable by ISO8859-1 charset
+        rune = '?';
+      }
+      if (!buff.append((char)rune)) {
+        break;
+      }
+    }
+    XChangeProperty(xdisplay, req.requestor, req.property, XA_STRING, 8, PropModeReplace,
+                    (const byte *)buff.data(), buff.size());
+
+  } else if (target == xUTF8_STRING) {
+
+    /* notify X11 selection as UTF-8 */
+    XChangeProperty(xdisplay, req.requestor, req.property, xUTF8_STRING, 8, PropModeReplace,
+                    (const byte *)data.data(), data.size());
   }
-  XSendEvent(xdisplay, XReq(XReqCount).requestor, False, 0, &ev);
+  ev.xselection.property = req.property;
+  XSendEvent(xdisplay, req.requestor, False, 0, &ev);
   setFlush();
 }
 
