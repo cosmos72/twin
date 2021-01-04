@@ -226,7 +226,7 @@ static void X11_SelectionNotify_X11(uldat ReqPrivate, uldat Magic, const char MI
 
   } else if (XReq(XReqCount).target == XA_STRING) {
 
-    /* X11 selection contains UTF-16 */
+    /* X11 selection contains ISO8859-1 */
     XChangeProperty(xdisplay, XReq(XReqCount).requestor, XReq(XReqCount).property, XA_STRING, 8,
                     PropModeReplace, (const byte *)Data, Len);
     ev.xselection.property = XReq(XReqCount).property;
@@ -240,11 +240,12 @@ static void X11_SelectionNotify_X11(uldat ReqPrivate, uldat Magic, const char MI
  */
 static void X11_SelectionNotify_up(Window win, Atom prop) {
   long nread = 0;
-  unsigned long nitems, bytes_after = TW_BIGBUFF;
+  unsigned long i, nitems, bytes_after = TW_BIGBUFF;
   Atom actual_type;
   int actual_fmt;
-  byte *data;
-  char *buff = NULL;
+  byte *data = NULL;
+  String buff;
+  bool ok = true;
 
   if (xReqCount == 0) {
     printk(THIS ".c: X11_SelectionNotify_up(): unexpected X Selection Notify event!\n");
@@ -255,34 +256,35 @@ static void X11_SelectionNotify_up(Window win, Atom prop) {
         printk(THIS ".c: X11_SelectionNotify_up(): %d nested X Selection Notify event\n", xReqCount);
     }
 #endif
-  if (prop == None)
+  if (prop == None) {
     return;
+  }
 
   xReqCount--;
 
   do {
-    if ((XGetWindowProperty(xdisplay, win, prop, nread / 4, bytes_after / 4, False, AnyPropertyType,
-                            &actual_type, &actual_fmt, &nitems, &bytes_after, &data) != Success) ||
-        (actual_type != XA_STRING)) {
+    ok = XGetWindowProperty(xdisplay, win, prop, nread / 4, bytes_after / 4, False, AnyPropertyType,
+                            &actual_type, &actual_fmt, &nitems, &bytes_after, &data) == Success;
 
-      XFree(data);
-      if (buff)
-        FreeMem(buff);
-      return;
+    if (actual_type == xUTF8_STRING) {
+      /* X11 selection contains UTF-8 */
+      ok = buff.append(Chars((const char *)data, nitems));
+    } else if (actual_type == XA_STRING) {
+      /* X11 selection contains ISO8859-1: convert to UTF-8 */
+      for (i = 0; ok && i < nitems; i++) {
+        ok = buff.append(Utf8(trune(data[i])));
+      }
+    } else {
+      ok = false;
     }
+  } while (ok && bytes_after > 0);
 
-    if (buff || (buff = (char *)AllocMem(nitems + bytes_after))) {
-      CopyMem(data, buff + nread, nitems);
-      nread += nitems;
-    }
+  if (data) {
     XFree(data);
-    if (!buff)
-      return;
-  } while (bytes_after > 0);
-
-  TwinSelectionNotify(xRequestor(xReqCount), xReqPrivate(xReqCount), SEL_UTF8MAGIC, NULL,
-                      Chars(buff, nread));
-  FreeMem(buff);
+  }
+  if (buff) {
+    TwinSelectionNotify(xRequestor(xReqCount), xReqPrivate(xReqCount), SEL_UTF8MAGIC, NULL, buff);
+  }
 }
 
 /*
@@ -305,11 +307,13 @@ static void X11_SelectionRequest_X11(obj Requestor, uldat ReqPrivate) {
     xReqPrivate(xReqCount) = ReqPrivate;
     xReqCount++;
 
-    if (XGetSelectionOwner(xdisplay, XA_PRIMARY) == None)
+    if (XGetSelectionOwner(xdisplay, XA_PRIMARY) == None) {
       X11_SelectionNotify_up(DefaultRootWindow(xdisplay), XA_CUT_BUFFER0);
-    else {
+    } else {
       Atom prop = XInternAtom(xdisplay, "VT_SELECTION", False);
-      XConvertSelection(xdisplay, XA_PRIMARY, XA_STRING, prop, xwindow, CurrentTime);
+      /* Request conversion to UTF-8. Not all owners will be able to fulfill that request. */
+      XConvertSelection(xdisplay, XA_PRIMARY, xUTF8_STRING, prop, xwindow, CurrentTime);
+
       setFlush();
       /* we will get an X11 SelectionNotify event */
     }
