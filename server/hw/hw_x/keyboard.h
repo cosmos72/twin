@@ -259,7 +259,7 @@ static Twkey X11_LookupKey(XEvent *ev, udat *ShiftFlags, udat *len, char *seq) {
       X11_DEBUG_SHOW_KEY("replaced(2)", sym, *len, seq);
     }
   }
-  return lastTW == TW_Null && *len == 0 ? TW_Other : lastTW;
+  return lastTW == TW_Null && *len != 0 ? TW_Other : lastTW;
 }
 
 static void X11_HandleEvent(XEvent *event) {
@@ -273,8 +273,9 @@ static void X11_HandleEvent(XEvent *event) {
     switch (event->type) {
     case KeyPress:
       TW_key = X11_LookupKey(event, &ShiftFlags, &len, seq);
-      if (TW_key != TW_Null)
+      if (TW_key != TW_Null) {
         KeyboardEventCommon(TW_key, ShiftFlags, len, seq);
+      }
       break;
     case KeyRelease:
       break;
@@ -333,11 +334,11 @@ static void X11_HandleEvent(XEvent *event) {
                                                               dx == Button5 ? HOLD_WHEEL_FWD :
 #endif
                                                                             0);
-      if (event->type == ButtonPress)
+      if (event->type == ButtonPress) {
         dy |= dx;
-      else
+      } else {
         dy &= ~dx;
-
+      }
       MouseEventCommon(x, y, 0, 0, dy);
 
       break;
@@ -360,8 +361,9 @@ static void X11_HandleEvent(XEvent *event) {
 
       NeedRedrawVideo(x, y, dx, dy);
       /* must we redraw the cursor too ? */
-      if (HW->XY[0] >= x && HW->XY[0] <= dx && HW->XY[1] >= y && HW->XY[1] <= dy)
+      if (HW->XY[0] >= x && HW->XY[0] <= dx && HW->XY[1] >= y && HW->XY[1] <= dy) {
         HW->TT = NOCURSOR;
+      }
       break;
     case VisibilityNotify:
       xwindow_AllVisible = event->xvisibility.state == VisibilityUnobscured;
