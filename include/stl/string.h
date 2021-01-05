@@ -46,19 +46,25 @@ public:
   bool append(Utf8 seq) {
     return append(Chars(seq.data(), seq.size()));
   }
+
   // convert UTF-32 runes to UTF-8 and append them to this string
-  bool append_runes(View<trune> runes);
+  bool append(View<trune> runes);
 
   bool operator+=(char ch) {
     return append(ch);
+  }
+
+  bool operator+=(Utf8 seq) {
+    return append(seq);
   }
 
   bool operator+=(Chars other) {
     return append(other);
   }
 
-  bool operator+=(Utf8 seq) {
-    return append(seq);
+  // convert UTF-32 runes to UTF-8 and append them to this string
+  bool operator+=(View<trune> runes) {
+    return append(runes);
   }
 };
 

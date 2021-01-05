@@ -8,7 +8,7 @@
  */
 #include "stl/string.h"
 
-bool String::append_runes(View<trune> runes) {
+bool String::append(View<trune> runes) {
   const size_t oldsize = size();
   bool ok = true;
   for (size_t i = 0, n = runes.size(); ok && i < n; i++) {

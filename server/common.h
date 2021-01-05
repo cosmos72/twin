@@ -40,10 +40,10 @@ void TwinSelectionRequest(obj Requestor, uldat ReqPrivate, obj Owner);
 
 void SelectionExport(void);
 void SelectionImport(void);
-byte SelectionStore(uldat Magic, const char MIME[MAX_MIMELEN], Chars Data);
-inline byte SelectionAppend(Chars Data) {
-  return SelectionStore(SEL_APPEND, NULL, Data);
-}
+byte SelectionStore(uldat magic, const char mime[MAX_MIMELEN], Chars data);
+byte SelectionAppend(Chars data);
+byte SelectionAppendRune(trune rune);
+byte SelectionAppendRunes(TRunes runes);
 
 byte KeyboardEventCommon(udat Code, udat ShiftFlags, udat Len, const char *Seq);
 byte MouseEventCommon(dat x, dat y, dat dx, dat dy, udat IdButtons);
