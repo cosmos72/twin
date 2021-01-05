@@ -211,17 +211,23 @@ static void X11_SelectionNotify_X11(uldat ReqPrivate, uldat Magic, const char MI
   if (target == xTARGETS) {
     /*
      * On some systems, the Atom typedef is 64 bits wide.
-     * We need to have a typedef that is exactly 32 bits wide,
+     * We need a type that is exactly 32 bits wide,
      * because a format of 64 is not allowed by the X11 protocol.
      */
     typedef CARD32 Atom32;
-    Atom32 target_list[2];
+    Atom32 target_list[3];
 
     target_list[0] = (Atom32)xTARGETS;
     target_list[1] = (Atom32)xUTF8_STRING;
-    XChangeProperty(xdisplay, req.requestor, req.property, xTARGETS, 8 * sizeof(target_list[0]),
-                    PropModeReplace, (const byte *)target_list,
-                    sizeof(target_list) / sizeof(target_list[0]));
+    target_list[2] = (Atom32)XA_STRING;
+    XChangeProperty(xdisplay, req.requestor, req.property, xTARGETS, 32, PropModeReplace,
+                    (const byte *)target_list, sizeof(target_list));
+
+  } else if (target == xUTF8_STRING) {
+
+    /* notify X11 selection as UTF-8 */
+    XChangeProperty(xdisplay, req.requestor, req.property, xUTF8_STRING, 8, PropModeReplace,
+                    (const byte *)data.data(), data.size());
 
   } else if (target == XA_STRING) {
 
@@ -242,12 +248,6 @@ static void X11_SelectionNotify_X11(uldat ReqPrivate, uldat Magic, const char MI
     }
     XChangeProperty(xdisplay, req.requestor, req.property, XA_STRING, 8, PropModeReplace,
                     (const byte *)buff.data(), buff.size());
-
-  } else if (target == xUTF8_STRING) {
-
-    /* notify X11 selection as UTF-8 */
-    XChangeProperty(xdisplay, req.requestor, req.property, xUTF8_STRING, 8, PropModeReplace,
-                    (const byte *)data.data(), data.size());
   }
   ev.xselection.property = req.property;
   XSendEvent(xdisplay, req.requestor, False, 0, &ev);
