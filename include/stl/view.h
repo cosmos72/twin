@@ -84,7 +84,7 @@ public:
   }
 
   bool empty() const {
-    return size_ != 0;
+    return size_ == 0;
   }
 
   template <class VEC> bool operator==(const VEC &other) const {

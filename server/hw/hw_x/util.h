@@ -235,7 +235,7 @@ static void X11_SelectionNotify_X11(uldat ReqPrivate, uldat Magic, const char MI
     Utf8 seq;
     String buff;
     buff.reserve(data.size());
-    while (!data.empty()) {
+    while (data) {
       seq.parse(data, &data);
       trune rune = seq.rune();
       if (rune > 0xFF) {
