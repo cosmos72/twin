@@ -259,7 +259,7 @@ static void X11_SelectionNotify_X11(uldat ReqPrivate, uldat Magic, const char MI
     if (XwcTextListToTextProperty(xdisplay, &waddr, 1, style, &ct) >= 0) {
       freect = true;
     } else {
-      ct.value = (byte *)data.data();
+      ct.value = (byte *)const_cast<char *>(data.data());
       ct.nitems = data.size();
       ct.encoding = target;
     }
