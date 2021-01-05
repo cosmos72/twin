@@ -179,6 +179,15 @@ static void X11_SelectionExport_X11(void) {
   }
 }
 
+static void X11_utf8_to_wchar(Chars src, Vector<wchar_t> &dst) {
+  dst.reserve(src.size());
+  Utf8 seq;
+  while (src) {
+    seq.parse(src, &src);
+    dst.append(seq.rune());
+  }
+}
+
 /*
  * notify our Selection to X11
  */
@@ -215,11 +224,13 @@ static void X11_SelectionNotify_X11(uldat ReqPrivate, uldat Magic, const char MI
      * because a format of 64 is not allowed by the X11 protocol.
      */
     typedef CARD32 Atom32;
-    Atom32 target_list[3];
+    Atom32 target_list[5];
 
     target_list[0] = (Atom32)xTARGETS;
-    target_list[1] = (Atom32)xUTF8_STRING;
-    target_list[2] = (Atom32)XA_STRING;
+    target_list[1] = (Atom32)XA_STRING;
+    target_list[2] = (Atom32)xUTF8_STRING;
+    target_list[3] = (Atom32)xTEXT;
+    target_list[4] = (Atom32)xCOMPOUND_TEXT;
     XChangeProperty(xdisplay, req.requestor, req.property, xTARGETS, 32, PropModeReplace,
                     (const byte *)target_list, sizeof(target_list));
 
@@ -229,25 +240,35 @@ static void X11_SelectionNotify_X11(uldat ReqPrivate, uldat Magic, const char MI
     XChangeProperty(xdisplay, req.requestor, req.property, xUTF8_STRING, 8, PropModeReplace,
                     (const byte *)data.data(), data.size());
 
-  } else if (target == XA_STRING) {
-
-    /* notify X11 selection as ISO8859-1 */
-    Utf8 seq;
-    String buff;
-    buff.reserve(data.size());
-    while (data) {
-      seq.parse(data, &data);
-      trune rune = seq.rune();
-      if (rune > 0xFF) {
-        // not representable by ISO8859-1 charset
-        rune = '?';
-      }
-      if (!buff.append((char)rune)) {
-        break;
-      }
+  } else {
+    XICCEncodingStyle style;
+    if (target == XA_STRING) {
+      style = XStringStyle;
+    } else if (target == xTEXT) {
+      style = XStdICCTextStyle;
+    } else /*if (target == xCOMPOUND_TEXT)*/ {
+      style = XCompoundTextStyle;
     }
-    XChangeProperty(xdisplay, req.requestor, req.property, XA_STRING, 8, PropModeReplace,
-                    (const byte *)buff.data(), buff.size());
+    Vector<wchar_t> wtext;
+    X11_utf8_to_wchar(data, wtext);
+    wtext.append('\0');
+    wchar_t *waddr = wtext.data();
+
+    XTextProperty ct = {};
+    bool freect = false;
+    if (XwcTextListToTextProperty(xdisplay, &waddr, 1, style, &ct) >= 0) {
+      freect = true;
+    } else {
+      ct.value = (byte *)data.data();
+      ct.nitems = data.size();
+      ct.encoding = target;
+    }
+
+    XChangeProperty(xdisplay, req.requestor, req.property, ct.encoding, 8, PropModeReplace,
+                    ct.value, (int)ct.nitems);
+    if (freect) {
+      XFree(ct.value);
+    }
   }
   ev.xselection.property = req.property;
   XSendEvent(xdisplay, req.requestor, False, 0, &ev);

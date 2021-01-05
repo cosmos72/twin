@@ -34,7 +34,7 @@ struct x11_data {
   uldat XReqCount;
   XSelectionRequestEvent XReq[NEST];
   unsigned long xcol[tmaxcol + 1];
-  Atom xWM_PROTOCOLS, xWM_DELETE_WINDOW, xTARGETS, xUTF8_STRING;
+  Atom xCOMPOUND_TEXT, xTARGETS, xTEXT, xUTF8_STRING, xWM_DELETE_WINDOW, xWM_PROTOCOLS;
 };
 
 #define xdata ((struct x11_data *)HW->Private)
@@ -68,10 +68,12 @@ struct x11_data {
 #define XReqCount (xdata->XReqCount)
 #define XReq(j) (xdata->XReq[j])
 #define xcol (xdata->xcol)
+#define xCOMPOUND_TEXT (xdata->xCOMPOUND_TEXT)
+#define xTARGETS (xdata->xTARGETS)
+#define xTEXT (xdata->xTEXT)
+#define xUTF8_STRING (xdata->xUTF8_STRING)
 #define xWM_PROTOCOLS (xdata->xWM_PROTOCOLS)
 #define xWM_DELETE_WINDOW (xdata->xWM_DELETE_WINDOW)
-#define xTARGETS (xdata->xTARGETS)
-#define xUTF8_STRING (xdata->xUTF8_STRING)
 
 #if HW_X_DRIVER == HW_XFT
 #define xftdraw (xdata->xftdraw)

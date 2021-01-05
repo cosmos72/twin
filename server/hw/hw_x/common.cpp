@@ -341,10 +341,12 @@ static byte X11_InitHW(void) {
          * ask ICCCM-compliant window manager to tell us when close window
          * has been chosen, rather than just killing us
          */
-        xWM_PROTOCOLS = XInternAtom(xdisplay, "WM_PROTOCOLS", False);
-        xWM_DELETE_WINDOW = XInternAtom(xdisplay, "WM_DELETE_WINDOW", False);
+        xCOMPOUND_TEXT = XInternAtom(xdisplay, "COMPOUND_TEXT", False);
         xTARGETS = XInternAtom(xdisplay, "TARGETS", False);
+        xTEXT = XInternAtom(xdisplay, "TEXT", False);
         xUTF8_STRING = XInternAtom(xdisplay, "UTF8_STRING", False);
+        xWM_DELETE_WINDOW = XInternAtom(xdisplay, "WM_DELETE_WINDOW", False);
+        xWM_PROTOCOLS = XInternAtom(xdisplay, "WM_PROTOCOLS", False);
 
         XChangeProperty(xdisplay, xwindow, xWM_PROTOCOLS, XA_ATOM, 32, PropModeReplace,
                         (unsigned char *)&xWM_DELETE_WINDOW, 1);
