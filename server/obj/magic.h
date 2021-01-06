@@ -10,28 +10,29 @@
  *
  */
 
-#ifndef _TWIN_MAGIC_H
-#define _TWIN_MAGIC_H
+#ifndef TWIN_MAGIC_H
+#define TWIN_MAGIC_H
 
 #define magic_mask ((uldat)0xF0000000ul)
 #define magic_shift 28
 
-#define obj_magic_id 0
-#define widget_magic_id 1
-#define gadget_magic_id 2
-#define window_magic_id 3
-#define screen_magic_id 4
-#define ggroup_magic_id 5
-#define row_magic_id 6
-#define menuitem_magic_id 7
-#define menu_magic_id 8
-#define msgport_magic_id 9
-#define msg_magic_id 0xA
-#define mutex_magic_id 0xB
-#define module_magic_id 0xC
-#define extension_magic_id 0xD
-#define display_hw_magic_id 0xE
-#define all_magic_id 0xF
+enum e_magic_id {
+  obj_magic_id = 0,
+  widget_magic_id = 1,
+  gadget_magic_id = 2,
+  window_magic_id = 3,
+  screen_magic_id = 4,
+  ggroup_magic_id = 5,
+  row_magic_id = 6,
+  menuitem_magic_id = 7,
+  menu_magic_id = 8,
+  msgport_magic_id = 9,
+  msg_magic_id = 0xA,
+  mutex_magic_id = 0xB,
+  module_magic_id = 0xC,
+  display_hw_magic_id = 0xE,
+  all_magic_id = 0xF,
+};
 
 /*
  * These must have consecutive values, but obj_magic_STR can be changed
@@ -53,35 +54,36 @@
 #define msg_magic_STR "\x3A"
 #define mutex_magic_STR "\x3B"
 #define module_magic_STR "\x3C"
-#define extension_magic_STR "\x3D"
 #define display_hw_magic_STR "\x3E"
 #define all_magic_STR "\x3F"
 
-#define obj_magic ((uldat)0x0DEAD0B1ul)
-#define widget_magic ((uldat)0x161D9743ul)
-#define gadget_magic ((uldat)0x29867551ul)
-#define window_magic ((uldat)0x31357531ul)
-#define screen_magic ((uldat)0x42659871ul)
-#define ggroup_magic ((uldat)0x5741F326ul)
-#define row_magic ((uldat)0x68074FFAul)
-#define menuitem_magic ((uldat)0x7ABC8FDEul)
-#define menu_magic ((uldat)0x8BAD0BEDul)
-#define msgport_magic ((uldat)0x90981437ul)
-#define msg_magic ((uldat)0xA3A61CE4ul) /* this gets compiled in libTw ! */
-#define mutex_magic ((uldat)0xB0FADED0ul)
-#define module_magic ((uldat)0xCB0F1278ul)
-#define extension_magic ((uldat)0xDE81EC51ul)
-#define display_hw_magic ((uldat)0xEDBCC609ul)
-#define all_magic ((uldat)0xFA11FA11ul)
+enum e_magic {
+  obj_magic = 0x0DEAD0B1ul,
+  widget_magic = 0x161D9743ul,
+  gadget_magic = 0x29867551ul,
+  window_magic = 0x31357531ul,
+  screen_magic = 0x42659871ul,
+  ggroup_magic = 0x5741F326ul,
+  row_magic = 0x68074FFAul,
+  menuitem_magic = 0x7ABC8FDEul,
+  menu_magic = 0x8BAD0BEDul,
+  msgport_magic = 0x90981437ul,
+  /*
+   *   B I G   F A T   WARNING:
+   *
+   * msg_magic is the magic number for user-created (tmsg) structures,
+   * while MSG_MAGIC (defined in socklist_m4.h) is the serial number reserved by
+   * libtw to receive server messages (which are still (tmsg) structures).
+   */
+  msg_magic = 0xA3A61CE4ul, /* this must match tmsg_magic in include/Tw/Tw_defs.h */
+  mutex_magic = 0xB0FADED0ul,
+  module_magic = 0xCB0F1278ul,
+  display_hw_magic = 0xEDBCC609ul,
+  all_magic = 0xFA11FA11ul,
+};
 
-#define magic_n 16 /* max top hex digit of the above ones + 1 */
+enum {
+  magic_n = 16, /* max top hex digit of the above ones + 1 */
+};
 
-/*
- *   B I G   F A T   WARNING:
- *
- * msg_magic is the magic number for user-created (tmsg) structures,
- * while MSG_MAGIC (defined in sockproto.h) is the serial number reserved by
- * libTw to receive server messages (which are still (tmsg) structures).
- */
-
-#endif /* _TWIN_MAGIC_H */
+#endif /* TWIN_MAGIC_H */

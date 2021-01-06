@@ -10,29 +10,44 @@
  *
  */
 
-#ifndef _TWIN_FN_H
-#define _TWIN_FN_H
+#ifndef TWIN_FN_H
+#define TWIN_FN_H
 
 #include "obj/fwd.h"
 
 /* in the same order as the #defines above ! */
-struct s_fn {
-  fn_obj f_obj;
-  fn_widget f_widget;
-  fn_gadget f_gadget;
-  fn_window f_window;
-  fn_screen f_screen;
-  fn_group f_group;
-  fn_row f_row;
-  fn_menuitem f_menuitem;
-  fn_menu f_menu;
-  fn_msgport f_msgport;
-  fn_mutex f_mutex;
-  fn_msg f_msg;
-  fn_module f_module;
-  fn_extension f_extension;
-  fn_display_hw f_display_hw;
-  fn_obj f_all;
+struct s_fn_struct {
+  fn_obj obj;
+  fn_widget widget;
+  fn_gadget gadget;
+  fn_window window;
+  fn_screen screen;
+  fn_group group;
+  fn_row row;
+  fn_menuitem menuitem;
+  fn_menu menu;
+  fn_msgport msgport;
+  fn_mutex mutex;
+  fn_msg msg;
+  fn_module module;
+  fn_display_hw display_hw;
+  fn_obj all;
 };
 
-#endif /* _TWIN_FN_H */
+extern fn_struct FnStruct;
+#define Fn_obj (FnStruct.obj)
+#define Fn_widget (FnStruct.widget)
+#define Fn_gadget (FnStruct.gadget)
+#define Fn_window (FnStruct.window)
+#define Fn_screen (FnStruct.screen)
+#define Fn_group (FnStruct.group)
+#define Fn_row (FnStruct.row)
+#define Fn_menuitem (FnStruct.menuitem)
+#define Fn_menu (FnStruct.menu)
+#define Fn_msgport (FnStruct.msgport)
+#define Fn_mutex (FnStruct.mutex)
+#define Fn_msg (FnStruct.msg)
+#define Fn_module (FnStruct.module)
+#define Fn_display_hw (FnStruct.display_hw)
+
+#endif /* TWIN_FN_H */

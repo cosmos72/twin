@@ -7,8 +7,8 @@
  * PLEASE DO NOT EDIT!
  */
 
-#ifndef _TUTF_MAC_SYMBOL_H
-#define _TUTF_MAC_SYMBOL_H
+#ifndef TUTF_MAC_SYMBOL_H
+#define TUTF_MAC_SYMBOL_H
 
 #define T_MAC_SYMBOL_CTRL_NULL 0x0000
 #define T_MAC_SYMBOL_CTRL_START_OF_HEADING 0x0001
@@ -589,4 +589,4 @@
   EL(_RIGHT_CURLY_BRACKET_MIDDLE_PIECE)                                                            \
   EL(_RIGHT_CURLY_BRACKET_LOWER_HOOK)
 
-#endif /* _TUTF_MAC_SYMBOL_H */
+#endif /* TUTF_MAC_SYMBOL_H */

@@ -14,8 +14,8 @@
  *
  */
 
-#ifndef _TT_TTANYSCROLL_H
-#define _TT_TTANYSCROLL_H
+#ifndef TT_TTANYSCROLL_H
+#define TT_TTANYSCROLL_H
 
 /* object structure */
 #ifndef s_ttanyscroll
@@ -85,4 +85,4 @@ ttint TTGetRealPosition_ttanyscroll(TT_ARG_READ ttanyscroll o);
 /** get `state' of ttanyscroll `o' */
 ttuint TTGetState_ttanyscroll(TT_ARG_READ ttanyscroll o);
 
-#endif /* _TT_TTANYSCROLL_H */
+#endif /* TT_TTANYSCROLL_H */

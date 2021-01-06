@@ -10,8 +10,8 @@
  *
  */
 
-#ifndef _TWIN_GADGET_H
-#define _TWIN_GADGET_H
+#ifndef TWIN_GADGET_H
+#define TWIN_GADGET_H
 
 #include "obj/widget.h"
 
@@ -20,8 +20,47 @@ struct s_gT { /* for GADGETFL_USETEXT gadgets */
   tcolor *Color[4];
 };
 
-struct s_gadget {
-  uldat Id;
+struct s_fn_gadget {
+  uldat Magic;
+  void (*Insert)(gadget, widget Parent, widget Prev, widget Next);
+  void (*Remove)(gadget);
+  void (*Delete)(gadget);
+  void (*ChangeField)(gadget, udat field, uldat CLEARMask, uldat XORMask);
+  /* widget */
+  fn_obj Fn_Obj;
+  void (*DrawSelf)(draw_ctx *D);
+  widget (*FindWidgetAt)(gadget Parent, dat X, dat Y);
+  gadget (*FindGadgetByCode)(gadget Parent, udat Code);
+  void (*SetXY)(gadget, dat X, dat Y);
+  void (*SetFill)(gadget, tcell Fill);
+  widget (*Focus)(gadget);
+  widget (*KbdFocus)(gadget);
+  void (*Map)(gadget, widget Parent);
+  void (*UnMap)(gadget);
+  void (*MapTopReal)(gadget, screen);
+  void (*Raise)(gadget);
+  void (*Lower)(gadget);
+  void (*Own)(gadget, msgport);
+  void (*DisOwn)(gadget);
+  void (*RecursiveDelete)(gadget, msgport);
+  void (*Expose)(gadget, dat xwidth, dat ywidth, dat Left, dat Up, const char *, const trune *,
+                 const tcell *);
+  byte (*InstallHook)(gadget, fn_hook, fn_hook *Where);
+  void (*RemoveHook)(gadget, fn_hook, fn_hook *Where);
+  /* gadget */
+  fn_widget Fn_Widget;
+  gadget (*CreateEmptyButton)(msgport owner, dat xwidth, dat ywidth, tcolor BgCol);
+  byte (*FillButton)(gadget g, widget Parent, udat Code, dat Left, dat Up, udat Flags,
+                     const char *Text, tcolor Color, tcolor ColorDisabled);
+  gadget (*CreateButton)(widget Parent, dat xwidth, dat ywidth, const char *Text, uldat Flags,
+                         udat Code, tcolor BgCol, tcolor Col, tcolor ColDisabled, dat Left, dat Up);
+  void (*WriteTexts)(gadget g, byte bitmap, dat xwidth, dat ywidth, const char *Text, dat Left,
+                     dat Up);
+  void (*WriteTRunes)(gadget g, byte bitmap, dat xwidth, dat ywidth, const trune *TRune, dat Left,
+                      dat Up);
+};
+
+struct s_gadget : public s_obj {
   fn_gadget Fn;
   widget Prev, Next;
   widget Parent;
@@ -29,7 +68,7 @@ struct s_gadget {
   widget FirstW, LastW; /* list of children */
   widget SelectW;       /* selected child */
   dat Left, Up, XWidth, YWidth;
-  uldat Attrib;
+  uldat Attr;
   uldat Flags;
   ldat XLogic, YLogic;
   widget O_Prev, O_Next; /* list in the same msgport (owner) */
@@ -48,55 +87,103 @@ struct s_gadget {
   udat Code;
   gadget G_Prev, G_Next; /* list in the same ggroup */
   ggroup Group;
-};
 
-struct s_fn_gadget {
-  uldat Magic, Size, Used;
-  gadget (*Create)(fn_gadget, msgport Owner, widget Parent, dat XWidth, dat YWidth,
-                   CONST char *TextNormal, uldat Attrib, uldat Flags, udat Code, tcolor ColText,
-                   tcolor ColTextSelect, tcolor ColTextDisabled, tcolor ColTextSelectDisabled,
-                   dat Left, dat Up);
-  void (*Insert)(gadget, widget Parent, widget Prev, widget Next);
-  void (*Remove)(gadget);
-  void (*Delete)(gadget);
-  void (*ChangeField)(gadget, udat field, uldat CLEARMask, uldat XORMask);
+  static gadget Create(msgport owner, widget Parent, dat xwidth, dat ywidth, const char *TextNormal,
+                       uldat Attr, uldat Flags, udat Code, tcolor ColText, tcolor ColTextSelect,
+                       tcolor ColTextDisabled, tcolor ColTextSelectDisabled, dat Left, dat Up);
+  gadget Init(msgport owner, widget Parent, dat xwidth, dat ywidth, const char *TextNormal,
+              uldat Attr, uldat Flags, udat Code, tcolor ColText, tcolor ColTextSelect,
+              tcolor ColTextDisabled, tcolor ColTextSelectDisabled, dat Left, dat Up);
+
+  /* obj */
+  uldat Magic() const {
+    return Fn->Magic;
+  }
+  void Remove() {
+    Fn->Remove(this);
+  }
+  void Delete() {
+    Fn->Delete(this);
+  }
+
   /* widget */
-  fn_obj Fn_Obj;
-  void (*DrawSelf)(draw_ctx *D);
-  widget (*FindWidgetAt)(gadget Parent, dat X, dat Y);
-  gadget (*FindGadgetByCode)(gadget Parent, udat Code);
-  void (*SetXY)(gadget, dat X, dat Y);
-  void (*SetFill)(widget, tcell Fill);
-  widget (*Focus)(gadget);
-  widget (*KbdFocus)(gadget);
-  void (*Map)(gadget, widget Parent);
-  void (*UnMap)(gadget);
-  void (*MapTopReal)(gadget, screen);
-  void (*Raise)(gadget);
-  void (*Lower)(gadget);
-  void (*Own)(gadget, msgport);
-  void (*DisOwn)(gadget);
-  void (*RecursiveDelete)(gadget, msgport);
-  void (*Expose)(gadget, dat XWidth, dat YWidth, dat Left, dat Up, CONST char *, CONST trune *,
-                 CONST tcell *);
-  byte (*InstallHook)(gadget, fn_hook, fn_hook *Where);
-  void (*RemoveHook)(gadget, fn_hook, fn_hook *Where);
+  void DrawSelf(draw_ctx *D) {
+    Fn->DrawSelf(D);
+  }
+  widget FindWidgetAt(dat x, dat y) {
+    return Fn->FindWidgetAt(this, x, y);
+  }
+  gadget FindGadgetByCode(udat code) {
+    return Fn->FindGadgetByCode(this, code);
+  }
+  void SetXY(dat x, dat y) {
+    Fn->SetXY(this, x, y);
+  }
+  void SetFill(tcell fill) {
+    Fn->SetFill(this, fill);
+  }
+  widget Focus() {
+    return Fn->Focus(this);
+  }
+  widget KbdFocus() {
+    return Fn->KbdFocus(this);
+  }
+  void Map(widget parent) {
+    Fn->Map(this, parent);
+  }
+  void UnMap() {
+    Fn->UnMap(this);
+  }
+  void MapTopReal(screen scr) {
+    Fn->MapTopReal(this, scr);
+  }
+  void Raise() {
+    Fn->Raise(this);
+  }
+  void Lower() {
+    Fn->Lower(this);
+  }
+  void Own(msgport port) {
+    Fn->Own(this, port);
+  }
+  void DisOwn() {
+    Fn->DisOwn(this);
+  }
+  void RecursiveDelete(msgport port) {
+    Fn->RecursiveDelete(this, port);
+  }
+  void Expose(dat xwidth, dat ywidth, dat left, dat up, const char *ascii, const trune *runes,
+              const tcell *cells) {
+    Fn->Expose(this, xwidth, ywidth, left, up, ascii, runes, cells);
+  }
+  byte InstallHook(fn_hook hook, fn_hook *where) {
+    return Fn->InstallHook(this, hook, where);
+  }
+  void RemoveHook(fn_hook hook, fn_hook *where) {
+    Fn->RemoveHook(this, hook, where);
+  }
   /* gadget */
-  fn_widget Fn_Widget;
-  gadget (*CreateEmptyButton)(fn_gadget Fn_Gadget, msgport Owner, dat XWidth, dat YWidth,
-                              tcolor BgCol);
-  byte (*FillButton)(gadget Gadget, widget Parent, udat Code, dat Left, dat Up, udat Flags,
-                     CONST char *Text, tcolor Color, tcolor ColorDisabled);
-  gadget (*CreateButton)(fn_gadget Fn_Gadget, widget Parent, dat XWidth, dat YWidth,
-                         CONST char *Text, uldat Flags, udat Code, tcolor BgCol, tcolor Col,
-                         tcolor ColDisabled, dat Left, dat Up);
-  void (*WriteTexts)(gadget Gadget, byte bitmap, dat XWidth, dat YWidth, CONST char *Text, dat Left,
-                     dat Up);
-  void (*WriteTRunes)(gadget Gadget, byte bitmap, dat XWidth, dat YWidth, CONST trune *TRune,
-                      dat Left, dat Up);
+  byte FillButton(widget parent, udat code, dat left, dat up, udat flags, const char *text,
+                  tcolor color, tcolor colordisabled) {
+    return Fn->FillButton(this, parent, code, left, up, flags, text, color, colordisabled);
+  }
+  gadget CreateEmptyButton(msgport owner, dat xwidth, dat ywidth, tcolor bgcol) {
+    return Fn->CreateEmptyButton(owner, xwidth, ywidth, bgcol);
+  }
+  gadget CreateButton(widget parent, dat xwidth, dat ywidth, const char *text, uldat flags,
+                      udat code, tcolor bgcol, tcolor col, tcolor coldisabled, dat left, dat up) {
+    return Fn->CreateButton(parent, xwidth, ywidth, text, flags, code, bgcol, col, coldisabled,
+                            left, up);
+  }
+  void WriteTexts(byte bitmap, dat xwidth, dat ywidth, const char *text, dat left, dat up) {
+    Fn->WriteTexts(this, bitmap, xwidth, ywidth, text, left, up);
+  }
+  void WriteTRunes(byte bitmap, dat xwidth, dat ywidth, const trune *runes, dat left, dat up) {
+    Fn->WriteTRunes(this, bitmap, xwidth, ywidth, runes, left, up);
+  }
 };
 
-/* Gadget->Attrib */
+/* Gadget->Attr */
 typedef enum e_gadget_attr {
   GADGET_WANT_MOUSE_MOTION = WIDGET_WANT_MOUSE_MOTION, /* 0x0001 */
   GADGET_WANT_KEYS = WIDGET_WANT_KEYS,                 /* 0x0002 */
@@ -144,4 +231,4 @@ typedef enum e_gadget_flag {
  *
  */
 
-#endif /* _TWIN_GADGET_H */
+#endif /* TWIN_GADGET_H */

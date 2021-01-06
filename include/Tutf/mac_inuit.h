@@ -7,8 +7,8 @@
  * PLEASE DO NOT EDIT!
  */
 
-#ifndef _TUTF_MAC_INUIT_H
-#define _TUTF_MAC_INUIT_H
+#ifndef TUTF_MAC_INUIT_H
+#define TUTF_MAC_INUIT_H
 
 #define T_MAC_INUIT_CTRL_NULL 0x0000
 #define T_MAC_INUIT_CTRL_START_OF_HEADING 0x0001
@@ -656,4 +656,4 @@
   EL(_LATIN_CAPITAL_LETTER_L_WITH_STROKE)                                                          \
   EL(_LATIN_SMALL_LETTER_L_WITH_STROKE)
 
-#endif /* _TUTF_MAC_INUIT_H */
+#endif /* TUTF_MAC_INUIT_H */

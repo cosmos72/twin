@@ -9,34 +9,24 @@
  *  (at your option) any later version.
  *
  */
-#ifndef _TWIN_ALLOC_H
-#define _TWIN_ALLOC_H
+#ifndef TWIN_ALLOC_H
+#define TWIN_ALLOC_H
+
+#include "stl/alloc.h"
+#include "stl/err.h"
 
 #include <Tw/datatypes.h>
+#include <string.h> // memcpy(), memmove()
 
-extern udat ErrNo;
-extern CONST char *ErrStr;
-byte Error(udat ErrNo);
+/* inline/define stuff: */
 
-/* memory allocation. these function call Error(NOMEMORY) on failure */
+#define CopyMem(from, to, len) memcpy(to, from, len)
+#define MoveMem(from, to, len) memmove(to, from, len)
 
-void *AllocMem(size_t Size);              /* wrapper for malloc() */
-void *ReAllocMem(void *Mem, size_t Size); /* wrapper for realloc() */
-#define FreeMem free
-
-void *AllocMem0(size_t ElementSize, size_t Count); /* wrapper for calloc() */
-void *ReAllocMem0(void *Mem, size_t ElementSize, size_t OldCount,
-                  size_t NewCount); /* wrapper for realloc() + memset() */
-
-/* INLINE/define stuff: */
-
-#define CopyMem(From, To, Size) memcpy(To, From, Size)
-#define MoveMem(From, To, Size) memmove(To, From, Size)
-
-void *CloneMem(CONST void *From, uldat Size);
-char *CloneStr(CONST char *s);
-char *CloneStrL(CONST char *s, uldat len);
+void *CloneMem(const void *From, uldat len);
+char *CloneStr(const char *s);
+char *CloneStrL(const char *s, uldat len);
 char **CloneStrList(char **s);
-trune *CloneStr2TRune(CONST char *s, uldat len);
+trune *CloneStr2TRune(const char *s, uldat len);
 
-#endif /* _TWIN_ALLOC_H */
+#endif /* TWIN_ALLOC_H */

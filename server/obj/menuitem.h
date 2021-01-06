@@ -10,13 +10,32 @@
  *
  */
 
-#ifndef _TWIN_MENUITEM_H
-#define _TWIN_MENUITEM_H
+#ifndef TWIN_MENUITEM_H
+#define TWIN_MENUITEM_H
 
 #include "obj/row.h"
 
-struct s_menuitem {
-  uldat Id;
+struct s_fn_menuitem {
+  uldat Magic;
+  void (*Insert)(menuitem, obj, menuitem Prev, menuitem Next);
+  void (*Remove)(menuitem);
+  void (*Delete)(menuitem);
+  void (*ChangeField)(menuitem, udat field, uldat CLEARMask, uldat XORMask);
+  /* row */
+  fn_obj Fn_Obj;
+  byte (*SetText)(row, uldat Len, const char *Text, byte DefaultCol);
+  byte (*SetTRune)(row, uldat Len, const trune *TRune, byte DefaultCol);
+  /* menuitem */
+  void (*Raise)(menuitem);
+  void (*Lower)(menuitem);
+  fn_row Fn_Row;
+  menuitem (*Create4Menu)(obj Parent, window Window, udat Code, byte Flags, ldat Len,
+                          const char *Name);
+  uldat (*Create4MenuCommon)(menu);
+  /* for compatibility this must return a non-zero value. */
+};
+
+struct s_menuitem : public s_obj {
   fn_menuitem Fn;
   menuitem Prev, Next;
   obj Parent;
@@ -31,28 +50,25 @@ struct s_menuitem {
   window Window;
   dat Left, ShortCut;
   ldat WCurY;
-};
 
-struct s_fn_menuitem {
-  uldat Magic, Size, Used;
-  menuitem (*Create)(fn_menuitem, obj Parent, window Window, udat Code, byte Flags, dat Left,
-                     ldat Len, dat ShortCut, CONST char *Name);
-  void (*Insert)(menuitem, obj, menuitem Prev, menuitem Next);
-  void (*Remove)(menuitem);
-  void (*Delete)(menuitem);
-  void (*ChangeField)(menuitem, udat field, uldat CLEARMask, uldat XORMask);
-  /* row */
-  fn_obj Fn_Obj;
-  byte (*SetText)(row, uldat Len, CONST char *Text, byte DefaultCol);
-  byte (*SetTRune)(row, uldat Len, CONST trune *TRune, byte DefaultCol);
-  /* menuitem */
-  void (*Raise)(menuitem);
-  void (*Lower)(menuitem);
-  fn_row Fn_Row;
-  menuitem (*Create4Menu)(fn_menuitem, obj Parent, window Window, udat Code, byte Flags, ldat Len,
-                          CONST char *Name);
-  uldat (*Create4MenuCommon)(fn_menuitem, menu);
-  /* for compatibility this must return a non-zero value. */
+  static menuitem Create(obj Parent, window Window, udat Code, byte Flags, dat Left, ldat Len,
+                         dat ShortCut, const char *Name);
+  menuitem Init(obj Parent, window Window, udat Code, byte Flags, dat Left, ldat Len, dat ShortCut,
+                const char *Name);
+
+  /* obj */
+  uldat Magic() const {
+    return Fn->Magic;
+  }
+  void Insert(obj parent, menuitem prev, menuitem next) {
+    Fn->Insert(this, parent, prev, next);
+  }
+  void Remove() {
+    Fn->Remove(this);
+  }
+  void Delete() {
+    Fn->Delete(this);
+  }
 };
 
 /* Some common menuitem codes: */
@@ -66,4 +82,4 @@ struct s_fn_menuitem {
 /* don't use codes above or equal to this one! */
 #define COD_RESERVED 0xF800
 
-#endif /* _TWIN_MENUITEM_H */
+#endif /* TWIN_MENUITEM_H */

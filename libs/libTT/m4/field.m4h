@@ -14,7 +14,7 @@ dnl Tell the user about this.
  * modify it under the terms of the GNU Library General Public
  * License as published by the Free Software Foundation; either
  * version 2 of the License, or (at your option) any later version.
- * 
+ *
  */
 
 /*
@@ -25,8 +25,8 @@ dnl Tell the user about this.
 
 include(`m4/TTclasses.m4')
 
-`#'define A	TClass_ttfield
-`#'define B(f)	((order_ttfield<<TT_MAGIC_SHIFT)|(f))
+`#'define A        TClass_ttfield
+`#'define B(f)        ((order_ttfield<<TT_MAGIC_SHIFT)|(f))
 
 divert(-1)
 
@@ -42,7 +42,7 @@ define(`ttobj_fields', `pushdef(`field', `ifdef(`ttobj_field_'$'`3, ttobj_field_
 `'TTdef_ttobj(ttobj)`'popdef(`field')')
 
 divert
-`#'define E(f)	ttobj_fields(f)
+`#'define E(f)        ttobj_fields(f)
 
 `#'define F(f) TT_STR(f),
 `#'define G(t,a) id_ttclass_(t)|(a),
@@ -55,7 +55,7 @@ define(`type_regularize', `ifelse(`$1', `', `void', `$1', `tt_class', `ttclass',
 define(`getset_method', `def_field($5,$6,$2)')
 
 define(`def_field', `
-    { E(this`'_$3)	len(this`'_$3), F(this`'_$3) G(type_regularize($2), encode_attribute($1)) },dnl
+    { E(this`'_$3)        len(this`'_$3), F(this`'_$3) G(type_regularize($2), encode_attribute($1)) },dnl
 `'ifelse(`$1', `', `', `
         /*$1*/
 `#'if e_FFP <= this`'_$3 - this`'_field_first
@@ -99,4 +99,3 @@ undefine(`TT_ARG_READ')
 define(`extends')
 define(`field')
 undefine(`el')
-

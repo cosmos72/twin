@@ -1,5 +1,5 @@
 /*
- *  Twstat.h  --  functions to get informations about libTw objects.
+ *  Twstat.h  --  functions to get informations about libtw objects.
  *
  *  Copyright (C) 2001 by Massimiliano Ghilardi
  *
@@ -10,8 +10,8 @@
  *
  */
 
-#ifndef _TW_STAT_H
-#define _TW_STAT_H
+#ifndef TW_STAT_H
+#define TW_STAT_H
 
 #include <stdarg.h>
 #include <Tw/Twtypes.h>
@@ -22,7 +22,7 @@
 #define TWS__STR(a) #a
 #define TWS_STR(a) TWS__STR(a)
 
-/* the following are hardcoded in socket.c, libTw.c and libTw ABI, don't change! */
+/* the following are hardcoded in socket.c, libtw.c and libtw ABI, don't change! */
 #define TWS_void 0
 #define TWS_char 1
 #define TWS_byte 1
@@ -45,7 +45,7 @@
 
 #define TWS_array 0xFD /* shortcut for TWS_vec|TWS_vecW|TWS_byte in (byte *) format strings */
 
-/* the following are hardcoded in libTw ABI, don't change! */
+/* the following are hardcoded in libtw ABI, don't change! */
 #define TWS_void_CHR '\xFE' /* '\xFF' would conflict with TWS_obj */
 #define TWS_void_STR "\xFE"
 #define TWS_char_STR "\x01"
@@ -100,11 +100,8 @@ tslist Tw_CloneStatL(tdisplay TwD, tobj Id, udat hN, ...);
 tslist Tw_CloneStatA(tdisplay TwD, tobj Id, udat hN, TW_CONST udat *h);
 tslist Tw_CloneStatV(tdisplay TwD, tobj Id, udat hN, va_list h);
 void Tw_DeleteStat(tdisplay TwD, tslist TSL);
-tsfield Tw_FindStat(tdisplay TwD, tslist TSL, udat hash);
+tsfield Tw_FindStat(tdisplay TwD, tslist TSL, udat label);
 void Tw_ChangeField(tdisplay TwD, tobj Obj, udat field, uldat CLEARMask, uldat XORMask);
-
-/* WARNING: here targs[0] is the return value, ! */
-tany Tw_CallTExtension(tdisplay TwD, textension eid, topaque args_n, tsfield targs);
 
 #define TwStat(Id, h) Tw_Stat(Tw_DefaultD, Id, h)
 
@@ -125,13 +122,10 @@ tslist TwCloneStatL(tobj Id, udat hN, ...);
 #define TwCloneStatA(Id, hN, h) Tw_CloneStatA(Tw_DefaultD, Id, hN, h)
 #define TwCloneStatV(Id, hN, h) Tw_CloneStatV(Tw_DefaultD, Id, hN, h)
 #define TwDeleteStat(TSL) Tw_DeleteStat(Tw_DefaultD, TSL)
-#define TwFindStat(TSL, hash) Tw_FindStat(Tw_DefaultD, TSL, hash)
-
-/* WARNING: here targs[0] is the return value ! */
-#define TwCallTExtension(eid, args_n, targs) Tw_CallTExtension(Tw_DefaultD, eid, args_n, targs)
+#define TwFindStat(TSL, label) Tw_FindStat(Tw_DefaultD, TSL, label)
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* _TW_STAT_H */
+#endif /* TW_STAT_H */

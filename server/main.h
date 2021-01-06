@@ -6,8 +6,8 @@
  * (at your option) any later version.
  *
  */
-#ifndef _TWIN_MAIN_H
-#define _TWIN_MAIN_H
+#ifndef TWIN_MAIN_H
+#define TWIN_MAIN_H
 
 extern fd_set save_rfds, save_wfds;
 extern int max_fds;
@@ -16,7 +16,7 @@ extern char *TWDisplay, *origTWDisplay, *origTERM, *origHW, *HOME;
 extern char **main_argv, **orig_argv;
 extern uldat main_argv_usable_len;
 extern byte flag_envrc, flag_secure;
-extern CONST char *flag_secure_msg;
+extern const char *flag_secure_msg;
 
 extern int (*OverrideSelect)(int n, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
                              struct timeval *timeout);
@@ -28,4 +28,4 @@ byte AlwaysTrue(void);
 byte AlwaysFalse(void);
 void *AlwaysNull(void);
 
-#endif /* _TWIN_MAIN_H */
+#endif /* TWIN_MAIN_H */

@@ -8,7 +8,7 @@ dnl Tell the user about this.
 /* This file was automatically generated with `m4' from `m4/Tw_common.m4', do not edit! */
 
 /*
- *  common_m4.h  --  common libTw function prototypes
+ *  common_m4.h  --  common libtw function prototypes
  *
  *  Copyright (C) 2002 by Massimiliano Ghilardi
  *
@@ -52,7 +52,7 @@ c_doxygen(/** change Tw_AllocMem(), Tw_ReAllocMem(), Tw_FreeMem() function point
 EASY(ConfigMalloc, void Tw_ConfigMalloc(void *(*my_malloc)(size_t),
 		     void *(*my_realloc)(void *, size_t),
 		     void  (*my_free)(void *));)
-		     
+
 c_doxygen(/** pointer to custom malloc() function; use Tw_ConfigMalloc() to change it */)
 EASY(AllocMem, extern void *(*Tw_AllocMem)(size_t);)
 c_doxygen(/** pointer to custom realloc() function; use Tw_ConfigMalloc() to change it */)
@@ -61,9 +61,9 @@ c_doxygen(/** pointer to custom free() function; use Tw_ConfigMalloc() to change
 EASY(FreeMem, extern void  (*Tw_FreeMem)(void *);)
 
 c_doxygen(/** equivalent to calloc() */)
-EASY(AllocMem0, void *Tw_AllocMem0(size_t ElementSize, size_t Count);)
+EASY(AllocMem0, void *Tw_AllocMem0(size_t Size);)
 c_doxygen(/** equivalent to realloc()+memset() */)
-EASY(ReAllocMem0, void *Tw_ReAllocMem0(void * Mem, size_t ElementSize, size_t OldCount, size_t NewCount);)
+EASY(ReAllocMem0, void *Tw_ReAllocMem0(void * Mem, size_t OldSize, size_t NewSize);)
 
 c_doxygen(/** custom malloc()+memcpy() function */)
 EASY(CloneMem, extern void *Tw_CloneMem(TW_CONST void *, size_t);)
@@ -141,9 +141,9 @@ DECL(uldat,ServerVersion)
 
 DECL(byte,InPanic)
 
-c_doxygen(/** this returns tfalse only after libTw has paniced */)
+c_doxygen(/** this returns tfalse only after libtw has paniced */)
 DECL(byte,Flush)
-c_doxygen(/** this returns tfalse only after libTw has paniced */)
+c_doxygen(/** this returns tfalse only after libtw has paniced */)
 DECL(byte,Sync)
 
 c_doxygen(
@@ -151,8 +151,8 @@ c_doxygen(
  * try to write to the underlying socket.
  * if not all data could be written, write as much as possible,
  * keep the rest queued, then return.
- * 
- * returns tfalse only after libTw has paniced,
+ *
+ * returns tfalse only after libtw has paniced,
  * returns ttrue+ttrue if not all data could be written.
  */)
 DECL(byte,TimidFlush)
@@ -161,7 +161,7 @@ c_doxygen(
 /**
  * This is the function you must call to check if there are pending Msgs,
  * i.e. already received from the socket.
- * Since Msgs can be received even during libTw calls, you cannot rely only
+ * Since Msgs can be received even during libtw calls, you cannot rely only
  * on select(Tw_ConnectionFd()) to detect incoming messages, as they could
  * be already queued in the library. So you must call either Tw_PendingMsg()
  * or Tw_PeekMsg() below to check for messages.
@@ -185,7 +185,7 @@ c_doxygen(
  * If Wait is ttrue  and no Msg is available, it waits until a Msg arrives.
  * If Wait is tfalse and no Msg is available, it tries non-blocking
  *                  to receive more Msgs.
- * 
+ *
  * In both cases, if there is at least a Msgs available it is returned
  * without waiting.
  */)
@@ -227,9 +227,3 @@ DECL(void,SetDefaultListener, tfn_default_listener listener, void *arg)
 DECL(byte,DispatchMsg, tmsg Msg)
 DECL(byte,MainLoop)
 DECL(void,ExitMainLoop)
-
-
-DECL(tany, CallAExtension, textension eid, TW_CONST byte *proto, topaque args_n, TW_CONST tany *args)
-c_doxygen(/** see Tw_CallLExtension() for the rules about how to pass arguments to this function */)
-DECL(tany, CallVExtension, textension eid, TW_CONST byte *proto, topaque args_n, va_list vargs)
-

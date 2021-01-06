@@ -6,10 +6,10 @@
  * (at your option) any later version.
  *
  */
-#ifndef _TWIN_UTIL_H
-#define _TWIN_UTIL_H
+#ifndef TWIN_UTIL_H
+#define TWIN_UTIL_H
 
-#ifndef _TWAUTOCONF_H
+#ifndef TWAUTOCONF_H
 #include "twautoconf.h" /* for TW_HAVE_ALARM */
 #endif
 
@@ -19,6 +19,8 @@
 #ifdef TW_HAVE_SYS_UN_H
 #include <sys/un.h>
 #endif
+
+#include "stl_types.h"
 
 extern uldat unixSlot;
 extern int unixFd;
@@ -31,10 +33,8 @@ void SetAlarm(unsigned seconds);
 #define AlarmReceived (0)
 #endif
 
-CONST char *TmpDir(void);
-udat CopyToSockaddrUn(CONST char *src, struct sockaddr_un *addr, udat pos);
-
-byte Error(udat Code_Error);
+const char *TmpDir(void);
+udat CopyToSockaddrUn(const char *src, struct sockaddr_un *addr, udat pos);
 
 void NormalizeTime(timevalue *Time);
 timevalue *InstantNow(timevalue *Now);
@@ -45,16 +45,14 @@ timevalue *IncrTime(timevalue *Time, timevalue *Incr);
 timevalue *DecrTime(timevalue *Time, timevalue *Decr);
 void SortMsgPortByCallTime(msgport Port);
 void SortAllMsgPortsByCallTime(void);
-byte SendControlMsg(msgport MsgPort, udat Code, udat Len, CONST char *Data);
+byte SendControlMsg(msgport MsgPort, udat Code, udat Len, const char *Data);
 
-byte Minimum(byte MaxIndex, CONST ldat *Array);
+byte Minimum(byte MaxIndex, const ldat *Array);
 
-uldat ComputeUsableLenArgv(char *CONST *argv);
-void SetArgv0(char *CONST *argv, uldat argv_usable_len, CONST char *src);
+uldat ComputeUsableLenArgv(char *const *argv);
+void SetArgv0(char *const *argv, uldat argv_usable_len, const char *src);
 
-#define SelectionAppend(Len, Data) SelectionStore(SEL_APPEND, NULL, Len, Data)
-byte SelectionStore(uldat Magic, CONST char MIME[MAX_MIMELEN], uldat Len, CONST char *Data);
-byte SetSelectionFromWindow(window Window);
+bool SetSelectionFromWindow(window Window);
 void doSelectionSetOwner(obj Owner, tany Time, tany Frac);
 #define SEL_CURRENTTIME ((tany)0)
 
@@ -74,12 +72,10 @@ byte CheckPrivileges(void);
 void GainPrivileges(void);
 byte SetServerUid(uldat uid, byte privileges);
 
-char *FindFile(CONST char *name, uldat *fsize);
+char *FindFile(const char *name, uldat *fsize);
 void RunTwEnvRC(void);
 
-/* remove CONST from a pointer and suppress compiler warnings */
-void *RemoveConst(CONST void *x);
+/* remove const from a pointer and suppress compiler warnings */
+void *RemoveConst(const void *x);
 
-tcell EncodeToTCellExtra(tpos pos, tternary detail, tbool active, tbool pressed);
-
-#endif /* _TWIN_UTIL_H */
+#endif /* TWIN_UTIL_H */

@@ -9,8 +9,8 @@
  *  All changes to this file will be lost when the script is re-executed.
  */
 
-#ifndef _TUTF_UTF_32_H
-#define _TUTF_UTF_32_H
+#ifndef TUTF_UTF_32_H
+#define TUTF_UTF_32_H
 
 /* auxiliary definitions */
 #include <Tutf/utf_32_aux.h>
@@ -31604,4 +31604,4 @@
 #define T_UTF_32_VARIATION_SELECTOR_255 0xE01EE
 #define T_UTF_32_VARIATION_SELECTOR_256 0xE01EF
 
-#endif /* _TUTF_UTF_32_H */
+#endif /* TUTF_UTF_32_H */

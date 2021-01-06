@@ -36,38 +36,46 @@ byte InitTWCD(void) {
 
   TWCD_MsgPort = TwCreateMsgPort(4, "twcd");
 
-  TWCD_Menu = TwCreateMenu(COL(BLACK, WHITE), COL(BLACK, GREEN), COL(HIGH | BLACK, WHITE),
-                           COL(HIGH | BLACK, BLACK), COL(RED, WHITE), COL(RED, GREEN), (byte)0);
+  TWCD_Menu =
+      TwCreateMenu(TCOL(tblack, twhite), TCOL(tblack, tgreen), TCOL(thigh | tblack, twhite),
+                   TCOL(thigh | tblack, tblack), TCOL(tred, twhite), TCOL(tred, tgreen), (byte)0);
+                   TCOL(thigh | tblack, tblack), TCOL(tred, twhite), TCOL(tred, tgreen), (byte)0);
+                   TCOL(thigh | tblack, tblack), TCOL(tred, twhite), TCOL(tred, tgreen), (byte)0);
+                   TCOL(thigh | tblack, tblack), TCOL(tred, twhite), TCOL(tred, tgreen), (byte)0);
+                   TCOL(thigh | tblack, tblack), TCOL(tred, twhite), TCOL(tred, tgreen), (byte)0);
+                   TCOL(thigh | tblack, tblack), TCOL(tred, twhite), TCOL(tred, tgreen), (byte)0);
+                   TCOL(thigh | tblack, tblack), TCOL(tred, twhite), TCOL(tred, tgreen), (byte)0);
 
-  TwInfo4Menu(TWCD_Menu, TW_ROW_ACTIVE, (uldat)8, " Twin CD ", "ppppppttp");
+                   TwInfo4Menu(TWCD_Menu, TW_ROW_ACTIVE, (uldat)8, " Twin CD ", "ppppppttp");
 
-  TWCD_Win =
-      TwCreateWindow(9, " Twin CD ", NULL, TWCD_Menu, COL(HIGH | WHITE, BLUE), TW_NOCURSOR,
-                     TW_WINDOW_DRAG | TW_WINDOW_CLOSE | TW_WINDOW_WANT_MOUSE | TW_WINDOW_WANT_KEYS,
-                     TW_WINDOWFL_USEROWS | TW_WINDOWFL_ROWS_DEFCOL, (udat)18, (udat)3, (udat)0);
+                   TWCD_Win = TwCreateWindow(
+                       9, " Twin CD ", NULL, TWCD_Menu, TCOL(thigh | twhite, tblue), TW_NOCURSOR,
+                       TW_WINDOW_DRAG | TW_WINDOW_CLOSE | TW_WINDOW_WANT_MOUSE |
+                           TW_WINDOW_WANT_KEYS,
+                       TW_WINDOWFL_USEROWS | TW_WINDOWFL_ROWS_DEFCOL, (udat)18, (udat)3, (udat)0);
 
-  FileWindow = TwWin4Menu(TWCD_Menu);
-  TwItem4Menu(TWCD_Menu, FileWindow, ttrue, 6, " File ");
-  TwRow4Menu(FileWindow, COD_QUIT, TW_ROW_ACTIVE, 6, " Quit ");
-  PlayWindow = TwWin4Menu(TWCD_Menu);
-  TwItem4Menu(TWCD_Menu, PlayWindow, ttrue, 6, " Play ");
+                   FileWindow = TwWin4Menu(TWCD_Menu);
+                   TwItem4Menu(TWCD_Menu, FileWindow, ttrue, 6, " File ");
+                   TwRow4Menu(FileWindow, COD_QUIT, TW_ROW_ACTIVE, 6, " Quit ");
+                   PlayWindow = TwWin4Menu(TWCD_Menu);
+                   TwItem4Menu(TWCD_Menu, PlayWindow, ttrue, 6, " Play ");
 
-  if (!TwItem4MenuCommon(TWCD_Menu))
-    return tfalse;
+                   if (!TwItem4MenuCommon(TWCD_Menu))
+                     return tfalse;
 
-  TwGotoXYWindow(TWCD_Win, 0, 2);
-  TwWriteAsciiWindow(TWCD_Win, 17, "<< [] || -> >> /\\");
-  TwMapWindow(TWCD_Win, TwFirstScreen());
-  TwFlush();
+                   TwGotoXYWindow(TWCD_Win, 0, 2);
+                   TwWriteCharsetWindow(TWCD_Win, 17, "<< [] || -> >> /\\");
+                   TwMapWindow(TWCD_Win, TwFirstScreen());
+                   TwFlush();
 
-  return ttrue;
+                   return ttrue;
 }
 
 void writeTrack(char *title) {
   TwGotoXYWindow(TWCD_Win, 0, 0);
-  TwWriteAsciiWindow(TWCD_Win, 20, "                    ");
+  TwWriteCharsetWindow(TWCD_Win, 20, "                    ");
   TwGotoXYWindow(TWCD_Win, 0, 0);
-  TwWriteAsciiWindow(TWCD_Win, strlen(title), title);
+  TwWriteCharsetWindow(TWCD_Win, strlen(title), title);
 }
 
 void changeTrack(void) {
@@ -91,7 +99,7 @@ int main(int argc, char **argv) {
          "COPYING file included "
          "with the distribution for the\nfull license, or visit http://www.gnu.org\n\n");
   if (!InitTWCD()) {
-    fprintf(stderr, "%s: libTw error: %s%s\n", argv[0], TwStrError(TwErrno),
+    fprintf(stderr, "%s: libtw error: %s%s\n", argv[0], TwStrError(TwErrno),
             TwStrErrorDetail(TwErrno, TwErrnoDetail));
     return 1;
   }
@@ -172,7 +180,7 @@ int main(int argc, char **argv) {
   }
 
   if (TwErrno)
-    printf("%s: libTw error: %s%s\n", argv[0], TwStrError(TwErrno),
+    printf("%s: libtw error: %s%s\n", argv[0], TwStrError(TwErrno),
            TwStrErrorDetail(TwErrno, TwErrnoDetail));
 
   if (!TwInPanic()) {

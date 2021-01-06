@@ -14,8 +14,8 @@
  *
  */
 
-#ifndef _TT_TTEVENT_H
-#define _TT_TTEVENT_H
+#ifndef TT_TTEVENT_H
+#define TT_TTEVENT_H
 
 /* object structure */
 #ifndef s_ttevent
@@ -58,4 +58,4 @@ ttevent TTGetPrev_ttevent(TT_ARG_READ ttevent o);
 /** get `next' of ttevent `o' */
 ttevent TTGetNext_ttevent(TT_ARG_READ ttevent o);
 
-#endif /* _TT_TTEVENT_H */
+#endif /* TT_TTEVENT_H */

@@ -7,8 +7,8 @@
  * PLEASE DO NOT EDIT!
  */
 
-#ifndef _TUTF_VT100GR_H
-#define _TUTF_VT100GR_H
+#ifndef TUTF_VT100GR_H
+#define TUTF_VT100GR_H
 
 #define T_VT100GR_CTRL_NULL 0x0000
 #define T_VT100GR_CTRL_START_OF_HEADING 0x0001
@@ -566,4 +566,4 @@
   EL(_POUND_SIGN)                                                                                  \
   EL(_MIDDLE_DOT)
 
-#endif /* _TUTF_VT100GR_H */
+#endif /* TUTF_VT100GR_H */

@@ -1,6 +1,6 @@
 
-#ifndef _TW_MISSING_H
-#define _TW_MISSING_H
+#ifndef TW_MISSING_H
+#define TW_MISSING_H
 
 #include <Tw/prefix.h>
 #include <Tw/autoconf.h>
@@ -25,11 +25,11 @@ char *Tw_missing_strdup(TW(CONST) char *s, void *(*missing_malloc)(size_t size))
 #endif
 
 #ifndef TW_HAVE_STRERROR
-#define strerror(errnum) ""
+#define strerror(err) ""
 #endif
 
 #ifndef TW_HAVE_HSTRERROR
-#define hstrerror(herrnum) ""
+#define hstrerror(herr) ""
 #endif
 
 #ifndef TW_HAVE_STRSPN
@@ -56,4 +56,4 @@ int Tw_option_strncmp(TW_CONST char *s1, TW_CONST char *s2, size_t n);
 
 #include <Tw/unprefix.h>
 
-#endif /* _TW_MISSING_H */
+#endif /* TW_MISSING_H */

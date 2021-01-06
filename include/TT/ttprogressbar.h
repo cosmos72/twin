@@ -14,8 +14,8 @@
  *
  */
 
-#ifndef _TT_TTPROGRESSBAR_H
-#define _TT_TTPROGRESSBAR_H
+#ifndef TT_TTPROGRESSBAR_H
+#define TT_TTPROGRESSBAR_H
 
 /* object structure */
 #ifndef s_ttprogressbar
@@ -37,4 +37,4 @@ ttprogressbar TTCreate_ttprogressbar(ttbyte orientation);
 
 /* TTGet*_ttprogressbar and TTSet*_ttprogressbar methods */
 
-#endif /* _TT_TTPROGRESSBAR_H */
+#endif /* TT_TTPROGRESSBAR_H */

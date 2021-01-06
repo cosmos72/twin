@@ -10,8 +10,8 @@
  *
  */
 
-#ifndef _TWIN_H
-#define _TWIN_H
+#ifndef TWIN_H
+#define TWIN_H
 
 #include "twautoconf.h" /* for TW_HAVE_* macros */
 #include "twconfig.h"   /* for CONF_* macros */
@@ -48,36 +48,21 @@
 #include "obj/msgport.h"
 #include "obj/mutex.h"
 #include "obj/module.h"
-#include "obj/extension.h"
 #include "obj/display_hw.h"
 #include "obj/all.h"
 #include "obj/fn.h"
 
-#define NOFD (-1)
-/* use for every FD that needs a special RemoteFlush()
- * instead of a plain write() and set PrivateFlush as needed */
-#define specFD (-2)
+enum s_fd {
+  NOFD = -1,
+  /* use for every FD that needs a special RemoteFlush()
+   * instead of a plain write() and set PrivateFlush as needed */
+  specFD = -2,
+};
 
 #ifndef NOPID /* some OSes (Solaris for one) already define NOPID */
 #define NOPID ((pid_t)0)
 #endif
 #define NOSLOT TW_MAXULDAT
-
-typedef struct s_font {
-  byte AsciiCode;
-  char *Bitmap;
-} font;
-
-typedef struct s_rgb {
-  byte Red, Green, Blue;
-} rgb;
-
-/* errors */
-#define NOMEMORY ((udat)1)
-#define NOTABLES ((udat)2)
-#define DLERROR ((udat)3)
-#define SYSCALLERROR ((udat)4)
-#define USERERROR ((udat)5)
 
 #define IS_OBJ(type, O) (((O)->Id >> magic_shift) == type##_magic_id)
 #define IS_WIDGET(O)                                                                               \
@@ -91,8 +76,7 @@ typedef struct s_rgb {
 #define IS_MSGPORT(O) IS_OBJ(msgport, O)
 #define IS_MUTEX(O) IS_OBJ(mutex, O)
 #define IS_MSG(O) IS_OBJ(msg, O)
-#define IS_MODULE(O) (IS_OBJ(module, O) || IS_OBJ(extension, O))
-#define IS_EXTENSION(O) IS_OBJ(extension, O)
+#define IS_MODULE(O) IS_OBJ(module, O)
 #define IS_DISPLAY_HW(O) IS_OBJ(display_hw, O)
 #define IS_ALL(O) IS_OBJ(all, O)
 
@@ -115,4 +99,4 @@ typedef enum { none, sgidtty, suidroot } e_privilege;
 #define GainRootPrivileges() seteuid(0)
 #define GainGroupPrivileges(g) setegid(g)
 
-#endif /* _TWIN_H */
+#endif /* TWIN_H */

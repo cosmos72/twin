@@ -15,9 +15,10 @@ dnl Tell the user about this.
  *
  */
 
+#ifndef TT_HW_COMMON_H
+#define TT_HW_COMMON_H
 
-#ifndef _TT_HW_COMMON_H
-#define _TT_HW_COMMON_H
+/* clang-format off */
 
 include(`m4/TTclasses.m4')
 
@@ -31,4 +32,4 @@ define(`el',`
 TTlist()
 undefine(`el')
 
-#endif /* _TT_HW_COMMON_H */
+#endif /* TT_HW_COMMON_H */

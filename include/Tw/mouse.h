@@ -1,6 +1,6 @@
 
-#ifndef _TW_MOUSE_H
-#define _TW_MOUSE_H
+#ifndef TW_MOUSE_H
+#define TW_MOUSE_H
 
 /* mouse events stuff */
 
@@ -88,4 +88,4 @@
 /* if (isSINGLE_MOVE(code)) then MOVE_N(n) return the button # pressed in code */
 #define MOVE_N(code) HOLD_N(code)
 
-#endif /* _TW_MOUSE_H */
+#endif /* TW_MOUSE_H */

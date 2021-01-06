@@ -13,8 +13,8 @@
  *
  */
 
-#ifndef _TWIN_FDLIST_H
-#define _TWIN_FDLIST_H
+#ifndef TWIN_FDLIST_H
+#define TWIN_FDLIST_H
 
 typedef void (*handler_io_s)(int, uldat);
 typedef void (*handler_io_d)(int, obj);
@@ -62,4 +62,4 @@ enum Alien_magics {
 #define AlienXendian(slot) AlienMagic(slot)[TWS_void /*0*/]
 #define AlienSizeof(type, slot) AlienMagic(slot)[TWS_##type]
 
-#endif /* _TWIN_FDLIST_H */
+#endif /* TWIN_FDLIST_H */

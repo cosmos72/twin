@@ -1,6 +1,6 @@
 
-#ifndef _TT_TYPES_H
-#define _TT_TYPES_H
+#ifndef TT_TYPES_H
+#define TT_TYPES_H
 
 #include <Tw/Twtypes.h>
 
@@ -15,4 +15,4 @@
 #include <TT/tt.h>
 #include <TT/list_m4.h>
 
-#endif /* _TT_TYPES_H */
+#endif /* TT_TYPES_H */

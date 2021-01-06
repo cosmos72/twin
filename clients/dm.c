@@ -302,39 +302,38 @@ static byte InitClient(void) {
   }
 
   if ((DM_MsgPort = TwCreateMsgPort(2, "DM")) &&
-      (DM_Menu =
-           TwCreateMenu(COL(BLACK, WHITE), COL(BLACK, GREEN), COL(HIGH | BLACK, WHITE),
-                        COL(HIGH | BLACK, BLACK), COL(RED, WHITE), COL(RED, GREEN), (byte)0)) &&
+      (DM_Menu = TwCreateMenu(TCOL(tblack, twhite), TCOL(tblack, tgreen),
+                              TCOL(thigh | tblack, twhite), TCOL(thigh | tblack, tblack),
+                              TCOL(tred, twhite), TCOL(tred, tgreen), (byte)0)) &&
       TwItem4MenuCommon(DM_Menu) &&
       (TwInfo4Menu(DM_Menu, TW_ROW_ACTIVE, 61,
                    " Twin Display Manager. Enter user name and password to login.", NULL),
        ttrue) &&
 
       (DM_Window =
-           TwCreateWindow(strlen(title), title, NULL, DM_Menu, COL(WHITE, BLUE), TW_NOCURSOR,
+           TwCreateWindow(strlen(title), title, NULL, DM_Menu, TCOL(twhite, tblue), TW_NOCURSOR,
                           TW_WINDOW_DRAG | TW_WINDOW_WANT_KEYS, TW_WINDOWFL_USEROWS, 40, 15, 0)) &&
       (DM_user = TwCreateWindow(
-           6, "Login:", NULL, DM_Menu, COL(BLACK, CYAN), TW_LINECURSOR, TW_WINDOW_WANT_KEYS,
+           6, "Login:", NULL, DM_Menu, TCOL(tblack, tcyan), TW_LINECURSOR, TW_WINDOW_WANT_KEYS,
            TW_WINDOWFL_CURSOR_ON | TW_WINDOWFL_USEROWS | TW_WINDOWFL_ROWS_DEFCOL, 30, 1, 0)) &&
       (DM_pass = TwCreateWindow(
-           9, "Password:", NULL, DM_Menu, COL(BLACK, CYAN), TW_LINECURSOR, TW_WINDOW_WANT_KEYS,
+           9, "Password:", NULL, DM_Menu, TCOL(tblack, tcyan), TW_LINECURSOR, TW_WINDOW_WANT_KEYS,
            TW_WINDOWFL_CURSOR_ON | TW_WINDOWFL_USEROWS | TW_WINDOWFL_ROWS_DEFCOL, 30, 1, 0)) &&
 
       TwCreateButtonGadget(DM_Window, 7, 1, " Login ", TW_GADGETFL_USETEXT, DM_GADGET_LOGIN,
-                           COL(WHITE, BLUE), COL(HIGH | WHITE, GREEN), COL(HIGH | BLACK, GREEN), 5,
-                           12) &&
+                           TCOL(twhite, tblue), TCOL(thigh | twhite, tgreen),
+                           TCOL(thigh | tblack, tgreen), 5, 12) &&
       TwCreateButtonGadget(DM_Window, 7, 1, " Clear ", TW_GADGETFL_USETEXT, DM_GADGET_CLEAR,
-                           COL(WHITE, BLUE), COL(HIGH | WHITE, GREEN), COL(HIGH | BLACK, GREEN), 16,
-                           12) &&
+                           TCOL(twhite, tblue), TCOL(thigh | twhite, tgreen),
+                           TCOL(thigh | tblack, tgreen), 16, 12) &&
       TwCreateButtonGadget(DM_Window, 7, 1, " Leave ", TW_GADGETFL_USETEXT, DM_GADGET_CONSOLE,
-                           COL(WHITE, BLUE), COL(HIGH | WHITE, GREEN), COL(HIGH | BLACK, GREEN), 27,
-                           12)
+                           TCOL(twhite, tblue), TCOL(thigh | twhite, tgreen),
+                           TCOL(thigh | tblack, tgreen), 27, 12)
 
   ) {
-
-    TwSetColTextWindow(DM_Window, COL(HIGH | RED, BLUE));
+    TwSetColTextWindow(DM_Window, TCOL(thigh | tred, tblue));
     TwGotoXYWindow(DM_Window, 7, 8);
-    TwWriteAsciiWindow(DM_Window, 26, "L O G I N   F A I L E D  !");
+    TwWriteCharsetWindow(DM_Window, 26, "L O G I N   F A I L E D  !");
 
     TwSetXYWindow(DM_Window, (X - 40) / 2, (Y - 15) / 2);
     TwSetXYWindow(DM_user, 4, 2);
@@ -354,13 +353,13 @@ static byte InitClient(void) {
 static void ClearKey(void) {
   TwGotoXYWindow(DM_user, 0, 0);
   memset(user.txt, ' ', user.len);
-  TwWriteAsciiWindow(DM_user, user.len, user.txt);
+  TwWriteCharsetWindow(DM_user, user.len, user.txt);
   TwGotoXYWindow(DM_user, user.len = user.x = 0, 0);
   user.txt[0] = '\0';
 
   TwGotoXYWindow(DM_pass, 0, 0);
   memset(pass.txt, ' ', pass.len);
-  TwWriteAsciiWindow(DM_pass, pass.len, pass.txt);
+  TwWriteCharsetWindow(DM_pass, pass.len, pass.txt);
   TwGotoXYWindow(DM_pass, pass.len = pass.x = 0, 0);
   pass.txt[0] = '\0';
 }
@@ -442,10 +441,10 @@ static void DelKey(twindow W, data u) {
 
     if (W == DM_user) {
       TwGotoXYWindow(W, 0, 0);
-      TwWriteAsciiWindow(W, u->len, u->txt);
+      TwWriteCharsetWindow(W, u->len, u->txt);
     } else
       TwGotoXYWindow(W, u->len, 0);
-    TwWriteAsciiWindow(W, 1, " ");
+    TwWriteCharsetWindow(W, 1, " ");
     TwGotoXYWindow(W, u->x, 0);
   }
 }
@@ -477,7 +476,7 @@ static void EndKey(twindow W, data u) {
     TwGotoXYWindow(W, u->x = u->len, 0);
 }
 
-static void WriteKey(twindow W, data u, udat len, char *seq) {
+static void WriteUtf8Key(twindow W, data u, udat len, char *seq) {
   char *_txt;
   byte _len, x;
 
@@ -496,18 +495,8 @@ static void WriteKey(twindow W, data u, udat len, char *seq) {
     u->len = _len;
     if (W == DM_pass)
       memset(seq, '*', len);
-    TwWriteAsciiWindow(W, len, seq);
+    TwWriteUtf8Window(W, len, seq);
   }
-}
-
-static void WriteTRuneKey(twindow W, data u, udat len, trune *h_data) {
-  char *d_data = (char *)h_data, *s_data = d_data;
-  udat n = len;
-
-  /* hack warning: this assumes `h_data' is writable and correctly aligned */
-  while (n--)
-    *d_data++ = Tutf_UTF_32_to_CP437(*h_data++);
-  WriteKey(W, u, len, s_data);
 }
 
 static void HandleKey(tevent_keyboard E) {
@@ -557,7 +546,7 @@ static void HandleKey(tevent_keyboard E) {
     break;
   default:
     if (E->Code >= 32 && E->Code < 256 && E->SeqLen)
-      WriteKey(E->W, u, E->SeqLen, E->AsciiSeq);
+      WriteUtf8Key(E->W, u, E->SeqLen, E->AsciiSeq);
     break;
   }
 }
@@ -674,12 +663,10 @@ int main(int argc, char *argv[]) {
           tevent_selectionnotify E = &Msg->Event.EventSelectionNotify;
 
           /* react as for keypresses */
-          if (E->Magic == TW_SEL_TEXTMAGIC)
-            WriteKey(E->ReqPrivate, E->ReqPrivate == DM_user ? &user : &pass, E->Len,
-                     (char *)E->Data);
-          else if (E->Magic == TW_SEL_TRUNEMAGIC)
-            WriteTRuneKey(E->ReqPrivate, E->ReqPrivate == DM_user ? &user : &pass,
-                          E->Len / sizeof(trune), (trune *)E->Data);
+          if (E->Magic == TW_SEL_UTF8MAGIC) {
+            WriteUtf8Key(E->ReqPrivate, E->ReqPrivate == DM_user ? &user : &pass, E->Len,
+                         (char *)E->Data);
+          }
         } break;
         default:
           break;
@@ -711,7 +698,7 @@ int main(int argc, char *argv[]) {
   }
 
   if ((err = TwErrno))
-    fprintf(stderr, "%s: libTw error: %s%s\n", argv[0], TwStrError(err),
+    fprintf(stderr, "%s: libtw error: %s%s\n", argv[0], TwStrError(err),
             TwStrErrorDetail(err, TwErrnoDetail));
 
   quit();

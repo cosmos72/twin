@@ -23,7 +23,7 @@ dat X, Y;
 static byte NewClutterWindow(void) {
   twindow Window;
   if ((Window = TwCreateWindow(
-           7, "Clutter", NULL, Clutter_Menu, COL(BLACK, HIGH | BLACK), TW_LINECURSOR,
+           7, "Clutter", NULL, Clutter_Menu, TCOL(tblack, thigh | tblack), TW_LINECURSOR,
            TW_WINDOW_DRAG | TW_WINDOW_RESIZE | TW_WINDOW_X_BAR | TW_WINDOW_Y_BAR | TW_WINDOW_CLOSE,
            TW_WINDOWFL_ROWS_DEFCOL, 11, 3, 0))) {
 
@@ -48,9 +48,9 @@ static byte InitClutter(void) {
   Y = TwGetDisplayHeight();
 
   if ((Clutter_MsgPort = TwCreateMsgPort(9, "twclutter")) &&
-      (Clutter_Menu =
-           TwCreateMenu(COL(BLACK, WHITE), COL(BLACK, GREEN), COL(HIGH | BLACK, WHITE),
-                        COL(HIGH | BLACK, BLACK), COL(RED, WHITE), COL(RED, GREEN), (byte)0)) &&
+      (Clutter_Menu = TwCreateMenu(TCOL(tblack, twhite), TCOL(tblack, tgreen),
+                                   TCOL(thigh | tblack, twhite), TCOL(thigh | tblack, tblack),
+                                   TCOL(tred, twhite), TCOL(tred, tgreen), (byte)0)) &&
       TwItem4MenuCommon(Clutter_Menu)) {
 
     TwInfo4Menu(Clutter_Menu, TW_ROW_ACTIVE, 17, " Useless Clutter ", NULL);
@@ -66,7 +66,7 @@ int main(int argc, char *argv[]) {
 
   if (!InitClutter()) {
     err = TwErrno;
-    fprintf(stderr, "%s: libTw error: %s%s\n", argv[0], TwStrError(err),
+    fprintf(stderr, "%s: libtw error: %s%s\n", argv[0], TwStrError(err),
             TwStrErrorDetail(err, TwErrnoDetail));
     return 1;
   }
@@ -81,7 +81,7 @@ int main(int argc, char *argv[]) {
     }
   }
   if ((err = TwErrno)) {
-    fprintf(stderr, "%s: libTw error: %s%s\n", argv[0], TwStrError(err),
+    fprintf(stderr, "%s: libtw error: %s%s\n", argv[0], TwStrError(err),
             TwStrErrorDetail(err, TwErrnoDetail));
     return 1;
   }

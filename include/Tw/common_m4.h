@@ -9,7 +9,7 @@
 /* This file was automatically generated with m4 from m4/Tw_common.m4, do not edit! */
 
 /*
- *  common_m4.h  --  common libTw function prototypes
+ *  common_m4.h  --  common libtw function prototypes
  *
  *  Copyright (C) 2002 by Massimiliano Ghilardi
  *
@@ -32,7 +32,7 @@ void Tw_MergeHyphensArgv(int argc, char **argv);
 void Tw_ConfigMalloc(void *(*my_malloc)(size_t),
 		     void *(*my_realloc)(void *, size_t),
 		     void  (*my_free)(void *));
-		     
+
 /** pointer to custom malloc() function; use Tw_ConfigMalloc() to change it */
 extern void *(*Tw_AllocMem)(size_t);
 /** pointer to custom realloc() function; use Tw_ConfigMalloc() to change it */
@@ -41,9 +41,9 @@ extern void *(*Tw_ReAllocMem)(void *, size_t);
 extern void  (*Tw_FreeMem)(void *);
 
 /** equivalent to calloc() */
-void *Tw_AllocMem0(size_t ElementSize, size_t Count);
+void *Tw_AllocMem0(size_t Size);
 /** equivalent to realloc()+memset() */
-void *Tw_ReAllocMem0(void * Mem, size_t ElementSize, size_t OldCount, size_t NewCount);
+void *Tw_ReAllocMem0(void * Mem, size_t OldSize, size_t NewSize);
 
 /** custom malloc()+memcpy() function */
 extern void *Tw_CloneMem(TW_CONST void *, size_t);
@@ -121,22 +121,22 @@ uldat Tw_ServerVersion(tdisplay TwD);
 
 byte Tw_InPanic(tdisplay TwD);
 
-/** this returns tfalse only after libTw has paniced */
+/** this returns tfalse only after libtw has paniced */
 byte Tw_Flush(tdisplay TwD);
-/** this returns tfalse only after libTw has paniced */
+/** this returns tfalse only after libtw has paniced */
 byte Tw_Sync(tdisplay TwD);
 
 /**
  * try to write to the underlying socket.
  * if not all data could be written,write as much as possible,* keep the rest queued,then return.
- * 
- * returns tfalse only after libTw has paniced,* returns ttrue+ttrue if not all data could be written.
+ *
+ * returns tfalse only after libtw has paniced,* returns ttrue+ttrue if not all data could be written.
  */
 byte Tw_TimidFlush(tdisplay TwD);
 
 /**
  * This is the function you must call to check if there are pending Msgs,* i.e. already received from the socket.
- * Since Msgs can be received even during libTw calls,you cannot rely only
+ * Since Msgs can be received even during libtw calls,you cannot rely only
  * on select(Tw_ConnectionFd()) to detect incoming messages,as they could
  * be already queued in the library. So you must call either Tw_PendingMsg()
  * or Tw_PeekMsg() below to check for messages.
@@ -155,7 +155,7 @@ tmsg Tw_PeekMsg(tdisplay TwD);
  * If Wait is ttrue  and no Msg is available,it waits until a Msg arrives.
  * If Wait is tfalse and no Msg is available,it tries non-blocking
  *                  to receive more Msgs.
- * 
+ *
  * In both cases,if there is at least a Msgs available it is returned
  * without waiting.
  */
@@ -196,11 +196,5 @@ void Tw_SetDefaultListener(tdisplay TwD, tfn_default_listener listener,void *arg
 byte Tw_DispatchMsg(tdisplay TwD, tmsg Msg);
 byte Tw_MainLoop(tdisplay TwD);
 void Tw_ExitMainLoop(tdisplay TwD);
-
-
-tany Tw_CallAExtension(tdisplay TwD, textension eid,TW_CONST byte *proto,topaque args_n,TW_CONST tany *args);
-/** see Tw_CallLExtension() for the rules about how to pass arguments to this function */
-tany Tw_CallVExtension(tdisplay TwD, textension eid,TW_CONST byte *proto,topaque args_n,va_list vargs);
-
 
 

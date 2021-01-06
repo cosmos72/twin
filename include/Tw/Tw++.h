@@ -1,5 +1,5 @@
 /*
- *  Tw++.h  --  C++ wrapper for all libTw data types, functions and macros
+ *  Tw++.h  --  C++ wrapper for all libtw data types, functions and macros
  *
  *  Copyright (C) 2001 by Massimiliano Ghilardi
  *
@@ -11,12 +11,12 @@
  */
 
 /*
- * This include is a C++ front-end to raw libTw functionalities.
- * It does not add any new feature to libTw (with an exception: non-static
- * method listeners) but just wraps raw libTw types and function calls inside
+ * This include is a C++ front-end to raw libtw functionalities.
+ * It does not add any new feature to libtw (with an exception: non-static
+ * method listeners) but just wraps raw libtw types and function calls inside
  * C++ objects and methods.
  *
- * Tw/Tw++.h currently has a limitation: libTw can handle multiple simultaneous
+ * Tw/Tw++.h currently has a limitation: libtw can handle multiple simultaneous
  * connections to multiple twin servers (it's multi-headed), while the objects
  * and methods declared in this file allow only a single connection to a single
  * twin server (single-headed). This should not be a problem for most
@@ -26,16 +26,16 @@
  * connection that was used to create it.
  */
 
-#ifndef _TW_PLUS_PLUS_H
-#define _TW_PLUS_PLUS_H
+#ifndef TW_PLUS_PLUS_H
+#define TW_PLUS_PLUS_H
 
 #include <stdio.h>
 #include <string.h>
 
-#ifndef _TW_H
+#ifndef TW_H
 #include <Tw/Tw.h>
 #endif
-#ifndef _TW_ERRNO_H
+#ifndef TW_ERRNO_H
 #include <Tw/Twerrno.h>
 #endif
 
@@ -96,10 +96,10 @@ public:
   inline ~TMenu() {
   }
 
-  inline TMenu(tcolor ColItem = COL(BLACK, WHITE), tcolor ColSelect = COL(BLACK, GREEN),
-               tcolor ColDisabled = COL(HIGH | BLACK, WHITE),
-               tcolor ColSelectDisabled = COL(HIGH | BLACK, BLACK),
-               tcolor ColShtCut = COL(RED, WHITE), tcolor ColSelShtCut = COL(RED, GREEN),
+  inline TMenu(tcolor ColItem = TCOL(tblack, twhite), tcolor ColSelect = TCOL(tblack, tgreen),
+               tcolor ColDisabled = TCOL(thigh | tblack, twhite),
+               tcolor ColSelectDisabled = TCOL(thigh | tblack, tblack),
+               tcolor ColShtCut = TCOL(tred, twhite), tcolor ColSelShtCut = TCOL(tred, tgreen),
                byte FlagDefColInfo = 0) {
     Id = TwCreateMenu(ColItem, ColSelect, ColDisabled, ColSelectDisabled, ColShtCut, ColSelShtCut,
                       FlagDefColInfo);
@@ -131,9 +131,9 @@ public:
   inline ~TWidget() {
   }
 
-  inline TWidget(dat XWidth, dat YWidth, uldat Attrib = 0, uldat Flags = 0, dat Left = 0,
-                 dat Up = 0, tcell Fill = TCELL(COL(BLACK, WHITE), ' ')) {
-    Id = TwCreateWidget(XWidth, YWidth, Attrib, Flags, Left, Up, Fill);
+  inline TWidget(dat XWidth, dat YWidth, uldat Attr = 0, uldat Flags = 0, dat Left = 0, dat Up = 0,
+                 tcell Fill = TCELL(TCOL(tblack, twhite), ' ')) {
+    Id = TwCreateWidget(XWidth, YWidth, Attr, Flags, Left, Up, Fill);
   }
   static inline void map(twidget myId, twidget parentId) {
     TwMapWidget(myId, parentId);
@@ -184,20 +184,20 @@ public:
   }
 
   /*
-   * args are `udat Code, udat Flags, uldat Attrib' to exploit optional paremeters,
-   * while in Tw.h they are `uldat Attrib, uldat Flags, udat Code'.
+   * args are `udat Code, udat Flags, uldat Attr' to exploit optional paremeters,
+   * while in Tw.h they are `uldat Attr, uldat Flags, udat Code'.
    *
    * Take care.
    */
   inline TGadget(const TWidget *parent, dat XWidth, dat YWidth, const char *TextNormal,
                  udat Code = 0, uldat Flags = TW_GADGETFL_USETEXT | TW_GADGETFL_TEXT_DEFCOL,
-                 uldat Attrib = 0, tcolor ColText = COL(BLACK, GREEN),
-                 tcolor ColTextSelect = COL(HIGH | WHITE, GREEN),
-                 tcolor ColTextDisabled = COL(HIGH | BLACK, GREEN),
-                 tcolor ColTextSelectDisabled = COL(HIGH | BLACK, GREEN), dat Left = 0,
+                 uldat Attr = 0, tcolor ColText = TCOL(tblack, tgreen),
+                 tcolor ColTextSelect = TCOL(thigh | twhite, tgreen),
+                 tcolor ColTextDisabled = TCOL(thigh | tblack, tgreen),
+                 tcolor ColTextSelectDisabled = TCOL(thigh | tblack, tgreen), dat Left = 0,
                  dat Up = 0) {
     Id = TwCreateGadget(/* TwCreateGadget(...) is a macro... */
-                        parent->Id, XWidth, YWidth, TextNormal, Attrib, Flags, Code, ColText,
+                        parent->Id, XWidth, YWidth, TextNormal, Attr, Flags, Code, ColText,
                         ColTextSelect, ColTextDisabled, ColTextSelectDisabled, Left, Up);
   }
   /*
@@ -206,10 +206,12 @@ public:
    *
    * Take care.
    */
-  static inline TGadget *
-  CreateButton(const TWidget *parent, dat XWidth, dat YWidth, const char *name, udat Code = 0,
-               uldat Flags = 0, tcolor BgCol = COL(BLACK, WHITE), tcolor Col = COL(BLACK, GREEN),
-               tcolor ColDisabled = COL(HIGH | BLACK, GREEN), dat Left = 0, dat Up = 0) {
+  static inline TGadget *CreateButton(const TWidget *parent, dat XWidth, dat YWidth,
+                                      const char *name, udat Code = 0, uldat Flags = 0,
+                                      tcolor BgCol = TCOL(tblack, twhite),
+                                      tcolor Col = TCOL(tblack, tgreen),
+                                      tcolor ColDisabled = TCOL(thigh | tblack, tgreen),
+                                      dat Left = 0, dat Up = 0) {
     TGadget *G = new TGadget();
     G->Id = TwCreateButtonGadget(parent ? parent->Id : TW_NOID, XWidth, YWidth, name, Flags, Code,
                                  BgCol, Col, ColDisabled, Left, Up);
@@ -285,8 +287,9 @@ public:
   }
 
   inline TButton(const TWidget *parent, dat XWidth, dat YWidth, const char *name, udat Code = 0,
-                 uldat Flags = 0, tcolor BgCol = COL(BLACK, WHITE), tcolor Col = COL(BLACK, GREEN),
-                 tcolor ColDisabled = COL(HIGH | BLACK, GREEN), dat Left = 0, dat Up = 0) {
+                 uldat Flags = 0, tcolor BgCol = TCOL(tblack, twhite
+                 tcolor Col = TCOL(tblack, tgreen), tcolor ColDisabled = TCOL(thigh | tblack, tgreen),
+                 dat Left = 0, dat Up = 0) {
     Id = TwCreateButtonGadget(parent->Id, XWidth, YWidth, name, Flags, Code, BgCol, Col,
                               ColDisabled, Left, Up);
   }
@@ -301,13 +304,13 @@ public:
   inline ~TWindow() {
   }
 
-  inline TWindow(const TMenu *Menu, const char *name = "", tcolor ColText = COL(BLACK, WHITE),
+  inline TWindow(const TMenu *Menu, const char *name = "", tcolor ColText = TCOL(tblack, twhite),
                  uldat CursorType = TW_NOCURSOR,
-                 uldat Attrib = TW_WINDOW_WANT_KEYS | TW_WINDOW_CLOSE | TW_WINDOW_DRAG |
-                                TW_WINDOW_RESIZE,
+                 uldat Attr = TW_WINDOW_WANT_KEYS | TW_WINDOW_CLOSE | TW_WINDOW_DRAG |
+                              TW_WINDOW_RESIZE,
                  uldat Flags = TW_WINDOWFL_USEROWS, dat XWidth = 0, dat YWidth = 0,
                  dat ScrollBackLines = 0) {
-    Id = TwCreateWindow(strlen(name), name, NULL, Menu->Id, ColText, CursorType, Attrib, Flags,
+    Id = TwCreateWindow(strlen(name), name, NULL, Menu->Id, ColText, CursorType, Attr, Flags,
                         XWidth, YWidth, ScrollBackLines);
   }
   static inline TWindow *create4Menu(const TMenu *Menu) {
@@ -315,31 +318,20 @@ public:
     W->Id = TwCreate4MenuWindow(Menu->Id);
     return W;
   }
-  inline void writeAscii(const char *text) const {
-    TwWriteAsciiWindow(Id, strlen(text), text);
+  inline void writeCharset(const char *charset_bytes) const {
+    TwWriteCharsetWindow(Id, strlen(charset_bytes), charset_bytes);
   }
-  inline void writeAscii(ldat len, const char *text) const {
-    TwWriteAsciiWindow(Id, len, text);
+  inline void writeCharset(ldat len, const char *charset_bytes) const {
+    TwWriteCharsetWindow(Id, len, charset_bytes);
   }
-  inline void writeString(const char *text) const {
-    TwWriteStringWindow(Id, strlen(text), text);
+  inline void writeUtf8(const char *utf8_bytes) const {
+    TwWriteTRuneWindow(Id, strlen(utf8_bytes), utf8_bytes);
   }
-  inline void writeString(ldat len, const char *text) const {
-    TwWriteStringWindow(Id, len, text);
-  }
-  inline void writeTRune(ldat len, const trune *text) const {
-    TwWriteTRuneWindow(Id, len, text);
+  inline void writeUtf8(ldat len, const char *utf8_bytes) const {
+    TwWriteTRuneWindow(Id, len, utf8_bytes);
   }
   inline void writeTCell(ldat len, dat x, dat y, ldat Len, const tcell *Attr) const {
     TwWriteTCellWindow(Id, x, y, Len, Attr);
-  }
-  /* backward compatibility. will be removed */
-  inline void writeRow(const char *text) const {
-    writeAscii(text);
-  }
-  /* backward compatibility. will be removed */
-  inline void writeRow(ldat len, const char *text) const {
-    writeAscii(len, text);
   }
   inline void gotoXY(ldat x, ldat y) const {
     TwGotoXYWindow(Id, x, y);
@@ -347,14 +339,15 @@ public:
   inline void setColText(tcolor C) const {
     TwSetColTextWindow(Id, C);
   }
-  inline void setColors(udat Bitmap, tcolor ColGadgets = COL(HIGH | YELLOW, CYAN),
-                        tcolor ColArrows = COL(HIGH | GREEN, HIGH | BLUE),
-                        tcolor ColBars = COL(WHITE, HIGH | BLUE),
-                        tcolor ColTabs = COL(HIGH | WHITE, HIGH | BLUE),
-                        tcolor ColBorder = COL(HIGH | WHITE, HIGH | BLUE),
-                        tcolor ColText = COL(BLACK, WHITE), tcolor ColSelect = COL(WHITE, BLACK),
-                        tcolor ColDisabled = COL(HIGH | BLACK, BLACK),
-                        tcolor ColSelectDisabled = COL(BLACK, HIGH | BLACK)) const {
+  inline void setColors(udat Bitmap, tcolor ColGadgets = TCOL(thigh | tyellow, tcyan),
+                        tcolor ColArrows = TCOL(thigh | tgreen, thigh | tblue),
+                        tcolor ColBars = TCOL(twhite, thigh | tblue),
+                        tcolor ColTabs = TCOL(thigh | twhite, thigh | tblue),
+                        tcolor ColBorder = TCOL(thigh | twhite, thigh | tblue),
+                        tcolor ColText = TCOL(tblack, twhite),
+                        tcolor ColSelect = TCOL(twhite, tblack),
+                        tcolor ColDisabled = TCOL(thigh | tblack, tblack),
+                        tcolor ColSelectDisabled = TCOL(tblack, thigh | tblack)) const {
     TwSetColorsWindow(Id, Bitmap, ColGadgets, ColArrows, ColBars, ColTabs, ColBorder, ColText,
                       ColSelect, ColDisabled, ColSelectDisabled);
   }
@@ -1337,7 +1330,7 @@ public:
   }
   static inline void dumpError(const char *argv0) {
     uldat e = error();
-    fprintf(stderr, "%s: libTw error: %s%s\n", argv0, strError(e),
+    fprintf(stderr, "%s: libtw error: %s%s\n", argv0, strError(e),
             strErrorDetail(e, errorDetail()));
   }
 };
@@ -1347,4 +1340,4 @@ inline TMsgPort::TMsgPort(TW *dpy, const char *name) {
   dpy->setMsgPort(this);
 }
 
-#endif /* _TW_PLUS_PLUS_H */
+#endif /* TW_PLUS_PLUS_H */

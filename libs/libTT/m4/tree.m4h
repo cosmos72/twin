@@ -11,15 +11,15 @@ dnl Tell the user about this.
  * modify it under the terms of the GNU Library General Public
  * License as published by the Free Software Foundation; either
  * version 2 of the License, or (at your option) any later version.
- * 
+ *
  */
 
 /*
  *  tree_m4.h  --  internal header for libTT objects hierarchy tree
  */
 
-#ifndef _TT_TREEM4_H
-#define _TT_TREEM4_H
+#ifndef TT_TREEM4_H
+#define TT_TREEM4_H
 
 
 
@@ -34,11 +34,11 @@ TTlist()
 #define TT_NLIST(el) \
 TTnlist()
 
-#define super_(t)	TT_CAT(super_,t)
-#define order_(t)	TT_CAT(order_,t)
-#define id_ttclass_(t)	TT_CAT(id_ttclass_,t)
-#define magicmask_(t)	TT_CAT(magicmask_,t)
-#define magic_(t)	TT_CAT(magic_,t)
+#define super_(t)        TT_CAT(super_,t)
+#define order_(t)        TT_CAT(order_,t)
+#define id_ttclass_(t)        TT_CAT(id_ttclass_,t)
+#define magicmask_(t)        TT_CAT(magicmask_,t)
+#define magic_(t)        TT_CAT(magic_,t)
 
 
 
@@ -46,14 +46,14 @@ TTnlist()
 /* set str_order_xxx defines for objects */
 define(`order_type_last', 1)
 define(`def_order', `
-`#'define str_order_$1	"\x`'eval(order_type_last, 16, 2)"`'define(`order_type_last', incr(order_type_last))`'dnl
+`#'define str_order_$1        "\x`'eval(order_type_last, 16, 2)"`'define(`order_type_last', incr(order_type_last))`'dnl
 ')`'dnl
 
 define(`el', `def_order($1)')`'dnl
 TTlist()`'dnl
 undefine(`el')
 
-`#'define str_order_first	str_order_ttobj
+`#'define str_order_first        str_order_ttobj
 def_order(last)
 
 
@@ -62,12 +62,12 @@ def_order(last)
 define(`el', `def_order($1)')`'dnl
 TTtypelist()`'dnl
 undefine(`el')
-    
-`#'define str_order_type_first	str_order_`'TTtypefirst()
+
+`#'define str_order_type_first        str_order_`'TTtypefirst()
 def_order(type_last)
 
 define(`el', `
-`#'define str_order_$1	str_order_$2')`'dnl
+`#'define str_order_$1        str_order_$2')`'dnl
 TTtypealiaslist()`'dnl
 undefine(`el')
 undefine(`order_type_last')
@@ -85,36 +85,36 @@ undefine(`order_type_last')
 define(`m4_order_type_last', 0)dnl
 
 define(`el', `define(`m4_order_type_last', incr(m4_order_type_last))
-`#'define order_$1	m4_order_type_last')dnl
-    
-`#'define order_first	m4_order_type_last
-`#'define order_ttobj	order_first
+`#'define order_$1        m4_order_type_last')dnl
+
+`#'define order_first        m4_order_type_last
+`#'define order_ttobj        order_first
 TTnlist()
     el(last)
 
-    
+
 /* set order_xxx enums for native types */
 TTtypelist()
-    
+
 undefine(`el')dnl
 define(`el', `
-`#'define order_$1	order_$2')dnl
+`#'define order_$1        order_$2')dnl
 
 TTtypealiaslist()`'dnl
 
 undefine(`el')dnl
 
-`#'define order_type_first	order_`'TTtypefirst(),
-`#'define order_type_last	(order_`'TTtypelast() + 1)
-    
+`#'define order_type_first        order_`'TTtypefirst(),
+`#'define order_type_last        (order_`'TTtypelast() + 1)
+
 divert(-1)
 define(`log2', `_log2($1, 0)')
 define(`_log2', `ifelse(`$1', 0, `$2', `_log2(eval(`$1'/2), incr(`$2'))')')
 
 define(`m4_order_usedbits', `log2(m4_order_type_last)')
 divert
-`#'define order_ttclass_usedbits	m4_order_usedbits
-`#'define order_ttclass_bitmask	eval((1<<m4_order_usedbits)-1)
+`#'define order_ttclass_usedbits        m4_order_usedbits
+`#'define order_ttclass_bitmask        eval((1<<m4_order_usedbits)-1)
 
 `#'ifndef TT_SIZEOF_ttopaque
 `#' error internal error: undefined TT_SIZEOF_ttopaque !
@@ -130,18 +130,18 @@ divert
 typedef enum e_id_ttclass_ttobj {
 define(`el', `
     id_ttclass_$1,')dnl
-    
+
     id_ttclass_first = (order_ttclass<<TT_MAGIC_SHIFT) | order_ttobj,
     id_ttclass_ttobj = id_ttclass_first,
 TTnlist()
     id_ttclass_last,
-    
+
 /* set order_xxx enums for native types */
 TTtypelist()
 
 undefine(`el')dnl
 define(`el', `
-    id_ttclass_$1	= id_ttclass_$2,')dnl
+    id_ttclass_$1        = id_ttclass_$2,')dnl
 
 TTtypealiaslist()`'dnl
 
@@ -149,7 +149,7 @@ undefine(`el')dnl
 
     id_ttclass_type_first = id_ttclass_`'TTtypefirst(),
     id_ttclass_type_last = id_ttclass_`'TTtypelast() + 1,
-    
+
 } e_id_ttclass_types;
 
 
@@ -210,10 +210,10 @@ TTlist()
 undefine(`el')
 
 dnl add parents' childlogN_$1 to each childlogN_$2
-dnl and shift each magicmaskN_$2 by childlogN_$2 and add parents' magicmaskN_$1 to them 
+dnl and shift each magicmaskN_$2 by childlogN_$2 and add parents' magicmaskN_$1 to them
 
 define(`extends', `define(`childlogN_$2', eval(childlogN_$2 + childlogN_$1))
-		  define(`magicmaskN_$2', eval((magicmaskN_$2<<childlogN_$1) | magicmaskN_$1))')
+                  define(`magicmaskN_$2', eval((magicmaskN_$2<<childlogN_$1) | magicmaskN_$1))')
 define(`field')
 define(`el', `TTdef_$1($1)')
 TTnlist()
@@ -293,7 +293,7 @@ divert
  *  } else {
  *      fail;
  *  }
- * 
+ *
  */
 
 
@@ -334,17 +334,17 @@ define(`m4_order_field_last', 0)dnl
 define(`extends')
 define(`fake_field', `field($@)')
 define(`field', `ifelse(`$4', `', `', `
-`#'define this`'_$3	m4_order_field_last`'dnl
+`#'define this`'_$3        m4_order_field_last`'dnl
 define(`m4_order_field_last', incr(m4_order_field_last))')')
 define(`el', `define(`this', $1)
-`#'define this`'_field_first	m4_order_field_last`'dnl
+`#'define this`'_field_first        m4_order_field_last`'dnl
 TTdef_$1($1)
-`#'define this`'_field_last	m4_order_field_last
+`#'define this`'_field_last        m4_order_field_last
 ')
 /* defines for existing object fields */
 
 TTlist()
-`#'define ttobj_field_max	m4_order_field_last
+`#'define ttobj_field_max        m4_order_field_last
 
 define(`fake_field')
 define(`field')
@@ -354,13 +354,13 @@ undefine(`el')
 
 define(`fake_field', `field($@)')
 define(`field', `ifelse(`$4', `', `', `
-`#'define this`'_$3	this`'_$3')')
+`#'define this`'_$3        this`'_$3')')
 define(`el', `define(`this', $1)
 `'field(,,field_first,r)`'dnl
 `'TTdef_$1($1)dnl
 `'field(,,field_last,r)')
 
-    
+
 divert(-1)
 
 /* defines for existing object fields */
@@ -399,7 +399,7 @@ divert
 
     /* generic functions */
 define(`decl_ttmethod', `ifdef(`done_ttmethod_$1', `', `define(`done_ttmethod_$1')
-`#'define ttmethod_$1	m4_order_method_last`'dnl
+`#'define ttmethod_$1        m4_order_method_last`'dnl
 `'define(`m4_order_method_last', incr(m4_order_method_last))')')
 
 
@@ -422,25 +422,25 @@ undefine(`decl_ttmethod')
 
 
     /* TTSet*_* methods omitted, they are listed above! */
-    
+
 #if 0
-`#'define ttmethod_FN_set_first		m4_order_method_last
+`#'define ttmethod_FN_set_first                m4_order_method_last
 
-`#'define ttmethod_SetField_ttobj	eval(m4_order_method_last+1)
-`#'define ttmethod_ChangeField_ttobj	eval(m4_order_method_last+2)
+`#'define ttmethod_SetField_ttobj        eval(m4_order_method_last+1)
+`#'define ttmethod_ChangeField_ttobj        eval(m4_order_method_last+2)
 
-`#'define ttmethod_FN_set_last		m4_order_method_last
+`#'define ttmethod_FN_set_last                m4_order_method_last
 #endif
 
     /* TTGet*_* methods */
 
-`#'define ttmethod_FN_get_first	m4_order_method_last
+`#'define ttmethod_FN_get_first        m4_order_method_last
 
 define(`el', `define(`this', `$1')
     /* TTGet*_$1 methods */TTdef_$1($1)')
 define(`extends')
 define(`getset_method', `
-`#'define ttmethod_`'Toupper2($1,$2)_`'this`'	m4_order_method_last`'dnl
+`#'define ttmethod_`'Toupper2($1,$2)_`'this`'        m4_order_method_last`'dnl
 `'define(`m4_order_method_last', incr(m4_order_method_last))')
 define(`field', `get_field($@)')
 TTlist()
@@ -449,10 +449,9 @@ define(`field')
 undefine(`this')
 undefine(`el')
 
-`#'define ttmethod_FN_get_last	m4_order_method_last
+`#'define ttmethod_FN_get_last        m4_order_method_last
 `#'define ttmethod_FN_last m4_order_method_last
 
 
 
-#endif /* _TT_TREEM4_H */
-
+#endif /* TT_TREEM4_H */

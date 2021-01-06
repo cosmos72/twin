@@ -1,6 +1,6 @@
 
-#ifndef _TT_MEM_H
-#define _TT_MEM_H
+#ifndef TT_MEM_H
+#define TT_MEM_H
 
 #include <TT/TTtypes.h>
 
@@ -117,8 +117,8 @@ ttattr *TTCloneFontL2Attr(TT_CONST ttfont *f, ttopaque len, ttcol c);
 #define TTGetCol_ttattr(attr) TCOLOR(attr)
 #define TTGetFont_ttattr(attr) TRUNE(attr)
 
-#define TTCol(fg, bg) COL(fg, bg)
-#define TTGetFg_ttcol(col) COLFG(col)
-#define TTGetBg_ttcol(col) COLBG(col)
+#define TTCol(fg, bg) TCOL(fg, bg)
+#define TTGetFg_ttcol(col) TCOLFG(col)
+#define TTGetBg_ttcol(col) TCOLBG(col)
 
-#endif /* _TT_MEM_H */
+#endif /* TT_MEM_H */

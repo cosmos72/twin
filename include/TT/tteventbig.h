@@ -14,8 +14,8 @@
  *
  */
 
-#ifndef _TT_TTEVENTBIG_H
-#define _TT_TTEVENTBIG_H
+#ifndef TT_TTEVENTBIG_H
+#define TT_TTEVENTBIG_H
 
 /* object structure */
 #ifndef s_tteventbig
@@ -72,4 +72,4 @@ ttopaque TTGetDataLen_tteventbig(TT_ARG_READ tteventbig o);
 /** get `data' of tteventbig `o' */
 TT_ARG_READ TT_ARG_ARRAY((_F(data_len))) ttbyte *TTGetData_tteventbig(TT_ARG_READ tteventbig o);
 
-#endif /* _TT_TTEVENTBIG_H */
+#endif /* TT_TTEVENTBIG_H */

@@ -1,7 +1,6 @@
 /* The various flavors of X11-based drivers. */
 #define HW_X11 1
 #define HW_XFT 2
-#define HW_GFX 3
 
 /*
  * The X11-based driver currently being compiled.  Must be redefined in each X11-based hw_xyz.c

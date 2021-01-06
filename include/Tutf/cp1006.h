@@ -7,8 +7,8 @@
  * PLEASE DO NOT EDIT!
  */
 
-#ifndef _TUTF_CP1006_H
-#define _TUTF_CP1006_H
+#ifndef TUTF_CP1006_H
+#define TUTF_CP1006_H
 
 #define T_CP1006_CTRL_NULL 0x0000
 #define T_CP1006_CTRL_START_OF_HEADING 0x0001
@@ -623,4 +623,4 @@
   EL(_ARABIC_SHADDA_ISOLATED_FORM)                                                                 \
   EL(_ARABIC_SHADDA_MEDIAL_FORM)
 
-#endif /* _TUTF_CP1006_H */
+#endif /* TUTF_CP1006_H */

@@ -14,8 +14,8 @@
  *
  */
 
-#ifndef _TT_TTCLASS_H
-#define _TT_TTCLASS_H
+#ifndef TT_TTCLASS_H
+#define TT_TTCLASS_H
 
 /* object structure */
 #ifndef s_ttclass
@@ -55,4 +55,4 @@ ttbyte TTIsPrimitiveType_ttclass(ttopaque type);
 
 /* TTGet*_ttclass and TTSet*_ttclass methods */
 
-#endif /* _TT_TTCLASS_H */
+#endif /* TT_TTCLASS_H */

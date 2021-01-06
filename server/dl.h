@@ -6,8 +6,8 @@
  * (at your option) any later version.
  *
  */
-#ifndef _TWIN_DL_H
-#define _TWIN_DL_H
+#ifndef TWIN_DL_H
+#define TWIN_DL_H
 
 byte DlOpen(module Module);
 void DlClose(module Module);
@@ -20,12 +20,12 @@ void DlClose(module Module);
 #define MAX_So ((uldat)5)
 
 module DlLoad(uldat code);
-void DlUnLoad(uldat code);
+void DlUnload(uldat code);
 module DlIsLoaded(uldat code);
-udat DlName2Code(CONST char *name);
+udat DlName2Code(const char *name);
 
-module DlLoadAny(uldat len, CONST char *name);
+module DlLoadAny(uldat len, const char *name);
 
-void *DlSym(module Module, CONST char *name);
+void *DlSym(module Module, const char *name);
 
-#endif /* _TWIN_DL_H */
+#endif /* TWIN_DL_H */

@@ -6,8 +6,8 @@
  * (at your option) any later version.
  *
  */
-#ifndef _TWIN_WM_H
-#define _TWIN_WM_H
+#ifndef TWIN_WM_H
+#define TWIN_WM_H
 
 typedef struct wm_ctx wm_ctx;
 
@@ -36,6 +36,6 @@ void ShowWinList(wm_ctx *C);
 void FocusCtx(wm_ctx *C);
 byte ActivateCtx(wm_ctx *C, byte State);
 
-void ForceRelease(CONST wm_ctx *C);
+void ForceRelease(const wm_ctx *C);
 
-#endif /* _TWIN_WM_H */
+#endif /* TWIN_WM_H */

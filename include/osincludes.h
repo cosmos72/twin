@@ -5,8 +5,8 @@
  *  the Free Software Foundation; either version 2 of the License, or
  *  (at your option) any later version.
  */
-#ifndef _TWIN_OSINCLUDES_H
-#define _TWIN_OSINCLUDES_H
+#ifndef TWIN_OSINCLUDES_H
+#define TWIN_OSINCLUDES_H
 
 #include <time.h>
 #include <sys/types.h>
@@ -36,4 +36,4 @@
 #include <sys/time.h>
 #endif
 
-#endif /* _TWIN_OSINCLUDES_H */
+#endif /* TWIN_OSINCLUDES_H */

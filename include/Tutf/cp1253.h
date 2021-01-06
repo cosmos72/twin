@@ -7,8 +7,8 @@
  * PLEASE DO NOT EDIT!
  */
 
-#ifndef _TUTF_CP1253_H
-#define _TUTF_CP1253_H
+#ifndef TUTF_CP1253_H
+#define TUTF_CP1253_H
 
 #define T_CP1253_CTRL_NULL 0x0000
 #define T_CP1253_CTRL_START_OF_HEADING 0x0001
@@ -636,4 +636,4 @@
   EL(_GREEK_SMALL_LETTER_OMEGA_WITH_TONOS)                                                         \
   EL(_UNDEFINED_00FF)
 
-#endif /* _TUTF_CP1253_H */
+#endif /* TUTF_CP1253_H */

@@ -26,11 +26,7 @@
 #include "utils.h"
 
 #include "check_asm.h"
-#if defined(CONF__ASM) && defined(TW_HAVE_ASM)
-#include "method2_asm.h"
-#else
 #include "method2_m4.h"
-#endif
 
 ttbyte TTCallA_ttmethod(TT_ARG_READ tt_obj id, TT_ARG_WRITE TT_ARG_ARRAY((1)) ttarg *return_value,
                         ttopaque args_n, TT_ARG_READ TT_ARG_ARRAY((_P(1))) ttarg *aargs) {

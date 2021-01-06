@@ -1,4 +1,4 @@
-/* Functions that are common between hw_x11, hw_xft, and hw_gfx. */
+/* Functions that are common between hw_x11 and hw_xft */
 
 #define X11_TITLE_MAXLEN 80
 
@@ -42,9 +42,9 @@ static void X11_HideCursor(dat x, dat y) {
 
   tcell V = (x >= 0 && x < DisplayWidth && y >= 0 && y < DisplayHeight)
                 ? Video[x + y * (ldat)DisplayWidth]
-                : TCELL(COL(HIGH | WHITE, BLACK), ' ');
+                : TCELL(TCOL(thigh | twhite, tblack), ' ');
   tcolor col = TCOLOR(V);
-  tcell extra = HWEXTRA(V);
+  tcell extra = 0;
   trune f = xUTF_32_to_charset(TRUNE(V));
 
   XChar16 c = RawToXChar16(f);
@@ -55,7 +55,7 @@ static void X11_HideCursor(dat x, dat y) {
 static void X11_ShowCursor(uldat type, dat x, dat y) {
   tcell V = (x >= 0 && x < DisplayWidth && y >= 0 && y < DisplayHeight)
                 ? Video[x + y * (ldat)DisplayWidth]
-                : TCELL(COL(HIGH | WHITE, BLACK), ' ');
+                : TCELL(TCOL(thigh | twhite, tblack), ' ');
 
   ldat xbegin = (x - xhw_startx) * xwfont;
   ldat ybegin = (y - xhw_starty) * xhfont;
@@ -65,25 +65,25 @@ static void X11_ShowCursor(uldat type, dat x, dat y) {
     tcolor v = (TCOLOR(V) | ((type >> 16) & 0xff)) ^ ((type >> 8) & 0xff);
     trune f;
     XChar16 c;
-    if ((type & 0x20) && (TCOLOR(V) & COL(0, WHITE)) == (v & COL(0, WHITE)))
-      v ^= COL(0, WHITE);
-    if ((type & 0x40) && ((COLFG(v) & WHITE) == (COLBG(v) & WHITE)))
-      v ^= COL(WHITE, 0);
+    if ((type & 0x20) && (TCOLOR(V) & TCOL(0, twhite)) == (v & TCOL(0, twhite)))
+      v ^= TCOL(0, twhite);
+    if ((type & 0x40) && ((TCOLFG(v) & twhite) == (TCOLBG(v) & twhite)))
+      v ^= TCOL(twhite, 0);
     f = xUTF_32_to_charset(TRUNE(V));
     c = RawToXChar16(f);
-    XDRAW_ANY(&c, 1, v, HWEXTRA(V));
+    XDRAW_ANY(&c, 1, v, 0);
   } else if (type & 0xF) {
     /* VGA hw-like cursor */
 
     /* doesn't work as expected on paletted visuals... */
-    unsigned long fg = xcol[COLFG(TCOLOR(V)) ^ COLBG(TCOLOR(V))];
+    unsigned long fg = xcol[TCOLFG(TCOLOR(V)) ^ TCOLBG(TCOLOR(V))];
 
     udat i = xhfont * ((type & 0xF) - NOCURSOR) / (SOLIDCURSOR - NOCURSOR);
 
     if (xsgc.foreground != fg) {
       XSetForeground(xdisplay, xgc, xsgc.foreground = fg);
 #if HW_X_DRIVER == HW_XFT
-      xforeground = xftcolors[COLFG(TCOLOR(V)) ^ COLBG(TCOLOR(V))];
+      xforeground = xftcolors[TCOLFG(TCOLOR(V)) ^ TCOLBG(TCOLOR(V))];
 #endif
     }
 
@@ -179,12 +179,22 @@ static void X11_SelectionExport_X11(void) {
   }
 }
 
+static void X11_utf8_to_wchar(Chars src, Vector<wchar_t> &dst) {
+  dst.reserve(src.size());
+  Utf8 seq;
+  while (src) {
+    seq.parse(src, &src);
+    dst.append(seq.rune());
+  }
+}
+
 /*
  * notify our Selection to X11
  */
-static void X11_SelectionNotify_X11(uldat ReqPrivate, uldat Magic, CONST char MIME[MAX_MIMELEN],
-                                    uldat Len, CONST char *Data) {
+static void X11_SelectionNotify_X11(uldat ReqPrivate, uldat Magic, const char MIME[MAX_MIMELEN],
+                                    Chars data) {
   XEvent ev;
+  Atom target;
 
   if (XReqCount == 0) {
     printk(THIS ".c: X11_SelectionNotify_X11(): unexpected Twin Selection Notify event!\n");
@@ -192,59 +202,76 @@ static void X11_SelectionNotify_X11(uldat ReqPrivate, uldat Magic, CONST char MI
   }
 #if 0
     else {
-	printk(THIS ".c: X11_SelectionNotify_X11(): %d nested Twin Selection Notify events\n", XReqCount);
+        printk(THIS ".c: X11_SelectionNotify_X11(): %d nested Twin Selection Notify events\n", XReqCount);
     }
 #endif
 
   XReqCount--;
+  XSelectionRequestEvent &req = XReq(XReqCount);
+
   ev.xselection.type = SelectionNotify;
   ev.xselection.property = None;
-  ev.xselection.display = XReq(XReqCount).display;
-  ev.xselection.requestor = XReq(XReqCount).requestor;
-  ev.xselection.selection = XReq(XReqCount).selection;
-  ev.xselection.target = XReq(XReqCount).target;
-  ev.xselection.time = XReq(XReqCount).time;
+  ev.xselection.display = req.display;
+  ev.xselection.requestor = req.requestor;
+  ev.xselection.selection = req.selection;
+  ev.xselection.target = target = req.target;
+  ev.xselection.time = req.time;
 
-  if (XReq(XReqCount).target == xTARGETS) {
+  if (target == xTARGETS) {
     /*
      * On some systems, the Atom typedef is 64 bits wide.
-     * We need to have a typedef that is exactly 32 bits wide,
+     * We need a type that is exactly 32 bits wide,
      * because a format of 64 is not allowed by the X11 protocol.
      */
     typedef CARD32 Atom32;
-    Atom32 target_list[2];
+    Atom32 target_list[5];
 
     target_list[0] = (Atom32)xTARGETS;
     target_list[1] = (Atom32)XA_STRING;
-    XChangeProperty(xdisplay, XReq(XReqCount).requestor, XReq(XReqCount).property, xTARGETS,
-                    8 * sizeof(target_list[0]), PropModeReplace, (CONST byte *)target_list,
-                    sizeof(target_list) / sizeof(target_list[0]));
-    ev.xselection.property = XReq(XReqCount).property;
-  } else if (XReq(XReqCount).target == XA_STRING) {
-    uldat l;
-    byte *_Data = NULL, *d;
-    CONST trune *s;
+    target_list[2] = (Atom32)xUTF8_STRING;
+    target_list[3] = (Atom32)xTEXT;
+    target_list[4] = (Atom32)xCOMPOUND_TEXT;
+    XChangeProperty(xdisplay, req.requestor, req.property, xTARGETS, 32, PropModeReplace,
+                    (const byte *)target_list, sizeof(target_list));
 
-    /* X11 selection contains UTF-16 */
-    if (Magic == SEL_TRUNEMAGIC) {
-      if ((_Data = d = (byte *)AllocMem(Len))) {
-        s = (CONST trune *)Data;
-        /* FIXME: this is rough. encode to UTF-8 instead */
-        for (l = Len; l; l--)
-          *d++ = Tutf_UTF_32_to_CP437(*s++);
-        Data = (char *)_Data;
-        Len /= sizeof(trune);
-      } else
-        Len = 0;
+  } else if (target == xUTF8_STRING) {
+
+    /* notify X11 selection as UTF-8 */
+    XChangeProperty(xdisplay, req.requestor, req.property, xUTF8_STRING, 8, PropModeReplace,
+                    (const byte *)data.data(), data.size());
+
+  } else {
+    XICCEncodingStyle style;
+    if (target == XA_STRING) {
+      style = XStringStyle;
+    } else if (target == xTEXT) {
+      style = XStdICCTextStyle;
+    } else /*if (target == xCOMPOUND_TEXT)*/ {
+      style = XCompoundTextStyle;
     }
-    XChangeProperty(xdisplay, XReq(XReqCount).requestor, XReq(XReqCount).property, XA_STRING, 8,
-                    PropModeReplace, (CONST byte *)Data, Len);
-    ev.xselection.property = XReq(XReqCount).property;
+    Vector<wchar_t> wtext;
+    X11_utf8_to_wchar(data, wtext);
+    wtext.append('\0');
+    wchar_t *waddr = wtext.data();
 
-    if (Magic == SEL_TRUNEMAGIC && _Data)
-      FreeMem(_Data);
+    XTextProperty ct = {};
+    bool freect = false;
+    if (XwcTextListToTextProperty(xdisplay, &waddr, 1, style, &ct) >= 0) {
+      freect = true;
+    } else {
+      ct.value = (byte *)const_cast<char *>(data.data());
+      ct.nitems = data.size();
+      ct.encoding = target;
+    }
+
+    XChangeProperty(xdisplay, req.requestor, req.property, ct.encoding, 8, PropModeReplace,
+                    ct.value, (int)ct.nitems);
+    if (freect) {
+      XFree(ct.value);
+    }
   }
-  XSendEvent(xdisplay, XReq(XReqCount).requestor, False, 0, &ev);
+  ev.xselection.property = req.property;
+  XSendEvent(xdisplay, req.requestor, False, 0, &ev);
   setFlush();
 }
 
@@ -253,11 +280,12 @@ static void X11_SelectionNotify_X11(uldat ReqPrivate, uldat Magic, CONST char MI
  */
 static void X11_SelectionNotify_up(Window win, Atom prop) {
   long nread = 0;
-  unsigned long nitems, bytes_after = TW_BIGBUFF;
+  unsigned long i, nitems, bytes_after = TW_BIGBUFF;
   Atom actual_type;
   int actual_fmt;
-  byte *data;
-  char *buff = NULL;
+  byte *data = NULL;
+  String buff;
+  bool ok = true;
 
   if (xReqCount == 0) {
     printk(THIS ".c: X11_SelectionNotify_up(): unexpected X Selection Notify event!\n");
@@ -265,37 +293,41 @@ static void X11_SelectionNotify_up(Window win, Atom prop) {
   }
 #if 0
     else {
-	printk(THIS ".c: X11_SelectionNotify_up(): %d nested X Selection Notify event\n", xReqCount);
+        printk(THIS ".c: X11_SelectionNotify_up(): %d nested X Selection Notify event\n", xReqCount);
     }
 #endif
-  if (prop == None)
+  if (prop == None) {
     return;
+  }
 
   xReqCount--;
 
   do {
-    if ((XGetWindowProperty(xdisplay, win, prop, nread / 4, bytes_after / 4, False, AnyPropertyType,
-                            &actual_type, &actual_fmt, &nitems, &bytes_after, &data) != Success) ||
-        (actual_type != XA_STRING)) {
+    ok = XGetWindowProperty(xdisplay, win, prop, nread / 4, bytes_after / 4, False, AnyPropertyType,
+                            &actual_type, &actual_fmt, &nitems, &bytes_after, &data) == Success;
 
-      XFree(data);
-      if (buff)
-        FreeMem(buff);
-      return;
+    if (actual_type == xUTF8_STRING) {
+      /* X11 selection contains UTF-8 */
+      ok = buff.append(Chars((const char *)data, nitems));
+    } else if (actual_type == XA_STRING) {
+      /* X11 selection contains ISO8859-1: convert to UTF-8 */
+      for (i = 0; ok && i < nitems; i++) {
+        ok = buff.append(Utf8(trune(data[i])));
+      }
+    } else {
+      ok = false;
     }
+  } while (ok && bytes_after > 0);
 
-    if (buff || (buff = (char *)AllocMem(nitems + bytes_after))) {
-      CopyMem(data, buff + nread, nitems);
-      nread += nitems;
-    }
+  if (data) {
     XFree(data);
-    if (!buff)
-      return;
-  } while (bytes_after > 0);
+  }
+  /* Signal the selection owner that we have successfully read the data. */
+  XDeleteProperty(xdisplay, win, prop);
 
-  TwinSelectionNotify(xRequestor(xReqCount), xReqPrivate(xReqCount), SEL_TEXTMAGIC, NULL, nread,
-                      buff);
-  FreeMem(buff);
+  if (buff) {
+    TwinSelectionNotify(xRequestor(xReqCount), xReqPrivate(xReqCount), SEL_UTF8MAGIC, NULL, buff);
+  }
 }
 
 /*
@@ -310,19 +342,21 @@ static void X11_SelectionRequest_X11(obj Requestor, uldat ReqPrivate) {
       return;
     }
 #if 0
-	else {
-	    printk(THIS ".c: X11_SelectionRequest_X11(): %d nested Twin Selection Request events\n", xReqCount+1);
-	}
+        else {
+            printk(THIS ".c: X11_SelectionRequest_X11(): %d nested Twin Selection Request events\n", xReqCount+1);
+        }
 #endif
     xRequestor(xReqCount) = Requestor;
     xReqPrivate(xReqCount) = ReqPrivate;
     xReqCount++;
 
-    if (XGetSelectionOwner(xdisplay, XA_PRIMARY) == None)
+    if (XGetSelectionOwner(xdisplay, XA_PRIMARY) == None) {
       X11_SelectionNotify_up(DefaultRootWindow(xdisplay), XA_CUT_BUFFER0);
-    else {
+    } else {
       Atom prop = XInternAtom(xdisplay, "VT_SELECTION", False);
-      XConvertSelection(xdisplay, XA_PRIMARY, XA_STRING, prop, xwindow, CurrentTime);
+      /* Request conversion to UTF-8. Not all owners will be able to fulfill that request. */
+      XConvertSelection(xdisplay, XA_PRIMARY, xUTF8_STRING, prop, xwindow, CurrentTime);
+
       setFlush();
       /* we will get an X11 SelectionNotify event */
     }
@@ -340,7 +374,7 @@ static void X11_SelectionRequest_up(XSelectionRequestEvent *req) {
   }
 #if 0
     else {
-	printk(THIS ".c: X11_SelectionRequest_up(): %d nested X Selection Request events\n", XReqCount+1);
+        printk(THIS ".c: X11_SelectionRequest_up(): %d nested X Selection Request events\n", XReqCount+1);
     }
 #endif
   CopyMem(req, &XReq(XReqCount), sizeof(XSelectionRequestEvent));
@@ -383,18 +417,18 @@ static int X11_Die(Display *d) {
      * this is not exactly trivial:
      * find our HW, shut it down
      * and quit if it was the last HW.
-     * 
+     *
      * don't rely on HW->Private only, as non-X11 displays
      * may use it differently and have by chance the same value for it.
      */
     forallHW {
-	if (HW->QuitHW == X11_QuitHW && HW->Private
-	    && d == xdisplay) { /* expands to HW->Private->xdisplay */
-	    
-	    HW->NeedHW |= NEEDPanicHW, NeedHW |= NEEDPanicHW;
-	    
-	    break;
-	}
+        if (HW->QuitHW == X11_QuitHW && HW->Private
+            && d == xdisplay) { /* expands to HW->Private->xdisplay */
+
+            HW->NeedHW |= NEEDPanicHW, NeedHW |= NEEDPanicHW;
+
+            break;
+        }
     }
     return 0;
 }
@@ -406,10 +440,10 @@ static int X11_Die(Display *d) {
 #endif
 
 #if HW_X_DRIVER != HW_XFT
-static Tutf_function X11_UTF_32_to_charset_function(CONST char *charset) {
+static Tutf_function X11_UTF_32_to_charset_function(const char *charset) {
   XFontProp *fp;
   unsigned long prop;
-  CONST char *s, *fontname = NULL;
+  const char *s, *fontname = NULL;
   uldat i;
 
   if (!charset) {
@@ -453,7 +487,7 @@ static Tutf_function X11_UTF_32_to_charset_function(CONST char *charset) {
   }
 
   if (i == (uldat)-1) {
-    printk("      X11_InitHW(): libTutf warning: unknown charset `" SS "', assuming `CP437'\n",
+    printk("      X11_InitHW(): libtutf warning: unknown charset `" SS "', assuming `CP437'\n",
            charset);
     return Tutf_UTF_32_to_CP437;
   }

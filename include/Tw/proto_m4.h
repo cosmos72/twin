@@ -2,11 +2,11 @@
 
 
 
-/* This file was automatically generated with m4 from m4/proto.m4, do not edit! */
+/* This file was automatically generated with m4 from m4/proto.m4h, do not edit! */
 
 /*
- *  proto_m4.h  --  check libTw functions prototypes from Tw_sockproto.m4h
- *		    against twin.h or against Tw/Tw.h include files.
+ *  proto_m4.h  --  check libtw functions prototypes from Tw_sockproto.m4h
+ *                    against twin.h or against Tw/Tw.h include files.
  *
  *  Copyright (C) 2001,2002 by Massimiliano Ghilardi
  *
@@ -30,11 +30,11 @@
 
 
 
-/** return server-side id of given libTw function name with given prototype */
+/** return server-side id of given libtw function name with given prototype */
 uldat  Tw_FindFunction(tdisplay TwD, byte namelen, TW_CONST char *name, byte protolen, TW_CONST char *proto);
 
 
-/** sync libTw socket: flush output buffer and wait for server replies */
+/** sync libtw socket: flush output buffer and wait for server replies */
 byte  Tw_SyncSocket(tdisplay TwD);
 
 
@@ -45,7 +45,7 @@ byte  Tw_ServerSizeof(tdisplay TwD, byte type);
 /** return 1 if server supports compression (using zlib) */
 byte  Tw_CanCompress(tdisplay TwD);
 
-/** used internally by libTw to enable/disable compression only on server side;
+/** used internally by libtw to enable/disable compression only on server side;
  * DO NOT USE THIS, use Tw_EnableGzip() and Tw_DisableGzip() instead */
 byte  Tw_DoCompress(tdisplay TwD, byte on_off);
 
@@ -102,15 +102,15 @@ tgadget  Tw_CreateGadget(tdisplay TwD, twidget parent, dat w, dat h, TW_CONST ch
 tgadget  Tw_CreateButtonGadget(tdisplay TwD, twidget parent, dat w, dat h, TW_CONST char *text, uldat flags, udat code, tcolor colbg, tcolor col, tcolor coldisabled, dat x, dat y);
 
 void  Tw_WriteTextsGadget(tdisplay TwD, tgadget G, byte mask, dat w, dat h, TW_CONST char *text, dat x, dat y);
-void  Tw_WriteTRunesGadget(tdisplay TwD, tgadget G, byte mask, dat w, dat h, TW_CONST trune *textfont, dat x, dat y);
+void  Tw_WriteTRunesGadget(tdisplay TwD, tgadget G, byte mask, dat w, dat h, TW_CONST trune *runes, dat x, dat y);
 
 twindow  Tw_CreateWindow(tdisplay TwD, dat titlelen, TW_CONST char *title, TW_CONST tcolor *coltitle, tmenu M, tcolor coltext, uldat cursortype, uldat attrib, uldat flags, dat w, dat h, dat hscroll);
 twindow  Tw_Create4MenuWindow(tdisplay TwD, tmenu M);
 
-void  Tw_WriteAsciiWindow(tdisplay TwD, twindow W, uldat len, TW_CONST char *ascii);
-void  Tw_WriteStringWindow(tdisplay TwD, twindow W, uldat len, TW_CONST char *string);
-void  Tw_WriteTRuneWindow(tdisplay TwD, twindow W, uldat len, TW_CONST trune *textfont);
-void  Tw_WriteTCellWindow(tdisplay TwD, twindow W, dat x, dat y, uldat len, TW_CONST tcell *textattr);
+void  Tw_WriteCharsetWindow(tdisplay TwD, twindow W, uldat len, TW_CONST char *charset_bytes);
+void  Tw_WriteUtf8Window(tdisplay TwD, twindow W, uldat len, TW_CONST char *utf8_bytes);
+void  Tw_WriteTRuneWindow(tdisplay TwD, twindow W, uldat len, TW_CONST trune *runes);
+void  Tw_WriteTCellWindow(tdisplay TwD, twindow W, dat x, dat y, uldat len, TW_CONST tcell *cells);
 
 void  Tw_GotoXYWindow(tdisplay TwD, twindow W, ldat x, ldat y);
 void  Tw_SetTitleWindow(tdisplay TwD, twindow W, dat titlelen, TW_CONST char *title);
@@ -128,7 +128,7 @@ void  Tw_SetSelectedGadgetGroup(tdisplay TwD, tgroup g, tgadget G);
 
 void  Tw_RaiseRow(tdisplay TwD, trow R);
 void  Tw_LowerRow(tdisplay TwD, trow R);
-void  Tw_RestackChildrenRow(tdisplay TwD, tobj O, uldat n, TW_CONST trow *children); 
+void  Tw_RestackChildrenRow(tdisplay TwD, tobj O, uldat n, TW_CONST trow *children);
 void  Tw_CirculateChildrenRow(tdisplay TwD, tobj O, byte up_down);
 
 trow  Tw_Create4MenuAny(tdisplay TwD, tobj parent, twindow W, udat code, byte flags, ldat len, TW_CONST char *text);
@@ -170,10 +170,4 @@ void  Tw_RequestSelection(tdisplay TwD, tobj owner, uldat reqprivate);
 void  Tw_NotifySelection(tdisplay TwD, tobj requestor, uldat reqprivate, uldat magic, TW_CONST char *mime, uldat len, TW_CONST char *data);
 
 byte  Tw_SetServerUid(tdisplay TwD, uldat uid, byte privileges);
-
-textension  Tw_OpenExtension(tdisplay TwD, byte namelen, TW_CONST char *name);
-tany  Tw_CallBExtension(tdisplay TwD, textension id, topaque len, TW_CONST byte *data, TW_CONST byte *return_type);
-void  Tw_CloseExtension(tdisplay TwD, textension id);
-
-
 

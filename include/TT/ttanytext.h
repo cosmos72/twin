@@ -14,8 +14,8 @@
  *
  */
 
-#ifndef _TT_TTANYTEXT_H
-#define _TT_TTANYTEXT_H
+#ifndef TT_TTANYTEXT_H
+#define TT_TTANYTEXT_H
 
 /* object structure */
 #ifndef s_ttanytext
@@ -40,4 +40,4 @@ ttopaque TTGetTextLen_ttanytext(TT_ARG_READ ttanytext o);
 /** get `text' of ttanytext `o' */
 TT_ARG_ARRAY((_F(text_len))) ttattr *TTGetText_ttanytext(TT_ARG_READ ttanytext o);
 
-#endif /* _TT_TTANYTEXT_H */
+#endif /* TT_TTANYTEXT_H */

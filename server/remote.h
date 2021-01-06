@@ -6,8 +6,8 @@
  * (at your option) any later version.
  *
  */
-#ifndef _TWIN_REMOTE_H
-#define _TWIN_REMOTE_H
+#ifndef TWIN_REMOTE_H
+#define TWIN_REMOTE_H
 
 typedef void (*handler_io)(int Fd, uldat Slot);
 typedef void (*handler_obj)(int Fd, obj HandlerObj);
@@ -18,7 +18,7 @@ uldat RegisterRemote(int Fd, obj HandlerData, handler_obj HandlerObj);
 void UnRegisterRemote(uldat Slot);
 byte RegisterWindowFdIO(window Window, handler_window HandlerWindow);
 void UnRegisterWindowFdIO(window Window);
-uldat RemoteWriteQueue(uldat Slot, uldat len, CONST void *data);
+uldat RemoteWriteQueue(uldat Slot, uldat len, const void *data);
 #define RemoteWindowWriteQueue(Window, len, data)                                                  \
   RemoteWriteQueue((Window)->RemoteData.FdSlot, (len), (data))
 byte RemoteFlush(uldat Slot);
@@ -50,4 +50,4 @@ void UnRegisterMsgPort(msgport MsgPort);
 
 void remoteKillSlot(uldat slot);
 
-#endif /* _TWIN_REMOTE_H */
+#endif /* TWIN_REMOTE_H */

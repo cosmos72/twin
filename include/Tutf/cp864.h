@@ -7,8 +7,8 @@
  * PLEASE DO NOT EDIT!
  */
 
-#ifndef _TUTF_CP864_H
-#define _TUTF_CP864_H
+#ifndef TUTF_CP864_H
+#define TUTF_CP864_H
 
 #define T_CP864_CTRL_NULL 0x0000
 #define T_CP864_CTRL_START_OF_HEADING 0x0001
@@ -655,4 +655,4 @@
   EL(_BLACK_SQUARE)                                                                                \
   EL(_UNDEFINED_00FF)
 
-#endif /* _TUTF_CP864_H */
+#endif /* TUTF_CP864_H */

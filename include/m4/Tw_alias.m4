@@ -8,7 +8,7 @@ dnl Tell the user about this.
 /* This file was automatically generated with `m4' from `m4/Tw_alias.m4', do not edit! */
 
 /*
- *  alias_m4.h  --  handy aliases for libTw function prototypes
+ *  alias_m4.h  --  handy aliases for libtw function prototypes
  *
  *  Copyright (C) 2002 by Massimiliano Ghilardi
  *
@@ -90,6 +90,7 @@ define(`methodsGadget', `extends(Widget, $2)`'dnl
 Twappend(Window)
 define(`methodsWindow', `extends(Widget, $2)`'dnl
     alias(Win4Menu, Create4Menu)`'dnl
+    alias(WriteAscii$2, WriteCharset)`'dnl
 ')
 
 Twappend(Screen)
@@ -103,4 +104,3 @@ define(`alias')
 
 
 divert
-

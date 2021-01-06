@@ -10,8 +10,8 @@
  *
  */
 
-#ifndef _TUTF_DEFS_H
-#define _TUTF_DEFS_H
+#ifndef TUTF_DEFS_H
+#define TUTF_DEFS_H
 
 #include <Tutf/utf_32.h>
 #include <Tutf/ascii.h>
@@ -108,4 +108,4 @@
 #include <Tutf/nextstep.h>
 #include <Tutf/vt100gr.h>
 
-#endif /* _TUTF_DEFS_H */
+#endif /* TUTF_DEFS_H */

@@ -1,18 +1,21 @@
 
-#ifndef _TW_VERSION_H
-#define _TW_VERSION_H
+#ifndef TW_VERSION_H
+#define TW_VERSION_H
 
-/* on-the-wire ABI compatibility version. different from ABI+API compatibility version in libTw.so.x.y.z name */
+/* on-the-wire ABI compatibility version. different from ABI+API compatibility version in
+ * libtw.so.x.y.z name */
 #define TW_PROTOCOL_VERSION_MAJOR 4
 #define TW_PROTOCOL_VERSION_MINOR 8
 #define TW_PROTOCOL_VERSION_PATCH 0
-#define TW_PROTOCOL_VERSION       ((TW_PROTOCOL_VERSION_MAJOR<<16)|(TW_PROTOCOL_VERSION_MINOR<<8)|TW_PROTOCOL_VERSION_PATCH)
-#define TW_PROTOCOL_VERSION_STR   TW_STR(TW_PROTOCOL_VERSION_MAJOR) "." TW_STR(TW_PROTOCOL_VERSION_MINOR) "." TW_STR(TW_PROTOCOL_VERSION_PATCH)
+#define TW_PROTOCOL_VERSION                                                                        \
+  ((TW_PROTOCOL_VERSION_MAJOR << 16) | (TW_PROTOCOL_VERSION_MINOR << 8) | TW_PROTOCOL_VERSION_PATCH)
+#define TW_PROTOCOL_VERSION_STR                                                                    \
+  TW_STR(TW_PROTOCOL_VERSION_MAJOR)                                                                \
+  "." TW_STR(TW_PROTOCOL_VERSION_MINOR) "." TW_STR(TW_PROTOCOL_VERSION_PATCH)
 
-#define TW_VER_MAJOR(n) ((n)>>16)
-#define TW_VER_MINOR(n) (((n)>>8) & 0xFF)
-#define TW_VER_PATCH(n) ((n) & 0xFF)
-#define TW_VER_BUILD(M, m, p) (((M)<<16)|((m)<<8)|(p))
+#define TW_VER_MAJOR(n) ((n) >> 16)
+#define TW_VER_MINOR(n) (((n) >> 8) & 0xFF)
+#define TW_VER_PATCH(n) ((n)&0xFF)
+#define TW_VER_BUILD(M, m, p) (((M) << 16) | ((m) << 8) | (p))
 
-#endif /* _TW_VERSION_H */
-
+#endif /* TW_VERSION_H */

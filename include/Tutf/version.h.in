@@ -1,6 +1,6 @@
 
-#ifndef _TUTF_VERSION_H
-#define _TUTF_VERSION_H
+#ifndef TUTF_VERSION_H
+#define TUTF_VERSION_H
 
 #define TUTF_PROTOCOL_VERSION_MAJOR @PACKAGE_VERSION_MAJOR@
 #define TUTF_PROTOCOL_VERSION_MINOR @PACKAGE_VERSION_MINOR@
@@ -13,4 +13,4 @@
 #define TUTF_VER_PATCH(n) ((n) & 0xFF)
 #define TUTF_VER_BUILD(M, m, p) (((M)<<16)|((m)<<8)|(p))
 
-#endif /* _TUTF_VERSION_H */
+#endif /* TUTF_VERSION_H */

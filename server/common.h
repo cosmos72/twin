@@ -6,16 +6,18 @@
  * (at your option) any later version.
  *
  */
-#ifndef _TWIN_COMMON_H
-#define _TWIN_COMMON_H
+#ifndef TWIN_COMMON_H
+#define TWIN_COMMON_H
+
+#include "stl/view.h"
 
 /*
  * this file exports functions and variables common to both
  * display.c and the whole twin sources, in particular hw_multi.c
  */
 
-char *CloneStr(CONST char *s);
-char *CloneStrL(CONST char *s, uldat len);
+char *CloneStr(const char *s);
+char *CloneStrL(const char *s, uldat len);
 
 byte AllHWCanDragAreaNow(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp);
 void DragAreaHW(dat Xstart, dat Ystart, dat Xend, dat Yend, dat DstXstart, dat DstYstart);
@@ -32,18 +34,18 @@ void ResetPaletteHW(void);
 obj TwinSelectionGetOwner(void);
 void TwinSelectionSetOwner(obj Owner, tany Time, tany Frac);
 #define SEL_CURRENTTIME ((tany)0)
-void TwinSelectionNotify(obj Requestor, uldat ReqPrivate, uldat Magic, CONST char MIME[MAX_MIMELEN],
-                         uldat Len, CONST char *Data);
+void TwinSelectionNotify(obj Requestor, uldat ReqPrivate, uldat Magic, const char MIME[MAX_MIMELEN],
+                         Chars Data);
 void TwinSelectionRequest(obj Requestor, uldat ReqPrivate, obj Owner);
 
 void SelectionExport(void);
 void SelectionImport(void);
-#ifndef SelectionAppend
-#define SelectionAppend(Len, Data) SelectionStore(SEL_APPEND, NULL, Len, Data)
-#endif
-byte SelectionStore(uldat Magic, CONST char MIME[MAX_MIMELEN], uldat Len, CONST char *Data);
+byte SelectionStore(uldat magic, const char mime[MAX_MIMELEN], Chars data);
+byte SelectionAppend(Chars data);
+byte SelectionAppendRune(trune rune);
+byte SelectionAppendRunes(TRunes runes);
 
-byte KeyboardEventCommon(udat Code, udat ShiftFlags, udat Len, CONST char *Seq);
+byte KeyboardEventCommon(udat Code, udat ShiftFlags, udat Len, const char *Seq);
 byte MouseEventCommon(dat x, dat y, dat dx, dat dy, udat IdButtons);
 
 dat GetDisplayWidth(void);
@@ -61,7 +63,7 @@ void GainPrivileges(void);
 #define SS "%." STR(TW_SMALLBUFF) "s"
 #endif
 
-int printk(CONST char *format, ...);
+int printk(const char *format, ...);
 int flushk(void);
 
 /*
@@ -69,4 +71,4 @@ int flushk(void);
  */
 void RemotePidIsDead(pid_t pid);
 
-#endif /* _TWIN_HW_COMMON_H */
+#endif /* TWIN_HW_COMMON_H */

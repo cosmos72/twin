@@ -22,8 +22,8 @@ void Usage(void) {
           " -h, --help              display this help and exit\n"
           " -V, --version           output version information and exit\n"
           " --twin@<dpy>            set the server to contact (default is $TWDISPLAY)\n"
-          " --control               send a MSG_USER_CONTROL message (default)\n"
-          " --clientmsg             send a MSG_USER_CLIENTMSG message\n"
+          " --control               send a msg_user_control message (default)\n"
+          " --clientmsg             send a msg_user_clientmsg message\n"
           " [--code=]<Code>         set the message code (default is `open')\n"
           " [--data=]<Data>         set the message data\n"
           "Currently known codes for control messages are:\n"
@@ -31,7 +31,9 @@ void Usage(void) {
           argv0);
 }
 
-void ShowVersion(void) { fputs("twsendmsg " TWIN_VERSION_STR "\n", stdout); }
+void ShowVersion(void) {
+  fputs("twsendmsg " TWIN_VERSION_STR "\n", stdout);
+}
 
 TW_DECL_MAGIC(sendmsg_magic);
 
@@ -141,7 +143,7 @@ int main(int argc, char *argv[]) {
     } while (0);
 
   err = TwErrno;
-  fprintf(stderr, "%s: libTw error: %s%s\n", argv0, TwStrError(err),
+  fprintf(stderr, "%s: libtw error: %s%s\n", argv0, TwStrError(err),
           TwStrErrorDetail(err, TwErrnoDetail));
   return 1;
 }

@@ -7,8 +7,8 @@
  * It was then manually tuned adding glyphs 0x0001...0x001B
  */
 
-#ifndef _TUTF_CP850_H
-#define _TUTF_CP850_H
+#ifndef TUTF_CP850_H
+#define TUTF_CP850_H
 
 #define T_CP850_CTRL_NULL 0x0000
 
@@ -691,4 +691,4 @@
   EL(_BLACK_SQUARE)                                                                                \
   EL(_NO_BREAK_SPACE)
 
-#endif /* _TUTF_CP850_H */
+#endif /* TUTF_CP850_H */

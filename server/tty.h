@@ -6,8 +6,8 @@
  * (at your option) any later version.
  *
  */
-#ifndef _TWIN_TTY_H
-#define _TWIN_TTY_H
+#ifndef TWIN_TTY_H
+#define TWIN_TTY_H
 
 #include <Tw/datatypes.h>
 
@@ -100,12 +100,12 @@ struct s_ttydata {
   char *newName; /* buffer for xterm set window title escape seq */
 };
 
-byte TtyWriteAscii(window Window, uldat Len, CONST char *AsciiSeq);
-byte TtyWriteString(window Window, uldat Len, CONST char *String);
-byte TtyWriteTRune(window Window, uldat Len, CONST trune *TRune);
-byte TtyWriteTCell(window Window, dat x, dat y, uldat Len, CONST tcell *Attr);
+byte TtyWriteCharset(window Window, uldat Len, const char *charset_bytes);
+byte TtyWriteUtf8(window Window, uldat Len, const char *utf8_bytes);
+byte TtyWriteTRune(window Window, uldat Len, const trune *runes);
+byte TtyWriteTCell(window Window, dat x, dat y, uldat Len, const tcell *cells);
 
 widget TtyKbdFocus(widget Window);
 void ForceKbdFocus(void);
 
-#endif /* _TWIN_TTY_H */
+#endif /* TWIN_TTY_H */

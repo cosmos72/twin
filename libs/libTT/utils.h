@@ -9,8 +9,8 @@
  *
  */
 
-#ifndef _TT_UTILS_H
-#define _TT_UTILS_H
+#ifndef TT_UTILS_H
+#define TT_UTILS_H
 
 #include "fire.h"
 
@@ -62,4 +62,4 @@
 #define minBOUND(a, min) ((a) < (min) ? (min) : (a))
 #define TW_MAXBOUND(a, max) ((a) > (max) ? (max) : (a))
 
-#endif /* _TT_UTILS_H */
+#endif /* TT_UTILS_H */

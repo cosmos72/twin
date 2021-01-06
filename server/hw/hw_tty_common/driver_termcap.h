@@ -2,21 +2,21 @@
 
 #ifdef CONF_HW_TTY_TERMCAP
 
-INLINE void termcap_SetCursorType(uldat type) {
+inline void termcap_SetCursorType(uldat type) {
   fprintf(stdOUT, "%s", (type & 0xFFFFFFl) == NOCURSOR ? tc_cursor_off : tc_cursor_on);
 }
-INLINE void termcap_MoveToXY(udat x, udat y) {
+inline void termcap_MoveToXY(udat x, udat y) {
   fputs(tgoto(tc_cursor_goto, x, y), stdOUT);
 }
 
 static udat termcap_LookupKey(udat *ShiftFlags, byte *slen, char *s, byte *retlen,
-                              CONST char **ret) {
+                              const char **ret) {
   struct linux_keys {
     udat k;
     byte l;
-    CONST char *s;
+    const char *s;
   };
-  static struct linux_keys CONST linux_key[] = {
+  static struct linux_keys const linux_key[] = {
 #define IS(k, l, s) {CAT(TW_, k), l, s},
       IS(F1, 4, "\033[[A") IS(F2, 4, "\033[[B") IS(F3, 4, "\033[[C") IS(F4, 4, "\033[[D")
           IS(F5, 4, "\033[[E") IS(F6, 5, "\033[17~") IS(F7, 5, "\033[18~") IS(F8, 5, "\033[19~")
@@ -31,7 +31,7 @@ static udat termcap_LookupKey(udat *ShiftFlags, byte *slen, char *s, byte *retle
                                       IS(Down, 3, "\033[B")
 #undef IS
   };
-  struct linux_keys CONST *lk;
+  struct linux_keys const *lk;
 
   char **key;
   byte keylen, len = *slen;
@@ -89,7 +89,7 @@ static udat termcap_LookupKey(udat *ShiftFlags, byte *slen, char *s, byte *retle
   return TW_Null;
 }
 
-static char *termcap_extract(CONST char *cap, char **dest) {
+static char *termcap_extract(const char *cap, char **dest) {
   char buf[20], *d = buf, *s = tgetstr(cap, &d);
 
   if (!s || !*s) {
@@ -130,12 +130,12 @@ static void fixup_colorbug(void) {
 }
 
 static byte termcap_InitVideo(void) {
-  CONST char *term = tty_TERM;
-  CONST char *tc_name[tc_cap_N + 1] = {"cl", "cm", "ve", "vi", "md", "mb", "me", "ks", "ke",
+  const char *term = tty_TERM;
+  const char *tc_name[tc_cap_N + 1] = {"cl", "cm", "ve", "vi", "md", "mb", "me", "ks", "ke",
                                        "bl", "as", "ae", "k1", "k2", "k3", "k4", "k5", "k6",
                                        "k7", "k8", "k9", "k;", "F1", "F2", "&7", "kh", "@7",
                                        "kD", "kI", "kN", "kP", "kl", "ku", "kr", "kd", NULL};
-  CONST char **n;
+  const char **n;
   char **d;
   char tcbuf[4096]; /* by convention, this is enough */
 
@@ -198,7 +198,7 @@ static byte termcap_InitVideo(void) {
   if (colorbug)
     fixup_colorbug();
 
-  fprintf(stdOUT, "%s%s%s", tc_attr_off, (tc_charset_start ? (CONST char *)tc_charset_start : ""),
+  fprintf(stdOUT, "%s%s%s", tc_attr_off, (tc_charset_start ? (const char *)tc_charset_start : ""),
           (tty_is_xterm ? "\033[?1h" : ""));
 
   HW->FlushVideo = termcap_FlushVideo;
@@ -215,7 +215,7 @@ static byte termcap_InitVideo(void) {
   HW->HWSelectionImport = AlwaysFalse;
   HW->HWSelectionExport = NoOp;
   HW->HWSelectionRequest = (void (*)(obj, uldat))NoOp;
-  HW->HWSelectionNotify = (void (*)(uldat, uldat, CONST char *, uldat, CONST char *))NoOp;
+  HW->HWSelectionNotify = (void (*)(uldat, uldat, const char *, Chars))NoOp;
   HW->HWSelectionPrivate = 0;
 
   HW->CanDragArea = termcap_CanDragArea;
@@ -260,52 +260,52 @@ static void termcap_QuitVideo(void) {
 
 #define termcap_MogrifyInit()                                                                      \
   fputs(tc_attr_off, stdOUT);                                                                      \
-  _col = COL(WHITE, BLACK)
+  _col = TCOL(twhite, tblack)
 #define termcap_MogrifyFinish()                                                                    \
   do {                                                                                             \
   } while (0)
 
-INLINE char *termcap_CopyAttr(char *attr, char *dest) {
+inline char *termcap_CopyAttr(char *attr, char *dest) {
   while ((*dest++ = *attr++))
     ;
   return --dest;
 }
 
-INLINE void termcap_SetColor(tcolor col) {
+inline void termcap_SetColor(tcolor col) {
   static char colbuf[80];
   char *colp = colbuf;
   byte c;
 
-  if ((col & COL(HIGH, HIGH)) != (_col & COL(HIGH, HIGH))) {
+  if ((col & TCOL(thigh, thigh)) != (_col & TCOL(thigh, thigh))) {
 
-    if (((_col & COL(0, HIGH)) && !(col & COL(0, HIGH))) ||
-        ((_col & COL(HIGH, 0)) && !(col & COL(HIGH, 0)))) {
+    if (((_col & TCOL(0, thigh)) && !(col & TCOL(0, thigh))) ||
+        ((_col & TCOL(thigh, 0)) && !(col & TCOL(thigh, 0)))) {
 
       /* cannot turn off blinking or standout, reset everything */
       colp = termcap_CopyAttr(tc_attr_off, colp);
-      _col = COL(WHITE, BLACK);
+      _col = TCOL(twhite, tblack);
     }
-    if ((col & COL(HIGH, 0)) && !(_col & COL(HIGH, 0)))
+    if ((col & TCOL(thigh, 0)) && !(_col & TCOL(thigh, 0)))
       colp = termcap_CopyAttr(tc_bold_on, colp);
-    if ((col & COL(0, HIGH)) && !(_col & COL(0, HIGH)))
+    if ((col & TCOL(0, thigh)) && !(_col & TCOL(0, thigh)))
       colp = termcap_CopyAttr(tc_blink_on, colp);
   }
 
-  if ((col & COL(WHITE, WHITE)) != (_col & COL(WHITE, WHITE))) {
+  if ((col & TCOL(twhite, twhite)) != (_col & TCOL(twhite, twhite))) {
     *colp++ = '\033';
     *colp++ = '[';
 
-    if ((col & COL(WHITE, 0)) != (_col & COL(WHITE, 0))) {
+    if ((col & TCOL(twhite, 0)) != (_col & TCOL(twhite, 0))) {
       *colp++ = '3';
-      c = COLFG(col) & ~HIGH;
-      *colp++ = VGA2ANSI(c) + '0';
+      c = TCOLFG(col) & ~thigh;
+      *colp++ = TVGA2ANSI(c) + '0';
       *colp++ = ';';
     }
 
-    if ((col & COL(0, WHITE)) != (_col & COL(0, WHITE))) {
+    if ((col & TCOL(0, twhite)) != (_col & TCOL(0, twhite))) {
       *colp++ = '4';
-      c = COLBG(col) & ~HIGH;
-      *colp++ = VGA2ANSI(c) + '0';
+      c = TCOLBG(col) & ~thigh;
+      *colp++ = TVGA2ANSI(c) + '0';
       *colp++ = 'm';
     } else if (colp[-1] == ';') {
       colp[-1] = 'm';
@@ -318,7 +318,7 @@ INLINE void termcap_SetColor(tcolor col) {
   fputs(colbuf, stdOUT);
 }
 
-INLINE void termcap_Mogrify(dat x, dat y, uldat len) {
+inline void termcap_Mogrify(dat x, dat y, uldat len) {
   uldat delta = x + y * (uldat)DisplayWidth;
   tcell *V, *oV;
   tcolor col;
@@ -363,7 +363,7 @@ INLINE void termcap_Mogrify(dat x, dat y, uldat len) {
   }
 }
 
-INLINE void termcap_SingleMogrify(dat x, dat y, tcell V) {
+inline void termcap_SingleMogrify(dat x, dat y, tcell V) {
   trune c, _c;
 
   if (!wrapglitch && x == DisplayWidth - 1 && y == DisplayHeight - 1)
@@ -399,7 +399,7 @@ INLINE void termcap_SingleMogrify(dat x, dat y, tcell V) {
 static void termcap_ShowMouse(void) {
   uldat pos =
       (HW->Last_x = HW->MouseState.x) + (HW->Last_y = HW->MouseState.y) * (ldat)DisplayWidth;
-  tcell h = Video[pos], c = TCELL_COLMASK(~h) ^ TCELL(COL(HIGH, HIGH), 0);
+  tcell h = Video[pos], c = TCELL_COLMASK(~h) ^ TCELL(TCOL(thigh, thigh), 0);
 
   termcap_SingleMogrify(HW->MouseState.x, HW->MouseState.y, c | TCELL_FONTMASK(h));
 

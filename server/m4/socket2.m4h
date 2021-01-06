@@ -7,12 +7,11 @@
  *
  */
 
-
-
-
 dnl This file is `m4/socket2.m4' : m4 macros to autogenerate socket2_m4.h
 dnl Tell the user about this.
 /* This file was automatically generated from `m4/socket2.m4', do not edit! */
+
+/* clang-format off */
 
 define(`TRIM', `translit(`$1', ` ')')
 
@@ -42,4 +41,3 @@ define(`PROTOSyncSocket', `PROTO($@)')
 define(`PROTOFindFunction', `PROTO($@)')
 
 include(`m4/Tw_sockproto.m4')
-

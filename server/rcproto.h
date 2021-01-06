@@ -7,8 +7,8 @@
  *
  */
 
-#ifndef _TWIN_RCPROTO_H
-#define _TWIN_RCPROTO_H
+#ifndef TWIN_RCPROTO_H
+#define TWIN_RCPROTO_H
 
 /* stuff exported by rcparse.h */
 
@@ -17,4 +17,4 @@ extern ldat GlobalShadows[2];
 
 byte rcload(void);
 
-#endif /*  _TWIN_RCPROTO_H */
+#endif /* TWIN_RCPROTO_H */

@@ -14,8 +14,8 @@
  *
  */
 
-#ifndef _TT_TTWINDOW_H
-#define _TT_TTWINDOW_H
+#ifndef TT_TTWINDOW_H
+#define TT_TTWINDOW_H
 
 /* object structure */
 #ifndef s_ttwindow
@@ -43,4 +43,4 @@ ttopaque TTGetTitleLen_ttwindow(TT_ARG_READ ttwindow o);
 /** get `title' of ttwindow `o' */
 TT_ARG_ARRAY((_F(title_len))) ttbyte *TTGetTitle_ttwindow(TT_ARG_READ ttwindow o);
 
-#endif /* _TT_TTWINDOW_H */
+#endif /* TT_TTWINDOW_H */

@@ -12,6 +12,7 @@
  *
  */
 
+/* clang-format off */
 
 
 
@@ -19,11 +20,12 @@
 
 
 
-#define OK_MAGIC	((uldat)0x3E4B4F3Cul)
-#define FAIL_MAGIC	((uldat)0xFFFFFFFFul)
 
-#define FIND_MAGIC		((uldat)0x646E6946ul) /* i.e. "Find" */
-#define MSG_MAGIC		((uldat)0x2167734dul) /* i.e. "Msg!" */
+#define OK_MAGIC        ((uldat)0x3E4B4F3Cul)
+#define FAIL_MAGIC        ((uldat)0xFFFFFFFFul)
+
+#define FIND_MAGIC                ((uldat)0x646E6946ul) /* i.e. "Find" */
+#define MSG_MAGIC                ((uldat)0x2167734dul) /* i.e. "Msg!" */
 
 
 
@@ -99,8 +101,8 @@ EL(WriteTRunesGadget)
 EL(CreateWindow)
 EL(Create4MenuWindow)
 
-EL(WriteAsciiWindow)
-EL(WriteStringWindow)
+EL(WriteCharsetWindow)
+EL(WriteUtf8Window)
 EL(WriteTRuneWindow)
 EL(WriteTCellWindow)
 
@@ -120,7 +122,7 @@ EL(SetSelectedGadgetGroup)
 
 EL(RaiseRow)
 EL(LowerRow)
-EL(RestackChildrenRow) 
+EL(RestackChildrenRow)
 EL(CirculateChildrenRow)
 
 EL(Create4MenuAny)
@@ -162,10 +164,4 @@ EL(RequestSelection)
 EL(NotifySelection)
 
 EL(SetServerUid)
-
-EL(OpenExtension)
-EL(CallBExtension)
-EL(CloseExtension)
-
-
 

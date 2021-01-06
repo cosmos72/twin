@@ -14,8 +14,8 @@
  *
  */
 
-#ifndef _TT_TTFRAME_H
-#define _TT_TTFRAME_H
+#ifndef TT_TTFRAME_H
+#define TT_TTFRAME_H
 
 /* object structure */
 #ifndef s_ttframe
@@ -46,4 +46,4 @@ ttmenubar TTGetMenubar_ttframe(TT_ARG_READ ttframe o);
 /** set `menubar' of ttframe `o' */
 ttbyte TTSetMenubar_ttframe(ttframe o, ttmenubar menubar);
 
-#endif /* _TT_TTFRAME_H */
+#endif /* TT_TTFRAME_H */

@@ -41,7 +41,7 @@
 TW_DECL_MAGIC(magic);
 
 static void Error(char *name, uldat err) {
-  fprintf(stderr, "%s: libTw error: %s%s\n", name, TwStrError(err),
+  fprintf(stderr, "%s: libtw error: %s%s\n", name, TwStrError(err),
           TwStrErrorDetail(err, TwErrnoDetail));
 }
 
@@ -58,7 +58,9 @@ static void Usage(char *name) {
           name);
 }
 
-static void ShowVersion(void) { fprintf(stdout, "twcuckoo " TWIN_VERSION_STR "\n"); }
+static void ShowVersion(void) {
+  fprintf(stdout, "twcuckoo " TWIN_VERSION_STR "\n");
+}
 
 static uldat ReallocBuff(char **buff, uldat min_len) {
   uldat len;
@@ -68,7 +70,9 @@ static uldat ReallocBuff(char **buff, uldat min_len) {
 
 static struct timeval Now;
 
-static void GetNow(void) { gettimeofday(&Now, NULL); }
+static void GetNow(void) {
+  gettimeofday(&Now, NULL);
+}
 
 static uldat BuiltinTime(char builtin_egg[10]) {
   time_t t;
@@ -124,7 +128,9 @@ byte InitSignals(void) {
   return ttrue;
 }
 
-static byte Init(void) { return InitSignals() && TwCheckMagic(magic) && TwOpen(NULL); }
+static byte Init(void) {
+  return InitSignals() && TwCheckMagic(magic) && TwOpen(NULL);
+}
 
 static void Cleanup(void) {
   if (wlist) {
@@ -192,7 +198,7 @@ int main(int argc, char *argv[]) {
    * which copies the buffer in a private malloc:ed() area.
    */
   if (wid == TW_NOID || (wlist = TwCloneStatL(wid, 1, TWS_window_Name)) == NULL || wlist->N < 1 ||
-      (wfield = wlist->TSF)->hash != TWS_window_Name || wfield->type != (TWS_vec | TWS_byte)) {
+      (wfield = wlist->TSF)->label != TWS_window_Name || wfield->type != (TWS_vec | TWS_byte)) {
 
     fprintf(stderr, "%s: error: no such server window: 0x%X\n", name, wid);
     return 1;

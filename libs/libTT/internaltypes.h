@@ -9,8 +9,8 @@
  *
  */
 
-#ifndef _TT_INTERNALTYPES_H
-#define _TT_INTERNALTYPES_H
+#ifndef TT_INTERNALTYPES_H
+#define TT_INTERNALTYPES_H
 
 typedef ttopaque opaque;
 
@@ -37,4 +37,4 @@ typedef tavl ttavl;
 typedef tavl_c ttavl_c;
 typedef tavl_compare ttavl_compare;
 
-#endif /* _TT_INSTERNALTYPES_H */
+#endif /* TT_INSTERNALTYPES_H */

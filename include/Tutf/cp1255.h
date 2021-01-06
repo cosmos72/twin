@@ -7,8 +7,8 @@
  * PLEASE DO NOT EDIT!
  */
 
-#ifndef _TUTF_CP1255_H
-#define _TUTF_CP1255_H
+#ifndef TUTF_CP1255_H
+#define TUTF_CP1255_H
 
 #define T_CP1255_CTRL_NULL 0x0000
 #define T_CP1255_CTRL_START_OF_HEADING 0x0001
@@ -628,4 +628,4 @@
   EL(_RIGHT_TO_LEFT_MARK)                                                                          \
   EL(_UNDEFINED_00FF)
 
-#endif /* _TUTF_CP1255_H */
+#endif /* TUTF_CP1255_H */

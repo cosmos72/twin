@@ -13,9 +13,10 @@
  *
  */
 
+#ifndef TT_HW_COMMON_H
+#define TT_HW_COMMON_H
 
-#ifndef _TT_HW_COMMON_H
-#define _TT_HW_COMMON_H
+/* clang-format off */
 
 /*  Copyright (C) 2002 by Massimiliano Ghilardi
  *
@@ -281,4 +282,4 @@
 
 
 
-#endif /* _TT_HW_COMMON_H */
+#endif /* TT_HW_COMMON_H */

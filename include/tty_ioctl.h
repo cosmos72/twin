@@ -5,10 +5,10 @@
  *  the Free Software Foundation; either version 2 of the License, or
  *  (at your option) any later version.
  */
-#ifndef _TWIN_TTY_IOCTL_H
-#define _TWIN_TTY_IOCTL_H
+#ifndef TWIN_TTY_IOCTL_H
+#define TWIN_TTY_IOCTL_H
 
-#ifndef _TWAUTOCONF_H
+#ifndef TWAUTOCONF_H
 #include "twautoconf.h"
 #endif
 
@@ -34,4 +34,4 @@
 #endif
 #endif
 
-#endif /* _TWIN_TTY_IOCTL_H */
+#endif /* TWIN_TTY_IOCTL_H */

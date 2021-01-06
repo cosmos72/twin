@@ -1,5 +1,5 @@
 /*
- *  fn.h  --  declare server class s_fn
+ *  all.h  --  declare server class s_all
  *
  *  Copyright (C) 1993-2019 by Massimiliano Ghilardi
  *
@@ -10,13 +10,14 @@
  *
  */
 
-#ifndef _TWIN_ALL_H
-#define _TWIN_ALL_H
+#ifndef TWIN_ALL_H
+#define TWIN_ALL_H
 
 #include "obj/obj.h"
 #include "obj/event.h"  /* MAX_MIMELEN */
 #include "obj/window.h" /* BUTTON_MAX */
 #include "tty.h"        /* USER_MAP */
+#include "stl_types.h"  /* String */
 
 struct s_setup {
   dat MaxMouseSnap;
@@ -25,18 +26,23 @@ struct s_setup {
   byte ButtonSelection, ButtonPaste;
   byte DeltaXShade, DeltaYShade;
 };
-/* All->Setup->Flags */
-#define SETUP_SHADOWS 0x01
-#define SETUP_BLINK 0x02
-#define SETUP_CURSOR_ALWAYS 0x04
-#define SETUP_MENU_HIDE 0x08
-#define SETUP_MENU_INFO 0x10
-#define SETUP_MENU_RELAX 0x20
-#define SETUP_SCREEN_SCROLL 0x40
-#define SETUP_TERMINALS_UTF8 0x80
 
-#define MAX_XSHADE 9
-#define MAX_YSHADE 9
+/* All->Setup->Flags */
+enum e_setup_flag {
+  setup_shadows = 0x01,
+  setup_blink = 0x02,
+  setup_cursor_always = 0x04,
+  setup_menu_hide = 0x08,
+  setup_menu_info = 0x10,
+  setup_menu_relax = 0x20,
+  setup_screen_scroll = 0x40,
+  setup_terminals_utf8 = 0x80,
+};
+
+enum {
+  max_xshade = 9,
+  max_yshade = 9,
+};
 
 /*
  * values of All->State.
@@ -45,23 +51,23 @@ struct s_setup {
  * in scroller.c:ScrollerH(),
  * do not change it!
  */
-typedef enum e_state {
-  STATE_DRAG = 10,
-  STATE_RESIZE = 15,
-  STATE_SCROLL = 16,
-  STATE_GADGET = 26,
-  STATE_MENU = 27,
-  STATE_SCREEN = 28,
-  STATE_BUTTON_SCREEN = 29,
-  STATE_ROOT = 30,
-  STATE_DEFAULT = 31,
+enum e_all_state {
+  state_drag = 10,
+  state_resize = 15,
+  state_scroll = 16,
+  state_gadget = 26,
+  state_menu = 27,
+  state_screen = 28,
+  state_button_screen = 29,
+  state_root = 30,
+  state_default = 31,
 
   /* mask for all the above */
-  STATE_ANY = 0x1F,
+  state_any = 0x1F,
 
   /* further All->State flags */
-  STATE_FL_BYMOUSE = 0x40,
-} tstate;
+  state_fl_bymouse = 0x40,
+};
 
 typedef struct s_button_vec {
   trune shape[2];
@@ -75,14 +81,11 @@ typedef struct s_selection {
   msgport Owner;
   display_hw OwnerOnce;
   uldat Magic;
+  String Data;
   char MIME[MAX_MIMELEN];
-  uldat Len, Max;
-  char *Data;
 } selection;
 
-struct s_all {
-  /* obj */
-  uldat Id;
+struct s_all : public s_obj {
   fn_obj Fn;
   obj Prev, Next, Parent;
 
@@ -113,8 +116,10 @@ struct s_all {
   button_vec ButtonVec[BUTTON_MAX + 1]; /* +1 for window corner */
 
   trune *Gtranslations[USER_MAP + 1];
+
+  all Init();
 };
 
-extern all CONST All;
+extern all const All;
 
-#endif /* _TWIN_ALL_H */
+#endif /* TWIN_ALL_H */

@@ -7,10 +7,9 @@
  *
  */
 
-
-
-
 /* This file was automatically generated from m4/socket3.m4, do not edit! */
+
+/* clang-format off */
 
 
 
@@ -164,12 +163,12 @@
     break;
 
 
-  case order_WriteAsciiWindow:
+  case order_WriteCharsetWindow:
     switch (n) {
       case 3: L = a[2]_any; break;
     }
     break;
-  case order_WriteStringWindow:
+  case order_WriteUtf8Window:
     switch (n) {
       case 3: L = a[2]_any; break;
     }
@@ -209,7 +208,7 @@
     switch (n) {
       case 3: L = a[2]_any; break;
     }
-    break; 
+    break;
 
 
   case order_Create4MenuAny:
@@ -283,21 +282,6 @@
       case 6: L = a[5]_any; break;
     }
     break;
-
-
-
-  case order_OpenExtension:
-    switch (n) {
-      case 2: L = a[1]_any; break;
-    }
-    break;
-  case order_CallBExtension:
-    switch (n) {
-      case 3: L = a[2]_any; break;
-      case 4: L = 2; break;
-    }
-    break;
-
 
 
 

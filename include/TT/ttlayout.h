@@ -14,8 +14,8 @@
  *
  */
 
-#ifndef _TT_TTLAYOUT_H
-#define _TT_TTLAYOUT_H
+#ifndef TT_TTLAYOUT_H
+#define TT_TTLAYOUT_H
 
 /* object structure */
 #ifndef s_ttlayout
@@ -40,4 +40,4 @@ extern ttclass TTClass_ttlayout;
 /** get `widget' of ttlayout `o' */
 ttwidget TTGetWidget_ttlayout(TT_ARG_READ ttlayout o);
 
-#endif /* _TT_TTLAYOUT_H */
+#endif /* TT_TTLAYOUT_H */

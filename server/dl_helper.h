@@ -10,10 +10,10 @@
  *
  */
 
-#ifndef _TWIN_DL_HELPER_H
-#define _TWIN_DL_HELPER_H
+#ifndef TWIN_DL_HELPER_H
+#define TWIN_DL_HELPER_H
 
-#ifndef _TWIN_H
+#ifndef TWIN_H
 #include "twin.h"
 #endif
 
@@ -56,4 +56,4 @@ byte dlinit_once(void); /* from dl_helper.c */
 #error nor dlopen() nor lt_dlopen() module loading API available!
 #endif
 
-#endif /* _TWIN_DL_HELPER_H */
+#endif /* TWIN_DL_HELPER_H */

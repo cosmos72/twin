@@ -6,10 +6,10 @@
  *  (at your option) any later version.
  *
  */
-#ifndef _TW_PTY_H
-#define _TW_PTY_H
+#ifndef TW_PTY_H
+#define TW_PTY_H
 
 int Spawn(twindow Window, pid_t *pid, dat X, dat Y, TW_CONST char *arg0,
           TW_CONST char *TW_CONST *argv);
 
-#endif /* _TW_PTY_H */
+#endif /* TW_PTY_H */

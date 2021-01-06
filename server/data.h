@@ -6,21 +6,27 @@
  * (at your option) any later version.
  *
  */
-#ifndef _TWIN_DATA_H
-#define _TWIN_DATA_H
+#ifndef TWIN_DATA_H
+#define TWIN_DATA_H
 
-extern CONST char *CONST pkg_libdir;
-extern CONST char *CONST pkg_libdir_modules_;
+#include <Tw/datatypes.h> // byte, udat, tcolor, trune
+#include <Tw/Tw_defs.h>   // tmaxcol
 
-extern rgb Palette[MAXCOL + 1], defaultPalette[MAXCOL + 1];
+typedef struct s_rgb {
+  byte Red, Green, Blue;
+} rgb;
 
-typedef struct keylist keylist;
-struct keylist {
-  CONST char *name;
+extern const char *const pkg_libdir;
+extern const char *const pkg_libdir_modules_;
+
+extern rgb Palette[tmaxcol + 1], defaultPalette[tmaxcol + 1];
+
+typedef struct s_keylist {
+  const char *name;
   udat key;
   byte len;
-  CONST char *seq;
-};
+  const char *seq;
+} keylist;
 
 extern keylist TW_KeyList[];
 
@@ -34,4 +40,4 @@ extern tcolor DEFAULT_ColGadgets, DEFAULT_ColArrows, DEFAULT_ColBars, DEFAULT_Co
 
 byte InitData(void);
 
-#endif /* _TWIN_DATA_H */
+#endif /* TWIN_DATA_H */

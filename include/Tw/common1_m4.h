@@ -9,7 +9,7 @@
 /* This file was automatically generated with m4 from m4/Tw_common.m4, do not edit! */
 
 /*
- *  common_m4.h  --  common libTw function prototypes
+ *  common_m4.h  --  common libtw function prototypes
  *
  *  Copyright (C) 2002 by Massimiliano Ghilardi
  *
@@ -30,7 +30,7 @@
 
 
 #define TwConfigMalloc		Tw_ConfigMalloc
-		     
+
 
 #define TwAllocMem		Tw_AllocMem
 
@@ -167,11 +167,5 @@
 #define TwDispatchMsg(a1)	Tw_DispatchMsg(Tw_DefaultD, a1)
 #define TwMainLoop()	Tw_MainLoop(Tw_DefaultD)
 #define TwExitMainLoop()	Tw_ExitMainLoop(Tw_DefaultD)
-
-
-#define TwCallAExtension(a1, a2, a3, a4)	Tw_CallAExtension(Tw_DefaultD, a1, a2, a3, a4)
-
-#define TwCallVExtension(a1, a2, a3, a4)	Tw_CallVExtension(Tw_DefaultD, a1, a2, a3, a4)
-
 
 

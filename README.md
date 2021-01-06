@@ -33,7 +33,7 @@ Documentation
 	License: twin server and clients are GPL'ed software.
 
 [COPYING.LIB](COPYING.LIB)
-	Library license: the libraries libTutf, libTw, libTT
+	Library license: the libraries libtutf, libtw, libTT
 	are LGPL'ed software.
 
 [INSTALL](INSTALL)
@@ -54,10 +54,10 @@ The following documentation is useful mostly to developers:
 [README.porting](README.porting)
 	Tips and warnings to compile twin on unsupported OSes.
 
-[libTw.txt](docs/libTw.txt)
+[libtw.txt](docs/libtw.txt)
 	reference API for programmers who want to write twin clients (INCOMPLETE).
-		
-[libTw++.txt](docs/libTw++.txt)
+
+[libtw++.txt](docs/libtw++.txt)
 	reference API for programmers who want to write	twin C++ clients (INCOMPLETE).
 
 --------------------------------------------------------------
@@ -73,7 +73,7 @@ https://github.com/cosmos72/twin
 Building and installing twin
 
 For detailed instructions about compiling and installing twin,
-see sections 3 and 4 of the file [docs/Tutorial](docs/Tutorial) 
+see sections 3 and 4 of the file [docs/Tutorial](docs/Tutorial)
 
 For the impatient, it basically reduces to
 ```
@@ -95,9 +95,9 @@ on FreeBSD instead, remember to run as root:
 
 To compile twin you need the following programs installed
 on your system:
-	
+
   * a Bourne-shell or compatible (for example bash, dash, ash...)
-  
+
   * make (most variants are supported: GNU make, BSD make...)
 
   * an ANSI C compiler (for example gcc or clang)
@@ -107,7 +107,7 @@ Note: it is STRONGLY recommended to install at least the following packages befo
 (the exact names depend on the operating system or Linux distribution):
 
   * x11-dev      - may be named x11-devel, libx11-dev ...
-  * xpm-dev      - may be named xpm-devel, libxpm-dev ...
+  * xft-dev      - may be named xft-devel, libxft-dev ...
   * ncurses-dev  - may be named ncurses-devel, libncurses-dev ...
   * zlib-dev     - may be named zlib1g-dev, zlib-devel, libzlib-dev ...
 
@@ -129,4 +129,3 @@ See the rest of the documentation, starting from the [Tutorial](docs/Tutorial)
 Greetings,
 
 Massimiliano Ghilardi
-

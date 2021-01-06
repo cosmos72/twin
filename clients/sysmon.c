@@ -70,21 +70,21 @@ byte InitSysMon(int argc, char **argv) {
   return TwCheckMagic(sysmon_magic) && TwOpen(NULL) &&
 
          (SysMon_MsgPort = TwCreateMsgPort(8, "twsysmon")) &&
-         (SysMon_Menu =
-              TwCreateMenu(COL(BLACK, WHITE), COL(BLACK, GREEN), COL(HIGH | BLACK, WHITE),
-                           COL(HIGH | BLACK, BLACK), COL(RED, WHITE), COL(RED, GREEN), (byte)0)) &&
+         (SysMon_Menu = TwCreateMenu(TCOL(tblack, twhite), TCOL(tblack, tgreen),
+                                     TCOL(thigh | tblack, twhite), TCOL(thigh | tblack, tblack),
+                                     TCOL(tred, twhite), TCOL(tred, tgreen), (byte)0)) &&
          TwItem4MenuCommon(SysMon_Menu) &&
 
          (SysMon_Win =
-              TwCreateWindow(len, name, NULL, SysMon_Menu, COL(HIGH | YELLOW, BLUE), TW_NOCURSOR,
-                             TW_WINDOW_DRAG | TW_WINDOW_CLOSE,
+              TwCreateWindow(len, name, NULL, SysMon_Menu, TCOL(thigh | tyellow, tblue),
+                             TW_NOCURSOR, TW_WINDOW_DRAG | TW_WINDOW_CLOSE,
                              (border ? 0 : TW_WINDOWFL_BORDERLESS), numeric ? 29 : 24, 5, 0)) &&
 
          (TwSetColorsWindow(SysMon_Win, 0x1FF, (tcolor)0x3F, (tcolor)0, (tcolor)0, (tcolor)0,
                             (tcolor)0x9F, (tcolor)0x17, (tcolor)0x3F, (tcolor)0x18, (tcolor)0x08),
           TwInfo4Menu(SysMon_Menu, TW_ROW_ACTIVE, 16, " System Monitor ",
                       (TW_CONST tcolor *)"pppppppppppppppp"),
-          TwWriteAsciiWindow(SysMon_Win, 26, "CPU \nDISK\nMEM \nSWAP\nUPTIME"),
+          TwWriteCharsetWindow(SysMon_Win, 26, "CPU \nDISK\nMEM \nSWAP\nUPTIME"),
           TwMapWindow(SysMon_Win, TwFirstScreen()), ttrue);
 }
 
@@ -106,9 +106,9 @@ uldat HBar(tcolor Col, uldat len, uldat scale, uldat frac) {
       frac = 0;
     memset(s, '\xDB', len / scale / 2);
 
-    TwWriteAsciiWindow(SysMon_Win, len / scale / 2 + !!frac, buf);
+    TwWriteCharsetWindow(SysMon_Win, len / scale / 2 + !!frac, buf);
 
-    half = COL(0, COLFG(Col));
+    half = TCOL(0, TCOLFG(Col));
     frac = len % (scale * 2);
   }
   return frac;
@@ -121,7 +121,7 @@ void PrintPercent(tcolor Col, uldat percent) {
   sprintf(buf, " %3d%%", percent);
 
   TwSetColTextWindow(SysMon_Win, Col);
-  TwWriteAsciiWindow(SysMon_Win, 5, buf);
+  TwWriteCharsetWindow(SysMon_Win, 5, buf);
 }
 
 void PrintAbsoluteK(tcolor Col, unsigned long nK) {
@@ -146,7 +146,7 @@ void PrintAbsoluteK(tcolor Col, unsigned long nK) {
     sprintf(buf, "    0");
 
   TwSetColTextWindow(SysMon_Win, Col);
-  TwWriteAsciiWindow(SysMon_Win, 5, buf);
+  TwWriteCharsetWindow(SysMon_Win, 5, buf);
 }
 
 void Update(void) {
@@ -304,42 +304,43 @@ void Update(void) {
   if (CpuTotal) {
     TwGotoXYWindow(SysMon_Win, 4, 0);
     if (numeric)
-      PrintPercent(COL(HIGH | YELLOW, BLUE), 100 * (CpuTotal - CpuIdle[i] - CpuWait[i]) / CpuTotal);
-    tmp = HBar(COL(HIGH | GREEN, 0), CpuUser[i], CpuTotal, 0);
-    tmp = HBar(COL(HIGH | YELLOW, 0), CpuNice[i], CpuTotal, tmp);
-    tmp = HBar(COL(HIGH | RED, 0), CpuSystem[i], CpuTotal, tmp);
-    tmp = HBar(COL(HIGH | MAGENTA, 0), CpuHardInt[i], CpuTotal, tmp);
-    tmp = HBar(COL(HIGH | CYAN, 0), CpuSoftInt[i], CpuTotal, tmp);
-    tmp = HBar(COL(HIGH | BLUE, 0), CpuWait[i], CpuTotal, tmp);
-    (void)HBar(COL(BLUE, 0), CpuIdle[i], CpuTotal, tmp);
+      PrintPercent(TCOL(thigh | tyellow, tblue),
+                   100 * (CpuTotal - CpuIdle[i] - CpuWait[i]) / CpuTotal);
+    tmp = HBar(TCOL(thigh | tgreen, 0), CpuUser[i], CpuTotal, 0);
+    tmp = HBar(TCOL(thigh | tyellow, 0), CpuNice[i], CpuTotal, tmp);
+    tmp = HBar(TCOL(thigh | tred, 0), CpuSystem[i], CpuTotal, tmp);
+    tmp = HBar(TCOL(thigh | tmagenta, 0), CpuHardInt[i], CpuTotal, tmp);
+    tmp = HBar(TCOL(thigh | tcyan, 0), CpuSoftInt[i], CpuTotal, tmp);
+    tmp = HBar(TCOL(thigh | tblue, 0), CpuWait[i], CpuTotal, tmp);
+    (void)HBar(TCOL(tblue, 0), CpuIdle[i], CpuTotal, tmp);
   }
   if (DiskMax) {
     TwGotoXYWindow(SysMon_Win, 4, 1);
     if (numeric)
-      PrintAbsoluteK(COL(HIGH | YELLOW, BLUE), (DiskR[i] + DiskW[i]) >> 1);
-    tmp = HBar(COL(HIGH | GREEN, 0), DiskR[i], DiskMax, 0);
-    tmp = HBar(COL(HIGH | RED, 0), DiskW[i], DiskMax, tmp);
-    (void)HBar(COL(BLUE, 0), DiskMax - DiskR[i] - DiskW[i], DiskMax, tmp);
+      PrintAbsoluteK(TCOL(thigh | tyellow, tblue), (DiskR[i] + DiskW[i]) >> 1);
+    tmp = HBar(TCOL(thigh | tgreen, 0), DiskR[i], DiskMax, 0);
+    tmp = HBar(TCOL(thigh | tred, 0), DiskW[i], DiskMax, tmp);
+    (void)HBar(TCOL(tblue, 0), DiskMax - DiskR[i] - DiskW[i], DiskMax, tmp);
   }
   if (MemTotal) {
     TwGotoXYWindow(SysMon_Win, 4, 2);
     if (numeric)
-      PrintAbsoluteK(COL(HIGH | YELLOW, BLUE), (MemTotal - MemFree));
-    tmp = HBar(COL(HIGH | GREEN, 0), MemUsed, MemTotal, 0);
-    tmp = HBar(COL(HIGH | CYAN, 0), MemShared, MemTotal, tmp);
-    tmp = HBar(COL(HIGH | YELLOW, 0), MemBuff, MemTotal, tmp);
-    tmp = HBar(COL(HIGH | RED, 0), MemCache, MemTotal, tmp);
-    (void)HBar(COL(BLUE, 0), MemFree, MemTotal, tmp);
+      PrintAbsoluteK(TCOL(thigh | tyellow, tblue), (MemTotal - MemFree));
+    tmp = HBar(TCOL(thigh | tgreen, 0), MemUsed, MemTotal, 0);
+    tmp = HBar(TCOL(thigh | tcyan, 0), MemShared, MemTotal, tmp);
+    tmp = HBar(TCOL(thigh | tyellow, 0), MemBuff, MemTotal, tmp);
+    tmp = HBar(TCOL(thigh | tred, 0), MemCache, MemTotal, tmp);
+    (void)HBar(TCOL(tblue, 0), MemFree, MemTotal, tmp);
   }
   if (SwapTotal) {
     TwGotoXYWindow(SysMon_Win, 4, 3);
     if (numeric)
-      PrintAbsoluteK(COL(HIGH | YELLOW, BLUE), SwapUsed);
-    tmp = HBar(COL(HIGH | GREEN, 0), SwapUsed, SwapTotal, 0);
-    (void)HBar(COL(BLUE, 0), SwapFree, SwapTotal, tmp);
+      PrintAbsoluteK(TCOL(thigh | tyellow, tblue), SwapUsed);
+    tmp = HBar(TCOL(thigh | tgreen, 0), SwapUsed, SwapTotal, 0);
+    (void)HBar(TCOL(tblue, 0), SwapFree, SwapTotal, tmp);
   }
 
-  TwSetColTextWindow(SysMon_Win, COL(WHITE, BLUE));
+  TwSetColTextWindow(SysMon_Win, TCOL(twhite, tblue));
 
   /*
    * --- Uptime ---
@@ -366,7 +367,7 @@ void Update(void) {
     sprintf(buf, "%lu days %2d:%02d", updays, uphours, upminutes);
 
     TwGotoXYWindow(SysMon_Win, 8, 4);
-    TwWriteAsciiWindow(SysMon_Win, strlen(buf), buf);
+    TwWriteCharsetWindow(SysMon_Win, strlen(buf), buf);
 
     close(Fd);
   }
@@ -388,7 +389,7 @@ void Update(void) {
 #define Quit()                                                                                     \
   do {                                                                                             \
     if ((err = TwErrno)) {                                                                         \
-      printf("%s: libTw error: %s%s\n", argv[0], TwStrError(err),                                  \
+      printf("%s: libtw error: %s%s\n", argv[0], TwStrError(err),                                  \
              TwStrErrorDetail(err, TwErrnoDetail));                                                \
       TwClose();                                                                                   \
       exit(1);                                                                                     \

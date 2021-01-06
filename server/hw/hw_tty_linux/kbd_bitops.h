@@ -1,4 +1,4 @@
-INLINE int lrawkbd_test_bit(uldat nr, void *addr_) {
+inline int lrawkbd_test_bit(uldat nr, void *addr_) {
   uldat mask, *addr = (uldat *)addr_;
 
   addr += nr / BITS_PER_ULDAT;
@@ -6,7 +6,7 @@ INLINE int lrawkbd_test_bit(uldat nr, void *addr_) {
   return ((mask & *addr) != 0);
 }
 
-INLINE void lrawkbd_set_bit(uldat nr, void *addr_) {
+inline void lrawkbd_set_bit(uldat nr, void *addr_) {
   uldat mask, *addr = (uldat *)addr_;
 
   addr += nr / BITS_PER_ULDAT;
@@ -15,7 +15,7 @@ INLINE void lrawkbd_set_bit(uldat nr, void *addr_) {
   *addr |= mask;
 }
 
-INLINE int lrawkbd_test_and_set_bit(uldat nr, void *addr_) {
+inline int lrawkbd_test_and_set_bit(uldat nr, void *addr_) {
   uldat mask, *addr = (uldat *)addr_;
   int retval;
 
@@ -27,7 +27,7 @@ INLINE int lrawkbd_test_and_set_bit(uldat nr, void *addr_) {
   return retval;
 }
 
-INLINE void lrawkbd_clear_bit(uldat nr, void *addr_) {
+inline void lrawkbd_clear_bit(uldat nr, void *addr_) {
   uldat mask, *addr = (uldat *)addr_;
 
   addr += nr / BITS_PER_ULDAT;
@@ -36,7 +36,7 @@ INLINE void lrawkbd_clear_bit(uldat nr, void *addr_) {
   *addr &= ~mask;
 }
 
-INLINE int lrawkbd_test_and_clear_bit(uldat nr, void *addr_) {
+inline int lrawkbd_test_and_clear_bit(uldat nr, void *addr_) {
   uldat mask, *addr = (uldat *)addr_;
   int retval;
 

@@ -14,8 +14,8 @@
  *
  */
 
-#ifndef _TT_TTCHECKBUTTON_H
-#define _TT_TTCHECKBUTTON_H
+#ifndef TT_TTCHECKBUTTON_H
+#define TT_TTCHECKBUTTON_H
 
 /* object structure */
 #ifndef s_ttcheckbutton
@@ -44,4 +44,4 @@ ttcheckbutton TTCreate_ttcheckbutton(ttshort w, ttshort h, ttshort pitch,
 
 /* TTGet*_ttcheckbutton and TTSet*_ttcheckbutton methods */
 
-#endif /* _TT_TTCHECKBUTTON_H */
+#endif /* TT_TTCHECKBUTTON_H */

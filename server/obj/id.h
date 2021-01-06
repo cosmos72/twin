@@ -10,25 +10,23 @@
  *
  */
 
-#ifndef _TWIN_ID_H
-#define _TWIN_ID_H
+#ifndef TWIN_ID_H
+#define TWIN_ID_H
 
-#include "twautoconf.h" /* for TW_HAVE_* macros */
-#include "compiler.h"
 #include "obj/fwd.h"
 
 #include <Tw/datatypes.h>
 
 /* IDs */
-#define NOID ((uldat)0)
-#define BADID ((uldat)-1)
+enum {
+  NOID = 0,
+  BADID = uldat(-1),
+  MAXID = uldat(0x0FFFFFFFul),
+};
 
-#define MAXID ((uldat)0x0FFFFFFFul)
-
-byte AssignId(CONST fn_obj Fn_Obj, obj Obj);
+byte AssignId(const fn_obj Fn_Obj, obj Obj);
 byte AssignId_all(all Obj);
 void DropId(obj Obj);
 obj Id2Obj(byte i, uldat Id);
-#define Obj2Id(o) ((o) ? (o)->Id : NOID)
 
-#endif /* _TWIN_ID_H */
+#endif /* TWIN_ID_H */

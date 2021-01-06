@@ -7,8 +7,8 @@
  * PLEASE DO NOT EDIT!
  */
 
-#ifndef _TUTF_ISO8859_11_H
-#define _TUTF_ISO8859_11_H
+#ifndef TUTF_ISO8859_11_H
+#define TUTF_ISO8859_11_H
 
 #define T_ISO8859_11_CTRL_NULL 0x0000
 #define T_ISO8859_11_CTRL_START_OF_HEADING 0x0001
@@ -608,4 +608,4 @@
   EL(_THAI_CHARACTER_ANGKHANKHU)                                                                   \
   EL(_THAI_CHARACTER_KHOMUT)
 
-#endif /* _TUTF_ISO8859_11_H */
+#endif /* TUTF_ISO8859_11_H */

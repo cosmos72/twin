@@ -7,7 +7,7 @@
 
 static void stdin_QuitKeyboard(void);
 static void stdin_KeyboardEvent(int fd, display_hw hw);
-static udat linux_LookupKey(udat *ShiftFlags, byte *slen, char *s, byte *retlen, CONST char **ret);
+static udat linux_LookupKey(udat *ShiftFlags, byte *slen, char *s, byte *retlen, const char **ret);
 static void xterm_MouseEvent(int, display_hw);
 
 static byte stdin_TestTty(void) {
@@ -31,7 +31,7 @@ static byte stdin_TestTty(void) {
 
   /* request ID */
   if (write(tty_fd, "\033[c", 3) != 3) {
-    ErrStr = "write() to tty failed";
+    Errstr = "write() to tty failed";
     ok = tfalse;
   } else {
     /* ensure we CAN read from the tty */
@@ -42,11 +42,11 @@ static byte stdin_TestTty(void) {
              (errno == EWOULDBLOCK || errno == EINTR));
     SetAlarm(0);
     if (i <= 0) {
-      Error(SYSCALLERROR);
+      Error(SYSERROR);
       if (alarmReceived)
-        ErrStr = "read() from tty timed out";
+        Errstr = "read() from tty timed out";
       else if (i == 0)
-        ErrStr = "read() from tty returned END-OF-FILE";
+        Errstr = "read() from tty returned END-OF-FILE";
       ok = tfalse;
     }
   }
@@ -105,7 +105,7 @@ static void stdin_QuitKeyboard(void) {
 }
 
 /* kludge! this is ok for linux terminals only... */
-static udat linux_LookupKey(udat *ShiftFlags, byte *slen, char *s, byte *retlen, CONST char **ret) {
+static udat linux_LookupKey(udat *ShiftFlags, byte *slen, char *s, byte *retlen, const char **ret) {
   byte used = 0, len = *slen;
 
   *ShiftFlags = 0;
@@ -305,7 +305,7 @@ static void stdin_KeyboardEvent(int fd, display_hw hw) {
   static fd_set rfds;
   static struct timeval t;
   char *s = buf, *end = buf + sizeof(buf) - 1;
-  CONST char *ret;
+  const char *ret;
   udat Code, ShiftFlags;
   byte got, chunk, retlen;
   SaveHW;

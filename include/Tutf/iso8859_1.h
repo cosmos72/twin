@@ -7,8 +7,8 @@
  * PLEASE DO NOT EDIT!
  */
 
-#ifndef _TUTF_ISO8859_1_H
-#define _TUTF_ISO8859_1_H
+#ifndef TUTF_ISO8859_1_H
+#define TUTF_ISO8859_1_H
 
 #define T_ISO8859_1_CTRL_NULL 0x0000
 #define T_ISO8859_1_CTRL_START_OF_HEADING 0x0001
@@ -529,4 +529,4 @@
 /* list of all characters NOT IDENTICALLY MAPPED to UTF-32 */
 #define T_NLIST_ISO8859_1(EL)
 
-#endif /* _TUTF_ISO8859_1_H */
+#endif /* TUTF_ISO8859_1_H */

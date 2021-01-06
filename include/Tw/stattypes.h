@@ -1,6 +1,6 @@
 
-#ifndef _TW_STATTYPES_H
-#define _TW_STATTYPES_H
+#ifndef TW_STATTYPES_H
+#define TW_STATTYPES_H
 
 typedef union s_tsval {
   tany _;
@@ -17,7 +17,7 @@ typedef union s_tsval {
 } tsval;
 
 typedef struct s_tsfield {
-  udat hash;
+  udat label;
   udat type;
   tsval val;
 } * tsfield;
@@ -28,4 +28,4 @@ typedef struct s_tslist {
   struct s_tsfield TSF[1];
 } * tslist;
 
-#endif /* _TW_STATTYPES_H */
+#endif /* TW_STATTYPES_H */

@@ -10,36 +10,69 @@
  *
  */
 
-#ifndef _TWIN_OBJ_H
-#define _TWIN_OBJ_H
+#ifndef TWIN_OBJ_H
+#define TWIN_OBJ_H
 
 #include "twautoconf.h" /* for TW_HAVE_* macros */
 #include "compiler.h"
 #include "obj/fwd.h"
+#include "obj/id.h"
 
 #include <Tw/datatypes.h>
 
 typedef struct s_obj *obj;
 typedef struct s_fn_obj *fn_obj;
-typedef struct s_obj_parent *obj_parent;
-
-struct s_obj {
-  uldat Id;
-  fn_obj Fn;
-  obj Prev, Next, Parent;
-};
-
-struct s_obj_parent {
-  obj First, Last;
-};
+typedef struct s_obj_entry *obj_entry;
+typedef struct s_obj_list *obj_list;
 
 struct s_fn_obj {
-  uldat Magic, Size, Used;
-  obj (*Create)(fn_obj);
-  void (*Insert)(obj Obj, obj, obj Prev, obj Next);
-  void (*Remove)(obj);
-  void (*Delete)(obj);
-  void (*ChangeField)(obj, udat field, uldat CLEARMask, uldat XORMask);
+  uldat Magic;
+  void (*Insert)(obj self, obj parent, obj prev, obj next);
+  void (*Remove)(obj self);
+  void (*Delete)(obj self);
+  void (*ChangeField)(obj self, udat field, uldat clear_mask, uldat xor_mask);
 };
 
-#endif /* _TWIN_OBJ_H */
+struct s_obj {
+protected:
+  s_obj() {
+  }
+  virtual ~s_obj() {
+  }
+
+public:
+  uldat Id;
+  //  fn_obj Fn;
+
+  static obj Create();
+  obj Init();
+
+#if 0
+  uldat Magic() const {
+    return ((const s_obj_entry *)this)->Fn->Magic;
+  }
+  void Insert(obj parent, obj prev, obj next) {
+    ((obj_entry)this)->Fn->Insert(this, parent, prev, next);
+  }
+  void Remove() {
+    ((obj_entry)this)->Fn->Remove(this);
+  }
+#endif // 0
+  void Delete();
+  void ChangeField(udat field, uldat clear_mask, uldat xor_mask);
+};
+
+inline uldat Obj2Id(obj o) {
+  return o ? o->Id : NOID;
+}
+
+struct s_obj_entry : public s_obj {
+  fn_obj Fn;
+  obj_entry Prev, Next, Parent;
+};
+
+struct s_obj_list {
+  obj_entry First, Last;
+};
+
+#endif /* TWIN_OBJ_H */

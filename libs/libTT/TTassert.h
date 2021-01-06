@@ -9,8 +9,8 @@
  *
  */
 
-#ifndef _TT_ASSERT_H
-#define _TT_ASSERT_H
+#ifndef TT_ASSERT_H
+#define TT_ASSERT_H
 
 /* this prints an "assertion failed" message. */
 void TTAssertFail(TT_CONST char *assertion, TT_CONST char *file, unsigned int line,
@@ -34,7 +34,7 @@ void TTAssertFail(TT_CONST char *assertion, TT_CONST char *file, unsigned int li
 
 /* Version 2.4 and later of GCC define a magical variable `__PRETTY_FUNCTION__'
    which contains the name of the function currently being defined.
-#  define __ASSERT_FUNCTION	__PRETTY_FUNCTION__
+#  define __ASSERT_FUNCTION        __PRETTY_FUNCTION__
    This is broken in G++ before version 2.6.
    C9x has a similar variable called __func__, but prefer the GCC one since
    it demangles C++ function names.  */
@@ -53,4 +53,4 @@ void TTAssertFail(TT_CONST char *assertion, TT_CONST char *file, unsigned int li
 
 #endif
 
-#endif /* _TT_ASSERT_H */
+#endif /* TT_ASSERT_H */

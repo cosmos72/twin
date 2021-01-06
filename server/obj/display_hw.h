@@ -10,10 +10,25 @@
  *
  */
 
-#ifndef _TWIN_DISPLAY_HW_H
-#define _TWIN_DISPLAY_HW_H
+#ifndef TWIN_DISPLAY_HW_H
+#define TWIN_DISPLAY_HW_H
 
 #include "obj/fwd.h"
+#include "obj/event.h" // MAX_MIMELEN
+#include "obj/obj.h"
+#include "stl_types.h"
+
+struct s_fn_display_hw {
+  uldat Magic;
+  void (*Insert)(display_hw, all, display_hw Prev, display_hw Next);
+  void (*Remove)(display_hw);
+  void (*Delete)(display_hw);
+  void (*ChangeField)(display_hw, udat field, uldat CLEARMask, uldat XORMask);
+  /* display_hw */
+  fn_obj Fn_Obj;
+  byte (*DoInit)(display_hw);
+  void (*DoQuit)(display_hw);
+};
 
 typedef struct s_mouse_state {
   dat x, y;
@@ -21,8 +36,7 @@ typedef struct s_mouse_state {
   byte keys;
 } mouse_state;
 
-struct s_display_hw {
-  uldat Id;
+struct s_display_hw : public s_obj {
   fn_display_hw Fn;
   display_hw Prev, Next; /* in the same All */
   all All;
@@ -56,8 +70,8 @@ struct s_display_hw {
   byte (*HWSelectionImport)(void);
   void (*HWSelectionExport)(void);
   void (*HWSelectionRequest)(obj Requestor, uldat ReqPrivate);
-  void (*HWSelectionNotify)(uldat ReqPrivate, uldat Magic, CONST char MIME[MAX_MIMELEN], uldat Len,
-                            CONST char *Data);
+  void (*HWSelectionNotify)(uldat ReqPrivate, uldat Magic, const char MIME[MAX_MIMELEN],
+                            Chars Data);
   tany HWSelectionPrivate;
 
   byte (*CanDragArea)(dat Xstart, dat Ystart, dat Xend, dat Yend, dat DstXstart, dat DstYstart);
@@ -82,77 +96,54 @@ struct s_display_hw {
   void (*QuitMouse)(void);
   void (*QuitVideo)(void);
 
-  byte DisplayIsCTTY;
-  /*
-   * set to ttrue if display is the controlling terminal
-   */
+  byte DisplayIsCTTY; /* set to ttrue if display is the controlling terminal */
+  byte Quitted;       /* used internally: set to ttrue before InitHW() and after QuitHW() */
 
-  byte Quitted;
-  /*
-   * used internally... is set to ttrue before InitHW() and after QuitHW()
-   */
-
-  byte FlagsHW;
   /*
    * various display HW flags:
    *
-   * FlHWSoftMouse		: set if display HW has to manually hide/show the mouse pointer
-   * FlHWChangedMouseFlag	: set after a mouse event that requires redrawing mouse pointer
-   * FlHWNeedOldVideo		: set if FlushVideo() is a bit expensive, and it's better to cache
-   *				  the actual display contents in OldVideo[] and send only
-   *				  what effectively changed, instead of all the dirty areas.
-   * FlHWExpensiveFlushVideo	: set if FlushVideo() is SO expensive that it's better to sleep
-   *				  a little before flushing, hoping to receive more data
-   *				  in the meantime, in order to merge the flush operations.
-   * FlHWNoInput		: set if the display HW should be used as view-only,
-   * 				  ignoring all input from it.
+   * FlHWSoftMouse         : set if display HW has to manually hide/show the mouse pointer
+   * FlHWChangedMouseFlag  : set after a mouse event that requires redrawing mouse pointer
+   * FlHWNeedOldVideo      : set if FlushVideo() is a bit expensive, and it's better to cache the
+   *                         actual display contents in OldVideo[] and send only what effectively
+   *                         changed, instead of all the dirty areas.
+   * FlHWExpensiveFlushVideo : set if FlushVideo() is SO expensive that it's better to sleep
+   *                         a little before flushing, hoping to receive more data in the meantime,
+   *                         in order to merge the flush operations.
+   * FlHWNoInput           : set if the display HW should be used as view-only, ignoring all input
+   *                         from it.
    */
+  byte FlagsHW;
 
-  byte NeedHW;
-  /*
-   * various runtime flags
-   */
+  byte NeedHW; /* various runtime flags */
 
-  byte CanResize;
   /*
    * set to ttrue if the display can actually resize itself (example: X11)
    * set to tfalse if it can only live with the externally set size (example: ttys)
    */
+  byte CanResize;
 
-  byte RedrawVideo;
   /*
    * set to ttrue if the display was corrupted by some external event
    * example: hw_X11.c sets this when its window gets Expose events
    */
-  dat RedrawLeft, RedrawUp, RedrawRight, RedrawDown;
+  byte RedrawVideo;
+
   /*
-   * the corrupted area that needs to be redrawn.
+   * the dirty area that needs to be redrawn.
    *
    * the upper layer (i.e. hw.c) automagically updates
    * ChangedVideoFlag and ChangedVideo[] to include this area
    * for your display.
    */
-
+  dat RedrawLeft, RedrawUp, RedrawRight, RedrawDown;
   uldat keyboard_slot, mouse_slot;
-
   mouse_state MouseState;
 
-  dat X, Y;
-  /*
-   * real display size, in character cells.
-   */
+  dat X, Y;           /* real display size, in character cells. */
+  dat usedX, usedY;   /* used display size (i.e. ScreenWidth, ScreenHeight) */
+  dat Last_x, Last_y; /* position of last mouse event */
 
-  dat usedX, usedY;
-  /*
-   * used display size (i.e. ScreenWidth, ScreenHeight)
-   */
-
-  dat Last_x, Last_y;
-  /*
-   * position of last mouse event
-   */
-
-  dat merge_Threshold;
   /*
    * if sending many small draw commands to the HW is more expensive
    * than sending fewer, bigger ones even considering you will also send
@@ -163,24 +154,36 @@ struct s_display_hw {
    *
    * Otherwise, set this to zero.
    */
+  dat merge_Threshold;
 
   uldat AttachSlot; /* slot of client that told us to attach to this display */
 
   dat XY[2]; /* hw-dependent cursor position */
   uldat TT;  /* hw-dependent cursor type */
-};
 
-struct s_fn_display_hw {
-  uldat Magic, Size, Used;
-  display_hw (*Create)(fn_display_hw, uldat NameLen, CONST char *Name);
-  void (*Insert)(display_hw, all, display_hw Prev, display_hw Next);
-  void (*Remove)(display_hw);
-  void (*Delete)(display_hw);
-  void (*ChangeField)(display_hw, udat field, uldat CLEARMask, uldat XORMask);
+  static display_hw Create(uldat namelen, const char *name);
+  display_hw Init(uldat namelen, const char *name);
+
+  /* obj */
+  uldat Magic() const {
+    return Fn->Magic;
+  }
+  void Insert(all a, display_hw prev, display_hw next) {
+    Fn->Insert(this, a, prev, next);
+  }
+  void Remove() {
+    Fn->Remove(this);
+  }
+  void Delete() {
+    Fn->Delete(this);
+  }
   /* display_hw */
-  fn_obj Fn_Obj;
-  byte (*Init)(display_hw);
-  void (*Quit)(display_hw);
+  byte DoInit() {
+    return Fn->DoInit(this);
+  }
+  void DoQuit() {
+    Fn->DoQuit(this);
+  }
 };
 
 /* DisplayHW->FlagsHW */
@@ -200,4 +203,4 @@ struct s_fn_display_hw {
 #define NEEDFromPreviousFlushHW ((byte)0x40)
 #define NEEDBeepHW ((byte)0x80)
 
-#endif /* _TWIN_DISPLAY_HW_H */
+#endif /* TWIN_DISPLAY_HW_H */

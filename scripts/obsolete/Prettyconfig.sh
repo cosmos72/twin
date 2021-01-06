@@ -23,9 +23,6 @@ if test "$enable__shlibs" = y; then
 fi
 
 echo_cc_feat=
-if test "$enable__asm" = y; then
-  echo_cc_feat="$echo_cc_feat $enable__asm_style"
-fi
 if test "$enable__long_long" = y; then
   echo_cc_feat="$echo_cc_feat long-long"
 fi
@@ -67,7 +64,7 @@ else
 fi
 
 echo_hw=
-for i in gfx x11 twin display tty ggi; do
+for i in x11 xft twin display tty; do
   eval "echo_val=\${enable_hw_$i}"
   if test "$echo_val" = y; then
     echo_hw="$echo_hw $i"
@@ -100,10 +97,10 @@ fi
 
 echo_libs=
 if test "$enable__unicode" != n; then
-  echo_libs="$echo_libs $echo_op""libTutf""$echo_cl"
+  echo_libs="$echo_libs $echo_op""libtutf""$echo_cl"
 fi
 if test "$enable_socket" != n; then
-  echo_libs="$echo_libs $echo_op""libTw""$echo_cl"
+  echo_libs="$echo_libs $echo_op""libtw""$echo_cl"
 fi
 if test "$enable_TT" != n; then
   echo_libs="$echo_libs $echo_op""libTT""$echo_cl"
@@ -149,4 +146,3 @@ Configuration:
 to show/change other configuration settings, you can run one of:
 './configure <options>', 'scripts/Configure.sh <options>',
 'make menuconfig' or 'make config'"
-

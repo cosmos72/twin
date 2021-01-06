@@ -14,8 +14,8 @@
  *
  */
 
-#ifndef _TT_TTCHECKMENUITEM_H
-#define _TT_TTCHECKMENUITEM_H
+#ifndef TT_TTCHECKMENUITEM_H
+#define TT_TTCHECKMENUITEM_H
 
 /* object structure */
 #ifndef s_ttcheckmenuitem
@@ -34,4 +34,4 @@ extern ttclass TTClass_ttcheckmenuitem;
 
 /* TTGet*_ttcheckmenuitem and TTSet*_ttcheckmenuitem methods */
 
-#endif /* _TT_TTCHECKMENUITEM_H */
+#endif /* TT_TTCHECKMENUITEM_H */

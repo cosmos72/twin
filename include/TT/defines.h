@@ -1,7 +1,7 @@
 
 
-#ifndef _TT_DEFINES_H
-#define _TT_DEFINES_H
+#ifndef TT_DEFINES_H
+#define TT_DEFINES_H
 
 #define TT_FALSE 0
 #define TT_TRUE 1
@@ -36,4 +36,4 @@
 /** return the class (runtime type) of `o' (will be one of the `TTClass_*' types) */
 #define TTCLASSOF(o) TTClassOf((ttobj)(o))
 
-#endif /* _TT_DEFINES_H */
+#endif /* TT_DEFINES_H */

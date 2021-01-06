@@ -9,8 +9,8 @@
  *
  */
 
-#ifndef _TT_INLINES_H
-#define _TT_INLINES_H
+#ifndef TT_INLINES_H
+#define TT_INLINES_H
 
 /* #define ISClass(Class1,Class2) macro */
 #define ISClass(ClassT, Class) (((Class)->magic & (ClassT)->magicmask) == (ClassT)->magic)
@@ -26,7 +26,9 @@
 
 /* ttobj <-> tt_obj conversion */
 
-TT_INLINE opaque Obj2Id(ttobj Obj) { return Obj ? Obj->id : TT_NOID; }
+TT_INLINE opaque Obj2Id(ttobj Obj) {
+  return Obj ? Obj->id : TT_NOID;
+}
 #define OBJ2ID(o) Obj2Id((ttobj)(o))
 
 #define ID2OBJ(id) Id2Obj(id_ttclass_ttobj, (opaque)(id))
@@ -104,6 +106,12 @@ TT_INLINE tttheme GetDefault_tttheme(void) {
   return TTD.Theme ? TTD.Theme : TTD.DummyTheme;
 }
 
-TT_INLINE ttapplication Get_ttapplication(void) { return TTD.Application; }
+TT_INLINE ttapplication Get_ttapplication(void) {
+  return TTD.Application;
+}
 
-#endif /* _TT_INLINES_H */
+TT_INLINE ttapplication Get_ttapplication(void) {
+  return TTD.Application;
+}
+
+#endif /* TT_INLINES_H */

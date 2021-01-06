@@ -74,11 +74,11 @@ static void Usage(void) {
 }
 
 static byte InitButtons(char *bt1, char *bt2) {
-  return TwCreateButtonGadget(Dialog_Win, strlen(bt1), 1, bt1, 1, 0, COL(BLACK, WHITE),
-                              COL(BLACK, GREEN), COL(HIGH | BLACK, GREEN),
+  return TwCreateButtonGadget(Dialog_Win, strlen(bt1), 1, bt1, 1, 0, TCOL(tblack, twhite),
+                              TCOL(tblack, tgreen), TCOL(thigh | tblack, tgreen),
                               width / 2 - (bt2 ? strlen(bt1) + 2 : strlen(bt1) / 2), height - 2) &&
-         (!bt2 || TwCreateButtonGadget(Dialog_Win, strlen(bt2), 1, bt2, 2, 0, COL(BLACK, WHITE),
-                                       COL(BLACK, GREEN), COL(HIGH | BLACK, GREEN),
+         (!bt2 || TwCreateButtonGadget(Dialog_Win, strlen(bt2), 1, bt2, 2, 0, TCOL(tblack, twhite),
+                                       TCOL(tblack, tgreen), TCOL(thigh | tblack, tgreen),
                                        width / 2 + strlen(bt2) / 2, height - 2));
 }
 
@@ -102,7 +102,7 @@ static byte ShowText(void) {
     int len = strlen(text);
     if (!memchr(text, '\n', len))
       TwGotoXYWindow(Dialog_Win, (width - len) / 2, 0);
-    TwWriteAsciiWindow(Dialog_Win, len, text);
+    TwWriteCharsetWindow(Dialog_Win, len, text);
   }
   return ttrue;
 }
@@ -137,9 +137,9 @@ static byte InitMenuBox(void) {
     y = CountNewLines(text) + 2;
     for (i = 0; i < listN; i++) {
       TwGotoXYWindow(Dialog_Win, 3, i + y);
-      TwWriteAsciiWindow(Dialog_Win, strlen(list[i].tag), list[i].tag);
+      TwWriteCharsetWindow(Dialog_Win, strlen(list[i].tag), list[i].tag);
       TwGotoXYWindow(Dialog_Win, 10, i + y);
-      TwWriteAsciiWindow(Dialog_Win, strlen(list[i].item), list[i].item);
+      TwWriteCharsetWindow(Dialog_Win, strlen(list[i].item), list[i].item);
     }
     return InitButtons("  OK  ", "Cancel");
   }
@@ -270,9 +270,9 @@ static byte InitDialog(void) {
 
   return TwCheckMagic(dialog_magic) && TwOpen(NULL) &&
          (Dialog_MsgPort = TwCreateMsgPort(8, "twdialog")) &&
-         (Dialog_Menu =
-              TwCreateMenu(COL(BLACK, WHITE), COL(BLACK, GREEN), COL(HIGH | BLACK, WHITE),
-                           COL(HIGH | BLACK, BLACK), COL(RED, WHITE), COL(RED, GREEN), (byte)0)) &&
+         (Dialog_Menu = TwCreateMenu(TCOL(tblack, twhite), TCOL(tblack, tgreen),
+                                     TCOL(thigh | tblack, twhite), TCOL(thigh | tblack, tblack),
+                                     TCOL(tred, twhite), TCOL(tred, tgreen), (byte)0)) &&
          (TwInfo4Menu(Dialog_Menu, TW_ROW_ACTIVE, 10, " Twin Dialog ",
                       (TW_CONST tcolor *)"ptpppptpppppp"),
           ttrue) &&
@@ -280,10 +280,11 @@ static byte InitDialog(void) {
          TwRow4Menu(Window, COD_QUIT, TW_ROW_INACTIVE, 6, " Quit ") &&
          TwItem4Menu(Dialog_Menu, Window, ttrue, 6, " File ") && TwItem4MenuCommon(Dialog_Menu) &&
          (Dialog_Win =
-              TwCreateWindow(strlen(title), title, NULL, Dialog_Menu, COL(BLACK, WHITE),
+              TwCreateWindow(strlen(title), title, NULL, Dialog_Menu, TCOL(tblack, twhite),
                              TW_LINECURSOR, TW_WINDOW_DRAG | TW_WINDOW_RESIZE | TW_WINDOW_CLOSE,
                              TW_WINDOWFL_ROWS_DEFCOL, width, height, 0)) &&
-         (TwSetColorsWindow(Dialog_Win, 1 << 6, 0, 0, 0, 0, 0, 0, COL(HIGH | WHITE, BLUE), 0, 0),
+         (TwSetColorsWindow(Dialog_Win, 1 << 6, 0, 0, 0, 0, 0, 0, TCOL(thigh | twhite, tblue), 0,
+                            0),
           ttrue) &&
          (*mode)() && (TwMapWindow(Dialog_Win, TwFirstScreen()), ttrue) && TwFlush();
 }
@@ -310,7 +311,7 @@ int main(int argc, char *argv[]) {
       }
     }
   if ((err = TwErrno))
-    fprintf(stderr, "%s: libTw error: %s%s\n", argv[0], TwStrError(err),
+    fprintf(stderr, "%s: libtw error: %s%s\n", argv[0], TwStrError(err),
             TwStrErrorDetail(err, TwErrnoDetail));
 
   if (!TwInPanic())

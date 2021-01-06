@@ -2,8 +2,8 @@
  *  ascii.h  --  include for ANSI_X3.4-1968 (US ASCII) characters database
  */
 
-#ifndef _TUTF_ASCII_H
-#define _TUTF_ASCII_H
+#ifndef TUTF_ASCII_H
+#define TUTF_ASCII_H
 
 #define T_ASCII_CTRL_NULL 0x0000
 #define T_ASCII_CTRL_START_OF_HEADING 0x0001
@@ -524,4 +524,4 @@
 /* list of all characters NOT IDENTICALLY MAPPED to UTF-16 */
 #define T_NLIST_ASCII(EL) /* empty */
 
-#endif /* _TUTF_ASCII_H */
+#endif /* TUTF_ASCII_H */

@@ -7,8 +7,10 @@
  *
  */
 
-#ifndef _TWIN_EXTREG_H
-#define _TWIN_EXTREG_H
+#ifndef TWIN_EXTREG_H
+#define TWIN_EXTREG_H
+
+#include "stl/span.h"
 
 typedef struct exts exts;
 
@@ -22,12 +24,10 @@ struct exts {
   struct {
     void (*SendMsg)(msgport MsgPort, msg Msg);
     byte (*InitAuth)(void);
-    byte (*DecodeExtension)(topaque *len, CONST byte **data, topaque *args_n, tsfield args);
-    void (*MultiplexS)(uldat order, topaque args_n, tsfield args);
-    tany (*MultiplexL)(uldat order, ...);
+    void (*MultiplexS)(uldat order, Span<s_tsfield> args);
   } Socket;
   struct {
-    window (*Open)(CONST char *arg0, CONST char *CONST *argv);
+    window (*Open)(const char *arg0, const char *const *argv);
   } Term;
 };
 
@@ -41,4 +41,4 @@ byte UnRegister_Ext(void **where, void *data);
 
 #define Ext(kind, member) (Exts.kind.member)
 
-#endif /* _TWIN_EXTREG_H */
+#endif /* TWIN_EXTREG_H */

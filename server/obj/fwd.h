@@ -10,11 +10,12 @@
  *
  */
 
-#ifndef _TWIN_FWD_H
-#define _TWIN_FWD_H
+#ifndef TWIN_FWD_H
+#define TWIN_FWD_H
 
 typedef struct s_draw_ctx draw_ctx;
-typedef struct s_obj_parent *obj_parent;
+typedef struct s_obj_list *obj_list;
+typedef struct s_obj_entry *obj_entry;
 typedef struct s_ttydata ttydata;
 typedef struct s_remotedata remotedata;
 
@@ -31,7 +32,6 @@ typedef struct s_msg *msg;
 typedef struct s_msgport *msgport;
 typedef struct s_mutex *mutex;
 typedef struct s_module *module;
-typedef struct s_extension *extension;
 typedef struct s_display_hw *display_hw;
 
 typedef struct s_fn_obj *fn_obj;
@@ -47,13 +47,12 @@ typedef struct s_fn_msg *fn_msg;
 typedef struct s_fn_msgport *fn_msgport;
 typedef struct s_fn_mutex *fn_mutex;
 typedef struct s_fn_module *fn_module;
-typedef struct s_fn_extension *fn_extension;
 typedef struct s_fn_display_hw *fn_display_hw;
 
-typedef struct s_fn fn;
+typedef struct s_fn_struct fn_struct;
 typedef struct s_setup setup;
 typedef struct s_all *all;
 
 typedef void (*fn_hook)(widget);
 
-#endif /* _TWIN_FWD_H */
+#endif /* TWIN_FWD_H */

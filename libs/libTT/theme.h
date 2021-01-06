@@ -9,8 +9,8 @@
  *
  */
 
-#ifndef _TT_THEME_H
-#define _TT_THEME_H
+#ifndef TT_THEME_H
+#define TT_THEME_H
 
 #define myTheme(o) ((o)->theme ? (o)->theme : GetDefault_tttheme())
 
@@ -25,4 +25,4 @@ TT_INLINE ttuint _myMenubar_n(ttmenubar m) {
 #define myMenubar_id(o) _myMenubar_id((o)->menubar)
 #define myMenubar_n(o) _myMenubar_n((o)->menubar)
 
-#endif /* _TT_THEME_H */
+#endif /* TT_THEME_H */

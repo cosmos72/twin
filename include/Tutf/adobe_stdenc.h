@@ -7,8 +7,8 @@
  * PLEASE DO NOT EDIT!
  */
 
-#ifndef _TUTF_ADOBE_STDENC_H
-#define _TUTF_ADOBE_STDENC_H
+#ifndef TUTF_ADOBE_STDENC_H
+#define TUTF_ADOBE_STDENC_H
 
 #define T_ADOBE_STDENC_CTRL_NULL 0x0000
 #define T_ADOBE_STDENC_CTRL_START_OF_HEADING 0x0001
@@ -441,4 +441,4 @@
   EL(_LATIN_SMALL_LETTER_N_WITH_TILDE)                                                             \
   EL(_LATIN_SMALL_LETTER_U_WITH_GRAVE)
 
-#endif /* _TUTF_ADOBE_STDENC_H */
+#endif /* TUTF_ADOBE_STDENC_H */

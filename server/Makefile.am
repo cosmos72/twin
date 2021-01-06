@@ -2,7 +2,7 @@ SUBDIRS = hw
 
 bin_PROGRAMS       = twdisplay twin twin_server
 bin_SCRIPTS        = twstart
-pkglib_LTLIBRARIES = 
+pkglib_LTLIBRARIES =
 
 if LIBRCPARSE_la
   pkglib_LTLIBRARIES += librcparse.la
@@ -20,17 +20,19 @@ endif
 AM_CPPFLAGS           = -I$(top_srcdir)/include $(LTDLINCL) -DPKG_LIBDIR="\"$(pkglibdir)\""
 twin_CPPFLAGS         = -I$(top_srcdir)/include $(LTDLINCL) -DBINDIR="\"$(bindir)\""
 
-twdisplay_SOURCES     = alloc.c display.c dl_helper.c missing.c hw.c
+twdisplay_SOURCES     = alloc.cpp display.cpp dl_helper.cpp missing.cpp hw.cpp
 twin_SOURCES          = wrapper.c
-twin_server_SOURCES   = alloc.c builtin.c data.c dl.c dl_helper.c draw.c extensions/ext_query.c extreg.c \
-                        hw.c hw_multi.c main.c methods.c missing.c \
-                        obj/id.c obj/widget.c obj/all.c \
-                        printk.c privilege.c remote.c resize.c scroller.c util.c
+twin_server_SOURCES   = alloc.cpp builtin.cpp data.cpp dl.cpp dl_helper.cpp draw.cpp \
+                        extreg.cpp hw.cpp hw_multi.cpp main.cpp methods.cpp missing.cpp \
+                        obj/all.cpp obj/display_hw.cpp obj/gadget.cpp obj/group.cpp \
+                        obj/id.cpp obj/menu.cpp obj/menuitem.cpp obj/module.cpp obj/msg.cpp obj/msgport.cpp \
+                        obj/mutex.cpp obj/obj.cpp obj/row.cpp obj/screen.cpp obj/widget.cpp obj/window.cpp \
+                        printk.cpp privilege.cpp remote.cpp resize.cpp scroller.cpp util.cpp
 
-librcparse_la_SOURCES = rcparse_tab.c rcparse_lex.c
-libterm_la_SOURCES    = pty.c tterm.c tty.c
-libsocket_la_SOURCES  = md5.c socket.c
-libwm_la_SOURCES      = rcopt.c rcrun.c shm.c wm.c
+librcparse_la_SOURCES = rcparse_tab.cpp rcparse_lex.cpp
+libterm_la_SOURCES    = pty.cpp tterm.cpp tty.cpp
+libsocket_la_SOURCES  = md5.cpp socket.cpp
+libwm_la_SOURCES      = rcopt.cpp rcrun.cpp shm.cpp wm.cpp
 
 twdisplay_LDFLAGS     = -export-dynamic $(LDFLAGS_BIN_EXPORT_DYNAMIC)
 twin_server_LDFLAGS   = -export-dynamic $(LDFLAGS_BIN_EXPORT_DYNAMIC)
@@ -41,7 +43,7 @@ libterm_la_LDFLAGS    = -export-dynamic -export-symbols-regex '^(Init|Quit)Modul
 # libwm exports some symbols needed by librcparse, do not constrain them with -export-symbols-regex
 libwm_la_LDFLAGS      = -export-dynamic                                              -release $(PACKAGE_VERSION)
 
-twdisplay_LDADD       = $(LIBTW) $(LIBTUTF) $(LIBDL)
-twin_server_LDADD     =          $(LIBTUTF) $(LIBDL)
+twdisplay_LDADD       = $(LIBTW) $(LIBTUTF) $(LIBDL) $(LIBTSTL)
+twin_server_LDADD     =          $(LIBTUTF) $(LIBDL) $(LIBTSTL)
 
 libsocket_la_LIBADD   = $(LIBSOCK) $(LIBZ)

@@ -7,8 +7,8 @@
  * PLEASE DO NOT EDIT!
  */
 
-#ifndef _TUTF_KOI8_U_H
-#define _TUTF_KOI8_U_H
+#ifndef TUTF_KOI8_U_H
+#define TUTF_KOI8_U_H
 
 #define T_KOI8_U_CTRL_NULL 0x0000
 #define T_KOI8_U_CTRL_START_OF_HEADING 0x0001
@@ -657,4 +657,4 @@
   EL(_CYRILLIC_CAPITAL_LETTER_CHE)                                                                 \
   EL(_CYRILLIC_CAPITAL_LETTER_HARD_SIGN)
 
-#endif /* _TUTF_KOI8_U_H */
+#endif /* TUTF_KOI8_U_H */

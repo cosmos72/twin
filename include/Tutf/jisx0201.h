@@ -5,8 +5,8 @@
  * Do not edit!
  */
 
-#ifndef _TUTF_JISX0201_H
-#define _TUTF_JISX0201_H
+#ifndef TUTF_JISX0201_H
+#define TUTF_JISX0201_H
 
 #define T_JISX0201_CTRL_NULL 0x0000
 #define T_JISX0201_CTRL_START_OF_HEADING 0x0001
@@ -625,4 +625,4 @@
   EL(_UNDEFINED_00FE)                                                                              \
   EL(_UNDEFINED_00FF)
 
-#endif /* _TUTF_JISX0201_H */
+#endif /* TUTF_JISX0201_H */

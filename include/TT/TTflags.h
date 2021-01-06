@@ -1,6 +1,6 @@
 
-#ifndef _TT_FLAGS_H
-#define _TT_FLAGS_H
+#ifndef TT_FLAGS_H
+#define TT_FLAGS_H
 
 /** ttevent value of `evtype' field indicating `del' (delete) event */
 #define ttevent_evtype_del 0
@@ -32,7 +32,7 @@
 #define ttevent_evcode_mouse_last 0x7FF
 #define ttevent_evcode_mouse_mask 0x3FF /* 0x07F actually used, but better stay large */
 
-/* mouse events stuff; loosely designed after libTw */
+/* mouse events stuff; loosely designed after libtw */
 
 #define ttevent_evcode_mouse_button_1 0x01
 #define ttevent_evcode_mouse_button_2 0x02
@@ -82,7 +82,7 @@
 #define ttevent_evcode_mouse_release_5                                                             \
   (ttevent_evcode_mouse_release | ttevent_evcode_mouse_button_5)
 
-/* ttevent evflags; same as libTw */
+/* ttevent evflags; same as libtw */
 #define ttevent_evflags_shift 0x0001
 #define ttevent_evflags_ctrl 0x0002
 #define ttevent_evflags_alt 0x0004
@@ -199,4 +199,4 @@
 /** ttscrollbar `forward arrow pressed' state */
 #define ttscrollbar_state_arrow_fwd 4
 
-#endif /* _TT_FLAGS_H */
+#endif /* TT_FLAGS_H */

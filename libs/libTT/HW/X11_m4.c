@@ -107,10 +107,10 @@ static ttfont X11_UTF_16_to_UTF_16(ttfont c) {
 static ttcol _col;
 
 #define XDRAW(col, buf, buflen)                                                                    \
-  if (xsgc.foreground != xcol[COLFG(col)])                                                         \
-    XSetForeground(dpy, xgc, xsgc.foreground = xcol[COLFG(col)]);                                  \
-  if (xsgc.background != xcol[COLBG(col)])                                                         \
-    XSetBackground(dpy, xgc, xsgc.background = xcol[COLBG(col)]);                                  \
+  if (xsgc.foreground != xcol[TCOLFG(col)])                                                        \
+    XSetForeground(dpy, xgc, xsgc.foreground = xcol[TCOLFG(col)]);                                 \
+  if (xsgc.background != xcol[TCOLBG(col)])                                                        \
+    XSetBackground(dpy, xgc, xsgc.background = xcol[TCOLBG(col)]);                                 \
   XDrawImageString16(dpy, w, xgc, xbegin, ybegin + xupfont, buf, buflen)
 
 TT_INLINE void X11_Mogrify(Window w, ttshort x, ttshort y, ttattr *Text, ttattr *OldText,
@@ -241,10 +241,10 @@ static ttbyte X11_MainLoop(void) {
     XEvent ev;
 
     while (!exitmainloop && XNextEvent(dpy, &ev)) {
-	if (!X11_FireEvent(&ev))
-	    break;
+        if (!X11_FireEvent(&ev))
+            break;
     }
-    
+
     exitmainloop = tfalse;
     return 1;
 }
@@ -346,7 +346,7 @@ static Tutf_function X11_UTF_16_to_charset_function(TT_CONST ttbyte *charset) {
 
   if (i == (ttuint)-1) {
     /*
-    printk("      X11_InitHW(): libTutf warning: unknown charset %."TTSB"s, assuming CP437\n",
+    printk("      X11_InitHW(): libtutf warning: unknown charset %."TTSB"s, assuming CP437\n",
     charset);
      */
     return Tutf_UTF_16_to_CP437;

@@ -1,5 +1,5 @@
 ;
-; This is (almost) a complete listing of libTw
+; This is (almost) a complete listing of libtw
 ; function prototypes to use with Linux ltrace(1).
 ;
 ; You can either append the contents of this file to the system-wide
@@ -21,7 +21,7 @@
 ; string	== (char *)
 ; stringN	== (char *)		[N>=0]	[show only up to (arg N) bytes]
 
-; libTw.h
+; libtw.h
 ;
 ; the following are added manually
 ;
@@ -34,7 +34,8 @@ addr  DEF(Tw_SearchWidgetAtWidget)(addr, addr, int, int);
 void  DEF(Tw_Create4MenuRow)(addr, addr, int, int, int, string);
 addr  DEF(Tw_CreateWindow)(addr, int, string2, string2, addr, int, uint, uint, uint, int, int, int);
 addr  DEF(Tw_Create4MenuWindow)(addr, addr);
-void  DEF(Tw_WriteAsciiWindow)(addr, addr, uint, string3);
+void  DEF(Tw_WriteCharsetWindow)(addr, addr, uint, string3);
+void  DEF(Tw_WriteUtf8Window)(addr, addr, uint, string3);
 void  DEF(Tw_WriteTCellWindow)(addr, addr, int, int, uint, string);
 void  DEF(Tw_WriteRowWindow)(addr, addr, uint, string3);
 void  DEF(Tw_ConfigureWindow)(addr, addr, octal, int, int, int, int, int, int);

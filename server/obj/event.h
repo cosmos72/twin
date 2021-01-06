@@ -10,56 +10,59 @@
  *
  */
 
-#ifndef _TWIN_EVENT_H
-#define _TWIN_EVENT_H
+#ifndef TWIN_EVENT_H
+#define TWIN_EVENT_H
 
 #include "obj/fwd.h"
+#include <Tw/datatypes.h>
 
-#define MSG_KEY ((udat)0)
-#define MSG_MOUSE ((udat)1)
-#define MSG_MAP ((udat)2)
-#define MSG_CONTROL ((udat)3)
+enum e_msg {
+  msg_key = 0,
+  msg_mouse = 1,
+  msg_map = 2,
+  msg_control = 3,
 
-#define MSG_DISPLAY ((udat)0x0FFF)
+  msg_display = 0x0FFF,
 
-#define MSG_SYSTEM_FIRST ((udat)0x1000)
-#define MSG_WIDGET_KEY ((udat)0x1000)
-#define MSG_WIDGET_MOUSE ((udat)0x1001)
-#define MSG_WIDGET_CHANGE ((udat)0x1002)
-#define MSG_WIDGET_GADGET ((udat)0x1003)
-#define MSG_MENU_ROW ((udat)0x1004)
-#define MSG_SELECTION ((udat)0x1005)
-#define MSG_SELECTIONNOTIFY ((udat)0x1006)
-#define MSG_SELECTIONREQUEST ((udat)0x1007)
-#define MSG_SELECTIONCLEAR ((udat)0x1008)
+  msg_system_first = 0x1000,
+  msg_widget_key = 0x1000,
+  msg_widget_mouse = 0x1001,
+  msg_widget_change = 0x1002,
+  msg_widget_gadget = 0x1003,
+  msg_menu_row = 0x1004,
+  msg_selection = 0x1005,
+  msg_selection_notify = 0x1006,
+  msg_selection_request = 0x1007,
+  msg_selection_clear = 0x1008,
 
-#define MSG_USER_FIRST ((udat)0x2000)
-#define MSG_USER_CONTROL ((udat)0x2000)
-#define MSG_USER_CONTROL_REPLY ((udat)0x2001)
-#define MSG_USER_CLIENTMSG ((udat)0x2100)
+  msg_user_first = 0x2000,
+  msg_user_control = 0x2000,
+  msg_user_control_reply = 0x2001,
+  msg_user_clientmsg = 0x2100,
+};
 
 /*
  * Notes about MsgType :
  *
  * 0x0000 ... 0x0FFF : Messages from Twin to the WM or another special task;
  * currently defined are:
- * MSG_KEY		use Msg->Event.EventKeyboard to get the event
- * MSG_MOUSE		use ...Event.EventMouse
- * MSG_CONTROL		use ...Event.EventControl
+ * msg_key                use Msg->Event.EventKeyboard to get the event
+ * msg_mouse                use ...Event.EventMouse
+ * msg_control                use ...Event.EventControl
  *
- * MSG_DISPLAY		use ...Event.EventDisplay
+ * msg_display                use ...Event.EventDisplay
  *
  * 0x1000 ... 0x1FFF : Messages from the WM to a generick task
  * currently defined are:
- * MSG_WIDGET_KEY	use ...EventKeyboard
- * MSG_WIDGET_MOUSE	use ...EventMouse
- * MSG_WIDGET_CHANGE	use ...EventWindow
- * MSG_WIDGET_GADGET	use ...EventGadget
- * MSG_MENU_ROW		use ...EventMenu
- * MSG_SELECTION	use ...EventSelection
- * MSG_SELECTIONNOTIFY	use ...EventSelectionNotify
- * MSG_SELECTIONREQUEST	use ...EventSelectionRequest
- * MSG_SELECTIONCLEAR	use ...EventCommon
+ * msg_widget_key        use ...EventKeyboard
+ * msg_widget_mouse        use ...EventMouse
+ * msg_widget_change        use ...EventWindow
+ * msg_widget_gadget        use ...EventGadget
+ * msg_menu_row                use ...EventMenu
+ * msg_selection        use ...EventSelection
+ * msg_selection_notify        use ...EventSelectionNotify
+ * msg_selection_request        use ...EventSelectionRequest
+ * msg_selection_clear        use ...EventCommon
  * If you don't want to get messages from gadgets or menuitem rows,
  * just set to 0 (zero) their Code.
  *
@@ -67,54 +70,48 @@
  * they are completely user-defined. As guideline, the following
  * are defined:
  *
- * MSG_USER_CONTROL	use ...Event.EventControl
+ * msg_user_control        use ...Event.EventControl
  */
 
-typedef struct s_event_common event_common;
-struct s_event_common {
+typedef struct s_event_common {
   widget W;
   udat Code, pad;
-};
+} event_common;
 
-typedef struct s_event_map event_map;
-struct s_event_map {
+typedef struct s_event_map {
   widget W;
   udat Code, pad; /* unused */
   screen Screen;
-};
+} event_map;
 
-typedef struct s_event_keyboard event_keyboard;
-struct s_event_keyboard {
+typedef struct s_event_keyboard {
   widget W;
   udat Code, ShiftFlags, SeqLen;
   byte pad;
   char AsciiSeq[1]; /* AsciiSeq[SeqLen] == '\0' */
-};
+} event_keyboard;
 
-typedef struct s_event_mouse event_mouse;
-struct s_event_mouse {
+typedef struct s_event_mouse {
   widget W;
   udat Code, ShiftFlags;
   dat X, Y;
-};
+} event_mouse;
 
-typedef struct s_event_control event_control;
-struct s_event_control {
+typedef struct s_event_control {
   widget W;
   udat Code, Len;
   dat X, Y;
   char Data[sizeof(uldat)]; /* [Len] bytes actually */
-};
+} event_control;
 
-/* some MSG_CONTROL codes */
+/* some msg_control codes */
 #define MSG_CONTROL_QUIT ((udat)0)
 #define MSG_CONTROL_RESTART ((udat)1)
 #define MSG_CONTROL_OPEN ((udat)2)
 #define MSG_CONTROL_DRAGNDROP ((udat)3)
 
 /* use for free-format messages between clients */
-typedef struct s_event_clientmsg event_clientmsg;
-struct s_event_clientmsg {
+typedef struct s_event_clientmsg {
   widget W;
   udat Code, Format;
   uldat Len;
@@ -123,33 +120,34 @@ struct s_event_clientmsg {
     udat d[sizeof(uldat) / sizeof(udat)];
     uldat l[1];
   } Data; /* [Len] bytes actually */
-};
+} event_clientmsg;
 
-typedef struct s_event_display event_display;
-struct s_event_display {
+typedef struct s_event_display {
   widget W; /* not used here */
   udat Code, Len;
   dat X, Y;
   void *Data; /* [Len] bytes actually */
+} event_display;
+
+enum e_event_display_code {
+  ev_dpy_DrawTCell = 0,
+  ev_dpy_FlushHW = 1,
+  ev_dpy_KeyboardEvent = 2,
+  ev_dpy_MouseEvent = 3,
+  ev_dpy_SetCursorType = 4,
+  ev_dpy_MoveToXY = 5,
+  ev_dpy_Resize = 6,
+
+  ev_dpy_SelectionExport = 8,
+  ev_dpy_DragArea = 9,
+  ev_dpy_Beep = 10,
+  ev_dpy_Configure = 11,
+  ev_dpy_SetPalette = 12,
+  ev_dpy_ResetPalette = 13,
+  ev_dpy_Helper = 14,
+  ev_dpy_RedrawVideo = 15,
+  ev_dpy_Quit = 16,
 };
-
-#define DPY_DrawTCell ((udat)0)
-#define DPY_FlushHW ((udat)1)
-#define DPY_KeyboardEvent ((udat)2)
-#define DPY_MouseEvent ((udat)3)
-#define DPY_SetCursorType ((udat)4)
-#define DPY_MoveToXY ((udat)5)
-#define DPY_Resize ((udat)6)
-
-#define DPY_SelectionExport ((udat)8)
-#define DPY_DragArea ((udat)9)
-#define DPY_Beep ((udat)10)
-#define DPY_Configure ((udat)11)
-#define DPY_SetPalette ((udat)12)
-#define DPY_ResetPalette ((udat)13)
-#define DPY_Helper ((udat)14)
-#define DPY_RedrawVideo ((udat)15)
-#define DPY_Quit ((udat)16)
 
 typedef struct s_event_widget event_widget;
 struct s_event_widget {
@@ -159,11 +157,11 @@ struct s_event_widget {
   dat X, Y;
 };
 
-/* some MSG_WIDGET_CHANGE codes */
+/* some msg_widget_change codes */
 #define MSG_WIDGET_RESIZE 0
 #define MSG_WIDGET_EXPOSE 1
 
-/* some MSG_WIDGET_CHANGE flags */
+/* some msg_widget_change flags */
 #define MSG_WIDGETFL_SHADED 1
 
 typedef struct s_event_gadget event_gadget;
@@ -201,8 +199,7 @@ struct s_event_selectionnotify {
 };
 /*SelectionNotify Magic*/
 #define SEL_APPEND 0x00000000
-#define SEL_TEXTMAGIC 0x54657874
-#define SEL_TRUNEMAGIC 0x4877666E /* it's unicode */
+#define SEL_UTF8MAGIC 0x55746638 /* UTF-8 */
 #define SEL_FILEMAGIC 0x46696c65
 #define SEL_URLMAGIC 0xAB1691BA
 #define SEL_DATAMAGIC 0xDA1AA1AD /* check MIME if you get this */
@@ -233,4 +230,4 @@ union event_any {
   event_selectionrequest EventSelectionRequest;
 };
 
-#endif /* _TWIN_EVENT_H */
+#endif /* TWIN_EVENT_H */

@@ -6,8 +6,8 @@
  * (at your option) any later version.
  *
  */
-#ifndef _TWIN_PRIVILEGE_H
-#define _TWIN_PRIVILEGE_H
+#ifndef TWIN_PRIVILEGE_H
+#define TWIN_PRIVILEGE_H
 
 #include "twautoconf.h"
 #include "compiler.h"
@@ -20,6 +20,6 @@
 #endif
 
 gid_t get_tty_grgid(void);
-int init_groups(CONST char *user_name, gid_t group_id);
+int init_groups(const char *user_name, gid_t group_id);
 
-#endif /* _TWIN_PRIVILEGE_H */
+#endif /* TWIN_PRIVILEGE_H */

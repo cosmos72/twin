@@ -15,19 +15,12 @@ struct x11_data {
   XGCValues xsgc;
 #if HW_X_DRIVER == HW_X11
   XFontStruct *xsfont;
-#elif HW_X_DRIVER == HW_GFX
-  XFontStruct *xsfont;
-  int xmonochrome;
-  Pixmap xtheme, xroot, xbg;
-  GC xthemegc, xrootgc, xbggc;
-  XGCValues xthemesgc;
-  byte xroot_flag, xbg_flag;
 #elif HW_X_DRIVER == HW_XFT
   XftFont *xsfont;
   XftDraw *xftdraw;
   XftColor *foreground; // current foreground color
   XftColor *background; // current background color
-  XftColor *xftcolors[MAXCOL + 1];
+  XftColor *xftcolors[tmaxcol + 1];
 #endif
 #ifdef TW_FEATURE_X11_XIM_XIC /* autodetected */
   XIM xim;
@@ -40,8 +33,8 @@ struct x11_data {
   uldat xReqCount;
   uldat XReqCount;
   XSelectionRequestEvent XReq[NEST];
-  unsigned long xcol[MAXCOL + 1];
-  Atom xWM_PROTOCOLS, xWM_DELETE_WINDOW, xTARGETS;
+  unsigned long xcol[tmaxcol + 1];
+  Atom xCOMPOUND_TEXT, xTARGETS, xTEXT, xUTF8_STRING, xWM_DELETE_WINDOW, xWM_PROTOCOLS;
 };
 
 #define xdata ((struct x11_data *)HW->Private)
@@ -75,22 +68,14 @@ struct x11_data {
 #define XReqCount (xdata->XReqCount)
 #define XReq(j) (xdata->XReq[j])
 #define xcol (xdata->xcol)
+#define xCOMPOUND_TEXT (xdata->xCOMPOUND_TEXT)
+#define xTARGETS (xdata->xTARGETS)
+#define xTEXT (xdata->xTEXT)
+#define xUTF8_STRING (xdata->xUTF8_STRING)
 #define xWM_PROTOCOLS (xdata->xWM_PROTOCOLS)
 #define xWM_DELETE_WINDOW (xdata->xWM_DELETE_WINDOW)
-#define xTARGETS (xdata->xTARGETS)
 
-#if HW_X_DRIVER == HW_GFX
-#define xmonochrome (xdata->xmonochrome)
-#define xtheme (xdata->xtheme)
-#define xthemegc (xdata->xthemegc)
-#define xthemesgc (xdata->xthemesgc)
-#define xroot_flag (xdata->xroot_flag)
-#define xroot (xdata->xroot)
-#define xrootgc (xdata->xrootgc)
-#define xbg_flag (xdata->xbg_flag)
-#define xbg (xdata->xbg)
-#define xbggc (xdata->xbggc)
-#elif HW_X_DRIVER == HW_XFT
+#if HW_X_DRIVER == HW_XFT
 #define xftdraw (xdata->xftdraw)
 #define xforeground (xdata->foreground)
 #define xbackground (xdata->background)

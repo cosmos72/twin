@@ -10,24 +10,17 @@
  *
  */
 
-#ifndef _TWIN_MSG_H
-#define _TWIN_MSG_H
+#ifndef TWIN_MSG_H
+#define TWIN_MSG_H
 
 #include "obj/event.h"
+#include "obj/fwd.h"
+#include "obj/obj.h"
+#include "printk.h"
+#include <Tw/datatypes.h>
 
-struct s_msg {
-  uldat Id;
-  fn_msg Fn;
-  msg Prev, Next;
-  msgport MsgPort;
-  /* msg */
-  udat Type; /* See note above */
-  udat Len;  /* length of Event */
-  event_any Event;
-};
 struct s_fn_msg {
-  uldat Magic, Size, Used;
-  msg (*Create)(fn_msg, udat Type, udat EventLen);
+  uldat Magic;
   void (*Insert)(msg, msgport, msg Prev, msg Next);
   void (*Remove)(msg);
   void (*Delete)(msg);
@@ -36,4 +29,31 @@ struct s_fn_msg {
   fn_obj Fn_Obj;
 };
 
-#endif /* _TWIN_MSG_H */
+struct s_msg : public s_obj {
+  fn_msg Fn;
+  msg Prev, Next;
+  msgport MsgPort;
+  /* msg */
+  udat Type; /* See note above */
+  udat Len;  /* length of Event */
+  event_any Event;
+
+  static msg Create(udat type, udat eventlen);
+  msg Init(udat type, udat eventlen);
+
+  /* obj */
+  uldat Magic() const {
+    return Fn->Magic;
+  }
+  void Insert(msgport port, msg prev, msg next) {
+    Fn->Insert(this, port, prev, next);
+  }
+  void Remove() {
+    Fn->Remove(this);
+  }
+  void Delete() {
+    Fn->Delete(this);
+  }
+};
+
+#endif /* TWIN_MSG_H */

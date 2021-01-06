@@ -19,11 +19,11 @@ static void linux_UpdateMouseAndCursor(void);
 static byte linux_CanDragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp);
 static void linux_DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp);
 
-INLINE void linux_SetCursorType(uldat type) {
+inline void linux_SetCursorType(uldat type) {
   fprintf(stdOUT, "\033[?%d;%d;%dc", (int)(type & 0xFF), (int)((type >> 8) & 0xFF),
           (int)((type >> 16) & 0xFF));
 }
-INLINE void linux_MoveToXY(udat x, udat y) {
+inline void linux_MoveToXY(udat x, udat y) {
   fprintf(stdOUT, "\033[%d;%dH", y + 1, x + 1);
 }
 
@@ -76,7 +76,7 @@ static byte linux_InitVideo(void) {
   HW->HWSelectionImport = AlwaysFalse;
   HW->HWSelectionExport = NoOp;
   HW->HWSelectionRequest = (void (*)(obj, uldat))NoOp;
-  HW->HWSelectionNotify = (void (*)(uldat, uldat, CONST char *, uldat, CONST char *))NoOp;
+  HW->HWSelectionNotify = (void (*)(uldat, uldat, const char *, Chars))NoOp;
   HW->HWSelectionPrivate = 0;
 
   HW->CanDragArea = linux_CanDragArea;
@@ -118,39 +118,39 @@ static void linux_QuitVideo(void) {
  */
 #define linux_MogrifyInit()                                                                        \
   (fputs(tty_use_utf8 ? "\033[3l\033%G\033[m" : "\033%@\033[3h\033[m", stdOUT),                    \
-   _col = COL(WHITE, BLACK))
+   _col = TCOL(twhite, tblack))
 
 #define linux_MogrifyFinish() ((void)0)
 
-INLINE void linux_SetColor(tcolor col) {
+inline void linux_SetColor(tcolor col) {
   char colbuf[] = "\033[2x;2x;4x;3xm";
   char *colp = colbuf + 2;
   byte c;
 
-  if ((col & COL(HIGH, 0)) != (_col & COL(HIGH, 0))) {
-    if (col & COL(HIGH, 0))
+  if ((col & TCOL(thigh, 0)) != (_col & TCOL(thigh, 0))) {
+    if (col & TCOL(thigh, 0))
       *colp++ = '1';
     /* '22m' is normal intensity. we used '21m', which is actually 'doubly underlined' */
     else
       *colp++ = '2', *colp++ = '2';
     *colp++ = ';';
   }
-  if ((col & COL(0, HIGH)) != (_col & COL(0, HIGH))) {
-    if (_col & COL(0, HIGH))
+  if ((col & TCOL(0, thigh)) != (_col & TCOL(0, thigh))) {
+    if (_col & TCOL(0, thigh))
       *colp++ = '2';
     *colp++ = '5';
     *colp++ = ';';
   }
-  if ((col & COL(0, WHITE)) != (_col & COL(0, WHITE))) {
-    c = COLBG(col) & ~HIGH;
+  if ((col & TCOL(0, twhite)) != (_col & TCOL(0, twhite))) {
+    c = TCOLBG(col) & ~thigh;
     *colp++ = '4';
-    *colp++ = VGA2ANSI(c) + '0';
+    *colp++ = TVGA2ANSI(c) + '0';
     *colp++ = ';';
   }
-  if ((col & COL(WHITE, 0)) != (_col & COL(WHITE, 0))) {
-    c = COLFG(col) & ~HIGH;
+  if ((col & TCOL(twhite, 0)) != (_col & TCOL(twhite, 0))) {
+    c = TCOLFG(col) & ~thigh;
     *colp++ = '3';
-    *colp++ = VGA2ANSI(c) + '0';
+    *colp++ = TVGA2ANSI(c) + '0';
     *colp++ = ';';
   }
   _col = col;
@@ -163,7 +163,7 @@ INLINE void linux_SetColor(tcolor col) {
   fputs(colbuf, stdOUT);
 }
 
-INLINE void linux_Mogrify(dat x, dat y, uldat len) {
+inline void linux_Mogrify(dat x, dat y, uldat len) {
   tcell *V, *oV;
   tcolor col;
   trune c, _c;
@@ -205,7 +205,7 @@ INLINE void linux_Mogrify(dat x, dat y, uldat len) {
   }
 }
 
-INLINE void linux_SingleMogrify(dat x, dat y, tcell V) {
+inline void linux_SingleMogrify(dat x, dat y, tcell V) {
   trune c, _c;
 
   linux_MoveToXY(x, y);
@@ -239,7 +239,7 @@ static void linux_ShowMouse(void) {
   uldat pos =
       (HW->Last_x = HW->MouseState.x) + (HW->Last_y = HW->MouseState.y) * (ldat)DisplayWidth;
   tcell h = Video[pos];
-  tcolor c = ~TCOLOR(h) ^ COL(HIGH, HIGH);
+  tcolor c = ~TCOLOR(h) ^ TCOL(thigh, thigh);
 
   linux_SingleMogrify(HW->MouseState.x, HW->MouseState.y, TCELL(c, TRUNEEXTRA(h)));
 

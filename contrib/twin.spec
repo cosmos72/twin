@@ -84,12 +84,12 @@ ldconfig
 %files
 %defattr(-, root, root)
 %doc %{_mandir}/man1/twin.1*
-%doc docs/Configure docs/Tutorial docs/libTw.txt docs/ltrace.conf
+%doc docs/Configure docs/Tutorial docs/libtw.txt docs/ltrace.conf
 %doc docs/Compatibility docs/libTT-design.txt docs/Philosophy
 %doc COPYING COPYING.LIB Changelog.txt README BUGS INSTALL README.porting
 %doc twin-current.lsm
-%{_libdir}/libTutf.so.*
-%{_libdir}/libTw.so.*
+%{_libdir}/libtutf.so.*
+%{_libdir}/libtw.so.*
 %{_libdir}/twin
 %{_datadir}/twin
 %config %{_libdir}/twin/.twinrc
@@ -103,10 +103,10 @@ ldconfig
 %defattr(-, root, root)
 %{_includedir}/Tutf
 %{_includedir}/Tw
-%{_libdir}/libTutf.a
-%{_libdir}/libTutf.so
-%{_libdir}/libTw.a
-%{_libdir}/libTw.so
+%{_libdir}/libtutf.a
+%{_libdir}/libtutf.so
+%{_libdir}/libtw.a
+%{_libdir}/libtw.so
 
 %files libTT
 %{_libdir}/TT
@@ -120,4 +120,3 @@ ldconfig
 
 %clean
 [ "$RPM_BUILD_ROOT" != "/" ] && [ -d $RPM_BUILD_ROOT ] && rm -rf $RPM_BUILD_ROOT
-

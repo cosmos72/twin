@@ -10,26 +10,16 @@
  *
  */
 
-#ifndef _TWIN_GROUP_H
-#define _TWIN_GROUP_H
+#ifndef TWIN_GROUP_H
+#define TWIN_GROUP_H
 
-#include "obj/gadget.h"
+#include "obj/fwd.h"
+#include <Tw/datatypes.h>
 
 /* ggroup -- gadget group */
 
-struct s_group {
-  uldat Id;
-  fn_group Fn;
-  ggroup Prev, Next; /* list in the same msgport */
-  msgport MsgPort;
-  /* ggroup */
-  gadget FirstG, LastG; /* list in this ggroup */
-  gadget SelectG;
-};
-
 struct s_fn_group {
-  uldat Magic, Size, Used;
-  ggroup (*Create)(fn_group, msgport Parent);
+  uldat Magic;
   void (*Insert)(ggroup, msgport MsgPort, ggroup Prev, ggroup Next);
   void (*Remove)(ggroup);
   void (*Delete)(ggroup);
@@ -42,4 +32,43 @@ struct s_fn_group {
   void (*SetSelectedGadget)(ggroup, gadget);
 };
 
-#endif /* _TWIN_GROUP_H */
+struct s_group : public s_obj {
+  fn_group Fn;
+  ggroup Prev, Next; /* list in the same msgport */
+  msgport MsgPort;
+  /* ggroup */
+  gadget FirstG, LastG; /* list in this ggroup */
+  gadget SelectG;
+
+  static ggroup Create(msgport Parent);
+  ggroup Init(msgport Parent);
+
+  /* obj */
+  uldat Magic() const {
+    return Fn->Magic;
+  }
+  void Insert(msgport owner, ggroup prev, ggroup next) {
+    Fn->Insert(this, owner, prev, next);
+  }
+  void Remove() {
+    Fn->Remove(this);
+  }
+  void Delete() {
+    Fn->Delete(this);
+  }
+  /* group */
+  void InsertGadget(gadget g) {
+    Fn->InsertGadget(this, g);
+  }
+  void RemoveGadget(gadget g) {
+    Fn->RemoveGadget(this, g);
+  }
+  gadget GetSelectedGadget() {
+    return Fn->GetSelectedGadget(this);
+  }
+  void SetSelectedGadget(gadget g) {
+    Fn->SetSelectedGadget(this, g);
+  }
+};
+
+#endif /* TWIN_GROUP_H */

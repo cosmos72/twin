@@ -1,2 +1,1 @@
-SUBDIRS = $(SUBDIR_LIBLTDL) libTutf libTw $(SUBDIR_LIBTT)
-
+SUBDIRS = $(SUBDIR_LIBLTDL) libtstl libtutf libtw $(SUBDIR_LIBTT)

@@ -14,8 +14,8 @@
  *
  */
 
-#ifndef _TT_TTVISIBLE_H
-#define _TT_TTVISIBLE_H
+#ifndef TT_TTVISIBLE_H
+#define TT_TTVISIBLE_H
 
 /* object structure */
 #ifndef s_ttvisible
@@ -104,4 +104,4 @@ ttvisible_repaint_fn TTGetRepaint_ttvisible(TT_ARG_READ ttvisible o);
 /** set `repaint' of ttvisible `o' */
 ttbyte TTSetRepaint_ttvisible(ttvisible o, ttvisible_repaint_fn repaint);
 
-#endif /* _TT_TTVISIBLE_H */
+#endif /* TT_TTVISIBLE_H */

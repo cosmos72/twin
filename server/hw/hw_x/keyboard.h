@@ -1,5 +1,5 @@
 /*
- * hw_X11_gfx_common.h  --  common functions between hw_X11 and hw_gfx
+ * keyboard.h
  *
  *  Copyright (C) 2007 by Massimiliano Ghilardi
  *
@@ -120,7 +120,7 @@ static struct {
   KeySym xkey;
   Twkey tkey;
   byte len;
-  CONST char *seq;
+  const char *seq;
 } X11_keys[] = {
 
 #define IS(sym, l, s) {XK_##sym, TW_##sym, l, s},
@@ -152,7 +152,7 @@ static byte X11_CheckRemapKeys(void) {
 }
 
 #ifdef DEBUG_HW_X11
-void X11_DEBUG_SHOW_KEY(CONST char *prefix, KeySym sym, udat len, CONST char *seq) {
+void X11_DEBUG_SHOW_KEY(const char *prefix, KeySym sym, udat len, const char *seq) {
   udat i;
   byte ch;
   printf("X11_LookupKey(): %s xkeysym=%d[%s] string=[", prefix, (int)sym, XKeysymToString(sym));
@@ -169,7 +169,7 @@ void X11_DEBUG_SHOW_KEY(CONST char *prefix, KeySym sym, udat len, CONST char *se
 #define X11_DEBUG_SHOW_KEY(prefix, sym, len, seq) ((void)0)
 #endif
 
-/* convert an X11 KeySym into a libTw key code and ASCII sequence */
+/* convert an X11 KeySym into a libtw key code and ASCII sequence */
 
 static Twkey X11_LookupKey(XEvent *ev, udat *ShiftFlags, udat *len, char *seq) {
   static Twkey lastTW = TW_Null;
@@ -194,24 +194,26 @@ static Twkey X11_LookupKey(XEvent *ev, udat *ShiftFlags, udat *len, char *seq) {
 #else
     *len = XmbLookupString(xic, kev, seq, _len, &sym, &status_return);
 #endif
-    if (XFilterEvent(ev, None))
+    if (XFilterEvent(ev, None)) {
       return TW_Null;
-
+    }
     if (status_return != XLookupBoth && status_return != XLookupChars &&
-        status_return != XLookupKeySym)
+        status_return != XLookupKeySym) {
       sym = XK_VoidSymbol;
+    }
   }
 #endif
-  if (sym == XK_VoidSymbol || sym == 0)
+  if (sym == XK_VoidSymbol || sym == 0) {
     *len = XLookupString(kev, seq, _len, &sym, &xcompose);
-
+  }
   X11_DEBUG_SHOW_KEY("", sym, *len, seq);
 
   if (sym == XK_BackSpace && (kev->state & (ControlMask | Mod1Mask)) != 0) {
-    if (kev->state & ControlMask)
+    if (kev->state & ControlMask) {
       *len = 1, *seq = '\x1F';
-    else
+    } else {
       *len = 2, seq[0] = '\x1B', seq[1] = '\x7F';
+    }
     return TW_BackSpace;
   }
 
@@ -257,7 +259,7 @@ static Twkey X11_LookupKey(XEvent *ev, udat *ShiftFlags, udat *len, char *seq) {
       X11_DEBUG_SHOW_KEY("replaced(2)", sym, *len, seq);
     }
   }
-  return lastTW;
+  return lastTW == TW_Null && *len != 0 ? TW_Other : lastTW;
 }
 
 static void X11_HandleEvent(XEvent *event) {
@@ -271,8 +273,9 @@ static void X11_HandleEvent(XEvent *event) {
     switch (event->type) {
     case KeyPress:
       TW_key = X11_LookupKey(event, &ShiftFlags, &len, seq);
-      if (TW_key != TW_Null)
+      if (TW_key != TW_Null) {
         KeyboardEventCommon(TW_key, ShiftFlags, len, seq);
+      }
       break;
     case KeyRelease:
       break;
@@ -331,11 +334,11 @@ static void X11_HandleEvent(XEvent *event) {
                                                               dx == Button5 ? HOLD_WHEEL_FWD :
 #endif
                                                                             0);
-      if (event->type == ButtonPress)
+      if (event->type == ButtonPress) {
         dy |= dx;
-      else
+      } else {
         dy &= ~dx;
-
+      }
       MouseEventCommon(x, y, 0, 0, dy);
 
       break;
@@ -358,8 +361,9 @@ static void X11_HandleEvent(XEvent *event) {
 
       NeedRedrawVideo(x, y, dx, dy);
       /* must we redraw the cursor too ? */
-      if (HW->XY[0] >= x && HW->XY[0] <= dx && HW->XY[1] >= y && HW->XY[1] <= dy)
+      if (HW->XY[0] >= x && HW->XY[0] <= dx && HW->XY[1] >= y && HW->XY[1] <= dy) {
         HW->TT = NOCURSOR;
+      }
       break;
     case VisibilityNotify:
       xwindow_AllVisible = event->xvisibility.state == VisibilityUnobscured;

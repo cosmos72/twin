@@ -2,8 +2,8 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.65])
-AC_INIT([twin], [0.8.1], [BUG-REPORT-ADDRESS])
-AC_CONFIG_SRCDIR([server/main.c])
+AC_INIT([twin], [0.8.4], [BUG-REPORT-ADDRESS])
+AC_CONFIG_SRCDIR([server/main.cpp])
 AC_CONFIG_HEADERS([include/config.h])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_MACRO_DIRS([m4])
@@ -22,7 +22,7 @@ LTDL_INIT([recursive])
 
 # Checks for programs.
 AC_PROG_CC
-dnl AC_PROG_CXX
+AC_PROG_CXX
 AM_PROG_AS
 AC_PROG_INSTALL
 AC_PROG_LIBTOOL
@@ -48,7 +48,7 @@ if test "$have_x" = yes; then
   AC_SUBST(LIBX11, "-lX11")
 fi
 
-dnl AC_LANG_PUSH([C++])
+AC_LANG_PUSH([C++])
 
 AC_FUNC_ALLOCA
 AC_HEADER_TIME
@@ -61,7 +61,7 @@ AC_CHECK_HEADERS([ \
        sys/dir.h sys/filio.h sys/ioctl.h sys/mman.h sys/ndir.h sys/param.h sys/resource.h \
        sys/select.h sys/socket.h sys/stat.h sys/timeb.h sys/ttydefaults.h sys/un.h sys/utsname.h \
        termcap.h termio.h termios.h unistd.h zlib.h])
-       
+
 
 AC_STRUCT_TM
 
@@ -75,19 +75,19 @@ TW_C_FEATURES
 
 ################################################################################
 
-# C flags '-g -O2' are already tested by AC_PROG_CC
-# C flags '-p -pg' are incompatible with -fomit-frame-pointer
-initial_CFLAGS="$CFLAGS"
-for try_flag in -fomit-frame-pointer -fno-strict-aliasing -pipe -Wall -Wshadow \
-                 -Wno-uninitialized -Wno-unused -Wundef  -Wcast-qual -Wcast-align -Wpointer-arith  \
-                 -Wwrite-strings \
-                 -Wstrict-prototypes -Wbad-function-cast -Wold-style-declaration -Wold-style-definition
+# C++ flags '-g -O2' are already tested by AC_PROG_CC
+# C++ flags '-p -pg' are incompatible with -fomit-frame-pointer
+initial_CXXFLAGS="$CXXFLAGS"
+for try_flag in -std=c++98 -fomit-frame-pointer -fno-strict-aliasing -fno-rtti -fno-exceptions \
+                -pipe -Wall -Wshadow -Wno-uninitialized -Wno-unused -Wundef \
+                -Wcast-qual -Wcast-align -Wpointer-arith -Wwrite-strings \
+                 # -Wstrict-prototypes -Wbad-function-cast -Wold-style-declaration -Wold-style-definition
                  # -Wsign-compare
 do
-  save_CFLAGS="$CFLAGS"
-  CFLAGS="$CFLAGS $try_flag"
-  try_flag_id="`echo \"$try_flag\" | tr - _`"
-  AC_CACHE_CHECK(for C compiler flag $try_flag, ac_cv_cflag$try_flag_id, AC_TRY_COMPILE(
+  save_CXXFLAGS="$CXXFLAGS"
+  CXXFLAGS="$CXXFLAGS $try_flag"
+  try_flag_id="`echo \"$try_flag\" | tr =+- _x_`"
+  AC_CACHE_CHECK(for C++ compiler flag $try_flag, ac_cv_cflag$try_flag_id, AC_TRY_COMPILE(
   [
     int ret0(void) {
       return 0;
@@ -98,12 +98,12 @@ do
     eval "ac_cv_cflag$try_flag_id=yes"
   ], [
     eval "ac_cv_cflag$try_flag_id=no"
-    CFLAGS="$save_CFLAGS"
+    CXXFLAGS="$save_CXXFLAGS"
   ]))
 done
-custom_CFLAGS="$CFLAGS"
-CFLAGS="$initial_CFLAGS"
-dnl AC_LANG_POP([C++])
+custom_CXXFLAGS="$CXXFLAGS"
+CXXFLAGS="$initial_CXXFLAGS"
+AC_LANG_POP([C++])
 
 ################################################################################
 
@@ -135,7 +135,7 @@ if echo "$ac_cv_host" | $GREP darwin >/dev/null 2>&1 ; then
   LDFLAGS_BIN_EXPORT_DYNAMIC="$LDFLAGS"
   LDFLAGS="$initial_LDFLAGS"
 fi
-    
+
 ################################################################################
 
 AC_CHECK_TYPE(gid_t,int)
@@ -185,7 +185,6 @@ AC_SEARCH_LIBS(dlopen,         dl)
 AC_SEARCH_LIBS(socket,         [socket wsock32])
 AC_SEARCH_LIBS(connect,        [socket wsock32])
 AC_SEARCH_LIBS(gethostbyname,  [nsl    wsock32])
-AC_SEARCH_LIBS(ggiOpen,        ggi)
 AC_SEARCH_LIBS(Gpm_Open,       gpm)
 
 AC_CHECK_MEMBER([Gpm_Event.wdy],,, [[#include <gpm.h>]])
@@ -201,9 +200,6 @@ if test "$have_x" = yes; then
   CPPFLAGS="$CPPFLAGS $X11_CPPFLAGS"
   LDFLAGS="$LDFLAGS $X11_LDFLAGS"
 
-  AC_CHECK_HEADERS([X11/xpm.h])                       dnl needs X11_CPPFLAGS
-  AC_SEARCH_LIBS(XpmReadFileToPixmap, Xpm)            dnl needs X11_LDFLAGS
-
   if test x"$PKG_CONFIG" != x; then
     PKG_CHECK_MODULES([XFT], [xft freetype2], , [XFT_CFLAGS="-I/usr/include/freetype2"])
   else
@@ -215,7 +211,7 @@ if test "$have_x" = yes; then
   AC_CHECK_HEADERS([X11/Xft/Xft.h])                   dnl needs XFT_CFLAGS
   AC_CHECK_HEADERS([fontconfig/fontconfig.h])         dnl needs XFT_CFLAGS
   AC_SEARCH_LIBS(XftFontOpen, Xft)                    dnl needs XFT_LIBS
-  
+
   CPPFLAGS="$save_CPPFLAGS"
   LDFLAGS="$save_LDFLAGS"
 fi
@@ -233,7 +229,7 @@ AC_DEFINE_UNQUOTED(ATTR_FN_CONST,      [`echo $ac_cv_c_attribute_const     | $SE
 AC_DEFINE_UNQUOTED(ATTR_TYPE_PACKED,   [`echo $ac_cv_c_attribute_packed    | $SED -e 's/^no$//g'`], [Define to compiler's variant of __attribute__((packed)),     or to empty if not supported.])
 AC_DEFINE_UNQUOTED(ATTR_PTR_ALIGNED_1, [`echo $ac_cv_c_attribute_aligned_1 | $SED -e 's/^no$//g'`], [Define to compiler's variant of __attribute__((aligned(1))), or to empty if not supported.])
 
-  
+
 if test "$ac_cv_search_crypt" != "no" -o "$ac_cv_func_crypt" != "no"; then
   AC_DEFINE(HAVE_CRYPT, 1, [Define to 1 if you have the `crypt'  function.])
 fi
@@ -246,9 +242,6 @@ fi
 if test "$ac_cv_search_gethostbyname" != "no"; then
   AC_DEFINE(HAVE_GETHOSTBYNAME, 1, [Define to 1 if you have the `gethostbyname'  function.])
 fi
-if test "$ac_cv_search_ggiOpen" != "no"; then
-  AC_DEFINE(HAVE_GGIOPEN, 1, [Define to 1 if you have the `ggiOpen'  function.])
-fi
 if test "$ac_cv_search_Gpm_Open" != "no"; then
   AC_DEFINE(HAVE_GPM_OPEN, 1, [Define to 1 if you have the `Gpm_Open'  function.])
 fi
@@ -260,9 +253,6 @@ if test "$ac_cv_search_pthread_create" != "no"; then
 fi
 if test "$ac_cv_search_tgetent" != "no"; then
   AC_DEFINE(HAVE_TGETENT, 1, [Define to 1 if you have the `tgetent'  function.])
-fi
-if test "$ac_cv_search_XpmReadFileToPixmap" != "no"; then
-  AC_DEFINE(HAVE_XPMREADFILETOPIXMAP, 1, [Define to 1 if you have the `XpmReadFileToPixmap'  function.])
 fi
 
 TW_FIX_CONFIG
@@ -281,25 +271,22 @@ else
 fi
 
 AC_SUBST(LIBCRYPT,    "`echo \"$ac_cv_search_crypt\"          | $SED -e 's/^none required$//g' -e 's/^no$//g'`")
-AC_SUBST(LIBGGI,      "`echo \"$ac_cv_search_ggiOpen\"        | $SED -e 's/^none required$//g' -e 's/^no$//g'`")
 AC_SUBST(LIBGPM,      "`echo \"$ac_cv_search_Gpm_Open\"       | $SED -e 's/^none required$//g' -e 's/^no$//g'`")
 AC_SUBST(LIBSOCK,     "`echo \"$ac_cv_search_gethostbyname\"  | $SED -e 's/^none required$//g' -e 's/^no$//g'` `echo \"$ac_cv_search_socket\" | $SED -e 's/^none required$//g' -e 's/^no$//g'` `echo \"$ac_cv_search_connect\"  | $SED -e 's/^none required$//g' -e 's/^no$//g'`")
 AC_SUBST(LIBPTHREAD,  "`echo \"$ac_cv_search_pthread_create\" | $SED -e 's/^none required$//g' -e 's/^no$//g'`")
 AC_SUBST(LIBTERMCAP,  "`echo \"$ac_cv_search_tgetent\"        | $SED -e 's/^none required$//g' -e 's/^no$//g'`")
-AC_SUBST(LIBXPM,      "`echo \"$ac_cv_search_XpmReadFileToPixmap\"  | $SED -e 's/^none required$//g' -e 's/^no$//g'`")
 AC_SUBST(LIBXFT,      "`echo \"$ac_cv_search_XftFontOpen\"    | $SED -e 's/^none required$//g' -e 's/^no$//g'`")
 if test "$enable_socket_gz" = yes; then
   AC_SUBST(LIBZ,      "`echo \"$ac_cv_search_deflate\"        | $SED -e 's/^none required$//g' -e 's/^no$//g'`")
 fi
-AC_SUBST(LIBTUTF,    '$(top_builddir)/libs/libTutf/libTutf.la')
-AC_SUBST(LIBTW,      '$(top_builddir)/libs/libTw/libTw.la')
+AC_SUBST(LIBTSTL,    '$(top_builddir)/libs/libtstl/libtstl.la')
+AC_SUBST(LIBTUTF,    '$(top_builddir)/libs/libtutf/libtutf.la')
+AC_SUBST(LIBTW,      '$(top_builddir)/libs/libtw/libtw.la')
 AC_SUBST(SUBDIR_LIBTT,                                    ) dnl libTT is disabled
 
 LIBS=
 
 AM_CONDITIONAL(LIBHW_DISPLAY_la, [test "$enable_hw_display" = yes])
-AM_CONDITIONAL(LIBHW_GFX_la,     [test "$enable_hw_gfx"     = yes])
-AM_CONDITIONAL(LIBHW_GGI_la,     [test "$enable_hw_ggi"     = yes])
 AM_CONDITIONAL(LIBHW_TTY_la,     [test "$enable_hw_tty"     = yes])
 AM_CONDITIONAL(LIBHW_TWIN_la,    [test "$enable_hw_twin"    = yes])
 AM_CONDITIONAL(LIBHW_X11_la,     [test "$enable_hw_x11"     = yes])
@@ -309,16 +296,17 @@ AM_CONDITIONAL(LIBSOCKET_la,     [test "$enable_socket"     = yes])
 AM_CONDITIONAL(LIBTERM_la,       [test "$enable_term"       = yes])
 AM_CONDITIONAL(LIBWM_la,         [test "$enable_wm"         = yes])
 
-CFLAGS="$custom_CFLAGS"
+CXXFLAGS="$custom_CXXFLAGS"
 
 AC_SUBST(LDFLAGS_BIN_EXPORT_DYNAMIC, "$LDFLAGS_BIN_EXPORT_DYNAMIC")
-         
+
 AC_CONFIG_FILES([
       Makefile clients/Makefile clients/mapscrn/Makefile contrib/Makefile contrib/twcd/Makefile \
       docs/Makefile include/Makefile include/Tutf/Makefile include/Tw/Makefile \
       include/version.h include/Tutf/version.h include/Tw/version.h \
-      libs/Makefile libs/libTutf/Makefile libs/libTw/Makefile libs/libltdl/Makefile \
-      server/Makefile server/hw/Makefile themes/Makefile themes/hw_gfx/Makefile])
+      libs/Makefile libs/libltdl/Makefile libs/libtstl/Makefile \
+      libs/libtutf/Makefile libs/libtw/Makefile server/Makefile server/hw/Makefile \
+      test/Makefile])
 
 AC_OUTPUT
 
@@ -332,4 +320,3 @@ tw_cfg()
 }
 
 TW_OUTPUT
-

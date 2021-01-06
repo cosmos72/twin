@@ -14,8 +14,8 @@
  *
  */
 
-#ifndef _TT_TTBOXLAYOUT_H
-#define _TT_TTBOXLAYOUT_H
+#ifndef TT_TTBOXLAYOUT_H
+#define TT_TTBOXLAYOUT_H
 
 /* object structure */
 #ifndef s_ttboxlayout
@@ -40,4 +40,4 @@ ttboxlayout TTCreate_ttboxlayout(ttany orientation);
 /** get `orientation' of ttboxlayout `o' */
 ttuint TTGetOrientation_ttboxlayout(TT_ARG_READ ttboxlayout o);
 
-#endif /* _TT_TTBOXLAYOUT_H */
+#endif /* TT_TTBOXLAYOUT_H */

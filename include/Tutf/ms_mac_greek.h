@@ -7,8 +7,8 @@
  * PLEASE DO NOT EDIT!
  */
 
-#ifndef _TUTF_MS_MAC_GREEK_H
-#define _TUTF_MS_MAC_GREEK_H
+#ifndef TUTF_MS_MAC_GREEK_H
+#define TUTF_MS_MAC_GREEK_H
 
 #define T_MS_MAC_GREEK_CTRL_NULL 0x0000
 #define T_MS_MAC_GREEK_CTRL_START_OF_HEADING 0x0001
@@ -655,4 +655,4 @@
   EL(_GREEK_SMALL_LETTER_UPSILON_WITH_DIALYTIKA_AND_TONOS)                                         \
   EL(_UNDEFINED_00FF)
 
-#endif /* _TUTF_MS_MAC_GREEK_H */
+#endif /* TUTF_MS_MAC_GREEK_H */

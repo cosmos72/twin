@@ -7,10 +7,9 @@
  *
  */
 
-
-
-
 /* This file was automatically generated from m4/socket2.m4, do not edit! */
+
+/* clang-format off */
 
 
 
@@ -145,9 +144,9 @@
 { 0, 0, "Create4MenuWindow",
     "1" "x" window_magic_STR"x" menu_magic_STR },
 
-{ 0, 0, "WriteAsciiWindow",
+{ 0, 0, "WriteCharsetWindow",
     "0" "v" TWS_void_STR"x" window_magic_STR"_" TWS_uldat_STR"V" TWS_char_STR },
-{ 0, 0, "WriteStringWindow",
+{ 0, 0, "WriteUtf8Window",
     "0" "v" TWS_void_STR"x" window_magic_STR"_" TWS_uldat_STR"V" TWS_char_STR },
 { 0, 0, "WriteTRuneWindow",
     "0" "v" TWS_void_STR"x" window_magic_STR"_" TWS_uldat_STR"V" TWS_trune_STR },
@@ -184,7 +183,7 @@
 { 0, 0, "LowerRow",
     "2" "v" TWS_void_STR"x" row_magic_STR },
 { 0, 0, "RestackChildrenRow",
-    "0" "v" TWS_void_STR"x" obj_magic_STR"_" TWS_uldat_STR"X" row_magic_STR }, 
+    "0" "v" TWS_void_STR"x" obj_magic_STR"_" TWS_uldat_STR"X" row_magic_STR },
 { 0, 0, "CirculateChildrenRow",
     "0" "v" TWS_void_STR"x" obj_magic_STR"_" TWS_byte_STR },
 
@@ -256,13 +255,4 @@
 
 { 0, 0, "SetServerUid",
     "0" "_" TWS_byte_STR"_" TWS_uldat_STR"_" TWS_byte_STR },
-
-{ 0, 0, "OpenExtension",
-    "0" "x" extension_magic_STR"_" TWS_byte_STR"V" TWS_char_STR },
-{ 0, 0, "CallBExtension",
-    "0" "O" TWS_tany_STR"x" extension_magic_STR"_" TWS_topaque_STR"V" TWS_byte_STR"V" TWS_byte_STR },
-{ 0, 0, "CloseExtension",
-    "0" "v" TWS_void_STR"x" extension_magic_STR },
-
-
 

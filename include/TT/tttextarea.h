@@ -14,8 +14,8 @@
  *
  */
 
-#ifndef _TT_TTTEXTAREA_H
-#define _TT_TTTEXTAREA_H
+#ifndef TT_TTTEXTAREA_H
+#define TT_TTTEXTAREA_H
 
 /* object structure */
 #ifndef s_tttextarea
@@ -34,4 +34,4 @@ extern ttclass TTClass_tttextarea;
 
 /* TTGet*_tttextarea and TTSet*_tttextarea methods */
 
-#endif /* _TT_TTTEXTAREA_H */
+#endif /* TT_TTTEXTAREA_H */

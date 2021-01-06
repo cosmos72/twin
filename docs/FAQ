@@ -1,6 +1,6 @@
                      TWIN FREQUENTLY ASKED QUESTIONS
 		            WITH ANSWERS
-			
+
                             28 Oct 2002
                 Massimiliano Ghilardi <https://github.com/cosmos72/>
 
@@ -239,15 +239,15 @@ twin server must draw on a display using one of its display drivers.
 At the time this document is being written, twin supports at least the
 following drivers:
 
-X [X11] : lets twin display on X11 servers (plain driver).
-gfx     : lets twin display on X11 servers (enhanced driver).
+X [X11] : lets twin display on X11 servers.
+xft     : lets twin display on X11 servers using truetype (antialiased) fonts.
 twin    : lets twin display on another twin server or on itself.
 tty     : lets twin display on text terminals, including at least:
 	Linux console (mouse support requires gpm and libgpm)
 	twterm, twin's own terminal emulator (with mouse)
 	any termcap/ncurses compatible terminal (with mouse if they support
 		either xterm or twterm mouse reporting protocols)
-ggi     : lets twin use libggi as display (UNFINISHED)
+
 
 -------------------------------------------------------------------------------
 
@@ -269,8 +269,8 @@ To obtain more information about these clients, see the Tutorial.
 
 Various libraries come with twin too:
 
-e) libTutf  - a tiny unicode translation library
-f) libTw    - a library to talk to twin servers
+e) libtutf  - a tiny unicode translation library
+f) libtw    - a library to talk to twin servers
 g) libTT    - a text toolkit library
 
 
@@ -383,4 +383,3 @@ contributors, not to restrict you as educators and learners.
 Ian Jackson asserts the right to be identified as the author of this work,
 and claims the moral rights of paternity and integrity, in accordance with
 the Copyright, Designs and Patents Act, 1988.
-

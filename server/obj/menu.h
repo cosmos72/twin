@@ -10,13 +10,27 @@
  *
  */
 
-#ifndef _TWIN_MENU_H
-#define _TWIN_MENU_H
+#ifndef TWIN_MENU_H
+#define TWIN_MENU_H
 
 #include "obj/obj.h"
 
-struct s_menu {
-  uldat Id;
+struct s_fn_menu {
+  uldat Magic;
+  void (*Insert)(menu, msgport, menu Prev, menu Next);
+  void (*Remove)(menu);
+  void (*Delete)(menu);
+  void (*ChangeField)(menu, udat field, uldat CLEARMask, uldat XORMask);
+  /* menu */
+  fn_obj Fn_Obj;
+  row (*SetInfo)(menu, byte Flags, ldat Len, const char *Text, const tcolor *ColText);
+  menuitem (*FindItem)(menu, dat i);
+  menuitem (*GetSelectedItem)(menu);
+  menuitem (*RecursiveGetSelectedItem)(menu, dat *depth);
+  void (*SetSelectedItem)(menu, menuitem);
+};
+
+struct s_menu : public s_obj {
   fn_menu Fn;
   menu Prev, Next; /* in the same msgport */
   msgport MsgPort;
@@ -26,23 +40,42 @@ struct s_menu {
   byte FlagDefColInfo;
   row Info;
   menuitem FirstI, LastI, SelectI;
-};
-struct s_fn_menu {
-  uldat Magic, Size, Used;
-  menu (*Create)(fn_menu, msgport MsgPort, tcolor ColItem, tcolor ColSelect, tcolor ColDisabled,
-                 tcolor ColSelectDisabled, tcolor ColShtCut, tcolor ColSelShtCut,
-                 byte FlagDefColInfo);
-  void (*Insert)(menu, msgport, menu Prev, menu Next);
-  void (*Remove)(menu);
-  void (*Delete)(menu);
-  void (*ChangeField)(menu, udat field, uldat CLEARMask, uldat XORMask);
+
+  static menu Create(msgport port, tcolor colitem, tcolor colselect, tcolor coldisabled,
+                     tcolor colselectdisabled, tcolor colshtcut, tcolor colselshtcut,
+                     byte flagdefcolinfo);
+  menu Init(msgport port, tcolor colitem, tcolor colselect, tcolor coldisabled,
+            tcolor colselectdisabled, tcolor colshtcut, tcolor colselshtcut, byte flagdefcolinfo);
+
+  /* obj */
+  uldat Magic() const {
+    return Fn->Magic;
+  }
+  void Insert(msgport owner, menu prev, menu next) {
+    Fn->Insert(this, owner, prev, next);
+  }
+  void Remove() {
+    Fn->Remove(this);
+  }
+  void Delete() {
+    Fn->Delete(this);
+  }
   /* menu */
-  fn_obj Fn_Obj;
-  row (*SetInfo)(menu, byte Flags, ldat Len, CONST char *Text, CONST tcolor *ColText);
-  menuitem (*FindItem)(menu, dat i);
-  menuitem (*GetSelectedItem)(menu);
-  menuitem (*RecursiveGetSelectedItem)(menu, dat *depth);
-  void (*SetSelectedItem)(menu, menuitem);
+  row SetInfo(byte flags, ldat len, const char *text, const tcolor *coltext) {
+    return Fn->SetInfo(this, flags, len, text, coltext);
+  }
+  menuitem FindItem(dat i) {
+    return Fn->FindItem(this, i);
+  }
+  menuitem GetSelectedItem() {
+    return Fn->GetSelectedItem(this);
+  }
+  menuitem RecursiveGetSelectedItem(dat *depth) {
+    return Fn->RecursiveGetSelectedItem(this, depth);
+  }
+  void SetSelectedItem(menuitem item) {
+    Fn->SetSelectedItem(this, item);
+  }
 };
 
-#endif /* _TWIN_MENU_H */
+#endif /* TWIN_MENU_H */

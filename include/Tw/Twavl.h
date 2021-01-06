@@ -10,8 +10,8 @@
  *
  */
 
-#ifndef _TW_AVL_H
-#define _TW_AVL_H
+#ifndef TW_AVL_H
+#define TW_AVL_H
 
 #include <Tw/Twtypes.h>
 
@@ -35,4 +35,4 @@ void AVLInsert(tavl key, tavl base, tavl_compare cmp, tavl *root);
 void AVLRemove(tavl node, tavl_compare cmp, tavl *root);
 void AVLRebalance(tavl base, tavl_compare cmp, tavl *root);
 
-#endif /* _TW_AVL_H */
+#endif /* TW_AVL_H */

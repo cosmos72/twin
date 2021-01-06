@@ -14,8 +14,8 @@
  *
  */
 
-#ifndef _TT_TTLABEL_H
-#define _TT_TTLABEL_H
+#ifndef TT_TTLABEL_H
+#define TT_TTLABEL_H
 
 /* object structure */
 #ifndef s_ttlabel
@@ -53,4 +53,4 @@ ttopaque TTGetTextLen_ttlabel(TT_ARG_READ ttlabel o);
 /** get `text' of ttlabel `o' */
 TT_ARG_ARRAY((_F(text_len))) ttfont *TTGetText_ttlabel(TT_ARG_READ ttlabel o);
 
-#endif /* _TT_TTLABEL_H */
+#endif /* TT_TTLABEL_H */

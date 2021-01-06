@@ -7,8 +7,8 @@
  * PLEASE DO NOT EDIT!
  */
 
-#ifndef _TUTF_KZ1048_H
-#define _TUTF_KZ1048_H
+#ifndef TUTF_KZ1048_H
+#define TUTF_KZ1048_H
 
 #define T_KZ1048_CTRL_NULL 0x0000
 #define T_KZ1048_CTRL_START_OF_HEADING 0x0001
@@ -642,4 +642,4 @@
   EL(_CYRILLIC_SMALL_LETTER_YU)                                                                    \
   EL(_CYRILLIC_SMALL_LETTER_YA)
 
-#endif /* _TUTF_KZ1048_H */
+#endif /* TUTF_KZ1048_H */

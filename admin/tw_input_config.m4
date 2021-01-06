@@ -7,12 +7,6 @@ dnl enable__alloc=yes
 dnl )dnl
 enable__alloc=no
 
-dnl hand-optimized assembler (if available for your platform)
-AC_ARG_ENABLE(-asm,dnl
-[  --enable--asm[=yes|no]                 enable hand-optimized assembler if supported ],,
-enable__asm=yes
-)dnl
-
 dnl dlopen() and friends
 AC_ARG_ENABLE(-dlopen,dnl
 [  --enable--dlopen[=yes|no]              use dlopen() to load modules instead of libtool lt_dlopen()],,
@@ -21,7 +15,7 @@ enable__dlopen=yes
 
 dnl socket server
 AC_ARG_ENABLE(socket,dnl
-[  --enable-socket[=yes|no]               enable remote socket connections (libTw) ],,
+[  --enable-socket[=yes|no]               enable remote socket connections (libtw) ],,
 enable_socket=yes
 )dnl
 
@@ -31,7 +25,7 @@ AC_ARG_ENABLE(socket_gz,dnl
 enable_socket_gz=yes
 )dnl
 
-dnl thread safe libTw
+dnl thread safe libtw
 AC_ARG_ENABLE(socket_pthreads,dnl
 [  --enable-socket-pthreads[=yes|no]      enable thread safe libraries (requires pthread) ],,
 enable_socket_pthreads=yes
@@ -127,12 +121,6 @@ AC_ARG_ENABLE(hw-xft,dnl
 enable_hw_xft=yes
 )dnl
 
-dnl the gfx driver
-AC_ARG_ENABLE(hw-gfx,dnl
-[  --enable-hw-gfx[=yes|no]               enable the gfx (enhanced X11) driver ],,
-enable_hw_gfx=yes
-)dnl
-
 dnl the twin driver
 AC_ARG_ENABLE(hw-twin,dnl
 [  --enable-hw-twin[=yes|no]              enable the twin nested driver ],,
@@ -143,18 +131,6 @@ dnl the twdisplay driver
 AC_ARG_ENABLE(hw-display,dnl
 [  --enable-hw-display[=yes|no]           enable the twdisplay client driver ],,
 enable_hw_display=yes
-)dnl
-
-dnl the ggi driver
-AC_ARG_ENABLE(hw-ggi,dnl
-[  --enable-hw-ggi[=yes|no]               enable the ggi driver (UNFINISHED) ],,
-enable_hw_ggi=yes
-)dnl
-
-dnl server extensions
-AC_ARG_ENABLE(ext,dnl
-[  --enable-ext[=yes|no]                  enable server extensions ],,
-enable_ext=yes
 )dnl
 
 enable_opt_shadows=yes

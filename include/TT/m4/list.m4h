@@ -20,8 +20,10 @@ dnl Tell the user about this.
  *
  */
 
-#ifndef _TT_LIST_M4_H
-#define _TT_LIST_M4_H
+#ifndef TT_LIST_M4_H
+#define TT_LIST_M4_H
+
+/* clang-format off */
 
 define(`c_doxygen', `
 
@@ -48,16 +50,15 @@ TTtypealiaslist()
 
 define(`el', `
 /** type of `$1' */
-extern ttclass	TTClass_$1;')
+extern ttclass        TTClass_$1;')
 TTtypelist()
 undefine(`el')
 
 /** aliases */
 define(`el', `
-`#'define TTClass_$1	TTClass_$2')
+`#'define TTClass_$1        TTClass_$2')
 TTtypealiaslist()
 undefine(`el')
 
 
-#endif /* _TT_LIST_M4_H */
-
+#endif /* TT_LIST_M4_H */

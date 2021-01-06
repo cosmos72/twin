@@ -8,8 +8,8 @@
 
 /* server internal stuff. define macros without any prefix */
 
-#ifndef _TWIN_COMPILER_H
-#define _TWIN_COMPILER_H
+#ifndef TWIN_COMPILER_H
+#define TWIN_COMPILER_H
 
 #if !defined(CAT)
 #define _CAT(a, b) a##b
@@ -68,4 +68,4 @@
 #endif
 #endif
 
-#endif /* _TWIN_COMPILER_H */
+#endif /* TWIN_COMPILER_H */

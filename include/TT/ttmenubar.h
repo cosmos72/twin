@@ -14,8 +14,8 @@
  *
  */
 
-#ifndef _TT_TTMENUBAR_H
-#define _TT_TTMENUBAR_H
+#ifndef TT_TTMENUBAR_H
+#define TT_TTMENUBAR_H
 
 /* object structure */
 #ifndef s_ttmenubar
@@ -37,4 +37,4 @@ ttmenubar TTGetDefault_ttmenubar(void);
 
 /* TTGet*_ttmenubar and TTSet*_ttmenubar methods */
 
-#endif /* _TT_TTMENUBAR_H */
+#endif /* TT_TTMENUBAR_H */

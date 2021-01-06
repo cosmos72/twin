@@ -96,15 +96,15 @@ int main(int argc, char *argv[]) {
     TwClose();
   }
   if ((err = TwErrno))
-    fprintf(stderr, "%s: libTw error: %s%s\n", name, TwStrError(err),
+    fprintf(stderr, "%s: libtw error: %s%s\n", name, TwStrError(err),
             TwStrErrorDetail(err, TwErrnoDetail));
 
   return 1;
 }
 
-#define DefColor COL(WHITE, BLACK)
-#define Underline COL(HIGH | WHITE, BLACK)
-#define HalfInten COL(HIGH | BLACK, BLACK)
+#define DefColor TCOL(twhite, tblack)
+#define Underline TCOL(thigh | twhite, tblack)
+#define HalfInten TCOL(thigh | tblack, tblack)
 
 static tcell *image;
 static tcolor ColText = DefColor, Color = DefColor;
@@ -122,35 +122,35 @@ udat Effects;
 
 TW_INLINE void update_eff(void) {
   udat effects = Effects;
-  tcolor fg = COLFG(ColText), bg = COLBG(ColText);
+  tcolor fg = TCOLFG(ColText), bg = TCOLBG(ColText);
 
   if (effects & EFF_UNDERLINE)
-    fg = COLFG(Underline);
+    fg = TCOLFG(Underline);
   else if (effects & EFF_HALFINTENS)
-    fg = COLFG(HalfInten);
+    fg = TCOLFG(HalfInten);
   if (effects & EFF_REVERSE) {
-    tcolor tmp = COL(bg & ~HIGH, fg & ~HIGH) | COL(fg & HIGH, bg & HIGH);
-    fg = COLFG(tmp);
-    bg = COLBG(tmp);
+    tcolor tmp = TCOL(bg & ~thigh, fg & ~thigh) | TCOL(fg & thigh, bg & thigh);
+    fg = TCOLFG(tmp);
+    bg = TCOLBG(tmp);
   }
   if (effects & EFF_INTENSITY)
-    fg ^= HIGH;
+    fg ^= thigh;
   if (effects & EFF_BLINK)
-    bg ^= HIGH;
-  Color = COL(fg, bg);
+    bg ^= thigh;
+  Color = TCOL(fg, bg);
 }
 
 TW_INLINE void csi_m(void) {
   udat i;
   udat effects = Effects;
-  tcolor fg = COLFG(ColText), bg = COLBG(ColText);
+  tcolor fg = TCOLFG(ColText), bg = TCOLBG(ColText);
 
   for (i = 0; i <= nPar; i++)
     switch (Par[i]) {
     case 0:
       /* all attributes off */
-      fg = COLFG(DefColor);
-      bg = COLBG(DefColor);
+      fg = TCOLFG(DefColor);
+      bg = TCOLBG(DefColor);
       effects = 0;
       break;
     case 1:
@@ -188,7 +188,7 @@ TW_INLINE void csi_m(void) {
               * with white underscore
               * (Linux - use default foreground).
               */
-      fg = COLFG(DefColor);
+      fg = TCOLFG(DefColor);
       effects |= EFF_UNDERLINE;
       break;
     case 39: /* ANSI X3.64-1979 (SCO-ish?)
@@ -196,21 +196,21 @@ TW_INLINE void csi_m(void) {
               * Reset colour to default? It did this
               * before...
               */
-      fg = COLFG(DefColor);
+      fg = TCOLFG(DefColor);
       effects &= ~EFF_UNDERLINE;
       break;
     case 49: /* restore default bg */
-      bg = COLBG(DefColor);
+      bg = TCOLBG(DefColor);
       break;
     default:
       if (Par[i] >= 30 && Par[i] <= 37)
-        Par[i] -= 30, fg = ANSI2VGA(Par[i]);
+        Par[i] -= 30, fg = TANSI2VGA(Par[i]);
       else if (Par[i] >= 40 && Par[i] <= 47)
-        Par[i] -= 40, bg = ANSI2VGA(Par[i]);
+        Par[i] -= 40, bg = TANSI2VGA(Par[i]);
       break;
     }
   Effects = effects;
-  ColText = COL(fg, bg);
+  ColText = TCOL(fg, bg);
 
   update_eff();
 }

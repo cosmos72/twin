@@ -10,8 +10,8 @@
  *
  */
 
-#ifndef _TT_ERRNO_H
-#define _TT_ERRNO_H
+#ifndef TT_ERRNO_H
+#define TT_ERRNO_H
 
 #include <TT/TTtypes.h>
 
@@ -64,4 +64,4 @@ TT_ATTR_FN_CONST TT_CONST byte *TTStrErrorDetail(ttuint e, ttuint s);
 }
 #endif
 
-#endif /* _TT_ERRNO_H */
+#endif /* TT_ERRNO_H */

@@ -7,8 +7,8 @@
  *
  */
 
-#ifndef _TWIN_HW_PRIVATE_H
-#define _TWIN_HW_PRIVATE_H
+#ifndef TWIN_HW_PRIVATE_H
+#define TWIN_HW_PRIVATE_H
 
 /*
  * this file exports "private" stuff from hw.c,
@@ -38,4 +38,4 @@ extern display_hw HW;
 
 #define RestoreHW (HW = s_hw)
 
-#endif /* _TWIN_HW_PRIVATE_H */
+#endif /* TWIN_HW_PRIVATE_H */

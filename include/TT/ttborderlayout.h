@@ -14,8 +14,8 @@
  *
  */
 
-#ifndef _TT_TTBORDERLAYOUT_H
-#define _TT_TTBORDERLAYOUT_H
+#ifndef TT_TTBORDERLAYOUT_H
+#define TT_TTBORDERLAYOUT_H
 
 /* object structure */
 #ifndef s_ttborderlayout
@@ -34,4 +34,4 @@ extern ttclass TTClass_ttborderlayout;
 
 /* TTGet*_ttborderlayout and TTSet*_ttborderlayout methods */
 
-#endif /* _TT_TTBORDERLAYOUT_H */
+#endif /* TT_TTBORDERLAYOUT_H */

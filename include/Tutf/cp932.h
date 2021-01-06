@@ -7,8 +7,8 @@
  * PLEASE DO NOT EDIT!
  */
 
-#ifndef _TUTF_CP932_H
-#define _TUTF_CP932_H
+#ifndef TUTF_CP932_H
+#define TUTF_CP932_H
 
 #define T_CP932_CTRL_NULL 0x0000
 #define T_CP932_CTRL_START_OF_HEADING 0x0001
@@ -657,4 +657,4 @@
   EL(_UNDEFINED_00FE)                                                                              \
   EL(_UNDEFINED_00FF)
 
-#endif /* _TUTF_CP932_H */
+#endif /* TUTF_CP932_H */

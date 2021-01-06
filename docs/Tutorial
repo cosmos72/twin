@@ -11,7 +11,7 @@
 
 
 		  updated to version 0.4.6, 26 Mar 2003
-	
+
 
 	     Author: Massimiliano Ghilardi <https://github.com/cosmos72/>
 
@@ -40,7 +40,7 @@
    Twin creates, draws and manages windows inside a text display.
    It implements in text mode the same concepts that X11 does in graphics:
 
-   a. draw on some kind of screen (typically a computer monitor).
+   a. draw on some kind of screen (tipically a computer monitor).
    b. allow multiple windows to coexist on the same screen,
       and draw independently on each of them.
    c. talk to external programs (even on other machines) so that
@@ -60,7 +60,7 @@
       as they are under control of twin builtin window manager
       (see the sample system.twinrc to learn how to customize the
       window manager look-n-feel).
-   c. In `twin', windows are not just plain rectangles where programs
+   c. In `twin', windows are not just plain rectangules where programs
       can draw. They can contain other windows and/or `gadgets' (small
       icons you can select, like the buttons you can find in many GUIs)
       and they can contain lines longer that the window width and/or more
@@ -90,7 +90,7 @@
 
 2. Supported displays
 
-   Twin runs perfectly on the Linux console, inside itself, in a twin terminal
+   Twin runs perfectly on the linux console, inside itself, in a twin terminal
    and on X11: it opens a window and draws in it, does _not_ run inside an
    xterm or similar.
    It can also run on generic text terminals (ttys) using the termcap/ncurses
@@ -122,12 +122,12 @@
 
    2.1. Emulated terminals
 
-	The built-in terminal emulator behaves as a Linux console.
-	
-	Implementing it on something different than a Linux console
+	The built-in terminal emulator behaves as a linux console.
+
+	Implementing it on something different than a linux console
 	is a little hard, as it would have to translate keyboard sequences:
-	
-	For example, when you hit <F5>, a Linux console sends ESC [ [ 5
+
+	For example, when you hit <F5>, a linux console sends ESC [ [ 5
 	while xterm and derivatives send ESC [ 1 5 ~.
 	Having twin correctly running in an xterm also means that each time
 	it receives ESC [ 1 5 ~	it must translate it into ESC [ [ 5.
@@ -142,7 +142,7 @@
 
 	To compile twin you need the following programs installed
 	on your system:
-	
+
 	* a Bourne-shell or compatible (for example bash, dash, ash...)
 
 	* make (most variants are supported: GNU make, BSD make...)
@@ -196,7 +196,7 @@
    the various parts of twin will be placed as follows:
    `twin' and the other programs (twterm, etc.) will go in $prefix/bin,
    modules will go in $prefix/lib/twin/modules,
-   libTw.so* will go in $prefix/lib.
+   libtw.so* will go in $prefix/lib.
 
    Once twin compiled fine, to actually install it,
    type the following command as root:
@@ -211,7 +211,7 @@
 
    WARNING (2):
    on most systems, after the installation it is necessary to run `ldconfig'
-   or `ldconfig <some parameter>' as root before programs can find libTw.so*
+   or `ldconfig <some parameter>' as root before programs can find libtw.so*
    shared libraries.
 
    WARNING (3):
@@ -243,12 +243,11 @@
 
    where <display> is one of:
 
-        X[@<XDISPLAY>]     or    X11[@<XDISPLAY>]
-	gfx[@<XDISPLAY>]
+   X[@<XDISPLAY>]     or    X11[@<XDISPLAY>]
+	xft[@<XDISPLAY>]
 	twin[@<TWDISPLAY>]
 	tty[@<tty device>]
-	ggi[@<libggi target>]
-	
+
    for an explanation of the available display methods and their options,
    see paragraph 8. below about `twattach' and `twdisplay': they have
    exactly the same syntax as twin for the argument `--hw=<display>[,options]'
@@ -294,7 +293,7 @@
    The "Window" menuitem is common to all menus and lets you do several
    operations on windows (explained immediately below)
 
-   OK, enough boring stuff for now... let's jump to something else.
+   Ok, enough boring stuff for now... let's jump to something else.
 
    Each window has its own menu, so opening a new window will give you
    a new menu while the previous gets inaccessible. When you start without
@@ -303,7 +302,7 @@
    lets you do basic operations with all windows --
    Move, Resize, Scroll, Center, Maximize, UnFocus, cycle through windows
    (Next), and also lets you open the Window List.
-   You can open the Window List also by middle-clicking on the desktop,
+   You can open the Window List also by middle-cliking on the desktop,
    in any area with no windows at all.
    A side effect of opening the Window List is that its menu
    is the default one, so you can get it back. Anyway you can get back
@@ -340,7 +339,7 @@
    on the lower-right corner of windows to resize them, a thing you probably
    don't know is that if _while holding the left button_ you also press
    the middle or right button, the window will `freeze', i.e. it doesn't resize
-   anymore when you move the mouse, but will instantly resize when you release
+   anymore when you move the mouse, but will istantly resize when you release
    the middle or right button. Also, while the window is `frozen', the virtual
    screen doesn't scroll. The same `freeze' technique can be used while
    dragging a window (to drag a window, press left button on window title).
@@ -370,7 +369,7 @@
    on the window's TOP/BACK button to have it become the top window. Clicking
    on the window's TOP/BACK button again will Lower and UnFocus the window.
 
-   Twin also implements cut-n-paste, in the same way as Linux console, xterm,
+   Twin also implements cut-n-paste, in the same way as linux console, xterm,
    and other terminals: you select some text by moving the mouse with
    the left button pressed and paste by clicking with the middle button.
 
@@ -385,7 +384,7 @@
    loaded the Socket Server module) you can run an external program
    by typing its name, just as you do with X11 clients.
    If twin is not installed yet, you will need to set LD_LIBRARY_PATH to the
-   directory where libTw.so.2 is: something like
+   directory where libtw.so.2 is: something like
 	export LD_LIBRARY_PATH=<twin-top-dir>/lib
    should work.
    Also, if you don't start external programs from within a twin terminal
@@ -401,7 +400,7 @@
    the file .TwinAuth in your home directory holds some magic data that
    clients use to answer the challenge received from twin. If that data
    is wrong or the file doesn't exist, clients can connect to twin only
-   using the Unix socket (TWDISPLAY=:<something>) so they must run
+   using the unix socket (TWDISPLAY=:<something>) so they must run
    on the same machine as twin; remote programs won't be able to connect.
 
 
@@ -417,23 +416,23 @@
 	    -V, --version        output version information and exit
 	    -r, --recursive      also show lists of parents, children, ...
 	    -v, --verbose        always show all data, even huge arrays
-	
+
 	twevent   - report twin events, like xev (X11) and mev (console/gpm)
 	twmapscrn - twin equivalent of Linux console tool `mapscrn'
 		    NOTE: when started from Linux console, twin will already
 		    load the current consolemap translation, so using twmapscrn
 		    is often not necessary.
-		
-	twsendmsg - utility to send messages to running libTw clients. Options:
+
+	twsendmsg - utility to send messages to running libtw clients. Options:
 	    -h, --help           display this help and exit
 	    -V, --version        output version information and exit
-	    --control            send a MSG_USER_CONTROL message (default)
-	    --clientmsg          send a MSG_USER_CLIENTMSG message
+	    --control            send a msg_user_control message (default)
+	    --clientmsg          send a msg_user_clientmsg message
 	    [--code=]<Code>      set the message code (default is open (2))
 	    [--data=]<Data>      set the message data
 	   Currently known codes for control messages are:
 	    quit (0), restart (1), open (2)
-	
+
 	twsetroot - customize twin background (see clients/README.twsetroot)
 	twsysmon  - a system resources monitor (works on Linux only)
 	twterm    - create remote twin terminal windows. Known options:
@@ -444,7 +443,7 @@
 				if it contains spaces or other special chars)
 	    -e <command>	run <command> instead of user's shell
 				(must be last option)
-	twthreadtest - a stupid demo to test libTw with threads.
+	twthreadtest - a stupid demo to test libtw with threads.
 
 	twdm      - a login manager, modeled after xdm/kdm. Known options:
 	    -h, --help               display this help and exit
@@ -481,7 +480,7 @@
 
 
    The `twterm' client and the builtin terminal emulator deserve a few extra
-   explanations. They implement a Linux terminal, so applications running
+   explanations. They implement a linux terminal, so applications running
    inside them will see TERM=linux, but also support two different mouse
    reporting protocols: the first is the classical xterm-style reporting
    (enabled with ESC [?1000h and disabled with ESC [?1000l ) which is only
@@ -492,7 +491,7 @@
    disabled with ESC [?9l . Also, they support xterm-style escape sequence
    to change window title.
 
-   Since most programs running inside a Linux terminal don't expect to be able
+   Since most programs running inside a linux terminal don't expect to be able
    to use the mouse with xterm-style protocol, various tricks may be needed in
    order to have mouse functionality with applications running in a twin
    terminal. Here are some:
@@ -532,32 +531,32 @@
    which causes twin to exit, as if Menu -> File -> Quit was selected.
 
    6.1. Saving diagnostic messages (logs):
-	
-	twin and other programs send diagnostic messages, information,
+
+	twin and other programs send diagnostic messages, informations,
 	and most notably errors, to standard error. This is good in most
 	cases, but if you tell twin to use its own tty as display,
 	diagnostic messages may be lost or may even garble the display.
-	
+
 	In this case, it can be useful to save diagnostic messages to some
 	file or device, for example another tty, or /var/log/twdm.log.
 	The way to obtain this depends on your shell, but with bash and many
 	other common shells, you can redirect standard error in this way:
-	
+
 	$ program arguments 2>filename
-	
+
 	The various programs distributed with twin do not change their
 	standard error, so for example, running
-	
+
 	$ twdm 2>/var/log/twdm.log
-	
+
 	will redirect all diagnostic messages produced by twdm and by programs
 	executed by it (twin and twattach/twdisplay) to /var/log/twdm.log.
 
 	Furthermore, diagnostic messages produced by twin are also collected
 	within twin itself, and can be viewed selecting Menu -> ≡ -> Messages
 	from the default menu.
-	
-	
+
+
    6.2. Security Statement on Sockets:
 
 	As said above,
@@ -565,12 +564,12 @@
 	the file .TwinAuth in your home directory holds some magic data that
 	clients use to answer the challenge received from twin. If that data
 	is wrong or the file doesn't exist, clients can connect to twin only
-	using the Unix socket (TWDISPLAY=:<something>) so they must run
+	using the unix socket (TWDISPLAY=:<something>) so they must run
 	on the same machine as twin; remote programs won't be able to connect.
-	
-	Also, the Unix socket is set to permissions 600, so only the owner can
+
+	Also, the unix socket is set to permissions 600, so only the owner can
 	connect to it (at least on Linux it works this way).
-	
+
 	The `challenge' is actually an MD5 checksum verification: server sends
 	256 bytes of random data; client does MD5 of that data + .TwinAuth and
 	sends MD5 back. If server agrees on MD5, it grants connection.
@@ -586,7 +585,7 @@
 
 7. Transparent Compression
 
-   Twin and libTw transparently support gzip compressed sockets
+   Twin and libtw transparently support gzip compressed sockets
    by using the library `zlib'. If the connection between twin
    and the remote programs you want to run is slow,
    you may benefit from compression.
@@ -601,7 +600,7 @@
    checking for deflate in -lz... yes
    [...]
 
-   finally compile twin and libTw.
+   finally compile twin and libtw.
 
    To actually use compression, append ",gz"
    to your $TWDISPLAY like in these examples:
@@ -665,7 +664,7 @@
 
    The two different programs have different advantages and disadvantages:
 
-	
+
    twattach:   advantages:  fast, efficient, extremely lightweight.
             disadvantages:  completely relies on twin to be able to use
 	                    the display. For example, twin running on a host
@@ -684,8 +683,8 @@
 			    Using `twdisplay' to attach twin to itself works!
             disadvantages:  eats more CPU and memory. Not really a problem
 	    		    these days.
-	
-	
+
+
     Examples:
 
       $ twattach --hw=X
@@ -751,9 +750,6 @@
       The final ",gz" means that the connection between `twdisplay'
       and the second `twin' will be compressed.
 
-      $ twattach --twin@<some twin display> --hw=ggi
-      tell twin to fire up libggi and display on it.
-
 
 
     The most general syntax of twattach is:
@@ -780,11 +776,10 @@
     known displays are:
 
       --hw=X[@<XDISPLAY>]     or    --hw=X11[@<XDISPLAY>]
-      --hw=gfx[@<XDISPLAY>]
+      --hw=xft[@<XDISPLAY>]
       --hw=twin[@<TWDISPLAY>]
       --hw=tty[@<tty device>]
-      --hw=ggi[@<libggi target>]
-	
+
     and known display options are:
 
       all displays : ",noinput" to start the display as view-only;
@@ -793,9 +788,9 @@
 		   : ",slow" to tell twin the display is slow and output
 			to it should be buffered and chunked together as much
 			as possible (this is on by default for -hw=X , -hw=X11
-			and -hw=gfx)
-		
-      --hw=X  or --hw=X11 or --hw=gfx :
+			and -hw=xft)
+
+      --hw=X  or --hw=X11 or --hw=xft :
                 : ",font=<fontname>" to choose your favourite X11 font
 		        (default: vga).
 		: ",charset=<name>" to inform the driver about the codepage
@@ -804,25 +799,6 @@
 			This is off by default as on many X servers XCopyArea
 			is actually slower than a normal redraw.
 			Your mileage may vary.
-
-      --hw=gfx  : ",mono" to load themes and images as monochrome
-                  ",color" to load themes and images as colorful (default)
-                  ",theme=<name>" to set the theme pixmap
-                  ",root=<name>"  to set the screen root pixmap
-                  ",bg=<name>"    to set the windows background pixmap
-                  ",root-as-{none|theme|root|bg}"
-                        to specify how to draw screen root:
-                        no pixmap (none), get from theme (theme),
-                        use root pixmap (root), use bg pixmap (bg)
-                  ",root-as-{none|theme|root|bg}"
-                        to specify how to draw screen root:
-                        no pixmap (none), get from theme (theme),
-                        use root pixmap (root), use bg pixmap (bg)
-                  ",bg-as-{none|theme|root|bg}"
-                        to specify how to draw windows background:
-                        no pixmap (none), get from theme (theme),
-                        use root pixmap (root), use bg pixmap (bg)
-
 
       --hw=twin : ",gz" to enable gzip compression on the connecting socket.
 
@@ -840,10 +816,6 @@
 		        controlling tty (mostly useful from twdm)
 		: ",utf8" to tell twin that the tty understands utf8 encoding
 		        to display Unicode.
-
-      --hw=ggi	: no options, use the zillion of libggi environment variables
-		  to control libggi behaviour.
-
 
 
     A common situation is the following:
@@ -955,7 +927,7 @@
     the default 80x25. Some of the ways to do this are:
     using SVGATextMode;
     using the card BIOS;
-    compiling framebuffer support in your Linux kernel.
+    compiling framebuffer support in your linux kernel.
 
 
 10. Greetings
@@ -966,4 +938,3 @@
 
     Massimiliano Ghilardi
     <https://github.com/cosmos72/>
-

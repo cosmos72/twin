@@ -9,12 +9,12 @@
  *
  */
 
-#ifndef _TT_FLAGS_H
+#ifndef TT_FLAGS_H
 
 #include <TT/TTflags.h>
 
-#ifndef _TT_FLAGS_H
-#define _TT_FLAGS_H
+#ifndef TT_FLAGS_H
+#define TT_FLAGS_H
 #endif
 
 #define ttmask(n) ((ttany)1 << (n))
@@ -164,4 +164,4 @@
 #define tt_x_right 2
 #define tt_y_down 3
 
-#endif /* _TT_FLAGS_H */
+#endif /* TT_FLAGS_H */

@@ -14,8 +14,8 @@
  *
  */
 
-#ifndef _TT_TTRADIOBUTTON_H
-#define _TT_TTRADIOBUTTON_H
+#ifndef TT_TTRADIOBUTTON_H
+#define TT_TTRADIOBUTTON_H
 
 /* object structure */
 #ifndef s_ttradiobutton
@@ -53,4 +53,4 @@ ttradiobutton TTGetGroupPrev_ttradiobutton(TT_ARG_READ ttradiobutton o);
 /** get `group_next' of ttradiobutton `o' */
 ttradiobutton TTGetGroupNext_ttradiobutton(TT_ARG_READ ttradiobutton o);
 
-#endif /* _TT_TTRADIOBUTTON_H */
+#endif /* TT_TTRADIOBUTTON_H */

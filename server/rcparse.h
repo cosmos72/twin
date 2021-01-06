@@ -10,8 +10,8 @@
  *
  */
 
-#ifndef _TWIN_RCPARSE_H
-#define _TWIN_RCPARSE_H
+#ifndef TWIN_RCPARSE_H
+#define TWIN_RCPARSE_H
 
 /*
  * ~/.twinrc syntax :
@@ -162,12 +162,12 @@
  * WindowList
  */
 
-#include "rcparse_tab.h"
+#include "rcparse_tab.hpp"
 
 ldat GlobalFlags[4];
 ldat GlobalShadows[2];
 
-static void yyerror(CONST char *s) {
+static void yyerror(const char *s) {
   printk("twin: %s:%d: %s\n", FILE_NAME, LINE_NO, s);
 }
 
@@ -184,13 +184,13 @@ static node ReverseList(node l) {
   return base;
 }
 
-INLINE node MakeNode(str name) {
+inline node MakeNode(str name) {
   node n = NEW();
   n->name = name; /* this is my_malloc()ed memory (done by rcparse.l) */
   return n;
 }
 
-INLINE node MakeBuiltinFunc(ldat id) {
+inline node MakeBuiltinFunc(ldat id) {
   node n = NEW();
   n->id = id;
   return n;
@@ -201,7 +201,7 @@ INLINE node MakeBuiltinFunc(ldat id) {
  * do nothing in that case
  * (it's a way to eat empty lines, they are coded as NULL nodes)
  */
-INLINE node AddtoNodeList(node l, node n) {
+inline node AddtoNodeList(node l, node n) {
   if (n) {
     n->next = l;
     return n;
@@ -369,28 +369,28 @@ static byte ImmGlobalFlags(node l) {
     case ALTFONT: /*ignored for compatibility*/
       return ttrue;
     case BLINK:
-      i = SETUP_BLINK;
+      i = setup_blink;
       break;
     case CURSOR_ALWAYS:
-      i = SETUP_CURSOR_ALWAYS;
+      i = setup_cursor_always;
       break;
     case SCREEN_SCROLL:
-      i = SETUP_SCREEN_SCROLL;
+      i = setup_screen_scroll;
       break;
     case MENU_HIDE:
-      i = SETUP_MENU_HIDE;
+      i = setup_menu_hide;
       break;
     case MENU_INFO:
-      i = SETUP_MENU_INFO;
+      i = setup_menu_info;
       break;
     case MENU_RELAX:
-      i = SETUP_MENU_RELAX;
+      i = setup_menu_relax;
       break;
     case SHADOWS:
-      i = SETUP_SHADOWS;
+      i = setup_shadows;
       break;
     case TERMINALS_UTF8:
-      i = SETUP_TERMINALS_UTF8;
+      i = setup_terminals_utf8;
       break;
     case BUTTON_PASTE:
       i = 0;
@@ -675,7 +675,7 @@ static node MakeSendToScreen(str name) {
 
 static node MakeSyntheticKey(ldat shiftflags, str label) {
   ldat key;
-  CONST char *seq;
+  const char *seq;
   char buf[4];
   node n;
 
@@ -751,12 +751,12 @@ static node AddtoStringList(node l, str string) {
 
 static str TokenName(ldat id) {
   switch (id) {
-  case BLACK:
-    return "BLACK";
-  case BLUE:
-    return "BLUE";
-  case GREEN:
-    return "GREEN";
+  case tblack:
+    return "tblack";
+  case tblue:
+    return "tblue";
+  case tgreen:
+    return "tgreen";
 
   case '+':
     return "+";
@@ -905,23 +905,23 @@ static str TokenName(ldat id) {
 
 static str ColorName(tcolor col) {
   switch (col) {
-  case BLACK:
+  case tblack:
     return "Black";
-  case BLUE:
+  case tblue:
     return "Blue";
-  case GREEN:
+  case tgreen:
     return "Green";
-  case CYAN:
+  case tcyan:
     return "Cyan";
-  case RED:
+  case tred:
     return "Red";
-  case MAGENTA:
+  case tmagenta:
     return "Magenta";
-  case YELLOW:
+  case tyellow:
     return "Yellow";
-  case WHITE:
+  case twhite:
     return "White";
-  case HIGH:
+  case thigh:
     return "High";
   default:
     break;
@@ -930,14 +930,14 @@ static str ColorName(tcolor col) {
 }
 
 static void DumpColorName(tcolor col) {
-  tcolor fg = COLFG(col), bg = COLBG(col);
+  tcolor fg = TCOLFG(col), bg = TCOLBG(col);
 
-  if (fg & HIGH)
-    fprintf(stderr, "%s ", ColorName(HIGH));
-  fprintf(stderr, "%s %s ", ColorName(fg & ~HIGH), TokenName(FL_ON));
-  if (bg & HIGH)
-    fprintf(stderr, "%s ", ColorName(HIGH));
-  fprintf(stderr, "%s ", ColorName(bg & ~HIGH));
+  if (fg & thigh)
+    fprintf(stderr, "%s ", ColorName(thigh));
+  fprintf(stderr, "%s %s ", ColorName(fg & ~thigh), TokenName(FL_ON));
+  if (bg & thigh)
+    fprintf(stderr, "%s ", ColorName(thigh));
+  fprintf(stderr, "%s ", ColorName(bg & ~thigh));
 }
 
 static void DumpNameList(node l, byte nl) {
@@ -1106,7 +1106,7 @@ static void WriteGlobals(void) {
   M = (void **)((str)M + sizeof(GlobalShadows));
 }
 
-static screen FindNameInScreens(dat len, CONST char *name, screen S) {
+static screen FindNameInScreens(dat len, const char *name, screen S) {
   while (S) {
     if (len == S->NameLen && !memcmp(name, S->Name, len))
       return S;
@@ -1115,7 +1115,7 @@ static screen FindNameInScreens(dat len, CONST char *name, screen S) {
   return NULL;
 }
 
-static node FindNameInList(uldat len, CONST char *name, node list) {
+static node FindNameInList(uldat len, const char *name, node list) {
   while (list) {
     if (list->name && strlen(list->name) == len && !memcmp(name, list->name, len))
       return list;
@@ -1124,12 +1124,12 @@ static node FindNameInList(uldat len, CONST char *name, node list) {
   return NULL;
 }
 
-static void DeleteScreens(screen Screens) {
-  screen Next;
-  while (Screens) {
-    Next = Screens->Next;
-    Delete(Screens);
-    Screens = Next;
+static void DeleteScreens(screen first) {
+  screen s = first, next;
+  while (s) {
+    next = s->Next;
+    s->Delete();
+    s = next;
   }
 }
 
@@ -1173,7 +1173,7 @@ static byte CreateNeededScreens(node list, screen *res_Screens) {
         }
         h++;
       }
-      s = Do(Create, Screen)(FnScreen, strlen(list->name), list->name, w, h, attr);
+      s = New(screen)(strlen(list->name), list->name, w, h, attr);
 
       FreeMem(attr);
     }
@@ -1210,7 +1210,7 @@ static void UpdateVisibleScreens(screen new_Screens) {
         FreeMem(Orig->USE.B.Bg);
       Orig->USE.B.Bg = S->USE.B.Bg;
       S->USE.B.Bg = NULL;
-      Delete(S);
+      S->Delete();
     } else
       InsertLast(Screen, S, All);
 
@@ -1225,9 +1225,9 @@ static void DeleteUnneededScreens(node list) {
   screen S, Next;
   for (S = All->FirstScreen; S; S = Next) {
     Next = S->Next;
-    if ((S->NameLen != 1 || S->Name[0] != '1') && !FindNameInList(S->NameLen, S->Name, list))
-
-      Delete(S);
+    if ((S->NameLen != 1 || S->Name[0] != '1') && !FindNameInList(S->NameLen, S->Name, list)) {
+      S->Delete();
+    }
   }
 }
 
@@ -1275,8 +1275,8 @@ static byte NewCommonMenu(void **shm_M, menu *res_CommonMenu, node **res_MenuBin
   new_MenuBindsMax = 0;
   new_MenuList = (node)(*(shm_M + (&MenuList - Globals)));
 
-  if (!(Menu = Do(Create, Menu)(FnMenu, Ext(WM, MsgPort), (tcolor)0, (tcolor)0, (tcolor)0,
-                                (tcolor)0, (tcolor)0, (tcolor)0, ttrue)))
+  if (!(Menu = New(menu)(Ext(WM, MsgPort), (tcolor)0, (tcolor)0, (tcolor)0, (tcolor)0, (tcolor)0,
+                         (tcolor)0, ttrue)))
     return tfalse;
 
   /* ok, now create the CommonMenu. Fill new_MenuBinds[] as we proceed */
@@ -1329,7 +1329,7 @@ static byte NewCommonMenu(void **shm_M, menu *res_CommonMenu, node **res_MenuBin
 
   /* out of memory! */
   FreeMem(new_MenuBinds);
-  Delete(Menu);
+  Menu->Delete();
   return tfalse;
 }
 
@@ -1362,8 +1362,9 @@ static byte ReadGlobals(void) {
     FreeMem(MenuBinds);
   GlobalsAreStatic = tfalse;
 
-  if (All->CommonMenu)
-    Delete(All->CommonMenu);
+  if (All->CommonMenu) {
+    All->CommonMenu->Delete();
+  }
   All->CommonMenu = new_CommonMenu;
   MenuBinds = new_MenuBinds;
   MenuBindsMax = new_MenuBindsMax;
@@ -1499,11 +1500,11 @@ static byte rcload(void) {
 }
 
 EXTERN_C byte InitModule(module Module) {
-  Module->Init = rcload;
+  Module->DoInit = rcload;
   return ttrue;
 }
 
 EXTERN_C void QuitModule(module Module) {
 }
 
-#endif /* _TWIN_RCPARSE_H */
+#endif /* TWIN_RCPARSE_H */

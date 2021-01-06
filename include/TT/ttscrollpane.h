@@ -14,8 +14,8 @@
  *
  */
 
-#ifndef _TT_TTSCROLLPANE_H
-#define _TT_TTSCROLLPANE_H
+#ifndef TT_TTSCROLLPANE_H
+#define TT_TTSCROLLPANE_H
 
 /* object structure */
 #ifndef s_ttscrollpane
@@ -59,4 +59,4 @@ ttscrollbar TTGetBarY_ttscrollpane(TT_ARG_READ ttscrollpane o);
 /** set `bar_y' of ttscrollpane `o' */
 ttbyte TTSetBarY_ttscrollpane(ttscrollpane o, ttscrollbar bar_y);
 
-#endif /* _TT_TTSCROLLPANE_H */
+#endif /* TT_TTSCROLLPANE_H */

@@ -15,7 +15,7 @@
 #include "twin.h"
 #include "alloc.h"
 #include "rctypes.h"
-#include "rcparse_tab.h"
+#include "rcparse_tab.hpp"
 
 #define IS_OCTDIGIT(c) ((c) >= '0' && (c) <= '7')
 #define IS_HEXDIGIT(c) (((c) >= '0' && (c) <= '9') || ((c) >= 'A' && (c) <= 'F') || ((c) >= 'a' && (c) <= 'f'))
@@ -39,7 +39,7 @@ static char errbuf[256];
 # define YY_DECL int yylex(YYSTYPE *_yylval, void *yylloc)
 # define yylval (*_yylval)
 #endif
-    
+
 #define YY_SKIP_YYWRAP
 #define YY_NO_SCAN_BYTES
 #define YY_NO_SCAN_STRING
@@ -147,14 +147,14 @@ Alt          { yylval.val = KBD_ALT_FL;   return KBD_FLAG; }
 Ctrl         { yylval.val = KBD_CTRL_FL;  return KBD_FLAG; }
 Shift        { yylval.val = KBD_SHIFT_FL; return KBD_FLAG; }
 
-Black        { yylval.val = BLACK;    return COLOR; }
-Blue         { yylval.val = BLUE;     return COLOR; }
-Green        { yylval.val = GREEN;    return COLOR; }
-Cyan         { yylval.val = CYAN;     return COLOR; }
-Red          { yylval.val = RED;      return COLOR; }
-Magenta      { yylval.val = MAGENTA;  return COLOR; }
-Yellow       { yylval.val = YELLOW;   return COLOR; }
-White        { yylval.val = WHITE;    return COLOR; }
+Black        { yylval.val = tblack;    return COLOR; }
+Blue         { yylval.val = tblue;     return COLOR; }
+Green        { yylval.val = tgreen;    return COLOR; }
+Cyan         { yylval.val = tcyan;     return COLOR; }
+Red          { yylval.val = tred;      return COLOR; }
+Magenta      { yylval.val = tmagenta;  return COLOR; }
+Yellow       { yylval.val = tyellow;   return COLOR; }
+White        { yylval.val = twhite;    return COLOR; }
 Bold|High    return COL_HIGH;
 
 \n        { LINE_NO++; return '\n'; }
@@ -185,7 +185,7 @@ Bold|High    return COL_HIGH;
             int len = strlen(yytext + 1);
             char c, *p = yytext + 1;
             char *res = (char *)my_malloc(len), *s = res;
-            
+
             while ((c = *p)) {
                 if (c != '\\' || !p[1])
                 *s++ = *p++;
@@ -247,7 +247,7 @@ Bold|High    return COL_HIGH;
             YY_FATAL_ERROR("twin: unterminated string\n");
         }
     }
-        
+
 [\t\r\f\v ]+    /* eat whitespace */
 
 
@@ -265,13 +265,13 @@ Bold|High    return COL_HIGH;
 %%
 
 
-int set_yy_file(CONST char *path) {
+int set_yy_file(const char *path) {
     uldat len;
     FILE *f;
-    
+
     if (!path)
         return 1;
-    
+
     if (read_stack_curr >= MAX_READ_DEPTH) {
         fprintf(stderr, "twin: %s:%d: `Read' commands nested too deeply!\n",
             FILE_NAME, LINE_NO);
@@ -282,7 +282,7 @@ int set_yy_file(CONST char *path) {
         return 1;
 
     len = strlen(path) + 1;
-    
+
     read_stack[read_stack_curr++] = YY_CURRENT_BUFFER;
     LINE_NO = 1;
     FILE_NAME = (char *)my_malloc(len);
@@ -302,4 +302,3 @@ static int yywrap(void) {
     }
     return read_stack_curr <= 0;
 }
-

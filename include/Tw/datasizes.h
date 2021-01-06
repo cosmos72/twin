@@ -1,7 +1,7 @@
-#ifndef _TW_DATASIZES_H
-#define _TW_DATASIZES_H
+#ifndef TW_DATASIZES_H
+#define TW_DATASIZES_H
 
-#ifndef _TW_TWAUTOCONF_H
+#ifndef TWTWAUTOCONF_H
 #include <Tw/autoconf.h>
 #endif
 
@@ -78,4 +78,4 @@
 #define TW_MAXWFONT 0xFFFFFFFF
 #define TW_MAXWATTR 0xFFFFFFFF
 
-#endif /* _TW_DATASIZES_H */
+#endif /* TW_DATASIZES_H */

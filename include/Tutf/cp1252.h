@@ -7,8 +7,8 @@
  * PLEASE DO NOT EDIT!
  */
 
-#ifndef _TUTF_CP1252_H
-#define _TUTF_CP1252_H
+#ifndef TUTF_CP1252_H
+#define TUTF_CP1252_H
 
 #define T_CP1252_CTRL_NULL 0x0000
 #define T_CP1252_CTRL_START_OF_HEADING 0x0001
@@ -561,4 +561,4 @@
   EL(_LATIN_SMALL_LETTER_Z_WITH_CARON)                                                             \
   EL(_LATIN_CAPITAL_LETTER_Y_WITH_DIAERESIS)
 
-#endif /* _TUTF_CP1252_H */
+#endif /* TUTF_CP1252_H */

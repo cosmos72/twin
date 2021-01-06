@@ -10,8 +10,8 @@
  *
  */
 
-#ifndef _TWIN_WINDOW_H
-#define _TWIN_WINDOW_H
+#ifndef TWIN_WINDOW_H
+#define TWIN_WINDOW_H
 
 #include "twautoconf.h"
 
@@ -21,7 +21,7 @@
 #include <sys/types.h> /* pid_t */
 #endif
 
-/* values returned by FnWindow->FindBorder (modeled after STATE_*) */
+/* values returned by Fn_window->FindBorder (modeled after STATE_*) */
 typedef enum e_pos {
   POS_TITLE = 10,
   POS_SIDE_LEFT = 11,
@@ -65,8 +65,60 @@ struct s_WC { /* for WINDOWFL_USECONTENTS windows */
   ldat HSplit;
 };
 
-struct s_window {
-  uldat Id;
+struct s_fn_window {
+  uldat Magic;
+  void (*Insert)(window, widget Parent, widget Prev, widget Next);
+  void (*Remove)(window);
+  void (*Delete)(window);
+  void (*ChangeField)(window, udat field, uldat CLEARMask, uldat XORMask);
+  /* widget */
+  fn_obj Fn_Obj;
+  void (*DrawSelf)(draw_ctx *D);
+  widget (*FindWidgetAt)(window Parent, dat X, dat Y);
+  gadget (*FindGadgetByCode)(window Parent, udat Code);
+  void (*SetXY)(window, dat X, dat Y);
+  void (*SetFill)(window, tcell Fill);
+  widget (*Focus)(window);
+  widget (*KbdFocus)(window);
+  void (*Map)(window, widget Parent);
+  void (*UnMap)(window);
+  void (*MapTopReal)(window, screen);
+  void (*Raise)(window);
+  void (*Lower)(window);
+  void (*Own)(window, msgport);
+  void (*DisOwn)(window);
+  void (*RecursiveDelete)(window, msgport);
+  void (*Expose)(window, dat XWidth, dat YWidth, dat Left, dat Up, const char *, const trune *,
+                 const tcell *);
+  byte (*InstallHook)(window, fn_hook, fn_hook *Where);
+  void (*RemoveHook)(window, fn_hook, fn_hook *Where);
+  /* window */
+  fn_widget Fn_Widget;
+  byte (*TtyWriteCharset)(window, uldat Len, const char *charset_bytes);
+  byte (*TtyWriteUtf8)(window, uldat Len, const char *utf8_bytes);
+  byte (*TtyWriteTRune)(window, uldat Len, const trune *runes);
+  byte (*TtyWriteTCell)(window, dat x, dat y, uldat Len, const tcell *cells);
+
+  byte (*RowWriteCharset)(window, uldat Len, const char *charset_bytes);
+  byte (*RowWriteUtf8)(window, uldat Len, const char *utf8_bytes);
+  byte (*RowWriteTRune)(window, uldat Len, const trune *runes);
+  byte (*RowWriteTCell)(window, dat x, dat y, uldat Len, const tcell *cells);
+
+  void (*GotoXY)(window, ldat X, ldat Y);
+  void (*SetTitle)(window, dat titlelen, char *title);
+  void (*SetColText)(window, tcolor ColText);
+  void (*SetColors)(window, udat Bitmap, tcolor ColGadgets, tcolor ColArrows, tcolor ColBars,
+                    tcolor ColTabs, tcolor ColBorder, tcolor ColText, tcolor ColSelect,
+                    tcolor ColDisabled, tcolor ColSelectDisabled);
+  void (*Configure)(window, byte Bitmap, dat Left, dat Up, dat MinXWidth, dat MinYWidth,
+                    dat MaxXWidth, dat MaxYWidth);
+  window (*Create4Menu)(menu);
+  tpos (*FindBorder)(window, dat u, dat v, byte Border, tcell *PtrAttr);
+  row (*FindRow)(window, ldat RowN);
+  row (*FindRowByCode)(window, udat Code, ldat *NumRow);
+};
+
+struct s_window : public s_obj {
   fn_window Fn;
   widget Prev, Next; /* list in the same parent */
   widget Parent;     /* where this window sits */
@@ -74,7 +126,7 @@ struct s_window {
   widget FirstW, LastW; /* list of children */
   widget SelectW;       /* selected child */
   dat Left, Up, XWidth, YWidth;
-  uldat Attrib;
+  uldat Attr;
   uldat Flags;
   ldat XLogic, YLogic;
   widget O_Prev, O_Next; /* list with the same msgport (owner) */
@@ -106,66 +158,145 @@ struct s_window {
   dat MinXWidth, MinYWidth;
   dat MaxXWidth, MaxYWidth;
   ldat WLogic, HLogic;  /* window interior logic size */
-  trune CONST *Charset; /* the byte -> trune translation to use */
-};
+  trune const *Charset; /* the byte -> trune translation to use */
 
-struct s_fn_window {
-  uldat Magic, Size, Used;
-  window (*Create)(fn_window, msgport Owner, dat NameLen, CONST char *Name, CONST tcolor *ColName,
-                   menu Menu, tcolor ColText, uldat CursorType, uldat Attrib, uldat Flags,
-                   dat XWidth, dat YWidth, dat ScrollBackLines);
-  void (*Insert)(window, widget Parent, widget Prev, widget Next);
-  void (*Remove)(window);
-  void (*Delete)(window);
-  void (*ChangeField)(window, udat field, uldat CLEARMask, uldat XORMask);
+  /* obj */
+  static window Create(msgport owner, dat titlelen, const char *title, const tcolor *coltitle,
+                       menu menu, tcolor coltext, uldat cursortype, uldat attr, uldat flags,
+                       dat xwidth, dat ywidth, dat scrollbacklines);
+  static window Create4Menu(menu);
+  window Init(msgport owner, dat titlelen, const char *title, const tcolor *coltitle, menu menu,
+              tcolor coltext, uldat cursortype, uldat attr, uldat flags, dat xwidth, dat ywidth,
+              dat scrollbacklines);
+  uldat Magic() const {
+    return Fn->Magic;
+  }
+  void Insert(widget parent, widget prev, widget next) {
+    Fn->Insert(this, parent, prev, next);
+  }
+  void Remove() {
+    Fn->Remove(this);
+  }
+  void Delete() {
+    Fn->Delete(this);
+  }
+  void ChangeField(udat field, uldat clear_mask, uldat xor_mask) {
+    Fn->ChangeField(this, field, clear_mask, xor_mask);
+  }
   /* widget */
-  fn_obj Fn_Obj;
-  void (*DrawSelf)(draw_ctx *D);
-  widget (*FindWidgetAt)(window Parent, dat X, dat Y);
-  gadget (*FindGadgetByCode)(window Parent, udat Code);
-  void (*SetXY)(window, dat X, dat Y);
-  void (*SetFill)(window, tcell Fill);
-  widget (*Focus)(window);
-  widget (*KbdFocus)(window);
-  void (*Map)(window, widget Parent);
-  void (*UnMap)(window);
-  void (*MapTopReal)(window, screen);
-  void (*Raise)(window);
-  void (*Lower)(window);
-  void (*Own)(window, msgport);
-  void (*DisOwn)(window);
-  void (*RecursiveDelete)(window, msgport);
-  void (*Expose)(window, dat XWidth, dat YWidth, dat Left, dat Up, CONST char *, CONST trune *,
-                 CONST tcell *);
-  byte (*InstallHook)(window, fn_hook, fn_hook *Where);
-  void (*RemoveHook)(window, fn_hook, fn_hook *Where);
+  void DrawSelf(draw_ctx *D) {
+    Fn->DrawSelf(D);
+  }
+  widget FindWidgetAt(dat x, dat y) {
+    return Fn->FindWidgetAt(this, x, y);
+  }
+  gadget FindGadgetByCode(udat code) {
+    return Fn->FindGadgetByCode(this, code);
+  }
+  void SetXY(dat x, dat y) {
+    Fn->SetXY(this, x, y);
+  }
+  void SetFill(tcell fill) {
+    Fn->SetFill(this, fill);
+  }
+  widget Focus() {
+    return Fn->Focus(this);
+  }
+  widget KbdFocus() {
+    return Fn->KbdFocus(this);
+  }
+  void Map(widget parent) {
+    Fn->Map(this, parent);
+  }
+  void UnMap() {
+    Fn->UnMap(this);
+  }
+  void MapTopReal(screen scr) {
+    Fn->MapTopReal(this, scr);
+  }
+  void Raise() {
+    Fn->Raise(this);
+  }
+  void Lower() {
+    Fn->Lower(this);
+  }
+  void Own(msgport port) {
+    Fn->Own(this, port);
+  }
+  void DisOwn() {
+    Fn->DisOwn(this);
+  }
+  void RecursiveDelete(msgport port) {
+    Fn->RecursiveDelete(this, port);
+  }
+  void Expose(dat xwidth, dat ywidth, dat left, dat up, const char *ascii, const trune *runes,
+              const tcell *cells) {
+    Fn->Expose(this, xwidth, ywidth, left, up, ascii, runes, cells);
+  }
+  byte InstallHook(fn_hook hook, fn_hook *where) {
+    return Fn->InstallHook(this, hook, where);
+  }
+  void RemoveHook(fn_hook hook, fn_hook *where) {
+    Fn->RemoveHook(this, hook, where);
+  }
   /* window */
-  fn_widget Fn_Widget;
-  byte (*TtyWriteAscii)(window, uldat Len, CONST char *Ascii);
-  byte (*TtyWriteString)(window, uldat Len, CONST char *String);
-  byte (*TtyWriteTRune)(window, uldat Len, CONST trune *TRune);
-  byte (*TtyWriteTCell)(window, dat x, dat y, uldat Len, CONST tcell *Attr);
+  byte TtyWriteCharset(uldat len, const char *charset_bytes) {
+    return Fn->TtyWriteCharset(this, len, charset_bytes);
+  }
+  byte TtyWriteUtf8(uldat len, const char *utf8_bytes) {
+    return Fn->TtyWriteUtf8(this, len, utf8_bytes);
+  }
+  byte TtyWriteTRune(uldat len, const trune *runes) {
+    return Fn->TtyWriteTRune(this, len, runes);
+  }
+  byte TtyWriteTCell(dat x, dat y, uldat len, const tcell *cells) {
+    return Fn->TtyWriteTCell(this, x, y, len, cells);
+  }
 
-  byte (*RowWriteAscii)(window, uldat Len, CONST char *Ascii);
-  byte (*RowWriteString)(window, uldat Len, CONST char *String);
-  byte (*RowWriteTRune)(window, uldat Len, CONST trune *TRune);
-  byte (*RowWriteTCell)(window, dat x, dat y, uldat Len, CONST tcell *Attr);
+  byte RowWriteCharset(uldat len, const char *charset_bytes) {
+    return Fn->RowWriteCharset(this, len, charset_bytes);
+  }
+  byte RowWriteUtf8(uldat len, const char *utf8_bytes) {
+    return Fn->RowWriteUtf8(this, len, utf8_bytes);
+  }
+  byte RowWriteTRune(uldat len, const trune *runes) {
+    return Fn->RowWriteTRune(this, len, runes);
+  }
+  byte RowWriteTCell(dat x, dat y, uldat len, const tcell *attr) {
+    return Fn->RowWriteTCell(this, x, y, len, attr);
+  }
 
-  void (*GotoXY)(window, ldat X, ldat Y);
-  void (*SetTitle)(window, dat titlelen, char *title);
-  void (*SetColText)(window, tcolor ColText);
-  void (*SetColors)(window, udat Bitmap, tcolor ColGadgets, tcolor ColArrows, tcolor ColBars,
-                    tcolor ColTabs, tcolor ColBorder, tcolor ColText, tcolor ColSelect,
-                    tcolor ColDisabled, tcolor ColSelectDisabled);
-  void (*Configure)(window, byte Bitmap, dat Left, dat Up, dat MinXWidth, dat MinYWidth,
-                    dat MaxXWidth, dat MaxYWidth);
-  window (*Create4Menu)(fn_window, menu);
-  tpos (*FindBorder)(window, dat u, dat v, byte Border, tcell *PtrAttr);
-  row (*FindRow)(window, ldat RowN);
-  row (*FindRowByCode)(window, udat Code, ldat *NumRow);
+  void GotoXY(ldat x, ldat y) {
+    Fn->GotoXY(this, x, y);
+  }
+  void SetTitle(dat titlelen, char *title) {
+    Fn->SetTitle(this, titlelen, title);
+  }
+  void SetColText(tcolor coltext) {
+    Fn->SetColText(this, coltext);
+  }
+  void SetColors(udat bitmap, tcolor colgadgets, tcolor colarrows, tcolor colbars, tcolor coltabs,
+                 tcolor colborder, tcolor coltext, tcolor colselect, tcolor coldisabled,
+                 tcolor colselectdisabled) {
+    Fn->SetColors(this, bitmap, colgadgets, colarrows, colbars, coltabs, colborder, coltext,
+                  colselect, coldisabled, colselectdisabled);
+  }
+  void Configure(byte bitmap, dat left, dat up, dat minxwidth, dat minywidth, dat maxxwidth,
+                 dat maxywidth) {
+    Fn->Configure(this, bitmap, left, up, minxwidth, minywidth, maxxwidth, maxywidth);
+  }
+  tpos FindBorder(dat u, dat v, byte border, tcell *ptrattr) {
+    return Fn->FindBorder(this, u, v, border, ptrattr);
+  }
+  row FindRow(ldat rown) {
+    return Fn->FindRow(this, rown);
+  }
+  row FindRowByCode(udat code, ldat *numrow) {
+    return Fn->FindRowByCode(this, code, numrow);
+  }
 };
 
-/* Window->Attrib */
+/* Window->Attr */
 typedef enum e_window_attr {
   WINDOW_WANT_MOUSE_MOTION = WIDGET_WANT_MOUSE_MOTION, /* 0x0001 */
   WINDOW_WANT_KEYS = WIDGET_WANT_KEYS,                 /* 0x0002 */
@@ -222,9 +353,9 @@ typedef enum e_window_state {
   BUTTON_ANY_SELECT = 0xFFC00000u,
 } window_state;
 
-/*#define BUTTON_FIRST		0 */
-/*#define BUTTON_CLOSE		0 */
-/*#define BUTTON_LAST		9 */
+/*#define BUTTON_FIRST                0 */
+/*#define BUTTON_CLOSE                0 */
+/*#define BUTTON_LAST                9 */
 
 #define BUTTON_MAX 10
 
@@ -240,4 +371,4 @@ typedef enum e_window_cursor_type {
 #define MIN_XWIN 5
 #define MIN_YWIN 2
 
-#endif /* _TWIN_WINDOW_H */
+#endif /* TWIN_WINDOW_H */

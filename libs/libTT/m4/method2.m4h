@@ -13,7 +13,7 @@ dnl Tell the user about this.
  * modify it under the terms of the GNU Library General Public
  * License as published by the Free Software Foundation; either
  * version 2 of the License, or (at your option) any later version.
- * 
+ *
  */
 
 
@@ -46,13 +46,13 @@ ttbyte TTCallY_ttmethod(tt_obj id, TT_ARG_WRITE TT_ARG_ARRAY((1)) ttarg * return
     ttany a0 = (ttany)0;
 
     if ((m = ID2(ttmethod,id)) && nargs >= m->parameter_type->array_n) switch ((m_order = (opaque)id & TT_MAGIC_MASK)) {
-    
-	/* generic functions */
+
+        /* generic functions */
 
 define(`handy_method', `
       case ttmethod_$1:
-	a0_eq_ifnotvoid($4,$5)`'c_arg_ret_undecay_ifnotvoid($4,$5)`'TT$1(c_args_call_anonymous(0, NSHIFT(6, $@)));
-	break;')
+        a0_eq_ifnotvoid($4,$5)`'c_arg_ret_undecay_ifnotvoid($4,$5)`'TT$1(c_args_call_anonymous(0, NSHIFT(6, $@)));
+        break;')
 
 TTdef_ttclass_handymethods()
 
@@ -62,12 +62,12 @@ undefine(`handy_method')`'dnl
 
 define(`final', `
       case ttmethod_$1_$2:
-	a0_eq_ifnotvoid($4,$5)`'c_arg_ret_undecay_ifnotvoid($4,$5)`'TT$1_$2(c_args_call_anonymous(0, NSHIFT(6, $@)));
-	break;')
+        a0_eq_ifnotvoid($4,$5)`'c_arg_ret_undecay_ifnotvoid($4,$5)`'TT$1_$2(c_args_call_anonymous(0, NSHIFT(6, $@)));
+        break;')
 define(`public', `final($@)')
 define(`public_set', `final($@)')
 define(`el',`
-	/* $1 methods */
+        /* $1 methods */
     TTdef_ttclass_$1($1)
 ')
 TTlist()
@@ -76,25 +76,24 @@ define(`final')
 define(`public_set')
 define(`public')
 
-	/* TTSet*_* methods omitted, they are listed above ! */
-    
-	/* TTGet*_* methods */
+        /* TTSet*_* methods omitted, they are listed above ! */
+
+        /* TTGet*_* methods */
 
       default:
         if (m_order >= ttmethod_FN_get_first && m_order < ttmethod_FN_get_last) {
-	  return TTGetField_ttobj((tt_obj)(opaque)a[1],
-				  (tt_obj)(opaque)((order_ttfield<<TT_MAGIC_SHIFT) |
-						   (m_order - ttmethod_FN_get_first +
-						    ttobj_field_first)),
-				  return_value);
-	}
-	return TT_FALSE;
-	
+          return TTGetField_ttobj((tt_obj)(opaque)a[1],
+                                  (tt_obj)(opaque)((order_ttfield<<TT_MAGIC_SHIFT) |
+                                                   (m_order - ttmethod_FN_get_first +
+                                                    ttobj_field_first)),
+                                  return_value);
+        }
+        return TT_FALSE;
+
     } else
-	return TT_FALSE;
-	
+        return TT_FALSE;
+
     return_value->type = m->return_type;
     return_value->value = a0;
     return TT_TRUE;
 }
-

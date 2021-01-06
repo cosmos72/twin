@@ -1,5 +1,5 @@
 /*
- *  Tw.h  --  main include for all libTw data types, functions and macros
+ *  Tw.h  --  main include for all libtw data types, functions and macros
  *
  *  Copyright (C) 1999-2001 by Massimiliano Ghilardi
  *
@@ -61,8 +61,8 @@
  * pending data will *NOT* be sent to the server.
  */
 
-#ifndef _TW_H
-#define _TW_H
+#ifndef TW_H
+#define TW_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -96,8 +96,6 @@ typedef tobj tmenu;
 typedef tobj tmsgport;
 /** type for server-side mutexes (used for inter-client synchronization) */
 typedef tobj tmutex;
-/** type for server extensions */
-typedef tobj textension;
 /** type for server topmost object */
 typedef tobj tall;
 
@@ -120,23 +118,25 @@ struct s_tevent_display {
 #define TW_SIZEOF_TEVENT_DISPLAY (sizeof(struct s_tevent_display) - sizeof(uldat))
 
 /* Code */
-#define TW_DPY_DrawTCell ((udat)0)
-#define TW_DPY_FlushHW ((udat)1)
-#define TW_DPY_KeyboardEvent ((udat)2)
-#define TW_DPY_MouseEvent ((udat)3)
-#define TW_DPY_SetCursorType ((udat)4)
-#define TW_DPY_MoveToXY ((udat)5)
-#define TW_DPY_Resize ((udat)6)
+enum e_tevent_display_code {
+  TW_EV_DPY_DrawTCell = 0,
+  TW_EV_DPY_FlushHW = 1,
+  TW_EV_DPY_KeyboardEvent = 2,
+  TW_EV_DPY_MouseEvent = 3,
+  TW_EV_DPY_SetCursorType = 4,
+  TW_EV_DPY_MoveToXY = 5,
+  TW_EV_DPY_Resize = 6,
 
-#define TW_DPY_SelectionExport ((udat)8)
-#define TW_DPY_DragArea ((udat)9)
-#define TW_DPY_Beep ((udat)10)
-#define TW_DPY_Configure ((udat)11)
-#define TW_DPY_SetPalette ((udat)12)
-#define TW_DPY_ResetPalette ((udat)13)
-#define TW_DPY_Helper ((udat)14)
-#define TW_DPY_RedrawVideo ((udat)15)
-#define TW_DPY_Quit ((udat)16)
+  TW_EV_DPY_SelectionExport = 8,
+  TW_EV_DPY_DragArea = 9,
+  TW_EV_DPY_Beep = 10,
+  TW_EV_DPY_Configure = 11,
+  TW_EV_DPY_SetPalette = 12,
+  TW_EV_DPY_ResetPalette = 13,
+  TW_EV_DPY_Helper = 14,
+  TW_EV_DPY_RedrawVideo = 15,
+  TW_EV_DPY_Quit = 16,
+};
 
 typedef struct s_tevent_keyboard *tevent_keyboard;
 /** type for keypress events */
@@ -210,8 +210,7 @@ struct s_tevent_selectionnotify {
 } TW_ATTR_TYPE_PACKED;
 
 /*SelectionNotify Magic*/
-#define TW_SEL_TEXTMAGIC ((uldat)0x54657874)
-#define TW_SEL_TRUNEMAGIC ((uldat)0x4877666E) /* it's unicode */
+#define TW_SEL_UTF8MAGIC ((uldat)0x55746638) /* UTF-8 */
 #define TW_SEL_FILEMAGIC ((uldat)0x46696c65)
 #define TW_SEL_URLMAGIC ((uldat)0xAB1691BA)
 #define TW_SEL_DATAMAGIC ((uldat)0xDA1AA1AD) /* check MIME if you get this */
@@ -306,9 +305,9 @@ struct s_tmsg {
 /** type containing information about server connection (it's an opaque pointer) */
 typedef struct s_tw_d *tdisplay;
 
-/** type of function pointers passed to libTw as listeners (i.e. tmsg handlers) */
+/** type of function pointers passed to libtw as listeners (i.e. tmsg handlers) */
 typedef void (*tfn_listener)(tevent_any, void *);
-/** type of function pointer passed to libTw as default listener (i.e. tmsg handler) */
+/** type of function pointer passed to libtw as default listener (i.e. tmsg handler) */
 typedef void (*tfn_default_listener)(tmsg, void *);
 
 /** type containing information about a listener (it's an opaque pointer) */
@@ -342,17 +341,8 @@ void Tw_Close(tdisplay TwD);
 #define TW_PRIV_SGIDTTY 1
 #define TW_PRIV_SUIDROOT 2
 
-/** return 1 if server supports all given libTw functions */
+/** return 1 if server supports all given libtw functions */
 byte Tw_FindLFunction(tdisplay TwD, ...);
-/**
- * call given server extension (opened with Tw_OpenExtension()).
- * Caller must cast all optional args to (ttany),
- * including strings and arrays.
- *
- * The same cast rules apply to arguments implicitly passed to
- * Tw_CallVExtension().
- */
-tany Tw_CallLExtension(tdisplay TwD, textension id, TW_CONST byte *proto, topaque args_n, ...);
 
 #include <Tw/common_m4.h>
 #include <Tw/proto_m4.h>
@@ -364,4 +354,4 @@ tany Tw_CallLExtension(tdisplay TwD, textension id, TW_CONST byte *proto, topaqu
 }
 #endif
 
-#endif /* _TW_H */
+#endif /* TW_H */

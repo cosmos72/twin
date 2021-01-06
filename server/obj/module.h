@@ -10,27 +10,17 @@
  *
  */
 
-#ifndef _TWIN_MODULE_H
-#define _TWIN_MODULE_H
+#ifndef TWIN_MODULE_H
+#define TWIN_MODULE_H
 
 #include "obj/fwd.h"
+#include "obj/obj.h"
+#include <Tw/datatypes.h>
 
 /* module */
 
-struct s_module {
-  uldat Id;
-  fn_module Fn;
-  module Prev, Next; /* in the same All */
-  all All;
-  /* module */
-  uldat NameLen, Used;
-  char *Name;
-  void *Handle;
-  byte (*Init)(void);
-};
 struct s_fn_module {
-  uldat Magic, Size, Used;
-  module (*Create)(fn_module, uldat NameLen, CONST char *Name);
+  uldat Magic;
   void (*Insert)(module, all, module Prev, module Next);
   void (*Remove)(module);
   void (*Delete)(module);
@@ -41,4 +31,39 @@ struct s_fn_module {
   void (*DlClose)(module);
 };
 
-#endif /* _TWIN_MODULE_H */
+struct s_module : public s_obj {
+  fn_module Fn;
+  module Prev, Next; /* in the same All */
+  all All;
+  /* module */
+  uldat NameLen, Used;
+  char *Name;
+  void *Handle;
+  byte (*DoInit)(void);
+
+  static module Create(uldat namelen, const char *name);
+  module Init(uldat namelen, const char *name);
+
+  /* obj */
+  uldat Magic() const {
+    return Fn->Magic;
+  }
+  void Insert(all a, module prev, module next) {
+    Fn->Insert(this, a, prev, next);
+  }
+  void Remove() {
+    Fn->Remove(this);
+  }
+  void Delete() {
+    Fn->Delete(this);
+  }
+  /* module */
+  byte DlOpen() {
+    return Fn->DlOpen(this);
+  }
+  void DlClose() {
+    Fn->DlClose(this);
+  }
+};
+
+#endif /* TWIN_MODULE_H */

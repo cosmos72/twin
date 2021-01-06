@@ -6,26 +6,28 @@
  *  (at your option) any later version.
  */
 
-#ifndef _TWIN_VERSION_H
-#define _TWIN_VERSION_H
+#ifndef TWIN_VERSION_H
+#define TWIN_VERSION_H
+
+/* clang-format off */
 
 #if !defined(TW_CAT)
-# define TW__CAT(a,b) a##b
-# define TW_CAT(a,b)  TW__CAT(a,b)
+#define TW__CAT(a, b) a##b
+#define TW_CAT(a, b) TW__CAT(a, b)
 #endif
 
 #if !defined(TW_STR)
-# define TW__STR(s) #s
-# define TW_STR(s)  TW__STR(s)
+#define TW__STR(s) #s
+#define TW_STR(s) TW__STR(s)
 #endif
 
 #define TWIN_VERSION_MAJOR @PACKAGE_VERSION_MAJOR@
 #define TWIN_VERSION_MINOR @PACKAGE_VERSION_MINOR@
 #define TWIN_VERSION_PATCH @PACKAGE_VERSION_PATCH@
 
-#define TWIN_VERSION       ((TWIN_VERSION_MAJOR<<16)|(TWIN_VERSION_MINOR<<8)|TWIN_VERSION_PATCH)
-#define TWIN_VERSION_STR   TW_STR(TWIN_VERSION_MAJOR) "." TW_STR(TWIN_VERSION_MINOR) "." TW_STR(TWIN_VERSION_PATCH)
+#define TWIN_VERSION ((TWIN_VERSION_MAJOR << 16) | (TWIN_VERSION_MINOR << 8) | TWIN_VERSION_PATCH)
+#define TWIN_VERSION_STR                                                                           \
+  TW_STR(TWIN_VERSION_MAJOR) "." TW_STR(TWIN_VERSION_MINOR) "." TW_STR(TWIN_VERSION_PATCH)
 #define TWIN_VERSION_EXTRA_STR TW_STR(@PACKAGE_VERSION_EXTRA@)
 
-#endif /* _TWIN_VERSION_H */
-
+#endif /* TWIN_VERSION_H */

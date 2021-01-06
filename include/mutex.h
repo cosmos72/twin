@@ -1,5 +1,5 @@
 /*
- *  mutex.h  --  mutex locking functions for libTw, libTT, ...
+ *  mutex.h  --  mutex locking functions for libtw, libTT, ...
  *
  *  Copyright (C) 2001-2002 by Massimiliano Ghilardi
  *
@@ -10,8 +10,8 @@
  *
  */
 
-#ifndef _TWIN_MUTEX_H
-#define _TWIN_MUTEX_H
+#ifndef TWIN_MUTEX_H
+#define TWIN_MUTEX_H
 
 #ifdef CONF_SOCKET_PTHREADS
 
@@ -138,4 +138,4 @@ typedef struct {
 
 #endif /* CONF_SOCKET_PTHREADS */
 
-#endif /* _TWIN_MUTEX_H */
+#endif /* TWIN_MUTEX_H */

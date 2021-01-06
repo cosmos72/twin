@@ -14,8 +14,8 @@
  *
  */
 
-#ifndef _TT_TTOBJ_H
-#define _TT_TTOBJ_H
+#ifndef TT_TTOBJ_H
+#define TT_TTOBJ_H
 
 /* object structure */
 #ifndef s_ttobj
@@ -45,4 +45,4 @@ ttbyte TTChangeField_ttobj(ttobj o, TT_ARG_READ ttfield which, ttany nand_value,
 
 /* TTGet*_ttobj and TTSet*_ttobj methods */
 
-#endif /* _TT_TTOBJ_H */
+#endif /* TT_TTOBJ_H */

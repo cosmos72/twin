@@ -14,8 +14,8 @@
  *
  */
 
-#ifndef _TT_TTVECTOR_H
-#define _TT_TTVECTOR_H
+#ifndef TT_TTVECTOR_H
+#define TT_TTVECTOR_H
 
 /* object structure */
 #ifndef s_ttvector
@@ -100,4 +100,4 @@ ttopaque TTGetArrayN_ttvector(TT_ARG_READ ttvector o);
 /** get `array' of ttvector `o' */
 TT_ARG_ARRAY((_F(array_n))) ttany *TTGetArray_ttvector(TT_ARG_READ ttvector o);
 
-#endif /* _TT_TTVECTOR_H */
+#endif /* TT_TTVECTOR_H */

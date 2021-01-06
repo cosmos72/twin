@@ -1,5 +1,5 @@
 /*
- *  Twkeys.h  --  keycode enum for libTw keyboard events
+ *  Twkeys.h  --  keycode enum for libtw keyboard events
  *
  *  Copyright (C) 2000,2016 by Massimiliano Ghilardi
  *
@@ -10,8 +10,8 @@
  *
  */
 
-#ifndef _TW_KEYS_H
-#define _TW_KEYS_H
+#ifndef TW_KEYS_H
+#define TW_KEYS_H
 
 enum Twkey_e {
 
@@ -251,6 +251,9 @@ enum Twkey_e {
   TW_DongSign = 0x17B,
   TW_EuroSign = 0x17C,
 
+  /* some other key, not among the ones above */
+  TW_Other = 0x1FD,
+
   /* a dummy value for xterm-style mouse reporting ASCII sequences */
   TW_XTermMouse = 0x1FE,
 
@@ -261,4 +264,4 @@ enum Twkey_e {
 
 typedef enum Twkey_e Twkey;
 
-#endif /* _TW_KEYS_H */
+#endif /* TW_KEYS_H */

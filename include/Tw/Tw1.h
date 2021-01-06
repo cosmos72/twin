@@ -1,5 +1,5 @@
 /*
- *  Tw1.h  --  single-head compatibility defines and prototypes for libTw
+ *  Tw1.h  --  single-head compatibility defines and prototypes for libtw
  *
  *  Copyright (C) 2001-2002 by Massimiliano Ghilardi
  *
@@ -10,11 +10,11 @@
  *
  */
 
-#ifndef _TW1_H
-#define _TW1_H
+#ifndef TW1_H
+#define TW1_H
 
 /*
- * libTw.so.1 --- single head compatibility. these are too handy to drop them.
+ * libtw.so.1 --- single head compatibility. these are too handy to drop them.
  */
 extern tdisplay Tw_DefaultD;
 
@@ -24,14 +24,12 @@ extern tdisplay Tw_DefaultD;
 #ifdef __GNUC__
 /* GCC has variable-arguments macros (they are ugly and tricky, but work) */
 #define TwFindLFunction(Function...) Tw_FindLFunction(Tw_DefaultD, ##Function)
-#define TwCallLExtension(id, proto, args_n...) Tw_CallLExtension(Tw_DefaultD, id, proto, ##args_n)
 #else
 byte TwFindLFunction(void *Function, ...);
-tany TwCallLExtension(textension id, TW_CONST byte *proto, topaque args_n, ...);
 #endif
 
 #include <Tw/common1_m4.h>
 #include <Tw/proto1_m4.h>
 #include <Tw/alias1_m4.h>
 
-#endif /* _TW1_H */
+#endif /* TW1_H */

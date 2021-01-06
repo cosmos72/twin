@@ -7,8 +7,8 @@
  * PLEASE DO NOT EDIT!
  */
 
-#ifndef _TUTF_ADOBE_SYMBOL_H
-#define _TUTF_ADOBE_SYMBOL_H
+#ifndef TUTF_ADOBE_SYMBOL_H
+#define TUTF_ADOBE_SYMBOL_H
 
 #define T_ADOBE_SYMBOL_CTRL_NULL 0x0000
 #define T_ADOBE_SYMBOL_CTRL_START_OF_HEADING 0x0001
@@ -350,4 +350,4 @@
   EL(_ACUTE_ACCENT)                                                                                \
   EL(_CEDILLA)
 
-#endif /* _TUTF_ADOBE_SYMBOL_H */
+#endif /* TUTF_ADOBE_SYMBOL_H */

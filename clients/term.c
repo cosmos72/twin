@@ -70,24 +70,25 @@ static uldat FdSize, FdTop, FdBottom;
 /* functions */
 
 static uldat FdListGrow(void) {
-  uldat oldsize, size;
+  uldat old_n, new_n;
   fdlist *newFdList;
 
-  if ((oldsize = FdSize) == TW_MAXULDAT)
+  if ((old_n = FdSize) == TW_MAXULDAT)
     return TW_NOSLOT;
 
-  if ((size = oldsize < 64 ? 96 : oldsize + (oldsize >> 1)) < oldsize)
-    size = TW_MAXULDAT;
+  if ((new_n = old_n < 64 ? 96 : old_n + (old_n >> 1)) < old_n)
+    new_n = TW_MAXULDAT;
 
-  if (!(newFdList = (fdlist *)TwReAllocMem0(FdList, sizeof(fdlist), oldsize, size)))
+  if (!(newFdList =
+            (fdlist *)TwReAllocMem0(FdList, sizeof(fdlist) * old_n, sizeof(fdlist) * new_n)))
     return TW_NOSLOT;
 
-  for (FdSize = oldsize + 1; FdSize < size; FdSize++)
+  for (FdSize = old_n + 1; FdSize < new_n; FdSize++)
     newFdList[FdSize].Fd = TW_NOFD;
 
   FdList = newFdList;
 
-  return oldsize;
+  return old_n;
 }
 
 TW_INLINE uldat FdListGet(void) {
@@ -228,17 +229,17 @@ static char *default_title = "Twin Term";
 
 static twindow newTermWindow(TW_CONST char *title) {
   twindow Window =
-      TwCreateWindow(strlen(title), title, NULL, Term_Menu, COL(WHITE, BLACK), TW_LINECURSOR,
+      TwCreateWindow(strlen(title), title, NULL, Term_Menu, TCOL(twhite, tblack), TW_LINECURSOR,
                      TW_WINDOW_WANT_KEYS | TW_WINDOW_WANT_CHANGES | TW_WINDOW_DRAG |
                          TW_WINDOW_RESIZE | TW_WINDOW_Y_BAR | TW_WINDOW_CLOSE,
                      TW_WINDOWFL_CURSOR_ON | TW_WINDOWFL_USECONTENTS, 80, 25, 200);
 
   if (Window != TW_NOID) {
-    TwSetColorsWindow(Window, 0x1FF, COL(HIGH | YELLOW, CYAN), COL(HIGH | GREEN, HIGH | BLUE),
-                      COL(WHITE, HIGH | BLUE), COL(HIGH | WHITE, HIGH | BLUE),
-                      COL(HIGH | WHITE, HIGH | BLUE), COL(WHITE, BLACK),
-                      COL(HIGH | BLACK, HIGH | WHITE), COL(HIGH | BLACK, BLACK),
-                      COL(BLACK, HIGH | BLACK));
+    TwSetColorsWindow(Window, 0x1FF, TCOL(thigh | tyellow, tcyan),
+                      TCOL(thigh | tgreen, thigh | tblue), TCOL(twhite, thigh | tblue),
+                      TCOL(thigh | twhite, thigh | tblue), TCOL(thigh | twhite, thigh | tblue),
+                      TCOL(twhite, tblack), TCOL(thigh | tblack, thigh | twhite),
+                      TCOL(thigh | tblack, tblack), TCOL(tblack, thigh | tblack));
 
     TwConfigureWindow(Window, (1 << 2) | (1 << 3), 0, 0, 5, 1, 0, 0);
   }
@@ -287,8 +288,8 @@ static void CloseTerm(uldat Slot) {
 }
 
 /*
- * it is not safe to call libTw functions from within signal handlers
- * (expecially if you compiled libTw as thread-safe) so
+ * it is not safe to call libtw functions from within signal handlers
+ * (expecially if you compiled libtw as thread-safe) so
  * just set a flag in the handler and react to it syncronously
  */
 static volatile byte ReceivedSignalChild;
@@ -352,9 +353,9 @@ static byte InitTerm(void) {
 #endif
 
   if (TwCheckMagic(term_magic) && TwOpen(NULL) && (Term_MsgPort = TwCreateMsgPort(6, "twterm")) &&
-      (Term_Menu =
-           TwCreateMenu(COL(BLACK, WHITE), COL(BLACK, GREEN), COL(HIGH | BLACK, WHITE),
-                        COL(HIGH | BLACK, BLACK), COL(RED, WHITE), COL(RED, GREEN), (byte)0)) &&
+      (Term_Menu = TwCreateMenu(TCOL(tblack, twhite), TCOL(tblack, tgreen),
+                                TCOL(thigh | tblack, twhite), TCOL(thigh | tblack, tblack),
+                                TCOL(tred, twhite), TCOL(tred, tgreen), (byte)0)) &&
       (TwInfo4Menu(Term_Menu, TW_ROW_ACTIVE, 18, " Remote Twin Term ",
                    (TW_CONST tcolor *)"ptpppppptpppptpppp"),
        ttrue) &&
@@ -368,7 +369,7 @@ static byte InitTerm(void) {
   TwClose();
 
   if ((err = TwErrno))
-    fprintf(stderr, "twterm: libTw error: %s%s\n", TwStrError(err),
+    fprintf(stderr, "twterm: libtw error: %s%s\n", TwStrError(err),
             TwStrErrorDetail(err, TwErrnoDetail));
 
   return tfalse;
@@ -407,19 +408,7 @@ static void TwinTermH(void) {
       Fd = Fd_Slot(Slot);
 
       /* react as for keypresses */
-      if (Event->EventSelectionNotify.Magic == TW_SEL_TRUNEMAGIC) {
-        char *Dst = Event->EventSelectionNotify.Data;
-        trune *Src = (trune *)Dst;
-        uldat n = Event->EventSelectionNotify.Len / sizeof(trune);
-
-        /* FIXME: this is rough. convert to UTF-8 instead */
-        while (n--)
-          *Dst++ = Tutf_UTF_32_to_CP437(*Src++);
-
-        write(Fd, Event->EventSelectionNotify.Data,
-              Event->EventSelectionNotify.Len / sizeof(trune));
-      } else
-        write(Fd, Event->EventSelectionNotify.Data, Event->EventSelectionNotify.Len);
+      write(Fd, Event->EventSelectionNotify.Data, Event->EventSelectionNotify.Len);
 
     } else if (Msg->Type == TW_MSG_WIDGET_MOUSE) {
       fprintf(stderr, "twterm: unexpected Mouse event message!\n");
@@ -469,7 +458,7 @@ static void TwinTermIO(int Slot) {
   } while (chunk > 0 && (got += chunk) < TW_BIGBUFF - 1);
 
   if (got)
-    TwWriteAsciiWindow(LS.Window, got, buf);
+    TwWriteCharsetWindow(LS.Window, got, buf);
   else if (chunk == -1 && errno != EINTR && errno != EWOULDBLOCK)
     /* something bad happened to our child :( */
     CloseTerm(Slot);
@@ -592,7 +581,7 @@ int main(int argc, char *argv[]) {
     }
   }
   if ((err = TwErrno)) {
-    fprintf(stderr, "twterm: libTw error: %s%s\n", TwStrError(err),
+    fprintf(stderr, "twterm: libtw error: %s%s\n", TwStrError(err),
             TwStrErrorDetail(err, TwErrnoDetail));
     return 1;
   }

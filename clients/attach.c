@@ -39,8 +39,7 @@ static void Usage(byte detach) {
           "Currently known display drivers: \n"
           "\tX[@<XDISPLAY>]\n"
           "\ttwin[@<TWDISPLAY>]\n"
-          "\ttty[@<tty device>]\n"
-          "\tggi[@<ggi display>]\n",
+          "\ttty[@<tty device>]\n",
           MYname, detach ? "" : "--hw=<display> [...]", detach ? "" : " (default)",
           detach ? " (default)" : "");
 }
@@ -239,7 +238,7 @@ int main(int argc, char *argv[]) {
           ret = (byte)(size_t)buff;
           break;
         } else if (buff == (char *)-1)
-          /* libTw panic */
+          /* libtw panic */
           break;
 
         fprintf(stderr, "%.*s", (int)chunk, buff);
@@ -288,7 +287,7 @@ int main(int argc, char *argv[]) {
     } while (0);
 
   chunk = TwErrno;
-  fprintf(stderr, "%s: libTw error: %s%s\n", MYname, TwStrError(chunk),
+  fprintf(stderr, "%s: libtw error: %s%s\n", MYname, TwStrError(chunk),
           TwStrErrorDetail(chunk, TwErrnoDetail));
   return 1;
 }

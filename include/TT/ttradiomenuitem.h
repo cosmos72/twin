@@ -14,8 +14,8 @@
  *
  */
 
-#ifndef _TT_TTRADIOMENUITEM_H
-#define _TT_TTRADIOMENUITEM_H
+#ifndef TT_TTRADIOMENUITEM_H
+#define TT_TTRADIOMENUITEM_H
 
 /* object structure */
 #ifndef s_ttradiomenuitem
@@ -34,4 +34,4 @@ extern ttclass TTClass_ttradiomenuitem;
 
 /* TTGet*_ttradiomenuitem and TTSet*_ttradiomenuitem methods */
 
-#endif /* _TT_TTRADIOMENUITEM_H */
+#endif /* TT_TTRADIOMENUITEM_H */

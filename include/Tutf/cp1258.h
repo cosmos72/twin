@@ -7,8 +7,8 @@
  * PLEASE DO NOT EDIT!
  */
 
-#ifndef _TUTF_CP1258_H
-#define _TUTF_CP1258_H
+#ifndef TUTF_CP1258_H
+#define TUTF_CP1258_H
 
 #define T_CP1258_CTRL_NULL 0x0000
 #define T_CP1258_CTRL_START_OF_HEADING 0x0001
@@ -575,4 +575,4 @@
   EL(_LATIN_SMALL_LETTER_U_WITH_HORN)                                                              \
   EL(_DONG_SIGN)
 
-#endif /* _TUTF_CP1258_H */
+#endif /* TUTF_CP1258_H */

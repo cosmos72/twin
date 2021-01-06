@@ -7,8 +7,8 @@
  * PLEASE DO NOT EDIT!
  */
 
-#ifndef _TUTF_ATARIST_H
-#define _TUTF_ATARIST_H
+#ifndef TUTF_ATARIST_H
+#define TUTF_ATARIST_H
 
 #define T_ATARIST_CTRL_NULL 0x0000
 #define T_ATARIST_CTRL_START_OF_HEADING 0x0001
@@ -657,4 +657,4 @@
   EL(_SUPERSCRIPT_THREE)                                                                           \
   EL(_MACRON)
 
-#endif /* _TUTF_ATARIST_H */
+#endif /* TUTF_ATARIST_H */

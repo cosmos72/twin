@@ -18,8 +18,10 @@
  *
  */
 
-#ifndef _TT_LIST_M4_H
-#define _TT_LIST_M4_H
+#ifndef TT_LIST_M4_H
+#define TT_LIST_M4_H
+
+/* clang-format off */
 
 
 
@@ -94,39 +96,38 @@ el(ttsbyte,ttbyte) el(ttushort,ttshort) el(ttuint,ttint)
 
 
 /** type of void */
-extern ttclass	TTClass_void; 
+extern ttclass        TTClass_void; 
 /** type of ttbyte */
-extern ttclass	TTClass_ttbyte; 
+extern ttclass        TTClass_ttbyte; 
 /** type of ttshort */
-extern ttclass	TTClass_ttshort; 
+extern ttclass        TTClass_ttshort; 
 /** type of ttint */
-extern ttclass	TTClass_ttint; 
+extern ttclass        TTClass_ttint; 
 /** type of ttcol */
-extern ttclass	TTClass_ttcol; 
+extern ttclass        TTClass_ttcol; 
 /** type of ttfont */
-extern ttclass	TTClass_ttfont; 
+extern ttclass        TTClass_ttfont; 
 /** type of ttattr */
-extern ttclass	TTClass_ttattr; 
+extern ttclass        TTClass_ttattr; 
 /** type of ttopaque */
-extern ttclass	TTClass_ttopaque; 
+extern ttclass        TTClass_ttopaque; 
 /** type of ttany */
-extern ttclass	TTClass_ttany; 
+extern ttclass        TTClass_ttany; 
 /** type of ttfunction_fn */
-extern ttclass	TTClass_ttfunction_fn; 
+extern ttclass        TTClass_ttfunction_fn; 
 /** type of va_list */
-extern ttclass	TTClass_va_list; 
+extern ttclass        TTClass_va_list; 
 /** type of ttarg */
-extern ttclass	TTClass_ttarg;
+extern ttclass        TTClass_ttarg;
 
 
 /** aliases */
 
 
-#define TTClass_ttsbyte	TTClass_ttbyte 
-#define TTClass_ttushort	TTClass_ttshort 
-#define TTClass_ttuint	TTClass_ttint
+#define TTClass_ttsbyte        TTClass_ttbyte 
+#define TTClass_ttushort        TTClass_ttshort 
+#define TTClass_ttuint        TTClass_ttint
 
 
 
-#endif /* _TT_LIST_M4_H */
-
+#endif /* TT_LIST_M4_H */

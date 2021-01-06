@@ -14,8 +14,8 @@
  *
  */
 
-#ifndef _TT_TTMETHOD_H
-#define _TT_TTMETHOD_H
+#ifndef TT_TTMETHOD_H
+#define TT_TTMETHOD_H
 
 /* object structure */
 #ifndef s_ttmethod
@@ -106,4 +106,4 @@ ttopaque TTGetReturnType_ttmethod(TT_ARG_READ ttmethod o);
 /** get `parameter_type' of ttmethod `o' */
 ttvector TTGetParameterType_ttmethod(TT_ARG_READ ttmethod o);
 
-#endif /* _TT_TTMETHOD_H */
+#endif /* TT_TTMETHOD_H */

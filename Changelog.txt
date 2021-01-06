@@ -2,7 +2,7 @@ From 0.6.2.1 to 0.6.2.2: (Massimiliano Ghilardi, 02 July 2016)
 	* Removed support for non-Unicode builds. From now on, twin
           can ONLY be compiled in Unicode-aware mode (currently uses
           UCS-2).
-          
+
 From 0.6.2 to 0.6.2.1: (Massimiliano Ghilardi, 08 Nov 2014)
 	* Fixed scroll glitch in twterm, affecting architectures
           with strongly pipelined memcpy() - for example amd64.
@@ -15,7 +15,7 @@ From 0.6.1 to 0.6.2: (Massimiliano Ghilardi, 24 Mar 2009)
 	* Fixed buggy RAW keyboard support on Linux console
           (numeric keys did not work with some keymaps)
         * Fixed numeric overflow in twsysmon CPU and disk monitors.
-	* Fixed broken libTw on 64 bit archs.
+	* Fixed broken libtw on 64 bit archs.
 
 From 0.6.0 to 0.6.1: (Massimiliano Ghilardi, Milos Jakubicek, 17 Feb 2009)
         * Fixed uninitialized variable bug in --hw=gfx introduced in 0.6.0,
@@ -46,7 +46,7 @@ From 0.5.1 to 0.6.0: (Massimiliano Ghilardi, 01 Dec 2007)
 	  on a different X11 server (in this example on :0 :1 :2 :3 servers).
 	* Updated twsysmon to linux kernel 2.6 style disk activity report
 	  (using /proc/diskstats) and cpu activity report (added new states
-	  'irq' as MAGENTA and 'wait' as HIGH|BLUE)
+	  'irq' as tmagenta and 'wait' as thigh|tblue)
 
 From 0.5.0 to 0.5.1: (Massimiliano Ghilardi, 29 May 2003)
 	* Added raw keyboard support for --hw=tty on Linux console.
@@ -64,9 +64,9 @@ From 0.5.0 to 0.5.1: (Massimiliano Ghilardi, 29 May 2003)
 
 
 From 0.4.6 to 0.5.0: (Massimiliano Ghilardi, 02 Apr 2003)
-	* Added libTw client `twcuckoo', modeled after xcuckoo.
+	* Added libtw client `twcuckoo', modeled after xcuckoo.
 	* Added support for mouse wheel (= buttons 4 and 5)
-	  in libTw, libTT and in twin server. Be aware anyway that
+	  in libtw, libTT and in twin server. Be aware anyway that
 	  gpm daemon (used by twin to receive mouse events on Linux console)
 	  does not support mouse wheel, at least up to gpm 1.18.1.
 	* Updated makefiles to support building in a different directory than
@@ -91,16 +91,16 @@ From 0.4.6 to 0.5.0: (Massimiliano Ghilardi, 02 Apr 2003)
 	* Enhanced tty keyboard driver code to better detect cursors, function keys
 	  and other special keys.
 	* Enhanced caching in CONF__ALLOC custom malloc()/free() routines.
-	* Bumped libTw major version to 4 due to incompatible changes.
-	* Removed `time_t' and `frac_t' types from libTw.
+	* Bumped libtw major version to 4 due to incompatible changes.
+	* Removed `time_t' and `frac_t' types from libtw.
 	  They are now replaced by `tany'.
 	* Removed unused parameters from Tw_CreateMsgPort().
 	* Rationalized and completed TTGet* and TTSet* libTT methods.
 	* Added java-like ttfield and ttmethod classes.
 	  TT{Get,Set,Change}Field_ttobj are now wrappers for ttfield methods.
 	  Also rewrote TTCall*_ttmethod.
-	* Started writing libTT tunneling and detunneling drivers on top of libTw.
-	  Implemented both sides (libTw client and twin server) of server extensions.
+	* Started writing libTT tunneling and detunneling drivers on top of libtw.
+	  Implemented both sides (libtw client and twin server) of server extensions.
 	* Started writing libTT tt*layout classes.
 	* Rewrote and cleaned up libTT m4 scripts.
 
@@ -110,7 +110,7 @@ From 0.4.5 to 0.4.6: (Massimiliano Ghilardi, 26 Mar 2003)
 	  by Marco Bodrato.
 	* Fixed memory leak in `Reload RC' if ~/.twinrc parser is a module:
 	  shm.lo is now in `wm' module instead of `rcparse' module.
-	* Fixed missing #include <stdarg.h> in libTw headers causing
+	* Fixed missing #include <stdarg.h> in libtw headers causing
 	  build errors with gcc-3.2.
 	* Fixed compile errors in server/hw_tty.c if CONF__UNICODE is disabled.
 	* Fixed cut-n-paste not to paste when clicking on a window border.
@@ -128,7 +128,7 @@ From 0.4.5 to 0.4.6: (Massimiliano Ghilardi, 26 Mar 2003)
 	* Updated scripts and binaries to invoke programs with
 	  double hyphens long options like `--help'
 	* Added utf8 support to Linux console HW driver
-	* Added more charsets to libTutf.
+	* Added more charsets to libtutf.
 
 
 From 0.4.4 to 0.4.5: (Massimiliano Ghilardi, 25 Oct 2002)
@@ -153,7 +153,7 @@ From 0.4.4 to 0.4.5: (Massimiliano Ghilardi, 25 Oct 2002)
 	  Also rewrote mutex locking logic to let clients safely call
 	  TTClose*() functions even from inside listeners.
 	* Added two more demo clients for libTT: ttdemo2 and ttdemo3.
-	* Added libTw WIDGET_AUTO_FOCUS attribute for focus-under-mouse
+	* Added libtw WIDGET_AUTO_FOCUS attribute for focus-under-mouse
 	  subwidgets policy (the subwidget and all its parents must have this
 	  attribute set for autofocus to work).
 	  Top-level widgets are still click-to-focus though.
@@ -188,7 +188,7 @@ From 0.4.3 to 0.4.4: (Massimiliano Ghilardi, 06 Jul 2002)
 	  (if your system has vsnprintf(), everything is already safe
 	  and this is not necessary).
 	* Added lt_dlopen() support for runtime module loading (unfinished).
-	* Added more charsets to libTutf.
+	* Added more charsets to libtutf.
 	* Added `-twin@<dpy>' option to twsendmsg.
 	* Added more options to `-hw=tty': `,mouse={xterm|twterm}' and `,utf8'.
 	  Also renamed option `,xterm' to `,mouse=xterm'
@@ -268,7 +268,7 @@ From 0.4.2 to 0.4.3: (Massimiliano Ghilardi, 09 Jun 2002)
 	  and moved OS-specific settings from makerules.in -> makeosvalues
 	  to configure -> makeautoconf.
 	* Changed twdm install path from ${exec_prefix}/bin to ${exec_prefix}/sbin
-	  
+
 From 0.4.1 to 0.4.2: (Massimiliano Ghilardi, 26 May 2002)
 	* Finished nested menus support.
 	* Continued libTT: it now begins being usable, even if not 100% complete yet.
@@ -284,8 +284,8 @@ From 0.4.1 to 0.4.2: (Massimiliano Ghilardi, 26 May 2002)
 	  }
 	* Fixed X11 keyboard support to allow non-ASCII keys
 	  (>= 128, found on non-US keyboards) to work.
-	* Fixed buggy libTw TwStat().
-	* Changed libTw to use recursive pthread locks, in order to allow
+	* Fixed buggy libtw TwStat().
+	* Changed libtw to use recursive pthread locks, in order to allow
 	  a listener to call (most) Tw* functions safely.
 	* Cleaned up keyboard-based use of gadgets and buttons in some
 	  builtin windows.
@@ -294,10 +294,10 @@ From 0.4.1 to 0.4.2: (Massimiliano Ghilardi, 26 May 2002)
 	  renamed *.so to *.so.$(VERSION).
 	* Added Unicode cut-n-paste, and fixed 8bit cut-n-paste.
 	  (twutils still needs to be updated to handle unicode cut-n-paste).
-	* Redesigned libTw code logic to reduce size: libTw.so shrinked by 35%.
+	* Redesigned libtw code logic to reduce size: libtw.so shrinked by 35%.
 	  Wrote hand-optimized i386 assembler functions to further reduce size.
 	  (you can disable them compiling with `make SYS_ARCH_I386=n [...]')
-	* Added libTw caching of missing server functions.
+	* Added libtw caching of missing server functions.
 	  Made some minor incompatible changes to TWS_* defines
 	  in <Tw/Twstat_defs.h>.
 	  Partially incompatible changes:
@@ -305,12 +305,12 @@ From 0.4.1 to 0.4.2: (Massimiliano Ghilardi, 26 May 2002)
 	  renamed TwResizeWindow() to TwResizeWidget()
 	  (server side implementation of TwResizeWidget() still incomplete
 	  for gadgets).
-	* Added more libTw functions, in particular TwFindRowByCodeWindow() and
+	* Added more libtw functions, in particular TwFindRowByCodeWindow() and
 	  Tw[Raise|Lower|Circulate|Restack][Widget|Gadget|Window|Screen|Row|MenuItem]()
 	  Glitch warning: altering a menu the user is interacting with may
 	  cause some visual incoherencies like misplaced menu windows,
 	  which go away when you close the misplaced window.
-	  
+
 From 0.4.0 to 0.4.1: (Massimiliano Ghilardi, 30 Dec 2001)
 	* Fixed window smart placement if screen is scrolled and not at (0,0).
 	* Fixed math overflow causing `twcat' window not to show up.
@@ -337,8 +337,8 @@ From 0.4.0 to 0.4.1: (Massimiliano Ghilardi, 30 Dec 2001)
 	* Cleaned up namespace for libraries version-related #defines.
 	* Cleaned up Makefiles to avoid unnecessary recompiling after
 	  configuration changed.
-	* Cleaned up libTw error reporting when socket server module is not
-	  running: libTw now reports
+	* Cleaned up libtw error reporting when socket server module is not
+	  running: libtw now reports
 		"connection lost (socket module may be not running on server)"
 	  instead of the generic
 		"connection lost (explicit kill or server shutdown)"
@@ -359,33 +359,33 @@ From 0.4.0 to 0.4.1: (Massimiliano Ghilardi, 30 Dec 2001)
 	  i.e. when user logs in, so that *his* ~/.twenvrc.sh is executed.
 	  A possible use of twdm with this option is placing a line like this
 	  in /etc/inittab (supposing twdm is installed in /usr/local/bin) :
-	  
+
 	  1:2345:respawn:/usr/local/bin/twdm -envrc -quiet -hw=tty@/dev/tty1,ctty,TERM=linux
-	  
+
 	  with it, users will log in with twdm instead of the usual getty
 	  (which must be removed from /etc/inittab)
-	  
+
 From 0.3.10 to 0.4.0: (Massimiliano Ghilardi, 31 Aug 2001)
 	* Added some more options to twdm, also twdm now sets $HOME to `/root'
 	  if it exists and $HOME is either `/' or unset.
 	* Added caching to Tutf_UTF_16_to_*() conversions.
 	* Added keypad state restoring on detaching a -hw=tty[...] display.
 	* Updated `twmapscrn' using kbd-1.06 sources.
-	* Fixed libTw build on SunOS bombing out at #include <netdb.h>.
+	* Fixed libtw build on SunOS bombing out at #include <netdb.h>.
 	* Fixed server-side bug causing missing fields on twlsobj for non-i386
 	  architectures.
 	* Fixed broken user charset translation (ESC(K ) in terminals
-	  and a few related bugs in libTutf translation routines.
+	  and a few related bugs in libtutf translation routines.
 	  This should fix problems with cyrillic and other charsets.
 	* Added utf-8 support to tty emulator and to tty display driver
 	  to properly handle unicode.
 	* Changed makefiles to do the right thing on
 	  `make CFLAGS=[...] LDFLAGS=[...]'
-	* Hardened libTw against malicious server data.
+	* Hardened libtw against malicious server data.
 	* Finally enabled `AddScreen' and `Background' commands in .twinrc .
 	  Also removed second virtual screen, since you can now create it
 	  with the above commands.
-	  
+
 From 0.3.9 to 0.3.10: (Massimiliano Ghilardi, 31 Jul 2001)
 	* Added `twdm' client. You can now use `twdm' as login manager instead
 	  of the obsolete `getty', `login' or the bloated `xdm', `kdm', ... !
@@ -397,7 +397,7 @@ From 0.3.9 to 0.3.10: (Massimiliano Ghilardi, 31 Jul 2001)
 	  or with `scripts/Configure --enable-<feature>=[yes|no|mod] ...'
 	* Added `-secure' option to twin, forbids starting external programs
 	  (used by `twdm' to stop users from opening root shells).
-	* Merged include/sockprotolist.h and libs/libTw/listmacros.h
+	* Merged include/sockprotolist.h and libs/libtw/listmacros.h
 	  into include/socklist_m4.h
 	* Started writing libTT, `The Text Toolkit' library.
 	* Fixed some more build problems on FreeBSD and SunOS.
@@ -408,29 +408,29 @@ From 0.3.9 to 0.3.10: (Massimiliano Ghilardi, 31 Jul 2001)
 	* Added support for nested menus (can be created, but are not
 	  correctly rendered yet).
 	* Fixed setting tty speed, was forced to 0 baud.
-	
+
 From 0.3.8 to 0.3.9: (Massimiliano Ghilardi, 25 Jun 2001)
 	* Added Unicode support.
-	* New libTutf library to convert between Unicode and other charsets.
+	* New libtutf library to convert between Unicode and other charsets.
 	* Added `charset=' option to -hw=X11 and -hw=tty.
-	* Bumped libTw major version to 3 due to the following changes:
+	* Bumped libtw major version to 3 due to the following changes:
 	  * Added prototype checking to Tw_FindFunction.
 	  * Changed events from Window-centric to Widget-centric, to
 	    accommodate for corresponding changes in the server.
 	  * Changed prototype of some crucial functions: Tw_CreateMenu,
 	    Tw_CreateWidget, Tw_CreateGadget, Tw_CreateWindow, Tw_CreateGroup.
-	* Updated all clients to libTw.so.3 API.
-	* Fixed libTw segfaults upon receiving huge replies from server.
-	* Fixed a lot of libTw pointer alignment problems on non-i386
+	* Updated all clients to libtw.so.3 API.
+	* Fixed libtw segfaults upon receiving huge replies from server.
+	* Fixed a lot of libtw pointer alignment problems on non-i386
 	  architectures. Some unaligned pointer accesses still probably exist.
-	* Added libTw sanity checks to avoid compiling a client against a libTw
-	  with certain data sizes and running it with another libTw with
+	* Added libtw sanity checks to avoid compiling a client against a libtw
+	  with certain data sizes and running it with another libtw with
 	  incompatible data sizes (i.e. if you changed Unicode support).
-	* Added Tw_*Stat() functions to retrieve information on libTw objects.
+	* Added Tw_*Stat() functions to retrieve information on libtw objects.
 	  Also added `twlsobj' client to demonstrate Tw_*Stat() usage.
 	* Added mouse motion reporting (with no buttons pressed).
-	  To enable it from a libTw client, set the TW_WINDOW_WANT_MOUSE_MOTION
-	  flag in twidget->Attrib.
+	  To enable it from a libtw client, set the TW_WINDOW_WANT_MOUSE_MOTION
+	  flag in twidget->Attr.
 	  To enable it from within a terminal, send "\033[?999h",
 	  to disable send "\033[?999l" (or "\033[?9h" to return to `normal'
 	  mouse reporting).
@@ -452,18 +452,18 @@ From 0.3.8 to 0.3.9: (Massimiliano Ghilardi, 25 Jun 2001)
 	* Started porting to SunOS (mostly contributed by Brian Witt),
 	  and substituted the bash/sed/grep script `MkDep' with a pure
 	  C implementation (grabbed and adapted from Linux kernel sources).
-	* libTw optimization: AVL (Adelson-Velskii and Landis) trees used
+	* libtw optimization: AVL (Adelson-Velskii and Landis) trees used
 	  to speed up listener search (grabbed from Linux kernel sources too).
-	* Rewrote server-side implementation of libTw using `m4' preprocessor.
+	* Rewrote server-side implementation of libtw using `m4' preprocessor.
 	  Design is now more complex, but resulting code is less than half of
 	  the original size if CONF_SOCKET_ALIEN is enabled.
 	* Cleaned up Tw/Tw++.h wrapper: (tlistener) type is now opaque,
-	  so that C++ clients do not depend on libTw internals.
+	  so that C++ clients do not depend on libtw internals.
 	* Decided and implemented sub-windows focus policy (sub-windows are
 	  windows contained or `mapped' inside other windows).
 	* Added support for placing cursor in a sub-window.
 	* Documented 0.3.8 last minute fix in Changelog (read below).
-	
+
 From 0.3.7 to 0.3.8: (Massimiliano Ghilardi, 08 Mar 2001)
 	* Last minute fix: added InitAlloc() call to twdisplay.
 	* Added printing of window size on menu during Interactive Resize.
@@ -476,7 +476,7 @@ From 0.3.7 to 0.3.8: (Massimiliano Ghilardi, 08 Mar 2001)
 	  slightly smaller windows... really not lethal.
 	* Fixed TwResizeWindow() for the same problem, and allowed
 	  TwResizeWindow() also on non-user-resizeable windows.
-	* Fixed libTw++.h using an uninitialized variable that randomly
+	* Fixed libtw++.h using an uninitialized variable that randomly
 	  resulted in non-working listeners.
 	* Fixed terminal emulator to work also as module. Noone noticed this!?
 	* Added socket protocol translation to allow connections from clients
@@ -484,7 +484,7 @@ From 0.3.7 to 0.3.8: (Massimiliano Ghilardi, 08 Mar 2001)
 	  Completely backward compatible, as socket protocol was designed
 	  for this, but I did not actually implement translation until now.
 	  Set CONF_SOCKET_ALIEN in configuration as `y' or `m' to enable it.
-	  Known problems still remain in libTw and socket.so on architectures
+	  Known problems still remain in libtw and socket.so on architectures
 	  not allowing unaligned pointers.
 	* Added support for TW_WINFL_USEEXPOSE windows and corresponding
 	  expose messages (they have type == TW_MSG_WINDOW_CHANGE
@@ -496,7 +496,7 @@ From 0.3.7 to 0.3.8: (Massimiliano Ghilardi, 08 Mar 2001)
 	  installation.
 	* Applied twin-devfs, twin-ncurses and twin-optflags patches from
 	  PLD team (www.pld.org.pl).
-	  
+
 From 0.3.6 to 0.3.7: (Massimiliano Ghilardi, 19 Feb 2001)
 	* Changed the terminal emulator to close window on shell logout
 	  even if there are background processes running (they keep running
@@ -542,28 +542,28 @@ From 0.3.6 to 0.3.7: (Massimiliano Ghilardi, 19 Feb 2001)
 	  twsendmsg "Builtin" open
 	  or
 	  twsendmsg "Remote Twin Term" open
-	* Fixed non-reentrant libTw problems.
-	* Added configuration option to make libTw thread-safe (requires
-	  POSIX pthread.h). Warning: calling libTw functions asynchronously
+	* Fixed non-reentrant libtw problems.
+	* Added configuration option to make libtw thread-safe (requires
+	  POSIX pthread.h). Warning: calling libtw functions asynchronously
 	  (i.e. from signal handler) will very often cause a deadlock!
 	  Also fixed a semantic issue about blocking in Tw_Flush()
 	  and Tw_ReadMsg().
-	* Added stupid demo client `twthreadtest' to try libTw with threads.
-	* Added more detailed libTw error reporting (Tw_StrErrorDetail()).
-	* Added some more libTw functions.
-	* Added C++ libTw wrapper (libTw++.h). Also wrote the first "serious"
+	* Added stupid demo client `twthreadtest' to try libtw with threads.
+	* Added more detailed libtw error reporting (Tw_StrErrorDetail()).
+	* Added some more libtw functions.
+	* Added C++ libtw wrapper (libtw++.h). Also wrote the first "serious"
 	  client: `twkalc', derived from `kcalc' of the KDE suite.
 	  Anyway `twkalc' is distributed separately, in the package `twutils'.
-	* Rationalized and removed some redundant libTw functions.
+	* Rationalized and removed some redundant libtw functions.
 	  Source, binary and socket protocol compatibility preserved, with two
-	  exceptions: using libTw from 0.3.7 with older servers may result in
-	  "libTw error: function not supported by server: Tw_MapWidget"
+	  exceptions: using libtw from 0.3.7 with older servers may result in
+	  "libtw error: function not supported by server: Tw_MapWidget"
 	  or similar errors;
-	  Also, you must now explicitly #include <libTwerrno.h> to access
+	  Also, you must now explicitly #include <libtwerrno.h> to access
 	  TwErrno, TwStrError() and related stuff like TW_E* error codes.
-	* Added libTw prototypes to use with Linux ltrace(1) in
+	* Added libtw prototypes to use with Linux ltrace(1) in
 	  docs/ltrace.conf
-	
+
 From 0.3.5 to 0.3.6: (Massimiliano Ghilardi, 14 Jan 2001)
 	* Added limited ShiftFlags reporting on keyboard events.
 	* Added ShiftFlags support to Key bindings in ~/.twinrc and
@@ -574,17 +574,17 @@ From 0.3.5 to 0.3.6: (Massimiliano Ghilardi, 14 Jan 2001)
 	* Added option ",slow" to all display drivers.
 	* Added support for xterm's change window title escape sequence.
 	* Added support for nested windows. For example, the "Remove" and
-	  "This" buttons in Menu -> ð -> Display window now are actually
+	  "This" buttons in Menu -> ï¿½ -> Display window now are actually
 	  inside a sub-window. This was a much bigger work than what
 	  it may seem.
 	* Updated twterm and twin server to correctly allow choosing which
 	  xterm-style protocol to send to applications.
-	* Changed signedness of all libTw function parameters used for
+	* Changed signedness of all libtw function parameters used for
 	  coordinates and sizes... for consistency they are now signed
 	  integers (`dat' or `ldat'). No need to recompile the clients.
 	  This allows to place windows (and sub-windows) at negative coords
 	  with respect to their parent.
-	* Changed some libTw functions not yet used by any client to take
+	* Changed some libtw functions not yet used by any client to take
 	  advantage of the new general `widget' type.
 	* Fixed missing setting TERM=linux in twterm.
 	* Fixed RC Virtual Machine to use the window you clicked upon instead
@@ -616,12 +616,12 @@ From 0.3.5 to 0.3.6: (Massimiliano Ghilardi, 14 Jan 2001)
 	  `make torture.<file1>.c torture.<file2>c ...'
 	  Example: `cd server; make torture.wm.c torture.methods.c'
 	* Fixed another pair of compile bugs found with `make Torture'.
-	
+
 From 0.3.4 to 0.3.5: (Massimiliano Ghilardi, 20 Dec 2000)
 	* Compatibility break: fixed heavily sick mouse event protocol
 	  (it swapped middle/right buttons in Drag and Release, both
 	  on server and client side). This means that mouse-aware clients
-	  compiled against pre-0.3.5 libTw will not work properly with
+	  compiled against pre-0.3.5 libtw will not work properly with
 	  twin 0.3.5 and vice-versa. Sorry.
 	* Removed suid-root or sgid-tty privileges to twin.
 	  You will need to manually add such privileges,
@@ -661,8 +661,8 @@ From 0.3.4 to 0.3.5: (Massimiliano Ghilardi, 20 Dec 2000)
 	* Added stricter compile checks using `const' attribute.
 	* Updated the README and started writing other documentation
 	  in docs/ subdirectory (still incomplete).
-	* Renamed Menu -> ð -> Borders window as Menu -> ð -> Buttons.
-	
+	* Renamed Menu -> ï¿½ -> Borders window as Menu -> ï¿½ -> Buttons.
+
 From 0.3.3 to 0.3.4: (Massimiliano Ghilardi, 11 Sep 2000)
         * FreeBSD support added by Andreas Schweitzer. Thanks!
 	* Fixed SEGFAULT when doing cut-n-paste on -hw=tty,stdout.
@@ -677,39 +677,39 @@ From 0.3.3 to 0.3.4: (Massimiliano Ghilardi, 11 Sep 2000)
 	  to its titlebar and restore it to normal size.
 	* Support for "floating" shadows added (i.e. so displaced to be
 	  separated from the window).
-	* Menu -> ð -> Borders window added to tweak window borders look.
+	* Menu -> ï¿½ -> Borders window added to tweak window borders look.
 	  Currently allows to move buttons.
-	
+
 From 0.3.2 to 0.3.3: (Massimiliano Ghilardi, 12 Jul 2000)
 	* Ported to AIX 3.2. I only had to fix minor problems
 	  like #includes and a few functions not available on it.
 	  Twin still does not compile out-of-the-box on AIX 3.2 and
 	  you need to work a little manually, see README.porting.
-	* Added twin <-> libTw protocol handshaking.
-	  Tweaked internal libTw protocol to allow passing NULL
+	* Added twin <-> libtw protocol handshaking.
+	  Tweaked internal libtw protocol to allow passing NULL
 	  instead of arrays where it makes sense;
-	  WARNING: don't mix twin or libTw from 0.3.3 and up
-	  with older twin or libTw... it will not work.
+	  WARNING: don't mix twin or libtw from 0.3.3 and up
+	  with older twin or libtw... it will not work.
 	* Cleaned up and modularized the window manager.
 	  Now you can write your own twin window manager!
 	* Fixed SEGFAULT on video activity while running detached.
-	* Fixed two socket-related bugs that could send libTw
+	* Fixed two socket-related bugs that could send libtw
 	  initialization data to the wrong client, freezing both who gets
 	  the unexpected data and who was waiting for it.
 	  This happened more often if twdisplay was in use.
 	* Optimized custom malloc/free with memory blocks > PAGE_SIZE.
 	* Added mouse support and `This' button to Display Window.
 	* X11 keyboard support cleanups.
-	
+
 From 0.3.1 to 0.3.2: (Massimiliano Ghilardi, 08 Jun 2000)
 	* Fixed internal FdWQueued bookkeeping.
 	* Fixed mouse redrawing problems with `-hw=tty'.
-	* Fixed libTw to let twattach and twdisplay work
+	* Fixed libtw to let twattach and twdisplay work
 	  also on compressed connections.
 	* Fixed a few SEGFAULTs on exit.
 	* Fixed a buffer overrun in twterm
 	  which sometimes made it completely non-working.
-	* Fixed 1x1 display detection after Menu -> ð -> Detach
+	* Fixed 1x1 display detection after Menu -> ï¿½ -> Detach
 	* New option `,noinput' common to all display HW : starts the display
 	  as view-only, ignoring all mouse/keyboard input coming from it.
         * Added `make menuconfig': it uses "dialog" as user interface.
@@ -722,7 +722,7 @@ From 0.3.1 to 0.3.2: (Massimiliano Ghilardi, 08 Jun 2000)
 	  Selection support on hw_tty and hw_ggi is still missing
 	  since underlying HW does not have an usable Selection mechanism.
 	  People, the code I had to write for cut-and-paste is a nightmare!
-	
+
 From 0.3.0 to 0.3.1: (Massimiliano Ghilardi, 16 May 2000)
 	* Updated README for the changes in twattach and for
 	  multiple display support.
@@ -744,17 +744,17 @@ From 0.3.0 to 0.3.1: (Massimiliano Ghilardi, 16 May 2000)
 	  if no resize happens: draw only on the new display HW.
 	* Finished smart display resizing. Try attaching/detaching/resizing
 	  one of the displays when multiple ones are used...
-        * Finished twdisplay (required adding some new libTw functions).
+        * Finished twdisplay (required adding some new libtw functions).
 	  Actually a pair of small things are still missing in twdisplay:
 	  cut-and-paste compatibility with the real display (X11, etc..)
 	  and palette changing support, but it is equally *VERY* usable.
-	  
+
 	  	Please take a few minutes to carefully (re)read
 	  	section 8. Attach/Detach of the README
 	  	as twdisplay adds noticeable power
 	  	to twin's attach/detach capabilities!
-	  
-	
+
+
 From 0.2.8 to 0.3.0: (Massimiliano Ghilardi, 10 May 2000)
 	* Added VNC-style multiple simultaneous displays support
 	  and updated twattach to manage them. Now you can have
@@ -777,11 +777,11 @@ From 0.2.8 to 0.3.0: (Massimiliano Ghilardi, 10 May 2000)
 	  Sending SIGKILL is not advised, as tty displays will be left
 	  messed up and you will get a stale /tmp/.Twin:<x> socket.
 	* Modified HW display drivers to allow multi-head.
-	* Modified libTw to allow multi-head,
-	  and bumped version number to libTw.so.2.
+	* Modified libtw to allow multi-head,
+	  and bumped version number to libtw.so.2.
 	  Clients will need to be recompiled to use the new library.
-	* Added Menu -> ð -> Display to list / detach displays.
-	* Added Menu -> ð -> Refresh.
+	* Added Menu -> ï¿½ -> Display to list / detach displays.
+	* Added Menu -> ï¿½ -> Refresh.
 	* Continued libggi display.
 	  Still INCOMPLETE (keyboard doesn't work), but I feel more and more
 	  unsatisfied by libggi and lost enthusiasm about it.
@@ -789,11 +789,11 @@ From 0.2.8 to 0.3.0: (Massimiliano Ghilardi, 10 May 2000)
 	* Added option `-hw=tty@-' to twattach:
 	  tells twin to attach to its own controlling tty.
 	  (`-hw=tty' instead uses the controlling tty of twattach)
-	  
+
 From 0.2.7 to 0.2.8: (Massimiliano Ghilardi, 02 May 2000)
 	* Added options `stdout' and `TERM=<terminal>' to display `-hw=tty'
 	  The first is to force twin to use stdout as display method on
-	  Linux console even if vcsa is available.	  
+	  Linux console even if vcsa is available.
 	  The second option makes possible for twattach to specify
 	  the terminal type.
 	  Usage: `-hw=tty[@device],TERM=<term>' or `-hw=tty[@device],stdout'
@@ -835,7 +835,7 @@ From 0.2.6 to 0.2.7: (Massimiliano Ghilardi, 17 Apr 2000)
 	  On other displays, it is just not supported yet :(
 	* Fixed a memory leak in twsysmon.
 	* Fixed a SEGFAULT when moving windows out-of-screen.
-	
+
 From 0.2.5 to 0.2.6: (Massimiliano Ghilardi, 04 Apr 2000)
 	* Fixed random SEGFAULT on Menu -> Window -> Send HotKey
 	* Fixed an insidious bug:
@@ -857,19 +857,19 @@ From 0.2.5 to 0.2.6: (Massimiliano Ghilardi, 04 Apr 2000)
 	  Unluckily, this change makes version 0.2.6 of twin and twattach
 	  incompatible with older versions. Always use twin and twattach
 	  of the same version and you will be fine.
-	* Added Menu -> ð -> Option window to change runtime options:
+	* Added Menu -> ï¿½ -> Option window to change runtime options:
 	  shadows displacement, cursor visibility, tty blink/high background,
 	  auto-hide menu, custom font (the latter requires running on
 	  a Linux console and loading the VGA font file fonts/vgafont.raw)
-	  
+
 	  Side effect: When the Menu is auto-hidden, Menu -> Window -> <ZOOM>
 	  gives a real fullscreen window.
-	
+
 From 0.2.4 to 0.2.5: (Massimiliano Ghilardi, 27 Mar 2000)
 	* Made display size persistant (if HW allows twin to choose size).
 	* Fixed `twattach -hw=tty' to correctly react to window size change,
 	  and fixed `Twin, native' display method for the same problem.
-	* Cleaned up copyright: libTw is now LGPLed.
+	* Cleaned up copyright: libtw is now LGPLed.
 	* Added KeyCode support on X11 and Linux console drivers:
 	  keyboard event also report a meaningful TW_* code for direct
 	  keyboard recognition. This allows keyboard shortcuts for
@@ -892,20 +892,19 @@ From 0.2.2 to 0.2.3: (Massimiliano Ghilardi, 14 Mar 2000)
 	* Added a default menu when no windows are on screen...
 	  so I can omit showing the clock at startup without
 	  making twin useless :)
-	* Added libTw support: twin can now directly connect to another twin,
+	* Added libtw support: twin can now directly connect to another twin,
 	  open a window there and display on it.
 	* Twin can now runtime attach/detach to any supported display;
 	  look README, section "8) Attach/Detach" for details.
 	* Added twin_wrapper to have twin append its TWDISPLAY on command line.
-	
+
 From 0.2.1 to 0.2.2: (Massimiliano Ghilardi, 06 Mar 2000)
 	* Fixed a SEGFAULT when switching to X11 display method
 	  after a Suspend.
 	* Added gzip (compressed) socket support.
-	
+
 From 0.2 to 0.2.1: (Massimiliano Ghilardi, 22 Feb 2000)
 	* Optimized main loop by reordering MsgPort checks;
 	  Result: removed two extra loops across the whole main loop
 	  for each external event (keyboard,mouse,clients) received.
 	* Tweaked socket protocol to decrease bandwidth usage.
-	

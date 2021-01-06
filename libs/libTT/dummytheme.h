@@ -14,8 +14,8 @@
 
 /***********************************/
 
-#define f COL(HIGH | WHITE, GREEN)
-#define b COL(BLACK, WHITE)
+#define f TCOL(thigh | twhite, tgreen)
+#define b TCOL(tblack, twhite)
 
 static ttattr t_button_normal[] = {t(' '), 0, 0, 0};
 static ttattr s_button_normal[] = {0,
@@ -43,8 +43,8 @@ static ttattr t_radiobutton_checked_normal[] = {t('('), t('*'), t(')'), t(' '), 
 
 #undef f
 #undef b
-#define f COL(HIGH | WHITE, GREEN)
-#define b COL(HIGH | BLACK, WHITE)
+#define f TCOL(thigh | twhite, tgreen)
+#define b TCOL(thigh | tblack, twhite)
 
 #define t_button_prelight t_button_normal
 static ttattr s_button_prelight[] = {0,
@@ -71,8 +71,8 @@ static ttattr s_button_prelight[] = {0,
 
 #undef f
 #undef b
-#define f COL(HIGH | WHITE, GREEN)
-#define b COL(BLACK, WHITE)
+#define f TCOL(thigh | twhite, tgreen)
+#define b TCOL(tblack, twhite)
 
 static ttattr t_button_pressed[] = {0, t(' '), 0, 0};
 static ttattr s_button_pressed[] = {s(' '), 0, s(' '), s(' ')};
@@ -92,8 +92,8 @@ static ttattr t_radiobutton_checked_pressed[] = {0, t('('), t('*'), t(')'), t(' 
 
 #undef f
 #undef b
-#define f COL(HIGH | BLACK, GREEN)
-#define b COL(BLACK, WHITE)
+#define f TCOL(thigh | tblack, tgreen)
+#define b TCOL(tblack, twhite)
 
 static ttattr t_button_disabled[] = {t(' '), 0, 0, 0};
 #define s_button_disabled s_button_normal
@@ -113,8 +113,8 @@ static ttattr t_radiobutton_checked_disabled[] = {t('('), t('*'), t(')'), t(' ')
 
 #undef f
 #undef b
-#define f COL(HIGH | GREEN, BLUE)
-#define b COL(HIGH | WHITE, BLUE)
+#define f TCOL(thigh | tgreen, tblue)
+#define b TCOL(thigh | twhite, tblue)
 
 static ttattr t_scrollbar_x_normal[] = {
     s(T_UTF_16_MEDIUM_SHADE),
@@ -135,8 +135,8 @@ static ttattr s_scrollbar_x_normal[] = {
 
 #undef f
 #undef b
-#define f COL(HIGH | GREEN, HIGH | BLUE)
-#define b COL(HIGH | WHITE, HIGH | BLUE)
+#define f TCOL(thigh | tgreen, thigh | tblue)
+#define b TCOL(thigh | twhite, thigh | tblue)
 
 static ttattr t_scrollbar_x_prelight[] = {
     s(T_UTF_16_MEDIUM_SHADE),
@@ -157,8 +157,8 @@ static ttattr s_scrollbar_x_prelight[] = {
 
 #undef f
 #undef b
-#define f COL(HIGH | BLUE, HIGH | GREEN)
-#define b COL(HIGH | BLUE, HIGH | WHITE)
+#define f TCOL(thigh | tblue, thigh | tgreen)
+#define b TCOL(thigh | tblue, thigh | twhite)
 
 static ttattr t_scrollbar_x_pressed[] = {
     s(T_UTF_16_MEDIUM_SHADE),
@@ -179,8 +179,8 @@ static ttattr s_scrollbar_x_pressed[] = {
 
 #undef f
 #undef b
-#define f COL(HIGH | BLACK, BLUE)
-#define b COL(HIGH | BLACK, BLUE)
+#define f TCOL(thigh | tblack, tblue)
+#define b TCOL(thigh | tblack, tblue)
 
 static ttattr t_scrollbar_x_disabled[] = {
     s(T_UTF_16_MEDIUM_SHADE),
@@ -201,8 +201,8 @@ static ttattr s_scrollbar_x_disabled[] = {
 
 #undef f
 #undef b
-#define f COL(HIGH | GREEN, BLUE)
-#define b COL(HIGH | WHITE, BLUE)
+#define f TCOL(thigh | tgreen, tblue)
+#define b TCOL(thigh | twhite, tblue)
 
 static ttattr t_slider_x_normal[] = {
     s(T_UTF_16_MEDIUM_SHADE),
@@ -217,8 +217,8 @@ static ttattr s_slider_x_normal[] = {
 
 #undef f
 #undef b
-#define f COL(HIGH | GREEN, HIGH | BLUE)
-#define b COL(HIGH | WHITE, HIGH | BLUE)
+#define f TCOL(thigh | tgreen, thigh | tblue)
+#define b TCOL(thigh | twhite, thigh | tblue)
 
 static ttattr t_slider_x_prelight[] = {
     s(T_UTF_16_MEDIUM_SHADE),
@@ -233,8 +233,8 @@ static ttattr s_slider_x_prelight[] = {
 
 #undef f
 #undef b
-#define f COL(HIGH | BLUE, HIGH | GREEN)
-#define b COL(HIGH | BLUE, HIGH | WHITE)
+#define f TCOL(thigh | tblue, thigh | tgreen)
+#define b TCOL(thigh | tblue, thigh | twhite)
 
 static ttattr t_slider_x_pressed[] = {
     s(T_UTF_16_MEDIUM_SHADE),
@@ -249,8 +249,8 @@ static ttattr s_slider_x_pressed[] = {
 
 #undef f
 #undef b
-#define f COL(HIGH | BLACK, BLUE)
-#define b COL(HIGH | BLACK, BLUE)
+#define f TCOL(thigh | tblack, tblue)
+#define b TCOL(thigh | tblack, tblue)
 
 static ttattr t_slider_x_disabled[] = {
     s(T_UTF_16_MEDIUM_SHADE),
@@ -265,8 +265,8 @@ static ttattr s_slider_x_disabled[] = {
 
 #undef f
 #undef b
-#define f COL(HIGH | GREEN, BLUE)
-#define b COL(HIGH | WHITE, BLUE)
+#define f TCOL(thigh | tgreen, tblue)
+#define b TCOL(thigh | twhite, tblue)
 
 static ttattr t_progressbar_x_normal[] = {
     s(' '),
@@ -300,8 +300,8 @@ static ttattr s_progressbar_x_normal[] = {
 
 #undef f
 #undef b
-#define f COL(HIGH | BLACK, BLUE)
-#define b COL(HIGH | BLACK, BLUE)
+#define f TCOL(thigh | tblack, tblue)
+#define b TCOL(thigh | tblack, tblue)
 
 static ttattr t_progressbar_x_disabled[] = {
     s(' '),
@@ -358,16 +358,16 @@ static s_tttheme s_DummyTheme, s_RealDummyTheme = {
                                    NULL,
                                    TRUNE(' '),
                                    {
-                                       COL(BLACK, WHITE),
-                                       COL(HIGH | BLACK, BLACK),
-                                       COL(BLACK, WHITE),
-                                       COL(BLACK, GREEN),
-                                       COL(HIGH | BLACK, WHITE),
-                                       COL(HIGH | BLACK, BLACK),
-                                       COL(RED, WHITE),
-                                       COL(RED, GREEN),
-                                       COL(HIGH | WHITE, WHITE),
-                                       COL(HIGH | GREEN, WHITE),
+                                       TCOL(tblack, twhite),
+                                       TCOL(thigh | tblack, tblack),
+                                       TCOL(tblack, twhite),
+                                       TCOL(tblack, tgreen),
+                                       TCOL(thigh | tblack, twhite),
+                                       TCOL(thigh | tblack, tblack),
+                                       TCOL(tred, twhite),
+                                       TCOL(tred, tgreen),
+                                       TCOL(thigh | twhite, twhite),
+                                       TCOL(thigh | tgreen, twhite),
                                    },
                                    {
                                        -2,

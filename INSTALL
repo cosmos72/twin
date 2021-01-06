@@ -4,10 +4,10 @@ Building and installing twin
 For the impatient, it basically reduces to
   ./configure
   make
-  
+
 then run as root
   make install
-  
+
 on Linux, also remember to run as root:
   ldconfig
 
@@ -16,9 +16,9 @@ on FreeBSD instead, remember to run as root:
 
 To compile twin you need the following programs installed
 on your system:
-	
+
   * a Bourne-shell or compatible (for example bash, dash, ash...)
-  
+
   * make (most variants are supported: GNU make, BSD make...)
 
   * an ANSI C compiler (for example gcc or clang)
@@ -31,7 +31,7 @@ In summary, it is STRONGLY recommended to install at least the following package
 (the exact names depend on the operating system or Linux distribution):
 
   * x11-dev      - may be named x11-devel, libx11-dev ...
-  * xpm-dev      - may be named xpm-devel, libxpm-dev ...
+  * xft-dev      - may be named xft-devel, libxft-dev ...
   * ncurses-dev  - may be named ncurses-devel, libncurses-dev ...
   * zlib-dev     - may be named zlib1g-dev, zlib-devel, libzlib-dev ...
 
@@ -43,4 +43,3 @@ For a discussion about MANUALLY configuring twin (almost never necessary),
 see the help file `Configure', again in the docs/ subdirectory.
 -- WARNING: if you manually enable options that were disabled by `./configure',
 build will almost certainly fail! --
-
