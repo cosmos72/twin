@@ -210,11 +210,12 @@ struct s_tevent_selectionnotify {
 } TW_ATTR_TYPE_PACKED;
 
 /*SelectionNotify Magic*/
-#define TW_SEL_UTF8MAGIC ((uldat)0x55746638) /* UTF-8 */
-#define TW_SEL_FILEMAGIC ((uldat)0x46696c65)
-#define TW_SEL_URLMAGIC ((uldat)0xAB1691BA)
-#define TW_SEL_DATAMAGIC ((uldat)0xDA1AA1AD) /* check MIME if you get this */
-#define TW_SEL_IDMAGIC ((uldat)0x49644964)
+#define TW_SEL_APPEND ((uldat)0x00000000)
+#define TW_SEL_UTF8MAGIC ((uldat)0x38465455) /* UTF-8 */
+#define TW_SEL_FILEMAGIC ((uldat)0x656C6946)
+#define TW_SEL_URLMAGIC ((uldat)0x2F4C5255)
+#define TW_SEL_DATAMAGIC ((uldat)0x41544144) /* check MIME if you get this */
+#define TW_SEL_IDMAGIC ((uldat)0x64496449)
 
 typedef struct s_tevent_selectionrequest *tevent_selectionrequest;
 /** type to request selection to owner */

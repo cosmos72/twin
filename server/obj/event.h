@@ -199,11 +199,11 @@ struct s_event_selectionnotify {
 };
 /*SelectionNotify Magic*/
 #define SEL_APPEND 0x00000000
-#define SEL_UTF8MAGIC 0x55746638 /* UTF-8 */
-#define SEL_FILEMAGIC 0x46696c65
-#define SEL_URLMAGIC 0xAB1691BA
-#define SEL_DATAMAGIC 0xDA1AA1AD /* check MIME if you get this */
-#define SEL_IDMAGIC 0x49644964
+#define SEL_UTF8MAGIC 0x38465455 /* UTF-8 */
+#define SEL_FILEMAGIC 0x656C6946
+#define SEL_URLMAGIC 0x2F4C5255
+#define SEL_DATAMAGIC 0x41544144 /* check MIME if you get this */
+#define SEL_IDMAGIC 0x64496449
 
 typedef struct s_event_selectionrequest event_selectionrequest;
 struct s_event_selectionrequest {
