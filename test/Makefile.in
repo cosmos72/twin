@@ -111,7 +111,8 @@ PROGRAMS = $(noinst_PROGRAMS)
 am_twtest_OBJECTS = test_stl_vector.$(OBJEXT) test_stl_utf8.$(OBJEXT) \
 	test_main.$(OBJEXT)
 twtest_OBJECTS = $(am_twtest_OBJECTS)
-twtest_DEPENDENCIES = $(LIBSTL)
+am__DEPENDENCIES_1 =
+twtest_DEPENDENCIES = $(am__DEPENDENCIES_1)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
@@ -277,9 +278,9 @@ LIBOBJS = @LIBOBJS@
 LIBPTHREAD = @LIBPTHREAD@
 LIBS = @LIBS@
 LIBSOCK = @LIBSOCK@
-LIBSTL = $(top_builddir)/libs/libstl/libstl.a
 LIBTERMCAP = @LIBTERMCAP@
 LIBTOOL = @LIBTOOL@
+LIBTSTL = @LIBTSTL@
 LIBTUTF = @LIBTUTF@
 LIBTW = @LIBTW@
 LIBX11 = @LIBX11@
@@ -394,7 +395,7 @@ top_srcdir = @top_srcdir@
 SUBDIRS = 
 AM_CPPFLAGS = -I$(top_srcdir)/include
 twtest_SOURCES = test_stl_vector.cpp test_stl_utf8.cpp test_main.cpp
-twtest_LDADD = $(LIBSTL)
+twtest_LDADD = $(LIBTSTL)
 all: all-recursive
 
 .SUFFIXES:

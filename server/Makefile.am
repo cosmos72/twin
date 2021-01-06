@@ -17,8 +17,6 @@ if LIBWM_la
   pkglib_LTLIBRARIES += libwm.la
 endif
 
-LIBSTL = $(top_builddir)/libs/libstl/libstl.a
-
 AM_CPPFLAGS           = -I$(top_srcdir)/include $(LTDLINCL) -DPKG_LIBDIR="\"$(pkglibdir)\""
 twin_CPPFLAGS         = -I$(top_srcdir)/include $(LTDLINCL) -DBINDIR="\"$(bindir)\""
 
@@ -45,7 +43,7 @@ libterm_la_LDFLAGS    = -export-dynamic -export-symbols-regex '^(Init|Quit)Modul
 # libwm exports some symbols needed by librcparse, do not constrain them with -export-symbols-regex
 libwm_la_LDFLAGS      = -export-dynamic                                              -release $(PACKAGE_VERSION)
 
-twdisplay_LDADD       = $(LIBTW) $(LIBTUTF) $(LIBDL) $(LIBSTL)
-twin_server_LDADD     =          $(LIBTUTF) $(LIBDL) $(LIBSTL)
+twdisplay_LDADD       = $(LIBTW) $(LIBTUTF) $(LIBDL) $(LIBTSTL)
+twin_server_LDADD     =          $(LIBTUTF) $(LIBDL) $(LIBTSTL)
 
 libsocket_la_LIBADD   = $(LIBSOCK) $(LIBZ)

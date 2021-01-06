@@ -183,7 +183,7 @@ am_twdisplay_OBJECTS = alloc.$(OBJEXT) display.$(OBJEXT) \
 	dl_helper.$(OBJEXT) missing.$(OBJEXT) hw.$(OBJEXT)
 twdisplay_OBJECTS = $(am_twdisplay_OBJECTS)
 twdisplay_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(LIBSTL)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 twdisplay_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
 	$(CXXFLAGS) $(twdisplay_LDFLAGS) $(LDFLAGS) -o $@
@@ -205,7 +205,7 @@ am_twin_server_OBJECTS = alloc.$(OBJEXT) builtin.$(OBJEXT) \
 	scroller.$(OBJEXT) util.$(OBJEXT)
 twin_server_OBJECTS = $(am_twin_server_OBJECTS)
 twin_server_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(LIBSTL)
+	$(am__DEPENDENCIES_1)
 twin_server_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
 	$(CXXFLAGS) $(twin_server_LDFLAGS) $(LDFLAGS) -o $@
@@ -414,9 +414,9 @@ LIBOBJS = @LIBOBJS@
 LIBPTHREAD = @LIBPTHREAD@
 LIBS = @LIBS@
 LIBSOCK = @LIBSOCK@
-LIBSTL = $(top_builddir)/libs/libstl/libstl.a
 LIBTERMCAP = @LIBTERMCAP@
 LIBTOOL = @LIBTOOL@
+LIBTSTL = @LIBTSTL@
 LIBTUTF = @LIBTUTF@
 LIBTW = @LIBTW@
 LIBX11 = @LIBX11@
@@ -554,8 +554,8 @@ libsocket_la_LDFLAGS = -export-dynamic -export-symbols-regex '^(Init|Quit)Module
 libterm_la_LDFLAGS = -export-dynamic -export-symbols-regex '^(Init|Quit)Module$$' -release $(PACKAGE_VERSION)
 # libwm exports some symbols needed by librcparse, do not constrain them with -export-symbols-regex
 libwm_la_LDFLAGS = -export-dynamic                                              -release $(PACKAGE_VERSION)
-twdisplay_LDADD = $(LIBTW) $(LIBTUTF) $(LIBDL) $(LIBSTL)
-twin_server_LDADD = $(LIBTUTF) $(LIBDL) $(LIBSTL)
+twdisplay_LDADD = $(LIBTW) $(LIBTUTF) $(LIBDL) $(LIBTSTL)
+twin_server_LDADD = $(LIBTUTF) $(LIBDL) $(LIBTSTL)
 libsocket_la_LIBADD = $(LIBSOCK) $(LIBZ)
 all: all-recursive
 

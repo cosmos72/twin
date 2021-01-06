@@ -142,7 +142,7 @@ am__installdirs = "$(DESTDIR)$(pkglibdir)"
 LTLIBRARIES = $(pkglib_LTLIBRARIES)
 am__DEPENDENCIES_1 =
 libhw_X11_la_DEPENDENCIES = $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_libhw_X11_la_OBJECTS = libhw_X11_la-hw_X11.lo
 libhw_X11_la_OBJECTS = $(am_libhw_X11_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
@@ -169,7 +169,7 @@ libhw_twin_la_OBJECTS = $(am_libhw_twin_la_OBJECTS)
 @LIBHW_TWIN_la_TRUE@am_libhw_twin_la_rpath = -rpath $(pkglibdir)
 libhw_xft_la_DEPENDENCIES = $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_libhw_xft_la_OBJECTS = libhw_xft_la-hw_xft.lo
 libhw_xft_la_OBJECTS = $(am_libhw_xft_la_OBJECTS)
 libhw_xft_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
@@ -301,9 +301,9 @@ LIBOBJS = @LIBOBJS@
 LIBPTHREAD = @LIBPTHREAD@
 LIBS = @LIBS@
 LIBSOCK = @LIBSOCK@
-LIBSTL = @LIBSTL@
 LIBTERMCAP = @LIBTERMCAP@
 LIBTOOL = @LIBTOOL@
+LIBTSTL = @LIBTSTL@
 LIBTUTF = @LIBTUTF@
 LIBTW = @LIBTW@
 LIBX11 = @LIBX11@
@@ -429,8 +429,8 @@ AM_LDFLAGS = -export-dynamic -export-symbols-regex '^(Init|Quit)Module$$' -relea
 libhw_X11_la_LDFLAGS = -export-dynamic -export-symbols-regex '^(Init|Quit)Module$$' -release $(PACKAGE_VERSION) $(X11_LDFLAGS)
 libhw_xft_la_LDFLAGS = -export-dynamic -export-symbols-regex '^(Init|Quit)Module$$' -release $(PACKAGE_VERSION) $(X11_LDFLAGS)
 libhw_display_la_LIBADD = 
-libhw_X11_la_LIBADD = $(LIBTUTF) $(LIBX11)
-libhw_xft_la_LIBADD = $(LIBTUTF) $(LIBX11) $(XFT_LIBS) $(LIBXFT)
+libhw_X11_la_LIBADD = $(LIBTUTF) $(LIBTSTL) $(LIBX11)
+libhw_xft_la_LIBADD = $(LIBTUTF) $(LIBTSTL) $(LIBX11) $(XFT_LIBS) $(LIBXFT)
 libhw_tty_la_LIBADD = $(LIBTUTF) $(LIBTERMCAP) $(LIBGPM)
 libhw_twin_la_LIBADD = $(LIBTUTF) $(LIBTW) $(LIBZ)
 all: all-am

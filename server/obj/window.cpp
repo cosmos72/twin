@@ -81,8 +81,8 @@ window s_window::Init(msgport owner, dat titlelen, const char *title, const tcol
   ColBars = DEFAULT_ColBars;
   ColTabs = DEFAULT_ColTabs;
   ColBorder = DEFAULT_ColBorder;
-  ColText = ColText;
-  ColSelect = TCOL(TCOLBG(ColText), TCOLFG(ColText));
+  ColText = coltext;
+  ColSelect = TCOL(TCOLBG(coltext), TCOLFG(coltext));
   ColDisabled = DEFAULT_ColDisabled;
   ColSelectDisabled = DEFAULT_ColSelectDisabled;
   /* sanity: */
