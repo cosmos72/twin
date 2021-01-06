@@ -47,6 +47,8 @@
 #define COD_SUSPEND (udat)10
 #define COD_DETACH (udat)11
 #define COD_RELOAD_RC (udat)12
+#define COD_COPY (udat)13
+#define COD_PASTE (udat)14
 
 #define COD_CLOCK_WIN (udat)20
 #define COD_OPTION_WIN (udat)21
@@ -567,6 +569,14 @@ static void BuiltinH(msgport MsgPort) {
           QuitHW();
           break;
 
+        case COD_COPY:
+          All->Clipboard->dup(All->Selection);
+          break;
+
+        case COD_PASTE:
+          All->Clipboard->paste();
+          break;
+
         case COD_RELOAD_RC:
           SendControlMsg(Ext(WM, MsgPort), MSG_CONTROL_RESTART, 0, NULL);
           break;
@@ -825,19 +835,7 @@ byte InitBuiltin(void) {
       Row4Menu(W, COD_QUIT, ROW_ACTIVE, 10, " Quit     ") &&
       (Builtin_File = Item4Menu(Builtin_Menu, W, ttrue, 6, " File ")) &&
 
-      (W = Win4Menu(Builtin_Menu)) && Row4Menu(W, (udat)0, ROW_INACTIVE, 11, " Undo      ") &&
-      Row4Menu(W, (udat)0, ROW_INACTIVE, 11, " Redo      ") &&
-      Row4Menu(W, (udat)0, ROW_IGNORE, 11, "\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4") &&
-      Row4Menu(W, (udat)0, ROW_INACTIVE, 11, " Cut       ") &&
-      Row4Menu(W, (udat)0, ROW_INACTIVE, 11, " Copy      ") &&
-      Row4Menu(W, (udat)0, ROW_INACTIVE, 11, " Paste     ") &&
-      Row4Menu(W, (udat)0, ROW_INACTIVE, 11, " Clear     ") &&
-      Row4Menu(W, (udat)0, ROW_IGNORE, 11, "\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4\xC4") &&
-      Row4Menu(W, (udat)0, ROW_INACTIVE, 11, " Clipboard ") &&
-      Item4Menu(Builtin_Menu, W, ttrue, 6, " Edit ") &&
-
       (W = Win4Menu(Builtin_Menu)) && (W->InstallHook(UpdateMenuRows, &All->FnHookModule), ttrue) &&
-
       Row4Menu(W, COD_TERM_ON, ROW_ACTIVE, 20, " Run Twin Term      ") &&
       Row4Menu(W, COD_TERM_OFF, ROW_INACTIVE, 20, " Stop Twin Term     ") &&
       Row4Menu(

@@ -76,14 +76,17 @@ typedef struct s_button_vec {
   byte changed;
 } button_vec;
 
-typedef struct s_selection {
+struct s_selection {
   timevalue Time;
   msgport Owner;
   display_hw OwnerOnce;
   uldat Magic;
   String Data;
   char MIME[MAX_MIMELEN];
-} selection;
+
+  void dup(const selection other);
+  void paste();
+};
 
 struct s_all : public s_obj {
   fn_obj Fn;
@@ -105,7 +108,8 @@ struct s_all : public s_obj {
   dat DisplayWidth, DisplayHeight;
   byte State;
   timevalue Now;
-  selection *Selection;
+  selection Selection;
+  selection Clipboard;
   setup *SetUp;
   void (*AtQuit)(void);
 

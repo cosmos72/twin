@@ -742,7 +742,7 @@ void TwinSelectionRequest(obj Requestor, uldat ReqPrivate, obj Owner) {
       RestoreHW;
     }
   } else {
-    selection *Sel = All->Selection;
+    selection Sel = All->Selection;
     TwinSelectionNotify(Requestor, ReqPrivate, Sel->Magic, Sel->MIME, Sel->Data);
   }
 }

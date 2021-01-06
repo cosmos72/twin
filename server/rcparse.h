@@ -836,8 +836,12 @@ static str TokenName(ldat id) {
     return "Center";
   case CLOSE:
     return "Close";
+  case COPY:
+    return "Copy";
   case KILL:
     return "Kill";
+  case PASTE:
+    return "Paste";
   case QUIT:
     return "Quit";
   case REFRESH:
@@ -1309,8 +1313,11 @@ static byte NewCommonMenu(void **shm_M, menu *res_CommonMenu, node **res_MenuBin
             Row->Code = (udat)(new_MenuBindsMax + COD_RESERVED);
             new_MenuBinds[new_MenuBindsMax++] = N->body;
           }
-        } else
+        } else if (N->name && N->name[0]) {
+          Row = Row4Menu(W, 0, ROW_INACTIVE, strlen(N->name), N->name);
+        } else {
           Row = Row4Menu(W, 0, ROW_IGNORE, maxlen, Line);
+        }
         if (!Row)
           break;
       }

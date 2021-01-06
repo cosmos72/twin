@@ -51,6 +51,7 @@ typedef struct s_fn_display_hw *fn_display_hw;
 
 typedef struct s_fn_struct fn_struct;
 typedef struct s_setup setup;
+typedef struct s_selection *selection;
 typedef struct s_all *all;
 
 typedef void (*fn_hook)(widget);

@@ -299,7 +299,7 @@ byte SendControlMsg(msgport MsgPort, udat Code, udat Len, const char *Data) {
 }
 
 byte SelectionStore(uldat magic, const char mime[MAX_MIMELEN], Chars data) {
-  selection *Sel = All->Selection;
+  selection Sel = All->Selection;
   if (mime) {
     CopyMem(mime, Sel->MIME, MAX_MIMELEN);
   } else {

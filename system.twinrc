@@ -66,10 +66,23 @@ Background 1 High Black On Blue (
 # this creates the menuitem " Window ", shared by all applications,
 # with the contents you see below.
 #
-# the command `Nop' is a do-nothing command used to insert a linebreak.
+# the command `Nop' is a do-nothing command used to insert either a disabled
+# line (if string is non-empty) or a linebreak (if string is empty).
 # `_Next' is a user function (all other ones are predefined by twin) and
 # is defined below.
 #
+AddToMenu " Edit " (
+   " Undo      "   Nop
+   " Redo      "   Nop
+   ""              Nop
+   " Cut       "   Nop
+   " Copy      "   Copy
+   " Paste     "   Paste
+   " Clear     "   Nop
+   ""              Nop
+   " Clipboard "   Nop
+)
+
 AddToMenu " Window " (
    " Move "        Interactive Move
    " Resize "      Interactive Resize
@@ -272,6 +285,12 @@ Key Shift "Prior" Scroll +0 -10
 #
 Key Shift "Next"  Scroll +0 +10
 
+
+#
+# ALT+C is Copy, ALT+V is Paste
+#
+Key Alt "C" Copy
+Key Alt "V" Paste
 
 #
 # mouse bindings syntax:

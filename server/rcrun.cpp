@@ -649,6 +649,9 @@ static byte RCSteps(run *r) {
         if (W)
           AskCloseWidget(W);
         break;
+      case COPY:
+        All->Clipboard->dup(All->Selection);
+        break;
       case KILL:
         /* BRUTAL! */
         if (W) {
@@ -665,6 +668,9 @@ static byte RCSteps(run *r) {
           } else
             AskCloseWidget(W);
         }
+        break;
+      case PASTE:
+        All->Clipboard->paste();
         break;
       case QUIT:
         Quit(0);

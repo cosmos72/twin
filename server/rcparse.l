@@ -1,3 +1,5 @@
+/* clang-format off */
+
 %{
 /* -*-c-*-
  *
@@ -11,6 +13,7 @@
  *  (at your option) any later version.
  *
  */
+
 
 #include "twin.h"
 #include "alloc.h"
@@ -110,11 +113,13 @@ Roll         { yylval.val = ROLL;       return FLAG_FUNC; }
 Beep         { yylval.val = BEEP;       return EASY_FUNC; }
 Center       { yylval.val = CENTER;     return EASY_FUNC; }
 Close        { yylval.val = CLOSE;      return EASY_FUNC; }
+Copy         { yylval.val = COPY;       return EASY_FUNC; }
 FullScreen   { yylval.val = FULLSCREEN; return EASY_FUNC; }
 Kill         { yylval.val = KILL;       return EASY_FUNC; }
 Lower        { yylval.val = LOWER;      return EASY_FUNC; }
 Maximize     { yylval.val = MAXIMIZE;   return EASY_FUNC; }
 Nop          { yylval.val = NOP;        return EASY_FUNC; }
+Paste        { yylval.val = PASTE;      return EASY_FUNC; }
 Quit         { yylval.val = QUIT;       return EASY_FUNC; }
 Raise        { yylval.val = RAISE;      return EASY_FUNC; }
 RaiseLower   { yylval.val = RAISELOWER; return EASY_FUNC; }

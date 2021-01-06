@@ -106,7 +106,7 @@
 
 %token <val> EASY_FUNC
 /* one of or */
-%token BEEP CENTER CLOSE KILL QUIT REFRESH WINDOWLIST
+%token BEEP CENTER CLOSE COPY KILL PASTE QUIT REFRESH WINDOWLIST
 
 %token <val> FLAG_FUNC
 /* one of or */
