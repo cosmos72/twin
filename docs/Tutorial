@@ -94,13 +94,14 @@
    and on X11: it opens a window and draws in it, does _not_ run inside an
    xterm or similar.
    It can also run on generic text terminals (ttys) using the termcap/ncurses
-   driver, but it will work far from optimal: it will have problems with mouse
-   (only xterm and derivatives have a standard to report mouse, but only report
-   click/release, not drags) and keyboard (each terminal sends different codes
-   for special keys: F1-F12, Pause, ...)
+   driver, but it will work far from optimal: it may have problems with mouse
+   (only xterm and derivatives have a standard to report mouse) and keyboard
+   (each terminal sends different codes for special keys: F1-F12, Pause, ...)
 
-   Currently, twin is tested on Linux (i386, PowerPC, Alpha, Sparc)
-   and on FreeBSD; SunOS porting is in progress.
+   Currently, twin is tested on:
+   * Linux (x86_64, i386, aarch64, arm, PowerPC, Alpha, Sparc)
+   * Mac OS X (must be compiled with Xcode command line tools)
+   * FreeBSD (x86_64, i386)
    I had yet no chance to test it on other systems.
 
    Twin will not be able to take advantage of special features of non-Linux
