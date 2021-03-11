@@ -287,10 +287,10 @@ Key Shift "Next"  Scroll +0 +10
 
 
 #
-# ALT+C is Copy, ALT+V is Paste
+# ALT-c is Copy, ALT-v is Paste
 #
-Key Alt "C" Copy
-Key Alt "V" Paste
+Key Alt "c" Copy
+Key Alt "v" Paste
 
 #
 # mouse bindings syntax:

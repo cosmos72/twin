@@ -535,17 +535,17 @@ byte CreateXTermMouseEvent(event_mouse *Event, byte buflen, char *buf) {
 
   Flags = w->USE.C.TtyData->Flags;
 
-  if (Flags & TTY_REPORTMOUSE) {
+  if (Flags & TTY_REPORTMOUSE_TWTERM) {
     /* new-style reporting */
 
-    /* when both TTY_REPORTMOUSE|TTY_REPORTMOUSE2 are set, also report motion */
-    if (buflen < 9 || (Code == MOVE_MOUSE && !(Flags & TTY_REPORTMOUSE2)))
+    /* if TTY_REPORTMOUSE_ALSO_MOVE is set, also report motion */
+    if (buflen < 9 || (Code == MOVE_MOUSE && !(Flags & TTY_REPORTMOUSE_ALSO_MOVE))) {
       /* buffer too small, or nothing to report */
       return len;
-
-    /* report also button just pressed as down */
-    if (isPRESS(Code))
+    } else if (isPRESS(Code)) {
+      /* report also button just pressed as down */
       Code |= HOLD_CODE(PRESS_N(Code));
+    }
 
     CopyMem("\033[5M", buf, 4);
     buf[4] = ' ' + ((Code & HOLD_ANY) >> HOLD_BITSHIFT);
@@ -554,7 +554,7 @@ byte CreateXTermMouseEvent(event_mouse *Event, byte buflen, char *buf) {
     buf[7] = '!' + (y & 0x7f);
     buf[8] = '!' + ((y >> 7) & 0x7f);
     len = 9;
-  } else if (Flags & TTY_REPORTMOUSE2) {
+  } else if (Flags & TTY_REPORTMOUSE_XTERM) {
     /* classic xterm-style reporting */
 
     if (buflen < 6)
@@ -563,7 +563,7 @@ byte CreateXTermMouseEvent(event_mouse *Event, byte buflen, char *buf) {
 
     CopyMem("\033[M", buf, 3);
 
-    if (isSINGLE_PRESS(Code))
+    if (isSINGLE_PRESS(Code)) {
       switch (Code & PRESS_ANY) {
       case PRESS_LEFT:
         buf[3] = ' ';
@@ -576,7 +576,7 @@ byte CreateXTermMouseEvent(event_mouse *Event, byte buflen, char *buf) {
         break;
         /* WHEEL_REV and WHEEL_FWD supported only at release */
       }
-    else if (isRELEASE(Code)) {
+    } else if (isRELEASE(Code)) {
       switch (Code & RELEASE_ANY) {
 #ifdef HOLD_WHEEL_REV
       case RELEASE_WHEEL_REV:
@@ -592,8 +592,13 @@ byte CreateXTermMouseEvent(event_mouse *Event, byte buflen, char *buf) {
         buf[3] = '#';
         break;
       }
-    } else
+    } else if (Code != MOVE_MOUSE && (Flags & TTY_REPORTMOUSE_ALSO_MOVE)) {
+      /* also report mouse dragging */
+      buf[3] = '@';
+    } else {
+      /* pure mouse move (without pressed buttons) is not reported */
       return len;
+    }
 
     buf[4] = '!' + x;
     buf[5] = '!' + y;

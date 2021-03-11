@@ -2469,7 +2469,7 @@ static void SocketH(msgport MsgPort) {
 
     if (Msg->Type == msg_widget_mouse && (W = Msg->Event.EventMouse.W) && IS_WINDOW(W) &&
         (W->Flags & WINDOWFL_USECONTENTS) && ((window)W)->USE.C.TtyData &&
-        ((window)W)->USE.C.TtyData->Flags & (TTY_REPORTMOUSE | TTY_REPORTMOUSE2)) {
+        ((window)W)->USE.C.TtyData->Flags & (TTY_REPORTMOUSE_TWTERM | TTY_REPORTMOUSE_XTERM)) {
 
       len = CreateXTermMouseEvent(&Msg->Event.EventMouse, 10, buf);
       /*

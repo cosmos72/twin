@@ -26,9 +26,10 @@ typedef enum e_tty_flag {
   TTY_RELORIG = 0x0400,
   TTY_SETMETA = 0x0800,
   TTY_UPDATECURSOR = 0x1000,
-  TTY_REPORTMOUSE = 0x2000,
-  TTY_REPORTMOUSE2 = 0x4000,
-  TTY_NEEDREFOCUS = 0x8000,
+  TTY_REPORTMOUSE_TWTERM = 0x2000,
+  TTY_REPORTMOUSE_XTERM = 0x4000,
+  TTY_REPORTMOUSE_ALSO_MOVE = 0x8000,
+  TTY_NEEDREFOCUS = 0x10000,
 } tty_flag;
 
 /* ttydata->Effects */
@@ -77,7 +78,7 @@ typedef enum e_ttystate {
 
 struct s_ttydata {
   ttystate State;
-  udat Flags;
+  uldat Flags;
   udat Effects;
   dat ScrollBack;   /* Number of scrollback lines */
   dat SizeX, SizeY; /* Terminal size */

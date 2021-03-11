@@ -41,7 +41,7 @@
 
 static window Win;
 static ttydata *Data;
-static udat *Flags;
+static uldat *Flags;
 /* enable keypad by default */
 static udat kbdFlags = TTY_KBDAPPLIC | TTY_AUTOWRAP, defaultFlags = TTY_KBDAPPLIC | TTY_AUTOWRAP;
 
@@ -766,8 +766,8 @@ static void set_mode(byte on_off) {
       case 8: /* Autorepeat on/off */
         break;
       case 9: /* new style */
-        CHANGE_BIT(TTY_REPORTMOUSE, on_off);
-        CHANGE_BIT(TTY_REPORTMOUSE2, tfalse);
+        CHANGE_BIT(TTY_REPORTMOUSE_TWTERM, on_off);
+        CHANGE_BIT(TTY_REPORTMOUSE_ALSO_MOVE, tfalse);
         Win->ChangeField(TWS_window_Attr, WINDOW_WANT_MOUSE_MOTION | WINDOW_WANT_MOUSE,
                          on_off ? WINDOW_WANT_MOUSE : 0);
         break;
@@ -775,15 +775,22 @@ static void set_mode(byte on_off) {
         Win->ChangeField(TWS_window_Flags, WINDOWFL_CURSOR_ON, on_off ? WINDOWFL_CURSOR_ON : 0);
         *Flags |= TTY_UPDATECURSOR;
         break;
-      case 999: /* new style, report also motions */
-        CHANGE_BIT(TTY_REPORTMOUSE, on_off);
-        CHANGE_BIT(TTY_REPORTMOUSE2, on_off);
+      case 999: /* new style, also report mouse move */
+        CHANGE_BIT(TTY_REPORTMOUSE_TWTERM, on_off);
+        CHANGE_BIT(TTY_REPORTMOUSE_ALSO_MOVE, on_off);
         Win->ChangeField(TWS_window_Attr, WINDOW_WANT_MOUSE | WINDOW_WANT_MOUSE_MOTION,
                          on_off ? WINDOW_WANT_MOUSE | WINDOW_WANT_MOUSE_MOTION : 0);
         break;
       case 1000: /* classic xterm style */
-        CHANGE_BIT(TTY_REPORTMOUSE, tfalse);
-        CHANGE_BIT(TTY_REPORTMOUSE2, on_off);
+        CHANGE_BIT(TTY_REPORTMOUSE_XTERM, on_off);
+        CHANGE_BIT(TTY_REPORTMOUSE_ALSO_MOVE, tfalse);
+        Win->ChangeField(TWS_window_Attr, WINDOW_WANT_MOUSE | WINDOW_WANT_MOUSE_MOTION,
+                         on_off ? WINDOW_WANT_MOUSE : 0);
+        break;
+
+      case 1002: /* classic xterm style, also report mouse dragging */
+        CHANGE_BIT(TTY_REPORTMOUSE_XTERM, on_off);
+        CHANGE_BIT(TTY_REPORTMOUSE_ALSO_MOVE, on_off);
         Win->ChangeField(TWS_window_Attr, WINDOW_WANT_MOUSE | WINDOW_WANT_MOUSE_MOTION,
                          on_off ? WINDOW_WANT_MOUSE | WINDOW_WANT_MOUSE_MOTION : 0);
         break;
