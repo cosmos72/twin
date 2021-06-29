@@ -20250,6 +20250,80 @@ fi
 
 ################################################################################
 
+ac_fn_c_find_intX_t "$LINENO" "8" "ac_cv_c_int8_t"
+case $ac_cv_c_int8_t in #(
+  no|yes) ;; #(
+  *)
+
+cat >>confdefs.h <<_ACEOF
+#define int8_t $ac_cv_c_int8_t
+_ACEOF
+;;
+esac
+
+ac_fn_c_find_intX_t "$LINENO" "16" "ac_cv_c_int16_t"
+case $ac_cv_c_int16_t in #(
+  no|yes) ;; #(
+  *)
+
+cat >>confdefs.h <<_ACEOF
+#define int16_t $ac_cv_c_int16_t
+_ACEOF
+;;
+esac
+
+ac_fn_c_find_intX_t "$LINENO" "32" "ac_cv_c_int32_t"
+case $ac_cv_c_int32_t in #(
+  no|yes) ;; #(
+  *)
+
+cat >>confdefs.h <<_ACEOF
+#define int32_t $ac_cv_c_int32_t
+_ACEOF
+;;
+esac
+
+ac_fn_c_find_uintX_t "$LINENO" "8" "ac_cv_c_uint8_t"
+case $ac_cv_c_uint8_t in #(
+  no|yes) ;; #(
+  *)
+
+$as_echo "#define _UINT8_T 1" >>confdefs.h
+
+
+cat >>confdefs.h <<_ACEOF
+#define uint8_t $ac_cv_c_uint8_t
+_ACEOF
+;;
+  esac
+
+ac_fn_c_find_uintX_t "$LINENO" "16" "ac_cv_c_uint16_t"
+case $ac_cv_c_uint16_t in #(
+  no|yes) ;; #(
+  *)
+
+
+cat >>confdefs.h <<_ACEOF
+#define uint16_t $ac_cv_c_uint16_t
+_ACEOF
+;;
+  esac
+
+ac_fn_c_find_uintX_t "$LINENO" "32" "ac_cv_c_uint32_t"
+case $ac_cv_c_uint32_t in #(
+  no|yes) ;; #(
+  *)
+
+$as_echo "#define _UINT32_T 1" >>confdefs.h
+
+
+cat >>confdefs.h <<_ACEOF
+#define uint32_t $ac_cv_c_uint32_t
+_ACEOF
+;;
+  esac
+
+
 ac_fn_c_check_type "$LINENO" "gid_t" "ac_cv_type_gid_t" "$ac_includes_default"
 if test "x$ac_cv_type_gid_t" = xyes; then :
 
@@ -20327,17 +20401,6 @@ _ACEOF
 
 fi
 
-ac_fn_c_check_type "$LINENO" "socklen_t" "ac_cv_type_socklen_t" "$ac_includes_default"
-if test "x$ac_cv_type_socklen_t" = xyes; then :
-
-else
-
-cat >>confdefs.h <<_ACEOF
-#define socklen_t int
-_ACEOF
-
-fi
-
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for uid_t in sys/types.h" >&5
 $as_echo_n "checking for uid_t in sys/types.h... " >&6; }
 if ${ac_cv_type_uid_t+:} false; then :
@@ -20369,78 +20432,21 @@ $as_echo "#define gid_t int" >>confdefs.h
 fi
 
 
-ac_fn_c_find_intX_t "$LINENO" "8" "ac_cv_c_int8_t"
-case $ac_cv_c_int8_t in #(
-  no|yes) ;; #(
-  *)
+ac_fn_c_check_type "$LINENO" "socklen_t" "ac_cv_type_socklen_t" "
+#ifdef HAVE_ARPA_INET_H
+#include <arpa/inet.h>
+#endif
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
 
-cat >>confdefs.h <<_ACEOF
-#define int8_t $ac_cv_c_int8_t
-_ACEOF
-;;
-esac
+"
+if test "x$ac_cv_type_socklen_t" = xyes; then :
 
-ac_fn_c_find_intX_t "$LINENO" "16" "ac_cv_c_int16_t"
-case $ac_cv_c_int16_t in #(
-  no|yes) ;; #(
-  *)
-
-cat >>confdefs.h <<_ACEOF
-#define int16_t $ac_cv_c_int16_t
-_ACEOF
-;;
-esac
-
-ac_fn_c_find_intX_t "$LINENO" "32" "ac_cv_c_int32_t"
-case $ac_cv_c_int32_t in #(
-  no|yes) ;; #(
-  *)
-
-cat >>confdefs.h <<_ACEOF
-#define int32_t $ac_cv_c_int32_t
-_ACEOF
-;;
-esac
-
-ac_fn_c_find_uintX_t "$LINENO" "8" "ac_cv_c_uint8_t"
-case $ac_cv_c_uint8_t in #(
-  no|yes) ;; #(
-  *)
-
-$as_echo "#define _UINT8_T 1" >>confdefs.h
-
-
-cat >>confdefs.h <<_ACEOF
-#define uint8_t $ac_cv_c_uint8_t
-_ACEOF
-;;
-  esac
-
-ac_fn_c_find_uintX_t "$LINENO" "16" "ac_cv_c_uint16_t"
-case $ac_cv_c_uint16_t in #(
-  no|yes) ;; #(
-  *)
-
-
-cat >>confdefs.h <<_ACEOF
-#define uint16_t $ac_cv_c_uint16_t
-_ACEOF
-;;
-  esac
-
-ac_fn_c_find_uintX_t "$LINENO" "32" "ac_cv_c_uint32_t"
-case $ac_cv_c_uint32_t in #(
-  no|yes) ;; #(
-  *)
-
-$as_echo "#define _UINT32_T 1" >>confdefs.h
-
-
-cat >>confdefs.h <<_ACEOF
-#define uint32_t $ac_cv_c_uint32_t
-_ACEOF
-;;
-  esac
+fi
 
 
 # The cast to long int works around a bug in the HP C Compiler

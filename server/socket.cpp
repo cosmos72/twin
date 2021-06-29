@@ -2303,7 +2303,7 @@ static void Wait4MagicInetIO(int fd, uldat slot) {
 }
 
 static void unixSocketIO(int fd, uldat slot) {
-  struct sockaddr_un un_addr;
+  struct sockaddr_un un_addr = {};
   socklen_t len = sizeof(un_addr);
   if ((fd = accept(unixFd, (struct sockaddr *)&un_addr, &len)) >= 0) {
     /* programs on the unix socket are always authorized */
@@ -2319,7 +2319,7 @@ static void unixSocketIO(int fd, uldat slot) {
 }
 
 static void inetSocketIO(int fd, uldat slot) {
-  struct sockaddr_in in_addr;
+  struct sockaddr_in in_addr = {};
   socklen_t len = sizeof(in_addr);
   if ((fd = accept(inetFd, (struct sockaddr *)&in_addr, &len)) >= 0) {
     if ((Slot = RegisterRemoteFd(fd, Wait4MagicInetIO)) != NOSLOT) {

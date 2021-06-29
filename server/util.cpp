@@ -854,7 +854,7 @@ int unixFd;
 uldat unixSlot;
 
 static void TWDisplayIO(int fd, uldat slot) {
-  struct sockaddr_un un_addr;
+  struct sockaddr_un un_addr = {};
   socklen_t len = sizeof(un_addr);
 
   if ((fd = accept(fd, (struct sockaddr *)&un_addr, &len)) >= 0) {

@@ -138,20 +138,31 @@ fi
 
 ################################################################################
 
-AC_CHECK_TYPE(gid_t,int)
-AC_TYPE_OFF_T
-AC_TYPE_PID_T
-AC_TYPE_SIGNAL
-AC_TYPE_SIZE_T
-AC_CHECK_TYPE(socklen_t,int)
-AC_TYPE_UID_T
-
 AC_TYPE_INT8_T
 AC_TYPE_INT16_T
 AC_TYPE_INT32_T
 AC_TYPE_UINT8_T
 AC_TYPE_UINT16_T
 AC_TYPE_UINT32_T
+
+AC_CHECK_TYPE(gid_t,int)
+AC_TYPE_OFF_T
+AC_TYPE_PID_T
+AC_TYPE_SIGNAL
+AC_TYPE_SIZE_T
+AC_TYPE_UID_T
+
+AC_CHECK_TYPE(socklen_t,,,[
+#ifdef HAVE_ARPA_INET_H
+#include <arpa/inet.h>
+#endif
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
+])
 
 AC_CHECK_SIZEOF([char])
 AC_CHECK_SIZEOF([short])
