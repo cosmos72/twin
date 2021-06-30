@@ -185,7 +185,7 @@ dnl we never use the 'struct rusage' returned by wait3()
 dnl AC_FUNC_WAIT3
 AC_CHECK_FUNCS([ \
       alarm alphasort crypt dup2 ftime getenv gethostname getpagesize getpt getspnam gettimeofday \
-      grantpt hstrerror initgroups lstat memchr memcmp memmove memset munmap ptsname putenv \
+      grantpt hstrerror initgroups lstat memchr memcmp memmove memset munmap posix_openpt ptsname putenv \
       scandir select setenv setlocale sigaction socket strchr strdup strerror strrchr \
       strspn strstr strtol strtoul sysconf tcsetpgrp uname unlockpt usleep \
       versionsort vprintf vsprintf vsnprintf wait3 wait4])
