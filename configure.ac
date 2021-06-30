@@ -212,9 +212,9 @@ if test "$have_x" = yes; then
   LDFLAGS="$LDFLAGS $X11_LDFLAGS"
 
   if test x"$PKG_CONFIG" != x; then
-    PKG_CHECK_MODULES([XFT], [xft freetype2], , [XFT_CFLAGS="-I/usr/include/freetype2"])
+    PKG_CHECK_MODULES([XFT], [xft freetype2], , [XFT_CFLAGS="-I/usr/include/freetype2 -I/usr/local/include/freetype2"])
   else
-    XFT_CFLAGS="-I/usr/include/freetype2"
+    XFT_CFLAGS="-I/usr/include/freetype2 -I/usr/local/include/freetype2"
   fi
   CPPFLAGS="$CPPFLAGS $XFT_CFLAGS"
   LDFLAGS="$LDFLAGS $XFT_LIBS"
