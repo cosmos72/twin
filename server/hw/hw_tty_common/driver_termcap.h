@@ -90,7 +90,8 @@ static udat termcap_LookupKey(udat *ShiftFlags, byte *slen, char *s, byte *retle
 }
 
 static char *termcap_extract(const char *cap, char **dest) {
-  char buf[20], *d = buf, *s = tgetstr(cap, &d);
+  // man page declares tgetstr(char *, char **) although it does not modify the first argument
+  char buf[20], *d = buf, *s = tgetstr(const_cast<char *>(cap), &d);
 
   if (!s || !*s) {
     return *dest = CloneStr("");
