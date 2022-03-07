@@ -107,14 +107,14 @@ static tobj *sockAllocListDeltaObjs(obj F, topaque *len, udat fdelta) {
   obj O = F;
   while (O) {
     L++;
-    O = *(obj *)(fdelta + (byte *)O);
+    O = deserialize<obj>(O, fdelta);
   }
   if ((_LW = LW = (tobj *)AllocMem(L *= sizeof(tobj)))) {
     *len = L;
     O = F;
     while (O) {
       *LW++ = O->Id;
-      O = *(obj *)(fdelta + (byte *)O);
+      O = deserialize<obj>(O, fdelta);
     }
   }
   return _LW;

@@ -93,6 +93,16 @@ extern uldat FdSize, FdTop, FdBottom, FdWQueued;
 
 /* some extra functions not included in remote.c */
 
+template <class T> inline T deserialize(const void *addr, size_t offset) {
+  T ret;
+  memcpy(&ret, static_cast<const byte *>(addr) + offset, sizeof(T));
+  return ret;
+}
+
+template <class T> inline void serialize(void *addr, size_t offset, T value) {
+  memcpy(static_cast<byte *>(addr) + offset, &value, sizeof(T));
+}
+
 #if 0  /* currently unused */
 static uldat RemoteReadAddQueue(uldat Slot, uldat len, byte *data) {
     uldat nmax;

@@ -720,23 +720,23 @@ static void FlipMoveMem(byte *mem, uldat len, uldat chunk) {
     return;
   case 2:
     while (len >= 2) {
-      *(uint16_t *)mem = htons(*(const uint16_t *)mem);
+      serialize(mem, 0, htons(deserialize<uint16_t>(mem, 0)));
       mem += 2;
       len -= 2;
     }
     return;
   case 4:
     while (len >= 4) {
-      *(uint32_t *)mem = htonl(*(const uint32_t *)mem);
+      serialize(mem, 0, htonl(deserialize<uint16_t>(mem, 0)));
       mem += 4;
       len -= 4;
     }
     return;
   case 8:
     while (len >= 8) {
-      t = htonl(((const uint32_t *)mem)[0]);
-      ((uint32_t *)mem)[0] = htonl(((const uint32_t *)mem)[1]);
-      ((uint32_t *)mem)[1] = t;
+      t = htonl(deserialize<uint32_t>(mem, 0));
+      serialize(mem, 0, htonl(deserialize<uint32_t>(mem, sizeof(uint32_t))));
+      serialize(mem, sizeof(uint32_t), t);
       mem += 8;
       len -= 8;
     }

@@ -91,8 +91,8 @@ static void ScrollerH(msgport MsgPort) {
   if (FocusWindow) {
     Attr = FocusWindow->Attr;
     WState = FocusWindow->State;
-    FlagWinScroll = (((Attr & WINDOW_X_BAR) && (WState | X_BAR_SELECT)) ||
-                     ((Attr & WINDOW_Y_BAR) && (WState | Y_BAR_SELECT))) &&
+    FlagWinScroll = (((Attr & WINDOW_X_BAR) && (WState & X_BAR_SELECT)) ||
+                     ((Attr & WINDOW_Y_BAR) && (WState & Y_BAR_SELECT))) &&
                     !(WState & TAB_SELECT);
   } else
     FlagWinScroll = tfalse;
