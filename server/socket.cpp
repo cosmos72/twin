@@ -1515,13 +1515,17 @@ static void sockSendMsg(msgport MsgPort, msg Msg) {
   }
 #if TW_SIZEOF_TOPAQUE == TW_SIZEOF_ULDAT
   if (Easy) {
-    Msg->Event.EventCommon.W = (void *)Obj2Id(Msg->Event.EventCommon.W);
+    Msg->Event.EventCommon.W =
+        reinterpret_cast<widget>(reinterpret_cast<void *>(Obj2Id(Msg->Event.EventCommon.W)));
     if (Msg->Type == msg_menu_row) {
-      Msg->Event.EventMenu.Menu = (void *)Obj2Id(Msg->Event.EventMenu.Menu);
-      Msg->Event.EventMenu.Row = (void *)Obj2Id(Msg->Event.EventMenu.Row);
-    } else if (Msg->Type == msg_selection_request)
-      Msg->Event.EventSelectionRequest.Requestor =
-          (void *)Obj2Id(Msg->Event.EventSelectionRequest.Requestor);
+      Msg->Event.EventMenu.Menu =
+          reinterpret_cast<menu>(reinterpret_cast<void *>(Obj2Id(Msg->Event.EventMenu.Menu)));
+      Msg->Event.EventMenu.Row =
+          reinterpret_cast<row>(reinterpret_cast<void *>(Obj2Id(Msg->Event.EventMenu.Row)));
+    } else if (Msg->Type == msg_selection_request) {
+      Msg->Event.EventSelectionRequest.Requestor = reinterpret_cast<msgport>(
+          reinterpret_cast<void *>(Obj2Id(Msg->Event.EventSelectionRequest.Requestor)));
+    }
     sockReply(Msg->Type, Msg->Len, &Msg->Event);
   }
 #endif
@@ -1621,8 +1625,7 @@ static byte sockSendToMsgPort(msgport MsgPort, udat Len, const byte *Data) {
               sizeof(struct s_tevent_display) ==
                   sizeof(twindow) + 4 * sizeof(dat) + sizeof(uldat)) {
 
-            CopyMem((void *)&tMsg->Event.EventDisplay.Code, (void *)&Msg->Event.EventDisplay.Code,
-                    4 * sizeof(dat));
+            CopyMem(&tMsg->Event.EventDisplay.Code, &Msg->Event.EventDisplay.Code, 4 * sizeof(dat));
           } else {
             Msg->Event.EventDisplay.Code = tMsg->Event.EventDisplay.Code;
             Msg->Event.EventDisplay.Len = tMsg->Event.EventDisplay.Len;
@@ -1642,7 +1645,7 @@ static byte sockSendToMsgPort(msgport MsgPort, udat Len, const byte *Data) {
               sizeof(struct s_tevent_keyboard) ==
                   sizeof(twindow) + 3 * sizeof(dat) + 2 * sizeof(byte)) {
 
-            CopyMem((void *)&tMsg->Event.EventKeyboard.Code, (void *)&Msg->Event.EventKeyboard.Code,
+            CopyMem(&tMsg->Event.EventKeyboard.Code, &Msg->Event.EventKeyboard.Code,
                     3 * sizeof(dat) + sizeof(byte));
           } else {
             Msg->Event.EventKeyboard.Code = tMsg->Event.EventKeyboard.Code;
@@ -1660,8 +1663,7 @@ static byte sockSendToMsgPort(msgport MsgPort, udat Len, const byte *Data) {
           if (sizeof(struct s_event_mouse) == sizeof(window) + 4 * sizeof(dat) &&
               sizeof(struct s_tevent_mouse) == sizeof(twindow) + 4 * sizeof(dat)) {
 
-            CopyMem((void *)&tMsg->Event.EventMouse.Code, (void *)&Msg->Event.EventMouse.Code,
-                    4 * sizeof(dat));
+            CopyMem(&tMsg->Event.EventMouse.Code, &Msg->Event.EventMouse.Code, 4 * sizeof(dat));
           } else {
             Msg->Event.EventMouse.Code = tMsg->Event.EventMouse.Code;
             Msg->Event.EventMouse.ShiftFlags = tMsg->Event.EventMouse.ShiftFlags;
@@ -1673,8 +1675,7 @@ static byte sockSendToMsgPort(msgport MsgPort, udat Len, const byte *Data) {
           if (sizeof(struct s_event_common) == sizeof(window) + 2 * sizeof(dat) &&
               sizeof(struct s_tevent_common) == sizeof(twindow) + 2 * sizeof(dat)) {
 
-            CopyMem((void *)&tMsg->Event.EventCommon.Code, (void *)&Msg->Event.EventCommon.Code,
-                    2 * sizeof(dat));
+            CopyMem(&tMsg->Event.EventCommon.Code, &Msg->Event.EventCommon.Code, 2 * sizeof(dat));
           } else {
             Msg->Event.EventCommon.Code = tMsg->Event.EventCommon.Code;
             Msg->Event.EventCommon.pad = tMsg->Event.EventCommon.pad;
@@ -1704,8 +1705,7 @@ static byte sockSendToMsgPort(msgport MsgPort, udat Len, const byte *Data) {
               sizeof(struct s_tevent_control) ==
                   sizeof(twindow) + 4 * sizeof(dat) + sizeof(uldat)) {
 
-            CopyMem((void *)&tMsg->Event.EventControl.Code, (void *)&Msg->Event.EventControl.Code,
-                    4 * sizeof(dat));
+            CopyMem(&tMsg->Event.EventControl.Code, &Msg->Event.EventControl.Code, 4 * sizeof(dat));
           } else {
             Msg->Event.EventControl.Code = tMsg->Event.EventControl.Code;
             Msg->Event.EventControl.Len = tMsg->Event.EventControl.Len;
@@ -1723,8 +1723,8 @@ static byte sockSendToMsgPort(msgport MsgPort, udat Len, const byte *Data) {
               sizeof(struct s_tevent_clientmsg) ==
                   sizeof(twindow) + 2 * sizeof(dat) + 2 * sizeof(uldat)) {
 
-            CopyMem((void *)&tMsg->Event.EventClientMsg.Code,
-                    (void *)&Msg->Event.EventClientMsg.Code, 2 * sizeof(dat) + sizeof(uldat));
+            CopyMem(&tMsg->Event.EventClientMsg.Code, &Msg->Event.EventClientMsg.Code,
+                    2 * sizeof(dat) + sizeof(uldat));
           } else {
             Msg->Event.EventClientMsg.Code = tMsg->Event.EventClientMsg.Code;
             Msg->Event.EventClientMsg.Format = tMsg->Event.EventClientMsg.Format;
@@ -1798,7 +1798,7 @@ static voidpf sockZAlloc(voidpf opaque, uInt items, uInt size) {
 
 static void sockZFree(voidpf opaque, voidpf address) {
   if (address != Z_NULL)
-    FreeMem((void *)address);
+    FreeMem(address);
 }
 
 /* fixup the uncompressed slot for on-the-fly compression */
@@ -1852,10 +1852,10 @@ static byte sockDoCompress(byte on_off) {
 
           /* ok, start pairing the two slots */
           ls.pairSlot = Slot;
-          ls.PrivateData = (void *)z1;
+          ls.PrivateData = static_cast<void *>(z1);
 
           LS.pairSlot = slot;
-          LS.PrivateData = (void *)z2;
+          LS.PrivateData = static_cast<void *>(z2);
           LS.PrivateAfterFlush = FixupGzip;
 
           /* we have ls.Fd == specFD. it will be fixed by LS.PrivateAfterFlush() */
@@ -2505,18 +2505,20 @@ EXTERN_C byte InitModule(module Module) {
   addr.sin_port = htons(TW_INET_PORT + strtoul(TWDisplay + 1, NULL, 16));
 
   if ((inetFd = socket(AF_INET, SOCK_STREAM, 0)) >= 0 &&
-      setsockopt(inetFd, SOL_SOCKET, SO_REUSEADDR, (void *)opt, sizeof(opt)) >= 0 &&
+      setsockopt(inetFd, SOL_SOCKET, SO_REUSEADDR, static_cast<void *>(opt), sizeof(opt)) >= 0 &&
       bind(inetFd, (struct sockaddr *)&addr, sizeof(addr)) >= 0 && listen(inetFd, 1) >= 0 &&
       fcntl(inetFd, F_SETFD, FD_CLOEXEC) >= 0) {
 
-    if ((inetSlot = RegisterRemoteFd(inetFd, inetSocketIO)) != NOSLOT)
-      ;
-    else
+    if ((inetSlot = RegisterRemoteFd(inetFd, inetSocketIO)) != NOSLOT) {
+      // nothing to do
+    } else {
       close(inetFd);
+    }
   } else {
     Error(SYSERROR);
-    if (inetFd >= 0)
+    if (inetFd >= 0) {
       close(inetFd);
+    }
   }
 
   if (unixSlot != NOSLOT || inetSlot != NOSLOT) {
