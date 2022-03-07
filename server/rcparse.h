@@ -163,6 +163,7 @@
  */
 
 #include "rcparse_tab.hpp"
+#include "unaligned.h"
 
 ldat GlobalFlags[4];
 ldat GlobalShadows[2];
@@ -1102,12 +1103,14 @@ static void WriteGlobals(void) {
   while (g < Globals + GLOBAL_MAX)
     *M++ = ReverseList(*g++);
 
-  CopyMem(All->ButtonVec, M, sizeof(All->ButtonVec));
-  M = (void **)((str)M + sizeof(All->ButtonVec));
-  CopyMem(GlobalFlags, M, sizeof(GlobalFlags));
-  M = (void **)((str)M + sizeof(GlobalFlags));
-  CopyMem(GlobalShadows, M, sizeof(GlobalShadows));
-  M = (void **)((str)M + sizeof(GlobalShadows));
+  byte *m = reinterpret_cast<byte *>(M);
+
+  CopyMem(All->ButtonVec, m, sizeof(All->ButtonVec));
+  m += sizeof(All->ButtonVec);
+  CopyMem(GlobalFlags, m, sizeof(GlobalFlags));
+  m += sizeof(GlobalFlags);
+  CopyMem(GlobalShadows, m, sizeof(GlobalShadows));
+  m += sizeof(GlobalShadows);
 }
 
 static screen FindNameInScreens(dat len, const char *name, screen S) {
@@ -1244,7 +1247,7 @@ static void NewCommonMenu_Overflow(void) {
  * create new CommonMenu and MenuBinds from MenuList
  * or fail with no side effects
  */
-static byte NewCommonMenu(void **shm_M, menu *res_CommonMenu, node **res_MenuBinds,
+static byte NewCommonMenu(void *const *shm_M, menu *res_CommonMenu, node **res_MenuBinds,
                           uldat *res_MenuBindsMax) {
   node new_MenuList;
   node *new_MenuBinds = (node *)0;
@@ -1346,7 +1349,7 @@ static byte NewCommonMenu(void **shm_M, menu *res_CommonMenu, node **res_MenuBin
  */
 static byte ReadGlobals(void) {
   node *g;
-  void **M = (void **)shm_getbase();
+  void *const *M = (void *const *)shm_getbase();
   menu new_CommonMenu;
   node *new_MenuBinds = (node *)0;
   uldat new_MenuBindsMax;
@@ -1378,14 +1381,16 @@ static byte ReadGlobals(void) {
 
   g = Globals;
   while (g < Globals + GLOBAL_MAX)
-    *g++ = (node)*M++;
+    *g++ = reinterpret_cast<node>(*M++);
 
-  CopyMem(M, All->ButtonVec, sizeof(All->ButtonVec));
-  M = (void **)((str)M + sizeof(All->ButtonVec));
-  CopyMem(M, GlobalFlags, sizeof(GlobalFlags));
-  M = (void **)((str)M + sizeof(GlobalFlags));
-  CopyMem(M, GlobalShadows, sizeof(GlobalShadows));
-  M = (void **)((str)M + sizeof(GlobalShadows));
+  const byte *m = reinterpret_cast<const byte *>(M);
+
+  CopyMem(m, All->ButtonVec, sizeof(All->ButtonVec));
+  m += sizeof(All->ButtonVec);
+  CopyMem(m, GlobalFlags, sizeof(GlobalFlags));
+  m += sizeof(GlobalFlags);
+  CopyMem(m, GlobalShadows, sizeof(GlobalShadows));
+  m += sizeof(GlobalShadows);
 
 #ifdef DEBUG_RC
   DumpGlobals();

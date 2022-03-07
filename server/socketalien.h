@@ -710,10 +710,7 @@ static void AlienIO(int fd, uldat slot) {
 
 /*move chunk bytes to chunk bytes at time, flipping byte order*/
 static void FlipMoveMem(byte *mem, uldat len, uldat chunk) {
-  uldat i, j;
-  byte c;
 #if TW_IS_LITTLE_ENDIAN
-  uint32_t t;
 
   switch (chunk) {
   case 1:
@@ -734,9 +731,9 @@ static void FlipMoveMem(byte *mem, uldat len, uldat chunk) {
     return;
   case 8:
     while (len >= 8) {
-      t = htonl(deserialize<uint32_t>(mem, 0));
-      serialize(mem, 0, htonl(deserialize<uint32_t>(mem, sizeof(uint32_t))));
-      serialize(mem, sizeof(uint32_t), t);
+      uint32_t tmp = htonl(deserialize<uint32_t>(mem, 0));
+      serialize(mem, 0, htonl(deserialize<uint32_t>(mem, 4)));
+      serialize(mem, 4, tmp);
       mem += 8;
       len -= 8;
     }
@@ -746,9 +743,9 @@ static void FlipMoveMem(byte *mem, uldat len, uldat chunk) {
   }
 #endif
   while (len >= chunk) {
-    for (i = 0; i < chunk / 2; i++) {
-      j = chunk - i - 1;
-      c = mem[i];
+    for (uldat i = 0; i < chunk / 2; i++) {
+      uldat j = chunk - i - 1;
+      byte c = mem[i];
       mem[i] = mem[j];
       mem[j] = c;
     }
