@@ -808,8 +808,8 @@ static uldat TryRead(tw_d TwD, TW_CONST timevalue *Timeout) {
   mayread = ioctl(Fd, FIONREAD, &sel) >= 0;
   if (!mayread || !sel)
     len = TW_SMALLBUFF;
-  else if (sel > TW_BIGBUFF * TW_BIGBUFF)
-    len = TW_BIGBUFF * TW_BIGBUFF;
+  else if (sel > TW_HUGEBUFF)
+    len = TW_HUGEBUFF;
   else
     len = sel;
 

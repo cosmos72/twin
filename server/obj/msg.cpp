@@ -15,64 +15,67 @@
 #include "obj/id.h" // AssignId()
 #include "obj/msg.h"
 
-#define Delta ((size_t) & (((msg)0)->Event))
+#define Delta
 
-msg s_msg::Create(udat type, udat eventlen) {
-  msg m;
+msg s_msg::Create(udat type, size_t eventlen) {
+  size_t headerlen = ((size_t) & (((msg)0)->Event));
 
   switch (type) {
   case msg_map:
-    eventlen += sizeof(event_map);
+    headerlen += sizeof(event_map);
     break;
   case msg_display:
-    eventlen += sizeof(event_display);
+    headerlen += sizeof(event_display);
     break;
   case msg_key:
   case msg_widget_key:
-    eventlen += sizeof(event_keyboard);
+    headerlen += sizeof(event_keyboard);
     break;
   case msg_widget_mouse:
   case msg_mouse:
-    eventlen += sizeof(event_mouse);
+    headerlen += sizeof(event_mouse);
     break;
   case msg_widget_change:
-    eventlen += sizeof(event_widget);
+    headerlen += sizeof(event_widget);
     break;
   case msg_widget_gadget:
-    eventlen += sizeof(event_gadget);
+    headerlen += sizeof(event_gadget);
     break;
   case msg_menu_row:
-    eventlen += sizeof(event_menu);
+    headerlen += sizeof(event_menu);
     break;
   case msg_selection:
-    eventlen += sizeof(event_selection);
+    headerlen += sizeof(event_selection);
     break;
   case msg_selection_notify:
-    eventlen += sizeof(event_selectionnotify) - sizeof(uldat);
+    headerlen += sizeof(event_selectionnotify) - sizeof(uldat);
     break;
   case msg_selection_request:
-    eventlen += sizeof(event_selectionrequest);
+    headerlen += sizeof(event_selectionrequest);
     break;
   case msg_control:
   case msg_user_control:
-    eventlen += sizeof(event_control) - sizeof(uldat);
+    headerlen += sizeof(event_control) - sizeof(uldat);
     break;
   case msg_user_clientmsg:
-    eventlen += sizeof(event_clientmsg) - sizeof(uldat);
+    headerlen += sizeof(event_clientmsg) - sizeof(uldat);
     break;
 
   case msg_selection_clear:
-    eventlen += sizeof(event_common);
+    headerlen += sizeof(event_common);
     break;
   default:
-    printk("twin: CreateMsg(): internal error: unknown Msg->Type 0x%04x(%d)\n", (int)type,
-           (int)type);
+    printk("twin: CreateMsg(): unknown message type 0x%04x(%d)\n", (int)type, (int)type);
     return NULL;
   }
-
-  if ((m = (msg)AllocMem0(eventlen + Delta))) {
+  if (eventlen > ((uldat)-1) - headerlen || eventlen > ((size_t)-1) - headerlen) {
+    printk("twin: CreateMsg(): event length too large: %lu\n", (unsigned long)eventlen);
+    return NULL;
+  }
+  msg m;
+  if ((m = (msg)AllocMem0(eventlen + headerlen))) {
     m->Fn = Fn_msg;
-    if (!m->Init(type, eventlen)) {
+    if (!m->Init(type, (uldat)eventlen)) {
       m->Delete();
       m = NULL;
     }
@@ -80,9 +83,7 @@ msg s_msg::Create(udat type, udat eventlen) {
   return m;
 }
 
-#undef Delta
-
-msg s_msg::Init(udat type, udat eventlen) {
+msg s_msg::Init(udat type, uldat eventlen) {
   if (AssignId((fn_obj)Fn, (obj)this)) {
     // this->Prev = this->Next = NULL;
     // this->MsgPort = NULL;

@@ -39,7 +39,8 @@ TW_DECL_MAGIC(sendmsg_magic);
 
 int main(int argc, char *argv[]) {
   char *DisplayName = NULL, *MsgPortName = NULL, *CodeName = NULL, *Data = NULL;
-  udat Type = TW_MSG_USER_CONTROL, Code = TW_MSG_CONTROL_OPEN, DataLen = 0;
+  uldat DataLen = 0;
+  udat Type = TW_MSG_USER_CONTROL, Code = TW_MSG_CONTROL_OPEN ;
   tmsgport MsgPort;
   tmsg Msg;
   uldat err;

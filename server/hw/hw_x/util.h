@@ -283,7 +283,7 @@ static void X11_SelectionNotify_up(Window win, Atom prop) {
   unsigned long i, nitems, bytes_after = TW_BIGBUFF;
   Atom actual_type;
   int actual_fmt;
-  byte *data = NULL;
+  byte *data;
   String buff;
   bool ok = true;
 
@@ -303,8 +303,16 @@ static void X11_SelectionNotify_up(Window win, Atom prop) {
   xReqCount--;
 
   do {
-    ok = XGetWindowProperty(xdisplay, win, prop, nread / 4, bytes_after / 4, False, AnyPropertyType,
-                            &actual_type, &actual_fmt, &nitems, &bytes_after, &data) == Success;
+    data = NULL;
+    if (bytes_after > TW_BIGBUFF) {
+      bytes_after = TW_BIGBUFF;
+    }
+    ok = XGetWindowProperty(xdisplay, win, prop, (nread + 3) / 4, (bytes_after + 3) / 4, False,
+                            AnyPropertyType, &actual_type, &actual_fmt, &nitems, &bytes_after,
+                            &data) == Success;
+    if (ok) {
+      nread += nitems * (actual_fmt / 8);
+    }
 
     if (actual_type == xUTF8_STRING) {
       /* X11 selection contains UTF-8 */
@@ -317,11 +325,11 @@ static void X11_SelectionNotify_up(Window win, Atom prop) {
     } else {
       ok = false;
     }
+    if (data) {
+      XFree(data);
+    }
   } while (ok && bytes_after > 0);
 
-  if (data) {
-    XFree(data);
-  }
   /* Signal the selection owner that we have successfully read the data. */
   XDeleteProperty(xdisplay, win, prop);
 

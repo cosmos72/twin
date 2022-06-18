@@ -31,6 +31,7 @@ enum {
 /* these must be #defines, they are stringified with # preprocessor macro */
 #define TW_SMALLBUFF 256
 #define TW_BIGBUFF 4096
+#define TW_HUGEBUFF 16777216
 
 /* return from signal macros */
 

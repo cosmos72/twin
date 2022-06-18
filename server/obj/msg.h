@@ -35,11 +35,11 @@ struct s_msg : public s_obj {
   msgport MsgPort;
   /* msg */
   udat Type; /* See note above */
-  udat Len;  /* length of Event */
+  uldat Len; /* length of Event */
   event_any Event;
 
-  static msg Create(udat type, udat eventlen);
-  msg Init(udat type, udat eventlen);
+  static msg Create(udat type, size_t eventlen);
+  msg Init(udat type, uldat eventlen);
 
   /* obj */
   uldat Magic() const {

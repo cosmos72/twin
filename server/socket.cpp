@@ -2387,8 +2387,8 @@ static void SocketIO(int fd, uldat slot) {
 
   if (ioctl(Fd, FIONREAD, &tot) != 0 || tot <= 0)
     tot = TW_SMALLBUFF;
-  else if (tot > TW_BIGBUFF * TW_BIGBUFF)
-    tot = TW_BIGBUFF * TW_BIGBUFF;
+  else if (tot > TW_HUGEBUFF)
+    tot = TW_HUGEBUFF;
 
   if (!(t = RemoteReadGrowQueue(Slot, tot)))
     return;
