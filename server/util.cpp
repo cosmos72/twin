@@ -367,8 +367,7 @@ private:
 };
 
 bool SetSelectionFromWindow(window w) {
-  ldat y;
-  uldat slen, i, spaces = 0;
+  ldat y, slen, i;
   bool ok = true, w_useC = W_USE(w, USECONTENTS);
 
   if (!(w->State & WINDOW_DO_SEL)) {
@@ -419,7 +418,7 @@ bool SetSelectionFromWindow(window w) {
       w->XendSel = w->WLogic - 1;
     }
 
-    slen = w->WLogic;
+    slen = Max2(w->WLogic, 0);
     cells = w->USE.C.Contents + (w->YstSel + w->USE.C.HSplit) * slen;
     while (cells >= w->USE.C.TtyData->Split) {
       cells -= w->USE.C.TtyData->Split - w->USE.C.Contents;
@@ -434,7 +433,7 @@ bool SetSelectionFromWindow(window w) {
       }
       cells += w->XstSel;
       ok = SelectionStore(_SEL_MAGIC, NULL, Chars());
-      for (i = slen; ok && i--; cells++) {
+      for (i = slen; ok && i-- > 0; cells++) {
         ok = appender.rune(TRUNE(*cells));
       }
       if (!ok) {
@@ -450,7 +449,7 @@ bool SetSelectionFromWindow(window w) {
         if (cells >= w->USE.C.TtyData->Split) {
           cells -= w->USE.C.TtyData->Split - w->USE.C.Contents;
         }
-        for (i = slen; ok && i--; cells++) {
+        for (i = slen; ok && i-- > 0; cells++) {
           ok = appender.rune(TRUNE(*cells));
         }
       }
@@ -463,7 +462,7 @@ bool SetSelectionFromWindow(window w) {
           cells -= w->USE.C.TtyData->Split - w->USE.C.Contents;
         }
         appender.nl();
-        for (i = slen = w->XendSel + 1; ok && i--; cells++) {
+        for (i = slen = w->XendSel + 1; ok && i-- > 0; cells++) {
           ok = appender.rune(TRUNE(*cells));
         }
       }
@@ -488,17 +487,20 @@ bool SetSelectionFromWindow(window w) {
   y = w->YstSel;
   r = w->FindRow(y);
   if (r && r->Text) {
+    uldat xstSel = Min2u(r->Len, (uldat)w->XstSel);
     if (y < w->YendSel) {
-      slen = r->Len - w->XstSel;
+      slen = r->Len - xstSel;
     } else {
-      slen = Min2(r->Len, (uldat)w->XendSel + 1) - Min2(r->Len, (uldat)w->XstSel);
+      slen = Min2u(r->Len, (uldat)w->XendSel + 1) - xstSel;
     }
 
-    const trune *runes = r->Text + Min2(r->Len, (uldat)w->XstSel);
-    ok = ok && SelectionAppendRunes(TRunes(runes, slen));
+    if (slen > 0) {
+      const trune *runes = r->Text + Min2(r->Len, xstSel);
+      ok = ok && SelectionAppendRunes(TRunes(runes, slen));
+    }
   }
 
-  if (y < w->YendSel || !r || !r->Text || r->Len <= (uldat)w->XendSel) {
+  if (y < w->YendSel || !r || !r->Text || (ldat)r->Len <= w->XendSel) {
     ok = ok && _SelAppendNL();
   }
 
@@ -510,10 +512,12 @@ bool SetSelectionFromWindow(window w) {
   }
   if (w->YendSel > w->YstSel) {
     if (w->XendSel >= 0 && (r = w->FindRow(w->YendSel)) && r->Text) {
-      slen = Min2(r->Len, (uldat)w->XendSel + 1);
-      ok = ok && SelectionAppendRunes(TRunes(r->Text, slen));
+      slen = Min2((ldat)r->Len, w->XendSel + 1);
+      if (slen > 0) {
+        ok = ok && SelectionAppendRunes(TRunes(r->Text, slen));
+      }
     }
-    if (!r || !r->Text || r->Len <= (uldat)w->XendSel) {
+    if (!r || !r->Text || (ldat)r->Len <= w->XendSel) {
       ok = ok && _SelAppendNL();
     }
   }
