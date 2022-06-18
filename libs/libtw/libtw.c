@@ -723,10 +723,12 @@ static byte Flush(tw_d TwD, byte Wait) {
  * if not all data can be immediately sent
  */
 byte Tw_Flush(tw_d TwD) {
-  byte b;
-  LOCK;
-  b = Flush(TwD, ttrue);
-  UNLK;
+  byte b = tfalse;
+  if (TwD) {
+    LOCK;
+    b = Flush(TwD, ttrue);
+    UNLK;
+  }
   return b;
 }
 
@@ -735,10 +737,12 @@ byte Tw_Flush(tw_d TwD) {
  * if not all data can be immediately sent, unsent data is kept in buffer
  */
 byte Tw_TimidFlush(tw_d TwD) {
-  byte b;
-  LOCK;
-  b = Flush(TwD, tfalse);
-  UNLK;
+  byte b = tfalse;
+  if (TwD) {
+    LOCK;
+    b = Flush(TwD, tfalse);
+    UNLK;
+  }
   return b;
 }
 
@@ -753,6 +757,10 @@ static uldat TryRead(tw_d TwD, TW_CONST timevalue *Timeout) {
   int sel, fd;
   byte *t, mayread;
   byte Q, timedout = tfalse;
+
+  if (!TwD) {
+    return (uldat)-1;
+  }
 
 #ifdef CONF_SOCKET_GZ
   if (GzipFlag)
@@ -935,13 +943,15 @@ uldat Tw_LibraryVersion(tw_d TwD) {
 }
 
 /**
- * returns server protocol version
+ * returns server protocol version, or (uldat)0 on error
  */
 uldat Tw_ServerVersion(tw_d TwD) {
-  uldat l;
-  LOCK;
-  l = TW_VER_BUILD(ServProtocol[0], ServProtocol[1], ServProtocol[2]);
-  UNLK;
+  uldat l = 0;
+  if (TwD) {
+    LOCK;
+    l = TW_VER_BUILD(ServProtocol[0], ServProtocol[1], ServProtocol[2]);
+    UNLK;
+  }
   return l;
 }
 
@@ -1377,6 +1387,10 @@ TW_CONST char *Tw_AttachGetReply(tw_d TwD, uldat *len) {
   byte wasGzipFlag;
 #endif
 
+  if (!TwD) {
+    return NULL;
+  }
+
   LOCK;
 
 #ifdef CONF_SOCKET_GZ
@@ -1419,6 +1433,9 @@ TW_CONST char *Tw_AttachGetReply(tw_d TwD, uldat *len) {
  * tells the server to confirm the Tw_Attach() previously issued
  */
 void Tw_AttachConfirm(tw_d TwD) {
+  if (!TwD) {
+    return;
+  }
   LOCK;
   if (Fd != TW_NOFD) {
     write(Fd, "\1", 1);
@@ -1538,10 +1555,12 @@ TW_ATTR_FN_CONST TW_CONST char *Tw_StrErrorDetail(TW_CONST tw_d TwD, uldat E, ul
  * returns the file descriptor used by the connection
  */
 int Tw_ConnectionFd(tw_d TwD) {
-  int f;
-  LOCK;
-  f = Fd;
-  UNLK;
+  int f = -1;
+  if (TwD) {
+    LOCK;
+    f = Fd;
+    UNLK;
+  }
   return f;
 }
 
@@ -1608,10 +1627,12 @@ static tmsg ReadMsg(tw_d TwD, byte Wait, byte deQueue) {
  */
 tmsg Tw_PendingMsg(tw_d TwD) {
   tmsg Msg;
-  uldat len;
-  LOCK;
-  Msg = (tmsg)GetQueue(TwD, QMSG, &len);
-  UNLK;
+  uldat len = 0;
+  if (TwD) {
+    LOCK;
+    Msg = (tmsg)GetQueue(TwD, QMSG, &len);
+    UNLK;
+  }
   if (!len)
     Msg = (tmsg)0;
   return Msg;
@@ -1626,10 +1647,12 @@ tmsg Tw_PendingMsg(tw_d TwD) {
  * returns NULL
  */
 tmsg Tw_PeekMsg(tw_d TwD) {
-  tmsg Msg;
-  LOCK;
-  Msg = ReadMsg(TwD, tfalse, tfalse);
-  UNLK;
+  tmsg Msg = (tmsg)0;
+  if (TwD) {
+    LOCK;
+    Msg = ReadMsg(TwD, tfalse, tfalse);
+    UNLK;
+  }
   return Msg;
 }
 
@@ -1642,10 +1665,12 @@ tmsg Tw_PeekMsg(tw_d TwD) {
  * in any case, the tmsg returned is removed from the queue.
  */
 tmsg Tw_ReadMsg(tw_d TwD, byte Wait) {
-  tmsg Msg;
-  LOCK;
-  Msg = ReadMsg(TwD, Wait, ttrue);
-  UNLK;
+  tmsg Msg = (tmsg)0;
+  if (TwD) {
+    LOCK;
+    Msg = ReadMsg(TwD, Wait, ttrue);
+    UNLK;
+  }
   return Msg;
 }
 
@@ -1656,12 +1681,13 @@ tmsg Tw_ReadMsg(tw_d TwD, byte Wait) {
  */
 tmsg Tw_CloneReadMsg(tw_d TwD, byte Wait) {
   tmsg Msg, ClonedMsg = (tmsg)0;
-  LOCK;
-  if ((Msg = ReadMsg(TwD, Wait, ttrue)) && (ClonedMsg = (tmsg)Tw_AllocMem(Msg->Len))) {
-
-    Tw_CopyMem(Msg, ClonedMsg, Msg->Len);
+  if (TwD) {
+    LOCK;
+    if ((Msg = ReadMsg(TwD, Wait, ttrue)) && (ClonedMsg = (tmsg)Tw_AllocMem(Msg->Len))) {
+      Tw_CopyMem(Msg, ClonedMsg, Msg->Len);
+    }
+    UNLK;
   }
-  UNLK;
   return ClonedMsg;
 }
 
@@ -1754,6 +1780,9 @@ static void DeleteAllListeners(tlistener L) {
  * if you call Tw_MainLoop() or Tw_DispatchMsg()
  */
 void Tw_InsertListener(tw_d TwD, tlistener L) {
+  if (!TwD) {
+    return;
+  }
   LOCK;
   InsertListener(TwD, L);
   UNLK;
@@ -1763,6 +1792,9 @@ void Tw_InsertListener(tw_d TwD, tlistener L) {
  * removes an event listener from connection
  */
 void Tw_RemoveListener(tw_d TwD, tlistener L) {
+  if (!TwD) {
+    return;
+  }
   LOCK;
   RemoveListener(TwD, L);
   UNLK;
@@ -1772,6 +1804,9 @@ void Tw_RemoveListener(tw_d TwD, tlistener L) {
  * deletes an event listener
  */
 void Tw_DeleteListener(tw_d TwD, tlistener L) {
+  if (!TwD) {
+    return;
+  }
   LOCK;
   if (L->TwD == TwD) {
     RemoveListener(TwD, L);
@@ -1786,6 +1821,9 @@ void Tw_DeleteListener(tw_d TwD, tlistener L) {
  * sets the fallback event listener, to be called when no other listeners match
  */
 void Tw_SetDefaultListener(tw_d TwD, tfn_default_listener Listener, void *Arg) {
+  if (!TwD) {
+    return;
+  }
   LOCK;
   TwD->DefaultListener = Listener;
   TwD->DefaultArg = Arg;
@@ -1794,8 +1832,8 @@ void Tw_SetDefaultListener(tw_d TwD, tfn_default_listener Listener, void *Arg) {
 
 static tlistener CreateListener(tw_d TwD, udat Type, tevent_any E, tfn_listener Listener,
                                 void *Arg) {
-  tlistener L;
-  if ((L = (tlistener)Tw_AllocMem(sizeof(struct s_tlistener)))) {
+  tlistener L = (tlistener)0;
+  if (TwD && (L = (tlistener)Tw_AllocMem(sizeof(struct s_tlistener)))) {
     L->AVLParent = NULL;
     L->Type = Type;
     L->Event = E;
@@ -1814,8 +1852,8 @@ static tlistener CreateListener(tw_d TwD, udat Type, tevent_any E, tfn_listener 
  * creates an event listener; you must manually Tw_InsertListener() it
  */
 tlistener Tw_CreateListener(tw_d TwD, udat Type, tevent_any E, tfn_listener Listener, void *Arg) {
-  tlistener L;
-  if ((L = (tlistener)Tw_AllocMem(sizeof(struct s_tlistener)))) {
+  tlistener L = (tlistener)0;
+  if (TwD && (L = (tlistener)Tw_AllocMem(sizeof(struct s_tlistener)))) {
     L->AVLParent = NULL;
     L->Type = Type;
     L->Left = L->Right = NULL;
@@ -1832,6 +1870,9 @@ tlistener Tw_CreateListener(tw_d TwD, udat Type, tevent_any E, tfn_listener List
  * the new Type and event
  */
 void Tw_SetTEListener(tw_d TwD, tlistener L, udat Type, tevent_any E) {
+  if (!TwD || !L) {
+    return;
+  }
   LOCK;
   if (L->TwD && L->TwD == TwD) {
     RemoveListener(TwD, L);
@@ -1875,10 +1916,9 @@ static tevent_any CreateMenuEvent(twidget W, tmenu Menu, udat Code) {
 static tlistener AddListener(tw_d TwD, udat Type, twidget W, udat Code, udat ShiftFlags,
                              tfn_listener Listener, void *Arg) {
 
-  tlistener L;
   tevent_any E;
-
-  if ((E = CreateEvent(W, Code, ShiftFlags))) {
+  if (TwD && (E = CreateEvent(W, Code, ShiftFlags))) {
+    tlistener L;
     if ((L = CreateListener(TwD, Type, E, Listener, Arg)))
       return L;
     Tw_FreeMem(E);
@@ -1888,11 +1928,9 @@ static tlistener AddListener(tw_d TwD, udat Type, twidget W, udat Code, udat Shi
 
 static tlistener AddMenuListener(tw_d TwD, udat Type, twidget W, tmenu Menu, udat Code,
                                  tfn_listener Listener, void *Arg) {
-
-  tlistener L;
   tevent_any E;
-
-  if ((E = CreateMenuEvent(W, Menu, Code))) {
+  if (TwD && (E = CreateMenuEvent(W, Menu, Code))) {
+    tlistener L;
     if ((L = CreateListener(TwD, Type, E, Listener, Arg)))
       return L;
     Tw_FreeMem(E);
@@ -1989,7 +2027,9 @@ static byte DispatchMsg(tdisplay TwD, tmsg Msg, byte mustClone) {
   void *Arg;
   tmsg ClonedMsg;
 
-  if ((L = FindListener(TwD, Msg))) {
+  if (!TwD) {
+    return tfalse;
+  } else if ((L = FindListener(TwD, Msg))) {
     Listener = L->Listener;
     Arg = L->Arg;
     DefaultListener = NULL;
@@ -2032,10 +2072,12 @@ static byte DispatchMsg(tdisplay TwD, tmsg Msg, byte mustClone) {
  * calls the appropriate event listener for given tmsg
  */
 byte Tw_DispatchMsg(tdisplay TwD, tmsg Msg) {
-  byte ret;
-  LOCK;
-  ret = DispatchMsg(TwD, Msg, tfalse);
-  UNLK;
+  byte ret = tfalse;
+  if (TwD) {
+    LOCK;
+    ret = DispatchMsg(TwD, Msg, tfalse);
+    UNLK;
+  }
   return ret;
 }
 
@@ -2044,20 +2086,23 @@ byte Tw_DispatchMsg(tdisplay TwD, tmsg Msg) {
  * the appropriate event listener for them, until a fatal error occurs
  */
 byte Tw_MainLoop(tw_d TwD) {
-  byte ret;
+  byte ret = tfalse;
   tmsg Msg;
-
-  LOCK;
-  Errno = 0;
-  while (!TwD->ExitMainLoop && (Msg = ReadMsg(TwD, ttrue, ttrue)))
-    (void)DispatchMsg(TwD, Msg, ttrue);
-  ret = TwD->ExitMainLoop || Errno == 0;
-  UNLK;
+  if (TwD) {
+    LOCK;
+    Errno = 0;
+    while (!TwD->ExitMainLoop && (Msg = ReadMsg(TwD, ttrue, ttrue)))
+      (void)DispatchMsg(TwD, Msg, ttrue);
+    ret = TwD->ExitMainLoop || Errno == 0;
+    UNLK;
+  }
   return ret;
 }
 
 void Tw_ExitMainLoop(tw_d TwD) {
-  TwD->ExitMainLoop = ttrue;
+  if (TwD) {
+    TwD->ExitMainLoop = ttrue;
+  }
 }
 
 static void FailedCall(tw_d TwD, uldat err, uldat order) {
@@ -2102,17 +2147,20 @@ static tany _Tw_EncodeCall(byte flags, uldat o, tw_d TwD, ...) {
   struct s_tsfield a[TW_MAX_ARGS_N];
   tsfield b;
   va_list va;
-  DECL_MyReply uldat space, My;
+  DECL_MyReply uldat space, myId;
   udat N;
 
+  if (!TwD) {
+    return (tany)0;
+  }
   a->TWS_field_scalar = TW_NOID;
 
   flags ^= (ENCODE_FL_NOLOCK | ENCODE_FL_VOID);
 
   if (flags & ENCODE_FL_LOCK)
     LOCK;
-  if (Fd != TW_NOFD && (My = id_Tw[o]) != TW_NOID &&
-      (My != TW_BADID || (My = FindFunctionId(TwD, o)) != TW_NOID)) {
+  if (Fd != TW_NOFD && (myId = id_Tw[o]) != TW_NOID &&
+      (myId != TW_BADID || (myId = FindFunctionId(TwD, o)) != TW_NOID)) {
 
     va_start(va, (void *)TwD);
     N = EncodeArgs(o, &space, va, a);
@@ -2124,9 +2172,9 @@ static tany _Tw_EncodeCall(byte flags, uldat o, tw_d TwD, ...) {
         for (b = a + 1; N; b++, N--)
           s = PushArg(s, b);
 
-        Send(TwD, (My = NextSerial(TwD)), id_Tw[o]);
+        Send(TwD, (myId = NextSerial(TwD)), id_Tw[o]);
         if (flags & ENCODE_FL_RETURN) {
-          if ((MyReply = (void *)Wait4Reply(TwD, My)) && (INIT_MyReply MyCode == OK_MAGIC)) {
+          if ((MyReply = (void *)Wait4Reply(TwD, myId)) && (INIT_MyReply MyCode == OK_MAGIC)) {
             if (MyLen == 2 * sizeof(uldat) + a[0].label)
               DecodeReply((byte *)MyData, a);
             else
@@ -2165,10 +2213,12 @@ static byte Sync(tw_d TwD) {
  * sends all buffered data to connection and waits for server to process it
  */
 byte Tw_Sync(tw_d TwD) {
-  byte ok;
-  LOCK;
-  ok = Sync(TwD);
-  UNLK;
+  byte ok = tfalse;
+  if (TwD) {
+    LOCK;
+    ok = Sync(TwD);
+    UNLK;
+  }
   return ok;
 }
 
@@ -2179,20 +2229,22 @@ byte Tw_Sync(tw_d TwD) {
  */
 uldat Tw_FindFunction(tw_d TwD, byte Len, TW_CONST char *Name, byte FormatLen,
                       TW_CONST char *Format) {
-  uldat MyId;
-  LOCK;
-  MyId = _Tw_FindFunction(TwD, Len, Name, FormatLen, Format);
-  UNLK;
-  return MyId;
+  uldat myId = 0;
+  if (TwD) {
+    LOCK;
+    myId = _Tw_FindFunction(TwD, Len, Name, FormatLen, Format);
+    UNLK;
+  }
+  return myId;
 }
 
 static uldat FindFunctionId(tw_d TwD, uldat order) {
-  uldat My;
-  if ((My = id_Tw[order]) == TW_BADID) {
-    My = id_Tw[order] = _Tw_FindFunction(TwD, Functions[order].len, 3 + Functions[order].name,
+  uldat myId;
+  if ((myId = id_Tw[order]) == TW_BADID) {
+    myId = id_Tw[order] = _Tw_FindFunction(TwD, Functions[order].len, 3 + Functions[order].name,
                                          Functions[order].formatlen, Functions[order].format + 1);
   }
-  return Fd != TW_NOFD ? My : TW_NOID;
+  return Fd != TW_NOFD ? myId : TW_NOID;
 }
 
 /* convert tcell to protocol <= 4.7.x i.e. {unicode64k_lo, color, unicode64k_hi, extra} */
@@ -2271,17 +2323,20 @@ void Tw_SetFillWidget(tw_d TwD, twidget a1, tcell a2) {
  */
 void Tw_Draw2Widget(tw_d TwD, twidget a1, dat a2, dat a3, dat a4, dat a5, dat pitch,
                     TW_CONST char *a6, TW_CONST trune *a7, TW_CONST tcell *a8) {
-  uldat len6, len7, len8, My;
+  uldat len6, len7, len8, myId;
+  if (!TwD) {
+    return;
+  }
   LOCK;
-  if (Fd != TW_NOFD && (My = id_Tw[order_DrawWidget]) != TW_NOID &&
-      (My != TW_BADID || (My = FindFunctionId(TwD, order_DrawWidget)) != TW_NOID)) {
+  if (Fd != TW_NOFD && (myId = id_Tw[order_DrawWidget]) != TW_NOID &&
+      (myId != TW_BADID || (myId = FindFunctionId(TwD, order_DrawWidget)) != TW_NOID)) {
 
     if (InitRS(TwD)) {
-      My = (0 + sizeof(uldat) + sizeof(dat) + sizeof(dat) + sizeof(dat) + sizeof(dat) +
+      myId = (0 + sizeof(uldat) + sizeof(dat) + sizeof(dat) + sizeof(dat) + sizeof(dat) +
             (len6 = a6 ? (uldat)a2 * a3 * sizeof(char) : 0, sizeof(uldat) + len6) +
             (len7 = a7 ? (uldat)a2 * a3 * sizeof(trune) : 0, sizeof(uldat) + len7) +
             (len8 = a8 ? (uldat)a2 * a3 * sizeof(tcell) : 0, sizeof(uldat) + len8));
-      if (WQLeft(My)) {
+      if (WQLeft(myId)) {
         Push(s, uldat, a1);
         Push(s, dat, a2);
         Push(s, dat, a3);
@@ -2305,7 +2360,7 @@ void Tw_Draw2Widget(tw_d TwD, twidget a1, dat a2, dat a3, dat a4, dat a5, dat pi
           a8 += pitch;
           len8 -= (uldat)a2 * sizeof(tcell);
         }
-        Send(TwD, (My = NextSerial(TwD)), id_Tw[order_DrawWidget]);
+        Send(TwD, (myId = NextSerial(TwD)), id_Tw[order_DrawWidget]);
         UNLK;
         return;
       }
@@ -2747,21 +2802,24 @@ static tslist StatTSL(tw_d TwD, udat flags, byte *data, byte *end) {
 }
 
 static tslist StatA(tw_d TwD, tobj Id, udat flags, udat hN, TW_CONST udat *h, tslist f) {
-  tslist a0;
-  DECL_MyReply uldat My;
+  tslist a0 = (tslist)TW_NOID;
+  DECL_MyReply uldat myId;
+  if (!TwD) {
+    return a0;
+  }
   LOCK;
-  if (Fd != TW_NOFD && (My = id_Tw[order_StatObj]) != TW_NOID &&
-      (My != TW_BADID || (My = FindFunctionId(TwD, order_StatObj)) != TW_NOID)) {
+  if (Fd != TW_NOFD && (myId = id_Tw[order_StatObj]) != TW_NOID &&
+      (myId != TW_BADID || (myId = FindFunctionId(TwD, order_StatObj)) != TW_NOID)) {
 
     if (InitRS(TwD)) {
-      My = (sizeof(tobj) + sizeof(udat) + hN * sizeof(udat));
-      if (WQLeft(My)) {
+      myId = (sizeof(tobj) + sizeof(udat) + hN * sizeof(udat));
+      if (WQLeft(myId)) {
         Push(s, tobj, Id);
         Push(s, udat, hN);
         PushV(s, hN * sizeof(udat), h);
 
-        Send(TwD, (My = NextSerial(TwD)), id_Tw[order_StatObj]);
-        if ((MyReply = (void *)Wait4Reply(TwD, My)) && (INIT_MyReply MyCode == OK_MAGIC)) {
+        Send(TwD, (myId = NextSerial(TwD)), id_Tw[order_StatObj]);
+        if ((MyReply = (void *)Wait4Reply(TwD, myId)) && (INIT_MyReply MyCode == OK_MAGIC)) {
           if (flags & TWS_SCALAR)
             a0 = StatScalar(f, (byte *)MyData, (byte *)MyReply + MyLen + sizeof(uldat));
           else
