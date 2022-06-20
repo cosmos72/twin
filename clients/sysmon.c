@@ -8,6 +8,7 @@
  */
 
 #include <stdio.h>
+#include <errno.h>
 
 #include <Tw/Tw.h>
 #include <Tw/Twerrno.h>
@@ -25,20 +26,21 @@
 #include <fcntl.h>
 #endif
 
-tmsgport SysMon_MsgPort;
-tmenu SysMon_Menu;
-twindow SysMon_Win;
+static tmsgport SysMon_MsgPort;
+static tmenu SysMon_Menu;
+static twindow SysMon_Win;
 
-byte numeric = 1;
+static byte numeric = 1;
 
-char buf[TW_BIGBUFF];
+static char buf[TW_BIGBUFF + 1];
 
 TW_DECL_MAGIC(sysmon_magic);
 
-byte InitSysMon(int argc, char **argv) {
+static byte InitSysMon(int argc, char **argv) {
   char *name;
   ldat len;
   byte border = 1;
+  byte ok;
 
 #if defined(TW_HAVE_SYS_UTSNAME_H) && defined(TW_HAVE_UNAME)
   struct utsname uts;
@@ -49,9 +51,9 @@ byte InitSysMon(int argc, char **argv) {
     len += 8;
   } else
 #endif
-      if ((name = strdup("System Monitor")))
+      if ((name = strdup("System Monitor"))) {
     len = 14;
-  else
+  } else
     return tfalse;
 
   name[len] = '\0';
@@ -67,7 +69,7 @@ byte InitSysMon(int argc, char **argv) {
       border = 0;
   }
 
-  return TwCheckMagic(sysmon_magic) && TwOpen(NULL) &&
+  ok = TwCheckMagic(sysmon_magic) && TwOpen(NULL) &&
 
          (SysMon_MsgPort = TwCreateMsgPort(8, "twsysmon")) &&
          (SysMon_Menu = TwCreateMenu(TCOL(tblack, twhite), TCOL(tblack, tgreen),
@@ -86,11 +88,14 @@ byte InitSysMon(int argc, char **argv) {
                       (TW_CONST tcolor *)"pppppppppppppppp"),
           TwWriteCharsetWindow(SysMon_Win, 26, "CPU \nDISK\nMEM \nSWAP\nUPTIME"),
           TwMapWindow(SysMon_Win, TwFirstScreen()), ttrue);
+
+  free(name);
+  return ok;
 }
 
 #define WIDTH 40
 
-uldat HBar(tcolor Col, uldat len, uldat scale, uldat frac) {
+static uldat HBar(tcolor Col, uldat len, uldat scale, uldat frac) {
   static tcolor half;
   char *s = buf;
 
@@ -124,7 +129,7 @@ void PrintPercent(tcolor Col, uldat percent) {
   TwWriteCharsetWindow(SysMon_Win, 5, buf);
 }
 
-void PrintAbsoluteK(tcolor Col, unsigned long nK) {
+static void PrintAbsoluteK(tcolor Col, unsigned long nK) {
   unsigned long G = nK >> 20;
   unsigned long M = (nK >> 10) & 0x3FF;
   unsigned long k = nK & 0x3FF;
@@ -149,8 +154,26 @@ void PrintAbsoluteK(tcolor Col, unsigned long nK) {
   TwWriteCharsetWindow(SysMon_Win, 5, buf);
 }
 
-void Update(void) {
-  static int Fd;
+static uldat FullRead(int fd, char* dst, uldat maxlen) {
+  ssize_t got;
+  uldat left = maxlen;
+  while (left) {
+    while ((got = read(fd, dst, left)) == -1 && errno == EINTR) {
+    }
+    if (got <= 0) {
+      break;
+    } else if (got > (ssize_t)maxlen) {
+      got = maxlen;
+    }
+    left -= got;
+    dst += got;
+  }
+  return maxlen - left;
+}
+
+
+static void Update(void) {
+  static int fd;
   static unsigned long CpuUser[2], CpuNice[2], CpuSystem[2], CpuIdle[2], CpuWait[2], CpuHardInt[2],
       CpuSoftInt[2], CpuTotal;
   static unsigned long DiskR[2], DiskW[2], DiskMax;
@@ -160,11 +183,8 @@ void Update(void) {
   uldat len, tmp;
   char *s, *e, *e2, *e3;
 
-  if ((Fd = open("/proc/stat", O_RDONLY)) != TW_NOFD) {
-    s = buf;
-    len = 0;
-    while ((tmp = read(Fd, s, TW_BIGBUFF - len)) > 0)
-      len += tmp, s += tmp;
+  if ((fd = open("/proc/stat", O_RDONLY)) != TW_NOFD) {
+    len = FullRead(fd, buf, sizeof(buf));
     buf[len] = '\0';
     if ((s = strstr(buf, "cpu "))) {
       CpuUser[i] = strtoul(s + 4, &e, 0) - CpuUser[!i];
@@ -207,16 +227,13 @@ void Update(void) {
       DiskW[i] -= DiskW[!i];
     }
 
-    close(Fd);
+    close(fd);
   }
 
-  if ((Fd = open("/proc/diskstats", O_RDONLY)) != TW_NOFD) {
+  if ((fd = open("/proc/diskstats", O_RDONLY)) != TW_NOFD) {
     /* linux kernel 2.6 disk stats: */
 
-    s = buf;
-    len = 0;
-    while ((tmp = read(Fd, s, TW_BIGBUFF - len)) > 0)
-      len += tmp, s += tmp;
+    len = FullRead(fd, buf, sizeof(buf));
     buf[len] = '\0';
     s = buf;
 
@@ -250,7 +267,7 @@ void Update(void) {
     DiskR[i] -= DiskR[!i];
     DiskW[i] -= DiskW[!i];
 
-    close(Fd);
+    close(fd);
   }
 
   if (DiskMax) {
@@ -264,11 +281,8 @@ void Update(void) {
     DiskMax = 1;
   }
 
-  if ((Fd = open("/proc/meminfo", O_RDONLY)) != TW_NOFD) {
-    s = buf;
-    len = 0;
-    while ((tmp = read(Fd, s, TW_BIGBUFF - len)) > 0)
-      len += tmp, s += tmp;
+  if ((fd = open("/proc/meminfo", O_RDONLY)) != TW_NOFD) {
+    len = FullRead(fd, buf, sizeof(buf));
     buf[len] = '\0';
     if ((s = strstr(buf, "MemTotal:")))
       MemTotal = strtoul(s + 9, &e, 0), s = e;
@@ -298,7 +312,7 @@ void Update(void) {
       SwapFree = strtoul(s + 9, &e, 0), s = e;
     SwapUsed = SwapTotal - SwapFree;
 
-    close(Fd);
+    close(fd);
   }
 
   if (CpuTotal) {
@@ -347,15 +361,12 @@ void Update(void) {
    * Print to SysMon Window
    * added by Mohammad Bahathir Hashim <bakhtiar@softhome.net>
    */
-  if ((Fd = open("/proc/uptime", O_RDONLY)) != TW_NOFD) {
+  if ((fd = open("/proc/uptime", O_RDONLY)) != TW_NOFD) {
 
     unsigned long updays;
     int uphours, upminutes;
 
-    s = buf;
-    len = 0;
-    while ((tmp = read(Fd, s, TW_BIGBUFF - len)) > 0)
-      len += tmp, s += tmp;
+    len = FullRead(fd, buf, sizeof(buf));
     buf[len] = '\0';
 
     updays = strtoul(buf, NULL, 0);
@@ -369,7 +380,7 @@ void Update(void) {
     TwGotoXYWindow(SysMon_Win, 8, 4);
     TwWriteCharsetWindow(SysMon_Win, strlen(buf), buf);
 
-    close(Fd);
+    close(fd);
   }
 
   CpuUser[i] += CpuUser[!i];
@@ -386,16 +397,16 @@ void Update(void) {
   i = !i;
 }
 
-#define Quit()                                                                                     \
-  do {                                                                                             \
-    if ((err = TwErrno)) {                                                                         \
-      printf("%s: libtw error: %s%s\n", argv[0], TwStrError(err),                                  \
-             TwStrErrorDetail(err, TwErrnoDetail));                                                \
-      TwClose();                                                                                   \
-      exit(1);                                                                                     \
-    }                                                                                              \
-    exit(0);                                                                                       \
-  } while (0)
+static void Quit(const char *argv0) {
+  uldat err;
+  if ((err = TwErrno)) {
+    printf("%s: libtw error: %s%s\n", argv0, TwStrError(err),
+           TwStrErrorDetail(err, TwErrnoDetail));
+    TwClose();
+    exit(1);
+  }
+  exit(0);
+}
 
 int main(int argc, char *argv[]) {
   tmsg Msg;
@@ -403,13 +414,13 @@ int main(int argc, char *argv[]) {
   struct timeval p = {0, 0};
   fd_set readfds;
   int fd;
-  uldat err;
 
   if (!InitSysMon(argc, argv))
-    Quit();
+    Quit(argv[0]);
 
   fd = TwConnectionFd();
   FD_ZERO(&readfds);
+
 
   for (;;) {
     if (p.tv_sec == 0 && p.tv_usec < 10000) {
@@ -426,7 +437,7 @@ int main(int argc, char *argv[]) {
         if (Msg->Type == TW_MSG_WIDGET_GADGET) {
           if (Event->EventGadget.Code == 0)
             /* 0 == Close Code */
-            Quit();
+            Quit(argv[0]);
         }
       }
     }
@@ -438,5 +449,5 @@ int main(int argc, char *argv[]) {
     FD_SET(fd, &readfds);
     select(fd + 1, &readfds, NULL, NULL, &p);
   }
-  Quit();
+  Quit(argv[0]);
 }
