@@ -154,8 +154,10 @@ static void PrintAbsoluteK(tcolor Col, unsigned long nK) {
   TwWriteCharsetWindow(SysMon_Win, 5, buf);
 }
 
-static uldat FullRead(int fd, char* dst, uldat maxlen) {
+// read at most maxlenPlus1-1 bytes, and append '\0'
+static uldat FullReadZ(int fd, char* dst, uldat maxlenPlus1) {
   ssize_t got;
+  const uldat maxlen = maxlenPlus1 - 1;
   uldat left = maxlen;
   while (left) {
     while ((got = read(fd, dst, left)) == -1 && errno == EINTR) {
@@ -168,63 +170,81 @@ static uldat FullRead(int fd, char* dst, uldat maxlen) {
     left -= got;
     dst += got;
   }
+  *dst = '\0';
   return maxlen - left;
 }
 
+typedef struct s_cpu_usage {
+   unsigned long User, Nice, System, Idle, Wait, HardInt, SoftInt, Total;
+} cpu_usage;
 
-static void Update(void) {
-  static int fd;
-  static unsigned long CpuUser[2], CpuNice[2], CpuSystem[2], CpuIdle[2], CpuWait[2], CpuHardInt[2],
-      CpuSoftInt[2], CpuTotal;
-  static unsigned long DiskR[2], DiskW[2], DiskMax;
-  static unsigned long MemUsed, MemShared, MemBuff, MemCache, MemFree, MemTotal;
-  static unsigned long SwapUsed, SwapFree, SwapTotal;
-  static byte i;
-  uldat len, tmp;
+typedef struct s_mem_usage {
+  unsigned long Used, Shared, Buff, Cache, Free, Total;
+} mem_usage;
+
+typedef struct s_swap_usage {
+  unsigned long Used, Free, Total;
+} swap_usage;
+
+typedef struct s_disk_usage {
+  unsigned long Read, Write, Max;
+} disk_usage;
+
+typedef struct s_usage {
+  cpu_usage Cpu;
+  mem_usage Mem;
+  swap_usage Swap;
+  disk_usage Disk;
+} usage;
+
+static byte Update(byte i, usage Usage[2]) {
+  usage *U = &Usage[i];
+  usage *V = &Usage[!i];
   char *s, *e, *e2, *e3;
+  uldat len, tmp;
+  int fd;
 
   if ((fd = open("/proc/stat", O_RDONLY)) != TW_NOFD) {
-    len = FullRead(fd, buf, sizeof(buf));
-    buf[len] = '\0';
+    len = FullReadZ(fd, buf, sizeof(buf));
     if ((s = strstr(buf, "cpu "))) {
-      CpuUser[i] = strtoul(s + 4, &e, 0) - CpuUser[!i];
-      CpuNice[i] = strtoul(e, &s, 0) - CpuNice[!i];
-      CpuSystem[i] = strtoul(s, &e, 0) - CpuSystem[!i];
-      CpuIdle[i] = strtoul(e, &s, 0) - CpuIdle[!i];
+      U->Cpu.User = strtoul(s + 4, &e, 0) - V->Cpu.User;
+      U->Cpu.Nice = strtoul(e, &s, 0) - V->Cpu.Nice;
+      U->Cpu.System = strtoul(s, &e, 0) - V->Cpu.System;
+      U->Cpu.Idle = strtoul(e, &s, 0) - V->Cpu.Idle;
       /* linux kernel 2.6 cpu stats: */
-      CpuWait[i] = strtoul(s, &e, 0) - CpuWait[!i];
-      CpuHardInt[i] = strtoul(e, &s, 0) - CpuHardInt[!i];
-      CpuSoftInt[i] = strtoul(s, &e, 0) - CpuSoftInt[!i];
+      U->Cpu.Wait = strtoul(s, &e, 0) - V->Cpu.Wait;
+      U->Cpu.HardInt = strtoul(e, &s, 0) - V->Cpu.HardInt;
+      U->Cpu.SoftInt = strtoul(s, &e, 0) - V->Cpu.SoftInt;
     }
-    CpuTotal = CpuUser[i] + CpuNice[i] + CpuSystem[i] + CpuIdle[i] + CpuWait[i] + CpuHardInt[i] +
-               CpuSoftInt[i];
+    U->Cpu.Total = U->Cpu.User + U->Cpu.Nice + U->Cpu.System + U->Cpu.Idle
+                 + U->Cpu.Wait + U->Cpu.HardInt + U->Cpu.SoftInt;
 
     /* linux kernel 2.2 disk stats: */
     if ((s = strstr(buf, "disk_rio "))) {
-      DiskR[i] = strtoul(s + 9, &e, 0);
-      DiskR[i] += strtoul(e, &s, 0);
-      DiskR[i] += strtoul(s, &e, 0);
-      DiskR[i] += strtoul(e, &s, 0) - DiskR[!i];
+      U->Disk.Read = strtoul(s + 9, &e, 0);
+      U->Disk.Read += strtoul(e, &s, 0);
+      U->Disk.Read += strtoul(s, &e, 0);
+      U->Disk.Read += strtoul(e, &s, 0) - V->Disk.Read;
     }
     if ((s = strstr(buf, "disk_wio "))) {
-      DiskW[i] = strtoul(s + 9, &e, 0);
-      DiskW[i] += strtoul(e, &s, 0);
-      DiskW[i] += strtoul(s, &e, 0);
-      DiskW[i] += strtoul(e, &s, 0) - DiskW[!i];
+      U->Disk.Write = strtoul(s + 9, &e, 0);
+      U->Disk.Write += strtoul(e, &s, 0);
+      U->Disk.Write += strtoul(s, &e, 0);
+      U->Disk.Write += strtoul(e, &s, 0) - V->Disk.Write;
     }
     if ((s = strstr(buf, "disk_io: "))) {
       /* linux kernel 2.4 disk stats: */
       s += 10;
-      DiskR[i] = DiskW[i] = 0;
+      U->Disk.Read = U->Disk.Write = 0;
       while (s && (s = strstr(s, "):("))) {
         if ((s = strchr(s + 3, ',')) && (s = strchr(s + 1, ','))) {
-          DiskR[i] += strtoul(s + 1, &e, 0);
+          U->Disk.Read += strtoul(s + 1, &e, 0);
           if (*e == ',' && (e = strchr(e + 1, ',')))
-            DiskW[i] += strtoul(e + 1, &s, 0);
+            U->Disk.Write += strtoul(e + 1, &s, 0);
         }
       }
-      DiskR[i] -= DiskR[!i];
-      DiskW[i] -= DiskW[!i];
+      U->Disk.Read -= V->Disk.Read;
+      U->Disk.Write -= V->Disk.Write;
     }
 
     close(fd);
@@ -233,11 +253,10 @@ static void Update(void) {
   if ((fd = open("/proc/diskstats", O_RDONLY)) != TW_NOFD) {
     /* linux kernel 2.6 disk stats: */
 
-    len = FullRead(fd, buf, sizeof(buf));
-    buf[len] = '\0';
+    len = FullReadZ(fd, buf, sizeof(buf));
     s = buf;
 
-    DiskR[i] = DiskW[i] = 0;
+    U->Disk.Read = U->Disk.Write = 0;
 
     while ((e = strstr(s, " hd")), (e2 = strstr(s, " sd")), (e3 = strstr(s, " nvme")),
            e || e2 || e3) {
@@ -254,104 +273,105 @@ static void Update(void) {
 
       if (s[0] != ' ' && s[1] == ' ') {
         /* match hd? sd? nvme?n? */
-        strtoul(s + 2, &s, 0);         /* skip  'reads'         */
-        strtoul(s, &s, 0);             /* skip  'read_merges'   */
-        DiskR[i] += strtoul(s, &s, 0); /* parse 'read_sectors'  */
-        strtoul(s, &s, 0);             /* skip  'read_ticks'    */
-        strtoul(s, &s, 0);             /* skip  'writes'        */
-        strtoul(s, &s, 0);             /* skip  'write_merges'  */
-        DiskW[i] += strtoul(s, &s, 0); /* parse 'write_sectors' */
+        strtoul(s + 2, &s, 0);              /* skip  'reads'         */
+        strtoul(s, &s, 0);                  /* skip  'read_merges'   */
+        U->Disk.Read += strtoul(s, &s, 0);  /* parse 'read_sectors'  */
+        strtoul(s, &s, 0);                  /* skip  'read_ticks'    */
+        strtoul(s, &s, 0);                  /* skip  'writes'        */
+        strtoul(s, &s, 0);                  /* skip  'write_merges'  */
+        U->Disk.Write += strtoul(s, &s, 0); /* parse 'write_sectors' */
       }
     }
 
-    DiskR[i] -= DiskR[!i];
-    DiskW[i] -= DiskW[!i];
+    U->Disk.Read -= V->Disk.Read;
+    U->Disk.Write -= V->Disk.Write;
 
     close(fd);
   }
 
-  if (DiskMax) {
-    if (DiskMax < DiskR[i] + DiskW[i])
-      DiskMax = DiskR[i] + DiskW[i];
+  if (U->Disk.Max) {
+    if (U->Disk.Max < U->Disk.Read + U->Disk.Write) {
+      U->Disk.Max = U->Disk.Read + U->Disk.Write;
+    }
   } else {
     /* first cycle... cannot know bandwidth */
-    DiskR[!i] = DiskR[i];
-    DiskW[!i] = DiskW[i];
-    DiskR[i] = DiskW[i] = 0;
-    DiskMax = 1;
+    V->Disk.Read = U->Disk.Read;
+    V->Disk.Write = U->Disk.Write;
+    U->Disk.Read  = U->Disk.Write = 0;
+    U->Disk.Max = 1;
   }
+  V->Disk.Max = U->Disk.Max;
 
   if ((fd = open("/proc/meminfo", O_RDONLY)) != TW_NOFD) {
-    len = FullRead(fd, buf, sizeof(buf));
-    buf[len] = '\0';
+    len = FullReadZ(fd, buf, sizeof(buf));
     if ((s = strstr(buf, "MemTotal:")))
-      MemTotal = strtoul(s + 9, &e, 0), s = e;
+      U->Mem.Total = strtoul(s + 9, &e, 0), s = e;
     if ((s = strstr(buf, "MemFree:")))
-      MemFree = strtoul(s + 8, &e, 0), s = e;
+      U->Mem.Free = strtoul(s + 8, &e, 0), s = e;
     if ((s = strstr(buf, "MemShared:")))
-      MemShared = strtoul(s + 10, &e, 0), s = e;
+      U->Mem.Shared = strtoul(s + 10, &e, 0), s = e;
     if ((s = strstr(buf, "Buffers:")))
-      MemBuff = strtoul(s + 8, &e, 0), s = e;
+      U->Mem.Buff = strtoul(s + 8, &e, 0), s = e;
     if ((s = strstr(buf, "Cached:")))
-      MemCache = strtoul(s + 8, &e, 0), s = e;
+      U->Mem.Cache = strtoul(s + 8, &e, 0), s = e;
 
-    MemUsed = MemTotal - MemFree;
-    if (MemCache > MemUsed)
-      MemCache = MemUsed;
-    MemUsed -= MemCache;
-    if (MemBuff > MemUsed)
-      MemBuff = MemUsed;
-    MemUsed -= MemBuff;
-    if (MemShared > MemUsed)
-      MemShared = MemUsed;
-    MemUsed -= MemShared;
+    U->Mem.Used = U->Mem.Total - U->Mem.Free;
+    if (U->Mem.Cache > U->Mem.Used)
+      U->Mem.Cache = U->Mem.Used;
+    U->Mem.Used -= U->Mem.Cache;
+    if (U->Mem.Buff > U->Mem.Used)
+      U->Mem.Buff = U->Mem.Used;
+    U->Mem.Used -= U->Mem.Buff;
+    if (U->Mem.Shared > U->Mem.Used)
+      U->Mem.Shared = U->Mem.Used;
+    U->Mem.Used -= U->Mem.Shared;
 
     if ((s = strstr(buf, "SwapTotal:")))
-      SwapTotal = strtoul(s + 10, &e, 0), s = e;
+      U->Swap.Total = strtoul(s + 10, &e, 0), s = e;
     if ((s = strstr(buf, "SwapFree:")))
-      SwapFree = strtoul(s + 9, &e, 0), s = e;
-    SwapUsed = SwapTotal - SwapFree;
+      U->Swap.Free = strtoul(s + 9, &e, 0), s = e;
+    U->Swap.Used = U->Swap.Total - U->Swap.Free;
 
     close(fd);
   }
 
-  if (CpuTotal) {
+  if (U->Cpu.Total) {
     TwGotoXYWindow(SysMon_Win, 4, 0);
     if (numeric)
       PrintPercent(TCOL(thigh | tyellow, tblue),
-                   100 * (CpuTotal - CpuIdle[i] - CpuWait[i]) / CpuTotal);
-    tmp = HBar(TCOL(thigh | tgreen, 0), CpuUser[i], CpuTotal, 0);
-    tmp = HBar(TCOL(thigh | tyellow, 0), CpuNice[i], CpuTotal, tmp);
-    tmp = HBar(TCOL(thigh | tred, 0), CpuSystem[i], CpuTotal, tmp);
-    tmp = HBar(TCOL(thigh | tmagenta, 0), CpuHardInt[i], CpuTotal, tmp);
-    tmp = HBar(TCOL(thigh | tcyan, 0), CpuSoftInt[i], CpuTotal, tmp);
-    tmp = HBar(TCOL(thigh | tblue, 0), CpuWait[i], CpuTotal, tmp);
-    (void)HBar(TCOL(tblue, 0), CpuIdle[i], CpuTotal, tmp);
+                   100 * (U->Cpu.Total - U->Cpu.Idle - U->Cpu.Wait) / U->Cpu.Total);
+    tmp = HBar(TCOL(thigh | tgreen, 0), U->Cpu.User, U->Cpu.Total, 0);
+    tmp = HBar(TCOL(thigh | tyellow, 0), U->Cpu.Nice, U->Cpu.Total, tmp);
+    tmp = HBar(TCOL(thigh | tred, 0), U->Cpu.System, U->Cpu.Total, tmp);
+    tmp = HBar(TCOL(thigh | tmagenta, 0), U->Cpu.HardInt, U->Cpu.Total, tmp);
+    tmp = HBar(TCOL(thigh | tcyan, 0), U->Cpu.SoftInt, U->Cpu.Total, tmp);
+    tmp = HBar(TCOL(thigh | tblue, 0), U->Cpu.Wait, U->Cpu.Total, tmp);
+    (void)HBar(TCOL(tblue, 0), U->Cpu.Idle, U->Cpu.Total, tmp);
   }
-  if (DiskMax) {
+  if (U->Disk.Max) {
     TwGotoXYWindow(SysMon_Win, 4, 1);
     if (numeric)
-      PrintAbsoluteK(TCOL(thigh | tyellow, tblue), (DiskR[i] + DiskW[i]) >> 1);
-    tmp = HBar(TCOL(thigh | tgreen, 0), DiskR[i], DiskMax, 0);
-    tmp = HBar(TCOL(thigh | tred, 0), DiskW[i], DiskMax, tmp);
-    (void)HBar(TCOL(tblue, 0), DiskMax - DiskR[i] - DiskW[i], DiskMax, tmp);
+      PrintAbsoluteK(TCOL(thigh | tyellow, tblue), (U->Disk.Read + U->Disk.Write) >> 1);
+    tmp = HBar(TCOL(thigh | tgreen, 0), U->Disk.Read, U->Disk.Max, 0);
+    tmp = HBar(TCOL(thigh | tred, 0), U->Disk.Write, U->Disk.Max, tmp);
+    (void)HBar(TCOL(tblue, 0), U->Disk.Max - U->Disk.Read - U->Disk.Write, U->Disk.Max, tmp);
   }
-  if (MemTotal) {
+  if (U->Mem.Total) {
     TwGotoXYWindow(SysMon_Win, 4, 2);
     if (numeric)
-      PrintAbsoluteK(TCOL(thigh | tyellow, tblue), (MemTotal - MemFree));
-    tmp = HBar(TCOL(thigh | tgreen, 0), MemUsed, MemTotal, 0);
-    tmp = HBar(TCOL(thigh | tcyan, 0), MemShared, MemTotal, tmp);
-    tmp = HBar(TCOL(thigh | tyellow, 0), MemBuff, MemTotal, tmp);
-    tmp = HBar(TCOL(thigh | tred, 0), MemCache, MemTotal, tmp);
-    (void)HBar(TCOL(tblue, 0), MemFree, MemTotal, tmp);
+      PrintAbsoluteK(TCOL(thigh | tyellow, tblue), (U->Mem.Total - U->Mem.Free));
+    tmp = HBar(TCOL(thigh | tgreen, 0), U->Mem.Used, U->Mem.Total, 0);
+    tmp = HBar(TCOL(thigh | tcyan, 0), U->Mem.Shared, U->Mem.Total, tmp);
+    tmp = HBar(TCOL(thigh | tyellow, 0), U->Mem.Buff, U->Mem.Total, tmp);
+    tmp = HBar(TCOL(thigh | tred, 0), U->Mem.Cache, U->Mem.Total, tmp);
+    (void)HBar(TCOL(tblue, 0), U->Mem.Free, U->Mem.Total, tmp);
   }
-  if (SwapTotal) {
+  if (U->Swap.Total) {
     TwGotoXYWindow(SysMon_Win, 4, 3);
     if (numeric)
-      PrintAbsoluteK(TCOL(thigh | tyellow, tblue), SwapUsed);
-    tmp = HBar(TCOL(thigh | tgreen, 0), SwapUsed, SwapTotal, 0);
-    (void)HBar(TCOL(tblue, 0), SwapFree, SwapTotal, tmp);
+      PrintAbsoluteK(TCOL(thigh | tyellow, tblue), U->Swap.Used);
+    tmp = HBar(TCOL(thigh | tgreen, 0), U->Swap.Used, U->Swap.Total, 0);
+    (void)HBar(TCOL(tblue, 0), U->Swap.Free, U->Swap.Total, tmp);
   }
 
   TwSetColTextWindow(SysMon_Win, TCOL(twhite, tblue));
@@ -366,8 +386,7 @@ static void Update(void) {
     unsigned long updays;
     int uphours, upminutes;
 
-    len = FullRead(fd, buf, sizeof(buf));
-    buf[len] = '\0';
+    len = FullReadZ(fd, buf, sizeof(buf));
 
     updays = strtoul(buf, NULL, 0);
     /*upseconds = updays % 60;*/
@@ -383,18 +402,18 @@ static void Update(void) {
     close(fd);
   }
 
-  CpuUser[i] += CpuUser[!i];
-  CpuNice[i] += CpuNice[!i];
-  CpuSystem[i] += CpuSystem[!i];
-  CpuIdle[i] += CpuIdle[!i];
-  CpuWait[i] += CpuWait[!i];
-  CpuHardInt[i] += CpuHardInt[!i];
-  CpuSoftInt[i] += CpuSoftInt[!i];
+  U->Cpu.User    += V->Cpu.User;
+  U->Cpu.Nice    += V->Cpu.Nice;
+  U->Cpu.System  += V->Cpu.System;
+  U->Cpu.Idle    += V->Cpu.Idle;
+  U->Cpu.Wait    += V->Cpu.Wait;
+  U->Cpu.HardInt += V->Cpu.HardInt;
+  U->Cpu.SoftInt += V->Cpu.SoftInt;
 
-  DiskR[i] += DiskR[!i];
-  DiskW[i] += DiskW[!i];
+  U->Disk.Read  += V->Disk.Read;
+  U->Disk.Write += V->Disk.Write;
 
-  i = !i;
+  return !i;
 }
 
 static void Quit(const char *argv0) {
@@ -409,11 +428,12 @@ static void Quit(const char *argv0) {
 }
 
 int main(int argc, char *argv[]) {
+  usage Usage[2];
   tmsg Msg;
   tevent_any Event;
   struct timeval p = {0, 0};
   fd_set readfds;
-  int fd;
+  int fd, which = 0;
 
   if (!InitSysMon(argc, argv))
     Quit(argv[0]);
@@ -421,10 +441,11 @@ int main(int argc, char *argv[]) {
   fd = TwConnectionFd();
   FD_ZERO(&readfds);
 
+  memset(Usage, 0, sizeof(Usage));
 
   for (;;) {
     if (p.tv_sec == 0 && p.tv_usec < 10000) {
-      Update();
+      which = Update(which, Usage);
       TwFlush();
 
       p.tv_sec = 1;
