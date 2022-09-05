@@ -287,8 +287,10 @@ public:
   }
 
   inline TButton(const TWidget *parent, dat XWidth, dat YWidth, const char *name, udat Code = 0,
-                 uldat Flags = 0, tcolor BgCol = TCOL(tblack, twhite
-                 tcolor Col = TCOL(tblack, tgreen), tcolor ColDisabled = TCOL(thigh | tblack, tgreen),
+                 uldat Flags = 0,                                   //
+                 tcolor BgCol = TCOL(tblack, twhite),               //
+                 tcolor Col = TCOL(tblack, tgreen),                 //
+                 tcolor ColDisabled = TCOL(thigh | tblack, tgreen), //
                  dat Left = 0, dat Up = 0) {
     Id = TwCreateButtonGadget(parent->Id, XWidth, YWidth, name, Flags, Code, BgCol, Col,
                               ColDisabled, Left, Up);
@@ -325,10 +327,13 @@ public:
     TwWriteCharsetWindow(Id, len, charset_bytes);
   }
   inline void writeUtf8(const char *utf8_bytes) const {
-    TwWriteTRuneWindow(Id, strlen(utf8_bytes), utf8_bytes);
+    TwWriteUtf8Window(Id, strlen(utf8_bytes), utf8_bytes);
   }
   inline void writeUtf8(ldat len, const char *utf8_bytes) const {
-    TwWriteTRuneWindow(Id, len, utf8_bytes);
+    TwWriteUtf8Window(Id, len, utf8_bytes);
+  }
+  inline void writeTRune(ldat len, const trune *runes) const {
+    TwWriteTRuneWindow(Id, len, runes);
   }
   inline void writeTCell(ldat len, dat x, dat y, ldat Len, const tcell *Attr) const {
     TwWriteTCellWindow(Id, x, y, Len, Attr);
