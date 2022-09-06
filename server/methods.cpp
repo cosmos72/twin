@@ -529,6 +529,10 @@ static void DeleteGadget(gadget G) {
         FreeMem(G->USE.T.Color[i]);
     }
   }
+  if (G->Group) {
+    G->Group->RemoveGadget(G);
+  }
+
   DeleteWidget((widget)G);
 }
 

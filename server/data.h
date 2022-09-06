@@ -16,8 +16,7 @@ typedef struct s_rgb {
   byte Red, Green, Blue;
 } rgb;
 
-extern const char *const pkg_libdir;
-extern const char *const pkg_libdir_modules_;
+extern const char *pkg_libdir;
 
 extern rgb Palette[tmaxcol + 1], defaultPalette[tmaxcol + 1];
 

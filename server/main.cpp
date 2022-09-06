@@ -129,6 +129,7 @@ static void Usage(void) {
         " --nohw                   start in background without display\n"
         " --hw=<display>[,options] start with the given display (multiple --hw=... allowed)\n"
         "                          (default: autoprobe all displays until one succeeds)\n"
+        " --plugindir=DIRECTORY    set directory where to look for --hw=<display> libraries\n"
         "Currently known display drivers: \n"
         "\txft[@<XDISPLAY>]\n"
         "\tX[@<XDISPLAY>]\n"
@@ -141,14 +142,22 @@ static void ShowVersion(void) {
   fputs("twin " TWIN_VERSION_STR " with socket protocol " TW_PROTOCOL_VERSION_STR "\n", stdout);
 }
 
-static byte Check4SpecialArgs(void) {
-  if (main_argv[1] && !main_argv[2]) {
-    if (!strcmp(main_argv[1], "-h") || !strcmp(main_argv[1], "-help")) {
+static byte Check4SpecialArgs(int argc, char *argv[]) {
+  for (int i = 1; i < argc && argv[i]; i++) {
+    const char *arg = argv[i];
+    if (!strcmp(arg, "-h") || !strcmp(arg, "-help")) {
       Usage();
       return ttrue;
-    } else if (!strcmp(main_argv[1], "-V") || !strcmp(main_argv[1], "-version")) {
+    } else if (!strcmp(arg, "-V") || !strcmp(arg, "-version")) {
       ShowVersion();
       return ttrue;
+    } else if (!strncmp(arg, "-plugindir=", 11)) {
+      const char *plugindir = CloneStr(arg + 11);
+      if (!plugindir) {
+        fputs("twin: Out of memory!\n", stderr);
+        return ttrue;
+      }
+      pkg_libdir = plugindir;
     }
   }
   return tfalse;
@@ -253,9 +262,9 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 #endif
-  if (Check4SpecialArgs())
+  if (Check4SpecialArgs(argc, argv)) {
     return 0;
-
+  }
   if (!(orig_argv = CloneStrList(main_argv + 1))) {
     fputs("twin: Out of memory!\n", stderr);
     return 1;
