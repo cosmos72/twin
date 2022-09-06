@@ -1,8 +1,8 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-AC_PREREQ([2.65])
-AC_INIT([twin], [0.9.1], [BUG-REPORT-ADDRESS])
+AC_PREREQ([2.71])
+AC_INIT([twin],[0.9.1],[BUG-REPORT-ADDRESS])
 AC_CONFIG_SRCDIR([server/main.cpp])
 AC_CONFIG_HEADERS([include/config.h])
 AC_CONFIG_MACRO_DIR([m4])
@@ -25,7 +25,7 @@ AC_PROG_CC
 AC_PROG_CXX
 AM_PROG_AS
 AC_PROG_INSTALL
-AC_PROG_LIBTOOL
+LT_INIT
 AC_PROG_LN_S
 AC_PROG_SED
 
@@ -51,15 +51,15 @@ fi
 AC_LANG_PUSH([C++])
 
 AC_FUNC_ALLOCA
-AC_HEADER_TIME
+
 AC_HEADER_SYS_WAIT
 AC_CHECK_HEADERS([ \
        arpa/inet.h asm/page.h crypt.h dirent.h dlfcn.h fcntl.h grp.h inttypes.h libintl.h limits.h \
        linux/kd.h linux/keyboard.h linux/vt.h locale.h machine/param.h malloc.h memory.h \
        ncurses.h ncurses/ncurses.h ncurses/termcap.h ndir.h netdb.h netinet/in.h pthread.h pwd.h \
        shadow.h signal.h stdarg.h stddef.h stdint.h stdlib.h string.h \
-       sys/dir.h sys/filio.h sys/ioctl.h sys/mman.h sys/ndir.h sys/param.h sys/resource.h \
-       sys/select.h sys/socket.h sys/stat.h sys/timeb.h sys/ttydefaults.h sys/un.h sys/utsname.h \
+       sys/dir.h sys/filio.h sys/ioctl.h sys/mman.h sys/ndir.h sys/param.h sys/resource.h sys/select.h \
+       sys/socket.h sys/stat.h sys/time.h sys/timeb.h sys/ttydefaults.h sys/un.h sys/utsname.h \
        termcap.h termio.h termios.h unistd.h zlib.h])
 
 
@@ -87,16 +87,15 @@ do
   save_CXXFLAGS="$CXXFLAGS"
   CXXFLAGS="$CXXFLAGS $try_flag"
   try_flag_id="`echo \"$try_flag\" | tr =+- _x_`"
-  AC_CACHE_CHECK(for C++ compiler flag $try_flag, ac_cv_cflag$try_flag_id, AC_TRY_COMPILE(
-  [
+  AC_CACHE_CHECK(for C++ compiler flag $try_flag, ac_cv_cflag$try_flag_id, AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
     int ret0(void) {
       return 0;
     }
-  ] , [
+   ]], [[
     int a = ret0();
-  ], [
+  ]])],[
     eval "ac_cv_cflag$try_flag_id=yes"
-  ], [
+  ],[
     eval "ac_cv_cflag$try_flag_id=no"
     CXXFLAGS="$save_CXXFLAGS"
   ]))
@@ -118,16 +117,15 @@ if echo "$ac_cv_host" | $GREP darwin >/dev/null 2>&1 ; then
     save_LDFLAGS="$LDFLAGS"
     LDFLAGS="$LDFLAGS $try_flag"
     try_flag_id="`echo \"$try_flag\" | tr ,- __`"
-    AC_CACHE_CHECK(for compiler flag $try_flag, ac_cv_ldflag$try_flag_id, AC_TRY_LINK(
-    [
+    AC_CACHE_CHECK(for compiler flag $try_flag, ac_cv_ldflag$try_flag_id, AC_LINK_IFELSE([AC_LANG_PROGRAM([[
       int ret0(void) {
         return 0;
       }
-    ] , [
+     ]], [[
       int a = ret0();
-    ], [
+    ]])],[
       eval "ac_cv_ldflag$try_flag_id=yes"
-    ], [
+    ],[
       eval "ac_cv_ldflag$try_flag_id=no"
       LDFLAGS="$save_LDFLAGS"
     ]))
@@ -148,7 +146,6 @@ AC_TYPE_UINT32_T
 AC_CHECK_TYPE(gid_t,int)
 AC_TYPE_OFF_T
 AC_TYPE_PID_T
-AC_TYPE_SIGNAL
 AC_TYPE_SIZE_T
 AC_TYPE_UID_T
 
@@ -180,7 +177,6 @@ AC_FUNC_MALLOC
 AC_FUNC_MEMCMP
 AC_FUNC_MMAP
 AC_FUNC_REALLOC
-AC_FUNC_SETVBUF_REVERSED
 dnl we never use the 'struct rusage' returned by wait3()
 dnl AC_FUNC_WAIT3
 AC_CHECK_FUNCS([ \
@@ -293,7 +289,6 @@ fi
 AC_SUBST(LIBTSTL,    '$(top_builddir)/libs/libtstl/libtstl.la')
 AC_SUBST(LIBTUTF,    '$(top_builddir)/libs/libtutf/libtutf.la')
 AC_SUBST(LIBTW,      '$(top_builddir)/libs/libtw/libtw.la')
-AC_SUBST(SUBDIR_LIBTT,                                    ) dnl libTT is disabled
 
 LIBS=
 

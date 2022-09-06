@@ -43,15 +43,6 @@ Options: [defaults in brackets after descriptions]
   --enable-socket-alien[=yes|no]         enable support for non-native architectures
 EOF
     cat << EOF
-  --enable-tt[=yes|no]                   enable Text Toolkit library (libTT)
-  --enable-tt-hw-twin[=yes|no|mod]       enable libTT to use twin (libtw) as display driver
-  --enable-tt-hw-twin-tunnel[=yes|mod|no]   enable libTT to use twin + server side libTT
-  --enable-tt-hw-twin-detunnel[=yes|mod|no] enable libTT on twin server side
-  --enable-tt-hw-gtk[=yes|no|mod]        enable libTT to use gtk as display driver
-  --enable-tt-hw-x11[=yes|mod|no]        enable libTT to use X11 as display target
-  --enable-tt-hw-xml[=yes|mod|no]        enable libTT to use xml files as display target
-EOF
-    cat << EOF
   --enable-wm[=yes|no|mod]               enable the builtin WM (absolutely needed!)
   --enable-wm-rc[=yes|no|mod]            enable ~/.twinrc configuration parser
   --enable-wm-rc-shmmap[=yes|no]         enable mmapped shared file for parser
@@ -71,7 +62,6 @@ EOF
 EOF
     cat << EOF
   --enable-ext[=yes|no]                  enable server extensions
-  --enable-ext-tt[=yes|mod|no]           enable the libTT server extensions
 EOF
     cat << EOF
   --enable-opt-shadows[=yes|no]          enable shadows

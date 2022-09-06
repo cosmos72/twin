@@ -15,10 +15,6 @@ int Tw_missing_memcmp(TW(CONST) void *s1, TW(CONST) void *s2, size_t n);
 #define memcmp Tw_missing_memcmp
 #endif
 
-#ifdef TW_SETVBUF_REVERSED
-#define setvbuf(stream, buf, mode, size) setvbuf(stream, mode, buf, size)
-#endif
-
 #ifndef TW_HAVE_STRDUP
 char *Tw_missing_strdup(TW(CONST) char *s, void *(*missing_malloc)(size_t size));
 #define strdup(s) Tw_missing_strdup((s), Tw(AllocMem))

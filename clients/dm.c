@@ -567,13 +567,13 @@ static void HandleGadget(tevent_gadget E) {
   }
 }
 
-static TW_RETSIGTYPE SignalPanic(int n) {
+static void SignalPanic(int n) {
   signal(n, SIG_DFL);
   quit();
   TW_RETFROMSIGNAL(0);
 }
 
-static TW_RETSIGTYPE SignalChild(int n) {
+static void SignalChild(int n) {
   pid_t pid;
   int status;
 

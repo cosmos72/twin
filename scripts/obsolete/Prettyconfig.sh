@@ -102,9 +102,6 @@ fi
 if test "$enable_socket" != n; then
   echo_libs="$echo_libs $echo_op""libtw""$echo_cl"
 fi
-if test "$enable_TT" != n; then
-  echo_libs="$echo_libs $echo_op""libTT""$echo_cl"
-fi
 if test "$echo_libs" = ""; then
   echo_libs="<none>"
 else

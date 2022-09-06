@@ -35,7 +35,7 @@ enum {
 
 /* return from signal macros */
 
-#define TW_RETFROMSIGNAL(value) return TW_ARG_IFNOTVOID(value, TW_RETSIGTYPE)
+#define TW_RETFROMSIGNAL(value) return TW_ARG_IFNOTVOID(value, void)
 #define TW_ARG_IFNOTVOID(value, type) TW_CAT(TW_ARG_IFNOTVOID_, type)(value)
 #define TW_ARG_IFNOTVOID_void(value)
 #define TW_ARG_IFNOTVOID_int(value) (value)

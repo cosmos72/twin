@@ -46,13 +46,13 @@ static void Usage(byte detach) {
 
 static TW_VOLATILE byte gotSignals, gotSignalWinch, gotSignalPanic;
 
-static TW_RETSIGTYPE SignalWinch(int n) {
+static void SignalWinch(int n) {
   signal(SIGWINCH, SignalWinch);
   gotSignals = gotSignalWinch = ttrue;
   TW_RETFROMSIGNAL(0);
 }
 
-static TW_RETSIGTYPE SignalPanic(int n) {
+static void SignalPanic(int n) {
   signal(n, SIG_IGN);
   gotSignals = gotSignalPanic = ttrue;
   TW_RETFROMSIGNAL(0);

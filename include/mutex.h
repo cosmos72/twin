@@ -1,5 +1,5 @@
 /*
- *  mutex.h  --  mutex locking functions for libtw, libTT, ...
+ *  mutex.h  --  mutex locking functions for libtw
  *
  *  Copyright (C) 2001-2002 by Massimiliano Ghilardi
  *

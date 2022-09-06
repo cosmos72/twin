@@ -93,7 +93,7 @@ static uldat wtitle_len;
 
 static volatile int ReceivedFatalSignal = tfalse;
 
-static TW_RETSIGTYPE SignalChild(int n) {
+static void SignalChild(int n) {
   pid_t pid;
   signal(SIGCHLD, SignalChild);
   while ((pid = Tw_wait3(NULL, WNOHANG, NULL)) != 0 && pid != (pid_t)-1)
@@ -101,7 +101,7 @@ static TW_RETSIGTYPE SignalChild(int n) {
   TW_RETFROMSIGNAL(0);
 }
 
-static TW_RETSIGTYPE SignalFatal(int n) {
+static void SignalFatal(int n) {
   ReceivedFatalSignal = n;
   signal(n, SIG_DFL);
   TW_RETFROMSIGNAL(0);

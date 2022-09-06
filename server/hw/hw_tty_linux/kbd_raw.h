@@ -231,9 +231,9 @@ static void lrawkbd_ReleaseConsole(void) {
   ioctl(tty_fd, VT_SETMODE, &vt);
 }
 
-static TW_RETSIGTYPE lrawkbd_ReactSignalIn(int sig);
+static void lrawkbd_ReactSignalIn(int sig);
 
-static TW_RETSIGTYPE lrawkbd_ReactSignalOut(int sig) {
+static void lrawkbd_ReactSignalOut(int sig) {
   /* HW may not be set here... use lrawkbd_HW */
   SaveHW;
   SetHW(lrawkbd_HW);
@@ -251,7 +251,7 @@ static TW_RETSIGTYPE lrawkbd_ReactSignalOut(int sig) {
   TW_RETFROMSIGNAL(0);
 }
 
-static TW_RETSIGTYPE lrawkbd_ReactSignalIn(int sig) {
+static void lrawkbd_ReactSignalIn(int sig) {
   /* HW may not be set here... use lrawkbd_HW */
   SaveHW;
   SetHW(lrawkbd_HW);

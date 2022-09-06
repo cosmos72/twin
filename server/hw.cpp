@@ -82,13 +82,13 @@ static VOLATILE byte GotSignalWinch;
 static VOLATILE byte GotSignalChild;
 static VOLATILE byte GotSignalHangup;
 
-static TW_RETSIGTYPE SignalWinch(int n) {
+static void SignalWinch(int n) {
   GotSignals = GotSignalWinch = ttrue;
   signal(SIGWINCH, SignalWinch);
   TW_RETFROMSIGNAL(0);
 }
 
-static TW_RETSIGTYPE HandleSignalWinch(void) {
+static void HandleSignalWinch(void) {
   GotSignalWinch = tfalse;
   if (DisplayHWCTTY && DisplayHWCTTY != HWCTTY_DETACHED && DisplayHWCTTY->DisplayIsCTTY) {
 
@@ -97,7 +97,7 @@ static TW_RETSIGTYPE HandleSignalWinch(void) {
   TW_RETFROMSIGNAL(0);
 }
 
-static TW_RETSIGTYPE SignalChild(int n) {
+static void SignalChild(int n) {
   GotSignals = GotSignalChild = ttrue;
   signal(SIGCHLD, SignalChild);
   TW_RETFROMSIGNAL(0);
@@ -116,7 +116,7 @@ static void HandleSignalChild(void) {
 /*
  * got a SIGHUP. shutdown the display on controlling tty, if any
  */
-static TW_RETSIGTYPE SignalHangup(int n) {
+static void SignalHangup(int n) {
   GotSignals = GotSignalHangup = ttrue;
   signal(SIGHUP, SignalHangup);
   TW_RETFROMSIGNAL(0);
@@ -141,7 +141,7 @@ void HandleSignals(void) {
 }
 
 #ifndef TW_DONT_TRAP_SIGNALS
-static TW_RETSIGTYPE SignalFatal(int n) {
+static void SignalFatal(int n) {
   sigset_t s, t;
 
   signal(n, SIG_DFL);

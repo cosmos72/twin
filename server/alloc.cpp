@@ -102,7 +102,7 @@ trune *CloneStr2TRune(const char *s, uldat len) {
 #if defined(TW_HAVE_ALARM) && defined(TW_HAVE_SIGACTION)
 volatile int AlarmReceived = 0;
 
-static TW_RETSIGTYPE AlarmHandler(int sig) {
+static void AlarmHandler(int sig) {
   AlarmReceived = 1;
   TW_RETFROMSIGNAL(0);
 }

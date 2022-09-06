@@ -4,7 +4,6 @@
 
 CONF___MENU="General setup"
 CONF_SOCKET_MENU="Socket support"
-CONF_TT_MENU="Toolkit library support"
 CONF_WM_MENU="Window Manager"
 CONF_TERM_MENU="Terminal emulator"
 CONF_PRINTK_MENU="Messages logging"
@@ -18,13 +17,6 @@ CONF_SOCKET_HELP="Support remote socket connections (libtw)"
 CONF_SOCKET_GZ_HELP=" -> Sockets: support gzip compression"
 CONF_SOCKET_PTHREADS_HELP=" -> Sockets: thread-safe libs (requires libpthread)"
 CONF_SOCKET_ALIEN_HELP=" -> Sockets: support non-native architectures"
-CONF_TT_HELP="Support Text Toolkit library (libTT)"
-CONF_TT_HW_TWIN_HELP=" -> HW support: twin, native"
-CONF_TT_HW_TWIN_TUNNEL_HELP=" -> HW support: twin + server side libTT"
-CONF_TT_HW_TWIN_DETUNNEL_HELP=" -> HW support: libTT on twin server side"
-CONF_TT_HW_GTK_HELP=" -> HW support: gtk"
-CONF_TT_HW_X11_HELP=" -> HW support: X11"
-CONF_TT_HW_XML_HELP=" -> HW support: write to xml files"
 CONF_WM_HELP="Window Manager: absolutely needed!"
 CONF_WM_RC_HELP="WM: support ~/.twinrc configuration parser"
 CONF_WM_RC_SHMMAP_HELP=" -> WM: RC: use mmapped shared file for parser"
@@ -58,15 +50,6 @@ menu CONF_SOCKET
   yesno_dep CONF_SOCKET_GZ CONF_SOCKET
   yesno_dep CONF_SOCKET_PTHREADS CONF_SOCKET
   yesno CONF_SOCKET_ALIEN
-endmenu
-menu CONF_TT
-  yesno CONF_TT
-  yesmodno_truedep CONF_TT_HW_TWIN          CONF_SOCKET
-  yesmodno_truedep CONF_TT_HW_TWIN_TUNNEL   CONF_SOCKET
-  yesmodno_truedep CONF_TT_HW_TWIN_DETUNNEL CONF_SOCKET
-  yesmodno CONF_TT_HW_GTK
-  yesmodno CONF_TT_HW_X11
-  yesmodno CONF_TT_HW_XML
 endmenu
 menu CONF_WM
   yesmodno CONF_WM

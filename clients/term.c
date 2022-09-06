@@ -294,7 +294,7 @@ static void CloseTerm(uldat Slot) {
  */
 static volatile byte ReceivedSignalChild;
 
-static TW_RETSIGTYPE SignalChild(int n) {
+static void SignalChild(int n) {
   ReceivedSignalChild = ttrue;
   signal(SIGCHLD, SignalChild);
   TW_RETFROMSIGNAL(0);

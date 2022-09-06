@@ -43,26 +43,6 @@ This package supplements '%{name}'.
 It contains header files and static libraries for %{name}
 developers
 
-%package libTT
-Summary:	Text Toolkit library for twin - Textmode WINdow environment
-Group:		User Interface/Twin
-Requires:	%{name}
-Provides:	%{name}-libTT
-
-%description libTT
-This package supplements '%{name}'.
-It contains libTT, a Text Toolkit library for %{name}
-
-
-%package libTT-devel
-Summary:	Text Toolkit library for twin - developer's files
-Group:		Development/Libraries
-Requires:	%{name} %{name}-libTT
-
-%description libTT-devel
-This package supplements 'libTT'.
-It contains header files and static libraries for libTT
-
 %prep
 %setup
 
@@ -85,7 +65,7 @@ ldconfig
 %defattr(-, root, root)
 %doc %{_mandir}/man1/twin.1*
 %doc docs/Configure docs/Tutorial docs/libtw.txt docs/ltrace.conf
-%doc docs/Compatibility docs/libTT-design.txt docs/Philosophy
+%doc docs/Compatibility docs/Philosophy
 %doc COPYING COPYING.LIB Changelog.txt README BUGS INSTALL README.porting
 %doc twin-current.lsm
 %{_libdir}/libtutf.so.*
@@ -107,16 +87,6 @@ ldconfig
 %{_libdir}/libtutf.so
 %{_libdir}/libtw.a
 %{_libdir}/libtw.so
-
-%files libTT
-%{_libdir}/TT
-%{_libdir}/libTT.so.*
-%{_bindir}/tt*
-
-%files libTT-devel
-%{_includedir}/TT
-%{_libdir}/libTT.a
-%{_libdir}/libTT.so
 
 %clean
 [ "$RPM_BUILD_ROOT" != "/" ] && [ -d $RPM_BUILD_ROOT ] && rm -rf $RPM_BUILD_ROOT
