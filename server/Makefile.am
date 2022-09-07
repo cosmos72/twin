@@ -41,6 +41,6 @@ libterm_la_LDFLAGS    = -export-dynamic -export-symbols-regex '^(Init|Quit)Modul
 twdisplay_LDADD       = $(LIBTW) $(LIBTUTF) $(LIBDL) $(LIBTSTL)
 twin_server_LDADD     =          $(LIBTUTF) $(LIBDL) $(LIBTSTL)
 
-librcparse_la_LIBADD  =            $(LIBTSTL)
-libsocket_la_LIBADD   =            $(LIBTSTL) $(LIBSOCK) $(LIBZ)
-libterm_la_LIBADD     =            $(LIBTSTL)
+librcparse_la_LIBADD  = $(LIBTUTF) $(LIBTSTL)
+libsocket_la_LIBADD   = $(LIBTUTF) $(LIBTSTL) $(LIBSOCK) $(LIBZ)
+libterm_la_LIBADD     = $(LIBTUTF) $(LIBTSTL)

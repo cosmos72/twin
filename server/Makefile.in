@@ -144,7 +144,8 @@ am__uninstall_files_from_dir = { \
   }
 LTLIBRARIES = $(pkglib_LTLIBRARIES)
 am__DEPENDENCIES_1 =
-librcparse_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
+librcparse_la_DEPENDENCIES = $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am_librcparse_la_OBJECTS = rcparse_tab.lo rcparse_lex.lo
 librcparse_la_OBJECTS = $(am_librcparse_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
@@ -157,14 +158,15 @@ librcparse_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	-o $@
 @LIBRCPARSE_la_TRUE@am_librcparse_la_rpath = -rpath $(pkglibdir)
 libsocket_la_DEPENDENCIES = $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am_libsocket_la_OBJECTS = md5.lo socket.lo
 libsocket_la_OBJECTS = $(am_libsocket_la_OBJECTS)
 libsocket_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
 	$(CXXFLAGS) $(libsocket_la_LDFLAGS) $(LDFLAGS) -o $@
 @LIBSOCKET_la_TRUE@am_libsocket_la_rpath = -rpath $(pkglibdir)
-libterm_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
+libterm_la_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_libterm_la_OBJECTS = pty.lo tterm.lo tty.lo
 libterm_la_OBJECTS = $(am_libterm_la_OBJECTS)
 libterm_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
@@ -546,9 +548,9 @@ libsocket_la_LDFLAGS = -export-dynamic -export-symbols-regex '^(Init|Quit)Module
 libterm_la_LDFLAGS = -export-dynamic -export-symbols-regex '^(Init|Quit)Module$$' -release $(PACKAGE_VERSION)
 twdisplay_LDADD = $(LIBTW) $(LIBTUTF) $(LIBDL) $(LIBTSTL)
 twin_server_LDADD = $(LIBTUTF) $(LIBDL) $(LIBTSTL)
-librcparse_la_LIBADD = $(LIBTSTL)
-libsocket_la_LIBADD = $(LIBTSTL) $(LIBSOCK) $(LIBZ)
-libterm_la_LIBADD = $(LIBTSTL)
+librcparse_la_LIBADD = $(LIBTUTF) $(LIBTSTL)
+libsocket_la_LIBADD = $(LIBTUTF) $(LIBTSTL) $(LIBSOCK) $(LIBZ)
+libterm_la_LIBADD = $(LIBTUTF) $(LIBTSTL)
 all: all-recursive
 
 .SUFFIXES:
