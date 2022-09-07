@@ -143,9 +143,9 @@ static tpos WMFindBorderWindow(window W, dat u, dat v, byte Border, tcell *PtrAt
     case 0:
 
 #define is_u(pos)                                                                                  \
-  ((pos) >= 0                                                                                      \
-       ? u == (udat)(pos) || u == (udat)(pos) + (udat)1                                            \
-       : (pos) < -1 ? rev_u + (udat)1 == (udat) - (pos) || rev_u + (udat)2 == (udat) - (pos) : 0)
+  ((pos) >= 0   ? u == (udat)(pos) || u == (udat)(pos) + (udat)1                                   \
+   : (pos) < -1 ? rev_u + (udat)1 == (udat) - (pos) || rev_u + (udat)2 == (udat) - (pos)           \
+                : 0)
 #define delta_u(pos) ((pos) >= 0 ? u - (udat)(pos) : (udat) - (pos)-rev_u - (udat)1)
 
       i = BUTTON_MAX;
@@ -1917,7 +1917,7 @@ static void OverrideMethods(byte enter) {
     OverrideMethod(window, FindBorder, WMFindBorderWindow, FakeFindBorderWindow);
 }
 
-EXTERN_C byte InitModule(module Module) {
+byte InitWM(void) {
   byte sent = tfalse;
 
   srand48(time(NULL));
@@ -1954,7 +1954,7 @@ EXTERN_C byte InitModule(module Module) {
   return tfalse;
 }
 
-EXTERN_C void QuitModule(module Module) {
+void QuitWM(void) {
   QuitRC();
   OverrideMethods(tfalse);
   UnRegisterExt(WM, MsgPort, WM_MsgPort);

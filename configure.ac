@@ -300,7 +300,6 @@ AM_CONDITIONAL(LIBHW_XFT_la,     [test "$enable_hw_xft"     = yes])
 AM_CONDITIONAL(LIBRCPARSE_la,    [test "$enable_wm_rc"      = yes])
 AM_CONDITIONAL(LIBSOCKET_la,     [test "$enable_socket"     = yes])
 AM_CONDITIONAL(LIBTERM_la,       [test "$enable_term"       = yes])
-AM_CONDITIONAL(LIBWM_la,         [test "$enable_wm"         = yes])
 
 CXXFLAGS="$custom_CXXFLAGS"
 

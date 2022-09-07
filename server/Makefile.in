@@ -94,7 +94,6 @@ bin_PROGRAMS = twdisplay$(EXEEXT) twin$(EXEEXT) twin_server$(EXEEXT)
 @LIBRCPARSE_la_TRUE@am__append_1 = librcparse.la
 @LIBSOCKET_la_TRUE@am__append_2 = libsocket.la
 @LIBTERM_la_TRUE@am__append_3 = libterm.la
-@LIBWM_la_TRUE@am__append_4 = libwm.la
 subdir = server
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/libtool.m4 \
@@ -144,7 +143,8 @@ am__uninstall_files_from_dir = { \
          $(am__cd) "$$dir" && rm -f $$files; }; \
   }
 LTLIBRARIES = $(pkglib_LTLIBRARIES)
-librcparse_la_LIBADD =
+am__DEPENDENCIES_1 =
+librcparse_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
 am_librcparse_la_OBJECTS = rcparse_tab.lo rcparse_lex.lo
 librcparse_la_OBJECTS = $(am_librcparse_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
@@ -156,29 +156,21 @@ librcparse_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(librcparse_la_LDFLAGS) $(LDFLAGS) \
 	-o $@
 @LIBRCPARSE_la_TRUE@am_librcparse_la_rpath = -rpath $(pkglibdir)
-am__DEPENDENCIES_1 =
 libsocket_la_DEPENDENCIES = $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_libsocket_la_OBJECTS = md5.lo socket.lo
 libsocket_la_OBJECTS = $(am_libsocket_la_OBJECTS)
 libsocket_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
 	$(CXXFLAGS) $(libsocket_la_LDFLAGS) $(LDFLAGS) -o $@
 @LIBSOCKET_la_TRUE@am_libsocket_la_rpath = -rpath $(pkglibdir)
-libterm_la_LIBADD =
+libterm_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
 am_libterm_la_OBJECTS = pty.lo tterm.lo tty.lo
 libterm_la_OBJECTS = $(am_libterm_la_OBJECTS)
 libterm_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
 	$(CXXFLAGS) $(libterm_la_LDFLAGS) $(LDFLAGS) -o $@
 @LIBTERM_la_TRUE@am_libterm_la_rpath = -rpath $(pkglibdir)
-libwm_la_LIBADD =
-am_libwm_la_OBJECTS = rcopt.lo rcrun.lo shm.lo wm.lo
-libwm_la_OBJECTS = $(am_libwm_la_OBJECTS)
-libwm_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
-	$(CXXFLAGS) $(libwm_la_LDFLAGS) $(LDFLAGS) -o $@
-@LIBWM_la_TRUE@am_libwm_la_rpath = -rpath $(pkglibdir)
 am_twdisplay_OBJECTS = alloc.$(OBJEXT) display.$(OBJEXT) \
 	dl_helper.$(OBJEXT) missing.$(OBJEXT) hw.$(OBJEXT)
 twdisplay_OBJECTS = $(am_twdisplay_OBJECTS)
@@ -201,8 +193,9 @@ am_twin_server_OBJECTS = alloc.$(OBJEXT) builtin.$(OBJEXT) \
 	obj/msg.$(OBJEXT) obj/msgport.$(OBJEXT) obj/mutex.$(OBJEXT) \
 	obj/obj.$(OBJEXT) obj/row.$(OBJEXT) obj/screen.$(OBJEXT) \
 	obj/widget.$(OBJEXT) obj/window.$(OBJEXT) printk.$(OBJEXT) \
-	privilege.$(OBJEXT) remote.$(OBJEXT) resize.$(OBJEXT) \
-	scroller.$(OBJEXT) util.$(OBJEXT)
+	privilege.$(OBJEXT) rcopt.$(OBJEXT) rcrun.$(OBJEXT) \
+	remote.$(OBJEXT) resize.$(OBJEXT) shm.$(OBJEXT) \
+	scroller.$(OBJEXT) util.$(OBJEXT) wm.$(OBJEXT)
 twin_server_OBJECTS = $(am_twin_server_OBJECTS)
 twin_server_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
@@ -233,13 +226,13 @@ am__depfiles_remade = ./$(DEPDIR)/alloc.Po ./$(DEPDIR)/builtin.Po \
 	./$(DEPDIR)/md5.Plo ./$(DEPDIR)/methods.Po \
 	./$(DEPDIR)/missing.Po ./$(DEPDIR)/printk.Po \
 	./$(DEPDIR)/privilege.Po ./$(DEPDIR)/pty.Plo \
-	./$(DEPDIR)/rcopt.Plo ./$(DEPDIR)/rcparse_lex.Plo \
-	./$(DEPDIR)/rcparse_tab.Plo ./$(DEPDIR)/rcrun.Plo \
+	./$(DEPDIR)/rcopt.Po ./$(DEPDIR)/rcparse_lex.Plo \
+	./$(DEPDIR)/rcparse_tab.Plo ./$(DEPDIR)/rcrun.Po \
 	./$(DEPDIR)/remote.Po ./$(DEPDIR)/resize.Po \
-	./$(DEPDIR)/scroller.Po ./$(DEPDIR)/shm.Plo \
+	./$(DEPDIR)/scroller.Po ./$(DEPDIR)/shm.Po \
 	./$(DEPDIR)/socket.Plo ./$(DEPDIR)/tterm.Plo \
 	./$(DEPDIR)/tty.Plo ./$(DEPDIR)/twin-wrapper.Po \
-	./$(DEPDIR)/util.Po ./$(DEPDIR)/wm.Plo obj/$(DEPDIR)/all.Po \
+	./$(DEPDIR)/util.Po ./$(DEPDIR)/wm.Po obj/$(DEPDIR)/all.Po \
 	obj/$(DEPDIR)/display_hw.Po obj/$(DEPDIR)/gadget.Po \
 	obj/$(DEPDIR)/group.Po obj/$(DEPDIR)/id.Po \
 	obj/$(DEPDIR)/menu.Po obj/$(DEPDIR)/menuitem.Po \
@@ -286,11 +279,11 @@ am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
 am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
 SOURCES = $(librcparse_la_SOURCES) $(libsocket_la_SOURCES) \
-	$(libterm_la_SOURCES) $(libwm_la_SOURCES) $(twdisplay_SOURCES) \
-	$(twin_SOURCES) $(twin_server_SOURCES)
+	$(libterm_la_SOURCES) $(twdisplay_SOURCES) $(twin_SOURCES) \
+	$(twin_server_SOURCES)
 DIST_SOURCES = $(librcparse_la_SOURCES) $(libsocket_la_SOURCES) \
-	$(libterm_la_SOURCES) $(libwm_la_SOURCES) $(twdisplay_SOURCES) \
-	$(twin_SOURCES) $(twin_server_SOURCES)
+	$(libterm_la_SOURCES) $(twdisplay_SOURCES) $(twin_SOURCES) \
+	$(twin_server_SOURCES)
 RECURSIVE_TARGETS = all-recursive check-recursive cscopelist-recursive \
 	ctags-recursive dvi-recursive html-recursive info-recursive \
 	install-data-recursive install-dvi-recursive \
@@ -530,8 +523,7 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 SUBDIRS = hw
 bin_SCRIPTS = twstart
-pkglib_LTLIBRARIES = $(am__append_1) $(am__append_2) $(am__append_3) \
-	$(am__append_4)
+pkglib_LTLIBRARIES = $(am__append_1) $(am__append_2) $(am__append_3)
 AM_CPPFLAGS = -I$(top_srcdir)/include $(LTDLINCL) -DPKG_LIBDIR="\"$(pkglibdir)\""
 twin_CPPFLAGS = -I$(top_srcdir)/include $(LTDLINCL) -DBINDIR="\"$(bindir)\""
 twdisplay_SOURCES = alloc.cpp display.cpp dl_helper.cpp missing.cpp hw.cpp
@@ -541,22 +533,22 @@ twin_server_SOURCES = alloc.cpp builtin.cpp data.cpp dl.cpp dl_helper.cpp draw.c
                         obj/all.cpp obj/display_hw.cpp obj/gadget.cpp obj/group.cpp \
                         obj/id.cpp obj/menu.cpp obj/menuitem.cpp obj/module.cpp obj/msg.cpp obj/msgport.cpp \
                         obj/mutex.cpp obj/obj.cpp obj/row.cpp obj/screen.cpp obj/widget.cpp obj/window.cpp \
-                        printk.cpp privilege.cpp remote.cpp resize.cpp scroller.cpp util.cpp
+                        printk.cpp privilege.cpp rcopt.cpp rcrun.cpp remote.cpp resize.cpp shm.cpp scroller.cpp \
+                        util.cpp wm.cpp
 
 librcparse_la_SOURCES = rcparse_tab.cpp rcparse_lex.cpp
 libterm_la_SOURCES = pty.cpp tterm.cpp tty.cpp
 libsocket_la_SOURCES = md5.cpp socket.cpp
-libwm_la_SOURCES = rcopt.cpp rcrun.cpp shm.cpp wm.cpp
 twdisplay_LDFLAGS = -export-dynamic $(LDFLAGS_BIN_EXPORT_DYNAMIC)
 twin_server_LDFLAGS = -export-dynamic $(LDFLAGS_BIN_EXPORT_DYNAMIC)
 librcparse_la_LDFLAGS = -export-dynamic -export-symbols-regex '^(Init|Quit)Module$$' -release $(PACKAGE_VERSION)
 libsocket_la_LDFLAGS = -export-dynamic -export-symbols-regex '^(Init|Quit)Module$$' -release $(PACKAGE_VERSION)
 libterm_la_LDFLAGS = -export-dynamic -export-symbols-regex '^(Init|Quit)Module$$' -release $(PACKAGE_VERSION)
-# libwm exports some symbols needed by librcparse, do not constrain them with -export-symbols-regex
-libwm_la_LDFLAGS = -export-dynamic                                              -release $(PACKAGE_VERSION)
 twdisplay_LDADD = $(LIBTW) $(LIBTUTF) $(LIBDL) $(LIBTSTL)
 twin_server_LDADD = $(LIBTUTF) $(LIBDL) $(LIBTSTL)
-libsocket_la_LIBADD = $(LIBSOCK) $(LIBZ)
+librcparse_la_LIBADD = $(LIBTSTL)
+libsocket_la_LIBADD = $(LIBTSTL) $(LIBSOCK) $(LIBZ)
+libterm_la_LIBADD = $(LIBTSTL)
 all: all-recursive
 
 .SUFFIXES:
@@ -684,9 +676,6 @@ libsocket.la: $(libsocket_la_OBJECTS) $(libsocket_la_DEPENDENCIES) $(EXTRA_libso
 libterm.la: $(libterm_la_OBJECTS) $(libterm_la_DEPENDENCIES) $(EXTRA_libterm_la_DEPENDENCIES) 
 	$(AM_V_CXXLD)$(libterm_la_LINK) $(am_libterm_la_rpath) $(libterm_la_OBJECTS) $(libterm_la_LIBADD) $(LIBS)
 
-libwm.la: $(libwm_la_OBJECTS) $(libwm_la_DEPENDENCIES) $(EXTRA_libwm_la_DEPENDENCIES) 
-	$(AM_V_CXXLD)$(libwm_la_LINK) $(am_libwm_la_rpath) $(libwm_la_OBJECTS) $(libwm_la_LIBADD) $(LIBS)
-
 twdisplay$(EXEEXT): $(twdisplay_OBJECTS) $(twdisplay_DEPENDENCIES) $(EXTRA_twdisplay_DEPENDENCIES) 
 	@rm -f twdisplay$(EXEEXT)
 	$(AM_V_CXXLD)$(twdisplay_LINK) $(twdisplay_OBJECTS) $(twdisplay_LDADD) $(LIBS)
@@ -788,20 +777,20 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/printk.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/privilege.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pty.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rcopt.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rcopt.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rcparse_lex.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rcparse_tab.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rcrun.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rcrun.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/remote.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/resize.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/scroller.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/shm.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/shm.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/socket.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tterm.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tty.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/twin-wrapper.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/util.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wm.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wm.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@obj/$(DEPDIR)/all.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@obj/$(DEPDIR)/display_hw.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@obj/$(DEPDIR)/gadget.Po@am__quote@ # am--include-marker
@@ -1112,20 +1101,20 @@ distclean: distclean-recursive
 	-rm -f ./$(DEPDIR)/printk.Po
 	-rm -f ./$(DEPDIR)/privilege.Po
 	-rm -f ./$(DEPDIR)/pty.Plo
-	-rm -f ./$(DEPDIR)/rcopt.Plo
+	-rm -f ./$(DEPDIR)/rcopt.Po
 	-rm -f ./$(DEPDIR)/rcparse_lex.Plo
 	-rm -f ./$(DEPDIR)/rcparse_tab.Plo
-	-rm -f ./$(DEPDIR)/rcrun.Plo
+	-rm -f ./$(DEPDIR)/rcrun.Po
 	-rm -f ./$(DEPDIR)/remote.Po
 	-rm -f ./$(DEPDIR)/resize.Po
 	-rm -f ./$(DEPDIR)/scroller.Po
-	-rm -f ./$(DEPDIR)/shm.Plo
+	-rm -f ./$(DEPDIR)/shm.Po
 	-rm -f ./$(DEPDIR)/socket.Plo
 	-rm -f ./$(DEPDIR)/tterm.Plo
 	-rm -f ./$(DEPDIR)/tty.Plo
 	-rm -f ./$(DEPDIR)/twin-wrapper.Po
 	-rm -f ./$(DEPDIR)/util.Po
-	-rm -f ./$(DEPDIR)/wm.Plo
+	-rm -f ./$(DEPDIR)/wm.Po
 	-rm -f obj/$(DEPDIR)/all.Po
 	-rm -f obj/$(DEPDIR)/display_hw.Po
 	-rm -f obj/$(DEPDIR)/gadget.Po
@@ -1205,20 +1194,20 @@ maintainer-clean: maintainer-clean-recursive
 	-rm -f ./$(DEPDIR)/printk.Po
 	-rm -f ./$(DEPDIR)/privilege.Po
 	-rm -f ./$(DEPDIR)/pty.Plo
-	-rm -f ./$(DEPDIR)/rcopt.Plo
+	-rm -f ./$(DEPDIR)/rcopt.Po
 	-rm -f ./$(DEPDIR)/rcparse_lex.Plo
 	-rm -f ./$(DEPDIR)/rcparse_tab.Plo
-	-rm -f ./$(DEPDIR)/rcrun.Plo
+	-rm -f ./$(DEPDIR)/rcrun.Po
 	-rm -f ./$(DEPDIR)/remote.Po
 	-rm -f ./$(DEPDIR)/resize.Po
 	-rm -f ./$(DEPDIR)/scroller.Po
-	-rm -f ./$(DEPDIR)/shm.Plo
+	-rm -f ./$(DEPDIR)/shm.Po
 	-rm -f ./$(DEPDIR)/socket.Plo
 	-rm -f ./$(DEPDIR)/tterm.Plo
 	-rm -f ./$(DEPDIR)/tty.Plo
 	-rm -f ./$(DEPDIR)/twin-wrapper.Po
 	-rm -f ./$(DEPDIR)/util.Po
-	-rm -f ./$(DEPDIR)/wm.Plo
+	-rm -f ./$(DEPDIR)/wm.Po
 	-rm -f obj/$(DEPDIR)/all.Po
 	-rm -f obj/$(DEPDIR)/display_hw.Po
 	-rm -f obj/$(DEPDIR)/gadget.Po

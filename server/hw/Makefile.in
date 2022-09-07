@@ -158,12 +158,14 @@ am_libhw_display_la_OBJECTS = hw_display.lo
 libhw_display_la_OBJECTS = $(am_libhw_display_la_OBJECTS)
 @LIBHW_DISPLAY_la_TRUE@am_libhw_display_la_rpath = -rpath $(pkglibdir)
 libhw_tty_la_DEPENDENCIES = $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am_libhw_tty_la_OBJECTS = hw_tty.lo
 libhw_tty_la_OBJECTS = $(am_libhw_tty_la_OBJECTS)
 @LIBHW_TTY_la_TRUE@am_libhw_tty_la_rpath = -rpath $(pkglibdir)
 libhw_twin_la_DEPENDENCIES = $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am_libhw_twin_la_OBJECTS = hw_twin.lo
 libhw_twin_la_OBJECTS = $(am_libhw_twin_la_OBJECTS)
 @LIBHW_TWIN_la_TRUE@am_libhw_twin_la_rpath = -rpath $(pkglibdir)
@@ -431,8 +433,8 @@ libhw_xft_la_LDFLAGS = -export-dynamic -export-symbols-regex '^(Init|Quit)Module
 libhw_display_la_LIBADD = 
 libhw_X11_la_LIBADD = $(LIBTUTF) $(LIBTSTL) $(LIBX11)
 libhw_xft_la_LIBADD = $(LIBTUTF) $(LIBTSTL) $(LIBX11) $(XFT_LIBS) $(LIBXFT)
-libhw_tty_la_LIBADD = $(LIBTUTF) $(LIBTERMCAP) $(LIBGPM)
-libhw_twin_la_LIBADD = $(LIBTUTF) $(LIBTW) $(LIBZ)
+libhw_tty_la_LIBADD = $(LIBTUTF) $(LIBTSTL) $(LIBTERMCAP) $(LIBGPM)
+libhw_twin_la_LIBADD = $(LIBTUTF) $(LIBTSTL) $(LIBTW) $(LIBZ)
 all: all-am
 
 .SUFFIXES:

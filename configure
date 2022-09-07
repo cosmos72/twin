@@ -668,8 +668,6 @@ am__EXEEXT_FALSE
 am__EXEEXT_TRUE
 LTLIBOBJS
 LDFLAGS_BIN_EXPORT_DYNAMIC
-LIBWM_la_FALSE
-LIBWM_la_TRUE
 LIBTERM_la_FALSE
 LIBTERM_la_TRUE
 LIBSOCKET_la_FALSE
@@ -24156,14 +24154,6 @@ else
   LIBTERM_la_FALSE=
 fi
 
- if test "$enable_wm"         = yes; then
-  LIBWM_la_TRUE=
-  LIBWM_la_FALSE='#'
-else
-  LIBWM_la_TRUE='#'
-  LIBWM_la_FALSE=
-fi
-
 
 CXXFLAGS="$custom_CXXFLAGS"
 
@@ -24378,10 +24368,6 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${LIBTERM_la_TRUE}" && test -z "${LIBTERM_la_FALSE}"; then
   as_fn_error $? "conditional \"LIBTERM_la\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
-if test -z "${LIBWM_la_TRUE}" && test -z "${LIBWM_la_FALSE}"; then
-  as_fn_error $? "conditional \"LIBWM_la\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 

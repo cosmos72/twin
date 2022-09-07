@@ -106,8 +106,6 @@ module DlLoadAny(uldat len, const char *name) {
 static module So[MAX_So];
 
 udat DlName2Code(const char *name) {
-  if (!strcmp(name, "wm"))
-    return WMSo;
   if (!strcmp(name, "term"))
     return TermSo;
   if (!strcmp(name, "socket"))
@@ -119,8 +117,6 @@ udat DlName2Code(const char *name) {
 
 static const char *DlCode2Name(uldat code) {
   switch (code) {
-  case WMSo:
-    return "wm";
   case TermSo:
     return "term";
   case SocketSo:

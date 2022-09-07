@@ -36,6 +36,7 @@
 #include "util.h"
 #include "remote.h"
 #include "version.h"
+#include "wm.h"
 
 /*-------------*/
 
@@ -163,12 +164,6 @@ static byte Check4SpecialArgs(int argc, char *argv[]) {
   return tfalse;
 }
 
-static byte DieWMSo(void) {
-  printk("twin: fatal: failed to load the window manager: " SS "\n", Errstr);
-  flushk();
-  return tfalse;
-}
-
 static byte Init(void) {
   FD_ZERO(&save_rfds);
   FD_ZERO(&save_wfds);
@@ -190,15 +185,14 @@ static byte Init(void) {
    * You may have twin SEGFAULT at startup or (worse) introduce subtle bugs!
    */
 
-  return (InitData() && InitSignals() && InitTWDisplay() && (All->AtQuit = QuitTWDisplay) &&
-          InitTransUser() && InitTtysave() && InitScroller() && InitBuiltin() &&
-          InitHW()
-          /*
-           * We need care here: DrawArea2(), DrawMenu(), etc. all need All->BuiltinMenu and
-           * also Video[]. The former is initialized by InitBuiltin(), the latter by InitHW().
-           * No DrawArea2() are allowed at all before InitHW() !
-           */
-          && InitDraw() && (DlLoad(WMSo) || DieWMSo()));
+  return InitData() && InitSignals() && InitTWDisplay() && (All->AtQuit = QuitTWDisplay) &&
+         InitTransUser() && InitTtysave() && InitScroller() && InitBuiltin() && InitHW() &&
+         /*
+          * We need care here: DrawArea2(), DrawMenu(), etc. all need All->BuiltinMenu and
+          * also Video[]. The former is initialized by InitBuiltin(), the latter by InitHW().
+          * No DrawArea2() are allowed at all before InitHW() !
+          */
+         InitDraw() && InitWM();
 }
 
 void Quit(int status) {

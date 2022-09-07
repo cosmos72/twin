@@ -13,9 +13,6 @@ endif
 if LIBTERM_la
   pkglib_LTLIBRARIES += libterm.la
 endif
-if LIBWM_la
-  pkglib_LTLIBRARIES += libwm.la
-endif
 
 AM_CPPFLAGS           = -I$(top_srcdir)/include $(LTDLINCL) -DPKG_LIBDIR="\"$(pkglibdir)\""
 twin_CPPFLAGS         = -I$(top_srcdir)/include $(LTDLINCL) -DBINDIR="\"$(bindir)\""
@@ -27,12 +24,12 @@ twin_server_SOURCES   = alloc.cpp builtin.cpp data.cpp dl.cpp dl_helper.cpp draw
                         obj/all.cpp obj/display_hw.cpp obj/gadget.cpp obj/group.cpp \
                         obj/id.cpp obj/menu.cpp obj/menuitem.cpp obj/module.cpp obj/msg.cpp obj/msgport.cpp \
                         obj/mutex.cpp obj/obj.cpp obj/row.cpp obj/screen.cpp obj/widget.cpp obj/window.cpp \
-                        printk.cpp privilege.cpp remote.cpp resize.cpp scroller.cpp util.cpp
+                        printk.cpp privilege.cpp rcopt.cpp rcrun.cpp remote.cpp resize.cpp shm.cpp scroller.cpp \
+                        util.cpp wm.cpp
 
 librcparse_la_SOURCES = rcparse_tab.cpp rcparse_lex.cpp
 libterm_la_SOURCES    = pty.cpp tterm.cpp tty.cpp
 libsocket_la_SOURCES  = md5.cpp socket.cpp
-libwm_la_SOURCES      = rcopt.cpp rcrun.cpp shm.cpp wm.cpp
 
 twdisplay_LDFLAGS     = -export-dynamic $(LDFLAGS_BIN_EXPORT_DYNAMIC)
 twin_server_LDFLAGS   = -export-dynamic $(LDFLAGS_BIN_EXPORT_DYNAMIC)
@@ -40,10 +37,10 @@ twin_server_LDFLAGS   = -export-dynamic $(LDFLAGS_BIN_EXPORT_DYNAMIC)
 librcparse_la_LDFLAGS = -export-dynamic -export-symbols-regex '^(Init|Quit)Module$$' -release $(PACKAGE_VERSION)
 libsocket_la_LDFLAGS  = -export-dynamic -export-symbols-regex '^(Init|Quit)Module$$' -release $(PACKAGE_VERSION)
 libterm_la_LDFLAGS    = -export-dynamic -export-symbols-regex '^(Init|Quit)Module$$' -release $(PACKAGE_VERSION)
-# libwm exports some symbols needed by librcparse, do not constrain them with -export-symbols-regex
-libwm_la_LDFLAGS      = -export-dynamic                                              -release $(PACKAGE_VERSION)
 
 twdisplay_LDADD       = $(LIBTW) $(LIBTUTF) $(LIBDL) $(LIBTSTL)
 twin_server_LDADD     =          $(LIBTUTF) $(LIBDL) $(LIBTSTL)
 
-libsocket_la_LIBADD   = $(LIBSOCK) $(LIBZ)
+librcparse_la_LIBADD  =            $(LIBTSTL)
+libsocket_la_LIBADD   =            $(LIBTSTL) $(LIBSOCK) $(LIBZ)
+libterm_la_LIBADD     =            $(LIBTSTL)

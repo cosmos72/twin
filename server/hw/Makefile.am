@@ -33,5 +33,5 @@ libhw_xft_la_LDFLAGS  = -export-dynamic -export-symbols-regex '^(Init|Quit)Modul
 libhw_display_la_LIBADD =
 libhw_X11_la_LIBADD   = $(LIBTUTF) $(LIBTSTL) $(LIBX11)
 libhw_xft_la_LIBADD   = $(LIBTUTF) $(LIBTSTL) $(LIBX11) $(XFT_LIBS) $(LIBXFT)
-libhw_tty_la_LIBADD   = $(LIBTUTF) $(LIBTERMCAP) $(LIBGPM)
-libhw_twin_la_LIBADD  = $(LIBTUTF) $(LIBTW) $(LIBZ)
+libhw_tty_la_LIBADD   = $(LIBTUTF) $(LIBTSTL) $(LIBTERMCAP) $(LIBGPM)
+libhw_twin_la_LIBADD  = $(LIBTUTF) $(LIBTSTL) $(LIBTW) $(LIBZ)

@@ -13,7 +13,6 @@ byte DlOpen(module Module);
 void DlClose(module Module);
 
 #define MainSo ((uldat)0)
-#define WMSo ((uldat)1)
 #define TermSo ((uldat)2)
 #define SocketSo ((uldat)3)
 #define RCParseSo ((uldat)4)

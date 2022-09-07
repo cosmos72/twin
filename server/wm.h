@@ -27,6 +27,7 @@ struct wm_ctx {
 };
 
 byte InitWM(void);
+void QuitWM(void);
 
 void AskCloseWidget(widget W);
 void Check4Resize(window W);
