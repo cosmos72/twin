@@ -78,6 +78,8 @@
  *
  */
 
+#include <map>
+
 /* Display variables */
 
 static void X11_SelectionNotify_up(Window win, Atom prop);
@@ -93,7 +95,7 @@ static void X11_Configure(udat resource, byte todefault, udat value) {
 
   switch (resource) {
   case HW_KBDAPPLIC:
-    /* TODO */
+    xnumkeypad = todefault || !value;
     break;
   case HW_ALTCURSKEYS:
     /* TODO */
@@ -116,39 +118,35 @@ static void X11_Configure(udat resource, byte todefault, udat value) {
   }
 }
 
-static struct {
-  KeySym xkey;
+/*
+ * calling XRebindKeysym() on non-english keyboards disrupts keys that use Mode_switch (AltGr),
+ * so we implement a manual translation using a map from X11 KeySym to Twkey + char sequence.
+ */
+
+struct X11_key_to_TW {
   Twkey tkey;
   byte len;
   const char *seq;
-} X11_keys[] = {
-
-#define IS(sym, l, s) {XK_##sym, TW_##sym, l, s},
-#include "hw_keys.h"
-#undef IS
-
 };
 
-static uldat X11_keyn = sizeof(X11_keys) / sizeof(X11_keys[0]);
+static const struct {
+  KeySym xkey;
+  X11_key_to_TW tmapping;
+} X11_keys_impl[] = {
+#define IS(sym, l, s) {XK_##sym, {TW_##sym, l, s}},
+#include "hw_keys.h"
+#undef IS
+};
 
-/*
- * calling XRebindKeysym() on non-english keyboards disrupts keys that use Mode_switch (AltGr),
- * so we implement a manual translation using binary search on the table above.
- * But first, check the table is sorted, or binary search would become bugged.
- */
-static byte X11_CheckRemapKeys(void) {
-  uldat i;
+typedef std::map<KeySym, X11_key_to_TW> X11_keymap_to_TW;
 
-  for (i = 1; i < X11_keyn; i++) {
-    if (X11_keys[i - 1].xkey >= X11_keys[i].xkey) {
-      printk("\n"
-             "      ERROR: twin compiled from a bad server/hw_keys.h file\n"
-             "             (data in file is not sorted). " __FILE__ " driver is unusable!\n"
-             "      InitHW() failed: internal error.\n");
-      return tfalse;
-    }
+static X11_keymap_to_TW X11_keys;
+
+static void X11_init_keys() {
+  for (size_t i = 0; i < sizeof(X11_keys_impl) / sizeof(X11_keys_impl[0]); i++) {
+    KeySym xkey = X11_keys_impl[i].xkey;
+    X11_keys[xkey] = X11_keys_impl[i].tmapping;
   }
-  return ttrue;
 }
 
 #ifdef DEBUG_HW_X11
@@ -169,16 +167,17 @@ void X11_DEBUG_SHOW_KEY(const char *prefix, KeySym sym, udat len, const char *se
 #define X11_DEBUG_SHOW_KEY(prefix, sym, len, seq) ((void)0)
 #endif
 
+static byte X11_IsNumericKeypad(Twkey key) {
+  return key >= TW_KP_Begin && key <= TW_KP_9;
+}
+
 /* convert an X11 KeySym into a libtw key code and ASCII sequence */
 
 static Twkey X11_LookupKey(XEvent *ev, udat *ShiftFlags, udat *len, char *seq) {
-  static Twkey lastTW = TW_Null;
-  static uldat lastI = TW_MAXULDAT;
-  static KeySym lastXK = NoSymbol;
   KeySym sym = XK_VoidSymbol;
   XKeyEvent *kev = &ev->xkey;
 
-  uldat i, low, up, _len = *len;
+  uldat i, low, up, maxlen = *len;
 
   *ShiftFlags = ((kev->state & ShiftMask) ? KBD_SHIFT_FL : 0) |
                 ((kev->state & LockMask) ? KBD_CAPS_LOCK : 0) |
@@ -190,9 +189,9 @@ static Twkey X11_LookupKey(XEvent *ev, udat *ShiftFlags, udat *len, char *seq) {
   if (xic) {
     Status status_return;
 #ifdef TW_FEATURE_X11_Xutf8LookupString
-    *len = Xutf8LookupString(xic, kev, seq, _len, &sym, &status_return);
+    *len = Xutf8LookupString(xic, kev, seq, maxlen, &sym, &status_return);
 #else
-    *len = XmbLookupString(xic, kev, seq, _len, &sym, &status_return);
+    *len = XmbLookupString(xic, kev, seq, maxlen, &sym, &status_return);
 #endif
     if (XFilterEvent(ev, None)) {
       return TW_Null;
@@ -204,11 +203,12 @@ static Twkey X11_LookupKey(XEvent *ev, udat *ShiftFlags, udat *len, char *seq) {
   }
 #endif
   if (sym == XK_VoidSymbol || sym == 0) {
-    *len = XLookupString(kev, seq, _len, &sym, &xcompose);
+    *len = XLookupString(kev, seq, maxlen, &sym, &xcompose);
   }
   X11_DEBUG_SHOW_KEY("", sym, *len, seq);
 
   if (sym == XK_BackSpace && (kev->state & (ControlMask | Mod1Mask)) != 0) {
+    /* generate escape sequences for Backspace and Ctrl+Backspace */
     if (kev->state & ControlMask) {
       *len = 1, *seq = '\x1F';
     } else {
@@ -229,37 +229,31 @@ static Twkey X11_LookupKey(XEvent *ev, udat *ShiftFlags, udat *len, char *seq) {
     return (Twkey)sym;
   }
 
-  if (sym != lastXK) {
-    low = 0;       /* the first possible */
-    up = X11_keyn; /* 1 + the last possible */
-
-    while (low < up) {
-      i = (low + up) / 2;
-      if (sym == X11_keys[i].xkey) {
-        lastTW = X11_keys[lastI = i].tkey;
-        break;
-      } else if (sym > X11_keys[i].xkey)
-        low = i + 1;
-      else
-        up = i;
+  const X11_key_to_TW *tkey_entry = NULL;
+  {
+    X11_keymap_to_TW::const_iterator iter = X11_keys.find(sym);
+    if (iter != X11_keys.end()) {
+      tkey_entry = &iter->second;
     }
-    if (low == up) {
-      lastI = X11_keyn;
-      lastTW = TW_Null;
-    }
-    lastXK = sym;
   }
-  /* XLookupString() returned empty string, or no ShiftFlags (ignoring CapsLock/NumLock): use the
-   * sequence stated in hw_keys.h */
-  if (lastI < X11_keyn && X11_keys[lastI].len &&
-      (*len == 0 || (*ShiftFlags & ~(KBD_CAPS_LOCK | KBD_NUM_LOCK)) == 0)) {
-    if (_len > X11_keys[lastI].len) {
-      CopyMem(X11_keys[lastI].seq, seq, *len = X11_keys[lastI].len);
+  Twkey tkey = tkey_entry ? tkey_entry->tkey : TW_Null;
+
+  if (tkey != TW_Null && *len == 1 && *ShiftFlags == KBD_NUM_LOCK && xnumkeypad &&
+      X11_IsNumericKeypad(tkey)) {
+    /* xnumkeypad = ttrue and only NumLock led is set:
+     * honor X11 numeric keypad mapping to numbers 0..9 and to / * - + . ENTER */
+
+  } else if (tkey_entry != NULL && tkey_entry->len &&
+             (*len == 0 || (*ShiftFlags & ~(KBD_CAPS_LOCK | KBD_NUM_LOCK)) == 0)) {
+    /* XLookupString() returned empty string, or no ShiftFlags (ignoring CapsLock/NumLock): use the
+     * sequence stated in hw_keys.h */
+    if (tkey_entry->len < maxlen) {
+      CopyMem(tkey_entry->seq, seq, *len = tkey_entry->len);
 
       X11_DEBUG_SHOW_KEY("replaced(2)", sym, *len, seq);
     }
   }
-  return lastTW == TW_Null && *len != 0 ? TW_Other : lastTW;
+  return tkey == TW_Null && *len != 0 ? TW_Other : tkey;
 }
 
 static void X11_HandleEvent(XEvent *event) {
@@ -323,17 +317,19 @@ static void X11_HandleEvent(XEvent *event) {
        * fix both cases here.
        */
       dx = event->xbutton.button;
-      dx = (dx == Button1
-                ? HOLD_LEFT
-                : dx == Button2 ? HOLD_MIDDLE
-                                : dx == Button3 ? HOLD_RIGHT :
+      dx = (dx == Button1   ? HOLD_LEFT
+            : dx == Button2 ? HOLD_MIDDLE
+            : dx == Button3 ? HOLD_RIGHT
+            :
 #ifdef HOLD_WHEEL_REV
-                                                dx == Button4 ? HOLD_WHEEL_REV :
+            dx == Button4 ? HOLD_WHEEL_REV
+            :
 #endif
 #ifdef HOLD_WHEEL_FWD
-                                                              dx == Button5 ? HOLD_WHEEL_FWD :
+            dx == Button5 ? HOLD_WHEEL_FWD
+                          :
 #endif
-                                                                            0);
+                          0);
       if (event->type == ButtonPress) {
         dy |= dx;
       } else {

@@ -4,9 +4,9 @@
 struct x11_data {
   int xwidth, xheight;
   int xwfont, xhfont, xupfont;
-
   /* we support showing only a portion of the whole twin display */
   dat xhw_view, xhw_startx, xhw_starty, xhw_endx, xhw_endy;
+  byte xnumkeypad; /* ttrue if numeric keypad emits numeric digits */
 
   Tutf_function xUTF_32_to_charset;
   Display *xdisplay;
@@ -49,6 +49,7 @@ struct x11_data {
 #define xhw_starty (xdata->xhw_starty)
 #define xhw_endx (xdata->xhw_endx)
 #define xhw_endy (xdata->xhw_endy)
+#define xnumkeypad (xdata->xnumkeypad)
 
 #define xUTF_32_to_charset (xdata->xUTF_32_to_charset)
 #define xdisplay (xdata->xdisplay)

@@ -254,13 +254,10 @@ static byte X11_InitHW(void) {
   xReqCount = XReqCount = 0;
   HW->keyboard_slot = NOSLOT;
 
-  if ((xdisplay = XOpenDisplay(xdisplay_)))
+  if ((xdisplay = XOpenDisplay(xdisplay_))) {
     do {
 
       (void)XSetIOErrorHandler(X11_Die);
-
-      if (!X11_CheckRemapKeys())
-        break;
 
       xscreen = DefaultScreen(xdisplay);
       xdepth = DefaultDepth(xdisplay, xscreen);
@@ -329,8 +326,9 @@ static byte X11_InitHW(void) {
             XCloseIM(xim);
             xim = NULL;
           }
-        } else
+        } else {
           xic = NULL;
+        }
 #endif
         X11_FillWindowTitle(title, sizeof(title));
         XStoreName(xdisplay, xwindow, title);
@@ -446,14 +444,17 @@ static byte X11_InitHW(void) {
         if (charset0)
           *charset0 = ',';
 
+        X11_init_keys();
+
         return ttrue;
       }
     } while (0);
-  else {
-    if (xdisplay_ || (xdisplay_ = getenv("DISPLAY")))
+  } else {
+    if (xdisplay_ || (xdisplay_ = getenv("DISPLAY"))) {
       printk("      X11_InitHW() failed to open display " SS "\n", HW->Name);
-    else
+    } else {
       printk("      X11_InitHW() failed: DISPLAY is not set\n");
+    }
   }
 
 fail:
