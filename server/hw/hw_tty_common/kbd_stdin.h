@@ -334,15 +334,29 @@ static void stdin_KeyboardEvent(int fd, display_hw hw) {
   while (got > 0) {
     if (HW->MouseEvent == xterm_MouseEvent) {
       while (got) {
-        if (got >= 6 && !memcmp(s, "\033[M", 3)) {
-          /* classic xterm mouse reporting (X11 specs) */
-          CopyMem(s, xterm_mouse_seq, xterm_mouse_len = chunk = 6);
-        } else if (got >= 9 && !memcmp(s, "\033[5M", 4)) {
-          /* enhanced xterm-style reporting (twin specs) */
+        if (got >= 9 && !memcmp(s, "\033[5M", 4)) {
+          /* twterm-style mouse reporting: twin specs */
           CopyMem(s, xterm_mouse_seq, xterm_mouse_len = chunk = 9);
-        } else
+        } else if (got >= 6 && !memcmp(s, "\033[M", 3)) {
+          /* classic xterm mouse reporting: X11 specs, ESC [?1002h */
+          CopyMem(s, xterm_mouse_seq, xterm_mouse_len = chunk = 6);
+        } else if (got >= 9 && !memcmp(s, "\033[<", 3)) {
+          /* enhanced xterm-style reporting: xterm specs, ESC [?1002h ESC [?1006h */
+          const char *m = (const char *)memchr(s + 8, 'M', got - 8);
+          if (!m) {
+            m = (const char *)memchr(s + 8, 'm', got - 8);
+            if (!m) {
+              break; // termination char 'M' or 'm' not found
+            }
+          }
+          chunk = (m - s) + 1;
+          if (chunk > sizeof(xterm_mouse_seq)) {
+            break; // sequence too long
+          }
+          CopyMem(s, xterm_mouse_seq, xterm_mouse_len = chunk);
+        } else {
           break;
-
+        }
         s += chunk, got -= chunk;
         xterm_MouseEvent(fd, HW);
       }

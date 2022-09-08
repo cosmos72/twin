@@ -10,17 +10,9 @@
 /*
  *             W A R N I N G  :
  *
- * the ORDER of the IS() macros in this file is CAREFULLY chosen
+ * the ORDER of the IS() macros in this file is carefully chosen
  * so that the corresponding XK_* KeySym (from <X11/keysymdef.h>)
- * have continuously GROWING values (i.e. are sorted).
- *
- * If you need to add more entries in this file,
- * look at the include file <X11/keysymdef.h> and put new entries
- * at the exact position to preserve sorting.
- *
- * If you mess up this file, compiling `twin' with X11 support
- * will result in a non-working executable.
- *
+ * have increasing values (i.e. are sorted).
  */
 
 IS(BackSpace, 1, "\x7F")

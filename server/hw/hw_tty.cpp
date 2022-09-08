@@ -73,7 +73,7 @@ struct tty_data {
   int GPM_fd;
   int GPM_keys;
 #endif
-  char xterm_mouse_seq[9];
+  char xterm_mouse_seq[31];
   byte xterm_mouse_len;
   dat xterm_prev_x, xterm_prev_y;
 
