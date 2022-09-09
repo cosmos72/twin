@@ -853,11 +853,11 @@ static udat get_kbentry(byte keycode, byte table) {
 #endif
       return keymap[keycode & 0x7F];
     }
-  } else
+  } else {
     printk("internal error! invalid arguments in get_kbentry(keycode = 0x%X, table = 0x%X): table "
            "must be < 0x%X\n",
            (int)keycode, (int)table, (int)lrawkbd_KEYMAPS_N);
-
+  }
   return K_NOSUCHMAP;
 }
 

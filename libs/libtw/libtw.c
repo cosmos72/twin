@@ -2242,7 +2242,7 @@ static uldat FindFunctionId(tw_d TwD, uldat order) {
   uldat myId;
   if ((myId = id_Tw[order]) == TW_BADID) {
     myId = id_Tw[order] = _Tw_FindFunction(TwD, Functions[order].len, 3 + Functions[order].name,
-                                         Functions[order].formatlen, Functions[order].format + 1);
+                                           Functions[order].formatlen, Functions[order].format + 1);
   }
   return Fd != TW_NOFD ? myId : TW_NOID;
 }
@@ -2333,9 +2333,9 @@ void Tw_Draw2Widget(tw_d TwD, twidget a1, dat a2, dat a3, dat a4, dat a5, dat pi
 
     if (InitRS(TwD)) {
       myId = (0 + sizeof(uldat) + sizeof(dat) + sizeof(dat) + sizeof(dat) + sizeof(dat) +
-            (len6 = a6 ? (uldat)a2 * a3 * sizeof(char) : 0, sizeof(uldat) + len6) +
-            (len7 = a7 ? (uldat)a2 * a3 * sizeof(trune) : 0, sizeof(uldat) + len7) +
-            (len8 = a8 ? (uldat)a2 * a3 * sizeof(tcell) : 0, sizeof(uldat) + len8));
+              (len6 = a6 ? (uldat)a2 * a3 * sizeof(char) : 0, sizeof(uldat) + len6) +
+              (len7 = a7 ? (uldat)a2 * a3 * sizeof(trune) : 0, sizeof(uldat) + len7) +
+              (len8 = a8 ? (uldat)a2 * a3 * sizeof(tcell) : 0, sizeof(uldat) + len8));
       if (WQLeft(myId)) {
         Push(s, uldat, a1);
         Push(s, dat, a2);
@@ -2530,7 +2530,7 @@ tmenuitem Tw_Create4MenuMenuItem(tdisplay TwD, tobj Parent, twindow Window, byte
 #define TWS_SORTED 2
 #define TWS_SCALAR 4
 
-static tslist StatA(tw_d TwD, tobj Id, udat flags, udat hN, TW_CONST udat *h, tslist f);
+static tslist StatA(tw_d TwD, tobj Id, udat flags, uldat hN, TW_CONST udat *h, tslist f);
 
 /**
  * returns information about given object
@@ -2544,7 +2544,7 @@ tany Tw_Stat(tw_d TwD, tobj Id, udat h) {
 /**
  * returns information about given object
  */
-tslist Tw_StatL(tw_d TwD, tobj Id, udat hN, ...) {
+tslist Tw_StatL(tw_d TwD, tobj Id, uldat hN, ...) {
   tslist TS;
   va_list ap;
 
@@ -2557,13 +2557,13 @@ tslist Tw_StatL(tw_d TwD, tobj Id, udat hN, ...) {
 /**
  * returns information about given object
  */
-tslist Tw_StatA(tw_d TwD, tobj Id, udat hN, TW_CONST udat *h) {
+tslist Tw_StatA(tw_d TwD, tobj Id, uldat hN, TW_CONST udat *h) {
   return StatA(TwD, Id, 0, hN, h, NULL);
 }
 /**
  * returns information about given object
  */
-tslist Tw_StatV(tw_d TwD, tobj Id, udat hN, va_list ap) {
+tslist Tw_StatV(tw_d TwD, tobj Id, uldat hN, va_list ap) {
   tslist TS = NULL;
   udat i, *h;
 
@@ -2578,7 +2578,7 @@ tslist Tw_StatV(tw_d TwD, tobj Id, udat hN, va_list ap) {
 /**
  * returns information about given object
  */
-tslist Tw_CloneStatL(tw_d TwD, tobj Id, udat hN, ...) {
+tslist Tw_CloneStatL(tw_d TwD, tobj Id, uldat hN, ...) {
   tslist TS;
   va_list ap;
 
@@ -2591,13 +2591,13 @@ tslist Tw_CloneStatL(tw_d TwD, tobj Id, udat hN, ...) {
 /**
  * returns information about given object
  */
-tslist Tw_CloneStatA(tw_d TwD, tobj Id, udat hN, TW_CONST udat *h) {
+tslist Tw_CloneStatA(tw_d TwD, tobj Id, uldat hN, TW_CONST udat *h) {
   return StatA(TwD, Id, TWS_CLONE_MEM, hN, h, NULL);
 }
 /**
  * returns information about given object
  */
-tslist Tw_CloneStatV(tw_d TwD, tobj Id, udat hN, va_list ap) {
+tslist Tw_CloneStatV(tw_d TwD, tobj Id, uldat hN, va_list ap) {
   tslist TS = NULL;
   udat i, *h;
 
@@ -2610,11 +2610,10 @@ tslist Tw_CloneStatV(tw_d TwD, tobj Id, udat hN, va_list ap) {
   return TS;
 }
 
-#ifndef __GNUC__
 /**
  * returns information about given object
  */
-tslist TwStatL(tobj Id, udat hN, ...) {
+tslist TwStatL(tobj Id, uldat hN, ...) {
   tslist TS;
   va_list ap;
 
@@ -2627,7 +2626,7 @@ tslist TwStatL(tobj Id, udat hN, ...) {
 /**
  * returns information about given object
  */
-tslist TwCloneStatL(tobj Id, udat hN, ...) {
+tslist TwCloneStatL(tobj Id, uldat hN, ...) {
   tslist TS;
   va_list ap;
 
@@ -2637,7 +2636,6 @@ tslist TwCloneStatL(tobj Id, udat hN, ...) {
 
   return TS;
 }
-#endif /* !__GNUC__ */
 
 /**
  * free information about an object that was returned
@@ -2801,7 +2799,7 @@ static tslist StatTSL(tw_d TwD, udat flags, byte *data, byte *end) {
   return (tslist)0;
 }
 
-static tslist StatA(tw_d TwD, tobj Id, udat flags, udat hN, TW_CONST udat *h, tslist f) {
+static tslist StatA(tw_d TwD, tobj Id, udat flags, uldat hN, TW_CONST udat *h, tslist f) {
   tslist a0 = (tslist)TW_NOID;
   DECL_MyReply uldat myId;
   if (!TwD) {

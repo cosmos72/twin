@@ -92,33 +92,24 @@ extern "C" {
 #endif
 
 tany Tw_Stat(tdisplay TwD, tobj Id, udat h);
-tslist Tw_StatL(tdisplay TwD, tobj Id, udat hN, ...);
-tslist Tw_StatA(tdisplay TwD, tobj Id, udat hN, TW_CONST udat *h);
-tslist Tw_StatV(tdisplay TwD, tobj Id, udat hN, va_list h);
-tslist Tw_CloneStat(tdisplay TwD, tobj Id, udat hN, ...);
-tslist Tw_CloneStatL(tdisplay TwD, tobj Id, udat hN, ...);
-tslist Tw_CloneStatA(tdisplay TwD, tobj Id, udat hN, TW_CONST udat *h);
-tslist Tw_CloneStatV(tdisplay TwD, tobj Id, udat hN, va_list h);
+tslist Tw_StatL(tdisplay TwD, tobj Id, uldat hN, ...);
+tslist Tw_StatA(tdisplay TwD, tobj Id, uldat hN, TW_CONST udat *h);
+tslist Tw_StatV(tdisplay TwD, tobj Id, uldat hN, va_list h);
+tslist Tw_CloneStat(tdisplay TwD, tobj Id, uldat hN, ...);
+tslist Tw_CloneStatL(tdisplay TwD, tobj Id, uldat hN, ...);
+tslist Tw_CloneStatA(tdisplay TwD, tobj Id, uldat hN, TW_CONST udat *h);
+tslist Tw_CloneStatV(tdisplay TwD, tobj Id, uldat hN, va_list h);
 void Tw_DeleteStat(tdisplay TwD, tslist TSL);
 tsfield Tw_FindStat(tdisplay TwD, tslist TSL, udat label);
 void Tw_ChangeField(tdisplay TwD, tobj Obj, udat field, uldat CLEARMask, uldat XORMask);
 
 #define TwStat(Id, h) Tw_Stat(Tw_DefaultD, Id, h)
 
-/* GCC has variable-arguments macros (they are ugly and tricky, but work) */
-#ifdef __GNUC__
-#define TwStatL(Id, hN...) Tw_StatL(Tw_DefaultD, Id, ##hN)
-#else
 tslist TwStatL(tobj Id, uldat hN, ...);
-#endif
 #define TwStatA(Id, hN, h) Tw_StatA(Tw_DefaultD, Id, hN, h)
 #define TwStatV(Id, hN, h) Tw_StatV(Tw_DefaultD, Id, hN, h)
 
-#ifdef __GNUC__
-#define TwCloneStatL(Id, hN...) Tw_CloneStatL(Tw_DefaultD, Id, ##hN)
-#else
-tslist TwCloneStatL(tobj Id, udat hN, ...);
-#endif
+tslist TwCloneStatL(tobj Id, uldat hN, ...);
 #define TwCloneStatA(Id, hN, h) Tw_CloneStatA(Tw_DefaultD, Id, hN, h)
 #define TwCloneStatV(Id, hN, h) Tw_CloneStatV(Tw_DefaultD, Id, hN, h)
 #define TwDeleteStat(TSL) Tw_DeleteStat(Tw_DefaultD, TSL)

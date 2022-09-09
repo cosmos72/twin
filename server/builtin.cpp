@@ -100,8 +100,8 @@ static void Clock_Update(void) {
   ClockWin->CurX = ClockWin->CurY = (uldat)0;
   Date = localtime(&Time);
 
-  sprintf((char *)Buffer, "%02hu/%02hu/%04hu\n %02hu:%02hu:%02hu", (udat)Date->tm_mday,
-          (udat)Date->tm_mon + 1, (udat)Date->tm_year + 1900, (udat)Date->tm_hour,
+  sprintf(Buffer, "%02hu/%02hu/%04hu\n %02hu:%02hu:%02hu", (udat)Date->tm_mday,
+          (udat)(Date->tm_mon + 1), (udat)(Date->tm_year + 1900), (udat)Date->tm_hour,
           (udat)Date->tm_min, (udat)Date->tm_sec);
   ClockWin->RowWriteCharset(strlen(Buffer), Buffer);
 
