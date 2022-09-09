@@ -25,29 +25,11 @@ exts Exts = {{NULL},
                  (void (*)(uldat, Span<s_tsfield>))NoOp,
              },
              {FakeOpenTerm}};
-static exts OrigExts = {{NULL},
-                        {remoteKillSlot},
-                        {
-                            (void (*)(msgport, msg))NoOp,
-                            AlwaysTrue,
-                            (void (*)(uldat, Span<s_tsfield>))NoOp,
-                        },
-                        {FakeOpenTerm}};
-
-#define OrigExt(where) ((void **)((byte *)&OrigExts + ((byte *)where - (byte *)&Exts)))
-
-byte Register_Ext(void **where, void *data) {
-  if (*where == *OrigExt(where)) {
-    *where = data;
-    return ttrue;
-  }
-  return tfalse;
-}
-
-byte UnRegister_Ext(void **where, void *data) {
-  if (*where == data) {
-    *where = *OrigExt(where);
-    return ttrue;
-  }
-  return tfalse;
-}
+const exts OrigExts = {{NULL},
+                       {remoteKillSlot},
+                       {
+                           (void (*)(msgport, msg))NoOp,
+                           AlwaysTrue,
+                           (void (*)(uldat, Span<s_tsfield>))NoOp,
+                       },
+                       {FakeOpenTerm}};

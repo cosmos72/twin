@@ -717,14 +717,14 @@ static void FlipMoveMem(byte *mem, uldat len, uldat chunk) {
     return;
   case 2:
     while (len >= 2) {
-      serialize(mem, 0, htons(deserialize<uint16_t>(mem, 0)));
+      serialize(mem, 0, htons(deserialize<uint16_t>(mem)));
       mem += 2;
       len -= 2;
     }
     return;
   case 4:
     while (len >= 4) {
-      serialize(mem, 0, htonl(deserialize<uint16_t>(mem, 0)));
+      serialize(mem, 0, htonl(deserialize<uint16_t>(mem)));
       mem += 4;
       len -= 4;
     }

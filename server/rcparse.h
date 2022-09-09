@@ -162,6 +162,7 @@
  * WindowList
  */
 
+#include "extreg.h"
 #include "rcparse_tab.hpp"
 #include "unaligned.h"
 

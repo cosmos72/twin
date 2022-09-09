@@ -32,12 +32,26 @@ struct exts {
 };
 
 extern exts Exts;
+extern const exts OrigExts;
 
-byte Register_Ext(void **where, void *data);
-byte UnRegister_Ext(void **where, void *data);
+template <class T> byte Register_Ext(T &where, const T &orig_data, T data) {
+  if (where == orig_data) {
+    where = data;
+    return ttrue;
+  }
+  return tfalse;
+}
+template <class T> byte UnRegister_Ext(T &where, const T &orig_data, T data) {
+  if (where == data) {
+    where = orig_data;
+    return ttrue;
+  }
+  return tfalse;
+}
 
-#define RegisterExt(kind, member, data) Register_Ext((void **)&(Exts.kind.member), (void *)data)
-#define UnRegisterExt(kind, member, data) UnRegister_Ext((void **)&(Exts.kind.member), (void *)data)
+#define RegisterExt(kind, member, data) Register_Ext(Exts.kind.member, OrigExts.kind.member, data)
+#define UnRegisterExt(kind, member, data)                                                          \
+  UnRegister_Ext(Exts.kind.member, OrigExts.kind.member, data)
 
 #define Ext(kind, member) (Exts.kind.member)
 

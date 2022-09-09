@@ -26,10 +26,10 @@
 #include "main.h"
 #include "draw.h"
 #include "resize.h"
-#include "extreg.h"
 
 #include "common.h"
 #include "dl.h"
+#include "extreg.h"
 #include "hw.h"
 #include "hw_multi.h"
 #include "scroller.h"

@@ -43,7 +43,6 @@
 #include "alloc.h"
 #include "data.h"
 #include "draw.h"
-#include "extreg.h"
 #include "main.h"
 #include "methods.h"
 #include "obj/id.h" // Obj2Id
@@ -52,6 +51,7 @@
 #include "util.h"
 
 #include "fdlist.h"
+#include "extreg.h"
 #include "remote.h"
 #include "socket.h"
 #include "md5.h"

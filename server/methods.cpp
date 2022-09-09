@@ -19,10 +19,10 @@
 #include "methods.h"
 #include "obj/id.h"
 #include "data.h"
-#include "extreg.h"
 
 #include "dl.h"
 #include "draw.h"
+#include "extreg.h"
 #include "printk.h"
 #include "resize.h"
 #include "util.h"

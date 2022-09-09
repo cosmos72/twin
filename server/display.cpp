@@ -23,6 +23,7 @@
 #include "data.h"
 #include "hw.h"
 #include "hw_private.h"
+#include "unaligned.h"
 #include "common.h"
 #include "dl_helper.h"
 #include "fdlist.h"
@@ -729,7 +730,7 @@ static void HandleMsg(tmsg Msg) {
       break;
     case TW_EV_DPY_SetCursorType:
       if (EventD->Len == sizeof(uldat))
-        SetCursorType(*(uldat *)EventD->Data);
+        SetCursorType(deserialize<uldat>(EventD->Data));
       break;
     case TW_EV_DPY_MoveToXY:
       MoveToXY(EventD->X, EventD->Y);
@@ -749,9 +750,9 @@ static void HandleMsg(tmsg Msg) {
       NeedHW |= NEEDSelectionExport;
       break;
     case TW_EV_DPY_DragArea:
-#define c ((udat *)EventD->Data)
+#define c(index) (deserialize<udat>(EventD->Data, (index) * sizeof(udat)))
       if (EventD->Len == 4 * sizeof(udat))
-        DragArea(EventD->X, EventD->Y, c[0], c[1], c[2], c[3]);
+        DragArea(EventD->X, EventD->Y, c(0), c(1), c(2), c(3));
 #undef c
       break;
     case TW_EV_DPY_Beep:
@@ -763,16 +764,16 @@ static void HandleMsg(tmsg Msg) {
       HW->Configure(EventD->X, EventD->Y == -1, EventD->Y);
       break;
     case TW_EV_DPY_SetPalette:
-#define c ((udat *)EventD->Data)
+#define c(index) (deserialize<udat>(EventD->Data, (index) * sizeof(udat)))
       if (EventD->Len == 3 * sizeof(udat))
-        HW->SetPalette(EventD->X, c[0], c[1], c[2]);
+        HW->SetPalette(EventD->X, c(0), c(1), c(2));
 #undef c
       break;
     case TW_EV_DPY_ResetPalette:
       HW->ResetPalette();
       break;
     case TW_EV_DPY_Helper:
-      THelper = *(uldat *)EventD->Data;
+      THelper = deserialize<uldat>(EventD->Data);
       break;
     case TW_EV_DPY_Quit:
       Quit(0);

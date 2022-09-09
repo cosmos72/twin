@@ -15,13 +15,13 @@
 #define PushV(s, len, vec) (memcpy(s, vec, len), (s) += (len))
 
 #ifdef __cplusplus
-template <class T> inline T deserialize(const void *addr, size_t offset) {
+template <class T> inline T deserialize(const void *addr, size_t byte_offset = 0) {
   T ret;
-  std::memcpy(&ret, static_cast<const byte *>(addr) + offset, sizeof(T));
+  std::memcpy(&ret, static_cast<const byte *>(addr) + byte_offset, sizeof(T));
   return ret;
 }
-template <class T> inline void serialize(void *addr, size_t offset, T value) {
-  std::memcpy(static_cast<byte *>(addr) + offset, &value, sizeof(T));
+template <class T> inline void serialize(void *addr, size_t byte_offset, T value) {
+  std::memcpy(static_cast<byte *>(addr) + byte_offset, &value, sizeof(T));
 }
 
 template <class T> inline byte *Pop(const byte *src, T &val) {

@@ -21,12 +21,13 @@
 #include "util.h"
 #include "wm.h"
 
+#include "common.h"
 #include "dl.h"
 #include "extreg.h"
-#include "methods.h"
 #include "hw.h"
-#include "common.h"
 #include "hw_multi.h"
+#include "methods.h"
+#include "unaligned.h"
 
 #include "rctypes.h"
 #include "rcparse_tab.hpp"

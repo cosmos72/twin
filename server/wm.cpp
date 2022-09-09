@@ -14,6 +14,7 @@
 #include "alloc.h"
 #include "algo.h"
 #include "data.h"
+#include "extreg.h"
 #include "methods.h"
 #include "builtin.h"
 #include "main.h"
@@ -21,7 +22,6 @@
 #include "obj/id.h" // NOID, Id2Obj()
 #include "resize.h"
 #include "util.h"
-#include "extreg.h"
 #include "scroller.h"
 #include "wm.h"
 
@@ -79,7 +79,8 @@ inline sbyte IsTabPosition(window Window, udat pos, sbyte isX) {
 }
 
 static tpos WMFindBorderWindow(window W, dat u, dat v, byte Border, tcell *PtrAttr) {
-  trune *BorderFont, Font;
+  const trune *BorderFont;
+  trune Font;
   ldat k;
   uldat Attr;
   tcell extra_u;

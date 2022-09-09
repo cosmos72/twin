@@ -85,7 +85,6 @@
 #include "alloc.h"
 #include "methods.h"
 #include "data.h"
-#include "extreg.h"
 #include "hw.h"
 #include "main.h"
 #include "printk.h"

@@ -12,11 +12,11 @@
 
 #include "twin.h"
 #include "alloc.h"
-#include "extreg.h"
 #include "data.h"
 #include "methods.h"
 #include "obj/id.h" // Id2Obj()
 
+#include "extreg.h"
 #include "remote.h"
 #include "pty.h"
 #include "util.h"

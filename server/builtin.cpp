@@ -17,8 +17,8 @@
 #include "data.h"
 #include "methods.h"
 #include "main.h"
-#include "extreg.h"
 
+#include "extreg.h"
 #include "dl.h"
 #include "draw.h"
 #include "common.h"

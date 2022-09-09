@@ -28,10 +28,10 @@
 #include "common.h"
 #include "data.h"
 #include "main.h"
+#include "extreg.h"
 #include "methods.h"
 #include "draw.h"
 #include "remote.h"
-#include "extreg.h"
 
 #include "dl.h"
 #include "hw.h"

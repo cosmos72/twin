@@ -14,9 +14,9 @@
 #include "alloc.h"
 #include "main.h"
 #include "data.h"
+#include "extreg.h"
 #include "remote.h"
 #include "methods.h"
-#include "extreg.h"
 #include "algo.h"
 
 #include "hw.h"
