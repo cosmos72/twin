@@ -35,10 +35,8 @@ struct s_fn_obj {
 
 struct s_obj {
 protected:
-  s_obj() {
-  }
-  virtual ~s_obj() {
-  }
+  s_obj() = default;
+  virtual ~s_obj() = default;
 
 public:
   uldat Id;

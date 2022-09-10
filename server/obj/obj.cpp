@@ -18,12 +18,11 @@
 #include <new>
 
 obj s_obj::Create() {
-  obj o = NULL;
-  void *addr = AllocMem0(sizeof(s_obj));
+  obj_entry o = NULL;
+  void *addr = AllocMem0(sizeof(s_obj_entry));
   if (addr) {
-    o = new (addr) s_obj();
-    obj_entry e = (obj_entry)o;
-    e->Fn = Fn_obj;
+    o = new (addr) s_obj_entry();
+    o->Fn = Fn_obj;
     if (!o->Init()) {
       o->Delete();
       o = NULL;
