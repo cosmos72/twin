@@ -78,7 +78,7 @@ TW_C_FEATURES
 # C++ flags '-g -O2' are already tested by AC_PROG_CC
 # C++ flags '-p -pg' are incompatible with -fomit-frame-pointer
 initial_CXXFLAGS="$CXXFLAGS"
-for try_flag in -std=c++98 -fomit-frame-pointer -fno-strict-aliasing -fno-rtti -fno-exceptions \
+for try_flag in -std=c++98 -fomit-frame-pointer -fno-strict-aliasing \
                 -pipe -Wall -Wshadow -Wno-uninitialized -Wno-unused -Wundef \
                 -Wcast-qual -Wcast-align -Wpointer-arith -Wwrite-strings \
                  # -Wstrict-prototypes -Wbad-function-cast -Wold-style-declaration -Wold-style-definition
