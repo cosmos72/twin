@@ -22,7 +22,7 @@
 #endif
 
 /* values returned by Fn_window->FindBorder (modeled after STATE_*) */
-typedef enum e_pos {
+enum tpos : byte {
   POS_TITLE = 10,
   POS_SIDE_LEFT = 11,
   POS_SIDE_UP = 12,
@@ -43,7 +43,7 @@ typedef enum e_pos {
   POS_MENU = 27,
   POS_BUTTON_SCREEN = 29,
   POS_ROOT = 30,
-} tpos;
+};
 
 struct s_remotedata {
   int Fd;
@@ -297,7 +297,7 @@ struct s_window : public s_obj {
 };
 
 /* Window->Attr */
-typedef enum e_window_attr {
+enum window_attr : udat {
   WINDOW_WANT_MOUSE_MOTION = WIDGET_WANT_MOUSE_MOTION, /* 0x0001 */
   WINDOW_WANT_KEYS = WIDGET_WANT_KEYS,                 /* 0x0002 */
   WINDOW_WANT_MOUSE = WIDGET_WANT_MOUSE,               /* 0x0004 */
@@ -310,10 +310,10 @@ typedef enum e_window_attr {
   WINDOW_X_BAR = 0x1000,
   WINDOW_Y_BAR = 0x2000,
   WINDOW_AUTO_KEYS = 0x4000,
-} window_attr;
+};
 
 /* Window->Flags */
-typedef enum e_window_flag {
+enum window_flag : udat {
   WINDOWFL_USEROWS = 0x00, /* default */
   WINDOWFL_USECONTENTS = 0x01,
   WINDOWFL_USEEXPOSE = WIDGETFL_USEEXPOSE, /* 0x02 */
@@ -327,12 +327,12 @@ typedef enum e_window_flag {
   WINDOWFL_ROWS_DEFCOL = 0x0200,
   WINDOWFL_ROWS_SELCURRENT = 0x0400,
   WINDOWFL_NOTVISIBLE = 0x8000,
-} window_flag;
+};
 
 #define W_USE(W, USExxx) (((W)->Flags & WINDOWFL_USEANY) == CAT(WINDOWFL_, USExxx))
 
 /* Window->State */
-typedef enum e_window_state {
+enum window_state : uldat {
   X_BAR_SELECT = 0x0001,
   Y_BAR_SELECT = 0x0002,
   XY_BAR_SELECT = (X_BAR_SELECT | Y_BAR_SELECT),
@@ -351,7 +351,7 @@ typedef enum e_window_state {
   BUTTON_FIRST_SELECT = 0x00400000u,
   BUTTON_LAST_SELECT = 0x80000000u,
   BUTTON_ANY_SELECT = 0xFFC00000u,
-} window_state;
+};
 
 /*#define BUTTON_FIRST                0 */
 /*#define BUTTON_CLOSE                0 */
@@ -361,11 +361,11 @@ typedef enum e_window_state {
 
 /* Window->CursorType */
 /* These come from linux/drivers/char/console.c */
-typedef enum e_window_cursor_type {
+enum window_cursor_type : byte {
   NOCURSOR = 1,
   LINECURSOR = 2,
   SOLIDCURSOR = 8,
-} window_cursor_type;
+};
 
 /* window size limits */
 #define MIN_XWIN 5

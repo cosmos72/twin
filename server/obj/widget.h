@@ -21,7 +21,7 @@
 #define WIDGET_USEEXPOSE_TCELL 4
 
 /* Widget->Attr */
-typedef enum e_widget_attr {
+enum widget_attr : udat {
   /*
    * ask the server to send events even for mouse motion without any pressed button.
    * works only if WIDGET_WANT_MOUSE is set too.
@@ -31,16 +31,16 @@ typedef enum e_widget_attr {
   WIDGET_WANT_MOUSE = 0x0004,
   WIDGET_WANT_CHANGES = 0x0008,
   WIDGET_AUTO_FOCUS = 0x0010,
-} widget_attr;
+};
 
 /* Widget->Flags */
-typedef enum e_widget_flag {
+enum widget_flag : udat {
   WIDGETFL_USEEXPOSE = 0x02,
   WIDGETFL_USEFILL = 0x03,
   WIDGETFL_USEANY = 0x07, /* mask of all above ones */
 
   WIDGETFL_NOTVISIBLE = 0x8000,
-} widget_flag;
+};
 
 #define w_USE(w, USExxx) (((w)->Flags & WIDGETFL_USEANY) == CAT(WIDGETFL_, USExxx))
 

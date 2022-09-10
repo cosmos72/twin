@@ -12,7 +12,7 @@
 #include <Tw/datatypes.h>
 
 /* ttydata->Flags */
-typedef enum e_tty_flag {
+enum tty_flag : uldat {
   TTY_STOPPED = 0x0001,
   TTY_AUTOWRAP = 0x0002,
   TTY_NEEDWRAP = 0x0004,
@@ -30,31 +30,31 @@ typedef enum e_tty_flag {
   TTY_REPORTMOUSE_XTERM = 0x4000,
   TTY_REPORTMOUSE_ALSO_MOVE = 0x8000,
   TTY_NEEDREFOCUS = 0x10000,
-} tty_flag;
+};
 
 /* ttydata->Effects */
-typedef enum e_tty_effect {
+enum tty_effect : udat {
   EFF_INTENSITY = 0x0001,
   EFF_HALFINTENS = 0x0002,
   EFF_UNDERLINE = 0x0004,
   EFF_BLINK = 0x0008,
   EFF_REVERSE = 0x0010,
-} tty_effect;
+};
 
 /* ttydata->nPar */
-typedef enum e_tty_par {
+enum tty_par : byte {
   NPAR = 16,
-} tty_par;
+};
 
 /* ttydata->*G? */
-typedef enum e_tty_charmap {
+enum tty_charmap : byte {
   VT100GR_MAP = 0,
   LATIN1_MAP = 1,
   IBMPC_MAP = 2,
   USER_MAP = 3,
-} tty_charmap;
+};
 
-typedef enum e_ttystate {
+enum ttystate : udat {
   ESnormal = 0,
   ESesc,
   ESsquare,
@@ -74,7 +74,7 @@ typedef enum e_ttystate {
   ESxterm_title,
   ESany = 0xFF,
   ESques = 0x100
-} ttystate;
+};
 
 struct s_ttydata {
   ttystate State;

@@ -1,7 +1,7 @@
 /*
- *  alloc.c  --  wrappers around malloc() / realloc() / free()
+ *  err.h  --  utilities to store/retrieve global error code and message
  *
- *  Copyright (C) 1999-2000,2016 by Massimiliano Ghilardi
+ *  Copyright (C) 1999-2000,2016,2022 by Massimiliano Ghilardi
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -12,7 +12,9 @@
 #ifndef TWIN_STL_ERR_H
 #define TWIN_STL_ERR_H
 
-typedef enum errnum_e {
+// keep the name 'errnum_e' as it's part of the ABI:
+// C++ mangled name for function 'bool Error(errnum err)' below includes it
+typedef enum errnum_e : unsigned {
   SUCCESS = 0,
   NOMEMORY = 1,
   NOTABLES = 2,

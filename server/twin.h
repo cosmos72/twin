@@ -52,7 +52,7 @@
 #include "obj/all.h"
 #include "obj/fn.h"
 
-enum s_fd {
+enum e_fd {
   NOFD = -1,
   /* use for every FD that needs a special RemoteFlush()
    * instead of a plain write() and set PrivateFlush as needed */
@@ -82,18 +82,18 @@ enum s_fd {
 
 /************** Keys **************/
 
-#define KBD_SHIFT_FL (byte)0x1
-#define KBD_CTRL_FL (byte)0x2
-#define KBD_ALT_FL (byte)0x4
-#define KBD_CAPS_LOCK (byte)0x8
-#define KBD_NUM_LOCK (byte)0x10
+#define KBD_SHIFT_FL ((byte)0x1)
+#define KBD_CTRL_FL ((byte)0x2)
+#define KBD_ALT_FL ((byte)0x4)
+#define KBD_CAPS_LOCK ((byte)0x8)
+#define KBD_NUM_LOCK ((byte)0x10)
 
 #define ENTER ((udat)'\r')
 #define ESCAPE ((udat)'\033')
 
 /**********************************/
 
-typedef enum { none, sgidtty, suidroot } e_privilege;
+enum e_privilege : unsigned char { none, sgidtty, suidroot };
 
 #define DropPrivileges() (setegid(getgid()), seteuid(getuid()))
 #define GainRootPrivileges() seteuid(0)

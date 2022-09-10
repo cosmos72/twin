@@ -125,15 +125,19 @@ static void X11_Configure(udat resource, byte todefault, udat value) {
 
 struct X11_key_to_TW {
   Twkey tkey;
-  byte len;
-  const char *seq;
+  char seq[6];
+
+  // reuse termination byte seq[5] as length to save space
+  byte len() const {
+    return seq[5];
+  }
 };
 
 static const struct {
-  KeySym xkey;
+  uldat xkey; // actually KeySym
   X11_key_to_TW tmapping;
 } X11_keys_impl[] = {
-#define IS(sym, l, s) {XK_##sym, {TW_##sym, l, s}},
+#define IS(sym, l, s) {XK_##sym, {TW_##sym, s}},
 #include "hw_keys.h"
 #undef IS
 };
@@ -145,7 +149,9 @@ static X11_keymap_to_TW X11_keys;
 static void X11_init_keys() {
   for (size_t i = 0; i < sizeof(X11_keys_impl) / sizeof(X11_keys_impl[0]); i++) {
     KeySym xkey = X11_keys_impl[i].xkey;
-    X11_keys[xkey] = X11_keys_impl[i].tmapping;
+    X11_key_to_TW &entry = X11_keys[xkey];
+    entry = X11_keys_impl[i].tmapping;
+    entry.seq[5] = strlen(entry.seq); // reuse termination byte seq[5] as length
   }
 }
 
@@ -238,17 +244,17 @@ static Twkey X11_LookupKey(XEvent *ev, udat *ShiftFlags, udat *len, char *seq) {
   }
   Twkey tkey = tkey_entry ? tkey_entry->tkey : TW_Null;
 
-  if (tkey != TW_Null && *len == 1 && *ShiftFlags == KBD_NUM_LOCK && xnumkeypad &&
-      X11_IsNumericKeypad(tkey)) {
-    /* xnumkeypad = ttrue and only NumLock led is set:
+  if (tkey != TW_Null && *len == 1 && (*ShiftFlags & ~KBD_CAPS_LOCK) == KBD_NUM_LOCK &&
+      xnumkeypad && X11_IsNumericKeypad(tkey)) {
+    /* xnumkeypad = ttrue and only NumLock led is set (ignoring CapsLock):
      * honor X11 numeric keypad mapping to numbers 0..9 and to / * - + . ENTER */
 
-  } else if (tkey_entry != NULL && tkey_entry->len &&
+  } else if (tkey_entry != NULL && tkey_entry->len() &&
              (*len == 0 || (*ShiftFlags & ~(KBD_CAPS_LOCK | KBD_NUM_LOCK)) == 0)) {
     /* XLookupString() returned empty string, or no ShiftFlags (ignoring CapsLock/NumLock): use the
      * sequence stated in hw_keys.h */
-    if (tkey_entry->len < maxlen) {
-      CopyMem(tkey_entry->seq, seq, *len = tkey_entry->len);
+    if (tkey_entry->len() < maxlen) {
+      CopyMem(tkey_entry->seq, seq, *len = tkey_entry->len());
 
       X11_DEBUG_SHOW_KEY("replaced(2)", sym, *len, seq);
     }

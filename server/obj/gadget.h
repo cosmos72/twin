@@ -184,16 +184,16 @@ struct s_gadget : public s_obj {
 };
 
 /* Gadget->Attr */
-typedef enum e_gadget_attr {
+enum gadget_attr : udat {
   GADGET_WANT_MOUSE_MOTION = WIDGET_WANT_MOUSE_MOTION, /* 0x0001 */
   GADGET_WANT_KEYS = WIDGET_WANT_KEYS,                 /* 0x0002 */
   GADGET_WANT_MOUSE = WIDGET_WANT_MOUSE,               /* 0x0004 */
   GADGET_WANT_CHANGES = WIDGET_WANT_CHANGES,           /* 0x0008 */
   GADGET_AUTO_FOCUS = WIDGET_AUTO_FOCUS,               /* 0x0010 */
-} gadget_attr;
+};
 
 /* Gadget->Flags */
-typedef enum e_gadget_flag {
+enum gadget_flag : udat {
   GADGETFL_USETEXT = 0x00,                 /* default */
   GADGETFL_USEEXPOSE = WIDGETFL_USEEXPOSE, /* 0x02 */
   GADGETFL_USEFILL = WIDGETFL_USEFILL,     /* 0x03 */
@@ -209,7 +209,7 @@ typedef enum e_gadget_flag {
   GADGETFL_PRESSED = 0x0100,
 
   GADGETFL_NOTVISIBLE = 0x8000,
-} gadget_flag;
+};
 
 #define G_USE(g, USExxx) (((g)->Flags & GADGETFL_USEANY) == CAT(GADGETFL_, USExxx))
 

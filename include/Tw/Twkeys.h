@@ -13,7 +13,11 @@
 #ifndef TW_KEYS_H
 #define TW_KEYS_H
 
-enum Twkey_e {
+enum Twkey_e
+#ifdef __cplusplus
+    : unsigned short
+#endif
+{
 
   TW_Tab = 0x09,
   TW_Linefeed = 0x0A,
