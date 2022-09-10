@@ -78,7 +78,7 @@
  *
  */
 
-#include <map>
+#include <unordered_map>
 
 /* Display variables */
 
@@ -138,7 +138,7 @@ static const struct {
 #undef IS
 };
 
-typedef std::map<KeySym, X11_key_to_TW> X11_keymap_to_TW;
+typedef std::unordered_map<KeySym, X11_key_to_TW> X11_keymap_to_TW;
 
 static X11_keymap_to_TW X11_keys;
 
