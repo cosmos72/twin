@@ -16,22 +16,24 @@
 #define magic_mask ((uldat)0xF0000000ul)
 #define magic_shift 28
 
-enum e_magic_id {
-  obj_magic_id = 0,
-  widget_magic_id = 1,
-  gadget_magic_id = 2,
-  window_magic_id = 3,
-  screen_magic_id = 4,
-  ggroup_magic_id = 5,
-  row_magic_id = 6,
-  menuitem_magic_id = 7,
-  menu_magic_id = 8,
-  msgport_magic_id = 9,
-  msg_magic_id = 0xA,
-  mutex_magic_id = 0xB,
-  module_magic_id = 0xC,
-  display_hw_magic_id = 0xE,
-  all_magic_id = 0xF,
+enum e_magic_byte : unsigned char {
+  obj_magic_byte = 0,
+  widget_magic_byte = 1,
+  gadget_magic_byte = 2,
+  window_magic_byte = 3,
+  screen_magic_byte = 4,
+  ggroup_magic_byte = 5,
+  row_magic_byte = 6,
+  menuitem_magic_byte = 7,
+  menu_magic_byte = 8,
+  msgport_magic_byte = 9,
+  msg_magic_byte = 0xA,
+  mutex_magic_byte = 0xB,
+  module_magic_byte = 0xC,
+  display_hw_magic_byte = 0xE,
+  all_magic_byte = 0xF,
+
+  magic_n = 16, /* 1 + max of the *_magic_byte values above */
 };
 
 /*
@@ -56,34 +58,5 @@ enum e_magic_id {
 #define module_magic_STR "\x3C"
 #define display_hw_magic_STR "\x3E"
 #define all_magic_STR "\x3F"
-
-enum e_magic {
-  obj_magic = 0x0DEAD0B1ul,
-  widget_magic = 0x161D9743ul,
-  gadget_magic = 0x29867551ul,
-  window_magic = 0x31357531ul,
-  screen_magic = 0x42659871ul,
-  ggroup_magic = 0x5741F326ul,
-  row_magic = 0x68074FFAul,
-  menuitem_magic = 0x7ABC8FDEul,
-  menu_magic = 0x8BAD0BEDul,
-  msgport_magic = 0x90981437ul,
-  /*
-   *   B I G   F A T   WARNING:
-   *
-   * msg_magic is the magic number for user-created (tmsg) structures,
-   * while MSG_MAGIC (defined in socklist_m4.h) is the serial number reserved by
-   * libtw to receive server messages (which are still (tmsg) structures).
-   */
-  msg_magic = 0xA3A61CE4ul, /* this must match tmsg_magic in include/Tw/Tw_defs.h */
-  mutex_magic = 0xB0FADED0ul,
-  module_magic = 0xCB0F1278ul,
-  display_hw_magic = 0xEDBCC609ul,
-  all_magic = 0xFA11FA11ul,
-};
-
-enum {
-  magic_n = 16, /* max top hex digit of the above ones + 1 */
-};
 
 #endif /* TWIN_MAGIC_H */

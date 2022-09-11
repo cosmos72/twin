@@ -18,7 +18,7 @@
 /* row */
 
 struct s_fn_row {
-  uldat Magic;
+  e_id Magic;
   void (*Insert)(row, window, row prev, row next);
   void (*Remove)(row);
   void (*Delete)(row);

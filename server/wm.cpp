@@ -507,7 +507,7 @@ static byte CheckForwardMsg(wm_ctx *C, msg Msg, byte WasUsed) {
   if (Msg->Type != msg_key && Msg->Type != msg_mouse)
     return inUse;
 
-  LastW = (widget)Id2Obj(widget_magic_id, LastWId);
+  LastW = (widget)Id2Obj(widget_magic_byte, LastWId);
 
   W = All->FirstScreen->FocusW;
 

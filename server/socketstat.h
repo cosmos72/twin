@@ -505,38 +505,38 @@ static void sockStat(obj x, udat n, const byte *in) {
     for (i = j = 0; j < n; j++) {
       Pop(in, udat, TSF[i].label);
       switch (x->Id >> magic_shift) {
-      case widget_magic_id:
+      case widget_magic_byte:
         ok = sockStatWidget((widget)x, TSF + i) || sockStatObj(x, TSF + i);
         break;
-      case gadget_magic_id:
+      case gadget_magic_byte:
         ok = sockStatGadget((gadget)x, TSF + i) || sockStatWidget((widget)x, TSF + i) ||
              sockStatObj(x, TSF + i);
         break;
-      case window_magic_id:
+      case window_magic_byte:
         ok = sockStatWindow((window)x, TSF + i) || sockStatWidget((widget)x, TSF + i) ||
              sockStatObj(x, TSF + i);
         break;
-      case screen_magic_id:
+      case screen_magic_byte:
         ok = sockStatScreen((screen)x, TSF + i) || sockStatWidget((widget)x, TSF + i) ||
              sockStatObj(x, TSF + i);
         break;
-      case ggroup_magic_id:
+      case ggroup_magic_byte:
         ok = sockStatGroup((ggroup)x, TSF + i) || sockStatObj(x, TSF + i);
         break;
-      case menuitem_magic_id:
+      case menuitem_magic_byte:
         ok = sockStatMenuItem((menuitem)x, TSF + i) || sockStatRow((row)x, TSF + i) ||
              sockStatObj(x, TSF + i);
         break;
-      case menu_magic_id:
+      case menu_magic_byte:
         ok = sockStatMenu((menu)x, TSF + i) || sockStatObj(x, TSF + i);
         break;
-      case msgport_magic_id:
+      case msgport_magic_byte:
         ok = sockStatMsgPort((msgport)x, TSF + i) || sockStatObj(x, TSF + i);
         break;
-      case mutex_magic_id:
+      case mutex_magic_byte:
         ok = sockStatMutex((mutex)x, TSF + i) || sockStatObj(x, TSF + i);
         break;
-      case all_magic_id:
+      case all_magic_byte:
         ok = sockStatAll((all)x, TSF + i) || sockStatObj(x, TSF + i);
         break;
       default:

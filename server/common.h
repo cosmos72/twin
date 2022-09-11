@@ -34,13 +34,13 @@ void ResetPaletteHW(void);
 obj TwinSelectionGetOwner(void);
 void TwinSelectionSetOwner(obj Owner, tany Time, tany Frac);
 #define SEL_CURRENTTIME ((tany)0)
-void TwinSelectionNotify(obj Requestor, uldat ReqPrivate, uldat Magic, const char MIME[MAX_MIMELEN],
+void TwinSelectionNotify(obj Requestor, uldat ReqPrivate, e_id Magic, const char MIME[MAX_MIMELEN],
                          Chars Data);
 void TwinSelectionRequest(obj Requestor, uldat ReqPrivate, obj Owner);
 
 void SelectionExport(void);
 void SelectionImport(void);
-byte SelectionStore(uldat magic, const char mime[MAX_MIMELEN], Chars data);
+bool SelectionStore(e_id magic, const char mime[MAX_MIMELEN], Chars data);
 byte SelectionAppend(Chars data);
 byte SelectionAppendRune(trune rune);
 byte SelectionAppendRunes(TRunes runes);

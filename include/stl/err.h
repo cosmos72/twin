@@ -13,7 +13,7 @@
 #define TWIN_STL_ERR_H
 
 // keep the name 'errnum_e' as it's part of the ABI:
-// C++ mangled name for function 'bool Error(errnum err)' below includes it
+// C++ mangled name for function 'bool Error(errnum err)' below contains it
 typedef enum errnum_e : unsigned {
   SUCCESS = 0,
   NOMEMORY = 1,

@@ -80,7 +80,7 @@ struct s_selection {
   timevalue Time;
   msgport Owner;
   display_hw OwnerOnce;
-  uldat Magic;
+  e_id Magic;
   String Data;
   char MIME[MAX_MIMELEN];
 

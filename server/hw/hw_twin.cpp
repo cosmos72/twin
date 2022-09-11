@@ -55,7 +55,7 @@ typedef struct {
 #define TSelReq (twdata->TSelReq)
 
 static void TW_SelectionRequest_up(uldat Requestor, uldat ReqPrivate);
-static void TW_SelectionNotify_up(uldat ReqPrivate, uldat Magic, const char MIME[MAX_MIMELEN],
+static void TW_SelectionNotify_up(uldat ReqPrivate, e_id Magic, const char MIME[MAX_MIMELEN],
                                   Chars Data);
 
 static void TW_Beep(void) {
@@ -122,8 +122,9 @@ static void TW_HandleMsg(tmsg Msg) {
                            Event->EventSelectionRequest.ReqPrivate);
     return;
   case TW_MSG_SELECTIONNOTIFY:
-    TW_SelectionNotify_up(Event->EventSelectionNotify.ReqPrivate, Event->EventSelectionNotify.Magic,
-                          Event->EventSelectionNotify.MIME,
+    TW_SelectionNotify_up(Event->EventSelectionNotify.ReqPrivate,  //
+                          e_id(Event->EventSelectionNotify.Magic), //
+                          Event->EventSelectionNotify.MIME,        //
                           Chars(Event->EventSelectionNotify.Data, Event->EventSelectionNotify.Len));
     return;
   default:
@@ -367,7 +368,7 @@ static void TW_SelectionRequest_up(uldat Requestor, uldat ReqPrivate) {
 /*
  * notify our Selection to libtw
  */
-static void TW_SelectionNotify_TW(uldat ReqPrivate, uldat Magic, const char MIME[MAX_MIMELEN],
+static void TW_SelectionNotify_TW(uldat ReqPrivate, e_id Magic, const char MIME[MAX_MIMELEN],
                                   Chars Data) {
 #ifdef DEBUG_HW_TWIN
   printf("notifying selection (%d/%d) to libtw server\n", ReqPrivate, SelCount - 1);
@@ -383,7 +384,7 @@ static void TW_SelectionNotify_TW(uldat ReqPrivate, uldat Magic, const char MIME
 /*
  * notify the libtw Selection to twin upper layer
  */
-static void TW_SelectionNotify_up(uldat ReqPrivate, uldat Magic, const char MIME[MAX_MIMELEN],
+static void TW_SelectionNotify_up(uldat ReqPrivate, e_id Magic, const char MIME[MAX_MIMELEN],
                                   Chars Data) {
 #ifdef DEBUG_HW_TWIN
   printf("notifying selection (%d/%d) to twin core\n", ReqPrivate, TSelCount - 1);

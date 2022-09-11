@@ -26,7 +26,7 @@ typedef struct s_obj_entry *obj_entry;
 typedef struct s_obj_list *obj_list;
 
 struct s_fn_obj {
-  uldat Magic;
+  e_id Magic;
   void (*Insert)(obj self, obj parent, obj prev, obj next);
   void (*Remove)(obj self);
   void (*Delete)(obj self);
@@ -39,16 +39,15 @@ protected:
   virtual ~s_obj() = default;
 
 public:
-  uldat Id;
+  e_id Id;
   //  fn_obj Fn;
 
   static obj Create();
   obj Init();
 
 #if 0
-  uldat Magic() const {
-    return ((const s_obj_entry *)this)->Fn->Magic;
-  }
+  virtual e_id Magic() const = 0;
+
   void Insert(obj parent, obj prev, obj next) {
     ((obj_entry)this)->Fn->Insert(this, parent, prev, next);
   }

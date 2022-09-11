@@ -12,7 +12,6 @@
 
 #include "alloc.h"    // AllocMem0(), CloneStr2TRune()
 #include "fn.h"       // Fn_gadget
-#include "id.h"       // AssignId()
 #include "menuitem.h" // COD_RESERVED
 #include "obj/gadget.h"
 

@@ -13,7 +13,6 @@
 #include "algo.h"  // Max2()
 #include "alloc.h" // AllocMem0(), CloneStr2TRune()
 #include "fn.h"    // Fn_menuitem
-#include "id.h"    // AssignId()
 #include "obj/menuitem.h"
 #include "resize.h" // SyncMenu()
 #include "twin.h"   // IS_WINDOW()

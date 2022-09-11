@@ -698,8 +698,9 @@ static void HandleMsg(tmsg Msg) {
 #endif
     /* notify selection to underlying HW */
     HW->HWSelectionNotify(
-        Msg->Event.EventSelectionNotify.ReqPrivate, Msg->Event.EventSelectionNotify.Magic,
-        Msg->Event.EventSelectionNotify.MIME,
+        Msg->Event.EventSelectionNotify.ReqPrivate,  //
+        e_id(Msg->Event.EventSelectionNotify.Magic), //
+        Msg->Event.EventSelectionNotify.MIME,        //
         Chars(Msg->Event.EventSelectionNotify.Data, Msg->Event.EventSelectionNotify.Len));
     break;
   case TW_MSG_DISPLAY:
@@ -817,7 +818,7 @@ void TwinSelectionSetOwner(obj Owner, tany Time, tany Frac) {
 }
 
 /* HW back-end function: notify selection */
-void TwinSelectionNotify(obj Requestor, uldat ReqPrivate, uldat Magic, const char MIME[MAX_MIMELEN],
+void TwinSelectionNotify(obj Requestor, uldat ReqPrivate, e_id Magic, const char MIME[MAX_MIMELEN],
                          Chars Data) {
   if (!MIME) {
     MIME = nullMIME;

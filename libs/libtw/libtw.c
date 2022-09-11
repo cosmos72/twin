@@ -2893,16 +2893,15 @@ static void ParseReplies(tw_d TwD) {
   }
 }
 
-#define Delta ((uldat)(size_t) & (((tmsg)0)->Event))
-
 /* nothing to lock here... */
 /**
  * creates an event message
  */
 tmsg Tw_CreateMsg(tw_d TwD, uldat Type, uldat EventLen) {
   tmsg Msg;
+  const uldat delta = (uldat)(size_t) & (((tmsg)NULL)->Event);
 
-  if ((Msg = (tmsg)Tw_AllocMem(EventLen += Delta))) {
+  if ((Msg = (tmsg)Tw_AllocMem(EventLen += delta))) {
     Msg->Len = EventLen;
     Msg->Magic = tmsg_magic;
     Msg->Type = Type;

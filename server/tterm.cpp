@@ -122,7 +122,7 @@ static void TwinTermH(msgport MsgPort) {
 
     } else if (Msg->Type == msg_selection_notify) {
 
-      if ((Win = (window)Id2Obj(window_magic_id, Event->EventSelectionNotify.ReqPrivate))) {
+      if ((Win = (window)Id2Obj(window_magic_byte, Event->EventSelectionNotify.ReqPrivate))) {
         (void)RemoteWindowWriteQueue(Win, Event->EventSelectionNotify.Len,
                                      Event->EventSelectionNotify.Data);
       }

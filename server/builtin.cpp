@@ -683,7 +683,7 @@ static void BuiltinH(msgport MsgPort) {
       break;
 
     case msg_selection_notify:
-      tempWin = (window)Id2Obj(window_magic_id, Msg->Event.EventSelectionNotify.ReqPrivate);
+      tempWin = (window)Id2Obj(window_magic_byte, Msg->Event.EventSelectionNotify.ReqPrivate);
       if (tempWin && tempWin == ExecuteWin) {
         switch (Msg->Event.EventSelectionNotify.Magic) {
         case SEL_UTF8MAGIC:

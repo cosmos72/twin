@@ -13,7 +13,6 @@
 #include "obj/widget.h"
 #include "alloc.h" // AllocMem0()
 #include "fn.h"    // Fn_widget
-#include "id.h"    // AssignId()
 
 #include <new>
 #include <string.h> // memset()

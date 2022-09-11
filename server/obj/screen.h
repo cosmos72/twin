@@ -21,7 +21,7 @@ struct s_sB { /* for SCREENFL_USEBG screens */
 };
 
 struct s_fn_screen {
-  uldat Magic;
+  e_id Magic;
   void (*Insert)(screen, all, screen Prev, screen Next);
   void (*Remove)(screen);
   void (*Delete)(screen);

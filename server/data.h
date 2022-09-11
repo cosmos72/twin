@@ -37,6 +37,6 @@ extern trune GadgetResize[2], ScrollBarX[3], ScrollBarY[3], TabX, TabY, StdBorde
 extern tcolor DEFAULT_ColGadgets, DEFAULT_ColArrows, DEFAULT_ColBars, DEFAULT_ColTabs,
     DEFAULT_ColBorder, DEFAULT_ColDisabled, DEFAULT_ColSelectDisabled;
 
-byte InitData(void);
+bool InitData(void);
 
 #endif /* TWIN_DATA_H */

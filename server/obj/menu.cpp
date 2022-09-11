@@ -12,7 +12,6 @@
 
 #include "alloc.h"   // AllocMem0()
 #include "fn.h"      // Fn_menu
-#include "id.h"      // AssignId()
 #include "methods.h" // InsertLast()
 #include "obj/menu.h"
 #include "obj/msgport.h"

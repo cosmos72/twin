@@ -19,7 +19,7 @@
 #include "stl_types.h"
 
 struct s_fn_display_hw {
-  uldat Magic;
+  e_id Magic;
   void (*Insert)(display_hw, all, display_hw Prev, display_hw Next);
   void (*Remove)(display_hw);
   void (*Delete)(display_hw);
@@ -30,11 +30,11 @@ struct s_fn_display_hw {
   void (*DoQuit)(display_hw);
 };
 
-typedef struct s_mouse_state {
+struct mouse_state {
   dat x, y;
   dat delta_x, delta_y;
   byte keys;
-} mouse_state;
+};
 
 struct s_display_hw : public s_obj {
   fn_display_hw Fn;
@@ -70,8 +70,7 @@ struct s_display_hw : public s_obj {
   byte (*HWSelectionImport)(void);
   void (*HWSelectionExport)(void);
   void (*HWSelectionRequest)(obj Requestor, uldat ReqPrivate);
-  void (*HWSelectionNotify)(uldat ReqPrivate, uldat Magic, const char MIME[MAX_MIMELEN],
-                            Chars Data);
+  void (*HWSelectionNotify)(uldat ReqPrivate, e_id Magic, const char MIME[MAX_MIMELEN], Chars Data);
   tany HWSelectionPrivate;
 
   byte (*CanDragArea)(dat Xstart, dat Ystart, dat Xend, dat Yend, dat DstXstart, dat DstYstart);

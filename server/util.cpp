@@ -298,7 +298,7 @@ byte SendControlMsg(msgport MsgPort, udat Code, udat Len, const char *Data) {
   return tfalse;
 }
 
-byte SelectionStore(uldat magic, const char mime[MAX_MIMELEN], Chars data) {
+bool SelectionStore(e_id magic, const char mime[MAX_MIMELEN], Chars data) {
   selection Sel = All->Selection;
   if (mime) {
     CopyMem(mime, Sel->MIME, MAX_MIMELEN);
@@ -323,7 +323,6 @@ byte SelectionAppendRunes(TRunes runes) {
   return All->Selection->Data.append(runes);
 }
 
-#define _SEL_MAGIC SEL_UTF8MAGIC
 #define _SelAppendNL() SelectionAppend(Chars("\n", 1));
 
 class Appender {
@@ -377,7 +376,7 @@ bool SetSelectionFromWindow(window w) {
   if (!(w->State & WINDOW_ANYSEL) || w->YstSel > w->YendSel ||
       (w->YstSel == w->YendSel && w->XstSel > w->XendSel)) {
 
-    ok = SelectionStore(_SEL_MAGIC, NULL, Chars());
+    ok = SelectionStore(SEL_UTF8MAGIC, NULL, Chars());
     if (ok) {
       NeedHW |= NEEDSelectionExport;
     }
@@ -432,7 +431,7 @@ bool SetSelectionFromWindow(window w) {
         slen = w->XendSel - w->XstSel + 1;
       }
       cells += w->XstSel;
-      ok = SelectionStore(_SEL_MAGIC, NULL, Chars());
+      ok = SelectionStore(SEL_UTF8MAGIC, NULL, Chars());
       for (i = slen; ok && i-- > 0; cells++) {
         ok = appender.rune(TRUNE(*cells));
       }
@@ -480,7 +479,7 @@ bool SetSelectionFromWindow(window w) {
     return false;
   }
 
-  ok = SelectionStore(_SEL_MAGIC, NULL, Chars());
+  ok = SelectionStore(SEL_UTF8MAGIC, NULL, Chars());
   row r;
 
   /* Gap not supported! */

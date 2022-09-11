@@ -15,7 +15,6 @@
 #include "alloc.h" // AllocMem0(), CloneStrL()
 #include "data.h"  // DEFAULT_Col*
 #include "fn.h"    // Fn_window
-#include "id.h"    // AssignId()
 #include "twin.h"  // NOFD, NOPID, NOSLOT
 
 #include <new>

@@ -21,181 +21,203 @@
 
 /* functions to manage Ids */
 
-static obj *IdList[magic_n];
-static uldat IdSize[magic_n], IdTop[magic_n], IdBottom[magic_n];
+struct s_idvec {
+  obj *Vec;
+  uldat Bottom, Top, Size;
 
-inline uldat IdListGrow(byte i) {
-  uldat oldsize, size;
-  obj *newIdList;
+  bool assign_id(e_magic_byte magic_byte, obj o);
+  void drop_id(e_magic_byte magic_byte, obj o);
 
-  oldsize = IdSize[i];
-  if (oldsize >= MAXID || i == obj_magic_id || i == all_magic_id)
+private:
+  // returns old size, or NOSLOT if resize failed
+  uldat grow(e_magic_byte magic_byte);
+  void shrink(e_magic_byte magic_byte);
+
+  // return first available id, growing if needed
+  uldat get(e_magic_byte magic_byte);
+};
+
+static s_idvec IdVec[magic_n];
+
+uldat s_idvec::grow(e_magic_byte magic_byte) {
+  uldat old_size = Size;
+
+  if (old_size >= MAXID || magic_byte == obj_magic_byte || magic_byte == all_magic_byte) {
+    // do not assign IDs to Obj and All
     return NOSLOT;
-
-  size = oldsize < TW_SMALLBUFF / 3 ? TW_SMALLBUFF / 2 : oldsize + (oldsize >> 1);
-  if (size > MAXID)
-    size = MAXID;
-
-  if (!(newIdList = (obj *)ReAllocMem0(IdList[i], sizeof(obj) * oldsize, sizeof(obj) * size)))
+  }
+  uldat new_size = old_size < TW_SMALLBUFF / 3 ? TW_SMALLBUFF / 2 : old_size + (old_size >> 1);
+  if (new_size > MAXID) {
+    new_size = MAXID;
+  }
+  obj *new_vec;
+  if (!(new_vec = (obj *)ReAllocMem0(Vec, sizeof(obj) * old_size, sizeof(obj) * new_size))) {
     return NOSLOT;
-
-  IdList[i] = newIdList;
-  IdSize[i] = size;
-
-  return oldsize;
+  }
+  Vec = new_vec;
+  Size = new_size;
+  return old_size;
 }
 
-inline void IdListShrink(byte i) {
-  obj *newIdList;
-  uldat size = Max2(TW_BIGBUFF, IdTop[i] << 1);
+void s_idvec::shrink(e_magic_byte magic_byte) {
+  obj *new_vec;
+  uldat new_size = Max2(TW_BIGBUFF, Top << 1);
 
-  if (size < IdSize[i] &&
-      (newIdList = (obj *)ReAllocMem0(IdList[i], sizeof(obj) * IdSize[i], sizeof(obj) * size))) {
-    IdList[i] = newIdList;
-    IdSize[i] = size;
+  if (new_size < Size &&
+      (new_vec = (obj *)ReAllocMem0(Vec, sizeof(obj) * Size, sizeof(obj) * new_size))) {
+    Vec = new_vec;
+    Size = new_size;
   }
 }
 
-inline uldat IdListGet(byte i) {
-  if (IdBottom[i] == IdSize[i])
-    return IdListGrow(i);
-
-  return IdBottom[i];
+uldat s_idvec::get(e_magic_byte magic_byte) {
+  return Bottom < Size ? Bottom : grow(magic_byte);
 }
 
-obj Id2Obj(byte i, uldat Id) {
-  byte I = Id >> magic_shift;
-
-  if (i < magic_n && I < magic_n) {
-    /* everything is a valid (obj) */
-    /* gadgets, windows, screens are valid (widget) */
-    /* menuitems are valid (row) */
-    if (i == I || i == obj_magic_id ||
-        (i == widget_magic_id &&
-         (I == gadget_magic_id || I == window_magic_id || I == screen_magic_id)) ||
-        (i == row_magic_id && I == menuitem_magic_id)) {
-
-      Id &= MAXID;
-      if (Id < IdTop[I])
-        return IdList[I][Id];
+bool s_idvec::assign_id(e_magic_byte magic_byte, obj o) {
+  const uldat id = get(magic_byte);
+  if (id != NOSLOT) {
+    o->Id = e_id(id | ((uldat)magic_byte << magic_shift));
+    Vec[id] = o;
+    if (Top <= id) {
+      Top = id + 1;
     }
-  }
-  return (obj)0;
-}
-
-inline byte _AssignId(byte i, obj o) {
-  uldat Id, j;
-  if ((Id = IdListGet(i)) != NOSLOT) {
-    o->Id = Id | ((uldat)i << magic_shift);
-    IdList[i][Id] = o;
-    if (IdTop[i] <= Id)
-      IdTop[i] = Id + 1;
-    for (j = IdBottom[i] + 1; j < IdTop[i]; j++)
-      if (!IdList[i][j])
+    uldat lo;
+    for (lo = Bottom + 1; lo < Top; lo++) {
+      if (!Vec[lo]) {
         break;
-    IdBottom[i] = j;
-    return ttrue;
+      }
+    }
+    Bottom = lo;
+    return true;
   }
   Error(NOTABLES);
-  return tfalse;
+  return false;
 }
 
-inline void _DropId(byte i, obj o) {
-  uldat Id = o->Id & MAXID, j;
+void s_idvec::drop_id(e_magic_byte magic_byte, obj o) {
+  uldat id = o->Id & MAXID;
 
-  if (Id < IdTop[i] && IdList[i][Id] == o /* paranoia */) {
+  if (id < Top && Vec[id] == o /* paranoia */) {
     o->Id = NOID;
-    IdList[i][Id] = (obj)0;
-    if (IdBottom[i] > Id)
-      IdBottom[i] = Id;
-    for (j = IdTop[i] - 1; j > IdBottom[i]; j--)
-      if (IdList[i][j])
+    Vec[id] = nullptr;
+    if (Bottom > id) {
+      Bottom = id;
+    }
+    uldat hi;
+    for (hi = Top - 1; hi > Bottom; hi--) {
+      if (Vec[hi]) {
         break;
-    IdTop[i] = (j == IdBottom[i]) ? j : j + 1;
+      }
+    }
+    Top = (hi == Bottom) ? hi : hi + 1;
 
-    if (IdSize[i] > (IdTop[i] << 4) && IdSize[i] > TW_BIGBUFF)
-      IdListShrink(i);
+    if (Size > (Top << 4) && Size > TW_BIGBUFF)
+      shrink(magic_byte);
   }
 }
 
-byte AssignId(const fn_obj Fn_Obj, obj o) {
-  byte i;
-  if (o)
-    switch (Fn_Obj->Magic) {
-    case obj_magic:
+bool AssignId(const e_id class_magic_id, obj o) {
+  if (o) {
+    const e_magic_byte magic_byte = e_magic_byte(class_magic_id >> magic_shift);
+    switch (magic_byte) {
+    case obj_magic_byte:
       /* 'obj' is an abstract type, you can't create one */
       break;
-    case row_magic:
-    case module_magic:
-    case display_hw_magic:
-    case msg_magic:
-      /*
-       * We don't use Ids for rows and msgs as we expect to create *lots* of them.
-       * Remote access to module and display_hw is unsafe too,
-       * so no Ids for them too.
-       */
-      o->Id = Fn_Obj->Magic;
-      return ttrue;
-    case widget_magic:
-    case gadget_magic:
-    case window_magic:
-    case screen_magic:
-    case ggroup_magic:
-    case menuitem_magic:
-    case menu_magic:
-    case msgport_magic:
-    case mutex_magic:
-      i = Fn_Obj->Magic >> magic_shift;
-      return _AssignId(i, o);
+    case row_magic_byte:
+    case module_magic_byte:
+    case display_hw_magic_byte:
+    case msg_magic_byte:
+      // We don't use Ids for rows and msgs as we expect to create *lots* of them.
+      //
+      // Remote access to module and display_hw is unsafe, so no Ids for them too.
+      o->Id = class_magic_id;
+      return true;
+    case widget_magic_byte:
+    case gadget_magic_byte:
+    case window_magic_byte:
+    case screen_magic_byte:
+    case ggroup_magic_byte:
+    case menuitem_magic_byte:
+    case menu_magic_byte:
+    case msgport_magic_byte:
+    case mutex_magic_byte:
+      return IdVec[magic_byte].assign_id(magic_byte, o);
     default:
       break;
     }
-  return tfalse;
+  }
+  return false;
 }
 
 void DropId(obj o) {
   obj_entry e = (obj_entry)o;
-  byte i = 0;
-  if (o && e->Fn)
-    switch (e->Fn->Magic) {
-    case obj_magic:
-      /* 'obj' is just a template type, you can't create one */
+  if (o && e->Fn) {
+    const e_magic_byte magic_byte = e_magic_byte(e->Fn->Magic >> magic_shift);
+
+    switch (magic_byte) {
+    case obj_magic_byte:
+      /* 'obj' is an abstract class, you can't create one */
       break;
-    case row_magic:
-    case module_magic:
-    case display_hw_magic:
-    case msg_magic:
+    case row_magic_byte:
+    case module_magic_byte:
+    case display_hw_magic_byte:
+    case msg_magic_byte:
       /* we don't use Ids for rows and msgs as we expect to create *lots* of them */
       /* it's unsafe to allow modules access remotely, so no Ids for them too */
       o->Id = NOID;
       break;
-    case widget_magic:
-    case gadget_magic:
-    case window_magic:
-    case screen_magic:
-    case ggroup_magic:
-    case menuitem_magic:
-    case menu_magic:
-    case msgport_magic:
-    case mutex_magic:
-      i = e->Fn->Magic >> magic_shift;
-      if (i == (o->Id >> magic_shift))
-        _DropId(i, o);
+    case widget_magic_byte:
+    case gadget_magic_byte:
+    case window_magic_byte:
+    case screen_magic_byte:
+    case ggroup_magic_byte:
+    case menuitem_magic_byte:
+    case menu_magic_byte:
+    case msgport_magic_byte:
+    case mutex_magic_byte:
+      if (magic_byte == e_magic_byte(o->Id >> magic_shift)) {
+        IdVec[magic_byte].drop_id(magic_byte, o);
+      }
       break;
     default:
       break;
     }
+  }
 }
 
-static obj IdList_all[1];
+obj Id2Obj(e_magic_byte expected_magic_byte, uldat id) {
+  e_magic_byte magic_byte = e_magic_byte(id >> magic_shift);
 
-byte AssignId_all(all a) {
-  byte i = all_magic_id;
+  if (expected_magic_byte < magic_n && magic_byte < magic_n) {
+    /* everything is a valid (obj) */
+    /* gadgets, windows, screens are valid (widget) */
+    /* menuitems are valid (row) */
+    if (expected_magic_byte == magic_byte || expected_magic_byte == obj_magic_byte ||
+        (expected_magic_byte == widget_magic_byte &&
+         (magic_byte == gadget_magic_byte || magic_byte == window_magic_byte ||
+          magic_byte == screen_magic_byte)) ||
+        (expected_magic_byte == row_magic_byte && magic_byte == menuitem_magic_byte)) {
 
-  if (!IdList[i]) {
-    IdList[i] = IdList_all;
-    IdSize[i] = 1;
-    return _AssignId(i, (obj)a);
+      id &= MAXID;
+      if (id < IdVec[magic_byte].Top) {
+        return IdVec[magic_byte].Vec[id];
+      }
+    }
   }
-  return tfalse;
+  return nullptr;
+}
+
+static obj IdVec_all[1];
+
+bool AssignId_all(all a) {
+  const e_magic_byte magic_byte = all_magic_byte;
+  s_idvec &my = IdVec[magic_byte];
+
+  if (!my.Vec) {
+    my.Vec = IdVec_all;
+    my.Size = 1;
+    return my.assign_id(magic_byte, a);
+  }
+  return false;
 }

@@ -15,10 +15,8 @@
 #include "obj/id.h" // AssignId()
 #include "obj/msg.h"
 
-#define Delta
-
 msg s_msg::Create(udat type, size_t eventlen) {
-  size_t headerlen = ((size_t) & (((msg)0)->Event));
+  size_t headerlen = ((size_t) & (((msg) nullptr)->Event));
 
   switch (type) {
   case msg_map:
@@ -84,7 +82,7 @@ msg s_msg::Create(udat type, size_t eventlen) {
 }
 
 msg s_msg::Init(udat type, uldat eventlen) {
-  if (AssignId((fn_obj)Fn, (obj)this)) {
+  if (AssignId(Fn->Magic, (obj)this)) {
     // this->Prev = this->Next = NULL;
     // this->MsgPort = NULL;
     this->Type = type;

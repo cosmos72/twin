@@ -111,7 +111,7 @@ typedef struct s_event_control {
 #define MSG_CONTROL_DRAGNDROP ((udat)3)
 
 /* use for free-format messages between clients */
-typedef struct s_event_clientmsg {
+struct event_clientmsg {
   widget W;
   udat Code, Format;
   uldat Len;
@@ -120,14 +120,14 @@ typedef struct s_event_clientmsg {
     udat d[sizeof(uldat) / sizeof(udat)];
     uldat l[1];
   } Data; /* [Len] bytes actually */
-} event_clientmsg;
+};
 
-typedef struct s_event_display {
+struct event_display {
   widget W; /* not used here */
   udat Code, Len;
   dat X, Y;
   void *Data; /* [Len] bytes actually */
-} event_display;
+};
 
 enum e_event_display_code {
   ev_dpy_DrawTCell = 0,
@@ -149,8 +149,7 @@ enum e_event_display_code {
   ev_dpy_Quit = 16,
 };
 
-typedef struct s_event_widget event_widget;
-struct s_event_widget {
+struct event_widget {
   widget W;
   udat Code, Flags;
   dat XWidth, YWidth;
@@ -164,22 +163,19 @@ struct s_event_widget {
 /* some msg_widget_change flags */
 #define MSG_WIDGETFL_SHADED 1
 
-typedef struct s_event_gadget event_gadget;
-struct s_event_gadget {
+struct event_gadget {
   widget W;
   udat Code, Flags; /* the Flags of the gadget */
 };
 
-typedef struct s_event_menu event_menu;
-struct s_event_menu {
+struct event_menu {
   window W;
   udat Code, pad;
   menu Menu;
   row Row;
 };
 
-typedef struct s_event_selection event_selection;
-struct s_event_selection {
+struct event_selection {
   widget W;
   udat Code, pad; /* unused */
   dat X, Y;
@@ -187,33 +183,23 @@ struct s_event_selection {
 
 #define MAX_MIMELEN 64
 
-typedef struct s_event_selectionnotify event_selectionnotify;
-struct s_event_selectionnotify {
+struct event_selectionnotify {
   widget W;
   udat Code, pad; /* unused */
   uldat ReqPrivate;
-  uldat Magic;
+  e_id Magic;
   char MIME[MAX_MIMELEN];
   uldat Len;
   char Data[sizeof(uldat)]; /* Data[] is Len bytes actually */
 };
-/*SelectionNotify Magic*/
-#define SEL_APPEND 0x00000000
-#define SEL_UTF8MAGIC 0x38465455 /* UTF-8 */
-#define SEL_FILEMAGIC 0x656C6946
-#define SEL_URLMAGIC 0x2F4C5255
-#define SEL_DATAMAGIC 0x41544144 /* check MIME if you get this */
-#define SEL_IDMAGIC 0x64496449
 
-typedef struct s_event_selectionrequest event_selectionrequest;
-struct s_event_selectionrequest {
+struct event_selectionrequest {
   widget W;
   udat Code, pad; /* unused */
   obj Requestor;
   uldat ReqPrivate;
 };
 
-typedef union event_any event_any;
 union event_any {
   event_common EventCommon;
   event_keyboard EventKeyboard;

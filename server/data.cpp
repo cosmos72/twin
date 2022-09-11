@@ -72,7 +72,7 @@ tcolor DEFAULT_ColGadgets = TCOL(thigh | tyellow, tcyan),
        DEFAULT_ColDisabled = TCOL(thigh | tblack, tblack),
        DEFAULT_ColSelectDisabled = TCOL(tblack, thigh | tblack);
 
-byte InitData(void) {
+bool InitData(void) {
   trune *vec[] = {GadgetResize, ScrollBarX,   ScrollBarY,   &TabX,
                   &TabY,        StdBorder[0], StdBorder[1], Screen_Back};
   byte sizes[] = {2, 3, 3, 1, 1, 9, 9, 2};

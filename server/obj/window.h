@@ -66,7 +66,7 @@ struct s_WC { /* for WINDOWFL_USECONTENTS windows */
 };
 
 struct s_fn_window {
-  uldat Magic;
+  e_id Magic;
   void (*Insert)(window, widget Parent, widget Prev, widget Next);
   void (*Remove)(window);
   void (*Delete)(window);

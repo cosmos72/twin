@@ -362,7 +362,7 @@ static void display_SelectionRequest_display(obj Requestor, uldat ReqPrivate) {
 /*
  * notify our Selection to twdisplay
  */
-static void display_SelectionNotify_display(uldat ReqPrivate, uldat Magic,
+static void display_SelectionNotify_display(uldat ReqPrivate, e_id Magic,
                                             const char MIME[MAX_MIMELEN], Chars Data) {
   /*
    * shortcut: since (display) is a msgport, use fail-safe TwinSelectionNotify()

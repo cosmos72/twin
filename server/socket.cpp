@@ -588,7 +588,7 @@ static obj *AllocId2ObjVec(byte *alloced, byte c, uldat n, byte *VV) {
     S = (const byte *)VV;
     while (n--) {
       Pop(S, uldat, i);
-      *X++ = Id2Obj(c, i);
+      *X++ = Id2Obj(e_magic_byte(c), i);
     }
     *alloced = ttrue;
   } else
@@ -639,7 +639,7 @@ inline ldat sockDecodeArg(uldat id, const char *Format, uldat n, tsfield a, ulda
       uldat a0;
       Pop(s, uldat, a0);
       c = (byte)*Format - base_magic_CHR;
-      a[n] _obj = Id2Obj(c, a0);
+      a[n] _obj = Id2Obj(e_magic_byte(c), a0);
       a[n] _type = obj_;
       break;
     }
@@ -1003,12 +1003,12 @@ static msgport sockGetMsgPortObj(obj p) {
       return (msgport)e;
     }
     switch (e->Id >> magic_shift) {
-    case row_magic_id:
-    case menuitem_magic_id:
-    case menu_magic_id:
+    case row_magic_byte:
+    case menuitem_magic_byte:
+    case menu_magic_byte:
       e = (obj_entry)e->Parent;
       break;
-    case mutex_magic_id:
+    case mutex_magic_byte:
       e = (obj_entry)((mutex)e)->Owner;
       break;
     default:
@@ -1617,11 +1617,11 @@ static byte sockSendToMsgPort(msgport MsgPort, udat Len, const byte *Data) {
 
       if ((Msg = New(msg)(tMsg->Type, _Len))) {
 
-        Msg->Event.EventCommon.W = (widget)Id2Obj(widget_magic_id, tMsg->Event.EventCommon.W);
+        Msg->Event.EventCommon.W = (widget)Id2Obj(widget_magic_byte, tMsg->Event.EventCommon.W);
 
         switch (tMsg->Type) {
         case TW_MSG_DISPLAY:
-          if (sizeof(struct s_event_display) == sizeof(window) + 4 * sizeof(dat) + sizeof(byte *) &&
+          if (sizeof(struct event_display) == sizeof(window) + 4 * sizeof(dat) + sizeof(byte *) &&
               sizeof(struct s_tevent_display) ==
                   sizeof(twindow) + 4 * sizeof(dat) + sizeof(uldat)) {
 
@@ -1718,8 +1718,7 @@ static byte sockSendToMsgPort(msgport MsgPort, udat Len, const byte *Data) {
           Msg->Event.EventControl.Data[Msg->Event.EventControl.Len] = '\0';
           break;
         case TW_MSG_USER_CLIENTMSG:
-          if (sizeof(struct s_event_clientmsg) ==
-                  sizeof(window) + 2 * sizeof(dat) + 2 * sizeof(uldat) &&
+          if (sizeof(event_clientmsg) == sizeof(window) + 2 * sizeof(dat) + 2 * sizeof(uldat) &&
               sizeof(struct s_tevent_clientmsg) ==
                   sizeof(twindow) + 2 * sizeof(dat) + 2 * sizeof(uldat)) {
 
@@ -1777,7 +1776,7 @@ static void sockSetOwnerSelection(tany Time, tany Frac) {
 
 static void sockNotifySelection(obj Requestor, uldat ReqPrivate, uldat Magic,
                                 const char MIME[MAX_MIMELEN], uldat Len, const char *Data) {
-  TwinSelectionNotify(Requestor, ReqPrivate, Magic, MIME, Chars(Data, Len));
+  TwinSelectionNotify(Requestor, ReqPrivate, e_id(Magic), MIME, Chars(Data, Len));
 }
 
 static void sockRequestSelection(obj Owner, uldat ReqPrivate) {

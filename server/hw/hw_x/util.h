@@ -191,7 +191,7 @@ static void X11_utf8_to_wchar(Chars src, Vector<wchar_t> &dst) {
 /*
  * notify our Selection to X11
  */
-static void X11_SelectionNotify_X11(uldat ReqPrivate, uldat Magic, const char MIME[MAX_MIMELEN],
+static void X11_SelectionNotify_X11(uldat ReqPrivate, e_id Magic, const char MIME[MAX_MIMELEN],
                                     Chars data) {
   XEvent ev;
   Atom target;

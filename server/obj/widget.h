@@ -70,7 +70,7 @@ struct s_draw_ctx {
 };
 
 struct s_fn_widget {
-  uldat Magic;
+  e_id Magic;
   void (*Insert)(widget self, widget parent, widget Prev, widget Next);
   void (*Remove)(widget self);
   void (*Delete)(widget self);

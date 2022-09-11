@@ -18,7 +18,7 @@
 #include <Tw/datatypes.h>
 
 struct s_fn_msgport {
-  uldat Magic;
+  e_id Magic;
   void (*Insert)(msgport, all, msgport Prev, msgport Next);
   void (*Remove)(msgport);
   void (*Delete)(msgport);

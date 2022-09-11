@@ -52,7 +52,7 @@
 #include "obj/all.h"
 #include "obj/fn.h"
 
-enum e_fd {
+enum {
   NOFD = -1,
   /* use for every FD that needs a special RemoteFlush()
    * instead of a plain write() and set PrivateFlush as needed */
@@ -64,7 +64,7 @@ enum e_fd {
 #endif
 #define NOSLOT TW_MAXULDAT
 
-#define IS_OBJ(type, O) (((O)->Id >> magic_shift) == type##_magic_id)
+#define IS_OBJ(type, O) (((O)->Id >> magic_shift) == type##_magic_byte)
 #define IS_WIDGET(O)                                                                               \
   (IS_OBJ(widget, O) || IS_OBJ(gadget, O) || IS_OBJ(window, O) || IS_OBJ(screen, O))
 #define IS_GADGET(O) IS_OBJ(gadget, O)

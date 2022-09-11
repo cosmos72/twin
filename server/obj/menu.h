@@ -16,7 +16,7 @@
 #include "obj/obj.h"
 
 struct s_fn_menu {
-  uldat Magic;
+  e_id Magic;
   void (*Insert)(menu, msgport, menu Prev, menu Next);
   void (*Remove)(menu);
   void (*Delete)(menu);

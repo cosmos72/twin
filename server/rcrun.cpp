@@ -378,7 +378,7 @@ static screen RCFindScreenName(cstr name) {
 
 inline widget RCCheck4WidgetId(run *r) {
   widget W;
-  if (!(W = (widget)Id2Obj(widget_magic_id, r->W)) || !W->Parent || !IS_SCREEN(W->Parent))
+  if (!(W = (widget)Id2Obj(widget_magic_byte, r->W)) || !W->Parent || !IS_SCREEN(W->Parent))
 
     r->W = NOID;
   return W;

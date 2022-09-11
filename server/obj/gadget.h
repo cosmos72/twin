@@ -21,7 +21,7 @@ struct s_gT { /* for GADGETFL_USETEXT gadgets */
 };
 
 struct s_fn_gadget {
-  uldat Magic;
+  e_id Magic;
   void (*Insert)(gadget, widget Parent, widget Prev, widget Next);
   void (*Remove)(gadget);
   void (*Delete)(gadget);
