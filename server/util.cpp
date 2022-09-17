@@ -919,7 +919,7 @@ byte InitTWDisplay(void) {
           if (connect(fd, (struct sockaddr *)&addr_unix, sizeof(addr_unix)) >= 0) {
             /*
              * server is alive, try to grab another TWDISPLAY.
-             * also, we must junk `fd' since SOCK_STREAM sockets
+             * also, we must close `fd' since SOCK_STREAM sockets
              * can connect() only once
              */
             close(fd);
@@ -935,7 +935,7 @@ byte InitTWDisplay(void) {
              *
              * Trying to delete a /tmp/.Twin:<x> entry we cannot
              * connect to wreaks havoc if you mix this twin server
-             * with older ones, but having two different servers
+             * with older ones, but having two different server versions
              * installed on one system should be rare enough.
              */
             ok = bind(unixFd, (struct sockaddr *)&addr_unix, sizeof(addr_unix)) >= 0;

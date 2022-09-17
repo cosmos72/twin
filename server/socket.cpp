@@ -2262,7 +2262,7 @@ static void Wait4Magic(int fd, uldat slot, byte isUnix) {
     if ((AlienXendian(Slot) = Check4MagicTranslation(Slot, t, max)) == MagicUnknown) {
       /*
        * no suitable translation available. use our native magic,
-       * in case library can handle it.
+       * in case client's library can handle it.
        */
       CopyMem(TwinMagicData, AlienMagic(Slot), TWS_highest);
       AlienXendian(Slot) = MagicNative;
@@ -2277,13 +2277,18 @@ static void Wait4Magic(int fd, uldat slot, byte isUnix) {
     RemoteReadDeQueue(Slot, max);
 
     if (got) {
-      if (isUnix) {
-        if ((LS.HandlerIO.S = GetHandlerIO()) && SendUldat(TW_GO_MAGIC))
-          return;
-      } else {
-        LS.HandlerIO.S = Wait4AuthIO;
-        if (SendUldat(TW_WAIT_MAGIC) && SendChallenge())
-          return;
+      /*
+       * twin < 0.9.1 automatically trusted clients connected via the unix socket
+       * i.e. accepted them without TwinAuth challenge.
+       * For increased security, twin >= 0.9.1 sends TwinAuth challenge also to them.
+       *
+       * Reason: on non-Linux systems, file system permissions on unix domain socket
+       * may be ignored => different users may be able to connect through it.
+       */
+      (void)isUnix;
+      LS.HandlerIO.S = Wait4AuthIO;
+      if (SendUldat(TW_WAIT_MAGIC) && SendChallenge()) {
+        return;
       }
     }
   }
@@ -2501,6 +2506,10 @@ EXTERN_C byte InitModule(module Module) {
   memset(&addr, 0, sizeof(addr));
 
   addr.sin_family = AF_INET;
+  /*
+   * the following wraps around on 'unsigned short' overflow:
+   * useful if we ever want to listen on ports < TW_INET_PORT i.e. < 7754
+   */
   addr.sin_port = htons(TW_INET_PORT + strtoul(TWDisplay + 1, NULL, 16));
 
   if ((inetFd = socket(AF_INET, SOCK_STREAM, 0)) >= 0 &&
