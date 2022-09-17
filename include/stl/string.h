@@ -43,8 +43,12 @@ public:
 
   using Base::append;
 
+  // add final '\0' but do not count it in size()
+  // return true if successful, false if out of memory
+  bool make_c_str();
+
   bool append(Utf8 seq) {
-    return append(Chars(seq.data(), seq.size()));
+    return append(seq.data(), seq.size());
   }
 
   // convert UTF-32 runes to UTF-8 and append them to this string

@@ -96,7 +96,7 @@ template <class T> void test_vector() {
   assert(a.size() == 0);
   assert(a.data() == NULL);
 
-  assert(a.dup(data, n));
+  assert(a.assign(data, n));
   assert(a.size() == n);
   assert(a.data());
   assert(a.data() != data);

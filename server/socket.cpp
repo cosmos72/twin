@@ -2012,9 +2012,9 @@ static byte sockInitAuth(void) {
   if (!HOME)
     return tfalse;
 
-  len = strlen(HOME);
+  len = HOME.size();
   len = Min2(len, TotalLen - 11);
-  CopyMem(HOME, AuthData, len);
+  CopyMem(HOME.data(), AuthData, len);
   CopyMem("/.TwinAuth", AuthData + len, 11);
 
   if ((fd = open(AuthData, O_RDONLY)) < 0)
@@ -2109,7 +2109,7 @@ static int EnsureRead(int fd, uldat slot, uldat len) {
   return max;
 }
 
-static handler_io_s GetHandlerIO(void) {
+static handler_io_s GetHandlerIO() {
 #ifdef CONF_SOCKET_ALIEN
   if (AlienXendian(Slot) != MagicNative) {
 
@@ -2124,6 +2124,7 @@ static void Wait4AuthIO(int fd, uldat slot) {
   byte *t;
   int got;
 
+  /* macro LS uses global variable Slot: set it */
   got = EnsureRead(fd, Slot = slot, digestLen * 2);
 
   if (got < 0)
@@ -2232,7 +2233,7 @@ static byte Check4MagicTranslation(uldat slot, const byte *magic, byte len) {
   return MagicUnknown;
 }
 
-static void Wait4Magic(int fd, uldat slot, byte isUnix) {
+static void Wait4Magic(int fd, uldat slot) {
   byte *t;
   uldat max;
   int got;
@@ -2277,15 +2278,6 @@ static void Wait4Magic(int fd, uldat slot, byte isUnix) {
     RemoteReadDeQueue(Slot, max);
 
     if (got) {
-      /*
-       * twin < 0.9.1 automatically trusted clients connected via the unix socket
-       * i.e. accepted them without TwinAuth challenge.
-       * For increased security, twin >= 0.9.1 sends TwinAuth challenge also to them.
-       *
-       * Reason: on non-Linux systems, file system permissions on unix domain socket
-       * may be ignored => different users may be able to connect through it.
-       */
-      (void)isUnix;
       LS.HandlerIO.S = Wait4AuthIO;
       if (SendUldat(TW_WAIT_MAGIC) && SendChallenge()) {
         return;
@@ -2298,24 +2290,24 @@ static void Wait4Magic(int fd, uldat slot, byte isUnix) {
   close(fd);
 }
 
-static void Wait4MagicUnixIO(int fd, uldat slot) {
-  Wait4Magic(fd, slot, ttrue);
-}
-
-static void Wait4MagicInetIO(int fd, uldat slot) {
-  Wait4Magic(fd, slot, tfalse);
-}
-
 static void unixSocketIO(int fd, uldat slot) {
   struct sockaddr_un un_addr = {};
   socklen_t len = sizeof(un_addr);
   if ((fd = accept(unixFd, (struct sockaddr *)&un_addr, &len)) >= 0) {
-    /* programs on the unix socket are always authorized */
-    if ((Slot = RegisterRemoteFd(fd, Wait4MagicUnixIO)) != NOSLOT) {
+    /*
+     * twin < 0.9.1 automatically trusted clients connected via the unix socket
+     * i.e. accepted them without TwinAuth challenge.
+     * For increased security, twin >= 0.9.1 sends TwinAuth challenge also to them.
+     *
+     * Reason: on non-Linux systems, file system permissions on unix domain socket
+     * may be ignored => different users may be able to connect through it.
+     */
+    if ((Slot = RegisterRemoteFd(fd, Wait4Magic)) != NOSLOT) {
       fcntl(fd, F_SETFL, O_NONBLOCK);
       fcntl(fd, F_SETFD, FD_CLOEXEC);
-      if (SendTwinProtocol())
+      if (SendTwinProtocol()) {
         return;
+      }
       UnRegisterRemote(Slot);
     }
     close(fd);
@@ -2326,11 +2318,12 @@ static void inetSocketIO(int fd, uldat slot) {
   struct sockaddr_in in_addr = {};
   socklen_t len = sizeof(in_addr);
   if ((fd = accept(inetFd, (struct sockaddr *)&in_addr, &len)) >= 0) {
-    if ((Slot = RegisterRemoteFd(fd, Wait4MagicInetIO)) != NOSLOT) {
+    if ((Slot = RegisterRemoteFd(fd, Wait4Magic)) != NOSLOT) {
       fcntl(fd, F_SETFL, O_NONBLOCK);
       fcntl(fd, F_SETFD, FD_CLOEXEC);
-      if (SendTwinProtocol())
+      if (SendTwinProtocol()) {
         return;
+      }
       UnRegisterRemote(Slot);
     }
     close(fd);
@@ -2563,8 +2556,7 @@ EXTERN_C void QuitModule(module Module) {
     close(inetFd);
   }
   for (Slot = 0; Slot < FdTop; Slot++) {
-    if (LS.Fd != NOFD && (LS.HandlerIO.S == Wait4MagicUnixIO ||
-                          LS.HandlerIO.S == Wait4MagicInetIO || LS.HandlerIO.S == Wait4AuthIO ||
+    if (LS.Fd != NOFD && (LS.HandlerIO.S == Wait4Magic || LS.HandlerIO.S == Wait4AuthIO ||
 #ifdef CONF_SOCKET_ALIEN
                           LS.HandlerIO.S == AlienIO ||
 #endif

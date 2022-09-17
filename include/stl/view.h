@@ -95,11 +95,11 @@ public:
     data_ = addr;
     size_ = n;
   }
-  void ref(const View<T> &other) {
+  void ref(const View<T> other) {
     data_ = other.data_;
     size_ = other.size_;
   }
-  void ref(const Span<T> &other);
+  void ref(const Span<T> other);
   void ref(const Vector<T> &other);
 
   const T *begin() const {
@@ -111,6 +111,14 @@ public:
     return data_ + size_;
   }
 
+  /* remove the last element */
+  void pop_back() {
+    if (size_) {
+      --size_;
+    }
+  }
+
+  /* return a subview of this view */
   View view(size_t start, size_t end) const {
     assert(start <= end);
     assert(end <= size_);

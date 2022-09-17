@@ -80,7 +80,7 @@ public:
   Vector() : Base(), cap_(0) {
   }
   Vector(const T *addr, size_t n) : Base(), cap_(0) {
-    dup(addr, n);
+    assign(addr, n);
   }
   // all one-argument constructors are explicit because they allocate,
   // thus they mail fail => we require users to explicitly invoke them.
@@ -88,16 +88,16 @@ public:
     init(n);
   }
   template <size_t N> explicit Vector(const T (&addr)[N]) : Base(), cap_(0) {
-    dup(addr, N - 1);
+    assign(addr, N - 1);
   }
   explicit Vector(const View<T> &other) : Base(), cap_(0) {
-    dup(other.data(), other.size());
+    assign(other.data(), other.size());
   }
   explicit Vector(const Span<T> &other) : Base(), cap_(0) {
-    dup(other.data(), other.size());
+    assign(other.data(), other.size());
   }
   explicit Vector(const Vector &other) : Base(), cap_(0) {
-    dup(other.data(), other.size());
+    assign(other.data(), other.size());
   }
   ~Vector() {
     destroy();
@@ -121,11 +121,12 @@ public:
   using Base::operator[];
   using Base::operator bool;
   using Base::operator==;
+  using Base::pop_back;
   using Base::size;
   using Base::span;
   using Base::view;
 
-  bool dup(const T *addr, size_t n) {
+  bool assign(const T *addr, size_t n) {
     if (!ensure_capacity(n)) {
       return false;
     }
@@ -133,14 +134,14 @@ public:
     size_ = n;
     return true;
   }
-  bool dup(const View<T> &other) {
-    return dup(other.data(), other.size());
+  bool assign(const View<T> other) {
+    return assign(other.data(), other.size());
   }
-  bool dup(const Span<T> &other) {
-    return dup(other.data(), other.size());
+  bool assign(const Span<T> other) {
+    return assign(other.data(), other.size());
   }
-  bool dup(const Vector &other) {
-    return dup(other.data(), other.size());
+  bool assign(const Vector &other) {
+    return assign(other.data(), other.size());
   }
 
   void clear() {
@@ -169,6 +170,10 @@ public:
 
   bool append(const T &src) {
     return append(View<T>(&src, 1));
+  }
+
+  bool append(const T *src, const size_t n) {
+    return append(View<T>(src, n));
   }
 
   bool append(View<T> src) {

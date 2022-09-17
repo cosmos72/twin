@@ -316,7 +316,7 @@ static void X11_SelectionNotify_up(Window win, Atom prop) {
 
     if (actual_type == xUTF8_STRING) {
       /* X11 selection contains UTF-8 */
-      ok = buff.append(Chars((const char *)data, nitems));
+      ok = buff.append((const char *)data, nitems);
     } else if (actual_type == XA_STRING) {
       /* X11 selection contains ISO8859-1: convert to UTF-8 */
       for (i = 0; ok && i < nitems; i++) {

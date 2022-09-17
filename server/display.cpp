@@ -20,15 +20,16 @@
 #include "twin.h"
 #include "algo.h"
 #include "alloc.h"
-#include "data.h"
-#include "hw.h"
-#include "hw_private.h"
-#include "unaligned.h"
 #include "common.h"
+#include "data.h"
 #include "dl_helper.h"
 #include "fdlist.h"
+#include "hw.h"
+#include "hw_private.h"
 #include "obj/id.h"
+#include "stl/string.h"
 #include "version.h"
+#include "unaligned.h"
 
 #include <Tw/Tw.h>
 #include <Tw/Twerrno.h>
@@ -56,7 +57,7 @@ const char *TWDisplay, *origTWDisplay, *origTERM;
 
 char nullMIME[TW_MAX_MIMELEN];
 
-const char *HOME;
+String HOME;
 
 #define L 0x55
 #define M 0xAA
@@ -1218,7 +1219,7 @@ int main(int argc, char *argv[]) {
 #ifdef CONF__ALLOC
   /* do this as soon as possible */
   if (!InitAlloc()) {
-    fputs("twin: InitAlloc() failed: internal error!\n", stderr);
+    fputs("twdisplay: InitAlloc() failed: internal error!\n", stderr);
     return 1;
   }
 #endif
@@ -1226,7 +1227,19 @@ int main(int argc, char *argv[]) {
   origTWDisplay = CloneStr(getenv("TWDISPLAY"));
   TWDisplay = dpy ? CloneStr(dpy) : origTWDisplay;
   origTERM = CloneStr(getenv("TERM"));
-  HOME = CloneStr(getenv("HOME"));
+  {
+    const char *home = getenv("HOME");
+    if (!home) {
+      fputs("twdisplay: required environment variable HOME is not set. Aborting.\n", stderr);
+      return 1;
+    }
+    if (!HOME.append(home, 1 + strlen(home))) { // also append final '\0'
+      fputs("twdisplay: out of memory! Aborting.\n", stderr);
+      return 1;
+    }
+    // keep final '\0' but do not count it
+    HOME.pop_back();
+  }
 
   if (((ourtty || (client_dpy && !*client_dpy)) && origTWDisplay && TWDisplay &&
        !strcmp(origTWDisplay, TWDisplay)) ||

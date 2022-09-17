@@ -35,20 +35,24 @@
 #include "alloc.h"
 #include "common.h"
 #include "data.h"
+#include "draw.h"
 #include "extreg.h"
 #include "methods.h"
 #include "main.h"
-#include "draw.h"
-#include "remote.h"
-#include "resize.h"
+#include "hw.h"
 #include "printk.h"
 #include "privilege.h"
-#include "util.h"
+#include "remote.h"
+#include "resize.h"
+#include "stl/string.h"
 #include "stl/vector.h"
-#include "hw.h"
+#include "util.h"
 
 #include <Tw/Twkeys.h>
 #include <Tutf/Tutf.h>
+
+String TmpDir;
+String SocketDir;
 
 void NormalizeTime(timevalue *Time) {
   if (Time->Fraction >= FullSEC || Time->Fraction < 0) {
@@ -867,11 +871,64 @@ static void TWDisplayIO(int fd, uldat slot) {
 
 static char envTWD[] = "TWDISPLAY=\0\0\0\0\0";
 
-const char *TmpDir(void) {
-  const char *tmp = getenv("TMPDIR");
-  if (tmp == NULL)
-    tmp = "/tmp";
-  return tmp;
+static bool initHOME(void) {
+  const char *home = getenv("HOME");
+  if (!home) {
+    printk("%s", "twin: required environment variable HOME is not set. Aborting.\n");
+    return false;
+  }
+  if (HOME.assign(home, 1 + strlen(home))) { // also append '\0'
+    // keep final '\0' but do not count it
+    HOME.pop_back();
+    return true;
+  }
+  printk("%s", "twin: out of memory! Aborting.\n");
+  return false;
+}
+
+/**
+ * initialize TmpDir to the absolutep path of temporary directory:
+ * if getenv("TMPDIR") is not null, use it;
+ * otherwise use "/tmp"
+ * on out-of-memory, return false
+ */
+static bool initTmpDir(void) {
+  const char *dir = getenv("TMPDIR");
+  if (dir == nullptr) {
+    dir = "/tmp";
+  }
+  if (TmpDir.assign(dir, 1 + strlen(dir))) { // also append final '\0'
+    TmpDir.pop_back();                       // but do not count it
+    return true;
+  }
+  printk("%s", "twin: out of memory! Aborting.\n");
+  return false;
+}
+
+/**
+ * initialize SOCKET_DIR to the directory where to create unix domain socket to listen on:
+ * if getenv("XDG_STATE_HOME") is not null, use it + "/twin"
+ * otherwise use HOME + "/.local/state/twin"
+ * on out-of-memory, return false
+ */
+/** return getenv("XDG_STATE_HOME") + "/twin", getenv("HOME") + "/.local/state/twin"  */
+static bool initSocketDir(void) {
+  const char *env = getenv("XDG_STATE_HOME");
+  if (env != nullptr && SocketDir.assign(env, strlen(env)) && SocketDir.append("/twin", 5)) {
+    SocketDir.pop_back(); // keep final '\0' but do not count it
+    return true;
+  }
+  if (SocketDir.assign(HOME) && SocketDir.append("/.local/state/twin", 19)) {
+    SocketDir.pop_back(); // keep final '\0' but do not count it
+    return true;
+  }
+  SocketDir.clear();
+  printk("%s", "twin: out of memory! Aborting.\n");
+  return false;
+}
+
+static bool initGlobalVariables(void) {
+  return initHOME() && initTmpDir() && initSocketDir();
 }
 
 udat CopyToSockaddrUn(const char *src, struct sockaddr_un *addr, udat pos) {
@@ -889,15 +946,22 @@ static struct sockaddr_un addr_unix;
 static const char *fullTWD = addr_unix.sun_path;
 static char twd[12];
 
-/* set TWDISPLAY and create /tmp/.Twin:<x> */
-byte InitTWDisplay(void) {
+/*
+ * create unix domain socket $HOME/.local/state/twin/socket:HHH
+ * create symbolic link /tmp/.Twin:HHH pointing to the former
+ * set TWDISPLAY to :HHH
+ */
+bool InitTWDisplay(void) {
   char *arg0;
   int fd = NOFD;
   unsigned short i;
   udat len;
   byte ok;
 
-  HOME = getenv("HOME");
+  if (!initGlobalVariables()) {
+    return false;
+  }
+
   memset(&addr_unix, 0, sizeof(addr_unix));
 
   if ((unixFd = socket(AF_UNIX, SOCK_STREAM, 0)) >= 0) {
@@ -907,7 +971,7 @@ byte InitTWDisplay(void) {
     for (i = 0; i < 0x1000; i++) {
       sprintf(twd, ":%hx", i);
 
-      len = CopyToSockaddrUn(TmpDir(), &addr_unix, 0);
+      len = CopyToSockaddrUn(TmpDir.data(), &addr_unix, 0);
       len = CopyToSockaddrUn("/.Twin", &addr_unix, len);
       len = CopyToSockaddrUn(twd, &addr_unix, len);
 
@@ -965,7 +1029,7 @@ byte InitTWDisplay(void) {
               SetArgv0(main_argv, main_argv_usable_len, arg0);
               FreeMem(arg0);
             }
-            return ttrue;
+            return true;
           }
         } else
           Error(SYSERROR);
@@ -976,14 +1040,14 @@ byte InitTWDisplay(void) {
   if (fd != NOFD)
     close(fd);
 
-  CopyToSockaddrUn(TmpDir(), &addr_unix, 0);
+  CopyToSockaddrUn(TmpDir.data(), &addr_unix, 0);
   arg0 = addr_unix.sun_path;
 
   printk("twin: failed to create any " SS "/.Twin* socket: " SS "\n", addr_unix.sun_path, Errstr);
   printk("      possible reasons: either " SS " not writable, or all TWDISPLAY already in use,\n"
          "      or too many stale " SS "/.Twin* sockets. Aborting.\n",
          arg0, arg0);
-  return tfalse;
+  return false;
 }
 
 /* unlink /tmp/.Twin<TWDISPLAY> */
@@ -1019,18 +1083,24 @@ void GainPrivileges(void) {
     GainGroupPrivileges(get_tty_grgid());
 }
 
-static void SetEnvs(struct passwd *p) {
+static bool SetEnvs(struct passwd *p) {
   char buf[TW_BIGBUFF];
 
-  chdir(HOME = p->pw_dir);
+  chdir(p->pw_dir);
+  if (!HOME.assign(p->pw_dir, 1 + strlen(p->pw_dir))) { // also append final '\0'
+    return false;
+  }
+  // keep final '\0' but do not count it
+  HOME.pop_back();
+
 #if defined(TW_HAVE_SETENV)
-  setenv("HOME", HOME, 1);
+  setenv("HOME", HOME.data(), 1);
   setenv("SHELL", p->pw_shell, 1);
   setenv("LOGNAME", p->pw_name, 1);
   sprintf(buf, "/var/mail/%.*s", (int)(TW_BIGBUFF - 11), p->pw_name);
   setenv("MAIL", buf, 1);
 #elif defined(TW_HAVE_PUTENV)
-  sprintf(buf, "HOME=%.*s", (int)(TW_BIGBUFF - 6), HOME);
+  sprintf(buf, "HOME=%.*s", (int)(TW_BIGBUFF - 6), HOME.data());
   putenv(buf);
   sprintf(buf, "SHELL=%.*s", (int)(TW_BIGBUFF - 7), p->pw_shell);
   putenv(buf);
@@ -1039,6 +1109,7 @@ static void SetEnvs(struct passwd *p) {
   sprintf(buf, "MAIL=/var/mail/%.*s", (int)(TW_BIGBUFF - 16) p->pw_name);
   putenv(buf);
 #endif
+  return true;
 }
 
 byte SetServerUid(uldat uid, byte privileges) {
@@ -1069,8 +1140,8 @@ byte SetServerUid(uldat uid, byte privileges) {
         }
         if (ok && (uid == 0 || CheckPrivileges() == privileges)) {
           flag_secure = 0;
-          SetEnvs(p);
-          if ((ok = Ext(Socket, InitAuth)())) {
+          ok = SetEnvs(p);
+          if (ok && (ok = Ext(Socket, InitAuth)())) {
             /*
              * it's time to execute .twenvrc.sh and read its output to set
              * environment variables (mostly useful for twdm)
@@ -1081,18 +1152,18 @@ byte SetServerUid(uldat uid, byte privileges) {
             SendControlMsg(WM_MsgPort, MSG_CONTROL_OPEN, 0, NULL);
             return ttrue;
           }
-        } else
+        } else {
           ok = tfalse;
+        }
 
         if (!ok) {
           flag_secure = 1;
-          if (setuid(0) < 0 || setgid(0) < 0 || chown(fullTWD, 0, 0) < 0) {
+          if (setuid(0) < 0 || setgid(0) < 0 || chown(fullTWD, 0, 0) < 0 || !SetEnvs(getpwuid(0))) {
             /* tried to recover, but screwed up uids too badly. */
             printk("twin: failed switching to uid %u: " SS "\n", uid, strerror(errno));
             printk("twin: also failed to recover. Quitting NOW!\n");
             Quit(0);
           }
-          SetEnvs(getpwuid(0));
         }
       }
       printk("twin: failed switching to uid %u: " SS "\n", uid, strerror(errno));
@@ -1115,8 +1186,8 @@ char *FindFile(const char *name, uldat *fsize) {
   int i, min_i, max_i, len, nlen = strlen(name);
   struct stat buf;
 
-  prefix[0] = HOME;
-  infix[0] = (HOME && *HOME) ? "/" : "";
+  prefix[0] = HOME.data();
+  infix[0] = HOME ? "/" : "";
   prefix[1] = pkg_libdir;
   infix[1] = "/system";
   prefix[2] = "";

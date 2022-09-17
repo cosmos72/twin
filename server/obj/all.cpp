@@ -40,7 +40,7 @@ void s_selection::dup(const selection other) {
   Owner = other->Owner;
   OwnerOnce = other->OwnerOnce;
   Magic = other->Magic;
-  Data.dup(other->Data);
+  Data.assign(other->Data);
   memcpy(MIME, other->MIME, sizeof(MIME));
 }
 

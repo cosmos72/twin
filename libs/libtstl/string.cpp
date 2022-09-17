@@ -8,6 +8,10 @@
  */
 #include "stl/string.h"
 
+bool String::make_c_str() {
+  return append('\0') && (pop_back(), true);
+}
+
 bool String::append(View<trune> runes) {
   const size_t oldsize = size();
   bool ok = true;

@@ -32,9 +32,10 @@
 #include "extreg.h"
 #include "hw.h"
 #include "hw_multi.h"
-#include "scroller.h"
-#include "util.h"
 #include "remote.h"
+#include "scroller.h"
+#include "stl/string.h"
+#include "util.h"
 #include "version.h"
 #include "wm.h"
 
@@ -43,11 +44,13 @@
 fd_set save_rfds, save_wfds;
 int max_fds;
 byte lenTWDisplay;
-char *TWDisplay, *origTWDisplay, *origTERM, *origHW, *HOME;
+char *TWDisplay, *origTWDisplay, *origTERM, *origHW;
 char **main_argv, **orig_argv;
 uldat main_argv_usable_len;
 byte flag_secure, flag_envrc;
 const char *flag_secure_msg = "twin: cannot exec() external programs in secure mode.\n";
+
+String HOME;
 
 int (*OverrideSelect)(int n, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
                       struct timeval *timeout);

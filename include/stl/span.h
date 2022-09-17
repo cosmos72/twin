@@ -74,7 +74,7 @@ public:
     data_ = addr;
     size_ = n;
   }
-  void ref(Span &other) {
+  void ref(Span other) {
     data_ = other.data_;
     size_ = other.size_;
   }
@@ -107,7 +107,7 @@ public:
   }
 };
 
-template <class T> void View<T>::ref(const Span<T> &other) {
+template <class T> void View<T>::ref(const Span<T> other) {
   data_ = other.data();
   size_ = other.size();
 }

@@ -1228,7 +1228,7 @@ tw_d Tw_Open(TW_CONST char *TwDisplay) {
       *p = '\0';
       /*
        * the following wraps around on 'unsigned short' overflow:
-       * useful if we want to connect to ports < TW_INET_PORT i.e. < 7754
+       * useful if we ever want to connect to ports < TW_INET_PORT i.e. < 7754
        */
       port = TW_INET_PORT + strtoul(p + 1, NULL, 16);
 

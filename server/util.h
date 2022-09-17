@@ -25,6 +25,9 @@
 extern uldat unixSlot;
 extern int unixFd;
 
+extern String TmpDir;
+extern String SocketDir;
+
 #if defined(TW_HAVE_ALARM) && defined(TW_HAVE_SIGACTION)
 extern volatile int AlarmReceived;
 void SetAlarm(unsigned seconds);
@@ -33,7 +36,6 @@ void SetAlarm(unsigned seconds);
 #define AlarmReceived (0)
 #endif
 
-const char *TmpDir(void);
 udat CopyToSockaddrUn(const char *src, struct sockaddr_un *addr, udat pos);
 
 void NormalizeTime(timevalue *Time);
@@ -65,7 +67,7 @@ char **TokenizeStringVec(uldat len, char *text);
 char **TokenizeTRuneVec(uldat len, trune *text);
 void FreeStringVec(char **argv);
 
-byte InitTWDisplay(void);
+bool InitTWDisplay(void);
 void QuitTWDisplay(void);
 
 byte CheckPrivileges(void);

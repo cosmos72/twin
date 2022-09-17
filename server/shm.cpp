@@ -117,7 +117,7 @@ byte shm_init(size_t len) {
   if (TW_PAGE_SIZE == 0)
     TW_PAGE_SIZE = getpagesize();
 
-  pathlen = CopyToSockaddrUn(TmpDir(), &addr, 0);
+  pathlen = CopyToSockaddrUn(TmpDir.data(), &addr, 0);
   pathlen = CopyToSockaddrUn("/.Twin_shm", &addr, pathlen);
   pathlen = CopyToSockaddrUn(TWDisplay, &addr, pathlen);
 
