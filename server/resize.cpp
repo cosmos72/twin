@@ -343,7 +343,7 @@ byte RowWriteCharset(window Window, uldat Len, const char *charset_bytes) {
 }
 
 byte RowWriteUtf8(window w, uldat len, const char *utf8_bytes) {
-  View<char> chars(utf8_bytes, len);
+  Chars chars(utf8_bytes, len);
   Vector<trune> runes;
   Utf8 seq;
 

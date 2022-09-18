@@ -11,9 +11,14 @@
  */
 
 #include "stl/err.h"
+#include "stl/view.h" // Chars, chars_from_c()
 #include "twautoconf.h"
 
-#include <errno.h>
+#include <cerrno> // errno
+
+#if defined(CONF__DLOPEN) && defined(TW_HAVE_DLFCN_H)
+#include <dlfcn.h> // dlerror()
+#endif
 
 #ifdef TW_HAVE_STRING_H
 #include <string.h>
@@ -22,18 +27,28 @@ char *strerror(int errnum);
 #endif
 
 errnum Err;
-const char *Errstr;
+Chars Errstr;
 
 bool Error(errnum err) {
   switch ((Err = err)) {
   case NOMEMORY:
-    Errstr = "Out of memory!";
+    Errstr = Chars("Out of memory!");
     break;
   case NOTABLES:
-    Errstr = "Internal tables full!";
+    Errstr = Chars("Internal tables full!");
+    break;
+  case DLERROR:
+#if defined(CONF__DLOPEN) && defined(TW_HAVE_DLFCN_H)
+    Errstr = chars_from_c(dlerror());
+#else
+    Errstr = Chars("Error loading dynamic library");
+#endif
     break;
   case SYSERROR:
-    Errstr = strerror(errno);
+    Errstr = chars_from_c(strerror(errno));
+    break;
+  case INVALERROR:
+    Errstr = Chars("Invalid value");
     break;
   default:
     break;

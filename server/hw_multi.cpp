@@ -37,8 +37,10 @@
 #include "hw.h"
 #include "hw_private.h"
 #include "hw_multi.h"
+#include "log.h"
 #include "printk.h"
 #include "resize.h"
+#include "stl/string.h"
 #include "util.h"
 
 #include <Tw/Tw.h>
@@ -128,11 +130,7 @@ void RunNoHW(byte print_info) {
   (void)DlLoad(SocketSo);
 }
 
-static byte module_InitHW(const char *arg, uldat len) {
-  const char *name, *tmp;
-  char *alloc_name;
-  byte (*InitD)(void);
-  module Module;
+static bool module_InitHW(const char *arg, uldat len) {
 
   if (!arg || !len)
     return tfalse;
@@ -142,8 +140,8 @@ static byte module_InitHW(const char *arg, uldat len) {
     len -= 4; /* skip "-hw=" */
   }
 
-  name = (const char *)memchr(arg, '@', len);
-  tmp = (const char *)memchr(arg, ',', len);
+  const char *name = (const char *)memchr(arg, '@', len);
+  const char *tmp = (const char *)memchr(arg, ',', len);
   if (tmp && (!name || tmp < name))
     name = tmp;
   if (name)
@@ -154,39 +152,33 @@ static byte module_InitHW(const char *arg, uldat len) {
     arg = "X11";
   }
 
-  if ((alloc_name = (char *)AllocMem(len + 4))) {
-    sprintf(alloc_name, "hw_%.*s", (int)len, arg);
+  Chars cname(arg, len);
+  String alloc_name;
+  module Module = nullptr;
 
-    Module = DlLoadAny(len + 3, alloc_name);
+  if (alloc_name.format("hw_", cname)) {
+    cname = alloc_name;
+    Module = DlLoadAny(cname.size(), cname.data());
 
     if (Module) {
-      printk("twin: starting display driver module `" SS "'...\n", alloc_name);
+      log(INFO, "twin: starting display driver module `", cname, "'...\n");
+      byte (*InitD)(void);
       if ((InitD = Module->DoInit) && InitD()) {
-        printk("twin: ...module `" SS "' successfully started.\n", alloc_name);
-        FreeMem(alloc_name);
+        log(INFO, "twin: ...module `", cname, "' successfully started.\n");
         HW->Module = Module;
         Module->Used++;
-        return ttrue;
+        return true;
       }
       Module->Delete();
     }
   }
 
-  if (alloc_name)
-    name = alloc_name;
-  else if (!name)
-    name = "(NULL)";
-
   if (Module) {
-    printk("twin: ...module `" SS "' failed to start.\n", name);
-  } else
-    printk("twin: unable to load display driver module `" SS "' :\n"
-           "      " SS "\n",
-           name, Errstr);
-  if (alloc_name)
-    FreeMem(alloc_name);
-
-  return tfalse;
+    log(ERROR, "twin: ...module `", cname, "' failed to start.\n");
+  } else {
+    log(ERROR, "twin: unable to load display driver module `", cname, "' :\n      ", Errstr, "\n");
+  }
+  return false;
 }
 
 static byte set_hw_name(display_hw D_HW, const char *name, uldat namelen) {

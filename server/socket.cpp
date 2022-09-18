@@ -923,8 +923,7 @@ static void sockAttachHW(uldat len, const char *arg, byte flags) {
   struct timeval tv = {2, 0};
   int realFd;
   char buf[2] = "\0";
-  byte verbose = flags & TW_ATTACH_HW_REDIRECT;
-  byte exclusive = flags & TW_ATTACH_HW_EXCLUSIVE;
+  bool verbose = (flags & TW_ATTACH_HW_REDIRECT) != 0;
 
   realFd = LS.Fd >= 0 ? LS.Fd : FdList[LS.pairSlot].Fd;
 
@@ -937,9 +936,9 @@ static void sockAttachHW(uldat len, const char *arg, byte flags) {
   }
 
   if (verbose)
-    verbose = RegisterPrintk(realFd);
+    verbose = RegisterPrintkFd(realFd);
 
-  if ((D_HW = AttachDisplayHW(len, arg, Slot, exclusive))) {
+  if ((D_HW = AttachDisplayHW(len, arg, Slot, flags & TW_ATTACH_HW_EXCLUSIVE))) {
     if (D_HW->NeedHW & NEEDPersistentSlot)
       LS.MsgPort->AttachHW = D_HW;
     else
@@ -958,12 +957,12 @@ static void sockAttachHW(uldat len, const char *arg, byte flags) {
   FD_ZERO(&set);
   FD_SET(realFd, &set);
 
-  while (select(realFd + 1, &set, NULL, NULL, &tv) == -1 && errno == EINTR)
-    ;
+  while (select(realFd + 1, &set, NULL, NULL, &tv) == -1 && errno == EINTR) {
+  }
   read(realFd, buf, 1);
 
   if (verbose)
-    UnRegisterPrintk();
+    UnRegisterPrintkFd();
 }
 
 static byte sockDetachHW(uldat len, const char *arg) {
@@ -2492,7 +2491,7 @@ EXTERN_C byte InitModule(module Module) {
   };
 
   if (!sockInitAuth()) {
-    printk("twin: failed to create ~/.TwinAuth: " SS "\n", Errstr);
+    printk("twin: failed to create ~/.TwinAuth: " SS "\n", Errstr.data());
     return tfalse;
   }
 
@@ -2543,7 +2542,7 @@ EXTERN_C byte InitModule(module Module) {
 
     return ttrue;
   }
-  printk("twin: failed to create sockets: " SS "\n", Errstr);
+  printk("twin: failed to create sockets: " SS "\n", Errstr.data());
   return tfalse;
 }
 

@@ -6,8 +6,8 @@
  * (at your option) any later version.
  *
  */
+#include "stl/any.h"
 #include "stl/string.h"
-#include "test_stl_any.h"
 
 template <class T> void test_view() {
   enum { n = 3 };
@@ -159,6 +159,21 @@ void test_string() {
   assert(st.size() == 0);
   assert(a.data());
   assert(a.size() == n);
+}
+
+template <class T> void test_any() {
+  T value(17), copy(0);
+  Any any;
+  any = value;
+
+  assert(any.is<T>());
+  assert(any.type() == Any::Type<T>());
+  assert(any.value<T>() == value);
+  assert(&any.value<T>() != &value);
+
+  assert(value != copy);
+  assert(any.get<T>(copy));
+  assert(value == copy);
 }
 
 void swap_string(String &left, String &right) {

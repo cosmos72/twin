@@ -40,7 +40,7 @@ byte InitScroller(void) {
 
     return ttrue;
   }
-  printk("twin: Scroller: " SS "\n", Errstr);
+  printk("twin: Scroller: " SS "\n", Errstr.data());
   return tfalse;
 }
 

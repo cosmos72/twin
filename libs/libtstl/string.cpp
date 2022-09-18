@@ -8,6 +8,12 @@
  */
 #include "stl/string.h"
 
+#include <cstring> // strlen()
+
+Chars chars_from_c(const char *c_str) {
+  return Chars(c_str, c_str ? strlen(c_str) : 0);
+}
+
 bool String::make_c_str() {
   return append('\0') && (pop_back(), true);
 }
@@ -22,4 +28,28 @@ bool String::append(View<trune> runes) {
     resize(oldsize);
   }
   return ok;
+}
+
+bool String::formatv(View<const FmtBase *> args) {
+  size_t n = 0;
+  for (const FmtBase *arg : args) {
+    if (arg) {
+      n += arg->size();
+    }
+  }
+  if (!resize0(n, false)) {
+    return false;
+  }
+  size_t i = 0;
+  for (const FmtBase *arg : args) {
+    if (arg) {
+      to_chars_result ret = arg->write_to(span(i, n));
+      if (ret.err != SUCCESS) {
+        return false;
+      }
+      i += ret.written;
+    }
+  }
+  assert(i == n);
+  return true;
 }

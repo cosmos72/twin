@@ -10,11 +10,10 @@
 #define TWIN_STL_VIEW_H
 
 #include "stl/fwd.h"
-#include "stl/defs.h" // STL_CXX11_EXPLICIT
 #include "stl/mem.h"
 
-#include <stddef.h> // size_t
-#include <assert.h>
+#include <cstddef> // size_t
+#include <cassert>
 
 /** read-only view of T[] */
 template <class T> class View {
@@ -34,11 +33,11 @@ public:
   typedef const T *const_pointer;
   typedef const T *const_iterator;
 
-  View() : data_(NULL), size_(0) {
+  constexpr View() : data_(NULL), size_(0) {
   }
-  template <size_t N> View(const T (&addr)[N]) : data_(addr), size_(N - 1) {
+  template <size_t N> constexpr View(const T (&addr)[N]) : data_(addr), size_(N - 1) {
   }
-  View(const T *addr, size_t n) : data_(addr), size_(n) {
+  constexpr View(const T *addr, size_t n) : data_(addr), size_(n) {
   }
 
   View(const Span<T> &other) {
@@ -79,7 +78,7 @@ public:
     return data_[index];
   }
 
-  STL_CXX11_EXPLICIT operator bool() const {
+  explicit operator bool() const {
     return size_ != 0;
   }
 
@@ -91,6 +90,10 @@ public:
     return mem::equalvec(*this, other);
   }
 
+  template <size_t N> void ref(const T (&addr)[N]) {
+    data_ = addr;
+    size_ = N - 1;
+  }
   void ref(const T *addr, size_t n) {
     data_ = addr;
     size_ = n;
@@ -137,5 +140,7 @@ template <class T> void swap(View<T> &left, View<T> &right) {
 }
 
 typedef View<char> Chars;
+
+Chars chars_from_c(const char *c_str);
 
 #endif /* TWIN_STL_VIEW_H */

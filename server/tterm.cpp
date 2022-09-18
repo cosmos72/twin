@@ -238,7 +238,7 @@ EXTERN_C byte InitModule(module Module) {
     return ttrue;
   }
   if (shellpath)
-    printk("twin: InitTerm(): " SS "\n", Errstr);
+    printk("twin: InitTerm(): " SS "\n", Errstr.data());
   else
     printk("twin: environment variable $SHELL not set!\n");
   return tfalse;

@@ -18,7 +18,7 @@ extern char *TWDisplay, *origTWDisplay, *origTERM, *origHW;
 extern char **main_argv, **orig_argv;
 extern uldat main_argv_usable_len;
 extern byte flag_envrc, flag_secure;
-extern const char *flag_secure_msg;
+extern const Chars flag_secure_msg;
 
 extern String HOME;
 

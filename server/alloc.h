@@ -16,12 +16,12 @@
 #include "stl/err.h"
 
 #include <Tw/datatypes.h>
-#include <string.h> // memcpy(), memmove()
+#include <cstring> // memcpy(), memmove()
 
 /* inline/define stuff: */
 
-#define CopyMem(from, to, len) memcpy(to, from, len)
-#define MoveMem(from, to, len) memmove(to, from, len)
+#define CopyMem(from, to, len) std::memcpy(to, from, len)
+#define MoveMem(from, to, len) std::memmove(to, from, len)
 
 void *CloneMem(const void *From, uldat len);
 char *CloneStr(const char *s);

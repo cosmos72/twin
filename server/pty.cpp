@@ -64,6 +64,7 @@
 #include "data.h"
 #include "main.h"
 #include "printk.h"
+#include "log.h"
 #include "util.h"
 
 /* pseudo-teletype connections handling functions */
@@ -119,7 +120,7 @@ static byte get_pty(void) {
   } else
     get_pty_error(
 #if defined(TW_HAVE_POSIX_OPENPT)
- 	"posix_openpt", ""
+        "posix_openpt", ""
 #elif defined(TW_HAVE_GETPT)
         "getpt", ""
 #else
@@ -254,7 +255,7 @@ byte SpawnInWindow(window Window, const char *arg0, const char *const *argv) {
 
   /* 0 */
   if (flag_secure) {
-    printk(flag_secure_msg);
+    log(ERROR, flag_secure_msg);
     return tfalse;
   }
   GainPrivileges();

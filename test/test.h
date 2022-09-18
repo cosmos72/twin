@@ -6,5 +6,7 @@
  * (at your option) any later version.
  *
  */
-void test_stl_vector();
+void test_stl_any();
+void test_stl_fmt();
 void test_stl_utf8();
+void test_stl_vector();

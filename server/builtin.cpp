@@ -23,10 +23,11 @@
 #include "draw.h"
 #include "common.h"
 #include "hw.h"
+#include "log.h"
 #include "hw_multi.h"
 #include "obj/id.h"
 #include "resize.h"
-#include "printk.h"
+#include "log.h"
 #include "util.h"
 #include "version.h"
 
@@ -175,7 +176,7 @@ static void ExecuteWinRun(void) {
   ExecuteWin->UnMap();
 
   if (flag_secure) {
-    printk(flag_secure_msg);
+    log(ERROR, flag_secure_msg);
     return;
   }
 
@@ -790,7 +791,7 @@ static byte InitScreens(void) {
     return ttrue;
   }
   Error(NOMEMORY);
-  printk("twin: InitScreens(): " SS "\n", Errstr);
+  log(ERROR, "twin: InitScreens(): ", Errstr, "\n");
   return tfalse;
 }
 
@@ -1000,6 +1001,6 @@ byte InitBuiltin(void) {
     return ttrue;
   }
   Error(NOMEMORY);
-  printk("twin: InitBuiltin(): " SS "\n", Errstr);
+  log(ERROR, "twin: InitBuiltin(): ", Errstr, "\n");
   return tfalse;
 }

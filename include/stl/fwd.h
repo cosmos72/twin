@@ -1,4 +1,4 @@
-/* Copyright (C) 2000-2020 by Massimiliano Ghilardi
+/* Copyright (C) 2000-2022 by Massimiliano Ghilardi
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -9,11 +9,23 @@
 #ifndef TWIN_STL_FWD_H
 #define TWIN_STL_FWD_H
 
-#include "stl/defs.h"
-
+template <class T> class Fmt;
 template <class T> class Span;
 class String;
 template <class T> class Vector;
 template <class T> class View;
+
+typedef Span<char> CharSpan;
+typedef View<char> Chars;
+
+struct to_chars_result;
+
+template <class T> T &lvalue(T &&val) {
+  return val;
+}
+
+template <class T> const T &lvalue(const T &&val) {
+  return val;
+}
 
 #endif /* TWIN_STL_FWD_H */

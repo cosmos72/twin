@@ -1043,7 +1043,8 @@ bool InitTWDisplay(void) {
   CopyToSockaddrUn(TmpDir.data(), &addr_unix, 0);
   arg0 = addr_unix.sun_path;
 
-  printk("twin: failed to create any " SS "/.Twin* socket: " SS "\n", addr_unix.sun_path, Errstr);
+  printk("twin: failed to create any " SS "/.Twin* socket: " SS "\n", addr_unix.sun_path,
+         Errstr.data());
   printk("      possible reasons: either " SS " not writable, or all TWDISPLAY already in use,\n"
          "      or too many stale " SS "/.Twin* sockets. Aborting.\n",
          arg0, arg0);
@@ -1248,7 +1249,7 @@ static void ReadTwEnvRC(int infd) {
       /* line too long! */
       left = 0;
 
-    memmove(buff, p, left);
+    std::memmove(buff, p, left);
     p = buff + left;
     left = TW_BIGBUFF - left;
   }

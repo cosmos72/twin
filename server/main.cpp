@@ -48,7 +48,7 @@ char *TWDisplay, *origTWDisplay, *origTERM, *origHW;
 char **main_argv, **orig_argv;
 uldat main_argv_usable_len;
 byte flag_secure, flag_envrc;
-const char *flag_secure_msg = "twin: cannot exec() external programs in secure mode.\n";
+const Chars flag_secure_msg = "twin: cannot exec() external programs in secure mode.\n";
 
 String HOME;
 

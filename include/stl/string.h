@@ -11,6 +11,10 @@
 
 #include "stl/vector.h"
 #include "stl/utf8.h"
+#include "stl/fmt.h"
+
+#include <utility> // std:forward()
+#include <initializer_list>
 
 class String : public Vector<char> {
 private:
@@ -41,11 +45,17 @@ public:
   }
   // ~String() = default;
 
-  using Base::append;
+  // convert args to string and assign them to this string
+  // return false if resizing this string failed
+  template <class... T> bool format(T &&...args) {
+    return formatl({&lvalue(fmt(std::forward<T>(args)))...});
+  }
 
   // add final '\0' but do not count it in size()
   // return true if successful, false if out of memory
   bool make_c_str();
+
+  using Base::append;
 
   bool append(Utf8 seq) {
     return append(seq.data(), seq.size());
@@ -70,6 +80,13 @@ public:
   bool operator+=(View<trune> runes) {
     return append(runes);
   }
+
+private:
+  inline bool formatl(std::initializer_list<const FmtBase *> args) {
+    return formatv(View<const FmtBase *>(args.begin(), args.size()));
+  }
+
+  bool formatv(View<const FmtBase *> args);
 };
 
 inline void swap(String &left, String &right) {

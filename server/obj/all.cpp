@@ -14,9 +14,10 @@
 #include "obj/all.h"
 #include "obj/msgport.h"
 #include "obj/screen.h"
-#include "common.h"    /* TwinSelectionNotify */
-#include "Tw/mouse.h"  /* HOLD_* */
-#include "Tutf/Tutf.h" /* Tutf_*_to_UTF_32[] */
+#include "common.h" /* TwinSelectionNotify */
+
+#include <Tw/mouse.h>  /* HOLD_* */
+#include <Tutf/Tutf.h> /* Tutf_*_to_UTF_32[] */
 
 static trune GtransUser[0x100];
 

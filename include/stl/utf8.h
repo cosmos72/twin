@@ -9,8 +9,8 @@
 #ifndef TWIN_STL_UTF8_H
 #define TWIN_STL_UTF8_H
 
-#include <stddef.h> // size_t
-#include <stdint.h> // uint32_t
+#include <cstddef> // size_t
+#include <cstdint> // uint32_t
 
 typedef uint32_t trune;
 template <class T> class View;
@@ -76,9 +76,8 @@ public:
   }
 
   bool operator<(const Utf8 &other) const {
-     return less(u, other.u);
+    return less(u, other.u);
   }
-
 };
 
 #endif /* TWIN_STL_UTF8_H */

@@ -26,6 +26,7 @@
 #include "extreg.h"
 #include "hw.h"
 #include "hw_multi.h"
+#include "log.h"
 #include "methods.h"
 #include "unaligned.h"
 
@@ -439,7 +440,7 @@ static byte RCSteps(run *r) {
 
       case EXEC:
         if (flag_secure)
-          printk(flag_secure_msg);
+          log(ERROR, flag_secure_msg);
         else
           switch (fork()) {
           case -1: /* error */
@@ -845,7 +846,7 @@ static void RCReload(void) {
     /* this would garble -hw=tty display */
     else
         printk("twin: failed to load the RC parser:\n"
-                "      " SS "\n", Errstr);
+                "      " SS "\n", Errstr.data());
 #endif
 
   success = mod_rcload && mod_rcload();

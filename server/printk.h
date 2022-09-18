@@ -9,16 +9,20 @@
 #ifndef TWIN_PRINTK_H
 #define TWIN_PRINTK_H
 
+#include <Tw/Tw_defs.h> // TW_BIGBUFF
+
 #ifndef SS
 #define SS "%." STR(TW_SMALLBUFF) "s"
 #endif
 
 int printk(const char *format, ...);
-void printk_str(int len, const char *s);
+void printk_str(const char *s, size_t len);
 int printk_receive_fd(int fd);
 int flushk(void);
 
-byte RegisterPrintk(int fd);
-void UnRegisterPrintk(void);
+bool RegisterPrintkFd(int fd);
+void UnRegisterPrintkFd(void);
+
+extern char printk_buf[TW_BIGBUFF];
 
 #endif /* TWIN_PRINTK_H */

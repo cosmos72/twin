@@ -1937,7 +1937,7 @@ byte InitWM(void) {
           return ttrue;
         } else {
           sent = ttrue;
-          printk("twin: RC: " SS "\n", Errstr);
+          printk("twin: RC: " SS "\n", Errstr.data());
         }
       }
       UnRegisterExt(WM, MsgPort, WM_MsgPort);
@@ -1950,7 +1950,7 @@ byte InitWM(void) {
     WM_MsgPort->Delete();
   }
   if (!sent) {
-    printk("twin: WM: " SS "\n", Errstr);
+    printk("twin: WM: " SS "\n", Errstr.data());
   }
   return tfalse;
 }

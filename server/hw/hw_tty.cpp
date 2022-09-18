@@ -475,7 +475,7 @@ static byte tty_InitHW(void) {
    */
 
   if (!stdin_TestTty()) {
-    printk("      tty_InitHW() failed: unable to read from the terminal: " SS "\n", Errstr);
+    printk("      tty_InitHW() failed: unable to read from the terminal: " SS "\n", Errstr.data());
   } else if (
 
 #if defined(CONF_HW_TTY_LINUX) || defined(CONF_HW_TTY_TWTERM)

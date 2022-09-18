@@ -11,6 +11,7 @@
  */
 
 #include "twin.h"
+#include "printk.h"
 #include "remote.h"
 #include "methods.h"
 #include "builtin.h"
@@ -20,42 +21,44 @@
 #include <stdarg.h>
 #endif
 
-static char buf[TW_BIGBUFF]; /* hope it's enough */
+char printk_buf[TW_BIGBUFF];
 static int printk_fd = NOFD;
 
-void printk_str(int len, const char *s) {
-  int chunk;
+void printk_str(const char *s, size_t len) {
+  ssize_t chunk;
 
-  if (len > 0) {
+  if (len == 0) {
+    return;
+  }
 
 #ifdef CONF_PRINTK
-    if (MessagesWin) {
-      if (MessagesWin->HLogic > TW_SMALLBUFF) {
-        while (MessagesWin->HLogic > TW_SMALLBUFF) {
-          MessagesWin->USE.R.FirstRow->Delete();
-          MessagesWin->CurY--;
-        }
-        if (MessagesWin->Parent)
-          DrawFullWindow2(MessagesWin);
+  if (MessagesWin) {
+    if (MessagesWin->HLogic > TW_SMALLBUFF) {
+      while (MessagesWin->HLogic > TW_SMALLBUFF) {
+        MessagesWin->USE.R.FirstRow->Delete();
+        MessagesWin->CurY--;
       }
-      MessagesWin->RowWriteCharset(len, s);
+      if (MessagesWin->Parent)
+        DrawFullWindow2(MessagesWin);
     }
+    MessagesWin->RowWriteCharset(len, s);
+  }
 #endif /* CONF_PRINTK */
 
-    if (printk_fd == NOFD)
-      fwrite(s, len, 1, stderr);
-    else {
-      do {
-        do {
-          chunk = write(printk_fd, s, len);
-        } while (chunk < 0 && errno == EINTR);
-        if (chunk > 0) {
-          s += chunk;
-          len -= chunk;
-        }
-      } while (len > 0 && chunk > 0);
-    }
+  if (printk_fd == NOFD) {
+    (void)fwrite(s, len, 1, stderr);
+    return;
   }
+  // write error message to printk_fd
+  do {
+    do {
+      chunk = write(printk_fd, s, len);
+    } while (chunk < 0 && errno == EINTR);
+    if (chunk > 0) {
+      s += chunk;
+      len -= chunk;
+    }
+  } while (len && chunk > 0);
 }
 
 int printk(const char *format, ...) {
@@ -65,18 +68,18 @@ int printk(const char *format, ...) {
 
   va_start(ap, format);
 #ifdef TW_HAVE_VSNPRINTF
-  len = vsnprintf(buf, sizeof(buf), format, ap);
+  len = vsnprintf(printk_buf, sizeof(printk_buf), format, ap);
   va_end(ap);
 #else
-  len = vsprintf(buf, format, ap); /* hopefully i < sizeof(buf) */
+  len = vsprintf(printk_buf, format, ap); /* hopefully len < sizeof(printk_buf) */
   va_end(ap);
 
-  if (len > sizeof(buf)) {
+  if (len > sizeof(printk_buf)) {
     fputs("twin: internal error: printk() overflow! \033[1mQUIT NOW !\033[0m\n", stderr);
-    return sizeof(buf);
+    return sizeof(printk_buf);
   }
 #endif /* TW_HAVE_VSNPRINTF */
-  printk_str(len, buf);
+  printk_str(printk_buf, len);
 
 #endif /* defined(TW_HAVE_VSNPRINTF) || defined(TW_HAVE_VPRINTF) */
   return len;
@@ -91,25 +94,25 @@ int printk_receive_fd(int fd) {
 
   do {
     do {
-      len = read(fd, buf, sizeof(buf));
+      len = read(fd, printk_buf, sizeof(printk_buf));
     } while (len < 0 && errno == EINTR);
     if (len > 0) {
       got += len;
-      printk_str(len, buf);
+      printk_str(printk_buf, len);
     }
   } while (len > 0);
 
   return got;
 }
 
-byte RegisterPrintk(int fd) {
+bool RegisterPrintkFd(int fd) {
   if (printk_fd == NOFD) {
     printk_fd = fd;
-    return ttrue;
+    return true;
   }
-  return tfalse;
+  return false;
 }
 
-void UnRegisterPrintk(void) {
+void UnRegisterPrintkFd(void) {
   printk_fd = NOFD;
 }

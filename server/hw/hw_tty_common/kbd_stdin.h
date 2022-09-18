@@ -31,7 +31,7 @@ static byte stdin_TestTty(void) {
 
   /* request ID */
   if (write(tty_fd, "\033[c", 3) != 3) {
-    Errstr = "write() to tty failed";
+    Errstr = Chars("write() to tty failed");
     ok = tfalse;
   } else {
     /* ensure we CAN read from the tty */
@@ -44,9 +44,9 @@ static byte stdin_TestTty(void) {
     if (i <= 0) {
       Error(SYSERROR);
       if (alarmReceived)
-        Errstr = "read() from tty timed out";
+        Errstr = Chars("read() from tty timed out");
       else if (i == 0)
-        Errstr = "read() from tty returned END-OF-FILE";
+        Errstr = Chars("read() from tty returned END-OF-FILE");
       ok = tfalse;
     }
   }

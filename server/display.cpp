@@ -26,6 +26,7 @@
 #include "fdlist.h"
 #include "hw.h"
 #include "hw_private.h"
+#include "log.h"
 #include "obj/id.h"
 #include "stl/string.h"
 #include "version.h"
@@ -56,6 +57,8 @@ static byte ValidVideo;
 const char *TWDisplay, *origTWDisplay, *origTERM;
 
 char nullMIME[TW_MAX_MIMELEN];
+
+char printk_buf[TW_BIGBUFF];
 
 String HOME;
 
@@ -125,12 +128,16 @@ int printk(const char *format, ...) {
   return i;
 }
 
+void printk_str(const char *s, size_t len) {
+  (void)fwrite(s, len, 1, stderr);
+}
+
 int flushk(void) {
   return fflush(stderr);
 }
 
 static void OutOfMemory(void) {
-  printk("twdisplay: Out of memory!\n");
+  log(ERROR, "twdisplay: Out of memory!\n");
 }
 
 inline uldat FdListGet(void) {
@@ -258,20 +265,19 @@ static module DlLoadAny(uldat len, char *name) {
       if ((init_func = (byte(*)(module))dlsym((dlhandle)m->Handle, "InitModule"))) {
         if (init_func(m)) {
           return m;
-        } else if (Errstr == NULL || *Errstr == '\0') {
+        } else if (!Errstr) {
           Error(DLERROR);
-          Errstr = "InitModule() failed";
+          Errstr = Chars("InitModule() failed");
         }
       } else {
         Error(DLERROR);
-        Errstr = "InitModule() not found in module";
+        Errstr = Chars("InitModule() not found in module");
       }
     } else {
       Error(DLERROR);
-      Errstr = dlerror();
     }
   } else {
-    Errstr = "Out of memory!";
+    Error(NOMEMORY);
   }
   return NULL;
 }

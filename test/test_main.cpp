@@ -9,7 +9,8 @@
 #include "test.h"
 
 int main() {
-  test_stl_vector();
+  test_stl_fmt();
   test_stl_utf8();
+  test_stl_vector();
   return 0;
 }

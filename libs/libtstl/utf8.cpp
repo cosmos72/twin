@@ -72,12 +72,12 @@ size_t Utf8::to_size(seq x) {
   return n;
 }
 
-View<char> Utf8::chars() const {
-  return View<char>(u.b, to_size(u));
+Chars Utf8::chars() const {
+  return Chars(u.b, to_size(u));
 }
 
 // parse UTF-8 sequence from chars
-bool Utf8::parse(View<char> chars, View<char> *remaining) {
+bool Utf8::parse(Chars chars, Chars *remaining) {
   const char *src = chars.data();
   const size_t srcn = chars.size();
   // replacement character is \uFFFD

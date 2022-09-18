@@ -48,7 +48,6 @@ byte DlOpen(module Module) {
   }
   if (!Handle) {
     Error(DLERROR);
-    Errstr = dlerror();
     return tfalse;
   }
 
@@ -61,7 +60,7 @@ byte DlOpen(module Module) {
     dlclose(Handle);
 
     if (init_func) {
-      if (Errstr == NULL || *Errstr == '\0') {
+      if (!Errstr) {
         Error(DLERROR);
         Errstr = "InitModule() failed";
       }
@@ -139,7 +138,7 @@ module DlLoad(uldat code) {
         All->FnHookModule(All->HookModule);
     } else {
       printk("failed to load module %s: %s\n", name ? name : "(NULL)",
-             Errstr ? Errstr : "unknown error");
+             Errstr ? Errstr.data() : "unknown error");
     }
   }
   return M;
