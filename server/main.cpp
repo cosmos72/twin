@@ -133,7 +133,7 @@ static void Usage(void) {
         " --nohw                   start in background without display\n"
         " --hw=<display>[,options] start with the given display (multiple --hw=... allowed)\n"
         "                          (default: autoprobe all displays until one succeeds)\n"
-        " --plugindir=DIRECTORY    set directory where to look for --hw=<display> libraries\n"
+        " --plugindir=DIRECTORY    set directory where to look for --hw=... libraries\n"
         "Currently known display drivers: \n"
         "\txft[@<XDISPLAY>]\n"
         "\tX[@<XDISPLAY>]\n"

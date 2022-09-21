@@ -1048,6 +1048,7 @@ static void Usage(void) {
         " --twin@<TWDISPLAY>       specify server to contact instead of $TWDISPLAY\n"
         " --hw=<display>[,options] start the given display (only one --hw=... allowed)\n"
         "                          (default: autoprobe all displays until one succeeds)\n"
+        " --plugindir=DIRECTORY    set directory where to look for --hw=... libraries\n"
         "Currently known display drivers: \n"
         "\txft[@<XDISPLAY>]\n"
         "\tX[@<XDISPLAY>]\n"
