@@ -35,6 +35,7 @@
 #include "hw_private.h"
 #include "hw_dirty.h"
 #include "common.h"
+#include "log.h"
 
 #include <Tw/Twkeys.h>
 #include <Tutf/Tutf.h>
