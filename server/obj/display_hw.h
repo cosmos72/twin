@@ -42,8 +42,7 @@ struct s_display_hw : public s_obj {
   all All;
 
   /* display_hw */
-  uldat NameLen;
-  char *Name;
+  String Name;
   module Module;
 
   void *Private; /* used to store HW-specific data */

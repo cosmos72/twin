@@ -11,6 +11,8 @@
 
 #include <Tw/datatypes.h>
 
+#include <cstddef>
+
 inline ldat Abs(ldat x) {
   return x >= 0 ? x : -x;
 }

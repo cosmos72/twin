@@ -131,7 +131,7 @@ static void fixup_colorbug(void) {
 }
 
 static byte termcap_InitVideo(void) {
-  const char *term = tty_TERM;
+  const char *term = tty_TERM.data(); // guaranteed to be '\0' terminated
   const char *tc_name[tc_cap_N + 1] = {"cl", "cm", "ve", "vi", "md", "mb", "me", "ks", "ke",
                                        "bl", "as", "ae", "k1", "k2", "k3", "k4", "k5", "k6",
                                        "k7", "k8", "k9", "k;", "F1", "F2", "&7", "kh", "@7",

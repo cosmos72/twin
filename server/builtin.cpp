@@ -421,10 +421,10 @@ static void UpdateDisplayWin(widget displayWin) {
 
     for (hw = All->FirstDisplayHW; hw; hw = hw->Next) {
       DisplayWin->GotoXY(x, y++);
-      if (!hw->NameLen)
+      if (!hw->Name)
         DisplayWin->RowWriteCharset(9, "(no name)");
       else
-        DisplayWin->RowWriteCharset(hw->NameLen, hw->Name);
+        DisplayWin->RowWriteCharset(hw->Name.size(), hw->Name.data());
     }
     if (DisplayWin->Parent)
       DrawFullWindow2(DisplayWin);

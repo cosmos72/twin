@@ -1413,14 +1413,14 @@ static byte ReadGlobals(void) {
 
 static byte rcparse(cstr path);
 
-static byte rcload(void) {
+static bool rcload(void) {
   str path;
   uldat len;
 #ifndef DEBUG_FORK
   int fdm[2];
   int fdl[2];
 #endif
-  byte c = tfalse;
+  bool c = false;
 
   if (!(path = FindFile(".twinrc", &len)))
     return c;

@@ -9,7 +9,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "twautoconf.h"
+#include <Tw/autoconf.h>
 #include "compiler.h"
 
 #ifdef TW_HAVE_UNISTD_H

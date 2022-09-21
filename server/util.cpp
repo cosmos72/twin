@@ -1189,7 +1189,7 @@ char *FindFile(const char *name, uldat *fsize) {
 
   prefix[0] = HOME.data();
   infix[0] = HOME ? "/" : "";
-  prefix[1] = pkg_libdir;
+  prefix[1] = pkg_libdir.data(); // guaranteed to be '\0' terminated
   infix[1] = "/system";
   prefix[2] = "";
   infix[2] = "";

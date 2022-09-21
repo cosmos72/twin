@@ -8,8 +8,8 @@
 #ifndef TWIN_TTY_IOCTL_H
 #define TWIN_TTY_IOCTL_H
 
-#ifndef TWAUTOCONF_H
-#include "twautoconf.h"
+#ifndef TW_TWAUTOCONF_H
+#include <Tw/autoconf.h>
 #endif
 
 #if defined(TW_HAVE_TERMIOS_H)

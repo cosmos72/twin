@@ -29,20 +29,20 @@ inline void linux_MoveToXY(udat x, udat y) {
 
 /* return tfalse if failed */
 static byte linux_InitVideo(void) {
-  char *term = tty_TERM;
+  Chars term = tty_TERM;
 
   if (!term) {
-    printk("      linux_InitVideo() failed: unknown terminal type.\n");
+    log(ERROR, "      linux_InitVideo() failed: unknown terminal type.\n");
     return tfalse;
   }
 
-  if (strcmp(term, "linux")) {
-    printk("      linux_InitVideo() failed: terminal `" SS "' is not `linux'.\n", term);
+  if (term != Chars("linux")) {
+    log(ERROR, "      linux_InitVideo() failed: terminal `", term, "' is not `linux'.\n");
     return tfalse;
   }
 
   if (!(tc_scr_clear = CloneStr("\033[2J"))) {
-    printk("      linux_InitVideo() failed: out of memory!");
+    log(ERROR, "      linux_InitVideo() failed: out of memory!");
     return tfalse;
   }
 

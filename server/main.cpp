@@ -161,7 +161,7 @@ static byte Check4SpecialArgs(int argc, char *argv[]) {
         fputs("twin: Out of memory!\n", stderr);
         return ttrue;
       }
-      pkg_libdir = plugindir;
+      pkg_libdir = Chars::from_c(plugindir);
     }
   }
   return tfalse;

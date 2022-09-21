@@ -11,13 +11,14 @@
  */
 
 #include "twin.h"
+#include "algo.h"
 #include "alloc.h"
 #include "main.h"
 #include "data.h"
 #include "extreg.h"
-#include "remote.h"
+#include "log.h"
 #include "methods.h"
-#include "algo.h"
+#include "remote.h"
 
 #include "hw.h"
 #include "hw_private.h"
@@ -398,52 +399,47 @@ static void display_QuitHW(void) {
 }
 
 static void fix4display(void) {
-  char *arg, *arg17;
+  Chars name = HW->Name;
+  if (name.starts_with(Chars("-hw=display@(-hw="))) {
+    size_t pos = name.find(")");
 
-  if (HW->Name && HW->NameLen > 17 && !memcmp(HW->Name, "-hw=display@(-hw=", 17) &&
-      (arg = (char *)memchr(arg17 = HW->Name + 17, ')', HW->NameLen - 17))) {
-
-    uldat n = arg - arg17;
-    /*
-      cannot use sprintf(HW->Name, "-display=%.*s", (int)n, arg17)
-      because arg17 points inside HW->Name -> undefined behaviour
-    */
-    CopyMem("-display=", HW->Name, 9);
-    MoveMem(arg17, HW->Name + 9, n);
-    HW->NameLen = 9 + n;
+    // the following requires String::format to never shrink String's capacity
+    // and to use memmove() to fill String
+    HW->Name.format("-display=", name.view(17, pos != size_t(-1) ? pos : name.size()));
   }
 }
 
-static byte display_InitHW(void) {
-  char *s, *arg = HW->Name;
+static bool display_InitHW(void) {
+  Chars arg = HW->Name;
   msgport Port;
 
-  if (arg && HW->NameLen > 4) {
-    arg += 4;
-    if (strncmp(arg, "display", 7))
-      return tfalse; /* user said "use <arg> as display, not twdisplay" */
-    arg += 7;
+  if (arg.size() > 4) {
+    arg = arg.view(4, arg.size());
+    if (arg.size() < 7 || memcmp(arg.data(), "display", 7)) {
+      return false; /* user said "use <arg> as display, not twdisplay" */
+    }
+    arg = arg.view(7, arg.size());
   } else
-    arg = NULL;
+    arg = Chars();
 
   if (HW->AttachSlot == NOSLOT) {
     /*
      * we can't start unless we have a connected twdisplay...
      */
-    printk("      display_InitHW() failed: not connected to twdisplay.\n"
-           "      (you cannot use -hw=display from command line or twattach)\n");
-    return tfalse;
+    log(ERROR, "      display_InitHW() failed: not connected to twdisplay.\n"
+               "      (you cannot use -hw=display from command line or twattach)\n");
+    return false;
   }
 
   if (!(Port = RemoteGetMsgPort(HW->AttachSlot))) {
-    printk("      display_InitHW() failed: twdisplay did not create a MsgPort.\n");
-    return tfalse;
+    log(ERROR, "      display_InitHW() failed: twdisplay did not create a MsgPort.\n");
+    return false;
   }
 
   if (!Ext(Socket, SendMsg)) {
-    printk("      display_InitHW() failed: SocketSendMsg() not available.\n"
-           "      (maybe you should load Socket Server module?)\n");
-    return tfalse;
+    log(ERROR, "      display_InitHW() failed: SocketSendMsg() not available.\n"
+               "      (maybe you should load Socket Server module?)\n");
+    return false;
   }
 
   if (!(HW->Private = (struct display_data *)AllocMem(sizeof(struct display_data))) ||
@@ -456,8 +452,8 @@ static byte display_InitHW(void) {
       }
       FreeMem(HW->Private);
     }
-    printk("      display_InitHW(): Out of memory!\n");
-    return tfalse;
+    log(ERROR, "      display_InitHW(): Out of memory!\n");
+    return false;
   }
 
   ev = &Msg->Event.EventDisplay;
@@ -493,7 +489,7 @@ static byte display_InitHW(void) {
   HW->HWSelectionNotify = display_SelectionNotify_display;
   HW->HWSelectionPrivate = (tany)0;
 
-  if (arg && strstr(arg, ",drag")) {
+  if (arg.contains(Chars(",drag"))) {
     HW->CanDragArea = display_CanDragArea;
     HW->DragArea = display_DragArea;
   } else
@@ -513,13 +509,13 @@ static byte display_InitHW(void) {
   HW->FlagsHW &= ~FlHWSoftMouse;
 
   HW->FlagsHW |= FlHWNeedOldVideo;
-  if (arg && strstr(arg, ",slow"))
+  if (arg.contains(Chars(",slow")))
     HW->FlagsHW |= FlHWExpensiveFlushVideo;
   else
     HW->FlagsHW &= ~FlHWExpensiveFlushVideo;
 
   HW->NeedHW = NEEDPersistentSlot;
-  HW->CanResize = arg && strstr(arg, ",resize");
+  HW->CanResize = arg.contains(Chars(",resize"));
   HW->merge_Threshold = 0;
 
   display_CreateMsg(ev_dpy_Helper, sizeof(Helper->Id));
@@ -527,12 +523,13 @@ static byte display_InitHW(void) {
   Ext(Socket, SendMsg)(display, Msg);
   /* don't flush now, twdisplay waits for attach messages */
 
-  if (arg && (s = strstr(arg, ",x=")))
-    HW->X = atoi(s + 3);
+  size_t pos;
+  if ((pos = arg.find(Chars(",x="))) != size_t(-1))
+    HW->X = atoi(&arg[pos + 3]); // safe, arg is '\0' terminated
   else
     HW->X = GetDisplayWidth();
-  if (arg && (s = strstr(arg, ",y=")))
-    HW->Y = atoi(s + 3);
+  if ((pos = arg.find(Chars(",y="))) != size_t(-1))
+    HW->Y = atoi(&arg[pos + 3]); // safe, arg is '\0' terminated
   else
     HW->Y = GetDisplayHeight();
 
@@ -550,7 +547,7 @@ static byte display_InitHW(void) {
 
   fix4display();
 
-  return ttrue;
+  return true;
 }
 
 EXTERN_C byte InitModule(module Module) {

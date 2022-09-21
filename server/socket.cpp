@@ -17,7 +17,7 @@
  * "twconfig.h" and "osincludes.h" early to pull in TW_HAVE_* and system headers
  * necessary to include <sys/socket.h> under FreeBSD.
  */
-#include "twautoconf.h"
+#include <Tw/autoconf.h>
 #include "osincludes.h"
 
 #include <sys/socket.h>
@@ -938,7 +938,7 @@ static void sockAttachHW(uldat len, const char *arg, byte flags) {
   if (verbose)
     verbose = RegisterPrintkFd(realFd);
 
-  if ((D_HW = AttachDisplayHW(len, arg, Slot, flags & TW_ATTACH_HW_EXCLUSIVE))) {
+  if ((D_HW = AttachDisplayHW(Chars(arg, len), Slot, flags & TW_ATTACH_HW_EXCLUSIVE))) {
     if (D_HW->NeedHW & NEEDPersistentSlot)
       LS.MsgPort->AttachHW = D_HW;
     else
@@ -966,7 +966,7 @@ static void sockAttachHW(uldat len, const char *arg, byte flags) {
 }
 
 static byte sockDetachHW(uldat len, const char *arg) {
-  return DetachDisplayHW(len, arg, 0); /* cannot detach exclusive displays !! */
+  return DetachDisplayHW(Chars(arg, len), 0); /* cannot detach exclusive displays !! */
 }
 
 static void sockSetFontTranslation(const byte trans[0x80]) {

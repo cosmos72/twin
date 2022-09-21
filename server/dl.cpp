@@ -15,47 +15,42 @@
 #include "methods.h"
 #include "data.h"
 #include "dl.h"
+#include "log.h"
 #include "util.h"
-#include "printk.h"
 #include "version.h"
 
 #include "dl_helper.h"
 
-byte DlOpen(module Module) {
+bool DlOpen(module Module) {
+  String name;
   dlhandle Handle = NULL;
-  uldat len, len0 = 1 + strlen(pkg_libdir) + strlen(DL_PREFIX) + strlen(DL_SUFFIX);
-  char *name = NULL;
+  uldat len;
   byte (*init_func)(module);
 
   if (!dlinit_once()) {
-    return tfalse;
+    return false;
   }
-
-  if (Module && !Module->Handle && (!Module->NameLen || Module->Name)) {
-    /* dlopen(NULL, ...) returns a handle for the main program */
-    if (Module->NameLen) {
-      len = len0 + Module->NameLen;
-      if ((name = (char *)AllocMem(len + 1)))
-        sprintf(name, "%s/%s%.*s%s", pkg_libdir, DL_PREFIX, (int)Module->NameLen, Module->Name,
-                DL_SUFFIX);
-      else {
-        return tfalse;
+  if (Module && !Module->Handle) {
+    if (Module->Name) {
+      if (!name.format(pkg_libdir, "/", DL_PREFIX, //
+                       Chars(Module->Name, Module->NameLen), DL_SUFFIX)) {
+        return false;
       }
+    } else {
+      /* dlopen(NULL, ...) returns a handle for the main program */
     }
-    Handle = dlopen(name);
-    if (name)
-      FreeMem(name);
+    Handle = dlopen(name.data());
   }
   if (!Handle) {
     Error(DLERROR);
-    return tfalse;
+    return false;
   }
 
   if (name) {
     init_func = (byte(*)(module))dlsym(Handle, "InitModule");
     if (init_func && init_func(Module)) {
       Module->Handle = (void *)Handle;
-      return ttrue;
+      return true;
     }
     dlclose(Handle);
 
@@ -68,14 +63,14 @@ byte DlOpen(module Module) {
       Error(DLERROR);
       Errstr = "InitModule() not found in module";
     }
-    return tfalse;
+    return false;
   }
-  return ttrue;
+  return true;
 }
 
 void DlClose(module Module) {
   if (Module && Module->Handle) {
-    if (Module->NameLen != 0) {
+    if (Module->Name) {
       void (*quit_func)(module) = (void (*)(module))dlsym((dlhandle)Module->Handle, "QuitModule");
       if (quit_func)
         quit_func(Module);
@@ -86,17 +81,18 @@ void DlClose(module Module) {
 }
 
 module DlLoadAny(uldat len, const char *name) {
+  Chars cname(name, len);
   module Module;
 
   for (Module = All->FirstModule; Module; Module = Module->Next) {
-    if (len == Module->NameLen && !memcmp(name, Module->Name, len))
-      /* already loaded! */
-      return Module;
+    if (cname == Chars(Module->Name, Module->NameLen)) {
+      return Module; // already loaded!
+    }
   }
-
   if ((Module = New(module)(len, name))) {
-    if (Module->DlOpen())
+    if (Module->DlOpen()) {
       return Module;
+    }
     Module->Delete();
   }
   return NULL;
@@ -114,7 +110,7 @@ udat DlName2Code(const char *name) {
   return MainSo;
 }
 
-static const char *DlCode2Name(uldat code) {
+static Chars DlCode2Name(uldat code) {
   switch (code) {
   case TermSo:
     return "term";
@@ -124,21 +120,21 @@ static const char *DlCode2Name(uldat code) {
     return "rcparse";
   default:
   case MainSo:
-    return NULL;
+    return Chars();
   }
 }
 
 module DlLoad(uldat code) {
   module M = (module)0;
   if (code < MAX_So && !(M = So[code])) {
-    const char *name = DlCode2Name(code);
-    M = DlLoadAny(name ? strlen(name) : 0, name);
+    const Chars name = DlCode2Name(code);
+    M = DlLoadAny(name.size(), name.data());
     if ((So[code] = M)) {
       if (All->FnHookModule)
         All->FnHookModule(All->HookModule);
     } else {
-      printk("failed to load module %s: %s\n", name ? name : "(NULL)",
-             Errstr ? Errstr.data() : "unknown error");
+      log(ERROR, "failed to load module ", name, ": ", //
+          (Errstr ? Errstr : Chars("unknown error")));
     }
   }
   return M;

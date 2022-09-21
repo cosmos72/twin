@@ -11,8 +11,8 @@
  */
 
 #include "stl/err.h"
-#include "stl/view.h" // Chars, chars_from_c()
-#include "twautoconf.h"
+#include "stl/chars.h"
+#include <Tw/autoconf.h>
 
 #include <cerrno> // errno
 
@@ -39,13 +39,13 @@ bool Error(errnum err) {
     break;
   case DLERROR:
 #if defined(CONF__DLOPEN) && defined(TW_HAVE_DLFCN_H)
-    Errstr = chars_from_c(dlerror());
+    Errstr = Chars::from_c(dlerror());
 #else
     Errstr = Chars("Error loading dynamic library");
 #endif
     break;
   case SYSERROR:
-    Errstr = chars_from_c(strerror(errno));
+    Errstr = Chars::from_c(strerror(errno));
     break;
   case INVALERROR:
     Errstr = Chars("Invalid value");

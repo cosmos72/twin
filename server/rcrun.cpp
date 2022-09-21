@@ -837,7 +837,7 @@ static byte RCSleep(timevalue *_t) {
  */
 static void RCReload(void) {
   module M;
-  byte (*mod_rcload)(void) = NULL;
+  bool (*mod_rcload)(void) = NULL;
   byte success;
 
   if ((M = DlLoad(RCParseSo)))

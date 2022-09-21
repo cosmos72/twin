@@ -47,7 +47,7 @@
 #define PKG_LIBDIR "/usr/local/lib/twin"
 #endif
 
-static const char *const modules_prefix = PKG_LIBDIR "/" DL_PREFIX;
+Chars pkg_libdir = PKG_LIBDIR;
 
 static const char *MYname;
 
@@ -223,8 +223,8 @@ static struct s_fn_module _FnModule = {
     (void (*)(module))NoOp,                      /* RemoveModule */
     (void (*)(module))NoOp,                      /* DeleteModule */
     (void (*)(module, udat, uldat, uldat))NoOp,  /* ChangeField  */
-    NULL,                                        /* Fn_Obj */
-    (byte (*)(module))NoOp,                      /* DlOpen              */
+    NULL,                                        /* Fn_Obj       */
+    (bool (*)(module))NoOp,                      /* DlOpen       */
     (void (*)(module))NoOp,                      /* DlClose      */
 };
 
@@ -241,106 +241,80 @@ module s_module::Init(uldat /*namelen*/, const char * /*name*/) {
 static s_module _Module;
 static module const GModule = (_Module.Fn = &_FnModule, _Module.Init(0, NULL));
 
-static module DlLoadAny(uldat len, char *name) {
+static module DlLoadAny(Chars name) {
   byte (*init_func)(module);
   module m = GModule;
-  char *path;
+  String path;
 
   if (!dlinit_once()) {
-    return (module)0;
-  }
-
-  if ((m->Name = CloneStrL(name, len)) &&
-      (path = (char *)AllocMem(len + strlen(modules_prefix) + strlen(DL_SUFFIX) + 1))) {
-
-    sprintf(path, "%s%.*s%s", modules_prefix, (int)len, name, DL_SUFFIX);
-    m->Handle = (void *)dlopen(path);
-    FreeMem(path);
-
-    if (m->Handle) {
-      /*
-       * Module MUST have a InitModule function, as it needs to set
-       * Module->Private to its xxx_InitHW() startup code.
-       */
-      if ((init_func = (byte(*)(module))dlsym((dlhandle)m->Handle, "InitModule"))) {
-        if (init_func(m)) {
-          return m;
-        } else if (!Errstr) {
-          Error(DLERROR);
-          Errstr = Chars("InitModule() failed");
-        }
-      } else {
-        Error(DLERROR);
-        Errstr = Chars("InitModule() not found in module");
-      }
-    } else {
-      Error(DLERROR);
-    }
-  } else {
+    return nullptr;
+  } else if (!(m->Name = CloneStrL(name.data(), name.size())) ||
+             !path.format(pkg_libdir, "/" DL_PREFIX, name, DL_SUFFIX)) {
     Error(NOMEMORY);
-  }
-  return NULL;
-}
-
-static byte module_InitHW(const char *arg, uldat len) {
-  const char *name, *tmp;
-  char *buf;
-  byte (*InitD)(void);
-  module m = NULL;
-
-  if (!arg || len <= 4)
-    return tfalse;
-
-  arg += 4;
-  len -= 4; /* skip "-hw=" */
-
-  name = (const char *)memchr(arg, '@', len);
-  tmp = (const char *)memchr(arg, ',', len);
-  if (tmp && (!name || tmp < name))
-    name = tmp;
-  if (name)
-    len = name - arg;
-
-  if (len == 1 && *arg == 'X')
-    len = 3, arg = "X11";
-
-  if ((buf = (char *)AllocMem(len + 4))) {
-    sprintf(buf, "hw_%.*s", (int)len, arg);
-
-    m = DlLoadAny(len + 3, buf);
-
-    if (m) {
-      printk("twdisplay: starting display driver module `" SS "'...\n", buf);
-
-      if ((InitD = m->DoInit) && InitD()) {
-        printk("twdisplay: ...module `" SS "' successfully started.\n", buf);
-        HW->Module = m;
-        m->Used++;
-
-        FreeMem(buf);
-        return ttrue;
-      }
-      /*m->Delete();*/
+  } else if (!(m->Handle = (void *)dlopen(path.data()))) {
+    Error(DLERROR);
+    /*
+     * a Module MUST have a InitModule function, as it needs to set
+     * Module->Private to its xxx_InitHW() startup code.
+     */
+  } else if (!(init_func = (byte(*)(module))dlsym((dlhandle)m->Handle, "InitModule"))) {
+    Error(DLERROR);
+    Errstr = Chars("InitModule() not found in module");
+  } else if (!init_func(m)) {
+    if (!Errstr) {
+      Error(DLERROR);
+      Errstr = Chars("InitModule() failed");
     }
-    name = buf;
   } else {
-    Errstr = "Out of memory!";
-    name = "(NULL)";
+    return m;
   }
-
-  if (m) {
-    printk("twdisplay: ...module `" SS "' failed to start.\n", name);
-  } else
-    printk("twdisplay: unable to load display driver module `" SS "' :\n      " SS "\n", name,
-           Errstr);
-
-  if (buf)
-    FreeMem(buf);
-
-  return tfalse;
+  return nullptr;
 }
 
-static display_hw CreateDisplayHW(uldat len, const char *name);
+static bool module_InitHW(Chars arg) {
+  module m = NULL;
+  const char *tmp;
+  char *buf;
+
+  if (arg.size() <= 4) {
+    return false;
+  }
+  arg = arg.view(4, arg.size()); // skip "-hw="
+
+  const size_t at = arg.find(Chars("@"));
+  const size_t comma = arg.find(Chars(","));
+  const size_t separator = at < comma ? at : comma;
+
+  Chars name = arg.view(0, separator != size_t(-1) ? separator : arg.size());
+  if (name == Chars("X")) {
+    name = Chars("X11");
+  }
+
+  String alloc_name;
+
+  if (!alloc_name.format("hw_", name)) {
+    Errstr = "Out of memory!";
+  } else if (!(m = DlLoadAny(name = alloc_name))) {
+    log(ERROR, "twdisplay: unable to load display driver module `", name, //
+        "' :\n      ", Errstr, "\n");
+  } else {
+    log(INFO, "twdisplay: starting display driver module `", name, "'...\n");
+
+    bool (*InitD)(void);
+    if (!(InitD = m->DoInit) || !InitD()) {
+      log(ERROR, "twdisplay: ...module `", name, "' failed to start.\n");
+    } else {
+      log(INFO, "twdisplay: ...module `", name, "' successfully started.\n");
+      HW->Module = m;
+      m->Used++;
+      return true;
+    }
+    /*m->Delete();*/
+  }
+  return false;
+}
+
+static display_hw CreateDisplayHW(Chars name);
 static byte InitDisplayHW(display_hw);
 static void QuitDisplayHW(display_hw);
 
@@ -358,13 +332,12 @@ static struct s_fn_display_hw _FnDisplayHW = {
 
 display_hw s_display_hw::Init(uldat namelen, const char *name) {
   Fn = &_FnDisplayHW;
-  if (!name || !s_obj::Init()) {
+  if (!s_obj::Init()) {
     return NULL;
   }
-  if (!(this->Name = CloneStrL(name, namelen))) {
+  if (!this->Name.assign(name, namelen)) {
     return NULL;
   }
-  this->NameLen = namelen;
   this->Module = NULL;
   /*
    * ->Quitted will be set to tfalse only
@@ -399,7 +372,7 @@ static void UpdateFlagsHW(void) {
  * and falling back in case some of them fails.
  */
 static byte InitDisplayHW(display_hw D_HW) {
-  char *arg = D_HW->Name;
+  Chars arg = D_HW->Name;
   uldat tried = 0;
   byte success;
 
@@ -408,21 +381,21 @@ static byte InitDisplayHW(display_hw D_HW) {
 
   D_HW->DisplayIsCTTY = D_HW->NeedHW = D_HW->FlagsHW = tfalse;
 
-  if (arg && !strncmp(arg, "-hw=", 4))
-    arg += 4;
-  else
-    arg = NULL;
+  if (arg.starts_with(Chars("-hw="))) {
+    arg = arg.view(4, arg.size());
+  } else {
+    arg = Chars();
+  }
+#define TRY4(hw_name) (tried++, module_InitHW(Chars(hw_name)))
 
-#define TRY4(hw) (tried++, module_InitHW(hw, strlen(hw)))
-
-  if (!arg || !*arg) {
+  if (!arg) {
     success = TRY4("-hw=xft") || TRY4("-hw=X11") || TRY4("-hw=twin") ||
 #if 0 /* cannot use `--hw=display' inside twdisplay! */
         TRY4("-hw=display") ||
 #endif
               TRY4("-hw=tty");
   } else {
-    success = module_InitHW(D_HW->Name, D_HW->NameLen);
+    success = module_InitHW(D_HW->Name);
   }
   if (success) {
     D_HW->Quitted = tfalse;
@@ -430,7 +403,7 @@ static byte InitDisplayHW(display_hw D_HW) {
       DisplayHWCTTY = D_HW;
     UpdateFlagsHW();
   } else
-    warn_NoHW(D_HW->NameLen, HW->Name, tried);
+    warn_NoHW(D_HW->Name.size(), HW->Name.data(), tried);
 
   RestoreHW;
 
@@ -438,15 +411,19 @@ static byte InitDisplayHW(display_hw D_HW) {
 }
 
 static void QuitDisplayHW(display_hw D_HW) {
-  if (D_HW && D_HW->QuitHW)
-    HW = D_HW, D_HW->QuitHW();
+  if (D_HW && D_HW->QuitHW) {
+    HW = D_HW;
+    D_HW->QuitHW();
+  }
 }
 
-static display_hw CreateDisplayHW(uldat namelen, const char *name) {
-  return HW = _HW.Init(namelen, name);
+static display_hw CreateDisplayHW(Chars name) {
+  return HW = _HW.Init(name.size(), name.data());
 }
 
-static byte IsValidHW(uldat len, const char *arg) {
+static byte IsValidHW(Chars carg) {
+  const char *arg = carg.data();
+  size_t len = carg.size();
   uldat i;
   byte b;
   if (len >= 4 && !memcmp(arg, "-hw=", 4))
@@ -466,18 +443,17 @@ static byte IsValidHW(uldat len, const char *arg) {
   return ttrue;
 }
 
-static display_hw AttachDisplayHW(uldat len, const char *arg, uldat slot, byte flags) {
-  if ((len && len <= 4) || memcmp("-hw=", arg, Min2(len, 4))) {
-    printk("twdisplay: specified `%.*s\' is not `--hw=<display>\'\n", (int)len, arg);
-    return (display_hw)0;
+static display_hw AttachDisplayHW(Chars arg, uldat slot, byte flags) {
+  if (arg && !arg.starts_with(Chars("-hw="))) {
+    log(ERROR, "twdisplay: specified `", arg, "' is not `--hw=<display>'\n");
+    return nullptr;
   }
-
-  if (IsValidHW(len, arg) && CreateDisplayHW(len, arg)) {
+  if (IsValidHW(arg) && CreateDisplayHW(arg)) {
     HW->AttachSlot = slot;
     if (InitDisplayHW(HW))
       return HW;
   }
-  return NULL;
+  return nullptr;
 }
 
 #if 0
@@ -1106,9 +1082,9 @@ static byte VersionsMatch(byte force) {
 }
 
 static void MergeHyphensArgv(int argc, char **argv) {
-  char *S;
+  const char *s;
   while (argc) {
-    if ((S = *argv) && S[0] == '-' && S[1] == '-' && S[2] && S[3])
+    if ((s = *argv) && s[0] == '-' && s[1] == '-' && s[2] && s[3])
       (*argv)++;
     argv++, argc--;
   }
@@ -1146,7 +1122,9 @@ int main(int argc, char *argv[]) {
       flags &= ~TW_ATTACH_HW_REDIRECT;
     else if (!strcmp(*argv, "-f") || !strcmp(*argv, "-force"))
       force = 1;
-    else if (!strncmp(*argv, "-twin@", 6))
+    else if (!strncmp(*argv, "-plugindir=", 11)) {
+      pkg_libdir = Chars::from_c(*argv + 11);
+    } else if (!strncmp(*argv, "-twin@", 6))
       dpy = *argv + 6;
     else if (!strncmp(*argv, "-hw=", 4)) {
       if (!strncmp(*argv + 4, "display", 7)) {
@@ -1289,19 +1267,19 @@ int main(int argc, char *argv[]) {
       DisplayWidth = TryDisplayWidth = TwGetDisplayWidth();
       DisplayHeight = TryDisplayHeight = TwGetDisplayHeight();
 
-      if (!(HW = AttachDisplayHW(strlen(carg), carg, NOSLOT, 0))) {
+      if (!(HW = AttachDisplayHW(Chars::from_c(carg), NOSLOT, 0))) {
         TwClose();
         return 1;
       }
-      if (!(buf = (char *)AllocMem(HW->NameLen + 80))) {
+      if (!(buf = (char *)AllocMem(HW->Name.size() + 80))) {
         QuitDisplayHW(HW);
         TwClose();
         OutOfMemory();
         return 1;
       }
 
-      sprintf(buf, "-hw=display@(%.*s),x=%d,y=%d%s%s%s", (int)HW->NameLen, HW->Name, (int)HW->X,
-              (int)HW->Y, HW->CanResize ? ",resize" : "",
+      sprintf(buf, "-hw=display@(%.*s),x=%d,y=%d%s%s%s", (int)HW->Name.size(), HW->Name.data(),
+              (int)HW->X, (int)HW->Y, HW->CanResize ? ",resize" : "",
               /* CanDragArea */ ttrue ? ",drag" : "", ExpensiveFlushVideo ? ",slow" : "");
 
       TwAttachHW(strlen(buf), buf, flags);

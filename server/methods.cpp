@@ -2057,8 +2057,7 @@ static void DeleteDisplayHW(display_hw DisplayHW) {
     All->ExclusiveHW = NULL;
 
   DisplayHW->Remove();
-  if (DisplayHW->NameLen && DisplayHW->Name)
-    FreeMem(DisplayHW->Name);
+  String().swap(DisplayHW->Name); // destroy DisplayHW->Name
 
   DeleteObj((obj)DisplayHW);
 

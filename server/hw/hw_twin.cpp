@@ -16,10 +16,11 @@
 #include "data.h"
 #include "remote.h"
 
+#include "common.h"
 #include "hw.h"
 #include "hw_private.h"
 #include "hw_dirty.h"
-#include "common.h"
+#include "log.h"
 #include "stl/view.h"
 
 #include <Tw/Tw.h>
@@ -415,51 +416,53 @@ static void TW_QuitHW(void) {
 
 TW_DECL_MAGIC(hw_twin_magic);
 
-static byte TW_InitHW(void) {
-  char *arg = HW->Name, *opt = NULL;
+static bool TW_InitHW(void) {
+  Chars arg = HW->Name;
   char name[] = "twin :??? on twin";
   uldat len;
   tmenu Tmenu;
   tscreen Tscreen;
 
-  if (arg && HW->NameLen > 4) {
-    arg += 4;
-    if (strncmp(arg, "twin", 4))
-      return tfalse; /* user said "use <arg> as display, not libtw" */
+  if (arg.size() > 4) {
+    arg = arg.view(4, arg.size());
+    if (!arg.starts_with("twin")) {
+      return false; /* user said "use <arg> as display, not libtw" */
+    }
+    arg = arg.view(4, arg.size());
 
-    arg += 4;
-
-    if ((opt = strstr(arg, ",noinput"))) {
-      *opt = '\0';
+    if (arg.contains(Chars(",noinput"))) {
       HW->FlagsHW |= FlHWNoInput;
     }
-    if (strstr(arg, ",slow"))
+    if (arg.contains(Chars(",slow"))) {
       HW->FlagsHW |= FlHWExpensiveFlushVideo;
-
-    if (*arg == '@')
-      ++arg; /* use specified TWDISPLAY */
-    else
-      arg = NULL; /* use default TWDISPLAY */
+    }
+    /* if '@' is present, it is followed by the TWDISPLAY to use */
+    const size_t at = arg.find(Chars("@"));
+    if (at != size_t(-1)) {
+      arg = arg.view(at + 1, arg.size());
+      const size_t comma = arg.find(Chars(","));
+      if (comma != size_t(-1)) {
+        arg = arg.view(0, comma);
+      }
+    } else {
+      arg = Chars();
+    }
   } else
-    arg = NULL;
+    arg = Chars();
 
-  if (!arg && !(arg = origTWDisplay)) {
+  if (!arg && !(arg = Chars::from_c(origTWDisplay))) {
     /*
      * we can't call Tw_Open(NULL) since getenv("TWDISPLAY")
      * returns OUR socket... and using ourself as display isn't
      * exactly a bright idea.
      */
-    printk("      TW_InitHW() failed: TWDISPLAY is not set\n");
-    if (opt)
-      *opt = ',';
-    return tfalse;
+    log(ERROR, "      TW_InitHW() failed: TWDISPLAY is not set\n");
+    return false;
   }
 
   if (!(HW->Private = (tw_data *)AllocMem(sizeof(tw_data)))) {
-    printk("      TW_InitHW(): Out of memory!\n");
-    if (opt)
-      *opt = ',';
-    return tfalse;
+    log(ERROR, "      TW_InitHW(): Out of memory!\n");
+    return false;
   }
 
 #ifdef CONF__ALLOC
@@ -468,7 +471,7 @@ static byte TW_InitHW(void) {
 
   Td = NULL;
 
-  if (Tw_CheckMagic(hw_twin_magic) && (Td = Tw_Open(arg)) &&
+  if (Tw_CheckMagic(hw_twin_magic) && (Td = Tw_Open(arg.data())) &&
 
       /*
        * check if the server supports the functions we need and store their IDs
@@ -482,7 +485,7 @@ static byte TW_InitHW(void) {
       (Tmenu = Tw_CreateMenu(Td, TCOL(tblack, twhite), TCOL(tblack, tgreen),
                              TCOL(thigh | tblack, twhite), TCOL(thigh | tblack, tblack),
                              TCOL(tred, twhite), TCOL(tred, tgreen), (byte)0)) &&
-      Tw_Item4MenuCommon(Td, Tmenu))
+      Tw_Item4MenuCommon(Td, Tmenu)) {
     do {
 
       Tw_Info4Menu(Td, Tmenu, TW_ROW_ACTIVE, (uldat)14, " Twin on Twin ",
@@ -491,12 +494,11 @@ static byte TW_InitHW(void) {
       sprintf(name + 5, "%s on twin", TWDisplay);
       len = strlen(name);
 
-      Twin =
-          Tw_CreateWindow(Td, strlen(name), name, NULL, Tmenu, TCOL(twhite, tblack), TW_LINECURSOR,
-                          TW_WINDOW_WANT_KEYS | TW_WINDOW_WANT_MOUSE | TW_WINDOW_WANT_CHANGES |
-                              TW_WINDOW_DRAG | TW_WINDOW_RESIZE | TW_WINDOW_CLOSE,
-                          TW_WINDOWFL_USECONTENTS | TW_WINDOWFL_CURSOR_ON,
-                          (HW->X = GetDisplayWidth()), (HW->Y = GetDisplayHeight()), (uldat)0);
+      Twin = Tw_CreateWindow(Td, len, name, NULL, Tmenu, TCOL(twhite, tblack), TW_LINECURSOR,
+                             TW_WINDOW_WANT_KEYS | TW_WINDOW_WANT_MOUSE | TW_WINDOW_WANT_CHANGES |
+                                 TW_WINDOW_DRAG | TW_WINDOW_RESIZE | TW_WINDOW_CLOSE,
+                             TW_WINDOWFL_USECONTENTS | TW_WINDOWFL_CURSOR_ON,
+                             (HW->X = GetDisplayWidth()), (HW->Y = GetDisplayHeight()), (uldat)0);
 
       if (!Twin)
         break;
@@ -576,26 +578,22 @@ static byte TW_InitHW(void) {
       HW->RedrawVideo = tfalse;
       NeedRedrawVideo(0, 0, HW->X - 1, HW->Y - 1);
 
-      if (opt)
-        *opt = ',';
-      return ttrue;
+      return true;
 
     } while (0);
-  else {
+  } else {
     /* TwErrno(NULL) is valid... used when Tw_Open fails */
     if ((len = Tw_Errno(Td)))
-      printk("      TW_InitHW() failed: " SS "" SS "\n", Tw_StrError(Td, len),
-             Tw_StrErrorDetail(Td, len, Tw_ErrnoDetail(Td)));
+      log(ERROR, "      TW_InitHW() failed: ", Chars::from_c(Tw_StrError(Td, len)), " ",
+          Chars::from_c(Tw_StrErrorDetail(Td, len, Tw_ErrnoDetail(Td))), "\n");
     else
-      printk("      TW_InitHW() failed.\n");
+      log(ERROR, "      TW_InitHW() failed.\n");
   }
 
   if (Td && Tw_ConnectionFd(Td) >= 0)
     TW_QuitHW();
 
-  if (opt)
-    *opt = ',';
-  return tfalse;
+  return false;
 }
 
 EXTERN_C byte InitModule(module Module) {

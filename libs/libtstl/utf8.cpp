@@ -7,15 +7,15 @@
  *
  */
 #include "stl/utf8.h"
-#include "stl/view.h"
-#include "twautoconf.h" /* for TW_HAVE* macros */
+#include "stl/chars.h"
+#include <Tw/autoconf.h> /* for TW_HAVE* macros */
 
 #ifdef TW_HAVE_ARPA_INET_H
 #include <arpa/inet.h> // htonl()
 #endif
 
 // convert Unicode codepoint 'rune' from UTF-32 to UTF-8
-Utf8::seq Utf8::to_utf8(trune rune) {
+Utf8::seq Utf8::from_rune(trune rune) {
   // replacement character is \uFFFD
   const seq replacement = {"\xEF\xBF\xBD"};
   seq x = {};
@@ -126,7 +126,7 @@ bool Utf8::valid(seq x) {
    * 4. UTF8 sequences that decode to invalid codepoints > 0x10FFFF
    */
   const trune rune = to_rune(x);
-  const seq y = to_utf8(rune);
+  const seq y = from_rune(rune);
   return x.val == y.val;
 }
 

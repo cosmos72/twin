@@ -9,6 +9,8 @@
 #ifndef TWIN_DATA_H
 #define TWIN_DATA_H
 
+#include "stl/chars.h"
+
 #include <Tw/datatypes.h> // byte, udat, tcolor, trune
 #include <Tw/Tw_defs.h>   // tmaxcol
 
@@ -16,7 +18,7 @@ typedef struct s_rgb {
   byte Red, Green, Blue;
 } rgb;
 
-extern const char *pkg_libdir;
+extern Chars pkg_libdir;
 
 extern rgb Palette[tmaxcol + 1], defaultPalette[tmaxcol + 1];
 

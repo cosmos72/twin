@@ -12,6 +12,7 @@
 #include "stl/vector.h"
 #include "stl/utf8.h"
 #include "stl/fmt.h"
+#include "stl/chars.h"
 
 #include <utility> // std:forward()
 #include <initializer_list>
@@ -25,8 +26,9 @@ private:
   String &operator=(const String &other); // = delete;
 
 public:
-  String() : Base() {
+  constexpr String() : Base() {
   }
+  // allocate a copy of addr and store it in this string
   String(const T *addr, size_t n) : Base(addr, n) {
   }
   // all one-argument constructors are explicit because they allocate,
@@ -45,8 +47,9 @@ public:
   }
   // ~String() = default;
 
-  // convert args to string and assign them to this string
-  // return false if resizing this string failed
+  /// convert args to string and assign them to this string,
+  /// then ensure it is also '\0' terminated.
+  /// @return true if successful, false if resizing this string failed
   template <class... T> bool format(T &&...args) {
     return formatl({&lvalue(fmt(std::forward<T>(args)))...});
   }
@@ -54,6 +57,18 @@ public:
   // add final '\0' but do not count it in size()
   // return true if successful, false if out of memory
   bool make_c_str();
+
+  bool contains(Chars key) const {
+    return Chars(*this).contains(key);
+  }
+
+  size_t find(Chars key) const {
+    return Chars(*this).find(key);
+  }
+
+  bool starts_with(Chars substr) const {
+    return Chars(*this).starts_with(substr);
+  }
 
   using Base::append;
 

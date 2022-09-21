@@ -6,7 +6,12 @@
  * (at your option) any later version.
  *
  */
-void test_stl_any();
+#ifndef TWIN_TEST_TEST_H
+#define TWIN_TEST_TEST_H
+
+void test_stl_chars();
 void test_stl_fmt();
 void test_stl_utf8();
 void test_stl_vector();
+
+#endif /* TWIN_TEST_TEST_H */

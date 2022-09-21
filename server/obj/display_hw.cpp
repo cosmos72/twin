@@ -19,30 +19,27 @@
 #include <new>
 
 display_hw s_display_hw::Create(uldat namelen, const char *name) {
-  display_hw d = NULL;
-  if (name) {
-    void *addr = AllocMem0(sizeof(s_display_hw));
-    if (addr) {
-      d = new (addr) s_display_hw();
-      d->Fn = Fn_display_hw;
-      if (!d->Init(namelen, name)) {
-        d->Delete();
-        d = NULL;
-      }
+  display_hw d = nullptr;
+  void *addr = AllocMem0(sizeof(s_display_hw));
+  if (addr) {
+    d = new (addr) s_display_hw();
+    d->Fn = Fn_display_hw;
+    if (!d->Init(namelen, name)) {
+      d->Delete();
+      d = nullptr;
     }
   }
   return d;
 }
 
 display_hw s_display_hw::Init(uldat namelen, const char *name) {
-  if (!name || !((obj)this)->Init()) {
-    return NULL;
+  if (!((obj)this)->Init()) {
+    return nullptr;
   }
-  if (!(this->Name = CloneStrL(name, namelen))) {
-    return NULL;
+  if (!this->Name.format(Chars(name, namelen))) {
+    return nullptr;
   }
-  this->NameLen = namelen;
-  this->Module = NULL;
+  this->Module = nullptr;
   this->Quitted = ttrue;
   this->AttachSlot = NOSLOT;
   /*

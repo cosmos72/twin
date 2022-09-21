@@ -21,8 +21,8 @@
 #define _GNU_SOURCE
 #define _XOPEN_SOURCE
 
-#include "twautoconf.h" /* for TW_HAVE_* macros */
-#include "twconfig.h"   /* for CONF_* macros */
+#include <Tw/autoconf.h> /* for TW_HAVE_* macros */
+#include "twconfig.h"    /* for CONF_* macros */
 
 #ifdef TW_HAVE_STDLIB_H
 #include <stdlib.h>

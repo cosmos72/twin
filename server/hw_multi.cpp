@@ -11,7 +11,7 @@
  *
  */
 
-#include "twautoconf.h"
+#include <Tw/autoconf.h>
 
 #include <stdio.h>
 
@@ -130,41 +130,35 @@ void RunNoHW(byte print_info) {
   (void)DlLoad(SocketSo);
 }
 
-static bool module_InitHW(const char *arg, uldat len) {
+static bool module_InitHW(Chars arg) {
 
-  if (!arg || !len)
+  if (!arg) {
     return tfalse;
-
-  if (len >= 4 && !memcmp(arg, "-hw=", 4)) {
-    arg += 4;
-    len -= 4; /* skip "-hw=" */
+  } else if (arg.starts_with(Chars("-hw="))) {
+    arg = arg.view(4, arg.size()); // skip "-hw="
   }
 
-  const char *name = (const char *)memchr(arg, '@', len);
-  const char *tmp = (const char *)memchr(arg, ',', len);
-  if (tmp && (!name || tmp < name))
-    name = tmp;
-  if (name)
-    len = name - arg;
+  const size_t at = arg.find(Chars("@"));
+  const size_t comma = arg.find(Chars(","));
+  const size_t separator = at < comma ? at : comma;
 
-  if (len == 1 && *arg == 'X') {
-    len = 3;
-    arg = "X11";
+  Chars name = arg.view(0, separator != size_t(-1) ? separator : arg.size());
+  if (name == Chars("X")) {
+    name = Chars("X11");
   }
 
-  Chars cname(arg, len);
   String alloc_name;
   module Module = nullptr;
 
-  if (alloc_name.format("hw_", cname)) {
-    cname = alloc_name;
-    Module = DlLoadAny(cname.size(), cname.data());
+  if (alloc_name.format("hw_", name)) {
+    name = alloc_name;
+    Module = DlLoadAny(name.size(), name.data());
 
     if (Module) {
-      log(INFO, "twin: starting display driver module `", cname, "'...\n");
-      byte (*InitD)(void);
+      log(INFO, "twin: starting display driver module `", name, "'...\n");
+      bool (*InitD)(void);
       if ((InitD = Module->DoInit) && InitD()) {
-        log(INFO, "twin: ...module `", cname, "' successfully started.\n");
+        log(INFO, "twin: ...module `", name, "' successfully started.\n");
         HW->Module = Module;
         Module->Used++;
         return true;
@@ -174,31 +168,27 @@ static bool module_InitHW(const char *arg, uldat len) {
   }
 
   if (Module) {
-    log(ERROR, "twin: ...module `", cname, "' failed to start.\n");
+    log(ERROR, "twin: ...module `", name, "' failed to start.\n");
   } else {
-    log(ERROR, "twin: unable to load display driver module `", cname, "' :\n      ", Errstr, "\n");
+    log(ERROR, "twin: unable to load display driver module `", name, "' :\n      ", Errstr, "\n");
   }
   return false;
 }
 
-static byte set_hw_name(display_hw D_HW, const char *name, uldat namelen) {
-  char *alloc_name;
-
-  if (D_HW && (alloc_name = CloneStrL(name, namelen)) != NULL) {
-    if (D_HW->Name)
-      FreeMem(D_HW->Name);
-    D_HW->Name = alloc_name;
-    D_HW->NameLen = namelen;
+static byte set_hw_name(display_hw D_HW, const Chars name) {
+  String alloc_name;
+  if (D_HW && alloc_name.format(name)) {
+    D_HW->Name.swap(alloc_name);
   }
   return ttrue;
 }
 
 static void warn_NoHW(const char *arg, uldat len) {
-  printk("twin: all display drivers failed");
+  log(ERROR, "twin: all display drivers failed");
   if (arg)
-    printk(" for `%.*s\'\n", Min2((int)len, TW_SMALLBUFF), arg);
+    log(ERROR, " for `", Chars(arg, len), "'\n");
   else
-    printk(".\n");
+    log(ERROR, ".\n");
 }
 
 /*
@@ -206,8 +196,7 @@ static void warn_NoHW(const char *arg, uldat len) {
  * and falling back in case some of them fails.
  */
 byte InitDisplayHW(display_hw D_HW) {
-  char *arg = D_HW->Name;
-  uldat arglen = D_HW->NameLen;
+  Chars arg = D_HW->Name;
   byte success;
 
   SaveHW;
@@ -215,13 +204,13 @@ byte InitDisplayHW(display_hw D_HW) {
 
   D_HW->DisplayIsCTTY = D_HW->NeedHW = D_HW->FlagsHW = tfalse;
 
-#define AUTOTRY4(hw, len) (module_InitHW(hw, len) && set_hw_name(D_HW, hw, len))
+#define AUTOTRY4(hw_name) (module_InitHW(Chars(hw_name)) && set_hw_name(D_HW, Chars(hw_name)))
 
-  if (arglen == 0) {
-    success = AUTOTRY4("-hw=xft", 7) || AUTOTRY4("-hw=X11", 7) || AUTOTRY4("-hw=twin", 8) ||
-              AUTOTRY4("-hw=tty", 7);
+  if (!arg) {
+    success =
+        AUTOTRY4("-hw=xft") || AUTOTRY4("-hw=X11") || AUTOTRY4("-hw=twin") || AUTOTRY4("-hw=tty");
   } else {
-    success = module_InitHW(D_HW->Name, D_HW->NameLen);
+    success = module_InitHW(arg);
   }
 
 #undef AUTOTRY4
@@ -243,7 +232,7 @@ byte InitDisplayHW(display_hw D_HW) {
       All->FnHookDisplayHW(All->HookDisplayHW);
     UpdateFlagsHW(); /* this garbles HW... not a problem here */
   } else {
-    warn_NoHW(arg, arglen);
+    warn_NoHW(arg.data(), arg.size());
   }
 
   RestoreHW;
@@ -279,7 +268,9 @@ void QuitDisplayHW(display_hw D_HW) {
   RestoreHW;
 }
 
-static byte IsValidHW(uldat len, const char *arg) {
+static byte IsValidHW(Chars carg) {
+  const char *arg = carg.data();
+  size_t len = carg.size();
   uldat i;
   byte b;
   if (len >= 4 && !memcmp(arg, "-hw=", 4))
@@ -299,22 +290,22 @@ static byte IsValidHW(uldat len, const char *arg) {
   return ttrue;
 }
 
-display_hw AttachDisplayHW(uldat len, const char *arg, uldat slot, byte flags) {
-  display_hw D_HW = NULL;
+display_hw AttachDisplayHW(Chars arg, uldat slot, byte flags) {
+  display_hw D_HW = nullptr;
 
-  if ((len && len <= 4) || memcmp("-hw=", arg, Min2(len, 4))) {
-    printk("twin: specified `%.*s\' is not a known option.\n"
-           "      try `twin --help' for usage summary.\n",
-           Min2((int)len, TW_SMALLBUFF), arg);
+  if (arg && !arg.starts_with(Chars("-hw="))) {
+    log(ERROR, "twin: specified `", arg,
+        "' is not a known option.\n"
+        "      try `twin --help' for usage summary.\n");
     return D_HW;
   }
 
   if (All->ExclusiveHW) {
-    printk("twin: exclusive display in use, permission to display denied!\n");
+    log(ERROR, "twin: exclusive display in use, permission to display denied!\n");
     return D_HW;
   }
 
-  if (IsValidHW(len, arg) && (D_HW = New(display_hw)(len, arg))) {
+  if (IsValidHW(arg) && (D_HW = New(display_hw)(arg.size(), arg.data()))) {
     D_HW->AttachSlot = slot;
     if (D_HW->DoInit()) {
 
@@ -342,29 +333,28 @@ display_hw AttachDisplayHW(uldat len, const char *arg, uldat slot, byte flags) {
     D_HW->AttachSlot = NOSLOT;
     D_HW->QuitHW = NoOp;
     D_HW->Delete();
-    D_HW = NULL;
+    D_HW = nullptr;
   }
   return D_HW;
 }
 
-byte DetachDisplayHW(uldat len, const char *arg, byte flags) {
-  byte done = tfalse;
-  display_hw s_HW;
-
+bool DetachDisplayHW(Chars arg, byte flags) {
   if (All->ExclusiveHW && !(flags & TW_ATTACH_HW_EXCLUSIVE))
-    return tfalse;
+    return false;
 
-  if (len) {
+  display_hw s_HW;
+  bool done = false;
+  if (arg) {
     safeforHW(s_HW) {
-      if (HW->NameLen == len && !memcmp(HW->Name, arg, len)) {
+      if (HW->Name == arg) {
         HW->Delete();
-        done = ttrue;
+        done = true;
         break;
       }
     }
   } else {
     QuitHW();
-    done = ttrue;
+    done = true;
   }
   return done;
 }
@@ -392,6 +382,8 @@ byte InitHW(void) {
       flag_envrc = ttrue;
     else if (!strncmp(arg, "-hw=", 4))
       hwcount++;
+    else if (!strncmp(arg, "-plugindir=", 11))
+      ; // already processed, ignore option
     else
       printk("twin: ignoring unknown option `" SS "'\n", arg);
   }
@@ -419,13 +411,13 @@ byte InitHW(void) {
   else if (hwcount) {
     for (arglist = orig_argv; (arg = *arglist); arglist++) {
       if (!strncmp(arg, "-hw=", 4)) {
-        ret |= !!AttachDisplayHW(strlen(arg), arg, NOSLOT, flags);
+        ret |= !!AttachDisplayHW(Chars::from_c(arg), NOSLOT, flags);
       }
     }
   }
   if (hwcount == 0 && !ret)
     /* autoprobe */
-    ret = !!AttachDisplayHW(0, "", NOSLOT, flags);
+    ret = !!AttachDisplayHW(Chars(), NOSLOT, flags);
 
   if (!ret)
     printk("\ntwin:  \033[1mALL  DISPLAY  DRIVERS  FAILED.  QUITTING.\033[0m\n");
@@ -552,7 +544,7 @@ byte ResizeDisplay(void) {
 
   if (!NeedOldVideo && OldVideo) {
     FreeMem(OldVideo);
-    OldVideo = NULL;
+    OldVideo = nullptr;
   } else if ((NeedOldVideo && !OldVideo) || change) {
     if (!(OldVideo = (tcell *)ReAllocMem(OldVideo, (ldat)TryDisplayWidth * TryDisplayHeight *
                                                        sizeof(tcell)))) {
@@ -632,7 +624,7 @@ obj TwinSelectionGetOwner(void) {
    */
   obj Owner = (obj)All->Selection->OwnerOnce;
   if (Owner)
-    All->Selection->OwnerOnce = NULL;
+    All->Selection->OwnerOnce = nullptr;
   else
     Owner = (obj)All->Selection->Owner;
   return Owner;
@@ -663,7 +655,7 @@ void TwinSelectionSetOwner(obj Owner, tany Time, tany Frac) {
       NeedHW |= NEEDSelectionExport;
 
       All->Selection->Owner = (msgport)Owner;
-      All->Selection->OwnerOnce = NULL;
+      All->Selection->OwnerOnce = nullptr;
       CopyMem(&T, &All->Selection->Time, sizeof(timevalue));
     } else if (Owner->Id >> magic_shift == display_hw_magic >> magic_shift) {
       /* don't NEEDSelectionExport here! */
@@ -687,7 +679,7 @@ void TwinSelectionNotify(obj Requestor, uldat ReqPrivate, e_id Magic, const char
 
     if ((NewMsg = New(msg)(msg_selection_notify, len))) {
       Event = &NewMsg->Event;
-      Event->EventSelectionNotify.W = NULL;
+      Event->EventSelectionNotify.W = nullptr;
       Event->EventSelectionNotify.Code = 0;
       Event->EventSelectionNotify.pad = 0;
       Event->EventSelectionNotify.ReqPrivate = ReqPrivate;
@@ -720,7 +712,7 @@ void TwinSelectionRequest(obj Requestor, uldat ReqPrivate, obj Owner) {
       if ((NewMsg = New(msg)(msg_selection_request, 0))) {
 
         Event = &NewMsg->Event;
-        Event->EventSelectionRequest.W = NULL;
+        Event->EventSelectionRequest.W = nullptr;
         Event->EventSelectionRequest.Code = 0;
         Event->EventSelectionRequest.pad = 0;
         Event->EventSelectionRequest.Requestor = Requestor;
@@ -751,7 +743,7 @@ void SelectionImport(void) {
     if (HW->HWSelectionImport())
       All->Selection->OwnerOnce = HW;
     else
-      All->Selection->OwnerOnce = NULL;
+      All->Selection->OwnerOnce = nullptr;
   }
 }
 

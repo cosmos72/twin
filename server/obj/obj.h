@@ -13,7 +13,7 @@
 #ifndef TWIN_OBJ_H
 #define TWIN_OBJ_H
 
-#include "twautoconf.h" /* for TW_HAVE_* macros */
+#include <Tw/autoconf.h> /* for TW_HAVE_* macros */
 #include "compiler.h"
 #include "obj/fwd.h"
 #include "obj/id.h"

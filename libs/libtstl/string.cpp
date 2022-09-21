@@ -8,13 +8,11 @@
  */
 #include "stl/string.h"
 
-#include <cstring> // strlen()
-
-Chars chars_from_c(const char *c_str) {
-  return Chars(c_str, c_str ? strlen(c_str) : 0);
-}
-
 bool String::make_c_str() {
+  if (cap_ > size_) {
+    data()[size_] = '\0';
+    return true;
+  }
   return append('\0') && (pop_back(), true);
 }
 
@@ -37,7 +35,8 @@ bool String::formatv(View<const FmtBase *> args) {
       n += arg->size();
     }
   }
-  if (!resize0(n, false)) {
+  // n+1 to make space for final '\0'
+  if (!resize0(n + 1, false)) {
     return false;
   }
   size_t i = 0;
@@ -51,5 +50,8 @@ bool String::formatv(View<const FmtBase *> args) {
     }
   }
   assert(i == n);
+  // store final '\0' but do not count it in size()
+  data()[n] = '\0';
+  size_ = n;
   return true;
 }

@@ -13,7 +13,7 @@ static void xterm_ConfigureMouse(udat resource, byte todefault, udat value);
 
 /* return tfalse if failed */
 static byte xterm_InitMouse(byte force) {
-  const char *term = tty_TERM;
+  const char *term = tty_TERM.data(); // guaranteed to be '\0' terminated
 
   if (force == ttrue) {
     printk("      xterm_InitMouse(): xterm-style mouse FORCED.\n"

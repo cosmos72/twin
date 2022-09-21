@@ -1,2 +1,2 @@
 
-byte X11_InitHW(void);
+bool X11_InitHW(void);

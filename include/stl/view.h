@@ -89,6 +89,9 @@ public:
   template <class VEC> bool operator==(const VEC &other) const {
     return mem::equalvec(*this, other);
   }
+  template <class VEC> bool operator!=(const VEC &other) const {
+    return !mem::equalvec(*this, other);
+  }
 
   template <size_t N> void ref(const T (&addr)[N]) {
     data_ = addr;
@@ -138,9 +141,5 @@ public:
 template <class T> void swap(View<T> &left, View<T> &right) {
   left.swap(right);
 }
-
-typedef View<char> Chars;
-
-Chars chars_from_c(const char *c_str);
 
 #endif /* TWIN_STL_VIEW_H */

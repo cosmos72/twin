@@ -108,8 +108,9 @@ CONFIG_HEADER = $(top_builddir)/include/config.h
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 PROGRAMS = $(noinst_PROGRAMS)
-am_twtest_OBJECTS = test_stl_fmt.$(OBJEXT) test_stl_utf8.$(OBJEXT) \
-	test_stl_vector.$(OBJEXT) test_main.$(OBJEXT)
+am_twtest_OBJECTS = test_stl_chars.$(OBJEXT) test_stl_fmt.$(OBJEXT) \
+	test_stl_utf8.$(OBJEXT) test_stl_vector.$(OBJEXT) \
+	test_main.$(OBJEXT)
 twtest_OBJECTS = $(am_twtest_OBJECTS)
 am__DEPENDENCIES_1 =
 twtest_DEPENDENCIES = $(am__DEPENDENCIES_1)
@@ -133,8 +134,8 @@ DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)/include
 depcomp = $(SHELL) $(top_srcdir)/admin/depcomp
 am__maybe_remake_depfiles = depfiles
 am__depfiles_remade = ./$(DEPDIR)/test_main.Po \
-	./$(DEPDIR)/test_stl_fmt.Po ./$(DEPDIR)/test_stl_utf8.Po \
-	./$(DEPDIR)/test_stl_vector.Po
+	./$(DEPDIR)/test_stl_chars.Po ./$(DEPDIR)/test_stl_fmt.Po \
+	./$(DEPDIR)/test_stl_utf8.Po ./$(DEPDIR)/test_stl_vector.Po
 am__mv = mv -f
 CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
@@ -395,7 +396,7 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 SUBDIRS = 
 AM_CPPFLAGS = -I$(top_srcdir)/include
-twtest_SOURCES = test_stl_fmt.cpp test_stl_utf8.cpp test_stl_vector.cpp test_main.cpp
+twtest_SOURCES = test_stl_chars.cpp test_stl_fmt.cpp test_stl_utf8.cpp test_stl_vector.cpp test_main.cpp
 twtest_LDADD = $(LIBTSTL)
 all: all-recursive
 
@@ -451,6 +452,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_main.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_stl_chars.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_stl_fmt.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_stl_utf8.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_stl_vector.Po@am__quote@ # am--include-marker
@@ -689,6 +691,7 @@ clean-am: clean-generic clean-libtool clean-noinstPROGRAMS \
 
 distclean: distclean-recursive
 		-rm -f ./$(DEPDIR)/test_main.Po
+	-rm -f ./$(DEPDIR)/test_stl_chars.Po
 	-rm -f ./$(DEPDIR)/test_stl_fmt.Po
 	-rm -f ./$(DEPDIR)/test_stl_utf8.Po
 	-rm -f ./$(DEPDIR)/test_stl_vector.Po
@@ -738,6 +741,7 @@ installcheck-am:
 
 maintainer-clean: maintainer-clean-recursive
 		-rm -f ./$(DEPDIR)/test_main.Po
+	-rm -f ./$(DEPDIR)/test_stl_chars.Po
 	-rm -f ./$(DEPDIR)/test_stl_fmt.Po
 	-rm -f ./$(DEPDIR)/test_stl_utf8.Po
 	-rm -f ./$(DEPDIR)/test_stl_vector.Po

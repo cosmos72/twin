@@ -13,7 +13,7 @@
 #include <cstdint> // uint32_t
 
 typedef uint32_t trune;
-template <class T> class View;
+class Chars;
 
 class Utf8 {
 private:
@@ -25,7 +25,7 @@ private:
   static bool valid(seq x);
   static trune to_rune(seq x);
   static size_t to_size(seq x);
-  static seq to_utf8(trune rune);
+  static seq from_rune(trune rune);
   static bool less(seq x, seq y);
 
   explicit Utf8(seq x) {
@@ -43,11 +43,11 @@ public:
 
   // convert Unicode codepoint 'rune' from UTF-32 to UTF-8
   explicit Utf8(trune rune) {
-    u.val = to_utf8(rune).val;
+    u.val = from_rune(rune).val;
   }
 
   // parse UTF-8 sequence from chars
-  bool parse(View<char> chars, View<char> *remaining = NULL);
+  bool parse(Chars chars, Chars *remaining = NULL);
 
   trune rune() const {
     return to_rune(u);
@@ -64,7 +64,7 @@ public:
   }
 
   //! @return view on UTF-8 byte sequence
-  View<char> chars() const;
+  Chars chars() const;
 
   Utf8 &operator=(const Utf8 &other) {
     u.val = other.u.val;

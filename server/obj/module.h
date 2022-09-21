@@ -27,7 +27,7 @@ struct s_fn_module {
   void (*ChangeField)(module, udat field, uldat CLEARMask, uldat XORMask);
   /* module */
   fn_obj Fn_Obj;
-  byte (*DlOpen)(module);
+  bool (*DlOpen)(module);
   void (*DlClose)(module);
 };
 
@@ -39,7 +39,7 @@ struct s_module : public s_obj {
   uldat NameLen, Used;
   char *Name;
   void *Handle;
-  byte (*DoInit)(void);
+  bool (*DoInit)(void);
 
   static module Create(uldat namelen, const char *name);
   module Init(uldat namelen, const char *name);
@@ -58,7 +58,7 @@ struct s_module : public s_obj {
     Fn->Delete(this);
   }
   /* module */
-  byte DlOpen() {
+  bool DlOpen() {
     return Fn->DlOpen(this);
   }
   void DlClose() {

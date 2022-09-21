@@ -9,6 +9,7 @@
 #ifndef TWIN_STL_FWD_H
 #define TWIN_STL_FWD_H
 
+class Chars;
 template <class T> class Fmt;
 template <class T> class Span;
 class String;
@@ -16,7 +17,6 @@ template <class T> class Vector;
 template <class T> class View;
 
 typedef Span<char> CharSpan;
-typedef View<char> Chars;
 
 struct to_chars_result;
 

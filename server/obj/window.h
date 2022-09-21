@@ -13,7 +13,7 @@
 #ifndef TWIN_WINDOW_H
 #define TWIN_WINDOW_H
 
-#include "twautoconf.h"
+#include <Tw/autoconf.h>
 
 #include "obj/widget.h"
 

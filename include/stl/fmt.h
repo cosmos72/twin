@@ -10,6 +10,7 @@
 #define TWIN_STL_FMT_H
 
 #include "stl/to_chars.h"
+#include "stl/chars.h"
 
 #include <cstddef>
 

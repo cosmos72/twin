@@ -9,8 +9,8 @@
 #ifndef TWIN_UTIL_H
 #define TWIN_UTIL_H
 
-#ifndef TWAUTOCONF_H
-#include "twautoconf.h" /* for TW_HAVE_ALARM */
+#ifndef TW_TWAUTOCONF_H
+#include <Tw/autoconf.h> /* for TW_HAVE_ALARM */
 #endif
 
 #ifdef TW_HAVE_SYS_TIMEB_H

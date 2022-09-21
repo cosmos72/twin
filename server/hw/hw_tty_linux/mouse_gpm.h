@@ -1,4 +1,6 @@
 
+#include "log.h"
+
 /*
  * libgpm is stacked, not multi-headed (so no multiplex too)
  */
@@ -22,14 +24,13 @@ static int wrap_Gpm_Open(void) {
    */
   extern int gpm_tried;
 
-  if (!tty_name) {
+  if (!tty_NAME) {
     printk("%s", "      GPM_InitMouse() failed: unable to detect tty device\n");
     return NOFD;
   }
   if (tty_number < 1 || tty_number > 63) {
-    printk("      GPM_InitMouse() failed: terminal `" SS "'\n"
-           "      is not a local linux console.\n",
-           tty_name);
+    log(ERROR, "      GPM_InitMouse() failed: terminal `", tty_NAME,
+        "'\n      is not a local linux console.\n");
     return NOFD;
   }
 

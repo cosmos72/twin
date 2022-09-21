@@ -13,8 +13,8 @@
 #define TW_PREFIX 0
 #define Tw(arg) arg
 #define TW(arg) arg
-#ifndef TWAUTOCONF_H
-#include "twautoconf.h"
+#ifndef TW_TWAUTOCONF_H
+#include <Tw/autoconf.h>
 #endif
 #endif
 

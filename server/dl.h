@@ -9,7 +9,9 @@
 #ifndef TWIN_DL_H
 #define TWIN_DL_H
 
-byte DlOpen(module Module);
+class Chars;
+
+bool DlOpen(module Module);
 void DlClose(module Module);
 
 #define MainSo ((uldat)0)

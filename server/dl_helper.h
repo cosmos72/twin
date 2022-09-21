@@ -21,7 +21,7 @@
 
 #include <dlfcn.h>
 #undef dlinit /* dlopen() requires no initialization */
-#define dlinit_once() ttrue
+#define dlinit_once() true
 #define dlhandle void *
 #define dlopen(name) dlopen((name), RTLD_NOW | RTLD_GLOBAL)
 #define DL_PREFIX "lib"
@@ -36,7 +36,7 @@
 
 #include <ltdl.h>
 #define dlinit lt_dlinit
-byte dlinit_once(void); /* from dl_helper.c */
+bool dlinit_once(void); /* from dl_helper.c */
 #define dlerror lt_dlerror
 #define dlhandle lt_dlhandle
 #define dlopen(name)                                                                               \

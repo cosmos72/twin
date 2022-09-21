@@ -14,7 +14,7 @@
 #include "util.h"
 
 #ifdef dlinit
-byte dlinit_once(void) {
+bool dlinit_once(void) {
   static enum { no_init = 0, init_ok = 1, init_error = 2 } initialized = no_init;
 
   if (initialized == no_init) {
@@ -26,6 +26,6 @@ byte dlinit_once(void) {
       initialized = init_ok;
     }
   }
-  return initialized == init_ok ? ttrue : tfalse;
+  return initialized == init_ok;
 }
 #endif

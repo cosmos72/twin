@@ -76,7 +76,7 @@ static byte stdin_InitKeyboard(void) {
 
   if (LookupKey == NULL
 #if defined(CONF_HW_TTY_LINUX) || defined(CONF_HW_TTY_TWTERM)
-      && strcmp(tty_TERM, "linux") && strcmp(tty_TERM, "twterm")
+      && tty_TERM != Chars("linux") && tty_TERM != Chars("twterm")
 #endif
   )
     return tfalse;

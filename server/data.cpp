@@ -27,7 +27,7 @@
 #define PKG_LIBDIR "/usr/local/lib/twin"
 #endif
 
-const char *pkg_libdir = PKG_LIBDIR;
+Chars pkg_libdir = PKG_LIBDIR;
 
 /* First, some structures */
 

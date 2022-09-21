@@ -28,6 +28,7 @@
 #include "main.h"
 #include "data.h"
 #include "remote.h"
+#include "stl/string.h"
 #include "util.h" /* for SetAlarm() and AlarmReceived */
 
 #include "hw.h"
@@ -37,6 +38,8 @@
 
 #include <Tw/Twkeys.h>
 #include <Tutf/Tutf.h>
+
+#include <new> // placement new
 
 #if !defined(CONF_HW_TTY_LINUX) && !defined(CONF_HW_TTY_TWTERM) && !defined(CONF_HW_TTY_TERMCAP)
 #warning trying to compile hw_tty.c without support for any specific terminal.
@@ -54,8 +57,8 @@
 #endif
 
 struct tty_data {
+  String tty_NAME, tty_TERM;
   int tty_fd, VcsaFd, tty_number;
-  char *tty_name, *tty_TERM;
   uldat tty_charset;
   Tutf_function tty_UTF_32_to_charset;
   Tutf_array tty_charset_to_UTF_32;
@@ -89,7 +92,7 @@ struct tty_data {
 #define tty_fd (ttydata->tty_fd)
 #define VcsaFd (ttydata->VcsaFd)
 #define tty_number (ttydata->tty_number)
-#define tty_name (ttydata->tty_name)
+#define tty_NAME (ttydata->tty_NAME)
 #define tty_TERM (ttydata->tty_TERM)
 #define tty_charset (ttydata->tty_charset)
 #define tty_UTF_32_to_charset (ttydata->tty_UTF_32_to_charset)
@@ -265,22 +268,17 @@ static void tty_MogrifyUTF8(trune h) {
  * note: during xxx_InitHW() initialization, DON'T use DisplayWidth/DisplayHeight
  * as they may be not up to date. Use GetDisplayWidth() / GetDisplayHeight().
  */
-static byte tty_InitHW(void) {
-  char *arg = HW->Name;
-  char *s;
-  char *charset = NULL;
-#define NEVER 0
-#define MAYBE 1
-#define ALWAYS 2
+static bool tty_InitHW(void) {
+  String charset;
+  Chars arg = HW->Name;
+  enum : byte { NEVER = 0, MAYBE = 1, ALWAYS = 2 };
   byte autotry_video = MAYBE, try_stdout = MAYBE, try_termcap = MAYBE, autotry_kbd = MAYBE,
-       try_lrawkbd = MAYBE,
-
-       force_mouse = tfalse, tc_colorbug = tfalse, need_persistent_slot = tfalse, try_ctty = tfalse,
-       display_is_ctty = tfalse;
+       try_lrawkbd = MAYBE, force_mouse = tfalse, tc_colorbug = tfalse,
+       need_persistent_slot = tfalse, try_ctty = tfalse, display_is_ctty = tfalse;
 
   if (!(HW->Private = (struct tty_data *)AllocMem0(sizeof(struct tty_data)))) {
     printk("      tty_InitHW(): Out of memory!\n");
-    return tfalse;
+    return false;
   }
   saveCursorType = (uldat)-1;
   tty_charset = (uldat)-1;
@@ -288,82 +286,77 @@ static byte tty_InitHW(void) {
   saveX = saveY = 0;
   stdOUT = NULL;
   tty_fd = -1;
-  tty_TERM = tty_name = NULL;
+  new (&tty_TERM) String();
+  new (&tty_NAME) String();
 
-  if (arg && HW->NameLen > 4) {
-    arg += 4;
+  HW->QuitHW = tty_QuitHW;
 
-    if (strncmp(arg, "tty", 3))
-      return tfalse; /* user said "use <arg> as display, not tty" */
-    arg += 3;
+  if (arg.size() > 4) {
+    arg = arg.view(4, arg.size());
 
-    if (*arg == '@') {
-      s = strchr(++arg, ',');
-      if (s)
-        *s = '\0';
-      tty_name = CloneStr(arg);
-      if (s)
-        *s = ',';
-      arg = s;
+    if (!arg.starts_with(Chars("tty"))) {
+      return false; /* user said "use <arg> as display, not tty" */
+    }
+    arg = arg.view(3, arg.size());
+
+    if (arg && arg[0] == '@') {
+      const size_t comma = arg.find(Chars(","));
+      if (!tty_NAME.format(arg.view(0, comma))) {
+        log(ERROR, "      tty_InitHW(): out of memory!\n");
+        return false;
+      }
+      arg = arg.view(comma + 1, arg.size());
     }
 
-    while (arg && *arg) {
-      /* parse options */
-      if (!strncmp(arg, ",TERM=", 6)) {
-        s = strchr(arg += 6, ',');
-        if (s)
-          *s = '\0';
-        tty_TERM = CloneStr(arg);
-        if (s)
-          *s = ',';
-        arg = s;
-      } else if (!strncmp(arg, ",charset=", 9)) {
-        s = strchr(arg += 9, ',');
-        if (s)
-          *s = '\0';
-        charset = CloneStr(arg);
-        if (s)
-          *s = ',';
-        arg = s;
-      } else if (!strncmp(arg, ",stdout", 7)) {
-        try_stdout = !(autotry_video = !strncmp(arg + 7, "=no", 3)) << 1;
-        arg = strchr(arg + 7, ',');
-      } else if (!strncmp(arg, ",termcap", 8)) {
-        try_termcap = !(autotry_video = !strncmp(arg + 8, "=no", 3)) << 1;
-        arg = strchr(arg + 8, ',');
-      } else if (!strncmp(arg, ",raw", 4)) {
-        try_lrawkbd = !(autotry_kbd = !strncmp(arg + 4, "=no", 3)) << 1;
-        arg = strchr(arg + 4, ',');
-      } else if (!strncmp(arg, ",ctty", 5)) {
-        arg = strchr(arg + 5, ',');
-        try_ctty = ttrue;
-      } else if (!strncmp(arg, ",colorbug", 9)) {
-        arg = strchr(arg + 9, ',');
-        tc_colorbug = ttrue;
-      } else if (!strncmp(arg, ",mouse=", 7)) {
-        if (!strncmp(arg + 7, "xterm", 5))
-          force_mouse = ttrue;
-        else if (!strncmp(arg + 7, "twterm", 5))
-          force_mouse = ttrue + ttrue;
-        arg = strchr(arg + 7, ',');
-      } else if (!strncmp(arg, ",noinput", 8)) {
-        arg = strchr(arg + 8, ',');
-        HW->FlagsHW |= FlHWNoInput;
-      } else if (!strncmp(arg, ",slow", 5)) {
-        arg = strchr(arg + 5, ',');
-        HW->FlagsHW |= FlHWExpensiveFlushVideo;
-      } else if (!strncmp(arg, ",utf8", 5)) {
-        tty_use_utf8 = !!strncmp(arg + 5, "=no", 3);
-        arg = strchr(arg + 5, ',');
+    while (arg) {
+      /* skip initial comma, find next one */
+      size_t comma = arg.view(1, arg.size()).find(Chars(","));
+      if (comma == size_t(-1)) {
+        comma = arg.size();
       } else {
-        if (*arg == ',')
-          arg++;
-        arg = strchr(arg, ',');
+        comma++; // skip initial comma
       }
+      /* parse options */
+      Chars arg0 = arg.view(0, comma);
+      if (arg0.starts_with(Chars(",TERM="))) {
+        if (!tty_TERM.format(arg0.view(6, comma))) {
+          log(ERROR, "      tty_InitHW(): out of memory!\n");
+          return false;
+        }
+      } else if (arg0.starts_with(Chars(",charset="))) {
+        if (!charset.format(arg0.view(9, comma))) {
+          log(ERROR, "      tty_InitHW(): out of memory!\n");
+          return false;
+        }
+      } else if (arg0.starts_with(Chars(",stdout"))) {
+        try_stdout = !(autotry_video = arg0.view(7, comma) == Chars("=no")) << 1;
+      } else if (arg0.starts_with(Chars(",termcap"))) {
+        try_termcap = !(autotry_video = arg0.view(8, comma) == Chars("=no")) << 1;
+      } else if (arg0.starts_with(Chars(",raw"))) {
+        try_lrawkbd = !(autotry_kbd = arg0.view(4, comma) == Chars("=no")) << 1;
+      } else if (arg0 == Chars(",ctty")) {
+        try_ctty = ttrue;
+      } else if (arg0 == Chars(",colorbug")) {
+        tc_colorbug = ttrue;
+      } else if (arg0.starts_with(Chars(",mouse="))) {
+        arg0 = arg0.view(7, comma);
+        if (arg0 == Chars("xterm")) {
+          force_mouse = ttrue;
+        } else if (arg0 == Chars("twterm")) {
+          force_mouse = ttrue + ttrue;
+        }
+      } else if (arg0 == Chars(",noinput")) {
+        HW->FlagsHW |= FlHWNoInput;
+      } else if (arg0 == Chars(",slow")) {
+        HW->FlagsHW |= FlHWExpensiveFlushVideo;
+      } else if (arg0.starts_with(Chars(",utf8"))) {
+        tty_use_utf8 = arg0.view(5, comma) != Chars("=no");
+      }
+      arg = arg.view(comma, arg.size());
     }
   }
 
-  if (tty_name) {
+  if (tty_NAME) {
     /*
      * open user-specified tty as display
      */
@@ -376,7 +369,7 @@ static byte tty_InitHW(void) {
      */
     need_persistent_slot = ttrue;
 
-    if ((tty_fd = open(tty_name, O_RDWR)) >= 0) {
+    if ((tty_fd = open(tty_NAME.data(), O_RDWR)) >= 0) {
       /*
        * try to set this tty as our controlling tty if user asked us.
        * this will greatly help detecting tty resizes,
@@ -402,11 +395,9 @@ static byte tty_InitHW(void) {
       stdOUT = fdopen(tty_fd, "r+");
     }
     if (tty_fd == -1 || !stdOUT) {
-      printk("      tty_InitHW(): open(\"" SS "\") failed: " SS "\n", tty_name, strerror(errno));
-      FreeMem(tty_name);
-      if (tty_TERM)
-        FreeMem(tty_TERM);
-      return tfalse;
+      log(ERROR, "      tty_InitHW(): open(\"", tty_NAME,
+          "\") failed: ", Chars::from_c(strerror(errno)), "\n");
+      return false;
     }
   } else {
     /*
@@ -416,23 +407,31 @@ static byte tty_InitHW(void) {
       printk("      tty_InitHW() failed: controlling tty " SS "\n",
              DisplayHWCTTY == HWCTTY_DETACHED ? "not usable after Detach"
                                               : "is already in use as display");
-      return tfalse;
+      return false;
     } else {
       display_is_ctty = ttrue;
       tty_fd = 0;
       stdOUT = stdout;
-      tty_name = CloneStr(ttyname(0));
-      if (!tty_TERM)
-        tty_TERM = CloneStr(origTERM);
+      if (!tty_NAME.format(Chars::from_c(ttyname(0)))) {
+        log(ERROR, "      tty_InitHW(): out of memory!\n");
+        return false;
+      }
+      if (!tty_TERM) {
+        if (!tty_TERM.format(Chars::from_c(origTERM))) {
+          log(ERROR, "      tty_InitHW(): out of memory!\n");
+          return false;
+        }
+      }
     }
   }
   fflush(stdOUT);
   setvbuf(stdOUT, NULL, _IOFBF, BUFSIZ);
 
   tty_number = 0;
-  if (tty_name && (!strncmp(tty_name, "/dev/tty", 8) || !strncmp(tty_name, "/dev/vc/", 8))) {
-    s = tty_name + 8;
-    while (*s && *s >= '0' && *s <= '9') {
+  if (tty_NAME.starts_with(Chars("/dev/tty")) || tty_NAME.starts_with(Chars("/dev/vc/"))) {
+    const char *s = tty_NAME.data() + 8;
+    const char *end = tty_NAME.end();
+    while (s < end && *s >= '0' && *s <= '9') {
       tty_number *= 10;
       tty_number += *s++ - '0';
     }
@@ -444,16 +443,15 @@ static byte tty_InitHW(void) {
 
   if (charset) {
     /* honor user-specified charset */
-    if ((tty_charset = Tutf_charset_id(charset)) == (uldat)-1)
-      printk("      tty_InitHW(): libtutf warning: unknown charset `" SS "', assuming `ASCII'\n",
-             charset);
-    else if (tty_charset == Tutf_charset_id(T_NAME(UTF_32))) {
-      printk("      tty_InitHW(): charset `" SS "' is Unicode, assuming terminal supports UTF-8\n",
-             charset);
+    if ((tty_charset = Tutf_charset_id(charset.data())) == (uldat)-1) {
+      log(ERROR, "      tty_InitHW(): libtutf warning: unknown charset `", charset,
+          "', assuming `ASCII'\n");
+    } else if (tty_charset == Tutf_charset_id(T_NAME(UTF_32))) {
+      log(ERROR, "      tty_InitHW(): charset `", charset,
+          "' is Unicode, assuming terminal supports UTF-8\n");
       tty_use_utf8 = ttrue;
       tty_charset = (uldat)-1;
     }
-    FreeMem(charset);
   }
 
 #define TRY_V(name) (autotry_video + try_##name >= ALWAYS)
@@ -475,7 +473,7 @@ static byte tty_InitHW(void) {
    */
 
   if (!stdin_TestTty()) {
-    printk("      tty_InitHW() failed: unable to read from the terminal: " SS "\n", Errstr.data());
+    log(ERROR, "      tty_InitHW() failed: unable to read from the terminal: ", Errstr, "\n");
   } else if (
 
 #if defined(CONF_HW_TTY_LINUX) || defined(CONF_HW_TTY_TWTERM)
@@ -518,8 +516,6 @@ static byte tty_InitHW(void) {
           HW->DisplayIsCTTY = ttrue;
           DisplayHWCTTY = HW;
         }
-        HW->QuitHW = tty_QuitHW;
-
         HW->MouseState.x = HW->MouseState.y = HW->MouseState.keys = HW->Last_x = HW->Last_y = 0;
 
         /*
@@ -538,7 +534,7 @@ static byte tty_InitHW(void) {
           fputs(tc_scr_clear, stdOUT);
         fflush(stdOUT);
 
-        return ttrue;
+        return true;
       }
       HW->QuitMouse();
     }
@@ -550,7 +546,7 @@ static byte tty_InitHW(void) {
     close(tty_fd);
   if (stdOUT && stdOUT != stdout)
     fclose(stdOUT);
-  return tfalse;
+  return false;
 }
 
 static void tty_QuitHW(void) {
@@ -559,10 +555,10 @@ static void tty_QuitHW(void) {
   HW->QuitVideo();
   HW->QuitHW = NoOp;
 
-  if (tty_name)
-    FreeMem(tty_name);
-  if (tty_TERM)
-    FreeMem(tty_TERM);
+  // destroy tty_NAME and tty_TERM
+  String().swap(tty_NAME);
+  String().swap(tty_TERM);
+
   if (HW->DisplayIsCTTY && DisplayHWCTTY == HW)
     DisplayHWCTTY = NULL;
 

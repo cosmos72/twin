@@ -151,8 +151,8 @@ static int check_hw_name(char *hw_name) {
   return at ? at - hw_name : -1;
 }
 
-static byte X11_InitHW(void) {
-  char *arg = HW->Name;
+static bool X11_InitHW(void) {
+  char *arg = HW->Name.data(); // guaranteed to be '\0' terminated
   int xscreen;
   unsigned int xdepth;
   XSetWindowAttributes xattr;
@@ -170,7 +170,7 @@ static byte X11_InitHW(void) {
 
   if (!(HW->Private = (struct x11_data *)AllocMem(sizeof(struct x11_data)))) {
     printk("      X11_InitHW(): Out of memory!\n");
-    return tfalse;
+    return false;
   }
   memset(HW->Private, 0, sizeof(struct x11_data));
 
@@ -446,7 +446,7 @@ static byte X11_InitHW(void) {
 
         X11_init_keys();
 
-        return ttrue;
+        return true;
       }
     } while (0);
   } else {
@@ -471,7 +471,7 @@ fail:
   FreeMem(HW->Private);
   HW->Private = NULL;
 
-  return tfalse;
+  return false;
 }
 
 EXTERN_C byte InitModule(module Module) {

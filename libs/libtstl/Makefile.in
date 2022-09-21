@@ -136,8 +136,8 @@ am__uninstall_files_from_dir = { \
 am__installdirs = "$(DESTDIR)$(libdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libtstl_la_LIBADD =
-am_libtstl_la_OBJECTS = alloc.lo err.lo fmt.lo string.lo to_chars.lo \
-	utf8.lo
+am_libtstl_la_OBJECTS = alloc.lo chars.lo err.lo fmt.lo string.lo \
+	to_chars.lo utf8.lo
 libtstl_la_OBJECTS = $(am_libtstl_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
@@ -161,8 +161,8 @@ am__v_at_1 =
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)/include
 depcomp = $(SHELL) $(top_srcdir)/admin/depcomp
 am__maybe_remake_depfiles = depfiles
-am__depfiles_remade = ./$(DEPDIR)/alloc.Plo ./$(DEPDIR)/err.Plo \
-	./$(DEPDIR)/fmt.Plo ./$(DEPDIR)/string.Plo \
+am__depfiles_remade = ./$(DEPDIR)/alloc.Plo ./$(DEPDIR)/chars.Plo \
+	./$(DEPDIR)/err.Plo ./$(DEPDIR)/fmt.Plo ./$(DEPDIR)/string.Plo \
 	./$(DEPDIR)/to_chars.Plo ./$(DEPDIR)/utf8.Plo
 am__mv = mv -f
 CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
@@ -381,7 +381,7 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 lib_LTLIBRARIES = libtstl.la
-libtstl_la_SOURCES = alloc.cpp err.cpp fmt.cpp string.cpp to_chars.cpp utf8.cpp
+libtstl_la_SOURCES = alloc.cpp chars.cpp err.cpp fmt.cpp string.cpp to_chars.cpp utf8.cpp
 libtstl_la_LDFLAGS = -version-info 2:0:1 -no-undefined
 AM_CPPFLAGS = -I$(top_srcdir)/include
 all: all-am
@@ -463,6 +463,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/alloc.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/chars.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/err.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fmt.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/string.Plo@am__quote@ # am--include-marker
@@ -633,6 +634,7 @@ clean-am: clean-generic clean-libLTLIBRARIES clean-libtool \
 
 distclean: distclean-am
 		-rm -f ./$(DEPDIR)/alloc.Plo
+	-rm -f ./$(DEPDIR)/chars.Plo
 	-rm -f ./$(DEPDIR)/err.Plo
 	-rm -f ./$(DEPDIR)/fmt.Plo
 	-rm -f ./$(DEPDIR)/string.Plo
@@ -684,6 +686,7 @@ installcheck-am:
 
 maintainer-clean: maintainer-clean-am
 		-rm -f ./$(DEPDIR)/alloc.Plo
+	-rm -f ./$(DEPDIR)/chars.Plo
 	-rm -f ./$(DEPDIR)/err.Plo
 	-rm -f ./$(DEPDIR)/fmt.Plo
 	-rm -f ./$(DEPDIR)/string.Plo

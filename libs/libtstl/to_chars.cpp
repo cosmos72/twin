@@ -11,6 +11,7 @@
  */
 
 #include "stl/to_chars.h"
+#include "stl/chars.h"
 
 #include <cassert>
 #include <cstring> // memcpy()
