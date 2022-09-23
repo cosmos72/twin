@@ -20,15 +20,15 @@ void test_stl_fmt() {
   assert(to_chars(out, 12345) == (to_chars_result{5, SUCCESS}));
   assert(out.span(0, 5) == Chars("12345"));
 
-  assert(to_chars(out, 2147483647l) == (to_chars_result{10, SUCCESS}));
+  assert(to_chars(out, int(2147483647)) == (to_chars_result{10, SUCCESS}));
   assert(out.span(0, 10) == Chars("2147483647"));
 
-  assert(to_chars(out, -2147483648l) == (to_chars_result{11, SUCCESS}));
+  assert(to_chars(out, int(-2147483648)) == (to_chars_result{11, SUCCESS}));
   assert(out.span(0, 11) == Chars("-2147483648"));
 
-  assert(to_chars(out, 2147483647l, 16) == (to_chars_result{8, SUCCESS}));
+  assert(to_chars(out, int(2147483647), 16) == (to_chars_result{8, SUCCESS}));
   assert(out.span(0, 8) == Chars("7fffffff"));
 
-  assert(to_chars(out, -2147483648l, 16) == (to_chars_result{9, SUCCESS}));
+  assert(to_chars(out, int(-2147483648), 16) == (to_chars_result{9, SUCCESS}));
   assert(out.span(0, 9) == Chars("-80000000"));
 }
