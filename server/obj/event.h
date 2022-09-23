@@ -78,18 +78,24 @@ typedef struct s_event_common {
   udat Code, pad;
 } event_common;
 
+#define SIZEOF_EVENT_COMMON (sizeof(event_common))
+
 typedef struct s_event_map {
   widget W;
   udat Code, pad; /* unused */
   screen Screen;
 } event_map;
 
+#define SIZEOF_EVENT_MAP (sizeof(event_map))
+
 typedef struct s_event_keyboard {
   widget W;
   udat Code, ShiftFlags, SeqLen;
   byte pad;
-  char AsciiSeq[1]; /* AsciiSeq[SeqLen] == '\0' */
+  char AsciiSeq[1]; /* [SeqLen+1] bytes actually. AsciiSeq[SeqLen] == '\0' */
 } event_keyboard;
+
+#define SIZEOF_EVENT_KEYBOARD (1 + (size_t)(void *)(((event_keyboard *)nullptr)->AsciiSeq))
 
 typedef struct s_event_mouse {
   widget W;
@@ -97,12 +103,16 @@ typedef struct s_event_mouse {
   dat X, Y;
 } event_mouse;
 
+#define SIZEOF_EVENT_MOUSE (sizeof(event_mouse))
+
 typedef struct s_event_control {
   widget W;
   udat Code, Len;
   dat X, Y;
   char Data[sizeof(uldat)]; /* [Len] bytes actually */
 } event_control;
+
+#define SIZEOF_EVENT_CONTROL ((size_t)(void *)(((event_control *)nullptr)->Data))
 
 /* some msg_control codes */
 #define MSG_CONTROL_QUIT ((udat)0)
@@ -122,12 +132,16 @@ struct event_clientmsg {
   } Data; /* [Len] bytes actually */
 };
 
+#define SIZEOF_EVENT_CLIENTMSG ((size_t)(void *)(((event_clientmsg *)nullptr)->Data.b))
+
 struct event_display {
   widget W; /* not used here */
   udat Code, Len;
   dat X, Y;
   void *Data; /* [Len] bytes actually */
 };
+
+#define SIZEOF_EVENT_DISPLAY ((size_t)(void *)&(((event_clientmsg *)nullptr)->Data))
 
 enum e_event_display_code {
   ev_dpy_DrawTCell = 0,
@@ -156,6 +170,8 @@ struct event_widget {
   dat X, Y;
 };
 
+#define SIZEOF_EVENT_WIDGET (sizeof(event_widget))
+
 /* some msg_widget_change codes */
 #define MSG_WIDGET_RESIZE 0
 #define MSG_WIDGET_EXPOSE 1
@@ -168,6 +184,8 @@ struct event_gadget {
   udat Code, Flags; /* the Flags of the gadget */
 };
 
+#define SIZEOF_EVENT_GADGET (sizeof(event_gadget))
+
 struct event_menu {
   window W;
   udat Code, pad;
@@ -175,11 +193,15 @@ struct event_menu {
   row Row;
 };
 
+#define SIZEOF_EVENT_MENU (sizeof(event_menu))
+
 struct event_selection {
   widget W;
   udat Code, pad; /* unused */
   dat X, Y;
 };
+
+#define SIZEOF_EVENT_SELECTION (sizeof(event_selection))
 
 #define MAX_MIMELEN 64
 
@@ -193,12 +215,16 @@ struct event_selectionnotify {
   char Data[sizeof(uldat)]; /* Data[] is Len bytes actually */
 };
 
+#define SIZEOF_EVENT_SELECTIONNOTIFY ((size_t)(void *)(((event_selectionnotify *)nullptr)->Data))
+
 struct event_selectionrequest {
   widget W;
   udat Code, pad; /* unused */
   obj Requestor;
   uldat ReqPrivate;
 };
+
+#define SIZEOF_EVENT_SELECTIONREQUEST (sizeof(event_selectionrequest))
 
 union event_any {
   event_common EventCommon;

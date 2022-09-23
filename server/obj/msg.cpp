@@ -16,51 +16,51 @@
 #include "obj/msg.h"
 
 msg s_msg::Create(udat type, size_t eventlen) {
-  size_t headerlen = ((size_t) & (((msg) nullptr)->Event));
+  size_t headerlen = (size_t) & ((msg) nullptr)->Event;
 
   switch (type) {
   case msg_map:
-    headerlen += sizeof(event_map);
+    eventlen += SIZEOF_EVENT_MAP;
     break;
   case msg_display:
-    headerlen += sizeof(event_display);
+    eventlen += SIZEOF_EVENT_DISPLAY;
     break;
   case msg_key:
   case msg_widget_key:
-    headerlen += sizeof(event_keyboard);
+    eventlen += SIZEOF_EVENT_KEYBOARD;
     break;
   case msg_widget_mouse:
   case msg_mouse:
-    headerlen += sizeof(event_mouse);
+    eventlen += SIZEOF_EVENT_MOUSE;
     break;
   case msg_widget_change:
-    headerlen += sizeof(event_widget);
+    eventlen += SIZEOF_EVENT_WIDGET;
     break;
   case msg_widget_gadget:
-    headerlen += sizeof(event_gadget);
+    eventlen += SIZEOF_EVENT_GADGET;
     break;
   case msg_menu_row:
-    headerlen += sizeof(event_menu);
+    eventlen += SIZEOF_EVENT_MENU;
     break;
   case msg_selection:
-    headerlen += sizeof(event_selection);
+    eventlen += SIZEOF_EVENT_SELECTION;
     break;
   case msg_selection_notify:
-    headerlen += sizeof(event_selectionnotify) - sizeof(uldat);
+    eventlen += SIZEOF_EVENT_SELECTIONNOTIFY;
     break;
   case msg_selection_request:
-    headerlen += sizeof(event_selectionrequest);
+    eventlen += SIZEOF_EVENT_SELECTIONREQUEST;
     break;
   case msg_control:
   case msg_user_control:
-    headerlen += sizeof(event_control) - sizeof(uldat);
+    eventlen += SIZEOF_EVENT_CONTROL;
     break;
   case msg_user_clientmsg:
-    headerlen += sizeof(event_clientmsg) - sizeof(uldat);
+    eventlen += SIZEOF_EVENT_CLIENTMSG;
     break;
 
   case msg_selection_clear:
-    headerlen += sizeof(event_common);
+    eventlen += SIZEOF_EVENT_COMMON;
     break;
   default:
     printk("twin: CreateMsg(): unknown message type 0x%04x(%d)\n", (int)type, (int)type);
@@ -71,7 +71,7 @@ msg s_msg::Create(udat type, size_t eventlen) {
     return NULL;
   }
   msg m;
-  if ((m = (msg)AllocMem0(eventlen + headerlen))) {
+  if ((m = (msg)AllocMem0(headerlen + eventlen))) {
     m->Fn = Fn_msg;
     if (!m->Init(type, (uldat)eventlen)) {
       m->Delete();

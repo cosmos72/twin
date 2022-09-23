@@ -25,6 +25,7 @@ Makefile
 /include/Tutf/version.h
 /include/Tw/autoconf.h
 /include/Tw/version.h
+/include/twautoconf.h
 /include/twconfig.h
 /include/version.h
 /server/mycat

@@ -1296,7 +1296,7 @@ static all sockGetAll(void) {
  */
 static void sockSendMsg(msgport MsgPort, msg Msg) {
   uldat Len, Tot;
-  byte *t, Easy;
+  byte *t;
   uldat save_Slot;
   int save_Fd;
 
@@ -1311,14 +1311,12 @@ static void sockSendMsg(msgport MsgPort, msg Msg) {
   save_Slot = Slot;
   save_Fd = Fd;
 
-  Easy = sizeof(twindow) == sizeof(window);
   RequestN = MSG_MAGIC;
   Fd = MsgPort->RemoteData.Fd;
   Slot = MsgPort->RemoteData.FdSlot;
 
   switch (Msg->Type) {
   case msg_display:
-    Easy = tfalse;
     sockReply(Msg->Type, Len = sizeof(twindow) + 4 * sizeof(udat) + Msg->Event.EventDisplay.Len,
               NULL);
 
@@ -1326,22 +1324,14 @@ static void sockSendMsg(msgport MsgPort, msg Msg) {
       t += Tot - Len;
 
       Push(t, twindow, NOID); /* not used here */
-      if (sizeof(event_display) == sizeof(window) + 4 * sizeof(dat) + sizeof(byte *)) {
-        PushV(t, 4 * sizeof(dat), &Msg->Event.EventDisplay.Code);
-      } else {
-        Push(t, udat, Msg->Event.EventDisplay.Code);
-        Push(t, udat, Msg->Event.EventDisplay.Len);
-        Push(t, udat, Msg->Event.EventDisplay.X);
-        Push(t, udat, Msg->Event.EventDisplay.Y);
-      }
+      Push(t, udat, Msg->Event.EventDisplay.Code);
+      Push(t, udat, Msg->Event.EventDisplay.Len);
+      Push(t, udat, Msg->Event.EventDisplay.X);
+      Push(t, udat, Msg->Event.EventDisplay.Y);
       PushV(t, Msg->Event.EventDisplay.Len, Msg->Event.EventDisplay.Data);
     }
     break;
   case msg_widget_key:
-    if (Easy && sizeof(event_keyboard) == sizeof(window) + 3 * sizeof(dat) + 2 * sizeof(byte))
-      break;
-    else
-      Easy = tfalse;
     sockReply(Msg->Type,
               Len = sizeof(twindow) + 3 * sizeof(udat) + 2 * sizeof(byte) +
                     Msg->Event.EventKeyboard.SeqLen,
@@ -1358,10 +1348,6 @@ static void sockSendMsg(msgport MsgPort, msg Msg) {
     }
     break;
   case msg_widget_mouse:
-    if (Easy && sizeof(event_mouse) == sizeof(window) + 4 * sizeof(dat))
-      break;
-    else
-      Easy = tfalse;
     sockReply(Msg->Type, Len = sizeof(twindow) + 4 * sizeof(udat), NULL);
     if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
       t += Tot - Len;
@@ -1373,10 +1359,6 @@ static void sockSendMsg(msgport MsgPort, msg Msg) {
     }
     break;
   case msg_widget_change:
-    if (Easy && sizeof(event_widget) == sizeof(widget) + 6 * sizeof(dat))
-      break;
-    else
-      Easy = tfalse;
     sockReply(Msg->Type, Len = sizeof(twindow) + 6 * sizeof(dat), NULL);
     if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
       t += Tot - Len;
@@ -1390,10 +1372,6 @@ static void sockSendMsg(msgport MsgPort, msg Msg) {
     }
     break;
   case msg_widget_gadget:
-    if (Easy && sizeof(event_gadget) == sizeof(window) + 2 * sizeof(dat))
-      break;
-    else
-      Easy = tfalse;
     sockReply(Msg->Type, Len = sizeof(twindow) + 2 * sizeof(dat), NULL);
     if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
       t += Tot - Len;
@@ -1403,11 +1381,6 @@ static void sockSendMsg(msgport MsgPort, msg Msg) {
     }
     break;
   case msg_menu_row:
-    if (Easy &&
-        sizeof(event_menu) == sizeof(window) + 2 * sizeof(udat) + sizeof(menu) + sizeof(row))
-      break;
-    else
-      Easy = tfalse;
     sockReply(Msg->Type, Len = sizeof(twindow) + 2 * sizeof(dat) + sizeof(tmenu) + sizeof(row),
               NULL);
     if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
@@ -1420,10 +1393,6 @@ static void sockSendMsg(msgport MsgPort, msg Msg) {
     }
     break;
   case msg_selection:
-    if (Easy && sizeof(event_selection) == sizeof(window) + 4 * sizeof(dat))
-      break;
-    else
-      Easy = tfalse;
     sockReply(Msg->Type, Len = sizeof(twindow) + 4 * sizeof(dat), NULL);
     if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
       t += Tot - Len;
@@ -1435,11 +1404,6 @@ static void sockSendMsg(msgport MsgPort, msg Msg) {
     }
     break;
   case msg_selection_notify:
-    if (Easy && sizeof(event_selectionnotify) == sizeof(window) + 2 * sizeof(dat) +
-                                                     3 * sizeof(ldat) + MAX_MIMELEN + sizeof(uldat))
-      break;
-    else
-      Easy = tfalse;
     sockReply(Msg->Type,
               Len = sizeof(twindow) + 2 * sizeof(dat) + 3 * sizeof(ldat) + MAX_MIMELEN +
                     Msg->Event.EventSelectionNotify.Len,
@@ -1457,11 +1421,6 @@ static void sockSendMsg(msgport MsgPort, msg Msg) {
     }
     break;
   case msg_selection_request:
-    if (Easy && sizeof(event_selectionrequest) ==
-                    sizeof(window) + 2 * sizeof(dat) + sizeof(obj) + sizeof(ldat))
-      break;
-    else
-      Easy = tfalse;
     sockReply(Msg->Type, Len = sizeof(twindow) + 2 * sizeof(dat) + sizeof(tobj) + sizeof(ldat),
               NULL);
     if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
@@ -1475,10 +1434,6 @@ static void sockSendMsg(msgport MsgPort, msg Msg) {
     break;
 
   case msg_user_control:
-    if (Easy && sizeof(event_control) == sizeof(window) + 4 * sizeof(dat) + sizeof(uldat))
-      break;
-    else
-      Easy = tfalse;
     sockReply(Msg->Type, Len = sizeof(twindow) + 4 * sizeof(dat) + Msg->Event.EventControl.Len,
               NULL);
     if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
@@ -1493,10 +1448,6 @@ static void sockSendMsg(msgport MsgPort, msg Msg) {
     break;
 
   case msg_user_clientmsg:
-    if (Easy && sizeof(event_clientmsg) == sizeof(window) + 2 * sizeof(dat) + 2 * sizeof(uldat))
-      break;
-    else
-      Easy = tfalse;
     sockReply(Msg->Type, Len = sizeof(twindow) + 2 * sizeof(dat) + Msg->Event.EventClientMsg.Len,
               NULL);
     if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
@@ -1510,24 +1461,8 @@ static void sockSendMsg(msgport MsgPort, msg Msg) {
     break;
 
   default:
-    Easy = tfalse;
+    break;
   }
-#if TW_SIZEOF_TOPAQUE == TW_SIZEOF_ULDAT
-  if (Easy) {
-    Msg->Event.EventCommon.W =
-        reinterpret_cast<widget>(reinterpret_cast<void *>(Obj2Id(Msg->Event.EventCommon.W)));
-    if (Msg->Type == msg_menu_row) {
-      Msg->Event.EventMenu.Menu =
-          reinterpret_cast<menu>(reinterpret_cast<void *>(Obj2Id(Msg->Event.EventMenu.Menu)));
-      Msg->Event.EventMenu.Row =
-          reinterpret_cast<row>(reinterpret_cast<void *>(Obj2Id(Msg->Event.EventMenu.Row)));
-    } else if (Msg->Type == msg_selection_request) {
-      Msg->Event.EventSelectionRequest.Requestor = reinterpret_cast<msgport>(
-          reinterpret_cast<void *>(Obj2Id(Msg->Event.EventSelectionRequest.Requestor)));
-    }
-    sockReply(Msg->Type, Msg->Len, &Msg->Event);
-  }
-#endif
   Slot = save_Slot;
   Fd = save_Fd;
 }
@@ -1717,17 +1652,9 @@ static byte sockSendToMsgPort(msgport MsgPort, udat Len, const byte *Data) {
           Msg->Event.EventControl.Data[Msg->Event.EventControl.Len] = '\0';
           break;
         case TW_MSG_USER_CLIENTMSG:
-          if (sizeof(event_clientmsg) == sizeof(window) + 2 * sizeof(dat) + 2 * sizeof(uldat) &&
-              sizeof(struct s_tevent_clientmsg) ==
-                  sizeof(twindow) + 2 * sizeof(dat) + 2 * sizeof(uldat)) {
-
-            CopyMem(&tMsg->Event.EventClientMsg.Code, &Msg->Event.EventClientMsg.Code,
-                    2 * sizeof(dat) + sizeof(uldat));
-          } else {
-            Msg->Event.EventClientMsg.Code = tMsg->Event.EventClientMsg.Code;
-            Msg->Event.EventClientMsg.Format = tMsg->Event.EventClientMsg.Format;
-            Msg->Event.EventClientMsg.Len = tMsg->Event.EventClientMsg.Len;
-          }
+          Msg->Event.EventClientMsg.Code = tMsg->Event.EventClientMsg.Code;
+          Msg->Event.EventClientMsg.Format = tMsg->Event.EventClientMsg.Format;
+          Msg->Event.EventClientMsg.Len = tMsg->Event.EventClientMsg.Len;
 #ifdef CONF_SOCKET_ALIEN
           /* FIXME: this must be replaced with a call to alienSendToMsgPort() above */
           if (AlienXendian(Slot) == MagicAlienXendian) {

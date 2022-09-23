@@ -444,7 +444,7 @@ static bool display_InitHW(void) {
 
   if (!(HW->Private = (struct display_data *)AllocMem(sizeof(struct display_data))) ||
       !(Helper = New(msgport)(16, "twdisplay Helper", 0, 0, 0, display_HelperH)) ||
-      (!Msg && !(Msg = New(msg)(msg_display, sizeof(event_display))))) {
+      (!Msg && !(Msg = New(msg)(msg_display, sizeof(uldat))))) {
 
     if (HW->Private) {
       if (Helper) {
@@ -519,6 +519,7 @@ static bool display_InitHW(void) {
   HW->merge_Threshold = 0;
 
   display_CreateMsg(ev_dpy_Helper, sizeof(Helper->Id));
+  ev->Len = sizeof(uldat);
   ev->Data = &Helper->Id;
   Ext(Socket, SendMsg)(display, Msg);
   /* don't flush now, twdisplay waits for attach messages */

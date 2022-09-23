@@ -895,7 +895,7 @@ byte KeyboardEventCommon(udat Code, udat ShiftFlags, udat Len, const char *Seq) 
   if (HW->FlagsHW & FlHWNoInput)
     return ttrue;
 
-  if ((Msg = TwCreateMsg(TW_MSG_WIDGET_KEY, Len + sizeof(event_keyboard)))) {
+  if ((Msg = TwCreateMsg(TW_MSG_WIDGET_KEY, Len + SIZEOF_EVENT_KEYBOARD))) {
     Event = &Msg->Event.EventKeyboard;
 
     Event->Code = Code;
