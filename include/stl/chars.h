@@ -15,10 +15,21 @@ class Chars : public View<char> {
   typedef View<char> Base;
 
 public:
-  using Base::Base; // export base class constructors
+  // g++ 4.9.2 does not fully grok "using Base::Base"
+  // => manually define all constructors
 
+  constexpr Chars() : Base() {
+  }
+  template <size_t N> constexpr Chars(const char (&addr)[N]) : Base(addr, N - 1) {
+  }
+  constexpr Chars(const char *addr, size_t n) : Base(addr, n) {
+  }
   // construct from base class
-  constexpr Chars(const Base &chars) : Base(chars) {
+  constexpr Chars(const View<char> &other) : Base(other) {
+  }
+  Chars(const Span<char> &other) : Base(other) {
+  }
+  Chars(const Vector<char> &other) : Base(other) {
   }
 
   // Chars(const Chars&) = default;

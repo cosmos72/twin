@@ -12,7 +12,7 @@
 #include "stl/view.h"
 
 /** read-write span of T[] */
-template <class T> class Span : protected View<T> {
+template <class T> class Span : public View<T> {
 private:
   typedef View<T> Base;
 
@@ -50,21 +50,13 @@ public:
     return *this;
   }
 
-  using Base::begin;
-  using Base::capacity;
   using Base::data;
-  using Base::empty;
-  using Base::end;
-  using Base::operator==;
-  using Base::operator!=;
-  using Base::operator[];
-  using Base::operator bool;
-  using Base::size;
-  using Base::view;
 
   T *data() {
     return const_cast<T *>(data_);
   }
+
+  using Base::operator[];
 
   T &operator[](size_t index) {
     assert(index < size_);
@@ -81,9 +73,13 @@ public:
   }
   void ref(Vector<T> &other);
 
+  using Base::begin;
+
   T *begin() {
     return data();
   }
+
+  using Base::end;
 
   T *end() {
     assert(data_ || !size_);
@@ -92,12 +88,12 @@ public:
 
   Span<T> span(size_t start, size_t end) {
     assert(start <= end);
-    assert(end <= size());
+    assert(end <= size_);
     return Span<T>(data() + start, end - start);
   }
 
   void copy(View<T> src) {
-    assert(src.size() == size());
+    assert(src.size() == size_);
     mem::copyvec(src, *this);
   }
 
@@ -108,7 +104,7 @@ public:
   }
 };
 
-template <class T> void View<T>::ref(const Span<T> other) {
+template <class T> void View<T>::ref(const Span<T> &other) {
   data_ = other.data();
   size_ = other.size();
 }

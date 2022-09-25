@@ -105,8 +105,8 @@ public:
     data_ = other.data_;
     size_ = other.size_;
   }
-  void ref(const Span<T> other);
-  void ref(const Vector<T> &other);
+  void ref(const Span<T> &other);   // defined in stl/span.h
+  void ref(const Vector<T> &other); // defined in stl/vector.h
 
   const T *begin() const {
     return data_;
