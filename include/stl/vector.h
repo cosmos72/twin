@@ -77,7 +77,7 @@ public:
   typedef const T *const_pointer;
   typedef const T *const_iterator;
 
-  constexpr Vector() : Base(), cap_(0) {
+  CONSTEXPR Vector() : Base(), cap_(0) {
   }
   // allocate a copy of addr and store it in this string
   Vector(const T *addr, size_t n) : Base(), cap_(0) {

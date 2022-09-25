@@ -31,11 +31,11 @@ public:
   typedef const T *const_pointer;
   typedef const T *const_iterator;
 
-  constexpr Span() : Base() {
+  CONSTEXPR Span() : Base() {
   }
-  template <size_t N> constexpr Span(T (&addr)[N]) : Base(addr, N - 1) {
+  template <size_t N> CONSTEXPR Span(T (&addr)[N]) : Base(addr, N - 1) {
   }
-  constexpr Span(T *addr, size_t n) : Base(addr, n) {
+  CONSTEXPR Span(T *addr, size_t n) : Base(addr, n) {
   }
 
   Span(Vector<T> &other) : Base(other) {

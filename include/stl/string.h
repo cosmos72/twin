@@ -26,7 +26,7 @@ private:
   String &operator=(const String &other); // = delete;
 
 public:
-  constexpr String() : Base() {
+  CONSTEXPR String() : Base() {
   }
   // allocate a copy of addr and store it in this string
   String(const T *addr, size_t n) : Base(addr, n) {

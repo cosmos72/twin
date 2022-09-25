@@ -9,6 +9,12 @@
 #ifndef TWIN_STL_FWD_H
 #define TWIN_STL_FWD_H
 
+#if defined(__cpp_constexpr) && __cpp_constexpr >= 200704L
+#define CONSTEXPR constexpr
+#else
+#define CONSTEXPR
+#endif
+
 class Chars;
 template <class T> class Fmt;
 template <class T> class Span;

@@ -33,11 +33,11 @@ public:
   typedef const T *const_pointer;
   typedef const T *const_iterator;
 
-  constexpr View() : data_(NULL), size_(0) {
+  CONSTEXPR View() : data_(NULL), size_(0) {
   }
-  template <size_t N> constexpr View(const T (&addr)[N]) : data_(addr), size_(N - 1) {
+  template <size_t N> CONSTEXPR View(const T (&addr)[N]) : data_(addr), size_(N - 1) {
   }
-  constexpr View(const T *addr, size_t n) : data_(addr), size_(n) {
+  CONSTEXPR View(const T *addr, size_t n) : data_(addr), size_(n) {
   }
 
   View(const Span<T> &other) {
