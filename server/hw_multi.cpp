@@ -282,8 +282,8 @@ static byte IsValidHW(Chars carg) {
       /* the rest are options - validated by each display HW */
       break;
     if ((b < '0' || b > '9') && (b < 'A' || b > 'Z') && (b < 'a' || b > 'z') && b != '_') {
-      printk("twin: invalid non-alphanumeric character `%c' in display HW name `%.*s'\n", (int)b,
-             Min2((int)len, TW_SMALLBUFF), arg);
+      log(ERROR, "twin: invalid non-alphanumeric character 0x", hex(b), " in display HW name `",
+          Chars(arg, len), "'\n");
       return tfalse;
     }
   }
@@ -385,17 +385,19 @@ byte InitHW(void) {
     else if (!strncmp(arg, "-plugindir=", 11))
       ; // already processed, ignore option
     else
-      printk("twin: ignoring unknown option `" SS "'\n", arg);
+      log(WARNING, "twin: ignoring unknown option `", Chars::from_c(arg), "'\n");
   }
 
   if (nohw && hwcount > 0) {
-    printk("twin: `--hw=' and `--nohw' options used together. make up your mind.\n");
+    log(ERROR, "twin: `--hw=' and `--nohw' options cannot be used together.\n");
     return ret;
   }
   if (flags & TW_ATTACH_HW_EXCLUSIVE) {
-    if (nohw || hwcount > 1) {
-      printk("twin: `--excl' used with %s. make up your mind.\n",
-             nohw ? "`--nohw'" : "multiple `--hw'");
+    if (nohw) {
+      log(ERROR, "twin: `--excl' cannot be used with `--nohw'.\n");
+      return ret;
+    } else if (hwcount > 1) {
+      log(ERROR, "twin: `--excl' cannot be used with multiple `--hw'.\n");
       return ret;
     }
   }
@@ -420,7 +422,7 @@ byte InitHW(void) {
     ret = !!AttachDisplayHW(Chars(), NOSLOT, flags);
 
   if (!ret)
-    printk("\ntwin:  \033[1mALL  DISPLAY  DRIVERS  FAILED.  QUITTING.\033[0m\n");
+    log(ERROR, "\ntwin:  \033[1mALL  DISPLAY  DRIVERS  FAILED.  QUITTING.\033[0m\n");
 
   return ret;
 }
@@ -444,13 +446,13 @@ byte RestartHW(byte verbose) {
       ResizeDisplay();
       QueuedDrawArea2FullScreen = ttrue;
     } else {
-      printk("\ntwin:   \033[1mALL  DISPLAY  DRIVERS  FAILED.\033[0m\n"
-             "\ntwin: continuing in background with no display.\n");
+      log(WARNING, "\ntwin:   \033[1mALL  DISPLAY  DRIVERS  FAILED.\033[0m\n"
+                   "\ntwin: continuing in background with no display.\n");
       RunNoHW(tfalse);
     }
   } else if (verbose) {
-    printk("twin: RestartHW(): All display drivers removed by SuspendHW().\n"
-           "      No display available for restarting, use twattach or twdisplay.\n");
+    log(INFO, "twin: RestartHW(): All display drivers removed by SuspendHW().\n"
+              "      No display available for restarting, use twattach or twdisplay.\n");
   }
   return ret;
 }
@@ -465,9 +467,9 @@ void SuspendHW(byte verbose) {
       HW->DoQuit();
   }
   if (verbose && !All->FirstDisplayHW) {
-    printk("twin: SuspendHW(): All display drivers had to be removed\n"
-           "      since they were attached to clients (twattach/twdisplay).\n"
-           "twin: --- STOPPED ---\n");
+    log(INFO, "twin: SuspendHW(): All display drivers had to be removed\n"
+              "      since they were attached to clients (twattach/twdisplay).\n"
+              "twin: --- STOPPED ---\n");
   }
 }
 
@@ -548,7 +550,7 @@ byte ResizeDisplay(void) {
   } else if ((NeedOldVideo && !OldVideo) || change) {
     if (!(OldVideo = (tcell *)ReAllocMem(OldVideo, (ldat)TryDisplayWidth * TryDisplayHeight *
                                                        sizeof(tcell)))) {
-      printk("twin: out of memory!\n");
+      log(ERROR, "twin: out of memory!\n");
       Quit(1);
     }
     ValidOldVideo = tfalse;
@@ -564,7 +566,7 @@ byte ResizeDisplay(void) {
         !(saveChangedVideo =
               (dat(*)[2][2])ReAllocMem(saveChangedVideo, (ldat)DisplayHeight * sizeof(dat) * 4))) {
 
-      printk("twin: out of memory!\n");
+      log(ERROR, "twin: out of memory!\n");
       Quit(1);
     }
     memset(ChangedVideo, 0xff, (ldat)DisplayHeight * sizeof(dat) * 4);
@@ -702,8 +704,8 @@ void TwinSelectionNotify(obj Requestor, uldat ReqPrivate, e_id Magic, const char
 
 void TwinSelectionRequest(obj Requestor, uldat ReqPrivate, obj Owner) {
 #if 0
-    printk("twin: Selection Request from 0x%08x, owner is 0x%08x\n",
-            Requestor ? Requestor->Id : NOID, Owner ? Owner->Id : NOID);
+  log(INFO, "twin: Selection Request from 0x", (Requestor ? Requestor->Id : NOID), //
+      ", owner is 0x", (Owner ? Owner->Id : NOID), "\n");
 #endif
   if (Owner) {
     if (Owner->Id >> magic_shift == msgport_magic >> magic_shift) {

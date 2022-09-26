@@ -16,11 +16,12 @@
 #include "methods.h"
 #include "obj/id.h" // Id2Obj()
 
-#include "extreg.h"
-#include "remote.h"
-#include "pty.h"
-#include "util.h"
 #include "common.h"
+#include "extreg.h"
+#include "log.h"
+#include "pty.h"
+#include "remote.h"
+#include "util.h"
 
 #define COD_QUIT (udat)1
 #define COD_SPAWN (udat)3
@@ -238,9 +239,9 @@ EXTERN_C byte InitModule(module Module) {
     return ttrue;
   }
   if (shellpath)
-    printk("twin: InitTerm(): " SS "\n", Errstr.data());
+    log(ERROR, "twin: InitTerm(): ", Errstr, "\n");
   else
-    printk("twin: environment variable $SHELL not set!\n");
+    log(ERROR, "twin: environment variable $SHELL not set!\n");
   return tfalse;
 }
 

@@ -181,12 +181,12 @@ static byte null_InitMouseConfirm(void) {
   byte c = '\0';
 
   fflush(stdOUT);
-  printk("%s", "\n"
-               "      \033[1m  ALL  MOUSE  DRIVERS  FAILED.\033[0m\n"
-               "\n"
-               "      If you really want to run `twin' without mouse\n"
-               "      hit RETURN within 10 seconds to continue,\n"
-               "      otherwise hit CTRL-C (or wait 10 seconds) to cancel.\n");
+  log(ERROR, "\n"
+             "      \033[1m  ALL  MOUSE  DRIVERS  FAILED.\033[0m\n"
+             "\n"
+             "      If you really want to run `twin' without mouse\n"
+             "      hit RETURN within 10 seconds to continue,\n"
+             "      otherwise hit CTRL-C (or wait 10 seconds) to cancel.\n");
   flushk();
 
   SetAlarm(10);
@@ -278,7 +278,7 @@ static bool tty_InitHW(void) {
        need_persistent_slot = tfalse, try_ctty = tfalse, display_is_ctty = tfalse;
 
   if (!(HW->Private = (struct tty_data *)AllocMem0(sizeof(struct tty_data)))) {
-    printk("      tty_InitHW(): Out of memory!\n");
+    log(ERROR, "      tty_InitHW(): Out of memory!\n");
     return false;
   }
   saveCursorType = (uldat)-1;
@@ -405,9 +405,9 @@ static bool tty_InitHW(void) {
      * open our controlling tty as display
      */
     if (DisplayHWCTTY) {
-      printk("      tty_InitHW() failed: controlling tty " SS "\n",
-             DisplayHWCTTY == HWCTTY_DETACHED ? "not usable after Detach"
-                                              : "is already in use as display");
+      log(ERROR, "      tty_InitHW() failed: controlling tty ",
+          (DisplayHWCTTY == HWCTTY_DETACHED ? Chars("not usable after Detach\n")
+                                            : Chars("is already in use as display\n")));
       return false;
     } else {
       display_is_ctty = ttrue;
@@ -483,13 +483,14 @@ static bool tty_InitHW(void) {
 #ifdef CONF_HW_TTY_TERMCAP
       (TRY_V(termcap) && termcap_InitVideo()) ||
 #endif
-      tfalse) {
+      false) {
 
     if (
 #ifdef CONF_HW_TTY_LINUX
         GPM_InitMouse() ||
 #else
-        (printk("      tty_InitHW(): gpm mouse support not compiled, skipping it.\n"), tfalse) ||
+        (log(WARNING, "      tty_InitHW(): gpm mouse support not compiled, skipping it.\n"),
+         false) ||
 #endif
         xterm_InitMouse(force_mouse) || null_InitMouseConfirm()) {
 

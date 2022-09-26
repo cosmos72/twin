@@ -46,18 +46,19 @@
 #include "main.h"
 #include "methods.h"
 #include "obj/id.h" // Obj2Id
-#include "printk.h"
 #include "resize.h"
-#include "util.h"
 
-#include "fdlist.h"
+#include "common.h"
 #include "extreg.h"
+#include "fdlist.h"
+#include "hw_multi.h"
+#include "log.h"
+#include "md5.h"
+#include "printk.h"
 #include "remote.h"
 #include "socket.h"
-#include "md5.h"
-#include "hw_multi.h"
-#include "common.h"
 #include "unaligned.h"
+#include "util.h"
 #include "version.h"
 
 #include "stl/span.h"
@@ -742,8 +743,8 @@ static void sockMultiplexB(uldat id) {
     } else /* (n >= TW_MAX_ARGS_N) */ {
       if (!warned) {
         warned = ttrue;
-        printk("twin: sockMultiplexB(): got a call with %d args, only %d supported!\n", n,
-               TW_MAX_ARGS_N);
+        log(ERROR, "twin: sockMultiplexB(): got a call with ", n, " args, only ", TW_MAX_ARGS_N,
+            " supported!\n");
       }
       fail = -fail;
     }
@@ -2082,8 +2083,8 @@ static byte Check4MagicTranslation(uldat slot, const byte *magic, byte len) {
   static byte warn_count = 0;
 #endif
 
-  const byte *zero = (const byte *)memchr(magic, '\0', len);
-  byte len1 = zero ? (byte)(zero - magic) : 0;
+  const char *zero = (const char *)memchr(magic, '\0', len);
+  byte len1 = zero ? (byte)(zero - (const char *)magic) : 0;
 
   if (len1 > TWS_tcolor && len == magic[0] && len == len1 + 1 + sizeof(uldat) &&
       /*check negotiated size to match ours*/
@@ -2121,18 +2122,17 @@ static byte Check4MagicTranslation(uldat slot, const byte *magic, byte len) {
     if (warn_count < 6) {
       zero = NULL;
       if (AlienMagic(slot)[TWS_tcell] < sizeof(tcell))
-        zero = (const byte *)"tcell";
+        zero = "tcell";
       else if (AlienMagic(slot)[TWS_trune] < sizeof(trune))
-        zero = (const byte *)"trune";
+        zero = "trune";
 
       if (zero) {
         if (warn_count == 5)
-          printk(
+          log(WARNING,
               "twin: warning: many clients with different sizes, suppressing further messages.\n");
         else
-          printk("twin: warning: client has different `" SS
-                 "' size, it may not be Unicode aware.\n",
-                 zero);
+          log(WARNING, "twin: warning: client has different `", Chars::from_c(zero),
+              "' size, it may not be Unicode aware.\n");
         warn_count++;
       }
     }
@@ -2418,7 +2418,7 @@ EXTERN_C byte InitModule(module Module) {
   };
 
   if (!sockInitAuth()) {
-    printk("twin: failed to create ~/.TwinAuth: " SS "\n", Errstr.data());
+    log(ERROR, "twin: failed to create ~/.TwinAuth: ", Errstr, "\n");
     return tfalse;
   }
 
@@ -2469,7 +2469,7 @@ EXTERN_C byte InitModule(module Module) {
 
     return ttrue;
   }
-  printk("twin: failed to create sockets: " SS "\n", Errstr.data());
+  log(ERROR, "twin: failed to create sockets: ", Errstr, "\n");
   return tfalse;
 }
 

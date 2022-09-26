@@ -500,8 +500,8 @@ static void alienMultiplexB(uldat id) {
     } else /* (n >= TW_MAX_ARGS_N) */ {
       if (!warned) {
         warned = ttrue;
-        printk("twin: alienMultiplexB(): got a call with %d args, only %d supported!\n", n,
-               TW_MAX_ARGS_N);
+        log(ERROR, "twin: alienMultiplexB(): got a call with ", n, " args, only ", TW_MAX_ARGS_N,
+            " supported!\n");
       }
       fail = -fail;
     }

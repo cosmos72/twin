@@ -1,6 +1,7 @@
 /* Functions that are common between hw_x11 and hw_xft. */
 
 #include "algo.h"
+#include "log.h"
 
 /* this can stay static, X11_FlushHW() is not reentrant */
 static tcolor _col;
@@ -100,7 +101,7 @@ static byte X11_LoadFont(const char *fontname, udat fontwidth, udat fontheight) 
     xhfont = (xupfont = xsfont->ascent) + xsfont->descent;
     xheight = xhfont * (unsigned)(HW->Y = GetDisplayHeight());
 
-    printk("      selected %ux%u font `" SS "'\n", (unsigned)xwfont, (unsigned)xhfont, fontname);
+    log(INFO, "      selected ", xwfont, "x", xhfont, " font `", Chars::from_c(fontname), "'\n");
   }
   if (alloc_fontname)
     free(alloc_fontname); /* allocated by FcNameUnparse() */
@@ -451,9 +452,9 @@ static bool X11_InitHW(void) {
     } while (0);
   } else {
     if (xdisplay_ || (xdisplay_ = getenv("DISPLAY"))) {
-      printk("      X11_InitHW() failed to open display " SS "\n", HW->Name);
+      log(ERROR, "      X11_InitHW() failed to open display ", HW->Name, "\n");
     } else {
-      printk("      X11_InitHW() failed: DISPLAY is not set\n");
+      log(ERROR, "      X11_InitHW() failed: DISPLAY is not set\n");
     }
   }
 

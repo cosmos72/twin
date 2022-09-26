@@ -100,8 +100,7 @@ static ldat X11_MonospaceFontScore(const XFontStruct *info, udat fontwidth, udat
   if (width == max_width || X11_FontIsDualWidth(info)) {
     score = calcFontScore(fontwidth, fontheight, width, height);
     if (score > best_score)
-      printk("      candidate font %ux%u score %ld\n", (unsigned)width, (unsigned)height,
-             (long)score);
+      log(INFO, "      candidate font ", width, "x", height, " score ", score, "\n");
   }
   return score;
 }

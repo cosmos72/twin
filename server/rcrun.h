@@ -9,6 +9,8 @@
 #ifndef TWIN_RCRUN_H
 #define TWIN_RCRUN_H
 
+struct wm_ctx;
+
 #define GLOBAL_MAX 7
 extern node Globals[GLOBAL_MAX];
 extern byte GlobalsAreStatic;

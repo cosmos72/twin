@@ -565,9 +565,10 @@ static byte RCSteps(run *r) {
         break;
       case STDERR:
         argv = n->x.v.argv;
-        while (*argv)
-          printk("" SS " ", *argv++);
-        printk("\n");
+        while (*argv) {
+          log(INFO, Chars::from_c(*argv++), " ");
+        }
+        log(INFO, "\n");
         break;
       case SYNTHETICKEY:
         if (W)
@@ -843,10 +844,8 @@ static void RCReload(void) {
   if ((M = DlLoad(RCParseSo)))
     mod_rcload = M->DoInit;
 #if 0
-    /* this would garble -hw=tty display */
-    else
-        printk("twin: failed to load the RC parser:\n"
-                "      " SS "\n", Errstr.data());
+  else /* this would garble -hw=tty display */
+    log(ERROR, "twin: failed to load the RC parser:\n      ", Errstr, "\n");
 #endif
 
   success = mod_rcload && mod_rcload();

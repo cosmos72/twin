@@ -23,6 +23,7 @@
 #include "dl.h"
 #include "draw.h"
 #include "extreg.h"
+#include "log.h"
 #include "printk.h"
 #include "resize.h"
 #include "util.h"
@@ -102,11 +103,11 @@ inline void RemoveGeneric(obj_entry Obj, obj_list Parent, ldat *ObjCount) {
 /* obj */
 
 static void InsertObj(obj Obj, obj Parent, obj Prev, obj Next) {
-  printk("twin: internal error: pure virtual function InsertObj() called!\n");
+  log(ERROR, "twin: internal error: pure virtual function InsertObj() called!\n");
 }
 
 static void RemoveObj(obj Obj) {
-  printk("twin: internal error: pure virtual function RemoveObj() called!\n");
+  log(ERROR, "twin: internal error: pure virtual function RemoveObj() called!\n");
 }
 
 static void DeleteObj(obj Obj) {

@@ -37,6 +37,7 @@
 #include "data.h"
 #include "draw.h"
 #include "extreg.h"
+#include "log.h"
 #include "methods.h"
 #include "main.h"
 #include "hw.h"
@@ -874,7 +875,7 @@ static char envTWD[] = "TWDISPLAY=\0\0\0\0\0";
 static bool initHOME(void) {
   const char *home = getenv("HOME");
   if (!home) {
-    printk("%s", "twin: required environment variable HOME is not set. Aborting.\n");
+    log(ERROR, "twin: required environment variable HOME is not set. Aborting.\n");
     return false;
   }
   if (HOME.assign(home, 1 + strlen(home))) { // also append '\0'
@@ -882,7 +883,7 @@ static bool initHOME(void) {
     HOME.pop_back();
     return true;
   }
-  printk("%s", "twin: out of memory! Aborting.\n");
+  log(ERROR, "twin: out of memory! Aborting.\n");
   return false;
 }
 
@@ -901,7 +902,7 @@ static bool initTmpDir(void) {
     TmpDir.pop_back();                       // but do not count it
     return true;
   }
-  printk("%s", "twin: out of memory! Aborting.\n");
+  log(ERROR, "twin: out of memory! Aborting.\n");
   return false;
 }
 
@@ -923,7 +924,7 @@ static bool initSocketDir(void) {
     return true;
   }
   SocketDir.clear();
-  printk("%s", "twin: out of memory! Aborting.\n");
+  log(ERROR, "twin: out of memory! Aborting.\n");
   return false;
 }
 
@@ -1043,11 +1044,12 @@ bool InitTWDisplay(void) {
   CopyToSockaddrUn(TmpDir.data(), &addr_unix, 0);
   arg0 = addr_unix.sun_path;
 
-  printk("twin: failed to create any " SS "/.Twin* socket: " SS "\n", addr_unix.sun_path,
-         Errstr.data());
-  printk("      possible reasons: either " SS " not writable, or all TWDISPLAY already in use,\n"
-         "      or too many stale " SS "/.Twin* sockets. Aborting.\n",
-         arg0, arg0);
+  log(ERROR, "twin: failed to create any ", Chars::from_c(addr_unix.sun_path),
+      "/.Twin* socket: ", Errstr, "\n");
+  printk("      possible reasons: either ", Chars::from_c(arg0),
+         " not writable, or all TWDISPLAY already in use,\n"
+         "      or too many stale ",
+         Chars::from_c(arg0), "/.Twin* sockets. Aborting.\n");
   return false;
 }
 
@@ -1161,16 +1163,17 @@ byte SetServerUid(uldat uid, byte privileges) {
           flag_secure = 1;
           if (setuid(0) < 0 || setgid(0) < 0 || chown(fullTWD, 0, 0) < 0 || !SetEnvs(getpwuid(0))) {
             /* tried to recover, but screwed up uids too badly. */
-            printk("twin: failed switching to uid %u: " SS "\n", uid, strerror(errno));
-            printk("twin: also failed to recover. Quitting NOW!\n");
+            log(ERROR, "twin: failed switching to uid ", uid, ": ", Chars::from_c(strerror(errno)),
+                "\n");
+            log(ERROR, "twin: also failed to recover. Quitting NOW!\n");
             Quit(0);
           }
         }
       }
-      printk("twin: failed switching to uid %u: " SS "\n", uid, strerror(errno));
+      log(ERROR, "twin: failed switching to uid ", uid, ": ", Chars::from_c(strerror(errno)), "\n");
     }
   } else
-    printk("twin: SetServerUid() can be called only if started by root with \"-secure\".\n");
+    log(ERROR, "twin: SetServerUid() can be called only if started by root with \"-secure\".\n");
   return tfalse;
 }
 

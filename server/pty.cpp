@@ -74,8 +74,12 @@ static char *ptydev, *ttydev;
 static int ptyfd, ttyfd;
 
 static void pty_error(const char *d, const char *f, const char *arg) {
-  printk("twin: " SS ": " SS "(\"" SS "\") failed: " SS "\n", d ? d : "<NULL>", f ? f : "<NULL>",
-         arg ? arg : "<NULL>", strerror(errno));
+  const Chars cd = d ? Chars::from_c(d) : Chars("<NULL>");
+  const Chars cf = f ? Chars::from_c(f) : Chars("<NULL>");
+  const Chars carg = arg ? Chars::from_c(arg) : Chars("<NULL>");
+
+  log(ERROR, "twin: ", cd, ": ", cf, "(\"", carg, "\") failed: ", //
+      Chars::from_c(strerror(errno)), "\n");
 }
 
 static void get_pty_error(const char *f, const char *arg) {
@@ -151,7 +155,7 @@ static byte get_pty(void) {
       }
     }
   }
-  printk("twin: failed to get a pty/tty pseudo-tty pair\n");
+  log(ERROR, "twin: failed to get a pty/tty pseudo-tty pair\n");
 
 #endif
   return tfalse;

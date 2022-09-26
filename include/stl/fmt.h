@@ -11,6 +11,7 @@
 
 #include "stl/to_chars.h"
 #include "stl/chars.h"
+#include "stl/type_traits.h"
 
 #include <cstddef>
 
@@ -97,7 +98,8 @@ inline Fmt<unsigned long> fmt(unsigned long val, unsigned base = 10) {
   return Fmt<unsigned long>(val, base);
 }
 
-template <class T> inline Fmt<T> hex(T val) {
+template <class T>
+inline Fmt<typename conditional<(T(-1) < T(0)), long, unsigned long>::type> hex(T val) {
   return fmt(val, 16);
 }
 

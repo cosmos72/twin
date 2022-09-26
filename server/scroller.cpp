@@ -19,7 +19,7 @@
 
 #include "hw_multi.h"
 #include "resize.h"
-#include "printk.h"
+#include "log.h"
 #include "util.h"
 
 /* FIXME: Fix screen scrolling during Interactive Drag/Resize */
@@ -40,7 +40,7 @@ byte InitScroller(void) {
 
     return ttrue;
   }
-  printk("twin: Scroller: " SS "\n", Errstr.data());
+  log(ERROR, "twin: Scroller: ", Errstr, "\n");
   return tfalse;
 }
 

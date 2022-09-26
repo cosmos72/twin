@@ -9,8 +9,6 @@
 #ifndef TWIN_WM_H
 #define TWIN_WM_H
 
-typedef struct wm_ctx wm_ctx;
-
 struct wm_ctx {
   widget W; /* top level widget user is interacting with */
   screen Screen;

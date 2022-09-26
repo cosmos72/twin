@@ -336,7 +336,7 @@ static void TW_SelectionRequest_TW(obj Requestor, uldat ReqPrivate) {
        * a TW_SelectionNotify_up() call */
     } else {
       TSelCount = 0;
-      printk(
+      log(WARNING,
           "hw_twin.c: TW_SelectionRequest_TW1(): too many nested Twin Selection Request events!\n");
     }
   }
@@ -361,7 +361,7 @@ static void TW_SelectionRequest_up(uldat Requestor, uldat ReqPrivate) {
     /* the call **CAN** arrive while we are still inside TwinSelectionRequest() !!! */
   } else {
     SelCount = 0;
-    printk(
+    log(WARNING,
         "hw_twin.c: TW_SelectionRequest_up(): too many nested libtw Selection Request events!\n");
   }
 }

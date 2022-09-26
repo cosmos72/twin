@@ -15,6 +15,7 @@
 #include "algo.h"
 #include "main.h"
 #include "data.h"
+#include "log.h"
 #include "methods.h"
 #include "hw.h"
 #include "hw_multi.h"
@@ -30,9 +31,10 @@ byte InitDraw(void) {
 }
 
 inline tcolor DoShadowColor(tcolor Color, byte Fg, byte Bg) {
-  return (Bg ? (Color & TCOL(0, tmaxcol)) > TCOL(0, thigh | tblack) ? TCOL(0, thigh | tblack)
-                                                                    : TCOL(0, tblack)
-             : Fg ? Color & TCOL(0, twhite) : Color & TCOL(0, tmaxcol)) |
+  return (Bg   ? (Color & TCOL(0, tmaxcol)) > TCOL(0, thigh | tblack) ? TCOL(0, thigh | tblack)
+                                                                      : TCOL(0, tblack)
+            : Fg ? Color & TCOL(0, twhite)
+               : Color & TCOL(0, tmaxcol)) |
          (Fg ? (Color & TCOL(tmaxcol, 0)) > TCOL(thigh | tblack, 0) ? TCOL(twhite, 0)
                                                                     : TCOL(thigh | tblack, 0)
              : Color & TCOL(tmaxcol, 0));
@@ -564,23 +566,27 @@ void DrawSelfGadget(draw_ctx *D) {
     GadgetText = G->USE.T.Text;
     GadgetColor = G->USE.T.Color;
 
-    Text = Select ? Disabled && GadgetText[3] ? GadgetText[3]
-                                              : GadgetText[1] ? GadgetText[1] : GadgetText[0]
-                  : Disabled && GadgetText[2] ? GadgetText[2] : GadgetText[0];
+    Text = Select                      ? Disabled && GadgetText[3] ? GadgetText[3]
+                                         : GadgetText[1]           ? GadgetText[1]
+                                                                   : GadgetText[0]
+                                : Disabled && GadgetText[2] ? GadgetText[2]
+                                       : GadgetText[0];
 
     if (!Text)
       Font = ' ';
 
-    ColText = Absent ? NULL
-                     : Select ? Disabled && GadgetColor[3]
-                                    ? GadgetColor[3]
-                                    : GadgetColor[1] ? GadgetColor[1] : GadgetColor[0]
-                              : Disabled && GadgetColor[2] ? GadgetColor[2] : GadgetColor[0];
+    ColText = Absent                       ? NULL
+              : Select                     ? Disabled && GadgetColor[3] ? GadgetColor[3]
+                                             : GadgetColor[1]           ? GadgetColor[1]
+                                                                        : GadgetColor[0]
+                                  : Disabled && GadgetColor[2] ? GadgetColor[2]
+                                           : GadgetColor[0];
 
     if (!ColText) {
       Absent = ttrue;
-      Color = Select ? Disabled ? G->ColSelectDisabled : G->ColSelect
-                     : Disabled ? G->ColDisabled : G->ColText;
+      Color = Select     ? Disabled ? G->ColSelectDisabled : G->ColSelect
+              : Disabled ? G->ColDisabled
+                         : G->ColText;
       Color = DoShadowColor(Color, D->Shaded, D->Shaded);
     }
 
@@ -868,7 +874,7 @@ void DrawSelfWindow(draw_ctx *D) {
 
 void DrawSelfScreen(draw_ctx *D) {
   /* should never be called */
-  printk("twin: DrawSelfScreen() called! This is not good...\n");
+  log(ERROR, "twin: DrawSelfScreen() called! This is not good...\n");
 }
 
 static void _DrawWCtx_(draw_ctx **FirstD, widget W, widget ChildNext, widget OnlyChild, ldat Left,
