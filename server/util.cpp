@@ -1046,10 +1046,10 @@ bool InitTWDisplay(void) {
 
   log(ERROR, "twin: failed to create any ", Chars::from_c(addr_unix.sun_path),
       "/.Twin* socket: ", Errstr, "\n");
-  printk("      possible reasons: either ", Chars::from_c(arg0),
-         " not writable, or all TWDISPLAY already in use,\n"
-         "      or too many stale ",
-         Chars::from_c(arg0), "/.Twin* sockets. Aborting.\n");
+  log(ERROR, "      possible reasons: either ", Chars::from_c(arg0),
+      " not writable, or all TWDISPLAY already in use,\n"
+      "      or too many stale ",
+      Chars::from_c(arg0), "/.Twin* sockets. Aborting.\n");
   return false;
 }
 
