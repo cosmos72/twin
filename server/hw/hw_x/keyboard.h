@@ -78,7 +78,13 @@
  *
  */
 
+#if defined(__cplusplus) && __cplusplus >= 201100
 #include <unordered_map>
+#define CXX_STD_MAP std::unordered_map
+#else
+#include <map>
+#define CXX_STD_MAP std::map
+#endif
 
 /* Display variables */
 
@@ -142,7 +148,7 @@ static const struct {
 #undef IS
 };
 
-typedef std::unordered_map<KeySym, X11_key_to_TW> X11_keymap_to_TW;
+typedef CXX_STD_MAP<KeySym, X11_key_to_TW> X11_keymap_to_TW;
 
 static X11_keymap_to_TW X11_keys;
 

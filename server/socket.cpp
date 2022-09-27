@@ -1575,7 +1575,7 @@ static byte sockSendToMsgPort(msgport MsgPort, udat Len, const byte *Data) {
 
           break;
         case TW_MSG_WIDGET_KEY:
-          if (sizeof(struct s_event_keyboard) ==
+          if (sizeof(struct event_keyboard) ==
                   sizeof(window) + 3 * sizeof(dat) + 2 * sizeof(byte) &&
               sizeof(struct s_tevent_keyboard) ==
                   sizeof(twindow) + 3 * sizeof(dat) + 2 * sizeof(byte)) {
@@ -1595,7 +1595,7 @@ static byte sockSendToMsgPort(msgport MsgPort, udat Len, const byte *Data) {
 
           break;
         case TW_MSG_WIDGET_MOUSE:
-          if (sizeof(struct s_event_mouse) == sizeof(window) + 4 * sizeof(dat) &&
+          if (sizeof(struct event_mouse) == sizeof(window) + 4 * sizeof(dat) &&
               sizeof(struct s_tevent_mouse) == sizeof(twindow) + 4 * sizeof(dat)) {
 
             CopyMem(&tMsg->Event.EventMouse.Code, &Msg->Event.EventMouse.Code, 4 * sizeof(dat));
@@ -1607,7 +1607,7 @@ static byte sockSendToMsgPort(msgport MsgPort, udat Len, const byte *Data) {
           }
           break;
         case TW_MSG_SELECTIONCLEAR:
-          if (sizeof(struct s_event_common) == sizeof(window) + 2 * sizeof(dat) &&
+          if (sizeof(struct event_common) == sizeof(window) + 2 * sizeof(dat) &&
               sizeof(struct s_tevent_common) == sizeof(twindow) + 2 * sizeof(dat)) {
 
             CopyMem(&tMsg->Event.EventCommon.Code, &Msg->Event.EventCommon.Code, 2 * sizeof(dat));
@@ -1636,7 +1636,7 @@ static byte sockSendToMsgPort(msgport MsgPort, udat Len, const byte *Data) {
                 break;
 #endif
         case TW_MSG_USER_CONTROL:
-          if (sizeof(struct s_event_control) == sizeof(window) + 4 * sizeof(dat) + sizeof(uldat) &&
+          if (sizeof(struct event_control) == sizeof(window) + 4 * sizeof(dat) + sizeof(uldat) &&
               sizeof(struct s_tevent_control) ==
                   sizeof(twindow) + 4 * sizeof(dat) + sizeof(uldat)) {
 

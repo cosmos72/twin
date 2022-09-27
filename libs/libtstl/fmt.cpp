@@ -13,6 +13,17 @@
 #include "stl/fmt.h"
 
 // =============================================================================
+// Fmt<Void>
+
+to_chars_result Fmt<Void>::write_to(Span<char> dst) const {
+  return to_chars_result(0, SUCCESS);
+}
+
+size_t Fmt<Void>::size() const {
+  return 0;
+}
+
+// =============================================================================
 // Fmt<long>
 
 to_chars_result Fmt<long>::write_to(Span<char> dst) const {
@@ -20,11 +31,7 @@ to_chars_result Fmt<long>::write_to(Span<char> dst) const {
 }
 
 size_t Fmt<long>::size() const {
-  if (val_ >= 0) {
-    return Fmt<unsigned long>((unsigned long)val_, base_).size();
-  } else {
-    return 1 + Fmt<unsigned long>((unsigned long)-val_, base_).size();
-  }
+  return to_chars_len(val_, base_);
 }
 
 // =============================================================================
@@ -35,27 +42,15 @@ to_chars_result Fmt<unsigned long>::write_to(Span<char> dst) const {
 }
 
 size_t Fmt<unsigned long>::size() const {
-  if (base_ < 2 || base_ > 36) {
-    return 0;
-  } else if (val_ == 0) {
-    return 1;
-  }
-  unsigned long val = val_;
-  const unsigned base = base_;
-  unsigned n = 0;
-  while (val != 0) {
-    val /= base;
-    n++;
-  }
-  return n;
+  return to_chars_len(val_, base_);
 }
 
 // =============================================================================
-// Fmt<Chars>
-to_chars_result Fmt<Chars>::write_to(Span<char> dst) const {
+// Fmt<View<char>>
+to_chars_result Fmt<View<char>>::write_to(Span<char> dst) const {
   return to_chars(dst, val_);
 }
 
-size_t Fmt<Chars>::size() const {
+size_t Fmt<View<char>>::size() const {
   return val_.size();
 }

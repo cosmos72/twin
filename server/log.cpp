@@ -10,20 +10,26 @@
 #include "log.h"
 #include "printk.h" // printk_buf[], printk_str()
 
-to_chars_result logv(log_level level, View<const FmtBase *> args) {
+#include <cstdarg>
+
+to_chars_result logv(log_level level, size_t arg_n, /* const FmtBase* */...) {
+  std::va_list vargs;
   const size_t end = sizeof(printk_buf); // TW_BIGBUFF
   Span<char> out(printk_buf, end);
   size_t written = 0;
   errnum err = SUCCESS;
-  for (const FmtBase *arg : args) {
-    if (arg) {
-      to_chars_result res = arg->write_to(out.span(written, end));
+  va_start(vargs, arg_n);
+  for (size_t i = 0; i < arg_n; ++i) {
+    const FmtBase *fmt = va_arg(vargs, const FmtBase *);
+    if (fmt) {
+      to_chars_result res = fmt->write_to(out.span(written, end));
       written += res.written;
       if ((err = res.err) != SUCCESS) {
         break;
       }
     }
   }
+  va_end(vargs);
   if (written != 0 && err == SUCCESS) {
     printk_str(printk_buf, written);
   }

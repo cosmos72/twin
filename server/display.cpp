@@ -247,7 +247,7 @@ static module DlLoadAny(Chars name) {
   String path;
 
   if (!dlinit_once()) {
-    return nullptr;
+    return NULL;
   } else if (!(m->Name = CloneStrL(name.data(), name.size())) ||
              !path.format(pkg_libdir, "/" DL_PREFIX, name, DL_SUFFIX)) {
     Error(NOMEMORY);
@@ -268,7 +268,7 @@ static module DlLoadAny(Chars name) {
   } else {
     return m;
   }
-  return nullptr;
+  return NULL;
 }
 
 static bool module_InitHW(Chars arg) {
@@ -444,14 +444,14 @@ static byte IsValidHW(Chars carg) {
 static display_hw AttachDisplayHW(Chars arg, uldat slot, byte flags) {
   if (arg && !arg.starts_with(Chars("-hw="))) {
     log(ERROR, "twdisplay: specified `", arg, "' is not `--hw=<display>'\n");
-    return nullptr;
+    return NULL;
   }
   if (IsValidHW(arg) && CreateDisplayHW(arg)) {
     HW->AttachSlot = slot;
     if (InitDisplayHW(HW))
       return HW;
   }
-  return nullptr;
+  return NULL;
 }
 
 #if 0
@@ -1072,12 +1072,23 @@ static byte VersionsMatch(byte force) {
   uldat cv = TW_PROTOCOL_VERSION, lv = TwLibraryVersion(), sv = TwServerVersion();
 
   if (lv != sv || lv != cv) {
-    log(force ? WARNING : ERROR, "twdisplay: ", (force ? Chars("warning") : Chars("fatal")),
-        ": socket protocol version mismatch!", (force ? Chars(" (ignored)") : Chars()),
-        "\n           client is ", TW_VER_MAJOR(cv), ".", TW_VER_MINOR(cv), ".", TW_VER_PATCH(cv),
-        ", library is ", TW_VER_MAJOR(lv), ".", TW_VER_MINOR(lv), ".", TW_VER_PATCH(lv),
-        ", server is ", TW_VER_MAJOR(sv), ".", TW_VER_MINOR(sv), ".", TW_VER_PATCH(sv), "\n");
-    return tfalse;
+    String lib_verstr;
+    String srv_verstr;
+    lib_verstr.format(TW_VER_MAJOR(lv), ".", TW_VER_MINOR(lv), ".", TW_VER_PATCH(lv));
+    srv_verstr.format(TW_VER_MAJOR(sv), ".", TW_VER_MINOR(sv), ".", TW_VER_PATCH(sv));
+
+    if (force) {
+      log(WARNING,
+          "twdisplay: warning: socket protocol version mismatch!  (ignored)"
+          "\n           client is " TW_PROTOCOL_VERSION_STR ", library is ",
+          lib_verstr, ", server is ", srv_verstr, "\n");
+      return tfalse;
+    } else {
+      log(ERROR,
+          "twdisplay: fatal: socket protocol version mismatch!"
+          "\n           client is " TW_PROTOCOL_VERSION_STR ", library is ",
+          lib_verstr, ", server is ", srv_verstr, "\n");
+    }
   }
   return ttrue;
 }

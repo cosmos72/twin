@@ -14,9 +14,6 @@
 #include "stl/fmt.h"
 #include "stl/chars.h"
 
-#include <utility> // std:forward()
-#include <initializer_list>
-
 class String : public Vector<char> {
 private:
   typedef char T;
@@ -50,8 +47,16 @@ public:
   /// convert args to string and assign them to this string,
   /// then ensure it is also '\0' terminated.
   /// @return true if successful, false if resizing this string failed
-  template <class... T> bool format(T &&...args) {
-    return formatl({&lvalue(fmt(std::forward<T>(args)))...});
+  template <class T1 = Void, class T2 = Void, class T3 = Void, class T4 = Void, class T5 = Void,
+            class T6 = Void, class T7 = Void, class T8 = Void, class T9 = Void>
+  bool format(const T1 &arg1 = Void(), const T2 &arg2 = Void(), const T3 &arg3 = Void(),
+              const T4 &arg4 = Void(), const T5 &arg5 = Void(), const T6 &arg6 = Void(),
+              const T7 &arg7 = Void(), const T8 &arg8 = Void(), const T9 &arg9 = Void()) {
+
+    return formatv(CountFmtArgs<T1, T2, T3, T4, T5, T6, T7, T8, T9>::value,    //
+                   &lvalue(fmt(arg1)), &lvalue(fmt(arg2)), &lvalue(fmt(arg3)), //
+                   &lvalue(fmt(arg4)), &lvalue(fmt(arg5)), &lvalue(fmt(arg6)), //
+                   &lvalue(fmt(arg7)), &lvalue(fmt(arg8)), &lvalue(fmt(arg9)));
   }
 
   // add final '\0' but do not count it in size()
@@ -97,11 +102,7 @@ public:
   }
 
 private:
-  inline bool formatl(std::initializer_list<const FmtBase *> args) {
-    return formatv(View<const FmtBase *>(args.begin(), args.size()));
-  }
-
-  bool formatv(View<const FmtBase *> args);
+  bool formatv(size_t arg_n, /* const FmtBase* */...);
 };
 
 inline void swap(String &left, String &right) {

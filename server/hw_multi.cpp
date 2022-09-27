@@ -148,7 +148,7 @@ static bool module_InitHW(Chars arg) {
   }
 
   String alloc_name;
-  module Module = nullptr;
+  module Module = NULL;
 
   if (alloc_name.format("hw_", name)) {
     name = alloc_name;
@@ -291,7 +291,7 @@ static byte IsValidHW(Chars carg) {
 }
 
 display_hw AttachDisplayHW(Chars arg, uldat slot, byte flags) {
-  display_hw D_HW = nullptr;
+  display_hw D_HW = NULL;
 
   if (arg && !arg.starts_with(Chars("-hw="))) {
     log(ERROR, "twin: specified `", arg,
@@ -333,7 +333,7 @@ display_hw AttachDisplayHW(Chars arg, uldat slot, byte flags) {
     D_HW->AttachSlot = NOSLOT;
     D_HW->QuitHW = NoOp;
     D_HW->Delete();
-    D_HW = nullptr;
+    D_HW = NULL;
   }
   return D_HW;
 }
@@ -546,7 +546,7 @@ byte ResizeDisplay(void) {
 
   if (!NeedOldVideo && OldVideo) {
     FreeMem(OldVideo);
-    OldVideo = nullptr;
+    OldVideo = NULL;
   } else if ((NeedOldVideo && !OldVideo) || change) {
     if (!(OldVideo = (tcell *)ReAllocMem(OldVideo, (ldat)TryDisplayWidth * TryDisplayHeight *
                                                        sizeof(tcell)))) {
@@ -626,7 +626,7 @@ obj TwinSelectionGetOwner(void) {
    */
   obj Owner = (obj)All->Selection->OwnerOnce;
   if (Owner)
-    All->Selection->OwnerOnce = nullptr;
+    All->Selection->OwnerOnce = NULL;
   else
     Owner = (obj)All->Selection->Owner;
   return Owner;
@@ -657,7 +657,7 @@ void TwinSelectionSetOwner(obj Owner, tany Time, tany Frac) {
       NeedHW |= NEEDSelectionExport;
 
       All->Selection->Owner = (msgport)Owner;
-      All->Selection->OwnerOnce = nullptr;
+      All->Selection->OwnerOnce = NULL;
       CopyMem(&T, &All->Selection->Time, sizeof(timevalue));
     } else if (Owner->Id >> magic_shift == display_hw_magic >> magic_shift) {
       /* don't NEEDSelectionExport here! */
@@ -681,7 +681,7 @@ void TwinSelectionNotify(obj Requestor, uldat ReqPrivate, e_id Magic, const char
 
     if ((NewMsg = New(msg)(msg_selection_notify, len))) {
       Event = &NewMsg->Event;
-      Event->EventSelectionNotify.W = nullptr;
+      Event->EventSelectionNotify.W = NULL;
       Event->EventSelectionNotify.Code = 0;
       Event->EventSelectionNotify.pad = 0;
       Event->EventSelectionNotify.ReqPrivate = ReqPrivate;
@@ -714,7 +714,7 @@ void TwinSelectionRequest(obj Requestor, uldat ReqPrivate, obj Owner) {
       if ((NewMsg = New(msg)(msg_selection_request, 0))) {
 
         Event = &NewMsg->Event;
-        Event->EventSelectionRequest.W = nullptr;
+        Event->EventSelectionRequest.W = NULL;
         Event->EventSelectionRequest.Code = 0;
         Event->EventSelectionRequest.pad = 0;
         Event->EventSelectionRequest.Requestor = Requestor;
@@ -745,7 +745,7 @@ void SelectionImport(void) {
     if (HW->HWSelectionImport())
       All->Selection->OwnerOnce = HW;
     else
-      All->Selection->OwnerOnce = nullptr;
+      All->Selection->OwnerOnce = NULL;
   }
 }
 

@@ -14,7 +14,7 @@
 void test_stl_fmt() {
   String out(64);
 
-  assert(to_chars(out, 0) == (to_chars_result{1, SUCCESS}));
+  assert(to_chars(out, 0) == (to_chars_result(1, SUCCESS)));
   assert(out[0] == '0');
 
   assert(to_chars(out, 12345) == (to_chars_result{5, SUCCESS}));

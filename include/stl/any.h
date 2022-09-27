@@ -9,8 +9,8 @@
 #ifndef TWIN_STL_ANY_H
 #define TWIN_STL_ANY_H
 
-#include <cstddef> // size_t
-#include <cstring> // memcpy
+#include <stddef.h> // size_t
+#include <cstring>  // memcpy
 #include <cassert>
 
 // can contain a value of arbitrary type T, with two constraints:

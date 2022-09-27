@@ -10,11 +10,16 @@
 #define TWIN_STL_TO_CHARS_H
 
 #include "stl/span.h"
+#include "stl/chars.h"
 #include "stl/err.h"
 
 struct to_chars_result {
   size_t written;
   errnum err;
+
+  explicit to_chars_result(size_t written_ = 0, errnum err_ = SUCCESS)
+      : written(written_), err(err_) {
+  }
 
   friend inline bool operator==(to_chars_result a, to_chars_result b) {
     return a.written == b.written && a.err == b.err;
@@ -50,6 +55,37 @@ inline to_chars_result to_chars(Span<char> out, unsigned char val, unsigned base
 }
 
 /** copy chars to string */
-to_chars_result to_chars(Span<char> out, Chars val);
+to_chars_result to_chars(Span<char> out, View<char> val);
+
+////////////////////////////////////////////////////////////////////////////////
+
+/** return number of characters needed to store conversion of signed integer to string */
+size_t to_chars_len(long val, unsigned base = 10);
+inline size_t to_chars_len(int val, unsigned base = 10) {
+  return to_chars_len((long)val, base);
+}
+inline size_t to_chars_len(short val, unsigned base = 10) {
+  return to_chars_len((long)val, base);
+}
+inline size_t to_chars_len(signed char val, unsigned base = 10) {
+  return to_chars_len((long)val, base);
+}
+
+/** return number of characters needed to store conversion of unsigned integer to string */
+size_t to_chars_len(unsigned long val, unsigned base = 10);
+inline size_t to_chars_len(unsigned int val, unsigned base = 10) {
+  return to_chars_len((unsigned long)val, base);
+}
+inline size_t to_chars_len(unsigned short val, unsigned base = 10) {
+  return to_chars_len((unsigned long)val, base);
+}
+inline size_t to_chars_len(unsigned char val, unsigned base = 10) {
+  return to_chars_len((unsigned long)val, base);
+}
+
+/** return number of characters needed to store conversion of View<char> to string */
+inline size_t to_chars_len(View<char> val) {
+  return val.size();
+}
 
 #endif /* TWIN_STL_TO_CHARS_H */

@@ -12,7 +12,7 @@
 #include "stl/fwd.h"
 #include "stl/mem.h"
 
-#include <cstddef> // size_t
+#include <stddef.h> // size_t
 #include <cassert>
 
 /** read-only view of T[] */
@@ -78,7 +78,7 @@ public:
     return data_[index];
   }
 
-  explicit operator bool() const {
+  /*explicit*/ operator bool() const {
     return size_ != 0;
   }
 

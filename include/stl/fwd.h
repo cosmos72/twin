@@ -15,6 +15,12 @@
 #define CONSTEXPR
 #endif
 
+#if defined(__cplusplus) && __cplusplus >= 201100
+#define OVERRIDE override
+#else
+#define OVERRIDE
+#endif
+
 class Chars;
 template <class T> class Fmt;
 template <class T> class Span;
@@ -26,11 +32,11 @@ typedef Span<char> CharSpan;
 
 struct to_chars_result;
 
-template <class T> T &lvalue(T &&val) {
+template <class T> T &lvalue(T &val) {
   return val;
 }
 
-template <class T> const T &lvalue(const T &&val) {
+template <class T> const T &lvalue(const T &val) {
   return val;
 }
 

@@ -73,46 +73,46 @@ enum e_msg {
  * msg_user_control        use ...Event.EventControl
  */
 
-typedef struct s_event_common {
+struct event_common {
   widget W;
   udat Code, pad;
-} event_common;
+};
 
 #define SIZEOF_EVENT_COMMON (sizeof(event_common))
 
-typedef struct s_event_map {
+struct event_map {
   widget W;
   udat Code, pad; /* unused */
   screen Screen;
-} event_map;
+};
 
 #define SIZEOF_EVENT_MAP (sizeof(event_map))
 
-typedef struct s_event_keyboard {
+struct event_keyboard {
   widget W;
   udat Code, ShiftFlags, SeqLen;
   byte pad;
   char AsciiSeq[1]; /* [SeqLen+1] bytes actually. AsciiSeq[SeqLen] == '\0' */
-} event_keyboard;
+};
 
-#define SIZEOF_EVENT_KEYBOARD (1 + (size_t)(void *)(((event_keyboard *)nullptr)->AsciiSeq))
+#define SIZEOF_EVENT_KEYBOARD (1 + offsetof(event_keyboard, AsciiSeq))
 
-typedef struct s_event_mouse {
+struct event_mouse {
   widget W;
   udat Code, ShiftFlags;
   dat X, Y;
-} event_mouse;
+};
 
 #define SIZEOF_EVENT_MOUSE (sizeof(event_mouse))
 
-typedef struct s_event_control {
+struct event_control {
   widget W;
   udat Code, Len;
   dat X, Y;
   char Data[sizeof(uldat)]; /* [Len] bytes actually */
-} event_control;
+};
 
-#define SIZEOF_EVENT_CONTROL ((size_t)(void *)(((event_control *)nullptr)->Data))
+#define SIZEOF_EVENT_CONTROL (offsetof(event_control, Data))
 
 /* some msg_control codes */
 #define MSG_CONTROL_QUIT ((udat)0)
@@ -132,7 +132,7 @@ struct event_clientmsg {
   } Data; /* [Len] bytes actually */
 };
 
-#define SIZEOF_EVENT_CLIENTMSG ((size_t)(void *)(((event_clientmsg *)nullptr)->Data.b))
+#define SIZEOF_EVENT_CLIENTMSG (offsetof(event_clientmsg, Data))
 
 struct event_display {
   widget W; /* not used here */
@@ -141,7 +141,7 @@ struct event_display {
   void *Data; /* [Len] bytes actually */
 };
 
-#define SIZEOF_EVENT_DISPLAY ((size_t)(void *)&(((event_clientmsg *)nullptr)->Data))
+#define SIZEOF_EVENT_DISPLAY (offsetof(event_clientmsg, Data))
 
 enum e_event_display_code {
   ev_dpy_DrawTCell = 0,
@@ -215,7 +215,7 @@ struct event_selectionnotify {
   char Data[sizeof(uldat)]; /* Data[] is Len bytes actually */
 };
 
-#define SIZEOF_EVENT_SELECTIONNOTIFY ((size_t)(void *)(((event_selectionnotify *)nullptr)->Data))
+#define SIZEOF_EVENT_SELECTIONNOTIFY (offsetof(event_selectionnotify, Data))
 
 struct event_selectionrequest {
   widget W;

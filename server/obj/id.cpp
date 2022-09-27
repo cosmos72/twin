@@ -100,7 +100,7 @@ void s_idvec::drop_id(e_magic_byte magic_byte, obj o) {
 
   if (id < Top && Vec[id] == o /* paranoia */) {
     o->Id = NOID;
-    Vec[id] = nullptr;
+    Vec[id] = NULL;
     if (Bottom > id) {
       Bottom = id;
     }
@@ -205,7 +205,7 @@ obj Id2Obj(e_magic_byte expected_magic_byte, uldat id) {
       }
     }
   }
-  return nullptr;
+  return NULL;
 }
 
 static obj IdVec_all[1];

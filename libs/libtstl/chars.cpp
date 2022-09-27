@@ -33,7 +33,7 @@ size_t Chars::find0(Chars str, Chars substr) {
   }
   const char *pos;
   const char ch0 = s2[0];
-  while (n1 >= n2 && (pos = (const char *)memchr(s1, ch0, n1 - n2 + 1)) != nullptr) {
+  while (n1 >= n2 && (pos = (const char *)memchr(s1, ch0, n1 - n2 + 1)) != NULL) {
     if (n2 == 1 || !memcmp(pos, s2, n2)) {
       return pos - str.data();
     }

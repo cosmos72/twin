@@ -16,7 +16,7 @@
 #include "obj/msg.h"
 
 msg s_msg::Create(udat type, size_t eventlen) {
-  size_t headerlen = (size_t) & ((msg) nullptr)->Event;
+  size_t headerlen = (size_t) & ((msg)NULL)->Event;
 
   switch (type) {
   case msg_map:

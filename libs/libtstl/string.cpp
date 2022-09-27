@@ -8,6 +8,8 @@
  */
 #include "stl/string.h"
 
+#include <cstdarg>
+
 bool String::make_c_str() {
   if (cap_ > size_) {
     data()[size_] = '\0';
@@ -28,30 +30,40 @@ bool String::append(View<trune> runes) {
   return ok;
 }
 
-bool String::formatv(View<const FmtBase *> args) {
-  size_t n = 0;
-  for (const FmtBase *arg : args) {
-    if (arg) {
-      n += arg->size();
+bool String::formatv(size_t arg_n, /* const FmtBase* */...) {
+  std::va_list vargs;
+  size_t len = 0;
+
+  va_start(vargs, arg_n);
+  for (size_t i = 0; i < arg_n; ++i) {
+    const FmtBase *fmt = va_arg(vargs, const FmtBase *);
+    if (fmt) {
+      len += fmt->size();
     }
   }
-  // n+1 to make space for final '\0'
-  if (!resize0(n + 1, false)) {
+  va_end(vargs);
+
+  // len+1 to make space for final '\0'
+  if (!resize0(len + 1, false)) {
     return false;
   }
-  size_t i = 0;
-  for (const FmtBase *arg : args) {
-    if (arg) {
-      to_chars_result ret = arg->write_to(span(i, n));
+  va_start(vargs, arg_n);
+  size_t written = 0;
+  for (size_t i = 0; i < arg_n; ++i) {
+    const FmtBase *fmt = va_arg(vargs, const FmtBase *);
+    if (fmt) {
+      to_chars_result ret = fmt->write_to(span(written, len));
       if (ret.err != SUCCESS) {
+        va_end(vargs);
         return false;
       }
-      i += ret.written;
+      written += ret.written;
     }
   }
-  assert(i == n);
+  assert(written == len);
   // store final '\0' but do not count it in size()
-  data()[n] = '\0';
-  size_ = n;
+  data()[len] = '\0';
+  size_ = len;
+  va_end(vargs);
   return true;
 }

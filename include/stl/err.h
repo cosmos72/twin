@@ -16,7 +16,7 @@
 
 // keep the name 'errnum_e' as it's part of the ABI:
 // C++ mangled name for function 'bool Error(errnum err)' below contains it
-typedef enum errnum_e : unsigned {
+typedef enum errnum_e /*: unsigned*/ {
   SUCCESS = 0,
   NOMEMORY = 1,   //< memory allocation failed
   NOTABLES = 2,   //< internal tables/buffers full

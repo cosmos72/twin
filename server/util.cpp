@@ -895,7 +895,7 @@ static bool initHOME(void) {
  */
 static bool initTmpDir(void) {
   const char *dir = getenv("TMPDIR");
-  if (dir == nullptr) {
+  if (dir == NULL) {
     dir = "/tmp";
   }
   if (TmpDir.assign(dir, 1 + strlen(dir))) { // also append final '\0'
@@ -915,7 +915,7 @@ static bool initTmpDir(void) {
 /** return getenv("XDG_STATE_HOME") + "/twin", getenv("HOME") + "/.local/state/twin"  */
 static bool initSocketDir(void) {
   const char *env = getenv("XDG_STATE_HOME");
-  if (env != nullptr && SocketDir.assign(env, strlen(env)) && SocketDir.append("/twin", 5)) {
+  if (env != NULL && SocketDir.assign(env, strlen(env)) && SocketDir.append("/twin", 5)) {
     SocketDir.pop_back(); // keep final '\0' but do not count it
     return true;
   }

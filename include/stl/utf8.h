@@ -9,8 +9,8 @@
 #ifndef TWIN_STL_UTF8_H
 #define TWIN_STL_UTF8_H
 
-#include <cstddef> // size_t
-#include <cstdint> // uint32_t
+#include <stddef.h> // size_t
+#include <stdint.h> // uint32_t
 
 typedef uint32_t trune;
 class Chars;
