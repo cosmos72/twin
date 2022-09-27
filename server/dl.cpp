@@ -113,11 +113,11 @@ udat DlName2Code(const char *name) {
 static Chars DlCode2Name(uldat code) {
   switch (code) {
   case TermSo:
-    return "term";
+    return Chars("term");
   case SocketSo:
-    return "socket";
+    return Chars("socket");
   case RCParseSo:
-    return "rcparse";
+    return Chars("rcparse");
   default:
   case MainSo:
     return Chars();
