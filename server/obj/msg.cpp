@@ -10,7 +10,8 @@
  *
  */
 
-#include "alloc.h"  // AllocMem()
+#include "alloc.h" // AllocMem()
+#include "log.h"
 #include "fn.h"     // Fn_msg
 #include "obj/id.h" // AssignId()
 #include "obj/msg.h"
@@ -63,11 +64,12 @@ msg s_msg::Create(udat type, size_t eventlen) {
     eventlen += SIZEOF_EVENT_COMMON;
     break;
   default:
-    printk("twin: CreateMsg(): unknown message type 0x%04x(%d)\n", (int)type, (int)type);
+    log(ERROR, "twin: CreateMsg(): unknown message type 0x", hex(unsigned(type)), "(",
+        unsigned(type), ")\n");
     return NULL;
   }
   if (eventlen > ((uldat)-1) - headerlen || eventlen > ((size_t)-1) - headerlen) {
-    printk("twin: CreateMsg(): event length too large: %lu\n", (unsigned long)eventlen);
+    log(ERROR, "twin: CreateMsg(): event length too large: ", eventlen, "\n");
     return NULL;
   }
   msg m;

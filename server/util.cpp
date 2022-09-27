@@ -41,7 +41,6 @@
 #include "methods.h"
 #include "main.h"
 #include "hw.h"
-#include "printk.h"
 #include "privilege.h"
 #include "remote.h"
 #include "resize.h"
@@ -1045,8 +1044,8 @@ bool InitTWDisplay(void) {
   arg0 = addr_unix.sun_path;
 
   log(ERROR, "twin: failed to create any ", Chars::from_c(addr_unix.sun_path),
-      "/.Twin* socket: ", Errstr, "\n");
-  log(ERROR, "      possible reasons: either ", Chars::from_c(arg0),
+      "/.Twin* socket: ", Errstr, //
+      "\n      possible reasons: either ", Chars::from_c(arg0),
       " not writable, or all TWDISPLAY already in use,\n"
       "      or too many stale ",
       Chars::from_c(arg0), "/.Twin* sockets. Aborting.\n");
@@ -1279,7 +1278,7 @@ void RunTwEnvRC(void) {
         case -1: /* error */
           close(fds[0]);
           close(fds[1]);
-          printk("twin: RunTwEnvRC(): fork() failed: " SS "\n", strerror(errno));
+          log(ERROR, "twin: RunTwEnvRC(): fork() failed: ", Chars::from_c(strerror(errno)), "\n");
           break;
         case 0: /* child */
           close(fds[0]);
@@ -1300,11 +1299,11 @@ void RunTwEnvRC(void) {
           break;
         }
       } else
-        printk("twin: RunTwEnvRC(): pipe() failed: " SS "\n", strerror(errno));
+        log(ERROR, "twin: RunTwEnvRC(): pipe() failed: ", Chars::from_c(strerror(errno)), "\n");
     } else
-      printk("twin: RunTwEnvRC(): .twenvrc.sh: File not found\n", strerror(errno));
+      log(ERROR, "twin: RunTwEnvRC(): .twenvrc.sh: File not found\n");
   } else
-    printk("twin: RunTwEnvRC(): delaying .twenvrc.sh execution until secure mode ends.\n");
+    log(ERROR, "twin: RunTwEnvRC(): delaying .twenvrc.sh execution until secure mode ends.\n");
 }
 
 /* remove const from a pointer and suppress compiler warnings */

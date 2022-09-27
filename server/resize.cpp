@@ -34,7 +34,6 @@
 #include "draw.h"
 #include "log.h"
 #include "methods.h"
-#include "printk.h"
 #include "resize.h"
 #include "util.h"
 #include "hw.h"

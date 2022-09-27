@@ -63,7 +63,6 @@ void GainPrivileges(void);
 #define SS "%." STR(TW_SMALLBUFF) "s"
 #endif
 
-int printk(const char *format, ...);
 int flushk(void);
 
 /*

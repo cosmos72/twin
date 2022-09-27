@@ -13,12 +13,13 @@
 #include "twin.h"
 #include "alloc.h"
 #include "algo.h"
-#include "data.h"
-#include "extreg.h"
-#include "methods.h"
 #include "builtin.h"
-#include "main.h"
+#include "data.h"
 #include "draw.h"
+#include "extreg.h"
+#include "log.h"
+#include "main.h"
+#include "methods.h"
 #include "obj/id.h" // NOID, Id2Obj()
 #include "resize.h"
 #include "util.h"
@@ -28,6 +29,7 @@
 #include "hw.h"
 #include "hw_multi.h"
 #include "common.h"
+
 #include <Tw/Twkeys.h> /* for TW_* key defines */
 #include <Tutf/Tutf.h> /* for UCS-2 to charset conversions */
 
@@ -671,7 +673,7 @@ static void DetailCtx(wm_ctx *C) {
     /* ensure IS_SCREEN(C->W->Parent) is true. */
     C->Screen = (screen)C->W->Parent;
     if (!C->Screen || !IS_SCREEN(C->Screen)) {
-      printk("twin: wm.c: DetailCtx(): internal error: C->W is a subwidget!\n");
+      log(ERROR, "twin: wm.c: DetailCtx(): internal error: C->W is a subwidget!\n");
       return;
     }
   }
@@ -1652,7 +1654,7 @@ static void TryAutoFocus(wm_ctx *C) {
     if (DeepW == W) {
       RecursiveFocusWidget(FocusW);
 #ifdef DEBUG_WM
-      printk("autofocus: 0x%x -> 0x%x\n", OldW ? OldW->Id : NOID, FocusW->Id);
+      log(INFO, "autofocus: 0x", hex(OldW ? OldW->Id : NOID), " -> 0x", hex(FocusW->Id), "\n");
 #endif
     }
   }
@@ -1937,20 +1939,20 @@ byte InitWM(void) {
           return ttrue;
         } else {
           sent = ttrue;
-          printk("twin: RC: " SS "\n", Errstr.data());
+          log(ERROR, "twin: RC: ", Errstr, "\n");
         }
       }
       UnRegisterExt(WM, MsgPort, WM_MsgPort);
     } else {
       sent = ttrue;
-      printk("twin: WM: RegisterExt(WM,MsgPort) failed! Another WM is running?\n");
+      log(ERROR, "twin: WM: RegisterExt(WM,MsgPort) failed! Another WM is running?\n");
     }
   }
   if (WM_MsgPort) {
     WM_MsgPort->Delete();
   }
   if (!sent) {
-    printk("twin: WM: " SS "\n", Errstr.data());
+    log(ERROR, "twin: WM: ", Errstr, "\n");
   }
   return tfalse;
 }

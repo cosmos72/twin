@@ -141,7 +141,7 @@ static byte termcap_InitVideo(void) {
   char tcbuf[4096]; /* by convention, this is enough */
 
   if (!term) {
-    printk("      termcap_InitVideo() failed: unknown terminal type.\n");
+    log(ERROR, "      termcap_InitVideo() failed: unknown terminal type.\n");
     return tfalse;
   }
 
@@ -149,13 +149,13 @@ static byte termcap_InitVideo(void) {
   case 1:
     break;
   case 0:
-    printk("      termcap_InitVideo() failed: no entry for `" SS "' in the terminal database.\n"
-           "      Please set your $TERM environment variable correctly.\n",
-           term);
+    log(ERROR, "      termcap_InitVideo() failed: no entry for `", Chars::from_c(term),
+        "' in the terminal database.\n"
+        "      Please set your $TERM environment variable correctly.\n");
     return tfalse;
   default:
-    printk("      termcap_InitVideo() failed: system call error in tgetent(): " SS "\n",
-           strerror(errno));
+    log(ERROR, "      termcap_InitVideo() failed: system call error in tgetent(): ",
+        Chars::from_c(strerror(errno)), "\n");
     return tfalse;
   }
 
@@ -168,14 +168,14 @@ static byte termcap_InitVideo(void) {
 
   for (n = tc_name, d = tc_cap; *n; n++, d++) {
     if (**n && !termcap_extract(*n, d)) {
-      printk("      termcap_InitVideo() failed: Out of memory!\n");
+      log(ERROR, "      termcap_InitVideo() failed: Out of memory!\n");
       termcap_cleanup();
       return tfalse;
     }
   }
 
   if (!*tc_cursor_goto) {
-    printk("      termcap_InitVideo() failed: terminal misses `cursor goto' capability\n");
+    log(ERROR, "      termcap_InitVideo() failed: terminal misses `cursor goto' capability\n");
     termcap_cleanup();
     return tfalse;
   }
@@ -189,7 +189,7 @@ static byte termcap_InitVideo(void) {
   }
   if (tty_use_utf8 == ttrue) {
     if (!(tc_charset_start = CloneStr("\033%G")) || !(tc_charset_end = CloneStr("\033%@"))) {
-      printk("      termcap_InitVideo() failed: Out of memory!\n");
+      log(ERROR, "      termcap_InitVideo() failed: Out of memory!\n");
       termcap_cleanup();
       return tfalse;
     }

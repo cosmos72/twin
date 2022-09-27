@@ -108,7 +108,7 @@ static void display_HandleEvent(display_hw hw) {
       /*
        * should never happen, twdisplay uses libtw calls to manage Selection Requests
        */
-      printk(
+      log(ERROR,
           "\ntwin: display_HandleEvent(): unexpected SelectionRequest Message from twdisplay!\n");
 #if 0
             TwinSelectionRequest(Event->EventSelectionRequest.Requestor,
@@ -120,7 +120,8 @@ static void display_HandleEvent(display_hw hw) {
       /*
        * should never happen, twdisplay uses libtw calls to manage Selection Notifies
        */
-      printk("\ntwin: display_HandleEvent(): unexpected SelectionNotify Message from twdisplay!\n");
+      log(ERROR,
+          "\ntwin: display_HandleEvent(): unexpected SelectionNotify Message from twdisplay!\n");
 #if 0
       TwinSelectionNotify(
           dRequestor, dReqPrivate, Event->EventSelectionNotify.Magic,
@@ -136,8 +137,8 @@ static void display_HandleEvent(display_hw hw) {
          * Not needed, twdisplay keeps its own copy of Video[]
          * and never generates ev_dpy_RedrawVideo events
          */
-        printk("\ntwin: display_HandleEvent(): unexpected Display.RedrawVideo Message from "
-               "twdisplay!\n");
+        log(ERROR, "\ntwin: display_HandleEvent(): unexpected Display.RedrawVideo Message from "
+                   "twdisplay!\n");
 #if 0
                 if (Event->EventDisplay.Len == sizeof(dat) * 2)
                     NeedRedrawVideo(Event->EventDisplay.X, Event->EventDisplay.Y,

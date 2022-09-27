@@ -38,10 +38,12 @@ static byte lrawkbd_InitKeyboard(void) {
   struct termios ttyb;
 
   if (lrawkbd_HW) {
-    printk("lrawkbd_InitKeyboard(): error: another display is already using raw-keyboard mode.\n");
+    log(ERROR,
+        "lrawkbd_InitKeyboard(): error: another display is already using raw-keyboard mode.\n");
     return tfalse;
   } else if (!lrawkbd_GetKeyboard()) {
-    printk("lrawkbd_InitKeyboard(): error: tty is not a Linux console: ioctl(KDGKBMODE) failed!\n");
+    log(ERROR,
+        "lrawkbd_InitKeyboard(): error: tty is not a Linux console: ioctl(KDGKBMODE) failed!\n");
     return tfalse;
   }
 
@@ -118,17 +120,17 @@ static void lrawkbd_ConfigureKeyboard(udat resource, byte todefault, udat value)
 #ifdef DEBUG_HW_TTY_LRAWKBD
 static void dump_bytes(byte *s, uldat len) {
   uldat i;
-  byte c;
+  char c;
 
-  printk("lrawkbd: received `");
+  log(INFO, "lrawkbd: received `");
 
-  for (i = 0; (c = s[i]) && i < len; i++) {
+  for (i = 0; (c = (char)s[i]) && i < len; i++) {
     if (c >= ' ' && c <= '~')
-      printk("%c", (int)c);
+      log(INFO, Chars(&c, 1));
     else
-      printk("\\x%02X", (int)c);
+      log(INFO, "\\x", hex((unsigned char)c));
   }
-  printk("'\n");
+  log(INFO, "'\n");
 }
 #endif // DEBUG_HW_TTY_LRAWKBD
 

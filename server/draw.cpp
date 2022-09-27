@@ -19,7 +19,6 @@
 #include "methods.h"
 #include "hw.h"
 #include "hw_multi.h"
-#include "printk.h"
 #include "util.h"
 #include "draw.h"
 

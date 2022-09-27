@@ -31,7 +31,6 @@
 #include "data.h"
 #include "hw.h"
 #include "main.h"
-#include "printk.h"
 #include "rctypes.h"
 #include "util.h"
 #include "version.h"

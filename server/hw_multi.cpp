@@ -38,7 +38,6 @@
 #include "hw_private.h"
 #include "hw_multi.h"
 #include "log.h"
-#include "printk.h"
 #include "resize.h"
 #include "stl/string.h"
 #include "util.h"
@@ -670,8 +669,8 @@ void TwinSelectionNotify(obj Requestor, uldat ReqPrivate, e_id Magic, const char
                          Chars Data) {
   msg NewMsg;
   event_any *Event;
-#if 0
-    printk("twin: Selection Notify to 0x%08x\n", Requestor ? Requestor->Id : NOID);
+#if 1
+  log(INFO, "twin: Selection Notify to 0x", hex(Requestor ? Requestor->Id : NOID), "\n");
 #endif
   if (!Requestor) {
     (void)SelectionStore(Magic, MIME, Data);

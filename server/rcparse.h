@@ -166,6 +166,7 @@
 #include "rcparse_tab.hpp"
 #include "unaligned.h"
 #include "log.h"
+#include "printk.h" // printk_receive_fd()
 
 ldat GlobalFlags[4];
 ldat GlobalShadows[2];

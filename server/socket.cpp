@@ -54,7 +54,7 @@
 #include "hw_multi.h"
 #include "log.h"
 #include "md5.h"
-#include "printk.h"
+#include "printk.h" // printk_receive_fd(), RegisterPrintkFd()
 #include "remote.h"
 #include "socket.h"
 #include "unaligned.h"

@@ -980,7 +980,7 @@ static void MainLoop(int Fd) {
        */
       if (TwGetDisplayWidth() <= 0) {
         QuitDisplayHW(HW);
-        printk("twdisplay: lost connection to TWIN.. \n");
+        log(ERROR, "twdisplay: lost connection to TWIN.. \n");
         exit(1);
       }
     }
@@ -1005,7 +1005,7 @@ static void MainLoop(int Fd) {
 
   if (num_fds < 0 && errno != EINTR) {
     QuitDisplayHW(HW);
-    printk("twdisplay: select(): " SS "\n", strerror(errno));
+    log(ERROR, "twdisplay: select(): ", Chars::from_c(strerror(errno)), "\n");
     exit(1);
   }
   if (TwInPanic()) {

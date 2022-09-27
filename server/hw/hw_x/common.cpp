@@ -170,7 +170,7 @@ static bool X11_InitHW(void) {
   unsigned long xcreategc_mask = GCForeground | GCBackground | GCGraphicsExposures;
 
   if (!(HW->Private = (struct x11_data *)AllocMem(sizeof(struct x11_data)))) {
-    printk("      X11_InitHW(): Out of memory!\n");
+    log(ERROR, "      X11_InitHW(): Out of memory!\n");
     return false;
   }
   memset(HW->Private, 0, sizeof(struct x11_data));
@@ -270,7 +270,7 @@ static bool X11_InitHW(void) {
         xcolor.green = 257 * (udat)Palette[i].Green;
         xcolor.blue = 257 * (udat)Palette[i].Blue;
         if (!X11_AllocColor(xdisplay, xvisual, colormap, &xcolor, &xcol[i], i)) {
-          printk("      X11_InitHW() failed to allocate colors\n");
+          log(ERROR, "      X11_InitHW() failed to allocate colors\n");
           break;
         }
       }

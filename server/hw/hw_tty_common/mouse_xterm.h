@@ -16,17 +16,17 @@ static byte xterm_InitMouse(byte force) {
   const char *term = tty_TERM.data(); // guaranteed to be '\0' terminated
 
   if (force == ttrue) {
-    printk("      xterm_InitMouse(): xterm-style mouse FORCED.\n"
-           "      Assuming terminal has xterm compatible mouse reporting.\n");
+    log(WARNING, "      xterm_InitMouse(): xterm-style mouse FORCED.\n"
+                 "      Assuming terminal has xterm compatible mouse reporting.\n");
     term = "xterm";
   } else if (force == ttrue + ttrue) {
-    printk("      xterm_InitMouse(): twterm-style mouse FORCED.\n"
-           "      Assuming terminal has twterm compatible mouse reporting.\n");
+    log(WARNING, "      xterm_InitMouse(): twterm-style mouse FORCED.\n"
+                 "      Assuming terminal has twterm compatible mouse reporting.\n");
     term = "twterm";
   }
 
   if (!term) {
-    printk("%s", "      xterm_InitMouse() failed: unknown terminal type.\n");
+    log(ERROR, "%s", "      xterm_InitMouse() failed: unknown terminal type.\n");
     return tfalse;
   }
 
@@ -42,13 +42,15 @@ static byte xterm_InitMouse(byte force) {
      * doesn't have twterm-style mouse reporting
      */
     if (ttypar[0] < 6 || (ttypar[0] == 6 && ttypar[1] < 3)) {
-      printk("%s", "      xterm_InitMouse() failed: this `linux' terminal\n"
-                   "      has no support for xterm-style mouse reporting.\n");
+      log(ERROR, "%s",
+          "      xterm_InitMouse() failed: this `linux' terminal\n"
+          "      has no support for xterm-style mouse reporting.\n");
       return tfalse;
     }
     if (ttypar[0] == 6 && ttypar[1] < 4) {
-      printk("%s", "      xterm_InitMouse() warning: this `linux' terminal\n"
-                   "      can only report click, drag and release, not motion.\n");
+      log(WARNING, "%s",
+          "      xterm_InitMouse() warning: this `linux' terminal\n"
+          "      can only report click, drag and release, not motion.\n");
       mouse_motion_seq = mouse_start_seq;
     }
   } else if (!strncmp(term, "xterm", 5) || !strncmp(term, "rxvt", 4) ||
@@ -59,7 +61,8 @@ static byte xterm_InitMouse(byte force) {
     mouse_end_seq = "\033[?1006l\033[?1002l\033[?1000l\033[?1001r";
     mouse_motion_seq = mouse_start_seq;
   } else {
-    printk("      xterm_InitMouse() failed: terminal `" SS "' is not supported.\n", term);
+    log(ERROR, "      xterm_InitMouse() failed: terminal `", Chars::from_c(term),
+        "' is not supported.\n");
     return tfalse;
   }
 

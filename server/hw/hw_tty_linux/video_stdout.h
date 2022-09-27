@@ -54,8 +54,9 @@ static byte linux_InitVideo(void) {
       tty_use_utf8 = tfalse;
 
       if (tty_charset == (uldat)-1)
-        printk("      linux_InitVideo() warning: this 'linux' terminal seems to be an old twin "
-               "(version <= 0.3.11) without UTF-8 support. Setting charset='ASCII'\n");
+        log(WARNING,
+            "      linux_InitVideo() warning: this 'linux' terminal seems to be an old twin "
+            "(version <= 0.3.11) without UTF-8 support. Setting charset='ASCII'\n");
     }
   }
   /* clear colors, enable/disable UTF-8 mode */

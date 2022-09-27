@@ -213,7 +213,7 @@ static int X11_AllocColor(Display *display, Visual *xvisual, Colormap colormap, 
   XftColor *xft_color;
 
   if (!(xft_color = (XftColor *)AllocMem(sizeof(XftColor)))) {
-    printk("      X11_AllocColor(): Out of memory!\n");
+    log(ERROR, "      X11_AllocColor(): Out of memory!\n");
     return -1;
   }
   memset(xft_color, 0, sizeof(XftColor));

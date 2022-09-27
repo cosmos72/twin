@@ -306,7 +306,7 @@ static void do_null(void) {
 }
 
 static udat do_lowercase(byte value, byte up_flag) {
-  printk("twin: hw/linux/kbd_low.h: do_lowercase() called - kernel bug!\n");
+  log(ERROR, "twin: hw/linux/kbd_low.h: do_lowercase() called - kernel bug!\n");
   return TW_Null;
 }
 
@@ -827,8 +827,8 @@ static void lrawkbd_LoadKeymaps(void) {
       if (ioctl(tty_fd, KDGKBENT, &ke) == 0) {
 
 #ifdef DEBUG_HW_TTY_LRAWKBD
-        printk("\t... ioctl(tty_fd = %d, KDGKBENT, {table = 0x%X, index = 0x%X} ) = 0x%X\n",
-               (int)tty_fd, table, keycode, (int)ke.kb_value);
+        log(INFO, "\t... ioctl(tty_fd = ", (int)tty_fd, ", KDGKBENT, {table = 0x", hex(table),
+            ", index = 0x", hex(keycode), "} ) = 0x", hex((int)ke.kb_value), "\n");
 #endif
 
         if (keycode == 0 && ke.kb_value == K_NOSUCHMAP)
@@ -848,15 +848,15 @@ static udat get_kbentry(byte keycode, byte table) {
     udat *keymap = lrawkbd_keymaps[table];
     if (keymap != NULL) {
 #ifdef DEBUG_HW_TTY_LRAWKBD
-      printk("\tget_kbentry(table = 0x%X, keycode = 0x%X) = 0x%X\n", (int)table, (int)keycode,
-             (int)keymap[keycode & 0x7F]);
+      log(INFO, "\tget_kbentry(table = 0x", hex(int(table)), ", keycode = 0x", hex(int(keycode)),
+          ") = 0x", hex(int(keymap[keycode & 0x7F])), "\n");
 #endif
       return keymap[keycode & 0x7F];
     }
   } else {
-    printk("internal error! invalid arguments in get_kbentry(keycode = 0x%X, table = 0x%X): table "
-           "must be < 0x%X\n",
-           (int)keycode, (int)table, (int)lrawkbd_KEYMAPS_N);
+    log(ERROR, "internal error! invalid arguments in get_kbentry(keycode = 0x", hex(int(keycode)),
+        ", table = 0x", hex(int(table)), "): table must be < 0x", hex(int(lrawkbd_KEYMAPS_N)),
+        "\n");
   }
   return K_NOSUCHMAP;
 }
@@ -883,15 +883,15 @@ static void dump_key(udat twk, ldat keysym, byte *s, uldat len) {
   uldat f;
   byte c;
 
-  printk("\tTWsym = 0x%X, ksym = 0x%X, `", (int)twk, (int)keysym);
+  log(INFO, "\tTWsym = 0x", hex(int(twk)), ", ksym = 0x", hex(int(keysym)), ", `");
 
   for (f = 0; (c = s[f]) && f < len; f++) {
     if (c >= ' ' && c <= '~')
-      printk("%c", (int)c);
+      log(INFO, Chars(&c, 1));
     else
-      printk("\\x%02X", (int)c);
+      log(INFO, "\\x", hex((unsigned char)c));
   }
-  printk("'\n");
+  log(INFO, "'\n");
 }
 #endif
 

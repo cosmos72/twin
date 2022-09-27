@@ -24,7 +24,6 @@
 
 #include "fdlist.h"
 #include "log.h"
-#include "printk.h"
 #include "remote.h"
 #include "util.h"
 

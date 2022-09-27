@@ -63,7 +63,6 @@
 #include "twin.h"
 #include "data.h"
 #include "main.h"
-#include "printk.h"
 #include "log.h"
 #include "util.h"
 

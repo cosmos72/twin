@@ -24,7 +24,6 @@
 #include "draw.h"
 #include "extreg.h"
 #include "log.h"
-#include "printk.h"
 #include "resize.h"
 #include "util.h"
 #include "hw.h"

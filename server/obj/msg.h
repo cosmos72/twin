@@ -16,7 +16,7 @@
 #include "obj/event.h"
 #include "obj/fwd.h"
 #include "obj/obj.h"
-#include "printk.h"
+
 #include <Tw/datatypes.h>
 
 struct s_fn_msg {

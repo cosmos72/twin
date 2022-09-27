@@ -1,5 +1,7 @@
 /* Functions that are common between hw_x11 and hw_xft */
 
+#include "log.h"
+
 #define X11_TITLE_MAXLEN 80
 
 static void X11_FillWindowTitle(char *title, int maxlen) {
@@ -197,13 +199,14 @@ static void X11_SelectionNotify_X11(uldat ReqPrivate, e_id Magic, const char MIM
   Atom target;
 
   if (XReqCount == 0) {
-    printk(THIS ".c: X11_SelectionNotify_X11(): unexpected Twin Selection Notify event!\n");
+    log(ERROR, THIS ".c: X11_SelectionNotify_X11(): unexpected Twin Selection Notify event!\n");
     return;
   }
 #if 0
-    else {
-        printk(THIS ".c: X11_SelectionNotify_X11(): %d nested Twin Selection Notify events\n", XReqCount);
-    }
+  else {
+    log(ERROR, THIS ".c: X11_SelectionNotify_X11(): ", XReqCount,
+           " nested Twin Selection Notify events\n", );
+  }
 #endif
 
   XReqCount--;
@@ -288,13 +291,14 @@ static void X11_SelectionNotify_up(Window win, Atom prop) {
   bool ok = true;
 
   if (xReqCount == 0) {
-    printk(THIS ".c: X11_SelectionNotify_up(): unexpected X Selection Notify event!\n");
+    log(WARNING, THIS ".c: X11_SelectionNotify_up(): unexpected X Selection Notify event!\n");
     return;
   }
 #if 0
-    else {
-        printk(THIS ".c: X11_SelectionNotify_up(): %d nested X Selection Notify event\n", xReqCount);
-    }
+  else {
+    log(INFO, THIS ".c: X11_SelectionNotify_up(): ", xReqCount,
+        " nested X Selection Notify event\n");
+  }
 #endif
   if (prop == None) {
     return;
@@ -345,14 +349,15 @@ static void X11_SelectionRequest_X11(obj Requestor, uldat ReqPrivate) {
   if (!HW->HWSelectionPrivate) {
 
     if (xReqCount == NEST) {
-      printk(THIS
-             ".c: X11_SelectionRequest_X11(): too many nested Twin Selection Request events!\n");
+      log(ERROR,
+          THIS ".c: X11_SelectionRequest_X11(): too many nested Twin Selection Request events!\n");
       return;
     }
 #if 0
-        else {
-            printk(THIS ".c: X11_SelectionRequest_X11(): %d nested Twin Selection Request events\n", xReqCount+1);
-        }
+    else {
+      log(INFO, THIS ".c: X11_SelectionRequest_X11(): ", xReqCount + 1,
+          " nested Twin Selection Request events\n");
+    }
 #endif
     xRequestor(xReqCount) = Requestor;
     xReqPrivate(xReqCount) = ReqPrivate;
@@ -377,13 +382,14 @@ static void X11_SelectionRequest_X11(obj Requestor, uldat ReqPrivate) {
  */
 static void X11_SelectionRequest_up(XSelectionRequestEvent *req) {
   if (XReqCount == NEST) {
-    printk(THIS ".c: X11_SelectionRequest_up(): too many nested X Selection Request events!\n");
+    log(ERROR, THIS ".c: X11_SelectionRequest_up(): too many nested X Selection Request events!\n");
     return;
   }
 #if 0
-    else {
-        printk(THIS ".c: X11_SelectionRequest_up(): %d nested X Selection Request events\n", XReqCount+1);
-    }
+  else {
+    log(INFO, THIS ".c: X11_SelectionRequest_up(): ", XReqCount + 1,
+        " nested X Selection Request events\n");
+  }
 #endif
   CopyMem(req, &XReq(XReqCount), sizeof(XSelectionRequestEvent));
   TwinSelectionRequest((obj)HW, XReqCount++, TwinSelectionGetOwner());
@@ -474,15 +480,15 @@ static Tutf_function X11_UTF_32_to_charset_function(const char *charset) {
     if (!charset) {
       if (xsfont->min_byte1 < xsfont->max_byte1) {
         /* font is more than just 8-bit. For now, assume it's unicode */
-        printk("    X11_InitHW: font `" SS "\' has no known charset encoding,\n"
-               "                assuming Unicode.\n",
-               fontname);
+        log(WARNING, "    X11_InitHW: font `", Chars::from_c(fontname),
+            "\' has no known charset encoding,\n"
+            "                assuming Unicode.\n");
         return NULL;
       }
       /* else assume codepage437. gross. */
-      printk("    X11_InitHW: font `" SS "\' has no known charset encoding,\n"
-             "                assuming CP437 codepage (\"VGA\").\n",
-             fontname);
+      log(WARNING, "    X11_InitHW: font `", Chars::from_c(fontname),
+          "\' has no known charset encoding,\n"
+          "                assuming CP437 codepage (\"VGA\").\n");
       return Tutf_UTF_32_to_CP437;
     }
   }
@@ -495,8 +501,8 @@ static Tutf_function X11_UTF_32_to_charset_function(const char *charset) {
   }
 
   if (i == (uldat)-1) {
-    printk("      X11_InitHW(): libtutf warning: unknown charset `" SS "', assuming `CP437'\n",
-           charset);
+    log(WARNING, "      X11_InitHW(): libtutf warning: unknown charset `", Chars::from_c(charset),
+        "', assuming `CP437'\n");
     return Tutf_UTF_32_to_CP437;
   }
 
