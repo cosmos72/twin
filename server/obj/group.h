@@ -19,7 +19,7 @@
 /* ggroup -- gadget group */
 
 struct s_fn_group {
-  e_id Magic;
+  uldat Magic;
   void (*Insert)(ggroup, msgport MsgPort, ggroup Prev, ggroup Next);
   void (*Remove)(ggroup);
   void (*Delete)(ggroup);

@@ -46,11 +46,11 @@ size_t Fmt<unsigned long>::size() const {
 }
 
 // =============================================================================
-// Fmt<View<char>>
-to_chars_result Fmt<View<char>>::write_to(Span<char> dst) const {
+// Fmt<View<char> >
+to_chars_result Fmt<View<char> /**/>::write_to(Span<char> dst) const {
   return to_chars(dst, val_);
 }
 
-size_t Fmt<View<char>>::size() const {
+size_t Fmt<View<char> /**/>::size() const {
   return val_.size();
 }

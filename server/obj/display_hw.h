@@ -19,7 +19,7 @@
 #include "stl_types.h"
 
 struct s_fn_display_hw {
-  e_id Magic;
+  uldat Magic;
   void (*Insert)(display_hw, all, display_hw Prev, display_hw Next);
   void (*Remove)(display_hw);
   void (*Delete)(display_hw);

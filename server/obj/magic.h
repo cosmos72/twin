@@ -16,7 +16,7 @@
 #define magic_mask ((uldat)0xF0000000ul)
 #define magic_shift 28
 
-enum e_magic_byte : unsigned char {
+enum e_magic_byte /*: unsigned char*/ {
   obj_magic_byte = 0,
   widget_magic_byte = 1,
   gadget_magic_byte = 2,

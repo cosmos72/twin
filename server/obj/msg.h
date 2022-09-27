@@ -20,7 +20,7 @@
 #include <Tw/datatypes.h>
 
 struct s_fn_msg {
-  e_id Magic;
+  uldat Magic;
   void (*Insert)(msg, msgport, msg Prev, msg Next);
   void (*Remove)(msg);
   void (*Delete)(msg);
@@ -35,14 +35,14 @@ struct s_msg : public s_obj {
   msgport MsgPort;
   /* msg */
   udat Type; /* See note above */
-  uldat Len; /* length of Event */
+  uldat Len; /* length of Event, in bytes */
   event_any Event;
 
   static msg Create(udat type, size_t eventlen);
   msg Init(udat type, uldat eventlen);
 
   /* obj */
-  e_id Magic() const {
+  uldat Magic() const {
     return Fn->Magic;
   }
   void Insert(msgport port, msg prev, msg next) {

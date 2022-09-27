@@ -16,7 +16,7 @@
 #include "obj/obj.h"
 
 struct s_fn_mutex {
-  e_id Magic;
+  uldat Magic;
   void (*Insert)(mutex, all, mutex Prev, mutex Next);
   void (*Remove)(mutex);
   void (*Delete)(mutex);

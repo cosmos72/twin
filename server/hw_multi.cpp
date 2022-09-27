@@ -729,7 +729,7 @@ void TwinSelectionRequest(obj Requestor, uldat ReqPrivate, obj Owner) {
     }
   } else {
     selection Sel = All->Selection;
-    TwinSelectionNotify(Requestor, ReqPrivate, Sel->Magic, Sel->MIME, Sel->Data);
+    TwinSelectionNotify(Requestor, ReqPrivate, e_id(Sel->Magic), Sel->MIME, Sel->Data);
   }
 }
 

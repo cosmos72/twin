@@ -77,7 +77,7 @@ uldat s_idvec::get(e_magic_byte magic_byte) {
 bool s_idvec::assign_id(e_magic_byte magic_byte, obj o) {
   const uldat id = get(magic_byte);
   if (id != NOSLOT) {
-    o->Id = e_id(id | ((uldat)magic_byte << magic_shift));
+    o->Id = id | ((uldat)magic_byte << magic_shift);
     Vec[id] = o;
     if (Top <= id) {
       Top = id + 1;

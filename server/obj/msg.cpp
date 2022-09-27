@@ -82,7 +82,7 @@ msg s_msg::Create(udat type, size_t eventlen) {
 }
 
 msg s_msg::Init(udat type, uldat eventlen) {
-  if (AssignId(Fn->Magic, (obj)this)) {
+  if (AssignId(e_id(Fn->Magic), (obj)this)) {
     // this->Prev = this->Next = NULL;
     // this->MsgPort = NULL;
     this->Type = type;

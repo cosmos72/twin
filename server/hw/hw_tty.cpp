@@ -272,7 +272,7 @@ static void tty_MogrifyUTF8(trune h) {
 static bool tty_InitHW(void) {
   String charset;
   Chars arg = HW->Name;
-  enum : byte { NEVER = 0, MAYBE = 1, ALWAYS = 2 };
+  enum /*: byte*/ { NEVER = 0, MAYBE = 1, ALWAYS = 2 };
   byte autotry_video = MAYBE, try_stdout = MAYBE, try_termcap = MAYBE, autotry_kbd = MAYBE,
        try_lrawkbd = MAYBE, force_mouse = tfalse, tc_colorbug = tfalse,
        need_persistent_slot = tfalse, try_ctty = tfalse, display_is_ctty = tfalse;

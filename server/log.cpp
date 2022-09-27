@@ -33,5 +33,5 @@ to_chars_result logv(log_level level, size_t arg_n, /* const FmtBase* */...) {
   if (written != 0 && err == SUCCESS) {
     printk_str(printk_buf, written);
   }
-  return to_chars_result{written, err};
+  return to_chars_result(written, err);
 }

@@ -21,7 +21,7 @@ struct s_gT { /* for GADGETFL_USETEXT gadgets */
 };
 
 struct s_fn_gadget {
-  e_id Magic;
+  uldat Magic;
   void (*Insert)(gadget, widget Parent, widget Prev, widget Next);
   void (*Remove)(gadget);
   void (*Delete)(gadget);
@@ -184,7 +184,7 @@ struct s_gadget : public s_obj {
 };
 
 /* Gadget->Attr */
-enum gadget_attr : udat {
+enum gadget_attr /*: udat*/ {
   GADGET_WANT_MOUSE_MOTION = WIDGET_WANT_MOUSE_MOTION, /* 0x0001 */
   GADGET_WANT_KEYS = WIDGET_WANT_KEYS,                 /* 0x0002 */
   GADGET_WANT_MOUSE = WIDGET_WANT_MOUSE,               /* 0x0004 */
@@ -193,7 +193,7 @@ enum gadget_attr : udat {
 };
 
 /* Gadget->Flags */
-enum gadget_flag : udat {
+enum gadget_flag /*: udat*/ {
   GADGETFL_USETEXT = 0x00,                 /* default */
   GADGETFL_USEEXPOSE = WIDGETFL_USEEXPOSE, /* 0x02 */
   GADGETFL_USEFILL = WIDGETFL_USEFILL,     /* 0x03 */

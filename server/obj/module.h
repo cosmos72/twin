@@ -20,7 +20,7 @@
 /* module */
 
 struct s_fn_module {
-  e_id Magic;
+  uldat Magic;
   void (*Insert)(module, all, module Prev, module Next);
   void (*Remove)(module);
   void (*Delete)(module);

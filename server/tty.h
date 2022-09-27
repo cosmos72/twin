@@ -12,7 +12,7 @@
 #include <Tw/datatypes.h>
 
 /* ttydata->Flags */
-enum tty_flag : uldat {
+enum tty_flag /*: uldat*/ {
   TTY_STOPPED = 0x0001,
   TTY_AUTOWRAP = 0x0002,
   TTY_NEEDWRAP = 0x0004,
@@ -33,7 +33,7 @@ enum tty_flag : uldat {
 };
 
 /* ttydata->Effects */
-enum tty_effect : udat {
+enum tty_effect /*: udat*/ {
   EFF_INTENSITY = 0x0001,
   EFF_HALFINTENS = 0x0002,
   EFF_UNDERLINE = 0x0004,
@@ -42,19 +42,19 @@ enum tty_effect : udat {
 };
 
 /* ttydata->nPar */
-enum tty_par : byte {
+enum tty_par /*: byte*/ {
   NPAR = 16,
 };
 
 /* ttydata->*G? */
-enum tty_charmap : byte {
+enum tty_charmap /*: byte*/ {
   VT100GR_MAP = 0,
   LATIN1_MAP = 1,
   IBMPC_MAP = 2,
   USER_MAP = 3,
 };
 
-enum ttystate : udat {
+enum ttystate /*: udat*/ {
   ESnormal = 0,
   ESesc,
   ESsquare,
@@ -76,7 +76,7 @@ enum ttystate : udat {
   ESques = 0x100
 };
 
-struct s_ttydata {
+struct ttydata {
   ttystate State;
   uldat Flags;
   udat Effects;

@@ -32,7 +32,7 @@ obj s_obj::Create() {
 }
 
 obj s_obj::Init() {
-  if (AssignId(((obj_entry)this)->Fn->Magic, this)) {
+  if (AssignId(e_id(((obj_entry)this)->Fn->Magic), this)) {
     return this;
   }
   return NULL;

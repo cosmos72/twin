@@ -73,7 +73,7 @@ private:
 /**
  * Copies chars to string.
  */
-template <> class Fmt<View<char>> : public FmtBase {
+template <> class Fmt<View<char> /**/> : public FmtBase {
 public:
   explicit Fmt(View<char> val) : val_(val) {
   }
@@ -120,12 +120,12 @@ inline Fmt<Void> fmt(Void val) {
   return Fmt<Void>(val);
 }
 
-inline Fmt<View<char>> fmt(View<char> val) {
-  return Fmt<View<char>>(val);
+inline Fmt<View<char> /**/> fmt(View<char> val) {
+  return Fmt<View<char> /**/>(val);
 }
 
-template <size_t N> Fmt<View<char>> fmt(const char (&addr)[N]) {
-  return Fmt<View<char>>(View<char>(addr, N - 1));
+template <size_t N> Fmt<View<char> /**/> fmt(const char (&addr)[N]) {
+  return Fmt<View<char> /**/>(View<char>(addr, N - 1));
 }
 
 template <class T> Fmt<T> fmt(Fmt<T> val) {

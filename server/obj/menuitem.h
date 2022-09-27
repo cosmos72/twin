@@ -16,7 +16,7 @@
 #include "obj/row.h"
 
 struct s_fn_menuitem {
-  e_id Magic;
+  uldat Magic;
   void (*Insert)(menuitem, obj, menuitem Prev, menuitem Next);
   void (*Remove)(menuitem);
   void (*Delete)(menuitem);

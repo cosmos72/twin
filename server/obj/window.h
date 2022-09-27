@@ -22,7 +22,7 @@
 #endif
 
 /* values returned by Fn_window->FindBorder (modeled after STATE_*) */
-enum tpos : byte {
+enum tpos /*: byte*/ {
   POS_TITLE = 10,
   POS_SIDE_LEFT = 11,
   POS_SIDE_UP = 12,
@@ -66,7 +66,7 @@ struct s_WC { /* for WINDOWFL_USECONTENTS windows */
 };
 
 struct s_fn_window {
-  e_id Magic;
+  uldat Magic;
   void (*Insert)(window, widget Parent, widget Prev, widget Next);
   void (*Remove)(window);
   void (*Delete)(window);
@@ -297,7 +297,7 @@ struct s_window : public s_obj {
 };
 
 /* Window->Attr */
-enum window_attr : udat {
+enum window_attr /*: udat*/ {
   WINDOW_WANT_MOUSE_MOTION = WIDGET_WANT_MOUSE_MOTION, /* 0x0001 */
   WINDOW_WANT_KEYS = WIDGET_WANT_KEYS,                 /* 0x0002 */
   WINDOW_WANT_MOUSE = WIDGET_WANT_MOUSE,               /* 0x0004 */
@@ -313,7 +313,7 @@ enum window_attr : udat {
 };
 
 /* Window->Flags */
-enum window_flag : udat {
+enum window_flag /*: udat*/ {
   WINDOWFL_USEROWS = 0x00, /* default */
   WINDOWFL_USECONTENTS = 0x01,
   WINDOWFL_USEEXPOSE = WIDGETFL_USEEXPOSE, /* 0x02 */
@@ -332,7 +332,7 @@ enum window_flag : udat {
 #define W_USE(W, USExxx) (((W)->Flags & WINDOWFL_USEANY) == CAT(WINDOWFL_, USExxx))
 
 /* Window->State */
-enum window_state : uldat {
+enum window_state /*: uldat*/ {
   X_BAR_SELECT = 0x0001,
   Y_BAR_SELECT = 0x0002,
   XY_BAR_SELECT = (X_BAR_SELECT | Y_BAR_SELECT),
@@ -361,7 +361,7 @@ enum window_state : uldat {
 
 /* Window->CursorType */
 /* These come from linux/drivers/char/console.c */
-enum window_cursor_type : byte {
+enum window_cursor_type /*: byte*/ {
   NOCURSOR = 1,
   LINECURSOR = 2,
   SOLIDCURSOR = 8,

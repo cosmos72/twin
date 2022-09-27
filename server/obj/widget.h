@@ -21,7 +21,7 @@
 #define WIDGET_USEEXPOSE_TCELL 4
 
 /* Widget->Attr */
-enum widget_attr : udat {
+enum widget_attr /*: udat*/ {
   /*
    * ask the server to send events even for mouse motion without any pressed button.
    * works only if WIDGET_WANT_MOUSE is set too.
@@ -34,7 +34,7 @@ enum widget_attr : udat {
 };
 
 /* Widget->Flags */
-enum widget_flag : udat {
+enum widget_flag /*: udat*/ {
   WIDGETFL_USEEXPOSE = 0x02,
   WIDGETFL_USEFILL = 0x03,
   WIDGETFL_USEANY = 0x07, /* mask of all above ones */
@@ -70,7 +70,7 @@ struct s_draw_ctx {
 };
 
 struct s_fn_widget {
-  e_id Magic;
+  uldat Magic;
   void (*Insert)(widget self, widget parent, widget Prev, widget Next);
   void (*Remove)(widget self);
   void (*Delete)(widget self);

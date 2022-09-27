@@ -19,7 +19,7 @@
 #include <Tw/datatypes.h>
 
 /* IDs */
-enum e_id : uldat {
+enum e_id /*: uldat*/ {
   NOID = 0,
   BADID = uldat(-1),
   MAXID = uldat(0x0FFFFFFFul),

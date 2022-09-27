@@ -209,7 +209,7 @@ struct event_selectionnotify {
   widget W;
   udat Code, pad; /* unused */
   uldat ReqPrivate;
-  e_id Magic;
+  uldat Magic;
   char MIME[MAX_MIMELEN];
   uldat Len;
   char Data[sizeof(uldat)]; /* Data[] is Len bytes actually */
