@@ -32,5 +32,8 @@ inline ldat Max3(ldat x, ldat y, ldat z) {
 inline uldat Min2u(uldat x, uldat y) {
   return x < y ? x : y;
 }
+inline size_t Min2z(size_t x, size_t y) {
+  return x < y ? x : y;
+}
 
 #endif /* TWIN_ALGO_H */

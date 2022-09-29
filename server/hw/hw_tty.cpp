@@ -301,59 +301,63 @@ static bool tty_InitHW(void) {
     arg = arg.view(3, arg.size());
 
     if (arg && arg[0] == '@') {
-      const size_t comma = arg.find(Chars(","));
-      if (!tty_NAME.format(arg.view(0, comma))) {
+      size_t comma = arg.find(Chars(","));
+      const size_t end = arg.size();
+      if (comma == size_t(-1)) {
+        comma = end;
+      }
+      if (!tty_NAME.format(arg.view(1, comma))) {
         log(ERROR, "      tty_InitHW(): out of memory!\n");
         return false;
       }
-      arg = arg.view(comma + 1, arg.size());
+
+      arg = arg.view(Min2z(comma + 1, end), end);
     }
 
     while (arg) {
-      /* skip initial comma, find next one */
-      size_t comma = arg.view(1, arg.size()).find(Chars(","));
+      /* find next comma */
+      size_t comma = arg.find(Chars(","));
+      const size_t end = arg.size();
       if (comma == size_t(-1)) {
-        comma = arg.size();
-      } else {
-        comma++; // skip initial comma
+        comma = end;
       }
       /* parse options */
       Chars arg0 = arg.view(0, comma);
-      if (arg0.starts_with(Chars(",TERM="))) {
-        if (!tty_TERM.format(arg0.view(6, comma))) {
+      if (arg0.starts_with(Chars("TERM="))) {
+        if (!tty_TERM.format(arg0.view(5, comma))) {
           log(ERROR, "      tty_InitHW(): out of memory!\n");
           return false;
         }
-      } else if (arg0.starts_with(Chars(",charset="))) {
-        if (!charset.format(arg0.view(9, comma))) {
+      } else if (arg0.starts_with(Chars("charset="))) {
+        if (!charset.format(arg0.view(8, comma))) {
           log(ERROR, "      tty_InitHW(): out of memory!\n");
           return false;
         }
-      } else if (arg0.starts_with(Chars(",stdout"))) {
-        try_stdout = !(autotry_video = arg0.view(7, comma) == Chars("=no")) << 1;
-      } else if (arg0.starts_with(Chars(",termcap"))) {
-        try_termcap = !(autotry_video = arg0.view(8, comma) == Chars("=no")) << 1;
-      } else if (arg0.starts_with(Chars(",raw"))) {
-        try_lrawkbd = !(autotry_kbd = arg0.view(4, comma) == Chars("=no")) << 1;
-      } else if (arg0 == Chars(",ctty")) {
+      } else if (arg0.starts_with(Chars("stdout"))) {
+        try_stdout = !(autotry_video = arg0.view(6, comma) == Chars("=no")) << 1;
+      } else if (arg0.starts_with(Chars("termcap"))) {
+        try_termcap = !(autotry_video = arg0.view(7, comma) == Chars("=no")) << 1;
+      } else if (arg0.starts_with(Chars("raw"))) {
+        try_lrawkbd = !(autotry_kbd = arg0.view(3, comma) == Chars("=no")) << 1;
+      } else if (arg0 == Chars("ctty")) {
         try_ctty = ttrue;
-      } else if (arg0 == Chars(",colorbug")) {
+      } else if (arg0 == Chars("colorbug")) {
         tc_colorbug = ttrue;
-      } else if (arg0.starts_with(Chars(",mouse="))) {
-        arg0 = arg0.view(7, comma);
+      } else if (arg0.starts_with(Chars("mouse="))) {
+        arg0 = arg0.view(6, comma);
         if (arg0 == Chars("xterm")) {
           force_mouse = ttrue;
         } else if (arg0 == Chars("twterm")) {
           force_mouse = ttrue + ttrue;
         }
-      } else if (arg0 == Chars(",noinput")) {
+      } else if (arg0 == Chars("noinput")) {
         HW->FlagsHW |= FlHWNoInput;
-      } else if (arg0 == Chars(",slow")) {
+      } else if (arg0 == Chars("slow")) {
         HW->FlagsHW |= FlHWExpensiveFlushVideo;
-      } else if (arg0.starts_with(Chars(",utf8"))) {
-        tty_use_utf8 = arg0.view(5, comma) != Chars("=no");
+      } else if (arg0.starts_with(Chars("utf8"))) {
+        tty_use_utf8 = arg0.view(4, comma) != Chars("=no");
       }
-      arg = arg.view(comma, arg.size());
+      arg = arg.view(Min2z(comma + 1, end), end);
     }
   }
 
