@@ -65,6 +65,7 @@
 #include "main.h"
 #include "log.h"
 #include "util.h"
+#include "hw.cpp" // AllDefaultSignals()
 
 /* pseudo-teletype connections handling functions */
 
@@ -269,6 +270,7 @@ byte spawnInWindow(window Window, const char *arg0, const char *const *argv) {
     case 0:
       /* child */
       /* 4 */
+      AllDefaultSignals();
       closeAllFds(ttyfd);
       if (switchtoTty()) {
         execvp(arg0, (char *const *)RemoveConst(argv));

@@ -32,6 +32,7 @@ extern VOLATILE byte GotSignals;
 byte InitSignals(void);
 void HandleSignals(void);
 void QuitSignals(void);
+void AllDefaultSignals(void); // set all signal handlers to SIG_DFL
 byte InitTtysave(void);
 
 void DirtyVideo(dat Xstart, dat Ystart, dat Xend, dat Yend);

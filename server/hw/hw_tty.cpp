@@ -293,7 +293,7 @@ static bool tty_InitHW(void) {
   HW->QuitHW = tty_QuitHW;
 
   if (arg.size() > 4) {
-    arg = arg.view(4, arg.size());
+    arg = arg.view(4, arg.size()); // skip -hw=
 
     if (!arg.starts_with(Chars("tty"))) {
       return false; /* user said "use <arg> as display, not tty" */
@@ -310,52 +310,53 @@ static bool tty_InitHW(void) {
         log(ERROR, "      tty_InitHW(): out of memory!\n");
         return false;
       }
-
-      arg = arg.view(Min2z(comma + 1, end), end);
+      arg = arg.view(comma, end);
     }
 
     while (arg) {
-      /* find next comma */
-      size_t comma = arg.find(Chars(","));
+      /* skip comma, find next one */
       const size_t end = arg.size();
+      size_t comma = arg.view(1, end).find(Chars(","));
       if (comma == size_t(-1)) {
         comma = end;
+      } else {
+        comma++; // skip initial comma
       }
       /* parse options */
       Chars arg0 = arg.view(0, comma);
-      if (arg0.starts_with(Chars("TERM="))) {
-        if (!tty_TERM.format(arg0.view(5, comma))) {
+      if (arg0.starts_with(Chars(",TERM="))) {
+        if (!tty_TERM.format(arg0.view(6, comma))) {
           log(ERROR, "      tty_InitHW(): out of memory!\n");
           return false;
         }
-      } else if (arg0.starts_with(Chars("charset="))) {
-        if (!charset.format(arg0.view(8, comma))) {
+      } else if (arg0.starts_with(Chars(",charset="))) {
+        if (!charset.format(arg0.view(9, comma))) {
           log(ERROR, "      tty_InitHW(): out of memory!\n");
           return false;
         }
-      } else if (arg0.starts_with(Chars("stdout"))) {
-        try_stdout = !(autotry_video = arg0.view(6, comma) == Chars("=no")) << 1;
-      } else if (arg0.starts_with(Chars("termcap"))) {
-        try_termcap = !(autotry_video = arg0.view(7, comma) == Chars("=no")) << 1;
-      } else if (arg0.starts_with(Chars("raw"))) {
-        try_lrawkbd = !(autotry_kbd = arg0.view(3, comma) == Chars("=no")) << 1;
-      } else if (arg0 == Chars("ctty")) {
+      } else if (arg0.starts_with(Chars(",stdout"))) {
+        try_stdout = !(autotry_video = arg0.view(7, comma) == Chars("=no")) << 1;
+      } else if (arg0.starts_with(Chars(",termcap"))) {
+        try_termcap = !(autotry_video = arg0.view(8, comma) == Chars("=no")) << 1;
+      } else if (arg0.starts_with(Chars(",raw"))) {
+        try_lrawkbd = !(autotry_kbd = arg0.view(4, comma) == Chars("=no")) << 1;
+      } else if (arg0 == Chars(",ctty")) {
         try_ctty = ttrue;
-      } else if (arg0 == Chars("colorbug")) {
+      } else if (arg0 == Chars(",colorbug")) {
         tc_colorbug = ttrue;
-      } else if (arg0.starts_with(Chars("mouse="))) {
-        arg0 = arg0.view(6, comma);
+      } else if (arg0.starts_with(Chars(",mouse="))) {
+        arg0 = arg0.view(7, comma);
         if (arg0 == Chars("xterm")) {
           force_mouse = ttrue;
         } else if (arg0 == Chars("twterm")) {
           force_mouse = ttrue + ttrue;
         }
-      } else if (arg0 == Chars("noinput")) {
+      } else if (arg0 == Chars(",noinput")) {
         HW->FlagsHW |= FlHWNoInput;
-      } else if (arg0 == Chars("slow")) {
+      } else if (arg0 == Chars(",slow")) {
         HW->FlagsHW |= FlHWExpensiveFlushVideo;
-      } else if (arg0.starts_with(Chars("utf8"))) {
-        tty_use_utf8 = arg0.view(4, comma) != Chars("=no");
+      } else if (arg0.starts_with(Chars(",utf8"))) {
+        tty_use_utf8 = arg0.view(5, comma) != Chars("=no");
       } else {
         log(INFO,
             "   --hw=tty options:\n"
@@ -373,7 +374,7 @@ static bool tty_InitHW(void) {
             "      ,termcap[=no]         use libtermcap escape sequences\n");
         return false;
       }
-      arg = arg.view(Min2z(comma + 1, end), end);
+      arg = arg.view(comma, end);
     }
   }
 

@@ -36,12 +36,13 @@
 #ifdef TW_HAVE_GRP_H
 #include <grp.h>
 #endif
-#ifdef TW_HAVE_TERMIOS_H
+#if defined(TW_HAVE_TERMIOS_H)
 #include <termios.h>
-#else
-#ifdef TW_HAVE_TERMIO_H
+#elif defined(TW_HAVE_TERMIO_H)
 #include <termio.h>
 #endif
+#ifdef TW_HAVE_SIGNAL_H
+#include <signal.h>
 #endif
 #ifdef TW_HAVE_SYS_IOCTL_H
 #include <sys/ioctl.h>
@@ -226,6 +227,7 @@ int Spawn(twindow Window, pid_t *ppid, dat X, dat Y, TW_CONST char *arg0,
     break;
   case 0:
     /* child */
+    signal(SIGHUP, SIG_DFL); // restore default SIGHUP behavior
     closeAllFds(ttyfd);
     if (switchToTty()) {
       execvp(arg0, (char *TW_CONST *)argv);

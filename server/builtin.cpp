@@ -204,6 +204,7 @@ static void ExecuteWinRun(void) {
         int fd = open("/dev/null", O_RDWR);
         closeAllFds(fd >= 0 ? fd : 1);
         (void)setsid();
+        AllDefaultSignals();
         execvp(arg0, argv);
         exit(1);
         break;

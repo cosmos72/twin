@@ -231,6 +231,17 @@ void QuitSignals(void) {
     signal(signals_fatal[i], SIG_DFL);
 }
 
+void AllDefaultSignals(void) {
+  uldat i;
+  signal(SIGWINCH, SIG_DFL);
+  signal(SIGCHLD, SIG_DFL);
+  signal(SIGHUP, SIG_DFL);
+  for (i = 0; i < sizeof(signals_ignore) / sizeof(signals_ignore[0]); i++)
+    signal(signals_ignore[i], SIG_DFL);
+  for (i = 0; i < sizeof(signals_fatal) / sizeof(signals_fatal[0]); i++)
+    signal(signals_fatal[i], SIG_DFL);
+}
+
 void MoveToXY(dat x, dat y) {
   CursorX = x;
   CursorY = y;
