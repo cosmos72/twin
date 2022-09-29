@@ -194,6 +194,8 @@ static void ExecuteWinRun(void) {
       case -1: /* error */
         break;
       case 0: /* child */
+        closeAllFds(-1);
+        (void)setsid();
         execvp(arg0, argv);
         exit(1);
         break;

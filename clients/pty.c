@@ -58,13 +58,13 @@ static char *ptydev, *ttydev;
 static int ptyfd, ttyfd;
 
 #ifdef CONF_TERM_DEVPTS
-static void pty_error(TW_CONST char *d, TW_CONST char *f, TW_CONST char *arg) {
+static void ptyError(TW_CONST char *d, TW_CONST char *f, TW_CONST char *arg) {
   fprintf(stderr, "twterm: %s: %s(\"%s\") failed: %s\n", d ? d : "<NULL>", f ? f : "<NULL>",
           arg ? arg : "<NULL>", strerror(errno));
 }
 
-static void get_pty_error(TW_CONST char *f, TW_CONST char *arg) {
-  pty_error("opening pseudo-tty", f, arg);
+static void getPtyError(TW_CONST char *f, TW_CONST char *arg) {
+  ptyError("opening pseudo-tty", f, arg);
 }
 #endif
 
@@ -74,7 +74,7 @@ static void get_pty_error(TW_CONST char *f, TW_CONST char *arg) {
  * On success, fills ttydev and ptydev with the names of the master
  * and slave parts and sets ttyfd and ptyfd to the file descriptors
  */
-static byte get_pty(void) {
+static byte getPty(void) {
   int fd = -1, sfd = -1;
 #ifdef CONF_TERM_DEVPTS
 
@@ -93,15 +93,15 @@ static byte get_pty(void) {
         if ((sfd = open(ptydev, O_RDWR | O_NOCTTY)) >= 0)
           goto Found;
         else
-          get_pty_error("slave open", ptydev);
+          getPtyError("slave open", ptydev);
       } else
-        get_pty_error("unlockpt", "");
+        getPtyError("unlockpt", "");
     } else
-      get_pty_error("grantpt", "");
+      getPtyError("grantpt", "");
 
     close(fd);
   } else
-    get_pty_error(
+    getPtyError(
 #ifdef TW_HAVE_GETPT
         "getpt", ""
 #else
@@ -146,7 +146,7 @@ Found:
 
 static gid_t tty_grgid;
 
-gid_t get_tty_grgid(void) {
+gid_t getTtyGrgid(void) {
   struct group *gr;
 
   if (!tty_grgid) {
@@ -159,10 +159,10 @@ gid_t get_tty_grgid(void) {
 }
 
 /* 2. Fixup permission for pty master/slave pairs and set window size on slave */
-static byte fixup_pty(dat X, dat Y) {
+static byte fixupPty(dat X, dat Y) {
   struct winsize wsiz;
   uid_t id = getuid();
-  gid_t tty_gid = get_tty_grgid();
+  gid_t tty_gid = getTtyGrgid();
 
   wsiz.ws_col = X;
   wsiz.ws_row = Y;
@@ -180,26 +180,15 @@ static byte fixup_pty(dat X, dat Y) {
   return tfalse;
 }
 
-/* 3. Establish ttyfd as controlling teletype for new session and switch to it */
-static byte switchto_tty(void) {
-  int i;
-  pid_t pid;
+/* 3. close all fds except tty_fd_to_dup: duplicate it on fds 0, 1 and 2 */
+void closeAllFds(int tty_fd_to_dup); /* in util.h */
 
-  pid = setsid();
+/* 4. Establish fd 0 as controlling teletype for new session and switch to it */
+static byte switchToTty(void) {
+
+  pid_t pid = setsid();
   if (pid < 0)
     return tfalse;
-
-  /*
-   * Hope all other file descriptors are set to fcntl(fd, F_SETFD, FD_CLOEXEC)
-   */
-  for (i = 0; i <= 2; i++) {
-    if (i != ttyfd) {
-      close(i);
-      dup2(ttyfd, i);
-    }
-  }
-  if (ttyfd > 2)
-    close(ttyfd);
 
 #ifdef TIOCSCTTY
   ioctl(0, TIOCSCTTY, 0);
@@ -221,11 +210,11 @@ int Spawn(twindow Window, pid_t *ppid, dat X, dat Y, TW_CONST char *arg0,
 
   TwGetPrivileges();
 
-  if (!get_pty()) {
+  if (!getPty()) {
     TwDropPrivileges();
     return tfalse;
   }
-  (void)fixup_pty(X, Y);
+  (void)fixupPty(X, Y);
 
   TwDropPrivileges();
 
@@ -237,9 +226,10 @@ int Spawn(twindow Window, pid_t *ppid, dat X, dat Y, TW_CONST char *arg0,
     break;
   case 0:
     /* child */
-    if (!switchto_tty())
-      exit(1);
-    execvp(arg0, (char *TW_CONST *)argv);
+    closeAllFds(ttyfd);
+    if (switchToTty()) {
+      execvp(arg0, (char *TW_CONST *)argv);
+    }
     exit(1);
     break;
   default:

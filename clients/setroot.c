@@ -10,12 +10,14 @@
  *
  */
 
-#include <stdio.h>
-#include <string.h>
-#include <signal.h>
-
 #include <Tw/Tw.h>
 #include <Tw/Twerrno.h>
+
+#ifdef TW_HAVE_SIGNAL_H
+#include <signal.h>
+#endif
+#include <stdio.h>
+#include <string.h>
 
 char *name;
 

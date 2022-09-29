@@ -12,14 +12,14 @@ twclutter_SOURCES    = clutter.c
 twcuckoo_SOURCES     = cuckoo.c
 twdialog_SOURCES     = dialog.c
 twdm_SOURCES         = dm.c
-twevent_SOURCES      = event.c
+twevent_SOURCES      = event.c util.c
 twfindtwin_SOURCES   = findtwin.c
 twlsmsgport_SOURCES  = lsmsgport.c
 twlsobj_SOURCES      = lsobj.c
 twsendmsg_SOURCES    = sendmsg.c
 twsetroot_SOURCES    = setroot.c
-twsysmon_SOURCES     = sysmon.c
-twterm_SOURCES       = pty.c term.c
+twsysmon_SOURCES     = sysmon.c util.c
+twterm_SOURCES       = pty.c term.c util.c
 twthreadtest_SOURCES = threadtest.c
 
 twattach_LDADD     = $(LIBTW)

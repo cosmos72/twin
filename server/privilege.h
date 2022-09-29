@@ -19,7 +19,7 @@
 #include <sys/types.h>
 #endif
 
-gid_t get_tty_grgid(void);
+gid_t getTtyGrgid(void);
 int init_groups(const char *user_name, gid_t group_id);
 
 #endif /* TWIN_PRIVILEGE_H */

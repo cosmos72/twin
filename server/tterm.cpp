@@ -84,7 +84,7 @@ static window OpenTerm(const char *arg0, const char *const *argv) {
   }
 
   if ((Window = newTermWindow(title))) {
-    if (SpawnInWindow(Window, arg0, argv)) {
+    if (spawnInWindow(Window, arg0, argv)) {
       if (RegisterWindowFdIO(Window, TwinTermIO)) {
         Window->ShutDownHook = termShutDown;
         Window->Map((widget)All->FirstScreen);

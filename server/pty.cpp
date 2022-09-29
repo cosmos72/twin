@@ -72,7 +72,7 @@
 static char *ptydev, *ttydev;
 static int ptyfd, ttyfd;
 
-static void pty_error(const char *d, const char *f, const char *arg) {
+static void ptyError(const char *d, const char *f, const char *arg) {
   const Chars cd = d ? Chars::from_c(d) : Chars("<NULL>");
   const Chars cf = f ? Chars::from_c(f) : Chars("<NULL>");
   const Chars carg = arg ? Chars::from_c(arg) : Chars("<NULL>");
@@ -81,8 +81,8 @@ static void pty_error(const char *d, const char *f, const char *arg) {
       Chars::from_c(strerror(errno)), "\n");
 }
 
-static void get_pty_error(const char *f, const char *arg) {
-  pty_error("opening pseudo-tty", f, arg);
+static void getPtyError(const char *f, const char *arg) {
+  ptyError("opening pseudo-tty", f, arg);
 }
 
 /* 1. Acquire a pseudo-teletype from the system. */
@@ -91,7 +91,7 @@ static void get_pty_error(const char *f, const char *arg) {
  * On success, fills ttydev and ptydev with the names of the
  * master and slave parts and sets ptyfd to the pty file descriptor
  */
-static byte get_pty(void) {
+static byte getPty(void) {
   int fd = -1, sfd = -1;
 #ifdef CONF_TERM_DEVPTS
 
@@ -113,15 +113,15 @@ static byte get_pty(void) {
         if ((sfd = open(devname, O_RDWR | O_NOCTTY)) >= 0)
           goto Found;
         else
-          get_pty_error("slave open", devname);
+          getPtyError("slave open", devname);
       } else
-        get_pty_error("unlockpt", "");
+        getPtyError("unlockpt", "");
     } else
-      get_pty_error("grantpt", "");
+      getPtyError("grantpt", "");
 
     close(fd);
   } else
-    get_pty_error(
+    getPtyError(
 #if defined(TW_HAVE_POSIX_OPENPT)
         "posix_openpt", ""
 #elif defined(TW_HAVE_GETPT)
@@ -168,12 +168,12 @@ Found:
 }
 
 /* 2. Fixup permission for pty master/slave pairs */
-static byte fixup_pty(void) {
+static byte fixupPty(void) {
   /* from util.c */
-  extern gid_t get_tty_grgid(void);
+  extern gid_t getTtyGrgid(void);
 
   uid_t id = getuid();
-  gid_t tty_gid = get_tty_grgid();
+  gid_t tty_gid = getTtyGrgid();
 
   if (tty_gid != (gid_t)-1 &&
 #ifndef CONF_TERM_DEVPTS
@@ -184,8 +184,8 @@ static byte fixup_pty(void) {
   return tfalse;
 }
 
-static void setup_pty_error(const char *f, const char *arg) {
-  pty_error("setting up slave tty", f, arg);
+static void setupPtyError(const char *f, const char *arg) {
+  ptyError("setting up slave tty", f, arg);
 }
 
 /* 3. Setup tty size and termios settings */
@@ -193,7 +193,7 @@ static void setup_pty_error(const char *f, const char *arg) {
  * do it before the fork() and NOT in the child to avoid
  * races with future tty resizes performed by the parent!
  */
-static byte setup_tty(ttydata *Data) {
+static byte setupTty(ttydata *Data) {
   struct winsize wsiz;
   /* from hw.c, ttysave is the console original state */
   extern struct termios ttysave;
@@ -210,32 +210,18 @@ static byte setup_tty(ttydata *Data) {
     if (tty_setioctl(ttyfd, &ttysave) >= 0)
       return ttrue;
     else
-      setup_pty_error("tty_setioctl", "");
+      setupPtyError("tty_setioctl", "");
   } else
-    setup_pty_error("ioctl", "TIOCSWINSZ");
+    setupPtyError("ioctl", "TIOCSWINSZ");
   return tfalse;
 }
 
-/* 4. Establish ttyfd as controlling teletype for new session and switch to it */
-static byte switchto_tty(void) {
-  int i;
-  pid_t pid;
+/* 4. Establish fd 0 as controlling teletype for new session and switch to it */
+static byte switchtoTty(void) {
 
-  pid = setsid();
+  pid_t pid = setsid();
   if (pid < 0)
     return tfalse;
-
-  /*
-   * Hope all other file descriptors are set to fcntl(fd, F_SETFD, FD_CLOEXEC)
-   */
-  for (i = 0; i <= 2; i++) {
-    if (i != ttyfd) {
-      close(i);
-      dup2(ttyfd, i);
-    }
-  }
-  if (ttyfd > 2)
-    close(ttyfd);
 
 #ifdef TIOCSCTTY
   ioctl(0, TIOCSCTTY, 0);
@@ -252,7 +238,7 @@ static byte switchto_tty(void) {
 }
 
 /* exported API: fork() a program in a pseudo-teletype */
-byte SpawnInWindow(window Window, const char *arg0, const char *const *argv) {
+byte spawnInWindow(window Window, const char *arg0, const char *const *argv) {
   pid_t childpid;
   remotedata *data;
 
@@ -261,19 +247,19 @@ byte SpawnInWindow(window Window, const char *arg0, const char *const *argv) {
     log(ERROR, flag_secure_msg);
     return tfalse;
   }
-  GainPrivileges();
+  gainPrivileges();
 
   /* 1 */
-  if (!get_pty()) {
-    DropPrivileges();
+  if (!getPty()) {
+    dropPrivileges();
     return tfalse;
   }
   /* 2 */
-  (void)fixup_pty();
-  DropPrivileges();
+  (void)fixupPty();
+  dropPrivileges();
 
   /* 3 */
-  if (setup_tty(Window->USE.C.TtyData)) {
+  if (setupTty(Window->USE.C.TtyData)) {
     switch ((childpid = fork())) {
     case -1:
       /* failed */
@@ -283,12 +269,14 @@ byte SpawnInWindow(window Window, const char *arg0, const char *const *argv) {
     case 0:
       /* child */
       /* 4 */
-      if (switchto_tty())
+      closeAllFds(ttyfd);
+      if (switchtoTty()) {
         execvp(arg0, (char *const *)RemoveConst(argv));
+      }
       exit(1);
       break;
     default:
-      /* father */
+      /* parent */
       data = &Window->RemoteData;
       data->Fd = ptyfd;
       data->ChildPid = childpid;

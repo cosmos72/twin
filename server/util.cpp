@@ -614,6 +614,30 @@ byte CreateXTermMouseEvent(event_mouse *Event, byte buflen, char *buf) {
   return len;
 }
 
+void closeAllFds(int tty_fd_to_dup) {
+  // do not assume all other file descriptors are set to fcntl(fd, F_SETFD, FD_CLOEXEC)
+  int i;
+  if (tty_fd_to_dup >= 0) {
+    for (i = 0; i <= 2; i++) {
+      if (i != tty_fd_to_dup) {
+        close(i);
+        dup2(tty_fd_to_dup, i);
+      }
+    }
+    if (tty_fd_to_dup > 2) {
+      close(tty_fd_to_dup);
+    }
+  } else {
+    i = 0;
+  }
+  int last_successful_close = i - 1;
+  for (; i < INT_MAX && i - 10 < last_successful_close; i++) {
+    if (close(i) >= 0) {
+      last_successful_close = i;
+    }
+  }
+}
+
 void ResetBorderPattern(void) {
   msgport MsgP;
   widget w;
@@ -1064,7 +1088,7 @@ static gid_t tty_grgid;
 byte CheckPrivileges(void) {
   Uid = getuid();
   EUid = geteuid();
-  tty_grgid = get_tty_grgid();
+  tty_grgid = getTtyGrgid();
 
   if (GainRootPrivileges() >= 0)
     Privilege = suidroot;
@@ -1073,16 +1097,16 @@ byte CheckPrivileges(void) {
   else
     Privilege = none;
 
-  DropPrivileges();
+  dropPrivileges();
 
   return Privilege;
 }
 
-void GainPrivileges(void) {
+void gainPrivileges(void) {
   if (Privilege == suidroot)
     GainRootPrivileges();
   else if (Privilege == sgidtty)
-    GainGroupPrivileges(get_tty_grgid());
+    GainGroupPrivileges(getTtyGrgid());
 }
 
 static bool SetEnvs(struct passwd *p) {

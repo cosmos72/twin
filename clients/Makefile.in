@@ -141,7 +141,7 @@ am_twdm_OBJECTS = dm.$(OBJEXT)
 twdm_OBJECTS = $(am_twdm_OBJECTS)
 twdm_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
-am_twevent_OBJECTS = event.$(OBJEXT)
+am_twevent_OBJECTS = event.$(OBJEXT) util.$(OBJEXT)
 twevent_OBJECTS = $(am_twevent_OBJECTS)
 twevent_DEPENDENCIES = $(am__DEPENDENCIES_1)
 am_twfindtwin_OBJECTS = findtwin.$(OBJEXT)
@@ -159,10 +159,10 @@ twsendmsg_DEPENDENCIES = $(am__DEPENDENCIES_1)
 am_twsetroot_OBJECTS = setroot.$(OBJEXT)
 twsetroot_OBJECTS = $(am_twsetroot_OBJECTS)
 twsetroot_DEPENDENCIES = $(am__DEPENDENCIES_1)
-am_twsysmon_OBJECTS = sysmon.$(OBJEXT)
+am_twsysmon_OBJECTS = sysmon.$(OBJEXT) util.$(OBJEXT)
 twsysmon_OBJECTS = $(am_twsysmon_OBJECTS)
 twsysmon_DEPENDENCIES = $(am__DEPENDENCIES_1)
-am_twterm_OBJECTS = pty.$(OBJEXT) term.$(OBJEXT)
+am_twterm_OBJECTS = pty.$(OBJEXT) term.$(OBJEXT) util.$(OBJEXT)
 twterm_OBJECTS = $(am_twterm_OBJECTS)
 twterm_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_twthreadtest_OBJECTS = threadtest.$(OBJEXT)
@@ -191,7 +191,8 @@ am__depfiles_remade = ./$(DEPDIR)/attach.Po ./$(DEPDIR)/cat.Po \
 	./$(DEPDIR)/lsmsgport.Po ./$(DEPDIR)/lsobj.Po \
 	./$(DEPDIR)/pty.Po ./$(DEPDIR)/sendmsg.Po \
 	./$(DEPDIR)/setroot.Po ./$(DEPDIR)/sysmon.Po \
-	./$(DEPDIR)/term.Po ./$(DEPDIR)/threadtest.Po
+	./$(DEPDIR)/term.Po ./$(DEPDIR)/threadtest.Po \
+	./$(DEPDIR)/util.Po
 am__mv = mv -f
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
@@ -469,14 +470,14 @@ twclutter_SOURCES = clutter.c
 twcuckoo_SOURCES = cuckoo.c
 twdialog_SOURCES = dialog.c
 twdm_SOURCES = dm.c
-twevent_SOURCES = event.c
+twevent_SOURCES = event.c util.c
 twfindtwin_SOURCES = findtwin.c
 twlsmsgport_SOURCES = lsmsgport.c
 twlsobj_SOURCES = lsobj.c
 twsendmsg_SOURCES = sendmsg.c
 twsetroot_SOURCES = setroot.c
-twsysmon_SOURCES = sysmon.c
-twterm_SOURCES = pty.c term.c
+twsysmon_SOURCES = sysmon.c util.c
+twterm_SOURCES = pty.c term.c util.c
 twthreadtest_SOURCES = threadtest.c
 twattach_LDADD = $(LIBTW)
 twcat_LDADD = $(LIBTW)
@@ -713,6 +714,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sysmon.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/term.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/threadtest.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/util.Po@am__quote@ # am--include-marker
 
 $(am__depfiles_remade):
 	@$(MKDIR_P) $(@D)
@@ -967,6 +969,7 @@ distclean: distclean-recursive
 	-rm -f ./$(DEPDIR)/sysmon.Po
 	-rm -f ./$(DEPDIR)/term.Po
 	-rm -f ./$(DEPDIR)/threadtest.Po
+	-rm -f ./$(DEPDIR)/util.Po
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags
@@ -1030,6 +1033,7 @@ maintainer-clean: maintainer-clean-recursive
 	-rm -f ./$(DEPDIR)/sysmon.Po
 	-rm -f ./$(DEPDIR)/term.Po
 	-rm -f ./$(DEPDIR)/threadtest.Po
+	-rm -f ./$(DEPDIR)/util.Po
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 

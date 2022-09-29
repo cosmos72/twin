@@ -60,6 +60,8 @@ void doSelectionSetOwner(obj Owner, tany Time, tany Frac);
 
 byte CreateXTermMouseEvent(event_mouse *Event, byte buflen, char *buf);
 
+void closeAllFds(int tty_fd_to_dup);
+
 void ResetBorderPattern(void);
 void FallBackKeyAction(window W, event_keyboard *EventK);
 
@@ -71,7 +73,7 @@ bool InitTWDisplay(void);
 void QuitTWDisplay(void);
 
 byte CheckPrivileges(void);
-void GainPrivileges(void);
+void gainPrivileges(void);
 byte SetServerUid(uldat uid, byte privileges);
 
 char *FindFile(const char *name, uldat *fsize);

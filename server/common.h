@@ -57,7 +57,7 @@ byte InitTransUser(void);
  * these comes either from display.c or from main.c/util.c
  */
 void Quit(int status);
-void GainPrivileges(void);
+void gainPrivileges(void);
 
 #ifndef SS
 #define SS "%." STR(TW_SMALLBUFF) "s"

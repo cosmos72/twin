@@ -95,7 +95,7 @@ enum {
 
 enum e_privilege /*: unsigned char*/ { none, sgidtty, suidroot };
 
-#define DropPrivileges() (setegid(getgid()), seteuid(getuid()))
+#define dropPrivileges() (setegid(getgid()), seteuid(getuid()))
 #define GainRootPrivileges() seteuid(0)
 #define GainGroupPrivileges(g) setegid(g)
 

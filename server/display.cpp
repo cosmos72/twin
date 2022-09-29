@@ -112,7 +112,7 @@ void *AlwaysNull(void) {
   return NULL;
 }
 
-void GainPrivileges(void) {
+void gainPrivileges(void) {
 }
 void RemotePidIsDead(pid_t pid) {
 }

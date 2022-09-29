@@ -9,8 +9,8 @@
 #ifndef TWIN_PTY_H
 #define TWIN_PTY_H
 
-byte SpawnInWindow(window Window, const char *arg0, const char *const *argv);
+byte spawnInWindow(window Window, const char *arg0, const char *const *argv);
 
-gid_t get_tty_grgid(void);
+gid_t getTtyGrgid(void);
 
 #endif /* TWIN_PTY_H */

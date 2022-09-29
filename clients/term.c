@@ -10,35 +10,37 @@
  *
  */
 
-#include <stdio.h>
-#include <string.h>
-#include <sys/ioctl.h>
-#include <signal.h>
-
 #include <Tw/autoconf.h>
-
-#ifdef TW_HAVE_SYS_RESOURCE_H
-#include <sys/resource.h>
-#endif
-
-#ifdef TW_HAVE_SYS_WAIT_H
-#include <sys/wait.h>
-#endif
-
-#ifdef TW_HAVE_TERMIOS_H
-#include <termios.h>
-#else
-#ifdef TW_HAVE_TERMIO_H
-#include <termio.h>
-#endif
-#endif
-
 #include <Tw/Tw.h>
 #include <Tw/Twerrno.h>
 #include <Tutf/Tutf.h>
 
-#include "version.h"
+#ifdef TW_HAVE_SIGNAL_H
+#include <signal.h>
+#endif
+#ifdef TW_HAVE_SYS_IOCTL_H
+#include <sys/ioctl.h>
+#endif
+#ifdef TW_HAVE_SYS_RESOURCE_H
+#include <sys/resource.h>
+#endif
+#ifdef TW_HAVE_SYS_WAIT_H
+#include <sys/wait.h>
+#endif
+#if defined(TW_HAVE_TERMIOS_H)
+#include <termios.h>
+#elif defined(TW_HAVE_TERMIO_H)
+#include <termio.h>
+#endif
+#ifdef TW_HAVE_UNISTD_H
+#include <unistd.h>
+#endif
 
+#include <stdio.h>
+#include <string.h>
+
+#include "version.h"
+#include "util.h"
 #include "pty.h"
 
 #define COD_QUIT (udat)1
@@ -344,6 +346,8 @@ static byte InitTerm(void) {
   twindow Window;
   uldat err;
 
+  closeAllFds(2); // keep fd 2 for fprintf(stderr, ...)
+
   signal(SIGCHLD, SignalChild);
 
 #if defined(TW_HAVE_SETENV)
@@ -362,10 +366,13 @@ static byte InitTerm(void) {
       (Window = TwWin4Menu(Term_Menu)) && Add_Spawn_Row4Menu(Window) &&
       TwRow4Menu(Window, COD_QUIT, tfalse, 6, " Exit ") &&
       TwItem4Menu(Term_Menu, Window, ttrue, 6, " File ") && TwItem4MenuCommon(Term_Menu) &&
-      (Term_Screen = TwFirstScreen()) && (OpenTerm(NULL, NULL)))
+      (Term_Screen = TwFirstScreen()) && (OpenTerm(NULL, NULL))) {
 
+    openDevNull();
+    setsid();
+    signal(SIGHUP, SIG_IGN);
     return ttrue;
-
+  }
   TwClose();
 
   if ((err = TwErrno))

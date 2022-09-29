@@ -111,7 +111,7 @@ byte InitSignals(void) {
   signal(SIGCHLD, SignalChild);
   signal(SIGPIPE, SIG_IGN);
   signal(SIGIO, SIG_IGN);
-  signal(SIGHUP, SignalFatal);
+  signal(SIGHUP, SIG_IGN);
   signal(SIGINT, SignalFatal);
   signal(SIGQUIT, SignalFatal);
   signal(SIGILL, SignalFatal);

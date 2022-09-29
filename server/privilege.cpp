@@ -18,7 +18,7 @@
 #include <grp.h>
 #endif
 
-gid_t get_tty_grgid(void) {
+gid_t getTtyGrgid(void) {
   struct group *gr;
   if ((gr = getgrnam("tty")))
     return gr->gr_gid;

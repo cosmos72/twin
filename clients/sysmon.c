@@ -7,6 +7,8 @@
  * Uptime function added by Mohammad Bahathir Hashim <bakhtiar@softhome.net>
  */
 
+#include "util.h"
+
 #include <stdio.h>
 #include <errno.h>
 
@@ -24,6 +26,9 @@
 #endif
 #ifdef TW_HAVE_FCNTL_H
 #include <fcntl.h>
+#endif
+#ifdef TW_HAVE_UNISTD_H
+#include <unistd.h>
 #endif
 
 static tmsgport SysMon_MsgPort;
@@ -69,27 +74,34 @@ static byte InitSysMon(int argc, char **argv) {
       border = 0;
   }
 
+  closeAllFds(1); // keep fd 1
+
   ok = TwCheckMagic(sysmon_magic) && TwOpen(NULL) &&
 
-         (SysMon_MsgPort = TwCreateMsgPort(8, "twsysmon")) &&
-         (SysMon_Menu = TwCreateMenu(TCOL(tblack, twhite), TCOL(tblack, tgreen),
-                                     TCOL(thigh | tblack, twhite), TCOL(thigh | tblack, tblack),
-                                     TCOL(tred, twhite), TCOL(tred, tgreen), (byte)0)) &&
-         TwItem4MenuCommon(SysMon_Menu) &&
+       (SysMon_MsgPort = TwCreateMsgPort(8, "twsysmon")) &&
+       (SysMon_Menu = TwCreateMenu(TCOL(tblack, twhite), TCOL(tblack, tgreen),
+                                   TCOL(thigh | tblack, twhite), TCOL(thigh | tblack, tblack),
+                                   TCOL(tred, twhite), TCOL(tred, tgreen), (byte)0)) &&
+       TwItem4MenuCommon(SysMon_Menu) &&
 
-         (SysMon_Win =
-              TwCreateWindow(len, name, NULL, SysMon_Menu, TCOL(thigh | tyellow, tblue),
-                             TW_NOCURSOR, TW_WINDOW_DRAG | TW_WINDOW_CLOSE,
-                             (border ? 0 : TW_WINDOWFL_BORDERLESS), numeric ? 29 : 24, 5, 0)) &&
+       (SysMon_Win =
+            TwCreateWindow(len, name, NULL, SysMon_Menu, TCOL(thigh | tyellow, tblue), TW_NOCURSOR,
+                           TW_WINDOW_DRAG | TW_WINDOW_CLOSE, (border ? 0 : TW_WINDOWFL_BORDERLESS),
+                           numeric ? 29 : 24, 5, 0)) &&
 
-         (TwSetColorsWindow(SysMon_Win, 0x1FF, (tcolor)0x3F, (tcolor)0, (tcolor)0, (tcolor)0,
-                            (tcolor)0x9F, (tcolor)0x17, (tcolor)0x3F, (tcolor)0x18, (tcolor)0x08),
-          TwInfo4Menu(SysMon_Menu, TW_ROW_ACTIVE, 16, " System Monitor ",
-                      (TW_CONST tcolor *)"pppppppppppppppp"),
-          TwWriteCharsetWindow(SysMon_Win, 26, "CPU \nDISK\nMEM \nSWAP\nUPTIME"),
-          TwMapWindow(SysMon_Win, TwFirstScreen()), ttrue);
+       (TwSetColorsWindow(SysMon_Win, 0x1FF, (tcolor)0x3F, (tcolor)0, (tcolor)0, (tcolor)0,
+                          (tcolor)0x9F, (tcolor)0x17, (tcolor)0x3F, (tcolor)0x18, (tcolor)0x08),
+        TwInfo4Menu(SysMon_Menu, TW_ROW_ACTIVE, 16, " System Monitor ",
+                    (TW_CONST tcolor *)"pppppppppppppppp"),
+        TwWriteCharsetWindow(SysMon_Win, 26, "CPU \nDISK\nMEM \nSWAP\nUPTIME"),
+        TwMapWindow(SysMon_Win, TwFirstScreen()), ttrue);
 
   free(name);
+
+  openDevNull();
+  (void)setsid();
+  ignoreSigHup();
+
   return ok;
 }
 
@@ -155,7 +167,7 @@ static void PrintAbsoluteK(tcolor Col, unsigned long nK) {
 }
 
 // read at most maxlenPlus1-1 bytes, and append '\0'
-static uldat FullReadZ(int fd, char* dst, uldat maxlenPlus1) {
+static uldat FullReadZ(int fd, char *dst, uldat maxlenPlus1) {
   ssize_t got;
   const uldat maxlen = maxlenPlus1 - 1;
   uldat left = maxlen;
@@ -175,7 +187,7 @@ static uldat FullReadZ(int fd, char* dst, uldat maxlenPlus1) {
 }
 
 typedef struct s_cpu_usage {
-   unsigned long User, Nice, System, Idle, Wait, HardInt, SoftInt, Total;
+  unsigned long User, Nice, System, Idle, Wait, HardInt, SoftInt, Total;
 } cpu_usage;
 
 typedef struct s_mem_usage {
@@ -201,11 +213,11 @@ static byte Update(byte i, usage Usage[2]) {
   usage *U = &Usage[i];
   usage *V = &Usage[!i];
   char *s, *e, *e2, *e3;
-  uldat len, tmp;
+  uldat tmp;
   int fd;
 
   if ((fd = open("/proc/stat", O_RDONLY)) != TW_NOFD) {
-    len = FullReadZ(fd, buf, sizeof(buf));
+    (void)FullReadZ(fd, buf, sizeof(buf));
     if ((s = strstr(buf, "cpu "))) {
       U->Cpu.User = strtoul(s + 4, &e, 0) - V->Cpu.User;
       U->Cpu.Nice = strtoul(e, &s, 0) - V->Cpu.Nice;
@@ -216,8 +228,8 @@ static byte Update(byte i, usage Usage[2]) {
       U->Cpu.HardInt = strtoul(e, &s, 0) - V->Cpu.HardInt;
       U->Cpu.SoftInt = strtoul(s, &e, 0) - V->Cpu.SoftInt;
     }
-    U->Cpu.Total = U->Cpu.User + U->Cpu.Nice + U->Cpu.System + U->Cpu.Idle
-                 + U->Cpu.Wait + U->Cpu.HardInt + U->Cpu.SoftInt;
+    U->Cpu.Total = U->Cpu.User + U->Cpu.Nice + U->Cpu.System + U->Cpu.Idle + U->Cpu.Wait +
+                   U->Cpu.HardInt + U->Cpu.SoftInt;
 
     /* linux kernel 2.2 disk stats: */
     if ((s = strstr(buf, "disk_rio "))) {
@@ -253,7 +265,7 @@ static byte Update(byte i, usage Usage[2]) {
   if ((fd = open("/proc/diskstats", O_RDONLY)) != TW_NOFD) {
     /* linux kernel 2.6 disk stats: */
 
-    len = FullReadZ(fd, buf, sizeof(buf));
+    (void)FullReadZ(fd, buf, sizeof(buf));
     s = buf;
 
     U->Disk.Read = U->Disk.Write = 0;
@@ -297,13 +309,13 @@ static byte Update(byte i, usage Usage[2]) {
     /* first cycle... cannot know bandwidth */
     V->Disk.Read = U->Disk.Read;
     V->Disk.Write = U->Disk.Write;
-    U->Disk.Read  = U->Disk.Write = 0;
+    U->Disk.Read = U->Disk.Write = 0;
     U->Disk.Max = 1;
   }
   V->Disk.Max = U->Disk.Max;
 
   if ((fd = open("/proc/meminfo", O_RDONLY)) != TW_NOFD) {
-    len = FullReadZ(fd, buf, sizeof(buf));
+    (void)FullReadZ(fd, buf, sizeof(buf));
     if ((s = strstr(buf, "MemTotal:")))
       U->Mem.Total = strtoul(s + 9, &e, 0), s = e;
     if ((s = strstr(buf, "MemFree:")))
@@ -386,7 +398,7 @@ static byte Update(byte i, usage Usage[2]) {
     unsigned long updays;
     int uphours, upminutes;
 
-    len = FullReadZ(fd, buf, sizeof(buf));
+    (void)FullReadZ(fd, buf, sizeof(buf));
 
     updays = strtoul(buf, NULL, 0);
     /*upseconds = updays % 60;*/
@@ -402,15 +414,15 @@ static byte Update(byte i, usage Usage[2]) {
     close(fd);
   }
 
-  U->Cpu.User    += V->Cpu.User;
-  U->Cpu.Nice    += V->Cpu.Nice;
-  U->Cpu.System  += V->Cpu.System;
-  U->Cpu.Idle    += V->Cpu.Idle;
-  U->Cpu.Wait    += V->Cpu.Wait;
+  U->Cpu.User += V->Cpu.User;
+  U->Cpu.Nice += V->Cpu.Nice;
+  U->Cpu.System += V->Cpu.System;
+  U->Cpu.Idle += V->Cpu.Idle;
+  U->Cpu.Wait += V->Cpu.Wait;
   U->Cpu.HardInt += V->Cpu.HardInt;
   U->Cpu.SoftInt += V->Cpu.SoftInt;
 
-  U->Disk.Read  += V->Disk.Read;
+  U->Disk.Read += V->Disk.Read;
   U->Disk.Write += V->Disk.Write;
 
   return !i;
@@ -419,8 +431,7 @@ static byte Update(byte i, usage Usage[2]) {
 static void Quit(const char *argv0) {
   uldat err;
   if ((err = TwErrno)) {
-    printf("%s: libtw error: %s%s\n", argv0, TwStrError(err),
-           TwStrErrorDetail(err, TwErrnoDetail));
+    printf("%s: libtw error: %s%s\n", argv0, TwStrError(err), TwStrErrorDetail(err, TwErrnoDetail));
     TwClose();
     exit(1);
   }

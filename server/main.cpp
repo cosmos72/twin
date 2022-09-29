@@ -246,7 +246,7 @@ int main(int argc, char *argv[]) {
   struct timeval sel_timeout, *this_timeout;
   int num_fds;
 
-  DropPrivileges();
+  dropPrivileges();
 
   main_argv_usable_len = ComputeUsableLenArgv(main_argv = argv);
 
