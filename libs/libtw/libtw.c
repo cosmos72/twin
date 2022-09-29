@@ -1296,8 +1296,8 @@ tw_d Tw_Open(TW_CONST char *TwDisplay) {
   th_r_mutex_init(mutex);
   Fd = fd;
 
-  fcntl(Fd, F_SETFD, FD_CLOEXEC);
-  fcntl(Fd, F_SETFL, O_NONBLOCK);
+  fcntl(fd, F_SETFD, FD_CLOEXEC);
+  fcntl(fd, F_SETFL, O_NONBLOCK);
 
   th_mutex_lock(OpenCountMutex);
   OpenCount++;

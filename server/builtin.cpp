@@ -10,8 +10,6 @@
  *
  */
 
-#include <signal.h>
-
 #include "twin.h"
 #include "alloc.h"
 #include "data.h"
@@ -32,9 +30,18 @@
 #include "version.h"
 
 #include <Tw/Twkeys.h>
+#include <Tw/autoconf.h>
 
 #include <Tutf/Tutf.h>
 #include <Tutf/Tutf_defs.h>
+
+#ifdef TW_HAVE_FCNTL_H
+#include <fcntl.h>
+#endif
+#ifdef TW_HAVE_SIGNAL_H
+#include <signal.h>
+#endif
+
 #define _CHECK T_UTF_32_CHECK_MARK
 #define _FULL T_UTF_32_FULL_BLOCK
 #define _LOWER T_UTF_32_LOWER_HALF_BLOCK
@@ -193,12 +200,14 @@ static void ExecuteWinRun(void) {
         /* do not run in a tty */
       case -1: /* error */
         break;
-      case 0: /* child */
-        closeAllFds(-1);
+      case 0: { /* child */
+        int fd = open("/dev/null", O_RDWR);
+        closeAllFds(fd >= 0 ? fd : 1);
         (void)setsid();
         execvp(arg0, argv);
         exit(1);
         break;
+      }
       default: /* parent */
         break;
       }
