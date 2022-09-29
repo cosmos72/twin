@@ -356,6 +356,22 @@ static bool tty_InitHW(void) {
         HW->FlagsHW |= FlHWExpensiveFlushVideo;
       } else if (arg0.starts_with(Chars("utf8"))) {
         tty_use_utf8 = arg0.view(4, comma) != Chars("=no");
+      } else {
+        log(INFO,
+            "   --hw=tty options:\n"
+            "      @/dev/SOME_TTY_NAME   attach to specified tty device (must be first option)\n"
+            "      ,charset=CHARSET_NAME use specified charset encoding\n"
+            "      ,ctty[=no]            set tty device as the controlling tty\n"
+            "      ,colorbug             assume terminal has colorbug\n"
+            "      ,help                 show this help\n"
+            "      ,mouse=[xterm|twterm] assume specified mouse reporting protocol\n"
+            "      ,noinput              open a view-only display on tty - ignore input\n"
+            "      ,raw[=no]             use Linux raw keyboard\n"
+            "      ,slow                 assume terminal is slow\n"
+            "      ,stdout[=no]          use hard-coded escape sequences\n"
+            "      ,TERM=TERM_NAME       assume terminal type is TERM_NAME\n"
+            "      ,termcap[=no]         use libtermcap escape sequences\n");
+        return false;
       }
       arg = arg.view(Min2z(comma + 1, end), end);
     }
