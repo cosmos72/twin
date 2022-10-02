@@ -31,6 +31,9 @@
 #ifdef TW_HAVE_SYS_IOCTL_H
 #include <sys/ioctl.h>
 #endif
+#ifdef TW_HAVE_SYS_STAT_H
+#include <sys/stat.h>
+#endif
 #ifdef TW_HAVE_SYS_UTSNAME_H
 #include <sys/utsname.h>
 #endif

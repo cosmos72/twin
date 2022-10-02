@@ -14,7 +14,6 @@
 
 @SET_MAKE@
 
-
 VPATH = @srcdir@
 am__is_gnu_make = { \
   if test -z '$(MAKELEVEL)'; then \
@@ -102,43 +101,14 @@ am__aclocal_m4_deps = $(top_srcdir)/m4/libtool.m4 \
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 DIST_COMMON = $(srcdir)/Makefile.am $(top_srcdir)/configure \
-	$(am__configure_deps) $(am__DIST_COMMON)
+	$(am__configure_deps) $(dist_pkgsysconf_DATA) \
+	$(am__DIST_COMMON)
 am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
  configure.lineno config.status.lineno
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/include/config.h
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
-am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
-am__vpath_adj = case $$p in \
-    $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
-    *) f=$$p;; \
-  esac;
-am__strip_dir = f=`echo $$p | sed -e 's|^.*/||'`;
-am__install_max = 40
-am__nobase_strip_setup = \
-  srcdirstrip=`echo "$(srcdir)" | sed 's/[].[^$$\\*|]/\\\\&/g'`
-am__nobase_strip = \
-  for p in $$list; do echo "$$p"; done | sed -e "s|$$srcdirstrip/||"
-am__nobase_list = $(am__nobase_strip_setup); \
-  for p in $$list; do echo "$$p $$p"; done | \
-  sed "s| $$srcdirstrip/| |;"' / .*\//!s/ .*/ ./; s,\( .*\)/[^/]*$$,\1,' | \
-  $(AWK) 'BEGIN { files["."] = "" } { files[$$2] = files[$$2] " " $$1; \
-    if (++n[$$2] == $(am__install_max)) \
-      { print $$2, files[$$2]; n[$$2] = 0; files[$$2] = "" } } \
-    END { for (dir in files) print dir, files[dir] }'
-am__base_list = \
-  sed '$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;s/\n/ /g' | \
-  sed '$$!N;$$!N;$$!N;$$!N;s/\n/ /g'
-am__uninstall_files_from_dir = { \
-  test -z "$$files" \
-    || { test ! -d "$$dir" && test ! -f "$$dir" && test ! -r "$$dir"; } \
-    || { echo " ( cd '$$dir' && rm -f" $$files ")"; \
-         $(am__cd) "$$dir" && rm -f $$files; }; \
-  }
-am__installdirs = "$(DESTDIR)$(pkglibexecdir)" \
-	"$(DESTDIR)$(pkgdatadir)"
-SCRIPTS = $(pkglibexec_SCRIPTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -166,7 +136,36 @@ am__can_run_installinfo = \
     n|no|NO) false;; \
     *) (install-info --version) >/dev/null 2>&1;; \
   esac
-DATA = $(pkgdata_DATA)
+am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
+am__vpath_adj = case $$p in \
+    $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
+    *) f=$$p;; \
+  esac;
+am__strip_dir = f=`echo $$p | sed -e 's|^.*/||'`;
+am__install_max = 40
+am__nobase_strip_setup = \
+  srcdirstrip=`echo "$(srcdir)" | sed 's/[].[^$$\\*|]/\\\\&/g'`
+am__nobase_strip = \
+  for p in $$list; do echo "$$p"; done | sed -e "s|$$srcdirstrip/||"
+am__nobase_list = $(am__nobase_strip_setup); \
+  for p in $$list; do echo "$$p $$p"; done | \
+  sed "s| $$srcdirstrip/| |;"' / .*\//!s/ .*/ ./; s,\( .*\)/[^/]*$$,\1,' | \
+  $(AWK) 'BEGIN { files["."] = "" } { files[$$2] = files[$$2] " " $$1; \
+    if (++n[$$2] == $(am__install_max)) \
+      { print $$2, files[$$2]; n[$$2] = 0; files[$$2] = "" } } \
+    END { for (dir in files) print dir, files[dir] }'
+am__base_list = \
+  sed '$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;s/\n/ /g' | \
+  sed '$$!N;$$!N;$$!N;$$!N;s/\n/ /g'
+am__uninstall_files_from_dir = { \
+  test -z "$$files" \
+    || { test ! -d "$$dir" && test ! -f "$$dir" && test ! -r "$$dir"; } \
+    || { echo " ( cd '$$dir' && rm -f" $$files ")"; \
+         $(am__cd) "$$dir" && rm -f $$files; }; \
+  }
+am__installdirs = "$(DESTDIR)$(pkgsysconfdir)" \
+	"$(DESTDIR)$(pkgdatadir)"
+DATA = $(dist_pkgsysconf_DATA) $(pkgdata_DATA)
 RECURSIVE_CLEAN_TARGETS = mostlyclean-recursive clean-recursive	\
   distclean-recursive maintainer-clean-recursive
 am__recursive_targets = \
@@ -418,8 +417,9 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 SUBDIRS = docs include libs clients test server
 ACLOCAL_AMFLAGS = -I m4
+pkgsysconfdir = $(sysconfdir)/twin
 pkgdata_DATA = BUGS COPYING COPYING.LIB Changelog.txt INSTALL README README.porting twin-current.lsm
-pkglibexec_SCRIPTS = system.twenvrc.sh system.twinrc
+dist_pkgsysconf_DATA = twenvrc.sh twinrc
 all: all-recursive
 
 .SUFFIXES:
@@ -456,41 +456,6 @@ $(top_srcdir)/configure: @MAINTAINER_MODE_TRUE@ $(am__configure_deps)
 $(ACLOCAL_M4): @MAINTAINER_MODE_TRUE@ $(am__aclocal_m4_deps)
 	$(am__cd) $(srcdir) && $(ACLOCAL) $(ACLOCAL_AMFLAGS)
 $(am__aclocal_m4_deps):
-install-pkglibexecSCRIPTS: $(pkglibexec_SCRIPTS)
-	@$(NORMAL_INSTALL)
-	@list='$(pkglibexec_SCRIPTS)'; test -n "$(pkglibexecdir)" || list=; \
-	if test -n "$$list"; then \
-	  echo " $(MKDIR_P) '$(DESTDIR)$(pkglibexecdir)'"; \
-	  $(MKDIR_P) "$(DESTDIR)$(pkglibexecdir)" || exit 1; \
-	fi; \
-	for p in $$list; do \
-	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
-	  if test -f "$$d$$p"; then echo "$$d$$p"; echo "$$p"; else :; fi; \
-	done | \
-	sed -e 'p;s,.*/,,;n' \
-	    -e 'h;s|.*|.|' \
-	    -e 'p;x;s,.*/,,;$(transform)' | sed 'N;N;N;s,\n, ,g' | \
-	$(AWK) 'BEGIN { files["."] = ""; dirs["."] = 1; } \
-	  { d=$$3; if (dirs[d] != 1) { print "d", d; dirs[d] = 1 } \
-	    if ($$2 == $$4) { files[d] = files[d] " " $$1; \
-	      if (++n[d] == $(am__install_max)) { \
-		print "f", d, files[d]; n[d] = 0; files[d] = "" } } \
-	    else { print "f", d "/" $$4, $$1 } } \
-	  END { for (d in files) print "f", d, files[d] }' | \
-	while read type dir files; do \
-	     if test "$$dir" = .; then dir=; else dir=/$$dir; fi; \
-	     test -z "$$files" || { \
-	       echo " $(INSTALL_SCRIPT) $$files '$(DESTDIR)$(pkglibexecdir)$$dir'"; \
-	       $(INSTALL_SCRIPT) $$files "$(DESTDIR)$(pkglibexecdir)$$dir" || exit $$?; \
-	     } \
-	; done
-
-uninstall-pkglibexecSCRIPTS:
-	@$(NORMAL_UNINSTALL)
-	@list='$(pkglibexec_SCRIPTS)'; test -n "$(pkglibexecdir)" || exit 0; \
-	files=`for p in $$list; do echo "$$p"; done | \
-	       sed -e 's,.*/,,;$(transform)'`; \
-	dir='$(DESTDIR)$(pkglibexecdir)'; $(am__uninstall_files_from_dir)
 
 mostlyclean-libtool:
 	-rm -f *.lo
@@ -500,6 +465,27 @@ clean-libtool:
 
 distclean-libtool:
 	-rm -f libtool config.lt
+install-dist_pkgsysconfDATA: $(dist_pkgsysconf_DATA)
+	@$(NORMAL_INSTALL)
+	@list='$(dist_pkgsysconf_DATA)'; test -n "$(pkgsysconfdir)" || list=; \
+	if test -n "$$list"; then \
+	  echo " $(MKDIR_P) '$(DESTDIR)$(pkgsysconfdir)'"; \
+	  $(MKDIR_P) "$(DESTDIR)$(pkgsysconfdir)" || exit 1; \
+	fi; \
+	for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  echo "$$d$$p"; \
+	done | $(am__base_list) | \
+	while read files; do \
+	  echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(pkgsysconfdir)'"; \
+	  $(INSTALL_DATA) $$files "$(DESTDIR)$(pkgsysconfdir)" || exit $$?; \
+	done
+
+uninstall-dist_pkgsysconfDATA:
+	@$(NORMAL_UNINSTALL)
+	@list='$(dist_pkgsysconf_DATA)'; test -n "$(pkgsysconfdir)" || list=; \
+	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
+	dir='$(DESTDIR)$(pkgsysconfdir)'; $(am__uninstall_files_from_dir)
 install-pkgdataDATA: $(pkgdata_DATA)
 	@$(NORMAL_INSTALL)
 	@list='$(pkgdata_DATA)'; test -n "$(pkgdatadir)" || list=; \
@@ -826,10 +812,10 @@ distcleancheck: distclean
 	       exit 1; } >&2
 check-am: all-am
 check: check-recursive
-all-am: Makefile $(SCRIPTS) $(DATA)
+all-am: Makefile $(DATA)
 installdirs: installdirs-recursive
 installdirs-am:
-	for dir in "$(DESTDIR)$(pkglibexecdir)" "$(DESTDIR)$(pkgdatadir)"; do \
+	for dir in "$(DESTDIR)$(pkgsysconfdir)" "$(DESTDIR)$(pkgdatadir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: install-recursive
@@ -884,13 +870,13 @@ info: info-recursive
 
 info-am:
 
-install-data-am: install-pkgdataDATA
+install-data-am: install-dist_pkgsysconfDATA install-pkgdataDATA
 
 install-dvi: install-dvi-recursive
 
 install-dvi-am:
 
-install-exec-am: install-pkglibexecSCRIPTS
+install-exec-am:
 	@$(NORMAL_INSTALL)
 	$(MAKE) $(AM_MAKEFLAGS) install-exec-hook
 install-html: install-html-recursive
@@ -931,7 +917,7 @@ ps: ps-recursive
 
 ps-am:
 
-uninstall-am: uninstall-pkgdataDATA uninstall-pkglibexecSCRIPTS
+uninstall-am: uninstall-dist_pkgsysconfDATA uninstall-pkgdataDATA
 
 .MAKE: $(am__recursive_targets) install-am install-exec-am \
 	install-strip
@@ -944,15 +930,16 @@ uninstall-am: uninstall-pkgdataDATA uninstall-pkglibexecSCRIPTS
 	distclean-generic distclean-libtool distclean-tags \
 	distcleancheck distdir distuninstallcheck dvi dvi-am html \
 	html-am info info-am install install-am install-data \
-	install-data-am install-dvi install-dvi-am install-exec \
-	install-exec-am install-exec-hook install-html install-html-am \
-	install-info install-info-am install-man install-pdf \
-	install-pdf-am install-pkgdataDATA install-pkglibexecSCRIPTS \
+	install-data-am install-dist_pkgsysconfDATA install-dvi \
+	install-dvi-am install-exec install-exec-am install-exec-hook \
+	install-html install-html-am install-info install-info-am \
+	install-man install-pdf install-pdf-am install-pkgdataDATA \
 	install-ps install-ps-am install-strip installcheck \
 	installcheck-am installdirs installdirs-am maintainer-clean \
 	maintainer-clean-generic mostlyclean mostlyclean-generic \
 	mostlyclean-libtool pdf pdf-am ps ps-am tags tags-am uninstall \
-	uninstall-am uninstall-pkgdataDATA uninstall-pkglibexecSCRIPTS
+	uninstall-am uninstall-dist_pkgsysconfDATA \
+	uninstall-pkgdataDATA
 
 .PRECIOUS: Makefile
 

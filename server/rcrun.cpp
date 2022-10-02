@@ -1,5 +1,5 @@
 /*
- *  rcrun.c  --  virtual machine to run byte-compiled ~/.twinrc code
+ *  rcrun.c  --  virtual machine to run byte-compiled configuration file ~/.config/twin/twinrc
  *
  *  Copyright (C) 2001 by Massimiliano Ghilardi
  *
@@ -834,7 +834,7 @@ static byte RCSleep(timevalue *_t) {
 /*
  * this is the real Initialization / Restart function.
  *
- * kill the queues, reload .twinrc and restart queues
+ * kill the queues, reload ~/.config/twin/twinrc and restart queues
  */
 static void RCReload(void) {
   module M;

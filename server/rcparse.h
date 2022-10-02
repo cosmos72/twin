@@ -1,5 +1,5 @@
 /*
- *  rcparse.h  --  C back-end of ~/.twinrc parser for twin
+ *  rcparse.h  --  C back-end of ~/.config/twin/twinrc parser for twin
  *
  *  Copyright (C) 2001 by Massimiliano Ghilardi
  *
@@ -14,7 +14,7 @@
 #define TWIN_RCPARSE_H
 
 /*
- * ~/.twinrc syntax :
+ * ~/.config/twin/twinrc syntax :
  *
  * AddScreen <screen name>
  *
@@ -1084,7 +1084,7 @@ static void DumpGlobals(void) {
 #endif /* DEBUG_RC */
 
 /*
- * clear all global pointers before parsing ~/.twinrc
+ * clear all global pointers before parsing ~/.config/twin/twinrc
  * (this happens in the child process)
  */
 static void ClearGlobals(void) {
@@ -1424,7 +1424,7 @@ static bool rcload(void) {
 #endif
   bool c = false;
 
-  if (!(path = FindFile(".twinrc", &len)))
+  if (!(path = FindConfigFile("twinrc", &len)))
     return c;
 
   /*

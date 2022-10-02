@@ -193,6 +193,18 @@ public:
     mem::rawswap(size_, other.size_);
     mem::rawswap(cap_, other.cap_);
   }
+
+  /// \return pointer to internal data and transfer its ownership to the caller.
+  /// After this method returns, caller owns the returned data and must invoke FreeMem() on it
+  /// when no longer needed.
+  /// After this method returns, the vector will be empty.
+  T *release() {
+    T *ptr = data();
+    data_ = NULL;
+    size_ = 0;
+    cap_ = 0;
+    return ptr;
+  }
 };
 
 template <class T> void View<T>::ref(const Vector<T> &other) {

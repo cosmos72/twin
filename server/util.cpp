@@ -12,6 +12,8 @@
 
 #include "twin.h"
 
+#include <stdio.h> // rename()
+
 #ifdef TW_HAVE_PWD_H
 #include <pwd.h>
 #endif
@@ -895,19 +897,67 @@ static void TWDisplayIO(int fd, uldat slot) {
 
 static char envTWD[] = "TWDISPLAY=\0\0\0\0\0";
 
+static bool moveOldTwinrcFile(void);
+
 static bool initHOME(void) {
   const char *home = getenv("HOME");
   if (!home) {
     log(ERROR, "twin: required environment variable HOME is not set. Aborting.\n");
     return false;
   }
-  if (HOME.assign(home, 1 + strlen(home))) { // also append '\0'
-    // keep final '\0' but do not count it
-    HOME.pop_back();
+  if (!HOME.format(Chars::from_c(home))) { // also append final '\0' but do not count it
+    log(ERROR, "twin: out of memory! Aborting.\n");
+    return false;
+  }
+  if (!moveOldTwinrcFile()) {
+    return false;
+  }
+  return true;
+}
+
+// create directory and all its parent directories.
+// temporarily modifies path, restores it before returning
+static void makeDirectories(char *path) {
+  if (!path || !path[0]) {
+    return;
+  }
+  char *slash = path;
+  char *end = path + strlen(path);
+  while ((slash = (char *)memchr(slash + 1, '/', end - (slash + 1))) != NULL) {
+    slash[0] = '\0';
+    (void)mkdir(path, 0700);
+    slash[0] = '/';
+  }
+  (void)mkdir(path, 0700);
+}
+
+bool moveOldTwinrcFile(void) {
+  String oldPath;
+  if (!oldPath.format(HOME, "/.twinrc")) {
+    log(ERROR, "twin: out of memory! Aborting.\n");
+    return false;
+  }
+  struct stat buf;
+  if (stat(oldPath.data(), &buf) != 0) {
     return true;
   }
-  log(ERROR, "twin: out of memory! Aborting.\n");
-  return false;
+  String newPath;
+  if (!newPath.format(HOME, "/.config/twin/twinrc")) {
+    log(ERROR, "twin: out of memory! Aborting.\n");
+    return false;
+  }
+  newPath[newPath.size() - 7] = '\0';
+  makeDirectories(newPath.data());
+  newPath[newPath.size() - 7] = '/';
+  if (rename(oldPath.data(), newPath.data()) != 0) {
+    log(ERROR,
+        "twin: failed to move configuration file from old (and no longer supported) location ",
+        oldPath, "\n      to the new location ", newPath, ": ", Chars::from_c(strerror(errno)));
+    return false;
+  }
+  log(WARNING, "twin: moved configuration file from old (and no longer supported) location ",
+      oldPath, "\n      to the new location ", newPath);
+  return true;
 }
 
 /**
@@ -938,20 +988,18 @@ static bool initTmpDir(void) {
 /** return getenv("XDG_STATE_HOME") + "/twin", getenv("HOME") + "/.local/state/twin"  */
 static bool initSocketDir(void) {
   const char *env = getenv("XDG_STATE_HOME");
-  if (env != NULL && SocketDir.assign(env, strlen(env)) && SocketDir.append("/twin", 5)) {
-    SocketDir.pop_back(); // keep final '\0' but do not count it
+  if (env != NULL && SocketDir.format(Chars::from_c(env), Chars("/twin"))) {
     return true;
-  }
-  if (SocketDir.assign(HOME) && SocketDir.append("/.local/state/twin", 19)) {
-    SocketDir.pop_back(); // keep final '\0' but do not count it
+  } else if (SocketDir.format(HOME, Chars("/.local/state/twin"))) {
     return true;
+  } else {
+    SocketDir.clear();
+    log(ERROR, "twin: out of memory! Aborting.\n");
+    return false;
   }
-  SocketDir.clear();
-  log(ERROR, "twin: out of memory! Aborting.\n");
-  return false;
 }
 
-static bool initGlobalVariables(void) {
+bool InitGlobalVariables(void) {
   return initHOME() && initTmpDir() && initSocketDir();
 }
 
@@ -981,10 +1029,6 @@ bool InitTWDisplay(void) {
   unsigned short i;
   udat len;
   byte ok;
-
-  if (!initGlobalVariables()) {
-    return false;
-  }
 
   memset(&addr_unix, 0, sizeof(addr_unix));
 
@@ -1169,12 +1213,12 @@ byte SetServerUid(uldat uid, byte privileges) {
           ok = SetEnvs(p);
           if (ok && (ok = Ext(Socket, InitAuth)())) {
             /*
-             * it's time to execute .twenvrc.sh and read its output to set
+             * it's time to execute ~/.config/twin/twenvrc.sh and read its output to set
              * environment variables (mostly useful for twdm)
              */
             RunTwEnvRC();
 
-            /* tell the WM to restart itself (so that it reads user's .twinrc) */
+            /* tell the WM to restart itself (so that it reads user's ~/.config/twin/twinrc) */
             SendControlMsg(WM_MsgPort, MSG_CONTROL_OPEN, 0, NULL);
             return ttrue;
           }
@@ -1187,8 +1231,7 @@ byte SetServerUid(uldat uid, byte privileges) {
           if (setuid(0) < 0 || setgid(0) < 0 || chown(fullTWD, 0, 0) < 0 || !SetEnvs(getpwuid(0))) {
             /* tried to recover, but screwed up uids too badly. */
             log(ERROR, "twin: failed switching to uid ", uid, ": ", Chars::from_c(strerror(errno)),
-                "\n");
-            log(ERROR, "twin: also failed to recover. Quitting NOW!\n");
+                "\ntwin: also failed to recover. Quitting NOW!\n");
             Quit(0);
           }
         }
@@ -1200,43 +1243,37 @@ byte SetServerUid(uldat uid, byte privileges) {
   return tfalse;
 }
 
-/*
- * search for a file relative to HOME, to PLUGINDIR or as path
- *
- * this for example will search "foo"
- * as "${HOME}/foo", "${PLUGINDIR}/system.foo" or plain "foo"
- */
-char *FindFile(const char *name, uldat *fsize) {
-  const char *prefix[3], *infix[3];
-  char *path;
-  const char *dir;
-  int i, min_i, max_i, len, nlen = strlen(name);
+char *FindConfigFile(const char *name, uldat *file_size) {
+  const Chars prefix[4] = {
+      Chars::from_c(getenv("XDG_CONFIG_HOME")),
+      HOME,
+      confdir,
+      Chars("."),
+  };
+  const Chars infix[4] = {
+      Chars("/twin/"),
+      Chars("/.config/twin/"),
+      Chars("/"),
+      Chars("/"),
+  };
+  unsigned min_i, max_i;
+  if (flag_secure)
+    min_i = max_i = 2; /* only confdir */
+  else
+    min_i = 0, max_i = 3;
+
+  String path;
+  Chars cname = Chars::from_c(name);
   struct stat buf;
 
-  prefix[0] = HOME.data();
-  infix[0] = HOME ? "/" : "";
-  prefix[1] = plugindir.data(); // guaranteed to be '\0' terminated
-  infix[1] = "/system";
-  prefix[2] = "";
-  infix[2] = "";
-
-  if (flag_secure)
-    min_i = max_i = 1; /* only plugindir */
-  else
-    min_i = 0, max_i = 2;
-
-  for (i = min_i; i <= max_i; i++) {
-    if (!(dir = prefix[i]))
-      continue;
-    len = strlen(dir) + strlen(infix[i]);
-    if ((path = (char *)AllocMem(len + nlen + 2))) {
-      sprintf(path, "%s%s%s", dir, infix[i], name);
-      if (stat(path, &buf) == 0) {
-        if (fsize)
-          *fsize = buf.st_size;
-        return path;
+  for (unsigned i = min_i; i <= max_i; i++) {
+    if (prefix[i] && path.format(prefix[i], infix[i], cname)) {
+      if (stat(path.data(), &buf) == 0) {
+        if (file_size) {
+          *file_size = buf.st_size;
+        }
+        return path.release();
       }
-      FreeMem(path);
     }
   }
   return NULL;
@@ -1282,12 +1319,11 @@ static void ReadTwEnvRC(int infd) {
 }
 
 /*
- * execute .twenvrc.sh <dummy> and read its output to set
+ * execute ~/.config/twin/twenvrc.sh and read its output to set
  * environment variables (mostly useful for twdm)
  */
 void RunTwEnvRC(void) {
-  char *path;
-  uldat len;
+  char *path = NULL;
   int fds[2];
 
   if (flag_envrc != 1)
@@ -1296,7 +1332,7 @@ void RunTwEnvRC(void) {
   if (flag_secure == 0) {
     flag_envrc = 0;
 
-    if ((path = FindFile(".twenvrc.sh", &len))) {
+    if ((path = FindConfigFile("twenvrc.sh", NULL))) {
       if ((pipe(fds) >= 0)) {
         switch (fork()) {
         case -1: /* error */
@@ -1313,8 +1349,10 @@ void RunTwEnvRC(void) {
           }
           close(1);
           dup2(0, 1);
-          execl(path, path, "dummy", NULL);
-          exit(0);
+          execlp("bash", "bash", "-i", "-l", path, NULL);
+          // if bash is not found, try plain sh
+          execlp("sh", "sh", path, NULL);
+          exit(1);
           break;
         default: /* parent */
           close(fds[1]);
@@ -1325,9 +1363,10 @@ void RunTwEnvRC(void) {
       } else
         log(ERROR, "twin: RunTwEnvRC(): pipe() failed: ", Chars::from_c(strerror(errno)), "\n");
     } else
-      log(ERROR, "twin: RunTwEnvRC(): .twenvrc.sh: File not found\n");
+      log(ERROR, "twin: RunTwEnvRC(): twenvrc.sh: File not found\n");
   } else
-    log(ERROR, "twin: RunTwEnvRC(): delaying .twenvrc.sh execution until secure mode ends.\n");
+    log(ERROR, "twin: RunTwEnvRC(): delaying twenvrc.sh execution until secure mode ends.\n");
+  FreeMem(path);
 }
 
 /* remove const from a pointer and suppress compiler warnings */

@@ -402,7 +402,7 @@ byte InitHW(void) {
   }
 
   /*
-   * execute .twenvrc.sh if needed and read its output to set
+   * execute ~/.config/twin/twenvrc.sh if needed and read its output to set
    * environment variables (mostly useful for twdm)
    */
   RunTwEnvRC();

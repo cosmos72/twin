@@ -44,7 +44,7 @@ Options: [defaults in brackets after descriptions]
 EOF
     cat << EOF
   --enable-wm[=yes|no|mod]               enable the builtin WM (absolutely needed!)
-  --enable-wm-rc[=yes|no|mod]            enable ~/.twinrc configuration parser
+  --enable-wm-rc[=yes|no|mod]            enable ~/.config/twin/twinrc configuration parser
   --enable-wm-rc-shmmap[=yes|no]         enable mmapped shared file for parser
   --enable-wm-rc-shrink[=yes|no]         enable shrinking memory when parser finished
   --enable-term[=yes|no|mod]             enable builtin terminal emulator

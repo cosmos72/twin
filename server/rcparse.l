@@ -3,7 +3,7 @@
 %{
 /* -*-c-*-
  *
- *  rcparse.l  --  lex back-end of ~/.twinrc parser for twin
+ *  rcparse.l  --  lex back-end of ~/.config/twin/twinrc parser for twin
  *
  *  Copyright (C) 2000-2001 by Massimiliano Ghilardi
  *

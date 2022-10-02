@@ -1,5 +1,5 @@
 /*
- *  rcrun.c  --  virtual machine to run byte-compiled ~/.twinrc code
+ *  rcrun.c  --  virtual machine to run byte-compiled configuration file ~/.config/twin/twinrc
  *
  *  Copyright (C) 2001 by Massimiliano Ghilardi
  *

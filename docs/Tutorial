@@ -58,7 +58,7 @@
       Things that you can't tailor in this way are:
       buttons position and look, scrollbars position and look,
       as they are under control of twin builtin window manager
-      (see the sample system.twinrc to learn how to customize the
+      (see the example file "twinrc" to learn how to customize the
       window manager look-n-feel).
    c. In `twin', windows are not just plain rectangules where programs
       can draw. They can contain other windows and/or `gadgets' (small
@@ -263,8 +263,8 @@
    Since the user interface of twin is quite customizable, this part
    cannot cover every possible setup you might create. For this reason,
    what is described here is the default setup, that you get if you do NOT
-   start tweaking your own ~/.twinrc file. To learn the syntax of ~/.twinrc,
-   look at the sample configuration `system.twinrc' distributed with twin.
+   start tweaking your own ~/.config/twin/twinrc file. To learn the syntax
+   of such file, look at the sample configuration `twinrc' distributed with twin.
 
 
    When twin comes up, you will have a blue screen (or window) with a
@@ -322,8 +322,8 @@
    and also unfocus if moving it to bottom of stack.
 
    You can use the menus even without a mouse: The `Pause' key opens the menu
-   (to change it, edit your ~/.twinrc, or, if you disabled support for
-   ~/.twinrc parser, edit server/hotkey.h and recompile)
+   (to change it, edit your ~/.config/twin/twinrc, or, if you disabled support
+   for twinrc parser, edit server/hotkey.h and recompile)
    then you can transverse the menu with arrow keys, hit `Return'
    to select an entry in a menuitem or `Escape' to close the menu.
    Choosing Menu -> Window -> Move lets you move the focused window with
@@ -375,9 +375,9 @@
    the left button pressed and paste by clicking with the middle button.
 
    Again, you can tailor (almost) any of the above features to your tastes
-   by editing your own ~/.twinrc configuration file. The file system.twinrc
-   distributed with twin is a well commented sample configuration you can
-   start from.
+   by editing your own ~/.config/twin/twinrc configuration file.
+   The file `twinrc' distributed with twin is a well commented sample
+   configuration you can start from.
 
 6. External programs
 
@@ -453,7 +453,7 @@
 	    -q, --quiet              quiet; suppress diagnostic messages
 	    --attach                 use "twattach" to start display (default)
 	    --display                use "twdisplay" to start display
-	    --envrc                  tell twin to run .twenvrc.sh to get environment
+	    --envrc                  tell twin to run ~/.config/twin/twenvrc.sh to get environment
 	    --suidroot               tell twin to keep suid root privileges
 	    --sgidtty                tell twin to keep sgid tty privileges
 	    --title=<title>          set window title
@@ -878,8 +878,8 @@
      -h, --help               display this help and exit
      -V, --version            output version information and exit
      --secure                 forbid starting external programs
-     --envrc                  execute .twenvrc.sh and read its output to set
-                              environment variables (mostly useful for twdm)
+     --envrc                  execute ~/.config/twin/twenvrc.sh and read its output
+                              to set environment variables (mostly useful for twdm)
      -s, --share              start display as shared (default)
      -x, --excl               start display as exclusive
      --nohw                   start in background without display

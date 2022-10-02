@@ -847,7 +847,7 @@ static void SetTitleWindow(window W, dat titlelen, char *title) {
    */
   DrawBorderWindow(W, BORDER_UP);
 #else
-  /* user may have title-dependent borders in ~/.twinrc, honour them: */
+  /* user may have title-dependent borders in ~/.config/twin/twinrc, honour them: */
   Win->BorderPattern[0] = Win->BorderPattern[1] = NULL;
   DrawBorderWindow(W, BORDER_ANY);
 #endif

@@ -1283,7 +1283,7 @@ yyreduce:
 
   case 7: /* line: READ string '\n'  */
   {
-    set_yy_file(FindFile((yyvsp[-1]._string), NULL));
+    set_yy_file(FindConfigFile((yyvsp[-1]._string), NULL));
     (yyval._node) = NULL;
   } break;
 

@@ -14,20 +14,24 @@
 #include <Tw/datatypes.h> // byte, udat, tcolor, trune
 #include <Tw/Tw_defs.h>   // tmaxcol
 
-typedef struct s_rgb {
+struct rgb {
   byte Red, Green, Blue;
-} rgb;
+};
 
+// directory containing plugins: libhw_*.* librcparse.* libsocket.* libterm.*
 extern Chars plugindir;
+
+// directory containing system-wide configuration file twinrc
+extern Chars confdir;
 
 extern rgb Palette[tmaxcol + 1], defaultPalette[tmaxcol + 1];
 
-typedef struct s_keylist {
+struct keylist {
   const char *name;
   udat key;
   byte len;
   const char *seq;
-} keylist;
+};
 
 extern keylist TW_KeyList[];
 

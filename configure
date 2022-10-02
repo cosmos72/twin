@@ -1566,7 +1566,7 @@ Optional Features:
   --enable-socket-pthreads=yes|no      enable thread safe libraries (requires pthread)
   --enable-socket-alien=yes|no         enable support for non-native architectures
   --enable-wm=yes|no                   enable the builtin WM (absolutely needed!)
-  --enable-wm-rc=yes|no                enable ~/.twinrc configuration parser
+  --enable-wm-rc=yes|no                enable ~/.config/twin/twinrc configuration parser
   --enable-wm-rc-shmmap=yes|no         enable mmapped shared file for parser
   --enable-wm-rc-shrink=yes|no         enable shrinking memory when parser finished
   --enable-term=yes|no                 enable builtin terminal emulator
@@ -26867,6 +26867,3 @@ tw_cfg()
 
   echo                              >> include/twconfig.h
   echo '#endif /* TWCONFIG_H */'    >> include/twconfig.h
-
-
-

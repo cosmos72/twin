@@ -58,7 +58,7 @@ backspace and delete if you have numlock led turned on.
 I did not get this, what are super-mouse1-move and super-mouse2-move?
 You can move a window by dragging its title, and resize it by dragging its
 lower-right corner (or from the menu, of course).
-The effect of ANY mouse action can be configured in your ~/.twinrc
+The effect of ANY mouse action can be configured in your ~/.config/twin/twinrc
 
 >* -hw=gfx appears to be attempting to load a 6x13 font, which doesn't
 >  exist.  how do I get it to use a properly sized font?

@@ -70,6 +70,7 @@ char **TokenizeStringVec(uldat len, char *text);
 char **TokenizeTRuneVec(uldat len, trune *text);
 void FreeStringVec(char **argv);
 
+bool InitGlobalVariables(void);
 bool InitTWDisplay(void);
 void QuitTWDisplay(void);
 
@@ -77,7 +78,19 @@ byte CheckPrivileges(void);
 void gainPrivileges(void);
 byte SetServerUid(uldat uid, byte privileges);
 
-char *FindFile(const char *name, uldat *fsize);
+/*
+ * search for a file relative to $XDG_CONFIG_HOME/twin, to $HOME/.config/twin,
+ * to global variable confdir or to current working directory
+ *
+ * this for example will search "foo" as:
+ *   getenv("XDG_CONFIG_HOME") + "/twin/foo"
+ *   getenv("HOME") + "/.config/twin/foo"
+ *   confdir + "/foo"
+ *   "./foo"
+ *
+ * returned path must be freed with FreeMem()
+ */
+char *FindConfigFile(const char *name, uldat *file_size);
 void RunTwEnvRC(void);
 
 /* remove const from a pointer and suppress compiler warnings */

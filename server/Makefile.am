@@ -14,7 +14,7 @@ if LIBTERM_la
   pkglib_LTLIBRARIES += libterm.la
 endif
 
-AM_CPPFLAGS           = -I$(top_srcdir)/include $(LTDLINCL) -DPLUGINDIR="\"$(pkglibdir)\""
+AM_CPPFLAGS           = -I$(top_srcdir)/include $(LTDLINCL) -DPLUGINDIR="\"$(pkglibdir)\"" -DCONFDIR="\"$(sysconfdir)/twin\""
 twin_CPPFLAGS         = -I$(top_srcdir)/include $(LTDLINCL) -DBINDIR="\"$(bindir)\""
 
 twdisplay_SOURCES     = alloc.cpp display.cpp dl_helper.cpp log.cpp missing.cpp hw.cpp

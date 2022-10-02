@@ -97,7 +97,7 @@ static void Usage(void) {
                   " --attach                use \"twattach\" to start display\n"
                   " --display               use \"twdisplay\" to start display\n"
                   "                             (default unless --hw=tty)\n"
-                  " --envrc                 tell twin to run .twenvrc.sh to get environment\n"
+                  " --envrc                 tell twin to run twenvrc.sh to get environment\n"
                   " --suidroot              tell twin to keep suid root privileges\n"
                   " --sgidtty               tell twin to keep sgid tty privileges\n"
                   " --title=<title>         set window title\n"

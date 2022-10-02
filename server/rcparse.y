@@ -1,6 +1,6 @@
 /* -*-c-*-
  *
- *  rcparse.y  --  bison ~/.twinrc parser for twin
+ *  rcparse.y  --  bison ~/.config/twin/twinrc parser for twin
  *
  *  Copyright (C) 2000-2001 by Massimiliano Ghilardi
  *
@@ -162,7 +162,7 @@ line_list	:           line { $$ = AddtoNodeList(NULL, $1); }
 
 line		: immediate_line '\n' { $$ = NULL; }
 		| func           '\n' { $$ = $1; }
-		| READ string    '\n' { set_yy_file(FindFile($2, NULL)); $$ = NULL; }
+		| READ string    '\n' { set_yy_file(FindConfigFile($2, NULL)); $$ = NULL; }
 		| '\n'                { $$ = NULL; }
                 ;
 

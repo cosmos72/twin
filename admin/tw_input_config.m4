@@ -43,9 +43,9 @@ AC_ARG_ENABLE(wm,dnl
 enable_wm=yes
 )dnl
 
-dnl ~/.twinrc parser
+dnl twinrc parser
 AC_ARG_ENABLE(wm_rc,dnl
-[  --enable-wm-rc[=yes|no]                enable ~/.twinrc configuration parser ],,
+[  --enable-wm-rc[=yes|no]                enable ~/.config/twin/twinrc configuration parser ],,
 enable_wm_rc=yes
 )dnl
 

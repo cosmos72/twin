@@ -72,10 +72,8 @@ ldconfig
 %{_libdir}/libtw.so.*
 %{_libdir}/twin
 %{_datadir}/twin
-%config %{_libdir}/twin/.twinrc
-%config %{_libdir}/twin/.twenvrc.sh
-%config %{_libdir}/twin/system.twinrc
-%config %{_libdir}/twin/system.twenvrc.sh
+%config %{_sysconfdir}/twin/twinrc
+%config %{_sysconfdir}/twin/twenvrc.sh
 %{_bindir}/tw*
 %{_sbindir}/tw*
 

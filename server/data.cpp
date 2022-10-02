@@ -26,8 +26,13 @@
 #warning PLUGINDIR is not #defined, assuming "/usr/local/lib/twin"
 #define PLUGINDIR "/usr/local/lib/twin"
 #endif
+#ifndef CONFDIR
+#warning CONFDIR is not #defined, assuming "/usr/local/etc/twin"
+#define CONFDIR "/usr/local/etc/twin"
+#endif
 
 Chars plugindir = PLUGINDIR;
+Chars confdir = CONFDIR;
 
 /* First, some structures */
 

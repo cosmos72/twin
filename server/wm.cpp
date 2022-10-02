@@ -1925,7 +1925,7 @@ byte InitWM(void) {
 
   srand48(time(NULL));
   if ((WM_MsgPort = New(msgport)(2, "WM", 0, 0, 0, WManagerH)) &&
-      /* this will later be sent to rcrun.c, it forces loading .twinrc */
+      /* this will later be sent to rcrun.c, it forces loading ~/.config/twin/twinrc */
       SendControlMsg(WM_MsgPort, MSG_CONTROL_OPEN, 0, NULL)) {
 
     if (RegisterExt(WM, MsgPort, WM_MsgPort)) {

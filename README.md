@@ -39,8 +39,8 @@ Documentation
 [INSTALL](INSTALL)
 	Quick compile/install guide.
 
-[system.twinrc](system.twinrc)
-	A detailed example of ~/.twinrc look-n-feel configuration file.
+[twinrc](twinrc)
+	A detailed example of ~/.config/twin/twinrc look-n-feel configuration file.
 
 The following documentation is useful mostly to developers:
 

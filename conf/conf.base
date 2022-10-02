@@ -18,7 +18,7 @@ CONF_SOCKET_GZ_HELP=" -> Sockets: support gzip compression"
 CONF_SOCKET_PTHREADS_HELP=" -> Sockets: thread-safe libs (requires libpthread)"
 CONF_SOCKET_ALIEN_HELP=" -> Sockets: support non-native architectures"
 CONF_WM_HELP="Window Manager: absolutely needed!"
-CONF_WM_RC_HELP="WM: support ~/.twinrc configuration parser"
+CONF_WM_RC_HELP="WM: support ~/.config/twin/twinrc configuration parser"
 CONF_WM_RC_SHMMAP_HELP=" -> WM: RC: use mmapped shared file for parser"
 CONF_WM_RC_SHRINK_HELP=" -> WM: RC: shrink memory when parser finished"
 CONF_TERM_HELP="Builtin Terminal emulator"
@@ -75,7 +75,7 @@ menu CONF_HW
   yesmodno_truedep CONF_HW_DISPLAY CONF_SOCKET
 endmenu
 menu CONF_OPT
-  msg "Warning: settings in ~/.twinrc or in system.twinrc"
+  msg "Warning: settings in ~/.config/twin/twinrc or in system-wide twinrc"
   msg "will always override the following options!"
   yesno CONF_OPT_SHADOWS
   yesno CONF_OPT_BLINK

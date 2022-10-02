@@ -1224,12 +1224,10 @@ int main(int argc, char *argv[]) {
       fputs("twdisplay: required environment variable HOME is not set. Aborting.\n", stderr);
       return 1;
     }
-    if (!HOME.append(home, 1 + strlen(home))) { // also append final '\0'
+    if (!HOME.format(Chars::from_c(home))) { // also append final '\0' but do not count it
       fputs("twdisplay: out of memory! Aborting.\n", stderr);
       return 1;
     }
-    // keep final '\0' but do not count it
-    HOME.pop_back();
   }
 
   if (((ourtty || (client_dpy && !*client_dpy)) && origTWDisplay && TWDisplay &&

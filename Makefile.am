@@ -3,9 +3,10 @@ SUBDIRS = docs include libs clients test server
 ACLOCAL_AMFLAGS = -I m4
 
 pkglibexecdir = $(pkglibdir)
+pkgsysconfdir = $(sysconfdir)/twin
 
-pkgdata_DATA       = BUGS COPYING COPYING.LIB Changelog.txt INSTALL README README.porting twin-current.lsm
-pkglibexec_SCRIPTS = system.twenvrc.sh system.twinrc
+pkgdata_DATA      = BUGS COPYING COPYING.LIB Changelog.txt INSTALL README README.porting twin-current.lsm
+dist_pkgsysconf_DATA = twenvrc.sh twinrc
 
 install-exec-hook:
 	@if echo "$(host_triplet)" | $(GREP) linux >/dev/null 2>&1 ; then \

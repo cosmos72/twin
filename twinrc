@@ -10,13 +10,13 @@
 #
 #
 # This file contains the configuration for twin look-n-feel.
-# By default, it is installed as ${libdir}/twin/system.twinrc
+# By default, it is installed as ${sysconfdir}/twin/twinrc
 # and, provided twin is compiled with RC parser support,
 # it is used as fallback configuration in case the user does not
-# have his own ${HOME}/.twinrc
+# have his own ${HOME}/.config/twin/twinrc
 #
-# to customize twin user interface, just copy this file in your
-# home directory as `.twinrc' and edit it to your tastes.
+# to customize twin user interface, just copy this file to
+# ${HOME}/.config/twin/twinrc and edit it to your tastes.
 #
 
 # file syntax:
@@ -410,7 +410,7 @@ ExecTty "" ; Wait "Twin Term" ; Maximize
 
 
 #
-# list of all RC commands available for ~/.twinrc
+# list of all RC commands available for ~/.config/twin/twinrc
 #
 # AddScreen <screen name>
 # # create a new virtual screen

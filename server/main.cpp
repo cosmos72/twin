@@ -126,8 +126,8 @@ static void Usage(void) {
         " -h, --help               display this help and exit\n"
         " -V, --version            output version information and exit\n"
         " --secure                 forbid starting external programs\n"
-        " --envrc                  execute .twenvrc.sh and read its output to set\n"
-        "                          environment variables (mostly useful for twdm)\n"
+        " --envrc                  execute ~/.config/twin/twenvrc.sh and read its output\n"
+        "                          to set environment variables (mostly useful for twdm)\n"
         " -s, --share              start display as shared (default)\n"
         " -x, --excl               start display as exclusive\n"
         " --nohw                   start in background without display\n"
@@ -188,8 +188,9 @@ static byte Init(void) {
    * You may have twin SEGFAULT at startup or (worse) introduce subtle bugs!
    */
 
-  return InitData() && InitSignals() && InitTWDisplay() && (All->AtQuit = QuitTWDisplay) &&
-         InitTransUser() && InitTtysave() && InitScroller() && InitBuiltin() && InitHW() &&
+  return InitData() && InitGlobalVariables() && InitSignals() && InitTWDisplay() &&
+         (All->AtQuit = QuitTWDisplay) && InitTransUser() && InitTtysave() && InitScroller() &&
+         InitBuiltin() && InitHW() &&
          /*
           * We need care here: DrawArea2(), DrawMenu(), etc. all need All->BuiltinMenu and
           * also Video[]. The former is initialized by InitBuiltin(), the latter by InitHW().

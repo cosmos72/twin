@@ -24,28 +24,28 @@
 #include <Tw/autoconf.h> /* for TW_HAVE_* macros */
 #include "twconfig.h"    /* for CONF_* macros */
 
-#ifdef TW_HAVE_STDLIB_H
-#include <stdlib.h>
-#endif
-#ifdef TW_HAVE_SYS_STAT_H
-#include <sys/stat.h>
-#endif
 #ifdef TW_HAVE_FCNTL_H
 #include <fcntl.h>
 #endif
 #ifdef TW_HAVE_GRP_H
 #include <grp.h>
 #endif
+#ifdef TW_HAVE_SIGNAL_H
+#include <signal.h>
+#endif
+#ifdef TW_HAVE_STDLIB_H
+#include <stdlib.h>
+#endif
+#ifdef TW_HAVE_SYS_IOCTL_H
+#include <sys/ioctl.h>
+#endif
+#ifdef TW_HAVE_SYS_STAT_H
+#include <sys/stat.h>
+#endif
 #if defined(TW_HAVE_TERMIOS_H)
 #include <termios.h>
 #elif defined(TW_HAVE_TERMIO_H)
 #include <termio.h>
-#endif
-#ifdef TW_HAVE_SIGNAL_H
-#include <signal.h>
-#endif
-#ifdef TW_HAVE_SYS_IOCTL_H
-#include <sys/ioctl.h>
 #endif
 
 #include <Tw/Tw.h>
