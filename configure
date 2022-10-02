@@ -23037,6 +23037,12 @@ then :
   printf "%s\n" "#define HAVE_MEMSET 1" >>confdefs.h
 
 fi
+ac_fn_c_check_func "$LINENO" "mkdir" "ac_cv_func_mkdir"
+if test "x$ac_cv_func_mkdir" = xyes
+then :
+  printf "%s\n" "#define HAVE_MKDIR 1" >>confdefs.h
+
+fi
 ac_fn_c_check_func "$LINENO" "munmap" "ac_cv_func_munmap"
 if test "x$ac_cv_func_munmap" = xyes
 then :
@@ -23059,6 +23065,12 @@ ac_fn_c_check_func "$LINENO" "putenv" "ac_cv_func_putenv"
 if test "x$ac_cv_func_putenv" = xyes
 then :
   printf "%s\n" "#define HAVE_PUTENV 1" >>confdefs.h
+
+fi
+ac_fn_c_check_func "$LINENO" "rename" "ac_cv_func_rename"
+if test "x$ac_cv_func_rename" = xyes
+then :
+  printf "%s\n" "#define HAVE_RENAME 1" >>confdefs.h
 
 fi
 ac_fn_c_check_func "$LINENO" "scandir" "ac_cv_func_scandir"
@@ -26867,3 +26879,6 @@ tw_cfg()
 
   echo                              >> include/twconfig.h
   echo '#endif /* TWCONFIG_H */'    >> include/twconfig.h
+
+
+
