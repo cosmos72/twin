@@ -669,7 +669,7 @@ void TwinSelectionNotify(obj Requestor, uldat ReqPrivate, e_id Magic, const char
                          Chars Data) {
   msg NewMsg;
   event_any *Event;
-#if 1
+#if 0
   log(INFO, "twin: Selection Notify to 0x", hex(Requestor ? Requestor->Id : NOID), "\n");
 #endif
   if (!Requestor) {
