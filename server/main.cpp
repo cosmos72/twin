@@ -156,12 +156,12 @@ static byte Check4SpecialArgs(int argc, char *argv[]) {
       ShowVersion();
       return ttrue;
     } else if (!strncmp(arg, "-plugindir=", 11)) {
-      const char *plugindir = CloneStr(arg + 11);
-      if (!plugindir) {
+      const char *dir = CloneStr(arg + 11);
+      if (!dir) {
         fputs("twin: Out of memory!\n", stderr);
         return ttrue;
       }
-      pkg_libdir = Chars::from_c(plugindir);
+      plugindir = Chars::from_c(dir);
     }
   }
   return tfalse;

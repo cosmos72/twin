@@ -18,7 +18,7 @@ typedef struct s_rgb {
   byte Red, Green, Blue;
 } rgb;
 
-extern Chars pkg_libdir;
+extern Chars plugindir;
 
 extern rgb Palette[tmaxcol + 1], defaultPalette[tmaxcol + 1];
 

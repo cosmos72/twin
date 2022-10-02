@@ -1201,10 +1201,10 @@ byte SetServerUid(uldat uid, byte privileges) {
 }
 
 /*
- * search for a file relative to HOME, to PKG_LIBDIR or as path
+ * search for a file relative to HOME, to PLUGINDIR or as path
  *
  * this for example will search "foo"
- * as "${HOME}/foo", "${PKG_LIBDIR}/system.foo" or plain "foo"
+ * as "${HOME}/foo", "${PLUGINDIR}/system.foo" or plain "foo"
  */
 char *FindFile(const char *name, uldat *fsize) {
   const char *prefix[3], *infix[3];
@@ -1215,13 +1215,13 @@ char *FindFile(const char *name, uldat *fsize) {
 
   prefix[0] = HOME.data();
   infix[0] = HOME ? "/" : "";
-  prefix[1] = pkg_libdir.data(); // guaranteed to be '\0' terminated
+  prefix[1] = plugindir.data(); // guaranteed to be '\0' terminated
   infix[1] = "/system";
   prefix[2] = "";
   infix[2] = "";
 
   if (flag_secure)
-    min_i = max_i = 1; /* only pkg_libdir */
+    min_i = max_i = 1; /* only plugindir */
   else
     min_i = 0, max_i = 2;
 

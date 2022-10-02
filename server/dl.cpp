@@ -32,7 +32,7 @@ bool DlOpen(module Module) {
   }
   if (Module && !Module->Handle) {
     if (Module->Name) {
-      if (!name.format(pkg_libdir, "/", DL_PREFIX, //
+      if (!name.format(plugindir, "/", DL_PREFIX, //
                        Chars(Module->Name, Module->NameLen), DL_SUFFIX)) {
         return false;
       }

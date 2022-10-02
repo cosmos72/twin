@@ -42,12 +42,12 @@
 #include <string.h>
 #include <signal.h>
 
-#ifndef PKG_LIBDIR
-#warning PKG_LIBDIR is not #defined, assuming "/usr/local/lib/twin"
-#define PKG_LIBDIR "/usr/local/lib/twin"
+#ifndef PLUGINDIR
+#warning PLUGINDIR is not #defined, assuming "/usr/local/lib/twin"
+#define PLUGINDIR "/usr/local/lib/twin"
 #endif
 
-Chars pkg_libdir = PKG_LIBDIR;
+Chars plugindir = PLUGINDIR;
 
 static const char *MYname;
 
@@ -249,7 +249,7 @@ static module DlLoadAny(Chars name) {
   if (!dlinit_once()) {
     return NULL;
   } else if (!(m->Name = CloneStrL(name.data(), name.size())) ||
-             !path.format(pkg_libdir, "/" DL_PREFIX, name, DL_SUFFIX)) {
+             !path.format(plugindir, "/" DL_PREFIX, name, DL_SUFFIX)) {
     Error(NOMEMORY);
   } else if (!(m->Handle = (void *)dlopen(path.data()))) {
     Error(DLERROR);
@@ -1107,8 +1107,7 @@ TW_DECL_MAGIC(display_magic);
 int main(int argc, char *argv[]) {
   const char *tty = ttyname(0);
   const char *dpy = NULL, *client_dpy = NULL;
-  const char *carg;
-  char *arg = NULL;
+  char *arg_hw = NULL;
   int Fd;
   byte flags = TW_ATTACH_HW_REDIRECT, force = 0;
   byte ret = 0, ourtty = 0;
@@ -1118,35 +1117,37 @@ int main(int argc, char *argv[]) {
   MYname = argv[0];
 
   while (*++argv) {
-    if (!strcmp(*argv, "-V") || !strcmp(*argv, "-version")) {
+    char *argi = *argv;
+    Chars cargi = Chars::from_c(argi);
+    if (!strcmp(argi, "-V") || !strcmp(argi, "-version")) {
       ShowVersion();
       return 0;
-    } else if (!strcmp(*argv, "-h") || !strcmp(*argv, "-help")) {
+    } else if (!strcmp(argi, "-h") || !strcmp(argi, "-help")) {
       Usage();
       return 0;
-    } else if (!strcmp(*argv, "-x") || !strcmp(*argv, "-excl"))
+    } else if (!strcmp(argi, "-x") || !strcmp(argi, "-excl"))
       flags |= TW_ATTACH_HW_EXCLUSIVE;
-    else if (!strcmp(*argv, "-s") || !strcmp(*argv, "-share"))
+    else if (!strcmp(argi, "-s") || !strcmp(argi, "-share"))
       flags &= ~TW_ATTACH_HW_EXCLUSIVE;
-    else if (!strcmp(*argv, "-v") || !strcmp(*argv, "-verbose"))
+    else if (!strcmp(argi, "-v") || !strcmp(argi, "-verbose"))
       flags |= TW_ATTACH_HW_REDIRECT;
-    else if (!strcmp(*argv, "-q") || !strcmp(*argv, "-quiet"))
+    else if (!strcmp(argi, "-q") || !strcmp(argi, "-quiet"))
       flags &= ~TW_ATTACH_HW_REDIRECT;
-    else if (!strcmp(*argv, "-f") || !strcmp(*argv, "-force"))
+    else if (!strcmp(argi, "-f") || !strcmp(argi, "-force"))
       force = 1;
-    else if (!strncmp(*argv, "-plugindir=", 11)) {
-      pkg_libdir = Chars::from_c(*argv + 11);
-    } else if (!strncmp(*argv, "-twin@", 6))
-      dpy = *argv + 6;
-    else if (!strncmp(*argv, "-hw=", 4)) {
-      if (!strncmp(*argv + 4, "display", 7)) {
+    else if (!strncmp(argi, "-plugindir=", 11)) {
+      plugindir = Chars::from_c(argi + 11);
+    } else if (!strncmp(argi, "-twin@", 6))
+      dpy = argi + 6;
+    else if (!strncmp(argi, "-hw=", 4)) {
+      if (!strncmp(argi + 4, "display", 7)) {
         printk("" SS ": argument `--hw=display' is for internal use only.\n", MYname);
         TryUsage(NULL);
         return 1;
       }
-      if (!strncmp(*argv + 4, "tty", 3)) {
+      if (!strncmp(argi + 4, "tty", 3)) {
         const char *cs = "";
-        char *opt = *argv + 7;
+        char *opt = argi + 7;
         char *s = strchr(opt, ',');
         if (s)
           *s = '\0';
@@ -1159,7 +1160,7 @@ int main(int argc, char *argv[]) {
             /*
              * using server controlling tty makes no sense for twdisplay
              */
-            printk("" SS ": `" SS "' makes sense only with twattach.\n", MYname, *argv);
+            printk("" SS ": `" SS "' makes sense only with twattach.\n", MYname, argi);
             return 1;
           } else if (tty) {
             if (!strcmp(opt + 1, tty))
@@ -1170,7 +1171,7 @@ int main(int argc, char *argv[]) {
             return 1;
           }
         } else {
-          printk("" SS ": malformed display hw `" SS "'\n", MYname, *argv);
+          printk("" SS ": malformed display hw `" SS "'\n", MYname, argi);
           return 1;
         }
 
@@ -1184,33 +1185,27 @@ int main(int argc, char *argv[]) {
           if (term && !*term)
             term = NULL;
 
-          arg = (char *)malloc(strlen(tty) + 9 + strlen(cs) + (term ? 6 + strlen(term) : 0));
+          arg_hw = (char *)malloc(strlen(tty) + 9 + strlen(cs) + (term ? 6 + strlen(term) : 0));
 
-          sprintf(arg, "-hw=tty%s%s%s", (term ? ",TERM=" : term), term, cs);
+          sprintf(arg_hw, "-hw=tty%s%s%s", (term ? ",TERM=" : term), term, cs);
         } else
-          arg = *argv;
-      } else if ((*argv)[4]) {
-        arg = *argv;
-        if (!strncmp(*argv + 4, "twin@", 5)) {
-          client_dpy = *argv + 9;
-        } else if (!strcmp(*argv + 4, "twin")) {
+          arg_hw = argi;
+      } else if ((argi)[4]) {
+        arg_hw = argi;
+        if (!strncmp(argi + 4, "twin@", 5)) {
+          client_dpy = argi + 9;
+        } else if (!strcmp(argi + 4, "twin")) {
           client_dpy = "";
         }
       } else {
-        TryUsage(*argv);
+        TryUsage(argi);
         return 1;
       }
     } else {
-      TryUsage(*argv);
+      TryUsage(argi);
       return 1;
     }
   }
-
-  if (arg)
-    carg = arg;
-  else
-    /* user did not specify any `--hw=<dpy>', autoprobe */
-    carg = "";
 
 #ifdef CONF__ALLOC
   /* do this as soon as possible */
@@ -1279,7 +1274,8 @@ int main(int argc, char *argv[]) {
       DisplayWidth = TryDisplayWidth = TwGetDisplayWidth();
       DisplayHeight = TryDisplayHeight = TwGetDisplayHeight();
 
-      if (!(HW = AttachDisplayHW(Chars::from_c(carg), NOSLOT, 0))) {
+      /* if user did not specify any `--hw=<dpy>', autoprobe */
+      if (!(HW = AttachDisplayHW(Chars::from_c(arg_hw), NOSLOT, 0))) {
         TwClose();
         return 1;
       }

@@ -22,12 +22,12 @@
 
 /* setup configuration paths */
 
-#ifndef PKG_LIBDIR
-#warning PKG_LIBDIR is not #defined, assuming "/usr/local/lib/twin"
-#define PKG_LIBDIR "/usr/local/lib/twin"
+#ifndef PLUGINDIR
+#warning PLUGINDIR is not #defined, assuming "/usr/local/lib/twin"
+#define PLUGINDIR "/usr/local/lib/twin"
 #endif
 
-Chars pkg_libdir = PKG_LIBDIR;
+Chars plugindir = PLUGINDIR;
 
 /* First, some structures */
 
