@@ -77,6 +77,7 @@ static byte lrawkbd_InitKeyboard(void) {
   lrawkbd_LoadKeymaps();
   lrawkbd_SetKeyboard();
 
+  log(INFO, "      enabled Linux console raw keyboard mode\n");
   return ttrue;
 }
 
