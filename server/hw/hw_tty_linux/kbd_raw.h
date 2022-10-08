@@ -20,14 +20,14 @@ static void lrawkbd_ConfigureKeyboard(udat resource, byte todefault, udat value)
 static udat lrawkbd_LookupKey(udat *ShiftFlags, byte *slen, char *s, byte *retlen, char **ret);
 static void lrawkbd_KeyboardEvent(int fd, display_hw hw);
 
-static byte lrawkbd_GetKeyboard(void);
-static void lrawkbd_SetKeyboard(void);
+static bool lrawkbd_GetKeyboard(void);
+static bool lrawkbd_SetKeyboard(void);
 static void lrawkbd_RestoreKeyboard(void);
 
-static void lrawkbd_LoadKeymaps(void);
+static bool lrawkbd_LoadKeymaps(void);
 static void lrawkbd_FreeKeymaps(void);
 
-static void lrawkbd_GrabConsole(void);
+static bool lrawkbd_GrabConsole(void);
 static void lrawkbd_ReleaseConsole(void);
 
 static void lrawkbd_InitSignals(void);
@@ -70,15 +70,53 @@ static byte lrawkbd_InitKeyboard(void) {
   /* set non-blocking mode */
   ttyb.c_cc[VQUIT] = 0;
   ttyb.c_cc[VINTR] = 0;
-  tty_setioctl(tty_fd, &ttyb);
+
+  if (tty_setioctl(tty_fd, &ttyb) < 0) {
+    log(ERROR, "lrawkbd_InitKeyboard() error setting console tty flags: "
+#if defined(TCSETS)
+               "ioctl(TCSETS)"
+#else
+               "tcsetattr(TCSANOW)"
+#endif
+               " failed\n");
+
+    goto failed_ttyioctl;
+  }
 
   lrawkbd_InitSignals();
-  lrawkbd_GrabConsole();
-  lrawkbd_LoadKeymaps();
-  lrawkbd_SetKeyboard();
-
+  if (!lrawkbd_GrabConsole()) {
+    log(ERROR, "lrawkbd_InitKeyboard() error grabbing console: ioctl(VT_SETMODE, "
+               "VT_PROCESS) failed\n");
+    goto failed_grabconsole;
+  }
+  if (!lrawkbd_LoadKeymaps()) {
+    log(ERROR, "lrawkbd_InitKeyboard() error setting unicode keyboard mode: ioctl(tty_fd, "
+               "KDSKBMODE, K_UNICODE) failed\n");
+    goto failed_loadkeymaps;
+  }
+  if (!lrawkbd_SetKeyboard()) {
+    log(ERROR, "lrawkbd_InitKeyboard() error setting raw keyboard mode: ioctl(KDSKBMODE, "
+               "K_MEDIUMRAW) failed\n");
+    goto failed_setkeyboard;
+  }
   log(INFO, "      enabled Linux console raw keyboard mode\n");
   return ttrue;
+
+failed_setkeyboard:
+  lrawkbd_FreeKeymaps();
+
+failed_loadkeymaps:
+  lrawkbd_ReleaseConsole();
+
+failed_grabconsole:
+  lrawkbd_QuitSignals();
+
+failed_ttyioctl:
+  UnRegisterRemote(HW->keyboard_slot);
+  HW->keyboard_slot = NOSLOT;
+  HW->QuitKeyboard = NoOp;
+  lrawkbd_HW = NULL;
+  return tfalse;
 }
 
 static void lrawkbd_QuitKeyboard(void) {
@@ -88,7 +126,7 @@ static void lrawkbd_QuitKeyboard(void) {
   lrawkbd_ReleaseConsole();
   lrawkbd_QuitSignals();
 
-  tty_setioctl(tty_fd, &ttysave);
+  (void)tty_setioctl(tty_fd, &ttysave);
 
   UnRegisterRemote(HW->keyboard_slot);
   HW->keyboard_slot = NOSLOT;
@@ -171,31 +209,31 @@ static void lrawkbd_KeyboardEvent(int fd, display_hw hw) {
   RestoreHW;
 }
 
-static byte lrawkbd_GetKeyboard(void) {
+static bool lrawkbd_GetKeyboard(void) {
   return
       /* get original (probably XLATE) mode */
       ioctl(tty_fd, KDGKBMODE, &lrawkbd_mode_save) >= 0;
 }
 
-static void lrawkbd_SetKeyboard(void) {
+static bool lrawkbd_SetKeyboard(void) {
   /* set LED mode */
   char leds = 0;
-  ioctl(tty_fd, KDGETLED, &leds);
-  ioctl(tty_fd, KDSETLED, lrawkbd_leds = leds & 7);
+  (void)ioctl(tty_fd, KDGETLED, &leds);
+  (void)ioctl(tty_fd, KDSETLED, lrawkbd_leds = leds & 7);
 
   /* set MEDIUMRAW mode */
-  ioctl(tty_fd, KDSKBMODE, K_MEDIUMRAW);
+  return ioctl(tty_fd, KDSKBMODE, K_MEDIUMRAW) >= 0;
 }
 
 static void lrawkbd_RestoreKeyboard(void) {
   /* restore LED mode */
-  ioctl(tty_fd, KDSETLED, lrawkbd_leds | 8);
+  (void)ioctl(tty_fd, KDSETLED, lrawkbd_leds | 8);
 
   /* restore original (probably XLATE) mode */
-  ioctl(tty_fd, KDSKBMODE, lrawkbd_mode_save);
+  (void)ioctl(tty_fd, KDSKBMODE, lrawkbd_mode_save);
 }
 
-static void lrawkbd_GrabConsole(void) {
+static bool lrawkbd_GrabConsole(void) {
   struct vt_mode vt;
 
 #if 0
@@ -219,7 +257,7 @@ static void lrawkbd_GrabConsole(void) {
   vt.acqsig = SIGUSR1;
   vt.frsig = 0;
 
-  ioctl(tty_fd, VT_SETMODE, &vt);
+  return ioctl(tty_fd, VT_SETMODE, &vt) >= 0;
 }
 
 static void lrawkbd_ReleaseConsole(void) {
@@ -231,7 +269,7 @@ static void lrawkbd_ReleaseConsole(void) {
   vt.acqsig = 0;
   vt.frsig = 0;
 
-  ioctl(tty_fd, VT_SETMODE, &vt);
+  (void)ioctl(tty_fd, VT_SETMODE, &vt);
 }
 
 static void lrawkbd_ReactSignalIn(int sig);
@@ -261,9 +299,9 @@ static void lrawkbd_ReactSignalIn(int sig) {
 
   /* we just got SIGUSR2. tell kernel we allow the switch and initialize settings */
 
-  signal(sig, lrawkbd_ReactSignalIn);
+  (void)signal(sig, lrawkbd_ReactSignalIn);
 
-  ioctl(tty_fd, VT_RELDISP, 2);
+  (void)ioctl(tty_fd, VT_RELDISP, 2);
 
   lrawkbd_SetKeyboard();
 
@@ -273,11 +311,11 @@ static void lrawkbd_ReactSignalIn(int sig) {
 }
 
 static void lrawkbd_InitSignals(void) {
-  signal(SIGUSR1, lrawkbd_ReactSignalIn);
-  signal(SIGUSR2, lrawkbd_ReactSignalOut);
+  (void)signal(SIGUSR1, lrawkbd_ReactSignalIn);
+  (void)signal(SIGUSR2, lrawkbd_ReactSignalOut);
 }
 
 static void lrawkbd_QuitSignals(void) {
-  signal(SIGUSR1, SIG_DFL);
-  signal(SIGUSR2, SIG_DFL);
+  (void)signal(SIGUSR1, SIG_DFL);
+  (void)signal(SIGUSR2, SIG_DFL);
 }

@@ -804,7 +804,7 @@ static void lrawkbd_FreeKeymaps(void) {
   }
 }
 
-static void lrawkbd_LoadKeymaps(void) {
+static bool lrawkbd_LoadKeymaps(void) {
   struct kbentry ke;
   ldat table, keycode;
 
@@ -815,7 +815,9 @@ static void lrawkbd_LoadKeymaps(void) {
    * keyboard mode will be overridden in lrawkbd_SetKeyboard(),
    * no need to restore it here.
    */
-  ioctl(tty_fd, KDSKBMODE, K_UNICODE);
+  if (ioctl(tty_fd, KDSKBMODE, K_UNICODE) < 0) {
+    return false;
+  }
 
   for (table = 0; table < lrawkbd_KEYMAPS_N; table++) {
     for (keycode = 0; keycode < 0x80; keycode++) {
@@ -841,6 +843,7 @@ static void lrawkbd_LoadKeymaps(void) {
       }
     }
   }
+  return true;
 }
 
 static udat get_kbentry(byte keycode, byte table) {
