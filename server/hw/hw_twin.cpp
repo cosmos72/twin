@@ -29,14 +29,14 @@
 #include <Tw/Twstat.h>
 #include <Tw/Twstat_defs.h>
 
-typedef struct {
+struct sel_req {
   tany Requestor;
   uldat ReqPrivate;
-} sel_req;
+};
 
 #define TSELMAX 2
 
-typedef struct {
+struct tw_data {
   tdisplay Td;
   twindow Twin;
   tmsgport Tmsgport;
@@ -44,7 +44,7 @@ typedef struct {
   byte TSelCount;
   sel_req SelReq[TSELMAX];  /* buffers to hold selection request data while waiting from twin */
   sel_req TSelReq[TSELMAX]; /* buffers to hold selection request data while waiting from libtw */
-} tw_data;
+};
 
 #define twdata ((tw_data *)HW->Private)
 #define Td (twdata->Td)
@@ -79,7 +79,7 @@ static void TW_Configure(udat resource, byte todefault, udat value) {
       Tw_WriteCharsetWindow(Td, Twin, 5, "\033[10]");
     else {
       char buf[10];
-      sprintf(buf, "\033[10;%.3hd]", value);
+      sprintf(buf, "\033[10;%.3hd]", (unsigned)value);
       Tw_WriteCharsetWindow(Td, Twin, strlen(buf), buf);
     }
     setFlush();
@@ -89,7 +89,7 @@ static void TW_Configure(udat resource, byte todefault, udat value) {
       Tw_WriteCharsetWindow(Td, Twin, 5, "\033[11]");
     else {
       char buf[10];
-      sprintf(buf, "\033[11;%.3hd]", value);
+      sprintf(buf, "\033[11;%.3hd]", (unsigned)value);
       Tw_WriteCharsetWindow(Td, Twin, strlen(buf), buf);
     }
     setFlush();
@@ -428,6 +428,7 @@ static bool TW_InitHW(void) {
     if (!arg.starts_with("twin")) {
       return false; /* user said "use <arg> as display, not libtw" */
     }
+    // skip "twin"
     arg = arg.view(4, arg.size());
 
     if (arg.contains(Chars(",noinput"))) {
@@ -435,6 +436,14 @@ static bool TW_InitHW(void) {
     }
     if (arg.contains(Chars(",slow"))) {
       HW->FlagsHW |= FlHWExpensiveFlushVideo;
+    }
+    if (arg.contains(Chars(",help"))) {
+      log(INFO, "   --hw=twin options:\n"
+                "      @TWDPY      connect to TWDPY instead of $TWDISPLAY (must be first option)\n"
+                "      ,help       show this help\n"
+                "      ,noinput    open a view-only window - ignore input\n"
+                "      ,slow       assume connection is slow\n");
+      return false;
     }
     /* if '@' is present, it is followed by the TWDISPLAY to use */
     const size_t at = arg.find(Chars("@"));
@@ -447,8 +456,9 @@ static bool TW_InitHW(void) {
     } else {
       arg = Chars();
     }
-  } else
+  } else {
     arg = Chars();
+  }
 
   if (!arg && !(arg = Chars::from_c(origTWDisplay))) {
     /*
