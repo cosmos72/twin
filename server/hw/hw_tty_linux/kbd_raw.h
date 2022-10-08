@@ -38,12 +38,12 @@ static byte lrawkbd_InitKeyboard(void) {
   struct termios ttyb;
 
   if (lrawkbd_HW) {
-    log(ERROR,
-        "lrawkbd_InitKeyboard(): error: another display is already using raw-keyboard mode.\n");
+    log(ERROR, "      lrawkbd_InitKeyboard(): error: another display is already using raw-keyboard "
+               "mode.\n");
     return tfalse;
   } else if (!lrawkbd_GetKeyboard()) {
-    log(ERROR,
-        "lrawkbd_InitKeyboard(): error: tty is not a Linux console: ioctl(KDGKBMODE) failed!\n");
+    log(ERROR, "      lrawkbd_InitKeyboard(): error: tty is not a Linux console: ioctl(KDGKBMODE) "
+               "failed!\n");
     return tfalse;
   }
 
@@ -72,7 +72,7 @@ static byte lrawkbd_InitKeyboard(void) {
   ttyb.c_cc[VINTR] = 0;
 
   if (tty_setioctl(tty_fd, &ttyb) < 0) {
-    log(ERROR, "lrawkbd_InitKeyboard() error setting console tty flags: "
+    log(ERROR, "      lrawkbd_InitKeyboard() error setting console tty flags: "
 #if defined(TCSETS)
                "ioctl(TCSETS)"
 #else
@@ -85,17 +85,17 @@ static byte lrawkbd_InitKeyboard(void) {
 
   lrawkbd_InitSignals();
   if (!lrawkbd_GrabConsole()) {
-    log(ERROR, "lrawkbd_InitKeyboard() error grabbing console: ioctl(VT_SETMODE, "
+    log(ERROR, "      lrawkbd_InitKeyboard() error grabbing console: ioctl(VT_SETMODE, "
                "VT_PROCESS) failed\n");
     goto failed_grabconsole;
   }
   if (!lrawkbd_LoadKeymaps()) {
-    log(ERROR, "lrawkbd_InitKeyboard() error setting unicode keyboard mode: ioctl(tty_fd, "
+    log(ERROR, "      lrawkbd_InitKeyboard() error setting unicode keyboard mode: ioctl(tty_fd, "
                "KDSKBMODE, K_UNICODE) failed\n");
     goto failed_loadkeymaps;
   }
   if (!lrawkbd_SetKeyboard()) {
-    log(ERROR, "lrawkbd_InitKeyboard() error setting raw keyboard mode: ioctl(KDSKBMODE, "
+    log(ERROR, "      lrawkbd_InitKeyboard() error setting raw keyboard mode: ioctl(KDSKBMODE, "
                "K_MEDIUMRAW) failed\n");
     goto failed_setkeyboard;
   }
@@ -210,9 +210,8 @@ static void lrawkbd_KeyboardEvent(int fd, display_hw hw) {
 }
 
 static bool lrawkbd_GetKeyboard(void) {
-  return
-      /* get original (probably XLATE) mode */
-      ioctl(tty_fd, KDGKBMODE, &lrawkbd_mode_save) >= 0;
+  /* get original (probably XLATE) mode */
+  return ioctl(tty_fd, KDGKBMODE, &lrawkbd_mode_save) >= 0;
 }
 
 static bool lrawkbd_SetKeyboard(void) {
@@ -271,8 +270,6 @@ static void lrawkbd_ReleaseConsole(void) {
 
   (void)ioctl(tty_fd, VT_SETMODE, &vt);
 }
-
-static void lrawkbd_ReactSignalIn(int sig);
 
 static void lrawkbd_ReactSignalOut(int sig) {
   /* HW may not be set here... use lrawkbd_HW */

@@ -245,11 +245,11 @@ static bool X11_InitHW(void) {
         noinput = ttrue;
       } else {
         log(INFO,
-            "   --hw=X11 options:\n"
+            "   --hw=X11 and --hw=xft options:\n"
             "      @DPY             connect to DPY instead of $DISPLAY (must be first option)\n"
             "      ,charset=NAME    use specified charset encoding\n"
             "      ,drag            use XCopyArea() for scroll/drag when possible\n"
-            "      ,font=FONT_NAME  use specified X11 font name or pattern\n"
+            "      ,font=FONT_NAME  use specified font name or pattern\n"
             "      ,fontsize=WxH    use specified font size\n"
             "      ,help            show this help\n"
             "      ,noinput         open a view-only X11 window - ignore input\n"
