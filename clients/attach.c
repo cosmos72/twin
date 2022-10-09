@@ -102,12 +102,12 @@ static void InitSignals(void) {
 #endif
 }
 
-static char *fix_tty(char *arg, byte is_ourtty[1], byte err[1]) {
+static char *fix_tty(char *arg, byte is_our_tty[1], byte err[1]) {
   char *target = NULL;
   char *opts = arg + 7;
   char *comma = strchr(opts, ',');
   TW_CONST char *tty = ttyname(0);
-  byte is_servtty = 0;
+  byte is_srv_tty = 0;
   if (!tty) {
     fprintf(stderr, "%s: ttyname() failed, cannot find controlling tty!\n", MYname);
     *err = 1;
@@ -118,12 +118,12 @@ static char *fix_tty(char *arg, byte is_ourtty[1], byte err[1]) {
   }
 
   if (!opts[0]) {
-    *is_ourtty = 1; /* attach twin to our tty */
+    *is_our_tty = 1; /* attach twin to our tty */
   } else if (opts[0] == '@' && opts[1]) {
     if (opts[1] == '-') {
-      is_servtty = 1; /* tell twin to attach to its own tty */
+      is_srv_tty = 1; /* tell twin to attach to its own tty */
     } else if (!strcmp(opts + 1, tty)) {
-      *is_ourtty = 1; /* attach twin to our tty */
+      *is_our_tty = 1; /* attach twin to our tty */
     }
   } else {
     fprintf(stderr, "%s: malformed display hw `%s'\n", MYname, arg);
@@ -136,7 +136,7 @@ static char *fix_tty(char *arg, byte is_ourtty[1], byte err[1]) {
   else
     comma = "";
 
-  if (*is_ourtty) {
+  if (*is_our_tty) {
     TW_CONST char *term = getenv("TERM");
     if (!term) {
       term = "";
@@ -145,7 +145,7 @@ static char *fix_tty(char *arg, byte is_ourtty[1], byte err[1]) {
     if (target) {
       sprintf(target, "-hw=tty@%s%s%s%s", tty, (*term ? ",TERM=" : ""), term, comma);
     }
-  } else if (is_servtty) {
+  } else if (is_srv_tty) {
     target = malloc(8 + strlen(comma));
     if (target) {
       sprintf(target, "-hw=tty%s", comma);
@@ -160,13 +160,49 @@ static char *fix_tty(char *arg, byte is_ourtty[1], byte err[1]) {
   return target;
 }
 
+static char *fix_x11(char *arg) {
+  TW_CONST char *our_xdisplay = NULL;
+  char *target = NULL;
+  char *opts = NULL;
+
+  if (!strncmp(arg, "-hw=xft", 7) || !strncmp(arg, "-hw=X11", 7)) {
+    opts = arg + 7;
+  } else /* if (!strncmp(arg, "-hw=X", 5)) */ {
+    opts = arg + 5;
+  }
+
+  if (!opts[0] || opts[0] != '@') {
+    our_xdisplay = getenv("DISPLAY"); /* attach twin to our $DISPLAY */
+    if (!our_xdisplay) {
+      fprintf(stderr,
+              "%s: warning: %.*s option @<XDISPLAY> not specified,"
+              " and environment variable $DISPLAY is not set."
+              "\n    using twin server's environment variable $DISPLAY",
+              MYname, (int)(opts - arg), arg);
+    }
+  }
+
+  if (our_xdisplay) {
+    target = (char *)malloc(strlen(arg) + 2 + strlen(our_xdisplay));
+    if (target) {
+      sprintf(target, "%.*s@%s%s", (int)(opts - arg), arg, our_xdisplay, opts);
+    }
+  } else {
+    target = strdup(arg);
+  }
+  if (!target) {
+    fprintf(stderr, "%s: out of memory!\n", MYname);
+  }
+  return target;
+}
+
 TW_DECL_MAGIC(attach_magic);
 
 int main(int argc, char *argv[]) {
   char *dpy = NULL, *target = NULL, *arg;
   uldat chunk;
   byte detach = 0, redirect, force = 0, flags = TW_ATTACH_HW_REDIRECT;
-  byte is_ourtty = 0;
+  byte is_our_tty = 0;
 
   TwMergeHyphensArgv(argc, argv);
 
@@ -200,14 +236,26 @@ int main(int argc, char *argv[]) {
     else if (!strncmp(arg, "-twin@", 6))
       dpy = arg + 6;
     else if (!strncmp(arg, "-hw=", 4)) {
-      if (!strncmp(arg + 4, "tty", 3)) {
+      if (target) {
+        fprintf(stderr, "%s: only a single --hw=... argument is supported\n", MYname);
+        return 1;
+      } else if (!strncmp(arg + 4, "tty", 3)) {
         byte err = 0;
-        target = fix_tty(arg, &is_ourtty, &err);
+        target = fix_tty(arg, &is_our_tty, &err);
         if (err != 0 || !target) {
+          return 1;
+        }
+      } else if (arg[4] == 'X' || !strncmp(arg + 4, "xft", 3)) {
+        target = fix_x11(arg);
+        if (!target) {
           return 1;
         }
       } else if (arg[4]) {
         target = strdup(arg);
+        if (!target) {
+          fprintf(stderr, "%s: out of memory!\n", MYname);
+          return 1;
+        }
       } else {
         Usage(detach);
         return 1;
@@ -269,7 +317,7 @@ int main(int argc, char *argv[]) {
       if (TwInPanic())
         break;
 
-      if (is_ourtty) {
+      if (is_our_tty) {
         fputs("\033[2J", stdout);
         fflush(stdout);
       }
