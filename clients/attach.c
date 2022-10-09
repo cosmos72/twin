@@ -25,19 +25,20 @@ static void Usage(byte detach) {
   fprintf(stderr,
           "Usage: %s [OPTIONS] %s\n"
           "Currently known options: \n"
-          " -h, --help               display this help and exit\n"
-          " -V, --version            output version information and exit\n"
-          " -a                       attach display%s\n"
-          " -d                       detach display%s\n"
-          " -s, --share              allow multiple simultaneous displays (default)\n"
-          " -x, --excl               request exclusive display - detach all others\n"
-          " -v, --verbose            verbose output (default)\n"
-          " -q, --quiet              quiet - don't report messages from twin server\n"
-          " -f, --force              force running even with wrong protocol version\n"
-          " --twin@<TWDISPLAY>       specify server to contact (default is $TWDISPLAY)\n"
-          " --hw=<display>[,options] start the given display driver\n"
+          "  -h, --help               display this help and exit\n"
+          "  -V, --version            output version information and exit\n"
+          "  -a                       attach display%s\n"
+          "  -d                       detach display%s\n"
+          "  -s, --share              allow multiple simultaneous displays (default)\n"
+          "  -x, --excl               request exclusive display: detach all others\n"
+          "  -v, --verbose            verbose output (default)\n"
+          "  -q, --quiet              quiet: don't report messages from twin server\n"
+          "  -f, --force              force running even with wrong protocol version\n"
+          "  --twin@<TWDISPLAY>       specify server to contact (default is $TWDISPLAY)\n"
+          "  --hw=<display>[,options] start the given display driver\n"
           "Currently known display drivers: \n"
           "\tX[@<XDISPLAY>]\n"
+          "\txft[@<XDISPLAY>]\n"
           "\ttwin[@<TWDISPLAY>]\n"
           "\ttty[@<tty device>]\n",
           MYname, detach ? "" : "--hw=<display> [...]", detach ? "" : " (default)",
@@ -101,94 +102,113 @@ static void InitSignals(void) {
 #endif
 }
 
+static char *fix_tty(char *arg, byte is_ourtty[1], byte err[1]) {
+  char *target = NULL;
+  char *opts = arg + 7;
+  char *comma = strchr(opts, ',');
+  TW_CONST char *tty = ttyname(0);
+  byte is_servtty = 0;
+  if (!tty) {
+    fprintf(stderr, "%s: ttyname() failed, cannot find controlling tty!\n", MYname);
+    *err = 1;
+    return NULL;
+  }
+  if (comma) {
+    *comma = '\0';
+  }
+
+  if (!opts[0]) {
+    *is_ourtty = 1; /* attach twin to our tty */
+  } else if (opts[0] == '@' && opts[1]) {
+    if (opts[1] == '-') {
+      is_servtty = 1; /* tell twin to attach to its own tty */
+    } else if (!strcmp(opts + 1, tty)) {
+      *is_ourtty = 1; /* attach twin to our tty */
+    }
+  } else {
+    fprintf(stderr, "%s: malformed display hw `%s'\n", MYname, arg);
+    *err = 1;
+    return NULL;
+  }
+
+  if (comma)
+    *comma = ',';
+  else
+    comma = "";
+
+  if (*is_ourtty) {
+    TW_CONST char *term = getenv("TERM");
+    if (!term) {
+      term = "";
+    }
+    target = (char *)malloc(strlen(tty) + 9 + strlen(comma) + (*term ? 6 + strlen(term) : 0));
+    if (target) {
+      sprintf(target, "-hw=tty@%s%s%s%s", tty, (*term ? ",TERM=" : ""), term, comma);
+    }
+  } else if (is_servtty) {
+    target = malloc(8 + strlen(comma));
+    if (target) {
+      sprintf(target, "-hw=tty%s", comma);
+    }
+  } else {
+    target = strdup(arg);
+  }
+  if (!target) {
+    fprintf(stderr, "%s: out of memory!\n", MYname);
+    *err = 1;
+  }
+  return target;
+}
+
 TW_DECL_MAGIC(attach_magic);
 
 int main(int argc, char *argv[]) {
-  byte detach = 0, redirect, force = 0, flags = TW_ATTACH_HW_REDIRECT;
-  char *dpy = NULL, *arg = NULL, *tty = ttyname(0);
-  byte ret = 0, ourtty = 0, servtty = 0;
-  char *s;
-  TW_CONST char *buff;
+  char *dpy = NULL, *target = NULL, *arg;
   uldat chunk;
+  byte detach = 0, redirect, force = 0, flags = TW_ATTACH_HW_REDIRECT;
+  byte is_ourtty = 0;
 
   TwMergeHyphensArgv(argc, argv);
 
   MYname = argv[0];
 
-  if (strstr(argv[0], "detach"))
+  if (strstr(argv[0], "detach")) {
     detach = 1;
+  }
 
-  while (*++argv) {
-    if (!strcmp(*argv, "-V") || !strcmp(*argv, "-version")) {
+  while ((arg = *++argv) != NULL) {
+    if (!strcmp(arg, "-V") || !strcmp(arg, "-version")) {
       ShowVersion();
       return 0;
-    } else if (!strcmp(*argv, "-h") || !strcmp(*argv, "-help")) {
+    } else if (!strcmp(arg, "-h") || !strcmp(arg, "-help")) {
       Usage(detach);
       return 0;
-    } else if (!strcmp(*argv, "-x") || !strcmp(*argv, "-excl"))
+    } else if (!strcmp(arg, "-x") || !strcmp(arg, "-excl"))
       flags |= TW_ATTACH_HW_EXCLUSIVE;
-    else if (!strcmp(*argv, "-s") || !strcmp(*argv, "-share"))
+    else if (!strcmp(arg, "-s") || !strcmp(arg, "-share"))
       flags &= ~TW_ATTACH_HW_EXCLUSIVE;
-    else if (!strcmp(*argv, "-a"))
+    else if (!strcmp(arg, "-a"))
       detach = 0;
-    else if (!strcmp(*argv, "-d"))
+    else if (!strcmp(arg, "-d"))
       detach = 1;
-    else if (!strcmp(*argv, "-v") || !strcmp(*argv, "-verbose"))
+    else if (!strcmp(arg, "-v") || !strcmp(arg, "-verbose"))
       flags |= TW_ATTACH_HW_REDIRECT;
-    else if (!strcmp(*argv, "-q") || !strcmp(*argv, "-quiet"))
+    else if (!strcmp(arg, "-q") || !strcmp(arg, "-quiet"))
       flags &= ~TW_ATTACH_HW_REDIRECT;
-    else if (!strcmp(*argv, "-f") || !strcmp(*argv, "-force"))
+    else if (!strcmp(arg, "-f") || !strcmp(arg, "-force"))
       force = 1;
-    else if (!strncmp(*argv, "-twin@", 6))
-      dpy = *argv + 6;
-    else if (!strncmp(*argv, "-hw=", 4)) {
-      if (!strncmp(*argv + 4, "tty", 3)) {
-        buff = *argv + 7;
-        s = strchr(buff, ',');
-        if (s)
-          *s = '\0';
-
-        if (!*buff)
-          /* attach twin to our tty */
-          ourtty = 1;
-        else if (*buff == '@' && buff[1]) {
-          if (buff[1] == '-') {
-            /* tell twin to attach to its tty */
-            servtty = 1;
-          } else if (tty) {
-            if (!strcmp(buff + 1, tty))
-              /* attach twin to our tty */
-              ourtty = 1;
-          } else {
-            fprintf(stderr, "%s: ttyname() failed, cannot find controlling tty!\n", MYname);
-            return 1;
-          }
-        } else {
-          fprintf(stderr, "%s: malformed display hw `%s'\n", MYname, *argv);
+    else if (!strncmp(arg, "-twin@", 6))
+      dpy = arg + 6;
+    else if (!strncmp(arg, "-hw=", 4)) {
+      if (!strncmp(arg + 4, "tty", 3)) {
+        byte err = 0;
+        target = fix_tty(arg, &is_ourtty, &err);
+        if (err != 0 || !target) {
           return 1;
         }
-
-        if (s)
-          *s = ',';
-        else
-          s = "";
-
-        if (ourtty) {
-          buff = getenv("TERM");
-          if (!buff)
-            buff = "";
-
-          arg = (char *)malloc(strlen(tty) + 9 + strlen(s) + (*buff ? 6 + strlen(buff) : 0));
-
-          sprintf(arg, "-hw=tty@%s%s%s%s", tty, (*buff ? ",TERM=" : ""), buff, s);
-        } else if (servtty) {
-          arg = malloc(8 + strlen(s));
-          sprintf(arg, "-hw=tty%s", s);
-        } else
-          arg = strdup(*argv);
-      } else if ((*argv)[4])
-        arg = strdup(*argv);
-      else {
+      } else if (arg[4]) {
+        target = strdup(arg);
+      } else {
         Usage(detach);
         return 1;
       }
@@ -196,12 +216,12 @@ int main(int argc, char *argv[]) {
       fprintf(stderr,
               "%s: argument `%s' not recognized\n"
               "\ttry `%s --help' for usage summary.\n",
-              MYname, *argv, MYname);
+              MYname, arg, MYname);
       return 1;
     }
   }
 
-  if (detach == 0 && !arg) {
+  if (detach == 0 && !target) {
     Usage(detach);
     return 1;
   }
@@ -212,6 +232,7 @@ int main(int argc, char *argv[]) {
 
   if (TwCheckMagic(attach_magic) && TwOpen(dpy) && TwCreateMsgPort(8, "twattach"))
     do {
+      byte ret = 0;
 
       if (!VersionsMatch(force)) {
         if (!force) {
@@ -222,33 +243,33 @@ int main(int argc, char *argv[]) {
       }
 
       if (detach) {
-        return !TwDetachHW(arg ? strlen(arg) : 0, arg);
+        return !TwDetachHW(target ? strlen(target) : 0, target);
       }
 
-      TwAttachHW(arg ? strlen(arg) : 0, arg, flags);
+      TwAttachHW(target ? strlen(target) : 0, target, flags);
       TwFlush();
-      free(arg);
+      free(target);
 
       if (redirect)
         fprintf(stderr, "reported messages...\n");
 
       for (;;) {
-        buff = TwAttachGetReply(&chunk);
-        if (buff <= (char *)2) {
-          ret = (byte)(size_t)buff;
+        TW_CONST char *reply = TwAttachGetReply(&chunk);
+        if (reply <= (char *)2) {
+          ret = (byte)(size_t)reply;
           break;
-        } else if (buff == (char *)-1)
-          /* libtw panic */
-          break;
+        } else if (reply == (char *)-1) {
+          break; /* libtw panic */
+        }
 
-        fprintf(stderr, "%.*s", (int)chunk, buff);
+        fprintf(stderr, "%.*s", (int)chunk, reply);
       }
       fflush(stderr);
 
       if (TwInPanic())
         break;
 
-      if (ourtty) {
+      if (is_ourtty) {
         fputs("\033[2J", stdout);
         fflush(stdout);
       }
