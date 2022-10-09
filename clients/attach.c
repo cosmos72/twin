@@ -69,11 +69,11 @@ static byte VersionsMatch(byte force) {
   if (lv != sv || lv != cv) {
     fprintf(stderr,
             "%s: %s: socket protocol version mismatch!%s\n"
-            "          client is %d.%d.%d, library is %d.%d.%d, server is %d.%d.%d\n",
+            "          client is %u.%u.%u, library is %u.%u.%u, server is %u.%u.%u\n",
             MYname, (force ? "warning" : "fatal"), (force ? " (ignored)" : ""),
-            (int)TW_VER_MAJOR(cv), (int)TW_VER_MINOR(cv), (int)TW_VER_PATCH(cv),
-            (int)TW_VER_MAJOR(lv), (int)TW_VER_MINOR(lv), (int)TW_VER_PATCH(lv),
-            (int)TW_VER_MAJOR(sv), (int)TW_VER_MINOR(sv), (int)TW_VER_PATCH(sv));
+            (unsigned)TW_VER_MAJOR(cv), (unsigned)TW_VER_MINOR(cv), (unsigned)TW_VER_PATCH(cv),
+            (unsigned)TW_VER_MAJOR(lv), (unsigned)TW_VER_MINOR(lv), (unsigned)TW_VER_PATCH(lv),
+            (unsigned)TW_VER_MAJOR(sv), (unsigned)TW_VER_MINOR(sv), (unsigned)TW_VER_PATCH(sv));
     return tfalse;
   }
   return ttrue;
