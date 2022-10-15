@@ -106,6 +106,20 @@ static void X11_FlushVideo(void) {
     /* ttrue if and only if the cursor will be erased by burst */
   }
 
+#if HW_X_DRIVER == HW_XFT
+  if (xflavor != 1) {
+    log(ERROR, "internal error! driver --hw=xft attempted to use --hw=X11 internal data instead of "
+               "its own!\n");
+    return;
+  }
+#else
+  if (xflavor != 0) {
+    log(ERROR, "internal error! driver --hw=X11 attempted to use --hw=xft internal data instead of "
+               "its own!\n");
+    return;
+  }
+#endif
+
   /* first burst all changes */
   if (ChangedVideoFlag) {
     for (i = 0; i < (uldat)DisplayHeight * 2; i++) {
