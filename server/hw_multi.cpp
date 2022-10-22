@@ -129,23 +129,6 @@ void RunNoHW(byte print_info) {
   (void)DlLoad(SocketSo);
 }
 
-// return true if at least one active display_hw->Name starts with <prefix>
-static bool have_display_hw(Chars prefix) {
-  display_hw hw;
-
-  for (hw = All->FirstDisplayHW; hw; hw = hw->Next) {
-    Chars name = hw->Name;
-    if (hw->Quitted || !name.starts_with(prefix)) {
-      continue;
-    }
-    const size_t prefix_len = prefix.size();
-    if (name.size() == prefix_len || name[prefix_len] == ',' || name[prefix_len] == '@') {
-      return true;
-    }
-  }
-  return false;
-}
-
 static bool module_InitHW(Chars arg) {
 
   if (!arg) {
@@ -161,16 +144,6 @@ static bool module_InitHW(Chars arg) {
   Chars name = arg.view(0, separator != size_t(-1) ? separator : arg.size());
   if (name == Chars("X")) {
     name = Chars("X11");
-  }
-  // temporary workaround: using both --hw=X11 and --hw=xft at the same time crashes => prevent it
-  if ((name == Chars("X11") && have_display_hw("-hw=xft")) ||
-      (name == Chars("xft") && (have_display_hw("-hw=X") || have_display_hw("-hw=X11")))) {
-    log(ERROR,
-        "      known bug: using both --hw=X11 and --hw=xft at the same time"
-        " currently crashes twin server.\n"
-        "      Please use twdisplay instead of twattach to start --hw=",
-        arg, "\n");
-    return false;
   }
 
   String alloc_name;

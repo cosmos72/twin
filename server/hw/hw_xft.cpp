@@ -48,24 +48,24 @@
 #include "hw_x/common_protos.h"
 
 /* forward declaration... */
-static void X11_XftDrawString16(Display *display, Drawable d, GC gc, int x, int y, XChar16 *string,
-                                int length);
+static void XSYM(DrawString16)(Display *display, Drawable d, GC gc, int x, int y, XChar16 *string,
+                               int length);
 
-#define myXDrawImageString X11_XftDrawString16
+#define myXDrawImageString XSYM(DrawString16)
 
 #define XDRAW(col, buf, buflen)                                                                    \
   do {                                                                                             \
-    X11_SetColors(col);                                                                            \
+    XSYM(SetColors)(col);                                                                          \
     myXDrawImageString(xdisplay, xwindow, xgc, xbegin, ybegin + xupfont, buf, buflen);             \
   } while (0)
 
 #define XDRAW_ANY(buf, buflen, col, _) XDRAW(col, buf, buflen)
 
 #include "hw_x/util.h"
-#include "hw_x/common.cpp"
+#include "hw_x/common.h"
 
-static void X11_XftDrawString16(Display *display, Drawable d, GC gc, int x, int y, XChar16 *string,
-                                int length) {
+static void XSYM(DrawString16)(Display *display, Drawable d, GC gc, int x, int y, XChar16 *string,
+                               int length) {
   /*
    * XftDrawString16 doesn't erase the existing character before it draws a new one, and when
    * it draws the new one, it only draws the strokes, so you see some of the previous character
@@ -78,7 +78,7 @@ static void X11_XftDrawString16(Display *display, Drawable d, GC gc, int x, int 
 }
 
 /* manage foreground/background colors */
-static void X11_SetColors(tcolor col) {
+static void XSYM(SetColors)(tcolor col) {
   if (xsgc.foreground != xcol[TCOLFG(col)]) {
     XSetForeground(xdisplay, xgc, xsgc.foreground = xcol[TCOLFG(col)]);
     xforeground = xftcolors[TCOLFG(col)];
@@ -90,8 +90,8 @@ static void X11_SetColors(tcolor col) {
   }
 }
 
-static ldat xftCalcFontScore(udat fontwidth, udat fontheight, XftFont *fontp,
-                             const char *fontname) {
+static ldat XSYM(CalcFontScore)(udat fontwidth, udat fontheight, XftFont *fontp,
+                                const char *fontname) {
   if (FC_CHARSET_MAP_SIZE >= 256 / 32) {
     FcChar32 map[FC_CHARSET_MAP_SIZE] = {}, *ptr = map, mask = (FcChar32)-1;
     FcChar32 next, first = FcCharSetFirstPage(fontp->charset, map, &next);
@@ -123,9 +123,9 @@ static ldat xftCalcFontScore(udat fontwidth, udat fontheight, XftFont *fontp,
       ptr++;
     }
   }
-  ldat score = calcFontScore(fontwidth, fontheight, (ldat)fontp->max_advance_width,
-                             (ldat)fontp->ascent + fontp->descent);
-  /* slightly prefer fonts with "DejaVu" "Sans" and "Mono" in their name */
+  ldat score = XSYM(FontScoreOf)(fontwidth, fontheight, (ldat)fontp->max_advance_width,
+                                 (ldat)fontp->ascent + fontp->descent);
+  /* slightly prefer fonts with "DejaVu" "Sans" or "Mono" in their name */
   if (!strstr(fontname, "DejaVu") && !strstr(fontname, "dejavu"))
     score -= 2;
   if (!strstr(fontname, "Sans") && !strstr(fontname, "sans") && !strstr(fontname, "Mono") &&
@@ -135,7 +135,7 @@ static ldat xftCalcFontScore(udat fontwidth, udat fontheight, XftFont *fontp,
 }
 
 /* return name of selected font in allocated (char *) */
-static char *X11_AutodetectFont(const char *family, udat fontwidth, udat fontheight) {
+static char *XSYM(AutodetectFont)(const char *family, udat fontwidth, udat fontheight) {
   char *fontname = NULL;
   FcPattern *best_pattern = NULL;
   ldat best_score = TW_MINLDAT;
@@ -182,7 +182,7 @@ static char *X11_AutodetectFont(const char *family, udat fontwidth, udat fonthei
 
       fontp = XftFontOpenPattern(xdisplay, t_pattern);
       if (fontp) {
-        ldat score = xftCalcFontScore(fontwidth, fontheight, fontp, (const char *)file);
+        ldat score = XSYM(CalcFontScore)(fontwidth, fontheight, fontp, (const char *)file);
 
         if (best_pattern == NULL || score > best_score) {
           best_score = score;
@@ -207,13 +207,13 @@ static char *X11_AutodetectFont(const char *family, udat fontwidth, udat fonthei
   return fontname;
 }
 
-static int X11_AllocColor(Display *display, Visual *xvisual, Colormap colormap, XColor *xcolor,
-                          unsigned long *pixel, int color_num) {
+static int XSYM(AllocColor)(Display *display, Visual *xvisual, Colormap colormap, XColor *xcolor,
+                            unsigned long *pixel, int color_num) {
   XRenderColor xrcolor;
   XftColor *xft_color;
 
   if (!(xft_color = (XftColor *)AllocMem(sizeof(XftColor)))) {
-    log(ERROR, "      X11_AllocColor(): Out of memory!\n");
+    log(ERROR, "      " XSYM_STR(AllocColor) "(): Out of memory!\n");
     return -1;
   }
   memset(xft_color, 0, sizeof(XftColor));
@@ -232,7 +232,7 @@ static int X11_AllocColor(Display *display, Visual *xvisual, Colormap colormap, 
   return 1;
 }
 
-static void X11_FlavorQuitHW(void) {
+static void XSYM(FlavorQuitHW)(void) {
   int xscreen;
   Colormap colormap;
   Visual *xvisual;
@@ -257,8 +257,8 @@ static void X11_FlavorQuitHW(void) {
   }
 }
 
-/* custom version of X11_UTF_32_to_charset_function for the XFT driver */
-static Tutf_function X11_UTF_32_to_charset_function(const char *charset) {
+/* custom version of XSYM(UTF_32_to_charset_function) for the XFT driver */
+static Tutf_function XSYM(UTF_32_to_charset_function)(const char *charset) {
   /* this is sufficient for xft fonts which are 16-bit unicode */
-  return X11_UTF_32_to_UCS_2;
+  return XSYM(UTF_32_to_UCS_2);
 }

@@ -259,16 +259,12 @@ static void termcap_QuitVideo(void) {
   HW->QuitVideo = NoOp;
 }
 
-#define termcap_MogrifyInit()                                                                      \
-  fputs(tc_attr_off, stdOUT);                                                                      \
-  _col = TCOL(twhite, tblack)
-#define termcap_MogrifyFinish()                                                                    \
-  do {                                                                                             \
-  } while (0)
+#define termcap_DrawStart() (fputs(tc_attr_off, stdOUT), _col = TCOL(twhite, tblack))
+#define termcap_DrawFinish() ((void)0)
 
 inline char *termcap_CopyAttr(char *attr, char *dest) {
-  while ((*dest++ = *attr++))
-    ;
+  while ((*dest++ = *attr++)) {
+  }
   return --dest;
 }
 
@@ -319,7 +315,7 @@ inline void termcap_SetColor(tcolor col) {
   fputs(colbuf, stdOUT);
 }
 
-inline void termcap_Mogrify(dat x, dat y, uldat len) {
+inline void termcap_DrawSome(dat x, dat y, uldat len) {
   uldat delta = x + y * (uldat)DisplayWidth;
   tcell *V, *oV;
   tcolor col;
@@ -346,7 +342,7 @@ inline void termcap_Mogrify(dat x, dat y, uldat len) {
       if (c >= 128) {
         if (tty_use_utf8) {
           /* use utf-8 to output this non-ASCII char */
-          tty_MogrifyUTF8(_c);
+          tty_DrawRune(_c);
           continue;
         } else if (tty_charset_to_UTF_32[c] != c) {
           c = tty_UTF_32_to_charset(_c);
@@ -364,7 +360,7 @@ inline void termcap_Mogrify(dat x, dat y, uldat len) {
   }
 }
 
-inline void termcap_SingleMogrify(dat x, dat y, tcell V) {
+inline void termcap_DrawTCell(dat x, dat y, tcell V) {
   trune c, _c;
 
   if (!wrapglitch && x == DisplayWidth - 1 && y == DisplayHeight - 1)
@@ -380,7 +376,7 @@ inline void termcap_SingleMogrify(dat x, dat y, tcell V) {
   if (c >= 128) {
     if (tty_use_utf8) {
       /* use utf-8 to output this non-ASCII char */
-      tty_MogrifyUTF8(_c);
+      tty_DrawRune(_c);
       return;
     } else if (tty_charset_to_UTF_32[c] != c) {
       c = tty_UTF_32_to_charset(_c);
@@ -402,7 +398,7 @@ static void termcap_ShowMouse(void) {
       (HW->Last_x = HW->MouseState.x) + (HW->Last_y = HW->MouseState.y) * (ldat)DisplayWidth;
   tcell h = Video[pos], c = TCELL_COLMASK(~h) ^ TCELL(TCOL(thigh, thigh), 0);
 
-  termcap_SingleMogrify(HW->MouseState.x, HW->MouseState.y, c | TCELL_FONTMASK(h));
+  termcap_DrawTCell(HW->MouseState.x, HW->MouseState.y, c | TCELL_FONTMASK(h));
 
   /* force updating the cursor */
   HW->XY[0] = HW->XY[1] = -1;
@@ -412,7 +408,7 @@ static void termcap_ShowMouse(void) {
 static void termcap_HideMouse(void) {
   uldat pos = HW->Last_x + HW->Last_y * (ldat)DisplayWidth;
 
-  termcap_SingleMogrify(HW->Last_x, HW->Last_y, Video[pos]);
+  termcap_DrawTCell(HW->Last_x, HW->Last_y, Video[pos]);
 
   /* force updating the cursor */
   HW->XY[0] = HW->XY[1] = -1;
@@ -561,8 +557,8 @@ static void termcap_FlushVideo(void) {
     } else
       FlippedVideo = tfalse;
   }
+  termcap_DrawStart();
 
-  termcap_MogrifyInit();
   if (HW->TT != NOCURSOR)
     termcap_SetCursorType(HW->TT = NOCURSOR);
   for (i = 0; i < DisplayHeight * 2; i++) {
@@ -570,7 +566,7 @@ static void termcap_FlushVideo(void) {
     end = ChangedVideo[i >> 1][i & 1][1];
 
     if (start != -1)
-      termcap_Mogrify(start, i >> 1, end - start + 1);
+      termcap_DrawSome(start, i >> 1, end - start + 1);
   }
 
   /* force updating the cursor */
@@ -589,6 +585,8 @@ static void termcap_FlushVideo(void) {
   }
 
   termcap_UpdateCursor();
+
+  termcap_DrawFinish();
 
   HW->FlagsHW &= ~FlHWChangedMouseFlag;
 }

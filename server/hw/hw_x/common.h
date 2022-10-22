@@ -3,10 +3,10 @@
 #include "algo.h"
 #include "log.h"
 
-/* this can stay static, X11_FlushHW() is not reentrant */
+/* this can stay static, XSYM(FlushHW)() is not reentrant */
 static tcolor _col;
 
-inline void X11_Mogrify(dat x, dat y, ldat len) {
+inline void XSYM(DrawSome)(dat x, dat y, ldat len) {
   tcell *V, *oV;
   tcolor col;
   udat buflen = 0;
@@ -57,13 +57,9 @@ inline void X11_Mogrify(dat x, dat y, ldat len) {
   }
 }
 
-inline ldat diff(ldat x, ldat y) {
-  return x >= y ? x - y : y - x;
-}
-
 enum { MAX_FONT_SCORE = 100 };
 
-static ldat calcFontScore(udat fontwidth, udat fontheight, ldat width, ldat height) {
+static ldat XSYM(FontScoreOf)(udat fontwidth, udat fontheight, ldat width, ldat height) {
   /*
    * TODO xft: since xft fonts are scalable, we could just consider the aspect ratio
    * compared to fontwidth X fontheight.
@@ -77,11 +73,11 @@ static ldat calcFontScore(udat fontwidth, udat fontheight, ldat width, ldat heig
   return score;
 }
 
-static byte X11_LoadFont(const char *fontname, udat fontwidth, udat fontheight) {
+static byte XSYM(LoadFont)(const char *fontname, udat fontwidth, udat fontheight) {
   char *alloc_fontname = NULL;
   byte loaded = tfalse;
 
-  fontname = alloc_fontname = X11_AutodetectFont(fontname, fontwidth, fontheight);
+  fontname = alloc_fontname = XSYM(AutodetectFont)(fontname, fontwidth, fontheight);
 #if HW_X_DRIVER == HW_X11
 
   if ((fontname && (xsfont = XLoadQueryFont(xdisplay, fontname))) ||
@@ -109,14 +105,14 @@ static byte X11_LoadFont(const char *fontname, udat fontwidth, udat fontheight) 
   return loaded;
 }
 
-static void X11_QuitHW(void) {
+static void XSYM(QuitHW)(void) {
 #ifdef TW_FEATURE_X11_XIM_XIC
   if (xic)
     XDestroyIC(xic);
   if (xim)
     XCloseIM(xim);
 #endif
-  X11_FlavorQuitHW();
+  XSYM(FlavorQuitHW)();
   if (xgc != None)
     XFreeGC(xdisplay, xgc);
   if (xwindow != None) {
@@ -137,7 +133,7 @@ static void X11_QuitHW(void) {
   HW->Private = NULL;
 }
 
-static int check_hw_name(char *hw_name) {
+static int XSYM(check_hw_name)(char *hw_name) {
   char *comma, *at;
   if (strncmp(hw_name, "-hw=", 4) != 0) {
     return -1;
@@ -152,7 +148,7 @@ static int check_hw_name(char *hw_name) {
   return at ? at - hw_name : -1;
 }
 
-static bool X11_InitHW(void) {
+static bool XSYM(InitHW)(void) {
   char *arg = HW->Name.data(); // guaranteed to be '\0' terminated
   int xscreen;
   unsigned int xdepth;
@@ -163,17 +159,17 @@ static bool X11_InitHW(void) {
   Visual *xvisual;
   Colormap colormap;
   char *s, *xdisplay_ = NULL, *xdisplay0 = NULL, *fontname = NULL, *fontname0 = NULL,
-           *charset = NULL, *charset0 = NULL, title[X11_TITLE_MAXLEN];
+           *charset = NULL, *charset0 = NULL, title[X_TITLE_MAXLEN];
   int i, nskip;
   udat fontwidth = 10, fontheight = 20;
   byte drag = tfalse, noinput = tfalse;
   unsigned long xcreategc_mask = GCForeground | GCBackground | GCGraphicsExposures;
 
-  if (!(HW->Private = (struct x11_data *)AllocMem(sizeof(struct x11_data)))) {
-    log(ERROR, "      X11_InitHW(): Out of memory!\n");
+  if (!(HW->Private = (XSYM(data) *)AllocMem(sizeof(XSYM(data))))) {
+    log(ERROR, "      " XSYM_STR(InitHW) "() Out of memory!\n");
     return false;
   }
-  memset(HW->Private, 0, sizeof(struct x11_data));
+  memset(HW->Private, 0, sizeof(XSYM(data)));
 
   /* default: show the whole screen */
   xhw_view = xhw_startx = xhw_starty = xhw_endx = xhw_endy = 0;
@@ -181,7 +177,7 @@ static bool X11_InitHW(void) {
   /* not yet opened */
   xdisplay = NULL;
 
-  if (arg && *arg && ((nskip = check_hw_name(arg)) >= 0)) {
+  if (arg && *arg && ((nskip = XSYM(check_hw_name)(arg)) >= 0)) {
     arg += nskip;
 
     if (*arg == '@') {
@@ -269,7 +265,7 @@ static bool X11_InitHW(void) {
   if ((xdisplay = XOpenDisplay(xdisplay_))) {
     do {
 
-      (void)XSetIOErrorHandler(X11_Die);
+      (void)XSetIOErrorHandler(XSYM(Die));
 
       xscreen = DefaultScreen(xdisplay);
       xdepth = DefaultDepth(xdisplay, xscreen);
@@ -280,8 +276,8 @@ static bool X11_InitHW(void) {
         xcolor.red = 257 * (udat)Palette[i].Red;
         xcolor.green = 257 * (udat)Palette[i].Green;
         xcolor.blue = 257 * (udat)Palette[i].Blue;
-        if (!X11_AllocColor(xdisplay, xvisual, colormap, &xcolor, &xcol[i], i)) {
-          log(ERROR, "      X11_InitHW() failed to allocate colors\n");
+        if (!XSYM(AllocColor)(xdisplay, xvisual, colormap, &xcolor, &xcol[i], i)) {
+          log(ERROR, "      " XSYM_STR(InitHW) "() failed to allocate colors\n");
           break;
         }
       }
@@ -293,7 +289,7 @@ static bool X11_InitHW(void) {
                          SubstructureNotifyMask | KeyPressMask | ButtonPressMask |
                          ButtonReleaseMask | PointerMotionMask;
 
-      if (!X11_LoadFont(fontname, fontwidth, fontheight))
+      if (!XSYM(LoadFont)(fontname, fontwidth, fontheight))
         break;
 
       if (xhw_view && xhw_startx >= 0 && xhw_starty >= 0 && xhw_endx > xhw_startx &&
@@ -342,11 +338,11 @@ static bool X11_InitHW(void) {
           xic = NULL;
         }
 #endif
-        X11_FillWindowTitle(title, sizeof(title));
+        XSYM(FillWindowTitle)(title, sizeof(title));
         XStoreName(xdisplay, xwindow, title);
 
-        if (!(xUTF_32_to_charset = X11_UTF_32_to_charset_function(charset)))
-          xUTF_32_to_charset = X11_UTF_32_to_UCS_2;
+        if (!(xUTF_32_to_charset = XSYM(UTF_32_to_charset_function)(charset)))
+          xUTF_32_to_charset = XSYM(UTF_32_to_UCS_2);
         /*
          * ask ICCCM-compliant window manager to tell us when close window
          * has been chosen, rather than just killing us
@@ -383,16 +379,16 @@ static bool X11_InitHW(void) {
 
         HW->mouse_slot = NOSLOT;
         HW->keyboard_slot = RegisterRemote(i = XConnectionNumber(xdisplay), (obj)HW,
-                                           (void (*)(int, obj))X11_KeyboardEvent);
+                                           (void (*)(int, obj))XSYM(KeyboardEvent));
         if (HW->keyboard_slot == NOSLOT)
           break;
         fcntl(i, F_SETFD, FD_CLOEXEC);
 
-        HW->FlushVideo = X11_FlushVideo;
-        HW->FlushHW = X11_FlushHW;
+        HW->FlushVideo = XSYM(FlushVideo);
+        HW->FlushHW = XSYM(FlushHW);
 
-        HW->KeyboardEvent = X11_KeyboardEvent;
-        /* mouse events handled by X11_KeyboardEvent */
+        HW->KeyboardEvent = XSYM(KeyboardEvent);
+        /* mouse events handled by XSYM(KeyboardEvent) */
         HW->MouseEvent = (void (*)(int, display_hw))NoOp;
 
         HW->XY[0] = HW->XY[1] = 0;
@@ -403,28 +399,28 @@ static bool X11_InitHW(void) {
         HW->UpdateMouseAndCursor = NoOp;
         HW->MouseState.x = HW->MouseState.y = HW->MouseState.keys = 0;
 
-        HW->DetectSize = X11_DetectSize;
-        HW->CheckResize = X11_CheckResize;
-        HW->Resize = X11_Resize;
+        HW->DetectSize = XSYM(DetectSize);
+        HW->CheckResize = XSYM(CheckResize);
+        HW->Resize = XSYM(Resize);
 
-        HW->HWSelectionImport = X11_SelectionImport_X11;
-        HW->HWSelectionExport = X11_SelectionExport_X11;
-        HW->HWSelectionRequest = X11_SelectionRequest_X11;
-        HW->HWSelectionNotify = X11_SelectionNotify_X11;
+        HW->HWSelectionImport = XSYM(SelectionImport_X11);
+        HW->HWSelectionExport = XSYM(SelectionExport_X11);
+        HW->HWSelectionRequest = XSYM(SelectionRequest_X11);
+        HW->HWSelectionNotify = XSYM(SelectionNotify_X11);
         HW->HWSelectionPrivate = 0;
 
         if (drag) {
-          HW->CanDragArea = X11_CanDragArea;
-          HW->DragArea = X11_DragArea;
+          HW->CanDragArea = XSYM(CanDragArea);
+          HW->DragArea = XSYM(DragArea);
         } else
           HW->CanDragArea = NULL;
 
-        HW->Beep = X11_Beep;
-        HW->Configure = X11_Configure;
+        HW->Beep = XSYM(Beep);
+        HW->Configure = XSYM(Configure);
         HW->SetPalette = (void (*)(udat, udat, udat, udat))NoOp;
         HW->ResetPalette = NoOp;
 
-        HW->QuitHW = X11_QuitHW;
+        HW->QuitHW = XSYM(QuitHW);
         HW->QuitKeyboard = NoOp;
         HW->QuitMouse = NoOp;
         HW->QuitVideo = NoOp;
@@ -456,16 +452,16 @@ static bool X11_InitHW(void) {
         if (charset0)
           *charset0 = ',';
 
-        X11_init_keys();
+        XSYM(init_keys)();
 
         return true;
       }
     } while (0);
   } else {
     if (xdisplay_ || (xdisplay_ = getenv("DISPLAY"))) {
-      log(ERROR, "      X11_InitHW() failed to open display ", HW->Name, "\n");
+      log(ERROR, "      " XSYM_STR(InitHW) "() failed to open display ", HW->Name, "\n");
     } else {
-      log(ERROR, "      X11_InitHW() failed: DISPLAY is not set\n");
+      log(ERROR, "      " XSYM_STR(InitHW) "() failed: DISPLAY is not set\n");
     }
   }
 
@@ -477,9 +473,9 @@ fail:
   if (charset0)
     *charset0 = ',';
 
-  if (xdisplay)
-    X11_QuitHW();
-
+  if (xdisplay) {
+    XSYM(QuitHW)();
+  }
   FreeMem(HW->Private);
   HW->Private = NULL;
 
@@ -487,10 +483,10 @@ fail:
 }
 
 EXTERN_C byte InitModule(module Module) {
-  Module->DoInit = X11_InitHW;
+  Module->DoInit = XSYM(InitHW);
   return ttrue;
 }
 
-/* this MUST be included, or it seems that a bug in dlsym() gets triggered */
+/* this MUST be defined, otherwise it seems to trigger a bug in dlsym() */
 EXTERN_C void QuitModule(module Module) {
 }

@@ -178,7 +178,7 @@ inline void display_DrawTCell(dat x, dat y, udat buflen, tcell *buf) {
   Ext(Socket, SendMsg)(display, Msg);
 }
 
-inline void display_Mogrify(dat x, dat y, uldat len) {
+inline void display_DrawSome(dat x, dat y, uldat len) {
   tcell *V, *oV;
   uldat buflen = 0;
   tcell *buf;
@@ -228,7 +228,7 @@ static void display_FlushVideo(void) {
       end = ChangedVideo[i >> 1][i & 1][1];
 
       if (start != -1)
-        display_Mogrify(start, i >> 1, end - start + 1);
+        display_DrawSome(start, i >> 1, end - start + 1);
     }
     setFlush();
   }

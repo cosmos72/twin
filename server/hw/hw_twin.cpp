@@ -189,7 +189,7 @@ static void TW_KeyboardEvent(int fd, display_hw hw) {
   RestoreHW;
 }
 
-inline void TW_Mogrify(dat x, dat y, uldat len) {
+inline void TW_DrawSome(dat x, dat y, uldat len) {
   tcell *V, *oV;
   uldat buflen = 0;
   tcell *buf;
@@ -226,7 +226,7 @@ static void TW_FlushVideo(void) {
       end = ChangedVideo[i >> 1][i & 1][1];
 
       if (start != -1)
-        TW_Mogrify(start, i >> 1, end - start + 1);
+        TW_DrawSome(start, i >> 1, end - start + 1);
     }
     setFlush();
   }

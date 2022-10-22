@@ -1,7 +1,7 @@
 /* State data for the various hw modes that use X11. */
 
 #define NEST 4
-struct x11_data {
+struct XSYM(data) {
   int xwidth, xheight;
   int xwfont, xhfont, xupfont;
   /* we support showing only a portion of the whole twin display */
@@ -37,7 +37,7 @@ struct x11_data {
   Atom xCOMPOUND_TEXT, xTARGETS, xTEXT, xUTF8_STRING, xWM_DELETE_WINDOW, xWM_PROTOCOLS;
 };
 
-#define xdata ((struct x11_data *)HW->Private)
+#define xdata ((struct XSYM(data) *)HW->Private)
 #define xwidth (xdata->xwidth)
 #define xheight (xdata->xheight)
 #define xwfont (xdata->xwfont)

@@ -148,7 +148,7 @@ static void stdin_CheckResize(dat *x, dat *y);
 static void stdin_Resize(dat x, dat y);
 static void stdout_FlushHW(void);
 
-static void tty_MogrifyUTF8(trune h);
+static void tty_DrawRune(trune h);
 
 /* this can stay static, as it's used only as temporary storage */
 static tcolor _col;
@@ -243,7 +243,7 @@ static void stdout_FlushHW(void) {
   clrFlush();
 }
 
-static void tty_MogrifyUTF8(trune h) {
+static void tty_DrawRune(trune h) {
   char buf[5];
 
   if (h <= 0x7FF) {

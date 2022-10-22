@@ -88,15 +88,15 @@
 
 /* Display variables */
 
-static void X11_SelectionNotify_up(Window win, Atom prop);
-static void X11_SelectionRequest_up(XSelectionRequestEvent *req);
+static void XSYM(SelectionNotify_up)(Window win, Atom prop);
+static void XSYM(SelectionRequest_up)(XSelectionRequestEvent *req);
 
-static void X11_Beep(void) {
+static void XSYM(Beep)(void) {
   XBell(xdisplay, 0);
   setFlush();
 }
 
-static void X11_Configure(udat resource, byte todefault, udat value) {
+static void XSYM(Configure)(udat resource, byte todefault, udat value) {
   XKeyboardControl xctrl;
 
   switch (resource) {
@@ -129,7 +129,7 @@ static void X11_Configure(udat resource, byte todefault, udat value) {
  * so we implement a manual translation using a map from X11 KeySym to Twkey + char sequence.
  */
 
-struct X11_key_to_TW {
+struct XSYM(key_to_TW) {
   Twkey tkey;
   char seq[6];
 
@@ -139,33 +139,36 @@ struct X11_key_to_TW {
   }
 };
 
-static const struct {
+struct XSYM(key_to_TW_entry) {
   uldat xkey; // actually KeySym
-  X11_key_to_TW tmapping;
-} X11_keys_impl[] = {
+  XSYM(key_to_TW) tmapping;
+};
+
+static const XSYM(key_to_TW_entry) XSYM(keys_impl)[] = {
 #define IS(sym, l, s) {XK_##sym, {TW_##sym, s}},
 #include "hw_keys.h"
 #undef IS
 };
 
-typedef CXX_STD_MAP<KeySym, X11_key_to_TW> X11_keymap_to_TW;
+typedef CXX_STD_MAP<KeySym, XSYM(key_to_TW)> XSYM(keymap_to_TW);
 
-static X11_keymap_to_TW X11_keys;
+static XSYM(keymap_to_TW) XSYM(keys);
 
-static void X11_init_keys() {
-  for (size_t i = 0; i < sizeof(X11_keys_impl) / sizeof(X11_keys_impl[0]); i++) {
-    KeySym xkey = X11_keys_impl[i].xkey;
-    X11_key_to_TW &entry = X11_keys[xkey];
-    entry = X11_keys_impl[i].tmapping;
+static void XSYM(init_keys)(void) {
+  for (size_t i = 0; i < sizeof(XSYM(keys_impl)) / sizeof(XSYM(keys_impl)[0]); i++) {
+    KeySym xkey = XSYM(keys_impl)[i].xkey;
+    XSYM(key_to_TW) &entry = XSYM(keys)[xkey];
+    entry = XSYM(keys_impl)[i].tmapping;
     entry.seq[5] = strlen(entry.seq); // reuse termination byte seq[5] as length
   }
 }
 
 #ifdef DEBUG_HW_X11
-void X11_DEBUG_SHOW_KEY(const char *prefix, KeySym sym, udat len, const char *seq) {
+void X_DEBUG_SHOW_KEY(const char *prefix, KeySym sym, udat len, const char *seq) {
   udat i;
   byte ch;
-  printf("X11_LookupKey(): %s xkeysym=%d[%s] string=[", prefix, (int)sym, XKeysymToString(sym));
+  printf(XSYM_STR(LookupKey) "(): %s xkeysym=%d[%s] string=[", prefix, (int)sym,
+         XKeysymToString(sym));
   for (i = 0; i < len; i++) {
     ch = (byte)seq[i];
     if (ch >= ' ' && ch <= '~' && ch != '\\')
@@ -176,16 +179,16 @@ void X11_DEBUG_SHOW_KEY(const char *prefix, KeySym sym, udat len, const char *se
   printf("] locale=%s\n", XLocaleOfIM(xim));
 }
 #else
-#define X11_DEBUG_SHOW_KEY(prefix, sym, len, seq) ((void)0)
+#define X_DEBUG_SHOW_KEY(prefix, sym, len, seq) ((void)0)
 #endif
 
-static byte X11_IsNumericKeypad(Twkey key) {
+static byte XSYM(IsNumericKeypad)(Twkey key) {
   return key >= TW_KP_Begin && key <= TW_KP_9;
 }
 
 /* convert an X11 KeySym into a libtw key code and ASCII sequence */
 
-static Twkey X11_LookupKey(XEvent *ev, udat *ShiftFlags, udat *len, char *seq) {
+static Twkey XSYM(LookupKey)(XEvent *ev, udat *ShiftFlags, udat *len, char *seq) {
   KeySym sym = XK_VoidSymbol;
   XKeyEvent *kev = &ev->xkey;
 
@@ -217,7 +220,7 @@ static Twkey X11_LookupKey(XEvent *ev, udat *ShiftFlags, udat *len, char *seq) {
   if (sym == XK_VoidSymbol || sym == 0) {
     *len = XLookupString(kev, seq, maxlen, &sym, &xcompose);
   }
-  X11_DEBUG_SHOW_KEY("", sym, *len, seq);
+  X_DEBUG_SHOW_KEY("", sym, *len, seq);
 
   if (sym == XK_BackSpace && (kev->state & (ControlMask | Mod1Mask)) != 0) {
     /* generate escape sequences for Backspace and Ctrl+Backspace */
@@ -236,22 +239,22 @@ static Twkey X11_LookupKey(XEvent *ev, udat *ShiftFlags, udat *len, char *seq) {
       seq[1] = seq[0];
       seq[0] = '\x1B';
 
-      X11_DEBUG_SHOW_KEY("replaced(1)", sym, *len, seq);
+      X_DEBUG_SHOW_KEY("replaced(1)", sym, *len, seq);
     }
     return (Twkey)sym;
   }
 
-  const X11_key_to_TW *tkey_entry = NULL;
+  const XSYM(key_to_TW) *tkey_entry = NULL;
   {
-    X11_keymap_to_TW::const_iterator iter = X11_keys.find(sym);
-    if (iter != X11_keys.end()) {
+    XSYM(keymap_to_TW)::const_iterator iter = XSYM(keys).find(sym);
+    if (iter != XSYM(keys).end()) {
       tkey_entry = &iter->second;
     }
   }
   Twkey tkey = tkey_entry ? tkey_entry->tkey : TW_Null;
 
   if (tkey != TW_Null && *len == 1 && (*ShiftFlags & ~KBD_CAPS_LOCK) == KBD_NUM_LOCK &&
-      xnumkeypad && X11_IsNumericKeypad(tkey)) {
+      xnumkeypad && XSYM(IsNumericKeypad)(tkey)) {
     /* xnumkeypad = ttrue and only NumLock led is set (ignoring CapsLock):
      * honor X11 numeric keypad mapping to numbers 0..9 and to / * - + . ENTER */
 
@@ -262,14 +265,14 @@ static Twkey X11_LookupKey(XEvent *ev, udat *ShiftFlags, udat *len, char *seq) {
     if (tkey_entry->len() < maxlen) {
       CopyMem(tkey_entry->seq, seq, *len = tkey_entry->len());
 
-      X11_DEBUG_SHOW_KEY("replaced(2)", sym, *len, seq);
+      X_DEBUG_SHOW_KEY("replaced(2)", sym, *len, seq);
     }
   }
   return tkey == TW_Null && *len != 0 ? TW_Other : tkey;
 }
 
-static void X11_HandleEvent(XEvent *event) {
-  /* this can stay static, X11_HandleEvent() is not reentrant */
+static void XSYM(HandleEvent)(XEvent *event) {
+  /* this can stay static, XSYM(HandleEvent)() is not reentrant */
   static char seq[TW_SMALLBUFF];
   dat x, y, dx, dy;
   udat len = sizeof(seq), ShiftFlags;
@@ -278,7 +281,7 @@ static void X11_HandleEvent(XEvent *event) {
   if (event->xany.window == xwindow)
     switch (event->type) {
     case KeyPress:
-      TW_key = X11_LookupKey(event, &ShiftFlags, &len, seq);
+      TW_key = XSYM(LookupKey)(event, &ShiftFlags, &len, seq);
       if (TW_key != TW_Null) {
         KeyboardEventCommon(TW_key, ShiftFlags, len, seq);
       }
@@ -381,10 +384,10 @@ static void X11_HandleEvent(XEvent *event) {
       TwinSelectionSetOwner((obj)HW, SEL_CURRENTTIME, SEL_CURRENTTIME);
       break;
     case SelectionRequest:
-      X11_SelectionRequest_up(&event->xselectionrequest);
+      XSYM(SelectionRequest_up)(&event->xselectionrequest);
       break;
     case SelectionNotify:
-      X11_SelectionNotify_up(event->xselection.requestor, event->xselection.property);
+      XSYM(SelectionNotify_up)(event->xselection.requestor, event->xselection.property);
       break;
     case ClientMessage:
       if (event->xclient.message_type == xWM_PROTOCOLS && event->xclient.format == 32 &&
@@ -399,14 +402,14 @@ static void X11_HandleEvent(XEvent *event) {
     }
 }
 
-static void X11_KeyboardEvent(int fd, display_hw D_HW) {
+static void XSYM(KeyboardEvent)(int fd, display_hw D_HW) {
   XEvent event;
   SaveHW;
   SetHW(D_HW);
 
   while (XPending(xdisplay) > 0) {
     XNextEvent(xdisplay, &event);
-    X11_HandleEvent(&event);
+    XSYM(HandleEvent)(&event);
   }
 
   RestoreHW;

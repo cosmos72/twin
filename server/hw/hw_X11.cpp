@@ -48,17 +48,17 @@
 
 #define XDRAW(col, buf, buflen)                                                                    \
   do {                                                                                             \
-    X11_SetColors(col);                                                                            \
+    XSYM(SetColors)(col);                                                                          \
     myXDrawImageString(xdisplay, xwindow, xgc, xbegin, ybegin + xupfont, buf, buflen);             \
   } while (0)
 
 #define XDRAW_ANY(buf, buflen, col, _) XDRAW(col, buf, buflen)
 
 #include "hw_x/util.h"
-#include "hw_x/common.cpp"
+#include "hw_x/common.h"
 
 /* manage foreground/background colors */
-static void X11_SetColors(tcolor col) {
+static void XSYM(SetColors)(tcolor col) {
   if (xsgc.foreground != xcol[TCOLFG(col)])
     XSetForeground(xdisplay, xgc, xsgc.foreground = xcol[TCOLFG(col)]);
   if (xsgc.background != xcol[TCOLBG(col)])
@@ -69,7 +69,7 @@ static void X11_SetColors(tcolor col) {
  * return ttrue if each font glyph is either 'narrow' (latin, etc.) or 'wide' (CJK...)
  * with 'wide' characters exactly twice as wide as 'narrow' ones
  */
-static tbool X11_FontIsDualWidth(const XFontStruct *info) {
+static tbool XSYM(FontIsDualWidth)(const XFontStruct *info) {
   XCharStruct *p = info->per_char;
   ldat wide = info->max_bounds.width, narrow = info->min_bounds.width, i, n_chars, w;
   if (wide != narrow * 2)
@@ -92,13 +92,13 @@ static tbool X11_FontIsDualWidth(const XFontStruct *info) {
 }
 
 /* if font is monospaced, return its score. otherwise return MINLDAT */
-static ldat X11_MonospaceFontScore(const XFontStruct *info, udat fontwidth, udat fontheight,
-                                   ldat best_score) {
+static ldat XSYM(MonospaceFontScore)(const XFontStruct *info, udat fontwidth, udat fontheight,
+                                     ldat best_score) {
   ldat score = TW_MINLDAT, width = info->min_bounds.width,
        height = (ldat)info->ascent + info->descent, max_width = info->max_bounds.width;
 
-  if (width == max_width || X11_FontIsDualWidth(info)) {
-    score = calcFontScore(fontwidth, fontheight, width, height);
+  if (width == max_width || XSYM(FontIsDualWidth)(info)) {
+    score = XSYM(FontScoreOf)(fontwidth, fontheight, width, height);
     if (score > best_score)
       log(INFO, "      candidate font ", width, "x", height, " score ", score, "\n");
   }
@@ -106,7 +106,7 @@ static ldat X11_MonospaceFontScore(const XFontStruct *info, udat fontwidth, udat
 }
 
 /* return name of selected font in allocated (char *) */
-static char *X11_AutodetectFont(const char *family, udat fontwidth, udat fontheight) {
+static char *XSYM(AutodetectFont)(const char *family, udat fontwidth, udat fontheight) {
   struct {
     const char *wildcard;
     ldat score_adj;
@@ -165,8 +165,9 @@ static char *X11_AutodetectFont(const char *family, udat fontwidth, udat fonthei
 
         if (info[k].direction == FontLeftToRight && info[k].min_byte1 == 0 &&
             info[k].min_char_or_byte2 <= 32) {
-          score = X11_MonospaceFontScore(&info[k], fontwidth, fontheight, best_score - score_adj) +
-                  score_adj;
+          score =
+              XSYM(MonospaceFontScore)(&info[k], fontwidth, fontheight, best_score - score_adj) +
+              score_adj;
           if (score <= best_score)
             continue;
 
@@ -184,8 +185,8 @@ static char *X11_AutodetectFont(const char *family, udat fontwidth, udat fonthei
   return best;
 }
 
-static int X11_AllocColor(Display *display, Visual *xvisual, Colormap colormap, XColor *xcolor,
-                          unsigned long *pixel, int color_num) {
+static int XSYM(AllocColor)(Display *display, Visual *xvisual, Colormap colormap, XColor *xcolor,
+                            unsigned long *pixel, int color_num) {
   if (!XAllocColor(display, colormap, xcolor)) {
     return -1;
   }
@@ -193,7 +194,7 @@ static int X11_AllocColor(Display *display, Visual *xvisual, Colormap colormap, 
   return 1;
 }
 
-static void X11_FlavorQuitHW(void) {
+static void XSYM(FlavorQuitHW)(void) {
   if (xsfont)
     XFreeFont(xdisplay, xsfont);
 }

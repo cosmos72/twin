@@ -5,23 +5,23 @@
 
 #include "stl/view.h"
 
-static void X11_FillWindowTitle(char *title, int maxlen);
-static void X11_HideCursor(dat x, dat y);
-static void X11_ShowCursor(uldat type, dat x, dat y);
-static void X11_FlushVideo(void);
-static void X11_FlushHW(void);
-static void X11_DetectSize(dat *x, dat *y);
-static void X11_CheckResize(dat *x, dat *y);
-static void X11_Resize(dat x, dat y);
-static byte X11_SelectionImport_X11(void);
-static void X11_SelectionExport_X11(void);
-static void X11_SelectionNotify_X11(uldat ReqPrivate, uldat Magic, const char MIME[MAX_MIMELEN],
-                                    Chars Data);
-static void X11_SelectionNotify_up(Window win, Atom prop);
-static void X11_SelectionRequest_X11(obj Requestor, uldat ReqPrivate);
-static void X11_SelectionRequest_up(XSelectionRequestEvent *req);
-static byte X11_CanDragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp);
-static void X11_DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp);
-static int X11_Die(Display *d);
-static Tutf_function X11_UTF_32_to_charset_function(const char *charset);
-static trune X11_UTF_32_to_UCS_2(trune c);
+static void XSYM(FillWindowTitle)(char *title, int maxlen);
+static void XSYM(HideCursor)(dat x, dat y);
+static void XSYM(ShowCursor)(uldat type, dat x, dat y);
+static void XSYM(FlushVideo)(void);
+static void XSYM(FlushHW)(void);
+static void XSYM(DetectSize)(dat *x, dat *y);
+static void XSYM(CheckResize)(dat *x, dat *y);
+static void XSYM(Resize)(dat x, dat y);
+static byte XSYM(SelectionImport_X11)(void);
+static void XSYM(SelectionExport_X11)(void);
+static void XSYM(SelectionNotify_X11)(uldat ReqPrivate, uldat Magic, const char MIME[MAX_MIMELEN],
+                                      Chars Data);
+static void XSYM(SelectionNotify_up)(Window win, Atom prop);
+static void XSYM(SelectionRequest_X11)(obj Requestor, uldat ReqPrivate);
+static void XSYM(SelectionRequest_up)(XSelectionRequestEvent *req);
+static byte XSYM(CanDragArea)(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp);
+static void XSYM(DragArea)(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp);
+static int XSYM(Die)(Display *d);
+static Tutf_function XSYM(UTF_32_to_charset_function)(const char *charset);
+static trune XSYM(UTF_32_to_UCS_2)(trune c);

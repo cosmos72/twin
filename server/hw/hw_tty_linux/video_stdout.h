@@ -117,11 +117,11 @@ static void linux_QuitVideo(void) {
  * the linux console is a noisy place... kernel and daemons often write there.
  * for better results, reinit UTF-8 mode and TTY_DISPCTRL every time
  */
-#define linux_MogrifyInit()                                                                        \
+#define linux_DrawStart()                                                                          \
   (fputs(tty_use_utf8 ? "\033[3l\033%G\033[m" : "\033%@\033[3h\033[m", stdOUT),                    \
    _col = TCOL(twhite, tblack))
 
-#define linux_MogrifyFinish() ((void)0)
+#define linux_DrawFinish() ((void)0)
 
 inline void linux_SetColor(tcolor col) {
   char colbuf[] = "\033[2x;2x;4x;3xm";
@@ -164,7 +164,7 @@ inline void linux_SetColor(tcolor col) {
   fputs(colbuf, stdOUT);
 }
 
-inline void linux_Mogrify(dat x, dat y, uldat len) {
+inline void linux_DrawSome(dat x, dat y, uldat len) {
   tcell *V, *oV;
   tcolor col;
   trune c, _c;
@@ -187,7 +187,7 @@ inline void linux_Mogrify(dat x, dat y, uldat len) {
       if (c >= 128) {
         if (tty_use_utf8) {
           /* use utf-8 to output this non-ASCII char. */
-          tty_MogrifyUTF8(c);
+          tty_DrawRune(c);
           continue;
         } else if (tty_charset_to_UTF_32[c] != c) {
           c = tty_UTF_32_to_charset(_c);
@@ -206,7 +206,7 @@ inline void linux_Mogrify(dat x, dat y, uldat len) {
   }
 }
 
-inline void linux_SingleMogrify(dat x, dat y, tcell V) {
+inline void linux_DrawTCell(dat x, dat y, tcell V) {
   trune c, _c;
 
   linux_MoveToXY(x, y);
@@ -218,7 +218,7 @@ inline void linux_SingleMogrify(dat x, dat y, tcell V) {
   if (c >= 128) {
     if (tty_use_utf8) {
       /* use utf-8 to output this non-ASCII char. */
-      tty_MogrifyUTF8(c);
+      tty_DrawRune(c);
       return;
     } else if (tty_charset_to_UTF_32[c] != c) {
       c = tty_UTF_32_to_charset(_c);
@@ -242,7 +242,7 @@ static void linux_ShowMouse(void) {
   tcell h = Video[pos];
   tcolor c = ~TCOLOR(h) ^ TCOL(thigh, thigh);
 
-  linux_SingleMogrify(HW->MouseState.x, HW->MouseState.y, TCELL(c, TRUNEEXTRA(h)));
+  linux_DrawTCell(HW->MouseState.x, HW->MouseState.y, TCELL(c, TRUNEEXTRA(h)));
 
   /* store current cursor state for correct updating */
   HW->XY[1] = HW->MouseState.y;
@@ -256,7 +256,7 @@ static void linux_ShowMouse(void) {
 static void linux_HideMouse(void) {
   uldat pos = HW->Last_x + HW->Last_y * (ldat)DisplayWidth;
 
-  linux_SingleMogrify(HW->Last_x, HW->Last_y, Video[pos]);
+  linux_DrawTCell(HW->Last_x, HW->Last_y, Video[pos]);
 
   /* store current cursor state for correct updating */
   HW->XY[1] = HW->Last_y;
@@ -296,7 +296,7 @@ static void linux_FlushVideo(void) {
 
   if (!ChangedVideoFlag) {
     HW->UpdateMouseAndCursor();
-    linux_MogrifyFinish();
+    linux_DrawFinish();
     return;
   }
 
@@ -336,14 +336,14 @@ static void linux_FlushVideo(void) {
       FlippedVideo = tfalse;
   }
 
-  linux_MogrifyInit();
+  linux_DrawStart();
   for (i = 0; i < DisplayHeight * 2; i++) {
     start = ChangedVideo[i >> 1][i & 1][0];
     end = ChangedVideo[i >> 1][i & 1][1];
 
     if (start != -1)
       /* also keep track of cursor position */
-      linux_Mogrify(start, XY[1] = i >> 1, (XY[0] = end) - start + 1);
+      linux_DrawSome(start, XY[1] = i >> 1, (XY[0] = end) - start + 1);
   }
 
   /* store current cursor state for correct updating */
@@ -365,7 +365,7 @@ static void linux_FlushVideo(void) {
   }
   linux_UpdateCursor();
 
-  linux_MogrifyFinish();
+  linux_DrawFinish();
 
   HW->FlagsHW &= ~FlHWChangedMouseFlag;
 }
