@@ -78,8 +78,8 @@ static void TW_Configure(udat resource, byte todefault, udat value) {
     if (todefault)
       Tw_WriteCharsetWindow(Td, Twin, 5, "\033[10]");
     else {
-      char buf[10];
-      sprintf(buf, "\033[10;%.3hd]", (unsigned)value);
+      char buf[17];
+      sprintf(buf, "\033[10;%u]", (unsigned)value);
       Tw_WriteCharsetWindow(Td, Twin, strlen(buf), buf);
     }
     setFlush();
@@ -88,8 +88,8 @@ static void TW_Configure(udat resource, byte todefault, udat value) {
     if (todefault)
       Tw_WriteCharsetWindow(Td, Twin, 5, "\033[11]");
     else {
-      char buf[10];
-      sprintf(buf, "\033[11;%.3hd]", (unsigned)value);
+      char buf[17];
+      sprintf(buf, "\033[11;%u]", (unsigned)value);
       Tw_WriteCharsetWindow(Td, Twin, strlen(buf), buf);
     }
     setFlush();

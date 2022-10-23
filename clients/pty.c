@@ -48,6 +48,13 @@
 #include <termio.h>
 #endif
 
+#ifdef TW_HAVE_SYS_TTYDEFAULTS_H
+#include <sys/ttydefaults.h>
+#else
+#include "my_ttydefaults.h"
+#endif
+#include "tty_ioctl.h"
+
 #include <Tw/Tw.h>
 
 #include "term.h"
@@ -181,10 +188,82 @@ static byte fixupPty(dat X, dat Y) {
   return tfalse;
 }
 
-/* 3. close all fds except tty_fd_to_dup: duplicate it on fds 0, 1 and 2 */
+/* 3. setup sane tty speed, input mode, output mode, conversions and flags */
+static byte fixupTty(int fd) {
+  struct termios ttyb = {};
+  byte ok = tty_getioctl(fd, &ttyb) == 0;
+
+  ttyb.c_cc[VINTR] = CINTR;
+  ttyb.c_cc[VQUIT] = CQUIT;
+  ttyb.c_cc[VERASE] = CERASE;
+  ttyb.c_cc[VKILL] = CKILL;
+  ttyb.c_cc[VSTART] = CSTART;
+  ttyb.c_cc[VSTOP] = CSTOP;
+  ttyb.c_cc[VSUSP] = CSUSP;
+#ifdef VDSUSP
+  ttyb.c_cc[VDSUSP] = VDISABLE;
+#endif
+#ifdef VREPRINT
+  ttyb.c_cc[VREPRINT] = CRPRNT;
+#endif
+#ifdef VDISCRD
+  ttyb.c_cc[VDISCRD] = CFLUSH;
+#endif
+#ifdef VWERSE
+  ttyb.c_cc[VWERSE] = CWERASE;
+#endif
+#ifdef VLNEXT
+  ttyb.c_cc[VLNEXT] = CLNEXT;
+#endif
+
+  ttyb.c_cc[VEOF] = CEOF;
+  ttyb.c_cc[VEOL] = VDISABLE;
+#ifdef VEOL2
+  ttyb.c_cc[VEOL2] = VDISABLE;
+#endif
+#ifdef VSWTC
+  ttyb.c_cc[VSWTC] = VDISABLE;
+#endif
+#ifdef VSWTCH
+  ttyb.c_cc[VSWTCH] = VDISABLE;
+#endif
+  ttyb.c_cc[VMIN] = 1;
+  ttyb.c_cc[VTIME] = 0;
+
+  if (ok) {
+    /* tweak as needed */
+
+    /* input modes */
+    ttyb.c_iflag |= TW_TTY_IFLAG_ON;
+    ttyb.c_iflag &= ~TW_TTY_IFLAG_OFF;
+
+    /* output modes */
+    ttyb.c_oflag |= TW_TTY_OFLAG_ON;
+    ttyb.c_oflag &= ~TW_TTY_OFLAG_OFF;
+
+    /* control modes */
+    ttyb.c_cflag |= TW_TTY_CFLAG_ON;
+    ttyb.c_cflag &= ~TW_TTY_CFLAG_OFF;
+
+    /* line discipline modes */
+    ttyb.c_lflag |= TW_TTY_LFLAG_ON;
+    ttyb.c_lflag &= ~TW_TTY_LFLAG_OFF;
+
+  } else {
+    /* full initialization */
+
+    ttyb.c_iflag = TW_TTY_IFLAG_ON;                      /* input modes */
+    ttyb.c_oflag = TW_TTY_OFLAG_ON;                      /* output modes */
+    ttyb.c_cflag = TW_TTY_CFLAG_ON | TW_TTY_CFLAG_SPEED; /* control modes */
+    ttyb.c_lflag = TW_TTY_LFLAG_ON;                      /* line discipline modes */
+  }
+  return tty_setioctl(fd, &ttyb) == 0 ? ttrue : tfalse;
+}
+
+/* 4. close all fds except tty_fd_to_dup: duplicate it on fds 0, 1 and 2 */
 void closeAllFds(int tty_fd_to_dup); /* in util.h */
 
-/* 4. Establish fd 0 as controlling teletype for new session and switch to it */
+/* 5. Establish fd 0 as controlling teletype for new session and switch to it */
 static byte switchToTty(void) {
 
   pid_t pid = setsid();
@@ -216,6 +295,7 @@ int Spawn(twindow Window, pid_t *ppid, dat X, dat Y, TW_CONST char *arg0,
     return tfalse;
   }
   (void)fixupPty(X, Y);
+  (void)fixupTty(ttyfd);
 
   TwDropPrivileges();
 

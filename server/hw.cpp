@@ -34,14 +34,14 @@
 #include <sys/resource.h>
 #endif
 
+#ifdef TW_HAVE_SYS_WAIT_H
+#include <sys/wait.h>
+#endif
+
 #ifdef TW_HAVE_SYS_TTYDEFAULTS_H
 #include <sys/ttydefaults.h>
 #else
 #include "my_ttydefaults.h"
-#endif
-
-#ifdef TW_HAVE_SYS_WAIT_H
-#include <sys/wait.h>
 #endif
 
 #include "tty_ioctl.h"
@@ -50,14 +50,6 @@
 #include "algo.h"
 #include "common.h"
 #include "hw.h"
-
-#ifndef VDISABLE
-#ifdef _POSIX_VDISABLE
-#define VDISABLE _POSIX_VDISABLE
-#else
-#define VDISABLE 255
-#endif
-#endif
 
 display_hw HW, DisplayHWCTTY;
 
@@ -487,184 +479,78 @@ void DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
 }
 
 byte InitTtysave(void) {
+  struct termios &ttyb = ttysave;
+
   int _fd = open("/dev/tty", O_RDWR | O_NOCTTY);
   int fd = _fd >= 0 ? _fd : 0;
-  byte ok = tty_getioctl(fd, &ttysave) == 0;
+  byte ok = tty_getioctl(fd, &ttyb) == 0;
 
   if (_fd >= 0)
     close(_fd);
 
-  ttysave.c_cc[VINTR] = CINTR;
-  ttysave.c_cc[VQUIT] = CQUIT;
-  ttysave.c_cc[VERASE] = CERASE;
-  ttysave.c_cc[VKILL] = CKILL;
-  ttysave.c_cc[VSTART] = CSTART;
-  ttysave.c_cc[VSTOP] = CSTOP;
-  ttysave.c_cc[VSUSP] = CSUSP;
+  ttyb.c_cc[VINTR] = CINTR;
+  ttyb.c_cc[VQUIT] = CQUIT;
+  ttyb.c_cc[VERASE] = CERASE;
+  ttyb.c_cc[VKILL] = CKILL;
+  ttyb.c_cc[VSTART] = CSTART;
+  ttyb.c_cc[VSTOP] = CSTOP;
+  ttyb.c_cc[VSUSP] = CSUSP;
 #ifdef VDSUSP
-  ttysave.c_cc[VDSUSP] = VDISABLE;
+  ttyb.c_cc[VDSUSP] = VDISABLE;
 #endif
 #ifdef VREPRINT
-  ttysave.c_cc[VREPRINT] = CRPRNT;
+  ttyb.c_cc[VREPRINT] = CRPRNT;
 #endif
 #ifdef VDISCRD
-  ttysave.c_cc[VDISCRD] = CFLUSH;
+  ttyb.c_cc[VDISCRD] = CFLUSH;
 #endif
 #ifdef VWERSE
-  ttysave.c_cc[VWERSE] = CWERASE;
+  ttyb.c_cc[VWERSE] = CWERASE;
 #endif
 #ifdef VLNEXT
-  ttysave.c_cc[VLNEXT] = CLNEXT;
+  ttyb.c_cc[VLNEXT] = CLNEXT;
 #endif
 
-  ttysave.c_cc[VEOF] = CEOF;
-  ttysave.c_cc[VEOL] = VDISABLE;
+  ttyb.c_cc[VEOF] = CEOF;
+  ttyb.c_cc[VEOL] = VDISABLE;
 #ifdef VEOL2
-  ttysave.c_cc[VEOL2] = VDISABLE;
+  ttyb.c_cc[VEOL2] = VDISABLE;
 #endif
 #ifdef VSWTC
-  ttysave.c_cc[VSWTC] = VDISABLE;
+  ttyb.c_cc[VSWTC] = VDISABLE;
 #endif
 #ifdef VSWTCH
-  ttysave.c_cc[VSWTCH] = VDISABLE;
+  ttyb.c_cc[VSWTCH] = VDISABLE;
 #endif
-  ttysave.c_cc[VMIN] = 1;
-  ttysave.c_cc[VTIME] = 0;
+  ttyb.c_cc[VMIN] = 1;
+  ttyb.c_cc[VTIME] = 0;
 
   if (ok) {
     /* tweak as needed */
 
     /* input modes */
-    ttysave.c_iflag |= (BRKINT | IGNPAR | ICRNL | IXON
-#ifdef ITW_MAXBEL
-                        | ITW_MAXBEL
-#endif
-    );
-
-    ttysave.c_iflag &= ~(IGNBRK
-#ifdef PARMRK
-                         | PARMRK
-#endif
-#ifdef INPCK
-                         | INPCK
-#endif
-#ifdef IUCLC
-                         | IUCLC
-#endif
-                         | ISTRIP | INLCR | IXANY | IXOFF);
+    ttyb.c_iflag |= TW_TTY_IFLAG_ON;
+    ttyb.c_iflag &= ~TW_TTY_IFLAG_OFF;
 
     /* output modes */
-    ttysave.c_oflag |= (OPOST | ONLCR);
-    ttysave.c_oflag &= ~(0
-#ifdef OLCUC
-                         | OLCUC
-#endif
-#ifdef ONOCR
-                         | ONOCR
-#endif
-#ifdef ONLRET
-                         | ONLRET
-#endif
-#ifdef OFILL
-                         | OFILL
-#endif
-#ifdef OFDEL
-                         | OFDEL
-#endif
-#ifdef NLDLY
-                         | NLDLY
-#endif
-#ifdef CRDLY
-                         | CRDLY
-#endif
-#ifdef TABDLY
-                         | TABDLY
-#endif
-#ifdef BSDLY
-                         | BSDLY
-#endif
-#ifdef VTDLY
-                         | VTDLY
-#endif
-#ifdef FFDLY
-                         | FFDLY
-#endif
-    );
+    ttyb.c_oflag |= TW_TTY_OFLAG_ON;
+    ttyb.c_oflag &= ~TW_TTY_OFLAG_OFF;
 
     /* control modes */
-    ttysave.c_cflag |= (CS8 | CREAD);
-    ttysave.c_cflag &= ~(CSTOPB | PARENB | PARODD
-#ifdef HUPCL
-                         | HUPCL
-#endif
-#ifdef CLOCAL
-                         | CLOCAL
-#endif
-#ifdef CMSPAR
-                         | CMSPAR
-#endif
-#ifdef CRTSCTS
-                         | CRTSCTS
-#endif
-    );
+    ttyb.c_cflag |= TW_TTY_CFLAG_ON;
+    ttyb.c_cflag &= ~TW_TTY_CFLAG_OFF;
 
     /* line discipline modes */
-    ttysave.c_lflag |= (ISIG | ICANON | IEXTEN | ECHO | ECHOE | ECHOK
-#ifdef ECHOKE
-                        | ECHOKE
-#endif
-    );
-
-    ttysave.c_lflag &= ~(ECHONL
-#ifdef XCASE
-                         | XCASE
-#endif
-#ifdef NOFLSH
-                         | NOFLSH
-#endif
-#ifdef TOSTOP
-                         | TOSTOP
-#endif
-#ifdef ECHOCTL
-                         | ECHOCTL
-#endif
-#ifdef ECHOPRT
-                         | ECHOPRT
-#endif
-#ifdef FLUSHO
-                         | FLUSHO
-#endif
-#ifdef PENDIN
-                         | PENDIN
-#endif
-    );
+    ttyb.c_lflag |= TW_TTY_LFLAG_ON;
+    ttyb.c_lflag &= ~TW_TTY_LFLAG_OFF;
 
   } else {
     /* full initialization */
 
-    /* input modes */
-    ttysave.c_iflag = (BRKINT | IGNPAR | ICRNL | IXON
-#ifdef ITW_MAXBEL
-                       | ITW_MAXBEL
-#endif
-    );
-
-    /* output modes */
-    ttysave.c_oflag = (OPOST | ONLCR);
-
-    /* control modes */
-    ttysave.c_cflag = (CS8 | CREAD
-#if defined(CBAUD) && defined(B38400)
-                       | B38400
-#endif
-    );
-
-    /* line discipline modes */
-    ttysave.c_lflag = (ISIG | ICANON | IEXTEN | ECHO | ECHOE | ECHOK
-#ifdef ECHOKE
-                       | ECHOKE
-#endif
-    );
+    ttyb.c_iflag = TW_TTY_IFLAG_ON;                      /* input modes */
+    ttyb.c_oflag = TW_TTY_OFLAG_ON;                      /* output modes */
+    ttyb.c_cflag = TW_TTY_CFLAG_ON | TW_TTY_CFLAG_SPEED; /* control modes */
+    ttyb.c_lflag = TW_TTY_LFLAG_ON;                      /* line discipline modes */
   }
   return ttrue;
 }

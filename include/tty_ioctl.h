@@ -32,4 +32,124 @@
 #error TCSETS and TCSANOW both undefined.
 #endif
 
+#ifndef VDISABLE
+#ifdef _POSIX_VDISABLE
+#define VDISABLE _POSIX_VDISABLE
+#else
+#define VDISABLE 255
+#endif
+#endif
+
+enum {
+  TW_TTY_IFLAG_ON = BRKINT | IGNPAR | ICRNL | IXON
+#ifdef ITW_MAXBEL
+                    | ITW_MAXBEL
+#endif
+  ,
+  TW_TTY_IFLAG_OFF = IGNBRK | ISTRIP | INLCR | IXANY | IXOFF
+#ifdef PARMRK
+                     | PARMRK
+#endif
+#ifdef INPCK
+                     | INPCK
+#endif
+#ifdef IUCLC
+                     | IUCLC
+#endif
+  ,
+  TW_TTY_OFLAG_ON = OPOST | ONLCR
+#if defined(__APPLE__) && defined(__MACH__)
+                    | OCRNL
+#endif
+  ,
+
+  TW_TTY_OFLAG_OFF = 0
+#ifdef OLCUC
+                     | OLCUC
+#endif
+#ifdef ONOCR
+                     | ONOCR
+#endif
+#ifdef ONLRET
+                     | ONLRET
+#endif
+#ifdef OFILL
+                     | OFILL
+#endif
+#ifdef OFDEL
+                     | OFDEL
+#endif
+#ifdef NLDLY
+                     | NLDLY
+#endif
+#ifdef CRDLY
+                     | CRDLY
+#endif
+#ifdef TABDLY
+                     | TABDLY
+#endif
+#ifdef BSDLY
+                     | BSDLY
+#endif
+#ifdef VTDLY
+                     | VTDLY
+#endif
+#ifdef FFDLY
+                     | FFDLY
+#endif
+  ,
+  TW_TTY_CFLAG_ON = CS8 | CREAD,
+  TW_TTY_CFLAG_OFF = CSTOPB | PARENB | PARODD
+#ifdef HUPCL
+                     | HUPCL
+#endif
+#ifdef CLOCAL
+                     | CLOCAL
+#endif
+#ifdef CMSPAR
+                     | CMSPAR
+#endif
+#ifdef CRTSCTS
+                     | CRTSCTS
+#endif
+  ,
+  TW_TTY_CFLAG_SPEED =
+#if defined(B38400)
+      B38400
+#elif defined(B19200)
+      B19200
+#else
+      B9600
+#endif
+  ,
+  TW_TTY_LFLAG_ON = ISIG | ICANON | IEXTEN | ECHO | ECHOE | ECHOK
+#ifdef ECHOKE
+                    | ECHOKE
+#endif
+  ,
+  TW_TTY_LFLAG_OFF = ECHONL
+#ifdef XCASE
+                     | XCASE
+#endif
+#ifdef NOFLSH
+                     | NOFLSH
+#endif
+#ifdef TOSTOP
+                     | TOSTOP
+#endif
+#ifdef ECHOCTL
+                     | ECHOCTL
+#endif
+#ifdef ECHOPRT
+                     | ECHOPRT
+#endif
+#ifdef FLUSHO
+                     | FLUSHO
+#endif
+#ifdef PENDIN
+                     | PENDIN
+#endif
+  ,
+};
+
 #endif /* TWIN_TTY_IOCTL_H */
