@@ -57,12 +57,7 @@ enum {
                      | IUCLC
 #endif
   ,
-  TW_TTY_OFLAG_ON = OPOST | ONLCR
-#if defined(__APPLE__) && defined(__MACH__)
-                    | OCRNL
-#endif
-  ,
-
+  TW_TTY_OFLAG_ON = OPOST | ONLCR,
   TW_TTY_OFLAG_OFF = 0
 #ifdef OLCUC
                      | OLCUC
