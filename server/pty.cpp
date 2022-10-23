@@ -208,7 +208,9 @@ static byte setupTty(ttydata *Data) {
   wsiz.ws_ypixel = 0;
 
   if (ioctl(ptyfd, TIOCSWINSZ, &wsiz) >= 0) {
-    if (tty_setioctl(ttyfd, &ttysave) >= 0)
+    termios ttyb = {};
+    InitTtyStruct(ttyfd, ttyb);
+    if (tty_setioctl(ttyfd, &ttyb) >= 0)
       return ttrue;
     else
       setupPtyError("tty_setioctl", "");

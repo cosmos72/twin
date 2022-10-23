@@ -21,7 +21,7 @@
 #include <string.h>    // memset()
 #include <Tutf/Tutf.h> // Tutf_CP437_to_UTF_32[]
 
-static byte InitTtyData(window w, dat scrollbacklines);
+static byte InitTtyDataWindow(window w, dat scrollbacklines);
 
 window s_window::Create(msgport owner, dat titlelen, const char *title, const tcolor *coltitle,
                         menu m, tcolor coltext, uldat cursortype, uldat attr, uldat flags,
@@ -109,7 +109,7 @@ window s_window::Init(msgport owner, dat titlelen, const char *title, const tcol
     CurY = YLogic = scrollbacklines;
     WLogic = xwidth - hasborder;
     HLogic = scrollbacklines + ywidth - hasborder;
-    if (!InitTtyData(this, scrollbacklines)) {
+    if (!InitTtyDataWindow(this, scrollbacklines)) {
       return NULL;
     }
   } else if (W_USE(this, USEROWS)) {
@@ -124,7 +124,7 @@ window s_window::Init(msgport owner, dat titlelen, const char *title, const tcol
 
 /* ttydata */
 
-static byte InitTtyData(window w, dat scrollbacklines) {
+static byte InitTtyDataWindow(window w, dat scrollbacklines) {
   ttydata *Data = w->USE.C.TtyData;
   ldat count = w->WLogic * w->HLogic;
   tcell *p = w->USE.C.Contents, h;

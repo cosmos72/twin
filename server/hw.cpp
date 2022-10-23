@@ -479,14 +479,16 @@ void DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
 }
 
 byte InitTtysave(void) {
-  struct termios &ttyb = ttysave;
+  int fd = open("/dev/tty", O_RDWR | O_NOCTTY);
+  InitTtyStruct(fd, ttysave);
+  if (fd >= 0)
+    close(fd);
+  return ttrue;
+}
 
-  int _fd = open("/dev/tty", O_RDWR | O_NOCTTY);
-  int fd = _fd >= 0 ? _fd : 0;
+void InitTtyStruct(int fd, termios &ttyb) {
+
   byte ok = tty_getioctl(fd, &ttyb) == 0;
-
-  if (_fd >= 0)
-    close(_fd);
 
   ttyb.c_cc[VINTR] = CINTR;
   ttyb.c_cc[VQUIT] = CQUIT;
@@ -552,5 +554,4 @@ byte InitTtysave(void) {
     ttyb.c_cflag = TW_TTY_CFLAG_ON | TW_TTY_CFLAG_SPEED; /* control modes */
     ttyb.c_lflag = TW_TTY_LFLAG_ON;                      /* line discipline modes */
   }
-  return ttrue;
 }

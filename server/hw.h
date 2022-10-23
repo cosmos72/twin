@@ -35,6 +35,9 @@ void QuitSignals(void);
 void AllDefaultSignals(void); // set all signal handlers to SIG_DFL
 byte InitTtysave(void);
 
+struct termios;
+void InitTtyStruct(int fd, termios &ttyb);
+
 void DirtyVideo(dat Xstart, dat Ystart, dat Xend, dat Yend);
 void DragArea(dat Xstart, dat Ystart, dat Xend, dat Yend, dat DstXstart, dat DstYstart);
 
