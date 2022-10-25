@@ -137,7 +137,7 @@ int flushk(void) {
 }
 
 static void OutOfMemory(void) {
-  log(ERROR, "twdisplay: Out of memory!\n");
+  log(ERROR) << "twdisplay: Out of memory!\n";
 }
 
 inline uldat FdListGet(void) {
@@ -295,16 +295,16 @@ static bool module_InitHW(Chars arg) {
   if (!alloc_name.format("hw_", name)) {
     Errstr = "Out of memory!";
   } else if (!(m = DlLoadAny(name = alloc_name))) {
-    log(ERROR, "twdisplay: unable to load display driver module `", name, //
-        "' :\n      ", Errstr, "\n");
+    log(ERROR) << "twdisplay: unable to load display driver module `" << name //
+               << "' :\n      " << Errstr << "\n";
   } else {
-    log(INFO, "twdisplay: starting display driver module `", name, "'...\n");
+    log(INFO) << "twdisplay: starting display driver module `" << name << "'...\n";
 
     bool (*InitD)(void);
     if (!(InitD = m->DoInit) || !InitD()) {
-      log(ERROR, "twdisplay: ...module `", name, "' failed to start.\n");
+      log(ERROR) << "twdisplay: ...module `" << name << "' failed to start.\n";
     } else {
-      log(INFO, "twdisplay: ...module `", name, "' successfully started.\n");
+      log(INFO) << "twdisplay: ...module `" << name << "' successfully started.\n";
       HW->Module = m;
       m->Used++;
       return true;
@@ -351,10 +351,11 @@ display_hw s_display_hw::Init(uldat namelen, const char *name) {
 static s_display_hw _HW;
 
 void warn_NoHW(uldat len, const char *arg, uldat tried) {
-  if (arg)
-    log(ERROR, "twdisplay: All display drivers failed for `", Chars(arg, len), "'\n");
-  else
-    log(ERROR, "twdisplay: All display drivers failed.\n");
+  log(ERROR) << "twdisplay: All display drivers failed";
+  if (arg) {
+    log(ERROR) << " for `" << Chars(arg, len) << "'";
+  }
+  log(ERROR) << "\n";
 }
 
 static void UpdateFlagsHW(void) {
@@ -433,8 +434,8 @@ static byte IsValidHW(Chars carg) {
       /* the rest are options - validated by each display HW */
       break;
     if ((b < '0' || b > '9') && (b < 'A' || b > 'Z') && (b < 'a' || b > 'z') && b != '_') {
-      log(ERROR, "twdisplay: invalid non-alphanumeric character 0x", hex(b),
-          " in display HW name: `", Chars(arg, len), "'\n");
+      log(ERROR) << "twdisplay: invalid non-alphanumeric character 0x" << hex(b)
+                 << " in display HW name: `" << Chars(arg, len) << "'\n";
       return tfalse;
     }
   }
@@ -443,7 +444,7 @@ static byte IsValidHW(Chars carg) {
 
 static display_hw AttachDisplayHW(Chars arg, uldat slot, byte flags) {
   if (arg && !arg.starts_with(Chars("-hw="))) {
-    log(ERROR, "twdisplay: specified `", arg, "' is not `--hw=<display>'\n");
+    log(ERROR) << "twdisplay: specified `" << arg << "' is not `--hw=<display>'\n";
     return NULL;
   }
   if (IsValidHW(arg) && CreateDisplayHW(arg)) {
@@ -656,12 +657,12 @@ static void HandleMsg(tmsg Msg) {
   switch (Msg->Type) {
   case TW_MSG_SELECTION:
     /* should never happen */
-    log(WARNING, "\ntwdisplay: HandleMsg(): unexpected Selection Message from twin!\n");
+    log(WARNING) << "\ntwdisplay: HandleMsg(): unexpected Selection Message from twin!\n";
     break;
   case TW_MSG_SELECTIONREQUEST:
 #if 0
-    log(INFO, "twdisplay: Selection Request from 0x",
-        hex(Msg->Event.EventSelectionRequest.Requestor), ", owner is underlying HW\n");
+    log(INFO) << "twdisplay: Selection Request from 0x"
+              << hex(Msg->Event.EventSelectionRequest.Requestor) << ", owner is underlying HW\n";
 #endif
     /* request selection from underlying HW */
 
@@ -676,7 +677,7 @@ static void HandleMsg(tmsg Msg) {
     break;
   case TW_MSG_SELECTIONNOTIFY:
 #if 0
-        log(INFO, "twdisplay: Selection Notify to underlying HW\n");
+    log(INFO) << "twdisplay: Selection Notify to underlying HW\n";
 #endif
     /* notify selection to underlying HW */
     HW->HWSelectionNotify(
@@ -806,7 +807,7 @@ void TwinSelectionNotify(obj Requestor, uldat ReqPrivate, e_id Magic, const char
     MIME = nullMIME;
   }
 #if 0
-    log(INFO, "twdisplay: Selection Notify to 0x", hex((topaque)Requestor), "\n", );
+  log(INFO) << "twdisplay: Selection Notify to 0x" << hex((topaque)Requestor) << "\n";
 #endif
   /* cast back Requestor from fake (obj) to its original (uldat) */
   TwNotifySelection((topaque)Requestor, ReqPrivate, Magic, MIME, Data.size(), Data.data());
@@ -815,8 +816,8 @@ void TwinSelectionNotify(obj Requestor, uldat ReqPrivate, e_id Magic, const char
 /* HW back-end function: request selection */
 void TwinSelectionRequest(obj Requestor, uldat ReqPrivate, obj Owner) {
 #if 0
-  log(INFO, "twdisplay: Selection Request from 0x", hex((topaque)Requestor), //
-      ", Owner is 0x", hex((topaque)Owner));
+  log(INFO) << "twdisplay: Selection Request from 0x" << hex((topaque)Requestor) //
+            << ", Owner is 0x" << hex((topaque)Owner);
 #endif
   /* cast back Owner from the fake (obj) to (uldat) */
   TwRequestSelection((topaque)Owner, ReqPrivate);
@@ -980,7 +981,7 @@ static void MainLoop(int Fd) {
        */
       if (TwGetDisplayWidth() <= 0) {
         QuitDisplayHW(HW);
-        log(ERROR, "twdisplay: lost connection to TWIN.. \n");
+        log(ERROR) << "twdisplay: lost connection to TWIN.. \n";
         exit(1);
       }
     }
@@ -1005,7 +1006,7 @@ static void MainLoop(int Fd) {
 
   if (num_fds < 0 && errno != EINTR) {
     QuitDisplayHW(HW);
-    log(ERROR, "twdisplay: select(): ", Chars::from_c(strerror(errno)), "\n");
+    log(ERROR) << "twdisplay: select(): " << Chars::from_c(strerror(errno)) << "\n";
     exit(1);
   }
   if (TwInPanic()) {
@@ -1078,16 +1079,14 @@ static byte VersionsMatch(byte force) {
     srv_verstr.format(TW_VER_MAJOR(sv), ".", TW_VER_MINOR(sv), ".", TW_VER_PATCH(sv));
 
     if (force) {
-      log(WARNING,
-          "twdisplay: warning: socket protocol version mismatch!  (ignored)"
-          "\n           client is " TW_PROTOCOL_VERSION_STR ", library is ",
-          lib_verstr, ", server is ", srv_verstr, "\n");
+      log(WARNING) << "twdisplay: warning: socket protocol version mismatch!  (ignored)"
+                      "\n           client is " TW_PROTOCOL_VERSION_STR ", library is "
+                   << lib_verstr << ", server is " << srv_verstr << "\n";
       return tfalse;
     } else {
-      log(ERROR,
-          "twdisplay: fatal: socket protocol version mismatch!"
-          "\n           client is " TW_PROTOCOL_VERSION_STR ", library is ",
-          lib_verstr, ", server is ", srv_verstr, "\n");
+      log(ERROR) << "twdisplay: fatal: socket protocol version mismatch!"
+                    "\n           client is " TW_PROTOCOL_VERSION_STR ", library is "
+                 << lib_verstr << ", server is " << srv_verstr << "\n";
     }
   }
   return ttrue;
@@ -1306,7 +1305,7 @@ int main(int argc, char *argv[]) {
           /* libtw panic */
           break;
 
-        log(INFO, "  ", Chars(reply, len));
+        log(INFO) << "  " << Chars(reply, len);
       }
       flushk();
 
@@ -1329,9 +1328,9 @@ int main(int argc, char *argv[]) {
 
       if (flags && !ourtty) {
         if (ret)
-          log(INFO, "... ok, twin successfully attached.\n");
+          log(INFO) << "... ok, twin successfully attached.\n";
         else
-          log(ERROR, "... ach, twin failed to attach.\n");
+          log(ERROR) << "... ach, twin failed to attach.\n";
         flushk();
       }
       if (ret == 2)
@@ -1341,13 +1340,13 @@ int main(int argc, char *argv[]) {
          */
         MainLoop(Fd);
       else if (ret)
-        log(WARNING, Chars::from_c(MYname), ": twin said we can quit... strange!\n");
+        log(WARNING) << Chars::from_c(MYname) << ": twin said we can quit... strange!\n";
 
       Quit(!ret);
     } while (0);
 
-  log(ERROR, Chars::from_c(MYname), ": libtw error: ", Chars::from_c(TwStrError(TwErrno)), " ",
-      Chars::from_c(TwStrErrorDetail(TwErrno, TwErrnoDetail)), "\n");
+  log(ERROR) << Chars::from_c(MYname) << ": libtw error: " << Chars::from_c(TwStrError(TwErrno))
+             << " " << Chars::from_c(TwStrErrorDetail(TwErrno, TwErrnoDetail)) << "\n";
   return 1;
 }
 

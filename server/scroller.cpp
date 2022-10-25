@@ -40,7 +40,7 @@ byte InitScroller(void) {
 
     return ttrue;
   }
-  log(ERROR, "twin: Scroller: ", Errstr, "\n");
+  log(ERROR) << "twin: Scroller: " << Errstr << "\n";
   return tfalse;
 }
 

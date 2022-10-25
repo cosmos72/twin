@@ -108,8 +108,8 @@ static void display_HandleEvent(display_hw hw) {
       /*
        * should never happen, twdisplay uses libtw calls to manage Selection Requests
        */
-      log(ERROR,
-          "\ntwin: display_HandleEvent(): unexpected SelectionRequest Message from twdisplay!\n");
+      log(ERROR)
+          << "\ntwin: display_HandleEvent(): unexpected SelectionRequest Message from twdisplay!\n";
 #if 0
             TwinSelectionRequest(Event->EventSelectionRequest.Requestor,
                                  Event->EventSelectionRequest.ReqPrivate,
@@ -120,8 +120,8 @@ static void display_HandleEvent(display_hw hw) {
       /*
        * should never happen, twdisplay uses libtw calls to manage Selection Notifies
        */
-      log(ERROR,
-          "\ntwin: display_HandleEvent(): unexpected SelectionNotify Message from twdisplay!\n");
+      log(ERROR)
+          << "\ntwin: display_HandleEvent(): unexpected SelectionNotify Message from twdisplay!\n";
 #if 0
       TwinSelectionNotify(
           dRequestor, dReqPrivate, Event->EventSelectionNotify.Magic,
@@ -137,8 +137,8 @@ static void display_HandleEvent(display_hw hw) {
          * Not needed, twdisplay keeps its own copy of Video[]
          * and never generates ev_dpy_RedrawVideo events
          */
-        log(ERROR, "\ntwin: display_HandleEvent(): unexpected Display.RedrawVideo Message from "
-                   "twdisplay!\n");
+        log(ERROR) << "\ntwin: display_HandleEvent(): unexpected Display.RedrawVideo Message from "
+                      "twdisplay!\n";
 #if 0
                 if (Event->EventDisplay.Len == sizeof(dat) * 2)
                     NeedRedrawVideo(Event->EventDisplay.X, Event->EventDisplay.Y,
@@ -427,19 +427,19 @@ static bool display_InitHW(void) {
     /*
      * we can't start unless we have a connected twdisplay...
      */
-    log(ERROR, "      display_InitHW() failed: not connected to twdisplay.\n"
-               "      (you cannot use -hw=display from command line or twattach)\n");
+    log(ERROR) << "      display_InitHW() failed: not connected to twdisplay.\n"
+                  "      (you cannot use -hw=display from command line or twattach)\n";
     return false;
   }
 
   if (!(Port = RemoteGetMsgPort(HW->AttachSlot))) {
-    log(ERROR, "      display_InitHW() failed: twdisplay did not create a MsgPort.\n");
+    log(ERROR) << "      display_InitHW() failed: twdisplay did not create a MsgPort.\n";
     return false;
   }
 
   if (!Ext(Socket, SendMsg)) {
-    log(ERROR, "      display_InitHW() failed: SocketSendMsg() not available.\n"
-               "      (maybe you should load Socket Server module?)\n");
+    log(ERROR) << "      display_InitHW() failed: SocketSendMsg() not available.\n"
+                  "      (maybe you should load Socket Server module?)\n";
     return false;
   }
 
@@ -453,7 +453,7 @@ static bool display_InitHW(void) {
       }
       FreeMem(HW->Private);
     }
-    log(ERROR, "      display_InitHW(): Out of memory!\n");
+    log(ERROR) << "      display_InitHW(): Out of memory!\n";
     return false;
   }
 

@@ -439,9 +439,9 @@ static byte RCSteps(run *r) {
       switch (n->id) {
 
       case EXEC:
-        if (flag_secure)
-          log(ERROR, flag_secure_msg);
-        else
+        if (flag_secure) {
+          log(ERROR) << flag_secure_msg;
+        } else {
           switch (fork()) {
           case -1: /* error */
             break;
@@ -461,6 +461,7 @@ static byte RCSteps(run *r) {
           default: /* parent */
             break;
           }
+        }
         break;
 
       case EXECTTY:
@@ -566,9 +567,9 @@ static byte RCSteps(run *r) {
       case STDERR:
         argv = n->x.v.argv;
         while (*argv) {
-          log(INFO, Chars::from_c(*argv++), " ");
+          log(INFO) << Chars::from_c(*argv++) << " ";
         }
-        log(INFO, "\n");
+        log(INFO) << "\n";
         break;
       case SYNTHETICKEY:
         if (W)
@@ -841,11 +842,13 @@ static void RCReload(void) {
   bool (*mod_rcload)(void) = NULL;
   byte success;
 
-  if ((M = DlLoad(RCParseSo)))
+  if ((M = DlLoad(RCParseSo))) {
     mod_rcload = M->DoInit;
+  }
 #if 0
-  else /* this would garble -hw=tty display */
-    log(ERROR, "twin: failed to load the RC parser:\n      ", Errstr, "\n");
+  else { /* this would garble -hw=tty display */
+    log(ERROR) << "twin: failed to load the RC parser:\n      " << Errstr << "\n";
+  }
 #endif
 
   success = mod_rcload && mod_rcload();

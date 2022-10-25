@@ -133,8 +133,8 @@ module DlLoad(uldat code) {
       if (All->FnHookModule)
         All->FnHookModule(All->HookModule);
     } else {
-      log(ERROR, "failed to load module ", name, ": ", //
-          (Errstr ? Errstr : Chars("unknown error")));
+      log(ERROR) << "failed to load module " << name << ": " //
+                 << (Errstr ? Errstr : Chars("unknown error"));
     }
   }
   return M;

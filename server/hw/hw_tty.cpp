@@ -181,12 +181,12 @@ static byte null_InitMouseConfirm(void) {
   byte c = '\0';
 
   fflush(stdOUT);
-  log(ERROR, "\n"
-             "      \033[1m  ALL  MOUSE  DRIVERS  FAILED.\033[0m\n"
-             "\n"
-             "      If you really want to run `twin' without mouse\n"
-             "      hit RETURN within 10 seconds to continue,\n"
-             "      otherwise hit CTRL-C (or wait 10 seconds) to cancel.\n");
+  log(ERROR) << "\n"
+                "      \033[1m  ALL  MOUSE  DRIVERS  FAILED.\033[0m\n"
+                "\n"
+                "      If you really want to run `twin' without mouse\n"
+                "      hit RETURN within 10 seconds to continue,\n"
+                "      otherwise hit CTRL-C (or wait 10 seconds) to cancel.\n";
   flushk();
 
   SetAlarm(10);
@@ -278,7 +278,7 @@ static bool tty_InitHW(void) {
        need_persistent_slot = tfalse, try_ctty = tfalse, display_is_ctty = tfalse;
 
   if (!(HW->Private = (struct tty_data *)AllocMem0(sizeof(struct tty_data)))) {
-    log(ERROR, "      tty_InitHW(): Out of memory!\n");
+    log(ERROR) << "      tty_InitHW(): Out of memory!\n";
     return false;
   }
   saveCursorType = (uldat)-1;
@@ -307,7 +307,7 @@ static bool tty_InitHW(void) {
         comma = end;
       }
       if (!tty_NAME.format(arg.view(1, comma))) {
-        log(ERROR, "      tty_InitHW(): out of memory!\n");
+        log(ERROR) << "      tty_InitHW(): out of memory!\n";
         return false;
       }
       arg = arg.view(comma, end);
@@ -326,12 +326,12 @@ static bool tty_InitHW(void) {
       Chars arg0 = arg.view(0, comma);
       if (arg0.starts_with(Chars(",TERM="))) {
         if (!tty_TERM.format(arg0.view(6, comma))) {
-          log(ERROR, "      tty_InitHW(): out of memory!\n");
+          log(ERROR) << "      tty_InitHW(): out of memory!\n";
           return false;
         }
       } else if (arg0.starts_with(Chars(",charset="))) {
         if (!charset.format(arg0.view(9, comma))) {
-          log(ERROR, "      tty_InitHW(): out of memory!\n");
+          log(ERROR) << "      tty_InitHW(): out of memory!\n";
           return false;
         }
       } else if (arg0.starts_with(Chars(",stdout"))) {
@@ -358,20 +358,20 @@ static bool tty_InitHW(void) {
       } else if (arg0.starts_with(Chars(",utf8"))) {
         tty_use_utf8 = arg0.view(5, comma) != Chars("=no");
       } else {
-        log(INFO,
-            "   --hw=tty options:\n"
-            "      @/dev/SOME_TTY_NAME   attach to specified tty device (must be first option)\n"
-            "      ,charset=CHARSET_NAME use specified charset encoding\n"
-            "      ,ctty[=no]            set tty device as the controlling tty\n"
-            "      ,colorbug             assume terminal has colorbug\n"
-            "      ,help                 show this help\n"
-            "      ,mouse=[xterm|twterm] assume specified mouse reporting protocol\n"
-            "      ,noinput              open a view-only display on tty - ignore input\n"
-            "      ,raw[=no]             use Linux raw keyboard\n"
-            "      ,slow                 assume terminal is slow\n"
-            "      ,stdout[=no]          use hard-coded escape sequences\n"
-            "      ,TERM=TERM_NAME       assume terminal type is TERM_NAME\n"
-            "      ,termcap[=no]         use libtermcap escape sequences\n");
+        log(INFO)
+            << "   --hw=tty options:\n"
+               "      @/dev/SOME_TTY_NAME   attach to specified tty device (must be first option)\n"
+               "      ,charset=CHARSET_NAME use specified charset encoding\n"
+               "      ,ctty[=no]            set tty device as the controlling tty\n"
+               "      ,colorbug             assume terminal has colorbug\n"
+               "      ,help                 show this help\n"
+               "      ,mouse=[xterm|twterm] assume specified mouse reporting protocol\n"
+               "      ,noinput              open a view-only display on tty - ignore input\n"
+               "      ,raw[=no]             use Linux raw keyboard\n"
+               "      ,slow                 assume terminal is slow\n"
+               "      ,stdout[=no]          use hard-coded escape sequences\n"
+               "      ,TERM=TERM_NAME       assume terminal type is TERM_NAME\n"
+               "      ,termcap[=no]         use libtermcap escape sequences\n";
         return false;
       }
       arg = arg.view(comma, end);
@@ -417,8 +417,8 @@ static bool tty_InitHW(void) {
       stdOUT = fdopen(tty_fd, "r+");
     }
     if (tty_fd == -1 || !stdOUT) {
-      log(ERROR, "      tty_InitHW(): open(\"", tty_NAME,
-          "\") failed: ", Chars::from_c(strerror(errno)), "\n");
+      log(ERROR) << "      tty_InitHW(): open(\"" << tty_NAME
+                 << "\") failed: " << Chars::from_c(strerror(errno)) << "\n";
       return false;
     }
   } else {
@@ -426,21 +426,21 @@ static bool tty_InitHW(void) {
      * open our controlling tty as display
      */
     if (DisplayHWCTTY) {
-      log(ERROR, "      tty_InitHW() failed: controlling tty ",
-          (DisplayHWCTTY == HWCTTY_DETACHED ? Chars("not usable after Detach\n")
-                                            : Chars("is already in use as display\n")));
+      log(ERROR) << "      tty_InitHW() failed: controlling tty "
+                 << (DisplayHWCTTY == HWCTTY_DETACHED ? Chars("not usable after Detach\n")
+                                                      : Chars("is already in use as display\n"));
       return false;
     } else {
       display_is_ctty = ttrue;
       tty_fd = 0;
       stdOUT = stdout;
       if (!tty_NAME.format(Chars::from_c(ttyname(0)))) {
-        log(ERROR, "      tty_InitHW(): out of memory!\n");
+        log(ERROR) << "      tty_InitHW(): out of memory!\n";
         return false;
       }
       if (!tty_TERM) {
         if (!tty_TERM.format(Chars::from_c(origTERM))) {
-          log(ERROR, "      tty_InitHW(): out of memory!\n");
+          log(ERROR) << "      tty_InitHW(): out of memory!\n";
           return false;
         }
       }
@@ -466,11 +466,11 @@ static bool tty_InitHW(void) {
   if (charset) {
     /* honor user-specified charset */
     if ((tty_charset = Tutf_charset_id(charset.data())) == (uldat)-1) {
-      log(ERROR, "      tty_InitHW(): libtutf warning: unknown charset `", charset,
-          "', assuming `ASCII'\n");
+      log(ERROR) << "      tty_InitHW(): libtutf warning: unknown charset `" << charset
+                 << "', assuming `ASCII'\n";
     } else if (tty_charset == Tutf_charset_id(T_NAME(UTF_32))) {
-      log(ERROR, "      tty_InitHW(): charset `", charset,
-          "' is Unicode, assuming terminal supports UTF-8\n");
+      log(ERROR) << "      tty_InitHW(): charset `" << charset
+                 << "' is Unicode, assuming terminal supports UTF-8\n";
       tty_use_utf8 = ttrue;
       tty_charset = (uldat)-1;
     }
@@ -495,7 +495,7 @@ static bool tty_InitHW(void) {
    */
 
   if (!stdin_TestTty()) {
-    log(ERROR, "      tty_InitHW() failed: unable to read from the terminal: ", Errstr, "\n");
+    log(ERROR) << "      tty_InitHW() failed: unable to read from the terminal: " << Errstr << "\n";
   } else if (
 
 #if defined(CONF_HW_TTY_LINUX) || defined(CONF_HW_TTY_TWTERM)
@@ -510,7 +510,7 @@ static bool tty_InitHW(void) {
 #ifdef CONF_HW_TTY_LINUX
         GPM_InitMouse() ||
 #else
-        (log(WARNING, "      tty_InitHW(): gpm mouse support not compiled, skipping it.\n"),
+        (log(WARNING) << "      tty_InitHW(): gpm mouse support not compiled, skipping it.\n",
          false) ||
 #endif
         xterm_InitMouse(force_mouse) || null_InitMouseConfirm()) {

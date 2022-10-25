@@ -306,7 +306,8 @@ static void do_null(void) {
 }
 
 static udat do_lowercase(byte value, byte up_flag) {
-  log(ERROR, "twin: hw/linux/kbd_low.h: do_lowercase() called - kernel bug!\n");
+  log(ERROR)
+      << "twin: hw/hw_tty_linux/kbd_raw1.h: do_lowercase() called. This should not happen!\n";
   return TW_Null;
 }
 
@@ -754,10 +755,9 @@ static udat do_spec(byte value, byte up_flag) {
 
 typedef udat (*k_hand)(byte value, byte up_flag);
 
-static k_hand key_handler[] = {
-    do_latin, do_fn,    do_spec, do_pad,       do_dead,  do_cons,  do_cur,    do_shift,
-
-    do_meta,  do_ascii, do_lock, do_lowercase, do_slock, do_dead2, do_ignore, do_ignore};
+static k_hand key_handler[] = {do_latin, do_fn,    do_spec,   do_pad,   do_dead, do_cons,
+                               do_cur,   do_shift, do_meta,   do_ascii, do_lock, do_lowercase,
+                               do_slock, do_dead2, do_ignore, do_ignore};
 
 /* maximum values each key_handler can handle */
 static const byte key_handler_maxval[] = {255,
@@ -829,8 +829,9 @@ static bool lrawkbd_LoadKeymaps(void) {
       if (ioctl(tty_fd, KDGKBENT, &ke) == 0) {
 
 #ifdef DEBUG_HW_TTY_LRAWKBD
-        log(INFO, "\t... ioctl(tty_fd = ", (int)tty_fd, ", KDGKBENT, {table = 0x", hex(table),
-            ", index = 0x", hex(keycode), "} ) = 0x", hex((int)ke.kb_value), "\n");
+        log(INFO) << "\t... ioctl(tty_fd = " << (int)tty_fd << ", KDGKBENT, {table = 0x"
+                  << hex(table) << ", index = 0x" << hex(keycode) << "} ) = 0x"
+                  << hex((int)ke.kb_value) << "\n";
 #endif
 
         if (keycode == 0 && ke.kb_value == K_NOSUCHMAP)
@@ -851,15 +852,15 @@ static udat get_kbentry(byte keycode, byte table) {
     udat *keymap = lrawkbd_keymaps[table];
     if (keymap != NULL) {
 #ifdef DEBUG_HW_TTY_LRAWKBD
-      log(INFO, "\tget_kbentry(table = 0x", hex(int(table)), ", keycode = 0x", hex(int(keycode)),
-          ") = 0x", hex(int(keymap[keycode & 0x7F])), "\n");
+      log(INFO) << "\tget_kbentry(table = 0x" << hex(int(table)) << ", keycode = 0x"
+                << hex(int(keycode)) << ") = 0x" << hex(int(keymap[keycode & 0x7F])) << "\n";
 #endif
       return keymap[keycode & 0x7F];
     }
   } else {
-    log(ERROR, "internal error! invalid arguments in get_kbentry(keycode = 0x", hex(int(keycode)),
-        ", table = 0x", hex(int(table)), "): table must be < 0x", hex(int(lrawkbd_KEYMAPS_N)),
-        "\n");
+    log(ERROR) << "internal error! invalid arguments in get_kbentry(keycode = 0x"
+               << hex(int(keycode)) << ", table = 0x" << hex(int(table)) << "): table must be < 0x"
+               << hex(int(lrawkbd_KEYMAPS_N)) << "\n";
   }
   return K_NOSUCHMAP;
 }
@@ -886,15 +887,15 @@ static void dump_key(udat twk, ldat keysym, byte *s, uldat len) {
   uldat f;
   byte c;
 
-  log(INFO, "\tTWsym = 0x", hex(int(twk)), ", ksym = 0x", hex(int(keysym)), ", `");
+  log(INFO) << "\tTWsym = 0x" << hex(int(twk)) << ", ksym = 0x" << hex(int(keysym)) << ", `";
 
   for (f = 0; (c = s[f]) && f < len; f++) {
     if (c >= ' ' && c <= '~')
-      log(INFO, Chars(&c, 1));
+      log(INFO) << Chars(&c, 1);
     else
-      log(INFO, "\\x", hex((unsigned char)c));
+      log(INFO) << "\\x" << hex((unsigned char)c);
   }
-  log(INFO, "'\n");
+  log(INFO) << "'\n";
 }
 #endif
 

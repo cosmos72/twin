@@ -90,12 +90,12 @@ static size_t full_read(int fd, byte *data, size_t len) {
 static void shm_shrink_error(void) {
 
   may_shrink = tfalse;
-  log(ERROR, "twin: shm_shrink(): ReAllocMem() relocated memory while shrinking! \n"
+  log(ERROR) << "twin: shm_shrink(): ReAllocMem() relocated memory while shrinking! \n"
 #ifdef CONF__ALLOC
-             "      This should not happen! Please report.\n"
+                "      This should not happen! Please report.\n"
 #endif
-             "      CONF_WM_RC_SHRINK disabled.\n"
-             "      Reconfigure and recompile to disable it permanently.\n");
+                "      CONF_WM_RC_SHRINK disabled.\n"
+                "      Reconfigure and recompile to disable it permanently.\n";
 }
 #endif /* !defined(CONF_WM_RC_SHMMAP) && defined(CONF_WM_RC_SHRINK) */
 
@@ -382,7 +382,7 @@ void *shm_malloc_or_die(size_t len) {
   void *m = shm_malloc(len);
   if (m || !len)
     return m;
-  log(ERROR, "twin: RC: Out of shared memory!\n");
+  log(ERROR) << "twin: RC: Out of shared memory!\n";
   exit(1);
 }
 

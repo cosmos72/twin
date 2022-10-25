@@ -239,9 +239,9 @@ EXTERN_C byte InitModule(module Module) {
     return ttrue;
   }
   if (shellpath)
-    log(ERROR, "twin: InitTerm(): ", Errstr, "\n");
+    log(ERROR) << "twin: InitTerm(): " << Errstr << "\n";
   else
-    log(ERROR, "twin: environment variable $SHELL not set!\n");
+    log(ERROR) << "twin: required environment variable $SHELL not set!\n";
   return tfalse;
 }
 

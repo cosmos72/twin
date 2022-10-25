@@ -9,29 +9,34 @@
 
 #include "log.h"
 #include "printk.h" // printk_buf[], printk_str()
+#include "stl/fmt.h"
 
-#include <cstdarg>
-
-to_chars_result logv(log_level level, size_t arg_n, /* const FmtBase* */...) {
-  std::va_list vargs;
-  const size_t end = sizeof(printk_buf); // TW_BIGBUFF
-  Span<char> out(printk_buf, end);
-  size_t written = 0;
-  errnum err = SUCCESS;
-  va_start(vargs, arg_n);
-  for (size_t i = 0; i < arg_n; ++i) {
-    const FmtBase *fmt = va_arg(vargs, const FmtBase *);
-    if (fmt) {
-      to_chars_result res = fmt->write_to(out.span(written, end));
-      written += res.written;
-      if ((err = res.err) != SUCCESS) {
-        break;
-      }
+Logger::~Logger() {
+  try {
+    if (written != 0) {
+      printk_str(printk_buf, written);
     }
+  } catch (...) {
   }
-  va_end(vargs);
-  if (written != 0 && err == SUCCESS) {
-    printk_str(printk_buf, written);
-  }
-  return to_chars_result(written, err);
+}
+
+Span<char> Logger::available_span() const {
+  return Span<char>(printk_buf + written, sizeof(printk_buf) - written);
+}
+
+Logger &Logger::operator<<(long value) {
+  written += to_chars(available_span(), value).written;
+  return *this;
+}
+Logger &Logger::operator<<(unsigned long value) {
+  written += to_chars(available_span(), value).written;
+  return *this;
+}
+Logger &Logger::operator<<(View<char> value) {
+  written += to_chars(available_span(), value).written;
+  return *this;
+}
+Logger &Logger::operator<<(const FmtBase &value) {
+  written += value.write_to(available_span()).written;
+  return *this;
 }

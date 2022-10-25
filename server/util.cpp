@@ -902,11 +902,11 @@ static bool moveOldTwinrcFile(void);
 static bool initHOME(void) {
   const char *home = getenv("HOME");
   if (!home) {
-    log(ERROR, "twin: required environment variable HOME is not set. Aborting.\n");
+    log(ERROR) << "twin: required environment variable $HOME is not set. Aborting.\n";
     return false;
   }
   if (!HOME.format(Chars::from_c(home))) { // also append final '\0' but do not count it
-    log(ERROR, "twin: out of memory! Aborting.\n");
+    log(ERROR) << "twin: out of memory! Aborting.\n";
     return false;
   }
   if (!moveOldTwinrcFile()) {
@@ -934,7 +934,7 @@ static void makeDirectories(char *path) {
 bool moveOldTwinrcFile(void) {
   String oldPath;
   if (!oldPath.format(HOME, "/.twinrc")) {
-    log(ERROR, "twin: out of memory! Aborting.\n");
+    log(ERROR) << "twin: out of memory! Aborting.\n";
     return false;
   }
   struct stat buf;
@@ -943,20 +943,21 @@ bool moveOldTwinrcFile(void) {
   }
   String newPath;
   if (!newPath.format(HOME, "/.config/twin/twinrc")) {
-    log(ERROR, "twin: out of memory! Aborting.\n");
+    log(ERROR) << "twin: out of memory! Aborting.\n";
     return false;
   }
   newPath[newPath.size() - 7] = '\0';
   makeDirectories(newPath.data());
   newPath[newPath.size() - 7] = '/';
   if (rename(oldPath.data(), newPath.data()) != 0) {
-    log(ERROR,
-        "twin: failed to move configuration file from old (and no longer supported) location ",
-        oldPath, "\n      to the new location ", newPath, ": ", Chars::from_c(strerror(errno)));
+    log(ERROR)
+        << "twin: failed to move configuration file from old (and no longer supported) location "
+        << oldPath << "\n      to the new location " << newPath << ": "
+        << Chars::from_c(strerror(errno));
     return false;
   }
-  log(WARNING, "twin: moved configuration file from old (and no longer supported) location ",
-      oldPath, "\n      to the new location ", newPath);
+  log(WARNING) << "twin: moved configuration file from old (and no longer supported) location "
+               << oldPath << "\n      to the new location " << newPath;
   return true;
 }
 
@@ -975,7 +976,7 @@ static bool initTmpDir(void) {
     TmpDir.pop_back();                       // but do not count it
     return true;
   }
-  log(ERROR, "twin: out of memory! Aborting.\n");
+  log(ERROR) << "twin: out of memory! Aborting.\n";
   return false;
 }
 
@@ -994,7 +995,7 @@ static bool initSocketDir(void) {
     return true;
   } else {
     SocketDir.clear();
-    log(ERROR, "twin: out of memory! Aborting.\n");
+    log(ERROR) << "twin: out of memory! Aborting.\n";
     return false;
   }
 }
@@ -1111,12 +1112,12 @@ bool InitTWDisplay(void) {
   CopyToSockaddrUn(TmpDir.data(), &addr_unix, 0);
   arg0 = addr_unix.sun_path;
 
-  log(ERROR, "twin: failed to create any ", Chars::from_c(addr_unix.sun_path),
-      "/.Twin* socket: ", Errstr, //
-      "\n      possible reasons: either ", Chars::from_c(arg0),
-      " not writable, or all TWDISPLAY already in use,\n"
-      "      or too many stale ",
-      Chars::from_c(arg0), "/.Twin* sockets. Aborting.\n");
+  log(ERROR) << "twin: failed to create any " << Chars::from_c(addr_unix.sun_path)
+             << "/.Twin* socket: " << Errstr << "\n      possible reasons: either "
+             << Chars::from_c(arg0)
+             << " is not writable, or all TWDISPLAY are already in use,\n"
+                "      or too many stale "
+             << Chars::from_c(arg0) << "/.Twin* sockets. Aborting.\n";
   return false;
 }
 
@@ -1230,16 +1231,18 @@ byte SetServerUid(uldat uid, byte privileges) {
           flag_secure = 1;
           if (setuid(0) < 0 || setgid(0) < 0 || chown(fullTWD, 0, 0) < 0 || !SetEnvs(getpwuid(0))) {
             /* tried to recover, but screwed up uids too badly. */
-            log(ERROR, "twin: failed switching to uid ", uid, ": ", Chars::from_c(strerror(errno)),
-                "\ntwin: also failed to recover. Quitting NOW!\n");
+            log(ERROR) << "twin: failed switching to uid " << uid << ": "
+                       << Chars::from_c(strerror(errno))
+                       << "\ntwin: also failed to recover. Quitting NOW!\n";
             Quit(0);
           }
         }
       }
-      log(ERROR, "twin: failed switching to uid ", uid, ": ", Chars::from_c(strerror(errno)), "\n");
+      log(ERROR) << "twin: failed switching to uid " << uid << ": "
+                 << Chars::from_c(strerror(errno)) << "\n";
     }
   } else
-    log(ERROR, "twin: SetServerUid() can be called only if started by root with \"-secure\".\n");
+    log(ERROR) << "twin: SetServerUid() can be called only if started by root with \"-secure\".\n";
   return tfalse;
 }
 
@@ -1338,7 +1341,8 @@ void RunTwEnvRC(void) {
         case -1: /* error */
           close(fds[0]);
           close(fds[1]);
-          log(ERROR, "twin: RunTwEnvRC(): fork() failed: ", Chars::from_c(strerror(errno)), "\n");
+          log(ERROR) << "twin: RunTwEnvRC(): fork() failed: " << Chars::from_c(strerror(errno))
+                     << "\n";
           break;
         case 0: /* child */
           close(fds[0]);
@@ -1361,11 +1365,12 @@ void RunTwEnvRC(void) {
           break;
         }
       } else
-        log(ERROR, "twin: RunTwEnvRC(): pipe() failed: ", Chars::from_c(strerror(errno)), "\n");
+        log(ERROR) << "twin: RunTwEnvRC(): pipe() failed: " << Chars::from_c(strerror(errno))
+                   << "\n";
     } else
-      log(ERROR, "twin: RunTwEnvRC(): twenvrc.sh: File not found\n");
+      log(ERROR) << "twin: RunTwEnvRC(): twenvrc.sh: File not found\n";
   } else
-    log(ERROR, "twin: RunTwEnvRC(): delaying twenvrc.sh execution until secure mode ends.\n");
+    log(ERROR) << "twin: RunTwEnvRC(): delaying twenvrc.sh execution until secure mode ends.\n";
   FreeMem(path);
 }
 

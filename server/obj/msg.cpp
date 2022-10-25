@@ -15,6 +15,7 @@
 #include "fn.h"     // Fn_msg
 #include "obj/id.h" // AssignId()
 #include "obj/msg.h"
+#include "stl/fmt.h"
 
 msg s_msg::Create(udat type, size_t eventlen) {
   size_t headerlen = (size_t) & ((msg)NULL)->Event;
@@ -64,12 +65,12 @@ msg s_msg::Create(udat type, size_t eventlen) {
     eventlen += SIZEOF_EVENT_COMMON;
     break;
   default:
-    log(ERROR, "twin: CreateMsg(): unknown message type 0x", hex(unsigned(type)), "(",
-        unsigned(type), ")\n");
+    log(ERROR) << "twin: CreateMsg(): unknown message type 0x" << hex(unsigned(type)) << "("
+               << unsigned(type) << ")\n";
     return NULL;
   }
   if (eventlen > ((uldat)-1) - headerlen || eventlen > ((size_t)-1) - headerlen) {
-    log(ERROR, "twin: CreateMsg(): event length too large: ", eventlen, "\n");
+    log(ERROR) << "twin: CreateMsg(): event length too large: " << eventlen << "\n";
     return NULL;
   }
   msg m;

@@ -1668,7 +1668,7 @@ static void TraverseMenu(menu M, menuitem OldItem, dat Odepth, menuitem NewItem,
   } else if (Ndepth == Odepth + 1) {
     OpenMenuItem(M, NewItem, ByMouse);
   } else
-    log(ERROR, "twin: internal error: unsupported menu traversing.\n");
+    log(ERROR) << "twin: internal error: unsupported menu traversing.\n";
 }
 
 /* close the menu bar */

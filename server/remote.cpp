@@ -342,7 +342,7 @@ void RemoteParanoia(void) {
   int safe, unsafe, test, last_errno;
   uldat Slot;
 
-  log(ERROR, "twin: RemoteParanoia() called! Trying to recover from unexpected I/O error...\n");
+  log(ERROR) << "twin: RemoteParanoia() called! Trying to recover from unexpected I/O error...\n";
 
   /* rebuild max_fds, save_rfds, FdWQueued, save_wfds */
   FdWQueued = max_fds = 0;
@@ -360,14 +360,13 @@ void RemoteParanoia(void) {
       }
     }
   }
-
-  log(WARNING, "                    ... rebuilt internal file descriptor arrays...\n");
+  log(WARNING) << "                    ... rebuilt internal file descriptor arrays...\n";
 
   sel_rfds = save_rfds;
   sel_wfds = save_wfds;
   zero.tv_sec = zero.tv_usec = 0;
   if (select(max_fds + 1, &sel_rfds, &sel_wfds, NULL, &zero) >= 0) {
-    log(WARNING, "                    ... problem disappeared. Good.\n");
+    log(WARNING) << "                    ... problem disappeared. Good.\n";
     return;
   }
 
@@ -384,15 +383,14 @@ void RemoteParanoia(void) {
     }
     if (test < 10) {
       /* solved ? */
-      log(WARNING,
-          "                    ... problem disappeared after a few tries, was:\n"
-          "                        errno = %d (",
-          Chars::from_c(strerror(last_errno)), ")\n");
+      log(WARNING) << "                    ... problem disappeared after a few tries, was:\n"
+                      "                        errno = "
+                   << last_errno << " (" << Chars::from_c(strerror(last_errno)) << ")\n";
       return;
     }
   }
 
-  log(ERROR, "                    ... problem did not disappear, going to close some fds...\n");
+  log(ERROR) << "                    ... problem did not disappear, going to close some fds...\n";
 
   /*
    * Assume we must thrash some fd with permanent errors.
@@ -415,7 +413,7 @@ void RemoteParanoia(void) {
   /* ok, let's trow away 'unsafe-1' fd. */
 
   test = unsafe - 1;
-  log(WARNING, "                    ... closing file descriptor ", test, "\n");
+  log(WARNING) << "                    ... closing file descriptor " << test << "\n";
 
   for (Slot = 0; Slot < FdTop; Slot++) {
     if (test == LS.Fd) {
@@ -435,7 +433,7 @@ void RemoteParanoia(void) {
     }
   }
 
-  log(ERROR, "                    ... bug! fd ", test, " should not be registered at all!\n");
+  log(ERROR) << "                    ... bug! fd " << test << " should not be registered at all!\n";
 
   /* Paranoia: still here? */
   FD_CLR(test, &save_rfds);

@@ -336,8 +336,8 @@ static void TW_SelectionRequest_TW(obj Requestor, uldat ReqPrivate) {
        * a TW_SelectionNotify_up() call */
     } else {
       TSelCount = 0;
-      log(WARNING,
-          "hw_twin.c: TW_SelectionRequest_TW1(): too many nested Twin Selection Request events!\n");
+      log(WARNING) << "hw_twin.c: TW_SelectionRequest_TW1(): too many nested Twin Selection "
+                      "Request events!\n";
     }
   }
   /* else race! someone else became Selection owner in the meanwhile... */
@@ -361,8 +361,8 @@ static void TW_SelectionRequest_up(uldat Requestor, uldat ReqPrivate) {
     /* the call **CAN** arrive while we are still inside TwinSelectionRequest() !!! */
   } else {
     SelCount = 0;
-    log(WARNING,
-        "hw_twin.c: TW_SelectionRequest_up(): too many nested libtw Selection Request events!\n");
+    log(WARNING)
+        << "hw_twin.c: TW_SelectionRequest_up(): too many nested libtw Selection Request events!\n";
   }
 }
 
@@ -438,11 +438,12 @@ static bool TW_InitHW(void) {
       HW->FlagsHW |= FlHWExpensiveFlushVideo;
     }
     if (arg.contains(Chars(",help"))) {
-      log(INFO, "   --hw=twin options:\n"
-                "      @TWDPY      connect to TWDPY instead of $TWDISPLAY (must be first option)\n"
-                "      ,help       show this help\n"
-                "      ,noinput    open a view-only window - ignore input\n"
-                "      ,slow       assume connection is slow\n");
+      log(INFO)
+          << "   --hw=twin options:\n"
+             "      @TWDPY      connect to TWDPY instead of $TWDISPLAY (must be first option)\n"
+             "      ,help       show this help\n"
+             "      ,noinput    open a view-only window - ignore input\n"
+             "      ,slow       assume connection is slow\n";
       return false;
     }
     /* if '@' is present, it is followed by the TWDISPLAY to use */
@@ -466,12 +467,12 @@ static bool TW_InitHW(void) {
      * returns OUR socket... and using ourself as display isn't
      * exactly a bright idea.
      */
-    log(ERROR, "      TW_InitHW() failed: TWDISPLAY is not set\n");
+    log(ERROR) << "      TW_InitHW() failed: TWDISPLAY is not set\n";
     return false;
   }
 
   if (!(HW->Private = (tw_data *)AllocMem(sizeof(tw_data)))) {
-    log(ERROR, "      TW_InitHW(): Out of memory!\n");
+    log(ERROR) << "      TW_InitHW(): Out of memory!\n";
     return false;
   }
 
@@ -594,10 +595,10 @@ static bool TW_InitHW(void) {
   } else {
     /* TwErrno(NULL) is valid... used when Tw_Open fails */
     if ((len = Tw_Errno(Td)))
-      log(ERROR, "      TW_InitHW() failed: ", Chars::from_c(Tw_StrError(Td, len)), " ",
-          Chars::from_c(Tw_StrErrorDetail(Td, len, Tw_ErrnoDetail(Td))), "\n");
+      log(ERROR) << "      TW_InitHW() failed: " << Chars::from_c(Tw_StrError(Td, len)) << " "
+                 << Chars::from_c(Tw_StrErrorDetail(Td, len, Tw_ErrnoDetail(Td))) << "\n";
     else
-      log(ERROR, "      TW_InitHW() failed.\n");
+      log(ERROR) << "      TW_InitHW() failed.\n";
   }
 
   if (Td && Tw_ConnectionFd(Td) >= 0)

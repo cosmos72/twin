@@ -25,12 +25,12 @@ static int wrap_Gpm_Open(void) {
   extern int gpm_tried;
 
   if (!tty_NAME) {
-    log(ERROR, "      GPM_InitMouse() failed: unable to detect tty device\n");
+    log(ERROR) << "      GPM_InitMouse() failed: unable to detect tty device\n";
     return NOFD;
   }
   if (tty_number < 1 || tty_number > 63) {
-    log(ERROR, "      GPM_InitMouse() failed: terminal `", tty_NAME,
-        "'\n      is not a local linux console.\n");
+    log(ERROR) << "      GPM_InitMouse() failed: terminal `" << tty_NAME
+               << "'\n      is not a local linux console.\n";
     return NOFD;
   }
 
@@ -49,9 +49,9 @@ static int wrap_Gpm_Open(void) {
     /* gpm_consolefd is opened by GPM_Open() */
     fcntl(gpm_consolefd, F_SETFD, FD_CLOEXEC);
   } else {
-    log(ERROR, "      GPM_InitMouse() failed: unable to connect to `gpm'.\n"
-               "      make sure you started `twin' from the console\n"
-               "      and/or check that `gpm' is running.\n");
+    log(ERROR) << "      GPM_InitMouse() failed: unable to connect to `gpm'.\n"
+                  "      make sure you started `twin' from the console\n"
+                  "      and/or check that `gpm' is running.\n";
   }
   return GPM_fd;
 }
@@ -60,7 +60,7 @@ static int wrap_Gpm_Open(void) {
 static byte GPM_InitMouse(void) {
 
   if (GPM_InUse) {
-    log(ERROR, "      GPM_InitMouse() failed: already connected to `gpm'.\n");
+    log(ERROR) << "      GPM_InitMouse() failed: already connected to `gpm'.\n";
     return tfalse;
   }
 
@@ -131,7 +131,7 @@ static void GPM_MouseEvent(int fd, display_hw hw) {
   do {
     if ((left = Gpm_GetEvent(&GPM_EV)) <= 0) {
       if (loopN == 30) {
-        log(ERROR, "GPM_MouseEvent(): connection to gpm lost. continuing without mouse :-(\n");
+        log(ERROR) << "GPM_MouseEvent(): connection to gpm lost. Continuing without mouse :-(\n";
         HW->QuitMouse();
         null_InitMouse();
       }

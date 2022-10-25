@@ -154,10 +154,10 @@ static bool module_InitHW(Chars arg) {
     Module = DlLoadAny(name.size(), name.data());
 
     if (Module) {
-      log(INFO, "twin: starting display driver module `", name, "'...\n");
+      log(INFO) << "twin: starting display driver module `" << name << "'...\n";
       bool (*InitD)(void);
       if ((InitD = Module->DoInit) && InitD()) {
-        log(INFO, "twin: ...module `", name, "' successfully started.\n");
+        log(INFO) << "twin: ...module `" << name << "' successfully started.\n";
         HW->Module = Module;
         Module->Used++;
         return true;
@@ -167,9 +167,10 @@ static bool module_InitHW(Chars arg) {
   }
 
   if (Module) {
-    log(ERROR, "twin: ...module `", name, "' failed to start.\n");
+    log(ERROR) << "twin: ...module `" << name << "' failed to start.\n";
   } else {
-    log(ERROR, "twin: unable to load display driver module `", name, "' :\n      ", Errstr, "\n");
+    log(ERROR) << "twin: unable to load display driver module `" << name //
+               << "' :\n      " << Errstr << "\n";
   }
   return false;
 }
@@ -183,11 +184,11 @@ static byte set_hw_name(display_hw D_HW, const Chars name) {
 }
 
 static void warn_NoHW(const char *arg, uldat len) {
-  log(ERROR, "twin: all display drivers failed");
+  log(ERROR) << "twin: all display drivers failed";
   if (arg)
-    log(ERROR, " for `", Chars(arg, len), "'\n");
+    log(ERROR) << " for `" << Chars(arg, len) << "'\n";
   else
-    log(ERROR, ".\n");
+    log(ERROR) << ".\n";
 }
 
 /*
@@ -281,8 +282,8 @@ static byte IsValidHW(Chars carg) {
       /* the rest are options - validated by each display HW */
       break;
     if ((b < '0' || b > '9') && (b < 'A' || b > 'Z') && (b < 'a' || b > 'z') && b != '_') {
-      log(ERROR, "twin: invalid non-alphanumeric character 0x", hex(b), " in display HW name `",
-          Chars(arg, len), "'\n");
+      log(ERROR) << "twin: invalid non-alphanumeric character 0x" << hex(b)
+                 << " in display HW name `" << Chars(arg, len) << "'\n";
       return tfalse;
     }
   }
@@ -293,14 +294,14 @@ display_hw AttachDisplayHW(Chars arg, uldat slot, byte flags) {
   display_hw D_HW = NULL;
 
   if (arg && !arg.starts_with(Chars("-hw="))) {
-    log(ERROR, "twin: specified `", arg,
-        "' is not a known option.\n"
-        "      try `twin --help' for usage summary.\n");
+    log(ERROR) << "twin: specified `" << arg
+               << "' is not a known option.\n"
+                  "      try `twin --help' for usage summary.\n";
     return D_HW;
   }
 
   if (All->ExclusiveHW) {
-    log(ERROR, "twin: exclusive display in use, permission to display denied!\n");
+    log(ERROR) << "twin: exclusive display in use, permission to display denied!\n";
     return D_HW;
   }
 
@@ -384,19 +385,19 @@ byte InitHW(void) {
     else if (!strncmp(arg, "-plugindir=", 11))
       ; // already processed, ignore option
     else
-      log(WARNING, "twin: ignoring unknown option `", Chars::from_c(arg), "'\n");
+      log(WARNING) << "twin: ignoring unknown option `" << Chars::from_c(arg) << "'\n";
   }
 
   if (nohw && hwcount > 0) {
-    log(ERROR, "twin: `--hw=' and `--nohw' options cannot be used together.\n");
+    log(ERROR) << "twin: `--hw=' and `--nohw' options cannot be used together.\n";
     return ret;
   }
   if (flags & TW_ATTACH_HW_EXCLUSIVE) {
     if (nohw) {
-      log(ERROR, "twin: `--excl' cannot be used with `--nohw'.\n");
+      log(ERROR) << "twin: `--excl' cannot be used with `--nohw'.\n";
       return ret;
     } else if (hwcount > 1) {
-      log(ERROR, "twin: `--excl' cannot be used with multiple `--hw'.\n");
+      log(ERROR) << "twin: `--excl' cannot be used with multiple `--hw'.\n";
       return ret;
     }
   }
@@ -421,7 +422,7 @@ byte InitHW(void) {
     ret = !!AttachDisplayHW(Chars(), NOSLOT, flags);
 
   if (!ret)
-    log(ERROR, "\ntwin:  \033[1mALL  DISPLAY  DRIVERS  FAILED.  QUITTING.\033[0m\n");
+    log(ERROR) << "\ntwin:  \033[1mALL  DISPLAY  DRIVERS  FAILED.  QUITTING.\033[0m\n";
 
   return ret;
 }
@@ -445,13 +446,13 @@ byte RestartHW(byte verbose) {
       ResizeDisplay();
       QueuedDrawArea2FullScreen = ttrue;
     } else {
-      log(WARNING, "\ntwin:   \033[1mALL  DISPLAY  DRIVERS  FAILED.\033[0m\n"
-                   "\ntwin: continuing in background with no display.\n");
+      log(WARNING) << "\ntwin:   \033[1mALL  DISPLAY  DRIVERS  FAILED.\033[0m\n"
+                      "\ntwin: continuing in background with no display.\n";
       RunNoHW(tfalse);
     }
   } else if (verbose) {
-    log(INFO, "twin: RestartHW(): All display drivers removed by SuspendHW().\n"
-              "      No display available for restarting, use twattach or twdisplay.\n");
+    log(INFO) << "twin: RestartHW(): All display drivers removed by SuspendHW().\n"
+                 "      No display available for restarting, use twattach or twdisplay.\n";
   }
   return ret;
 }
@@ -466,9 +467,9 @@ void SuspendHW(byte verbose) {
       HW->DoQuit();
   }
   if (verbose && !All->FirstDisplayHW) {
-    log(INFO, "twin: SuspendHW(): All display drivers had to be removed\n"
-              "      since they were attached to clients (twattach/twdisplay).\n"
-              "twin: --- STOPPED ---\n");
+    log(INFO) << "twin: SuspendHW(): All display drivers had to be removed\n"
+                 "      since they were attached to clients (twattach/twdisplay).\n"
+                 "twin: --- STOPPED ---\n";
   }
 }
 
@@ -549,7 +550,7 @@ byte ResizeDisplay(void) {
   } else if ((NeedOldVideo && !OldVideo) || change) {
     if (!(OldVideo = (tcell *)ReAllocMem(OldVideo, (ldat)TryDisplayWidth * TryDisplayHeight *
                                                        sizeof(tcell)))) {
-      log(ERROR, "twin: out of memory!\n");
+      log(ERROR) << "twin: out of memory!\n";
       Quit(1);
     }
     ValidOldVideo = tfalse;
@@ -565,7 +566,7 @@ byte ResizeDisplay(void) {
         !(saveChangedVideo =
               (dat(*)[2][2])ReAllocMem(saveChangedVideo, (ldat)DisplayHeight * sizeof(dat) * 4))) {
 
-      log(ERROR, "twin: out of memory!\n");
+      log(ERROR) << "twin: out of memory!\n";
       Quit(1);
     }
     memset(ChangedVideo, 0xff, (ldat)DisplayHeight * sizeof(dat) * 4);
@@ -670,7 +671,7 @@ void TwinSelectionNotify(obj Requestor, uldat ReqPrivate, e_id Magic, const char
   msg NewMsg;
   event_any *Event;
 #if 0
-  log(INFO, "twin: Selection Notify to 0x", hex(Requestor ? Requestor->Id : NOID), "\n");
+  log(INFO) << "twin: Selection Notify to 0x" << hex(Requestor ? Requestor->Id : NOID) << "\n";
 #endif
   if (!Requestor) {
     (void)SelectionStore(Magic, MIME, Data);
@@ -703,8 +704,8 @@ void TwinSelectionNotify(obj Requestor, uldat ReqPrivate, e_id Magic, const char
 
 void TwinSelectionRequest(obj Requestor, uldat ReqPrivate, obj Owner) {
 #if 0
-  log(INFO, "twin: Selection Request from 0x", (Requestor ? Requestor->Id : NOID), //
-      ", owner is 0x", (Owner ? Owner->Id : NOID), "\n");
+  log(INFO) << "twin: Selection Request from 0x" << (Requestor ? Requestor->Id : NOID)
+            << ", owner is 0x" << (Owner ? Owner->Id : NOID) << "\n";
 #endif
   if (Owner) {
     if (Owner->Id >> magic_shift == msgport_magic >> magic_shift) {

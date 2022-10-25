@@ -183,7 +183,7 @@ static void ExecuteWinRun(void) {
   ExecuteWin->UnMap();
 
   if (flag_secure) {
-    log(ERROR, flag_secure_msg);
+    log(ERROR) << flag_secure_msg;
     return;
   }
 
@@ -803,7 +803,7 @@ static byte InitScreens(void) {
     return ttrue;
   }
   Error(NOMEMORY);
-  log(ERROR, "twin: InitScreens(): ", Errstr, "\n");
+  log(ERROR) << "twin: InitScreens(): " << Errstr << "\n";
   return tfalse;
 }
 
@@ -1013,6 +1013,6 @@ byte InitBuiltin(void) {
     return ttrue;
   }
   Error(NOMEMORY);
-  log(ERROR, "twin: InitBuiltin(): ", Errstr, "\n");
+  log(ERROR) << "twin: InitBuiltin(): " << Errstr << "\n";
   return tfalse;
 }

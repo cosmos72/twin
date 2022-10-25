@@ -172,7 +172,8 @@ ldat GlobalFlags[4];
 ldat GlobalShadows[2];
 
 static void yyerror(const char *s) {
-  log(ERROR, "twin: ", Chars::from_c(FILE_NAME), ":", LINE_NO, ": ", Chars::from_c(s), "\n");
+  log(ERROR) << "twin: " << Chars::from_c(FILE_NAME) << ":" << LINE_NO << ": " << Chars::from_c(s)
+             << "\n";
 }
 
 #define NEW() (node) my_malloc(sizeof(struct s_node))
@@ -1242,8 +1243,8 @@ static void DeleteUnneededScreens(node list) {
 }
 
 static void NewCommonMenu_Overflow(void) {
-  log(ERROR, "twin: RC parser: user-defined menu is too big! (max is ",
-      (int)(TW_MAXUDAT - COD_RESERVED + 1), " entries)\n");
+  log(ERROR) << "twin: RC parser: user-defined menu is too big! (max is "
+             << (int)(TW_MAXUDAT - COD_RESERVED + 1) << " entries)\n";
 }
 
 /*

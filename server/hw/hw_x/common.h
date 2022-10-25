@@ -97,7 +97,8 @@ static byte XSYM(LoadFont)(const char *fontname, udat fontwidth, udat fontheight
     xhfont = (xupfont = xsfont->ascent) + xsfont->descent;
     xheight = xhfont * (unsigned)(HW->Y = GetDisplayHeight());
 
-    log(INFO, "      selected ", xwfont, "x", xhfont, " font `", Chars::from_c(fontname), "'\n");
+    log(INFO) << "      selected " << xwfont << "x" << xhfont << " font `"
+              << Chars::from_c(fontname) << "'\n";
   }
   if (alloc_fontname)
     free(alloc_fontname); /* allocated by FcNameUnparse() */
@@ -166,7 +167,7 @@ static bool XSYM(InitHW)(void) {
   unsigned long xcreategc_mask = GCForeground | GCBackground | GCGraphicsExposures;
 
   if (!(HW->Private = (XSYM(data) *)AllocMem(sizeof(XSYM(data))))) {
-    log(ERROR, "      " XSYM_STR(InitHW) "() Out of memory!\n");
+    log(ERROR) << "      " XSYM_STR(InitHW) "() Out of memory!\n";
     return false;
   }
   memset(HW->Private, 0, sizeof(XSYM(data)));
@@ -240,16 +241,16 @@ static bool XSYM(InitHW)(void) {
         arg += 7;
         noinput = ttrue;
       } else {
-        log(INFO,
-            "   --hw=X11 and --hw=xft options:\n"
-            "      @DPY             connect to DPY instead of $DISPLAY (must be first option)\n"
-            "      ,charset=NAME    use specified charset encoding\n"
-            "      ,drag            use XCopyArea() for scroll/drag when possible\n"
-            "      ,font=FONT_NAME  use specified font name or pattern\n"
-            "      ,fontsize=WxH    use specified font size\n"
-            "      ,help            show this help\n"
-            "      ,noinput         open a view-only X11 window - ignore input\n"
-            "      ,view=WxH+X+Y    only show a subarea of twin's desktop\n");
+        log(INFO)
+            << "   --hw=X11 and --hw=xft options:\n"
+               "      @DPY             connect to DPY instead of $DISPLAY (must be first option)\n"
+               "      ,charset=NAME    use specified charset encoding\n"
+               "      ,drag            use XCopyArea() for scroll/drag when possible\n"
+               "      ,font=FONT_NAME  use specified font name or pattern\n"
+               "      ,fontsize=WxH    use specified font size\n"
+               "      ,help            show this help\n"
+               "      ,noinput         open a view-only X11 window - ignore input\n"
+               "      ,view=WxH+X+Y    only show a subarea of twin's desktop\n";
         goto fail;
       }
     }
@@ -277,7 +278,7 @@ static bool XSYM(InitHW)(void) {
         xcolor.green = 257 * (udat)Palette[i].Green;
         xcolor.blue = 257 * (udat)Palette[i].Blue;
         if (!XSYM(AllocColor)(xdisplay, xvisual, colormap, &xcolor, &xcol[i], i)) {
-          log(ERROR, "      " XSYM_STR(InitHW) "() failed to allocate colors\n");
+          log(ERROR) << "      " XSYM_STR(InitHW) "() failed to allocate colors\n";
           break;
         }
       }
@@ -459,9 +460,9 @@ static bool XSYM(InitHW)(void) {
     } while (0);
   } else {
     if (xdisplay_ || (xdisplay_ = getenv("DISPLAY"))) {
-      log(ERROR, "      " XSYM_STR(InitHW) "() failed to open display ", HW->Name, "\n");
+      log(ERROR) << "      " XSYM_STR(InitHW) "() failed to open display " << HW->Name << "\n";
     } else {
-      log(ERROR, "      " XSYM_STR(InitHW) "() failed: DISPLAY is not set\n");
+      log(ERROR) << "      " XSYM_STR(InitHW) "() failed: DISPLAY is not set\n";
     }
   }
 

@@ -873,7 +873,7 @@ void DrawSelfWindow(draw_ctx *D) {
 
 void DrawSelfScreen(draw_ctx *D) {
   /* should never be called */
-  log(ERROR, "twin: DrawSelfScreen() called! This is not good...\n");
+  log(ERROR) << "twin: DrawSelfScreen() called! This should not happen.\n";
 }
 
 static void _DrawWCtx_(draw_ctx **FirstD, widget W, widget ChildNext, widget OnlyChild, ldat Left,

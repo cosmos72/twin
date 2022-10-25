@@ -78,8 +78,8 @@ static void ptyError(const char *d, const char *f, const char *arg) {
   const Chars cf = f ? Chars::from_c(f) : Chars("<NULL>");
   const Chars carg = arg ? Chars::from_c(arg) : Chars("<NULL>");
 
-  log(ERROR, "twin: ", cd, ": ", cf, "(\"", carg, "\") failed: ", //
-      Chars::from_c(strerror(errno)), "\n");
+  log(ERROR) << "twin: " << cd << ": " << cf << "(\"" << carg
+             << "\") failed: " << Chars::from_c(strerror(errno)) << "\n";
 }
 
 static void getPtyError(const char *f, const char *arg) {
@@ -155,7 +155,7 @@ static byte getPty(void) {
       }
     }
   }
-  log(ERROR, "twin: failed to get a pty/tty pseudo-tty pair\n");
+  log(ERROR) << "twin: failed to get a pty/tty pseudo-tty pair\n";
 
 #endif
   return tfalse;
@@ -247,7 +247,7 @@ byte spawnInWindow(window Window, const char *arg0, const char *const *argv) {
 
   /* 0 */
   if (flag_secure) {
-    log(ERROR, flag_secure_msg);
+    log(ERROR) << flag_secure_msg;
     return tfalse;
   }
   gainPrivileges();

@@ -200,14 +200,14 @@ static void XSYM(SelectionNotify_X11)(uldat ReqPrivate, e_id Magic, const char M
   Atom target;
 
   if (XReqCount == 0) {
-    log(ERROR,
-        THIS ".c: " XSYM_STR(SelectionNotify_X11) "(): unexpected Twin Selection Notify event!\n");
+    log(ERROR) << THIS
+        ".c: " XSYM_STR(SelectionNotify_X11) "(): unexpected Twin Selection Notify event!\n";
     return;
   }
 #if 0
   else {
-    log(ERROR, THIS ".c: "XSYM_STR(SelectionNotify_X11)"(): ", XReqCount,
-           " nested Twin Selection Notify events\n", );
+    log(ERROR) << THIS ".c: " XSYM_STR(SelectionNotify_X11) "(): " << XReqCount
+               << " nested Twin Selection Notify events\n";
   }
 #endif
 
@@ -293,14 +293,14 @@ static void XSYM(SelectionNotify_up)(Window win, Atom prop) {
   bool ok = true;
 
   if (xReqCount == 0) {
-    log(WARNING,
-        THIS ".c: " XSYM_STR(SelectionNotify_up) "(): unexpected X Selection Notify event!\n");
+    log(WARNING) << THIS
+        ".c: " XSYM_STR(SelectionNotify_up) "(): unexpected X Selection Notify event!\n";
     return;
   }
 #if 0
   else {
-    log(INFO, THIS ".c: " XSYM_STR(SelectionNotify_up)"(): ", xReqCount,
-        " nested X Selection Notify event\n");
+    log(INFO) << THIS ".c: " XSYM_STR(SelectionNotify_up) "(): " << xReqCount
+              << " nested X Selection Notify event\n";
   }
 #endif
   if (prop == None) {
@@ -352,14 +352,14 @@ static void XSYM(SelectionRequest_X11)(obj Requestor, uldat ReqPrivate) {
   if (!HW->HWSelectionPrivate) {
 
     if (xReqCount == NEST) {
-      log(ERROR, THIS ".c: " XSYM_STR(
-                     SelectionRequest_X11) "(): too many nested Twin Selection Request events!\n");
+      log(ERROR) << THIS ".c: " XSYM_STR(
+          SelectionRequest_X11) "(): too many nested Twin Selection Request events!\n";
       return;
     }
 #if 0
     else {
-      log(INFO, THIS ".c: " XSYM_STR(SelectionRequest_X11)"(): ", xReqCount + 1,
-          " nested Twin Selection Request events\n");
+      log(INFO) << THIS ".c: " XSYM_STR(SelectionRequest_X11) "(): " << (xReqCount + 1)
+                << " nested Twin Selection Request events\n";
     }
 #endif
     xRequestor(xReqCount) = Requestor;
@@ -385,14 +385,14 @@ static void XSYM(SelectionRequest_X11)(obj Requestor, uldat ReqPrivate) {
  */
 static void XSYM(SelectionRequest_up)(XSelectionRequestEvent *req) {
   if (XReqCount == NEST) {
-    log(ERROR, THIS
-        ".c: " XSYM_STR(SelectionRequest_up) "(): too many nested X Selection Request events!\n");
+    log(ERROR) << THIS
+        ".c: " XSYM_STR(SelectionRequest_up) "(): too many nested X Selection Request events!\n";
     return;
   }
 #if 0
   else {
-    log(INFO, THIS ".c: " XSYM_STR(SelectionRequest_up)"(): ", XReqCount + 1,
-        " nested X Selection Request events\n");
+    log(INFO) << THIS ".c: " XSYM_STR(SelectionRequest_up) "(): " << (XReqCount + 1)
+              << " nested X Selection Request events\n";
   }
 #endif
   CopyMem(req, &XReq(XReqCount), sizeof(XSelectionRequestEvent));
@@ -484,15 +484,15 @@ static Tutf_function XSYM(UTF_32_to_charset_function)(const char *charset) {
     if (!charset) {
       if (xsfont->min_byte1 < xsfont->max_byte1) {
         /* font is more than just 8-bit. For now, assume it's unicode */
-        log(WARNING, "    " XSYM_STR(InitHW) ": font `", Chars::from_c(fontname),
-            "\' has no known charset encoding,\n"
-            "                assuming Unicode.\n");
+        log(WARNING) << "    " XSYM_STR(InitHW) ": font `" << Chars::from_c(fontname)
+                     << "\' has unknown charset encoding,\n"
+                        "                assuming Unicode.\n";
         return NULL;
       }
       /* else assume codepage437. gross. */
-      log(WARNING, "    " XSYM_STR(InitHW) ": font `", Chars::from_c(fontname),
-          "\' has no known charset encoding,\n"
-          "                assuming CP437 codepage (\"VGA\").\n");
+      log(WARNING) << "    " XSYM_STR(InitHW) ": font `" << Chars::from_c(fontname)
+                   << "\' has unknown charset encoding,\n"
+                      "                assuming charset `CP437' i.e. `VGA'.\n";
       return Tutf_UTF_32_to_CP437;
     }
   }
@@ -505,8 +505,8 @@ static Tutf_function XSYM(UTF_32_to_charset_function)(const char *charset) {
   }
 
   if (i == (uldat)-1) {
-    log(WARNING, "      " XSYM_STR(InitHW) ": libtutf warning: unknown charset `",
-        Chars::from_c(charset), "', assuming `CP437'\n");
+    log(WARNING) << "      " XSYM_STR(InitHW) ": libtutf warning: unknown charset `"
+                 << Chars::from_c(charset) << "', assuming charset `CP437' i.e. `VGA'.\n";
     return Tutf_UTF_32_to_CP437;
   }
 

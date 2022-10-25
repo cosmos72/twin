@@ -32,17 +32,17 @@ static byte linux_InitVideo(void) {
   Chars term = tty_TERM;
 
   if (!term) {
-    log(ERROR, "      linux_InitVideo() failed: unknown terminal type.\n");
+    log(ERROR) << "      linux_InitVideo() failed: unknown terminal type.\n";
     return tfalse;
   }
 
   if (term != Chars("linux")) {
-    log(ERROR, "      linux_InitVideo() failed: terminal `", term, "' is not `linux'.\n");
+    log(ERROR) << "      linux_InitVideo() failed: terminal `" << term << "' is not `linux'.\n";
     return tfalse;
   }
 
   if (!(tc_scr_clear = CloneStr("\033[2J"))) {
-    log(ERROR, "      linux_InitVideo() failed: out of memory!");
+    log(ERROR) << "      linux_InitVideo() failed: out of memory!";
     return tfalse;
   }
 
@@ -53,10 +53,11 @@ static byte linux_InitVideo(void) {
     } else {
       tty_use_utf8 = tfalse;
 
-      if (tty_charset == (uldat)-1)
-        log(WARNING,
-            "      linux_InitVideo() warning: this 'linux' terminal seems to be an old twin "
-            "(version <= 0.3.11) without UTF-8 support. Setting charset='ASCII'\n");
+      if (tty_charset == (uldat)-1) {
+        log(WARNING)
+            << "      linux_InitVideo() warning: this 'linux' terminal seems to be an old twin "
+               "(version <= 0.3.11) without UTF-8 support. Setting charset='ASCII'\n";
+      }
     }
   }
   /* clear colors, enable/disable UTF-8 mode */

@@ -213,7 +213,7 @@ static int XSYM(AllocColor)(Display *display, Visual *xvisual, Colormap colormap
   XftColor *xft_color;
 
   if (!(xft_color = (XftColor *)AllocMem(sizeof(XftColor)))) {
-    log(ERROR, "      " XSYM_STR(AllocColor) "(): Out of memory!\n");
+    log(ERROR) << "      " XSYM_STR(AllocColor) "(): Out of memory!\n";
     return -1;
   }
   memset(xft_color, 0, sizeof(XftColor));

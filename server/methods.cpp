@@ -102,11 +102,11 @@ inline void RemoveGeneric(obj_entry Obj, obj_list Parent, ldat *ObjCount) {
 /* obj */
 
 static void InsertObj(obj Obj, obj Parent, obj Prev, obj Next) {
-  log(ERROR, "twin: internal error: pure virtual function InsertObj() called!\n");
+  log(ERROR) << "twin: internal error: pure virtual function InsertObj() called!\n";
 }
 
 static void RemoveObj(obj Obj) {
-  log(ERROR, "twin: internal error: pure virtual function RemoveObj() called!\n");
+  log(ERROR) << "twin: internal error: pure virtual function RemoveObj() called!\n";
 }
 
 static void DeleteObj(obj Obj) {

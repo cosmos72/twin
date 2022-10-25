@@ -673,7 +673,7 @@ static void DetailCtx(wm_ctx *C) {
     /* ensure IS_SCREEN(C->W->Parent) is true. */
     C->Screen = (screen)C->W->Parent;
     if (!C->Screen || !IS_SCREEN(C->Screen)) {
-      log(ERROR, "twin: wm.c: DetailCtx(): internal error: C->W is a subwidget!\n");
+      log(ERROR) << "twin: wm.c: DetailCtx(): internal error: C->W is a subwidget!\n";
       return;
     }
   }
@@ -1654,7 +1654,8 @@ static void TryAutoFocus(wm_ctx *C) {
     if (DeepW == W) {
       RecursiveFocusWidget(FocusW);
 #ifdef DEBUG_WM
-      log(INFO, "autofocus: 0x", hex(OldW ? OldW->Id : NOID), " -> 0x", hex(FocusW->Id), "\n");
+      log(INFO) << "autofocus: 0x" << hex(OldW ? OldW->Id : NOID) << " -> 0x" << hex(FocusW->Id)
+                << "\n";
 #endif
     }
   }
@@ -1939,20 +1940,20 @@ byte InitWM(void) {
           return ttrue;
         } else {
           sent = ttrue;
-          log(ERROR, "twin: RC: ", Errstr, "\n");
+          log(ERROR) << "twin: RC: " << Errstr << "\n";
         }
       }
       UnRegisterExt(WM, MsgPort, WM_MsgPort);
     } else {
       sent = ttrue;
-      log(ERROR, "twin: WM: RegisterExt(WM,MsgPort) failed! Another WM is running?\n");
+      log(ERROR) << "twin: WM: RegisterExt(WM,MsgPort) failed! Another WM is running?\n";
     }
   }
   if (WM_MsgPort) {
     WM_MsgPort->Delete();
   }
   if (!sent) {
-    log(ERROR, "twin: WM: ", Errstr, "\n");
+    log(ERROR) << "twin: WM: " << Errstr << "\n";
   }
   return tfalse;
 }

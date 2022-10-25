@@ -746,8 +746,8 @@ static void sockMultiplexB(uldat id) {
     } else /* (n >= TW_MAX_ARGS_N) */ {
       if (!warned) {
         warned = ttrue;
-        log(ERROR, "twin: sockMultiplexB(): got a call with ", n, " args, only ", TW_MAX_ARGS_N,
-            " supported!\n");
+        log(ERROR) << "twin: sockMultiplexB(): got a call with " << n << " args, only "
+                   << TW_MAX_ARGS_N << " supported!\n";
       }
       fail = -fail;
     }
@@ -2131,11 +2131,11 @@ static byte Check4MagicTranslation(uldat slot, const byte *magic, byte len) {
 
       if (zero) {
         if (warn_count == 5)
-          log(WARNING,
-              "twin: warning: many clients with different sizes, suppressing further messages.\n");
+          log(WARNING) << "twin: warning: many clients with different sizes, suppressing further "
+                          "messages.\n";
         else
-          log(WARNING, "twin: warning: client has different `", Chars::from_c(zero),
-              "' size, it may not be Unicode aware.\n");
+          log(WARNING) << "twin: warning: client has different `" << Chars::from_c(zero),
+              "' size, it may not be Unicode aware.\n";
         warn_count++;
       }
     }
@@ -2421,7 +2421,7 @@ EXTERN_C byte InitModule(module Module) {
   };
 
   if (!sockInitAuth()) {
-    log(ERROR, "twin: failed to create ~/.TwinAuth: ", Errstr, "\n");
+    log(ERROR) << "twin: failed to create ~/.TwinAuth: " << Errstr << "\n";
     return tfalse;
   }
 
@@ -2472,7 +2472,7 @@ EXTERN_C byte InitModule(module Module) {
 
     return ttrue;
   }
-  log(ERROR, "twin: failed to create sockets: ", Errstr, "\n");
+  log(ERROR) << "twin: failed to create sockets: " << Errstr << "\n";
   return tfalse;
 }
 

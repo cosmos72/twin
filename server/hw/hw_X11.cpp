@@ -100,7 +100,7 @@ static ldat XSYM(MonospaceFontScore)(const XFontStruct *info, udat fontwidth, ud
   if (width == max_width || XSYM(FontIsDualWidth)(info)) {
     score = XSYM(FontScoreOf)(fontwidth, fontheight, width, height);
     if (score > best_score)
-      log(INFO, "      candidate font ", width, "x", height, " score ", score, "\n");
+      log(INFO) << "      candidate font " << width << "x" << height << " score " << score << "\n";
   }
   return score;
 }
