@@ -15,7 +15,7 @@
 #endif
 
 // convert Unicode codepoint 'rune' from UTF-32 to UTF-8
-Utf8::seq Utf8::from_rune(trune rune) {
+Utf8::seq Utf8::from_rune(trune rune) NOTHROW {
   // replacement character is \uFFFD
   const seq replacement = {"\xEF\xBF\xBD"};
   seq x = {};
@@ -43,7 +43,7 @@ Utf8::seq Utf8::from_rune(trune rune) {
   return x;
 }
 
-trune Utf8::to_rune(seq x) {
+trune Utf8::to_rune(seq x) NOTHROW {
   trune rune;
   if (x.b[1] == 0) {
     rune = x.b[0];
@@ -58,7 +58,7 @@ trune Utf8::to_rune(seq x) {
   return rune;
 }
 
-size_t Utf8::to_size(seq x) {
+size_t Utf8::to_size(seq x) NOTHROW {
   size_t n;
   if (x.b[1] == 0) {
     n = 1;
@@ -72,12 +72,12 @@ size_t Utf8::to_size(seq x) {
   return n;
 }
 
-Chars Utf8::chars() const {
+Chars Utf8::chars() const NOTHROW {
   return Chars(u.b, to_size(u));
 }
 
 // parse UTF-8 sequence from chars
-bool Utf8::parse(Chars chars, Chars *remaining) {
+bool Utf8::parse(Chars chars, Chars *remaining) NOTHROW {
   const char *src = chars.data();
   const size_t srcn = chars.size();
   // replacement character is \uFFFD
@@ -113,7 +113,7 @@ bool Utf8::parse(Chars chars, Chars *remaining) {
   return ok;
 }
 
-bool Utf8::valid(seq x) {
+bool Utf8::valid(seq x) NOTHROW {
   /*
    * the simplest and safest way to validate an UTF8 sequence
    * is converting it to UTF-32 and back to UTF-8,
@@ -130,6 +130,6 @@ bool Utf8::valid(seq x) {
   return x.val == y.val;
 }
 
-bool Utf8::less(seq x, seq y) {
+bool Utf8::less(seq x, seq y) NOTHROW {
   return htonl(x.val) < htonl(y.val);
 }

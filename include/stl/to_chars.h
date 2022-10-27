@@ -17,74 +17,75 @@ struct to_chars_result {
   size_t written;
   errnum err;
 
-  explicit to_chars_result(size_t written_ = 0, errnum err_ = SUCCESS)
-      : written(written_), err(err_) {
+  explicit to_chars_result(size_t written_ = 0, errnum err_ = SUCCESS) NOTHROW //
+      : written(written_),
+        err(err_) {
   }
 
-  friend inline bool operator==(to_chars_result a, to_chars_result b) {
+  friend inline bool operator==(to_chars_result a, to_chars_result b) NOTHROW {
     return a.written == b.written && a.err == b.err;
   }
 
-  friend inline bool operator!=(to_chars_result a, to_chars_result b) {
+  friend inline bool operator!=(to_chars_result a, to_chars_result b) NOTHROW {
     return !(a == b);
   }
 };
 
 /** convert signed integer to string */
-to_chars_result to_chars(Span<char> out, long val, unsigned base = 10);
-inline to_chars_result to_chars(Span<char> out, int val, unsigned base = 10) {
+to_chars_result to_chars(Span<char> out, long val, unsigned base = 10) NOTHROW;
+inline to_chars_result to_chars(Span<char> out, int val, unsigned base = 10) NOTHROW {
   return to_chars(out, (long)val, base);
 }
-inline to_chars_result to_chars(Span<char> out, short val, unsigned base = 10) {
+inline to_chars_result to_chars(Span<char> out, short val, unsigned base = 10) NOTHROW {
   return to_chars(out, (long)val, base);
 }
-inline to_chars_result to_chars(Span<char> out, signed char val, unsigned base = 10) {
+inline to_chars_result to_chars(Span<char> out, signed char val, unsigned base = 10) NOTHROW {
   return to_chars(out, (long)val, base);
 }
 
 /** convert unsigned integer to string */
-to_chars_result to_chars(Span<char> out, unsigned long val, unsigned base = 10);
-inline to_chars_result to_chars(Span<char> out, unsigned int val, unsigned base = 10) {
+to_chars_result to_chars(Span<char> out, unsigned long val, unsigned base = 10) NOTHROW;
+inline to_chars_result to_chars(Span<char> out, unsigned int val, unsigned base = 10) NOTHROW {
   return to_chars(out, (unsigned long)val, base);
 }
-inline to_chars_result to_chars(Span<char> out, unsigned short val, unsigned base = 10) {
+inline to_chars_result to_chars(Span<char> out, unsigned short val, unsigned base = 10) NOTHROW {
   return to_chars(out, (unsigned long)val, base);
 }
-inline to_chars_result to_chars(Span<char> out, unsigned char val, unsigned base = 10) {
+inline to_chars_result to_chars(Span<char> out, unsigned char val, unsigned base = 10) NOTHROW {
   return to_chars(out, (unsigned long)val, base);
 }
 
 /** copy chars to string */
-to_chars_result to_chars(Span<char> out, View<char> val);
+to_chars_result to_chars(Span<char> out, View<char> val) NOTHROW;
 
 ////////////////////////////////////////////////////////////////////////////////
 
 /** return number of characters needed to store conversion of signed integer to string */
-size_t to_chars_len(long val, unsigned base = 10);
-inline size_t to_chars_len(int val, unsigned base = 10) {
+size_t to_chars_len(long val, unsigned base = 10) NOTHROW;
+inline size_t to_chars_len(int val, unsigned base = 10) NOTHROW {
   return to_chars_len((long)val, base);
 }
-inline size_t to_chars_len(short val, unsigned base = 10) {
+inline size_t to_chars_len(short val, unsigned base = 10) NOTHROW {
   return to_chars_len((long)val, base);
 }
-inline size_t to_chars_len(signed char val, unsigned base = 10) {
+inline size_t to_chars_len(signed char val, unsigned base = 10) NOTHROW {
   return to_chars_len((long)val, base);
 }
 
 /** return number of characters needed to store conversion of unsigned integer to string */
-size_t to_chars_len(unsigned long val, unsigned base = 10);
-inline size_t to_chars_len(unsigned int val, unsigned base = 10) {
+size_t to_chars_len(unsigned long val, unsigned base = 10) NOTHROW;
+inline size_t to_chars_len(unsigned int val, unsigned base = 10) NOTHROW {
   return to_chars_len((unsigned long)val, base);
 }
-inline size_t to_chars_len(unsigned short val, unsigned base = 10) {
+inline size_t to_chars_len(unsigned short val, unsigned base = 10) NOTHROW {
   return to_chars_len((unsigned long)val, base);
 }
-inline size_t to_chars_len(unsigned char val, unsigned base = 10) {
+inline size_t to_chars_len(unsigned char val, unsigned base = 10) NOTHROW {
   return to_chars_len((unsigned long)val, base);
 }
 
 /** return number of characters needed to store conversion of View<char> to string */
-inline size_t to_chars_len(View<char> val) {
+inline size_t to_chars_len(View<char> val) NOTHROW {
   return val.size();
 }
 

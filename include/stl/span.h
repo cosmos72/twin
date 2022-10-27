@@ -31,85 +31,85 @@ public:
   typedef const T *const_pointer;
   typedef const T *const_iterator;
 
-  CONSTEXPR Span() : Base() {
+  CONSTEXPR Span() NOTHROW : Base() {
   }
-  template <size_t N> CONSTEXPR Span(T (&addr)[N]) : Base(addr, N - 1) {
+  template <size_t N> CONSTEXPR Span(T (&addr)[N]) NOTHROW : Base(addr, N - 1) {
   }
-  CONSTEXPR Span(T *addr, size_t n) : Base(addr, n) {
+  CONSTEXPR Span(T *addr, size_t n) NOTHROW : Base(addr, n) {
   }
 
-  Span(Vector<T> &other) : Base(other) {
+  Span(Vector<T> &other) NOTHROW : Base(other) {
   }
 
   // Span(const Span&) = default;
   // ~Span() = default;
   // operator=(const Span&) = default;
 
-  Span &operator=(Vector<T> &other) {
+  Span &operator=(Vector<T> &other) NOTHROW {
     ref(other);
     return *this;
   }
 
   using Base::data;
 
-  T *data() {
+  T *data() NOTHROW {
     return const_cast<T *>(data_);
   }
 
   using Base::operator[];
 
-  T &operator[](size_t index) {
+  T &operator[](size_t index) NOTHROW {
     assert(index < size_);
     return data()[index];
   }
 
-  void ref(T *addr, size_t n) {
+  void ref(T *addr, size_t n) NOTHROW {
     data_ = addr;
     size_ = n;
   }
-  void ref(Span other) {
+  void ref(Span other) NOTHROW {
     data_ = other.data_;
     size_ = other.size_;
   }
-  void ref(Vector<T> &other);
+  void ref(Vector<T> &other) NOTHROW;
 
   using Base::begin;
 
-  T *begin() {
+  T *begin() NOTHROW {
     return data();
   }
 
   using Base::end;
 
-  T *end() {
+  T *end() NOTHROW {
     assert(data_ || !size_);
     return data() + size_;
   }
 
-  Span<T> span(size_t start, size_t end) {
+  Span<T> span(size_t start, size_t end) NOTHROW {
     assert(start <= end);
     assert(end <= size_);
     return Span<T>(data() + start, end - start);
   }
 
-  void copy(View<T> src) {
+  void copy(View<T> src) NOTHROW {
     assert(src.size() == size_);
     mem::copyvec(src, *this);
   }
 
-  void swap(Span &other) {
+  void swap(Span &other) NOTHROW {
     Span temp = *this;
     *this = other;
     other = temp;
   }
 };
 
-template <class T> void View<T>::ref(const Span<T> &other) {
+template <class T> void View<T>::ref(const Span<T> &other) NOTHROW {
   data_ = other.data();
   size_ = other.size();
 }
 
-template <class T> void swap(Span<T> &left, Span<T> &right) {
+template <class T> void swap(Span<T> &left, Span<T> &right) NOTHROW {
   left.swap(right);
 }
 

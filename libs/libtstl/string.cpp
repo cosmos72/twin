@@ -10,7 +10,7 @@
 
 #include <cstdarg>
 
-bool String::make_c_str() {
+bool String::make_c_str() NOTHROW {
   if (cap_ > size_) {
     data()[size_] = '\0';
     return true;
@@ -18,7 +18,7 @@ bool String::make_c_str() {
   return append('\0') && (pop_back(), true);
 }
 
-bool String::append(View<trune> runes) {
+bool String::append(View<trune> runes) NOTHROW {
   const size_t oldsize = size();
   bool ok = true;
   for (size_t i = 0, n = runes.size(); ok && i < n; i++) {
@@ -30,7 +30,7 @@ bool String::append(View<trune> runes) {
   return ok;
 }
 
-bool String::formatv(size_t arg_n, /* const FmtBase* */...) {
+bool String::formatv(size_t arg_n, /* const FmtBase* */...) NOTHROW {
   std::va_list vargs;
   size_t len = 0;
 

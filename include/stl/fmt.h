@@ -20,10 +20,10 @@
 class FmtBase {
 public:
   /** convert this FmtBase to string */
-  virtual to_chars_result write_to(Span<char> dst) const = 0;
+  virtual to_chars_result write_to(Span<char> dst) const NOTHROW = 0;
 
   /** return number of chars needed to convert this FmtBase to string */
-  virtual size_t size() const = 0;
+  virtual size_t size() const NOTHROW = 0;
 };
 
 /**
@@ -31,11 +31,11 @@ public:
  */
 template <> class Fmt<Void> : public FmtBase {
 public:
-  explicit Fmt(Void unused) {
+  explicit Fmt(Void unused) NOTHROW {
   }
 
-  to_chars_result write_to(Span<char> dst) const OVERRIDE;
-  size_t size() const OVERRIDE;
+  to_chars_result write_to(Span<char> dst) const OVERRIDE NOTHROW;
+  size_t size() const OVERRIDE NOTHROW;
 };
 
 /**
@@ -43,11 +43,11 @@ public:
  */
 template <> class Fmt<long> : public FmtBase {
 public:
-  explicit Fmt(long val, unsigned base = 10) : val_(val), base_(base) {
+  explicit Fmt(long val, unsigned base = 10) NOTHROW : val_(val), base_(base) {
   }
 
-  to_chars_result write_to(Span<char> dst) const OVERRIDE;
-  size_t size() const OVERRIDE;
+  to_chars_result write_to(Span<char> dst) const OVERRIDE NOTHROW;
+  size_t size() const OVERRIDE NOTHROW;
 
 private:
   long val_;
@@ -59,11 +59,11 @@ private:
  */
 template <> class Fmt<unsigned long> : public FmtBase {
 public:
-  explicit Fmt(unsigned long val, unsigned base = 10) : val_(val), base_(base) {
+  explicit Fmt(unsigned long val, unsigned base = 10) NOTHROW : val_(val), base_(base) {
   }
 
-  to_chars_result write_to(Span<char> dst) const OVERRIDE;
-  size_t size() const OVERRIDE;
+  to_chars_result write_to(Span<char> dst) const OVERRIDE NOTHROW;
+  size_t size() const OVERRIDE NOTHROW;
 
 private:
   unsigned long val_;
@@ -75,60 +75,60 @@ private:
  */
 template <> class Fmt<View<char> /**/> : public FmtBase {
 public:
-  explicit Fmt(View<char> val) : val_(val) {
+  explicit Fmt(View<char> val) NOTHROW : val_(val) {
   }
 
-  to_chars_result write_to(Span<char> dst) const OVERRIDE;
-  size_t size() const OVERRIDE;
+  to_chars_result write_to(Span<char> dst) const OVERRIDE NOTHROW;
+  size_t size() const OVERRIDE NOTHROW;
 
 private:
   View<char> val_;
 };
 
-inline Fmt<long> fmt(signed char val, unsigned base = 10) {
+inline Fmt<long> fmt(signed char val, unsigned base = 10) NOTHROW {
   return Fmt<long>(val, base);
 }
-inline Fmt<long> fmt(short val, unsigned base = 10) {
+inline Fmt<long> fmt(short val, unsigned base = 10) NOTHROW {
   return Fmt<long>(val, base);
 }
-inline Fmt<long> fmt(int val, unsigned base = 10) {
+inline Fmt<long> fmt(int val, unsigned base = 10) NOTHROW {
   return Fmt<long>(val, base);
 }
-inline Fmt<long> fmt(long val, unsigned base = 10) {
+inline Fmt<long> fmt(long val, unsigned base = 10) NOTHROW {
   return Fmt<long>(val, base);
 }
 
-inline Fmt<unsigned long> fmt(unsigned char val, unsigned base = 10) {
+inline Fmt<unsigned long> fmt(unsigned char val, unsigned base = 10) NOTHROW {
   return Fmt<unsigned long>(val, base);
 }
-inline Fmt<unsigned long> fmt(unsigned short val, unsigned base = 10) {
+inline Fmt<unsigned long> fmt(unsigned short val, unsigned base = 10) NOTHROW {
   return Fmt<unsigned long>(val, base);
 }
-inline Fmt<unsigned long> fmt(unsigned int val, unsigned base = 10) {
+inline Fmt<unsigned long> fmt(unsigned int val, unsigned base = 10) NOTHROW {
   return Fmt<unsigned long>(val, base);
 }
-inline Fmt<unsigned long> fmt(unsigned long val, unsigned base = 10) {
+inline Fmt<unsigned long> fmt(unsigned long val, unsigned base = 10) NOTHROW {
   return Fmt<unsigned long>(val, base);
 }
 
 template <class T>
-inline Fmt<typename conditional<(T(-1) < T(0)), long, unsigned long>::type> hex(T val) {
+inline Fmt<typename conditional<(T(-1) < T(0)), long, unsigned long>::type> hex(T val) NOTHROW {
   return fmt(val, 16);
 }
 
-inline Fmt<Void> fmt(Void val) {
+inline Fmt<Void> fmt(Void val) NOTHROW {
   return Fmt<Void>(val);
 }
 
-inline Fmt<View<char> /**/> fmt(View<char> val) {
+inline Fmt<View<char> /**/> fmt(View<char> val) NOTHROW {
   return Fmt<View<char> /**/>(val);
 }
 
-template <size_t N> Fmt<View<char> /**/> fmt(const char (&addr)[N]) {
+template <size_t N> Fmt<View<char> /**/> fmt(const char (&addr)[N]) NOTHROW {
   return Fmt<View<char> /**/>(View<char>(addr, N - 1));
 }
 
-template <class T> Fmt<T> fmt(Fmt<T> val) {
+template <class T> Fmt<T> fmt(Fmt<T> val) NOTHROW {
   return val;
 }
 

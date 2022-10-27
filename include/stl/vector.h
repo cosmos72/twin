@@ -29,7 +29,7 @@ protected:
   using Base::size_;
   size_t cap_;
 
-  bool init(size_t n) {
+  bool init(size_t n) NOTHROW {
     data_ = mem::alloc<T>(n);
     if (n && !data_) {
       // mem::alloc() failed
@@ -41,13 +41,13 @@ protected:
     return true;
   }
 
-  void destroy() {
+  void destroy() NOTHROW {
     if (data_ != NULL) {
       mem::free(data());
     }
   }
 
-  bool ensure_capacity(size_t n) {
+  bool ensure_capacity(size_t n) NOTHROW {
     if (cap_ >= n) {
       return true;
     }
@@ -55,7 +55,7 @@ protected:
     return reserve(n >= cap2 ? n : cap2);
   }
 
-  bool resize0(size_t n, bool zerofill) {
+  bool resize0(size_t n, bool zerofill) NOTHROW {
     if (!ensure_capacity(n)) {
       return false;
     }
@@ -77,41 +77,41 @@ public:
   typedef const T *const_pointer;
   typedef const T *const_iterator;
 
-  CONSTEXPR Vector() : Base(), cap_(0) {
+  CONSTEXPR Vector() NOTHROW : Base(), cap_(0) {
   }
   // allocate a copy of addr and store it in this string
-  Vector(const T *addr, size_t n) : Base(), cap_(0) {
+  Vector(const T *addr, size_t n) NOTHROW : Base(), cap_(0) {
     assign(addr, n);
   }
   // all one-argument constructors are explicit because they allocate,
   // thus they mail fail => we require users to explicitly invoke them.
-  explicit Vector(size_t n) : Base(), cap_(0) {
+  explicit Vector(size_t n) NOTHROW : Base(), cap_(0) {
     init(n);
   }
-  template <size_t N> explicit Vector(const T (&addr)[N]) : Base(), cap_(0) {
+  template <size_t N> explicit Vector(const T (&addr)[N]) NOTHROW : Base(), cap_(0) {
     assign(addr, N - 1);
   }
-  explicit Vector(const View<T> &other) : Base(), cap_(0) {
+  explicit Vector(const View<T> &other) NOTHROW : Base(), cap_(0) {
     assign(other.data(), other.size());
   }
-  explicit Vector(const Span<T> &other) : Base(), cap_(0) {
+  explicit Vector(const Span<T> &other) NOTHROW : Base(), cap_(0) {
     assign(other.data(), other.size());
   }
-  explicit Vector(const Vector &other) : Base(), cap_(0) {
+  explicit Vector(const Vector &other) NOTHROW : Base(), cap_(0) {
     assign(other.data(), other.size());
   }
-  ~Vector() {
+  ~Vector() NOTHROW {
     destroy();
   }
 
-  template <class VEC> bool operator==(const VEC &other) {
+  template <class VEC> bool operator==(const VEC &other) NOTHROW {
     return mem::equalvec(*this, other);
   }
 
-  bool fail() const {
+  bool fail() const NOTHROW {
     return data_ == NULL;
   }
-  size_t capacity() const {
+  size_t capacity() const NOTHROW {
     return cap_;
   }
   using Base::begin;
@@ -128,33 +128,33 @@ public:
   using Base::span;
   using Base::view;
 
-  bool assign(const T *addr, size_t n) {
+  bool assign(const T *addr, size_t n) NOTHROW {
     if (!ensure_capacity(n)) {
       return false;
     }
-    memcpy(data(), addr, n * sizeof(T));
+    std::memcpy(data(), addr, n * sizeof(T));
     size_ = n;
     return true;
   }
-  bool assign(const View<T> other) {
+  bool assign(const View<T> other) NOTHROW {
     return assign(other.data(), other.size());
   }
-  bool assign(const Span<T> other) {
+  bool assign(const Span<T> other) NOTHROW {
     return assign(other.data(), other.size());
   }
-  bool assign(const Vector &other) {
+  bool assign(const Vector &other) NOTHROW {
     return assign(other.data(), other.size());
   }
 
-  void clear() {
+  void clear() NOTHROW {
     (void)resize(0);
   }
 
-  bool resize(size_t n) {
+  bool resize(size_t n) NOTHROW {
     return resize0(n, true);
   }
 
-  bool reserve(size_t newcap) {
+  bool reserve(size_t newcap) NOTHROW {
     if (newcap > cap_) {
       T *olddata = fail() ? (T *)0 : data();
       T *newdata = mem::realloc(olddata, cap_, newcap);
@@ -170,15 +170,15 @@ public:
     return true;
   }
 
-  bool append(const T &src) {
+  bool append(const T &src) NOTHROW {
     return append(View<T>(&src, 1));
   }
 
-  bool append(const T *src, const size_t n) {
+  bool append(const T *src, const size_t n) NOTHROW {
     return append(View<T>(src, n));
   }
 
-  bool append(View<T> src) {
+  bool append(View<T> src) NOTHROW {
     const size_t oldn = size_;
     const size_t srcn = src.size();
     if (!resize0(oldn + srcn, false)) {
@@ -188,7 +188,7 @@ public:
     return true;
   }
 
-  void swap(Vector &other) {
+  void swap(Vector &other) NOTHROW {
     mem::rawswap(data_, other.data_);
     mem::rawswap(size_, other.size_);
     mem::rawswap(cap_, other.cap_);
@@ -198,7 +198,7 @@ public:
   /// After this method returns, caller owns the returned data and must invoke FreeMem() on it
   /// when no longer needed.
   /// After this method returns, the vector will be empty.
-  T *release() {
+  T *release() NOTHROW {
     T *ptr = data();
     data_ = NULL;
     size_ = 0;
@@ -207,17 +207,17 @@ public:
   }
 };
 
-template <class T> void View<T>::ref(const Vector<T> &other) {
+template <class T> void View<T>::ref(const Vector<T> &other) NOTHROW {
   data_ = other.data();
   size_ = other.size();
 }
 
-template <class T> void Span<T>::ref(Vector<T> &other) {
+template <class T> void Span<T>::ref(Vector<T> &other) NOTHROW {
   data_ = other.data();
   size_ = other.size();
 }
 
-template <class T> void swap(Vector<T> &left, Vector<T> &right) {
+template <class T> void swap(Vector<T> &left, Vector<T> &right) NOTHROW {
   left.swap(right);
 }
 

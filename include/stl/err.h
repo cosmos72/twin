@@ -27,6 +27,6 @@ typedef enum errnum_e /*: unsigned*/ {
 
 extern errnum Err;
 extern Chars Errstr;
-bool Error(errnum err); // always returns false
+bool Error(errnum err) NOTHROW; // always returns false
 
 #endif /* TWIN_STL_ERR_H */

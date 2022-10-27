@@ -11,7 +11,7 @@
 #include "printk.h" // printk_buf[], printk_str()
 #include "stl/fmt.h"
 
-Logger::~Logger() {
+Logger::~Logger() NOTHROW {
   try {
     if (written != 0) {
       printk_str(printk_buf, written);
@@ -20,23 +20,23 @@ Logger::~Logger() {
   }
 }
 
-Span<char> Logger::available_span() const {
+Span<char> Logger::available_span() const NOTHROW {
   return Span<char>(printk_buf + written, sizeof(printk_buf) - written);
 }
 
-Logger &Logger::operator<<(long value) {
+Logger &Logger::operator<<(long value) NOTHROW {
   written += to_chars(available_span(), value).written;
   return *this;
 }
-Logger &Logger::operator<<(unsigned long value) {
+Logger &Logger::operator<<(unsigned long value) NOTHROW {
   written += to_chars(available_span(), value).written;
   return *this;
 }
-Logger &Logger::operator<<(View<char> value) {
+Logger &Logger::operator<<(View<char> value) NOTHROW {
   written += to_chars(available_span(), value).written;
   return *this;
 }
-Logger &Logger::operator<<(const FmtBase &value) {
+Logger &Logger::operator<<(const FmtBase &value) NOTHROW {
   written += value.write_to(available_span()).written;
   return *this;
 }

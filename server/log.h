@@ -18,42 +18,42 @@ enum log_level /*: unsigned char*/ { INFO, WARNING, ERROR };
 
 class Logger {
 public:
-  Logger() : written(0) {
+  Logger() NOTHROW : written(0) {
   }
 
   // write internal buffer to messages window
-  ~Logger();
+  ~Logger() NOTHROW;
 
-  Logger &operator<<(signed char value) {
+  Logger &operator<<(signed char value) NOTHROW {
     return operator<<((long)value);
   }
-  Logger &operator<<(short value) {
+  Logger &operator<<(short value) NOTHROW {
     return operator<<((long)value);
   }
-  Logger &operator<<(int value) {
+  Logger &operator<<(int value) NOTHROW {
     return operator<<((long)value);
   }
-  Logger &operator<<(long value);
+  Logger &operator<<(long value) NOTHROW;
 
-  Logger &operator<<(unsigned char value) {
+  Logger &operator<<(unsigned char value) NOTHROW {
     return operator<<((unsigned long)value);
   }
-  Logger &operator<<(unsigned short value) {
+  Logger &operator<<(unsigned short value) NOTHROW {
     return operator<<((unsigned long)value);
   }
-  Logger &operator<<(unsigned int value) {
+  Logger &operator<<(unsigned int value) NOTHROW {
     return operator<<((unsigned long)value);
   }
-  Logger &operator<<(unsigned long value);
+  Logger &operator<<(unsigned long value) NOTHROW;
 
   // also accepts string literals, thanks to implicit constructor
   // template<size_t N> View(const T (&addr)[N])
-  Logger &operator<<(View<char> value);
+  Logger &operator<<(View<char> value) NOTHROW;
 
-  Logger &operator<<(const FmtBase &value);
+  Logger &operator<<(const FmtBase &value) NOTHROW;
 
 private:
-  Span<char> available_span() const;
+  Span<char> available_span() const NOTHROW;
 
 private:
   size_t written;

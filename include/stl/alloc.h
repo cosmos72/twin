@@ -11,11 +11,14 @@
 
 #include <stddef.h> // size_t
 
-void *AllocMem(size_t len);               /* wrapper for malloc() */
-void *ReAllocMem(void *addr, size_t len); /* wrapper for realloc() */
-void FreeMem(void *addr);                 /* wrapper for free()    */
+#include "stl/macros.h" // NOTHROW
 
-void *AllocMem0(size_t len);                                  /* wrapper for calloc() */
-void *ReAllocMem0(void *mem, size_t old_len, size_t new_len); /* wrapper for realloc() + memset() */
+void *AllocMem(size_t len) NOTHROW;               // wrapper for malloc()
+void *ReAllocMem(void *addr, size_t len) NOTHROW; // wrapper for realloc()
+void FreeMem(void *addr) NOTHROW;                 // wrapper for free()
+
+void *AllocMem0(size_t len) NOTHROW; // wrapper for calloc()
+// wrapper for realloc() + memset()
+void *ReAllocMem0(void *mem, size_t old_len, size_t new_len) NOTHROW;
 
 #endif /* TWIN_STL_ALLOC_H */

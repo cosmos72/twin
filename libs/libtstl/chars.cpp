@@ -10,11 +10,11 @@
 
 #include <cstring> // memchr(), strlen()
 
-Chars Chars::from_c(const char *c_str) {
+Chars Chars::from_c(const char *c_str) NOTHROW {
   return Chars(c_str, c_str ? strlen(c_str) : 0);
 }
 
-size_t Chars::find0(Chars str, Chars substr) {
+size_t Chars::find0(Chars str, Chars substr) NOTHROW {
   size_t n1 = str.size();
   size_t n2 = substr.size();
   if (n2 == 0) {
@@ -34,7 +34,7 @@ size_t Chars::find0(Chars str, Chars substr) {
   const char *pos;
   const char ch0 = s2[0];
   while (n1 >= n2 && (pos = (const char *)memchr(s1, ch0, n1 - n2 + 1)) != NULL) {
-    if (n2 == 1 || !memcmp(pos, s2, n2)) {
+    if (n2 == 1 || !std::memcmp(pos, s2, n2)) {
       return pos - str.data();
     }
     n1 -= (pos + 1) - s1;
@@ -43,7 +43,7 @@ size_t Chars::find0(Chars str, Chars substr) {
   return size_t(-1);
 }
 
-bool Chars::starts_with0(Chars str, Chars substr) {
+bool Chars::starts_with0(Chars str, Chars substr) NOTHROW {
   size_t n1 = str.size();
   size_t n2 = substr.size();
   if (n2 == 0) {
@@ -53,5 +53,5 @@ bool Chars::starts_with0(Chars str, Chars substr) {
   }
   const char *s1 = str.data();
   const char *s2 = substr.data();
-  return s1 == s2 || !memcmp(s1, s2, n2);
+  return s1 == s2 || !std::memcmp(s1, s2, n2);
 }

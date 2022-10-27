@@ -9,17 +9,7 @@
 #ifndef TWIN_STL_FWD_H
 #define TWIN_STL_FWD_H
 
-#if defined(__cpp_constexpr) && __cpp_constexpr >= 200704L
-#define CONSTEXPR constexpr
-#else
-#define CONSTEXPR
-#endif
-
-#if defined(__cplusplus) && __cplusplus >= 201100
-#define OVERRIDE override
-#else
-#define OVERRIDE
-#endif
+#include "stl/macros.h"
 
 class Chars;
 template <class T> class Fmt;

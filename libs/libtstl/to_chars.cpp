@@ -18,7 +18,7 @@
 #include <climits> // CHAR_BIT
 
 /** convert a small number (<= 36) to a single printed digit */
-static char to_char(unsigned val) {
+static char to_char(unsigned val) NOTHROW {
   if (val < 10) {
     return '0' + val;
   } else {
@@ -26,7 +26,7 @@ static char to_char(unsigned val) {
   }
 }
 
-to_chars_result to_chars(Span<char> dst, long val, unsigned base) {
+to_chars_result to_chars(Span<char> dst, long val, unsigned base) NOTHROW {
   if (val >= 0) {
     return to_chars(dst, (unsigned long)val, base);
   } else if (dst.size() < 2) {
@@ -37,7 +37,7 @@ to_chars_result to_chars(Span<char> dst, long val, unsigned base) {
   return to_chars_result(result.written + 1, result.err);
 }
 
-to_chars_result to_chars(Span<char> dst, unsigned long val, unsigned base) {
+to_chars_result to_chars(Span<char> dst, unsigned long val, unsigned base) NOTHROW {
   if (base < 2 || base > 36) {
     return to_chars_result(0, INVALERROR);
   }
@@ -60,7 +60,7 @@ to_chars_result to_chars(Span<char> dst, unsigned long val, unsigned base) {
   return to_chars_result(n, val == 0 && dst_n >= src_n ? SUCCESS : NOTABLES);
 }
 
-to_chars_result to_chars(Span<char> dst, View<char> src) {
+to_chars_result to_chars(Span<char> dst, View<char> src) NOTHROW {
   const size_t dst_n = dst.size();
   const size_t src_n = src.size();
   const size_t n = src_n <= dst_n ? src_n : dst_n;
@@ -72,7 +72,7 @@ to_chars_result to_chars(Span<char> dst, View<char> src) {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-size_t to_chars_len(long val, unsigned base) {
+size_t to_chars_len(long val, unsigned base) NOTHROW {
   if (val >= 0) {
     return to_chars_len((unsigned long)val, base);
   } else {
@@ -80,7 +80,7 @@ size_t to_chars_len(long val, unsigned base) {
   }
 }
 
-size_t to_chars_len(unsigned long val, unsigned base) {
+size_t to_chars_len(unsigned long val, unsigned base) NOTHROW {
   if (base < 2 || base > 36) {
     return 0;
   } else if (val == 0) {

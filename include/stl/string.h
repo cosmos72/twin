@@ -23,24 +23,24 @@ private:
   String &operator=(const String &other); // = delete;
 
 public:
-  CONSTEXPR String() : Base() {
+  CONSTEXPR String() NOTHROW : Base() {
   }
   // allocate a copy of addr and store it in this string
-  String(const T *addr, size_t n) : Base(addr, n) {
+  String(const T *addr, size_t n) NOTHROW : Base(addr, n) {
   }
   // all one-argument constructors are explicit because they allocate,
   // thus they mail fail => we require users to explicitly invoke them.
-  explicit String(size_t n) : Base(n) {
+  explicit String(size_t n) NOTHROW : Base(n) {
   }
-  template <size_t N> explicit String(const T (&cstr)[N]) : Base(cstr, N - 1) {
+  template <size_t N> explicit String(const T (&cstr)[N]) NOTHROW : Base(cstr, N - 1) {
   }
-  explicit String(const View<T> &other) : Base(other) {
+  explicit String(const View<T> &other) NOTHROW : Base(other) {
   }
-  explicit String(const Span<T> &other) : Base(other) {
+  explicit String(const Span<T> &other) NOTHROW : Base(other) {
   }
-  explicit String(const Vector<T> &other) : Base(other) {
+  explicit String(const Vector<T> &other) NOTHROW : Base(other) {
   }
-  String(const String &other) : Base(other) {
+  String(const String &other) NOTHROW : Base(other) {
   }
   // ~String() = default;
 
@@ -50,7 +50,7 @@ public:
   template <class T1, class T2, class T3, class T4, class T5, class T6, class T7, class T8,
             class T9>
   bool format(const T1 &arg1, const T2 &arg2, const T3 &arg3, const T4 &arg4, const T5 &arg5,
-              const T6 &arg6, const T7 &arg7, const T8 &arg8, const T9 &arg9) {
+              const T6 &arg6, const T7 &arg7, const T8 &arg8, const T9 &arg9) NOTHROW {
 
     return formatv(CountFmtArgs<T1, T2, T3, T4, T5, T6, T7, T8, T9>::value,    //
                    &lvalue(fmt(arg1)), &lvalue(fmt(arg2)), &lvalue(fmt(arg3)), //
@@ -59,90 +59,91 @@ public:
   }
   template <class T1, class T2, class T3, class T4, class T5, class T6, class T7, class T8>
   bool format(const T1 &arg1, const T2 &arg2, const T3 &arg3, const T4 &arg4, const T5 &arg5,
-              const T6 &arg6, const T7 &arg7, const T8 &arg8) {
+              const T6 &arg6, const T7 &arg7, const T8 &arg8) NOTHROW {
     return format(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, Void());
   }
 
   template <class T1, class T2, class T3, class T4, class T5, class T6, class T7>
   bool format(const T1 &arg1, const T2 &arg2, const T3 &arg3, const T4 &arg4, const T5 &arg5,
-              const T6 &arg6, const T7 &arg7) {
+              const T6 &arg6, const T7 &arg7) NOTHROW {
     return format(arg1, arg2, arg3, arg4, arg5, arg6, arg7, Void(), Void());
   }
   template <class T1, class T2, class T3, class T4, class T5, class T6>
   bool format(const T1 &arg1, const T2 &arg2, const T3 &arg3, const T4 &arg4, const T5 &arg5,
-              const T6 &arg6) {
+              const T6 &arg6) NOTHROW {
     return format(arg1, arg2, arg3, arg4, arg5, arg6, Void(), Void(), Void());
   }
   template <class T1, class T2, class T3, class T4, class T5>
-  bool format(const T1 &arg1, const T2 &arg2, const T3 &arg3, const T4 &arg4, const T5 &arg5) {
+  bool format(const T1 &arg1, const T2 &arg2, const T3 &arg3, const T4 &arg4,
+              const T5 &arg5) NOTHROW {
     return format(arg1, arg2, arg3, arg4, arg5, Void(), Void(), Void(), Void());
   }
   template <class T1, class T2, class T3, class T4>
-  bool format(const T1 &arg1, const T2 &arg2, const T3 &arg3, const T4 &arg4) {
+  bool format(const T1 &arg1, const T2 &arg2, const T3 &arg3, const T4 &arg4) NOTHROW {
     return format(arg1, arg2, arg3, arg4, Void(), Void(), Void(), Void(), Void());
   }
   template <class T1, class T2, class T3>
-  bool format(const T1 &arg1, const T2 &arg2, const T3 &arg3) {
+  bool format(const T1 &arg1, const T2 &arg2, const T3 &arg3) NOTHROW {
     return format(arg1, arg2, arg3, Void(), Void(), Void(), Void(), Void(), Void());
   }
-  template <class T1, class T2> bool format(const T1 &arg1, const T2 &arg2) {
+  template <class T1, class T2> bool format(const T1 &arg1, const T2 &arg2) NOTHROW {
     return format(arg1, arg2, Void(), Void(), Void(), Void(), Void(), Void(), Void());
   }
-  template <class T1> bool format(const T1 &arg1) {
+  template <class T1> bool format(const T1 &arg1) NOTHROW {
     return format(arg1, Void(), Void(), Void(), Void(), Void(), Void(), Void(), Void());
   }
-  bool format() {
+  bool format() NOTHROW {
     clear();
     return make_c_str();
   }
 
   // add final '\0' but do not count it in size()
   // return true if successful, false if out of memory
-  bool make_c_str();
+  bool make_c_str() NOTHROW;
 
-  bool contains(Chars key) const {
+  bool contains(Chars key) const NOTHROW {
     return Chars(*this).contains(key);
   }
 
-  size_t find(Chars key) const {
+  size_t find(Chars key) const NOTHROW {
     return Chars(*this).find(key);
   }
 
-  bool starts_with(Chars substr) const {
+  bool starts_with(Chars substr) const NOTHROW {
     return Chars(*this).starts_with(substr);
   }
 
   using Base::append;
 
-  bool append(Utf8 seq) {
+  bool append(Utf8 seq) NOTHROW {
     return append(seq.data(), seq.size());
   }
 
   // convert UTF-32 runes to UTF-8 and append them to this string
-  bool append(View<trune> runes);
+  bool append(View<trune> runes) NOTHROW;
 
-  bool operator+=(char ch) {
+  bool operator+=(char ch) NOTHROW {
     return append(ch);
   }
 
-  bool operator+=(Utf8 seq) {
+  bool operator+=(Utf8 seq) NOTHROW {
     return append(seq);
   }
 
-  bool operator+=(Chars other) {
+  bool operator+=(Chars other) NOTHROW {
     return append(other);
   }
 
   // convert UTF-32 runes to UTF-8 and append them to this string
-  bool operator+=(View<trune> runes) {
+  bool operator+=(View<trune> runes) NOTHROW {
     return append(runes);
   }
 
 private:
-  bool formatv(size_t arg_n, /* const FmtBase* */...);
+  bool formatv(size_t arg_n, /* const FmtBase* */...) NOTHROW;
 };
 
-inline void swap(String &left, String &right) {
+inline void swap(String &left, String &right) NOTHROW {
   // invoke Vector<char>::swap()
   left.swap(right);
 }

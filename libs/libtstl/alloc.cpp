@@ -16,14 +16,14 @@
 #include <stdlib.h>
 #include <string.h>
 
-void *AllocMem(size_t len) {
+void *AllocMem(size_t len) NOTHROW {
   void *ret = NULL;
   if (len && !(ret = malloc(len)))
     Error(NOMEMORY);
   return ret;
 }
 
-void *ReAllocMem(void *addr, size_t len) {
+void *ReAllocMem(void *addr, size_t len) NOTHROW {
   void *ret;
   if (addr) {
     if (len) {
@@ -38,20 +38,20 @@ void *ReAllocMem(void *addr, size_t len) {
   return ret;
 }
 
-void FreeMem(void *addr) {
+void FreeMem(void *addr) NOTHROW {
   if (addr) {
     free(addr);
   }
 }
 
-void *AllocMem0(size_t len) {
+void *AllocMem0(size_t len) NOTHROW {
   void *ret = NULL;
   if (len && !(ret = calloc(1, len)))
     Error(NOMEMORY);
   return ret;
 }
 
-void *ReAllocMem0(void *addr, size_t old_len, size_t new_len) {
+void *ReAllocMem0(void *addr, size_t old_len, size_t new_len) NOTHROW {
   void *ret;
   if (addr) {
     if (new_len) {

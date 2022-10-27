@@ -29,7 +29,7 @@ char *strerror(int errnum);
 errnum Err;
 Chars Errstr;
 
-bool Error(errnum err) {
+bool Error(errnum err) NOTHROW {
   switch ((Err = err)) {
   case NOMEMORY:
     Errstr = Chars("Out of memory!");

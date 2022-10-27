@@ -33,17 +33,17 @@ public:
   typedef const T *const_pointer;
   typedef const T *const_iterator;
 
-  CONSTEXPR View() : data_(NULL), size_(0) {
+  CONSTEXPR View() NOTHROW : data_(NULL), size_(0) {
   }
-  template <size_t N> CONSTEXPR View(const T (&addr)[N]) : data_(addr), size_(N - 1) {
+  template <size_t N> CONSTEXPR View(const T (&addr)[N]) NOTHROW : data_(addr), size_(N - 1) {
   }
-  CONSTEXPR View(const T *addr, size_t n) : data_(addr), size_(n) {
+  CONSTEXPR View(const T *addr, size_t n) NOTHROW : data_(addr), size_(n) {
   }
 
-  View(const Span<T> &other) {
+  View(const Span<T> &other) NOTHROW {
     ref(other);
   }
-  View(const Vector<T> &other) {
+  View(const Vector<T> &other) NOTHROW {
     ref(other);
   }
 
@@ -51,94 +51,94 @@ public:
   // ~View() = default;
   // operator=(const View&) = default;
 
-  View &operator=(const Span<T> &other) {
+  View &operator=(const Span<T> &other) NOTHROW {
     ref(other);
     return *this;
   }
 
-  View &operator=(const Vector<T> &other) {
+  View &operator=(const Vector<T> &other) NOTHROW {
     ref(other);
     return *this;
   }
 
-  size_t capacity() const {
+  size_t capacity() const NOTHROW {
     return size_;
   }
 
-  size_t size() const {
+  size_t size() const NOTHROW {
     return size_;
   }
 
-  const T *data() const {
+  const T *data() const NOTHROW {
     return data_;
   }
 
-  const T &operator[](size_t index) const {
+  const T &operator[](size_t index) const NOTHROW {
     assert(index < size_);
     return data_[index];
   }
 
-  /*explicit*/ operator bool() const {
+  /*explicit*/ operator bool() const NOTHROW {
     return size_ != 0;
   }
 
-  bool empty() const {
+  bool empty() const NOTHROW {
     return size_ == 0;
   }
 
-  template <class VEC> bool operator==(const VEC &other) const {
+  template <class VEC> bool operator==(const VEC &other) const NOTHROW {
     return mem::equalvec(*this, other);
   }
-  template <class VEC> bool operator!=(const VEC &other) const {
+  template <class VEC> bool operator!=(const VEC &other) const NOTHROW {
     return !mem::equalvec(*this, other);
   }
 
-  template <size_t N> void ref(const T (&addr)[N]) {
+  template <size_t N> void ref(const T (&addr)[N]) NOTHROW {
     data_ = addr;
     size_ = N - 1;
   }
-  void ref(const T *addr, size_t n) {
+  void ref(const T *addr, size_t n) NOTHROW {
     data_ = addr;
     size_ = n;
   }
-  void ref(const View<T> other) {
+  void ref(const View<T> other) NOTHROW {
     data_ = other.data_;
     size_ = other.size_;
   }
-  void ref(const Span<T> &other);   // defined in stl/span.h
-  void ref(const Vector<T> &other); // defined in stl/vector.h
+  void ref(const Span<T> &other) NOTHROW;   // defined in stl/span.h
+  void ref(const Vector<T> &other) NOTHROW; // defined in stl/vector.h
 
-  const T *begin() const {
+  const T *begin() const NOTHROW {
     return data_;
   }
 
-  const T *end() const {
+  const T *end() const NOTHROW {
     assert(data_ || !size_);
     return data_ + size_;
   }
 
   /* remove the last element */
-  void pop_back() {
+  void pop_back() NOTHROW {
     if (size_) {
       --size_;
     }
   }
 
   /* return a subview of this view */
-  View view(size_t start, size_t end) const {
+  View view(size_t start, size_t end) const NOTHROW {
     assert(start <= end);
     assert(end <= size_);
     return View(data_ + start, end - start);
   }
 
-  void swap(View &other) {
+  void swap(View &other) NOTHROW {
     View temp = *this;
     *this = other;
     other = temp;
   }
 };
 
-template <class T> void swap(View<T> &left, View<T> &right) {
+template <class T> void swap(View<T> &left, View<T> &right) NOTHROW {
   left.swap(right);
 }
 
