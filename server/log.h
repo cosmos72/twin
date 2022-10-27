@@ -12,7 +12,7 @@
 #include "stl/span.h"
 
 class FmtBase;
-class to_chars_result;
+struct to_chars_result;
 
 enum log_level /*: unsigned char*/ { INFO, WARNING, ERROR };
 
