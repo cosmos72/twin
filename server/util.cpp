@@ -289,15 +289,15 @@ void SortAllMsgPortsByCallTime(void) {
 }
 
 byte SendControlMsg(Tmsgport MsgPort, udat Code, udat Len, const char *Data) {
-  Tmsg Msg;
+  Tmsg msg;
   event_control *Event;
 
-  if (MsgPort && (Msg = New(msg)(msg_control, Len))) {
-    Event = &Msg->Event.EventControl;
+  if (MsgPort && (msg = New(msg)(msg_control, Len))) {
+    Event = &msg->Event.EventControl;
     Event->Code = Code;
     Event->Len = Len;
     CopyMem(Data, Event->Data, Len);
-    SendMsg(MsgPort, Msg);
+    SendMsg(MsgPort, msg);
 
     return ttrue;
   }

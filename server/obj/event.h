@@ -46,23 +46,23 @@ enum e_msg {
  *
  * 0x0000 ... 0x0FFF : Messages from Twin to the WM or another special task;
  * currently defined are:
- * msg_key                use Msg->Event.EventKeyboard to get the event
+ * msg_key                  use msg->Event.EventKeyboard to get the event
  * msg_mouse                use ...Event.EventMouse
- * msg_control                use ...Event.EventControl
+ * msg_control              use ...Event.EventControl
  *
- * msg_display                use ...Event.EventDisplay
+ * msg_display              use ...Event.EventDisplay
  *
  * 0x1000 ... 0x1FFF : Messages from the WM to a generick task
  * currently defined are:
- * msg_widget_key        use ...EventKeyboard
- * msg_widget_mouse        use ...EventMouse
+ * msg_widget_key           use ...EventKeyboard
+ * msg_widget_mouse         use ...EventMouse
  * msg_widget_change        use ...EventWindow
  * msg_widget_gadget        use ...EventGadget
- * msg_menu_row                use ...EventMenu
- * msg_selection        use ...EventSelection
- * msg_selection_notify        use ...EventSelectionNotify
- * msg_selection_request        use ...EventSelectionRequest
- * msg_selection_clear        use ...EventCommon
+ * msg_menu_row             use ...EventMenu
+ * msg_selection            use ...EventSelection
+ * msg_selection_notify     use ...EventSelectionNotify
+ * msg_selection_request    use ...EventSelectionRequest
+ * msg_selection_clear      use ...EventCommon
  * If you don't want to get messages from gadgets or menuitem rows,
  * just set to 0 (zero) their Code.
  *
@@ -70,7 +70,7 @@ enum e_msg {
  * they are completely user-defined. As guideline, the following
  * are defined:
  *
- * msg_user_control        use ...Event.EventControl
+ * msg_user_control         use ...Event.EventControl
  */
 
 struct event_common {

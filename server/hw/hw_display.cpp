@@ -33,18 +33,18 @@ struct display_data {
 #define display (displaydata->display)
 #define Helper (displaydata->Helper)
 
-static Tmsg Msg;
+static Tmsg msg;
 static event_display *ev;
 static uldat Used;
 
 inline void display_CreateMsg(udat Code, udat Len) {
-  Msg->Event.EventDisplay.Code = Code;
-  Msg->Event.EventDisplay.Len = Len;
+  msg->Event.EventDisplay.Code = Code;
+  msg->Event.EventDisplay.Len = Len;
 }
 
 static void display_Beep(void) {
   display_CreateMsg(ev_dpy_Beep, 0);
-  Ext(Socket, SendMsg)(display, Msg);
+  Ext(Socket, SendMsg)(display, msg);
   setFlush();
 }
 
@@ -56,7 +56,7 @@ static void display_Configure(udat resource, byte todefault, udat value) {
     ev->Y = -1;
   else
     ev->Y = (dat)value;
-  Ext(Socket, SendMsg)(display, Msg);
+  Ext(Socket, SendMsg)(display, msg);
   setFlush();
 }
 
@@ -175,7 +175,7 @@ inline void display_DrawTCell(dat x, dat y, udat buflen, tcell *buf) {
   ev->X = x;
   ev->Y = y;
   ev->Data = buf;
-  Ext(Socket, SendMsg)(display, Msg);
+  Ext(Socket, SendMsg)(display, msg);
 }
 
 inline void display_DrawSome(dat x, dat y, uldat len) {
@@ -208,13 +208,13 @@ inline void display_MoveToXY(udat x, udat y) {
   display_CreateMsg(ev_dpy_MoveToXY, 0);
   ev->X = x;
   ev->Y = y;
-  Ext(Socket, SendMsg)(display, Msg);
+  Ext(Socket, SendMsg)(display, msg);
 }
 
 inline void display_SetCursorType(uldat type) {
   display_CreateMsg(ev_dpy_SetCursorType, sizeof(uldat));
   ev->Data = &type;
-  Ext(Socket, SendMsg)(display, Msg);
+  Ext(Socket, SendMsg)(display, msg);
 }
 
 static void display_FlushVideo(void) {
@@ -248,7 +248,7 @@ static void display_FlushVideo(void) {
 
 static void display_FlushHW(void) {
   display_CreateMsg(ev_dpy_FlushHW, 0);
-  Ext(Socket, SendMsg)(display, Msg);
+  Ext(Socket, SendMsg)(display, msg);
   if (RemoteFlush(HW->AttachSlot))
     clrFlush();
 }
@@ -280,7 +280,7 @@ static void display_Resize(dat x, dat y) {
       HW->Y = y;
     }
 
-    Ext(Socket, SendMsg)(display, Msg);
+    Ext(Socket, SendMsg)(display, msg);
     setFlush();
   }
 }
@@ -303,7 +303,7 @@ static void display_DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, da
   ev->Y = Up;
   ev->Data = data;
 
-  Ext(Socket, SendMsg)(display, Msg);
+  Ext(Socket, SendMsg)(display, msg);
   setFlush();
 }
 
@@ -318,13 +318,13 @@ static void display_SetPalette(udat N, udat R, udat G, udat B) {
   ev->X = N;
   ev->Data = data;
 
-  Ext(Socket, SendMsg)(display, Msg);
+  Ext(Socket, SendMsg)(display, msg);
   setFlush();
 }
 
 static void display_ResetPalette(void) {
   display_CreateMsg(ev_dpy_ResetPalette, 0);
-  Ext(Socket, SendMsg)(display, Msg);
+  Ext(Socket, SendMsg)(display, msg);
   setFlush();
 }
 
@@ -342,7 +342,7 @@ static void display_SelectionExport_display(void) {
   if (!HW->HWSelectionPrivate) {
     HW->HWSelectionPrivate = (tany)display;
     display_CreateMsg(ev_dpy_SelectionExport, 0);
-    Ext(Socket, SendMsg)(display, Msg);
+    Ext(Socket, SendMsg)(display, msg);
     setFlush();
   }
 }
@@ -376,7 +376,7 @@ static void display_SelectionNotify_display(uldat ReqPrivate, e_id Magic,
 static void display_QuitHW(void) {
   /* tell twdisplay to cleanly quit */
   display_CreateMsg(ev_dpy_Quit, 4 * sizeof(dat));
-  Ext(Socket, SendMsg)(display, Msg);
+  Ext(Socket, SendMsg)(display, msg);
   RemoteFlush(HW->AttachSlot);
 
   /* then cleanup */
@@ -384,9 +384,9 @@ static void display_QuitHW(void) {
   Helper->AttachHW = (Tdisplay)0; /* to avoid infinite loop */
   Helper->Delete();
 
-  if (!--Used && Msg) {
-    Msg->Delete();
-    Msg = NULL;
+  if (!--Used && msg) {
+    msg->Delete();
+    msg = NULL;
   }
 
   /*
@@ -445,7 +445,7 @@ static bool display_InitHW(void) {
 
   if (!(HW->Private = (struct display_data *)AllocMem(sizeof(struct display_data))) ||
       !(Helper = New(msgport)(16, "twdisplay Helper", 0, 0, 0, display_HelperH)) ||
-      (!Msg && !(Msg = New(msg)(msg_display, sizeof(uldat))))) {
+      (!msg && !(msg = New(msg)(msg_display, sizeof(uldat))))) {
 
     if (HW->Private) {
       if (Helper) {
@@ -457,7 +457,7 @@ static bool display_InitHW(void) {
     return false;
   }
 
-  ev = &Msg->Event.EventDisplay;
+  ev = &msg->Event.EventDisplay;
   display = Port;
   Helper->AttachHW = HW;
 
@@ -522,7 +522,7 @@ static bool display_InitHW(void) {
   display_CreateMsg(ev_dpy_Helper, sizeof(Helper->Id));
   ev->Len = sizeof(uldat);
   ev->Data = &Helper->Id;
-  Ext(Socket, SendMsg)(display, Msg);
+  Ext(Socket, SendMsg)(display, msg);
   /* don't flush now, twdisplay waits for attach messages */
 
   size_t pos;

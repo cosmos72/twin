@@ -162,7 +162,7 @@ generates events (user input) is decided by the application.
 
    tmsg
 
-   /* Msg ->Type : */
+   /* msg ->Type : */
    TW_MSG_DISPLAY, TW_MSG_WINDOW_KEY, TW_MSG_WINDOW_MOUSE,
    TW_MSG_WINDOW_CHANGE, TW_MSG_WINDOW_GADGET, TW_MSG_MENU_ROW
    TW_MSG_SELECTION, TW_MSG_SELECTIONNOTIFY, TW_MSG_SELECTIONREQUEST
@@ -278,10 +278,10 @@ generates events (user input) is decided by the application.
    byte    Tw_TimidFlush(tdisplay TwD);
 
   /*
-   * This is the function you must call to get a Msg from the server.
-   * If Wait is TRUE  and no Msg is available, it flushes output queue
-   *    (with Tw_Flush()) then waits until a Msg arrives.
-   * If Wait is FALSE and no Msg is available, it flushes output queue
+   * This is the function you must call to get a tmsg from the server.
+   * If Wait is TRUE  and no tmsg is available, it flushes output queue
+   *    (with Tw_Flush()) then waits until a tmsg arrives.
+   * If Wait is FALSE and no tmsg is available, it flushes output queue
    *    non-blocking (with Tw_TimidFlush()), then it tries non-blocking
    *    to receive more Msgs.
    *
@@ -306,7 +306,7 @@ generates events (user input) is decided by the application.
    * blocking function call like Tw_Sync(), Tw_CreateWindow(), etc.
    * Look at the twterm sources for an example.
    *
-   * This returns the first pending Msg, or (tmsg)0 if none is available
+   * This returns the first pending tmsg, or (tmsg)0 if none is available
    * and none can be received non-blocking.
    */
    tmsg TwPeekMsg(void);
@@ -431,9 +431,9 @@ udat Tw_GetDisplayWidth(tdisplay TwD);
 udat Tw_GetDisplayHeight(tdisplay TwD);
 
 tmsg Tw_CreateMsg(tdisplay TwD, udat Type, udat Len);
-void Tw_DeleteMsg(tdisplay TwD, tmsg Msg);
-byte Tw_SendMsg(tdisplay TwD, tmsgport MsgPort, tmsg Msg);
-void Tw_BlindSendMsg(tdisplay TwD, tmsgport MsgPort, tmsg Msg);
+void Tw_DeleteMsg(tdisplay TwD, tmsg msg);
+byte Tw_SendMsg(tdisplay TwD, tmsgport MsgPort, tmsg msg);
+void Tw_BlindSendMsg(tdisplay TwD, tmsgport MsgPort, tmsg msg);
 
 
 /*

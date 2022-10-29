@@ -89,7 +89,7 @@ void changeTrack(void) {
 }
 
 int main(int argc, char **argv) {
-  tmsg Msg;
+  tmsg msg;
   tevent_any EventA;
   tevent_mouse EventM;
   udat Code, x, y;
@@ -104,11 +104,11 @@ int main(int argc, char **argv) {
     return 1;
   }
   writeTrack("   Twin CD 0.1");
-  while ((Msg = TwReadMsg(ttrue))) {
+  while ((msg = TwReadMsg(ttrue))) {
     static byte eject = 0;
-    EventA = &Msg->Event;
-    if (Msg->Type == TW_MSG_WIDGET_MOUSE) {
-      EventM = &Msg->Event.EventMouse;
+    EventA = &msg->Event;
+    if (msg->Type == TW_MSG_WIDGET_MOUSE) {
+      EventM = &msg->Event.EventMouse;
       Code = EventA->EventMouse.Code;
       y = EventA->EventMouse.Y;
       x = EventA->EventMouse.X;
@@ -170,10 +170,10 @@ int main(int argc, char **argv) {
         default:
           break;
         }
-    } else if (Msg->Type == TW_MSG_MENU_ROW) {
+    } else if (msg->Type == TW_MSG_MENU_ROW) {
       if (EventA->EventMenu.Code == COD_QUIT && EventA->EventMenu.W == TWCD_Win)
         break;
-    } else if (Msg->Type == TW_MSG_WIDGET_GADGET) {
+    } else if (msg->Type == TW_MSG_WIDGET_GADGET) {
       if (EventA->EventGadget.Code == 0 && EventA->EventGadget.W == TWCD_Win)
         break;
     }

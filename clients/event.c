@@ -223,37 +223,37 @@ TW_CONST char *twcontrolname(udat Code) {
 }
 
 int main(int argc, char *argv[]) {
-  tmsg Msg;
+  tmsg msg;
   uldat err;
   udat Code;
 
   if (InitEvent())
-    while ((Msg = TwReadMsg(ttrue))) {
-      if (Msg->Event.EventCommon.W != Event_Win)
+    while ((msg = TwReadMsg(ttrue))) {
+      if (msg->Event.EventCommon.W != Event_Win)
         printf("SubWindow: ");
 
-      if (Msg->Type == TW_MSG_WIDGET_KEY) {
-        tevent_keyboard EventK = &Msg->Event.EventKeyboard;
+      if (msg->Type == TW_MSG_WIDGET_KEY) {
+        tevent_keyboard EventK = &msg->Event.EventKeyboard;
 
         printf("Key: Code %.3u (0x%04x, %s),\tShiftFlags 0x%04x, ASCII ", (unsigned)EventK->Code,
                (unsigned)EventK->Code, twkeyname(EventK->Code), (unsigned)EventK->ShiftFlags);
         human_print(EventK->SeqLen, EventK->AsciiSeq);
         putchar('\n');
-      } else if (Msg->Type == TW_MSG_SELECTION) {
+      } else if (msg->Type == TW_MSG_SELECTION) {
         uldat Owner = TwGetOwnerSelection();
         printf("Selection Paste: Owner %d (0x%08x), requesting data notify...\n", (int)Owner,
                (int)Owner);
         TwRequestSelection(Owner, TW_NOID);
-      } else if (Msg->Type == TW_MSG_SELECTIONNOTIFY) {
-        tevent_selectionnotify EventN = &Msg->Event.EventSelectionNotify;
+      } else if (msg->Type == TW_MSG_SELECTIONNOTIFY) {
+        tevent_selectionnotify EventN = &msg->Event.EventSelectionNotify;
 
         printf("Selection Notify: Magic %u (0x%08x), Len %u, ASCII ", (unsigned)EventN->Magic,
                (unsigned)EventN->Magic, (unsigned)EventN->Len);
         human_print(EventN->Len, EventN->Data);
         putchar('\n');
-      } else if (Msg->Type == TW_MSG_WIDGET_MOUSE) {
+      } else if (msg->Type == TW_MSG_WIDGET_MOUSE) {
         char *s1, *s2, *s3, *s4, *s5, *s6, *s7, *s8, *s9;
-        tevent_mouse EventM = &Msg->Event.EventMouse;
+        tevent_mouse EventM = &msg->Event.EventMouse;
 
         Code = EventM->Code;
 
@@ -338,14 +338,14 @@ int main(int argc, char *argv[]) {
         printf("Mouse: Code 0x%04x: %s%s, %s%s%s%s%s%s%sx=%d, y=%d\n", (int)Code, s1, s2, s3, s4,
                s5, s6, s7, s8, s9, EventM->X, EventM->Y);
 
-      } else if (Msg->Type == TW_MSG_WIDGET_GADGET) {
-        tevent_gadget EventG = &Msg->Event.EventGadget;
+      } else if (msg->Type == TW_MSG_WIDGET_GADGET) {
+        tevent_gadget EventG = &msg->Event.EventGadget;
         printf("Gadget: Code %d (0x%04x)\n", (unsigned)EventG->Code, (unsigned)EventG->Code);
         if (EventG->Code == 0 && EventG->W == Event_Win) {
           break;
         }
-      } else if (Msg->Type == TW_MSG_WIDGET_CHANGE) {
-        tevent_widget EventW = &Msg->Event.EventWidget;
+      } else if (msg->Type == TW_MSG_WIDGET_CHANGE) {
+        tevent_widget EventW = &msg->Event.EventWidget;
         if (EventW->Code == TW_MSG_WIDGET_RESIZE)
           printf("Widget Change: new size x=%d y=%d\n", EventW->XWidth, EventW->YWidth);
         else if (EventW->Code == TW_MSG_WIDGET_EXPOSE) {
@@ -355,14 +355,14 @@ int main(int argc, char *argv[]) {
           TwDrawTextWindow(EventW->W, EventW->XWidth, EventW->YWidth, EventW->X, EventW->Y, 0,
                            NULL);
         }
-      } else if (Msg->Type == TW_MSG_USER_CONTROL) {
-        tevent_control EventC = &Msg->Event.EventControl;
+      } else if (msg->Type == TW_MSG_USER_CONTROL) {
+        tevent_control EventC = &msg->Event.EventControl;
         printf("User Control Message: Code %d (%s), x=%d y=%d, ASCII ", EventC->Code,
                twcontrolname(EventC->Code), EventC->X, EventC->Y);
         human_print(EventC->Len, EventC->Data);
         putchar('\n');
-      } else if (Msg->Type == TW_MSG_USER_CLIENTMSG) {
-        tevent_clientmsg EventC = &Msg->Event.EventClientMsg;
+      } else if (msg->Type == TW_MSG_USER_CLIENTMSG) {
+        tevent_clientmsg EventC = &msg->Event.EventClientMsg;
         printf("User Client Message: Code %d, ASCII ", EventC->Code);
         human_print(EventC->Len, (TW_CONST char *)EventC->Data.b);
         putchar('\n');

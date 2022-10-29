@@ -440,7 +440,7 @@ static void Quit(const char *argv0) {
 
 int main(int argc, char *argv[]) {
   usage Usage[2];
-  tmsg Msg;
+  tmsg msg;
   tevent_any Event;
   struct timeval p = {0, 0};
   fd_set readfds;
@@ -463,10 +463,10 @@ int main(int argc, char *argv[]) {
       p.tv_usec = 0;
     }
 
-    while ((Msg = TwReadMsg(tfalse))) {
-      Event = &Msg->Event;
+    while ((msg = TwReadMsg(tfalse))) {
+      Event = &msg->Event;
       if (Event->EventCommon.W == SysMon_Win) {
-        if (Msg->Type == TW_MSG_WIDGET_GADGET) {
+        if (msg->Type == TW_MSG_WIDGET_GADGET) {
           if (Event->EventGadget.Code == 0)
             /* 0 == Close Code */
             Quit(argv[0]);

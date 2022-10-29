@@ -40,9 +40,9 @@ TW_DECL_MAGIC(sendmsg_magic);
 int main(int argc, char *argv[]) {
   char *DisplayName = NULL, *MsgPortName = NULL, *CodeName = NULL, *Data = NULL;
   uldat DataLen = 0;
-  udat Type = TW_MSG_USER_CONTROL, Code = TW_MSG_CONTROL_OPEN ;
+  udat Type = TW_MSG_USER_CONTROL, Code = TW_MSG_CONTROL_OPEN;
   tmsgport MsgPort;
-  tmsg Msg;
+  tmsg msg;
   uldat err;
 
   TwMergeHyphensArgv(argc, argv);
@@ -108,8 +108,8 @@ int main(int argc, char *argv[]) {
       if (MsgPortName) {
         if ((MsgPort = TwFindMsgPort(TW_NOID, strlen(MsgPortName), MsgPortName))) {
           if (Type == TW_MSG_USER_CONTROL) {
-            if ((Msg = TwCreateMsg(TW_MSG_USER_CONTROL, DataLen + TW_SIZEOF_TEVENT_CONTROL))) {
-              tevent_control EventC = &Msg->Event.EventControl;
+            if ((msg = TwCreateMsg(TW_MSG_USER_CONTROL, DataLen + TW_SIZEOF_TEVENT_CONTROL))) {
+              tevent_control EventC = &msg->Event.EventControl;
               EventC->W = TW_NOID;
               EventC->Code = Code;
               EventC->Len = DataLen;
@@ -117,18 +117,18 @@ int main(int argc, char *argv[]) {
               EventC->Y = 0;
               if (DataLen)
                 memcpy(EventC->Data, Data, DataLen);
-              if (TwSendMsg(MsgPort, Msg))
+              if (TwSendMsg(MsgPort, msg))
                 return 0;
             }
           } else {
-            if ((Msg = TwCreateMsg(TW_MSG_USER_CLIENTMSG, DataLen + TW_SIZEOF_TEVENT_CLIENTMSG))) {
-              tevent_clientmsg EventC = &Msg->Event.EventClientMsg;
+            if ((msg = TwCreateMsg(TW_MSG_USER_CLIENTMSG, DataLen + TW_SIZEOF_TEVENT_CLIENTMSG))) {
+              tevent_clientmsg EventC = &msg->Event.EventClientMsg;
               EventC->W = TW_NOID;
               EventC->Code = Code;
               EventC->Len = DataLen;
               if (DataLen)
                 memcpy(EventC->Data.b, Data, DataLen);
-              if (TwSendMsg(MsgPort, Msg))
+              if (TwSendMsg(MsgPort, msg))
                 return 0;
             }
           }

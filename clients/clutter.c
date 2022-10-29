@@ -61,7 +61,7 @@ static byte InitClutter(void) {
 }
 
 int main(int argc, char *argv[]) {
-  tmsg Msg;
+  tmsg msg;
   uldat err;
 
   if (!InitClutter()) {
@@ -72,9 +72,9 @@ int main(int argc, char *argv[]) {
   }
 
   while (NewClutterWindow()) {
-    while ((Msg = TwReadMsg(tfalse))) {
-      if (Msg->Type == TW_MSG_WIDGET_GADGET) {
-        if (Msg->Event.EventGadget.Code == 0) {
+    while ((msg = TwReadMsg(tfalse))) {
+      if (msg->Type == TW_MSG_WIDGET_GADGET) {
+        if (msg->Event.EventGadget.Code == 0) {
           return 0;
         }
       }

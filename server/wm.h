@@ -15,7 +15,7 @@ struct wm_ctx {
   Tmenu Menu;
   Tmenuitem Item;
   Twidget DW; /* deepest Twidget user is interacting with */
-  udat Type;  /* Msg->Type: MSG_* */
+  udat Type;  /* Tmsg->Type: MSG_* */
   byte Pos;   /* POS_* relative to (W) */
   byte ByMouse;
   udat Code; /* keyboard key / mouse buttons pressed */

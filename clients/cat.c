@@ -56,7 +56,7 @@ static byte InitCat(void) {
 int main(int argc, char *argv[]) {
   int fd = -1, got;
   char buf[4096];
-  tmsg Msg;
+  tmsg msg;
   tevent_gadget EventG;
   uldat err;
 
@@ -92,9 +92,9 @@ int main(int argc, char *argv[]) {
     TwWriteCharsetWindow(Cat_Win, got, buf);
     TwFlush();
   }
-  while ((Msg = TwReadMsg(ttrue))) {
-    if (Msg->Type == TW_MSG_WIDGET_GADGET) {
-      EventG = &Msg->Event.EventGadget;
+  while ((msg = TwReadMsg(ttrue))) {
+    if (msg->Type == TW_MSG_WIDGET_GADGET) {
+      EventG = &msg->Event.EventGadget;
       if (EventG->Code == 0 && EventG->W == Cat_Win)
         break;
     }

@@ -58,7 +58,7 @@ int fd;
 pthread_mutex_t T = PTHREAD_MUTEX_INITIALIZER;
 
 void mainloop(twindow *Win) {
-  tmsg Msg;
+  tmsg msg;
   tevent_any Event;
   /*struct timeval p = {0, 0};*/
   fd_set readfds;
@@ -91,14 +91,14 @@ void mainloop(twindow *Win) {
      * as the other thread is calling Tw* functions...
      * they invalidate the static buffer used by TwReadMsg()
      */
-    while ((Msg = TwCloneReadMsg(tfalse))) {
-      Event = &Msg->Event;
-      if (Msg->Type == TW_MSG_WIDGET_GADGET) {
+    while ((msg = TwCloneReadMsg(tfalse))) {
+      Event = &msg->Event;
+      if (msg->Type == TW_MSG_WIDGET_GADGET) {
         if (Event->EventGadget.Code == 0)
           /* 0 == Close Code */
           Quit();
       }
-      TwFreeMem(Msg);
+      TwFreeMem(msg);
     }
     /*
     FD_SET(fd, &readfds);

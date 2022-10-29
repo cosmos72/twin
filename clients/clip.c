@@ -63,35 +63,35 @@ static byte InitClip(void) {
 }
 
 int main(int argc, char *argv[]) {
-  tmsg Msg;
+  tmsg msg;
   uldat err, WinN = 1;
 
   if (InitClip())
-    while ((Msg = TwReadMsg(ttrue))) {
-      if (Msg->Type == TW_MSG_WIDGET_KEY) {
+    while ((msg = TwReadMsg(ttrue))) {
+      if (msg->Type == TW_MSG_WIDGET_KEY) {
 
-        tevent_keyboard EventK = &Msg->Event.EventKeyboard;
+        tevent_keyboard EventK = &msg->Event.EventKeyboard;
         (void)TwWriteCharsetWindow(EventK->W, EventK->SeqLen, EventK->AsciiSeq);
 
-      } else if (Msg->Type == TW_MSG_SELECTION) {
+      } else if (msg->Type == TW_MSG_SELECTION) {
         /*
-         * send Msg->Event.EventSelection.Window as ReqPrivate field,
+         * send msg->Event.EventSelection.Window as ReqPrivate field,
          * so that we will get it back in TW_MSG_SELECTIONNOTIFY message
          * without having to store it manually
          */
-        TwRequestSelection(TwGetOwnerSelection(), Msg->Event.EventSelection.W);
+        TwRequestSelection(TwGetOwnerSelection(), msg->Event.EventSelection.W);
 
-      } else if (Msg->Type == TW_MSG_SELECTIONNOTIFY) {
+      } else if (msg->Type == TW_MSG_SELECTIONNOTIFY) {
 
-        tevent_selectionnotify EventN = &Msg->Event.EventSelectionNotify;
+        tevent_selectionnotify EventN = &msg->Event.EventSelectionNotify;
         if (EventN->Magic == TW_SEL_UTF8MAGIC)
           (void)TwWriteUtf8Window(EventN->ReqPrivate, EventN->Len, EventN->Data);
 
-      } else if (Msg->Type == TW_MSG_SELECTIONCLEAR) {
+      } else if (msg->Type == TW_MSG_SELECTIONCLEAR) {
         ;
-      } else if (Msg->Type == TW_MSG_WIDGET_GADGET) {
+      } else if (msg->Type == TW_MSG_WIDGET_GADGET) {
 
-        tevent_gadget EventG = &Msg->Event.EventGadget;
+        tevent_gadget EventG = &msg->Event.EventGadget;
         if (EventG->Code == 0 && EventG->W == Clip_Win) {
           TwUnMapWindow(Clip_Win);
           TwDeleteWindow(Clip_Win);

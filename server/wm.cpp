@@ -326,7 +326,7 @@ static tpos WMFindBorderWindow(Twindow W, dat u, dat v, byte Border, tcell *PtrA
 static void SmartPlace(Twidget W, screen Screen);
 
 void Check4Resize(Twindow W) {
-  Tmsg Msg;
+  Tmsg msg;
   event_any *Event;
   byte HasBorder;
 
@@ -339,13 +339,13 @@ void Check4Resize(Twindow W) {
       (!W_USE(W, USECONTENTS) || W->XWidth != W->USE.C.TtyData->SizeX + HasBorder ||
        W->YWidth != W->USE.C.TtyData->SizeY + HasBorder)) {
 
-    if ((Msg = New(msg)(msg_widget_change, 0))) {
-      Event = &Msg->Event;
+    if ((msg = New(msg)(msg_widget_change, 0))) {
+      Event = &msg->Event;
       Event->EventWidget.W = (Twidget)W;
       Event->EventWidget.Code = MSG_WIDGET_RESIZE;
       Event->EventWidget.XWidth = W->XWidth - HasBorder;
       Event->EventWidget.YWidth = W->YWidth - HasBorder;
-      SendMsg(W->Owner, Msg);
+      SendMsg(W->Owner, msg);
     }
   }
   if (W_USE(W, USECONTENTS))
@@ -353,14 +353,14 @@ void Check4Resize(Twindow W) {
 }
 
 void AskCloseWidget(Twidget W) {
-  Tmsg Msg;
+  Tmsg msg;
 
   if (W && (!IS_WINDOW(W) || (W->Attr & WINDOW_CLOSE))) {
 
-    if ((Msg = New(msg)(msg_widget_gadget, 0))) {
-      Msg->Event.EventGadget.W = W;
-      Msg->Event.EventGadget.Code = (udat)0; /* COD_CLOSE */
-      SendMsg(W->Owner, Msg);
+    if ((msg = New(msg)(msg_widget_gadget, 0))) {
+      msg->Event.EventGadget.W = W;
+      msg->Event.EventGadget.Code = (udat)0; /* COD_CLOSE */
+      SendMsg(W->Owner, msg);
     }
   }
 }
@@ -496,7 +496,7 @@ static void HandleHilightAndSelection(Twidget W, udat Code, dat X, dat Y, byte I
   }
 }
 
-static byte CheckForwardMsg(wm_ctx *C, Tmsg Msg, byte WasUsed) {
+static byte CheckForwardMsg(wm_ctx *C, Tmsg msg, byte WasUsed) {
   static uldat LastWId = NOID;
   static byte LastInside = tfalse;
   static udat LastKeys = 0;
@@ -506,7 +506,7 @@ static byte CheckForwardMsg(wm_ctx *C, Tmsg Msg, byte WasUsed) {
   dat X, Y;
   byte Inside, inUse = tfalse;
 
-  if (Msg->Type != msg_key && Msg->Type != msg_mouse)
+  if (msg->Type != msg_key && msg->Type != msg_mouse)
     return inUse;
 
   LastW = (Twidget)Id2Obj(Twidget_magic_byte, LastWId);
@@ -532,8 +532,8 @@ static byte CheckForwardMsg(wm_ctx *C, Tmsg Msg, byte WasUsed) {
   else
     return inUse;
 
-  Event = &Msg->Event;
-  if (Msg->Type == msg_key) {
+  Event = &msg->Event;
+  if (msg->Type == msg_key) {
     if (!WasUsed && All->State == state_default) {
 
       /* back up to first parent that WANT_KEYS or has AUTO_KEYS */
@@ -542,9 +542,9 @@ static byte CheckForwardMsg(wm_ctx *C, Tmsg Msg, byte WasUsed) {
         W = W->Parent;
       if (W) {
         if (W->Attr & WIDGET_WANT_KEYS) {
-          Msg->Type = msg_widget_key;
+          msg->Type = msg_widget_key;
           Event->EventKeyboard.W = (Twidget)W;
-          SendMsg(W->Owner, Msg);
+          SendMsg(W->Owner, msg);
           return ttrue;
         } else if (IS_WINDOW(W) && ((Twindow)W)->Attr & WINDOW_AUTO_KEYS)
           FallBackKeyAction((Twindow)W, &Event->EventKeyboard);
@@ -626,11 +626,11 @@ static byte CheckForwardMsg(wm_ctx *C, Tmsg Msg, byte WasUsed) {
       if (Code == MOVE_MOUSE && !Inside)
         X = Y = TW_MINDAT;
 
-      Msg->Type = msg_widget_mouse;
+      msg->Type = msg_widget_mouse;
       Event->EventMouse.W = (Twidget)W;
       Event->EventMouse.X = X;
       Event->EventMouse.Y = Y;
-      SendMsg(W->Owner, Msg);
+      SendMsg(W->Owner, msg);
 
       LastInside = (W->Attr & WIDGET_WANT_MOUSE_MOTION) ? Inside : 0;
       LastKeys = (W->Attr & WIDGET_WANT_MOUSE) ? Code & HOLD_ANY : 0;
@@ -648,14 +648,14 @@ static byte CheckForwardMsg(wm_ctx *C, Tmsg Msg, byte WasUsed) {
 
 static ldat DragPosition[2];
 
-static void InitCtx(const Tmsg Msg, wm_ctx *C) {
+static void InitCtx(const Tmsg msg, wm_ctx *C) {
 
-  C->Code = Msg->Event.EventCommon.Code;
-  C->ShiftFlags = Msg->Event.EventKeyboard.ShiftFlags; /* ok for mouse too */
+  C->Code = msg->Event.EventCommon.Code;
+  C->ShiftFlags = msg->Event.EventKeyboard.ShiftFlags; /* ok for mouse too */
 
-  if ((C->ByMouse = (Msg->Type == msg_mouse))) {
-    C->i = Msg->Event.EventMouse.X;
-    C->j = Msg->Event.EventMouse.Y;
+  if ((C->ByMouse = (msg->Type == msg_mouse))) {
+    C->i = msg->Event.EventMouse.X;
+    C->j = msg->Event.EventMouse.Y;
 
     if ((C->Screen = Do(Find, screen)(C->j)) && C->Screen == All->FirstScreen &&
         C->Screen->YLimit < C->j) {
@@ -867,7 +867,7 @@ static void ReleaseMenu(wm_ctx *C) {
   Tmenu Menu;
   Tmenuitem Item;
   Trow Row;
-  Tmsg Msg;
+  Tmsg msg;
   event_menu *Event;
   udat Code;
 
@@ -887,16 +887,16 @@ static void ReleaseMenu(wm_ctx *C) {
     Fill4RC_VM(C, (Twidget)MW, msg_menu_row, POS_MENU, Row->Code);
     (void)RC_VMQueue(C);
   } else if (Code) {
-    if ((Msg = New(msg)(msg_menu_row, 0))) {
-      Event = &Msg->Event.EventMenu;
+    if ((msg = New(msg)(msg_menu_row, 0))) {
+      Event = &msg->Event.EventMenu;
       Event->W = MW;
       Event->Code = Code;
       Event->Menu = Menu;
       Event->Row = Row;
       if (MW)
-        SendMsg(MW->Owner, Msg);
+        SendMsg(MW->Owner, msg);
       else
-        SendMsg(Menu->MsgPort, Msg);
+        SendMsg(Menu->MsgPort, msg);
     }
   }
 }
@@ -1665,41 +1665,41 @@ static void TryAutoFocus(wm_ctx *C) {
 static void WManagerH(Tmsgport MsgPort) {
   static wm_ctx _C;
   wm_ctx *C = &_C;
-  Tmsg Msg;
+  Tmsg msg;
   Twidget W;
   byte used;
 
-  while ((Msg = WM_MsgPort->FirstMsg)) {
+  while ((msg = WM_MsgPort->FirstMsg)) {
 
-    Msg->Remove();
+    msg->Remove();
 
-    if (Msg->Type == msg_map) {
-      SendMsg(MapQueue, Msg);
+    if (msg->Type == msg_map) {
+      SendMsg(MapQueue, msg);
       continue;
-    } else if (Msg->Type != msg_mouse && Msg->Type != msg_key) {
-      if (Msg->Type == msg_control) {
+    } else if (msg->Type != msg_mouse && msg->Type != msg_key) {
+      if (msg->Type == msg_control) {
         /*
          * for now, don't allow starting a different WM (MSG_CONTROL_RESTART)
          * but just restart this one (MSG_CONTROL_OPEN)
          */
-        if ((Msg->Event.EventControl.Code == MSG_CONTROL_RESTART ||
-             Msg->Event.EventControl.Code == MSG_CONTROL_OPEN)) {
+        if ((msg->Event.EventControl.Code == MSG_CONTROL_RESTART ||
+             msg->Event.EventControl.Code == MSG_CONTROL_OPEN)) {
 
           Fill4RC_VM(C, NULL, msg_control, POS_ROOT, MSG_CONTROL_OPEN);
           (void)RC_VMQueue(C);
         }
       }
-      Msg->Delete();
+      msg->Delete();
       continue;
     }
 
-    InitCtx(Msg, C);
+    InitCtx(msg, C);
 
     if (All->State == state_default) {
       if (C->ByMouse && isSINGLE_PRESS(C->Code)) {
         if (C->Screen && C->Screen != All->FirstScreen) {
           Act(Focus, C->Screen)(C->Screen);
-          InitCtx(Msg, C);
+          InitCtx(msg, C);
         }
         if (HOLD_CODE(PRESS_N(C->Code)) == All->SetUp->ButtonSelection) {
 
@@ -1783,27 +1783,27 @@ static void WManagerH(Tmsgport MsgPort) {
     /* must we send the event to the focused window too ? */
     if (C->ByMouse || (All->State == state_default && !used)) {
 
-      if (CheckForwardMsg(C, Msg, used))
-        /* don't Msg->Delete() ! */
+      if (CheckForwardMsg(C, msg, used))
+        /* don't msg->Delete() ! */
         continue;
     }
 
-    Msg->Delete();
+    msg->Delete();
   }
 
   if (All->State == state_default) {
-    for (used = 30, Msg = MapQueue->FirstMsg; Msg && used; Msg = Msg->Next, used--)
+    for (used = 30, msg = MapQueue->FirstMsg; msg && used; msg = msg->Next, used--)
       ;
     if (!used)
       QueuedDrawArea2FullScreen = ttrue;
-    while ((Msg = MapQueue->FirstMsg)) {
-      C->W = Msg->Event.EventMap.W;
-      SmartPlace((Twidget)C->W, Msg->Event.EventMap.Screen);
+    while ((msg = MapQueue->FirstMsg)) {
+      C->W = msg->Event.EventMap.W;
+      SmartPlace((Twidget)C->W, msg->Event.EventMap.Screen);
 
       Fill4RC_VM(C, C->W, msg_map, POS_ROOT, 0);
       (void)RC_VMQueue(C);
 
-      Msg->Delete();
+      msg->Delete();
     }
   }
 

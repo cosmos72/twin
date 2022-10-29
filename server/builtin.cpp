@@ -258,12 +258,12 @@ void UpdateOptionWin(void) {
   OptionWin->RowWriteCharset(1, &ch);
 }
 
-static void OptionH(Tmsg Msg) {
+static void OptionH(Tmsg msg) {
   byte Flags = All->SetUp->Flags, XShade = All->SetUp->DeltaXShade,
        YShade = All->SetUp->DeltaYShade;
   byte redraw = ttrue;
 
-  switch (Msg->Event.EventGadget.Code) {
+  switch (msg->Event.EventGadget.Code) {
   case COD_O_SHADOWS:
     Flags ^= setup_shadows;
     break;
@@ -408,8 +408,8 @@ void UpdateButtonWin(void) {
   }
 }
 
-static void BordersH(Tmsg Msg) {
-  udat Code = Msg->Event.EventGadget.Code;
+static void BordersH(Tmsg msg) {
+  udat Code = msg->Event.EventGadget.Code;
   sbyte op = -1;
 
   if (!(Code & 2))
@@ -454,11 +454,11 @@ static void SelectRowWindow(Twindow CurrWin, ldat newCurY) {
   }
 }
 
-static void DisplayGadgetH(Tmsg Msg) {
+static void DisplayGadgetH(Tmsg msg) {
   Tdisplay hw;
   ldat i;
 
-  switch (Msg->Event.EventGadget.Code) {
+  switch (msg->Event.EventGadget.Code) {
   case COD_D_REMOVE:
     if ((i = DisplayWin->CurY) < DisplayWin->HLogic) {
       for (hw = All->FirstDisplayHW; hw && i; hw = hw->Next, i--) {
@@ -484,7 +484,7 @@ static void DisplayGadgetH(Tmsg Msg) {
 }
 
 static void BuiltinH(Tmsgport MsgPort) {
-  Tmsg Msg;
+  Tmsg msg;
   event_any *Event;
   screen Screen;
   Twindow NewWindow, tempWin;
@@ -493,11 +493,11 @@ static void BuiltinH(Tmsgport MsgPort) {
 
   Screen = All->FirstScreen;
 
-  while ((Msg = Builtin_MsgPort->FirstMsg)) {
-    Msg->Remove();
-    Event = &Msg->Event;
+  while ((msg = Builtin_MsgPort->FirstMsg)) {
+    msg->Remove();
+    Event = &msg->Event;
 
-    switch (Msg->Type) {
+    switch (msg->Type) {
     case msg_widget_gadget:
       tempWin = (Twindow)Event->EventGadget.W;
       Code = Event->EventGadget.Code;
@@ -511,11 +511,11 @@ static void BuiltinH(Tmsgport MsgPort) {
           Builtin_MsgPort->WakeUp = tfalse;
 
       } else if (tempWin == OptionWin)
-        OptionH(Msg);
+        OptionH(msg);
       else if (tempWin == ButtonWin)
-        BordersH(Msg);
+        BordersH(msg);
       else if (tempWin == DisplaySubWin)
-        DisplayGadgetH(Msg);
+        DisplayGadgetH(msg);
       else if (tempWin == ExecuteWin)
         ExecuteGadgetH(&Event->EventGadget);
       break;
@@ -625,9 +625,9 @@ static void BuiltinH(Tmsgport MsgPort) {
       break;
 
     case msg_widget_key:
-      tempWin = (Twindow)Msg->Event.EventCommon.W;
+      tempWin = (Twindow)msg->Event.EventCommon.W;
       if (tempWin == WinList) {
-        switch (Msg->Event.EventKeyboard.Code) {
+        switch (msg->Event.EventKeyboard.Code) {
         case TW_Escape:
           WinList->UnMap();
           break;
@@ -635,11 +635,11 @@ static void BuiltinH(Tmsgport MsgPort) {
           SelectWinList();
           break;
         default:
-          FallBackKeyAction(WinList, &Msg->Event.EventKeyboard);
+          FallBackKeyAction(WinList, &msg->Event.EventKeyboard);
           break;
         }
       } else if (tempWin == ExecuteWin) {
-        switch ((Code = Msg->Event.EventKeyboard.Code)) {
+        switch ((Code = msg->Event.EventKeyboard.Code)) {
         case TW_Escape:
           ExecuteWin->UnMap();
           break;
@@ -656,33 +656,33 @@ static void BuiltinH(Tmsgport MsgPort) {
           break;
         default:
           if (Code == TW_Return || Code == TW_KP_Enter ||
-              (Msg->Event.EventKeyboard.SeqLen == 1 &&
-               ((Code = Msg->Event.EventKeyboard.AsciiSeq[0]) == 10 /* CTRL+J */ ||
+              (msg->Event.EventKeyboard.SeqLen == 1 &&
+               ((Code = msg->Event.EventKeyboard.AsciiSeq[0]) == 10 /* CTRL+J */ ||
                 Code == 13 /* CTRL+M */)))
             ExecuteWinRun();
-          else if (Msg->Event.EventKeyboard.SeqLen)
-            ExecuteWin->RowWriteCharset(Msg->Event.EventKeyboard.SeqLen,
-                                        Msg->Event.EventKeyboard.AsciiSeq);
+          else if (msg->Event.EventKeyboard.SeqLen)
+            ExecuteWin->RowWriteCharset(msg->Event.EventKeyboard.SeqLen,
+                                        msg->Event.EventKeyboard.AsciiSeq);
           break;
         }
       }
       break;
 
     case msg_widget_mouse:
-      tempWin = (Twindow)Msg->Event.EventCommon.W;
+      tempWin = (Twindow)msg->Event.EventCommon.W;
 
       if (tempWin == WinList || tempWin == DisplayWin) {
         dat EventMouseX, EventMouseY;
         byte temp;
 
-        EventMouseX = Msg->Event.EventMouse.X, EventMouseY = Msg->Event.EventMouse.Y;
+        EventMouseX = msg->Event.EventMouse.X, EventMouseY = msg->Event.EventMouse.Y;
         temp = EventMouseX >= 0 && EventMouseX <= tempWin->XWidth - 2 && EventMouseY >= 0 &&
                EventMouseY <= tempWin->YWidth - 2 &&
                (uldat)EventMouseY + tempWin->YLogic < (uldat)tempWin->HLogic;
 
         SelectRowWindow(tempWin, temp ? (uldat)EventMouseY + tempWin->YLogic : TW_MAXLDAT);
 
-        if (tempWin == WinList && isRELEASE(Msg->Event.EventMouse.Code)) {
+        if (tempWin == WinList && isRELEASE(msg->Event.EventMouse.Code)) {
           if (temp)
             SelectWinList();
         }
@@ -691,17 +691,17 @@ static void BuiltinH(Tmsgport MsgPort) {
 
     case msg_selection:
       /* user wants to paste. ask for selection contents */
-      if (Msg->Event.EventSelection.W == (Twidget)ExecuteWin)
+      if (msg->Event.EventSelection.W == (Twidget)ExecuteWin)
         TwinSelectionRequest((Tobj)Builtin_MsgPort, ExecuteWin->Id, TwinSelectionGetOwner());
       break;
 
     case msg_selection_notify:
-      tempWin = (Twindow)Id2Obj(Twindow_magic_byte, Msg->Event.EventSelectionNotify.ReqPrivate);
+      tempWin = (Twindow)Id2Obj(Twindow_magic_byte, msg->Event.EventSelectionNotify.ReqPrivate);
       if (tempWin && tempWin == ExecuteWin) {
-        switch (Msg->Event.EventSelectionNotify.Magic) {
+        switch (msg->Event.EventSelectionNotify.Magic) {
         case SEL_UTF8MAGIC:
-          tempWin->RowWriteUtf8(Msg->Event.EventSelectionNotify.Len,
-                                Msg->Event.EventSelectionNotify.Data);
+          tempWin->RowWriteUtf8(msg->Event.EventSelectionNotify.Len,
+                                msg->Event.EventSelectionNotify.Data);
           break;
         default:
           break;
@@ -731,7 +731,7 @@ static void BuiltinH(Tmsgport MsgPort) {
     default:
       break;
     }
-    Msg->Delete();
+    msg->Delete();
   }
   if (Builtin_MsgPort->WakeUp)
     Clock_Update();

@@ -240,16 +240,16 @@ static void DecMouseMotionN(void) {
 }
 
 static void MapWidget(Twidget W, Twidget Parent) {
-  Tmsg Msg;
+  Tmsg msg;
 
   if (W && !W->Parent && !W->MapQueueMsg && Parent) {
     if (IS_SCREEN(Parent)) {
-      if (Ext(WM, MsgPort) && (Msg = New(msg)(msg_map, 0))) {
-        Msg->Event.EventMap.W = W;
-        Msg->Event.EventMap.Code = 0;
-        Msg->Event.EventMap.Screen = (screen)Parent;
-        W->MapQueueMsg = Msg;
-        SendMsg(Ext(WM, MsgPort), Msg);
+      if (Ext(WM, MsgPort) && (msg = New(msg)(msg_map, 0))) {
+        msg->Event.EventMap.W = W;
+        msg->Event.EventMap.Code = 0;
+        msg->Event.EventMap.Screen = (screen)Parent;
+        W->MapQueueMsg = msg;
+        SendMsg(Ext(WM, MsgPort), msg);
       } else
         W->MapTopReal((screen)Parent);
     } else if (IS_WIDGET(Parent)) {
@@ -1801,30 +1801,30 @@ static struct SmenuFn _FnMenu = {
 
 /* Tmsg */
 
-static void InsertMsg(Tmsg Msg, Tmsgport Parent, Tmsg Prev, Tmsg Next) {
-  if (!Msg->MsgPort && Parent) {
+static void InsertMsg(Tmsg msg, Tmsgport Parent, Tmsg Prev, Tmsg Next) {
+  if (!msg->MsgPort && Parent) {
     /* if adding the first Tmsg, move the Tmsgport to the head
      * of Tmsgport list, so that the scheduler will run it */
     if (!Parent->FirstMsg && Parent->All)
       MoveFirst(MsgPort, All, Parent);
 
-    InsertGeneric((obj_entry)Msg, (obj_list)&Parent->FirstMsg, (obj_entry)Prev, (obj_entry)Next,
+    InsertGeneric((obj_entry)msg, (obj_list)&Parent->FirstMsg, (obj_entry)Prev, (obj_entry)Next,
                   NULL);
-    Msg->MsgPort = Parent;
+    msg->MsgPort = Parent;
   }
 }
 
-static void RemoveMsg(Tmsg Msg) {
-  if (Msg->MsgPort) {
-    RemoveGeneric((obj_entry)Msg, (obj_list)&Msg->MsgPort->FirstMsg, NULL);
-    Msg->MsgPort = NULL;
+static void RemoveMsg(Tmsg msg) {
+  if (msg->MsgPort) {
+    RemoveGeneric((obj_entry)msg, (obj_list)&msg->MsgPort->FirstMsg, NULL);
+    msg->MsgPort = NULL;
   }
 }
 
-static void DeleteMsg(Tmsg Msg) {
-  if (Msg) {
-    Msg->Remove();
-    DeleteObj((Tobj)Msg);
+static void DeleteMsg(Tmsg msg) {
+  if (msg) {
+    msg->Remove();
+    DeleteObj((Tobj)msg);
   }
 }
 

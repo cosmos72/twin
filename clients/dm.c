@@ -614,7 +614,7 @@ static void InitSignals(void) {
 int main(int argc, char *argv[]) {
   fd_set fset;
   int fd;
-  tmsg Msg;
+  tmsg msg;
   uldat err;
 
   Args = argv + 1;
@@ -643,24 +643,24 @@ int main(int argc, char *argv[]) {
     while (AttachPid != (pid_t)-1 && ServerPid != (pid_t)-1 && logged_in == tfalse &&
            !TwInPanic()) {
 
-      while ((Msg = TwReadMsg(tfalse)))
-        switch (Msg->Type) {
+      while ((msg = TwReadMsg(tfalse)))
+        switch (msg->Type) {
         case TW_MSG_WIDGET_KEY:
-          HandleKey(&Msg->Event.EventKeyboard);
+          HandleKey(&msg->Event.EventKeyboard);
           break;
         case TW_MSG_WIDGET_GADGET:
-          HandleGadget(&Msg->Event.EventGadget);
+          HandleGadget(&msg->Event.EventGadget);
           break;
         case TW_MSG_SELECTION:
           /*
-           * send Msg->Event.EventSelection.W as ReqPrivate field,
+           * send msg->Event.EventSelection.W as ReqPrivate field,
            * so that we will get it back in TW_MSG_SELECTIONNOTIFY message
            * without having to store it manually
            */
-          TwRequestSelection(TwGetOwnerSelection(), Msg->Event.EventSelection.W);
+          TwRequestSelection(TwGetOwnerSelection(), msg->Event.EventSelection.W);
           break;
         case TW_MSG_SELECTIONNOTIFY: {
-          tevent_selectionnotify E = &Msg->Event.EventSelectionNotify;
+          tevent_selectionnotify E = &msg->Event.EventSelectionNotify;
 
           /* react as for keypresses */
           if (E->Magic == TW_SEL_UTF8MAGIC) {
@@ -684,7 +684,7 @@ int main(int argc, char *argv[]) {
     /* wait for user to logout */
     while (AttachPid != (pid_t)-1 && ServerPid != (pid_t)-1 && logged_in == ttrue && !TwInPanic()) {
 
-      while ((Msg = TwReadMsg(tfalse)))
+      while ((msg = TwReadMsg(tfalse)))
         ;
 
       /* sleep until a message or a signal arrives (as above) */

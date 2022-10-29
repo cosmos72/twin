@@ -694,12 +694,12 @@ static void respond_string(const char *p) {
   /* the remote program may be directly attached to the window */
   if (!RemoteWindowWriteQueue(Win, len, p)) {
 
-    /* or we may need to send a Msg to Win->Owner */
-    Tmsg Msg;
+    /* or we may need to send a message to Win->Owner */
+    Tmsg msg;
     event_keyboard *Event;
-    if ((Msg = New(msg)(msg_widget_key, len))) {
+    if ((msg = New(msg)(msg_widget_key, len))) {
       /* this is the same code as in KeyboardEvent() in hw.c */
-      Event = &Msg->Event.EventKeyboard;
+      Event = &msg->Event.EventKeyboard;
       Event->W = (Twidget)Win;
       if (len == 1 && (p[0] == ENTER || p[0] == ESCAPE))
         Event->Code = p[0];
@@ -709,7 +709,7 @@ static void respond_string(const char *p) {
       Event->SeqLen = len;
       CopyMem(p, Event->AsciiSeq, len);
       Event->AsciiSeq[len] = '\0'; /* terminate string with \0 */
-      SendMsg(Win->Owner, Msg);
+      SendMsg(Win->Owner, msg);
     }
   }
 }

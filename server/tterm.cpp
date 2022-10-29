@@ -98,36 +98,36 @@ static Twindow OpenTerm(const char *arg0, const char *const *argv) {
 }
 
 static void TwinTermH(Tmsgport MsgPort) {
-  Tmsg Msg;
+  Tmsg msg;
   event_any *Event;
   udat Code /*, Repeat*/;
   Twindow Win;
 
-  while ((Msg = Term_MsgPort->FirstMsg)) {
-    Msg->Remove();
+  while ((msg = Term_MsgPort->FirstMsg)) {
+    msg->Remove();
 
-    Event = &Msg->Event;
+    Event = &msg->Event;
     Win = (Twindow)Event->EventSelection.W;
     if (Win && !IS_WINDOW(Win))
       Win = NULL;
 
-    if (Msg->Type == msg_widget_key) {
+    if (msg->Type == msg_widget_key) {
       Code = Event->EventKeyboard.Code;
       /* send keypresses */
       if (Win)
         (void)RemoteWindowWriteQueue(Win, Event->EventKeyboard.SeqLen,
                                      Event->EventKeyboard.AsciiSeq);
-    } else if (Msg->Type == msg_selection) {
+    } else if (msg->Type == msg_selection) {
 
       TwinSelectionRequest((Tobj)Term_MsgPort, Win->Id, TwinSelectionGetOwner());
 
-    } else if (Msg->Type == msg_selection_notify) {
+    } else if (msg->Type == msg_selection_notify) {
 
       if ((Win = (Twindow)Id2Obj(Twindow_magic_byte, Event->EventSelectionNotify.ReqPrivate))) {
         (void)RemoteWindowWriteQueue(Win, Event->EventSelectionNotify.Len,
                                      Event->EventSelectionNotify.Data);
       }
-    } else if (Msg->Type == msg_widget_mouse) {
+    } else if (msg->Type == msg_widget_mouse) {
       if (Win) {
         char buf[10];
         byte len = CreateXTermMouseEvent(&Event->EventMouse, 10, buf);
@@ -136,11 +136,11 @@ static void TwinTermH(Tmsgport MsgPort) {
         if (len)
           (void)RemoteWindowWriteQueue(Win, len, buf);
       }
-    } else if (Msg->Type == msg_widget_gadget) {
+    } else if (msg->Type == msg_widget_gadget) {
       if (Win && Event->EventGadget.Code == 0 /* Close Code */) {
         Win->Delete();
       }
-    } else if (Msg->Type == msg_menu_row) {
+    } else if (msg->Type == msg_menu_row) {
       if (Event->EventMenu.Menu == Term_Menu) {
         Code = Event->EventMenu.Code;
         switch (Code) {
@@ -151,7 +151,7 @@ static void TwinTermH(Tmsgport MsgPort) {
           break;
         }
       }
-    } else if (Msg->Type == msg_user_control) {
+    } else if (msg->Type == msg_user_control) {
       /* this duplicates the same functionality of builtin.c */
       if (Event->EventControl.Code == MSG_CONTROL_OPEN) {
         char **cmd = TokenizeStringVec(Event->EventControl.Len, Event->EventControl.Data);
@@ -162,7 +162,7 @@ static void TwinTermH(Tmsgport MsgPort) {
           OpenTerm(NULL, NULL);
       }
     }
-    Msg->Delete();
+    msg->Delete();
   }
 }
 

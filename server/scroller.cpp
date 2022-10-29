@@ -61,7 +61,7 @@ inline void ScrollerDelayRepeat(void) {
 }
 
 static void ScrollerH(Tmsgport MsgPort) {
-  Tmsg Msg, saveMsg;
+  Tmsg msg, saveMsg;
   mouse_state *Mouse;
   uldat Attr, WState;
   dat Limit;
@@ -69,12 +69,12 @@ static void ScrollerH(Tmsgport MsgPort) {
   byte State, FlagDeskScroll, FlagWinScroll, WinScrolled = tfalse;
   Twindow FocusWindow;
 
-  while ((Msg = Scroller_MsgPort->FirstMsg)) {
-    Msg->Remove();
-    if (Msg == Do_Scroll || Msg == Dont_Scroll)
-      saveMsg = Msg;
+  while ((msg = Scroller_MsgPort->FirstMsg)) {
+    msg->Remove();
+    if (msg == Do_Scroll || msg == Dont_Scroll)
+      saveMsg = msg;
     else
-      Msg->Delete();
+      msg->Delete();
   }
 
   if (saveMsg == Dont_Scroll || !All->MouseHW) {

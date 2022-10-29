@@ -383,32 +383,32 @@ static byte InitTerm(void) {
 }
 
 static void TwinTermH(void) {
-  tmsg Msg;
+  tmsg msg;
   tevent_any Event;
   udat Code /*, Repeat*/;
   twindow Win;
   uldat Slot;
   int Fd;
 
-  while ((Msg = TwReadMsg(tfalse))) {
+  while ((msg = TwReadMsg(tfalse))) {
 
-    Event = &Msg->Event;
+    Event = &msg->Event;
     Win = Event->EventCommon.W;
     Slot = Slot_Window(Win);
     Fd = Fd_Slot(Slot);
 
-    if (Msg->Type == TW_MSG_WIDGET_KEY) {
+    if (msg->Type == TW_MSG_WIDGET_KEY) {
       /* send keypresses */
       write(Fd, Event->EventKeyboard.AsciiSeq, Event->EventKeyboard.SeqLen);
-    } else if (Msg->Type == TW_MSG_SELECTION) {
+    } else if (msg->Type == TW_MSG_SELECTION) {
       /*
-       * send Msg->Event.EventCommon.Window as ReqPrivate field,
+       * send msg->Event.EventCommon.Window as ReqPrivate field,
        * so that we will get it back in TW_MSG_SELECTIONNOTIFY message
        * without having to store it manually
        */
       TwRequestSelection(TwGetOwnerSelection(), Win);
 
-    } else if (Msg->Type == TW_MSG_SELECTIONNOTIFY) {
+    } else if (msg->Type == TW_MSG_SELECTIONNOTIFY) {
 
       Win = Event->EventSelectionNotify.ReqPrivate;
       Slot = Slot_Window(Win);
@@ -417,13 +417,13 @@ static void TwinTermH(void) {
       /* react as for keypresses */
       write(Fd, Event->EventSelectionNotify.Data, Event->EventSelectionNotify.Len);
 
-    } else if (Msg->Type == TW_MSG_WIDGET_MOUSE) {
+    } else if (msg->Type == TW_MSG_WIDGET_MOUSE) {
       fprintf(stderr, "twterm: unexpected Mouse event message!\n");
 
-    } else if (Msg->Type == TW_MSG_WIDGET_GADGET) {
+    } else if (msg->Type == TW_MSG_WIDGET_GADGET) {
       if (Event->EventGadget.Code == 0 /* Close Code */)
         CloseTerm(Slot);
-    } else if (Msg->Type == TW_MSG_MENU_ROW) {
+    } else if (msg->Type == TW_MSG_MENU_ROW) {
       if (Event->EventMenu.Menu == Term_Menu) {
         Code = Event->EventMenu.Code;
         switch (Code) {
@@ -437,10 +437,10 @@ static void TwinTermH(void) {
           break;
         }
       }
-    } else if (Msg->Type == TW_MSG_WIDGET_CHANGE) {
+    } else if (msg->Type == TW_MSG_WIDGET_CHANGE) {
       Resize(Slot, Event->EventWidget.XWidth, Event->EventWidget.YWidth);
 
-    } else if (Msg->Type == TW_MSG_USER_CONTROL) {
+    } else if (msg->Type == TW_MSG_USER_CONTROL) {
       if (Event->EventControl.Code == TW_MSG_CONTROL_OPEN) {
         char **cmd = TokenizeStringVec(Event->EventControl.Len, (char *)Event->EventControl.Data);
         if (cmd) {
@@ -551,7 +551,7 @@ int main(int argc, char *argv[]) {
       break;
 
     if (TwPendingMsg())
-      /* some Msg is available, don't sleep */
+      /* some msg is available, don't sleep */
       pt = &zero;
     else
       pt = NULL;

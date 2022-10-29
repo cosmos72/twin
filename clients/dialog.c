@@ -290,7 +290,7 @@ static byte InitDialog(void) {
 }
 
 int main(int argc, char *argv[]) {
-  tmsg Msg;
+  tmsg msg;
   tevent_gadget EventG;
   uldat err;
 
@@ -298,9 +298,9 @@ int main(int argc, char *argv[]) {
     return 255;
 
   if (InitDialog())
-    while ((Msg = TwReadMsg(ttrue))) {
-      if (Msg->Type == TW_MSG_WIDGET_GADGET) {
-        EventG = &Msg->Event.EventGadget;
+    while ((msg = TwReadMsg(ttrue))) {
+      if (msg->Type == TW_MSG_WIDGET_GADGET) {
+        EventG = &msg->Event.EventGadget;
         if (EventG->W == Dialog_Win)
           switch (EventG->Code) {
           case 0:

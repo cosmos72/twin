@@ -1884,15 +1884,15 @@ void RestackRows(Tobj O, uldat N, const Trow *arrayR) {
 /* ---------------- */
 
 void SendMsgGadget(Tgadget G) {
-  Tmsg Msg;
+  Tmsg msg;
   event_gadget *Event;
   if (G->Code && !(G->Flags & GADGETFL_DISABLED)) {
-    if ((Msg = New(msg)(msg_widget_gadget, 0))) {
-      Event = &Msg->Event.EventGadget;
+    if ((msg = New(msg)(msg_widget_gadget, 0))) {
+      Event = &msg->Event.EventGadget;
       Event->W = G->Parent;
       Event->Code = G->Code;
       Event->Flags = G->Flags;
-      SendMsg(G->Owner, Msg);
+      SendMsg(G->Owner, msg);
     }
   }
 }

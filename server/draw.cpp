@@ -507,11 +507,11 @@ void DrawSelfWidget(draw_ctx *d) {
       }
     } else {
       /* ask the client to draw */
-      Tmsg Msg;
+      Tmsg msg;
       event_widget *EventW;
 
-      if ((Msg = New(msg)(msg_widget_change, 0))) {
-        EventW = &Msg->Event.EventWidget;
+      if ((msg = New(msg)(msg_widget_change, 0))) {
+        EventW = &msg->Event.EventWidget;
         EventW->W = w;
         EventW->Code = MSG_WIDGET_EXPOSE;
         EventW->Flags = shaded ? MSG_WIDGETFL_SHADED : 0;
@@ -519,7 +519,7 @@ void DrawSelfWidget(draw_ctx *d) {
         EventW->YWidth = Y2 - Y1 + 1;
         EventW->X = X1 - Left;
         EventW->Y = Y1 - up;
-        SendMsg(w->Owner, Msg);
+        SendMsg(w->Owner, msg);
       }
     }
   } else

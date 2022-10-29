@@ -633,10 +633,10 @@ Tobj TwinSelectionGetOwner(void) {
 }
 
 static void SelectionClear(Tmsgport Owner) {
-  Tmsg Msg;
+  Tmsg msg;
 
-  if ((Msg = New(msg)(msg_selection_clear, 0)))
-    SendMsg(Owner, Msg);
+  if ((msg = New(msg)(msg_selection_clear, 0)))
+    SendMsg(Owner, msg);
 }
 
 /* HW back-end function: set selection owner */
@@ -925,18 +925,18 @@ void FlushHW(void) {
 
 void SyntheticKey(Twidget W, udat Code, udat ShiftFlags, byte Len, const char *Seq) {
   event_keyboard *Event;
-  Tmsg Msg;
+  Tmsg msg;
 
-  if (W && Len && Seq && (Msg = New(msg)(msg_widget_key, Len))) {
+  if (W && Len && Seq && (msg = New(msg)(msg_widget_key, Len))) {
 
-    Event = &Msg->Event.EventKeyboard;
+    Event = &msg->Event.EventKeyboard;
     Event->W = W;
     Event->Code = Code;
     Event->ShiftFlags = ShiftFlags;
     Event->SeqLen = Len;
     CopyMem(Seq, Event->AsciiSeq, Len);
     Event->AsciiSeq[Len] = '\0'; /* terminate string with \0 */
-    SendMsg(W->Owner, Msg);
+    SendMsg(W->Owner, msg);
   }
 }
 
@@ -1134,26 +1134,26 @@ byte MouseEventCommon(dat x, dat y, dat dx, dat dy, udat Buttons) {
 }
 
 byte StdAddMouseEvent(udat Code, dat MouseX, dat MouseY) {
-  Tmsg Msg;
+  Tmsg msg;
   event_mouse *Event;
 
   if (HW && HW == All->MouseHW && HW->FlagsHW & FlHWNoInput)
     return ttrue;
 
-  if ((Code & MOUSE_ACTION_ANY) == MOVE_MOUSE && (Msg = Ext(WM, MsgPort)->LastMsg) &&
-      Msg->Type == msg_mouse && (Event = &Msg->Event.EventMouse) && Event->Code == Code) {
+  if ((Code & MOUSE_ACTION_ANY) == MOVE_MOUSE && (msg = Ext(WM, MsgPort)->LastMsg) &&
+      msg->Type == msg_mouse && (Event = &msg->Event.EventMouse) && Event->Code == Code) {
     /* merge the two events */
     Event->X = MouseX;
     Event->Y = MouseY;
     return ttrue;
   }
-  if ((Msg = New(msg)(msg_mouse, 0))) {
-    Event = &Msg->Event.EventMouse;
+  if ((msg = New(msg)(msg_mouse, 0))) {
+    Event = &msg->Event.EventMouse;
     Event->Code = Code;
     Event->ShiftFlags = (udat)0;
     Event->X = MouseX;
     Event->Y = MouseY;
-    SendMsg(Ext(WM, MsgPort), Msg);
+    SendMsg(Ext(WM, MsgPort), msg);
     return ttrue;
   }
   return tfalse;
@@ -1161,20 +1161,20 @@ byte StdAddMouseEvent(udat Code, dat MouseX, dat MouseY) {
 
 byte KeyboardEventCommon(udat Code, udat ShiftFlags, udat Len, const char *Seq) {
   event_keyboard *Event;
-  Tmsg Msg;
+  Tmsg msg;
 
   if (HW->FlagsHW & FlHWNoInput)
     return ttrue;
 
-  if ((Msg = New(msg)(msg_key, Len))) {
-    Event = &Msg->Event.EventKeyboard;
+  if ((msg = New(msg)(msg_key, Len))) {
+    Event = &msg->Event.EventKeyboard;
 
     Event->Code = Code;
     Event->ShiftFlags = ShiftFlags;
     Event->SeqLen = Len;
     CopyMem(Seq, Event->AsciiSeq, Len);
     Event->AsciiSeq[Len] = '\0'; /* terminate string with \0 */
-    SendMsg(Ext(WM, MsgPort), Msg);
+    SendMsg(Ext(WM, MsgPort), msg);
     return ttrue;
   }
   return tfalse;

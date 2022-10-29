@@ -651,10 +651,10 @@ void ResetPaletteHW(void) {
   HW->ResetPalette();
 }
 
-static void HandleMsg(tmsg Msg) {
+static void HandleMsg(tmsg msg) {
   tevent_display EventD;
 
-  switch (Msg->Type) {
+  switch (msg->Type) {
   case TW_MSG_SELECTION:
     /* should never happen */
     log(WARNING) << "\ntwdisplay: HandleMsg(): unexpected Selection Message from twin!\n";
@@ -662,7 +662,7 @@ static void HandleMsg(tmsg Msg) {
   case TW_MSG_SELECTIONREQUEST:
 #if 0
     log(INFO) << "twdisplay: Selection Request from 0x"
-              << hex(Msg->Event.EventSelectionRequest.Requestor) << ", owner is underlying HW\n";
+              << hex(msg->Event.EventSelectionRequest.Requestor) << ", owner is underlying HW\n";
 #endif
     /* request selection from underlying HW */
 
@@ -672,8 +672,8 @@ static void HandleMsg(tmsg Msg) {
      * Cast it to (Tobj) as expected by HW displays...
      * we will cast it back when needed
      */
-    HW->HWSelectionRequest((Tobj)(topaque)Msg->Event.EventSelectionRequest.Requestor,
-                           Msg->Event.EventSelectionRequest.ReqPrivate);
+    HW->HWSelectionRequest((Tobj)(topaque)msg->Event.EventSelectionRequest.Requestor,
+                           msg->Event.EventSelectionRequest.ReqPrivate);
     break;
   case TW_MSG_SELECTIONNOTIFY:
 #if 0
@@ -681,13 +681,13 @@ static void HandleMsg(tmsg Msg) {
 #endif
     /* notify selection to underlying HW */
     HW->HWSelectionNotify(
-        Msg->Event.EventSelectionNotify.ReqPrivate,  //
-        e_id(Msg->Event.EventSelectionNotify.Magic), //
-        Msg->Event.EventSelectionNotify.MIME,        //
-        Chars(Msg->Event.EventSelectionNotify.Data, Msg->Event.EventSelectionNotify.Len));
+        msg->Event.EventSelectionNotify.ReqPrivate,  //
+        e_id(msg->Event.EventSelectionNotify.Magic), //
+        msg->Event.EventSelectionNotify.MIME,        //
+        Chars(msg->Event.EventSelectionNotify.Data, msg->Event.EventSelectionNotify.Len));
     break;
   case TW_MSG_DISPLAY:
-    EventD = &Msg->Event.EventDisplay;
+    EventD = &msg->Event.EventDisplay;
     switch (EventD->Code) {
     case TW_EV_DPY_DrawTCell:
       if (EventD->Len /= sizeof(tcell)) {
@@ -769,9 +769,9 @@ static void HandleMsg(tmsg Msg) {
 }
 
 static void SocketIO(void) {
-  tmsg Msg;
-  while ((Msg = TwReadMsg(tfalse)))
-    HandleMsg(Msg);
+  tmsg msg;
+  while ((msg = TwReadMsg(tfalse)))
+    HandleMsg(msg);
 }
 
 void SelectionExport(void) {
@@ -793,10 +793,10 @@ Tobj TwinSelectionGetOwner(void) {
 
 /* HW back-end function: set selection owner */
 void TwinSelectionSetOwner(Tobj Owner, tany Time, tany Frac) {
-  tmsg Msg;
+  tmsg msg;
 
-  if ((Msg = TwCreateMsg(TW_MSG_SELECTIONCLEAR, sizeof(tevent_common)))) {
-    TwBlindSendMsg(THelper, Msg);
+  if ((msg = TwCreateMsg(TW_MSG_SELECTIONCLEAR, sizeof(tevent_common)))) {
+    TwBlindSendMsg(THelper, msg);
   }
 }
 
@@ -825,20 +825,20 @@ void TwinSelectionRequest(Tobj Requestor, uldat ReqPrivate, Tobj Owner) {
 
 static byte StdAddMouseEvent(udat Code, dat MouseX, dat MouseY) {
   tevent_mouse Event;
-  tmsg Msg;
+  tmsg msg;
 
   if (HW->FlagsHW & FlHWNoInput)
     return ttrue;
 
-  if ((Msg = TwCreateMsg(TW_MSG_WIDGET_MOUSE, sizeof(event_mouse)))) {
-    Event = &Msg->Event.EventMouse;
+  if ((msg = TwCreateMsg(TW_MSG_WIDGET_MOUSE, sizeof(event_mouse)))) {
+    Event = &msg->Event.EventMouse;
 
     Event->Code = Code;
     Event->ShiftFlags = (udat)0;
     Event->X = MouseX;
     Event->Y = MouseY;
 
-    TwBlindSendMsg(THelper, Msg);
+    TwBlindSendMsg(THelper, msg);
     return ttrue;
   }
   return tfalse;
@@ -891,13 +891,13 @@ byte MouseEventCommon(dat x, dat y, dat dx, dat dy, udat Buttons) {
 
 byte KeyboardEventCommon(udat Code, udat ShiftFlags, udat Len, const char *Seq) {
   tevent_keyboard Event;
-  tmsg Msg;
+  tmsg msg;
 
   if (HW->FlagsHW & FlHWNoInput)
     return ttrue;
 
-  if ((Msg = TwCreateMsg(TW_MSG_WIDGET_KEY, Len + SIZEOF_EVENT_KEYBOARD))) {
-    Event = &Msg->Event.EventKeyboard;
+  if ((msg = TwCreateMsg(TW_MSG_WIDGET_KEY, Len + SIZEOF_EVENT_KEYBOARD))) {
+    Event = &msg->Event.EventKeyboard;
 
     Event->Code = Code;
     Event->ShiftFlags = ShiftFlags;
@@ -905,7 +905,7 @@ byte KeyboardEventCommon(udat Code, udat ShiftFlags, udat Len, const char *Seq) 
     CopyMem(Seq, Event->AsciiSeq, Len);
     Event->AsciiSeq[Len] = '\0'; /* terminate string with \0 */
 
-    TwBlindSendMsg(THelper, Msg);
+    TwBlindSendMsg(THelper, msg);
     return ttrue;
   }
   return tfalse;

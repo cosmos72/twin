@@ -106,14 +106,14 @@ static void TW_Configure(udat resource, byte todefault, udat value) {
   }
 }
 
-static void TW_HandleMsg(tmsg Msg) {
+static void TW_HandleMsg(tmsg msg) {
   tevent_any Event;
   dat x, y, dx, dy;
   udat keys;
 
-  Event = &Msg->Event;
+  Event = &msg->Event;
 
-  switch (Msg->Type) {
+  switch (msg->Type) {
   case TW_MSG_SELECTIONCLEAR:
     HW->HWSelectionPrivate = 0; /* selection now owned by some other libtw client */
     TwinSelectionSetOwner((Tobj)HW, SEL_CURRENTTIME, SEL_CURRENTTIME);
@@ -133,7 +133,7 @@ static void TW_HandleMsg(tmsg Msg) {
   }
 
   if (Event->EventCommon.W == Twin) {
-    switch (Msg->Type) {
+    switch (msg->Type) {
     case TW_MSG_WIDGET_KEY:
       KeyboardEventCommon(Event->EventKeyboard.Code, Event->EventKeyboard.ShiftFlags,
                           Event->EventKeyboard.SeqLen, Event->EventKeyboard.AsciiSeq);
@@ -168,7 +168,7 @@ static void TW_HandleMsg(tmsg Msg) {
 }
 
 static void TW_KeyboardEvent(int fd, Tdisplay hw) {
-  tmsg Msg;
+  tmsg msg;
   byte firstloop = ttrue;
   SaveHW;
   SetHW(hw);
@@ -179,8 +179,8 @@ static void TW_KeyboardEvent(int fd, Tdisplay hw) {
    * To compensate this and avoid to lag behind, we do a small loop checking
    * for all messages received while reading the first one.
    */
-  while ((firstloop || Tw_PendingMsg(Td)) && (Msg = Tw_ReadMsg(Td, tfalse))) {
-    TW_HandleMsg(Msg);
+  while ((firstloop || Tw_PendingMsg(Td)) && (msg = Tw_ReadMsg(Td, tfalse))) {
+    TW_HandleMsg(msg);
     firstloop = tfalse;
   }
 

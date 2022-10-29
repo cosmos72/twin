@@ -761,7 +761,7 @@ static void FlipMoveMem(byte *mem, uldat len, uldat chunk) {
  * this can be called in nasty places like detaching non-exclusive displays
  * when an exclusive one is started. Must preserve Slot, Fd and other globals!
  */
-static void alienSendMsg(Tmsgport MsgPort, Tmsg Msg) {
+static void alienSendMsg(Tmsgport MsgPort, Tmsg msg) {
   byte *t;
   char *Src;
   uldat save_Slot = Slot, Len = 0, Tot, N;
@@ -774,15 +774,15 @@ static void alienSendMsg(Tmsgport MsgPort, Tmsg Msg) {
   Fd = MsgPort->RemoteData.Fd;
   Slot = MsgPort->RemoteData.FdSlot;
 
-  switch (Msg->Type) {
+  switch (msg->Type) {
   case msg_display:
-    Src = (char *)Msg->Event.EventDisplay.Data;
+    Src = (char *)msg->Event.EventDisplay.Data;
     N = 1;
 
-    switch (Msg->Event.EventDisplay.Code) {
+    switch (msg->Event.EventDisplay.Code) {
     case ev_dpy_DrawTCell:
       Type = TWS_tcell;
-      N = Msg->Event.EventDisplay.Len / sizeof(tcell);
+      N = msg->Event.EventDisplay.Len / sizeof(tcell);
       break;
     case ev_dpy_Helper:
     case ev_dpy_SetCursorType:
@@ -795,22 +795,22 @@ static void alienSendMsg(Tmsgport MsgPort, Tmsg Msg) {
       break;
     default:
       Type = TWS_byte;
-      N = Msg->Event.EventDisplay.Len;
+      N = msg->Event.EventDisplay.Len;
       break;
     }
 
     Len = AlienMagic(Slot)[Type] * N + SIZEOF(uldat) + 4 * SIZEOF(udat);
-    alienReply(Msg->Type, Len, 0, NULL);
+    alienReply(msg->Type, Len, 0, NULL);
 
     if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
       t += Tot - Len;
 
       PUSH_(t, uldat, NOID); /* not used here */
-      PUSH(t, udat, Msg->Event.EventDisplay.Code);
+      PUSH(t, udat, msg->Event.EventDisplay.Code);
       Len -= SIZEOF(uldat) + 4 * SIZEOF(udat);
       PUSH(t, udat, Len);
-      PUSH(t, udat, Msg->Event.EventDisplay.X);
-      PUSH(t, udat, Msg->Event.EventDisplay.Y);
+      PUSH(t, udat, msg->Event.EventDisplay.X);
+      PUSH(t, udat, msg->Event.EventDisplay.Y);
 
       if (Type == TWS_byte) {
         PushV(t, N, Src);
@@ -834,123 +834,123 @@ static void alienSendMsg(Tmsgport MsgPort, Tmsg Msg) {
 
     break;
   case msg_widget_key:
-    alienReply(Msg->Type,
+    alienReply(msg->Type,
                Len = SIZEOF(uldat) + 3 * SIZEOF(udat) + 2 * SIZEOF(byte) +
-                     Msg->Event.EventKeyboard.SeqLen,
+                     msg->Event.EventKeyboard.SeqLen,
                0, NULL);
     if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
       t += Tot - Len;
-      PUSH_(t, uldat, Obj2Id(Msg->Event.EventKeyboard.W));
-      PUSH(t, udat, Msg->Event.EventKeyboard.Code);
-      PUSH(t, udat, Msg->Event.EventKeyboard.ShiftFlags);
-      PUSH(t, udat, Msg->Event.EventKeyboard.SeqLen);
-      PUSH(t, byte, Msg->Event.EventKeyboard.pad);
-      PushV(t, Msg->Event.EventKeyboard.SeqLen + 1, /* the final '\0' */
-            Msg->Event.EventKeyboard.AsciiSeq);
+      PUSH_(t, uldat, Obj2Id(msg->Event.EventKeyboard.W));
+      PUSH(t, udat, msg->Event.EventKeyboard.Code);
+      PUSH(t, udat, msg->Event.EventKeyboard.ShiftFlags);
+      PUSH(t, udat, msg->Event.EventKeyboard.SeqLen);
+      PUSH(t, byte, msg->Event.EventKeyboard.pad);
+      PushV(t, msg->Event.EventKeyboard.SeqLen + 1, /* the final '\0' */
+            msg->Event.EventKeyboard.AsciiSeq);
     }
     break;
   case msg_widget_mouse:
-    alienReply(Msg->Type, Len = SIZEOF(uldat) + 4 * SIZEOF(udat), 0, NULL);
+    alienReply(msg->Type, Len = SIZEOF(uldat) + 4 * SIZEOF(udat), 0, NULL);
     if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
       t += Tot - Len;
-      PUSH_(t, uldat, Obj2Id(Msg->Event.EventMouse.W));
-      PUSH(t, udat, Msg->Event.EventMouse.Code);
-      PUSH(t, udat, Msg->Event.EventMouse.ShiftFlags);
-      PUSH(t, dat, Msg->Event.EventMouse.X);
-      PUSH(t, dat, Msg->Event.EventMouse.Y);
+      PUSH_(t, uldat, Obj2Id(msg->Event.EventMouse.W));
+      PUSH(t, udat, msg->Event.EventMouse.Code);
+      PUSH(t, udat, msg->Event.EventMouse.ShiftFlags);
+      PUSH(t, dat, msg->Event.EventMouse.X);
+      PUSH(t, dat, msg->Event.EventMouse.Y);
     }
     break;
   case msg_widget_change:
-    alienReply(Msg->Type, Len = SIZEOF(uldat) + 4 * SIZEOF(dat), 0, NULL);
+    alienReply(msg->Type, Len = SIZEOF(uldat) + 4 * SIZEOF(dat), 0, NULL);
     if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
       t += Tot - Len;
-      PUSH_(t, uldat, Obj2Id(Msg->Event.EventWidget.W));
-      PUSH(t, udat, Msg->Event.EventWidget.Code);
-      PUSH(t, udat, Msg->Event.EventWidget.Flags);
-      PUSH(t, udat, Msg->Event.EventWidget.XWidth);
-      PUSH(t, udat, Msg->Event.EventWidget.YWidth);
-      PUSH(t, udat, Msg->Event.EventWidget.XWidth);
-      PUSH(t, udat, Msg->Event.EventWidget.Y);
+      PUSH_(t, uldat, Obj2Id(msg->Event.EventWidget.W));
+      PUSH(t, udat, msg->Event.EventWidget.Code);
+      PUSH(t, udat, msg->Event.EventWidget.Flags);
+      PUSH(t, udat, msg->Event.EventWidget.XWidth);
+      PUSH(t, udat, msg->Event.EventWidget.YWidth);
+      PUSH(t, udat, msg->Event.EventWidget.XWidth);
+      PUSH(t, udat, msg->Event.EventWidget.Y);
     }
     break;
   case msg_widget_gadget:
-    alienReply(Msg->Type, Len = SIZEOF(uldat) + 2 * SIZEOF(dat), 0, NULL);
+    alienReply(msg->Type, Len = SIZEOF(uldat) + 2 * SIZEOF(dat), 0, NULL);
     if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
       t += Tot - Len;
-      PUSH_(t, uldat, Obj2Id(Msg->Event.EventGadget.W));
-      PUSH(t, udat, Msg->Event.EventGadget.Code);
-      PUSH(t, udat, Msg->Event.EventGadget.Flags);
+      PUSH_(t, uldat, Obj2Id(msg->Event.EventGadget.W));
+      PUSH(t, udat, msg->Event.EventGadget.Code);
+      PUSH(t, udat, msg->Event.EventGadget.Flags);
     }
     break;
   case msg_menu_row:
-    alienReply(Msg->Type, Len = SIZEOF(uldat) + 2 * SIZEOF(dat) + SIZEOF(uldat), 0, NULL);
+    alienReply(msg->Type, Len = SIZEOF(uldat) + 2 * SIZEOF(dat) + SIZEOF(uldat), 0, NULL);
     if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
       t += Tot - Len;
-      PUSH_(t, uldat, Obj2Id(Msg->Event.EventMenu.W));
-      PUSH(t, udat, Msg->Event.EventMenu.Code);
-      PUSH(t, udat, Msg->Event.EventMenu.pad);
-      PUSH_(t, uldat, Obj2Id(Msg->Event.EventMenu.Menu));
+      PUSH_(t, uldat, Obj2Id(msg->Event.EventMenu.W));
+      PUSH(t, udat, msg->Event.EventMenu.Code);
+      PUSH(t, udat, msg->Event.EventMenu.pad);
+      PUSH_(t, uldat, Obj2Id(msg->Event.EventMenu.Menu));
     }
     break;
   case msg_selection:
-    alienReply(Msg->Type, Len = SIZEOF(uldat) + 4 * SIZEOF(dat), 0, NULL);
+    alienReply(msg->Type, Len = SIZEOF(uldat) + 4 * SIZEOF(dat), 0, NULL);
     if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
       t += Tot - Len;
-      PUSH_(t, uldat, Obj2Id(Msg->Event.EventSelection.W));
-      PUSH(t, udat, Msg->Event.EventSelection.Code);
-      PUSH(t, udat, Msg->Event.EventSelection.pad);
-      PUSH(t, dat, Msg->Event.EventSelection.X);
-      PUSH(t, dat, Msg->Event.EventSelection.Y);
+      PUSH_(t, uldat, Obj2Id(msg->Event.EventSelection.W));
+      PUSH(t, udat, msg->Event.EventSelection.Code);
+      PUSH(t, udat, msg->Event.EventSelection.pad);
+      PUSH(t, dat, msg->Event.EventSelection.X);
+      PUSH(t, dat, msg->Event.EventSelection.Y);
     }
     break;
   case msg_selection_notify:
-    N = Msg->Event.EventSelectionNotify.Len;
-    alienReply(Msg->Type, Len = 4 * SIZEOF(uldat) + 2 * SIZEOF(dat) + MAX_MIMELEN + N, 0, NULL);
+    N = msg->Event.EventSelectionNotify.Len;
+    alienReply(msg->Type, Len = 4 * SIZEOF(uldat) + 2 * SIZEOF(dat) + MAX_MIMELEN + N, 0, NULL);
 
     if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
       t += Tot - Len;
-      PUSH_(t, uldat, Obj2Id(Msg->Event.EventSelectionNotify.W));
-      PUSH(t, udat, Msg->Event.EventSelectionNotify.Code);
-      PUSH(t, udat, Msg->Event.EventSelectionNotify.pad);
-      PUSH(t, uldat, Msg->Event.EventSelectionNotify.ReqPrivate);
-      PUSH(t, uldat, Msg->Event.EventSelectionNotify.Magic);
-      PushV(t, MAX_MIMELEN, Msg->Event.EventSelectionNotify.MIME);
-      PUSH(t, uldat, Msg->Event.EventSelectionNotify.Len);
-      PushV(t, Msg->Event.EventSelectionNotify.Len, Msg->Event.EventSelectionNotify.Data);
+      PUSH_(t, uldat, Obj2Id(msg->Event.EventSelectionNotify.W));
+      PUSH(t, udat, msg->Event.EventSelectionNotify.Code);
+      PUSH(t, udat, msg->Event.EventSelectionNotify.pad);
+      PUSH(t, uldat, msg->Event.EventSelectionNotify.ReqPrivate);
+      PUSH(t, uldat, msg->Event.EventSelectionNotify.Magic);
+      PushV(t, MAX_MIMELEN, msg->Event.EventSelectionNotify.MIME);
+      PUSH(t, uldat, msg->Event.EventSelectionNotify.Len);
+      PushV(t, msg->Event.EventSelectionNotify.Len, msg->Event.EventSelectionNotify.Data);
     }
     break;
   case msg_selection_request:
-    alienReply(Msg->Type, Len = SIZEOF(uldat) + 2 * SIZEOF(dat) + 2 * SIZEOF(ldat), 0, NULL);
+    alienReply(msg->Type, Len = SIZEOF(uldat) + 2 * SIZEOF(dat) + 2 * SIZEOF(ldat), 0, NULL);
     if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
       t += Tot - Len;
-      PUSH_(t, uldat, Obj2Id(Msg->Event.EventSelectionRequest.W));
-      PUSH(t, udat, Msg->Event.EventSelectionRequest.Code);
-      PUSH(t, udat, Msg->Event.EventSelectionRequest.pad);
-      PUSH_(t, uldat, Obj2Id(Msg->Event.EventSelectionRequest.Requestor));
-      PUSH(t, uldat, Msg->Event.EventSelectionRequest.ReqPrivate);
+      PUSH_(t, uldat, Obj2Id(msg->Event.EventSelectionRequest.W));
+      PUSH(t, udat, msg->Event.EventSelectionRequest.Code);
+      PUSH(t, udat, msg->Event.EventSelectionRequest.pad);
+      PUSH_(t, uldat, Obj2Id(msg->Event.EventSelectionRequest.Requestor));
+      PUSH(t, uldat, msg->Event.EventSelectionRequest.ReqPrivate);
     }
     break;
 
   case msg_user_control:
-    alienReply(Msg->Type,
-               Len = SIZEOF(uldat) + 4 * SIZEOF(dat) + SIZEOF(byte) + Msg->Event.EventControl.Len,
+    alienReply(msg->Type,
+               Len = SIZEOF(uldat) + 4 * SIZEOF(dat) + SIZEOF(byte) + msg->Event.EventControl.Len,
                0, NULL);
     if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
       t += Tot - Len;
-      PUSH_(t, uldat, Obj2Id(Msg->Event.EventControl.W));
-      PUSH(t, udat, Msg->Event.EventControl.Code);
-      PUSH(t, udat, Msg->Event.EventControl.Len);
-      PUSH(t, dat, Msg->Event.EventControl.X);
-      PUSH(t, dat, Msg->Event.EventControl.Y);
-      PushV(t, Msg->Event.EventControl.Len, Msg->Event.EventControl.Data);
+      PUSH_(t, uldat, Obj2Id(msg->Event.EventControl.W));
+      PUSH(t, udat, msg->Event.EventControl.Code);
+      PUSH(t, udat, msg->Event.EventControl.Len);
+      PUSH(t, dat, msg->Event.EventControl.X);
+      PUSH(t, dat, msg->Event.EventControl.Y);
+      PushV(t, msg->Event.EventControl.Len, msg->Event.EventControl.Data);
     }
     break;
 
   case msg_user_clientmsg:
-    alienReply(Msg->Type, Len = 2 * SIZEOF(uldat) + 2 * SIZEOF(dat) + Msg->Event.EventClientMsg.Len,
+    alienReply(msg->Type, Len = 2 * SIZEOF(uldat) + 2 * SIZEOF(dat) + msg->Event.EventClientMsg.Len,
                0, NULL);
     if ((t = RemoteWriteGetQueue(Slot, &Tot)) && Tot >= Len) {
-      event_clientmsg *E = &Msg->Event.EventClientMsg;
+      event_clientmsg *E = &msg->Event.EventClientMsg;
 
       t += Tot - Len;
       PUSH_(t, uldat, Obj2Id(E->W));
