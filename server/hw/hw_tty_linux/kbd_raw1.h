@@ -40,7 +40,6 @@
 #include <linux/keyboard.h>
 #include <linux/vt.h>
 
-#define SIZE(array) (sizeof(array) / sizeof(array[0]))
 #define BITS_PER_ULDAT (sizeof(uldat) * 8)
 
 #include "kbd_bitops.h"
@@ -445,7 +444,7 @@ static udat do_fn(byte value, byte up_flag) {
     return TW_Null;
   puts_queue(get_kbsentry(value));
 
-  return value < SIZE(map_FN) ? map_FN[value] : 0;
+  return value < N_OF(map_FN) ? map_FN[value] : 0;
 }
 
 static udat map_PAD[] = {
@@ -470,7 +469,7 @@ static udat map_PAD[] = {
     /* K_PPARENL */ TW_Null,
     /* K_PPARENR */ TW_Null,
 };
-enum { map_PAD_len = sizeof(map_PAD) / sizeof(map_PAD[0]) };
+enum { map_PAD_len = N_OF(map_PAD) };
 
 static udat do_pad(byte value, byte up_flag) {
   static const char *const pad_chars = "0123456789+-*/\015,.?()";
@@ -533,7 +532,7 @@ static udat map_CUR[] = {
     /* K_RIGHT */ TW_Right,
     /* K_UP */ TW_Up,
 };
-enum { map_CUR_len = sizeof(map_CUR) / sizeof(map_CUR[0]) };
+enum { map_CUR_len = N_OF(map_CUR) };
 
 static udat do_cur(byte value, byte up_flag) {
   static const char *const cur_chars = "BDCA";
@@ -556,7 +555,7 @@ static udat map_SHIFT[] = {
     /* K_CTRLR */ TW_Control_R,
     /* K_CAPSSHIFT*/ TW_Shift_R,
 };
-enum { map_SHIFT_len = sizeof(map_SHIFT) / sizeof(map_SHIFT[0]) };
+enum { map_SHIFT_len = N_OF(map_SHIFT) };
 
 static udat do_shift(byte value, byte up_flag) {
   ldat old_state = lrawkbd_shiftstate;
@@ -603,10 +602,10 @@ static int compute_shiftstate(void) {
   udat sym, val;
 
   lrawkbd_shiftstate = 0;
-  for (i = 0; i < SIZE(k_down); i++)
+  for (i = 0; i < N_OF(k_down); i++)
     k_down[i] = 0;
 
-  for (i = 0; i < SIZE(key_down); i++) {
+  for (i = 0; i < N_OF(key_down); i++) {
     if (key_down[i]) { /* skip this word if not a single bit on */
       k = i * BITS_PER_ULDAT;
       for (j = 0; j < BITS_PER_ULDAT; j++, k++) {
@@ -762,18 +761,18 @@ static k_hand key_handler[] = {do_latin, do_fn,    do_spec,   do_pad,   do_dead,
 /* maximum values each key_handler can handle */
 static const byte key_handler_maxval[] = {255,
                                           255,
-                                          SIZE(map_SPEC) - 1,
-                                          SIZE(map_PAD) - 1,
-                                          SIZE(map_DIACR) - 1,
+                                          N_OF(map_SPEC) - 1,
+                                          N_OF(map_PAD) - 1,
+                                          N_OF(map_DIACR) - 1,
                                           255,
-                                          SIZE(map_CUR) - 1,
-                                          SIZE(map_SHIFT) - 1,
+                                          N_OF(map_CUR) - 1,
+                                          N_OF(map_SHIFT) - 1,
 
                                           255,
                                           NR_ASCII - 1,
-                                          SIZE(map_LOCK) - 1,
+                                          N_OF(map_LOCK) - 1,
                                           255,
-                                          SIZE(map_SLOCK) - 1,
+                                          N_OF(map_SLOCK) - 1,
                                           255,
                                           0,
                                           0};
@@ -929,7 +928,7 @@ static udat handle_keycode(byte keycode, byte up) {
     }
 
     val = KVAL(keysym);
-    if (type < SIZE(key_handler_maxval) && val <= key_handler_maxval[type])
+    if (type < N_OF(key_handler_maxval) && val <= key_handler_maxval[type])
       twk = (*key_handler[type])(val, up_flag);
 
     if (type != KT_SLOCK)

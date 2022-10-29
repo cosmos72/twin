@@ -89,6 +89,8 @@ TH_R_MUTEX_HELPER_DEFS(static);
 
 #define Min2(a, b) ((a) < (b) ? (a) : (b))
 
+#define N_OF(array) (sizeof(array) / sizeof((array)[0]))
+
 #ifdef CONF_SOCKET_PTHREADS
 
 typedef struct s_tw_errno {
@@ -124,9 +126,7 @@ static fn_list Functions[] = {
 
     {NULL, 0, 0, NULL, NULL}};
 
-#define Functions_N sizeof(Functions) / sizeof(Functions[0])
-
-typedef uldat v_id_vec[Functions_N - 1];
+typedef uldat v_id_vec[N_OF(Functions) - 1];
 
 /*
  * automagically get the symbols order_* to be the index
@@ -1287,7 +1287,7 @@ tw_d Tw_Open(TW_CONST char *TwDisplay) {
   }
 
   memset(TwD, '\0', sizeof(struct s_tw_d) - sizeof(v_id_vec));
-  for (i = 0; i < sizeof(id_Tw) / sizeof(id_Tw[0]); i++)
+  for (i = 0; i < N_OF(id_Tw); i++)
     /* initialize function ids to 'unknown' */
     id_Tw[i] = TW_BADID;
   /* except for Tw_FindFunction */

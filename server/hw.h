@@ -23,17 +23,18 @@ extern display_hw DisplayHWCTTY;
 #define HWCTTY_DETACHED ((display_hw)1)
 
 extern tcell *Video, *OldVideo;
-extern byte NeedOldVideo, ValidOldVideo;
-extern byte ExpensiveFlushVideo, NeedHW;
-extern byte CanDragArea, ChangedVideoFlagAgain;
-extern byte QueuedDrawArea2FullScreen;
+extern bool NeedOldVideo, ValidOldVideo;
+extern bool ExpensiveFlushVideo;
+extern bool CanDragArea, ChangedVideoFlagAgain;
+extern bool QueuedDrawArea2FullScreen;
+extern byte NeedHW; // various flags
 
-extern VOLATILE byte GotSignals;
-byte InitSignals(void) NOTHROW;
+extern VOLATILE bool GotSignals;
+bool InitSignals(void) NOTHROW;
 void HandleSignals(void);
 void QuitSignals(void) NOTHROW;
 void AllDefaultSignals(void) NOTHROW; // set all signal handlers to SIG_DFL
-byte InitTtysave(void) NOTHROW;
+bool InitTtysave(void) NOTHROW;
 
 struct termios;
 void InitTtyStruct(int fd, termios &ttyb) NOTHROW;

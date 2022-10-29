@@ -83,7 +83,7 @@ bool InitData(void) {
   byte sizes[] = {2, 3, 3, 1, 1, 9, 9, 2};
   uldat i, j;
 
-  for (i = 0; i < sizeof(vec) / sizeof(vec[0]); i++) {
+  for (i = 0; i < N_OF(vec); i++) {
     for (j = 0; j < sizes[i]; j++)
       vec[i][j] = Tutf_CP437_to_UTF_32[(byte)vec[i][j]];
   }

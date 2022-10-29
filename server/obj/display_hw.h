@@ -191,7 +191,7 @@ struct s_display_hw : public s_obj {
 #define FlHWExpensiveFlushVideo ((byte)0x08)
 #define FlHWNoInput ((byte)0x10)
 
-/* DisplayHW->NeedHW */
+/* DisplayHW->NeedHW and global NeedHW */
 #define NEEDFlushStdout ((byte)0x01)
 #define NEEDFlushHW ((byte)0x02)
 #define NEEDResizeDisplay ((byte)0x04)

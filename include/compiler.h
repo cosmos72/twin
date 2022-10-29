@@ -68,4 +68,6 @@
 #endif
 #endif
 
+#define N_OF(array) (sizeof(array) / sizeof((array)[0]))
+
 #endif /* TWIN_COMPILER_H */

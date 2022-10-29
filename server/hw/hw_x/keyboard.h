@@ -155,7 +155,7 @@ typedef CXX_STD_MAP<KeySym, XSYM(key_to_TW)> XSYM(keymap_to_TW);
 static XSYM(keymap_to_TW) XSYM(keys);
 
 static void XSYM(init_keys)(void) {
-  for (size_t i = 0; i < sizeof(XSYM(keys_impl)) / sizeof(XSYM(keys_impl)[0]); i++) {
+  for (size_t i = 0; i < N_OF(XSYM(keys_impl)); i++) {
     KeySym xkey = XSYM(keys_impl)[i].xkey;
     XSYM(key_to_TW) &entry = XSYM(keys)[xkey];
     entry = XSYM(keys_impl)[i].tmapping;

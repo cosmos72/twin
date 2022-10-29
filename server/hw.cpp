@@ -55,12 +55,13 @@ display_hw HW, DisplayHWCTTY;
 
 tcell *Video, *OldVideo;
 
-byte NeedOldVideo, CanDragArea;
-byte ExpensiveFlushVideo, ValidOldVideo, NeedHW;
+bool NeedOldVideo, CanDragArea;
+bool ExpensiveFlushVideo, ValidOldVideo;
+byte NeedHW;
 
 dat (*ChangedVideo)[2][2];
-byte ChangedVideoFlag, ChangedVideoFlagAgain;
-byte QueuedDrawArea2FullScreen;
+bool ChangedVideoFlag, ChangedVideoFlagAgain;
+bool QueuedDrawArea2FullScreen;
 
 dat DisplayWidth, DisplayHeight;
 
@@ -69,7 +70,7 @@ uldat CursorType;
 
 struct termios ttysave;
 
-VOLATILE byte GotSignals;
+VOLATILE bool GotSignals;
 static VOLATILE byte GotSignalWinch;
 static VOLATILE byte GotSignalChild;
 static VOLATILE byte GotSignalHangup;
@@ -201,25 +202,25 @@ static const int signals_fatal[] = {
 #endif
 };
 
-byte InitSignals(void) NOTHROW {
+bool InitSignals(void) NOTHROW {
   uldat i;
   signal(SIGWINCH, SignalWinch);
   signal(SIGCHLD, SignalChild);
   signal(SIGHUP, SignalHangup);
-  for (i = 0; i < sizeof(signals_ignore) / sizeof(signals_ignore[0]); i++)
+  for (i = 0; i < N_OF(signals_ignore); i++)
     signal(signals_ignore[i], SIG_IGN);
-  for (i = 0; i < sizeof(signals_fatal) / sizeof(signals_fatal[0]); i++)
+  for (i = 0; i < N_OF(signals_fatal); i++)
     signal(signals_fatal[i], SignalFatal);
-  return ttrue;
+  return true;
 }
 
 void QuitSignals(void) NOTHROW {
   uldat i;
   signal(SIGWINCH, SIG_IGN);
   signal(SIGCHLD, SIG_IGN);
-  for (i = 0; i < sizeof(signals_ignore) / sizeof(signals_ignore[0]); i++)
+  for (i = 0; i < N_OF(signals_ignore); i++)
     signal(signals_ignore[i], SIG_IGN);
-  for (i = 0; i < sizeof(signals_fatal) / sizeof(signals_fatal[0]); i++)
+  for (i = 0; i < N_OF(signals_fatal); i++)
     signal(signals_fatal[i], SIG_DFL);
 }
 
@@ -228,9 +229,9 @@ void AllDefaultSignals(void) NOTHROW {
   signal(SIGWINCH, SIG_DFL);
   signal(SIGCHLD, SIG_DFL);
   signal(SIGHUP, SIG_DFL);
-  for (i = 0; i < sizeof(signals_ignore) / sizeof(signals_ignore[0]); i++)
+  for (i = 0; i < N_OF(signals_ignore); i++)
     signal(signals_ignore[i], SIG_DFL);
-  for (i = 0; i < sizeof(signals_fatal) / sizeof(signals_fatal[0]); i++)
+  for (i = 0; i < N_OF(signals_fatal); i++)
     signal(signals_fatal[i], SIG_DFL);
 }
 
@@ -478,12 +479,13 @@ void DragArea(dat Left, dat Up, dat Rgt, dat Dwn, dat DstLeft, dat DstUp) {
     Video2OldVideo(DstLeft, DstUp, DstRgt, DstDwn);
 }
 
-byte InitTtysave(void) NOTHROW {
+bool InitTtysave(void) NOTHROW {
   int fd = open("/dev/tty", O_RDWR | O_NOCTTY);
   InitTtyStruct(fd, ttysave);
-  if (fd >= 0)
+  if (fd >= 0) {
     close(fd);
-  return ttrue;
+  }
+  return true;
 }
 
 void InitTtyStruct(int fd, termios &ttyb) NOTHROW {

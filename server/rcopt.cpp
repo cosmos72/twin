@@ -51,7 +51,7 @@ byte InitRCOptions(void) {
   const char *env;
   size_t i;
   byte utf8 = tfalse;
-  for (i = 0; i < sizeof(keys) / sizeof(keys[0]); i++) {
+  for (i = 0; i < N_OF(keys); i++) {
     if ((env = getenv(keys[i])) && *env) {
       if (strfuzzy_ends_with(env, "utf8")) {
         utf8 = ttrue;

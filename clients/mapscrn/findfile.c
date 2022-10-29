@@ -27,8 +27,6 @@ void fpclose(FILE *fp) {
     fclose(fp);
 }
 
-#define SIZE(a) (sizeof(a) / sizeof(a[0]))
-
 static struct decompressor {
   char *ext; /* starts with `.', has no other dots */
   char *cmd;

@@ -121,7 +121,7 @@ static char *XSYM(AutodetectFont)(const char *family, udat fontwidth, udat fonth
       {"-*-*-medium-r-normal-*-%s?-*-*-*-*-*-ibm-850", -5},
       {"-*-*-medium-r-normal-*-%s?-*-*-*-*-*-iso8859-*", -10},
   };
-  enum { max_fonts = 1000, n_patterns = sizeof(patterns) / sizeof(patterns[0]) };
+  enum { max_fonts = 1000, n_patterns = N_OF(patterns) };
 
   XFontStruct *info;
   int i, j, k, n_fonts;
