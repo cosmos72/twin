@@ -1158,7 +1158,7 @@ static void ReleaseButton(wm_ctx *C) {
 
 /* this is mouse only */
 static byte ActivateGadget(wm_ctx *C) {
-  gadget G = (gadget)C->DW;
+  Tgadget G = (Tgadget)C->DW;
   All->State = state_gadget | state_fl_bymouse;
   if (!G->Group &&
       (G->Flags & (GADGETFL_TOGGLE | GADGETFL_PRESSED)) == (GADGETFL_TOGGLE | GADGETFL_PRESSED))
@@ -1173,10 +1173,10 @@ static byte ActivateGadget(wm_ctx *C) {
 /* this is mouse only */
 static void ContinueGadget(wm_ctx *C) {
   Twindow FW = All->FirstScreen->ClickWindow;
-  gadget FG;
+  Tgadget FG;
   udat temp;
 
-  if (FW && (FG = (gadget)RecursiveFindFocusWidget((Twidget)FW))) {
+  if (FW && (FG = (Tgadget)RecursiveFindFocusWidget((Twidget)FW))) {
     temp = FG->Flags;
 
     if (!(temp & GADGETFL_TOGGLE)) {
@@ -1198,7 +1198,7 @@ static void ContinueGadget(wm_ctx *C) {
 /* this is mouse only */
 static void ReleaseGadget(wm_ctx *C) {
   Twindow FW = All->FirstScreen->ClickWindow;
-  gadget FG;
+  Tgadget FG;
 
   All->State = state_default;
   if (!FW)
@@ -1206,7 +1206,7 @@ static void ReleaseGadget(wm_ctx *C) {
 
   DetailCtx(C);
 
-  FG = (gadget)RecursiveFindFocusWidget((Twidget)FW);
+  FG = (Tgadget)RecursiveFindFocusWidget((Twidget)FW);
 
   if (!FG || !IS_GADGET(FG) || FG->Flags & GADGETFL_TOGGLE)
     return;
@@ -1244,10 +1244,10 @@ void ForceRelease(const wm_ctx *C) {
     break;
   case state_gadget: {
     Twindow FW;
-    gadget FG;
+    Tgadget FG;
 
     if ((FW = All->FirstScreen->ClickWindow) &&
-        (FG = (gadget)RecursiveFindFocusWidget((Twidget)FW)) && IS_GADGET(FG) &&
+        (FG = (Tgadget)RecursiveFindFocusWidget((Twidget)FW)) && IS_GADGET(FG) &&
         !(FG->Flags & GADGETFL_TOGGLE))
 
       UnPressGadget(FG, tfalse);
@@ -1291,7 +1291,7 @@ static byte ActivateMouseState(wm_ctx *C) {
       break;
     case POS_INSIDE:
       if (isPressButtonSelection && C->DW && IS_GADGET(C->DW) &&
-          !(((gadget)C->DW)->Flags & GADGETFL_DISABLED))
+          !(((Tgadget)C->DW)->Flags & GADGETFL_DISABLED))
         used = ttrue, ActivateGadget(C);
       break;
     default:

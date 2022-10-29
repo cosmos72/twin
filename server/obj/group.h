@@ -16,7 +16,7 @@
 #include "obj/fwd.h"
 #include <Tw/datatypes.h>
 
-/* Tgroup -- gadget group */
+/* Tgroup -- group of Tgadget:s */
 
 struct SgroupFn {
   uldat Magic;
@@ -26,10 +26,10 @@ struct SgroupFn {
   void (*ChangeField)(Tgroup, udat field, uldat CLEARMask, uldat XORMask);
   /* Tgroup */
   TobjFn Fn_Obj; /* backup of overloaded functions */
-  void (*InsertGadget)(Tgroup, gadget);
-  void (*RemoveGadget)(Tgroup, gadget);
-  gadget (*GetSelectedGadget)(Tgroup);
-  void (*SetSelectedGadget)(Tgroup, gadget);
+  void (*InsertGadget)(Tgroup, Tgadget);
+  void (*RemoveGadget)(Tgroup, Tgadget);
+  Tgadget (*GetSelectedGadget)(Tgroup);
+  void (*SetSelectedGadget)(Tgroup, Tgadget);
 };
 
 struct Sgroup : public Sobj {
@@ -37,8 +37,8 @@ struct Sgroup : public Sobj {
   Tgroup Prev, Next; /* list in the same Tmsgport */
   Tmsgport MsgPort;
   /* Tgroup */
-  gadget FirstG, LastG; /* list in this Tgroup */
-  gadget SelectG;
+  Tgadget FirstG, LastG; /* list in this Tgroup */
+  Tgadget SelectG;
 
   static Tgroup Create(Tmsgport Parent);
   Tgroup Init(Tmsgport Parent);
@@ -57,16 +57,16 @@ struct Sgroup : public Sobj {
     Fn->Delete(this);
   }
   /* group */
-  void InsertGadget(gadget g) {
+  void InsertGadget(Tgadget g) {
     Fn->InsertGadget(this, g);
   }
-  void RemoveGadget(gadget g) {
+  void RemoveGadget(Tgadget g) {
     Fn->RemoveGadget(this, g);
   }
-  gadget GetSelectedGadget() {
+  Tgadget GetSelectedGadget() {
     return Fn->GetSelectedGadget(this);
   }
-  void SetSelectedGadget(gadget g) {
+  void SetSelectedGadget(Tgadget g) {
     Fn->SetSelectedGadget(this, g);
   }
 };

@@ -17,21 +17,21 @@
 #define magic_shift 28
 
 enum e_magic_byte /*: unsigned char*/ {
-  obj_magic_byte = 0,
+  Tobj_magic_byte = 0,
   Twidget_magic_byte = 1,
-  gadget_magic_byte = 2,
-  window_magic_byte = 3,
-  screen_magic_byte = 4,
-  ggroup_magic_byte = 5,
-  row_magic_byte = 6,
-  menuitem_magic_byte = 7,
-  menu_magic_byte = 8,
+  Tgadget_magic_byte = 2,
+  Twindow_magic_byte = 3,
+  Tscreen_magic_byte = 4,
+  Tgroup_magic_byte = 5,
+  Trow_magic_byte = 6,
+  Tmenuitem_magic_byte = 7,
+  Tmenu_magic_byte = 8,
   Tmsgport_magic_byte = 9,
-  msg_magic_byte = 0xA,
-  mutex_magic_byte = 0xB,
-  module_magic_byte = 0xC,
-  display_hw_magic_byte = 0xE,
-  all_magic_byte = 0xF,
+  Tmsg_magic_byte = 0xA,
+  Tmutex_magic_byte = 0xB,
+  Tmodule_magic_byte = 0xC,
+  Tdisplay_magic_byte = 0xE,
+  Tall_magic_byte = 0xF,
 
   magic_n = 16, /* 1 + max of the *_magic_byte values above */
 };

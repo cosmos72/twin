@@ -21,7 +21,7 @@ typedef struct s_remotedata remotedata;
 
 typedef struct Sobj *obj;
 typedef struct Swidget *Twidget;
-typedef struct Sgadget *gadget;
+typedef struct Sgadget *Tgadget;
 typedef struct Swindow *Twindow;
 typedef struct Sscreen *screen;
 typedef struct Sgroup *Tgroup;
@@ -30,7 +30,7 @@ typedef struct Smenuitem *Tmenuitem;
 typedef struct Smenu *menu;
 typedef struct Smsg *msg;
 typedef struct Smsgport *Tmsgport;
-typedef struct Smutex *mutex;
+typedef struct Smutex *Tmutex;
 typedef struct Smodule *module;
 typedef struct Sdisplay *Tdisplay;
 

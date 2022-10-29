@@ -219,14 +219,14 @@ Twidget FakeKbdFocus(Twidget W) {
   return oldW;
 }
 
-static gadget FindGadgetByCode(Twidget Parent, udat Code) {
+static Tgadget FindGadgetByCode(Twidget Parent, udat Code) {
   Twidget W;
 
   for (W = Parent->FirstW; W; W = W->Next) {
-    if (IS_GADGET(W) && ((gadget)W)->Code == Code)
-      return (gadget)W;
+    if (IS_GADGET(W) && ((Tgadget)W)->Code == Code)
+      return (Tgadget)W;
   }
-  return (gadget)0;
+  return (Tgadget)0;
 }
 
 static void IncMouseMotionN(void) {
@@ -515,9 +515,9 @@ static struct SwidgetFn _FnWidget = {
     InstallHookWidget, RemoveHookWidget,
 };
 
-/* gadget */
+/* Tgadget */
 
-static void DeleteGadget(gadget G) {
+static void DeleteGadget(Tgadget G) {
   byte i;
 
   G->UnMap();
@@ -536,7 +536,7 @@ static void DeleteGadget(gadget G) {
   DeleteWidget((Twidget)G);
 }
 
-static void ChangeFieldGadget(gadget G, udat field, uldat CLEARMask, uldat XORMask) {
+static void ChangeFieldGadget(Tgadget G, udat field, uldat CLEARMask, uldat XORMask) {
   uldat i, mask;
 
   if (G)
@@ -573,8 +573,8 @@ static void ChangeFieldGadget(gadget G, udat field, uldat CLEARMask, uldat XORMa
     }
 }
 
-static gadget CreateEmptyButton(Tmsgport Owner, dat XWidth, dat YWidth, tcolor BgCol) {
-  gadget G = NULL;
+static Tgadget CreateEmptyButton(Tmsgport Owner, dat XWidth, dat YWidth, tcolor BgCol) {
+  Tgadget G = NULL;
   ldat Size;
   byte i;
   dat j, k;
@@ -624,7 +624,7 @@ static gadget CreateEmptyButton(Tmsgport Owner, dat XWidth, dat YWidth, tcolor B
 #endif
     }
 
-    G->G_Prev = G->G_Next = (gadget)0;
+    G->G_Prev = G->G_Next = (Tgadget)0;
     G->Group = (Tgroup)0;
   }
   return G;
@@ -633,8 +633,8 @@ static gadget CreateEmptyButton(Tmsgport Owner, dat XWidth, dat YWidth, tcolor B
 #undef _LOWER
 }
 
-byte FillButton(gadget G, Twidget Parent, udat Code, dat Left, dat Up, udat Flags, const char *Text,
-                tcolor Color, tcolor ColorDisabled) {
+byte FillButton(Tgadget G, Twidget Parent, udat Code, dat Left, dat Up, udat Flags,
+                const char *Text, tcolor Color, tcolor ColorDisabled) {
   dat i, j, XWidth, YWidth;
   const char *T;
 
@@ -664,10 +664,10 @@ byte FillButton(gadget G, Twidget Parent, udat Code, dat Left, dat Up, udat Flag
   return ttrue;
 }
 
-static gadget CreateButton(Twidget Parent, dat XWidth, dat YWidth, const char *Text, uldat Flags,
-                           udat Code, tcolor BgCol, tcolor Col, tcolor ColDisabled, dat Left,
-                           dat Up) {
-  gadget G;
+static Tgadget CreateButton(Twidget Parent, dat XWidth, dat YWidth, const char *Text, uldat Flags,
+                            udat Code, tcolor BgCol, tcolor Col, tcolor ColDisabled, dat Left,
+                            dat Up) {
+  Tgadget G;
   if (Parent && (G = CreateEmptyButton(Parent->Owner, XWidth, YWidth, BgCol))) {
     if (G->FillButton(Parent, Code, Left, Up, Flags, Text, Col, ColDisabled))
       return G;
@@ -678,23 +678,23 @@ static gadget CreateButton(Twidget Parent, dat XWidth, dat YWidth, const char *T
 }
 
 static struct SgadgetFn _FnGadget = {
-    gadget_magic,                                              //
-    (void (*)(gadget, Twidget, Twidget, Twidget))InsertWidget, //
-    (void (*)(gadget))RemoveWidget, DeleteGadget, ChangeFieldGadget,
+    gadget_magic,                                               //
+    (void (*)(Tgadget, Twidget, Twidget, Twidget))InsertWidget, //
+    (void (*)(Tgadget))RemoveWidget, DeleteGadget, ChangeFieldGadget,
     /* Twidget */
-    &_FnObj, DrawSelfGadget,                     /* exported by draw.c */
-    (Twidget (*)(gadget, dat, dat))FindWidgetAt, /* exported by draw.c */
-    (gadget (*)(gadget, udat))FindGadgetByCode, (void (*)(gadget, dat, dat))SetXYWidget,
-    (void (*)(gadget, tcell))SetFillWidget, (Twidget(*)(gadget))FocusWidget,
-    (Twidget(*)(gadget))TtyKbdFocus, (void (*)(gadget, Twidget))MapWidget,
-    (void (*)(gadget))UnMapWidget, (void (*)(gadget, screen))MapTopRealWidget,
-    (void (*)(gadget))RaiseW, (void (*)(gadget))LowerW, (void (*)(gadget, Tmsgport))OwnWidget,
-    (void (*)(gadget))DisOwnWidget, (void (*)(gadget, Tmsgport))RecursiveDeleteWidget,
-    (void (*)(gadget, dat, dat, dat, dat, const char *, const trune *,
+    &_FnObj, DrawSelfGadget,                      /* exported by draw.c */
+    (Twidget (*)(Tgadget, dat, dat))FindWidgetAt, /* exported by draw.c */
+    (Tgadget (*)(Tgadget, udat))FindGadgetByCode, (void (*)(Tgadget, dat, dat))SetXYWidget,
+    (void (*)(Tgadget, tcell))SetFillWidget, (Twidget(*)(Tgadget))FocusWidget,
+    (Twidget(*)(Tgadget))TtyKbdFocus, (void (*)(Tgadget, Twidget))MapWidget,
+    (void (*)(Tgadget))UnMapWidget, (void (*)(Tgadget, screen))MapTopRealWidget,
+    (void (*)(Tgadget))RaiseW, (void (*)(Tgadget))LowerW, (void (*)(Tgadget, Tmsgport))OwnWidget,
+    (void (*)(Tgadget))DisOwnWidget, (void (*)(Tgadget, Tmsgport))RecursiveDeleteWidget,
+    (void (*)(Tgadget, dat, dat, dat, dat, const char *, const trune *,
               const tcell *))ExposeWidget2, /* exported by resize.c */
-    (byte (*)(gadget, HookFn, void (**)(Twidget)))InstallHookWidget,
-    (void (*)(gadget, HookFn, void (**)(Twidget)))RemoveHookWidget,
-    /* gadget */
+    (byte (*)(Tgadget, HookFn, void (**)(Twidget)))InstallHookWidget,
+    (void (*)(Tgadget, HookFn, void (**)(Twidget)))RemoveHookWidget,
+    /* Tgadget */
     &_FnWidget, CreateEmptyButton, FillButton, CreateButton,
     WriteTextsGadget,  /* exported by resize.c */
     WriteTRunesGadget, /* exported by resize.c */
@@ -1107,7 +1107,7 @@ static struct SwindowFn _FnWindow = {
     &_FnObj,
     DrawSelfWindow,
     (Twidget(*)(Twindow, dat, dat))FindWidgetAt,
-    (gadget(*)(Twindow, udat))FindGadgetByCode,
+    (Tgadget(*)(Twindow, udat))FindGadgetByCode,
     SetXYWindow,
     (void (*)(Twindow, tcell))SetFillWidget,
     (Twidget(*)(Twindow))FocusWidget,
@@ -1282,7 +1282,7 @@ static struct SscreenFn _FnScreen = {
     &_FnObj,
     DrawSelfScreen,
     (Twidget(*)(screen, dat, dat))FindWidgetAt,
-    (gadget(*)(screen, udat))FindGadgetByCode,
+    (Tgadget(*)(screen, udat))FindGadgetByCode,
     SetXYScreen,
     (void (*)(screen, tcell))SetFillWidget,
     FocusScreen,
@@ -1335,7 +1335,7 @@ static void DeleteGroup(Tgroup group) {
   DeleteObj((obj)group);
 }
 
-static void InsertGadgetGroup(Tgroup group, gadget G) {
+static void InsertGadgetGroup(Tgroup group, Tgadget G) {
   if (G && !G->Group && !G->G_Prev && !G->G_Next) {
     if ((G->G_Next = group->FirstG))
       group->FirstG->G_Prev = G;
@@ -1347,7 +1347,7 @@ static void InsertGadgetGroup(Tgroup group, gadget G) {
   }
 }
 
-static void RemoveGadgetGroup(Tgroup group, gadget G) {
+static void RemoveGadgetGroup(Tgroup group, Tgadget G) {
   if (G && G->Group == group) {
     if (G->G_Prev)
       G->G_Prev->G_Next = G->G_Next;
@@ -1359,16 +1359,16 @@ static void RemoveGadgetGroup(Tgroup group, gadget G) {
     else if (group->LastG == G)
       group->LastG = G->G_Prev;
 
-    G->G_Prev = G->G_Next = (gadget)0;
+    G->G_Prev = G->G_Next = (Tgadget)0;
     G->Group = (Tgroup)0;
   }
 }
 
-static gadget GetSelectedGadget(Tgroup group) {
+static Tgadget GetSelectedGadget(Tgroup group) {
   return group->SelectG;
 }
 
-static void SetSelectedGadget(Tgroup group, gadget G) {
+static void SetSelectedGadget(Tgroup group, Tgadget G) {
   if (!G || (G && G->Group == group)) {
     if (group->SelectG)
       UnPressGadget(group->SelectG, ttrue);
@@ -1907,9 +1907,9 @@ static struct SmsgportFn _FnMsgPort = {
     &_FnObj,
 };
 
-/* mutex */
+/* Tmutex */
 
-static void InsertMutex(mutex Mutex, all Parent, mutex Prev, mutex Next) {
+static void InsertMutex(Tmutex Mutex, all Parent, Tmutex Prev, Tmutex Next) {
   if (!Mutex->All && Parent) {
     InsertGeneric((obj_entry)Mutex, (obj_list)&Mutex->All->FirstMutex, (obj_entry)Prev,
                   (obj_entry)Next, NULL);
@@ -1917,20 +1917,20 @@ static void InsertMutex(mutex Mutex, all Parent, mutex Prev, mutex Next) {
   }
 }
 
-static void RemoveMutex(mutex Mutex) {
+static void RemoveMutex(Tmutex Mutex) {
   if (Mutex->All) {
     RemoveGeneric((obj_entry)Mutex, (obj_list)&Mutex->All->FirstMutex, NULL);
     Mutex->All = (all)0;
   }
 }
 
-static void DeleteMutex(mutex Mutex) {
+static void DeleteMutex(Tmutex Mutex) {
   Mutex->DisOwn();
   Mutex->Remove();
   DeleteObj((obj)Mutex);
 }
 
-static void OwnMutex(mutex Mutex, Tmsgport Parent) {
+static void OwnMutex(Tmutex Mutex, Tmsgport Parent) {
   if (!Mutex->Owner && Parent) {
 
     if ((Mutex->O_Prev = Parent->LastMutex))
@@ -1938,14 +1938,14 @@ static void OwnMutex(mutex Mutex, Tmsgport Parent) {
     else
       Parent->FirstMutex = Mutex;
 
-    Mutex->O_Next = (mutex)0;
+    Mutex->O_Next = (Tmutex)0;
     Parent->LastMutex = Mutex;
 
     Mutex->Owner = Parent;
   }
 }
 
-static void DisOwnMutex(mutex Mutex) {
+static void DisOwnMutex(Tmutex Mutex) {
   Tmsgport Parent;
   if ((Parent = Mutex->Owner)) {
     if (Mutex->O_Prev)
@@ -1958,7 +1958,7 @@ static void DisOwnMutex(mutex Mutex) {
     else if (Parent->LastMutex == Mutex)
       Parent->LastMutex = Mutex->O_Prev;
 
-    Mutex->O_Prev = Mutex->O_Next = (mutex)0;
+    Mutex->O_Prev = Mutex->O_Next = (Tmutex)0;
 
     Mutex->Owner = (Tmsgport)0;
   }
@@ -1969,8 +1969,8 @@ static struct SmutexFn _FnMutex = {
     InsertMutex,
     RemoveMutex,
     DeleteMutex,
-    (void (*)(mutex, udat, uldat, uldat))NoOp,
-    /* mutex */
+    (void (*)(Tmutex, udat, uldat, uldat))NoOp,
+    /* Tmutex */
     &_FnObj,
     OwnMutex,
     DisOwnMutex,

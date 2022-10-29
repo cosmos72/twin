@@ -30,7 +30,7 @@ struct SscreenFn {
   TobjFn Fn_Obj;
   void (*DrawSelf)(draw_ctx *D);
   Twidget (*FindWidgetAt)(screen Parent, dat X, dat Y);
-  gadget (*FindGadgetByCode)(screen Parent, udat Code);
+  Tgadget (*FindGadgetByCode)(screen Parent, udat Code);
   void (*SetXY)(screen, dat X, dat Y);
   void (*SetFill)(screen, tcell Fill);
   Twidget (*Focus)(screen);
@@ -111,7 +111,7 @@ struct Sscreen : public Sobj {
   Twidget FindWidgetAt(dat x, dat y) {
     return Fn->FindWidgetAt(this, x, y);
   }
-  gadget FindGadgetByCode(udat code) {
+  Tgadget FindGadgetByCode(udat code) {
     return Fn->FindGadgetByCode(this, code);
   }
   void SetXY(dat x, dat y) {

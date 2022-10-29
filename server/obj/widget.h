@@ -85,7 +85,7 @@ struct SwidgetFn {
   TobjFn Fn_Obj; /* backup of overloaded functions */
   void (*DrawSelf)(draw_ctx *d);
   Twidget (*FindWidgetAt)(Twidget self, dat x, dat y);
-  gadget (*FindGadgetByCode)(Twidget self, udat code);
+  Tgadget (*FindGadgetByCode)(Twidget self, udat code);
   void (*SetXY)(Twidget self, dat x, dat y);
   void (*SetFill)(Twidget self, tcell fill);
   Twidget (*Focus)(Twidget self);
@@ -153,7 +153,7 @@ struct Swidget : public Sobj {
   Twidget FindWidgetAt(dat x, dat y) {
     return Fn->FindWidgetAt(this, x, y);
   }
-  gadget FindGadgetByCode(udat code) {
+  Tgadget FindGadgetByCode(udat code) {
     return Fn->FindGadgetByCode(this, code);
   }
   void SetXY(dat x, dat y) {

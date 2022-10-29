@@ -42,7 +42,7 @@ static s_idvec IdVec[magic_n];
 uldat s_idvec::grow(e_magic_byte magic_byte) {
   uldat old_size = Size;
 
-  if (old_size >= MAXID || magic_byte == obj_magic_byte || magic_byte == all_magic_byte) {
+  if (old_size >= MAXID || magic_byte == Tobj_magic_byte || magic_byte == Tall_magic_byte) {
     // do not assign IDs to Obj and All
     return NOSLOT;
   }
@@ -121,27 +121,27 @@ bool AssignId(const e_id class_magic_id, obj o) {
   if (o) {
     const e_magic_byte magic_byte = e_magic_byte(class_magic_id >> magic_shift);
     switch (magic_byte) {
-    case obj_magic_byte:
+    case Tobj_magic_byte:
       /* 'obj' is an abstract type, you can't create one */
       break;
-    case row_magic_byte:
-    case module_magic_byte:
-    case display_hw_magic_byte:
-    case msg_magic_byte:
+    case Trow_magic_byte:
+    case Tmodule_magic_byte:
+    case Tdisplay_magic_byte:
+    case Tmsg_magic_byte:
       // We don't use Ids for rows and msgs as we expect to create *lots* of them.
       //
       // Remote access to module and Tdisplay is unsafe, so no Ids for them too.
       o->Id = class_magic_id;
       return true;
     case Twidget_magic_byte:
-    case gadget_magic_byte:
-    case window_magic_byte:
-    case screen_magic_byte:
-    case ggroup_magic_byte:
-    case menuitem_magic_byte:
-    case menu_magic_byte:
+    case Tgadget_magic_byte:
+    case Twindow_magic_byte:
+    case Tscreen_magic_byte:
+    case Tgroup_magic_byte:
+    case Tmenuitem_magic_byte:
+    case Tmenu_magic_byte:
     case Tmsgport_magic_byte:
-    case mutex_magic_byte:
+    case Tmutex_magic_byte:
       return IdVec[magic_byte].assign_id(magic_byte, o);
     default:
       break;
@@ -156,26 +156,26 @@ void DropId(obj o) {
     const e_magic_byte magic_byte = e_magic_byte(e->Fn->Magic >> magic_shift);
 
     switch (magic_byte) {
-    case obj_magic_byte:
+    case Tobj_magic_byte:
       /* 'obj' is an abstract class, you can't create one */
       break;
-    case row_magic_byte:
-    case module_magic_byte:
-    case display_hw_magic_byte:
-    case msg_magic_byte:
+    case Trow_magic_byte:
+    case Tmodule_magic_byte:
+    case Tdisplay_magic_byte:
+    case Tmsg_magic_byte:
       /* we don't use Ids for rows and msgs as we expect to create *lots* of them */
       /* it's unsafe to allow modules access remotely, so no Ids for them too */
       o->Id = NOID;
       break;
     case Twidget_magic_byte:
-    case gadget_magic_byte:
-    case window_magic_byte:
-    case screen_magic_byte:
-    case ggroup_magic_byte:
-    case menuitem_magic_byte:
-    case menu_magic_byte:
+    case Tgadget_magic_byte:
+    case Twindow_magic_byte:
+    case Tscreen_magic_byte:
+    case Tgroup_magic_byte:
+    case Tmenuitem_magic_byte:
+    case Tmenu_magic_byte:
     case Tmsgport_magic_byte:
-    case mutex_magic_byte:
+    case Tmutex_magic_byte:
       if (magic_byte == e_magic_byte(o->Id >> magic_shift)) {
         IdVec[magic_byte].drop_id(magic_byte, o);
       }
@@ -193,11 +193,11 @@ obj Id2Obj(e_magic_byte expected_magic_byte, uldat id) {
     /* everything is a valid (obj) */
     /* gadgets, windows, screens are valid (widget) */
     /* menuitems are valid (row) */
-    if (expected_magic_byte == magic_byte || expected_magic_byte == obj_magic_byte ||
+    if (expected_magic_byte == magic_byte || expected_magic_byte == Tobj_magic_byte ||
         (expected_magic_byte == Twidget_magic_byte &&
-         (magic_byte == gadget_magic_byte || magic_byte == window_magic_byte ||
-          magic_byte == screen_magic_byte)) ||
-        (expected_magic_byte == row_magic_byte && magic_byte == menuitem_magic_byte)) {
+         (magic_byte == Tgadget_magic_byte || magic_byte == Twindow_magic_byte ||
+          magic_byte == Tscreen_magic_byte)) ||
+        (expected_magic_byte == Trow_magic_byte && magic_byte == Tmenuitem_magic_byte)) {
 
       id &= MAXID;
       if (id < IdVec[magic_byte].Top) {
@@ -211,7 +211,7 @@ obj Id2Obj(e_magic_byte expected_magic_byte, uldat id) {
 static obj IdVec_all[1];
 
 bool AssignId_all(all a) {
-  const e_magic_byte magic_byte = all_magic_byte;
+  const e_magic_byte magic_byte = Tall_magic_byte;
   s_idvec &my = IdVec[magic_byte];
 
   if (!my.Vec) {

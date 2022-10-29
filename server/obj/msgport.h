@@ -43,7 +43,7 @@ struct Smsgport : public Sobj {
   menu FirstMenu, LastMenu;     /* menus created by this MsgPort */
   Twidget FirstW, LastW;        /* widgets owned by this MsgPort */
   Tgroup FirstGroup, LastGroup; /* groups owned by this MsgPort */
-  mutex FirstMutex, LastMutex;  /* mutexes owned by this MsgPort */
+  Tmutex FirstMutex, LastMutex; /* mutexes owned by this MsgPort */
   Tdisplay AttachHW;            /* that was attached as told by MsgPort */
 
   static Tmsgport Create(byte NameLen, const char *Name, tany PauseSec, tany PauseFraction,

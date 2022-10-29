@@ -229,12 +229,12 @@ case order_CreateButtonGadget:
 
 case order_WriteTextsGadget:
     if (a.size() >= 7)
-        Act(WriteTexts,(gadget)a[1]_obj)((gadget)a[1]_obj, (byte)a[2]_any, (dat)a[3]_any, (dat)a[4]_any, (const char *)a[5]_vec, (dat)a[6]_any, (dat)a[7]_any);
+        Act(WriteTexts,(Tgadget)a[1]_obj)((Tgadget)a[1]_obj, (byte)a[2]_any, (dat)a[3]_any, (dat)a[4]_any, (const char *)a[5]_vec, (dat)a[6]_any, (dat)a[7]_any);
     break;
 
 case order_WriteTRunesGadget:
     if (a.size() >= 7)
-        Act(WriteTRunes,(gadget)a[1]_obj)((gadget)a[1]_obj, (byte)a[2]_any, (dat)a[3]_any, (dat)a[4]_any, (const trune *)a[5]_vec, (dat)a[6]_any, (dat)a[7]_any);
+        Act(WriteTRunes,(Tgadget)a[1]_obj)((Tgadget)a[1]_obj, (byte)a[2]_any, (dat)a[3]_any, (dat)a[4]_any, (const trune *)a[5]_vec, (dat)a[6]_any, (dat)a[7]_any);
     break;
 
 
@@ -308,12 +308,12 @@ case order_CreateGroup:
 
 case order_InsertGadgetGroup:
     if (a.size() >= 2)
-        Act(InsertGadget,(Tgroup)a[1]_obj)((Tgroup)a[1]_obj, (gadget)a[2]_obj);
+        Act(InsertGadget,(Tgroup)a[1]_obj)((Tgroup)a[1]_obj, (Tgadget)a[2]_obj);
     break;
 
 case order_RemoveGadgetGroup:
     if (a.size() >= 2)
-        Act(RemoveGadget,(Tgroup)a[1]_obj)((Tgroup)a[1]_obj, (gadget)a[2]_obj);
+        Act(RemoveGadget,(Tgroup)a[1]_obj)((Tgroup)a[1]_obj, (Tgadget)a[2]_obj);
     break;
 
 
@@ -324,7 +324,7 @@ case order_GetSelectedGadgetGroup:
 
 case order_SetSelectedGadgetGroup:
     if (a.size() >= 2)
-        Act(SetSelectedGadget,(Tgroup)a[1]_obj)((Tgroup)a[1]_obj, (gadget)a[2]_obj);
+        Act(SetSelectedGadget,(Tgroup)a[1]_obj)((Tgroup)a[1]_obj, (Tgadget)a[2]_obj);
     break;
 
 

@@ -40,7 +40,7 @@ void CloseMenu(void);
 void SetMenuState(Tmenuitem Item, byte ByMouse);
 
 void ResizeWidget(Twidget W, dat X, dat Y);
-void ResizeGadget(gadget G, dat X, dat Y);
+void ResizeGadget(Tgadget G, dat X, dat Y);
 
 void DragFirstWindow(dat i, dat j);
 void DragWindow(Twindow Window, dat i, dat j);
@@ -66,12 +66,12 @@ void RestackWidgets(Twidget P, uldat N, const Twidget *arrayW);
 
 void RestackRows(obj O, uldat N, const row *arrayR);
 
-void PressGadget(gadget G);
-void UnPressGadget(gadget G, byte maySendMsgIfNotToggle);
-void SendMsgGadget(gadget G);
-void WriteTextsGadget(gadget G, byte bitmap, dat XWidth, dat YWidth, const char *Text, dat Left,
+void PressGadget(Tgadget G);
+void UnPressGadget(Tgadget G, byte maySendMsgIfNotToggle);
+void SendMsgGadget(Tgadget G);
+void WriteTextsGadget(Tgadget G, byte bitmap, dat XWidth, dat YWidth, const char *Text, dat Left,
                       dat Up);
-void WriteTRunesGadget(gadget G, byte bitmap, dat XWidth, dat YWidth, const trune *Text, dat Left,
+void WriteTRunesGadget(Tgadget G, byte bitmap, dat XWidth, dat YWidth, const trune *Text, dat Left,
                        dat Up);
 
 void SyncMenu(menu Menu);

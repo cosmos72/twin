@@ -652,30 +652,30 @@ void ResetBorderPattern(void) {
   }
 }
 
-static gadget _PrevGadget(gadget G) {
+static Tgadget _PrevGadget(Tgadget G) {
   while (G->Prev) {
-    G = (gadget)G->Prev;
+    G = (Tgadget)G->Prev;
     if (IS_GADGET(G))
-      return (gadget)G;
+      return (Tgadget)G;
   }
-  return (gadget)G->Prev;
+  return (Tgadget)G->Prev;
 }
 
-static gadget _NextGadget(gadget G) {
+static Tgadget _NextGadget(Tgadget G) {
   while (G->Next) {
-    G = (gadget)G->Next;
+    G = (Tgadget)G->Next;
     if (IS_GADGET(G))
-      return (gadget)G;
+      return (Tgadget)G;
   }
-  return (gadget)G->Next;
+  return (Tgadget)G->Next;
 }
 
 /* handle common keyboard actions like cursor moving and button navigation */
 void FallBackKeyAction(Twindow w, event_keyboard *EventK) {
   ldat NumRow, OldNumRow;
-  gadget G, H;
+  Tgadget G, H;
 
-  if ((G = (gadget)w->SelectW) && IS_GADGET(G))
+  if ((G = (Tgadget)w->SelectW) && IS_GADGET(G))
     switch (EventK->Code) {
     case TW_Escape:
       UnPressGadget(G, tfalse);
@@ -707,7 +707,7 @@ void FallBackKeyAction(Twindow w, event_keyboard *EventK) {
     default:
       break;
     }
-  else if ((G = (gadget)w->FirstW) && IS_GADGET(G)) {
+  else if ((G = (Tgadget)w->FirstW) && IS_GADGET(G)) {
     PressGadget(G);
     w->SelectW = (Twidget)G;
   } else

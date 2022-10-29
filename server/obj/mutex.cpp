@@ -18,9 +18,9 @@
 #include <new>
 #include <cstring> // memcmp()
 
-mutex Smutex::Create(Tmsgport owner, byte namelen, const char *name, byte perm) {
+Tmutex Smutex::Create(Tmsgport owner, byte namelen, const char *name, byte perm) {
   byte mask = PERM_WRITE;
-  mutex curr, x = NULL, old = NULL;
+  Tmutex curr, x = NULL, old = NULL;
 
   if (!perm || !owner)
     return x;
@@ -56,7 +56,7 @@ mutex Smutex::Create(Tmsgport owner, byte namelen, const char *name, byte perm) 
   return x;
 }
 
-mutex Smutex::Init(Tmsgport owner, byte namelen, const char *name, byte perm) {
+Tmutex Smutex::Init(Tmsgport owner, byte namelen, const char *name, byte perm) {
   if (!((obj)this)->Init()) {
     return NULL;
   }

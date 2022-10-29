@@ -22,41 +22,42 @@ struct s_gT { /* for GADGETFL_USETEXT gadgets */
 
 struct SgadgetFn {
   uldat Magic;
-  void (*Insert)(gadget, Twidget Parent, Twidget Prev, Twidget Next);
-  void (*Remove)(gadget);
-  void (*Delete)(gadget);
-  void (*ChangeField)(gadget, udat field, uldat CLEARMask, uldat XORMask);
+  void (*Insert)(Tgadget, Twidget Parent, Twidget Prev, Twidget Next);
+  void (*Remove)(Tgadget);
+  void (*Delete)(Tgadget);
+  void (*ChangeField)(Tgadget, udat field, uldat CLEARMask, uldat XORMask);
   /* Twidget */
   TobjFn Fn_Obj;
   void (*DrawSelf)(draw_ctx *D);
-  Twidget (*FindWidgetAt)(gadget Parent, dat X, dat Y);
-  gadget (*FindGadgetByCode)(gadget Parent, udat Code);
-  void (*SetXY)(gadget, dat X, dat Y);
-  void (*SetFill)(gadget, tcell Fill);
-  Twidget (*Focus)(gadget);
-  Twidget (*KbdFocus)(gadget);
-  void (*Map)(gadget, Twidget Parent);
-  void (*UnMap)(gadget);
-  void (*MapTopReal)(gadget, screen);
-  void (*Raise)(gadget);
-  void (*Lower)(gadget);
-  void (*Own)(gadget, Tmsgport);
-  void (*DisOwn)(gadget);
-  void (*RecursiveDelete)(gadget, Tmsgport);
-  void (*Expose)(gadget, dat xwidth, dat ywidth, dat Left, dat Up, const char *, const trune *,
+  Twidget (*FindWidgetAt)(Tgadget Parent, dat X, dat Y);
+  Tgadget (*FindGadgetByCode)(Tgadget Parent, udat Code);
+  void (*SetXY)(Tgadget, dat X, dat Y);
+  void (*SetFill)(Tgadget, tcell Fill);
+  Twidget (*Focus)(Tgadget);
+  Twidget (*KbdFocus)(Tgadget);
+  void (*Map)(Tgadget, Twidget Parent);
+  void (*UnMap)(Tgadget);
+  void (*MapTopReal)(Tgadget, screen);
+  void (*Raise)(Tgadget);
+  void (*Lower)(Tgadget);
+  void (*Own)(Tgadget, Tmsgport);
+  void (*DisOwn)(Tgadget);
+  void (*RecursiveDelete)(Tgadget, Tmsgport);
+  void (*Expose)(Tgadget, dat xwidth, dat ywidth, dat Left, dat Up, const char *, const trune *,
                  const tcell *);
-  byte (*InstallHook)(gadget, HookFn, HookFn *Where);
-  void (*RemoveHook)(gadget, HookFn, HookFn *Where);
-  /* gadget */
+  byte (*InstallHook)(Tgadget, HookFn, HookFn *Where);
+  void (*RemoveHook)(Tgadget, HookFn, HookFn *Where);
+  /* Tgadget */
   TwidgetFn Fn_Widget;
-  gadget (*CreateEmptyButton)(Tmsgport owner, dat xwidth, dat ywidth, tcolor BgCol);
-  byte (*FillButton)(gadget g, Twidget Parent, udat Code, dat Left, dat Up, udat Flags,
+  Tgadget (*CreateEmptyButton)(Tmsgport owner, dat xwidth, dat ywidth, tcolor BgCol);
+  byte (*FillButton)(Tgadget g, Twidget Parent, udat Code, dat Left, dat Up, udat Flags,
                      const char *Text, tcolor Color, tcolor ColorDisabled);
-  gadget (*CreateButton)(Twidget Parent, dat xwidth, dat ywidth, const char *Text, uldat Flags,
-                         udat Code, tcolor BgCol, tcolor Col, tcolor ColDisabled, dat Left, dat Up);
-  void (*WriteTexts)(gadget g, byte bitmap, dat xwidth, dat ywidth, const char *Text, dat Left,
+  Tgadget (*CreateButton)(Twidget Parent, dat xwidth, dat ywidth, const char *Text, uldat Flags,
+                          udat Code, tcolor BgCol, tcolor Col, tcolor ColDisabled, dat Left,
+                          dat Up);
+  void (*WriteTexts)(Tgadget g, byte bitmap, dat xwidth, dat ywidth, const char *Text, dat Left,
                      dat Up);
-  void (*WriteTRunes)(gadget g, byte bitmap, dat xwidth, dat ywidth, const trune *TRune, dat Left,
+  void (*WriteTRunes)(Tgadget g, byte bitmap, dat xwidth, dat ywidth, const trune *TRune, dat Left,
                       dat Up);
 };
 
@@ -82,19 +83,19 @@ struct Sgadget : public Sobj {
     struct s_gT T;
     struct s_wE E;
   } USE;
-  /* gadget */
+  /* Tgadget */
   tcolor ColText, ColSelect, ColDisabled, ColSelectDisabled;
   udat Code;
-  gadget G_Prev, G_Next; /* list in the same Tgroup */
+  Tgadget G_Prev, G_Next; /* list in the same Tgroup */
   Tgroup Group;
 
-  static gadget Create(Tmsgport owner, Twidget Parent, dat xwidth, dat ywidth,
-                       const char *TextNormal, uldat Attr, uldat Flags, udat Code, tcolor ColText,
-                       tcolor ColTextSelect, tcolor ColTextDisabled, tcolor ColTextSelectDisabled,
-                       dat Left, dat Up);
-  gadget Init(Tmsgport owner, Twidget Parent, dat xwidth, dat ywidth, const char *TextNormal,
-              uldat Attr, uldat Flags, udat Code, tcolor ColText, tcolor ColTextSelect,
-              tcolor ColTextDisabled, tcolor ColTextSelectDisabled, dat Left, dat Up);
+  static Tgadget Create(Tmsgport owner, Twidget Parent, dat xwidth, dat ywidth,
+                        const char *TextNormal, uldat Attr, uldat Flags, udat Code, tcolor ColText,
+                        tcolor ColTextSelect, tcolor ColTextDisabled, tcolor ColTextSelectDisabled,
+                        dat Left, dat Up);
+  Tgadget Init(Tmsgport owner, Twidget Parent, dat xwidth, dat ywidth, const char *TextNormal,
+               uldat Attr, uldat Flags, udat Code, tcolor ColText, tcolor ColTextSelect,
+               tcolor ColTextDisabled, tcolor ColTextSelectDisabled, dat Left, dat Up);
 
   /* obj */
   uldat Magic() const {
@@ -114,7 +115,7 @@ struct Sgadget : public Sobj {
   Twidget FindWidgetAt(dat x, dat y) {
     return Fn->FindWidgetAt(this, x, y);
   }
-  gadget FindGadgetByCode(udat code) {
+  Tgadget FindGadgetByCode(udat code) {
     return Fn->FindGadgetByCode(this, code);
   }
   void SetXY(dat x, dat y) {
@@ -163,16 +164,16 @@ struct Sgadget : public Sobj {
   void RemoveHook(HookFn hook, HookFn *where) {
     Fn->RemoveHook(this, hook, where);
   }
-  /* gadget */
+  /* Tgadget */
   byte FillButton(Twidget parent, udat code, dat left, dat up, udat flags, const char *text,
                   tcolor color, tcolor colordisabled) {
     return Fn->FillButton(this, parent, code, left, up, flags, text, color, colordisabled);
   }
-  gadget CreateEmptyButton(Tmsgport owner, dat xwidth, dat ywidth, tcolor bgcol) {
+  Tgadget CreateEmptyButton(Tmsgport owner, dat xwidth, dat ywidth, tcolor bgcol) {
     return Fn->CreateEmptyButton(owner, xwidth, ywidth, bgcol);
   }
-  gadget CreateButton(Twidget parent, dat xwidth, dat ywidth, const char *text, uldat flags,
-                      udat code, tcolor bgcol, tcolor col, tcolor coldisabled, dat left, dat up) {
+  Tgadget CreateButton(Twidget parent, dat xwidth, dat ywidth, const char *text, uldat flags,
+                       udat code, tcolor bgcol, tcolor col, tcolor coldisabled, dat left, dat up) {
     return Fn->CreateButton(parent, xwidth, ywidth, text, flags, code, bgcol, col, coldisabled,
                             left, up);
   }
@@ -200,12 +201,12 @@ enum gadget_flag /*: udat*/ {
   GADGETFL_USEFILL = WIDGETFL_USEFILL,     /* 0x03 */
   GADGETFL_USEANY = WIDGETFL_USEANY,       /* 0x07 */
 
-  /* remember this gadget is a button, so that SetText() does not ruin the shadow */
+  /* remember this Tgadget is a button, so that SetText() does not ruin the shadow */
   GADGETFL_BUTTON = 0x0010,
   GADGETFL_DISABLED = 0x0020,
   GADGETFL_TEXT_DEFCOL = 0x0040,
-  /* this makes the gadget 'checkable' : can be in 'checked' or 'unchecked' state.
-   * also necessary to put the gadget in a Tgroup */
+  /* this makes the Tgadget 'checkable' : can be in 'checked' or 'unchecked' state.
+   * also necessary to put the Tgadget in a Tgroup */
   GADGETFL_TOGGLE = 0x0080,
   GADGETFL_PRESSED = 0x0100,
 
@@ -216,7 +217,7 @@ enum gadget_flag /*: udat*/ {
 
 /*              NOTE :
  *
- * the USE.T fields (Contents) of a gadget are used as follows:
+ * the USE.T fields (Contents) of a Tgadget are used as follows:
  * Text[0]==TextNormal;      (mandatory)
  * Text[1]==TextSelect;        (if not present, use ...[0])
  * Text[2]==TextDisabled;      (if not present, use ...[0])

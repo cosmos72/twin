@@ -527,7 +527,7 @@ void DrawSelfWidget(draw_ctx *d) {
 }
 
 void DrawSelfGadget(draw_ctx *d) {
-  gadget G = (gadget)d->TopW;
+  Tgadget G = (Tgadget)d->TopW;
 
   if (QueuedDrawArea2FullScreen || (G->Flags & WIDGETFL_NOTVISIBLE))
     return;

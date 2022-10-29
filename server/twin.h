@@ -66,19 +66,19 @@ enum {
 
 #define IS_OBJ(type, O) (((O)->Id >> magic_shift) == type##_magic_byte)
 #define IS_WIDGET(O)                                                                               \
-  (IS_OBJ(Twidget, O) || IS_OBJ(gadget, O) || IS_OBJ(window, O) || IS_OBJ(screen, O))
-#define IS_GADGET(O) IS_OBJ(gadget, O)
-#define IS_WINDOW(O) IS_OBJ(window, O)
-#define IS_SCREEN(O) IS_OBJ(screen, O)
-#define IS_ROW(O) (IS_OBJ(row, O) || IS_OBJ(menuitem, O))
-#define IS_MENUITEM(O) IS_OBJ(menuitem, O)
-#define IS_MENU(O) IS_OBJ(menu, O)
+  (IS_OBJ(Twidget, O) || IS_OBJ(Tgadget, O) || IS_OBJ(Twindow, O) || IS_OBJ(Tscreen, O))
+#define IS_GADGET(O) IS_OBJ(Tgadget, O)
+#define IS_WINDOW(O) IS_OBJ(Twindow, O)
+#define IS_SCREEN(O) IS_OBJ(Tscreen, O)
+#define IS_ROW(O) (IS_OBJ(Trow, O) || IS_OBJ(Tmenuitem, O))
+#define IS_MENUITEM(O) IS_OBJ(Tmenuitem, O)
+#define IS_MENU(O) IS_OBJ(Tmenu, O)
 #define IS_MSGPORT(O) IS_OBJ(Tmsgport, O)
-#define IS_MUTEX(O) IS_OBJ(mutex, O)
-#define IS_MSG(O) IS_OBJ(msg, O)
-#define IS_MODULE(O) IS_OBJ(module, O)
+#define IS_MUTEX(O) IS_OBJ(Tmutex, O)
+#define IS_MSG(O) IS_OBJ(Tmsg, O)
+#define IS_MODULE(O) IS_OBJ(Tmodule, O)
 #define IS_DISPLAY_HW(O) IS_OBJ(Tdisplay, O)
-#define IS_ALL(O) IS_OBJ(all, O)
+#define IS_ALL(O) IS_OBJ(Tall, O)
 
 /************** Keys **************/
 

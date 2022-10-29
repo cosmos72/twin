@@ -17,34 +17,34 @@
 
 struct SmutexFn {
   uldat Magic;
-  void (*Insert)(mutex, all, mutex Prev, mutex Next);
-  void (*Remove)(mutex);
-  void (*Delete)(mutex);
-  void (*ChangeField)(mutex, udat field, uldat CLEARMask, uldat XORMask);
-  /* mutex */
+  void (*Insert)(Tmutex, all, Tmutex Prev, Tmutex Next);
+  void (*Remove)(Tmutex);
+  void (*Delete)(Tmutex);
+  void (*ChangeField)(Tmutex, udat field, uldat CLEARMask, uldat XORMask);
+  /* Tmutex */
   TobjFn Fn_Obj;
-  void (*Own)(mutex, Tmsgport);
-  void (*DisOwn)(mutex);
+  void (*Own)(Tmutex, Tmsgport);
+  void (*DisOwn)(Tmutex);
 };
 
 struct Smutex : public Sobj {
   TmutexFn Fn;
-  mutex Prev, Next; /* in the same All */
+  Tmutex Prev, Next; /* in the same All */
   all All;
-  /* mutex */
-  mutex O_Prev, O_Next; /* owned by the same MsgPort */
+  /* Tmutex */
+  Tmutex O_Prev, O_Next; /* owned by the same MsgPort */
   Tmsgport Owner;
   byte Perm, NameLen;
   char *Name;
 
-  static mutex Create(Tmsgport owner, byte namelen, const char *name, byte perm);
-  mutex Init(Tmsgport owner, byte namelen, const char *name, byte perm);
+  static Tmutex Create(Tmsgport owner, byte namelen, const char *name, byte perm);
+  Tmutex Init(Tmsgport owner, byte namelen, const char *name, byte perm);
 
   /* obj */
   uldat Magic() const {
     return Fn->Magic;
   }
-  void Insert(all a, mutex prev, mutex next) {
+  void Insert(all a, Tmutex prev, Tmutex next) {
     Fn->Insert(this, a, prev, next);
   }
   void Remove() {
@@ -53,7 +53,7 @@ struct Smutex : public Sobj {
   void Delete() {
     Fn->Delete(this);
   }
-  /* mutex */
+  /* Tmutex */
   void Own(Tmsgport owner) {
     Fn->Own(this, owner);
   }

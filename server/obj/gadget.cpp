@@ -17,11 +17,11 @@
 
 #include <new>
 
-gadget Sgadget::Create(Tmsgport owner, Twidget parent, dat xwidth, dat ywidth,
-                       const char *textnormal, uldat attr, uldat flags, udat code, tcolor coltext,
-                       tcolor coltextselect, tcolor coltextdisabled, tcolor coltextselectdisabled,
-                       dat left, dat up) {
-  gadget g = NULL;
+Tgadget Sgadget::Create(Tmsgport owner, Twidget parent, dat xwidth, dat ywidth,
+                        const char *textnormal, uldat attr, uldat flags, udat code, tcolor coltext,
+                        tcolor coltextselect, tcolor coltextdisabled, tcolor coltextselectdisabled,
+                        dat left, dat up) {
+  Tgadget g = NULL;
 
   if (owner) {
     void *addr = AllocMem0(sizeof(Sgadget));
@@ -38,9 +38,10 @@ gadget Sgadget::Create(Tmsgport owner, Twidget parent, dat xwidth, dat ywidth,
   return g;
 }
 
-gadget Sgadget::Init(Tmsgport owner, Twidget parent, dat xwidth, dat ywidth, const char *textnormal,
-                     uldat attr, uldat flags, udat code, tcolor coltext, tcolor coltextselect,
-                     tcolor coltextdisabled, tcolor coltextselectdisabled, dat left, dat up) {
+Tgadget Sgadget::Init(Tmsgport owner, Twidget parent, dat xwidth, dat ywidth,
+                      const char *textnormal, uldat attr, uldat flags, udat code, tcolor coltext,
+                      tcolor coltextselect, tcolor coltextdisabled, tcolor coltextselectdisabled,
+                      dat left, dat up) {
   ldat Size;
 
   if (code >= COD_RESERVED || xwidth <= 0 || ywidth <= 0) {

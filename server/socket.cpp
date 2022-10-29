@@ -373,10 +373,10 @@ static void sockCirculateChildrenWidget(Twidget W, byte up_or_down);
 #define TW_CIRCULATE_RAISE_LAST 0
 #define TW_CIRCULATE_LOWER_FIRST 1
 
-static gadget sockCreateGadget(Twidget Parent, dat XWidth, dat YWidth, const char *TextNormal,
-                               uldat Attr, uldat Flags, udat Code, tcolor ColText,
-                               tcolor ColTextSelect, tcolor ColTextDisabled,
-                               tcolor ColTextSelectDisabled, dat Left, dat Up);
+static Tgadget sockCreateGadget(Twidget Parent, dat XWidth, dat YWidth, const char *TextNormal,
+                                uldat Attr, uldat Flags, udat Code, tcolor ColText,
+                                tcolor ColTextSelect, tcolor ColTextDisabled,
+                                tcolor ColTextSelectDisabled, dat Left, dat Up);
 
 static Twindow sockCreateWindow(dat TitleLen, const char *Title, const tcolor *ColTitle, menu Menu,
                                 tcolor ColText, uldat CursorType, uldat Attr, uldat Flags,
@@ -416,9 +416,9 @@ static Tmsgport sockFirstMsgPort(void);
 static menu sockFirstMenu(Tmsgport MsgPort);
 static Twidget sockFirstW(Tmsgport MsgPort);
 static Tgroup sockFirstGroup(Tmsgport MsgPort);
-static mutex sockFirstMutex(Tmsgport MsgPort);
+static Tmutex sockFirstMutex(Tmsgport MsgPort);
 static Tmenuitem sockFirstMenuItem(menu Menu);
-static gadget sockFirstGadget(Tgroup group);
+static Tgadget sockFirstGadget(Tgroup group);
 
 static byte sockSendToMsgPort(Tmsgport MsgPort, udat Len, const byte *Data);
 static void sockBlindSendToMsgPort(Tmsgport MsgPort, udat Len, const byte *Data);
@@ -1006,13 +1006,13 @@ static Tmsgport sockGetMsgPortObj(obj p) {
       return (Tmsgport)e;
     }
     switch (e->Id >> magic_shift) {
-    case row_magic_byte:
-    case menuitem_magic_byte:
-    case menu_magic_byte:
+    case Trow_magic_byte:
+    case Tmenuitem_magic_byte:
+    case Tmenu_magic_byte:
       e = (obj_entry)e->Parent;
       break;
-    case mutex_magic_byte:
-      e = (obj_entry)((mutex)e)->Owner;
+    case Tmutex_magic_byte:
+      e = (obj_entry)((Tmutex)e)->Owner;
       break;
     default:
       if (IS_WIDGET(e))
@@ -1084,7 +1084,7 @@ static void sockResizeWidget(Twidget W, dat X, dat Y) {
         X += 2, Y += 2;
       ResizeRelWindow((Twindow)W, X - W->XWidth, Y - W->YWidth);
     } else if (IS_GADGET(W)) {
-      ResizeGadget((gadget)W, X, Y);
+      ResizeGadget((Tgadget)W, X, Y);
     } else {
       ResizeWidget((Twidget)W, X, Y);
     }
@@ -1130,15 +1130,15 @@ static void sockCirculateChildrenRow(obj O, byte up_or_down) {
   }
 }
 
-static gadget sockCreateGadget(Twidget Parent, dat XWidth, dat YWidth, const char *TextNormal,
-                               uldat Attr, uldat Flags, udat Code, tcolor ColText,
-                               tcolor ColTextSelect, tcolor ColTextDisabled,
-                               tcolor ColTextSelectDisabled, dat Left, dat Up) {
+static Tgadget sockCreateGadget(Twidget Parent, dat XWidth, dat YWidth, const char *TextNormal,
+                                uldat Attr, uldat Flags, udat Code, tcolor ColText,
+                                tcolor ColTextSelect, tcolor ColTextDisabled,
+                                tcolor ColTextSelectDisabled, dat Left, dat Up) {
   Tmsgport Owner;
   if ((Owner = RemoteGetMsgPort(Slot)))
     return New(gadget)(Owner, Parent, XWidth, YWidth, TextNormal, Attr, Flags, Code, ColText,
                        ColTextSelect, ColTextDisabled, ColTextSelectDisabled, Left, Up);
-  return (gadget)0;
+  return (Tgadget)0;
 }
 
 static Twindow sockCreateWindow(dat TitleLen, const char *Title, const tcolor *ColTitle, menu Menu,
@@ -1278,14 +1278,14 @@ static Twidget sockFirstW(Tmsgport MsgPort) {
 static Tgroup sockFirstGroup(Tmsgport MsgPort) {
   return MsgPort ? MsgPort->FirstGroup : (Tgroup)0;
 }
-static mutex sockFirstMutex(Tmsgport MsgPort) {
-  return MsgPort ? MsgPort->FirstMutex : (mutex)0;
+static Tmutex sockFirstMutex(Tmsgport MsgPort) {
+  return MsgPort ? MsgPort->FirstMutex : (Tmutex)0;
 }
 static Tmenuitem sockFirstMenuItem(menu Menu) {
   return Menu ? Menu->FirstI : (Tmenuitem)0;
 }
-static gadget sockFirstGadget(Tgroup group) {
-  return group ? group->FirstG : (gadget)0;
+static Tgadget sockFirstGadget(Tgroup group) {
+  return group ? group->FirstG : (Tgadget)0;
 }
 
 static all sockGetAll(void) {

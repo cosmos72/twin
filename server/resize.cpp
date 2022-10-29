@@ -594,7 +594,7 @@ void ResizeWidget(Twidget w, dat X, dat Y) {
   }
 }
 
-void ResizeGadget(gadget G, dat X, dat Y) {
+void ResizeGadget(Tgadget G, dat X, dat Y) {
   if (G) {
     if (G_USE(G, USETEXT)) {
       /* FIXME: finish this */
@@ -1883,7 +1883,7 @@ void RestackRows(obj O, uldat N, const row *arrayR) {
 
 /* ---------------- */
 
-void SendMsgGadget(gadget G) {
+void SendMsgGadget(Tgadget G) {
   msg Msg;
   event_gadget *Event;
   if (G->Code && !(G->Flags & GADGETFL_DISABLED)) {
@@ -1897,17 +1897,17 @@ void SendMsgGadget(gadget G) {
   }
 }
 
-static void realUnPressGadget(gadget G) {
+static void realUnPressGadget(Tgadget G) {
   G->Flags &= ~GADGETFL_PRESSED;
   if (G->Group && G->Group->SelectG == G)
-    G->Group->SelectG = (gadget)0;
+    G->Group->SelectG = (Tgadget)0;
   if ((Twidget)G == All->FirstScreen->FirstW)
     DrawWidget((Twidget)G, 0, 0, TW_MAXDAT, TW_MAXDAT, tfalse);
   else
     DrawAreaWidget((Twidget)G);
 }
 
-static void realPressGadget(gadget G) {
+static void realPressGadget(Tgadget G) {
   G->Flags |= GADGETFL_PRESSED;
   if (G->Group)
     G->Group->SelectG = G;
@@ -1917,7 +1917,7 @@ static void realPressGadget(gadget G) {
     DrawAreaWidget((Twidget)G);
 }
 
-void PressGadget(gadget G) {
+void PressGadget(Tgadget G) {
   if (!(G->Flags & GADGETFL_DISABLED)) {
     /* honour groups */
     if (G->Group && G->Group->SelectG && G->Group->SelectG != G)
@@ -1929,7 +1929,7 @@ void PressGadget(gadget G) {
   }
 }
 
-void UnPressGadget(gadget G, byte maySendMsgIfNotToggle) {
+void UnPressGadget(Tgadget G, byte maySendMsgIfNotToggle) {
   if (!(G->Flags & GADGETFL_DISABLED)) {
     realUnPressGadget(G);
     if (maySendMsgIfNotToggle || (G->Flags & GADGETFL_TOGGLE))
@@ -1939,7 +1939,7 @@ void UnPressGadget(gadget G, byte maySendMsgIfNotToggle) {
 
 /* Left < 0 means right-align leaving (-Left-1) margin */
 /* Up   < 0 means down-align  leaving (-Up-1)   margin */
-void WriteTextsGadget(gadget G, byte bitmap, dat TW, dat TH, const char *charset_bytes, dat L,
+void WriteTextsGadget(Tgadget G, byte bitmap, dat TW, dat TH, const char *charset_bytes, dat L,
                       dat U) {
   dat GW = G->XWidth, GH = G->YWidth;
   dat TL = 0, TU = 0, w, H;
@@ -1994,7 +1994,7 @@ void WriteTextsGadget(gadget G, byte bitmap, dat TW, dat TH, const char *charset
             TT += TW - w;
           }
         } else {
-          /* clear the specified part of gadget contents */
+          /* clear the specified part of Tgadget contents */
           while (H-- > 0) {
             _W = w;
             while (_W-- > 0)
@@ -2010,7 +2010,7 @@ void WriteTextsGadget(gadget G, byte bitmap, dat TW, dat TH, const char *charset
 
 /* Left < 0 means right-align leaving (-Left-1) margin */
 /* Up   < 0 means down-align  leaving (-Up-1)   margin */
-void WriteTRunesGadget(gadget G, byte bitmap, dat TW, dat TH, const trune *TRune, dat L, dat U) {
+void WriteTRunesGadget(Tgadget G, byte bitmap, dat TW, dat TH, const trune *TRune, dat L, dat U) {
   dat GW = G->XWidth, GH = G->YWidth;
   dat TL = 0, TU = 0, w, H;
   dat _W;
@@ -2064,7 +2064,7 @@ void WriteTRunesGadget(gadget G, byte bitmap, dat TW, dat TH, const trune *TRune
             TT += TW - w;
           }
         } else {
-          /* clear the specified part of gadget contents */
+          /* clear the specified part of Tgadget contents */
           while (H-- > 0) {
             _W = w;
             while (_W-- > 0)

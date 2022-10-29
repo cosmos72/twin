@@ -35,7 +35,7 @@ struct keylist {
 
 extern keylist TW_KeyList[];
 
-extern gadget GadgetFlag, GadgetSwitch;
+extern Tgadget GadgetFlag, GadgetSwitch;
 
 extern trune GadgetResize[2], ScrollBarX[3], ScrollBarY[3], TabX, TabY, StdBorder[2][9],
     Screen_Back[2];

@@ -95,7 +95,7 @@ struct Sall : public Sobj {
   /* all */
   screen FirstScreen, LastScreen;
   Tmsgport FirstMsgPort, LastMsgPort, RunMsgPort;
-  mutex FirstMutex, LastMutex;
+  Tmutex FirstMutex, LastMutex;
 
   module FirstModule, LastModule;
   HookFn FnHookModule;

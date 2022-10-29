@@ -75,7 +75,7 @@ struct SwindowFn {
   TobjFn Fn_Obj;
   void (*DrawSelf)(draw_ctx *D);
   Twidget (*FindWidgetAt)(Twindow Parent, dat X, dat Y);
-  gadget (*FindGadgetByCode)(Twindow Parent, udat Code);
+  Tgadget (*FindGadgetByCode)(Twindow Parent, udat Code);
   void (*SetXY)(Twindow, dat X, dat Y);
   void (*SetFill)(Twindow, tcell Fill);
   Twidget (*Focus)(Twindow);
@@ -190,7 +190,7 @@ struct Swindow : public Sobj {
   Twidget FindWidgetAt(dat x, dat y) {
     return Fn->FindWidgetAt(this, x, y);
   }
-  gadget FindGadgetByCode(udat code) {
+  Tgadget FindGadgetByCode(udat code) {
     return Fn->FindGadgetByCode(this, code);
   }
   void SetXY(dat x, dat y) {

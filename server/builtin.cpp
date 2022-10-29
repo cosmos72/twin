@@ -98,7 +98,7 @@ static Twindow AboutWin, ClockWin, OptionWin, ButtonWin, DisplayWin, DisplaySubW
 
 Twindow WinList, MessagesWin;
 
-static gadget ButtonOK_About, ButtonRemove, ButtonThis;
+static Tgadget ButtonOK_About, ButtonRemove, ButtonThis;
 
 static void Clock_Update(void) {
   time_t Time = (time_t)All->Now.Seconds;
@@ -162,7 +162,7 @@ static void SelectWinList(void) {
 }
 
 static void ExecuteGadgetH(event_gadget *EventG) {
-  gadget G;
+  Tgadget G;
 
   if (EventG->Code == COD_E_TTY && (G = ExecuteWin->FindGadgetByCode(COD_E_TTY))) {
 
@@ -178,7 +178,7 @@ static void ExecuteGadgetH(event_gadget *EventG) {
 static void ExecuteWinRun(void) {
   char **argv, *arg0;
   row Row;
-  gadget G;
+  Tgadget G;
 
   ExecuteWin->UnMap();
 
@@ -218,7 +218,7 @@ static void ExecuteWinRun(void) {
 }
 
 void UpdateOptionWin(void) {
-  gadget G;
+  Tgadget G;
   udat list[] = {COD_O_Xp_SHADE, COD_O_Xn_SHADE, COD_O_Yp_SHADE, COD_O_Yn_SHADE, 0};
   byte i, Flags = All->SetUp->Flags;
   char ch;
@@ -696,7 +696,7 @@ static void BuiltinH(Tmsgport MsgPort) {
       break;
 
     case msg_selection_notify:
-      tempWin = (Twindow)Id2Obj(window_magic_byte, Msg->Event.EventSelectionNotify.ReqPrivate);
+      tempWin = (Twindow)Id2Obj(Twindow_magic_byte, Msg->Event.EventSelectionNotify.ReqPrivate);
       if (tempWin && tempWin == ExecuteWin) {
         switch (Msg->Event.EventSelectionNotify.Magic) {
         case SEL_UTF8MAGIC:
