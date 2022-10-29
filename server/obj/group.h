@@ -16,38 +16,38 @@
 #include "obj/fwd.h"
 #include <Tw/datatypes.h>
 
-/* ggroup -- gadget group */
+/* Tgroup -- gadget group */
 
 struct SgroupFn {
   uldat Magic;
-  void (*Insert)(ggroup, Tmsgport MsgPort, ggroup Prev, ggroup Next);
-  void (*Remove)(ggroup);
-  void (*Delete)(ggroup);
-  void (*ChangeField)(ggroup, udat field, uldat CLEARMask, uldat XORMask);
-  /* ggroup */
+  void (*Insert)(Tgroup, Tmsgport MsgPort, Tgroup Prev, Tgroup Next);
+  void (*Remove)(Tgroup);
+  void (*Delete)(Tgroup);
+  void (*ChangeField)(Tgroup, udat field, uldat CLEARMask, uldat XORMask);
+  /* Tgroup */
   TobjFn Fn_Obj; /* backup of overloaded functions */
-  void (*InsertGadget)(ggroup, gadget);
-  void (*RemoveGadget)(ggroup, gadget);
-  gadget (*GetSelectedGadget)(ggroup);
-  void (*SetSelectedGadget)(ggroup, gadget);
+  void (*InsertGadget)(Tgroup, gadget);
+  void (*RemoveGadget)(Tgroup, gadget);
+  gadget (*GetSelectedGadget)(Tgroup);
+  void (*SetSelectedGadget)(Tgroup, gadget);
 };
 
 struct Sgroup : public Sobj {
   TgroupFn Fn;
-  ggroup Prev, Next; /* list in the same Tmsgport */
+  Tgroup Prev, Next; /* list in the same Tmsgport */
   Tmsgport MsgPort;
-  /* ggroup */
-  gadget FirstG, LastG; /* list in this ggroup */
+  /* Tgroup */
+  gadget FirstG, LastG; /* list in this Tgroup */
   gadget SelectG;
 
-  static ggroup Create(Tmsgport Parent);
-  ggroup Init(Tmsgport Parent);
+  static Tgroup Create(Tmsgport Parent);
+  Tgroup Init(Tmsgport Parent);
 
   /* obj */
   uldat Magic() const {
     return Fn->Magic;
   }
-  void Insert(Tmsgport owner, ggroup prev, ggroup next) {
+  void Insert(Tmsgport owner, Tgroup prev, Tgroup next) {
     Fn->Insert(this, owner, prev, next);
   }
   void Remove() {

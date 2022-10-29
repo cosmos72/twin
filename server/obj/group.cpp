@@ -18,8 +18,8 @@
 
 #include <new>
 
-ggroup Sgroup::Create(Tmsgport owner) {
-  ggroup g = NULL;
+Tgroup Sgroup::Create(Tmsgport owner) {
+  Tgroup g = NULL;
   if (owner) {
     void *addr = AllocMem0(sizeof(Sgroup));
     if (addr) {
@@ -34,7 +34,7 @@ ggroup Sgroup::Create(Tmsgport owner) {
   return g;
 }
 
-ggroup Sgroup::Init(Tmsgport owner) {
+Tgroup Sgroup::Init(Tmsgport owner) {
   if (!owner || !((obj)this)->Init()) {
     return NULL;
   }

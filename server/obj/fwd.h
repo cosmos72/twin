@@ -24,7 +24,7 @@ typedef struct Swidget *Twidget;
 typedef struct Sgadget *gadget;
 typedef struct Swindow *Twindow;
 typedef struct Sscreen *screen;
-typedef struct Sgroup *ggroup;
+typedef struct Sgroup *Tgroup;
 typedef struct Srow *row;
 typedef struct Smenuitem *Tmenuitem;
 typedef struct Smenu *menu;

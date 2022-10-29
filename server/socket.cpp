@@ -404,7 +404,7 @@ static menu sockCreateMenu(tcolor ColItem, tcolor ColSelect, tcolor ColDisabled,
 static Tmsgport sockCreateMsgPort(byte NameLen, const char *Name);
 static Tmsgport sockFindMsgPort(Tmsgport Prev, byte NameLen, const char *Name);
 
-static ggroup sockCreateGroup(void);
+static Tgroup sockCreateGroup(void);
 
 static obj sockPrevObj(obj o);
 static obj sockNextObj(obj o);
@@ -415,10 +415,10 @@ static Twidget sockFirstWidget(Twidget W);
 static Tmsgport sockFirstMsgPort(void);
 static menu sockFirstMenu(Tmsgport MsgPort);
 static Twidget sockFirstW(Tmsgport MsgPort);
-static ggroup sockFirstGroup(Tmsgport MsgPort);
+static Tgroup sockFirstGroup(Tmsgport MsgPort);
 static mutex sockFirstMutex(Tmsgport MsgPort);
 static Tmenuitem sockFirstMenuItem(menu Menu);
-static gadget sockFirstGadget(ggroup Group);
+static gadget sockFirstGadget(Tgroup group);
 
 static byte sockSendToMsgPort(Tmsgport MsgPort, udat Len, const byte *Data);
 static void sockBlindSendToMsgPort(Tmsgport MsgPort, udat Len, const byte *Data);
@@ -1240,11 +1240,11 @@ static Tmsgport sockFindMsgPort(Tmsgport Prev, byte NameLen, const char *Name) {
   return M;
 }
 
-static ggroup sockCreateGroup(void) {
+static Tgroup sockCreateGroup(void) {
   Tmsgport Owner;
   if ((Owner = RemoteGetMsgPort(Slot)))
     return New(group)(Owner);
-  return (ggroup)0;
+  return (Tgroup)0;
 }
 
 static obj sockPrevObj(obj o) {
@@ -1275,8 +1275,8 @@ static menu sockFirstMenu(Tmsgport MsgPort) {
 static Twidget sockFirstW(Tmsgport MsgPort) {
   return MsgPort ? MsgPort->FirstW : (Twidget)0;
 }
-static ggroup sockFirstGroup(Tmsgport MsgPort) {
-  return MsgPort ? MsgPort->FirstGroup : (ggroup)0;
+static Tgroup sockFirstGroup(Tmsgport MsgPort) {
+  return MsgPort ? MsgPort->FirstGroup : (Tgroup)0;
 }
 static mutex sockFirstMutex(Tmsgport MsgPort) {
   return MsgPort ? MsgPort->FirstMutex : (mutex)0;
@@ -1284,8 +1284,8 @@ static mutex sockFirstMutex(Tmsgport MsgPort) {
 static Tmenuitem sockFirstMenuItem(menu Menu) {
   return Menu ? Menu->FirstI : (Tmenuitem)0;
 }
-static gadget sockFirstGadget(ggroup Group) {
-  return Group ? Group->FirstG : (gadget)0;
+static gadget sockFirstGadget(Tgroup group) {
+  return group ? group->FirstG : (gadget)0;
 }
 
 static all sockGetAll(void) {

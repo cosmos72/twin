@@ -31,8 +31,6 @@ define(`T_', tany)
 define(`TO', tany)
 define(`Tx', obj)
 
-define(`group', ggroup)
-
 define(`DECL0', `ifelse($2, v, `', `a[0]`'ifelse(T$2, obj, `_obj', `_any') = (T$2)')')
 
 define(`ARG', `ifelse($1, 1, `', ``, '')`'ifelse($3, V, `(const $2 *)a[$1]_vec', $3, x, `(T$2)a[$1]_obj', `($2)a[$1]_any')')

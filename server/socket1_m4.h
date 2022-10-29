@@ -308,23 +308,23 @@ case order_CreateGroup:
 
 case order_InsertGadgetGroup:
     if (a.size() >= 2)
-        Act(InsertGadget,(ggroup)a[1]_obj)((ggroup)a[1]_obj, (gadget)a[2]_obj);
+        Act(InsertGadget,(Tgroup)a[1]_obj)((Tgroup)a[1]_obj, (gadget)a[2]_obj);
     break;
 
 case order_RemoveGadgetGroup:
     if (a.size() >= 2)
-        Act(RemoveGadget,(ggroup)a[1]_obj)((ggroup)a[1]_obj, (gadget)a[2]_obj);
+        Act(RemoveGadget,(Tgroup)a[1]_obj)((Tgroup)a[1]_obj, (gadget)a[2]_obj);
     break;
 
 
 case order_GetSelectedGadgetGroup:
     if (a.size() >= 1)
-        a[0]_obj = (obj)Act(GetSelectedGadget,(ggroup)a[1]_obj)((ggroup)a[1]_obj);
+        a[0]_obj = (obj)Act(GetSelectedGadget,(Tgroup)a[1]_obj)((Tgroup)a[1]_obj);
     break;
 
 case order_SetSelectedGadgetGroup:
     if (a.size() >= 2)
-        Act(SetSelectedGadget,(ggroup)a[1]_obj)((ggroup)a[1]_obj, (gadget)a[2]_obj);
+        Act(SetSelectedGadget,(Tgroup)a[1]_obj)((Tgroup)a[1]_obj, (gadget)a[2]_obj);
     break;
 
 
@@ -447,7 +447,7 @@ case order_FirstMenuItem:
 
 case order_FirstGadget:
     if (a.size() >= 1)
-        a[0]_obj = (obj)sockFirstGadget((ggroup  )a[1]_obj);
+        a[0]_obj = (obj)sockFirstGadget((Tgroup  )a[1]_obj);
     break;
 
 

@@ -28,8 +28,6 @@ define(`lW', `$1')
 define(`lX', `$1')
 define(`lY', `$1')
 
-define(`group', ggroup)
-
 define(`VEC', `ifelse($3, V, `NAME`'      case $1: L = $4; break;
 `'define(`NAME')`'define(`ENDNAME', `    }
     break;')')')

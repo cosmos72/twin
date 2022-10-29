@@ -42,7 +42,7 @@ struct Smsgport : public Sobj {
   msg FirstMsg, LastMsg;
   menu FirstMenu, LastMenu;     /* menus created by this MsgPort */
   Twidget FirstW, LastW;        /* widgets owned by this MsgPort */
-  ggroup FirstGroup, LastGroup; /* groups owned by this MsgPort */
+  Tgroup FirstGroup, LastGroup; /* groups owned by this MsgPort */
   mutex FirstMutex, LastMutex;  /* mutexes owned by this MsgPort */
   Tdisplay AttachHW;            /* that was attached as told by MsgPort */
 

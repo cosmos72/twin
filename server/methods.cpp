@@ -625,7 +625,7 @@ static gadget CreateEmptyButton(Tmsgport Owner, dat XWidth, dat YWidth, tcolor B
     }
 
     G->G_Prev = G->G_Next = (gadget)0;
-    G->Group = (ggroup)0;
+    G->Group = (Tgroup)0;
   }
   return G;
 #undef _FULL
@@ -1310,68 +1310,68 @@ static struct SscreenFn _FnScreen = {
     DeActivateMenuScreen,
 };
 
-/* ggroup */
+/* Tgroup */
 
-static void InsertGroup(ggroup Group, Tmsgport MsgPort, ggroup Prev, ggroup Next) {
-  if (!Group->MsgPort && MsgPort) {
-    InsertGeneric((obj_entry)Group, (obj_list)&MsgPort->FirstGroup, (obj_entry)Prev,
+static void InsertGroup(Tgroup group, Tmsgport MsgPort, Tgroup Prev, Tgroup Next) {
+  if (!group->MsgPort && MsgPort) {
+    InsertGeneric((obj_entry)group, (obj_list)&MsgPort->FirstGroup, (obj_entry)Prev,
                   (obj_entry)Next, NULL);
-    Group->MsgPort = MsgPort;
+    group->MsgPort = MsgPort;
   }
 }
 
-static void RemoveGroup(ggroup Group) {
-  if (Group->MsgPort) {
-    RemoveGeneric((obj_entry)Group, (obj_list)&Group->MsgPort->FirstGroup, NULL);
-    Group->MsgPort = NULL;
+static void RemoveGroup(Tgroup group) {
+  if (group->MsgPort) {
+    RemoveGeneric((obj_entry)group, (obj_list)&group->MsgPort->FirstGroup, NULL);
+    group->MsgPort = NULL;
   }
 }
 
-static void DeleteGroup(ggroup Group) {
-  Group->Remove();
-  while (Group->FirstG)
-    Group->RemoveGadget(Group->FirstG);
+static void DeleteGroup(Tgroup group) {
+  group->Remove();
+  while (group->FirstG)
+    group->RemoveGadget(group->FirstG);
 
-  DeleteObj((obj)Group);
+  DeleteObj((obj)group);
 }
 
-static void InsertGadgetGroup(ggroup Group, gadget G) {
+static void InsertGadgetGroup(Tgroup group, gadget G) {
   if (G && !G->Group && !G->G_Prev && !G->G_Next) {
-    if ((G->G_Next = Group->FirstG))
-      Group->FirstG->G_Prev = G;
+    if ((G->G_Next = group->FirstG))
+      group->FirstG->G_Prev = G;
     else
-      Group->LastG = G;
+      group->LastG = G;
 
-    Group->FirstG = G;
-    G->Group = Group;
+    group->FirstG = G;
+    G->Group = group;
   }
 }
 
-static void RemoveGadgetGroup(ggroup Group, gadget G) {
-  if (G && G->Group == Group) {
+static void RemoveGadgetGroup(Tgroup group, gadget G) {
+  if (G && G->Group == group) {
     if (G->G_Prev)
       G->G_Prev->G_Next = G->G_Next;
-    else if (Group->FirstG == G)
-      Group->FirstG = G->G_Next;
+    else if (group->FirstG == G)
+      group->FirstG = G->G_Next;
 
     if (G->G_Next)
       G->G_Next->G_Prev = G->G_Prev;
-    else if (Group->LastG == G)
-      Group->LastG = G->G_Prev;
+    else if (group->LastG == G)
+      group->LastG = G->G_Prev;
 
     G->G_Prev = G->G_Next = (gadget)0;
-    G->Group = (ggroup)0;
+    G->Group = (Tgroup)0;
   }
 }
 
-static gadget GetSelectedGadget(ggroup Group) {
-  return Group->SelectG;
+static gadget GetSelectedGadget(Tgroup group) {
+  return group->SelectG;
 }
 
-static void SetSelectedGadget(ggroup Group, gadget G) {
-  if (!G || (G && G->Group == Group)) {
-    if (Group->SelectG)
-      UnPressGadget(Group->SelectG, ttrue);
+static void SetSelectedGadget(Tgroup group, gadget G) {
+  if (!G || (G && G->Group == group)) {
+    if (group->SelectG)
+      UnPressGadget(group->SelectG, ttrue);
     if (G)
       PressGadget(G);
   }
@@ -1382,7 +1382,7 @@ static struct SgroupFn _FnGroup = {
     InsertGroup,
     RemoveGroup,
     DeleteGroup,
-    (void (*)(ggroup, udat, uldat, uldat))NoOp,
+    (void (*)(Tgroup, udat, uldat, uldat))NoOp,
     &_FnObj,
     InsertGadgetGroup,
     RemoveGadgetGroup,

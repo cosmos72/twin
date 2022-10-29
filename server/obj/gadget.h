@@ -85,8 +85,8 @@ struct Sgadget : public Sobj {
   /* gadget */
   tcolor ColText, ColSelect, ColDisabled, ColSelectDisabled;
   udat Code;
-  gadget G_Prev, G_Next; /* list in the same ggroup */
-  ggroup Group;
+  gadget G_Prev, G_Next; /* list in the same Tgroup */
+  Tgroup Group;
 
   static gadget Create(Tmsgport owner, Twidget Parent, dat xwidth, dat ywidth,
                        const char *TextNormal, uldat Attr, uldat Flags, udat Code, tcolor ColText,
@@ -205,7 +205,7 @@ enum gadget_flag /*: udat*/ {
   GADGETFL_DISABLED = 0x0020,
   GADGETFL_TEXT_DEFCOL = 0x0040,
   /* this makes the gadget 'checkable' : can be in 'checked' or 'unchecked' state.
-   * also necessary to put the gadget in a ggroup */
+   * also necessary to put the gadget in a Tgroup */
   GADGETFL_TOGGLE = 0x0080,
   GADGETFL_PRESSED = 0x0100,
 
